@@ -4,23 +4,22 @@ using static MoonProject.Art.Place;
 namespace MoonProject.Art.Editor
 {
     /// <summary>
-    /// Kenji's spare tether ring (docs/design/first-hour-v2.md §3): a brass bezel round 07's eye, where the beam comes
-    /// from, with a thin glass band on its front face that rover lights faintly cyan at rest and brightly while the
-    /// tether holds. Built in Eye space: +Z out of the lens, the ring round the lens rim so the face stays the same
-    /// gentle eye, only framed.
+    /// Kenji's spare tether ring (docs/design/first-hour-v2.md §3): a small warm-brass ring seated low behind 07's head,
+    /// on its RingSocket, with a thin glass band that rover lights cyan only while the tether holds. Built in socket
+    /// space: +Z out of the ring's face (backwards from the head), so the eye's silhouette stays clear.
     /// </summary>
     internal static class RoverTetherRingMeshes
     {
-        private const float RingRadius = 0.152f;
-        private const float RingTube = 0.012f;
-        private const float BandTube = 0.005f;
-        private const float BandForward = 0.012f;
-        private const float StudRadius = 0.01f;
+        private const float RingRadius = 0.1f;
+        private const float RingTube = 0.008f;
+        private const float BandTube = 0.0035f;
+        private const float BandForward = 0.008f;
+        private const float StudRadius = 0.0065f;
         private const int Segments = 24;
         private const int TubeSides = 6;
         private const int Studs = 3;
 
-        /// <summary>Lays a torus's axis (local Y) along the lens's +Z.</summary>
+        /// <summary>Lays a torus's axis (local Y) along the socket's +Z.</summary>
         private static readonly Vector3 AlongZ = new Vector3(90f, 0f, 0f);
 
         public static LowPolyMeshBuilder Ring()

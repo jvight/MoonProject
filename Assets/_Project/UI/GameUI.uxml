@@ -100,10 +100,6 @@
                         <ui:Label name="recipe-card-needs-word" class="recipe-card__word" picking-mode="Ignore" />
                         <ui:VisualElement name="recipe-card-needs" class="recipe" picking-mode="Ignore" />
                     </ui:VisualElement>
-                    <ui:VisualElement class="recipe-card__row" picking-mode="Ignore">
-                        <ui:Label name="recipe-card-have-word" class="recipe-card__word" picking-mode="Ignore" />
-                        <ui:VisualElement name="recipe-card-have" class="recipe" picking-mode="Ignore" />
-                    </ui:VisualElement>
                     <ui:Label name="recipe-card-short" class="recipe__need recipe-card__line" picking-mode="Ignore" />
                     <ui:Label name="recipe-card-part" class="recipe-card__line" picking-mode="Ignore" />
                     <ui:Label name="recipe-card-where" class="recipe-card__where" picking-mode="Ignore" />

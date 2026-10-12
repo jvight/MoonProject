@@ -100,7 +100,7 @@ namespace MoonProject.Audio.PlayModeTests
                 Assert.AreEqual(1f, _rig.Director.LastVoice.pitch, 1e-6f, "chimes stay in key");
             }
 
-            _rig.Events.Publish(new MaterialSalvaged(SalvageMaterial.Optics, 1, cargo, "trail.kestrel", 0));
+            _rig.Events.Publish(new MaterialSalvaged(SalvageMaterial.Optics, 1, cargo, "site.kestrel", 0));
             Assert.AreEqual("salvage_chime_D5", LastClip, "a new chain starts at the bottom");
         }
     }

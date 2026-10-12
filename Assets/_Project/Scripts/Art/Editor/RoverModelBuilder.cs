@@ -89,6 +89,13 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public const string DeckSocketName = "DeckSocket";
 
+        /// <summary>
+        /// Where Kenji's tether ring sits (first-hour v2 §3): low on the back of the head, facing back, clear of the eye.
+        /// </summary>
+        public const string RingSocketName = "RingSocket";
+
+        public static readonly Vector3 RingSocket = new Vector3(0f, 0.1f, -0.2f);
+
         public static readonly Vector3 DeckSocket = new Vector3(-RoverMeshes.BodyHalfWidth, 0.78f, -0.45f);
 
         // 07 weathered as itself, just old (VISION ruling 11): no mismatched panels, rust low down and at the bolts,
@@ -163,6 +170,7 @@ namespace MoonProject.Art.Editor
             ModelNode eye = head.Add(new ModelNode("Eye", RoverMeshes.EyeCentre,
                 new ModelMesh(ModelName + "_Eye", RoverMeshes.Eye())));
             eye.Add(new ModelNode("TetherOrigin", new Vector3(0f, 0f, RoverMeshes.LensFront)));
+            head.Add(new ModelNode(RingSocketName, RingSocket, Place.Rotation(new Vector3(0f, 180f, 0f))));
             head.Add(new ModelNode("Eyelid", RoverMeshes.EyeCentre,
                 new ModelMesh(ModelName + "_Eyelid", RoverMeshes.Eyelid())));
 

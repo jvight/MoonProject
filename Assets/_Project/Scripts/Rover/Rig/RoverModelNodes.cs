@@ -50,6 +50,9 @@ namespace MoonProject.Rover
         /// <summary>Where the old tape deck rides on the left flank (docs/features/M3-24 C).</summary>
         public const string DeckSocket = "DeckSocket";
 
+        /// <summary>Where Kenji's tether ring sits, low on the back of the head (Head/RingSocket).</summary>
+        public const string RingSocket = "RingSocket";
+
         /// <summary>The tether ring's glass band (Art's Kit_TetherRing child), lit by RoverKit.</summary>
         public const string RingGlow = "Glow";
 

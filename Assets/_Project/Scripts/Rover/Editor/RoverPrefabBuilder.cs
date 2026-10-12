@@ -25,7 +25,7 @@ namespace MoonProject.Rover.Editor
     ///           Kit_CargoRack (nested prefab, inactive until 07 owns the Cargo Cradle)
     ///         SpineSocket
     ///           Kit_BatterySpine (nested prefab, inactive until 07 owns Cell Pack II)
-    ///         Eye
+    ///         Neck/Head/RingSocket
     ///           Kit_TetherRing (nested prefab, inactive until Kenji's garage port fits it)
     ///         DeckSocket
     ///           Kit_TapeDeck (nested prefab, inactive until 07 has picked up Tilly's tape deck)
@@ -302,7 +302,7 @@ namespace MoonProject.Rover.Editor
             Transform rack = Mount(scratch, rackPrefab, BuildWiring.Node(model, RoverModelNodes.CargoSocket));
             Transform spine = Mount(scratch, spinePrefab, BuildWiring.Node(model, RoverModelNodes.SpineSocket));
             Transform deck = Mount(scratch, deckPrefab, BuildWiring.Node(model, RoverModelNodes.DeckSocket));
-            Transform ring = Mount(scratch, ringPrefab, BuildWiring.Node(model, RoverModelNodes.Eye));
+            Transform ring = Mount(scratch, ringPrefab, BuildWiring.Node(model, RoverModelNodes.RingSocket));
             Transform tubeSocket = BuildWiring.Node(model, RoverModelNodes.TubeSocket);
             Transform tube = Mount(scratch, tubePrefab, tubeSocket);
             var parts = new Object[partPrefabs.Length];

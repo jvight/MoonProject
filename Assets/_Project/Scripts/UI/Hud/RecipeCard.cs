@@ -7,8 +7,8 @@ namespace MoonProject.UI
 {
     /// <summary>
     /// The recipe card (docs/features/M3-24 B): while 07's view rests on the radio tower's port hopper or a sheet on
-    /// Kenji's board (<see cref="IRecipeLook"/>), the next level's name and title, what it needs and what 07 has of each
-    /// material (the short ones dimmed, with the quiet need line), the component the tower still waits for, and where
+    /// Kenji's board (<see cref="IRecipeLook"/>), the next level's name and title, what it needs against what 07 has
+    /// of each material (the short ones dimmed, with the quiet need line), the component the tower still waits for, and where
     /// it is built: the tower's pad, or the bay's turntable for a decoded blueprint. Never while parked at a station
     /// (its own panel shows then). Words are written only when the recipe or the language changes.
     /// </summary>
@@ -17,7 +17,6 @@ namespace MoonProject.UI
         private const string TowerWhereKey = "ui.recipecard.tower";
         private const string BlueprintWhereKey = "ui.recipecard.blueprint";
         private const string NeedsKey = "ui.recipecard.needs";
-        private const string HaveKey = "ui.recipecard.have";
 
         private readonly ILocalization _localization;
         private readonly IUpgradeShop _shop;
@@ -27,11 +26,9 @@ namespace MoonProject.UI
         private readonly Label _title;
         private readonly Label _level;
         private readonly Label _needsWord;
-        private readonly Label _haveWord;
         private readonly Label _part;
         private readonly Label _where;
         private readonly RecipeView _needs;
-        private readonly MaterialSlots _have;
         private string _shownId;
         private int _shownLevel = -1;
         private string _shownPart;
@@ -57,12 +54,10 @@ namespace MoonProject.UI
             _title = Require<Label>(root, "recipe-card-title");
             _level = Require<Label>(root, "recipe-card-level");
             _needsWord = Require<Label>(root, "recipe-card-needs-word");
-            _haveWord = Require<Label>(root, "recipe-card-have-word");
             _part = Require<Label>(root, "recipe-card-part");
             _where = Require<Label>(root, "recipe-card-where");
             _needs = new RecipeView(Require<VisualElement>(root, "recipe-card-needs"),
                 Require<Label>(root, "recipe-card-short"), localization, numbers);
-            _have = new MaterialSlots(Require<VisualElement>(root, "recipe-card-have"), numbers, false);
             Relocalize();
         }
 
@@ -96,7 +91,6 @@ namespace MoonProject.UI
         public void Relocalize()
         {
             _needsWord.text = _localization.Get(NeedsKey);
-            _haveWord.text = _localization.Get(HaveKey);
             _needs.Relocalize();
             _shownId = null;
             _shownLevel = -1;
@@ -124,17 +118,7 @@ namespace MoonProject.UI
                 WritePart(part);
             }
 
-            Recipe recipe = offer.NextCost;
-            _needs.Show(recipe, _stock);
-            for (int i = 0; i < Materials.Count; i++)
-            {
-                SalvageMaterial material = Materials.At(i);
-                int need = recipe.Of(material);
-                int have = _stock.Of(material);
-                _have.SetShown(material, need > 0);
-                _have.SetCount(material, have);
-                _have.SetShort(material, have < need);
-            }
+            _needs.Show(offer.NextCost, _stock);
         }
 
         private void WritePart(string part)

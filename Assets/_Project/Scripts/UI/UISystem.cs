@@ -557,9 +557,9 @@ namespace MoonProject.UI
             _ticker.Tick(hudTime, tickerOpen);
             _hopFade.Tick(deltaTime);
             _protocol.Tick(hudTime);
-            _recipeCard.Tick(hudTime, !paused && _awake && !_protocol.IsVisible && !_placeCard.IsVisible &&
-                                      !_card.IsVisible && !_tower.IsVisible && !_kitTitle.IsVisible &&
-                                      !_stargaze.IsVeiled);
+            // Its own zone (right of centre): it stands beside a place card, so the tower's card never hides it.
+            _recipeCard.Tick(hudTime, !paused && _awake && !_protocol.IsVisible && !_card.IsVisible &&
+                                      !_tower.IsVisible && !_kitTitle.IsVisible && !_stargaze.IsVeiled);
             bool hintOpen = !_protocol.IsVisible && !_placeCard.IsVisible && !_card.IsVisible && !_tower.IsVisible &&
                             !_kitTitle.IsVisible &&
                             !_dial.IsBusy && !_hopList.IsBusy && !_prompt.IsVisible && !_siteName.IsVisible &&

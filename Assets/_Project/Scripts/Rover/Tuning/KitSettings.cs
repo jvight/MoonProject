@@ -77,9 +77,9 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _drumIdleGlow = 0.05f;
 
-        [Tooltip("Glow (linear) of the tether ring's band at rest: faintly cyan, so the ring reads as alive.")]
+        [Tooltip("Glow (linear) of the tether ring's band at rest: none, so the ring reads as warm brass.")]
         [Range(0f, 2f)]
-        [SerializeField] private float _ringRestGlow = 0.25f;
+        [SerializeField] private float _ringRestGlow;
 
         [Tooltip("Glow (linear) of the tether ring's band while the tether holds something.")]
         [Range(0f, 4f)]

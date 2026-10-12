@@ -289,6 +289,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>The share of the battery 07 must still have at the dock after the garage's one trip (§4).</summary>
         private const float OneTripArrival = 0.25f;
 
+        /// <summary>Metres above the ground the straight way to a line-up is checked for anything solid.</summary>
+        private const float WayCheckHeight = 0.6f;
+
         /// <summary>Metres from the tower's pad that count as having driven to the tower.</summary>
         private const float TowerVisit = 5f;
 
@@ -862,10 +865,15 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// Drives round the wreck, outside its footprint (and <paramref name="extra"/> metres more), to the side facing
-        /// the target.
+        /// the target; when nothing solid stands on the straight way there, it goes straight, as a player would.
         /// </summary>
         private IEnumerator CircleTo(SalvageSite site, Vector3 target, float extra)
         {
+            if (StraightWayIsOpen(target))
+            {
+                yield break;
+            }
+
             float ring = Anchor(site.Id).Radius + RingMargin + extra;
             Vector3 centre = Flat(site.Position);
             float from = Bearing(_rover.Position - centre);
@@ -878,6 +886,15 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Vector3 point = centre + SurfaceRules.BearingDirection(bearing) * ring;
                 yield return DriveTo(point, 3f, 0.7f, 40f, "the way round the wreck");
             }
+        }
+
+        /// <summary>True when no wreck or prop stands between 07 and <paramref name="target"/> at wheel height.</summary>
+        private bool StraightWayIsOpen(Vector3 target)
+        {
+            Vector3 from = _rover.Position + Vector3.up * WayCheckHeight;
+            Vector3 to = new Vector3(target.x, from.y, target.z);
+            int solid = ~(Layers.GroundMask | Layers.RoverMask | Layers.RelicMask | Layers.PickupMask);
+            return !Physics.Linecast(from, to, solid, QueryTriggerInteraction.Ignore);
         }
 
         private static float Bearing(Vector3 direction)

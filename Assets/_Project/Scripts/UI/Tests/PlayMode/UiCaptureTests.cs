@@ -634,6 +634,16 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Looked = null;
             yield return new WaitForSecondsRealtime(_tuning.Guidance.Recipe.FadeOut + 0.5f);
             Assert.IsFalse(ui.RecipeCard.IsVisible, "looking away hides it");
+
+            fakes.Bay = _bayKit;
+            fakes.IsSheet = true;
+            fakes.Looked = _bayKit[0].Id;
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Recipe.FadeIn + 0.5f);
+            Assert.AreEqual(_bayKit[0].Id, ui.RecipeCard.Shown, "a sheet on Kenji's board shows its kit's card");
+            yield return Capture(camera, folder, "49d_recipe_card_board");
+            fakes.Looked = null;
+            fakes.IsSheet = false;
+            fakes.Bay = null;
 #else
             Assert.Ignore("Captures need the editor.");
             yield break;

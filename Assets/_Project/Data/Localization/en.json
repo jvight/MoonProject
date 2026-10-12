@@ -839,10 +839,6 @@
             "text": "NEEDS"
         },
         {
-            "key": "ui.recipecard.have",
-            "text": "HAVE"
-        },
-        {
             "key": "ui.recipecard.tower",
             "text": "Park on the tower's pad and feed its hopper."
         },

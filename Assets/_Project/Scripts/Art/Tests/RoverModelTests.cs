@@ -16,7 +16,7 @@ namespace MoonProject.Art.Tests
             "Wheel_FL", "Wheel_FL/Weather_Dust", "Wheel_FR", "Wheel_FR/Weather_Dust", "Wheel_ML",
             "Wheel_ML/Weather_Dust", "Wheel_MR", "Wheel_MR/Weather_Dust", "Wheel_RL", "Wheel_RL/Weather_Dust",
             "Wheel_RR", "Wheel_RR/Weather_Dust",
-            "Neck", "Neck/Head", "Neck/Head/Eye", "Neck/Head/Eye/TetherOrigin", "Neck/Head/Eyelid",
+            "Neck", "Neck/Head", "Neck/Head/Eye", "Neck/Head/Eye/TetherOrigin", "Neck/Head/RingSocket", "Neck/Head/Eyelid",
             "Neck/Head/Weather_Paint", "Neck/Head/Weather_Dust",
             "SolarWing", "SolarWing/CellFilled", "Antenna", "Antenna/AntennaTip", "Antenna/Pennant",
             "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket", "DrumSocket_L",
@@ -26,7 +26,7 @@ namespace MoonProject.Art.Tests
         private static readonly string[] EmptyNodes =
         {
             "TetherOrigin", "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket",
-            "DrumSocket_L", "DrumSocket_R", "TubeSocket", "PartSocket", "SpineSocket", "DeckSocket",
+            "DrumSocket_L", "DrumSocket_R", "TubeSocket", "PartSocket", "SpineSocket", "DeckSocket", "RingSocket",
         };
 
         /// <summary>The battery light bar's segments (docs/features/M3-20).</summary>
