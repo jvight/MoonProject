@@ -29,7 +29,7 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void ASecondSave_WhileTheTickIsUp_KeepsItUpForAnotherHold()
+        public void ABurstOfSaves_ReadsAsOneSign_AndALaterSaveShowsItAgain()
         {
             var settings = new SaveTickSettings();
             var tick = new SaveTick(Layout(), settings);
@@ -37,9 +37,14 @@ namespace MoonProject.UI.Tests
             Run(tick, settings.HoldSeconds * 0.8f);
             tick.Saved();
             Run(tick, settings.HoldSeconds * 0.8f);
-            Assert.IsTrue(tick.IsVisible, "the new save restarted the hold");
+            tick.Saved();
             Run(tick, settings.HoldSeconds + settings.Reveal.FadeOut + 0.3f);
-            Assert.IsFalse(tick.IsVisible);
+            Assert.IsFalse(tick.IsVisible, "the repeats inside the burst did not keep it up");
+
+            Run(tick, settings.BurstSeconds);
+            tick.Saved();
+            Run(tick, settings.Reveal.FadeIn + 0.1f);
+            Assert.IsTrue(tick.IsVisible, "a save after the burst shows the sign again");
         }
 
         [Test]

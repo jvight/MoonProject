@@ -394,3 +394,4 @@ MonoBehaviour:
       _springFrequency: 1.2
       _springDamping: 0.8
     _holdSeconds: 1
+    _burstSeconds: 2

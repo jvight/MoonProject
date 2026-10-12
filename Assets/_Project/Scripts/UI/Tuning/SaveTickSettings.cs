@@ -14,7 +14,14 @@ namespace MoonProject.UI
         [Range(0.3f, 4f)]
         [SerializeField] private float _holdSeconds = 1f;
 
+        [Tooltip("Saves come in bursts: a save within this many seconds of the one that showed the sign is part of the same "
+            + "sign and shows nothing.")]
+        [Range(0.5f, 5f)]
+        [SerializeField] private float _burstSeconds = 2f;
+
         public RevealSettings Reveal => _reveal;
+
+        public float BurstSeconds => _burstSeconds;
 
         public float HoldSeconds => _holdSeconds;
     }
