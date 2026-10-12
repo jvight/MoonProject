@@ -279,6 +279,30 @@ MonoBehaviour:
     _volumeMax: 0.55
     _pitchMin: 1
     _pitchMax: 1
+  - _id: pickup_lift
+    _clips:
+    - {fileID: 8300000, guid: c64dd6e694d465943878f59789546b74, type: 3}
+    _variantLabels:
+    - pickup_lift
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: pickup_clunk
+    _clips:
+    - {fileID: 8300000, guid: edd6bc275ad47904a93b25d961c4d0be, type: 3}
+    _variantLabels:
+    - pickup_clunk
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.8
+    _volumeMax: 0.8
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: tower_hum_rise
     _clips:
     - {fileID: 8300000, guid: 8a0f567e6fce516409cdaa012dae3d1e, type: 3}
