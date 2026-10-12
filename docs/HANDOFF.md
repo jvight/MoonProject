@@ -4,7 +4,32 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 0000000. LATEST (2026-10-12 ~17:00): 0.5.2 released for the owner's play-through
+## 00000000. LATEST (2026-10-12 ~20:15): token cap lifted; 0.5.3 closing; 0.5.4 started
+- **The owner lifted the 50% cap** ("just go"). Cron v4 (job 6c90db20, session-only) logs usage, tells the owner at
+  85%/95%, and checks stalls. It never stops sessions.
+- **0.5.3 (closing):**
+  - landed: the copy pass (writing-style.md), the tower comes online (Build beats ~6 s), pickups on E, the tether gated,
+    relay names;
+  - ui is finishing: credits plus the Licenses/ folder (build_player ships them), Settings tabs plus Display,
+    Moonlight Glass AA 4.5:1 legibility, the overlaps, the slots removed, pickup notifications, the reward card,
+    recipe rows.
+  - Then verify, build 0.5.3.
+- **0.5.4 (started):** the M3-25 cargo and storage, M3-26 cutter tiers 0-1, the M3-27 materials foundation, and the
+  first-hour QA leftovers.
+  - Phase A: gameplay writes the Core contracts (authorised) and reports them for review.
+  - In parallel: art (tower lamp rings plus plaque, shelves, crates, the Focusing Lens look, the orange glass field),
+    rover (the charge-run lamps, the "Godzilla" idea), audio (the charge-run notes).
+  - Next: ui (the Tab screen: hold, shelves, "07 can", unlock cards) and world (map crate marks, the orange glass
+    field) after the contracts.
+- **Design docs on main:**
+  - M3-25 cargo (revised with Lunarion twists: the load on 07's body, open shelves, Tilly fetches, crew crates);
+  - M3-26 cutter progression (the charge run, 4 tiers, segmented pieces);
+  - M3-27 materials (salvage vs lunar families, 8 raw + 5 refined by 1.0, auto refining at home);
+  - first-hour-qa.md;
+  - feel-pass §8.
+- Memories: `learn-then-improve`, `plain-functional-text`, `ui-taste-subnautica`, `standing-sessions`.
+
+## 0000000. (2026-10-12 ~17:00): 0.5.2 released for the owner's play-through
 - **origin/main = a1263860, verified** (compile, EditMode, both PlayMode shards, the Playthrough). Builds:
   - `Builds/Lunarion-0.5.1-20261012-c179a545.zip`;
   - `Builds/Lunarion-0.5.2-20261012-a1263860.zip` (smoke PASS).
