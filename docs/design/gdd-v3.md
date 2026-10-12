@@ -33,7 +33,7 @@ pushes its battery's reach a little farther every night until it can call Earth,
 ## 2. The core loop at each scale
 | Scale | Loop | Battery's role |
 |---|---|---|
-| **Seconds** (10–60 s) | notice a light → ping → it answers → drive → the beam works (cut, dig, tow, stitch) → the melody climbs → a find | driving and beam work draw charge; the flank lamps answer |
+| **Seconds** (10–60 s) | notice a light → stop, 07 listens → it answers → drive → the beam works (cut, dig, tow, stitch) → the melody climbs → a find | driving and beam work draw charge; the flank lamps answer |
 | **A trip** (5–15 min) | read the range (flank lamps, the chargers on the chart) → drive out → salvage, plus the site's **heart** (a blueprint or a component) → top up at a lit mast or a pylon → home: the **lab** decodes, the **bay** builds and fits → the dock's evening: a full charge and the next light | the trip's shape: how far, where to top up, when to turn back |
 | **A session** (20–40 min) | 2–3 trips and at least one **capability jump**: a kit, a bigger cell, a mast or pylon that extends range, a structure, a tower level | ends on the dock: cells full, the next light named |
 | **A version** (1–2 h) | see a region → need an ability and range → find and build them → enter → light its mast, build its pylons → its tier of materials → see the next region | range grows by cells, efficiency, masts and pylons |
@@ -74,17 +74,19 @@ pushes its battery's reach a little farther every night until it can call Earth,
 | Boost | driving cost ×2 while boosting | the drums pay first |
 | Lights | +20% driving cost while the lamp bar or floodlights are on in the dark | 07 switches them by itself |
 | Heavy tools (Thermal Cutter, Anchor reel) | 1 cell ≈ 30 s | revisit in 0.7 against real vaults (review §1.2) |
-| Sonar ping | ~free | never discourage pinging (ruling 3) |
+| Listening | 0 | 07 listens by itself when it rests (ruling 3) |
 | Standing still | 0 | in light, trickles back up to 1 cell |
 | Starting battery | **4 cells** | |
 
 ### 3.3 Chargers
-- **The dock at home:** a full charge in ~4 s, inside the dock's evening. Each cell fills with a rising note
-  (D E F# A B …). Docking keeps the day (saves).
+- **The dock at home:** **4 s per cell** (a usual 2–3 cells: 8–12 s), only while 07 is stopped, inside the dock's
+  evening. Each cell fills with a rising note (D E F# A B …). Driving off is free at any moment and keeps the filled
+  part of a cell. Docking keeps the day (saves).
 - **Every lit relay mast** has a **4 m** charge pad: a worn painted ring with a low ramp lip at the mast's foot.
   - Dormant, the pad is dust-capped, a promise that reads at 50 m.
   - Lit, the mast's lamp pours a warm pool onto it, visible from 200 m.
-  - Cells fill in ~3 s. At relay.2, the pad sits on the home side, never on the chasm's run-up line.
+  - Cells fill at **5 s per cell** (a usual 2–3 cells: 10–15 s), only while 07 is stopped on the pad. At relay.2,
+    the pad sits on the home side, never on the chasm's run-up line.
 - **Field charge pylons** (0.6+), built by the player on pylon pads (§6.2), fill gaps where no mast stands.
 - **Radio-hop** between lit masts is free and lands 07 on a pad.
 - The **survey chart** in the lab shows every charger's circle, so trips are planned at a glance.
@@ -95,8 +97,10 @@ pushes its battery's reach a little farther every night until it can call Earth,
   the rear as a pair (P3).
 - **Body language:** below 30% the eye dims a little and the wing droops. A charge perks 07 up: head lift, brighter
   eye, an antenna wiggle.
-- **The HUD:** a thin segmented arc around the compass. It reveals itself the first time 07 drops below 70%, and it
-  hides while the cells are full and while 07 works the beam (the flank lamps carry it then).
+- **The HUD:** the cell row at the top-left, one pill per cell (at most 8) on a small glass plate, mirroring the
+  flank lamps (`docs/design/first-hour-v2.md` §6.4). It reveals itself the first time 07 drops below 70%. After that
+  it shows while 07 is not full, while it charges and for 4 s after full. While the beam works it dims to 50%; it no
+  longer hides.
 
 ### 3.5 Warnings
 | Charge | What happens |
@@ -193,7 +197,7 @@ folded into Tilly's Scout Module, and Bay Arms II becomes the Bay Wing structure
 | Thermal Cutter | blueprint + Alloy + Heat Sink | opens sealed wrecks, Circuitry's source |
 | Anchor Line | blueprint (the Peak's foot) + Superconductor + Power Cell | the beam locks onto the crew's anchor posts and reels 07 up the Peak road |
 | Warm Headlamp ✔ | blueprint (drill) + Optics | a wider, warmer pool |
-| Wide Sonar | blueprint + T1 + Lens Array | ping range ×2 |
+| Wide Sonar | blueprint + T1 + Lens Array | listening range ×2 |
 | Floodlights | blueprint (the canyon's terminus cache) + T1 + Lens Array | lights the deep dark; opens the crater |
 | Star Tracker | blueprint + Superconductor | aims the great dish |
 | Scout Module | blueprint (Bell's signal) + T1 + Lens Array | Tilly flies ahead to a pillar and scans what its site holds |
@@ -220,6 +224,9 @@ small and readable through 0.8.
 - **Outside the slots:** the hover coils stay under the belly, below the silhouette. The wings are 07's body: one
   tired wing, repaired by Tilly, then a pair (0.7). **Wings and vanes fold flat while driving** and open when 07 is
   still or leaping.
+- **Two small parts show 07's first functions and take no slot:** the **antenna tip lamp** (lights cyan at tower L1;
+  it lifts and blinks when 07 listens) and the **tether ring** round the beam's emitter (fitted at Kenji's garage
+  port; faintly cyan at rest, bright while 07 holds something).
 - **Art rules:**
   - one design language: cream enamel, the worn orange stripe, brass fittings;
   - never spiky or militarised; the rear never reads as a face; the lens never changes;
@@ -398,8 +405,8 @@ There are no structures or T2 in 0.5.
 
 ### 1.0
 No new region. The mid regions become fully order-free. Also: polish, the title and collections (M3-09), Settings
-("Gentle camera", the next line, the battery HUD), controller support, photo mode, the Paint Booth, the after-ending
-letters, and the events (Eclipse, Solar Flare: a flare fills every cell, Earthrise).
+(the next line, the battery HUD; the "Gentle camera" already ships in 0.5.1), controller support, photo mode, the
+Paint Booth, the after-ending letters, and the events (Eclipse, Solar Flare: a flare fills every cell, Earthrise).
 
 **Main arc ≈ 5.5 h; completion ≈ 9–10 h.**
 
@@ -497,7 +504,7 @@ of its lessons. They change 0.6 onward; **0.5's scope is unchanged** (phased rel
 
 | # | Lesson | Ours | Ver |
 |---|---|---|---|
-| A1 | **Blueprint fragments.** A blueprint is learned by scanning 2–4 fragments spread through a site, so every site is explored fully and "almost there" pulls the player on. | From 0.6, a kit's blueprint is split into 2–4 fragments in one site (or one region for big kits). 07 scans each with its lens (the sonar-and-look verb, no new button). The lab's reader shows the partial tape (1/3, 2/3) and decodes when the set is complete; the board's pin shows the count. 0.5's single tubes stay as they are. | 0.6 |
+| A1 | **Blueprint fragments.** A blueprint is learned by scanning 2–4 fragments spread through a site, so every site is explored fully and "almost there" pulls the player on. | From 0.6, a kit's blueprint is split into 2–4 fragments in one site (or one region for big kits). 07 scans each by looking at it while still (within 10 m, still for 1.5 s; there is still no button). The lab's reader shows the partial tape (1/3, 2/3) and decodes when the set is complete; the board's pin shows the count. 0.5's single tubes stay as they are. | 0.6 |
 | A2 | **A great wreck seen from the start and revisited with each new tool** (the Aurora). | **Kestrel-3 becomes our Aurora.** 0.5: its outer hull and the Warm Headlamp heart (built). 0.6: a sealed hatch is visible and named on the chart, a promise. 0.7: the Thermal Cutter opens the sealed vault (Circuitry, a sealed data core for Lab Reader II, a crew log). 0.8: its core holds the Power Cell's last part, so the Peak climb starts from the first wreck the player ever saw. | 0.6–0.8 |
 | A3 | **Radio that guides softly**: a caught signal gives a place without a quest log. | When the radio, Bell or a newly lit mast catches a signal, Kenji's chart pen draws a pencil mark on the survey chart (a cross, a circle, a small note in Ines's hand), and the place's pillar rises once. Never an arrow or HUD marker; tier-2 finds stay unnamed (ruling 16) — the mark is a place, not a task. | 0.6 |
 | A4 | **A mid-game emotional turn** (the Sunbeam). | Midway through the Link target, the half-repaired network catches Earth for a few seconds: static, a fragment of Ro's station jingle, a voice too faint to read, then gone. The lab's panel lights the Dish row's first lamp as a question mark. Sad but warm (pillar 6): it turns "repair the dish" from a task into a wish. No threat, no timer. | 0.7 |
@@ -552,6 +559,10 @@ revision:
 - **The Survey Scanner** (0.6, needed for A1's blueprint fragments): a slim folding boom on a new **neck slot**,
   beside the head, never in front of the lens. While 07 scans, the boom unfolds and a thin fan of light sweeps the
   fragment. Its blueprint is a 0.6 basin find.
+- **The antenna tip lamp** (tower L1, 0.5.1): the whip antenna's tip lights cyan when the tower first speaks to 07.
+  When 07 rests and listens, the antenna lifts and the tip blinks.
+- **The tether ring** (Kenji's garage port, 0.5.1): a brass ring round the beam's emitter, faintly cyan at rest and
+  bright while 07 holds something. The tether does not work until it is fitted.
 - The other kits keep their slots (§4.4). Any later function (Star Tracker, Anchor Line, …) must name its part before
   it is built.
 
