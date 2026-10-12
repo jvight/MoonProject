@@ -706,8 +706,8 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// Back: one small soft tail lamp off-centre (a pair would read as a second face; the lens is 07's only one)
-        /// and a little hatch with a handle (where cargo attaches).
+        /// Back: one small soft tail lamp off-centre (a pair would read as a second face; the lens is 07's only one);
+        /// the cargo hatch beside it is its own leaf (RoverHatchMeshes).
         /// </summary>
         private static void Rear(LowPolyMeshBuilder b)
         {
@@ -717,13 +717,6 @@ namespace MoonProject.Art.Editor
             b.Frustum(At(lamp + Vector3.forward * (face - 0.034f), AlongZ), 0.026f, 0.019f, 0.016f, 10,
                 PaletteSwatch.PilotLight);
 
-            const float hatchY = 0.48f;
-            b.Box(At(0f, hatchY + 0.07f, face - 0.002f), new Vector3(0.26f, 0.012f, 0.012f), PaletteSwatch.Charcoal);
-            b.Box(At(0f, hatchY - 0.07f, face - 0.002f), new Vector3(0.26f, 0.012f, 0.012f), PaletteSwatch.Charcoal);
-            b.Box(At(-0.124f, hatchY, face - 0.002f), new Vector3(0.012f, 0.14f, 0.012f), PaletteSwatch.Charcoal);
-            b.Box(At(0.124f, hatchY, face - 0.002f), new Vector3(0.012f, 0.14f, 0.012f), PaletteSwatch.Charcoal);
-            b.Box(At(0f, hatchY - 0.02f, face - 0.012f), new Vector3(0.08f, 0.016f, 0.02f), PaletteSwatch.Charcoal,
-                0.004f);
         }
 
         private static void LidRivets(LowPolyMeshBuilder b)
