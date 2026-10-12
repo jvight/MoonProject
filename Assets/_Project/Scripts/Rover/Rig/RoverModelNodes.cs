@@ -52,6 +52,15 @@ namespace MoonProject.Rover
 
         public const string BinSocketRight = "BinSocket_R";
 
+        /// <summary>The rear cargo hatch on its top hinge (opens about local +X), holding the crate window.</summary>
+        public const string CargoHatch = "CargoHatch";
+
+        /// <summary>The hatch window's crate <paramref name="index"/>, one per hold slot (top row L to R, then bottom).</summary>
+        public static string HatchCrate(int index)
+        {
+            return "HatchCrate_" + index;
+        }
+
         /// <summary>Where Cell Pack II's battery spine stands on the lid's right edge (docs/features/M3-20).</summary>
         public const string SpineSocket = "SpineSocket";
 
