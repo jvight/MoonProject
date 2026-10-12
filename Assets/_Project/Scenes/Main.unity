@@ -3015,6 +3015,7 @@ MonoBehaviour:
   _mapSheet: {fileID: 11400000, guid: 59efd900c39f24b47bda626e71b11a79, type: 2}
   _mapTuning: {fileID: 11400000, guid: c4cbd258394e83a4abb0dd4eb177760b, type: 2}
   _wordmark: {fileID: 11400000, guid: d675b977c90eef54090f9af57adc6cac, type: 2}
+  _credits: {fileID: 4900000, guid: 0e070ce2d397ff649bc0d7a9eb2869cc, type: 3}
 --- !u!4 &1989386162566748015
 Transform:
   m_ObjectHideFlags: 0
