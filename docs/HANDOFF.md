@@ -27,6 +27,17 @@ account) can continue without the old conversation.
   - Land order: rover -> ui -> gameplay -> art swap -> audio.
   - After landing: rover adds a 0.05 rumble per `StockCountTicked` unit; audio subscribes to FeelBeat and
     StockCountTicked.
+- **Polish wave 1 approved** (`docs/design/polish-pass.md` §3.2, ~6.7%): feel-pass P1 + §7 (the dock lock, 07's
+  machine chirps via ChirpMood/RoverChirpRequested/RoverChirpSyllable) + the high-impact gaps.
+  - Dispatched on the same box branches as P0: gameplay, rover, art, ui, world.
+  - Audio follows after voice lands.
+  - `tools/feel_coverage.py` maps which Core events are seen and heard.
+  - Waves 2-3 come next week.
+- **Clarity calls (2026-10-12):**
+  - keep OneTripArrival 0.25 and the battery tuning;
+  - make the pilot line up once per seam; if it still arrives under 25%, move the garage up to 40 m toward home;
+  - fix the recipe card's gating;
+  - the tether ring: x0.65, lower behind the head, brass.
 - **0.5.1 still to close:** clarity (running), then voice, then §8.2 doc edits, verify --parallel --push and a 0.5.1
   build.
 
