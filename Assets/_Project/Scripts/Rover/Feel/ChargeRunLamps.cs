@@ -23,8 +23,12 @@ namespace MoonProject.Rover
         private readonly MaterialPropertyBlock _block = new MaterialPropertyBlock();
         private readonly IDisposable _beats;
         private readonly IDisposable _tiers;
+        private readonly EventBus _events;
+        private readonly Func<float> _chargeSeconds;
+        private readonly Transform _emitter;
+        private readonly TestCut _testCut = new TestCut();
         private ChargeRunRow _row;
-        private ChargeRun _run;
+        private ChargeRunLights _run;
         private Color _colour;
         private bool _ignited;
 
@@ -40,7 +44,10 @@ namespace MoonProject.Rover
             return "ChargeLamp_" + index;
         }
 
-        public ChargeRunLamps(EventBus events, ChargeRunSettings settings, ChargeRunRow[] rows)
+        /// <param name="chargeSeconds">The cutter's fresh charge length now (ICutter), for the bay's test cut.</param>
+        /// <param name="emitter">07's beam emitter: the test cut's beats happen there.</param>
+        public ChargeRunLamps(EventBus events, ChargeRunSettings settings, ChargeRunRow[] rows,
+            Func<float> chargeSeconds, Transform emitter)
         {
             if (rows == null || rows.Length == 0)
             {
@@ -49,17 +56,21 @@ namespace MoonProject.Rover
 
             _rows = rows;
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            _events = events;
+            _chargeSeconds = chargeSeconds ?? throw new ArgumentNullException(nameof(chargeSeconds));
+            _emitter = emitter;
             _beats = events.Subscribe<FeelBeat>(OnBeat);
-            _tiers = events.Subscribe<CutterTierChanged>(changed => ShowTier(changed.Tier));
+            _tiers = events.Subscribe<CutterTierChanged>(OnTierChanged);
             ShowTier(0);
         }
 
-        public ChargeRun Run => _run;
+        public ChargeRunLights Run => _run;
 
         public int Tier { get; private set; }
 
         public void Tick(float deltaTime)
         {
+            StepTestCut(deltaTime);
             _run.Step(deltaTime);
             Renderer[] lamps = _row.Lamps;
             for (int i = 0; i < lamps.Length; i++)
@@ -75,6 +86,40 @@ namespace MoonProject.Rover
             _tiers.Dispose();
         }
 
+        /// <summary>
+        /// A real cutter upgrade (not a load): the new row shows, and once the part has seated the bay's test cut
+        /// plays the first charge run at the new speed, ignites, cracks the coupon, and 07 is proud (Install Reward).
+        /// </summary>
+        private void OnTierChanged(CutterTierChanged changed)
+        {
+            bool upgrade = !changed.Restored && changed.Tier > Tier;
+            ShowTier(changed.Tier);
+            if (upgrade)
+            {
+                _testCut.Start(_settings.TestCutDelay, _chargeSeconds(), _settings.TestCutBurn);
+            }
+        }
+
+        private void StepTestCut(float deltaTime)
+        {
+            switch (_testCut.Step(deltaTime))
+            {
+                case TestCut.Beat.Charge:
+                    _ignited = false;
+                    _run.Begin(_testCut.ChargeSeconds, 0f);
+                    break;
+                case TestCut.Beat.Ignite:
+                    _ignited = true;
+                    _run.Ignite();
+                    break;
+                case TestCut.Beat.Crack:
+                    _run.Fade();
+                    Vector3 at = _emitter != null ? _emitter.position : Vector3.zero;
+                    _events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Reward, at, Vector3.up, 1f, 0f));
+                    break;
+            }
+        }
+
         /// <summary>Shows tier <paramref name="tier"/>'s row (the highest built one when art has fewer) in its colour.</summary>
         private void ShowTier(int tier)
         {
@@ -85,7 +130,7 @@ namespace MoonProject.Rover
             }
 
             _row = _rows[Tier];
-            _run = new ChargeRun(_settings, _row.Lamps.Length);
+            _run = new ChargeRunLights(_settings, _row.Lamps.Length);
             _colour = _settings.TierColour(Tier);
             _ignited = false;
         }

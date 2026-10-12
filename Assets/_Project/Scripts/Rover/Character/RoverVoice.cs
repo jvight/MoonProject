@@ -32,6 +32,7 @@ namespace MoonProject.Rover
         private readonly HashSet<string> _answered = new HashSet<string>(StringComparer.Ordinal);
         private readonly IDisposable[] _subscriptions;
         private float _charge = 1f;
+        private bool _upgradedCutPending;
 
         public RoverVoice(EventBus events, ChirpSettings settings, Func<float> clock)
         {
@@ -55,6 +56,7 @@ namespace MoonProject.Rover
                 }),
                 events.Subscribe<FindDecoded>(_ => Say(ChirpMood.Affirm, Gentle)),
                 events.Subscribe<ChargingChanged>(OnChargingChanged),
+                events.Subscribe<CutterTierChanged>(changed => _upgradedCutPending |= !changed.Restored),
                 events.Subscribe<FriendRepaired>(_ => Say(ChirpMood.Happy, Gentle)),
                 events.Subscribe<FriendGreeted>(_ => Say(ChirpMood.Greeting, Gentle)),
                 events.Subscribe<FriendAnswered>(answer => FirstAnswer("friend." + answer.FriendId)),
@@ -85,6 +87,13 @@ namespace MoonProject.Rover
 
             if (beat.Kind == FeelKind.Build && beat.Phase == FeelPhase.Impact)
             {
+                Say(ChirpMood.Happy, 1f);
+                return;
+            }
+
+            if (beat.Kind == FeelKind.Cut && beat.Phase == FeelPhase.Impact && _upgradedCutPending)
+            {
+                _upgradedCutPending = false;
                 Say(ChirpMood.Happy, 1f);
                 return;
             }

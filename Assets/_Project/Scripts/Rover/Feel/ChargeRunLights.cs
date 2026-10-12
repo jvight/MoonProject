@@ -10,7 +10,7 @@ namespace MoonProject.Rover
     /// all once, each cut step pulses them, a release drains them back toward the battery and the break fades them.
     /// A resume starts part-way (the line is still warm). Fixed memory, no allocations.
     /// </summary>
-    public sealed class ChargeRun
+    public sealed class ChargeRunLights
     {
         private enum State
         {
@@ -28,7 +28,7 @@ namespace MoonProject.Rover
         private float _spike;
         private float _pulse;
 
-        public ChargeRun(ChargeRunSettings settings, int lamps)
+        public ChargeRunLights(ChargeRunSettings settings, int lamps)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _onsets = new float[Mathf.Max(1, lamps)];

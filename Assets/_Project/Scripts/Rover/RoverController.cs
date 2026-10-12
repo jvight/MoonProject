@@ -79,6 +79,7 @@ namespace MoonProject.Rover
         private IDisposable _dockChanges;
         private RoverFeel _feel;
         private ChargeRunLamps _chargeRun;
+        private GameContext _context;
         private bool _docked;
         private bool _cradled;
         private Vector3 _cradleBody;
@@ -311,6 +312,7 @@ namespace MoonProject.Rover
                 return;
             }
 
+            _context = context;
             _input = context.Input;
             _events = context.Events;
             _landing = new LandingDetector(_tuning.Landing);
@@ -344,7 +346,8 @@ namespace MoonProject.Rover
                 _visualRig.SetNudge(_feel.Nudge);
                 if (_chargeRows.Length > 0)
                 {
-                    _chargeRun = new ChargeRunLamps(_events, feel.ChargeRun, _chargeRows);
+                    _chargeRun = new ChargeRunLamps(_events, feel.ChargeRun, _chargeRows, CutterChargeSeconds,
+                        _tetherOrigin);
                 }
             }
 
@@ -885,6 +888,18 @@ namespace MoonProject.Rover
         }
 
         /// <summary>Rumble never runs while the game window is away.</summary>
+        /// <summary>The cutter's fresh charge length now (gameplay registers ICutter); the bay's test cut runs at it.</summary>
+        private float CutterChargeSeconds()
+        {
+            if (!_context.TryGet(out ICutter cutter))
+            {
+                Debug.LogError($"{nameof(RoverController)}: no ICutter is registered; the test cut cannot run.", this);
+                return 0f;
+            }
+
+            return cutter.ChargeSeconds;
+        }
+
         private void OnApplicationFocus(bool hasFocus)
         {
             _feel?.SetFocused(hasFocus);

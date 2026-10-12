@@ -60,6 +60,15 @@ namespace MoonProject.Rover
         [Range(0.05f, 2f)]
         [SerializeField] private float _fadeSeconds = 0.4f;
 
+        [Header("The bay's test cut after a cutter upgrade")]
+        [Tooltip("Seconds after the upgrade before the test cut's charge run starts (the part seats first).")]
+        [Range(0f, 5f)]
+        [SerializeField] private float _testCutDelay = 1.2f;
+
+        [Tooltip("Seconds the test coupon burns after ignition before it cracks (charge + burn stays under a second).")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _testCutBurn = 0.25f;
+
         /// <summary>The run's colour at cutter tier <paramref name="tier"/> (the highest tuned one beyond it).</summary>
         public Color TierColour(int tier)
         {
@@ -67,6 +76,10 @@ namespace MoonProject.Rover
                 ? Color.white
                 : _tierColours[Mathf.Clamp(tier, 0, _tierColours.Length - 1)];
         }
+
+        public float TestCutDelay => _testCutDelay;
+
+        public float TestCutBurn => _testCutBurn;
 
         public float RestGlow => _restGlow;
 

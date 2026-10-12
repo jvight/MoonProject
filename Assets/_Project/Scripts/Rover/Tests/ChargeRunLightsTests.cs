@@ -7,33 +7,33 @@ using MoonProject.Rover;
 namespace MoonProject.Rover.Tests
 {
     /// <summary>The charge run (M3-26 §2): timing, resume, ignition, drain, fade, the tier rows; the cargo load.</summary>
-    public sealed class ChargeRunTests
+    public sealed class ChargeRunLightsTests
     {
         private readonly ChargeRunSettings _settings = new ChargeRunSettings();
 
         [Test]
         public void TheLastLamp_LightsAtIgnition_AndTheRunAccelerates()
         {
-            Assert.AreEqual(0.65f, ChargeRun.Onset(4, 5, 0.65f, 0f), 1e-5f, "The last lamp lands at ignition.");
-            float first = ChargeRun.Onset(0, 5, 0.65f, 0f);
-            float second = ChargeRun.Onset(1, 5, 0.65f, 0f) - first;
-            float last = ChargeRun.Onset(4, 5, 0.65f, 0f) - ChargeRun.Onset(3, 5, 0.65f, 0f);
+            Assert.AreEqual(0.65f, ChargeRunLights.Onset(4, 5, 0.65f, 0f), 1e-5f, "The last lamp lands at ignition.");
+            float first = ChargeRunLights.Onset(0, 5, 0.65f, 0f);
+            float second = ChargeRunLights.Onset(1, 5, 0.65f, 0f) - first;
+            float last = ChargeRunLights.Onset(4, 5, 0.65f, 0f) - ChargeRunLights.Onset(3, 5, 0.65f, 0f);
             Assert.Less(last, second, "Ease-in: the gaps shrink toward the emitter.");
         }
 
         [Test]
         public void AResume_StartsPartWay_TheWarmLampsAtOnce()
         {
-            Assert.AreEqual(0f, ChargeRun.Onset(0, 5, 0.3f, 0.5f), "Under the start share: lit at once.");
-            Assert.AreEqual(0f, ChargeRun.Onset(1, 5, 0.3f, 0.5f));
-            Assert.Greater(ChargeRun.Onset(2, 5, 0.3f, 0.5f), 0f);
-            Assert.AreEqual(0.3f, ChargeRun.Onset(4, 5, 0.3f, 0.5f), 1e-5f);
+            Assert.AreEqual(0f, ChargeRunLights.Onset(0, 5, 0.3f, 0.5f), "Under the start share: lit at once.");
+            Assert.AreEqual(0f, ChargeRunLights.Onset(1, 5, 0.3f, 0.5f));
+            Assert.Greater(ChargeRunLights.Onset(2, 5, 0.3f, 0.5f), 0f);
+            Assert.AreEqual(0.3f, ChargeRunLights.Onset(4, 5, 0.3f, 0.5f), 1e-5f);
         }
 
         [Test]
         public void TheLamps_FlareHoldSpikeDrainAndRest()
         {
-            var run = new ChargeRun(_settings, 5);
+            var run = new ChargeRunLights(_settings, 5);
             run.Begin(0.65f, 0f);
             run.Step(0.01f);
             Assert.AreEqual(_settings.RestGlow, run.Glow(4), "The emitter's lamp waits for the run.");
@@ -53,7 +53,7 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void TheBreak_FadesTheLamps()
         {
-            var run = new ChargeRun(_settings, 5);
+            var run = new ChargeRunLights(_settings, 5);
             run.Begin(0.1f, 0f);
             run.Step(0.2f);
             run.Ignite();
@@ -85,7 +85,7 @@ namespace MoonProject.Rover.Tests
                 rows[tier] = Row(roots[tier], lamps);
             }
 
-            var driver = new ChargeRunLamps(events, _settings, rows);
+            var driver = new ChargeRunLamps(events, _settings, rows, () => 0.45f, null);
             Assert.AreEqual(5, driver.Run.Count);
             Assert.IsTrue(roots[0].activeSelf && !roots[1].activeSelf && !roots[2].activeSelf);
             events.Publish(new CutterTierChanged(2, false));
@@ -111,6 +111,19 @@ namespace MoonProject.Rover.Tests
             Assert.IsFalse(load.BecameFull(5, 8));
             Assert.IsTrue(load.BecameFull(8, 8), "It just filled.");
             Assert.IsFalse(load.BecameFull(8, 8), "Once.");
+        }
+
+        [Test]
+        public void TheTestCut_ChargesIgnitesAndCracks_InOrder_UnderASecond()
+        {
+            var cut = new TestCut();
+            cut.Start(1.2f, 0.45f, 0.25f);
+            Assert.AreEqual(TestCut.Beat.None, cut.Step(1f), "The part seats first.");
+            Assert.AreEqual(TestCut.Beat.Charge, cut.Step(0.3f));
+            Assert.AreEqual(TestCut.Beat.None, cut.Step(0.3f));
+            Assert.AreEqual(TestCut.Beat.Ignite, cut.Step(0.2f), "At the new tier's charge length.");
+            Assert.AreEqual(TestCut.Beat.Crack, cut.Step(0.3f), "The coupon cracks: charge + burn under a second.");
+            Assert.IsFalse(cut.IsRunning);
         }
 
         private static ChargeRunRow Row(GameObject root, Renderer[] lamps)
