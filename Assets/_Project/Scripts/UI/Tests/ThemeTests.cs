@@ -75,12 +75,9 @@ namespace MoonProject.UI.Tests
             }
 
             string characters = FontCharacters.Collect(texts);
-            foreach (string style in new[]
-                     {
-                         UiAssetPaths.RegularStyle, UiAssetPaths.MediumStyle, UiAssetPaths.SemiBoldStyle,
-                     })
+            foreach (string[] style in UiAssetPaths.Fonts)
             {
-                string path = UiAssetPaths.FontAsset(style);
+                string path = UiAssetPaths.FontAsset(style[0], style[1]);
                 var font = AssetDatabase.LoadAssetAtPath<FontAsset>(path);
                 Assert.IsNotNull(font, $"{path} is missing: run the UI/Fonts builder");
                 Assert.AreEqual(AtlasPopulationMode.Dynamic, font.atlasPopulationMode, path);
