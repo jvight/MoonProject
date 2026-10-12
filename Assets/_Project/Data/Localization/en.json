@@ -24,11 +24,11 @@
         },
         {
             "key": "ui.pause.quit_question",
-            "text": "Rest here for now?"
+            "text": "Quit for now?"
         },
         {
             "key": "ui.pause.quit_aside",
-            "text": "07 will keep watch until you return."
+            "text": "07 will wait here until you return."
         },
         {
             "key": "ui.pause.quit_stay",
@@ -40,7 +40,7 @@
         },
         {
             "key": "ui.journey.put_away",
-            "text": "An older journey was put away."
+            "text": "An older save was kept separately."
         },
         {
             "key": "ui.save_tick.word",
@@ -48,7 +48,7 @@
         },
         {
             "key": "ui.battery.power",
-            "text": "power"
+            "text": "battery"
         },
         {
             "key": "ui.meter.home",
@@ -112,23 +112,23 @@
         },
         {
             "key": "next.wake",
-            "text": "Power first. The radio tower is asleep."
+            "text": "First job: repair the radio tower."
         },
         {
             "key": "next.salvage",
-            "text": "It needs metal, wiring, optics and a coil. The old depot has some."
+            "text": "The tower needs metal, wiring, optics and a coil. Salvage them at the Supply Depot."
         },
         {
             "key": "next.tower",
-            "text": "The coil. The tower is waiting."
+            "text": "You have the coil. Park on the radio tower's pad to repair it."
         },
         {
             "key": "next.signal",
-            "text": "A faint signal, out past the dune. Someone is out there."
+            "text": "A faint signal past the dune. Ping, then follow it."
         },
         {
             "key": "next.dig",
-            "text": "Her last part is under the dust."
+            "text": "The last part is under the dust. Dig it up."
         },
         {
             "key": "next.friend.repair",
@@ -136,15 +136,15 @@
         },
         {
             "key": "next.garage",
-            "text": "Kenji's garage. Something of 07's might still be there."
+            "text": "Go to Kenji's Garage. A spare part for 07 may still be there."
         },
         {
             "key": "next.port",
-            "text": "Kenji's old service port. It still has a spare."
+            "text": "The garage's service port works. Park on its pad to fit the spare."
         },
         {
             "key": "next.relic",
-            "text": "Home has room for it."
+            "text": "Dig up the keepsake and tow it home."
         },
         {
             "key": "next.lift.stitch",
@@ -152,43 +152,43 @@
         },
         {
             "key": "next.lift.ride",
-            "text": "Rest on the lift. The lab is up there."
+            "text": "Stop on the lift's platform to ride up to the lab."
         },
         {
             "key": "next.chasm",
-            "text": "A light across the chasm. Too far to cross, for now."
+            "text": "A light across the chasm. You can't cross it yet."
         },
         {
             "key": "next.bay.wake",
-            "text": "The bay sleeps. The tower's second level would wake it."
+            "text": "Kenji's Rover Bay has no power. Upgrade the radio tower to level 2."
         },
         {
             "key": "next.bay",
-            "text": "The bay has power. The turntable is waiting."
+            "text": "The bay has power. Park on its turntable to build."
         },
         {
             "key": "next.power.part",
-            "text": "The tower needs its last part."
+            "text": "The tower's next level needs one more part."
         },
         {
             "key": "next.power.carried",
-            "text": "The tower's last part rides with 07. The port is waiting."
+            "text": "07 has the part. Park on the tower's pad to fit it."
         },
         {
             "key": "next.power.build",
-            "text": "The last part is in. Now the tower needs materials."
+            "text": "The part is in. Now feed the tower its materials."
         },
         {
             "key": "next.link.relay.0",
-            "text": "The mound mast is still dark."
+            "text": "Mound relay is offline. Repair it."
         },
         {
             "key": "next.link.relay.1",
-            "text": "The shoulder mast is still dark."
+            "text": "Rim shoulder relay is offline. Repair it."
         },
         {
             "key": "next.link",
-            "text": "Dark masts lead toward the Peak."
+            "text": "Repair the offline relays on the way to the Peak."
         },
         {
             "key": "ui.recovery.title",
@@ -220,15 +220,15 @@
         },
         {
             "key": "tech.tower_l1.name",
-            "text": "Tower, level 1"
+            "text": "Radio Tower, level 1"
         },
         {
             "key": "tech.tower_l2.name",
-            "text": "Tower, level 2"
+            "text": "Radio Tower, level 2"
         },
         {
             "key": "tech.tower_l3.name",
-            "text": "Tower, level 3"
+            "text": "Radio Tower, level 3"
         },
         {
             "key": "tech.relay_network.name",
@@ -248,7 +248,7 @@
         },
         {
             "key": "tech.capacitor_drums.name",
-            "text": "Capacitor drums"
+            "text": "Boost Coils"
         },
         {
             "key": "tech.cell_pack_2.name",
@@ -256,7 +256,7 @@
         },
         {
             "key": "ticker.recovery.power",
-            "text": "Power restored."
+            "text": "The station has power."
         },
         {
             "key": "ticker.recovery.link",
@@ -264,7 +264,7 @@
         },
         {
             "key": "ticker.recovery.dish",
-            "text": "The great dish is whole again."
+            "text": "The great dish is repaired."
         },
         {
             "key": "ticker.recovery.answer",
@@ -272,23 +272,23 @@
         },
         {
             "key": "notyet.tower",
-            "text": "Asleep. Metal and a coil will wake it."
+            "text": "Offline. Needs metal and a coil."
         },
         {
             "key": "notyet.bay",
-            "text": "No power yet. It wakes with the tower."
+            "text": "No power. Needs the radio tower at level 2."
         },
         {
             "key": "notyet.chart",
-            "text": "Dark. It wakes with the tower."
+            "text": "No power. Needs the radio tower at level 3."
         },
         {
             "key": "notyet.tether",
-            "text": "07's tether is gone. Kenji kept a spare in his garage."
+            "text": "07's tether is missing. Kenji kept a spare in his garage."
         },
         {
             "key": "ticker.listen.first",
-            "text": "07 listens when it rests. What still holds something answers."
+            "text": "When 07 stops, it listens. Wrecks that still hold something answer."
         },
         {
             "key": "place.dock.name",
@@ -296,7 +296,7 @@
         },
         {
             "key": "place.dock.job",
-            "text": "Park here to charge. A rest here saves the day."
+            "text": "Park here to charge. Charging also saves the game."
         },
         {
             "key": "place.lander.name",
@@ -304,7 +304,7 @@
         },
         {
             "key": "place.lander.job",
-            "text": "The crew's home. The tower's power lights its windows."
+            "text": "The crew's home. Its windows light when the tower has power."
         },
         {
             "key": "place.tower.name",
@@ -312,7 +312,7 @@
         },
         {
             "key": "place.tower.job",
-            "text": "The station's heart: each level powers more of home."
+            "text": "Powers the station. Each level brings power to more of home."
         },
         {
             "key": "place.bay.name",
@@ -328,7 +328,7 @@
         },
         {
             "key": "place.ladder.job",
-            "text": "The crew's ladder. Not made for wheels."
+            "text": "The crew's ladder. Wheels can't climb it."
         },
         {
             "key": "place.lift.name",
@@ -336,7 +336,7 @@
         },
         {
             "key": "place.lift.job",
-            "text": "Rest on the platform to ride up into the lab."
+            "text": "Stop on the platform to ride up to the lab."
         },
         {
             "key": "place.lab.name",
@@ -344,7 +344,7 @@
         },
         {
             "key": "place.lab.job",
-            "text": "Bring finds up here: the reader turns them into blueprints."
+            "text": "Bring finds here: the reader decodes them into blueprints."
         },
         {
             "key": "place.rack.name",
@@ -360,7 +360,7 @@
         },
         {
             "key": "place.garage_port.job",
-            "text": "Fits 07's spare parts. Park on its pad."
+            "text": "Park on its pad to fit 07's spare parts."
         },
         {
             "key": "ui.blueprint.found",
@@ -368,7 +368,7 @@
         },
         {
             "key": "ui.blueprint.delivered",
-            "text": "The reader takes the tube."
+            "text": "Blueprint loaded into the reader."
         },
         {
             "key": "ui.settings.sound",
@@ -376,7 +376,7 @@
         },
         {
             "key": "ui.settings.master",
-            "text": "Everything"
+            "text": "Master"
         },
         {
             "key": "ui.settings.music",
@@ -392,7 +392,7 @@
         },
         {
             "key": "ui.settings.look_speed",
-            "text": "Look speed"
+            "text": "Look sensitivity"
         },
         {
             "key": "ui.settings.invert_look",
@@ -468,7 +468,7 @@
         },
         {
             "key": "ui.card.caption",
-            "text": "Memory {0} of {1}"
+            "text": "Keepsake {0} of {1}"
         },
         {
             "key": "ui.card.close",
@@ -480,7 +480,7 @@
         },
         {
             "key": "ui.tower.purchased",
-            "text": "The signal grows"
+            "text": "Repairing the tower…"
         },
         {
             "key": "hint.excavate",
@@ -496,7 +496,7 @@
         },
         {
             "key": "hint.reel",
-            "text": "Reel"
+            "text": "Reel in"
         },
         {
             "key": "upgrade.radio_tower.name",
@@ -504,39 +504,39 @@
         },
         {
             "key": "upgrade.radio_tower.1.title",
-            "text": "Wake the old mast"
+            "text": "Repair the radio tower"
         },
         {
             "key": "upgrade.radio_tower.1.effect",
-            "text": "Power the tired antenna and home wakes: the lander's windows glow again."
+            "text": "Brings power home: the lander's windows light and the radio picks up the station."
         },
         {
             "key": "component.tower_coil.needed",
-            "text": "The tower is waiting for its coil."
+            "text": "Needs a coil. The Supply Depot has one."
         },
         {
             "key": "upgrade.radio_tower.2.title",
-            "text": "Raise the mast"
+            "text": "Upgrade to level 2"
         },
         {
             "key": "upgrade.radio_tower.2.effect",
-            "text": "A taller mast carries power to Kenji's bay, and the radio stays clear far out."
+            "text": "Powers Kenji's Rover Bay, and the radio stays clear farther out."
         },
         {
             "key": "component.transformer.needed",
-            "text": "The tower is waiting for its transformer."
+            "text": "Needs a transformer. Look in Kenji's Garage."
         },
         {
             "key": "upgrade.radio_tower.3.title",
-            "text": "Light the whole basin"
+            "text": "Upgrade to level 3"
         },
         {
             "key": "upgrade.radio_tower.3.effect",
-            "text": "The tower sings across the basin and wakes the crew's lift; home glows like a lantern."
+            "text": "Powers the chart in the lab, and the radio is clear across the basin."
         },
         {
             "key": "component.relay_spare.needed",
-            "text": "The tower is waiting for a spare from the relays."
+            "text": "Needs a relay spare part. Repair a relay to get one."
         },
         {
             "key": "upgrade.rover.hover_jump.name",
@@ -548,7 +548,7 @@
         },
         {
             "key": "upgrade.rover.hover_jump.1.effect",
-            "text": "Coil up and let go: 07 leaps over gaps and floats across the dunes."
+            "text": "Hold to charge, release to leap: 07 jumps over gaps."
         },
         {
             "key": "relic.cassette_player.name",
@@ -720,7 +720,7 @@
         },
         {
             "key": "ui.card.log_caption",
-            "text": "From {0}'s memory"
+            "text": "Repair log: {0}"
         },
         {
             "key": "friend.tilly.name",
@@ -772,7 +772,7 @@
         },
         {
             "key": "ticker.bell.signal",
-            "text": "Bell's picking something up. Her light points the way."
+            "text": "Bell has picked up a signal. Follow her light."
         },
         {
             "key": "ticker.bell.found_0",
@@ -864,11 +864,11 @@
         },
         {
             "key": "ticker.relay.online",
-            "text": "Relay {0} online. Lumen Station can hear a little farther."
+            "text": "Relays online: {0}. The station reaches a little farther."
         },
         {
             "key": "ticker.relay.waiting",
-            "text": "Relay repaired. It listens for a lit neighbour."
+            "text": "Relay repaired. It comes online when a neighbouring relay is lit."
         },
         {
             "key": "hop.node.home",
@@ -940,7 +940,7 @@
         },
         {
             "key": "ui.recipecard.tower",
-            "text": "Park on the tower's pad and feed its hopper."
+            "text": "Park on the tower's pad, then feed materials into its hopper."
         },
         {
             "key": "ui.recipecard.blueprint",
@@ -956,7 +956,7 @@
         },
         {
             "key": "upgrade.rover.cargo_cradle.1.effect",
-            "text": "One memory rides home snug in a basket on 07's back; the tether stays free for big salvage."
+            "text": "Carries one keepsake home in a rack on 07's back, so the tether stays free."
         },
         {
             "key": "upgrade.rover.warm_headlamp.name",
@@ -968,7 +968,7 @@
         },
         {
             "key": "upgrade.rover.warm_headlamp.1.effect",
-            "text": "A wider, warmer pool of light ahead, and the sonar pillars 07 heads for stay a little longer."
+            "text": "A wider, brighter light ahead, and sonar pillars stay up longer."
         },
         {
             "key": "upgrade.rover.boost_coils.name",
@@ -980,7 +980,7 @@
         },
         {
             "key": "upgrade.rover.boost_coils.1.effect",
-            "text": "Hold forward on open ground and 07 hums along a little faster, drums aglow. Never a race."
+            "text": "Hold forward on open ground to drive a little faster."
         },
         {
             "key": "hint.stow",
@@ -1008,7 +1008,7 @@
         },
         {
             "key": "ui.bay.pick",
-            "text": "tap for the next"
+            "text": "tap to see the next"
         },
         {
             "key": "log.kenji_1",
@@ -1156,7 +1156,7 @@
         },
         {
             "key": "map.state.heart_waiting",
-            "text": "Something still waits in its heart."
+            "text": "Something is still inside."
         },
         {
             "key": "map.state.picked_clean",
@@ -1164,11 +1164,11 @@
         },
         {
             "key": "map.state.mast_dark",
-            "text": "Dark. Waiting to be lit."
+            "text": "Offline. Needs repair."
         },
         {
             "key": "map.state.mast_lit",
-            "text": "Lit. Home reaches this far."
+            "text": "Online. Inside the station's reach."
         },
         {
             "key": "map.place.lander.name",
@@ -1324,7 +1324,7 @@
         },
         {
             "key": "map.region.terraces.name",
-            "text": "The terraces"
+            "text": "Rim Terraces"
         },
         {
             "key": "map.region.terraces.note",
@@ -1428,19 +1428,19 @@
         },
         {
             "key": "ui.title.new_game_question",
-            "text": "Put this moon away and start again?"
+            "text": "Start a new game?"
         },
         {
             "key": "ui.title.new_game_aside",
-            "text": "Your old moon is kept."
+            "text": "Your current save is kept, not deleted."
         },
         {
             "key": "ui.title.new_game_keep",
-            "text": "Keep this moon"
+            "text": "Keep playing"
         },
         {
             "key": "ui.title.new_game_confirm",
-            "text": "Start again"
+            "text": "Start new"
         },
         {
             "key": "ui.pause.quit_to_title",
@@ -1508,11 +1508,11 @@
         },
         {
             "key": "battery.low.dock",
-            "text": "Charge is getting low. The dock can top you up."
+            "text": "Battery low. Charge at the dock at home."
         },
         {
             "key": "battery.low.mast",
-            "text": "Charge is getting low. The {0} can top you up."
+            "text": "Battery low. You can charge at {0}."
         },
         {
             "key": "upgrade.rover.cell_pack.name",
@@ -1524,11 +1524,11 @@
         },
         {
             "key": "upgrade.rover.cell_pack.1.effect",
-            "text": "Two more cells on 07's back: six lamps lit, and the far side of the basin in reach."
+            "text": "Two more cells, six in total: enough to reach the far side of the basin."
         },
         {
             "key": "ticker.tether.back",
-            "text": "07 can hold things again."
+            "text": "07 can tow things again."
         },
         {
             "key": "ui.pause.can",

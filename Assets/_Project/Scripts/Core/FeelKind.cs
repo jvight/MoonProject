@@ -51,7 +51,9 @@ namespace MoonProject.Core
         /// <summary>A letter's signal catching on the radio.</summary>
         Letter = 14,
 
-        /// <summary>A structure going up on a build pad (0.6).</summary>
+        /// <summary>
+        /// A structure comes online: each radio tower level-up now, build pads in 0.6 (feel-pass §8.2).
+        /// </summary>
         Build = 15,
     }
 }

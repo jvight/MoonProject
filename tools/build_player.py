@@ -8,7 +8,9 @@ Steps:
   1. tools/unity_batch.py exec MoonProject.Editor.Build.PlayerBuild.BuildWindows: runs every builder (Main Scene
      last) so the build reflects source, then builds Main.unity for StandaloneWindows64 (Mono, release) and writes
      build_info.txt (version = <bundleVersion>-<commit date>-<short hash>[-dirty]) next to the exe.
-  2. Zips the build to Builds/Lunarion-<version>.zip (Builds/ is git-ignored) and prints its size and path.
+  2. Copies the licence texts (Assets/_Project/UI/Credits/Licenses) into Licenses/ next to the exe, so the fonts'
+     OFL and the voice's CC BY 4.0 travel with the game, then zips the build to Builds/Lunarion-<version>.zip
+     (Builds/ is git-ignored) and prints its size and path.
   3. Smoke check: launches the exe windowed (1280x720) with -logFile and -saveSlot smoke for --smoke-seconds,
      requires the bootstrap to confirm the smoke slot and the WorldSystem boot line, and no exceptions/errors in the
      player log, then closes it and reports boot time and sizes. The smoke slot's files are deleted before and
@@ -19,6 +21,7 @@ Exit code 0 = build, zip and smoke check all passed.
 import argparse
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -37,6 +40,8 @@ PLAYER_PROBLEM = re.compile(r"(?i)\b(couldn't|could not|cannot|can't|failed|fail
                             r"exception|crash)\b")
 BUILD_TIMEOUT = 5400
 SMOKE_SLOT = "smoke"
+LICENSES = Path("Assets/_Project/UI/Credits/Licenses")
+LICENSES_OUT = "Licenses"
 SLOT_MARKER = re.compile(r"^GameBootstrap: save slot '(?P<slot>[^']*)'")
 
 
@@ -82,6 +87,21 @@ def build(root, out_dir, skip_builders, timeout):
            "--arg", f"builders={'false' if skip_builders else 'true'}"]
     say("building the player through unity_batch (first builds compile player shaders and take several minutes)")
     return subprocess.run(cmd).returncode == 0
+
+
+def copy_licenses(root, out_dir):
+    """Copies every licence text into <out_dir>/Licenses; False (with the reason) when there are none to ship."""
+    source = root / LICENSES
+    texts = sorted(source.glob("*.txt")) if source.is_dir() else []
+    if not texts:
+        say(f"ERROR: no licence texts in {source}; the credits' licences must ship with the player")
+        return False
+    target = out_dir / LICENSES_OUT
+    target.mkdir(exist_ok=True)
+    for text in texts:
+        shutil.copyfile(text, target / text.name)
+    say(f"licences: {len(texts)} file(s) -> {target}")
+    return True
 
 
 def make_zip(root, out_dir, version):
@@ -205,6 +225,9 @@ def main():
 
     info = read_info(out_dir)
     exe = out_dir / info["exe"]
+    if not copy_licenses(root, out_dir):
+        say("RESULT: FAIL")
+        sys.exit(1)
     archive = make_zip(root, out_dir, info["version"])
     say(f"version {info['version']}  exe {mb(exe.stat().st_size)}  build folder {mb(folder_size(out_dir))}")
     say(f"zip {mb(archive.stat().st_size)}: {archive}")
