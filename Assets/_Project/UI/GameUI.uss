@@ -1565,13 +1565,17 @@ Label {
 .setting-row {
     flex-direction: row;
     align-items: center;
-    height: 40px;
+    min-height: 40px;
     padding-left: 4px;
 }
 
+/* A fixed label column wide enough for the longest label in English and Vietnamese; a longer one wraps */
 .setting-row__label {
-    width: 130px;
+    width: 172px;
+    flex-shrink: 0;
+    margin-right: 6px;
     font-size: 18px;
+    white-space: normal;
     color: var(--moon-text-dim);
 }
 
