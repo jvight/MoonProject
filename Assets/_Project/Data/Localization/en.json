@@ -119,10 +119,6 @@
             "text": "The tower needs metal, wiring, optics and the Tower Coil. Salvage them at the Supply Depot."
         },
         {
-            "key": "next.tower",
-            "text": "You have the Tower Coil. Park on the radio tower's pad to repair it."
-        },
-        {
             "key": "next.tower.part",
             "text": "The Tower Coil is at the Supply Depot. Drive close and press E to pick it up."
         },
@@ -1037,6 +1033,10 @@
         {
             "key": "ui.recipe.row",
             "text": "{0} (have {1})"
+        },
+        {
+            "key": "ui.friend.parts",
+            "text": "{0}'s parts: {1} of {2}"
         },
         {
             "key": "ui.reward.title",

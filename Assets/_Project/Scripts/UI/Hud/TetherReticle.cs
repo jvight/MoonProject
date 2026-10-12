@@ -8,8 +8,8 @@ namespace MoonProject.UI
     /// <summary>
     /// The tether reticle: a soft centre ring shown only while aiming. It appears dim while the tether button is held
     /// with nothing in the aim cone, brightens to tether-cyan and gently opens when a relic is hovered, and leaves
-    /// once something is on the tether (the beam says it all). Never shown while 07 lacks the tether ability. No
-    /// permanent crosshair.
+    /// once something is on the tether (the beam says it all). Never shown while the tether is asleep (07 has no
+    /// ring yet). No permanent crosshair.
     /// </summary>
     internal sealed class TetherReticle
     {
@@ -43,11 +43,10 @@ namespace MoonProject.UI
         /// <param name="deltaTime">Unscaled seconds since the last tick.</param>
         /// <param name="state">The tether's state this frame.</param>
         /// <param name="tetherHeld">True while the player holds the tether button.</param>
-        /// <param name="hasTether">True once 07 has the tether ability.</param>
-        public void Tick(float deltaTime, TetherAimState state, bool tetherHeld, bool hasTether)
+        public void Tick(float deltaTime, TetherAimState state, bool tetherHeld)
         {
             bool hovering = state == TetherAimState.Hovering;
-            _reveal.Set(hasTether && (hovering || (state == TetherAimState.Idle && tetherHeld)));
+            _reveal.Set(hovering || (state == TetherAimState.Idle && tetherHeld));
             _reveal.Tick(deltaTime);
             if (_reveal.IsHidden)
             {

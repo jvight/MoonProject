@@ -811,8 +811,21 @@ Label {
 
 /* Friend parts readout: warm pips over a broken friend, no glyphs, no numbers */
 
+.friend-chip {
+    flex-direction: row;
+    align-items: center;
+    padding: 9px 16px 9px 16px;
+}
+
+.friend-chip__label {
+    margin-right: 12px;
+    font-size: 20px;
+    color: var(--glass-hi);
+}
+
 .friend-pips {
-    padding: 9px 12px;
+    flex-direction: row;
+    align-items: center;
 }
 
 .pip {

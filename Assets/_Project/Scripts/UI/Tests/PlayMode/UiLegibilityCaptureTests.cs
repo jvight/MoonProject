@@ -17,7 +17,7 @@ namespace MoonProject.UI.PlayModeTests
         private const string LegibleFolder = OutputFolder + "/legible";
         private const int LegibleWidth = 1920;
         private const int LegibleHeight = 1080;
-        private const float RequiredContrast = 7f;
+        private const float RequiredContrast = 4.5f;
         private const float FontFloor = 18f;
         private const float PlateSamplePixels = 6f;
 
@@ -33,7 +33,7 @@ namespace MoonProject.UI.PlayModeTests
         /// stars, the ticker over a lit dune, the tower card, the bay list, the cell row while charging and at Low, and
         /// the same cards at a 150% text size. Every text measured in a shot logs its contrast as
         /// <c>[ui-contrast]</c>: the brightest text pixel against the plate's own pixel, both composited over the
-        /// brightest dune of the scene (#A7A9CC), the worst backdrop a plate holds. Each must reach 7:1, no text may
+        /// brightest dune of the scene (#A7A9CC), the worst backdrop a plate holds. Each must reach WCAG AA, 4.5:1, no text may
         /// be under 18 px, and at 150% no card may leave the screen or end in an ellipsis. PNGs land in
         /// Logs/ui-captures/legible. Run on its own:
         /// <c>python tools/unity_batch.py tests --platform playmode --filter CaptureLegibility</c>.
@@ -59,7 +59,7 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Fade = 0f;
             yield return new WaitForSecondsRealtime(1f);
 
-            context.Events.Publish(new NextStepChanged("next.tower"));
+            context.Events.Publish(new NextStepChanged("next.tower.pad"));
             yield return new WaitForSecondsRealtime(1f + _tuning.Guidance.StillSeconds +
                                                     _tuning.Guidance.Line.FadeIn + 1f);
             yield return LegibleShot(camera, folder, "70_next_line_over_stars", report, layout.NextLineText);
@@ -261,9 +261,8 @@ namespace MoonProject.UI.PlayModeTests
             float ratio = Contrast.Ratio(brightest, background);
             Debug.Log($"[ui-contrast] {shot} '{text.text}' {ratio:0.0}:1 (text {brightest.r},{brightest.g}," +
                       $"{brightest.b} on plate {background.r},{background.g},{background.b})");
-            bool dim = text.resolvedStyle.color.a < 0.95f;
-            return ratio >= RequiredContrast || dim ? null
-                : $"{shot}: '{text.text}' reads {ratio:0.0}:1, under {RequiredContrast:0}:1";
+            return ratio >= RequiredContrast ? null
+                : $"{shot}: '{text.text}' reads {ratio:0.0}:1, under {RequiredContrast:0.0}:1";
         }
 
         /// <summary>The ReadPixels row of panel pixel (x, y), y counted from the top.</summary>

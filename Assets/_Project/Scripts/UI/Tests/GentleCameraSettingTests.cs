@@ -13,7 +13,7 @@ namespace MoonProject.UI.Tests
         public void GentleCamera_IsOffByDefault_OffersALowerLookStep_AndRoundTrips()
         {
             var services = new FakeSettingsServices();
-            ILocalization localization = TestTables.Localization(new EventBus(), "next.tower", "x", "y");
+            ILocalization localization = TestTables.Localization(new EventBus(), "next.tower.pad", "x", "y");
             var pause = new PauseSettings();
             var settings = new PlayerSettings(services, services, services, new FakeDisplayControl(), localization, pause);
             settings.Restore(new SettingsSaveData());

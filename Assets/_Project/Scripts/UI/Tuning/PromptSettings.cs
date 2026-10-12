@@ -29,6 +29,7 @@ namespace MoonProject.UI
             new PromptEntry(InteractionKind.Hop, RoverAction.Excavate, 0.8f, 1.7f),
             new PromptEntry(InteractionKind.Salvage, RoverAction.Excavate, 0.4f, 0.6f),
             new PromptEntry(InteractionKind.Stow, RoverAction.Tether, 0.4f, 0.9f),
+            new PromptEntry(InteractionKind.PickUp, RoverAction.Excavate, 0.2f, 0.9f, 6),
         };
 
         [Tooltip("Seconds after 07 starts waking before any prompt may appear (the opening belongs to the moon).")]

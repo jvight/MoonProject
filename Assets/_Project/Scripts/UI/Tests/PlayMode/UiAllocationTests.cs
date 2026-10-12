@@ -7,7 +7,6 @@ using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
 using UnityEngine.TestTools.Constraints;
 using Unity.Profiling;
-using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Gameplay;
 using MoonProject.Testing;
@@ -64,7 +63,6 @@ namespace MoonProject.UI.PlayModeTests
             InputSystem.AddDevice<Keyboard>();
             _rig = UiTestRig.Boot(_controls, _slot);
             _rig.Bootstrap.Context.Events.Publish(new RoverAwoke(Vector3.zero, false));
-            _rig.Fakes.Grant(RoverAbility.Tether);
             _rig.Fakes.TetherState = TetherAimState.Hovering;
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Excavate, new Vector3(0f, 0f, 10f), true);
             _rig.Fakes.Position = new Vector3(0f, 0f, 2f);

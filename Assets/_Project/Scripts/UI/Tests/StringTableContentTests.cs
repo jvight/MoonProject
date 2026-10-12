@@ -18,9 +18,7 @@ namespace MoonProject.UI.Tests
     /// </summary>
     public sealed class StringTableContentTests
     {
-        // A part's noun is keyed by its model id, as Gameplay asks for it ("pickup.Part_TowerCoil").
-        private static readonly Regex KeyPattern =
-            new Regex(@"^([a-z0-9_]+(\.[a-z0-9_]+)+|pickup\.Part_[A-Za-z0-9]+)$");
+        private static readonly Regex KeyPattern = new Regex(@"^[a-z0-9_]+(\.[a-z0-9_]+)+$");
         private static readonly Regex Placeholder = new Regex(@"\{\d+\}");
 
         private StringTable[] _tables;

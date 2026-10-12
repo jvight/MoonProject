@@ -174,7 +174,6 @@ namespace MoonProject.UI.PlayModeTests
             yield return Capture(camera, folder, "02_prompt_dig");
 
             fakes.PrimaryHint = InteractionHint.None;
-            fakes.Grant(RoverAbility.Tether);
             fakes.TetherState = TetherAimState.Hovering;
             yield return new WaitForSecondsRealtime(1f);
             yield return Capture(camera, folder, "03_reticle_hover");
@@ -818,7 +817,7 @@ namespace MoonProject.UI.PlayModeTests
             context.Events.Publish(new RoverAwoke(Vector3.zero, false));
             yield return new WaitForSecondsRealtime(0.5f);
 
-            context.Events.Publish(new NextStepChanged("next.tower"));
+            context.Events.Publish(new NextStepChanged("next.tower.pad"));
             context.Events.Publish(new PlaceFirstApproached("place.tower"));
             yield return new WaitForSecondsRealtime(_tuning.Guidance.TowerCardDelay + _tuning.Guidance.Place.FadeIn +
                                                     0.5f);
@@ -934,7 +933,7 @@ namespace MoonProject.UI.PlayModeTests
 
             yield return Watch(ui, overlaps, _tuning.Salvage.SiteNameHoldSeconds + _tuning.Salvage.SiteName.FadeOut);
             fakes.SetMaterials(3, 1, 0);
-            events.Publish(new NextStepChanged("next.tower"));
+            events.Publish(new NextStepChanged("next.tower.pad"));
             events.Publish(new BlueprintFound("rover.cargo_cradle", DepotSite, depot.Position));
             events.Publish(new PlaceFirstApproached("place.tower"));
             yield return Watch(ui, overlaps, _tuning.Guidance.Place.FadeIn + 0.5f);

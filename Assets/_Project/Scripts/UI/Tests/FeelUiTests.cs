@@ -196,7 +196,7 @@ namespace MoonProject.UI.Tests
         public void Rumble_IsOnAtFullStrengthByDefault_EvenForOlderSaves_AndRoundTrips()
         {
             var services = new FakeSettingsServices();
-            ILocalization localization = TestTables.Localization(new EventBus(), "next.tower", "x", "y");
+            ILocalization localization = TestTables.Localization(new EventBus(), "next.tower.pad", "x", "y");
             var settings = new PlayerSettings(services, services, services, new FakeDisplayControl(), localization, new PauseSettings());
             settings.Restore(new SettingsSaveData());
             Assert.IsTrue(services.RumbleEnabled, "a save from before the setting keeps it on");
