@@ -254,7 +254,8 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(1, _rig.Fakes.Purchases, "one purchase per hold");
             Release(keyboard.eKey);
             yield return Seconds(0.3f);
-            Assert.AreEqual("Raise the mast", _rig.Ui.Layout.TowerTitle.text, "the next level is offered");
+            Assert.AreEqual(Text(UiKeys.UpgradeTitle("radio_tower", 2)), _rig.Ui.Layout.TowerTitle.text,
+                "the next level is offered");
             Assert.AreEqual(string.Empty, _rig.Ui.Layout.TowerHoldWord.text, "the hold is the ring, never a word");
             Assert.IsTrue(recipe.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass),
                 "what 07 is short of reads dimmed");
