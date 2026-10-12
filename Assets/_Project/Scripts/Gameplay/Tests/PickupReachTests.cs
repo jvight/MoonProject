@@ -13,7 +13,7 @@ namespace MoonProject.Gameplay.Tests
     public sealed class PickupReachTests
     {
         private const float Reach = 4.5f;
-        private const string Coil = "pickup.Part_TowerCoil";
+        private const string Coil = "pickup.part_towercoil";
         private const string Rotor = "pickup.tilly.rotor";
 
         [Test]
