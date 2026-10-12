@@ -62,10 +62,11 @@ namespace MoonProject.UI
                     Line(p, 0.5f, 0.45f, 0.5f, 0.9f);
                     break;
                 case AbilityIcon.Listen:
-                    Line(p, 0.34f, 0.18f, 0.34f, 0.9f);
-                    Line(p, 0.18f, 0.9f, 0.5f, 0.9f);
-                    Arc(p, 0.34f, 0.3f, 0.2f, -55f, 55f);
-                    Arc(p, 0.34f, 0.3f, 0.38f, -50f, 50f);
+                    Line(p, 0.3f, 0.34f, 0.3f, 0.9f);
+                    Line(p, 0.16f, 0.9f, 0.44f, 0.9f);
+                    Arc(p, 0.3f, 0.22f, 0.02f, 0f, 360f);
+                    Arc(p, 0.3f, 0.22f, 0.3f, -40f, 40f);
+                    Arc(p, 0.3f, 0.22f, 0.5f, -36f, 36f);
                     break;
                 case AbilityIcon.Leap:
                     Polyline(p, 0.24f, 0.48f, 0.5f, 0.24f, 0.76f, 0.48f);
