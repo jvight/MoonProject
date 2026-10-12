@@ -51,16 +51,16 @@ MonoBehaviour:
     _freezeSeconds: 0.3
     _resumeSeconds: 0.45
     _volumeSteps: 10
-    _fpsCaps:
-    - 30
-    - 60
-    - 120
-    - 144
-    - 0
+    _fpsCaps: 1e0000003c000000780000009000000000000000
     _defaultFpsCap: 60
     _lookStep: 0.25
     _lookMin: 0.25
+    _gentleLookMin: 0.15
     _lookMax: 3
+    _textScales:
+    - 1
+    - 1.25
+    - 1.5
   _title:
     _reveal:
       _fadeIn: 2.2
@@ -137,12 +137,18 @@ MonoBehaviour:
       _dwellSeconds: 0.4
       _liftMetres: 0.9
       _usesToRetire: 2
+    - _kind: 13
+      _action: 1
+      _dwellSeconds: 0.2
+      _liftMetres: 0.9
+      _usesToRetire: 6
     _startDelay: 9
     _maxShowSeconds: 7
     _repeatCooldown: 25
     _showingsToRetire: 3
     _followHalfLife: 0.08
     _screenMargin: 72
+    _cardGap: 18
   _reticle:
     _reveal:
       _fadeIn: 0.25
@@ -155,7 +161,7 @@ MonoBehaviour:
     _hoverFadeSeconds: 0.25
     _hoverSpringFrequency: 1.6
     _hoverSpringDamping: 0.55
-  _materialsChip:
+  _pickupFeed:
     _reveal:
       _fadeIn: 0.35
       _fadeOut: 0.7
@@ -163,14 +169,12 @@ MonoBehaviour:
       _scaleFrom: 0.92
       _springFrequency: 1.8
       _springDamping: 0.6
+    _slideDistance: 72
     _stepSeconds: 0.08
     _maxCountSeconds: 1.4
     _lingerSeconds: 3
     _tickPulseSeconds: 0.14
     _tickPulseScale: 0.08
-    _pulseSeconds: 1.2
-    _pulseScale: 0.16
-    _glowOpacity: 0.35
   _memoryCard:
     _reveal:
       _fadeIn: 0.18
@@ -209,6 +213,15 @@ MonoBehaviour:
       _springDamping: 0.7
     _delay: 0.35
     _holdSeconds: 2.6
+  _rewardCard:
+    _reveal:
+      _fadeIn: 0.9
+      _fadeOut: 1.4
+      _slide: 14
+      _scaleFrom: 0.96
+      _springFrequency: 1
+      _springDamping: 0.7
+    _holdSeconds: 6
   _friends:
     _readout:
       _fadeIn: 0.5
@@ -251,6 +264,7 @@ MonoBehaviour:
     _maxYields: 1
     _lampBreathSeconds: 3.2
     _lampMinOpacity: 0.45
+    _voiceTailSeconds: 1.5
   _dialReadout:
     _reveal:
       _fadeIn: 0.3
@@ -342,11 +356,62 @@ MonoBehaviour:
       _springFrequency: 1
       _springDamping: 0.7
     _placeHoldSeconds: 4
+    _towerCardDelay: 4
+    _recipe:
+      _fadeIn: 0.45
+      _fadeOut: 0.6
+      _slide: 8
+      _scaleFrom: 0.96
+      _springFrequency: 1.4
+      _springDamping: 0.7
+    _protocol:
+      _fadeIn: 0.8
+      _fadeOut: 1.1
+      _slide: 6
+      _scaleFrom: 0.97
+      _springFrequency: 1
+      _springDamping: 0.8
+    _protocolHoldSeconds: 2.8
   _backdrop:
     _blurStartMetres: 0
     _blurEndMetres: 4
     _blurRadius: 1.5
     _saturation: -30
+  _saveTick:
+    _reveal:
+      _fadeIn: 0.25
+      _fadeOut: 0.7
+      _slide: 6
+      _scaleFrom: 0.96
+      _springFrequency: 1.2
+      _springDamping: 0.8
+    _holdSeconds: 1
+    _burstSeconds: 2
+  _homeMeter:
+    _reveal:
+      _fadeIn: 0.6
+      _fadeOut: 0.8
+      _slide: -6
+      _scaleFrom: 0.97
+      _springFrequency: 1.2
+      _springDamping: 0.8
+    _nearMetres: 40
+    _fullArcMetres: 800
+    _stepMetres: 5
+    _maxShownMetres: 9995
+    _easeRate: 4
+  _credits:
+    _reveal:
+      _fadeIn: 0.5
+      _fadeOut: 0.4
+      _slide: 12
+      _scaleFrom: 0.97
+      _springFrequency: 1.4
+      _springDamping: 0.75
+    _scrollSpeed: 34
+    _startDelaySeconds: 2
+    _resumeAfterSeconds: 5
+    _lineStepPixels: 110
   _lab:
     _prompts:
       _fadeIn: 0.6
@@ -387,49 +452,13 @@ MonoBehaviour:
       _scaleFrom: 0.97
       _springFrequency: 1.2
       _springDamping: 0.7
-  _saveTick:
-    _reveal:
-      _fadeIn: 0.25
-      _fadeOut: 0.7
-      _slide: 6
-      _scaleFrom: 0.96
-      _springFrequency: 1.2
-      _springDamping: 0.8
-    _holdSeconds: 1
-    _burstSeconds: 2
-  _homeMeter:
-    _reveal:
-      _fadeIn: 0.6
-      _fadeOut: 0.8
-      _slide: -6
-      _scaleFrom: 0.97
-      _springFrequency: 1.2
-      _springDamping: 0.8
-    _nearMetres: 40
-    _fullArcMetres: 800
-    _stepMetres: 5
-    _maxShownMetres: 9995
-    _easeRate: 4
-  _abilitySlots:
-    _reveal:
-      _fadeIn: 0.5
-      _fadeOut: 0.9
-      _slide: 8
-      _scaleFrom: 0.96
-      _springFrequency: 1.2
-      _springDamping: 0.8
-    _earnedSeconds: 8
-    _stillSpeed: 0.3
-    _stillSeconds: 1.5
-  _credits:
-    _reveal:
-      _fadeIn: 0.5
-      _fadeOut: 0.4
-      _slide: 12
-      _scaleFrom: 0.97
-      _springFrequency: 1.4
-      _springDamping: 0.75
-    _scrollSpeed: 34
-    _startDelaySeconds: 2
-    _resumeAfterSeconds: 5
-    _lineStepPixels: 110
+    _fullHoldSeconds: 4
+    _dimShare: 0.5
+    _dimRate: 5
+    _breathSeconds: 2.4
+    _lowBreathSeconds: 5
+    _breathDepth: 0.45
+  _safe:
+    _hudAspect: 2.3333
+    _menuAspect: 1.7778
+    _edgeMargin: 48
