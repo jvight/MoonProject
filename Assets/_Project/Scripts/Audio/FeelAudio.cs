@@ -16,8 +16,8 @@ namespace MoonProject.Audio
     /// progress, with a deeper undertone per tier (later Acts); the tick-slide onto the next cut line (Follow 0.5); the
     /// crack (Impact); a strap tuk at the fold (Follow 1). The beam's singing climb and the collect melody stay
     /// <see cref="SalvageAudio"/>'s;</item>
-    /// <item>cargo and storage (M3-25): a tok on the full hold's lid, a rising note per crate on the dock's belt (Kind
-    /// Cargo Act) and its bump (Impact), a crew crate's latch and note, Tilly's fetch;</item>
+    /// <item>cargo and storage (M3-25): a tok on the full hold's lid; the dock's unload (Kind Cargo) as a small rising
+    /// scale, one soft tick per slot, ending on a bell; a crew crate's latch and note; Tilly's fetch;</item>
     /// <item>the dock (Kind Dock): the walls rising (Anticipate), the clamp (Impact), the walls settling (Reward; the
     /// full chord and the per-cell notes are <see cref="StationAudio"/>'s and <see cref="BatteryAudio"/>'s), the quick
     /// drop (Cancel);</item>
@@ -361,17 +361,25 @@ namespace MoonProject.Audio
             }
         }
 
-        /// <summary>The dock unloading the hold (M3-25): a rising note per crate on the belt, the bump.</summary>
+        /// <summary>
+        /// The dock unloading the hold (M3-25): the hatch's servo (Anticipate), a soft tick per slot climbing the
+        /// scale with progress (Act, every ~0.15 s, so it stays quiet and short), a bell on D when the hold is empty
+        /// (Reward), the falling two-note when home is full (Cancel). A Cargo Impact is a full hold:
+        /// <see cref="CargoOverflowed"/> plays its tok.
+        /// </summary>
         private void OnCargoBeat(FeelBeat beat)
         {
             switch (beat.Phase)
             {
+                case FeelPhase.Anticipate:
+                    _director.PlayAt(_pickupLift, beat.Position, _tuning.UnloadVolume);
+                    break;
                 case FeelPhase.Act:
                     int note = Mathf.Clamp(Mathf.RoundToInt(beat.Strength * (_countNotes - 1)), 0, _countNotes - 1);
-                    _director.PlayVariantAt(_countTick, note, beat.Position);
+                    _director.PlayVariantAt(_countTick, note, beat.Position, _tuning.UnloadVolume);
                     break;
-                case FeelPhase.Impact:
-                    _director.PlayAt(_pickupClunk, beat.Position);
+                case FeelPhase.Reward:
+                    _director.PlayVariantAt(_nodeLight, 0, beat.Position, _tuning.UnloadVolume);
                     break;
                 case FeelPhase.Cancel:
                     _director.PlayAt(_cancel, beat.Position);

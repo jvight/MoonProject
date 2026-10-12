@@ -26,6 +26,11 @@ namespace MoonProject.Audio
         [Tooltip("Time constant (s) of the sizzle easing to its level, and away when the beam stops.")]
         [Min(0.01f)] [SerializeField] private float _sizzleEase = 0.15f;
 
+        [Header("Cargo and storage (M3-25)")]
+        [Tooltip("Level of the dock's unload ticks and its closing bell: one tick per slot every ~0.15 s, so they " +
+            "stay soft.")]
+        [Range(0f, 1f)] [SerializeField] private float _unloadVolume = 0.6f;
+
         [Header("07 speaks machine (feel-pass section 7.2)")]
         [Tooltip("Level of 07's chirps (mezzo-piano).")]
         [Range(0f, 1f)] [SerializeField] private float _chirpVolume = 0.8f;
@@ -51,6 +56,7 @@ namespace MoonProject.Audio
         [Range(0f, 1f)] [SerializeField] private float _boostVolume = 0.7f;
 
         public int LowDFromTier => _lowDFromTier;
+        public float UnloadVolume => _unloadVolume;
 
         /// <summary>The undertone's level at cutter tier <paramref name="tier"/> (0 at tier 0).</summary>
         public float UndertoneAt(int tier)
