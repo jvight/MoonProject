@@ -136,23 +136,23 @@
         },
         {
             "key": "pickup.part_towercoil",
-            "text": "cuộn dây tháp"
+            "text": "Cuộn dây tháp"
         },
         {
             "key": "pickup.part_transformer",
-            "text": "bộ biến áp"
+            "text": "Bộ biến áp"
         },
         {
             "key": "pickup.part_relayspare",
-            "text": "linh kiện trạm tiếp sóng"
+            "text": "Linh kiện trạm tiếp sóng"
         },
         {
             "key": "pickup.relay_part",
-            "text": "linh kiện trạm tiếp sóng"
+            "text": "Linh kiện trạm tiếp sóng"
         },
         {
             "key": "pickup.tilly.rotor",
-            "text": "cánh quạt của Tilly"
+            "text": "Cánh quạt của Tilly"
         },
         {
             "key": "pickup.tilly.lens",
@@ -176,7 +176,7 @@
         },
         {
             "key": "pickup.blueprint_tube",
-            "text": "ống bản vẽ"
+            "text": "Ống bản vẽ"
         },
         {
             "key": "next.signal",
@@ -1665,6 +1665,198 @@
         {
             "key": "ui.settings.text_size",
             "text": "Cỡ chữ"
+        },
+        {
+            "key": "material.metal.job",
+            "text": "Dùng làm khung, vỏ và hầu hết công trình."
+        },
+        {
+            "key": "material.metal.source",
+            "text": "Cắt từ xác tàu. Kho tiếp tế có nhiều nhất."
+        },
+        {
+            "key": "material.wiring.job",
+            "text": "Dẫn điện: cho tháp, trạm tiếp sóng và đồ lắp."
+        },
+        {
+            "key": "material.wiring.source",
+            "text": "Cắt từ xác tàu. Giàn khoan có nhiều nhất."
+        },
+        {
+            "key": "material.optics.job",
+            "text": "Dùng làm thấu kính, đèn và cảm biến."
+        },
+        {
+            "key": "material.optics.source",
+            "text": "Cắt từ xác tàu. Kestrel-3 có nhiều nhất."
+        },
+        {
+            "key": "material.circuit_chips.job",
+            "text": "Linh kiện điện tử: máy đọc II, drone, siêu dẫn."
+        },
+        {
+            "key": "material.circuit_chips.source",
+            "text": "Cắt từ vỏ tàu kín. Cần máy cắt nhiệt."
+        },
+        {
+            "key": "material.orange_beads.job",
+            "text": "Nấu thành thủy tinh ở lò luyện."
+        },
+        {
+            "key": "material.orange_beads.source",
+            "text": "Đào ở các vệt màu cam quanh miệng phun cũ trong lòng chảo."
+        },
+        {
+            "key": "material.ilmenite.job",
+            "text": "Luyện thành hợp kim."
+        },
+        {
+            "key": "material.ilmenite.source",
+            "text": "Khoan ở các vỉa đá tối trên Bậc thềm vành hố. Cần máy khoan lõi."
+        },
+        {
+            "key": "material.water_ice.job",
+            "text": "Chế thành chất làm mát và tinh thể."
+        },
+        {
+            "key": "material.water_ice.source",
+            "text": "Khoan ở đáy tối của Hố Tối. Cần đèn pha mạnh để thấy."
+        },
+        {
+            "key": "material.rare_earths.job",
+            "text": "Chế thành siêu dẫn."
+        },
+        {
+            "key": "material.rare_earths.source",
+            "text": "Khoan trên đường lên Đỉnh núi."
+        },
+        {
+            "key": "material.glass.job",
+            "text": "Làm kính, chảo sonar và cánh pin mặt trời."
+        },
+        {
+            "key": "material.glass.source",
+            "text": "Nấu từ hạt thủy tinh cam ở lò luyện."
+        },
+        {
+            "key": "material.alloy.job",
+            "text": "Chi tiết chịu lực: bánh từ tính, khung máy cắt, kệ."
+        },
+        {
+            "key": "material.alloy.source",
+            "text": "Luyện từ ilmenit ở lò luyện."
+        },
+        {
+            "key": "material.coolant.job",
+            "text": "Làm mát dụng cụ nóng: máy cắt nhiệt, lõi năng lượng."
+        },
+        {
+            "key": "material.coolant.source",
+            "text": "Chưng từ băng nước ở tháp chưng băng."
+        },
+        {
+            "key": "material.crystal.job",
+            "text": "Dùng cho cánh pin mặt trời và drone."
+        },
+        {
+            "key": "material.crystal.source",
+            "text": "Moss trồng từ băng nước trong mái vòm."
+        },
+        {
+            "key": "material.superconductor.job",
+            "text": "Dùng cho chảo ăng-ten lớn, ống ngắm sao và tời neo."
+        },
+        {
+            "key": "material.superconductor.source",
+            "text": "Luyện từ đất hiếm và chip mạch ở lò luyện II."
+        },
+        {
+            "key": "ticker.cargo.full",
+            "text": "Khoang hàng của 07 đã đầy. Phần còn lại để ở đây, quay lại lấy sau."
+        },
+        {
+            "key": "ticker.cargo.home_full",
+            "text": "Kho ở nhà đã đầy. Hãy dựng thêm kệ ở ổ trống."
+        },
+        {
+            "key": "crate.depot.note",
+            "text": "Đồ dự phòng cho đợt sau. Đừng để Ines lấy mất cuộn dây xịn. — Kenji"
+        },
+        {
+            "key": "crate.kestrel.note",
+            "text": "Thấu kính tháo từ vệ tinh cũ. Cầm nhẹ tay như cầm đĩa nhạc nhé. — Ro"
+        },
+        {
+            "key": "crate.drill.note",
+            "text": "Dây cho mùa khoan tới. Đã dán nhãn, đã đếm, hai lần. — I. Kalani"
+        },
+        {
+            "key": "crate.garage.note",
+            "text": "Cho 07, lần tới nó hỏng. Thế nào cũng hỏng. — Kenji"
+        },
+        {
+            "key": "crate.lander.note",
+            "text": "Khay hạt giống đã mang lên trên. Đây là mọi thứ còn lại. — Theo"
+        },
+        {
+            "key": "kit.focus_lens.name",
+            "text": "Thấu kính hội tụ"
+        },
+        {
+            "key": "kit.side_bins.name",
+            "text": "Thùng hông"
+        },
+        {
+            "key": "pickup.part_relaymodule",
+            "text": "Mô-đun trạm tiếp sóng"
+        },
+        {
+            "key": "pickup.part_tillyrotor",
+            "text": "Cánh quạt của Tilly"
+        },
+        {
+            "key": "pickup.part_tillylens",
+            "text": "Thấu kính của Tilly"
+        },
+        {
+            "key": "pickup.part_tillycell",
+            "text": "Ô pin của Tilly"
+        },
+        {
+            "key": "pickup.part_bellcone",
+            "text": "Màng loa của Bell"
+        },
+        {
+            "key": "pickup.part_bellknob",
+            "text": "Núm dò đài của Bell"
+        },
+        {
+            "key": "pickup.part_bellvalve",
+            "text": "Bóng đèn điện tử của Bell"
+        },
+        {
+            "key": "upgrade.rover.focus_lens.name",
+            "text": "Thấu kính hội tụ"
+        },
+        {
+            "key": "upgrade.rover.focus_lens.1.title",
+            "text": "Thấu kính hội tụ cho tia cắt"
+        },
+        {
+            "key": "upgrade.rover.focus_lens.1.effect",
+            "text": "Máy cắt tích điện nhanh hơn, cắt nhanh hơn 30% và tốn ít pin hơn 15%."
+        },
+        {
+            "key": "upgrade.rover.side_bins.name",
+            "text": "Thùng hông"
+        },
+        {
+            "key": "upgrade.rover.side_bins.1.title",
+            "text": "Hai thùng hai bên hông 07"
+        },
+        {
+            "key": "upgrade.rover.side_bins.1.effect",
+            "text": "Thêm bốn ô trong khoang hàng của 07, mỗi chuyến chở về được nhiều hơn."
         }
     ]
 }

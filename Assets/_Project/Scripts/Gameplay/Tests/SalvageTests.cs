@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Gameplay.Editor;
+using Object = UnityEngine.Object;
 
 namespace MoonProject.Gameplay.Tests
 {
@@ -54,21 +56,21 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void Yield_GrowsWithThePiece_AndEveryCutIsAShortCalmBeat()
+        public void Yield_GrowsWithThePiece_AndBigPiecesCutInSegments()
         {
             var tuning = Create<SalvageTuning>();
-            Assert.AreEqual(tuning.SmallYield, SalvageYield.Units(new Vector3(0.9f, 0.9f, 0.9f), false, tuning));
-            Assert.AreEqual(tuning.MediumYield, SalvageYield.Units(new Vector3(1.5f, 1f, 1.5f), false, tuning));
-            Assert.AreEqual(tuning.LargeYield, SalvageYield.Units(new Vector3(2f, 2f, 2f), false, tuning));
-            Assert.AreEqual(tuning.DragYield, SalvageYield.Units(new Vector3(0.5f, 0.5f, 0.5f), true, tuning),
-                "a drag piece is worth its fixed amount, whatever its size");
+            Assert.AreEqual(2, SalvageYield.Units(PieceSize.Small, 1, tuning));
+            Assert.AreEqual(3, SalvageYield.Units(PieceSize.Medium, 1, tuning));
+            Assert.AreEqual(5, SalvageYield.Units(PieceSize.Large, 1, tuning));
+            Assert.AreEqual(8, SalvageYield.Units(PieceSize.Hull, 1, tuning));
+            Assert.AreEqual(6, SalvageYield.Units(PieceSize.Medium, 2, tuning), "the garage's rich seams");
 
-            Vector2 range = tuning.CutSeconds;
-            Assert.AreEqual(range.x, SalvageYield.CutSeconds(1, tuning), 1e-5f, "never shorter than the range");
-            Assert.AreEqual(3f, SalvageYield.CutSeconds(3, tuning), 1e-5f, "about a second per unit");
-            Assert.AreEqual(range.y, SalvageYield.CutSeconds(9, tuning), 1e-5f, "never longer than the range");
-            Assert.AreEqual(2f, range.x, 1e-5f, "the brief's 2-4 s");
-            Assert.AreEqual(4f, range.y, 1e-5f);
+            Assert.AreEqual(1.2f, SalvageYield.CutSeconds(PieceSize.Small, 1f, tuning), 1e-5f, "M3-26 §4.1");
+            Assert.AreEqual(2.5f, SalvageYield.CutSeconds(PieceSize.Medium, 1f, tuning), 1e-5f);
+            Assert.AreEqual(5f, SalvageYield.CutSeconds(PieceSize.Large, 1f, tuning), 1e-5f, "two segments");
+            Assert.AreEqual(10.5f, SalvageYield.CutSeconds(PieceSize.Hull, 1f, tuning), 1e-5f, "three segments");
+            Assert.AreEqual(8.1f, SalvageYield.CutSeconds(PieceSize.Hull, 1.3f, tuning), 0.05f, "with the Focus Lens");
+            Assert.AreEqual(3, tuning.Size(PieceSize.Hull).Segments);
         }
 
         [Test]
@@ -104,25 +106,28 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void Sites_GiveAboutTwiceWhatStepsZeroToEightNeed_EachLeaningOnItsSignature()
+        public void Sites_AndTheirCrates_GiveAboutTwiceWhatThe05PathNeeds_EachLeaningOnItsSignature()
         {
             var tuning = Create<SalvageTuning>();
-            var yield = new Recipe(0, 0, 0);
+            var supply = new Recipe(0, 0, 0);
             foreach (string name in SalvageEconomy.SiteNames)
             {
-                Recipe site = SiteYield(name, tuning);
-                yield = yield.Plus(site);
-                TestContext.WriteLine($"{name}: metal {site.Metal}, wiring {site.Wiring}, optics {site.Optics}");
+                Recipe site = SiteYield(name, tuning).Plus(CrateOf(name));
+                supply = supply.Plus(site);
+                TestContext.WriteLine($"{name} (crate in): metal {site.Metal}, wiring {site.Wiring}, " +
+                                      $"optics {site.Optics}");
             }
 
-            Recipe needs = StepsZeroToEight();
-            TestContext.WriteLine($"All: {yield}; steps 0-8 take {needs}.");
+            Recipe needs = PathNeeds();
+            TestContext.WriteLine($"All: {supply}; the 0.5 path takes {needs}.");
+            Assert.GreaterOrEqual(supply.Total, MostUnderTwice * needs.Total,
+                "M3-26 §4.4: about twice (ruling 5), the crew crates included");
             foreach (SalvageMaterial material in Materials)
             {
-                Assert.GreaterOrEqual(yield.Of(material), 2 * needs.Of(material),
-                    $"VISION ruling 5 (M3-16 P9): the moon gives at least twice the {material} steps 0-8 take");
-                Assert.LessOrEqual(yield.Of(material), MostOverTwice * needs.Of(material),
-                    $"P9: about twice, so collecting still matters: not much more {material} than that");
+                Assert.GreaterOrEqual(supply.Of(material), LeastPerMaterial * needs.Of(material),
+                    $"no material runs tight: {material}");
+                Assert.LessOrEqual(supply.Of(material), MostOverTwice * needs.Of(material),
+                    $"about twice, so collecting still matters: not much more {material} than that");
             }
 
             AssertSignature("depot", SalvageMaterial.Metal, tuning);
@@ -130,6 +135,50 @@ namespace MoonProject.Gameplay.Tests
             AssertSignature("drill", SalvageMaterial.Metal, tuning);
             AssertSignature("garage", SalvageMaterial.Wiring, tuning);
             AssertSignature("lander", SalvageMaterial.Metal, tuning);
+        }
+
+        [Test]
+        public void OneSite_FitsOneTrip_InTheHoldOfItsStage()
+        {
+            var tuning = Create<SalvageTuning>();
+            var cargo = Create<CargoTuning>();
+            foreach (string name in SalvageEconomy.SiteNames)
+            {
+                Recipe site = SiteYield(name, tuning).Plus(CrateOf(name));
+                int slots = 0;
+                foreach (SalvageMaterial material in Materials)
+                {
+                    slots += (site.Of(material) + SalvageEconomy.SalvageStack - 1) / SalvageEconomy.SalvageStack;
+                }
+
+                bool early = name == "depot" || name == "garage";
+                int hold = cargo.HoldSlots + (early ? 0 : cargo.CradleSlots);
+                TestContext.WriteLine($"{name}: {slots} slots of {hold}");
+                Assert.LessOrEqual(slots, hold, $"M3-25 §4: {name} and its crate fit one trip");
+            }
+        }
+
+        [Test]
+        public void TheFirstHalfHour_CutsSnappily()
+        {
+            var tuning = Create<SalvageTuning>();
+            var cutter = Create<CutterTuning>();
+            CutterTier bare = cutter.Tier(0);
+            float first = bare.ChargeSeconds + SalvageYield.CutSeconds(PieceSize.Small, bare.SpeedFactor, tuning);
+            Assert.LessOrEqual(first, FirstCut, "M3-26 §4.3: the first cut ever, press to crack, about 1.9 s");
+            foreach (string name in new[] { "depot", "garage" })
+            {
+                foreach (PieceSize size in SalvageEconomy.PieceClasses(name))
+                {
+                    float seconds = bare.ChargeSeconds + SalvageYield.CutSeconds(size, bare.SpeedFactor, tuning);
+                    Assert.LessOrEqual(seconds, FirstHalfHourCut, $"{name}'s {size} piece: nothing over ~3.2 s");
+                }
+            }
+
+            CutterTier lens = cutter.Tier(1);
+            Assert.Less(lens.ChargeSeconds, bare.ChargeSeconds, "the Focus Lens charges sooner");
+            Assert.Greater(lens.SpeedFactor, bare.SpeedFactor, "and cuts faster");
+            Assert.Less(lens.DrainFactor, bare.DrainFactor, "and cheaper");
         }
 
         [Test]
@@ -148,19 +197,31 @@ namespace MoonProject.Gameplay.Tests
         {
             var tuning = Create<SalvageTuning>();
             var relays = Create<RelayTuning>();
-            Recipe stock = CutYield("depot", tuning);
+            Recipe stock = CutYield("depot", tuning).Plus(CrateOf("depot"));
             stock = Spend(stock, SalvageEconomy.RadioTower[0], "tower L1 from the depot");
-            stock = stock.Plus(CutYield("garage", tuning));
+            stock = stock.Plus(CutYield("garage", tuning)).Plus(CrateOf("garage"));
             stock = Spend(stock, SalvageEconomy.RadioTower[1], "tower L2 after the garage");
             stock = Spend(stock, SalvageEconomy.HoverJump, "Hover-Jump");
             stock = Spend(stock, SalvageEconomy.CargoCradle, "the Cargo Cradle");
             stock = Spend(stock, relays.CostAfter(0), "the first relay mast (step 7)");
-            stock = stock.Plus(CutYield("kestrel", tuning));
+            stock = stock.Plus(CutYield("kestrel", tuning)).Plus(CrateOf("kestrel"));
             Spend(stock, SalvageEconomy.RadioTower[2], "tower L3 after the Kestrel (step 8)");
         }
 
         /// <summary>About twice (ruling 5, P9): a material's yield stays under this many times its need.</summary>
         private const float MostOverTwice = 2.5f;
+
+        /// <summary>About twice (M3-26 §4.4: ~1.9x with the crates): the whole supply over the path's needs.</summary>
+        private const float MostUnderTwice = 1.7f;
+
+        /// <summary>No single material runs tight: each gives at least this many times its need.</summary>
+        private const float LeastPerMaterial = 1.6f;
+
+        /// <summary>M3-26 §4.3: the first cut ever, press to crack (s).</summary>
+        private const float FirstCut = 1.9f;
+
+        /// <summary>M3-26 §4.3: nothing in the first 30 minutes takes longer to cut (s).</summary>
+        private const float FirstHalfHourCut = 3.2f;
 
         private static readonly SalvageMaterial[] Materials =
         {
@@ -168,19 +229,29 @@ namespace MoonProject.Gameplay.Tests
         };
 
         /// <summary>
-        /// What steps 0-8 of the wake-up take (M3-16): the tower's three levels, Hover-Jump, the Cargo Cradle and the
-        /// first relay mast.
+        /// What the 0.5 path takes (M3-25 §4, M3-26 §4.4): the tower's three levels, every kit the bay fits and every
+        /// relay mast. The shelves are left out: home only fills for a player who hoards, and a shelf is the answer.
         /// </summary>
-        private Recipe StepsZeroToEight()
+        private Recipe PathNeeds()
         {
-            Recipe needs = SalvageEconomy.HoverJump.Plus(SalvageEconomy.CargoCradle)
-                .Plus(Create<RelayTuning>().CostAfter(0));
+            Recipe needs = SalvageEconomy.HoverJump.Plus(SalvageEconomy.CargoCradle).Plus(SalvageEconomy.WarmHeadlamp)
+                .Plus(SalvageEconomy.BoostCoils).Plus(SalvageEconomy.CellPack).Plus(SalvageEconomy.FocusLens)
+                .Plus(SalvageEconomy.SideBins).Plus(Create<RelayTuning>().TotalCost(RelayMasts));
             foreach (Recipe level in SalvageEconomy.RadioTower)
             {
                 needs = needs.Plus(level);
             }
 
             return needs;
+        }
+
+        /// <summary>What site <paramref name="name"/>'s crew supply crate holds (M3-25 T4).</summary>
+        private static Recipe CrateOf(string name)
+        {
+            SupplyCrate crate = SalvageEconomy.Crate(name);
+            var units = new int[3];
+            units[(int)crate.Material] = crate.Units;
+            return new Recipe(units[0], units[1], units[2]);
         }
 
         private static Recipe Spend(Recipe stock, Recipe cost, string what)
@@ -194,9 +265,10 @@ namespace MoonProject.Gameplay.Tests
             return stock.Metal >= cost.Metal && stock.Wiring >= cost.Wiring && stock.Optics >= cost.Optics;
         }
 
+        /// <summary>A site, its crate counted, gives no more of anything than of its signature material.</summary>
         private static void AssertSignature(string name, SalvageMaterial signature, SalvageTuning tuning)
         {
-            Recipe site = SiteYield(name, tuning);
+            Recipe site = SiteYield(name, tuning).Plus(CrateOf(name));
             foreach (SalvageMaterial other in Materials)
             {
                 if (other != signature)
@@ -238,20 +310,21 @@ namespace MoonProject.Gameplay.Tests
             Assert.IsNotNull(prefab, $"Art's site prefab for '{name}'");
             Assert.IsNotNull(prefab.transform.Find("Skeleton"), $"{name} has its skeleton");
             Assert.IsNotNull(prefab.transform.Find("Heart"), $"{name} has its heart");
+            PieceSizeEntry[] sizes = SalvageSizes.Deal(prefab, SalvageEconomy.PieceClasses(name));
             int pieces = 0;
             foreach (Transform node in prefab.transform)
             {
-                if (!SalvagePieceName.TryParsePiece(node.name, out _, out SalvageMaterial material, out bool drag))
+                if (!SalvagePieceName.TryParsePiece(node.name, out int number, out SalvageMaterial material,
+                        out bool drag))
                 {
                     continue;
                 }
 
                 Assert.IsNotNull(node.Find("CutPoint"), $"{name}/{node.name} has its cut point");
-                Mesh mesh = node.GetComponent<MeshFilter>().sharedMesh;
-                Vector3 size = Vector3.Scale(mesh.bounds.size, node.localScale);
+                PieceSize size = Array.Find(sizes, entry => entry.Number == number).Size;
                 yield[(int)material] += drag && !drags
                     ? 0
-                    : SalvageEconomy.YieldScale(name) * SalvageYield.Units(size, drag, tuning);
+                    : SalvageYield.Units(size, SalvageEconomy.YieldScale(name), tuning);
                 pieces++;
             }
 

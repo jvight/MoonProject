@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using MoonProject.Core;
 
@@ -27,6 +28,12 @@ namespace MoonProject.Gameplay.Editor
         /// <summary>Cell Pack II (M3-20): two cream cells in a metal spine, their contacts and gauge lenses.</summary>
         public static Recipe CellPack => new Recipe(3, 0, 2);
 
+        /// <summary>The Focus Lens (M3-26 §3): a ringed lens on the emitter, its glass and its coil.</summary>
+        public static Recipe FocusLens => new Recipe(0, 1, 3);
+
+        /// <summary>The Side Bins (M3-25 §2.2): two low metal panniers and their latch wiring.</summary>
+        public static Recipe SideBins => new Recipe(3, 1, 0);
+
         /// <summary>
         /// The radio tower's three levels, more each time: L1 from the depot alone, L2 once the garage is cut, and L3,
         /// the big one (its lift winch is heavy metal), from the Kestrel's optics and what the rest of the basin gives.
@@ -35,6 +42,27 @@ namespace MoonProject.Gameplay.Editor
         {
             new Recipe(1, 1, 1), new Recipe(1, 3, 1), new Recipe(4, 5, 6),
         };
+
+        /// <summary>Units of a salvage bundle one slot holds (docs/features/M3-25 §2.2).</summary>
+        public const int SalvageStack = 4;
+
+        /// <summary>Units of a lunar ore one slot holds (M3-27: beads and ores pack denser than bundles).</summary>
+        public const int OreStack = 6;
+
+        /// <summary>
+        /// The materials of this version (docs/features/M3-27 §8): the three salvage materials, and the basin's orange
+        /// beads, seen in their vent field but not gathered until the dig on bead patches (0.6).
+        /// </summary>
+        public static MaterialEntry[] Materials()
+        {
+            return new[]
+            {
+                new MaterialEntry(SalvageMaterial.Metal, "metal", MaterialFamily.Salvage, SalvageStack, true),
+                new MaterialEntry(SalvageMaterial.Wiring, "wiring", MaterialFamily.Salvage, SalvageStack, true),
+                new MaterialEntry(SalvageMaterial.Optics, "optics", MaterialFamily.Salvage, SalvageStack, true),
+                new MaterialEntry(SalvageMaterial.OrangeBeads, "orange_beads", MaterialFamily.Lunar, OreStack, false),
+            };
+        }
 
         /// <summary>The salvage sites in catalog order (Art's Site_&lt;name&gt; on site.&lt;name&gt;).</summary>
         public static IReadOnlyList<string> SiteNames { get; } = new[]
@@ -52,6 +80,67 @@ namespace MoonProject.Gameplay.Editor
         public static int YieldScale(string name)
         {
             return name == "garage" ? GarageYieldScale : 1;
+        }
+
+        /// <summary>
+        /// Each site's piece sizes (docs/features/M3-26 §4.2), dealt biggest to biggest: the depot small and snappy
+        /// (nothing over ~3.2 s in the first 30 minutes), the drill's first two-segment plate at ~40 min, the Kestrel's
+        /// large plates, and the lander's first hull plate at ~60 min, when the Focus Lens arrives.
+        /// </summary>
+        public static IReadOnlyList<PieceSize> PieceClasses(string name)
+        {
+            switch (name)
+            {
+                case "depot":
+                    return new[] { PieceSize.Small, PieceSize.Small, PieceSize.Medium, PieceSize.Medium };
+                case "garage":
+                    return new[] { PieceSize.Medium, PieceSize.Medium, PieceSize.Medium };
+                case "drill":
+                    return new[]
+                    {
+                        PieceSize.Medium, PieceSize.Medium, PieceSize.Medium, PieceSize.Medium, PieceSize.Large,
+                    };
+                case "kestrel":
+                    return new[]
+                    {
+                        PieceSize.Medium, PieceSize.Medium, PieceSize.Medium, PieceSize.Medium, PieceSize.Large,
+                        PieceSize.Large, PieceSize.Large,
+                    };
+                case "lander":
+                    return new[]
+                    {
+                        PieceSize.Medium, PieceSize.Medium, PieceSize.Medium, PieceSize.Medium, PieceSize.Large,
+                        PieceSize.Large, PieceSize.Hull,
+                    };
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(name), name, "No such salvage site.");
+            }
+        }
+
+        /// <summary>Units of the site's signature material in each crew supply crate (docs/features/M3-25 T4).</summary>
+        public const int CrateUnits = 6;
+
+        /// <summary>
+        /// Each site's crew supply crate (M3-25 T4): whose hand packed it and its signature material. Its packing note
+        /// is "crate.&lt;site&gt;.note" (story).
+        /// </summary>
+        public static SupplyCrate Crate(string name)
+        {
+            switch (name)
+            {
+                case "depot":
+                    return new SupplyCrate("theo", SalvageMaterial.Metal, CrateUnits);
+                case "garage":
+                    return new SupplyCrate("kenji", SalvageMaterial.Wiring, CrateUnits);
+                case "drill":
+                    return new SupplyCrate("ro", SalvageMaterial.Metal, CrateUnits);
+                case "kestrel":
+                    return new SupplyCrate("ines", SalvageMaterial.Optics, CrateUnits);
+                case "lander":
+                    return new SupplyCrate("kenji", SalvageMaterial.Metal, CrateUnits);
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(name), name, "No such salvage site.");
+            }
         }
 
         /// <summary>The site whose last cut reveals its heart (M3-16 P10: the supply depot).</summary>

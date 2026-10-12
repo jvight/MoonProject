@@ -109,6 +109,8 @@ namespace MoonProject.Gameplay.Tests
             cut.Engage(progress, SalvageMaterial.Optics, Vector3.zero, Vector3.up);
             Assert.AreEqual(Resume, cut.ChargeSeconds, 1e-5f, "the seam is still warm: the short charge");
             Assert.AreEqual(Resume, _beats[_beats.Count - 1].Seconds, 1e-5f);
+            Assert.AreEqual(1f - Resume / Charge, _beats[_beats.Count - 1].Strength, 1e-5f,
+                "M3-26: the run starts part-way, as far as the shorter charge saves");
             Run(cut, ref progress, Resume + Frame * 2f, out bool ignited);
             Assert.IsTrue(cut.Draws, "resumed after the short charge");
             Assert.GreaterOrEqual(progress, kept, "from where it was");
@@ -131,6 +133,12 @@ namespace MoonProject.Gameplay.Tests
             cut.Engage(next, SalvageMaterial.Wiring, Vector3.zero, Vector3.up);
             Assert.AreEqual(CutPhase.Charging, cut.Phase, "never locked: the next piece charges while this one flies");
             Assert.AreEqual(Charge, cut.ChargeSeconds, 1e-5f, "a fresh piece takes the full charge");
+            Assert.AreEqual(0f, _beats[_beats.Count - 1].Strength, "a fresh run starts at the battery");
+
+            cut.Release(next, Vector3.zero, Vector3.up);
+            cut.Tune(0.45f, 0.2f);
+            cut.Engage(next, SalvageMaterial.Wiring, Vector3.zero, Vector3.up);
+            Assert.AreEqual(0.45f, cut.ChargeSeconds, 1e-5f, "a better cutter charges sooner");
         }
 
         [Test]
@@ -176,7 +184,10 @@ namespace MoonProject.Gameplay.Tests
             {
                 new PieceCutLine(1, new[] { Vector3.zero, Vector3.right }),
                 new PieceCutLine(2, new[] { Vector3.zero }),
-            });
+            }, new[] { new PieceSizeEntry(1, PieceSize.Large) }, new SupplyCrate("ro", SalvageMaterial.Metal, 6));
+            Assert.IsTrue(entry.TryGetSize(1, out PieceSize size));
+            Assert.AreEqual(PieceSize.Large, size);
+            Assert.IsFalse(entry.TryGetSize(2, out _));
             Assert.IsTrue(entry.TryGetCutLine(1, out Vector3[] points));
             Assert.AreEqual(2, points.Length);
             Assert.IsFalse(entry.TryGetCutLine(2, out _), "a single point is no line");

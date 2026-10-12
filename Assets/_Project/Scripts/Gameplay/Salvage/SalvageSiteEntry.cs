@@ -33,9 +33,18 @@ namespace MoonProject.Gameplay
                  "Art may author better ones.")]
         [SerializeField] private PieceCutLine[] _cutLines = Array.Empty<PieceCutLine>();
 
+        [Tooltip("Each piece's size (docs/features/M3-26 §4.2): the content builder deals the site's classes to its " +
+                 "pieces, biggest to biggest.")]
+        [SerializeField] private PieceSizeEntry[] _sizes = Array.Empty<PieceSizeEntry>();
+
+        [Tooltip("The crew supply crate beside its heart (docs/features/M3-25 T4): whose hand and what stack.")]
+        [SerializeField] private SupplyCrate _crate;
+
         public SalvageSiteEntry(string anchorId, GameObject prefab, AbilityGate gate, bool heartUnderPieces,
-            int yieldScale, PieceCutLine[] cutLines)
+            int yieldScale, PieceCutLine[] cutLines, PieceSizeEntry[] sizes, SupplyCrate crate)
         {
+            _crate = crate;
+            _sizes = sizes ?? throw new ArgumentNullException(nameof(sizes));
             _anchorId = anchorId;
             _prefab = prefab;
             _gate = gate ?? throw new ArgumentNullException(nameof(gate));
@@ -55,6 +64,8 @@ namespace MoonProject.Gameplay
 
         public int YieldScale => _yieldScale;
 
+        public SupplyCrate Crate => _crate;
+
         /// <summary>The seam of piece <paramref name="number"/>, if the entry has a valid one.</summary>
         public bool TryGetCutLine(int number, out Vector3[] points)
         {
@@ -68,6 +79,22 @@ namespace MoonProject.Gameplay
             }
 
             points = null;
+            return false;
+        }
+
+        /// <summary>The size of piece <paramref name="number"/>, if the entry has one.</summary>
+        public bool TryGetSize(int number, out PieceSize size)
+        {
+            for (int i = 0; i < _sizes.Length; i++)
+            {
+                if (_sizes[i].Number == number)
+                {
+                    size = _sizes[i].Size;
+                    return true;
+                }
+            }
+
+            size = PieceSize.Small;
             return false;
         }
 

@@ -33,6 +33,8 @@ namespace MoonProject.Gameplay
         /// <summary>The Moon's surface gravity (m/s²): a freed piece tumbles under it (feel-pass R11).</summary>
         private const float LunarGravity = 1.62f;
 
+        /// <summary>The Cut Follow strength that marks the beam sliding to a piece's next segment (M3-26 §6).</summary>
+        private const float SegmentSlide = 0.5f;
         [Tooltip("Salvage tuning (Assets/_Project/Data/Tuning/Gameplay/SalvageTuning.asset).")]
         [SerializeField] private SalvageTuning _tuning;
 
@@ -45,6 +47,8 @@ namespace MoonProject.Gameplay
         private EventBus _events;
         private InputReader _input;
         private BeamWork _beamWork;
+        private ICutter _cutter;
+        private float _slideLeft;
         private IRoverState _rover;
         private IRoverRig _rig;
         private IViewCamera _view;
@@ -142,7 +146,7 @@ namespace MoonProject.Gameplay
         /// Stands every site on its anchor. False (logged) when wiring, an anchor or a prefab node from the site
         /// contract is missing.
         /// </summary>
-        internal bool Initialize(GameplayServices services)
+        internal bool Initialize(GameplayServices services, ICutter cutter)
         {
             string problem = _tuning == null ? "SalvageTuning is not assigned."
                 : _catalog == null ? "SalvageCatalog is not assigned."
@@ -161,7 +165,9 @@ namespace MoonProject.Gameplay
             _view = services.View;
             _save = services.Save;
             _stock = services.Materials;
-            _cut = new CutState(_events, FeelKind.Cut, _tuning.ChargeSeconds, _tuning.ResumeChargeSeconds, _tuning.CutSteps);
+            _cutter = cutter ?? throw new ArgumentNullException(nameof(cutter));
+            _cut = new CutState(_events, FeelKind.Cut, cutter.ChargeSeconds, cutter.ResumeChargeSeconds,
+                _tuning.CutSteps);
             _dragMaterial = new PhysicsMaterial("SalvageDrag")
             {
                 bounciness = _tuning.DragBounciness,
@@ -386,7 +392,7 @@ namespace MoonProject.Gameplay
                 StepCut(_cutting, deltaTime);
                 if (draws)
                 {
-                    _beamWork.Work(deltaTime);
+                    _beamWork.Work(deltaTime * _cutter.DrainFactor);
                 }
             }
 
@@ -448,6 +454,8 @@ namespace MoonProject.Gameplay
         private void StartCut(SalvagePiece piece)
         {
             _cutting = piece;
+            _slideLeft = 0f;
+            _cut.Tune(_cutter.ChargeSeconds, _cutter.ResumeChargeSeconds);
             _cut.Engage(piece.Progress, piece.Material, piece.HotPoint, piece.CutNormal);
         }
 
@@ -470,11 +478,30 @@ namespace MoonProject.Gameplay
             }
         }
 
+        /// <summary>
+        /// The beam's work on a piece: the charge, then each segment in turn at the cutter's speed. Between segments
+        /// the beam stays lit and slides to the next one (a Cut Follow of 0.5, docs/features/M3-26 §4.1), with no new
+        /// charge and no progress lost.
+        /// </summary>
         private void StepCut(SalvagePiece piece, float deltaTime)
         {
-            float progress = piece.Progress;
-            bool broke = _cut.Step(deltaTime, piece.CutSeconds, ref progress, piece.HotPoint, piece.CutNormal,
-                out bool ignited);
+            if (_slideLeft > 0f)
+            {
+                _slideLeft -= deltaTime;
+                return;
+            }
+
+            float before = piece.Progress;
+            float progress = before;
+            bool broke = _cut.Step(deltaTime, piece.CutSeconds / _cutter.SpeedFactor, ref progress, piece.HotPoint,
+                piece.CutNormal, out bool ignited);
+            if (!broke && CutSegments.ReachedSegmentEnd(before, ref progress, piece.Segments))
+            {
+                _slideLeft = _tuning.SegmentSlideSeconds;
+                _events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Follow, piece.HotPoint, piece.CutNormal,
+                    SegmentSlide, 0f, piece.Material));
+            }
+
             piece.Progress = progress;
             if (ignited)
             {
@@ -639,15 +666,29 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Salvage folds into 07: a flash, the event, the Collect reward beat, the stock, and a save once nothing else
-        /// flies.
+        /// Salvage folds into 07's hold: a flash, the event, the Collect reward beat and the stock for what fits. What
+        /// does not fit bumps the closed hatch (a Cargo Impact) and is left to wait beside 07 (M3-25 §2.3,
+        /// <see cref="CargoOverflowed"/>). The game saves once nothing else flies.
         /// </summary>
         private void Arrive(SalvageMaterial material, int units, Vector3 socket, string siteId, int comboStep)
         {
-            _flashes.Spawn(socket);
-            _events.Publish(new MaterialSalvaged(material, units, socket, siteId, comboStep));
-            _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Reward, socket, Vector3.up, 1f, 0f, material));
-            _stock.Add(material, units);
+            int fitted = Math.Min(units, _stock.Hold.FreeUnits(material));
+            int left = units - fitted;
+            if (fitted > 0)
+            {
+                _flashes.Spawn(socket);
+                _events.Publish(new MaterialSalvaged(material, fitted, socket, siteId, comboStep));
+                _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Reward, socket, Vector3.up, 1f, 0f,
+                    material));
+                _stock.Collect(material, fitted);
+            }
+
+            if (left > 0)
+            {
+                _events.Publish(new FeelBeat(FeelKind.Cargo, FeelPhase.Impact, socket, Vector3.up, 1f, 0f, material));
+                _events.Publish(new CargoOverflowed(material, left, socket));
+            }
+
             _inFlight--;
             if (_inFlight == 0)
             {

@@ -20,6 +20,9 @@ namespace MoonProject.Gameplay
         private const string HaloName = "Halo";
         private const string LandmarkName = "Landmark";
         private const string LandmarkPilotName = "LandmarkPilot";
+        private const string CrateName = "CrewCrate";
+        private const string LidName = "Lid";
+        private const string SealName = "Seal";
 
         /// <summary>
         /// Builds the site under <paramref name="parent"/> and adds its pieces and drag bodies to the lists. Null when
@@ -52,6 +55,18 @@ namespace MoonProject.Gameplay
 
             var built = new SalvageSite(index, entry.AnchorId, root, anchor.Radius, heart.position, entry.Gate,
                 new ComboCounter(tuning.ChainWindow), entry.HeartUnderPieces);
+            Transform crate = Child(root, CrateName);
+            Transform lid = crate != null ? Child(crate, LidName) : null;
+            Transform cut = lid != null ? Child(lid, CutPointName) : null;
+            Transform seal = lid != null ? Child(lid, SealName) : null;
+            Renderer sealGlow = seal != null ? seal.GetComponent<Renderer>() : null;
+            if (cut == null || sealGlow == null)
+            {
+                return $"the prefab has no '{CrateName}/{LidName}' with its '{CutPointName}' and '{SealName}' glow " +
+                       "(the crew's supply crate, M3-25 T4)";
+            }
+
+            built.Crate = new CrewCrate(built, entry.Crate, crate, lid, cut, sealGlow);
             Transform landmark = Child(root, LandmarkName);
             if (landmark != null)
             {
@@ -130,9 +145,14 @@ namespace MoonProject.Gameplay
                        "in the catalog (run Gameplay/Content)";
             }
 
+            if (!entry.TryGetSize(number, out PieceSize size))
+            {
+                return $"'{node.name}' has no size class in the catalog (run Gameplay/Content)";
+            }
+
             Mesh mesh = filter.sharedMesh;
             Bounds bounds = mesh.bounds;
-            int units = yieldScale * SalvageYield.Units(Vector3.Scale(bounds.size, node.localScale), drag, tuning);
+            int units = SalvageYield.Units(size, yieldScale, tuning);
             Collider solid = drag ? null : MakeSolid(node);
             if (solid != null)
             {
@@ -150,7 +170,8 @@ namespace MoonProject.Gameplay
             SetLayer(bundle.transform, Layers.Pickup);
             bundle.SetActive(false);
 
-            var piece = new SalvagePiece(site, number, material, drag, units, SalvageYield.CutSeconds(units, tuning),
+            var piece = new SalvagePiece(site, number, material, drag, size, units, tuning.Size(size).Segments,
+                SalvageYield.CutSeconds(size, 1f, tuning),
                 node, bounds.center, cutPoint, cutLine, solid, new GlowRenderer(haloRenderer), bundle.transform);
             if (drag)
             {

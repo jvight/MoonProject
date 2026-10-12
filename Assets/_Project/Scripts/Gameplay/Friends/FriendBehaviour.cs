@@ -71,6 +71,7 @@ namespace MoonProject.Gameplay
             Spotting = 4,
             Greeting = 5,
             Leading = 6,
+            Fetching = 7,
         }
 
         private enum Fade
@@ -108,11 +109,18 @@ namespace MoonProject.Gameplay
             {
                 Begin(senses.Lead ? Mode.Leading : _homeWatch.Home ? Mode.Perched : Mode.Following, senses.Now);
             }
+            else if (!senses.Lead && senses.Fetch != (_mode == Mode.Fetching))
+            {
+                Begin(senses.Fetch ? Mode.Fetching : _homeWatch.Home ? Mode.Perched : Mode.Following, senses.Now);
+            }
 
             switch (_mode)
             {
                 case Mode.Leading:
                     Lead(senses, ref intent);
+                    break;
+                case Mode.Fetching:
+                    Fetch(senses, ref intent);
                     break;
                 case Mode.Greeting:
                     Greet(senses, ref intent);
@@ -148,7 +156,7 @@ namespace MoonProject.Gameplay
         private void TrackHome(FriendSenses senses, ref FriendIntent intent)
         {
             RoverHomeWatch.Change change = _homeWatch.Step(senses.Rover, senses.Home, _tuning);
-            if (_mode == Mode.Leading)
+            if (_mode == Mode.Leading || _mode == Mode.Fetching)
             {
                 return;
             }
@@ -207,6 +215,19 @@ namespace MoonProject.Gameplay
                     Begin(Mode.Spotting, senses.Now);
                 }
             }
+        }
+
+        /// <summary>
+        /// Straight to the bundle it fetches, then home to the shelves, at its calm fetching speed and height (M3-25
+        /// T3): a friend with a visible job.
+        /// </summary>
+        private void Fetch(FriendSenses senses, ref FriendIntent intent)
+        {
+            Vector3 toward = senses.FetchToward;
+            intent.Target = new Vector3(toward.x, _terrain.SampleHeight(toward.x, toward.z) + senses.FetchHeight,
+                toward.z);
+            intent.Look = toward;
+            intent.Speed = senses.FetchSpeed;
         }
 
         /// <summary>

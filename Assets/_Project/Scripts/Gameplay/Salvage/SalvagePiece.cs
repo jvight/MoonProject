@@ -12,8 +12,8 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class SalvagePiece
     {
-        internal SalvagePiece(SalvageSite site, int number, SalvageMaterial material, bool drag, int units,
-            float cutSeconds, Transform body, Vector3 localCentre, Transform cutPoint, Vector3[] cutLine,
+        internal SalvagePiece(SalvageSite site, int number, SalvageMaterial material, bool drag, PieceSize size,
+            int units, int segments, float cutSeconds, Transform body, Vector3 localCentre, Transform cutPoint, Vector3[] cutLine,
             Collider wreckCollider, GlowRenderer halo, Transform bundle)
         {
             CutLine = cutLine ?? throw new ArgumentNullException(nameof(cutLine));
@@ -21,7 +21,9 @@ namespace MoonProject.Gameplay
             Number = number;
             Material = material;
             IsDrag = drag;
+            Size = size;
             Units = units;
+            Segments = Math.Max(1, segments);
             CutSeconds = cutSeconds;
             Body = body != null ? body : throw new ArgumentNullException(nameof(body));
             LocalCentre = localCentre;
@@ -43,10 +45,16 @@ namespace MoonProject.Gameplay
         /// <summary>Must be tethered clear of its wreck before it can be cut.</summary>
         public bool IsDrag { get; }
 
+        /// <summary>How big it is (docs/features/M3-26 §4): its segments, cut time and yield.</summary>
+        public PieceSize Size { get; }
+
         /// <summary>Material units it folds into.</summary>
         public int Units { get; }
 
-        /// <summary>Seconds of beam it takes from untouched to free.</summary>
+        /// <summary>Segments the beam cuts in turn, sliding from one to the next.</summary>
+        public int Segments { get; }
+
+        /// <summary>Seconds of lit beam it takes from untouched to free at tier 0 (the cutter's speed divides it).</summary>
         public float CutSeconds { get; }
 
         public SalvagePieceState State { get; internal set; }

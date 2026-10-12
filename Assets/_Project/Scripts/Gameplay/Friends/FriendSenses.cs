@@ -30,5 +30,17 @@ namespace MoonProject.Gameplay
 
         /// <summary>The charger it leads 07 toward (valid while <see cref="Lead"/>).</summary>
         public Vector3 LeadToward { get; set; }
+
+        /// <summary>It fetches a waiting bundle home (docs/features/M3-25 T3); leading 07 comes first.</summary>
+        public bool Fetch { get; set; }
+
+        /// <summary>Where it flies on its fetch: the bundle, then home's shelves (valid while <see cref="Fetch"/>).</summary>
+        public Vector3 FetchToward { get; set; }
+
+        /// <summary>Its calm fetching speed (m/s).</summary>
+        public float FetchSpeed { get; set; }
+
+        /// <summary>Metres over the ground it flies while fetching.</summary>
+        public float FetchHeight { get; set; }
     }
 }
