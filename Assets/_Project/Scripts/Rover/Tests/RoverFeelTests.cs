@@ -149,6 +149,26 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void EachStockUnit_Ticks_ThinnedPastTheSixth()
+        {
+            var ticked = new System.Collections.Generic.List<int>();
+            for (int unit = 0; unit < 12; unit++)
+            {
+                _events.Publish(new StockCountTicked(SalvageMaterial.Metal, unit, 12 - unit));
+                Run(Frame);
+                if (_motors.Low > 0f)
+                {
+                    ticked.Add(unit);
+                }
+
+                Run(0.1f);
+            }
+
+            CollectionAssert.AreEqual(new[] { 0, 1, 2, 3, 4, 5, 6, 8, 10 }, ticked);
+            Assert.LessOrEqual(_motors.Low, RumbleMixer.HardCap);
+        }
+
+        [Test]
         public void OnlyTheLastFollow_TheFold_Pulses()
         {
             Beat(FeelPhase.Follow, 0f);
