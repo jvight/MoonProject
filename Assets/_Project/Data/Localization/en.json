@@ -116,11 +116,11 @@
         },
         {
             "key": "next.salvage",
-            "text": "The tower needs metal, wiring, optics and a coil. Salvage them at the Supply Depot."
+            "text": "The tower needs metal, wiring, optics and the Tower Coil. Salvage them at the Supply Depot."
         },
         {
             "key": "next.tower",
-            "text": "You have the coil. Park on the radio tower's pad to repair it."
+            "text": "You have the Tower Coil. Park on the radio tower's pad to repair it."
         },
         {
             "key": "next.signal",
@@ -152,7 +152,7 @@
         },
         {
             "key": "next.lift.ride",
-            "text": "Stop on the lift's platform to ride up to the lab."
+            "text": "Park on the lift's platform to ride up to the lab."
         },
         {
             "key": "next.chasm",
@@ -160,11 +160,11 @@
         },
         {
             "key": "next.bay.wake",
-            "text": "Kenji's Rover Bay has no power. Upgrade the radio tower to level 2."
+            "text": "The bay has no power. Radio Tower level 2 powers it."
         },
         {
             "key": "next.bay",
-            "text": "The bay has power. Park on its turntable to build."
+            "text": "The bay has power. Park on its turntable to build a kit."
         },
         {
             "key": "next.power.part",
@@ -180,11 +180,11 @@
         },
         {
             "key": "next.link.relay.0",
-            "text": "Mound relay is offline. Repair it."
+            "text": "The Mound Relay is offline. Repair it."
         },
         {
             "key": "next.link.relay.1",
-            "text": "Rim shoulder relay is offline. Repair it."
+            "text": "The Shoulder Relay is offline. Repair it."
         },
         {
             "key": "next.link",
@@ -272,15 +272,15 @@
         },
         {
             "key": "notyet.tower",
-            "text": "Offline. Needs metal and a coil."
+            "text": "Offline. Needs the Tower Coil and materials: see the tower's card."
         },
         {
             "key": "notyet.bay",
-            "text": "No power. Needs the radio tower at level 2."
+            "text": "No power. Radio Tower level 2 powers the bay."
         },
         {
             "key": "notyet.chart",
-            "text": "No power. Needs the radio tower at level 3."
+            "text": "No power. Radio Tower level 3 powers the chart."
         },
         {
             "key": "notyet.tether",
@@ -288,7 +288,7 @@
         },
         {
             "key": "ticker.listen.first",
-            "text": "When 07 stops, it listens. Wrecks that still hold something answer."
+            "text": "When 07 stops, it listens. A wreck with something left answers with a light."
         },
         {
             "key": "place.dock.name",
@@ -504,7 +504,7 @@
         },
         {
             "key": "upgrade.radio_tower.1.title",
-            "text": "Repair the radio tower"
+            "text": "Build level 1"
         },
         {
             "key": "upgrade.radio_tower.1.effect",
@@ -512,11 +512,11 @@
         },
         {
             "key": "component.tower_coil.needed",
-            "text": "Needs a coil. The Supply Depot has one."
+            "text": "Needs the Tower Coil. It is at the Supply Depot."
         },
         {
             "key": "upgrade.radio_tower.2.title",
-            "text": "Upgrade to level 2"
+            "text": "Build level 2"
         },
         {
             "key": "upgrade.radio_tower.2.effect",
@@ -528,7 +528,7 @@
         },
         {
             "key": "upgrade.radio_tower.3.title",
-            "text": "Upgrade to level 3"
+            "text": "Build level 3"
         },
         {
             "key": "upgrade.radio_tower.3.effect",
@@ -864,31 +864,31 @@
         },
         {
             "key": "ticker.relay.online",
-            "text": "Relays online: {0}. The station reaches a little farther."
+            "text": "Relay online: 07 can charge here and hop home."
         },
         {
             "key": "ticker.relay.waiting",
-            "text": "Relay repaired. It comes online when a neighbouring relay is lit."
+            "text": "This relay needs a lit relay nearby. Repair the one closer to home first."
         },
         {
             "key": "hop.node.home",
-            "text": "Lumen Station"
+            "text": "Home"
         },
         {
             "key": "hop.node.relay.0",
-            "text": "Mound relay"
+            "text": "Mound Relay"
         },
         {
             "key": "hop.node.relay.1",
-            "text": "Rim shoulder relay"
+            "text": "Shoulder Relay"
         },
         {
             "key": "hop.node.relay.2",
-            "text": "Canyon mouth relay"
+            "text": "Canyon Mouth Relay"
         },
         {
             "key": "hop.node.relay.3",
-            "text": "Terminus relay"
+            "text": "Terminus Relay"
         },
         {
             "key": "ui.pause.relays",
@@ -1236,7 +1236,7 @@
         },
         {
             "key": "map.relay.0.name",
-            "text": "Mound relay"
+            "text": "Mound Relay"
         },
         {
             "key": "map.relay.0.note",
@@ -1244,7 +1244,7 @@
         },
         {
             "key": "map.relay.1.name",
-            "text": "Rim shoulder relay"
+            "text": "Shoulder Relay"
         },
         {
             "key": "map.relay.1.note",
@@ -1252,7 +1252,7 @@
         },
         {
             "key": "map.relay.2.name",
-            "text": "Canyon mouth relay"
+            "text": "Canyon Mouth Relay"
         },
         {
             "key": "map.relay.2.note",
@@ -1260,7 +1260,7 @@
         },
         {
             "key": "map.relay.3.name",
-            "text": "Terminus relay"
+            "text": "Terminus Relay"
         },
         {
             "key": "map.relay.3.note",

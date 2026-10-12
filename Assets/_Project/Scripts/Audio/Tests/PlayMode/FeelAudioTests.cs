@@ -77,6 +77,31 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual("dock_walls_drop", LastClip);
         }
 
+        [UnityTest]
+        public IEnumerator TheTower_HumsRingsUpThoomsAndTheRadioComesBackIn()
+        {
+            _rig.Wake(true);
+            yield return new WaitForSecondsRealtime(3f);
+            float before = _rig.LoudestDeck().volume;
+            Beat(FeelKind.Build, FeelPhase.Anticipate, 0f, 1.2f);
+            Assert.AreEqual("tower_hum_rise", LastClip);
+            for (int ring = 1; ring <= 4; ring++)
+            {
+                Beat(FeelKind.Build, FeelPhase.Act, ring * 0.25f);
+                Assert.AreEqual($"tower_ring_0{ring}", LastClip, "one pentatonic step per lamp ring");
+            }
+
+            Beat(FeelKind.Build, FeelPhase.Impact);
+            Assert.AreEqual("tower_thoom", LastClip);
+            yield return new WaitForSecondsRealtime(1.5f);
+            Assert.Less(_rig.LoudestDeck().volume, before * 0.5f, "the radio steps back for the tower");
+
+            Beat(FeelKind.Build, FeelPhase.Follow, 0f);
+            Assert.IsTrue(AudioTestRig.FindChildSource(_rig.Radio.transform, "TuningSwish").isPlaying, "a crackle");
+            yield return new WaitForSecondsRealtime(5f);
+            Assert.Greater(_rig.LoudestDeck().volume, before * 0.8f, "and the music fades back in");
+        }
+
         [Test]
         public void SavesInABurst_TickOnce()
         {

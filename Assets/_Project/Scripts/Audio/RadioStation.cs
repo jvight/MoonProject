@@ -33,7 +33,7 @@ namespace MoonProject.Audio
     public sealed class RadioStation : MonoBehaviour
     {
         private const float MinPitch = 0.01f;
-        private const int SubscriptionCount = 15;
+        private const int SubscriptionCount = 16;
 
         [Tooltip("Assets/_Project/Data/Audio/RadioTuning.asset.")]
         [SerializeField] private RadioTuning _tuning;
@@ -59,6 +59,8 @@ namespace MoonProject.Audio
         private readonly EasedValue _deckShare = new EasedValue(0f);
         private readonly EasedValue _carrierPresence = new EasedValue(0f);
         private readonly EasedValue _eveningDuck = new EasedValue(1f);
+        private readonly EasedValue _buildDuck = new EasedValue(1f);
+        private bool _building;
         private float _eveningLeft;
         private readonly IDisposable[] _subscriptions = new IDisposable[SubscriptionCount];
         private readonly Dictionary<string, RadioTrack> _tapeTracks = new Dictionary<string, RadioTrack>(
@@ -225,6 +227,7 @@ namespace MoonProject.Audio
             _subscriptions[12] = context.Events.Subscribe<RoverKitRestored>(OnRoverKitRestored);
             _subscriptions[13] = context.Events.Subscribe<BasePowerChanged>(OnBasePowerChanged);
             _subscriptions[14] = context.Events.Subscribe<DockEveningOpened>(OnDockEveningOpened);
+            _subscriptions[15] = context.Events.Subscribe<FeelBeat>(OnFeelBeat);
         }
 
         internal void Wire(RadioTuning tuning, RadioPlaylist playlist, RadioTapeLibrary tapes)
@@ -265,7 +268,9 @@ namespace MoonProject.Audio
 
             float cabin = _director.CabinBlend;
             float title = _title.Step(dt, _tuning.TitleRiseTime, _tuning.TitleFallTime);
-            float level = _director.Buses.Effective(AudioBus.Music) * _wake.Power * title;
+            float build = _buildDuck.Step(_building ? _tuning.BuildDuckGain : 1f, dt,
+                _building ? _tuning.BuildDuckTime : _tuning.BuildReturnTime);
+            float level = _director.Buses.Effective(AudioBus.Music) * _wake.Power * title * build;
             float deckTarget = _gate.Stage == RadioGateStage.Deck ? 1f : 0f;
             float deckShare = _deckShare.Step(deckTarget, dt, _tuning.DeckBlendTime);
             float music = Mathf.Lerp(mix.MusicVolume, _tuning.DeckMusicGain, deckShare) * level * _wake.MusicGain *
@@ -665,6 +670,31 @@ namespace MoonProject.Audio
             }
 
             _mixer.Change(HasMusic(), _tuning.SilentSwitchFade, 0f, fadeIn, 0f);
+        }
+
+        /// <summary>
+        /// The tower comes online (feel-pass section 8.2, Kind Build): the set steps back while it powers up, then at
+        /// Follow 0 the radio crackles (the dial swish) and whatever the gate allows eases back in.
+        /// </summary>
+        private void OnFeelBeat(FeelBeat beat)
+        {
+            if (beat.Kind != FeelKind.Build)
+            {
+                return;
+            }
+
+            if (beat.Phase == FeelPhase.Anticipate)
+            {
+                _building = true;
+            }
+            else if (beat.Phase == FeelPhase.Follow && beat.Strength <= 0f && _building)
+            {
+                _building = false;
+                if (_wake.IsAwake)
+                {
+                    PlaySwish();
+                }
+            }
         }
 
         /// <summary>The dock evening's swell: the music steps back about 3 dB under it for a moment.</summary>
