@@ -576,7 +576,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             Assert.IsFalse(_context.Get<IRoverAbilities>().Has(RoverAbility.Tether), "no tether before the port");
             Assert.AreEqual(0, _events.TetherAttached.Count, "the tether never latched before the ring");
-            Assert.AreEqual(TetherAimState.Idle, _gameplay.Tether.State, "nothing to hold with");
+            Assert.AreEqual(TetherAimState.Asleep, _gameplay.Tether.State, "nothing to hold with: no reticle, no icon");
         }
 
         /// <summary>
