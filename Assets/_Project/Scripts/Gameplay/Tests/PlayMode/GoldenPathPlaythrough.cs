@@ -253,7 +253,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Close enough (m) to a part resting on a mast's pad to draw it in.</summary>
         private const float PartArrive = 1.5f;
 
-        /// <summary>M3-26 §4.3: the first cut ever, press to crack (s).</summary>
+        /// <summary>M3-26 §4.3: a small piece (the depot's), press to crack (s).</summary>
         private const float FirstCut = 1.9f;
 
         /// <summary>M3-26 §4.3: nothing in the first half hour takes longer to cut, press to crack (s).</summary>
@@ -771,19 +771,19 @@ namespace MoonProject.Gameplay.PlayModeTests
                 "02d-depot-picked-clean");
             End("Salvage the depot", $"{site.Pieces.Count} pieces in {cuts} cuts, melody up to step {topStep}; " +
                                      $"stock metal {stock.Metal}, wiring {stock.Wiring}, optics {stock.Optics}; " +
-                                     $"first cut {_firstCut:F2} s, slowest so far {_slowestEarlyCut:F2} s");
+                                     $"first small cut {_firstCut:F2} s, slowest so far {_slowestEarlyCut:F2} s");
         }
 
         /// <summary>
-        /// M3-26 §4.3, measured: the first cut ever about 1.9 s from press to crack, and nothing in the first half hour
-        /// over about 3.2 s (each with a little room for 07 easing to a stop as the beam asks it to).
+        /// M3-26 §4.3, measured: a small piece about 1.9 s from press to crack, and nothing in the first half hour over
+        /// about 3.2 s (each with a little room for 07 easing to a stop as the beam asks it to).
         /// </summary>
-        private void TimeTheCut(float took)
+        private void TimeTheCut(float took, PieceSize size)
         {
-            if (_firstCut < 0f)
+            if (size == PieceSize.Small)
             {
-                _firstCut = took;
-                Assert.LessOrEqual(took, FirstCut + EaseToStop, "the first cut ever is snappy");
+                _firstCut = _firstCut < 0f ? took : _firstCut;
+                Assert.LessOrEqual(took, FirstCut + EaseToStop, "a small piece cuts snappily");
             }
 
             if (Time.time - _awokeAt <= FirstHalfHour)
@@ -827,6 +827,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                     int salvaged = _events.MaterialSalvaged.Count;
                     int completed = CompletedCuts();
                     float cutSeconds = salvage.Candidate.CutSeconds;
+                    PieceSize size = salvage.Candidate.Size;
                     float pressed = Time.time;
                     Press(_keyboard.eKey);
                     yield return Until(() => _events.SalvageCutStarted.Count > cuts, 6f, "the beam starts cutting");
@@ -842,7 +843,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
                     yield return Until(() => CompletedCuts() > completed, cutSeconds + 4f, "the beam cuts it free");
                     Release(_keyboard.eKey);
-                    TimeTheCut(Time.time - pressed);
+                    TimeTheCut(Time.time - pressed, size);
                     yield return Until(() => _events.MaterialSalvaged.Count > salvaged, 6f,
                         "the piece comes away and folds into 07");
                     cuts = _events.SalvageCutStarted.Count;
