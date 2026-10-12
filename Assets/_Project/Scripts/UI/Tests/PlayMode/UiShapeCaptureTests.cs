@@ -94,6 +94,8 @@ namespace MoonProject.UI.PlayModeTests
             Vector3 site = view.position + Vector3.ProjectOnPlane(view.forward, Vector3.up).normalized * 9f +
                            Vector3.down * 1.5f;
             fakes.PrimaryHint = new InteractionHint(InteractionKind.Excavate, site, true);
+            fakes.Position = context.Get<IWorldLayout>().BasePosition + new Vector3(120f, 0f, 90f);
+            fakes.Grant(RoverAbility.HoverJump);
             yield return new WaitForSecondsRealtime(1.5f);
             int gain = 0;
             foreach (ScreenShape shape in ScreenShapes.All)
@@ -104,6 +106,8 @@ namespace MoonProject.UI.PlayModeTests
                     {
                         ScreenFit.CheckApart(layout.BatteryDial, layout.NextLine, shot, found);
                         ScreenFit.CheckApart(layout.NextLine, layout.MaterialsChip, shot, found);
+                        ScreenFit.CheckApart(layout.HomeMeter, layout.NextLine, shot, found);
+                        ScreenFit.CheckApart(layout.AbilitySlots, layout.MaterialsChip, shot, found);
                     });
             }
 
