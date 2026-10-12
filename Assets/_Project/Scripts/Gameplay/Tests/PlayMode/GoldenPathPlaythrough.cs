@@ -390,7 +390,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(_gameplay.TowerPartField.IsResting(CoilPart), "no coil before the heart is open");
             yield return SalvageTheDepot(depot);
             Assert.IsTrue(depot.HeartRevealed, "the last cut reveals it");
-            yield return ExpectStep(ProgressionKeys.NextTower, "the coil glows in the open heart: the tower waits");
+            yield return ExpectStep(ProgressionKeys.NextTowerPart, "the coil glows in the open heart: bring it to the tower");
             Assert.IsTrue(_gameplay.Materials.Has(_gameplay.Upgrades.Find(Tower).Levels[0].Recipe),
                 "the depot's materials cover level 1...");
             Assert.IsTrue(_gameplay.TowerParts.NeedsPart(Tower, 1), "...but power is earned by a find (P1)");

@@ -20,6 +20,7 @@ namespace MoonProject.Gameplay
         private readonly List<string> _keys = new List<string>();
         private readonly List<Func<bool>> _done = new List<Func<bool>>();
         private readonly List<Func<bool>> _seen = new List<Func<bool>>();
+        private readonly List<Func<string>> _lines = new List<Func<string>>();
         private bool _announced;
 
         public StepFlow(EventBus events)
@@ -55,6 +56,25 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
+        /// Appends a teaching step whose line names its exact sub-step now (<paramref name="line"/>, e.g. bring the
+        /// part, park on the pad, hold E) until <paramref name="done"/>.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">A need was added already: teaching comes first.</exception>
+        public void Add(Func<string> line, Func<bool> done)
+        {
+            if (TeachingCount != _keys.Count)
+            {
+                throw new InvalidOperationException("Teaching steps come before the targets' needs.");
+            }
+
+            _keys.Add(string.Empty);
+            _done.Add(done ?? throw new ArgumentNullException(nameof(done)));
+            _seen.Add(null);
+            _lines.Add(line ?? throw new ArgumentNullException(nameof(line)));
+            TeachingCount++;
+        }
+
+        /// <summary>
         /// Appends a recovery target's need: <paramref name="lineKey"/> shows until <paramref name="done"/>, and only
         /// while <paramref name="seen"/> (what it names has been seen).
         /// </summary>
@@ -77,7 +97,7 @@ namespace MoonProject.Gameplay
                 index = Math.Min(index, i);
                 if (_seen[i] == null || _seen[i]())
                 {
-                    key = _keys[i];
+                    key = _lines[i] != null ? _lines[i]() : _keys[i];
                     break;
                 }
             }
@@ -104,6 +124,7 @@ namespace MoonProject.Gameplay
             _keys.Add(lineKey);
             _done.Add(done ?? throw new ArgumentNullException(nameof(done)));
             _seen.Add(seen);
+            _lines.Add(null);
         }
     }
 }
