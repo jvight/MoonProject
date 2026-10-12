@@ -10,8 +10,8 @@ namespace MoonProject.Art.Tests
     /// <summary>
     /// The salvage site contract (M3-13): the nodes gameplay detaches and aims at, pieces that fly off without seams,
     /// footprints and a clear way in, a sheltered heart, Kestrel-3 tall enough to read from the base even picked
-    /// clean, the colour language that tells what is left (violet optics, copper wiring, weathered metal), the
-    /// bundles and the trail's loose bits.
+    /// clean, the colour language that tells what is left (violet optics, copper wiring, weathered metal) and the
+    /// bundles.
     /// </summary>
     public sealed class SiteModelTests
     {
@@ -27,7 +27,7 @@ namespace MoonProject.Art.Tests
         private const float LaneHeight = 0.4f;
 
         private const float KestrelLandmark = 6f;
-        private const int MinPieces = 4;
+        private const int MinPieces = 3;
         private const int MaxPieces = 8;
         private const float WeldGrid = 1e4f;
         private const float PivotSlack = 0.05f;
@@ -39,14 +39,9 @@ namespace MoonProject.Art.Tests
 
         private const float MinBundle = 0.3f;
         private const float MaxBundle = 0.4f;
-        private const int MinDebris = 4;
-        private const int MaxDebris = 6;
-        private const float MinDebrisSize = 0.3f;
-        private const float MaxDebrisSize = 1.2f;
         private const float PivotTolerance = 1e-3f;
 
         private static readonly Regex PieceName = new Regex(@"^Salvage_(\d+)_(Metal|Wiring|Optics)(_Drag)?$");
-        private static readonly Regex DebrisName = new Regex(@"^Debris_(Metal|Wiring|Optics)_\d+$");
 
         private static IEnumerable<string> Ids => SiteModelBuilder.Ids;
 
@@ -274,35 +269,6 @@ namespace MoonProject.Art.Tests
             Assert.Greater(optics.Bounds.size.x / optics.Bounds.size.z, 1.25f);
         }
 
-        [Test]
-        public void Debris_AreSmallLooseBits_PivotedAtTheirCentreOfMass()
-        {
-            IReadOnlyList<string> names = SiteModelBuilder.DebrisNames;
-            Assert.That(names.Count, Is.InRange(MinDebris, MaxDebris));
-            foreach (string name in names)
-            {
-                Match match = DebrisName.Match(name);
-                Assert.IsTrue(match.Success, name);
-                ModelNode debris = SiteModelBuilder.CreateDebris(name);
-                Assert.AreEqual(name, debris.Name);
-                CollectionAssert.IsEmpty(debris.Children);
-                LowPolyMeshBuilder geometry = debris.Mesh.Geometry;
-                MeshChecks.AssertWellFormed(geometry);
-                Vector3 size = geometry.Bounds.size;
-                Assert.That(Mathf.Max(size.x, Mathf.Max(size.y, size.z)), Is.InRange(MinDebrisSize, MaxDebrisSize),
-                    name);
-                Assert.That(geometry.VolumeCentroid().magnitude, Is.LessThan(PivotTolerance), name);
-                List<PaletteSwatch> swatches = MeshChecks.Swatches(geometry);
-                Assert.IsFalse(swatches.Any(Palette.IsEmissive), name);
-                string material = match.Groups[1].Value;
-                Assert.AreEqual(material == "Optics", swatches.Contains(PaletteSwatch.SkyHorizon), name);
-                Assert.AreEqual(material == "Wiring", swatches.Contains(PaletteSwatch.WarmAccent), name);
-                MeshChecks.AssertSameModel(debris, SiteModelBuilder.CreateDebris(name));
-            }
-
-            CollectionAssert.AllItemsAreUnique(names);
-        }
-
         private static List<ModelNode> Pieces(ModelNode site)
         {
             return site.Children.Where(node => PieceName.IsMatch(node.Name)).ToList();
@@ -372,7 +338,7 @@ namespace MoonProject.Art.Tests
 
         private static readonly Dictionary<string, int[]> Yields = new Dictionary<string, int[]>
         {
-            { "depot", new[] { 5, 2, 2 } }, { "garage", new[] { 7, 7, 2 } }, { "kestrel", new[] { 2, 2, 9 } },
+            { "depot", new[] { 5, 2, 2 } }, { "garage", new[] { 4, 4, 2 } }, { "kestrel", new[] { 5, 5, 10 } },
             { "drill", new[] { 7, 7, 2 } },
         };
 

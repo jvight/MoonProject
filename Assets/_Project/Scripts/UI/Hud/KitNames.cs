@@ -5,7 +5,8 @@ namespace MoonProject.UI
     /// <summary>
     /// Which name goes with each piece of kit as it settles onto 07 (docs/features/M3-11, M3-14), pure logic,
     /// EditMode-tested. A crafted piece is named after the upgrade that brought it, which the event carries
-    /// ("upgrade.&lt;id&gt;.name"); a friend's gift has its own title ("kit.&lt;gift&gt;.name").
+    /// ("upgrade.&lt;id&gt;.name"); a friend's gift and a piece Kenji's garage port fits have their own title
+    /// ("kit.&lt;piece&gt;.name").
     /// </summary>
     internal static class KitNames
     {
@@ -15,15 +16,9 @@ namespace MoonProject.UI
         /// </summary>
         public static bool TryTitle(RoverKitFitted fitted, out string key)
         {
-            if (fitted.Gift)
-            {
-                return UiKeys.TryGetGiftName(fitted.Piece, out key);
-            }
-
             if (string.IsNullOrEmpty(fitted.UpgradeId))
             {
-                key = null;
-                return false;
+                return UiKeys.TryGetGiftName(fitted.Piece, out key);
             }
 
             key = UiKeys.UpgradeName(fitted.UpgradeId);

@@ -3,20 +3,24 @@ using UnityEngine;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The sonar: ping rhythm, the ring that rolls over the ground, how relics answer, the light pillars they leave
+    /// The sonar: when 07 listens, the ring that rolls over the ground, how relics answer, the light pillars they leave
     /// on the horizon and how 07 keeps glancing at them. Created by the Gameplay/Tuning builder; runtime code only
     /// reads it.
     /// </summary>
     public sealed class SonarTuning : ScriptableObject
     {
-        [Header("Ping")]
-        [Tooltip("Seconds between pings: calm, never a spam button.")]
-        [Range(0.5f, 10f)] [SerializeField] private float _cooldown = 2.5f;
+        [Header("Listening (from tower level 1 on)")]
+        [Tooltip("Seconds 07 must rest before it listens: a pause, not a stop sign.")]
+        [Range(0.5f, 10f)] [SerializeField] private float _restSeconds = 2f;
 
-        [Tooltip("A press this many seconds before the cooldown ends is remembered and fires when ready.")]
-        [Range(0f, 3f)] [SerializeField] private float _inputBuffer = 0.6f;
+        [Tooltip("At or below this speed (m/s) 07 counts as resting.")]
+        [Range(0.05f, 2f)] [SerializeField] private float _restSpeed = 0.3f;
 
-        [Tooltip("Metres the ping reaches; relics farther away stay silent.")]
+        [Tooltip("Metres 07 must drive after a listen before it listens again: a new place listens once, and " +
+                 "sitting still never repeats it. The first listen of a session needs none.")]
+        [Range(1f, 200f)] [SerializeField] private float _listenSpacing = 30f;
+
+        [Tooltip("Metres a listen reaches; relics farther away stay silent.")]
         [Range(10f, 500f)] [SerializeField] private float _range = 140f;
 
         [Header("Ring")]
@@ -122,8 +126,9 @@ namespace MoonProject.Gameplay
         [Tooltip("At most this many extra seconds per answer, so a pillar still bows out in the end.")]
         [Range(0f, 120f)] [SerializeField] private float _headlampMaxLinger = 25f;
 
-        public float Cooldown => _cooldown;
-        public float InputBuffer => _inputBuffer;
+        public float RestSeconds => _restSeconds;
+        public float RestSpeed => _restSpeed;
+        public float ListenSpacing => _listenSpacing;
         public float Range => _range;
         public float RingDuration => _ringDuration;
         public Vector2 RingWidth => _ringWidth;

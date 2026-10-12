@@ -11,40 +11,6 @@ namespace MoonProject.Art.Editor
     /// </summary>
     internal static class RelicMeshes
     {
-        /// <summary>"Mixtape Walkman": a tape labelled for the long drive inside, orange-foam headphones.</summary>
-        public static LowPolyMeshBuilder CassettePlayer()
-        {
-            var b = new LowPolyMeshBuilder(500);
-            b.Box(At(0f, 0.2f, 0f), new Vector3(0.56f, 0.4f, 0.15f), PaletteSwatch.Sage, 0.035f);
-            b.Box(At(0f, 0.2f, 0.07f), new Vector3(0.5f, 0.34f, 0.02f), PaletteSwatch.Metal, 0.006f);
-            b.Box(At(-0.03f, 0.21f, 0.083f), new Vector3(0.36f, 0.21f, 0.012f), PaletteSwatch.Charcoal);
-            b.Box(At(-0.03f, 0.285f, 0.09f), new Vector3(0.3f, 0.055f, 0.006f), PaletteSwatch.Cream);
-            b.Box(At(new Vector3(-0.05f, 0.285f, 0.094f), new Vector3(0f, 0f, 3f)), new Vector3(0.2f, 0.026f, 0.004f),
-                PaletteSwatch.WarmAccent);
-            foreach (float x in new[] { -0.12f, 0.06f })
-            {
-                b.Prism(At(new Vector3(x, 0.195f, 0.09f), AlongZ), 0.045f, 0.01f, 10, PaletteSwatch.Cream);
-                b.Prism(At(new Vector3(x, 0.195f, 0.096f), AlongZ), 0.022f, 0.008f, 6, PaletteSwatch.Charcoal);
-            }
-
-            for (int i = 0; i < 4; i++)
-            {
-                PaletteSwatch button = i == 1 ? PaletteSwatch.WarmAccent : PaletteSwatch.Metal;
-                b.Box(At(-0.15f + i * 0.08f, 0.415f, 0.01f), new Vector3(0.06f, 0.03f, 0.08f), button, 0.008f);
-            }
-
-            b.Box(At(0.21f, 0.12f, 0.085f), new Vector3(0.05f, 0.1f, 0.012f), PaletteSwatch.Charcoal);
-            b.Torus(At(new Vector3(0f, 0.38f, 0f), AlongZ), 0.26f, 0.022f, 16, 4, PaletteSwatch.Charcoal);
-            for (int side = -1; side <= 1; side += 2)
-            {
-                b.Prism(At(new Vector3(side * 0.275f, 0.38f, 0f), AlongX), 0.07f, 0.04f, 10, PaletteSwatch.Charcoal);
-                b.Icosphere(At(new Vector3(side * 0.31f, 0.38f, 0f), Vector3.zero, new Vector3(0.45f, 1f, 1f)), 0.085f,
-                    1, PaletteSwatch.WarmAccent);
-            }
-
-            return b;
-        }
-
         /// <summary>"Bath Duck": round and yellow, its left side sun-faded to cream.</summary>
         public static LowPolyMeshBuilder RubberDuck()
         {

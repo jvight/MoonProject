@@ -12,5 +12,11 @@ namespace MoonProject.Core
 
         /// <summary>Cell Pack II: two more cells (4 to 6) and the battery spine on 07's back (docs/features/M3-20).</summary>
         CellPack = 6,
+
+        /// <summary>
+        /// The tether (lift, tow, reel, place): Kenji's spare tether ring, fitted at his garage port
+        /// (docs/design/first-hour-v2.md §3). Asleep until then.
+        /// </summary>
+        Tether = 7,
     }
 }

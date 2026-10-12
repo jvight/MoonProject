@@ -131,6 +131,17 @@ namespace MoonProject.Core.Events
 
         /// <summary>Cell Pack II's battery spine on the back (docs/features/M3-20): two more cells.</summary>
         BatterySpine = 6,
+
+        /// <summary>
+        /// The old tape deck Tilly spotted, on 07's left flank (docs/features/M3-24 C): it plays the first tape softly.
+        /// </summary>
+        TapeDeck = 7,
+
+        /// <summary>
+        /// Kenji's spare tether ring round the beam's emitter, fitted at his garage port (docs/design/first-hour-v2.md
+        /// §3): faintly cyan at rest, bright while the tether holds.
+        /// </summary>
+        TetherRing = 8,
     }
 
     /// <summary>
@@ -174,6 +185,20 @@ namespace MoonProject.Core.Events
         /// The upgrade that brought a crafted piece (UI names it by this, "upgrade.&lt;id&gt;.name"); empty for a gift.
         /// </summary>
         public string UpgradeId { get; }
+    }
+
+    /// <summary>
+    /// A loaded game's piece already on 07, shown silently without its moment: published once per such piece on the
+    /// kit's first tick of play, so listeners (the tape deck's music) can start in the right state.
+    /// </summary>
+    public readonly struct RoverKitRestored
+    {
+        public RoverKitRestored(RoverKitPiece piece)
+        {
+            Piece = piece;
+        }
+
+        public RoverKitPiece Piece { get; }
     }
 
     /// <summary>

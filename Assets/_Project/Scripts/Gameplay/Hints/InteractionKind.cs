@@ -1,14 +1,13 @@
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Things the player can do, for context prompts (design ruling 6: a glyph and one word, near the thing).
+    /// Things the player can do, for context prompts (design ruling 6: a glyph and one word, near the thing). The
+    /// numbers are serialized in the UI's prompt table, so they never shift: 1 was the sonar ping, cut when 07 learned
+    /// to listen.
     /// </summary>
     public enum InteractionKind
     {
         None = 0,
-
-        /// <summary>Send a sonar ping (Ready while the sonar is not cooling down).</summary>
-        Ping = 1,
 
         /// <summary>Hold to lift the relic resting in the site's heart 07 is next to.</summary>
         Excavate = 2,

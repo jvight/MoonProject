@@ -83,6 +83,21 @@ namespace MoonProject.Art.Editor
 
         public static readonly Vector3 SpineSocket = new Vector3(0.385f, RoverMeshes.LidTop, -0.2f);
 
+        /// <summary>
+        /// Where the old tape deck rides (M3-24 C): on the left flank, high above the middle and rear wheels and behind
+        /// the drum, its bracket on the body side. The node faces out to the left (+X of the deck is 07's -X).
+        /// </summary>
+        public const string DeckSocketName = "DeckSocket";
+
+        /// <summary>
+        /// Where Kenji's tether ring sits (first-hour v2 §3): low on the back of the head, facing back, clear of the eye.
+        /// </summary>
+        public const string RingSocketName = "RingSocket";
+
+        public static readonly Vector3 RingSocket = new Vector3(0f, 0.1f, -0.2f);
+
+        public static readonly Vector3 DeckSocket = new Vector3(-RoverMeshes.BodyHalfWidth, 0.78f, -0.45f);
+
         // 07 weathered as itself, just old (VISION ruling 11): no mismatched panels, rust low down and at the bolts,
         // dust on the lid and lower body; its skins stand off by a hair so Bell's fresh "07" sits over all of them.
         // 07's head: tired paint and dust on the hood, no rust; it is off the ground.
@@ -155,6 +170,7 @@ namespace MoonProject.Art.Editor
             ModelNode eye = head.Add(new ModelNode("Eye", RoverMeshes.EyeCentre,
                 new ModelMesh(ModelName + "_Eye", RoverMeshes.Eye())));
             eye.Add(new ModelNode("TetherOrigin", new Vector3(0f, 0f, RoverMeshes.LensFront)));
+            head.Add(new ModelNode(RingSocketName, RingSocket, Place.Rotation(new Vector3(0f, 180f, 0f))));
             head.Add(new ModelNode("Eyelid", RoverMeshes.EyeCentre,
                 new ModelMesh(ModelName + "_Eyelid", RoverMeshes.Eyelid())));
 
@@ -180,6 +196,7 @@ namespace MoonProject.Art.Editor
             root.Add(new ModelNode(TubeSocketName, TubeSocket, Place.Rotation(new Vector3(0f, 90f, 0f))));
             root.Add(new ModelNode(PartSocketName, PartSocket));
             root.Add(new ModelNode(SpineSocketName, SpineSocket));
+            root.Add(new ModelNode(DeckSocketName, DeckSocket, Place.Rotation(new Vector3(0f, 180f, 0f))));
             return root;
         }
 

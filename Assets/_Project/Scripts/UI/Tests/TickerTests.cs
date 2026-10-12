@@ -80,6 +80,44 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void AVoicedLine_RestsUntilItsRecordingEnds_OnlyForItsOwnKey()
+        {
+            _queue.Enqueue(new TickerLine(Home));
+            Run(_settings.GapSeconds * 1.5f);
+            Assert.AreEqual(1, _queue.Starts, "the line started once");
+            float own = _queue.HoldSeconds;
+
+            _queue.HoldAtLeast(Signal, own + 30f);
+            Assert.AreEqual(own, _queue.HoldSeconds, "another line's recording does not hold this one");
+
+            _queue.HoldAtLeast(Home, own + 30f);
+            Assert.AreEqual(own + 30f, _queue.HoldSeconds, 1e-4f, "the subtitle waits for the voice");
+
+            _queue.HoldAtLeast(Home, 1f);
+            Assert.AreEqual(own + 30f, _queue.HoldSeconds, 1e-4f, "a hold never shortens");
+        }
+
+        [Test]
+        public void Starts_CountsEachNewLine_NotAYieldedLineComingBack()
+        {
+            _queue.Enqueue(new TickerLine(Home));
+            Run(_settings.GapSeconds * 1.5f);
+            Assert.AreEqual(1, _queue.Starts);
+
+            for (float t = 0f; t < 3f; t += Frame)
+            {
+                Step(Frame, false);
+            }
+
+            Run(_settings.GapSeconds * 2f);
+            Assert.AreEqual(1, _queue.Starts, "coming back after yielding is not a new start");
+
+            _queue.Enqueue(new TickerLine(Signal, "140"));
+            Run(Lifetime(_settings.MaxHoldSeconds) * 2f);
+            Assert.AreEqual(2, _queue.Starts);
+        }
+
+        [Test]
         public void TheNextLine_StartsOnlyOnceThePreviousHasEasedAway()
         {
             _queue.Enqueue(new TickerLine(Home));

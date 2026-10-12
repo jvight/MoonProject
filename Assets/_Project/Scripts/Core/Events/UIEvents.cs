@@ -106,6 +106,21 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// The radio ticker just started showing a line (it eases in now). Published once per line, not again when a line
+    /// that yielded comes back. Audio plays the line's recording, when it has one, so the ticker is its subtitle.
+    /// </summary>
+    public readonly struct TickerLineShown
+    {
+        public TickerLineShown(string key)
+        {
+            Key = key;
+        }
+
+        /// <summary>The line's localization key (<see cref="TickerLine.Key"/>).</summary>
+        public string Key { get; }
+    }
+
+    /// <summary>
     /// A UI moment worth a sound. Published by the UI at the moment it happens; carries no position (2D).
     /// </summary>
     public readonly struct UiCue

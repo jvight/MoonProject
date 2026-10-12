@@ -11,6 +11,11 @@ namespace MoonProject.Audio
         // Keeps ranges non-degenerate if an asset is edited into min >= max.
         private const float MinSpan = 0.01f;
 
+        [Header("Listening (first-hour v2: 07 listens when it rests)")]
+        [Tooltip("Level of the listening ring's kalimba note (the old ping, 6 dB softer: 0.5). It sounds at most once " +
+            "per stop, because 07 listens at most once per stop.")]
+        [Range(0f, 1f)] [SerializeField] private float _listenVolume = 0.5f;
+
         [Header("Relic answer")]
         [Tooltip("Distance (m, rover to relic) at and below which the answer is fullest and brightest.")]
         [Min(0f)] [SerializeField] private float _answerNearDistance = 10f;
@@ -75,6 +80,8 @@ namespace MoonProject.Audio
 
         [Tooltip("Volume scale of the excavation rumble (times the cue volume).")]
         [Range(0f, 1f)] [SerializeField] private float _rumbleVolume = 1f;
+
+        public float ListenVolume => _listenVolume;
 
         public float AnswerNearDistance => _answerNearDistance;
         public float AnswerFarDistance => Mathf.Max(_answerFarDistance, _answerNearDistance + MinSpan);

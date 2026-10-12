@@ -9,6 +9,12 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class GameplayVisuals : ScriptableObject
     {
+        /// <summary>Art's GaragePort node where a set-down piece rests.</summary>
+        public const string PortTrayNode = "Tray";
+
+        /// <summary>Art's GaragePort node where the fitting arm reaches from.</summary>
+        public const string PortArmTipNode = "ArmTip";
+
         [Tooltip("Expanding sonar ring on the ground (TechGlow, additive).")]
         [SerializeField] private Material _sonarRing;
 
@@ -38,9 +44,6 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Warm glow ball: radio tower beacon (WarmLamp, additive, fresnel).")]
         [SerializeField] private Material _warmGlow;
-
-        [Tooltip("Camera-facing glints over loose salvage along a debris trail (Glint shader, TechGlow).")]
-        [SerializeField] private Material _salvageGlint;
 
         [Tooltip("Camera-facing glints over a friend's missing parts (Glint shader, WarmLamp amber).")]
         [SerializeField] private Material _partGlint;
@@ -83,6 +86,10 @@ namespace MoonProject.Gameplay
                  "a world anchor (docs/features/M3-21).")]
         [SerializeField] private GameObject _tube;
 
+        [Tooltip("Art's garage service port (Generated/Art/Sites/GaragePort.prefab), with its Tray and ArmTip nodes " +
+                 "(first-hour v2 §3).")]
+        [SerializeField] private GameObject _garagePort;
+
         public Material SonarRing => _sonarRing;
         public Material SiteRing => _siteRing;
         public Material SitePillar => _sitePillar;
@@ -93,7 +100,6 @@ namespace MoonProject.Gameplay
         public Material Dust => _dust;
         public Material WarmRing => _warmRing;
         public Material WarmGlow => _warmGlow;
-        public Material SalvageGlint => _salvageGlint;
         public Material PartGlint => _partGlint;
         public Material FriendPillar => _friendPillar;
         public Material Spark => _spark;
@@ -104,6 +110,7 @@ namespace MoonProject.Gameplay
         public Material BeamCore => _beamCore;
         public Material BeamSheath => _beamSheath;
         public Material HeatSeam => _heatSeam;
+        public GameObject GaragePort => _garagePort;
 
         /// <summary>Art's station pad (StationPad_&lt;cm&gt;) whose radius is nearest <paramref name="radius"/>.</summary>
         public GameObject PadFor(float radius)
@@ -144,7 +151,6 @@ namespace MoonProject.Gameplay
                 : _dust == null ? "dust material is missing"
                 : _warmRing == null ? "warm ring material is missing"
                 : _warmGlow == null ? "warm glow material is missing"
-                : _salvageGlint == null ? "salvage glint material is missing"
                 : _partGlint == null ? "part glint material is missing"
                 : _friendPillar == null ? "friend pillar material is missing"
                 : _spark == null ? "spark material is missing"
@@ -155,6 +161,7 @@ namespace MoonProject.Gameplay
                 : _components == null || Array.IndexOf(_components, null) >= 0
                     ? "Art's tower components are missing (run Gameplay/Materials)"
                 : _tube == null ? "Art's blueprint tube is missing (run Gameplay/Materials)"
+                : _garagePort == null ? "Art's garage port is missing (run Gameplay/Materials)"
                 : null;
         }
 
@@ -185,10 +192,15 @@ namespace MoonProject.Gameplay
             _heatSeam = heatSeam;
         }
 
+        internal void PopulateGaragePort(GameObject port)
+        {
+            _garagePort = port;
+        }
+
         internal void Populate(Material sonarRing, Material siteRing, Material sitePillar, Material tractorBeam,
             Material tetherBeam, Material flash, Material relicHalo, Material dust, Material warmRing,
-            Material warmGlow, Material salvageGlint, Material partGlint, Material friendPillar, Material spark,
-            Material homeHalo, Material linkPulse)
+            Material warmGlow, Material partGlint, Material friendPillar, Material spark, Material homeHalo,
+            Material linkPulse)
         {
             _sonarRing = sonarRing;
             _siteRing = siteRing;
@@ -200,7 +212,6 @@ namespace MoonProject.Gameplay
             _dust = dust;
             _warmRing = warmRing;
             _warmGlow = warmGlow;
-            _salvageGlint = salvageGlint;
             _partGlint = partGlint;
             _friendPillar = friendPillar;
             _spark = spark;

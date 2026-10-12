@@ -4,7 +4,23 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 00000. LATEST (2026-10-12 ~09:00): 0.5.2 "Satisfying" P0 dispatched; 0.5.1 still closing
+## 000000. LATEST (2026-10-12 ~14:40): 0.5.1 verified and pushed; 0.5.2 branches ready to land
+- **0.5.1:** clarity + voice landed; version 0.5.1; `verify --parallel --push` PASS; origin/main = c179a545. The
+  build is running in MoonProject-wt/director (copy the zip to D:/Project/MoonProject/Builds). Don't land while it
+  builds: land --batch uses the same worktree.
+- **0.5.2 ready on box branches** (all box_check PASS). Land order: rover -> ui -> gameplay -> world -> art (then art's
+  swap from CutSparks) -> voice (audio), then wire count_tick and window_click, verify, build.
+  - rover f4f0f874+;
+  - ui b1083618 ("Moonlight Glass" UI, owner pick #1, Nunito Sans + Exo 2 OFL);
+  - gameplay 37dc6640+ (a dock Anticipate tweak running);
+  - world 6129cab3 (check that HomeLighting's dock tint survives in the asset);
+  - art 6459cf09;
+  - voice/audio 7d94543d.
+- The owner's UI taste: memory `ui-taste-subnautica`. Owner rule: standing sessions only (memory `standing-sessions`).
+- Lesson: never detach or check out other commits in the verify worktrees (director, director2, landtest). A test
+  run there left an untracked meta that broke `verify` (director2 must stay on director/verify2).
+
+## 00000. (2026-10-12 ~09:00): 0.5.2 "Satisfying" P0 dispatched; 0.5.1 still closing
 - **Owner rule (memory `standing-sessions`):** no new session per task. Work goes to the standing sessions (game
   design, gameplay, art, rover, ui, world, map, tools, story & flow; voice becomes **audio** after it lands). The 12
   finished slice sessions were archived with the owner's consent.
@@ -27,6 +43,17 @@ account) can continue without the old conversation.
   - Land order: rover -> ui -> gameplay -> art swap -> audio.
   - After landing: rover adds a 0.05 rumble per `StockCountTicked` unit; audio subscribes to FeelBeat and
     StockCountTicked.
+- **Polish wave 1 approved** (`docs/design/polish-pass.md` §3.2, ~6.7%): feel-pass P1 + §7 (the dock lock, 07's
+  machine chirps via ChirpMood/RoverChirpRequested/RoverChirpSyllable) + the high-impact gaps.
+  - Dispatched on the same box branches as P0: gameplay, rover, art, ui, world.
+  - Audio follows after voice lands.
+  - `tools/feel_coverage.py` maps which Core events are seen and heard.
+  - Waves 2-3 come next week.
+- **Clarity calls (2026-10-12):**
+  - keep OneTripArrival 0.25 and the battery tuning;
+  - make the pilot line up once per seam; if it still arrives under 25%, move the garage up to 40 m toward home;
+  - fix the recipe card's gating;
+  - the tether ring: x0.65, lower behind the head, brass.
 - **0.5.1 still to close:** clarity (running), then voice, then §8.2 doc edits, verify --parallel --push and a 0.5.1
   build.
 
