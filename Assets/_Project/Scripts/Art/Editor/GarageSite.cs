@@ -46,8 +46,8 @@ namespace MoonProject.Art.Editor
             SiteKit.Drift(b, new Vector3(-2.7f, 0f, -0.9f), 1.5f, 1f, 0.4f, 60f, 64);
 
             // First-hour v2 §4: the garage is one trip, three rich seams round Kenji's port (Gameplay doubles their
-            // units): Metal L (the fallen roof), Wiring L (the hanging coil), Optics S (the spare headlamp) = (4, 4, 2);
-            // the rocker arm, the charging post and the skylight stay as scenery.
+            // units): Metal L (the fallen roof), Wiring L (the charging post), Optics S (the spare headlamp)
+            // = (4, 4, 2); the rocker arm, the hanging coil and the skylight stay as scenery.
             FallenRoof(site);
             RockerArm(site);
             ChargingPost(site);
@@ -266,7 +266,6 @@ namespace MoonProject.Art.Editor
                 new Vector3(0.16f, 0.12f, 0.22f),
                 PaletteSwatch.Charcoal);
             piece.Resize(1.25f);
-            site.Settle(piece);
         }
 
         /// <summary>A spare 07 headlamp on the floor by the bench: faded hood, big violet lens.</summary>
@@ -299,7 +298,8 @@ namespace MoonProject.Art.Editor
                 PaletteSwatch.WarmAccent);
             SiteKit.Cable(b, new[] { centre + new Vector3(0.2f, -0.25f, 0f), centre + new Vector3(0.3f, -0.8f, -0.1f) },
                 0.04f, PaletteSwatch.WarmAccent);
-            piece.Resize(2.2f);
+            piece.Resize(1.6f);
+            site.Settle(piece);
         }
 
         /// <summary>
