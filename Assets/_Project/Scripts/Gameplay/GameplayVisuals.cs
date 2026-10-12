@@ -57,6 +57,19 @@ namespace MoonProject.Gameplay
         [Tooltip("The pulse running along the ground from a newly lit relay mast toward home (WarmLamp, additive).")]
         [SerializeField] private Material _linkPulse;
 
+        [Tooltip("The feel kit's glowing sprites: charge motes, the glow bead, flashes, vacuum sparks and slag beads " +
+                 "(SoftGlow, white, additive, soft round; each sprite carries its own colour).")]
+        [SerializeField] private Material _feelSprite;
+
+        [Tooltip("The cutting beam's hot white core (SoftGlow, additive, soft across).")]
+        [SerializeField] private Material _beamCore;
+
+        [Tooltip("The cutting beam's cyan sheath round the core (SoftGlow, additive, soft across, faint bands).")]
+        [SerializeField] private Material _beamSheath;
+
+        [Tooltip("The molten seam on a piece, emission by heat (HeatSeam shader).")]
+        [SerializeField] private Material _heatSeam;
+
         [Tooltip("Art's station pads (Generated/Art/Base/StationPad_<cm>), one per size.")]
         [SerializeField] private GameObject[] _pads = Array.Empty<GameObject>();
 
@@ -87,6 +100,10 @@ namespace MoonProject.Gameplay
         public Material HomeHalo => _homeHalo;
         public Material LinkPulse => _linkPulse;
         public GameObject Tube => _tube;
+        public Material FeelSprite => _feelSprite;
+        public Material BeamCore => _beamCore;
+        public Material BeamSheath => _beamSheath;
+        public Material HeatSeam => _heatSeam;
 
         /// <summary>Art's station pad (StationPad_&lt;cm&gt;) whose radius is nearest <paramref name="radius"/>.</summary>
         public GameObject PadFor(float radius)
@@ -138,6 +155,10 @@ namespace MoonProject.Gameplay
                 : _components == null || Array.IndexOf(_components, null) >= 0
                     ? "Art's tower components are missing (run Gameplay/Materials)"
                 : _tube == null ? "Art's blueprint tube is missing (run Gameplay/Materials)"
+                : _feelSprite == null ? "feel sprite material is missing"
+                : _beamCore == null ? "beam core material is missing"
+                : _beamSheath == null ? "beam sheath material is missing"
+                : _heatSeam == null ? "heat seam material is missing"
                 : null;
         }
 
@@ -155,6 +176,17 @@ namespace MoonProject.Gameplay
         internal void PopulateTube(GameObject tube)
         {
             _tube = tube;
+        }
+
+        /// <summary>
+        /// The cut feel kit's materials, written by Gameplay/FeelVfx (its own editor assembly) after Gameplay/Materials.
+        /// </summary>
+        public void PopulateFeel(Material feelSprite, Material beamCore, Material beamSheath, Material heatSeam)
+        {
+            _feelSprite = feelSprite;
+            _beamCore = beamCore;
+            _beamSheath = beamSheath;
+            _heatSeam = heatSeam;
         }
 
         internal void Populate(Material sonarRing, Material siteRing, Material sitePillar, Material tractorBeam,
