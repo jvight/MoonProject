@@ -51,6 +51,13 @@ MonoBehaviour:
     _freezeSeconds: 0.3
     _resumeSeconds: 0.45
     _volumeSteps: 10
+    _fpsCaps:
+    - 30
+    - 60
+    - 120
+    - 144
+    - 0
+    _defaultFpsCap: 60
     _lookStep: 0.25
     _lookMin: 0.25
     _lookMax: 3

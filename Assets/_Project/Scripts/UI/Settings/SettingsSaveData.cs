@@ -28,6 +28,20 @@ namespace MoonProject.UI
         /// <summary>The rumble strength multiplier, 0..1; older saves read 1.</summary>
         public float rumbleStrength = 1f;
 
+        /// <summary>The resolution chosen on the Display page; 0 (older files) is the desktop's own.</summary>
+        public int resolutionWidth;
+
+        public int resolutionHeight;
+
+        /// <summary>The window mode (<c>DisplayMode</c>): 0, borderless fullscreen, for older files.</summary>
+        public int windowMode;
+
+        /// <summary>V-Sync switched off (stored inverted so older files keep it on).</summary>
+        public bool vsyncOff;
+
+        /// <summary>Frames per second held while V-Sync is off; 0 is unlimited and 60 is what older files read.</summary>
+        public int fpsCap = 60;
+
         /// <summary>The text size as a multiple of the normal size (1, 1.25, 1.5); older saves read 1.</summary>
         public float textScale = 1f;
 

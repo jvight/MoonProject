@@ -195,6 +195,9 @@ namespace MoonProject.UI
         /// <summary>What confirming Quit does; tests replace it so the editor keeps running.</summary>
         internal Action QuitAction { get; set; } = Application.Quit;
 
+        /// <summary>The screen the Display page drives (Unity's, unless a test hands in its own).</summary>
+        internal IDisplayControl DisplayControl { get; set; } = new UnityDisplayControl();
+
         internal void Wire(UIDocument document, UiTuning tuning, RelicCatalog relics, TextAsset[] stringTables,
             WordmarkShape wordmark, TextAsset credits)
         {
@@ -309,7 +312,7 @@ namespace MoonProject.UI
             _numbers = new IntText(CachedNumbers);
             _ledger = new PromptLedger(_tuning.Prompts);
             _director = new PromptDirector(_tuning.Prompts, _ledger);
-            _player = new PlayerSettings(services.Audio, services.Look, services.Feel, _localization,
+            _player = new PlayerSettings(services.Audio, services.Look, services.Feel, DisplayControl, _localization,
                 _tuning.Pause);
             _cursor = new CursorPolicy();
             _glyphs = new GlyphLabels(services.Input, _localization);

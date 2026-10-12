@@ -81,7 +81,7 @@ namespace MoonProject.UI.Tests
         {
             var services = new FakeSettingsServices();
             ILocalization localization = TestTables.Localization(new EventBus(), "next.tower", "x", "y");
-            return new PlayerSettings(services, services, services, localization, new PauseSettings());
+            return new PlayerSettings(services, services, services, new FakeDisplayControl(), localization, new PauseSettings());
         }
     }
 }
