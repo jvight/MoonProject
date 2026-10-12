@@ -320,7 +320,6 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<BlueprintDelivered>(OnBlueprintDelivered));
             _tokens.Add(events.Subscribe<RoverWideShotChanged>(OnWideShotChanged));
             _tokens.Add(events.Subscribe<RoverWakeBeatReached>(OnWakeBeat));
-            _tokens.Add(events.Subscribe<SonarPinged>(OnSonarPinged));
             _tokens.Add(events.Subscribe<SiteAnswered>(OnSiteAnswered));
             _tokens.Add(events.Subscribe<ExcavationStarted>(OnExcavationStarted));
             _tokens.Add(events.Subscribe<ExcavationStopped>(OnExcavationStopped));
@@ -329,6 +328,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<FriendRepairStarted>(OnFriendRepairStarted));
             _tokens.Add(events.Subscribe<FriendRepaired>(OnFriendRepaired));
             _tokens.Add(events.Subscribe<TickerLine>(OnTickerLine));
+            _tokens.Add(events.Subscribe<StationNotYet>(OnStationNotYet));
             _tokens.Add(events.Subscribe<CrewLogFound>(OnCrewLogFound));
             _tokens.Add(events.Subscribe<CassetteCollected>(OnCassetteCollected));
             _tokens.Add(events.Subscribe<RadioProgramChanged>(OnRadioProgramChanged));
@@ -731,11 +731,6 @@ namespace MoonProject.UI
             }
         }
 
-        private void OnSonarPinged(SonarPinged pinged)
-        {
-            _director.NotifyUsed(InteractionKind.Ping);
-        }
-
         private void OnExcavationStarted(ExcavationStarted started)
         {
             _digging = true;
@@ -818,6 +813,12 @@ namespace MoonProject.UI
         private void OnTickerLine(TickerLine line)
         {
             _tickerLines.Enqueue(line);
+        }
+
+        /// <summary>A sleeping station's "not yet": the ticker says what wakes it (Audio plays the tone).</summary>
+        private void OnStationNotYet(StationNotYet notYet)
+        {
+            _tickerLines.Enqueue(new TickerLine(notYet.ReasonKey));
         }
 
         private void OnTetherAttached(TetherAttached attached)

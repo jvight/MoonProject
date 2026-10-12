@@ -45,8 +45,9 @@ namespace MoonProject.Art.Editor
             SiteKit.Drift(b, new Vector3(1.3f, 0f, 5.7f), 2.6f, 2f, 0.7f, 30f, 63);
             SiteKit.Drift(b, new Vector3(-2.7f, 0f, -0.9f), 1.5f, 1f, 0.4f, 60f, 64);
 
-            // M3-16 P9: wiring its signature, every piece cut (the golden path never drags here): Wiring L, Wiring M,
-            // Metal L (the fallen roof), Metal M, Optics S = (7, 7, 2); the skylight stays as scenery.
+            // First-hour v2 §4: the garage is one trip, three rich seams round Kenji's port (Gameplay doubles their
+            // units): Metal L (the fallen roof), Wiring L (the hanging coil), Optics S (the spare headlamp) = (4, 4, 2);
+            // the rocker arm, the charging post and the skylight stay as scenery.
             FallenRoof(site);
             RockerArm(site);
             ChargingPost(site);
@@ -238,6 +239,7 @@ namespace MoonProject.Art.Editor
             b.Prism(At(boss, AlongX), 0.15f, 0.26f, 8, PaletteSwatch.Charcoal);
             b.Prism(At(low, AlongX), 0.17f, 0.2f, 8, PaletteSwatch.Metal);
             b.Prism(At(high, AlongX), 0.17f, 0.2f, 8, PaletteSwatch.Metal);
+            site.Settle(piece);
         }
 
         /// <summary>The charging post at the door: a sage head, a thick copper lead coiled on its hook.</summary>
@@ -264,6 +266,7 @@ namespace MoonProject.Art.Editor
                 new Vector3(0.16f, 0.12f, 0.22f),
                 PaletteSwatch.Charcoal);
             piece.Resize(1.25f);
+            site.Settle(piece);
         }
 
         /// <summary>A spare 07 headlamp on the floor by the bench: faded hood, big violet lens.</summary>

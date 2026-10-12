@@ -71,12 +71,12 @@ namespace MoonProject.Gameplay.Editor
                 : throw new InvalidOperationException($"{BuilderPath}: Art's blueprint tube {path} is missing.");
         }
 
-        private static GameObject TapeDeckModel()
+        private static GameObject GaragePortModel()
         {
-            string path = ArtPaths.RoverFolder + "/" + RoverKitBuilder.TapeDeckName + ".prefab";
-            var deck = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-            return deck != null ? deck
-                : throw new InvalidOperationException($"{BuilderPath}: Art's tape deck {path} is missing.");
+            string path = ArtPaths.SitesFolder + "/" + GaragePortBuilder.PortName + ".prefab";
+            var port = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            return port != null ? port
+                : throw new InvalidOperationException($"{BuilderPath}: Art's garage port {path} is missing.");
         }
 
         [MoonBuilder(BuilderPath, BuilderOrder)]
@@ -97,7 +97,7 @@ namespace MoonProject.Gameplay.Editor
             visuals.PopulatePads(Pads(), BaseModelBuilder.PadRadii);
             visuals.PopulateComponents(ComponentModels());
             visuals.PopulateTube(TubeModel());
-            visuals.PopulateTapeDeck(TapeDeckModel());
+            visuals.PopulateGaragePort(GaragePortModel());
             GeneratedAssets.CreateOrReplace(visuals, GameplayAssetPaths.Visuals);
             AssetDatabase.SaveAssets();
             Debug.Log($"{BuilderPath}: wrote {Enum.GetValues(typeof(GlowRole)).Length + 1} materials and " +

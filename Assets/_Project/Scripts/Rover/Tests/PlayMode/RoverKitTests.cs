@@ -187,43 +187,51 @@ namespace MoonProject.Rover.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator TheTapeDeck_SettlesOnTheFlankWithAGiftsMoment_OrIsRestoredSilently()
+        public IEnumerator KenjisPort_FitsTheRingThenTheDeck_EachWithItsMoment()
         {
             Spawn();
             var restored = new List<RoverKitRestored>();
             _rover.Context.Events.Subscribe<RoverKitRestored>(restored.Add);
             yield return null;
-            Assert.IsFalse(_rover.TapeDeck.gameObject.activeSelf, "No deck before Tilly's glint is picked up.");
+            Assert.IsFalse(_rover.TetherRing.gameObject.activeSelf, "No ring before Kenji's port (first-hour v2).");
+            Assert.IsFalse(_rover.TapeDeck.gameObject.activeSelf, "No deck either.");
 
-            _rover.Context.Events.Publish(new TapeDeckFound(_rover.Controller.Position, false));
-            Assert.AreEqual(1, _installing.Count, "The gift's soft moment begins (M3-24 C).");
-            Assert.AreEqual(RoverKitPiece.TapeDeck, _installing[0].Piece);
-            Assert.IsTrue(_installing[0].Gift);
-            yield return Wait(3f);
+            foreach (RoverKitPiece piece in new[] { RoverKitPiece.TetherRing, RoverKitPiece.TapeDeck })
+            {
+                _installing.Clear();
+                _fitted.Clear();
+                _rover.Context.Events.Publish(new PortFitting(piece, _rover.Controller.Position, false));
+                Assert.AreEqual(1, _installing.Count, $"{piece}: the port's install moment begins.");
+                Assert.AreEqual(piece, _installing[0].Piece);
+                Assert.IsFalse(_installing[0].Gift, "a port piece, not a friend's gift");
+                yield return Wait(3f);
+                Assert.AreEqual(1, _fitted.Count, $"{piece}: RoverKitFitted once it is on 07.");
+                Assert.AreEqual(piece, _fitted[0].Piece);
+                Assert.IsFalse(_fitted[0].Gift);
+            }
+
+            Assert.IsTrue(_rover.TetherRing.gameObject.activeSelf, "The ring frames the eye.");
             Assert.IsTrue(_rover.TapeDeck.gameObject.activeSelf, "The deck is on 07's flank.");
-            Assert.AreEqual(1, _fitted.Count, "RoverKitFitted(TapeDeck) gates the music.");
-            Assert.AreEqual(RoverKitPiece.TapeDeck, _fitted[0].Piece);
-            Assert.IsTrue(_fitted[0].Gift);
             Assert.IsEmpty(restored, "A live fit is not a restore.");
-
-            _rover.Context.Events.Publish(new TapeDeckFound(_rover.Controller.Position, true));
-            Assert.IsEmpty(restored, "A deck already on 07 is not restored twice.");
+            _rover.Context.Events.Publish(new PortFitting(RoverKitPiece.TapeDeck, _rover.Controller.Position, true));
+            Assert.IsEmpty(restored, "A piece already on 07 is not restored twice.");
         }
 
         [UnityTest]
-        public IEnumerator ALoadedGamesTapeDeck_IsThereAtOnce_AndAnnouncedRestored()
+        public IEnumerator ALoadedGamesPortPieces_AreThereAtOnce_AndAnnouncedRestored()
         {
             Spawn();
             var restored = new List<RoverKitRestored>();
             _rover.Context.Events.Subscribe<RoverKitRestored>(restored.Add);
-            _rover.Context.Events.Publish(new TapeDeckFound(_rover.Controller.Position, true));
+            _rover.Context.Events.Publish(new PortFitting(RoverKitPiece.TetherRing, _rover.Controller.Position, true));
+            _rover.Context.Events.Publish(new PortFitting(RoverKitPiece.TapeDeck, _rover.Controller.Position, true));
             yield return null;
             yield return null;
-            Assert.IsTrue(_rover.TapeDeck.gameObject.activeSelf, "There from the first frame.");
+            Assert.IsTrue(_rover.TetherRing.gameObject.activeSelf && _rover.TapeDeck.gameObject.activeSelf,
+                "There from the first frame.");
             Assert.IsEmpty(_installing, "No moment replayed on load.");
             Assert.IsEmpty(_fitted);
-            Assert.AreEqual(1, restored.Count);
-            Assert.AreEqual(RoverKitPiece.TapeDeck, restored[0].Piece);
+            Assert.AreEqual(2, restored.Count);
         }
 
         [UnityTest]

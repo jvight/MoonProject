@@ -100,6 +100,9 @@ namespace MoonProject.Rover
         private readonly HeldShot _held = new HeldShot();
         private bool _onLift;
         private bool _evening;
+        private bool _charging;
+        private float _chargingSeconds;
+        private bool _chargeAsks;
         private BayShot _shot;
         private bool _shotSolved;
         private bool _hasShot;
@@ -209,6 +212,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<RoverPlaced>(OnPlaced),
                 context.Events.Subscribe<RoverKitInstalling>(OnKitInstalling),
                 context.Events.Subscribe<LowPowerChanged>(OnLowPowerChanged),
+                context.Events.Subscribe<ChargingChanged>(OnChargingChanged),
             };
             context.Register<IViewCamera>(this);
             context.Register<ILookSettings>(this);
@@ -639,15 +643,18 @@ namespace MoonProject.Rover
 
         /// <summary>
         /// Counts 07's rest toward the wide shot (a moment, a leap or the tether keep it closed; the pause menu only
-        /// delays it) and opens or hands it back when it says so.
+        /// delays it) and opens or hands it back when it says so. A charge asks for it once, after its charging delay.
         /// </summary>
         private void StepWideShot(float deltaTime)
         {
             bool busy = _moment.IsActive || _leapHeld || _tethered || _hopListOpen || _inBay || _stargaze.LookUp > 0f
                 || _opening.IsActive || _held.IsOpen || _onLift;
-            switch (_wide.Step(_stillness.StillSeconds, busy, _paused, deltaTime))
+            _chargingSeconds = _charging ? _chargingSeconds + deltaTime : 0f;
+            bool asked = _chargeAsks && _chargingSeconds >= _tuning.WideShot.ChargingDelay;
+            switch (_wide.Step(_stillness.StillSeconds, busy, _paused, asked, deltaTime))
             {
                 case WideShotCue.Open:
+                    _chargeAsks = false;
                     OpenWideShot();
                     break;
                 case WideShotCue.HandBack:
@@ -804,12 +811,16 @@ namespace MoonProject.Rover
             screen.y = Mathf.Lerp(screen.y, frame.ScreenY, weight);
         }
 
-        /// <summary>The dock's evening ends on any drive or look input or once its hold has run.</summary>
+        /// <summary>
+        /// The dock's evening ends on any drive or look input or once its hold has run; while 07 charges it holds at
+        /// least as long as the fill, up to the evening's fill hold (a longer fill goes on in the chase frame).
+        /// </summary>
         private void StepHeldShot(Vector2 look, float deltaTime)
         {
             bool input = look.sqrMagnitude > LookEpsilon * LookEpsilon
                 || _rover.DriveInput.sqrMagnitude > DriveEpsilon * DriveEpsilon;
-            if (_held.HoldRanOut || (_evening && input))
+            bool fillHolds = _evening && _charging && _held.Seconds < _tuning.EveningFillHoldMax;
+            if ((_held.HoldRanOut && !fillHolds) || (_evening && input))
             {
                 CloseHeldShot();
             }
@@ -850,6 +861,7 @@ namespace MoonProject.Rover
             }
 
             bool wasOpen = _held.IsOpen;
+            _chargeAsks = false;
             _held.Open(settings, ClearHeldFrame(settings, follow, yaw), holdSeconds);
             _evening = false;
             if (!wasOpen)
@@ -945,6 +957,16 @@ namespace MoonProject.Rover
         /// 07 crawls home on its reserve (docs/features/M3-20): the chase eases wider and a touch lower, a quiet frame;
         /// a loaded crawl starts framed.
         /// </summary>
+        /// <summary>
+        /// A charge starting asks for the wide shot after its delay, unless a held shot (the dock's evening) already
+        /// has the view.
+        /// </summary>
+        private void OnChargingChanged(ChargingChanged charging)
+        {
+            _charging = charging.Charging;
+            _chargeAsks = _charging && !_held.IsOpen;
+        }
+
         private void OnLowPowerChanged(LowPowerChanged lowPower)
         {
             _crawling = lowPower.LowPower;
@@ -1108,7 +1130,7 @@ namespace MoonProject.Rover
         /// </summary>
         private void OnKitInstalling(RoverKitInstalling installing)
         {
-            if (!installing.Gift)
+            if (!installing.Gift && !RoverKitPieces.IsPortPiece(installing.Piece))
             {
                 _bayDismissed = false;
                 return;

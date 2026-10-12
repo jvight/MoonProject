@@ -101,21 +101,42 @@ namespace MoonProject.Gameplay
             new BlueprintTube("rover.cell_pack", "relay.2"),
         };
 
-        [Header("Tilly's glint: the old tape deck (M3-24 C)")]
-        [Tooltip("The world anchor the tape deck lies behind (along the anchor's back): the garage Tilly spots.")]
-        [SerializeField] private string _tapeDeckAnchor = "site.garage";
+        [Header("Kenji's garage port (first-hour v2 §3)")]
+        [Tooltip("The salvage site the port stands in: its last cut opens the port.")]
+        [SerializeField] private string _portSite = "site.garage";
 
-        [Tooltip("Metres behind the anchor where the deck lies, clear of the site's pieces.")]
-        [Range(0f, 30f)] [SerializeField] private float _tapeDeckSetback = 9f;
+        [Tooltip("Where Art's GaragePort stands, in the site's own space (behind the garage's painted 07 pad).")]
+        [SerializeField] private Vector3 _portLocal = new Vector3(0f, 0.12f, 3.3f);
 
-        [Tooltip("Height (m) of the deck's middle above the ground, so it lies half in the dust.")]
-        [Range(0f, 0.3f)] [SerializeField] private float _tapeDeckLift = 0.04f;
+        [Tooltip("The port's turn (deg) in the site's space: 180 faces the pad and the door.")]
+        [Range(-180f, 180f)] [SerializeField] private float _portYaw = 180f;
 
-        [Tooltip("How the deck lies in the dust (deg, relative to the anchor's heading): tipped on its side.")]
-        [SerializeField] private Vector3 _tapeDeckTilt = new Vector3(0f, 35f, 70f);
+        [Tooltip("The middle of the port's pad, in the site's own space (Art's painted 07 pad).")]
+        [SerializeField] private Vector3 _portPadLocal = new Vector3(0f, 0.12f, 1.5f);
 
-        [Tooltip("The friend whose glint the deck is: it shows once she is awake and out with 07.")]
-        [SerializeField] private string _tapeDeckFriend = "tilly";
+        [Tooltip("Metres from the pad's middle within which 07 counts as on the pad.")]
+        [Range(0.5f, 4f)] [SerializeField] private float _portPadRadius = 1.4f;
+
+        [Tooltip("Speed (m/s) under which 07 counts as parked on the pad.")]
+        [Range(0.05f, 1f)] [SerializeField] private float _portParkSpeed = 0.3f;
+
+        [Tooltip("Seconds 07 stays parked on the pad before the port's arm fits the tether ring.")]
+        [Range(0f, 4f)] [SerializeField] private float _portParkSeconds = 1f;
+
+        [Tooltip("Metres from the pad within which the open port's place card shows, once.")]
+        [Range(2f, 30f)] [SerializeField] private float _portPlaceRadius = 9f;
+
+        [Tooltip("Metres from the tray within which a towed tape deck is taken off the tether.")]
+        [Range(0.5f, 4f)] [SerializeField] private float _portTrayRadius = 1.8f;
+
+        [Tooltip("Seconds the tape deck glides from the tether onto the tray before the arm fits it.")]
+        [Range(0.2f, 4f)] [SerializeField] private float _portTrayGlideSeconds = 1.2f;
+
+        [Tooltip("The relic that is Ro's tape deck (it is fitted on 07, never shelved).")]
+        [SerializeField] private string _portDeckRelic = "cassette_player";
+
+        [Tooltip("Before the ring, a loose keepsake within this many metres of 07 says the tether is gone, once.")]
+        [Range(2f, 20f)] [SerializeField] private float _portTetherHintRadius = 7f;
 
         [Header("Recipe cards (M3-24 B)")]
         [Tooltip("Metres from the camera within which a hopper or a board sheet shows its recipe card when looked at.")]
@@ -234,15 +255,29 @@ namespace MoonProject.Gameplay
 
         public IReadOnlyList<BlueprintTube> Tubes => _tubes;
 
-        public string TapeDeckAnchor => _tapeDeckAnchor;
+        public string PortSite => _portSite;
 
-        public float TapeDeckSetback => _tapeDeckSetback;
+        public Vector3 PortLocal => _portLocal;
 
-        public float TapeDeckLift => _tapeDeckLift;
+        public float PortYaw => _portYaw;
 
-        public Vector3 TapeDeckTilt => _tapeDeckTilt;
+        public Vector3 PortPadLocal => _portPadLocal;
 
-        public string TapeDeckFriend => _tapeDeckFriend;
+        public float PortPadRadius => _portPadRadius;
+
+        public float PortParkSpeed => _portParkSpeed;
+
+        public float PortParkSeconds => _portParkSeconds;
+
+        public float PortPlaceRadius => _portPlaceRadius;
+
+        public float PortTrayRadius => _portTrayRadius;
+
+        public float PortTrayGlideSeconds => _portTrayGlideSeconds;
+
+        public string PortDeckRelic => _portDeckRelic;
+
+        public float PortTetherHintRadius => _portTetherHintRadius;
 
         public float RecipeLookDistance => _recipeLookDistance;
 

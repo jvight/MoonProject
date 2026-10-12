@@ -87,8 +87,8 @@ namespace MoonProject.Gameplay
         /// <summary>The blueprint tubes waiting on the ground at world anchors (docs/features/M3-21).</summary>
         public GroundTubes GroundTubes { get; private set; }
 
-        /// <summary>Tilly's glint, the old tape deck on the ground (docs/features/M3-24 C).</summary>
-        public TapeDeckFind TapeDeck { get; private set; }
+        /// <summary>Kenji's garage service port: the tether ring, then the tape deck (first-hour v2 §3).</summary>
+        public GaragePort Port { get; private set; }
 
         /// <summary>The recipe 07's view rests on: the tower's hopper or a board sheet (docs/features/M3-24 B).</summary>
         public RecipeLook RecipeLook { get; private set; }
@@ -228,7 +228,7 @@ namespace MoonProject.Gameplay
             Vector3 lander = HomeBase.LanderSpot(services.Terrain, services.Layout.BasePosition, _home.Tuning);
             if (!_salvage.Initialize(services) || !_relics.Initialize(services, _salvage) ||
                 !_excavation.Initialize(services, _relics, _salvage) ||
-                !_tether.Initialize(services, _relics, _salvage) ||
+                !_tether.Initialize(services, _relics, _salvage, abilities) ||
                 !_home.Initialize(services, _relics, Upgrades, lights, _lift) ||
                 !_cradle.Initialize(services, seat, _relics, _home) ||
                 !_lift.Initialize(services, Power, context.Get<IRoverStillness>(), _tether, _cradle, Blueprints,
@@ -237,7 +237,7 @@ namespace MoonProject.Gameplay
                 !_workshop.Initialize(services, Upgrades, _salvage.Catalog, _tower, Power, Blueprints, lights) ||
                 !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _salvage, _home) ||
                 !_cassettes.Initialize(services, Radio, KeepClearOfCassettes()) || !_logs.Initialize(services) ||
-                !_sonar.Initialize(services, _relics, _friends, _salvage, abilities) ||
+                !_sonar.Initialize(services, _relics, _friends, _salvage, abilities, Power) ||
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
                 !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context),
@@ -276,8 +276,8 @@ namespace MoonProject.Gameplay
 
             TowerPartField = NewTowerPartField(services);
             GroundTubes = TowerPartField != null ? NewGroundTubes(services) : null;
-            TapeDeck = GroundTubes != null ? NewTapeDeck(services) : null;
-            if (TapeDeck == null || !NewGoals(context.Events))
+            Port = GroundTubes != null ? NewPort(services, abilities) : null;
+            if (Port == null || !NewGoals(context.Events))
             {
                 enabled = false;
                 return;
@@ -285,7 +285,7 @@ namespace MoonProject.Gameplay
 
             Shop = new UpgradeShop(Upgrades, stations, save, Blueprints, TowerParts);
             RecipeLook = new RecipeLook(services.View, Shop, _tower, _plotter, Blueprints.Kits, _progression.Tuning);
-            Hints = new InteractionHints(services.Rover, _sonar, _excavation, _salvage, _tether, _cradle, _home,
+            Hints = new InteractionHints(_excavation, _salvage, _tether, _cradle, _home,
                 stations, Upgrades, TowerParts, _friends, _relays, services.Beam);
             context.Register<IMaterialStock>(Materials);
             context.Register<ISalvageStatus>(_salvage);
@@ -345,8 +345,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.TowerPartsVersion, TowerParts.Capture, RestoreTowerParts)));
             _saveTokens.Add(save.Register(new SaveSection<BatterySaveData>(GameplaySaveKeys.Battery,
                 GameplaySaveKeys.BatteryVersion, _battery.Capture, _battery.Restore)));
-            _saveTokens.Add(save.Register(new SaveSection<TapeDeckSaveData>(GameplaySaveKeys.TapeDeck,
-                GameplaySaveKeys.TapeDeckVersion, TapeDeck.Capture, TapeDeck.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<GaragePortSaveData>(GameplaySaveKeys.GaragePort,
+                GameplaySaveKeys.GaragePortVersion, Port.Capture, Port.Restore)));
         }
 
         private void RestoreTowerParts(TowerPartsSaveData data)
@@ -400,12 +400,12 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>Tilly's tape deck on the ground, or null (logged) when its anchor is missing.</summary>
-        private TapeDeckFind NewTapeDeck(GameplayServices services)
+        /// <summary>Kenji's garage port, or null (logged) when its site, its relic or Art's port is missing.</summary>
+        private GaragePort NewPort(GameplayServices services, IRoverAbilities abilities)
         {
             try
             {
-                return new TapeDeckFind(transform, services, _friends, _friends.Tuning, _progression.Tuning);
+                return new GaragePort(transform, services, _salvage, _relics, abilities, _progression.Tuning);
             }
             catch (InvalidOperationException exception)
             {
@@ -529,7 +529,7 @@ namespace MoonProject.Gameplay
             Blueprints.Announce();
             TowerParts.Announce();
             GroundTubes.Sync();
-            TapeDeck.Announce();
+            Port.Announce();
             Tech.Announce();
             Recovery.Announce();
         }
@@ -540,7 +540,7 @@ namespace MoonProject.Gameplay
             Power.Show(_tower.ShownLevel);
             TowerPartField.Step(now);
             GroundTubes.Step(now);
-            TapeDeck.Step(now);
+            Port.Step(Time.deltaTime);
             RecipeLook.Step();
             Tech.Refresh();
             Recovery.Refresh();
@@ -663,7 +663,7 @@ namespace MoonProject.Gameplay
             Blueprints?.Dispose();
             TowerPartField?.Dispose();
             GroundTubes?.Dispose();
-            TapeDeck?.Dispose();
+            Port?.Dispose();
             _meshes?.Dispose();
         }
     }

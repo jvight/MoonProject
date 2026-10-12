@@ -84,7 +84,7 @@
         },
         {
             "key": "next.lift.stitch",
-            "text": "Thang nâng bị kẹt: khâu lại dây cáp."
+            "text": "Thang nâng bị kẹt. Hãy sửa dây cáp của nó."
         },
         {
             "key": "next.lift.ride",
@@ -219,6 +219,14 @@
             "text": "Còn tối. Tháp mạnh lên thì nó sẽ thức."
         },
         {
+            "key": "notyet.tether",
+            "text": "Dây tether của 07 đã mất. Kenji có giữ một cái dự phòng trong garage."
+        },
+        {
+            "key": "ticker.listen.first",
+            "text": "07 lắng nghe khi dừng nghỉ. Thứ gì còn giữ điều gì đó sẽ trả lời."
+        },
+        {
             "key": "place.dock.name",
             "text": "Đế sạc"
         },
@@ -281,6 +289,14 @@
         {
             "key": "place.rack.job",
             "text": "Băng tìm được sẽ phát ở đây: nhạc và giọng nói của phi hành đoàn."
+        },
+        {
+            "key": "place.garage_port.name",
+            "text": "Cổng bảo trì của Kenji"
+        },
+        {
+            "key": "place.garage_port.job",
+            "text": "Lắp phụ tùng dự phòng cho 07. Đỗ lên bệ của nó."
         },
         {
             "key": "ui.blueprint.found",
@@ -349,10 +365,6 @@
         {
             "key": "ui.tower.purchased",
             "text": "Tín hiệu vươn xa hơn"
-        },
-        {
-            "key": "hint.ping",
-            "text": "Dò tìm"
         },
         {
             "key": "hint.excavate",
@@ -636,7 +648,7 @@
         },
         {
             "key": "ticker.bell.signal",
-            "text": "Bell đang bắt được gì đó… hướng {0}°."
+            "text": "Bell đang bắt được gì đó. Ánh đèn của cô ấy chỉ đường."
         },
         {
             "key": "ticker.bell.found_0",
@@ -720,7 +732,7 @@
         },
         {
             "key": "hint.restore",
-            "text": "Khôi phục"
+            "text": "Sửa"
         },
         {
             "key": "hint.hop",
@@ -864,7 +876,11 @@
         },
         {
             "key": "kit.tape_deck.name",
-            "text": "Một đầu băng cũ, tìm cùng Tilly"
+            "text": "Đầu băng cũ của Ro"
+        },
+        {
+            "key": "kit.tether_ring.name",
+            "text": "Vòng tether dự phòng của Kenji"
         },
         {
             "key": "ui.bay.fitted",
@@ -1321,6 +1337,10 @@
         {
             "key": "upgrade.rover.cell_pack.1.effect",
             "text": "Thêm hai ô pin trên lưng 07: sáu ngọn đèn sáng, và phía xa của lòng chảo trong tầm với."
+        },
+        {
+            "key": "ticker.tether.back",
+            "text": "07 lại có thể giữ đồ vật."
         }
     ]
 }

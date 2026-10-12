@@ -50,6 +50,9 @@ namespace MoonProject.Rover
         /// <summary>Where the old tape deck rides on the left flank (docs/features/M3-24 C).</summary>
         public const string DeckSocket = "DeckSocket";
 
+        /// <summary>The tether ring's glass band (Art's Kit_TetherRing child), lit by RoverKit.</summary>
+        public const string RingGlow = "Glow";
+
         /// <summary>Friend gifts on RoverModel, hidden until given (SolarWing/, Body/ and Antenna/ children).</summary>
         public const string CellFilled = "CellFilled";
         public const string Decal07Fresh = "Decal07Fresh";

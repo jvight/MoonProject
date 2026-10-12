@@ -361,7 +361,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ExpectStep(ProgressionKeys.NextSalvage, "out on the basin: salvage comes next");
             Assert.IsFalse(depot.HeartRevealed, "the depot's heart lies under its pieces (P10)");
             Assert.IsFalse(_gameplay.TowerPartField.IsResting(CoilPart), "no coil before the heart is open");
-            yield return Ping(depot);
             yield return SalvageTheDepot(depot);
             Assert.IsTrue(depot.HeartRevealed, "the last cut reveals it");
             yield return ExpectStep(ProgressionKeys.NextTower, "materials in the stock: the tower needs them");
@@ -528,7 +527,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Until(() => dock.Docked, _gameplay.Home.Tuning.DockDelay + 3f, "07 rests on the dock");
             float docked = Time.time;
             yield return Until(() => battery.FullCells == battery.Cells && !battery.IsCharging,
-                _gameplay.Battery.Tuning.DockFill + 2f, "the dock fills the cells");
+                _gameplay.Battery.Tuning.ChargeStopHold
+                + battery.Cells * _gameplay.Battery.Tuning.DockSecondsPerCell + 2f,
+                "the dock fills the cells");
             float fill = Time.time - docked;
             _pilot.Reverse = BayThrottle;
             yield return Until(() => !dock.Docked, 2f, "a touch of the throttle leaves the dock");
@@ -611,21 +612,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveTo(Flat(site.Position - toSite * SiteApproach), 3f, 1f, 60f, "the supply depot");
             Capture("01b-the-depot");
             End($"Drive to the supply depot ({distance:F0} m)", $"{site.Pieces.Count} pieces on the wreck");
-        }
-
-        private IEnumerator Ping(SalvageSite site)
-        {
-            Begin();
-            Press(_keyboard.spaceKey, queueEventOnly: true);
-            yield return null;
-            Release(_keyboard.spaceKey);
-            yield return Until(() => _events.SonarPinged.Count > 0, 2f, "space pings");
-            yield return Until(() => SiteHeard(site.Id), _gameplay.Sonar.Tuning.RingDuration + 2f,
-                "the depot answers the ping with its own tone");
-            Assert.IsEmpty(_events.RelicAnswered, "nothing answers from a heart still under the pieces");
-            Assert.IsTrue(site.Discovered);
-            Capture("02-ping-answered");
-            End("Ping", $"{_events.SiteAnswered.Count} site(s) answered");
         }
 
         /// <summary>
@@ -1429,13 +1415,14 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Home is powered but the bay is not: at its mouth it offers nothing (no pad, no prompt, no panel), and a
-        /// ping finds it answering "not yet".
+        /// Home is powered but the bay is not: at its mouth it offers nothing (no pad, no prompt, no panel), and coming
+        /// near it, it answers "not yet".
         /// </summary>
         private IEnumerator TheBaySleepsUntilTheTowerWakesIt()
         {
             Begin();
             Workshop bay = _gameplay.Workshop;
+            int answers = _events.StationNotYet.Count;
             yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 90f,
                 "the base pad, clear of the lander");
             Vector3 entrance = Flat(bay.PadCentre) + Flat(bay.BayForward).normalized * BayApproach;
@@ -1444,14 +1431,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(_gameplay.Shop.IsAtStation, "no panel");
             Assert.IsFalse(_gameplay.Hints.TryGet(InteractionKind.Upgrade, out _), "no prompt");
             Assert.AreEqual(PurchaseResult.NotAtStation, _gameplay.Shop.Purchase(CargoCradle), "nothing to buy");
-            int answers = _events.StationNotYet.Count;
-            int pings = _events.SonarPinged.Count;
-            Press(_keyboard.spaceKey, queueEventOnly: true);
-            yield return null;
-            Release(_keyboard.spaceKey);
-            yield return Until(() => _events.SonarPinged.Count > pings, 2f, "space pings");
-            yield return Until(() => AnsweredNotYet(answers, ProgressionKeys.NotYetBay),
-                _gameplay.Sonar.Tuning.RingDuration + 2f, "the sleeping bay answers 'not yet'");
+            yield return Until(() => AnsweredNotYet(answers, ProgressionKeys.NotYetBay), 2f,
+                "the sleeping bay answers 'not yet' as 07 comes near");
             End("The Rover Bay sleeps until the tower wakes it", "no pad, no prompt, a soft 'not yet'");
         }
 
@@ -1482,12 +1463,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Vector3 near = site - toSite.normalized * TillyPingDistance;
             yield return DriveTo(near, 3f, 1f, 60f, "the rim of Tilly's crater");
             int answersBefore = _events.FriendAnswered.Count;
-            yield return Until(() => _gameplay.Sonar.IsReady, 6f, "the sonar is ready");
-            Press(_keyboard.spaceKey, queueEventOnly: true);
-            yield return null;
-            Release(_keyboard.spaceKey);
-            yield return Until(() => _events.FriendAnswered.Count > answersBefore, 6f,
-                "a broken chirp answers from the crater");
+            yield return Until(() => _events.FriendAnswered.Count > answersBefore,
+                _gameplay.Sonar.Tuning.RestSeconds + 6f, "07 rests and listens: a broken chirp answers");
             Assert.AreEqual(TillyId, _events.FriendAnswered[_events.FriendAnswered.Count - 1].Value.FriendId);
             yield return new WaitForSeconds(1f);
             Capture("08-tilly-answers");
@@ -2100,7 +2077,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveTo(Flat(mast.Anchor.Position), PadArrive, 0.35f, 60f, mast.Id + "'s charge ring");
             yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 stops on the ring");
             yield return Until(() => battery.FullCells == battery.Cells && !battery.IsCharging,
-                _gameplay.Battery.Tuning.MastFill + 3f, "the ring fills the cells");
+                _gameplay.Battery.Tuning.ChargeStopHold
+                + battery.Cells * _gameplay.Battery.Tuning.MastSecondsPerCell + 3f,
+                "the ring fills the cells");
             End($"Charge on {mast.Id}'s ring", string.Format(CultureInfo.InvariantCulture, "{0:P0} -> {1:P0}",
                 before, battery.Charge01));
         }
@@ -2775,19 +2754,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             return completed;
-        }
-
-        private bool SiteHeard(string siteId)
-        {
-            foreach (EventRecorder.Timed<SiteAnswered> answer in _events.SiteAnswered)
-            {
-                if (answer.Value.SiteId == siteId)
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         private bool Surfaced(string relicId)

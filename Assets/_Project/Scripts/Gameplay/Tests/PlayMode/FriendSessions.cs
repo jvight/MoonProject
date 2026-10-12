@@ -49,11 +49,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             Vector3 site = tilly.Site.Position;
             _fixture.Rover.Place(Toward(site, Vector3.zero, 20f), Yaw(site, Vector3.zero) + 180f);
             yield return null;
-            Press(_keyboard.spaceKey, queueEventOnly: true);
-            yield return null;
-            Release(_keyboard.spaceKey);
+            _fixture.PowerTo(1);
+            yield return Waits.Until(() => _fixture.Events.SonarPinged.Count > 0,
+                _fixture.SonarTuning.RestSeconds + 1f);
+            Assert.AreEqual(1, _fixture.Events.SonarPinged.Count, "07 rests at tower level 1 and listens");
             yield return new WaitForSeconds(1.5f);
-            Assert.AreEqual(1, _fixture.Events.FriendAnswered.Count, "a broken chirp answers the ping");
+            Assert.AreEqual(1, _fixture.Events.FriendAnswered.Count, "a broken chirp answers the listen");
             Assert.AreEqual(TillyId, _fixture.Events.FriendAnswered[0].Value.FriendId);
             Assert.IsTrue(tilly.Progress.Discovered);
             _fixture.Rover.Aim(site + new Vector3(-4f, 2.5f, -4f), site);

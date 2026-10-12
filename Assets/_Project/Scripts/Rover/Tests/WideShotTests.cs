@@ -24,13 +24,13 @@ namespace MoonProject.Rover.Tests
 
         /// <summary>Steps with 07 resting (or not), returning the first cue other than None.</summary>
         private WideShotCue Run(float seconds, bool resting = true, bool busy = false, bool held = false,
-            float frame = Frame)
+            bool asked = false, float frame = Frame)
         {
             WideShotCue first = WideShotCue.None;
             for (float t = 0f; t < seconds - 1e-4f; t += frame)
             {
                 _still = resting ? _still + frame : 0f;
-                WideShotCue cue = _wide.Step(_still, busy, held, frame);
+                WideShotCue cue = _wide.Step(_still, busy, held, asked, frame);
                 Assert.LessOrEqual(_wide.QuietSeconds, _still + 1e-4f, "Quiet time never exceeds the rest.");
                 if (first == WideShotCue.None)
                 {
@@ -61,6 +61,15 @@ namespace MoonProject.Rover.Tests
             Assert.AreEqual(WideShotCue.None, Run(3f * _settings.Delay, busy: true));
             Assert.AreEqual(WideShotCue.None, Run(_settings.Delay - 0.1f), "The quiet count started over.");
             Assert.AreEqual(WideShotCue.Open, Run(0.2f));
+        }
+
+        [Test]
+        public void A_CalmStopAsking_OpensAtOnce_OnlyOnAQuietFrame()
+        {
+            Assert.AreEqual(2f, _settings.ChargingDelay, "charging asks for the frame from 2 s");
+            Assert.AreEqual(WideShotCue.None, Run(Frame, busy: true, asked: true), "A busy camera is not asked.");
+            Assert.AreEqual(WideShotCue.None, Run(Frame, held: true, asked: true), "Paused: it waits.");
+            Assert.AreEqual(WideShotCue.Open, Run(Frame, asked: true), "No waiting out the delay.");
         }
 
         [Test]
@@ -170,26 +179,26 @@ namespace MoonProject.Rover.Tests
             for (float t = 0f; t < _settings.Delay + 0.1f; t += frame)
             {
                 still += frame;
-                wide.Step(still, false, false, frame);
+                wide.Step(still, false, false, false, frame);
             }
 
             wide.Open(new WideShotFrame(0f, 7f, 28f, 0.19f));
             for (float t = 0f; t < 0.35f * _settings.OpenSeconds; t += frame)
             {
                 still += frame;
-                wide.Step(still, false, false, frame);
+                wide.Step(still, false, false, false, frame);
             }
 
             float before = wide.Weight;
             still += frame;
-            wide.Step(still, false, false, frame);
+            wide.Step(still, false, false, false, frame);
             float speed = (wide.Weight - before) / frame;
             wide.HandBack();
             float largest = 0f;
             for (int i = 0; i < 4; i++)
             {
                 before = wide.Weight;
-                wide.Step(0f, false, false, frame);
+                wide.Step(0f, false, false, false, frame);
                 float next = (wide.Weight - before) / frame;
                 largest = Mathf.Max(largest, Mathf.Abs(next - speed));
                 speed = next;

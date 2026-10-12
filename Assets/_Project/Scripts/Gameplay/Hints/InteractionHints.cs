@@ -13,11 +13,9 @@ namespace MoonProject.Gameplay
         {
             InteractionKind.Deposit, InteractionKind.Repair, InteractionKind.Restore, InteractionKind.Tune,
             InteractionKind.Hop, InteractionKind.Upgrade, InteractionKind.Salvage, InteractionKind.Excavate,
-            InteractionKind.Stow, InteractionKind.Tether, InteractionKind.Reel, InteractionKind.Ping,
+            InteractionKind.Stow, InteractionKind.Tether, InteractionKind.Reel,
         };
 
-        private readonly IRoverState _rover;
-        private readonly SonarSystem _sonar;
         private readonly ExcavationSystem _excavation;
         private readonly SalvageField _salvage;
         private readonly TetherSystem _tether;
@@ -33,12 +31,10 @@ namespace MoonProject.Gameplay
         /// <param name="beam">
         /// 07's beam work: while new work sleeps (the crawl, docs/features/M3-20) a beam verb's hint shows as not ready.
         /// </param>
-        public InteractionHints(IRoverState rover, SonarSystem sonar, ExcavationSystem excavation,
+        public InteractionHints(ExcavationSystem excavation,
             SalvageField salvage, TetherSystem tether, CargoCradle cradle, HomeBase home, IUpgradeStation[] stations,
             UpgradeService upgrades, IComponentGate parts, FriendField friends, RelayField relays, BeamWork beam)
         {
-            _rover = rover ?? throw new ArgumentNullException(nameof(rover));
-            _sonar = sonar != null ? sonar : throw new ArgumentNullException(nameof(sonar));
             _excavation = excavation != null ? excavation : throw new ArgumentNullException(nameof(excavation));
             _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
             _tether = tether != null ? tether : throw new ArgumentNullException(nameof(tether));
@@ -73,9 +69,6 @@ namespace MoonProject.Gameplay
             ITowable towed = _tether.TowedBody;
             switch (kind)
             {
-                case InteractionKind.Ping:
-                    hint = new InteractionHint(kind, _rover.Position, _sonar.IsReady);
-                    return _sonar.enabled;
                 case InteractionKind.Excavate:
                     Relic candidate = _excavation.Candidate;
                     hint = candidate != null

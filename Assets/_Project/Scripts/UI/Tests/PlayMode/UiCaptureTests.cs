@@ -673,12 +673,11 @@ namespace MoonProject.UI.PlayModeTests
             yield return Watch(ui, overlaps, _tuning.Title.Reveal.FadeOut + _tuning.Guidance.Place.FadeIn + 1.6f);
             yield return Capture(camera, folder, "61_dock_card");
 
-            fakes.PrimaryHint = new InteractionHint(InteractionKind.Ping, fakes.Position, true);
-            yield return Watch(ui, overlaps, _tuning.Guidance.PlaceHoldSeconds + _tuning.Guidance.Place.FadeOut +
-                                             _tuning.Prompts.Find(InteractionKind.Ping).DwellSeconds + 1.5f);
-            yield return Capture(camera, folder, "62_ping_prompt");
-            events.Publish(new SonarPinged());
-            fakes.PrimaryHint = InteractionHint.None;
+            yield return Watch(ui, overlaps, _tuning.Guidance.PlaceHoldSeconds + _tuning.Guidance.Place.FadeOut);
+            events.Publish(new SonarPinged(fakes.Position, 140f));
+            events.Publish(new TickerLine("ticker.listen.first"));
+            yield return Watch(ui, overlaps, 1.5f);
+            yield return Capture(camera, folder, "62_first_listen");
             if (!context.Get<IWorldAnchors>().TryGet(DepotSite, out MoonProject.Core.WorldAnchor depot))
             {
                 throw new InvalidOperationException($"The world has no '{DepotSite}' anchor.");

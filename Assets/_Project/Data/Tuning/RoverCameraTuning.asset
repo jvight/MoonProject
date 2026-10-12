@@ -278,6 +278,7 @@ MonoBehaviour:
     _gazePriority: 50
   _wideShot:
     _delay: 9
+    _chargingDelay: 2
     _openSeconds: 8
     _handBackSeconds: 0.8
     _cardQuietSeconds: 14
@@ -330,6 +331,7 @@ MonoBehaviour:
     _centreSeconds: 0.8
   _eveningShot:
     _delay: 9
+    _chargingDelay: 2
     _openSeconds: 4
     _handBackSeconds: 3
     _cardQuietSeconds: 14
@@ -364,6 +366,7 @@ MonoBehaviour:
   _heldShotClearance: 0.5
   _heldShotYawStep: 25
   _eveningHoldSeconds: 11
+  _eveningFillHoldMax: 16
   _positionDamping: {x: 1.1, y: 0.9, z: 1.3}
   _yawDamping: 1.8
   _aimDamping: {x: 0.6, y: 0.5}

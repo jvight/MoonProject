@@ -732,17 +732,21 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// 07 picked up the old tape deck Tilly spotted (docs/features/M3-24 C) at <see cref="Position"/>: Rover fits it on
-    /// 07's flank with the gift's soft moment. Restored is true when a loaded game already has it (once, after the save
-    /// is applied): it is there at once.
+    /// Kenji's garage port fits <see cref="Piece"/> on 07 (docs/design/first-hour-v2.md §3): the tether ring, then the
+    /// tape deck 07 set on its tray. Its arm reaches from <see cref="Position"/>; Rover plays the install moment and
+    /// publishes <see cref="RoverKitFitted"/>. Restored is true when a loaded game already has the piece (once, after
+    /// the save is applied): it is on 07 at once.
     /// </summary>
-    public readonly struct TapeDeckFound
+    public readonly struct PortFitting
     {
-        public TapeDeckFound(Vector3 position, bool restored)
+        public PortFitting(RoverKitPiece piece, Vector3 position, bool restored)
         {
+            Piece = piece;
             Position = position;
             Restored = restored;
         }
+
+        public RoverKitPiece Piece { get; }
 
         public Vector3 Position { get; }
 

@@ -20,8 +20,9 @@ namespace MoonProject.Rover
     /// <item>Gifts by <see cref="IFriendRoster"/> (<see cref="FriendGift"/>): Tilly's cell for the solar wing, Bell's
     /// fresh "07" and pennant. A friend repaired before the game loaded: there at once; repaired during play: the
     /// soft version of the moment the next time 07 is home.</item>
-    /// <item>The old tape deck Tilly spotted (docs/features/M3-24 C, <see cref="TapeDeckFound"/>): picked up, it
-    /// settles onto the left flank with the gift's soft moment; a loaded game's deck is there at once.</item>
+    /// <item>Kenji's garage port fits (<see cref="PortFitting"/>, first-hour v2 §3) the tether ring round the eye and
+    /// the old tape deck on the left flank: each grows in place in a short install moment; a loaded game's are there at
+    /// once. The ring's band glows faintly at rest and brightly while the tether holds.</item>
     /// <item>Every piece a loaded game shows at once is announced (<see cref="RoverKitRestored"/>), so the deck's
     /// music starts in the right state.</item>
     /// <item>The road light: the lamp bar makes it wider and warmer and moves it to the bar's middle glass, and its
@@ -35,7 +36,7 @@ namespace MoonProject.Rover
     [DisallowMultipleComponent]
     public sealed class RoverKit : MonoBehaviour, IRoverCargoSeat
     {
-        private const int PieceCount = 8;
+        private const int PieceCount = 9;
         private const int DrumCount = 2;
 
         /// <summary>Glow changes smaller than this are not worth a new property block.</summary>
@@ -70,8 +71,14 @@ namespace MoonProject.Rover
         [Tooltip("Art's Kit_BatterySpine under SpineSocket (inactive until Cell Pack II is owned).")]
         [SerializeField] private Transform _spine;
 
-        [Tooltip("Art's Kit_TapeDeck under DeckSocket (inactive until 07 has picked up Tilly's tape deck).")]
+        [Tooltip("Art's Kit_TapeDeck under DeckSocket (inactive until Kenji's garage port fits it).")]
         [SerializeField] private Transform _tapeDeck;
+
+        [Tooltip("Art's Kit_TetherRing on the Eye (inactive until Kenji's garage port fits it).")]
+        [SerializeField] private Transform _tetherRing;
+
+        [Tooltip("The tether ring's Glow band (glow renderer on M_LowPolyGlowOff, cyan).")]
+        [SerializeField] private Renderer _ringGlow;
 
         [Tooltip("The rack's RelicSeat, where a carried relic rests (+Y up).")]
         [SerializeField] private Transform _relicSeat;
@@ -110,7 +117,11 @@ namespace MoonProject.Rover
         private IDisposable _tubesRestored;
         private IDisposable _partsFound;
         private IDisposable _partsDelivered;
-        private IDisposable _deckFound;
+        private IDisposable _portFitting;
+        private IDisposable _tetherAttached;
+        private IDisposable _tetherReleased;
+        private bool _tetherHolds;
+        private float _ringLevel = -1f;
         private Vector3[] _storyPartScales;
         private TubeCarry _tubes;
         private Vector3 _tubeScale;
@@ -127,6 +138,7 @@ namespace MoonProject.Rover
         private Vector3 _rackScale;
         private Vector3 _spineScale;
         private Vector3 _deckScale;
+        private Vector3 _ringScale;
         private Vector3 _cellScale;
         private Vector3 _serialScale;
         private Vector3 _pennantScale;
@@ -195,8 +207,7 @@ namespace MoonProject.Rover
             for (int i = 0; i < PieceCount; i++)
             {
                 RoverKitPiece piece = (RoverKitPiece)i;
-                _fits[i] = new KitFit(settings, piece == RoverKitPiece.SolarCell || piece == RoverKitPiece.FreshPaint
-                    || piece == RoverKitPiece.TapeDeck);
+                _fits[i] = new KitFit(settings, !RoverKitPieces.TryGetAbility(piece, out _));
             }
 
             _glowBlock = new MaterialPropertyBlock();
@@ -222,7 +233,9 @@ namespace MoonProject.Rover
 
             _partsFound = _events.Subscribe<ComponentFound>(found => _tubes.PartFound(found.PartId, found.Restored));
             _partsDelivered = _events.Subscribe<ComponentDelivered>(delivered => _tubes.PartDelivered(delivered.PartId));
-            _deckFound = _events.Subscribe<TapeDeckFound>(OnTapeDeckFound);
+            _portFitting = _events.Subscribe<PortFitting>(OnPortFitting);
+            _tetherAttached = _events.Subscribe<TetherAttached>(attached => _tetherHolds = true);
+            _tetherReleased = _events.Subscribe<TetherReleased>(released => _tetherHolds = false);
             return true;
         }
 
@@ -233,6 +246,8 @@ namespace MoonProject.Rover
                 & Require(_lampBar != null && _cargoRack != null && _relicSeat != null && _spine != null,
                     "Lamp bar, cargo rack, its RelicSeat or the battery spine is not assigned.")
                 & Require(_tapeDeck != null, "The tape deck (Kit_TapeDeck on DeckSocket) is not assigned.")
+                & Require(_tetherRing != null && _ringGlow != null,
+                    "The tether ring (Kit_TetherRing on the Eye) or its Glow band is not assigned.")
                 & Require(_tube != null, "The BlueprintTube on TubeSocket is not assigned.")
                 & Require(StoryPartsWired(), "A tower story part on TubeSocket is not assigned (Part_TowerCoil...).")
                 & Require(_solarCell != null && _freshSerial != null && _pennant != null,
@@ -341,6 +356,7 @@ namespace MoonProject.Rover
             _rackScale = _cargoRack.localScale;
             _spineScale = _spine.localScale;
             _deckScale = _tapeDeck.localScale;
+            _ringScale = _tetherRing.localScale;
             _cellScale = _solarCell.localScale;
             _serialScale = _freshSerial.localScale;
             _pennantScale = _pennant.localScale;
@@ -373,6 +389,7 @@ namespace MoonProject.Rover
             _cargoRack.gameObject.SetActive(false);
             _spine.gameObject.SetActive(false);
             _tapeDeck.gameObject.SetActive(false);
+            _tetherRing.gameObject.SetActive(false);
             _solarCell.gameObject.SetActive(false);
             _freshSerial.gameObject.SetActive(false);
             _pennant.gameObject.SetActive(false);
@@ -440,7 +457,8 @@ namespace MoonProject.Rover
             {
                 if (_fits[i].Step(deltaTime))
                 {
-                    _events.Publish(new RoverKitFitted((RoverKitPiece)i, true, string.Empty));
+                    RoverKitPiece fitted = (RoverKitPiece)i;
+                    _events.Publish(new RoverKitFitted(fitted, !RoverKitPieces.IsPortPiece(fitted), string.Empty));
                 }
             }
 
@@ -450,6 +468,7 @@ namespace MoonProject.Rover
             _lampLevel = Smoothing.Damp(_lampLevel, lamp, dock.LampHalfLife, deltaTime);
             ApplyWarmth(_fits[(int)RoverKitPiece.LampBar].Lights);
             ApplyDrumGlow();
+            ApplyRingGlow();
             StepTube(deltaTime);
             _started = true;
         }
@@ -519,25 +538,42 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// Tilly's tape deck was picked up: it settles onto the flank with the gift's soft moment; a loaded game's deck
-        /// is there at once (and announced as restored).
+        /// Kenji's garage port fits a piece: it grows in place in its install moment; a loaded game's piece is there at
+        /// once (and announced as restored).
         /// </summary>
-        private void OnTapeDeckFound(TapeDeckFound found)
+        private void OnPortFitting(PortFitting fitting)
         {
-            KitFit fit = _fits[(int)RoverKitPiece.TapeDeck];
+            KitFit fit = _fits[(int)fitting.Piece];
             if (!fit.IsHidden)
             {
                 return;
             }
 
-            if (found.Restored)
+            if (fitting.Restored)
             {
-                ShowRestored(RoverKitPiece.TapeDeck);
+                ShowRestored(fitting.Piece);
                 return;
             }
 
             fit.Install();
-            _events.Publish(new RoverKitInstalling(RoverKitPiece.TapeDeck, true));
+            _events.Publish(new RoverKitInstalling(fitting.Piece, false));
+        }
+
+        /// <summary>The tether ring's band: faint at rest, bright while the tether holds (written on change).</summary>
+        private void ApplyRingGlow()
+        {
+            KitFit fit = _fits[(int)RoverKitPiece.TetherRing];
+            KitSettings settings = _tuning.Kit;
+            float level = fit.Lights * (_tetherHolds ? settings.RingHoldGlow : settings.RingRestGlow);
+            if (Mathf.Abs(level - _ringLevel) < GlowEpsilon)
+            {
+                return;
+            }
+
+            _ringLevel = level;
+            _glowBlock.Clear();
+            _glowBlock.SetVector(EmissionColorId, new Vector4(level, level, level, 1f));
+            _ringGlow.SetPropertyBlock(_glowBlock);
         }
 
         /// <summary>A loaded game's piece: there at once, no moment, and announced as restored.</summary>
@@ -700,6 +736,7 @@ namespace MoonProject.Rover
             Place(_cargoRack, _fits[(int)RoverKitPiece.CargoRack], _rackScale);
             Place(_spine, _fits[(int)RoverKitPiece.BatterySpine], _spineScale);
             Place(_tapeDeck, _fits[(int)RoverKitPiece.TapeDeck], _deckScale);
+            Place(_tetherRing, _fits[(int)RoverKitPiece.TetherRing], _ringScale);
             Place(_solarCell, _fits[(int)RoverKitPiece.SolarCell], _cellScale);
             KitFit paint = _fits[(int)RoverKitPiece.FreshPaint];
             Place(_freshSerial, paint, _serialScale);
@@ -788,7 +825,9 @@ namespace MoonProject.Rover
             _tubesRestored?.Dispose();
             _partsFound?.Dispose();
             _partsDelivered?.Dispose();
-            _deckFound?.Dispose();
+            _portFitting?.Dispose();
+            _tetherAttached?.Dispose();
+            _tetherReleased?.Dispose();
         }
     }
 }

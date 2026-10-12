@@ -84,7 +84,7 @@
         },
         {
             "key": "next.lift.stitch",
-            "text": "The lift is stuck: stitch the cable."
+            "text": "The lift is stuck. Repair its cable."
         },
         {
             "key": "next.lift.ride",
@@ -219,6 +219,14 @@
             "text": "Dark. It wakes with the tower."
         },
         {
+            "key": "notyet.tether",
+            "text": "07's tether is gone. Kenji kept a spare in his garage."
+        },
+        {
+            "key": "ticker.listen.first",
+            "text": "07 listens when it rests. What still holds something answers."
+        },
+        {
             "key": "place.dock.name",
             "text": "Charging Dock"
         },
@@ -281,6 +289,14 @@
         {
             "key": "place.rack.job",
             "text": "Tapes you find play here: music and the crew's voices."
+        },
+        {
+            "key": "place.garage_port.name",
+            "text": "Kenji's Garage Port"
+        },
+        {
+            "key": "place.garage_port.job",
+            "text": "Fits 07's spare parts. Park on its pad."
         },
         {
             "key": "ui.blueprint.found",
@@ -349,10 +365,6 @@
         {
             "key": "ui.tower.purchased",
             "text": "The signal grows"
-        },
-        {
-            "key": "hint.ping",
-            "text": "Ping"
         },
         {
             "key": "hint.excavate",
@@ -580,7 +592,7 @@
         },
         {
             "key": "hint.repair",
-            "text": "Mend"
+            "text": "Repair"
         },
         {
             "key": "ui.card.log_caption",
@@ -636,7 +648,7 @@
         },
         {
             "key": "ticker.bell.signal",
-            "text": "Bell's picking something up… bearing {0}°."
+            "text": "Bell's picking something up. Her light points the way."
         },
         {
             "key": "ticker.bell.found_0",
@@ -720,7 +732,7 @@
         },
         {
             "key": "hint.restore",
-            "text": "Restore"
+            "text": "Repair"
         },
         {
             "key": "hint.hop",
@@ -732,7 +744,7 @@
         },
         {
             "key": "ticker.relay.waiting",
-            "text": "Relay restored. It listens for a lit neighbour."
+            "text": "Relay repaired. It listens for a lit neighbour."
         },
         {
             "key": "hop.node.home",
@@ -864,7 +876,11 @@
         },
         {
             "key": "kit.tape_deck.name",
-            "text": "An old tape deck, found with Tilly"
+            "text": "Ro's old tape deck"
+        },
+        {
+            "key": "kit.tether_ring.name",
+            "text": "Kenji's spare tether ring"
         },
         {
             "key": "ui.bay.fitted",
@@ -1321,6 +1337,10 @@
         {
             "key": "upgrade.rover.cell_pack.1.effect",
             "text": "Two more cells on 07's back: six lamps lit, and the far side of the basin in reach."
+        },
+        {
+            "key": "ticker.tether.back",
+            "text": "07 can hold things again."
         }
     ]
 }

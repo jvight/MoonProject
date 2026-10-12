@@ -17,7 +17,6 @@ namespace MoonProject.Core.Input
         private readonly InputAction _drive;
         private readonly InputAction _lookDelta;
         private readonly InputAction _lookRate;
-        private readonly InputAction _ping;
         private readonly InputAction _excavate;
         private readonly InputAction _tether;
         private readonly InputAction _winch;
@@ -36,7 +35,6 @@ namespace MoonProject.Core.Input
             _drive = _roverMap.FindAction("Drive", throwIfNotFound: true);
             _lookDelta = _roverMap.FindAction("LookDelta", throwIfNotFound: true);
             _lookRate = _roverMap.FindAction("LookRate", throwIfNotFound: true);
-            _ping = _roverMap.FindAction("Ping", throwIfNotFound: true);
             _excavate = _roverMap.FindAction("Excavate", throwIfNotFound: true);
             _tether = _roverMap.FindAction("Tether", throwIfNotFound: true);
             _winch = _roverMap.FindAction("Winch", throwIfNotFound: true);
@@ -56,8 +54,6 @@ namespace MoonProject.Core.Input
 
         /// <summary>Gamepad look stick, -1..1. Multiply by deltaTime and a rate.</summary>
         public Vector2 LookRate => _lookRate.ReadValue<Vector2>();
-
-        public bool PingPressed => _ping.WasPressedThisFrame();
 
         public bool ExcavateHeld => _excavate.IsPressed();
 
@@ -136,8 +132,6 @@ namespace MoonProject.Core.Input
         {
             switch (action)
             {
-                case RoverAction.Ping:
-                    return _ping;
                 case RoverAction.Excavate:
                     return _excavate;
                 case RoverAction.Tether:

@@ -27,7 +27,7 @@ namespace MoonProject.Art.Tests
         private const float LaneHeight = 0.4f;
 
         private const float KestrelLandmark = 6f;
-        private const int MinPieces = 4;
+        private const int MinPieces = 3;
         private const int MaxPieces = 8;
         private const float WeldGrid = 1e4f;
         private const float PivotSlack = 0.05f;
@@ -338,7 +338,7 @@ namespace MoonProject.Art.Tests
 
         private static readonly Dictionary<string, int[]> Yields = new Dictionary<string, int[]>
         {
-            { "depot", new[] { 5, 2, 2 } }, { "garage", new[] { 7, 7, 2 } }, { "kestrel", new[] { 2, 2, 9 } },
+            { "depot", new[] { 5, 2, 2 } }, { "garage", new[] { 4, 4, 2 } }, { "kestrel", new[] { 2, 2, 9 } },
             { "drill", new[] { 7, 7, 2 } },
         };
 

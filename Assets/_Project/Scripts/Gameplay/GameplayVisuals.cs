@@ -9,6 +9,12 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class GameplayVisuals : ScriptableObject
     {
+        /// <summary>Art's GaragePort node where a set-down piece rests.</summary>
+        public const string PortTrayNode = "Tray";
+
+        /// <summary>Art's GaragePort node where the fitting arm reaches from.</summary>
+        public const string PortArmTipNode = "ArmTip";
+
         [Tooltip("Expanding sonar ring on the ground (TechGlow, additive).")]
         [SerializeField] private Material _sonarRing;
 
@@ -67,8 +73,9 @@ namespace MoonProject.Gameplay
                  "a world anchor (docs/features/M3-21).")]
         [SerializeField] private GameObject _tube;
 
-        [Tooltip("Art's old tape deck (Generated/Art/Rover/Kit_TapeDeck.prefab): Tilly's glint on the ground (M3-24).")]
-        [SerializeField] private GameObject _tapeDeck;
+        [Tooltip("Art's garage service port (Generated/Art/Sites/GaragePort.prefab), with its Tray and ArmTip nodes " +
+                 "(first-hour v2 §3).")]
+        [SerializeField] private GameObject _garagePort;
 
         public Material SonarRing => _sonarRing;
         public Material SiteRing => _siteRing;
@@ -86,7 +93,7 @@ namespace MoonProject.Gameplay
         public Material HomeHalo => _homeHalo;
         public Material LinkPulse => _linkPulse;
         public GameObject Tube => _tube;
-        public GameObject TapeDeck => _tapeDeck;
+        public GameObject GaragePort => _garagePort;
 
         /// <summary>Art's station pad (StationPad_&lt;cm&gt;) whose radius is nearest <paramref name="radius"/>.</summary>
         public GameObject PadFor(float radius)
@@ -137,7 +144,7 @@ namespace MoonProject.Gameplay
                 : _components == null || Array.IndexOf(_components, null) >= 0
                     ? "Art's tower components are missing (run Gameplay/Materials)"
                 : _tube == null ? "Art's blueprint tube is missing (run Gameplay/Materials)"
-                : _tapeDeck == null ? "Art's tape deck is missing (run Gameplay/Materials)"
+                : _garagePort == null ? "Art's garage port is missing (run Gameplay/Materials)"
                 : null;
         }
 
@@ -157,9 +164,9 @@ namespace MoonProject.Gameplay
             _tube = tube;
         }
 
-        internal void PopulateTapeDeck(GameObject deck)
+        internal void PopulateGaragePort(GameObject port)
         {
-            _tapeDeck = deck;
+            _garagePort = port;
         }
 
         internal void Populate(Material sonarRing, Material siteRing, Material sitePillar, Material tractorBeam,

@@ -42,6 +42,18 @@ namespace MoonProject.Gameplay.Editor
             "depot", "kestrel", "drill", "garage", "lander",
         };
 
+        /// <summary>
+        /// Kenji's garage has three rich seams (first-hour v2 §4: one trip from a full battery), each worth this many
+        /// times its size's units, so the 2x economy holds.
+        /// </summary>
+        public const int GarageYieldScale = 2;
+
+        /// <summary>How many times its size's units each piece of site <paramref name="name"/> yields.</summary>
+        public static int YieldScale(string name)
+        {
+            return name == "garage" ? GarageYieldScale : 1;
+        }
+
         /// <summary>The site whose last cut reveals its heart (M3-16 P10: the supply depot).</summary>
         public const string HeartUnderPiecesSite = "depot";
 

@@ -45,7 +45,7 @@ namespace MoonProject.Gameplay
         public const int MapVersion = 1;
         public const string Battery = "gameplay.battery";
         public const int BatteryVersion = 1;
-        public const string TapeDeck = "gameplay.tape_deck";
-        public const int TapeDeckVersion = 1;
+        public const string GaragePort = "gameplay.garage_port";
+        public const int GaragePortVersion = 1;
     }
 }

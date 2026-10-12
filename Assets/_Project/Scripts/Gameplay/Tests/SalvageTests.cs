@@ -249,11 +249,13 @@ namespace MoonProject.Gameplay.Tests
                 Assert.IsNotNull(node.Find("CutPoint"), $"{name}/{node.name} has its cut point");
                 Mesh mesh = node.GetComponent<MeshFilter>().sharedMesh;
                 Vector3 size = Vector3.Scale(mesh.bounds.size, node.localScale);
-                yield[(int)material] += drag && !drags ? 0 : SalvageYield.Units(size, drag, tuning);
+                yield[(int)material] += drag && !drags
+                    ? 0
+                    : SalvageEconomy.YieldScale(name) * SalvageYield.Units(size, drag, tuning);
                 pieces++;
             }
 
-            Assert.That(pieces, Is.InRange(4, 8), $"{name}: 4 to 8 salvage points");
+            Assert.That(pieces, Is.InRange(3, 8), $"{name}: 3 to 8 salvage points (the garage's three rich seams)");
             return new Recipe(yield[0], yield[1], yield[2]);
         }
 

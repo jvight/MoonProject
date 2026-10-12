@@ -9,15 +9,16 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// Waking Lumen Station step by step (docs/features/M3-16, revised by M3-19 §7). Each frame it notes whether 07 has
     /// woken and gone out, greets 07 at each place the first time (<see cref="PlaceApproaches"/>; the lab once 07 is
-    /// up in it), lets the sleeping tower and bay answer the sonar with "not yet" (<see cref="DormantAnswers"/>) and
-    /// keeps the soft "next" line in two tiers (<see cref="StepFlow"/>, docs/features/M3-21 §3): the teaching steps in
-    /// order, then only the recovery targets' needs, Power before Link, naming only what the station has seen. Step 4
-    /// brings the first relic home, stitches the belly lift and rides it up to the keepsake shelf; step 5 wakes the
-    /// bay with the tower's second level and fits a kit. The chasm comes before the bay (P2): once Tilly is home and the
-    /// first memory is on the shelf, she spots Bell's light across the chasm (Bell's warm pillar rises); the first
-    /// time 07 reaches the lip without Hover-Jump it holds still and looks across while the light pulses. Coming home
-    /// to the dock with news opens the dock's evening (<see cref="DockEvening"/>, P6), whose listening sweep raises
-    /// the next signal pillar. Saved as "gameplay.progression".
+    /// up in it), lets the sleeping tower and bay say "not yet" as 07 comes near (<see cref="DormantAnswers"/>), gives
+    /// 07's first listen its one line, and keeps the soft "next" line in two tiers (<see cref="StepFlow"/>,
+    /// docs/features/M3-21 §3): the teaching steps in order, then only the recovery targets' needs, Power before
+    /// Link, naming only what the station has seen. Step 4 brings the first relic home, stitches the belly lift and
+    /// rides it up to the keepsake shelf; step 5 wakes the bay with the tower's second level and fits a kit. The chasm
+    /// comes before the bay (P2): once Tilly is home and the first memory is on the shelf, she spots Bell's light
+    /// across the chasm (Bell's warm pillar rises); the first time 07 reaches the lip without Hover-Jump it holds still
+    /// and looks across while the light pulses. Coming home to the dock with news opens the dock's evening
+    /// (<see cref="DockEvening"/>, P6), whose listening sweep raises the next signal pillar. Saved as
+    /// "gameplay.progression".
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class BaseProgression : MonoBehaviour
@@ -62,9 +63,11 @@ namespace MoonProject.Gameplay
         private RadioLetters _letters;
         private StepFlow _steps;
         private IDisposable _salvage;
+        private IDisposable _listens;
         private Vector3 _dock;
         private bool _woke;
         private bool _salvaged;
+        private bool _listened;
         private bool _initialized;
 
         public ProgressionTuning Tuning => _tuning;
@@ -133,11 +136,15 @@ namespace MoonProject.Gameplay
                     Speaks(Places[i], leap));
             }
 
-            _answers = new DormantAnswers(services.Events, sonar.Tuning);
+            _answers = new DormantAnswers(services.Events);
             Func<bool> homePowered = () => power.HasReached(BasePowerStage.Home);
-            _answers.Add(ProgressionKeys.NotYetTower, _places[TowerSpot].position, () => !homePowered());
-            _answers.Add(ProgressionKeys.NotYetBay, bay.transform.position, () => homePowered() && !bay.Awake);
+            _answers.Add(ProgressionKeys.NotYetTower, _places[TowerSpot].position,
+                _tuning.RadiusOf(ProgressionKeys.PlaceTower), () => !homePowered());
+            _answers.Add(ProgressionKeys.NotYetBay, bay.transform.position, _tuning.RadiusOf(ProgressionKeys.PlaceBay),
+                () => homePowered() && !bay.Awake);
             _salvage = services.Events.Subscribe<MaterialSalvaged>(_ => _salvaged = true);
+            EventBus events = services.Events;
+            _listens = events.Subscribe<SonarPinged>(_ => OnListened(events));
             _evening = new DockEvening(services.Events, _tuning.EveningSweepDelay, _tuning.EveningCompletionHold);
             _letters = new RadioLetters(services.Events, _tuning.SingleLetterMasts, _tuning.LettersAfter,
                 _tuning.LetterCount);
@@ -230,7 +237,8 @@ namespace MoonProject.Gameplay
         {
             return new ProgressionSaveData
             {
-                woke = _woke, salvaged = _salvaged, chasmSeen = _chasmSeen, places = _approaches.Capture(),
+                woke = _woke, salvaged = _salvaged, chasmSeen = _chasmSeen, listened = _listened,
+                places = _approaches.Capture(),
             };
         }
 
@@ -239,6 +247,7 @@ namespace MoonProject.Gameplay
             _woke = data.woke;
             _salvaged = data.salvaged;
             _chasmSeen = data.chasmSeen;
+            _listened = data.listened;
             _approaches.Restore(data.places);
         }
 
@@ -253,7 +262,7 @@ namespace MoonProject.Gameplay
             Vector3 rover = _rover.Position;
             _woke |= SurfaceRules.HorizontalDistance(rover, _dock) > _tuning.WakeDistance;
             _approaches.Tick(rover, now);
-            _answers.Tick(now);
+            _answers.Tick(rover);
             StepChasm(rover, now);
             _letters.Tick();
             if (_evening.Tick(now))
@@ -289,6 +298,18 @@ namespace MoonProject.Gameplay
             {
                 EndLook();
             }
+        }
+
+        /// <summary>07's first listen ever puts one line on the ticker (first-hour v2 §3); saved: once.</summary>
+        private void OnListened(EventBus events)
+        {
+            if (_listened)
+            {
+                return;
+            }
+
+            _listened = true;
+            events.Publish(new TickerLine(ProgressionKeys.FirstListen));
         }
 
         private void EndLook()
@@ -371,7 +392,7 @@ namespace MoonProject.Gameplay
         private void OnDestroy()
         {
             _salvage?.Dispose();
-            _answers?.Dispose();
+            _listens?.Dispose();
             _evening?.Dispose();
             _letters?.Dispose();
             if (_looking)

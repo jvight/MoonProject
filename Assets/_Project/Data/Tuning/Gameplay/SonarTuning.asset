@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b29047d900c85c04384ea3b4587795e2, type: 3}
   m_Name: SonarTuning
   m_EditorClassIdentifier: 
-  _cooldown: 2.5
-  _inputBuffer: 0.6
+  _restSeconds: 2
+  _restSpeed: 0.3
+  _listenSpacing: 30
   _range: 140
   _ringDuration: 5
   _ringWidth: {x: 0.6, y: 2.8}

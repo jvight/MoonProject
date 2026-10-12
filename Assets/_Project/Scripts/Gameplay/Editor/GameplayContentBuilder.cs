@@ -242,7 +242,7 @@ namespace MoonProject.Gameplay.Editor
                     : AbilityGate.Open;
                 sites[i] = new SalvageSiteEntry(SalvageEconomy.SiteId(names[i]),
                     LoadArt(GameplayAssetPaths.SitePrefab(names[i])), gate,
-                    names[i] == SalvageEconomy.HeartUnderPiecesSite);
+                    names[i] == SalvageEconomy.HeartUnderPiecesSite, SalvageEconomy.YieldScale(names[i]));
             }
 
             var catalog = ScriptableObject.CreateInstance<SalvageCatalog>();

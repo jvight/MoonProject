@@ -153,12 +153,21 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public RelayTuning RelayTuning { get; private set; }
 
-        /// <summary>Builds and boots everything; 07 starts at the base facing +Z.</summary>
+        /// <summary>
+        /// Builds and boots everything; 07 starts at the base facing +Z, its tether already fitted unless
+        /// <paramref name="tether"/> is false (Kenji's garage port's own tests earn it).
+        /// </summary>
         /// <param name="cargoSeat">False boots a rover that registers no cargo seat (the boot check's test).</param>
-        public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null, bool cargoSeat = true)
+        public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null, bool cargoSeat = true,
+            bool tether = true)
         {
             var fixture = new GameplayFixture(controls, saveSlot ?? BootstrapHarness.NewTestSlot(), cargoSeat);
             fixture.Build();
+            if (tether)
+            {
+                fixture.Rover.Grant(RoverAbility.Tether);
+            }
+
             return fixture;
         }
 
@@ -366,7 +375,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Template("Part_RelaySpare", new Vector3(0.4f, 0.3f, 0.5f)),
             });
             visuals.PopulateTube(Template("BlueprintTube", new Vector3(0.7f, 0.14f, 0.14f)));
-            visuals.PopulateTapeDeck(Template("Kit_TapeDeck", new Vector3(0.1f, 0.14f, 0.28f)));
+            visuals.PopulateGaragePort(PortTemplate());
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
             Gameplay = root.AddComponent<GameplaySystem>();
@@ -602,7 +611,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 string name = SiteNames[i];
                 sites[i] = new SalvageSiteEntry(WorldAnchorIds.SitePrefix + name, SiteModel(name, name == "depot"),
-                    name == "lander" ? new AbilityGate(true, RoverAbility.HoverJump) : AbilityGate.Open, false);
+                    name == "lander" ? new AbilityGate(true, RoverAbility.HoverJump) : AbilityGate.Open, false, 1);
             }
 
             var catalog = Asset<SalvageCatalog>();
@@ -921,6 +930,19 @@ namespace MoonProject.Gameplay.PlayModeTests
             block.transform.localPosition = localPosition;
             block.transform.localScale = size;
             return block.transform;
+        }
+
+        /// <summary>A stand-in for Art's GaragePort with its Tray and ArmTip nodes.</summary>
+        private GameObject PortTemplate()
+        {
+            GameObject port = Template("GaragePort", new Vector3(2.6f, 1.6f, 0.12f));
+            var tray = new GameObject(GameplayVisuals.PortTrayNode);
+            tray.transform.SetParent(port.transform, false);
+            tray.transform.localPosition = new Vector3(-0.85f, 0.65f, 0.45f);
+            var arm = new GameObject(GameplayVisuals.PortArmTipNode);
+            arm.transform.SetParent(port.transform, false);
+            arm.transform.localPosition = new Vector3(0.9f, 1.35f, 1.3f);
+            return port;
         }
 
         private GameObject Template(string name, Vector3 size)

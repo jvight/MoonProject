@@ -125,6 +125,9 @@ namespace MoonProject.Rover.PlayModeTests
         /// <summary>The stand-in Kit_TapeDeck on DeckSocket (left flank).</summary>
         public Transform TapeDeck { get; private set; }
 
+        /// <summary>The stand-in Kit_TetherRing on the Eye and its Glow band.</summary>
+        public Transform TetherRing { get; private set; }
+
         /// <summary>The tower story part stand-ins on TubeSocket, in <see cref="StoryParts"/> order.</summary>
         public Transform[] StoryPartNodes { get; private set; }
 
@@ -295,6 +298,10 @@ namespace MoonProject.Rover.PlayModeTests
             deckSocket.localRotation = Quaternion.Euler(0f, 180f, 0f);
             Transform deck = Node("Kit_TapeDeck", deckSocket, Vector3.zero);
             Shape(PrimitiveType.Cube, deck, new Vector3(0.05f, 0f, 0f), new Vector3(0.07f, 0.13f, 0.27f), material);
+            Transform tetherRing = Node("Kit_TetherRing", model, new Vector3(0f, 1.3f, 0.8f));
+            Transform ringGlow = Shape(PrimitiveType.Cylinder, tetherRing, Vector3.zero,
+                new Vector3(0.3f, 0.01f, 0.3f), material);
+            ringGlow.name = RoverModelNodes.RingGlow;
             Transform cell = Shape(PrimitiveType.Cube, wing, new Vector3(0.1f, 0.02f, -0.1f),
                 new Vector3(0.15f, 0.01f, 0.15f), material);
             cell.name = RoverModelNodes.CellFilled;
@@ -338,7 +345,8 @@ namespace MoonProject.Rover.PlayModeTests
             Assign(rig, ("_tuning", rigTuning), ("_chassis", chassis), ("_bogieLeft", bogieLeft),
                 ("_bogieRight", bogieRight), ("_antenna", antenna));
             Assign(kit, ("_tuning", rigTuning), ("_headlamp", headlamp), ("_lampBar", lampBar), ("_cargoRack", rack),
-                ("_spine", spine), ("_tapeDeck", deck),
+                ("_spine", spine), ("_tapeDeck", deck), ("_tetherRing", tetherRing),
+                ("_ringGlow", ringGlow.GetComponent<MeshRenderer>()),
                 ("_relicSeat", seat), ("_solarCell", cell), ("_freshSerial", serial), ("_pennant", pennant),
                 ("_tube", tube));
             AssignArray(kit, "_lamps", lamps);
@@ -401,6 +409,7 @@ namespace MoonProject.Rover.PlayModeTests
                 DrumGlows = drumGlows,
                 CargoRack = rack,
                 TapeDeck = deck,
+                TetherRing = tetherRing,
                 StoryPartNodes = parts,
                 RelicSeat = seat,
                 CellFilled = cell,
