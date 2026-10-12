@@ -50,6 +50,7 @@ namespace MoonProject.UI
 
         [Tooltip("The title's Lunarion wordmark (Generated/UI/Wordmark.asset, built by UI/Wordmark).")]
         [SerializeField] private WordmarkShape _wordmark;
+        [SerializeField] private TextAsset _credits;
 
         private readonly List<IDisposable> _tokens = new List<IDisposable>();
         private readonly JourneyNotice _journey = new JourneyNotice();
@@ -75,7 +76,6 @@ namespace MoonProject.UI
         private NextLineView _nextLine;
         private BatteryDial _batteryDial;
         private HomeMeter _homeMeter;
-        private AbilitySlots _abilitySlots;
         private bool _cellRowRevealed;
         private PlaceCard _placeCard;
         private SaveTick _saveTick;
@@ -84,10 +84,11 @@ namespace MoonProject.UI
         private RecipeCard _recipeCard;
         private TetherReticle _reticle;
         private ContextPrompt _prompt;
-        private MaterialsChip _chip;
+        private PickupFeed _pickups;
         private SalvageRing _salvageRing;
         private SiteNameTag _siteName;
         private MemoryCard _card;
+        private RewardCard _rewardCard;
         private TickerQueue _tickerLines;
         private int _tickerStartsAnnounced;
         private EventBus _events;
@@ -131,7 +132,7 @@ namespace MoonProject.UI
 
         internal TetherReticle Reticle => _reticle;
 
-        internal MaterialsChip Chip => _chip;
+        internal PickupFeed Pickups => _pickups;
 
         internal SalvageRing SalvageRing => _salvageRing;
 
@@ -157,6 +158,8 @@ namespace MoonProject.UI
 
         internal KitTitle KitTitle => _kitTitle;
 
+        internal RewardCard RewardCard => _rewardCard;
+
 
         internal FriendReadout FriendReadout => _friendReadout;
 
@@ -181,8 +184,6 @@ namespace MoonProject.UI
 
         internal HomeMeter HomeMeter => _homeMeter;
 
-        internal AbilitySlots AbilitySlots => _abilitySlots;
-
         internal VerbList Verbs => _verbs;
 
         internal UiLayout Layout => _layout;
@@ -194,9 +195,13 @@ namespace MoonProject.UI
         /// <summary>What confirming Quit does; tests replace it so the editor keeps running.</summary>
         internal Action QuitAction { get; set; } = Application.Quit;
 
+        /// <summary>The screen the Display page drives (Unity's, unless a test hands in its own).</summary>
+        internal IDisplayControl DisplayControl { get; set; } = new UnityDisplayControl();
+
         internal void Wire(UIDocument document, UiTuning tuning, RelicCatalog relics, TextAsset[] stringTables,
-            WordmarkShape wordmark)
+            WordmarkShape wordmark, TextAsset credits)
         {
+            _credits = credits;
             _document = document;
             _wordmark = wordmark;
             _tuning = tuning;
@@ -281,6 +286,7 @@ namespace MoonProject.UI
                 : Array.IndexOf(_stringTables, null) >= 0 ? "a string table slot is empty."
                 : _tuning.Validate() != null ? "UiTuning " + _tuning.Validate() + "."
                 : _wordmark == null ? "the WordmarkShape is not assigned (run UI/Wordmark)."
+                : _credits == null ? "the credits asset is not assigned."
                 : _wordmark.Validate() != null ? "the wordmark " + _wordmark.Validate() + "."
                 : null;
             if (problem == null)
@@ -306,7 +312,7 @@ namespace MoonProject.UI
             _numbers = new IntText(CachedNumbers);
             _ledger = new PromptLedger(_tuning.Prompts);
             _director = new PromptDirector(_tuning.Prompts, _ledger);
-            _player = new PlayerSettings(services.Audio, services.Look, services.Feel, _localization,
+            _player = new PlayerSettings(services.Audio, services.Look, services.Feel, DisplayControl, _localization,
                 _tuning.Pause);
             _cursor = new CursorPolicy();
             _glyphs = new GlyphLabels(services.Input, _localization);
@@ -328,6 +334,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RoverAwoke>(OnRoverAwoke));
             _tokens.Add(events.Subscribe<TitleShown>(OnTitleShown));
             _tokens.Add(events.Subscribe<FeelBeat>(OnFeelBeat));
+            _tokens.Add(events.Subscribe<UpgradePurchased>(OnUpgradePurchased));
             _tokens.Add(events.Subscribe<GameSaved>(OnGameSaved));
             _tokens.Add(events.Subscribe<StationNotYet>(OnStationNotYet));
             _tokens.Add(events.Subscribe<StargazingChanged>(OnStargazingChanged));
@@ -411,8 +418,6 @@ namespace MoonProject.UI
             _nextLine = new NextLineView(_layout, _tuning.Guidance, _localization);
             _batteryDial = new BatteryDial(_layout, _tuning.Battery, services.Battery, services.Beam);
             _homeMeter = new HomeMeter(_layout, _tuning.HomeMeter, services.Rover, services.World, _localization);
-            _abilitySlots = new AbilitySlots(_layout, _tuning.AbilitySlots, services.Abilities, services.Tether,
-                services.Rover);
             _saveTick = new SaveTick(_layout, _tuning.SaveTick);
             _placeCard = new PlaceCard(_layout, _tuning.Guidance, _localization, services.Events);
             _protocol = new ProtocolReadout(_layout.Hud, _tuning.Guidance, _localization, services.Recovery);
@@ -420,16 +425,16 @@ namespace MoonProject.UI
                 services.Materials, services.RecipeLook);
             _reticle = new TetherReticle(_layout.Reticle, _layout.ReticleRest, _layout.ReticleHover, _tuning.Reticle);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
-                services.Events);
-            _chip = new MaterialsChip(_layout, _tuning.MaterialsChip, _numbers, services.Events);
+                services.Events, new[] { _layout.RecipeCardRoot, _layout.TowerPanel });
+            _pickups = new PickupFeed(_layout, _tuning.PickupFeed, _numbers, _localization, services.Events);
             IMaterialStock stock = services.Materials;
-            _chip.Change(stock.Metal, stock.Wiring, stock.Optics);
+            _pickups.Change(stock.Metal, stock.Wiring, stock.Optics);
             _salvageRing = new SalvageRing(_layout, _tuning.Salvage, _tuning.Prompts, services.Salvage, services.View);
             _siteName = new SiteNameTag(_layout, _tuning.Salvage, _tuning.Prompts, _localization, services.View);
             _card = new MemoryCard(_layout, _tuning.MemoryCard, _localization, services.Events, _relics,
                 services.Friends);
             _friendReadout = new FriendReadout(_layout, _tuning.Friends, _tuning.Prompts, services.Friends,
-                services.Rover, services.View);
+                services.Rover, services.View, _localization);
             _friendName = new FriendNameTag(_layout, _tuning.Friends, _tuning.Prompts, services.Friends,
                 _localization, services.View);
             _ticker = new RadioTicker(_layout, _tuning.Ticker, _tickerLines);
@@ -441,9 +446,11 @@ namespace MoonProject.UI
             _tower = new TowerPanel(_layout, _tuning.TowerPanel, _localization, services.Events, services.Shop,
                 services.Board, services.Materials, services.Hints, _numbers);
             _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
+            _rewardCard = new RewardCard(_layout, _tuning.RewardCard, _localization, services.Shop);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
-                services.Events, _settings, services.Materials, services.Radio, services.Relays, services.Flow,
-                _numbers, _cursor, Quit);
+                services.Events, _settings, services.Radio, services.Relays, services.Flow,
+                _numbers, _cursor, Quit,
+                new CreditsView(_layout, _tuning.Credits, _localization, _credits.text));
             _verbs = new VerbList(_layout, _tuning.Prompts, _ledger, _glyphs, _localization);
             _textScale = new TextScale(_document.panelSettings);
             _backdrop = new BackdropBlur(transform, _tuning.Backdrop);
@@ -525,13 +532,13 @@ namespace MoonProject.UI
             bool hopping = _services.Hop.Phase >= RadioHopPhase.Leaving || _hopFade.IsVisible;
             _reticle.Tick(deltaTime, _services.Tether.State, input.TetherHeld);
             _card.Tick(hudTime, _glyphs.Cancel(device), device,
-                !_ticker.IsVisible && !hopping && !_hopList.IsBusy && !_placeCard.IsVisible && !_prompt.IsVisible);
+                !_ticker.IsVisible && !hopping && !_hopList.IsBusy && !_placeCard.IsVisible && !_prompt.IsVisible &&
+                !_rewardCard.IsVisible);
             _tower.Tick(hudTime, !paused, input.ExcavateHeld, input.Winch,
                 _services.Tether.State == TetherAimState.Towing, _glyphs.For(RoverAction.Excavate, device), device);
             _kitTitle.Tick(hudTime, !_placeCard.IsVisible);
-            bool materialMet = _ledger.Met(HudVerb.Material) || _services.Materials.Total > 0;
-            _chip.SetPinned(materialMet && (_tower.IsVisible || _relayTag.IsVisible));
-            _chip.Tick(deltaTime);
+            _rewardCard.Tick(hudTime, !_placeCard.IsVisible && !_kitTitle.IsVisible && !_card.IsVisible);
+            _pickups.Tick(deltaTime);
             bool cutting = _services.Salvage.IsCutting;
             if (cutting && !_wasCutting)
             {
@@ -551,7 +558,8 @@ namespace MoonProject.UI
                 _prompt.StackHeight(InteractionKind.Repair, _tuning.Friends.StackGap));
             _friendName.Tick(hudTime, panelSize);
             _siteName.Tick(hudTime, panelSize, !_prompt.IsVisible && !_placeCard.IsVisible &&
-                                               !_lookUpChip.IsVisible && !_ticker.IsVisible && !_kitTitle.IsVisible);
+                                               !_lookUpChip.IsVisible && !_ticker.IsVisible && !_kitTitle.IsVisible &&
+                                               !_rewardCard.IsVisible);
             // A standing prompt gives way to a waiting card or site name: those moments pass, the prompt returns.
             bool promptsOpen = !paused && _awake && _sinceAwake >= _tuning.Prompts.StartDelay &&
                                !_card.IsBusy && !_tower.IsVisible && !_dial.IsBusy && !_hopList.IsBusy && !hopping &&
@@ -575,7 +583,7 @@ namespace MoonProject.UI
             bool tickerOpen = _awake && !_card.IsBusy && !_digging && !cutting &&
                               !_prompt.IsVisible && !_reticle.IsVisible && !_dial.IsBusy && !_hopList.IsBusy &&
                               !hopping && !_placeCard.IsVisible && !_siteName.IsVisible && !_lookUpChip.IsVisible &&
-                              !_kitTitle.IsVisible;
+                              !_kitTitle.IsVisible && !_rewardCard.IsVisible && !_rewardCard.IsWaiting;
             _ticker.Tick(hudTime, tickerOpen);
             if (_tickerLines.Starts != _tickerStartsAnnounced)
             {
@@ -600,16 +608,16 @@ namespace MoonProject.UI
             _lookUpChip.Tick(deltaTime, paused ? HintWord.None : hint, device);
             _nextStep.Tick(hudTime, _services.Rover.Speed, _player.Guidance);
             _placeCard.Tick(hudTime, _awake && !_protocol.IsVisible && !_kitTitle.IsVisible && !_card.IsVisible &&
+                                     !_rewardCard.IsVisible &&
                                      !_prompt.IsVisible && !_ticker.IsVisible && !_siteName.IsVisible &&
                                      !_lookUpChip.IsVisible);
             _nextLine.Tick(deltaTime, _nextStep, !paused && _awake && !_card.IsVisible &&
                                                  !_tower.IsVisible && !_stargaze.IsVeiled &&
-                                                 !_placeCard.IsVisible && !_protocol.IsVisible);
+                                                 !_placeCard.IsVisible && !_protocol.IsVisible &&
+                                                 !_rewardCard.IsVisible);
             bool hudOpen = !paused && _awake && !_stargaze.IsVeiled && !onMap;
             _batteryDial.Tick(deltaTime, _cellRowRevealed, hudOpen);
             _homeMeter.Tick(deltaTime, hudOpen && !_card.IsVisible);
-            _abilitySlots.Tick(deltaTime, hudOpen && !_card.IsVisible && !_tower.IsVisible && !_dial.IsBusy &&
-                                          !_hopList.IsBusy && !_lookUpChip.IsVisible);
         }
 
         /// <summary>The cell row exists from the first time the charge dropped below its reveal share.</summary>
@@ -632,7 +640,7 @@ namespace MoonProject.UI
                     _ledger.RecordMet(HudVerb.Material);
                 }
 
-                _chip.Change(changed.Metal, changed.Wiring, changed.Optics);
+                _pickups.Change(changed.Metal, changed.Wiring, changed.Optics);
             }
         }
 
@@ -708,6 +716,15 @@ namespace MoonProject.UI
             if (_bound)
             {
                 _salvageRing.OnBeat(beat);
+                _rewardCard.OnBeat(beat);
+            }
+        }
+
+        private void OnUpgradePurchased(UpgradePurchased purchased)
+        {
+            if (_bound)
+            {
+                _rewardCard.Purchased(purchased.UpgradeId, purchased.Level);
             }
         }
 
@@ -948,6 +965,9 @@ namespace MoonProject.UI
             _friendName.Relocalize();
             _tower.Relocalize();
             _kitTitle.Relocalize();
+            _pickups.Relocalize();
+            _friendReadout.Relocalize();
+            _rewardCard.Relocalize();
             _relayTag.Relocalize();
             _siteName.Relocalize();
             _pause.Relocalize();

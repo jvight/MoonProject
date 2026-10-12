@@ -14,6 +14,12 @@ namespace MoonProject.World
         private const string ReflectorName = "Reflector";
         private const string LampName = "Lamp";
         private const uint DishSalt = 0x68E31DA4u;
+        private const uint VentSalt = 0x3C6EF372u;
+        private const int VentDiscSegments = 12;
+        private const float VentLift = 0.05f;
+
+        // The patches at the field's edge keep this much less strength than those at the vent.
+        private const float VentEdgeFade = 0.6f;
 
         // The dish frames lie around the farm's centre a little off even spacing, between half and all of the spread.
         private const float DishAngleJitter = 0.4f;
@@ -36,6 +42,34 @@ namespace MoonProject.World
             PlaceRoutePosts(root.transform, surface, settings, prefabs.RoutePost, block, hideFlags);
             PlaceBridge(root.transform, surface, anchors, settings, prefabs, block, hideFlags);
             PlaceAntennaFarm(root.transform, surface, anchors, settings, seed, prefabs.DishFrames, hideFlags);
+        }
+
+        /// <summary>
+        /// The old vent's field of orange glass beads (M3-27): soft orange patches pressed into the dust round
+        /// place.orange_vent, thickest at the vent, readable across the basin. Not harvestable before 0.6.
+        /// </summary>
+        public static Mesh BuildVentField(MoonSurface surface, IWorldAnchors anchors, LandmarkSettings settings,
+            int seed)
+        {
+            WorldAnchor vent = Require(anchors, WorldAnchorIds.PlaceOrangeVent);
+            uint ventSeed = Hashing.Mix((uint)seed ^ VentSalt);
+            var marks = new GroundMarkMesh();
+            Func<float, float, float> height = (x, z) => surface.Sample(x, z).Height;
+            float spread = vent.Radius * settings.VentSpread;
+            for (int i = 0; i < settings.VentPatches; i++)
+            {
+                // Uniform in reach, so the patches crowd round the vent and thin out toward the field's edge.
+                float reach = spread * Hashing.ToUnit(Hashing.Hash(i, 0, ventSeed));
+                float angle = Hashing.ToUnit(Hashing.Hash(i, 1, ventSeed)) * Mathf.PI * 2f;
+                float radius = Mathf.Lerp(settings.VentPatchRadius.x, settings.VentPatchRadius.y,
+                    Hashing.ToUnit(Hashing.Hash(i, 2, ventSeed)));
+                var centre = new Vector3(vent.Position.x + Mathf.Cos(angle) * reach, 0f,
+                    vent.Position.z + Mathf.Sin(angle) * reach);
+                float strength = settings.VentStrength * (1f - Mathf.Sqrt(reach / Mathf.Max(spread, 1e-3f)) * VentEdgeFade);
+                marks.AddDisc(centre, radius, strength, VentDiscSegments, VentLift, height);
+            }
+
+            return marks.ToMesh("VentBeads");
         }
 
         private static void PlaceRoutePosts(Transform root, MoonSurface surface, LandmarkSettings settings,

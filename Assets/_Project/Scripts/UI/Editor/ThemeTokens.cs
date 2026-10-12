@@ -14,17 +14,18 @@ namespace MoonProject.UI.Editor
     internal static class ThemeTokens
     {
         // Declared before Tokens: static fields initialise in order, so the table must see these set.
-        private static readonly Color32 GlassText = new Color32(230, 240, 255, 255);
+        private static readonly Color32 GlassText = new Color32(244, 249, 255, 255);
         private static readonly Color32 White = new Color32(255, 255, 255, 255);
-        private static readonly Color32 GlassFill = new Color32(40, 66, 140, 255);
+        private static readonly Color32 GlassFill = new Color32(24, 42, 110, 255);
         private static readonly Color32 GlassRim = new Color32(150, 196, 255, 255);
         private static readonly Color32 GlassRimGlow = new Color32(110, 170, 255, 255);
         private static readonly Color32 GlassRing = new Color32(143, 208, 255, 255);
         private static readonly Color32 GlassSelection = new Color32(255, 198, 90, 255);
         private static readonly Color32 GlassSelectionText = new Color32(42, 26, 0, 255);
-        private static readonly Color32 GlassBar = new Color32(70, 120, 220, 255);
-        private static readonly Color32 GlassButton = new Color32(88, 140, 230, 255);
-        private static readonly Color32 GlassBubble = new Color32(64, 104, 190, 255);
+        private static readonly Color32 GlassDeep = new Color32(10, 18, 54, 255);
+        private static readonly Color32 GlassBar = new Color32(34, 62, 142, 255);
+        private static readonly Color32 GlassButton = new Color32(30, 56, 132, 255);
+        private static readonly Color32 GlassBubble = new Color32(44, 76, 160, 255);
         private static readonly Color32 GlassVeil = new Color32(10, 16, 40, 255);
 
         private static readonly Token[] Tokens =
@@ -40,7 +41,7 @@ namespace MoonProject.UI.Editor
             new Token("--moon-text", GlassText, 1f),
             new Token("--moon-text-dim", GlassText, 0.78f),
             new Token("--moon-text-faint", GlassText, 0.5f),
-            new Token("--moon-glass", GlassFill, 0.62f),
+            new Token("--moon-glass", GlassFill, 0.82f),
             new Token("--moon-plate", PaletteSwatch.SkyTop, 0.72f),
             new Token("--moon-glass-edge", GlassRim, 0.85f),
             new Token("--moon-veil", GlassVeil, 0.3f),
@@ -57,9 +58,10 @@ namespace MoonProject.UI.Editor
             new Token("--glass-sel", GlassSelection, 1f),
             new Token("--glass-sel-text", GlassSelectionText, 1f),
             new Token("--glass-sel-glow", GlassSelection, 0.55f),
-            new Token("--glass-bar", GlassBar, 0.65f),
-            new Token("--glass-btn", GlassButton, 0.45f),
-            new Token("--glass-bubble", GlassBubble, 0.85f),
+            new Token("--glass-bar", GlassBar, 0.86f),
+            new Token("--glass-deep", GlassDeep, 0.86f),
+            new Token("--glass-btn", GlassButton, 0.86f),
+            new Token("--glass-bubble", GlassBubble, 0.86f),
         };
 
         /// <summary>The token stylesheet (deterministic text).</summary>

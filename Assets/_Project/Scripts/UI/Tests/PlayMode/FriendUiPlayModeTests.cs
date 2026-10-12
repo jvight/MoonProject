@@ -83,6 +83,8 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual("Repair", _rig.Ui.Layout.PromptWord.text);
             Assert.AreEqual("E", _rig.Ui.Layout.PromptGlyphLabel.text);
             Assert.IsTrue(_rig.Ui.FriendReadout.IsVisible);
+            StringAssert.Contains(_rig.Ui.Localization.Get(UiKeys.FriendName("tilly")), _rig.Ui.Layout.FriendPartsLabel.text,
+                "the pips say whose parts they are and how many");
             Rect readout = _rig.Ui.Layout.FriendReadout.worldBound;
             Rect prompt = _rig.Ui.Layout.Prompt.worldBound;
             Assert.LessOrEqual(readout.yMax, prompt.yMin + 1f, "the full pips rest on top of the prompt, not under it");
@@ -109,13 +111,15 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual("Tilly", _rig.Ui.Layout.FriendNameText.text);
             Assert.IsTrue(_rig.Ui.Card.IsVisible);
             Assert.AreEqual("tilly", _rig.Ui.Card.Current);
-            Assert.AreEqual("From Tilly's memory", _rig.Ui.Layout.MemoryCardCaption.text);
+            Assert.AreEqual(string.Format(_rig.Ui.Localization.Get(UiKeys.LogCaption), "Tilly"),
+                _rig.Ui.Layout.MemoryCardCaption.text);
             Assert.AreEqual("Tilly", _rig.Ui.Layout.MemoryCardName.text);
             StringAssert.StartsWith("Walked the rim at sunrise", _rig.Ui.Layout.MemoryCardText.text);
 
             _rig.Ui.Localization.SetLanguage("vi");
             yield return null;
-            Assert.AreEqual("Từ ký ức của Tilly", _rig.Ui.Layout.MemoryCardCaption.text, "the card changes in place");
+            Assert.AreEqual(string.Format(_rig.Ui.Localization.Get(UiKeys.LogCaption), "Tilly"),
+                _rig.Ui.Layout.MemoryCardCaption.text, "the card changes in place");
 
             Tilly(FriendState.Awake, 3, Site + Vector3.up * 2f);
             yield return Seconds(_rig.Tuning.Friends.NameHoldSeconds + _rig.Tuning.Friends.Name.FadeOut + 0.5f);

@@ -26,9 +26,15 @@ namespace MoonProject.UI
         private readonly Label _word;
         private readonly VisualElement _chip;
         private readonly GlyphView _glyph;
+        private readonly VisualElement[] _cards;
+        private readonly float _cardGap;
+        private readonly float _screenMargin;
+        private readonly float _followHalfLife;
+        private float _lift;
 
+        /// <param name="cards">The cards the prompt keeps clear of when its point sits under one.</param>
         public ContextPrompt(UiLayout layout, PromptSettings settings, PromptDirector director, IViewCamera view,
-            GlyphLabels labels, ILocalization localization, EventBus events)
+            GlyphLabels labels, ILocalization localization, EventBus events, VisualElement[] cards)
         {
             if (layout == null)
             {
@@ -44,6 +50,10 @@ namespace MoonProject.UI
             _labels = labels ?? throw new ArgumentNullException(nameof(labels));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _events = events ?? throw new ArgumentNullException(nameof(events));
+            _cards = cards ?? throw new ArgumentNullException(nameof(cards));
+            _cardGap = settings.CardGap;
+            _screenMargin = settings.ScreenMargin;
+            _followHalfLife = settings.FollowHalfLife;
             int kinds = 0;
             foreach (InteractionKind kind in Enum.GetValues(typeof(InteractionKind)))
             {
@@ -98,14 +108,19 @@ namespace MoonProject.UI
             {
                 if (_director.Started)
                 {
-                    _word.text = _localization.Get(_wordKeys[(int)entry.Kind]);
+                    WriteWord(entry);
                 }
 
                 _glyph.Set(_labels.For(entry.Action, device), device);
             }
 
-            bool onScreen = entry != null && _anchor.Track(_director.WorldPoint, panelSize, deltaTime,
-                _director.Started || _reveal.IsHidden);
+            bool snap = _director.Started || _reveal.IsHidden;
+            bool onScreen = entry != null && _anchor.Track(_director.WorldPoint, panelSize, deltaTime, snap);
+            if (onScreen)
+            {
+                ClearCards(panelSize, deltaTime, snap);
+            }
+
             bool wasHidden = _reveal.IsHidden;
             _reveal.Set(_director.WantsShown && onScreen);
             if (wasHidden && _reveal.Target)
@@ -116,14 +131,57 @@ namespace MoonProject.UI
             _reveal.Tick(deltaTime);
         }
 
+        /// <summary>Eases the prompt up (or down) off any card it would sit over, and back when the card goes.</summary>
+        private void ClearCards(Vector2 panelSize, float deltaTime, bool snap)
+        {
+            float width = _chip.resolvedStyle.width;
+            float height = _chip.resolvedStyle.height;
+            if (float.IsNaN(width) || width <= 0f || float.IsNaN(height))
+            {
+                return;
+            }
+
+            // Placed from the anchor and the chip's size, not its world bound: the chip hangs from the anchor by a
+            // percentage translate, which the world bound only knows a layout later.
+            Vector2 foot = _anchor.Screen;
+            var chip = new Rect(foot.x - width * 0.5f, foot.y - height, width, height);
+            var screen = new Rect(Vector2.zero, panelSize);
+            float target = 0f;
+            for (int i = 0; i < _cards.Length; i++)
+            {
+                if (_cards[i].resolvedStyle.display == DisplayStyle.None)
+                {
+                    continue;
+                }
+
+                float lift = PromptClearance.Lift(chip, _cards[i].worldBound, _cardGap, screen, _screenMargin);
+                chip.y -= lift;
+                target += lift;
+            }
+
+            _lift = snap ? target
+                : ScreenAnchor.Follow(new Vector2(0f, _lift), new Vector2(0f, target), _followHalfLife, deltaTime).y;
+            _anchor.Lift = _lift;
+        }
+
         /// <summary>Re-reads the word in the new language (a prompt on screen changes in place).</summary>
         public void Relocalize()
         {
             PromptEntry entry = _director.Entry;
             if (entry != null)
             {
-                _word.text = _localization.Get(_wordKeys[(int)entry.Kind]);
+                WriteWord(entry);
             }
+        }
+
+        /// <summary>The verb's word, then what it acts on when the hint names one ("Pick up Tower Coil").</summary>
+        private void WriteWord(PromptEntry entry)
+        {
+            string verb = _localization.Get(_wordKeys[(int)entry.Kind]);
+            string noun = _director.NounKey;
+            _word.text = string.IsNullOrEmpty(noun)
+                ? verb
+                : string.Concat(verb, " ", _localization.Get(noun));
         }
     }
 }

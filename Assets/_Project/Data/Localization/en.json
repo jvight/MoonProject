@@ -119,10 +119,6 @@
             "text": "The tower needs metal, wiring, optics and the Tower Coil. Salvage them at the Supply Depot."
         },
         {
-            "key": "next.tower",
-            "text": "You have the Tower Coil. Park on the radio tower's pad to repair it."
-        },
-        {
             "key": "next.tower.part",
             "text": "The Tower Coil is at the Supply Depot. Drive close and press E to pick it up."
         },
@@ -451,10 +447,6 @@
             "text": "Ambience"
         },
         {
-            "key": "ui.settings.camera",
-            "text": "Camera"
-        },
-        {
             "key": "ui.settings.look_speed",
             "text": "Look sensitivity"
         },
@@ -477,6 +469,54 @@
         {
             "key": "ui.settings.language",
             "text": "Language"
+        },
+        {
+            "key": "ui.settings.tab_camera",
+            "text": "Camera & feel"
+        },
+        {
+            "key": "ui.settings.tab_display",
+            "text": "Display"
+        },
+        {
+            "key": "ui.display.resolution",
+            "text": "Resolution"
+        },
+        {
+            "key": "ui.display.mode",
+            "text": "Window mode"
+        },
+        {
+            "key": "ui.display.vsync",
+            "text": "V-Sync"
+        },
+        {
+            "key": "ui.display.fps_cap",
+            "text": "FPS limit"
+        },
+        {
+            "key": "ui.display.unlimited",
+            "text": "Unlimited"
+        },
+        {
+            "key": "ui.display.prev",
+            "text": "‹"
+        },
+        {
+            "key": "ui.display.next",
+            "text": "›"
+        },
+        {
+            "key": "ui.display.mode.borderless",
+            "text": "Borderless fullscreen"
+        },
+        {
+            "key": "ui.display.mode.exclusive",
+            "text": "Fullscreen"
+        },
+        {
+            "key": "ui.display.mode.windowed",
+            "text": "Windowed"
         },
         {
             "key": "ui.settings.back",
@@ -991,6 +1031,38 @@
             "text": "{0} more {1} to salvage"
         },
         {
+            "key": "ui.recipe.row",
+            "text": "{0} (have {1})"
+        },
+        {
+            "key": "ui.friend.parts",
+            "text": "{0}'s parts: {1} of {2}"
+        },
+        {
+            "key": "ui.reward.title",
+            "text": "{0} · Level {1}"
+        },
+        {
+            "key": "ui.reward.light_on",
+            "text": "Home has power"
+        },
+        {
+            "key": "ui.reward.light_up",
+            "text": "Home glows brighter"
+        },
+        {
+            "key": "ui.reward.radio_on",
+            "text": "The radio picks up signals"
+        },
+        {
+            "key": "ui.reward.reach",
+            "text": "Go {0} m farther"
+        },
+        {
+            "key": "ui.station.offline",
+            "text": "offline"
+        },
+        {
             "key": "ui.recipecard.needs",
             "text": "NEEDS"
         },
@@ -1413,6 +1485,74 @@
         {
             "key": "ui.title.quit",
             "text": "Quit"
+        },
+        {
+            "key": "ui.title.credits",
+            "text": "Credits"
+        },
+        {
+            "key": "ui.credits.title",
+            "text": "Credits"
+        },
+        {
+            "key": "ui.credits.version",
+            "text": "Version {0}"
+        },
+        {
+            "key": "ui.credits.game",
+            "text": "Lunarion"
+        },
+        {
+            "key": "ui.credits.made_by",
+            "text": "Made by jvight"
+        },
+        {
+            "key": "ui.credits.fonts",
+            "text": "Fonts"
+        },
+        {
+            "key": "ui.credits.voice",
+            "text": "Voice"
+        },
+        {
+            "key": "ui.credits.voice_station",
+            "text": "Station voice synthesised with a Piper model trained on LibriTTS-R"
+        },
+        {
+            "key": "ui.credits.voice_ro",
+            "text": "Ro's voice synthesised with a Piper model trained on Cori Samuel's LibriVox readings"
+        },
+        {
+            "key": "ui.credits.public_domain",
+            "text": "Public domain"
+        },
+        {
+            "key": "ui.credits.voice_engine",
+            "text": "Speech engine: sherpa-onnx"
+        },
+        {
+            "key": "ui.credits.music",
+            "text": "Music and sound"
+        },
+        {
+            "key": "ui.credits.music_in_house",
+            "text": "Made in-house, in code."
+        },
+        {
+            "key": "ui.credits.engine",
+            "text": "Engine"
+        },
+        {
+            "key": "ui.credits.made_with_unity",
+            "text": "Made with Unity"
+        },
+        {
+            "key": "ui.credits.licences",
+            "text": "Licences"
+        },
+        {
+            "key": "ui.credits.licences_folder",
+            "text": "The full licence texts are in the Licenses folder next to the game."
         },
         {
             "key": "ui.title.new_game_question",

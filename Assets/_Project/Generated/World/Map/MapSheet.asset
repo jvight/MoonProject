@@ -9751,6 +9751,9 @@ MonoBehaviour:
   - place.antenna_farm
   - region.peak
   - region.terraces
+  - place.orange_vent
+  - place.ilmenite_band
+  - place.shadowed_crater
   _anchorPoints:
   - {x: 266.29584, y: 86.52475}
   - {x: 283.41486, y: 92.08706}
@@ -9774,3 +9777,6 @@ MonoBehaviour:
   - {x: -120, y: 0.0000014309857}
   - {x: 91.48115, y: 430.38495}
   - {x: -222.73862, y: -222.73865}
+  - {x: 40.116966, y: -149.7185}
+  - {x: -272.22342, y: -170.10413}
+  - {x: 179.0304, y: 73.16954}

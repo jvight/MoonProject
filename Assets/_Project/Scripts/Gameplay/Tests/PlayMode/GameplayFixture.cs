@@ -420,6 +420,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 signals, shelf, relays, progression, plotter, Lift);
             battery.Wire(Asset<BatteryTuning>());
             Gameplay.WireBattery(battery);
+            Gameplay.WireCutter(Asset<CutterTuning>());
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);

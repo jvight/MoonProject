@@ -102,7 +102,7 @@ namespace MoonProject.UI.Tests
 
         public int Of(SalvageMaterial material)
         {
-            return Materials.Of(this, material);
+            return material == SalvageMaterial.Metal ? Metal : material == SalvageMaterial.Wiring ? Wiring : Optics;
         }
 
         public bool Has(Recipe recipe)

@@ -35,6 +35,9 @@ namespace MoonProject.Gameplay
         [Tooltip("How pickups glint from afar (Assets/_Project/Data/Tuning/Gameplay/GlintTuning.asset).")]
         [SerializeField] private GlintTuning _glints;
 
+        [Tooltip("07's cutter tiers (Assets/_Project/Data/Tuning/Gameplay/CutterTuning.asset).")]
+        [SerializeField] private CutterTuning _cutterTuning;
+
         [Tooltip("Every upgrade crafted from materials (Assets/_Project/Data/Content/Upgrades).")]
         [SerializeField] private UpgradeDefinition[] _upgradeDefinitions = Array.Empty<UpgradeDefinition>();
 
@@ -63,6 +66,9 @@ namespace MoonProject.Gameplay
         private GlowMeshSet _meshes;
 
         public MaterialStock Materials { get; private set; }
+
+        /// <summary>07's cutter as its fitted kits make it (docs/features/M3-26).</summary>
+        public Cutter Cutter { get; private set; }
 
         public UpgradeService Upgrades { get; private set; }
 
@@ -168,6 +174,11 @@ namespace MoonProject.Gameplay
             _lift = lift;
         }
 
+        internal void WireCutter(CutterTuning cutter)
+        {
+            _cutterTuning = cutter;
+        }
+
         internal void WireBattery(BatteryField battery)
         {
             _battery = battery;
@@ -206,6 +217,7 @@ namespace MoonProject.Gameplay
 
             _meshes = new GlowMeshSet();
             Materials = new MaterialStock(context.Events);
+            Cutter = new Cutter(context.Events, context.Get<IRoverAbilities>(), _cutterTuning);
             var save = context.Get<ISaveService>();
             var services = new GameplayServices(context.Events, context.Input, context.Get<ITerrainQuery>(),
                 context.Get<IWorldLayout>(), context.Get<IWorldAnchors>(), context.Get<IRoverState>(),
@@ -290,6 +302,7 @@ namespace MoonProject.Gameplay
             Hints = new InteractionHints(_excavation, _salvage, _tether, _cradle, _home,
                 stations, Upgrades, TowerParts, _friends, _relays, services.Beam, services.Pickups);
             context.Register<IMaterialStock>(Materials);
+            context.Register<ICutter>(Cutter);
             context.Register<ISalvageStatus>(_salvage);
             context.Register<ITetherAim>(_tether);
             context.Register<IUpgradeShop>(Shop);
@@ -541,6 +554,7 @@ namespace MoonProject.Gameplay
         {
             float now = Time.time;
             Power.Show(_tower.PoweredLevel);
+            Cutter.Step();
             TowerPartField.Step(now);
             GroundTubes.Step(now);
             Port.Step(Time.deltaTime);
@@ -623,6 +637,7 @@ namespace MoonProject.Gameplay
             }
 
             return _glints == null ? "GlintTuning is not assigned."
+                : _cutterTuning == null ? "CutterTuning is not assigned."
                 : _upgradeDefinitions == null || _upgradeDefinitions.Length == 0 ? "no upgrade definitions."
                 : _salvage == null ? "SalvageField is not assigned."
                 : _relics == null ? "RelicField is not assigned."

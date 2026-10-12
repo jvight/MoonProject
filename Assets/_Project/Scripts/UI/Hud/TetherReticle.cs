@@ -8,7 +8,8 @@ namespace MoonProject.UI
     /// <summary>
     /// The tether reticle: a soft centre ring shown only while aiming. It appears dim while the tether button is held
     /// with nothing in the aim cone, brightens to tether-cyan and gently opens when a relic is hovered, and leaves
-    /// once something is on the tether (the beam says it all). No permanent crosshair.
+    /// once something is on the tether (the beam says it all). Never shown while the tether is asleep (07 has no
+    /// ring yet). No permanent crosshair.
     /// </summary>
     internal sealed class TetherReticle
     {

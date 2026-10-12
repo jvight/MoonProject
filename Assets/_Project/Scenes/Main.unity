@@ -3015,6 +3015,7 @@ MonoBehaviour:
   _mapSheet: {fileID: 11400000, guid: 59efd900c39f24b47bda626e71b11a79, type: 2}
   _mapTuning: {fileID: 11400000, guid: c4cbd258394e83a4abb0dd4eb177760b, type: 2}
   _wordmark: {fileID: 11400000, guid: d675b977c90eef54090f9af57adc6cac, type: 2}
+  _credits: {fileID: 4900000, guid: 0e070ce2d397ff649bc0d7a9eb2869cc, type: 3}
 --- !u!4 &1989386162566748015
 Transform:
   m_ObjectHideFlags: 0
@@ -6934,6 +6935,7 @@ MonoBehaviour:
     - {fileID: 3199159636312175029, guid: eec13148ce5aa01469eb6dd5a5138422, type: 3}
     - {fileID: 672067429377264459, guid: b5e3e2a0ac277364394546b0eb3706d3, type: 3}
     - {fileID: 6434243330529093039, guid: 8fea22ce5c38a7643bfa58e0efbe68b9, type: 3}
+  _ventBeadMaterial: {fileID: 2100000, guid: d7f06c7c79c204349b22b2e2b6b2d4ee, type: 2}
   _peakBeacon: {fileID: 2522665144052418063}
   _earthlight: {fileID: 3339212068541551884}
   _fillLight: {fileID: 4575894151075447720}
@@ -7269,6 +7271,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _visuals: {fileID: 11400000, guid: d0041afc7955acf48be4dd7cf5c09747, type: 2}
   _glints: {fileID: 11400000, guid: a0a01ae3c65f3f34f91727943ba07a2e, type: 2}
+  _cutterTuning: {fileID: 11400000, guid: f6afbe3ccb78e1745921d4125fc1a80b, type: 2}
   _upgradeDefinitions:
   - {fileID: 11400000, guid: 214663e3648dfcd4597adf2528a8d867, type: 2}
   - {fileID: 11400000, guid: 78d4cc86a6a8e6e449566b365dd36d31, type: 2}

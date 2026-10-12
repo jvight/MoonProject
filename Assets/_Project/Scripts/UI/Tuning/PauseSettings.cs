@@ -37,6 +37,13 @@ namespace MoonProject.UI
         [Range(4, 20)]
         [SerializeField] private int _volumeSteps = 10;
 
+        [Tooltip("The frame-rate limits the Display page offers while V-Sync is off; 0 is unlimited.")]
+        [SerializeField] private int[] _fpsCaps = { 30, 60, 120, 144, 0 };
+
+        [Tooltip("The limit older settings files (and a first run) start with; one of the limits above.")]
+        [Min(0)]
+        [SerializeField] private int _defaultFpsCap = 60;
+
         [Tooltip("Look speed per step of the slider (multiplier on the tuned camera sensitivity).")]
         [Range(0.05f, 0.5f)]
         [SerializeField] private float _lookStep = 0.25f;
@@ -72,6 +79,10 @@ namespace MoonProject.UI
         public float ResumeSeconds => _resumeSeconds;
 
         public int VolumeSteps => _volumeSteps;
+
+        public int[] FpsCaps => _fpsCaps;
+
+        public int DefaultFpsCap => _defaultFpsCap;
 
         public float LookStep => _lookStep;
 

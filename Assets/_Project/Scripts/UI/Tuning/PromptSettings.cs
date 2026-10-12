@@ -29,6 +29,7 @@ namespace MoonProject.UI
             new PromptEntry(InteractionKind.Hop, RoverAction.Excavate, 0.8f, 1.7f),
             new PromptEntry(InteractionKind.Salvage, RoverAction.Excavate, 0.4f, 0.6f),
             new PromptEntry(InteractionKind.Stow, RoverAction.Tether, 0.4f, 0.9f),
+            new PromptEntry(InteractionKind.PickUp, RoverAction.Excavate, 0.2f, 0.9f),
         };
 
         [Tooltip("Seconds after 07 starts waking before any prompt may appear (the opening belongs to the moon).")]
@@ -55,6 +56,10 @@ namespace MoonProject.UI
         [Range(0f, 300f)]
         [SerializeField] private float _screenMargin = 72f;
 
+        [Tooltip("Pixels (at 1080p) a prompt keeps clear of the recipe card and the tower's panel.")]
+        [Range(0f, 100f)]
+        [SerializeField] private float _cardGap = 18f;
+
         public RevealSettings Reveal => _reveal;
 
         public PromptEntry[] Entries => _entries;
@@ -70,6 +75,8 @@ namespace MoonProject.UI
         public float FollowHalfLife => _followHalfLife;
 
         public float ScreenMargin => _screenMargin;
+
+        public float CardGap => _cardGap;
 
         /// <summary>The entry teaching <paramref name="kind"/>, or null when that kind has no prompt.</summary>
         public PromptEntry Find(InteractionKind kind)

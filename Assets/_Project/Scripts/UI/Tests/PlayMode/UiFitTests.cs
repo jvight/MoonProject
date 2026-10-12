@@ -30,6 +30,9 @@ namespace MoonProject.UI.PlayModeTests
         private const float WideAspect = 16f / 9f;
         private const float NeverIdleSeconds = 1e6f;
         private const int BigTextPresses = 2;
+        private const float RecipeCardViewportX = 0.8f;
+        private const float RecipeCardViewportY = 0.55f;
+        private const float CardDepth = 10f;
 
         private readonly List<string> _problems = new List<string>();
         private string _slot;
@@ -135,7 +138,7 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Fakes.Cells = 4;
             _rig.Fakes.Charge = 2f;
             events.Publish(new BatteryArcRevealed(false));
-            events.Publish(new NextStepChanged("next.tower"));
+            events.Publish(new NextStepChanged("next.tower.pad"));
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Excavate, new Vector3(0f, 0f, 12f), true);
             events.Publish(new TickerLine(UiTestRig.HomeLine));
             int gain = 0;
@@ -149,9 +152,9 @@ namespace MoonProject.UI.PlayModeTests
                 {
                     ScreenFit.CheckApart(layout.BatteryDial, layout.NextLine, label, found);
                     ScreenFit.CheckApart(layout.HomeMeter, layout.NextLine, label, found);
-                    ScreenFit.CheckApart(layout.AbilitySlots, layout.MaterialsChip, label, found);
+                    ScreenFit.CheckApart(layout.BatteryDial, layout.PickupFeed, label, found);
                     ScreenFit.CheckApart(layout.NextLine, layout.Ticker, label, found);
-                    ScreenFit.CheckApart(layout.Ticker, layout.MaterialsChip, label, found);
+                    ScreenFit.CheckApart(layout.Ticker, layout.PickupFeed, label, found);
                 });
             }
 
@@ -166,6 +169,32 @@ namespace MoonProject.UI.PlayModeTests
             }
 
             _rig.Fakes.AtStation = false;
+            _rig.Fakes.Looked = _rig.Fakes.Upgrade.Id;
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Deposit,
+                _rig.Camera.ViewportToWorldPoint(new Vector3(RecipeCardViewportX, RecipeCardViewportY, CardDepth)),
+                true);
+            yield return Seconds(3f);
+            foreach (ScreenShape shape in ScreenShapes.All)
+            {
+                yield return Reframe(shape);
+                yield return Check(shape, "recipe card and prompt", (label, found) =>
+                    ScreenFit.CheckApart(layout.RecipeCardRoot, layout.Prompt, label, found));
+            }
+
+            _rig.Fakes.Looked = null;
+            _rig.Fakes.PrimaryHint = InteractionHint.None;
+            events.Publish(new UpgradePurchased(_rig.Fakes.Upgrade.Id, 1));
+            events.Publish(new FeelBeat(FeelKind.Build, FeelPhase.Reward, Vector3.zero, Vector3.up, 1f, 0f));
+            yield return Seconds(_rig.Tuning.RewardCard.Reveal.FadeIn + 1f);
+            Assert.IsTrue(_rig.Ui.RewardCard.IsVisible, "the tower's reward card is up");
+            foreach (ScreenShape shape in ScreenShapes.All)
+            {
+                yield return Reframe(shape);
+                yield return Check(shape, "reward card", (label, found) =>
+                    ScreenFit.CheckApart(layout.RewardCard, layout.NextLine, label, found));
+            }
+
+            yield return Seconds(_rig.Tuning.RewardCard.HoldSeconds + _rig.Tuning.RewardCard.Reveal.FadeOut);
             yield return Seconds(1f);
             events.Publish(new RelicDeposited("rubber_duck", Vector3.zero, 4));
             yield return Seconds(2f);

@@ -23,23 +23,27 @@ namespace MoonProject.UI
         /// <summary>True once the file has given (or been given) the settings.</summary>
         public bool IsStored { get; private set; }
 
-        /// <summary>Applies the file's settings, if it has any. Call before the save loads.</summary>
+        /// <summary>
+        /// Applies the file's settings, if it has any, and then the screen as it stands (a first run or an older file
+        /// is borderless at the desktop's resolution with V-Sync on). Call before the save loads.
+        /// </summary>
         public void Load()
         {
-            if (!_file.TryRead(out string json))
+            if (_file.TryRead(out string json))
             {
-                return;
+                SettingsSaveData data = JsonUtility.FromJson<SettingsSaveData>(json);
+                if (data == null)
+                {
+                    Debug.LogError($"{nameof(SettingsStore)}: the settings file is not settings JSON; defaults are kept.");
+                }
+                else
+                {
+                    _player.Restore(data);
+                    IsStored = true;
+                }
             }
 
-            SettingsSaveData data = JsonUtility.FromJson<SettingsSaveData>(json);
-            if (data == null)
-            {
-                Debug.LogError($"{nameof(SettingsStore)}: the settings file is not settings JSON; defaults are kept.");
-                return;
-            }
-
-            _player.Restore(data);
-            IsStored = true;
+            _player.ApplyDisplay();
         }
 
         /// <summary>A save's old "ui.settings" section: used only while the file has nothing, then written to it.</summary>

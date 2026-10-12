@@ -14,12 +14,12 @@ namespace MoonProject.UI.Tests
     {
         private const float Frame = 1f / 60f;
 
-        private MaterialsChipSettings _settings;
+        private PickupFeedSettings _settings;
 
         [SetUp]
         public void SetUp()
         {
-            _settings = new MaterialsChipSettings();
+            _settings = new PickupFeedSettings();
         }
 
         [Test]
@@ -120,7 +120,7 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual(1, tally.Rolled(SalvageMaterial.Metal));
             Assert.AreEqual(1, tally.Remaining(SalvageMaterial.Metal), "one unit still to come");
             tally.Step(Frame);
-            Assert.Greater(tally.TickPulse(SalvageMaterial.Metal), 0f, "the chip pulses with the unit");
+            Assert.Greater(tally.TickPulse(SalvageMaterial.Metal), 0f, "the row pulses with the unit");
             Assert.AreEqual(0f, tally.TickPulse(SalvageMaterial.Wiring), "only the material that ticked");
 
             tally.Snap(5, 0, 0);
@@ -196,8 +196,8 @@ namespace MoonProject.UI.Tests
         public void Rumble_IsOnAtFullStrengthByDefault_EvenForOlderSaves_AndRoundTrips()
         {
             var services = new FakeSettingsServices();
-            ILocalization localization = TestTables.Localization(new EventBus(), "next.tower", "x", "y");
-            var settings = new PlayerSettings(services, services, services, localization, new PauseSettings());
+            ILocalization localization = TestTables.Localization(new EventBus(), "next.tower.pad", "x", "y");
+            var settings = new PlayerSettings(services, services, services, new FakeDisplayControl(), localization, new PauseSettings());
             settings.Restore(new SettingsSaveData());
             Assert.IsTrue(services.RumbleEnabled, "a save from before the setting keeps it on");
             Assert.AreEqual(1f, services.RumbleStrength);
@@ -209,7 +209,7 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual(0.5f, services.RumbleStrength, 0.06f);
 
             var other = new FakeSettingsServices();
-            var restored = new PlayerSettings(other, other, other, localization, new PauseSettings());
+            var restored = new PlayerSettings(other, other, other, new FakeDisplayControl(), localization, new PauseSettings());
             restored.Restore(settings.Capture());
             Assert.IsFalse(other.RumbleEnabled);
             Assert.AreEqual(services.RumbleStrength, other.RumbleStrength, 1e-5f);

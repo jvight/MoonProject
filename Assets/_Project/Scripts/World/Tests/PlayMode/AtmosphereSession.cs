@@ -74,6 +74,10 @@ namespace MoonProject.World.PlayModeTests
         private const float CanyonViewEyeHeight = 3f;
         private const float CanyonViewLookHeight = 2f;
 
+        // The orange vent's bead field (M3-27) from home, and from a chase-like distance on the way to it.
+        private const float VentCloseDistance = 22f;
+        private const float VentCloseHeight = 5f;
+
         // After power reaches Home (seconds since the previous frame): the cable halfway, the windows half-lit with
         // the porch lamps starting, and home settled.
         private static readonly (float Wait, string Name)[] WakeFrames =
@@ -194,6 +198,15 @@ namespace MoonProject.World.PlayModeTests
             poses.Add(LookPose("toward_the_canyon",
                 context.Get<IWorldLayout>().BasePosition + Vector3.up * CanyonViewEyeHeight,
                 lip.Position + Vector3.up * CanyonViewLookHeight, view.fieldOfView));
+            Assert.IsTrue(context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.PlaceOrangeVent, out WorldAnchor vent),
+                "the World has the orange vent");
+            Vector3 home = context.Get<IWorldLayout>().BasePosition;
+            Vector3 toVent = Vector3.ProjectOnPlane(vent.Position - home, Vector3.up).normalized;
+            poses.Add(LookPose("orange_vent_from_base", home + Vector3.up * CanyonViewEyeHeight, vent.Position,
+                view.fieldOfView));
+            poses.Add(LookPose("orange_vent_close",
+                vent.Position - toVent * VentCloseDistance + Vector3.up * VentCloseHeight, vent.Position,
+                view.fieldOfView));
             var report = new StringBuilder();
             report.AppendLine("# Atmosphere session (real Main scene)");
             report.AppendLine();

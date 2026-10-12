@@ -4,7 +4,50 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 00000000. LATEST (2026-10-12 ~20:15): token cap lifted; 0.5.3 closing; 0.5.4 started
+## 0000000000. LATEST (2026-10-12 ~22:50): 0.5.3 one fix from release; 0.5.4 branches ready
+- **main 9700010f** (version 0.5.3).
+  - Verify: everything PASS (the Playthrough too, after the timeout fix ea... in GoldenPathPlaythrough: TestTimeoutMs
+    1,800,000 above TotalBudget 1580 s) except UiAllocationTests.PromptFollowingAMovingPoint_DoesNotAllocate (2666 >
+    2634 bytes).
+  - ui was asked for a standalone zero-GC fix on main (cache the parts-chip and noun strings).
+  - Next: land it alone, `verify --parallel --push`, then `tools/build_player.py` in MoonProject-wt/director and copy
+    the zip to D:/Project/MoonProject/Builds.
+- **Ready to land after the 0.5.3 build, in this order:**
+  1. art ae455d84 (shelves Slot_00..11 + Stack_0..2, ShelfCrate_<Material> incl. OrangeBeads, CrewCrate
+     Lid/CutPoint/Seal, the tower rings + plaque, the Focus Lens, ChargeRun_0/1 rows, Kit_SideBin, blueprint sheets);
+  2. rover (box/rover: rows collected across parts, lens, side bins; needs art first);
+  3. gameplay Phase B (box/gameplay: cargo, unload, Tilly, crates, cutter tiers, IChargerReach, crew sets, chart
+     pencil marks; needs art's nodes and blueprint sheets);
+  4. ui's Tab screen (in progress).
+  Audio's 0.5.4 cues are already on main.
+- **Owner ideas, designed** (M3-25/26/27 on main): the inventory and shelves, the cutter tiers with Godzilla-style
+  charge lamps, the materials families. 0.6 is the big lunar-materials and build-pad wave.
+- **Token cap lifted** (cron v4: notices at 85/95% only). Weekly ~46% on 2026-10-12 22:50; resets 2026-10-18 02:00.
+- This Director's context is ~84%; a new Director should start here and recreate cron v4 (CronCreate is
+  session-only).
+
+## 000000000. (2026-10-12 ~21:25): 0.5.3 verify FAILED (my land order); fix pending
+- **Main is broken at boot:** "No ICutter service registered".
+  - I landed audio's 0.5.4 (FeelAudio Get<ICutter>() at init) before gameplay registered ICutter. The 0.5.3 verify
+    of 318c3c68 failed: 8 PlayMode tests and the Playthrough.
+  - The fix was asked of gameplay: a standalone commit registering ICutter at tier 0 (M3-26 values). Land it alone,
+    re-run `verify --parallel --push`, then build 0.5.3 (Builds/).
+- **Landed since 0.5.2:**
+  - 0.5.3: copy pass, tower online, pickups, credits + Licenses, Settings tabs + Display, AA glass, pickup feed,
+    slots removed;
+  - 0.5.4 parts: Core contracts (cargo, cutter, materials, IChargerReach), material name keys, audio 0.5.4 cues,
+    world vent/anchors.
+- **Running 0.5.4** (on box branches, not landed):
+  - gameplay Phase B: cargo, unload, Tilly fetch, crates, cutter tiers, chart pencil marks, IChargerReach, crew sets;
+  - rover: charge-run rows, sag, tier install (778b868d+);
+  - art: tower rings + plaque, shelves with Slot_00..11 + ShelfCrate_<Material>, crew crates with Seal, Focus Lens,
+    ChargeRun_0..3 lamp rows, the orange glass bundle;
+  - ui: the Tab screen (hold, shelves, "07 làm được", unlock cards), materials via IMaterialCatalog.
+- **Lesson:** before landing a box whose code Get<T>()s a service, check that the registering box has already landed
+  (grep main for Register<T>).
+- This Director session's context is ~80%. A fresh Director starts here.
+
+## 00000000. (2026-10-12 ~20:15): token cap lifted; 0.5.3 closing; 0.5.4 started
 - **The owner lifted the 50% cap** ("just go"). Cron v4 (job 6c90db20, session-only) logs usage, tells the owner at
   85%/95%, and checks stalls. It never stops sessions.
 - **0.5.3 (closing):**

@@ -30,7 +30,7 @@ namespace MoonProject.UI
         /// <param name="need">The quiet need line (left out of the layout while nothing is short).</param>
         public RecipeView(VisualElement items, Label need, ILocalization localization, IntText numbers)
         {
-            _slots = new MaterialSlots(items, numbers, false, localization, true);
+            _slots = new MaterialSlots(items, numbers, localization, true);
             _need = need ?? throw new ArgumentNullException(nameof(need));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             SetNeedShown(false);

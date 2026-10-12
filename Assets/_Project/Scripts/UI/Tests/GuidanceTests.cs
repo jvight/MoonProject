@@ -51,7 +51,7 @@ namespace MoonProject.UI.Tests
         {
             var settings = new GuidanceSettings();
             var line = new NextStepLine(settings);
-            line.SetKey("next.tower");
+            line.SetKey("next.tower.pad");
             Ticks(line, 2f, 3f, true);
             Assert.IsFalse(line.WantsShown, "hidden while driving");
             Ticks(line, settings.StillSeconds * 0.5f, 0f, true);
@@ -69,15 +69,15 @@ namespace MoonProject.UI.Tests
         public void Guidance_IsOnByDefault_EvenForOlderSaves_AndRoundTrips()
         {
             var services = new FakeSettingsServices();
-            ILocalization localization = TestTables.Localization(new EventBus(), "next.tower", "x", "y");
-            var settings = new PlayerSettings(services, services, services, localization, new PauseSettings());
+            ILocalization localization = TestTables.Localization(new EventBus(), "next.tower.pad", "x", "y");
+            var settings = new PlayerSettings(services, services, services, new FakeDisplayControl(), localization, new PauseSettings());
             Assert.IsTrue(settings.Guidance);
             settings.Restore(new SettingsSaveData());
             Assert.IsTrue(settings.Guidance, "a save from before the setting keeps it on");
 
             settings.Guidance = false;
             Assert.IsTrue(settings.IsDirty);
-            var restored = new PlayerSettings(services, services, services, localization, new PauseSettings());
+            var restored = new PlayerSettings(services, services, services, new FakeDisplayControl(), localization, new PauseSettings());
             restored.Restore(settings.Capture());
             Assert.IsFalse(restored.Guidance);
         }

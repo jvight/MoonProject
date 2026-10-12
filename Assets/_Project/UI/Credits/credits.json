@@ -1,0 +1,70 @@
+{
+    "sections": [
+        {
+            "headingKey": "ui.credits.game",
+            "entries": [
+                { "nameKey": "ui.credits.made_by" }
+            ]
+        },
+        {
+            "headingKey": "ui.credits.fonts",
+            "entries": [
+                {
+                    "name": "Nunito Sans",
+                    "family": "NunitoSans",
+                    "detail": "SIL Open Font License 1.1",
+                    "note": "Copyright 2016 The Nunito Sans Project Authors (https://github.com/Fonthausen/NunitoSans)"
+                },
+                {
+                    "name": "Exo 2",
+                    "family": "Exo2",
+                    "detail": "SIL Open Font License 1.1",
+                    "note": "Copyright 2013 The Exo 2 Project Authors (https://github.com/googlefonts/Exo-2.0)"
+                },
+                {
+                    "name": "Be Vietnam Pro",
+                    "family": "BeVietnamPro",
+                    "detail": "SIL Open Font License 1.1",
+                    "note": "Copyright 2021 The Be Vietnam Pro Project Authors (https://github.com/bettergui/BeVietnamPro)"
+                }
+            ]
+        },
+        {
+            "headingKey": "ui.credits.voice",
+            "entries": [
+                {
+                    "nameKey": "ui.credits.voice_station",
+                    "detail": "CC BY 4.0",
+                    "note": "LibriTTS-R: Koizumi et al., 2023, https://www.openslr.org/141/"
+                },
+                {
+                    "nameKey": "ui.credits.voice_ro",
+                    "detailKey": "ui.credits.public_domain"
+                },
+                {
+                    "nameKey": "ui.credits.voice_engine",
+                    "detail": "Apache-2.0",
+                    "note": "https://github.com/k2-fsa/sherpa-onnx"
+                }
+            ]
+        },
+        {
+            "headingKey": "ui.credits.music",
+            "entries": [
+                { "nameKey": "ui.credits.music_in_house" }
+            ]
+        },
+        {
+            "headingKey": "ui.credits.engine",
+            "entries": [
+                { "nameKey": "ui.credits.made_with_unity" }
+            ]
+        },
+        {
+            "headingKey": "ui.credits.licences",
+            "entries": [
+                { "nameKey": "ui.credits.licences_folder" }
+            ]
+        }
+    ]
+}

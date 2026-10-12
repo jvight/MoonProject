@@ -62,5 +62,17 @@ namespace MoonProject.Core
         /// wall. Where the dock's evening raises 0.5's last pillar.
         /// </summary>
         public const string RegionTerraces = "region.terraces";
+
+        /// <summary>
+        /// The basin's old vent and its field of orange glass beads (M3-27, Apollo 17's orange soil): seen from 0.5,
+        /// dug in 0.6. The radius covers the bead field.
+        /// </summary>
+        public const string PlaceOrangeVent = "place.orange_vent";
+
+        /// <summary>The dark basalt band on the rim terraces where 0.6's Core Drill finds ilmenite (M3-27).</summary>
+        public const string PlaceIlmeniteBand = "place.ilmenite_band";
+
+        /// <summary>The permanently shadowed crater whose floor holds 0.7's water ice (M3-27).</summary>
+        public const string PlaceShadowedCrater = "place.shadowed_crater";
     }
 }

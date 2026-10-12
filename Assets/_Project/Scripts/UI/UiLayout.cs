@@ -23,7 +23,6 @@ namespace MoonProject.UI
             HomeMeterArc = Require<VisualElement>("home-meter-arc");
             HomeMeterValue = Require<Label>("home-meter-value");
             HomeMeterKey = Require<Label>("home-meter-key");
-            AbilitySlots = Require<VisualElement>("ability-slots");
             BatteryDialFace = Require<VisualElement>("battery-dial-face");
             BatteryDialRing = Require<VisualElement>("battery-dial-ring");
             BatteryDialValue = Require<Label>("battery-dial-value");
@@ -36,6 +35,10 @@ namespace MoonProject.UI
             KitTitle = Require<VisualElement>("kit-title");
             KitTitleName = Require<Label>("kit-title-name");
             KitTitleShadow = Require<VisualElement>("kit-title-shadow");
+            RewardCard = Require<VisualElement>("reward-card");
+            RewardTitle = Require<Label>("reward-card-title");
+            RewardLines = Require<VisualElement>("reward-card-lines");
+            TowerState = Require<Label>("tower-state");
 
             Reticle = Require<VisualElement>("reticle");
             ReticleRest = Require<VisualElement>("reticle-rest");
@@ -52,14 +55,13 @@ namespace MoonProject.UI
             FriendReadout = Require<VisualElement>("friend-readout");
             FriendReadoutShadow = Require<VisualElement>("friend-readout-shadow");
             FriendPips = Require<VisualElement>("friend-pips");
+            FriendPartsLabel = Require<Label>("friend-parts-label");
             FriendNameAnchor = Require<VisualElement>("friend-name-anchor");
             FriendName = Require<VisualElement>("friend-name");
             FriendNameShadow = Require<VisualElement>("friend-name-shadow");
             FriendNameText = Require<Label>("friend-name-text");
 
-            MaterialsChip = Require<VisualElement>("materials-chip");
-            MaterialsChipShadow = Require<VisualElement>("materials-chip-shadow");
-            MaterialsChipItems = Require<VisualElement>("materials-chip-items");
+            PickupFeed = Require<VisualElement>("pickup-feed");
 
             SalvageRingAnchor = Require<VisualElement>("salvage-ring-anchor");
             SalvageRing = Require<VisualElement>("salvage-ring");
@@ -80,6 +82,7 @@ namespace MoonProject.UI
             MemoryCardClose = Require<Label>("memory-card-close");
 
             TowerPanel = Require<VisualElement>("tower-panel");
+            RecipeCardRoot = Require<VisualElement>("recipe-card");
             TowerPanelShadow = Require<VisualElement>("tower-panel-shadow");
             TowerName = Require<Label>("tower-name");
             TowerLevel = Require<Label>("tower-level");
@@ -136,7 +139,6 @@ namespace MoonProject.UI
             PauseStack = Require<VisualElement>("pause-stack");
             PauseMain = Require<VisualElement>("pause-main");
             PauseMainShadow = Require<VisualElement>("pause-main-shadow");
-            PauseMaterials = Require<VisualElement>("pause-materials");
             PauseCan = Require<VisualElement>("pause-can");
             PauseCanRows = Require<VisualElement>("pause-can-rows");
             PauseCassettes = Require<VisualElement>("pause-cassettes");
@@ -160,6 +162,28 @@ namespace MoonProject.UI
             TitleWordmark = Require<VisualElement>("title-wordmark");
             Curtain = Require<VisualElement>("curtain");
             SaveTick = Require<VisualElement>("save-tick");
+            CreditsButton = Require<Button>("button-credits");
+            TabSound = Require<Button>("button-tab-sound");
+            TabCamera = Require<Button>("button-tab-camera");
+            TabDisplay = Require<Button>("button-tab-display");
+            PageSound = Require<VisualElement>("settings-page-sound");
+            PageCamera = Require<VisualElement>("settings-page-camera");
+            PageDisplay = Require<VisualElement>("settings-page-display");
+            ResolutionPrev = Require<Button>("button-resolution-prev");
+            ResolutionNext = Require<Button>("button-resolution-next");
+            ResolutionValue = Require<Label>("resolution-value");
+            ModePrev = Require<Button>("button-mode-prev");
+            ModeNext = Require<Button>("button-mode-next");
+            ModeValue = Require<Label>("mode-value");
+            VSyncToggle = Require<Toggle>("toggle-vsync");
+            FpsRow = Require<VisualElement>("row-fps");
+            FpsPrev = Require<Button>("button-fps-prev");
+            FpsNext = Require<Button>("button-fps-next");
+            FpsValue = Require<Label>("fps-value");
+            Credits = Require<VisualElement>("credits");
+            CreditsTitle = Require<Label>("credits-title");
+            CreditsScroll = Require<ScrollView>("credits-scroll");
+            CreditsBack = Require<Button>("button-credits-back");
             SaveTickCheck = Require<VisualElement>("save-tick-check");
             NewGameKeepButton = Require<Button>("button-new-game-keep");
             NewGameConfirmButton = Require<Button>("button-new-game-confirm");
@@ -211,8 +235,6 @@ namespace MoonProject.UI
         public Label HomeMeterKey { get; }
 
         /// <summary>07's abilities as round glass bubbles at the bottom centre (filled from code).</summary>
-        public VisualElement AbilitySlots { get; }
-
         public VisualElement BatteryDialRing { get; }
 
         public Label BatteryDialValue { get; }
@@ -234,6 +256,16 @@ namespace MoonProject.UI
         public Label KitTitleName { get; }
 
         public VisualElement KitTitleShadow { get; }
+
+        /// <summary>The card that says what a tower level gave: its box, its title and the column of its lines.</summary>
+        public VisualElement RewardCard { get; }
+
+        public Label RewardTitle { get; }
+
+        public VisualElement RewardLines { get; }
+
+        /// <summary>The tower card's state word ("offline" until the tower is built).</summary>
+        public Label TowerState { get; }
 
         public VisualElement Reticle { get; }
 
@@ -261,6 +293,9 @@ namespace MoonProject.UI
 
         public VisualElement FriendPips { get; }
 
+        /// <summary>The words on the parts chip: whose parts, how many of how many.</summary>
+        public Label FriendPartsLabel { get; }
+
         public VisualElement FriendNameAnchor { get; }
 
         public VisualElement FriendName { get; }
@@ -269,11 +304,8 @@ namespace MoonProject.UI
 
         public Label FriendNameText { get; }
 
-        public VisualElement MaterialsChip { get; }
-
-        public VisualElement MaterialsChipShadow { get; }
-
-        public VisualElement MaterialsChipItems { get; }
+        /// <summary>The column the pickup feed's rows are built into.</summary>
+        public VisualElement PickupFeed { get; }
 
         public VisualElement SalvageRingAnchor { get; }
 
@@ -308,6 +340,9 @@ namespace MoonProject.UI
         public Label MemoryCardClose { get; }
 
         public VisualElement TowerPanel { get; }
+
+        /// <summary>The recipe card's box (the prompt keeps clear of it).</summary>
+        public VisualElement RecipeCardRoot { get; }
 
         public VisualElement TowerPanelShadow { get; }
 
@@ -408,8 +443,6 @@ namespace MoonProject.UI
 
         public VisualElement PauseMainShadow { get; }
 
-        public VisualElement PauseMaterials { get; }
-
         /// <summary>"07 can": the verbs learned so far, on the pause page (docs/design/first-hour-v2 6.5).</summary>
         public VisualElement PauseCan { get; }
 
@@ -463,6 +496,55 @@ namespace MoonProject.UI
         public VisualElement SaveTick { get; }
 
         public VisualElement SaveTickCheck { get; }
+
+        /// <summary>The settings' three tabs (Sound, Camera and feel, Display) and their pages.</summary>
+        public Button TabSound { get; }
+
+        public Button TabCamera { get; }
+
+        public Button TabDisplay { get; }
+
+        public VisualElement PageSound { get; }
+
+        public VisualElement PageCamera { get; }
+
+        public VisualElement PageDisplay { get; }
+
+        /// <summary>The Display page's resolution, window mode and FPS cap, each stepped by a pair of arrows.</summary>
+        public Button ResolutionPrev { get; }
+
+        public Button ResolutionNext { get; }
+
+        public Label ResolutionValue { get; }
+
+        public Button ModePrev { get; }
+
+        public Button ModeNext { get; }
+
+        public Label ModeValue { get; }
+
+        public Toggle VSyncToggle { get; }
+
+        /// <summary>The FPS cap's row, dimmed while V-Sync (which sets the pace) is on.</summary>
+        public VisualElement FpsRow { get; }
+
+        public Button FpsPrev { get; }
+
+        public Button FpsNext { get; }
+
+        public Label FpsValue { get; }
+
+        /// <summary>The title's Credits entry.</summary>
+        public Button CreditsButton { get; }
+
+        /// <summary>The credits panel's overlay, its title, its scrolling text and its Back button.</summary>
+        public VisualElement Credits { get; }
+
+        public Label CreditsTitle { get; }
+
+        public ScrollView CreditsScroll { get; }
+
+        public Button CreditsBack { get; }
 
         public Button NewGameKeepButton { get; }
 
