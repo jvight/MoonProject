@@ -279,6 +279,48 @@ MonoBehaviour:
     _volumeMax: 0.55
     _pitchMin: 1
     _pitchMax: 1
+  - _id: tower_hum_rise
+    _clips:
+    - {fileID: 8300000, guid: 8a0f567e6fce516409cdaa012dae3d1e, type: 3}
+    _variantLabels:
+    - tower_hum_rise
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.7
+    _volumeMax: 0.7
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: tower_ring
+    _clips:
+    - {fileID: 8300000, guid: fcd35528b3e91a1489ba9c231fd233b5, type: 3}
+    - {fileID: 8300000, guid: fcab3af352a277a41a27034360456db6, type: 3}
+    - {fileID: 8300000, guid: 31285540d435c504388d1cd04489ec5b, type: 3}
+    - {fileID: 8300000, guid: 2ba2666208726ee4a92def477e0ac029, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
+    - 04
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: tower_thoom
+    _clips:
+    - {fileID: 8300000, guid: 08c62686094ffa04aaec68ce552fca15, type: 3}
+    _variantLabels:
+    - tower_thoom
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.75
+    _volumeMax: 0.75
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: node_light
     _clips:
     - {fileID: 8300000, guid: 471c7830250657e40b10e1bb9b891f68, type: 3}
