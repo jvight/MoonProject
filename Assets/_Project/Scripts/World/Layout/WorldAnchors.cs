@@ -67,6 +67,27 @@ namespace MoonProject.World
         private const float TerracesRadius = 6f;
         private const float TerracesSearchStep = 1f;
 
+        // The crew crates (M3-25 T4) stand beside each site's heart, this share of the site's radius to its right.
+        private const float CrateSideShare = 0.6f;
+        private const float CrateRadius = 1.5f;
+
+        // The old vent's orange bead field (M3-27) on the open floor east-south-east of home.
+        private const float VentBearing = 140f;
+        private const float VentDistance = 150f;
+        private const float VentRadius = 8f;
+
+        // The vent stands on the first level disc found walking out and round from that bearing (a fixed lattice).
+        private const float VentSearchBearing = 40f;
+        private const float VentSearchDistance = 60f;
+        private const float VentSearchStep = 5f;
+        private const float VentMaxRise = 0.6f;
+        private const int VentRingSamples = 12;
+
+        // The ilmenite band (0.6) lies on the same terraces a little further round; the shadowed crater (0.7) is the
+        // basin's biggest real crater, its anchor a small disc on its floor.
+        private const float IlmeniteBearing = 238f;
+        private const float ShadowedFloorRadius = 4f;
+
         private readonly WorldAnchor[] _anchors;
         private readonly Dictionary<string, int> _byId = new Dictionary<string, int>(StringComparer.Ordinal);
 
@@ -148,6 +169,14 @@ namespace MoonProject.World
             anchors.Add(Make(surface, WorldAnchorIds.RegionPeak, summit, summit, surface.SummitRadius));
             Vector2 up = MoonSurface.BearingToDirection(TerracesBearing);
             anchors.Add(Make(surface, WorldAnchorIds.RegionTerraces, TerracesFoot(surface, up), up, TerracesRadius));
+            AddCrates(surface, anchors);
+            Vector2 vent = VentSite(surface);
+            anchors.Add(Make(surface, WorldAnchorIds.PlaceOrangeVent, vent, vent, VentRadius));
+            Vector2 band = MoonSurface.BearingToDirection(IlmeniteBearing);
+            anchors.Add(Make(surface, WorldAnchorIds.PlaceIlmeniteBand, TerracesFoot(surface, band), band,
+                TerracesRadius));
+            Vector2 shadowed = LargestCrater(surface);
+            anchors.Add(Make(surface, WorldAnchorIds.PlaceShadowedCrater, shadowed, shadowed, ShadowedFloorRadius));
 
             _anchors = anchors.ToArray();
             for (int i = 0; i < _anchors.Length; i++)
@@ -202,6 +231,86 @@ namespace MoonProject.World
             }
 
             return up * Mathf.Max(0f, last - TerracesRadius);
+        }
+
+        /// <summary>One crew crate per salvage site (M3-25 T4), beside the site's heart inside its flat footprint.</summary>
+        private static void AddCrates(MoonSurface surface, List<WorldAnchor> anchors)
+        {
+            int count = anchors.Count;
+            for (int i = 0; i < count; i++)
+            {
+                WorldAnchor site = anchors[i];
+                if (!site.Id.StartsWith(WorldAnchorIds.SitePrefix, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var forward = new Vector2(site.Forward.x, site.Forward.z);
+                var right = new Vector2(forward.y, -forward.x);
+                Vector2 spot = new Vector2(site.Position.x, site.Position.z) + right * (site.Radius * CrateSideShare);
+                string name = site.Id.Substring(WorldAnchorIds.SitePrefix.Length);
+                anchors.Add(Make(surface, WorldAnchorIds.CratePrefix + name, spot, forward, CrateRadius));
+            }
+        }
+
+        /// <summary>
+        /// The old vent's site: the first spot from <see cref="VentBearing"/> / <see cref="VentDistance"/> outward and
+        /// round whose whole bead field is drivable and level.
+        /// </summary>
+        private static Vector2 VentSite(MoonSurface surface)
+        {
+            for (float reach = 0f; reach <= VentSearchDistance; reach += VentSearchStep)
+            {
+                for (float turn = 0f; turn <= VentSearchBearing; turn += VentSearchStep)
+                {
+                    for (int side = -1; side <= 1; side += 2)
+                    {
+                        Vector2 spot = MoonSurface.BearingToDirection(VentBearing + turn * side)
+                            * (VentDistance + reach);
+                        if (IsLevelDisc(surface, spot, VentRadius))
+                        {
+                            return spot;
+                        }
+                    }
+                }
+            }
+
+            throw new InvalidOperationException("No level, drivable spot for the orange vent's bead field.");
+        }
+
+        private static bool IsLevelDisc(MoonSurface surface, Vector2 centre, float radius)
+        {
+            float height = surface.SampleHeight(centre.x, centre.y);
+            for (int i = 0; i <= VentRingSamples; i++)
+            {
+                float angle = i * Mathf.PI * 2f / VentRingSamples;
+                float reach = i == VentRingSamples ? radius * 0.5f : radius;
+                float x = centre.x + Mathf.Cos(angle) * reach;
+                float z = centre.y + Mathf.Sin(angle) * reach;
+                if (!surface.IsDrivable(x, z) || Mathf.Abs(surface.SampleHeight(x, z) - height) > VentMaxRise)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>The centre of the basin's largest crater that is not a play bowl.</summary>
+        private static Vector2 LargestCrater(MoonSurface surface)
+        {
+            Vector2 centre = Vector2.zero;
+            float largest = 0f;
+            foreach (Crater crater in surface.Craters)
+            {
+                if (!crater.IsPlayBowl && crater.Radius > largest)
+                {
+                    largest = crater.Radius;
+                    centre = crater.Center;
+                }
+            }
+
+            return centre;
         }
 
         /// <summary>A shaped site footprint on the basin floor, facing on from home.</summary>
