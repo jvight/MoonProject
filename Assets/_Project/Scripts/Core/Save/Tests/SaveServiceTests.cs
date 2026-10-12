@@ -242,6 +242,24 @@ namespace MoonProject.Core.Save.Tests
         }
 
         [Test]
+        public void Saved_IsRaisedOnlyAfterAWrite()
+        {
+            var holder = new ProgressHolder();
+            SaveService service = NewService();
+            service.Register(holder.Section(1));
+            int saved = 0;
+            service.Saved += () => saved++;
+            LogAssert.Expect(LogType.Error, new Regex("SaveNow before Load"));
+
+            Assert.IsFalse(service.SaveNow());
+            Assert.AreEqual(0, saved, "nothing written, nothing announced");
+
+            service.Load();
+            Assert.IsTrue(service.SaveNow());
+            Assert.AreEqual(1, saved);
+        }
+
+        [Test]
         public void FailedCapture_WritesNothing()
         {
             SaveWith(1);

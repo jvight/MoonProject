@@ -16,6 +16,15 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// Progress was written to disk (a successful <see cref="Save.ISaveService.SaveNow"/>). The dock's lamp and the
+    /// HUD answer with a small sign that the game is safe (docs/design/polish-pass.md). Saves come at checkpoints, on
+    /// pause and on quit, so a listener that shows something should let a burst of saves read as one.
+    /// </summary>
+    public readonly struct GameSaved
+    {
+    }
+
+    /// <summary>
     /// The player chose Continue on the title. App moves the flow to Playing; Rover eases from the title frame into the
     /// chase frame and plays the short wake.
     /// </summary>
