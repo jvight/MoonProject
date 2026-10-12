@@ -306,6 +306,7 @@ namespace MoonProject.Gameplay
             context.Register<ILabInterior>(_lift.Lab);
             context.Register<IBlueprintBoard>(Blueprints);
             context.Register<IComponentGate>(TowerParts);
+            _home.Dock.Connect(_battery.Model);
             context.Register<IRoverBattery>(_battery.Model);
             context.Register<IBeamStatus>(services.Beam);
             context.Register<ITechTree>(Tech);

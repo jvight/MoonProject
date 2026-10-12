@@ -240,9 +240,10 @@ namespace MoonProject.Gameplay.Editor
                 AbilityGate gate = names[i] == SalvageEconomy.GatedSite
                     ? new AbilityGate(true, RoverAbility.HoverJump)
                     : AbilityGate.Open;
-                sites[i] = new SalvageSiteEntry(SalvageEconomy.SiteId(names[i]),
-                    LoadArt(GameplayAssetPaths.SitePrefab(names[i])), gate,
-                    names[i] == SalvageEconomy.HeartUnderPiecesSite, SalvageEconomy.YieldScale(names[i]));
+                GameObject prefab = LoadArt(GameplayAssetPaths.SitePrefab(names[i]));
+                sites[i] = new SalvageSiteEntry(SalvageEconomy.SiteId(names[i]), prefab, gate,
+                    names[i] == SalvageEconomy.HeartUnderPiecesSite, SalvageEconomy.YieldScale(names[i]),
+                    SalvageCutLines.Across(prefab));
             }
 
             var catalog = ScriptableObject.CreateInstance<SalvageCatalog>();

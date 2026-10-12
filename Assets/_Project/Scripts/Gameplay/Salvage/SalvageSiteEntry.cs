@@ -29,14 +29,19 @@ namespace MoonProject.Gameplay
         [Range(1, 4)]
         [SerializeField] private int _yieldScale = 1;
 
+        [Tooltip("Each piece's seam (docs/design/feel-pass.md §3.2): the content builder writes one across its face; " +
+                 "Art may author better ones.")]
+        [SerializeField] private PieceCutLine[] _cutLines = Array.Empty<PieceCutLine>();
+
         public SalvageSiteEntry(string anchorId, GameObject prefab, AbilityGate gate, bool heartUnderPieces,
-            int yieldScale)
+            int yieldScale, PieceCutLine[] cutLines)
         {
             _anchorId = anchorId;
             _prefab = prefab;
             _gate = gate ?? throw new ArgumentNullException(nameof(gate));
             _heartUnderPieces = heartUnderPieces;
             _yieldScale = yieldScale;
+            _cutLines = cutLines ?? throw new ArgumentNullException(nameof(cutLines));
         }
 
         /// <summary>The site's id everywhere (saves, events, relic definitions): its anchor id.</summary>
@@ -49,6 +54,22 @@ namespace MoonProject.Gameplay
         public bool HeartUnderPieces => _heartUnderPieces;
 
         public int YieldScale => _yieldScale;
+
+        /// <summary>The seam of piece <paramref name="number"/>, if the entry has a valid one.</summary>
+        public bool TryGetCutLine(int number, out Vector3[] points)
+        {
+            for (int i = 0; i < _cutLines.Length; i++)
+            {
+                if (_cutLines[i].Number == number && _cutLines[i].IsValid)
+                {
+                    points = _cutLines[i].Points;
+                    return true;
+                }
+            }
+
+            points = null;
+            return false;
+        }
 
         /// <summary>Null when the entry is complete, else what is wrong with it.</summary>
         public string Validate()

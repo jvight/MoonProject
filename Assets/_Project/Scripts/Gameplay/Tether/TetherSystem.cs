@@ -47,6 +47,9 @@ namespace MoonProject.Gameplay
         private bool _armed;
         private bool _wasHeld;
         private float _reach;
+        private ITowable _reaching;
+        private float _reachLeft;
+        private int _tensionStep;
         private bool _retracting;
         private Vector3 _beamEnd;
         private float _savedLinearDamping;
@@ -195,7 +198,7 @@ namespace MoonProject.Gameplay
                 _armed = false;
                 if (_towed != null)
                 {
-                    Release(false, true);
+                    Release(false, true, false);
                 }
             }
 
@@ -212,8 +215,12 @@ namespace MoonProject.Gameplay
                     }
                     else
                     {
-                        Attach(_hovered);
+                        Reach(_hovered, Time.deltaTime);
                     }
+                }
+                else
+                {
+                    CancelReach();
                 }
             }
             else
@@ -241,15 +248,17 @@ namespace MoonProject.Gameplay
                 ceiling);
             body.AddForce(TetherPhysics.Force(position, body.linearVelocity, target, _rover.Velocity, body.mass,
                 -Physics.gravity.y, _tuning));
-            if (_snap.Step(Vector3.Distance(position, anchor), _winch.Length, Time.fixedDeltaTime))
+            float distance = Vector3.Distance(position, anchor);
+            StepTension(distance, body.position);
+            if (_snap.Step(distance, _winch.Length, Time.fixedDeltaTime))
             {
-                Release(true, true);
+                Release(true, true, false);
             }
             else if (_towed.WantsRelease)
             {
                 // Done: the held button must not latch straight back on.
                 _armed = false;
-                Release(false, true);
+                Release(false, true, true);
             }
         }
 
@@ -266,7 +275,7 @@ namespace MoonProject.Gameplay
             }
 
             _armed = false;
-            Release(false, true);
+            Release(false, true, true);
             return relic;
         }
 
@@ -329,6 +338,59 @@ namespace MoonProject.Gameplay
             }
         }
 
+        /// <summary>
+        /// The held button reaches for <paramref name="towable"/> (feel-pass §2.5): a short reach (Anticipate, the
+        /// pulse running out to it), then the latch.
+        /// </summary>
+        private void Reach(ITowable towable, float deltaTime)
+        {
+            if (_reaching != towable)
+            {
+                CancelReach();
+                _reaching = towable;
+                _reachLeft = _tuning.ReachSeconds;
+                Publish(FeelPhase.Anticipate, towable.Position, 0f, _tuning.ReachSeconds);
+            }
+
+            _reachLeft -= deltaTime;
+            if (_reachLeft <= 0f)
+            {
+                _reaching = null;
+                Attach(towable);
+            }
+        }
+
+        /// <summary>A reach let go of (or whose target slipped away) before it latched.</summary>
+        private void CancelReach()
+        {
+            if (_reaching == null)
+            {
+                return;
+            }
+
+            Publish(FeelPhase.Cancel, _reaching.Position, 0f, 0f);
+            _reaching = null;
+        }
+
+        /// <summary>An Act beat each time the tether's tension crosses one of its steps (the hum, the rumble).</summary>
+        private void StepTension(float distance, Vector3 at)
+        {
+            float tension = Mathf.Clamp01((distance - _winch.Length) / _tuning.SnapStretch);
+            int step = Mathf.FloorToInt(tension * _tuning.TensionSteps);
+            if (step == _tensionStep)
+            {
+                return;
+            }
+
+            _tensionStep = step;
+            Publish(FeelPhase.Act, at, tension, 0f);
+        }
+
+        private void Publish(FeelPhase phase, Vector3 at, float strength, float seconds)
+        {
+            _events.Publish(new FeelBeat(FeelKind.Tether, phase, at, Vector3.up, strength, seconds));
+        }
+
         private void Attach(ITowable towable)
         {
             SetHovered(null);
@@ -346,10 +408,15 @@ namespace MoonProject.Gameplay
             _reach = 0f;
             _retracting = false;
             _events.Publish(new TetherAttached(body.position, body.mass));
+            _tensionStep = 0;
+            float weight = Mathf.Clamp01(body.mass / _tuning.HeavyMass);
+            Publish(FeelPhase.Impact, body.position, weight, 0f);
+            Publish(FeelPhase.Follow, body.position, weight, _tuning.LiftSeconds);
         }
 
         /// <param name="announce">False when the scene is being torn down: listeners may already be gone.</param>
-        private void Release(bool snapped, bool announce)
+        /// <param name="delivered">The tow ended where it was going (the shelf, the rack): Reward, not Cancel.</param>
+        private void Release(bool snapped, bool announce, bool delivered)
         {
             ITowable towable = _towed;
             Rigidbody body = towable.Body;
@@ -371,6 +438,7 @@ namespace MoonProject.Gameplay
             if (announce)
             {
                 _events.Publish(new TetherReleased(_beamEnd, snapped));
+                Publish(delivered ? FeelPhase.Reward : FeelPhase.Cancel, _beamEnd, snapped ? 1f : 0f, 0f);
             }
         }
 
@@ -436,7 +504,7 @@ namespace MoonProject.Gameplay
 
             if (_towed != null)
             {
-                Release(false, false);
+                Release(false, false, false);
             }
 
             SetHovered(null);

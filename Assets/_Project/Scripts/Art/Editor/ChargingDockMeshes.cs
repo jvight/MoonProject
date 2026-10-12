@@ -32,13 +32,44 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public static readonly Vector3 AnchorEuler = new Vector3(0f, 226.34f, 0f);
 
-        public const float PadHalfWidth = 0.86f;
+        public const float PadHalfWidth = 1.06f;
 
         // The pad's ends in dock space, behind 07's rear wheels and ahead of its front ones.
         private const float PadBack = -1.4f;
-        private const float PadFront = 1.2f;
+        private const float PadFront = 1.39f;
 
         private const float LaneX = 0.64f;
+
+        /// <summary>The lock's four low walls (feel-pass §7.1): front, right, back, left of the pad.</summary>
+        public const int WallCount = 4;
+
+        /// <summary>Each wall's height above the pad when raised; it sinks into its floor slot when lowered.</summary>
+        public const float WallHeight = 0.35f;
+
+        /// <summary>The lamp band along each wall's top: a 3.5 cm emissive band, cut into segments.</summary>
+        public const float StripHeight = 0.035f;
+
+        /// <summary>
+        /// Segments of each wall's band (Strip_0..2): twelve round the ring, so 4 cells light 3 each and 6 cells 2.
+        /// </summary>
+        public const int StripSegments = 3;
+
+        /// <summary>
+        /// The ring's inner faces (dock space): 07's wheels reach |x| 0.82 (RoverModelBuilder's track plus the wheel
+        /// and its hub cap) and |z| 1.15 (its wheelbase plus the wheel's radius), so these clear them by 12 cm.
+        /// </summary>
+        public const float RingInnerX = 0.94f;
+
+        public const float RingInnerZ = 1.27f;
+
+        /// <summary>The rim lamps' rings, outer to inner: they chase toward the centre as 07 rolls on.</summary>
+        public const int RimRings = 3;
+
+        private const float WallThickness = 0.08f;
+        private const float SlotHeight = 0.006f;
+        private const float BaseBand = 0.05f;
+        private const float CapHeight = 0.035f;
+        private static readonly float[] RimReach = { 0.92f, 0.62f, 0.32f };
 
         // The pylon beside the pad, ahead of 07's left front wheel (the lander's side) and clear of its lane.
         private static readonly Vector3 Pylon = new Vector3(-PadHalfWidth - 0.42f, 0f, 0.7f);
@@ -66,7 +97,7 @@ namespace MoonProject.Art.Editor
             float length = PadFront - PadBack;
             float middle = (PadBack + PadFront) * 0.5f;
             b.Box(At(0f, PadTop * 0.5f, middle), new Vector3(PadHalfWidth * 2f, PadTop, length),
-                PaletteSwatch.WornPanel, 0.004f);
+                PaletteSwatch.Metal, 0.004f);
             for (int side = -1; side <= 1; side += 2)
             {
                 b.Box(At(side * LaneX, PadTop + 0.002f, middle), new Vector3(0.1f, 0.004f, length - 0.5f),
@@ -79,6 +110,110 @@ namespace MoonProject.Art.Editor
             b.Box(At(Pylon + new Vector3(PylonSize.x * 0.5f + 0.004f, 0.42f, 0f)), new Vector3(0.008f, 0.16f, 0.12f),
                 PaletteSwatch.Honey);
             b.Box(At(Pylon + Vector3.up * 0.03f), new Vector3(0.42f, 0.06f, 0.36f), PaletteSwatch.Charcoal, 0.01f);
+            for (int wall = 0; wall < WallCount; wall++)
+            {
+                Vector3 centre = WallCentre(wall);
+                // A dark slot standing a few millimetres proud of the plate, so it never fights the pad's surface.
+                Vector3 slot = wall % 2 == 0
+                    ? new Vector3(WallLength(wall) + 0.04f, SlotHeight, WallThickness + 0.05f)
+                    : new Vector3(WallThickness + 0.05f, SlotHeight, WallLength(wall) + 0.04f);
+                b.Box(At(centre.x, PadTop + SlotHeight * 0.5f, centre.z), slot, PaletteSwatch.Charcoal, 0.002f);
+            }
+        }
+
+        /// <summary>Where wall <paramref name="wall"/> stands (base space, its foot on the pad's top).</summary>
+        public static Vector3 WallPosition(int wall)
+        {
+            return ToBase.MultiplyPoint3x4(WallCentre(wall));
+        }
+
+        /// <summary>Wall <paramref name="wall"/>'s rotation in base space: its length along its local x.</summary>
+        public static Quaternion WallRotation(int wall)
+        {
+            return Rotation(AnchorEuler) * Quaternion.Euler(0f, wall % 2 == 0 ? 0f : 90f, 0f);
+        }
+
+        /// <summary>
+        /// A wall, in its own space, its length along x: a mechanical panel in the dock's paint on a dark base band,
+        /// a bevelled metal cap, rivets along both faces and a hinge plate at each end.
+        /// </summary>
+        public static LowPolyMeshBuilder Wall(int wall)
+        {
+            float length = WallLength(wall);
+            var b = new LowPolyMeshBuilder(160);
+            b.Box(At(0f, BaseBand * 0.5f, 0f), new Vector3(length, BaseBand, WallThickness + 0.006f),
+                PaletteSwatch.Charcoal, 0.004f);
+            float body = WallHeight - BaseBand - CapHeight;
+            b.Box(At(0f, BaseBand + body * 0.5f, 0f), new Vector3(length, body, WallThickness), PaletteSwatch.FadedPaint,
+                0.006f);
+            b.Box(At(0f, WallHeight - CapHeight * 0.5f, 0f), new Vector3(length + 0.012f, CapHeight,
+                WallThickness + 0.024f), PaletteSwatch.Metal, 0.01f);
+            for (int face = -1; face <= 1; face += 2)
+            {
+                float z = face * (WallThickness * 0.5f + 0.004f);
+                for (int rivet = -1; rivet <= 1; rivet++)
+                {
+                    b.Icosphere(At(rivet * length * 0.35f, BaseBand + body * 0.55f, z), 0.011f, 0,
+                        PaletteSwatch.Metal);
+                }
+
+                for (int end = -1; end <= 1; end += 2)
+                {
+                    b.Box(At(end * (length * 0.5f - 0.06f), BaseBand + 0.05f, face * (WallThickness * 0.5f + 0.009f)),
+                        new Vector3(0.05f, 0.07f, 0.018f), PaletteSwatch.Metal, 0.004f);
+                }
+            }
+
+            return b;
+        }
+
+        /// <summary>
+        /// Segment <paramref name="segment"/> of the lamp band along a wall's cap, in the wall's space (a glow layer):
+        /// one lit block per cell's share, with a dark gap between segments.
+        /// </summary>
+        public static LowPolyMeshBuilder WallStrip(int wall, int segment)
+        {
+            float span = WallLength(wall) * 0.9f;
+            float pitch = span / StripSegments;
+            var b = new LowPolyMeshBuilder(12);
+            b.Box(At(-span * 0.5f + pitch * (segment + 0.5f), WallHeight + StripHeight * 0.5f, 0f),
+                new Vector3(pitch - 0.025f, StripHeight, 0.03f), PaletteSwatch.LampGlass, 0.004f);
+            return b;
+        }
+
+        /// <summary>Rim lamp ring <paramref name="ring"/> (0 outermost): four small lenses on the pad, base space.</summary>
+        public static LowPolyMeshBuilder RimRing(int ring)
+        {
+            var b = new LowPolyMeshBuilder(48);
+            float reach = RimReach[ring];
+            for (int i = 0; i < 4; i++)
+            {
+                float x = (i % 2 == 0 ? -1f : 1f) * (PadHalfWidth - 0.08f) * reach;
+                float z = (i < 2 ? PadFront - 0.08f : PadBack + 0.08f) * reach;
+                b.Prism(At(x, PadTop + 0.004f, z), 0.03f, 0.006f, 6, PaletteSwatch.LampGlass);
+            }
+
+            b.Transform(new MeshRange(0, b.TriangleCount), ToBase);
+            return b;
+        }
+
+        /// <summary>The walls stand on the pad round 07's rest, their inner faces on the ring.</summary>
+        private static Vector3 WallCentre(int wall)
+        {
+            float side = RingInnerX + WallThickness * 0.5f;
+            float end = RingInnerZ + WallThickness * 0.5f;
+            switch (wall)
+            {
+                case 0: return new Vector3(0f, PadTop, end);
+                case 1: return new Vector3(side, PadTop, 0f);
+                case 2: return new Vector3(0f, PadTop, -end);
+                default: return new Vector3(-side, PadTop, 0f);
+            }
+        }
+
+        private static float WallLength(int wall)
+        {
+            return wall % 2 == 0 ? (RingInnerX + WallThickness) * 2f : RingInnerZ * 2f;
         }
 
         /// <summary>What glows while 07 charges: a band round the pylon's head and a lens at each pad corner.</summary>

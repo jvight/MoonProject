@@ -55,6 +55,10 @@ namespace MoonProject.Gameplay
         private bool _docked;
         private bool _boosting;
         private bool _placed;
+        private bool _wasAtMast;
+        private bool _mastFull;
+        private int _mastCells;
+        private bool _wasLow;
         private bool _initialized;
 
         /// <summary>07's battery: the rules and the state other domains read.</summary>
@@ -141,6 +145,7 @@ namespace MoonProject.Gameplay
             if (_initialized)
             {
                 Model.Announce();
+                _wasLow = Model.IsLowPower;
             }
         }
 
@@ -153,9 +158,60 @@ namespace MoonProject.Gameplay
 
             float deltaTime = Time.deltaTime;
             Model.Step(Sample(), deltaTime);
+            StepFeel();
             _beam.SetAsleep(Model.IsLowPower);
             _leaderBody.Lead(Model.FriendLeads && !Model.IsCharging, _nearestLit);
             StepPillar(Time.time, deltaTime);
+        }
+
+        /// <summary>
+        /// The battery's FeelBeats (feel-pass §2.7, §2.13). At a lit mast (Kind MastCharge): Anticipate as charging
+        /// starts, Act per whole cell gained (strength = charge), Reward when full there, Cancel when 07 leaves it
+        /// first. Low power (Kind LowPower): Impact as 07 drops onto its reserve cell, Reward when it is back above.
+        /// </summary>
+        private void StepFeel()
+        {
+            Vector3 at = _rover.Position;
+            bool atMast = Model.IsCharging && Model.Charger == ChargerKind.Mast;
+            int cells = Mathf.FloorToInt(Model.Charge);
+            bool full = Model.Charge >= Model.Cells;
+            if (atMast && !_wasAtMast)
+            {
+                _mastCells = cells;
+                Feel(FeelKind.MastCharge, FeelPhase.Anticipate, at, Model.Charge01);
+            }
+            else if (!atMast && _wasAtMast && !_mastFull)
+            {
+                Feel(FeelKind.MastCharge, FeelPhase.Cancel, at, Model.Charge01);
+            }
+
+            if (atMast)
+            {
+                while (_mastCells < cells)
+                {
+                    _mastCells++;
+                    Feel(FeelKind.MastCharge, FeelPhase.Act, at, Model.Charge01);
+                }
+
+                if (full && !_mastFull)
+                {
+                    Feel(FeelKind.MastCharge, FeelPhase.Reward, at, 1f);
+                }
+            }
+
+            _mastFull = atMast && full;
+            _wasAtMast = atMast;
+            if (Model.IsLowPower != _wasLow)
+            {
+                Feel(FeelKind.LowPower, Model.IsLowPower ? FeelPhase.Impact : FeelPhase.Reward, at,
+                    Model.IsLowPower ? 1f : Model.Charge01);
+                _wasLow = Model.IsLowPower;
+            }
+        }
+
+        private void Feel(FeelKind kind, FeelPhase phase, Vector3 at, float strength)
+        {
+            _events.Publish(new FeelBeat(kind, phase, at, Vector3.up, strength, 0f));
         }
 
         /// <summary>This frame's battery step: 07's travel, its verbs, the charger under it.</summary>

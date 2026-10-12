@@ -127,6 +127,21 @@ namespace MoonProject.UI.PlayModeTests
 
         float ISalvageStatus.Progress => CutProgress;
 
+        public bool IsBeamCharging { get; set; }
+
+        public float BeamChargeProgress { get; set; }
+
+        public Vector3 HotPoint { get; set; }
+
+        public Vector3 CutNormal { get; set; } = Vector3.up;
+
+        public int CutLineCount => 0;
+
+        public Vector3 CutLinePoint(int index)
+        {
+            return HotPoint;
+        }
+
         public TetherAimState State => TetherState;
 
         public Vector3 TargetPosition { get; set; }

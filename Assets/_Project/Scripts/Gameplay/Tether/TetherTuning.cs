@@ -82,6 +82,19 @@ namespace MoonProject.Gameplay
         [Tooltip("If the relic hangs this many metres beyond the tether length (stuck)...")]
         [Range(0.5f, 20f)] [SerializeField] private float _snapStretch = 5f;
 
+        [Header("Feel beats (feel-pass §2.5)")]
+        [Tooltip("Seconds the held tether reaches out to its target before it latches.")]
+        [Range(0f, 0.5f)] [SerializeField] private float _reachSeconds = 0.15f;
+
+        [Tooltip("Seconds of the lift beat after the latch (how long the body's response to the weight lasts).")]
+        [Range(0.1f, 1f)] [SerializeField] private float _liftSeconds = 0.3f;
+
+        [Tooltip("A towed thing this many kg or more feels fully heavy (the latch and lift beats' strength).")]
+        [Range(1f, 50f)] [SerializeField] private float _heavyMass = 15f;
+
+        [Tooltip("Steps of tension (0 to the snap stretch): each one crossed publishes an Act beat.")]
+        [Range(2, 8)] [SerializeField] private int _tensionSteps = 4;
+
         [Tooltip("...for this many seconds, the tether lets go softly.")]
         [Range(0f, 5f)] [SerializeField] private float _snapGrace = 0.8f;
 
@@ -142,6 +155,10 @@ namespace MoonProject.Gameplay
         public float TowLinearDamping => _towLinearDamping;
         public float TowAngularDamping => _towAngularDamping;
         public float SnapStretch => _snapStretch;
+        public float ReachSeconds => _reachSeconds;
+        public float LiftSeconds => _liftSeconds;
+        public float HeavyMass => _heavyMass;
+        public int TensionSteps => _tensionSteps;
         public float SnapGrace => _snapGrace;
         public float SnapDistance => _snapDistance;
         public float SnapCarry => _snapCarry;

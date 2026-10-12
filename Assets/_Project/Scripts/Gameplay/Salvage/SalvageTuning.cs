@@ -45,6 +45,16 @@ namespace MoonProject.Gameplay
         [Tooltip("Once cutting, 07 may drift this many times faster before the beam lets go (no flicker).")]
         [Range(1f, 3f)] [SerializeField] private float _engageHysteresis = 1.5f;
 
+        [Tooltip("Seconds the emitter charges up before ignition on a fresh cut (feel-pass §3.1); letting go during it " +
+                 "cancels with nothing lost and no battery drawn.")]
+        [Range(0.5f, 0.8f)] [SerializeField] private float _chargeSeconds = 0.65f;
+
+        [Tooltip("Seconds of charge-up when resuming a part-cut piece: its seam is still warm.")]
+        [Range(0.1f, 0.6f)] [SerializeField] private float _resumeChargeSeconds = 0.3f;
+
+        [Tooltip("Steps a cut climbs through: each one publishes an Act beat (the sustained rumble and sizzle).")]
+        [Range(1, 8)] [SerializeField] private int _cutSteps = 5;
+
         [Tooltip("Seconds of cutting per material unit the piece yields...")]
         [Range(0.2f, 3f)] [SerializeField] private float _cutSecondsPerUnit = 1f;
 
@@ -139,15 +149,40 @@ namespace MoonProject.Gameplay
         [Tooltip("...plus this many seconds per metre it floats (a long way back stays gentle).")]
         [Range(0f, 0.2f)] [SerializeField] private float _returnPerMetre = 0.02f;
 
-        [Header("Break off")]
-        [Tooltip("Seconds a cut piece takes to come away and fold into a bundle.")]
-        [Range(0.1f, 2f)] [SerializeField] private float _breakDuration = 0.7f;
+        [Header("Break off (feel-pass §3.1: crack, tumble, fold, tie-off)")]
+        [Tooltip("Seconds of the crack: the piece holds while the wreck shudders, then it lets go.")]
+        [Range(0f, 0.4f)] [SerializeField] private float _crackSeconds = 0.12f;
+
+        [Tooltip("Seconds the freed piece tumbles slowly under the Moon's gravity before it folds.")]
+        [Range(0.5f, 2f)] [SerializeField] private float _tumbleSeconds = 1.2f;
+
+        [Tooltip("Metres the piece rises at the top of its tumble (it falls back a little under 1/6 g).")]
+        [Range(0f, 1.5f)] [SerializeField] private float _tumbleRise = 0.5f;
 
         [Tooltip("Metres a cut piece eases out of its cut face as it comes away.")]
         [Range(0f, 2f)] [SerializeField] private float _breakPop = 0.45f;
 
-        [Tooltip("Degrees a cut piece tumbles while it folds.")]
+        [Tooltip("Degrees a cut piece turns over its tumble.")]
         [Range(0f, 180f)] [SerializeField] private float _breakTumble = 35f;
+
+        [Tooltip("Seconds the piece's facets take to fold into a bundle of its material.")]
+        [Range(0.2f, 1.5f)] [SerializeField] private float _foldSeconds = 0.6f;
+
+        [Tooltip("Seconds of the bundle's tie-off pop.")]
+        [Range(0.05f, 0.6f)] [SerializeField] private float _tieSeconds = 0.2f;
+
+        [Tooltip("The bundle's scale at the top of its tie-off pop (1 = none).")]
+        [Range(1f, 1.4f)] [SerializeField] private float _tiePop = 1.12f;
+
+        [Header("Wreck shudder at the crack")]
+        [Tooltip("Metres the wreck shudders when a piece cracks free.")]
+        [Range(0f, 0.05f)] [SerializeField] private float _shudderAmplitude = 0.01f;
+
+        [Tooltip("Seconds the shudder lasts, fading out.")]
+        [Range(0.05f, 0.5f)] [SerializeField] private float _shudderSeconds = 0.15f;
+
+        [Tooltip("Shakes per second of the shudder.")]
+        [Range(5f, 60f)] [SerializeField] private float _shudderFrequency = 30f;
 
         [Header("Into 07")]
         [Tooltip("Flight time (s) of a bundle right next to 07.")]
@@ -240,7 +275,21 @@ namespace MoonProject.Gameplay
         public float ReturnHover => _returnHover;
         public float ReturnDuration => _returnDuration;
         public float ReturnPerMetre => _returnPerMetre;
-        public float BreakDuration => _breakDuration;
+        public float ChargeSeconds => _chargeSeconds;
+        public float ResumeChargeSeconds => _resumeChargeSeconds;
+        public int CutSteps => _cutSteps;
+        public float CrackSeconds => _crackSeconds;
+        public float TumbleSeconds => _tumbleSeconds;
+        public float TumbleRise => _tumbleRise;
+        public float FoldSeconds => _foldSeconds;
+        public float TieSeconds => _tieSeconds;
+        public float TiePop => _tiePop;
+        public float ShudderAmplitude => _shudderAmplitude;
+        public float ShudderSeconds => _shudderSeconds;
+        public float ShudderFrequency => _shudderFrequency;
+
+        /// <summary>Seconds from the break to the bundle's flight: crack, tumble, fold and tie-off.</summary>
+        public float BreakDuration => _crackSeconds + _tumbleSeconds + _foldSeconds + _tieSeconds;
         public float BreakPop => _breakPop;
         public float BreakTumble => _breakTumble;
         public float FlightDuration => _flightDuration;

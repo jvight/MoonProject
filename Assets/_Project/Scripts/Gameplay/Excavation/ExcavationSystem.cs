@@ -40,6 +40,9 @@ namespace MoonProject.Gameplay
         private Relic _lifting;
         private Vector3 _segmentFrom;
         private float _segmentStart;
+        private CutState _dig;
+        private IDisposable _stowed;
+        private IDisposable _deposited;
         private float _spin;
         private float _beamLevel;
         private Vector3 _beamTarget;
@@ -79,6 +82,10 @@ namespace MoonProject.Gameplay
             _events = services.Events;
             _input = services.Input;
             _beamWork = services.Beam;
+            _dig = new CutState(services.Events, FeelKind.Dig, _tuning.ChargeSeconds, _tuning.ResumeChargeSeconds,
+                _tuning.DigSteps);
+            _stowed = services.Events.Subscribe<RelicStowed>(stowed => Reward(stowed.Position));
+            _deposited = services.Events.Subscribe<RelicDeposited>(deposited => Reward(deposited.Position));
             _rover = services.Rover;
             _rig = services.Rig;
             _terrain = services.Terrain;
@@ -120,8 +127,16 @@ namespace MoonProject.Gameplay
 
             if (_lifting != null)
             {
-                StepLift(_lifting, deltaTime);
-                _beamWork.Work(deltaTime);
+                // The battery draws only from ignition on: a charge-up costs nothing.
+                if (_dig.Draws)
+                {
+                    StepLift(_lifting, deltaTime);
+                    _beamWork.Work(deltaTime);
+                }
+                else if (_dig.Charge(deltaTime, _lifting.Site.Position, Vector3.up))
+                {
+                    _events.Publish(new ExcavationStarted(_lifting.Site.Position));
+                }
             }
 
             UpdateBeam(wantsBeam, deltaTime);
@@ -170,16 +185,21 @@ namespace MoonProject.Gameplay
             _segmentStart = relic.Progress;
             _segmentFrom = relic.transform.position;
             _spin = relic.transform.eulerAngles.y;
-            _events.Publish(new ExcavationStarted(relic.Site.Position));
+            _dig.Engage(relic.Progress, relic.Site.Position, Vector3.up);
         }
 
         /// <param name="announce">False when the scene is being torn down: listeners may already be gone.</param>
         private void StopLift(bool announce)
         {
+            bool lit = _dig.Draws;
             _lifting.PauseLift();
             if (announce)
             {
-                _events.Publish(new ExcavationStopped(_lifting.Site.Position, false));
+                _dig.Release(_lifting.Progress, _lifting.transform.position, Vector3.up);
+                if (lit)
+                {
+                    _events.Publish(new ExcavationStopped(_lifting.Site.Position, false));
+                }
             }
 
             _lifting = null;
@@ -188,7 +208,8 @@ namespace MoonProject.Gameplay
         private void StepLift(Relic relic, float deltaTime)
         {
             float duration = _tuning.DurationFor(relic.Definition.Mass);
-            float progress = ExcavationRise.Advance(relic.Progress, deltaTime, duration);
+            float before = relic.Progress;
+            float progress = ExcavationRise.Advance(before, deltaTime, duration);
             float segment = ExcavationRise.Segment(progress, _segmentStart);
             Vector3 eye = _rig.TetherOrigin.position;
             Vector3 present = ExcavationRise.Ahead(eye, _rover.Rotation * Vector3.forward, _tuning.PresentDistance);
@@ -197,7 +218,7 @@ namespace MoonProject.Gameplay
             Vector3 position = ExcavationRise.Position(_segmentFrom, present, segment);
             _spin += _tuning.RiseSpin * deltaTime;
             relic.SetLiftPose(position, Quaternion.Euler(0f, _spin, 0f), progress);
-            if (progress >= 1f)
+            if (_dig.Advance(before, progress, position, Vector3.up))
             {
                 Complete(relic);
             }
@@ -227,6 +248,9 @@ namespace MoonProject.Gameplay
         {
             Vector3 hop = Vector3.up * _tuning.SurfaceHop + new Vector3(_rover.Velocity.x, 0f, _rover.Velocity.z);
             relic.Surface(hop, Vector3.up * (_tuning.SurfaceSpin * Mathf.Deg2Rad));
+            // The dig's only Follow is the relic's hop out, a first Follow (strength 0), not a fold.
+            _events.Publish(new FeelBeat(FeelKind.Dig, FeelPhase.Follow, relic.transform.position, Vector3.up, 0f,
+                0f));
             _lifting = null;
             _events.Publish(new ExcavationStopped(relic.Site.Position, true));
             _events.Publish(new RelicSurfaced(relic.transform.position, relic.Definition.Id));
@@ -236,7 +260,8 @@ namespace MoonProject.Gameplay
 
         private void UpdateBeam(bool wantsBeam, float deltaTime)
         {
-            float target = _lifting != null ? _tuning.BeamIntensity
+            bool lit = _lifting != null && _dig.Draws;
+            float target = lit ? _tuning.BeamIntensity
                 : wantsBeam ? _tuning.ReachingIntensity
                 : 0f;
             float timeConstant = target > _beamLevel ? _tuning.BeamFadeIn : _tuning.BeamFadeOut;
@@ -263,7 +288,7 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            float dust = _lifting != null ? _beamLevel / Mathf.Max(0.01f, _tuning.BeamIntensity) : 0f;
+            float dust = lit ? _beamLevel / Mathf.Max(0.01f, _tuning.BeamIntensity) : 0f;
             _dust.Emit(_lifting != null ? _lifting.Site.Position : _dust.Position, dust);
         }
 
@@ -311,6 +336,18 @@ namespace MoonProject.Gameplay
                 _rig.ClearGazeTarget(this);
                 _gazing = false;
             }
+        }
+
+        private void OnDestroy()
+        {
+            _stowed?.Dispose();
+            _deposited?.Dispose();
+        }
+
+        /// <summary>A dug relic reached 07's rack or the shelf: the dig's closing Reward beat.</summary>
+        private void Reward(Vector3 position)
+        {
+            _events.Publish(new FeelBeat(FeelKind.Dig, FeelPhase.Reward, position, Vector3.up, 1f, 0f));
         }
     }
 }

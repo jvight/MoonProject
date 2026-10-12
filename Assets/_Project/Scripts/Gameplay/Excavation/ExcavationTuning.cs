@@ -20,6 +20,16 @@ namespace MoonProject.Gameplay
         [Tooltip("Holding the beam asks 07 to ease to a stop; the beam takes hold below this speed (m/s).")]
         [Range(0.1f, 5f)] [SerializeField] private float _engageSpeed = 1.2f;
 
+        [Tooltip("Seconds the emitter charges up before the dig's beam ignites (feel-pass §3.2: the cut's kit); " +
+                 "letting go during it cancels with nothing lost and no battery drawn.")]
+        [Range(0.5f, 0.8f)] [SerializeField] private float _chargeSeconds = 0.65f;
+
+        [Tooltip("Seconds of charge-up when resuming a half-lifted relic.")]
+        [Range(0.1f, 0.6f)] [SerializeField] private float _resumeChargeSeconds = 0.3f;
+
+        [Tooltip("Steps a dig climbs through: each one publishes an Act beat.")]
+        [Range(1, 8)] [SerializeField] private int _digSteps = 5;
+
         [Header("Rise")]
         [Tooltip("Seconds to lift a weightless relic all the way.")]
         [Range(0.5f, 20f)] [SerializeField] private float _baseDuration = 2.5f;
@@ -83,6 +93,9 @@ namespace MoonProject.Gameplay
         public float ReachRadius => _reachRadius;
         public float ReachHysteresis => _reachHysteresis;
         public float EngageSpeed => _engageSpeed;
+        public float ChargeSeconds => _chargeSeconds;
+        public float ResumeChargeSeconds => _resumeChargeSeconds;
+        public int DigSteps => _digSteps;
         public float BaseDuration => _baseDuration;
         public float SecondsPerKg => _secondsPerKg;
         public float PresentDistance => _presentDistance;

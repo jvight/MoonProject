@@ -76,8 +76,8 @@ namespace MoonProject.Gameplay
                     continue;
                 }
 
-                string problem = AddPiece(built, node, number, material, drag, entry.YieldScale, parent, terrain,
-                    tuning, catalog, halo, dragMaterial, wreck, drags);
+                string problem = AddPiece(built, entry, node, number, material, drag, entry.YieldScale, parent,
+                    terrain, tuning, catalog, halo, dragMaterial, wreck, drags);
                 if (problem != null)
                 {
                     return problem;
@@ -103,10 +103,10 @@ namespace MoonProject.Gameplay
             return null;
         }
 
-        private static string AddPiece(SalvageSite site, Transform node, int number, SalvageMaterial material,
-            bool drag, int yieldScale, Transform parent, ITerrainQuery terrain, SalvageTuning tuning,
-            SalvageCatalog catalog, Material halo, PhysicsMaterial dragMaterial, List<Collider> wreck,
-            List<SalvageDrag> drags)
+        private static string AddPiece(SalvageSite site, SalvageSiteEntry entry, Transform node, int number,
+            SalvageMaterial material, bool drag, int yieldScale, Transform parent, ITerrainQuery terrain,
+            SalvageTuning tuning, SalvageCatalog catalog, Material halo, PhysicsMaterial dragMaterial,
+            List<Collider> wreck, List<SalvageDrag> drags)
         {
             if (site.Find(number) != null)
             {
@@ -122,6 +122,12 @@ namespace MoonProject.Gameplay
             if (cutPoint == null)
             {
                 return $"'{node.name}' has no '{CutPointName}' node";
+            }
+
+            if (!entry.TryGetCutLine(number, out Vector3[] cutLine))
+            {
+                return $"'{node.name}' has no cut line of {PieceCutLine.MinPoints}-{PieceCutLine.MaxPoints} points " +
+                       "in the catalog (run Gameplay/Content)";
             }
 
             Mesh mesh = filter.sharedMesh;
@@ -145,7 +151,7 @@ namespace MoonProject.Gameplay
             bundle.SetActive(false);
 
             var piece = new SalvagePiece(site, number, material, drag, units, SalvageYield.CutSeconds(units, tuning),
-                node, bounds.center, cutPoint, solid, new GlowRenderer(haloRenderer), bundle.transform);
+                node, bounds.center, cutPoint, cutLine, solid, new GlowRenderer(haloRenderer), bundle.transform);
             if (drag)
             {
                 SetLayer(node, Layers.Relic);
