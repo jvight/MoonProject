@@ -57,6 +57,7 @@ namespace MoonProject.Art.Editor
                 ModelPrefabWriter.Write(CreateBundle(bundle), ArtPaths.PickupFolder, material);
             }
 
+            ModelPrefabWriter.Write(CreateOrangeBeadsBundle(), ArtPaths.PickupFolder, material);
             ModelPrefabWriter.Write(CreateBlueprintTube(), ArtPaths.PickupFolder, material);
             foreach (string part in StoryPartNames)
             {
@@ -183,6 +184,18 @@ namespace MoonProject.Art.Editor
 
             string name = BundleName(material);
             return new ModelNode(name, Vector3.zero, new ModelMesh(name, RecipeKit.CentredOnMass(geometry)));
+        }
+
+        /// <summary>
+        /// The first lunar material's bundle (M3-27 #4), <c>Material_OrangeBeads</c> beside the salvage ones: orange
+        /// beads heaped in a round woven sack, round and orange where Wiring's coil is round and copper.
+        /// </summary>
+        public const string OrangeBeadsBundleName = "Material_OrangeBeads";
+
+        public static ModelNode CreateOrangeBeadsBundle()
+        {
+            return new ModelNode(OrangeBeadsBundleName, Vector3.zero,
+                new ModelMesh(OrangeBeadsBundleName, RecipeKit.CentredOnMass(OrangeBeadMeshes.Bundle())));
         }
 
         /// <summary>

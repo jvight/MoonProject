@@ -291,6 +291,40 @@ namespace MoonProject.Art.Tests
             Assert.Greater(optics.Bounds.size.x / optics.Bounds.size.z, 1.25f);
         }
 
+        [Test]
+        public void OrangeBeads_ARoundWovenSack_HeapedOrange_ApartFromWiringsCopperCoil()
+        {
+            ModelNode bundle = SiteModelBuilder.CreateOrangeBeadsBundle();
+            Assert.AreEqual(SiteModelBuilder.OrangeBeadsBundleName, bundle.Name);
+            CollectionAssert.IsEmpty(bundle.Children);
+            LowPolyMeshBuilder sack = bundle.Mesh.Geometry;
+            MeshChecks.AssertWellFormed(sack);
+            Vector3 size = sack.Bounds.size;
+            Assert.That(Mathf.Max(size.x, Mathf.Max(size.y, size.z)), Is.InRange(MinBundle, MaxBundle));
+            Assert.That(sack.VolumeCentroid().magnitude, Is.LessThan(PivotTolerance));
+            Assert.IsFalse(MeshChecks.Swatches(sack).Any(Palette.IsEmissive));
+            Assert.AreEqual(1f, size.x / size.z, 0.15f, "round in plan");
+            Assert.AreEqual(PaletteSwatch.Rust, Dominant(sack, Vector3.up), "orange beads seen from above");
+            LowPolyMeshBuilder wiring = SiteModelBuilder.CreateBundle(SalvagePieceMaterial.Wiring).Mesh.Geometry;
+            Assert.Greater(size.y, 1.3f * wiring.Bounds.size.y, "a tall sack, not a low coil");
+        }
+
+        [Test]
+        public void OrangeBeadPatches_AreLowOrangeDrifts_ThatReadFromAbove()
+        {
+            for (int i = 0; i < PropModelBuilder.OrangeBeadPatchVariants; i++)
+            {
+                ModelNode patch = PropModelBuilder.CreateOrangeBeadPatch(i);
+                StringAssert.StartsWith(PropModelBuilder.OrangeBeadPatchPrefix, patch.Name);
+                LowPolyMeshBuilder drift = patch.Mesh.Geometry;
+                MeshChecks.AssertWellFormed(drift);
+                Assert.Less(drift.Bounds.size.y, 0.4f, $"{patch.Name} hugs the ground");
+                Assert.Greater(Mathf.Min(drift.Bounds.size.x, drift.Bounds.size.z), 1f, $"{patch.Name} reads far off");
+                Assert.AreEqual(PaletteSwatch.Rust, Dominant(drift, Vector3.up), $"{patch.Name} is orange from above");
+                Assert.IsFalse(MeshChecks.Swatches(drift).Any(Palette.IsEmissive), "beads don't glow");
+            }
+        }
+
         private static List<ModelNode> Pieces(ModelNode site)
         {
             return site.Children.Where(node => PieceName.IsMatch(node.Name)).ToList();

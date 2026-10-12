@@ -19,7 +19,7 @@ namespace MoonProject.Art.Editor
         public const int Slots = Columns * Tiers;
 
         /// <summary>The materials a crate comes in (bundle and crate colours of M3-27); the rest come later.</summary>
-        public static readonly string[] CrateMaterials = { "Metal", "Wiring", "Optics", "OrangeGlass" };
+        public static readonly string[] CrateMaterials = { "Metal", "Wiring", "Optics", "OrangeBeads" };
 
         public static readonly Vector3 CrateSize = new Vector3(0.3f, 0.24f, 0.34f);
 
@@ -128,8 +128,8 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
-        /// <summary>The crate's colour by material (M3-25 T2, M3-27): Metal grey, Wiring honey, Optics dusk-blue glass,
-        /// orange glass the soil's orange.</summary>
+        /// <summary>The crate's colour by material (M3-25 T2, M3-27): Metal grey, Wiring copper, Optics violet, as
+        /// their bundles; orange beads the soil's rust orange.</summary>
         public static PaletteSwatch CrateColour(string material)
         {
             switch (material)
@@ -137,10 +137,10 @@ namespace MoonProject.Art.Editor
                 case "Metal":
                     return PaletteSwatch.Metal;
                 case "Wiring":
-                    return PaletteSwatch.Honey;
+                    return PaletteSwatch.WarmAccent;
                 case "Optics":
                     return PaletteSwatch.SkyHorizon;
-                case "OrangeGlass":
+                case "OrangeBeads":
                     return PaletteSwatch.Rust;
                 default:
                     throw new System.ArgumentException($"No crate colour for '{material}'.", nameof(material));

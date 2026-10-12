@@ -21,7 +21,7 @@ namespace MoonProject.Art.Editor
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
     ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner|
     ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|kitmain|home|homeclean|
-    ///                  builtfor07|shelves|focuslens|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|lab_dark|lab_lit]
+    ///                  builtfor07|shelves|focuslens|orangebeads|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|lab_dark|lab_lit]
     /// </code>
     /// (default rover; a ';'-separated list captures several scenes in one run)
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the habitat lander and the
@@ -208,6 +208,10 @@ namespace MoonProject.Art.Editor
                     case "focuslens":
                         NightSetting(material, temporary, 90f, 12f);
                         poses = FocusLensScene(temporary);
+                        break;
+                    case "orangebeads":
+                        NightSetting(material, temporary, 90f, 12f);
+                        poses = OrangeBeadsScene(temporary);
                         break;
                     case "shelves":
                         NightSetting(material, temporary, 90f, 12f);
@@ -464,6 +468,42 @@ namespace MoonProject.Art.Editor
             part.SetParent(socket, false);
             part.localPosition = Vector3.zero;
             part.localRotation = Quaternion.identity;
+        }
+
+        private static CameraPoseSet OrangeBeadsScene(TemporaryObjects temporary)
+        {
+            var field = new[]
+            {
+                new Vector3(0f, 0f, 6f), new Vector3(3.2f, 0f, 8.5f), new Vector3(-2.8f, 0f, 9f),
+                new Vector3(1.2f, 0f, 12f), new Vector3(-0.6f, 0f, 15f),
+            };
+            for (int i = 0; i < field.Length; i++)
+            {
+                GameObject patch = Instantiate(
+                    PropModelBuilder.OrangeBeadPatchPrefix + (i % PropModelBuilder.OrangeBeadPatchVariants), temporary,
+                    ArtPaths.PropFolder);
+                patch.transform.SetPositionAndRotation(field[i], Quaternion.Euler(0f, i * 47f, 0f));
+            }
+
+            string[] bundles =
+            {
+                SiteModelBuilder.BundleName(SalvagePieceMaterial.Metal),
+                SiteModelBuilder.BundleName(SalvagePieceMaterial.Wiring),
+                SiteModelBuilder.BundleName(SalvagePieceMaterial.Optics), SiteModelBuilder.OrangeBeadsBundleName,
+            };
+            for (int i = 0; i < bundles.Length; i++)
+            {
+                GameObject bundle = Instantiate(bundles[i], temporary, ArtPaths.PickupFolder);
+                float lift = bundle.transform.position.y - RendererBounds(bundle).min.y;
+                bundle.transform.SetPositionAndRotation(new Vector3((i - 1.5f) * 0.55f, lift, 2.2f),
+                    Quaternion.Euler(0f, 20f, 0f));
+            }
+
+            temporary.Add(Rover(temporary, new Vector3(2.6f, 0f, 3.4f), -20f).gameObject);
+            return Poses(
+                Pose("bundles", new[] { 0.1f, 1.2f, 0.6f }, new[] { 0f, 0.15f, 2.2f }, 45f),
+                Pose("field_near", new[] { 1.5f, 2.2f, -1.5f }, new[] { 0f, 0f, 8f }, 50f),
+                Pose("field_far30m", new[] { 6f, 5f, -20f }, new[] { 0f, 0f, 10f }, 40f));
         }
 
         private static CameraPoseSet ShelvesScene(TemporaryObjects temporary)
