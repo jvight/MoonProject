@@ -283,7 +283,8 @@ namespace MoonProject.World.Tests
                 {
                     WorldAnchor other = _anchors.Get(i);
                     bool partOfKestrel = name == Kestrel && other.Id == WorldAnchorIds.KestrelTrail;
-                    if (other.Id == site.Id || partOfKestrel)
+                    bool ownCrate = other.Id == WorldAnchorIds.CratePrefix + name;
+                    if (other.Id == site.Id || partOfKestrel || ownCrate)
                     {
                         continue;
                     }
