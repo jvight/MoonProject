@@ -554,11 +554,10 @@ Label {
 /* 07's abilities at the bottom centre: round glass bubbles, a padlock until earned, an amber ring in use or new */
 .ability-slots {
     position: absolute;
-    left: 0;
-    right: 0;
+    left: 50%;
     bottom: 18px;
+    translate: -50% 0;
     flex-direction: row;
-    justify-content: center;
     align-items: center;
 }
 
@@ -796,6 +795,11 @@ Label {
     bottom: 0;
     width: 242px;
     height: 211px;
+}
+
+/* The dials carry their own glass and glow: the chip's shadow layer stays empty */
+.materials-chip .soft-shadow {
+    display: none;
 }
 
 .materials-chip__body {
