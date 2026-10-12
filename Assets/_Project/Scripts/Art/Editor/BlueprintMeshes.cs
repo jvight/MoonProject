@@ -17,7 +17,10 @@ namespace MoonProject.Art.Editor
         /// The kits with a sheet, in the order of their pegs from the left, named as Core's RoverAbility members (Art
         /// does not reference Core; Gameplay maps the names).
         /// </summary>
-        public static readonly string[] Kits = { "HoverJump", "CargoCradle", "WarmHeadlamp", "BoostCoils", "CellPack" };
+        public static readonly string[] Kits =
+        {
+            "HoverJump", "CargoCradle", "WarmHeadlamp", "BoostCoils", "CellPack", "FocusLens", "SideBins",
+        };
 
         /// <summary>The plotter's bed: its centre and tilt (leaning back) in plotter space.</summary>
         public static readonly Vector3 BedCentre = new Vector3(0f, 1.15f, 0f);
@@ -34,14 +37,14 @@ namespace MoonProject.Art.Editor
         /// <summary>The plotter's ready lamp (plotter space).</summary>
         public static readonly Vector3 PlotterLamp = new Vector3(0.62f, 1.0f, 0.17f);
 
-        private const float SheetWidth = 0.3f;
-        private const float SheetHeight = 0.36f;
+        private const float SheetWidth = 0.26f;
+        private const float SheetHeight = 0.32f;
         private const float SheetThickness = 0.004f;
         private const float Line = 0.008f;
-        private const float SlotSpacing = 0.38f;
+        private const float SlotSpacing = 0.3f;
         private const float CordHeight = 2.12f;
         private const float CordZ = -0.34f;
-        private const float CordHalfSpan = 0.98f;
+        private const float CordHalfSpan = 1.06f;
 
         private const float BedWidth = 1f;
         private const float BedHeight = 0.74f;
@@ -121,6 +124,27 @@ namespace MoonProject.Art.Editor
                         Ring(b, new Vector2(i * 0.075f, 0.025f), 0.03f);
                     }
 
+                    break;
+                case "FocusLens":
+                    Ring(b, new Vector2(0f, 0.01f), 0.09f);
+                    Ring(b, new Vector2(0f, 0.01f), 0.042f);
+                    Ring(b, new Vector2(0f, 0.01f), 0.02f);
+                    for (int i = 0; i < 3; i++)
+                    {
+                        float angle = (90f + i * 120f) * Mathf.Deg2Rad;
+                        var direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+                        Draw(b, new Vector2(0f, 0.01f) + direction * 0.05f, new Vector2(0f, 0.01f) + direction * 0.085f);
+                    }
+
+                    Draw(b, new Vector2(-0.11f, 0.01f), new Vector2(-0.06f, 0.01f));
+                    Draw(b, new Vector2(0.06f, 0.01f), new Vector2(0.11f, 0.01f));
+                    break;
+                case "SideBins":
+                    Body(b);
+                    Box(b, new Vector2(0.02f, 0.06f), new Vector2(0.075f, 0.1f));
+                    Draw(b, new Vector2(0.03f, 0.06f), new Vector2(0.03f, 0.045f));
+                    Draw(b, new Vector2(0.065f, 0.06f), new Vector2(0.065f, 0.045f));
+                    Draw(b, new Vector2(0.015f, 0.1f), new Vector2(0.08f, 0.1f));
                     break;
                 case "CellPack":
                     Draw(b, new Vector2(-0.11f, -0.06f), new Vector2(0.11f, -0.06f));

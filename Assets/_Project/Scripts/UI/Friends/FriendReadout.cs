@@ -38,7 +38,7 @@ namespace MoonProject.UI
         private int _shownFriend = FriendFocus.None;
         private float _writtenRaise = -1f;
         private int _writtenCollected = -1;
-        private string[] _labels = new string[0];
+        private string[] _labels = Array.Empty<string>();
 
         public FriendReadout(UiLayout layout, FriendUiSettings settings, PromptSettings anchoring,
             IFriendStatuses friends, IRoverState rover, IViewCamera view, ILocalization localization)
@@ -84,10 +84,11 @@ namespace MoonProject.UI
         public void Relocalize()
         {
             _writtenCollected = -1;
-            _labels = new string[0];
             if (_shownFriend != FriendFocus.None)
             {
-                WriteLabel(_friends.Status(_shownFriend));
+                FriendStatus status = _friends.Status(_shownFriend);
+                BuildLabels(status);
+                WriteLabel(status);
             }
         }
 
@@ -139,11 +140,22 @@ namespace MoonProject.UI
             _fill.Snap(status.Collected);
             WritePips();
             _writtenCollected = -1;
-            _labels = new string[0];
+            BuildLabels(status);
             WriteLabel(status);
         }
 
-        /// <summary>"Tilly's parts: 2 of 3", formatted only when the count or the friend changes.</summary>
+        /// <summary>"Tilly's parts: 2 of 3": every count's words are made once when the readout shows a friend.</summary>
+        private void BuildLabels(FriendStatus status)
+        {
+            string name = _localization.Get(UiKeys.FriendName(_friends.Definition(_shownFriend).Id));
+            string format = _localization.Get(UiKeys.FriendParts);
+            _labels = new string[status.Total + 1];
+            for (int count = 0; count < _labels.Length; count++)
+            {
+                _labels[count] = string.Format(format, name, count, status.Total);
+            }
+        }
+
         private void WriteLabel(FriendStatus status)
         {
             if (status.Collected == _writtenCollected)
@@ -152,14 +164,7 @@ namespace MoonProject.UI
             }
 
             _writtenCollected = status.Collected;
-            if (_labels.Length <= status.Total)
-            {
-                _labels = new string[status.Total + 1];
-            }
-
-            int count = Mathf.Clamp(status.Collected, 0, status.Total);
-            _label.text = _labels[count] ?? (_labels[count] = string.Format(_localization.Get(UiKeys.FriendParts),
-                _localization.Get(UiKeys.FriendName(_friends.Definition(_shownFriend).Id)), count, status.Total));
+            _label.text = _labels[Mathf.Clamp(status.Collected, 0, _labels.Length - 1)];
         }
 
         private void BuildPips(int count)

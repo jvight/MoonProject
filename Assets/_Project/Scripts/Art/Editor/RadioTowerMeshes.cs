@@ -99,26 +99,68 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
-        /// <summary>The stage's warm lamps: one bulb, then four, then a ring and a crown.</summary>
-        public static LowPolyMeshBuilder Lights(int level)
+        /// <summary>The rings each stage's lamps light in, bottom to top, one per Act of its coming online.</summary>
+        public const int LightRings = 4;
+
+        /// <summary>Where the "offline" plaque hangs beside the port's hopper (stage space), and its lamp on it.</summary>
+        public static readonly Vector3 OfflinePlaque = new Vector3(PortHopperMouth.x - 0.42f, PortHopperMouth.y + 0.1f,
+            PortHopperMouth.z - 0.05f);
+
+        public static readonly Vector3 OfflineLamp = new Vector3(0.09f, 0f, 0.025f);
+
+        // L1's two lamps up the pole, as shares of its height, and how far they stand off its side.
+        private static readonly float[] PoleLamps = { 0.35f, 0.68f };
+        private const float PoleLampOffset = 0.12f;
+
+        /// <summary>
+        /// Ring <paramref name="ring"/> (0..<see cref="LightRings"/> - 1, bottom to top) of the stage's warm lamps:
+        /// ring 0 is the cabinet's lamp; L1 then climbs its pole to the top bulb, L2 its mast's platform, middle and
+        /// top, and L3 its low deck, high deck and crown.
+        /// </summary>
+        public static LowPolyMeshBuilder Lights(int level, int ring)
         {
-            var b = new LowPolyMeshBuilder(400);
-            b.Box(At(0.17f, 0.85f, 0.5f), new Vector3(0.05f, 0.05f, 0.02f), PaletteSwatch.WarmLamp);
+            if (ring < 0 || ring >= LightRings)
+            {
+                throw new System.ArgumentOutOfRangeException(nameof(ring), ring, "Tower light rings are 0..3.");
+            }
+
+            var b = new LowPolyMeshBuilder(200);
+            if (ring == 0)
+            {
+                b.Box(At(0.17f, 0.85f, 0.5f), new Vector3(0.05f, 0.05f, 0.02f), PaletteSwatch.WarmLamp);
+                return b;
+            }
+
             switch (RequireLevel(level))
             {
+                case 1 when ring < LightRings - 1:
+                    float y = PlinthHeight + (PoleTop - PlinthHeight) * PoleLamps[ring - 1];
+                    b.Icosphere(At(PoleLampOffset, y, PoleFoot.z), 0.06f, 1, PaletteSwatch.WarmLamp);
+                    break;
                 case 1:
                     b.Icosphere(At(0f, PoleTop + 0.12f, PoleFoot.z), 0.08f, 1, PaletteSwatch.WarmLamp);
                     break;
-                case 2:
+                case 2 when ring == 1:
                     Corners(b, MastPlatform + 0.15f, LatticeHalf(MastPlatform, MastTop, 0.62f, 0.28f) + 0.02f, 0.09f,
                         PaletteSwatch.WarmLamp);
+                    break;
+                case 2 when ring == 2:
+                    float middle = (MastPlatform + MastTop) * 0.5f;
+                    Corners(b, middle, LatticeHalf(middle, MastTop, 0.62f, 0.28f) + 0.02f, 0.07f,
+                        PaletteSwatch.WarmLamp);
+                    break;
+                case 2:
                     b.Icosphere(At(0f, MastTop + 0.2f, 0f), 0.12f, 1, PaletteSwatch.WarmLamp);
                     break;
-                default:
+                case 3 when ring == 1:
                     Corners(b, LowDeck + 0.15f, LatticeHalf(LowDeck, TowerTop, 0.66f, 0.22f) + 0.02f, 0.09f,
                         PaletteSwatch.PilotLight);
+                    break;
+                case 3 when ring == 2:
                     Corners(b, HighDeck + 0.15f, LatticeHalf(HighDeck, TowerTop, 0.66f, 0.22f) + 0.02f, 0.1f,
                         PaletteSwatch.WarmLamp);
+                    break;
+                default:
                     for (int i = 0; i < 8; i++)
                     {
                         float angle = i * Mathf.PI / 4f;
@@ -130,6 +172,27 @@ namespace MoonProject.Art.Editor
                     break;
             }
 
+            return b;
+        }
+
+        /// <summary>
+        /// The small "offline" plaque beside the hopper (plaque space): a worn plate with "OFF" in rust and a dark
+        /// lamp's housing; the lamp itself is <see cref="OfflineLampGlass"/>.
+        /// </summary>
+        public static LowPolyMeshBuilder OfflinePlaqueMesh()
+        {
+            var b = new LowPolyMeshBuilder(200);
+            b.Box(Matrix4x4.identity, new Vector3(0.26f, 0.12f, 0.02f), PaletteSwatch.WornPanel, 0.004f);
+            Glyphs.Write(b, At(-0.035f, 0f, 0.011f), "OFF", 0.055f, PaletteSwatch.Rust, PaletteSwatch.WornPanel);
+            b.Prism(At(OfflineLamp + new Vector3(0f, 0f, -0.012f), AlongZ), 0.032f, 0.012f, 8, PaletteSwatch.Charcoal);
+            return b;
+        }
+
+        /// <summary>The offline lamp's glass (lamp space): dark until gameplay lights it while the tower is down.</summary>
+        public static LowPolyMeshBuilder OfflineLampGlass()
+        {
+            var b = new LowPolyMeshBuilder(40);
+            b.Icosphere(Matrix4x4.identity, 0.022f, 1, PaletteSwatch.LampGlass);
             return b;
         }
 
