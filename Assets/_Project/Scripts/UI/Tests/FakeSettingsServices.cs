@@ -12,10 +12,12 @@ namespace MoonProject.UI.Tests
         public float Sensitivity
         {
             get => _sensitivity;
-            set => _sensitivity = Mathf.Clamp(value, 0.25f, 3f);
+            set => _sensitivity = Mathf.Clamp(value, GentleCamera ? 0.15f : 0.25f, 3f);
         }
 
         public bool InvertY { get; set; }
+
+        public bool GentleCamera { get; set; }
 
         public float GetVolume(AudioBus bus)
         {

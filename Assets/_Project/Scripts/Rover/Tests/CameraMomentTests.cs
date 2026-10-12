@@ -249,5 +249,22 @@ namespace MoonProject.Rover.Tests
                 Object.DestroyImmediate(tuning);
             }
         }
+
+        [Test]
+        public void MinBlend_StretchesShortEases_AndALooksCancel()
+        {
+            var moment = new CameraMoment { MinBlend = 1.2f };
+            moment.Start(Settings, Vector3.one, true);
+            Run(moment, 1.05f);
+            Assert.Less(moment.Weight, 1f, "A 1 s ease-in lasts the 1.2 s floor.");
+            Run(moment, 0.2f);
+            Assert.AreEqual(1f, moment.Weight);
+
+            moment.Cancel(0.6f);
+            Run(moment, 1.05f);
+            Assert.Greater(moment.Weight, 0f, "A look's quick cancel eases out over the floor too.");
+            Run(moment, 0.2f);
+            Assert.AreEqual(0f, moment.Weight);
+        }
     }
 }

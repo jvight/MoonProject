@@ -153,22 +153,60 @@ namespace MoonProject.Rover
         [Range(0.01f, 2f)]
         [SerializeField] private float _stargazeMaxSpeed = 0.3f;
 
-        [Header("Auto-recenter")]
-        [Tooltip("Seconds without look input before the camera eases back behind 07.")]
+        [Header("Following and auto-recenter")]
+        [Tooltip("Seconds after the mouse stops before the camera may ease back behind 07.")]
         [Range(0.5f, 20f)]
-        [SerializeField] private float _recenterDelay = 3f;
+        [SerializeField] private float _recenterDelay = 5f;
+
+        [Tooltip("Seconds after the stick returns to centre before the camera may ease back behind 07.")]
+        [Range(0.5f, 20f)]
+        [SerializeField] private float _stickRecenterDelay = 4f;
+
+        [Tooltip("Recenter only while 07 drives forward faster than this (m/s): parked, crawling or reversing, the "
+            + "view stays where the player left it.")]
+        [Range(0f, 8f)]
+        [SerializeField] private float _recenterMinSpeed = 2f;
+
+        [Tooltip("Seconds 07 must have been driving forward above the minimum speed before recentering may start.")]
+        [Range(0f, 5f)]
+        [SerializeField] private float _recenterDriveSeconds = 1f;
+
+        [Tooltip("Views nearer than this (deg) to straight behind 07 are left alone: no micro-swings.")]
+        [Range(0f, 90f)]
+        [SerializeField] private float _recenterDeadzone = 25f;
 
         [Tooltip("Seconds over which recentering fades in once it starts (no sudden pull).")]
         [Range(0.05f, 5f)]
-        [SerializeField] private float _recenterRampTime = 1.5f;
+        [SerializeField] private float _recenterRampTime = 2f;
 
-        [Tooltip("Half-life (s) of the recentering itself, once fully faded in.")]
-        [Range(0.1f, 10f)]
-        [SerializeField] private float _recenterHalfLife = 0.9f;
+        [Tooltip("Seconds over which recentering fades out when 07 stops driving forward (look input stops it at "
+            + "once).")]
+        [Range(0.05f, 3f)]
+        [SerializeField] private float _recenterFadeOut = 0.5f;
 
-        [Tooltip("Recenter only while moving faster than this (m/s): a parked 07 lets you admire the view.")]
-        [Range(0f, 5f)]
-        [SerializeField] private float _recenterMinSpeed = 0.5f;
+        [Tooltip("Fastest the view turns (deg/s) while recentering, once fully faded in.")]
+        [Range(5f, 120f)]
+        [SerializeField] private float _recenterMaxRate = 30f;
+
+        [Tooltip("Degrees before straight behind 07 over which recentering eases out to a stop.")]
+        [Range(1f, 90f)]
+        [SerializeField] private float _recenterEaseAngle = 20f;
+
+        [Tooltip("Fastest the elevation returns to its default (deg/s) while recentering.")]
+        [Range(1f, 60f)]
+        [SerializeField] private float _recenterPitchRate = 10f;
+
+        [Tooltip("Seconds the recenter button takes to ease the view behind 07 (eased in and out).")]
+        [Range(0.2f, 3f)]
+        [SerializeField] private float _recenterButtonSeconds = 0.8f;
+
+        [Tooltip("Half-life (s) of the camera following 07's turns while it sits behind 07 (no free look).")]
+        [Range(0f, 3f)]
+        [SerializeField] private float _followHalfLife = 0.27f;
+
+        [Tooltip("Fastest the camera follows 07's turns (deg/s): a pivot slides into view and never whips round.")]
+        [Range(5f, 180f)]
+        [SerializeField] private float _followMaxRate = 45f;
 
         [Header("Downhill lift")]
         [Tooltip("Extra elevation (deg) when driving downhill, to see the slope ahead.")]
@@ -190,7 +228,7 @@ namespace MoonProject.Rover
 
         [Tooltip("Extra field of view (deg) at top speed.")]
         [Range(0f, 30f)]
-        [SerializeField] private float _speedFovBoost = 6f;
+        [SerializeField] private float _speedFovBoost = 3f;
 
         [Tooltip("Half-life (s) of the FOV change.")]
         [Range(0.05f, 5f)]
@@ -211,8 +249,8 @@ namespace MoonProject.Rover
         [SerializeField] private float _bumpPerImpact = 0.18f;
 
         [Tooltip("Largest dip speed (m/s), however hard the landing.")]
-        [Range(0f, 5f)]
-        [SerializeField] private float _maxBumpKick = 0.9f;
+        [Range(0f, 0.6f)]
+        [SerializeField] private float _maxBumpKick = 0.6f;
 
         [Tooltip("Spring frequency (Hz) of the camera bump.")]
         [Range(0.2f, 6f)]
@@ -297,6 +335,28 @@ namespace MoonProject.Rover
         [Range(0.02f, 1f)]
         [SerializeField] private float _momentBlendHalfLife = 0.3f;
 
+        [Tooltip("Shortest blend (s) into or out of any framed shot: moments, the bay's close shot, the wide shot and "
+            + "the dock's evening.")]
+        [Range(1.2f, 4f)]
+        [SerializeField] private float _minShotBlend = 1.2f;
+
+        [Header("Gentle camera (the player's setting)")]
+        [Tooltip("Shortest blend (s) into or out of any framed shot while the Gentle camera is on.")]
+        [Range(2f, 6f)]
+        [SerializeField] private float _gentleMinShotBlend = 2f;
+
+        [Tooltip("Share of the leap moment's pull-back kept while the Gentle camera is on.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _gentleLeapPullBack = 0.5f;
+
+        [Tooltip("Speed of the wide shot's slow breathing while the Gentle camera is on (1 = as tuned).")]
+        [Range(0.1f, 1f)]
+        [SerializeField] private float _gentleBreathRate = 0.5f;
+
+        [Tooltip("Lowest look sensitivity multiplier the settings menu can choose while the Gentle camera is on.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _gentleMinSensitivity = 0.15f;
+
         [Header("Opening through 07's eye and the title")]
         [Tooltip("The fresh game's wake through 07's own eye (cutscenes §1), the short wake and the title's frames "
             + "(M3-09 Part A).")]
@@ -335,10 +395,6 @@ namespace MoonProject.Rover
         [Tooltip("Orbital follow position damping (x, y, z): high = floaty drone.")]
         [SerializeField] private Vector3 _positionDamping = new Vector3(1.1f, 0.9f, 1.3f);
 
-        [Tooltip("Orbital follow yaw damping: how lazily the camera swings behind 07 when it turns.")]
-        [Range(0f, 20f)]
-        [SerializeField] private float _yawDamping = 1.8f;
-
         [Tooltip("Rotation composer damping (horizontal, vertical).")]
         [SerializeField] private Vector2 _aimDamping = new Vector2(0.6f, 0.5f);
 
@@ -375,6 +431,8 @@ namespace MoonProject.Rover
         public float MinSensitivity => _minSensitivity;
 
         public float MaxSensitivity => Mathf.Max(_minSensitivity, _maxSensitivity);
+
+        public float GentleMinSensitivity => Mathf.Min(_gentleMinSensitivity, MaxSensitivity);
 
         public float LookHalfLife => _lookHalfLife;
 
@@ -434,11 +492,29 @@ namespace MoonProject.Rover
 
         public float RecenterDelay => _recenterDelay;
 
-        public float RecenterRampTime => _recenterRampTime;
-
-        public float RecenterHalfLife => _recenterHalfLife;
+        public float StickRecenterDelay => _stickRecenterDelay;
 
         public float RecenterMinSpeed => _recenterMinSpeed;
+
+        public float RecenterDriveSeconds => _recenterDriveSeconds;
+
+        public float RecenterDeadzone => _recenterDeadzone;
+
+        public float RecenterRampTime => _recenterRampTime;
+
+        public float RecenterFadeOut => _recenterFadeOut;
+
+        public float RecenterMaxRate => _recenterMaxRate;
+
+        public float RecenterEaseAngle => _recenterEaseAngle;
+
+        public float RecenterPitchRate => _recenterPitchRate;
+
+        public float RecenterButtonSeconds => _recenterButtonSeconds;
+
+        public float FollowHalfLife => _followHalfLife;
+
+        public float FollowMaxRate => _followMaxRate;
 
         public float DownhillLift => _downhillLift;
 
@@ -498,6 +574,14 @@ namespace MoonProject.Rover
 
         public float MomentBlendHalfLife => _momentBlendHalfLife;
 
+        public float MinShotBlend => _minShotBlend;
+
+        public float GentleMinShotBlend => Mathf.Max(_gentleMinShotBlend, _minShotBlend);
+
+        public float GentleLeapPullBack => _gentleLeapPullBack;
+
+        public float GentleBreathRate => _gentleBreathRate;
+
         public WideShotSettings WideShot => _wideShot;
 
         public LabCameraSettings Lab => _lab;
@@ -511,8 +595,6 @@ namespace MoonProject.Rover
         public float HeldShotYawStep => _heldShotYawStep;
 
         public Vector3 PositionDamping => _positionDamping;
-
-        public float YawDamping => _yawDamping;
 
         public Vector2 AimDamping => _aimDamping;
 
