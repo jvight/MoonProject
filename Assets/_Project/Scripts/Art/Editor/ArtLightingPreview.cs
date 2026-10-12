@@ -429,6 +429,10 @@ namespace MoonProject.Art.Editor
             SetGlow(Descendant(charged, RoverModelBuilder.FocusLensName), RoverModelBuilder.FocusLensGlassName,
                 new[] { string.Empty }, 1f);
             ShowChargeRun(charged, 1, 1f);
+            for (int i = 5; i < RoverModelBuilder.HatchCrates; i++)
+            {
+                Descendant(charged, RoverModelBuilder.HatchCratePrefix + i).gameObject.SetActive(false);
+            }
             ShowChargeRun(Rover(temporary, new Vector3(-2.4f, 0f, -0.6f), 120f), 0, 1f);
             Transform dark = Rover(temporary, new Vector3(2.4f, 0f, -0.6f), 200f);
             temporary.Add(dark.gameObject);

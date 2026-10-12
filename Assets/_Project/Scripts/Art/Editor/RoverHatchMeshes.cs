@@ -5,8 +5,8 @@ namespace MoonProject.Art.Editor
 {
     /// <summary>
     /// 07's cargo hatch (M3-25 T1): the rear leaf, hinged along its top so it lifts out between the Cargo Cradle's
-    /// rails, a shallow worn panel with a window strip where the hold's crates show, two rows of small warm crates, one
-    /// per hold slot. Leaf space: the origin on the hinge, -Y down the leaf, -Z out of 07's back.
+    /// rails, a shallow worn panel with a window strip lit warm from inside, where the hold's crates stand in dark
+    /// silhouette against the glow, two rows, one per hold slot, so full or empty reads from the chase camera. Leaf space: the origin on the hinge, -Y down the leaf, -Z out of 07's back.
     /// </summary>
     internal static class RoverHatchMeshes
     {
@@ -17,14 +17,14 @@ namespace MoonProject.Art.Editor
         public const float Height = 0.26f;
 
         private const int Columns = 4;
-        private const float HalfWidth = 0.19f;
+        private const float HalfWidth = 0.22f;
         private const float Depth = 0.028f;
         private const float Bar = 0.014f;
-        private static readonly Vector3 CrateSize = new Vector3(0.068f, 0.036f, 0.02f);
-        private const float CrateGap = 0.01f;
+        private static readonly Vector3 CrateSize = new Vector3(0.09f, 0.054f, 0.02f);
+        private const float CrateGap = 0.008f;
 
         // The window strip sits high on the leaf, clear of the cradle's lower rail.
-        private const float WindowTop = 0.025f;
+        private const float WindowTop = 0.02f;
 
         private static float WindowWidth => Columns * CrateSize.x + (Columns + 1) * CrateGap;
 
@@ -69,19 +69,25 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
-        /// <summary>The hold behind the window (window space): dark, so an empty slot reads empty.</summary>
+        /// <summary>
+        /// The hold behind the window (window space): warm lamp glass on 07's own palette, so it always glows a notch
+        /// under the lamps and an empty slot reads as a lit gap, a full one as a crate's dark shape against it.
+        /// </summary>
         public static LowPolyMeshBuilder Hold()
         {
             var b = new LowPolyMeshBuilder(12);
-            b.Box(At(0f, 0f, 0.011f), new Vector3(WindowWidth, WindowHeight, 0.004f), PaletteSwatch.Charcoal);
+            b.Box(At(0f, 0f, 0.011f), new Vector3(WindowWidth, WindowHeight, 0.004f), PaletteSwatch.LampGlass);
             return b;
         }
 
-        /// <summary>One small crate (crate space: its centre), warm wood with a dark band, alternating with honey.</summary>
-        public static LowPolyMeshBuilder CrateMesh(bool honey)
+        /// <summary>
+        /// One small crate (crate space: its centre), dark against the lit hold: wood or charcoal-stained, with a dark
+        /// band across it.
+        /// </summary>
+        public static LowPolyMeshBuilder CrateMesh(bool stained)
         {
             var b = new LowPolyMeshBuilder(24);
-            b.Box(Matrix4x4.identity, CrateSize, honey ? PaletteSwatch.Honey : PaletteSwatch.Wood);
+            b.Box(Matrix4x4.identity, CrateSize, stained ? PaletteSwatch.RockDark : PaletteSwatch.Wood);
             b.Box(At(0f, 0f, -CrateSize.z * 0.5f - 0.001f), new Vector3(CrateSize.x, 0.008f, 0.002f),
                 PaletteSwatch.Charcoal);
             return b;

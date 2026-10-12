@@ -113,7 +113,7 @@ namespace MoonProject.Art.Editor
         public const int HatchCrates = RoverHatchMeshes.Crates;
 
         /// <summary>The hatch's hinge, along the top of the rear face under the stripe.</summary>
-        public static readonly Vector3 CargoHatchHinge = new Vector3(0f, 0.665f, RoverMeshes.BodyBack);
+        public static readonly Vector3 CargoHatchHinge = new Vector3(0f, 0.69f, RoverMeshes.BodyBack);
 
         public static readonly Vector3 BinSocket = new Vector3(RoverMeshes.BodyHalfWidth, 0.86f, 0.4f);
 
@@ -357,11 +357,11 @@ namespace MoonProject.Art.Editor
             ModelNode window = hatch.Add(new ModelNode(HatchWindowName, RoverHatchMeshes.Window,
                 new ModelMesh(ModelName + "_" + HatchWindowName, RoverHatchMeshes.Hold())));
             var wood = new ModelMesh(ModelName + "_HatchCrate", RoverHatchMeshes.CrateMesh(false));
-            var honey = new ModelMesh(ModelName + "_HatchCrateHoney", RoverHatchMeshes.CrateMesh(true));
+            var stained = new ModelMesh(ModelName + "_HatchCrateStained", RoverHatchMeshes.CrateMesh(true));
             for (int i = 0; i < HatchCrates; i++)
             {
                 window.Add(new ModelNode(HatchCratePrefix + i.ToString(CultureInfo.InvariantCulture),
-                    RoverHatchMeshes.Crate(i), (i + i / 4) % 2 == 0 ? wood : honey));
+                    RoverHatchMeshes.Crate(i), (i + i / 4) % 2 == 0 ? wood : stained));
             }
         }
 
