@@ -44,7 +44,7 @@ namespace MoonProject.Art.Editor
             b.Box(At(x, 0f, 0f), new Vector3(DeckDepth, DeckHeight, DeckLength), PaletteSwatch.Cream, 0.012f);
             float face = BracketDepth + DeckDepth;
             b.Box(At(face + Skin * 0.5f, 0.008f, WindowBack),
-                new Vector3(Skin, WindowHeight, WindowLength), PaletteSwatch.Charcoal, 0.004f);
+                new Vector3(Skin, WindowHeight, WindowLength), PaletteSwatch.Charcoal);
             for (int side = -1; side <= 1; side += 2)
             {
                 b.Prism(At(new Vector3(face + Skin, 0.008f, WindowBack + side * ReelSpacing), AlongX),
