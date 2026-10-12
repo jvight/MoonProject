@@ -434,7 +434,7 @@ namespace MoonProject.UI
             _card = new MemoryCard(_layout, _tuning.MemoryCard, _localization, services.Events, _relics,
                 services.Friends);
             _friendReadout = new FriendReadout(_layout, _tuning.Friends, _tuning.Prompts, services.Friends,
-                services.Rover, services.View);
+                services.Rover, services.View, _localization);
             _friendName = new FriendNameTag(_layout, _tuning.Friends, _tuning.Prompts, services.Friends,
                 _localization, services.View);
             _ticker = new RadioTicker(_layout, _tuning.Ticker, _tickerLines);
@@ -530,8 +530,7 @@ namespace MoonProject.UI
                 _services.Hints.TryGet(InteractionKind.Deposit, out _), _glyphs.For(RoverAction.Tether, device), device);
             _board.Tick(deltaTime, !paused);
             bool hopping = _services.Hop.Phase >= RadioHopPhase.Leaving || _hopFade.IsVisible;
-            _reticle.Tick(deltaTime, _services.Tether.State, input.TetherHeld,
-                _services.Abilities.Has(RoverAbility.Tether));
+            _reticle.Tick(deltaTime, _services.Tether.State, input.TetherHeld);
             _card.Tick(hudTime, _glyphs.Cancel(device), device,
                 !_ticker.IsVisible && !hopping && !_hopList.IsBusy && !_placeCard.IsVisible && !_prompt.IsVisible &&
                 !_rewardCard.IsVisible);
@@ -967,6 +966,7 @@ namespace MoonProject.UI
             _tower.Relocalize();
             _kitTitle.Relocalize();
             _pickups.Relocalize();
+            _friendReadout.Relocalize();
             _rewardCard.Relocalize();
             _relayTag.Relocalize();
             _siteName.Relocalize();

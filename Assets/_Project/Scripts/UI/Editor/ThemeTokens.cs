@@ -41,7 +41,7 @@ namespace MoonProject.UI.Editor
             new Token("--moon-text", GlassText, 1f),
             new Token("--moon-text-dim", GlassText, 0.78f),
             new Token("--moon-text-faint", GlassText, 0.5f),
-            new Token("--moon-glass", GlassFill, 0.92f),
+            new Token("--moon-glass", GlassFill, 0.82f),
             new Token("--moon-plate", PaletteSwatch.SkyTop, 0.72f),
             new Token("--moon-glass-edge", GlassRim, 0.85f),
             new Token("--moon-veil", GlassVeil, 0.3f),
@@ -58,10 +58,10 @@ namespace MoonProject.UI.Editor
             new Token("--glass-sel", GlassSelection, 1f),
             new Token("--glass-sel-text", GlassSelectionText, 1f),
             new Token("--glass-sel-glow", GlassSelection, 0.55f),
-            new Token("--glass-bar", GlassBar, 0.94f),
-            new Token("--glass-deep", GlassDeep, 0.96f),
-            new Token("--glass-btn", GlassButton, 0.94f),
-            new Token("--glass-bubble", GlassBubble, 0.94f),
+            new Token("--glass-bar", GlassBar, 0.86f),
+            new Token("--glass-deep", GlassDeep, 0.86f),
+            new Token("--glass-btn", GlassButton, 0.86f),
+            new Token("--glass-bubble", GlassBubble, 0.86f),
         };
 
         /// <summary>The token stylesheet (deterministic text).</summary>

@@ -54,6 +54,9 @@ namespace MoonProject.UI
         /// <summary>World point the chip floats at (the hint's position lifted by the entry's height).</summary>
         public Vector3 WorldPoint { get; private set; }
 
+        /// <summary>The key of what the showing prompt acts on (a part's name), or null.</summary>
+        public string NounKey { get; private set; }
+
         /// <summary>
         /// True on the step a new showing began: refresh the glyph and word, snap the screen position.
         /// </summary>
@@ -83,6 +86,7 @@ namespace MoonProject.UI
             if (Displayed != InteractionKind.None && primary.Kind == Displayed)
             {
                 WorldPoint = primary.Position + Vector3.up * Entry.LiftMetres;
+                NounKey = primary.NounKey;
             }
 
             if (Displayed != InteractionKind.None && !(_ending && chipHidden))
@@ -101,6 +105,7 @@ namespace MoonProject.UI
             Displayed = desired;
             Entry = _settings.Find(desired);
             WorldPoint = primary.Position + Vector3.up * Entry.LiftMetres;
+            NounKey = primary.NounKey;
             _showTime = 0f;
             Started = true;
             _ledger.RecordShown(desired);

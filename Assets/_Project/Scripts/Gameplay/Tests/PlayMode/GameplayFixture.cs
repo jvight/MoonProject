@@ -439,7 +439,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                 new MaterialEntry(SalvageMaterial.Optics, "optics", MaterialFamily.Salvage, 4, true),
             });
             CargoTuning = Asset<CargoTuning>();
-            Gameplay.WireCargo(materials, CargoTuning, Asset<CutterTuning>());
+            Gameplay.WireCargo(materials, CargoTuning);
+            Gameplay.WireCutter(Asset<CutterTuning>());
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);

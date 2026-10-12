@@ -55,6 +55,7 @@ namespace MoonProject.UI
             FriendReadout = Require<VisualElement>("friend-readout");
             FriendReadoutShadow = Require<VisualElement>("friend-readout-shadow");
             FriendPips = Require<VisualElement>("friend-pips");
+            FriendPartsLabel = Require<Label>("friend-parts-label");
             FriendNameAnchor = Require<VisualElement>("friend-name-anchor");
             FriendName = Require<VisualElement>("friend-name");
             FriendNameShadow = Require<VisualElement>("friend-name-shadow");
@@ -291,6 +292,9 @@ namespace MoonProject.UI
         public VisualElement FriendReadoutShadow { get; }
 
         public VisualElement FriendPips { get; }
+
+        /// <summary>The words on the parts chip: whose parts, how many of how many.</summary>
+        public Label FriendPartsLabel { get; }
 
         public VisualElement FriendNameAnchor { get; }
 

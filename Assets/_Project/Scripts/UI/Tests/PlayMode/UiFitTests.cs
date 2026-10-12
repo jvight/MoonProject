@@ -138,7 +138,7 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Fakes.Cells = 4;
             _rig.Fakes.Charge = 2f;
             events.Publish(new BatteryArcRevealed(false));
-            events.Publish(new NextStepChanged("next.tower"));
+            events.Publish(new NextStepChanged("next.tower.pad"));
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Excavate, new Vector3(0f, 0f, 12f), true);
             events.Publish(new TickerLine(UiTestRig.HomeLine));
             int gain = 0;

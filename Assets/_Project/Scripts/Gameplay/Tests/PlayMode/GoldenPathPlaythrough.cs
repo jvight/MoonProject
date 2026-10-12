@@ -243,6 +243,13 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// </summary>
         private const float TotalBudget = 1580f;
 
+        /// <summary>
+        /// NUnit's hard stop: the budget plus the scene boot and teardown, so the budget's own assertion (with its
+        /// per-step report) fails first, never a bare timeout (the tower's online moments and pickups on E made the path
+        /// longer in 0.5.3).
+        /// </summary>
+        private const int TestTimeoutMs = 1800000;
+
         /// <summary>Close enough (m) to a part resting on a mast's pad to draw it in.</summary>
         private const float PartArrive = 1.5f;
 
@@ -383,7 +390,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
-        [Timeout(1500000)]
+        [Timeout(TestTimeoutMs)]
         [PrebuildSetup(typeof(PlaythroughScene))]
         [PostBuildCleanup(typeof(PlaythroughScene))]
         public IEnumerator FreshGame_FirstRelicHome_AndTheTowerAwake()

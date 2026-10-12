@@ -25,6 +25,8 @@ namespace MoonProject.UI
         private readonly FriendUiSettings _settings;
         private readonly IFriendStatuses _friends;
         private readonly IRoverState _rover;
+        private readonly ILocalization _localization;
+        private readonly Label _label;
         private readonly FriendFocus _focus;
         private readonly PipFill _fill;
         private readonly Reveal _reveal;
@@ -35,9 +37,11 @@ namespace MoonProject.UI
         private readonly List<float> _writtenFills = new List<float>();
         private int _shownFriend = FriendFocus.None;
         private float _writtenRaise = -1f;
+        private int _writtenCollected = -1;
+        private string[] _labels = new string[0];
 
         public FriendReadout(UiLayout layout, FriendUiSettings settings, PromptSettings anchoring,
-            IFriendStatuses friends, IRoverState rover, IViewCamera view)
+            IFriendStatuses friends, IRoverState rover, IViewCamera view, ILocalization localization)
         {
             if (layout == null)
             {
@@ -52,6 +56,8 @@ namespace MoonProject.UI
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _friends = friends ?? throw new ArgumentNullException(nameof(friends));
             _rover = rover ?? throw new ArgumentNullException(nameof(rover));
+            _localization = localization ?? throw new ArgumentNullException(nameof(localization));
+            _label = layout.FriendPartsLabel;
             _focus = new FriendFocus(settings);
             _fill = new PipFill(settings);
             _reveal = new Reveal(layout.FriendReadout, settings.Readout);
@@ -73,6 +79,17 @@ namespace MoonProject.UI
 
         /// <summary>Parts shown as filled (fractional while a pip fills).</summary>
         public float ShownParts => _fill.Shown;
+
+        /// <summary>Writes the label again (a new language).</summary>
+        public void Relocalize()
+        {
+            _writtenCollected = -1;
+            _labels = new string[0];
+            if (_shownFriend != FriendFocus.None)
+            {
+                WriteLabel(_friends.Status(_shownFriend));
+            }
+        }
 
         /// <param name="deltaTime">Unscaled seconds since the last tick.</param>
         /// <param name="gateOpen">False while paused.</param>
@@ -96,6 +113,7 @@ namespace MoonProject.UI
             if (_shownFriend != FriendFocus.None)
             {
                 FriendStatus status = _friends.Status(_shownFriend);
+                WriteLabel(status);
                 if (_fill.Step(status.Collected, deltaTime))
                 {
                     WritePips();
@@ -120,6 +138,28 @@ namespace MoonProject.UI
 
             _fill.Snap(status.Collected);
             WritePips();
+            _writtenCollected = -1;
+            _labels = new string[0];
+            WriteLabel(status);
+        }
+
+        /// <summary>"Tilly's parts: 2 of 3", formatted only when the count or the friend changes.</summary>
+        private void WriteLabel(FriendStatus status)
+        {
+            if (status.Collected == _writtenCollected)
+            {
+                return;
+            }
+
+            _writtenCollected = status.Collected;
+            if (_labels.Length <= status.Total)
+            {
+                _labels = new string[status.Total + 1];
+            }
+
+            int count = Mathf.Clamp(status.Collected, 0, status.Total);
+            _label.text = _labels[count] ?? (_labels[count] = string.Format(_localization.Get(UiKeys.FriendParts),
+                _localization.Get(UiKeys.FriendName(_friends.Definition(_shownFriend).Id)), count, status.Total));
         }
 
         private void BuildPips(int count)

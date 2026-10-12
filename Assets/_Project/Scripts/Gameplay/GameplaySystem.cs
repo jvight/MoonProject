@@ -191,16 +191,20 @@ namespace MoonProject.Gameplay
             _lift = lift;
         }
 
+        internal void WireCutter(CutterTuning cutter)
+        {
+            _cutterTuning = cutter;
+        }
+
         internal void WireBattery(BatteryField battery)
         {
             _battery = battery;
         }
 
-        internal void WireCargo(MaterialCatalog catalog, CargoTuning cargo, CutterTuning cutter)
+        internal void WireCargo(MaterialCatalog catalog, CargoTuning cargo)
         {
             _materialCatalog = catalog;
             _cargo = cargo;
-            _cutterTuning = cutter;
         }
 
         public void Initialize(GameContext context)

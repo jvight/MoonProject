@@ -119,10 +119,6 @@
             "text": "Tháp cần kim loại, dây điện, thấu kính và cuộn dây tháp. Hãy trục vớt ở Kho tiếp tế."
         },
         {
-            "key": "next.tower",
-            "text": "Đã có cuộn dây tháp. Đỗ lên bệ của tháp radio để sửa tháp."
-        },
-        {
             "key": "next.tower.part",
             "text": "Cuộn dây tháp ở Kho tiếp tế. Lại gần và nhấn E để nhặt."
         },
@@ -1037,6 +1033,10 @@
         {
             "key": "ui.recipe.row",
             "text": "{0} (có {1})"
+        },
+        {
+            "key": "ui.friend.parts",
+            "text": "Bộ phận của {0}: {1}/{2}"
         },
         {
             "key": "ui.reward.title",

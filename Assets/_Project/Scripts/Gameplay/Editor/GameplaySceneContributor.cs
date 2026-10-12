@@ -226,7 +226,8 @@ namespace MoonProject.Gameplay.Editor
                 progression, plotter, liftStation);
             battery.Wire(batteryTuning);
             gameplay.WireBattery(battery);
-            gameplay.WireCargo(materialCatalog, cargoTuning, cutterTuning);
+            gameplay.WireCargo(materialCatalog, cargoTuning);
+            gameplay.WireCutter(cutterTuning);
             context.AddSystem(gameplay);
         }
 

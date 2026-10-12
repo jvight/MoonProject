@@ -108,7 +108,7 @@ namespace MoonProject.UI
             {
                 if (_director.Started)
                 {
-                    _word.text = _localization.Get(_wordKeys[(int)entry.Kind]);
+                    WriteWord(entry);
                 }
 
                 _glyph.Set(_labels.For(entry.Action, device), device);
@@ -170,8 +170,18 @@ namespace MoonProject.UI
             PromptEntry entry = _director.Entry;
             if (entry != null)
             {
-                _word.text = _localization.Get(_wordKeys[(int)entry.Kind]);
+                WriteWord(entry);
             }
+        }
+
+        /// <summary>The verb's word, then what it acts on when the hint names one ("Pick up Tower Coil").</summary>
+        private void WriteWord(PromptEntry entry)
+        {
+            string verb = _localization.Get(_wordKeys[(int)entry.Kind]);
+            string noun = _director.NounKey;
+            _word.text = string.IsNullOrEmpty(noun)
+                ? verb
+                : string.Concat(verb, " ", _localization.Get(noun));
         }
     }
 }
