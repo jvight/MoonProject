@@ -540,7 +540,7 @@ namespace MoonProject.Gameplay
         private void Update()
         {
             float now = Time.time;
-            Power.Show(_tower.ShownLevel);
+            Power.Show(_tower.PoweredLevel);
             TowerPartField.Step(now);
             GroundTubes.Step(now);
             Port.Step(Time.deltaTime);

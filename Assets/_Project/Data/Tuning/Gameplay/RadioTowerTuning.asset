@@ -38,6 +38,12 @@ MonoBehaviour:
   _beaconLightIntensity: 1.5
   _unpoweredGlow: 0.02
   _poweredGlow: 1
+  _onlineAnticipateSeconds: 1.2
+  _onlineRingSeconds: 0.4
+  _onlineImpactAt: 1.6
+  _onlinePowerAt: 2.2
+  _onlineRingAt: 3.4
+  _onlineRewardAt: 4.6
   _flareDuration: 0.7
   _flareGlow: 2.2
   _growDuration: 1.3
