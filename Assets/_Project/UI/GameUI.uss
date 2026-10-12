@@ -390,6 +390,11 @@ Label {
     padding-bottom: 48px;
 }
 
+/* The settings panel is tall: while it is open the title's menu steps down to a small margin so it fits at any text size */
+.pause--title.pause--settings-open .pause__frame {
+    padding-bottom: 8px;
+}
+
 .pause--title .pause__stack {
     width: 340px;
 }
@@ -1286,6 +1291,11 @@ Label {
     border-color: var(--moon-glass-edge);
     background-color: var(--moon-cream-glow);
     -unity-text-align: middle-center;
+}
+
+/* The settings list has grown to a dozen rows: a little less padding keeps it on screen at the largest text size */
+.pause__panel--settings {
+    padding: 18px 28px 14px 28px;
 }
 
 .pause__panel--settings .menu-button--quiet {

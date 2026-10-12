@@ -30,6 +30,7 @@ namespace MoonProject.UI
     {
         private const float MoveEpsilon = 0.1f;
         private const string TitleClass = "pause--title";
+        private const string SettingsOpenClass = "pause--settings-open";
 
         private readonly UiLayout _layout;
         private readonly PauseSettings _settings;
@@ -282,6 +283,7 @@ namespace MoonProject.UI
             _titleScreen.Tick(unscaledDeltaTime);
             _curtain.Tick(unscaledDeltaTime);
             ShiftForSettings();
+            _layout.Pause.EnableInClassList(SettingsOpenClass, _settingsPanel.Target);
             CenterSettings();
             if (_leaving != Leaving.None && _curtain.IsShown)
             {
