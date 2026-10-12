@@ -319,6 +319,10 @@
             "text": "Invert look"
         },
         {
+            "key": "ui.settings.gentle_camera",
+            "text": "Gentle camera"
+        },
+        {
             "key": "ui.settings.language",
             "text": "Language"
         },

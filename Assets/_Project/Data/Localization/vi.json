@@ -319,6 +319,10 @@
             "text": "Đảo trục dọc"
         },
         {
+            "key": "ui.settings.gentle_camera",
+            "text": "Camera dịu nhẹ"
+        },
+        {
             "key": "ui.settings.language",
             "text": "Ngôn ngữ"
         },
