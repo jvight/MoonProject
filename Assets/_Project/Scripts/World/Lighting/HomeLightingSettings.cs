@@ -22,6 +22,14 @@ namespace MoonProject.World
         [Range(0.1f, 8f)]
         [SerializeField] private float _wakeFade = 2.4f;
 
+        [Tooltip("Steps the windows wake in, one warm step per window, each paired with Audio's soft click.")]
+        [Range(1, 8)]
+        [SerializeField] private int _windowSteps = 4;
+
+        [Tooltip("Seconds each window step eases up over: never a snap.")]
+        [Range(0.05f, 1.5f)]
+        [SerializeField] private float _windowStepEase = 0.35f;
+
         [Tooltip("Seconds power takes to travel a ground cable from the tower to what it wakes, segment by segment; " +
             "that place's warm points start waking when it arrives.")]
         [Range(0.1f, 6f)]
@@ -99,7 +107,8 @@ namespace MoonProject.World
             "pools round the three masses).")]
         [SerializeField] private LightPoolTuning[] _pools =
         {
-            new LightPoolTuning(HomeLight.Dock, "DockAnchor", new Vector3(0f, -0.02f, 0.8f), 5f, 0.5f, true),
+            new LightPoolTuning(HomeLight.Dock, "DockAnchor", new Vector3(0f, -0.02f, 0.8f), 3.5f, 0.38f, true,
+                new Color(0.7f, 0.95f, 1.35f)),
             new LightPoolTuning(HomeLight.PorchLamps, "Lander", new Vector3(0f, 2.2f, 5.6f), 9f, 4f, false),
             new LightPoolTuning(HomeLight.Windows, "Lander", new Vector3(0f, 2.9f, 0f), 10f, 3f, false),
             new LightPoolTuning(HomeLight.BayLamps, "RoverBay", new Vector3(0f, 0.03f, 4f), 7f, 1f, true),
@@ -112,6 +121,8 @@ namespace MoonProject.World
 
         public float WakeStagger => _wakeStagger;
         public float WakeFade => _wakeFade;
+        public int WindowSteps => _windowSteps;
+        public float WindowStepEase => _windowStepEase;
         public float CableTravel => _cableTravel;
         public float CableSegmentFade => _cableSegmentFade;
         public float PreviewTravel => _previewTravel;

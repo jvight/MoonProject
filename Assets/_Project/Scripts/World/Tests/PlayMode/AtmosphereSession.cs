@@ -86,6 +86,11 @@ namespace MoonProject.World.PlayModeTests
         // The whole base awake (the owner's frame is the woken base at night): power stepped to the Lift, settled.
         private const float LiftSettleSeconds = 8f;
 
+        // The reach ring (polish wave 1): the tower's reach grows from a token radius to this, seen mid roll-out.
+        private const float RingBaselineRadius = 1f;
+        private const float RingReach = 70f;
+        private const float RingCaptureSeconds = 0.8f;
+
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "world-captures"));
 
@@ -216,7 +221,8 @@ namespace MoonProject.World.PlayModeTests
         /// <summary>
         /// The dark start and home's wake (M3-16), from the game camera's own spawn view on a fresh save: asleep (only
         /// the dock, 07's eye and the tower's pilot warm), power travelling the cable, the windows waking, and home
-        /// settled, then the whole base awake at the Lift. Writes Logs/world-captures/wake-*.png.
+        /// settled, then the whole base awake at the Lift and its reach ring rolling out. Writes
+        /// Logs/world-captures/wake-*.png.
         /// </summary>
         [UnityTest]
         [Timeout(600000)]
@@ -267,6 +273,10 @@ namespace MoonProject.World.PlayModeTests
             context.Events.Publish(new BasePowerChanged(BasePowerStage.Chart, false));
             yield return new WaitForSeconds(LiftSettleSeconds);
             Capture(view, "wake-4-lift");
+            context.Events.Publish(new SignalRadiusChanged(RingBaselineRadius));
+            context.Events.Publish(new SignalRadiusChanged(RingReach));
+            yield return new WaitForSeconds(RingCaptureSeconds);
+            Capture(view, "wake-5-reach-ring");
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
         }
 

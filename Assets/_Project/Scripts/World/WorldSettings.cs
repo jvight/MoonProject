@@ -55,6 +55,9 @@ namespace MoonProject.World
         [Tooltip("Where the crew's remnants from Art's landmark kit stand (M3-18 L2, L4, L7).")]
         [SerializeField] private LandmarkSettings _landmarks = new LandmarkSettings();
 
+        [Tooltip("The warm ring that rolls out over the ground when a reach grows (polish wave 1).")]
+        [SerializeField] private ReachRingSettings _reachRing = new ReachRingSettings();
+
         [Tooltip("The picture through 07's own eye in the opening (docs/design/cutscenes.md §1).")]
         [SerializeField] private LensViewSettings _lensView = new LensViewSettings();
 
@@ -88,6 +91,8 @@ namespace MoonProject.World
         public GroundMarkSettings GroundMarks => _groundMarks;
 
         public LandmarkSettings Landmarks => _landmarks;
+
+        public ReachRingSettings ReachRing => _reachRing;
 
         public LensViewSettings LensView => _lensView;
 

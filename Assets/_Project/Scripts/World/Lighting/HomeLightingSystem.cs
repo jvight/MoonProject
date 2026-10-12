@@ -62,6 +62,8 @@ namespace MoonProject.World
         private float[] _bayApplied;
         private float[] _chartApplied;
         private float _gradeApplied = -1f;
+        private GameContext _context;
+        private int _windowStepsLit;
         private float[] _poolsApplied;
 
         public void Initialize(GameContext context)
@@ -82,6 +84,7 @@ namespace MoonProject.World
             _chartApplied = Unapplied(_chartCable.Length);
             _poolsApplied = Unapplied(_pools.Length);
             SetUpPools();
+            _context = context;
             _powerChanged = context.Events.Subscribe<BasePowerChanged>(OnPowerChanged);
             _placeApproached = context.Events.Subscribe<PlaceFirstApproached>(OnPlaceApproached);
             context.Register<IHomeLights>(this);
@@ -115,6 +118,7 @@ namespace MoonProject.World
             _block.SetFloat(MinAngleFullId, tuning.PilotHaloFull);
             _pilot.SetPropertyBlock(_block);
             ApplyPools(tuning, time);
+            PublishWindowSteps(time);
             float warmth = _stages.GradeWarmth(time);
             if (!Mathf.Approximately(warmth, _gradeApplied))
             {
@@ -181,8 +185,10 @@ namespace MoonProject.World
                 if (pool.Disc)
                 {
                     float strength = level * pool.Intensity;
+                    Color tint = pool.Tint;
                     _block.Clear();
-                    _block.SetVector(EmissionColorId, new Vector4(strength, strength, strength, 1f));
+                    _block.SetVector(EmissionColorId,
+                        new Vector4(strength * tint.r, strength * tint.g, strength * tint.b, 1f));
                     _poolDiscs[i].SetPropertyBlock(_block);
                     _poolDiscs[i].enabled = level > 0f;
                     continue;
@@ -193,9 +199,27 @@ namespace MoonProject.World
             }
         }
 
+        /// <summary>One <see cref="HomeWindowLit"/> per window step as it begins, so Audio clicks with each.</summary>
+        private void PublishWindowSteps(float time)
+        {
+            int lit = _stages.WindowStepsLit(time);
+            while (_windowStepsLit < lit)
+            {
+                _windowStepsLit++;
+                _context.Events.Publish(new HomeWindowLit(_windowStepsLit, _settings.HomeLighting.WindowSteps));
+            }
+
+            _windowStepsLit = lit;
+        }
+
         private void OnPowerChanged(BasePowerChanged change)
         {
             _stages.SetStage(change.Stage, change.Restored, Time.time);
+            if (change.Restored)
+            {
+                // A loaded stage shows at once and silently: no clicks for windows that were already lit.
+                _windowStepsLit = _stages.WindowStepsLit(Time.time);
+            }
         }
 
         private void OnPlaceApproached(PlaceFirstApproached approached)

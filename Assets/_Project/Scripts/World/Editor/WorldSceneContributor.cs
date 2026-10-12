@@ -69,6 +69,12 @@ namespace MoonProject.World.Editor
             lighting.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(homeLighting);
 
+            var reachRing = context.CreateChild("Reach Ring", root).AddComponent<ReachRingSystem>();
+            var ring = new SerializedObject(reachRing);
+            Assign(ring, "_settings", settings);
+            ring.ApplyModifiedPropertiesWithoutUndo();
+            context.AddSystem(reachRing);
+
             var labLights = context.CreateChild("Lab Lights", root).AddComponent<LabLights>();
             var lab = new SerializedObject(labLights);
             Assign(lab, "_settings", settings);
