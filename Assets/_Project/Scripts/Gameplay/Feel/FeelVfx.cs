@@ -30,7 +30,6 @@ namespace MoonProject.Gameplay
         private readonly ChargeUp _charge;
         private readonly CutBeam _beam;
         private readonly VacuumDebris _debris;
-        private readonly BundleTieOff _tieOff;
         private readonly LightPulse _flashLight;
         private readonly LightPulse _cutLight;
         private readonly LightPulse _installLight;
@@ -69,7 +68,6 @@ namespace MoonProject.Gameplay
             _charge = new ChargeUp(root, tuning, visuals.FeelSprite);
             _beam = new CutBeam(root, tuning, visuals.BeamCore, visuals.BeamSheath);
             _debris = new VacuumDebris(root, tuning, visuals.FeelSprite);
-            _tieOff = new BundleTieOff(tuning);
             _flashLight = new LightPulse("FlashLight", root, Color.white, tuning.FlashRange);
             _cutLight = new LightPulse("CutLight", root, tuning.CutLightColor, tuning.CutRange);
             _installLight = new LightPulse("InstallLight", root, tuning.MoteColor, tuning.EmitterRange);
@@ -90,19 +88,6 @@ namespace MoonProject.Gameplay
 
         /// <summary>The seam on the piece under the beam, or null.</summary>
         public HeatSeam Seam => _seam;
-
-        /// <summary>
-        /// The bundle a piece folded into ties off: it pops (gameplay calls this when the fold ends).
-        /// </summary>
-        public void TieOff(Transform bundle)
-        {
-            if (bundle == null)
-            {
-                throw new ArgumentNullException(nameof(bundle));
-            }
-
-            _tieOff.Play(bundle);
-        }
 
         public void Handle(FeelBeat beat)
         {
@@ -177,7 +162,6 @@ namespace MoonProject.Gameplay
                 _seams[i].Step(deltaTime);
             }
 
-            _tieOff.Step(deltaTime);
             DrawFlashes(deltaTime);
         }
 

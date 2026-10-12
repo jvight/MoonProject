@@ -73,6 +73,9 @@ namespace MoonProject.Gameplay
         [Tooltip("The molten seam on a piece, emission by heat (HeatSeam shader).")]
         [SerializeField] private Material _heatSeam;
 
+        [Tooltip("Every look number of the feel kit (Data/Tuning/Gameplay/FeelVfxTuning.asset).")]
+        [SerializeField] private FeelVfxTuning _feelTuning;
+
         [Tooltip("Art's station pads (Generated/Art/Base/StationPad_<cm>), one per size.")]
         [SerializeField] private GameObject[] _pads = Array.Empty<GameObject>();
 
@@ -110,6 +113,7 @@ namespace MoonProject.Gameplay
         public Material BeamCore => _beamCore;
         public Material BeamSheath => _beamSheath;
         public Material HeatSeam => _heatSeam;
+        public FeelVfxTuning FeelTuning => _feelTuning;
         public GameObject GaragePort => _garagePort;
 
         /// <summary>Art's station pad (StationPad_&lt;cm&gt;) whose radius is nearest <paramref name="radius"/>.</summary>
@@ -161,6 +165,11 @@ namespace MoonProject.Gameplay
                 : _components == null || Array.IndexOf(_components, null) >= 0
                     ? "Art's tower components are missing (run Gameplay/Materials)"
                 : _tube == null ? "Art's blueprint tube is missing (run Gameplay/Materials)"
+                : _feelSprite == null ? "feel sprite material is missing (run Gameplay/FeelVfx)"
+                : _beamCore == null ? "beam core material is missing (run Gameplay/FeelVfx)"
+                : _beamSheath == null ? "beam sheath material is missing (run Gameplay/FeelVfx)"
+                : _heatSeam == null ? "heat seam material is missing (run Gameplay/FeelVfx)"
+                : _feelTuning == null ? "the feel VFX tuning is missing (run Gameplay/FeelVfx)"
                 : _garagePort == null ? "Art's garage port is missing (run Gameplay/Materials)"
                 : null;
         }
@@ -184,8 +193,10 @@ namespace MoonProject.Gameplay
         /// <summary>
         /// The cut feel kit's materials, written by Gameplay/FeelVfx (its own editor assembly) after Gameplay/Materials.
         /// </summary>
-        public void PopulateFeel(Material feelSprite, Material beamCore, Material beamSheath, Material heatSeam)
+        public void PopulateFeel(Material feelSprite, Material beamCore, Material beamSheath, Material heatSeam,
+            FeelVfxTuning tuning)
         {
+            _feelTuning = tuning;
             _feelSprite = feelSprite;
             _beamCore = beamCore;
             _beamSheath = beamSheath;

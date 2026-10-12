@@ -147,10 +147,8 @@ namespace MoonProject.Gameplay.Feel.Editor
             GameObject bundle = Spawn(ArtPaths.PickupFolder + "/" + bundleName + ".prefab", temporary);
             bundle.transform.position = piece.position;
             clock = Run(vfx, clock, FoldSeconds);
-            vfx.TieOff(bundle.transform);
-            clock = Run(vfx, clock, tuning.TieSeconds * 0.5f);
+            clock = Run(vfx, clock, Step);
             shots.Take("06_fold", Close(bundle.transform, rover.transform));
-            clock = Run(vfx, clock, tuning.TieSeconds);
             bundle.transform.position = Descendant(rover.transform, "CargoSocket").position;
             Publish(events, FeelPhase.Reward, anchors, 1f, 0f);
             Run(vfx, clock, Step * 4f);

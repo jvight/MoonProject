@@ -5,7 +5,7 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// Every look number of the cut's feel kit (docs/design/feel-pass.md §3.1, §4): the charge-up motes and bead, the
     /// ignition flash, the beam's core and sheath, the cut light, the heat seam's cooling, the vacuum sparks and slag
-    /// beads, the crack and the bundle's tie-off. Timings the cut state owns (charge length, break sequence) come in
+    /// beads, and the crack. Timings the cut state owns (charge length, break sequence) come in
     /// on the FeelBeat; this holds only how each beat looks.
     /// </summary>
     [CreateAssetMenu(menuName = "MoonProject/Gameplay/Feel VFX Tuning", fileName = "FeelVfxTuning")]
@@ -226,12 +226,6 @@ namespace MoonProject.Gameplay
         [Tooltip("How long the emitter's glow fades after the crack (s).")]
         [Range(0.1f, 1.2f)] [SerializeField] private float _emitterFadeSeconds = 0.4f;
 
-        [Header("Bundle tie-off")]
-        [Tooltip("The bundle's scale at the top of its tie-off pop.")]
-        [Range(1f, 1.4f)] [SerializeField] private float _tiePop = 1.12f;
-
-        [Tooltip("How long the tie-off pop lasts (s).")]
-        [Range(0.05f, 0.6f)] [SerializeField] private float _tieSeconds = 0.2f;
 
         public int MoteCount => Mathf.Min(_moteCount, MotePool);
         public float MoteRadius => _moteRadius;
@@ -305,7 +299,5 @@ namespace MoonProject.Gameplay
         public float CrackFlashSeconds => _crackFlashSeconds;
         public float CrackSpike => _crackSpike;
         public float EmitterFadeSeconds => _emitterFadeSeconds;
-        public float TiePop => _tiePop;
-        public float TieSeconds => _tieSeconds;
     }
 }

@@ -12,8 +12,9 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// Salvage (docs/features/M3-13). Art's five wrecks stand on the World's <c>site.*</c> anchors
     /// (<see cref="SalvageSiteBuilder"/>), and a soft cone of aim (VISION ruling 2) picks the piece 07 looks at within
-    /// reach. Holding Excavate asks 07 to ease to a stop, then a stitching beam cuts at the piece's cut point for two
-    /// to four seconds with warm sparks (<see cref="SalvageCutStarted"/>); letting go keeps the progress (ruling 4,
+    /// reach. Holding Excavate asks 07 to ease to a stop, then the beam charges up and cuts along the piece's cut line
+    /// for two to four seconds (<see cref="SalvageCutStarted"/>; the look is the feel kit's <see cref="FeelVfx"/>,
+    /// which reads where to draw from this field as its <see cref="IFeelAnchors"/>); letting go keeps the progress (ruling 4,
     /// <see cref="SalvageCutStopped"/>). Cut free, the piece comes away from the wreck, folds into a bundle of its
     /// material and spirals into 07: a flash, <see cref="MaterialSalvaged"/> with the site's climbing melody step, the
     /// stock grows and the game saves. Drag pieces hang on until the tether pulls them a few metres clear; then they
@@ -24,7 +25,7 @@ namespace MoonProject.Gameplay
     /// initialisation; the frame loop allocates nothing.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class SalvageField : MonoBehaviour, ISalvageStatus
+    public sealed class SalvageField : MonoBehaviour, ISalvageStatus, IFeelAnchors
     {
         /// <summary>Half-angle (degrees) inside which a relic's heart competes with the pieces for the hold.</summary>
         private const float HeartCone = 90f;
@@ -51,14 +52,11 @@ namespace MoonProject.Gameplay
         private MaterialStock _stock;
         private ExcavationSystem _excavation;
         private PhysicsMaterial _dragMaterial;
-        private RepairBeam _beam;
-        private CutSparks _sparks;
+        private FeelVfx _feel;
         private GlowFlashPool _flashes;
         private PickupCadence _cadence;
         private SalvagePiece _cutting;
         private CutState _cut;
-        private Vector3 _beamTarget;
-        private Vector3 _beamNormal = Vector3.up;
         private int _inFlight;
         private bool _holding;
         private bool _gazing;
@@ -117,9 +115,22 @@ namespace MoonProject.Gameplay
         private SalvagePiece Aimed => _cutting ?? Candidate;
 
         /// <summary>Current cutting beam brightness (tests and debugging views).</summary>
-        public float BeamLevel => _beam != null ? _beam.Level : 0f;
+        /// <summary>How far the cutting beam reaches toward the cut (0..1; tests and debugging views).</summary>
+        public float BeamLevel => _feel != null ? _feel.Beam.Reach : 0f;
 
-        internal CutSparks Sparks => _sparks;
+        /// <summary>The cut's vacuum sparks and slag (tests and debugging views).</summary>
+        internal VacuumDebris Sparks => _feel.Debris;
+
+        /// <summary>07's beam emitter: the cut's charge-up and beam leave from it.</summary>
+        public Vector3 Emitter => _rig.TetherOrigin.position;
+
+        /// <summary>The aimed piece's CutPoint, the space its cut line lives in (it tumbles with the piece).</summary>
+        public Transform CutPiece => Aimed != null ? Aimed.CutPoint : null;
+
+        public IReadOnlyList<Vector3> CutLine => Aimed != null ? Aimed.CutLine : Array.Empty<Vector3>();
+
+        /// <summary>The cut face's normal in the CutPoint's space: its +Z leaves the cut face.</summary>
+        public Vector3 CutFaceNormal => Vector3.forward;
 
         internal void Wire(SalvageTuning tuning, SalvageCatalog catalog)
         {
@@ -184,9 +195,7 @@ namespace MoonProject.Gameplay
             _cadence = new PickupCadence(_tuning.MinArrivalInterval);
             _flashes = new GlowFlashPool(transform, services.Meshes.Sphere, services.Visuals.Flash,
                 _tuning.FlashPoolSize, _tuning.FlashDuration, _tuning.FlashRadius, _tuning.FlashIntensity);
-            _beam = new RepairBeam("CuttingBeam", transform, services.Visuals.TetherBeam, _tuning.BeamSweepRate,
-                _tuning.BeamSweep);
-            _sparks = new CutSparks(transform, _tuning, services.Visuals.Spark);
+            _feel = new FeelVfx(transform, services.Visuals.FeelTuning, services.Visuals, _events, this);
             return true;
         }
 
@@ -337,6 +346,7 @@ namespace MoonProject.Gameplay
             float now = Time.time;
             float deltaTime = Time.deltaTime;
             UpdateCut(now, deltaTime);
+            _feel.Step(deltaTime);
             for (int i = 0; i < _drags.Count; i++)
             {
                 _drags[i].StepReach(deltaTime);
@@ -380,7 +390,6 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            UpdateBeam(now, deltaTime);
             UpdateGaze(wantsBeam);
         }
 
@@ -654,20 +663,6 @@ namespace MoonProject.Gameplay
             piece.Bundle.gameObject.SetActive(false);
         }
 
-        private void UpdateBeam(float now, float deltaTime)
-        {
-            SalvagePiece target = _cutting ?? Candidate;
-            if (target != null)
-            {
-                _beamTarget = target.CutPosition;
-                _beamNormal = target.CutNormal;
-            }
-
-            _beam.Step(IsCutting, target != null || _beam.Level > 0f, _rig.TetherOrigin.position, _beamTarget,
-                now, deltaTime);
-            _sparks.Emit(_beamTarget, _beamNormal, IsCutting ? _beam.Level : 0f);
-        }
-
         private void UpdateGaze(bool wantsBeam)
         {
             SalvagePiece look = _cutting ?? Candidate;
@@ -723,6 +718,7 @@ namespace MoonProject.Gameplay
 
         private void OnDestroy()
         {
+            _feel?.Dispose();
             if (_dragMaterial != null)
             {
                 Object.Destroy(_dragMaterial);
