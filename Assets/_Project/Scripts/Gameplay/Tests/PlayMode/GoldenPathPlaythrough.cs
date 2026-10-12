@@ -830,6 +830,15 @@ namespace MoonProject.Gameplay.PlayModeTests
                     PieceSize size = salvage.Candidate.Size;
                     float pressed = Time.time;
                     Press(_keyboard.eKey);
+                    if (!captured)
+                    {
+                        // Mid charge-up (the Anticipate): the charge run's lamps on their way to the emitter (M3-26).
+                        yield return Until(() => salvage.Cutting != null, 6f, "the emitter starts to charge");
+                        yield return new WaitForSeconds(_context.Get<ICutter>().ChargeSeconds * 0.5f);
+                        Capture(capture + "a-charge-run");
+                        Witness(salvage.Cutting.CutPosition, capture + "a-charge-run-closeup");
+                    }
+
                     yield return Until(() => _events.SalvageCutStarted.Count > cuts, 6f, "the beam starts cutting");
                     Assert.IsTrue(_rover.IsHeldStill, "07 is asked to hold still while it cuts");
                     if (!captured)
