@@ -21,7 +21,7 @@ namespace MoonProject.Art.Editor
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
     ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner|
     ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|kitmain|home|homeclean|
-    ///                  builtfor07|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|lab_dark|lab_lit]
+    ///                  builtfor07|shelves|focuslens|orangebeads|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|lab_dark|lab_lit]
     /// </code>
     /// (default rover; a ';'-separated list captures several scenes in one run)
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the habitat lander and the
@@ -205,6 +205,18 @@ namespace MoonProject.Art.Editor
                         NightSetting(material, temporary, 90f, 12f);
                         poses = TowersScene(temporary);
                         break;
+                    case "focuslens":
+                        NightSetting(material, temporary, 90f, 12f);
+                        poses = FocusLensScene(temporary);
+                        break;
+                    case "orangebeads":
+                        NightSetting(material, temporary, 90f, 12f);
+                        poses = OrangeBeadsScene(temporary);
+                        break;
+                    case "shelves":
+                        NightSetting(material, temporary, 90f, 12f);
+                        poses = ShelvesScene(temporary);
+                        break;
                     case "relics":
                         NightSetting(material, temporary, 40f, 8f);
                         poses = RelicsScene(temporary);
@@ -383,19 +395,167 @@ namespace MoonProject.Art.Editor
 
         private static CameraPoseSet TowersScene(TemporaryObjects temporary)
         {
+            var towers = new Transform[3];
             for (int level = 1; level <= 3; level++)
             {
-                Instantiate(BaseModelBuilder.TowerPrefix + level, temporary).transform.position =
-                    new Vector3((level - 2) * 6f, 0f, 0f);
+                towers[level - 1] = Instantiate(BaseModelBuilder.TowerPrefix + level, temporary).transform;
+                towers[level - 1].position = new Vector3((level - 2) * 6f, 0f, 0f);
                 Light lamp = NewLight("TowerLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp), 2f);
                 lamp.transform.position = new Vector3((level - 2) * 6f + 1.2f, 1.6f, 1.6f);
                 lamp.range = 6f;
                 temporary.Add(lamp.gameObject);
             }
 
+            // Power climbing (feel-pass §8.2): L1 offline with its plaque lit, L2 two rings up, L3 every ring.
+            SetGlow(towers[0], BaseModelBuilder.OfflineLampName, new[] { string.Empty }, 1f);
+            SetGlow(towers[1], BaseModelBuilder.TowerLightsName, new[] { string.Empty }, 1f);
+            SetGlow(towers[1], BaseModelBuilder.TowerLightRingPrefix, new[] { "1" }, 1f);
+            SetGlow(towers[2], BaseModelBuilder.TowerLightsName, new[] { string.Empty }, 1f);
+            SetGlow(towers[2], BaseModelBuilder.TowerLightRingPrefix, new[] { "1", "2", "3" }, 1f);
+            Vector3 plaque = Descendant(towers[0], BaseModelBuilder.OfflinePlaqueName).position;
+
             return Poses(
                 Pose("near15m", new[] { 0f, 4f, 15f }, new[] { 0f, 4.5f, 0f }, 50f),
-                Pose("far55m", new[] { 8f, 8f, 55f }, new[] { 0f, 4f, 0f }, 30f));
+                Pose("far55m", new[] { 8f, 8f, 55f }, new[] { 0f, 4f, 0f }, 30f),
+                Pose("plaque", new[] { plaque.x + 0.6f, plaque.y + 0.5f, plaque.z + 2.2f },
+                    new[] { plaque.x, plaque.y, plaque.z }, 35f));
+        }
+
+        private static CameraPoseSet FocusLensScene(TemporaryObjects temporary)
+        {
+            Transform charged = Rover(temporary, Vector3.zero, 160f);
+            temporary.Add(charged.gameObject);
+            Mount(temporary, RoverModelBuilder.FocusLensName, Descendant(charged, RoverModelBuilder.LensSocketName));
+            SetGlow(Descendant(charged, RoverModelBuilder.FocusLensName), RoverModelBuilder.FocusLensGlassName,
+                new[] { string.Empty }, 1f);
+            ShowChargeRun(charged, 1, 1f);
+            ShowChargeRun(Rover(temporary, new Vector3(-2.4f, 0f, -0.6f), 120f), 0, 1f);
+            Transform dark = Rover(temporary, new Vector3(2.4f, 0f, -0.6f), 200f);
+            temporary.Add(dark.gameObject);
+            Mount(temporary, RoverModelBuilder.FocusLensName, Descendant(dark, RoverModelBuilder.LensSocketName));
+            ShowChargeRun(dark, 1, 0f);
+            Transform eyeNode = Descendant(charged, "Eye");
+            Vector3 eye = eyeNode.position;
+            Vector3 front = eye + eyeNode.forward * 0.9f + eyeNode.right * 0.25f + Vector3.up * 0.15f;
+            Vector3 above = eye + eyeNode.forward * 0.7f - eyeNode.right * 0.6f + Vector3.up * 0.75f;
+            Vector3 behind = charged.position - charged.forward * 1.5f + charged.right * 0.7f + Vector3.up * 1.9f;
+            return Poses(
+                Pose("run_back", new[] { behind.x, behind.y, behind.z },
+                    new[] { charged.position.x, 1.05f, charged.position.z }, 45f),
+                Pose("lens_close", new[] { front.x, front.y, front.z }, new[] { eye.x, eye.y, eye.z }, 35f),
+                Pose("brow_three_quarter", new[] { above.x, above.y, above.z },
+                    new[] { eye.x, eye.y + 0.12f, eye.z }, 40f),
+                Pose("pair_chase", new[] { 1.2f, 2.2f, -4.5f }, new[] { 1.2f, 0.9f, 0f }, 45f));
+        }
+
+        /// <summary>Shows charge-run row <paramref name="tier"/> lit at <paramref name="intensity"/>, hiding the others.</summary>
+        private static void ShowChargeRun(Transform rover, int tier, float intensity)
+        {
+            string shown = RoverModelBuilder.ChargeRunPrefix + tier;
+            var block = new MaterialPropertyBlock();
+            block.SetVector("_EmissionColor", new Vector4(intensity, intensity, intensity, 1f));
+            foreach (Transform node in rover.GetComponentsInChildren<Transform>(true))
+            {
+                if (node.name.StartsWith(RoverModelBuilder.ChargeRunPrefix, StringComparison.Ordinal))
+                {
+                    node.gameObject.SetActive(node.name == shown);
+                }
+                else if (node.parent != null && node.parent.name == shown)
+                {
+                    node.GetComponent<Renderer>().SetPropertyBlock(block);
+                }
+            }
+        }
+
+        private static void Mount(TemporaryObjects temporary, string prefab, Transform socket)
+        {
+            Transform part = Instantiate(prefab, temporary, ArtPaths.RoverFolder).transform;
+            part.SetParent(socket, false);
+            part.localPosition = Vector3.zero;
+            part.localRotation = Quaternion.identity;
+        }
+
+        private static CameraPoseSet OrangeBeadsScene(TemporaryObjects temporary)
+        {
+            var field = new[]
+            {
+                new Vector3(0f, 0f, 6f), new Vector3(3.2f, 0f, 8.5f), new Vector3(-2.8f, 0f, 9f),
+                new Vector3(1.2f, 0f, 12f), new Vector3(-0.6f, 0f, 15f),
+            };
+            for (int i = 0; i < field.Length; i++)
+            {
+                GameObject patch = Instantiate(
+                    PropModelBuilder.OrangeBeadPatchPrefix + (i % PropModelBuilder.OrangeBeadPatchVariants), temporary,
+                    ArtPaths.PropFolder);
+                patch.transform.SetPositionAndRotation(field[i], Quaternion.Euler(0f, i * 47f, 0f));
+            }
+
+            string[] bundles =
+            {
+                SiteModelBuilder.BundleName(SalvagePieceMaterial.Metal),
+                SiteModelBuilder.BundleName(SalvagePieceMaterial.Wiring),
+                SiteModelBuilder.BundleName(SalvagePieceMaterial.Optics), SiteModelBuilder.OrangeBeadsBundleName,
+            };
+            for (int i = 0; i < bundles.Length; i++)
+            {
+                GameObject bundle = Instantiate(bundles[i], temporary, ArtPaths.PickupFolder);
+                float lift = bundle.transform.position.y - RendererBounds(bundle).min.y;
+                bundle.transform.SetPositionAndRotation(new Vector3((i - 1.5f) * 0.55f, lift, 2.2f),
+                    Quaternion.Euler(0f, 20f, 0f));
+            }
+
+            temporary.Add(Rover(temporary, new Vector3(2.6f, 0f, 3.4f), -20f).gameObject);
+            return Poses(
+                Pose("bundles", new[] { 0.1f, 1.2f, 0.6f }, new[] { 0f, 0.15f, 2.2f }, 45f),
+                Pose("field_near", new[] { 1.5f, 2.2f, -1.5f }, new[] { 0f, 0f, 8f }, 50f),
+                Pose("field_far30m", new[] { 6f, 5f, -20f }, new[] { 0f, 0f, 10f }, 40f));
+        }
+
+        /// <summary>Stacks crates on a supply shelf the way gameplay does: one material per slot, 1-3 high.</summary>
+        private static void StockShelf(Transform shelf, TemporaryObjects temporary)
+        {
+            IReadOnlyList<string> materials = BaseModelBuilder.ShelfMaterials;
+            for (int slot = 0; slot < BaseModelBuilder.ShelfSlots; slot++)
+            {
+                string name = BaseModelBuilder.ShelfSlotPrefix +
+                              slot.ToString("00", System.Globalization.CultureInfo.InvariantCulture);
+                Transform anchor = Descendant(shelf, name);
+                int stacked = 1 + slot * 7 % BaseModelBuilder.ShelfStackHeight;
+                for (int level = 0; level < stacked; level++)
+                {
+                    Transform crate = Instantiate(BaseModelBuilder.ShelfCratePrefix + materials[slot % materials.Count],
+                        temporary).transform;
+                    crate.SetParent(anchor.GetChild(level), false);
+                }
+            }
+        }
+
+        private static CameraPoseSet ShelvesScene(TemporaryObjects temporary)
+        {
+            Transform lander = Instantiate(BaseModelBuilder.LanderName, temporary).transform;
+            Transform shelves = Descendant(lander, BaseModelBuilder.ShelvesName);
+            foreach (Transform shelf in shelves)
+            {
+                SetGlow(shelf, BaseModelBuilder.ShelfLampName, new[] { string.Empty }, 1f);
+                Light lamp = NewLight("ShelfLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp), 1.2f);
+                lamp.transform.position = Descendant(shelf, BaseModelBuilder.ShelfLampName).position;
+                lamp.range = 3f;
+                temporary.Add(lamp.gameObject);
+                StockShelf(shelf, temporary);
+            }
+
+            GameObject site = Instantiate(SiteModelBuilder.SiteName("depot"), temporary, ArtPaths.SitesFolder);
+            site.transform.position = new Vector3(-20f, 0f, 0f);
+            Vector3 crate = Descendant(site.transform, SiteModelBuilder.CrewCrateName).position;
+            SetGlow(site.transform, SiteModelBuilder.CrewCrateSealName, new[] { string.Empty }, 1f);
+            Vector3 dock = lander.TransformPoint(ChargingDockMeshes.Anchor);
+            return Poses(
+                Pose("from_dock", new[] { dock.x, dock.y + 1.6f, dock.z }, new[] { 0f, 1.2f, 0f }, 45f),
+                Pose("east_shelves", new[] { 7.5f, 1.6f, 1.5f }, new[] { 3f, 0.8f, 0f }, 50f),
+                Pose("west_shelves", new[] { -7.5f, 1.6f, -1.5f }, new[] { -3f, 0.8f, 0f }, 50f),
+                Pose("crew_crate", new[] { crate.x + 1.6f, crate.y + 1.4f, crate.z + 2.4f },
+                    new[] { crate.x, crate.y + 0.3f, crate.z }, 45f),
+                Pose("crate_site", new[] { -20f + 6f, 4f, 10f }, new[] { crate.x, 0.5f, crate.z }, 50f));
         }
 
         private static CameraPoseSet RelicsScene(TemporaryObjects temporary)
@@ -940,6 +1100,7 @@ namespace MoonProject.Art.Editor
             SetGlow(lander, "DockGlow", new[] { string.Empty }, 1f);
             Transform tower = SceneObjectStartingWith(BaseModelBuilder.TowerPrefix);
             SetGlow(tower, "Lights", new[] { string.Empty }, 1f);
+            SetGlow(tower, BaseModelBuilder.TowerLightRingPrefix, new[] { "1", "2", "3" }, 1f);
             Quaternion toLift = lander.rotation * Quaternion.Euler(0f, 180f, 0f);
             Vector3 front = lander.TransformPoint(new Vector3(-1.6f, 0f, 9.2f));
             TravellingRover(temporary, front, toLift, false);
@@ -1026,7 +1187,9 @@ namespace MoonProject.Art.Editor
             SetGlow(belly, BaseModelBuilder.BellyLampName, new[] { string.Empty }, 1f);
             SetGlow(belly, BaseModelBuilder.HatchRimName, new[] { string.Empty }, 1f);
             RestoreLift(lander);
-            SetGlow(SceneObjectStartingWith(BaseModelBuilder.TowerPrefix), "Lights", new[] { string.Empty }, 1f);
+            Transform homeTower = SceneObjectStartingWith(BaseModelBuilder.TowerPrefix);
+            SetGlow(homeTower, "Lights", new[] { string.Empty }, 1f);
+            SetGlow(homeTower, BaseModelBuilder.TowerLightRingPrefix, new[] { "1", "2", "3" }, 1f);
             Transform lab = Descendant(lander, BaseModelBuilder.LabName);
             if (lit)
             {
@@ -1257,6 +1420,8 @@ namespace MoonProject.Art.Editor
             }
 
             Attach(rover, RoverKitBuilder.CargoRackName, "CargoSocket", temporary);
+            Attach(rover, RoverKitBuilder.SideBinName, "BinSocket_L", temporary);
+            Attach(rover, RoverKitBuilder.SideBinName, "BinSocket_R", temporary);
             Attach(rover, RoverModelBuilder.HoverCoilsName, "CoilSocket", temporary);
             foreach (string gift in new[]
             {

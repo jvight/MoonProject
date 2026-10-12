@@ -175,6 +175,7 @@ namespace MoonProject.Art.Tests
                 Assert.Greater(bounds.max.y, previousHeight + 2f, $"L{level} is clearly taller");
                 Assert.Greater(beacon.LocalPosition.y, bounds.max.y - 1.6f, "beacon near the top");
                 AssertGlowsOnly(tower.GetDescendant("Lights"));
+                AssertRingsClimb(tower);
                 previousHeight = bounds.max.y;
             }
 
@@ -266,6 +267,83 @@ namespace MoonProject.Art.Tests
             Assert.IsNotNull(node, $"{model.Name} needs {name}");
             Assert.IsNull(node.Mesh, $"{name} must be an empty");
             return node;
+        }
+
+
+        [Test]
+        public void Shelves_StandUnderTheBelly_TwelveSlotsOfThreeStacked_EachWithADarkLamp()
+        {
+            ModelNode shelves = BaseModelBuilder.CreateLander().GetDescendant(BaseModelBuilder.ShelvesName);
+            Assert.AreEqual(BaseModelBuilder.ShelfCount, shelves.Children.Count);
+            foreach (ModelNode shelf in shelves.Children)
+            {
+                StringAssert.StartsWith(BaseModelBuilder.ShelfPrefix, shelf.Name);
+                Bounds rack = shelf.Mesh.Geometry.Bounds;
+                Assert.Less(rack.max.y, BaseModelBuilder.LanderBellyHeight, $"{shelf.Name} fits under the belly");
+                float radius = new Vector2(shelf.LocalPosition.x, shelf.LocalPosition.z).magnitude;
+                Assert.That(radius, Is.InRange(2.4f, 3.6f), $"{shelf.Name} is on the belly ring, clear of the lift");
+                Assert.Greater(Mathf.Abs(shelf.LocalPosition.x), Mathf.Abs(shelf.LocalPosition.z),
+                    $"{shelf.Name} keeps out of the lift's lane on Z");
+                ModelNode lamp = shelf.GetDescendant(BaseModelBuilder.ShelfLampName);
+                Assert.AreEqual(ModelMaterial.PaletteGlowOff, lamp.Material, $"{shelf.Name}'s lamp starts dark");
+                AssertGlowsOnly(lamp);
+                Assert.AreEqual(BaseModelBuilder.ShelfSlots + 1, shelf.Children.Count, $"{shelf.Name}: lamp and slots");
+                for (int i = 0; i < BaseModelBuilder.ShelfSlots; i++)
+                {
+                    string name = BaseModelBuilder.ShelfSlotPrefix + i.ToString("00");
+                    ModelNode slot = shelf.GetDescendant(name);
+                    Assert.IsNotNull(slot, $"{shelf.Name} has {name}");
+                    Assert.IsNull(slot.Mesh, $"{shelf.Name}/{name} is an empty anchor");
+                    Assert.AreEqual(BaseModelBuilder.ShelfStackHeight, slot.Children.Count);
+                    foreach (string material in BaseModelBuilder.ShelfMaterials)
+                    {
+                        Bounds crate = BaseModelBuilder.CreateShelfCrate(material).Mesh.Geometry.Bounds;
+                        ModelNode top = slot.Children[BaseModelBuilder.ShelfStackHeight - 1];
+                        crate.center += slot.LocalPosition + top.LocalPosition;
+                        Assert.IsTrue(rack.Contains(crate.min) && rack.Contains(crate.max),
+                            $"{shelf.Name}/{name}: a full stack of {material} fits its rack");
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void ShelfCrates_StackOnTheirRidges_InTheirMaterialsColour()
+        {
+            foreach (string material in BaseModelBuilder.ShelfMaterials)
+            {
+                ModelNode crate = BaseModelBuilder.CreateShelfCrate(material);
+                Assert.AreEqual(BaseModelBuilder.ShelfCratePrefix + material, crate.Name);
+                CollectionAssert.IsEmpty(crate.Children);
+                LowPolyMeshBuilder box = crate.Mesh.Geometry;
+                MeshChecks.AssertWellFormed(box);
+                Assert.AreEqual(0f, box.Bounds.min.y, 1e-3f, $"{crate.Name} pivots at its bottom");
+                ModelNode slot = BaseModelBuilder.CreateLander().GetDescendant(BaseModelBuilder.ShelfSlotPrefix + "00");
+                float pitch = slot.Children[1].LocalPosition.y - slot.Children[0].LocalPosition.y;
+                Assert.That(pitch - box.Bounds.max.y, Is.InRange(0f, 0.01f), $"{crate.Name} stacks snugly");
+            }
+        }
+
+        /// <summary>
+        /// The stage's lamps light ring by ring as power climbs (feel-pass §8.2): Lights is ring 0, Ring_1..3 sit
+        /// higher and higher, each a glow renderer; the offline plaque's lamp starts dark.
+        /// </summary>
+        private static void AssertRingsClimb(ModelNode tower)
+        {
+            ModelNode lights = tower.GetDescendant(BaseModelBuilder.TowerLightsName);
+            float below = lights.Mesh.Geometry.Bounds.max.y;
+            for (int ring = 1; ring < BaseModelBuilder.TowerLightRings; ring++)
+            {
+                ModelNode node = lights.GetDescendant(BaseModelBuilder.TowerLightRingPrefix + ring);
+                AssertGlowsOnly(node);
+                Bounds bounds = node.Mesh.Geometry.Bounds;
+                Assert.Greater(bounds.min.y, below, $"{tower.Name} ring {ring} sits above the ring under it");
+                below = bounds.max.y;
+            }
+
+            ModelNode lamp = tower.GetDescendant(BaseModelBuilder.OfflineLampName);
+            Assert.AreEqual(ModelMaterial.PaletteGlowOff, lamp.Material, "the offline lamp starts dark");
+            Assert.IsTrue(tower.Children.Contains(tower.GetDescendant(BaseModelBuilder.OfflinePlaqueName)));
         }
 
         private static void AssertGlowsOnly(ModelNode node)
