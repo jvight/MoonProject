@@ -20,6 +20,9 @@ namespace MoonProject.UI.PlayModeTests
         private const float RequiredContrast = 7f;
         private const float FontFloor = 18f;
         private const float PlateSamplePixels = 6f;
+
+        // A glass plate's rim and glow fill its first pixels; the glass itself starts beyond them.
+        private const float GlassSamplePixels = 20f;
         private const float BigTextScale = 1.5f;
         private const int BigTextPresses = 2;
 
@@ -212,7 +215,8 @@ namespace MoonProject.UI.PlayModeTests
         private string MeasureContrast(string shot, TextElement text, Color32[] ui, float scale)
         {
             VisualElement plate = text;
-            while (plate != null && plate.resolvedStyle.backgroundColor.a < 0.3f)
+            while (plate != null && plate.resolvedStyle.backgroundColor.a < 0.3f &&
+                   plate.resolvedStyle.backgroundImage.texture == null)
             {
                 plate = plate.parent;
             }
@@ -240,7 +244,8 @@ namespace MoonProject.UI.PlayModeTests
             }
 
             Rect rim = plate.worldBound;
-            int rimX = Mathf.FloorToInt(rim.xMin * scale + PlateSamplePixels);
+            float inset = plate.resolvedStyle.backgroundImage.texture != null ? GlassSamplePixels : PlateSamplePixels;
+            int rimX = Mathf.FloorToInt(rim.xMin * scale + inset);
             int rimY = Mathf.FloorToInt(rim.center.y * scale);
             Color32 background = Contrast.Over(ui[PixelIndex(rimX, rimY)], Contrast.BrightestDune);
             float ratio = Contrast.Ratio(brightest, background);
