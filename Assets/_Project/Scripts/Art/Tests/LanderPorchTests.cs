@@ -119,7 +119,9 @@ namespace MoonProject.Art.Tests
 
             // In dock space 07 faces +Z, square to the dock: its rest and its lane are measured there.
             Matrix4x4 toDock = Matrix4x4.TRS(anchor.LocalPosition, anchor.LocalRotation, Vector3.one).inverse;
-            List<Vector3> fixedParts = Posed(Solid(_lander, string.Empty), toDock);
+            // The lock's walls under DockGlow sink into their floor slots whenever 07 drives on or off (feel-pass
+            // 7.1); they rise round it only while it charges, so they are not in the lane.
+            List<Vector3> fixedParts = Posed(Solid(_lander, "DockGlow"), toDock);
             AssertClear(Posed(_rover, Matrix4x4.Translate(Vector3.up * Rest)), fixedParts, "07 at the dock");
             float halfWidth = _rover.Max(p => Mathf.Abs(p.x)) + LaneMargin;
             foreach (Vector3 p in fixedParts)
