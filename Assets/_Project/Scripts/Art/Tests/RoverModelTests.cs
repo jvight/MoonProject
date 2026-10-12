@@ -165,7 +165,16 @@ namespace MoonProject.Art.Tests
                             $"{path} glows the cutter's cyan");
                     }
 
-                    Assert.AreEqual(0f, lamp.LocalPosition.x, 1e-5f, $"{path} is on the centreline (P3)");
+                    if (part.Length > 0)
+                    {
+                        Assert.AreEqual(0f, lamp.LocalPosition.x, 1e-5f, $"{path} is on the centreline (P3)");
+                    }
+                    else
+                    {
+                        Bounds glass = lamp.Mesh.Geometry.Bounds;
+                        Assert.Greater(lamp.LocalPosition.x - glass.extents.x * 2f, WingEdge(),
+                            $"{path} sits clear of the solar wing, where the chase camera sees it");
+                    }
                     MeshChecks.AssertWellFormed(lamp.Mesh.Geometry);
                     Assert.Greater(SilhouetteCamera.WorldOf(_rover, path).GetColumn(3).y, RoverModelBuilder.NeckBase.y - 0.01f,
                         $"{path} rides the top of 07, where the chase camera sees it");
@@ -234,6 +243,13 @@ namespace MoonProject.Art.Tests
                 again.GetDescendant("Body").Mesh.Geometry.Positions);
             CollectionAssert.AreEqual(_rover.GetDescendant("Head").Mesh.Geometry.Uvs,
                 again.GetDescendant("Head").Mesh.Geometry.Uvs);
+        }
+
+        /// <summary>The solar wing's right edge on 07 (its hinge plus its mesh's reach toward +X).</summary>
+        private float WingEdge()
+        {
+            ModelNode wing = _rover.GetDescendant("SolarWing");
+            return wing.LocalPosition.x + wing.Mesh.Geometry.Bounds.max.x;
         }
 
         private static ModelNode AtPath(ModelNode root, string path)
