@@ -4,6 +4,7 @@ using NUnit.Framework;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using Object = UnityEngine.Object;
 
 namespace MoonProject.Gameplay.Tests
 {
@@ -11,6 +12,7 @@ namespace MoonProject.Gameplay.Tests
     {
         private EventBus _events;
         private List<MaterialsChanged> _changes;
+        private MaterialCatalog _catalog;
         private MaterialStock _stock;
 
         [SetUp]
@@ -19,15 +21,22 @@ namespace MoonProject.Gameplay.Tests
             _events = new EventBus();
             _changes = new List<MaterialsChanged>();
             _events.Subscribe<MaterialsChanged>(change => _changes.Add(change));
-            _stock = new MaterialStock(_events);
+            _catalog = CargoFixtures.Catalog();
+            _stock = CargoFixtures.Stock(_events, _catalog);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            Object.DestroyImmediate(_catalog);
         }
 
         [Test]
-        public void Stock_AddsSalvage_AndSpendsWholeRecipes_PublishingTotals()
+        public void Stock_CollectsSalvage_AndSpendsWholeRecipes_PublishingTotals()
         {
-            _stock.Add(SalvageMaterial.Metal, 4);
-            _stock.Add(SalvageMaterial.Wiring, 3);
-            _stock.Add(SalvageMaterial.Optics, 2);
+            _stock.Collect(SalvageMaterial.Metal, 4);
+            _stock.Collect(SalvageMaterial.Wiring, 3);
+            _stock.Collect(SalvageMaterial.Optics, 2);
             Assert.IsTrue(_stock.Has(new Recipe(4, 2, 1)));
             Assert.IsTrue(_stock.TrySpend(new Recipe(4, 2, 1)));
 
@@ -46,28 +55,34 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void Stock_NeverSpendsPartOfARecipe()
         {
-            _stock.Add(SalvageMaterial.Metal, 9);
-            _stock.Add(SalvageMaterial.Wiring, 9);
+            _stock.Collect(SalvageMaterial.Metal, 9);
+            _stock.Collect(SalvageMaterial.Wiring, 9);
             Assert.IsFalse(_stock.Has(new Recipe(1, 1, 1)), "one optics short");
             Assert.IsFalse(_stock.TrySpend(new Recipe(1, 1, 1)));
             Assert.AreEqual(18, _stock.Total, "nothing taken");
             Assert.AreEqual(2, _changes.Count);
             Assert.Throws<ArgumentException>(() => _stock.TrySpend(new Recipe(0, 0, 0)));
-            Assert.Throws<ArgumentOutOfRangeException>(() => _stock.Add(SalvageMaterial.Optics, 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => _stock.Collect(SalvageMaterial.Optics, 0));
         }
 
         [Test]
         public void Stock_Restore_RoundTripsAndAnnounces()
         {
-            _stock.Add(SalvageMaterial.Metal, 5);
-            _stock.Restore(new MaterialsSaveData { metal = 7, wiring = 3, optics = 2 });
+            _stock.Collect(SalvageMaterial.Metal, 5);
+            var saved = new MaterialsSaveData
+            {
+                hold = new[] { 2, 1, 0 }, holdSlots = 8, home = new[] { 5, 2, 2 }, shelvesBuilt = 3,
+            };
+            _stock.Restore(saved);
             Assert.AreEqual(12, _stock.Total);
-            Assert.AreEqual(7, _changes[1].Metal);
-            Assert.AreEqual(3, _changes[1].Wiring);
-            MaterialsSaveData saved = _stock.Capture();
-            Assert.AreEqual(7, saved.metal);
-            Assert.AreEqual(2, saved.optics);
-            Assert.Throws<FormatException>(() => _stock.Restore(new MaterialsSaveData { wiring = -1 }));
+            Assert.AreEqual(7, _changes[_changes.Count - 1].Metal);
+            Assert.AreEqual(3, _changes[_changes.Count - 1].Wiring);
+            Assert.AreEqual(3, _stock.Home.BuiltCount, "a built shelf stays built");
+            MaterialsSaveData captured = _stock.Capture();
+            Assert.AreEqual(2, captured.hold[(int)SalvageMaterial.Metal]);
+            Assert.AreEqual(5, captured.home[(int)SalvageMaterial.Metal]);
+            Assert.AreEqual(SalvageMaterials.Count, captured.home.Length, "every material, new ones at 0");
+            Assert.Throws<FormatException>(() => _stock.Restore(new MaterialsSaveData { home = new[] { 0, -1 } }));
         }
 
         [Test]
@@ -75,16 +90,16 @@ namespace MoonProject.Gameplay.Tests
         {
             string json = MaterialsSaveMigrations.Migrate(JsonUtility.ToJson(new WalletSaveData { balance = 150 }),
                 1);
-            MaterialsSaveData stock = JsonUtility.FromJson<MaterialsSaveData>(json);
+            MaterialsSaveDataV2 stock = JsonUtility.FromJson<MaterialsSaveDataV2>(json);
             Assert.AreEqual(8, stock.metal + stock.wiring + stock.optics, "150 scrap at 20 per unit, rounded");
             Assert.AreEqual(4, stock.metal, "dealt metal, wiring, metal, wiring, metal, wiring, optics, metal");
             Assert.AreEqual(3, stock.wiring);
             Assert.AreEqual(1, stock.optics);
-            MaterialsSaveData none = MaterialsSaveMigrations.Convert(0);
+            MaterialsSaveDataV2 none = MaterialsSaveMigrations.Convert(0);
             Assert.AreEqual(0, none.metal + none.wiring + none.optics);
-            MaterialsSaveData all = MaterialsSaveMigrations.Convert(705);
+            MaterialsSaveDataV2 all = MaterialsSaveMigrations.Convert(705);
             Assert.AreEqual(35, all.metal + all.wiring + all.optics, "the whole old economy buys about every recipe");
-            Assert.Throws<InvalidOperationException>(() => MaterialsSaveMigrations.Migrate("{}", 2));
+            Assert.Throws<InvalidOperationException>(() => MaterialsSaveMigrations.Migrate("{}", 3));
         }
 
         [Test]

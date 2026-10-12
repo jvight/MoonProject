@@ -25,6 +25,9 @@ namespace MoonProject.Gameplay
         /// <summary>Owner id of the relay masts' spare parts (<see cref="RelayField"/>).</summary>
         public const int Relays = 3;
 
+        /// <summary>Owner id of the material bundles waiting because the hold was full (<see cref="CargoBundles"/>).</summary>
+        public const int Bundles = 4;
+
         private const string NounPrefix = "pickup.";
 
         private int _frame = int.MinValue;

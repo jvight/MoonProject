@@ -18,3 +18,4 @@ MonoBehaviour:
   _answerNote: 1
   _siteId: site.drill
   _heartOffset: {x: 0, y: 0}
+  _crewSet: ines

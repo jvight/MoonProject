@@ -53,7 +53,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreSame(first, FindBootstrap(), "without a reload");
             int persistent = PersistentRoots();
             context.Get<IRoverAbilities>().Grant(RoverAbility.HoverJump);
-            ((MaterialStock)context.Get<IMaterialStock>()).Add(SalvageMaterial.Metal, 20);
+            ((MaterialStock)context.Get<IMaterialStock>()).Deliver(SalvageMaterial.Metal, 20);
             ISaveService save = context.Get<ISaveService>();
             Assert.IsTrue(save.SaveNow(), "mid-game progress is on disk");
             string savePath = save.FilePath;

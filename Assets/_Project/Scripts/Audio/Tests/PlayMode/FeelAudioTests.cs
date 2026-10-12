@@ -143,6 +143,11 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual("count_tick_01", LastClip, "the first crate on the belt");
             Beat(FeelKind.Cargo, FeelPhase.Act, 1f);
             Assert.AreEqual("count_tick_06", LastClip, "the last one, highest");
+            Beat(FeelKind.Cargo, FeelPhase.Reward, 1f);
+            Assert.AreEqual("node_light_01", LastClip, "the hold empty: a bell on D");
+            int plays = _rig.Director.PlayCount;
+            Beat(FeelKind.Cargo, FeelPhase.Impact, 1f);
+            Assert.AreEqual(plays, _rig.Director.PlayCount, "a full hold's Impact is CargoOverflowed's tok");
             Beat(FeelKind.Build, FeelPhase.Impact);
             Assert.AreEqual("shelf_chord", LastClip, "a lone Build Impact is a shelf built");
             Beat(FeelKind.Build, FeelPhase.Act, 0.5f);

@@ -50,7 +50,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             SalvageField salvage = _fixture.Gameplay.Salvage;
             SalvagePiece metal = _fixture.FindSite("depot").Find(0);
             Assert.AreEqual(SalvageMaterial.Metal, metal.Material);
-            Assert.AreEqual(_fixture.SalvageTuning.SmallYield, metal.Units, "a small piece");
+            Assert.AreEqual(_fixture.SalvageTuning.Size(PieceSize.Small).Units, metal.Units, "a small piece");
             Assert.AreEqual(Layers.Prop, metal.Body.gameObject.layer, "the wreck is solid");
             yield return FaceCut(metal);
             Assert.AreSame(metal, salvage.Candidate, "aimed at and within reach");
@@ -182,7 +182,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Waits.Until(() => _fixture.Events.MaterialSalvaged.Count > 0, 5f);
             Release(_keyboard.eKey);
             Assert.AreEqual(1, _fixture.Events.MaterialSalvaged.Count);
-            Assert.AreEqual(_fixture.SalvageTuning.DragYield, _fixture.Events.MaterialSalvaged[0].Value.Amount);
+            Assert.AreEqual(_fixture.SalvageTuning.Size(PieceSize.Small).Units,
+                _fixture.Events.MaterialSalvaged[0].Value.Amount);
             Assert.AreEqual(SalvagePieceState.Taken, hatch.State);
         }
 

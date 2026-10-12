@@ -18,3 +18,4 @@ MonoBehaviour:
   _answerNote: 5
   _siteId: site.garage
   _heartOffset: {x: 0, y: 0}
+  _crewSet: kenji

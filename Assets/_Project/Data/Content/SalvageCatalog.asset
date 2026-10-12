@@ -41,6 +41,19 @@ MonoBehaviour:
       - {x: -0.12600027, y: 0, z: 0}
       - {x: 0, y: 0, z: 0}
       - {x: 0.994, y: 0, z: 0}
+    _sizes:
+    - _number: 0
+      _size: 0
+    - _number: 1
+      _size: 1
+    - _number: 2
+      _size: 0
+    - _number: 3
+      _size: 1
+    _crate:
+      _crewId: theo
+      _material: 0
+      _units: 6
   - _anchorId: site.kestrel
     _prefab: {fileID: 6452073641338690709, guid: 0382be6e5dabbda49989eee33d564b49, type: 3}
     _gate:
@@ -84,6 +97,25 @@ MonoBehaviour:
       - {x: -0.85028666, y: 0, z: 0}
       - {x: 0, y: 0, z: 0}
       - {x: 0.5097753, y: 0, z: 0}
+    _sizes:
+    - _number: 0
+      _size: 2
+    - _number: 1
+      _size: 1
+    - _number: 2
+      _size: 1
+    - _number: 3
+      _size: 2
+    - _number: 4
+      _size: 1
+    - _number: 5
+      _size: 1
+    - _number: 6
+      _size: 2
+    _crate:
+      _crewId: ines
+      _material: 2
+      _units: 6
   - _anchorId: site.drill
     _prefab: {fileID: 4663772846675265821, guid: 2703d9d50f921874a8ee09e301212165, type: 3}
     _gate:
@@ -117,6 +149,21 @@ MonoBehaviour:
       - {x: -0.4226896, y: 0, z: 0}
       - {x: 0, y: 0, z: 0}
       - {x: 0.47079483, y: 0, z: 0}
+    _sizes:
+    - _number: 0
+      _size: 1
+    - _number: 1
+      _size: 1
+    - _number: 2
+      _size: 2
+    - _number: 3
+      _size: 1
+    - _number: 4
+      _size: 1
+    _crate:
+      _crewId: ro
+      _material: 0
+      _units: 6
   - _anchorId: site.garage
     _prefab: {fileID: 541481811713480840, guid: 8c3a57a9fff9e7e41a594c7f5d505c3f, type: 3}
     _gate:
@@ -140,6 +187,17 @@ MonoBehaviour:
       - {x: -0.24401453, y: 0, z: 0}
       - {x: 0, y: 0, z: 0}
       - {x: 0.24978185, y: 0, z: 0}
+    _sizes:
+    - _number: 0
+      _size: 1
+    - _number: 1
+      _size: 1
+    - _number: 2
+      _size: 1
+    _crate:
+      _crewId: kenji
+      _material: 1
+      _units: 6
   - _anchorId: site.lander
     _prefab: {fileID: 2727997806974874189, guid: dfc50462b5908d5479e12c5d0ef9b1b0, type: 3}
     _gate:
@@ -183,6 +241,25 @@ MonoBehaviour:
       - {x: -1.3257834, y: 0, z: 0}
       - {x: 0, y: 0, z: 0}
       - {x: 0.7557445, y: 0, z: 0}
+    _sizes:
+    - _number: 0
+      _size: 1
+    - _number: 1
+      _size: 1
+    - _number: 2
+      _size: 1
+    - _number: 3
+      _size: 1
+    - _number: 4
+      _size: 2
+    - _number: 5
+      _size: 3
+    - _number: 6
+      _size: 2
+    _crate:
+      _crewId: kenji
+      _material: 0
+      _units: 6
   _metalBundle: {fileID: 8960714290519639283, guid: 26e27ff987c8ae2478a4f6090ec487d1, type: 3}
   _wiringBundle: {fileID: 8133406963958762877, guid: 20853bd915ffc68498705589c043faee, type: 3}
   _opticsBundle: {fileID: 7272007056206292504, guid: 0c943ef936aaa0d4c8382df341cfd7c4, type: 3}
