@@ -103,9 +103,7 @@ namespace MoonProject.Rover
         private readonly HeldShot _held = new HeldShot();
         private bool _onLift;
         private bool _evening;
-        private bool _cutLeaning;
-        private float _cutLean;
-        private Vector3 _cutPoint;
+        private readonly CutFraming _cutFraming = new CutFraming();
         private bool _charging;
         private float _chargingSeconds;
         private bool _chargeAsks;
@@ -354,6 +352,12 @@ namespace MoonProject.Rover
                 _bayDismissed |= _inBay;
             }
 
+            bool driving = _rover.DriveInput.sqrMagnitude > DriveEpsilon * DriveEpsilon;
+            if (_cutFraming.IsActive && (viewInput || driving))
+            {
+                _cutFraming.End(_tuning.CutFrameHandBackSeconds);
+            }
+
             if (recenter && _wide.IsOpen)
             {
                 HandBackWideShot();
@@ -367,8 +371,7 @@ namespace MoonProject.Rover
             StepWideShot(deltaTime);
             StepHeldShot(viewInput, deltaTime);
             StepMomentFraming(deltaTime);
-            float lean = _cutLeaning && !_look.GentleCamera ? 1f : 0f;
-            _cutLean = Mathf.MoveTowards(_cutLean, lean, deltaTime / _tuning.CutLeanSeconds);
+            _cutFraming.Step(deltaTime);
             PlaceTarget();
             _orbitState.Step(OrbitInput(look, recenter), deltaTime);
             StepStargaze(deltaTime);
@@ -637,9 +640,10 @@ namespace MoonProject.Rover
         private void PlaceTarget()
         {
             Vector3 point = _rover.Position + Vector3.up * _tuning.TargetHeight + _momentShift;
-            if (_cutLean > 0f)
+            float cut = _cutFraming.Weight;
+            if (cut > 0f)
             {
-                point += (_cutPoint - point) * (_tuning.CutLeanShare * Smoothing.SmoothStep(0f, 1f, _cutLean));
+                point = Vector3.Lerp(point, BeamMiddle(), cut);
             }
 
             _targetYaw = RoverYaw() + _momentYaw;
@@ -694,6 +698,12 @@ namespace MoonProject.Rover
             if (framed > 0f)
             {
                 BlendHeldShot(framed, ref yaw, ref elevation, ref radius, ref fov, ref screen);
+            }
+
+            float cutFrame = _cutFraming.Weight;
+            if (cutFrame > 0f)
+            {
+                BlendCutFraming(cutFrame, ref yaw, ref elevation, ref radius);
             }
 
             float wake = _opening.Weight;
@@ -1090,8 +1100,7 @@ namespace MoonProject.Rover
             _momentLift = 0f;
             _momentPullBack = 0f;
             _momentShift = Vector3.zero;
-            _cutLeaning = false;
-            _cutLean = 0f;
+            _cutFraming.Reset();
             Snap();
             if (wasWide)
             {
@@ -1178,8 +1187,9 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// While 07 cuts (or digs) the look target leans gently toward the cut point; the piece breaking free or the
-        /// player releasing eases it back (docs/design/feel-pass.md §3.1, Cam). The Gentle camera never leans.
+        /// The cut's work framing (docs/design/feel-pass.md §3.1, Cam): 07 stands still while it cuts or digs, so
+        /// from the charge-up the camera eases over its shoulder on the beam's side (half as far and slower with the
+        /// Gentle camera) until the piece is folded, or the player releases; look or drive input hands it back at once.
         /// </summary>
         private void OnFeelBeat(FeelBeat beat)
         {
@@ -1191,15 +1201,51 @@ namespace MoonProject.Rover
             switch (beat.Phase)
             {
                 case FeelPhase.Anticipate:
-                case FeelPhase.Act:
-                    _cutLeaning = true;
-                    _cutPoint = beat.Position;
+                    float side = CutFraming.ChooseSide(_rover.Position, _rover.Rotation * Vector3.forward,
+                        beat.Position);
+                    _cutFraming.Begin(beat.Position, side,
+                        _look.GentleCamera ? _tuning.CutFrameGentleSeconds : _tuning.CutFrameInSeconds);
                     break;
-                case FeelPhase.Impact:
+                case FeelPhase.Follow when beat.Strength >= 1f:
                 case FeelPhase.Cancel:
-                    _cutLeaning = false;
+                    if (_cutFraming.IsActive)
+                    {
+                        _cutFraming.End(_tuning.CutFrameOutSeconds);
+                    }
+
                     break;
             }
+        }
+
+        /// <summary>The middle of the beam, between 07's emitter (its follow point) and the cut point.</summary>
+        private Vector3 BeamMiddle()
+        {
+            Vector3 emitter = _rover.Position + Vector3.up * _tuning.TargetHeight;
+            return Vector3.Lerp(emitter, _cutFraming.CutPoint, 0.5f);
+        }
+
+        /// <summary>
+        /// The orbit toward the over-the-shoulder eye, looking at the beam's middle (where the target goes): the
+        /// emitter, the beam and the cut point all in view, never rolled.
+        /// </summary>
+        private void BlendCutFraming(float weight, ref float yaw, ref float elevation, ref float radius)
+        {
+            float share = _look.GentleCamera ? _tuning.CutFrameGentleShare : 1f;
+            Vector3 emitter = _rover.Position + Vector3.up * _tuning.TargetHeight;
+            Vector3 eye = _cutFraming.Eye(emitter, _tuning.CutFrameBack, _tuning.CutFrameSide * share,
+                _tuning.CutFrameRise * share);
+            Vector3 line = BeamMiddle() - eye;
+            float distance = line.magnitude;
+            if (distance < MinSubjectDistance)
+            {
+                return;
+            }
+
+            float frameYaw = Mathf.DeltaAngle(RoverYaw() + _momentYaw, WideShotComposer.Bearing(line));
+            yaw += Mathf.DeltaAngle(yaw, frameYaw) * weight;
+            elevation = Mathf.Lerp(elevation, Mathf.Asin(Mathf.Clamp(-line.y / distance, -1f, 1f)) * Mathf.Rad2Deg,
+                weight);
+            radius = Mathf.Lerp(radius, distance, weight);
         }
 
         /// <summary>A real leap (not a hop) lifts the camera and looks ahead to the landing until 07 is down.</summary>
