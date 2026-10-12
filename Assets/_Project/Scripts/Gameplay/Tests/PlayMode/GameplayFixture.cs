@@ -491,6 +491,24 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             home.Wire(BaseTuning, baseRoot, windows.GetComponent<Renderer>(), sockets, keepsakes, slots, dock,
                 dockGlow.GetComponent<Renderer>());
+            var walls = new Transform[DockLock.Walls];
+            var strips = new Renderer[DockLock.Walls];
+            for (int i = 0; i < walls.Length; i++)
+            {
+                walls[i] = Named(Block(dockGlow, new Vector3(i % 2 == 0 ? 0f : (i == 1 ? 0.85f : -0.85f), 0.17f,
+                    i % 2 == 0 ? (i == 0 ? 1.2f : -1.2f) : 0f), new Vector3(0.3f, 0.35f, 0.05f)), "DockWall_" + i);
+                strips[i] = Named(Block(walls[i], new Vector3(0f, 0.2f, 0f), new Vector3(0.3f, 0.02f, 0.04f)),
+                    "Strip").GetComponent<Renderer>();
+            }
+
+            var rims = new Renderer[DockLock.RimRings];
+            for (int i = 0; i < rims.Length; i++)
+            {
+                rims[i] = Named(Block(dockGlow, new Vector3(0f, 0.03f, 0.3f * i), new Vector3(0.05f, 0.01f, 0.05f)),
+                    "DockRim_" + i).GetComponent<Renderer>();
+            }
+
+            home.WireDockLock(walls, strips, rims);
             tower.Wire(TowerTuning, RadioTowerUpgrade, anchor, stages, lights, beacons, hoppers, hatches);
             Transform bay = Node("WorkshopAnchor", lander, new Vector3(12.5f, 0f, -2f));
             BuildBay(bay, workshop, plotter);

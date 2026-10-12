@@ -44,3 +44,17 @@ MonoBehaviour:
   _dockBreathPeriod: 3.6
   _dockBreathDepth: 0.3
   _dockGlowEase: 0.8
+  _wallStagger: 0.06
+  _wallRiseSeconds: 0.45
+  _wallOvershoot: 1.2
+  _wallLowerSeconds: 0.6
+  _wallDropSeconds: 0.25
+  _wallSink: 0.42
+  _fullSweepSeconds: 0.7
+  _stripLit: 1.6
+  _stripUnlit: 0.12
+  _stripEase: 0.15
+  _stripCharging: {r: 0.45, g: 1, b: 1.15, a: 1}
+  _stripFull: {r: 1.35, g: 0.92, b: 0.4, a: 1}
+  _rimChaseSeconds: 0.6
+  _rimGlow: 1.4

@@ -119,6 +119,49 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds (time constant) for the dock's glow to warm up or cool down.")]
         [Range(0f, 4f)] [SerializeField] private float _dockGlowEase = 0.8f;
 
+        [Header("Dock lock (feel-pass §7.1)")]
+        [Tooltip("Seconds between one wall starting to rise (or lower) and the next.")]
+        [Range(0f, 0.3f)] [SerializeField] private float _wallStagger = 0.06f;
+
+        [Tooltip("Seconds each wall takes to rise when 07 docks to charge.")]
+        [Range(0.1f, 1.5f)] [SerializeField] private float _wallRiseSeconds = 0.45f;
+
+        [Tooltip("How far past its top a rising wall overshoots before it settles (ease-out back).")]
+        [Range(0f, 3f)] [SerializeField] private float _wallOvershoot = 1.2f;
+
+        [Tooltip("Seconds each wall takes to lower once 07 is full (ease-in).")]
+        [Range(0.1f, 2f)] [SerializeField] private float _wallLowerSeconds = 0.6f;
+
+        [Tooltip("Seconds the walls take to drop when 07 drives off before it is full.")]
+        [Range(0.05f, 1f)] [SerializeField] private float _wallDropSeconds = 0.25f;
+
+        [Tooltip("Metres a lowered wall sinks below its raised pose, hidden in its slot.")]
+        [Range(0.2f, 1f)] [SerializeField] private float _wallSink = 0.42f;
+
+        [Tooltip("Seconds the strips take to sweep from cyan to warm gold when 07 is full, before the walls lower.")]
+        [Range(0.1f, 2f)] [SerializeField] private float _fullSweepSeconds = 0.7f;
+
+        [Tooltip("Glow of a wall's strip where its cells are charged.")]
+        [Range(0f, 4f)] [SerializeField] private float _stripLit = 1.6f;
+
+        [Tooltip("Glow of a raised wall's strip where its cells are not charged yet.")]
+        [Range(0f, 1f)] [SerializeField] private float _stripUnlit = 0.12f;
+
+        [Tooltip("Seconds (time constant) for a strip's glow to follow its cells.")]
+        [Range(0f, 1f)] [SerializeField] private float _stripEase = 0.15f;
+
+        [Tooltip("The strips' charging tint (a linear multiplier of the lamp glass's emission).")]
+        [SerializeField] private Color _stripCharging = new Color(0.45f, 1f, 1.15f, 1f);
+
+        [Tooltip("The strips' full tint, warm gold (a linear multiplier of the lamp glass's emission).")]
+        [SerializeField] private Color _stripFull = new Color(1.35f, 0.92f, 0.4f, 1f);
+
+        [Tooltip("Seconds for the rim lamps' chase to run from the outer ring to the inner one as 07 rolls on.")]
+        [Range(0.2f, 2f)] [SerializeField] private float _rimChaseSeconds = 0.6f;
+
+        [Tooltip("Glow of a rim lamp at the head of the chase.")]
+        [Range(0f, 4f)] [SerializeField] private float _rimGlow = 1.4f;
+
         public Vector3 LanderOffset => _landerOffset;
         public float DepositDuration => _depositDuration;
         public float DepositLift => _depositLift;
@@ -150,6 +193,20 @@ namespace MoonProject.Gameplay
         public float DockBreathPeriod => _dockBreathPeriod;
         public float DockBreathDepth => _dockBreathDepth;
         public float DockGlowEase => _dockGlowEase;
+        public float WallStagger => _wallStagger;
+        public float WallRiseSeconds => _wallRiseSeconds;
+        public float WallOvershoot => _wallOvershoot;
+        public float WallLowerSeconds => _wallLowerSeconds;
+        public float WallDropSeconds => _wallDropSeconds;
+        public float WallSink => _wallSink;
+        public float FullSweepSeconds => _fullSweepSeconds;
+        public float StripLit => _stripLit;
+        public float StripUnlit => _stripUnlit;
+        public float StripEase => _stripEase;
+        public Color StripCharging => _stripCharging;
+        public Color StripFull => _stripFull;
+        public float RimChaseSeconds => _rimChaseSeconds;
+        public float RimGlow => _rimGlow;
 
         /// <summary>0 while 07 is home .. 1 once it is <see cref="WarmFar"/> or more from the lander.</summary>
         public float FarnessAt(float distance)

@@ -50,6 +50,15 @@ namespace MoonProject.Gameplay
         [Tooltip("The lander's DockGlow renderer (the charging dock's contacts and strip).")]
         [SerializeField] private Renderer _dockGlow;
 
+        [Tooltip("The dock lock's walls DockWall_0..3 (front, right, back, left), children of DockGlow.")]
+        [SerializeField] private Transform[] _dockWalls = Array.Empty<Transform>();
+
+        [Tooltip("Each dock wall's Strip renderer, in the same order.")]
+        [SerializeField] private Renderer[] _dockStrips = Array.Empty<Renderer>();
+
+        [Tooltip("The dock's rim lamp rings DockRim_0..2 (outer to inner).")]
+        [SerializeField] private Renderer[] _dockRims = Array.Empty<Renderer>();
+
         private EventBus _events;
         private IRoverState _rover;
         private ITerrainQuery _terrain;
@@ -134,6 +143,14 @@ namespace MoonProject.Gameplay
             _dockGlow = dockGlow;
         }
 
+        /// <summary>The dock lock's walls, their strips and the rim lamp rings (feel-pass §7.1).</summary>
+        internal void WireDockLock(Transform[] walls, Renderer[] strips, Renderer[] rims)
+        {
+            _dockWalls = walls;
+            _dockStrips = strips;
+            _dockRims = rims;
+        }
+
         /// <param name="lights">
         /// How lit home's warm points are as power returns (World, docs/features/M3-16): the windows, porch lamps and
         /// halo glow at their share of it.
@@ -147,6 +164,10 @@ namespace MoonProject.Gameplay
                 : _windows == null ? "the lander windows are not assigned."
                 : _slots.Length == 0 ? "the keepsake shelf has no cubbies."
                 : _dockAnchor == null || _dockGlow == null ? "the lander's DockAnchor or DockGlow is not assigned."
+                : _dockWalls.Length != DockLock.Walls || _dockStrips.Length != DockLock.Walls ||
+                  _dockRims.Length != DockLock.RimRings || Array.IndexOf(_dockWalls, null) >= 0 ||
+                  Array.IndexOf(_dockStrips, null) >= 0 || Array.IndexOf(_dockRims, null) >= 0
+                    ? "the dock lock's DockWall_0..3 with their Strips and DockRim_0..2 are not all assigned."
                 : null;
             if (problem != null)
             {
@@ -168,7 +189,7 @@ namespace MoonProject.Gameplay
 
             _windowGlow = new EmissionGlow(_windows);
             _halo = new HomeHalo(transform, services.Meshes.Quad, services.Visuals.HomeHalo, _tuning, _root);
-            _dock = new ChargingDock(_dockAnchor, _dockGlow, _tuning, _events);
+            _dock = new ChargingDock(_dockAnchor, _dockGlow, _dockWalls, _dockStrips, _dockRims, _tuning, _events);
             _lamps = new Light[_lampSockets.Length];
             for (int i = 0; i < _lamps.Length; i++)
             {

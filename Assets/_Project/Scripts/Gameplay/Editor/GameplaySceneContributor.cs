@@ -182,6 +182,7 @@ namespace MoonProject.Gameplay.Editor
             home.Wire(baseTuning, baseRoot.transform, Renderer(Child(lander, "Windows")),
                 Children(lander, "LampSocket_", LampSockets), keepsakes, Cubbies(keepsakes, relicCatalog),
                 Child(lander, "DockAnchor"), Renderer(Child(lander, "DockGlow")));
+            WireDockLock(home, Child(lander, "DockGlow"));
             tower.Wire(towerTuning, radioTower, towerAnchor, stages, stageLights, beacons, hoppers, hatches);
             workshop.Wire(workshopTuning, benchKit, bay, Child(bay, "Turntable"), Child(bay, "HopperMouth"), bayLamps,
                 Renderer(Child(bay, "BaySign")), weldSockets);
@@ -436,6 +437,26 @@ namespace MoonProject.Gameplay.Editor
 
             throw new InvalidOperationException($"Gameplay scene build: {parent.name} has no '{name}' node " +
                                                 "(M2 content contract, docs/ARCHITECTURE.md).");
+        }
+
+        /// <summary>The dock lock's walls (with their strips) and rim rings under DockGlow (feel-pass §7.1).</summary>
+        private static void WireDockLock(HomeBase home, Transform dockGlow)
+        {
+            Transform[] walls = Children(dockGlow, BaseModelBuilder.DockWallPrefix, DockLock.Walls);
+            var strips = new Renderer[walls.Length];
+            for (int i = 0; i < walls.Length; i++)
+            {
+                strips[i] = Renderer(Child(walls[i], BaseModelBuilder.DockWallStripName));
+            }
+
+            Transform[] rimNodes = Children(dockGlow, BaseModelBuilder.DockRimPrefix, DockLock.RimRings);
+            var rims = new Renderer[rimNodes.Length];
+            for (int i = 0; i < rims.Length; i++)
+            {
+                rims[i] = Renderer(rimNodes[i]);
+            }
+
+            home.WireDockLock(walls, strips, rims);
         }
 
         private static Transform[] Children(Transform parent, string prefix, int count)

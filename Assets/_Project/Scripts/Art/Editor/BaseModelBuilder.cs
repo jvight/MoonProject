@@ -435,6 +435,43 @@ namespace MoonProject.Art.Editor
             AssetDatabase.SaveAssets();
         }
 
+        /// <summary>The lock's walls under DockGlow: DockWall_0..3 (front, right, back, left), each with a Strip.</summary>
+        public const string DockWallPrefix = "DockWall_";
+
+        /// <summary>A dock wall's lamp strip along its top (a dark glow renderer the dock lights per cell).</summary>
+        public const string DockWallStripName = "Strip";
+
+        /// <summary>The rim lamp rings under DockGlow, DockRim_0 (outer) .. DockRim_2 (inner).</summary>
+        public const string DockRimPrefix = "DockRim_";
+
+        /// <summary>
+        /// The dock's lock (docs/design/feel-pass.md §7.1): four low walls standing raised in their floor slots round
+        /// the pad (Gameplay sinks them until 07 docks), each with a dark lamp strip along its top, and three rings
+        /// of rim lamps that chase toward the centre as 07 rolls on. Children of DockGlow, so the lander's own node
+        /// order stays; no colliders, so they never touch 07's wheels.
+        /// </summary>
+        private static void AddDockLock(ModelNode dockGlow)
+        {
+            for (int i = 0; i < ChargingDockMeshes.WallCount; i++)
+            {
+                string index = i.ToString(CultureInfo.InvariantCulture);
+                ModelNode wall = dockGlow.Add(new ModelNode(DockWallPrefix + index,
+                    ChargingDockMeshes.WallPosition(i), ChargingDockMeshes.WallRotation(i),
+                    new ModelMesh(LanderName + "_" + DockWallPrefix + index, ChargingDockMeshes.Wall(i))));
+                wall.Add(new ModelNode(DockWallStripName, Vector3.zero, Quaternion.identity,
+                    new ModelMesh(LanderName + "_DockWallStrip_" + index, ChargingDockMeshes.WallStrip(i)),
+                    ModelMaterial.PaletteGlowOff));
+            }
+
+            for (int ring = 0; ring < ChargingDockMeshes.RimRings; ring++)
+            {
+                string index = ring.ToString(CultureInfo.InvariantCulture);
+                dockGlow.Add(new ModelNode(DockRimPrefix + index, Vector3.zero, Quaternion.identity,
+                    new ModelMesh(LanderName + "_" + DockRimPrefix + index, ChargingDockMeshes.RimRing(ring)),
+                    ModelMaterial.PaletteGlowOff));
+            }
+        }
+
         public static ModelNode CreateLander()
         {
             LowPolyMeshBuilder hull = LanderMeshes.Hull();
@@ -463,8 +500,9 @@ namespace MoonProject.Art.Editor
             lander.Add(new ModelNode("WorkshopAnchor", WorkshopAnchor));
             lander.Add(new ModelNode("DockAnchor", ChargingDockMeshes.Anchor,
                 Place.Rotation(ChargingDockMeshes.AnchorEuler)));
-            lander.Add(new ModelNode("DockGlow", Vector3.zero, Quaternion.identity,
+            ModelNode dockGlow = lander.Add(new ModelNode("DockGlow", Vector3.zero, Quaternion.identity,
                 new ModelMesh(LanderName + "_DockGlow", ChargingDockMeshes.Glow()), ModelMaterial.PaletteGlowOff));
+            AddDockLock(dockGlow);
             lander.Add(new ModelNode(HomeSignName, LanderMeshes.HomeSignFoot,
                 Place.Rotation(LanderMeshes.HomeSignLean),
                 new ModelMesh(LanderName + "_" + HomeSignName, LanderMeshes.HomeSign())));

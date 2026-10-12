@@ -20,6 +20,7 @@ namespace MoonProject.Gameplay
         private readonly Renderer _renderer;
         private readonly MaterialPropertyBlock _block = new MaterialPropertyBlock();
         private float _applied = -1f;
+        private Color _tint = Color.white;
 
         public EmissionGlow(Renderer renderer)
         {
@@ -30,15 +31,27 @@ namespace MoonProject.Gameplay
 
         public void Apply(float intensity)
         {
+            Apply(Color.white, intensity);
+        }
+
+        /// <summary>
+        /// The same with a per-channel <paramref name="tint"/>: a linear multiplier of each emission channel (a lamp
+        /// strip turning from cyan to gold), never read as a gamma colour.
+        /// </summary>
+        public void Apply(Color tint, float intensity)
+        {
             intensity = Mathf.Max(0f, intensity);
-            if (Mathf.Abs(intensity - _applied) < Epsilon)
+            if (Mathf.Abs(intensity - _applied) < Epsilon && Mathf.Abs(tint.r - _tint.r) < Epsilon &&
+                Mathf.Abs(tint.g - _tint.g) < Epsilon && Mathf.Abs(tint.b - _tint.b) < Epsilon)
             {
                 return;
             }
 
             _applied = intensity;
+            _tint = tint;
             _renderer.GetPropertyBlock(_block);
-            _block.SetVector(EmissionColorId, new Vector4(intensity, intensity, intensity, 1f));
+            _block.SetVector(EmissionColorId,
+                new Vector4(tint.r * intensity, tint.g * intensity, tint.b * intensity, 1f));
             _renderer.SetPropertyBlock(_block);
         }
     }

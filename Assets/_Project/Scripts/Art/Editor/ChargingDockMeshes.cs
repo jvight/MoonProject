@@ -40,6 +40,22 @@ namespace MoonProject.Art.Editor
 
         private const float LaneX = 0.64f;
 
+        /// <summary>The lock's four low walls (feel-pass §7.1): front, right, back, left of the pad.</summary>
+        public const int WallCount = 4;
+
+        /// <summary>Each wall's height above the pad when raised; it sinks into its floor slot when lowered.</summary>
+        public const float WallHeight = 0.35f;
+
+        /// <summary>The lamp strip along each wall's top.</summary>
+        public const float StripHeight = 0.025f;
+
+        /// <summary>The rim lamps' rings, outer to inner: they chase toward the centre as 07 rolls on.</summary>
+        public const int RimRings = 3;
+
+        private const float WallThickness = 0.05f;
+        private const float SlotDepth = 0.003f;
+        private static readonly float[] RimReach = { 0.92f, 0.62f, 0.32f };
+
         // The pylon beside the pad, ahead of 07's left front wheel (the lander's side) and clear of its lane.
         private static readonly Vector3 Pylon = new Vector3(-PadHalfWidth - 0.42f, 0f, 0.7f);
         private static readonly Vector3 PylonSize = new Vector3(0.3f, 0.78f, 0.24f);
@@ -79,6 +95,78 @@ namespace MoonProject.Art.Editor
             b.Box(At(Pylon + new Vector3(PylonSize.x * 0.5f + 0.004f, 0.42f, 0f)), new Vector3(0.008f, 0.16f, 0.12f),
                 PaletteSwatch.Honey);
             b.Box(At(Pylon + Vector3.up * 0.03f), new Vector3(0.42f, 0.06f, 0.36f), PaletteSwatch.Charcoal, 0.01f);
+            for (int wall = 0; wall < WallCount; wall++)
+            {
+                Vector3 centre = WallCentre(wall);
+                Vector3 slot = wall % 2 == 0
+                    ? new Vector3(WallLength(wall), SlotDepth, WallThickness + 0.02f)
+                    : new Vector3(WallThickness + 0.02f, SlotDepth, WallLength(wall));
+                b.Box(At(centre.x, PadTop + SlotDepth * 0.5f, centre.z), slot, PaletteSwatch.Charcoal);
+            }
+        }
+
+        /// <summary>Where wall <paramref name="wall"/> stands (base space, its foot on the pad's top).</summary>
+        public static Vector3 WallPosition(int wall)
+        {
+            return ToBase.MultiplyPoint3x4(WallCentre(wall));
+        }
+
+        /// <summary>Wall <paramref name="wall"/>'s rotation in base space: its length along its local x.</summary>
+        public static Quaternion WallRotation(int wall)
+        {
+            return Rotation(AnchorEuler) * Quaternion.Euler(0f, wall % 2 == 0 ? 0f : 90f, 0f);
+        }
+
+        /// <summary>A wall, in its own space: a low plate rising from its slot, its length along x.</summary>
+        public static LowPolyMeshBuilder Wall(int wall)
+        {
+            var b = new LowPolyMeshBuilder(24);
+            b.Box(At(0f, WallHeight * 0.5f, 0f), new Vector3(WallLength(wall), WallHeight, WallThickness),
+                PaletteSwatch.Metal, 0.006f);
+            return b;
+        }
+
+        /// <summary>The lamp strip along a wall's top, in the wall's space (a glow layer).</summary>
+        public static LowPolyMeshBuilder WallStrip(int wall)
+        {
+            var b = new LowPolyMeshBuilder(12);
+            b.Box(At(0f, WallHeight + StripHeight * 0.5f, 0f),
+                new Vector3(WallLength(wall) * 0.92f, StripHeight, WallThickness * 0.7f), PaletteSwatch.LampGlass);
+            return b;
+        }
+
+        /// <summary>Rim lamp ring <paramref name="ring"/> (0 outermost): four small lenses on the pad, base space.</summary>
+        public static LowPolyMeshBuilder RimRing(int ring)
+        {
+            var b = new LowPolyMeshBuilder(48);
+            float reach = RimReach[ring];
+            for (int i = 0; i < 4; i++)
+            {
+                float x = (i % 2 == 0 ? -1f : 1f) * (PadHalfWidth - 0.08f) * reach;
+                float z = (i < 2 ? PadFront - 0.08f : PadBack + 0.08f) * reach;
+                b.Prism(At(x, PadTop + 0.004f, z), 0.03f, 0.006f, 6, PaletteSwatch.LampGlass);
+            }
+
+            b.Transform(new MeshRange(0, b.TriangleCount), ToBase);
+            return b;
+        }
+
+        private static Vector3 WallCentre(int wall)
+        {
+            float middle = (PadBack + PadFront) * 0.5f;
+            float side = PadHalfWidth + WallThickness * 0.5f;
+            switch (wall)
+            {
+                case 0: return new Vector3(0f, PadTop, PadFront + WallThickness * 0.5f);
+                case 1: return new Vector3(side, PadTop, middle);
+                case 2: return new Vector3(0f, PadTop, PadBack - WallThickness * 0.5f);
+                default: return new Vector3(-side, PadTop, middle);
+            }
+        }
+
+        private static float WallLength(int wall)
+        {
+            return wall % 2 == 0 ? PadHalfWidth * 2f + WallThickness * 2f : PadFront - PadBack;
         }
 
         /// <summary>What glows while 07 charges: a band round the pylon's head and a lens at each pad corner.</summary>
