@@ -264,6 +264,9 @@ namespace MoonProject.Rover
                 case FeelKind.Install when beat.Phase == FeelPhase.Impact:
                     _rumble.Play(_motion.SeatRumble);
                     return true;
+                case FeelKind.Build when beat.Phase == FeelPhase.Impact:
+                    _rumble.Play(_motion.TowerOnline);
+                    return true;
                 case FeelKind.LowPower when beat.Phase == FeelPhase.Impact:
                     _rumble.Play(_motion.PowerDown);
                     return true;

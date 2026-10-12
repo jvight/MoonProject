@@ -79,6 +79,9 @@ namespace MoonProject.Rover
         [Tooltip("The battery empties: 0.06 decaying over 600 ms.")]
         [SerializeField] private RumbleProfile _powerDown = new RumbleProfile(0.06f, 0f, 0.03f, 0f, 0.6f, false);
 
+        [Tooltip("The radio tower comes online: 0.3 for 120 ms (feel-pass §8.2).")]
+        [SerializeField] private RumbleProfile _towerOnline = new RumbleProfile(0.3f, 0.3f, 0.25f, 0.25f, 0.12f, false);
+
         [Tooltip("The drums' boost: a soft 0.06 while it lasts.")]
         [SerializeField] private RumbleProfile _boost = new RumbleProfile(0.06f, 0.06f, 0.03f, 0.03f, 0f, true);
 
@@ -125,5 +128,7 @@ namespace MoonProject.Rover
         public RumbleProfile PowerDown => _powerDown;
 
         public RumbleProfile Boost => _boost;
+
+        public RumbleProfile TowerOnline => _towerOnline;
     }
 }

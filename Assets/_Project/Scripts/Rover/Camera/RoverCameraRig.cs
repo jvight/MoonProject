@@ -358,6 +358,11 @@ namespace MoonProject.Rover
                 _cutFraming.End(_tuning.CutFrameHandBackSeconds);
             }
 
+            if (driving && IsTowerMoment)
+            {
+                _moment.Cancel(_tuning.MomentCancelEaseOut);
+            }
+
             if (recenter && _wide.IsOpen)
             {
                 HandBackWideShot();
@@ -1193,6 +1198,12 @@ namespace MoonProject.Rover
         /// </summary>
         private void OnFeelBeat(FeelBeat beat)
         {
+            if (beat.Kind == FeelKind.Build)
+            {
+                OnTowerBuilt(beat);
+                return;
+            }
+
             if (beat.Kind != FeelKind.Cut && beat.Kind != FeelKind.Dig)
             {
                 return;
@@ -1214,6 +1225,28 @@ namespace MoonProject.Rover
                     }
 
                     break;
+            }
+        }
+
+        /// <summary>The camera moment running now is the radio tower coming online.</summary>
+        private bool IsTowerMoment => _moment.IsActive && (ReferenceEquals(_moment.Settings, _tuning.TowerMoment)
+            || ReferenceEquals(_moment.Settings, _tuning.GentleTowerMoment));
+
+        /// <summary>
+        /// The radio tower comes online (docs/design/feel-pass.md §8.2): the camera eases round to frame the tower
+        /// with 07 in front (a gentler turn with the Gentle camera), held until the beat's last Follow, then eases
+        /// back. Gameplay publishes it on a level-up only, never on a load.
+        /// </summary>
+        private void OnTowerBuilt(FeelBeat beat)
+        {
+            if (beat.Phase == FeelPhase.Anticipate)
+            {
+                CameraMomentSettings moment = _look.GentleCamera ? _tuning.GentleTowerMoment : _tuning.TowerMoment;
+                _moment.Start(moment, beat.Position, true);
+            }
+            else if (beat.Phase == FeelPhase.Follow && beat.Strength >= 1f && IsTowerMoment)
+            {
+                _moment.Release();
             }
         }
 

@@ -554,6 +554,13 @@ namespace MoonProject.Rover
                 return;
             }
 
+            if (beat.Kind == FeelKind.Build && beat.Phase == FeelPhase.Impact)
+            {
+                PerkUp(_tuning.KitProudPerk);
+                Glance(beat.Position);
+                return;
+            }
+
             if (beat.Kind == FeelKind.Collect && beat.Phase == FeelPhase.Reward)
             {
                 EndCutFocus();

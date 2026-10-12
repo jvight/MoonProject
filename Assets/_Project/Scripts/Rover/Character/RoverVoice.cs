@@ -83,6 +83,12 @@ namespace MoonProject.Rover
                 return;
             }
 
+            if (beat.Kind == FeelKind.Build && beat.Phase == FeelPhase.Impact)
+            {
+                Say(ChirpMood.Happy, 1f);
+                return;
+            }
+
             if (beat.Kind != FeelKind.Dock)
             {
                 return;

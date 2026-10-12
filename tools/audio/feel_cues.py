@@ -334,3 +334,36 @@ def window_click(_variant, gen):
     n = samples(0.3)
     click = filters.bandpass(noise.white(n, gen), 1100.0, 1.2) * envelope.ar(n, 0.001, 0.03)
     return filters.lowpass(0.12 * click + 0.2 * _tick(gen, note_freq("D4"), 0.3), 2500.0)
+
+
+# ------------------------------------------------------------------------------------ the tower comes online (8.2)
+
+TOWER_RING_NOTES = ("D5", "E5", "F#5", "A5")
+
+
+def tower_hum_rise(_variant, _gen):
+    """The tower taking the parts: a low hum on D2/A2 rising in level and a fifth in pitch over ~1.2 s, felt more
+    than heard, ending where the first lamp ring lights."""
+    n = samples(1.4)
+    rise = osc.glide(n, note_freq("D2"), note_freq("A2"), time_constant=0.6)
+    hum = osc.additive(n, rise, [(1, 1.0), (2, 0.4), (3, 0.12)])
+    shape = envelope.segments(n, [(0.0, 0.0), (1.15, 1.0), (1.4, 0.0)], shape="smooth")
+    return filters.lowpass(0.3 * hum * shape, 600.0)
+
+
+def tower_ring(variant, _gen):
+    """A lamp ring lighting on the tower, bottom to top: one soft bell per ring on D E F# A."""
+    bell = instruments.soft_bell(note_freq(TOWER_RING_NOTES[variant]), 1.4, decay=1.0, attack=0.01)
+    return filters.lowpass(0.6 * bell, 5000.0)
+
+
+def tower_thoom(_variant, _gen):
+    """The beacon flares: a deep soft 'thoom' felt through the ground and a D major chord (D F# A D') blooming over
+    it."""
+    n = samples(3.5)
+    thoom = osc.sine(n, osc.glide(n, 70.0, 46.0, time_constant=0.15)) * envelope.ar(n, 0.01, 1.2)
+    mix = 0.8 * filters.lowpass(thoom, 160.0)
+    for index, note in enumerate(("D4", "F#4", "A4", "D5")):
+        place(mix, 0.22 * instruments.soft_bell(note_freq(note), 3.0, decay=2.2, attack=0.06), samples(0.03 * index))
+    place(mix, 0.1 * instruments.soft_pad(note_freq("D3"), 3.0, 0.4, 1.8, hold=0.4), 0)
+    return filters.lowpass(mix, 4500.0)

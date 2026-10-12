@@ -300,6 +300,15 @@ namespace MoonProject.Rover
         [SerializeField] private CameraMomentSettings _upgradeMoment =
             new CameraMomentSettings(1.3f, 1.8f, 1.5f, 0.5f, 6f, 0.6f, 0f, 45f, 14f, 0.5f, 40f);
 
+        [Tooltip("The radio tower comes online (feel-pass §8.2): ease (~1.2 s) to frame the tower with 07 in the "
+            + "foreground, held until it settles; any drive input skips it.")]
+        [SerializeField] private CameraMomentSettings _towerMoment =
+            new CameraMomentSettings(1.2f, 0.6f, 1.4f, 0.45f, 8f, 0.8f, 10f, 70f, 10f, 0.45f, 120f);
+
+        [Tooltip("The same with the Gentle camera: a smaller, slower turn toward the tower.")]
+        [SerializeField] private CameraMomentSettings _gentleTowerMoment =
+            new CameraMomentSettings(2f, 0.6f, 2f, 0.3f, 5f, 0.4f, 0f, 35f, 6f, 0.3f, 120f);
+
         [Tooltip("A relay mast 07 restored lights up: the camera eases low, back and a little to the side, looking up "
             + "past 07 at the mast and its warming lamp against the sky, then returns (~8 s).")]
         [SerializeField] private CameraMomentSettings _relayMoment =
@@ -600,6 +609,10 @@ namespace MoonProject.Rover
         public CameraMomentSettings RelicMoment => _relicMoment;
 
         public CameraMomentSettings UpgradeMoment => _upgradeMoment;
+
+        public CameraMomentSettings TowerMoment => _towerMoment;
+
+        public CameraMomentSettings GentleTowerMoment => _gentleTowerMoment;
 
         public CameraMomentSettings LeapMoment => _leapMoment;
 
