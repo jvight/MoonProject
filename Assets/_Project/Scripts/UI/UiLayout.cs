@@ -18,8 +18,15 @@ namespace MoonProject.UI
             LabHud = Require<VisualElement>("lab-hud");
 
             NextLine = Require<VisualElement>("next-line");
-            CellRow = Require<VisualElement>("cell-row");
-            CellRowPlate = Require<VisualElement>("cell-row-plate");
+            BatteryDial = Require<VisualElement>("battery-dial");
+            HomeMeter = Require<VisualElement>("home-meter");
+            HomeMeterArc = Require<VisualElement>("home-meter-arc");
+            HomeMeterValue = Require<Label>("home-meter-value");
+            HomeMeterKey = Require<Label>("home-meter-key");
+            AbilitySlots = Require<VisualElement>("ability-slots");
+            BatteryDialFace = Require<VisualElement>("battery-dial-face");
+            BatteryDialRing = Require<VisualElement>("battery-dial-ring");
+            BatteryDialValue = Require<Label>("battery-dial-value");
             NextLineShadow = Require<VisualElement>("next-line-shadow");
             NextLineText = Require<Label>("next-line-text");
             PlaceCard = Require<VisualElement>("place-card");
@@ -93,6 +100,7 @@ namespace MoonProject.UI
             Ticker = Require<VisualElement>("ticker");
             TickerLamp = Require<VisualElement>("ticker-lamp");
             TickerText = Require<Label>("ticker-text");
+            TickerIcon = Require<VisualElement>("ticker-icon");
             TickerLine = Require<VisualElement>("ticker-line");
 
             LookHint = Require<VisualElement>("look-hint");
@@ -151,6 +159,8 @@ namespace MoonProject.UI
             TitleScreen = Require<VisualElement>("title-screen");
             TitleWordmark = Require<VisualElement>("title-wordmark");
             Curtain = Require<VisualElement>("curtain");
+            SaveTick = Require<VisualElement>("save-tick");
+            SaveTickCheck = Require<VisualElement>("save-tick-check");
             NewGameKeepButton = Require<Button>("button-new-game-keep");
             NewGameConfirmButton = Require<Button>("button-new-game-confirm");
             PauseSettings = Require<VisualElement>("pause-settings");
@@ -163,6 +173,8 @@ namespace MoonProject.UI
             LookValue = Require<Label>("look-value");
             InvertToggle = Require<Toggle>("toggle-invert");
             GentleCameraToggle = Require<Toggle>("toggle-gentle-camera");
+            RumbleToggle = Require<Toggle>("toggle-rumble");
+            RumbleSlider = Require<SliderInt>("slider-rumble");
             GuidanceToggle = Require<Toggle>("toggle-guidance");
             LanguageButton = Require<Button>("button-language");
             TextSizeButton = Require<Button>("button-text-size");
@@ -184,11 +196,26 @@ namespace MoonProject.UI
 
         public VisualElement NextLine { get; }
 
-        /// <summary>07's cells, a row of pills at the top left (docs/design/first-hour-v2 6.4).</summary>
-        public VisualElement CellRow { get; }
+        /// <summary>The battery dial at the bottom left: its glass face, the cells' ring and the percentage.</summary>
+        public VisualElement BatteryDial { get; }
 
-        /// <summary>The row's glass plate: the pills are built into it, and it dims while the beam works.</summary>
-        public VisualElement CellRowPlate { get; }
+        public VisualElement BatteryDialFace { get; }
+
+        /// <summary>The distance home at the top centre: its arc, the metres and the bearing line.</summary>
+        public VisualElement HomeMeter { get; }
+
+        public VisualElement HomeMeterArc { get; }
+
+        public Label HomeMeterValue { get; }
+
+        public Label HomeMeterKey { get; }
+
+        /// <summary>07's abilities as round glass bubbles at the bottom centre (filled from code).</summary>
+        public VisualElement AbilitySlots { get; }
+
+        public VisualElement BatteryDialRing { get; }
+
+        public Label BatteryDialValue { get; }
 
         public VisualElement NextLineShadow { get; }
 
@@ -320,6 +347,9 @@ namespace MoonProject.UI
 
         public Label TickerText { get; }
 
+        /// <summary>The radio icon in the ticker toast's round glass bubble.</summary>
+        public VisualElement TickerIcon { get; }
+
         public VisualElement TickerLine { get; }
 
         public VisualElement LookHint { get; }
@@ -429,6 +459,11 @@ namespace MoonProject.UI
         /// <summary>A soft dark over everything, drawn before the scene reloads (New Game, Quit to title, Quit).</summary>
         public VisualElement Curtain { get; }
 
+        /// <summary>The save tick: a tiny "07" and a check mark in the corner.</summary>
+        public VisualElement SaveTick { get; }
+
+        public VisualElement SaveTickCheck { get; }
+
         public Button NewGameKeepButton { get; }
 
         public Button NewGameConfirmButton { get; }
@@ -452,6 +487,10 @@ namespace MoonProject.UI
         public Toggle InvertToggle { get; }
 
         public Toggle GentleCameraToggle { get; }
+
+        public Toggle RumbleToggle { get; }
+
+        public SliderInt RumbleSlider { get; }
 
         public Toggle GuidanceToggle { get; }
 

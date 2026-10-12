@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _pause:
     _menu:
-      _fadeIn: 0.35
+      _fadeIn: 0.2
       _fadeOut: 0.3
       _slide: 12
       _scaleFrom: 0.96
@@ -35,8 +35,8 @@ MonoBehaviour:
       _springFrequency: 2
       _springDamping: 1
     _veil:
-      _fadeIn: 0.35
-      _fadeOut: 0.35
+      _fadeIn: 0.25
+      _fadeOut: 0.2
       _slide: 0
       _scaleFrom: 1
       _springFrequency: 1
@@ -156,18 +156,19 @@ MonoBehaviour:
       _scaleFrom: 0.92
       _springFrequency: 1.8
       _springDamping: 0.6
-    _secondsPerUnit: 0.12
-    _minCountSeconds: 0.4
+    _stepSeconds: 0.08
     _maxCountSeconds: 1.4
     _lingerSeconds: 3
+    _tickPulseSeconds: 0.14
+    _tickPulseScale: 0.08
     _pulseSeconds: 1.2
     _pulseScale: 0.16
     _glowOpacity: 0.35
   _memoryCard:
     _reveal:
-      _fadeIn: 1
+      _fadeIn: 0.18
       _fadeOut: 0.9
-      _slide: 16
+      _slide: 8
       _scaleFrom: 0.97
       _springFrequency: 0.9
       _springDamping: 0.75
@@ -293,6 +294,8 @@ MonoBehaviour:
       _springDamping: 0.7
     _siteNameHoldSeconds: 3
     _siteNameLiftMetres: 6
+    _chargeEmptySeconds: 0.2
+    _chargeHandoffSeconds: 0.35
   _stargaze:
     _hud:
       _fadeIn: 0.8
@@ -377,3 +380,37 @@ MonoBehaviour:
       _scaleFrom: 0.97
       _springFrequency: 1.2
       _springDamping: 0.7
+  _saveTick:
+    _reveal:
+      _fadeIn: 0.25
+      _fadeOut: 0.7
+      _slide: 6
+      _scaleFrom: 0.96
+      _springFrequency: 1.2
+      _springDamping: 0.8
+    _holdSeconds: 1
+    _burstSeconds: 2
+  _homeMeter:
+    _reveal:
+      _fadeIn: 0.6
+      _fadeOut: 0.8
+      _slide: -6
+      _scaleFrom: 0.97
+      _springFrequency: 1.2
+      _springDamping: 0.8
+    _nearMetres: 40
+    _fullArcMetres: 800
+    _stepMetres: 5
+    _maxShownMetres: 9995
+    _easeRate: 4
+  _abilitySlots:
+    _reveal:
+      _fadeIn: 0.5
+      _fadeOut: 0.9
+      _slide: 8
+      _scaleFrom: 0.96
+      _springFrequency: 1.2
+      _springDamping: 0.8
+    _earnedSeconds: 8
+    _stillSpeed: 0.3
+    _stillSeconds: 1.5

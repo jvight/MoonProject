@@ -24,7 +24,19 @@ namespace MoonProject.UI
         [Range(0f, 30f)]
         [SerializeField] private float _siteNameLiftMetres = 6f;
 
+        [Tooltip("Seconds the ring's charge segment takes to empty when the player lets go before ignition.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _chargeEmptySeconds = 0.2f;
+
+        [Tooltip("Seconds the full charge segment takes to ease away at ignition, as the progress fill takes over.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _chargeHandoffSeconds = 0.35f;
+
         public RevealSettings Ring => _ring;
+
+        public float ChargeEmptySeconds => _chargeEmptySeconds;
+
+        public float ChargeHandoffSeconds => _chargeHandoffSeconds;
 
         public RevealSettings SiteName => _siteName;
 

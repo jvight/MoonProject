@@ -41,7 +41,7 @@ namespace MoonProject.UI.Tests
                 "place.ladder.name", "Crew's Ladder", "Thang",
                 "place.ladder.job", "Not made for wheels.", "Không dành cho bánh xe.");
             var settings = new GuidanceSettings();
-            var card = new PlaceCard(layout, settings, localization);
+            var card = new PlaceCard(layout, settings, localization, new EventBus());
             Assert.AreSame(layout.PlaceCard, layout.PlaceCardShadow.parent, "the shadow fades with the card");
 
             card.Approached("place.dock");
@@ -71,7 +71,7 @@ namespace MoonProject.UI.Tests
                 UiKeys.UpgradeName("rover.cargo_cradle"), "Cargo Cradle", "Giá chở hàng",
                 UiKeys.BlueprintFound, "Blueprint found", "Tìm thấy bản vẽ");
             var settings = new GuidanceSettings();
-            var card = new PlaceCard(layout, settings, localization);
+            var card = new PlaceCard(layout, settings, localization, new EventBus());
             card.BlueprintFound("rover.cargo_cradle");
             card.BlueprintFound("rover.cargo_cradle");
             card.Tick(Step, true);

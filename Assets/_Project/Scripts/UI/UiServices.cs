@@ -13,10 +13,11 @@ namespace MoonProject.UI
     internal sealed class UiServices
     {
         public UiServices(EventBus events, InputReader input, IViewCamera view, IRoverState rover, IAudioSettings audio,
-            ILookSettings look, ISaveService save, IMaterialStock materials, ITetherAim tether, IInteractionHints hints,
+            ILookSettings look, IFeelSettings feel, ISaveService save, IMaterialStock materials, ITetherAim tether, IInteractionHints hints,
             IUpgradeShop shop, IBlueprintBoard board, IFriendStatuses friends, IRadioProgram radio, IRadioHop hop,
             IRelayStatus relays, ISalvageStatus salvage, IGameFlow flow, ISettingsFile settings, IRoverBattery battery,
-            IBeamStatus beam, ITechTree tech, IRecoveryProgress recovery, IRecipeLook recipeLook)
+            IBeamStatus beam, ITechTree tech, IRecoveryProgress recovery, IRecipeLook recipeLook,
+            IWorldLayout world, IRoverAbilities abilities)
         {
             Events = events ?? throw new ArgumentNullException(nameof(events));
             Input = input ?? throw new ArgumentNullException(nameof(input));
@@ -24,6 +25,7 @@ namespace MoonProject.UI
             Rover = rover ?? throw new ArgumentNullException(nameof(rover));
             Audio = audio ?? throw new ArgumentNullException(nameof(audio));
             Look = look ?? throw new ArgumentNullException(nameof(look));
+            Feel = feel ?? throw new ArgumentNullException(nameof(feel));
             Save = save ?? throw new ArgumentNullException(nameof(save));
             Materials = materials ?? throw new ArgumentNullException(nameof(materials));
             Tether = tether ?? throw new ArgumentNullException(nameof(tether));
@@ -42,6 +44,8 @@ namespace MoonProject.UI
             Recovery = recovery ?? throw new ArgumentNullException(nameof(recovery));
             RecipeLook = recipeLook ?? throw new ArgumentNullException(nameof(recipeLook));
             Beam = beam ?? throw new ArgumentNullException(nameof(beam));
+            World = world ?? throw new ArgumentNullException(nameof(world));
+            Abilities = abilities ?? throw new ArgumentNullException(nameof(abilities));
         }
 
         public EventBus Events { get; }
@@ -55,6 +59,8 @@ namespace MoonProject.UI
         public IAudioSettings Audio { get; }
 
         public ILookSettings Look { get; }
+
+        public IFeelSettings Feel { get; }
 
         public ISaveService Save { get; }
 
@@ -77,6 +83,12 @@ namespace MoonProject.UI
         public IRelayStatus Relays { get; }
 
         public ISalvageStatus Salvage { get; }
+
+        /// <summary>Where home is (the home meter).</summary>
+        public IWorldLayout World { get; }
+
+        /// <summary>What 07 has earned (the ability slots).</summary>
+        public IRoverAbilities Abilities { get; }
 
         public IGameFlow Flow { get; }
 
@@ -108,13 +120,14 @@ namespace MoonProject.UI
             }
 
             return new UiServices(context.Events, context.Input, context.Get<IViewCamera>(), context.Get<IRoverState>(),
-                context.Get<IAudioSettings>(), context.Get<ILookSettings>(), context.Get<ISaveService>(),
+                context.Get<IAudioSettings>(), context.Get<ILookSettings>(), context.Get<IFeelSettings>(),
+                context.Get<ISaveService>(),
                 context.Get<IMaterialStock>(), context.Get<ITetherAim>(), context.Get<IInteractionHints>(),
                 context.Get<IUpgradeShop>(), context.Get<IBlueprintBoard>(), context.Get<IFriendStatuses>(), context.Get<IRadioProgram>(),
                 context.Get<IRadioHop>(), context.Get<IRelayStatus>(), context.Get<ISalvageStatus>(),
                 context.Get<IGameFlow>(), context.Get<ISettingsFile>(), context.Get<IRoverBattery>(),
                 context.Get<IBeamStatus>(), context.Get<ITechTree>(), context.Get<IRecoveryProgress>(),
-                context.Get<IRecipeLook>());
+                context.Get<IRecipeLook>(), context.Get<IWorldLayout>(), context.Get<IRoverAbilities>());
         }
     }
 }

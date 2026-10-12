@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 
 namespace MoonProject.UI
 {
@@ -19,6 +20,7 @@ namespace MoonProject.UI
         private readonly UiLayout _layout;
         private readonly GuidanceSettings _settings;
         private readonly ILocalization _localization;
+        private readonly EventBus _events;
         private readonly Reveal _reveal;
         private readonly Queue<string> _waiting = new Queue<string>();
         private readonly Queue<string> _waitingLines = new Queue<string>();
@@ -28,11 +30,12 @@ namespace MoonProject.UI
         private float _clock;
         private string _lineKey;
 
-        public PlaceCard(UiLayout layout, GuidanceSettings settings, ILocalization localization)
+        public PlaceCard(UiLayout layout, GuidanceSettings settings, ILocalization localization, EventBus events)
         {
             _layout = layout ?? throw new ArgumentNullException(nameof(layout));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
+            _events = events ?? throw new ArgumentNullException(nameof(events));
             _reveal = new Reveal(layout.PlaceCard, settings.Place);
             _reveal.Snap(false);
             new ShadowPainter(layout.PlaceCardShadow);
@@ -95,6 +98,7 @@ namespace MoonProject.UI
                 Write();
                 _rest = _settings.PlaceHoldSeconds;
                 _reveal.Show();
+                _events.Publish(new UiCue(UiCueKind.CardShown));
             }
 
             if (_reveal.IsShown)

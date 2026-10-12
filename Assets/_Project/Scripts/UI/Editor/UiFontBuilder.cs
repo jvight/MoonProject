@@ -9,8 +9,8 @@ using TextAsset = UnityEngine.TextAsset;
 namespace MoonProject.UI.Editor
 {
     /// <summary>
-    /// Builds the UI Toolkit font assets of Be Vietnam Pro (Regular, Medium, SemiBold) from the TTFs in
-    /// Assets/_Project/UI/Fonts: signed-distance-field atlases with dynamic population (so any Vietnamese diacritic
+    /// Builds the UI Toolkit font assets of every UI font (<see cref="UiAssetPaths.Fonts"/>: Nunito Sans for text,
+    /// Exo 2 for numbers and titles) from the TTFs in Assets/_Project/UI/Fonts: signed-distance-field atlases with dynamic population (so any Vietnamese diacritic
     /// renders), pre-filled with every character of the string tables (<see cref="FontCharacters"/>) so play never
     /// has to add glyphs. An existing font asset keeps its GUID and only gains missing characters.
     /// </summary>
@@ -27,15 +27,17 @@ namespace MoonProject.UI.Editor
         private static void Build()
         {
             string characters = FontCharacters.Collect(TableTexts());
-            BuildStyle(UiAssetPaths.RegularStyle, characters);
-            BuildStyle(UiAssetPaths.MediumStyle, characters);
-            BuildStyle(UiAssetPaths.SemiBoldStyle, characters);
+            foreach (string[] font in UiAssetPaths.Fonts)
+            {
+                BuildStyle(font[0], font[1], characters);
+            }
+
             AssetDatabase.SaveAssets();
         }
 
-        private static void BuildStyle(string style, string characters)
+        private static void BuildStyle(string family, string style, string characters)
         {
-            string sourcePath = UiAssetPaths.SourceFont(style);
+            string sourcePath = UiAssetPaths.SourceFont(family, style);
             var font = AssetDatabase.LoadAssetAtPath<Font>(sourcePath);
             if (font == null)
             {
@@ -43,7 +45,7 @@ namespace MoonProject.UI.Editor
                 return;
             }
 
-            string path = UiAssetPaths.FontAsset(style);
+            string path = UiAssetPaths.FontAsset(family, style);
             FontAsset asset = AssetDatabase.LoadAssetAtPath<FontAsset>(path);
             bool created = asset == null;
             if (created)

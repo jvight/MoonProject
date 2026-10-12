@@ -33,23 +33,38 @@ namespace MoonProject.UI.Editor
         public const string Palette = GeneratedFolder + "/Palette.uss";
         public const string GeneratedFontFolder = GeneratedFolder + "/Fonts";
 
-        /// <summary>Body text weight (file names BeVietnamPro-&lt;style&gt;.ttf).</summary>
-        public const string RegularStyle = "Regular";
+        /// <summary>The Moonlight Glass textures (UI/Glass builder), drawn at 2x.</summary>
+        public const string GlassFolder = GeneratedFolder + "/Glass";
+        public const string GlassPanel = GlassFolder + "/GlassPanel.png";
+        public const string GlassPill = GlassFolder + "/GlassPill.png";
+        public const string GlassBubble = GlassFolder + "/GlassBubble.png";
+        public const string GlassDial = GlassFolder + "/GlassDial.png";
 
-        /// <summary>Buttons, chips and prompt words.</summary>
-        public const string MediumStyle = "Medium";
+        /// <summary>Text: body, buttons, toasts (Moonlight Glass; file names NunitoSans-&lt;style&gt;.ttf).</summary>
+        public const string TextFamily = "NunitoSans";
 
-        /// <summary>Headings, names and the wordmark.</summary>
-        public const string SemiBoldStyle = "SemiBold";
+        /// <summary>Numbers and titles: dials, the meter, names, headings (file names Exo2-&lt;style&gt;.ttf).</summary>
+        public const string NumberFamily = "Exo2";
 
-        public static string SourceFont(string style)
+        /// <summary>Every font the UI builds and uses, as family and style.</summary>
+        public static readonly string[][] Fonts =
         {
-            return FontFolder + "/BeVietnamPro-" + style + ".ttf";
+            new[] { TextFamily, "Regular" },
+            new[] { TextFamily, "SemiBold" },
+            new[] { TextFamily, "Bold" },
+            new[] { NumberFamily, "Medium" },
+            new[] { NumberFamily, "SemiBold" },
+            new[] { NumberFamily, "Bold" },
+        };
+
+        public static string SourceFont(string family, string style)
+        {
+            return FontFolder + "/" + family + "-" + style + ".ttf";
         }
 
-        public static string FontAsset(string style)
+        public static string FontAsset(string family, string style)
         {
-            return GeneratedFontFolder + "/BeVietnamPro-" + style + ".asset";
+            return GeneratedFontFolder + "/" + family + "-" + style + ".asset";
         }
 
         public static string StringTable(string language)
