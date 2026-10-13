@@ -116,6 +116,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public ProgressionTuning ProgressionTuning { get; private set; }
 
+        /// <summary>The fragment sets and the scan verb (0.5.5 §1), as the tuning builder makes it.</summary>
+        public ScanTuning ScanTuning { get; private set; }
+
         public CargoTuning CargoTuning { get; private set; }
 
         public SonarTuning SonarTuning { get; private set; }
@@ -284,10 +287,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// The lab's reader has decoded <paramref name="kits"/>' blueprints, and only those (no sheet is pinned from the
-        /// start, docs/features/M3-21 §4): the bay can build them.
+        /// 07 has learned <paramref name="kits"/>' blueprints, and only those (no sheet is pinned from the start,
+        /// docs/features/M3-21 §4): the bay can build them. Their fragments are left as they lie.
         /// </summary>
-        public void Decode(params string[] kits)
+        public void Learn(params string[] kits)
         {
             Gameplay.Blueprints.Restore(new BlueprintsSaveData { found = kits });
         }
@@ -413,7 +416,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Template("Part_Transformer", new Vector3(0.6f, 0.5f, 0.45f)),
                 Template("Part_RelaySpare", new Vector3(0.4f, 0.3f, 0.5f)),
             });
-            visuals.PopulateTube(Template("BlueprintTube", new Vector3(0.7f, 0.14f, 0.14f)));
+            ScanTuning = Asset<ScanTuning>();
+            visuals.PopulateScans(FragmentTemplates(), JumperTemplate());
             visuals.PopulateGaragePort(PortTemplate(), Template("Kit_TapeDeck", new Vector3(0.3f, 0.15f, 0.12f)));
             visuals.PopulateContainers(new[]
             {
@@ -472,6 +476,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             CargoTuning = Asset<CargoTuning>();
             Gameplay.WireCargo(materials, CargoTuning);
             Gameplay.WireCutter(Asset<CutterTuning>());
+            Gameplay.WireScans(ScanTuning);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
@@ -795,6 +800,15 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Node(HaulBotSocket, root.transform, new Vector3(6f, 0f, -2f));
             }
 
+            string blueprint = name == "garage" ? "CargoCradle"
+                : name == "kestrel" ? "FocusLens"
+                : name == "lander" ? "SideBins"
+                : null;
+            if (blueprint != null)
+            {
+                FragmentSockets(root.transform, blueprint, new Vector3(-10f, 0f, -8f));
+            }
+
             if (name == "garage")
             {
                 // Kenji's bench beside the port's pad, the spare crate's front toward 07 coming in (0.5.5 §2).
@@ -824,7 +838,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>
         /// A stand-in derelict (0.5.5 §1.7) in its anchor's frame: a slumped body, its <c>TapeCaseSocket</c> on the
         /// ground against its right flank facing out of its side and its <c>HutSocket</c> on its left (06's), or one
-        /// small Metal piece on its back (the Mule's track skirt, the haul bot's load).
+        /// small Metal piece on its back (the Mule's track skirt, the haul bot's load); its fragment sockets in a row
+        /// 12 m behind it, clear of every other E verb (06's Cell Pack, the Mule's Warm Headlamp, the haul bot's Boost
+        /// Coils).
         /// </summary>
         private GameObject DerelictModel(string name, bool piece)
         {
@@ -844,7 +860,73 @@ namespace MoonProject.Gameplay.PlayModeTests
                     Quaternion.Euler(0f, 90f, 0f);
             }
 
+            FragmentSockets(root.transform, name == "Derelict_06" ? "CellPack"
+                : name == "Derelict_Mule" ? "WarmHeadlamp"
+                : "BoostCoils", new Vector3(-1.4f, 0f, -12f));
             return root;
+        }
+
+        /// <summary>
+        /// The set <paramref name="blueprint"/>'s FragmentSocket_&lt;Blueprint&gt;_&lt;n&gt; nodes in a row from
+        /// <paramref name="first"/>, 1.4 m apart (0.5.5 §1.3).
+        /// </summary>
+        private void FragmentSockets(Transform root, string blueprint, Vector3 first)
+        {
+            if (!ScanTuning.TryGetSet(blueprint, out ScanSet set))
+            {
+                throw new ArgumentException($"ScanTuning has no set '{blueprint}'.", nameof(blueprint));
+            }
+
+            for (int i = 0; i < set.Count; i++)
+            {
+                Node(ScanFragment.SocketPrefix + blueprint + "_" + i, root, first + Vector3.right * (1.4f * i));
+            }
+        }
+
+        /// <summary>
+        /// A stand-in for each of Art's fragments (0.5.5 §1.2): Solid and Lines boxes, the ScanTarget at their middle,
+        /// and the inactive Brackets and DustOutline.
+        /// </summary>
+        private GameObject[] FragmentTemplates()
+        {
+            var fragments = new List<GameObject>();
+            foreach (ScanSet set in ScanTuning.Sets)
+            {
+                for (int i = 0; i < set.Count; i++)
+                {
+                    var root = new GameObject(ScanFragment.PrefabPrefix + set.Blueprint + "_" + i);
+                    root.transform.position = new Vector3(0f, -500f, 0f);
+                    _created.Add(root);
+                    Named(Block(root.transform, new Vector3(0f, 0.2f, 0f), Vector3.one * 0.4f), "Solid");
+                    Named(Block(root.transform, new Vector3(0f, 0.2f, 0f), Vector3.one * 0.42f), "Lines");
+                    Node("ScanTarget", root.transform, new Vector3(0f, 0.2f, 0f));
+                    Named(Block(root.transform, new Vector3(0f, 0.42f, 0f), new Vector3(0.5f, 0.02f, 0.5f)),
+                        "Brackets").gameObject.SetActive(false);
+                    Named(Block(root.transform, new Vector3(0f, 0.01f, 0f), new Vector3(0.5f, 0.02f, 0.5f)),
+                        "DustOutline").gameObject.SetActive(false);
+                    fragments.Add(root);
+                }
+            }
+
+            return fragments.ToArray();
+        }
+
+        /// <summary>
+        /// A stand-in for Kenji's crashed test jumper (0.5.5 §1.3): a low frame on its root, its nose (+Z) to the
+        /// chasm, and the Hover-Jump fragment sockets in a row 3 m to its side.
+        /// </summary>
+        private GameObject JumperTemplate()
+        {
+            GameObject jumper = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            jumper.name = "JumperWreck";
+            Object.DestroyImmediate(jumper.GetComponent<Collider>());
+            jumper.transform.position = new Vector3(0f, -500f, 0f);
+            jumper.transform.localScale = new Vector3(1.6f, 0.5f, 2.4f);
+            _created.Add(jumper);
+            var unscaled = Node("Sockets", jumper.transform, Vector3.zero);
+            unscaled.localScale = new Vector3(1f / 1.6f, 1f / 0.5f, 1f / 2.4f);
+            FragmentSockets(unscaled, "HoverJump", new Vector3(-1.4f, 0f, -3f));
+            return jumper;
         }
 
         private static void Piece(Transform site, string name, Vector3 position, Vector3 size)
@@ -1090,8 +1172,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>
         /// A stand-in for the crew's lab in the lander's cabin (docs/ARCHITECTURE.md "Contract: the lab"): Lab at the
         /// cabin floor's middle, 3.6 m up, with the four station frames round the axis at 07's lens height, +Z toward
-        /// the axis, clockwise from above from the front: Chart, Reader, Board, Keepsakes; the reader's Slot, Reel and
-        /// Tape.
+        /// the axis, clockwise from above from the front: Chart, Reader, Board, Keepsakes.
         /// </summary>
         private static Transform BuildLab(Transform lander)
         {
@@ -1105,10 +1186,6 @@ namespace MoonProject.Gameplay.PlayModeTests
                 station.localRotation = round * Quaternion.Euler(0f, 180f, 0f);
             }
 
-            Transform reader = lab.Find("Station_Reader");
-            Node("Slot", reader, new Vector3(0f, 0f, 0.1f));
-            Node("Reel", reader, new Vector3(0.4f, 0.2f, 0f));
-            Node("Tape", reader, new Vector3(-0.3f, -0.1f, 0f));
             return lab;
         }
 
@@ -1142,7 +1219,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             Transform cableRight = Node("Cable_R", belly, new Vector3(1.3f, 3.4f, 0f));
             Transform jam = Node("CableJam", belly, new Vector3(1.3f, 0.4f, 0f));
             Transform stitch = Node("StitchPoint", jam, Vector3.zero);
-            Transform reader = lab.Find("Station_Reader");
             var stations = new Transform[LabInterior.StationCount];
             for (int i = 0; i < stations.Length; i++)
             {
@@ -1152,7 +1228,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             LiftTuning = Asset<LiftTuning>();
             Lift.Wire(LiftTuning, TowerTuning, platform, body, down, up, Quaternion.identity, spot,
                 pad.GetComponent<Renderer>(), dust, hatchLeft, hatchRight, 1.2f, cableLeft, cableRight, 3.4f, jam,
-                stitch, lab, stations, reader.Find("Slot"), reader.Find("Reel"), reader.Find("Tape"), dock);
+                stitch, lab, stations, dock);
             return down;
         }
 

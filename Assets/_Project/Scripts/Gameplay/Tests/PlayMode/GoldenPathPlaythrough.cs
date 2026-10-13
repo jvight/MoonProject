@@ -33,21 +33,22 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// (M3-02): gather her parts (the last one dug from the dust), repair her, drive home with her, be greeted, and let
     /// her spot Kenji's garage on the next trip, the tether still asleep. Cut the garage's three seams in one trip; its
     /// port fits the tether ring, then Ro's tape deck from Kenji's sealed spare crate, and 07 is home with at least
-    /// a quarter of its charge. Dig Kenji's duck out of the garage's heart, which holds the Cargo Cradle's
-    /// blueprint, and tow it home, where the jammed belly lift asks for its stitch (M3-19): stitch it from beside it,
-    /// ride up with the duck beside 07, let the lab's reader decode the Cradle's tube (its hand-off pulse waits at the
-    /// sleeping bay) and place the duck on the keepsake shelf: the first memory (step 4), then ride down facing out.
-    /// Tilly spots Bell's light across the chasm (P2): drive to the lip, look across with no way over, pick up
-    /// Hover-Jump's blueprint tube waiting there (M3-21), then back to the garage, where the transformer now shows.
-    /// Find the Rover Bay still asleep (no pad, no prompt, a "not yet" answer on approach), hand in the transformer and
-    /// craft tower level 2 to wake it (its plotter draws the Cradle's waiting sheet), ride up for the reader to decode
-    /// Hover-Jump's tube, find that holding Jump does nothing yet, craft Hover-Jump in the bay through the same hold
-    /// and the Cargo Cradle from its new blueprint, dig the gnome from the garage, lift it into the rack with the
+    /// a quarter of its charge. Dig Kenji's duck out of the garage's heart, scan the Cargo Cradle's two fragments on
+    /// Kenji's bench (0.5.5 §1: the brackets and the Scan chip teach it, and the set completes the blueprint), and tow
+    /// the duck home, where the jammed belly lift asks for its stitch (M3-19): stitch it from beside it, ride up with
+    /// the duck beside 07 and place it on the keepsake shelf: the first memory (step 4), then ride down facing out.
+    /// Tilly spots Bell's light across the chasm (P2): drive to the lip, look across with no way over, scan the three
+    /// Hover-Jump fragments of Kenji's crashed test jumper there, restore the mouth relay and hop home, then back to
+    /// the garage, where the transformer now shows. Find the Rover Bay still asleep (no pad, no prompt, a "not yet"
+    /// answer on approach), hand in the transformer and craft tower level 2 to wake it (its plotter draws the learned
+    /// sheets), find that holding Jump does nothing yet, craft Hover-Jump in the bay through the same hold and the
+    /// Cargo Cradle from its blueprint, dig the gnome from the garage, lift it into the rack with the
     /// tether button, drive home, ride the lift up and set it down on the keepsake shelf from the rack, and take the
     /// first leap. Then Bell (M3-04/05): drive up the mouth lane, leap the chasm, find her lying at the terminus with
     /// Ro's log cache and her tape, gather her three parts from the alcoves, repair her (the tape slides in, her dial
     /// wakes, she stands), drive home by the one-way exit while she makes her own way, be greeted by her, turn her dial
-    /// through every station, and follow her first signal to the basin tape onto her rack. Then the relay network
+    /// through every station, and follow her first signal to Ro's case on 06, whose tape goes onto her rack;
+    /// the case open, scan 06's three Cell Pack II fragments in its battery bay. Then the relay network
     /// (M3-06): pick up the mound relay's part, restore it at its foot with materials and watch it come online, pick up
     /// the relay spare on its pad (level 3's part), drive out past the tower's reach and find home still reaching 07
     /// there, then radio-hop home from the mast's pad and back, and rest on the dock: the dock's evening opens, the
@@ -313,8 +314,27 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// </summary>
         private const float LabTurnTimeout = 6f;
 
-        /// <summary>Seconds the reader may take to feed a tube in and decode it.</summary>
-        private const float ReaderTimeout = 12f;
+        /// <summary>Seconds 07's view may take to settle on a fragment once it is parked facing it.</summary>
+        private const float ScanLookTimeout = 3f;
+
+        /// <summary>Seconds a scan may take beyond its size's time (the press, 07 easing to a stop).</summary>
+        private const float ScanAllowance = 3f;
+
+        /// <summary>A scan's line-up is this much (m) farther out than where 07 stops facing the fragment.</summary>
+        private const float ScanLineUp = 3f;
+
+        /// <summary>Metres the jumper's ring lies out from its middle when 07 goes round it.</summary>
+        private const float JumperRing = 5f;
+
+        /// <summary>07 scans at the lip no nearer the drop than this (m), on the basin's side.</summary>
+        private const float LipMargin = 1.5f;
+
+        /// <summary>Metres beyond another E verb's reach that 07 stops to scan, so that verb never takes the hold.
+        /// </summary>
+        private const float VerbMargin = 0.5f;
+
+        /// <summary>07 scans no nearer a lit mast's pad than this (m), where E opens the hop's list.</summary>
+        private const float PadKeepOut = 6f;
 
         /// <summary>Seconds 07 rests on the map while the chart pen inks before coming away.</summary>
         private const float MapSeconds = 4f;
@@ -469,11 +489,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ChargeAtTheDock("home from the garage in one trip", OneTripArrival);
             yield return Excavate(garage, duck);
             Assert.IsTrue(LogFound("kenji_1"), "Kenji's log tin by his bench opens while 07 digs");
-            Assert.IsTrue(_gameplay.Blueprints.IsCarrying, "the garage's heart held the Cradle's blueprint tube");
-            Assert.IsFalse(_gameplay.Blueprints.IsPinned(CargoCradle), "it rides home to the lab's reader first");
             Assert.IsFalse(_gameplay.TowerPartField.IsResting(TransformerPart), "the transformer waits for the chasm");
             Assert.LessOrEqual(_gameplay.Lift.Phase, LiftPhase.Called,
                 "home's power woke the belly lift jammed; it still waits for its repair");
+            yield return ScanTheCradleFragments(garage);
             yield return LatchTether(duck);
             yield return TowHome(garage, duck);
             yield return StitchTheLift();
@@ -491,12 +510,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ToTheRunUp();
             yield return LookAcrossTheChasm();
             Lesson("the chasm lip", 0.3f, 0.45f);
-            yield return PickUpTheLipTube();
+            yield return ScanTheJumperAtTheLip();
             yield return ExpectStep(ProgressionKeys.NextBayWake, "the chasm is seen: the bay waits for the tower");
             yield return RestoreTheMouthRelay();
             yield return ChargeOnTheRing(2);
             yield return HopFrom(WorldAnchorIds.RelayPrefix + 2, StationReach.HomeId);
-            yield return RideUpToDecodeTheTubes();
             yield return ChargeAtTheDock("home from the mouth relay");
             yield return BackToTheGarageForTheTransformer(garage);
             yield return TheBaySleepsUntilTheTowerWakesIt();
@@ -506,7 +524,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return BuyHoverJumpAtTheBench();
             yield return ExpectStep(ProgressionKeys.NextPowerPart, "a kit is fitted: only the targets speak now");
             yield return CraftTheCargoCradle();
-            yield return CraftTheCellPack();
             yield return Excavate(garage, gnome);
             yield return StowInTheCradle(gnome);
             yield return CarryHomeInTheCradle(garage, gnome);
@@ -525,6 +542,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ChargeAtTheDock("home from the canyon");
             yield return TurnBellsDial();
             yield return FollowBellsSignal();
+            yield return ScanSixsCellPack();
             yield return ExpectStep(ProgressionKeys.NextPowerPart, "Bell is home: the tower still needs its last part");
             Assert.IsTrue(_gameplay.TowerParts.NeedsPart(Tower, 3), "level 3 waits for the relay spare");
             yield return ToTheMoundRelay();
@@ -535,6 +553,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return RestOnTheDock();
             AssertReadyForTheChart();
             yield return StockUpForTheChart();
+            yield return CraftTheCellPack();
             yield return BuyTowerLevel(3);
             yield return LookAtTheChart();
             yield return Until(
@@ -992,13 +1011,20 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// </summary>
         private IEnumerator CircleTo(SalvageSite site, Vector3 target, float extra)
         {
+            yield return CircleRound(Flat(site.Position), Anchor(site.Id).Radius + RingMargin + extra, target);
+        }
+
+        /// <summary>
+        /// Drives round <paramref name="centre"/> on a ring <paramref name="ring"/> m out to the side facing the
+        /// target; straight there when nothing solid stands in the way.
+        /// </summary>
+        private IEnumerator CircleRound(Vector3 centre, float ring, Vector3 target)
+        {
             if (StraightWayIsOpen(target))
             {
                 yield break;
             }
 
-            float ring = Anchor(site.Id).Radius + RingMargin + extra;
-            Vector3 centre = Flat(site.Position);
             float from = Bearing(_rover.Position - centre);
             float to = Bearing(target - centre);
             float turn = Mathf.DeltaAngle(from, to);
@@ -1183,52 +1209,149 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Hover-Jump's blueprint tube waits at the chasm's near lip (M3-21 §4), where 07 stopped to look across: drive
-        /// through it and it rides home on 07's back, for the lab's reader.
+        /// Kenji's test jumper crashed short of the far side (0.5.5 §1.3): its three Hover-Jump fragments lie at the
+        /// chasm's near lip, where 07 stopped to look across. Scanned, the set completes Hover-Jump's blueprint.
         /// </summary>
-        private IEnumerator PickUpTheLipTube()
+        private IEnumerator ScanTheJumperAtTheLip()
         {
             Begin();
-            GroundTubes tubes = _gameplay.GroundTubes;
-            if (tubes.IsResting(HoverJump))
-            {
-                yield return DriveTo(Flat(tubes.RestPosition(HoverJump)), PartArrive, 0.4f, 30f,
-                    "Hover-Jump's tube at the lip");
-                yield return PickupPress.Take(this, _gameplay, 4f, "Hover-Jump's tube");
-            }
-
-            yield return Until(() => !_gameplay.Blueprints.IsWaiting(HoverJump), 8f, "the tube spirals into 07");
-            Assert.AreEqual(HoverJump, _gameplay.Blueprints.NextCarried, "it rides home to the lab's reader");
-            Assert.AreEqual(TechNodeState.Unknown, _gameplay.Tech.StateOf(TechNodeId.HoverJump), "not read yet");
-            Capture("08b-the-lip-tube");
-            End("Pick up Hover-Jump's tube at the chasm's lip", "no sheet was pinned from the start");
+            WorldAnchor lip = Anchor(WorldAnchorIds.CanyonLip);
+            Vector3 chasm = Flat(lip.Forward).normalized;
+            Assert.AreEqual(TechNodeState.Unknown, _gameplay.Tech.StateOf(TechNodeId.HoverJump), "not learned yet");
+            yield return ScanTheSet(WorldAnchorIds.CanyonLip, JumperRing,
+                spot => Vector3.Dot(Flat(spot - lip.Position), chasm) < -LipMargin);
+            Assert.IsTrue(_gameplay.Blueprints.IsPinned(HoverJump), "the set completes Hover-Jump's blueprint");
+            yield return Until(() => _gameplay.Tech.StateOf(TechNodeId.HoverJump) == TechNodeState.Decoded, 2f,
+                "its sheet is on the tech board");
+            Capture("08b-the-jumper-scanned");
+            End("Scan the crashed jumper's three Hover-Jump fragments at the lip", "no sheet was pinned from the start");
         }
 
         /// <summary>
-        /// Home from the mouth relay by radio-hop: up the belly lift with Hover-Jump's tube from the lip and Cell Pack
-        /// II's from relay.2's cabinet on 07's back. The turntable turns to the reader, which decodes one, then the
-        /// other, sending each hand-off pulse to the bay (still asleep); then back down (M3-19 §5, M3-20, M3-21 §4).
+        /// The duck dug free, Kenji's bench beside it: the Cargo Cradle's two fragments lie either side of his spare
+        /// crate. The first scan is taught by the brackets and the Scan chip alone (0.5.5 §1.5); the set completes the
+        /// Cradle's blueprint, whose sheet waits for the sleeping bay.
         /// </summary>
-        private IEnumerator RideUpToDecodeTheTubes()
+        private IEnumerator ScanTheCradleFragments(SalvageSite garage)
         {
             Begin();
-            LiftStation lift = _gameplay.Lift;
-            int decoded = 0;
-            using IDisposable finds = _context.Events.Subscribe<FindDecoded>(find =>
-                decoded += find.KitId == HoverJump || find.KitId == CellPack ? 1 : 0);
-            yield return DriveOntoTheLift("the belly lift's platform, the tubes on 07's back");
-            yield return Until(() => lift.Phase == LiftPhase.Inside, LiftPhaseTimeout,
-                "resting on the platform carries 07 up into the lab");
-            yield return Until(() => decoded > 1, LabTurnTimeout + 2f * ReaderTimeout,
-                "the turntable turns to the reader, whose beam feeds both tubes in to decode, one after the other");
-            Assert.IsTrue(_gameplay.Blueprints.IsPinned(HoverJump), "decoded: the bay can build Hover-Jump");
-            Assert.IsTrue(_gameplay.Blueprints.IsPinned(CellPack), "decoded: the bay can build Cell Pack II");
-            yield return null;
-            Assert.AreEqual(TechNodeState.Decoded, _gameplay.Tech.StateOf(TechNodeId.HoverJump),
-                "its sheet is on the tech board");
-            Assert.AreEqual(TechNodeState.Decoded, _gameplay.Tech.StateOf(TechNodeId.CellPackII));
-            yield return RideDown("08c-down-from-the-reader");
-            End("Ride up to decode the two tubes", "the reader decoded both; the hand-offs ran to the bay");
+            Assert.AreEqual(CargoCradle, _gameplay.Scans.KitAt(garage.Id), "the Cradle's fragments lie in the garage");
+            yield return ScanTheSet(garage.Id, Anchor(garage.Id).Radius + RingMargin, _ => true);
+            Assert.IsTrue(_gameplay.Blueprints.IsPinned(CargoCradle), "the set completes the Cradle's blueprint");
+            Assert.IsFalse(_gameplay.Blueprints.IsDrawn(CargoCradle), "the bay sleeps: its sheet waits for level 2");
+            Capture("04b-the-cradle-scanned");
+            End("Scan the Cargo Cradle's two fragments on Kenji's bench", "the first scan, taught by its brackets");
+        }
+
+        /// <summary>
+        /// Ro's case on 06 is open (Bell's signal led 07 to it): 06's battery bay holds Cell Pack II's three fragments,
+        /// which the sealed case beside them kept unscannable until now (0.5.5 §1.2: a cut comes before a scan).
+        /// </summary>
+        private IEnumerator ScanSixsCellPack()
+        {
+            Begin();
+            Assert.AreEqual(CellPack, _gameplay.Scans.KitAt(WorldAnchorIds.Micro06), "06's battery bay");
+            yield return ScanTheSet(WorldAnchorIds.Micro06, Anchor(WorldAnchorIds.Micro06).Radius + RingMargin,
+                _ => true);
+            Assert.IsTrue(_gameplay.Blueprints.IsPinned(CellPack), "the set completes Cell Pack II's blueprint");
+            Capture("29b-sixs-cell-pack-scanned");
+            End("Scan 06's three Cell Pack II fragments", "the bay draws its sheet while 07 drives home");
+        }
+
+        /// <summary>
+        /// Every fragment still to scan at <paramref name="hostId"/>, one by one, as a player does: round the host
+        /// (<paramref name="ring"/> m out, when something solid stands in the way) to open ground a few metres from the
+        /// nearest, facing it, where no other E verb is on offer and <paramref name="fits"/> agrees; its brackets show
+        /// and the Scan chip with them; hold E until it is drawn whole (07 eases to a stop and its lens opens), then let
+        /// go before the next.
+        /// </summary>
+        private IEnumerator ScanTheSet(string hostId, float ring, Func<Vector3, bool> fits)
+        {
+            ScanField scans = _gameplay.Scans;
+            Assert.Greater(scans.Left(hostId), 0, $"{hostId} has fragments to scan");
+            while (scans.Left(hostId) > 0)
+            {
+                ScanFragment next = NearestToScan(hostId);
+                Assert.IsTrue(OpenSpotBy(next.Point, spot => fits(spot) && NoOtherVerbAt(spot), out Vector3 park,
+                    out Vector3 outward), $"open ground facing {next.FragmentId}, clear of every other E verb");
+                Vector3 lineUp = Flat(next.Point + outward * (DigStandOff + ScanLineUp));
+                yield return CircleRound(Flat(next.Root.parent.parent.position), ring, lineUp);
+                yield return DriveTo(lineUp, 2f, 0.6f, 40f, $"a line-up facing {next.FragmentId}");
+                yield return DriveTo(park, 1f, 0.35f, 30f, $"the spot facing {next.FragmentId}");
+                yield return Until(() => scans.Candidate != null && scans.Candidate.HostId == hostId, ScanLookTimeout,
+                    $"07's view rests on a fragment at {hostId}: its brackets and the Scan chip show");
+                ScanFragment fragment = scans.Candidate;
+                Assert.AreEqual(InteractionKind.Scan, _gameplay.Hints.Primary.Kind, "the Scan chip, no other verb");
+                Press(_keyboard.eKey);
+                yield return Until(() => fragment.Scanned, scans.Tuning.Seconds(fragment.Size) + ScanAllowance,
+                    $"held E scans {fragment.FragmentId}");
+                Release(_keyboard.eKey);
+                yield return null;
+            }
+        }
+
+        private ScanFragment NearestToScan(string hostId)
+        {
+            ScanFragment nearest = null;
+            foreach (ScanFragment fragment in _gameplay.Scans.Fragments)
+            {
+                if (!fragment.Scanned && fragment.HostId == hostId && (nearest == null ||
+                        SurfaceRules.HorizontalDistance(fragment.Point, _rover.Position) <
+                        SurfaceRules.HorizontalDistance(nearest.Point, _rover.Position)))
+                {
+                    nearest = fragment;
+                }
+            }
+
+            return nearest;
+        }
+
+        /// <summary>
+        /// True when holding E at <paramref name="spot"/> would scan (0.5.5 §1.2): no sealed container or crew crate
+        /// in the beam's reach, no relic to dig in the dig's reach, and no lit mast's pad (the hop's list).
+        /// </summary>
+        private bool NoOtherVerbAt(Vector3 spot)
+        {
+            float cutReach = _gameplay.Salvage.Tuning.ReachRadius + VerbMargin;
+            for (int i = 0; i < _gameplay.Containers.Count; i++)
+            {
+                SealedContainer container = _gameplay.Containers.Get(i);
+                if (!container.Opened && container.Available &&
+                    SurfaceRules.HorizontalDistance(spot, container.CutPoint.position) <= cutReach)
+                {
+                    return false;
+                }
+            }
+
+            foreach (SalvageSite site in _gameplay.Salvage.Sites)
+            {
+                if (!site.Crate.Opened && site.Discovered &&
+                    SurfaceRules.HorizontalDistance(spot, site.Crate.CutPoint.position) <= cutReach)
+                {
+                    return false;
+                }
+            }
+
+            float digReach = _gameplay.Excavation.Tuning.ReachRadius + VerbMargin;
+            foreach (Relic relic in _gameplay.Relics.Relics)
+            {
+                if (relic.CanBeLifted && relic.Home.HeartRevealed &&
+                    SurfaceRules.HorizontalDistance(spot, relic.Site.Position) <= digReach)
+                {
+                    return false;
+                }
+            }
+
+            StationReach reach = _gameplay.Relays.Reach;
+            for (int node = 0; node < reach.NodeCount; node++)
+            {
+                if (reach.IsLit(node) && SurfaceRules.HorizontalDistance(spot, reach.Position(node)) <= PadKeepOut)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>Having seen the chasm, back to the garage: Tilly spots the transformer (P1, L2).</summary>
@@ -1268,13 +1391,15 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// The salvage of the rest of the basin, which the golden path skips: the stock is topped up to the tower's
-        /// third level.
+        /// The salvage of the rest of the basin, which the golden path skips: the stock is topped up to Cell Pack II and
+        /// the tower's third level.
         /// </summary>
         private IEnumerator StockUpForTheChart()
         {
             Begin();
-            Recipe need = _gameplay.Upgrades.Find(Tower).Levels[2].Recipe;
+            Recipe tower = _gameplay.Upgrades.Find(Tower).Levels[2].Recipe;
+            Recipe pack = _gameplay.Upgrades.Find(CellPack).Levels[0].Recipe;
+            var need = new Recipe(tower.Metal + pack.Metal, tower.Wiring + pack.Wiring, tower.Optics + pack.Optics);
             IMaterialStock stock = _gameplay.Materials;
             var topUp = new Recipe(Mathf.Max(0, need.Metal - stock.Metal), Mathf.Max(0, need.Wiring - stock.Wiring),
                 Mathf.Max(0, need.Optics - stock.Optics));
@@ -1286,7 +1411,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Home with the duck in tow and the Cradle's tube on its back, the jammed belly lift asked for its stitch: to
+        /// Home with the duck in tow, the jammed belly lift asked for its stitch: to
         /// the spot just off its lit platform, the duck still in tow, and rest while 07's beam stitches the cable and
         /// the platform levels.
         /// </summary>
@@ -1306,37 +1431,25 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// The first ride: up the ramp onto the restored platform, which carries 07 up into the lab with the duck
-        /// beside it. The turntable turns to the reader, which takes the Cradle's tube and decodes it (its hand-off
-        /// pulse runs to the bay, still asleep), then to the keepsake shelf, where the press places the duck: the first
-        /// memory. Back brings the platform down, turned so 07 drives out toward the dock.
+        /// beside it. The turntable turns to the keepsake shelf, where the press places the duck: the first memory.
+        /// Back brings the platform down, turned so 07 drives out toward the dock.
         /// </summary>
         private IEnumerator RideUpWithTheFirstFinds(Relic duck)
         {
             Begin();
             LiftStation lift = _gameplay.Lift;
-            int decoded = 0;
-            int handOffs = 0;
-            using IDisposable finds = _context.Events.Subscribe<FindDecoded>(find =>
-                decoded += find.KitId == CargoCradle ? 1 : 0);
-            using IDisposable pulses = _context.Events.Subscribe<DecodeHandOff>(_ => handOffs++);
             yield return DriveTo(Flat(lift.RideSpot), BoardRadius, 0.35f, 30f, "up its ramp onto the platform");
             yield return Until(() => lift.Phase == LiftPhase.Inside, LiftPhaseTimeout,
                 "resting on the platform, it carries 07 up into the lab");
             Assert.AreSame(duck, lift.Rider, "the towed duck rode up beside 07");
             Assert.IsNull(_gameplay.Tether.Towed, "the tether let it go aboard");
             yield return ExpectStep(ProgressionKeys.NextLiftRide, "up in the lab, the duck waits to be placed");
-            yield return Until(() => decoded > 0, LabTurnTimeout + ReaderTimeout,
-                "the turntable turns to the reader, whose beam feeds the Cradle's tube in to decode");
-            Capture("06-lab-reader");
-            Assert.AreEqual(CargoCradle, _events.BlueprintDelivered[0].Value.KitId, "the reader took the tube");
-            Assert.IsTrue(_gameplay.Blueprints.IsPinned(CargoCradle), "decoded: the bay can build the Cradle");
-            Assert.AreEqual(1, handOffs, "the hand-off pulse runs down to the bay");
-            Assert.IsFalse(_gameplay.Blueprints.IsDrawn(CargoCradle), "the bay sleeps: its sheet waits for level 2");
+            Assert.IsFalse(_gameplay.Blueprints.IsDrawn(CargoCradle), "the bay sleeps: the Cradle's sheet waits");
             yield return Until(() => _gameplay.Home.KeepsakesFaced, LabTurnTimeout,
-                "then the turntable turns to the keepsake shelf, for the duck");
+                "the turntable turns to the keepsake shelf, for the duck");
             yield return Deposit(duck);
             yield return RideDown("08-down-from-the-lab");
-            End("Ride up with the first finds", "the tube decoded at the reader, the duck on the keepsake shelf");
+            End("Ride up with the first find", "the duck on the keepsake shelf");
         }
 
         /// <summary>Back the stick, as a player does, and wait for the platform to settle down, 07 facing
@@ -1665,7 +1778,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// The base as a fresh game opens (docs/features/M3-16, M3-21): no power, the bay asleep with its lamps dark, no
-        /// sheet on Kenji's board (Hover-Jump's tube waits at the chasm's lip), the recovery panel dark, nothing to buy.
+        /// sheet on Kenji's board (Hover-Jump's fragments wait at the chasm's lip), the recovery panel dark, nothing to
+    /// buy.
         /// </summary>
         private void AssertAsleep()
         {
@@ -1673,7 +1787,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(_gameplay.Workshop.Awake, "the Rover Bay sleeps");
             Assert.AreEqual(0f, _gameplay.Workshop.LampLevel, 1e-3f, "its lamps are dark");
             Assert.IsFalse(_gameplay.Blueprints.IsPinned(HoverJump), "no sheet is pinned from the start");
-            Assert.IsTrue(_gameplay.GroundTubes.IsResting(HoverJump), "Hover-Jump's tube glints at the chasm's lip");
+            Assert.AreEqual(3, _gameplay.Scans.Left(WorldAnchorIds.CanyonLip),
+                "Hover-Jump's three fragments lie by Kenji's test jumper at the chasm's lip");
             Assert.AreEqual(0, _gameplay.Tech.KnownCount, "the porthole's lamps are dark");
             Assert.AreEqual(0, _gameplay.Recovery.LitLamps(RecoveryTarget.Power), "the recovery panel is dark");
             Assert.IsFalse(_gameplay.Blueprints.IsPinned(CargoCradle), "the Cradle's sheet is still out there");
@@ -1924,9 +2039,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 90f,
                 "the base pad, clear of the lander");
             yield return DriveIntoTheBay(bench);
-            yield return Until(() => _gameplay.Blueprints.IsDrawn(CargoCradle),
+            yield return Until(() => _gameplay.Blueprints.IsDrawn(HoverJump),
                 _gameplay.Progression.Tuning.PlotterDrawSeconds + 3f,
-                "the woken bay's plotter draws the Cradle's sheet that waited for it (M3-19)");
+                "the woken bay's plotter draws Hover-Jump's sheet first, which waited for it (M3-19)");
             Assert.AreSame(bench.Definition, _gameplay.Shop.StationUpgrade, "the bay offers Hover-Jump");
             Assert.AreEqual(UpgradeStationKind.Workshop, _gameplay.Shop.StationUpgrade.Station);
 
@@ -2477,16 +2592,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// relay.2 by the canyon's mouth, the second mast: its part, the stitch, and as it straightens its service
-        /// cabinet swings open on Cell Pack II's blueprint tube (docs/features/M3-20 §6).
+        /// relay.2 by the canyon's mouth, the second mast: its part and the stitch (docs/features/M3-20 §6).
         /// </summary>
         private IEnumerator RestoreTheMouthRelay()
         {
-            int found = _events.BlueprintFound.Count;
             yield return RestoreRelay(2, "the mouth relay");
-            yield return Until(() => _events.BlueprintFound.Count > found, 4f,
-                "the mast's cabinet gives Cell Pack II's tube");
-            Assert.AreEqual(CellPack, _events.BlueprintFound[_events.BlueprintFound.Count - 1].Value.KitId);
         }
 
         /// <summary>relay.3 at the terminus, beside Bell's wall: a charger at the canyon's far end.</summary>
@@ -2587,14 +2697,16 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Back into the bay for Cell Pack II: the spine set on 07's back, two more lamps lit; the turntable shows it
-        /// turned to the open front, and 07 drives straight out.
+        /// Into the bay for Cell Pack II, its sheet drawn while 07 drove home from 06: the spine set on 07's back, two
+        /// more lamps lit; the turntable shows it turned to the open front, and 07 drives straight out.
         /// </summary>
         private IEnumerator CraftTheCellPack()
         {
             Begin();
             Workshop bench = _gameplay.Workshop;
             BatteryModel battery = _gameplay.Battery.Model;
+            yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 90f,
+                "the base pad, clear of the lander");
             yield return Until(() => _gameplay.Blueprints.IsDrawn(CellPack),
                 2f * _gameplay.Progression.Tuning.PlotterDrawSeconds + 3f, "the plotter draws Cell Pack II's sheet");
             yield return DriveIntoTheBay(bench);

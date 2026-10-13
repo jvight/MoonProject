@@ -15,14 +15,11 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// Scripted sessions for the crew's lab up the belly lift (docs/features/M3-19) on the real components behind the
-    /// fake rover: the reader takes a tube 07 brought up, decodes it and hands it off, and the plotter in the bay draws
-    /// its sheet only once the bay is awake; the stick turns the turntable round the stations, looks at one and comes
-    /// away, and brings the platform down turned toward the dock.
+    /// fake rover: the stick turns the turntable round the stations, looks at one and comes away, and brings the
+    /// platform down turned toward the dock.
     /// </summary>
     public sealed class LabSessions : InputTestFixture
     {
-        private const string CargoCradle = "rover.cargo_cradle";
-
         /// <summary>Seconds a key is held, as a player taps the stick.</summary>
         private const float KeySeconds = 0.15f;
 
@@ -45,57 +42,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture?.Dispose();
             Object.Destroy(_controls);
             base.TearDown();
-        }
-
-        [UnityTest]
-        public IEnumerator TheReader_TakesTheTube_DecodesIt_AndThePlotterDrawsOnceTheBayWakes()
-        {
-            _fixture = GameplayFixture.Boot(_controls);
-            yield return null;
-            GameplaySystem gameplay = _fixture.Gameplay;
-            Blueprints blueprints = gameplay.Blueprints;
-            blueprints.Restore(new BlueprintsSaveData { carried = new[] { CargoCradle } });
-            var log = new List<string>();
-            float handOffSeconds = 0f;
-            EventBus events = _fixture.Bootstrap.Context.Events;
-            using var taken = events.Subscribe<BlueprintDelivered>(e => log.Add("taken " + e.KitId));
-            using var decoded = events.Subscribe<FindDecoded>(e => log.Add("decoded " + e.KitId));
-            using var handOff = events.Subscribe<DecodeHandOff>(e =>
-            {
-                log.Add("hand-off " + e.KitId);
-                handOffSeconds = e.Seconds;
-            });
-            using var drawing = events.Subscribe<BlueprintDrawing>(e => log.Add("drawing " + e.KitId));
-
-            yield return _fixture.RideIntoTheLab();
-            LiftStation lift = gameplay.Lift;
-            Assert.AreEqual(LabStation.Reader, lift.Lab.Facing, "carrying a tube, 07 is turned to the reader");
-            ProgressionTuning tuning = _fixture.ProgressionTuning;
-            yield return Waits.Until(() => log.Contains("taken " + CargoCradle), tuning.ReaderFeedSeconds + 1f);
-            Assert.AreEqual(ReaderPhase.Decoding, lift.ReaderPhase, "the beam fed it in: the reel turns");
-            Assert.IsFalse(blueprints.IsCarrying, "the tube left 07's back");
-            Assert.IsFalse(blueprints.IsPinned(CargoCradle), "not decoded yet: a moment, not a timer");
-
-            yield return Waits.Until(() => log.Contains("decoded " + CargoCradle), tuning.ReaderDecodeSeconds + 1f);
-            CollectionAssert.AreEqual(new[] { "taken " + CargoCradle, "decoded " + CargoCradle,
-                "hand-off " + CargoCradle }, log, "taken, decoded, then the hand-off pulse, once each");
-            Assert.AreEqual(tuning.HandOffSeconds, handOffSeconds);
-            Assert.IsTrue(blueprints.IsPinned(CargoCradle), "decoded: the bay can build it");
-            Assert.AreEqual(ReaderPhase.Idle, lift.ReaderPhase);
-            Assert.IsTrue(System.IO.File.Exists(_fixture.Bootstrap.Context.Get<MoonProject.Core.Save.ISaveService>()
-                .FilePath), "the decode is saved");
-
-            yield return new WaitForSeconds(handOffSeconds + 0.5f);
-            Assert.IsFalse(gameplay.Workshop.Awake, "the bay still sleeps");
-            Assert.IsFalse(gameplay.Plotter.Drawing, "the pulse stops at the dark bay: its sheet waits");
-            Assert.IsFalse(blueprints.IsDrawn(CargoCradle));
-
-            _fixture.PowerTo(2);
-            yield return Waits.Until(() => gameplay.Plotter.Drawing, 3f);
-            Assert.AreEqual(CargoCradle, gameplay.Plotter.DrawingKit, "the woken bay draws the waiting sheet");
-            Assert.AreEqual("drawing " + CargoCradle, log[log.Count - 1]);
-            yield return Waits.Until(() => blueprints.IsDrawn(CargoCradle), tuning.PlotterDrawSeconds + 1f);
-            Assert.IsTrue(gameplay.Plotter.ShowsSheet(CargoCradle), "and hangs it in the bay");
         }
 
         [UnityTest]

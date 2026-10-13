@@ -17,7 +17,7 @@ namespace MoonProject.Gameplay.Lift
         /// <summary>The base power has reached home (tower L1).</summary>
         public bool Powered { get; }
 
-        /// <summary>07 is home carrying something for the lab: a relic or a blueprint tube.</summary>
+        /// <summary>07 is home carrying something for the lab: a relic.</summary>
         public bool CarryingHome { get; }
 
         /// <summary>07 rests by the jammed platform, at the spot it stitches the cable from.</summary>

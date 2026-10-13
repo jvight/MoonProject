@@ -404,7 +404,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             IUpgradeShop shop = _fixture.Bootstrap.Context.Get<IUpgradeShop>();
             PadLook look = _fixture.WorkshopTuning.PadLook;
             WorkshopTuning tuning = _fixture.WorkshopTuning;
-            _fixture.Decode(HoverJump);
+            _fixture.Learn(HoverJump);
             Assert.AreSame(_fixture.HoverJumpUpgrade, bay.Definition, "the bay's first offer");
             Assert.IsFalse(bay.Awake, "asleep until the tower's second level powers it (M3-16)");
             Assert.AreEqual(0f, bay.LampLevel, 1e-3f, "its work lamps are dark");
@@ -474,7 +474,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(_fixture.Rover.Has(RoverAbility.HoverJump), "bought, not yet on 07: the bay crafts it");
             Assert.Greater(bay.PadLevel, look.Occupied, "the purchase flares the pad");
             Assert.AreSame(_fixture.HoverJumpUpgrade, bay.Definition, "no other blueprint yet: it rests on Hover-Jump");
-            _fixture.Decode(HoverJump, _fixture.CargoCradleUpgrade.Id);
+            _fixture.Learn(HoverJump, _fixture.CargoCradleUpgrade.Id);
             Assert.AreSame(_fixture.CargoCradleUpgrade, bay.Definition, "the Cargo Cradle's sheet pinned, it offers it");
             Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out hint));
             Assert.IsFalse(hint.Ready, "4 metal it does not have yet");
@@ -690,55 +690,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             bay = _fixture.Gameplay.Workshop;
             Assert.IsTrue(bay.Powered, "the base keeps its power across a load");
             Assert.AreEqual(tuning.SignGlow, bay.SignLevel, 1e-3f, "and the sign is simply lit, no flicker");
-        }
-
-        [UnityTest]
-        public IEnumerator BlueprintTube_RidesHome_TheLabsReaderDecodesIt_ThePlotterDrawsIt_AndALoadKeepsIt()
-        {
-            string slot = BootstrapHarness.NewTestSlot();
-            _fixture = GameplayFixture.Boot(_controls, slot);
-            yield return null;
-            BlueprintPlotter plotter = _fixture.Gameplay.Plotter;
-            Blueprints board = _fixture.Gameplay.Blueprints;
-            string cradle = _fixture.CargoCradleUpgrade.Id;
-            Assert.IsFalse(plotter.ShowsSheet(_fixture.HoverJumpUpgrade.Id), "no sheet hangs from the start (M3-21)");
-            Assert.IsFalse(plotter.ShowsSheet(cradle));
-            Relic duck = null;
-            foreach (Relic relic in _fixture.Gameplay.Relics.Relics)
-            {
-                duck = duck == null && relic.Home != null && relic.Home.Id == "site.garage" ? relic : duck;
-            }
-
-            _fixture.Bootstrap.Context.Events.Publish(new RelicSurfaced(duck.transform.position, duck.Definition.Id));
-            Assert.IsTrue(board.IsCarrying, "the garage's tube rides home on 07");
-            Assert.IsFalse(board.IsPinned(cradle));
-
-            _fixture.PowerTo(2);
-            _fixture.Rover.Place(_fixture.Gameplay.Workshop.PadCentre, 0f);
-            yield return new WaitForSeconds(0.5f);
-            Assert.IsTrue(board.IsCarrying, "the plotter in the awake bay takes no tube: the lab's reader does");
-            Assert.IsFalse(plotter.Drawing);
-
-            yield return _fixture.RideIntoTheLab();
-            ProgressionTuning tuning = _fixture.ProgressionTuning;
-            yield return Waits.Until(() => board.IsPinned(cradle),
-                tuning.ReaderFeedSeconds + tuning.ReaderDecodeSeconds + 1f);
-            Assert.IsTrue(board.IsPinned(cradle), "the reader decoded it: pinned");
-            Assert.AreEqual(1, _fixture.Events.BlueprintDelivered.Count, "the reader took it");
-            Assert.AreEqual(cradle, _fixture.Events.BlueprintDelivered[0].Value.KitId);
-            yield return Waits.Until(() => plotter.Drawing, tuning.HandOffSeconds + 1f);
-            Assert.IsTrue(plotter.Drawing, "the hand-off reached the awake bay: the plotter draws");
-            Assert.IsFalse(plotter.ShowsSheet(cradle), "the sheet is still on the bed");
-            yield return Waits.Until(() => !plotter.Drawing, _fixture.ProgressionTuning.PlotterDrawSeconds + 2f);
-            Assert.IsTrue(plotter.ShowsSheet(cradle), "drawn, it hangs on Kenji's pegboard");
-
-            _fixture.Dispose(true);
-            yield return null;
-            _fixture = GameplayFixture.Boot(_controls, slot);
-            yield return null;
-            yield return null;
-            Assert.IsTrue(_fixture.Gameplay.Blueprints.IsPinned(cradle), "pinned across a load");
-            Assert.IsTrue(_fixture.Gameplay.Plotter.ShowsSheet(cradle), "and simply shown");
         }
 
         [UnityTest]

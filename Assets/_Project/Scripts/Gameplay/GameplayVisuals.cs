@@ -83,9 +83,13 @@ namespace MoonProject.Gameplay
                  "TillySled), each named as its prefab (0.5.5 §2).")]
         [SerializeField] private GameObject[] _containers = Array.Empty<GameObject>();
 
-        [Tooltip("Art's blueprint tube (Generated/Art/Pickups/BlueprintTube.prefab): a tube waiting on the ground at " +
-                 "a world anchor (docs/features/M3-21).")]
-        [SerializeField] private GameObject _tube;
+        [Tooltip("Art's scan fragments (Generated/Art/Fragments/Fragment_<Blueprint>_<n>), each named as its prefab " +
+                 "(0.5.5 §1).")]
+        [SerializeField] private GameObject[] _fragments = Array.Empty<GameObject>();
+
+        [Tooltip("Art's crashed test jumper (Generated/Art/Props/JumperWreck.prefab), holding the Hover-Jump " +
+                 "fragments at the chasm's near lip (0.5.5 §1.3).")]
+        [SerializeField] private GameObject _jumperWreck;
 
         [Tooltip("Art's garage service port (Generated/Art/Sites/GaragePort.prefab), with its Tray node " +
                  "(first-hour v2 §3).")]
@@ -109,7 +113,7 @@ namespace MoonProject.Gameplay
         public Material Spark => _spark;
         public Material HomeHalo => _homeHalo;
         public Material LinkPulse => _linkPulse;
-        public GameObject Tube => _tube;
+        public GameObject JumperWreck => _jumperWreck;
         public Material FeelSprite => _feelSprite;
         public Material BeamCore => _beamCore;
         public Material BeamSheath => _beamSheath;
@@ -138,6 +142,20 @@ namespace MoonProject.Gameplay
                 if (_containers[i] != null && _containers[i].name == name)
                 {
                     return _containers[i];
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>Art's scan fragment named <paramref name="name"/> (its prefab name), or null.</summary>
+        public GameObject Fragment(string name)
+        {
+            for (int i = 0; i < _fragments.Length; i++)
+            {
+                if (_fragments[i] != null && _fragments[i].name == name)
+                {
+                    return _fragments[i];
                 }
             }
 
@@ -181,7 +199,9 @@ namespace MoonProject.Gameplay
                     ? "Art's tower components are missing (run Gameplay/Materials)"
                 : _containers == null || _containers.Length == 0 || Array.IndexOf(_containers, null) >= 0
                     ? "Art's sealed containers are missing (run Gameplay/Materials)"
-                : _tube == null ? "Art's blueprint tube is missing (run Gameplay/Materials)"
+                : _fragments == null || _fragments.Length == 0 || Array.IndexOf(_fragments, null) >= 0
+                    ? "Art's scan fragments are missing (run Gameplay/Materials)"
+                : _jumperWreck == null ? "Art's jumper wreck is missing (run Gameplay/Materials)"
                 : _feelSprite == null ? "feel sprite material is missing (run Gameplay/FeelVfx)"
                 : _beamCore == null ? "beam core material is missing (run Gameplay/FeelVfx)"
                 : _beamSheath == null ? "beam sheath material is missing (run Gameplay/FeelVfx)"
@@ -208,9 +228,10 @@ namespace MoonProject.Gameplay
             _containers = containers;
         }
 
-        internal void PopulateTube(GameObject tube)
+        internal void PopulateScans(GameObject[] fragments, GameObject jumperWreck)
         {
-            _tube = tube;
+            _fragments = fragments;
+            _jumperWreck = jumperWreck;
         }
 
         /// <summary>

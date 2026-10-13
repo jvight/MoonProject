@@ -94,8 +94,7 @@ namespace MoonProject.Gameplay.Map
             try
             {
                 MapPlaces.Build(_tuning, context.Get<IWorldAnchors>(), _gameplay.Relays.Reach, _gameplay.Salvage.Sites,
-                    _gameplay.Friends.Friends, _gameplay.Blueprints, _gameplay.Progression.Tuning.Tubes, places,
-                    probes);
+                    _gameplay.Friends.Friends, _gameplay.Blueprints, _gameplay.Scans, places, probes);
             }
             catch (InvalidOperationException exception)
             {

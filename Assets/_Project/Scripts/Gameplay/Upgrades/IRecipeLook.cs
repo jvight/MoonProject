@@ -10,7 +10,7 @@ namespace MoonProject.Gameplay
         /// <summary>The upgrade id whose next level is looked at, or null when the view rests on no recipe.</summary>
         string Looked { get; }
 
-        /// <summary>True when <see cref="Looked"/> is a kit's sheet on the board (its blueprint is decoded).</summary>
+        /// <summary>True when <see cref="Looked"/> is a kit's sheet on the board (its blueprint is learned).</summary>
         bool IsSheet { get; }
     }
 }

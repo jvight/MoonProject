@@ -11,9 +11,10 @@ namespace MoonProject.Gameplay
     {
         private static readonly InteractionKind[] Priority =
         {
-            InteractionKind.PickUp, InteractionKind.Build, InteractionKind.Deposit, InteractionKind.Repair, InteractionKind.Restore, InteractionKind.Tune,
-            InteractionKind.Hop, InteractionKind.Upgrade, InteractionKind.Salvage, InteractionKind.Excavate,
-            InteractionKind.Stow, InteractionKind.Tether, InteractionKind.Reel,
+            InteractionKind.PickUp, InteractionKind.Build, InteractionKind.Deposit, InteractionKind.Repair,
+            InteractionKind.Restore, InteractionKind.Tune, InteractionKind.Hop, InteractionKind.Upgrade,
+            InteractionKind.Salvage, InteractionKind.Excavate, InteractionKind.Stow, InteractionKind.Tether,
+            InteractionKind.Reel, InteractionKind.Scan,
         };
 
         private readonly ExcavationSystem _excavation;
@@ -31,6 +32,7 @@ namespace MoonProject.Gameplay
         private readonly HomeShelves _shelves;
         private readonly CrewCrates _crates;
         private readonly SealedContainers _containers;
+        private readonly ScanField _scans;
 
         /// <param name="beam">
         /// 07's beam work: while new work sleeps (the crawl, docs/features/M3-20) a beam verb's hint shows as not ready.
@@ -38,8 +40,9 @@ namespace MoonProject.Gameplay
         public InteractionHints(ExcavationSystem excavation,
             SalvageField salvage, TetherSystem tether, CargoCradle cradle, HomeBase home, IUpgradeStation[] stations,
             UpgradeService upgrades, IComponentGate parts, FriendField friends, RelayField relays, BeamWork beam,
-            PickupReach pickups, HomeShelves shelves, CrewCrates crates, SealedContainers containers)
+            PickupReach pickups, HomeShelves shelves, CrewCrates crates, SealedContainers containers, ScanField scans)
         {
+            _scans = scans ?? throw new ArgumentNullException(nameof(scans));
             _crates = crates ?? throw new ArgumentNullException(nameof(crates));
             _containers = containers ?? throw new ArgumentNullException(nameof(containers));
             _shelves = shelves ?? throw new ArgumentNullException(nameof(shelves));
@@ -152,6 +155,10 @@ namespace MoonProject.Gameplay
                         ? new InteractionHint(kind, _relays.Reach.Position(hop.Here), true)
                         : InteractionHint.None;
                     return hopHere;
+                case InteractionKind.Scan:
+                    ScanFragment fragment = _scans.Candidate;
+                    hint = fragment != null ? new InteractionHint(kind, fragment.Point, true) : InteractionHint.None;
+                    return fragment != null;
                 case InteractionKind.Reel:
                     hint = towed != null
                         ? new InteractionHint(kind, towed.Position, true)

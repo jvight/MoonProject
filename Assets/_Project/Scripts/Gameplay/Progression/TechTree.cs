@@ -7,8 +7,8 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// <see cref="ITechTree"/> over what the game already holds (docs/features/M3-21 §4): the tower's levels are
-    /// built as they land, the relay network once its first mast is lit, and each kit is decoded once the lab's
-    /// reader pinned its blueprint and built once the bay fitted it. Nothing of its own is saved. <see cref="Refresh"/>
+    /// built as they land, the relay network once its first mast is lit, and each kit is decoded once 07 has scanned
+    /// its blueprint's set and built once the bay fitted it. Nothing of its own is saved. <see cref="Refresh"/>
     /// publishes <see cref="TechNodeChanged"/> for each node that moved on; <see cref="Announce"/> (after a save is
     /// applied) takes the state silently and publishes it once per known node with Restored = true. Nothing allocates
     /// per frame.
@@ -25,7 +25,7 @@ namespace MoonProject.Gameplay
 
         /// <param name="towerLevel">The tower level on show.</param>
         /// <param name="litMasts">Relay masts lit (linked home).</param>
-        /// <param name="decoded">True once a kit's blueprint is decoded (by the bay's upgrade id).</param>
+        /// <param name="decoded">True once a kit's blueprint is learned (by the bay's upgrade id).</param>
         /// <param name="fitted">A kit's fitted level (by the bay's upgrade id).</param>
         /// <param name="kits">The kit nodes this version holds; a kit node left out stays unknown.</param>
         /// <exception cref="ArgumentException">A kit names a station node, no upgrade, or repeats another.</exception>

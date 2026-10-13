@@ -28,11 +28,11 @@ namespace MoonProject.Gameplay.Map
 
         /// <summary>The places and their probes, in ink order.</summary>
         public static void Build(MapTuning tuning, IWorldAnchors anchors, StationReach reach,
-            IReadOnlyList<SalvageSite> sites, IReadOnlyList<Friend> friends, IBlueprintBoard board,
-            IReadOnlyList<BlueprintTube> tubes, List<MapPlace> places, List<MapPlaceProbe> probes)
+            IReadOnlyList<SalvageSite> sites, IReadOnlyList<Friend> friends, IBlueprintBoard board, ScanField scans,
+            List<MapPlace> places, List<MapPlaceProbe> probes)
         {
             if (tuning == null || anchors == null || reach == null || sites == null || friends == null
-                || board == null || tubes == null || places == null || probes == null)
+                || board == null || scans == null || places == null || probes == null)
             {
                 throw new ArgumentNullException(nameof(tuning), "The map's place list is missing an input.");
             }
@@ -45,7 +45,7 @@ namespace MoonProject.Gameplay.Map
 
             foreach (SalvageSite site in sites)
             {
-                entries.Add(SiteEntry(site, board, tubes));
+                entries.Add(SiteEntry(site, board, scans));
             }
 
             for (int node = StationReach.Home + 1; node < reach.NodeCount; node++)
@@ -86,15 +86,9 @@ namespace MoonProject.Gameplay.Map
             return true;
         }
 
-        private static Entry SiteEntry(SalvageSite site, IBlueprintBoard board, IReadOnlyList<BlueprintTube> tubes)
+        private static Entry SiteEntry(SalvageSite site, IBlueprintBoard board, ScanField scans)
         {
-            string kit = null;
-            foreach (BlueprintTube tube in tubes)
-            {
-                kit = tube.SiteId == site.Id ? tube.KitId : kit;
-            }
-
-            bool TubeWaits() => kit != null && !board.IsPinned(kit);
+            string kit = scans.KitAt(site.Id);
 
             bool HeartWaits()
             {
@@ -106,7 +100,7 @@ namespace MoonProject.Gameplay.Map
                     }
                 }
 
-                return TubeWaits();
+                return false;
             }
 
             return new Entry(new MapPlace(site.Id, site.Position, MapPlaceKind.Site, site.Radius))

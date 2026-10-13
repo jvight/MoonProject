@@ -101,22 +101,6 @@ namespace MoonProject.Gameplay
         [Tooltip("Letters there are to play, letter.mast_1 to letter.mast_n.")]
         [Range(0, 40)] [SerializeField] private int _letterCount = 10;
 
-        [Header("Blueprints")]
-        [Tooltip("Where the kits' blueprint tubes lie: Hover-Jump's on the ground at the chasm's near lip (M3-21), " +
-                 "Cell Pack II's in relay.2's service cabinet, which opens as the mast comes back to life (M3-20), " +
-                 "the Focus Lens's by the Kestrel's cockpit (M3-26), the Side Bins' in the lander's heart (M3-25), " +
-                 "the others each in a salvage site's heart, found with its relic.")]
-        [SerializeField] private BlueprintTube[] _tubes =
-        {
-            BlueprintTube.AtAnchor("rover.hover_jump", WorldAnchorIds.CanyonLip, 6f),
-            new BlueprintTube("rover.cargo_cradle", "site.garage"),
-            new BlueprintTube("rover.warm_headlamp", "site.kestrel"),
-            new BlueprintTube("rover.boost_coils", "site.drill"),
-            new BlueprintTube("rover.cell_pack", "relay.2"),
-            BlueprintTube.AtAnchor("rover.focus_lens", "site.kestrel", 12f),
-            new BlueprintTube("rover.side_bins", "site.lander"),
-        };
-
         [Header("Kenji's garage port (first-hour v2 §3)")]
         [Tooltip("The salvage site the port stands in: its last cut opens the port.")]
         [SerializeField] private string _portSite = "site.garage";
@@ -192,22 +176,8 @@ namespace MoonProject.Gameplay
         [Tooltip("Height (m) of the arc a component glides along into the hopper.")]
         [Range(0f, 3f)] [SerializeField] private float _partFeedArc = 0.8f;
 
-        [Header("The lab's reader (M3-19)")]
-        [Tooltip("Seconds 07's beam takes to feed a blueprint tube into the reader's slot.")]
-        [Range(0.3f, 4f)] [SerializeField] private float _readerFeedSeconds = 1.2f;
-
-        [Tooltip("Seconds the reader decodes a tube: a moment, not a timer.")]
-        [Range(1f, 10f)] [SerializeField] private float _readerDecodeSeconds = 4f;
-
-        [Tooltip("Turns per second of the reader's reel while it decodes.")]
-        [Range(0.1f, 4f)] [SerializeField] private float _reelTurnsPerSecond = 0.8f;
-
-        [Tooltip("Seconds the hand-off's lamp pulse takes from the reader down the leg and along the cable to the " +
-                 "bay.")]
-        [Range(0.5f, 10f)] [SerializeField] private float _handOffSeconds = 3f;
-
         [Header("Kenji's pen plotter (P7)")]
-        [Tooltip("Seconds the plotter takes to draw a decoded sheet.")]
+        [Tooltip("Seconds the plotter takes to draw a learned sheet.")]
         [Range(1f, 20f)] [SerializeField] private float _plotterDrawSeconds = 6f;
 
         [Tooltip("Rows the pen sweeps across the bed while drawing.")]
@@ -243,14 +213,6 @@ namespace MoonProject.Gameplay
 
         public float EveningCompletionHold => _eveningCompletionHold;
 
-        public float ReaderFeedSeconds => _readerFeedSeconds;
-
-        public float ReaderDecodeSeconds => _readerDecodeSeconds;
-
-        public float ReelTurnsPerSecond => _reelTurnsPerSecond;
-
-        public float HandOffSeconds => _handOffSeconds;
-
         public float PlotterDrawSeconds => _plotterDrawSeconds;
 
         public int PlotterRows => _plotterRows;
@@ -269,7 +231,6 @@ namespace MoonProject.Gameplay
 
         public string LeapKit => _leapKit;
 
-        public IReadOnlyList<BlueprintTube> Tubes => _tubes;
 
         public string PortSite => _portSite;
 

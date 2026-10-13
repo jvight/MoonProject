@@ -232,7 +232,7 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// The parts upgrade <paramref name="id"/> brings are known from now on (its blueprint decoded): 07's
+        /// The parts upgrade <paramref name="id"/> brings are known from now on (its blueprint learned): 07's
         /// equipment screen names their sockets (0.5.5 §3.5).
         /// </summary>
         public void MarkPartsKnown(string id)

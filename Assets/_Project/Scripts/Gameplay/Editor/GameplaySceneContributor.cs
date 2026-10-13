@@ -86,6 +86,7 @@ namespace MoonProject.Gameplay.Editor
             var batteryTuning = context.LoadAsset<BatteryTuning>(GameplayAssetPaths.BatteryTuning);
             var cargoTuning = context.LoadAsset<CargoTuning>(GameplayAssetPaths.CargoTuning);
             var cutterTuning = context.LoadAsset<CutterTuning>(GameplayAssetPaths.CutterTuning);
+            var scanTuning = context.LoadAsset<ScanTuning>(GameplayAssetPaths.ScanTuning);
             var materialCatalog = context.LoadAsset<MaterialCatalog>(GameplayAssetPaths.MaterialCatalog);
             var salvageCatalog = context.LoadAsset<SalvageCatalog>(GameplayAssetPaths.SalvageCatalog);
             var relayMast = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayMast);
@@ -245,6 +246,7 @@ namespace MoonProject.Gameplay.Editor
             gameplay.WireBattery(battery);
             gameplay.WireCargo(materialCatalog, cargoTuning);
             gameplay.WireCutter(cutterTuning);
+            gameplay.WireScans(scanTuning);
             context.AddSystem(gameplay);
         }
 
@@ -379,7 +381,6 @@ namespace MoonProject.Gameplay.Editor
             body.isKinematic = true;
             body.interpolation = RigidbodyInterpolation.Interpolate;
             Transform cableJam = Child(belly, BaseModelBuilder.CableJamName);
-            Transform reader = Station(lab, LabStation.Reader);
             var stations = new Transform[LabInterior.StationCount];
             for (int i = 0; i < stations.Length; i++)
             {
@@ -392,8 +393,7 @@ namespace MoonProject.Gameplay.Editor
                 Child(belly, BaseModelBuilder.HatchLeafRightName), BaseModelBuilder.HatchLeafTravel,
                 Child(belly, BaseModelBuilder.CableLeftName), Child(belly, BaseModelBuilder.CableRightName),
                 BaseModelBuilder.BellyCableBuiltLength, cableJam, Child(cableJam, BaseModelBuilder.StitchPointName),
-                lab, stations, Child(reader, BaseModelBuilder.ReaderSlotName),
-                Child(reader, BaseModelBuilder.ReaderReelName), Child(reader, BaseModelBuilder.ReaderTapeName), dock);
+                lab, stations, dock);
         }
 
         /// <summary>

@@ -26,12 +26,11 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// The crew's belly lift and lab in the real Main scene (docs/features/M3-19), seeded with home powered (tower L1)
-    /// and the Cargo Cradle's blueprint tube riding on 07: waking on the dock with a find for the lab, the jammed lift
-    /// asks for the stitch; 07 drives onto the platform and stitches it level (saved as restored); a breath later the
-    /// platform carries 07 up through the hatch into the lab, where the turntable turns to the reader, whose beam feed
-    /// and decode publish the delivery, the decode and the hand-off. Then the stick turns the table round all four
-    /// stations, looks at the dark chart and comes away, and brings the platform down, turned so 07 faces out toward the
-    /// dock. A second session greets the ladder as progression does (07 wakes beside it) and catches 07's look up it,
+    /// and the rubber duck riding in the Cargo Cradle: waking on the dock with a find for the lab, the jammed lift asks
+    /// for the stitch; 07 drives onto the platform and stitches it level (saved as restored); a breath later the
+    /// platform carries 07 up through the hatch into the lab, where the turntable turns to the keepsake shelf that wants
+    /// the duck. Then the stick turns the table round every station, looks at the dark chart and comes away, and brings
+    /// the platform down, turned so 07 faces out toward the dock. A second session greets the ladder as progression does (07 wakes beside it) and catches 07's look up it,
     /// then down at the lift (Logs/gameplay-captures/ladder-*.png). Frames from the game camera at each stage (the ride
     /// from outside and through the hatch, each station from the ring) go to Logs/gameplay-captures/lift-*.png and
     /// lab-*.png, with lift.md recording 07's height and the lift's phase. Any error in the log fails it. Slow and needs
@@ -69,16 +68,14 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>07 is carried up: it rose at least this much short of the platform's rise (m).</summary>
         private const float CarriedTolerance = 0.6f;
 
-        private const string CargoCradle = "rover.cargo_cradle";
-
-        // Home powered (tower L1) and the Cargo Cradle's tube found and riding on 07, in Core's envelope and Gameplay's
-        // upgrades and blueprints (version 1) section formats.
+        // Home powered (tower L1) and the rubber duck riding in the Cargo Cradle (RelicState.Cradled), in Core's
+        // envelope and Gameplay's upgrades and relics (version 1) section formats.
         private const string LabSave =
             "{\"formatVersion\":1,\"contentVersion\":\"0.5.0\",\"savedAtUtc\":\"2026-10-10T00:00:00Z\"," +
             "\"sections\":[{\"key\":\"gameplay.upgrades\",\"version\":1,\"json\":\"{\\\"upgrades\\\":[" +
             "{\\\"id\\\":\\\"radio_tower\\\",\\\"level\\\":1}]}\"}," +
-            "{\"key\":\"gameplay.blueprints\",\"version\":1,\"json\":\"{\\\"carried\\\":[" +
-            "\\\"rover.cargo_cradle\\\"]}\"}]}";
+            "{\"key\":\"gameplay.relics\",\"version\":1,\"json\":\"{\\\"relics\\\":[" +
+            "{\\\"id\\\":\\\"rubber_duck\\\",\\\"state\\\":6}]}\"}]}";
 
         // The tower at its first level: home awake (no wake opening), the lift still dormant.
         private const string HomeAwakeSave =
@@ -125,7 +122,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         [Timeout(600000)]
         [PrebuildSetup(typeof(PlaythroughScene))]
         [PostBuildCleanup(typeof(PlaythroughScene))]
-        public IEnumerator TheBellyLift_IsStitched_RiddenIntoTheLab_TheReaderDecodes_AndItComesDownFacingOut()
+        public IEnumerator TheBellyLift_IsStitched_RiddenIntoTheLab_TurnsToTheShelf_AndItComesDownFacingOut()
         {
             yield return Boot(LabSave);
             LiftStation lift = _gameplay.Lift;
@@ -135,16 +132,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             _report.AppendLine("|---|---|---:|");
             var beats = new int[5];
             var faced = new List<LabStation>();
-            var decoded = new List<string>();
-            var handOffs = new List<DecodeHandOff>();
             bool inside = false;
             using IDisposable sounds = _context.Events.Subscribe<LiftCued>(cued => beats[(int)cued.Cue]++);
             using IDisposable turns = _context.Events.Subscribe<LabStationFaced>(stop => faced.Add(stop.Station));
-            using IDisposable finds = _context.Events.Subscribe<FindDecoded>(find => decoded.Add(find.KitId));
-            using IDisposable pulses = _context.Events.Subscribe<DecodeHandOff>(handOffs.Add);
             using IDisposable rides = _context.Events.Subscribe<LiftRideChanged>(ride => inside = ride.Inside);
             yield return WaitFor(lift, LiftPhase.Called,
-                "Home powered and a tube for the lab riding on 07: the jammed lift asks for the stitch.");
+                "Home powered and a relic for the lab riding on 07: the jammed lift asks for the stitch.");
             Capture("lift-0-called", lift);
 
             yield return DriveTo(lift.RideSpot - lift.RideHeading * LineUp, BoardRadius, "the apron before the lift");
@@ -167,16 +160,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             float rise = _rover.Position.y - bottom;
             Assert.Greater(rise, LiftRise(lift) - CarriedTolerance, $"07 rode up with the platform ({rise:F2} m).");
 
-            yield return WaitUntil(() => faced.Contains(LabStation.Reader), TurnSeconds,
-                "The turntable turns to the reader that wants the tube");
-            yield return WaitUntil(() => decoded.Count > 0, PhaseTimeout, "The reader feeds the tube in and decodes it");
-            Capture("lab-reader", lift);
-            Assert.AreEqual(CargoCradle, decoded[0]);
-            Assert.AreEqual(1, handOffs.Count, "The hand-off pulse starts down to the bay.");
-            Assert.IsTrue(_gameplay.Blueprints.IsPinned(CargoCradle), "Decoded: the bay can build the Cargo Cradle.");
-            Assert.IsFalse(_gameplay.Blueprints.IsDrawn(CargoCradle), "The bay sleeps: the sheet waits for L2.");
+            yield return WaitUntil(() => faced.Contains(LabStation.Keepsakes) && !lift.Turning, TurnSeconds,
+                "The turntable turns to the keepsake shelf that wants the duck");
+            Capture("lab-shelf-arrival", lift);
 
-            LabStation[] round = { LabStation.Board, LabStation.Keepsakes, LabStation.Chart, LabStation.Reader };
+            LabStation[] round = { LabStation.Chart, LabStation.Reader, LabStation.Board, LabStation.Keepsakes };
             foreach (LabStation next in round)
             {
                 int stops = faced.Count;
@@ -188,9 +176,9 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Capture("lab-" + next.ToString().ToLowerInvariant(), lift);
             }
 
-            yield return Tap(_keyboard.aKey);
+            yield return Tap(_keyboard.dKey);
             yield return WaitUntil(() => lift.Lab.Facing == LabStation.Chart && !lift.Turning, TurnSeconds,
-                "Left turns it back to the chart");
+                "Right turns it on round to the chart");
             yield return Tap(_keyboard.wKey);
             yield return WaitUntil(() => lift.Lab.IsLooking, PhaseTimeout, "Forward looks at the chart");
             yield return new WaitForSeconds(StationFrameSeconds);
@@ -212,7 +200,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Capture("lift-4-down", lift);
 
             Assert.LessOrEqual(beats[(int)LiftCue.WinchCreaked], 1,
-                "The jammed platform creaks at most once as it asks (07 may wake carrying the tube, before this listens).");
+                "The jammed platform creaks at most once as it asks (07 may wake carrying the duck, before this listens).");
             Assert.AreEqual(2, beats[(int)LiftCue.RideStarted], "The platform started moving up, then down.");
             Assert.AreEqual(2, beats[(int)LiftCue.RideStopped], "The platform reached the cabin, then the bottom.");
             Assert.AreEqual(1, beats[(int)LiftCue.HatchOpened], "The hatch opened for the ride up.");

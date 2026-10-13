@@ -5,8 +5,7 @@ using MoonProject.Core.Events;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The press that picks a waiting part up (tower parts, friends' parts, relay spares, blueprint tubes, Ro's tapes,
-    /// Ro's tape deck). Each frame the fields offer their resting parts; the nearest one within reach is the candidate,
+    /// The press that picks a waiting part up (tower parts, friends' parts, relay spares, Ro's tapes, Ro's tape deck). Each frame the fields offer their resting parts; the nearest one within reach is the candidate,
     /// shown as a world prompt with the key and the verb (<see cref="InteractionKind.PickUp"/>, the part's name from
     /// <see cref="TryGet"/>), and Excavate held takes it, like every other E verb (a tap, or a hold begun before 07
     /// came up to it, or kept on after digging it free): only then does it lift onto 07's back. Reach is measured
@@ -17,9 +16,6 @@ namespace MoonProject.Gameplay
     {
         /// <summary>Owner id of the tower's parts (<see cref="TowerPartField"/>).</summary>
         public const int TowerParts = 0;
-
-        /// <summary>Owner id of the blueprint tubes on the ground (<see cref="GroundTubes"/>).</summary>
-        public const int Tubes = 1;
 
         /// <summary>Owner id of the friends' parts (index = friend x <see cref="FriendProgress.MaxParts"/> + part).</summary>
         public const int Friends = 2;

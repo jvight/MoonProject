@@ -248,7 +248,7 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>A static collider of the node's mesh on the Prop layer (wrecks are solid), or null.</summary>
-        private static Collider MakeSolid(Transform node)
+        internal static Collider MakeSolid(Transform node)
         {
             if (!node.TryGetComponent(out MeshFilter filter) || filter.sharedMesh == null)
             {

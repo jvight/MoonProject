@@ -13,8 +13,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// Free order after the teaching steps (docs/features/M3-21 §5), on the real components behind the fake rover:
-    /// past the bay step a different path than the golden one (the Cargo Cradle fitted first while Hover-Jump's tube
-    /// still waits at the lip, the mound mast lit before the tower's last level) still reaches Power 3/3 with nothing
+    /// past the bay step a different path than the golden one (the Cargo Cradle fitted first while Hover-Jump's
+    /// fragments still wait at the lip, the mound mast lit before the tower's last level) still reaches Power 3/3 with nothing
     /// blocked, the recovery rows light as it goes, and the next line names only the targets all the way.
     /// </summary>
     public sealed class GoalsSessions : InputTestFixture
@@ -70,7 +70,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture.Display(_fixture.FindRelic("rubber_duck"), 0);
             _fixture.PowerTo(2);
             _fixture.GiveMaterials(40, 40, 40);
-            _fixture.Decode(CargoCradle);
+            _fixture.Learn(CargoCradle);
             Workshop bay = gameplay.Workshop;
             yield return Waits.Until(() => bay.Awake, 5f);
             Assert.AreEqual(ProgressionKeys.NextBay, progression.NextStep, "the last teaching step: fit a kit");
@@ -86,8 +86,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(ProgressionKeys.NextPowerPart, progression.NextStep, "Power first");
             Assert.AreEqual(TechNodeState.Built, gameplay.Tech.StateOf(TechNodeId.CargoCradle));
             Assert.AreEqual(TechNodeState.Unknown, gameplay.Tech.StateOf(TechNodeId.HoverJump),
-                "Hover-Jump's tube still waits at the lip, and nothing asks for it");
-            Assert.IsTrue(gameplay.GroundTubes.IsResting(HoverJump));
+                "Hover-Jump's fragments still wait at the lip, and nothing asks for them");
+            Assert.AreEqual(3, gameplay.Scans.Left(WorldAnchorIds.CanyonLip));
             Assert.AreEqual(2, gameplay.Recovery.LitLamps(RecoveryTarget.Power));
 
             gameplay.Relays.Restore(new RelaysSaveData
