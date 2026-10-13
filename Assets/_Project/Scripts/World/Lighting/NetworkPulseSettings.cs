@@ -47,24 +47,24 @@ namespace MoonProject.World
 
         [Tooltip("Glow of a lamp's flash halo at its peak (LofiBeaconHalo intensity).")]
         [Range(0f, 6f)]
-        [SerializeField] private float _flashIntensity = 1.5f;
+        [SerializeField] private float _flashIntensity = 2.4f;
 
         [Tooltip("Radius of a lamp's flash halo up close, metres.")]
         [Range(0.05f, 4f)]
-        [SerializeField] private float _flashRadius = 0.6f;
+        [SerializeField] private float _flashRadius = 1f;
 
         [Tooltip("Glow of the travelling bead's halo (LofiBeaconHalo intensity).")]
         [Range(0f, 6f)]
-        [SerializeField] private float _beadIntensity = 1.1f;
+        [SerializeField] private float _beadIntensity = 1.8f;
 
         [Tooltip("Radius of the travelling bead's halo up close, metres.")]
         [Range(0.05f, 4f)]
-        [SerializeField] private float _beadRadius = 0.35f;
+        [SerializeField] private float _beadRadius = 0.6f;
 
         [Tooltip("Smallest apparent radius of the flashes and the bead, degrees, so the chain still reads as warm " +
             "dots from across the basin.")]
         [Range(0f, 2f)]
-        [SerializeField] private float _minAngle = 0.3f;
+        [SerializeField] private float _minAngle = 0.6f;
 
         [Tooltip("Distance (metres) from which the halos begin keeping their minimum size.")]
         [Range(1f, 400f)]

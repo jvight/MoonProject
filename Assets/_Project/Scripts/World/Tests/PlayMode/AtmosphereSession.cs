@@ -425,6 +425,12 @@ namespace MoonProject.World.PlayModeTests
                 RelayNode lit = reach.GetNode(origin);
                 context.Events.Publish(new RelayRestored(lit.Id, lit.LampPosition, reach.LitCount - 1,
                     reach.NodeCount - 1, "home", 1f));
+                for (int i = 0; i < reach.NodeCount; i++)
+                {
+                    RelayNode node = reach.GetNode(i);
+                    Debug.Log($"[network-pulse] {node.Id} lit {node.Lit} lamp {node.LampPosition}");
+                }
+
                 Vector3 outward = Vector3.ProjectOnPlane(centre - home, Vector3.up).normalized;
                 Vector3 eye = home - outward * PulseViewBack + Vector3.up * PulseViewHeight;
                 Pose pose = LookPose("network_pulse", eye, Vector3.Lerp(home, centre, 0.5f), PulseViewFov);
@@ -434,7 +440,7 @@ namespace MoonProject.World.PlayModeTests
                 CapturePose(view, pose, "network-pulse-1-first-link");
                 yield return new WaitForSeconds(hop);
                 CapturePose(view, pose, "network-pulse-2-chain");
-                while (hops.Count == 0 || hops[hops.Count - 1].NodeId != "home")
+                while (!hops.Exists(reached => reached.NodeId == "home"))
                 {
                     Assert.Less(Time.time - started, WakeTimeout * 10f, "the handshake reaches home");
                     yield return null;
