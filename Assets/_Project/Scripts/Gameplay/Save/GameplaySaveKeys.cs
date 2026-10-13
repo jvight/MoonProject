@@ -53,5 +53,7 @@ namespace MoonProject.Gameplay
         public const int GaragePortVersion = 1;
         public const string Equipment = "gameplay.equipment";
         public const int EquipmentVersion = 1;
+        public const string Containers = "gameplay.containers";
+        public const int ContainersVersion = 1;
     }
 }

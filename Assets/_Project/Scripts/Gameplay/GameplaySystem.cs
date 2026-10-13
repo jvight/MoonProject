@@ -98,6 +98,9 @@ namespace MoonProject.Gameplay
         /// <summary>The crew's supply crates, one beside each site's heart (M3-25 T4).</summary>
         public CrewCrates Crates { get; private set; }
 
+        /// <summary>The world's sealed containers: every find that rests in one (0.5.5 §2).</summary>
+        public SealedContainers Containers { get; private set; }
+
         public UpgradeService Upgrades { get; private set; }
 
         /// <summary>07's equipment (0.5.5 §3.5): its fitted parts and the parts row.</summary>
@@ -367,7 +370,8 @@ namespace MoonProject.Gameplay
                 services.Layout.BasePosition, _friends.Tuning);
             RecipeLook = new RecipeLook(services.View, Shop, _tower, _plotter, Blueprints.Kits, _progression.Tuning);
             Hints = new InteractionHints(_excavation, _salvage, _tether, _cradle, _home,
-                stations, Upgrades, TowerParts, _friends, _relays, services.Beam, services.Pickups, Shelves, Crates);
+                stations, Upgrades, TowerParts, _friends, _relays, services.Beam, services.Pickups, Shelves, Crates,
+                Containers);
             context.Register<IMaterialStock>(Materials);
             context.Register<IMaterialCatalog>(_materialCatalog);
             context.Register<ICutter>(Cutter);
@@ -442,6 +446,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.GaragePortVersion, Port.Capture, Port.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<EquipmentSaveData>(GameplaySaveKeys.Equipment,
                 GameplaySaveKeys.EquipmentVersion, Equipment.Capture, Equipment.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<ContainersSaveData>(GameplaySaveKeys.Containers,
+                GameplaySaveKeys.ContainersVersion, Containers.Capture, Containers.Restore)));
         }
 
         /// <summary>True while 07 rests at <paramref name="station"/>, free to fit or take off its parts.</summary>
@@ -506,7 +512,7 @@ namespace MoonProject.Gameplay
             try
             {
                 return new TowerPartField(TowerParts, transform, services, _salvage, _relays.Reach, _tower,
-                    _friends.Tuning, _progression.Tuning, () => _progression.ChasmSeen);
+                    _friends.Tuning, _progression.Tuning, () => _progression.ChasmSeen, Containers);
             }
             catch (InvalidOperationException exception)
             {
@@ -689,6 +695,7 @@ namespace MoonProject.Gameplay
             Fetch.Step(now);
             Shelves.Step(now, Time.deltaTime);
             Crates.Step(now, Time.deltaTime);
+            Containers.Step(now, Time.deltaTime);
             TowerPartField.Step(now);
             GroundTubes.Step(now);
             Port.Step(Time.deltaTime);
@@ -732,6 +739,7 @@ namespace MoonProject.Gameplay
             LiftStation lift = _lift;
             Fetch = new TillyFetch(Bundles, _relays.Reach, fetcher, _cargo, () => lift.RideSpot);
             Crates = new CrewCrates(_salvage, _cargo, Cutter, services);
+            Containers = new SealedContainers(_salvage, Crates, _cargo, Cutter, services);
             Transform[] racks = _home.ShelfRacks;
             int seats = _cargo.ShelfSlots * HomeShelves.Seats;
             var rackSeats = new Transform[racks.Length][];

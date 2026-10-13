@@ -82,6 +82,10 @@ namespace MoonProject.Gameplay
         [Tooltip("Art's tower components (Generated/Art/Pickups/Part_*), each named as the part's id.")]
         [SerializeField] private GameObject[] _components = Array.Empty<GameObject>();
 
+        [Tooltip("Art's sealed containers (Generated/Art/Props: CoilCrate, TapeCase, JunctionBox, SupplyPod, " +
+                 "TillySled), each named as its prefab (0.5.5 §2).")]
+        [SerializeField] private GameObject[] _containers = Array.Empty<GameObject>();
+
         [Tooltip("Art's blueprint tube (Generated/Art/Pickups/BlueprintTube.prefab): a tube waiting on the ground at " +
                  "a world anchor (docs/features/M3-21).")]
         [SerializeField] private GameObject _tube;
@@ -125,6 +129,20 @@ namespace MoonProject.Gameplay
             return _pads[best];
         }
 
+        /// <summary>Art's sealed container named <paramref name="name"/> (its prefab name), or null.</summary>
+        public GameObject Container(string name)
+        {
+            for (int i = 0; i < _containers.Length; i++)
+            {
+                if (_containers[i] != null && _containers[i].name == name)
+                {
+                    return _containers[i];
+                }
+            }
+
+            return null;
+        }
+
         /// <summary>Art's model of the tower component <paramref name="partId"/> (its prefab name), or null.</summary>
         public GameObject ComponentModel(string partId)
         {
@@ -161,6 +179,8 @@ namespace MoonProject.Gameplay
                   Array.IndexOf(_pads, null) >= 0 ? "Art's station pads are missing (run Gameplay/Materials)"
                 : _components == null || Array.IndexOf(_components, null) >= 0
                     ? "Art's tower components are missing (run Gameplay/Materials)"
+                : _containers == null || _containers.Length == 0 || Array.IndexOf(_containers, null) >= 0
+                    ? "Art's sealed containers are missing (run Gameplay/Materials)"
                 : _tube == null ? "Art's blueprint tube is missing (run Gameplay/Materials)"
                 : _feelSprite == null ? "feel sprite material is missing (run Gameplay/FeelVfx)"
                 : _beamCore == null ? "beam core material is missing (run Gameplay/FeelVfx)"
@@ -180,6 +200,11 @@ namespace MoonProject.Gameplay
         internal void PopulateComponents(GameObject[] parts)
         {
             _components = parts;
+        }
+
+        internal void PopulateContainers(GameObject[] containers)
+        {
+            _containers = containers;
         }
 
         internal void PopulateTube(GameObject tube)

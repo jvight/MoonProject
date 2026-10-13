@@ -136,6 +136,14 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Seconds the bay's arms may take to set a bought piece on 07 (the rover's install moment).</summary>
         private const float BayFitTimeout = 25f;
 
+        /// <summary>Metres in front of a sealed container's cut point 07 stops to cut it (0.5.5 §2).</summary>
+        private const float SealStandOff = 1.6f;
+
+        /// <summary>
+        /// Seconds to cut a container's seal: a crew crate beside it may come first, then the lid swings.
+        /// </summary>
+        private const float SealCutTimeout = 20f;
+
         /// <summary>07 lines up this far (m) in front of the turntable to drive in; it backs out as far.</summary>
         private const float BayApproach = 6f;
 
@@ -1026,16 +1034,28 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// The tower's component <paramref name="index"/> waits in <paramref name="site"/>'s open heart: round the
-        /// wreck to open ground beside it, ease up and press E: it spirals into 07 (P1).
+        /// The tower's component <paramref name="index"/> rests sealed in Art's container in <paramref name="site"/>'s
+        /// open heart (0.5.5 §2): round the wreck to the container's front and hold E to cut its seal; the lid swings
+        /// open and the part slides out. Then to open ground beside it, ease up and press E: it spirals into 07 (P1).
         /// </summary>
         private IEnumerator PickUpPartInTheHeart(SalvageSite site, int index)
         {
             Begin();
             TowerPartField field = _gameplay.TowerPartField;
             string part = _gameplay.TowerParts.PartAt(index).PartId;
-            yield return Until(() => field.IsResting(index), _gameplay.Progression.Tuning.PartAppearSeconds + 2f,
-                $"{part} eases into view in the heart of {site.Id}");
+            SealedContainer container =
+                _gameplay.Containers.Find(TowerPartField.ContainerId(_gameplay.TowerParts.PartAt(index)));
+            Assert.IsNotNull(container, $"{part} rests sealed in a container in the heart of {site.Id}");
+            yield return Until(() => container.Available, 2f, $"the seal of {part}'s container glows");
+            Vector3 front = container.CutPoint.position + container.Root.forward * SealStandOff;
+            yield return CircleTo(site, Flat(front), 0f);
+            yield return DriveTo(Flat(front), 1f, 0.35f, 30f, $"the seal of {part}'s container");
+            Press(_keyboard.eKey);
+            yield return Until(() => container.Opened, SealCutTimeout, $"held E cuts the seal of {part}'s container");
+            Release(_keyboard.eKey);
+            yield return Until(() => field.IsResting(index), _gameplay.Progression.Tuning.PartAppearSeconds +
+                _gameplay.Cargo.ContainerLidSeconds + 2f, $"{part} slides out of its container");
+            Capture("03-container-" + part);
             Vector3 rest = field.RestPosition(index);
             Assert.IsTrue(OpenSpotBy(rest, _ => true, out Vector3 park, out Vector3 outward),
                 $"open ground beside {part} in the heart of {site.Id}");

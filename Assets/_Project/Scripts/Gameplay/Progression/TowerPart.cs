@@ -27,10 +27,15 @@ namespace MoonProject.Gameplay
                  "power waits on that look.")]
         [SerializeField] private bool _afterTheChasm;
 
+        [Tooltip("For a site's heart: Art's sealed container it rests in (CoilCrate, JunctionBox; 0.5.5 §2), " +
+                 "its seal cut to find it. Empty for a part that rests elsewhere.")]
+        [SerializeField] private string _container;
+
         public TowerPart(string partId, int towerLevel, TowerPartSource source, string siteId, Vector2 heartOffset,
-            bool afterTheChasm = false)
+            bool afterTheChasm = false, string container = "")
         {
             _afterTheChasm = afterTheChasm;
+            _container = container;
             _partId = partId;
             _towerLevel = towerLevel;
             _source = source;
@@ -49,5 +54,11 @@ namespace MoonProject.Gameplay
         public Vector2 HeartOffset => _heartOffset;
 
         public bool AfterTheChasm => _afterTheChasm;
+
+        /// <summary>Art's container prefab the part rests in, or empty.</summary>
+        public string Container => _container ?? string.Empty;
+
+        /// <summary>True when the part rests in a sealed container.</summary>
+        public bool InContainer => !string.IsNullOrEmpty(_container);
     }
 }

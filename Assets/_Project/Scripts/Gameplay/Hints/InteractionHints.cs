@@ -30,6 +30,7 @@ namespace MoonProject.Gameplay
         private readonly PickupReach _pickups;
         private readonly HomeShelves _shelves;
         private readonly CrewCrates _crates;
+        private readonly SealedContainers _containers;
 
         /// <param name="beam">
         /// 07's beam work: while new work sleeps (the crawl, docs/features/M3-20) a beam verb's hint shows as not ready.
@@ -37,9 +38,10 @@ namespace MoonProject.Gameplay
         public InteractionHints(ExcavationSystem excavation,
             SalvageField salvage, TetherSystem tether, CargoCradle cradle, HomeBase home, IUpgradeStation[] stations,
             UpgradeService upgrades, IComponentGate parts, FriendField friends, RelayField relays, BeamWork beam,
-            PickupReach pickups, HomeShelves shelves, CrewCrates crates)
+            PickupReach pickups, HomeShelves shelves, CrewCrates crates, SealedContainers containers)
         {
             _crates = crates ?? throw new ArgumentNullException(nameof(crates));
+            _containers = containers ?? throw new ArgumentNullException(nameof(containers));
             _shelves = shelves ?? throw new ArgumentNullException(nameof(shelves));
             _pickups = pickups ?? throw new ArgumentNullException(nameof(pickups));
             _excavation = excavation != null ? excavation : throw new ArgumentNullException(nameof(excavation));
@@ -102,12 +104,15 @@ namespace MoonProject.Gameplay
                 case InteractionKind.Salvage:
                     SalvagePiece piece = _salvage.Cutting ?? _salvage.Candidate;
                     CrewCrate crate = _crates.Candidate;
+                    SealedContainer sealedOne = _containers.Candidate;
                     hint = piece != null
                         ? new InteractionHint(kind, piece.CutPosition, _salvage.Cutting != null || _beam.MayStart)
                         : crate != null
                             ? new InteractionHint(kind, crate.CutPoint.position, _beam.MayStart)
-                            : InteractionHint.None;
-                    return piece != null || crate != null;
+                            : sealedOne != null
+                                ? new InteractionHint(kind, sealedOne.CutPoint.position, _beam.MayStart)
+                                : InteractionHint.None;
+                    return piece != null || crate != null || sealedOne != null;
                 case InteractionKind.Stow:
                     Relic stowable = _cradle.CanStow ? _tether.Hovered : null;
                     hint = stowable != null

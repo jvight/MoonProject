@@ -112,7 +112,20 @@ namespace MoonProject.Gameplay
         [Tooltip("Glow of a sealed crate's seam (dark once cut).")]
         [Range(0f, 4f)] [SerializeField] private float _sealGlow = 1f;
 
+        [Header("Sealed containers (0.5.5 §2)")]
+        [Tooltip("How big a container's one cut is (its seal).")]
+        [SerializeField] private PieceSize _containerCut = PieceSize.Small;
+
+        [Tooltip("Degrees a container's lid swings open about its hinge once the seal is cut.")]
+        [Range(30f, 180f)] [SerializeField] private float _containerLidSwing = 105f;
+
+        [Tooltip("Seconds the lid takes to swing open; the find slides out once it stands open.")]
+        [Range(0.2f, 3f)] [SerializeField] private float _containerLidSeconds = 0.9f;
+
         public PieceSize CrateCut => _crateCut;
+        public PieceSize ContainerCut => _containerCut;
+        public float ContainerLidSwing => _containerLidSwing;
+        public float ContainerLidSeconds => _containerLidSeconds;
         public float LidLift => _lidLift;
         public float LidTilt => _lidTilt;
         public float LidSeconds => _lidSeconds;

@@ -259,7 +259,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator TowerCoil_WaitsInTheDepotsHeart_RidesOn07_IsFedToThePort_ThenTheFirstLevelCanBeBuilt()
+        public IEnumerator TowerCoil_WaitsSealedInTheDepotsCrate_SlidesOut_RidesOn07_IsFed_ThenTheFirstLevelCanBeBuilt()
         {
             _fixture = GameplayFixture.Boot(_controls);
             yield return null;
@@ -273,10 +273,18 @@ namespace MoonProject.Gameplay.PlayModeTests
             var delivered = new List<ComponentDelivered>();
             _fixture.Bootstrap.Context.Events.Subscribe<ComponentFound>(found.Add);
             _fixture.Bootstrap.Context.Events.Subscribe<ComponentDelivered>(delivered.Add);
+            var cuts = new List<ContainerSealCut>();
+            var opens = new List<ContainerOpened>();
+            _fixture.Bootstrap.Context.Events.Subscribe<ContainerSealCut>(cuts.Add);
+            _fixture.Bootstrap.Context.Events.Subscribe<ContainerOpened>(opens.Add);
             Assert.AreEqual("Part_TowerCoil", parts.PartAt(0).PartId);
-            Assert.IsTrue(field.IsResting(0), "the depot's heart is open: the tower's coil waits in it");
-            Assert.Less(SurfaceRules.HorizontalDistance(field.RestPosition(0), _fixture.FindSite("depot").Heart),
-                1e-3f);
+            SealedContainer crate = gameplay.Containers.Find(TowerPartField.ContainerId(parts.PartAt(0)));
+            Assert.IsNotNull(crate, "the coil rests in Art's crate (0.5.5 §2)");
+            Assert.AreEqual(ContainerKind.Crate, crate.Kind);
+            Assert.Less(SurfaceRules.HorizontalDistance(crate.Root.position, _fixture.FindSite("depot").Heart), 1e-3f,
+                "the crate stands in the depot's heart");
+            Assert.IsTrue(crate.Available, "the heart is open: the crate's seal glows to be cut");
+            Assert.IsFalse(field.IsResting(0), "nothing lies loose on the ground: the coil is sealed in");
             Assert.IsFalse(field.IsResting(2), "no mast is restored yet, so no relay spare");
 
             _fixture.GiveMaterials(30, 30, 30);
@@ -287,6 +295,19 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out InteractionHint hint));
             Assert.IsFalse(hint.Ready, "the prompt waits for the coil");
 
+            gameplay.Crates.Restore(new CratesSaveData { opened = new[] { WorldAnchorIds.SitePrefix + "depot" } });
+            _fixture.Rover.Place(crate.CutPoint.position + crate.Root.forward * 1.5f, Yaw(-Flat(crate.Root.forward)));
+            yield return SealCut.Hold(this, gameplay, crate, "the coil crate");
+            Assert.AreEqual(1, cuts.Count, "the seal parts");
+            Assert.AreEqual(crate.Id, cuts[0].ContainerId);
+            Assert.AreEqual(1, opens.Count, "the lid stands open");
+            Assert.AreEqual(ContainerKind.Crate, opens[0].Kind);
+            yield return Waits.Until(() => field.IsResting(0), _fixture.ProgressionTuning.PartAppearSeconds + 1f);
+            Assert.IsTrue(field.IsResting(0), "the coil slides out onto the ground at the crate's front");
+            Assert.Greater(Vector3.Dot(Flat(field.RestPosition(0) - crate.ItemSocket.position), crate.Root.forward),
+                0f, "out in front, not inside");
+            yield return null;
+            Assert.IsNull(gameplay.Containers.Candidate, "an open crate has nothing more to cut");
             _fixture.Rover.Place(field.RestPosition(0), 0f);
             yield return PickupPress.Take(this, _fixture.Gameplay, 2f, "the coil");
             yield return Waits.Until(() => found.Count > 0, 5f);
@@ -319,6 +340,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             Friend tilly = FindFriend("tilly");
             Friend bell = FindFriend("bell");
             Assert.IsFalse(field.IsResting(1), "the garage's transformer waits for the chasm (P2)");
+            TowerPart transformer = gameplay.TowerParts.PartAt(1);
+            SealedContainer box = gameplay.Containers.Find(TowerPartField.ContainerId(transformer));
+            Assert.IsFalse(box.Available,
+                "its junction box stays dark until then");
             Assert.IsFalse(bell.Progress.Discovered);
 
             tilly.Progress.Restore(new FriendSaveData { id = "tilly", state = (int)FriendState.Awake, parts = -1,
@@ -341,7 +366,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return new WaitForSeconds(_fixture.ProgressionTuning.ChasmLookSeconds + 0.5f);
             Assert.IsFalse(progression.LookingAcross);
             Assert.AreEqual(0, _fixture.Rover.HoldStillCount, "then it is free to drive");
-            Assert.IsTrue(field.IsResting(1), "now Tilly spots the transformer in the garage's heart");
+            Assert.AreEqual(ContainerKind.Box, box.Kind);
+            Assert.IsTrue(box.Available, "now Tilly spots it: the garage's junction box glows to be cut");
+            Assert.IsFalse(field.IsResting(1), "the transformer is still sealed in");
 
             _fixture.Rover.Place(lip.Position - lip.Forward * 30f, 0f);
             yield return null;

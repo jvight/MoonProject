@@ -405,6 +405,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             });
             visuals.PopulateTube(Template("BlueprintTube", new Vector3(0.7f, 0.14f, 0.14f)));
             visuals.PopulateGaragePort(PortTemplate());
+            visuals.PopulateContainers(new[]
+            {
+                ContainerTemplate("CoilCrate"), ContainerTemplate("TapeCase"), ContainerTemplate("JunctionBox"),
+                ContainerTemplate("SupplyPod"), ContainerTemplate("TillySled"),
+            });
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
             Gameplay = root.AddComponent<GameplaySystem>();
@@ -1079,6 +1084,27 @@ namespace MoonProject.Gameplay.PlayModeTests
             block.transform.localPosition = localPosition;
             block.transform.localScale = size;
             return block.transform;
+        }
+
+        /// <summary>
+        /// A stand-in for one of Art's sealed containers (0.5.5 §2): a body with its <c>Lid</c> hinged at the back,
+        /// holding <c>CutPoint</c> and the glowing <c>Seal</c>, and the <c>ItemSocket</c> inside.
+        /// </summary>
+        private GameObject ContainerTemplate(string name)
+        {
+            GameObject container = Template(name, new Vector3(0.9f, 0.6f, 0.7f));
+            var lid = new GameObject(SealedContainer.LidPath);
+            lid.transform.SetParent(container.transform, false);
+            lid.transform.localPosition = new Vector3(0f, 0.6f, -0.35f);
+            var cut = new GameObject("CutPoint");
+            cut.transform.SetParent(lid.transform, false);
+            cut.transform.localPosition = new Vector3(0f, 0f, 0.7f);
+            Transform seal = Block(lid.transform, new Vector3(0f, 0f, 0.7f), new Vector3(0.8f, 0.04f, 0.04f));
+            seal.name = "Seal";
+            var socket = new GameObject(SealedContainer.ItemSocketPath);
+            socket.transform.SetParent(container.transform, false);
+            socket.transform.localPosition = new Vector3(0f, 0.25f, 0f);
+            return container;
         }
 
         /// <summary>A stand-in for Art's GaragePort with its Tray node.</summary>
