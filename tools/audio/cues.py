@@ -2137,7 +2137,7 @@ def bell_knob_tap(_variant, gen):
 
 # ---- The crew's lab up the belly lift (docs/features/M3-19) and its map (M3-07) ----
 
-LAB_DETENT_NOTES = ("D5", "E5", "F#5", "A5")
+LAB_DETENT_NOTES = ("D5", "F#5", "A5")
 
 
 def lift_hatch_open(_variant, gen):

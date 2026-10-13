@@ -222,8 +222,12 @@ namespace MoonProject.Audio.PlayModeTests
             _rig.Events.Publish(new LabEntered(LabStation.Board));
             yield return new WaitForSeconds(0.6f);
             Assert.IsTrue(_rig.Lab.RoomSource.isPlaying, "the lab's room tone comes in");
+            _rig.Events.Publish(new LabStationFaced(LabStation.Chart));
+            Assert.AreEqual("lab_detent_01", LastClip, "each station settles on its own pentatonic note");
             _rig.Events.Publish(new LabStationFaced(LabStation.Board));
-            Assert.AreEqual("lab_detent_03", LastClip, "each station settles on its own pentatonic note");
+            Assert.AreEqual("lab_detent_02", LastClip);
+            _rig.Events.Publish(new LabStationFaced(LabStation.Keepsakes));
+            Assert.AreEqual("lab_detent_03", LastClip);
             _rig.Events.Publish(new RecoveryProgressChanged(RecoveryTarget.Power, 3, 3, true));
             _rig.Events.Publish(new RecoveryProgressChanged(RecoveryTarget.Link, 1, 3, false));
             Assert.AreEqual("lab_detent_03", LastClip, "a load or a lamp alone plays no chord");

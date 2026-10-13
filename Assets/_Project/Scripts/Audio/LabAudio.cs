@@ -119,9 +119,27 @@ namespace MoonProject.Audio
             Drive(_tableHum, _table.Gain * _tuning.TableHumVolume * _tableCueVolume * sfx);
         }
 
+        /// <summary>Each station settles on its own note, chosen by which station it is, never by its position.</summary>
         private void OnFaced(LabStationFaced faced)
         {
-            _director.PlayVariantAt(_detent, (int)faced.Station, _rover.Position, _tuning.DetentVolume);
+            int note;
+            switch (faced.Station)
+            {
+                case LabStation.Chart:
+                    note = 0;
+                    break;
+                case LabStation.Board:
+                    note = 1;
+                    break;
+                case LabStation.Keepsakes:
+                    note = 2;
+                    break;
+                default:
+                    Debug.LogError($"{nameof(LabAudio)}: no detent note for lab station {faced.Station}.", this);
+                    return;
+            }
+
+            _director.PlayVariantAt(_detent, note, _rover.Position, _tuning.DetentVolume);
         }
 
         private void OnRecovery(RecoveryProgressChanged changed)

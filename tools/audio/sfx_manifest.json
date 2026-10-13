@@ -4961,20 +4961,17 @@
       "files": [
         "Assets/_Project/Audio/SFX/lab_detent_01.wav",
         "Assets/_Project/Audio/SFX/lab_detent_02.wav",
-        "Assets/_Project/Audio/SFX/lab_detent_03.wav",
-        "Assets/_Project/Audio/SFX/lab_detent_04.wav"
+        "Assets/_Project/Audio/SFX/lab_detent_03.wav"
       ],
       "variantLabels": [
         "01",
         "02",
-        "03",
-        "04"
+        "03"
       ],
       "sha256": [
         "944da4744631ad2623acb2cfaf6cc4b7f65da1eb5d46ba93e46d82d184c04845",
-        "c17f6d5f96077cbff503dd00bdb8247dca270aff2509ef9374714cd856a508ab",
-        "941bbaaa5db2b4af993cd27fdc0be85f5b88592e7963401fb88db3a37457c46d",
-        "cc5be6bef6a8d64758ff5fc831bae690a5d230a819ffee970a3ea143f9536fac"
+        "33cac7aaf75c7074f41eb4978424df764ce5d7e31008a8053f0de87835136de6",
+        "cb9279fb3363948df9429e23f0b15117145b735f383262ef336daf7dd6df5db4"
       ],
       "volumeMin": 0.55,
       "volumeMax": 0.55,
