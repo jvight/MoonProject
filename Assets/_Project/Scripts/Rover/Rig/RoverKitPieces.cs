@@ -36,6 +36,12 @@ namespace MoonProject.Rover
                 case RoverKitPiece.BatterySpine:
                     ability = RoverAbility.CellPack;
                     return true;
+                case RoverKitPiece.FocusLens:
+                    ability = RoverAbility.FocusLens;
+                    return true;
+                case RoverKitPiece.SideBins:
+                    ability = RoverAbility.SideBins;
+                    return true;
                 default:
                     ability = RoverAbility.HoverJump;
                     return false;
