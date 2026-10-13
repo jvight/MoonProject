@@ -6,7 +6,7 @@ namespace MoonProject.World.Tests
 {
     /// <summary>
     /// Kestrel-3's scrap field (0.5.5 §2): the hull fragments lie along the furrow either side of its clear lane,
-    /// never in it; scenery sinks deeper and tilts, the hosts stand upright at the lane's edge; deterministic.
+    /// never in it, sunk deep and tilted, crowding the impact end; deterministic.
     /// </summary>
     public sealed class ScrapFieldTests
     {
@@ -47,31 +47,12 @@ namespace MoonProject.World.Tests
                 Vector2 offset = new Vector2(piece.Position.x, piece.Position.z) - kestrel.TrailEnd;
                 float side = Mathf.Abs(Vector2.Dot(offset, across));
                 Assert.That(side, Is.InRange(_settings.LaneHalfWidth,
-                    _settings.LaneHalfWidth + _settings.HostOffset + _settings.Spread + _settings.AnchorScale.y),
+                    _settings.LaneHalfWidth + _settings.LaneMargin + _settings.Spread + _settings.AnchorScale.y),
                     "beside the lane, never in it");
                 Assert.That(Vector2.Dot(offset, along), Is.GreaterThanOrEqualTo(0f), "on the furrow, not behind it");
                 float ground = _surface.SampleHeight(piece.Position.x, piece.Position.z);
-                if (piece.IsHost)
-                {
-                    Assert.AreEqual(ground, piece.Position.y, 1e-4f, "a host stands on its dust line");
-                    Assert.AreEqual(1f, Vector3.Dot(piece.Rotation * Vector3.up, Vector3.up), 1e-4f, "upright");
-                    Assert.LessOrEqual(side, _settings.LaneHalfWidth + _settings.HostOffset + 1e-3f,
-                        "at the lane's edge, in 07's reach");
-                }
-                else
-                {
-                    Assert.AreEqual(ground - _settings.Sink * piece.Scale, piece.Position.y, 1e-4f,
-                        "scenery sinks deeper, in proportion to its size");
-                }
-            }
-        }
-
-        [Test]
-        public void Field_HasItsHosts_FirstInOrderFromTheFarEnd()
-        {
-            for (int i = 0; i < _pieces.Count; i++)
-            {
-                Assert.AreEqual(i < _settings.Hosts, _pieces[i].IsHost, $"piece {i}");
+                Assert.AreEqual(ground - _settings.Sink * piece.Scale, piece.Position.y, 1e-4f,
+                    "sunk deep, in proportion to its size");
             }
         }
 
