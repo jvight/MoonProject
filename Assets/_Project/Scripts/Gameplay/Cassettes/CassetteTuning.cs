@@ -43,6 +43,12 @@ namespace MoonProject.Gameplay
         [Tooltip("Lean (degrees) of a waiting tape back against its rim (or the wall behind it).")]
         [Range(0f, 80f)] [SerializeField] private float _restLean = 35f;
 
+        [Tooltip("Metres a tape slides out of its opened container, onto the ground at its front (0.5.5 §2).")]
+        [Range(0f, 2f)] [SerializeField] private float _slideOut = 0.45f;
+
+        [Tooltip("Seconds the slide out of an opened container takes.")]
+        [Range(0.1f, 3f)] [SerializeField] private float _slideSeconds = 0.7f;
+
         [Tooltip("07 glances at a waiting tape within this many metres.")]
         [Range(1f, 60f)] [SerializeField] private float _glanceRadius = 16f;
 
@@ -91,6 +97,8 @@ namespace MoonProject.Gameplay
         public int RimDirections => _rimDirections;
         public float RestHeight => _restHeight;
         public float RestLean => _restLean;
+        public float SlideOut => _slideOut;
+        public float SlideSeconds => _slideSeconds;
         public float GlanceRadius => _glanceRadius;
         public float MagnetRadius => _magnetRadius;
         public float FlightDuration => _flightDuration;

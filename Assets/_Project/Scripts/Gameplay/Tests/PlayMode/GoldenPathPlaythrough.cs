@@ -2157,7 +2157,16 @@ namespace MoonProject.Gameplay.PlayModeTests
             float travelled = 0f;
             yield return DriveAlong(terminus.Position, "the terminus", value => travelled = value);
             yield return Until(() => LogFound("ro_1"), 3f, "Ro's log cache opens beside her");
-            yield return Until(() => Collected(AfterDark), 6f, "Lumen After Dark, Vol. 1 drifts into 07");
+            SealedContainer tapeCase = _gameplay.Cassettes.Container(CassetteIndex(AfterDark));
+            Assert.IsNotNull(tapeCase, "her tape rests sealed in Ro's tape case (0.5.5 §2)");
+            Vector3 front = tapeCase.CutPoint.position + tapeCase.Root.forward * SealStandOff;
+            yield return DriveTo(Flat(front), 1f, 0.35f, 30f, "the seal of Ro's tape case");
+            Press(_keyboard.eKey);
+            yield return Until(() => tapeCase.Opened, SealCutTimeout, "held E cuts the seal of Ro's tape case");
+            Release(_keyboard.eKey);
+            yield return Until(() => Collected(AfterDark), _gameplay.Cargo.ContainerLidSeconds +
+                _gameplay.Cassettes.Tuning.SlideSeconds + 6f,
+                "Lumen After Dark, Vol. 1 slides out and drifts into 07");
             yield return Until(() => bell.Progress.ItemsCollected == 1, 1f,
                 "her tape lights her fourth lamp: it is the fourth thing she needs");
             Capture("19b-terminus");

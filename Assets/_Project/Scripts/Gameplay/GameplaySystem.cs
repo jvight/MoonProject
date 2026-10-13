@@ -288,6 +288,7 @@ namespace MoonProject.Gameplay
 
             Vector3 lander = HomeBase.LanderSpot(services.Terrain, services.Layout.BasePosition, _home.Tuning);
             Cutter = new Cutter(context.Events, abilities, _cutterTuning);
+            Containers = new SealedContainers(_salvage, _cargo, Cutter, services);
             if (!_salvage.Initialize(services, Cutter) || !_relics.Initialize(services, _salvage) ||
                 !_excavation.Initialize(services, _relics, _salvage) ||
                 !_tether.Initialize(services, _relics, _salvage, abilities) ||
@@ -299,7 +300,8 @@ namespace MoonProject.Gameplay
                 !_workshop.Initialize(services, Upgrades, _salvage.Catalog, _tower, Power, Blueprints, lights,
                     Equipment) ||
                 !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _salvage, _home) ||
-                !_cassettes.Initialize(services, Radio, KeepClearOfCassettes()) || !_logs.Initialize(services) ||
+                !_cassettes.Initialize(services, Radio, KeepClearOfCassettes(), Containers) ||
+                !_logs.Initialize(services) ||
                 !_sonar.Initialize(services, _relics, _friends, _salvage, abilities, Power) ||
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
@@ -739,7 +741,7 @@ namespace MoonProject.Gameplay
             LiftStation lift = _lift;
             Fetch = new TillyFetch(Bundles, _relays.Reach, fetcher, _cargo, () => lift.RideSpot);
             Crates = new CrewCrates(_salvage, _cargo, Cutter, services);
-            Containers = new SealedContainers(_salvage, Crates, _cargo, Cutter, services);
+            Containers.Connect(Crates);
             Transform[] racks = _home.ShelfRacks;
             int seats = _cargo.ShelfSlots * HomeShelves.Seats;
             var rackSeats = new Transform[racks.Length][];

@@ -28,12 +28,22 @@ namespace MoonProject.Gameplay
         [Tooltip("The rover ability needed to reach it (Bell never points behind a gate 07 cannot pass yet).")]
         [SerializeField] private AbilityGate _gate;
 
+        [Tooltip("Art's sealed container it rests in (TapeCase, SupplyPod; 0.5.5 §2), its seal cut to find it. " +
+                 "Empty for a tape that rests on its own.")]
+        [SerializeField] private string _container;
+
         public string Id => _id;
         public GameObject Prefab => _prefab;
         public CassetteSiteRule Site => _site;
         public AnchorSpot Anchor => _anchor;
         public int PlannerSeed => _plannerSeed;
         public AbilityGate Gate => _gate;
+
+        /// <summary>Art's container prefab the tape rests in, or empty.</summary>
+        public string Container => _container ?? string.Empty;
+
+        /// <summary>True when the tape rests in a sealed container.</summary>
+        public bool InContainer => !string.IsNullOrEmpty(_container);
 
         /// <summary>Null when the definition is complete, else what is wrong with it.</summary>
         public string Validate()
@@ -67,8 +77,9 @@ namespace MoonProject.Gameplay
         }
 
         internal void Populate(string id, GameObject prefab, CassetteSiteRule site, AnchorSpot anchor,
-            int plannerSeed, AbilityGate gate)
+            int plannerSeed, AbilityGate gate, string container)
         {
+            _container = container ?? string.Empty;
             _id = id;
             _prefab = prefab;
             _site = site;

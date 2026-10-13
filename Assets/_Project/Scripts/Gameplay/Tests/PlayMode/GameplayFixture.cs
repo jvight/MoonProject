@@ -938,20 +938,23 @@ namespace MoonProject.Gameplay.PlayModeTests
             Cassettes.Populate(new[]
             {
                 Cassette("after_dark_1", CassetteSiteRule.Anchor,
-                    new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.2f, 1.9f)), hoverJump),
+                    new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.2f, 1.9f)), hoverJump,
+                    ContainerKinds.TapeCase),
                 Cassette("dust_and_honey", CassetteSiteRule.BasinPlanner, new AnchorSpot(string.Empty, Vector2.zero),
-                    AbilityGate.Open),
+                    AbilityGate.Open, string.Empty),
                 Cassette("slow_orbit", CassetteSiteRule.Anchor,
-                    new AnchorSpot(WorldAnchorIds.CanyonLedge, Vector2.zero), hoverJump),
+                    new AnchorSpot(WorldAnchorIds.CanyonLedge, Vector2.zero), hoverJump, ContainerKinds.SupplyPod),
             });
-            field.Wire(Cassettes, CassetteTuning);
+            Transform pod = Object.Instantiate(ContainerTemplate(ContainerKinds.SupplyPod), field.transform).transform;
+            pod.name = ContainerKinds.SupplyPod;
+            field.Wire(Cassettes, CassetteTuning, pod);
         }
 
-        private CassetteDefinition Cassette(string id, CassetteSiteRule site, AnchorSpot anchor, AbilityGate gate)
+        private CassetteDefinition Cassette(string id, CassetteSiteRule site, AnchorSpot anchor, AbilityGate gate,
+            string container)
         {
             var cassette = Asset<CassetteDefinition>();
-            cassette.Populate(id, Template("Cassette_" + id, CassetteSize), site, anchor, 73,
-                gate);
+            cassette.Populate(id, Template("Cassette_" + id, CassetteSize), site, anchor, 73, gate, container);
             return cassette;
         }
 

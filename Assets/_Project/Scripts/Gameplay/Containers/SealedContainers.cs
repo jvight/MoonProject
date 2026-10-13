@@ -21,7 +21,6 @@ namespace MoonProject.Gameplay
     {
         private readonly List<SealedContainer> _containers = new List<SealedContainer>();
         private readonly SalvageField _salvage;
-        private readonly CrewCrates _crates;
         private readonly CargoTuning _tuning;
         private readonly Cutter _cutter;
         private readonly EventBus _events;
@@ -31,13 +30,15 @@ namespace MoonProject.Gameplay
         private readonly ISaveService _save;
         private readonly PickupReach _pickups;
         private readonly CutState _cut;
+        private CrewCrates _crates;
         private SealedContainer _cutting;
 
-        public SealedContainers(SalvageField salvage, CrewCrates crates, CargoTuning tuning, Cutter cutter,
-            GameplayServices services)
+        /// <summary>
+        /// Made before the finds' owners initialise, so each can add its containers; connect the crates later.
+        /// </summary>
+        public SealedContainers(SalvageField salvage, CargoTuning tuning, Cutter cutter, GameplayServices services)
         {
             _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
-            _crates = crates ?? throw new ArgumentNullException(nameof(crates));
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             _cutter = cutter ?? throw new ArgumentNullException(nameof(cutter));
             if (services == null)
@@ -53,6 +54,12 @@ namespace MoonProject.Gameplay
             _pickups = services.Pickups;
             _cut = new CutState(_events, FeelKind.Cut, cutter.ChargeSeconds, cutter.ResumeChargeSeconds,
                 salvage.Tuning.CutSteps);
+        }
+
+        /// <summary>The crew's crates: a crate in reach is cut before a container (one press, one verb).</summary>
+        public void Connect(CrewCrates crates)
+        {
+            _crates = crates ?? throw new ArgumentNullException(nameof(crates));
         }
 
         /// <summary>The sealed container a hold of E would cut now, or null.</summary>

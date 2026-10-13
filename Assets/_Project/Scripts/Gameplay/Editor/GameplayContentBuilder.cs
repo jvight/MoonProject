@@ -168,10 +168,12 @@ namespace MoonProject.Gameplay.Editor
             CassetteDefinition[] cassettes =
             {
                 Cassette("after_dark_1", CassetteSiteRule.Anchor,
-                    new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.2f, 1.9f)), 0, hoverJump),
-                Cassette("dust_and_honey", CassetteSiteRule.BasinPlanner, noAnchor, 73, AbilityGate.Open),
+                    new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.2f, 1.9f)), 0, hoverJump,
+                    ContainerKinds.TapeCase),
+                Cassette("dust_and_honey", CassetteSiteRule.BasinPlanner, noAnchor, 73, AbilityGate.Open,
+                    string.Empty),
                 Cassette("slow_orbit", CassetteSiteRule.Anchor, new AnchorSpot(WorldAnchorIds.CanyonLedge,
-                    Vector2.zero), 0, hoverJump),
+                    Vector2.zero), 0, hoverJump, ContainerKinds.SupplyPod),
             };
 
             var catalog = ScriptableObject.CreateInstance<CassetteCatalog>();
@@ -187,10 +189,11 @@ namespace MoonProject.Gameplay.Editor
         }
 
         private static CassetteDefinition Cassette(string id, CassetteSiteRule site, AnchorSpot anchor,
-            int plannerSeed, AbilityGate gate)
+            int plannerSeed, AbilityGate gate, string container)
         {
             var cassette = ScriptableObject.CreateInstance<CassetteDefinition>();
-            cassette.Populate(id, LoadArt(GameplayAssetPaths.CassettePrefab(id)), site, anchor, plannerSeed, gate);
+            cassette.Populate(id, LoadArt(GameplayAssetPaths.CassettePrefab(id)), site, anchor, plannerSeed, gate,
+                container);
             return GeneratedAssets.CreateOrReplace(cassette, GameplayAssetPaths.CassetteDefinition(id));
         }
 

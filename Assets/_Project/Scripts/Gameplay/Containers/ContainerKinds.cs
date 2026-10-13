@@ -9,6 +9,13 @@ namespace MoonProject.Gameplay
     /// </summary>
     public static class ContainerKinds
     {
+        public const string CoilCrate = "CoilCrate";
+        public const string JunctionBox = "JunctionBox";
+        public const string TapeCase = "TapeCase";
+        public const string SupplyPod = "SupplyPod";
+        public const string TillySled = "TillySled";
+        public const string Cabinet = "Cabinet";
+
         /// <summary>
         /// The kind of Art's container prefab <paramref name="prefab"/>; an unknown name is a wiring bug.
         /// </summary>
@@ -16,16 +23,16 @@ namespace MoonProject.Gameplay
         {
             switch (prefab)
             {
-                case "CoilCrate":
+                case CoilCrate:
                     return ContainerKind.Crate;
-                case "JunctionBox":
+                case JunctionBox:
                     return ContainerKind.Box;
-                case "TapeCase":
+                case TapeCase:
                     return ContainerKind.Case;
-                case "SupplyPod":
-                case "TillySled":
+                case SupplyPod:
+                case TillySled:
                     return ContainerKind.Pod;
-                case "Cabinet":
+                case Cabinet:
                     return ContainerKind.Cabinet;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(prefab), prefab, "Not one of Art's containers.");
