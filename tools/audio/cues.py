@@ -2496,8 +2496,6 @@ CUES = (
         notes="0.5.5 E: the full lock: a firm clunk-click before the held breath."),
     Cue("hold_boot", "ui_2d", feel.hold_boot, volume=(0.6, 0.6), milestone="M3",
         notes="0.5.5 B: the first Tab press, 07's hold powering on in the dark."),
-    Cue("type_tick", "tick_2d", feel.type_tick, volume=(0.35, 0.35), milestone="M3",
-        notes="0.5.5 B: one character of 07's system text typing in."),
     Cue("hold_slot", "tick_2d", feel.hold_slot, variants=len(feel.HOLD_SLOT_NOTES), volume=(0.45, 0.45),
         milestone="M3", notes="0.5.5 B: a hold slot lighting, a rising pentatonic tick (D5 .. F#6)."),
     Cue("item_slide", "tick_2d", feel.item_slide, volume=(0.45, 0.45), milestone="M3",

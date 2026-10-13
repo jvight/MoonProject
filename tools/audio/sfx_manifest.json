@@ -761,33 +761,6 @@
       "notes": "0.5.5 B: the first Tab press, 07's hold powering on in the dark."
     },
     {
-      "id": "type_tick",
-      "category": "tick_2d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": false,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/2D/type_tick.wav"
-      ],
-      "variantLabels": [
-        "type_tick"
-      ],
-      "sha256": [
-        "3b56b727202404e6d1bf62704030f0ac6099f01a80d33338065ac46d1b60a73c"
-      ],
-      "volumeMin": 0.35,
-      "volumeMax": 0.35,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -28.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": false,
-      "notes": "0.5.5 B: one character of 07's system text typing in."
-    },
-    {
       "id": "hold_slot",
       "category": "tick_2d",
       "milestone": "M3",

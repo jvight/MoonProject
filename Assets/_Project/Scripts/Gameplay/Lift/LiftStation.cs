@@ -340,6 +340,14 @@ namespace MoonProject.Gameplay.Lift
                     + "Station_Board, Station_Keepsakes).";
             }
 
+            float dockToPlatform = SurfaceRules.HorizontalDistance(_dock.position, _platform.parent.TransformPoint(
+                _down.localPosition));
+            if (dockToPlatform > _tuning.CallRadius)
+            {
+                return $"07's dock is {dockToPlatform:F2} m from the platform, outside LiftTuning's call radius " +
+                       $"({_tuning.CallRadius} m): a find carried home to the dock would never call the lift.";
+            }
+
             return power == null || stillness == null || tether == null || cradle == null || blueprints == null
                    || progression == null
                 ? "the base power, 07's stillness, the tether, the cradle, the blueprints or ProgressionTuning is "

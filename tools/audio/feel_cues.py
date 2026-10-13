@@ -467,13 +467,6 @@ def hold_boot(_variant, gen):
     return mix
 
 
-def type_tick(_variant, gen):
-    """One character of 07's system text typing in: a tiny dry tick."""
-    n = samples(0.06)
-    click = filters.bandpass(noise.white(n, gen), 2400.0, 2.0) * envelope.ar(n, 0.0005, 0.008)
-    return filters.lowpass(filters.lowpass(0.25 * click, 4000.0), 4000.0)
-
-
 def hold_slot(variant, gen):
     """A hold slot's outline lighting (60 ms apart, left to right): a soft tick on the next pentatonic step."""
     return filters.lowpass(0.25 * _tick(gen, note_freq(HOLD_SLOT_NOTES[variant]), 0.15), 5000.0)

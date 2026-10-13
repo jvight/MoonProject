@@ -21,7 +21,6 @@ namespace MoonProject.UI
         private readonly GlyphView _glyph;
         private readonly VisualElement _glyphElement;
         private readonly Label _verb;
-        private readonly Label _line;
         private readonly Queue<AbilityRow> _waiting = new Queue<AbilityRow>();
         private AbilityRow _shown;
         private bool _showing;
@@ -44,7 +43,6 @@ namespace MoonProject.UI
             _glyphElement = Require<VisualElement>(root, "unlock-glyph");
             _glyph = new GlyphView(_glyphElement, Require<Label>(root, "unlock-glyph-label"));
             _verb = Require<Label>(root, "unlock-card-verb");
-            _line = Require<Label>(root, "unlock-card-line");
         }
 
         /// <summary>True while a card is on screen (or easing).</summary>
@@ -117,7 +115,6 @@ namespace MoonProject.UI
         private void Write(InputDeviceKind device)
         {
             _verb.text = _localization.Get(_shown.VerbKey);
-            _line.text = _localization.Get(_shown.LineKey);
             _glyphElement.style.display = _shown.HasAction
                 ? DisplayStyle.Flex
                 : DisplayStyle.None;

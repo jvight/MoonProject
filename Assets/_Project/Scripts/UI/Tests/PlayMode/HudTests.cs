@@ -176,24 +176,60 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator CargoScreen_SevenCan_ListsTheAbilitiesOwned_AndDecodedKitsAsPencil()
+        public IEnumerator CargoScreen_Docked_IsTheTransferView_OnePressMovesAStack_AndLeavingTheDockClosesIt()
         {
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             Boot();
+            _rig.Ui.Ledger.RecordHoldBooted();
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            _rig.Fakes.Hold.Set(8);
-            _rig.Fakes.Grant(RoverAbility.Tether);
-            _rig.Fakes.SetTech(TechNodeId.HoverJump, TechNodeState.Decoded);
+            _rig.Fakes.Hold.Set(6, new MaterialSlot(SalvageMaterial.Metal, 3, 4),
+                new MaterialSlot(SalvageMaterial.Wiring, 2, 4));
+            _rig.Fakes.Home.Set(6, new MaterialSlot(SalvageMaterial.Optics, 4, 4));
+            int moved = 0;
+            bool toHome = false;
+            Events.Subscribe<StackTransferred>(transfer =>
+            {
+                moved = transfer.Units;
+                toHome = transfer.ToHome;
+            });
+            _rig.Fakes.Dock.IsDocked = false;
             yield return Seconds(0.3f);
+
             yield return Tap(keyboard.tabKey);
-            _rig.Ui.Cargo.SelectTab(1);
-            yield return Seconds(0.6f);
+            yield return Seconds(0.5f);
             CargoScreen cargo = _rig.Ui.Cargo;
-            Assert.AreEqual(2, cargo.CanRowCount, "the tether it has and the Hover-Jump sheet it decoded");
-            Assert.AreEqual(Text("ui.can.tether.verb") + " | " + Text("ui.can.tether.line"), cargo.CanRowText(0));
-            Assert.IsFalse(cargo.CanRowIsPencil(0));
-            Assert.IsTrue(cargo.CanRowIsPencil(1), "a decoded kit not yet fitted is a pencil sheet");
-            Assert.AreEqual(Text("ui.can.hover_jump.verb") + " | " + Text(UiKeys.CanDecoded), cargo.CanRowText(1));
+            Assert.IsFalse(cargo.IsTransferView, "away from home Tab is the plain hold");
+            Assert.IsFalse(cargo.HoldCell(0).focusable, "no slot is a button away from the dock");
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(0.5f);
+
+            _rig.Fakes.Dock.IsDocked = true;
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(0.5f);
+            Assert.IsTrue(cargo.IsOpen && cargo.IsTransferView, "docked, Tab opens the transfer view");
+            Assert.AreEqual(8, cargo.HoldCellCount);
+            Assert.AreEqual(7, cargo.HomeCellCount, "home's shelves sit beside the hold");
+            Assert.AreEqual(Text(UiKeys.TransferToHome), cargo.TransferHintText, "the focus starts on 07's first slot");
+
+            Submit(cargo.HoldCell(0));
+            yield return Seconds(0.2f);
+            Assert.AreEqual(1, _rig.Fakes.Transfer.Moves, "one press, one stack");
+            Assert.AreEqual(3, moved);
+            Assert.IsTrue(toHome, "07's slot stores at home");
+            Assert.AreEqual(1, _rig.Fakes.Hold.UsedSlots, "the hold lost the metal stack");
+            Assert.AreEqual(2, _rig.Fakes.Home.UsedSlots, "and home gained it");
+
+            cargo.HomeCell(0).Focus();
+            yield return null;
+            Assert.AreEqual(Text(UiKeys.TransferToTrip), cargo.TransferHintText, "a shelf slot takes its stack along");
+            Submit(cargo.HomeCell(0));
+            yield return Seconds(0.2f);
+            Assert.IsFalse(toHome, "the shelf slot's stack comes aboard for the trip");
+            Assert.AreEqual(2, _rig.Fakes.Transfer.Moves);
+
+            _rig.Fakes.Dock.IsDocked = false;
+            yield return Seconds(0.8f);
+            Assert.IsFalse(cargo.IsOpen, "leaving the dock closes the view");
         }
 
         [UnityTest]
@@ -1039,6 +1075,15 @@ namespace MoonProject.UI.PlayModeTests
         private static IEnumerator Seconds(float seconds)
         {
             yield return new WaitForSecondsRealtime(seconds);
+        }
+
+        private static void Submit(VisualElement target)
+        {
+            using (NavigationSubmitEvent submit = NavigationSubmitEvent.GetPooled())
+            {
+                submit.target = target;
+                target.SendEvent(submit);
+            }
         }
 
         private IEnumerator Tap(ButtonControl button)

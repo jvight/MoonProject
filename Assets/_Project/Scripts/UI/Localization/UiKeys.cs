@@ -36,6 +36,9 @@ namespace MoonProject.UI
         public const string HintHold = "hint.hold";
         public const string NotYetTower = "notyet.tower";
         public const string HoldBoot = "ui.hold.boot";
+        public const string HintShelves = "hint.shelves";
+        public const string TransferToTrip = "ui.transfer.to_trip";
+        public const string TransferToHome = "ui.transfer.to_home";
         public const string BlueprintFound = "ui.blueprint.found";
         public const string BlueprintDelivered = "ui.blueprint.delivered";
 
@@ -47,7 +50,6 @@ namespace MoonProject.UI
         public const string CargoWaiting = "ui.cargo.waiting";
         public const string CargoSummary = "ui.cargo.summary";
         public const string CrateCaption = "ui.crate.caption";
-        public const string CanDecoded = "ui.can.decoded";
         public const string StationOffline = "ui.station.offline";
 
         /// <summary>"hint.excavate": the one word of the prompt teaching <paramref name="kind"/>.</summary>

@@ -28,7 +28,6 @@ namespace MoonProject.UI.Tests
         {
             Assert.IsTrue(AbilityTable.TryFind(RoverAbility.HoverJump, out AbilityRow row));
             Assert.AreEqual("ui.can.hover_jump.verb", row.VerbKey);
-            Assert.AreEqual("ui.can.hover_jump.line", row.LineKey);
             Assert.IsTrue(row.HasAction, "Hover-Jump has its own key");
             Assert.IsTrue(AbilityTable.TryFind(RoverAbility.WideSonar, out row));
             Assert.IsFalse(row.HasAction, "the sonar just works");

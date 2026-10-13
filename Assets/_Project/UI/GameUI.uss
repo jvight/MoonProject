@@ -63,7 +63,6 @@
 .bay-row__effect,
 .recovery-board__node,
 .recovery-board__target,
-.verb-row__word,
 .pause .menu-button {
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/NunitoSans-SemiBold.asset");
 }
@@ -844,13 +843,6 @@ Label {
     letter-spacing: 2px;
     color: var(--glass-hi);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
-}
-
-.unlock-card__line {
-    margin-top: 4px;
-    font-size: 21px;
-    white-space: normal;
-    color: var(--glass-hi);
 }
 
 /* A crew crate's packing note: a calm glass card low and centred, under 07, never in the way of driving */
@@ -1647,33 +1639,6 @@ Label {
     min-height: 196px;
 }
 
-/* "07 can": the verbs learned so far, a reference and never a tutorial (docs/design/first-hour-v2 6.5) */
-
-.pause__can {
-    margin-top: 12px;
-    padding-left: 8px;
-}
-
-.pause--title .pause__can {
-    display: none;
-}
-
-.pause__can-rows {
-    flex-direction: row;
-    flex-wrap: wrap;
-}
-
-.verb-row {
-    flex-direction: row;
-    align-items: center;
-    margin: 0 20px 8px 0;
-}
-
-.verb-row__word {
-    font-size: 18px;
-    color: var(--moon-text);
-}
-
 .pause__question {
     font-size: 23px;
     margin-top: 6px;
@@ -2155,18 +2120,6 @@ Label {
     -unity-slice-scale: 0.5;
 }
 
-.cargo__tabs {
-    flex-direction: row;
-    justify-content: center;
-    margin-bottom: 14px;
-}
-
-.cargo__tabs .settings-tab-wrap {
-    flex-grow: 0;
-    flex-basis: auto;
-    width: 220px;
-}
-
 .cargo__page {
     min-width: 320px;
 }
@@ -2211,6 +2164,41 @@ Label {
     opacity: 0;
 }
 
+/* The docked transfer view: every slot is a button, one press moves its stack */
+.cargo__column--home {
+    display: none;
+    margin-left: 34px;
+}
+
+.cargo--transfer .cargo__column--home {
+    display: flex;
+}
+
+.cargo__cell--button {
+    padding: 0;
+}
+
+.cargo__cell--button:hover {
+    border-color: var(--glass-hi);
+}
+
+.cargo__cell--button:focus {
+    border-width: 2.5px;
+    border-color: var(--glass-sel);
+}
+
+.cargo__transfer-hint {
+    display: none;
+    margin-top: 10px;
+    font-size: 19px;
+    color: var(--glass-sel);
+    -unity-text-align: middle-center;
+}
+
+.cargo--transfer .cargo__transfer-hint {
+    display: flex;
+}
+
 .cargo__grid {
     flex-direction: row;
     flex-wrap: wrap;
@@ -2248,40 +2236,6 @@ Label {
     font-size: 13px;
     color: var(--glass-hi);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
-}
-
-.cargo__can {
-    min-width: 560px;
-}
-
-.can-row {
-    flex-direction: row;
-    align-items: center;
-    padding: 8px 4px;
-}
-
-.can-row__glyph {
-    width: 74px;
-    align-items: center;
-}
-
-.can-row__verb {
-    width: 190px;
-    font-size: 22px;
-    color: var(--glass-hi);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
-}
-
-.can-row__line {
-    flex-shrink: 1;
-    font-size: 19px;
-    white-space: normal;
-    color: var(--glass-hi);
-}
-
-.can-row--pencil .can-row__verb,
-.can-row--pencil .can-row__line {
-    color: var(--moon-text-dim);
 }
 
 .cargo__summary {

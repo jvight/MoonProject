@@ -340,6 +340,11 @@ namespace MoonProject.Gameplay.Tests
             {
                 _owned.Add(ability);
             }
+
+            public void Revoke(RoverAbility ability)
+            {
+                _owned.Remove(ability);
+            }
         }
     }
 }

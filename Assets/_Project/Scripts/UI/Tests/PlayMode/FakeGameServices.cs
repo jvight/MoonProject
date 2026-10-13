@@ -95,6 +95,11 @@ namespace MoonProject.UI.PlayModeTests
             Abilities.Add(ability);
         }
 
+        public void Revoke(RoverAbility ability)
+        {
+            Abilities.Remove(ability);
+        }
+
         public float RumbleStrength { get; set; } = 1f;
 
         /// <summary>True while the next level waits for a component the tower has not been fed (the coil).</summary>
@@ -112,6 +117,17 @@ namespace MoonProject.UI.PlayModeTests
         public FakeHold Hold { get; } = new FakeHold();
 
         public FakeCatalog Catalog { get; } = new FakeCatalog();
+
+        /// <summary>Home's shelves, set by a test.</summary>
+        public FakeHome Home { get; } = new FakeHome();
+
+        /// <summary>Whether 07 rests on the dock, set by a test.</summary>
+        public FakeDock Dock { get; } = new FakeDock();
+
+        /// <summary>The docked transfer, moving whole slots between <see cref="Hold"/> and <see cref="Home"/>.</summary>
+        public FakeTransfer Transfer => _transfer ?? (_transfer = new FakeTransfer(Hold, Home, Dock));
+
+        private FakeTransfer _transfer;
 
         public int Metal => _units[(int)SalvageMaterial.Metal];
 
@@ -289,6 +305,9 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IRoverAbilities>(this);
             context.Register<ICargoHold>(Hold);
             context.Register<IMaterialCatalog>(Catalog);
+            context.Register<IHomeStorage>(Home);
+            context.Register<IDockState>(Dock);
+            context.Register<IStackTransfer>(Transfer);
         }
 
         public int KnownCount
