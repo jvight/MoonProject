@@ -913,4 +913,37 @@ namespace MoonProject.Core.Events
 
         public Vector3 Subject { get; }
     }
+
+    /// <summary>
+    /// The cut's charge-up reached a stage (docs/design/0.5.5-owner-feedback.md §5.1). Published right after the
+    /// charge's <see cref="FeelBeat"/> Anticipate with <see cref="Stage"/> 0 (the charge starts: the 0.5 s brace
+    /// first unless <see cref="Warm"/>), then at each stage lock, 1..<see cref="StagesNeeded"/>; the last is the full
+    /// lock. A release before it drains (the Anticipate's Cancel beat).
+    /// </summary>
+    public readonly struct CutChargeStaged
+    {
+        public CutChargeStaged(int stage, int stagesNeeded, bool warm, float stageSeconds)
+        {
+            StagesNeeded = Mathf.Max(1, stagesNeeded);
+            Stage = Mathf.Clamp(stage, 0, StagesNeeded);
+            Warm = warm;
+            StageSeconds = Mathf.Max(0f, stageSeconds);
+        }
+
+        /// <summary>0 as the charge starts, then the stage that just locked.</summary>
+        public int Stage { get; }
+
+        /// <summary>The stages the piece needs before the beam fires: small 1, medium 2, large and hull 3.</summary>
+        public int StagesNeeded { get; }
+
+        /// <summary>A warm emitter (a re-press soon after the last firing at the same site): no brace, quicker
+        /// stages.</summary>
+        public bool Warm { get; }
+
+        /// <summary>Seconds each stage takes to build at this tier (warm included).</summary>
+        public float StageSeconds { get; }
+
+        /// <summary>The needed stage locked: the beam fires after the held breath.</summary>
+        public bool IsFullLock => Stage >= StagesNeeded;
+    }
 }

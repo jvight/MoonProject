@@ -6,7 +6,8 @@ namespace MoonProject.Rover
     /// <summary>
     /// The cargo hatch's swing as plain logic (M3-25 T1): it opens now or after a delay (a bundle's flight less the
     /// lead), eases on a spring, and on shutting meets the frame with a small bounce, the soft thunk
-    /// (<see cref="Step"/> says when). A bump shakes it a few degrees. Angles in degrees, 0 = shut, + = open.
+    /// (<see cref="Step"/> says when). It can also open for a while and shut by itself (a show of the hold). A bump
+    /// shakes it a few degrees. Angles in degrees, 0 = shut, + = open.
     /// </summary>
     public sealed class CargoHatchMotion
     {
@@ -15,6 +16,7 @@ namespace MoonProject.Rover
         private DampedSpring _shake;
         private float _target;
         private float _openIn = -1f;
+        private float _closeIn = -1f;
 
         public CargoHatchMotion(CargoHatchSettings settings)
         {
@@ -27,15 +29,30 @@ namespace MoonProject.Rover
         /// <summary>Whether the hatch is open or opening (or about to).</summary>
         public bool IsOpening => _target > 0f || _openIn >= 0f;
 
+        /// <summary>Opens now and shuts once <paramref name="seconds"/> have passed, unless it is already open (a
+        /// bundle or an unload owns it then).</summary>
+        public void OpenFor(float seconds)
+        {
+            if (IsOpening)
+            {
+                return;
+            }
+
+            Open();
+            _closeIn = Mathf.Max(0f, seconds);
+        }
+
         /// <summary>Opens once <paramref name="seconds"/> less the lead have passed (at once when that is past).</summary>
         public void OpenBefore(float seconds)
         {
             _openIn = Mathf.Max(0f, seconds - _settings.OpenLead);
+            _closeIn = -1f;
         }
 
         public void Open()
         {
             _openIn = -1f;
+            _closeIn = -1f;
             _target = _settings.OpenAngle;
         }
 
@@ -43,6 +60,7 @@ namespace MoonProject.Rover
         public void Close()
         {
             _openIn = -1f;
+            _closeIn = -1f;
             _target = _swing.Value > 0f ? -_settings.ClosePush : 0f;
         }
 
@@ -56,6 +74,7 @@ namespace MoonProject.Rover
         public void Reset()
         {
             _openIn = -1f;
+            _closeIn = -1f;
             _target = 0f;
             _swing.Reset(0f);
             _shake.Reset(0f);
@@ -71,6 +90,15 @@ namespace MoonProject.Rover
                 if (_openIn < 0f)
                 {
                     Open();
+                }
+            }
+
+            if (_closeIn >= 0f)
+            {
+                _closeIn -= step;
+                if (_closeIn < 0f)
+                {
+                    Close();
                 }
             }
 
