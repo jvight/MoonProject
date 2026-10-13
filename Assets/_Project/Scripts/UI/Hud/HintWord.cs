@@ -9,5 +9,6 @@ namespace MoonProject.UI
         None = 0,
         LookUp = 1,
         Drive = 2,
+        Hold = 3,
     }
 }

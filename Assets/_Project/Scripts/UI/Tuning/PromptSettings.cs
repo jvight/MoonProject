@@ -45,10 +45,6 @@ namespace MoonProject.UI
         [Range(0f, 120f)]
         [SerializeField] private float _repeatCooldown = 25f;
 
-        [Tooltip("Times a prompt is shown before it is retired for good (saved).")]
-        [Range(1, 10)]
-        [SerializeField] private int _showingsToRetire = 3;
-
         [Tooltip("Half-life (s) of the prompt following its world point on screen: it floats, never jitters.")]
         [Range(0f, 0.5f)]
         [SerializeField] private float _followHalfLife = 0.08f;
@@ -70,8 +66,6 @@ namespace MoonProject.UI
         public float MaxShowSeconds => _maxShowSeconds;
 
         public float RepeatCooldown => _repeatCooldown;
-
-        public int ShowingsToRetire => _showingsToRetire;
 
         public float FollowHalfLife => _followHalfLife;
 

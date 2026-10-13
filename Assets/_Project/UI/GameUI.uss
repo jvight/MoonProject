@@ -58,7 +58,6 @@
 .place-card__job,
 .memory-card__text,
 .tower-panel__text,
-.recipe__need,
 .material-slot__word,
 .hint-row__word,
 .bay-row__effect,
@@ -357,9 +356,33 @@ Label {
     min-width: 0;
 }
 
-.recipe__need {
-    font-size: 18px;
-    color: var(--moon-text-faint);
+.recipe__part {
+    margin: 3px 0;
+}
+
+.recipe__part-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.recipe__part-name {
+    min-width: 120px;
+    font-size: 22px;
+    color: var(--glass-hi);
+}
+
+.recipe__part-count {
+    margin-left: 6px;
+    font-size: 22px;
+    color: var(--moon-text-dim);
+    white-space: nowrap;
+}
+
+/* Where to find it, small under its row */
+.recipe__part-source {
+    margin-top: 1px;
+    font-size: 16px;
+    color: var(--moon-text-dim);
     white-space: normal;
 }
 
@@ -673,14 +696,6 @@ Label {
 .battery-dial__value {
     font-size: 38px;
     color: var(--glass-hi);
-    -unity-text-align: middle-center;
-}
-
-.battery-dial__word {
-    margin-top: -4px;
-    font-size: 18px;
-    letter-spacing: 2px;
-    color: var(--moon-text-dim);
     -unity-text-align: middle-center;
 }
 
@@ -1262,11 +1277,6 @@ Label {
     margin-left: 10px;
 }
 
-.relay-tag__need {
-    font-size: 18px;
-    margin: 2px 0 2px 6px;
-}
-
 .relay-tag__ring {
     width: 32px;
     height: 32px;
@@ -1451,11 +1461,6 @@ Label {
     justify-content: space-between;
     margin-top: 20px;
     min-height: 48px;
-}
-
-.tower-panel__need {
-    flex-shrink: 1;
-    margin-right: 12px;
 }
 
 /* Kenji's Rover Bay: what is left to craft, one row each, the picked one lit and read in full */
@@ -1797,7 +1802,7 @@ Label {
     -unity-text-align: middle-center;
 }
 
-.pause .settings-tab:focus {
+.settings-tab-wrap--focus .settings-tab {
     color: var(--glass-sel-text);
 }
 
@@ -2081,14 +2086,6 @@ Label {
     text-shadow: 0 2px 12px var(--moon-shadow);
 }
 
-.recipe-card__line {
-    margin-top: 4px;
-    font-size: 16px;
-    color: var(--moon-text);
-    white-space: normal;
-    text-shadow: 0 2px 12px var(--moon-shadow);
-}
-
 .recipe-card__where {
     margin-top: 8px;
     font-size: 16px;
@@ -2133,8 +2130,8 @@ Label {
 }
 
 /*
- * The cargo screen (M3-25 §2.4, Tab / View): 07's hold on the left, home's shelves on the right, and a "07 can" page;
- * Moonlight Glass over the blur. Cell sizes are written by CargoScreen to fit the screen.
+ * The cargo screen (M3-25 §2.4, Tab / View): 07's hold and a "07 can" page; Moonlight Glass over the blur. Cell sizes
+ * are written by CargoScreen to fit the screen.
  */
 
 .cargo {
@@ -2170,10 +2167,6 @@ Label {
     width: 220px;
 }
 
-.cargo .settings-tab:focus {
-    color: var(--glass-sel-text);
-}
-
 .cargo__page {
     min-width: 320px;
 }
@@ -2181,10 +2174,6 @@ Label {
 .cargo__page--columns {
     flex-direction: row;
     align-items: flex-start;
-}
-
-.cargo__column--home {
-    margin-left: 42px;
 }
 
 .cargo__heading {
@@ -2201,25 +2190,30 @@ Label {
     color: var(--glass-sel);
 }
 
+/* 07's system line on the first Tab press, typed in over the dark screen */
+.cargo__boot {
+    display: none;
+    margin-bottom: 8px;
+    font-size: 19px;
+    letter-spacing: 2px;
+    color: var(--glass-sel);
+}
+
+.cargo--booting .cargo__boot {
+    display: flex;
+}
+
+.cargo--booting .cargo__summary {
+    opacity: 0;
+}
+
+.cargo__cell--unlit {
+    opacity: 0;
+}
+
 .cargo__grid {
     flex-direction: row;
     flex-wrap: wrap;
-}
-
-.cargo__shelves {
-    flex-direction: row;
-    flex-wrap: wrap;
-}
-
-.cargo__shelf {
-    margin: 0 22px 12px 0;
-}
-
-.cargo__shelf-name {
-    margin-bottom: 6px;
-    font-size: 18px;
-    letter-spacing: 1px;
-    color: var(--moon-text-dim);
 }
 
 .cargo__cell {
@@ -2254,25 +2248,6 @@ Label {
     font-size: 13px;
     color: var(--glass-hi);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
-}
-
-/* A shelf not built yet: a pencil outline that says so */
-.cargo__pencil {
-    padding: 14px 18px;
-    border-width: 1.5px;
-    border-radius: 12px;
-    border-color: var(--moon-track);
-}
-
-.cargo__pencil-text {
-    font-size: 18px;
-    white-space: normal;
-    color: var(--moon-text-dim);
-}
-
-.cargo__pencil-cost {
-    margin-top: 8px;
-    color: var(--glass-sel);
 }
 
 .cargo__can {

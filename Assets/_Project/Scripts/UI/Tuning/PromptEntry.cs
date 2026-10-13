@@ -12,8 +12,8 @@ namespace MoonProject.UI
     [Serializable]
     public sealed class PromptEntry
     {
-        /// <summary>Uses that retire a prompt unless its entry says otherwise: done twice, it is known.</summary>
-        public const int DefaultUsesToRetire = 2;
+        /// <summary>Uses that retire a prompt unless its entry says otherwise: done once, it is known.</summary>
+        public const int DefaultUsesToRetire = 1;
 
         [Tooltip("The interaction hint this prompt teaches.")]
         [SerializeField] private InteractionKind _kind;

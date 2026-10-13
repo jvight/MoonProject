@@ -8,9 +8,10 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// "Every place has one job, said in one line" (docs/features/M3-16 rule 3): the first time 07 comes within a
-    /// place's radius, <see cref="PlaceFirstApproached"/> is published, once per save. Places reached together
-    /// (07 wakes beside its dock, the ladder and the lift) are told one at a time, a gap apart, in the order they
-    /// were added. Nothing allocates per frame.
+    /// place's radius, <see cref="PlaceFirstApproached"/> is published, once per save. A place 07 is already inside
+    /// when it wakes waits until 07 has left it and comes back (text audit 0.5.5 §1: the dock's card fired at the
+    /// wake). Places reached together are told one at a time, a gap apart, in the order they were added. Nothing
+    /// allocates per frame.
     /// </summary>
     public sealed class PlaceApproaches
     {
@@ -22,6 +23,8 @@ namespace MoonProject.Gameplay
         private readonly List<Func<bool>> _present = new List<Func<bool>>();
         private readonly HashSet<string> _approached = new HashSet<string>(StringComparer.Ordinal);
         private readonly HashSet<string> _told = new HashSet<string>(StringComparer.Ordinal);
+        private readonly List<bool> _wokeInside = new List<bool>();
+        private bool _woke;
         private float _lastTold = float.NegativeInfinity;
 
         /// <param name="gap">Seconds between two places' lines.</param>
@@ -45,6 +48,7 @@ namespace MoonProject.Gameplay
             _positions.Add(position);
             _radii.Add(radius);
             _present.Add(present);
+            _wokeInside.Add(false);
         }
 
         public bool HasApproached(string placeId)
@@ -57,12 +61,15 @@ namespace MoonProject.Gameplay
         {
             for (int i = 0; i < _ids.Count; i++)
             {
-                if (SurfaceRules.HorizontalDistance(rover, _positions[i]) <= _radii[i] &&
-                    (_present[i] == null || _present[i]()))
+                bool inside = SurfaceRules.HorizontalDistance(rover, _positions[i]) <= _radii[i];
+                _wokeInside[i] = inside && (!_woke || _wokeInside[i]);
+                if (inside && !_wokeInside[i] && (_present[i] == null || _present[i]()))
                 {
                     _approached.Add(_ids[i]);
                 }
             }
+
+            _woke = true;
 
             if (now - _lastTold < _gap)
             {

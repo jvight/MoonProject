@@ -60,8 +60,8 @@ namespace MoonProject.Gameplay
         PickUp = 13,
 
         /// <summary>
-        /// Beside a free shelf socket at home (docs/features/M3-25 §3.1): hold Excavate to build its shelf (Ready once home
-        /// and 07 cover its recipe).
+        /// Beside a free shelf socket at home while home's shelves are full (docs/features/M3-25 §3.1): hold Excavate to
+        /// build its shelf (Ready once home and 07 cover its recipe).
         /// </summary>
         Build = 14,
     }

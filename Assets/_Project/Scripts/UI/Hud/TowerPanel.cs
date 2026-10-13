@@ -17,15 +17,14 @@ namespace MoonProject.UI
     /// need line in place of the hold; the stock stays in view in the pinned materials chip), and a ring that fills
     /// while the confirm button is held (<see cref="HoldToConfirm"/>: no accidental purchases). Buying goes through
     /// <see cref="IUpgradeShop"/>. Then the ring rests full while the station does the work (<see cref="StationWork"/>,
-    /// docs/features/M3-14), and the station's own line ("ui.tower.purchased" as the tower's beam starts stitching up
-    /// its new section, "ui.bay.fitted" as the Rover Bay sets the piece on 07) glows a moment before the panel shows
-    /// what is next, or bows out when all is bought. The ring starting and completing are published as
+    /// docs/features/M3-14), and the Rover Bay's line ("ui.bay.fitted", as it sets the piece on 07) glows a moment
+    /// before the panel shows what is next, or bows out when all is bought; the radio tower says nothing (the world
+    /// shows the stitch, then the reward card). The ring starting and completing are published as
     /// <see cref="UiCue"/>s.
     /// <para>
     /// While the station has more than one thing left to sell (Kenji's Rover Bay, docs/features/M3-11), the panel lists
     /// them instead (<see cref="BayList"/>): a tap of Interact or the Winch picks (<see cref="BayPick"/>, a
-    /// <see cref="UiCueKind.FocusMove"/> each), the hold crafts the picked one, and a faint "ui.bay.pick" line says
-    /// how to choose. The radio tower, and the bay's last piece, keep the single offer.
+    /// <see cref="UiCueKind.FocusMove"/> each) and the hold crafts the picked one. The radio tower, and the bay's last piece, keep the single offer.
     /// </para>
     /// </summary>
     internal sealed class TowerPanel
@@ -57,7 +56,6 @@ namespace MoonProject.UI
         private int _shownLevel = -1;
         private bool _shownAffordable;
         private string _shownGlyph;
-        private string _partLine;
         private readonly StationWork _work;
 
         public TowerPanel(UiLayout layout, TowerPanelSettings settings, ILocalization localization, EventBus events,
@@ -72,7 +70,7 @@ namespace MoonProject.UI
             _board = board ?? throw new ArgumentNullException(nameof(board));
             _materials = materials ?? throw new ArgumentNullException(nameof(materials));
             _hints = hints ?? throw new ArgumentNullException(nameof(hints));
-            _recipe = new RecipeView(layout.TowerRecipe, layout.TowerNeed, localization, numbers);
+            _recipe = new RecipeView(layout.TowerRecipe, localization, numbers);
             _reveal = new Reveal(layout.TowerPanel, settings.Reveal);
             _reveal.Snap(false);
             _hold = new HoldToConfirm(settings);
@@ -83,7 +81,6 @@ namespace MoonProject.UI
             _pick = new BayPick(settings);
             _list = new BayList(layout.TowerChoices, localization, numbers);
             _pickGlyph = new GlyphView(layout.TowerPickGlyph, layout.TowerPickGlyphLabel);
-            layout.TowerPickWord.text = localization.Get(UiKeys.BayPick);
             WriteListed(false);
         }
 
@@ -111,6 +108,13 @@ namespace MoonProject.UI
         /// <summary>True while the station's line glows, once its work shows.</summary>
         public bool IsCelebrating => _work.IsShowingLine;
 
+        /// <summary>True while the panel has something to show or is at its work (before the guidance slot decides).</summary>
+        public bool Wants { get; private set; }
+
+        /// <summary>True while 07 is at the radio tower with a build to offer (not the bay).</summary>
+        public bool AtRadioTower => _shop.IsAtStation && _shop.StationUpgrade != null &&
+                                    _shop.StationUpgrade.Station == UpgradeStationKind.RadioTower;
+
         /// <summary>0..1 fill of the hold ring.</summary>
         public float HoldProgress => _hold.Progress;
 
@@ -136,7 +140,8 @@ namespace MoonProject.UI
         public void Tick(float deltaTime, bool gateOpen, bool confirmHeld, float winch, bool towing,
             string confirmGlyph, InputDeviceKind device)
         {
-            bool offered = gateOpen && _hints.TryGet(InteractionKind.Upgrade, out InteractionHint _);
+            Wants = _hints.TryGet(InteractionKind.Upgrade, out InteractionHint _) || _work.IsBusy;
+            bool offered = gateOpen && Wants;
             StationWork.Outcome outcome = _work.Step(deltaTime);
             if (outcome == StationWork.Outcome.Overdue)
             {
@@ -180,7 +185,8 @@ namespace MoonProject.UI
             }
 
             bool held = _listed ? _pick.HoldHeld : confirmHeld;
-            HoldStep step = _hold.Step(ready && offer.CanAfford, held, deltaTime);
+            HoldStep step = _hold.Step(ready && offer.CanAfford && _shop.ComponentNeeded(upgrade.Id) == null, held,
+                deltaTime);
             if (step == HoldStep.Started)
             {
                 _events.Publish(new UiCue(UiCueKind.HoldFill));
@@ -222,7 +228,9 @@ namespace MoonProject.UI
         {
             if (_work.Showed(station, upgradeId))
             {
-                _layout.TowerHoldWord.text = _localization.Get(UiKeys.StationLine(station));
+                _layout.TowerHoldWord.text = UiKeys.TryStationLine(station, out string key)
+                    ? _localization.Get(key)
+                    : string.Empty;
             }
         }
 
@@ -230,7 +238,6 @@ namespace MoonProject.UI
         public void Relocalize()
         {
             _layout.TowerHoldWord.text = HoldWord();
-            _layout.TowerPickWord.text = _localization.Get(UiKeys.BayPick);
             _recipe.Relocalize();
             _list.Relocalize();
             _shownUpgrade = null;
@@ -242,9 +249,7 @@ namespace MoonProject.UI
             PurchaseResult result = _shop.Purchase(upgrade.Id);
             if (result == PurchaseResult.NeedsPart)
             {
-                _partLine = UiKeys.ComponentNeeded(_shop.ComponentNeeded(upgrade.Id));
                 _hold.Reset();
-                _layout.TowerHoldWord.text = HoldWord();
                 _events.Publish(new UiCue(UiCueKind.HoldRelease));
                 return;
             }
@@ -277,17 +282,9 @@ namespace MoonProject.UI
         /// </summary>
         private string HoldWord()
         {
-            if (_work.IsShowingLine)
-            {
-                return _localization.Get(UiKeys.StationLine(_work.Station));
-            }
-
-            if (_work.IsWorking)
-            {
-                return string.Empty;
-            }
-
-            return _partLine == null ? string.Empty : _localization.Get(_partLine);
+            return _work.IsShowingLine && UiKeys.TryStationLine(_work.Station, out string key)
+                ? _localization.Get(key)
+                : string.Empty;
         }
 
         private void DressFor(UpgradeStationKind station)
@@ -332,19 +329,13 @@ namespace MoonProject.UI
                 _layout.TowerState.text = _localization.Get(UiKeys.StationOffline);
                 if (!listed)
                 {
-                    _layout.TowerLevel.text = offer.MaxLevel > 1
-                        ? string.Format(_localization.Get(UiKeys.TowerLevel), level, offer.MaxLevel)
-                        : _localization.Get(UiKeys.UpgradeName(upgrade.Id));
+                    _layout.TowerLevel.text = _localization.Get(UiKeys.UpgradeName(upgrade.Id));
+                    _layout.TowerLevel.style.display = offer.MaxLevel > 1 ? DisplayStyle.None : DisplayStyle.Flex;
                     _layout.TowerTitle.text = _localization.Get(UiKeys.UpgradeTitle(upgrade.Id, level));
                     _layout.TowerDescription.text = _localization.Get(UiKeys.UpgradeEffect(upgrade.Id, level));
                 }
 
-                _shownAffordable = !offer.CanAfford;
-                if (_partLine != null)
-                {
-                    _partLine = null;
-                    _layout.TowerHoldWord.text = HoldWord();
-                }
+                _shownAffordable = !(offer.CanAfford && _shop.ComponentNeeded(upgrade.Id) == null);
             }
 
             if (listed)
@@ -352,8 +343,9 @@ namespace MoonProject.UI
                 _list.Show(_choices, _materials);
             }
 
-            _recipe.Show(offer.NextCost, _materials);
-            bool affordable = offer.CanAfford;
+            string part = _shop.ComponentNeeded(upgrade.Id);
+            _recipe.Show(offer.NextCost, _materials, part);
+            bool affordable = offer.CanAfford && part == null;
             if (affordable != _shownAffordable)
             {
                 _layout.TowerConfirm.style.display = affordable ? DisplayStyle.Flex : DisplayStyle.None;

@@ -120,11 +120,11 @@
         },
         {
             "key": "next.tower.part",
-            "text": "Cuộn dây tháp ở Kho tiếp tế. Lại gần và nhấn E để nhặt."
+            "text": "Cuộn dây tháp nằm trong thùng ở Kho tiếp tế."
         },
         {
             "key": "next.tower.pad",
-            "text": "Mang cuộn dây tháp về tháp radio và đỗ lên bệ."
+            "text": "Mang cuộn dây về bệ tháp."
         },
         {
             "key": "next.tower.hold",
@@ -184,7 +184,7 @@
         },
         {
             "key": "next.dig",
-            "text": "Bộ phận cuối cùng nằm dưới lớp bụi. Hãy đào lên."
+            "text": "Bộ phận của Tilly nằm trong xe trượt bị rơi của cô bé."
         },
         {
             "key": "next.friend.repair",
@@ -352,7 +352,7 @@
         },
         {
             "key": "place.dock.job",
-            "text": "Đỗ vào đây để sạc pin. Sạc xong là game được lưu."
+            "text": "Đỗ vào để sạc pin và lưu game."
         },
         {
             "key": "place.lander.name",
@@ -568,7 +568,7 @@
         },
         {
             "key": "component.tower_coil.needed",
-            "text": "Cần cuộn dây tháp. Nó ở Kho tiếp tế."
+            "text": "Thùng cuộn dây · Kho tiếp tế"
         },
         {
             "key": "upgrade.radio_tower.2.title",
@@ -580,7 +580,7 @@
         },
         {
             "key": "component.transformer.needed",
-            "text": "Cần một bộ biến áp. Tìm ở Gara của Kenji."
+            "text": "Hộp đấu dây · Gara của Kenji"
         },
         {
             "key": "upgrade.radio_tower.3.title",
@@ -592,7 +592,7 @@
         },
         {
             "key": "component.relay_spare.needed",
-            "text": "Cần linh kiện trạm tiếp sóng. Sửa một trạm để lấy."
+            "text": "Tủ bảo trì · trạm tiếp sóng"
         },
         {
             "key": "upgrade.rover.hover_jump.name",
@@ -1051,28 +1051,16 @@
             "text": "Khoang hàng của 07"
         },
         {
-            "key": "ui.cargo.home",
-            "text": "Kệ ở nhà"
-        },
-        {
             "key": "ui.cargo.waiting",
-            "text": "{0} gói đang chờ"
-        },
-        {
-            "key": "ui.cargo.shelf",
-            "text": "Kệ {0}"
-        },
-        {
-            "key": "ui.cargo.shelf_free",
-            "text": "Ổ trống. Đỗ vào đây để dựng kệ."
+            "text": "{0} món đang chờ ở xác tàu"
         },
         {
             "key": "ui.cargo.summary",
-            "text": "07: {0}/{1} ô · Nhà: {2}/{3} ô"
+            "text": "07: {0}/{1} ô"
         },
         {
             "key": "ui.can.decoded",
-            "text": "Đã giải mã. Hãy chế tạo ở xưởng xe."
+            "text": "Đã đủ bản vẽ. Hãy chế tạo ở xưởng xe."
         },
         {
             "key": "ui.can.tether.verb",
@@ -1165,14 +1153,6 @@
         {
             "key": "tech.side_bins.name",
             "text": "Thùng hông"
-        },
-        {
-            "key": "ui.cargo.shelf_cost",
-            "text": "Cần: {0}"
-        },
-        {
-            "key": "ui.cargo.cost_part",
-            "text": "{0} {1}"
         },
         {
             "key": "ui.crate.caption",
@@ -1912,7 +1892,7 @@
         },
         {
             "key": "ticker.cargo.full",
-            "text": "Khoang hàng của 07 đã đầy. Phần còn lại để ở đây, quay lại lấy sau."
+            "text": "Khoang hàng đã đầy. Phần đã cắt vẫn nằm ở xác tàu."
         },
         {
             "key": "ticker.cargo.home_full",
@@ -1997,6 +1977,90 @@
         {
             "key": "upgrade.rover.side_bins.1.effect",
             "text": "Thêm bốn ô trong khoang hàng của 07, mỗi chuyến chở về được nhiều hơn."
+        },
+        {
+            "key": "hint.scan",
+            "text": "Quét"
+        },
+        {
+            "key": "scan.fragment",
+            "text": "Mảnh {0}/{1} · {2}"
+        },
+        {
+            "key": "scan.known",
+            "text": "Bản vẽ đã có · +{0} Kim loại"
+        },
+        {
+            "key": "scan.complete",
+            "text": "Đã đủ bản vẽ: {0}. Hãy chế tạo ở xưởng xe."
+        },
+        {
+            "key": "scan.site_count",
+            "text": "{0} mảnh cần quét"
+        },
+        {
+            "key": "hint.hold",
+            "text": "Khoang hàng"
+        },
+        {
+            "key": "hint.shelves",
+            "text": "Kệ"
+        },
+        {
+            "key": "ui.hold.boot",
+            "text": "KHOANG · {0} Ô · OK"
+        },
+        {
+            "key": "ui.transfer.to_trip",
+            "text": "Mang theo"
+        },
+        {
+            "key": "ui.transfer.to_home",
+            "text": "Cất ở nhà"
+        },
+        {
+            "key": "container.coil_crate",
+            "text": "Thùng cuộn dây"
+        },
+        {
+            "key": "container.junction_box",
+            "text": "Hộp đấu dây"
+        },
+        {
+            "key": "container.service_cabinet",
+            "text": "Tủ bảo trì"
+        },
+        {
+            "key": "container.supply_pod",
+            "text": "Khoang tiếp tế"
+        },
+        {
+            "key": "container.tape_case",
+            "text": "Hộp băng của Ro"
+        },
+        {
+            "key": "container.spare_crate",
+            "text": "07 · DỰ PHÒNG"
+        },
+        {
+            "key": "container.survey_sled",
+            "text": "Xe trượt của Tilly"
+        },
+        {
+            "key": "site.hut.name",
+            "text": "Chòi bảo trì trạm tiếp sóng"
+        },
+        {
+            "key": "site.chasm_lip.name",
+            "text": "Bãi thử nhảy của Kenji"
+        },
+        {
+            "key": "glyph.keyboard.tab",
+            "text": "Tab"
+        },
+        {
+            "key": "glyph.gamepad.select",
+            "text": "View"
         }
     ]
 }

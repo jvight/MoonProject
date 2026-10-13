@@ -188,7 +188,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             SonarTuning tuning = _fixture.SonarTuning;
             yield return Listen();
-            Assert.AreEqual(1, FirstListenLines(), "the first listen says what listening is");
+            Assert.AreEqual(0, FirstListenLines(), "at home the first listen says nothing (text audit 0.5.5 §3.4)");
 
             var near = new Vector3(0f, 0f, tuning.ListenSpacing * 0.5f);
             yield return Drive(Vector3.zero, near);
@@ -202,7 +202,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Waits.Until(() => _fixture.Events.SonarPinged.Count > 1, tuning.RestSeconds + 1f);
             Assert.AreEqual(2, _fixture.Events.SonarPinged.Count, "a new place listens once");
             Assert.AreEqual(far.z, _fixture.Events.SonarPinged[1].Value.Origin.z, 0.01f, "from where 07 rests");
-            Assert.AreEqual(1, FirstListenLines(), "the line is said only once");
+            Assert.AreEqual(0, FirstListenLines(), "nor near home, with no wreck answering");
         }
 
         /// <summary>Brings the tower to level 1 (if it is not yet) and waits until 07, resting, listens.</summary>

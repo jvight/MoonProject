@@ -60,15 +60,13 @@ namespace MoonProject.UI.PlayModeTests
         private readonly GameObject _camera;
         private readonly GameObject _services;
         private readonly GameObject _ui;
-        private readonly CargoTuning _cargoTuning;
         private readonly List<UpgradeDefinition> _upgrades = new List<UpgradeDefinition>();
         private PanelSettings _framedPanel;
         private RenderTexture _frame;
 
         private UiTestRig(GameObject camera, GameObject services, GameObject ui, UiTuning tuning,
-            GameBootstrap bootstrap, string saveSlot, CargoTuning cargoTuning)
+            GameBootstrap bootstrap, string saveSlot)
         {
-            _cargoTuning = cargoTuning;
             _camera = camera;
             _services = services;
             _ui = ui;
@@ -132,15 +130,14 @@ namespace MoonProject.UI.PlayModeTests
             document.panelSettings = panel;
             document.visualTreeAsset = Load<VisualTreeAsset>(UxmlPath);
             var system = ui.AddComponent<UISystem>();
-            CargoTuning cargoTuning = ScriptableObject.CreateInstance<CargoTuning>();
             system.Wire(document, tuning, Load<RelicCatalog>(CatalogPath),
                 new[] { Load<TextAsset>(EnglishPath), Load<TextAsset>(VietnamesePath) },
-                Load<WordmarkShape>(WordmarkPath), Load<TextAsset>(CreditsPath), cargoTuning);
+                Load<WordmarkShape>(WordmarkPath), Load<TextAsset>(CreditsPath));
             system.QuitAction = () => { };
             ui.SetActive(true);
 
             GameBootstrap bootstrap = BootstrapHarness.Create(controls, saveSlot, fakes, system);
-            return new UiTestRig(camera, services, ui, tuning, bootstrap, saveSlot, cargoTuning)
+            return new UiTestRig(camera, services, ui, tuning, bootstrap, saveSlot)
             {
                 _framedPanel = framedPanel,
                 _frame = frame,
@@ -274,7 +271,6 @@ namespace MoonProject.UI.PlayModeTests
             Object.DestroyImmediate(_services);
             Object.DestroyImmediate(_camera);
             Object.DestroyImmediate(Tuning);
-            Object.DestroyImmediate(_cargoTuning);
             foreach (UpgradeDefinition upgrade in _upgrades)
             {
                 Object.DestroyImmediate(upgrade);

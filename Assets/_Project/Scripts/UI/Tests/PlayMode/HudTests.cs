@@ -111,7 +111,6 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Fakes.Hold.Set(5, new MaterialSlot(SalvageMaterial.Metal, 4, 4),
                 new MaterialSlot(SalvageMaterial.Wiring, 2, 4), new MaterialSlot(SalvageMaterial.Ilmenite, 3, 6));
             _rig.Fakes.Hold.WaitingBundles = 3;
-            _rig.Fakes.Home.Lay(2, 2, 12, new MaterialSlot(SalvageMaterial.Metal, 4, 4));
             yield return Seconds(0.3f);
 
             yield return Tap(keyboard.tabKey);
@@ -120,16 +119,8 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsTrue(cargo.IsOpen);
             Assert.AreEqual(1f, Time.timeScale, "the game does not pause");
             Assert.AreEqual(8, cargo.HoldCellCount, "a cell for every slot of 07's hold");
-            Assert.AreEqual(4, cargo.ShelfBlockCount, "two built shelves and two free sockets");
             StringAssert.Contains("3", cargo.WaitingText);
-            Assert.AreEqual(string.Format(Text(UiKeys.CargoSummary), 3, 8, 1, 24), cargo.SummaryText);
-            string metal = Text(UiKeys.MaterialName(SalvageMaterial.Metal));
-            string wiring = Text(UiKeys.MaterialName(SalvageMaterial.Wiring));
-            Assert.AreEqual(string.Format(Text(UiKeys.CargoShelfCost),
-                string.Format(Text(UiKeys.CargoCostPart), 3, metal)), cargo.ShelfCostText(2),
-                "the first free socket says what its shelf takes");
-            Assert.AreEqual(string.Format(Text(UiKeys.CargoShelfCost), string.Format(Text(UiKeys.CargoCostPart), 4, metal) +
-                ", " + string.Format(Text(UiKeys.CargoCostPart), 1, wiring)), cargo.ShelfCostText(3));
+            Assert.AreEqual(string.Format(Text(UiKeys.CargoSummary), 3, 8), cargo.SummaryText);
 
             yield return Tap(keyboard.tabKey);
             yield return Seconds(0.6f);
@@ -145,11 +136,52 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator CargoScreen_FirstTab_BootsOnce_AndAsksForTheHatchAndTheChirp()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Hold.Set(6, new MaterialSlot(SalvageMaterial.Metal, 2, 4),
+                new MaterialSlot(SalvageMaterial.Wiring, 1, 4));
+            int started = 0;
+            int lit = 0;
+            int arrived = 0;
+            float hatch = -1f;
+            ChirpMood? chirp = null;
+            Events.Subscribe<HoldBootStarted>(_ => started++);
+            Events.Subscribe<HoldSlotLit>(_ => lit++);
+            Events.Subscribe<HoldItemArrived>(_ => arrived++);
+            Events.Subscribe<RoverHatchCycleRequested>(request => hatch = request.OpenSeconds);
+            Events.Subscribe<RoverChirpRequested>(request => chirp = request.Mood);
+            yield return Seconds(0.3f);
+
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(0.15f);
+            CargoScreen cargo = _rig.Ui.Cargo;
+            Assert.IsTrue(cargo.IsBooting, "the first press boots the hold");
+            Assert.AreEqual(1, started);
+            Assert.Greater(hatch, 1.2f, "07's hatch is asked to stay open for the whole boot");
+            yield return Seconds(2f);
+            Assert.IsFalse(cargo.IsBooting);
+            Assert.AreEqual(8, lit, "every slot outline lit, once");
+            Assert.AreEqual(2, arrived, "both starter items slid in");
+            Assert.AreEqual(ChirpMood.Affirm, chirp, "07 chirps when the boot is done");
+
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(0.6f);
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(0.5f);
+            Assert.IsFalse(cargo.IsBooting, "never again");
+            Assert.AreEqual(1, started);
+        }
+
+        [UnityTest]
         public IEnumerator CargoScreen_SevenCan_ListsTheAbilitiesOwned_AndDecodedKitsAsPencil()
         {
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             Boot();
             Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Hold.Set(8);
             _rig.Fakes.Grant(RoverAbility.Tether);
             _rig.Fakes.SetTech(TechNodeId.HoverJump, TechNodeState.Decoded);
             yield return Seconds(0.3f);
@@ -347,18 +379,86 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Fakes.AwaitingPart = true;
             _rig.Fakes.AtStation = true;
             yield return Seconds(2f);
+            Assert.AreEqual(DisplayStyle.None, _rig.Ui.Layout.TowerConfirm.resolvedStyle.display,
+                "the action waits until everything is in hand");
+            Assert.AreEqual(Text("pickup.part_towercoil") + " | " + string.Format(Text(UiKeys.RecipeRow), 1, 0) + " | " +
+                            Text(UiKeys.ComponentNeeded("Part_TowerCoil")), _rig.Ui.Tower.Recipe.PartText,
+                "the missing coil is one row, with where to find it");
             Press(keyboard.eKey);
             yield return Seconds(_rig.Tuning.TowerPanel.HoldSeconds + 0.5f);
             Release(keyboard.eKey);
             yield return null;
             Assert.AreEqual(0, _rig.Fakes.Purchases, "nothing is bought without the coil");
             Assert.IsFalse(_rig.Ui.Tower.IsWorking);
-            Assert.AreEqual(Text(UiKeys.ComponentNeeded("Part_TowerCoil")), _rig.Ui.Layout.TowerHoldWord.text);
 
             _rig.Fakes.AwaitingPart = false;
+            yield return Seconds(0.3f);
+            Assert.AreEqual(string.Empty, _rig.Ui.Tower.Recipe.PartText);
             Press(keyboard.eKey);
             yield return Seconds(_rig.Tuning.TowerPanel.HoldSeconds + 0.5f);
             Assert.AreEqual(1, _rig.Fakes.Purchases, "once the coil is in, the same hold wakes the tower");
+        }
+
+        [UnityTest]
+        public IEnumerator AtTheTower_TheTabChipComesFirst_ThenTheCardFollows()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Hold.Set(6, new MaterialSlot(SalvageMaterial.Metal, 2, 4),
+                new MaterialSlot(SalvageMaterial.Wiring, 1, 4));
+            _rig.Fakes.Upgrade = _rig.TestTower();
+            _rig.Fakes.SetMaterials(2, 1, 0);
+            _rig.Fakes.AtStation = true;
+            yield return Seconds(1.5f);
+            Assert.IsTrue(_rig.Ui.LookUp.IsVisible, "the one Tab chip, first");
+            Assert.AreEqual(Text(UiKeys.HintHold), _rig.Ui.Layout.LookHintWord.text);
+            Assert.IsFalse(_rig.Ui.Tower.IsVisible, "the card and the chip never show together");
+
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(2.5f);
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(2f);
+            Assert.IsTrue(_rig.Ui.Tower.IsVisible, "once the hold has been opened the card follows");
+            Assert.IsFalse(_rig.Ui.LookUp.IsVisible, "and the chip does not come back");
+        }
+
+        [UnityTest]
+        public IEnumerator TheDarkTower_NeverPutsWordsOnTheTicker_OtherSleepersDo()
+        {
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(1f);
+            Events.Publish(new StationNotYet(UiKeys.NotYetTower, Vector3.zero, 10f));
+            yield return Seconds(2f);
+            Assert.IsFalse(_rig.Ui.Ticker.IsVisible, "the tower answers with its lamp and a tone, not a line");
+
+            Events.Publish(new StationNotYet("notyet.bay", Vector3.zero, 10f));
+            yield return Seconds(2f);
+            Assert.IsTrue(_rig.Ui.Ticker.IsVisible, "another sleeper still says what wakes it");
+        }
+
+        [UnityTest]
+        public IEnumerator NoFrame_ShowsTwoGuidanceElements()
+        {
+            Boot();
+            yield return null;
+            _rig.Fakes.Upgrade = _rig.TestTower();
+            _rig.Fakes.SetMaterials(3, 1, 0);
+            _rig.Fakes.AtStation = true;
+            int shownFrames = 0;
+            float until = Time.realtimeSinceStartup + 8f;
+            while (Time.realtimeSinceStartup < until)
+            {
+                int up = (_rig.Ui.Prompt.IsVisible ? 1 : 0) + (_rig.Ui.Tower.IsVisible ? 1 : 0) +
+                         (_rig.Ui.RecipeCard.IsVisible ? 1 : 0) + (_rig.Ui.PlaceCard.IsVisible ? 1 : 0) +
+                         (_rig.Ui.NextLine.IsVisible ? 1 : 0);
+                shownFrames += up > 0 ? 1 : 0;
+                Assert.LessOrEqual(up, 1, "one guidance element at a time");
+                yield return null;
+            }
+
+            Assert.Greater(shownFrames, 0, "the scene did guide, or the test proves nothing");
         }
 
         [UnityTest]
@@ -375,7 +475,8 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsTrue(_rig.Ui.Tower.IsVisible);
             Assert.AreEqual(0, _rig.Fakes.Purchases, "arriving with the button already held buys nothing");
             Assert.AreEqual(Text(UiKeys.UpgradeTitle("radio_tower", 1)), _rig.Ui.Layout.TowerTitle.text);
-            Assert.AreEqual("Level 1 of 3", _rig.Ui.Layout.TowerLevel.text);
+            Assert.AreEqual(DisplayStyle.None, _rig.Ui.Layout.TowerLevel.resolvedStyle.display,
+                "the title says which level comes next, so no counter");
             MaterialSlots recipe = _rig.Ui.Tower.Recipe.Slots;
             Assert.AreEqual(string.Format(Text(UiKeys.RecipeRow), 2, _rig.Fakes.Metal),
                 recipe.Text(SalvageMaterial.Metal), "the need first, then what 07 has");
@@ -384,7 +485,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(DisplayStyle.None, recipe.Root(SalvageMaterial.Optics).resolvedStyle.display,
                 "a material the recipe does not use is left out");
             Assert.IsFalse(recipe.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass));
-            Assert.AreEqual(DisplayStyle.None, _rig.Ui.Layout.TowerNeed.resolvedStyle.display, "nothing is short");
+            Assert.AreEqual(string.Empty, _rig.Ui.Tower.Recipe.PartText, "and no component is missing");
 
             Release(keyboard.eKey);
             yield return Seconds(0.2f);
@@ -406,7 +507,7 @@ namespace MoonProject.UI.PlayModeTests
             Events.Publish(new StationCued(StationCue.StitchStarted, _rig.Fakes.Upgrade.Id, Vector3.zero));
             yield return null;
             Assert.IsTrue(_rig.Ui.Tower.IsCelebrating, "the beam stitches the new section up: the line comes");
-            Assert.AreEqual(Text(UiKeys.TowerPurchased), _rig.Ui.Layout.TowerHoldWord.text);
+            Assert.AreEqual(string.Empty, _rig.Ui.Layout.TowerHoldWord.text, "the tower says nothing: the world shows it");
             yield return Seconds(_rig.Tuning.TowerPanel.CelebrateSeconds + 0.5f);
             Assert.AreEqual(1, _rig.Fakes.Purchases, "one purchase per hold");
             Release(keyboard.eKey);
@@ -417,10 +518,6 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsTrue(recipe.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass),
                 "what 07 is short of reads dimmed");
             Assert.IsTrue(recipe.Root(SalvageMaterial.Optics).ClassListContains(MaterialSlots.ShortClass));
-            Assert.AreEqual(DisplayStyle.Flex, _rig.Ui.Layout.TowerNeed.resolvedStyle.display,
-                "and one quiet line says what to salvage");
-            Assert.AreEqual(string.Format(Text(UiKeys.RecipeNeed), 3, Text(UiKeys.MaterialName(SalvageMaterial.Metal))),
-                _rig.Ui.Layout.TowerNeed.text);
             Assert.AreEqual(DisplayStyle.None, _rig.Ui.Layout.TowerConfirm.resolvedStyle.display,
                 "the hold waits until the recipe is covered");
 
@@ -460,7 +557,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(1f);
             UiLayout layout = _rig.Ui.Layout;
             Assert.AreEqual(Text(UiKeys.StationName(UpgradeStationKind.RadioTower)), layout.TowerName.text);
-            Assert.AreEqual("Level 1 of 3", layout.TowerLevel.text, "the tower counts its levels");
+            Assert.AreEqual(DisplayStyle.None, layout.TowerLevel.resolvedStyle.display, "the tower does not count its levels");
             Assert.IsTrue(layout.TowerPanel.ClassListContains(TowerPanel.StationClass(UpgradeStationKind.RadioTower)));
 
             _rig.Fakes.AtStation = false;
@@ -503,7 +600,6 @@ namespace MoonProject.UI.PlayModeTests
                 MaterialSlots.ShortClass), "no optics yet: the headlamp's optics read dimmed");
             Assert.AreEqual(DisplayStyle.None, layout.TowerTitle.resolvedStyle.display, "no single offer's title");
             Assert.AreEqual(DisplayStyle.Flex, layout.TowerPick.resolvedStyle.display);
-            Assert.AreEqual(Text(UiKeys.BayPick), layout.TowerPickWord.text);
             Assert.AreEqual(DisplayStyle.Flex, layout.TowerConfirm.resolvedStyle.display, "the hover-jump is covered");
 
             yield return Tap(keyboard.eKey);
@@ -548,7 +644,6 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(2, panel.List.RowCount, "the crafted piece leaves the list");
             Assert.AreSame(headlamp, panel.Choices.Current, "and the next takes its place under the pick");
             Assert.AreEqual(DisplayStyle.None, layout.TowerConfirm.resolvedStyle.display, "short: no hold");
-            Assert.AreEqual(DisplayStyle.Flex, layout.TowerNeed.resolvedStyle.display, "but one quiet need line");
 
             _rig.Fakes.SetMaterials(9, 9, 9);
             yield return Tap(keyboard.eKey);
@@ -641,8 +736,6 @@ namespace MoonProject.UI.PlayModeTests
                 "short of metal: it reads dimmed");
             Assert.IsFalse(recipe.Root(SalvageMaterial.Wiring).ClassListContains(MaterialSlots.ShortClass),
                 "the wiring 07 has enough of reads normally");
-            Assert.AreEqual(string.Format(Text(UiKeys.RecipeNeed), 4, Text(UiKeys.MaterialName(SalvageMaterial.Metal))),
-                _rig.Ui.Layout.RelayTagNeed.text);
             Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "and nothing nags");
 
             _rig.Fakes.SetMaterials(8, 5, 0);
@@ -651,7 +744,6 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsTrue(_rig.Ui.Prompt.IsVisible);
             Assert.AreEqual(Text(UiKeys.Hint(InteractionKind.Restore)), _rig.Ui.Layout.PromptWord.text);
             Assert.IsFalse(recipe.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass));
-            Assert.AreEqual(DisplayStyle.None, _rig.Ui.Layout.RelayTagNeed.resolvedStyle.display);
             Assert.LessOrEqual(_rig.Ui.Layout.RelayTag.worldBound.yMax, _rig.Ui.Layout.Prompt.worldBound.yMin + 1f,
                 "the tag rests on top of the prompt, never over it");
 
@@ -690,7 +782,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsTrue(_rig.Ui.SalvageRing.IsVisible);
             Assert.AreEqual(0.3f, _rig.Ui.SalvageRing.Progress, 1e-3f);
             Assert.AreEqual(SalvageMaterial.Optics, _rig.Ui.SalvageRing.ShownMaterial, "it says what the piece yields");
-            Assert.AreEqual(1, _rig.Ui.Ledger.Used(InteractionKind.Salvage), "cutting is doing it");
+            Assert.AreEqual(0, _rig.Ui.Ledger.Used(InteractionKind.Salvage), "the verb is learned when a piece comes free");
             Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "the prompt bows out once the beam cuts");
 
             _rig.Fakes.IsCutting = false;

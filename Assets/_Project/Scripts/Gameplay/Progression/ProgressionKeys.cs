@@ -20,10 +20,7 @@ namespace MoonProject.Gameplay
         /// <summary>Kenji's garage service port (first-hour v2 §3): it fits 07's spare parts.</summary>
         public const string PlaceGaragePort = "place.garage_port";
 
-        /// <summary>The ticker line as the port fits the tether ring.</summary>
-        public const string TickerTetherBack = "ticker.tether.back";
-
-        /// <summary>Before the ring, said once near a loose keepsake: the tether is gone, Kenji kept a spare.</summary>
+        /// <summary>Before the ring, said once when the player first tries to tow: Kenji kept a spare.</summary>
         public const string NotYetTether = "notyet.tether";
 
         /// <summary>Step 0: drive, look.</summary>
@@ -37,9 +34,6 @@ namespace MoonProject.Gameplay
 
         /// <summary>Step 2, the coil on 07's back: park on the tower's pad, where it goes into the port.</summary>
         public const string NextTowerPad = "next.tower.pad";
-
-        /// <summary>Step 2, the coil in the port: hold E on the pad to repair the tower.</summary>
-        public const string NextTowerHold = "next.tower.hold";
 
         /// <summary>Step 3: follow the faint signal, stitch Tilly.</summary>
         public const string NextSignal = "next.signal";

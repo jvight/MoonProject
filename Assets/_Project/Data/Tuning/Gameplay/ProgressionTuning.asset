@@ -22,6 +22,8 @@ MonoBehaviour:
   _liftRadius: 4
   _rackRadius: 4
   _placeLineGap: 6
+  _listenAwayFromHome: 40
+  _dockCardBelow: 0.9
   _signalFriend: tilly
   _leapFriend: bell
   _leapKit: rover.hover_jump

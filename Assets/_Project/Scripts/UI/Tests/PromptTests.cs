@@ -66,19 +66,17 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void DoingTheAction_EndsTheShowing_ThenItRestsForItsCooldown()
+        public void DoingTheAction_EndsTheShowing_AndRetiresThePrompt()
         {
             Run(1f, Ready(InteractionKind.Excavate));
             _director.NotifyUsed(InteractionKind.Excavate);
             Assert.IsFalse(_director.WantsShown, "the prompt bows out as soon as the player does it");
             Assert.AreEqual(1, _ledger.Used(InteractionKind.Excavate));
 
-            Run(_settings.RepeatCooldown * 0.5f, Ready(InteractionKind.Excavate));
-            Assert.AreEqual(InteractionKind.None, _director.Displayed, "rests during the cooldown");
             float dwell = _settings.Find(InteractionKind.Excavate).DwellSeconds;
-            Run(_settings.RepeatCooldown * 0.5f + dwell + 1f, Ready(InteractionKind.Excavate));
-            Assert.AreEqual(InteractionKind.Excavate, _director.Displayed, "and may return once");
-            Assert.AreEqual(2, _ledger.Shown(InteractionKind.Excavate));
+            Run(_settings.RepeatCooldown + dwell + 1f, Ready(InteractionKind.Excavate));
+            Assert.AreEqual(InteractionKind.None, _director.Displayed, "done once, the verb is known and never returns");
+            Assert.AreEqual(1, _ledger.Shown(InteractionKind.Excavate));
         }
 
         [Test]
@@ -87,21 +85,6 @@ namespace MoonProject.UI.Tests
             Run(1f, Ready(InteractionKind.Excavate));
             Run(_settings.MaxShowSeconds, Ready(InteractionKind.Excavate));
             Assert.IsFalse(_director.WantsShown);
-        }
-
-        [Test]
-        public void APrompt_IsRetired_AfterItsShowings()
-        {
-            for (int i = 0; i < _settings.ShowingsToRetire; i++)
-            {
-                Run(_settings.RepeatCooldown + _settings.MaxShowSeconds + 2f, Ready(InteractionKind.Tether));
-            }
-
-            Assert.AreEqual(_settings.ShowingsToRetire, _ledger.Shown(InteractionKind.Tether));
-            Assert.IsFalse(_ledger.ShouldTeach(InteractionKind.Tether));
-            Run(120f, Ready(InteractionKind.Tether));
-            Assert.AreEqual(_settings.ShowingsToRetire, _ledger.Shown(InteractionKind.Tether), "never again");
-            Assert.AreEqual(InteractionKind.None, _director.Displayed);
         }
 
         [Test]
