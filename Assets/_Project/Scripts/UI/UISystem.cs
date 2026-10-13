@@ -369,8 +369,8 @@ namespace MoonProject.UI
                 _cargo?.MarkDirty();
             }));
             _tokens.Add(events.Subscribe<RecoveryProgressChanged>(OnRecoveryProgressChanged));
-            _tokens.Add(events.Subscribe<BlueprintFound>(OnBlueprintFound));
-            _tokens.Add(events.Subscribe<BlueprintDelivered>(OnBlueprintDelivered));
+            _tokens.Add(events.Subscribe<FragmentScanned>(OnFragmentScanned));
+            _tokens.Add(events.Subscribe<BlueprintCompleted>(OnBlueprintCompleted));
             _tokens.Add(events.Subscribe<RoverWideShotChanged>(OnWideShotChanged));
             _tokens.Add(events.Subscribe<RoverWakeBeatReached>(OnWakeBeat));
             _tokens.Add(events.Subscribe<SiteAnswered>(OnSiteAnswered));
@@ -906,9 +906,10 @@ namespace MoonProject.UI
             }
         }
 
-        private void OnBlueprintFound(BlueprintFound found)
+        /// <summary>"Fragment 2 of 3 · Cargo Cradle", or the known blueprint's metal, as a note.</summary>
+        private void OnFragmentScanned(FragmentScanned scanned)
         {
-            _placeCard.BlueprintFound(found.KitId);
+            _crateNote.Scanned(ScanLines.Fragment(_localization, scanned, _tuning.CrateNote.KnownMetal));
         }
 
         private void OnLabLeft(LabLeft left)
@@ -938,9 +939,10 @@ namespace MoonProject.UI
             }
         }
 
-        private void OnBlueprintDelivered(BlueprintDelivered delivered)
+        /// <summary>The last fragment is in: one ticker line names the kit and where to build it.</summary>
+        private void OnBlueprintCompleted(BlueprintCompleted completed)
         {
-            _tickerLines.Enqueue(new TickerLine(UiKeys.BlueprintDelivered));
+            _tickerLines.Enqueue(new TickerLine(UiKeys.ScanComplete, UiKeys.UpgradeName(completed.BlueprintId), true));
         }
 
         private void OnNextStepChanged(NextStepChanged changed)

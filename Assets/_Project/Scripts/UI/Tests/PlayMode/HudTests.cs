@@ -460,6 +460,23 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator AScan_ShowsItsPickupNote_AndACompletedBlueprintOneTickerLine()
+        {
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(1f);
+            Events.Publish(new FragmentScanned("fragment.cradle.1", "rover.cargo_cradle", 1, 3, false));
+            yield return Seconds(1.5f);
+            Assert.IsTrue(_rig.Ui.CrateNote.IsVisible, "the note is a pickup note, not a card or a line");
+            StringAssert.Contains("2", _rig.Ui.CrateNote.Text);
+            StringAssert.Contains(Text(UiKeys.UpgradeName("rover.cargo_cradle")), _rig.Ui.CrateNote.Text);
+
+            Events.Publish(new BlueprintCompleted("rover.cargo_cradle"));
+            yield return Seconds(2.5f);
+            Assert.IsTrue(_rig.Ui.Ticker.IsVisible, "\"Blueprint complete\" is one ticker line");
+        }
+
+        [UnityTest]
         public IEnumerator TheDarkTower_NeverPutsWordsOnTheTicker_OtherSleepersDo()
         {
             Boot();

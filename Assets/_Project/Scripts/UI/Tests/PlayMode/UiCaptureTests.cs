@@ -1006,14 +1006,18 @@ namespace MoonProject.UI.PlayModeTests
             yield return Watch(ui, overlaps, _tuning.Salvage.SiteNameHoldSeconds + _tuning.Salvage.SiteName.FadeOut);
             fakes.SetMaterials(3, 1, 0);
             events.Publish(new NextStepChanged("next.tower.pad"));
-            events.Publish(new BlueprintFound("rover.cargo_cradle", DepotSite, depot.Position));
             events.Publish(new PlaceFirstApproached("place.tower"));
             yield return Watch(ui, overlaps, _tuning.Guidance.Place.FadeIn + 0.5f);
-            yield return Capture(camera, folder, "64_blueprint_card");
-            events.Publish(new BlueprintDelivered("rover.cargo_cradle"));
+            yield return Capture(camera, folder, "64_tower_card");
             yield return Watch(ui, overlaps, _tuning.Guidance.PlaceHoldSeconds + _tuning.Guidance.Place.FadeOut +
-                                             _tuning.Guidance.Place.FadeIn + 0.5f);
-            yield return Capture(camera, folder, "65_tower_card");
+                                             0.5f);
+            events.Publish(new FragmentScanned("fragment.cradle.1", "rover.cargo_cradle", 1, 3, false));
+            yield return Watch(ui, overlaps, _tuning.CrateNote.Reveal.FadeIn + 0.8f);
+            Assert.IsTrue(ui.CrateNote.IsVisible, "the scan's pickup note is up");
+            StringAssert.Contains("2", ui.CrateNote.Text);
+            yield return Capture(camera, folder, "65_scan_note");
+            events.Publish(new BlueprintCompleted("rover.cargo_cradle"));
+            yield return Watch(ui, overlaps, _tuning.CrateNote.HoldSeconds(40) + _tuning.CrateNote.Reveal.FadeOut + 0.5f);
             yield return Watch(ui, overlaps, _tuning.Guidance.PlaceHoldSeconds + _tuning.Guidance.Place.FadeOut +
                                              TickerEntrance());
             yield return Capture(camera, folder, "66_plotter_line");
