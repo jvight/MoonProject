@@ -26,45 +26,38 @@
 | **Hardspace: Shipbreaker's tool tiers** | upgrades are numbers in a menu; bigger hulls are walls of time | Every tier **changes 07's body**: more ribs, a faster run, a hotter core. Big pieces cut in **segments**, so long work is a sequence of short satisfying beats, never one long hold. |
 | **Both** | a charge you wait for | The charge is part of the pleasure, and the tiers make it *snappier*, never skippable. Waiting less is the reward you feel on every cut. |
 
-## 2. The charge run
-### 2.1 Where, and how many
-- **Path:** from the battery spine on 07's back (where the cell modules sit, GDD v3 §4.4), forward along the body's
-  top centreline, up the back of the neck, to the emitter ring round the beam's mouth. A single centred line, never a
-  symmetric pair (P3).
-- **The lamps:**
-
-| Tier | What carries the run | Count | Look |
-|---|---|---|---|
-| 0 (start) | small round **conduit lamps**, flush with the body | 5 (2 deck, 2 neck, 1 ring) | dim cyan dots, a little dusty |
-| 1 Focus Lens | + 2 lamps on the head's brow | 7 | cleaner glass, brighter |
-| 2 Cutter Ribs | the deck lamps become **rounded radiator ribs** (low fins, 4–6 cm tall) | 9 | each rib's edge lights, so it reads at 30 m |
-| 3 Thermal Cutter | the same ribs with a **white-hot core and an amber edge** as the run passes | 9 | warmer and hotter, never red |
-
-### 2.2 The sequence
-The timing is exactly the Anticipate's `Seconds`.
-- **The run:** lamps light one after another from the battery to the emitter, accelerating (ease-in). Each lamp
-  flares (+60% for 80 ms), then holds at a charged glow. Each lamp sounds one step of the charge arpeggio
-  (D E F# A, then B and D′ for longer rows), replacing feel-pass §3's flat four-note run.
-- **Arrival:** the run reaches the emitter at **ignition** (feel-pass §3: the flash and the recoil). On the flash
-  every lamp spikes once. Then all lamps sit at a sustained glow that **pulses with each cut step** (the Act beats).
-- **Cancel:** the lamps drain **backwards**, emitter to battery, in 200 ms, with a soft falling two-note. Nothing is
-  lost (ruling 4).
-- **Resume** (0.3 s): the run **starts part-way**, from the middle lamp, because the line is still warm. The player
-  sees why the resume is faster.
-- **Break:** all lamps fade over 400 ms as the emitter vents (feel-pass §3).
-- **The ChargeUp motes** (feel-pass §3) still condense at the emitter in the run's last third, so the run *feeds*
-  them.
+## 2. The charge-up (revised 2026-10-13; full spec in `docs/design/0.5.5-owner-feedback.md` §5)
+The owner, after 0.5.4: the first version (a row of lamps lighting one by one in 0.65 s) was too fast and weightless.
+Its sound didn't fit, the lamps didn't read as technology, and 07 was lopsided. The charge-up is now one designed
+moment:
+- **Timing:** holding E builds **stages 1–3**, and the beam fires when the piece's needed stage is reached (small 1,
+  medium 2, large and hull 3). A fixed **0.5 s brace** comes first on every fresh charge. A **warm emitter** (a
+  re-press within 6 s at the same site) skips the brace and builds at ×0.6. Tiers shorten the stages (§3), never the
+  brace.
+- **Curve:** brace → per-stage ease-in builds, each ending in a lock click → full lock → a 120 ms held breath →
+  ignition.
+- **Body:** 07 squats 3 cm, locks its wheels and stiffens its rockers. It settles 0.5 cm per stage, with a body-only
+  micro-tremor, and is completely still at lock.
+- **Visual:** energy travels through **hardware** (a conduit, rings, a collar) from the battery to the emitter, with
+  something moving at each stage. It is symmetric about 07's centre plane, readable in three stages at 30 m, and
+  tech-cyan going to white. Art offers 2–3 variants for the owner; the requirements are in the 0.5.5 spec §5.4.
+- **Sound:** a mechanical build heard through the chassis: brace servo, a capacitor whine stepping D → A → D′ on
+  detent clicks, a "clunk-click" lock and the held note through the breath.
+- **Camera:** a gentle push-in only for fresh large and hull charges, dead still at lock. None under Gentle, never any
+  shake.
+- **Drain on release** before firing: the fill runs back to the source in 200 ms. Nothing is lost (ruling 4).
+- **The ChargeUp motes** (feel-pass §3) still condense at the emitter in the last stage, fed by the conduit.
 
 ## 3. Cutter tiers
 Names follow the glossary style. **New glossary rows (story to add):** Cutter (the beam's cutting) / *máy cắt*; Focus
 Lens / *Thấu kính hội tụ*; Cutter Ribs / *Gân tản nhiệt*; Thermal Cutter / *Máy cắt nhiệt*.
 
-| Tier | Kit (fitted in the bay) | Ver / unlock | Recipe | Charge (fresh / resume) | Cut speed | Beam drain | Visible on 07 |
+| Tier | Kit (fitted in the bay) | Ver / unlock | Recipe | Stage time (brace 0.5 s fixed) | Cut speed | Beam drain | Visible on 07 |
 |---|---|---|---|---|---|---|---|
-| 0 | the old cutter | start | — | 0.65 s / 0.30 s | ×1.0 | ×1.0 | 5 dusty conduit lamps |
-| 1 | **Focus Lens** | 0.5.x. Bell's first signal points at its tube in Kestrel-3's cockpit (~min 50–60). | Optics 3, Wiring 1 | 0.45 / 0.20 | ×1.3 | ×0.85 | a ringed lens on the emitter; 7 lamps |
-| 2 | **Cutter Ribs** | 0.6, a terrace wreck's heart | Alloy 2, Wiring 3 | 0.32 / 0.15 | ×1.7 | ×0.70 | radiator ribs along the back; 9 lit edges |
-| 3 | **Thermal Cutter** (GDD v3's node) | 0.7 | blueprint + Alloy + Heat Sink | 0.22 / 0.10 | ×2.2 | ×0.60 | the hot core, heat-sink fins at the emitter. **Also opens sealed hulls** (the one hard gate). |
+| 0 | the old cutter | start | — | 0.45 s | ×1.0 | ×1.0 | the base charge hardware (0.5.5 spec §5.4) |
+| 1 | **Focus Lens** | 0.5.x. Bell's first signal points at its tube in Kestrel-3's cockpit (~min 50–60). | Optics 3, Wiring 1 | 0.36 s | ×1.3 | ×0.85 | a ringed lens on the emitter |
+| 2 | **Cutter Ribs** | 0.6, a terrace wreck's heart | Alloy 2, Wiring 3 | 0.29 s | ×1.7 | ×0.70 | radiator ribs along the back conduit |
+| 3 | **Thermal Cutter** (GDD v3's node) | 0.7 | blueprint + Alloy + Heat Sink | 0.22 s | ×2.2 | ×0.60 | the hot core, heat-sink fins at the emitter. **Also opens sealed hulls** (the one hard gate). |
 
 - **Speed** divides each segment's cut time. **Drain** multiplies the beam's battery use (M3-20 counts beam seconds
   from ignition only).
@@ -103,7 +96,7 @@ hatch, GDD v3 A2), not a slowdown.
 | 0.6 terraces | — | large and hull plates (Alloy) | Cutter Ribs arrive here |
 
 ### 4.3 The first hour
-- The first cut the player ever makes (a depot small piece) is **0.65 s of charge run + 1.2 s of cutting ≈ 1.9 s** from
+- The first cut the player ever makes (a depot small piece) is **0.95 s of charge (brace + stage 1) + 1.2 s of cutting ≈ 2.2 s** from
   press to crack, against ~2.7–4.7 s today.
 - Nothing in the first 30 minutes takes over 3.2 s, so the owner's first impression is snappy.
 - **Long cuts arrive only after the player knows the verb and has seen a reason:**
@@ -126,7 +119,7 @@ hatch, GDD v3 A2), not a slowdown.
 ## 5. Feel per tier
 | Beat | Tier 0 | Tier 1 | Tier 2 | Tier 3 |
 |---|---|---|---|---|
-| Run | 5 lamps, soft | 7, brighter | 9 rib edges | 9 with a hot core |
+| Charge hardware | the base conduit (0.5.5 §5.4) | + the Focus Lens ring | + rib edges along the conduit | + a hot core |
 | Arpeggio | D E F# A | + B | + D′ (a full octave) | + a sustained low D under it |
 | Ignition flash | feel-pass §3 | +15% | +30% | +45% and amber-white |
 | Beam hum | the existing tone | a step brighter | a fuller second layer | a deep warm undertone |
@@ -150,7 +143,7 @@ hatch, GDD v3 A2), not a slowdown.
 - **Glossary rows** (§3) in `writing-style.md`. Kit keys `kit.focus_lens.*`, `kit.cutter_ribs.*`.
 
 **Tuning:**
-- **`CutterTuning`** (gameplay): one row per tier (charge, resume, speed, drain, lamp count) with `[Tooltip]` and
+- **`CutterTuning`** (gameplay): one row per tier (stage time, speed, drain), plus the brace time and the warm-emitter factor and window with `[Tooltip]` and
   `[Range]`.
 - **`SalvageTuning`**: a size table (segment seconds, segments, units) replacing `_cutSeconds` and
   `_cutSecondsPerUnit`.
@@ -162,8 +155,8 @@ start at tier 0, and pieces already cut stay cut.
 | Session | Tasks | Size |
 |---|---|---|
 | **gameplay** | `ICutter`, `CutterTuning`; segment cutting (slide, keep progress per segment); the size table and per-site classes; the Focus Lens kit data and its tube in the Kestrel's cockpit on Bell's first signal; drain by tier; economy tests (one site fits one trip; supply ≈ 1.9×) | M |
-| **art** | the conduit lamps and the brow pair (tier 0–1), the Focus Lens model; re-sized pieces at the depot (small), the lander's hull plate mesh; cut lines with 2–3 segments on large and hull pieces; ribs and tier 3 later (0.6–0.7) | M |
-| **rover** | the charge run driver (sequence by `Seconds`, start fraction, drain on Cancel, sustain pulse, break fade), the lamp count by tier, the bay's test-coupon cut in the install moment, chirps | M |
+| **art** | the chosen symmetric charge hardware (0.5.5 §5.4, 2–3 variants first), the Focus Lens model; re-sized pieces at the depot (small), the lander's hull plate mesh; cut lines with 2–3 segments on large and hull pieces; ribs and tier 3 later (0.6–0.7) | M |
+| **rover** | the charge-up driver (brace, stages, lock, breath, drain, warm glow), 07's brace body language and the push-in camera rule, the bay's test-coupon cut in the install moment, chirps | M |
 | **audio** | the arpeggio extended per tier, the hum layers, the segment "tick-slide" | S |
 | **ui** | the kit cards (first-hour-qa R1 lines), the cutter tier on the Tab screen's "07 can" page | S |
 
@@ -176,6 +169,6 @@ both specs**.
   fires".
 - Cancel drains it backwards, and a resume starts part-way.
 - The first depot cut, press to crack, takes ≤ 2 s. Nothing in the first 30 minutes takes over 3.5 s.
-- Each tier is visible on 07 at 30 m (lamps, lens, ribs, core) and felt on every cut (shorter run, quicker crack).
+- Each tier is visible on 07 at 30 m (conduit, lens, ribs, core) and felt on every cut (shorter stages, quicker crack).
 - One site fits one trip at every tier and stage. Supply ≈ 1.9× needs.
-- Zero per-frame GC. The run's lamps are pre-built and driven by a parameter.
+- Zero per-frame GC. The charge hardware is pre-built and driven by a parameter.
