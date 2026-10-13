@@ -167,6 +167,22 @@ namespace MoonProject.Art.Editor
 
         public static readonly Vector3 DeckSocket = new Vector3(-RoverMeshes.BodyHalfWidth, 0.78f, -0.45f);
 
+        /// <summary>
+        /// The equipment screen's socket markers (0.5.5 §3.5): one empty <c>&lt;RoverSocket&gt;Socket</c> per Core
+        /// <c>RoverSocket</c>, at the spot where that part sits on 07, for ui and rover to draw on the live render.
+        /// Paths: <c>Neck/Head/Eye/CutterSocket</c>, <c>Neck/Head/TetherSocket</c>, <c>LampSocket</c>,
+        /// <c>BellySocket</c>, <c>FlanksSocket</c> and <c>PanniersSocket</c> (the right of each mirrored pair),
+        /// <c>BackSocket</c>, <c>HoldSocket</c>, <c>SolarWing/WingSocket</c>, <c>DeckSocket</c> (the tape deck's own
+        /// mount), <c>Wheel_MR/WheelsSocket</c> and <c>Antenna/AntennaSocket</c>.
+        /// </summary>
+        public static readonly IReadOnlyList<string> EquipmentSockets = new[]
+        {
+            "Cutter", "Tether", "Lamp", "Belly", "Flanks", "Panniers", "Back", "Hold", "Wing", "Deck", "Wheels",
+            "Antenna",
+        };
+
+        public const string EquipmentSocketSuffix = "Socket";
+
         // 07 weathered as itself, just old (VISION ruling 11): no mismatched panels, rust low down and at the bolts,
         // dust on the lid and lower body; its skins stand off by a hair so Bell's fresh "07" sits over all of them.
         // 07's head: tired paint and dust on the hood, no rust; it is off the ground.
@@ -230,7 +246,8 @@ namespace MoonProject.Art.Editor
             Dusty(root.Add(new ModelNode("Wheel_FL", WheelCentre(-1f, 1f), wheelLeft)), coats);
             Dusty(root.Add(new ModelNode("Wheel_FR", WheelCentre(1f, 1f), wheelRight)), coats);
             Dusty(root.Add(new ModelNode("Wheel_ML", WheelCentre(-1f, 0f), wheelLeft)), coats);
-            Dusty(root.Add(new ModelNode("Wheel_MR", WheelCentre(1f, 0f), wheelRight)), coats);
+            ModelNode middleRight = root.Add(new ModelNode("Wheel_MR", WheelCentre(1f, 0f), wheelRight));
+            Dusty(middleRight, coats);
             Dusty(root.Add(new ModelNode("Wheel_RL", WheelCentre(-1f, -1f), spareLeft)), coats);
             Dusty(root.Add(new ModelNode("Wheel_RR", WheelCentre(1f, -1f), wheelRight)), coats);
 
@@ -277,6 +294,7 @@ namespace MoonProject.Art.Editor
             root.Add(new ModelNode(PartSocketName, PartSocket));
             root.Add(new ModelNode(SpineSocketName, SpineSocket));
             root.Add(new ModelNode(DeckSocketName, DeckSocket, Place.Rotation(new Vector3(0f, 180f, 0f))));
+            AddEquipmentSockets(root, eye, head, wing, antenna, middleRight);
             return root;
         }
 
@@ -425,6 +443,25 @@ namespace MoonProject.Art.Editor
             root.Add(new ModelNode(FocusLensGlassName, ChargeRunMeshes.LensSeat, Quaternion.identity,
                 new ModelMesh(FocusLensName + "_Glass", ChargeRunMeshes.LensGlass()), ModelMaterial.PaletteGlowOff));
             return root;
+        }
+
+        // Each marker sits on the part it stands for, under the node that moves it (head, wing, wheel), so it follows
+        // the live pose; the Deck's is the tape deck's own mount, added with the other mounts.
+        private static void AddEquipmentSockets(ModelNode root, ModelNode eye, ModelNode head, ModelNode wing,
+            ModelNode antenna, ModelNode middleRight)
+        {
+            eye.Add(new ModelNode("Cutter" + EquipmentSocketSuffix, new Vector3(0f, 0f, RoverMeshes.LensFront)));
+            head.Add(new ModelNode("Tether" + EquipmentSocketSuffix, RingSocket,
+                Place.Rotation(new Vector3(0f, 180f, 0f))));
+            root.Add(new ModelNode("Lamp" + EquipmentSocketSuffix, HeadlampPosition));
+            root.Add(new ModelNode("Belly" + EquipmentSocketSuffix, CoilSocket));
+            root.Add(new ModelNode("Flanks" + EquipmentSocketSuffix, DrumSocket));
+            root.Add(new ModelNode("Panniers" + EquipmentSocketSuffix, BinSocket));
+            root.Add(new ModelNode("Back" + EquipmentSocketSuffix, SpineSocket));
+            root.Add(new ModelNode("Hold" + EquipmentSocketSuffix, CargoPosition));
+            wing.Add(new ModelNode("Wing" + EquipmentSocketSuffix, RoverMeshes.WingCentre));
+            middleRight.Add(new ModelNode("Wheels" + EquipmentSocketSuffix, RoverMeshes.WheelOuterFace));
+            antenna.Add(new ModelNode("Antenna" + EquipmentSocketSuffix, Vector3.zero));
         }
 
         private static Vector3 WheelCentre(float side, float row)
