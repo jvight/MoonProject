@@ -5,8 +5,8 @@ using UnityEngine;
 namespace MoonProject.World.Tests
 {
     /// <summary>
-    /// Kestrel-3's scrap field (0.5.5 §2): the hull fragments lie on the ground along the furrow either side of its
-    /// clear lane, upright (yaw only: Art models the tilt), every variant in use, deterministic for a seed.
+    /// Kestrel-3's scrap field (0.5.5 §2): the hull fragments lie along the furrow either side of its clear lane,
+    /// never in it; scenery sinks deeper and tilts, the hosts stand upright at the lane's edge; deterministic.
     /// </summary>
     public sealed class ScrapFieldTests
     {
@@ -46,12 +46,30 @@ namespace MoonProject.World.Tests
             {
                 Vector2 offset = new Vector2(piece.Position.x, piece.Position.z) - kestrel.TrailEnd;
                 float side = Mathf.Abs(Vector2.Dot(offset, across));
-                Assert.That(side, Is.InRange(_settings.LaneHalfWidth, _settings.LaneHalfWidth + _settings.Spread),
-                    "beside the lane, within the field");
+                Assert.That(side, Is.InRange(_settings.LaneHalfWidth,
+                    _settings.LaneHalfWidth + _settings.HostOffset + _settings.Spread), "beside the lane, never in it");
                 Assert.That(Vector2.Dot(offset, along), Is.GreaterThanOrEqualTo(0f), "on the furrow, not behind it");
-                Assert.AreEqual(_surface.SampleHeight(piece.Position.x, piece.Position.z), piece.Position.y, 1e-4f,
-                    "the dust line on the ground");
-                Assert.AreEqual(1f, Vector3.Dot(piece.Rotation * Vector3.up, Vector3.up), 1e-4f, "yaw only");
+                float ground = _surface.SampleHeight(piece.Position.x, piece.Position.z);
+                if (piece.IsHost)
+                {
+                    Assert.AreEqual(ground, piece.Position.y, 1e-4f, "a host stands on its dust line");
+                    Assert.AreEqual(1f, Vector3.Dot(piece.Rotation * Vector3.up, Vector3.up), 1e-4f, "upright");
+                    Assert.LessOrEqual(side, _settings.LaneHalfWidth + _settings.HostOffset + 1e-3f,
+                        "at the lane's edge, in 07's reach");
+                }
+                else
+                {
+                    Assert.AreEqual(ground - _settings.Sink, piece.Position.y, 1e-4f, "scenery sinks deeper");
+                }
+            }
+        }
+
+        [Test]
+        public void Field_HasItsHosts_FirstInOrderFromTheFarEnd()
+        {
+            for (int i = 0; i < _pieces.Count; i++)
+            {
+                Assert.AreEqual(i < _settings.Hosts, _pieces[i].IsHost, $"piece {i}");
             }
         }
 
