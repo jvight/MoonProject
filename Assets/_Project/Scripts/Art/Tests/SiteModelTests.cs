@@ -72,7 +72,7 @@ namespace MoonProject.Art.Tests
             List<ModelNode> pieces = Pieces(site);
             int landmarks = SiteLandmarkMeshes.HasLandmark(id) ? 1 : 0;
             int pockets = SiteModelBuilder.RelicsAt(id).Count;
-            int sockets = SiteModelBuilder.FragmentsAt(id).Count + (id == "garage" ? 1 : 0);
+            int sockets = SiteModelBuilder.FragmentsAt(id).Count + (id == "garage" || id == "drill" ? 1 : 0);
             Assert.AreEqual(site.Children.Count - 3 - landmarks - pockets - sockets, pieces.Count,
                 "only Skeleton, Salvage_*, Heart, CrewCrate, the relic pockets, the fragment sockets and the landmark");
             Assert.That(pieces.Count, Is.InRange(MinPieces, MaxPieces));
@@ -370,6 +370,60 @@ namespace MoonProject.Art.Tests
                 Assert.IsFalse(MeshChecks.Swatches(mesh).Any(Palette.IsEmissive), "nothing glows on the regolith");
                 ModelNode cut = fragment.Children.Single(n => n.Name == SiteModelBuilder.CutPointName);
                 Assert.Greater(cut.LocalPosition.y, 0f, $"{fragment.Name}'s cut is above the dust");
+            }
+        }
+
+        [Test]
+        public void Drill_SeatsTheHaulBot_OnClearGround_AwayFromTheRigAndItsFinds()
+        {
+            ModelNode site = SiteModelBuilder.CreateSite("drill");
+            ModelNode seat = site.Children.Single(n => n.Name == SiteModelBuilder.HaulBotSocketName);
+            Assert.IsNull(seat.Mesh);
+            Assert.AreEqual(0f, seat.LocalPosition.y, 1e-5f, "its root on the ground");
+            Matrix4x4 place = Matrix4x4.TRS(seat.LocalPosition, seat.LocalRotation, Vector3.one);
+            ModelNode bot = DerelictBuilder.CreateHaulBot();
+            Bounds placed = default;
+            bool any = false;
+            foreach (ModelNode part in bot.Children.Where(n => n.Mesh != null))
+            {
+                Bounds local = part.Mesh.Geometry.Bounds;
+                for (int i = 0; i < 8; i++)
+                {
+                    Vector3 corner = place.MultiplyPoint3x4(part.LocalMatrix.MultiplyPoint3x4(new Vector3(
+                        (i & 1) != 0 ? local.max.x : local.min.x, (i & 2) != 0 ? local.max.y : local.min.y,
+                        (i & 4) != 0 ? local.max.z : local.min.z)));
+                    if (!any)
+                    {
+                        placed = new Bounds(corner, Vector3.zero);
+                        any = true;
+                    }
+
+                    placed.Encapsulate(corner);
+                }
+            }
+
+            // Its body above the dust: what the rig's skeleton must not pass through.
+            var body = new Bounds(placed.center + Vector3.up * 0.05f, placed.size - Vector3.up * 0.1f);
+            LowPolyMeshBuilder skeleton = site.Children.Single(n => n.Name == SiteModelBuilder.SkeletonName).Mesh
+                .Geometry;
+            for (int t = 0; t < skeleton.TriangleCount; t++)
+            {
+                for (int k = 0; k < 3; k++)
+                {
+                    Vector3 a = skeleton.Positions[t * 3 + k];
+                    Vector3 edge = skeleton.Positions[t * 3 + (k + 1) % 3] - a;
+                    bool crosses = body.Contains(a) || body.IntersectRay(new Ray(a, edge), out float hit)
+                        && hit <= edge.magnitude;
+                    Assert.IsFalse(crosses, $"the drill rig passes through the haul bot at {a}");
+                }
+            }
+
+            foreach (ModelNode child in site.Children.Where(
+                n => n.Mesh != null && n.Name != SiteModelBuilder.SkeletonName))
+            {
+                Bounds bounds = child.Mesh.Geometry.Bounds;
+                bounds.center += child.LocalPosition;
+                Assert.IsFalse(placed.Intersects(bounds), $"the haul bot stands on {child.Name}");
             }
         }
 
