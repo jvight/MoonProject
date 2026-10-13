@@ -221,6 +221,17 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [Test]
+        public void TheNetworkPulse_StepsUpPerHop_AndResolvesAtHome()
+        {
+            _rig.Events.Publish(new NetworkPulseReached("relay.2", Point, 0, 3));
+            Assert.AreEqual("pulse_note_01", LastClip, "the new mast first, on D");
+            _rig.Events.Publish(new NetworkPulseReached("relay.1", Point, 1, 3));
+            Assert.AreEqual("pulse_note_02", LastClip, "a step up the next hop");
+            _rig.Events.Publish(new NetworkPulseReached("home", Point, 3, 3));
+            Assert.AreEqual("pulse_home", LastClip, "home answers with a warm resolve");
+        }
+
+        [Test]
         public void AContainer_PopsItsSeal_ThenOpensWithItsKindsHinge()
         {
             _rig.Events.Publish(new ContainerSealCut("relay.cabinet", ContainerKind.Cabinet, Point));

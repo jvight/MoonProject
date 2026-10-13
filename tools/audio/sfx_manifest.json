@@ -590,6 +590,75 @@
       "notes": "0.5.5: a drop refused: two soft muted ticks falling B4 -> F#4."
     },
     {
+      "id": "pulse_note",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/pulse_note_01.wav",
+        "Assets/_Project/Audio/SFX/pulse_note_02.wav",
+        "Assets/_Project/Audio/SFX/pulse_note_03.wav",
+        "Assets/_Project/Audio/SFX/pulse_note_04.wav",
+        "Assets/_Project/Audio/SFX/pulse_note_05.wav",
+        "Assets/_Project/Audio/SFX/pulse_note_06.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06"
+      ],
+      "sha256": [
+        "e1b5bd65187f1a7e14345fa38b7ada2139529a69e41204d2cd64848f6f59fdea",
+        "bad613325dc4232cadd62a4fd1ed31355e95fb8c84f2fe4f39961bba8ed1604d",
+        "0ff74529ef30cbf8b54ea85fdeb15820d2c5def110133084e29e39d461a63b6d",
+        "a2de2fe9ae5a7336db6a6ebab38cca1cd7b547d21ca6c35df0bdd9d1500066ec",
+        "79a54ef682400d04bbde2aea8828ce0424427b7820093fc25ded9568ee65b17d",
+        "acf69ed3ac4d79b7f95eb73d4f47635f52b55543a5dcea5b48c49fef54f14238"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "0.5.5: a mast lamp on the network's handshake: an airy bell a step up per hop."
+    },
+    {
+      "id": "pulse_home",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/pulse_home.wav"
+      ],
+      "variantLabels": [
+        "pulse_home"
+      ],
+      "sha256": [
+        "30adc336fb6aa760f76a06d747eb0a0afd048884459944f15d1d3f82478a6312"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "0.5.5: the handshake arriving home: a warm A4 -> D5 resolve."
+    },
+    {
       "id": "sheet_complete",
       "category": "stinger_2d",
       "milestone": "M3",
