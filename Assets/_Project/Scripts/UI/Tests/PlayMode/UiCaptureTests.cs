@@ -68,7 +68,7 @@ namespace MoonProject.UI.PlayModeTests
         private const float SiteShotHeight = 3.2f;
         private const float CutHeight = 0.8f;
         private const float CutHeld = 0.55f;
-        private const string RelicPrefabPath = "Assets/_Project/Generated/Art/Relics/Relic_cassette_player.prefab";
+        private const string RelicPrefabPath = "Assets/_Project/Generated/Art/Relics/Relic_teapot.prefab";
         private const float RelicShotAhead = 10f;
         private const float RelicShotSide = 2.2f;
         private const float RelicShotYaw = 35f;
@@ -185,7 +185,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return Capture(camera, folder, "04_pickup_feed_gain");
             yield return new WaitForSecondsRealtime(_tuning.PickupFeed.MaxCountSeconds);
 
-            context.Events.Publish(new RelicDeposited("cassette_player", Vector3.zero, 3));
+            context.Events.Publish(new RelicDeposited("teapot", Vector3.zero, 3));
             yield return new WaitForSecondsRealtime(_tuning.MemoryCard.AppearDelay +
                                                     _tuning.MemoryCard.Reveal.FadeIn + 0.5f);
             yield return Capture(camera, folder, "05_memory_card");
