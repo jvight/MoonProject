@@ -975,10 +975,6 @@
             "text": "{0} (có {1})"
         },
         {
-            "key": "ui.friend.parts",
-            "text": "Bộ phận của {0}: {1}/{2}"
-        },
-        {
             "key": "ui.cargo.hold",
             "text": "Khoang hàng của 07"
         },

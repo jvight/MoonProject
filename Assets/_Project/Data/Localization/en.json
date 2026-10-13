@@ -975,10 +975,6 @@
             "text": "{0} (have {1})"
         },
         {
-            "key": "ui.friend.parts",
-            "text": "{0}'s parts: {1} of {2}"
-        },
-        {
             "key": "ui.cargo.hold",
             "text": "07's hold"
         },
