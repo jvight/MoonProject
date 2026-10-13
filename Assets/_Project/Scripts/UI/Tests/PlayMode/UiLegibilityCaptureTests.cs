@@ -88,7 +88,7 @@ namespace MoonProject.UI.PlayModeTests
             fakes.SetMaterials(2, 6, 0);
             yield return new WaitForSecondsRealtime(2f);
             yield return LegibleShot(camera, folder, "74_tower_card", report, layout.TowerTitle,
-                layout.TowerDescription, layout.TowerNeed, layout.TowerRecipe);
+                layout.TowerDescription, layout.TowerRecipe);
             fakes.AtStation = false;
             yield return new WaitForSecondsRealtime(1f);
 
@@ -131,7 +131,7 @@ namespace MoonProject.UI.PlayModeTests
             fakes.AtStation = true;
             yield return new WaitForSecondsRealtime(2f);
             yield return LegibleShot(camera, folder, "78_tower_card_at_150", report, layout.TowerTitle,
-                layout.TowerDescription, layout.TowerNeed, layout.TowerRecipe);
+                layout.TowerDescription, layout.TowerRecipe);
             var problems = new List<string>();
             yield return ScreenFit.Probe(found => ScreenFit.CheckOnScreen(layout.Root, "150% tower card", found),
                 problems);

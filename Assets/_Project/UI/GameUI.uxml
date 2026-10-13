@@ -49,7 +49,6 @@
                                 </ui:VisualElement>
                                 <ui:VisualElement name="relay-tag-recipe" class="recipe relay-tag__recipe" />
                             </ui:VisualElement>
-                            <ui:Label name="relay-tag-need" class="recipe__need relay-tag__need" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
@@ -110,7 +109,6 @@
                     <ui:VisualElement name="battery-dial-face" class="battery-dial__face" picking-mode="Ignore">
                         <ui:VisualElement name="battery-dial-ring" class="battery-dial__ring" picking-mode="Ignore" />
                         <ui:Label name="battery-dial-value" class="battery-dial__value" picking-mode="Ignore" />
-                        <ui:Label class="battery-dial__word loc" text="ui.battery.power" picking-mode="Ignore" />
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement class="next-line" picking-mode="Ignore">
@@ -139,8 +137,6 @@
                         <ui:Label name="recipe-card-needs-word" class="recipe-card__word" picking-mode="Ignore" />
                         <ui:VisualElement name="recipe-card-needs" class="recipe" picking-mode="Ignore" />
                     </ui:VisualElement>
-                    <ui:Label name="recipe-card-short" class="recipe__need recipe-card__line" picking-mode="Ignore" />
-                    <ui:Label name="recipe-card-part" class="recipe-card__line" picking-mode="Ignore" />
                     <ui:Label name="recipe-card-where" class="recipe-card__where" picking-mode="Ignore" />
                 </ui:VisualElement>
                 <ui:VisualElement name="pickup-feed" class="pickup-feed" picking-mode="Ignore" />
@@ -218,13 +214,11 @@
                                 </ui:VisualElement>
                                 <ui:Label name="tower-hold-word" class="hold__word" />
                             </ui:VisualElement>
-                            <ui:Label name="tower-need" class="recipe__need tower-panel__need" />
                             <ui:VisualElement name="tower-recipe" class="recipe" />
                             <ui:VisualElement name="tower-pick" class="hint-row tower-panel__pick">
                                 <ui:VisualElement name="tower-pick-glyph" class="glyph glyph--small">
                                     <ui:Label name="tower-pick-glyph-label" class="glyph__label" />
                                 </ui:VisualElement>
-                                <ui:Label name="tower-pick-word" class="hint-row__word" />
                             </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>

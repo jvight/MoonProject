@@ -102,7 +102,10 @@ namespace MoonProject.UI.Tests
             };
             foreach (RecoveryTarget target in Enum.GetValues(typeof(RecoveryTarget)))
             {
-                keys.Add(UiKeys.RecoveryComplete(target));
+                if (target != RecoveryTarget.Power)
+                {
+                    keys.Add(UiKeys.RecoveryComplete(target));
+                }
             }
 
             foreach (string id in new[] { "power", "link", "dish", "answer" })

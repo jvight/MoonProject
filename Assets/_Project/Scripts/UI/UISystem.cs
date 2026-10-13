@@ -89,6 +89,9 @@ namespace MoonProject.UI
         private SiteNameTag _siteName;
         private MemoryCard _card;
         private RewardCard _rewardCard;
+        private readonly GuidanceSlot _slot = new GuidanceSlot();
+        private readonly bool[] _guidanceWants = new bool[GuidanceSlot.KindCount];
+        private readonly bool[] _guidanceShown = new bool[GuidanceSlot.KindCount];
         private CargoScreen _cargo;
         private UnlockCard _unlockCard;
         private CrateNote _crateNote;
@@ -119,7 +122,6 @@ namespace MoonProject.UI
         private bool _titleWaiting;
         private bool _titleHasSave;
         private bool _digging;
-        private bool _wasCutting;
         private float _sinceAwake;
 
         /// <summary>The localization service this system registered (tests and editor tools read it).</summary>
@@ -162,6 +164,9 @@ namespace MoonProject.UI
         internal KitTitle KitTitle => _kitTitle;
 
         internal RewardCard RewardCard => _rewardCard;
+
+        /// <summary>The guidance slot (tests): which element may show now.</summary>
+        internal GuidanceSlot Slot => _slot;
 
         internal CargoScreen Cargo => _cargo;
 
@@ -561,10 +566,11 @@ namespace MoonProject.UI
             _board.Tick(deltaTime, !paused);
             bool hopping = _services.Hop.Phase >= RadioHopPhase.Leaving || _hopFade.IsVisible;
             _reticle.Tick(deltaTime, _services.Tether.State, input.TetherHeld);
+            DecideGuidance(paused, hopping);
             _card.Tick(hudTime, _glyphs.Cancel(device), device,
                 !_ticker.IsVisible && !hopping && !_hopList.IsBusy && !_placeCard.IsVisible && !_prompt.IsVisible &&
                 !_rewardCard.IsVisible);
-            _tower.Tick(hudTime, !paused, input.ExcavateHeld, input.Winch,
+            _tower.Tick(hudTime, !paused && _slot.Allows(GuidanceKind.Card), input.ExcavateHeld, input.Winch,
                 _services.Tether.State == TetherAimState.Towing, _glyphs.For(RoverAction.Excavate, device), device);
             _kitTitle.Tick(hudTime, !_placeCard.IsVisible);
             _rewardCard.Tick(hudTime, !_placeCard.IsVisible && !_kitTitle.IsVisible && !_card.IsVisible);
@@ -574,12 +580,6 @@ namespace MoonProject.UI
                 device);
             _pickups.Tick(deltaTime);
             bool cutting = _services.Salvage.IsCutting;
-            if (cutting && !_wasCutting)
-            {
-                _director.NotifyUsed(InteractionKind.Salvage);
-            }
-
-            _wasCutting = cutting;
 
             if (_director.Displayed == InteractionKind.Reel && _director.WantsShown && input.Winch != 0f)
             {
@@ -595,11 +595,8 @@ namespace MoonProject.UI
                                                !_lookUpChip.IsVisible && !_ticker.IsVisible && !_kitTitle.IsVisible &&
                                                !_rewardCard.IsVisible);
             // A standing prompt gives way to a waiting card or site name: those moments pass, the prompt returns.
-            bool promptsOpen = !paused && _awake && _sinceAwake >= _tuning.Prompts.StartDelay &&
-                               !_card.IsBusy && !_tower.IsVisible && !_dial.IsBusy && !_hopList.IsBusy && !hopping &&
-                               !_placeCard.IsVisible && !_placeCard.IsWaiting && !_siteName.IsVisible &&
-                               !_siteName.IsWaiting && !_lookUpChip.IsVisible && !_kitTitle.IsVisible;
-            _prompt.Tick(deltaTime, promptsOpen, _services.Hints.Primary, device, panelSize);
+            _prompt.Tick(deltaTime, PromptsOpen(paused, hopping) && _slot.Allows(GuidanceKind.Prompt),
+                _services.Hints.Primary, device, panelSize);
             bool tagOpen = !paused && _awake && !_card.IsVisible && !_tower.IsVisible &&
                            !_hopList.IsBusy && !hopping;
             _relayTag.Tick(deltaTime, tagOpen, panelSize,
@@ -627,12 +624,8 @@ namespace MoonProject.UI
             _hopFade.Tick(deltaTime);
             _protocol.Tick(hudTime);
             // Its own zone (right of centre): it stands beside a place card, so the tower's card never hides it.
-            _recipeCard.Tick(hudTime, !paused && _awake && !_protocol.IsVisible && !_card.IsVisible &&
-                                      !_tower.IsVisible && !_kitTitle.IsVisible && !_stargaze.IsVeiled);
-            bool hintOpen = !_protocol.IsVisible && !_placeCard.IsVisible && !_card.IsVisible && !_tower.IsVisible &&
-                            !_kitTitle.IsVisible &&
-                            !_dial.IsBusy && !_hopList.IsBusy && !_prompt.IsVisible && !_siteName.IsVisible &&
-                            !_ticker.IsVisible;
+            _recipeCard.Tick(hudTime, CardsOpen(paused) && _slot.Allows(GuidanceKind.Card));
+            bool hintOpen = LookHintsOpen() && _slot.Allows(GuidanceKind.Prompt);
             float stick = _tuning.Stargaze.FirstPromptStick * _tuning.Stargaze.FirstPromptStick;
             bool looking = !paused && (input.LookDelta.sqrMagnitude > 0f || input.LookRate.sqrMagnitude > stick);
             _firstPrompt.Tick(hudTime, hintOpen, looking, !paused && input.Drive.sqrMagnitude > stick);
@@ -641,14 +634,8 @@ namespace MoonProject.UI
                 : _lookUpHint.WantsShown ? HintWord.LookUp : HintWord.None;
             _lookUpChip.Tick(deltaTime, paused ? HintWord.None : hint, device);
             _nextStep.Tick(hudTime, _services.Rover.Speed, _player.Guidance);
-            _placeCard.Tick(hudTime, _awake && !_protocol.IsVisible && !_kitTitle.IsVisible && !_card.IsVisible &&
-                                     !_rewardCard.IsVisible &&
-                                     !_prompt.IsVisible && !_ticker.IsVisible && !_siteName.IsVisible &&
-                                     !_lookUpChip.IsVisible);
-            _nextLine.Tick(deltaTime, _nextStep, !paused && _awake && !_card.IsVisible &&
-                                                 !_tower.IsVisible && !_stargaze.IsVeiled &&
-                                                 !_placeCard.IsVisible && !_protocol.IsVisible &&
-                                                 !_rewardCard.IsVisible);
+            _placeCard.Tick(hudTime, PlaceCardsOpen() && _slot.Allows(GuidanceKind.Place));
+            _nextLine.Tick(deltaTime, _nextStep, NextLineOpen(paused) && _slot.Allows(GuidanceKind.Next));
             bool hudOpen = !paused && _awake && !_stargaze.IsVeiled && !onMap;
             _batteryDial.Tick(deltaTime, _cellRowRevealed, hudOpen);
             _homeMeter.Tick(deltaTime, hudOpen && !_card.IsVisible);
@@ -658,6 +645,70 @@ namespace MoonProject.UI
         private void OnBatteryArcRevealed(BatteryArcRevealed revealed)
         {
             _cellRowRevealed = true;
+        }
+
+        /// <summary>Everything but the slot that lets the teaching prompt show.</summary>
+        private bool PromptsOpen(bool paused, bool hopping)
+        {
+            return !paused && _awake && _sinceAwake >= _tuning.Prompts.StartDelay && !_card.IsBusy &&
+                   !_dial.IsBusy && !_hopList.IsBusy && !hopping && !_siteName.IsVisible && !_siteName.IsWaiting &&
+                   !_kitTitle.IsVisible;
+        }
+
+        private bool CardsOpen(bool paused)
+        {
+            return !paused && _awake && !_protocol.IsVisible && !_card.IsVisible && !_kitTitle.IsVisible &&
+                   !_stargaze.IsVeiled;
+        }
+
+        private bool PlaceCardsOpen()
+        {
+            return _awake && !_protocol.IsVisible && !_kitTitle.IsVisible && !_card.IsVisible &&
+                   !_rewardCard.IsVisible && !_ticker.IsVisible && !_siteName.IsVisible;
+        }
+
+        private bool NextLineOpen(bool paused)
+        {
+            return !paused && _awake && !_stargaze.IsVeiled && !_protocol.IsVisible && !_rewardCard.IsVisible;
+        }
+
+        private bool LookHintsOpen()
+        {
+            return !_protocol.IsVisible && !_card.IsVisible && !_kitTitle.IsVisible && !_dial.IsBusy &&
+                   !_hopList.IsBusy && !_siteName.IsVisible && !_ticker.IsVisible;
+        }
+
+        /// <summary>
+        /// One guidance element at a time (docs/design/0.5.5-owner-feedback.md §4.1): the teaching prompt, then a
+        /// station or recipe card, a place card, the next line. Each wants the slot when it could show; the slot
+        /// goes to the highest and passes on once the screen is clear.
+        /// </summary>
+        private void DecideGuidance(bool paused, bool hopping)
+        {
+            bool looks = LookHintsOpen() && (_firstPrompt.Word != HintWord.None || _lookUpHint.WantsShown);
+            _guidanceWants[(int)GuidanceKind.Prompt] =
+                (PromptsOpen(paused, hopping) && _director.Wants(_services.Hints.Primary)) || looks;
+            _guidanceWants[(int)GuidanceKind.Card] = CardsOpen(paused) && (_tower.Wants || _recipeCard.Wants);
+            _guidanceWants[(int)GuidanceKind.Place] = PlaceCardsOpen() && (_placeCard.IsWaiting || _placeCard.IsVisible);
+            _guidanceWants[(int)GuidanceKind.Next] = NextLineOpen(paused) && _nextStep.WantsShown;
+            _guidanceShown[(int)GuidanceKind.Prompt] = _prompt.IsVisible || _lookUpChip.IsVisible;
+            _guidanceShown[(int)GuidanceKind.Card] = _tower.IsVisible || _recipeCard.IsVisible;
+            _guidanceShown[(int)GuidanceKind.Place] = _placeCard.IsVisible;
+            _guidanceShown[(int)GuidanceKind.Next] = _nextLine.IsVisible;
+            _slot.Step(_guidanceWants, _guidanceShown);
+        }
+
+        private bool AnyGuidanceShown()
+        {
+            for (int i = 0; i < _guidanceShown.Length; i++)
+            {
+                if (_guidanceShown[i])
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private Vector2 ScreenSize()
@@ -767,7 +818,8 @@ namespace MoonProject.UI
         /// <summary>A sleeping station answered the sonar: its line on what wakes it goes to the ticker, once.</summary>
         private void OnStationNotYet(StationNotYet notYet)
         {
-            if (_notYet.ShouldSay(notYet.ReasonKey))
+            // A not-yet notice is guidance too: never over another element.
+            if (!AnyGuidanceShown() && _notYet.ShouldSay(notYet.ReasonKey))
             {
                 _tickerLines.Enqueue(new TickerLine(notYet.ReasonKey));
             }
@@ -779,6 +831,10 @@ namespace MoonProject.UI
             {
                 _salvageRing.OnBeat(beat);
                 _rewardCard.OnBeat(beat);
+                if (beat.Kind == FeelKind.Collect && beat.Phase == FeelPhase.Reward)
+                {
+                    _director.NotifyUsed(InteractionKind.Salvage);
+                }
             }
         }
 
@@ -836,11 +892,13 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>A completed row's quiet ticker line, never on a load ("Power restored.", M3-21 §2).</summary>
+        /// <summary>A completed row's quiet ticker line, never on a load (M3-21 §2).</summary>
         private void OnRecoveryProgressChanged(RecoveryProgressChanged changed)
         {
             _board?.MarkDirty();
-            if (!changed.Restored && changed.Lamps > 0 && changed.LitLamps >= changed.Lamps)
+            // The power target's line is the reward card's "home has power" a moment earlier: not said twice.
+            if (!changed.Restored && changed.Lamps > 0 && changed.LitLamps >= changed.Lamps &&
+                changed.Target != RecoveryTarget.Power)
             {
                 _tickerLines.Enqueue(new TickerLine(UiKeys.RecoveryComplete(changed.Target)));
             }

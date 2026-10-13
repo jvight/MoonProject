@@ -14,8 +14,6 @@ namespace MoonProject.UI
     {
         public const string CardCaption = "ui.card.caption";
         public const string CardClose = "ui.card.close";
-        public const string TowerLevel = "ui.tower.level";
-        public const string TowerPurchased = "ui.tower.purchased";
         public const string BayFitted = "ui.bay.fitted";
         public const string LogCaption = "ui.card.log_caption";
         public const string CrewLogCaption = "ui.card.crew_log";
@@ -40,7 +38,6 @@ namespace MoonProject.UI
 
         /// <summary>Art's prefix on a component's model name (Part_TowerCoil), left out of its keys.</summary>
         private const string ComponentModelPrefix = "Part_";
-        public const string RecipeNeed = "ui.recipe.need";
         public const string RecipeRow = "ui.recipe.row";
         public const string RewardTitle = "ui.reward.title";
         public const string FriendParts = "ui.friend.parts";
@@ -49,7 +46,6 @@ namespace MoonProject.UI
         public const string CrateCaption = "ui.crate.caption";
         public const string CanDecoded = "ui.can.decoded";
         public const string StationOffline = "ui.station.offline";
-        public const string BayPick = "ui.bay.pick";
 
         /// <summary>"hint.excavate": the one word of the prompt teaching <paramref name="kind"/>.</summary>
         public static string Hint(InteractionKind kind)
@@ -144,20 +140,13 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// The quiet line a station says once its work on a purchase shows: the radio tower's "ui.tower.purchased" as
-        /// its new section rises, the Rover Bay's "ui.bay.fitted" as it sets the piece on 07.
+        /// The quiet line a station says once its work on a purchase shows: the Rover Bay's "ui.bay.fitted" as it sets
+        /// the piece on 07. The radio tower says nothing (the world shows the stitch, then the reward card).
         /// </summary>
-        public static string StationLine(UpgradeStationKind station)
+        public static bool TryStationLine(UpgradeStationKind station, out string key)
         {
-            switch (station)
-            {
-                case UpgradeStationKind.RadioTower:
-                    return TowerPurchased;
-                case UpgradeStationKind.Workshop:
-                    return BayFitted;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(station), station, "This station has no line.");
-            }
+            key = station == UpgradeStationKind.Workshop ? BayFitted : null;
+            return key != null;
         }
 
         /// <summary>"material.wiring": a material's name (salvage, lunar or refined; docs/features/M3-27).</summary>
@@ -285,12 +274,16 @@ namespace MoonProject.UI
             return key.Append(".needed").ToString();
         }
 
-        /// <summary>The ticker's quiet line as a recovery target's row completes ("Power restored.", M3-21 §2).</summary>
+        /// <summary>
+        /// The ticker's quiet line as a recovery target's row completes (M3-21 §2); Power has none, its reward card
+        /// says it.
+        /// </summary>
         public static string RecoveryComplete(RecoveryTarget target)
         {
             switch (target)
             {
-                case RecoveryTarget.Power: return "ticker.recovery.power";
+                case RecoveryTarget.Power:
+                    throw new ArgumentOutOfRangeException(nameof(target), target, "Power has no ticker line.");
                 case RecoveryTarget.Link: return "ticker.recovery.link";
                 case RecoveryTarget.Dish: return "ticker.recovery.dish";
                 default: return "ticker.recovery.answer";

@@ -58,7 +58,6 @@
 .place-card__job,
 .memory-card__text,
 .tower-panel__text,
-.recipe__need,
 .material-slot__word,
 .hint-row__word,
 .bay-row__effect,
@@ -357,9 +356,33 @@ Label {
     min-width: 0;
 }
 
-.recipe__need {
-    font-size: 18px;
-    color: var(--moon-text-faint);
+.recipe__part {
+    margin: 3px 0;
+}
+
+.recipe__part-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.recipe__part-name {
+    min-width: 120px;
+    font-size: 22px;
+    color: var(--glass-hi);
+}
+
+.recipe__part-count {
+    margin-left: 6px;
+    font-size: 22px;
+    color: var(--moon-text-dim);
+    white-space: nowrap;
+}
+
+/* Where to find it, small under its row */
+.recipe__part-source {
+    margin-top: 1px;
+    font-size: 16px;
+    color: var(--moon-text-dim);
     white-space: normal;
 }
 
@@ -673,14 +696,6 @@ Label {
 .battery-dial__value {
     font-size: 38px;
     color: var(--glass-hi);
-    -unity-text-align: middle-center;
-}
-
-.battery-dial__word {
-    margin-top: -4px;
-    font-size: 18px;
-    letter-spacing: 2px;
-    color: var(--moon-text-dim);
     -unity-text-align: middle-center;
 }
 
@@ -1262,11 +1277,6 @@ Label {
     margin-left: 10px;
 }
 
-.relay-tag__need {
-    font-size: 18px;
-    margin: 2px 0 2px 6px;
-}
-
 .relay-tag__ring {
     width: 32px;
     height: 32px;
@@ -1451,11 +1461,6 @@ Label {
     justify-content: space-between;
     margin-top: 20px;
     min-height: 48px;
-}
-
-.tower-panel__need {
-    flex-shrink: 1;
-    margin-right: 12px;
 }
 
 /* Kenji's Rover Bay: what is left to craft, one row each, the picked one lit and read in full */
@@ -2078,14 +2083,6 @@ Label {
     font-size: 15px;
     letter-spacing: 2px;
     color: var(--moon-text);
-    text-shadow: 0 2px 12px var(--moon-shadow);
-}
-
-.recipe-card__line {
-    margin-top: 4px;
-    font-size: 16px;
-    color: var(--moon-text);
-    white-space: normal;
     text-shadow: 0 2px 12px var(--moon-shadow);
 }
 

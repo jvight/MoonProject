@@ -19,6 +19,11 @@ namespace MoonProject.UI
         [Range(0f, 600f)]
         [SerializeField] private float _stepPatienceSeconds = 120f;
 
+        [Tooltip("Seconds on a teaching step without progress before its next line shows (the owner: guidance only " +
+                 "when it is needed).")]
+        [Range(0f, 120f)]
+        [SerializeField] private float _teachingPatienceSeconds = 20f;
+
         [Tooltip("Speed (m/s) under which 07 counts as still.")]
         [Range(0.05f, 2f)]
         [SerializeField] private float _stillSpeed = 0.4f;
@@ -52,6 +57,8 @@ namespace MoonProject.UI
         public RevealSettings Line => _line;
 
         public float StepPatienceSeconds => _stepPatienceSeconds;
+
+        public float TeachingPatienceSeconds => _teachingPatienceSeconds;
 
         public float StillSpeed => _stillSpeed;
 

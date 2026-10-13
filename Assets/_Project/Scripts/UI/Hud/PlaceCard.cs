@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine.UIElements;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 
@@ -16,6 +17,13 @@ namespace MoonProject.UI
     {
         private const string Prefix = "place.";
         private const string TowerPlace = "place.tower";
+
+        // A place card is its name alone; these three also say their job, which nothing else teaches
+        // (docs/design/text-audit-0.5.5.md §3.3).
+        private static readonly HashSet<string> JobPlaces = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "place.dock", "place.lab", "place.rack",
+        };
 
         private readonly UiLayout _layout;
         private readonly GuidanceSettings _settings;
@@ -61,7 +69,7 @@ namespace MoonProject.UI
             if (!string.IsNullOrEmpty(placeId) && _seen.Add(KeyBase(placeId)))
             {
                 _waiting.Enqueue(KeyBase(placeId) + ".name");
-                _waitingLines.Enqueue(KeyBase(placeId) + ".job");
+                _waitingLines.Enqueue(JobPlaces.Contains(KeyBase(placeId)) ? KeyBase(placeId) + ".job" : null);
                 _readyAt.Enqueue(_clock + (KeyBase(placeId) == TowerPlace ? _settings.TowerCardDelay : 0f));
             }
         }
@@ -90,6 +98,11 @@ namespace MoonProject.UI
         public void Tick(float deltaTime, bool open)
         {
             _clock += deltaTime;
+            if (!open && _reveal.IsShown)
+            {
+                _reveal.Hide();
+            }
+
             if (Current == null && open && _waiting.Count > 0 && _clock >= _readyAt.Peek())
             {
                 Current = _waiting.Dequeue();
@@ -120,7 +133,12 @@ namespace MoonProject.UI
         private void Write()
         {
             _layout.PlaceCardName.text = _localization.Get(Current);
-            _layout.PlaceCardJob.text = _localization.Get(_lineKey);
+            bool job = _lineKey != null;
+            _layout.PlaceCardJob.style.display = job ? DisplayStyle.Flex : DisplayStyle.None;
+            if (job)
+            {
+                _layout.PlaceCardJob.text = _localization.Get(_lineKey);
+            }
         }
     }
 }

@@ -121,6 +121,22 @@ namespace MoonProject.UI
             }
         }
 
+        /// <summary>
+        /// True while a prompt is up, or <paramref name="primary"/> is something to teach right now (its verb not yet
+        /// learned, past its cooldown): the guidance slot's claim, before the dwell has run.
+        /// </summary>
+        public bool Wants(InteractionHint primary)
+        {
+            if (Displayed != InteractionKind.None && !_ending)
+            {
+                return true;
+            }
+
+            InteractionKind kind = primary.Kind;
+            return kind != InteractionKind.None && primary.Ready && _settings.Find(kind) != null &&
+                   _ledger.ShouldTeach(kind) && _now >= _cooldownUntil[(int)kind];
+        }
+
         private InteractionKind Desire(float deltaTime, bool gateOpen, InteractionHint primary)
         {
             InteractionKind kind = primary.Kind;
