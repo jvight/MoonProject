@@ -27,6 +27,27 @@ account) can continue without the old conversation.
     follow the pick and game design's charge-up section).
   - ui: tab contrast + Tab = 07 only.
 - 0.6 (lunar materials + build pads) waits until 0.5.5 ships.
+- **Progress (2026-10-13 ~11:00):**
+  - On main, verified and pushed:
+    - 5838bc7a: the 0.5.5 spec;
+    - b44a6084: the text audit;
+    - b9ded9dd: the Tilly pickup fix, a held E now picks up;
+    - 815523b6: slice A guidance plus the Tab hold boot.
+  - Owner picks:
+    - Cells charge-up (memory cut-charge-weight);
+    - 07 equipment screen: fixed sockets, fit only at the bay (memory equipment-07);
+    - scan decisions D1-D6 (memory scan-fragments).
+  - Ready for the E batch (land together):
+    - art 220e1679 (Cells + slice C props + pod mast + hull fragments);
+    - rover 22ddec56 (Cells driver, brace, camera);
+    - gameplay 38a4a0dc+ (E publisher + timings; box_check queued);
+    - audio box/voice 18b229e5;
+    - also world 6faca86b (pod beacon) if art lands.
+  - Rulings:
+    - docked Tab = the hold beside home's shelves; E at the dock stays Hop;
+    - CutChargeStaged is a dedicated event;
+    - world scenery uses buried hull fragments; only gameplay's 4 cut pieces glint.
+  - Next: gameplay B1-B3 (starter grant, IStackTransfer, IDockState), then the C/D/equipment contracts, then C, then D.
 
 ## 000000000000. (2026-10-13 ~03:35): 0.5.4 released for the owner to play
 - **main e7d15870 = version 0.5.4**, verified at 37276343 and pushed. Build:
