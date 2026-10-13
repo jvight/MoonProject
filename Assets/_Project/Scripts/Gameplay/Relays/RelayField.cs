@@ -10,16 +10,17 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// The station's relay network (docs/features/M3-06). A dark, leaning mast stands on each of the World's
-    /// <c>relay.&lt;n&gt;</c> anchors with its one relay part glinting amber nearby (<see cref="RelayPartPlanner"/>);
-    /// a press of E beside the part draws it in like a friend's part. With the part held, holding Interact at the mast's
-    /// foot spends the next escalating recipe and plays the restoration (<see cref="RelayBeat"/>): 07's beam
+    /// <c>relay.&lt;n&gt;</c> anchors with its one relay part sealed in Art's service cabinet at its foot (0.5.5 §2):
+    /// holding E cuts the cabinet's seal (<see cref="SealedContainers"/>), its door swings open and the part glints on
+    /// its shelf, and a press of E beside it draws it in like a friend's part. With the part held, holding Interact at
+    /// the mast's foot spends the next escalating recipe and plays the restoration (<see cref="RelayBeat"/>): 07's beam
     /// stitches while the part glides into the junction box, the mast straightens with a creak and its lamp warms. A
     /// mast that links home (<see cref="StationReach"/>) comes online: a pulse of light runs along the ground toward
     /// the node it links to, and <see cref="RelayRestored"/> and the radio's ticker line follow. One beyond the lit
     /// frontier keeps a low listening glow until a neighbour or a stronger tower reaches it, then lights in turn (a
     /// whole chain one after another). Home's circle is the radio tower's clear-signal radius. Also the radio-hop
-    /// (<see cref="RadioHop"/>) between the lit nodes' pads, each pad a ring of light while a hop is possible. This
-    /// is Core's <see cref="IStationReach"/> (through <see cref="Reach"/>) and the UI's <see cref="IRelayStatus"/>.
+    /// (<see cref="RadioHop"/>) between the lit nodes' pads, each pad a ring of light while a hop is possible. This is
+    /// Core's <see cref="IStationReach"/> (through <see cref="Reach"/>) and the UI's <see cref="IRelayStatus"/>.
     /// Everything paid, gathered and restored is saved at once and never lost. Allocation-free per frame.
     /// </summary>
     [DisallowMultipleComponent]
@@ -31,9 +32,6 @@ namespace MoonProject.Gameplay
 
         /// <summary>A part spins this many times faster in flight than at rest.</summary>
         private const float PartFlightSpin = 4f;
-
-        /// <summary>Degrees between the idle headings of the masts' parts (so they never turn in step).</summary>
-        private const float PartHeadingStep = 137f;
 
         /// <summary>A mast's spare part's name key for the pickup prompt.</summary>
         private static readonly string RelayPartNoun = PickupReach.NounKey("relay_part");
@@ -52,6 +50,7 @@ namespace MoonProject.Gameplay
 
         private readonly List<RelayMast> _masts = new List<RelayMast>();
         private RelayMast[] _chain = Array.Empty<RelayMast>();
+        private SealedContainers _cabinets;
         private EventBus _events;
         private InputReader _input;
         private PickupReach _pickups;
@@ -131,6 +130,15 @@ namespace MoonProject.Gameplay
             return _chain[index].Id;
         }
 
+        /// <summary>
+        /// The service cabinet of the mast at station node <paramref name="node"/> (not home): where its part rested,
+        /// and where a spare waits once the mast is lit (the tower's relay spare).
+        /// </summary>
+        internal SealedContainer CabinetAt(int node)
+        {
+            return _masts[node - 1].Cabinet;
+        }
+
         /// <summary>Where the Link chain's mast <paramref name="index"/> stands (its pad, on the surface).</summary>
         public Vector3 ChainMastPosition(int index)
         {
@@ -172,8 +180,10 @@ namespace MoonProject.Gameplay
         /// <param name="placement">Core's rover placement for the hop, or null while no domain registers it.</param>
         /// <param name="homePad">07's dock on the base pad: home's hop pad, where a hop home sets 07 down to rest (home's
         /// reach stays centred on the base pad).</param>
+        /// <param name="cabinets">The world's sealed containers: each mast's service cabinet joins them.</param>
         internal bool Initialize(GameplayServices services, UpgradeService upgrades, RadioTower tower,
-            ITetherAim tether, FriendTuning friends, IRoverPlacement placement, Vector3 homePad)
+            ITetherAim tether, FriendTuning friends, IRoverPlacement placement, Vector3 homePad,
+            SealedContainers cabinets)
         {
             List<WorldAnchor> anchors = services.Anchors != null ? RelayAnchors(services.Anchors) : null;
             string problem = _tuning == null ? "RelayTuning is not assigned."
@@ -189,6 +199,7 @@ namespace MoonProject.Gameplay
                 return false;
             }
 
+            _cabinets = cabinets ?? throw new ArgumentNullException(nameof(cabinets));
             _events = services.Events;
             _input = services.Input;
             _pickups = services.Pickups;
@@ -317,6 +328,12 @@ namespace MoonProject.Gameplay
                     mast.PartState = RelayPartState.Held;
                     mast.Part.gameObject.SetActive(false);
                 }
+
+                if (mast.IsRestored || saved.part)
+                {
+                    // The part was taken: its cabinet stands open (an older save's, from before cabinets, too).
+                    _cabinets.StandOpen(mast.Cabinet.Id);
+                }
             }
 
             for (int i = 0; i < _masts.Count; i++)
@@ -345,13 +362,19 @@ namespace MoonProject.Gameplay
             return direction.sqrMagnitude > 1e-4f ? Quaternion.LookRotation(direction) : Quaternion.identity;
         }
 
+        /// <summary>The save id of a mast's service cabinet ("container.relay.0").</summary>
+        public static string CabinetId(string mastId)
+        {
+            return "container." + mastId;
+        }
+
         private RelayMast Spawn(WorldAnchor anchor, int index, GameplayServices services)
         {
-            if (!RelayPartPlanner.TryPlan(services.Terrain, anchor, _tuning, _friends, index, out Vector3 partRest,
-                    out string problem))
+            GameObject cabinetPrefab = services.Visuals.Container(ContainerKinds.Cabinet);
+            if (cabinetPrefab == null)
             {
-                Debug.LogError($"{nameof(RelayField)}: '{anchor.Id}' has nowhere for its relay part: {problem} " +
-                               "(world anchors contract, RelayTuning part range).", this);
+                Debug.LogError($"{nameof(RelayField)}: Art's '{ContainerKinds.Cabinet}' for the masts' service " +
+                               "cabinets is not in GameplayVisuals (run Gameplay/Materials).", this);
                 return null;
             }
 
@@ -364,11 +387,27 @@ namespace MoonProject.Gameplay
             restored.MakeSolid();
             restored.Visible = false;
             broken.SetLamp(0f);
-            GameObject part = Instantiate(_partPrefab, partRest + Vector3.up * _friends.PartHover, Quaternion.identity,
-                root);
+            Transform cabinetRoot = Instantiate(cabinetPrefab, root).transform;
+            cabinetRoot.name = ContainerKinds.Cabinet;
+            cabinetRoot.SetPositionAndRotation(broken.CabinetSocket.position, broken.CabinetSocket.rotation);
+            RelayMast mast = null;
+            SealedContainer cabinet = SealedContainer.Read(CabinetId(anchor.Id),
+                ContainerKinds.Of(ContainerKinds.Cabinet), cabinetRoot, SealedContainer.LidPath,
+                SealedContainer.ItemSocketPath, () => !mast.IsRestored && mast.PartState == RelayPartState.Resting,
+                out string problem);
+            if (cabinet == null)
+            {
+                Debug.LogError($"{nameof(RelayField)}: '{anchor.Id}': {problem}.", this);
+                return null;
+            }
+
+            Transform shelf = cabinet.ItemSocket;
+            GameObject part = Instantiate(_partPrefab, shelf.position, shelf.rotation, root);
             SetLayer(part.transform, Layers.Pickup);
             var pulse = new LinkPulse("LinkPulse", root, services.Visuals.LinkPulse, services.Terrain, _tuning);
-            return new RelayMast(index + 1, anchor, broken, restored, part.transform, partRest, pulse);
+            mast = new RelayMast(index + 1, anchor, broken, restored, part.transform, pulse) { Cabinet = cabinet };
+            _cabinets.Add(cabinet);
+            return mast;
         }
 
         private RelayMast Find(string id)
@@ -449,7 +488,10 @@ namespace MoonProject.Gameplay
             StepGaze();
         }
 
-        /// <summary>The part bobs and glints at rest; a press of E beside it draws it into 07 to be held.</summary>
+        /// <summary>
+        /// The part waits on its cabinet's shelf; once the door stands open it glints there, and a press of E beside it
+        /// draws it into 07 to be held.
+        /// </summary>
         private void StepPart(RelayMast mast, int index, float now, float deltaTime)
         {
             Transform part = mast.Part;
@@ -457,11 +499,13 @@ namespace MoonProject.Gameplay
             switch (mast.PartState)
             {
                 case RelayPartState.Resting:
-                    float bob = Mathf.Sin(now * 2f * Mathf.PI * _friends.PartBobFrequency + index) * _friends.PartBob;
-                    Vector3 rest = mast.PartRest + Vector3.up * (_friends.PartHover + bob);
-                    part.SetPositionAndRotation(rest,
-                        Quaternion.Euler(0f, now * _friends.PartSpin + index * PartHeadingStep, 0f));
-                    _glints.Add(mast.PartRest, index);
+                    if (!mast.Cabinet.StandsOpen)
+                    {
+                        break;
+                    }
+
+                    Vector3 rest = mast.PartRest;
+                    _glints.Add(rest, index);
                     if (_pickups.Offer(Time.frameCount, _input.ExcavateHeld, PickupReach.Relays, index, rest,
                             _rover.Position, _friends.PartReachRadius, RelayPartNoun))
                     {

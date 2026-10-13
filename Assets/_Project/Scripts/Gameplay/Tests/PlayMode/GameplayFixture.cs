@@ -407,7 +407,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             visuals.PopulateContainers(new[]
             {
                 ContainerTemplate("CoilCrate"), ContainerTemplate("TapeCase"), ContainerTemplate("JunctionBox"),
-                ContainerTemplate("SupplyPod"), SledTemplate(),
+                ContainerTemplate("SupplyPod"), SledTemplate(), ContainerTemplate(ContainerKinds.Cabinet),
             });
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
@@ -921,6 +921,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Named(Block(mast, new Vector3(0f, 7.95f, 0f), Vector3.one * 0.5f), RelayRig.LampNode);
             Node(RelayRig.PartSocketNode, root.transform, new Vector3(0f, 0.78f, -1.24f));
             Node(RelayRig.BeamPointNode, root.transform, new Vector3(0f, 1.12f, -1.24f));
+            Node(RelayRig.CabinetSocketNode, root.transform, new Vector3(1.75f, 0f, -2.8f));
             if (broken)
             {
                 mast.localRotation = Quaternion.Euler(-9f, 0f, 10f);
