@@ -47,7 +47,9 @@ namespace MoonProject.Gameplay
         private EventBus _events;
         private InputReader _input;
         private BeamWork _beamWork;
-        private ICutter _cutter;
+        private Cutter _cutter;
+        private SalvageSite _firedAt;
+        private float _firedTime = float.NegativeInfinity;
         private float _slideLeft;
         private IRoverState _rover;
         private IRoverRig _rig;
@@ -146,7 +148,7 @@ namespace MoonProject.Gameplay
         /// Stands every site on its anchor. False (logged) when wiring, an anchor or a prefab node from the site
         /// contract is missing.
         /// </summary>
-        internal bool Initialize(GameplayServices services, ICutter cutter)
+        internal bool Initialize(GameplayServices services, Cutter cutter)
         {
             string problem = _tuning == null ? "SalvageTuning is not assigned."
                 : _catalog == null ? "SalvageCatalog is not assigned."
@@ -450,13 +452,17 @@ namespace MoonProject.Gameplay
             return picked;
         }
 
-        /// <summary>07 holds the beam on a piece: the emitter charges up (shorter on a part-cut piece).</summary>
+        /// <summary>
+        /// 07 holds the beam on a piece: the charge builds the stages its size needs (0.5.5 §5.1), from a warm emitter
+        /// (no brace, quicker stages) when the last firing was at this site moments ago.
+        /// </summary>
         private void StartCut(SalvagePiece piece)
         {
             _cutting = piece;
             _slideLeft = 0f;
-            _cut.Tune(_cutter.ChargeSeconds, _cutter.ResumeChargeSeconds);
-            _cut.Engage(piece.Progress, piece.Material, piece.HotPoint, piece.CutNormal);
+            bool warm = piece.Site == _firedAt && Time.time - _firedTime <= _cutter.WarmWindowSeconds;
+            _cut.Engage(piece.Progress, piece.Material, piece.HotPoint, piece.CutNormal,
+                _cutter.Plan(_tuning.Size(piece.Size).Stages, warm));
         }
 
         /// <summary>The hold lets go: a charge-up cancels, a lit cut pauses with its progress kept.</summary>
@@ -505,6 +511,8 @@ namespace MoonProject.Gameplay
             piece.Progress = progress;
             if (ignited)
             {
+                _firedAt = piece.Site;
+                _firedTime = Time.time;
                 _events.Publish(new SalvageCutStarted(piece.CutPosition, piece.Material));
             }
 

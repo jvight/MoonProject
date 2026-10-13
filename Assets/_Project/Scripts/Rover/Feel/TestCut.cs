@@ -4,7 +4,7 @@ namespace MoonProject.Rover
 {
     /// <summary>
     /// The bay's test cut after a cutter upgrade (docs/features/M3-26 §5, install moment) as plain logic: a pause
-    /// while the part seats, the first charge run at the new speed, a short burn, then the coupon cracks. Step says
+    /// while the part seats, the first charge at the new speed, a short burn, then the coupon cracks. Step says
     /// which beat comes due.
     /// </summary>
     public sealed class TestCut

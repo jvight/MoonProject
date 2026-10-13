@@ -13,6 +13,10 @@ namespace MoonProject.Audio.PlayModeTests
 
         public float ResumeChargeSeconds { get; set; } = 0.3f;
 
+        public float BraceSeconds => 0.5f;
+
+        public float WarmWindowSeconds => 6f;
+
         public float SpeedFactor => 1f;
 
         public float DrainFactor => 1f;

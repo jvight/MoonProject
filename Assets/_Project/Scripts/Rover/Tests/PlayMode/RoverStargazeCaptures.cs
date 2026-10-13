@@ -80,12 +80,19 @@ namespace MoonProject.Rover.PlayModeTests
         private const float EveningEndTimeout = 20f;
         private const float EveningEarlySeconds = 2f;
 
-        /// <summary>The charge run capture: tier 0's fresh charge, the cut point ahead of 07, and the frames' shares.</summary>
-        private const float ChargeSeconds = 0.65f;
+        /// <summary>The cut point ahead of 07, the Cells capture's frame waits, and the share of stage 2 at its frame.
+        /// </summary>
         private const float CutReach = 1.4f;
         private const float CutRise = 0.6f;
-        private const float EarlyShare = 0.55f;
-        private const float LateShare = 0.9f;
+        private const float MidStageShare = 0.5f;
+        private const float LockFrameSeconds = 0.1f;
+        private const float WarmFrameSeconds = 0.8f;
+
+        /// <summary>The brace capture: a hull plate's stages, the tier-0 stage time, the brace and the held breath.</summary>
+        private const int HullStages = 3;
+        private const float StageSeconds = 0.45f;
+        private const float BraceSeconds = 0.5f;
+        private const float HeldBreathSeconds = 0.12f;
 
         /// <summary>The hatch capture: five of eight slots used, a bundle's flight, and the wait before each frame.</summary>
         private const int HatchCrates = 5;
@@ -237,17 +244,17 @@ namespace MoonProject.Rover.PlayModeTests
         }
 
         /// <summary>
-        /// The charge run (M3-26 §2) from the chase camera: 07 at home charges a cut, and frames are taken early and
-        /// late in the charge-up, as the light travels from the battery along its back to the emitter.
+        /// The Cells charge-up (0.5.5 §5.4) from the chase camera: a warm three-stage charge (no brace, no push-in, so
+        /// the frame holds) with frames mid stage 2, at the full lock, and in the warm trace after the cut.
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
         [PrebuildSetup(typeof(RoverSessionScene))]
         [PostBuildCleanup(typeof(RoverSessionScene))]
-        public IEnumerator ChargeRun_IsCapturedMidChargeUp_FromTheChaseCamera()
+        public IEnumerator ChargeCells_AreCapturedMidChargeLockedAndWarm_FromTheChaseCamera()
         {
             yield return Boot();
-            _report.AppendLine("# The charge run (real Main scene)");
+            _report.AppendLine("# The Cells charge-up (real Main scene)");
             _report.AppendLine();
             _report.AppendLine("| Capture | Orbit elevation (deg) | Camera above dust (m) | 07's gaze | Beat |");
             _report.AppendLine("|---|---:|---:|---:|---|");
@@ -264,14 +271,77 @@ namespace MoonProject.Rover.PlayModeTests
             yield return Wait(SettleSeconds);
             Vector3 cutPoint = _rover.Position + _rover.Rotation * Vector3.forward * CutReach + Vector3.up * CutRise;
             _context.Events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Anticipate, cutPoint, Vector3.up, 0f,
-                ChargeSeconds));
-            yield return Wait(ChargeSeconds * EarlyShare);
-            Capture("chargerun-1-early");
-            yield return Wait(ChargeSeconds * (LateShare - EarlyShare));
-            Capture("chargerun-2-late");
+                HullStages * StageSeconds));
+            _context.Events.Publish(new CutChargeStaged(0, HullStages, true, StageSeconds));
+            yield return Wait(StageSeconds);
+            _context.Events.Publish(new CutChargeStaged(1, HullStages, true, StageSeconds));
+            yield return Wait(StageSeconds * MidStageShare);
+            Capture("cells-1-stage2");
+            yield return Wait(StageSeconds * (1f - MidStageShare));
+            _context.Events.Publish(new CutChargeStaged(2, HullStages, true, StageSeconds));
+            yield return Wait(StageSeconds);
+            _context.Events.Publish(new CutChargeStaged(3, HullStages, true, StageSeconds));
+            yield return Wait(LockFrameSeconds);
+            Capture("cells-2-lock");
+            _context.Events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Act, cutPoint, Vector3.up, 0f, 0f));
+            _context.Events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Impact, cutPoint, Vector3.up, 1f, 0f));
+            yield return Wait(WarmFrameSeconds);
+            Capture("cells-3-warm");
+            Directory.CreateDirectory(CaptureFolder);
+            File.WriteAllText(Path.Combine(CaptureFolder, "cells.md"), _report.ToString());
+        }
+
+        /// <summary>
+        /// The charge-up's weight (0.5.5 §5.3, §5.6) from the chase camera: a fresh charge on a hull plate (3 stages)
+        /// braces 07 and pushes the camera in; frames at rest, braced, and at the full lock, with the camera's
+        /// distance and height from 07 in the report.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator ChargeBrace_IsCapturedBracedAndPushedIn_ForAFreshHullCharge()
+        {
+            yield return Boot();
+            _report.AppendLine("# The charge-up's brace and push-in (real Main scene)");
+            _report.AppendLine();
+            _report.AppendLine("| Capture | Orbit elevation (deg) | Camera above dust (m) | 07's gaze | Beat |");
+            _report.AppendLine("|---|---:|---:|---:|---|");
+            Set(_gamepad.rightStick, new Vector2(LookStick, 0f));
+            yield return Wait(StickProbeSeconds);
+            Set(_gamepad.rightStick, Vector2.zero);
+            float opening = Time.time + WakeEaseTimeout;
+            while (_cameraRig.Opening.IsActive)
+            {
+                Assert.Less(Time.time, opening, "The wake hands over first.");
+                yield return null;
+            }
+
+            yield return Wait(SettleSeconds);
+            Capture("brace-0-rest");
+            Vector3 rest = _view.transform.position - _rover.Position;
+            Vector3 cutPoint = _rover.Position + _rover.Rotation * Vector3.forward * CutReach + Vector3.up * CutRise;
+            _context.Events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Anticipate, cutPoint, Vector3.up, 0f,
+                BraceSeconds + HullStages * StageSeconds));
+            _context.Events.Publish(new CutChargeStaged(0, HullStages, false, StageSeconds));
+            yield return Wait(BraceSeconds);
+            Capture("brace-1-braced");
+            for (int stage = 1; stage <= HullStages; stage++)
+            {
+                yield return Wait(StageSeconds);
+                _context.Events.Publish(new CutChargeStaged(stage, HullStages, false, StageSeconds));
+            }
+
+            yield return Wait(HeldBreathSeconds);
+            Capture("brace-2-lock");
+            Vector3 locked = _view.transform.position - _rover.Position;
+            _report.AppendLine();
+            _report.AppendLine($"Camera from 07: rest {rest.magnitude:F2} m (up {rest.y:F2} m), full lock "
+                + $"{locked.magnitude:F2} m (up {locked.y:F2} m).");
             _context.Events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Cancel, cutPoint, Vector3.up, 0f, 0f));
             Directory.CreateDirectory(CaptureFolder);
-            File.WriteAllText(Path.Combine(CaptureFolder, "chargerun.md"), _report.ToString());
+            File.WriteAllText(Path.Combine(CaptureFolder, "brace.md"), _report.ToString());
+            Assert.Less(locked.magnitude, rest.magnitude, "A fresh hull charge pushes the camera in.");
         }
 
         /// <summary>

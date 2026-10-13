@@ -66,6 +66,26 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void TheChargeStages_BraceTheBody_AndTheCrackLetsItRise()
+        {
+            Beat(FeelPhase.Anticipate, seconds: 1.4f);
+            _events.Publish(new CutChargeStaged(0, 2, false, 0.45f));
+            Run(0.5f);
+            Assert.IsTrue(_feel.Brace.IsBraced, "07 plants itself for the charge.");
+            Assert.Less(_feel.Brace.Heave, -0.02f, "Squatting on its suspension.");
+            _events.Publish(new CutChargeStaged(1, 2, false, 0.45f));
+            _events.Publish(new CutChargeStaged(2, 2, false, 0.45f));
+            Assert.IsTrue(_feel.Brace.IsLocked, "The full lock holds it still.");
+
+            Beat(FeelPhase.Act);
+            Run(0.5f);
+            Assert.IsTrue(_feel.Brace.IsBraced, "Braced through the beam.");
+            Beat(FeelPhase.Impact);
+            Run(2f);
+            Assert.IsTrue(_feel.Brace.IsAtRest(Tolerance), "The crack lets it rise back to rest.");
+        }
+
+        [Test]
         public void TheCut_ChargesKicksSustainsAndCracks()
         {
             Beat(FeelPhase.Anticipate, seconds: 0.65f);

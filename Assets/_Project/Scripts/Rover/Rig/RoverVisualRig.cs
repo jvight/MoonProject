@@ -45,6 +45,9 @@ namespace MoonProject.Rover
         private Quaternion _chassisRestRotation;
         private Quaternion _antennaRestRotation;
         private ImpactNudge _nudge;
+        private ChargeBrace _brace;
+        private float _heldBogieLeft;
+        private float _heldBogieRight;
         private float _sag;
         private float _sagTarget;
         private float _sagHalfLife = 1f;
@@ -274,6 +277,15 @@ namespace MoonProject.Rover
             _nudge = nudge;
         }
 
+        /// <summary>
+        /// The cut's charge-up brace (<see cref="ChargeBrace"/>): the chassis squats and settles, the wheels stop
+        /// turning and the rockers hold where they were; null leaves the body free.
+        /// </summary>
+        public void SetChargeBrace(ChargeBrace brace)
+        {
+            _brace = brace;
+        }
+
         /// <summary>The cargo's weight: the chassis settles <paramref name="metres"/> lower over the half-life.</summary>
         public void SetLoadSag(float metres, float halfLife)
         {
@@ -286,19 +298,31 @@ namespace MoonProject.Rover
             Vector3 pivot = Vector3.up * _tuning.LeanPivotHeight;
             float nudgePitch = _nudge != null ? _nudge.Pitch : 0f;
             Vector3 nudge = (_nudge != null ? new Vector3(0f, _nudge.Heave, _nudge.Surge) : Vector3.zero)
-                + Vector3.down * _sag;
+                + Vector3.down * _sag + Vector3.up * (_brace != null ? _brace.Heave : 0f);
             Quaternion lean = GroundPlaneFit.Tilt(_jelly.Pitch - nudgePitch, _jelly.Roll);
             _chassis.localPosition = _chassisRestPosition + pivot - lean * pivot + Vector3.up * _jelly.Heave + nudge;
             _chassis.localRotation = lean * _chassisRestRotation;
         }
 
-        /// <summary>Each rocker arm pitches to the line between its front and rear wheel (visual only).</summary>
+        /// <summary>
+        /// Each rocker arm pitches to the line between its front and rear wheel (visual only); braced for a charge,
+        /// it stiffens toward the pitch it had when the brace began.
+        /// </summary>
         private void ApplyBogies()
         {
-            _bogieLeft.localRotation = _bogieLeftRestRotation * Quaternion.AngleAxis(
-                -BogiePitch(RoverModelNodes.FrontLeftIndex, RoverModelNodes.RearLeftIndex), Vector3.right);
-            _bogieRight.localRotation = _bogieRightRestRotation * Quaternion.AngleAxis(
-                -BogiePitch(RoverModelNodes.FrontRightIndex, RoverModelNodes.RearRightIndex), Vector3.right);
+            float left = BogiePitch(RoverModelNodes.FrontLeftIndex, RoverModelNodes.RearLeftIndex);
+            float right = BogiePitch(RoverModelNodes.FrontRightIndex, RoverModelNodes.RearRightIndex);
+            float stiffness = _brace != null ? _brace.Stiffness : 0f;
+            if (stiffness <= 0f)
+            {
+                _heldBogieLeft = left;
+                _heldBogieRight = right;
+            }
+
+            _bogieLeft.localRotation = _bogieLeftRestRotation
+                * Quaternion.AngleAxis(-Mathf.Lerp(left, _heldBogieLeft, stiffness), Vector3.right);
+            _bogieRight.localRotation = _bogieRightRestRotation
+                * Quaternion.AngleAxis(-Mathf.Lerp(right, _heldBogieRight, stiffness), Vector3.right);
         }
 
         /// <summary>Nose-up pitch (deg) of the line from the rear to the front wheel of one side.</summary>
@@ -313,7 +337,7 @@ namespace MoonProject.Rover
         {
             float yawRadians = _rover.YawRate * Mathf.Deg2Rad * deltaTime;
             float steer = _rover.SteerInput * _tuning.FrontSteerAngle;
-            float degreesPerMetre = Mathf.Rad2Deg / _tuning.WheelRadius;
+            float degreesPerMetre = _brace != null && _brace.IsBraced ? 0f : Mathf.Rad2Deg / _tuning.WheelRadius;
 
             for (int i = 0; i < _wheels.Length; i++)
             {

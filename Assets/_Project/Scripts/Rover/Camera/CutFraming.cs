@@ -3,9 +3,11 @@ using UnityEngine;
 namespace MoonProject.Rover
 {
     /// <summary>
-    /// The cut's work framing (docs/design/feel-pass.md §3.1, Cam): while 07 stands still cutting, the camera eases
-    /// over its shoulder, on the side the beam runs to so 07's head never hides it, a little higher, aiming at the
-    /// middle of the beam. Plain logic: which side, where the eye goes, and how far the framing has eased in.
+    /// The beam's work framing, aiming at the middle of the beam from 07's shoulder on the side the beam runs to so
+    /// 07's head never hides it. The cut's charge-up push-in (docs/design/0.5.5-owner-feedback.md §5.6) eases a little
+    /// closer and lower only for a fresh charge on a big piece; the dig's framing (feel-pass §3.1) eases over the
+    /// shoulder and a little higher. Plain logic: whether the cut earns it, which side, where the eye goes, and how
+    /// far the framing has eased in.
     /// </summary>
     public sealed class CutFraming
     {
@@ -24,6 +26,15 @@ namespace MoonProject.Rover
 
         /// <summary>The cut point to look at the beam toward.</summary>
         public Vector3 CutPoint { get; private set; }
+
+        /// <summary>
+        /// Whether a charge earns the push-in: a fresh one (a warm emitter repeats too often to move the camera) on a
+        /// piece needing at least <paramref name="minStages"/> stages, and never with the Gentle camera.
+        /// </summary>
+        public static bool Wanted(bool warm, int stagesNeeded, int minStages, bool gentle)
+        {
+            return !warm && !gentle && stagesNeeded >= minStages;
+        }
 
         /// <summary>
         /// The side the beam runs to as seen from behind 07 (+1 right, -1 left; straight ahead counts as right): the
@@ -55,6 +66,17 @@ namespace MoonProject.Rover
             Side = side;
             _target = 1f;
             _seconds = Mathf.Max(seconds, 1e-3f);
+        }
+
+        /// <summary>
+        /// The orbit pushed in by <paramref name="weight"/>: the radius <paramref name="pushIn"/> (a share) shorter and
+        /// the camera <paramref name="lower"/> metres lower, at the same follow point. Elevations in degrees.
+        /// </summary>
+        public static void PushIn(float weight, float pushIn, float lower, ref float elevation, ref float radius)
+        {
+            float height = radius * Mathf.Sin(elevation * Mathf.Deg2Rad) - lower * weight;
+            radius *= 1f - pushIn * weight;
+            elevation = Mathf.Asin(Mathf.Clamp(height / Mathf.Max(radius, 1e-3f), -1f, 1f)) * Mathf.Rad2Deg;
         }
 
         /// <summary>Eases back to the chase camera over <paramref name="seconds"/> (the fold, a release, the player's hands).</summary>

@@ -71,8 +71,9 @@ namespace MoonProject.Art.Tests
 
             List<ModelNode> pieces = Pieces(site);
             int landmarks = SiteLandmarkMeshes.HasLandmark(id) ? 1 : 0;
-            Assert.AreEqual(site.Children.Count - 3 - landmarks, pieces.Count,
-                "only Skeleton, Salvage_*, Heart, CrewCrate and the landmark");
+            int pockets = SiteModelBuilder.RelicsAt(id).Count;
+            Assert.AreEqual(site.Children.Count - 3 - landmarks - pockets, pieces.Count,
+                "only Skeleton, Salvage_*, Heart, CrewCrate, the relic pockets and the landmark");
             Assert.That(pieces.Count, Is.InRange(MinPieces, MaxPieces));
             Assert.LessOrEqual(pieces.Count(IsDrag), 1, "at most one drag piece");
             for (int i = 0; i < pieces.Count; i++)
@@ -326,6 +327,49 @@ namespace MoonProject.Art.Tests
                 Assert.Greater(Mathf.Min(drift.Bounds.size.x, drift.Bounds.size.z), 1f, $"{patch.Name} reads far off");
                 Assert.AreEqual(PaletteSwatch.Rust, Dominant(drift, Vector3.up), $"{patch.Name} is orange from above");
                 Assert.IsFalse(MeshChecks.Swatches(drift).Any(Palette.IsEmissive), "beads don't glow");
+            }
+        }
+
+        [TestCaseSource(nameof(Ids))]
+        public void RelicPockets_LeanOnTheWreck_OnePerRelic_TheirDigSpotInTheGap(string id)
+        {
+            ModelNode site = SiteModelBuilder.CreateSite(id);
+            Bounds footprint = SiteModelBuilder.Footprint(site);
+            foreach (string relic in SiteModelBuilder.RelicsAt(id))
+            {
+                ModelNode pocket = site.Children.Single(n => n.Name == SiteModelBuilder.RelicPocketPrefix + relic);
+                Assert.AreEqual(0f, pocket.LocalPosition.y, 1e-4f, $"{pocket.Name} is on the ground");
+                var flat = new Vector3(pocket.LocalPosition.x, footprint.center.y, pocket.LocalPosition.z);
+                Assert.Less(Mathf.Sqrt(footprint.SqrDistance(flat)), 0.45f, $"{pocket.Name} tucks against the wreck");
+                Vector3 outward = pocket.LocalRotation * Vector3.forward;
+                Vector3 away = flat - footprint.center;
+                Assert.Greater(Vector3.Dot(new Vector3(outward.x, 0f, outward.z), new Vector3(away.x, 0f, away.z)), 0f,
+                    $"{pocket.Name} opens away from the wreck");
+                ModelNode spot = pocket.Children.Single();
+                Assert.AreEqual(SiteModelBuilder.DigSpotName, spot.Name);
+                Assert.IsNull(spot.Mesh, "DigSpot is an empty");
+                Assert.IsFalse(MeshChecks.Swatches(pocket.Mesh.Geometry).Any(Palette.IsEmissive),
+                    "nothing glows on the regolith; the glint is gameplay's, in the gap");
+                MeshChecks.AssertWellFormed(pocket.Mesh.Geometry);
+            }
+        }
+
+        [Test]
+        public void HullFragments_ReadAsAHullsRemains_HalfBuried_EachWithACutPoint()
+        {
+            for (int i = 0; i < PropModelBuilder.HullFragmentVariants; i++)
+            {
+                ModelNode fragment = PropModelBuilder.CreateHullFragment(i);
+                LowPolyMeshBuilder mesh = fragment.Mesh.Geometry;
+                MeshChecks.AssertWellFormed(mesh);
+                Bounds size = mesh.Bounds;
+                Assert.That(Mathf.Max(size.size.x, size.size.z), Is.InRange(1.4f, 3f), $"{fragment.Name} reads at 20 m");
+                Assert.Less(size.min.y, -0.05f, $"{fragment.Name} sinks into the dust");
+                Assert.Greater(size.max.y, 0.4f, $"{fragment.Name} stands out of it");
+                Assert.IsFalse(MeshChecks.Swatches(mesh).Any(Palette.IsEmissive), "nothing glows on the regolith");
+                ModelNode cut = fragment.Children.Single();
+                Assert.AreEqual(SiteModelBuilder.CutPointName, cut.Name);
+                Assert.Greater(cut.LocalPosition.y, 0f, $"{fragment.Name}'s cut is above the dust");
             }
         }
 

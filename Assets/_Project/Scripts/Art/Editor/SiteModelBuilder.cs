@@ -35,6 +35,36 @@ namespace MoonProject.Art.Editor
         public const string CrewCrateLidName = "Lid";
         public const string CrewCrateSealName = "Seal";
 
+        /// <summary>
+        /// The relics' debris pockets (0.5.5 §2, D6): <c>RelicPocket_&lt;relic id&gt;</c> at the wreck's edge, a dark gap
+        /// under a fallen panel, +Z its open side facing out from the wreck, holding <c>DigSpot</c> where the relic
+        /// and its glint sit in the gap.
+        /// </summary>
+        public const string RelicPocketPrefix = "RelicPocket_";
+
+        public const string DigSpotName = "DigSpot";
+
+        /// <summary>The relics buried at each site (the content contract's ids, matching gameplay's relic recipes).</summary>
+        public static IReadOnlyList<string> RelicsAt(string id)
+        {
+            switch (id)
+            {
+                case "garage":
+                    return new[] { "cassette_player", "rubber_duck", "garden_gnome" };
+                case "kestrel":
+                    return new[] { "golden_record" };
+                case "drill":
+                    return new[] { "astronaut_boot" };
+                case "lander":
+                    return new[] { "teapot" };
+                default:
+                    return Array.Empty<string>();
+            }
+        }
+
+        // How far a pocket's middle sits out from the wreck's edge: close enough that its panel leans on the wreck.
+        private const float PocketOutset = 0.3f;
+
         // Off to the heart's right and out in front of the wreck, so the crate stands in the open where 07 arrives.
         private const float CrewCrateBesideHeart = 0.9f;
         private const float CrewCrateClearOfWreck = 0.8f;
@@ -124,8 +154,10 @@ namespace MoonProject.Art.Editor
             }
 
             root.Add(new ModelNode(HeartName, recipe.Heart));
+            Bounds footprint = Footprint(root);
             AddCrewCrate(root, name, new Vector3(recipe.Heart.x + CrewCrateBesideHeart, 0f,
-                Footprint(root).max.z + CrewCrateClearOfWreck));
+                footprint.max.z + CrewCrateClearOfWreck));
+            AddRelicPockets(root, id, footprint);
             if (SiteLandmarkMeshes.HasLandmark(id))
             {
                 (Vector3 foot, float yaw) = SiteLandmarkMeshes.Placement(id);
@@ -155,6 +187,26 @@ namespace MoonProject.Art.Editor
             }
 
             return footprint;
+        }
+
+        private static void AddRelicPockets(ModelNode root, string id, Bounds footprint)
+        {
+            IReadOnlyList<string> relics = RelicsAt(id);
+            var edges = new[]
+            {
+                new Vector3(footprint.min.x - PocketOutset, 0f, footprint.center.z),
+                new Vector3(footprint.center.x, 0f, footprint.min.z - PocketOutset),
+                new Vector3(footprint.max.x + PocketOutset, 0f, footprint.center.z - footprint.extents.z * 0.4f),
+            };
+            for (int i = 0; i < relics.Count; i++)
+            {
+                Vector3 at = edges[i];
+                Vector3 outward = at - new Vector3(footprint.center.x, 0f, footprint.center.z);
+                ModelNode pocket = root.Add(new ModelNode(RelicPocketPrefix + relics[i], at,
+                    Quaternion.LookRotation(outward.normalized, Vector3.up),
+                    new ModelMesh($"Site_{id}_{RelicPocketPrefix}{i}", LootContainerMeshes.Pocket(1000 + i))));
+                pocket.Add(new ModelNode(DigSpotName, LootContainerMeshes.DigSpot));
+            }
         }
 
         private static void AddCrewCrate(ModelNode root, string name, Vector3 foot)

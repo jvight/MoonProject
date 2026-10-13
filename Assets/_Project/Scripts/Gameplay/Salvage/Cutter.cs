@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 
@@ -27,9 +28,30 @@ namespace MoonProject.Gameplay
 
         public int LampCount => _tuning.Tier(Tier).LampCount;
 
-        public float ChargeSeconds => _tuning.Tier(Tier).ChargeSeconds;
+        /// <summary>A small piece's fresh charge: the brace, one stage and the breath.</summary>
+        public float ChargeSeconds => _tuning.BraceSeconds + StageSeconds + _tuning.BreathSeconds;
 
-        public float ResumeChargeSeconds => _tuning.Tier(Tier).ResumeChargeSeconds;
+        /// <summary>A small piece's warm charge: one quicker stage and the breath.</summary>
+        public float ResumeChargeSeconds => StageSeconds * _tuning.WarmFactor + _tuning.BreathSeconds;
+
+        public float BraceSeconds => _tuning.BraceSeconds;
+
+        public float WarmWindowSeconds => _tuning.WarmWindowSeconds;
+
+        /// <summary>Seconds one charge stage takes at this tier (fresh).</summary>
+        public float StageSeconds => _tuning.Tier(Tier).StageSeconds;
+
+        /// <summary>
+        /// The charge plan for a piece needing <paramref name="stages"/> stages, warm or fresh (0.5.5 §5.1).
+        /// </summary>
+        public ChargePlan Plan(int stages, bool warm)
+        {
+            float stage = warm ? StageSeconds * _tuning.WarmFactor : StageSeconds;
+            float fresh = _tuning.BraceSeconds + stages * StageSeconds + _tuning.BreathSeconds;
+            float total = stages * stage + _tuning.BreathSeconds;
+            float start = warm && fresh > 0f ? Mathf.Clamp01(1f - total / fresh) : 0f;
+            return new ChargePlan(_tuning.BraceSeconds, stage, stages, _tuning.BreathSeconds, warm, start);
+        }
 
         public float SpeedFactor => _tuning.Tier(Tier).SpeedFactor;
 

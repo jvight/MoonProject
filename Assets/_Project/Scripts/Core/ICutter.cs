@@ -12,11 +12,20 @@ namespace MoonProject.Core
         /// <summary>Conduit lamps the charge run lights on its way to the head.</summary>
         int LampCount { get; }
 
-        /// <summary>Seconds of a fresh charge run, from the press to the crack.</summary>
+        /// <summary>Seconds of a small piece's fresh charge, from the press to ignition (the brace, one stage, the
+        /// held breath).</summary>
         float ChargeSeconds { get; }
 
-        /// <summary>Seconds of a resumed run, which starts part-way, where the drain left it.</summary>
+        /// <summary>Seconds of a small piece's warm charge (a re-press soon after the last firing at the same site:
+        /// no brace, a quicker stage).</summary>
         float ResumeChargeSeconds { get; }
+
+        /// <summary>Seconds 07 plants itself before a fresh charge builds (0.5.5 §5.1: every tier).</summary>
+        float BraceSeconds { get; }
+
+        /// <summary>A re-press at the same site within this many seconds of the last firing finds the emitter warm.
+        /// </summary>
+        float WarmWindowSeconds { get; }
 
         /// <summary>Multiplier on cutting speed once the beam fires (1 at tier 0).</summary>
         float SpeedFactor { get; }
