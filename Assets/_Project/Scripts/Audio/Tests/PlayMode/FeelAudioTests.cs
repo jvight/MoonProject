@@ -189,6 +189,48 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual("item_slide", LastClip);
         }
 
+        [UnityTest]
+        public IEnumerator AScan_SweepsStepsUpEachQuarter_AndLiftsOffIntoTheLens()
+        {
+            AudioSource sweep = AudioTestRig.FindChildSource(_rig.Feel.transform, "ScanSweep");
+            Beat(FeelKind.Scan, FeelPhase.Anticipate);
+            yield return new WaitForSeconds(0.5f);
+            Assert.IsTrue(sweep.isPlaying, "the lens's fan of light hums while it draws");
+            Assert.AreEqual(1f, sweep.pitch, 1e-4f, "on D");
+            Beat(FeelKind.Scan, FeelPhase.Act, 0.25f);
+            Assert.AreEqual("scan_step_01", LastClip);
+            Beat(FeelKind.Scan, FeelPhase.Act, 0.5f);
+            Assert.AreEqual(1.1225f, sweep.pitch, 1e-4f, "a step up, on E");
+            Beat(FeelKind.Scan, FeelPhase.Act, 1f);
+            Assert.AreEqual("scan_step_04", LastClip);
+            Beat(FeelKind.Scan, FeelPhase.Reward);
+            Assert.AreEqual("scan_liftoff", LastClip, "the lines stream into the lens");
+            yield return new WaitForSeconds(1f);
+            Assert.IsFalse(sweep.isPlaying);
+        }
+
+        [UnityTest]
+        public IEnumerator ACompletedBlueprint_AnswersAfterTheChirp()
+        {
+            int plays = _rig.Director.PlayCount;
+            _rig.Events.Publish(new BlueprintCompleted("rover.hover_jump"));
+            yield return new WaitForSeconds(_rig.FeelTuning.SheetCompleteDelay * 0.5f);
+            Assert.AreEqual(plays, _rig.Director.PlayCount, "07's Proud chirp leads");
+            yield return new WaitForSeconds(_rig.FeelTuning.SheetCompleteDelay);
+            Assert.AreEqual("sheet_complete", LastClip, "then the sheet answers");
+        }
+
+        [Test]
+        public void AContainer_PopsItsSeal_ThenOpensWithItsKindsHinge()
+        {
+            _rig.Events.Publish(new ContainerSealCut("relay.cabinet", ContainerKind.Cabinet, Point));
+            Assert.AreEqual("seal_cut", LastClip);
+            _rig.Events.Publish(new ContainerOpened("relay.cabinet", ContainerKind.Cabinet, Point));
+            Assert.AreEqual("container_open_cabinet", LastClip);
+            _rig.Events.Publish(new ContainerOpened("ro.case", ContainerKind.Case, Point));
+            Assert.AreEqual("container_open_case", LastClip);
+        }
+
         [Test]
         public void SavesInABurst_TickOnce()
         {

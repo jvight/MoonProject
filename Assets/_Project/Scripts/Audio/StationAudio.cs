@@ -13,10 +13,12 @@ namespace MoonProject.Audio
     /// <item>the Rover Bay's old arms whir at their tips while they move and sigh as they come to rest, and the
     /// turntable rumbles while it turns 07 (both read from <see cref="IRoverBay"/>'s transforms, so they follow
     /// wherever the Rover drives them);</item>
-    /// <item>a crafted piece set on 07 (<see cref="RoverKitFitted"/>) is welded at the nearest arm tip, then a
-    /// resolved chime: done for 07; at Kenji's garage port (the tether ring, the tape deck) the folded arm unfolds as
-    /// the install begins (<see cref="RoverKitInstalling"/>), the weld sparks on 07 itself, and the tether ring hums
-    /// for the first time;</item>
+    /// <item>a part fitted on 07 (<see cref="PartFitted"/>, then Rover's install moment as <see cref="FeelBeat"/>s of
+    /// <see cref="FeelKind.Install"/>): at Kenji's garage port (the <see cref="RoverSocket.Deck"/> and
+    /// <see cref="RoverSocket.Tether"/> sockets) the folded arm unfolds as the moment begins (Anticipate); at the seat
+    /// (Impact) the part is welded, at the nearest bay arm tip or on 07 at the port, then a resolved chime, and the
+    /// tether ring hums for the first time. A friend's gift fits itself, unwelded. A swapped-out part is recycled
+    /// with a soft crunch; a part taken off (<see cref="PartRemoved"/>) releases with the moment in reverse;</item>
     /// <item>the radio tower's hatch opens, the beam's stitching rises with the new section, the hatch shuts;</item>
     /// <item>the charging dock clunks as 07 settles on it and leaving it is a tiny release
     /// (<see cref="RoverDockChanged"/>); any charger (the dock, a lit mast's ring) hums very softly while it fills the
@@ -36,7 +38,7 @@ namespace MoonProject.Audio
     [DisallowMultipleComponent]
     public sealed class StationAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 10;
+        private const int SubscriptionCount = 11;
         private const uint DropSeedSalt = 0x68E31DA4u;
         private const float CentsPerSemitone = 100f;
         private const float CentsPerOctave = 1200f;
@@ -57,6 +59,11 @@ namespace MoonProject.Audio
         private CueHandle _found;
         private CueHandle _portArm;
         private CueHandle _ringWake;
+        private CueHandle _recycle;
+        private CueHandle _partRemove;
+        private bool _installing;
+        private bool _installAtPort;
+        private bool _installRing;
         private AudioSource _liftLoop;
         private float _liftCueVolume;
         private AudioDirector _director;
@@ -129,10 +136,13 @@ namespace MoonProject.Audio
             _found = director.Resolve(AudioCueIds.BlueprintFound);
             _portArm = director.Resolve(AudioCueIds.PortArm);
             _ringWake = director.Resolve(AudioCueIds.TetherRingWake);
+            _recycle = director.Resolve(AudioCueIds.RecycleCrunch);
+            _partRemove = director.Resolve(AudioCueIds.PartRemove);
             if (!feed.IsValid || !servo.IsValid || !turn.IsValid || !stitch.IsValid || !charge.IsValid ||
                 !_sigh.IsValid || !_weld.IsValid || !_chime.IsValid || !_dockConnect.IsValid || !_dockFull.IsValid ||
                 !_dockRelease.IsValid || !_wake.IsValid || !_notYet.IsValid || !liftRide.IsValid ||
-                !_found.IsValid || !_portArm.IsValid || !_ringWake.IsValid || !TryResolveBeats(director) ||
+                !_found.IsValid || !_portArm.IsValid || !_ringWake.IsValid ||
+                !_recycle.IsValid || !_partRemove.IsValid || !TryResolveBeats(director) ||
                 !TryResolveLiftBeats(director) ||
                 !TryResolveWakes(director.Library.GetCue(_wake)))
             {
@@ -164,7 +174,7 @@ namespace MoonProject.Audio
 
             EventBus events = context.Events;
             _subscriptions[0] = events.Subscribe<StationCued>(OnStationCued);
-            _subscriptions[1] = events.Subscribe<RoverKitFitted>(OnKitFitted);
+            _subscriptions[1] = events.Subscribe<PartFitted>(OnPartFitted);
             _subscriptions[2] = events.Subscribe<RoverDockChanged>(OnDockChanged);
             _subscriptions[3] = events.Subscribe<BasePowerChanged>(OnBasePowerChanged);
             _subscriptions[4] = events.Subscribe<StationNotYet>(OnStationNotYet);
@@ -172,7 +182,8 @@ namespace MoonProject.Audio
             _subscriptions[6] = events.Subscribe<BlueprintFound>(OnBlueprintFound);
             _subscriptions[7] = events.Subscribe<ChargingChanged>(OnChargingChanged);
             _subscriptions[8] = events.Subscribe<BatteryChanged>(OnBatteryChanged);
-            _subscriptions[9] = events.Subscribe<RoverKitInstalling>(OnKitInstalling);
+            _subscriptions[9] = events.Subscribe<FeelBeat>(OnFeelBeat);
+            _subscriptions[10] = events.Subscribe<PartRemoved>(OnPartRemoved);
         }
 
         internal void Wire(StationAudioTuning tuning)
@@ -271,35 +282,52 @@ namespace MoonProject.Audio
             }
         }
 
-        private void OnKitFitted(RoverKitFitted fitted)
+        /// <summary>A part is going onto 07: the install moment that follows is this part's; a swap recycles.</summary>
+        private void OnPartFitted(PartFitted fitted)
         {
-            if (fitted.Gift)
+            _installing = !fitted.Gift;
+            _installAtPort = AtGaragePort(fitted.Socket);
+            _installRing = fitted.Socket == RoverSocket.Tether;
+            if (fitted.Replaced && fitted.RecycledMetal > 0)
+            {
+                _director.PlayAt(_recycle, _installAtPort ? _rover.Position : NearestTip(_rover.Position));
+            }
+        }
+
+        /// <summary>Rover's install moment: the port's arm reaches for 07 (Anticipate), the weld and chime at the
+        /// seat (Impact). A friend's gift fits itself, unwelded.</summary>
+        private void OnFeelBeat(FeelBeat beat)
+        {
+            if (beat.Kind != FeelKind.Install || !_installing)
             {
                 return;
             }
 
-            bool atPort = AtGaragePort(fitted.Piece);
-            _director.PlayAt(_weld, atPort ? _rover.Position : NearestTip(_rover.Position));
-            _director.Play2D(_chime);
-            if (fitted.Piece == RoverKitPiece.TetherRing)
-            {
-                _director.PlayAt(_ringWake, _rover.Position);
-            }
-        }
-
-        /// <summary>Kenji's garage port begins an install: its folded arm unfolds towards 07.</summary>
-        private void OnKitInstalling(RoverKitInstalling installing)
-        {
-            if (!installing.Gift && AtGaragePort(installing.Piece))
+            if (beat.Phase == FeelPhase.Anticipate && _installAtPort)
             {
                 _director.PlayAt(_portArm, _rover.Position);
             }
+            else if (beat.Phase == FeelPhase.Impact)
+            {
+                _installing = false;
+                _director.PlayAt(_weld, _installAtPort ? _rover.Position : NearestTip(_rover.Position));
+                _director.Play2D(_chime);
+                if (_installRing)
+                {
+                    _director.PlayAt(_ringWake, _rover.Position);
+                }
+            }
         }
 
-        /// <summary>The pieces Kenji's garage port fits (first-hour v2 section 3); the bay's arms the rest.</summary>
-        private static bool AtGaragePort(RoverKitPiece piece)
+        private void OnPartRemoved(PartRemoved removed)
         {
-            return piece == RoverKitPiece.TetherRing || piece == RoverKitPiece.TapeDeck;
+            _director.PlayAt(_partRemove, AtGaragePort(removed.Socket) ? _rover.Position : NearestTip(_rover.Position));
+        }
+
+        /// <summary>The sockets Kenji's garage port fits (first-hour v2 section 3); the bay's arms the rest.</summary>
+        private static bool AtGaragePort(RoverSocket socket)
+        {
+            return socket == RoverSocket.Tether || socket == RoverSocket.Deck;
         }
 
         private void OnDockChanged(RoverDockChanged changed)

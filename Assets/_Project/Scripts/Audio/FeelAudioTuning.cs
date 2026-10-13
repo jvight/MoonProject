@@ -36,6 +36,17 @@ namespace MoonProject.Audio
         [Tooltip("Time constant (s) of the sizzle easing to its level, and away when the beam stops.")]
         [Min(0.01f)] [SerializeField] private float _sizzleEase = 0.15f;
 
+        [Header("Scanning (0.5.5 section 1)")]
+        [Tooltip("Level of the lens's sweep tone while a scan draws.")]
+        [Range(0f, 1f)] [SerializeField] private float _scanVolume = 0.6f;
+
+        [Tooltip("Seconds after a blueprint completes before its sheet's arpeggio plays: 07's Proud chirp leads, " +
+            "then the sheet answers.")]
+        [Range(0f, 3f)] [SerializeField] private float _sheetCompleteDelay = 1.2f;
+
+        [Tooltip("Time constant (s) of the sweep tone easing in and out.")]
+        [Min(0.01f)] [SerializeField] private float _scanEase = 0.15f;
+
         [Header("Cargo and storage (M3-25)")]
         [Tooltip("Level of the dock's unload ticks and its closing bell: one tick per slot every ~0.15 s, so they " +
             "stay soft.")]
@@ -85,6 +96,9 @@ namespace MoonProject.Audio
             }
         }
         public float UnloadVolume => _unloadVolume;
+        public float ScanVolume => _scanVolume;
+        public float ScanEase => _scanEase;
+        public float SheetCompleteDelay => _sheetCompleteDelay;
 
         /// <summary>The undertone's level at cutter tier <paramref name="tier"/> (0 at tier 0).</summary>
         public float UndertoneAt(int tier)
