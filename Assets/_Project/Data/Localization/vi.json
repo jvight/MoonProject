@@ -1949,6 +1949,18 @@
         {
             "key": "micro.drone.name",
             "text": "Chị em của Tilly"
+        },
+        {
+            "key": "ui.cargo.tab_seven",
+            "text": "07"
+        },
+        {
+            "key": "hint.fit",
+            "text": "Lắp"
+        },
+        {
+            "key": "ui.bay.row_full",
+            "text": "Hãy lắp một bộ phận trước."
         }
     ]
 }

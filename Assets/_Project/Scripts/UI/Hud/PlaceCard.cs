@@ -74,17 +74,6 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>Queues "Blueprint found" under the kit's name, once per kit.</summary>
-        public void BlueprintFound(string kitId)
-        {
-            if (!string.IsNullOrEmpty(kitId) && _seen.Add(UiKeys.UpgradeName(kitId)))
-            {
-                _waiting.Enqueue(UiKeys.UpgradeName(kitId));
-                _waitingLines.Enqueue(UiKeys.BlueprintFound);
-                _readyAt.Enqueue(_clock);
-            }
-        }
-
         public void Relocalize()
         {
             if (Current != null)

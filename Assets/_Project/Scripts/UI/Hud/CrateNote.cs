@@ -6,8 +6,9 @@ using MoonProject.Core;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The packing note of a crew crate that was just cut open (docs/features/M3-25 T4): a calm glass card low on the
-    /// screen with the note as its crew member wrote it, resting as long as it takes to read and then fading by itself.
+    /// A short note on a calm glass card low on the screen: the packing note of a crew crate that was just cut open
+    /// (docs/features/M3-25 T4, as its crew member wrote it) or what a scan found (docs/design/0.5.5-owner-feedback.md
+    /// §1), resting as long as it takes to read and then fading by itself.
     /// It never takes the player's input or the view, so driving goes on under it; notes that arrive together wait
     /// their turn, and the card waits while a bigger card (a memory, a reward) holds the screen.
     /// </summary>
@@ -18,8 +19,8 @@ namespace MoonProject.UI
         private readonly Reveal _reveal;
         private readonly Label _caption;
         private readonly Label _text;
-        private readonly Queue<string> _waiting = new Queue<string>();
-        private string _key;
+        private readonly Queue<Note> _waiting = new Queue<Note>();
+        private Note _note;
         private bool _showing;
         private bool _leaving;
         private float _timer;
@@ -54,7 +55,13 @@ namespace MoonProject.UI
         /// <summary>A crate at <paramref name="siteId"/> was opened: its note will show.</summary>
         public void Opened(string siteId)
         {
-            _waiting.Enqueue(CrewCrateKeys.Note(siteId));
+            _waiting.Enqueue(new Note(UiKeys.CrateCaption, CrewCrateKeys.Note(siteId), null));
+        }
+
+        /// <summary>A scan found something: <paramref name="text"/> (already worded) shows under the Scan caption.</summary>
+        public void Scanned(string text)
+        {
+            _waiting.Enqueue(new Note(UiKeys.HintScan, null, text));
         }
 
         /// <summary>Re-reads the words in the new language (a note on screen changes in place).</summary>
@@ -72,7 +79,7 @@ namespace MoonProject.UI
         {
             if (!_showing && !_leaving && open && _waiting.Count > 0)
             {
-                _key = _waiting.Dequeue();
+                _note = _waiting.Dequeue();
                 Write();
                 _hold = _settings.HoldSeconds(_text.text.Length);
                 _timer = 0f;
@@ -100,8 +107,25 @@ namespace MoonProject.UI
 
         private void Write()
         {
-            _caption.text = _localization.Get(UiKeys.CrateCaption);
-            _text.text = _localization.Get(_key);
+            _caption.text = _localization.Get(_note.CaptionKey);
+            _text.text = _note.Text ?? _localization.Get(_note.Key);
+        }
+
+        private readonly struct Note
+        {
+            public Note(string captionKey, string key, string text)
+            {
+                CaptionKey = captionKey;
+                Key = key;
+                Text = text;
+            }
+
+            public string CaptionKey { get; }
+
+            /// <summary>The localization key of the note, or null when <see cref="Text"/> is already worded.</summary>
+            public string Key { get; }
+
+            public string Text { get; }
         }
     }
 }

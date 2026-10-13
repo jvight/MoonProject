@@ -1949,6 +1949,18 @@
         {
             "key": "micro.drone.name",
             "text": "Tilly's sister"
+        },
+        {
+            "key": "ui.cargo.tab_seven",
+            "text": "07"
+        },
+        {
+            "key": "hint.fit",
+            "text": "Fit"
+        },
+        {
+            "key": "ui.bay.row_full",
+            "text": "Fit a part first."
         }
     ]
 }

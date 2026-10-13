@@ -233,13 +233,59 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator SevenTab_ShowsSocketsAndThePartsRow_AndFitsOnlyAtTheStation()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordHoldBooted();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Hold.Set(8);
+            _rig.Fakes.Equipment.Fit(RoverKitPiece.TetherRing);
+            _rig.Fakes.Equipment.Craft(RoverKitPiece.HoverCoils);
+            _rig.Fakes.Equipment.AtStation = false;
+            yield return Seconds(0.3f);
+
+            yield return Tap(keyboard.tabKey);
+            _rig.Ui.Cargo.SelectTab(1);
+            yield return Seconds(0.6f);
+            EquipmentPage seven = _rig.Ui.Cargo.Seven;
+            Assert.AreEqual(Text("ui.can.tether.verb"), seven.SocketName(RoverSocket.Tether), "a fitted part carries its name");
+            Assert.AreEqual(Text("ui.can.hover_jump.verb"), seven.SocketName(RoverSocket.Belly),
+                "a crafted part's socket is named, with the bay icon");
+            Assert.IsTrue(seven.SocketShowsBay(RoverSocket.Belly));
+            Assert.IsFalse(seven.SocketShowsBay(RoverSocket.Tether), "a fitted socket needs no bay icon");
+            Assert.AreEqual(string.Empty, seven.SocketName(RoverSocket.Flanks), "unknown sockets are dim and unnamed");
+            Assert.AreEqual(1, seven.CardCount, "the crafted part waits in the row");
+            Assert.AreEqual(Text("ui.can.hover_jump.verb"), seven.CardName(0));
+            Assert.IsTrue(seven.CardElement(0).ClassListContains(EquipmentPage.AwayClass),
+                "away from the bay it shows the bay icon");
+
+            Submit(seven.CardElement(0));
+            yield return Seconds(0.3f);
+            Assert.AreEqual(0, _rig.Fakes.Equipment.Fits, "away from the bay nothing happens");
+            Assert.IsTrue(_rig.Ui.Cargo.IsOpen, "and nothing pops up or closes");
+
+            seven.CardElement(0).Focus();
+            yield return null;
+            StringAssert.StartsWith(Text("ui.can.hover_jump.verb"), seven.TooltipText,
+                "a tooltip is the part's name and its key");
+
+            _rig.Fakes.Equipment.AtStation = true;
+            yield return Seconds(0.3f);
+            Submit(seven.CardElement(0));
+            yield return Seconds(0.8f);
+            Assert.AreEqual(1, _rig.Fakes.Equipment.Fits, "at the bay one press fits the part");
+            Assert.IsFalse(_rig.Ui.Cargo.IsOpen, "the screen eases away for the install");
+        }
+
+        [UnityTest]
         public IEnumerator UnlockCard_SaysWhatAFittedKitLetsSevenDo_AfterTheKitTitle()
         {
             InputSystem.AddDevice<Keyboard>();
             Boot();
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             yield return Seconds(0.3f);
-            Events.Publish(new RoverKitFitted(RoverKitPiece.HoverCoils, false, "rover.hover_jump"));
+            Events.Publish(new PartFitted(RoverSocket.Belly, RoverKitPiece.HoverCoils, false, false, default, 0));
             yield return Seconds(0.5f);
             Assert.IsTrue(_rig.Ui.UnlockCard.IsWaiting || _rig.Ui.UnlockCard.IsVisible);
             float limit = Time.realtimeSinceStartup + 20f;
@@ -460,6 +506,23 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator AScan_ShowsItsPickupNote_AndACompletedBlueprintOneTickerLine()
+        {
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(1f);
+            Events.Publish(new FragmentScanned("fragment.cradle.1", "rover.cargo_cradle", 1, 3, false, 0));
+            yield return Seconds(1.5f);
+            Assert.IsTrue(_rig.Ui.CrateNote.IsVisible, "the note is a pickup note, not a card or a line");
+            StringAssert.Contains("2", _rig.Ui.CrateNote.Text);
+            StringAssert.Contains(Text(UiKeys.UpgradeName("rover.cargo_cradle")), _rig.Ui.CrateNote.Text);
+
+            Events.Publish(new BlueprintCompleted("rover.cargo_cradle"));
+            yield return Seconds(2.5f);
+            Assert.IsTrue(_rig.Ui.Ticker.IsVisible, "\"Blueprint complete\" is one ticker line");
+        }
+
+        [UnityTest]
         public IEnumerator TheDarkTower_NeverPutsWordsOnTheTicker_OtherSleepersDo()
         {
             Boot();
@@ -495,6 +558,26 @@ namespace MoonProject.UI.PlayModeTests
             }
 
             Assert.Greater(shownFrames, 0, "the scene did guide, or the test proves nothing");
+        }
+
+        [UnityTest]
+        public IEnumerator TheBay_RefusesAKitWhileThePartsRowIsFull_WithOneLine()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordHoldBooted();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Upgrade = _rig.TestTower();
+            _rig.Fakes.SetMaterials(20, 20, 20);
+            _rig.Fakes.PartsRowFull = true;
+            _rig.Fakes.AtStation = true;
+            yield return Seconds(2f);
+            Press(keyboard.eKey);
+            yield return Seconds(_rig.Tuning.TowerPanel.HoldSeconds + 0.5f);
+            Release(keyboard.eKey);
+            yield return Seconds(1.5f);
+            Assert.AreEqual(0, _rig.Fakes.Purchases, "nothing is spent");
+            Assert.IsTrue(_rig.Ui.Ticker.IsVisible, "one line says to fit a part first");
         }
 
         [UnityTest]
@@ -665,11 +748,10 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(0, _rig.Fakes.LevelOf(hover.Id), "not the first on the list");
             Assert.IsTrue(panel.IsWorking, "the bay feeds and fits; nothing is said yet");
             Assert.AreEqual(string.Empty, layout.TowerHoldWord.text);
-            Events.Publish(new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty));
-            Events.Publish(new RoverKitInstalling(RoverKitPiece.CargoRack, false));
+            Events.Publish(new PartFitted(RoverSocket.Wing, RoverKitPiece.SolarCell, true, false, default, 0));
             yield return Seconds(StitchDelay);
             Assert.IsTrue(panel.IsWorking, "a gift or the install starting is not the piece set on");
-            Events.Publish(new RoverKitFitted(RoverKitPiece.CargoRack, false, cradle.Id));
+            Events.Publish(new PartFitted(RoverSocket.Hold, RoverKitPiece.CargoRack, false, false, default, 0));
             yield return null;
             Assert.IsTrue(panel.IsCelebrating, "the arms set the piece on: the bay's line comes");
             Assert.AreEqual(Text(UiKeys.BayFitted), layout.TowerHoldWord.text);
@@ -688,7 +770,7 @@ namespace MoonProject.UI.PlayModeTests
             Press(keyboard.eKey);
             yield return Seconds(_rig.Tuning.TowerPanel.TapSeconds + _rig.Tuning.TowerPanel.HoldSeconds + 0.3f);
             Assert.AreEqual(1, _rig.Fakes.LevelOf(hover.Id));
-            Events.Publish(new RoverKitFitted(RoverKitPiece.HoverCoils, false, hover.Id));
+            Events.Publish(new PartFitted(RoverSocket.Belly, RoverKitPiece.HoverCoils, false, false, default, 0));
             yield return Seconds(_rig.Tuning.TowerPanel.CelebrateSeconds + 0.5f);
             Release(keyboard.eKey);
             yield return Seconds(0.3f);
@@ -728,13 +810,11 @@ namespace MoonProject.UI.PlayModeTests
             yield return null;
             const string headlamp = "rover.warm_headlamp";
             KitTitleSettings settings = _rig.Tuning.KitTitle;
-            Events.Publish(new RoverKitInstalling(RoverKitPiece.LampBar, false));
             yield return Seconds(settings.Delay + settings.Reveal.FadeIn);
             Assert.IsFalse(_rig.Ui.KitTitle.IsVisible, "installing, not yet settled: no name before the piece lands");
 
-            Events.Publish(new RoverKitFitted(RoverKitPiece.LampBar, false, headlamp));
-            Events.Publish(new RoverKitInstalling(RoverKitPiece.SolarCell, true));
-            Events.Publish(new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty));
+            Events.Publish(new PartFitted(RoverSocket.Lamp, RoverKitPiece.LampBar, false, false, default, 0));
+            Events.Publish(new PartFitted(RoverSocket.Wing, RoverKitPiece.SolarCell, true, false, default, 0));
             yield return Seconds(settings.Delay + settings.Reveal.FadeIn + 0.2f);
             Assert.IsTrue(_rig.Ui.KitTitle.IsVisible);
             Assert.AreEqual(Text(UiKeys.UpgradeName(headlamp)), _rig.Ui.Layout.KitTitleName.text,
@@ -749,8 +829,9 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(gift, _rig.Ui.KitTitle.Current, "the gift's title waited its turn");
             Assert.AreEqual(Text(gift), _rig.Ui.Layout.KitTitleName.text);
 
-            LogAssert.Expect(LogType.Error, new Regex("CargoRack settled onto 07"));
-            Events.Publish(new RoverKitFitted(RoverKitPiece.CargoRack, false, string.Empty));
+            const RoverKitPiece Unnamed = (RoverKitPiece)99;
+            LogAssert.Expect(LogType.Error, new Regex("99 settled onto 07"));
+            Events.Publish(new PartFitted(RoverSocket.Hold, Unnamed, false, false, default, 0));
         }
 
         [UnityTest]

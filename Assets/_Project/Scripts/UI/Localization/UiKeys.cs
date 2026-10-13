@@ -34,13 +34,17 @@ namespace MoonProject.UI
         public const string LookUp = "ui.hint.look_up";
         public const string Drive = "ui.hint.drive";
         public const string HintHold = "hint.hold";
+        public const string HintFit = "hint.fit";
+        public const string RowFull = "ui.bay.row_full";
         public const string NotYetTower = "notyet.tower";
         public const string HoldBoot = "ui.hold.boot";
+        public const string HintScan = "hint.scan";
+        public const string ScanFragment = "scan.fragment";
+        public const string ScanKnown = "scan.known";
+        public const string ScanComplete = "scan.complete";
         public const string HintShelves = "hint.shelves";
         public const string TransferToTrip = "ui.transfer.to_trip";
         public const string TransferToHome = "ui.transfer.to_home";
-        public const string BlueprintFound = "ui.blueprint.found";
-        public const string BlueprintDelivered = "ui.blueprint.delivered";
 
         /// <summary>Art's prefix on a component's model name (Part_TowerCoil), left out of its keys.</summary>
         private const string ComponentModelPrefix = "Part_";

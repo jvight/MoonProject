@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace MoonProject.UI
 {
-    /// <summary>The packing note a crew crate gives up when it is cut open (docs/features/M3-25 T4).</summary>
+    /// <summary>The short note card: a crew crate's packing note (docs/features/M3-25 T4) and what a scan found.</summary>
     [Serializable]
     public sealed class CrateNoteSettings
     {
