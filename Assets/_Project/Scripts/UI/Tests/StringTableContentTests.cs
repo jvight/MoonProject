@@ -104,7 +104,9 @@ namespace MoonProject.UI.Tests
                          UiKeys.CardCaption, UiKeys.CardClose, UiKeys.TowerLevel,
                          UiKeys.TowerPurchased, UiKeys.LogCaption, UiKeys.CrewLogCaption, UiKeys.LinerCaption,
                          UiKeys.TapeCount, UiKeys.PauseCassettes, UiKeys.PauseRelays, UiKeys.RecipeNeed,
-                         UiKeys.RecipeRow, UiKeys.RewardTitle, UiKeys.StationOffline,
+                         UiKeys.RecipeRow, UiKeys.RewardTitle, UiKeys.StationOffline, UiKeys.FriendParts,
+                         UiKeys.CrateCaption, UiKeys.CargoWaiting, UiKeys.CargoShelfCost, UiKeys.CargoCostPart, UiKeys.CargoShelf, UiKeys.CargoShelfFree, UiKeys.CargoSummary,
+                         UiKeys.CanDecoded,
                          UiKeys.BayPick, UiKeys.BayFitted,
                      })
             {
@@ -115,6 +117,18 @@ namespace MoonProject.UI.Tests
             {
                 Assert.IsTrue(_english.TryGet(UiKeys.RadioChannelName(channel), out _),
                     UiKeys.RadioChannelName(channel));
+            }
+
+            foreach (string site in new[] { "depot", "kestrel", "drill", "garage", "lander" })
+            {
+                Assert.IsTrue(_english.TryGet(CrewCrateKeys.Note(site), out _), CrewCrateKeys.Note(site));
+            }
+
+            for (int i = 0; i < AbilityTable.Count; i++)
+            {
+                AbilityRow row = AbilityTable.At(i);
+                Assert.IsTrue(_english.TryGet(row.VerbKey, out _), row.VerbKey);
+                Assert.IsTrue(_english.TryGet(row.LineKey, out _), row.LineKey);
             }
 
             foreach (RewardLineKind kind in Enum.GetValues(typeof(RewardLineKind)))

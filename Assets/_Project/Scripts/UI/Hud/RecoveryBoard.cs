@@ -22,7 +22,8 @@ namespace MoonProject.UI
         private static readonly string[] NodeKeys =
         {
             "tech.tower_l1", "tech.tower_l2", "tech.tower_l3", "tech.relay_network", "tech.hover_jump",
-            "tech.cargo_cradle", "tech.warm_headlamp", "tech.capacitor_drums", "tech.cell_pack_2",
+            "tech.cargo_cradle", "tech.warm_headlamp", "tech.capacitor_drums", "tech.cell_pack_2", "tech.focus_lens",
+            "tech.side_bins",
         };
 
         private readonly ILocalization _localization;

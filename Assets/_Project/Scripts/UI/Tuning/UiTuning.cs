@@ -20,6 +20,9 @@ namespace MoonProject.UI
         [SerializeField] private TowerPanelSettings _towerPanel = new TowerPanelSettings();
         [SerializeField] private KitTitleSettings _kitTitle = new KitTitleSettings();
         [SerializeField] private RewardCardSettings _rewardCard = new RewardCardSettings();
+        [SerializeField] private CargoScreenSettings _cargo = new CargoScreenSettings();
+        [SerializeField] private UnlockCardSettings _unlockCard = new UnlockCardSettings();
+        [SerializeField] private CrateNoteSettings _crateNote = new CrateNoteSettings();
         [SerializeField] private FriendUiSettings _friends = new FriendUiSettings();
         [SerializeField] private TickerSettings _ticker = new TickerSettings();
         [SerializeField] private DialReadoutSettings _dialReadout = new DialReadoutSettings();
@@ -52,6 +55,12 @@ namespace MoonProject.UI
         public KitTitleSettings KitTitle => _kitTitle;
 
         public RewardCardSettings RewardCard => _rewardCard;
+
+        public CargoScreenSettings Cargo => _cargo;
+
+        public UnlockCardSettings UnlockCard => _unlockCard;
+
+        public CrateNoteSettings CrateNote => _crateNote;
 
         public FriendUiSettings Friends => _friends;
 
@@ -89,7 +98,8 @@ namespace MoonProject.UI
                 _ticker == null || _dialReadout == null || _relays == null || _salvage == null ||
                 _stargaze == null || _guidance == null || _backdrop == null || _battery == null || _lab == null ||
                 _safe == null || _saveTick == null || _homeMeter == null || _credits == null ||
-                _rewardCard == null)
+                _rewardCard == null || _cargo == null || _unlockCard == null ||
+                _crateNote == null)
             {
                 return "a settings section is missing";
             }

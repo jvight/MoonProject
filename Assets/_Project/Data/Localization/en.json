@@ -112,11 +112,11 @@
         },
         {
             "key": "next.wake",
-            "text": "First job: repair the radio tower."
+            "text": "Repair the radio tower."
         },
         {
             "key": "next.salvage",
-            "text": "The tower needs metal, wiring, optics and the Tower Coil. Salvage them at the Supply Depot."
+            "text": "Salvage at the Supply Depot."
         },
         {
             "key": "next.tower.part",
@@ -180,7 +180,7 @@
         },
         {
             "key": "next.signal",
-            "text": "A faint signal past the dune. Ping, then follow it."
+            "text": "A faint signal. Ping and follow it."
         },
         {
             "key": "next.dig",
@@ -188,15 +188,15 @@
         },
         {
             "key": "next.friend.repair",
-            "text": "All her parts are here. Repair her."
+            "text": "Repair Tilly."
         },
         {
             "key": "next.garage",
-            "text": "Go to Kenji's Garage. A spare part for 07 may still be there."
+            "text": "Go to Kenji's Garage."
         },
         {
             "key": "next.port",
-            "text": "The garage's service port works. Park on its pad to fit the spare."
+            "text": "Park on the port's pad."
         },
         {
             "key": "next.relic",
@@ -216,11 +216,11 @@
         },
         {
             "key": "next.bay.wake",
-            "text": "The bay has no power. Radio Tower level 2 powers it."
+            "text": "Build tower level 2 to power the bay."
         },
         {
             "key": "next.bay",
-            "text": "The bay has power. Park on its turntable to build a kit."
+            "text": "Park on the bay's turntable to build."
         },
         {
             "key": "next.power.part",
@@ -332,19 +332,19 @@
         },
         {
             "key": "notyet.bay",
-            "text": "No power. Radio Tower level 2 powers the bay."
+            "text": "Needs tower level 2."
         },
         {
             "key": "notyet.chart",
-            "text": "No power. Radio Tower level 3 powers the chart."
+            "text": "Needs tower level 3."
         },
         {
             "key": "notyet.tether",
-            "text": "07's tether is missing. Kenji kept a spare in his garage."
+            "text": "07 has no tether. Kenji kept a spare at the garage."
         },
         {
             "key": "ticker.listen.first",
-            "text": "When 07 stops, it listens. A wreck with something left answers with a light."
+            "text": "Stop and 07 listens: a wreck with something left lights up."
         },
         {
             "key": "place.dock.name",
@@ -924,7 +924,7 @@
         },
         {
             "key": "ticker.relay.waiting",
-            "text": "This relay needs a lit relay nearby. Repair the one closer to home first."
+            "text": "Needs a lit relay nearby."
         },
         {
             "key": "hop.node.home",
@@ -1039,6 +1039,146 @@
             "text": "{0}'s parts: {1} of {2}"
         },
         {
+            "key": "ui.cargo.tab_cargo",
+            "text": "Cargo"
+        },
+        {
+            "key": "ui.cargo.tab_can",
+            "text": "07 can"
+        },
+        {
+            "key": "ui.cargo.hold",
+            "text": "07's hold"
+        },
+        {
+            "key": "ui.cargo.home",
+            "text": "Home shelves"
+        },
+        {
+            "key": "ui.cargo.waiting",
+            "text": "{0} bundles waiting"
+        },
+        {
+            "key": "ui.cargo.shelf",
+            "text": "Shelf {0}"
+        },
+        {
+            "key": "ui.cargo.shelf_free",
+            "text": "Free socket. Park here to build a shelf."
+        },
+        {
+            "key": "ui.cargo.summary",
+            "text": "07: {0} of {1} slots · Home: {2} of {3} slots"
+        },
+        {
+            "key": "ui.can.decoded",
+            "text": "Decoded. Build it in the bay."
+        },
+        {
+            "key": "ui.can.tether.verb",
+            "text": "Lift"
+        },
+        {
+            "key": "ui.can.tether.line",
+            "text": "Hold to lift what glows cyan, then drive to tow it."
+        },
+        {
+            "key": "ui.can.hover_jump.verb",
+            "text": "Hover-Jump"
+        },
+        {
+            "key": "ui.can.hover_jump.line",
+            "text": "Hop over rocks and across gaps."
+        },
+        {
+            "key": "ui.can.cargo_cradle.verb",
+            "text": "Cargo Cradle"
+        },
+        {
+            "key": "ui.can.cargo_cradle.line",
+            "text": "Carries a keepsake on 07's back."
+        },
+        {
+            "key": "ui.can.warm_headlamp.verb",
+            "text": "Warm Headlamp"
+        },
+        {
+            "key": "ui.can.warm_headlamp.line",
+            "text": "Lights the ground ahead after dark."
+        },
+        {
+            "key": "ui.can.boost_coils.verb",
+            "text": "Boost Coils"
+        },
+        {
+            "key": "ui.can.boost_coils.line",
+            "text": "Drives faster and holds a little spare charge."
+        },
+        {
+            "key": "ui.can.cell_pack.verb",
+            "text": "Cell Pack II"
+        },
+        {
+            "key": "ui.can.cell_pack.line",
+            "text": "Four cells become six: 07 can go farther."
+        },
+        {
+            "key": "ui.can.wide_sonar.verb",
+            "text": "Wide Sonar"
+        },
+        {
+            "key": "ui.can.wide_sonar.line",
+            "text": "Sonar pings reach farther."
+        },
+        {
+            "key": "ui.can.magnetic_treads.verb",
+            "text": "Magnetic Treads"
+        },
+        {
+            "key": "ui.can.magnetic_treads.line",
+            "text": "The wheels grip steep ground."
+        },
+        {
+            "key": "ui.can.side_bins.verb",
+            "text": "Side Bins"
+        },
+        {
+            "key": "ui.can.side_bins.line",
+            "text": "Four more slots in 07's hold."
+        },
+        {
+            "key": "ui.can.focus_lens.verb",
+            "text": "Focus Lens"
+        },
+        {
+            "key": "ui.can.focus_lens.line",
+            "text": "A tighter cutting beam."
+        },
+        {
+            "key": "hint.build",
+            "text": "Build"
+        },
+        {
+            "key": "tech.focus_lens.name",
+            "text": "Focus Lens"
+        },
+        {
+            "key": "tech.side_bins.name",
+            "text": "Side Bins"
+        },
+        {
+            "key": "ui.cargo.shelf_cost",
+            "text": "Cost: {0}"
+        },
+        {
+            "key": "ui.cargo.cost_part",
+            "text": "{0} {1}"
+        },
+        {
+            "key": "ui.crate.caption",
+            "text": "From the crate"
+        },
+        {
             "key": "ui.reward.title",
             "text": "{0} · Level {1}"
         },
@@ -1068,7 +1208,7 @@
         },
         {
             "key": "ui.recipecard.tower",
-            "text": "Park on the tower's pad, then feed materials into its hopper."
+            "text": "Park on the pad to build."
         },
         {
             "key": "ui.recipecard.blueprint",

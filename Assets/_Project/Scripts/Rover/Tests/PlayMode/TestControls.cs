@@ -24,6 +24,7 @@ namespace MoonProject.Rover.PlayModeTests
             menu.AddAction("Cancel", InputActionType.Button, "<Gamepad>/buttonEast");
             menu.AddAction("Pause", InputActionType.Button, "<Gamepad>/start");
             menu.AddAction("Click", InputActionType.Button, "<Mouse>/leftButton");
+            menu.AddAction("Cargo", InputActionType.Button, "<Gamepad>/select");
             return asset;
         }
     }

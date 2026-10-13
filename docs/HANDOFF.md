@@ -4,7 +4,51 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 00000000000. LATEST (2026-10-13 ~00:50): 0.5.3 released; 0.5.4 landing (art on main)
+## 0000000000000. LATEST (2026-10-13): owner played 0.5.4 -> 0.5.5 "owner feedback" before 0.6
+- **Owner's verdict on 0.5.4** (memories: plain-functional-text, scan-fragments, no-floating-loot,
+  inventory-07-only):
+  1. Text is still unfitting and too much: the charger hint shows at boot with a full battery; the tower repair says
+     the same thing three times (banner + card + notice). At most one guidance element; hints only when needed.
+  2. Glowing items lie loose on the ground (also flagged in 0.5.0 and never fixed in placement).
+  3. Tilly's part can't be picked up with E (bug).
+  4. Wants Subnautica-style scanning at derelict stations, scrap fields and wrecks: N scans by complexity; a scanned
+     object disappears; a known blueprint gives raw metal.
+  5. 07's charge-run lamps sit lopsided beside the solar wing; make them symmetric.
+  6. Tab must show 07's hold only; home storage separate. The selected tab label is unreadable.
+  7. The opening teaches Tab like Subnautica: a first-open boot moment and starter items.
+  8. The cut's charge-up is too fast and weightless, its sound doesn't fit, and the lamp row "doesn't look like
+     technology". The solar panel sits off to one side; 07 must be symmetric (memory cut-charge-weight).
+- **Dispatched 2026-10-13:**
+  - game design (high): docs/design/0.5.5-owner-feedback.md covering scanning, re-homing all loose loot, the
+    inventory split + first open, and the guidance budget. Spec comes to the Director before any build.
+  - story & flow: docs/design/text-audit-0.5.5.md, every visible string with a verdict.
+  - gameplay (high): the Tilly pickup bug.
+  - art: 2-3 variants of a symmetric 07 with a tech charge-up, for the owner to pick (rover, gameplay and audio
+    follow the pick and game design's charge-up section).
+  - ui: tab contrast + Tab = 07 only.
+- 0.6 (lunar materials + build pads) waits until 0.5.5 ships.
+
+## 000000000000. (2026-10-13 ~03:35): 0.5.4 released for the owner to play
+- **main e7d15870 = version 0.5.4**, verified at 37276343 and pushed. Build:
+  `Builds/Lunarion-0.5.4-20261012-e7d15870.zip` (smoke PASS).
+- **0.5.4 has:**
+  - the cargo hold + home shelves (dock unload, overflow bundles, Tilly fetch);
+  - crew crates with the packing note card;
+  - cutter tiers 0-1 and the charge-run lamps;
+  - Focus Lens, side bins, 07's cargo hatch with a lit crate window;
+  - the Tab screen (Cargo / 07 can), unlock cards, the 13-material pickup feed, shelf Build prompt + costs;
+  - tower rings; the materials catalog; audio for all of it; story's text (crate.<site>.note via CrewCrateKeys.Note).
+- **Lessons:**
+  - don't commit to main while verify runs (director2 ff'd to the newer sha and verify aborted);
+  - a box that changes Core input (ui's Cargo action) breaks Rover's TestControls; its box_check must run Rover
+    PlayMode — or check TestControls when MenuInput/InputReader change;
+  - pin temp branches (box/<name>-<topic>) to the reported SHA and always pass --filter.
+- **Open, not dispatched:** waiting bundles silent to sonar; crate cuts don't hold 07 still; a general Recipe and
+  MaterialsChanged (0.6); per-slot shelf fill tick; unlock cards for Focus Lens / side bins (no RoverKitPiece);
+  first-hour QA leftovers (docs/design/first-hour-qa.md).
+- **Next:** the owner plays 0.5.4; then 0.6 (lunar materials + build pads, M3-22/M3-27).
+
+## 00000000000. (2026-10-13 ~00:50): 0.5.3 released; 0.5.4 landing (art on main)
 - Director is session local_0b7c61a2 ("MoonProject Director handoff"); cron v4 = job 27877d8f (:17/:47).
 - **0.5.3 released:** ui zero-GC fix e31c8ebf landed alone (7599f185), verify PASS + pushed,
   `Builds/Lunarion-0.5.3-20261012-7599f185.zip` (smoke PASS).

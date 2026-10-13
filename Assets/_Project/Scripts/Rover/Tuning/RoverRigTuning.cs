@@ -151,6 +151,9 @@ namespace MoonProject.Rover
         [Tooltip("The charge run's lamps from the battery along 07's back to the emitter (M3-26 §2).")]
         [SerializeField] private ChargeRunSettings _chargeRun = new ChargeRunSettings();
 
+        [Tooltip("07's rear cargo hatch: its swing, the soft thunk as it shuts and the bump's shake (M3-25 T1).")]
+        [SerializeField] private CargoHatchSettings _cargoHatch = new CargoHatchSettings();
+
         [Header("Flank lamps (the battery)")]
         [Tooltip("The amber lamps along the stripe, one per cell (docs/features/M3-20).")]
         [SerializeField] private FlankLampSettings _flankLamps = new FlankLampSettings();
@@ -265,6 +268,8 @@ namespace MoonProject.Rover
         public MotionFeelSettings MotionFeel => _motionFeel;
 
         public ChargeRunSettings ChargeRun => _chargeRun;
+
+        public CargoHatchSettings CargoHatch => _cargoHatch;
 
         public float TubeHalfLife => _tubeHalfLife;
 

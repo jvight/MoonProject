@@ -175,6 +175,9 @@ namespace MoonProject.Rover.Editor
             Transform lens = Mount(scratch, focusLens, BuildWiring.Node(m, RoverModelNodes.LensSocket));
             BuildWiring.Assign(controller, ("_focusLens", lens.gameObject),
                 ("_focusLensGlass", BuildWiring.NodeComponent<Renderer>(lens, "Glass")));
+            Transform hatch = BuildWiring.Node(m, RoverModelNodes.CargoHatch);
+            BuildWiring.Assign(controller, ("_cargoHatch", hatch));
+            BuildWiring.AssignArray(controller, "_hatchCrates", HatchCrates(hatch));
             BuildWiring.AssignArray(controller, "_sideBins", new Object[]
             {
                 Mount(scratch, sideBin, BuildWiring.Node(m, RoverModelNodes.BinSocketLeft)).gameObject,
@@ -421,6 +424,31 @@ namespace MoonProject.Rover.Editor
             }
 
             serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>The hatch window's HatchCrate_0, HatchCrate_1, ... nodes in order; at least one, no gaps.</summary>
+        private static Object[] HatchCrates(Transform hatch)
+        {
+            Transform[] nodes = hatch.GetComponentsInChildren<Transform>(true);
+            var crates = new List<Object>();
+            for (int i = 0; ; i++)
+            {
+                Transform crate = Find(nodes, RoverModelNodes.HatchCrate(i));
+                if (crate == null)
+                {
+                    break;
+                }
+
+                crates.Add(crate.gameObject);
+            }
+
+            if (crates.Count == 0)
+            {
+                throw new System.InvalidOperationException(
+                    "CargoHatch has no HatchCrate_0 (the hatch window's crate contract, M3-25).");
+            }
+
+            return crates.ToArray();
         }
 
         private static Transform Find(Transform[] nodes, string name)

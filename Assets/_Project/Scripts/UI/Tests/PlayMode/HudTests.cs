@@ -103,6 +103,135 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator CargoScreen_OpensOnTab_ShowsTheHoldAndHome_AndClosesOnTab_WithoutPausing()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Hold.Set(5, new MaterialSlot(SalvageMaterial.Metal, 4, 4),
+                new MaterialSlot(SalvageMaterial.Wiring, 2, 4), new MaterialSlot(SalvageMaterial.Ilmenite, 3, 6));
+            _rig.Fakes.Hold.WaitingBundles = 3;
+            _rig.Fakes.Home.Lay(2, 2, 12, new MaterialSlot(SalvageMaterial.Metal, 4, 4));
+            yield return Seconds(0.3f);
+
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(0.6f);
+            CargoScreen cargo = _rig.Ui.Cargo;
+            Assert.IsTrue(cargo.IsOpen);
+            Assert.AreEqual(1f, Time.timeScale, "the game does not pause");
+            Assert.AreEqual(8, cargo.HoldCellCount, "a cell for every slot of 07's hold");
+            Assert.AreEqual(4, cargo.ShelfBlockCount, "two built shelves and two free sockets");
+            StringAssert.Contains("3", cargo.WaitingText);
+            Assert.AreEqual(string.Format(Text(UiKeys.CargoSummary), 3, 8, 1, 24), cargo.SummaryText);
+            string metal = Text(UiKeys.MaterialName(SalvageMaterial.Metal));
+            string wiring = Text(UiKeys.MaterialName(SalvageMaterial.Wiring));
+            Assert.AreEqual(string.Format(Text(UiKeys.CargoShelfCost),
+                string.Format(Text(UiKeys.CargoCostPart), 3, metal)), cargo.ShelfCostText(2),
+                "the first free socket says what its shelf takes");
+            Assert.AreEqual(string.Format(Text(UiKeys.CargoShelfCost), string.Format(Text(UiKeys.CargoCostPart), 4, metal) +
+                ", " + string.Format(Text(UiKeys.CargoCostPart), 1, wiring)), cargo.ShelfCostText(3));
+
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(0.6f);
+            Assert.IsFalse(cargo.IsOpen, "Tab again closes it");
+
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(0.4f);
+            Assert.IsTrue(cargo.IsOpen);
+            yield return Tap(keyboard.escapeKey);
+            yield return Seconds(0.4f);
+            Assert.IsFalse(cargo.IsOpen, "Esc closes it too");
+            Assert.IsFalse(_rig.Ui.Pause.IsOpen, "and does not open the pause menu");
+        }
+
+        [UnityTest]
+        public IEnumerator CargoScreen_SevenCan_ListsTheAbilitiesOwned_AndDecodedKitsAsPencil()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Grant(RoverAbility.Tether);
+            _rig.Fakes.SetTech(TechNodeId.HoverJump, TechNodeState.Decoded);
+            yield return Seconds(0.3f);
+            yield return Tap(keyboard.tabKey);
+            _rig.Ui.Cargo.SelectTab(1);
+            yield return Seconds(0.6f);
+            CargoScreen cargo = _rig.Ui.Cargo;
+            Assert.AreEqual(2, cargo.CanRowCount, "the tether it has and the Hover-Jump sheet it decoded");
+            Assert.AreEqual(Text("ui.can.tether.verb") + " | " + Text("ui.can.tether.line"), cargo.CanRowText(0));
+            Assert.IsFalse(cargo.CanRowIsPencil(0));
+            Assert.IsTrue(cargo.CanRowIsPencil(1), "a decoded kit not yet fitted is a pencil sheet");
+            Assert.AreEqual(Text("ui.can.hover_jump.verb") + " | " + Text(UiKeys.CanDecoded), cargo.CanRowText(1));
+        }
+
+        [UnityTest]
+        public IEnumerator UnlockCard_SaysWhatAFittedKitLetsSevenDo_AfterTheKitTitle()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(0.3f);
+            Events.Publish(new RoverKitFitted(RoverKitPiece.HoverCoils, false, "rover.hover_jump"));
+            yield return Seconds(0.5f);
+            Assert.IsTrue(_rig.Ui.UnlockCard.IsWaiting || _rig.Ui.UnlockCard.IsVisible);
+            float limit = Time.realtimeSinceStartup + 20f;
+            while (!_rig.Ui.UnlockCard.IsVisible && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rig.Ui.UnlockCard.IsVisible, "the card follows the kit's title");
+            Assert.AreEqual(RoverAbility.HoverJump, _rig.Ui.UnlockCard.Shown);
+            Assert.AreEqual(Text("ui.can.hover_jump.verb"), _rig.Ui.Layout.UnlockCard.Q<Label>("unlock-card-verb").text);
+            yield return Seconds(_rig.Tuning.UnlockCard.HoldSeconds + _rig.Tuning.UnlockCard.Reveal.FadeOut + 0.5f);
+            Assert.IsFalse(_rig.Ui.UnlockCard.IsVisible, "and leaves by itself");
+        }
+
+        [UnityTest]
+        public IEnumerator PickupFeed_ShowsAMaterialBeyondTheFirstThree()
+        {
+            Boot();
+            yield return Seconds(0.3f);
+            _rig.Fakes.SetUnits(SalvageMaterial.Ilmenite, 3);
+            yield return Seconds(0.5f);
+            Assert.IsTrue(_rig.Ui.Pickups.IsShowing(SalvageMaterial.Ilmenite));
+            Assert.AreEqual(Text(UiKeys.MaterialName(SalvageMaterial.Ilmenite)),
+                _rig.Ui.Pickups.NameText(SalvageMaterial.Ilmenite));
+        }
+
+        [UnityTest]
+        public IEnumerator CrateNote_ShowsThePackingNote_RestsToReadIt_AndLeavesByItself()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(0.3f);
+            Events.Publish(new CrewCrateOpened("site.depot", "kenji", SalvageMaterial.Metal, 3, Vector3.zero));
+            yield return Seconds(_rig.Tuning.CrateNote.Reveal.FadeIn + 0.5f);
+            CrateNote note = _rig.Ui.CrateNote;
+            Assert.IsTrue(note.IsVisible);
+            Assert.AreEqual(Text("crate.depot.note"), note.Text, "the note as Kenji wrote it");
+            Assert.AreEqual(1f, Time.timeScale, "it never pauses the game");
+            Assert.IsFalse(_rig.Ui.Pause.IsOpen);
+            yield return Seconds(_rig.Tuning.CrateNote.HoldSeconds(note.Text.Length) +
+                                 _rig.Tuning.CrateNote.Reveal.FadeOut + 0.5f);
+            Assert.IsFalse(note.IsVisible, "it closes itself");
+        }
+
+        [UnityTest]
+        public IEnumerator BuildPrompt_SaysBuild_ForAShelfSocket()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Build, new Vector3(0f, 0f, 4f), true);
+            yield return Seconds(1.5f);
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible);
+            Assert.AreEqual(Text("hint.build"), _rig.Ui.Layout.PromptWord.text);
+            Assert.AreEqual("E", _rig.Ui.Layout.PromptGlyphLabel.text);
+        }
+
+        [UnityTest]
         public IEnumerator PickUpPrompt_NamesThePart_AfterTheVerb()
         {
             InputSystem.AddDevice<Keyboard>();

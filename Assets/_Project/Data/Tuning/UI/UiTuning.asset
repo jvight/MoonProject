@@ -142,6 +142,11 @@ MonoBehaviour:
       _dwellSeconds: 0.2
       _liftMetres: 0.9
       _usesToRetire: 6
+    - _kind: 14
+      _action: 1
+      _dwellSeconds: 0.4
+      _liftMetres: 0.9
+      _usesToRetire: 2
     _startDelay: 9
     _maxShowSeconds: 7
     _repeatCooldown: 25
@@ -169,6 +174,7 @@ MonoBehaviour:
       _scaleFrom: 0.92
       _springFrequency: 1.8
       _springDamping: 0.6
+    _maxRows: 3
     _slideDistance: 72
     _stepSeconds: 0.08
     _maxCountSeconds: 1.4
@@ -222,6 +228,28 @@ MonoBehaviour:
       _springFrequency: 1
       _springDamping: 0.7
     _holdSeconds: 6
+  _cargo:
+    _reveal:
+      _fadeIn: 0.2
+      _fadeOut: 0.18
+      _slide: 18
+      _scaleFrom: 0.98
+      _springFrequency: 1.8
+      _springDamping: 0.7
+    _maxCell: 62
+    _minCell: 34
+    _widthShare: 0.82
+    _heightShare: 0.94
+    _shrinkStep: 0.92
+  _unlockCard:
+    _reveal:
+      _fadeIn: 0.7
+      _fadeOut: 1
+      _slide: 14
+      _scaleFrom: 0.96
+      _springFrequency: 1
+      _springDamping: 0.7
+    _holdSeconds: 4
   _friends:
     _readout:
       _fadeIn: 0.5

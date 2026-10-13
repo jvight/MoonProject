@@ -112,11 +112,11 @@
         },
         {
             "key": "next.wake",
-            "text": "Việc đầu tiên: sửa tháp radio."
+            "text": "Sửa tháp radio."
         },
         {
             "key": "next.salvage",
-            "text": "Tháp cần kim loại, dây điện, thấu kính và cuộn dây tháp. Hãy trục vớt ở Kho tiếp tế."
+            "text": "Trục vớt ở Kho tiếp tế."
         },
         {
             "key": "next.tower.part",
@@ -180,7 +180,7 @@
         },
         {
             "key": "next.signal",
-            "text": "Có tín hiệu yếu sau đụn cát. Dò sóng rồi lần theo."
+            "text": "Có tín hiệu yếu. Dò sóng rồi lần theo."
         },
         {
             "key": "next.dig",
@@ -188,15 +188,15 @@
         },
         {
             "key": "next.friend.repair",
-            "text": "Đã đủ bộ phận. Hãy sửa cho cô ấy."
+            "text": "Sửa cho Tilly."
         },
         {
             "key": "next.garage",
-            "text": "Đến Gara của Kenji. Ở đó có thể còn phụ tùng dự phòng cho 07."
+            "text": "Đến Gara của Kenji."
         },
         {
             "key": "next.port",
-            "text": "Cổng bảo trì ở gara vẫn dùng được. Đỗ lên bệ để lắp phụ tùng."
+            "text": "Đỗ lên bệ cổng bảo trì."
         },
         {
             "key": "next.relic",
@@ -216,11 +216,11 @@
         },
         {
             "key": "next.bay.wake",
-            "text": "Xưởng xe chưa có điện. Tháp radio cấp 2 sẽ cấp điện cho xưởng."
+            "text": "Xây tháp cấp 2 để có điện cho xưởng xe."
         },
         {
             "key": "next.bay",
-            "text": "Xưởng xe đã có điện. Đỗ lên bàn xoay để chế tạo đồ cho 07."
+            "text": "Đỗ lên bàn xoay ở xưởng xe để chế tạo."
         },
         {
             "key": "next.power.part",
@@ -332,19 +332,19 @@
         },
         {
             "key": "notyet.bay",
-            "text": "Chưa có điện. Tháp radio cấp 2 sẽ cấp điện cho xưởng xe."
+            "text": "Cần tháp cấp 2."
         },
         {
             "key": "notyet.chart",
-            "text": "Chưa có điện. Tháp radio cấp 3 sẽ cấp điện cho bản đồ."
+            "text": "Cần tháp cấp 3."
         },
         {
             "key": "notyet.tether",
-            "text": "07 không còn dây kéo. Kenji có để một cái dự phòng ở gara."
+            "text": "07 chưa có dây kéo. Kenji để một cái dự phòng ở gara."
         },
         {
             "key": "ticker.listen.first",
-            "text": "Khi 07 dừng lại, nó sẽ lắng nghe. Xác tàu nào còn đồ sẽ đáp lại bằng một ánh sáng."
+            "text": "Dừng lại để 07 lắng nghe: xác tàu còn đồ sẽ sáng lên."
         },
         {
             "key": "place.dock.name",
@@ -924,7 +924,7 @@
         },
         {
             "key": "ticker.relay.waiting",
-            "text": "Trạm này cần một trạm có điện ở gần. Hãy sửa trạm gần nhà hơn trước."
+            "text": "Cần một trạm có điện ở gần."
         },
         {
             "key": "hop.node.home",
@@ -1039,6 +1039,146 @@
             "text": "Bộ phận của {0}: {1}/{2}"
         },
         {
+            "key": "ui.cargo.tab_cargo",
+            "text": "Hàng hóa"
+        },
+        {
+            "key": "ui.cargo.tab_can",
+            "text": "07 làm được"
+        },
+        {
+            "key": "ui.cargo.hold",
+            "text": "Khoang hàng của 07"
+        },
+        {
+            "key": "ui.cargo.home",
+            "text": "Kệ ở nhà"
+        },
+        {
+            "key": "ui.cargo.waiting",
+            "text": "{0} gói đang chờ"
+        },
+        {
+            "key": "ui.cargo.shelf",
+            "text": "Kệ {0}"
+        },
+        {
+            "key": "ui.cargo.shelf_free",
+            "text": "Ổ trống. Đỗ vào đây để dựng kệ."
+        },
+        {
+            "key": "ui.cargo.summary",
+            "text": "07: {0}/{1} ô · Nhà: {2}/{3} ô"
+        },
+        {
+            "key": "ui.can.decoded",
+            "text": "Đã giải mã. Hãy chế tạo ở xưởng xe."
+        },
+        {
+            "key": "ui.can.tether.verb",
+            "text": "Nâng"
+        },
+        {
+            "key": "ui.can.tether.line",
+            "text": "Giữ để nâng vật đang sáng xanh, rồi lái để kéo nó."
+        },
+        {
+            "key": "ui.can.hover_jump.verb",
+            "text": "Bật nhảy"
+        },
+        {
+            "key": "ui.can.hover_jump.line",
+            "text": "Nhảy qua đá và vượt khe hở."
+        },
+        {
+            "key": "ui.can.cargo_cradle.verb",
+            "text": "Giỏ chở đồ"
+        },
+        {
+            "key": "ui.can.cargo_cradle.line",
+            "text": "Chở kỷ vật trên lưng 07."
+        },
+        {
+            "key": "ui.can.warm_headlamp.verb",
+            "text": "Đèn pha ấm"
+        },
+        {
+            "key": "ui.can.warm_headlamp.line",
+            "text": "Chiếu sáng mặt đất phía trước khi trời tối."
+        },
+        {
+            "key": "ui.can.boost_coils.verb",
+            "text": "Bộ tăng tốc"
+        },
+        {
+            "key": "ui.can.boost_coils.line",
+            "text": "Chạy nhanh hơn và giữ thêm một chút điện."
+        },
+        {
+            "key": "ui.can.cell_pack.verb",
+            "text": "Bộ pin II"
+        },
+        {
+            "key": "ui.can.cell_pack.line",
+            "text": "Bốn ô pin thành sáu: 07 đi được xa hơn."
+        },
+        {
+            "key": "ui.can.wide_sonar.verb",
+            "text": "Sonar rộng"
+        },
+        {
+            "key": "ui.can.wide_sonar.line",
+            "text": "Sóng sonar vươn xa hơn."
+        },
+        {
+            "key": "ui.can.magnetic_treads.verb",
+            "text": "Bánh từ tính"
+        },
+        {
+            "key": "ui.can.magnetic_treads.line",
+            "text": "Bánh bám chắc trên dốc."
+        },
+        {
+            "key": "ui.can.side_bins.verb",
+            "text": "Thùng hông"
+        },
+        {
+            "key": "ui.can.side_bins.line",
+            "text": "Thêm bốn ô trong khoang hàng của 07."
+        },
+        {
+            "key": "ui.can.focus_lens.verb",
+            "text": "Thấu kính hội tụ"
+        },
+        {
+            "key": "ui.can.focus_lens.line",
+            "text": "Chùm cắt hẹp và mạnh hơn."
+        },
+        {
+            "key": "hint.build",
+            "text": "Chế tạo"
+        },
+        {
+            "key": "tech.focus_lens.name",
+            "text": "Thấu kính hội tụ"
+        },
+        {
+            "key": "tech.side_bins.name",
+            "text": "Thùng hông"
+        },
+        {
+            "key": "ui.cargo.shelf_cost",
+            "text": "Cần: {0}"
+        },
+        {
+            "key": "ui.cargo.cost_part",
+            "text": "{0} {1}"
+        },
+        {
+            "key": "ui.crate.caption",
+            "text": "Từ chiếc thùng"
+        },
+        {
             "key": "ui.reward.title",
             "text": "{0} · Cấp {1}"
         },
@@ -1068,7 +1208,7 @@
         },
         {
             "key": "ui.recipecard.tower",
-            "text": "Đỗ lên bệ của tháp rồi nạp vật liệu vào phễu."
+            "text": "Đỗ lên bệ để xây."
         },
         {
             "key": "ui.recipecard.blueprint",

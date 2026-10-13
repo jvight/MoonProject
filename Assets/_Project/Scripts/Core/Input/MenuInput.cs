@@ -18,6 +18,7 @@ namespace MoonProject.Core.Input
         private readonly InputAction _cancel;
         private readonly InputAction _pause;
         private readonly InputAction _click;
+        private readonly InputAction _cargo;
 
         internal MenuInput(InputActionMap map)
         {
@@ -26,6 +27,7 @@ namespace MoonProject.Core.Input
             _cancel = map.FindAction("Cancel", throwIfNotFound: true);
             _pause = map.FindAction("Pause", throwIfNotFound: true);
             _click = map.FindAction("Click", throwIfNotFound: true);
+            _cargo = map.FindAction("Cargo", throwIfNotFound: true);
         }
 
         /// <summary>A menu direction (arrows, WASD, d-pad, stick) started being pushed this frame.</summary>
@@ -36,6 +38,9 @@ namespace MoonProject.Core.Input
 
         /// <summary>Open or close the pause menu (Esc, gamepad Start).</summary>
         public bool PausePressed => _pause.WasPressedThisFrame();
+
+        /// <summary>Open or close the cargo screen (Tab, gamepad View).</summary>
+        public bool CargoPressed => _cargo.WasPressedThisFrame();
 
         /// <summary>Primary mouse button pressed this frame (used to recapture the cursor).</summary>
         public bool ClickPressed => _click.WasPressedThisFrame();

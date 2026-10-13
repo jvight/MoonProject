@@ -45,6 +45,12 @@ namespace MoonProject.Art.Tests
         /// <summary>The battery light bar's segments (docs/features/M3-20).</summary>
         private const int BatteryLamps = 8;
 
+        // The Cargo Cradle's front rails (Kit_CargoRack): their outer face and the lower rail's top.
+        private const float CradleFront = -0.658f;
+        private const float CradleRailTop = 0.522f;
+        private const float TailLampInnerEdge = 0.246f;
+        private const float WindowHalfHeight = 0.0665f;
+
         private ModelNode _rover;
 
         [OneTimeSetUp]
@@ -63,6 +69,14 @@ namespace MoonProject.Art.Tests
             {
                 contract.Add("Body/BatteryLamp_" + i);
                 contract.Add("Body/BatteryLamp_" + i + "/BatteryGlass_" + i);
+            }
+
+            contract.Add("Body/" + RoverModelBuilder.CargoHatchName);
+            string window = "Body/" + RoverModelBuilder.CargoHatchName + "/" + RoverModelBuilder.HatchWindowName;
+            contract.Add(window);
+            for (int i = 0; i < RoverModelBuilder.HatchCrates; i++)
+            {
+                contract.Add(window + "/" + RoverModelBuilder.HatchCratePrefix + i);
             }
 
             for (int tier = 0; tier < ChargeLamps.Length; tier++)
@@ -183,6 +197,37 @@ namespace MoonProject.Art.Tests
 
             Assert.AreEqual(_rover.GetDescendant("TetherOrigin").LocalPosition,
                 _rover.GetDescendant(RoverModelBuilder.LensSocketName).LocalPosition, "the lens is on the beam's mouth");
+        }
+
+        [Test]
+        public void CargoHatch_HangsOnTheRearFace_ItsCratesInOrder_InsideTheWindow_ClearOfTheCradle()
+        {
+            ModelNode hatch = AtPath(_rover, "Body/" + RoverModelBuilder.CargoHatchName);
+            Assert.AreEqual(Quaternion.identity, hatch.LocalRotation, "shut at rest; rover turns it about local X");
+            Bounds leaf = hatch.Mesh.Geometry.Bounds;
+            leaf.center += hatch.LocalPosition;
+            Assert.LessOrEqual(leaf.max.z, RoverModelBuilder.CargoHatchHinge.z + 0.013f, "it sits on the rear face");
+            Assert.Greater(leaf.min.z, CradleFront, "it stays in front of the Cargo Cradle's front rails");
+            Assert.Less(leaf.max.x, TailLampInnerEdge, "it leaves the tail lamp beside it clear");
+            ModelNode window = hatch.Children.Single();
+            Assert.AreEqual(RoverModelBuilder.HatchWindowName, window.Name);
+            Assert.Greater(hatch.LocalPosition.y + window.LocalPosition.y - WindowHalfHeight, CradleRailTop,
+                "the window shows above the cradle's lower rail");
+            Assert.AreEqual(RoverModelBuilder.HatchCrates, window.Children.Count);
+            Assert.IsTrue(MeshChecks.Swatches(window.Mesh.Geometry).All(Palette.IsEmissive),
+                "the hold glows behind the crates, so full and empty read apart");
+            Bounds hold = window.Mesh.Geometry.Bounds;
+            for (int i = 0; i < RoverModelBuilder.HatchCrates; i++)
+            {
+                ModelNode crate = window.Children[i];
+                Assert.AreEqual(RoverModelBuilder.HatchCratePrefix + i, crate.Name, "crates in slot order");
+                Assert.IsFalse(MeshChecks.Swatches(crate.Mesh.Geometry).Any(Palette.IsEmissive));
+                Bounds box = crate.Mesh.Geometry.Bounds;
+                box.center += crate.LocalPosition;
+                Assert.IsTrue(hold.Contains(new Vector3(box.min.x, box.min.y, hold.center.z)) &&
+                              hold.Contains(new Vector3(box.max.x, box.max.y, hold.center.z)),
+                    $"{crate.Name} shows inside the window");
+            }
         }
 
         [Test]

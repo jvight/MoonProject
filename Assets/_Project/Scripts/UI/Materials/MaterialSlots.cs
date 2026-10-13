@@ -30,7 +30,7 @@ namespace MoonProject.UI
         private readonly bool _names;
         private readonly bool _haveNeed;
         private readonly Dictionary<int, string> _haveNeedTexts = new Dictionary<int, string>();
-        private readonly Slot[] _slots = new Slot[Materials.Count];
+        private readonly Slot[] _slots = new Slot[Materials.RecipeCount];
 
         /// <param name="container">Where the three slots go (emptied first).</param>
         /// <param name="numbers">Cached number strings.</param>
@@ -55,7 +55,7 @@ namespace MoonProject.UI
             _names = words != null && names;
             _haveNeed = haveNeed;
             container.Clear();
-            for (int i = 0; i < Materials.Count; i++)
+            for (int i = 0; i < Materials.RecipeCount; i++)
             {
                 SalvageMaterial material = Materials.At(i);
                 string suffix = Materials.ClassSuffix(material);
@@ -64,7 +64,6 @@ namespace MoonProject.UI
                 root.AddToClassList(SlotClass + "--" + suffix);
                 var icon = new VisualElement { pickingMode = PickingMode.Ignore };
                 icon.AddToClassList(IconClass);
-                icon.AddToClassList(IconClass + "--" + suffix);
                 var count = new Label { pickingMode = PickingMode.Ignore };
                 count.AddToClassList(CountClass);
                 root.Add(icon);
@@ -98,7 +97,7 @@ namespace MoonProject.UI
         public void Relocalize()
         {
             _haveNeedTexts.Clear();
-            for (int i = 0; i < Materials.Count; i++)
+            for (int i = 0; i < Materials.RecipeCount; i++)
             {
                 _slots[i].WrittenPair = -1;
                 if (_names)
@@ -184,7 +183,7 @@ namespace MoonProject.UI
         /// </summary>
         public void ShowRecipe(Recipe recipe, RecipeStatus status)
         {
-            for (int i = 0; i < Materials.Count; i++)
+            for (int i = 0; i < Materials.RecipeCount; i++)
             {
                 SalvageMaterial material = Materials.At(i);
                 SetShown(material, status.Uses(material));

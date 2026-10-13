@@ -14,6 +14,11 @@ namespace MoonProject.UI
         [Tooltip("A row easing in and out (fade and a soft settle; the slide in from the left is SlideDistance).")]
         [SerializeField] private RevealSettings _reveal = new RevealSettings(0.4f, 0.7f, 0f, 0.96f, 1.8f, 0.6f);
 
+        [Tooltip("Rows the feed shows at once, shared by every material: a new pickup takes a free row or the one that " +
+                 "has rested longest.")]
+        [Range(1, 6)]
+        [SerializeField] private int _maxRows = 3;
+
         [Tooltip("Pixels (at 1080p) a row slides in from the left as it appears.")]
         [Range(0f, 200f)]
         [SerializeField] private float _slideDistance = 72f;
@@ -39,6 +44,8 @@ namespace MoonProject.UI
         [SerializeField] private float _tickPulseScale = 0.12f;
 
         public RevealSettings Reveal => _reveal;
+
+        public int MaxRows => _maxRows;
 
         public float SlideDistance => _slideDistance;
 

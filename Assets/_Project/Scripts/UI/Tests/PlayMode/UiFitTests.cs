@@ -196,6 +196,43 @@ namespace MoonProject.UI.PlayModeTests
 
             yield return Seconds(_rig.Tuning.RewardCard.HoldSeconds + _rig.Tuning.RewardCard.Reveal.FadeOut);
             yield return Seconds(1f);
+
+            events.Publish(new CrewCrateOpened("site.garage", "kenji", SalvageMaterial.Wiring, 2, Vector3.zero));
+            yield return Seconds(_rig.Tuning.CrateNote.Reveal.FadeIn + 1f);
+            foreach (ScreenShape shape in ScreenShapes.All)
+            {
+                yield return Reframe(shape);
+                yield return Check(shape, "crate note", (label, found) =>
+                    ScreenFit.CheckApart(layout.CrateNote, layout.NextLine, label, found));
+            }
+
+            yield return Seconds(_rig.Tuning.CrateNote.HoldSeconds(120) + _rig.Tuning.CrateNote.Reveal.FadeOut);
+            yield return Seconds(1f);
+
+            _rig.Fakes.Hold.Set(14, new MaterialSlot(SalvageMaterial.Metal, 4, 4),
+                new MaterialSlot(SalvageMaterial.Ilmenite, 3, 6));
+            _rig.Fakes.Hold.WaitingBundles = 2;
+            _rig.Fakes.Home.Lay(3, 1, 12, new MaterialSlot(SalvageMaterial.Optics, 4, 4));
+            _rig.Fakes.Grant(RoverAbility.Tether);
+            _rig.Fakes.SetTech(TechNodeId.HoverJump, TechNodeState.Decoded);
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(1f);
+            foreach (ScreenShape shape in ScreenShapes.All)
+            {
+                yield return Reframe(shape);
+                yield return Check(shape, "cargo screen", null);
+            }
+
+            _rig.Ui.Cargo.SelectTab(1);
+            yield return Seconds(0.5f);
+            foreach (ScreenShape shape in ScreenShapes.All)
+            {
+                yield return Reframe(shape);
+                yield return Check(shape, "07 can page", null);
+            }
+
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(1f);
             events.Publish(new RelicDeposited("rubber_duck", Vector3.zero, 4));
             yield return Seconds(2f);
             foreach (ScreenShape shape in ScreenShapes.All)

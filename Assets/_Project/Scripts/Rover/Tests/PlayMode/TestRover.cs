@@ -44,6 +44,11 @@ namespace MoonProject.Rover.PlayModeTests
         private const float SideBinY = 0.9f;
         private const float SideBinZ = 0.35f;
 
+        /// <summary>The cargo hatch stand-in on the rear face and its crate window's slots.</summary>
+        private const float HatchY = 0.65f;
+        private const float HatchZ = -0.7f;
+        private const int HatchCrateCount = 8;
+
         /// <summary>Art's tower story part names (stand-ins on TubeSocket).</summary>
         public static readonly string[] StoryParts = { "Part_TowerCoil", "Part_Transformer", "Part_RelaySpare" };
 
@@ -386,6 +391,15 @@ namespace MoonProject.Rover.PlayModeTests
             }
 
             AssignArray(controller, "_sideBins", sideBins);
+            Transform hatch = Node(RoverModelNodes.CargoHatch, model, new Vector3(0f, HatchY, HatchZ));
+            var crates = new Object[HatchCrateCount];
+            for (int i = 0; i < crates.Length; i++)
+            {
+                crates[i] = Node(RoverModelNodes.HatchCrate(i), hatch, Vector3.zero).gameObject;
+            }
+
+            Assign(controller, ("_cargoHatch", hatch));
+            AssignArray(controller, "_hatchCrates", crates);
             Assign(body, ("_tuning", characterTuning), ("_rover", controller), ("_rig", rig), ("_neck", neck),
                 ("_head", head), ("_eyelid", eyelid), ("_solarWing", wing),
                 ("_eyeRenderer", eye.GetComponent<MeshRenderer>()),

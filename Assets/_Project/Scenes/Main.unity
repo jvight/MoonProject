@@ -3404,6 +3404,7 @@ MonoBehaviour:
   _document: {fileID: 2746450647057328791}
   _tuning: {fileID: 11400000, guid: a614583542305cc41a89499c14d9f0d1, type: 2}
   _relics: {fileID: 11400000, guid: 93d153b3071e596409b379516fe9c088, type: 2}
+  _cargoTuning: {fileID: 11400000, guid: de35fd932df151943936801c10100f59, type: 2}
   _stringTables:
   - {fileID: 4900000, guid: 883507821acbd1744b9d4bfafd1347fd, type: 3}
   - {fileID: 4900000, guid: c722eb162180a424fa4406cc2dc9c340, type: 3}

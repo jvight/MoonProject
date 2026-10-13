@@ -3,17 +3,21 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Gameplay;
 
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The pickup feed (Subnautica's pickup notices, docs/features/M3-13): no permanent HUD for the stock. When 07's
-    /// metal, wiring or optics grow, a small glass row for that material slides in at the left with its icon, its name,
-    /// a "+N" and the new total; the "+N" and the total roll one unit at a time (<see cref="MaterialTally"/>), the
-    /// icon gives a small pulse for each, and the row lingers a few seconds after the count settles and fades away.
-    /// More of the same material while its row is up adds to its "+N"; the three materials' rows stack, so at most
-    /// three are up. Changes before the UI's first frame are a loaded save: they are taken as they are, with no row.
-    /// Each unit rolled publishes a <see cref="StockCountTicked"/>, so Audio can tick and Rover can rumble in step.
+    /// The pickup feed (Subnautica's pickup notices, docs/features/M3-13): no permanent HUD for the stock. When any
+    /// material of 07's stock (home and hold together) grows, a small glass row for that material slides in at the left
+    /// with its icon, its name, a "+N" and the new total; the "+N" and the total roll one unit at a time
+    /// (<see cref="MaterialTally"/>), the icon gives a small pulse for each, and the row lingers a few seconds after the
+    /// count settles and fades away. More of the same material while its row is up adds to its "+N". A few rows are
+    /// shared by every material (<see cref="PickupFeedSettings.MaxRows"/>): a new one takes a free row, or the row that
+    /// has rested longest. The stock is read each frame, so a load is taken as it is, with no row, and moving units
+    /// from the hold to home's shelves (the total does not change) shows nothing. Only the materials the catalog
+    /// describes in this version are read. Each unit rolled publishes a
+    /// <see cref="StockCountTicked"/>, so Audio can tick and Rover can rumble in step.
     /// </summary>
     internal sealed class PickupFeed
     {
@@ -24,12 +28,14 @@ namespace MoonProject.UI
         private readonly EventBus _events;
         private readonly ILocalization _localization;
         private readonly IntText _numbers;
+        private readonly IMaterialStock _stock;
+        private readonly IMaterialCatalog _catalog;
         private readonly MaterialTally _tally;
-        private readonly Row[] _rows = new Row[Materials.Count];
+        private readonly Row[] _rows;
         private bool _armed;
 
         public PickupFeed(UiLayout layout, PickupFeedSettings settings, IntText numbers, ILocalization localization,
-            EventBus events)
+            IMaterialStock stock, IMaterialCatalog catalog, EventBus events)
         {
             if (layout == null)
             {
@@ -39,15 +45,16 @@ namespace MoonProject.UI
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _numbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
+            _stock = stock ?? throw new ArgumentNullException(nameof(stock));
+            _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _tally = new MaterialTally(settings);
             layout.PickupFeed.Clear();
-            for (int i = 0; i < Materials.Count; i++)
+            _rows = new Row[settings.MaxRows];
+            for (int i = 0; i < _rows.Length; i++)
             {
-                _rows[i] = BuildRow(layout.PickupFeed, Materials.At(i));
+                _rows[i] = BuildRow(layout.PickupFeed);
             }
-
-            Relocalize();
         }
 
         /// <summary>True while any row is up (or easing).</summary>
@@ -67,10 +74,11 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>True while <paramref name="material"/>'s row is up (or easing).</summary>
+        /// <summary>True while <paramref name="material"/> has a row up (or easing).</summary>
         public bool IsShowing(SalvageMaterial material)
         {
-            return !_rows[(int)material].Reveal.IsHidden;
+            Row row = Showing(material);
+            return row != null && !row.Reveal.IsHidden;
         }
 
         /// <summary>The number on <paramref name="material"/>'s row (or counting) right now.</summary>
@@ -82,19 +90,19 @@ namespace MoonProject.UI
         /// <summary>The "+N" written on <paramref name="material"/>'s row (tests and captures).</summary>
         public string GainText(SalvageMaterial material)
         {
-            return _rows[(int)material].Gain.text;
+            return Showing(material).Gain.text;
         }
 
         /// <summary>The total written on <paramref name="material"/>'s row (tests and captures).</summary>
         public string TotalText(SalvageMaterial material)
         {
-            return _rows[(int)material].Total.text;
+            return Showing(material).Total.text;
         }
 
         /// <summary>The name written on <paramref name="material"/>'s row (tests and captures).</summary>
         public string NameText(SalvageMaterial material)
         {
-            return _rows[(int)material].Name.text;
+            return Showing(material).Name.text;
         }
 
         /// <summary>Writes the materials' names again (a new language).</summary>
@@ -102,30 +110,48 @@ namespace MoonProject.UI
         {
             for (int i = 0; i < _rows.Length; i++)
             {
-                _rows[i].Name.text = _localization.Get(UiKeys.MaterialName(Materials.At(i)));
+                if (_rows[i].Active)
+                {
+                    _rows[i].Name.text = _localization.Get(_catalog.NameKey(_rows[i].Material));
+                }
             }
-        }
-
-        /// <summary>The stock changed: before the first frame (a load) it is taken as it is; after, shown.</summary>
-        public void Change(int metal, int wiring, int optics)
-        {
-            if (!_armed)
-            {
-                _tally.Snap(metal, wiring, optics);
-                WriteAll();
-                return;
-            }
-
-            Note(SalvageMaterial.Metal, metal);
-            Note(SalvageMaterial.Wiring, wiring);
-            Note(SalvageMaterial.Optics, optics);
-            _tally.Apply(metal, wiring, optics);
         }
 
         /// <param name="deltaTime">Unscaled seconds since the last tick.</param>
         public void Tick(float deltaTime)
         {
-            _armed = true;
+            if (!_armed)
+            {
+                for (int i = 0; i < Materials.Count; i++)
+                {
+                    SalvageMaterial material = Materials.At(i);
+                    if (_catalog.Contains(material))
+                    {
+                        _tally.Snap(material, _stock.Of(material));
+                    }
+                }
+
+                _armed = true;
+            }
+            else
+            {
+                for (int i = 0; i < Materials.Count; i++)
+                {
+                    SalvageMaterial material = Materials.At(i);
+                    if (!_catalog.Contains(material))
+                    {
+                        continue;
+                    }
+
+                    int amount = _stock.Of(material);
+                    if (amount != _tally.Target(material))
+                    {
+                        Note(material, amount);
+                        _tally.Apply(material, amount);
+                    }
+                }
+            }
+
             if (_tally.Step(deltaTime))
             {
                 PublishTicks();
@@ -133,11 +159,11 @@ namespace MoonProject.UI
 
             for (int i = 0; i < _rows.Length; i++)
             {
-                TickRow(_rows[i], Materials.At(i), deltaTime);
+                TickRow(_rows[i], deltaTime);
             }
         }
 
-        private Row BuildRow(VisualElement feed, SalvageMaterial material)
+        private Row BuildRow(VisualElement feed)
         {
             var root = new VisualElement { pickingMode = PickingMode.Ignore };
             root.AddToClassList(RowClass);
@@ -145,8 +171,7 @@ namespace MoonProject.UI
             body.AddToClassList(RowClass + "__body");
             var icon = new VisualElement { pickingMode = PickingMode.Ignore };
             icon.AddToClassList(MaterialSlots.IconClass);
-            icon.AddToClassList(MaterialSlots.IconClass + "--" + Materials.ClassSuffix(material));
-            new MaterialIconPainter(icon, material);
+            var painter = new MaterialIconPainter(icon, SalvageMaterial.Metal);
             var name = new Label { pickingMode = PickingMode.Ignore };
             name.AddToClassList(RowClass + "__name");
             var plus = new Label("+") { pickingMode = PickingMode.Ignore };
@@ -164,36 +189,97 @@ namespace MoonProject.UI
             feed.Add(root);
             var reveal = new Reveal(root, _settings.Reveal);
             reveal.Snap(false);
-            return new Row(reveal, body, icon, name, gain, total);
+            return new Row(reveal, body, icon, painter, name, gain, total);
+        }
+
+        private Row Showing(SalvageMaterial material)
+        {
+            for (int i = 0; i < _rows.Length; i++)
+            {
+                if (_rows[i].Active && _rows[i].Material == material)
+                {
+                    return _rows[i];
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>The row <paramref name="material"/> takes: its own, a free one, or the one resting longest.</summary>
+        private Row Claim(SalvageMaterial material)
+        {
+            Row own = Showing(material);
+            if (own != null)
+            {
+                return own;
+            }
+
+            Row oldest = null;
+            for (int i = 0; i < _rows.Length; i++)
+            {
+                if (!_rows[i].Active)
+                {
+                    return Assign(_rows[i], material);
+                }
+
+                if (oldest == null || _rows[i].Linger > oldest.Linger)
+                {
+                    oldest = _rows[i];
+                }
+            }
+
+            oldest.Reveal.Snap(false);
+            return Assign(oldest, material);
+        }
+
+        private Row Assign(Row row, SalvageMaterial material)
+        {
+            row.Active = true;
+            row.Material = material;
+            row.Linger = 0f;
+            row.Base = _tally.Target(material);
+            row.WrittenTotal = -1;
+            row.WrittenGain = -1;
+            row.Painter.SetMaterial(material);
+            row.Name.text = _localization.Get(_catalog.NameKey(material));
+            return row;
         }
 
         /// <summary>Opens (or feeds) a row when <paramref name="amount"/> is a gain; a spend closes nothing.</summary>
         private void Note(SalvageMaterial material, int amount)
         {
-            Row row = _rows[(int)material];
             int target = _tally.Target(material);
             if (amount > target)
             {
+                Row row = Claim(material);
                 if (!row.Reveal.Target)
                 {
-                    row.Base = target;
                     row.Reveal.Show();
                 }
 
                 row.Linger = 0f;
             }
-            else if (amount < target)
+            else
             {
-                row.Base = Mathf.Min(row.Base, amount);
+                Row row = Showing(material);
+                if (row != null)
+                {
+                    row.Base = Mathf.Min(row.Base, amount);
+                }
             }
         }
 
-        private void TickRow(Row row, SalvageMaterial material, float deltaTime)
+        private void TickRow(Row row, float deltaTime)
         {
+            if (!row.Active)
+            {
+                return;
+            }
+
             if (row.Reveal.Target)
             {
-                WriteRow(row, material);
-                if (_tally.IsCountSettled(material))
+                WriteRow(row);
+                if (_tally.IsCountSettled(row.Material))
                 {
                     row.Linger += deltaTime;
                     if (row.Linger >= _settings.LingerSeconds)
@@ -206,6 +292,7 @@ namespace MoonProject.UI
             row.Reveal.Tick(deltaTime);
             if (row.Reveal.IsHidden)
             {
+                row.Active = row.Reveal.Target;
                 return;
             }
 
@@ -216,7 +303,7 @@ namespace MoonProject.UI
                 row.WrittenSlide = slide;
             }
 
-            float grown = 1f + _tally.TickPulse(material) * _settings.TickPulseScale;
+            float grown = 1f + _tally.TickPulse(row.Material) * _settings.TickPulseScale;
             if (Mathf.Abs(grown - row.WrittenScale) > WriteEpsilon)
             {
                 row.Icon.style.scale = new StyleScale(new Scale(new Vector2(grown, grown)));
@@ -224,17 +311,9 @@ namespace MoonProject.UI
             }
         }
 
-        private void WriteAll()
+        private void WriteRow(Row row)
         {
-            for (int i = 0; i < _rows.Length; i++)
-            {
-                WriteRow(_rows[i], Materials.At(i));
-            }
-        }
-
-        private void WriteRow(Row row, SalvageMaterial material)
-        {
-            int total = _tally.Shown(material);
+            int total = _tally.Shown(row.Material);
             if (total != row.WrittenTotal)
             {
                 row.Total.text = _numbers.Get(total);
@@ -273,11 +352,13 @@ namespace MoonProject.UI
 
         private sealed class Row
         {
-            public Row(Reveal reveal, VisualElement body, VisualElement icon, Label name, Label gain, Label total)
+            public Row(Reveal reveal, VisualElement body, VisualElement icon, MaterialIconPainter painter, Label name,
+                Label gain, Label total)
             {
                 Reveal = reveal;
                 Body = body;
                 Icon = icon;
+                Painter = painter;
                 Name = name;
                 Gain = gain;
                 Total = total;
@@ -289,11 +370,18 @@ namespace MoonProject.UI
 
             public VisualElement Icon { get; }
 
+            public MaterialIconPainter Painter { get; }
+
             public Label Name { get; }
 
             public Label Gain { get; }
 
             public Label Total { get; }
+
+            /// <summary>True from the claim until the row has faded out.</summary>
+            public bool Active { get; set; }
+
+            public SalvageMaterial Material { get; set; }
 
             /// <summary>The total the row opened on: its "+N" counts up from here.</summary>
             public int Base { get; set; }

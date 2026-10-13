@@ -44,6 +44,14 @@ namespace MoonProject.UI
         public const string RecipeRow = "ui.recipe.row";
         public const string RewardTitle = "ui.reward.title";
         public const string FriendParts = "ui.friend.parts";
+        public const string CargoWaiting = "ui.cargo.waiting";
+        public const string CargoShelf = "ui.cargo.shelf";
+        public const string CargoShelfFree = "ui.cargo.shelf_free";
+        public const string CargoSummary = "ui.cargo.summary";
+        public const string CrateCaption = "ui.crate.caption";
+        public const string CargoShelfCost = "ui.cargo.shelf_cost";
+        public const string CargoCostPart = "ui.cargo.cost_part";
+        public const string CanDecoded = "ui.can.decoded";
         public const string StationOffline = "ui.station.offline";
         public const string BayPick = "ui.bay.pick";
 

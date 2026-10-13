@@ -106,13 +106,35 @@ namespace MoonProject.UI.PlayModeTests
 
         public TetherAimState TetherState { get; set; }
 
-        public int Metal { get; private set; }
+        private readonly int[] _units = new int[SalvageMaterials.Count];
 
-        public int Wiring { get; private set; }
+        /// <summary>07's hold, set by a test.</summary>
+        public FakeHold Hold { get; } = new FakeHold();
 
-        public int Optics { get; private set; }
+        /// <summary>Home's shelves, set by a test.</summary>
+        public FakeHome Home { get; } = new FakeHome();
 
-        public int Total => Metal + Wiring + Optics;
+        public FakeCatalog Catalog { get; } = new FakeCatalog();
+
+        public int Metal => _units[(int)SalvageMaterial.Metal];
+
+        public int Wiring => _units[(int)SalvageMaterial.Wiring];
+
+        public int Optics => _units[(int)SalvageMaterial.Optics];
+
+        public int Total
+        {
+            get
+            {
+                int total = 0;
+                foreach (int units in _units)
+                {
+                    total += units;
+                }
+
+                return total;
+            }
+        }
 
         public bool HasTarget { get; set; }
 
@@ -268,6 +290,9 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IRecoveryProgress>(this);
             context.Register<IWorldLayout>(this);
             context.Register<IRoverAbilities>(this);
+            context.Register<ICargoHold>(Hold);
+            context.Register<IHomeStorage>(Home);
+            context.Register<IMaterialCatalog>(Catalog);
         }
 
         public int KnownCount
@@ -410,25 +435,25 @@ namespace MoonProject.UI.PlayModeTests
         /// <summary>Sets the materials held and publishes the change like the real stock.</summary>
         public void SetMaterials(int metal, int wiring, int optics)
         {
-            Metal = metal;
-            Wiring = wiring;
-            Optics = optics;
+            _units[(int)SalvageMaterial.Metal] = metal;
+            _units[(int)SalvageMaterial.Wiring] = wiring;
+            _units[(int)SalvageMaterial.Optics] = optics;
             _events.Publish(new MaterialsChanged(metal, wiring, optics));
+        }
+
+        /// <summary>Sets the units of any material (the three salvage ones also publish MaterialsChanged).</summary>
+        public void SetUnits(SalvageMaterial material, int units)
+        {
+            _units[(int)material] = units;
+            if ((int)material < Materials.RecipeCount)
+            {
+                _events.Publish(new MaterialsChanged(Metal, Wiring, Optics));
+            }
         }
 
         public int Of(SalvageMaterial material)
         {
-            switch (material)
-            {
-                case SalvageMaterial.Metal:
-                    return Metal;
-                case SalvageMaterial.Wiring:
-                    return Wiring;
-                case SalvageMaterial.Optics:
-                    return Optics;
-                default:
-                    throw new System.ArgumentOutOfRangeException(nameof(material), material, "Unknown material.");
-            }
+            return _units[(int)material];
         }
 
         public bool Has(Recipe recipe)
