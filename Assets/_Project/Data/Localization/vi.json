@@ -123,10 +123,6 @@
             "text": "Mang cuộn dây về bệ tháp."
         },
         {
-            "key": "next.tower.hold",
-            "text": "Giữ E trên bệ để sửa tháp radio."
-        },
-        {
             "key": "hint.pickup",
             "text": "Nhặt"
         },
@@ -317,10 +313,6 @@
         {
             "key": "ticker.recovery.answer",
             "text": "Trái Đất đã nghe thấy."
-        },
-        {
-            "key": "notyet.tower",
-            "text": "Đang tắt. Cần cuộn dây tháp và vật liệu: xem thẻ của tháp."
         },
         {
             "key": "notyet.bay",
@@ -1661,10 +1653,6 @@
         {
             "key": "upgrade.rover.cell_pack.1.effect",
             "text": "Thêm hai ô pin, tổng cộng sáu ô: đủ để tới phía xa của lòng chảo."
-        },
-        {
-            "key": "ticker.tether.back",
-            "text": "07 lại kéo được đồ rồi."
         },
         {
             "key": "ui.settings.text_size",
