@@ -3,9 +3,10 @@ using UnityEngine;
 namespace MoonProject.Rover
 {
     /// <summary>
-    /// The cut's work framing (docs/design/feel-pass.md §3.1, Cam): while 07 stands still cutting, the camera eases
-    /// over its shoulder, on the side the beam runs to so 07's head never hides it, a little higher, aiming at the
-    /// middle of the beam. Plain logic: which side, where the eye goes, and how far the framing has eased in.
+    /// The charge-up's push-in (docs/design/0.5.5-owner-feedback.md §5.6): only for a fresh charge on a big piece, the
+    /// camera eases a little closer and lower toward 07's shoulder, on the side the beam runs to so 07's head never
+    /// hides it, aiming at the middle of the beam; it holds still through the lock and eases back after. Plain logic:
+    /// whether to frame at all, which side, where the eye looks from, and how far the framing has eased in.
     /// </summary>
     public sealed class CutFraming
     {
@@ -26,6 +27,15 @@ namespace MoonProject.Rover
         public Vector3 CutPoint { get; private set; }
 
         /// <summary>
+        /// Whether a charge earns the push-in: a fresh one (a warm emitter repeats too often to move the camera) on a
+        /// piece needing at least <paramref name="minStages"/> stages, and never with the Gentle camera.
+        /// </summary>
+        public static bool Wanted(bool warm, int stagesNeeded, int minStages, bool gentle)
+        {
+            return !warm && !gentle && stagesNeeded >= minStages;
+        }
+
+        /// <summary>
         /// The side the beam runs to as seen from behind 07 (+1 right, -1 left; straight ahead counts as right): the
         /// camera sits there, so the line from 07's emitter to the cut point clears 07's head.
         /// </summary>
@@ -36,16 +46,16 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// Where the eye goes: behind the emitter along the beam's direction by <paramref name="back"/>, out to
-        /// <see cref="Side"/> by <paramref name="offset"/> and up by <paramref name="rise"/> (all metres).
+        /// Where the eye looks from: behind the emitter along the beam's direction by <paramref name="back"/> and out
+        /// to <see cref="Side"/> by <paramref name="offset"/> (metres, level with the emitter).
         /// </summary>
-        public Vector3 Eye(Vector3 emitter, float back, float offset, float rise)
+        public Vector3 Eye(Vector3 emitter, float back, float offset)
         {
             Vector3 along = CutPoint - emitter;
             along.y = 0f;
             along = along.sqrMagnitude > 1e-6f ? along.normalized : Vector3.forward;
             Vector3 right = Vector3.Cross(Vector3.up, along);
-            return emitter - along * back + right * (Side * offset) + Vector3.up * rise;
+            return emitter - along * back + right * (Side * offset);
         }
 
         /// <summary>Starts easing in over <paramref name="seconds"/> toward framing the beam to <paramref name="cutPoint"/>.</summary>
@@ -55,6 +65,17 @@ namespace MoonProject.Rover
             Side = side;
             _target = 1f;
             _seconds = Mathf.Max(seconds, 1e-3f);
+        }
+
+        /// <summary>
+        /// The orbit pushed in by <paramref name="weight"/>: the radius <paramref name="pushIn"/> (a share) shorter and
+        /// the camera <paramref name="lower"/> metres lower, at the same follow point. Elevations in degrees.
+        /// </summary>
+        public static void PushIn(float weight, float pushIn, float lower, ref float elevation, ref float radius)
+        {
+            float height = radius * Mathf.Sin(elevation * Mathf.Deg2Rad) - lower * weight;
+            radius *= 1f - pushIn * weight;
+            elevation = Mathf.Asin(Mathf.Clamp(height / Mathf.Max(radius, 1e-3f), -1f, 1f)) * Mathf.Rad2Deg;
         }
 
         /// <summary>Eases back to the chase camera over <paramref name="seconds"/> (the fold, a release, the player's hands).</summary>

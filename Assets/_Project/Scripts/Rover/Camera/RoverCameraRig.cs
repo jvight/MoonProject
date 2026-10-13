@@ -104,6 +104,7 @@ namespace MoonProject.Rover
         private bool _onLift;
         private bool _evening;
         private readonly CutFraming _cutFraming = new CutFraming();
+        private Vector3 _chargePoint;
         private bool _charging;
         private float _chargingSeconds;
         private bool _chargeAsks;
@@ -215,6 +216,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<RelayRestored>(OnRelayRestored),
                 context.Events.Subscribe<LadderLookChanged>(OnLadderLookChanged),
                 context.Events.Subscribe<FeelBeat>(OnFeelBeat),
+                context.Events.Subscribe<CutChargeStaged>(OnChargeStaged),
                 context.Events.Subscribe<LiftRideChanged>(OnLiftRideChanged),
                 context.Events.Subscribe<DockEveningOpened>(OnDockEveningOpened),
                 context.Events.Subscribe<UpgradePurchased>(OnUpgradePurchased),
@@ -1192,10 +1194,25 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The cut's work framing (docs/design/feel-pass.md §3.1, Cam): 07 stands still while it cuts or digs, so
-        /// from the charge-up the camera eases over its shoulder on the beam's side (half as far and slower with the
-        /// Gentle camera) until the piece is folded, or the player releases; look or drive input hands it back at once.
+        /// The charge-up's push-in (0.5.5 §5.6): a fresh charge on a big piece (<see cref="CutFraming.Wanted"/>)
+        /// eases the camera closer and lower toward 07's shoulder on the beam's side over the brace and build, holds
+        /// still through the lock and the cut, and eases back after the fold or a release; look or drive input hands
+        /// it back at once. Small and medium pieces, warm charges and the Gentle camera never move it.
         /// </summary>
+        private void OnChargeStaged(CutChargeStaged staged)
+        {
+            if (staged.Stage != 0
+                || !CutFraming.Wanted(staged.Warm, staged.StagesNeeded, _tuning.CutFrameMinStages, _look.GentleCamera))
+            {
+                return;
+            }
+
+            float side = CutFraming.ChooseSide(_rover.Position, _rover.Rotation * Vector3.forward, _chargePoint);
+            _cutFraming.Begin(_chargePoint, side, _tuning.CutFrameInSeconds);
+        }
+
+        /// <summary>The cut's beats: the Anticipate says where the beam will run; the fold or a release ends the
+        /// push-in.</summary>
         private void OnFeelBeat(FeelBeat beat)
         {
             if (beat.Kind == FeelKind.Build)
@@ -1204,7 +1221,7 @@ namespace MoonProject.Rover
                 return;
             }
 
-            if (beat.Kind != FeelKind.Cut && beat.Kind != FeelKind.Dig)
+            if (beat.Kind != FeelKind.Cut)
             {
                 return;
             }
@@ -1212,10 +1229,7 @@ namespace MoonProject.Rover
             switch (beat.Phase)
             {
                 case FeelPhase.Anticipate:
-                    float side = CutFraming.ChooseSide(_rover.Position, _rover.Rotation * Vector3.forward,
-                        beat.Position);
-                    _cutFraming.Begin(beat.Position, side,
-                        _look.GentleCamera ? _tuning.CutFrameGentleSeconds : _tuning.CutFrameInSeconds);
+                    _chargePoint = beat.Position;
                     break;
                 case FeelPhase.Follow when beat.Strength >= 1f:
                 case FeelPhase.Cancel:
@@ -1263,22 +1277,17 @@ namespace MoonProject.Rover
         /// </summary>
         private void BlendCutFraming(float weight, ref float yaw, ref float elevation, ref float radius)
         {
-            float share = _look.GentleCamera ? _tuning.CutFrameGentleShare : 1f;
+            CutFraming.PushIn(weight, _tuning.CutFramePushIn, _tuning.CutFrameLower, ref elevation, ref radius);
             Vector3 emitter = _rover.Position + Vector3.up * _tuning.TargetHeight;
-            Vector3 eye = _cutFraming.Eye(emitter, _tuning.CutFrameBack, _tuning.CutFrameSide * share,
-                _tuning.CutFrameRise * share);
-            Vector3 line = BeamMiddle() - eye;
-            float distance = line.magnitude;
-            if (distance < MinSubjectDistance)
+            Vector3 line = BeamMiddle() - _cutFraming.Eye(emitter, _tuning.CutFrameBack, _tuning.CutFrameSide);
+            line.y = 0f;
+            if (line.magnitude < MinSubjectDistance)
             {
                 return;
             }
 
             float frameYaw = Mathf.DeltaAngle(RoverYaw() + _momentYaw, WideShotComposer.Bearing(line));
             yaw += Mathf.DeltaAngle(yaw, frameYaw) * weight;
-            elevation = Mathf.Lerp(elevation, Mathf.Asin(Mathf.Clamp(-line.y / distance, -1f, 1f)) * Mathf.Rad2Deg,
-                weight);
-            radius = Mathf.Lerp(radius, distance, weight);
         }
 
         /// <summary>A real leap (not a hop) lifts the camera and looks ahead to the landing until 07 is down.</summary>

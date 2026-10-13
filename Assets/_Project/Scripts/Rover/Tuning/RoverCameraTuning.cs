@@ -397,38 +397,39 @@ namespace MoonProject.Rover
         [SerializeField] private float _heldShotYawStep = 25f;
 
         [Header("Feel: the cut (docs/design/feel-pass.md)")]
-        [Tooltip("The cut's work framing: how far (m) the camera sits out to the side the beam runs to, so 07's head "
-            + "never hides it.")]
+        [Tooltip("The charge-up's push-in (0.5.5 §5.6): the fewest stages a piece needs for a fresh charge to earn it "
+            + "(3: large and hull plates). Small and medium pieces, warm charges and the Gentle camera never move it.")]
+        [Range(1, 3)]
+        [SerializeField] private int _cutFrameMinStages = 3;
+
+        [Tooltip("The push-in: how much closer the camera eases (share of its distance: 0.06 = 6%).")]
+        [Range(0f, 0.3f)]
+        [SerializeField] private float _cutFramePushIn = 0.06f;
+
+        [Tooltip("The push-in: how far (m) lower the camera eases.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _cutFrameLower = 0.3f;
+
+        [Tooltip("The push-in turns toward 07's shoulder: how far (m) out to the side the beam runs to the eye looks "
+            + "from, so 07's head never hides the beam.")]
         [Range(0.3f, 3f)]
         [SerializeField] private float _cutFrameSide = 1.2f;
 
-        [Tooltip("How far (m) behind 07's emitter, along the beam, the framing's camera sits.")]
+        [Tooltip("How far (m) behind 07's emitter, along the beam, the shoulder's eye looks from.")]
         [Range(0.5f, 6f)]
         [SerializeField] private float _cutFrameBack = 2.4f;
 
-        [Tooltip("How far (m) above 07's emitter the framing's camera sits.")]
-        [Range(0f, 2f)]
-        [SerializeField] private float _cutFrameRise = 0.5f;
-
-        [Tooltip("Seconds the framing takes to ease in from the charge-up (07 stands still, so slow is calm).")]
-        [Range(0.2f, 4f)]
-        [SerializeField] private float _cutFrameInSeconds = 1.2f;
+        [Tooltip("Seconds the push-in takes to ease in over the brace and build (at most 1 s), eased at both ends.")]
+        [Range(0.2f, 1f)]
+        [SerializeField] private float _cutFrameInSeconds = 1f;
 
         [Tooltip("Seconds it takes to ease back after the fold or a release.")]
         [Range(0.2f, 4f)]
-        [SerializeField] private float _cutFrameOutSeconds = 1f;
+        [SerializeField] private float _cutFrameOutSeconds = 1.2f;
 
         [Tooltip("Seconds it takes to hand back when the player looks or drives (quick: their choice wins).")]
         [Range(0.05f, 1f)]
         [SerializeField] private float _cutFrameHandBackSeconds = 0.3f;
-
-        [Tooltip("Gentle camera: the share of the side offset and rise it uses.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _cutFrameGentleShare = 0.5f;
-
-        [Tooltip("Gentle camera: seconds the framing takes to ease in.")]
-        [Range(0.2f, 6f)]
-        [SerializeField] private float _cutFrameGentleSeconds = 2f;
 
         [Tooltip("Seconds from the evening shot opening until it eases back (any drive or look input ends it early).")]
         [Range(3f, 30f)]
@@ -662,17 +663,17 @@ namespace MoonProject.Rover
 
         public float CutFrameBack => _cutFrameBack;
 
-        public float CutFrameRise => _cutFrameRise;
+        public int CutFrameMinStages => _cutFrameMinStages;
+
+        public float CutFramePushIn => _cutFramePushIn;
+
+        public float CutFrameLower => _cutFrameLower;
 
         public float CutFrameInSeconds => _cutFrameInSeconds;
 
         public float CutFrameOutSeconds => _cutFrameOutSeconds;
 
         public float CutFrameHandBackSeconds => _cutFrameHandBackSeconds;
-
-        public float CutFrameGentleShare => _cutFrameGentleShare;
-
-        public float CutFrameGentleSeconds => _cutFrameGentleSeconds;
 
         public Vector3 PositionDamping => _positionDamping;
 
