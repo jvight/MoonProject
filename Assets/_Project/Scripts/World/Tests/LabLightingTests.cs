@@ -7,7 +7,7 @@ namespace MoonProject.World.Tests
     /// <summary>
     /// The lab's lamps (docs/features/M3-19): lamps warm up in play and restore at once, the porthole counts known
     /// nodes, the recovery rows place their lamps (the Link's last in the Peak socket), the chart pen plots round home,
-    /// the hand-off pulse runs from the reader to the bay and lingers, and the halo rule holds for home's pilot.
+    /// and the halo rule holds for home's pilot.
     /// </summary>
     public sealed class LabLightingTests
     {
@@ -66,22 +66,6 @@ namespace MoonProject.World.Tests
             Assert.AreEqual(0.5f, east.y, Tolerance);
             Assert.AreEqual(Vector2.one, ChartPenPlot.OnPaper(home + new Vector3(900f, 0f, 900f), home, 300f),
                 "beyond the paper, drawn at its edge");
-        }
-
-        [Test]
-        public void HandOffPulse_RunsFromTheReaderToTheBay_ThenLingers()
-        {
-            var pulse = new HandOffPulse();
-            const float Width = 0.1f;
-            const float Afterglow = 1f;
-            Assert.AreEqual(0f, pulse.BeadLevel(0, 10, 0f, Width, Afterglow), "dark before any hand-off");
-            pulse.Begin(10f, 4f);
-            Assert.AreEqual(1f, pulse.BeadLevel(0, 10, 10f, Width, Afterglow), Tolerance, "it starts at the reader");
-            Assert.Less(pulse.BeadLevel(9, 10, 10f, Width, Afterglow), 0.01f, "the bay end still waits");
-            Assert.AreEqual(1f, pulse.BeadLevel(9, 10, 14f, Width, Afterglow), Tolerance, "it reaches the bay");
-            Assert.AreEqual(0.5f, pulse.BeadLevel(9, 10, 14.5f, Width, Afterglow), Tolerance, "and lingers there");
-            Assert.AreEqual(0f, pulse.BeadLevel(9, 10, 15.5f, Width, Afterglow), "then goes out");
-            Assert.IsFalse(pulse.IsRunning(15.5f, Afterglow));
         }
 
         [Test]

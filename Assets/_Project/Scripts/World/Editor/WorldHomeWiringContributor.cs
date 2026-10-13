@@ -64,7 +64,7 @@ namespace MoonProject.World.Editor
             serialized.FindProperty("_pilot").objectReferenceValue = CreatePilot(context, gameplay);
             AssignPools(context, serialized, gameplay);
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            WireLab(context, lab, Find(gameplay, LanderName));
+            WireLab(lab, Find(gameplay, LanderName));
             CreateHomeMarks(context, gameplay);
             CreatePodBeacon(context, gameplay);
         }
@@ -103,10 +103,9 @@ namespace MoonProject.World.Editor
         }
 
         /// <summary>
-        /// Hands <see cref="LabLights"/> the lander's lab and belly lift nodes (Art's lab contract) and hangs the
-        /// hand-off pulse's travelling light on its path.
+        /// Hands <see cref="LabLights"/> the lander's lab and belly lift nodes (Art's lab contract).
         /// </summary>
-        private static void WireLab(SceneBuildContext context, LabLights lights, Transform lander)
+        private static void WireLab(LabLights lights, Transform lander)
         {
             var lab = new SerializedObject(lights);
             Transform belly = Child(lander, BaseModelBuilder.BellyLiftName);
@@ -157,23 +156,6 @@ namespace MoonProject.World.Editor
                 sections.GetArrayElementAtIndex(i).intValue = BaseModelBuilder.KeepsakeSection(i);
             }
 
-            AssignCable(lab, "_handOffBeads", Segments(lander, BaseModelBuilder.HandOffCableName));
-            Transform path = Child(lander, BaseModelBuilder.HandOffPathName);
-            SerializedProperty points = lab.FindProperty("_handOffPath");
-            points.arraySize = path.childCount;
-            for (int i = 0; i < path.childCount; i++)
-            {
-                points.GetArrayElementAtIndex(i).objectReferenceValue =
-                    Child(path, BaseModelBuilder.HandOffPointPrefix + i);
-            }
-
-            GameObject pulse = context.CreateChild("HandOffLight", path);
-            var light = pulse.AddComponent<Light>();
-            light.type = LightType.Point;
-            light.shadows = LightShadows.None;
-            light.intensity = 0f;
-            light.enabled = false;
-            lab.FindProperty("_handOffLight").objectReferenceValue = light;
             lab.ApplyModifiedPropertiesWithoutUndo();
         }
 

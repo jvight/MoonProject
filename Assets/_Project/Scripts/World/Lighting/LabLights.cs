@@ -11,10 +11,8 @@ namespace MoonProject.World
     /// the big porthole per known tech node and the tech board's sheets and lamps from <see cref="TechNodeChanged"/>;
     /// the recovery panel's rows from <see cref="RecoveryProgressChanged"/>; the light table and Kenji's chart pen from
     /// the map's look (<see cref="MapLookStarted"/>, <see cref="MapInkCued"/>, <see cref="MapLookEnded"/>); the reading
-    /// lamps brighten per keepsake (<see cref="RelicDeposited"/>); the hand-off's lamp pulse runs down the conduit to
-    /// the bay (<see cref="DecodeHandOff"/>). Thin: the timing lives in <see cref="LampBank"/>,
-    /// <see cref="HandOffPulse"/>, <see cref="RecoveryRowLamps"/> and <see cref="ChartPenPlot"/>. Allocation-free per
-    /// frame.
+    /// lamps brighten per keepsake (<see cref="RelicDeposited"/>). Thin: the timing lives in <see cref="LampBank"/>,
+    /// <see cref="RecoveryRowLamps"/> and <see cref="ChartPenPlot"/>. Allocation-free per frame.
     /// </summary>
     public sealed class LabLights : MonoBehaviour, IGameSystem
     {
@@ -89,17 +87,7 @@ namespace MoonProject.World
         [Min(0.01f)]
         [SerializeField] private float _drawHeight = 0.34f;
 
-        [Tooltip("HandOffCable/Glow_n: the conduit's beads from the reader to the bay, in order.")]
-        [SerializeField] private Renderer[] _handOffBeads = new Renderer[0];
-
-        [Tooltip("HandOffPath/Point_n: the pulse's polyline from the reader's slot to the bay's back wall.")]
-        [SerializeField] private Transform[] _handOffPath = new Transform[0];
-
-        [Tooltip("The small warm light that travels with the pulse (the scene build hangs it on the path).")]
-        [SerializeField] private Light _handOffLight;
-
         private readonly TechNodeTally _tally = new TechNodeTally();
-        private readonly HandOffPulse _pulse = new HandOffPulse();
         private MaterialPropertyBlock _block;
         private IHomeLights _lights;
         private IDisposable[] _subscriptions;
@@ -110,8 +98,6 @@ namespace MoonProject.World
         private LampBank _porthole;
         private LampBank _board;
         private int[] _keepsakes;
-        private float[] _pathAt;
-        private float _pathLength;
         private Vector3 _carriageHome;
         private Vector3 _headHome;
         private Vector2 _penFrom;
@@ -130,7 +116,6 @@ namespace MoonProject.World
         private float[] _boardApplied;
         private float[][] _rowsApplied;
         private float[] _readingApplied;
-        private float[] _beadsApplied;
 
         public void Initialize(GameContext context)
         {
@@ -171,15 +156,9 @@ namespace MoonProject.World
             _portholeLampsApplied = Unapplied(_portholeLamps.Length);
             _boardApplied = Unapplied(_boardLamps.Length);
             _readingApplied = Unapplied(_readingLamps.Length);
-            _beadsApplied = Unapplied(_handOffBeads.Length);
             _keepsakes = new int[_readingLamps.Length];
-            MeasurePath();
             _carriageHome = _penCarriage.localPosition;
             _headHome = _penHead.localPosition;
-            _handOffLight.enabled = false;
-            _handOffLight.shadows = LightShadows.None;
-            _handOffLight.color = _settings.LabLighting.HandOffLightColour;
-            _handOffLight.range = _settings.LabLighting.HandOffLightRange;
             EventBus events = context.Events;
             _subscriptions = new[]
             {
@@ -188,7 +167,6 @@ namespace MoonProject.World
                 events.Subscribe<MapLookStarted>(OnMapLookStarted),
                 events.Subscribe<MapLookEnded>(OnMapLookEnded),
                 events.Subscribe<MapInkCued>(OnMapInkCued),
-                events.Subscribe<DecodeHandOff>(OnDecodeHandOff),
                 events.Subscribe<RelicDeposited>(OnRelicDeposited),
             };
         }
@@ -230,7 +208,6 @@ namespace MoonProject.World
             }
 
             MovePen(now, tuning);
-            ApplyHandOff(now, tuning);
         }
 
         private void OnTechNodeChanged(TechNodeChanged change)
@@ -290,11 +267,6 @@ namespace MoonProject.World
         private void OnMapInkCued(MapInkCued ink)
         {
             StartPen(ChartPenPlot.OnPaper(ink.Position, _home.position, _settings.LabLighting.ChartRadius));
-        }
-
-        private void OnDecodeHandOff(DecodeHandOff handOff)
-        {
-            _pulse.Begin(Time.time, handOff.Seconds);
         }
 
         private void OnRelicDeposited(RelicDeposited deposit)
@@ -363,52 +335,6 @@ namespace MoonProject.World
             }
         }
 
-        private void ApplyHandOff(float now, LabLightingSettings tuning)
-        {
-            bool running = _pulse.IsRunning(now, tuning.HandOffAfterglow);
-            for (int i = 0; i < _handOffBeads.Length; i++)
-            {
-                float level = running ? _pulse.BeadLevel(i, _handOffBeads.Length, now, tuning.HandOffWidth,
-                    tuning.HandOffAfterglow) : 0f;
-                Glow(_handOffBeads[i], ref _beadsApplied[i], level * tuning.HandOffBeadGlow);
-            }
-
-            _handOffLight.enabled = running;
-            if (!running)
-            {
-                return;
-            }
-
-            _handOffLight.intensity = _pulse.Strength(now, tuning.HandOffAfterglow) * tuning.HandOffLightIntensity;
-            _handOffLight.transform.position = PointAlong(Mathf.Clamp01(_pulse.Progress(now)) * _pathLength);
-        }
-
-        private void MeasurePath()
-        {
-            _pathAt = new float[_handOffPath.Length];
-            for (int i = 1; i < _handOffPath.Length; i++)
-            {
-                _pathAt[i] = _pathAt[i - 1] + Vector3.Distance(_handOffPath[i - 1].position, _handOffPath[i].position);
-            }
-
-            _pathLength = _pathAt[_pathAt.Length - 1];
-        }
-
-        private Vector3 PointAlong(float distance)
-        {
-            for (int i = 1; i < _pathAt.Length; i++)
-            {
-                if (distance <= _pathAt[i])
-                {
-                    float span = Mathf.Max(_pathAt[i] - _pathAt[i - 1], 1e-4f);
-                    return Vector3.Lerp(_handOffPath[i - 1].position, _handOffPath[i].position,
-                        (distance - _pathAt[i - 1]) / span);
-                }
-            }
-
-            return _handOffPath[_handOffPath.Length - 1].position;
-        }
-
         private void ApplyBank(Renderer[] lamps, float[] applied, LampBank bank, float glow)
         {
             for (int i = 0; i < lamps.Length; i++)
@@ -462,14 +388,14 @@ namespace MoonProject.World
             }
 
             if (_bellyLamp == null || _hatchRim == null || _cabinLamps == null || _bigPorthole == null ||
-                _tableGlow == null || _penCarriage == null || _penHead == null || _handOffLight == null)
+                _tableGlow == null || _penCarriage == null || _penHead == null)
             {
-                return "the belly lamp, hatch rim, cabin lamps, big porthole, light table, chart pen and hand-off " +
-                       "light must be assigned (the scene build wires Art's lab nodes).";
+                return "the belly lamp, hatch rim, cabin lamps, big porthole, light table, chart pen " +
+                       "must be assigned (the scene build wires Art's lab nodes).";
             }
 
             if (HasEmpty(_portholeLamps) || HasEmpty(_boardLamps) || HasEmpty(_readingLamps) ||
-                HasEmpty(_handOffBeads) || HasEmpty(_powerRow) || HasEmpty(_linkRow) || HasEmpty(_dishRow) ||
+                HasEmpty(_powerRow) || HasEmpty(_linkRow) || HasEmpty(_dishRow) ||
                 HasEmpty(_answerRow))
             {
                 return "every lamp array must be assigned and hold no empty slot (the scene build wires Art's lab).";
@@ -478,11 +404,6 @@ namespace MoonProject.World
             if (_boardSheets.Length != _boardLamps.Length || Array.IndexOf(_boardSheets, null) >= 0)
             {
                 return "the board needs one sheet per node lamp.";
-            }
-
-            if (_handOffPath.Length < 2 || Array.IndexOf(_handOffPath, null) >= 0)
-            {
-                return "the hand-off path needs at least two points.";
             }
 
             if (_keepsakeSlots.Length == 0 || _keepsakeSlots.Length != _slotSections.Length ||
