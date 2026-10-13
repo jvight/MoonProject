@@ -380,6 +380,45 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(skirt.Body.gameObject.activeSelf, "nothing respawns");
         }
 
+        [UnityTest]
+        public IEnumerator TheTrailsScrapField_StandsOnTheWorldsSlots_AndItsPiecesCutAndStayTaken()
+        {
+            string slot = BootstrapHarness.NewTestSlot();
+            _fixture = GameplayFixture.Boot(_controls, slot);
+            yield return null;
+            SalvageField salvage = _fixture.Gameplay.Salvage;
+            SalvageSite field = salvage.FindDerelict(SalvageField.ScrapFieldId);
+            var slots = _fixture.Bootstrap.Context.Get<IScrapField>();
+            Assert.IsNotNull(field, "Kestrel-3's scrap field stands (0.5.5 §2)");
+            CollectionAssert.DoesNotContain(salvage.Sites, field, "no sonar, no map until scanning");
+            Assert.AreEqual(slots.Count, field.Pieces.Count, "a piece on every lane slot");
+            for (int i = 0; i < field.Pieces.Count; i++)
+            {
+                SalvagePiece piece = field.Find(i);
+                Assert.AreEqual(SalvageMaterial.Metal, piece.Material);
+                Assert.Less(Vector3.Distance(piece.Body.position, slots.Slot(i).Position), 1e-3f, "on its slot");
+                Assert.IsNotNull(piece.Body.GetComponent<Collider>(), "solid to 07");
+            }
+
+            SalvagePiece first = field.Find(0);
+            first.Progress = 0.97f;
+            yield return FaceCut(first);
+            Press(_keyboard.eKey);
+            yield return Waits.Until(() => first.State == SalvagePieceState.Taken, IgnitionTimeout + 5f);
+            Release(_keyboard.eKey);
+            Assert.AreEqual(SalvagePieceState.Taken, first.State, "cut like a wreck's piece");
+            Assert.AreEqual(SalvageField.ScrapFieldId,
+                _fixture.Events.MaterialSalvaged[_fixture.Events.MaterialSalvaged.Count - 1].Value.SiteId);
+            Assert.IsTrue(_fixture.Bootstrap.Context.Get<ISaveService>().SaveNow());
+            _fixture.Dispose(true);
+            yield return null;
+
+            _fixture = GameplayFixture.Boot(_controls, slot);
+            yield return null;
+            first = _fixture.Gameplay.Salvage.FindDerelict(SalvageField.ScrapFieldId).Find(0);
+            Assert.AreEqual(SalvagePieceState.Taken, first.State, "saved by the field's id, it stays taken");
+        }
+
         private SalvagePieceSaveData SavedPiece(SalvageSite site, SalvagePiece piece)
         {
             foreach (SalvageSiteSaveData saved in _fixture.Gameplay.Salvage.Capture().sites)

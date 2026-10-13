@@ -286,10 +286,23 @@ namespace MoonProject.Gameplay.Editor
                     props);
             }
 
+            var fragments = new GameObject[PropModelBuilder.HullFragmentVariants];
+            var seams = new PieceCutLine[fragments.Length];
+            for (int i = 0; i < fragments.Length; i++)
+            {
+                fragments[i] = LoadArt(GameplayAssetPaths.HullFragment(i));
+                if (!SalvageCutLines.TryThrough(fragments[i].transform, i, out seams[i]))
+                {
+                    throw new InvalidOperationException($"{BuilderPath}: Art's hull fragment {i} has no CutPoint or " +
+                                                        "mesh (Art/Props contract).");
+                }
+            }
+
             var catalog = ScriptableObject.CreateInstance<SalvageCatalog>();
             catalog.Populate(sites, derelicts, LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Metal)),
                 LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Wiring)),
-                LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Optics)));
+                LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Optics)), fragments, seams,
+                SalvageEconomy.TrailScrapSize);
             catalog = GeneratedAssets.CreateOrReplace(catalog, GameplayAssetPaths.SalvageCatalog);
             string problem = catalog.Validate();
             if (problem != null)

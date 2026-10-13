@@ -56,33 +56,47 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < root.childCount; i++)
             {
                 Transform node = root.GetChild(i);
-                Transform cut = node.Find(CutPointName);
-                if (!SalvagePieceName.TryParsePiece(node.name, out int number, out _, out _) || cut == null ||
-                    !node.TryGetComponent(out MeshFilter filter) || filter.sharedMesh == null)
+                if (SalvagePieceName.TryParsePiece(node.name, out int number, out _, out _) &&
+                    TryThrough(node, number, out PieceCutLine line))
                 {
-                    continue;
+                    lines.Add(line);
                 }
-
-                Bounds bounds = filter.sharedMesh.bounds;
-                float left = 0f;
-                float right = 0f;
-                for (int corner = 0; corner < 8; corner++)
-                {
-                    Vector3 local = bounds.center + Vector3.Scale(bounds.extents,
-                        new Vector3((corner & 1) == 0 ? -1f : 1f, (corner & 2) == 0 ? -1f : 1f,
-                            (corner & 4) == 0 ? -1f : 1f));
-                    float x = cut.InverseTransformPoint(node.TransformPoint(local)).x;
-                    left = Mathf.Min(left, x);
-                    right = Mathf.Max(right, x);
-                }
-
-                lines.Add(new PieceCutLine(number, new[]
-                {
-                    new Vector3(left * SpanShare, 0f, 0f), Vector3.zero, new Vector3(right * SpanShare, 0f, 0f),
-                }));
             }
 
             return lines.ToArray();
+        }
+
+        /// <summary>
+        /// The seam of one piece <paramref name="piece"/> (a prefab whose root is the piece: Art's hull fragments)
+        /// numbered <paramref name="number"/>; false when it has no CutPoint or no mesh.
+        /// </summary>
+        public static bool TryThrough(Transform piece, int number, out PieceCutLine line)
+        {
+            Transform cut = piece.Find(CutPointName);
+            if (cut == null || !piece.TryGetComponent(out MeshFilter filter) || filter.sharedMesh == null)
+            {
+                line = default;
+                return false;
+            }
+
+            Bounds bounds = filter.sharedMesh.bounds;
+            float left = 0f;
+            float right = 0f;
+            for (int corner = 0; corner < 8; corner++)
+            {
+                Vector3 local = bounds.center + Vector3.Scale(bounds.extents,
+                    new Vector3((corner & 1) == 0 ? -1f : 1f, (corner & 2) == 0 ? -1f : 1f,
+                        (corner & 4) == 0 ? -1f : 1f));
+                float x = cut.InverseTransformPoint(piece.TransformPoint(local)).x;
+                left = Mathf.Min(left, x);
+                right = Mathf.Max(right, x);
+            }
+
+            line = new PieceCutLine(number, new[]
+            {
+                new Vector3(left * SpanShare, 0f, 0f), Vector3.zero, new Vector3(right * SpanShare, 0f, 0f),
+            });
+            return true;
         }
     }
 }

@@ -55,7 +55,31 @@ namespace MoonProject.Gameplay
                 return $"'{SkeletonName}' has no mesh";
             }
 
-            var built = new SalvageSite(index, entry.Id, root, anchor.Radius, heart.position, entry.Gate,
+            return Stand(index, entry, derelict, root, heart.position, anchor.Radius,
+                new List<Collider> { skeletonCollider }, parent, terrain, tuning, catalog, halo, dragMaterial, pieces,
+                drags, out site);
+        }
+
+        /// <summary>
+        /// Reads a scrap field (0.5.5 §2) the caller has laid out under <paramref name="root"/>: pieces only (no
+        /// skeleton, heart or crew crate), each a Salvage_&lt;n&gt;_&lt;Material&gt; node.
+        /// </summary>
+        public static string BuildScrap(int index, SalvageSiteEntry entry, Transform root, float radius,
+            Transform parent, ITerrainQuery terrain, SalvageTuning tuning, SalvageCatalog catalog, Material halo,
+            PhysicsMaterial dragMaterial, List<SalvagePiece> pieces, List<SalvageDrag> drags, out SalvageSite site)
+        {
+            string problem = Stand(index, entry, true, root, root.position, radius, new List<Collider>(), parent,
+                terrain, tuning, catalog, halo, dragMaterial, pieces, drags, out site);
+            return problem ?? (site.Pieces.Count == 0 ? "the scrap field has no pieces" : null);
+        }
+
+        private static string Stand(int index, SalvageSiteEntry entry, bool derelict, Transform root, Vector3 heart,
+            float radius, List<Collider> wreck, Transform parent, ITerrainQuery terrain, SalvageTuning tuning,
+            SalvageCatalog catalog, Material halo, PhysicsMaterial dragMaterial, List<SalvagePiece> pieces,
+            List<SalvageDrag> drags, out SalvageSite site)
+        {
+            site = null;
+            var built = new SalvageSite(index, entry.Id, root, radius, heart, entry.Gate,
                 new ComboCounter(tuning.ChainWindow), entry.HeartUnderPieces);
             string problem = (derelict ? null : AddCrate(built, entry, root)) ?? AddProps(entry, root);
             if (problem != null)
@@ -76,7 +100,6 @@ namespace MoonProject.Gameplay
                 built.AttachPilot(lamp, tuning);
             }
 
-            var wreck = new List<Collider> { skeletonCollider };
             int firstDrag = drags.Count;
             for (int i = 0; i < root.childCount; i++)
             {

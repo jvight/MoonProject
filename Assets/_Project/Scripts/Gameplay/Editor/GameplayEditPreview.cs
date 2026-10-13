@@ -23,6 +23,9 @@ namespace MoonProject.Gameplay.Editor
     {
         public const string RootName = "[GameplayPreview]";
 
+        /// <summary>The scrap field's hull fragments stand under this child of the preview.</summary>
+        public const string ScrapFieldName = "ScrapField";
+
         static GameplayEditPreview()
         {
             EditorSceneManager.sceneOpened += OnSceneOpened;
@@ -77,6 +80,11 @@ namespace MoonProject.Gameplay.Editor
                         }
                     }
                 }
+            }
+
+            if (world is IScrapField field && field.Count > 0)
+            {
+                PlaceScrapField(field, salvage.Catalog, root.transform);
             }
 
             for (int i = 0; i < anchors.Count; i++)
@@ -176,6 +184,25 @@ namespace MoonProject.Gameplay.Editor
 
         /// <summary>The prefab at the anchor, facing its (level) forward as the game places it, hidden like the root.
         /// </summary>
+        /// <summary>Kestrel-3's cuttable hull fragments on the World's lane slots, under one hidden root.</summary>
+        private static void PlaceScrapField(IScrapField field, SalvageCatalog catalog, Transform root)
+        {
+            var scrap = new GameObject(ScrapFieldName).transform;
+            scrap.SetParent(root, false);
+            Hide(scrap);
+            for (int i = 0; i < field.Count; i++)
+            {
+                ScrapPlateInfo slot = field.Slot(i);
+                GameObject prefab = catalog.ScrapFragment(slot.Variant);
+                if (prefab != null)
+                {
+                    Transform piece = Object.Instantiate(prefab, slot.Position, slot.Rotation, scrap).transform;
+                    piece.localScale *= slot.Scale;
+                    Hide(piece);
+                }
+            }
+        }
+
         private static Transform Place(GameObject prefab, WorldAnchor anchor, Transform root)
         {
             Vector3 forward = anchor.Forward;

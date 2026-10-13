@@ -165,7 +165,10 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(salvage.Catalog.Sites.Count, sites, "every salvage site's wreck");
             Assert.AreEqual(salvage.Catalog.Derelicts.Count, derelicts, "every derelict on its micro-site");
             Assert.Greater(masts, 0, "the broken relay masts");
-            Assert.AreEqual(sites + derelicts + masts, root.transform.childCount, "and nothing else");
+            Transform scrap = root.transform.Find(GameplayEditPreview.ScrapFieldName);
+            Assert.IsNotNull(scrap, "Kestrel-3's scrap field on the World's lane slots");
+            Assert.AreEqual(((IScrapField)world).Count, scrap.childCount, "a hull fragment on every slot");
+            Assert.AreEqual(sites + derelicts + masts + 1, root.transform.childCount, "and nothing else");
             for (int i = 0; i < root.transform.childCount; i++)
             {
                 Transform piece = root.transform.GetChild(i);
