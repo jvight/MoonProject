@@ -10,13 +10,14 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// Ro's cassette tapes out in the world (docs/features/M3-05 "Cassettes"). A tape at an anchor rests sealed in
     /// Art's container there (0.5.5 §2: the ledge tape in the fallen SupplyPod, the terminus tape in Ro's TapeCase
-    /// beside Bell): once its seal is cut and the lid stands open (<see cref="SealedContainers"/>) the tape slides out
-    /// onto the ground at the container's front. The basin tape waits half-buried in the dust, leaning back against a
-    /// crater rim. A tape in view leans with its label toward open ground and a warm glint that reads from afar.
-    /// Driving within reach pops it out: it straightens up, spins a little and drifts into 07, flashes warm, joins the
-    /// <see cref="RadioProgram"/> and publishes <see cref="CassetteCollected"/>, then the game saves. A collected tape
-    /// never comes back. Anchored tapes need the World's anchors; the basin tape's spot comes from the
-    /// <see cref="CassetteSitePlanner"/>, clear of relics and friends. The frame loop allocates nothing.
+    /// beside Bell): once its seal is cut and the lid stands open (<see cref="SealedContainers"/>) the tape rises off
+    /// its ItemSocket to the open mouth, still in the container, never on the ground. The basin tape waits half-buried
+    /// in the dust, leaning back against a crater rim. A tape in view leans with its label toward open ground and a
+    /// warm glint that reads from afar. Driving within reach pops it out: it straightens up, spins a little and drifts
+    /// into 07, flashes warm, joins the <see cref="RadioProgram"/> and publishes <see cref="CassetteCollected"/>, then
+    /// the game saves. A collected tape never comes back. Anchored tapes need the World's anchors; the basin tape's
+    /// spot comes from the <see cref="CassetteSitePlanner"/>, clear of relics and friends. The frame loop allocates
+    /// nothing.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CassetteField : MonoBehaviour
@@ -52,7 +53,7 @@ namespace MoonProject.Gameplay
         private float[] _flightDuration = Array.Empty<float>();
         private PieceState[] _state = Array.Empty<PieceState>();
         private SealedContainer[] _containers = Array.Empty<SealedContainer>();
-        private float[] _slideStart = Array.Empty<float>();
+        private float[] _riseStart = Array.Empty<float>();
         private SealedContainers _sealed;
         private bool _glancing;
         private bool _initialized;
@@ -63,7 +64,7 @@ namespace MoonProject.Gameplay
             Flying = 1,
             Collected = 2,
             Sealed = 3,
-            Sliding = 4,
+            Rising = 4,
         }
 
         /// <summary>Cassettes in the world (collected or not).</summary>
@@ -223,7 +224,7 @@ namespace MoonProject.Gameplay
         {
             int count = _sites.Length;
             _containers = new SealedContainer[count];
-            _slideStart = new float[count];
+            _riseStart = new float[count];
             _pieces = new Transform[count];
             _rest = new Vector3[count];
             _restRotation = new Quaternion[count];
@@ -245,9 +246,7 @@ namespace MoonProject.Gameplay
                         return problem;
                     }
 
-                    Transform root = _containers[i].Root;
-                    spot = _containers[i].ItemSocket.position + root.forward * _tuning.SlideOut;
-                    spot.y = site.Position.y;
+                    spot = _containers[i].ItemSocket.position + Vector3.up * (_tuning.PresentRise - _tuning.RestHeight);
                 }
 
                 _rest[i] = spot + Vector3.up * _tuning.RestHeight;
@@ -324,14 +323,14 @@ namespace MoonProject.Gameplay
                     case PieceState.Sealed:
                         if (_containers[i].StandsOpen)
                         {
-                            _state[i] = PieceState.Sliding;
-                            _slideStart[i] = Time.time;
+                            _state[i] = PieceState.Rising;
+                            _riseStart[i] = Time.time;
                             _pieces[i].gameObject.SetActive(true);
                         }
 
                         break;
-                    case PieceState.Sliding:
-                        Slide(i);
+                    case PieceState.Rising:
+                        Rise(i);
                         break;
                     case PieceState.Waiting:
                     {
@@ -361,10 +360,12 @@ namespace MoonProject.Gameplay
             UpdateGlance(nearest);
         }
 
-        /// <summary>The tape slides out of its opened container to where it then waits for 07.</summary>
-        private void Slide(int index)
+        /// <summary>
+        /// The tape rises off its opened container's socket to the open mouth, where it then waits for 07.
+        /// </summary>
+        private void Rise(int index)
         {
-            float t = Mathf.Clamp01((Time.time - _slideStart[index]) / _tuning.SlideSeconds);
+            float t = Mathf.Clamp01((Time.time - _riseStart[index]) / _tuning.PresentSeconds);
             _pieces[index].SetPositionAndRotation(
                 Vector3.Lerp(_containers[index].ItemSocket.position, _rest[index], Ease.OutCubic(t)),
                 _restRotation[index]);

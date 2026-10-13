@@ -142,8 +142,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             yield return SealCut.Hold(this, _fixture.Gameplay, tapeCase, "Ro's tape case");
             yield return Waits.Until(() => _fixture.Events.CassetteCollected.Count > 0,
-                _fixture.CassetteTuning.SlideSeconds + _fixture.CassetteTuning.FlightDuration + 1f);
-            Assert.AreEqual(1, _fixture.Events.CassetteCollected.Count, "cut open, the tape slides out and drifts in");
+                _fixture.CassetteTuning.PresentSeconds + _fixture.CassetteTuning.FlightDuration + 1f);
+            Assert.AreEqual(1, _fixture.Events.CassetteCollected.Count,
+                "cut open, the tape rises in its case and drifts in");
             Assert.AreEqual(AfterDark, _fixture.Events.CassetteCollected[0].Value.CassetteId);
 
             _fixture.Rover.Place(new Vector3(from.x, 0f, from.z), 0f);
@@ -185,7 +186,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(0, _fixture.Events.CassetteCollected.Count, "sealed in, it cannot drift to 07");
             yield return SealCut.Hold(this, _fixture.Gameplay, pod, "the supply pod");
             yield return Waits.Until(() => _fixture.Events.CassetteCollected.Count > 0,
-                _fixture.CassetteTuning.SlideSeconds + _fixture.CassetteTuning.FlightDuration + 1f);
+                _fixture.CassetteTuning.PresentSeconds + _fixture.CassetteTuning.FlightDuration + 1f);
             Assert.AreEqual(SlowOrbit, _fixture.Events.CassetteCollected[0].Value.CassetteId);
         }
 

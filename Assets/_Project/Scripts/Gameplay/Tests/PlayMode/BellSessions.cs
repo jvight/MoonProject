@@ -86,7 +86,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture.Rover.Place(Flat(tape.Position + tape.Facing * 1.5f), 0f);
             SealedContainer tapeCase = _fixture.Gameplay.Cassettes.Container(IndexOf(AfterDark));
             yield return SealCut.Hold(this, _fixture.Gameplay, tapeCase, "Ro's tape case");
-            yield return new WaitForSeconds(_fixture.CassetteTuning.SlideSeconds +
+            yield return new WaitForSeconds(_fixture.CassetteTuning.PresentSeconds +
                                             _fixture.CassetteTuning.FlightDuration + 1f);
             Assert.AreEqual(AfterDark, _fixture.Events.CassetteCollected[0].Value.CassetteId);
             Assert.AreEqual(1, bell.Progress.ItemsCollected, "the tape is her fourth part");

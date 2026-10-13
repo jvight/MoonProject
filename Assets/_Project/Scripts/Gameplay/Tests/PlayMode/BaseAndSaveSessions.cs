@@ -303,12 +303,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(1, opens.Count, "the lid stands open");
             Assert.AreEqual(ContainerKind.Crate, opens[0].Kind);
             yield return Waits.Until(() => field.IsResting(0), _fixture.ProgressionTuning.PartAppearSeconds + 1f);
-            Assert.IsTrue(field.IsResting(0), "the coil slides out onto the ground at the crate's front");
-            Assert.Greater(Vector3.Dot(Flat(field.RestPosition(0) - crate.ItemSocket.position), crate.Root.forward),
-                0f, "out in front, not inside");
+            Assert.IsTrue(field.IsResting(0), "the coil rises to the crate's open mouth");
+            Assert.Less(Vector3.Distance(field.RestPosition(0),
+                    crate.ItemSocket.position + Vector3.up * _fixture.ProgressionTuning.PartPresentRise), 1e-3f,
+                "it rests in the crate, on its socket, never on the ground");
             yield return null;
             Assert.IsNull(gameplay.Containers.Candidate, "an open crate has nothing more to cut");
-            _fixture.Rover.Place(field.RestPosition(0), 0f);
             yield return PickupPress.Take(this, _fixture.Gameplay, 2f, "the coil");
             yield return Waits.Until(() => found.Count > 0, 5f);
             Assert.AreEqual("Part_TowerCoil", found[0].PartId);

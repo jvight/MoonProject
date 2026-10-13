@@ -1036,7 +1036,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>
         /// The tower's component <paramref name="index"/> rests sealed in Art's container in <paramref name="site"/>'s
         /// open heart (0.5.5 §2): round the wreck to the container's front and hold E to cut its seal; the lid swings
-        /// open and the part slides out. Then to open ground beside it, ease up and press E: it spirals into 07 (P1).
+        /// open and the part rises to its open mouth. Press E from where 07 stands: it spirals into 07 (P1).
         /// </summary>
         private IEnumerator PickUpPartInTheHeart(SalvageSite site, int index)
         {
@@ -1054,14 +1054,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Until(() => container.Opened, SealCutTimeout, $"held E cuts the seal of {part}'s container");
             Release(_keyboard.eKey);
             yield return Until(() => field.IsResting(index), _gameplay.Progression.Tuning.PartAppearSeconds +
-                _gameplay.Cargo.ContainerLidSeconds + 2f, $"{part} slides out of its container");
+                _gameplay.Cargo.ContainerLidSeconds + 2f, $"{part} rises to its container's open mouth");
             Capture("03-container-" + part);
-            Vector3 rest = field.RestPosition(index);
-            Assert.IsTrue(OpenSpotBy(rest, _ => true, out Vector3 park, out Vector3 outward),
-                $"open ground beside {part} in the heart of {site.Id}");
-            yield return CircleTo(site, Flat(rest + outward * CutLineUp), 0f);
-            yield return DriveTo(Flat(rest + outward * CutLineUp), 2f, 0.6f, 40f, $"a line-up facing {part}");
-            yield return DriveTo(park, 1f, 0.35f, 30f, $"{part} in the heart");
             yield return PickupPress.Take(this, _gameplay, 4f, part);
             yield return Until(() => _gameplay.TowerParts.StateOf(index) == TowerPartState.Carried, 8f,
                 $"{part} spirals into 07");
@@ -2165,8 +2159,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Until(() => tapeCase.Opened, SealCutTimeout, "held E cuts the seal of Ro's tape case");
             Release(_keyboard.eKey);
             yield return Until(() => Collected(AfterDark), _gameplay.Cargo.ContainerLidSeconds +
-                _gameplay.Cassettes.Tuning.SlideSeconds + 6f,
-                "Lumen After Dark, Vol. 1 slides out and drifts into 07");
+                _gameplay.Cassettes.Tuning.PresentSeconds + 6f,
+                "Lumen After Dark, Vol. 1 rises in its case and drifts into 07");
             yield return Until(() => bell.Progress.ItemsCollected == 1, 1f,
                 "her tape lights her fourth lamp: it is the fourth thing she needs");
             Capture("19b-terminus");

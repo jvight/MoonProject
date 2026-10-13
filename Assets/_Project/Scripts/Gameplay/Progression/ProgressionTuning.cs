@@ -194,8 +194,9 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds a component takes to ease into view once it is there to be found.")]
         [Range(0.1f, 4f)] [SerializeField] private float _partAppearSeconds = 1.2f;
 
-        [Tooltip("Metres a component slides out of its opened container, onto the ground at its front (0.5.5 §2).")]
-        [Range(0f, 2f)] [SerializeField] private float _partSlideOut = 0.55f;
+        [Tooltip("Metres a component rises off its container's ItemSocket toward the open mouth once the lid stands " +
+                 "open, where 07 takes it: never onto the ground (0.5.5 §2).")]
+        [Range(0f, 0.5f)] [SerializeField] private float _partPresentRise = 0.12f;
 
         [Tooltip("Seconds a component glides from 07's back into the tower's port hopper.")]
         [Range(0.3f, 5f)] [SerializeField] private float _partFeedSeconds = 1.6f;
@@ -320,7 +321,7 @@ namespace MoonProject.Gameplay
         public IReadOnlyList<TowerPart> TowerParts => _towerParts;
 
         public float PartAppearSeconds => _partAppearSeconds;
-        public float PartSlideOut => _partSlideOut;
+        public float PartPresentRise => _partPresentRise;
 
         public float PartFeedSeconds => _partFeedSeconds;
 
