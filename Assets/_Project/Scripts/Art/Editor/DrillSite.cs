@@ -22,6 +22,21 @@ namespace MoonProject.Art.Editor
 
         private static readonly Vector3 PoleTop = new Vector3(-2.65f, 2.45f, 2.7f);
 
+        // The haul sled bot, stalled with its load past the cable reel at the rig's right, its open side door toward
+        // the way in: clear of the bore hole, the lying derrick and the drill's pieces.
+        private static readonly Vector3 HaulBotSeat = new Vector3(4.7f, 0f, -1.2f);
+        private const float HaulBotYaw = 70f;
+
+        /// <summary>
+        /// Where the haul sled bot (Derelict_HaulBot) stands in the drill site (site space): its root on the ground,
+        /// +Z the sled's forward.
+        /// </summary>
+        public static Vector3 HaulBotHost(out Quaternion rotation)
+        {
+            rotation = Quaternion.Euler(0f, HaulBotYaw, 0f);
+            return HaulBotSeat;
+        }
+
         public static SiteRecipe Create()
         {
             var site = new SiteRecipe();

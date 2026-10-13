@@ -300,7 +300,7 @@ namespace MoonProject.Gameplay
                 !_workshop.Initialize(services, Upgrades, _salvage.Catalog, _tower, Power, Blueprints, lights,
                     Equipment) ||
                 !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _salvage, _home, Containers) ||
-                !_cassettes.Initialize(services, Radio, KeepClearOfCassettes(), Containers) ||
+                !_cassettes.Initialize(services, Radio, _salvage, Containers) ||
                 !_logs.Initialize(services) ||
                 !_sonar.Initialize(services, _relics, _friends, _salvage, abilities, Power) ||
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
@@ -777,24 +777,6 @@ namespace MoonProject.Gameplay
             Radio.Restore(data);
             _cassettes.SyncCollected();
             _shelf.Sync();
-        }
-
-        /// <summary>Every salvage site, friend site and friend part: a basin cassette keeps clear of them.</summary>
-        private List<Vector3> KeepClearOfCassettes()
-        {
-            var points = new List<Vector3>();
-            foreach (SalvageSite site in _salvage.Sites)
-            {
-                points.Add(site.Position);
-            }
-
-            foreach (Friend friend in _friends.Friends)
-            {
-                points.Add(friend.Site.Position);
-                points.AddRange(friend.Site.Parts);
-            }
-
-            return points;
         }
 
         private void RestoreRelics(RelicsSaveData data)

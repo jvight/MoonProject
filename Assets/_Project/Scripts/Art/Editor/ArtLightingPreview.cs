@@ -783,8 +783,6 @@ namespace MoonProject.Art.Editor
         private static CameraPoseSet DerelictsScene(TemporaryObjects temporary)
         {
             var poses = new List<CameraPose>();
-            Transform hut = Instantiate(RelayModelBuilder.HutName, temporary, ArtPaths.RelayFolder).transform;
-            hut.SetPositionAndRotation(new Vector3(-1.9f, 0f, 0.4f), Quaternion.Euler(0f, 90f, 0f));
             (string name, string blueprint, int count)[] hosts =
             {
                 (DerelictBuilder.ElderName, "CellPack", 3), (DerelictBuilder.MuleName, "WarmHeadlamp", 2),
@@ -804,6 +802,8 @@ namespace MoonProject.Art.Editor
 
                 if (hosts[h].name == DerelictBuilder.ElderName)
                 {
+                    Transform hut = Instantiate(RelayModelBuilder.HutName, temporary, ArtPaths.RelayFolder).transform;
+                    hut.SetParent(Descendant(host, DerelictBuilder.HutSocketName), false);
                     Transform tape = Instantiate(LootContainerBuilder.TapeCaseName, temporary, ArtPaths.PropFolder)
                         .transform;
                     tape.SetParent(Descendant(host, DerelictBuilder.TapeSocketName), false);
@@ -1359,6 +1359,12 @@ namespace MoonProject.Art.Editor
                 Quaternion facing = Quaternion.LookRotation(forward);
                 GameObject site = Instantiate(SiteModelBuilder.SiteName(ids[i]), temporary, ArtPaths.SitesFolder);
                 site.transform.SetPositionAndRotation(anchor, facing);
+                if (ids[i] == "drill")
+                {
+                    Transform bot = Instantiate(DerelictBuilder.HaulBotName, temporary, ArtPaths.PropFolder).transform;
+                    bot.SetParent(Descendant(site.transform, SiteModelBuilder.HaulBotSocketName), false);
+                }
+
                 if (pickedClean)
                 {
                     foreach (Transform child in site.transform)

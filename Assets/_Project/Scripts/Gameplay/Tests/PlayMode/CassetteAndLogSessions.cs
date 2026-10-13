@@ -40,7 +40,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator BasinCassette_PopsOutInto07_JoinsTheRadio_AndStaysCollected()
+        public IEnumerator DustAndHoney_RestsInRosCaseOn06_CutIt_JoinsTheRadio_AndStaysCollected()
         {
             string slot = BootstrapHarness.NewTestSlot();
             _fixture = GameplayFixture.Boot(_controls, slot);
@@ -54,31 +54,30 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             CassetteField field = _fixture.Gameplay.Cassettes;
             int basin = IndexOf(field, DustAndHoney);
+            SalvageSite elder = _fixture.Gameplay.Salvage.FindDerelict(WorldAnchorIds.Micro06);
+            Assert.IsNotNull(elder, "06 stands at micro.06 (0.5.5 §1.7)");
+            SealedContainer tapeCase = field.Container(basin);
+            Assert.AreEqual(ContainerKind.Case, tapeCase.Kind, "in Ro's tape case (0.5.5 §2)");
+            Assert.AreSame(elder.Root.Find("TapeCaseSocket"), tapeCase.Root.parent, "set on 06's TapeCaseSocket");
+            Assert.IsFalse(field.IsWaiting(basin), "nothing lies loose on the ground");
+
             CassetteSite site = field.Site(basin);
-            Vector2 band = _fixture.CassetteTuning.Distance;
-            Assert.That(SurfaceRules.HorizontalDistance(site.Position, Vector3.zero), Is.InRange(band.x, band.y));
-            foreach (SalvageSite wreck in _fixture.Gameplay.Salvage.Sites)
-            {
-                Assert.GreaterOrEqual(SurfaceRules.HorizontalDistance(site.Position, wreck.Position),
-                    _fixture.CassetteTuning.Clearance, "clear of every salvage site");
-            }
-
-            Friend tilly = _fixture.Gameplay.Friends.Find("tilly");
-            Assert.GreaterOrEqual(SurfaceRules.HorizontalDistance(site.Position, tilly.Site.Position),
-                _fixture.CassetteTuning.Clearance, "clear of Tilly");
-            Assert.IsTrue(field.IsWaiting(basin));
-
             Vector3 approach = site.Position + site.Facing * 8f;
             _fixture.Rover.Place(new Vector3(approach.x, 0f, approach.z), Yaw(approach, site.Position));
             yield return null;
             _fixture.Rover.Aim(site.Position + site.Facing * 2.5f + Vector3.up * 1.2f, site.Position);
-            _fixture.Capture("20-cassette-waiting");
-            Assert.AreEqual(0, _fixture.Events.CassetteCollected.Count, "8 m away it waits");
+            _fixture.Capture("20-cassette-case-on-06");
+            Assert.AreEqual(0, _fixture.Events.CassetteCollected.Count, "8 m away it waits, sealed");
 
-            _fixture.Rover.Place(new Vector3(site.Position.x, 0f, site.Position.z) + site.Facing * 2f,
-                Yaw(approach, site.Position));
-            yield return new WaitForSeconds(_fixture.CassetteTuning.FlightDuration + 1f);
-            Assert.AreEqual(1, _fixture.Events.CassetteCollected.Count, "driving through pops it out into 07");
+            Vector3 near = site.Position + site.Facing * 1.6f;
+            _fixture.Rover.Place(new Vector3(near.x, 0f, near.z), Yaw(approach, site.Position));
+            yield return null;
+            Assert.AreEqual(0, _fixture.Events.CassetteCollected.Count, "beside it, the case stays shut");
+            yield return SealCut.Hold(this, _fixture.Gameplay, tapeCase, "Ro's case on 06");
+            yield return Waits.Until(() => _fixture.Events.CassetteCollected.Count > 0,
+                _fixture.CassetteTuning.PresentSeconds + _fixture.CassetteTuning.FlightDuration + 1f);
+            Assert.AreEqual(1, _fixture.Events.CassetteCollected.Count,
+                "cut open, the tape rises in its case and drifts in");
             CassetteCollected collected = _fixture.Events.CassetteCollected[0].Value;
             Assert.AreEqual(DustAndHoney, collected.CassetteId);
             Assert.AreEqual(1, collected.Collected);

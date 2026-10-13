@@ -12,8 +12,8 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// mast pads facing home, linked like the real chain (relay.0 within the dark tower's reach, relay.1 only once
     /// the tower's first level widens home, relay.2 through relay.0, relay.3 through relay.2), the five salvage
     /// sites (the depot just ahead of home; each approached heading +Z, so a test parked south of a heart faces it
-    /// over the wreck's pieces) and Kestrel-3's furrow leading to its site. Registers ITerrainQuery,
-    /// IWorldLayout and IWorldAnchors.
+    /// over the wreck's pieces), Kestrel-3's furrow leading to its site, and the derelicts' micro-sites (06 beside
+    /// relay.2's pad, the Mule on the way to the canyon). Registers ITerrainQuery, IWorldLayout and IWorldAnchors.
     /// </summary>
     public sealed class FlatWorldSystem : MonoBehaviour, IGameSystem, ITerrainQuery, IWorldLayout, IWorldAnchors
     {
@@ -48,6 +48,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Site("lander", 200f, 120f),
             new WorldAnchor(WorldAnchorIds.KestrelTrail, new Vector3(-45f, 0f, 70f),
                 new Vector3(25f, 0f, 100f).normalized, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.Micro06, new Vector3(-222f, 0f, 72f), Vector3.right, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.MicroMule, new Vector3(-150f, 0f, 30f), West, AnchorRadius),
         };
 
         public Rect PlayableArea

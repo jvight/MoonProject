@@ -376,6 +376,9 @@ namespace MoonProject.Rover
             + "(0.5.5 §1.2).")]
         [SerializeField] private ScanLookSettings _scanLook = new ScanLookSettings();
 
+        [Tooltip("07's one quiet look at its elder 06 by relay.2's hut, the first time it comes near (0.5.5 §1.7).")]
+        [SerializeField] private ElderGlanceSettings _elderGlance = new ElderGlanceSettings();
+
         [Header("07 speaks machine (docs/design/feel-pass.md §7.2)")]
         [Tooltip("When 07 chirps (cooldowns) and how its eye, antenna and head move with each syllable; the full "
             + "dock's sigh.")]
@@ -690,6 +693,8 @@ namespace MoonProject.Rover
         public CutFocusSettings CutFocus => _cutFocus;
 
         public ScanLookSettings ScanLook => _scanLook;
+
+        public ElderGlanceSettings ElderGlance => _elderGlance;
 
         public ChirpSettings Chirp => _chirp;
 

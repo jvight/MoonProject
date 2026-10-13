@@ -2332,16 +2332,22 @@ namespace MoonProject.Gameplay.PlayModeTests
             float distance = SurfaceRules.HorizontalDistance(_rover.Position, tape.Position);
             Vector3 stand = tape.Position + tape.Facing * 6f;
             yield return DriveTo(new Vector3(stand.x, 0f, stand.z), 2f, 0.8f, 90f, "Bell's signal");
-            Review(tape.Position + tape.Facing * 3f + Vector3.up * 1.4f, tape.Position, "28-basin-tape-tucked");
-            yield return DriveTo(new Vector3(tape.Position.x, 0f, tape.Position.z), 1f, 0.5f, 30f, "the tape");
-            yield return Until(() => Collected(DustAndHoney), 6f, "the tape pops out of the dust into 07");
+            Review(tape.Position + tape.Facing * 3f + Vector3.up * 1.4f, tape.Position, "28-tape-case-on-06");
+            SealedContainer tapeCase = _gameplay.Cassettes.Container(CassetteIndex(DustAndHoney));
+            Vector3 front = tapeCase.CutPoint.position + tapeCase.Root.forward * SealStandOff;
+            yield return DriveTo(Flat(front), 1f, 0.35f, 30f, "the seal of Ro's case on 06");
+            Press(_keyboard.eKey);
+            yield return Until(() => tapeCase.Opened, SealCutTimeout, "held E cuts the seal of Ro's case on 06");
+            Release(_keyboard.eKey);
+            yield return Until(() => Collected(DustAndHoney), _gameplay.Cargo.ContainerLidSeconds +
+                _gameplay.Cassettes.Tuning.PresentSeconds + 6f, "Dust & Honey rises in its case and drifts into 07");
             yield return Until(() => _events.BellSignalFound.Count > 0, 2f, "Bell says so");
             Assert.IsTrue(Ticker(BellSignals.FoundLine0), "Bell says: told you so");
             Assert.AreEqual(2, _gameplay.Shelf.Shown, "both tapes stand on her rack");
             Transform corner = _gameplay.Friends.Find(BellId).Home;
             Review(_gameplay.Shelf.transform.position + _gameplay.Shelf.transform.forward * 2.2f + Vector3.up * 1.3f,
                 _gameplay.Shelf.transform.position + Vector3.up * 0.6f, "29-tape-rack");
-            End($"Follow Bell's signal to the basin tape ({distance:F0} m)",
+            End($"Follow Bell's signal to Ro's case on 06 ({distance:F0} m)",
                 $"Dust & Honey on the rack next to Vol. 1 by {corner.name}");
         }
 
