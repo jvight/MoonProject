@@ -38,17 +38,18 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// the duck home, where the jammed belly lift asks for its stitch (M3-19): stitch it from beside it, ride up with
     /// the duck beside 07 and place it on the keepsake shelf: the first memory (step 4), then ride down facing out.
     /// Tilly spots Bell's light across the chasm (P2): drive to the lip, look across with no way over, scan the three
-    /// Hover-Jump fragments of Kenji's crashed test jumper there, restore the mouth relay and hop home, then back to
-    /// the garage, where the transformer now shows. Find the Rover Bay still asleep (no pad, no prompt, a "not yet"
+    /// Hover-Jump fragments of Kenji's crashed test jumper there, restore the mouth relay, cut Ro's case on 06 beside
+    /// it (Dust & Honey) and scan the three Cell Pack II fragments in 06's battery bay, and hop home, then back to the
+    /// garage, where the transformer now shows. Find the Rover Bay still asleep (no pad, no prompt, a "not yet"
     /// answer on approach), hand in the transformer and craft tower level 2 to wake it (its plotter draws the learned
-    /// sheets), find that holding Jump does nothing yet, craft Hover-Jump in the bay through the same hold and the
-    /// Cargo Cradle from its blueprint, dig the gnome from the garage, lift it into the rack with the
+    /// sheets), find that holding Jump does nothing yet, craft Hover-Jump in the bay through the same hold, the Cargo
+    /// Cradle and Cell Pack II from their blueprints, dig the gnome from the garage, lift it into the rack with the
     /// tether button, drive home, ride the lift up and set it down on the keepsake shelf from the rack, and take the
     /// first leap. Then Bell (M3-04/05): drive up the mouth lane, leap the chasm, find her lying at the terminus with
     /// Ro's log cache and her tape, gather her three parts from the alcoves, repair her (the tape slides in, her dial
     /// wakes, she stands), drive home by the one-way exit while she makes her own way, be greeted by her, turn her dial
-    /// through every station, and follow her first signal to Ro's case on 06, whose tape goes onto her rack;
-    /// the case open, scan 06's three Cell Pack II fragments in its battery bay. Then the relay network
+    /// through every station, and follow her first signal back into the canyon to Ro's supply pod on the ledge,
+    /// whose tape (Slow Orbit) goes onto her rack, and hop home from the terminus relay. Then the relay network
     /// (M3-06): pick up the mound relay's part, restore it at its foot with materials and watch it come online, pick up
     /// the relay spare on its pad (level 3's part), drive out past the tower's reach and find home still reaching 07
     /// there, then radio-hop home from the mast's pad and back, and rest on the dock: the dock's evening opens, the
@@ -513,6 +514,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ScanTheJumperAtTheLip();
             yield return ExpectStep(ProgressionKeys.NextBayWake, "the chasm is seen: the bay waits for the tower");
             yield return RestoreTheMouthRelay();
+            yield return CutRosCaseOnSix();
+            yield return ScanSixsCellPack();
             yield return ChargeOnTheRing(2);
             yield return HopFrom(WorldAnchorIds.RelayPrefix + 2, StationReach.HomeId);
             yield return ChargeAtTheDock("home from the mouth relay");
@@ -524,6 +527,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return BuyHoverJumpAtTheBench();
             yield return ExpectStep(ProgressionKeys.NextPowerPart, "a kit is fitted: only the targets speak now");
             yield return CraftTheCargoCradle();
+            yield return CraftTheCellPack();
             yield return Excavate(garage, gnome);
             yield return StowInTheCradle(gnome);
             yield return CarryHomeInTheCradle(garage, gnome);
@@ -542,7 +546,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ChargeAtTheDock("home from the canyon");
             yield return TurnBellsDial();
             yield return FollowBellsSignal();
-            yield return ScanSixsCellPack();
             yield return ExpectStep(ProgressionKeys.NextPowerPart, "Bell is home: the tower still needs its last part");
             Assert.IsTrue(_gameplay.TowerParts.NeedsPart(Tower, 3), "level 3 waits for the relay spare");
             yield return ToTheMoundRelay();
@@ -553,7 +556,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return RestOnTheDock();
             AssertReadyForTheChart();
             yield return StockUpForTheChart();
-            yield return CraftTheCellPack();
             yield return BuyTowerLevel(3);
             yield return LookAtTheChart();
             yield return Until(
@@ -1244,8 +1246,30 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Ro's case on 06 is open (Bell's signal led 07 to it): 06's battery bay holds Cell Pack II's three fragments,
-        /// which the sealed case beside them kept unscannable until now (0.5.5 §1.2: a cut comes before a scan).
+        /// The mouth relay lit, 06 rests beside its hut: Ro's case on its flank glows by the battery bay, and one held
+        /// press cuts it (0.5.5 §1.2: a cut comes before a scan); Dust & Honey drifts into 07.
+        /// </summary>
+        private IEnumerator CutRosCaseOnSix()
+        {
+            Begin();
+            CassetteSite tape = _gameplay.Cassettes.Site(CassetteIndex(DustAndHoney));
+            Vector3 stand = tape.Position + tape.Facing * 6f;
+            yield return DriveTo(new Vector3(stand.x, 0f, stand.z), 2f, 0.8f, 90f, "06 beside the mouth relay's hut");
+            Review(tape.Position + tape.Facing * 3f + Vector3.up * 1.4f, tape.Position, "28-tape-case-on-06");
+            SealedContainer tapeCase = _gameplay.Cassettes.Container(CassetteIndex(DustAndHoney));
+            Vector3 front = tapeCase.CutPoint.position + tapeCase.Root.forward * SealStandOff;
+            yield return DriveTo(Flat(front), 1f, 0.35f, 30f, "the seal of Ro's case on 06");
+            Press(_keyboard.eKey);
+            yield return Until(() => tapeCase.Opened, SealCutTimeout, "held E cuts the seal of Ro's case on 06");
+            Release(_keyboard.eKey);
+            yield return Until(() => Collected(DustAndHoney), _gameplay.Cargo.ContainerLidSeconds +
+                _gameplay.Cassettes.Tuning.PresentSeconds + 6f, "Dust & Honey rises in its case and drifts into 07");
+            End("Cut Ro's case on 06", "Dust & Honey, and the battery bay beside it free to scan");
+        }
+
+        /// <summary>
+        /// Ro's case on 06 is open: 06's battery bay holds Cell Pack II's three fragments, which the sealed case beside
+        /// them kept unscannable until it was cut.
         /// </summary>
         private IEnumerator ScanSixsCellPack()
         {
@@ -1255,7 +1279,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 _ => true);
             Assert.IsTrue(_gameplay.Blueprints.IsPinned(CellPack), "the set completes Cell Pack II's blueprint");
             Capture("29b-sixs-cell-pack-scanned");
-            End("Scan 06's three Cell Pack II fragments", "the bay draws its sheet while 07 drives home");
+            End("Scan 06's three Cell Pack II fragments", "its sheet waits for the bay to wake");
         }
 
         /// <summary>
@@ -1391,15 +1415,13 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// The salvage of the rest of the basin, which the golden path skips: the stock is topped up to Cell Pack II and
-        /// the tower's third level.
+        /// The salvage of the rest of the basin, which the golden path skips: the stock is topped up to the tower's
+        /// third level.
         /// </summary>
         private IEnumerator StockUpForTheChart()
         {
             Begin();
-            Recipe tower = _gameplay.Upgrades.Find(Tower).Levels[2].Recipe;
-            Recipe pack = _gameplay.Upgrades.Find(CellPack).Levels[0].Recipe;
-            var need = new Recipe(tower.Metal + pack.Metal, tower.Wiring + pack.Wiring, tower.Optics + pack.Optics);
+            Recipe need = _gameplay.Upgrades.Find(Tower).Levels[2].Recipe;
             IMaterialStock stock = _gameplay.Materials;
             var topUp = new Recipe(Mathf.Max(0, need.Metal - stock.Metal), Mathf.Max(0, need.Wiring - stock.Wiring),
                 Mathf.Max(0, need.Optics - stock.Optics));
@@ -2472,37 +2494,47 @@ namespace MoonProject.Gameplay.PlayModeTests
             End("Turn Bell's dial through every station", string.Join(" -> ", heard));
         }
 
+        /// <summary>
+        /// Bell's first signal: Ro's two other tapes home, the next one waits in the supply pod on the canyon's ledge.
+        /// Hop to the terminus relay, drive the canyon up onto the ledge, cut the pod's seal and take Slow Orbit; Bell
+        /// says so and it stands on her rack. Then back to the terminus pad and hop home.
+        /// </summary>
         private IEnumerator FollowBellsSignal()
         {
             Begin();
             Assert.Greater(_events.BellSignalPicked.Count, 0, "home and listening, Bell picks up a signal");
             BellSignalPicked picked = _events.BellSignalPicked[_events.BellSignalPicked.Count - 1].Value;
             Assert.AreEqual(BellSignalTarget.Cassette, picked.Target, "the nearest reachable tape");
-            CassetteSite tape = _gameplay.Cassettes.Site(CassetteIndex(DustAndHoney));
-            Assert.Less(SurfaceRules.HorizontalDistance(picked.Position, tape.Position), 0.01f, "Dust & Honey");
+            CassetteSite tape = _gameplay.Cassettes.Site(CassetteIndex(SlowOrbit));
+            Assert.Less(SurfaceRules.HorizontalDistance(picked.Position, tape.Position), 0.01f,
+                "Slow Orbit on the ledge (Dust & Honey came home from 06)");
             Assert.IsTrue(Ticker("ticker.bell.signal"), "Bell's picking something up... bearing");
             Vector3 home = _context.Get<IWorldLayout>().BasePosition;
             Review(home + Vector3.up * 3f, tape.Position + Vector3.up * 12f, "27-bell-signal-pillar");
-            float distance = SurfaceRules.HorizontalDistance(_rover.Position, tape.Position);
+            yield return HopBetween(StationReach.HomeId, WorldAnchorIds.RelayPrefix + 3);
+            float travelled = 0f;
             Vector3 stand = tape.Position + tape.Facing * 6f;
-            yield return DriveTo(new Vector3(stand.x, 0f, stand.z), 2f, 0.8f, 90f, "Bell's signal");
-            Review(tape.Position + tape.Facing * 3f + Vector3.up * 1.4f, tape.Position, "28-tape-case-on-06");
-            SealedContainer tapeCase = _gameplay.Cassettes.Container(CassetteIndex(DustAndHoney));
-            Vector3 front = tapeCase.CutPoint.position + tapeCase.Root.forward * SealStandOff;
-            yield return DriveTo(Flat(front), 1f, 0.35f, 30f, "the seal of Ro's case on 06");
+            yield return DriveAlong(stand, "Bell's signal on the ledge", value => travelled = value);
+            Review(tape.Position + tape.Facing * 3f + Vector3.up * 1.4f, tape.Position, "28-supply-pod-on-the-ledge");
+            SealedContainer pod = _gameplay.Cassettes.Container(CassetteIndex(SlowOrbit));
+            Vector3 front = pod.CutPoint.position + pod.Root.forward * SealStandOff;
+            yield return DriveTo(Flat(front), 1f, 0.35f, 30f, "the seal of Ro's supply pod");
             Press(_keyboard.eKey);
-            yield return Until(() => tapeCase.Opened, SealCutTimeout, "held E cuts the seal of Ro's case on 06");
+            yield return Until(() => pod.Opened, SealCutTimeout, "held E cuts the seal of Ro's supply pod");
             Release(_keyboard.eKey);
-            yield return Until(() => Collected(DustAndHoney), _gameplay.Cargo.ContainerLidSeconds +
-                _gameplay.Cassettes.Tuning.PresentSeconds + 6f, "Dust & Honey rises in its case and drifts into 07");
+            yield return Until(() => Collected(SlowOrbit), _gameplay.Cargo.ContainerLidSeconds +
+                _gameplay.Cassettes.Tuning.PresentSeconds + 6f, "Slow Orbit rises in its pod and drifts into 07");
             yield return Until(() => _events.BellSignalFound.Count > 0, 2f, "Bell says so");
             Assert.IsTrue(Ticker(BellSignals.FoundLine0), "Bell says: told you so");
-            Assert.AreEqual(2, _gameplay.Shelf.Shown, "both tapes stand on her rack");
+            Assert.AreEqual(3, _gameplay.Shelf.Shown, "all three of Ro's tapes stand on her rack");
             Transform corner = _gameplay.Friends.Find(BellId).Home;
             Review(_gameplay.Shelf.transform.position + _gameplay.Shelf.transform.forward * 2.2f + Vector3.up * 1.3f,
                 _gameplay.Shelf.transform.position + Vector3.up * 0.6f, "29-tape-rack");
-            End($"Follow Bell's signal to Ro's case on 06 ({distance:F0} m)",
-                $"Dust & Honey on the rack next to Vol. 1 by {corner.name}");
+            RelayMast terminus = _gameplay.Relays.Masts[3];
+            yield return DriveAlong(Flat(terminus.Anchor.Position), "the terminus relay's pad", null);
+            yield return HopBetween(WorldAnchorIds.RelayPrefix + 3, StationReach.HomeId);
+            End($"Follow Bell's signal to Ro's supply pod on the ledge ({travelled:F0} m in the canyon)",
+                $"Slow Orbit on the rack by {corner.name}; home by radio-hop");
         }
 
         /// <summary>
@@ -2694,16 +2726,14 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Into the bay for Cell Pack II, its sheet drawn while 07 drove home from 06: the spine set on 07's back, two
-        /// more lamps lit; the turntable shows it turned to the open front, and 07 drives straight out.
+        /// Back into the bay for Cell Pack II, learned at 06: the spine set on 07's back, two more lamps lit; the
+        /// turntable shows it turned to the open front, and 07 drives straight out.
         /// </summary>
         private IEnumerator CraftTheCellPack()
         {
             Begin();
             Workshop bench = _gameplay.Workshop;
             BatteryModel battery = _gameplay.Battery.Model;
-            yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 90f,
-                "the base pad, clear of the lander");
             yield return Until(() => _gameplay.Blueprints.IsDrawn(CellPack),
                 2f * _gameplay.Progression.Tuning.PlotterDrawSeconds + 3f, "the plotter draws Cell Pack II's sheet");
             yield return DriveIntoTheBay(bench);
