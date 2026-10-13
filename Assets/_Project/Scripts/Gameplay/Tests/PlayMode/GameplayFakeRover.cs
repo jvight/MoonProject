@@ -118,6 +118,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             _abilities.Add(ability);
         }
 
+        public void Revoke(RoverAbility ability)
+        {
+            _abilities.Remove(ability);
+        }
+
         /// <summary>Teleports 07 (velocity reads zero afterwards).</summary>
         public void Place(Vector3 position, float yaw)
         {
