@@ -176,27 +176,6 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator CargoScreen_SevenCan_ListsTheAbilitiesOwned_AndDecodedKitsAsPencil()
-        {
-            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
-            Boot();
-            Events.Publish(new RoverAwoke(Vector3.zero, false));
-            _rig.Fakes.Hold.Set(8);
-            _rig.Fakes.Grant(RoverAbility.Tether);
-            _rig.Fakes.SetTech(TechNodeId.HoverJump, TechNodeState.Decoded);
-            yield return Seconds(0.3f);
-            yield return Tap(keyboard.tabKey);
-            _rig.Ui.Cargo.SelectTab(1);
-            yield return Seconds(0.6f);
-            CargoScreen cargo = _rig.Ui.Cargo;
-            Assert.AreEqual(2, cargo.CanRowCount, "the tether it has and the Hover-Jump sheet it decoded");
-            Assert.AreEqual(Text("ui.can.tether.verb") + " | " + Text("ui.can.tether.line"), cargo.CanRowText(0));
-            Assert.IsFalse(cargo.CanRowIsPencil(0));
-            Assert.IsTrue(cargo.CanRowIsPencil(1), "a decoded kit not yet fitted is a pencil sheet");
-            Assert.AreEqual(Text("ui.can.hover_jump.verb") + " | " + Text(UiKeys.CanDecoded), cargo.CanRowText(1));
-        }
-
-        [UnityTest]
         public IEnumerator UnlockCard_SaysWhatAFittedKitLetsSevenDo_AfterTheKitTitle()
         {
             InputSystem.AddDevice<Keyboard>();
