@@ -561,3 +561,61 @@ def container_open(variant, gen):
         slide_n, [(0.0, 0.0), (0.08, 1.0), (0.3, 0.0)], shape="smooth")
     place(mix, 0.03 * slide, samples(0.6))
     return filters.lowpass(mix, 4000.0)
+
+
+# ---------------------------------------------------------- 0.5.5 E: the cut's charge-up has weight (section 5.5)
+
+def charge_brace(_variant, gen):
+    """07 bracing before a fresh charge: a short servo 'chunk' and the wheel-lock clack, through the chassis."""
+    n = samples(0.6)
+    servo_n = samples(0.25)
+    servo = osc.additive(servo_n, osc.glide(servo_n, note_freq("A2"), note_freq("D3"), time_constant=0.06),
+                         [(1, 1.0), (2, 0.4), (3, 0.15)])
+    servo *= envelope.segments(servo_n, [(0.0, 0.0), (0.03, 1.0), (0.2, 0.7), (0.25, 0.0)], shape="smooth")
+    mix = np.zeros(n)
+    place(mix, 0.12 * servo, 0)
+    place(mix, 0.6 * _chassis_thump(0.1, 75.0), samples(0.22))
+    place(mix, 0.3 * _tick(gen, note_freq("D4"), 0.15), samples(0.4))
+    return filters.lowpass(mix, 3500.0)
+
+
+CHARGE_WHINE_LOOP_S = 2.0
+
+
+def charge_whine(_variant, _gen):
+    """The capacitor whine on D5: a soft sine with a filtered-saw edge, steady and seamless; the runtime glides its
+    pitch up the stages (D -> A -> D') and back down on a drain."""
+    n = samples(CHARGE_WHINE_LOOP_S)
+    d5 = loop_freq(note_freq("D5"), n)
+    edge = periodic(osc.saw(n, d5), lambda x: filters.lowpass(x, 1800.0))
+    tone = (osc.sine(n, d5) + 0.25 * edge) * envelope.lfo(n, 6.0 / CHARGE_WHINE_LOOP_S, 0.06, 0.94)
+    return periodic(0.12 * tone, lambda x: filters.lowpass(x, 3000.0))
+
+
+CHARGE_HUM_LOOP_S = 3.0
+
+
+def charge_hum(_variant, _gen):
+    """The low hum on D under the charge, swelling with the stages (the runtime sets its level). Seamless."""
+    n = samples(CHARGE_HUM_LOOP_S)
+    tone = osc.additive(n, loop_freq(note_freq("D2"), n), [(1, 1.0), (2, 0.45), (3, 0.12)])
+    return periodic(0.2 * tone, lambda x: filters.lowpass(x, 500.0))
+
+
+def charge_detent(_variant, gen):
+    """A charge stage locking: a discrete detent click, small and mechanical."""
+    n = samples(0.15)
+    click = filters.bandpass(noise.white(n, gen), 1600.0, 2.0) * envelope.ar(n, 0.0008, 0.015)
+    body = osc.sine(n, note_freq("A3")) * envelope.ar(n, 0.001, 0.03)
+    return filters.lowpass(0.3 * click + 0.25 * body, 4000.0)
+
+
+def charge_lock(_variant, gen):
+    """The full lock: a firm two-part 'clunk-click' felt through the chassis before the held breath."""
+    n = samples(0.4)
+    mix = 0.8 * np.concatenate((_chassis_thump(0.12, 80.0), np.zeros(n - samples(0.12))))
+    place(mix, 0.3 * osc.sine(samples(0.12), note_freq("D3")) * envelope.ar(samples(0.12), 0.001, 0.05), 0)
+    click_n = samples(0.1)
+    click = filters.bandpass(noise.white(click_n, gen), 1800.0, 2.0) * envelope.ar(click_n, 0.0008, 0.02)
+    place(mix, 0.35 * click, samples(0.07))
+    return filters.lowpass(mix, 4000.0)

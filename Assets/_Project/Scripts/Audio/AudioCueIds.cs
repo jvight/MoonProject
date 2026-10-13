@@ -58,6 +58,11 @@ namespace MoonProject.Audio
         public const string StackTransfer = "stack_transfer";
         public const string SealCut = "seal_cut";
         public const string ContainerOpen = "container_open";
+        public const string ChargeBrace = "charge_brace";
+        public const string ChargeWhine = "charge_whine";
+        public const string ChargeHum = "charge_hum";
+        public const string ChargeDetent = "charge_detent";
+        public const string ChargeLock = "charge_lock";
         public const string PickupLift = "pickup_lift";
         public const string PickupClunk = "pickup_clunk";
         public const string TowerRing = "tower_ring";

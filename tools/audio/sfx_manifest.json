@@ -509,6 +509,141 @@
       "notes": "07's machine voice, greeting (feel-pass 7.2); syllables in chirp_syllables.json."
     },
     {
+      "id": "charge_brace",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/charge_brace.wav"
+      ],
+      "variantLabels": [
+        "charge_brace"
+      ],
+      "sha256": [
+        "4872eb081ef8b04da88153b5b44eb4dd8a102c31a2f13ba1a8c1649911c13fc6"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 E: 07 bracing before a fresh charge: servo chunk and wheel-lock clack."
+    },
+    {
+      "id": "charge_whine",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/charge_whine_loop.wav"
+      ],
+      "variantLabels": [
+        "charge_whine"
+      ],
+      "sha256": [
+        "f999aac05c0d069b35a1c552dced04585b9531b29b71f092b70c4cebcec73f7f"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 E: the capacitor whine on D5; pitch glides D -> A -> D' at runtime. 2 s seamless."
+    },
+    {
+      "id": "charge_hum",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/charge_hum_loop.wav"
+      ],
+      "variantLabels": [
+        "charge_hum"
+      ],
+      "sha256": [
+        "e7d91cfeeef4fd2ea26312173eb83accb1c0bccb64a3a1e37077cd4cd83cf783"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 E: the low hum on D under the charge, level by stage. 3 s seamless."
+    },
+    {
+      "id": "charge_detent",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/charge_detent.wav"
+      ],
+      "variantLabels": [
+        "charge_detent"
+      ],
+      "sha256": [
+        "84a2ff4fc3471e052a21d70df7a3712fd081c3e61485866182183eb2b7b418a5"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 E: a charge stage locking: a detent click."
+    },
+    {
+      "id": "charge_lock",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/charge_lock.wav"
+      ],
+      "variantLabels": [
+        "charge_lock"
+      ],
+      "sha256": [
+        "1ea7febb57fdcf7219a5839cbdda683679660a8ff2bca340b83dc12c02da1e9e"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 E: the full lock: a firm clunk-click before the held breath."
+    },
+    {
       "id": "hold_boot",
       "category": "ui_2d",
       "milestone": "M3",
