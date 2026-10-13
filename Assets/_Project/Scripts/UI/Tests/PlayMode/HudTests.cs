@@ -809,8 +809,9 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(gift, _rig.Ui.KitTitle.Current, "the gift's title waited its turn");
             Assert.AreEqual(Text(gift), _rig.Ui.Layout.KitTitleName.text);
 
-            LogAssert.Expect(LogType.Error, new Regex("CargoRack settled onto 07"));
-            Events.Publish(new PartFitted(RoverSocket.Hold, RoverKitPiece.CargoRack, false, false, default, 0));
+            const RoverKitPiece Unnamed = (RoverKitPiece)99;
+            LogAssert.Expect(LogType.Error, new Regex("99 settled onto 07"));
+            Events.Publish(new PartFitted(RoverSocket.Hold, Unnamed, false, false, default, 0));
         }
 
         [UnityTest]
