@@ -7,6 +7,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Save;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
 
@@ -50,6 +51,52 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture?.Dispose();
             Object.Destroy(_controls);
             base.TearDown();
+        }
+
+        [UnityTest]
+        public IEnumerator ANewGame_Carries07sSpares_AndALoadedSaveKeepsItsOwnHold()
+        {
+            string slot = BootstrapHarness.NewTestSlot();
+            _fixture = GameplayFixture.Boot(_controls, slot, spares: true);
+            yield return null;
+            MaterialStock stock = _fixture.Gameplay.Materials;
+            Recipe spares = _fixture.CargoTuning.StarterItems;
+            Assert.AreEqual(spares.Metal, stock.Hold.Units(SalvageMaterial.Metal), "07's spares, aboard");
+            Assert.AreEqual(spares.Wiring, stock.Hold.Units(SalvageMaterial.Wiring));
+            Assert.AreEqual(spares.Total, stock.Total);
+            Assert.IsTrue(stock.TrySpend(new Recipe(spares.Metal, 0, 0)), "07 spends its metal");
+            Assert.IsTrue(_fixture.Bootstrap.Context.Get<ISaveService>().SaveNow());
+
+            _fixture.Dispose(true);
+            yield return null;
+            _fixture = GameplayFixture.Boot(_controls, slot, spares: true);
+            yield return null;
+            stock = _fixture.Gameplay.Materials;
+            Assert.AreEqual(0, stock.Hold.Units(SalvageMaterial.Metal), "the save's hold, no spares again");
+            Assert.AreEqual(spares.Wiring, stock.Hold.Units(SalvageMaterial.Wiring));
+        }
+
+        [UnityTest]
+        public IEnumerator Docked_TheTransferTakesAStackAboard_AndUndockedItRefuses()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            GameContext context = _fixture.Bootstrap.Context;
+            var dock = context.Get<IDockState>();
+            var transfer = context.Get<IStackTransfer>();
+            MaterialStock stock = _fixture.Gameplay.Materials;
+            stock.Deliver(SalvageMaterial.Metal, Stack * 2);
+            Assert.IsFalse(dock.IsDocked);
+            Assert.IsFalse(transfer.TryMove(SalvageMaterial.Metal, false, out int moved), "away from the dock");
+            Assert.AreEqual(0, moved);
+
+            _fixture.Rover.Place(_fixture.Gameplay.Home.Dock.Position, 0f);
+            yield return Waits.Until(() => dock.IsDocked, UnloadTimeout);
+            Assert.IsTrue(dock.IsDocked, "07 rests on the dock");
+            Assert.IsTrue(transfer.TryMove(SalvageMaterial.Metal, false, out moved));
+            Assert.AreEqual(Stack, moved, "one stack aboard for the trip");
+            Assert.AreEqual(Stack, stock.Hold.Units(SalvageMaterial.Metal));
+            Assert.AreEqual(Stack, stock.Home.Units(SalvageMaterial.Metal));
         }
 
         [UnityTest]
@@ -170,7 +217,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture.Rover.Place(racks[2].position + Vector3.forward * 1.5f, 180f);
             yield return null;
             Assert.AreEqual(2, shelves.Candidate);
-            Assert.IsTrue(gameplay.Hints.TryGet(InteractionKind.Build, out InteractionHint hint));
+            Assert.IsFalse(gameplay.Hints.TryGet(InteractionKind.Build, out _), "home has room: no Build prompt");
+            stock.Deliver(SalvageMaterial.Metal, 2 * CargoFixtureSlots * Stack - 6);
+            yield return null;
+            Assert.IsTrue(gameplay.Hints.TryGet(InteractionKind.Build, out InteractionHint hint), "home is full");
             Assert.IsTrue(hint.Ready, "home holds the shelf's metal");
             Press(Keyboard.current.eKey);
             yield return Waits.Until(() => built.Count > 0, _fixture.CargoTuning.BuildHoldSeconds + 1f);
@@ -179,7 +229,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(2, built[0].SocketIndex);
             Assert.IsTrue(racks[2].gameObject.activeSelf, "the third shelf stands");
             Assert.AreEqual(3 * CargoFixtureSlots, stock.Home.SlotCount);
-            Assert.AreEqual(3, stock.Home.Units(SalvageMaterial.Metal), "it took three metal");
+            Assert.AreEqual(2 * CargoFixtureSlots * Stack - 3, stock.Home.Units(SalvageMaterial.Metal),
+                "it took three metal");
             CollectionAssert.AreEqual(new[] { FeelPhase.Impact, FeelPhase.Reward },
                 buildBeats.ConvertAll(beat => beat.Phase), "a shelf is only Impact and Reward (the tower Anticipates)");
         }

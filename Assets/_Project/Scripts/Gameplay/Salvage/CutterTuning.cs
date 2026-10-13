@@ -13,13 +13,29 @@ namespace MoonProject.Gameplay
         [Tooltip("Tier 0 (the old cutter), then each kit's tier in order (tier 1: the Focus Lens).")]
         [SerializeField] private CutterTier[] _tiers =
         {
-            new CutterTier(0.65f, 0.3f, 1f, 1f, 5), new CutterTier(0.45f, 0.2f, 1.3f, 0.85f, 7),
+            new CutterTier(0.45f, 1f, 1f, 5), new CutterTier(0.36f, 1.3f, 0.85f, 7),
         };
+
+        [Tooltip("Seconds 07 plants itself before a fresh charge builds (every tier: upgrades shorten the stages).")]
+        [Range(0f, 2f)] [SerializeField] private float _braceSeconds = 0.5f;
+
+        [Tooltip("Seconds of stillness after the full lock, before the beam fires (the held breath).")]
+        [Range(0f, 0.5f)] [SerializeField] private float _breathSeconds = 0.12f;
+
+        [Tooltip("A re-press at the same site within this many seconds of the last firing finds the emitter warm.")]
+        [Range(0f, 20f)] [SerializeField] private float _warmWindowSeconds = 6f;
+
+        [Tooltip("A warm emitter skips the brace and builds its stages this many times as long.")]
+        [Range(0.2f, 1f)] [SerializeField] private float _warmFactor = 0.6f;
 
         [Tooltip("The kit that brings each tier above 0, in order (one fewer than the tiers).")]
         [SerializeField] private RoverAbility[] _kits = { RoverAbility.FocusLens };
 
         public int TierCount => _tiers.Length;
+        public float BraceSeconds => _braceSeconds;
+        public float BreathSeconds => _breathSeconds;
+        public float WarmWindowSeconds => _warmWindowSeconds;
+        public float WarmFactor => _warmFactor;
 
         public CutterTier Tier(int index)
         {

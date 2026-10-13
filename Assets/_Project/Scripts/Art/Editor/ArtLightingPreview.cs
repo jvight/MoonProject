@@ -21,7 +21,7 @@ namespace MoonProject.Art.Editor
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
     ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner|
     ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|kitmain|home|homeclean|
-    ///                  builtfor07|shelves|focuslens|orangebeads|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|lab_dark|lab_lit]
+    ///                  builtfor07|shelves|focuslens|orangebeads|containers|hullfragments|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|lab_dark|lab_lit]
     /// </code>
     /// (default rover; a ';'-separated list captures several scenes in one run)
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the habitat lander and the
@@ -100,6 +100,13 @@ namespace MoonProject.Art.Editor
         // The game's default chase camera (RoverCameraTuning asset): distance, pitch, look-at height and lens; and the
         // spawn heading (RoverTuning) both kitmain 07s face, so Earth and The Peak sit ahead of them.
         private const float ChaseDistance = 7.5f;
+
+        // The charge-up scenes: full lock pushes the cyan toward white; the warm-emitter window keeps a faint trace.
+        private const string ChargeScenePrefix = "charge_";
+        private const float ChargeLockGlow = 2.4f;
+        private const float ChargeWarmGlow = 0.3f;
+        private static readonly string[] ChargeStates = { "rest", "s1", "s2", "lock", "warm" };
+        private const int WarmState = 4;
         private const float ChasePitch = 16f;
         private const float ChaseTargetHeight = 1.1f;
         private const float ChaseFov = 52f;
@@ -213,6 +220,14 @@ namespace MoonProject.Art.Editor
                         NightSetting(material, temporary, 90f, 12f);
                         poses = OrangeBeadsScene(temporary);
                         break;
+                    case "hullfragments":
+                        NightSetting(material, temporary, 90f, 12f);
+                        poses = HullFragmentsScene(temporary);
+                        break;
+                    case "containers":
+                        NightSetting(material, temporary, 90f, 12f);
+                        poses = ContainersScene(temporary);
+                        break;
                     case "shelves":
                         NightSetting(material, temporary, 90f, 12f);
                         poses = ShelvesScene(temporary);
@@ -298,6 +313,10 @@ namespace MoonProject.Art.Editor
                         break;
                     case "builtfor07":
                         poses = BuiltFor07Scene(material, temporary);
+                        break;
+                    case string charge when charge.StartsWith(ChargeScenePrefix, StringComparison.Ordinal):
+                        NightSetting(material, temporary, 90f, 12f);
+                        poses = ChargeUpScene(temporary, charge);
                         break;
                     default:
                         Debug.LogError($"ArtLightingPreview: unknown scene '{scene}' " +
@@ -428,16 +447,16 @@ namespace MoonProject.Art.Editor
             Mount(temporary, RoverModelBuilder.FocusLensName, Descendant(charged, RoverModelBuilder.LensSocketName));
             SetGlow(Descendant(charged, RoverModelBuilder.FocusLensName), RoverModelBuilder.FocusLensGlassName,
                 new[] { string.Empty }, 1f);
-            ShowChargeRun(charged, 1, 1f);
+            PoseCharge(charged, ChargeStates.Length - 2);
             for (int i = 5; i < RoverModelBuilder.HatchCrates; i++)
             {
                 Descendant(charged, RoverModelBuilder.HatchCratePrefix + i).gameObject.SetActive(false);
             }
-            ShowChargeRun(Rover(temporary, new Vector3(-2.4f, 0f, -0.6f), 120f), 0, 1f);
+            PoseCharge(Rover(temporary, new Vector3(-2.4f, 0f, -0.6f), 120f), 1);
             Transform dark = Rover(temporary, new Vector3(2.4f, 0f, -0.6f), 200f);
             temporary.Add(dark.gameObject);
             Mount(temporary, RoverModelBuilder.FocusLensName, Descendant(dark, RoverModelBuilder.LensSocketName));
-            ShowChargeRun(dark, 1, 0f);
+            PoseCharge(dark, 0);
             Transform eyeNode = Descendant(charged, "Eye");
             Vector3 eye = eyeNode.position;
             Vector3 front = eye + eyeNode.forward * 0.9f + eyeNode.right * 0.25f + Vector3.up * 0.15f;
@@ -446,6 +465,8 @@ namespace MoonProject.Art.Editor
             return Poses(
                 ChasePose("run_chase", charged.position, charged.rotation, ChaseDistance, 0f),
                 ChasePose("run_chase_near", charged.position, charged.rotation, ChaseDistance * 0.4f, 0f),
+                Pose("run_top", new[] { charged.position.x, 4.6f, charged.position.z - 0.01f },
+                    new[] { charged.position.x, 0.9f, charged.position.z }, 30f),
                 Pose("run_back", new[] { behind.x, behind.y, behind.z },
                     new[] { charged.position.x, 1.05f, charged.position.z }, 45f),
                 Pose("lens_close", new[] { front.x, front.y, front.z }, new[] { eye.x, eye.y, eye.z }, 35f),
@@ -454,21 +475,32 @@ namespace MoonProject.Art.Editor
                 Pose("pair_chase", new[] { 1.2f, 2.2f, -4.5f }, new[] { 1.2f, 0.9f, 0f }, 45f));
         }
 
-        /// <summary>Shows charge-run row <paramref name="tier"/> lit at <paramref name="intensity"/>, hiding the others.</summary>
-        private static void ShowChargeRun(Transform rover, int tier, float intensity)
+        /// <summary>
+        /// Poses 07's charge-up in <paramref name="state"/> (an index into <see cref="ChargeStates"/>): stages filled up
+        /// to it with their sleeves slid forward and lit, the conduits flowing, full lock pushed toward white with the
+        /// ring lit, or the warm trace on the conduits and the ring alone.
+        /// </summary>
+        private static void PoseCharge(Transform rover, int state)
         {
-            string shown = RoverModelBuilder.ChargeRunPrefix + tier;
-            var block = new MaterialPropertyBlock();
-            block.SetVector("_EmissionColor", new Vector4(intensity, intensity, intensity, 1f));
+            bool warm = state == WarmState;
+            int filled = warm ? 0 : state;
+            float hot = filled == RoverModelBuilder.ChargeStages ? ChargeLockGlow : 1f;
             foreach (Transform node in rover.GetComponentsInChildren<Transform>(true))
             {
-                if (node.name.StartsWith(RoverModelBuilder.ChargeRunPrefix, StringComparison.Ordinal))
+                if (node.name == RoverModelBuilder.ConduitGlowName)
                 {
-                    node.gameObject.SetActive(node.name == shown);
+                    Lit(node, warm ? ChargeWarmGlow : filled > 0 ? hot : 0f);
                 }
-                else if (node.parent != null && node.parent.name == shown)
+                else if (node.name == RoverModelBuilder.LockGlowName)
                 {
-                    node.GetComponent<Renderer>().SetPropertyBlock(block);
+                    Lit(node, warm ? ChargeWarmGlow : filled == RoverModelBuilder.ChargeStages ? ChargeLockGlow : 0f);
+                }
+                else if (node.name.StartsWith(RoverModelBuilder.StageGlowPrefix, StringComparison.Ordinal))
+                {
+                    bool full = node.name[RoverModelBuilder.StageGlowPrefix.Length] - '0' <= filled;
+                    Lit(node, full ? hot : 0f);
+                    node.localPosition = RoverModelBuilder.SleeveRest +
+                                         Vector3.forward * (full ? RoverModelBuilder.ChargeSleeveTravel : 0f);
                 }
             }
         }
@@ -534,6 +566,126 @@ namespace MoonProject.Art.Editor
                     crate.SetParent(anchor.GetChild(level), false);
                 }
             }
+        }
+
+        /// <summary>
+        /// 07's charge-up (0.5.5 owner feedback §5.4, "Cells"): <c>charge_&lt;state&gt;</c>, 07 with the Focus Lens
+        /// fitted, posed <c>rest</c>; <c>s1</c>, <c>s2</c> (stages filled, sleeves slid forward, the conduits flowing);
+        /// <c>lock</c> (all three, everything pushed toward white, the ring lit); or <c>warm</c> (the trace after
+        /// firing). Seen from the chase camera at 7.5 m and 30 m, from above and from a close three-quarter.
+        /// </summary>
+        private static CameraPoseSet ChargeUpScene(TemporaryObjects temporary, string scene)
+        {
+            int state = Array.IndexOf(ChargeStates, scene.Substring(ChargeScenePrefix.Length));
+            if (state < 0)
+            {
+                throw new ArgumentException($"ArtLightingPreview: '{scene}' is not charge_<rest|s1|s2|lock|warm>.");
+            }
+
+            Transform rover = Rover(temporary, Vector3.zero, 160f);
+            temporary.Add(rover.gameObject);
+            Mount(temporary, RoverModelBuilder.FocusLensName, Descendant(rover, RoverModelBuilder.LensSocketName));
+            PoseCharge(rover, state);
+            Transform eye = Descendant(rover, "Eye");
+            Vector3 quarter = rover.position - rover.forward * 1.25f + rover.right * 1.05f + Vector3.up * 1.45f;
+            return Poses(
+                ChasePose("chase7m", rover.position, rover.rotation, ChaseDistance, 0f),
+                ChasePose("chase30m", rover.position, rover.rotation, FarDistance, 0f),
+                Pose("top", new[] { rover.position.x, 4.6f, rover.position.z - 0.01f },
+                    new[] { rover.position.x, 0.9f, rover.position.z }, 30f),
+                Pose("quarter", new[] { quarter.x, quarter.y, quarter.z },
+                    new[] { eye.position.x * 0.3f + rover.position.x * 0.7f, 0.95f, rover.position.z }, 45f));
+        }
+
+        private static void Lit(Transform node, float intensity)
+        {
+            var block = new MaterialPropertyBlock();
+            block.SetVector("_EmissionColor", new Vector4(intensity, intensity, intensity, 1f));
+            node.GetComponent<Renderer>().SetPropertyBlock(block);
+        }
+
+        /// <summary>
+        /// 0.5.5 slice C's places for finds: the coil crate (opened), Ro's tape case, the junction box and the supply pod
+        /// (sealed, their seams lit, the pod's beacon warm) in a row; Tilly's sled with its clamp and pod seals lit; the
+        /// garage's three relic pockets against its wreck; and the relay masts' cabinets, dormant (sealed) and restored.
+        /// </summary>
+        private static CameraPoseSet ContainersScene(TemporaryObjects temporary)
+        {
+            string[] row =
+            {
+                LootContainerBuilder.CoilCrateName, LootContainerBuilder.TapeCaseName,
+                LootContainerBuilder.JunctionBoxName, LootContainerBuilder.SupplyPodName,
+            };
+            for (int i = 0; i < row.Length; i++)
+            {
+                Transform container = Instantiate(row[i], temporary, ArtPaths.PropFolder).transform;
+                container.SetPositionAndRotation(new Vector3(-3f + i * 1.6f, 0f, 0f), Quaternion.Euler(0f, 200f, 0f));
+                foreach (Transform node in container.GetComponentsInChildren<Transform>())
+                {
+                    if (node.name == LootContainerBuilder.SealName || node.name == LootContainerBuilder.GlowName)
+                    {
+                        Lit(node, i == 0 ? 0f : 1f);
+                    }
+                }
+
+                if (i == 0)
+                {
+                    Descendant(container, LootContainerBuilder.LidName).localRotation =
+                        Quaternion.Euler(LootContainerBuilder.LidOpenDegrees, 0f, 0f);
+                }
+            }
+
+            Transform sled = Instantiate(LootContainerBuilder.TillySledName, temporary, ArtPaths.PropFolder).transform;
+            sled.SetPositionAndRotation(new Vector3(0f, 0f, 4f), Quaternion.Euler(0f, 160f, 0f));
+            foreach (Transform node in sled.GetComponentsInChildren<Transform>())
+            {
+                if (node.name == LootContainerBuilder.SealName)
+                {
+                    Lit(node, 1f);
+                }
+            }
+
+            Transform garage = Instantiate(SiteModelBuilder.SiteName("garage"), temporary, ArtPaths.SitesFolder)
+                .transform;
+            garage.position = new Vector3(14f, 0f, 0f);
+            Transform pocket = Descendant(garage, SiteModelBuilder.RelicPocketPrefix + "rubber_duck");
+            foreach (bool broken in new[] { true, false })
+            {
+                Transform mast = Instantiate(broken ? RelayModelBuilder.BrokenMastName : RelayModelBuilder.MastName,
+                    temporary, ArtPaths.RelayFolder).transform;
+                mast.position = new Vector3(broken ? -14f : -24f, 0f, 0f);
+                Lit(Descendant(mast, RelayModelBuilder.CabinetSealName), broken ? 1f : 0f);
+            }
+
+            Vector3 duck = pocket.position;
+            return Poses(
+                Pose("row", new[] { 0f, 1.6f, -3.4f }, new[] { -0.6f, 0.3f, 0f }, 50f),
+                Pose("pod_mast", new[] { 4.5f, 2.2f, -6.5f }, new[] { 1.8f, 1.8f, 0f }, 45f),
+                Pose("pod_far60m", new[] { 30f, 6f, -55f }, new[] { 1.8f, 2f, 0f }, 25f),
+                Pose("sled", new[] { 1.6f, 1.5f, 1.6f }, new[] { 0f, 0.25f, 4f }, 45f),
+                Pose("pocket_close", new[] { duck.x + pocket.forward.x * 1.4f, 0.9f, duck.z + pocket.forward.z * 1.4f },
+                    new[] { duck.x, 0.1f, duck.z }, 45f),
+                Pose("garage_pockets", new[] { 14f, 7f, -9f }, new[] { 14f, 0.5f, 0f }, 50f),
+                Pose("cabinet_sealed", new[] { -10.9f, 1.5f, -0.5f }, new[] { -12.25f, 0.6f, -2.8f }, 45f),
+                Pose("cabinet_open", new[] { -20.9f, 1.5f, -0.5f }, new[] { -22.25f, 0.6f, -2.8f }, 45f));
+        }
+
+        /// <summary>Kestrel-3's four hull fragments laid along a furrow the way World's scrap field places them, 07 among
+        /// them for scale, near and from 20 m.</summary>
+        private static CameraPoseSet HullFragmentsScene(TemporaryObjects temporary)
+        {
+            for (int i = 0; i < PropModelBuilder.HullFragmentVariants; i++)
+            {
+                Transform fragment = Instantiate(PropModelBuilder.HullFragmentPrefix + i, temporary, ArtPaths.PropFolder)
+                    .transform;
+                fragment.SetPositionAndRotation(new Vector3((i % 2 == 0 ? -1.6f : 1.8f), 0f, 3f + i * 3.2f),
+                    Quaternion.Euler(0f, i * 70f + 20f, 0f));
+            }
+
+            temporary.Add(Rover(temporary, new Vector3(0.2f, 0f, 1f), 10f).gameObject);
+            return Poses(
+                Pose("near", new[] { 3.5f, 2.2f, -1.5f }, new[] { 0f, 0.4f, 5f }, 50f),
+                Pose("far20m", new[] { 8f, 4f, -14f }, new[] { 0f, 0.4f, 7f }, 40f));
         }
 
         private static CameraPoseSet ShelvesScene(TemporaryObjects temporary)

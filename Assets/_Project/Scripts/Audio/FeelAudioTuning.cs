@@ -14,8 +14,18 @@ namespace MoonProject.Audio
             "the singing tone alone).")]
         [SerializeField] private Vector3 _undertoneByTier = new Vector3(0.35f, 0.6f, 0.9f);
 
-        [Tooltip("The cutter tier from which the charge run gets its sustained low D (M3-26 section 5).")]
-        [Range(0, 3)] [SerializeField] private int _lowDFromTier = 3;
+        [Header("The weighted charge-up (0.5.5 section 5.5)")]
+        [Tooltip("Seconds of the brace before the whine rises on a fresh charge (gameplay's brace is 0.5 s).")]
+        [Range(0f, 1f)] [SerializeField] private float _braceSeconds = 0.5f;
+
+        [Tooltip("Level of the capacitor whine while it builds and holds.")]
+        [Range(0f, 1f)] [SerializeField] private float _whineLevel = 0.7f;
+
+        [Tooltip("Level of the low hum on D at the charge's start and after stages 1, 2 and 3: it swells with them.")]
+        [SerializeField] private Vector4 _humByStage = new Vector4(0.35f, 0.55f, 0.75f, 0.9f);
+
+        [Tooltip("Seconds the whine takes to glide back down to D and fade when the charge is released.")]
+        [Range(0.05f, 1f)] [SerializeField] private float _drainSeconds = 0.2f;
 
         [Tooltip("Level of the sizzle through 07's body at full cut progress.")]
         [Range(0f, 1f)] [SerializeField] private float _sizzleMax = 0.8f;
@@ -55,7 +65,25 @@ namespace MoonProject.Audio
         [Tooltip("Level of the drums' boost whine.")]
         [Range(0f, 1f)] [SerializeField] private float _boostVolume = 0.7f;
 
-        public int LowDFromTier => _lowDFromTier;
+        public float BraceSeconds => _braceSeconds;
+        public float WhineLevel => _whineLevel;
+        public float DrainSeconds => _drainSeconds;
+
+        /// <summary>The hum's level at stage <paramref name="stage"/> (0 = the charge's start).</summary>
+        public float HumAt(int stage)
+        {
+            switch (stage)
+            {
+                case 0:
+                    return Mathf.Clamp01(_humByStage.x);
+                case 1:
+                    return Mathf.Clamp01(_humByStage.y);
+                case 2:
+                    return Mathf.Clamp01(_humByStage.z);
+                default:
+                    return Mathf.Clamp01(_humByStage.w);
+            }
+        }
         public float UnloadVolume => _unloadVolume;
 
         /// <summary>The undertone's level at cutter tier <paramref name="tier"/> (0 at tier 0).</summary>

@@ -35,6 +35,11 @@ namespace MoonProject.Art.Tests
                 { "PartSocket", mast.Name },
                 { "BeamPoint", mast.Name },
                 { "ChargeRing", mast.Name },
+                { RelayModelBuilder.CabinetName, mast.Name },
+                { RelayModelBuilder.CabinetDoorName, RelayModelBuilder.CabinetName },
+                { SiteModelBuilder.CutPointName, RelayModelBuilder.CabinetDoorName },
+                { RelayModelBuilder.CabinetSealName, RelayModelBuilder.CabinetDoorName },
+                { LootContainerBuilder.ItemSocketName, RelayModelBuilder.CabinetName },
             };
             var parents = new Dictionary<string, string>();
             Collect(mast, parents);
@@ -55,6 +60,21 @@ namespace MoonProject.Art.Tests
 
         [TestCase(false)]
         [TestCase(true)]
+        public void Cabinet_SealedWhenDormant_OpenWhenRestored_ItsPartInside(bool broken)
+        {
+            ModelNode cabinet = RelayModelBuilder.CreateMast(broken).Children
+                .Single(n => n.Name == RelayModelBuilder.CabinetName);
+            ModelNode door = cabinet.Children.Single(n => n.Name == RelayModelBuilder.CabinetDoorName);
+            float swing = Quaternion.Angle(Quaternion.identity, door.LocalRotation);
+            Assert.AreEqual(broken ? 0f : 105f, swing, 0.5f, broken ? "shut and sealed" : "standing open");
+            ModelNode cut = door.Children.Single(n => n.Name == SiteModelBuilder.CutPointName);
+            Assert.Greater(cut.LocalPosition.x, door.Mesh.Geometry.Bounds.max.x - 0.05f, "the cut is on the free edge");
+            ModelNode item = cabinet.Children.Single(n => n.Name == LootContainerBuilder.ItemSocketName);
+            Assert.Greater(item.LocalPosition.y, 0f, "the part waits inside, off the ground");
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
         public void Lamp_IsTheOnlyGlowRenderer_DarkUntilLit_AndWarm(bool broken)
         {
             ModelNode mast = RelayModelBuilder.CreateMast(broken);
@@ -67,6 +87,13 @@ namespace MoonProject.Art.Tests
                     CollectionAssert.AreEqual(new[] { PaletteSwatch.SignalGlass }, swatches);
                     Assert.Greater(Palette.GetGlow(PaletteSwatch.SignalGlass).r, Palette.BloomThreshold,
                         "lit at 1 it glows HDR warm, above the bloom threshold");
+                    continue;
+                }
+
+                if (node.Name == RelayModelBuilder.CabinetSealName)
+                {
+                    Assert.AreEqual(ModelMaterial.PaletteGlowOff, node.Material, "the cabinet's seal starts dark");
+                    Assert.IsTrue(swatches.All(Palette.IsEmissive), "the seal is all glass");
                     continue;
                 }
 

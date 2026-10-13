@@ -13,14 +13,16 @@ MonoBehaviour:
   m_Name: CutterTuning
   m_EditorClassIdentifier: 
   _tiers:
-  - _chargeSeconds: 0.65
-    _resumeChargeSeconds: 0.3
+  - _stageSeconds: 0.45
     _speedFactor: 1
     _drainFactor: 1
     _lampCount: 5
-  - _chargeSeconds: 0.45
-    _resumeChargeSeconds: 0.2
+  - _stageSeconds: 0.36
     _speedFactor: 1.3
     _drainFactor: 0.85
     _lampCount: 7
+  _braceSeconds: 0.5
+  _breathSeconds: 0.12
+  _warmWindowSeconds: 6
+  _warmFactor: 0.6
   _kits: 09000000

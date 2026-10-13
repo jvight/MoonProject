@@ -9,7 +9,8 @@ namespace MoonProject.Rover
     /// 07's chassis and the gamepad answering the feel beats (docs/design/feel-pass.md §3.1, §4): the cut's (and the
     /// dig's) lean, recoil, steadying micro-motions, crack dip and received rear dip on <see cref="ImpactNudge"/>, and
     /// its rumble through <see cref="RumbleMixer"/>, under the player's <see cref="IFeelSettings"/>. Rumble stops at
-    /// once on pause, focus loss and without a gamepad. The dock's clunk dips 07 and rumbles (§7.1). Zero allocations
+    /// once on pause, focus loss and without a gamepad. The dock's clunk dips 07 and rumbles (§7.1). Through the
+    /// charge-up 07 braces (<see cref="ChargeBrace"/>, 0.5.5 §5.3) on <see cref="CutChargeStaged"/>. Zero allocations
     /// per frame.
     /// </summary>
     public sealed class RoverFeel : IDisposable
@@ -29,6 +30,7 @@ namespace MoonProject.Rover
         private readonly RoverVisualRig _body;
         private readonly RumbleMixer _rumble = new RumbleMixer();
         private readonly ImpactNudge _nudge = new ImpactNudge();
+        private readonly ChargeBrace _brace;
         private readonly IDisposable _beats;
         private readonly IDisposable _pauses;
         private int _held = NoVoice;
@@ -47,6 +49,7 @@ namespace MoonProject.Rover
             _preferences = preferences ?? throw new ArgumentNullException(nameof(preferences));
             _motors = motors ?? throw new ArgumentNullException(nameof(motors));
             _body = body;
+            _brace = new ChargeBrace(cut.Brace);
             _beats = events.Subscribe<FeelBeat>(OnBeat);
             _pauses = events.Subscribe<PauseChanged>(OnPauseChanged);
             _verbs = new[]
@@ -58,6 +61,7 @@ namespace MoonProject.Rover
                 events.Subscribe<RoverKitFitted>(OnKitFitted),
                 events.Subscribe<LowPowerChanged>(OnLowPowerChanged),
                 events.Subscribe<RoverBoostChanged>(OnBoostChanged),
+                events.Subscribe<CutChargeStaged>(OnChargeStaged),
                 events.Subscribe<CargoChanged>(cargo => _body?.SetLoadSag(
                     CargoLoad.Sag(cargo.UsedSlots, cargo.SlotCount, _motion.SagPerQuarter), _motion.SagHalfLife)),
                 events.Subscribe<StockCountTicked>(tick =>
@@ -72,6 +76,9 @@ namespace MoonProject.Rover
 
         /// <summary>The chassis response the visual rig applies.</summary>
         public ImpactNudge Nudge => _nudge;
+
+        /// <summary>07 bracing through the cut's charge-up, which the visual rig applies.</summary>
+        public ChargeBrace Brace => _brace;
 
         /// <summary>The rumble mix (tests and tooling).</summary>
         public RumbleMixer Rumble => _rumble;
@@ -106,6 +113,7 @@ namespace MoonProject.Rover
                 ? (2f * Mathf.PerlinNoise(time * _cut.SustainJitterRate, 0f) - 1f) * _cut.SustainJitter
                 : 0f;
             _nudge.Step(deltaTime, jitter);
+            _brace.Step(deltaTime);
 
             _rumble.Enabled = _preferences.RumbleEnabled && !_paused && _focused && _motors.IsConnected;
             _rumble.Strength = _preferences.RumbleStrength;
@@ -185,6 +193,7 @@ namespace MoonProject.Rover
                     _held = NoVoice;
                     _sustaining = false;
                     _nudge.Release();
+                    _brace.Release();
                     break;
                 case FeelPhase.Impact:
                     _rumble.Stop(_held);
@@ -192,6 +201,7 @@ namespace MoonProject.Rover
                     _rumble.Play(_cut.Crack);
                     _sustaining = false;
                     _nudge.Release();
+                    _brace.Release();
                     _nudge.KickHeave(_cut.CrackDip);
                     break;
                 case FeelPhase.Follow:
@@ -297,6 +307,19 @@ namespace MoonProject.Rover
             if (power.LowPower && !power.Restored)
             {
                 Publish(FeelKind.LowPower, FeelPhase.Impact, 1f);
+            }
+        }
+
+        /// <summary>The charge starts (the brace, or straight down when warm) or a stage locks.</summary>
+        private void OnChargeStaged(CutChargeStaged staged)
+        {
+            if (staged.Stage == 0)
+            {
+                _brace.Begin(staged.Warm);
+            }
+            else
+            {
+                _brace.Stage(staged.Stage, staged.StagesNeeded);
             }
         }
 

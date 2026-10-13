@@ -66,6 +66,8 @@ namespace MoonProject.Gameplay
         private TowerParts _parts;
         private TowerOnline _online;
         private IDisposable _purchases;
+        private IDisposable _notYet;
+        private float _answeredAt = float.NegativeInfinity;
         private EmissionGlow[] _lights = Array.Empty<EmissionGlow>();
         private EmissionGlow[] _rings = Array.Empty<EmissionGlow>();
         private EmissionGlow[] _offline = Array.Empty<EmissionGlow>();
@@ -111,6 +113,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>The coming-online sequence (tests and debugging views).</summary>
         public TowerOnline Online => _online;
+
+        /// <summary>The shown stage's offline plaque lamp level (tests and debugging views).</summary>
+        public float OfflineLampLevel => _offline.Length > 0 ? _offline[ActiveStage].Intensity : 0f;
 
         /// <summary>Current beacon brightness (tests and debugging views).</summary>
         public float BeaconLevel => _beaconGlow != null ? _beaconGlow.Intensity : 0f;
@@ -255,6 +260,7 @@ namespace MoonProject.Gameplay
                 services.Visuals.WarmRing));
             _bloomCentre = SurfaceRules.OnSurface(_terrain, _anchor.position.x, _anchor.position.z);
             _purchases = services.Events.Subscribe<UpgradePurchased>(OnPurchased);
+            _notYet = services.Events.Subscribe<StationNotYet>(OnNotYet);
             ShowLevel(upgrades.LevelOf(_definition.Id));
             _initialized = true;
             return true;
@@ -542,8 +548,32 @@ namespace MoonProject.Gameplay
 
             for (int i = 0; i < _offline.Length; i++)
             {
-                _offline[i].Apply(i == stage && ShownLevel <= 0 ? _tuning.OfflineLampGlow : 0f);
+                _offline[i].Apply(i == stage && ShownLevel <= 0 ? _tuning.OfflineLampGlow * OfflineBlink(now) : 0f);
             }
+        }
+
+        /// <summary>
+        /// The dark tower answers a listen with its plaque lamp, not words (text audit 0.5.5 §3.4): a few blinks while
+        /// Audio's "not yet" tone plays.
+        /// </summary>
+        private void OnNotYet(StationNotYet notYet)
+        {
+            if (notYet.ReasonKey == ProgressionKeys.NotYetTower)
+            {
+                _answeredAt = Time.time;
+            }
+        }
+
+        /// <summary>The plaque lamp's level while it answers: 1 at rest, dipping to 0 on each blink.</summary>
+        private float OfflineBlink(float now)
+        {
+            float t = (now - _answeredAt) / _tuning.OfflineBlinkSeconds;
+            if (t < 0f || t >= 1f)
+            {
+                return 1f;
+            }
+
+            return 1f - Ease.Hump(Mathf.Repeat(t * _tuning.OfflineBlinks, 1f));
         }
 
         /// <summary>Ring <paramref name="ring"/>'s glow: lit once power has climbed to it.</summary>
@@ -587,6 +617,7 @@ namespace MoonProject.Gameplay
         private void OnDestroy()
         {
             _purchases?.Dispose();
+            _notYet?.Dispose();
             _pad?.Dispose();
 
             if (_bloomRing != null)

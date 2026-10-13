@@ -53,6 +53,22 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void ANewGamesSpares_GoInto07sHold_UntilASaveLaysItsOwnHoldIn()
+        {
+            var totals = new List<MaterialsChanged>();
+            _events.Subscribe<MaterialsChanged>(totals.Add);
+            _stock.Stow(new Recipe(2, 1, 0));
+            Assert.AreEqual(2, _stock.Hold.Units(SalvageMaterial.Metal));
+            Assert.AreEqual(1, _stock.Hold.Units(SalvageMaterial.Wiring));
+            Assert.AreEqual(0, _stock.Home.Units(SalvageMaterial.Metal), "aboard, not on the shelves");
+            Assert.AreEqual(2, totals[totals.Count - 1].Metal, "the totals count them");
+
+            _stock.Restore(new MaterialsSaveData { holdSlots = CargoFixtures.HoldSlots,
+                shelvesBuilt = CargoFixtures.BuiltInShelves });
+            Assert.AreEqual(0, _stock.Total, "a loaded save keeps its own hold: no spares added");
+        }
+
+        [Test]
         public void AFullHold_TakesWhatFits_AndHandsBackTheRest()
         {
             Assert.AreEqual(0, _stock.Collect(SalvageMaterial.Metal, 7 * 4));

@@ -44,6 +44,11 @@ namespace MoonProject.Rover.PlayModeTests
         private const float SideBinY = 0.9f;
         private const float SideBinZ = 0.35f;
 
+        /// <summary>The charge-up's cell stand-ins on the deck: their offset, height and spacing.</summary>
+        private const float CellX = 0.2f;
+        private const float CellY = 0.62f;
+        private const float CellSpacing = 0.2f;
+
         /// <summary>The cargo hatch stand-in on the rear face and its crate window's slots.</summary>
         private const float HatchY = 0.65f;
         private const float HatchZ = -0.7f;
@@ -400,6 +405,34 @@ namespace MoonProject.Rover.PlayModeTests
 
             Assign(controller, ("_cargoHatch", hatch));
             AssignArray(controller, "_hatchCrates", crates);
+            var conduits = new Object[]
+            {
+                Shape(PrimitiveType.Cube, model, new Vector3(0f, CellY, 0f), new Vector3(0.04f, 0.02f, 0.8f), material)
+                    .GetComponent<MeshRenderer>(),
+                Shape(PrimitiveType.Cube, neck, Vector3.zero, new Vector3(0.02f, 0.3f, 0.02f), material)
+                    .GetComponent<MeshRenderer>(),
+            };
+            var sleeves = new Object[2 * RoverModelNodes.ChargeStages];
+            for (int i = 0; i < sleeves.Length; i++)
+            {
+                int stage = i / 2 + 1;
+                Transform stageCell = Node(RoverModelNodes.StageCell(stage, i % 2 == 0), model,
+                    new Vector3(i % 2 == 0 ? -CellX : CellX, CellY, (stage - 2) * CellSpacing));
+                Transform sleeve = Shape(PrimitiveType.Cylinder, stageCell, Vector3.zero, Vector3.one * 0.06f, material);
+                sleeve.name = RoverModelNodes.StageGlow(stage);
+                sleeves[i] = sleeve.GetComponent<MeshRenderer>();
+            }
+
+            Transform lockGlow = Shape(PrimitiveType.Cylinder, eye, Vector3.zero, new Vector3(1.1f, 0.05f, 1.1f),
+                material);
+            lockGlow.name = RoverModelNodes.LockGlow;
+            Transform lens = Node(RoverModelNodes.LensSocket, eye, Vector3.zero);
+            Transform lensGlass = Shape(PrimitiveType.Sphere, lens, Vector3.zero, Vector3.one * 0.5f, material);
+            lensGlass.name = "Glass";
+            AssignArray(controller, "_conduitGlows", conduits);
+            AssignArray(controller, "_stageSleeves", sleeves);
+            Assign(controller, ("_lockGlow", lockGlow.GetComponent<MeshRenderer>()), ("_focusLens", lens.gameObject),
+                ("_focusLensGlass", lensGlass.GetComponent<MeshRenderer>()));
             Assign(body, ("_tuning", characterTuning), ("_rover", controller), ("_rig", rig), ("_neck", neck),
                 ("_head", head), ("_eyelid", eyelid), ("_solarWing", wing),
                 ("_eyeRenderer", eye.GetComponent<MeshRenderer>()),

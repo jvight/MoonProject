@@ -33,6 +33,7 @@ namespace MoonProject.Gameplay
         private const int TowerSpot = 4;
         private const int StepTower = 0;
         private const int StepLiftStitch = 9;
+        /// <summary>Step 12, "build tower level 2 to power the bay": the bay's place card and its not-yet wait for it.</summary>
         private const int StepBay = 12;
 
         [Tooltip("The wake-up's tuning (Assets/_Project/Data/Tuning/Gameplay/ProgressionTuning.asset).")]
@@ -64,6 +65,9 @@ namespace MoonProject.Gameplay
         private StepFlow _steps;
         private IDisposable _salvage;
         private IDisposable _listens;
+        private IDisposable _answersHeard;
+        private Func<float> _batteryShare;
+        private bool _listenArmed;
         private Vector3 _dock;
         private bool _woke;
         private bool _salvaged;
@@ -101,8 +105,9 @@ namespace MoonProject.Gameplay
 
         internal bool Initialize(GameplayServices services, BasePower power, HomeBase home, Workshop bay,
             SonarSystem sonar, FriendField friends, RelayField relays, UpgradeService upgrades, LiftStation lift,
-            RadioTower tower, TowerParts components)
+            RadioTower tower, TowerParts components, Func<float> batteryShare)
         {
+            _batteryShare = batteryShare ?? throw new ArgumentNullException(nameof(batteryShare));
             string problem = WiringProblem();
             WorldAnchor lip = default;
             problem = problem ?? (services.Anchors.TryGet(WorldAnchorIds.CanyonLip, out lip)
@@ -146,11 +151,13 @@ namespace MoonProject.Gameplay
             Func<bool> homePowered = () => power.HasReached(BasePowerStage.Home);
             _answers.Add(ProgressionKeys.NotYetTower, _places[TowerSpot].position,
                 _tuning.RadiusOf(ProgressionKeys.PlaceTower), () => !homePowered());
+            // The bay's not-yet stays quiet while the next line already says what wakes it (text audit 0.5.5 §3.4).
             _answers.Add(ProgressionKeys.NotYetBay, bay.transform.position, _tuning.RadiusOf(ProgressionKeys.PlaceBay),
-                () => homePowered() && !bay.Awake);
+                () => homePowered() && !bay.Awake && _steps.CurrentIndex != StepBay);
             _salvage = services.Events.Subscribe<MaterialSalvaged>(_ => _salvaged = true);
             EventBus events = services.Events;
-            _listens = events.Subscribe<SonarPinged>(_ => OnListened(events));
+            _listens = events.Subscribe<SonarPinged>(OnListened);
+            _answersHeard = events.Subscribe<SiteAnswered>(_ => OnSiteAnswered(events));
             _evening = new DockEvening(services.Events, _tuning.EveningSweepDelay, _tuning.EveningCompletionHold);
             _letters = new RadioLetters(services.Events, _tuning.SingleLetterMasts, _tuning.LettersAfter,
                 _tuning.LetterCount);
@@ -327,11 +334,12 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// The tower step's exact sub-step (feel-pass §8.2): bring the coil while it is still out there, park on the
-        /// tower's pad while 07 carries it, hold E once it is in the port.
+        /// tower's pad while 07 carries it, then no line once it is in the port: the tower's panel, its hold ring and
+        /// the prompt say it (text audit 0.5.5 §3.1).
         /// </summary>
         private static string TowerLine(TowerParts components, RadioTower tower)
         {
-            return !components.NeedsPart(tower.Definition.Id, 1) ? ProgressionKeys.NextTowerHold
+            return !components.NeedsPart(tower.Definition.Id, 1) ? string.Empty
                 : components.StateOf(0) == TowerPartState.Carried ? ProgressionKeys.NextTowerPad
                 : ProgressionKeys.NextTowerPart;
         }
@@ -363,15 +371,28 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>07's first listen ever puts one line on the ticker (first-hour v2 §3); saved: once.</summary>
-        private void OnListened(EventBus events)
+        /// <summary>
+        /// A listen away from home arms the first-listen line (text audit 0.5.5 §3.4: only at the first stop away
+        /// from home); a listen at home disarms it.
+        /// </summary>
+        private void OnListened(SonarPinged pinged)
         {
-            if (_listened)
+            _listenArmed = !_listened &&
+                           SurfaceRules.HorizontalDistance(pinged.Origin, _dock) > _tuning.ListenAwayFromHome;
+        }
+
+        /// <summary>
+        /// A wreck answers that armed listen: the line says what just happened, once (saved), at the moment it shows.
+        /// </summary>
+        private void OnSiteAnswered(EventBus events)
+        {
+            if (!_listenArmed || _listened)
             {
                 return;
             }
 
             _listened = true;
+            _listenArmed = false;
             events.Publish(new TickerLine(ProgressionKeys.FirstListen));
         }
 
@@ -405,7 +426,7 @@ namespace MoonProject.Gameplay
         {
             switch (placeId)
             {
-                case ProgressionKeys.PlaceDock: return null;
+                case ProgressionKeys.PlaceDock: return () => _batteryShare() < _tuning.DockCardBelow;
                 case ProgressionKeys.PlaceLander:
                 case ProgressionKeys.PlaceTower: return () => _steps.CurrentIndex >= StepTower;
                 case ProgressionKeys.PlaceLab: return () => _lift.Lab.IsInside;
@@ -456,6 +477,7 @@ namespace MoonProject.Gameplay
         {
             _salvage?.Dispose();
             _listens?.Dispose();
+            _answersHeard?.Dispose();
             _powered?.Dispose();
             _evening?.Dispose();
             _letters?.Dispose();

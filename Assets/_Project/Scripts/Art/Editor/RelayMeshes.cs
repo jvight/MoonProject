@@ -98,7 +98,7 @@ namespace MoonProject.Art.Editor
                 new Vector3(FootingHalf * 2f, FootingTop + FootingDepth, FootingHalf * 2f), PaletteSwatch.Metal, 0.05f);
             b.Box(At(0f, FootingTop + 0.02f, MastFoot.z), new Vector3(1.3f, 0.04f, 1.3f), PaletteSwatch.Charcoal);
             JunctionBox(b, broken);
-            ServiceCabinet(b, !broken);
+            ServiceCabinet(b);
             for (int i = 0; i < 3; i++)
             {
                 Vector3 stake = GuyStake(i);
@@ -162,29 +162,55 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The mast's rover-height service cabinet beside its footing, facing the pad (docs/features/M3-20): shut on a
-        /// dormant mast, its door swung wide once the mast is restored (relay.2's keeps the Cell Pack II tube).
+        /// The mast's rover-height service cabinet beside its footing, facing the pad (docs/features/M3-20): its body,
+        /// roof and dark inside; the door is its own node (<see cref="CabinetDoor"/>), shut and sealed on a dormant
+        /// mast, swung wide once the mast is restored.
         /// </summary>
-        private static void ServiceCabinet(LowPolyMeshBuilder b, bool open)
+        private static void ServiceCabinet(LowPolyMeshBuilder b)
         {
             b.Box(At(CabinetCentre + Vector3.up * CabinetSize.y * 0.5f), CabinetSize, PaletteSwatch.Metal, 0.03f);
             b.Box(At(CabinetCentre + new Vector3(0f, CabinetSize.y + 0.03f, 0f)),
                 new Vector3(CabinetSize.x + 0.08f, 0.06f, CabinetSize.z + 0.08f), PaletteSwatch.Charcoal, 0.02f);
             float front = CabinetCentre.z + CabinetSize.z * 0.5f;
-            var hinge = new Vector3(CabinetCentre.x - CabinetSize.x * 0.5f, 0f, front);
-            var door = new Vector3(CabinetSize.x - 0.06f, CabinetSize.y - 0.1f, 0.03f);
-            if (open)
-            {
-                b.Box(At(new Vector3(CabinetCentre.x, CabinetSize.y * 0.5f, front - 0.01f)),
-                    new Vector3(door.x - 0.04f, door.y - 0.04f, 0.02f), PaletteSwatch.Charcoal);
-            }
-
-            Matrix4x4 swing = At(hinge + Vector3.up * CabinetSize.y * 0.5f,
-                new Vector3(0f, open ? -CabinetDoorOpen : 0f, 0f));
-            b.Box(swing * At(door.x * 0.5f + 0.03f, 0f, door.z * 0.5f), door, PaletteSwatch.Sage, 0.01f);
-            b.Box(swing * At(door.x - 0.06f, 0.05f, door.z + 0.015f), new Vector3(0.03f, 0.14f, 0.03f),
-                PaletteSwatch.Charcoal);
+            b.Box(At(new Vector3(CabinetCentre.x, CabinetSize.y * 0.5f, front - 0.01f)),
+                new Vector3(CabinetDoorSize.x - 0.04f, CabinetDoorSize.y - 0.04f, 0.02f), PaletteSwatch.Charcoal);
         }
+
+        /// <summary>The cabinet door's hinge on its left edge (mast root space); the door reaches along +X.</summary>
+        public static Vector3 CabinetHinge => new Vector3(CabinetCentre.x - CabinetSize.x * 0.5f, CabinetSize.y * 0.5f,
+            CabinetCentre.z + CabinetSize.z * 0.5f);
+
+        /// <summary>How far the restored mast's door stands open about its local Y (negative swings it out).</summary>
+        public const float CabinetDoorOpenDegrees = -CabinetDoorOpen;
+
+        /// <summary>Where the spare part waits inside the cabinet (mast root space).</summary>
+        public static Vector3 CabinetItem => CabinetCentre + new Vector3(0f, 0.3f, 0f);
+
+        /// <summary>The seal's cut point on the door's free edge (door space), +Z out of the seam.</summary>
+        public static Vector3 CabinetSealPoint =>
+            new Vector3(CabinetDoorSize.x + 0.03f, 0f, CabinetDoorSize.z + 0.012f);
+
+        /// <summary>The cabinet door (door space: its hinge at the origin, the door along +X) in sage with a handle.</summary>
+        public static LowPolyMeshBuilder CabinetDoor()
+        {
+            var b = new LowPolyMeshBuilder(80);
+            b.Box(At(CabinetDoorSize.x * 0.5f + 0.03f, 0f, CabinetDoorSize.z * 0.5f), CabinetDoorSize,
+                PaletteSwatch.Sage, 0.01f);
+            b.Box(At(CabinetDoorSize.x - 0.06f, 0.05f, CabinetDoorSize.z + 0.015f), new Vector3(0.03f, 0.14f, 0.03f),
+                PaletteSwatch.Charcoal);
+            return b;
+        }
+
+        /// <summary>The door's seal (door space): a warm glass bead down its free edge, glowing until the cut.</summary>
+        public static LowPolyMeshBuilder CabinetSeal()
+        {
+            var b = new LowPolyMeshBuilder(24);
+            b.Box(At(CabinetDoorSize.x + 0.032f, 0f, CabinetDoorSize.z * 0.5f),
+                new Vector3(0.014f, CabinetDoorSize.y, CabinetDoorSize.z + 0.012f), PaletteSwatch.LampGlass);
+            return b;
+        }
+
+        private static Vector3 CabinetDoorSize => new Vector3(CabinetSize.x - 0.06f, CabinetSize.y - 0.1f, 0.03f);
 
         /// <summary>The mast from its foot (origin) to the lantern's cap; the lamp glass is the Lamp node.</summary>
         public static LowPolyMeshBuilder Mast(bool broken)

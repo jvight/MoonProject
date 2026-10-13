@@ -75,6 +75,9 @@ namespace MoonProject.Gameplay
 
         public MaterialStock Materials { get; private set; }
 
+        /// <summary>Cargo and storage tuning (07's spares, the hold, home's shelves).</summary>
+        public CargoTuning Cargo => _cargo;
+
         /// <summary>07's cutter as its fitted kits make it (docs/features/M3-26).</summary>
         public Cutter Cutter { get; private set; }
 
@@ -249,6 +252,7 @@ namespace MoonProject.Gameplay
             var storage = new HomeStorage(context.Events, _materialCatalog, _cargo.ShelfLayout(),
                 _cargo.BuiltInShelves);
             Materials = new MaterialStock(context.Events, hold, storage);
+            Materials.Stow(_cargo.StarterItems);
             var save = context.Get<ISaveService>();
             var services = new GameplayServices(context.Events, context.Input, context.Get<ITerrainQuery>(),
                 context.Get<IWorldLayout>(), context.Get<IWorldAnchors>(), context.Get<IRoverState>(),
@@ -288,7 +292,7 @@ namespace MoonProject.Gameplay
                 !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context),
                     _home.Dock.Position) ||
                 !_progression.Initialize(services, Power, _home, _workshop, _sonar, _friends, _relays,
-                    Upgrades, _lift, _tower, TowerParts) ||
+                    Upgrades, _lift, _tower, TowerParts, () => _battery.Model.Charge01) ||
                 !_plotter.Initialize(services, Blueprints, _workshop, _progression.Tuning, Upgrades) ||
                 !_battery.Initialize(services, _relays.Reach, _tether, _home, abilities, _friends, _sonar.Tuning))
 
@@ -347,6 +351,8 @@ namespace MoonProject.Gameplay
             context.Register<ICutter>(Cutter);
             context.Register<ICargoHold>(Materials.Hold);
             context.Register<IHomeStorage>(Materials.Home);
+            context.Register<IDockState>(_home.Dock);
+            context.Register<IStackTransfer>(new StackTransfer(Materials, _materialCatalog, _home.Dock, Unload));
             context.Register<ISalvageStatus>(_salvage);
             context.Register<ITetherAim>(_tether);
             context.Register<IUpgradeShop>(Shop);
@@ -468,7 +474,7 @@ namespace MoonProject.Gameplay
         {
             try
             {
-                return new GaragePort(transform, services, _salvage, _relics, abilities, _progression.Tuning);
+                return new GaragePort(transform, services, _salvage, _relics, abilities, _progression.Tuning, _tether);
             }
             catch (InvalidOperationException exception)
             {

@@ -20,12 +20,15 @@ namespace MoonProject.Gameplay
     {
         private readonly EventBus _events;
         private readonly FeelKind _kind;
-        private float _chargeSeconds;
-        private float _resumeChargeSeconds;
+        private readonly float _chargeSeconds;
+        private readonly float _resumeChargeSeconds;
         private readonly int _steps;
         private float _chargeLeft;
         private SalvageMaterial _material;
         private bool _hasMaterial;
+        private bool _staged;
+        private ChargePlan _plan;
+        private int _locked;
 
         /// <param name="kind">The beam's verb: <see cref="FeelKind.Cut"/> or <see cref="FeelKind.Dig"/>.</param>
         /// <param name="steps">The cut's progress publishes an Act beat each time it crosses a 1/steps mark.</param>
@@ -47,13 +50,6 @@ namespace MoonProject.Gameplay
         public float ResumeStart =>
             _chargeSeconds > 0f ? Mathf.Clamp01(1f - _resumeChargeSeconds / _chargeSeconds) : 0f;
 
-        /// <summary>The cutter's tier sets the next charges (docs/features/M3-26 §3).</summary>
-        public void Tune(float chargeSeconds, float resumeChargeSeconds)
-        {
-            _chargeSeconds = chargeSeconds;
-            _resumeChargeSeconds = resumeChargeSeconds;
-        }
-
         /// <summary>True while the beam is lit and cutting: the only time it draws on the battery.</summary>
         public bool Draws => Phase == CutPhase.Cutting;
 
@@ -74,6 +70,26 @@ namespace MoonProject.Gameplay
             Begin(progress, point, normal);
         }
 
+        /// <summary>
+        /// The cutter's charge-up in stages (docs/design/0.5.5-owner-feedback.md §5.1): the brace unless warm, then
+        /// each stage locking in turn (<see cref="CutChargeStaged"/>, stage 0 right after the Anticipate), then the
+        /// held breath, then ignition.
+        /// </summary>
+        public void Engage(float progress, SalvageMaterial material, Vector3 point, Vector3 normal, ChargePlan plan)
+        {
+            _material = material;
+            _hasMaterial = true;
+            _staged = true;
+            _plan = plan;
+            _locked = 0;
+            ChargeSeconds = plan.TotalSeconds;
+            _chargeLeft = ChargeSeconds;
+            ChargeProgress = 0f;
+            Phase = CutPhase.Charging;
+            Publish(FeelPhase.Anticipate, point, normal, plan.StartFraction, ChargeSeconds);
+            _events.Publish(new CutChargeStaged(0, plan.Stages, plan.Warm, plan.StageSeconds));
+        }
+
         /// <summary>The same for a beam that works no material (a dig).</summary>
         public void Engage(float progress, Vector3 point, Vector3 normal)
         {
@@ -83,6 +99,7 @@ namespace MoonProject.Gameplay
 
         private void Begin(float progress, Vector3 point, Vector3 normal)
         {
+            _staged = false;
             ChargeSeconds = progress > 0f ? _resumeChargeSeconds : _chargeSeconds;
             _chargeLeft = ChargeSeconds;
             ChargeProgress = 0f;
@@ -132,6 +149,13 @@ namespace MoonProject.Gameplay
 
             _chargeLeft -= deltaTime;
             ChargeProgress = ChargeSeconds > 0f ? Mathf.Clamp01(1f - _chargeLeft / ChargeSeconds) : 1f;
+            float elapsed = ChargeSeconds - _chargeLeft;
+            while (_staged && _locked < _plan.Stages && elapsed >= _plan.LockAt(_locked + 1))
+            {
+                _locked++;
+                _events.Publish(new CutChargeStaged(_locked, _plan.Stages, _plan.Warm, _plan.StageSeconds));
+            }
+
             if (_chargeLeft > 0f)
             {
                 return false;

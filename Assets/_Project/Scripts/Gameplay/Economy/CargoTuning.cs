@@ -19,6 +19,10 @@ namespace MoonProject.Gameplay
         [Tooltip("Slots the Side Bins add once they are fitted.")]
         [Range(0, 12)] [SerializeField] private int _sideBinSlots = 4;
 
+        [Tooltip("07's spares: what its hold carries at the start of a new game (0.5.5 D4). A loaded save keeps its own " +
+                 "hold instead.")]
+        [SerializeField] private Recipe _starterItems = new Recipe(2, 1, 0);
+
         [Header("Home's shelves (§3.1)")]
         [Tooltip("Slots of one shelf.")]
         [Range(1, 32)] [SerializeField] private int _shelfSlots = 12;
@@ -118,6 +122,7 @@ namespace MoonProject.Gameplay
         public int SideBinSlots => _sideBinSlots;
         public int ShelfSlots => _shelfSlots;
         public int BuiltInShelves => _builtInShelves;
+        public Recipe StarterItems => _starterItems;
         public int ShelfSockets => _shelfSockets;
         public float SocketRadius => _socketRadius;
         public float BuildHoldSeconds => _buildHoldSeconds;
