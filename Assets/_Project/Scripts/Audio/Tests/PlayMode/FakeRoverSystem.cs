@@ -20,7 +20,7 @@ namespace MoonProject.Audio.PlayModeTests
         public FakeCutter Cutter { get; } = new FakeCutter();
 
         /// <summary>The parts on 07 at boot (a loaded game); set before the rig boots.</summary>
-        public FakeEquipment Equipment { get; } = new FakeEquipment();
+        public AudioFakeEquipment Equipment { get; } = new AudioFakeEquipment();
 
         public FakeFriend Tilly { get; } = new FakeFriend("tilly");
 
