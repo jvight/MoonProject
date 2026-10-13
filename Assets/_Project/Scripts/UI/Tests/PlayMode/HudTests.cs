@@ -400,6 +400,21 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator TheDarkTower_NeverPutsWordsOnTheTicker_OtherSleepersDo()
+        {
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(1f);
+            Events.Publish(new StationNotYet(UiKeys.NotYetTower, Vector3.zero, 10f));
+            yield return Seconds(2f);
+            Assert.IsFalse(_rig.Ui.Ticker.IsVisible, "the tower answers with its lamp and a tone, not a line");
+
+            Events.Publish(new StationNotYet("notyet.bay", Vector3.zero, 10f));
+            yield return Seconds(2f);
+            Assert.IsTrue(_rig.Ui.Ticker.IsVisible, "another sleeper still says what wakes it");
+        }
+
+        [UnityTest]
         public IEnumerator NoFrame_ShowsTwoGuidanceElements()
         {
             Boot();

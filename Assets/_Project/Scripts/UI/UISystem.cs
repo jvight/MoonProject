@@ -855,8 +855,9 @@ namespace MoonProject.UI
         /// <summary>A sleeping station answered the sonar: its line on what wakes it goes to the ticker, once.</summary>
         private void OnStationNotYet(StationNotYet notYet)
         {
-            // A not-yet notice is guidance too: never over another element.
-            if (!AnyGuidanceShown() && _notYet.ShouldSay(notYet.ReasonKey))
+            // The dark tower answers a listen with its plaque lamp and a tone, never words; every other not-yet notice
+            // is guidance too: never over another element.
+            if (notYet.ReasonKey != UiKeys.NotYetTower && !AnyGuidanceShown() && _notYet.ShouldSay(notYet.ReasonKey))
             {
                 _tickerLines.Enqueue(new TickerLine(notYet.ReasonKey));
             }

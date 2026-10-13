@@ -735,7 +735,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(_tuning.SaveTick.HoldSeconds + _tuning.SaveTick.Reveal.FadeOut + 0.5f);
             Assert.IsFalse(ui.SaveTick.IsVisible, "and gone a moment later");
 
-            context.Events.Publish(new StationNotYet("notyet.tower", Vector3.zero, 10f));
+            context.Events.Publish(new StationNotYet("notyet.bay", Vector3.zero, 10f));
             yield return Until(() => ui.Ticker.IsVisible, WaitLimitSeconds);
             yield return new WaitForSecondsRealtime(_tuning.Ticker.Reveal.FadeIn + 0.3f);
             Assert.IsTrue(ui.Ticker.IsVisible, "the sleeper's line is on the ticker");

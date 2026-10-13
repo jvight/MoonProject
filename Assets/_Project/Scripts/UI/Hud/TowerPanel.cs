@@ -17,15 +17,14 @@ namespace MoonProject.UI
     /// need line in place of the hold; the stock stays in view in the pinned materials chip), and a ring that fills
     /// while the confirm button is held (<see cref="HoldToConfirm"/>: no accidental purchases). Buying goes through
     /// <see cref="IUpgradeShop"/>. Then the ring rests full while the station does the work (<see cref="StationWork"/>,
-    /// docs/features/M3-14), and the station's own line ("ui.tower.purchased" as the tower's beam starts stitching up
-    /// its new section, "ui.bay.fitted" as the Rover Bay sets the piece on 07) glows a moment before the panel shows
-    /// what is next, or bows out when all is bought. The ring starting and completing are published as
+    /// docs/features/M3-14), and the Rover Bay's line ("ui.bay.fitted", as it sets the piece on 07) glows a moment
+    /// before the panel shows what is next, or bows out when all is bought; the radio tower says nothing (the world
+    /// shows the stitch, then the reward card). The ring starting and completing are published as
     /// <see cref="UiCue"/>s.
     /// <para>
     /// While the station has more than one thing left to sell (Kenji's Rover Bay, docs/features/M3-11), the panel lists
     /// them instead (<see cref="BayList"/>): a tap of Interact or the Winch picks (<see cref="BayPick"/>, a
-    /// <see cref="UiCueKind.FocusMove"/> each), the hold crafts the picked one, and a faint "ui.bay.pick" line says
-    /// how to choose. The radio tower, and the bay's last piece, keep the single offer.
+    /// <see cref="UiCueKind.FocusMove"/> each) and the hold crafts the picked one. The radio tower, and the bay's last piece, keep the single offer.
     /// </para>
     /// </summary>
     internal sealed class TowerPanel
