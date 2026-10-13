@@ -184,11 +184,14 @@ namespace MoonProject.Gameplay.Editor
 
         /// <summary>The prefab at the anchor, facing its (level) forward as the game places it, hidden like the root.
         /// </summary>
-        /// <summary>Kestrel-3's cuttable hull fragments on the World's lane slots, under one hidden root.</summary>
+        /// <summary>
+        /// Kestrel-3's cuttable hull fragments on the World's lane slots, under one hidden root standing on the first.
+        /// </summary>
         private static void PlaceScrapField(IScrapField field, SalvageCatalog catalog, Transform root)
         {
             var scrap = new GameObject(ScrapFieldName).transform;
             scrap.SetParent(root, false);
+            scrap.position = field.Slot(0).Position;
             Hide(scrap);
             for (int i = 0; i < field.Count; i++)
             {
