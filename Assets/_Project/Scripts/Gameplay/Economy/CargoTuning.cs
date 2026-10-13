@@ -122,10 +122,27 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds the lid takes to swing open; the find slides out once it stands open.")]
         [Range(0.2f, 3f)] [SerializeField] private float _containerLidSeconds = 0.9f;
 
+        [Tooltip("Glow of a container's seal seen from afar: a small mark on the object that reads across the basin, " +
+                 "never a lamp (its seal can be a whole lid face; 1 = the palette's glow as authored).")]
+        [Range(0f, 1f)] [SerializeField] private float _containerSealGlow = 0.8f;
+
+        [Tooltip("Glow of a container's seal once 07 has arrived: the mark has done its job and only whispers where " +
+                 "to cut, so it never washes over 07.")]
+        [Range(0f, 1f)] [SerializeField] private float _containerSealNearGlow = 0.1f;
+
+        [Tooltip("07's distance (m) to the seal over which its glow eases from the near to the far level (near, far).")]
+        [SerializeField] private Vector2 _containerSealFade = new Vector2(3f, 9f);
+
         public PieceSize CrateCut => _crateCut;
         public PieceSize ContainerCut => _containerCut;
         public float ContainerLidSwing => _containerLidSwing;
         public float ContainerLidSeconds => _containerLidSeconds;
+        public float ContainerSealGlow => _containerSealGlow;
+        public float ContainerSealNearGlow => _containerSealNearGlow;
+
+        public Vector2 ContainerSealFade => _containerSealFade.x <= _containerSealFade.y
+            ? _containerSealFade
+            : new Vector2(_containerSealFade.y, _containerSealFade.x);
         public float LidLift => _lidLift;
         public float LidTilt => _lidTilt;
         public float LidSeconds => _lidSeconds;
