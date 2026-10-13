@@ -47,10 +47,13 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.IsTrue(whine.isPlaying, "then the capacitor whine rises");
             _rig.Events.Publish(new CutChargeStaged(1, 2, false, 0.45f));
             Assert.AreEqual("charge_detent", LastClip, "a stage locks with a detent click");
-            Assert.AreEqual(1f, whine.pitch, 1e-3f, "on D");
+            yield return null;
+            Assert.GreaterOrEqual(whine.pitch, 1f, "on D, gliding on toward A");
+            Assert.Less(whine.pitch, 1.1f);
             yield return new WaitForSeconds(0.45f);
             _rig.Events.Publish(new CutChargeStaged(2, 2, false, 0.45f));
             Assert.AreEqual("charge_lock", LastClip, "the full lock's clunk-click");
+            yield return null;
             Assert.AreEqual(1.4983f, whine.pitch, 1e-3f, "held on A through the breath");
 
             _rig.Rover.Cutter.Tier = 3;
