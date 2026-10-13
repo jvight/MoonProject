@@ -54,7 +54,6 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.Less(_firstDropPitch, top, "the next feed starts in an empty bin again");
             _rig.Events.Publish(new StationCued(StationCue.Fed, Upgrade, mouth));
 
-            _rig.Events.Publish(new RoverBayFitting(Upgrade));
             Transform upper = _rig.Bay.GetArmJoint(0, RoverBayJoint.Upper);
             Transform tip = _rig.Bay.GetArmJoint(0, RoverBayJoint.Tip);
             AudioSource servo = Stations.ArmSource(0);
