@@ -501,16 +501,16 @@ MonoBehaviour:
     _bloomIntensity: 1.1
     _bloomScatter: 0.7
     _bloomTint: {r: 1, g: 0.93, b: 0.86, a: 1}
-    _postExposure: 0.5
+    _postExposure: 0
     _gradeInHdr: 1
-    _contrast: 20
-    _saturation: -5
+    _contrast: 22
+    _saturation: -18
     _lift: {x: 0.96, y: 0.97, z: 1.08, w: 0}
     _gamma: {x: 1, y: 1, z: 1, w: 0}
     _gain: {x: 1.04, y: 1, z: 0.95, w: 0}
-    _splitShadows: {r: 0.32, g: 0.35, b: 0.55, a: 1}
-    _splitHighlights: {r: 1, g: 0.86, b: 0.68, a: 1}
-    _splitBalance: -10
+    _splitShadows: {r: 0.36, g: 0.39, b: 0.46, a: 1}
+    _splitHighlights: {r: 1, g: 0.92, b: 0.8, a: 1}
+    _splitBalance: -15
     _occlusionIntensity: 1.2
     _occlusionRadius: 1.2
     _occlusionDirectLighting: 0.55
