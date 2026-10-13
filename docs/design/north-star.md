@@ -129,6 +129,65 @@ Each is observable in a play-through, and the owner's play or a capture checks i
 | **1.0** | - The main arc takes 6–8 h. - The player transmits and stays after the credits. |
 | **Always** | - After a dock evening the player sets out again within 30 s in at least half of evenings (the "one more trip" hook). - A second session starts voluntarily. |
 
+## 4a. Awe beats (owner, 2026-10-13, memory `awe-hooks`)
+Recurring wow moments. Awe is half of the target feeling, "lonely wonder"; the other half is the pride that follows.
+Every beat below follows the light model L1 (a low polar Sun circling once per 2 h of play; earthshine never
+charges; Earth fixed and low) and the ecology rules (living moon §1a).
+
+**Rules for awe beats:**
+- They are earned by being somewhere, never forced.
+- Any input continues play. A camera move happens only when 07 is still and Gentle camera is off.
+- They never come with text.
+- At most one staged beat per ~20 minutes, so they stay special.
+
+### The beats
+| # | Beat | Trigger | What you see and hear | Logic | Frequency | Release |
+|---|---|---|---|---|---|---|
+| 1 | **The first nightfall** | the Sun's bearing passes behind the basin's rim (timed for the first day, below) | Long shadows race across the floor. The panels go dark one by one. Then home's windows, the station lamps and the lit masts come on **in sequence, like a village at dusk**. The stars and the Milky Way bloom as the sky darkens. Earth brightens, and its night half shows **city lights**. Machines walk back to their pads and settle with soft chimes. The radio's music shifts to the night set. | When the local Sun sets, Earth seen from the Moon is near half phase, so its night half (city lights) faces us. Through the night it waxes toward full, and earthshine grows (the lavender night). Lamps switch on at dusk because the station's light sensors do. Solar machines seek pads (§1a.2). | the first one is staged; then every dusk, unstaged (no camera) | **0.6** (needs the L1 Sun rig); see "0.5.5" below |
+| 2 | **Machine fireflies** | night, anywhere with dormant machines | Tiny slow-blinking **standby LEDs** dot the landscape: a vista looks inhabited | Dormant machines keep a standby light at minimal draw. **Dead derelicts show none**, so the LEDs also tell the player what can be woken. | every night | **0.5.5** (cheap: dormant stations and 0.5.5's derelicts get standby LEDs), more in 0.6 |
+| 3 | **Dawn, the world waking** | the Sun's bearing clears the rim | The **terminator sweeps** across the ground with the **dust glow** riding it. Frost in shadowed pockets sparkles and lifts. Panels flare as light hits them, mites pour out onto the panels, the flock lifts off its perches, and the music brightens. | Living moon §2: dust levitates at the terminator, frost sublimates in first light, and solar machines wake when their source returns. | every dawn, unstaged except the first | 0.6 |
+| 4 | **An eclipse by Earth** | a scripted alignment: the Sun passes exactly behind Earth's fixed disk | Earth goes black with **a thin red ring**: every sunrise and sunset on Earth at once (real). The landscape dims to a red-violet. Biolum things glow in VISION's reserved eclipse swatches (#3CFFC2 / #FF5FD2). Total silence, then one held radio chord. | It is real, and it happens when Earth eclipses the Sun as seen from the Moon. With both low on the horizon, it needs the Sun's circle to cross behind Earth: rare by construction. | once, as a story beat (proposed: when the survey's last piece is found, before the Peak, 0.8) plus a rare repeat after the ending | 0.8 |
+| 5 | **Flash-shower nights** | a "shower night" (about one in 4 nights in open regions) | **No streaks:** the Moon has no air to burn meteors. Instead, many **tiny white impact flashes** spark across the plain and far ridges. High **ejecta arcs** catch the sunlight above the shadow line and glitter, then fall. The next dawn shows **fresh craters with warm impact glass** (living moon §2). | Real impact flashes; ejecta lit by the Sun above the terminator | about one in 4 nights in open regions | 0.6 |
+| 6 | **Vista reveals** | the first crossing into a new region (the rille pass's mouth, the terraces' first step, the crater rim, the skylight's edge) | 07 stops at the opening. A slow camera pull-out (6–8 s) shows the whole region: the Long Mare's swirl and the dish's blink under a huge low Earth. Then the region's first sound bed fades in. | Each region's lure is designed to be seen whole from its seam (regions §3) | once per region | 0.6 (the mare), then one per region |
+| 7 | **The network pulse** | lighting a mast at night | A **handshake pulse** runs mast to mast: each lit mast's lamp flashes in turn, out to the horizon. Where cables exist (home, the trencher's line), light runs along them. A rising pentatonic run, one note per mast. | The relay chain re-links: each mast confirms the next (radio handshake), and the cable lamps show power flowing | every mast lit at night | **0.5.5** (cheap: the 4 basin masts' lamps blink in sequence on `RelayRestored`), then grows with every region |
+| 8 | **The skylight's shaft** | the lunar day's course | In the lava tube, the shaft of sunlight **drifts across the cave floor** as the Sun circles. Once per day it reaches the crystals and the moss, which glow. | The Sun circles (L1), so the shaft moves | once per lunar day in the tube | 0.8 |
+
+### Timing the first day
+The first session is about 60–90 min, and the beloved look is the earthlit night. So the first day is paced on
+purpose:
+- **New Game starts in late, low sunlight:** the Sun about 35 minutes from setting behind the basin's west rim.
+  Golden-white light, very long shadows, a black sky with Earth huge and few stars. The opening (wake, Look up) plays
+  in that light.
+- **Minute ~30–35:** the player usually rides down from their first lab visit (first-hour-v2 §4). **The first
+  nightfall** (beat 1) falls right as they come out of the lander: home's lights, which they just powered, come on
+  as a village at dusk. It is the payoff of the first half hour.
+- **The first night lasts ~55 min** (the iconic lavender look) and holds the Tilly, garage, lift and chasm beats.
+- **The first dawn** comes around minute 90.
+- **After that,** a normal 2-hour lunar day: the basin floor is sunlit about 45% of the cycle, with ~5-minute dusk
+  and dawn transitions.
+- **Loaded games keep their saved Sun.**
+- Story's opening storyboard (`cutscenes.md`) adapts: the wake in low sunlight, and the stars bloom at nightfall
+  instead of at minute one. **Story to confirm.**
+
+### 0.5.5 versus 0.6
+- **In 0.5.5 (cheap, no Sun rig):**
+  - **machine fireflies** on the dormant stations and the new derelicts (art: one standby LED each; gameplay: on
+    while dormant, off when dead or awake);
+  - **the network pulse** on the basin masts (world and gameplay: the sequence on `RelayRestored`; audio: the run).
+- **A scripted first nightfall in 0.5.5 is possible but not recommended.** It would need a tuned sunlit preset and
+  a timed blend (world and art, M) and would change the opening's look just before release. Better as the first
+  item of 0.6's L1 build.
+- **0.6:** the Sun rig and phases, then the first nightfall (staged), dawns, flash-shower nights and the mare's vista
+  reveal.
+- **0.8:** the eclipse beat and the skylight's shaft.
+
+### Playtest signals
+- At the first nightfall, the player **stops driving to watch** (07 still for ≥ 5 s during the sequence).
+- At a vista reveal, the player waits out the pull-out without pressing anything.
+- During a dawn, the player looks around (camera movement while still).
+- After a mast lights at night, the player looks toward the horizon to follow the pulse.
+- The owner names at least one awe beat unprompted after a session.
+
 ## 5. The checklist every future spec must pass
 1. **Hook, pull, hold, finish and feeling** are answered *in the doc*, before the mechanics (skill
    `player-experience`).
