@@ -112,11 +112,11 @@
         },
         {
             "key": "next.wake",
-            "text": "Việc đầu tiên: sửa tháp radio."
+            "text": "Sửa tháp radio."
         },
         {
             "key": "next.salvage",
-            "text": "Tháp cần kim loại, dây điện, thấu kính và cuộn dây tháp. Hãy trục vớt ở Kho tiếp tế."
+            "text": "Trục vớt ở Kho tiếp tế."
         },
         {
             "key": "next.tower.part",
@@ -180,7 +180,7 @@
         },
         {
             "key": "next.signal",
-            "text": "Có tín hiệu yếu sau đụn cát. Dò sóng rồi lần theo."
+            "text": "Có tín hiệu yếu. Dò sóng rồi lần theo."
         },
         {
             "key": "next.dig",
@@ -188,15 +188,15 @@
         },
         {
             "key": "next.friend.repair",
-            "text": "Đã đủ bộ phận. Hãy sửa cho cô ấy."
+            "text": "Sửa cho Tilly."
         },
         {
             "key": "next.garage",
-            "text": "Đến Gara của Kenji. Ở đó có thể còn phụ tùng dự phòng cho 07."
+            "text": "Đến Gara của Kenji."
         },
         {
             "key": "next.port",
-            "text": "Cổng bảo trì ở gara vẫn dùng được. Đỗ lên bệ để lắp phụ tùng."
+            "text": "Đỗ lên bệ cổng bảo trì."
         },
         {
             "key": "next.relic",
@@ -216,11 +216,11 @@
         },
         {
             "key": "next.bay.wake",
-            "text": "Xưởng xe chưa có điện. Tháp radio cấp 2 sẽ cấp điện cho xưởng."
+            "text": "Xây tháp cấp 2 để có điện cho xưởng xe."
         },
         {
             "key": "next.bay",
-            "text": "Xưởng xe đã có điện. Đỗ lên bàn xoay để chế tạo đồ cho 07."
+            "text": "Đỗ lên bàn xoay ở xưởng xe để chế tạo."
         },
         {
             "key": "next.power.part",
@@ -332,19 +332,19 @@
         },
         {
             "key": "notyet.bay",
-            "text": "Chưa có điện. Tháp radio cấp 2 sẽ cấp điện cho xưởng xe."
+            "text": "Cần tháp cấp 2."
         },
         {
             "key": "notyet.chart",
-            "text": "Chưa có điện. Tháp radio cấp 3 sẽ cấp điện cho bản đồ."
+            "text": "Cần tháp cấp 3."
         },
         {
             "key": "notyet.tether",
-            "text": "07 không còn dây kéo. Kenji có để một cái dự phòng ở gara."
+            "text": "07 chưa có dây kéo. Kenji để một cái dự phòng ở gara."
         },
         {
             "key": "ticker.listen.first",
-            "text": "Khi 07 dừng lại, nó sẽ lắng nghe. Xác tàu nào còn đồ sẽ đáp lại bằng một ánh sáng."
+            "text": "Dừng lại để 07 lắng nghe: xác tàu còn đồ sẽ sáng lên."
         },
         {
             "key": "place.dock.name",
@@ -924,7 +924,7 @@
         },
         {
             "key": "ticker.relay.waiting",
-            "text": "Trạm này cần một trạm có điện ở gần. Hãy sửa trạm gần nhà hơn trước."
+            "text": "Cần một trạm có điện ở gần."
         },
         {
             "key": "hop.node.home",
@@ -1188,7 +1188,7 @@
         },
         {
             "key": "ui.recipecard.tower",
-            "text": "Đỗ lên bệ của tháp rồi nạp vật liệu vào phễu."
+            "text": "Đỗ lên bệ để xây."
         },
         {
             "key": "ui.recipecard.blueprint",
