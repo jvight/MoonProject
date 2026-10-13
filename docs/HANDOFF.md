@@ -4,7 +4,44 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 0000000000000. LATEST (2026-10-13): owner played 0.5.4 -> 0.5.5 "owner feedback" before 0.6
+## 00000000000000. LATEST (2026-10-13 ~19:30): 0.5.5 most slices on main (95f5f746, verified + pushed)
+- Director: session local_0b7c61a2 ("MoonProject Director handoff"); cron v4 = job 27877d8f (session-only).
+- **On main, verified:**
+  - A guidance; B hold, transfer view and spares;
+  - E Cells charge-up; equipment (07 tab with a live portrait, sockets, fit at the bay);
+  - Core contracts (equipment, scan, containers);
+  - C1-C4 + C7 (sealed containers with finds at the mouth, Tilly's sled, canyon tapes, keepsakes in RelicPockets);
+  - the art derelicts 06/Mule/HaulBot/Drone (prefabs only, NOT placed yet);
+  - the pod beacon, the scrap field, WorldSettings re-serialised;
+  - rover's scan look + portrait lights; no ability notes; the low-battery hint; the Tilly parts chip removed;
+  - `verify --explicit` (run it before the release build).
+- **Remaining for 0.5.5 (all gameplay-led):**
+  - C8 cabinets, C9 SpareCrate, the 06 TapeCase (dust_and_honey);
+  - C11 place the derelicts (06 first, then rover re-captures its glance; box/rover a7101a38/dbd64207 waits for it);
+  - C5 the scrap.kestrel_trail site (4 Metal);
+  - C10 drop the ground rings;
+  - C6 held pieces (amber; overflow crates);
+  - D scanning (gameplay: fragments at FragmentSocket_*, progress, dissolve start = FeelBeat Scan Reward at ScanTarget, known gives +metal).
+  - Then `verify --explicit --parallel --push`, a version bump to 0.5.5, build_player, Builds/.
+- **Rulings today** (see memories scan-fragments, equipment-07, derelict-variety, inventory-07-only, cut-charge-weight,
+  plain-functional-text, no-floating-loot):
+  - docked Tab = the transfer view; E at the dock stays Hop;
+  - one event per fact (PartFitted replaced the old kit events);
+  - finds rest at the container's mouth, never on the ground;
+  - relics in debris pockets (D6);
+  - the deck on the back centreline;
+  - dust_and_honey in a TapeCase at 06;
+  - the drone fall after D (or 0.6).
+- **Lessons:**
+  - box_check never runs the Playthrough: a slice that changes the first-hour flow must run
+    `--category Playthrough` before it reports (the C2 coil line broke it);
+  - hand-tuned assets (WorldSettings) keep stale values when code defaults change; re-serialise them in the same
+    commit (the 1.2 s cable pulse never ran until today);
+  - a box that edits another domain's tests runs that domain's suites;
+  - pin temp branches and pass --filter on every land.
+- 0.6 backlog: the solar field vs antenna farm (L7) clash; more elders; the drone fall if cut from 0.5.5.
+
+## 0000000000000. (previous) (2026-10-13): owner played 0.5.4 -> 0.5.5 "owner feedback" before 0.6
 - **Owner's verdict on 0.5.4** (memories: plain-functional-text, scan-fragments, no-floating-loot,
   inventory-07-only):
   1. Text is still unfitting and too much: the charger hint shows at boot with a full battery; the tower repair says

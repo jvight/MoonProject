@@ -78,6 +78,23 @@ namespace MoonProject.Art.Tests
             }
         }
 
+        [Test]
+        public void Elder06_SlumpsAgainstRelay2sHut_WhichStandsClearOfItsCellsAndTape()
+        {
+            ModelNode elder = DerelictBuilder.CreateElder();
+            ModelNode socket = elder.Children.Single(n => n.Name == DerelictBuilder.HutSocketName);
+            Assert.IsNull(socket.Mesh);
+            Assert.AreEqual(0f, socket.LocalPosition.y, 1e-5f, "the hut stands on the ground");
+            Bounds hut = Placed(socket, RelayModelBuilder.CreateHut().Mesh.Geometry.Bounds);
+            Bounds body = elder.Children.Single(n => n.Name == SiteModelBuilder.SkeletonName).Mesh.Geometry.Bounds;
+            Assert.Less(Mathf.Abs(hut.max.x - body.min.x), 0.6f, "06 slumps against it, not apart from it");
+            foreach (ModelNode other in elder.Children.Where(n => n != socket && n.Mesh == null
+                && n.Name != SiteModelBuilder.SkeletonName))
+            {
+                Assert.IsFalse(hut.Contains(other.LocalPosition), $"{other.Name} lies outside the hut");
+            }
+        }
+
         private static Bounds Placed(ModelNode socket, Bounds local)
         {
             return Placed(socket, null, local);

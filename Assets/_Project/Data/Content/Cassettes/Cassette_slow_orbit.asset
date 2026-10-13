@@ -18,7 +18,6 @@ MonoBehaviour:
   _anchor:
     _anchorId: canyon.ledge
     _offset: {x: 0, y: 0}
-  _plannerSeed: 0
   _gate:
     _gated: 1
     _ability: 0

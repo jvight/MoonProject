@@ -34,6 +34,14 @@ namespace MoonProject.Art.Editor
         public static readonly Quaternion ElderTapeTurn = Quaternion.Euler(0f, 90f, 0f);
 
         /// <summary>
+        /// Where relay.2's service hut stands by 06 (06 space): on 06's left, its open side turned toward 06, so 06
+        /// slumps against it.
+        /// </summary>
+        public static readonly Vector3 ElderHutSeat = new Vector3(-1.9f, 0f, 0.4f);
+
+        public static readonly Quaternion ElderHutTurn = Quaternion.Euler(0f, 90f, 0f);
+
+        /// <summary>
         /// Where Cell Pack II's fragment <paramref name="index"/> lies on 06 (06 space) and how: one cell half out of
         /// its open battery bay, one on the bay's fallen door, the cell rail on its lid.
         /// </summary>
