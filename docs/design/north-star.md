@@ -188,7 +188,76 @@ purpose:
 - After a mast lights at night, the player looks toward the horizon to follow the pulse.
 - The owner names at least one awe beat unprompted after a session.
 
-## 5. The checklist every future spec must pass
+## 4b. Variety and density (owner, 2026-10-13: "the world overall is too monotonous")
+
+### Why Subnautica never feels empty, and our harder problem
+- Subnautica's ocean is dense by nature:
+  - a reef has something moving or glowing every few metres;
+  - a biome changes every few hundred metres;
+  - a landmark (the Aurora, a floating island, a wreck) is almost always in view.
+- **The Moon is barren by nature.** Grey rock everywhere is the honest default, and that is our monotony.
+- So our density must come from **five axes we control**, layered at **three distances**, without breaking solitude:
+  the moon stays quiet, but never *blank*.
+
+### The interest-density rule
+At cruise (~5 m/s), something worth looking at enters view **every ~20–30 s of driving**, i.e. every **~100–150 m**:
+
+| Layer | Spacing | Examples | Job |
+|---|---|---|---|
+| **Far landmark** | always ≥ 1 in view | the Peak's beacon, the canyon notch, the swirl, the dish blink, Meridian's strobes, Earth | orientation and the pull |
+| **Mid interest** | every ~100–150 m of route | a derelict, a machine group, a fresh crater with glass, a boulder garden, an outcrop, a crew post, a rille, a crate | a reason to steer or stop |
+| **Near detail** | every ~20–40 m | rock clusters, old tracks, cable runs, ejecta blocks, a small crater, a lost tool | texture: the ground is never one value (visual review V4) |
+
+- **Gaps:** no route between two places runs > 30 s at cruise without a mid-interest.
+- **Solitude is kept:** mid-interests are *things*, not crowds. Machine encounters stay sparse (living moon §0). A
+  derelict, a geology feature or a human trace counts as much as a machine.
+
+### The five variety axes
+Each region differs from its neighbours on **at least three axes**. Inside a region, **3–5 sub-zones** each change at
+least one axis.
+
+| Axis | What changes | Range across the game |
+|---|---|---|
+| **Albedo** | how bright the ground is | the mare's near-black basalt · the basin's lavender dust · the terraces' pale highland rock · the crater's frost glitter · the orange glass vent patches · bright young-crater rays |
+| **Landform** | the shape of the ground | dunes · crater fields at several scales · rilles · boulder gardens · ejecta rays · swirls · terraces and walls · skylights and tubes · switchbacks and rifts |
+| **Light phase** | L1's sunlit / terminator / earthlit / permanent dark | gold rims on high ground · the dust glow at the terminator · the lavender night · total dark lit only by floods |
+| **Human traces** | what the crew and Meridian left | tracks, cables, route posts, lamp posts, wrecks, stations, crates, flags, a lost glove: Lumen's cream and orange vs Meridian's white and teal |
+| **Machine life** | who still moves | mites, the sweeper, the flock, the trencher, climbers, tappers, beacons; plus standby LEDs at night |
+
+**Per region** (each row differs from its neighbours on ≥ 3 axes):
+
+| Region | Albedo | Landform | Light | Human traces | Machine life |
+|---|---|---|---|---|---|
+| Basin (home) | mid lavender dust, with **new darker and brighter patches** (below) | dunes, craters, ramps, bowls, the canyon | the sunlit/earthlit cycle | home, 5 wrecks, Lumen tracks and posts | mites at the west works, Tilly, Bell |
+| Long Mare | **near-black** with bright rays and the pale swirl | flat swells, the rille, ejecta rays, outcrops, the skylight | long sunlit stretches; the terminator glow | the dish, the convoy, the trencher's line, Meridian's prospector | the flock, the trencher, the sweeper |
+| Rim Terraces | **pale, bright** | steps, walls, switchbacks | near-eternal sunlight | Meridian's station (white and teal), cables | climbers, sorters, wipers |
+| Shadowed Crater | black with **frost glitter** | a deep bowl, ice sheets | **permanent dark** | Theo's sled, Meridian's ice works | ice tappers, Moss |
+| Lava tube | dark basalt with **lit shafts** | a vault, pillars | skylight shafts only | the storm shelter | echo beacons |
+| Peak road | grey rock, high | switchbacks, rifts, a rockfall | sunlit, Earth at eye level | the dish station, the beacon | — (the loneliest climb) |
+
+### The basin variety pass (World is mocking it up): proposals
+**Sub-zones:**
+| Sub-zone | Character |
+|---|---|
+| the home pad | tracks, cables, warm pools |
+| the depot flats | crew traces, posts |
+| **the Kestrel ray field** | a young crater north-east of Kestrel throws **bright ejecta rays** across the floor, the first strong albedo contrast |
+| **the boulder garden** | blocky ejecta around a fresh crater on the canyon road, which breaks up the dead road (level review L2) |
+| **the dark-mantle patch** | a near-black pyroclastic stain around the orange-glass vent field (M3-27): a preview of the mare's colour |
+| **the west works** | arrays, mites, the antenna farm (M5 + L7 merged) |
+| **a small rille** | a shallow sinuous channel crossing the south floor, a natural lane toward the garage |
+
+**Near detail everywhere:** crater fields at 3 scales (V4), rock clusters, and 07's old tracks.
+
+### Monotony check (how we measure it)
+- **Capture drive:** each main route driven at cruise, with a capture every 5 s.
+  - Count the mid-interests in view: **≥ 2 per 30 s, and no stretch over 30 s without one.**
+  - The ground's flatness metric stays under the visual review's target (≤ 0.30).
+- **Playtest signal:**
+  - the player turns the camera toward something at least once per minute of driving;
+  - **the owner no longer says "monotonous".**
+
+## 5. The checklist every future spec must pass (10 points)
 1. **Hook, pull, hold, finish and feeling** are answered *in the doc*, before the mechanics (skill
    `player-experience`).
 2. **Learn, then improve:** the borrowed mechanic, why it works there, and Lunarion's better version.
@@ -199,3 +268,5 @@ purpose:
 7. **One guidance element;** hints only when needed; never repeat the world.
 8. **A playtest signal** that says how we'll know it works.
 9. **Phased scope:** what ships in which release.
+10. **Monotony check** (§4b): something worth looking at every ~20–30 s of driving, three layers (far, mid,
+    near), ≥ 3 variety axes differing from neighbouring regions, and 3–5 sub-zones inside each one.
