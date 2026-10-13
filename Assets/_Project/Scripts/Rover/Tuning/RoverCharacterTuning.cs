@@ -372,6 +372,10 @@ namespace MoonProject.Rover
             + "nod, then following the piece.")]
         [SerializeField] private CutFocusSettings _cutFocus = new CutFocusSettings();
 
+        [Tooltip("07's eye while it scans a fragment: the lid fully open, the lens fan, the pulses and the flare "
+            + "(0.5.5 §1.2).")]
+        [SerializeField] private ScanLookSettings _scanLook = new ScanLookSettings();
+
         [Header("07 speaks machine (docs/design/feel-pass.md §7.2)")]
         [Tooltip("When 07 chirps (cooldowns) and how its eye, antenna and head move with each syllable; the full "
             + "dock's sigh.")]
@@ -684,6 +688,8 @@ namespace MoonProject.Rover
         public BatteryMoodSettings Battery => _battery;
 
         public CutFocusSettings CutFocus => _cutFocus;
+
+        public ScanLookSettings ScanLook => _scanLook;
 
         public ChirpSettings Chirp => _chirp;
 

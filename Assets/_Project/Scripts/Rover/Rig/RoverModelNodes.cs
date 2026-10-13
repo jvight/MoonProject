@@ -48,6 +48,9 @@ namespace MoonProject.Rover
         /// <summary>On the eye: where the Focus Lens kit mounts (M3-26).</summary>
         public const string LensSocket = "LensSocket";
 
+        /// <summary>The empty node at the lens front where the scan fan mounts (it sweeps about its local Y).</summary>
+        public const string ScanFanSocket = "ScanFanSocket";
+
         /// <summary>Art's empty node marking where equipment socket <paramref name="socket"/> sits on 07 (0.5.5
         /// §3.5), e.g. "CutterSocket".</summary>
         public static string EquipmentSocket(RoverSocket socket)

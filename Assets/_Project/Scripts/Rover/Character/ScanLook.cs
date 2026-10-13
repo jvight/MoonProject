@@ -23,6 +23,7 @@ namespace MoonProject.Rover
         private float _sweepTime;
         private float _pulseAge = float.PositiveInfinity;
         private float _flareAge = float.PositiveInfinity;
+        private float _learnedAge = float.PositiveInfinity;
 
         public ScanLook(ScanLookSettings settings)
         {
@@ -31,6 +32,9 @@ namespace MoonProject.Rover
 
         /// <summary>True from <see cref="Begin"/> until <see cref="LetGo"/> or <see cref="Learned"/>.</summary>
         public bool IsScanning { get; private set; }
+
+        /// <summary>Whether 07 still looks at the fragment: while scanning, and through the dissolve after it.</summary>
+        public bool HoldsGaze => IsScanning || _learnedAge < _settings.DissolveSeconds;
 
         /// <summary>How far the lid has lifted toward fully open, 0 (its mood's pose) .. 1.</summary>
         public float Open => _open;
@@ -49,6 +53,7 @@ namespace MoonProject.Rover
         {
             IsScanning = true;
             _flareAge = float.PositiveInfinity;
+            _learnedAge = float.PositiveInfinity;
         }
 
         /// <param name="progress">How far the scan has come, 0..1 (gameplay's Act at each quarter).</param>
@@ -71,6 +76,7 @@ namespace MoonProject.Rover
             IsScanning = false;
             _progress = 0f;
             _flareAge = 0f;
+            _learnedAge = 0f;
         }
 
         /// <summary>Back to the mood's pose at once (07 was placed).</summary>
@@ -83,6 +89,7 @@ namespace MoonProject.Rover
             _sweepTime = 0f;
             _pulseAge = float.PositiveInfinity;
             _flareAge = float.PositiveInfinity;
+            _learnedAge = float.PositiveInfinity;
         }
 
         public void Step(float deltaTime)
@@ -94,6 +101,7 @@ namespace MoonProject.Rover
             _sweepTime = Mathf.Repeat(_sweepTime + step, _settings.SweepSeconds);
             _pulseAge += step;
             _flareAge += step;
+            _learnedAge += step;
         }
 
         private float Pulse => _pulseAge < _settings.PulseSeconds
