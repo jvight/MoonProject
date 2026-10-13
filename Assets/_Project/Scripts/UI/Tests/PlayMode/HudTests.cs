@@ -233,6 +233,52 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator SevenTab_ShowsSocketsAndThePartsRow_AndFitsOnlyAtTheStation()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordHoldBooted();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Hold.Set(8);
+            _rig.Fakes.Equipment.Fit(RoverKitPiece.TetherRing);
+            _rig.Fakes.Equipment.Craft(RoverKitPiece.HoverCoils);
+            _rig.Fakes.Equipment.AtStation = false;
+            yield return Seconds(0.3f);
+
+            yield return Tap(keyboard.tabKey);
+            _rig.Ui.Cargo.SelectTab(1);
+            yield return Seconds(0.6f);
+            EquipmentPage seven = _rig.Ui.Cargo.Seven;
+            Assert.AreEqual(Text("ui.can.tether.verb"), seven.SocketName(RoverSocket.Tether), "a fitted part carries its name");
+            Assert.AreEqual(Text("ui.can.hover_jump.verb"), seven.SocketName(RoverSocket.Belly),
+                "a crafted part's socket is named, with the bay icon");
+            Assert.IsTrue(seven.SocketShowsBay(RoverSocket.Belly));
+            Assert.IsFalse(seven.SocketShowsBay(RoverSocket.Tether), "a fitted socket needs no bay icon");
+            Assert.AreEqual(string.Empty, seven.SocketName(RoverSocket.Flanks), "unknown sockets are dim and unnamed");
+            Assert.AreEqual(1, seven.CardCount, "the crafted part waits in the row");
+            Assert.AreEqual(Text("ui.can.hover_jump.verb"), seven.CardName(0));
+            Assert.IsTrue(seven.CardElement(0).ClassListContains(EquipmentPage.AwayClass),
+                "away from the bay it shows the bay icon");
+
+            Submit(seven.CardElement(0));
+            yield return Seconds(0.3f);
+            Assert.AreEqual(0, _rig.Fakes.Equipment.Fits, "away from the bay nothing happens");
+            Assert.IsTrue(_rig.Ui.Cargo.IsOpen, "and nothing pops up or closes");
+
+            seven.CardElement(0).Focus();
+            yield return null;
+            StringAssert.StartsWith(Text("ui.can.hover_jump.verb"), seven.TooltipText,
+                "a tooltip is the part's name and its key");
+
+            _rig.Fakes.Equipment.AtStation = true;
+            yield return Seconds(0.3f);
+            Submit(seven.CardElement(0));
+            yield return Seconds(0.8f);
+            Assert.AreEqual(1, _rig.Fakes.Equipment.Fits, "at the bay one press fits the part");
+            Assert.IsFalse(_rig.Ui.Cargo.IsOpen, "the screen eases away for the install");
+        }
+
+        [UnityTest]
         public IEnumerator UnlockCard_SaysWhatAFittedKitLetsSevenDo_AfterTheKitTitle()
         {
             InputSystem.AddDevice<Keyboard>();

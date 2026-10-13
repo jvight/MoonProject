@@ -34,6 +34,7 @@ namespace MoonProject.UI
         public const string LookUp = "ui.hint.look_up";
         public const string Drive = "ui.hint.drive";
         public const string HintHold = "hint.hold";
+        public const string HintFit = "hint.fit";
         public const string NotYetTower = "notyet.tower";
         public const string HoldBoot = "ui.hold.boot";
         public const string HintScan = "hint.scan";

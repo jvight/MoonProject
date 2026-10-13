@@ -27,5 +27,8 @@ namespace MoonProject.UI
 
         /// <summary>The "Tab · Hold" chip has been shown (absent in older saves: false).</summary>
         public bool holdChipShown;
+
+        /// <summary>The first part has been fitted: the "Tab · Fit" chip is retired (absent in older saves: false).</summary>
+        public bool fitTaught;
     }
 }

@@ -90,6 +90,14 @@ namespace MoonProject.UI
         /// <summary>True once the "Tab · Hold" chip has been shown in this save.</summary>
         public bool HoldChipShown { get; private set; }
 
+        /// <summary>True once the first part has been fitted in this save: the "Tab · Fit" chip retires.</summary>
+        public bool FitTaught { get; private set; }
+
+        public void RecordFitTaught()
+        {
+            FitTaught = true;
+        }
+
         public void RecordHoldBooted()
         {
             HoldBooted = true;
@@ -145,7 +153,7 @@ namespace MoonProject.UI
             {
                 kinds = kinds.ToArray(), lookUpHinted = LookUpHinted, metVerbs = met.ToArray(),
                 lookTaught = LookTaught, driveTaught = DriveTaught, holdBooted = HoldBooted,
-                holdChipShown = HoldChipShown,
+                holdChipShown = HoldChipShown, fitTaught = FitTaught,
             };
         }
 
@@ -160,6 +168,7 @@ namespace MoonProject.UI
             DriveTaught = data != null && data.driveTaught;
             HoldBooted = data != null && data.holdBooted;
             HoldChipShown = data != null && data.holdChipShown;
+            FitTaught = data != null && data.fitTaught;
             if (data?.metVerbs != null)
             {
                 foreach (string name in data.metVerbs)

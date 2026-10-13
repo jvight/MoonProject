@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 
 namespace MoonProject.UI.PlayModeTests
 {
@@ -110,6 +111,105 @@ namespace MoonProject.UI.PlayModeTests
         public int OverflowUnits(SalvageMaterial material)
         {
             return 0;
+        }
+    }
+
+    /// <summary>07's equipment, set by hand: what is fitted, known and waiting, and whether 07 is at the station.</summary>
+    public sealed class FakeEquipment : IRoverEquipment
+    {
+        private readonly Dictionary<RoverSocket, RoverKitPiece> _fitted = new Dictionary<RoverSocket, RoverKitPiece>();
+        private readonly HashSet<RoverSocket> _known = new HashSet<RoverSocket>();
+        private readonly List<RoverKitPiece> _row = new List<RoverKitPiece>();
+
+        /// <summary>True while 07 rests at the part's station (the bay or the port).</summary>
+        public bool AtStation { get; set; }
+
+        /// <summary>Parts fitted through <see cref="TryFit"/>.</summary>
+        public int Fits { get; private set; }
+
+        /// <summary>Parts taken off through <see cref="TryUnequip"/>.</summary>
+        public int Removals { get; private set; }
+
+        public int RowCapacity => 4;
+
+        public int RowCount => _row.Count;
+
+        public RoverSocket SocketOf(RoverKitPiece part)
+        {
+            switch (part)
+            {
+                case RoverKitPiece.HoverCoils: return RoverSocket.Belly;
+                case RoverKitPiece.LampBar: return RoverSocket.Lamp;
+                case RoverKitPiece.CapacitorDrums: return RoverSocket.Flanks;
+                case RoverKitPiece.CargoRack: return RoverSocket.Hold;
+                case RoverKitPiece.SolarCell: return RoverSocket.Wing;
+                case RoverKitPiece.BatterySpine: return RoverSocket.Back;
+                case RoverKitPiece.TapeDeck: return RoverSocket.Deck;
+                case RoverKitPiece.TetherRing: return RoverSocket.Tether;
+                case RoverKitPiece.FocusLens: return RoverSocket.Cutter;
+                case RoverKitPiece.SideBins: return RoverSocket.Panniers;
+                default: return RoverSocket.Wing;
+            }
+        }
+
+        public bool TryGetFitted(RoverSocket socket, out RoverKitPiece part)
+        {
+            return _fitted.TryGetValue(socket, out part);
+        }
+
+        public bool IsKnown(RoverSocket socket)
+        {
+            return _fitted.ContainsKey(socket) || _known.Contains(socket);
+        }
+
+        public RoverKitPiece RowPart(int index)
+        {
+            return _row[index];
+        }
+
+        public bool CanFit(RoverKitPiece part)
+        {
+            return AtStation;
+        }
+
+        public bool TryFit(int rowIndex)
+        {
+            if (!AtStation || rowIndex >= _row.Count)
+            {
+                return false;
+            }
+
+            RoverKitPiece part = _row[rowIndex];
+            _row.RemoveAt(rowIndex);
+            _fitted[SocketOf(part)] = part;
+            Fits++;
+            return true;
+        }
+
+        public bool TryUnequip(RoverSocket socket)
+        {
+            if (!AtStation || !_fitted.TryGetValue(socket, out RoverKitPiece part) || _row.Count >= RowCapacity)
+            {
+                return false;
+            }
+
+            _fitted.Remove(socket);
+            _row.Add(part);
+            Removals++;
+            return true;
+        }
+
+        /// <summary>A part was crafted: it waits in the row and its socket is known.</summary>
+        public void Craft(RoverKitPiece part)
+        {
+            _row.Add(part);
+            _known.Add(SocketOf(part));
+        }
+
+        /// <summary>A part is already on 07.</summary>
+        public void Fit(RoverKitPiece part)
+        {
+            _fitted[SocketOf(part)] = part;
         }
     }
 

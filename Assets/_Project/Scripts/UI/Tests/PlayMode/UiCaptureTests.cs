@@ -818,6 +818,21 @@ namespace MoonProject.UI.PlayModeTests
             yield return Capture(camera, folder, "95b_transfer_view");
             fakes.Dock.IsDocked = false;
             ui.Cargo.Close();
+            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeOut + 0.4f);
+            fakes.Equipment.Fit(RoverKitPiece.TetherRing);
+            fakes.Equipment.Fit(RoverKitPiece.SolarCell);
+            fakes.Equipment.Craft(RoverKitPiece.HoverCoils);
+            fakes.Equipment.Craft(RoverKitPiece.FocusLens);
+            fakes.Equipment.AtStation = false;
+            ui.Cargo.SelectTab(1);
+            ui.Cargo.Open();
+            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeIn + 0.6f);
+            yield return Capture(camera, folder, "96_seven_tab_away");
+            fakes.Equipment.AtStation = true;
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Capture(camera, folder, "96b_seven_tab_at_the_bay");
+            ui.Cargo.SelectTab(0);
+            ui.Cargo.Close();
             yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeOut + 0.6f);
 
             ui.UnlockCard.Gained(RoverAbility.Tether);
@@ -1486,7 +1501,8 @@ namespace MoonProject.UI.PlayModeTests
             ui.Initialize(new UiServices(context.Events, context.Input, fakes, fakes, context.Get<IAudioSettings>(),
                 context.Get<ILookSettings>(), context.Get<IFeelSettings>(), save, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes,
                 fakes, context.Get<IGameFlow>(), new SettingsFile(SaveService.DefaultDirectory, _slot), fakes, fakes,
-                fakes, fakes, fakes, context.Get<IWorldLayout>(), fakes, fakes.Hold, fakes.Catalog, fakes.Dock, fakes.Home, fakes.Transfer));
+                fakes, fakes, fakes, context.Get<IWorldLayout>(), fakes, fakes.Hold, fakes.Catalog, fakes.Dock, fakes.Home, fakes.Transfer,
+                fakes.Equipment));
             save.Load();
             return ui;
         }

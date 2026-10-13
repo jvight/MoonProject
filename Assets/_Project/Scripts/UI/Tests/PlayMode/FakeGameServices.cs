@@ -124,6 +124,9 @@ namespace MoonProject.UI.PlayModeTests
         /// <summary>Whether 07 rests on the dock, set by a test.</summary>
         public FakeDock Dock { get; } = new FakeDock();
 
+        /// <summary>07's equipment, set by a test.</summary>
+        public FakeEquipment Equipment { get; } = new FakeEquipment();
+
         /// <summary>The docked transfer, moving whole slots between <see cref="Hold"/> and <see cref="Home"/>.</summary>
         public FakeTransfer Transfer => _transfer ?? (_transfer = new FakeTransfer(Hold, Home, Dock));
 
@@ -307,6 +310,7 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IMaterialCatalog>(Catalog);
             context.Register<IHomeStorage>(Home);
             context.Register<IDockState>(Dock);
+            context.Register<IRoverEquipment>(Equipment);
             context.Register<IStackTransfer>(Transfer);
         }
 

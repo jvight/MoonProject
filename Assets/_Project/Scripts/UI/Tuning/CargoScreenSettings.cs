@@ -55,6 +55,24 @@ namespace MoonProject.UI
         [Range(0f, 1f)]
         [SerializeField] private float _bootHatchLingerSeconds = 0.2f;
 
+        [Header("The 07 tab (docs/design/0.5.5-owner-feedback.md §3.5)")]
+        [Tooltip("Where each socket sits on 07's portrait, 0..1 from the top left, in RoverSocket order: Cutter, " +
+                 "Tether, Lamp, Belly, Flanks, Panniers, Back, Hold, Wing, Deck, Wheels, Antenna.")]
+        [SerializeField] private Vector2[] _socketPositions =
+        {
+            new Vector2(0.78f, 0.30f), new Vector2(0.86f, 0.38f), new Vector2(0.90f, 0.52f), new Vector2(0.55f, 0.74f),
+            new Vector2(0.46f, 0.56f), new Vector2(0.42f, 0.84f), new Vector2(0.38f, 0.32f), new Vector2(0.12f, 0.52f),
+            new Vector2(0.62f, 0.14f), new Vector2(0.28f, 0.22f), new Vector2(0.30f, 0.92f), new Vector2(0.70f, 0.06f),
+        };
+
+        [Tooltip("Pixels the pointer must move with a part held before it counts as a drag and not a press.")]
+        [Range(2f, 20f)]
+        [SerializeField] private float _dragThreshold = 6f;
+
+        [Tooltip("Gap (px) between a socket or part and the tooltip that names it.")]
+        [Range(0f, 40f)]
+        [SerializeField] private float _tooltipGap = 10f;
+
         public RevealSettings Reveal => _reveal;
 
         public float MaxCell => _maxCell;
@@ -66,6 +84,18 @@ namespace MoonProject.UI
         public float HeightShare => _heightShare;
 
         public float ShrinkStep => _shrinkStep;
+
+        /// <summary>Where <paramref name="index"/> (a RoverSocket value) sits on the portrait, 0..1.</summary>
+        public Vector2 SocketPosition(int index)
+        {
+            return _socketPositions[index];
+        }
+
+        public int SocketPositionCount => _socketPositions.Length;
+
+        public float DragThreshold => _dragThreshold;
+
+        public float TooltipGap => _tooltipGap;
 
         public float BootTypeSeconds => _bootTypeSeconds;
 
