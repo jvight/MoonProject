@@ -16,7 +16,7 @@ namespace MoonProject.World
         [SerializeField] private int _plates = 10;
 
         [Tooltip("Plate length range, metres (x = min, y = max).")]
-        [SerializeField] private Vector2 _length = new Vector2(1.4f, 3.2f);
+        [SerializeField] private Vector2 _length = new Vector2(1.8f, 3.6f);
 
         [Tooltip("Plate width as a share of its length (x = min, y = max).")]
         [SerializeField] private Vector2 _widthShare = new Vector2(0.45f, 0.8f);
@@ -26,7 +26,7 @@ namespace MoonProject.World
         [SerializeField] private float _thickness = 0.09f;
 
         [Tooltip("How steeply the plates stick out of the dust, degrees (x = min, y = max).")]
-        [SerializeField] private Vector2 _tilt = new Vector2(18f, 48f);
+        [SerializeField] private Vector2 _tilt = new Vector2(30f, 62f);
 
         [Tooltip("Share of each plate's width sunk into the dust (0..1): half-buried, never resting on top.")]
         [Range(0f, 0.9f)]
