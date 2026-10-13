@@ -24,22 +24,20 @@ is answered before the player has the problem.
 | ticker | `UISystem.OnStationNotYet` ← sonar answer (`notyet.tower`) | "Đang tắt. Cần cuộn dây tháp và vật liệu: xem thẻ của tháp." |
 | prompt | the hint chip | the E glyph |
 
-## 2. The rule the code should enforce (proposal for ui + gameplay)
-One **guidance slot**, by priority. A lower element **waits** (never stacks) while a higher one shows:
-1. a station's panel or recipe card (07 is at the tower, the bay, a socket);
-2. a contextual prompt (glyph + verb) for an action available **now**;
-3. the next line;
-4. ticker notices (not-yet, relay, battery, cargo).
+## 2. The rule (canonical: game design's 0.5.5 spec §4.1, `design/0.5.5` 44f94edb)
+One guidance element at a time. Its priority decides which one shows:
 
-Plus:
-- **The next line never names what the visible card already lists.** When the tower's card is up, the next line hides.
-- **A not-yet notice never repeats the next line's need.** If the current step is the tower, the tower answers the
-  sonar with its plaque light and a tone, not words.
-- **Place cards show the name only**, and only once. The action is taught by the next line at the moment the
-  player needs it. Exceptions below give a job line where nothing else explains the place.
-- **No hint fires for a problem the player doesn't have yet:** the dock only when the battery is below full, the
-  tether only when the player tries to tow.
-- **No key names in text.** The glyph chip shows the key.
+| Priority | Element | Shows when |
+|---|---|---|
+| 1 | prompt chip (glyph + one verb) | the verb is possible now on what 07 faces, and hasn't been learned yet |
+| 2 | station / recipe card | 07 faces or is parked at a station with something to do |
+| 3 | place card | the first approach to a place (one line of job) |
+| 4 | low-battery hint | ≤ 30% and not charging; never at full; once per trip |
+| 5 | next line | only after ~2 min without progress (20 s on teaching steps), and only while nothing above shows |
+
+- **Voices are not guidance:** letters, Bell, Ro and the radio may show beside the one element.
+- **Never repeat:** no text says what another element or the world (lamps, brackets, glinting seams) already shows.
+- **No key names in text:** the chip shows the key.
 
 ## 3. The audit
 Verdicts:
@@ -174,7 +172,7 @@ voice. They follow the writing style already and never compete with guidance.
 `next.friend.repair`, `next.garage`, `next.port`, `next.bay.wake`, `next.bay`, `ui.recipecard.tower`, `notyet.bay`,
 `notyet.chart`, `notyet.tether`, `ticker.listen.first` and `ticker.relay.waiting`.
 
-**Pending spec** (game design's 0.5.5 spec may change these flows; text unchanged for now):
+**Formerly pending spec**, now written against the spec (§6 below):
 - loose pickups: `next.tower.part`, `next.tower.pad`, `next.dig`, `component.*.needed` (the merge into the part's
   row), `pickup.*`;
 - blueprint tubes: `ui.blueprint.found`, `ui.blueprint.delivered`, `ui.recipecard.blueprint`;
@@ -198,3 +196,53 @@ path:
 | `ui.battery.power` | `GameUI.uxml` dial word | ui |
 
 Story deletes the keys from en/vi once the code no longer reads them; the localization tests show it.
+
+## 6. Text for the spec's flows (design/0.5.5 44f94edb)
+The owner is still deciding D1–D6, so scan and relic texts sit in their own keys, easy to change.
+
+### 6.1 Applied now to existing keys (en/vi tables)
+| Key | New en | New vi | Why |
+|---|---|---|---|
+| `next.tower.part` | The Tower Coil is in the depot's coil crate. | Cuộn dây tháp nằm trong thùng ở Kho tiếp tế. | the coil lives in a crate (§2); no key names |
+| `next.tower.pad` | Bring the coil to the tower's pad. | Mang cuộn dây về bệ tháp. | shortened |
+| `next.dig` | Tilly's parts are in her crashed sled. | Bộ phận của Tilly nằm trong xe trượt bị rơi của cô bé. | the parts live in her sled (§2) |
+| `component.tower_coil.needed` | Coil crate · Supply Depot | Thùng cuộn dây · Kho tiếp tế | **now the part row's small source line** (ui: render it under the row, not as a sentence) |
+| `component.transformer.needed` | Junction box · Kenji's Garage | Hộp đấu dây · Gara của Kenji | same |
+| `component.relay_spare.needed` | Service cabinet · any relay | Tủ bảo trì · trạm tiếp sóng | same |
+| `place.dock.job` | Park here to charge and save. | Đỗ vào để sạc pin và lưu game. | shown only when the battery isn't full and 07 is near the pad (§4.1 rule 3) |
+| `ticker.cargo.full` | 07's hold is full. The cut pieces stay on the wreck. | Khoang hàng đã đầy. Phần đã cắt vẫn nằm ở xác tàu. | overflow stays on the wreck (§2) |
+| `ui.cargo.waiting` | {0} pieces held at wrecks | {0} món đang chờ ở xác tàu | same |
+| `ui.can.decoded` | Blueprint complete. Build it in the bay. | Đã đủ bản vẽ. Hãy chế tạo ở xưởng xe. | scanning replaces decoding |
+
+**CUT with the tubes** (gameplay and ui remove their code in slice D, then story deletes the keys):
+`pickup.blueprint_tube`, `ui.blueprint.found`, `ui.blueprint.delivered`, `ui.recipecard.blueprint`.
+
+### 6.2 New keys, ready to paste when their slice reads them
+| Proposed key | en | vi | Slice |
+|---|---|---|---|
+| `hint.scan` | Scan | Quét | D |
+| `scan.fragment` | Fragment {0} of {1} · {2} | Mảnh {0}/{1} · {2} | D (pickup note) |
+| `scan.known` | Known blueprint · +{0} Metal | Bản vẽ đã có · +{0} Kim loại | D |
+| `scan.complete` | Blueprint complete: {0}. Build it in the bay. | Đã đủ bản vẽ: {0}. Hãy chế tạo ở xưởng xe. | D (ticker) |
+| `scan.site_count` | {0} fragments to scan | {0} mảnh cần quét | D (place card) |
+| `hint.hold` | Hold | Khoang hàng | B ("Tab · Hold", once) |
+| `hint.shelves` | Shelves | Kệ | B (docked) |
+| `ui.hold.boot` | HOLD · {0} SLOTS · OK | KHOANG · {0} Ô · OK | B (first Tab press) |
+| `ui.transfer.to_trip` | Take for the trip | Mang theo | B |
+| `ui.transfer.to_home` | Store at home | Cất ở nhà | B |
+| `container.coil_crate` | Coil crate | Thùng cuộn dây | C |
+| `container.junction_box` | Junction box | Hộp đấu dây | C |
+| `container.service_cabinet` | Service cabinet | Tủ bảo trì | C |
+| `container.tool_locker` | Kenji's tool locker | Tủ đồ nghề của Kenji | C |
+| `container.galley_box` | Galley box | Thùng bếp | C |
+| `container.suit_locker` | Suit locker | Tủ đồ bảo hộ | C |
+| `container.cabin_safe` | Cabin safe | Két buồng lái | C |
+| `container.desk_drawer` | Desk drawer | Ngăn bàn | C |
+| `container.supply_pod` | Supply pod | Khoang tiếp tế | C |
+| `container.tape_case` | Ro's tape case | Hộp băng của Ro | C |
+| `container.spare_crate` | 07 · SPARE | 07 · DỰ PHÒNG | C (the label painted on the crate) |
+| `container.survey_sled` | Tilly's sled | Xe trượt của Tilly | C |
+| `site.hut.name` | Relay Service Hut | Chòi bảo trì trạm tiếp sóng | D (relay.2's hut) |
+| `site.chasm_lip.name` | Kenji's Test Jump | Bãi thử nhảy của Kenji | D (the jumper debris) |
+
+Container names show only on the prompt chip's noun ("Cut · Coil crate"), never as a separate line.
