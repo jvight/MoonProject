@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 
 namespace MoonProject.Rover.PlayModeTests
 {
@@ -59,7 +60,7 @@ namespace MoonProject.Rover.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator Coils_StayHiddenWithoutTheAbility_AndAreThereOnceOwned()
+        public IEnumerator Coils_StayHiddenUntilFitted_EvenOnceOwned()
         {
             yield return Frames(0.5f);
             _rover.Drive.JumpHeld = true;
@@ -70,19 +71,17 @@ namespace MoonProject.Rover.PlayModeTests
             yield return Frames(0.5f);
 
             _rover.Context.Get<IRoverAbilities>().Grant(RoverAbility.HoverJump);
-            yield return null;
-            Assert.IsTrue(_rover.CoilMount.gameObject.activeSelf, "Owned (not bought at the bay): simply there...");
-            Assert.AreEqual(Vector3.one, _rover.CoilMount.localScale, "...at full size.");
-            Assert.AreEqual(Vector3.zero, _rover.CoilMount.localPosition, "On the CoilSocket.");
+            yield return Frames(0.5f);
+            Assert.IsFalse(_rover.CoilMount.gameObject.activeSelf, "Crafted, the coils wait in the row to be fitted.");
         }
 
         [UnityTest]
         public IEnumerator Coils_SquashAndGlowWithTheCharge_SpringOutOnTheLeap_AndGoDark()
         {
             HoverCoilSettings settings = _rover.RigTuning.HoverCoils;
-            _rover.Context.Get<IRoverAbilities>().Grant(RoverAbility.HoverJump);
+            _rover.Equip(RoverKitPiece.HoverCoils);
             yield return Frames(1f);
-            Assert.IsTrue(_rover.CoilMount.gameObject.activeSelf, "Owned from the start: the coils are there.");
+            Assert.IsTrue(_rover.CoilMount.gameObject.activeSelf, "Fitted from the start: the coils are there.");
             Assert.AreEqual(1f, _rover.CoilMount.localScale.y, 1e-3f, "No pop-in for an ability owned at start-up.");
             Assert.IsFalse(_rover.CoilLight.enabled, "Dark until the jump charges.");
 

@@ -144,7 +144,6 @@ namespace MoonProject.Rover
                 events.Subscribe<RelayRestored>(OnRelayRestored),
                 events.Subscribe<BellSignalPicked>(OnBellSignalPicked),
                 events.Subscribe<RadioHopFinished>(OnRadioHopFinished),
-                events.Subscribe<RoverKitFitted>(OnKitFitted),
                 events.Subscribe<ChargingChanged>(OnChargingChanged),
                 events.Subscribe<BatteryWarned>(OnBatteryWarned),
                 events.Subscribe<RoverLeapRefused>(OnLeapRefused),
@@ -314,12 +313,12 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// A gift settled onto 07: a soft perk-up now. A kit piece fitted by the bay: the proud pose once the bay
-        /// lets 07 go, turned to show the piece.
+        /// A part seated on 07 (Install Impact): a gift's soft settle (Strength under 1) perks it up now; a fitted part
+        /// strikes the proud pose once the bay lets 07 go, turned to show the piece.
         /// </summary>
-        private void OnKitFitted(RoverKitFitted fitted)
+        private void OnSeated(FeelBeat beat)
         {
-            if (fitted.Gift)
+            if (beat.Strength < 1f)
             {
                 PerkUp(_tuning.GiftPerk);
             }
@@ -553,6 +552,12 @@ namespace MoonProject.Rover
             if (beat.Kind == FeelKind.Dock && beat.Phase == FeelPhase.Reward)
             {
                 _sigh = 1f;
+                return;
+            }
+
+            if (beat.Kind == FeelKind.Install && beat.Phase == FeelPhase.Impact)
+            {
+                OnSeated(beat);
                 return;
             }
 

@@ -69,8 +69,8 @@ namespace MoonProject.Rover.PlayModeTests
             BayStrip.Header(report);
             var strip = new BayStrip(_rover.Context.Events, _rover.Controller, _rover.Camera, CaptureFolder);
             _rover.Context.Get<IRoverAbilities>().Grant(RoverAbility.WarmHeadlamp);
-            _rover.Context.Events.Publish(new UpgradePurchased("rover.warm_headlamp", 1));
-            _rover.Context.Events.Publish(new RoverBayFitting("rover.warm_headlamp"));
+            _rover.Context.Events.Publish(new PartFitted(RoverSocket.Lamp, RoverKitPiece.LampBar, false, false, default,
+                0));
             yield return strip.Capture(RoverKitPiece.LampBar, _rover.LampBar, "bay-standin-lampbar", report,
                 StripTimeout);
 

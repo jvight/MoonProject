@@ -144,11 +144,6 @@ namespace MoonProject.Rover.PlayModeTests
             RoverAbility.HoverJump, RoverAbility.WarmHeadlamp, RoverAbility.BoostCoils, RoverAbility.CargoCradle,
         };
 
-        private static readonly string[] KitUpgrades =
-        {
-            "rover.hover_jump", "rover.warm_headlamp", "rover.boost_coils", "rover.cargo_cradle",
-        };
-
         private static readonly string[] KitNames = { "coils", "lampbar", "drums", "rack" };
 
         private static readonly RoverKitPiece[] KitPieces =
@@ -358,14 +353,15 @@ namespace MoonProject.Rover.PlayModeTests
             IRoverAbilities abilities = _context.Get<IRoverAbilities>();
             var strip = new BayStrip(_context.Events, _rover, _view, CaptureFolder);
             _report.AppendLine();
-            _report.AppendLine("## Kenji's Rover Bay fits each piece (the hopper fed first)");
+            _report.AppendLine("## Kenji's Rover Bay fits each piece");
             _report.AppendLine();
             BayStrip.Header(_report);
             for (int piece = 0; piece < KitAbilities.Length; piece++)
             {
                 Transform part = RoverNode(KitNodes[piece]);
                 abilities.Grant(KitAbilities[piece]);
-                _context.Events.Publish(new UpgradePurchased(KitUpgrades[piece], 1));
+                RoverSocket socket = _context.Get<IRoverEquipment>().SocketOf(KitPieces[piece]);
+                _context.Events.Publish(new PartFitted(socket, KitPieces[piece], false, false, default, 0));
                 yield return strip.Capture(KitPieces[piece], part, $"kit-fit-{KitNames[piece]}", _report, FitTimeout);
             }
 

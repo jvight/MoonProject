@@ -146,7 +146,7 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void TheSeat_AndTheBatteryEmptying_AreFelt()
         {
-            _events.Publish(new RoverKitFitted(RoverKitPiece.LampBar, false, "warm_headlamp"));
+            Beat(FeelPhase.Impact, 1f, kind: FeelKind.Install);
             Run(Frame);
             Assert.AreEqual(0.2f, _motors.Low, Tolerance, "The seat's clunk.");
             Run(0.3f);

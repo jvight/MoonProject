@@ -12,8 +12,7 @@ namespace MoonProject.Rover
         /// <summary>Upgrades bought for 07 itself (Kenji's bench) have ids starting with this.</summary>
         public const string UpgradePrefix = "rover.";
 
-        /// <summary>Friend ids (Gameplay's friend definitions) and their gifts.</summary>
-        public const string TillyId = "tilly";
+        /// <summary>Bell's friend id (Gameplay's friend definitions): her gift is not a socket part.</summary>
         public const string BellId = "bell";
 
         /// <summary>The ability that brings <paramref name="piece"/>; false for a friend's gift.</summary>

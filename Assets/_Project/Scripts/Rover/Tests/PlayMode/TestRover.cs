@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Cinemachine;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Core.Input;
 using Object = UnityEngine.Object;
 
@@ -157,6 +158,20 @@ namespace MoonProject.Rover.PlayModeTests
 
         /// <summary>Tilly and Bell, dormant until a test wakes them.</summary>
         public TestFriendRoster Friends { get; } = new TestFriendRoster();
+
+        /// <summary>What a loaded game has fitted (set before 07's first frame).</summary>
+        public TestEquipment Equipment { get; } = new TestEquipment();
+
+        /// <summary>A loaded game with <paramref name="part"/> fitted and its ability (call before the first frame).
+        /// </summary>
+        public void Equip(RoverKitPiece part)
+        {
+            Equipment.Fitted(part);
+            if (RoverKitPieces.TryGetAbility(part, out RoverAbility ability))
+            {
+                Context.Get<IRoverAbilities>().Grant(ability);
+            }
+        }
 
         /// <summary>The world's landmarks (a test may move the base to bring 07 home).</summary>
         public TestWorldLayout Layout { get; } = new TestWorldLayout();
@@ -488,6 +503,7 @@ namespace MoonProject.Rover.PlayModeTests
             context.Register(world.Terrain);
             context.Register<IWorldLayout>(rover.Layout);
             context.Register<IFriendRoster>(rover.Friends);
+            context.Register<IRoverEquipment>(rover.Equipment);
             rover.Context = context;
             controller.Initialize(context);
             controller.SetDriveSource(rover.Drive);

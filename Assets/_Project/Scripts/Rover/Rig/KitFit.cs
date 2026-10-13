@@ -8,7 +8,8 @@ namespace MoonProject.Rover
     /// once (<see cref="Show"/>). A crafted piece is carried in by the Rover Bay (<see cref="Carry"/>: its pose is the
     /// bay arm's, it grows from the size it showed in the rack) and fitted where the arm sets it
     /// (<see cref="Land"/>). A friend's gift grows in place from nothing with one soft overshoot after a short wait
-    /// (<see cref="Install"/>), reporting the frame it is fully there. Lights ease on once a piece is on.
+    /// (<see cref="Install"/>), reporting the frame it is fully there. Lights ease on once a piece is on. Taken off
+    /// (<see cref="Remove"/>), it shrinks away, lights out, and is hidden.
     /// </summary>
     public sealed class KitFit
     {
@@ -30,6 +31,7 @@ namespace MoonProject.Rover
             Carried,
             Growing,
             Fitted,
+            Removing,
         }
 
         private Phase _phase;
@@ -43,7 +45,8 @@ namespace MoonProject.Rover
         }
 
         /// <summary>The piece is on 07 or on its way onto it (carried, growing or fitted).</summary>
-        public bool Visible => _phase == Phase.Carried || _phase == Phase.Growing || _phase == Phase.Fitted;
+        public bool Visible => _phase == Phase.Carried || _phase == Phase.Growing || _phase == Phase.Fitted
+            || _phase == Phase.Removing;
 
         /// <summary>Hidden and not on its way: a purchase or a gift may start it.</summary>
         public bool IsHidden => _phase == Phase.Hidden;
@@ -52,7 +55,8 @@ namespace MoonProject.Rover
         public bool IsCarried => _phase == Phase.Carried;
 
         /// <summary>Its scale changed this step, or it just came to rest: write it out.</summary>
-        public bool Moving => _phase == Phase.Carried || _phase == Phase.Growing || _settledThisStep;
+        public bool Moving => _phase == Phase.Carried || _phase == Phase.Growing || _phase == Phase.Removing
+            || _settledThisStep;
 
         /// <summary>Uniform scale right now (1 at rest).</summary>
         public float Scale => Mathf.Max(0f, _scale.Value);
@@ -103,6 +107,19 @@ namespace MoonProject.Rover
             _landedSinceStep = true;
         }
 
+        /// <summary>Taken off 07 (unequipped, or swapped for a better tier): it shrinks away, lights out.</summary>
+        public void Remove()
+        {
+            if (_phase == Phase.Hidden)
+            {
+                return;
+            }
+
+            _phase = Phase.Removing;
+            _landed = false;
+            Lights = 0f;
+        }
+
         /// <summary>Advances one frame; true on the frame a gift is fully there.</summary>
         public bool Step(float deltaTime)
         {
@@ -129,6 +146,17 @@ namespace MoonProject.Rover
 
                     case Phase.Growing:
                         landed = Grow(deltaTime);
+                        break;
+
+                    case Phase.Removing:
+                        _scale.Step(0f, _settings.FitGrowFrequency, 1f, deltaTime);
+                        if (_scale.Value < Rest)
+                        {
+                            _phase = Phase.Hidden;
+                            _scale.Reset(0f);
+                            _settledThisStep = true;
+                        }
+
                         break;
 
                     case Phase.Fitted:

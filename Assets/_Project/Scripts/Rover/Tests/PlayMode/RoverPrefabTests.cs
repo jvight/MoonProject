@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Core.Input;
 using MoonProject.Testing;
 
@@ -88,6 +89,12 @@ namespace MoonProject.Rover.PlayModeTests
             context.Register(_world.Terrain);
             context.Register<IWorldLayout>(new TestWorldLayout());
             context.Register<IFriendRoster>(new TestFriendRoster());
+            var equipment = new TestEquipment();
+            equipment.Fitted(RoverKitPiece.HoverCoils);
+            equipment.Fitted(RoverKitPiece.LampBar);
+            equipment.Fitted(RoverKitPiece.CapacitorDrums);
+            equipment.Fitted(RoverKitPiece.CargoRack);
+            context.Register<IRoverEquipment>(equipment);
             var controller = _rover.GetComponent<RoverController>();
             controller.Initialize(context);
             controller.SetDriveSource(_drive);
@@ -149,10 +156,9 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsNotNull(coils, "Rover.prefab mounts art's HoverCoils on CoilSocket.");
             Assert.IsNotNull(glow, "Rover.prefab has the charge light at CoilSocket.");
             var coilLight = glow.GetComponent<Light>();
-            Assert.IsFalse(coils.gameObject.activeSelf, "The coils stay hidden until the Hover-Jump is bought.");
             context.Get<IRoverAbilities>().Grant(RoverAbility.HoverJump);
             yield return Settle(1.5f);
-            Assert.IsTrue(coils.gameObject.activeSelf, "Bought: the coils appear.");
+            Assert.IsTrue(coils.gameObject.activeSelf, "Fitted on load: the coils are there.");
             Assert.IsFalse(coilLight.enabled, "The charge light is off until 07 charges.");
             FrameCapture.SavePng(camera, 960, 540, Path.Combine(OutputFolder, "14-prefab-coils-idle.png"));
             _drive.JumpHeld = true;
@@ -170,7 +176,7 @@ namespace MoonProject.Rover.PlayModeTests
             {
                 Transform piece = Find(_rover.transform, kit);
                 Assert.IsNotNull(piece, $"Rover.prefab mounts art's {kit}.");
-                Assert.IsTrue(piece.gameObject.activeSelf, $"Owned: {kit} is on 07.");
+                Assert.IsTrue(piece.gameObject.activeSelf, $"Fitted: {kit} is on 07.");
             }
 
             Assert.IsTrue(context.Get<IRoverCargoSeat>().IsFitted, "The cradle is fitted.");
