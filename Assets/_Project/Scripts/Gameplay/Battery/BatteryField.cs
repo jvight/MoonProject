@@ -147,7 +147,8 @@ namespace MoonProject.Gameplay
             _subscriptions.Add(_events.Subscribe<RoverPlaced>(OnPlaced));
             _subscriptions.Add(_events.Subscribe<BatteryWarned>(OnWarned));
             _subscriptions.Add(_events.Subscribe<ChargingChanged>(OnChargingChanged));
-            _subscriptions.Add(_events.Subscribe<RoverKitFitted>(OnKitFitted));
+            _subscriptions.Add(_events.Subscribe<PartFitted>(OnPartFitted));
+            _subscriptions.Add(_events.Subscribe<PartRemoved>(OnPartRemoved));
             _initialized = true;
             return true;
         }
@@ -385,11 +386,20 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>Cell Pack II's spine is on 07: two more cells, arriving full (the install moment's rise).</summary>
-        private void OnKitFitted(RoverKitFitted fitted)
+        private void OnPartFitted(PartFitted fitted)
         {
-            if (fitted.Piece == RoverKitPiece.BatterySpine)
+            if (fitted.Part == RoverKitPiece.BatterySpine)
             {
                 Model.GrowTo(_tuning.CellPackCells);
+            }
+        }
+
+        /// <summary>The spine came off at the bay: back to 07's own cells until it is refitted.</summary>
+        private void OnPartRemoved(PartRemoved removed)
+        {
+            if (removed.Part == RoverKitPiece.BatterySpine)
+            {
+                Model.ShrinkTo(_tuning.StartingCells);
             }
         }
 

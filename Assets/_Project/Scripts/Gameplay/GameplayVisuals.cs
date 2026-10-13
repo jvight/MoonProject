@@ -12,9 +12,6 @@ namespace MoonProject.Gameplay
         /// <summary>Art's GaragePort node where a set-down piece rests.</summary>
         public const string PortTrayNode = "Tray";
 
-        /// <summary>Art's GaragePort node where the fitting arm reaches from.</summary>
-        public const string PortArmTipNode = "ArmTip";
-
         [Tooltip("Expanding sonar ring on the ground (TechGlow, additive).")]
         [SerializeField] private Material _sonarRing;
 
@@ -89,7 +86,7 @@ namespace MoonProject.Gameplay
                  "a world anchor (docs/features/M3-21).")]
         [SerializeField] private GameObject _tube;
 
-        [Tooltip("Art's garage service port (Generated/Art/Sites/GaragePort.prefab), with its Tray and ArmTip nodes " +
+        [Tooltip("Art's garage service port (Generated/Art/Sites/GaragePort.prefab), with its Tray node " +
                  "(first-hour v2 §3).")]
         [SerializeField] private GameObject _garagePort;
 

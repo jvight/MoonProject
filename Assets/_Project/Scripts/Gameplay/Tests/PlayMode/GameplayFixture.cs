@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using MoonProject.App;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Core.Save;
 using MoonProject.Gameplay.Lift;
 using MoonProject.Testing;
@@ -183,6 +184,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             return fixture;
+        }
+
+        /// <summary>
+        /// 07 wears <paramref name="part"/> as a loaded game would have it (0.5.5 §3.5): in its socket, its ability
+        /// granted, with no craft and no moment. For tests about what a part does, not how it is fitted.
+        /// </summary>
+        public void Wear(RoverKitPiece part)
+        {
+            Gameplay.Equipment.RestoreOwned(part);
         }
 
         /// <summary>The salvage site named <paramref name="name"/> ("depot", ...).</summary>
@@ -1071,16 +1081,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             return block.transform;
         }
 
-        /// <summary>A stand-in for Art's GaragePort with its Tray and ArmTip nodes.</summary>
+        /// <summary>A stand-in for Art's GaragePort with its Tray node.</summary>
         private GameObject PortTemplate()
         {
             GameObject port = Template("GaragePort", new Vector3(2.6f, 1.6f, 0.12f));
             var tray = new GameObject(GameplayVisuals.PortTrayNode);
             tray.transform.SetParent(port.transform, false);
             tray.transform.localPosition = new Vector3(-0.85f, 0.65f, 0.45f);
-            var arm = new GameObject(GameplayVisuals.PortArmTipNode);
-            arm.transform.SetParent(port.transform, false);
-            arm.transform.localPosition = new Vector3(0.9f, 1.35f, 1.3f);
             return port;
         }
 

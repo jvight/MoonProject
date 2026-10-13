@@ -139,6 +139,24 @@ namespace MoonProject.Gameplay
             _events.Publish(new BatteryChanged(_fullCells, Cells, true, false));
         }
 
+        /// <summary>
+        /// The cell pack came off (taken off at the bay, 0.5.5 §3.5): the capacity falls back to
+        /// <paramref name="cells"/>, keeping what charge still fits. A larger or equal capacity changes nothing.
+        /// </summary>
+        public void ShrinkTo(int cells)
+        {
+            cells = Mathf.Clamp(cells, 1, MaxCells);
+            if (cells >= Cells)
+            {
+                return;
+            }
+
+            Cells = cells;
+            Charge = Mathf.Min(Charge, Cells);
+            _fullCells = FullCells;
+            _events.Publish(new BatteryChanged(_fullCells, Cells, false, false));
+        }
+
         public void Step(in BatteryStep step, float deltaTime)
         {
             if (deltaTime <= 0f)

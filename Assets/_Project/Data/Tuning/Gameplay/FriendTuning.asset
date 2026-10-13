@@ -12,6 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ccac8e4e91132f44a292288260d28f1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _giftHomeRadius: 22
+  _giftMaxSpeed: 2.5
+  _wingCellFriend: tilly
   _siteAttempts: 600
   _siteEdgeMargin: 12
   _siteMaxSlope: 12
