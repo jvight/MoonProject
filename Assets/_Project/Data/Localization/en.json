@@ -351,64 +351,32 @@
             "text": "The Lander"
         },
         {
-            "key": "place.lander.job",
-            "text": "The crew's home. Its windows light when the tower has power."
-        },
-        {
             "key": "place.tower.name",
             "text": "Radio Tower"
-        },
-        {
-            "key": "place.tower.job",
-            "text": "Powers the station. Each level brings power to more of home."
         },
         {
             "key": "place.bay.name",
             "text": "Kenji's Rover Bay"
         },
         {
-            "key": "place.bay.job",
-            "text": "Park on the turntable: the arms fit new kit on 07."
-        },
-        {
             "key": "place.ladder.name",
             "text": "Crew's Ladder"
-        },
-        {
-            "key": "place.ladder.job",
-            "text": "The crew's ladder. Wheels can't climb it."
         },
         {
             "key": "place.lift.name",
             "text": "Crew's Lift"
         },
         {
-            "key": "place.lift.job",
-            "text": "Stop on the platform to ride up to the lab."
-        },
-        {
             "key": "place.lab.name",
             "text": "Crew's Lab"
-        },
-        {
-            "key": "place.lab.job",
-            "text": "Bring finds here: the reader decodes them into blueprints."
         },
         {
             "key": "place.rack.name",
             "text": "Tape Rack"
         },
         {
-            "key": "place.rack.job",
-            "text": "Tapes you find play here: music and the crew's voices."
-        },
-        {
             "key": "place.garage_port.name",
             "text": "Kenji's Garage Port"
-        },
-        {
-            "key": "place.garage_port.job",
-            "text": "Park on its pad to fit 07's spare parts."
         },
         {
             "key": "ui.blueprint.found",
