@@ -8,22 +8,23 @@ using MoonProject.Core.Save;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Ro's cassette tapes out in the world (docs/features/M3-05 "Cassettes"). A tape at an anchor rests sealed in
-    /// Art's container there (0.5.5 §2: the ledge tape in the fallen SupplyPod, the terminus tape in Ro's TapeCase
-    /// beside Bell): once its seal is cut and the lid stands open (<see cref="SealedContainers"/>) the tape rises off
-    /// its ItemSocket to the open mouth, still in the container, never on the ground. The basin tape waits half-buried
-    /// in the dust, leaning back against a crater rim. A tape in view leans with its label toward open ground and a
-    /// warm glint that reads from afar. Driving within reach pops it out: it straightens up, spins a little and drifts
-    /// into 07, flashes warm, joins the <see cref="RadioProgram"/> and publishes <see cref="CassetteCollected"/>, then
-    /// the game saves. A collected tape never comes back. Anchored tapes need the World's anchors; the basin tape's
-    /// spot comes from the <see cref="CassetteSitePlanner"/>, clear of relics and friends. The frame loop allocates
-    /// nothing.
+    /// Ro's cassette tapes out in the world (docs/features/M3-05 "Cassettes"). Every tape rests sealed in one of Art's
+    /// containers (0.5.5 §2): the ledge tape in the fallen SupplyPod, the terminus tape in Ro's TapeCase beside Bell,
+    /// and Dust &amp; Honey in her case set on 06's TapeCaseSocket at micro.06. Once its seal is cut and the lid
+    /// stands open (<see cref="SealedContainers"/>) the tape rises off its ItemSocket to the open mouth, still in the
+    /// container, never on the ground, leaning with its label toward 07 and a warm glint that reads from afar. Driving
+    /// within reach pops it out: it straightens up, spins a little and drifts into 07, flashes warm, joins the
+    /// <see cref="RadioProgram"/> and publishes <see cref="CassetteCollected"/>, then the game saves. A collected tape
+    /// never comes back. The frame loop allocates nothing.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CassetteField : MonoBehaviour
     {
         /// <summary>Tapes arrive one at a time (they are far apart), so one flash is always free.</summary>
         private const int FlashPoolSize = 1;
+
+        /// <summary>The node on a derelict where Ro's case is set with identity (Art's derelict contract).</summary>
+        private const string TapeCaseSocketName = "TapeCaseSocket";
 
         [Tooltip("The cassettes in the world (Assets/_Project/Data/Content/CassetteCatalog.asset).")]
         [SerializeField] private CassetteCatalog _catalog;
@@ -45,6 +46,7 @@ namespace MoonProject.Gameplay
         private GlowFlashPool _flashes;
         private Transform[] _pieces = Array.Empty<Transform>();
         private CassetteSite[] _sites = Array.Empty<CassetteSite>();
+        private Transform[] _seats = Array.Empty<Transform>();
         private Vector3[] _rest = Array.Empty<Vector3>();
         private Quaternion[] _restRotation = Array.Empty<Quaternion>();
         private Vector3[] _scale = Array.Empty<Vector3>();
@@ -87,13 +89,22 @@ namespace MoonProject.Gameplay
             return _sites[index];
         }
 
-        /// <summary>In view and waiting for 07 (not sealed in, not yet popped out of the dust).</summary>
+        /// <summary>In view at its container's open mouth and waiting for 07.</summary>
         public bool IsWaiting(int index)
         {
             return _state[index] == PieceState.Waiting;
         }
 
-        /// <summary>The sealed container tape <paramref name="index"/> rests in, or null.</summary>
+        /// <summary>
+        /// Tape <paramref name="index"/> is in 07's hands for good. Until then it is still out there to be found, sealed
+        /// in its container or waiting at the open mouth (what Bell's signal points at).
+        /// </summary>
+        public bool IsCollected(int index)
+        {
+            return _state[index] == PieceState.Collected;
+        }
+
+        /// <summary>The sealed container tape <paramref name="index"/> rests in.</summary>
         public SealedContainer Container(int index)
         {
             return _containers[index];
@@ -113,10 +124,10 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Finds every cassette's spot (anchors, or the basin planner clear of <paramref name="keepClear"/>) and
-        /// spawns the pickups. False (logged) when wiring or an anchor is missing.
+        /// Stands every cassette's container (at its anchor, or on its derelict in <paramref name="salvage"/>) and
+        /// spawns the pickups. False (logged) when wiring, an anchor or a derelict's socket is missing.
         /// </summary>
-        internal bool Initialize(GameplayServices services, RadioProgram radio, IReadOnlyList<Vector3> keepClear,
+        internal bool Initialize(GameplayServices services, RadioProgram radio, SalvageField salvage,
             SealedContainers containers)
         {
             _sealed = containers ?? throw new ArgumentNullException(nameof(containers));
@@ -138,7 +149,7 @@ namespace MoonProject.Gameplay
             _view = services.View;
             _save = services.Save;
             _radio = radio ?? throw new ArgumentNullException(nameof(radio));
-            if (!PlanSites(services, keepClear ?? throw new ArgumentNullException(nameof(keepClear))))
+            if (!PlanSites(services, salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage))))
             {
                 enabled = false;
                 return false;
@@ -181,39 +192,44 @@ namespace MoonProject.Gameplay
             }
         }
 
-        private bool PlanSites(GameplayServices services, IReadOnlyList<Vector3> keepClear)
+        private bool PlanSites(GameplayServices services, SalvageField salvage)
         {
             IReadOnlyList<CassetteDefinition> cassettes = _catalog.Cassettes;
             _sites = new CassetteSite[cassettes.Count];
-            var clear = new List<Vector3>(keepClear);
+            _seats = new Transform[cassettes.Count];
             for (int i = 0; i < cassettes.Count; i++)
             {
                 CassetteDefinition cassette = cassettes[i];
-                if (cassette.Site == CassetteSiteRule.Anchor)
+                string anchorId = cassette.Anchor.AnchorId;
+                if (cassette.Site == CassetteSiteRule.Derelict)
                 {
-                    if (!cassette.Anchor.TryResolve(services.Anchors, services.Terrain, out Vector3 position,
-                            out Vector3 facing))
+                    SalvageSite derelict = salvage.FindDerelict(anchorId);
+                    _seats[i] = derelict != null ? derelict.Root.Find(TapeCaseSocketName) : null;
+                    if (_seats[i] == null)
                     {
-                        Debug.LogError($"{nameof(CassetteField)}: cassette '{cassette.Id}' waits at world anchor " +
-                                       $"'{cassette.Anchor.AnchorId}', which the World does not publish " +
-                                       "(world anchors contract).", this);
+                        Debug.LogError($"{nameof(CassetteField)}: cassette '{cassette.Id}' rests on the derelict at " +
+                                       $"'{anchorId}', " + (derelict == null
+                                           ? "where the salvage catalog stands none"
+                                           : $"whose prefab has no '{TapeCaseSocketName}' node") +
+                                       " (Art's derelict contract, 0.5.5 §2).", this);
                         return false;
                     }
 
-                    _sites[i] = new CassetteSite(position, facing, true);
+                    Vector3 front = _seats[i].forward;
+                    front.y = 0f;
+                    _sites[i] = new CassetteSite(_seats[i].position, front.normalized);
+                }
+                else if (cassette.Anchor.TryResolve(services.Anchors, services.Terrain, out Vector3 position,
+                             out Vector3 facing))
+                {
+                    _sites[i] = new CassetteSite(position, facing);
                 }
                 else
                 {
-                    _sites[i] = CassetteSitePlanner.Plan(services.Terrain, services.Layout, _tuning,
-                        cassette.PlannerSeed, clear);
-                    if (!_sites[i].Tucked)
-                    {
-                        Debug.LogWarning($"{nameof(CassetteField)}: no small crater rim to tuck '{cassette.Id}' " +
-                                         "against; it waits on the best open spot found.", this);
-                    }
+                    Debug.LogError($"{nameof(CassetteField)}: cassette '{cassette.Id}' waits at world anchor " +
+                                   $"'{anchorId}', which the World does not publish (world anchors contract).", this);
+                    return false;
                 }
-
-                clear.Add(_sites[i].Position);
             }
 
             return true;
@@ -237,19 +253,13 @@ namespace MoonProject.Gameplay
             {
                 CassetteSite site = _sites[i];
                 CassetteDefinition cassette = Definition(i);
-                Vector3 spot = site.Position;
-                if (cassette.InContainer)
+                string problem = Seal(i, cassette, site, visuals);
+                if (problem != null)
                 {
-                    string problem = Seal(i, cassette, site, visuals);
-                    if (problem != null)
-                    {
-                        return problem;
-                    }
-
-                    spot = _containers[i].PresentPoint + Vector3.down * _tuning.RestHeight;
+                    return problem;
                 }
 
-                _rest[i] = spot + Vector3.up * _tuning.RestHeight;
+                _rest[i] = _containers[i].PresentPoint;
                 _restRotation[i] = Quaternion.LookRotation(site.Facing) *
                                    Quaternion.Euler(-_tuning.RestLean, 0f, 0f);
                 GameObject piece = Instantiate(cassette.Prefab, _rest[i], _restRotation[i], transform);
@@ -257,18 +267,16 @@ namespace MoonProject.Gameplay
                 SetLayer(piece.transform, Layers.Pickup);
                 _pieces[i] = piece.transform;
                 _scale[i] = piece.transform.localScale;
-                if (_containers[i] != null)
-                {
-                    _state[i] = PieceState.Sealed;
-                    piece.SetActive(false);
-                }
+                _state[i] = PieceState.Sealed;
+                piece.SetActive(false);
             }
 
             return null;
         }
 
         /// <summary>
-        /// Stands Art's container for tape <paramref name="i"/> on its spot, its front toward open ground.
+        /// Stands Art's container for tape <paramref name="i"/> on its spot, its front toward open ground, or on its
+        /// derelict's socket with identity.
         /// </summary>
         private string Seal(int i, CassetteDefinition cassette, CassetteSite site, GameplayVisuals visuals)
         {
@@ -290,7 +298,16 @@ namespace MoonProject.Gameplay
                 root.name = cassette.Container;
             }
 
-            root.SetPositionAndRotation(site.Position, Quaternion.LookRotation(site.Facing));
+            if (_seats[i] != null)
+            {
+                root.SetParent(_seats[i], false);
+                root.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            }
+            else
+            {
+                root.SetPositionAndRotation(site.Position, Quaternion.LookRotation(site.Facing));
+            }
+
             _containers[i] = SealedContainer.Read(ContainerId(cassette.Id), ContainerKinds.Of(cassette.Container),
                 root, SealedContainer.LidPath, SealedContainer.ItemSocketPath, () => true, out string problem);
             if (_containers[i] == null)

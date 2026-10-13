@@ -16,34 +16,27 @@ namespace MoonProject.Gameplay
         [Tooltip("Art pickup (Generated/Art/Pickups/Cassette_<id>.prefab): meshes only, label +Z.")]
         [SerializeField] private GameObject _prefab;
 
-        [Tooltip("Where it waits: at a world anchor, or on a basin spot the cassette planner picks.")]
+        [Tooltip("Where it waits: at a world anchor, or on the derelict standing on one.")]
         [SerializeField] private CassetteSiteRule _site;
 
-        [Tooltip("The anchor and offset it waits at (Anchor rule only).")]
+        [Tooltip("The anchor and offset it waits at (the offset is the Anchor rule's only; the Derelict rule's " +
+                 "anchor is the derelict's micro-site, e.g. micro.06).")]
         [SerializeField] private AnchorSpot _anchor;
-
-        [Tooltip("Seed of the basin planner (BasinPlanner rule only): the same seed and world give the same spot.")]
-        [SerializeField] private int _plannerSeed;
 
         [Tooltip("The rover ability needed to reach it (Bell never points behind a gate 07 cannot pass yet).")]
         [SerializeField] private AbilityGate _gate;
 
-        [Tooltip("Art's sealed container it rests in (TapeCase, SupplyPod; 0.5.5 §2), its seal cut to find it. " +
-                 "Empty for a tape that rests on its own.")]
+        [Tooltip("Art's sealed container it rests in (TapeCase, SupplyPod; 0.5.5 §2), its seal cut to find it.")]
         [SerializeField] private string _container;
 
         public string Id => _id;
         public GameObject Prefab => _prefab;
         public CassetteSiteRule Site => _site;
         public AnchorSpot Anchor => _anchor;
-        public int PlannerSeed => _plannerSeed;
         public AbilityGate Gate => _gate;
 
-        /// <summary>Art's container prefab the tape rests in, or empty.</summary>
+        /// <summary>Art's container prefab the tape rests in.</summary>
         public string Container => _container ?? string.Empty;
-
-        /// <summary>True when the tape rests in a sealed container.</summary>
-        public bool InContainer => !string.IsNullOrEmpty(_container);
 
         /// <summary>Null when the definition is complete, else what is wrong with it.</summary>
         public string Validate()
@@ -63,28 +56,31 @@ namespace MoonProject.Gameplay
                 return $"'{_id}' has no ability gate";
             }
 
+            if (string.IsNullOrWhiteSpace(_container))
+            {
+                return $"'{_id}' rests in no container (no tape lies on open ground, 0.5.5 §2)";
+            }
+
             switch (_site)
             {
                 case CassetteSiteRule.Anchor:
+                case CassetteSiteRule.Derelict:
                     return _anchor == null || string.IsNullOrWhiteSpace(_anchor.AnchorId)
                         ? $"'{_id}' waits at an anchor but names none"
                         : null;
-                case CassetteSiteRule.BasinPlanner:
-                    return null;
                 default:
                     return $"'{_id}' has an unknown site rule {_site}";
             }
         }
 
         internal void Populate(string id, GameObject prefab, CassetteSiteRule site, AnchorSpot anchor,
-            int plannerSeed, AbilityGate gate, string container)
+            AbilityGate gate, string container)
         {
             _container = container ?? string.Empty;
             _id = id;
             _prefab = prefab;
             _site = site;
             _anchor = anchor ?? throw new ArgumentNullException(nameof(anchor));
-            _plannerSeed = plannerSeed;
             _gate = gate ?? throw new ArgumentNullException(nameof(gate));
         }
     }

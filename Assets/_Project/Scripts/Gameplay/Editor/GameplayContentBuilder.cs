@@ -155,25 +155,24 @@ namespace MoonProject.Gameplay.Editor
         }
 
         /// <summary>
-        /// Ro's first three tapes (docs/features/M3-05 "Cassettes"): Lumen After Dark, Vol. 1 by her tin box beside
-        /// Bell at the canyon terminus, Dust &amp; Honey tucked against a small crater rim in the basin (no gate), and
-        /// Slow Orbit on the glinting ledge, a short Hover-Jump up. Anchor offsets are in the anchor's frame (x right,
-        /// y forward); content faces back toward 07 arriving. Their texts live in the localization tables
-        /// (cassette.&lt;id&gt;.*).
+        /// Ro's first three tapes (docs/features/M3-05 "Cassettes"), each sealed in a container (0.5.5 §2): Lumen
+        /// After Dark, Vol. 1 in her TapeCase by her tin box beside Bell at the canyon terminus, Dust &amp; Honey in
+        /// her TapeCase on 06 at micro.06 (no gate), and Slow Orbit in the fallen SupplyPod on the glinting ledge, a
+        /// short Hover-Jump up. Anchor offsets are in the anchor's frame (x right, y forward); content faces back
+        /// toward 07 arriving. Their texts live in the localization tables (cassette.&lt;id&gt;.*).
         /// </summary>
         private static void BuildCassettes()
         {
             var hoverJump = new AbilityGate(true, RoverAbility.HoverJump);
-            var noAnchor = new AnchorSpot(string.Empty, Vector2.zero);
             CassetteDefinition[] cassettes =
             {
                 Cassette("after_dark_1", CassetteSiteRule.Anchor,
-                    new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.2f, 1.9f)), 0, hoverJump,
+                    new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.2f, 1.9f)), hoverJump,
                     ContainerKinds.TapeCase),
-                Cassette("dust_and_honey", CassetteSiteRule.BasinPlanner, noAnchor, 73, AbilityGate.Open,
-                    string.Empty),
+                Cassette("dust_and_honey", CassetteSiteRule.Derelict,
+                    new AnchorSpot(WorldAnchorIds.Micro06, Vector2.zero), AbilityGate.Open, ContainerKinds.TapeCase),
                 Cassette("slow_orbit", CassetteSiteRule.Anchor, new AnchorSpot(WorldAnchorIds.CanyonLedge,
-                    Vector2.zero), 0, hoverJump, ContainerKinds.SupplyPod),
+                    Vector2.zero), hoverJump, ContainerKinds.SupplyPod),
             };
 
             var catalog = ScriptableObject.CreateInstance<CassetteCatalog>();
@@ -189,11 +188,10 @@ namespace MoonProject.Gameplay.Editor
         }
 
         private static CassetteDefinition Cassette(string id, CassetteSiteRule site, AnchorSpot anchor,
-            int plannerSeed, AbilityGate gate, string container)
+            AbilityGate gate, string container)
         {
             var cassette = ScriptableObject.CreateInstance<CassetteDefinition>();
-            cassette.Populate(id, LoadArt(GameplayAssetPaths.CassettePrefab(id)), site, anchor, plannerSeed, gate,
-                container);
+            cassette.Populate(id, LoadArt(GameplayAssetPaths.CassettePrefab(id)), site, anchor, gate, container);
             return GeneratedAssets.CreateOrReplace(cassette, GameplayAssetPaths.CassetteDefinition(id));
         }
 
@@ -253,7 +251,8 @@ namespace MoonProject.Gameplay.Editor
 
         /// <summary>
         /// The salvage catalog: Art's five wreck sites on their World anchors (the canyon lander past the Hover-Jump
-        /// gate) and the three material bundles cut pieces fold into.
+        /// gate), the derelicts on the micro-site anchors (0.5.5 §1.7) and the three material bundles cut pieces fold
+        /// into.
         /// </summary>
         private static void BuildSalvage()
         {
@@ -271,8 +270,18 @@ namespace MoonProject.Gameplay.Editor
                     SalvageEconomy.Crate(names[i]));
             }
 
+            IReadOnlyList<(string AnchorId, string Prefab)> derelictNames = SalvageEconomy.Derelicts;
+            var derelicts = new SalvageSiteEntry[derelictNames.Count];
+            for (int i = 0; i < derelicts.Length; i++)
+            {
+                string anchorId = derelictNames[i].AnchorId;
+                GameObject prefab = LoadArt(GameplayAssetPaths.DerelictPrefab(derelictNames[i].Prefab));
+                derelicts[i] = SalvageSiteEntry.Derelict(anchorId, prefab, SalvageCutLines.Across(prefab),
+                    SalvageSizes.Deal(prefab, SalvageEconomy.DerelictPieceClasses(anchorId)));
+            }
+
             var catalog = ScriptableObject.CreateInstance<SalvageCatalog>();
-            catalog.Populate(sites, LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Metal)),
+            catalog.Populate(sites, derelicts, LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Metal)),
                 LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Wiring)),
                 LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Optics)));
             catalog = GeneratedAssets.CreateOrReplace(catalog, GameplayAssetPaths.SalvageCatalog);
@@ -282,7 +291,8 @@ namespace MoonProject.Gameplay.Editor
                 throw new InvalidOperationException($"{BuilderPath}: salvage catalog {problem}.");
             }
 
-            Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.SalvageCatalog} ({sites.Length} sites)");
+            Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.SalvageCatalog} ({sites.Length} sites, " +
+                      $"{derelicts.Length} derelicts)");
         }
 
         private static void BuildRelics()

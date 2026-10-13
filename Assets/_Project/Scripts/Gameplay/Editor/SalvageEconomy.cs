@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MoonProject.Art.Editor;
 using MoonProject.Core;
 
 namespace MoonProject.Gameplay.Editor
@@ -148,6 +149,35 @@ namespace MoonProject.Gameplay.Editor
 
         /// <summary>The site standing past the Hover-Jump gate (the canyon supply lander).</summary>
         public const string GatedSite = "lander";
+
+        /// <summary>
+        /// The derelicts left on the routes (0.5.5 §1.7), in catalog order: each World micro-site anchor and Art's
+        /// robot standing on it.
+        /// </summary>
+        public static IReadOnlyList<(string AnchorId, string Prefab)> Derelicts { get; } = new[]
+        {
+            (WorldAnchorIds.Micro06, DerelictBuilder.ElderName),
+            (WorldAnchorIds.MicroMule, DerelictBuilder.MuleName),
+            (WorldAnchorIds.MicroDrone, DerelictBuilder.DroneName),
+        };
+
+        /// <summary>
+        /// A derelict's piece sizes: one small cut where Art gives it one (the Mule's track skirt, the drone's camera
+        /// boom); 06 has nothing to cut.
+        /// </summary>
+        public static IReadOnlyList<PieceSize> DerelictPieceClasses(string anchorId)
+        {
+            switch (anchorId)
+            {
+                case WorldAnchorIds.Micro06:
+                    return Array.Empty<PieceSize>();
+                case WorldAnchorIds.MicroMule:
+                case WorldAnchorIds.MicroDrone:
+                    return new[] { PieceSize.Small };
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(anchorId), anchorId, "No such derelict.");
+            }
+        }
 
         /// <summary>The site id of <paramref name="name"/> (its World anchor).</summary>
         public static string SiteId(string name)
