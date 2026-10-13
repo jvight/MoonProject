@@ -48,6 +48,14 @@ account) can continue without the old conversation.
     - CutChargeStaged is a dedicated event;
     - world scenery uses buried hull fragments; only gameplay's 4 cut pieces glint.
   - Next: gameplay B1-B3 (starter grant, IStackTransfer, IDockState), then the C/D/equipment contracts, then C, then D.
+  - Progress (2026-10-13 ~13:30), on main and verified (1aa7a280):
+    - E (Cells + brace + camera + charge sound), slice C art props, B1-B3 (spares, docked transfer view);
+    - no ability notes; the lift radius fix; `verify --explicit` (run it before every release build).
+  - Owner adds:
+    - memory derelict-variety: spec §1.7 robots 06/Mule/haul bot/drone, art ab049610 ready;
+    - no ability notes (memory plain-functional-text).
+  - Gameplay's Core contracts (equipment, scan, containers, saves) approved; Core commit pending.
+  - Then equipment (ui B2, rover moments), C (re-homing; world 1366759c and art ab049610 wait for it) and D (scan).
 
 ## 000000000000. (2026-10-13 ~03:35): 0.5.4 released for the owner to play
 - **main e7d15870 = version 0.5.4**, verified at 37276343 and pushed. Build:
