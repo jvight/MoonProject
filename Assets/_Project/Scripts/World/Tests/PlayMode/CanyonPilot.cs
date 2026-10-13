@@ -20,6 +20,12 @@ namespace MoonProject.World.PlayModeTests
 
         private const float TurnThrottle = 0.4f;
 
+        /// <summary>
+        /// Above this heading error (degrees) the target is behind: the pilot backs up on the opposite lock (a
+        /// three-point turn), so a narrow chamber's back wall never pins 07 nose-first.
+        /// </summary>
+        private const float ReverseAngle = 120f;
+
         private readonly IRoverState _rover;
 
         public CanyonPilot(IRoverState rover)
@@ -65,6 +71,11 @@ namespace MoonProject.World.PlayModeTests
                 Vector3 forward = _rover.Rotation * Vector3.forward;
                 forward.y = 0f;
                 float angle = Vector3.SignedAngle(forward, to, Vector3.up);
+                if (Mathf.Abs(angle) > ReverseAngle)
+                {
+                    return new Vector2(-Mathf.Sign(angle), -TurnThrottle);
+                }
+
                 float steer = Mathf.Clamp(angle / FullLockAngle, -1f, 1f);
                 float throttle = Mathf.Abs(angle) > TurnSlowAngle ? Mathf.Min(Throttle, TurnThrottle) : Throttle;
                 return new Vector2(steer, throttle);
