@@ -26,6 +26,7 @@ namespace MoonProject.World
         private BasePowerStage _wakingStage = BasePowerStage.Asleep;
         private float _wokeAt = float.NegativeInfinity;
         private float _previewAt = float.NegativeInfinity;
+        private float _echoAt = float.NegativeInfinity;
 
         public HomeLightStages(HomeLightingSettings settings)
         {
@@ -74,6 +75,15 @@ namespace MoonProject.World
             _previewAt = time;
         }
 
+        /// <summary>
+        /// The network's handshake reached home at <paramref name="time"/> (north-star §4a beat 7): a soft light
+        /// runs along every powered cable from the tower to home.
+        /// </summary>
+        public void Echo(float time)
+        {
+            _echoAt = time;
+        }
+
         /// <summary>How lit <paramref name="light"/> is at <paramref name="time"/>: 0 dark, 1 fully lit.</summary>
         public float Level(HomeLight light, float time)
         {
@@ -112,7 +122,8 @@ namespace MoonProject.World
         /// </summary>
         public float CableLevel(BasePowerStage stage, int segment, int count, float time)
         {
-            return Mathf.Max(PowerLevel(stage, segment, count, time), PreviewLevel(stage, segment, count, time));
+            float level = Mathf.Max(PowerLevel(stage, segment, count, time), PreviewLevel(stage, segment, count, time));
+            return Mathf.Max(level, EchoLevel(stage, segment, count, time));
         }
 
         private float PowerLevel(BasePowerStage stage, int segment, int count, float time)
@@ -174,6 +185,28 @@ namespace MoonProject.World
                 - OrderInStage(HomeLight.Windows) * _settings.WakeStagger;
             int lit = Mathf.FloorToInt(since / (_settings.WakeFade / _settings.WindowSteps)) + 1;
             return Mathf.Clamp(lit, 0, _settings.WindowSteps);
+        }
+
+        /// <summary>
+        /// The handshake's echo on a segment of a powered cable: it brightens above the steady glow as the light
+        /// passes and eases back.
+        /// </summary>
+        private float EchoLevel(BasePowerStage stage, int segment, int count, float time)
+        {
+            if (stage > _stage)
+            {
+                return 0f;
+            }
+
+            float since = time - _echoAt - _settings.EchoTravel * segment / Mathf.Max(1, count);
+            if (since <= 0f || since >= _settings.EchoRise + _settings.EchoTail)
+            {
+                return 0f;
+            }
+
+            float rise = Mathf.SmoothStep(0f, 1f, since / _settings.EchoRise);
+            float fall = 1f - Mathf.SmoothStep(0f, 1f, (since - _settings.EchoRise) / _settings.EchoTail);
+            return _settings.EchoPeak * Mathf.Min(rise, fall);
         }
 
         /// <summary>

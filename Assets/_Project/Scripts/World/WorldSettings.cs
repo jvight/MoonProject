@@ -67,6 +67,9 @@ namespace MoonProject.World
         [Tooltip("The warm pools on lit relay masts' charge rings (docs/features/M3-20).")]
         [SerializeField] private ChargerPoolSettings _chargerPools = new ChargerPoolSettings();
 
+        [Tooltip("The handshake that runs lamp to lamp when a mast lights (north-star beat 7).")]
+        [SerializeField] private NetworkPulseSettings _networkPulse = new NetworkPulseSettings();
+
         public int Seed => _seed;
 
         public SurfaceSettings Surface => _surface;
@@ -102,6 +105,8 @@ namespace MoonProject.World
         public LensViewSettings LensView => _lensView;
 
         public ChargerPoolSettings ChargerPools => _chargerPools;
+
+        public NetworkPulseSettings NetworkPulse => _networkPulse;
 
         /// <summary>Builds the analytic surface for these settings (throws on invalid settings).</summary>
         public MoonSurface CreateSurface()
