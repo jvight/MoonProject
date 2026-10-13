@@ -87,5 +87,31 @@ namespace MoonProject.World.Tests
 
             Assert.Greater(used.Count, 1, "more than one kind of fragment");
         }
+
+        [Test]
+        public void Cuttables_LieInTheClearLane_EvenlyDownTheFurrow_ShallowerThanTheScenery()
+        {
+            List<ScrapPlate> slots = ScrapFieldPlanner.PlanCuttables(_surface, _settings, Variants,
+                WorldSettings.DefaultSeed);
+            Assert.AreEqual(_settings.Cuttables, slots.Count);
+            KestrelImpact kestrel = _surface.Kestrel;
+            Vector2 along = (kestrel.Center - kestrel.TrailEnd).normalized;
+            var across = new Vector2(along.y, -along.x);
+            float previous = float.NegativeInfinity;
+            foreach (ScrapPlate slot in slots)
+            {
+                Vector2 offset = new Vector2(slot.Position.x, slot.Position.z) - kestrel.TrailEnd;
+                Assert.LessOrEqual(Mathf.Abs(Vector2.Dot(offset, across)), _settings.LaneHalfWidth,
+                    "a cuttable slot lies in the lane");
+                float down = Vector2.Dot(offset, along);
+                Assert.Greater(down, previous, "the slots run down the furrow in order");
+                previous = down;
+                float ground = _surface.SampleHeight(slot.Position.x, slot.Position.z);
+                Assert.AreEqual(ground - _settings.CuttableSink, slot.Position.y, 1e-3f, "shallow, its seam showing");
+                Assert.Less(_settings.CuttableSink, _settings.Sink, "shallower than the scenery");
+                Assert.AreNotEqual(0, slot.Variant, "never the anchor skin");
+                Assert.AreEqual(1f, slot.Scale);
+            }
+        }
     }
 }

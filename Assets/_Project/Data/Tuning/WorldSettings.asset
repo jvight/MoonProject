@@ -593,6 +593,11 @@ MonoBehaviour:
     _crowding: 1.8
     _sink: 0.45
     _tilt: {x: 12, y: 28}
+    _cuttables: 4
+    _cuttableSpan: {x: 0.15, y: 0.85}
+    _cuttableOffset: 1
+    _cuttableSink: 0.15
+    _cuttableTilt: {x: 4, y: 10}
     _dust: {r: 0.7, g: 0.68, b: 0.74, a: 1}
   _lensView:
     _lidSoftness: 0.14
