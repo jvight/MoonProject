@@ -82,7 +82,7 @@ namespace MoonProject.Art.Editor
         private const float BrowInner = 0.205f;
         private const float BrowOuter = 0.255f;
         private const float WingBar = 0.02f;
-        private const float WingHalfWidth = 0.31f;
+        private const float WingHalfWidth = 0.19f;
         private const float WingLength = 0.62f;
 
         private static readonly Vector2[] Seven =

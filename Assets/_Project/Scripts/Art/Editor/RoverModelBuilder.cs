@@ -30,7 +30,7 @@ namespace MoonProject.Art.Editor
         public static readonly Vector3 NeckBase = new Vector3(0f, RoverMeshes.LidTop, 0.3f);
 
         /// <summary>Hinge of the solar wing (front edge of the folded panel).</summary>
-        public static readonly Vector3 SolarWingHinge = new Vector3(-0.18f, RoverMeshes.LidTop + 0.012f, 0.06f);
+        public static readonly Vector3 SolarWingHinge = new Vector3(-0.26f, RoverMeshes.LidTop + 0.012f, 0.06f);
 
         /// <summary>Base of the whip antenna.</summary>
         public static readonly Vector3 AntennaBase = new Vector3(0.32f, RoverMeshes.LidTop, -0.5f);
@@ -51,7 +51,7 @@ namespace MoonProject.Art.Editor
         /// A row's lamps ride the part they sit on, so its <c>ChargeRun_&lt;tier&gt;</c> group appears under each part
         /// it touches (the root, Neck, Neck/Head, Neck/Head/Eye) and the indices run on across them. Each lamp is its
         /// glass on the glow-off material (drive its _EmissionColor) with a <c>Bezel</c> child. Rows 0 (5 dusty
-        /// conduit lamps: 2 on the deck right of the solar wing, 2 on the neck's back, 1 on the eye's rim, low and facing out) and
+        /// conduit lamps: 2 on the deck spine, 2 on the neck's back, 1 on the eye's rim, low and facing out) and
         /// 1 (the Focus Lens's 7: the same line in clean glass plus 2 on the brow) are built; Rover shows one row.
         /// <c>FocusLens</c> mounts on <c>Neck/Head/Eye/LensSocket</c> with identity: its frame, and the <c>Glass</c>
         /// the run's arrival lights.
@@ -67,18 +67,18 @@ namespace MoonProject.Art.Editor
         /// <summary>How many lamps each built row has, by tier.</summary>
         public static IReadOnlyList<int> ChargeRunLamps => new[] { 5, 7 };
 
-        // The deck's pair on the lid's open strip right of the solar wing, where the chase camera sees it, running from
-        // the battery bar toward the neck; the brow's pair round the eye's
+        // The deck's pair on the lid's centreline, the spine 07's run climbs from the battery bar to the neck, beside the
+        // solar wing on the left; the brow's pair round the eye's
         // axis under the hood's top (the back one first, as the run climbs to the eye); the ring lamp low on the eye's
         // rim, facing out, inside the eye's own outline.
         private static readonly Vector3[] DeckLamps =
         {
-            new Vector3(0.245f, RoverMeshes.LidTop, -0.12f), new Vector3(0.235f, RoverMeshes.LidTop, 0.11f),
+            new Vector3(0f, RoverMeshes.LidTop, -0.34f), new Vector3(0f, RoverMeshes.LidTop, 0.02f),
         };
 
         // The deck's lamps are the run's biggest, on short posts, and the neck's a step up from the eye's, so each reads
         // as a dot from the chase camera.
-        private const float DeckLampScale = 2f;
+        private const float DeckLampScale = 1.6f;
         private const float NeckLampScale = 1.3f;
         private const float DeckLampPost = 0.03f;
 

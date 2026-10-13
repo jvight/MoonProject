@@ -446,6 +446,8 @@ namespace MoonProject.Art.Editor
             return Poses(
                 ChasePose("run_chase", charged.position, charged.rotation, ChaseDistance, 0f),
                 ChasePose("run_chase_near", charged.position, charged.rotation, ChaseDistance * 0.4f, 0f),
+                Pose("run_top", new[] { charged.position.x, 4.6f, charged.position.z - 0.01f },
+                    new[] { charged.position.x, 0.9f, charged.position.z }, 30f),
                 Pose("run_back", new[] { behind.x, behind.y, behind.z },
                     new[] { charged.position.x, 1.05f, charged.position.z }, 45f),
                 Pose("lens_close", new[] { front.x, front.y, front.z }, new[] { eye.x, eye.y, eye.z }, 35f),

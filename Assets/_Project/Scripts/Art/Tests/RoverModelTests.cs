@@ -179,14 +179,11 @@ namespace MoonProject.Art.Tests
                             $"{path} glows the cutter's cyan");
                     }
 
-                    if (part.Length > 0)
+                    Assert.AreEqual(0f, lamp.LocalPosition.x, 1e-5f, $"{path} is on the centreline (P3)");
+                    if (part.Length == 0)
                     {
-                        Assert.AreEqual(0f, lamp.LocalPosition.x, 1e-5f, $"{path} is on the centreline (P3)");
-                    }
-                    else
-                    {
-                        Bounds glass = lamp.Mesh.Geometry.Bounds;
-                        Assert.Greater(lamp.LocalPosition.x - glass.extents.x * 2f, WingEdge(),
+                        float bezel = lamp.Children.Single().Mesh.Geometry.Bounds.extents.x;
+                        Assert.Greater(lamp.LocalPosition.x - bezel, WingEdge(),
                             $"{path} sits clear of the solar wing, where the chase camera sees it");
                     }
                     MeshChecks.AssertWellFormed(lamp.Mesh.Geometry);
