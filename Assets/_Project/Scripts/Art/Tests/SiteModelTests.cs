@@ -72,8 +72,9 @@ namespace MoonProject.Art.Tests
             List<ModelNode> pieces = Pieces(site);
             int landmarks = SiteLandmarkMeshes.HasLandmark(id) ? 1 : 0;
             int pockets = SiteModelBuilder.RelicsAt(id).Count;
-            Assert.AreEqual(site.Children.Count - 3 - landmarks - pockets, pieces.Count,
-                "only Skeleton, Salvage_*, Heart, CrewCrate, the relic pockets and the landmark");
+            int sockets = SiteModelBuilder.FragmentsAt(id).Count;
+            Assert.AreEqual(site.Children.Count - 3 - landmarks - pockets - sockets, pieces.Count,
+                "only Skeleton, Salvage_*, Heart, CrewCrate, the relic pockets, the fragment sockets and the landmark");
             Assert.That(pieces.Count, Is.InRange(MinPieces, MaxPieces));
             Assert.LessOrEqual(pieces.Count(IsDrag), 1, "at most one drag piece");
             for (int i = 0; i < pieces.Count; i++)
@@ -367,9 +368,25 @@ namespace MoonProject.Art.Tests
                 Assert.Less(size.min.y, -0.05f, $"{fragment.Name} sinks into the dust");
                 Assert.Greater(size.max.y, 0.4f, $"{fragment.Name} stands out of it");
                 Assert.IsFalse(MeshChecks.Swatches(mesh).Any(Palette.IsEmissive), "nothing glows on the regolith");
-                ModelNode cut = fragment.Children.Single();
-                Assert.AreEqual(SiteModelBuilder.CutPointName, cut.Name);
+                ModelNode cut = fragment.Children.Single(n => n.Name == SiteModelBuilder.CutPointName);
                 Assert.Greater(cut.LocalPosition.y, 0f, $"{fragment.Name}'s cut is above the dust");
+            }
+        }
+
+        [TestCaseSource(nameof(Ids))]
+        public void FragmentSockets_SitOnTheWreckItself_NeverOnOpenGround(string id)
+        {
+            ModelNode site = SiteModelBuilder.CreateSite(id);
+            Bounds footprint = SiteModelBuilder.Footprint(site);
+            (string blueprint, int count) = SiteModelBuilder.FragmentsAt(id);
+            for (int i = 0; i < count; i++)
+            {
+                ModelNode socket = site.Children.Single(
+                    n => n.Name == SiteModelBuilder.FragmentSocketPrefix + blueprint + "_" + i);
+                Assert.IsNull(socket.Mesh);
+                Assert.Greater(socket.LocalPosition.y, 0.015f, $"{socket.Name} rests on the wreck, not the dust");
+                Assert.IsTrue(footprint.Contains(new Vector3(socket.LocalPosition.x, footprint.center.y,
+                    socket.LocalPosition.z)), $"{socket.Name} lies within the wreck");
             }
         }
 

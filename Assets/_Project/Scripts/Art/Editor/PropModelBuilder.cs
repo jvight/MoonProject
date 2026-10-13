@@ -26,6 +26,13 @@ namespace MoonProject.Art.Editor
 
         public const int HullFragmentVariants = HullFragmentMeshes.Variants;
 
+        /// <summary>
+        /// Kenji's crashed test jumper at the chasm's near lip (0.5.5 §1.3), <c>JumperWreck</c>: its root on the ground,
+        /// +Z its nose toward the chasm, holding <c>FragmentSocket_HoverJump_0..2</c> on its frame and the rubble.
+        /// </summary>
+        public const string JumperWreckName = "JumperWreck";
+
+
         [MoonBuilder("Art/Props", 175)]
         public static void Build()
         {
@@ -42,6 +49,8 @@ namespace MoonProject.Art.Editor
                 ModelPrefabWriter.Write(CreateHullFragment(i), ArtPaths.PropFolder, material);
             }
 
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateJumperWreck()), ArtPaths.PropFolder, material);
+
             AssetDatabase.SaveAssets();
         }
 
@@ -55,6 +64,19 @@ namespace MoonProject.Art.Editor
             string name = HullFragmentPrefix + variant.ToString(System.Globalization.CultureInfo.InvariantCulture);
             var root = new ModelNode(name, Vector3.zero, new ModelMesh(name, HullFragmentMeshes.Fragment(variant)));
             root.Add(new ModelNode(SiteModelBuilder.CutPointName, HullFragmentMeshes.CutPoint(variant)));
+            return root;
+        }
+
+        public static ModelNode CreateJumperWreck()
+        {
+            var root = new ModelNode(JumperWreckName, Vector3.zero,
+                new ModelMesh(JumperWreckName, ScanSiteMeshes.JumperWreck()));
+            for (int i = 0; i < 3; i++)
+            {
+                Vector3 at = ScanSiteMeshes.JumperSocket(i, out Quaternion rotation);
+                root.Add(new ModelNode(SiteModelBuilder.FragmentSocketPrefix + "HoverJump_" + i, at, rotation));
+            }
+
             return root;
         }
 

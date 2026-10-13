@@ -28,14 +28,14 @@ namespace MoonProject.Art.Tests
         {
             "TetherOrigin", "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket",
             "DrumSocket_L", "DrumSocket_R", "TubeSocket", "PartSocket", "SpineSocket", "DeckSocket", "RingSocket",
-            "LensSocket", "BinSocket_L", "BinSocket_R",
+            "LensSocket", "BinSocket_L", "BinSocket_R", "ScanFanSocket",
         };
 
         // The charge-up's nodes (0.5.5 "Cells"), the contract rover drives.
         private static readonly string[] ChargePaths =
         {
             "ChargeConduits", "ChargeConduits/ConduitGlow", "Neck/ChargeConduits", "Neck/ChargeConduits/ConduitGlow",
-            "Neck/Head/Eye/LockRing", "Neck/Head/Eye/LockRing/LockGlow",
+            "Neck/Head/Eye/LockRing", "Neck/Head/Eye/LockRing/LockGlow", "Neck/Head/Eye/ScanFanSocket",
             "Stage_1_L", "Stage_1_L/StageGlow_1", "Stage_1_R", "Stage_1_R/StageGlow_1",
             "Stage_2_L", "Stage_2_L/StageGlow_2", "Stage_2_R", "Stage_2_R/StageGlow_2",
             "Stage_3_L", "Stage_3_L/StageGlow_3", "Stage_3_R", "Stage_3_R/StageGlow_3",

@@ -137,6 +137,24 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
+        /// <summary>
+        /// The scan's fan of light from the lens (0.5.5 §1.2), lens space, along +Z: a few hair-thin rays spread
+        /// <paramref name="halfAngle"/> degrees either side and reaching <paramref name="reach"/> metres, faint and
+        /// stylised so the fragment's own sweep stays the main read.
+        /// </summary>
+        public static LowPolyMeshBuilder ScanFan(float halfAngle, float reach)
+        {
+            var b = new LowPolyMeshBuilder(60);
+            for (int i = -2; i <= 2; i++)
+            {
+                Vector3 direction = Quaternion.Euler(0f, halfAngle * i / 2f, 0f) * Vector3.forward;
+                b.Box(Along(Vector3.forward * 0.02f, direction * reach), new Vector3(0.004f, 0.004f, reach),
+                    PaletteSwatch.EyeGlass);
+            }
+
+            return b;
+        }
+
         public static Vector3 Mirror(Vector3 point)
         {
             return new Vector3(-point.x, point.y, point.z);

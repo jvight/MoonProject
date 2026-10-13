@@ -37,14 +37,23 @@ namespace MoonProject.Art.Editor
         public static GameObject Write(ModelNode root, string folder, Material material, Material glowOffMaterial,
             Material weatherMaterial)
         {
+            return Write(root, folder, new[] { material, glowOffMaterial, weatherMaterial });
+        }
+
+        /// <summary>
+        /// As <see cref="Write(ModelNode, string, Material)"/> with one material per <see cref="ModelMaterial"/>, in
+        /// its order; a node whose material is missing fails the write.
+        /// </summary>
+        public static GameObject Write(ModelNode root, string folder, Material[] materials)
+        {
             if (root == null)
             {
                 throw new ArgumentNullException(nameof(root));
             }
 
-            if (material == null)
+            if (materials == null || materials.Length == 0 || materials[0] == null)
             {
-                throw new ArgumentNullException(nameof(material), "Run the Art/Palette builder first.");
+                throw new ArgumentNullException(nameof(materials), "Run the Art/Palette builder first.");
             }
 
             GeneratedAssets.EnsureFolder(folder);
@@ -52,7 +61,6 @@ namespace MoonProject.Art.Editor
             WriteMeshes(root, folder, meshes);
             using (var scratch = new BuilderScratchScene())
             {
-                var materials = new[] { material, glowOffMaterial, weatherMaterial };
                 GameObject instance = Instantiate(scratch, root, null, meshes, materials);
                 string path = $"{folder}/{root.Name}.prefab";
 
@@ -145,7 +153,7 @@ namespace MoonProject.Art.Editor
         /// <summary>A node's material (<paramref name="materials"/> in <see cref="ModelMaterial"/> order).</summary>
         private static Material MaterialFor(ModelNode node, Material[] materials)
         {
-            Material chosen = materials[(int)node.Material];
+            Material chosen = (int)node.Material < materials.Length ? materials[(int)node.Material] : null;
             if (chosen == null)
             {
                 throw new InvalidOperationException(

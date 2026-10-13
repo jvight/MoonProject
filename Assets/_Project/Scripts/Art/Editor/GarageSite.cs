@@ -23,6 +23,22 @@ namespace MoonProject.Art.Editor
 
         private static readonly Vector3 Bench = new Vector3(-1.7f, 0.92f, 5.5f);
 
+        // Kenji's half-built rack frames on his bench (the frame along it, the corner piece by the vice).
+        private static readonly Vector3[] BenchWork =
+        {
+            new Vector3(-1.72f, 0.95f, 5.9f), new Vector3(-1.86f, 0.95f, 5.0f),
+        };
+
+        /// <summary>
+        /// Where the Cargo Cradle's fragment <paramref name="index"/> lies (site space): on Kenji's workbench top, his
+        /// half-built rack frames left mid-job.
+        /// </summary>
+        public static Vector3 FragmentHost(int index, out Quaternion rotation)
+        {
+            rotation = Quaternion.Euler(0f, index == 0 ? 90f : 75f, 0f);
+            return BenchWork[index];
+        }
+
         public static SiteRecipe Create()
         {
             var site = new SiteRecipe();
