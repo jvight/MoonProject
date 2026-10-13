@@ -53,6 +53,55 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
+        public void Elder06_HoldsRosTapeCase_BesideItsBay_ClearOfTheCells()
+        {
+            ModelNode elder = DerelictBuilder.CreateElder();
+            ModelNode socket = elder.Children.Single(n => n.Name == DerelictBuilder.TapeSocketName);
+            Assert.IsNull(socket.Mesh);
+            Assert.AreEqual(0f, socket.LocalPosition.y, 1e-5f, "on the ground: the case has its own dust skirt");
+            Assert.Greater((socket.LocalRotation * Vector3.forward).x, 0.99f, "its seal faces out from 06's side");
+            ModelNode door = elder.Children.Single(n => n.Name == SiteModelBuilder.FragmentSocketPrefix + "CellPack_1");
+            Assert.Less(Vector3.Distance(socket.LocalPosition, door.LocalPosition), 0.7f, "by the bay's fallen door");
+
+            ModelNode tapeCase = LootContainerBuilder.CreateTapeCase();
+            Bounds placed = Placed(socket, tapeCase.Mesh.Geometry.Bounds);
+            placed.Encapsulate(Placed(socket, tapeCase.Children.Single(n => n.Name == LootContainerBuilder.LidName),
+                tapeCase.Children.Single(n => n.Name == LootContainerBuilder.LidName).Mesh.Geometry.Bounds));
+            for (int i = 0; i < 3; i++)
+            {
+                ModelNode cell = elder.Children.Single(
+                    n => n.Name == SiteModelBuilder.FragmentSocketPrefix + "CellPack_" + i);
+                ModelNode fragment = FragmentBuilder.CreateFragment("CellPack", i);
+                Bounds solid = Placed(cell,
+                    fragment.Children.Single(n => n.Name == FragmentBuilder.SolidName).Mesh.Geometry.Bounds);
+                Assert.IsFalse(placed.Intersects(solid), $"clear of {cell.Name}: {placed} vs {solid}");
+            }
+        }
+
+        private static Bounds Placed(ModelNode socket, Bounds local)
+        {
+            return Placed(socket, null, local);
+        }
+
+        private static Bounds Placed(ModelNode socket, ModelNode child, Bounds local)
+        {
+            Matrix4x4 place = Matrix4x4.TRS(socket.LocalPosition, socket.LocalRotation, Vector3.one);
+            if (child != null)
+            {
+                place *= child.LocalMatrix;
+            }
+
+            var bounds = new Bounds(place.MultiplyPoint3x4(local.min), Vector3.zero);
+            for (int i = 1; i < 8; i++)
+            {
+                bounds.Encapsulate(place.MultiplyPoint3x4(new Vector3((i & 1) != 0 ? local.max.x : local.min.x,
+                    (i & 2) != 0 ? local.max.y : local.min.y, (i & 4) != 0 ? local.max.z : local.min.z)));
+            }
+
+            return bounds;
+        }
+
+        [Test]
         public void Elder06_IsSeventhsSibling_SmallerAndDark()
         {
             Bounds elder = DerelictBuilder.CreateElder().Children[0].Mesh.Geometry.Bounds;

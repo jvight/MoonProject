@@ -776,8 +776,9 @@ namespace MoonProject.Art.Editor
 
         /// <summary>
         /// The robots left behind (0.5.5 §1.7), each where World anchors it with its fragments seated (noticed, brackets
-        /// lit): 06 slumped against relay.2's hut, Mule face-down by its last lamp post, the haul sled bot stalled with
-        /// its load, and the drone caught in its wire; each from a close three-quarter and from 20 m.
+        /// lit): 06 slumped against relay.2's hut with Ro's tape case by its bay, Mule face-down by its last lamp post,
+        /// the haul sled bot stalled with its load, and the drone caught in its wire; each from a close three-quarter
+        /// and from 20 m.
         /// </summary>
         private static CameraPoseSet DerelictsScene(TemporaryObjects temporary)
         {
@@ -799,6 +800,14 @@ namespace MoonProject.Art.Editor
                     SeatFragment(temporary,
                         Descendant(host, SiteModelBuilder.FragmentSocketPrefix + hosts[h].blueprint + "_" + i),
                         hosts[h].blueprint, i, 0f, 0f);
+                }
+
+                if (hosts[h].name == DerelictBuilder.ElderName)
+                {
+                    Transform tape = Instantiate(LootContainerBuilder.TapeCaseName, temporary, ArtPaths.PropFolder)
+                        .transform;
+                    tape.SetParent(Descendant(host, DerelictBuilder.TapeSocketName), false);
+                    Lit(Descendant(tape, LootContainerBuilder.SealName), 1f);
                 }
 
                 string tag = hosts[h].name.Substring(DerelictBuilder.Prefix.Length);

@@ -26,6 +26,14 @@ namespace MoonProject.Art.Editor
         public static readonly Vector3 ElderBayDoor = new Vector3(0.66f, 0f, 0.02f);
 
         /// <summary>
+        /// Where Ro's tape case lies by 06 (06 space): on the ground against its flank behind the fallen bay door, by
+        /// the rear wheel, where it slid out of the open bay; its front (+Z, the seal) faces out, its length along 06.
+        /// </summary>
+        public static readonly Vector3 ElderTapeSeat = new Vector3(0.7f, 0f, -0.5f);
+
+        public static readonly Quaternion ElderTapeTurn = Quaternion.Euler(0f, 90f, 0f);
+
+        /// <summary>
         /// Where Cell Pack II's fragment <paramref name="index"/> lies on 06 (06 space) and how: one cell half out of
         /// its open battery bay, one on the bay's fallen door, the cell rail on its lid.
         /// </summary>
