@@ -330,7 +330,7 @@ namespace MoonProject.World.PlayModeTests
             CanyonPath main = _canyon.MainPath;
             Assert.IsTrue(_context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.CanyonLedge, out WorldAnchor ledge));
             yield return Follow(main, Arc(), _canyon.LedgeArc, "to the ledge");
-            Vector3 glow = Ground(_canyon.GlowPoint) + Vector3.up * _settings.GlowHeight;
+            Vector3 glow = Ground(_canyon.GlowPoint) + Vector3.up * _settings.PodBeacon.y;
             Review(ledge.Position - ledge.Forward * 7f + Vector3.up * 2f, glow, WideFov, "06-ledge-glow");
             yield return Follow(main, _canyon.LedgeArc, main.EndArc - _settings.TerminusRadius, "up the canyon");
             Capture("07-inside");
@@ -419,7 +419,7 @@ namespace MoonProject.World.PlayModeTests
 
         private void CaptureFromTheBase()
         {
-            Vector3 glow = Ground(_canyon.GlowPoint) + Vector3.up * _settings.GlowHeight;
+            Vector3 glow = Ground(_canyon.GlowPoint) + Vector3.up * _settings.PodBeacon.y;
             Vector3 eye = Ground(Vector2.zero) + Vector3.up * EyeHeight;
             Review(eye, glow, WideFov, "01-canyon-from-the-base");
             Review(eye, glow, ZoomFov, "01-ledge-glow-from-the-base");

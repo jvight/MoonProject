@@ -136,7 +136,7 @@ namespace MoonProject.World.Editor
             MoonSurface surface = settings.CreateSurface();
             Vector2 point = surface.Canyon.GlowPoint;
             Vector2 ledge = surface.Canyon.LedgeCenter;
-            float height = surface.SampleHeight(ledge.x, ledge.y) + canyon.GlowHeight;
+            float height = surface.SampleHeight(ledge.x, ledge.y) + canyon.PodBeacon.y;
             GameObject glow = context.CreateChild("CanyonGlow", root);
             glow.transform.position = new Vector3(point.x, height, point.y);
 

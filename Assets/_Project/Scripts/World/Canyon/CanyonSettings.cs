@@ -180,17 +180,19 @@ namespace MoonProject.World
         [SerializeField] private float _landerBayHalfLength = 20f;
 
         [Header("The faint warm light inside")]
-        [Tooltip("Height of the warm light above the glinting ledge, metres.")]
-        [Range(0.5f, 15f)]
-        [SerializeField] private float _glowHeight = 3.5f;
+        [Tooltip("Where the fallen supply pod's cracked beacon is, in the pod's frame (Art's SupplyPod, its Glow node " +
+            "on the bent locator mast): the pod stands on the ledge facing canyon.ledge's Forward, and the warm light " +
+            "is its beacon, high enough to be seen from home (0.5.5, M3-04).")]
+        [SerializeField] private Vector3 _podBeacon = new Vector3(-0.12f, 3.5f, 0.32f);
 
         [Tooltip("Brightness of the warm light's soft halo.")]
         [Range(0f, 4f)]
         [SerializeField] private float _glowIntensity = 0.9f;
 
-        [Tooltip("Radius of the halo up close, metres.")]
-        [Range(0.2f, 6f)]
-        [SerializeField] private float _glowRadius = 1.2f;
+        [Tooltip("Radius of the beacon's glow up close, metres: tight on the cracked glass; the halo grows to its " +
+            "minimum apparent size only from far off.")]
+        [Range(0.05f, 6f)]
+        [SerializeField] private float _glowRadius = 0.2f;
 
         [Tooltip("Smallest apparent radius of the halo, degrees, so it still reads from the base.")]
         [Range(0f, 2f)]
@@ -269,7 +271,7 @@ namespace MoonProject.World
         public float LanderBayArc => _landerBayArc;
         public float LanderBayDepth => _landerBayDepth;
         public float LanderBayHalfLength => _landerBayHalfLength;
-        public float GlowHeight => _glowHeight;
+        public Vector3 PodBeacon => _podBeacon;
         public float GlowIntensity => _glowIntensity;
         public float GlowRadius => _glowRadius;
         public float GlowMinAngle => _glowMinAngle;
