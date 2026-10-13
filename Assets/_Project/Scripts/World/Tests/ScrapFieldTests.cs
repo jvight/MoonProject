@@ -47,7 +47,8 @@ namespace MoonProject.World.Tests
                 Vector2 offset = new Vector2(piece.Position.x, piece.Position.z) - kestrel.TrailEnd;
                 float side = Mathf.Abs(Vector2.Dot(offset, across));
                 Assert.That(side, Is.InRange(_settings.LaneHalfWidth,
-                    _settings.LaneHalfWidth + _settings.HostOffset + _settings.Spread), "beside the lane, never in it");
+                    _settings.LaneHalfWidth + _settings.HostOffset + _settings.Spread + _settings.AnchorScale.y),
+                    "beside the lane, never in it");
                 Assert.That(Vector2.Dot(offset, along), Is.GreaterThanOrEqualTo(0f), "on the furrow, not behind it");
                 float ground = _surface.SampleHeight(piece.Position.x, piece.Position.z);
                 if (piece.IsHost)
@@ -59,7 +60,8 @@ namespace MoonProject.World.Tests
                 }
                 else
                 {
-                    Assert.AreEqual(ground - _settings.Sink, piece.Position.y, 1e-4f, "scenery sinks deeper");
+                    Assert.AreEqual(ground - _settings.Sink * piece.Scale, piece.Position.y, 1e-4f,
+                        "scenery sinks deeper, in proportion to its size");
                 }
             }
         }
@@ -71,6 +73,25 @@ namespace MoonProject.World.Tests
             {
                 Assert.AreEqual(i < _settings.Hosts, _pieces[i].IsHost, $"piece {i}");
             }
+        }
+
+        [Test]
+        public void Field_CrowdsTheImpactEnd_AroundBigAnchorSkins()
+        {
+            KestrelImpact kestrel = _surface.Kestrel;
+            Vector2 toCrater = kestrel.Center - kestrel.TrailEnd;
+            float half = (toCrater.magnitude - kestrel.RimRadius) * 0.5f;
+            int nearImpact = 0;
+            int anchors = 0;
+            foreach (ScrapPlate piece in _pieces)
+            {
+                Vector2 offset = new Vector2(piece.Position.x, piece.Position.z) - kestrel.TrailEnd;
+                nearImpact += Vector2.Dot(offset, toCrater.normalized) < half ? 1 : 0;
+                anchors += piece.Scale >= _settings.AnchorScale.x ? 1 : 0;
+            }
+
+            Assert.Greater(nearImpact, _pieces.Count / 2, "most of the wreck lies near where Kestrel-3 first hit");
+            Assert.GreaterOrEqual(anchors, _settings.Anchors, "a few big skins anchor the field");
         }
 
         [Test]

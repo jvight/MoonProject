@@ -15,7 +15,7 @@ namespace MoonProject.World
     {
         [Tooltip("Hull fragments along the furrow, the hosts included.")]
         [Range(0, 40)]
-        [SerializeField] private int _pieces = 6;
+        [SerializeField] private int _pieces = 14;
 
         [Tooltip("Of them, the pieces at the lane's edge that host the Warm Headlamp's scan fragments.")]
         [Range(0, 4)]
@@ -37,7 +37,23 @@ namespace MoonProject.World
         [Tooltip("Span of the furrow the fragments cover, as shares from its far end (0) to the crater's rim (1).")]
         [SerializeField] private Vector2 _span = new Vector2(0.05f, 0.95f);
 
-        [Tooltip("How far each scenery fragment sinks below its dust line, metres: about two thirds buried.")]
+        [Tooltip("Big curved hull skins among the scenery (Art's variant 0), the wreck's anchors near the impact end.")]
+        [Range(0, 8)]
+        [SerializeField] private int _anchors = 3;
+
+        [Tooltip("Scale of an anchor skin (x = min, y = max).")]
+        [SerializeField] private Vector2 _anchorScale = new Vector2(2f, 2.5f);
+
+        [Tooltip("Scale of the other scenery fragments (x = min, y = max).")]
+        [SerializeField] private Vector2 _scale = new Vector2(1f, 1.6f);
+
+        [Tooltip("How the fragments crowd the impact end (the furrow's far end): a fragment's place along the furrow " +
+            "is a uniform share raised to this power, so above 1 most lie near where Kestrel-3 first hit.")]
+        [Range(1f, 4f)]
+        [SerializeField] private float _crowding = 1.8f;
+
+        [Tooltip("How far each scenery fragment sinks below its dust line at scale 1, metres: about two thirds " +
+            "buried (it sinks in proportion to its scale).")]
         [Range(0f, 2f)]
         [SerializeField] private float _sink = 0.45f;
 
@@ -54,6 +70,10 @@ namespace MoonProject.World
         public float HostOffset => _hostOffset;
         public Vector2 Span => _span;
         public float Sink => _sink;
+        public int Anchors => _anchors;
+        public Vector2 AnchorScale => _anchorScale;
+        public Vector2 Scale => _scale;
+        public float Crowding => _crowding;
         public Vector2 Tilt => _tilt;
         public Color Dust => _dust;
     }

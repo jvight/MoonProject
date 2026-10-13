@@ -34,6 +34,7 @@ namespace MoonProject.World
                 GameObject model = UnityEngine.Object.Instantiate(fragments[piece.Variant], piece.Position,
                     piece.Rotation, root.transform);
                 model.name = fragments[piece.Variant].name;
+                model.transform.localScale = Vector3.one * piece.Scale;
                 Transform cutPoint = model.transform.Find(CutPointName);
                 if (cutPoint != null)
                 {
