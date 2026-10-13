@@ -28,7 +28,7 @@ Material:
     - _Band: 0.12
     - _Falloff: 2
     m_Colors:
-    - _BaseColor: {r: 0.4437841, g: 0.30605894, b: 0.103644736, a: 0.22}
+    - _BaseColor: {r: 0.39370224, g: 0.27058432, b: 0.08695077, a: 0.22}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

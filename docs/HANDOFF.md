@@ -4,7 +4,56 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 000000000000000. LATEST (2026-10-13 ~22:30): 0.5.5 nearly done; 0.6 designed; story v3 + concept art pending owner review
+## 000000000000000000. LATEST (2026-10-14 ~02:30): main ae1f50d7 verified + pushed; C10 + C5 world half next
+- **main ae1f50d7 (verified, origin has it)** = look A (art palette + world sky/fog/grade), C9 (the tape deck is a
+  station spare; keepsakes 5), audio 27ad1ff9, ui (keepsake total from the catalog), gameplay 59e4e157 (C11b relay.2's
+  hut + the haul bot; the relic dig waits for a sealed container's seal).
+- **Next land (one batch):** gameplay box 8af2fce9 (c48ec7ee garage flake fix + d838b393 Core IScrapField + C10 drop
+  the ground rings, M_GlowSiteRing.mat deleted) + world 408ccc21 (C5 world half: 4 cuttable lane slots, WorldSystem
+  serves IScrapField; its e3bf64d7 is byte-identical to d838b393). Land when gameplay reports C10's box_check PASS.
+- **Then:** gameplay C5 side (scrap.kestrel_trail pieces at IScrapField slots), C6, D scanning; verify --explicit;
+  bump 0.5.5; build; Builds/.
+- **Art:** real-scene captures of look A (dock, wide basin, 07 close, night) asked; show the owner when they arrive.
+- **World:** stands by until 0.5.5 ships (no 0.6 work before the owner reviews 0.5.5).
+- **Owner pending:** story v3's 7 questions (see the previous section).
+
+## 00000000000000000. (prev) (2026-10-14 ~01:30): main 235422b1 NOT verified (2 fixes pending); story v3 Qs to owner
+- **main 235422b1** (local, NOT pushed; origin = 5bffb082 + docs) = look A (art 0bac0cfe + world 52432607, one grade
+  source in World PostProcessSettings), C9 (gameplay 2ec38e77; the tape deck is a spare in the SpareCrate; keepsakes 5),
+  audio 27ad1ff9, ui 2d5237c2, VISION's palette = look A.
+- **The verify failed on two things, both asked:**
+  1. ui: HudTests expects "Keepsake 2 of 6" (now 5); read the total from the catalog.
+  2. gameplay: the Playthrough times out at the garage, "relic in the beam's reach" at (-86.9, -74.1); likely art's
+     garage pocket changes. Gameplay is reproducing on main.
+  Land both fixes, then `verify --parallel --push`.
+- **Then:** art's real-scene captures of look A for the owner; gameplay C11b (box/gameplay 0087c582?), C10, C5
+  (IScrapField = 4 lane slots, gameplay writes Core, world registers), C6, D; then verify --explicit, bump 0.5.5,
+  build.
+- **Owner pending:** story v3's 7 questions (docs/design/story-v3.md §6, box/story 34f104d0). Proposals sent:
+  survey row 0/6; Ro hears first, then Houston; keep Tycho Consortium; a 4-of-6 threshold; approve the 16 rewrites;
+  Lena Moreau yes; the Charge Adapter in 0.7. NOTE: the story & flow session's outbound messaging is paused until
+  the owner types in it.
+
+## 0000000000000000. (prev) (2026-10-14 ~00:30): main 5bffb082 verified+pushed; look A in flight
+- Director: session local_0b7c61a2 at ~92% context. A fresh Director starts HERE and recreates cron v4.
+- **Landed since e13afbde (all verified):**
+  - feb2157a: the network pulse + its sound;
+  - 5bffb082: C8 relay cabinets + container seals dimmed (the "blue wash at 06" was over-bright seals);
+  - docs: north-star §4b variety/density and the monotony check, ARCHITECTURE's CabinetSocket.
+- **Owner decisions tonight:**
+  - look: day = C "Low sun", night = A "Moon grey". A ships in 0.5.5 as the game's look; C arrives with 0.6's
+    day/night. The basin variety pass moves to 0.6 (world's PROPOSAL.md in its worktree Logs).
+  - Ruling: Ro's tape deck is a station spare part in Kenji's "07 · SPARE" crate; keepsakes = 5; the cassette_player
+    relic is retired.
+- **In flight (land together):**
+  - look A: art palette (box/art 0bac0cfe+; must raise Palette.ReferenceLight) + world sky/fog/grade (box/world
+    758491da; ONE grade source = World PostProcessSettings);
+  - C9: gameplay 2ec38e77 + art 0bac0cfe (retire the relic) + audio 28a01874 (re-render relic_answer after C9's
+    asset delete).
+  - Then gameplay C11b, C5, C10, C6, D; then verify --explicit, bump 0.5.5, build.
+- **Pending owner review:** story v3 (box/story 34f104d0; ask story & flow for the summary) and concept round 2.
+
+## 000000000000000. (prev) (2026-10-13 ~22:30): 0.5.5 nearly done; 0.6 designed; story v3 + concept art pending owner review
 - Director: session local_0b7c61a2 ("MoonProject Director handoff"); context ~85%; a fresh Director starts HERE.
   Recreate cron v4 (usage log, notice at 85/95%, stall check, no auto-stop).
 - **main e13afbde+ (verified; origin has it).** Since 95f5f746:

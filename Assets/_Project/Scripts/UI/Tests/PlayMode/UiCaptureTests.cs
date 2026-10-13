@@ -68,7 +68,7 @@ namespace MoonProject.UI.PlayModeTests
         private const float SiteShotHeight = 3.2f;
         private const float CutHeight = 0.8f;
         private const float CutHeld = 0.55f;
-        private const string RelicPrefabPath = "Assets/_Project/Generated/Art/Relics/Relic_cassette_player.prefab";
+        private const string RelicPrefabPath = "Assets/_Project/Generated/Art/Relics/Relic_teapot.prefab";
         private const float RelicShotAhead = 10f;
         private const float RelicShotSide = 2.2f;
         private const float RelicShotYaw = 35f;
@@ -185,7 +185,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return Capture(camera, folder, "04_pickup_feed_gain");
             yield return new WaitForSecondsRealtime(_tuning.PickupFeed.MaxCountSeconds);
 
-            context.Events.Publish(new RelicDeposited("cassette_player", Vector3.zero, 3));
+            context.Events.Publish(new RelicDeposited("teapot", Vector3.zero, 3));
             yield return new WaitForSecondsRealtime(_tuning.MemoryCard.AppearDelay +
                                                     _tuning.MemoryCard.Reveal.FadeIn + 0.5f);
             yield return Capture(camera, folder, "05_memory_card");
@@ -336,6 +336,11 @@ namespace MoonProject.UI.PlayModeTests
             Release(keyboard.eKey);
             yield return new WaitForSecondsRealtime(KitSettleSeconds);
             yield return Capture(camera, folder, "44_bay_working");
+            // The real rover plays the bay's install moment for this event, so it rests on the bay's turntable first,
+            // where the moment is valid.
+            IRoverBay bay = context.Get<IRoverBay>();
+            context.Get<IRoverPlacement>().PlaceAt(bay.TurntablePosition, bay.TurntableRotation);
+            yield return new WaitForSecondsRealtime(KitSettleSeconds);
             context.Events.Publish(new PartFitted(RoverSocket.Hold, RoverKitPiece.CargoRack, false, false, default, 0));
             yield return new WaitForSecondsRealtime(LineShotSeconds);
             yield return Capture(camera, folder, "44b_bay_fitted_line");

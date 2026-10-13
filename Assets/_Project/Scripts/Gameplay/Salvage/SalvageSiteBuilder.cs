@@ -55,9 +55,9 @@ namespace MoonProject.Gameplay
                 return $"'{SkeletonName}' has no mesh";
             }
 
-            var built = new SalvageSite(index, entry.AnchorId, root, anchor.Radius, heart.position, entry.Gate,
+            var built = new SalvageSite(index, entry.Id, root, anchor.Radius, heart.position, entry.Gate,
                 new ComboCounter(tuning.ChainWindow), entry.HeartUnderPieces);
-            string problem = derelict ? null : AddCrate(built, entry, root);
+            string problem = (derelict ? null : AddCrate(built, entry, root)) ?? AddProps(entry, root);
             if (problem != null)
             {
                 return problem;
@@ -111,6 +111,30 @@ namespace MoonProject.Gameplay
 
             pieces.AddRange(built.Pieces);
             site = built;
+            return null;
+        }
+
+        /// <summary>Art's props on their sockets with identity, solid to 07; null when they all stand.</summary>
+        private static string AddProps(SalvageSiteEntry entry, Transform root)
+        {
+            for (int i = 0; i < entry.Props.Count; i++)
+            {
+                SocketProp prop = entry.Props[i];
+                Transform socket = Child(root, prop.Socket);
+                if (socket == null)
+                {
+                    return $"the prefab has no '{prop.Socket}' node for its prop '{prop.Prefab.name}'";
+                }
+
+                GameObject instance = Object.Instantiate(prop.Prefab, socket);
+                instance.name = prop.Prefab.name;
+                instance.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+                foreach (MeshFilter mesh in instance.GetComponentsInChildren<MeshFilter>())
+                {
+                    MakeSolid(mesh.transform);
+                }
+            }
+
             return null;
         }
 

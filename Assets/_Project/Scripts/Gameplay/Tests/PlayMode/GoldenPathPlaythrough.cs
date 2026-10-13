@@ -32,7 +32,7 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// through the UI's hold. The tower's first sweep raises Tilly's pillar; 07 listens when it rests. Then Tilly
     /// (M3-02): gather her parts (the last one dug from the dust), repair her, drive home with her, be greeted, and let
     /// her spot Kenji's garage on the next trip, the tether still asleep. Cut the garage's three seams in one trip; its
-    /// port fits the tether ring, then Ro's tape deck dug beside it and held on the tether, and 07 is home with at least
+    /// port fits the tether ring, then Ro's tape deck from Kenji's sealed spare crate, and 07 is home with at least
     /// a quarter of its charge. Dig Kenji's duck out of the garage's heart, which holds the Cargo Cradle's
     /// blueprint, and tow it home, where the jammed belly lift asks for its stitch (M3-19): stitch it from beside it,
     /// ride up with the duck beside 07, let the lab's reader decode the Cradle's tube (its hand-off pulse waits at the
@@ -208,6 +208,16 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Sphere (m) that must be free of the wreck where 07 parks to dig.</summary>
         private const float ParkClearance = 1.6f;
 
+        /// <summary>Degrees the waypoint beside a mast swings toward its front per try, and at most.</summary>
+        private const float AsideSwingStep = 15f;
+
+        private const float AsideMaxSwing = 75f;
+
+        /// <summary>The probe 07 drives straight along to a waypoint: its height (m) and radius (m).</summary>
+        private const float PathProbeHeight = 0.8f;
+
+        private const float PathProbeRadius = 1f;
+
         /// <summary>07 parks this far (m) in front of a relay mast's junction box to restore it.</summary>
         private const float RelayFoot = 3f;
 
@@ -316,9 +326,6 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float FacesOut = 0.9f;
 
         private const float KeySeconds = 0.25f;
-        /// <summary>Ro's tape deck: the relic Kenji's port fits on 07's flank (first-hour v2 §3).</summary>
-        private const string Deck = "cassette_player";
-
         /// <summary>The keepsake carried home in the Cargo Cradle once it is built.</summary>
         private const string Gnome = "garden_gnome";
 
@@ -341,7 +348,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Metres 07 backs out from the port's pad before it turns, clear of the garage's walls.</summary>
         private const float PortBackOut = 5f;
 
-        /// <summary>Tether releases before the tow home began (Kenji's port took the tape deck off the tether).</summary>
+        /// <summary>Tether releases before the tow home began.</summary>
         private int _releasesBeforeTow;
 
         private static readonly string ReportPath = Path.Combine(GameplayFixture.CaptureFolder, "playthrough.md");
@@ -453,13 +460,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             SalvageSite garage = _gameplay.Salvage.Find(WorldAnchorIds.SitePrefix + "garage");
             yield return TillySpotsOnTheNextTrip(garage);
             Relic duck = RelicIn(garage, Duck);
-            Relic deck = RelicIn(garage, Deck);
             Relic gnome = RelicIn(garage, Gnome);
             yield return SalvageTheGarage(garage, int.MaxValue, "the garage's three seams, one trip");
             yield return ExpectStep(ProgressionKeys.NextPort, "the last cut opened Kenji's port");
             yield return FitTheTetherRing();
-            yield return Excavate(garage, deck);
-            yield return LatchTether(deck);
             yield return FitTheTapeDeck();
             Lesson("the garage in one trip", 0.25f, 0.4f);
             yield return ChargeAtTheDock("home from the garage in one trip", OneTripArrival);
@@ -654,23 +658,40 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Ro's tape deck, dug up beside the port and held on the tether: resting by the port, 07 has it taken onto the
-        /// tray and fitted on its flank; the first tape plays.
+        /// Kenji's sealed "07 · SPARE" crate on his bench (0.5.5 §2): with the ring on, cut its seal, take Ro's tape
+        /// deck at its mouth with E (it glides onto the port's tray), park on the pad and the arm fits it on 07; the
+        /// first tape plays.
         /// </summary>
         private IEnumerator FitTheTapeDeck()
         {
             Begin();
             GaragePort port = _gameplay.Port;
+            SealedContainer crate = port.SpareCrate;
             int fitted = 0;
             using IDisposable fits = _context.Events.Subscribe<PartFitted>(fit =>
                 fitted += fit.Part == RoverKitPiece.TapeDeck ? 1 : 0);
-            _pilot.Target = null;
-            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 rests by the port, the deck on its tether");
-            yield return Until(() => port.DeckFitted, 10f, "the port takes the deck onto its tray and fits it");
-            Release(_mouse.rightButton);
+            yield return Until(() => crate.Available, 2f, "with the ring on, the spare crate's seal glows");
+            Vector3 front = crate.CutPoint.position + crate.Root.forward * SealStandOff;
+            yield return DriveTo(Flat(front), 1f, 0.35f, 30f, "the seal of Kenji's spare crate");
+            Press(_keyboard.eKey);
+            yield return Until(() => crate.Opened, SealCutTimeout, "held E cuts the seal of Kenji's spare crate");
+            Release(_keyboard.eKey);
+            yield return Until(() => port.DeckInTheCrate, _gameplay.Cargo.ContainerLidSeconds +
+                _gameplay.Progression.Tuning.PartAppearSeconds + 2f, "Ro's tape deck rises to the crate's mouth");
+            Capture("12d-the-spare-crate");
+            yield return PickupPress.Take(this, _gameplay, 4f, "Ro's tape deck");
+            yield return Until(() => port.DeckOnTheTray, _gameplay.Progression.Tuning.PortTrayGlideSeconds + 2f,
+                "the deck glides onto the port's tray");
+            yield return DriveTo(Flat(port.PadCentre), PortPark, 0.35f, 40f, "Kenji's port pad");
+            yield return Until(() => port.DeckFitted, 6f, "parked on the pad, the arm fits the deck");
             yield return Until(() => fitted == 1, 6f, "the deck is on 07's flank");
             Capture("12d-the-tape-deck");
-            End("Kenji's port fits Ro's tape deck", "the first music, earned");
+            _pilot.Reverse = BayThrottle;
+            yield return Until(() => SurfaceRules.HorizontalDistance(_rover.Position, port.PadCentre) > PortBackOut,
+                6f, "07 backs out of Kenji's bay the way it came in");
+            _pilot.Reverse = 0f;
+            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 stops outside the port");
+            End("Kenji's port fits Ro's tape deck from his spare crate", "the first music, earned");
         }
 
         private IEnumerator ChargeAtTheDock(string why, float leastOnArrival = 0f)
@@ -1076,23 +1097,44 @@ namespace MoonProject.Gameplay.PlayModeTests
             End($"Pick up {part} in the heart of {site.Id}", "it rides home on 07's back");
         }
 
-        /// <summary>The relay spare waits on the first lit mast's pad: drive up to it and press E (P1, level 3).</summary>
+        /// <summary>
+        /// The relay spare waits on the shelf of the first lit mast's open cabinet: drive up to it and press E (P1,
+        /// level 3).
+        /// </summary>
         private IEnumerator PickUpTheRelaySpare()
         {
             Begin();
             TowerPartField field = _gameplay.TowerPartField;
             yield return Until(() => field.IsResting(SparePart) ||
                                      _gameplay.TowerParts.StateOf(SparePart) != TowerPartState.Waiting,
-                _gameplay.Progression.Tuning.PartAppearSeconds + 2f, "the relay spare shows on the lit mast's pad");
+                _gameplay.Progression.Tuning.PartAppearSeconds + 2f,
+                "the relay spare shows in the lit mast's cabinet");
             if (_gameplay.TowerParts.StateOf(SparePart) == TowerPartState.Waiting)
             {
-                yield return DriveTo(Flat(field.RestPosition(SparePart)), PartArrive, 0.5f, 60f, "the relay spare");
+                Vector3 spare = field.RestPosition(SparePart);
+                Vector3 front = spare + CabinetHolding(spare).Root.forward * SealStandOff;
+                yield return DriveTo(Flat(front), PartArrive, 0.5f, 60f, "the relay spare");
                 yield return PickupPress.Take(this, _gameplay, 4f, "the relay spare");
             }
 
             yield return Until(() => _gameplay.TowerParts.StateOf(SparePart) == TowerPartState.Carried, 8f,
                 "the relay spare spirals into 07");
-            End("Pick up the relay spare on the mast's pad", "level 3's part rides on 07's back");
+            End("Pick up the relay spare in the mast's cabinet", "level 3's part rides on 07's back");
+        }
+
+        /// <summary>The relay mast's service cabinet whose shelf holds <paramref name="point"/>.</summary>
+        private SealedContainer CabinetHolding(Vector3 point)
+        {
+            foreach (RelayMast mast in _gameplay.Relays.Masts)
+            {
+                if (Vector3.Distance(mast.PartRest, point) < 0.01f)
+                {
+                    return mast.Cabinet;
+                }
+            }
+
+            Assert.Fail($"no relay cabinet holds {point}");
+            return null;
         }
 
         /// <summary>
@@ -2453,6 +2495,23 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return RestoreRelay(3, "the terminus relay");
         }
 
+        /// <summary>
+        /// 07 drives up to the mast's service cabinet, cuts its seal (0.5.5 §2) and takes the part off its shelf.
+        /// </summary>
+        private IEnumerator TakeTheRelayPart(RelayMast mast, string name)
+        {
+            SealedContainer cabinet = mast.Cabinet;
+            Vector3 front = cabinet.CutPoint.position + cabinet.Root.forward * SealStandOff;
+            yield return DriveTo(Flat(front), 1f, 0.35f, 120f, $"the seal of {name}'s cabinet");
+            Press(_keyboard.eKey);
+            yield return Until(() => cabinet.Opened, SealCutTimeout, $"held E cuts the seal of {name}'s cabinet");
+            Release(_keyboard.eKey);
+            yield return Until(() => cabinet.StandsOpen, _gameplay.Cargo.ContainerLidSeconds + 2f,
+                $"{name}'s cabinet door swings open");
+            yield return PickupPress.Take(this, _gameplay, 4f, "the relay part");
+            yield return Until(() => mast.PartState == RelayPartState.Held, 8f, "the relay part flies into 07");
+        }
+
         /// <summary>A mast's part, then the stitch at its foot; done once it comes online, linked home.</summary>
         private IEnumerator RestoreRelay(int index, string name)
         {
@@ -2462,10 +2521,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(_gameplay.Materials.Has(recipe), $"the stock covers {name}");
             Begin();
             int online = _events.RelayRestored.Count;
-            float partAway = SurfaceRules.HorizontalDistance(mast.PartRest, mast.Anchor.Position);
-            yield return DriveTo(Flat(mast.PartRest), 1.5f, 0.7f, 120f, name + "'s part");
-            yield return PickupPress.Take(this, _gameplay, 4f, "the relay part");
-            yield return Until(() => mast.PartState == RelayPartState.Held, 8f, "the relay part flies into 07");
+            yield return TakeTheRelayPart(mast, name);
             yield return AroundToTheFront(mast, name);
             Vector3 foot = mast.Broken.PartSocket.position + mast.Anchor.Forward * RelayFoot;
             yield return DriveTo(Flat(foot), 1.2f, 0.5f, 60f, name + "'s foot");
@@ -2478,7 +2534,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Until(() => _events.RelayRestored.Count > online, beat.Duration + 2f,
                 name + " comes online, linked home");
             Assert.AreEqual(mast.Id, _events.RelayRestored[_events.RelayRestored.Count - 1].Value.RelayId);
-            End($"Restore {name} ({mast.Id})", $"recipe {recipe}, its part {partAway:F0} m from the mast");
+            End($"Restore {name} ({mast.Id})", $"recipe {recipe}, its part from its cabinet");
         }
 
         /// <summary>
@@ -2496,10 +2552,38 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             Vector3 side = Vector3.Cross(Vector3.up, forward);
             side *= Vector3.Dot(fromMast, side) < 0f ? -1f : 1f;
-            yield return DriveTo(Flat(mast.Anchor.Position + side * RelayAside), WaypointArrive, CanyonThrottle, 60f,
+            yield return DriveTo(OpenAside(mast.Anchor.Position, side, forward), WaypointArrive, CanyonThrottle, 60f,
                 "the side of " + name);
             yield return DriveTo(Flat(mast.Anchor.Position + (side + forward) * RelayAside * 0.5f), WaypointArrive,
                 CanyonThrottle, 60f, "the front of " + name + "'s pad");
+        }
+
+        /// <summary>
+        /// The waypoint beside a mast on 07's side, swung toward the mast's front until it stands on open ground that 07
+        /// can drive straight to: a mast's neighbours (06 and relay.2's hut, 0.5.5 §1.7) may stand in the way.
+        /// </summary>
+        private Vector3 OpenAside(Vector3 pad, Vector3 side, Vector3 forward)
+        {
+            var terrain = _context.Get<ITerrainQuery>();
+            for (float swing = 0f; swing <= AsideMaxSwing; swing += AsideSwingStep)
+            {
+                float radians = swing * Mathf.Deg2Rad;
+                Vector3 spot = Flat(pad + (side * Mathf.Cos(radians) + forward * Mathf.Sin(radians)) * RelayAside);
+                float ground = terrain.SampleHeight(spot.x, spot.z);
+                Vector3 from = new Vector3(_rover.Position.x, ground + PathProbeHeight, _rover.Position.z);
+                Vector3 to = new Vector3(spot.x, ground + PathProbeHeight, spot.z);
+                bool open = !Physics.CheckSphere(new Vector3(spot.x, ground + ParkClearance + 0.2f, spot.z),
+                    ParkClearance, Layers.PropMask, QueryTriggerInteraction.Ignore);
+                bool clear = !Physics.SphereCast(from, PathProbeRadius, (to - from).normalized, out _,
+                    (to - from).magnitude, Layers.PropMask, QueryTriggerInteraction.Ignore);
+                if (open && clear)
+                {
+                    return spot;
+                }
+            }
+
+            Assert.Fail($"no open ground beside the mast at {pad} on its {side} side");
+            return Vector3.zero;
         }
 
         /// <summary>
@@ -2578,10 +2662,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Begin();
             Vector3 pad = mast.Anchor.Position;
             Review(pad + mast.Anchor.Forward * 16f + Vector3.up * 2.5f, pad + Vector3.up * 5f, "30-relay-dark");
-            float partAway = SurfaceRules.HorizontalDistance(mast.PartRest, pad);
-            yield return DriveTo(Flat(mast.PartRest), 1.5f, 0.7f, 120f, "the mound relay's part");
-            yield return PickupPress.Take(this, _gameplay, 4f, "the relay part");
-            yield return Until(() => mast.PartState == RelayPartState.Held, 8f, "the relay part flies into 07");
+            yield return TakeTheRelayPart(mast, "the mound relay");
             Vector3 foot = mast.Broken.PartSocket.position + mast.Anchor.Forward * RelayFoot;
             yield return DriveTo(Flat(foot), 1.2f, 0.5f, 60f, "the mound relay's foot");
             yield return Until(() => _gameplay.Hints.TryGet(InteractionKind.Restore, out InteractionHint hint) &&
@@ -2604,7 +2685,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Review(pad + mast.Anchor.Forward * 30f + Vector3.up * 14f, pad + mast.Anchor.Forward * 40f,
                 "33-relay-link-pulse");
             End("Restore the mound relay (relay.0)",
-                $"recipe {recipe} ({mast.Paid} units), its part {partAway:F0} m from the mast, beat " +
+                $"recipe {recipe} ({mast.Paid} units), its part from its cabinet, beat " +
                 $"{beat.Duration:F1} s");
         }
 

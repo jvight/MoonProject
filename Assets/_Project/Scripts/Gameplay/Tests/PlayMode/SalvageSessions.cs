@@ -242,7 +242,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             SalvageSite depot = _fixture.FindSite("depot");
             Relic walkman = depot.Relics[0];
-            Assert.AreEqual("cassette_player", walkman.Definition.Id, "the walkman rests in the depot's heart");
+            Assert.AreEqual("walkman", walkman.Definition.Id, "the walkman rests in the depot's heart");
             Assert.Less(SurfaceRules.HorizontalDistance(walkman.Site.Position, depot.Heart), 1e-3f);
             Assert.Greater(walkman.BuriedPosition.y + walkman.RestHeight, depot.Heart.y,
                 "its top peeks out of the dust (the stand-in is as tall above its pivot as below)");
@@ -250,6 +250,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture.Rover.Place(depot.Heart + new Vector3(0f, 0f, -4f), 0f);
             Vector3 camera = depot.Heart + new Vector3(0f, 3.5f, -10f);
             _fixture.Rover.Aim(camera, depot.Heart);
+            yield return null;
+            yield return null;
+            SealedContainer coilCrate = _fixture.Gameplay.Containers.Find(
+                TowerPartField.ContainerId(_fixture.Gameplay.TowerParts.PartAt(0)));
+            Assert.AreSame(coilCrate, _fixture.Gameplay.Containers.Candidate, "the coil crate's seal glows in reach");
+            Assert.IsNull(_fixture.Gameplay.Excavation.Candidate, "one press, one verb: the seal first, the dig waits");
+            _fixture.Gameplay.Containers.StandOpen(coilCrate.Id);
             yield return null;
             yield return null;
             Assert.AreSame(walkman, _fixture.Gameplay.Excavation.Candidate, "looking at the heart: dig");
@@ -330,6 +337,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsNotNull(mule, "the Mule stands on micro.mule");
             CollectionAssert.DoesNotContain(salvage.Sites, mule, "a derelict is no wreck site: no sonar, no map");
             Assert.AreEqual(0, elder.Pieces.Count, "06 has nothing to cut");
+            Transform hut = elder.Root.Find("HutSocket/RelayHut");
+            Assert.IsNotNull(hut, "relay.2's hut stands on 06's HutSocket: 06 slumps against it");
+            Assert.IsNotNull(hut.GetComponentInChildren<MeshCollider>(), "solid to 07");
+            SalvageSite haulBot = salvage.FindDerelict(GameplayFixture.HaulBot);
+            Transform seat = _fixture.FindSite("drill").Root.Find("HaulBotSocket");
+            Assert.Less(Vector3.Distance(haulBot.Root.position, seat.position), 1e-3f,
+                "the haul bot stands inside the drill site, on its seat");
+            Assert.AreEqual(1, haulBot.Pieces.Count, "its load to cut");
+            CollectionAssert.Contains(salvage.Pieces, haulBot.Pieces[0]);
             Assert.IsNull(mule.Crate, "and no crew crate");
             Assert.AreEqual(1, mule.Pieces.Count);
             SalvagePiece skirt = mule.Pieces[0];

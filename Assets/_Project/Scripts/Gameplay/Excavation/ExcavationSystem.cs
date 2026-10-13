@@ -14,7 +14,8 @@ namespace MoonProject.Gameplay
     /// dig. Letting go keeps the progress (the relic waits, bobbing, where it is). When it is fully up it is handed to
     /// physics with a little hop: <see cref="ExcavationStopped"/> (completed) then <see cref="RelicSurfaced"/>, and the
     /// game saves. The hold is shared with salvage: while <see cref="SalvageField"/> has a piece picked (07 looks at it
-    /// more directly than at the heart) or is cutting, there is nothing to dig.
+    /// more directly than at the heart) or is cutting, there is nothing to dig; nor while a sealed container's glowing
+    /// seal is in reach (<see cref="SealedContainers"/>, 0.5.5 §2): one press, one verb, the seal first.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class ExcavationSystem : MonoBehaviour
@@ -34,6 +35,7 @@ namespace MoonProject.Gameplay
         private ISaveService _save;
         private RelicField _relics;
         private SalvageField _salvage;
+        private SealedContainers _containers;
         private Transform _beam;
         private GlowRenderer _beamGlow;
         private DustSwirl _dust;
@@ -70,7 +72,8 @@ namespace MoonProject.Gameplay
             _tuning = tuning;
         }
 
-        internal bool Initialize(GameplayServices services, RelicField relics, SalvageField salvage)
+        internal bool Initialize(GameplayServices services, RelicField relics, SalvageField salvage,
+            SealedContainers containers)
         {
             if (_tuning == null)
             {
@@ -92,6 +95,7 @@ namespace MoonProject.Gameplay
             _save = services.Save;
             _relics = relics ?? throw new ArgumentNullException(nameof(relics));
             _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
+            _containers = containers ?? throw new ArgumentNullException(nameof(containers));
             MeshRenderer beam = GlowObject.Create("TractorBeam", transform, services.Meshes.Cone,
                 services.Visuals.TractorBeam);
             _beam = beam.transform;
@@ -109,7 +113,7 @@ namespace MoonProject.Gameplay
             }
 
             float deltaTime = Time.deltaTime;
-            Candidate = _salvage.ClaimsHold ? null : NearestLiftable();
+            Candidate = _salvage.ClaimsHold || _containers.Candidate != null ? null : NearestLiftable();
             bool wantsBeam = _input.ExcavateHeld && Candidate != null && (_lifting != null || _beamWork.MayStart);
             SetHold(wantsBeam);
 

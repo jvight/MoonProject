@@ -6,19 +6,19 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// One relay mast's live state (<see cref="RelayField"/>): its broken and restored rigs on its anchor, its relay
-    /// part, what was paid, its restoration's progress, whether its lamp shows it linked home, and its link pulse.
+    /// part in its service cabinet, what was paid, its restoration's progress, whether its lamp shows it linked home,
+    /// and its link pulse.
     /// </summary>
     internal sealed class RelayMast
     {
         public RelayMast(int node, WorldAnchor anchor, RelayRig broken, RelayRig restored, Transform part,
-            Vector3 partRest, LinkPulse pulse)
+            LinkPulse pulse)
         {
             Node = node;
             Anchor = anchor;
             Broken = broken ?? throw new ArgumentNullException(nameof(broken));
             Restored = restored ?? throw new ArgumentNullException(nameof(restored));
             Part = part != null ? part : throw new ArgumentNullException(nameof(part));
-            PartRest = partRest;
             PartScale = part.localScale;
             Pulse = pulse ?? throw new ArgumentNullException(nameof(pulse));
         }
@@ -36,8 +36,14 @@ namespace MoonProject.Gameplay
 
         public Transform Part { get; }
 
-        /// <summary>Where the part rests on the ground (on the surface).</summary>
-        public Vector3 PartRest { get; }
+        /// <summary>
+        /// Its service cabinet at the mast's foot (0.5.5 §2): the part rests inside until its seal is cut and the door
+        /// stands open. Set once the field has read it.
+        /// </summary>
+        public SealedContainer Cabinet { get; set; }
+
+        /// <summary>Where the part rests: inside its cabinet, on the shelf behind the door.</summary>
+        public Vector3 PartRest => Cabinet.PresentPoint;
 
         public Vector3 PartScale { get; }
 

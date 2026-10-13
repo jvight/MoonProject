@@ -34,7 +34,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private static readonly string[] RelicIds =
         {
-            "cassette_player", "rubber_duck", "golden_record", "astronaut_boot", "teapot", "garden_gnome",
+            "walkman", "rubber_duck", "golden_record", "astronaut_boot", "teapot", "garden_gnome",
         };
 
         /// <summary>Where each relic rests, as in the content builder (the gnome beside the duck).</summary>
@@ -42,6 +42,14 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             "depot", "garage", "kestrel", "drill", "lander", "garage",
         };
+
+        /// <summary>The haul bot's id: it stands inside the drill site, as in the content builder.</summary>
+        public const string HaulBot = "derelict.haul_bot";
+
+        /// <summary>The drill site's node the haul bot stands on, and 06's node relay.2's hut is set on.</summary>
+        private const string HaulBotSocket = "HaulBotSocket";
+
+        private const string HutSocket = "HutSocket";
 
         /// <summary>Units in each stand-in crew crate (as the economy's).</summary>
         public const int CrateUnits = 6;
@@ -64,7 +72,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// Each relic stand-in's size (m) at true scale, gently exaggerated (VISION ruling 13, the art report): the
-        /// cassette player 0.25, the duck 0.20, the golden record 0.40, the boot 0.40, the teapot 0.35, the gnome 0.50.
+        /// walkman 0.25, the duck 0.20, the golden record 0.40, the boot 0.40, the teapot 0.35, the gnome 0.50.
         /// </summary>
         private static readonly Vector3[] RelicSizes =
         {
@@ -403,11 +411,12 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Template("Part_RelaySpare", new Vector3(0.4f, 0.3f, 0.5f)),
             });
             visuals.PopulateTube(Template("BlueprintTube", new Vector3(0.7f, 0.14f, 0.14f)));
-            visuals.PopulateGaragePort(PortTemplate());
+            visuals.PopulateGaragePort(PortTemplate(), Template("Kit_TapeDeck", new Vector3(0.3f, 0.15f, 0.12f)));
             visuals.PopulateContainers(new[]
             {
                 ContainerTemplate("CoilCrate"), ContainerTemplate("TapeCase"), ContainerTemplate("JunctionBox"),
-                ContainerTemplate("SupplyPod"), SledTemplate(),
+                ContainerTemplate("SupplyPod"), SledTemplate(), ContainerTemplate(ContainerKinds.Cabinet),
+                ContainerTemplate(ContainerKinds.SpareCrate),
             });
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
@@ -715,12 +724,16 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             GameObject elder = DerelictModel("Derelict_06", false);
             GameObject mule = DerelictModel("Derelict_Mule", true);
+            GameObject haulBot = DerelictModel("Derelict_HaulBot", true);
+            var hut = new[] { new SocketProp(HutSocket, Template("RelayHut", new Vector3(2f, 2f, 1.6f))) };
             var derelicts = new[]
             {
-                SalvageSiteEntry.Derelict(WorldAnchorIds.Micro06, elder, SalvageCutLines.Across(elder),
-                    SmallPieces(elder)),
-                SalvageSiteEntry.Derelict(WorldAnchorIds.MicroMule, mule, SalvageCutLines.Across(mule),
-                    SmallPieces(mule)),
+                SalvageSiteEntry.Derelict(WorldAnchorIds.Micro06, WorldAnchorIds.Micro06, string.Empty, elder,
+                    SalvageCutLines.Across(elder), SmallPieces(elder), hut),
+                SalvageSiteEntry.Derelict(WorldAnchorIds.MicroMule, WorldAnchorIds.MicroMule, string.Empty, mule,
+                    SalvageCutLines.Across(mule), SmallPieces(mule), Array.Empty<SocketProp>()),
+                SalvageSiteEntry.Derelict(HaulBot, WorldAnchorIds.SitePrefix + "drill", HaulBotSocket, haulBot,
+                    SalvageCutLines.Across(haulBot), SmallPieces(haulBot), Array.Empty<SocketProp>()),
             };
             var catalog = Asset<SalvageCatalog>();
             catalog.Populate(sites, derelicts, Template("Material_Metal", Vector3.one * 0.35f),
@@ -764,6 +777,19 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             Node("Heart", root.transform, Vector3.zero);
+            if (name == "drill")
+            {
+                // The haul bot's seat on clear ground at the rig's right (Art's HaulBotSocket, 0.5.5 §1.7).
+                Node(HaulBotSocket, root.transform, new Vector3(6f, 0f, -2f));
+            }
+
+            if (name == "garage")
+            {
+                // Kenji's bench beside the port's pad, the spare crate's front toward 07 coming in (0.5.5 §2).
+                Node(GaragePort.SpareCrateSocket, root.transform, new Vector3(9f, 0f, -1f)).localRotation =
+                    Quaternion.Euler(0f, 180f, 0f);
+            }
+
             for (int i = 0; i < RelicIds.Length; i++)
             {
                 if (RelicSites[i] == name)
@@ -785,8 +811,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// A stand-in derelict (0.5.5 §1.7) in its anchor's frame: a slumped body, its <c>TapeCaseSocket</c> on the
-        /// ground against its right flank facing out of its side (06's), or one small Metal piece on its back (the
-        /// Mule's track skirt).
+        /// ground against its right flank facing out of its side and its <c>HutSocket</c> on its left (06's), or one
+        /// small Metal piece on its back (the Mule's track skirt, the haul bot's load).
         /// </summary>
         private GameObject DerelictModel(string name, bool piece)
         {
@@ -801,6 +827,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             else
             {
                 Node("TapeCaseSocket", root.transform, new Vector3(1.1f, 0f, 0.2f)).localRotation =
+                    Quaternion.Euler(0f, 90f, 0f);
+                Node(HutSocket, root.transform, new Vector3(-1.9f, 0f, 0.4f)).localRotation =
                     Quaternion.Euler(0f, 90f, 0f);
             }
 
@@ -921,6 +949,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Named(Block(mast, new Vector3(0f, 7.95f, 0f), Vector3.one * 0.5f), RelayRig.LampNode);
             Node(RelayRig.PartSocketNode, root.transform, new Vector3(0f, 0.78f, -1.24f));
             Node(RelayRig.BeamPointNode, root.transform, new Vector3(0f, 1.12f, -1.24f));
+            Node(RelayRig.CabinetSocketNode, root.transform, new Vector3(1.75f, 0f, -2.8f));
             if (broken)
             {
                 mast.localRotation = Quaternion.Euler(-9f, 0f, 10f);

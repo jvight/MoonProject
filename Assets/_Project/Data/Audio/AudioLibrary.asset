@@ -1096,14 +1096,12 @@ MonoBehaviour:
   - _id: relic_answer
     _clips:
     - {fileID: 8300000, guid: f124a9fedff76e445838e12b2db90f00, type: 3}
-    - {fileID: 8300000, guid: abc62af520228ae419c2b36839cf93e1, type: 3}
     - {fileID: 8300000, guid: 3337d533ce2196c4ca6d652efc7960cb, type: 3}
     - {fileID: 8300000, guid: 87c99e29ef04b5e4ea8ca9b1b2522b30, type: 3}
     - {fileID: 8300000, guid: 106eeb3a40f9b1045b91ac89de59f7f7, type: 3}
     - {fileID: 8300000, guid: 85c11b70b7e9ef748841b8139abe8bf9, type: 3}
     _variantLabels:
     - astronaut_boot
-    - cassette_player
     - garden_gnome
     - golden_record
     - rubber_duck

@@ -77,7 +77,9 @@ namespace MoonProject.Art.Editor
             return new ModelNode(SideBinName, Vector3.zero, new ModelMesh(SideBinName, RoverBinMeshes.Bin()));
         }
 
-        /// <summary>The old tape deck on DeckSocket (M3-24 C), also the find Tilly spots on the ground.</summary>
+        /// <summary>
+        /// The old tape deck on DeckSocket (M3-24 C), also the spare sealed in the 07 · SPARE crate at the garage.
+        /// </summary>
         public static ModelNode CreateTapeDeck()
         {
             return new ModelNode(TapeDeckName, Vector3.zero, new ModelMesh(TapeDeckName, RoverDeckMeshes.Deck()));

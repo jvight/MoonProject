@@ -5,9 +5,9 @@ using MoonProject.Core.Events;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The press that picks a waiting part up (tower parts, friends' parts, relay spares, blueprint tubes, Ro's tapes).
-    /// Each frame the fields offer their resting parts; the nearest one within reach is the candidate, shown as a world
-    /// prompt with the key and the verb (<see cref="InteractionKind.PickUp"/>, the part's name from
+    /// The press that picks a waiting part up (tower parts, friends' parts, relay spares, blueprint tubes, Ro's tapes,
+    /// Ro's tape deck). Each frame the fields offer their resting parts; the nearest one within reach is the candidate,
+    /// shown as a world prompt with the key and the verb (<see cref="InteractionKind.PickUp"/>, the part's name from
     /// <see cref="TryGet"/>), and Excavate held takes it, like every other E verb (a tap, or a hold begun before 07
     /// came up to it, or kept on after digging it free): only then does it lift onto 07's back. Reach is measured
     /// across the ground, so a part a little above or below 07 still counts. Fields step in different components, so a
@@ -29,6 +29,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>Owner id of the material bundles waiting because the hold was full (<see cref="CargoBundles"/>).</summary>
         public const int Bundles = 4;
+
+        /// <summary>Owner id of Ro's tape deck in Kenji's spare crate (<see cref="GaragePort"/>).</summary>
+        public const int Port = 5;
 
         private const string NounPrefix = "pickup.";
 

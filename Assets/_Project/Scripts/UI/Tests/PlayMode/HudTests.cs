@@ -472,7 +472,8 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual("rubber_duck", _rig.Ui.Card.Current);
             Assert.AreEqual("Senior Debugging Consultant", _rig.Ui.Layout.MemoryCardName.text);
             StringAssert.StartsWith("Kenji explained", _rig.Ui.Layout.MemoryCardText.text);
-            Assert.AreEqual(string.Format(Text(UiKeys.CardCaption), 2, 6), _rig.Ui.Layout.MemoryCardCaption.text);
+            Assert.AreEqual(string.Format(Text(UiKeys.CardCaption), 2, UiTestRig.RelicCount),
+                _rig.Ui.Layout.MemoryCardCaption.text);
             Assert.AreEqual("Esc", _rig.Ui.Layout.MemoryCardGlyphLabel.text);
             Assert.IsTrue(_rig.Bootstrap.Context.Input.Enabled, "the card never blocks driving");
 

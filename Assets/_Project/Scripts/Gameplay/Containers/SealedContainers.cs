@@ -245,11 +245,12 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// The seal glows while it can be cut; once cut, the lid swings open and the container stands open.
+        /// The seal glows while it can be cut, a small mark that eases down to a whisper as 07 arrives (the find's own
+        /// glint takes over); once cut, the lid swings open and the container stands open.
         /// </summary>
         private void StepLid(SealedContainer container, float now)
         {
-            container.Seal.Apply(!container.Opened && container.Available ? _tuning.SealGlow : 0f);
+            container.Seal.Apply(!container.Opened && container.Available ? SealGlow(container) : 0f);
             float t = container.Opened ? Mathf.Clamp01((now - container.OpenedAt) / _tuning.ContainerLidSeconds) : 0f;
             container.Lid.localRotation = container.LidRest *
                                           Quaternion.AngleAxis(-_tuning.ContainerLidSwing * Ease.OutCubic(t),
@@ -259,6 +260,14 @@ namespace MoonProject.Gameplay
                 container.StandsOpen = true;
                 _events.Publish(new ContainerOpened(container.Id, container.Kind, container.ItemSocket.position));
             }
+        }
+
+        private float SealGlow(SealedContainer container)
+        {
+            Vector2 fade = _tuning.ContainerSealFade;
+            float distance = SurfaceRules.HorizontalDistance(_rover.Position, container.CutPoint.position);
+            float far = Ease.InOutSine(Mathf.InverseLerp(fade.x, fade.y, distance));
+            return Mathf.Lerp(_tuning.ContainerSealNearGlow, _tuning.ContainerSealGlow, far);
         }
 
         private void Open(SealedContainer container, float now)
