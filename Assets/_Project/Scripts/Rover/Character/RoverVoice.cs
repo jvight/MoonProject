@@ -64,6 +64,12 @@ namespace MoonProject.Rover
             };
         }
 
+        /// <summary>07 meets its elder 06 (0.5.5 §1.7): one soft, low Curious chirp, quiet rather than sad.</summary>
+        public void Elder(float intensity)
+        {
+            Say(ChirpMood.Curious, intensity);
+        }
+
         /// <summary>
         /// A fragment learned (0.5.5 §1.2): Curious for new data, Affirm for a known blueprint's. The set's last new
         /// fragment stays quiet, since its blueprint's Proud follows at once and must never be lost.
