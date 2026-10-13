@@ -229,7 +229,6 @@
                 <ui:VisualElement name="lab-place" class="name-tag" picking-mode="Ignore">
                     <ui:VisualElement name="lab-place-shadow" class="soft-shadow soft-shadow--name" />
                     <ui:Label name="lab-place-name" class="name-tag__name" picking-mode="Ignore" />
-                    <ui:Label name="lab-place-job" class="place-card__job" picking-mode="Ignore" />
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="lab-board" class="recovery-board" picking-mode="Ignore">

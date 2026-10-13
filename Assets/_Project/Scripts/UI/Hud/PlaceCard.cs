@@ -18,11 +18,11 @@ namespace MoonProject.UI
         private const string Prefix = "place.";
         private const string TowerPlace = "place.tower";
 
-        // A place card is its name alone; these three also say their job, which nothing else teaches
+        // A place card is its name alone; only the dock also says its job, which nothing else teaches
         // (docs/design/text-audit-0.5.5.md §3.3).
         private static readonly HashSet<string> JobPlaces = new HashSet<string>(StringComparer.Ordinal)
         {
-            "place.dock", "place.lab", "place.rack",
+            "place.dock",
         };
 
         private readonly UiLayout _layout;
