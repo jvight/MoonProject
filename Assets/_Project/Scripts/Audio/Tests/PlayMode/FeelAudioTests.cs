@@ -177,6 +177,19 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [Test]
+        public void TheHoldBoots_InTheDark_SlotByRisingSlot_ThenItsItemsSlideIn()
+        {
+            _rig.Events.Publish(new HoldBootStarted());
+            Assert.AreEqual("hold_boot", LastClip);
+            _rig.Events.Publish(new HoldSlotLit(0, 8));
+            Assert.AreEqual("hold_slot_01", LastClip);
+            _rig.Events.Publish(new HoldSlotLit(7, 8));
+            Assert.AreEqual("hold_slot_08", LastClip, "the eighth slot, highest");
+            _rig.Events.Publish(new HoldItemArrived(0));
+            Assert.AreEqual("item_slide", LastClip);
+        }
+
+        [Test]
         public void SavesInABurst_TickOnce()
         {
             int plays = _rig.Director.PlayCount;

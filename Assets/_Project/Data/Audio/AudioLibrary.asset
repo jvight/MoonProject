@@ -367,18 +367,6 @@ MonoBehaviour:
     _volumeMax: 0.6
     _pitchMin: 1
     _pitchMax: 1
-  - _id: type_tick
-    _clips:
-    - {fileID: 8300000, guid: 1396b25f039a35f4889c2b8b6a2c83d0, type: 3}
-    _variantLabels:
-    - type_tick
-    _bus: 2
-    _spatial: 0
-    _loop: 0
-    _volumeMin: 0.35
-    _volumeMax: 0.35
-    _pitchMin: 1
-    _pitchMax: 1
   - _id: hold_slot
     _clips:
     - {fileID: 8300000, guid: ecb9120445744d74f8ad27300b08f55a, type: 3}
