@@ -665,3 +665,16 @@ def part_remove(_variant, gen):
     servo *= envelope.segments(servo_n, [(0.0, 0.0), (0.06, 1.0), (0.4, 0.6), (0.5, 0.0)], shape="smooth")
     place(mix, 0.1 * servo, samples(0.1))
     return filters.lowpass(mix, 2500.0)
+
+
+def sheet_complete(_variant, gen):
+    """A blueprint's last fragment scanned, the sheet complete on the lab's board: a soft, warm rising D major
+    arpeggio (D4 F#4 A4 D5) on a felt piano, settling on a quiet bell D5. Gentler than the tower's thoom, and no
+    glass, so it never sounds like the scan's lift-off."""
+    n = samples(2.6)
+    mix = np.zeros(n)
+    for index, note in enumerate(("D4", "F#4", "A4", "D5")):
+        place(mix, (0.3 + 0.04 * index) * instruments.felt_piano(note_freq(note), 2.0, gen, decay=1.4),
+              samples(0.14 * index))
+    place(mix, 0.12 * instruments.soft_bell(note_freq("D5"), 2.0, decay=1.6, attack=0.05), samples(0.56))
+    return filters.lowpass(mix, 4500.0)

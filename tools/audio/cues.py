@@ -2478,6 +2478,8 @@ CUES = (
         milestone="M3", notes="07's machine voice, relieved (feel-pass 7.2); syllables in chirp_syllables.json."),
     Cue("chirp_greeting", "oneshot_3d", feel.CHIRP_RENDERS["greeting"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
         milestone="M3", notes="07's machine voice, greeting (feel-pass 7.2); syllables in chirp_syllables.json."),
+    Cue("sheet_complete", "stinger_2d", feel.sheet_complete, volume=(0.45, 0.45), milestone="M3", tonal=True,
+        notes="0.5.5 D: a blueprint's sheet complete: a soft rising D major arpeggio on felt piano."),
     Cue("recycle_crunch", "oneshot_3d", feel.recycle_crunch, volume=(0.55, 0.55), milestone="M3",
         notes="0.5.5: the bay recycling a swapped-out part into Metal: a muffled crunch and two settling ticks."),
     Cue("part_remove", "oneshot_3d", feel.part_remove, volume=(0.6, 0.6), milestone="M3",

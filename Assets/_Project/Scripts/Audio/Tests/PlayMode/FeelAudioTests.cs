@@ -209,6 +209,17 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.IsFalse(sweep.isPlaying);
         }
 
+        [UnityTest]
+        public IEnumerator ACompletedBlueprint_AnswersAfterTheChirp()
+        {
+            int plays = _rig.Director.PlayCount;
+            _rig.Events.Publish(new BlueprintCompleted("rover.hover_jump"));
+            yield return new WaitForSeconds(_rig.FeelTuning.SheetCompleteDelay * 0.5f);
+            Assert.AreEqual(plays, _rig.Director.PlayCount, "07's Proud chirp leads");
+            yield return new WaitForSeconds(_rig.FeelTuning.SheetCompleteDelay);
+            Assert.AreEqual("sheet_complete", LastClip, "then the sheet answers");
+        }
+
         [Test]
         public void AContainer_PopsItsSeal_ThenOpensWithItsKindsHinge()
         {

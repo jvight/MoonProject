@@ -18,8 +18,9 @@ namespace MoonProject.Audio
     /// onto the next cut line (Follow 0.5); the crack (Impact); a strap tuk at the fold (Follow 1). The beam's singing
     /// climb and the collect melody stay <see cref="SalvageAudio"/>'s;</item>
     /// <item>scanning (Kind Scan, 0.5.5 §1): the sweep tone stepping up per quarter, a glass note each quarter, the
-    /// lift-off chime at the dissolve; containers (0.5.5 §2): the seal cut through, the container opening by kind;
-    /// the hold's first boot (0.5.5 §3): the power-on, a rising tick per slot, the starter items sliding in;</item>
+    /// lift-off chime at the dissolve, and a warm arpeggio when a blueprint's sheet completes; containers (0.5.5 §2):
+    /// the seal cut through, the container opening by kind; the hold's first boot (0.5.5 §3): the power-on, a rising
+    /// tick per slot, the starter items sliding in;</item>
     /// <item>cargo and storage (M3-25): a tok on the full hold's lid; the dock's unload (Kind Cargo) as a small rising
     /// scale, one soft tick per slot, ending on a bell; a crew crate's latch and note; Tilly's fetch;</item>
     /// <item>the dock (Kind Dock): the walls rising (Anticipate), the clamp (Impact), the walls settling (Reward; the
@@ -41,7 +42,7 @@ namespace MoonProject.Audio
     [DisallowMultipleComponent]
     public sealed class FeelAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 20;
+        private const int SubscriptionCount = 21;
         private const float SegmentFollow = 0.5f;
         private const float SilentVolume = 0.001f;
         private const int ScanQuarters = 4;
@@ -87,6 +88,8 @@ namespace MoonProject.Audio
         private CueHandle _containerOpen;
         private CueHandle _scanStep;
         private CueHandle _scanLiftoff;
+        private CueHandle _sheetComplete;
+        private float _sheetIn = -1f;
         private AudioSource _scanSource;
         private float _scanCueVolume;
         private float _scanTarget;
@@ -164,6 +167,7 @@ namespace MoonProject.Audio
             _containerOpen = director.Resolve(AudioCueIds.ContainerOpen);
             _scanStep = director.Resolve(AudioCueIds.ScanStep);
             _scanLiftoff = director.Resolve(AudioCueIds.ScanLiftoff);
+            _sheetComplete = director.Resolve(AudioCueIds.SheetComplete);
             CueHandle sweep = director.Resolve(AudioCueIds.ScanSweep);
             _cancel = director.Resolve(AudioCueIds.CutCancel);
             _ignite = director.Resolve(AudioCueIds.CutIgniteTier);
@@ -194,6 +198,7 @@ namespace MoonProject.Audio
                   _cargoTok.IsValid && _shelfChord.IsValid && _crateLatch.IsValid && _tillyFetch.IsValid &&
                   _holdBoot.IsValid && _holdSlot.IsValid && _itemSlide.IsValid &&
                   _sealCut.IsValid && _containerOpen.IsValid && _scanStep.IsValid && _scanLiftoff.IsValid &&
+                  _sheetComplete.IsValid &&
                   sweep.IsValid &&
                   _cancel.IsValid && _ignite.IsValid && sizzle.IsValid && _crack.IsValid &&
                   _strap.IsValid && _wallsRise.IsValid && _clamp.IsValid && _wallsSettle.IsValid &&
@@ -251,6 +256,7 @@ namespace MoonProject.Audio
             _subscriptions[17] = events.Subscribe<HoldItemArrived>(OnHoldItemArrived);
             _subscriptions[18] = events.Subscribe<ContainerSealCut>(OnContainerSealCut);
             _subscriptions[19] = events.Subscribe<ContainerOpened>(OnContainerOpened);
+            _subscriptions[20] = events.Subscribe<BlueprintCompleted>(OnBlueprintCompleted);
         }
 
         private void Update()
@@ -274,6 +280,15 @@ namespace MoonProject.Audio
             _whineSource.pitch = _charge.Pitch;
             Loop(_whineSource, _charge.WhineLevel * _whineCueVolume * world);
             Loop(_humSource, _charge.HumLevel * _humCueVolume * world);
+
+            if (_sheetIn >= 0f)
+            {
+                _sheetIn -= dt;
+                if (_sheetIn < 0f)
+                {
+                    _director.Play2D(_sheetComplete);
+                }
+            }
 
             float scan = _scan.Step(_scanTarget, dt, _tuning.ScanEase);
             Loop(_scanSource, scan * _tuning.ScanVolume * _scanCueVolume * world);
@@ -518,6 +533,15 @@ namespace MoonProject.Audio
         private static int QuarterOf(float progress)
         {
             return Mathf.Clamp(Mathf.FloorToInt(progress * ScanQuarters), 0, ScanQuarters - 1);
+        }
+
+        /// <summary>
+        /// A blueprint's last fragment is in: the sheet completes with a soft rising D major arpeggio, a moment after
+        /// the dissolve so 07's Proud chirp leads.
+        /// </summary>
+        private void OnBlueprintCompleted(BlueprintCompleted completed)
+        {
+            _sheetIn = _tuning.SheetCompleteDelay;
         }
 
         private void OnContainerSealCut(ContainerSealCut cut)

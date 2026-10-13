@@ -509,6 +509,33 @@
       "notes": "07's machine voice, greeting (feel-pass 7.2); syllables in chirp_syllables.json."
     },
     {
+      "id": "sheet_complete",
+      "category": "stinger_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/sheet_complete.wav"
+      ],
+      "variantLabels": [
+        "sheet_complete"
+      ],
+      "sha256": [
+        "658acd89e28e67e90804466e7c1ad338899e741ef7dbf99b3379d51fd49544bf"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "0.5.5 D: a blueprint's sheet complete: a soft rising D major arpeggio on felt piano."
+    },
+    {
       "id": "recycle_crunch",
       "category": "oneshot_3d",
       "milestone": "M3",
