@@ -62,19 +62,19 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void TheChoices_ArePinnedKitsOnly_AndABlueprintFoundAddsItsKit()
+        public void TheChoices_ArePinnedKitsOnly_AndACompletedBlueprintAddsItsKit()
         {
             _shop.Unpinned.Add(_cradle.Id);
             _shop.Unpinned.Add(_coils.Id);
             var choices = new BayChoice();
             Assert.IsTrue(choices.Refresh(_shop, _shop));
-            Assert.AreEqual(2, choices.Count, "no blueprint, no choice");
+            Assert.AreEqual(2, choices.Count, "no completed blueprint, no choice");
             Assert.AreSame(_hover, choices.At(0));
             Assert.AreSame(_headlamp, choices.At(1));
 
             _shop.Unpinned.Remove(_cradle.Id);
             Assert.IsTrue(choices.Refresh(_shop, _shop));
-            Assert.AreSame(_cradle, choices.At(1), "the found blueprint takes its place in the station's order");
+            Assert.AreSame(_cradle, choices.At(1), "the completed blueprint takes its place in the station's order");
         }
 
         [Test]

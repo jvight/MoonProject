@@ -167,10 +167,6 @@
             "text": "Bell's radio valve"
         },
         {
-            "key": "pickup.blueprint_tube",
-            "text": "Blueprint tube"
-        },
-        {
             "key": "next.signal",
             "text": "A faint signal. Ping and follow it."
         },
@@ -369,14 +365,6 @@
         {
             "key": "place.garage_port.name",
             "text": "Kenji's Garage Port"
-        },
-        {
-            "key": "ui.blueprint.found",
-            "text": "Blueprint found"
-        },
-        {
-            "key": "ui.blueprint.delivered",
-            "text": "Blueprint loaded into the reader."
         },
         {
             "key": "ui.settings.sound",

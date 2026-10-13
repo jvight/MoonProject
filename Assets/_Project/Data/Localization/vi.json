@@ -167,10 +167,6 @@
             "text": "đèn điện tử của Bell"
         },
         {
-            "key": "pickup.blueprint_tube",
-            "text": "Ống bản vẽ"
-        },
-        {
             "key": "next.signal",
             "text": "Có tín hiệu yếu. Dò sóng rồi lần theo."
         },
@@ -369,14 +365,6 @@
         {
             "key": "place.garage_port.name",
             "text": "Cổng bảo trì ở gara"
-        },
-        {
-            "key": "ui.blueprint.found",
-            "text": "Tìm thấy bản vẽ"
-        },
-        {
-            "key": "ui.blueprint.delivered",
-            "text": "Đã nạp bản vẽ vào máy đọc."
         },
         {
             "key": "ui.settings.sound",
