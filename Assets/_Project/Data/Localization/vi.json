@@ -2061,6 +2061,22 @@
         {
             "key": "glyph.gamepad.select",
             "text": "View"
+        },
+        {
+            "key": "micro.06.name",
+            "text": "06"
+        },
+        {
+            "key": "micro.mule.name",
+            "text": "Mule"
+        },
+        {
+            "key": "micro.haul_sled.name",
+            "text": "Xe chở hàng"
+        },
+        {
+            "key": "micro.drone.name",
+            "text": "Chị em của Tilly"
         }
     ]
 }

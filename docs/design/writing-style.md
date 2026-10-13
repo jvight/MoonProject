@@ -65,6 +65,8 @@ If a line tells the player what to do, it is functional, even when a character c
 | the basin | lòng chảo |
 | Relay, by name only, never a number: Mound Relay, Shoulder Relay, Canyon Mouth Relay, Terminus Relay | trạm tiếp sóng: Trạm trên gò, Trạm vai vành hố, Trạm miệng hẻm, Trạm cuối hẻm |
 | the great dish | chảo ăng-ten lớn |
+| 06 (the crew's earlier survey cart, the sixth thing they fixed; 07 was the seventh) | 06 |
+| Mule (the construction bot), Haul Sled, Tilly's sister (the drone) | Mule, Xe chở hàng, Chị em của Tilly |
 
 ### Things
 | en | vi |

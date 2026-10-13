@@ -2061,6 +2061,22 @@
         {
             "key": "glyph.gamepad.select",
             "text": "View"
+        },
+        {
+            "key": "micro.06.name",
+            "text": "06"
+        },
+        {
+            "key": "micro.mule.name",
+            "text": "Mule"
+        },
+        {
+            "key": "micro.haul_sled.name",
+            "text": "Haul Sled"
+        },
+        {
+            "key": "micro.drone.name",
+            "text": "Tilly's sister"
         }
     ]
 }
