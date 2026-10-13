@@ -13,7 +13,7 @@ namespace MoonProject.Gameplay.Lift
         [Tooltip("07 is home carrying something for the lab within this many metres (horizontal) of the platform: " +
                  "the lift asks for the stitch.")]
         [Range(3f, 40f)]
-        [SerializeField] private float _callRadius = 16f;
+        [SerializeField] private float _callRadius = 20f;
 
         [Tooltip("How far (m) out from the platform's centre, toward the dock, 07 rests to stitch the jammed cable " +
                  "(just off the platform's edge, facing it).")]
