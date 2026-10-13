@@ -47,6 +47,29 @@ namespace MoonProject.Rover
         /// <summary>On the eye: where the Focus Lens kit mounts (M3-26).</summary>
         public const string LensSocket = "LensSocket";
 
+        /// <summary>The charge-up's conduit glass cores (the deck pair under the root and the neck's), on the glow-off
+        /// material.</summary>
+        public const string ConduitGlow = "ConduitGlow";
+
+        /// <summary>The charge-up's stages (0.5.5 §5.4): three mirrored cells, the battery end first.</summary>
+        public const int ChargeStages = 3;
+
+        /// <summary>The lock ring's glow round the Focus Lens socket on the eye, lit at the full lock.</summary>
+        public const string LockGlow = "LockGlow";
+
+        /// <summary>Stage <paramref name="stage"/>'s cell (1..3) on the left or right deck conduit.</summary>
+        public static string StageCell(int stage, bool left)
+        {
+            return "Stage_" + stage + (left ? "_L" : "_R");
+        }
+
+        /// <summary>The glass sleeve of stage <paramref name="stage"/>'s cells, sliding along local +Z as it
+        /// fills.</summary>
+        public static string StageGlow(int stage)
+        {
+            return "StageGlow_" + stage;
+        }
+
         /// <summary>The front flanks above the front wheels: where the side bins mount (RoverAbility.SideBins).</summary>
         public const string BinSocketLeft = "BinSocket_L";
 

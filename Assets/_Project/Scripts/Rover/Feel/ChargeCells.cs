@@ -81,6 +81,13 @@ namespace MoonProject.Rover
         /// <summary>The lock ring's glow around the lens: on at the full lock only.</summary>
         public float LockGlow => _heat * _settings.LockGlow * _fade;
 
+        /// <summary>The lock ring's glow: the full lock's (times <paramref name="lockBoost"/>, a better tier's
+        /// brighter lock), or the warm trace once the cut is over.</summary>
+        public float RingGlow(float lockBoost)
+        {
+            return Mathf.Max(LockGlow * lockBoost, WarmTrace);
+        }
+
         /// <param name="warm">A warm emitter: no brace, and the warm trace is already lit.</param>
         /// <param name="stagesNeeded">The stages the piece needs before the beam fires.</param>
         /// <param name="stageSeconds">Seconds each stage takes to build.</param>

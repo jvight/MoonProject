@@ -44,8 +44,6 @@ namespace MoonProject.Rover.Editor
     /// </summary>
     public static class RoverPrefabBuilder
     {
-        private const string LampPrefix = "ChargeLamp_";
-
         private const int DustMaxParticles = 160;
         private const int LandingMaxParticles = 240;
         private const float DustConeAngle = 30f;
@@ -171,7 +169,7 @@ namespace MoonProject.Rover.Editor
                 ("_kit", kit),
                 ("_tetherOrigin", BuildWiring.Node(m, RoverModelNodes.TetherOrigin)),
                 ("_cargoSocket", BuildWiring.Node(m, RoverModelNodes.CargoSocket)));
-            AssignChargeRows(controller, m);
+            AssignChargeCells(controller, m);
             Transform lens = Mount(scratch, focusLens, BuildWiring.Node(m, RoverModelNodes.LensSocket));
             BuildWiring.Assign(controller, ("_focusLens", lens.gameObject),
                 ("_focusLensGlass", BuildWiring.NodeComponent<Renderer>(lens, "Glass")));
@@ -358,72 +356,41 @@ namespace MoonProject.Rover.Editor
         }
 
         /// <summary>
-        /// The charge run's rows (M3-26 §2). A tier's lamps ride the parts they sit on, so its row is every node named
-        /// ChargeRun_{tier} (under the body, the neck, the head and the eye) and their ChargeLamp_{i} children ordered
-        /// by index; a gap in the numbering is a broken contract. Rows run from tier 0 as far as art has built them.
+        /// The charge-up's Cells (0.5.5 §5.4): every ConduitGlow renderer (the deck pair and the neck's), the
+        /// StageGlow_n sleeve of each Stage_n_L and Stage_n_R (stage 1 first), and the eye's LockGlow.
         /// </summary>
-        private static void AssignChargeRows(RoverController controller, Transform model)
+        private static void AssignChargeCells(RoverController controller, Transform model)
         {
-            Transform[] nodes = model.GetComponentsInChildren<Transform>(true);
-            var serialized = new SerializedObject(controller);
-            SerializedProperty rows = serialized.FindProperty("_chargeRows");
-            rows.arraySize = 0;
-            for (int tier = 0; ; tier++)
+            var conduits = new List<Object>();
+            foreach (Transform node in model.GetComponentsInChildren<Transform>(true))
             {
-                string rowName = ChargeRunLamps.RowName(tier);
-                var roots = new List<Transform>();
-                foreach (Transform node in nodes)
+                if (node.name == RoverModelNodes.ConduitGlow)
                 {
-                    if (node.name == rowName)
-                    {
-                        roots.Add(node);
-                    }
-                }
-
-                if (roots.Count == 0)
-                {
-                    break;
-                }
-
-                var lamps = new SortedDictionary<int, Renderer>();
-                foreach (Transform root in roots)
-                {
-                    foreach (Transform child in root)
-                    {
-                        if (child.name.StartsWith(LampPrefix, System.StringComparison.Ordinal)
-                            && int.TryParse(child.name.Substring(LampPrefix.Length), out int index))
-                        {
-                            lamps[index] = child.GetComponent<Renderer>();
-                        }
-                    }
-                }
-
-                rows.arraySize = tier + 1;
-                SerializedProperty entry = rows.GetArrayElementAtIndex(tier);
-                SerializedProperty rootList = entry.FindPropertyRelative("_roots");
-                rootList.arraySize = roots.Count;
-                for (int i = 0; i < roots.Count; i++)
-                {
-                    rootList.GetArrayElementAtIndex(i).objectReferenceValue = roots[i].gameObject;
-                }
-
-                SerializedProperty lampList = entry.FindPropertyRelative("_lamps");
-                lampList.arraySize = lamps.Count;
-                int expected = 0;
-                foreach (KeyValuePair<int, Renderer> lamp in lamps)
-                {
-                    if (lamp.Key != expected || lamp.Value == null)
-                    {
-                        throw new System.InvalidOperationException(
-                            $"{rowName}: {LampPrefix}{expected} is missing or has no renderer (the charge run's lamp "
-                            + "contract, M3-26).");
-                    }
-
-                    lampList.GetArrayElementAtIndex(expected++).objectReferenceValue = lamp.Value;
+                    conduits.Add(BuildWiring.NodeComponent<Renderer>(node.parent, RoverModelNodes.ConduitGlow));
                 }
             }
 
-            serialized.ApplyModifiedPropertiesWithoutUndo();
+            if (conduits.Count == 0)
+            {
+                throw new System.InvalidOperationException(
+                    "RoverModel has no ConduitGlow (the charge-up's Cells contract, 0.5.5).");
+            }
+
+            var sleeves = new Object[2 * RoverModelNodes.ChargeStages];
+            for (int stage = 1; stage <= RoverModelNodes.ChargeStages; stage++)
+            {
+                for (int side = 0; side < 2; side++)
+                {
+                    Transform cell = BuildWiring.Node(model, RoverModelNodes.StageCell(stage, side == 0));
+                    sleeves[2 * (stage - 1) + side] =
+                        BuildWiring.NodeComponent<Renderer>(cell, RoverModelNodes.StageGlow(stage));
+                }
+            }
+
+            BuildWiring.AssignArray(controller, "_conduitGlows", conduits.ToArray());
+            BuildWiring.AssignArray(controller, "_stageSleeves", sleeves);
+            BuildWiring.Assign(controller,
+                ("_lockGlow", BuildWiring.NodeComponent<Renderer>(model, RoverModelNodes.LockGlow)));
         }
 
         /// <summary>The hatch window's HatchCrate_0, HatchCrate_1, ... nodes in order; at least one, no gaps.</summary>

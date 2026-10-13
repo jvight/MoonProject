@@ -148,8 +148,8 @@ namespace MoonProject.Rover
             + "the battery emptying and the boost (feel-pass §2.3, §2.4, §2.10, §2.13).")]
         [SerializeField] private MotionFeelSettings _motionFeel = new MotionFeelSettings();
 
-        [Tooltip("The charge run's lamps from the battery along 07's back to the emitter (M3-26 §2).")]
-        [SerializeField] private ChargeRunSettings _chargeRun = new ChargeRunSettings();
+        [Tooltip("The charge-up's Cells hardware: sleeves, conduits and the lock ring (0.5.5 §5.4).")]
+        [SerializeField] private ChargeCellsSettings _chargeCells = new ChargeCellsSettings();
 
         [Tooltip("07's rear cargo hatch: its swing, the soft thunk as it shuts and the bump's shake (M3-25 T1).")]
         [SerializeField] private CargoHatchSettings _cargoHatch = new CargoHatchSettings();
@@ -267,7 +267,7 @@ namespace MoonProject.Rover
 
         public MotionFeelSettings MotionFeel => _motionFeel;
 
-        public ChargeRunSettings ChargeRun => _chargeRun;
+        public ChargeCellsSettings ChargeCells => _chargeCells;
 
         public CargoHatchSettings CargoHatch => _cargoHatch;
 

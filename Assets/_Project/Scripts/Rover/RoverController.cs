@@ -56,14 +56,19 @@ namespace MoonProject.Rover
         [Tooltip("The amber flank lamps along the stripe: 07's battery (docs/features/M3-20).")]
         [SerializeField] private RoverFlankLamps _flankLamps;
 
-        [Tooltip("The charge run's rows per cutter tier (RoverModel's ChargeRun_{tier} with its ChargeLamp_0.. nodes, "
-            + "M3-26 §2); art's model carries them from the cutter-lamps pass on.")]
-        [SerializeField] private ChargeRunRow[] _chargeRows = new ChargeRunRow[0];
+        [Tooltip("The charge-up's ConduitGlow renderers: the deck pair and the neck's (0.5.5 §5.4).")]
+        [SerializeField] private Renderer[] _conduitGlows = new Renderer[0];
+
+        [Tooltip("The stage cells' StageGlow sleeves, two per stage (left, right), stage 1 first.")]
+        [SerializeField] private Renderer[] _stageSleeves = new Renderer[0];
+
+        [Tooltip("The lock ring's LockGlow on the eye, lit at the full lock.")]
+        [SerializeField] private Renderer _lockGlow;
 
         [Tooltip("Art's Focus Lens on Neck/Head/Eye/LensSocket, shown from its cutter tier on (M3-26).")]
         [SerializeField] private GameObject _focusLens;
 
-        [Tooltip("The Focus Lens's Glass child, glowing with the charge run.")]
+        [Tooltip("The Focus Lens's Glass child, glowing with the lock ring.")]
         [SerializeField] private Renderer _focusLensGlass;
 
         [Tooltip("RoverModel's CargoHatch: the rear leaf on its top hinge, opening about local +X (M3-25).")]
@@ -93,7 +98,7 @@ namespace MoonProject.Rover
         private BatteryLink _battery;
         private IDisposable _dockChanges;
         private RoverFeel _feel;
-        private ChargeRunLamps _chargeRun;
+        private ChargeCellHardware _chargeCells;
         private CargoHatch _hatch;
         private GameContext _context;
         private bool _docked;
@@ -369,11 +374,8 @@ namespace MoonProject.Rover
                 _visualRig.SetNudge(_feel.Nudge);
                 _visualRig.SetChargeBrace(_feel.Brace);
                 _hatch = new CargoHatch(_events, feel.CargoHatch, _cargoHatch, _hatchCrates, _feel.Rumble);
-                if (_chargeRows.Length > 0)
-                {
-                    _chargeRun = new ChargeRunLamps(_events, feel.ChargeRun, _chargeRows, CutterChargeSeconds,
-                        _tetherOrigin, _focusLens, _focusLensGlass);
-                }
+                _chargeCells = new ChargeCellHardware(_events, feel.ChargeCells, _conduitGlows, _stageSleeves, _lockGlow,
+                    CutterChargeSeconds, _tetherOrigin, _focusLens, _focusLensGlass);
             }
 
             bool kitReady = _kit.Initialize(context, this, _visualRig);
@@ -410,12 +412,12 @@ namespace MoonProject.Rover
                 "The CargoHatch or a HatchCrate is not assigned (M3-25 hatch contract).");
             ok &= Require(_sideBins.Length == 2 && _sideBins[0] != null && _sideBins[1] != null,
                 "The two side bins (BinSocket_L, BinSocket_R) are not assigned.");
-            ok &= Require(_chargeRows.Length == 0 || (_focusLens != null && _focusLensGlass != null),
+            ok &= Require(_focusLens != null && _focusLensGlass != null,
                 "The Focus Lens or its Glass is not assigned (art's cutter kit).");
-            foreach (ChargeRunRow row in _chargeRows)
-            {
-                ok &= Require(row != null && row.IsWired, "A charge-run row has no root or a missing lamp.");
-            }
+            ok &= Require(_conduitGlows.Length > 0 && Array.TrueForAll(_conduitGlows, r => r != null)
+                && _stageSleeves.Length == 2 * RoverModelNodes.ChargeStages
+                && Array.TrueForAll(_stageSleeves, r => r != null) && _lockGlow != null,
+                "The charge-up's ConduitGlow, StageGlow sleeves or LockGlow are not assigned (0.5.5 Cells contract).");
 
             ok &= Require(_tetherOrigin != null && _cargoSocket != null, "TetherOrigin/CargoSocket are not assigned.");
             if (_body != null)
@@ -608,6 +610,7 @@ namespace MoonProject.Rover
             _feel?.Nudge.Reset();
             _feel?.Brace.Reset();
             _hatch?.Reset();
+            _chargeCells?.Reset();
             _visualRig.Snap(normal);
             _wheelFx.Break();
             _lampMotes.Carry(lens, facing);
@@ -903,7 +906,7 @@ namespace MoonProject.Rover
             float deltaTime = Time.deltaTime;
             _stillness.Step(SampleStillness(), deltaTime);
             _feel.Tick(deltaTime, Time.time, Speed, _visualRig.RootPosition);
-            _chargeRun?.Tick(deltaTime);
+            _chargeCells?.Tick(deltaTime);
             _hatch.Tick(deltaTime);
             _visualRig.Tick(deltaTime);
             _kit.Tick(deltaTime);
@@ -942,7 +945,7 @@ namespace MoonProject.Rover
         {
             _dockChanges?.Dispose();
             _feel?.Dispose();
-            _chargeRun?.Dispose();
+            _chargeCells?.Dispose();
             _hatch?.Dispose();
         }
     }

@@ -63,6 +63,7 @@ namespace MoonProject.Rover.Tests
             Assert.AreEqual(0f, cells.Fill(3), "A medium piece needs two cells.");
             Assert.AreEqual(1f, cells.Heat, 1e-4f);
             Assert.AreEqual(_settings.LockGlow, cells.LockGlow, 1e-4f, "The ring lights at the full lock.");
+            Assert.AreEqual(1.5f * _settings.LockGlow, cells.RingGlow(1.5f), 1e-4f, "A better tier locks brighter.");
             Assert.AreEqual(_settings.LockGlow, cells.StageGlow(1), 1e-4f, "Every lit part runs hot.");
             Assert.Greater(cells.Colour.r, _settings.Colour.r, "Toward white.");
         }
@@ -98,8 +99,10 @@ namespace MoonProject.Rover.Tests
             Assert.AreEqual(0f, cells.Fill(1));
             Assert.AreEqual(0f, cells.LockGlow);
             Assert.AreEqual(_settings.WarmGlow, cells.ConduitGlow, 1e-4f, "The warm emitter shows why the next is quick.");
+            Assert.AreEqual(_settings.WarmGlow, cells.RingGlow(1.5f), 1e-4f, "The ring keeps the trace, unboosted.");
             Run(cells, Warm);
             Assert.AreEqual(0f, cells.ConduitGlow);
+            Assert.AreEqual(0f, cells.RingGlow(1.5f));
             Assert.IsFalse(cells.IsShowing);
         }
 

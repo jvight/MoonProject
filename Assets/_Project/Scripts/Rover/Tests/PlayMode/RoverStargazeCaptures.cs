@@ -80,12 +80,13 @@ namespace MoonProject.Rover.PlayModeTests
         private const float EveningEndTimeout = 20f;
         private const float EveningEarlySeconds = 2f;
 
-        /// <summary>The charge run capture: tier 0's fresh charge, the cut point ahead of 07, and the frames' shares.</summary>
-        private const float ChargeSeconds = 0.65f;
+        /// <summary>The cut point ahead of 07, the Cells capture's frame waits, and the share of stage 2 at its frame.
+        /// </summary>
         private const float CutReach = 1.4f;
         private const float CutRise = 0.6f;
-        private const float EarlyShare = 0.55f;
-        private const float LateShare = 0.9f;
+        private const float MidStageShare = 0.5f;
+        private const float LockFrameSeconds = 0.1f;
+        private const float WarmFrameSeconds = 0.8f;
 
         /// <summary>The brace capture: a hull plate's stages, the tier-0 stage time, the brace and the held breath.</summary>
         private const int HullStages = 3;
@@ -243,17 +244,17 @@ namespace MoonProject.Rover.PlayModeTests
         }
 
         /// <summary>
-        /// The charge run (M3-26 §2) from the chase camera: 07 at home charges a cut, and frames are taken early and
-        /// late in the charge-up, as the light travels from the battery along its back to the emitter.
+        /// The Cells charge-up (0.5.5 §5.4) from the chase camera: a warm three-stage charge (no brace, no push-in, so
+        /// the frame holds) with frames mid stage 2, at the full lock, and in the warm trace after the cut.
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
         [PrebuildSetup(typeof(RoverSessionScene))]
         [PostBuildCleanup(typeof(RoverSessionScene))]
-        public IEnumerator ChargeRun_IsCapturedMidChargeUp_FromTheChaseCamera()
+        public IEnumerator ChargeCells_AreCapturedMidChargeLockedAndWarm_FromTheChaseCamera()
         {
             yield return Boot();
-            _report.AppendLine("# The charge run (real Main scene)");
+            _report.AppendLine("# The Cells charge-up (real Main scene)");
             _report.AppendLine();
             _report.AppendLine("| Capture | Orbit elevation (deg) | Camera above dust (m) | 07's gaze | Beat |");
             _report.AppendLine("|---|---:|---:|---:|---|");
@@ -270,14 +271,24 @@ namespace MoonProject.Rover.PlayModeTests
             yield return Wait(SettleSeconds);
             Vector3 cutPoint = _rover.Position + _rover.Rotation * Vector3.forward * CutReach + Vector3.up * CutRise;
             _context.Events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Anticipate, cutPoint, Vector3.up, 0f,
-                ChargeSeconds));
-            yield return Wait(ChargeSeconds * EarlyShare);
-            Capture("chargerun-1-early");
-            yield return Wait(ChargeSeconds * (LateShare - EarlyShare));
-            Capture("chargerun-2-late");
-            _context.Events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Cancel, cutPoint, Vector3.up, 0f, 0f));
+                HullStages * StageSeconds));
+            _context.Events.Publish(new CutChargeStaged(0, HullStages, true, StageSeconds));
+            yield return Wait(StageSeconds);
+            _context.Events.Publish(new CutChargeStaged(1, HullStages, true, StageSeconds));
+            yield return Wait(StageSeconds * MidStageShare);
+            Capture("cells-1-stage2");
+            yield return Wait(StageSeconds * (1f - MidStageShare));
+            _context.Events.Publish(new CutChargeStaged(2, HullStages, true, StageSeconds));
+            yield return Wait(StageSeconds);
+            _context.Events.Publish(new CutChargeStaged(3, HullStages, true, StageSeconds));
+            yield return Wait(LockFrameSeconds);
+            Capture("cells-2-lock");
+            _context.Events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Act, cutPoint, Vector3.up, 0f, 0f));
+            _context.Events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Impact, cutPoint, Vector3.up, 1f, 0f));
+            yield return Wait(WarmFrameSeconds);
+            Capture("cells-3-warm");
             Directory.CreateDirectory(CaptureFolder);
-            File.WriteAllText(Path.Combine(CaptureFolder, "chargerun.md"), _report.ToString());
+            File.WriteAllText(Path.Combine(CaptureFolder, "cells.md"), _report.ToString());
         }
 
         /// <summary>

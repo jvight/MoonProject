@@ -48,7 +48,44 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _warmGlow = 0.3f;
 
+        [Tooltip("A better cutter tier's brighter lock: the lock ring's extra glow per tier (share).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _tierLockBoost = 0.25f;
+
+        [Tooltip("Seconds of the brace before stage 1 fills (gameplay's CutterTuning brace, 0.5 s).")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _braceSeconds = 0.5f;
+
+        [Tooltip("Seconds the warm trace lasts after firing (gameplay's warm-emitter window, 6 s).")]
+        [Range(0f, 20f)]
+        [SerializeField] private float _warmWindowSeconds = 6f;
+
+        [Tooltip("The cutter tier from which the Focus Lens is fitted on 07's eye.")]
+        [Range(0, 3)]
+        [SerializeField] private int _lensFromTier = 1;
+
+        [Header("The bay's test cut after a cutter upgrade")]
+        [Tooltip("Seconds after the upgrade before the test cut's charge starts (the part seats first).")]
+        [Range(0f, 5f)]
+        [SerializeField] private float _testCutDelay = 1.2f;
+
+        [Tooltip("Seconds the test coupon burns after ignition before it cracks (charge + burn stays under a second).")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _testCutBurn = 0.25f;
+
         public Color Colour => _colour;
+
+        public float TierLockBoost => _tierLockBoost;
+
+        public float BraceSeconds => _braceSeconds;
+
+        public float WarmWindowSeconds => _warmWindowSeconds;
+
+        public int LensFromTier => _lensFromTier;
+
+        public float TestCutDelay => _testCutDelay;
+
+        public float TestCutBurn => _testCutBurn;
 
         public float SleeveTravel => _sleeveTravel;
 
