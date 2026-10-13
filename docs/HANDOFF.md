@@ -4,7 +4,36 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 0000000000000000000. LATEST (2026-10-14 ~04:00): main caa2d913 verified + pushed; gameplay C6 in progress
+## 00000000000000000000. LATEST (2026-10-14 ~06:00): main 500ab26e (C5) verified + pushed; the D1 batch waits on gameplay
+- **main 33291f98 (verified, origin has it)** = gameplay C6: what 07's hold has no room for is held where it was (a cut
+  piece on its wreck with an amber halo, a crate's remainder in its mouth); Recycled Metal goes home -> hold -> home's
+  overflow crates; Tilly never drops a stack; old saves' ground bundles go to the overflow crates.
+- **Landed + verified since:** main 500ab26e = gameplay C5 side (Kestrel-3's trail is a scrap field: 4 hull fragments
+  to cut on World's lane slots) + ui 45af2a15 (the held-stacks Tab line: "{0} phần để lại tại chỗ: hết chỗ chứa").
+- **D1 batch ready except gameplay** (pinned temp branches): box/rover-d1 a727b1d8 (tube removed; TubeCarry became
+  StoryPartCarry for the tower's story parts), box/audio-d1 ae255641 (tube/reader cues; the lab detent by station
+  name), box/ui-d1 6d441326 (tube strings; the Electronics line no longer promises a Reader II), box/world-d1 079057b3
+  (LabLights' DecodeHandOff light run, HandOffPulse, the hand-off wiring). In the land the Director also deletes
+  DecodeHandOff. Parked for 0.7 design: gdd-v3's "Lab Reader II decodes sealed data cores" must be redesigned
+  under scanning.
+- **Next lands:**
+  1. (done) gameplay C5 side.
+  2. **D1 batch** = gameplay D1 (ScanField, fragments, the verb, gameplay.scans save, known -> 3 Metal, completion
+     pins the blueprint, JumperWreck at canyon.lip, tubes + LabReader + DockEvening news removed, 0.5.4 migration,
+     the Playthrough scanning; a feat(core) commit deletes LabStation.Reader and renumbers Chart 0, Board 1,
+     Keepsakes 2) + rover, audio, ui removal commits (every tube/reader listener). In the land, the Director deletes
+     the Core tube events (BlueprintFound, BlueprintDelivered, BlueprintsCarriedRestored, FindDecoded) before verify.
+  3. Art after D1 is on main: remove the reader meshes (plain wall, nothing operable), the tube props and the rover
+     model's tube socket node.
+  4. D2: listening answers sites/derelicts with fragments or uncut pieces, chart pencil brackets, place-card counts;
+     ui: the lab board's torn sheets.
+  5. ui: CargoScreen's "waiting bundles" line reworded for held stacks (can land alone).
+  Then verify --explicit, bump 0.5.5, build, Builds/.
+- **D rulings (2026-10-14):** Warm Headlamp's fragments on the Mule (§1.3); Kestrel's heart is only a sonar answer
+  point now; migration: decoded/pinned/drawn or carried/in-reader tubes -> complete, waiting tubes -> gone.
+- **Owner pending:** story v3's 7 questions; look-A captures + shadow tune shown, no reaction yet.
+
+## 0000000000000000000. (prev) (2026-10-14 ~04:00): main caa2d913 verified + pushed; gameplay C6 in progress
 - **main caa2d913 (verified, origin has it)** = gameplay C10 (ground rings gone: a sonar answer, Bell's signal and the
   charger warning are each a pillar that fades; M_GlowSiteRing.mat deleted) + c48ec7ee flake fix + Core IScrapField;
   world C5 half (408ccc21: 4 cuttable lane slots, WorldSystem serves IScrapField) + world's look-A shadow tune
