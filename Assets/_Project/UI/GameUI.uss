@@ -2100,27 +2100,36 @@ Label {
 }
 
 .seven__portrait {
-    width: 600px;
+    width: 800px;
     height: 400px;
     border-radius: 14px;
     background-color: rgba(8, 12, 40, 0.5);
     -unity-background-scale-mode: scale-to-fit;
 }
 
+.seven__leaders {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    --leader-color: rgba(190, 215, 255, 0.45);
+}
+
 .seven__socket {
     position: absolute;
-    width: 30px;
-    height: 30px;
-    margin-left: -15px;
-    margin-top: -15px;
+    width: 20px;
+    height: 20px;
+    margin-left: -10px;
+    margin-top: -10px;
     align-items: center;
     justify-content: center;
 }
 
 .seven__socket-dot {
-    width: 22px;
-    height: 22px;
-    border-radius: 11px;
+    width: 14px;
+    height: 14px;
+    border-radius: 7px;
     border-width: 2px;
     border-color: var(--glass-rim);
     background-color: rgba(0, 0, 0, 0);
@@ -2146,20 +2155,21 @@ Label {
     border-width: 3px;
 }
 
-.seven__socket-name {
+.seven__socket-label {
     position: absolute;
-    top: 30px;
-    width: 130px;
-    margin-left: -50px;
     font-size: 15px;
-    -unity-text-align: upper-center;
+    -unity-text-align: middle-right;
     color: var(--glass-hi);
+}
+
+.seven__socket-label--right-column {
+    -unity-text-align: middle-left;
 }
 
 .seven__bay {
     position: absolute;
-    left: 24px;
-    top: -8px;
+    left: 14px;
+    top: -10px;
     width: 18px;
     height: 18px;
     --bay-icon-color: rgb(255, 214, 120);
