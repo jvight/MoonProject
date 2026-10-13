@@ -149,6 +149,14 @@ and the shelter backup. The lab's recovery panel gains a **Survey** count (§6, 
   STOPPED: NO CHARGE". It is plain guidance, not a farewell.
 - They stay where they stopped. 07 completes their tasks.
 
+**Keepsakes: five** (Director's ruling).
+- **The five:** the duck, the gnome, the teapot, the golden record and Ines's boot. The blue pebble belongs to the
+  survey story.
+- **Ro's tape deck is not a keepsake.** It is a **station spare part** sealed in Kenji's "07 · SPARE" crate at the
+  garage: an operational part, not a gift (§4's rule). Its job is playing tapes through 07's speaker.
+- **The `relic.cassette_player.*` text retires** when gameplay's C9 lands. Story deletes the keys then; gameplay
+  tells story when.
+
 ## 3. The two stations' machines
 ### 3.0 The logic base (carried over from v2 §3.1; `0.6-living-moon.md` §1a)
 - **Light:** Lumen sits at a near-polar site.
