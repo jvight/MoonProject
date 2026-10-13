@@ -105,6 +105,7 @@ namespace MoonProject.Rover
         private bool _evening;
         private readonly CutFraming _cutFraming = new CutFraming();
         private Vector3 _chargePoint;
+        private bool _digFraming;
         private bool _charging;
         private float _chargingSeconds;
         private bool _chargeAsks;
@@ -1208,11 +1209,17 @@ namespace MoonProject.Rover
             }
 
             float side = CutFraming.ChooseSide(_rover.Position, _rover.Rotation * Vector3.forward, _chargePoint);
+            _digFraming = false;
             _cutFraming.Begin(_chargePoint, side, _tuning.CutFrameInSeconds);
         }
 
-        /// <summary>The cut's beats: the Anticipate says where the beam will run; the fold or a release ends the
-        /// push-in.</summary>
+        /// <summary>
+        /// The beam's beats. The cut's Anticipate says where its beam will run (the push-in waits for the charge's
+        /// stages). The dig's work framing (feel-pass §3.1, as in 0.5.4) starts on its own Anticipate: 07 stands still
+        /// while it digs, so the camera eases over its shoulder on the beam's side and a little higher (half as far and
+        /// slower with the Gentle camera). Either ends after the fold or a release; look or drive input hands it back
+        /// at once.
+        /// </summary>
         private void OnFeelBeat(FeelBeat beat)
         {
             if (beat.Kind == FeelKind.Build)
@@ -1221,21 +1228,28 @@ namespace MoonProject.Rover
                 return;
             }
 
-            if (beat.Kind != FeelKind.Cut)
+            if (beat.Kind != FeelKind.Cut && beat.Kind != FeelKind.Dig)
             {
                 return;
             }
 
             switch (beat.Phase)
             {
-                case FeelPhase.Anticipate:
+                case FeelPhase.Anticipate when beat.Kind == FeelKind.Cut:
                     _chargePoint = beat.Position;
+                    break;
+                case FeelPhase.Anticipate:
+                    float side = CutFraming.ChooseSide(_rover.Position, _rover.Rotation * Vector3.forward,
+                        beat.Position);
+                    _digFraming = true;
+                    _cutFraming.Begin(beat.Position, side,
+                        _look.GentleCamera ? _tuning.DigFrameGentleSeconds : _tuning.DigFrameInSeconds);
                     break;
                 case FeelPhase.Follow when beat.Strength >= 1f:
                 case FeelPhase.Cancel:
-                    if (_cutFraming.IsActive)
+                    if (_cutFraming.IsActive && _digFraming == (beat.Kind == FeelKind.Dig))
                     {
-                        _cutFraming.End(_tuning.CutFrameOutSeconds);
+                        _cutFraming.End(_digFraming ? _tuning.DigFrameOutSeconds : _tuning.CutFrameOutSeconds);
                     }
 
                     break;
@@ -1277,9 +1291,15 @@ namespace MoonProject.Rover
         /// </summary>
         private void BlendCutFraming(float weight, ref float yaw, ref float elevation, ref float radius)
         {
+            if (_digFraming)
+            {
+                BlendDigFraming(weight, ref yaw, ref elevation, ref radius);
+                return;
+            }
+
             CutFraming.PushIn(weight, _tuning.CutFramePushIn, _tuning.CutFrameLower, ref elevation, ref radius);
             Vector3 emitter = _rover.Position + Vector3.up * _tuning.TargetHeight;
-            Vector3 line = BeamMiddle() - _cutFraming.Eye(emitter, _tuning.CutFrameBack, _tuning.CutFrameSide);
+            Vector3 line = BeamMiddle() - _cutFraming.Eye(emitter, _tuning.CutFrameBack, _tuning.CutFrameSide, 0f);
             line.y = 0f;
             if (line.magnitude < MinSubjectDistance)
             {
@@ -1288,6 +1308,28 @@ namespace MoonProject.Rover
 
             float frameYaw = Mathf.DeltaAngle(RoverYaw() + _momentYaw, WideShotComposer.Bearing(line));
             yaw += Mathf.DeltaAngle(yaw, frameYaw) * weight;
+        }
+
+        /// <summary>The dig's framing: the orbit toward the shoulder eye, a little higher, looking at the beam's middle.
+        /// </summary>
+        private void BlendDigFraming(float weight, ref float yaw, ref float elevation, ref float radius)
+        {
+            float share = _look.GentleCamera ? _tuning.DigFrameGentleShare : 1f;
+            Vector3 emitter = _rover.Position + Vector3.up * _tuning.TargetHeight;
+            Vector3 eye = _cutFraming.Eye(emitter, _tuning.CutFrameBack, _tuning.CutFrameSide * share,
+                _tuning.DigFrameRise * share);
+            Vector3 line = BeamMiddle() - eye;
+            float distance = line.magnitude;
+            if (distance < MinSubjectDistance)
+            {
+                return;
+            }
+
+            float frameYaw = Mathf.DeltaAngle(RoverYaw() + _momentYaw, WideShotComposer.Bearing(line));
+            yaw += Mathf.DeltaAngle(yaw, frameYaw) * weight;
+            elevation = Mathf.Lerp(elevation, Mathf.Asin(Mathf.Clamp(-line.y / distance, -1f, 1f)) * Mathf.Rad2Deg,
+                weight);
+            radius = Mathf.Lerp(radius, distance, weight);
         }
 
         /// <summary>A real leap (not a hop) lifts the camera and looks ahead to the landing until 07 is down.</summary>

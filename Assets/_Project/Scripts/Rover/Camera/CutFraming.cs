@@ -3,10 +3,11 @@ using UnityEngine;
 namespace MoonProject.Rover
 {
     /// <summary>
-    /// The charge-up's push-in (docs/design/0.5.5-owner-feedback.md §5.6): only for a fresh charge on a big piece, the
-    /// camera eases a little closer and lower toward 07's shoulder, on the side the beam runs to so 07's head never
-    /// hides it, aiming at the middle of the beam; it holds still through the lock and eases back after. Plain logic:
-    /// whether to frame at all, which side, where the eye looks from, and how far the framing has eased in.
+    /// The beam's work framing, aiming at the middle of the beam from 07's shoulder on the side the beam runs to so
+    /// 07's head never hides it. The cut's charge-up push-in (docs/design/0.5.5-owner-feedback.md §5.6) eases a little
+    /// closer and lower only for a fresh charge on a big piece; the dig's framing (feel-pass §3.1) eases over the
+    /// shoulder and a little higher. Plain logic: whether the cut earns it, which side, where the eye goes, and how
+    /// far the framing has eased in.
     /// </summary>
     public sealed class CutFraming
     {
@@ -46,16 +47,16 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// Where the eye looks from: behind the emitter along the beam's direction by <paramref name="back"/> and out
-        /// to <see cref="Side"/> by <paramref name="offset"/> (metres, level with the emitter).
+        /// Where the eye goes: behind the emitter along the beam's direction by <paramref name="back"/>, out to
+        /// <see cref="Side"/> by <paramref name="offset"/> and up by <paramref name="rise"/> (all metres).
         /// </summary>
-        public Vector3 Eye(Vector3 emitter, float back, float offset)
+        public Vector3 Eye(Vector3 emitter, float back, float offset, float rise)
         {
             Vector3 along = CutPoint - emitter;
             along.y = 0f;
             along = along.sqrMagnitude > 1e-6f ? along.normalized : Vector3.forward;
             Vector3 right = Vector3.Cross(Vector3.up, along);
-            return emitter - along * back + right * (Side * offset);
+            return emitter - along * back + right * (Side * offset) + Vector3.up * rise;
         }
 
         /// <summary>Starts easing in over <paramref name="seconds"/> toward framing the beam to <paramref name="cutPoint"/>.</summary>

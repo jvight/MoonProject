@@ -4,7 +4,8 @@ using MoonProject.Rover;
 
 namespace MoonProject.Rover.Tests
 {
-    /// <summary>The charge-up's push-in: when it is earned, its side, eye and depth, easing in and handing back.</summary>
+    /// <summary>The beam's framing: when the cut's push-in is earned, its side, eye and depth, easing in and handing
+    /// back.</summary>
     public sealed class CutFramingTests
     {
         [Test]
@@ -17,14 +18,14 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheEye_IsBehind_AndOutToTheSide()
+        public void TheEye_IsBehind_OutToTheSide_AndRaised()
         {
             var framing = new CutFraming();
             framing.Begin(new Vector3(0f, 0f, 3f), -1f, 1f);
-            Vector3 eye = framing.Eye(Vector3.up, 2f, 1.2f);
+            Vector3 eye = framing.Eye(Vector3.up, 2f, 1.2f, 0.5f);
             Assert.AreEqual(-1.2f, eye.x, 1e-4f, "Out to the left by the offset.");
             Assert.AreEqual(-2f, eye.z, 1e-4f, "Behind the emitter along the beam.");
-            Assert.AreEqual(1f, eye.y, 1e-4f, "Level with the emitter.");
+            Assert.AreEqual(1.5f, eye.y, 1e-4f, "A little higher (the dig's rise).");
         }
 
         [Test]

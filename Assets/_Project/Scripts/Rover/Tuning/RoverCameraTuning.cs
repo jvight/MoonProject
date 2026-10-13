@@ -427,6 +427,26 @@ namespace MoonProject.Rover
         [Range(0.2f, 4f)]
         [SerializeField] private float _cutFrameOutSeconds = 1.2f;
 
+        [Tooltip("The dig's work framing (feel-pass §3.1): how far (m) above 07's emitter its shoulder camera sits.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _digFrameRise = 0.5f;
+
+        [Tooltip("Seconds the dig's framing takes to ease in from its charge-up (07 stands still, so slow is calm).")]
+        [Range(0.2f, 4f)]
+        [SerializeField] private float _digFrameInSeconds = 1.2f;
+
+        [Tooltip("Seconds the dig's framing takes to ease back after the relic comes up or a release.")]
+        [Range(0.2f, 4f)]
+        [SerializeField] private float _digFrameOutSeconds = 1f;
+
+        [Tooltip("Gentle camera: the share of the dig framing's side offset and rise it uses.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _digFrameGentleShare = 0.5f;
+
+        [Tooltip("Gentle camera: seconds the dig's framing takes to ease in.")]
+        [Range(0.2f, 6f)]
+        [SerializeField] private float _digFrameGentleSeconds = 2f;
+
         [Tooltip("Seconds it takes to hand back when the player looks or drives (quick: their choice wins).")]
         [Range(0.05f, 1f)]
         [SerializeField] private float _cutFrameHandBackSeconds = 0.3f;
@@ -674,6 +694,16 @@ namespace MoonProject.Rover
         public float CutFrameOutSeconds => _cutFrameOutSeconds;
 
         public float CutFrameHandBackSeconds => _cutFrameHandBackSeconds;
+
+        public float DigFrameRise => _digFrameRise;
+
+        public float DigFrameInSeconds => _digFrameInSeconds;
+
+        public float DigFrameOutSeconds => _digFrameOutSeconds;
+
+        public float DigFrameGentleShare => _digFrameGentleShare;
+
+        public float DigFrameGentleSeconds => _digFrameGentleSeconds;
 
         public Vector3 PositionDamping => _positionDamping;
 
