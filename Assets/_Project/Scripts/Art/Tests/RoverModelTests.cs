@@ -31,15 +31,14 @@ namespace MoonProject.Art.Tests
             "LensSocket", "BinSocket_L", "BinSocket_R",
         };
 
-        // Each charge-run lamp by tier: the part its row group sits under and its index along the run.
-        private static readonly (string Part, int Index)[][] ChargeLamps =
+        // The charge-up's nodes (0.5.5 "Cells"), the contract rover drives.
+        private static readonly string[] ChargePaths =
         {
-            new[] { ("", 0), ("", 1), ("Neck/", 2), ("Neck/", 3), ("Neck/Head/Eye/", 4) },
-            new[]
-            {
-                ("", 0), ("", 1), ("Neck/", 2), ("Neck/", 3), ("Neck/Head/", 4), ("Neck/Head/", 5),
-                ("Neck/Head/Eye/", 6),
-            },
+            "ChargeConduits", "ChargeConduits/ConduitGlow", "Neck/ChargeConduits", "Neck/ChargeConduits/ConduitGlow",
+            "Neck/Head/Eye/LockRing", "Neck/Head/Eye/LockRing/LockGlow",
+            "Stage_1_L", "Stage_1_L/StageGlow_1", "Stage_1_R", "Stage_1_R/StageGlow_1",
+            "Stage_2_L", "Stage_2_L/StageGlow_2", "Stage_2_R", "Stage_2_R/StageGlow_2",
+            "Stage_3_L", "Stage_3_L/StageGlow_3", "Stage_3_R", "Stage_3_R/StageGlow_3",
         };
 
         /// <summary>The battery light bar's segments (docs/features/M3-20).</summary>
@@ -79,21 +78,7 @@ namespace MoonProject.Art.Tests
                 contract.Add(window + "/" + RoverModelBuilder.HatchCratePrefix + i);
             }
 
-            for (int tier = 0; tier < ChargeLamps.Length; tier++)
-            {
-                foreach ((string part, int index) in ChargeLamps[tier])
-                {
-                    string row = part + RoverModelBuilder.ChargeRunPrefix + tier;
-                    if (!contract.Contains(row))
-                    {
-                        contract.Add(row);
-                    }
-
-                    string lamp = row + "/" + RoverModelBuilder.ChargeLampPrefix + index;
-                    contract.Add(lamp);
-                    contract.Add(lamp + "/" + RoverModelBuilder.ChargeLampBezelName);
-                }
-            }
+            contract.AddRange(ChargePaths);
 
             Assert.AreEqual(RoverModelBuilder.ModelName, _rover.Name);
             CollectionAssert.AreEquivalent(contract, paths);
@@ -161,37 +146,39 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
-        public void ChargeRuns_ClimbFromTheDeckToTheEye_EachLampAGlassThatStartsDark()
+        public void ChargeUp_IsSymmetric_ItsCellsBesideTheWing_EveryGlowStartingDark()
         {
-            Assert.AreEqual(ChargeLamps.Length, RoverModelBuilder.ChargeRunLamps.Count);
-            for (int tier = 0; tier < ChargeLamps.Length; tier++)
+            foreach (string path in ChargePaths.Where(p => p.Contains("Glow")))
             {
-                Assert.AreEqual(ChargeLamps[tier].Length, RoverModelBuilder.ChargeRunLamps[tier]);
-                foreach ((string part, int index) in ChargeLamps[tier])
+                ModelNode glow = AtPath(_rover, path);
+                Assert.AreEqual(ModelMaterial.PaletteGlowOff, glow.Material, $"{path} starts dark");
+                for (int t = 0; t < glow.Mesh.Geometry.TriangleCount; t++)
                 {
-                    string path = part + RoverModelBuilder.ChargeRunPrefix + tier + "/" +
-                                  RoverModelBuilder.ChargeLampPrefix + index;
-                    ModelNode lamp = AtPath(_rover, path);
-                    Assert.AreEqual(ModelMaterial.PaletteGlowOff, lamp.Material, $"{path} starts dark");
-                    for (int t = 0; t < lamp.Mesh.Geometry.TriangleCount; t++)
-                    {
-                        Assert.AreEqual(PaletteSwatch.EyeGlass, MeshChecks.SwatchOf(lamp.Mesh.Geometry, t),
-                            $"{path} glows the cutter's cyan");
-                    }
+                    Assert.AreEqual(PaletteSwatch.EyeGlass, MeshChecks.SwatchOf(glow.Mesh.Geometry, t),
+                        $"{path} glows the cutter's one cyan");
+                }
 
-                    if (part.Length > 0)
-                    {
-                        Assert.AreEqual(0f, lamp.LocalPosition.x, 1e-5f, $"{path} is on the centreline (P3)");
-                    }
-                    else
-                    {
-                        Bounds glass = lamp.Mesh.Geometry.Bounds;
-                        Assert.Greater(lamp.LocalPosition.x - glass.extents.x * 2f, WingEdge(),
-                            $"{path} sits clear of the solar wing, where the chase camera sees it");
-                    }
-                    MeshChecks.AssertWellFormed(lamp.Mesh.Geometry);
-                    Assert.Greater(SilhouetteCamera.WorldOf(_rover, path).GetColumn(3).y, RoverModelBuilder.NeckBase.y - 0.01f,
-                        $"{path} rides the top of 07, where the chase camera sees it");
+                MeshChecks.AssertWellFormed(glow.Mesh.Geometry);
+            }
+
+            Assert.AreEqual(0f, _rover.GetDescendant("SolarWing").LocalPosition.x, 1e-5f, "the wing is centred");
+            for (int stage = 1; stage <= RoverModelBuilder.ChargeStages; stage++)
+            {
+                ModelNode left = AtPath(_rover, RoverModelBuilder.ChargeStagePrefix + stage + "_L");
+                ModelNode right = AtPath(_rover, RoverModelBuilder.ChargeStagePrefix + stage + "_R");
+                Assert.AreEqual(-left.LocalPosition.x, right.LocalPosition.x, 1e-5f, $"stage {stage} is mirrored");
+                Assert.AreEqual(left.LocalPosition.z, right.LocalPosition.z, 1e-5f, $"stage {stage} is mirrored");
+                Bounds cell = left.Mesh.Geometry.Bounds;
+                Assert.Less(left.LocalPosition.x + cell.extents.x, -WingEdge(), $"stage {stage} clears the wing");
+                ModelNode sleeve = left.Children.Single();
+                Assert.AreEqual(RoverModelBuilder.StageGlowPrefix + stage, sleeve.Name);
+                float front = sleeve.LocalPosition.z + RoverModelBuilder.ChargeSleeveTravel;
+                Assert.LessOrEqual(front, cell.max.z, $"stage {stage}'s sleeve stays on its cell at full travel");
+                if (stage > 1)
+                {
+                    float previous = AtPath(_rover, RoverModelBuilder.ChargeStagePrefix + (stage - 1) + "_L")
+                        .LocalPosition.z;
+                    Assert.Greater(left.LocalPosition.z, previous, "the stages run from the battery toward the neck");
                 }
             }
 
