@@ -636,7 +636,8 @@ namespace MoonProject.UI
             _hopFade.Tick(deltaTime);
             _protocol.Tick(hudTime);
             // Its own zone (right of centre): it stands beside a place card, so the tower's card never hides it.
-            _recipeCard.Tick(hudTime, _awake && CardsOpen(paused) && _slot.Allows(GuidanceKind.Card));
+            _recipeCard.Tick(hudTime, _awake && !_kitTitle.IsVisible && CardsOpen(paused) &&
+                                      _slot.Allows(GuidanceKind.Card));
             bool hintOpen = LookHintsOpen() && _slot.Allows(GuidanceKind.Prompt);
             float stick = _tuning.Stargaze.FirstPromptStick * _tuning.Stargaze.FirstPromptStick;
             bool looking = !paused && (input.LookDelta.sqrMagnitude > 0f || input.LookRate.sqrMagnitude > stick);
@@ -669,7 +670,7 @@ namespace MoonProject.UI
 
         private bool CardsOpen(bool paused)
         {
-            return !paused && !_protocol.IsVisible && !_card.IsVisible && !_kitTitle.IsVisible && !_stargaze.IsVeiled;
+            return !paused && !_protocol.IsVisible && !_card.IsVisible && !_stargaze.IsVeiled;
         }
 
         private bool PlaceCardsOpen()
@@ -700,7 +701,7 @@ namespace MoonProject.UI
             _guidanceWants[(int)GuidanceKind.Prompt] =
                 (PromptsOpen(paused, hopping) && _director.Wants(_services.Hints.Primary)) || looks;
             _guidanceWants[(int)GuidanceKind.Card] =
-                CardsOpen(paused) && (_tower.Wants || (_awake && _recipeCard.Wants));
+                CardsOpen(paused) && (_tower.Wants || (_awake && !_kitTitle.IsVisible && _recipeCard.Wants));
             _guidanceWants[(int)GuidanceKind.Place] = PlaceCardsOpen() && (_placeCard.IsWaiting || _placeCard.IsVisible);
             _guidanceWants[(int)GuidanceKind.Next] = NextLineOpen(paused) && _nextStep.WantsShown;
             _guidanceShown[(int)GuidanceKind.Prompt] = _prompt.IsVisible || _lookUpChip.IsVisible;
