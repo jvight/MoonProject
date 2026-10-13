@@ -62,8 +62,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Listen(events, RadioHopStarted, false);
             Listen(events, RadioHopFinished, false);
             Listen(events, StationCued, false);
-            Listen(events, RoverBayFitting, false);
-            Listen(events, RoverKitFitted, false);
+            Listen(events, PartCrafted, false);
+            Listen(events, PartFitted, false);
             Listen(events, RoverDockChanged, false);
         }
 
@@ -137,9 +137,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public List<Timed<StationCued>> StationCued { get; } = new List<Timed<StationCued>>();
 
-        public List<Timed<RoverBayFitting>> RoverBayFitting { get; } = new List<Timed<RoverBayFitting>>();
+        public List<Timed<PartCrafted>> PartCrafted { get; } = new List<Timed<PartCrafted>>();
 
-        public List<Timed<RoverKitFitted>> RoverKitFitted { get; } = new List<Timed<RoverKitFitted>>();
+        public List<Timed<PartFitted>> PartFitted { get; } = new List<Timed<PartFitted>>();
 
         public List<Timed<RoverDockChanged>> RoverDockChanged { get; } = new List<Timed<RoverDockChanged>>();
 

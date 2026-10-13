@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c8dc59cd78a0c944dbe8136a68512358, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _partsRowSlots: 4
+  _recycleShare: 0.5
   _padRadius: 1.8
   _padIdle: 0.22
   _padInviting: 0.65
