@@ -126,6 +126,8 @@ namespace MoonProject.World.PlayModeTests
         private const float PulseViewBack = 70f;
         private const float PulseViewHeight = 45f;
         private const float PulseViewFov = 50f;
+        private const string DockName = "DockAnchor";
+        private const float DockEyeHeight = 2.5f;
         private const float PulseCaptureHop = 0.5f;
         private const string WorldSettingsPath = "Assets/_Project/Data/Tuning/WorldSettings.asset";
 
@@ -361,7 +363,8 @@ namespace MoonProject.World.PlayModeTests
         /// <summary>
         /// The network's handshake (north-star §4a beat 7) from a distance: with the basin's masts restored, the
         /// farthest lit mast lights again and the pulse runs lamp to lamp back to home and out. Captures mid-hop on the
-        /// first link, mid-way through the chain and as it reaches home, to Logs/world-captures/network-pulse-*.png.
+        /// first link, mid-way through the chain and as it reaches home, from high behind home and from the dock (the
+        /// player's view home), to Logs/world-captures/network-pulse-*.png.
         /// </summary>
         [UnityTest]
         [Timeout(600000)]
@@ -435,11 +438,15 @@ namespace MoonProject.World.PlayModeTests
                 Vector3 eye = home - outward * PulseViewBack + Vector3.up * PulseViewHeight;
                 Pose pose = LookPose("network_pulse", eye, Vector3.Lerp(home, centre, 0.5f), PulseViewFov);
                 Camera view = context.Get<IViewCamera>().Camera;
+                Vector3 dockEye = FindNamed(DockName).position + Vector3.up * DockEyeHeight;
+                Pose dock = LookPose("network_pulse_dock", dockEye, centre, view.fieldOfView);
                 float hop = AssetDatabase.LoadAssetAtPath<WorldSettings>(WorldSettingsPath).NetworkPulse.HopSeconds;
                 yield return new WaitForSeconds(PulseCaptureHop * hop);
                 CapturePose(view, pose, "network-pulse-1-first-link");
+                CapturePose(view, dock, "network-pulse-dock-1-first-link");
                 yield return new WaitForSeconds(hop);
                 CapturePose(view, pose, "network-pulse-2-chain");
+                CapturePose(view, dock, "network-pulse-dock-2-chain");
                 while (!hops.Exists(reached => reached.NodeId == "home"))
                 {
                     Assert.Less(Time.time - started, WakeTimeout * 10f, "the handshake reaches home");
@@ -448,6 +455,7 @@ namespace MoonProject.World.PlayModeTests
 
                 yield return new WaitForSeconds(PulseCaptureHop * hop);
                 CapturePose(view, pose, "network-pulse-3-home");
+                CapturePose(view, dock, "network-pulse-dock-3-home");
             }
 
             Debug.Log($"[network-pulse] lit masts {reach.LitCount - 1}, origin {reach.GetNode(origin).Id}, " +

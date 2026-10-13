@@ -64,7 +64,7 @@ namespace MoonProject.World
         [Tooltip("Smallest apparent radius of the flashes and the bead, degrees, so the chain still reads as warm " +
             "dots from across the basin.")]
         [Range(0f, 2f)]
-        [SerializeField] private float _minAngle = 0.6f;
+        [SerializeField] private float _minAngle = 0.8f;
 
         [Tooltip("Distance (metres) from which the halos begin keeping their minimum size.")]
         [Range(1f, 400f)]
