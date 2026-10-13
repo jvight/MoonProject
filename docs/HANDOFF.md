@@ -4,7 +4,35 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 00000000000000000. LATEST (2026-10-14 ~01:30): main 235422b1 NOT verified (2 fixes pending); story v3 Qs to owner
+## 0000000000000000000. LATEST (2026-10-14 ~04:00): main caa2d913 verified + pushed; gameplay C6 in progress
+- **main caa2d913 (verified, origin has it)** = gameplay C10 (ground rings gone: a sonar answer, Bell's signal and the
+  charger warning are each a pillar that fades; M_GlowSiteRing.mat deleted) + c48ec7ee flake fix + Core IScrapField;
+  world C5 half (408ccc21: 4 cuttable lane slots, WorldSystem serves IScrapField) + world's look-A shadow tune
+  (e22fb009: fill 0.45, ambient up and neutral, earthlight shadow strength 0.78, grade lift/split toward neutral).
+- **Owner shown:** art's real-scene look-A captures and world's before/after shadow tune (art Logs/look-a, world
+  Logs/look-a-tune). No owner reaction yet.
+- **Gameplay queue:** C6 (held stacks on their wreck, crate remainders at the mouth, Recycled Metal home -> hold ->
+  overflow crates, Tilly never drops, IWaitingBundles on the chart; old saves' ground bundles -> overflow), then C5's
+  gameplay side (pieces at the IScrapField slots), then D scanning. Then verify --explicit, bump 0.5.5, build.
+- **Art, world:** stand by until 0.5.5 ships (no 0.6 work before the owner reviews 0.5.5).
+- **Lesson:** never rewrite a landed commit (even just its subject): the verification worktree's branch keeps the old
+  SHA and `verify` then fails to fast-forward. Write the `merge: ` prefix into `land -m` instead.
+- **Owner pending:** story v3's 7 questions (see the ~01:30 section).
+
+## 000000000000000000. (prev) (2026-10-14 ~02:30): main ae1f50d7 verified + pushed; C10 + C5 world half next
+- **main ae1f50d7 (verified, origin has it)** = look A (art palette + world sky/fog/grade), C9 (the tape deck is a
+  station spare; keepsakes 5), audio 27ad1ff9, ui (keepsake total from the catalog), gameplay 59e4e157 (C11b relay.2's
+  hut + the haul bot; the relic dig waits for a sealed container's seal).
+- **Next land (one batch):** gameplay box 8af2fce9 (c48ec7ee garage flake fix + d838b393 Core IScrapField + C10 drop
+  the ground rings, M_GlowSiteRing.mat deleted) + world 408ccc21 (C5 world half: 4 cuttable lane slots, WorldSystem
+  serves IScrapField; its e3bf64d7 is byte-identical to d838b393). Land when gameplay reports C10's box_check PASS.
+- **Then:** gameplay C5 side (scrap.kestrel_trail pieces at IScrapField slots), C6, D scanning; verify --explicit;
+  bump 0.5.5; build; Builds/.
+- **Art:** real-scene captures of look A (dock, wide basin, 07 close, night) asked; show the owner when they arrive.
+- **World:** stands by until 0.5.5 ships (no 0.6 work before the owner reviews 0.5.5).
+- **Owner pending:** story v3's 7 questions (see the previous section).
+
+## 00000000000000000. (prev) (2026-10-14 ~01:30): main 235422b1 NOT verified (2 fixes pending); story v3 Qs to owner
 - **main 235422b1** (local, NOT pushed; origin = 5bffb082 + docs) = look A (art 0bac0cfe + world 52432607, one grade
   source in World PostProcessSettings), C9 (gameplay 2ec38e77; the tape deck is a spare in the SpareCrate; keepsakes 5),
   audio 27ad1ff9, ui 2d5237c2, VISION's palette = look A.

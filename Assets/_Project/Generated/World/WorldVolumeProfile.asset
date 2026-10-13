@@ -15,7 +15,7 @@ MonoBehaviour:
   active: 1
   shadows:
     m_OverrideState: 1
-    m_Value: {r: 0.36, g: 0.39, b: 0.46, a: 1}
+    m_Value: {r: 0.42, g: 0.43, b: 0.46, a: 1}
   highlights:
     m_OverrideState: 1
     m_Value: {r: 1, g: 0.92, b: 0.8, a: 1}
@@ -157,7 +157,7 @@ MonoBehaviour:
   active: 1
   lift:
     m_OverrideState: 1
-    m_Value: {x: 0.96, y: 0.97, z: 1.08, w: 0}
+    m_Value: {x: 1, y: 1, z: 1.03, w: 0}
   gamma:
     m_OverrideState: 1
     m_Value: {x: 1, y: 1, z: 1, w: 0}
