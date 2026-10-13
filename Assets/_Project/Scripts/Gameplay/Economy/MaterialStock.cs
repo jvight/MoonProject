@@ -117,6 +117,23 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
+        /// Moves up to <paramref name="units"/> of <paramref name="material"/> from home's shelves into 07's hold (the
+        /// docked transfer view, 0.5.5 §3); returns how many moved. The totals do not change.
+        /// </summary>
+        public int MoveAboard(SalvageMaterial material, int units)
+        {
+            int moving = Math.Min(Math.Min(units, Home.Units(material)), Hold.FreeUnits(material));
+            if (moving <= 0)
+            {
+                return 0;
+            }
+
+            Home.Remove(material, moving);
+            Hold.Add(material, moving);
+            return moving;
+        }
+
+        /// <summary>
         /// Puts <paramref name="units"/> straight onto home's shelves (Tilly's fetch, M3-25 T3); returns what did not
         /// fit, which stays where it was.
         /// </summary>

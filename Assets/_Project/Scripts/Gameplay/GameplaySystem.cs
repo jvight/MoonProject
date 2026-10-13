@@ -352,6 +352,7 @@ namespace MoonProject.Gameplay
             context.Register<ICargoHold>(Materials.Hold);
             context.Register<IHomeStorage>(Materials.Home);
             context.Register<IDockState>(_home.Dock);
+            context.Register<IStackTransfer>(new StackTransfer(Materials, _materialCatalog, _home.Dock, Unload));
             context.Register<ISalvageStatus>(_salvage);
             context.Register<ITetherAim>(_tether);
             context.Register<IUpgradeShop>(Shop);

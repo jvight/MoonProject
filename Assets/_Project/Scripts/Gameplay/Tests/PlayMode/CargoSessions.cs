@@ -77,6 +77,29 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator Docked_TheTransferTakesAStackAboard_AndUndockedItRefuses()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            GameContext context = _fixture.Bootstrap.Context;
+            var dock = context.Get<IDockState>();
+            var transfer = context.Get<IStackTransfer>();
+            MaterialStock stock = _fixture.Gameplay.Materials;
+            stock.Deliver(SalvageMaterial.Metal, Stack * 2);
+            Assert.IsFalse(dock.IsDocked);
+            Assert.IsFalse(transfer.TryMove(SalvageMaterial.Metal, false, out int moved), "away from the dock");
+            Assert.AreEqual(0, moved);
+
+            _fixture.Rover.Place(_fixture.Gameplay.Home.Dock.Position, 0f);
+            yield return Waits.Until(() => dock.IsDocked, UnloadTimeout);
+            Assert.IsTrue(dock.IsDocked, "07 rests on the dock");
+            Assert.IsTrue(transfer.TryMove(SalvageMaterial.Metal, false, out moved));
+            Assert.AreEqual(Stack, moved, "one stack aboard for the trip");
+            Assert.AreEqual(Stack, stock.Hold.Units(SalvageMaterial.Metal));
+            Assert.AreEqual(Stack, stock.Home.Units(SalvageMaterial.Metal));
+        }
+
+        [UnityTest]
         public IEnumerator AFullHold_LeavesTheBundleWaiting_TheDockUnloads_AndEThenTakesIt()
         {
             _fixture = GameplayFixture.Boot(_controls);
