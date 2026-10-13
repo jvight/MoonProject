@@ -158,6 +158,10 @@ namespace MoonProject.Rover
         [Tooltip("The amber lamps along the stripe, one per cell (docs/features/M3-20).")]
         [SerializeField] private FlankLampSettings _flankLamps = new FlankLampSettings();
 
+        [Header("The Tab \"07\" page's portrait")]
+        [Tooltip("The live portrait's fixed side-three-quarter camera and its render size (0.5.5 §3.5).")]
+        [SerializeField] private PortraitSettings _portrait = new PortraitSettings();
+
         [Tooltip("Half-life (s) of a blueprint tube popping on to, or off, 07's back.")]
         [Range(0.02f, 2f)]
         [SerializeField] private float _tubeHalfLife = 0.2f;
@@ -260,6 +264,8 @@ namespace MoonProject.Rover
         public KitSettings Kit => _kit;
 
         public FlankLampSettings FlankLamps => _flankLamps;
+
+        public PortraitSettings Portrait => _portrait;
 
         public CutFeelSettings CutFeel => _cutFeel;
 

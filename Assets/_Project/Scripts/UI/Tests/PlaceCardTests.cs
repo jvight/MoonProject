@@ -26,8 +26,8 @@ namespace MoonProject.UI.Tests
             "next.lift.ride", "next.chasm", "next.bay.wake", "next.bay", "next.power.part", "next.power.carried",
             "next.power.build", "next.link.relay.0", "next.link.relay.1", "next.link", "notyet.bay",
             "notyet.chart", "ui.lab.turn", "ui.lab.look", "ui.lab.down", "glyph.lab.turn", "glyph.lab.turn.pad",
-            "glyph.lab.look", "glyph.lab.look.pad", "glyph.lab.down", "glyph.lab.down.pad", UiKeys.BlueprintFound,
-            UiKeys.BlueprintDelivered,
+            "glyph.lab.look", "glyph.lab.look.pad", "glyph.lab.down", "glyph.lab.down.pad", UiKeys.ScanFragment,
+            UiKeys.ScanKnown, UiKeys.ScanComplete,
         };
 
         [Test]
@@ -61,25 +61,6 @@ namespace MoonProject.UI.Tests
             Ticks(card, settings.Place.FadeIn + settings.PlaceHoldSeconds + settings.Place.FadeOut + 0.5f);
             Assert.IsNull(card.Current, "the dock was named once, not twice");
             Assert.IsFalse(card.IsVisible);
-        }
-
-        [Test]
-        public void AFoundBlueprint_GetsTheSameQuietCard_OncePerKit()
-        {
-            var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(UiAssetPaths.Uxml);
-            var layout = new UiLayout(uxml.Instantiate());
-            ILocalization localization = TestTables.Localization(new EventBus(),
-                UiKeys.UpgradeName("rover.cargo_cradle"), "Cargo Cradle", "Giá chở hàng",
-                UiKeys.BlueprintFound, "Blueprint found", "Tìm thấy bản vẽ");
-            var settings = new GuidanceSettings();
-            var card = new PlaceCard(layout, settings, localization, new EventBus());
-            card.BlueprintFound("rover.cargo_cradle");
-            card.BlueprintFound("rover.cargo_cradle");
-            card.Tick(Step, true);
-            Assert.AreEqual("Cargo Cradle", layout.PlaceCardName.text);
-            Assert.AreEqual("Blueprint found", layout.PlaceCardJob.text);
-            Ticks(card, settings.Place.FadeIn + settings.PlaceHoldSeconds + settings.Place.FadeOut + 0.5f);
-            Assert.IsNull(card.Current, "once per kit");
         }
 
         [Test]

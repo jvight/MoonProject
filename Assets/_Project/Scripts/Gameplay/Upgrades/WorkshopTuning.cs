@@ -10,6 +10,14 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class WorkshopTuning : ScriptableObject
     {
+        [Header("Parts (0.5.5 §3.5)")]
+        [Tooltip("Crafted parts the parts row holds while they wait to be fitted; the bay crafts no more until " +
+                 "one is.")]
+        [Range(1, 8)] [SerializeField] private int _partsRowSlots = 4;
+
+        [Tooltip("Share of a swapped-out part's recipe Metal the bay recycles it into.")]
+        [Range(0f, 1f)] [SerializeField] private float _recycleShare = 0.5f;
+
         [Header("Pad")]
         [Tooltip("07 counts as parked on the bay's turntable within this many metres of its centre (Art's pad " +
                  "nearest this radius lies on the turntable; the turntable is 1.75 m across).")]
@@ -164,6 +172,8 @@ namespace MoonProject.Gameplay
                  "is set on.")]
         [Range(0.02f, 2f)] [SerializeField] private float _weldArmTravel = 0.12f;
 
+        public int PartsRowSlots => _partsRowSlots;
+        public float RecycleShare => _recycleShare;
         public float PadFlare => _padFlare;
         public float LampIdle => _lampIdle;
         public float LampOccupied => _lampOccupied;

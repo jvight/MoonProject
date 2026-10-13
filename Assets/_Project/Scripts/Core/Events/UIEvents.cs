@@ -67,6 +67,15 @@ namespace MoonProject.Core.Events
         /// The hold ended before the ring filled: the button was let go, or the offer disappeared (once per press).
         /// </summary>
         HoldRelease = 10,
+
+        /// <summary>A part was picked up on the 07 tab (a drag began): Audio plays a soft pick-up tick.</summary>
+        PartPick = 11,
+
+        /// <summary>A part was set down where it fits (fitted, or taken off to the row): a soft drop tick.</summary>
+        PartDrop = 12,
+
+        /// <summary>A part was dropped where it does not fit: a quiet refusal.</summary>
+        PartRefuse = 13,
     }
 
     /// <summary>

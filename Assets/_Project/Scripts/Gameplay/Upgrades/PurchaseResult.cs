@@ -23,5 +23,10 @@ namespace MoonProject.Gameplay
 
         /// <summary>A tower level whose component is not fed to the tower's port yet (docs/features/M3-16 P1).</summary>
         NeedsPart = 6,
+
+        /// <summary>
+        /// A kit whose part would join a full parts row (0.5.5 §3.5): fit a part first; nothing changed.
+        /// </summary>
+        RowFull = 7,
     }
 }

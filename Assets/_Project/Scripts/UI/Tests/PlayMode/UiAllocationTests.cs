@@ -152,7 +152,7 @@ namespace MoonProject.UI.PlayModeTests
             InputSystem.AddDevice<Keyboard>();
             _rig = UiTestRig.Boot(_controls, _slot);
             _rig.Tune("_kitTitle._holdSeconds", LongHoldSeconds);
-            var gift = new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty);
+            var gift = new PartFitted(RoverSocket.Wing, RoverKitPiece.SolarCell, true, false, default, 0);
             _rig.Bootstrap.Context.Events.Publish(gift);
             yield return new WaitForSecondsRealtime(_rig.Tuning.KitTitle.Delay + _rig.Tuning.KitTitle.Reveal.FadeIn +
                                                     0.5f);

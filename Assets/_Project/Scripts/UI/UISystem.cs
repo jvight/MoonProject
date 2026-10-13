@@ -74,6 +74,7 @@ namespace MoonProject.UI
         private StargazeVeil _stargaze;
         private LookUpHint _lookUpHint;
         private HoldHint _holdHint;
+        private FitHint _fitHint;
         private FirstPrompt _firstPrompt;
         private LookUpChip _lookUpChip;
         private NextStepLine _nextStep;
@@ -126,6 +127,7 @@ namespace MoonProject.UI
         private bool _digging;
         private float _sinceAwake;
         private float _pickUpGrace;
+        private bool _reopenSeven;
 
         /// <summary>The localization service this system registered (tests and editor tools read it).</summary>
         internal LocalizationService Localization => _localization;
@@ -369,8 +371,8 @@ namespace MoonProject.UI
                 _cargo?.MarkDirty();
             }));
             _tokens.Add(events.Subscribe<RecoveryProgressChanged>(OnRecoveryProgressChanged));
-            _tokens.Add(events.Subscribe<BlueprintFound>(OnBlueprintFound));
-            _tokens.Add(events.Subscribe<BlueprintDelivered>(OnBlueprintDelivered));
+            _tokens.Add(events.Subscribe<FragmentScanned>(OnFragmentScanned));
+            _tokens.Add(events.Subscribe<BlueprintCompleted>(OnBlueprintCompleted));
             _tokens.Add(events.Subscribe<RoverWideShotChanged>(OnWideShotChanged));
             _tokens.Add(events.Subscribe<RoverWakeBeatReached>(OnWakeBeat));
             _tokens.Add(events.Subscribe<SiteAnswered>(OnSiteAnswered));
@@ -388,7 +390,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RelayRestored>(OnRelayRestored));
             _tokens.Add(events.Subscribe<RadioHopListChanged>(OnRadioHopListChanged));
             _tokens.Add(events.Subscribe<StationCued>(OnStationCued));
-            _tokens.Add(events.Subscribe<RoverKitFitted>(OnRoverKitFitted));
+            _tokens.Add(events.Subscribe<PartFitted>(OnPartFitted));
             _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
 
             services.Input.Menu.Enable();
@@ -437,6 +439,7 @@ namespace MoonProject.UI
                 _layout.TickerLine);
             _lookUpHint = new LookUpHint(_tuning.Stargaze, _ledger);
             _holdHint = new HoldHint(_tuning.Stargaze, _ledger);
+            _fitHint = new FitHint(_tuning.Stargaze, _ledger, services.Equipment);
             _firstPrompt = new FirstPrompt(_tuning.Stargaze, _ledger);
             _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization);
             _nextStep = new NextStepLine(_tuning.Guidance);
@@ -472,7 +475,8 @@ namespace MoonProject.UI
             _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
             _rewardCard = new RewardCard(_layout, _tuning.RewardCard, _localization, services.Shop);
             _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold,
-                services.Home, services.Transfer, services.Dock, _numbers, services.Events, _ledger);
+                services.Home, services.Transfer, services.Dock, services.Equipment, services.Portrait, _glyphs, _numbers, services.Events,
+                _ledger);
             _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization, _glyphs);
             _crateNote = new CrateNote(_layout, _tuning.CrateNote, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
@@ -544,9 +548,10 @@ namespace MoonProject.UI
             _pause.Tick(deltaTime);
             bool paused = _pause.IsOpen;
             _map?.Tick(deltaTime, paused);
-            _cargo.Tick(deltaTime, ScreenSize());
-            if (_cargo.IsOpen && _cargo.IsTransferView && !_services.Dock.IsDocked)
+            _cargo.Tick(deltaTime, ScreenSize(), input.ActiveDevice);
+            if (_cargo.IsOpen && ((_cargo.IsTransferView && !_services.Dock.IsDocked) || _cargo.WantsClose))
             {
+                _reopenSeven = _cargo.WantsClose;
                 CloseCargo();
             }
 
@@ -645,9 +650,12 @@ namespace MoonProject.UI
             _lookUpHint.Tick(hudTime, hintOpen && _firstPrompt.Word == HintWord.None);
             _holdHint.Tick(hudTime, hintOpen && !_cargo.IsOpen && _firstPrompt.Word == HintWord.None &&
                                     !_lookUpHint.WantsShown, AtTower());
+            _fitHint.Tick(hudTime, hintOpen && !_cargo.IsOpen && _firstPrompt.Word == HintWord.None &&
+                                   !_lookUpHint.WantsShown && !_holdHint.WantsShown, _cargo.IsOpen);
             HintWord hint = _firstPrompt.Word != HintWord.None ? _firstPrompt.Word
                 : _lookUpHint.WantsShown ? HintWord.LookUp
-                : _holdHint.WantsShown ? HintWord.Hold : HintWord.None;
+                : _holdHint.WantsShown ? HintWord.Hold
+                : _fitHint.WantsShown ? HintWord.Fit : HintWord.None;
             _lookUpChip.Tick(deltaTime, paused ? HintWord.None : hint, device);
             _nextStep.Tick(hudTime, _services.Rover.Speed, _player.Guidance);
             _placeCard.Tick(hudTime, PlaceCardsOpen() && _slot.Allows(GuidanceKind.Place));
@@ -707,7 +715,7 @@ namespace MoonProject.UI
         private void DecideGuidance(bool paused, bool hopping)
         {
             bool looks = LookHintsOpen() && (_firstPrompt.Word != HintWord.None || _lookUpHint.WantsShown ||
-                                             _holdHint.Wants(AtTower()));
+                                             _holdHint.Wants(AtTower()) || _fitHint.Wants());
             _guidanceWants[(int)GuidanceKind.Prompt] =
                 (PromptsOpen(paused, hopping) && _director.Wants(_services.Hints.Primary)) || looks;
             _guidanceWants[(int)GuidanceKind.Card] =
@@ -748,10 +756,16 @@ namespace MoonProject.UI
 
         private void OpenCargo()
         {
+            _reopenSeven = false;
             _cargo.Open();
             _services.Input.Disable();
             _cursor.Menu();
             _cargo.FocusFirst();
+            if (!_cargo.IsTransferView)
+            {
+                _cargo.FirstTab.Focus();
+            }
+
             _events.Publish(new UiCue(UiCueKind.Confirm));
         }
 
@@ -869,6 +883,17 @@ namespace MoonProject.UI
                 {
                     _director.NotifyUsed(InteractionKind.Salvage);
                 }
+
+                // The install moment ends with its Proud chirp: the 07 tab the player fitted from comes back.
+                if (beat.Kind == FeelKind.Install && beat.Phase == FeelPhase.Reward && _reopenSeven)
+                {
+                    _reopenSeven = false;
+                    if (CanOpenCargo() && !_cargo.IsOpen)
+                    {
+                        _cargo.SelectTab(1);
+                        OpenCargo();
+                    }
+                }
             }
         }
 
@@ -906,9 +931,10 @@ namespace MoonProject.UI
             }
         }
 
-        private void OnBlueprintFound(BlueprintFound found)
+        /// <summary>"Fragment 2 of 3 · Cargo Cradle", or the known blueprint's metal, as a note.</summary>
+        private void OnFragmentScanned(FragmentScanned scanned)
         {
-            _placeCard.BlueprintFound(found.KitId);
+            _crateNote.Scanned(ScanLines.Fragment(_localization, scanned));
         }
 
         private void OnLabLeft(LabLeft left)
@@ -938,9 +964,10 @@ namespace MoonProject.UI
             }
         }
 
-        private void OnBlueprintDelivered(BlueprintDelivered delivered)
+        /// <summary>The last fragment is in: one ticker line names the kit and where to build it.</summary>
+        private void OnBlueprintCompleted(BlueprintCompleted completed)
         {
-            _tickerLines.Enqueue(new TickerLine(UiKeys.BlueprintDelivered));
+            _tickerLines.Enqueue(new TickerLine(UiKeys.ScanComplete, UiKeys.UpgradeName(completed.BlueprintId), true));
         }
 
         private void OnNextStepChanged(NextStepChanged changed)
@@ -1038,11 +1065,11 @@ namespace MoonProject.UI
             }
         }
 
-        private void OnRoverKitFitted(RoverKitFitted fitted)
+        private void OnPartFitted(PartFitted fitted)
         {
-            if (!KitNames.TryTitle(fitted, out string key))
+            if (!PartNames.TryTitle(fitted.Part, out string key))
             {
-                Debug.LogError($"{nameof(UISystem)}: {fitted.Piece} settled onto 07 (gift: {fitted.Gift}) with no " +
+                Debug.LogError($"{nameof(UISystem)}: {fitted.Part} settled onto 07 (gift: {fitted.Gift}) with no " +
                                "upgrade or gift to name it.", this);
                 return;
             }
@@ -1053,7 +1080,7 @@ namespace MoonProject.UI
             }
 
             _kitTitle.Enqueue(key);
-            if (AbilityTable.TryAbilityOf(fitted.Piece, out RoverAbility gained))
+            if (AbilityTable.TryAbilityOf(fitted.Part, out RoverAbility gained))
             {
                 _unlockCard.Gained(gained);
                 _cargo.MarkDirty();
@@ -1061,7 +1088,12 @@ namespace MoonProject.UI
 
             if (!fitted.Gift)
             {
-                _tower.StationShowed(UpgradeStationKind.Workshop, fitted.UpgradeId);
+                _ledger.RecordFitTaught();
+            }
+
+            if (!fitted.Gift && PartNames.TryUpgradeId(fitted.Part, out string upgradeId))
+            {
+                _tower.StationShowed(UpgradeStationKind.Workshop, upgradeId);
             }
         }
 

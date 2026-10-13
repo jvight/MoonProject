@@ -14,12 +14,16 @@ namespace MoonProject.Gameplay
         private readonly ISaveService _save;
         private readonly IBlueprintBoard _board;
         private readonly IComponentGate _parts;
+        private readonly Func<string, bool> _rowFullFor;
 
         /// <param name="board">Kenji's board: a kit is built only once its blueprint is pinned.</param>
         /// <param name="parts">The tower's components: a level that needs one is built only once it is delivered.</param>
+        /// <param name="rowFullFor">True when the next level of an upgrade brings a part and the parts row (with the
+        /// crafts still queued) has no room for it.</param>
         public UpgradeShop(UpgradeService service, IUpgradeStation[] stations, ISaveService save,
-            IBlueprintBoard board, IComponentGate parts)
+            IBlueprintBoard board, IComponentGate parts, Func<string, bool> rowFullFor)
         {
+            _rowFullFor = rowFullFor ?? throw new ArgumentNullException(nameof(rowFullFor));
             _service = service ?? throw new ArgumentNullException(nameof(service));
             _stations = stations ?? throw new ArgumentNullException(nameof(stations));
             _save = save ?? throw new ArgumentNullException(nameof(save));
@@ -85,6 +89,11 @@ namespace MoonProject.Gameplay
             if (_parts.NeedsPart(upgradeId, _service.LevelOf(upgradeId) + 1))
             {
                 return PurchaseResult.NeedsPart;
+            }
+
+            if (_rowFullFor(upgradeId))
+            {
+                return PurchaseResult.RowFull;
             }
 
             PurchaseResult result = _service.Purchase(upgradeId);

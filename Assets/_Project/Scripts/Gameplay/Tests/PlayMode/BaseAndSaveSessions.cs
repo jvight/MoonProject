@@ -443,7 +443,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 _fixture.Events.Order.GetRange(before, _fixture.Events.Order.Count - before));
             Assert.AreEqual(HoverJump, _fixture.Events.UpgradePurchased[0].Value.UpgradeId);
             Assert.AreEqual(1, _fixture.Events.UpgradePurchased[0].Value.Level);
-            Assert.IsTrue(_fixture.Rover.Has(RoverAbility.HoverJump), "07 can leap now");
+            Assert.IsFalse(_fixture.Rover.Has(RoverAbility.HoverJump), "bought, not yet on 07: the bay crafts it");
             Assert.Greater(bay.PadLevel, look.Occupied, "the purchase flares the pad");
             Assert.AreSame(_fixture.HoverJumpUpgrade, bay.Definition, "no other blueprint yet: it rests on Hover-Jump");
             _fixture.Decode(HoverJump, _fixture.CargoCradleUpgrade.Id);
@@ -468,19 +468,21 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(2, bay.BundlesInFlight, "metal and wiring are on their way, optics next");
             Assert.Greater(bay.LightLevel, tuning.LightIdle + (tuning.LightWorking - tuning.LightIdle) * 0.4f,
                 "its work lights ease up to light the inside and the arms");
-            Assert.AreEqual(0, _fixture.Events.RoverBayFitting.Count, "nothing is fitted before the hopper is fed");
+            Assert.AreEqual(0, _fixture.Events.PartCrafted.Count, "nothing is crafted before the hopper is fed");
             Assert.AreEqual(0, bay.SparkCount);
             Vector3 front = bay.BayForward;
             _fixture.Rover.Aim(bay.BayPosition + front * 7f + Vector3.Cross(Vector3.up, front) * 3f + Vector3.up * 2.6f,
                 bay.BayPosition + Vector3.up);
             _fixture.Capture("18a-bay-hopper-feed");
 
-            yield return Waits.Until(() => _fixture.Events.RoverBayFitting.Count > 0,
+            yield return Waits.Until(() => _fixture.Events.PartCrafted.Count > 0,
                 HopperFeed.DurationFor(3, feedLook) + 0.5f);
             AssertCues(cues, HoverJump, StationCue.FeedStarted, StationCue.BundleDropped, StationCue.BundleDropped,
                 StationCue.BundleDropped, StationCue.Fed);
-            RoverBayFitting fitting = _fixture.Events.RoverBayFitting[0].Value;
-            Assert.AreEqual(HoverJump, fitting.UpgradeId);
+            RoverEquipment equipment = _fixture.Gameplay.Equipment;
+            Assert.AreEqual(RoverKitPiece.HoverCoils, _fixture.Events.PartCrafted[0].Value.Part);
+            Assert.AreEqual(1, equipment.RowCount, "the coils wait in the parts row (0.5.5 §3.5)");
+            Assert.IsFalse(_fixture.Rover.Has(RoverAbility.HoverJump), "a part in the row gives nothing yet");
             var rig = _fixture.Bootstrap.Context.Get<IRoverBay>();
             Assert.AreSame(bay, rig, "the bay itself is registered for the rover to drive its arms");
             Assert.AreEqual(3, rig.ArmCount);
@@ -494,16 +496,24 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(_fixture.Rover.TryGetGaze(bay, out _, out _));
             yield return new WaitForSeconds(tuning.SparkInterval * 1.5f);
             Assert.AreEqual(0, bay.SparkCount, "no sparks while the arms are still folded at the rail");
-            Assert.IsTrue(bay.Working, "the bay works on while the piece is fitted");
+            Assert.IsTrue(bay.ReadyToFit, "fed and free, with 07 on the turntable");
 
             // The rover's floor arm lifts the Hover-Jump coils up through the turntable and sets them on.
             rig.FloorLift.localPosition += Vector3.up * 0.25f;
             yield return new WaitForSeconds(tuning.LightEase * 4f);
             Assert.Greater(bay.PitLevel, 0.9f, "the pit and the floor arm's tip light the coils coming up");
-            Weld(new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty));
-            Assert.AreEqual(0, bay.SparkCount, "a friend's gift is no weld");
-            Weld(new RoverKitFitted(RoverKitPiece.HoverCoils, false, HoverJump));
-            Assert.Greater(bay.LampLevel, tuning.LampOccupied * 2f, "the lamps flare at the weld");
+            _fixture.Bootstrap.Context.Events.Publish(new PartFitted(RoverSocket.Wing, RoverKitPiece.SolarCell, true,
+                false, default, 0));
+            Seat();
+            Assert.AreEqual(0, bay.SparkCount, "a friend's gift seating is no weld");
+            Assert.IsTrue(equipment.TryFit(0), "the player drops the coils on their socket");
+            Assert.AreEqual(RoverSocket.Belly, _fixture.Events.PartFitted[1].Value.Socket, "after the gift's");
+            Assert.IsTrue(_fixture.Rover.Has(RoverAbility.HoverJump), "fitted: 07 can leap now");
+            yield return null;
+            Assert.IsTrue(bay.Working, "the bay works while the part goes on");
+            Assert.IsFalse(bay.ReadyToFit, "and fits nothing else until it seats");
+            Seat();
+            Assert.Greater(bay.LampLevel, tuning.LampOccupied * 2f, "the coils seat: the lamps flare at the weld");
             yield return new WaitForSeconds(tuning.SparkInterval * 1.5f);
             Assert.Greater(bay.FloorSparkCount, tuning.SparkCount, "weld sparks fly from the floor arm's tip");
             for (int arm = 0; arm < rig.ArmCount; arm++)
@@ -531,32 +541,45 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 Assert.AreSame(kit[i], bay.Definition, "the bay offers its kit in order");
                 Assert.AreEqual(PurchaseResult.Purchased, shop.Purchase(kit[i].Id));
-                Assert.IsTrue(_fixture.Rover.Has(abilities[i]), $"{kit[i].Id} grants its ability");
+                Assert.IsFalse(_fixture.Rover.Has(abilities[i]), $"{kit[i].Id} waits for its part to be fitted");
             }
 
             Assert.AreEqual(0, _fixture.Gameplay.Materials.Total, "the kit takes exactly its recipes");
             balance = 0;
             Assert.IsFalse(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out _), "nothing left to buy");
-            yield return Waits.Until(() => _fixture.Events.RoverBayFitting.Count == 4,
+            yield return Waits.Until(() => _fixture.Events.PartCrafted.Count == 4,
                 3f * HopperFeed.DurationFor(3, feedLook) + 1f);
+            RoverKitPiece[] parts = { RoverKitPiece.CargoRack, RoverKitPiece.LampBar, RoverKitPiece.CapacitorDrums };
             for (int i = 0; i < kit.Length; i++)
             {
-                Assert.AreEqual(kit[i].Id, _fixture.Events.RoverBayFitting[i + 1].Value.UpgradeId,
-                    "pieces bought together are fed and fitted one after another, in order");
+                Assert.AreEqual(parts[i], equipment.RowPart(i),
+                    "pieces bought together are fed and crafted one after another, in order");
             }
+
+            yield return Waits.Until(() => bay.ReadyToFit, 2f);
+            Assert.IsTrue(bay.ReadyToFit, "the last feed done, the bay is free to fit");
+            Assert.IsTrue(equipment.TryFit(0), "the Cargo Cradle's rack first");
 
             // The right-hand arm swings down to set the Cargo Cradle's rack on 07's back.
             Transform shoulder = rig.GetArmJoint(2, RoverBayJoint.Upper);
             Quaternion folded = shoulder.localRotation;
             shoulder.localRotation = folded * Quaternion.Euler(70f, 0f, 0f);
-            Weld(new RoverKitFitted(RoverKitPiece.CargoRack, false, _fixture.CargoCradleUpgrade.Id));
+            Seat();
             yield return new WaitForSeconds(tuning.SparkInterval * 1.5f);
             Assert.Greater(bay.SparkCountOf(2), tuning.SparkCount, "weld sparks fly from the fitting arm's tip");
             Assert.AreEqual(0, bay.SparkCountOf(0) + bay.SparkCountOf(1), "and only from it");
             shoulder.localRotation = folded;
-            Assert.IsTrue(bay.Working, "two more pieces to set on");
-            Weld(new RoverKitFitted(RoverKitPiece.LampBar, false, _fixture.WarmHeadlampUpgrade.Id));
-            Weld(new RoverKitFitted(RoverKitPiece.CapacitorDrums, false, _fixture.BoostCoilsUpgrade.Id));
+            Assert.AreEqual(2, equipment.RowCount, "two more parts to set on");
+            for (int i = 1; i < kit.Length; i++)
+            {
+                Assert.IsTrue(equipment.TryFit(0), $"{parts[i]} in its turn");
+                Seat();
+            }
+
+            for (int i = 0; i < kit.Length; i++)
+            {
+                Assert.IsTrue(_fixture.Rover.Has(abilities[i]), $"{kit[i].Id}'s part brings its ability");
+            }
 
             yield return new WaitForSeconds(tuning.SparkInterval * tuning.SparkBursts + tuning.SparkLifetime.y + 0.5f);
             Assert.AreEqual(0, bay.SparkCount, "the sparks die out (an idle bay costs nothing)");
@@ -572,12 +595,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture = GameplayFixture.Boot(_controls, slot);
             yield return null;
             Assert.AreEqual(1, _fixture.Gameplay.Upgrades.LevelOf(HoverJump), "the purchase was a checkpoint");
-            Assert.IsTrue(_fixture.Rover.Has(RoverAbility.HoverJump), "granted again on load");
+            Assert.IsTrue(_fixture.Rover.Has(RoverAbility.HoverJump), "fitted again on load");
+            Assert.IsTrue(_fixture.Gameplay.Equipment.IsFitted(RoverKitPiece.HoverCoils));
+            Assert.AreEqual(0, _fixture.Gameplay.Equipment.RowCount);
             Assert.IsTrue(_fixture.Rover.Has(RoverAbility.CargoCradle));
             Assert.IsTrue(_fixture.Rover.Has(RoverAbility.WarmHeadlamp));
             Assert.IsTrue(_fixture.Rover.Has(RoverAbility.BoostCoils));
             Assert.AreEqual(0, _fixture.Events.UpgradePurchased.Count, "a load is never a purchase");
             Assert.AreEqual(0, _fixture.Events.StationCued.Count, "nor a feed");
+            Assert.AreEqual(0, _fixture.Events.PartFitted.Count, "nor a fit: the rover reads the equipment");
             Assert.AreEqual(balance, _fixture.Gameplay.Materials.Total, "the checkpoint kept the change");
         }
 
@@ -808,10 +834,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture.Capture("12-reloaded-keepsakes");
         }
 
-        /// <summary>Stands in for the rover setting a piece on 07 in the bay (or a friend's gift appearing).</summary>
-        private void Weld(RoverKitFitted fitted)
+        /// <summary>Stands in for the rover's install moment seating a part on 07 (its Install Impact beat).</summary>
+        private void Seat()
         {
-            _fixture.Bootstrap.Context.Events.Publish(fitted);
+            _fixture.Bootstrap.Context.Events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Impact,
+                _fixture.Rover.Position, Vector3.up, 1f, 0f));
         }
 
         /// <summary>The review camera out in front of the tower's service port, a little aside.</summary>

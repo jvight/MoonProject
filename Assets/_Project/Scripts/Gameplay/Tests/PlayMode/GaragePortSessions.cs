@@ -48,9 +48,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             GameplaySystem gameplay = _fixture.Gameplay;
             GaragePort port = gameplay.Port;
             EventBus events = _fixture.Bootstrap.Context.Events;
-            var fittings = new List<PortFitting>();
+            var fittings = new List<PartFitted>();
             var lines = new List<string>();
-            using var fitted = events.Subscribe<PortFitting>(fittings.Add);
+            using var fitted = events.Subscribe<PartFitted>(fittings.Add);
             using var ticker = events.Subscribe<TickerLine>(line => lines.Add(line.Key));
 
             Relic duck = LooseAt(Duck, _fixture.Rover.Position + new Vector3(1f, 0.6f, 5f));
@@ -81,8 +81,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             });
             yield return Waits.Until(() => port.RingFitted, 4f);
             Assert.IsTrue(port.IsOpen, "the last cut opened it");
-            Assert.AreEqual(RoverKitPiece.TetherRing, fittings[0].Piece);
-            Assert.IsFalse(fittings[0].Restored);
+            Assert.AreEqual(RoverKitPiece.TetherRing, fittings[0].Part);
+            Assert.AreEqual(RoverSocket.Tether, fittings[0].Socket, "fitted through 07's equipment (0.5.5 §3.5)");
+            Assert.IsFalse(fittings[0].Gift, "the port's arm fits it");
             Assert.IsTrue(_fixture.Rover.Has(RoverAbility.Tether), "the tether wakes with the ring");
 
             Relic deck = LooseAt(Deck, port.TrayPosition + Vector3.up * 0.3f);
@@ -91,7 +92,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Waits.Until(() => port.DeckFitted, 6f);
             Release(_mouse.rightButton);
             Assert.AreEqual(2, fittings.Count);
-            Assert.AreEqual(RoverKitPiece.TapeDeck, fittings[1].Piece, "the arm fits the deck on 07's flank");
+            Assert.AreEqual(RoverKitPiece.TapeDeck, fittings[1].Part, "the arm fits the deck on 07");
+            Assert.AreEqual(RoverSocket.Deck, fittings[1].Socket);
             Assert.AreEqual(RelicState.Fitted, deck.State);
             Assert.IsFalse(deck.gameObject.activeSelf, "it rides on 07 now, nowhere on the ground");
 
@@ -100,8 +102,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             fittings.Clear();
             port.Restore(saved);
             port.Announce();
-            Assert.AreEqual(2, fittings.Count, "a loaded game has the ring and the deck back at once");
-            Assert.IsTrue(fittings[0].Restored && fittings[1].Restored);
+            Assert.IsEmpty(fittings, "a load publishes nothing: the rover reads the equipment");
+            Assert.IsTrue(gameplay.Equipment.IsFitted(RoverKitPiece.TetherRing), "the ring is back at once");
+            Assert.IsTrue(gameplay.Equipment.IsFitted(RoverKitPiece.TapeDeck), "and the deck");
         }
 
         private Relic LooseAt(string id, Vector3 position)

@@ -1054,17 +1054,18 @@ namespace MoonProject.Core.Events
     /// <summary>
     /// Fragment <see cref="FragmentId"/> is fully scanned and its dissolve begins (§1.2, D2): fragment
     /// <see cref="Index"/> + 1 of <see cref="Count"/> for <see cref="BlueprintId"/>. <see cref="Known"/> when the
-    /// blueprint was already complete: 3 Metal follow the dissolve instead of new knowledge.
+    /// blueprint was already complete: <see cref="Metal"/> follows the dissolve instead of new knowledge.
     /// </summary>
     public readonly struct FragmentScanned
     {
-        public FragmentScanned(string fragmentId, string blueprintId, int index, int count, bool known)
+        public FragmentScanned(string fragmentId, string blueprintId, int index, int count, bool known, int metal)
         {
             FragmentId = fragmentId ?? string.Empty;
             BlueprintId = blueprintId ?? string.Empty;
             Index = index;
             Count = count;
             Known = known;
+            Metal = metal;
         }
 
         public string FragmentId { get; }
@@ -1077,6 +1078,12 @@ namespace MoonProject.Core.Events
         public int Count { get; }
 
         public bool Known { get; }
+
+        /// <summary>
+        /// Metal a known blueprint's fragment pays after its dissolve (Gameplay's tuning; 0 for new knowledge): the
+        /// pickup note shows this amount.
+        /// </summary>
+        public int Metal { get; }
     }
 
     /// <summary>
