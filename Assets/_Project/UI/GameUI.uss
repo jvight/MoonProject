@@ -2164,6 +2164,41 @@ Label {
     opacity: 0;
 }
 
+/* The docked transfer view: every slot is a button, one press moves its stack */
+.cargo__column--home {
+    display: none;
+    margin-left: 34px;
+}
+
+.cargo--transfer .cargo__column--home {
+    display: flex;
+}
+
+.cargo__cell--button {
+    padding: 0;
+}
+
+.cargo__cell--button:hover {
+    border-color: var(--glass-hi);
+}
+
+.cargo__cell--button:focus {
+    border-width: 2.5px;
+    border-color: var(--glass-sel);
+}
+
+.cargo__transfer-hint {
+    display: none;
+    margin-top: 10px;
+    font-size: 19px;
+    color: var(--glass-sel);
+    -unity-text-align: middle-center;
+}
+
+.cargo--transfer .cargo__transfer-hint {
+    display: flex;
+}
+
 .cargo__grid {
     flex-direction: row;
     flex-wrap: wrap;

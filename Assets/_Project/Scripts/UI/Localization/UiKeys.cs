@@ -36,6 +36,9 @@ namespace MoonProject.UI
         public const string HintHold = "hint.hold";
         public const string NotYetTower = "notyet.tower";
         public const string HoldBoot = "ui.hold.boot";
+        public const string HintShelves = "hint.shelves";
+        public const string TransferToTrip = "ui.transfer.to_trip";
+        public const string TransferToHome = "ui.transfer.to_home";
         public const string BlueprintFound = "ui.blueprint.found";
         public const string BlueprintDelivered = "ui.blueprint.delivered";
 
