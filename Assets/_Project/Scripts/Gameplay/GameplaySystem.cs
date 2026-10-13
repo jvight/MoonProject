@@ -306,7 +306,7 @@ namespace MoonProject.Gameplay
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
                 !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context),
-                    _home.Dock.Position) ||
+                    _home.Dock.Position, Containers) ||
                 !_progression.Initialize(services, Power, _home, _workshop, _sonar, _friends, _relays,
                     Upgrades, _lift, _tower, TowerParts, () => _battery.Model.Charge01) ||
                 !_plotter.Initialize(services, Blueprints, _workshop, _progression.Tuning, Upgrades) ||
@@ -513,7 +513,7 @@ namespace MoonProject.Gameplay
         {
             try
             {
-                return new TowerPartField(TowerParts, transform, services, _salvage, _relays.Reach, _tower,
+                return new TowerPartField(TowerParts, transform, services, _salvage, _relays, _tower,
                     _friends.Tuning, _progression.Tuning, () => _progression.ChasmSeen, Containers);
             }
             catch (InvalidOperationException exception)

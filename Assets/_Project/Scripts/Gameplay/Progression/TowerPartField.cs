@@ -12,12 +12,12 @@ namespace MoonProject.Gameplay
     /// rests sealed in Art's container there (0.5.5 §2: the coil in the depot's crate, the transformer in the garage's
     /// junction box): once the heart is revealed (the depot's last cut; the garage's box only once 07 has looked across
     /// the chasm, P2) its seal glows to be cut, and as the lid stands open the part rises off its ItemSocket to the
-    /// open mouth and glints there, never touching the ground. The relay spare waits on the pad of the first mast 07
-    /// restores, once the tower's next level is its own (07 charges on that pad long before, M3-20), hovering, bobbing
-    /// and turning like a friend's part. A press of E beside a waiting part (<see cref="PickupReach"/>) draws it into
-    /// 07 to ride home (<see cref="TowerParts.PickUp"/>; Rover shows it). Parked on the tower's pad, 07 hands each
-    /// carried part to the port, lowest level first: it leaves 07's back (<see cref="TowerParts.Deliver"/>) and glides
-    /// on a soft arc into the hopper while 07 watches it go.
+    /// open mouth and glints there, never touching the ground. The relay spare waits on the shelf of the open service
+    /// cabinet at the foot of the first mast 07 restores, once the tower's next level is its own (07 charges on that
+    /// mast's pad long before, M3-20). A press of E beside a waiting part (<see cref="PickupReach"/>) draws it into 07
+    /// to ride home (<see cref="TowerParts.PickUp"/>; Rover shows it). Parked on the tower's pad, 07 hands each carried
+    /// part to the port, lowest level first: it leaves 07's back (<see cref="TowerParts.Deliver"/>) and glides on a
+    /// soft arc into the hopper while 07 watches it go.
     /// </summary>
     public sealed class TowerPartField : IDisposable
     {
@@ -56,6 +56,8 @@ namespace MoonProject.Gameplay
         private readonly float[] _since;
         private readonly float[] _flight;
         private readonly SealedContainer[] _containers;
+        private readonly Transform[] _shelves;
+        private readonly RelayField _relays;
         private readonly SealedContainers _sealed;
         private int _feeding = -1;
 
@@ -63,7 +65,7 @@ namespace MoonProject.Gameplay
         /// A part's model, site or container is missing (broken content).
         /// </exception>
         public TowerPartField(TowerParts parts, Transform parent, GameplayServices services, SalvageField salvage,
-            StationReach reach, RadioTower tower, FriendTuning friends, ProgressionTuning tuning, Func<bool> chasmSeen,
+            RelayField relays, RadioTower tower, FriendTuning friends, ProgressionTuning tuning, Func<bool> chasmSeen,
             SealedContainers containers)
         {
             _sealed = containers ?? throw new ArgumentNullException(nameof(containers));
@@ -74,7 +76,8 @@ namespace MoonProject.Gameplay
                 throw new ArgumentNullException(nameof(services));
             }
 
-            _reach = reach ?? throw new ArgumentNullException(nameof(reach));
+            _relays = relays != null ? relays : throw new ArgumentNullException(nameof(relays));
+            _reach = relays.Reach;
             _tower = tower != null ? tower : throw new ArgumentNullException(nameof(tower));
             _friends = friends != null ? friends : throw new ArgumentNullException(nameof(friends));
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
@@ -97,6 +100,7 @@ namespace MoonProject.Gameplay
             _since = new float[count];
             _flight = new float[count];
             _containers = new SealedContainer[count];
+            _shelves = new Transform[count];
             for (int i = 0; i < count; i++)
             {
                 TowerPart part = parts.PartAt(i);
@@ -217,7 +221,7 @@ namespace MoonProject.Gameplay
 
                     break;
                 case Phase.Resting:
-                    Vector3 at = _containers[i] != null ? Present(i, now) : Hover(i, now);
+                    Vector3 at = Present(i, now);
                     _glints.Add(_rest[i], i);
                     if (_pickups.Offer(Time.frameCount, _input.ExcavateHeld, PickupReach.TowerParts, i, at,
                             _rover.Position, _friends.PartReachRadius, _nouns[i]))
@@ -254,24 +258,13 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>A part with no container (the relay spare) hovers, bobs and turns as it eases into view.</summary>
-        private Vector3 Hover(int i, float now)
-        {
-            float bob = Mathf.Sin(now * 2f * Mathf.PI * _friends.PartBobFrequency + i) * _friends.PartBob;
-            Vector3 at = _rest[i] + Vector3.up * (_friends.PartHover + bob);
-            float heading = now * _friends.PartSpin + i * 360f / _models.Length;
-            float appear = Mathf.Clamp01((now - _since[i]) / _tuning.PartAppearSeconds);
-            _models[i].SetPositionAndRotation(at, Quaternion.Euler(0f, heading, 0f));
-            _models[i].localScale = _scales[i] * Ease.OutCubic(appear);
-            return at;
-        }
-
         /// <summary>
-        /// A part rises off its opened container's ItemSocket to the open mouth and rests there, in the container.
+        /// A part rises off its opened container's ItemSocket to the open mouth and rests there, in the container (the
+        /// relay spare stands on its cabinet's shelf already).
         /// </summary>
         private Vector3 Present(int i, float now)
         {
-            Transform socket = _containers[i].ItemSocket;
+            Transform socket = _shelves[i];
             float rise = Ease.OutCubic(Mathf.Clamp01((now - _since[i]) / _tuning.PartAppearSeconds));
             Vector3 at = Vector3.Lerp(socket.position, _rest[i], rise);
             _models[i].SetPositionAndRotation(at, socket.rotation);
@@ -387,6 +380,7 @@ namespace MoonProject.Gameplay
             SealedContainer container = _containers[i];
             if (container != null)
             {
+                _shelves[i] = container.ItemSocket;
                 rest = container.PresentPoint;
                 return container.StandsOpen;
             }
@@ -403,9 +397,10 @@ namespace MoonProject.Gameplay
             {
                 if (node != StationReach.Home && _reach.IsLit(node))
                 {
-                    Vector3 pad = _reach.Position(node);
-                    rest = SurfaceRules.OnSurface(_terrain, pad.x, pad.z);
-                    return true;
+                    SealedContainer cabinet = _relays.CabinetAt(node);
+                    _shelves[i] = cabinet.ItemSocket;
+                    rest = cabinet.PresentPoint;
+                    return cabinet.StandsOpen;
                 }
             }
 

@@ -7,6 +7,7 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// One instance of a relay mast's Art prefab (RelayMast or RelayMast_Broken; same node names, docs/ARCHITECTURE.md
     /// "Contract: relay masts"): its lamp lit through the emission contract (linear), its part socket and beam point,
+    /// the socket its service cabinet stands on,
     /// a blend from the broken instance's leaning pose up to its own (rocking past upright on the way), and a solid
     /// footing so 07 drives around it. Throws when a node is missing.
     /// </summary>
@@ -18,6 +19,7 @@ namespace MoonProject.Gameplay
         public const string LampNode = "Lamp";
         public const string PartSocketNode = "PartSocket";
         public const string BeamPointNode = "BeamPoint";
+        public const string CabinetSocketNode = "CabinetSocket";
 
         private const string Contract = "Relay mast";
 
@@ -36,6 +38,7 @@ namespace MoonProject.Gameplay
             Lamp = _pose.Node(_pose.IndexOf(LampNode));
             PartSocket = _pose.Node(_pose.IndexOf(PartSocketNode));
             BeamPoint = _pose.Node(_pose.IndexOf(BeamPointNode));
+            CabinetSocket = _pose.Node(_pose.IndexOf(CabinetSocketNode));
         }
 
         public Transform Root { get; }
@@ -51,6 +54,12 @@ namespace MoonProject.Gameplay
 
         /// <summary>On the junction box: 07's repair beam aims here.</summary>
         public Transform BeamPoint { get; }
+
+        /// <summary>
+        /// Beside the footing, +Z toward the pad: the mast's service cabinet stands here (0.5.5 §2), on the ground and
+        /// still while the mast leans or straightens.
+        /// </summary>
+        public Transform CabinetSocket { get; }
 
         public float LampLevel => _lamp.Intensity;
 

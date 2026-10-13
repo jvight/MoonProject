@@ -23,29 +23,6 @@ namespace MoonProject.Gameplay
             new Recipe(2, 1, 0), new Recipe(3, 1, 0), new Recipe(4, 1, 0), new Recipe(4, 2, 0),
         };
 
-        [Header("Relay part")]
-        [Tooltip("The part lies this far (m) from its mast's pad centre, nearest the middle of the range first " +
-                 "(min, max; the design caps it at 40).")]
-        [SerializeField] private Vector2 _partDistance = new Vector2(14f, 34f);
-
-        [Tooltip("Preferred distance (m) of the part from its mast.")]
-        [Range(5f, 40f)] [SerializeField] private float _partPreferred = 22f;
-
-        [Tooltip("Metres between the rings the part's spot is searched on.")]
-        [Range(1f, 10f)] [SerializeField] private float _partRingStep = 4f;
-
-        [Tooltip("Degrees between the spots tried on one ring.")]
-        [Range(5f, 90f)] [SerializeField] private float _partAngleStep = 20f;
-
-        [Tooltip("Steepest ground (degrees) a part may rest on.")]
-        [Range(2f, 30f)] [SerializeField] private float _partMaxSlope = 14f;
-
-        [Tooltip("Drivable ground (m) the part keeps on every side.")]
-        [Range(0f, 10f)] [SerializeField] private float _partMargin = 2f;
-
-        [Tooltip("Spots driven to from the pad (an A* over drivable ground) before giving up on a mast.")]
-        [Range(1, 60)] [SerializeField] private int _partPathTries = 16;
-
         [Header("Restoring")]
         [Tooltip("07 can restore a mast within this many metres (horizontal) of its part socket.")]
         [Range(1f, 15f)] [SerializeField] private float _restoreRadius = 6f;
@@ -148,13 +125,6 @@ namespace MoonProject.Gameplay
 
         public float MastReach => _mastReach;
         public int CostCount => _costs.Length;
-        public Vector2 PartDistance => _partDistance;
-        public float PartPreferred => _partPreferred;
-        public float PartRingStep => _partRingStep;
-        public float PartAngleStep => _partAngleStep;
-        public float PartMaxSlope => _partMaxSlope;
-        public float PartMargin => _partMargin;
-        public int PartPathTries => _partPathTries;
         public float RestoreRadius => _restoreRadius;
         public float RestoreHold => _restoreHold;
         public float Stitch => _stitch;
@@ -220,9 +190,7 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            return _partDistance.x <= 0f || _partDistance.y < _partDistance.x
-                ? "RelayTuning's part distance range is empty."
-                : null;
+            return null;
         }
     }
 }
