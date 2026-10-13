@@ -19,6 +19,7 @@ using MoonProject.Testing;
 using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 #if UNITY_EDITOR
+using UnityEditor;
 using UnityEditor.SceneManagement;
 #endif
 
@@ -110,6 +111,23 @@ namespace MoonProject.World.PlayModeTests
         private const float RingBaselineRadius = 1f;
         private const float RingReach = 70f;
         private const float RingCaptureSeconds = 0.8f;
+
+        // The network's handshake (north-star beat 7): the four basin masts restored in the save, the farthest lit one
+        // lit again, seen from high behind home looking out along the chain, at three moments of the pulse.
+        private const string BasinMastsSave =
+            "{\"formatVersion\":1,\"contentVersion\":\"0.5.5\",\"savedAtUtc\":\"2026-10-13T00:00:00Z\"," +
+            "\"sections\":[{\"key\":\"gameplay.relays\",\"version\":1,\"json\":\"{\\\"masts\\\":[" +
+            "{\\\"id\\\":\\\"relay.0\\\",\\\"part\\\":true,\\\"paid\\\":60,\\\"restored\\\":true}," +
+            "{\\\"id\\\":\\\"relay.1\\\",\\\"part\\\":true,\\\"paid\\\":60,\\\"restored\\\":true}," +
+            "{\\\"id\\\":\\\"relay.2\\\",\\\"part\\\":true,\\\"paid\\\":60,\\\"restored\\\":true}," +
+            "{\\\"id\\\":\\\"relay.3\\\",\\\"part\\\":true,\\\"paid\\\":60,\\\"restored\\\":true}" +
+            "]}\"}]}";
+
+        private const float PulseViewBack = 70f;
+        private const float PulseViewHeight = 45f;
+        private const float PulseViewFov = 50f;
+        private const float PulseCaptureHop = 0.5f;
+        private const string WorldSettingsPath = "Assets/_Project/Data/Tuning/WorldSettings.asset";
 
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "world-captures"));
@@ -340,6 +358,98 @@ namespace MoonProject.World.PlayModeTests
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
         }
 
+        /// <summary>
+        /// The network's handshake (north-star §4a beat 7) from a distance: with the basin's masts restored, the
+        /// farthest lit mast lights again and the pulse runs lamp to lamp back to home and out. Captures mid-hop on the
+        /// first link, mid-way through the chain and as it reaches home, to Logs/world-captures/network-pulse-*.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator NetworkPulse_IsCapturedMidHandshake_FromAfar()
+        {
+            Directory.CreateDirectory(SaveService.DefaultDirectory);
+            File.WriteAllText(Path.Combine(SaveService.DefaultDirectory,
+                CanyonSessionScene.SaveSlot + SaveService.Extension), BasinMastsSave);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+            IStationReach reach = context.Get<IStationReach>();
+            Vector3 home = reach.GetNode(0).LampPosition;
+            int origin = -1;
+            Vector3 centre = Vector3.zero;
+            for (int i = 1; i < reach.NodeCount; i++)
+            {
+                RelayNode node = reach.GetNode(i);
+                if (!node.Lit)
+                {
+                    continue;
+                }
+
+                centre += node.LampPosition;
+                bool farther = origin < 0 || (node.LampPosition - home).sqrMagnitude
+                    > (reach.GetNode(origin).LampPosition - home).sqrMagnitude;
+                origin = farther ? i : origin;
+            }
+
+            Assert.Greater(origin, 0, "the save lights at least one mast");
+            centre /= reach.LitCount - 1;
+            var hops = new List<NetworkPulseReached>();
+            using (context.Events.Subscribe<NetworkPulseReached>(hops.Add))
+            {
+                RelayNode lit = reach.GetNode(origin);
+                context.Events.Publish(new RelayRestored(lit.Id, lit.LampPosition, reach.LitCount - 1,
+                    reach.NodeCount - 1, "home", 1f));
+                Vector3 outward = Vector3.ProjectOnPlane(centre - home, Vector3.up).normalized;
+                Vector3 eye = home - outward * PulseViewBack + Vector3.up * PulseViewHeight;
+                Pose pose = LookPose("network_pulse", eye, Vector3.Lerp(home, centre, 0.5f), PulseViewFov);
+                Camera view = context.Get<IViewCamera>().Camera;
+                float hop = AssetDatabase.LoadAssetAtPath<WorldSettings>(WorldSettingsPath).NetworkPulse.HopSeconds;
+                yield return new WaitForSeconds(PulseCaptureHop * hop);
+                CapturePose(view, pose, "network-pulse-1-first-link");
+                yield return new WaitForSeconds(hop);
+                CapturePose(view, pose, "network-pulse-2-chain");
+                while (hops.Count == 0 || hops[hops.Count - 1].NodeId != "home")
+                {
+                    Assert.Less(Time.time - started, WakeTimeout * 10f, "the handshake reaches home");
+                    yield return null;
+                }
+
+                yield return new WaitForSeconds(PulseCaptureHop * hop);
+                CapturePose(view, pose, "network-pulse-3-home");
+            }
+
+            Debug.Log($"[network-pulse] lit masts {reach.LitCount - 1}, origin {reach.GetNode(origin).Id}, " +
+                $"hops so far {hops.Count}, farthest hop {hops[0].Hops}");
+            Assert.AreEqual(0, hops[0].Hop, "the handshake starts at the new mast");
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
         private static void Publish(GameContext context, FeelPhase phase, Vector3 tower, float strength, float seconds)
         {
             context.Events.Publish(new FeelBeat(FeelKind.Build, phase, tower, Vector3.up, strength, seconds));
@@ -392,6 +502,24 @@ namespace MoonProject.World.PlayModeTests
                 camera.enabled = false;
                 CopyPipelineSettings(view, camera);
                 camera.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(beads.center - eye));
+                FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight, Path.Combine(CaptureFolder, name + ".png"));
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+        }
+
+        private static void CapturePose(Camera view, Pose pose, string name)
+        {
+            var host = new GameObject("PulseReviewCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                Place(camera, pose);
                 FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight, Path.Combine(CaptureFolder, name + ".png"));
             }
             finally

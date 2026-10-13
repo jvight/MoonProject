@@ -102,6 +102,25 @@ namespace MoonProject.World
         [Range(0f, 2f)]
         [SerializeField] private float _pilotMinAngle = 0.4f;
 
+        [Header("The network's handshake home (north-star beat 7)")]
+        [Tooltip("Seconds the handshake's echo takes to run a powered cable from the tower's foot to home, when the " +
+            "network pulse reaches the tower.")]
+        [Range(0.3f, 6f)]
+        [SerializeField] private float _echoTravel = 1.2f;
+
+        [Tooltip("Seconds a cable segment takes to brighten as the echo reaches it.")]
+        [Range(0.02f, 2f)]
+        [SerializeField] private float _echoRise = 0.15f;
+
+        [Tooltip("Seconds a segment's echo glow eases back to the steady glow.")]
+        [Range(0.1f, 4f)]
+        [SerializeField] private float _echoTail = 0.9f;
+
+        [Tooltip("Peak glow of the echo (linear glow scale; a powered cable rests at Cable Steady): softer than " +
+            "power arriving.")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _echoPeak = 1.8f;
+
         [Header("The tower comes online (feel-pass §8.2)")]
         [Tooltip("Seconds a new power stage waits for the tower's build beat to reach its Follow before it applies " +
             "anyway (the beat takes about 6 s).")]
@@ -191,6 +210,10 @@ namespace MoonProject.World
         public float PreviewRise => _previewRise;
         public float PreviewTail => _previewTail;
         public float PreviewPeak => _previewPeak;
+        public float EchoTravel => _echoTravel;
+        public float EchoRise => _echoRise;
+        public float EchoTail => _echoTail;
+        public float EchoPeak => _echoPeak;
         public float PilotPeriod => _pilotPeriod;
         public float PilotSharpness => _pilotSharpness;
         public float PilotIntensity => _pilotIntensity;
