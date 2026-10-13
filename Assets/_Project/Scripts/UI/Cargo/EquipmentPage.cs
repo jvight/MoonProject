@@ -24,10 +24,14 @@ namespace MoonProject.UI
         public const string UnknownClass = "seven__socket--unknown";
         public const string FittedClass = "seven__socket--fitted";
         public const string TargetClass = "seven__target";
+        private const string RightColumnClass = "seven__socket-label--right-column";
         public const string AwayClass = "seven__card--away";
         private const string CardClass = "seven__card";
         private const string TooltipShownClass = "seven__tooltip--shown";
         private const int SocketCount = 12;
+
+        // A hair of air between a leader line's end and the name it points to.
+        private const float LeaderGap = 6f;
 
         private readonly CargoScreenSettings _settings;
         private readonly ILocalization _localization;
@@ -43,6 +47,12 @@ namespace MoonProject.UI
         private readonly GlyphView _tooltipGlyph;
         private readonly VisualElement _tooltipGlyphHolder;
         private readonly Label _ghost;
+        private readonly LeaderPainter _leaders;
+        private readonly Vector2[] _points = new Vector2[SocketCount];
+        private readonly bool[] _placedMask = new bool[SocketCount];
+        private readonly bool[] _wantsLabel = new bool[SocketCount];
+        private readonly bool[] _rightColumn = new bool[SocketCount];
+        private readonly float[] _labelY = new float[SocketCount];
         private readonly SocketView[] _sockets = new SocketView[SocketCount];
         private readonly CardView[] _cards;
         private InputDeviceKind _device = InputDeviceKind.KeyboardMouse;
@@ -77,6 +87,7 @@ namespace MoonProject.UI
             _tooltipGlyphHolder = Require<VisualElement>(root, "seven-tooltip-glyph");
             _tooltipGlyph = new GlyphView(_tooltipGlyphHolder, Require<Label>(root, "seven-tooltip-glyph-label"));
             _ghost = Require<Label>(root, "seven-ghost");
+            _leaders = new LeaderPainter(Require<VisualElement>(root, "seven-leaders"), SocketCount);
             _portrait.style.backgroundImage = Background.FromRenderTexture(portrait.Texture);
             for (int i = 0; i < SocketCount; i++)
             {
@@ -184,9 +195,15 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>Puts each socket where its mount lands on the portrait now (it follows 07's bob); none where it cannot.</summary>
+        /// <summary>
+        /// Puts each socket where its mount lands on the portrait now (it follows 07's bob; none where it cannot) and
+        /// its name in the column at the side, kept clear of the other names by a short leader line from the true point.
+        /// </summary>
         private void PlaceSockets()
         {
+            Rect area = _portrait.contentRect;
+            bool sized = area.width > 0f && area.height > 0f;
+            Rect image = ImageRect(area);
             for (int i = 0; i < SocketCount; i++)
             {
                 SocketView view = _sockets[i];
@@ -197,13 +214,70 @@ namespace MoonProject.UI
                     view.Root.style.display = placed ? DisplayStyle.Flex : DisplayStyle.None;
                 }
 
-                if (placed && uv != view.At)
+                _placedMask[i] = placed;
+                Vector2 point = placed
+                    ? new Vector2(image.x + uv.x * image.width, image.y + (1f - uv.y) * image.height)
+                    : Vector2.zero;
+                if (placed && point != view.At)
                 {
-                    view.At = uv;
-                    view.Root.style.left = Length.Percent(uv.x * 100f);
-                    view.Root.style.top = Length.Percent((1f - uv.y) * 100f);
+                    view.At = point;
+                    view.Root.style.left = point.x;
+                    view.Root.style.top = point.y;
                 }
+
+                _points[i] = point;
+                _wantsLabel[i] = sized && placed && view.Name.text.Length > 0;
             }
+
+            LabelLayout.Place(_points, _wantsLabel, area.width, area.height, _settings.LabelHeight, _settings.LabelGap,
+                _labelY, _rightColumn);
+            _leaders.Clear();
+            float inner = _settings.LabelMargin + _settings.LabelWidth;
+            for (int i = 0; i < SocketCount; i++)
+            {
+                SocketView view = _sockets[i];
+                bool shown = _wantsLabel[i];
+                if (shown != view.LabelShown)
+                {
+                    view.LabelShown = shown;
+                    view.Name.style.display = shown ? DisplayStyle.Flex : DisplayStyle.None;
+                }
+
+                if (!shown)
+                {
+                    continue;
+                }
+
+                bool right = _rightColumn[i];
+                if (right != view.LabelRight || !Mathf.Approximately(_labelY[i], view.LabelY))
+                {
+                    view.LabelRight = right;
+                    view.LabelY = _labelY[i];
+                    view.Name.EnableInClassList(RightColumnClass, right);
+                    view.Name.style.width = _settings.LabelWidth;
+                    view.Name.style.height = _settings.LabelHeight;
+                    view.Name.style.left = right ? area.width - inner : _settings.LabelMargin;
+                    view.Name.style.top = _labelY[i] - _settings.LabelHeight * 0.5f;
+                }
+
+                float edge = right ? area.width - inner - LeaderGap : inner + LeaderGap;
+                _leaders.Add(_points[i], new Vector2(edge, _labelY[i]));
+            }
+
+            _leaders.Apply();
+        }
+
+        /// <summary>
+        /// Where the portrait's picture sits inside its element: as large as fits, centred, so the columns of names
+        /// can take the room left and right of it.
+        /// </summary>
+        private Rect ImageRect(Rect area)
+        {
+            RenderTexture texture = _portraitSource.Texture;
+            float aspect = (float)texture.width / texture.height;
+            float width = Mathf.Min(area.width, area.height * aspect);
+            float height = width / aspect;
+            return new Rect((area.width - width) * 0.5f, (area.height - height) * 0.5f, width, height);
         }
 
         /// <summary>
@@ -309,11 +383,12 @@ namespace MoonProject.UI
             bay.AddToClassList("seven__bay");
             new BayIconPainter(bay);
             var name = new Label { pickingMode = PickingMode.Ignore };
-            name.AddToClassList("seven__socket-name");
+            name.AddToClassList("seven__socket-label");
+            name.style.display = DisplayStyle.None;
             root.Add(dot);
             root.Add(bay);
-            root.Add(name);
             _portrait.Add(root);
+            _portrait.Add(name);
             var view = new SocketView { Id = (RoverSocket)index, Root = root, Name = name, Bay = bay };
             root.RegisterCallback<PointerEnterEvent>(_ => ShowSocketTooltip(view));
             root.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
@@ -549,6 +624,9 @@ namespace MoonProject.UI
             public bool Fitted;
             public bool Placed;
             public Vector2 At = new Vector2(float.NaN, float.NaN);
+            public float LabelY = float.NaN;
+            public bool LabelRight;
+            public bool LabelShown;
         }
 
         private sealed class CardView

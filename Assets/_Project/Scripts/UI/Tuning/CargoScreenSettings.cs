@@ -60,6 +60,22 @@ namespace MoonProject.UI
         [Range(2f, 20f)]
         [SerializeField] private float _dragThreshold = 6f;
 
+        [Tooltip("Width (px) of the column down each side of the portrait where socket names sit.")]
+        [Range(80f, 240f)]
+        [SerializeField] private float _labelWidth = 150f;
+
+        [Tooltip("Height (px) of one socket name.")]
+        [Range(14f, 40f)]
+        [SerializeField] private float _labelHeight = 24f;
+
+        [Tooltip("Gap (px) kept between two socket names in a column.")]
+        [Range(0f, 16f)]
+        [SerializeField] private float _labelGap = 4f;
+
+        [Tooltip("Gap (px) between the portrait's edge and a column of names.")]
+        [Range(0f, 40f)]
+        [SerializeField] private float _labelMargin = 8f;
+
         [Tooltip("Gap (px) between a socket or part and the tooltip that names it.")]
         [Range(0f, 40f)]
         [SerializeField] private float _tooltipGap = 10f;
@@ -79,6 +95,14 @@ namespace MoonProject.UI
         public float DragThreshold => _dragThreshold;
 
         public float TooltipGap => _tooltipGap;
+
+        public float LabelWidth => _labelWidth;
+
+        public float LabelHeight => _labelHeight;
+
+        public float LabelGap => _labelGap;
+
+        public float LabelMargin => _labelMargin;
 
         public float BootTypeSeconds => _bootTypeSeconds;
 

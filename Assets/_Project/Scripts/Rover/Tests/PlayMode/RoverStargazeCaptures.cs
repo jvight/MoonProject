@@ -80,6 +80,12 @@ namespace MoonProject.Rover.PlayModeTests
         private const float EveningEndTimeout = 20f;
         private const float EveningEarlySeconds = 2f;
 
+        /// <summary>The scan capture: the fragment's distance ahead, the wait before each frame, and the flare's.
+        /// </summary>
+        private const float ScanReach = 2.5f;
+        private const float ScanFrameSeconds = 1.2f;
+        private const float ScanFlareFrameSeconds = 0.05f;
+
         /// <summary>The cut point ahead of 07, the Cells capture's frame waits, and the share of stage 2 at its frame.
         /// </summary>
         private const float CutReach = 1.4f;
@@ -289,6 +295,45 @@ namespace MoonProject.Rover.PlayModeTests
             Capture("cells-3-warm");
             Directory.CreateDirectory(CaptureFolder);
             File.WriteAllText(Path.Combine(CaptureFolder, "cells.md"), _report.ToString());
+        }
+
+        /// <summary>
+        /// 07 scanning a fragment (0.5.5 §1.2) from the chase camera: the lid fully open and the fan sweeping toward a
+        /// point ahead mid-scan, then the lens's flare as the scan completes.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator Scan_IsCapturedSweepingAndLearning_FromTheChaseCamera()
+        {
+            yield return Boot();
+            _report.AppendLine("# The scan (real Main scene)");
+            _report.AppendLine();
+            _report.AppendLine("| Capture | Orbit elevation (deg) | Camera above dust (m) | 07's gaze | Beat |");
+            _report.AppendLine("|---|---:|---:|---:|---|");
+            Set(_gamepad.rightStick, new Vector2(LookStick, 0f));
+            yield return Wait(StickProbeSeconds);
+            Set(_gamepad.rightStick, Vector2.zero);
+            float opening = Time.time + WakeEaseTimeout;
+            while (_cameraRig.Opening.IsActive)
+            {
+                Assert.Less(Time.time, opening, "The wake hands over first.");
+                yield return null;
+            }
+
+            yield return Wait(SettleSeconds);
+            Vector3 target = _rover.Position + _rover.Rotation * Vector3.forward * ScanReach + Vector3.up * CutRise;
+            _context.Events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Anticipate, target, Vector3.up, 0f, 0f));
+            yield return Wait(ScanFrameSeconds);
+            _context.Events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Act, target, Vector3.up, 0.5f, 0f));
+            Capture("scan-1-sweep");
+            yield return Wait(ScanFrameSeconds);
+            _context.Events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, target, Vector3.up, 1f, 0f));
+            yield return Wait(ScanFlareFrameSeconds);
+            Capture("scan-2-learned");
+            Directory.CreateDirectory(CaptureFolder);
+            File.WriteAllText(Path.Combine(CaptureFolder, "scan.md"), _report.ToString());
         }
 
         /// <summary>

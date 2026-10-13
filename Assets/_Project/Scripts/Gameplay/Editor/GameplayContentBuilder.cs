@@ -303,7 +303,7 @@ namespace MoonProject.Gameplay.Editor
 
                 var definition = ScriptableObject.CreateInstance<RelicDefinition>();
                 definition.Populate(recipe.Id, recipe.Mass, prefab, recipe.AnswerNote,
-                    SalvageEconomy.SiteId(recipe.Site), recipe.HeartOffset, recipe.Crew);
+                    SalvageEconomy.SiteId(recipe.Site), recipe.Crew);
                 definitions[i] = GeneratedAssets.CreateOrReplace(definition,
                     GameplayAssetPaths.RelicDefinition(recipe.Id));
             }

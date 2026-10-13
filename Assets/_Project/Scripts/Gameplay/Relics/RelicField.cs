@@ -7,14 +7,23 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Every relic in the world: spawns one <see cref="Relic"/> per catalog entry, half-sunk in the heart of the
-    /// salvage site it names (docs/features/M3-13), and keeps the "no loss, ever" promise — a loose relic that comes
-    /// to rest off the drivable floor (or sinks under it) floats gently back to the nearest reachable spot on the way
-    /// home.
+    /// Every relic in the world: spawns one <see cref="Relic"/> per catalog entry, half-sunk under the wreck debris of
+    /// the salvage site it names, in Art's pocket there (0.5.5 §2: RelicPocket_&lt;id&gt;/DigSpot, a dark gap at the
+    /// wreck's edge, never open regolith; docs/features/M3-13), and keeps the "no loss, ever" promise — a loose relic
+    /// that comes to rest off the drivable floor (or sinks under it) floats gently back to the nearest reachable spot
+    /// on the way home.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RelicField : MonoBehaviour
     {
+        /// <summary>
+        /// Art's pocket under each site's wreck debris where a relic is dug (0.5.5 §2): RelicPocket_&lt;id&gt;.
+        /// </summary>
+        private const string PocketPrefix = "RelicPocket_";
+
+        /// <summary>The empty inside a relic pocket where the glint and the dig go.</summary>
+        private const string DigSpotName = "DigSpot";
+
         /// <summary>Metres per step when searching for the nearest reachable spot toward home.</summary>
         private const float ReturnSearchStep = 2f;
 
@@ -80,7 +89,18 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < _sites.Length; i++)
             {
                 homes[i] = salvage.Find(definitions[i].SiteId);
-                _sites[i] = HeartOf(homes[i], definitions[i].HeartOffset);
+                Transform dig = homes[i].Root.Find(PocketPrefix + definitions[i].Id + "/" + DigSpotName);
+                if (dig == null)
+                {
+                    string pocket = PocketPrefix + definitions[i].Id + "/" + DigSpotName;
+                    Debug.LogError($"{nameof(RelicField)}: relic '{definitions[i].Id}' rests under the debris of " +
+                                   $"'{definitions[i].SiteId}', whose wreck has no '{pocket}' (Art's relic pockets, " +
+                                   "0.5.5 §2).", this);
+                    enabled = false;
+                    return false;
+                }
+
+                _sites[i] = new RelicSite(dig.position, dig.up);
             }
 
             _physicsMaterial = new PhysicsMaterial("Relic")
@@ -125,17 +145,6 @@ namespace MoonProject.Gameplay
             }
 
             return null;
-        }
-
-        /// <summary>
-        /// Where a relic rests: the site's heart, moved by <paramref name="offset"/> in the site's frame (x to its
-        /// right, y along its forward), on the ground the heart stands on.
-        /// </summary>
-        private RelicSite HeartOf(SalvageSite site, Vector2 offset)
-        {
-            Transform root = site.Root;
-            Vector3 heart = site.Heart + root.right * offset.x + root.forward * offset.y;
-            return new RelicSite(heart, _terrain.SampleNormal(heart.x, heart.z));
         }
 
         /// <summary>The relic with <paramref name="id"/>, or null.</summary>

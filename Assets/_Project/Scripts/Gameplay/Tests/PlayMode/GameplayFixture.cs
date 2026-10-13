@@ -376,8 +376,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 definitions[i] = Asset<RelicDefinition>();
                 definitions[i].Populate(RelicIds[i], RelicMasses[i],
                     Template("Relic_" + RelicIds[i], RelicSizes[i]), i,
-                    WorldAnchorIds.SitePrefix + RelicSites[i], i == RelicIds.Length - 1 ? new Vector2(1.2f, 0f)
-                        : Vector2.zero, RelicCrews[i]);
+                    WorldAnchorIds.SitePrefix + RelicSites[i], RelicCrews[i]);
             }
 
             relicCatalog.Populate(definitions);
@@ -755,6 +754,17 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             Node("Heart", root.transform, Vector3.zero);
+            for (int i = 0; i < RelicIds.Length; i++)
+            {
+                if (RelicSites[i] == name)
+                {
+                    // Art's relic pocket at the wreck's edge (0.5.5 §2): the gnome beside the duck's.
+                    Transform pocket = Node("RelicPocket_" + RelicIds[i], root.transform,
+                        i == RelicIds.Length - 1 ? new Vector3(1.2f, 0f, 0f) : Vector3.zero);
+                    Node("DigSpot", pocket, Vector3.zero);
+                }
+            }
+
             Transform crate = Named(Block(root.transform, new Vector3(0f, 0.3f, 2.4f), new Vector3(0.8f, 0.6f, 0.6f)),
                 "CrewCrate");
             Transform lid = Named(Block(crate, new Vector3(0f, 0.35f, 0f), new Vector3(0.82f, 0.1f, 0.62f)), "Lid");
