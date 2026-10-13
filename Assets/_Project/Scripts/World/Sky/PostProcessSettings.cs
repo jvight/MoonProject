@@ -98,8 +98,8 @@ namespace MoonProject.World
         [Range(0.01f, 1f)]
         [SerializeField] private float _vignetteSmoothness = 0.5f;
 
-        [Tooltip("Vignette colour.")]
-        [SerializeField] private Color _vignetteColor = new Color(0.05f, 0.03f, 0.12f);
+        [Tooltip("Vignette colour: a near-black cool grey, so the frame edges darken without a violet cast.")]
+        [SerializeField] private Color _vignetteColor = new Color(0.03f, 0.035f, 0.05f);
 
         [Tooltip("Film grain strength. Barely there.")]
         [Range(0f, 1f)]
