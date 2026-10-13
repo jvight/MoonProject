@@ -3,17 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Core.Input;
-using MoonProject.Gameplay;
 
 namespace MoonProject.UI
 {
     /// <summary>
     /// The cargo screen (docs/features/M3-25 §2.4; the PDA of docs/design/first-hour-qa.md R1): Tab or View opens a
-    /// Moonlight Glass panel over the blur, and the game goes on. The first page has 07's hold on the left (a grid of
-    /// slots, each with its material's icon and units out of its capacity, empty slots as faint outlines, the waiting
-    /// bundles) and home's shelves on the right (a grid per built shelf, a pencil outline for a free socket), with one
-    /// plain line under both. The second page, "07 can", lists each ability 07 has (its key, its word, one line) and the
+    /// Moonlight Glass panel over the blur, and the game goes on. The first page is 07's hold only (a grid of slots,
+    /// each with its material's icon and units out of its capacity, empty slots as faint outlines, the waiting
+    /// bundles) with one plain line under it; home's shelves belong to the docked storage view, not to Tab. The second page, "07 can", lists each ability 07 has (its key, its word, one line) and the
     /// kits decoded but not yet fitted as pencil sheets. Everything is written when the screen opens or something
     /// changed (<see cref="MarkDirty"/>); an open screen with nothing new allocates nothing.
     /// </summary>
@@ -21,39 +20,43 @@ namespace MoonProject.UI
     {
         public const string CellClass = "cargo__cell";
         public const string EmptyClass = "cargo__cell--empty";
+        public const string UnlitClass = "cargo__cell--unlit";
+        private const string BootingClass = "cargo--booting";
         private const string TabOnClass = "settings-tab--on";
         private const string TabSkinOnClass = "settings-tab-wrap--on";
+        private const string TabFocusClass = "settings-tab-wrap--focus";
         private const float CellGap = 6f;
-        private const float ColumnGap = 42f;
-        private const float ShelfGap = 22f;
-        private const int ShelfSlotsAcross = 6;
         private const int HoldSlotsAcross = 4;
         private const int WaitingCache = 100;
 
         private readonly CargoScreenSettings _settings;
         private readonly ILocalization _localization;
         private readonly ICargoHold _hold;
-        private readonly IHomeStorage _home;
         private readonly IRoverAbilities _abilities;
         private readonly ITechTree _tech;
         private readonly GlyphLabels _glyphs;
         private readonly IntText _numbers;
-        private readonly CargoTuning _tuning;
+        private readonly EventBus _events;
+        private readonly PromptLedger _ledger;
+        private readonly HoldBoot _boot;
+        private readonly VisualElement _root;
+        private readonly Label _bootLine;
         private readonly Reveal _reveal;
         private readonly VisualElement _panel;
         private readonly Button[] _tabs;
         private readonly VisualElement[] _pages;
         private readonly Label _waiting;
         private readonly VisualElement _holdGrid;
-        private readonly VisualElement _shelves;
         private readonly VisualElement _canRows;
         private readonly Label _summary;
         private readonly List<Cell> _holdCells = new List<Cell>();
-        private readonly List<Shelf> _shelfBlocks = new List<Shelf>();
         private readonly CanRow[] _rows = new CanRow[AbilityTable.Count];
         private readonly Dictionary<int, string> _pairs = new Dictionary<int, string>();
-        private readonly Dictionary<int, string> _shelfNames = new Dictionary<int, string>();
         private readonly string[] _waitingTexts = new string[WaitingCache];
+        private string _bootText = string.Empty;
+        private int _bootTyped = -1;
+        private int _bootLit;
+        private int _bootArrived;
         private int _tab;
         private bool _dirty = true;
         private float _cell;
@@ -61,12 +64,11 @@ namespace MoonProject.UI
         private Vector2 _fittedFor;
         private float _writtenCell = -1f;
         private int _writtenSummary = -1;
-        private int _writtenHomeShape = -1;
         private InputDeviceKind _device = InputDeviceKind.KeyboardMouse;
 
         public CargoScreen(UiLayout layout, CargoScreenSettings settings, ILocalization localization,
-            ICargoHold hold, IHomeStorage home, IRoverAbilities abilities, ITechTree tech, GlyphLabels glyphs,
-            IntText numbers, CargoTuning tuning)
+            ICargoHold hold, IRoverAbilities abilities, ITechTree tech, GlyphLabels glyphs, IntText numbers,
+            EventBus events, PromptLedger ledger)
         {
             if (layout == null)
             {
@@ -76,13 +78,15 @@ namespace MoonProject.UI
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _hold = hold ?? throw new ArgumentNullException(nameof(hold));
-            _home = home ?? throw new ArgumentNullException(nameof(home));
             _abilities = abilities ?? throw new ArgumentNullException(nameof(abilities));
             _tech = tech ?? throw new ArgumentNullException(nameof(tech));
             _glyphs = glyphs ?? throw new ArgumentNullException(nameof(glyphs));
             _numbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
-            _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
+            _events = events ?? throw new ArgumentNullException(nameof(events));
+            _ledger = ledger ?? throw new ArgumentNullException(nameof(ledger));
+            _boot = new HoldBoot(settings);
             VisualElement root = layout.Cargo;
+            _root = root;
             _reveal = new Reveal(root, settings.Reveal);
             _reveal.Snap(false);
             _panel = Require<VisualElement>(root, "cargo-panel");
@@ -97,8 +101,8 @@ namespace MoonProject.UI
                 Require<VisualElement>(root, "cargo-page-can"),
             };
             _waiting = Require<Label>(root, "cargo-waiting");
+            _bootLine = Require<Label>(root, "cargo-boot");
             _holdGrid = Require<VisualElement>(root, "cargo-hold-grid");
-            _shelves = Require<VisualElement>(root, "cargo-shelves");
             _canRows = Require<VisualElement>(root, "cargo-can-rows");
             _summary = Require<Label>(root, "cargo-summary");
             for (int i = 0; i < _tabs.Length; i++)
@@ -107,6 +111,8 @@ namespace MoonProject.UI
                 VisualElement skin = _tabs[i].parent;
                 new TabPainter(skin);
                 _tabs[i].clicked += () => SelectTab(tab);
+                _tabs[i].RegisterCallback<FocusInEvent>(_ => skin.AddToClassList(TabFocusClass));
+                _tabs[i].RegisterCallback<FocusOutEvent>(_ => skin.RemoveFromClassList(TabFocusClass));
             }
 
             for (int i = 0; i < _rows.Length; i++)
@@ -129,17 +135,11 @@ namespace MoonProject.UI
         /// <summary>The button to focus when the screen opens (gamepad and keyboard move from it).</summary>
         public Button FirstTab => _tabs[0];
 
+        /// <summary>True while the first-press boot plays (tests and captures).</summary>
+        public bool IsBooting => _boot.IsRunning;
+
         /// <summary>The slot cells on 07's grid now (tests and captures).</summary>
         public int HoldCellCount => _holdCells.Count;
-
-        /// <summary>Home's shelves as built on screen: built and free sockets together (tests and captures).</summary>
-        public int ShelfBlockCount => _shelfBlocks.Count;
-
-        /// <summary>The cost line on free socket <paramref name="shelf"/>'s pencil box (tests and captures).</summary>
-        public string ShelfCostText(int shelf)
-        {
-            return _shelfBlocks[shelf].Cost.text;
-        }
 
         /// <summary>How many rows of the "07 can" page are shown (tests and captures).</summary>
         public int CanRowCount
@@ -215,11 +215,19 @@ namespace MoonProject.UI
 
             _dirty = true;
             _reveal.Show();
+            if (!_ledger.HoldBooted && _tab == 0)
+            {
+                StartBoot();
+            }
         }
 
         public void Close()
         {
             _reveal.Hide();
+            if (_boot.IsRunning)
+            {
+                EndBoot(false);
+            }
         }
 
         /// <summary>The hold, the shelves or the abilities changed: write the screen again while it is open.</summary>
@@ -246,7 +254,6 @@ namespace MoonProject.UI
         public void Relocalize()
         {
             _pairs.Clear();
-            _shelfNames.Clear();
             Array.Clear(_waitingTexts, 0, _waitingTexts.Length);
             _writtenSummary = -1;
             _dirty = true;
@@ -261,6 +268,12 @@ namespace MoonProject.UI
             if (_reveal.IsHidden)
             {
                 return;
+            }
+
+            bool booting = _boot.IsRunning;
+            if (booting)
+            {
+                _boot.Step(deltaTime);
             }
 
             if (device != _device)
@@ -294,6 +307,114 @@ namespace MoonProject.UI
                 _dirty = false;
                 Refresh();
             }
+
+            if (booting)
+            {
+                PlayBootFrame();
+            }
+        }
+
+        /// <summary>
+        /// The first Tab press (docs/design/0.5.5-owner-feedback.md §3): the screen opens dark, one line of system text
+        /// types in, the slot outlines light and the items 07 starts with slide in. Once per save.
+        /// </summary>
+        private void StartBoot()
+        {
+            int slots = _hold.SlotCount;
+            int items = 0;
+            for (int i = 0; i < slots; i++)
+            {
+                items += _hold.GetSlot(i).IsEmpty ? 0 : 1;
+            }
+
+            _boot.Start(slots, items);
+            _ledger.RecordHoldBooted();
+            _bootText = string.Format(_localization.Get(UiKeys.HoldBoot), slots);
+            _bootTyped = -1;
+            _bootLit = 0;
+            _bootArrived = 0;
+            _root.AddToClassList(BootingClass);
+            _events.Publish(new HoldBootStarted());
+            _events.Publish(new RoverHatchCycleRequested(_boot.TotalSeconds + _settings.BootHatchLingerSeconds));
+        }
+
+        private void EndBoot(bool completed)
+        {
+            _root.RemoveFromClassList(BootingClass);
+            for (int i = 0; i < _holdCells.Count; i++)
+            {
+                Cell cell = _holdCells[i];
+                cell.Root.RemoveFromClassList(UnlitClass);
+                SetItem(cell, 1f);
+            }
+
+            _boot.Stop();
+            if (completed)
+            {
+                _events.Publish(new RoverChirpRequested(ChirpMood.Affirm, 1f));
+            }
+        }
+
+        private void PlayBootFrame()
+        {
+            int typed = Mathf.CeilToInt(_boot.TypedFraction * _bootText.Length);
+            if (typed != _bootTyped)
+            {
+                _bootTyped = typed;
+                _bootLine.text = _bootText.Substring(0, typed);
+            }
+
+            int lit = _boot.LitCount;
+            for (; _bootLit < lit; _bootLit++)
+            {
+                _events.Publish(new HoldSlotLit(_bootLit, _holdCells.Count));
+            }
+
+            int item = 0;
+            for (int i = 0; i < _holdCells.Count; i++)
+            {
+                Cell cell = _holdCells[i];
+                cell.Root.EnableInClassList(UnlitClass, i >= lit);
+                if (_hold.GetSlot(i).IsEmpty)
+                {
+                    continue;
+                }
+
+                SetItem(cell, _boot.ItemProgress(item));
+                item++;
+            }
+
+            int arrived = _boot.ArrivedCount;
+            int seen = 0;
+            for (int i = 0; i < _holdCells.Count && _bootArrived < arrived; i++)
+            {
+                if (_hold.GetSlot(i).IsEmpty)
+                {
+                    continue;
+                }
+
+                if (seen == _bootArrived)
+                {
+                    _events.Publish(new HoldItemArrived(i));
+                    _bootArrived++;
+                }
+
+                seen++;
+            }
+
+            if (!_boot.IsRunning)
+            {
+                EndBoot(true);
+            }
+        }
+
+        /// <summary>An item at <paramref name="progress"/> of its slide: it comes in from the left, fading up.</summary>
+        private void SetItem(Cell cell, float progress)
+        {
+            float eased = 1f - (1f - progress) * (1f - progress);
+            cell.Icon.style.opacity = eased;
+            cell.Units.style.opacity = eased;
+            cell.Icon.style.translate = new Translate(-_settings.BootSlideDistance * (1f - eased), 0f);
         }
 
         private float FitCell(Vector2 panelSize)
@@ -303,10 +424,7 @@ namespace MoonProject.UI
                 return _settings.MaxCell;
             }
 
-            // The widest row of cells: 07's grid, then the two shelves side by side, with the gaps between.
-            float cells = HoldSlotsAcross + 2 * ShelfSlotsAcross;
-            float gaps = cells * CellGap + ColumnGap + ShelfGap;
-            float cell = (panelSize.x * _settings.WidthShare - gaps) / cells;
+            float cell = panelSize.x * _settings.WidthShare / HoldSlotsAcross - CellGap;
             return Mathf.Clamp(cell * _shrink, _settings.MinCell, _settings.MaxCell);
         }
 
@@ -316,7 +434,6 @@ namespace MoonProject.UI
             if (_tab == 0)
             {
                 RefreshHold();
-                RefreshHome();
                 WriteSummary();
             }
             else
@@ -330,8 +447,8 @@ namespace MoonProject.UI
         private void RefreshHold()
         {
             int count = _hold.SlotCount;
-            Fit(_holdCells, _holdGrid, count);
-            Fill(_holdCells, _hold, 0, count);
+            Fit(count);
+            Fill(count);
             _holdGrid.style.width = HoldSlotsAcross * (_cell + CellGap);
             int waiting = _hold.WaitingBundles;
             _waiting.style.display = waiting > 0 ? DisplayStyle.Flex : DisplayStyle.None;
@@ -348,152 +465,42 @@ namespace MoonProject.UI
                 string.Format(_localization.Get(UiKeys.CargoWaiting), waiting));
         }
 
-        private void RefreshHome()
-        {
-            int shelves = _home.ShelfCount;
-            int shape = shelves * 1000 + Mathf.RoundToInt(_cell);
-            for (int i = 0; i < shelves; i++)
-            {
-                shape = shape * 31 + (_home.GetShelf(i).Built ? _home.GetShelf(i).SlotCount + 1 : 0);
-            }
-
-            if (shape != _writtenHomeShape || _shelfBlocks.Count != shelves)
-            {
-                BuildShelves(shelves);
-                _writtenHomeShape = shape;
-            }
-
-            for (int i = 0; i < shelves; i++)
-            {
-                HomeShelf shelf = _home.GetShelf(i);
-                Shelf block = _shelfBlocks[i];
-                if (!shelf.Built)
-                {
-                    continue;
-                }
-
-                Fill(block.Cells, _home, shelf.FirstSlot, shelf.SlotCount);
-                block.Grid.style.width = ShelfSlotsAcross * (_cell + CellGap);
-            }
-
-            _shelves.style.width = 2 * (ShelfSlotsAcross * (_cell + CellGap) + ShelfGap);
-        }
-
-        private void BuildShelves(int shelves)
-        {
-            _shelves.Clear();
-            _shelfBlocks.Clear();
-            for (int i = 0; i < shelves; i++)
-            {
-                HomeShelf shelf = _home.GetShelf(i);
-                var root = new VisualElement { pickingMode = PickingMode.Ignore };
-                root.AddToClassList("cargo__shelf");
-                var name = new Label { pickingMode = PickingMode.Ignore };
-                name.AddToClassList("cargo__shelf-name");
-                name.text = ShelfName(i + 1);
-                root.Add(name);
-                var block = new Shelf { Root = root };
-                if (shelf.Built)
-                {
-                    var grid = new VisualElement { pickingMode = PickingMode.Ignore };
-                    grid.AddToClassList("cargo__grid");
-                    root.Add(grid);
-                    block.Grid = grid;
-                    block.Cells = new List<Cell>();
-                    Fit(block.Cells, grid, shelf.SlotCount);
-                }
-                else
-                {
-                    var pencil = new VisualElement { pickingMode = PickingMode.Ignore };
-                    pencil.AddToClassList("cargo__pencil");
-                    pencil.style.width = ShelfSlotsAcross * (_cell + CellGap) - CellGap;
-                    pencil.style.height = 2 * (_cell + CellGap) - CellGap;
-                    var text = new Label(_localization.Get(UiKeys.CargoShelfFree)) { pickingMode = PickingMode.Ignore };
-                    text.AddToClassList("cargo__pencil-text");
-                    pencil.Add(text);
-                    var cost = new Label(CostLine(_tuning.ShelfCost(i - _tuning.BuiltInShelves)))
-                    {
-                        pickingMode = PickingMode.Ignore,
-                    };
-                    cost.AddToClassList("cargo__pencil-text");
-                    cost.AddToClassList("cargo__pencil-cost");
-                    pencil.Add(cost);
-                    block.Cost = cost;
-                    root.Add(pencil);
-                }
-
-                _shelves.Add(root);
-                _shelfBlocks.Add(block);
-            }
-        }
-
-        /// <summary>"Cost: 4 Metal, 1 Wiring": what a shelf takes, in the materials' names.</summary>
-        private string CostLine(Recipe cost)
-        {
-            string parts = string.Empty;
-            for (int i = 0; i < Materials.RecipeCount; i++)
-            {
-                SalvageMaterial material = Materials.At(i);
-                int need = cost.Of(material);
-                if (need <= 0)
-                {
-                    continue;
-                }
-
-                string part = string.Format(_localization.Get(UiKeys.CargoCostPart), need,
-                    _localization.Get(UiKeys.MaterialName(material)));
-                parts = parts.Length == 0 ? part : string.Concat(parts, ", ", part);
-            }
-
-            return string.Format(_localization.Get(UiKeys.CargoShelfCost), parts);
-        }
-
-        private string ShelfName(int number)
-        {
-            return _shelfNames.TryGetValue(number, out string text)
-                ? text
-                : _shelfNames[number] = string.Format(_localization.Get(UiKeys.CargoShelf), number);
-        }
-
         private void WriteSummary()
         {
             int holdUsed = _hold.UsedSlots;
             int holdSlots = _hold.SlotCount;
-            int homeUsed = _home.UsedSlots;
-            int homeSlots = _home.SlotCount;
-            int key = ((holdUsed * 97 + holdSlots) * 97 + homeUsed) * 97 + homeSlots;
+            int key = holdUsed * 97 + holdSlots;
             if (key == _writtenSummary)
             {
                 return;
             }
 
             _writtenSummary = key;
-            _summary.text = string.Format(_localization.Get(UiKeys.CargoSummary), holdUsed, holdSlots, homeUsed,
-                homeSlots);
+            _summary.text = string.Format(_localization.Get(UiKeys.CargoSummary), holdUsed, holdSlots);
         }
 
-        /// <summary>Grows or trims <paramref name="cells"/> to <paramref name="count"/> cells in <paramref name="grid"/>.</summary>
-        private void Fit(List<Cell> cells, VisualElement grid, int count)
+        /// <summary>Grows or trims 07's grid to <paramref name="count"/> cells.</summary>
+        private void Fit(int count)
         {
-            while (cells.Count < count)
+            while (_holdCells.Count < count)
             {
-                cells.Add(BuildCell(grid));
+                _holdCells.Add(BuildCell(_holdGrid));
             }
 
-            while (cells.Count > count)
+            while (_holdCells.Count > count)
             {
-                Cell last = cells[cells.Count - 1];
-                grid.Remove(last.Root);
-                cells.RemoveAt(cells.Count - 1);
+                Cell last = _holdCells[_holdCells.Count - 1];
+                _holdGrid.Remove(last.Root);
+                _holdCells.RemoveAt(_holdCells.Count - 1);
             }
         }
 
-        private void Fill(List<Cell> cells, IMaterialSlots slots, int first, int count)
+        private void Fill(int count)
         {
             for (int i = 0; i < count; i++)
             {
-                Cell cell = cells[i];
-                MaterialSlot slot = slots.GetSlot(first + i);
+                Cell cell = _holdCells[i];
+                MaterialSlot slot = _hold.GetSlot(i);
                 cell.Root.style.width = _cell;
                 cell.Root.style.height = _cell;
                 if (slot.IsEmpty)
@@ -528,7 +535,7 @@ namespace MoonProject.UI
             root.Add(icon);
             root.Add(units);
             grid.Add(root);
-            return new Cell { Root = root, Painter = painter, Units = units };
+            return new Cell { Root = root, Icon = icon, Painter = painter, Units = units };
         }
 
         private void RefreshAbilities()
@@ -599,16 +606,9 @@ namespace MoonProject.UI
         private sealed class Cell
         {
             public VisualElement Root;
+            public VisualElement Icon;
             public MaterialIconPainter Painter;
             public Label Units;
-        }
-
-        private sealed class Shelf
-        {
-            public VisualElement Root;
-            public VisualElement Grid;
-            public List<Cell> Cells;
-            public Label Cost;
         }
 
         private sealed class CanRow

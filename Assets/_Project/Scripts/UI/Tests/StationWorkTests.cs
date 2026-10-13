@@ -72,16 +72,12 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void EveryStation_HasALineOfItsOwn()
+        public void OnlyTheBay_SaysALine_WhenItsWorkShows()
         {
-            var lines = new HashSet<string>();
-            foreach (UpgradeStationKind station in Enum.GetValues(typeof(UpgradeStationKind)))
-            {
-                Assert.IsTrue(lines.Add(UiKeys.StationLine(station)), $"{station} shares its line");
-            }
-
-            Assert.AreEqual(UiKeys.TowerPurchased, UiKeys.StationLine(UpgradeStationKind.RadioTower));
-            Assert.AreEqual(UiKeys.BayFitted, UiKeys.StationLine(UpgradeStationKind.Workshop));
+            Assert.IsFalse(UiKeys.TryStationLine(UpgradeStationKind.RadioTower, out _),
+                "the tower says nothing: the world shows the stitch, then the reward card");
+            Assert.IsTrue(UiKeys.TryStationLine(UpgradeStationKind.Workshop, out string key));
+            Assert.AreEqual(UiKeys.BayFitted, key);
         }
     }
 }

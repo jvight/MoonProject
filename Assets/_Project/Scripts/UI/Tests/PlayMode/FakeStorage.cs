@@ -65,44 +65,6 @@ namespace MoonProject.UI.PlayModeTests
         public int WaitingBundles { get; set; }
     }
 
-    /// <summary>Home's shelves, set by hand.</summary>
-    public sealed class FakeHome : FakeSlots, IHomeStorage
-    {
-        private readonly List<HomeShelf> _shelves = new List<HomeShelf>();
-
-        public int ShelfCount => _shelves.Count;
-
-        public HomeShelf GetShelf(int index)
-        {
-            return _shelves[index];
-        }
-
-        public int OverflowUnits(SalvageMaterial material)
-        {
-            return 0;
-        }
-
-        /// <summary>
-        /// Lays out <paramref name="built"/> built shelves of <paramref name="slotsPerShelf"/> slots (the first
-        /// ones filled from <paramref name="filled"/>) and <paramref name="free"/> free sockets.
-        /// </summary>
-        public void Lay(int built, int free, int slotsPerShelf, params MaterialSlot[] filled)
-        {
-            int total = built * slotsPerShelf;
-            Set(total - filled.Length, filled);
-            _shelves.Clear();
-            for (int i = 0; i < built; i++)
-            {
-                _shelves.Add(new HomeShelf(0, i * slotsPerShelf, slotsPerShelf, true, true));
-            }
-
-            for (int i = 0; i < free; i++)
-            {
-                _shelves.Add(new HomeShelf(0, total, 0, false, false));
-            }
-        }
-    }
-
     /// <summary>Every material described with the names the tables hold.</summary>
     public sealed class FakeCatalog : IMaterialCatalog
     {

@@ -15,7 +15,6 @@ namespace MoonProject.UI
     internal sealed class RecipeCard
     {
         private const string TowerWhereKey = "ui.recipecard.tower";
-        private const string BlueprintWhereKey = "ui.recipecard.blueprint";
         private const string NeedsKey = "ui.recipecard.needs";
 
         private readonly ILocalization _localization;
@@ -26,13 +25,12 @@ namespace MoonProject.UI
         private readonly Label _title;
         private readonly Label _level;
         private readonly Label _needsWord;
-        private readonly Label _part;
         private readonly Label _where;
         private readonly RecipeView _needs;
         private string _shownId;
         private int _shownLevel = -1;
-        private string _shownPart;
         private bool _shownSheet;
+        private bool _shownReady = true;
 
         /// <param name="hud">The HUD holding the card (recipe-card).</param>
         public RecipeCard(VisualElement hud, RevealSettings reveal, ILocalization localization, IntText numbers,
@@ -54,14 +52,15 @@ namespace MoonProject.UI
             _title = Require<Label>(root, "recipe-card-title");
             _level = Require<Label>(root, "recipe-card-level");
             _needsWord = Require<Label>(root, "recipe-card-needs-word");
-            _part = Require<Label>(root, "recipe-card-part");
             _where = Require<Label>(root, "recipe-card-where");
-            _needs = new RecipeView(Require<VisualElement>(root, "recipe-card-needs"),
-                Require<Label>(root, "recipe-card-short"), localization, numbers);
+            _needs = new RecipeView(Require<VisualElement>(root, "recipe-card-needs"), localization, numbers);
             Relocalize();
         }
 
         public bool IsVisible => !_reveal.IsHidden;
+
+        /// <summary>True while 07's view rests on a recipe the card would show (before the guidance slot decides).</summary>
+        public bool Wants { get; private set; }
 
         /// <summary>The upgrade whose card is up (or easing), or null (tests and captures).</summary>
         public string Shown => _shownId;
@@ -70,7 +69,9 @@ namespace MoonProject.UI
         /// <param name="open">False while something else holds the screen.</param>
         public void Tick(float deltaTime, bool open)
         {
-            string looked = open && !_shop.IsAtStation ? _look.Looked : null;
+            string looked = !_shop.IsAtStation ? _look.Looked : null;
+            Wants = looked != null && _shop.TryGetOffer(looked, out UpgradeOffer wanted) && !wanted.IsMaxed;
+            looked = open ? looked : null;
             if (looked != null && _shop.TryGetOffer(looked, out UpgradeOffer offer) && !offer.IsMaxed)
             {
                 Write(looked, offer, _look.IsSheet);
@@ -94,7 +95,6 @@ namespace MoonProject.UI
             _needs.Relocalize();
             _shownId = null;
             _shownLevel = -1;
-            _shownPart = null;
         }
 
         private void Write(string id, UpgradeOffer offer, bool sheet)
@@ -105,29 +105,17 @@ namespace MoonProject.UI
                 _shownId = id;
                 _shownLevel = level;
                 _shownSheet = sheet;
-                _shownPart = null;
                 _title.text = _localization.Get(UiKeys.UpgradeName(id));
                 _level.text = _localization.Get(UiKeys.UpgradeTitle(id, level));
-                _where.text = _localization.Get(sheet ? BlueprintWhereKey : TowerWhereKey);
-                WritePart(null);
+                _where.text = _localization.Get(TowerWhereKey);
             }
 
-            string part = _shop.ComponentNeeded(id);
-            if (!ReferenceEquals(part, _shownPart))
+            _needs.Show(offer.NextCost, _stock, _shop.ComponentNeeded(id));
+            bool ready = !sheet && _needs.IsComplete;
+            if (ready != _shownReady)
             {
-                WritePart(part);
-            }
-
-            _needs.Show(offer.NextCost, _stock);
-        }
-
-        private void WritePart(string part)
-        {
-            _shownPart = part;
-            _part.style.display = part != null ? DisplayStyle.Flex : DisplayStyle.None;
-            if (part != null)
-            {
-                _part.text = _localization.Get(UiKeys.ComponentNeeded(part));
+                _where.style.display = ready ? DisplayStyle.Flex : DisplayStyle.None;
+                _shownReady = ready;
             }
         }
 

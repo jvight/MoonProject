@@ -113,18 +113,19 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void TheRecipeView_DimsTheShort_AndWritesOneQuietNeedLine_InTheCurrentLanguage()
+        public void TheRecipeView_DimsTheShort_AndShowsAMissingComponentAsOneRow_InTheCurrentLanguage()
         {
             var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(UiAssetPaths.Uxml);
             Assert.IsNotNull(uxml, UiAssetPaths.Uxml);
             LocalizationService localization = TestTables.Localization(new EventBus(),
-                UiKeys.RecipeNeed, "{0} more {1} to salvage", "Cần trục vớt thêm {0} {1}",
                 UiKeys.RecipeRow, "{0} (have {1})", "{0} (có {1})",
                 UiKeys.MaterialName(SalvageMaterial.Metal), "metal", "kim loại",
                 UiKeys.MaterialName(SalvageMaterial.Wiring), "wiring", "dây điện",
-                UiKeys.MaterialName(SalvageMaterial.Optics), "optics", "quang học");
+                UiKeys.MaterialName(SalvageMaterial.Optics), "optics", "quang học",
+                "pickup.part_towercoil", "Tower Coil", "cuộn dây tháp",
+                UiKeys.ComponentNeeded("Part_TowerCoil"), "Coil crate · Supply Depot", "Thùng cuộn dây · Kho tiếp tế");
             var layout = new UiLayout(uxml.Instantiate());
-            var view = new RecipeView(layout.TowerRecipe, layout.TowerNeed, localization, new IntText(100));
+            var view = new RecipeView(layout.TowerRecipe, localization, new IntText(100));
             var stock = new Stock { Metal = 2, Wiring = 9 };
 
             view.Show(new Recipe(6, 4, 0), stock);
@@ -136,26 +137,26 @@ namespace MoonProject.UI.Tests
             Assert.IsTrue(slots.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass));
             Assert.IsFalse(slots.Root(SalvageMaterial.Wiring).ClassListContains(MaterialSlots.ShortClass));
             Assert.AreEqual(DisplayStyle.None, slots.Root(SalvageMaterial.Optics).style.display.value);
-            Assert.AreEqual("4 more metal to salvage", layout.TowerNeed.text);
-            Assert.AreEqual(DisplayStyle.Flex, layout.TowerNeed.style.display.value);
             Assert.IsFalse(view.IsAffordable);
+            Assert.AreEqual(string.Empty, view.PartText, "no component is waited for");
 
-            string line = layout.TowerNeed.text;
-            view.Show(new Recipe(7, 4, 0), stock);
-            Assert.AreEqual("5 more metal to salvage", layout.TowerNeed.text);
-            view.Show(new Recipe(6, 4, 0), stock);
-            Assert.AreSame(line, layout.TowerNeed.text, "a need line seen before is reused, not formatted again");
+            view.Show(new Recipe(6, 4, 0), stock, "Part_TowerCoil");
+            Assert.AreEqual("Tower Coil | 1 (have 0) | Coil crate · Supply Depot", view.PartText,
+                "the missing component is one more row, with where to find it in small type");
 
             localization.SetLanguage(TestTables.Vietnamese);
             view.Relocalize();
-            view.Show(new Recipe(6, 4, 0), stock);
-            Assert.AreEqual("Cần trục vớt thêm 4 kim loại", layout.TowerNeed.text);
+            view.Show(new Recipe(6, 4, 0), stock, "Part_TowerCoil");
+            Assert.AreEqual("cuộn dây tháp | 1 (có 0) | Thùng cuộn dây · Kho tiếp tế", view.PartText);
 
             stock.Metal = 6;
-            view.Show(new Recipe(6, 4, 0), stock);
+            view.Show(new Recipe(6, 4, 0), stock, "Part_TowerCoil");
             Assert.IsFalse(slots.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass));
-            Assert.AreEqual(DisplayStyle.None, layout.TowerNeed.style.display.value, "covered: the line goes");
             Assert.IsTrue(view.IsAffordable);
+            Assert.IsFalse(view.IsComplete, "the materials are in, the component is not");
+            view.Show(new Recipe(6, 4, 0), stock);
+            Assert.IsTrue(view.IsComplete);
+            Assert.AreEqual(string.Empty, view.PartText);
         }
 
         /// <summary>A material stock the test sets by hand.</summary>

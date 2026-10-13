@@ -95,13 +95,11 @@ namespace MoonProject.UI
             TowerRing = Require<VisualElement>("tower-ring");
             TowerRingGlyph = Require<Label>("tower-ring-glyph");
             TowerHoldWord = Require<Label>("tower-hold-word");
-            TowerNeed = Require<Label>("tower-need");
             TowerRecipe = Require<VisualElement>("tower-recipe");
             TowerChoices = Require<VisualElement>("tower-choices");
             TowerPick = Require<VisualElement>("tower-pick");
             TowerPickGlyph = Require<VisualElement>("tower-pick-glyph");
             TowerPickGlyphLabel = Require<Label>("tower-pick-glyph-label");
-            TowerPickWord = Require<Label>("tower-pick-word");
 
             Ticker = Require<VisualElement>("ticker");
             TickerLamp = Require<VisualElement>("ticker-lamp");
@@ -131,7 +129,6 @@ namespace MoonProject.UI
             RelayTagRing = Require<VisualElement>("relay-tag-ring");
             RelayTagIcon = Require<VisualElement>("relay-tag-icon");
             RelayTagRecipe = Require<VisualElement>("relay-tag-recipe");
-            RelayTagNeed = Require<Label>("relay-tag-need");
 
             HopVeil = Require<VisualElement>("hop-veil");
             HopVeilDark = Require<VisualElement>("hop-veil-dark");
@@ -374,8 +371,6 @@ namespace MoonProject.UI
 
         public Label TowerHoldWord { get; }
 
-        public Label TowerNeed { get; }
-
         public VisualElement TowerRecipe { get; }
 
         public VisualElement TowerChoices { get; }
@@ -385,8 +380,6 @@ namespace MoonProject.UI
         public VisualElement TowerPickGlyph { get; }
 
         public Label TowerPickGlyphLabel { get; }
-
-        public Label TowerPickWord { get; }
 
         public VisualElement Ticker { get; }
 
@@ -436,8 +429,6 @@ namespace MoonProject.UI
         public VisualElement RelayTagIcon { get; }
 
         public VisualElement RelayTagRecipe { get; }
-
-        public Label RelayTagNeed { get; }
 
         public VisualElement HopVeil { get; }
 

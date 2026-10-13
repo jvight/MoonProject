@@ -21,5 +21,11 @@ namespace MoonProject.UI
 
         /// <summary>The opening's first prompt has taught "Drive" in this save (absent in older saves: false).</summary>
         public bool driveTaught;
+
+        /// <summary>The first Tab press has played the hold's boot (absent in older saves: false).</summary>
+        public bool holdBooted;
+
+        /// <summary>The "Tab · Hold" chip has been shown (absent in older saves: false).</summary>
+        public bool holdChipShown;
     }
 }

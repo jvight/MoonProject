@@ -7,8 +7,9 @@ using MoonProject.Core.Events;
 namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
-    /// A waiting part is picked up by a press, never by driving past it: the nearest part within reach offers its
-    /// prompt (with its name), only a fresh press takes it, and the lift and the landing are Collect beats.
+    /// A waiting part is picked up with E, a tap or a hold (even one begun on the way), never by driving past it: the
+    /// nearest part within reach across the ground offers its prompt (with its name), and the lift and the landing are
+    /// Collect beats.
     /// </summary>
     public sealed class PickupReachTests
     {
@@ -17,7 +18,7 @@ namespace MoonProject.Gameplay.Tests
         private const string Rotor = "pickup.tilly.rotor";
 
         [Test]
-        public void InReach_OffersThePrompt_ButOnlyAPressTakesIt()
+        public void InReach_OffersThePrompt_ButOnlyEHeldTakesIt()
         {
             var reach = new PickupReach();
             Vector3 coil = new Vector3(0f, 0f, 3f);
@@ -27,8 +28,31 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(coil, at);
             Assert.AreEqual(Coil, noun);
             Assert.IsTrue(Offer(reach, 3, true, coil), "the press takes it");
-            Assert.IsFalse(Offer(reach, 4, true, coil), "holding does not take another");
             Assert.IsFalse(reach.TryGet(6, out _, out _), "a quiet frame clears the prompt");
+        }
+
+        [Test]
+        public void AHoldBegunBeforeThePartCameInReach_StillTakesIt()
+        {
+            var reach = new PickupReach();
+            Vector3 far = new Vector3(0f, 0f, Reach + 5f);
+            Vector3 near = new Vector3(0f, 0f, 2f);
+            Assert.IsFalse(Offer(reach, 1, true, far), "E held on the way (a dig, a cut, a habit)");
+            Assert.IsFalse(Offer(reach, 2, true, far));
+            Assert.IsFalse(Offer(reach, 3, true, near), "it comes in reach...");
+            Assert.IsTrue(Offer(reach, 4, true, near), "...and the hold takes it, like every other E verb");
+        }
+
+        [Test]
+        public void Reach_IsAcrossTheGround_SoAPartALittleAboveOrBelowCounts()
+        {
+            var reach = new PickupReach();
+            Vector3 onALedge = new Vector3(0f, 2.5f, 3.5f);
+            Offer(reach, 1, false, onALedge);
+            Assert.IsTrue(Offer(reach, 2, true, onALedge), "3.5 m away across the ground, 2.5 m up");
+            Vector3 cliff = new Vector3(0f, Reach + 1f, 1f);
+            Offer(reach, 3, false, cliff);
+            Assert.IsFalse(Offer(reach, 4, true, cliff), "but not up a cliff");
         }
 
         [Test]

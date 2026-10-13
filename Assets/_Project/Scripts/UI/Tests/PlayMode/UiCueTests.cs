@@ -127,6 +127,7 @@ namespace MoonProject.UI.PlayModeTests
         {
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             Boot();
+            _rig.Ui.Ledger.RecordHoldBooted();
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Excavate, new Vector3(0f, 0f, 12f), true);
             yield return new WaitForSecondsRealtime(1.5f);

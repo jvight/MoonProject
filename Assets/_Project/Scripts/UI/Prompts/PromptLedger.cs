@@ -48,8 +48,7 @@ namespace MoonProject.UI
         public bool ShouldTeach(InteractionKind kind)
         {
             PromptEntry entry = _settings.Find(kind);
-            return entry != null && _shown[(int)kind] < _settings.ShowingsToRetire &&
-                   _used[(int)kind] < entry.UsesToRetire;
+            return entry != null && _used[(int)kind] < entry.UsesToRetire;
         }
 
         public void RecordShown(InteractionKind kind)
@@ -84,6 +83,22 @@ namespace MoonProject.UI
 
         /// <summary>True once the opening's first prompt has taught "Drive" in this save.</summary>
         public bool DriveTaught { get; private set; }
+
+        /// <summary>True once the first Tab press has played the hold's boot in this save.</summary>
+        public bool HoldBooted { get; private set; }
+
+        /// <summary>True once the "Tab · Hold" chip has been shown in this save.</summary>
+        public bool HoldChipShown { get; private set; }
+
+        public void RecordHoldBooted()
+        {
+            HoldBooted = true;
+        }
+
+        public void RecordHoldChipShown()
+        {
+            HoldChipShown = true;
+        }
 
         public void RecordLookTaught()
         {
@@ -129,7 +144,8 @@ namespace MoonProject.UI
             return new PromptsSaveData
             {
                 kinds = kinds.ToArray(), lookUpHinted = LookUpHinted, metVerbs = met.ToArray(),
-                lookTaught = LookTaught, driveTaught = DriveTaught,
+                lookTaught = LookTaught, driveTaught = DriveTaught, holdBooted = HoldBooted,
+                holdChipShown = HoldChipShown,
             };
         }
 
@@ -142,6 +158,8 @@ namespace MoonProject.UI
             LookUpHinted = data != null && data.lookUpHinted;
             LookTaught = data != null && data.lookTaught;
             DriveTaught = data != null && data.driveTaught;
+            HoldBooted = data != null && data.holdBooted;
+            HoldChipShown = data != null && data.holdChipShown;
             if (data?.metVerbs != null)
             {
                 foreach (string name in data.metVerbs)

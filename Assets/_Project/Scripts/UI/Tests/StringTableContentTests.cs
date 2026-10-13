@@ -101,13 +101,13 @@ namespace MoonProject.UI.Tests
         {
             foreach (string key in new[]
                      {
-                         UiKeys.CardCaption, UiKeys.CardClose, UiKeys.TowerLevel,
-                         UiKeys.TowerPurchased, UiKeys.LogCaption, UiKeys.CrewLogCaption, UiKeys.LinerCaption,
-                         UiKeys.TapeCount, UiKeys.PauseCassettes, UiKeys.PauseRelays, UiKeys.RecipeNeed,
+                         UiKeys.CardCaption, UiKeys.CardClose,
+                         UiKeys.LogCaption, UiKeys.CrewLogCaption, UiKeys.LinerCaption,
+                         UiKeys.TapeCount, UiKeys.PauseCassettes, UiKeys.PauseRelays,
                          UiKeys.RecipeRow, UiKeys.RewardTitle, UiKeys.StationOffline, UiKeys.FriendParts,
-                         UiKeys.CrateCaption, UiKeys.CargoWaiting, UiKeys.CargoShelfCost, UiKeys.CargoCostPart, UiKeys.CargoShelf, UiKeys.CargoShelfFree, UiKeys.CargoSummary,
+                         UiKeys.CrateCaption, UiKeys.CargoWaiting, UiKeys.CargoSummary,
                          UiKeys.CanDecoded,
-                         UiKeys.BayPick, UiKeys.BayFitted,
+                         UiKeys.BayFitted,
                      })
             {
                 Assert.IsTrue(_english.TryGet(key, out _), key);
@@ -145,7 +145,10 @@ namespace MoonProject.UI.Tests
             foreach (UpgradeStationKind station in Enum.GetValues(typeof(UpgradeStationKind)))
             {
                 Assert.IsTrue(_english.TryGet(UiKeys.StationName(station), out _), UiKeys.StationName(station));
-                Assert.IsTrue(_english.TryGet(UiKeys.StationLine(station), out _), UiKeys.StationLine(station));
+                if (UiKeys.TryStationLine(station, out string line))
+                {
+                    Assert.IsTrue(_english.TryGet(line, out _), line);
+                }
             }
 
             foreach (RoverKitPiece piece in Enum.GetValues(typeof(RoverKitPiece)))

@@ -288,7 +288,7 @@ namespace MoonProject.Gameplay
                 !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context),
                     _home.Dock.Position) ||
                 !_progression.Initialize(services, Power, _home, _workshop, _sonar, _friends, _relays,
-                    Upgrades, _lift, _tower, TowerParts) ||
+                    Upgrades, _lift, _tower, TowerParts, () => _battery.Model.Charge01) ||
                 !_plotter.Initialize(services, Blueprints, _workshop, _progression.Tuning, Upgrades) ||
                 !_battery.Initialize(services, _relays.Reach, _tether, _home, abilities, _friends, _sonar.Tuning))
 
@@ -468,7 +468,7 @@ namespace MoonProject.Gameplay
         {
             try
             {
-                return new GaragePort(transform, services, _salvage, _relics, abilities, _progression.Tuning);
+                return new GaragePort(transform, services, _salvage, _relics, abilities, _progression.Tuning, _tether);
             }
             catch (InvalidOperationException exception)
             {
