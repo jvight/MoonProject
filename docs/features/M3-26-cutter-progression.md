@@ -88,8 +88,8 @@ hatch, GDD v3 A2), not a slowdown.
 ### 4.2 Where each size lies (0.5 basin)
 | Site | When | Pieces | Cutting at tier 0 (with charges) |
 |---|---|---|---|
-| **Depot** | min 3–7 | 2 small, 2 medium | each cut ≈ 1.9–3.2 s; **the whole depot ≈ 10 s** of beam |
-| Garage | min 17–27 | 3 medium (×2 yield) | ≈ 3.2 s each |
+| **Depot** | min 3–7 | 2 small, 2 medium | each cut ≈ 1.5–3.9 s (the first one fresh, the rest warm); **the whole depot ≈ 10 s** of beam |
+| Garage | min 17–27 | 3 medium (×2 yield) | ≈ 3.0–3.9 s each |
 | Drill | ~min 40 | 4 medium, 1 large | the first two-segment cut, ≈ 5.7 s |
 | Kestrel-3 | ~min 50–70 | 4 medium, 3 large | ≈ 22 s in all; **the Focus Lens is found here** |
 | Crashed lander (canyon) | ~min 60–80 | 4 medium, 2 large, 1 hull plate | the first hull plate (10.5 s, or 8.1 s with the lens) |
@@ -98,7 +98,7 @@ hatch, GDD v3 A2), not a slowdown.
 ### 4.3 The first hour
 - The first cut the player ever makes (a depot small piece) is **0.95 s of charge (brace + stage 1) + 1.2 s of cutting ≈ 2.2 s** from
   press to crack, against ~2.7–4.7 s today.
-- Nothing in the first 30 minutes takes over 3.2 s, so the owner's first impression is snappy.
+- Nothing in the first 30 minutes takes over ~4 s. The weight is in the first charge at each site; the rest chain warm.
 - **Long cuts arrive only after the player knows the verb and has seen a reason:**
   - the drill's first two-segment piece at ~40 min;
   - the first hull plate at ~60 min.
@@ -168,7 +168,7 @@ both specs**.
 - The run is readable from the chase camera: a first-time player can say "the light runs to its head, then it
   fires".
 - Cancel drains it backwards, and a resume starts part-way.
-- The first depot cut, press to crack, takes ≤ 2 s. Nothing in the first 30 minutes takes over 3.5 s.
+- The first depot cut, press to crack, takes ≈ 2.2 s with a felt charge. Nothing in the first 30 minutes takes over 4 s.
 - Each tier is visible on 07 at 30 m (conduit, lens, ribs, core) and felt on every cut (shorter stages, quicker crack).
 - One site fits one trip at every tier and stage. Supply ≈ 1.9× needs.
 - Zero per-frame GC. The charge hardware is pre-built and driven by a parameter.
