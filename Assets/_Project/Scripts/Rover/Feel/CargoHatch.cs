@@ -12,6 +12,8 @@ namespace MoonProject.Rover
     /// its arrival (Collect Reward) closes it with a soft thunk;</item>
     /// <item>a bundle bumping the shut hatch of a full hold (Cargo Impact) shakes it;</item>
     /// <item>unloading at the dock (Cargo Anticipate) opens it; its Reward or Cancel, or an empty hold, closes it;</item>
+    /// <item>a show of the hold (<see cref="RoverHatchCycleRequested"/>, ui's first-Tab boot) opens it and shuts it
+    /// once;</item>
     /// <item>the window shows one crate per used hold slot (<see cref="CargoChanged"/>).</item>
     /// </list>
     /// Art's contract: RoverModel's <c>CargoHatch</c> (top hinge, opening about local +X) and its
@@ -41,6 +43,7 @@ namespace MoonProject.Rover
             {
                 events.Subscribe<FeelBeat>(OnBeat),
                 events.Subscribe<CargoChanged>(OnCargoChanged),
+                events.Subscribe<RoverHatchCycleRequested>(OnCycleRequested),
             };
         }
 
@@ -105,6 +108,11 @@ namespace MoonProject.Rover
                     _motion.Close();
                     break;
             }
+        }
+
+        private void OnCycleRequested(RoverHatchCycleRequested request)
+        {
+            _motion.OpenFor(request.OpenSeconds);
         }
 
         private void OnCargoChanged(CargoChanged cargo)

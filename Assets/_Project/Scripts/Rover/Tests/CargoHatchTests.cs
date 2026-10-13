@@ -57,6 +57,34 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void AShowOfTheHold_OpensStaysOpen_ThenShutsWithOneThunk()
+        {
+            var hatch = new CargoHatchMotion(_settings);
+            hatch.OpenFor(0.8f);
+            Assert.AreEqual(0, Run(hatch, 0.75f), "Open the whole while.");
+            Assert.Greater(hatch.Angle, 0.5f * _settings.OpenAngle, "Eased well open.");
+            Assert.AreEqual(1, Run(hatch, 3f), "Then it shuts by itself, one soft thunk.");
+            Assert.AreEqual(0f, hatch.Angle, 0.5f);
+            Assert.IsFalse(hatch.IsOpening);
+        }
+
+        [Test]
+        public void AShowOfTheHold_NeverShutsAHatchABundleOrAnUnloadOpened()
+        {
+            var hatch = new CargoHatchMotion(_settings);
+            hatch.Open();
+            hatch.OpenFor(0.2f);
+            Run(hatch, 2f);
+            Assert.AreEqual(_settings.OpenAngle, hatch.Angle, 1f, "The unload still owns it.");
+
+            var shown = new CargoHatchMotion(_settings);
+            shown.OpenFor(0.2f);
+            shown.OpenBefore(0.5f);
+            Run(shown, 2f);
+            Assert.IsTrue(shown.IsOpening, "A bundle on its way keeps it open until it lands.");
+        }
+
+        [Test]
         public void ABump_ShakesTheShutHatch_ThenItSettles()
         {
             var hatch = new CargoHatchMotion(_settings);
@@ -88,6 +116,8 @@ namespace MoonProject.Rover.Tests
             events.Publish(new CargoChanged(0, 8));
             Assert.IsFalse(driver.Motion.IsOpening, "An empty hold shuts it.");
             Assert.IsFalse(crates[0].activeSelf);
+            events.Publish(new RoverHatchCycleRequested(0.5f));
+            Assert.IsTrue(driver.Motion.IsOpening, "The first Tab's boot shows the hold.");
             driver.Dispose();
             Object.DestroyImmediate(root);
         }
