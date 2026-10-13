@@ -70,6 +70,9 @@ namespace MoonProject.Rover
         /// <summary>Owner of 07's own glances in the shared gaze requests.</summary>
         private readonly object _glanceOwner = new object();
         private readonly object _cutOwner = new object();
+        /// <summary>A fan this faint is off: its dark rays never show at rest (nor in the portrait).</summary>
+        private const float FanDark = 1e-3f;
+
         private readonly object _scanOwner = new object();
         private ScanLook _scanLook;
         private Quaternion _scanFanRest;
@@ -129,6 +132,7 @@ namespace MoonProject.Rover
             _wingRest = _solarWing.localRotation;
             _scanFanRest = _scanFan.transform.localRotation;
             _scanLook = new ScanLook(_tuning.ScanLook);
+            _scanFan.enabled = false;
             _yaw.Reset(0f);
             _pitch.Reset(_tuning.TravelHeadPitch);
             _eyeLight.type = LightType.Point;
@@ -555,7 +559,16 @@ namespace MoonProject.Rover
             SetGlow(_eyeRenderer, eyeGlow);
             ScanLookSettings scan = _tuning.ScanLook;
             _scanFan.transform.localRotation = _scanFanRest * Quaternion.AngleAxis(_scanLook.Sweep, Vector3.up);
-            SetGlow(_scanFan, scan.FanColour.linear * (_scanLook.Fan * scan.FanGlow));
+            bool fanLit = _scanLook.Fan > FanDark;
+            if (_scanFan.enabled != fanLit)
+            {
+                _scanFan.enabled = fanLit;
+            }
+
+            if (fanLit)
+            {
+                SetGlow(_scanFan, scan.FanColour.linear * (_scanLook.Fan * scan.FanGlow));
+            }
             SetGlow(_antennaTipRenderer, _listen.TipEmission(_mood.TipGlow));
             _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow;
         }
