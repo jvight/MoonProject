@@ -52,7 +52,6 @@ namespace MoonProject.Art.Editor
         private const int DustLumps = 3;
 
         // The service cabinet: rover height, beside the footing, its door facing the pad and swinging to the left.
-        private const float CabinetDoorOpen = 105f;
         private static readonly Vector3 CabinetCentre = new Vector3(1.75f, 0f, -2.8f);
         private static readonly Vector3 CabinetSize = new Vector3(0.9f, 1.1f, 0.45f);
         private const float FootingDepth = 0.6f;
@@ -98,7 +97,6 @@ namespace MoonProject.Art.Editor
                 new Vector3(FootingHalf * 2f, FootingTop + FootingDepth, FootingHalf * 2f), PaletteSwatch.Metal, 0.05f);
             b.Box(At(0f, FootingTop + 0.02f, MastFoot.z), new Vector3(1.3f, 0.04f, 1.3f), PaletteSwatch.Charcoal);
             JunctionBox(b, broken);
-            ServiceCabinet(b);
             for (int i = 0; i < 3; i++)
             {
                 Vector3 stake = GuyStake(i);
@@ -162,29 +160,33 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The mast's rover-height service cabinet beside its footing, facing the pad (docs/features/M3-20): its body,
-        /// roof and dark inside; the door is its own node (<see cref="CabinetDoor"/>), shut and sealed on a dormant
-        /// mast, swung wide once the mast is restored.
+        /// Where the service cabinet stands (mast root space): beside the footing, its foot on the pad, its door
+        /// facing the pad along +Z. The cabinet itself is its own container prefab, set here by gameplay.
         /// </summary>
-        private static void ServiceCabinet(LowPolyMeshBuilder b)
+        public static Vector3 CabinetSocket => CabinetCentre;
+
+        /// <summary>
+        /// The mast's rover-height service cabinet (docs/features/M3-20), cabinet space (its foot's middle at the
+        /// origin, +Z the door's front): its body, roof and dark inside; the door is its own node
+        /// (<see cref="CabinetDoor"/>).
+        /// </summary>
+        public static LowPolyMeshBuilder CabinetBody()
         {
-            b.Box(At(CabinetCentre + Vector3.up * CabinetSize.y * 0.5f), CabinetSize, PaletteSwatch.Metal, 0.03f);
-            b.Box(At(CabinetCentre + new Vector3(0f, CabinetSize.y + 0.03f, 0f)),
+            var b = new LowPolyMeshBuilder(80);
+            b.Box(At(Vector3.up * CabinetSize.y * 0.5f), CabinetSize, PaletteSwatch.Metal, 0.03f);
+            b.Box(At(new Vector3(0f, CabinetSize.y + 0.03f, 0f)),
                 new Vector3(CabinetSize.x + 0.08f, 0.06f, CabinetSize.z + 0.08f), PaletteSwatch.Charcoal, 0.02f);
-            float front = CabinetCentre.z + CabinetSize.z * 0.5f;
-            b.Box(At(new Vector3(CabinetCentre.x, CabinetSize.y * 0.5f, front - 0.01f)),
+            b.Box(At(new Vector3(0f, CabinetSize.y * 0.5f, CabinetSize.z * 0.5f - 0.01f)),
                 new Vector3(CabinetDoorSize.x - 0.04f, CabinetDoorSize.y - 0.04f, 0.02f), PaletteSwatch.Charcoal);
+            return b;
         }
 
-        /// <summary>The cabinet door's hinge on its left edge (mast root space); the door reaches along +X.</summary>
-        public static Vector3 CabinetHinge => new Vector3(CabinetCentre.x - CabinetSize.x * 0.5f, CabinetSize.y * 0.5f,
-            CabinetCentre.z + CabinetSize.z * 0.5f);
+        /// <summary>The cabinet door's hinge on its left edge (cabinet space); the door reaches along +X.</summary>
+        public static Vector3 CabinetHinge => new Vector3(-CabinetSize.x * 0.5f, CabinetSize.y * 0.5f,
+            CabinetSize.z * 0.5f);
 
-        /// <summary>How far the restored mast's door stands open about its local Y (negative swings it out).</summary>
-        public const float CabinetDoorOpenDegrees = -CabinetDoorOpen;
-
-        /// <summary>Where the spare part waits inside the cabinet (mast root space).</summary>
-        public static Vector3 CabinetItem => CabinetCentre + new Vector3(0f, 0.3f, 0f);
+        /// <summary>Where the spare part waits inside the cabinet (cabinet space).</summary>
+        public static Vector3 CabinetItem => new Vector3(0f, 0.3f, 0f);
 
         /// <summary>The seal's cut point on the door's free edge (door space), +Z out of the seam.</summary>
         public static Vector3 CabinetSealPoint =>

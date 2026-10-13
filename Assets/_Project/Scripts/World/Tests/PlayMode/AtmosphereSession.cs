@@ -78,6 +78,9 @@ namespace MoonProject.World.PlayModeTests
         private const float VentCloseDistance = 22f;
         private const float VentCloseHeight = 5f;
 
+        // Kestrel-3's scrap field (0.5.5): looking down the furrow from its far end toward the crater.
+        private const float ScrapFieldLookAhead = 25f;
+
         // After power reaches Home (seconds since the previous frame): the cable halfway, the windows half-lit with
         // the porch lamps starting, and home settled.
         private static readonly (float Wait, string Name)[] WakeFrames =
@@ -204,6 +207,11 @@ namespace MoonProject.World.PlayModeTests
             Vector3 toVent = Vector3.ProjectOnPlane(vent.Position - home, Vector3.up).normalized;
             poses.Add(LookPose("orange_vent_from_base", home + Vector3.up * CanyonViewEyeHeight, vent.Position,
                 view.fieldOfView));
+            Assert.IsTrue(context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.KestrelTrail, out WorldAnchor trail),
+                "the World has Kestrel-3's trail");
+            poses.Add(LookPose("kestrel_scrap_field",
+                trail.Position - trail.Forward * VentCloseDistance * 0.5f + Vector3.up * VentCloseHeight,
+                trail.Position + trail.Forward * ScrapFieldLookAhead, view.fieldOfView));
             poses.Add(LookPose("orange_vent_close",
                 vent.Position - toVent * VentCloseDistance + Vector3.up * VentCloseHeight, vent.Position,
                 view.fieldOfView));

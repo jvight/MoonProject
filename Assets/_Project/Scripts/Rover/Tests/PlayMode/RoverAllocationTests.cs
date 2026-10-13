@@ -110,10 +110,9 @@ namespace MoonProject.Rover.PlayModeTests
         {
             _world = new TestWorld();
             _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -300f), 0f);
-            IRoverAbilities abilities = _rover.Context.Get<IRoverAbilities>();
-            abilities.Grant(RoverAbility.WarmHeadlamp);
-            abilities.Grant(RoverAbility.BoostCoils);
-            abilities.Grant(RoverAbility.CargoCradle);
+            _rover.Equip(RoverKitPiece.LampBar);
+            _rover.Equip(RoverKitPiece.CapacitorDrums);
+            _rover.Equip(RoverKitPiece.CargoRack);
             _rover.Friends.Bell.Activity = FriendActivity.Home;
             _rover.Drive.Drive = new Vector2(0f, 1f);
             float until = Time.time + 5f;
@@ -145,8 +144,8 @@ namespace MoonProject.Rover.PlayModeTests
             }
 
             _rover.Context.Get<IRoverAbilities>().Grant(RoverAbility.BoostCoils);
-            _rover.Context.Events.Publish(new UpgradePurchased("rover.boost_coils", 1));
-            _rover.Context.Events.Publish(new RoverBayFitting("rover.boost_coils"));
+            _rover.Context.Events.Publish(new PartFitted(RoverSocket.Flanks, RoverKitPiece.CapacitorDrums, false, false,
+                default, 0));
             until = Time.time + 0.8f;
             while (Time.time < until)
             {

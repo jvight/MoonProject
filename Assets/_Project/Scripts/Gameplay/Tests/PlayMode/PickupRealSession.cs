@@ -17,8 +17,9 @@ using UnityEditor.SceneManagement;
 namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
-    /// Picking parts up with E in the real Main scene, as the owner plays it: 07 comes to rest beside each of Tilly's
-    /// parts on the basin's ground (her buried one dug free first) and a tap of E draws it in.
+    /// Picking parts up with E in the real Main scene, as the owner plays it: Tilly's parts rest in her crashed sled
+    /// (0.5.5 §2). 07 cuts its clamp and its sensor pod open, comes to rest beside each part at the open mouth and a
+    /// tap of E draws it in; the one under the hull is dug free.
     /// </summary>
     [Category("Pickups")]
     public sealed class PickupRealSession : InputTestFixture
@@ -29,6 +30,12 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>07 stops this far (m) from a part, inside its reach, as a player would.</summary>
         private const float Beside = 2.5f;
+
+        /// <summary>07 stands this far (m) in front of a seal to cut it.</summary>
+        private const float SealStandOff = 1.4f;
+
+        /// <summary>Seconds to cut a seal and let the lid swing open.</summary>
+        private const float SealTimeout = 12f;
 
         private GameContext _context;
         private GameplaySystem _gameplay;
@@ -66,9 +73,16 @@ namespace MoonProject.Gameplay.PlayModeTests
             Friend tilly = _gameplay.Friends.Find(TillyId);
             var placement = _context.Get<IRoverPlacement>();
             var terrain = _context.Get<ITerrainQuery>();
-            for (int p = 0; p < tilly.Parts.Length; p++)
+            int[] order = { 0, 2, 1 };
+            Assert.AreEqual(1, tilly.BuriedPart, "her sled: clamp, hull, pod");
+            foreach (int p in order)
             {
                 int before = tilly.Progress.Collected;
+                if (tilly.PartContainers[p] != null)
+                {
+                    yield return CutOpen(tilly.PartContainers[p], placement, terrain);
+                }
+
                 Vector3 part = tilly.PartRest[p];
                 Vector3 from = Flat(part) + Vector3.back * Beside;
                 from.y = terrain.SampleHeight(from.x, from.z);
@@ -107,6 +121,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             var placement = _context.Get<IRoverPlacement>();
             var terrain = _context.Get<ITerrainQuery>();
             int p = tilly.BuriedPart == 0 ? 1 : 0;
+            yield return CutOpen(tilly.PartContainers[p], placement, terrain);
             Vector3 part = tilly.PartRest[p];
             Vector3 far = Flat(part) + Vector3.back * 20f;
             far.y = terrain.SampleHeight(far.x, far.z);
@@ -125,6 +140,34 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             Release(_keyboard.eKey);
             Assert.AreEqual(1, tilly.Progress.Collected, "E is held, as for every other verb: the part comes in");
+        }
+
+        /// <summary>07 comes up in front of a seal on Tilly's sled, facing it, holds E to cut it and lets go.</summary>
+        private IEnumerator CutOpen(SealedContainer box, IRoverPlacement placement, ITerrainQuery terrain)
+        {
+            Assert.IsNotNull(box, "a sealed part");
+            Vector3 cut = box.CutPoint.position;
+            Vector3 outward = Flat(box.CutPoint.forward).normalized;
+            Vector3 from = Flat(cut) + outward * SealStandOff;
+            from.y = terrain.SampleHeight(from.x, from.z);
+            placement.PlaceAt(from, Quaternion.LookRotation(-outward));
+            yield return new WaitForSeconds(0.5f);
+            Press(_keyboard.eKey);
+            float deadline = Time.time + SealTimeout;
+            while (!box.Opened && Time.time < deadline)
+            {
+                yield return null;
+            }
+
+            Release(_keyboard.eKey);
+            Assert.IsTrue(box.Opened, $"held E cuts the seal of {box.Id}");
+            while (!box.StandsOpen && Time.time < deadline)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(box.StandsOpen, $"{box.Id} stands open");
+            yield return new WaitForSeconds(_gameplay.Friends.Tuning.PartRiseSeconds);
         }
 
         private static IEnumerator WaitCollected(Friend tilly, int before, string what)

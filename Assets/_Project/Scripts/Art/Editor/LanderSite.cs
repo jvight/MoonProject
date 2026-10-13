@@ -26,6 +26,23 @@ namespace MoonProject.Art.Editor
         private static Matrix4x4 ModuleFrame => At(Module, new Vector3(0f, 90f, 0f))
             * Matrix4x4.Rotate(Rotation(new Vector3(3f, 0f, 0f)));
 
+        // The ripped panniers inside the split module: round its bottom skin (degrees from frame X) and along it.
+        private static readonly (float Degrees, float Along)[] Panniers = { (240f, -0.75f), (294f, 0.55f) };
+
+        /// <summary>
+        /// Where the Side Bins' fragment <paramref name="index"/> lies (site space) and how: inside the split cargo
+        /// module on its bottom skin, wedged against the ring frames, upright to the skin it rests on.
+        /// </summary>
+        public static Vector3 FragmentHost(int index, out Quaternion rotation)
+        {
+            (float degrees, float along) = Panniers[index];
+            float angle = degrees * Mathf.Deg2Rad;
+            var outward = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f);
+            Matrix4x4 module = ModuleFrame;
+            rotation = module.rotation * Quaternion.FromToRotation(Vector3.up, -outward);
+            return module.MultiplyPoint3x4(outward * (ModuleRadius + Lift - 0.02f) + Vector3.forward * along);
+        }
+
         public static SiteRecipe Create()
         {
             var site = new SiteRecipe();

@@ -55,6 +55,9 @@ namespace MoonProject.World.PlayModeTests
         private const float WaypointSpacing = 10f;
         private const float WaypointArrive = 4f;
         private const float WaypointTimeout = 20f;
+
+        // Getting this much closer to the waypoint counts as progress (restarts the stuck clock).
+        private const float WaypointProgress = 0.5f;
         private const float RunTimeout = 30f;
         private const float InsideThrottle = 0.7f;
         private const float EyeHeight = 3f;
@@ -330,7 +333,7 @@ namespace MoonProject.World.PlayModeTests
             CanyonPath main = _canyon.MainPath;
             Assert.IsTrue(_context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.CanyonLedge, out WorldAnchor ledge));
             yield return Follow(main, Arc(), _canyon.LedgeArc, "to the ledge");
-            Vector3 glow = Ground(_canyon.GlowPoint) + Vector3.up * _settings.GlowHeight;
+            Vector3 glow = Ground(_canyon.GlowPoint) + Vector3.up * _settings.PodBeacon.y;
             Review(ledge.Position - ledge.Forward * 7f + Vector3.up * 2f, glow, WideFov, "06-ledge-glow");
             yield return Follow(main, _canyon.LedgeArc, main.EndArc - _settings.TerminusRadius, "up the canyon");
             Capture("07-inside");
@@ -374,8 +377,7 @@ namespace MoonProject.World.PlayModeTests
                 arc = direction > 0f ? Mathf.Min(arc + WaypointSpacing, to) : Mathf.Max(arc - WaypointSpacing, to);
                 _pilot.Throttle = InsideThrottle;
                 _pilot.Target = Ground(path.PointAt(arc));
-                yield return Until(() => _pilot.Distance < WaypointArrive, WaypointTimeout,
-                    $"07 drives {what} (waypoint at arc {arc:F0})");
+                yield return UntilArrived($"07 drives {what} (waypoint at arc {arc:F0})");
             }
 
             _pilot.Release();
@@ -407,6 +409,30 @@ namespace MoonProject.World.PlayModeTests
             yield return Until(() => _rover.IsGrounded && _rover.Speed < StopSpeed, RunTimeout, "07 settles");
         }
 
+        /// <summary>
+        /// Waits until 07 reaches the pilot's waypoint. It fails only when 07 stops getting closer for
+        /// <see cref="WaypointTimeout"/> seconds (stuck), never on a slow but steady drive: a fixed total time made the
+        /// check depend on how the turn at the terminus happened to go.
+        /// </summary>
+        private IEnumerator UntilArrived(string what)
+        {
+            float closest = _pilot.Distance;
+            float progressedAt = Time.time;
+            while (_pilot.Distance >= WaypointArrive)
+            {
+                if (_pilot.Distance < closest - WaypointProgress)
+                {
+                    closest = _pilot.Distance;
+                    progressedAt = Time.time;
+                }
+
+                Assert.Less(Time.time - progressedAt, WaypointTimeout, string.Format(CultureInfo.InvariantCulture,
+                    "stuck: {0}, {1:F1} m short, 07 at {2} moving {3:F2} m/s", what, _pilot.Distance,
+                    _rover.Position, _rover.Speed));
+                yield return null;
+            }
+        }
+
         private static IEnumerator Until(Func<bool> condition, float timeout, string what)
         {
             float started = Time.time;
@@ -419,7 +445,7 @@ namespace MoonProject.World.PlayModeTests
 
         private void CaptureFromTheBase()
         {
-            Vector3 glow = Ground(_canyon.GlowPoint) + Vector3.up * _settings.GlowHeight;
+            Vector3 glow = Ground(_canyon.GlowPoint) + Vector3.up * _settings.PodBeacon.y;
             Vector3 eye = Ground(Vector2.zero) + Vector3.up * EyeHeight;
             Review(eye, glow, WideFov, "01-canyon-from-the-base");
             Review(eye, glow, ZoomFov, "01-ledge-glow-from-the-base");

@@ -54,11 +54,6 @@ namespace MoonProject.UI
             PromptGlyphLabel = Require<Label>("prompt-glyph-label");
             PromptWord = Require<Label>("prompt-word");
 
-            FriendAnchor = Require<VisualElement>("friend-anchor");
-            FriendReadout = Require<VisualElement>("friend-readout");
-            FriendReadoutShadow = Require<VisualElement>("friend-readout-shadow");
-            FriendPips = Require<VisualElement>("friend-pips");
-            FriendPartsLabel = Require<Label>("friend-parts-label");
             FriendNameAnchor = Require<VisualElement>("friend-name-anchor");
             FriendName = Require<VisualElement>("friend-name");
             FriendNameShadow = Require<VisualElement>("friend-name-shadow");
@@ -291,17 +286,6 @@ namespace MoonProject.UI
         public Label PromptGlyphLabel { get; }
 
         public Label PromptWord { get; }
-
-        public VisualElement FriendAnchor { get; }
-
-        public VisualElement FriendReadout { get; }
-
-        public VisualElement FriendReadoutShadow { get; }
-
-        public VisualElement FriendPips { get; }
-
-        /// <summary>The words on the parts chip: whose parts, how many of how many.</summary>
-        public Label FriendPartsLabel { get; }
 
         public VisualElement FriendNameAnchor { get; }
 

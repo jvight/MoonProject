@@ -58,7 +58,6 @@ namespace MoonProject.Rover
                     charged.Strength)),
                 events.Subscribe<RoverJumped>(jumped => Publish(FeelKind.Leap, FeelPhase.Act, jumped.Strength)),
                 events.Subscribe<RoverLanded>(OnLanded),
-                events.Subscribe<RoverKitFitted>(OnKitFitted),
                 events.Subscribe<LowPowerChanged>(OnLowPowerChanged),
                 events.Subscribe<RoverBoostChanged>(OnBoostChanged),
                 events.Subscribe<CutChargeStaged>(OnChargeStaged),
@@ -291,15 +290,6 @@ namespace MoonProject.Rover
         {
             float impact = landed.ImpactSpeed / _motion.HardLanding;
             _events.Publish(new FeelBeat(FeelKind.Land, FeelPhase.Impact, landed.Position, Vector3.up, impact, 0f));
-        }
-
-        /// <summary>A bay fit seats the piece (the kit dips 07 itself); a friend's gift is not an install.</summary>
-        private void OnKitFitted(RoverKitFitted fitted)
-        {
-            if (!fitted.Gift)
-            {
-                Publish(FeelKind.Install, FeelPhase.Impact, 1f);
-            }
         }
 
         private void OnLowPowerChanged(LowPowerChanged power)

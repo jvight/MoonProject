@@ -975,10 +975,6 @@
             "text": "{0} (có {1})"
         },
         {
-            "key": "ui.friend.parts",
-            "text": "Bộ phận của {0}: {1}/{2}"
-        },
-        {
             "key": "ui.cargo.hold",
             "text": "Khoang hàng của 07"
         },
@@ -1949,6 +1945,18 @@
         {
             "key": "micro.drone.name",
             "text": "Chị em của Tilly"
+        },
+        {
+            "key": "ui.cargo.tab_seven",
+            "text": "07"
+        },
+        {
+            "key": "hint.fit",
+            "text": "Lắp"
+        },
+        {
+            "key": "ui.bay.row_full",
+            "text": "Hàng linh kiện đã đầy. Hãy lắp một món lên 07 trước."
         }
     ]
 }

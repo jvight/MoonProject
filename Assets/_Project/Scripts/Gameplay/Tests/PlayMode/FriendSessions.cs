@@ -15,6 +15,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     {
         private const string TillyId = "tilly";
 
+        /// <summary>Metres in front of a seal's cut point 07 stands to cut it.</summary>
+        private const float SealStandOff = 1.2f;
+
         private InputActionAsset _controls;
         private GameplayFixture _fixture;
         private Keyboard _keyboard;
@@ -60,28 +63,18 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture.Rover.Aim(site + new Vector3(-4f, 2.5f, -4f), site);
             _fixture.Capture("13-tilly-broken");
 
-            for (int part = 0; part < 3; part++)
+            Assert.IsNotNull(tilly.PartContainers[0], "one part is wedged behind her sled's clamp (0.5.5 §2)");
+            Assert.IsNotNull(tilly.PartContainers[2], "one is sealed in its sensor pod");
+            Assert.AreEqual(1, tilly.BuriedPart, "one lies in the gap under its tipped hull");
+            Assert.IsFalse(tilly.Parts[0].gameObject.activeSelf, "nothing lies loose: sealed parts are out of view");
+            int[] order = { 0, 2, 1 };
+            for (int i = 0; i < order.Length; i++)
             {
-                Vector3 spot = tilly.PartRest[part];
-                _fixture.Rover.Place(new Vector3(spot.x, 0f, spot.z), 0f);
-                if (part == tilly.BuriedPart)
-                {
-                    yield return new WaitForSeconds(1f);
-                    Assert.AreEqual(part, _fixture.Events.FriendPartCollected.Count,
-                        "her last part lies half under the dust: driving over it is not enough");
-                    Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Excavate, out _), "a Dig prompt");
-                    Press(_keyboard.eKey);
-                    yield return new WaitForSeconds(_fixture.FriendTuning.PartDigSeconds + 0.3f);
-                    Release(_keyboard.eKey);
-                }
-                else
-                {
-                    yield return PickupPress.Take(this, _fixture.Gameplay, 2f, $"Tilly's part {part}");
-                }
+                yield return Gather(tilly, order[i]);
                 yield return new WaitForSeconds(_fixture.FriendTuning.PartFlightDuration + 1f);
-                Assert.AreEqual(part + 1, _fixture.Events.FriendPartCollected.Count, $"part {part} gathered");
-                FriendPartCollected collected = _fixture.Events.FriendPartCollected[part].Value;
-                Assert.AreEqual(part + 1, collected.Collected);
+                Assert.AreEqual(i + 1, _fixture.Events.FriendPartCollected.Count, $"part {order[i]} gathered");
+                FriendPartCollected collected = _fixture.Events.FriendPartCollected[i].Value;
+                Assert.AreEqual(i + 1, collected.Collected);
                 Assert.AreEqual(3, collected.Total);
             }
 
@@ -185,24 +178,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture = GameplayFixture.Boot(_controls, slot);
             yield return null;
             Friend tilly = _fixture.Gameplay.Friends.Find(TillyId);
-            for (int part = 0; part < 2; part++)
+            foreach (int part in new[] { 0, 2 })
             {
-                Vector3 spot = tilly.PartRest[part];
-                _fixture.Rover.Place(new Vector3(spot.x, 0f, spot.z), 0f);
-                if (part == tilly.BuriedPart)
-                {
-                    yield return new WaitForSeconds(1f);
-                    Assert.AreEqual(part, _fixture.Events.FriendPartCollected.Count,
-                        "her last part lies half under the dust: driving over it is not enough");
-                    Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Excavate, out _), "a Dig prompt");
-                    Press(_keyboard.eKey);
-                    yield return new WaitForSeconds(_fixture.FriendTuning.PartDigSeconds + 0.3f);
-                    Release(_keyboard.eKey);
-                }
-                else
-                {
-                    yield return PickupPress.Take(this, _fixture.Gameplay, 2f, $"Tilly's part {part}");
-                }
+                yield return Gather(tilly, part);
                 yield return new WaitForSeconds(_fixture.FriendTuning.PartFlightDuration + 1f);
             }
 
@@ -216,11 +194,46 @@ namespace MoonProject.Gameplay.PlayModeTests
             tilly = _fixture.Gameplay.Friends.Find(TillyId);
             Assert.AreEqual(FriendState.PartsGathering, tilly.Progress.State);
             Assert.IsTrue(tilly.Progress.IsCollected(0));
-            Assert.IsTrue(tilly.Progress.IsCollected(1));
-            Assert.IsFalse(tilly.Progress.IsCollected(2));
+            Assert.IsFalse(tilly.Progress.IsCollected(1));
+            Assert.IsTrue(tilly.Progress.IsCollected(2));
             Assert.IsFalse(tilly.Parts[0].gameObject.activeSelf, "gathered parts stay gathered");
-            Assert.IsTrue(tilly.Parts[2].gameObject.activeSelf);
+            Assert.IsTrue(tilly.Parts[1].gameObject.activeSelf, "the dug part still waits under the hull");
+            Assert.IsTrue(tilly.PartContainers[0].StandsOpen && tilly.PartContainers[2].StandsOpen,
+                "the cut clamp and pod stand open");
             Assert.AreEqual(0, _fixture.Events.FriendPartCollected.Count, "a load is not a pickup");
+        }
+
+        /// <summary>
+        /// Gathers Tilly's part <paramref name="part"/> from her crashed sled (0.5.5 §2): a sealed one by cutting its
+        /// clamp or pod from in front and taking it with E at the open mouth, the one under the hull by digging.
+        /// </summary>
+        private IEnumerator Gather(Friend tilly, int part)
+        {
+            int before = _fixture.Events.FriendPartCollected.Count;
+            SealedContainer box = tilly.PartContainers[part];
+            if (box != null)
+            {
+                Vector3 front = box.CutPoint.position + Flat(box.CutPoint.forward).normalized * SealStandOff;
+                _fixture.Rover.Place(new Vector3(front.x, 0f, front.z), Yaw(front, box.CutPoint.position));
+                yield return SealCut.Hold(this, _fixture.Gameplay, box, $"the seal over Tilly's part {part}");
+                yield return PickupPress.Take(this, _fixture.Gameplay, 2f, $"Tilly's part {part}");
+                yield break;
+            }
+
+            Vector3 spot = tilly.PartRest[part];
+            _fixture.Rover.Place(new Vector3(spot.x, 0f, spot.z), 0f);
+            yield return new WaitForSeconds(1f);
+            Assert.AreEqual(before, _fixture.Events.FriendPartCollected.Count,
+                "her part in the gap under the hull: driving over it is not enough");
+            Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Excavate, out _), "a Dig prompt");
+            Press(_keyboard.eKey);
+            yield return new WaitForSeconds(_fixture.FriendTuning.PartDigSeconds + 0.3f);
+            Release(_keyboard.eKey);
+        }
+
+        private static Vector3 Flat(Vector3 v)
+        {
+            return new Vector3(v.x, 0f, v.z);
         }
 
         private SalvageSite SpottedSite()

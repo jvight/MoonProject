@@ -9,13 +9,15 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// The tower's components in the world (docs/features/M3-16 P1), Art's Part_* models. A part in a site's heart
-    /// eases into view once the heart is revealed (the depot's last cut; the garage's transformer only once 07 has
-    /// looked across the chasm, P2); the relay spare on the pad of the first mast 07 restores, once the tower's next
-    /// level is its own (07 charges on that pad long before, M3-20). Waiting, a part hovers, bobs, turns and glints
-    /// like a friend's part; a press of E beside it (<see cref="PickupReach"/>) draws it into 07 to ride home (<see
-    /// cref="TowerParts.PickUp"/>; Rover shows it). Parked on the tower's pad, 07 hands each carried part to the port,
-    /// lowest level first: it leaves 07's back (<see cref="TowerParts.Deliver"/>) and glides on a soft arc into the
-    /// hopper while 07 watches it go.
+    /// rests sealed in Art's container there (0.5.5 §2: the coil in the depot's crate, the transformer in the garage's
+    /// junction box): once the heart is revealed (the depot's last cut; the garage's box only once 07 has looked across
+    /// the chasm, P2) its seal glows to be cut, and as the lid stands open the part rises off its ItemSocket to the
+    /// open mouth and glints there, never touching the ground. The relay spare waits on the pad of the first mast 07
+    /// restores, once the tower's next level is its own (07 charges on that pad long before, M3-20), hovering, bobbing
+    /// and turning like a friend's part. A press of E beside a waiting part (<see cref="PickupReach"/>) draws it into
+    /// 07 to ride home (<see cref="TowerParts.PickUp"/>; Rover shows it). Parked on the tower's pad, 07 hands each
+    /// carried part to the port, lowest level first: it leaves 07's back (<see cref="TowerParts.Deliver"/>) and glides
+    /// on a soft arc into the hopper while 07 watches it go.
     /// </summary>
     public sealed class TowerPartField : IDisposable
     {
@@ -53,12 +55,18 @@ namespace MoonProject.Gameplay
         private readonly Vector3[] _from;
         private readonly float[] _since;
         private readonly float[] _flight;
+        private readonly SealedContainer[] _containers;
+        private readonly SealedContainers _sealed;
         private int _feeding = -1;
 
-        /// <exception cref="InvalidOperationException">A part's model or site is missing (broken content).</exception>
+        /// <exception cref="InvalidOperationException">
+        /// A part's model, site or container is missing (broken content).
+        /// </exception>
         public TowerPartField(TowerParts parts, Transform parent, GameplayServices services, SalvageField salvage,
-            StationReach reach, RadioTower tower, FriendTuning friends, ProgressionTuning tuning, Func<bool> chasmSeen)
+            StationReach reach, RadioTower tower, FriendTuning friends, ProgressionTuning tuning, Func<bool> chasmSeen,
+            SealedContainers containers)
         {
+            _sealed = containers ?? throw new ArgumentNullException(nameof(containers));
             _chasmSeen = chasmSeen ?? throw new ArgumentNullException(nameof(chasmSeen));
             _parts = parts ?? throw new ArgumentNullException(nameof(parts));
             if (services == null)
@@ -88,6 +96,7 @@ namespace MoonProject.Gameplay
             _from = new Vector3[count];
             _since = new float[count];
             _flight = new float[count];
+            _containers = new SealedContainer[count];
             for (int i = 0; i < count; i++)
             {
                 TowerPart part = parts.PartAt(i);
@@ -109,6 +118,10 @@ namespace MoonProject.Gameplay
                 _models[i].name = part.PartId;
                 _scales[i] = _models[i].localScale;
                 _models[i].gameObject.SetActive(false);
+                if (part.Source == TowerPartSource.SiteHeart && part.InContainer)
+                {
+                    _containers[i] = Seal(i, part, parent, services.Visuals);
+                }
             }
 
             _glints = new PickupGlints(parent, services.Visuals.PartGlint, services.Glints, services.GlintVeil,
@@ -132,7 +145,11 @@ namespace MoonProject.Gameplay
             return _rest[index];
         }
 
-        /// <summary>Shows each part as the save says (boot, load): carried and fed parts are out of view.</summary>
+        /// <summary>
+        /// Shows each part as the save says (boot, load): carried and fed parts are out of view, and the containers
+        /// they
+        /// were taken from stand open (an older save's finds, from before containers, stay taken).
+        /// </summary>
         public void Sync()
         {
             ClearFeed();
@@ -144,6 +161,10 @@ namespace MoonProject.Gameplay
                     : Phase.Fed;
                 _models[i].gameObject.SetActive(false);
                 _models[i].localScale = _scales[i];
+                if (state != TowerPartState.Waiting && _containers[i] != null)
+                {
+                    _sealed.StandOpen(_containers[i].Id);
+                }
             }
         }
 
@@ -187,12 +208,7 @@ namespace MoonProject.Gameplay
 
                     break;
                 case Phase.Resting:
-                    float bob = Mathf.Sin(now * 2f * Mathf.PI * _friends.PartBobFrequency + i) * _friends.PartBob;
-                    Vector3 at = _rest[i] + Vector3.up * (_friends.PartHover + bob);
-                    float heading = now * _friends.PartSpin + i * 360f / _models.Length;
-                    float appear = Mathf.Clamp01((now - _since[i]) / _tuning.PartAppearSeconds);
-                    model.SetPositionAndRotation(at, Quaternion.Euler(0f, heading, 0f));
-                    model.localScale = _scales[i] * Ease.OutCubic(appear);
+                    Vector3 at = _containers[i] != null ? Present(i, now) : Hover(i, now);
                     _glints.Add(_rest[i], i);
                     if (_pickups.Offer(Time.frameCount, _input.ExcavateHeld, PickupReach.TowerParts, i, at,
                             _rover.Position, _friends.PartReachRadius, _nouns[i]))
@@ -227,6 +243,81 @@ namespace MoonProject.Gameplay
                                        Mathf.Lerp(1f, _friends.PartArrivalScale, Ease.InOutSine(progress));
                     break;
             }
+        }
+
+        /// <summary>A part with no container (the relay spare) hovers, bobs and turns as it eases into view.</summary>
+        private Vector3 Hover(int i, float now)
+        {
+            float bob = Mathf.Sin(now * 2f * Mathf.PI * _friends.PartBobFrequency + i) * _friends.PartBob;
+            Vector3 at = _rest[i] + Vector3.up * (_friends.PartHover + bob);
+            float heading = now * _friends.PartSpin + i * 360f / _models.Length;
+            float appear = Mathf.Clamp01((now - _since[i]) / _tuning.PartAppearSeconds);
+            _models[i].SetPositionAndRotation(at, Quaternion.Euler(0f, heading, 0f));
+            _models[i].localScale = _scales[i] * Ease.OutCubic(appear);
+            return at;
+        }
+
+        /// <summary>
+        /// A part rises off its opened container's ItemSocket to the open mouth and rests there, in the container.
+        /// </summary>
+        private Vector3 Present(int i, float now)
+        {
+            Transform socket = _containers[i].ItemSocket;
+            float rise = Ease.OutCubic(Mathf.Clamp01((now - _since[i]) / _tuning.PartAppearSeconds));
+            Vector3 at = Vector3.Lerp(socket.position, _rest[i], rise);
+            _models[i].SetPositionAndRotation(at, socket.rotation);
+            _models[i].localScale = _scales[i];
+            return at;
+        }
+
+        /// <summary>
+        /// The site's heart is open and the part is there to be found (the chasm look first, for some).
+        /// </summary>
+        private bool Revealed(int i)
+        {
+            TowerPart part = _parts.PartAt(i);
+            return _sites[i].HeartRevealed && (!part.AfterTheChasm || _chasmSeen());
+        }
+
+        private static Vector3 HeartSpot(SalvageSite site, TowerPart part)
+        {
+            Transform root = site.Root;
+            return site.Heart + root.right * part.HeartOffset.x + root.forward * part.HeartOffset.y;
+        }
+
+        /// <summary>
+        /// Stands Art's container for the part at the site's heart, sealed until the part is there to be found.
+        /// </summary>
+        private SealedContainer Seal(int i, TowerPart part, Transform parent, GameplayVisuals visuals)
+        {
+            GameObject prefab = visuals.Container(part.Container);
+            if (prefab == null)
+            {
+                throw new InvalidOperationException($"Art's container '{part.Container}' for tower part " +
+                                                    $"'{part.PartId}' is not in GameplayVisuals " +
+                                                    "(run Gameplay/Materials).");
+            }
+
+            SalvageSite site = _sites[i];
+            Vector3 heart = HeartSpot(site, part);
+            Transform root = Object.Instantiate(prefab, parent).transform;
+            root.name = part.Container;
+            root.SetPositionAndRotation(SurfaceRules.OnSurface(_terrain, heart.x, heart.z), site.Root.rotation);
+            SealedContainer container = SealedContainer.Read(ContainerId(part), ContainerKinds.Of(part.Container), root,
+                SealedContainer.LidPath, SealedContainer.ItemSocketPath, () => Revealed(i), out string problem);
+            if (container == null)
+            {
+                throw new InvalidOperationException(problem);
+            }
+
+            _sealed.Add(container);
+            return container;
+        }
+
+        /// <summary>The save id of the container a tower part rests in.</summary>
+        public static string ContainerId(TowerPart part)
+        {
+            return "container." + part.PartId;
         }
 
         /// <summary>Parked on the tower's pad, 07 hands its carried parts to the port one after another.</summary>
@@ -284,13 +375,18 @@ namespace MoonProject.Gameplay
         private bool TryRest(int i, out Vector3 rest)
         {
             TowerPart part = _parts.PartAt(i);
+            SealedContainer container = _containers[i];
+            if (container != null)
+            {
+                rest = container.PresentPoint;
+                return container.StandsOpen;
+            }
+
             if (part.Source == TowerPartSource.SiteHeart)
             {
                 SalvageSite site = _sites[i];
-                Transform root = site.Root;
-                Vector3 heart = site.Heart + root.right * part.HeartOffset.x + root.forward * part.HeartOffset.y;
-                rest = SurfaceRules.OnSurface(_terrain, heart.x, heart.z);
-                return site.HeartRevealed && (!part.AfterTheChasm || _chasmSeen());
+                rest = HeartSpot(site, part);
+                return Revealed(i);
             }
 
             bool needed = _tower.ShownLevel + 1 >= part.TowerLevel;

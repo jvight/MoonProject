@@ -95,6 +95,10 @@ namespace MoonProject.Rover
 
         public RoverKitPiece Piece { get; private set; }
 
+        /// <summary>Seconds from <see cref="Begin"/> until the piece is set on its socket (<see cref="BayCue.Landed"/>).
+        /// </summary>
+        public float SeatSeconds { get; private set; }
+
         /// <summary>The turntable's turn (deg from 07's arrival facing), kept from the last show turn.</summary>
         public float TurntableAngle => _angle;
 
@@ -143,6 +147,8 @@ namespace MoonProject.Rover
             }
 
             _leftTurn = Mathf.DeltaAngle(0f, _angle);
+            SeatSeconds = _settings.CentreSeconds + _settings.TurnSeconds(_turn) + _settings.ReachSeconds
+                + _settings.DescendSeconds;
             _elapsed = 0f;
             _phase = Phase.Centre;
             _rover.HoldPose(_startBody, _startHeading);

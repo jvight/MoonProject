@@ -19,14 +19,16 @@ namespace MoonProject.Art.Editor
         public const string PartName = "Part_RelayModule";
 
         /// <summary>
-        /// The service cabinet (0.5.5 §2): <c>Cabinet/Door</c> pivoted on its left hinge (turn it about local Y,
-        /// negative, to swing it open; the restored mast's stands open) with <c>CutPoint</c> and <c>Seal</c>
-        /// (M_LowPolyGlowOff) on its free edge, and <c>Cabinet/ItemSocket</c> where the spare part waits inside.
+        /// Where the mast's service cabinet stands (0.5.5 §2): an empty beside the footing, +Z facing the pad, where
+        /// gameplay sets the <c>Cabinet</c> container with identity.
         /// </summary>
-        public const string CabinetName = "Cabinet";
+        public const string CabinetSocketName = "CabinetSocket";
 
-        public const string CabinetDoorName = "Door";
-        public const string CabinetSealName = "Seal";
+        /// <summary>
+        /// relay.2's service hut (0.5.5 §1.4, §1.7), <c>RelayHut</c>: an open-fronted lean-to placed at the mast's foot,
+        /// its root on the ground, +Z its open side; 06 slumps against it.
+        /// </summary>
+        public const string HutName = "RelayHut";
 
         /// <summary>The broken mast's lean: back (away from home) and to its left, about 13.5 degrees.</summary>
         public static readonly Vector3 BrokenLeanEuler = new Vector3(-9f, 0f, 10f);
@@ -42,6 +44,7 @@ namespace MoonProject.Art.Editor
             ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateMast(false)), ArtPaths.RelayFolder, material, glowOff);
             ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateMast(true)), ArtPaths.RelayFolder, material, glowOff);
             ModelPrefabWriter.Write(CreatePart(), ArtPaths.RelayFolder, material);
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateHut()), ArtPaths.RelayFolder, material);
             AssetDatabase.SaveAssets();
         }
 
@@ -59,20 +62,17 @@ namespace MoonProject.Art.Editor
                 new ModelMesh(MastName + "_Dish", RelayMeshes.Dish())));
             mast.Add(new ModelNode("Lamp", RelayMeshes.LampCentre, Quaternion.identity,
                 new ModelMesh(MastName + "_Lamp", RelayMeshes.Lamp()), ModelMaterial.PaletteGlowOff));
-            ModelNode cabinet = root.Add(new ModelNode(CabinetName, Vector3.zero));
-            ModelNode door = cabinet.Add(new ModelNode(CabinetDoorName, RelayMeshes.CabinetHinge,
-                Place.Rotation(new Vector3(0f, broken ? 0f : RelayMeshes.CabinetDoorOpenDegrees, 0f)),
-                new ModelMesh(MastName + "_" + CabinetDoorName, RelayMeshes.CabinetDoor())));
-            door.Add(new ModelNode(SiteModelBuilder.CutPointName, RelayMeshes.CabinetSealPoint, Quaternion.identity));
-            door.Add(new ModelNode(CabinetSealName, Vector3.zero, Quaternion.identity,
-                new ModelMesh(MastName + "_" + CabinetSealName, RelayMeshes.CabinetSeal()),
-                ModelMaterial.PaletteGlowOff));
-            cabinet.Add(new ModelNode(LootContainerBuilder.ItemSocketName, RelayMeshes.CabinetItem));
+            root.Add(new ModelNode(CabinetSocketName, RelayMeshes.CabinetSocket));
             root.Add(new ModelNode("PartSocket", RelayMeshes.PartSocket));
             root.Add(new ModelNode("BeamPoint", RelayMeshes.BeamPoint));
             root.Add(new ModelNode("ChargeRing", Vector3.zero,
                 new ModelMesh(variant + "_ChargeRing", RelayMeshes.ChargeRing(broken))));
             return root;
+        }
+
+        public static ModelNode CreateHut()
+        {
+            return new ModelNode(HutName, Vector3.zero, new ModelMesh(HutName, ScanSiteMeshes.Hut()));
         }
 
         public static ModelNode CreatePart()

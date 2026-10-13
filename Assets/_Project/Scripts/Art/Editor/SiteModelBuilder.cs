@@ -62,6 +62,36 @@ namespace MoonProject.Art.Editor
             }
         }
 
+        /// <summary>
+        /// The scannable fragments' places at a site (0.5.5 §1.3, §1.4):
+        /// <c>FragmentSocket_&lt;Blueprint&gt;_&lt;n&gt;</c> on the wreck's own geometry (+Y up from the surface the fragment rests on, +Z its front) where gameplay sets
+        /// the fragment, so each reads as a broken piece of its host: Kenji's rack frames on his workbench, the lens
+        /// stack on Kestrel-3's floor inside its split, the panniers inside the lander's torn cargo module.
+        /// </summary>
+        public const string FragmentSocketPrefix = "FragmentSocket_";
+
+        /// <summary>
+        /// The garage's seat for the tape deck's crate (0.5.5 §2): <c>SpareCrateSocket</c> on Kenji's workbench top,
+        /// +Y up, +Z the crate's front, where gameplay sets the <c>SpareCrate</c> container with identity.
+        /// </summary>
+        public const string SpareCrateSocketName = "SpareCrateSocket";
+
+        /// <summary>The blueprint whose fragments lie at each site, and how many.</summary>
+        public static (string Blueprint, int Count) FragmentsAt(string id)
+        {
+            switch (id)
+            {
+                case "garage":
+                    return ("CargoCradle", 2);
+                case "kestrel":
+                    return ("FocusLens", 3);
+                case "lander":
+                    return ("SideBins", 2);
+                default:
+                    return (string.Empty, 0);
+            }
+        }
+
         // How far a pocket's middle sits out from the wreck's edge: close enough that its panel leans on the wreck.
         private const float PocketOutset = 0.3f;
 
@@ -158,6 +188,13 @@ namespace MoonProject.Art.Editor
             AddCrewCrate(root, name, new Vector3(recipe.Heart.x + CrewCrateBesideHeart, 0f,
                 footprint.max.z + CrewCrateClearOfWreck));
             AddRelicPockets(root, id, footprint);
+            if (id == "garage")
+            {
+                Vector3 seat = GarageSite.SpareCrateHost(out Quaternion turn);
+                root.Add(new ModelNode(SpareCrateSocketName, seat, turn));
+            }
+
+            AddFragmentSockets(root, id);
             if (SiteLandmarkMeshes.HasLandmark(id))
             {
                 (Vector3 foot, float yaw) = SiteLandmarkMeshes.Placement(id);
@@ -187,6 +224,33 @@ namespace MoonProject.Art.Editor
             }
 
             return footprint;
+        }
+
+        private static void AddFragmentSockets(ModelNode root, string id)
+        {
+            (string blueprint, int count) = FragmentsAt(id);
+            for (int i = 0; i < count; i++)
+            {
+                Quaternion rotation;
+                Vector3 at;
+                switch (id)
+                {
+                    case "garage":
+                        at = GarageSite.FragmentHost(i, out rotation);
+                        break;
+                    case "kestrel":
+                        at = KestrelSite.FragmentHost(i, out rotation);
+                        break;
+                    case "lander":
+                        at = LanderSite.FragmentHost(i, out rotation);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(id), id, "This site hosts no fragments.");
+                }
+
+                string tag = blueprint + "_" + i.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                root.Add(new ModelNode(FragmentSocketPrefix + tag, at, rotation));
+            }
         }
 
         private static void AddRelicPockets(ModelNode root, string id, Bounds footprint)

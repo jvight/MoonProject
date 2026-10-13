@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using MoonProject.App;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Core.Save;
 using MoonProject.Gameplay.Lift;
 using MoonProject.Testing;
@@ -183,6 +184,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             return fixture;
+        }
+
+        /// <summary>
+        /// 07 wears <paramref name="part"/> as a loaded game would have it (0.5.5 §3.5): in its socket, its ability
+        /// granted, with no craft and no moment. For tests about what a part does, not how it is fitted.
+        /// </summary>
+        public void Wear(RoverKitPiece part)
+        {
+            Gameplay.Equipment.RestoreOwned(part);
         }
 
         /// <summary>The salvage site named <paramref name="name"/> ("depot", ...).</summary>
@@ -395,6 +405,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             });
             visuals.PopulateTube(Template("BlueprintTube", new Vector3(0.7f, 0.14f, 0.14f)));
             visuals.PopulateGaragePort(PortTemplate());
+            visuals.PopulateContainers(new[]
+            {
+                ContainerTemplate("CoilCrate"), ContainerTemplate("TapeCase"), ContainerTemplate("JunctionBox"),
+                ContainerTemplate("SupplyPod"), SledTemplate(),
+            });
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
             Gameplay = root.AddComponent<GameplaySystem>();
@@ -923,20 +938,23 @@ namespace MoonProject.Gameplay.PlayModeTests
             Cassettes.Populate(new[]
             {
                 Cassette("after_dark_1", CassetteSiteRule.Anchor,
-                    new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.2f, 1.9f)), hoverJump),
+                    new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.2f, 1.9f)), hoverJump,
+                    ContainerKinds.TapeCase),
                 Cassette("dust_and_honey", CassetteSiteRule.BasinPlanner, new AnchorSpot(string.Empty, Vector2.zero),
-                    AbilityGate.Open),
+                    AbilityGate.Open, string.Empty),
                 Cassette("slow_orbit", CassetteSiteRule.Anchor,
-                    new AnchorSpot(WorldAnchorIds.CanyonLedge, Vector2.zero), hoverJump),
+                    new AnchorSpot(WorldAnchorIds.CanyonLedge, Vector2.zero), hoverJump, ContainerKinds.SupplyPod),
             });
-            field.Wire(Cassettes, CassetteTuning);
+            Transform pod = Object.Instantiate(ContainerTemplate(ContainerKinds.SupplyPod), field.transform).transform;
+            pod.name = ContainerKinds.SupplyPod;
+            field.Wire(Cassettes, CassetteTuning, pod);
         }
 
-        private CassetteDefinition Cassette(string id, CassetteSiteRule site, AnchorSpot anchor, AbilityGate gate)
+        private CassetteDefinition Cassette(string id, CassetteSiteRule site, AnchorSpot anchor, AbilityGate gate,
+            string container)
         {
             var cassette = Asset<CassetteDefinition>();
-            cassette.Populate(id, Template("Cassette_" + id, CassetteSize), site, anchor, 73,
-                gate);
+            cassette.Populate(id, Template("Cassette_" + id, CassetteSize), site, anchor, 73, gate, container);
             return cassette;
         }
 
@@ -1071,16 +1089,54 @@ namespace MoonProject.Gameplay.PlayModeTests
             return block.transform;
         }
 
-        /// <summary>A stand-in for Art's GaragePort with its Tray and ArmTip nodes.</summary>
+        /// <summary>
+        /// A stand-in for one of Art's sealed containers (0.5.5 §2): a body with its <c>Lid</c> hinged at the back,
+        /// holding <c>CutPoint</c> and the glowing <c>Seal</c>, and the <c>ItemSocket</c> inside.
+        /// </summary>
+        private GameObject ContainerTemplate(string name)
+        {
+            GameObject container = Template(name, new Vector3(0.9f, 0.6f, 0.7f));
+            var lid = new GameObject(SealedContainer.LidPath);
+            lid.transform.SetParent(container.transform, false);
+            lid.transform.localPosition = new Vector3(0f, 0.6f, -0.35f);
+            var cut = new GameObject("CutPoint");
+            cut.transform.SetParent(lid.transform, false);
+            cut.transform.localPosition = new Vector3(0f, 0f, 0.7f);
+            Transform seal = Block(lid.transform, new Vector3(0f, 0f, 0.7f), new Vector3(0.8f, 0.04f, 0.04f));
+            seal.name = "Seal";
+            var socket = new GameObject(SealedContainer.ItemSocketPath);
+            socket.transform.SetParent(container.transform, false);
+            socket.transform.localPosition = new Vector3(0f, 0.25f, 0f);
+            return container;
+        }
+
+        /// <summary>
+        /// A stand-in for Art's TillySled (0.5.5 §2): PartSocket_0 behind its <c>Clamp</c> (with CutPoint and Seal),
+        /// PartSocket_1 under its tipped hull, and its <c>SensorPod</c> container holding PartSocket_2.
+        /// </summary>
+        private GameObject SledTemplate()
+        {
+            GameObject sled = Template(ContainerKinds.TillySled, new Vector3(1.2f, 0.4f, 0.9f));
+            Transform clamp = Node("Clamp", sled.transform, new Vector3(0.38f, 0.32f, 0.18f));
+            Node("CutPoint", clamp, new Vector3(0f, 0f, 0.05f));
+            Block(clamp, Vector3.zero, new Vector3(0.2f, 0.04f, 0.04f)).name = "Seal";
+            Node("PartSocket_0", sled.transform, new Vector3(0.38f, 0.32f, 0.06f));
+            Node("PartSocket_1", sled.transform, new Vector3(-0.1f, 0.02f, -0.22f));
+            Transform pod = Node("SensorPod", sled.transform, new Vector3(0.55f, 0f, 0.75f));
+            Transform lid = Node(SealedContainer.LidPath, pod, new Vector3(0f, 0.3f, -0.15f));
+            Node("CutPoint", lid, new Vector3(0f, 0f, 0.3f));
+            Block(lid, new Vector3(0f, 0f, 0.3f), new Vector3(0.3f, 0.04f, 0.04f)).name = "Seal";
+            Node("PartSocket_2", pod, new Vector3(0f, 0.1f, 0f));
+            return sled;
+        }
+
+        /// <summary>A stand-in for Art's GaragePort with its Tray node.</summary>
         private GameObject PortTemplate()
         {
             GameObject port = Template("GaragePort", new Vector3(2.6f, 1.6f, 0.12f));
             var tray = new GameObject(GameplayVisuals.PortTrayNode);
             tray.transform.SetParent(port.transform, false);
             tray.transform.localPosition = new Vector3(-0.85f, 0.65f, 0.45f);
-            var arm = new GameObject(GameplayVisuals.PortArmTipNode);
-            arm.transform.SetParent(port.transform, false);
-            arm.transform.localPosition = new Vector3(0.9f, 1.35f, 1.3f);
             return port;
         }
 

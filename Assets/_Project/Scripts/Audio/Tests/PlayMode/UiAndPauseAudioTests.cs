@@ -51,7 +51,8 @@ namespace MoonProject.Audio.PlayModeTests
                 (UiCueKind.Confirm, "ui_confirm"), (UiCueKind.SliderStep, "ui_slider_"),
                 (UiCueKind.Back, "ui_back"), (UiCueKind.MenuClose, "ui_menu_close"),
                 (UiCueKind.CardShown, "ui_card"), (UiCueKind.PromptShown, "ui_prompt"),
-                (UiCueKind.HoldComplete, "ui_hold_complete"),
+                (UiCueKind.HoldComplete, "ui_hold_complete"), (UiCueKind.PartPick, "part_pick"),
+                (UiCueKind.PartDrop, "part_drop"), (UiCueKind.PartRefuse, "part_refuse"),
             };
 
             foreach ((UiCueKind kind, string clip) in expected)

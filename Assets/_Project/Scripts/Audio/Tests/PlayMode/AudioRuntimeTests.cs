@@ -281,8 +281,8 @@ namespace MoonProject.Audio.PlayModeTests
                     events.Publish(new StationCued(StationCue.BundleDropped, "rover.hover_jump", Vector3.left * 4f));
                     if (frame % 48 == 8)
                     {
-                        events.Publish(new RoverBayFitting("rover.hover_jump"));
-                        events.Publish(new RoverKitFitted(RoverKitPiece.HoverCoils, false, "rover.hover_jump"));
+                        events.Publish(new PartFitted(RoverSocket.Belly, RoverKitPiece.HoverCoils, false, false,
+                            default, 0));
                         events.Publish(new RoverDockChanged(frame % 96 == 8, Vector3.back * 6f, Quaternion.identity));
                         events.Publish(new BellCued(BellCue.DialTapped, Vector3.left));
                     }

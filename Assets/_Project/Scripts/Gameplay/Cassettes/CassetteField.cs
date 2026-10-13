@@ -8,12 +8,16 @@ using MoonProject.Core.Save;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Ro's cassette tapes out in the world (docs/features/M3-05 "Cassettes"). Each waits half-buried in the dust,
-    /// leaning back against a crater rim or the rock behind its anchor with its label toward open ground and a warm
-    /// glint that reads from afar. Driving within reach pops it out: it straightens up, spins a little and drifts into
-    /// 07, flashes warm, joins the <see cref="RadioProgram"/> and publishes <see cref="CassetteCollected"/>, then the
-    /// game saves. A collected tape never comes back. Anchored tapes need the World's anchors; the basin tape's spot
-    /// comes from the <see cref="CassetteSitePlanner"/>, clear of relics and friends. The frame loop allocates nothing.
+    /// Ro's cassette tapes out in the world (docs/features/M3-05 "Cassettes"). A tape at an anchor rests sealed in
+    /// Art's container there (0.5.5 §2: the ledge tape in the fallen SupplyPod, the terminus tape in Ro's TapeCase
+    /// beside Bell): once its seal is cut and the lid stands open (<see cref="SealedContainers"/>) the tape rises off
+    /// its ItemSocket to the open mouth, still in the container, never on the ground. The basin tape waits half-buried
+    /// in the dust, leaning back against a crater rim. A tape in view leans with its label toward open ground and a
+    /// warm glint that reads from afar. Driving within reach pops it out: it straightens up, spins a little and drifts
+    /// into 07, flashes warm, joins the <see cref="RadioProgram"/> and publishes <see cref="CassetteCollected"/>, then
+    /// the game saves. A collected tape never comes back. Anchored tapes need the World's anchors; the basin tape's
+    /// spot comes from the <see cref="CassetteSitePlanner"/>, clear of relics and friends. The frame loop allocates
+    /// nothing.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CassetteField : MonoBehaviour
@@ -26,6 +30,10 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Cassette tuning (Assets/_Project/Data/Tuning/Gameplay/CassetteTuning.asset).")]
         [SerializeField] private CassetteTuning _tuning;
+
+        [Tooltip("Art's fallen SupplyPod, stood under the Gameplay root by the scene build so World can light its " +
+                 "Glow beacon; set on its tape's anchor at boot.")]
+        [SerializeField] private Transform _supplyPod;
 
         private EventBus _events;
         private IRoverState _rover;
@@ -44,6 +52,9 @@ namespace MoonProject.Gameplay
         private float[] _flightTime = Array.Empty<float>();
         private float[] _flightDuration = Array.Empty<float>();
         private PieceState[] _state = Array.Empty<PieceState>();
+        private SealedContainer[] _containers = Array.Empty<SealedContainer>();
+        private float[] _riseStart = Array.Empty<float>();
+        private SealedContainers _sealed;
         private bool _glancing;
         private bool _initialized;
 
@@ -52,6 +63,8 @@ namespace MoonProject.Gameplay
             Waiting = 0,
             Flying = 1,
             Collected = 2,
+            Sealed = 3,
+            Rising = 4,
         }
 
         /// <summary>Cassettes in the world (collected or not).</summary>
@@ -74,26 +87,43 @@ namespace MoonProject.Gameplay
             return _sites[index];
         }
 
-        /// <summary>Still out in the world (not yet popped out of the dust).</summary>
+        /// <summary>In view and waiting for 07 (not sealed in, not yet popped out of the dust).</summary>
         public bool IsWaiting(int index)
         {
             return _state[index] == PieceState.Waiting;
         }
 
-        internal void Wire(CassetteCatalog catalog, CassetteTuning tuning)
+        /// <summary>The sealed container tape <paramref name="index"/> rests in, or null.</summary>
+        public SealedContainer Container(int index)
+        {
+            return _containers[index];
+        }
+
+        internal void Wire(CassetteCatalog catalog, CassetteTuning tuning, Transform supplyPod)
         {
             _catalog = catalog;
             _tuning = tuning;
+            _supplyPod = supplyPod;
+        }
+
+        /// <summary>The save id of the container cassette <paramref name="id"/> rests in.</summary>
+        public static string ContainerId(string id)
+        {
+            return "container.cassette." + id;
         }
 
         /// <summary>
         /// Finds every cassette's spot (anchors, or the basin planner clear of <paramref name="keepClear"/>) and
         /// spawns the pickups. False (logged) when wiring or an anchor is missing.
         /// </summary>
-        internal bool Initialize(GameplayServices services, RadioProgram radio, IReadOnlyList<Vector3> keepClear)
+        internal bool Initialize(GameplayServices services, RadioProgram radio, IReadOnlyList<Vector3> keepClear,
+            SealedContainers containers)
         {
+            _sealed = containers ?? throw new ArgumentNullException(nameof(containers));
             string problem = _catalog == null ? "CassetteCatalog is not assigned."
                 : _tuning == null ? "CassetteTuning is not assigned."
+                : _supplyPod == null
+                    ? "Art's SupplyPod is not wired (the scene build stands it under the Gameplay root)."
                 : _catalog.Validate();
             if (problem != null)
             {
@@ -114,7 +144,14 @@ namespace MoonProject.Gameplay
                 return false;
             }
 
-            Spawn();
+            problem = Spawn(services.Visuals);
+            if (problem != null)
+            {
+                Debug.LogError($"{nameof(CassetteField)}: {problem}", this);
+                enabled = false;
+                return false;
+            }
+
             _glints = new PickupGlints(transform, services.Visuals.PartGlint, services.Glints, services.GlintVeil,
                 Mathf.Max(1, Count),
                 Layers.Pickup);
@@ -124,7 +161,10 @@ namespace MoonProject.Gameplay
             return true;
         }
 
-        /// <summary>After a load: tapes the radio program owns are already collected.</summary>
+        /// <summary>
+        /// After a load: tapes the radio program owns are already collected, and the containers they came from stand
+        /// open (an older save's tapes, from before containers, stay taken).
+        /// </summary>
         internal void SyncCollected()
         {
             for (int i = 0; i < _pieces.Length; i++)
@@ -133,6 +173,10 @@ namespace MoonProject.Gameplay
                 {
                     _state[i] = PieceState.Collected;
                     _pieces[i].gameObject.SetActive(false);
+                    if (_containers[i] != null)
+                    {
+                        _sealed.StandOpen(_containers[i].Id);
+                    }
                 }
             }
         }
@@ -175,9 +219,12 @@ namespace MoonProject.Gameplay
             return true;
         }
 
-        private void Spawn()
+        /// <summary>Null when every tape and container stands, else what breaks the content.</summary>
+        private string Spawn(GameplayVisuals visuals)
         {
             int count = _sites.Length;
+            _containers = new SealedContainer[count];
+            _riseStart = new float[count];
             _pieces = new Transform[count];
             _rest = new Vector3[count];
             _restRotation = new Quaternion[count];
@@ -189,15 +236,70 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < count; i++)
             {
                 CassetteSite site = _sites[i];
-                _rest[i] = site.Position + Vector3.up * _tuning.RestHeight;
+                CassetteDefinition cassette = Definition(i);
+                Vector3 spot = site.Position;
+                if (cassette.InContainer)
+                {
+                    string problem = Seal(i, cassette, site, visuals);
+                    if (problem != null)
+                    {
+                        return problem;
+                    }
+
+                    spot = _containers[i].PresentPoint + Vector3.down * _tuning.RestHeight;
+                }
+
+                _rest[i] = spot + Vector3.up * _tuning.RestHeight;
                 _restRotation[i] = Quaternion.LookRotation(site.Facing) *
                                    Quaternion.Euler(-_tuning.RestLean, 0f, 0f);
-                GameObject piece = Instantiate(Definition(i).Prefab, _rest[i], _restRotation[i], transform);
-                piece.name = "Cassette_" + Definition(i).Id;
+                GameObject piece = Instantiate(cassette.Prefab, _rest[i], _restRotation[i], transform);
+                piece.name = "Cassette_" + cassette.Id;
                 SetLayer(piece.transform, Layers.Pickup);
                 _pieces[i] = piece.transform;
                 _scale[i] = piece.transform.localScale;
+                if (_containers[i] != null)
+                {
+                    _state[i] = PieceState.Sealed;
+                    piece.SetActive(false);
+                }
             }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Stands Art's container for tape <paramref name="i"/> on its spot, its front toward open ground.
+        /// </summary>
+        private string Seal(int i, CassetteDefinition cassette, CassetteSite site, GameplayVisuals visuals)
+        {
+            Transform root;
+            if (cassette.Container == ContainerKinds.SupplyPod)
+            {
+                root = _supplyPod;
+            }
+            else
+            {
+                GameObject prefab = visuals.Container(cassette.Container);
+                if (prefab == null)
+                {
+                    return $"Art's container '{cassette.Container}' for cassette '{cassette.Id}' is not in " +
+                           "GameplayVisuals (run Gameplay/Materials).";
+                }
+
+                root = Instantiate(prefab, transform).transform;
+                root.name = cassette.Container;
+            }
+
+            root.SetPositionAndRotation(site.Position, Quaternion.LookRotation(site.Facing));
+            _containers[i] = SealedContainer.Read(ContainerId(cassette.Id), ContainerKinds.Of(cassette.Container),
+                root, SealedContainer.LidPath, SealedContainer.ItemSocketPath, () => true, out string problem);
+            if (_containers[i] == null)
+            {
+                return problem;
+            }
+
+            _sealed.Add(_containers[i]);
+            return null;
         }
 
         private void Update()
@@ -218,6 +320,18 @@ namespace MoonProject.Gameplay
             {
                 switch (_state[i])
                 {
+                    case PieceState.Sealed:
+                        if (_containers[i].StandsOpen)
+                        {
+                            _state[i] = PieceState.Rising;
+                            _riseStart[i] = Time.time;
+                            _pieces[i].gameObject.SetActive(true);
+                        }
+
+                        break;
+                    case PieceState.Rising:
+                        Rise(i);
+                        break;
                     case PieceState.Waiting:
                     {
                         _glints.Add(_rest[i], i);
@@ -244,6 +358,21 @@ namespace MoonProject.Gameplay
             _glints.End();
             _flashes.Tick(deltaTime);
             UpdateGlance(nearest);
+        }
+
+        /// <summary>
+        /// The tape rises off its opened container's socket to the open mouth, where it then waits for 07.
+        /// </summary>
+        private void Rise(int index)
+        {
+            float t = Mathf.Clamp01((Time.time - _riseStart[index]) / _tuning.PresentSeconds);
+            _pieces[index].SetPositionAndRotation(
+                Vector3.Lerp(_containers[index].ItemSocket.position, _rest[index], Ease.OutCubic(t)),
+                _restRotation[index]);
+            if (t >= 1f)
+            {
+                _state[index] = PieceState.Waiting;
+            }
         }
 
         private void Launch(int index, Vector3 socket)

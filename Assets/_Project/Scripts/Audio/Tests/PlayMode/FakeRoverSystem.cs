@@ -19,6 +19,9 @@ namespace MoonProject.Audio.PlayModeTests
         /// <summary>The cutter tests change (tier, lamps).</summary>
         public FakeCutter Cutter { get; } = new FakeCutter();
 
+        /// <summary>The parts on 07 at boot (a loaded game); set before the rig boots.</summary>
+        public AudioFakeEquipment Equipment { get; } = new AudioFakeEquipment();
+
         public FakeFriend Tilly { get; } = new FakeFriend("tilly");
 
         public FakeFriend Bell { get; } = new FakeFriend("bell");
@@ -106,6 +109,7 @@ namespace MoonProject.Audio.PlayModeTests
             Bay = new FakeRoverBay(transform);
             context.Register<IRoverBay>(Bay);
             context.Register<ICutter>(Cutter);
+            context.Register<IRoverEquipment>(Equipment);
         }
     }
 }

@@ -14,8 +14,11 @@ namespace MoonProject.UI
         /// <summary>A place's card, the first time near it.</summary>
         Place = 2,
 
+        /// <summary>The low-battery hint: at 30% on a trip, once.</summary>
+        Battery = 3,
+
         /// <summary>The next line, after a while without progress.</summary>
-        Next = 3,
+        Next = 4,
     }
 
     /// <summary>
@@ -27,7 +30,7 @@ namespace MoonProject.UI
     /// </summary>
     internal sealed class GuidanceSlot
     {
-        public const int KindCount = 4;
+        public const int KindCount = 5;
 
         /// <summary>The element that may show now, or null while the slot is held back for a fade.</summary>
         public GuidanceKind? Granted { get; private set; }

@@ -148,6 +148,8 @@ namespace MoonProject.World
             LastBuild = _terrainBuilder.Build(_generatedRoot.transform, Surface, _settings.Mesh, _settings.Paint,
                 toLight, _groundMaterial, hideFlags);
             _gateBuilder.Build(_generatedRoot.transform, surface.Canyon.Slabs, _paletteMaterial, hideFlags);
+            ScrapFieldBuilder.Build(_generatedRoot.transform, surface, _settings.ScrapField, _settings.Seed,
+                _landmarkPrefabs.HullFragments, hideFlags);
             LastScatter = _scatterBuilder.Build(_generatedRoot.transform, scatterPlan.GetAwaiter().GetResult(),
                 scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _paletteMaterial, hideFlags);
             BuildEarth(hideFlags);

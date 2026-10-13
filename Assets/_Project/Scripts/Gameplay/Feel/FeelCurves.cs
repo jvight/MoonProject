@@ -47,6 +47,31 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
+        /// The scan ribbon's span along its path a share <paramref name="t"/> into its stream: x the tail, y the head
+        /// (0 the fragment, 1 the lens). The head leads, the tail trails <paramref name="length"/> behind, both on an
+        /// ease-in, and both reach the lens at t = 1.
+        /// </summary>
+        public static Vector2 RibbonSpan(float t, float length)
+        {
+            float u = Mathf.Clamp01(t) * (1f + length);
+            float head = Mathf.Clamp01(u);
+            float tail = Mathf.Clamp01(u - length);
+            return new Vector2(tail * tail, head * head);
+        }
+
+        /// <summary>
+        /// A point a share <paramref name="s"/> along the scan ribbon's path: a quadratic arc from
+        /// <paramref name="from"/> to <paramref name="to"/>, lifted <paramref name="arc"/> of its length at the middle.
+        /// </summary>
+        public static Vector3 RibbonPoint(Vector3 from, Vector3 to, float arc, float s)
+        {
+            Vector3 control = (from + to) * 0.5f + Vector3.up * (arc * Vector3.Distance(from, to));
+            float u = Mathf.Clamp01(s);
+            float v = 1f - u;
+            return v * v * from + 2f * v * u * control + u * u * to;
+        }
+
+        /// <summary>
         /// The beam's reach (0..1) a share <paramref name="t"/> into its extend: a fast cubic ease-out.
         /// </summary>
         public static float Extend(float t)

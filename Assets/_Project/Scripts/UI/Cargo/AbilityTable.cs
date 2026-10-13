@@ -86,6 +86,12 @@ namespace MoonProject.UI
                 case RoverKitPiece.TetherRing:
                     ability = RoverAbility.Tether;
                     return true;
+                case RoverKitPiece.FocusLens:
+                    ability = RoverAbility.FocusLens;
+                    return true;
+                case RoverKitPiece.SideBins:
+                    ability = RoverAbility.SideBins;
+                    return true;
                 default:
                     ability = default;
                     return false;

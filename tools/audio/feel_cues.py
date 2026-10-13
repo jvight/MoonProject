@@ -632,3 +632,77 @@ def scan_liftoff(_variant, _gen):
     place(mix, 0.32 * _glass(note_freq("D6"), 0.6), samples(0.5))
     place(mix, 0.35 * _glass(note_freq("F#6"), 0.5), samples(0.8))
     return filters.lowpass(mix, 6500.0)
+
+
+# ------------------------------------------------------------------------- 0.5.5 equipment: swaps and removals
+
+def recycle_crunch(_variant, gen):
+    """The bay recycling a swapped-out part into Metal: a soft, muffled crunch and two settling ticks (E, D),
+    heard through the bay's floor, never harsh."""
+    n = samples(1.0)
+    crunch_n = samples(0.4)
+    crunch = noise.pink_filter(noise.white(crunch_n, gen)) * (0.5 + 0.5 * (gen.random(crunch_n) > 0.6))
+    crunch = filters.lowpass(filters.bandpass(crunch, 500.0, 0.8), 1500.0)
+    crunch = crunch / max(float(np.std(crunch)), 1e-9) * envelope.segments(
+        crunch_n, [(0.0, 0.0), (0.03, 1.0), (0.25, 0.5), (0.4, 0.0)], shape="smooth")
+    mix = np.zeros(n)
+    place(mix, 0.05 * crunch, 0)
+    place(mix, 0.5 * _chassis_thump(0.1, 70.0), 0)
+    place(mix, 0.25 * _tick(gen, note_freq("E4"), 0.15), samples(0.5))
+    place(mix, 0.25 * _tick(gen, note_freq("D4"), 0.2), samples(0.65))
+    return filters.lowpass(mix, 3000.0)
+
+
+def part_remove(_variant, gen):
+    """A part coming off 07 into the parts row: the latch releasing (a tick on A), then a short servo easing down
+    a fourth (D3 to A2), the install moment in reverse."""
+    n = samples(0.8)
+    mix = np.zeros(n)
+    place(mix, 0.3 * _tick(gen, note_freq("A4"), 0.12), 0)
+    servo_n = samples(0.5)
+    servo = osc.additive(servo_n, osc.glide(servo_n, note_freq("D3"), note_freq("A2"), time_constant=0.15),
+                         [(1, 1.0), (2, 0.35)])
+    servo *= envelope.segments(servo_n, [(0.0, 0.0), (0.06, 1.0), (0.4, 0.6), (0.5, 0.0)], shape="smooth")
+    place(mix, 0.1 * servo, samples(0.1))
+    return filters.lowpass(mix, 2500.0)
+
+
+def sheet_complete(_variant, gen):
+    """A blueprint's last fragment scanned, the sheet complete on the lab's board: a soft, warm rising D major
+    arpeggio (D4 F#4 A4 D5) on a felt piano, settling on a quiet bell D5. Gentler than the tower's thoom, and no
+    glass, so it never sounds like the scan's lift-off."""
+    n = samples(2.6)
+    mix = np.zeros(n)
+    for index, note in enumerate(("D4", "F#4", "A4", "D5")):
+        place(mix, (0.3 + 0.04 * index) * instruments.felt_piano(note_freq(note), 2.0, gen, decay=1.4),
+              samples(0.14 * index))
+    place(mix, 0.12 * instruments.soft_bell(note_freq("D5"), 2.0, decay=1.6, attack=0.05), samples(0.56))
+    return filters.lowpass(mix, 4500.0)
+
+
+# ------------------------------------------------------------------- 0.5.5: the 07 tab's drag and drop (ui)
+
+def part_pick(_variant, gen):
+    """Picking a part up in the 07 tab: a light lift, a tick rising E5 -> A5, soft and tactile."""
+    n = samples(0.25)
+    mix = np.zeros(n)
+    place(mix, 0.2 * _tick(gen, note_freq("E5"), 0.12), 0)
+    place(mix, 0.22 * _tick(gen, note_freq("A5"), 0.15), samples(0.05))
+    return filters.lowpass(mix, 4500.0)
+
+
+def part_drop(_variant, gen):
+    """Dropping a part on a valid socket: a seated tick on D5 over a small felt thud, settling."""
+    n = samples(0.35)
+    mix = 0.25 * np.concatenate((_chassis_thump(0.08, 110.0), np.zeros(n - samples(0.08))))
+    place(mix, 0.25 * _tick(gen, note_freq("D5"), 0.2), samples(0.01))
+    return filters.lowpass(mix, 4000.0)
+
+
+def part_refuse(_variant, gen):
+    """A drop the socket refuses: two soft, muted ticks falling B4 -> F#4, gentle, never a buzzer."""
+    n = samples(0.3)
+    mix = np.zeros(n)
+    place(mix, 0.18 * _tick(gen, note_freq("B4"), 0.1), 0)
+    place(mix, 0.18 * _tick(gen, note_freq("F#4"), 0.15), samples(0.09))
+    return filters.lowpass(mix, 2500.0)

@@ -247,6 +247,14 @@ namespace MoonProject.UI
         private void Buy(UpgradeDefinition upgrade)
         {
             PurchaseResult result = _shop.Purchase(upgrade.Id);
+            if (result == PurchaseResult.RowFull)
+            {
+                _hold.Reset();
+                _events.Publish(new UiCue(UiCueKind.HoldRelease));
+                _events.Publish(new TickerLine(UiKeys.RowFull));
+                return;
+            }
+
             if (result == PurchaseResult.NeedsPart)
             {
                 _hold.Reset();

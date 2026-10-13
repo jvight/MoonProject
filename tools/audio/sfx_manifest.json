@@ -509,6 +509,168 @@
       "notes": "07's machine voice, greeting (feel-pass 7.2); syllables in chirp_syllables.json."
     },
     {
+      "id": "part_pick",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/part_pick.wav"
+      ],
+      "variantLabels": [
+        "part_pick"
+      ],
+      "sha256": [
+        "6c28cb8a03417ec71371159746241b150262af26b153f60e215727b4796c52b4"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5: picking a part up in the 07 tab: a light tick rising E5 -> A5."
+    },
+    {
+      "id": "part_drop",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/part_drop.wav"
+      ],
+      "variantLabels": [
+        "part_drop"
+      ],
+      "sha256": [
+        "b2520b591ef9fcd250c255965fa91d3e8f58422a6294f3b14bf4735774ce0fc6"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5: a part dropped on a valid socket: a seated tick on D5 over a felt thud."
+    },
+    {
+      "id": "part_refuse",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/part_refuse.wav"
+      ],
+      "variantLabels": [
+        "part_refuse"
+      ],
+      "sha256": [
+        "8c1eedfb89fd7fa4ad05c1ccf9778a06d44ae3e99ab79d4e5a649225ec7ad07a"
+      ],
+      "volumeMin": 0.4,
+      "volumeMax": 0.4,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5: a drop refused: two soft muted ticks falling B4 -> F#4."
+    },
+    {
+      "id": "sheet_complete",
+      "category": "stinger_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/sheet_complete.wav"
+      ],
+      "variantLabels": [
+        "sheet_complete"
+      ],
+      "sha256": [
+        "658acd89e28e67e90804466e7c1ad338899e741ef7dbf99b3379d51fd49544bf"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "0.5.5 D: a blueprint's sheet complete: a soft rising D major arpeggio on felt piano."
+    },
+    {
+      "id": "recycle_crunch",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/recycle_crunch.wav"
+      ],
+      "variantLabels": [
+        "recycle_crunch"
+      ],
+      "sha256": [
+        "6d0852add4f71be55b107efcd361353f503d2cec8510b45d102c4478fbf0f800"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5: the bay recycling a swapped-out part into Metal: a muffled crunch and two settling ticks."
+    },
+    {
+      "id": "part_remove",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/part_remove.wav"
+      ],
+      "variantLabels": [
+        "part_remove"
+      ],
+      "sha256": [
+        "03ab434676a68ce1e0445c8bcc2dadd49d3345ac98e6440182c023cff9930240"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5: a part coming off 07: a latch tick and a servo easing down (the install in reverse)."
+    },
+    {
       "id": "scan_sweep",
       "category": "loop_3d",
       "milestone": "M3",

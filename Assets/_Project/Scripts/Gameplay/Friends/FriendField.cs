@@ -29,6 +29,16 @@ namespace MoonProject.Gameplay
         /// <summary>Degrees between the idle headings of a friend's parts (so they never turn in step).</summary>
         private const float PartHeadingStep = 120f;
 
+        /// <summary>Art's TillySled contract (0.5.5 §2): its clamp, its sensor pod and the part sockets.</summary>
+        private const string SledClamp = "Clamp";
+        private const string SledPod = "SensorPod";
+        private const string SledPodLid = "SensorPod/Lid";
+        private const string SledSocket = "PartSocket_";
+        private const int SledParts = 3;
+        private const int SledClampPart = 0;
+        private const int SledHullPart = 1;
+        private const int SledPodPart = 2;
+
         /// <summary>Degrees the buried part leans while half under the dust, easing upright as it is dug.</summary>
         private const float BuriedTilt = 28f;
 
@@ -63,6 +73,7 @@ namespace MoonProject.Gameplay
         private RadioProgram _radio;
         private IHeldItems _items;
         private RelicField _relics;
+        private SealedContainers _containers;
         private SalvageField _salvage;
         private SonarSystem _sonar;
         private PickupGlints _glints;
@@ -160,8 +171,9 @@ namespace MoonProject.Gameplay
         }
 
         internal bool Initialize(GameplayServices services, RadioProgram radio, CassetteCatalog cassettes,
-            RelicField relics, SalvageField salvage, HomeBase home)
+            RelicField relics, SalvageField salvage, HomeBase home, SealedContainers containers)
         {
+            _containers = containers ?? throw new ArgumentNullException(nameof(containers));
             string problem = _catalog == null ? "FriendCatalog is not assigned."
                 : _tuning == null ? "FriendTuning is not assigned."
                 : _catalog.Validate() ?? HomeProblem() ?? CabinetProblem(cassettes);
@@ -258,8 +270,14 @@ namespace MoonProject.Gameplay
                 friend.Progress.Restore(saved);
                 for (int part = 0; part < friend.Parts.Length; part++)
                 {
+                    bool collected = friend.Progress.IsCollected(part);
+                    SealedContainer box = friend.PartContainers[part];
                     friend.PartFlying[part] = false;
-                    friend.Parts[part].gameObject.SetActive(!friend.Progress.IsCollected(part));
+                    friend.Parts[part].gameObject.SetActive(!collected && (box == null || box.StandsOpen));
+                    if (collected && box != null)
+                    {
+                        _containers.StandOpen(box.Id);
+                    }
                 }
 
                 bool awake = friend.Progress.State == FriendState.Awake;
@@ -431,10 +449,23 @@ namespace MoonProject.Gameplay
             var root = new GameObject("Friend_" + definition.Id).transform;
             root.SetParent(transform, false);
             var parts = new Transform[definition.Parts.Count];
+            var boxes = new SealedContainer[parts.Length];
+            var spots = new Vector3[parts.Length];
+            bool inSled = definition.Id == _tuning.BuriedPartFriend;
             for (int p = 0; p < parts.Length; p++)
             {
-                Vector3 spot = site.Parts[p] + Vector3.up * _tuning.PartHover;
-                GameObject piece = Instantiate(definition.Parts[p].Prefab, spot, Quaternion.identity, root);
+                spots[p] = site.Parts[p] + Vector3.up * _tuning.PartHover;
+            }
+
+            if (inSled && !LayTheSled(definition, site, root, services.Visuals, boxes, spots))
+            {
+                return null;
+            }
+
+            for (int p = 0; p < parts.Length; p++)
+            {
+                GameObject piece = Instantiate(definition.Parts[p].Prefab, spots[p],
+                    Quaternion.Euler(0f, p * PartHeadingStep, 0f), root);
                 SetLayer(piece.transform, Layers.Pickup);
                 parts[p] = piece.transform;
             }
@@ -455,9 +486,15 @@ namespace MoonProject.Gameplay
             }
 
             var friend = new Friend(definition, index, site, progress, parts, _homes[index], body);
-            if (definition.Id == _tuning.BuriedPartFriend && parts.Length > 0)
+            if (inSled)
             {
-                friend.BuriedPart = parts.Length - 1;
+                friend.InSled = true;
+                friend.BuriedPart = SledHullPart;
+                for (int p = 0; p < parts.Length; p++)
+                {
+                    friend.PartContainers[p] = boxes[p];
+                    parts[p].gameObject.SetActive(boxes[p] == null);
+                }
             }
             if (definition.AbilityId == FriendDefinition.RadioDialAbility)
             {
@@ -465,6 +502,53 @@ namespace MoonProject.Gameplay
             }
 
             return friend;
+        }
+
+        /// <summary>
+        /// Lays Art's crashed survey sled by the friend (0.5.5 §2) and her parts in it: behind its clamp
+        /// (PartSocket_0, cut free), in the gap under its tipped hull (PartSocket_1, dug) and in its sensor pod
+        /// (PartSocket_2, cut open). False (logged) when the sled or its contract is missing.
+        /// </summary>
+        private bool LayTheSled(FriendDefinition definition, FriendSite site, Transform parent, GameplayVisuals visuals,
+            SealedContainer[] boxes, Vector3[] spots)
+        {
+            GameObject prefab = visuals.Container(ContainerKinds.TillySled);
+            if (prefab == null || spots.Length != SledParts)
+            {
+                Debug.LogError($"{nameof(FriendField)}: '{definition.Id}' rests her {SledParts} parts in Art's " +
+                               $"{ContainerKinds.TillySled}, which is not in GameplayVisuals " +
+                               $"(run Gameplay/Materials), or she has {spots.Length} parts.", this);
+                return false;
+            }
+
+            Vector3 facing = site.Facing;
+            Vector3 right = new Vector3(facing.z, 0f, -facing.x);
+            Vector3 at = site.Position + right * _tuning.SledOffset.x + facing * _tuning.SledOffset.y;
+            Transform sled = Instantiate(prefab, parent).transform;
+            sled.name = ContainerKinds.TillySled;
+            sled.SetPositionAndRotation(SurfaceRules.OnSurface(_terrain, at.x, at.z),
+                Quaternion.LookRotation(facing) * Quaternion.Euler(0f, _tuning.SledYaw, 0f));
+            ContainerKind kind = ContainerKinds.Of(ContainerKinds.TillySled);
+            boxes[SledClampPart] = SealedContainer.Read($"container.{definition.Id}.clamp", kind, sled, SledClamp,
+                SledSocket + SledClampPart, () => true, out string problem);
+            boxes[SledPodPart] = problem == null
+                ? SealedContainer.Read($"container.{definition.Id}.sensor_pod", kind, sled, SledPodLid,
+                    SledPod + "/" + SledSocket + SledPodPart, () => true, out problem)
+                : null;
+            Transform hull = problem == null ? sled.Find(SledSocket + SledHullPart) : null;
+            if (problem != null || hull == null)
+            {
+                string missing = problem ?? $"'{sled.name}' has no '{SledSocket}{SledHullPart}'";
+                Debug.LogError($"{nameof(FriendField)}: {missing}", this);
+                return false;
+            }
+
+            _containers.Add(boxes[SledClampPart]);
+            _containers.Add(boxes[SledPodPart]);
+            spots[SledClampPart] = boxes[SledClampPart].PresentPoint;
+            spots[SledHullPart] = hull.position;
+            spots[SledPodPart] = boxes[SledPodPart].PresentPoint;
+            return true;
         }
 
         private FriendSite PlanSite(FriendDefinition definition, GameplayServices services)
@@ -617,6 +701,12 @@ namespace MoonProject.Gameplay
                 }
 
                 Transform piece = friend.Parts[p];
+                SealedContainer box = friend.PartContainers[p];
+                if (box != null && !friend.PartFlying[p] && !Shown(friend, p, box, now))
+                {
+                    continue;
+                }
+
                 if (p == friend.BuriedPart && friend.PartDug[p] < _tuning.PartDigSeconds)
                 {
                     StepBuried(friend, p, piece, rover, deltaTime);
@@ -625,9 +715,10 @@ namespace MoonProject.Gameplay
 
                 if (!friend.PartFlying[p])
                 {
-                    Vector3 rest = friend.PartRest[p] + Vector3.up * (Mathf.Sin(now * bobOmega + p) * _tuning.PartBob);
-                    piece.SetPositionAndRotation(rest,
-                        Quaternion.Euler(0f, now * _tuning.PartSpin + p * PartHeadingStep, 0f));
+                    Vector3 rest = friend.InSled ? InTheSled(friend, p, box, now)
+                        : friend.PartRest[p] + Vector3.up * (Mathf.Sin(now * bobOmega + p) * _tuning.PartBob);
+                    piece.SetPositionAndRotation(rest, Quaternion.Euler(0f,
+                        (friend.InSled ? 0f : now * _tuning.PartSpin) + p * PartHeadingStep, 0f));
                     _glints.Add(friend.PartRest[p], p);
                     if (_pickups.Offer(Time.frameCount, _input.ExcavateHeld, PickupReach.Friends,
                             friend.Index * FriendProgress.MaxParts + p, rest, rover, _tuning.PartReachRadius,
@@ -722,7 +813,8 @@ namespace MoonProject.Gameplay
         {
             Vector3 rest = friend.PartRest[p];
             float reach = _tuning.PartDigRadius;
-            bool near = (rest - rover).sqrMagnitude <= reach * reach;
+            // One press, one verb: a seal in reach (her sled's clamp or pod) is cut before the beam digs.
+            bool near = (rest - rover).sqrMagnitude <= reach * reach && _containers.Candidate == null;
             if (near)
             {
                 HasDigCandidate = true;
@@ -737,6 +829,46 @@ namespace MoonProject.Gameplay
             piece.SetPositionAndRotation(rest + Vector3.down * (_tuning.BuriedPartSink * (1f - Ease.OutCubic(dug))),
                 Quaternion.Euler(0f, p * PartHeadingStep, BuriedTilt * (1f - dug)));
             _glints.Add(rest, p);
+        }
+
+        /// <summary>
+        /// A part sealed in its clamp or pod stays hidden until the container stands open, then comes into view. True
+        /// once it is in view.
+        /// </summary>
+        private static bool Shown(Friend friend, int p, SealedContainer box, float now)
+        {
+            Transform piece = friend.Parts[p];
+            if (!box.StandsOpen)
+            {
+                if (piece.gameObject.activeSelf)
+                {
+                    piece.gameObject.SetActive(false);
+                }
+
+                return false;
+            }
+
+            if (!piece.gameObject.activeSelf)
+            {
+                piece.gameObject.SetActive(true);
+                friend.PartShownAt[p] = now;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Where a sled part rests: still at its socket, or rising off its container's socket to the open mouth.
+        /// </summary>
+        private Vector3 InTheSled(Friend friend, int p, SealedContainer box, float now)
+        {
+            if (box == null)
+            {
+                return friend.PartRest[p];
+            }
+
+            float rise = Ease.OutCubic(Mathf.Clamp01((now - friend.PartShownAt[p]) / _tuning.PartRiseSeconds));
+            return Vector3.Lerp(box.ItemSocket.position, friend.PartRest[p], rise);
         }
 
         private void StepRepairInput(float deltaTime)

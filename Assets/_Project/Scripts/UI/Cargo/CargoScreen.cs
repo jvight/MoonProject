@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Input;
 
 namespace MoonProject.UI
 {
@@ -11,7 +12,8 @@ namespace MoonProject.UI
     /// The cargo screen (docs/features/M3-25 §2.4; the PDA of docs/design/first-hour-qa.md R1): Tab or View opens a
     /// Moonlight Glass panel over the blur, and the game goes on. It is 07's hold (a grid of slots, each with its
     /// material's icon and units out of its capacity, empty slots as faint outlines, the waiting bundles) with one
-    /// plain line under it. Nothing on it explains what 07 can do (the owner: such notes read as wrong). Opened while
+    /// plain line under it. Beside it is the 07 tab (<see cref="EquipmentPage"/>): 07's sockets and the parts row.
+    /// Nothing on it explains what 07 can do (the owner: such notes read as wrong). Opened while
     /// 07 rests on the dock (docs/design/0.5.5-owner-feedback.md §3, ruling B3) it is the transfer view: home's shelves
     /// beside the hold, every slot a button, and one press moves that slot's stack to the other side; leaving the dock
     /// closes it. Everything is written when the screen opens or something changed (<see cref="MarkDirty"/>); an open
@@ -24,6 +26,9 @@ namespace MoonProject.UI
         public const string UnlitClass = "cargo__cell--unlit";
         private const string BootingClass = "cargo--booting";
         private const string TransferClass = "cargo--transfer";
+        private const string TabOnClass = "settings-tab--on";
+        private const string TabSkinOnClass = "settings-tab-wrap--on";
+        private const string TabFocusClass = "settings-tab-wrap--focus";
         private const string ButtonClass = "cargo__cell--button";
         private const float CellGap = 6f;
         private const int HoldSlotsAcross = 4;
@@ -35,6 +40,9 @@ namespace MoonProject.UI
         private readonly IHomeStorage _home;
         private readonly IStackTransfer _transfer;
         private readonly IDockState _dock;
+        private readonly EquipmentPage _seven;
+        private readonly Button[] _tabs;
+        private readonly VisualElement[] _pages;
         private readonly IntText _numbers;
         private readonly EventBus _events;
         private readonly PromptLedger _ledger;
@@ -55,6 +63,7 @@ namespace MoonProject.UI
         private int _bootLit;
         private int _bootArrived;
         private bool _transferView;
+        private int _tab;
         private bool _dirty = true;
         private float _cell;
         private float _shrink = 1f;
@@ -63,8 +72,8 @@ namespace MoonProject.UI
         private int _writtenSummary = -1;
 
         public CargoScreen(UiLayout layout, CargoScreenSettings settings, ILocalization localization,
-            ICargoHold hold, IHomeStorage home, IStackTransfer transfer, IDockState dock, IntText numbers,
-            EventBus events, PromptLedger ledger)
+            ICargoHold hold, IHomeStorage home, IStackTransfer transfer, IDockState dock, IRoverEquipment equipment,
+            IRoverPortrait portrait, GlyphLabels glyphs, IntText numbers, EventBus events, PromptLedger ledger)
         {
             if (layout == null)
             {
@@ -86,12 +95,64 @@ namespace MoonProject.UI
             _reveal = new Reveal(root, settings.Reveal);
             _reveal.Snap(false);
             _panel = Require<VisualElement>(root, "cargo-panel");
+            _tabs = new[]
+            {
+                Require<Button>(root, "button-cargo-tab-hold"),
+                Require<Button>(root, "button-cargo-tab-seven"),
+            };
+            _pages = new[]
+            {
+                Require<VisualElement>(root, "cargo-page-cargo"),
+                Require<VisualElement>(root, "cargo-page-seven"),
+            };
+            _seven = new EquipmentPage(layout, settings, localization, equipment, portrait, glyphs, events);
             _waiting = Require<Label>(root, "cargo-waiting");
             _bootLine = Require<Label>(root, "cargo-boot");
             _transferHint = Require<Label>(root, "cargo-transfer-hint");
             _summary = Require<Label>(root, "cargo-summary");
             _holdGrid = new Grid(Require<VisualElement>(root, "cargo-hold-grid"), _hold, true);
             _homeGrid = new Grid(Require<VisualElement>(root, "cargo-home-grid"), _home, false);
+            for (int i = 0; i < _tabs.Length; i++)
+            {
+                int tab = i;
+                VisualElement skin = _tabs[i].parent;
+                new TabPainter(skin);
+                _tabs[i].clicked += () => SelectTab(tab);
+                _tabs[i].RegisterCallback<FocusInEvent>(_ => skin.AddToClassList(TabFocusClass));
+                _tabs[i].RegisterCallback<FocusOutEvent>(_ => skin.RemoveFromClassList(TabFocusClass));
+            }
+
+            SelectTab(0);
+        }
+
+        /// <summary>The page shown: 0 the hold, 1 the 07 tab.</summary>
+        public int Tab => _tab;
+
+        /// <summary>The button to focus when the screen opens (gamepad and keyboard move from it).</summary>
+        public Button FirstTab => _tabs[0];
+
+        /// <summary>The 07 tab's page (tests and captures).</summary>
+        internal EquipmentPage Seven => _seven;
+
+        /// <summary>True once a part was fitted from the 07 tab: the screen eases away for the install moment.</summary>
+        public bool WantsClose => _seven.FitRequested;
+
+        /// <summary>Shows one of the pages and marks its tab.</summary>
+        public void SelectTab(int tab)
+        {
+            _tab = tab;
+            for (int i = 0; i < _pages.Length; i++)
+            {
+                _pages[i].style.display = i == tab ? DisplayStyle.Flex : DisplayStyle.None;
+                _tabs[i].EnableInClassList(TabOnClass, i == tab);
+                _tabs[i].parent.EnableInClassList(TabSkinOnClass, i == tab);
+            }
+
+            _transferHint.style.display = tab == 0 ? StyleKeyword.Null : DisplayStyle.None;
+            _summary.style.display = tab == 0 ? StyleKeyword.Null : DisplayStyle.None;
+            _dirty = true;
+            _seven.MarkDirty();
+            _seven.SetShown(tab == 1 && IsOpen);
         }
 
         /// <summary>True while the screen is up (or easing).</summary>
@@ -145,8 +206,10 @@ namespace MoonProject.UI
             _holdGrid.SetInteractive(_transferView);
             _homeGrid.SetInteractive(_transferView);
             _dirty = true;
+            _seven.Opened();
+            _seven.SetShown(_tab == 1);
             _reveal.Show();
-            if (!_ledger.HoldBooted)
+            if (!_ledger.HoldBooted && _tab == 0)
             {
                 StartBoot();
             }
@@ -155,6 +218,7 @@ namespace MoonProject.UI
         public void Close()
         {
             _reveal.Hide();
+            _seven.SetShown(false);
             if (_boot.IsRunning)
             {
                 EndBoot(false);
@@ -188,7 +252,8 @@ namespace MoonProject.UI
 
         /// <param name="deltaTime">Unscaled seconds.</param>
         /// <param name="panelSize">The UI panel's size, for the cell size.</param>
-        public void Tick(float deltaTime, Vector2 panelSize)
+        /// <param name="device">The active device, for the glyph of each part's key on the 07 tab.</param>
+        public void Tick(float deltaTime, Vector2 panelSize, InputDeviceKind device)
         {
             _reveal.Tick(deltaTime);
             if (_reveal.IsHidden)
@@ -200,6 +265,11 @@ namespace MoonProject.UI
             if (booting)
             {
                 _boot.Step(deltaTime);
+            }
+
+            if (_tab == 1)
+            {
+                _seven.Tick(device);
             }
 
             if (panelSize != _fittedFor)
@@ -354,6 +424,11 @@ namespace MoonProject.UI
         private void Refresh()
         {
             _writtenCell = _cell;
+            if (_tab != 0)
+            {
+                return;
+            }
+
             _holdGrid.Write(this);
             if (_transferView)
             {

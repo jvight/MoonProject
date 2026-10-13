@@ -15,7 +15,8 @@ namespace MoonProject.Gameplay.Feel.Editor
 {
     /// <summary>
     /// Captures each beat of the cut's look at 1080p with the game's post (docs/design/feel-pass.md, Acceptance P0):
-    /// charge, ignition, sustain, crack, tumble, fold and received. Opens Main.unity (never saved), sets 07 before a
+    /// charge, ignition, sustain, crack, tumble, fold and received; then polish wave 1's beats and the scan's close
+    /// (the ribbon into 07's lens, the lens flare). Opens Main.unity (never saved), sets 07 before a
     /// depot wreck and drives the feel kit with a scripted beat publisher, so it needs no gameplay.
     /// <code>
     /// python tools/unity_batch.py exec --method MoonProject.Gameplay.Feel.Editor.FeelCapture.Capture
@@ -43,6 +44,9 @@ namespace MoonProject.Gameplay.Feel.Editor
         private const float TetherLift = 1.2f;
         private const float AlignSeconds = 0.4f;
         private const float SweepShot = 0.3f;
+        private const float ScanReach = 2.6f;
+        private const float RibbonShot = 0.55f;
+        private const float DissolveSeconds = 0.9f;
         private const float ChaseDistance = 7.5f;
         private const float ChasePitch = 16f;
         private const float ChaseHeight = 1.1f;
@@ -155,6 +159,7 @@ namespace MoonProject.Gameplay.Feel.Editor
             shots.Take("07_received", Wide(rover.transform.position + Vector3.up, anchors.CutPoint, rover.transform,
                 1.2f));
             CaptureWaveOne(events, vfx, rover.transform, shots);
+            CaptureScan(events, vfx, rover.transform, shots, tuning, temporary);
             vfx.Dispose();
             return shots.Written;
         }
@@ -186,6 +191,50 @@ namespace MoonProject.Gameplay.Feel.Editor
             events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Act, socket, -rover.forward, 1f, SweepShot * 2f));
             Run(vfx, 0f, SweepShot);
             shots.Take("12_install_sweep", Above(socket, rover));
+        }
+
+        /// <summary>
+        /// The scan's close (0.5.5 §1.2, D2): a fragment before 07 dissolves, its lines stream into the lens as a
+        /// ribbon and the lens flares. The fragment's _Dissolve is driven here as gameplay will, in step with the beat.
+        /// </summary>
+        private static void CaptureScan(EventBus events, FeelVfx vfx, Transform rover, Shots shots,
+            FeelVfxTuning tuning, List<Object> temporary)
+        {
+            Run(vfx, 0f, WaveSettle);
+            GameObject fragment = Spawn(ArtPaths.FragmentFolder + "/" + FragmentBuilder.PrefabName("FocusLens", 0)
+                + ".prefab", temporary);
+            fragment.transform.SetPositionAndRotation(Ground(rover.position + rover.forward * ScanReach),
+                rover.rotation * Quaternion.Euler(0f, 180f, 0f));
+            Transform target = Descendant(fragment.transform, FragmentBuilder.ScanTargetName);
+            var block = new MaterialPropertyBlock();
+            Renderer[] renderers =
+            {
+                Descendant(fragment.transform, FragmentBuilder.SolidName).GetComponent<Renderer>(),
+                Descendant(fragment.transform, FragmentBuilder.LinesName).GetComponent<Renderer>(),
+            };
+            events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, target.position, Vector3.up, 1f,
+                DissolveSeconds));
+            float at = 0f;
+            foreach ((string name, float until) in new[]
+            {
+                ("13_scan_ribbon", tuning.ScanRibbonDelay + tuning.ScanRibbonSeconds * RibbonShot),
+                ("14_scan_flare", tuning.ScanRibbonDelay + tuning.ScanRibbonSeconds + tuning.ScanFlareSeconds * 0.3f),
+            })
+            {
+                for (; at < until; at += Step)
+                {
+                    block.SetFloat("_ScanProgress", 1f);
+                    block.SetFloat("_Dissolve", Mathf.Clamp01(at / DissolveSeconds));
+                    foreach (Renderer renderer in renderers)
+                    {
+                        renderer.SetPropertyBlock(block);
+                    }
+
+                    vfx.Step(Step);
+                }
+
+                shots.Take(name, Wide(rover.position + Vector3.up, target.position, rover, 0.9f));
+            }
         }
 
         private static float Run(FeelVfx vfx, float clock, float seconds)

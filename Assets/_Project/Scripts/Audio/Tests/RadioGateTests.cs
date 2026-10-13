@@ -50,7 +50,20 @@ namespace MoonProject.Audio.Tests
         }
 
         [Test]
-        public void TheGate_NeverClosesAgain()
+        public void TakingTheDeckOff_ClosesOnlyItsStep()
+        {
+            var gate = new RadioGate();
+            gate.FitDeck();
+            Assert.IsTrue(gate.RemoveDeck());
+            Assert.AreEqual(RadioGateStage.Static, gate.Stage);
+            gate.FitDeck();
+            gate.SetDialUnlocked(true);
+            Assert.IsFalse(gate.RemoveDeck(), "Bell's station plays on without the deck");
+            Assert.AreEqual(RadioGateStage.Station, gate.Stage);
+        }
+
+        [Test]
+        public void BellsDial_NeverClosesAgain()
         {
             var gate = new RadioGate();
             gate.SetDialUnlocked(true);

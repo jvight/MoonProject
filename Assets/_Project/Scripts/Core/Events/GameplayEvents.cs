@@ -244,23 +244,6 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// Kenji's Rover Bay starts fitting the kit piece of <see cref="UpgradeId"/> onto 07, parked on its turntable,
-    /// now that 07's beam has fed the hopper (docs/features/M3-14). The install moment plays from here: the Rover
-    /// domain drives the bay's arms through <see cref="IRoverBay"/> to lower the piece onto 07, and the turntable
-    /// turns 07 to show it. The bay throws its weld sparks from the arms' SparkSockets as this is published, so they
-    /// follow the tips wherever the arms are driven.
-    /// </summary>
-    public readonly struct RoverBayFitting
-    {
-        public RoverBayFitting(string upgradeId)
-        {
-            UpgradeId = upgradeId;
-        }
-
-        public string UpgradeId { get; }
-    }
-
-    /// <summary>
     /// 07 came to rest on the charging dock at home (<see cref="Docked"/> true), or left it (false): docked once it
     /// has stood still on the dock's pad for a moment with no drive input; any drive input undocks it at once
     /// (docs/features/M3-14). The rover settles 07 gently onto <see cref="Position"/> and <see cref="Rotation"/> (the
@@ -750,28 +733,6 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// Kenji's garage port fits <see cref="Piece"/> on 07 (docs/design/first-hour-v2.md §3): the tether ring, then the
-    /// tape deck 07 set on its tray. Its arm reaches from <see cref="Position"/>; Rover plays the install moment and
-    /// publishes <see cref="RoverKitFitted"/>. Restored is true when a loaded game already has the piece (once, after
-    /// the save is applied): it is on 07 at once.
-    /// </summary>
-    public readonly struct PortFitting
-    {
-        public PortFitting(RoverKitPiece piece, Vector3 position, bool restored)
-        {
-            Piece = piece;
-            Position = position;
-            Restored = restored;
-        }
-
-        public RoverKitPiece Piece { get; }
-
-        public Vector3 Position { get; }
-
-        public bool Restored { get; }
-    }
-
-    /// <summary>
     /// 07 handed component <see cref="PartId"/> to the tower's port hopper at <see cref="Position"/>
     /// (docs/features/M3-16 P1): it leaves 07's back and glides in, and tower level <see cref="TowerLevel"/> can now be
     /// built.
@@ -1054,17 +1015,18 @@ namespace MoonProject.Core.Events
     /// <summary>
     /// Fragment <see cref="FragmentId"/> is fully scanned and its dissolve begins (§1.2, D2): fragment
     /// <see cref="Index"/> + 1 of <see cref="Count"/> for <see cref="BlueprintId"/>. <see cref="Known"/> when the
-    /// blueprint was already complete: 3 Metal follow the dissolve instead of new knowledge.
+    /// blueprint was already complete: <see cref="Metal"/> follows the dissolve instead of new knowledge.
     /// </summary>
     public readonly struct FragmentScanned
     {
-        public FragmentScanned(string fragmentId, string blueprintId, int index, int count, bool known)
+        public FragmentScanned(string fragmentId, string blueprintId, int index, int count, bool known, int metal)
         {
             FragmentId = fragmentId ?? string.Empty;
             BlueprintId = blueprintId ?? string.Empty;
             Index = index;
             Count = count;
             Known = known;
+            Metal = metal;
         }
 
         public string FragmentId { get; }
@@ -1077,6 +1039,12 @@ namespace MoonProject.Core.Events
         public int Count { get; }
 
         public bool Known { get; }
+
+        /// <summary>
+        /// Metal a known blueprint's fragment pays after its dissolve (Gameplay's tuning; 0 for new knowledge): the
+        /// pickup note shows this amount.
+        /// </summary>
+        public int Metal { get; }
     }
 
     /// <summary>

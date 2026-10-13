@@ -28,14 +28,22 @@ namespace MoonProject.Art.Tests
         {
             "TetherOrigin", "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket",
             "DrumSocket_L", "DrumSocket_R", "TubeSocket", "PartSocket", "SpineSocket", "DeckSocket", "RingSocket",
-            "LensSocket", "BinSocket_L", "BinSocket_R",
+            "LensSocket", "BinSocket_L", "BinSocket_R", "ScanFanSocket",
+        };
+
+        // The equipment screen's markers, one per Core RoverSocket, each on the part it stands for.
+        private static readonly string[] EquipmentPaths =
+        {
+            "Neck/Head/Eye/CutterSocket", "Neck/Head/TetherSocket", "LampSocket", "BellySocket", "FlanksSocket",
+            "PanniersSocket", "BackSocket", "HoldSocket", "SolarWing/WingSocket", "DeckSocket",
+            "Wheel_MR/WheelsSocket", "Antenna/AntennaSocket",
         };
 
         // The charge-up's nodes (0.5.5 "Cells"), the contract rover drives.
         private static readonly string[] ChargePaths =
         {
             "ChargeConduits", "ChargeConduits/ConduitGlow", "Neck/ChargeConduits", "Neck/ChargeConduits/ConduitGlow",
-            "Neck/Head/Eye/LockRing", "Neck/Head/Eye/LockRing/LockGlow",
+            "Neck/Head/Eye/LockRing", "Neck/Head/Eye/LockRing/LockGlow", "Neck/Head/Eye/ScanFanSocket",
             "Stage_1_L", "Stage_1_L/StageGlow_1", "Stage_1_R", "Stage_1_R/StageGlow_1",
             "Stage_2_L", "Stage_2_L/StageGlow_2", "Stage_2_R", "Stage_2_R/StageGlow_2",
             "Stage_3_L", "Stage_3_L/StageGlow_3", "Stage_3_R", "Stage_3_R/StageGlow_3",
@@ -79,6 +87,7 @@ namespace MoonProject.Art.Tests
             }
 
             contract.AddRange(ChargePaths);
+            contract.AddRange(EquipmentPaths.Where(p => p != RoverModelBuilder.DeckSocketName));
 
             Assert.AreEqual(RoverModelBuilder.ModelName, _rover.Name);
             CollectionAssert.AreEquivalent(contract, paths);
@@ -143,6 +152,25 @@ namespace MoonProject.Art.Tests
             Assert.AreEqual(Quaternion.identity, _rover.GetDescendant("TetherOrigin").LocalRotation);
             Assert.AreEqual(0f, _rover.GetDescendant("DustSocket_L").LocalPosition.y, 1e-5f);
             Assert.AreEqual(-RoverModelBuilder.WheelBase, _rover.GetDescendant("DustSocket_R").LocalPosition.z, 1e-5f);
+        }
+
+        [Test]
+        public void EquipmentSockets_OnePerRoverSocket_EmptyMarkersOnThePartsTheyStandFor()
+        {
+            Assert.AreEqual(EquipmentPaths.Length, RoverModelBuilder.EquipmentSockets.Count);
+            for (int i = 0; i < EquipmentPaths.Length; i++)
+            {
+                string name = RoverModelBuilder.EquipmentSockets[i] + RoverModelBuilder.EquipmentSocketSuffix;
+                StringAssert.EndsWith(name, EquipmentPaths[i]);
+                ModelNode socket = AtPath(_rover, EquipmentPaths[i]);
+                Assert.IsNull(socket.Mesh, $"{name} is a marker, not a mount plate");
+                Assert.AreEqual(1, AllNodes(_rover).Count(n => n.Name == name), $"{name} is unique");
+            }
+
+            Assert.Greater(_rover.GetDescendant("FlanksSocket").LocalPosition.x, 0f, "the right of the pair");
+            Assert.Greater(_rover.GetDescendant("PanniersSocket").LocalPosition.x, 0f, "the right of the pair");
+            Assert.Less(_rover.GetDescendant("HoldSocket").LocalPosition.z, 0f, "the hold is at the rear");
+            Assert.Greater(_rover.GetDescendant("LampSocket").LocalPosition.z, 0f, "the lamp is at the front");
         }
 
         [Test]

@@ -184,14 +184,16 @@ namespace MoonProject.Gameplay
                  "transformer in the garage's heart (L2), the relay spare at the first restored mast (L3).")]
         [SerializeField] private TowerPart[] _towerParts =
         {
-            new TowerPart("Part_TowerCoil", 1, TowerPartSource.SiteHeart, "site.depot", Vector2.zero),
+            new TowerPart("Part_TowerCoil", 1, TowerPartSource.SiteHeart, "site.depot", Vector2.zero,
+                container: "CoilCrate"),
             new TowerPart("Part_Transformer", 2, TowerPartSource.SiteHeart, "site.garage", new Vector2(0f, 1.3f),
-                true),
+                true, "JunctionBox"),
             new TowerPart("Part_RelaySpare", 3, TowerPartSource.FirstRestoredMast, string.Empty, Vector2.zero),
         };
 
         [Tooltip("Seconds a component takes to ease into view once it is there to be found.")]
         [Range(0.1f, 4f)] [SerializeField] private float _partAppearSeconds = 1.2f;
+
 
         [Tooltip("Seconds a component glides from 07's back into the tower's port hopper.")]
         [Range(0.3f, 5f)] [SerializeField] private float _partFeedSeconds = 1.6f;

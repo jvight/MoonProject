@@ -62,7 +62,7 @@ namespace MoonProject.World
 
         [Tooltip("Depth of the furrow where it meets the crater, metres; it fades out toward its far end.")]
         [Range(0.1f, 1.2f)]
-        [SerializeField] private float _furrowDepth = 0.3f;
+        [SerializeField] private float _furrowDepth = 0.55f;
 
         [Tooltip("Height of the low berms of pushed-up dust along the furrow's sides, metres.")]
         [Range(0f, 0.6f)]

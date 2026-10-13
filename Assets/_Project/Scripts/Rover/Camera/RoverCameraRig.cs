@@ -17,7 +17,8 @@ namespace MoonProject.Rover
     /// through <see cref="IRoverState"/>, so it must initialise after the rover.
     /// Slow, skippable camera moments frame 07 with the beam while digging, a surfacing relic, a relay mast's lamp as
     /// it lights, the base after an upgrade (needs <see cref="IWorldLayout"/>), or 07 itself from low and round the
-    /// side as a friend's gift settles onto it (<see cref="RoverKitInstalling"/>). In Kenji's Rover Bay
+    /// side as a gift or a port part settles onto it (<see cref="PartFitted"/>, or a gift's Install beat). In Kenji's
+    /// Rover Bay
     /// (<see cref="IRoverBay"/>, resolved once Gameplay registers it) a held moment fixes the view in through the open
     /// front, under the crane rail (<see cref="BayFramingSettings"/>); while the bay fits a piece
     /// (<see cref="IBayFitView"/>) it eases in to a close shot of the arm setting it on, or low under 07's belly for
@@ -98,6 +99,8 @@ namespace MoonProject.Rover
         private bool _bayBroken;
         private bool _inBay;
         private bool _bayDismissed;
+        private bool _giftViewPending;
+        private RoverKitPiece _giftViewPiece;
         private IBayFitView _fit;
         private readonly PropSightLine _sight = new PropSightLine();
         private readonly HeldShot _held = new HeldShot();
@@ -228,7 +231,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<BellCued>(OnBellCued),
                 context.Events.Subscribe<RadioHopListChanged>(OnHopListChanged),
                 context.Events.Subscribe<RoverPlaced>(OnPlaced),
-                context.Events.Subscribe<RoverKitInstalling>(OnKitInstalling),
+                context.Events.Subscribe<PartFitted>(OnPartFitted),
                 context.Events.Subscribe<LowPowerChanged>(OnLowPowerChanged),
                 context.Events.Subscribe<ChargingChanged>(OnChargingChanged),
             };
@@ -342,6 +345,12 @@ namespace MoonProject.Rover
             if (!_initialized || deltaTime <= 0f)
             {
                 return;
+            }
+
+            if (_giftViewPending)
+            {
+                _giftViewPending = false;
+                StartGiftView(_giftViewPiece);
             }
 
             // On the belly lift the lab camera has the view: looking round must not stir this hidden orbit.
@@ -1209,6 +1218,12 @@ namespace MoonProject.Rover
                 return;
             }
 
+            if (beat.Kind == FeelKind.Install && beat.Phase == FeelPhase.Anticipate && beat.Strength < 1f)
+            {
+                OnGiftAnticipated();
+                return;
+            }
+
             _beam.OnBeat(beat, _rover.Position, _rover.Rotation * Vector3.forward, _look.GentleCamera);
         }
 
@@ -1332,20 +1347,39 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// A friend's gift: the camera eases low and round to the side the gift faces (gift views), holds while it
-        /// settles, then returns. Kit is fitted inside the bay's view, which the fitting brings back if the player
-        /// had looked away.
+        /// A part fitted: a gift or a port part gets the gift view (taken this frame); bay kit is fitted inside the
+        /// bay's view, which the fitting brings back if the player had looked away.
         /// </summary>
-        private void OnKitInstalling(RoverKitInstalling installing)
+        private void OnPartFitted(PartFitted fitted)
         {
-            if (!installing.Gift && !RoverKitPieces.IsPortPiece(installing.Piece))
+            if (!fitted.Gift && !RoverKitPieces.IsPortPiece(fitted.Part))
             {
                 _bayDismissed = false;
                 return;
             }
 
+            _giftViewPending = true;
+            _giftViewPiece = fitted.Part;
+        }
+
+        /// <summary>A gift's soft moment with no part behind it (Bell's paint): its view, unless a part claimed it.</summary>
+        private void OnGiftAnticipated()
+        {
+            if (!_giftViewPending)
+            {
+                _giftViewPending = true;
+                _giftViewPiece = RoverKitPiece.FreshPaint;
+            }
+        }
+
+        /// <summary>
+        /// The gift view: the camera eases low and round to the side the piece faces (gift views), holds while it
+        /// settles, then returns.
+        /// </summary>
+        private void StartGiftView(RoverKitPiece piece)
+        {
             KitViewSettings views = _tuning.KitViews;
-            float bearing = RoverYaw() + views.Bearing(installing.Piece);
+            float bearing = RoverYaw() + views.Bearing(piece);
             Vector3 toward = Quaternion.Euler(0f, bearing, 0f) * Vector3.forward;
             Vector3 subject = _rover.Position + toward * views.SubjectDistance;
             _moment.Start(_tuning.GiftMoment, subject, false);

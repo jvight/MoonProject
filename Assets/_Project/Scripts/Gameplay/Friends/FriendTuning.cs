@@ -9,6 +9,17 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class FriendTuning : ScriptableObject
     {
+        [Header("Gifts (0.5.5 §3.5)")]
+        [Tooltip("07 counts as home (a repaired friend's waiting gift fits itself) within this distance (m) of the " +
+                 "base.")]
+        [Range(5f, 100f)] [SerializeField] private float _giftHomeRadius = 22f;
+
+        [Tooltip("...and slower than this (m/s), so the gift arrives as 07 settles in, not as it rushes past.")]
+        [Range(0.1f, 10f)] [SerializeField] private float _giftMaxSpeed = 2.5f;
+
+        [Tooltip("The friend whose gift is the solar wing's missing cell (0.5.5 §3.5, the Wing socket).")]
+        [SerializeField] private string _wingCellFriend = "tilly";
+
         [Header("Site")]
         [Tooltip("Candidate spots tried for a friend's site.")]
         [Range(16, 2048)] [SerializeField] private int _siteAttempts = 600;
@@ -68,9 +79,19 @@ namespace MoonProject.Gameplay
         [Tooltip("Within this many metres of 07 a waiting part offers its pickup prompt; a press of E lifts it in.")]
         [Range(1f, 15f)] [SerializeField] private float _partReachRadius = 4.5f;
 
-        [Tooltip("The friend whose last part lies half under the dust, so the beam's dig is learned on it " +
-                 "(first-hour v2 §4).")]
+        [Tooltip("The friend whose parts rest in her crashed survey sled (Art's TillySled, 0.5.5 §2): one behind " +
+                 "its clamp and one in its sensor pod, each cut free, and one in the gap under its tipped hull, dug, " +
+                 "so the beam's dig is learned on it (first-hour v2 §4).")]
         [SerializeField] private string _buriedPartFriend = "tilly";
+
+        [Tooltip("Where her sled lies from her own spot (m, in her frame: x to her right, y ahead of her).")]
+        [SerializeField] private Vector2 _sledOffset = new Vector2(3.5f, 2.5f);
+
+        [Tooltip("Degrees the sled lies turned from her facing.")]
+        [Range(-180f, 180f)] [SerializeField] private float _sledYaw = 140f;
+
+        [Tooltip("Seconds a part takes to rise off its sled socket to the open mouth once its clamp or pod opens.")]
+        [Range(0.1f, 3f)] [SerializeField] private float _partRiseSeconds = 0.6f;
 
         [Tooltip("Metres the buried part sits under its rest point before it is dug: half under the dust.")]
         [Range(0f, 1f)] [SerializeField] private float _buriedPartSink = 0.22f;
@@ -320,6 +341,9 @@ namespace MoonProject.Gameplay
         [Tooltip("Brightness of the light pillar a spotted relic raises (softer than a ping's answer).")]
         [Range(0f, 4f)] [SerializeField] private float _spotPillar = 0.7f;
 
+        public float GiftHomeRadius => _giftHomeRadius;
+        public float GiftMaxSpeed => _giftMaxSpeed;
+        public string WingCellFriend => _wingCellFriend;
         public int SiteAttempts => _siteAttempts;
         public float SiteEdgeMargin => _siteEdgeMargin;
         public float SiteMaxSlope => _siteMaxSlope;
@@ -341,6 +365,9 @@ namespace MoonProject.Gameplay
         public float PartReachRadius => _partReachRadius;
 
         public string BuriedPartFriend => _buriedPartFriend;
+        public Vector2 SledOffset => _sledOffset;
+        public float SledYaw => _sledYaw;
+        public float PartRiseSeconds => _partRiseSeconds;
 
         public float BuriedPartSink => _buriedPartSink;
 

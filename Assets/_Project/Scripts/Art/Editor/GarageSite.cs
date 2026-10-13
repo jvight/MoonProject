@@ -23,6 +23,35 @@ namespace MoonProject.Art.Editor
 
         private static readonly Vector3 Bench = new Vector3(-1.7f, 0.92f, 5.5f);
 
+        // Kenji's half-built rack frames on his bench (the frame along it, the corner piece by the vice).
+        private static readonly Vector3[] BenchWork =
+        {
+            new Vector3(-1.72f, 0.95f, 5.9f), new Vector3(-1.86f, 0.95f, 5.0f),
+        };
+
+        // The tape deck's spare crate on the bench between the two rack frames, clear of the vice.
+        private static readonly Vector3 SpareCrateSeat = new Vector3(-1.7f, Bench.y + 0.03f, 5.5f);
+
+        /// <summary>
+        /// Where the tape deck's "07 · SPARE" crate stands (site space): on Kenji's workbench top between his rack
+        /// frames, its front (+Z) and stencil facing the garage's way in.
+        /// </summary>
+        public static Vector3 SpareCrateHost(out Quaternion rotation)
+        {
+            rotation = Quaternion.Euler(0f, 180f, 0f);
+            return SpareCrateSeat;
+        }
+
+        /// <summary>
+        /// Where the Cargo Cradle's fragment <paramref name="index"/> lies (site space): on Kenji's workbench top, his
+        /// half-built rack frames left mid-job.
+        /// </summary>
+        public static Vector3 FragmentHost(int index, out Quaternion rotation)
+        {
+            rotation = Quaternion.Euler(0f, index == 0 ? 90f : 75f, 0f);
+            return BenchWork[index];
+        }
+
         public static SiteRecipe Create()
         {
             var site = new SiteRecipe();

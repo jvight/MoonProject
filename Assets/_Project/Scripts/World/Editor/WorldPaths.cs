@@ -43,6 +43,8 @@ namespace MoonProject.World.Editor
 
         /// <summary>Art's landmark kit World places (M3-18 L2, L4, L7).</summary>
         public const string LandmarkFolder = "Assets/_Project/Generated/Art/Landmarks/";
+        /// <summary>Art's props folder, where Kestrel-3's HullFragment variants are (0.5.5).</summary>
+        public const string HullFragmentFolder = "Assets/_Project/Generated/Art/Props/";
         public const string RoutePostPrefab = LandmarkFolder + "RoutePost.prefab";
         public const string BridgeNearPrefab = LandmarkFolder + "ChasmBridge_Near.prefab";
         public const string BridgeFarPrefab = LandmarkFolder + "ChasmBridge_Far.prefab";
@@ -65,6 +67,14 @@ namespace MoonProject.World.Editor
             for (int i = 0; i < DishFramePrefabs.Length; i++)
             {
                 frames.GetArrayElementAtIndex(i).objectReferenceValue = Require(DishFramePrefabs[i]);
+            }
+
+            UnityEditor.SerializedProperty fragments = world.FindProperty("_landmarkPrefabs._hullFragments");
+            fragments.arraySize = MoonProject.Art.Editor.PropModelBuilder.HullFragmentVariants;
+            for (int i = 0; i < fragments.arraySize; i++)
+            {
+                fragments.GetArrayElementAtIndex(i).objectReferenceValue = Require(HullFragmentFolder
+                    + MoonProject.Art.Editor.PropModelBuilder.HullFragmentPrefix + i + ".prefab");
             }
         }
 

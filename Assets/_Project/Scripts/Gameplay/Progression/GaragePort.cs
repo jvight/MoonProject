@@ -8,12 +8,14 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Kenji's garage service port (docs/design/first-hour-v2.md §3), Art's GaragePort standing in the garage behind its
-    /// painted "07" pad. The garage's last cut opens it: its place card, its pad lit. Parked on the pad, 07 has its spare
-    /// tether ring fitted round its eye (<see cref="PortFitting"/>; the Tether ability, asleep until then). Then Ro's
-    /// tape deck, dug up beside the port and brought to it on the tether (towed to its tray, or held while 07 rests
-    /// by the port), is taken off the tether, glides onto the tray and is fitted on 07's flank. Before the ring, a loose keepsake near 07 gives one line, once: the tether is gone and
-    /// Kenji kept a spare. A save that already used the tether (a keepsake home, or the Cargo Cradle) has the ring.
+    /// Kenji's garage service port (docs/design/first-hour-v2.md §3), Art's GaragePort standing in the garage behind
+    /// its painted "07" pad. The garage's last cut opens it: its place card, its pad lit. Parked on the pad, 07 has its
+    /// spare tether ring fitted round its eye, through 07's equipment (<see cref="PartFitted"/>, 0.5.5 §3.5: the
+    /// Tether ability, asleep until then). Then Ro's tape deck, dug up beside the port and brought to it on the tether
+    /// (towed to its tray, or held while 07 rests by the port), is taken off the tether, glides onto the tray and is
+    /// fitted on 07 the same way. Before the ring, a loose keepsake near 07 gives one line, once: the tether is gone
+    /// and Kenji kept a spare. A save that already used the tether (a keepsake home, or the Cargo Cradle) has the
+    /// ring.
     /// </summary>
     public sealed class GaragePort : IDisposable
     {
@@ -29,13 +31,13 @@ namespace MoonProject.Gameplay
         private readonly SalvageSite _garage;
         private readonly RelicField _relics;
         private readonly IRoverAbilities _abilities;
+        private readonly RoverEquipment _equipment;
         private readonly TetherSystem _tether;
         private readonly IRoverState _rover;
         private readonly ISaveService _save;
         private readonly EventBus _events;
         private readonly Transform _model;
         private readonly Transform _tray;
-        private readonly Transform _armTip;
         private readonly GameObject _pad;
         private readonly Vector3 _padCentre;
         private readonly Relic _deck;
@@ -51,9 +53,10 @@ namespace MoonProject.Gameplay
 
         /// <exception cref="InvalidOperationException">The garage site or Art's port is missing.</exception>
         public GaragePort(Transform parent, GameplayServices services, SalvageField salvage, RelicField relics,
-            IRoverAbilities abilities, ProgressionTuning tuning, TetherSystem tether)
+            IRoverAbilities abilities, ProgressionTuning tuning, TetherSystem tether, RoverEquipment equipment)
         {
             _tether = tether != null ? tether : throw new ArgumentNullException(nameof(tether));
+            _equipment = equipment ?? throw new ArgumentNullException(nameof(equipment));
             if (services == null || salvage == null)
             {
                 throw new ArgumentNullException(services == null ? nameof(services) : nameof(salvage));
@@ -76,8 +79,6 @@ namespace MoonProject.Gameplay
                 site.rotation * Quaternion.Euler(0f, tuning.PortYaw, 0f));
             _tray = _model.Find(GameplayVisuals.PortTrayNode) ?? throw new InvalidOperationException(
                 $"Art's GaragePort has no '{GameplayVisuals.PortTrayNode}' node.");
-            _armTip = _model.Find(GameplayVisuals.PortArmTipNode) ?? throw new InvalidOperationException(
-                $"Art's GaragePort has no '{GameplayVisuals.PortArmTipNode}' node.");
             _padCentre = site.TransformPoint(tuning.PortPadLocal);
             _pad = Object.Instantiate(services.Visuals.PadFor(tuning.PortPadRadius), parent);
             _pad.name = "GaragePortPad";
@@ -93,6 +94,11 @@ namespace MoonProject.Gameplay
 
         /// <summary>True once the port has fitted Ro's tape deck on 07.</summary>
         public bool DeckFitted => _deckPhase == DeckPhase.Fitted;
+
+        /// <summary>
+        /// True while 07 has stood parked on the pad: its port parts can be taken off or refitted here (0.5.5 §3.5).
+        /// </summary>
+        public bool Parked => _parked >= _tuning.PortParkSeconds;
 
         /// <summary>The middle of the port's pad, where 07 parks.</summary>
         public Vector3 PadCentre => _padCentre;
@@ -124,14 +130,13 @@ namespace MoonProject.Gameplay
             _ringFitted |= UsedTheTether();
             if (_ringFitted)
             {
-                _abilities.Grant(RoverAbility.Tether);
-                _events.Publish(new PortFitting(RoverKitPiece.TetherRing, _armTip.position, true));
+                _equipment.RestoreOwned(RoverKitPiece.TetherRing);
             }
 
             if (_deck.State == RelicState.Fitted)
             {
                 _deckPhase = DeckPhase.Fitted;
-                _events.Publish(new PortFitting(RoverKitPiece.TapeDeck, _armTip.position, true));
+                _equipment.RestoreOwned(RoverKitPiece.TapeDeck);
             }
         }
 
@@ -175,8 +180,7 @@ namespace MoonProject.Gameplay
         private void FitTheRing()
         {
             _ringFitted = true;
-            _abilities.Grant(RoverAbility.Tether);
-            _events.Publish(new PortFitting(RoverKitPiece.TetherRing, _armTip.position, false));
+            _equipment.FitItself(RoverKitPiece.TetherRing);
             _save.SaveNow();
         }
 
@@ -218,7 +222,7 @@ namespace MoonProject.Gameplay
                     {
                         _deck.SetFitted();
                         _deckPhase = DeckPhase.Fitted;
-                        _events.Publish(new PortFitting(RoverKitPiece.TapeDeck, _armTip.position, false));
+                        _equipment.FitItself(RoverKitPiece.TapeDeck);
                         _save.SaveNow();
                     }
 

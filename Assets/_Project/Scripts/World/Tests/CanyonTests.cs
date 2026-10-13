@@ -217,7 +217,7 @@ namespace MoonProject.World.Tests
         {
             Vector2 glow = _canyon.GlowPoint;
             Vector2 ledge = _canyon.LedgeCenter;
-            var target = new Vector3(glow.x, _surface.SampleHeight(ledge.x, ledge.y) + _settings.Canyon.GlowHeight,
+            var target = new Vector3(glow.x, _surface.SampleHeight(ledge.x, ledge.y) + _settings.Canyon.PodBeacon.y,
                 glow.y);
             var eye = new Vector3(0f, _surface.SampleHeight(0f, 0f) + EyeHeight, 0f);
             float length = Vector3.Distance(eye, target);

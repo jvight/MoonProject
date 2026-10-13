@@ -219,7 +219,10 @@ namespace MoonProject.Gameplay.Editor
             ShowFirstStage(stages);
 
             friends.Wire(friendCatalog, friendTuning, bellTuning, homes);
-            cassettes.Wire(cassetteCatalog, cassetteTuning);
+            Transform pod = context.InstantiatePrefab(ArtPaths.PropFolder + "/" + LootContainerBuilder.SupplyPodName +
+                ".prefab", context.GameplayRoot.transform).transform;
+            pod.name = ContainerKinds.SupplyPod;
+            cassettes.Wire(cassetteCatalog, cassetteTuning, pod);
             logs.Wire(logCacheCatalog, logCacheTuning);
             relays.Wire(relayTuning, relayMast, relayMastBroken, relayPart);
             Transform dock = Child(lander, "DockAnchor");

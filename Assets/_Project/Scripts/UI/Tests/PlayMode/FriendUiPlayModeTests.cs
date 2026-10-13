@@ -39,37 +39,6 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator PartsReadout_ShowsNearABrokenFriend_FillsAsPartsReturn_AndLeaves()
-        {
-            InputSystem.AddDevice<Keyboard>();
-            Boot();
-            Tilly(FriendState.Dormant, 0);
-            yield return Seconds(1f);
-            Assert.IsFalse(_rig.Ui.FriendReadout.IsVisible, "07 is far away: nothing on screen");
-
-            _rig.Fakes.Position = Site + new Vector3(0f, 0f, -8f);
-            yield return Seconds(1f);
-            Assert.IsTrue(_rig.Ui.FriendReadout.IsVisible);
-            Assert.AreEqual(3, _rig.Ui.FriendReadout.PipCount, "one pip per missing part");
-            Assert.AreEqual(0f, _rig.Ui.FriendReadout.ShownParts);
-
-            Tilly(FriendState.PartsGathering, 1);
-            yield return null;
-            Assert.Less(_rig.Ui.FriendReadout.ShownParts, 1f, "a returning part fills its pip, never pops it on");
-            yield return Seconds(_rig.Tuning.Friends.PipFillSeconds + 0.2f);
-            Assert.AreEqual(1f, _rig.Ui.FriendReadout.ShownParts);
-
-            _rig.Fakes.Position = Site + new Vector3(0f, 0f, -(_rig.Tuning.Friends.HideDistance + 5f));
-            yield return Seconds(1.2f);
-            Assert.IsFalse(_rig.Ui.FriendReadout.IsVisible, "driving away lets it go");
-
-            _rig.Fakes.Position = Site + new Vector3(0f, 0f, -8f);
-            Tilly(FriendState.Repairing, 3);
-            yield return Seconds(1.2f);
-            Assert.IsFalse(_rig.Ui.FriendReadout.IsVisible, "once the repair starts the readout has said its piece");
-        }
-
-        [UnityTest]
         public IEnumerator RepairPrompt_NamesTheDigKey_AndBowsOutWhenTheRepairStarts()
         {
             InputSystem.AddDevice<Keyboard>();
@@ -82,13 +51,6 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsTrue(_rig.Ui.Prompt.IsVisible);
             Assert.AreEqual("Repair", _rig.Ui.Layout.PromptWord.text);
             Assert.AreEqual("E", _rig.Ui.Layout.PromptGlyphLabel.text);
-            Assert.IsTrue(_rig.Ui.FriendReadout.IsVisible);
-            StringAssert.Contains(_rig.Ui.Localization.Get(UiKeys.FriendName("tilly")), _rig.Ui.Layout.FriendPartsLabel.text,
-                "the pips say whose parts they are and how many");
-            Rect readout = _rig.Ui.Layout.FriendReadout.worldBound;
-            Rect prompt = _rig.Ui.Layout.Prompt.worldBound;
-            Assert.LessOrEqual(readout.yMax, prompt.yMin + 1f, "the full pips rest on top of the prompt, not under it");
-            Assert.Less(Mathf.Abs(readout.center.x - prompt.center.x), 2f, "in one column");
 
             Events.Publish(new FriendRepairStarted("tilly"));
             yield return Seconds(1f);

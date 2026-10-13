@@ -4,7 +4,7 @@ using static MoonProject.Art.Place;
 namespace MoonProject.Art.Editor
 {
     /// <summary>
-    /// The old tape deck Tilly spotted (docs/features/M3-24 C), strapped on 07's left flank above the wheels: a
+    /// The old tape deck Tilly spotted (docs/features/M3-24 C), strapped across 07's back above the hatch: a
     /// cream-enamel deck on a metal bracket, a dark cassette window with two honey reels, three piano keys on top and a
     /// slotted speaker at its front end, held by two honey straps. Built in DeckSocket space: +X out from the body,
     /// +Y up, +Z forward, the bracket on the socket. Small and rounded, so it reads as a kept treasure, never a face.

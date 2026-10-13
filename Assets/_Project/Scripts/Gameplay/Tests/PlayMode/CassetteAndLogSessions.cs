@@ -19,6 +19,7 @@ namespace MoonProject.Gameplay.PlayModeTests
     {
         private const string AfterDark = "after_dark_1";
         private const string DustAndHoney = "dust_and_honey";
+        private const string SlowOrbit = "slow_orbit";
         private const string RoLog = "ro_1";
 
         private InputActionAsset _controls;
@@ -117,7 +118,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             CassetteField cassettes = _fixture.Gameplay.Cassettes;
             int tape = IndexOf(cassettes, AfterDark);
             Assert.Less(SurfaceRules.HorizontalDistance(cassettes.Site(tape).Position, cache), 1.5f,
-                "Lumen After Dark, Vol. 1 sits by the box");
+                "Lumen After Dark, Vol. 1 rests by the box");
+            SealedContainer tapeCase = cassettes.Container(tape);
+            Assert.IsNotNull(tapeCase, "sealed in Ro's tape case (0.5.5 §2)");
+            Assert.AreEqual(ContainerKind.Case, tapeCase.Kind);
+            Assert.IsFalse(cassettes.IsWaiting(tape), "nothing lies loose on the ground");
 
             Vector3 from = cache - terminus.Forward * 12f;
             _fixture.Rover.Place(new Vector3(from.x, 0f, from.z), Yaw(from, cache));
@@ -133,7 +138,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(RoLog, _fixture.Events.CrewLogFound[0].Value.LogId);
             Assert.AreEqual(cache, _fixture.Events.CrewLogFound[0].Value.Position);
             Assert.IsTrue(logs.IsFound(0));
-            Assert.AreEqual(1, _fixture.Events.CassetteCollected.Count, "and the tape beside it drifts in");
+            Assert.AreEqual(0, _fixture.Events.CassetteCollected.Count, "the tape beside it stays sealed in its case");
+
+            yield return SealCut.Hold(this, _fixture.Gameplay, tapeCase, "Ro's tape case");
+            yield return Waits.Until(() => _fixture.Events.CassetteCollected.Count > 0,
+                _fixture.CassetteTuning.PresentSeconds + _fixture.CassetteTuning.FlightDuration + 1f);
+            Assert.AreEqual(1, _fixture.Events.CassetteCollected.Count,
+                "cut open, the tape rises in its case and drifts in");
             Assert.AreEqual(AfterDark, _fixture.Events.CassetteCollected[0].Value.CassetteId);
 
             _fixture.Rover.Place(new Vector3(from.x, 0f, from.z), 0f);
@@ -152,6 +163,31 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture.Rover.Place(new Vector3(again.x, 0f, again.z), 0f);
             yield return new WaitForSeconds(0.5f);
             Assert.AreEqual(0, _fixture.Events.CrewLogFound.Count, "its card never opens twice");
+        }
+
+        [UnityTest]
+        public IEnumerator LedgeTape_RestsInTheFallenSupplyPod_CutItsLid_AndItSlidesOutInto07()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            CassetteField cassettes = _fixture.Gameplay.Cassettes;
+            int tape = IndexOf(cassettes, SlowOrbit);
+            SealedContainer pod = cassettes.Container(tape);
+            WorldAnchor ledge = _fixture.World.Anchor(WorldAnchorIds.CanyonLedge);
+            Assert.IsNotNull(pod, "the ledge tape rests in the fallen supply pod (0.5.5 §2)");
+            Assert.AreEqual(ContainerKind.Pod, pod.Kind);
+            Assert.AreEqual(ContainerKinds.SupplyPod, pod.Root.name, "the scene's pod, where World lights its beacon");
+            Assert.Less(SurfaceRules.HorizontalDistance(pod.Root.position, ledge.Position), 1e-3f, "on the ledge");
+            Assert.IsFalse(cassettes.IsWaiting(tape));
+
+            Vector3 front = pod.CutPoint.position + pod.Root.forward * 1.5f;
+            _fixture.Rover.Place(new Vector3(front.x, 0f, front.z), Yaw(front, pod.Root.position));
+            yield return null;
+            Assert.AreEqual(0, _fixture.Events.CassetteCollected.Count, "sealed in, it cannot drift to 07");
+            yield return SealCut.Hold(this, _fixture.Gameplay, pod, "the supply pod");
+            yield return Waits.Until(() => _fixture.Events.CassetteCollected.Count > 0,
+                _fixture.CassetteTuning.PresentSeconds + _fixture.CassetteTuning.FlightDuration + 1f);
+            Assert.AreEqual(SlowOrbit, _fixture.Events.CassetteCollected[0].Value.CassetteId);
         }
 
         private static int IndexOf(CassetteField field, string id)

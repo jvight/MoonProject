@@ -54,5 +54,10 @@ namespace MoonProject.Art.Editor
 
         /// <summary>The additive glass of 07's lens: Earth's reflection and a faint edge sheen.</summary>
         public const string LensGlassShader = "Assets/_Project/Shaders/Art/LofiLensGlass.shader";
+        public const string ScanSolidShader = "Assets/_Project/Shaders/Art/LofiScanSolid.shader";
+        public const string ScanLinesShader = "Assets/_Project/Shaders/Art/LofiScanLines.shader";
+        public const string ScanSolidMaterial = PaletteFolder + "/M_ScanSolid.mat";
+        public const string ScanLinesMaterial = PaletteFolder + "/M_ScanLines.mat";
+        public const string FragmentFolder = Root + "/Fragments";
     }
 }
