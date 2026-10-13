@@ -1171,17 +1171,18 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// A stand-in for the crew's lab in the lander's cabin (docs/ARCHITECTURE.md "Contract: the lab"): Lab at the
-        /// cabin floor's middle, 3.6 m up, with the four station frames round the axis at 07's lens height, +Z toward
-        /// the axis, clockwise from above from the front: Chart, Reader, Board, Keepsakes.
+        /// cabin floor's middle, 3.6 m up, with the three station frames round the axis at 07's lens height, +Z toward
+        /// the axis, clockwise from above from the front: Chart at the front, Board behind, Keepsakes on the left.
         /// </summary>
         private static Transform BuildLab(Transform lander)
         {
             Transform lab = Node("Lab", lander, new Vector3(0f, LabFloor, 0f));
             Node("RingRail", lab, new Vector3(0f, 2.3f, 0f));
-            string[] names = { "Station_Chart", "Station_Reader", "Station_Board", "Station_Keepsakes" };
+            string[] names = { "Station_Chart", "Station_Board", "Station_Keepsakes" };
+            float[] bearings = { 0f, 180f, 270f };
             for (int i = 0; i < names.Length; i++)
             {
-                Quaternion round = Quaternion.Euler(0f, 90f * i, 0f);
+                Quaternion round = Quaternion.Euler(0f, bearings[i], 0f);
                 Transform station = Node(names[i], lab, round * new Vector3(0f, LensHeight, StationRadius));
                 station.localRotation = round * Quaternion.Euler(0f, 180f, 0f);
             }

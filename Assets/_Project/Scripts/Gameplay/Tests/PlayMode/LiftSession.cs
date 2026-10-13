@@ -164,7 +164,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 "The turntable turns to the keepsake shelf that wants the duck");
             Capture("lab-shelf-arrival", lift);
 
-            LabStation[] round = { LabStation.Chart, LabStation.Reader, LabStation.Board, LabStation.Keepsakes };
+            LabStation[] round = { LabStation.Chart, LabStation.Board, LabStation.Keepsakes };
             foreach (LabStation next in round)
             {
                 int stops = faced.Count;

@@ -1528,11 +1528,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             LiftStation lift = _gameplay.Lift;
             yield return Tap(_keyboard.dKey);
-            yield return Until(() => lift.Lab.Facing == LabStation.Reader && !lift.Turning, LabTurnTimeout,
-                "right turns the turntable to the reader");
-            yield return Tap(_keyboard.dKey);
             yield return Until(() => lift.Lab.Facing == LabStation.Board && !lift.Turning, LabTurnTimeout,
-                "and on to the tech board");
+                "right turns the turntable to the tech board");
             yield return new WaitForSeconds(BoardSeconds);
             Capture("39a-the-recovery-panel");
             yield return Tap(_keyboard.wKey);

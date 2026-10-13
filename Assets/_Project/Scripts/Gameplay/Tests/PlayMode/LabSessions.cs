@@ -66,7 +66,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             yield return Tap(_keyboard.dKey);
             yield return Waits.Until(() => faced.Count > arrived && !lift.Turning, TurnTimeout);
-            Assert.AreEqual(LabStation.Reader, faced[faced.Count - 1], "right turns it clockwise to the reader");
+            Assert.AreEqual(LabStation.Board, faced[faced.Count - 1], "right turns it clockwise to the tech board");
             yield return Tap(_keyboard.aKey);
             yield return Tap(_keyboard.aKey);
             yield return Waits.Until(() => faced.Count >= arrived + 3 && !lift.Turning, 2f * TurnTimeout);

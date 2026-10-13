@@ -71,23 +71,24 @@ namespace MoonProject.Gameplay.Tests
             lab.Look(true);
             Assert.IsEmpty(log, "nothing to look at from outside");
 
-            lab.Enter(LabStation.Reader);
+            lab.Enter(LabStation.Board);
             lab.Faced();
             lab.Look(true);
             lab.Look(true);
-            lab.TurnTo(LabInterior.Next(LabStation.Reader, 1));
-            Assert.AreEqual(LabStation.Board, lab.Facing);
+            lab.TurnTo(LabInterior.Next(LabStation.Board, 1));
+            Assert.AreEqual(LabStation.Keepsakes, lab.Facing);
             lab.Faced();
             lab.Look(true);
             lab.Leave();
             lab.Leave();
             CollectionAssert.AreEqual(new[]
             {
-                "entered Reader", "faced Reader", "look Reader", "away Reader", "faced Board", "look Board",
-                "away Board", "left",
+                "entered Board", "faced Board", "look Board", "away Board", "faced Keepsakes", "look Keepsakes",
+                "away Keepsakes", "left",
             }, log);
             Assert.IsFalse(lab.IsInside);
             Assert.AreEqual(LabStation.Keepsakes, LabInterior.Next(LabStation.Chart, -1), "round the ring");
+            Assert.AreEqual(LabStation.Chart, LabInterior.Next(LabStation.Keepsakes, 1), "three stations round it");
         }
     }
 }
