@@ -294,11 +294,6 @@ namespace MoonProject.Audio.PlayModeTests
                     events.Publish(new StargazingChanged(frame % 48 < 24));
                     events.Publish(new StationNotYet("notyet.bay", Vector3.forward * 30f, 30f));
                     events.Publish(new LiftCued((LiftCue)(frame / 12 % 3), Vector3.up * 5f));
-                    if (frame % 48 == 10)
-                    {
-                        events.Publish(new BlueprintDelivered("kit.cargo"));
-                        events.Publish(new BlueprintFound("kit.cargo", "site.garage", Vector3.one));
-                    }
                     events.Publish(new BasePowerChanged((BasePowerStage)(frame / 12 % 4), frame % 24 == 10));
                     break;
                 case 9:

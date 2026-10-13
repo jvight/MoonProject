@@ -30,15 +30,14 @@ namespace MoonProject.Audio
     /// <item>the crew's belly lift: the jammed platform creaks as it asks for the stitch, the hatch slides open on an A
     /// and shut, the ride ratchets and hums in D while it moves and clunks at each stop (<see cref="LiftCued"/>,
     /// <see cref="LiftSounds"/>);</item>
-    /// <item>a found blueprint tube chimes where it was found (<see cref="BlueprintFound"/>); the lab's reader and
-    /// Kenji's plotter are <see cref="LabAudio"/>'s.</item>
+    /// <item>the lab's turntable and Kenji's plotter are <see cref="LabAudio"/>'s.</item>
     /// </list>
     /// Game-time loops duck while paused. Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class StationAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 11;
+        private const int SubscriptionCount = 10;
         private const uint DropSeedSalt = 0x68E31DA4u;
         private const float CentsPerSemitone = 100f;
         private const float CentsPerOctave = 1200f;
@@ -56,7 +55,6 @@ namespace MoonProject.Audio
         private CueHandle _wake;
         private CueHandle _notYet;
         private CueHandle[] _liftBeats = Array.Empty<CueHandle>();
-        private CueHandle _found;
         private CueHandle _portArm;
         private CueHandle _ringWake;
         private CueHandle _recycle;
@@ -133,7 +131,6 @@ namespace MoonProject.Audio
             _wake = director.Resolve(AudioCueIds.BaseWake);
             _notYet = director.Resolve(AudioCueIds.StationNotYet);
             CueHandle liftRide = director.Resolve(AudioCueIds.LiftRide);
-            _found = director.Resolve(AudioCueIds.BlueprintFound);
             _portArm = director.Resolve(AudioCueIds.PortArm);
             _ringWake = director.Resolve(AudioCueIds.TetherRingWake);
             _recycle = director.Resolve(AudioCueIds.RecycleCrunch);
@@ -141,7 +138,7 @@ namespace MoonProject.Audio
             if (!feed.IsValid || !servo.IsValid || !turn.IsValid || !stitch.IsValid || !charge.IsValid ||
                 !_sigh.IsValid || !_weld.IsValid || !_chime.IsValid || !_dockConnect.IsValid || !_dockFull.IsValid ||
                 !_dockRelease.IsValid || !_wake.IsValid || !_notYet.IsValid || !liftRide.IsValid ||
-                !_found.IsValid || !_portArm.IsValid || !_ringWake.IsValid ||
+                !_portArm.IsValid || !_ringWake.IsValid ||
                 !_recycle.IsValid || !_partRemove.IsValid || !TryResolveBeats(director) ||
                 !TryResolveLiftBeats(director) ||
                 !TryResolveWakes(director.Library.GetCue(_wake)))
@@ -179,11 +176,10 @@ namespace MoonProject.Audio
             _subscriptions[3] = events.Subscribe<BasePowerChanged>(OnBasePowerChanged);
             _subscriptions[4] = events.Subscribe<StationNotYet>(OnStationNotYet);
             _subscriptions[5] = events.Subscribe<LiftCued>(OnLiftCued);
-            _subscriptions[6] = events.Subscribe<BlueprintFound>(OnBlueprintFound);
-            _subscriptions[7] = events.Subscribe<ChargingChanged>(OnChargingChanged);
-            _subscriptions[8] = events.Subscribe<BatteryChanged>(OnBatteryChanged);
-            _subscriptions[9] = events.Subscribe<FeelBeat>(OnFeelBeat);
-            _subscriptions[10] = events.Subscribe<PartRemoved>(OnPartRemoved);
+            _subscriptions[6] = events.Subscribe<ChargingChanged>(OnChargingChanged);
+            _subscriptions[7] = events.Subscribe<BatteryChanged>(OnBatteryChanged);
+            _subscriptions[8] = events.Subscribe<FeelBeat>(OnFeelBeat);
+            _subscriptions[9] = events.Subscribe<PartRemoved>(OnPartRemoved);
         }
 
         internal void Wire(StationAudioTuning tuning)
@@ -385,11 +381,6 @@ namespace MoonProject.Audio
             {
                 _director.PlayAt(_liftBeats[beat], cued.Position, _tuning.LiftBeatVolume);
             }
-        }
-
-        private void OnBlueprintFound(BlueprintFound found)
-        {
-            _director.PlayAt(_found, found.Position, _tuning.BlueprintFoundVolume);
         }
 
         private void OnStationNotYet(StationNotYet notYet)

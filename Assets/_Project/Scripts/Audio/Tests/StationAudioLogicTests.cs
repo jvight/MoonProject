@@ -91,7 +91,6 @@ namespace MoonProject.Audio.Tests
 
             Assert.IsFalse(LiftSounds.TryGetOneShot((LiftCue)99, out _), "an unknown beat is silent, not an error");
             Assert.AreEqual("plotter_draw", AudioCueIds.PlotterDraw);
-            Assert.AreEqual("blueprint_found", AudioCueIds.BlueprintFound);
         }
 
         [Test]

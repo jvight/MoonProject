@@ -1960,14 +1960,6 @@ def plotter_draw(_variant, gen):
     return envelope.fade_out(filters.lowpass(mix, 7000.0), 0.1)
 
 
-def blueprint_found(_variant, gen):
-    """A blueprint tube found in a site's heart: a tiny two-note glass chime, A5 then D6."""
-    mix = np.zeros((samples(1.6), 2))
-    place(mix, pan(instruments.glass_chime(note_freq("A5"), 1.2, decay=0.8), -0.1), 0, 0.5)
-    place(mix, pan(instruments.glass_chime(note_freq("D6"), 1.4, decay=1.0), 0.1), samples(0.14), 0.55)
-    return mix
-
-
 def dock_evening_swell(_variant, gen):
     """The dock's evening: a warm, low swell under the wide shot of the day's lamps, D3/F#3/A3 over a D2 root."""
     n = samples(6.0)
@@ -2193,44 +2185,6 @@ def lab_room_tone(_variant, gen):
     hum = osc.additive(n, loop_freq(note_freq("D2"), n), [(1, 1.0), (2, 0.35), (3, 0.1)])
     hum *= envelope.lfo(n, 1.0 / LAB_ROOM_LOOP_S, 0.15, 0.85)
     return periodic(0.03 * air + 0.1 * hum, lambda x: filters.highpass(filters.lowpass(x, 1800.0), 40.0))
-
-
-READER_REEL_LOOP_S = 1.0
-
-
-def reader_reel(_variant, gen):
-    """The reader decoding: its reel turning with a soft cog purr and the paper tape ticking out, eight to the turn.
-    Seamless."""
-    n = samples(READER_REEL_LOOP_S)
-    purr = osc.additive(n, loop_freq(note_freq("A2"), n), [(1, 1.0), (2, 0.4), (3, 0.15)])
-    ticks = np.zeros(n)
-    tick_len = samples(0.03)
-    for k in range(8):
-        tick = filters.bandpass(noise.white(tick_len, gen), 2600.0, 2.0) * envelope.ar(tick_len, 0.0005, 0.015)
-        start = k * n // 8
-        ticks[start:start + tick_len] += (0.7 + 0.3 * (k % 2)) * tick
-    mix = 0.08 * purr + 0.05 * ticks / max(float(np.max(np.abs(ticks))), 1e-9)
-    return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 4000.0), 60.0))
-
-
-def reader_take(_variant, gen):
-    """The reader taking a blueprint tube: a paper-and-tin slide into the slot and a soft latch."""
-    n = samples(0.9)
-    slide = filters.bandpass(noise.pink(n, gen), 1400.0, 0.8)
-    slide = slide / max(float(np.std(slide)), 1e-9) * envelope.segments(
-        n, [(0.0, 0.0), (0.05, 1.0), (0.45, 0.4), (0.5, 0.0)], shape="smooth")
-    latch = filters.bandpass(noise.white(n, gen), 2200.0, 1.6) * envelope.segments(
-        n, [(0.0, 0.0), (0.5, 0.0), (0.501, 1.0), (0.53, 0.0)], shape="smooth")
-    return filters.lowpass(0.05 * slide + 0.15 * latch / max(float(np.max(np.abs(latch))), 1e-9), 5000.0)
-
-
-def reader_decode_chime(_variant, gen):
-    """A find decoded: the reel stops and a small felt chime rises D5, A5, D6, know-how gained."""
-    mix = np.zeros((samples(2.4), 2))
-    for i, note in enumerate(("D5", "A5", "D6")):
-        place(mix, pan(instruments.glass_chime(note_freq(note), 1.6, decay=1.0), -0.15 + 0.15 * i),
-              samples(0.16 * i), 0.45)
-    return mix
 
 
 RECOVERY_CHORD_NOTES = ("D3", "A3", "D4", "F#4", "A4")
@@ -2550,8 +2504,6 @@ CUES = (
         notes="The beacon flares (Build Impact): a deep soft thoom and a D major chord."),
     Cue("node_light", "stinger_2d", feel.node_light, variants=len(feel.NODE_LIGHT_NOTES), volume=(0.55, 0.55),
         milestone="M3", tonal=True, notes="A tech node lighting: a bloom pop and one pentatonic step by branch."),
-    Cue("cable_ticks", "ui_2d", feel.cable_ticks, volume=(0.5, 0.5), milestone="M3",
-        notes="The decode's lamp pulse travelling down the cable to the plotter: tick-tick-tick on A."),
     Cue("component_found", "oneshot_3d", feel.component_found, volume=(0.6, 0.6), milestone="M3", tonal=True,
         notes="A component lifting free: a two-note found, E -> A."),
     Cue("boost_whine", "loop_3d", feel.boost_whine, loop=True, file_stem="boost_whine_loop", volume=(0.45, 0.45),
@@ -2822,12 +2774,6 @@ CUES = (
         milestone="M3", tonal=True, notes="The lab's turntable settling at a station: felt click + a pentatonic tine."),
     Cue("lab_room_tone", "ambience_2d", lab_room_tone, loop=True, file_stem="lab_room_tone_loop", volume=(0.7, 0.7),
         milestone="M3", tonal=True, notes="The crew's lab: a close warm room, a soft D2 lamp hum and faint air."),
-    Cue("reader_reel", "loop_3d", reader_reel, loop=True, file_stem="reader_reel_loop", volume=(0.45, 0.45),
-        milestone="M3", tonal=True, notes="The reader decoding: reel purr on A2 + paper tape ticks."),
-    Cue("reader_take", "oneshot_3d", reader_take, volume=(0.5, 0.5), fade_out=0.08, milestone="M3",
-        notes="The reader taking a tube: paper-and-tin slide into the slot + soft latch."),
-    Cue("reader_decode_chime", "stinger_2d", reader_decode_chime, volume=(0.55, 0.55), fade_out=0.3, milestone="M3",
-        tonal=True, notes="A find decoded: felt glass chime rising D5, A5, D6."),
     Cue("recovery_row_chord", "stinger_2d", recovery_row_chord, volume=(0.55, 0.55), fade_out=0.6, milestone="M3",
         tonal=True, notes="A recovery row completes: a warm D-major chord rising left to right under its lamps."),
     Cue("map_pencil", "tick_2d", map_pencil, volume=(0.5, 0.5), fade_out=0.05, milestone="M3",
@@ -2836,8 +2782,6 @@ CUES = (
         milestone="M3", tonal=True, notes="The chart pen inking a place: nib scratch + tine climbing D pentatonic."),
     Cue("map_table_hum", "loop_3d", map_table_hum, loop=True, file_stem="map_table_hum_loop", volume=(0.4, 0.4),
         milestone="M3", tonal=True, notes="The light table glowing under the chart: soft D3/A3 lamp hum."),
-    Cue("blueprint_found", "oneshot_3d", blueprint_found, volume=(0.5, 0.5), fade_out=0.2, milestone="M3",
-        tonal=True, notes="A blueprint tube found: a tiny two-note glass chime, A5 then D6."),
     Cue("dock_evening_swell", "stinger_2d", dock_evening_swell, volume=(0.5, 0.5), fade_out=0.6, milestone="M3",
         tonal=True, notes="The dock's evening: a warm low D-major swell under the wide shot of the lamps."),
     Cue("bay_turntable", "loop_3d", bay_turntable, loop=True, file_stem="bay_turntable_loop", volume=(0.5, 0.5),

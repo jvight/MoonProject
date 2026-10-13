@@ -25,15 +25,10 @@ MonoBehaviour:
   _liftRideVolume: 0.7
   _liftBeatVolume: 0.8
   _plotterVolume: 0.7
-  _blueprintFoundVolume: 0.7
   _labRoomVolume: 0.7
   _labRoomFadeIn: 2
   _labRoomFadeOut: 2.5
   _detentVolume: 0.6
-  _readerTakeVolume: 0.7
-  _reelVolume: 0.6
-  _reelFade: 0.3
-  _decodeChimeVolume: 0.7
   _rowChordVolume: 0.75
   _mapPencilVolume: 0.5
   _mapPenVolume: 0.6

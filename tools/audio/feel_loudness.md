@@ -19,7 +19,6 @@ at most three of these at once (feel-pass R10): e.g. the crack = cut_crack + the
 | Garage port: arm | `port_arm` | oneshot_3d | -18 | 0.80 | -19.9 |
 | Tether ring: first hum | `tether_ring_wake` | oneshot_3d | -18 | 0.80 | -19.9 |
 | Lab: node lights | `node_light` | stinger_2d | -20 | 0.55 | -25.2 |
-| Decode: cable ticks | `cable_ticks` | ui_2d | -22 | 0.50 | -28.0 |
 | Component found | `component_found` | oneshot_3d | -18 | 0.60 | -22.4 |
 | Drums: boost (loop) | `boost_whine` | loop_3d | -22 | 0.45 | -28.9 |
 | Drums: release | `boost_release` | tick_3d | -26 | 0.60 | -30.4 |

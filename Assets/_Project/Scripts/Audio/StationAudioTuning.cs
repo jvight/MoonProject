@@ -57,9 +57,6 @@ namespace MoonProject.Audio
         [Tooltip("Volume scale of the pen plotter drawing a decoded sheet.")]
         [Range(0f, 1f)] [SerializeField] private float _plotterVolume = 0.7f;
 
-        [Tooltip("Volume scale of the tiny chime as a blueprint tube is found.")]
-        [Range(0f, 1f)] [SerializeField] private float _blueprintFoundVolume = 0.7f;
-
         [Header("The crew's lab (M3-19)")]
         [Tooltip("Volume scale of the lab's room tone while 07 is up in the lab.")]
         [Range(0f, 1f)] [SerializeField] private float _labRoomVolume = 0.7f;
@@ -72,18 +69,6 @@ namespace MoonProject.Audio
 
         [Tooltip("Volume scale of the turntable's detent as it settles at a station.")]
         [Range(0f, 1f)] [SerializeField] private float _detentVolume = 0.6f;
-
-        [Tooltip("Volume scale of the reader taking a tube into its slot.")]
-        [Range(0f, 1f)] [SerializeField] private float _readerTakeVolume = 0.7f;
-
-        [Tooltip("Volume scale of the reader's reel and tape while it decodes.")]
-        [Range(0f, 1f)] [SerializeField] private float _reelVolume = 0.6f;
-
-        [Tooltip("Seconds for the reel's sound to come in and to let go.")]
-        [Range(0.05f, 2f)] [SerializeField] private float _reelFade = 0.3f;
-
-        [Tooltip("Volume scale of the chime as a find is decoded.")]
-        [Range(0f, 1f)] [SerializeField] private float _decodeChimeVolume = 0.7f;
 
         [Tooltip("Volume scale of the warm chord as a recovery target's row completes (docs/features/M3-21).")]
         [Range(0f, 1f)] [SerializeField] private float _rowChordVolume = 0.75f;
@@ -189,15 +174,10 @@ namespace MoonProject.Audio
         public float LiftRideVolume => _liftRideVolume;
         public float LiftBeatVolume => _liftBeatVolume;
         public float PlotterVolume => _plotterVolume;
-        public float BlueprintFoundVolume => _blueprintFoundVolume;
         public float LabRoomVolume => _labRoomVolume;
         public float LabRoomFadeIn => _labRoomFadeIn;
         public float LabRoomFadeOut => _labRoomFadeOut;
         public float DetentVolume => _detentVolume;
-        public float ReaderTakeVolume => _readerTakeVolume;
-        public float ReelVolume => _reelVolume;
-        public float ReelFade => _reelFade;
-        public float DecodeChimeVolume => _decodeChimeVolume;
         public float RowChordVolume => _rowChordVolume;
         public float MapPencilVolume => _mapPencilVolume;
         public float MapPenVolume => _mapPenVolume;

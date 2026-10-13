@@ -237,16 +237,6 @@ def node_light(variant, gen):
     return filters.lowpass(mix, 5000.0)
 
 
-def cable_ticks(_variant, gen):
-    """The lamp pulse running down the cable to the plotter: a travelling 'tick-tick-tick' on A, slowing as it lands."""
-    n = samples(1.8)
-    mix = np.zeros(n)
-    times = (0.0, 0.22, 0.42, 0.6, 0.78, 0.98, 1.22)
-    for index, at in enumerate(times):
-        place(mix, (0.22 + 0.03 * index) * _tick(gen, note_freq("A5"), 0.08), samples(at))
-    return filters.lowpass(mix, 4500.0)
-
-
 def component_found(_variant, gen):
     """A component lifting free of its wreck: a two-note 'found', E -> A."""
     n = samples(1.6)

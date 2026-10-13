@@ -33,7 +33,6 @@ namespace MoonProject.Audio
         public const string DockWallsSettle = "dock_walls_settle";
         public const string DockWallsDrop = "dock_walls_drop";
         public const string NodeLight = "node_light";
-        public const string CableTicks = "cable_ticks";
         public const string ComponentFound = "component_found";
         public const string BoostWhine = "boost_whine";
         public const string BoostRelease = "boost_release";
@@ -142,14 +141,10 @@ namespace MoonProject.Audio
         public const string LiftHatchClose = "lift_hatch_close";
         public const string LabDetent = "lab_detent";
         public const string LabRoomTone = "lab_room_tone";
-        public const string ReaderReel = "reader_reel";
-        public const string ReaderTake = "reader_take";
-        public const string ReaderDecodeChime = "reader_decode_chime";
         public const string RecoveryRowChord = "recovery_row_chord";
         public const string MapPencil = "map_pencil";
         public const string MapPen = "map_pen";
         public const string MapTableHum = "map_table_hum";
-        public const string BlueprintFound = "blueprint_found";
         public const string DockEveningSwell = "dock_evening_swell";
         public const string AsleepStatic = "asleep_static";
         public const string GhostChord = "ghost_chord";

@@ -1556,33 +1556,6 @@
       "notes": "A tech node lighting: a bloom pop and one pentatonic step by branch."
     },
     {
-      "id": "cable_ticks",
-      "category": "ui_2d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": false,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/2D/cable_ticks.wav"
-      ],
-      "variantLabels": [
-        "cable_ticks"
-      ],
-      "sha256": [
-        "0ee381a962d0cd408e6a06cfd21c1ee8359427f38c8b8afbdcda54dc77f3641d"
-      ],
-      "volumeMin": 0.5,
-      "volumeMax": 0.5,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -22.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": false,
-      "notes": "The decode's lamp pulse travelling down the cable to the plotter: tick-tick-tick on A."
-    },
-    {
       "id": "component_found",
       "category": "oneshot_3d",
       "milestone": "M3",
@@ -5042,87 +5015,6 @@
       "notes": "The crew's lab: a close warm room, a soft D2 lamp hum and faint air."
     },
     {
-      "id": "reader_reel",
-      "category": "loop_3d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": true,
-      "loop": true,
-      "files": [
-        "Assets/_Project/Audio/SFX/reader_reel_loop.wav"
-      ],
-      "variantLabels": [
-        "reader_reel"
-      ],
-      "sha256": [
-        "97530899cf06e604d952bc1770128849997c56b5e276c012fb1ed1f0e1d7cf98"
-      ],
-      "volumeMin": 0.45,
-      "volumeMax": 0.45,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -22.0,
-      "loudnessMode": "integrated",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "The reader decoding: reel purr on A2 + paper tape ticks."
-    },
-    {
-      "id": "reader_take",
-      "category": "oneshot_3d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": true,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/reader_take.wav"
-      ],
-      "variantLabels": [
-        "reader_take"
-      ],
-      "sha256": [
-        "1be0310034d1a7e8d7ee67c48c2c906564838d6faf1ac8f133ff57d89b4668bf"
-      ],
-      "volumeMin": 0.5,
-      "volumeMax": 0.5,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -18.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": false,
-      "notes": "The reader taking a tube: paper-and-tin slide into the slot + soft latch."
-    },
-    {
-      "id": "reader_decode_chime",
-      "category": "stinger_2d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": false,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/2D/reader_decode_chime.wav"
-      ],
-      "variantLabels": [
-        "reader_decode_chime"
-      ],
-      "sha256": [
-        "0ddf1b5272028f85405b9c5f9c2d513e51a46c9cbab8698192dc4800faa734fc"
-      ],
-      "volumeMin": 0.55,
-      "volumeMax": 0.55,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -20.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "A find decoded: felt glass chime rising D5, A5, D6."
-    },
-    {
       "id": "recovery_row_chord",
       "category": "stinger_2d",
       "milestone": "M3",
@@ -5244,33 +5136,6 @@
       "hfMaxDb": -30.0,
       "tonal": true,
       "notes": "The light table glowing under the chart: soft D3/A3 lamp hum."
-    },
-    {
-      "id": "blueprint_found",
-      "category": "oneshot_3d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": true,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/blueprint_found.wav"
-      ],
-      "variantLabels": [
-        "blueprint_found"
-      ],
-      "sha256": [
-        "2ad71e1feb016bc06d3268ffd1081f093f8b085e7cb1a1bb388fa8f638eceb82"
-      ],
-      "volumeMin": 0.5,
-      "volumeMax": 0.5,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -18.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "A blueprint tube found: a tiny two-note glass chime, A5 then D6."
     },
     {
       "id": "dock_evening_swell",
