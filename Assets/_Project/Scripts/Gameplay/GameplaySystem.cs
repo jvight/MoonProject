@@ -83,13 +83,16 @@ namespace MoonProject.Gameplay
         /// <summary>07's cutter as its fitted kits make it (docs/features/M3-26).</summary>
         public Cutter Cutter { get; private set; }
 
-        /// <summary>Bundles waiting in the world because 07's hold was full (docs/features/M3-25 §2.3).</summary>
+        /// <summary>
+        /// What 07's hold had no room for, held where it was (docs/features/M3-25 §2.3, 0.5.5 §2): pieces on their
+        /// wrecks, remainders in their crates' mouths.
+        /// </summary>
         public CargoBundles Bundles { get; private set; }
 
         /// <summary>The dock's unload onto home's shelves (M3-25 §3.2).</summary>
         public DockUnload Unload { get; private set; }
 
-        /// <summary>Tilly fetching waiting bundles inside the station's reach (M3-25 T3).</summary>
+        /// <summary>Tilly fetching held stacks inside the station's reach home (M3-25 T3).</summary>
         public TillyFetch Fetch { get; private set; }
 
         /// <summary>Home's supply shelves as they stand, and building more (M3-25 §3.1).</summary>
@@ -466,14 +469,17 @@ namespace MoonProject.Gameplay
                 : 0;
         }
 
-        /// <summary>Recycled Metal goes to home's shelves, else 07's hold, else waits as a bundle at the bay.</summary>
+        /// <summary>
+        /// Recycled Metal goes to home's shelves, else 07's hold, else home's overflow crates (0.5.5 §2: it never waits
+        /// on the ground).
+        /// </summary>
         private void DeliverRecycled(int metal)
         {
             int left = Materials.Deliver(SalvageMaterial.Metal, metal);
             left = left > 0 ? Materials.Collect(SalvageMaterial.Metal, left) : 0;
             if (left > 0)
             {
-                _events.Publish(new CargoOverflowed(SalvageMaterial.Metal, left, _workshop.TurntablePosition));
+                Materials.Home.AddOverflow(SalvageMaterial.Metal, left);
             }
         }
 
@@ -709,18 +715,26 @@ namespace MoonProject.Gameplay
             Recovery.Refresh();
         }
 
-        /// <summary>Where every material is, the bundles waiting in the world included (M3-25 §6).</summary>
+        /// <summary>Where every material is (M3-25 §6); what is held in the world saves with its holder.</summary>
         private MaterialsSaveData CaptureMaterials()
         {
-            MaterialsSaveData data = Materials.Capture();
-            data.waiting = Bundles.Capture();
-            return data;
+            return Materials.Capture();
         }
 
+        /// <summary>
+        /// An older save's bundles that waited on the ground (before 0.5.5 §2) go into home's overflow crates: nothing
+        /// is lost, nothing lies on the regolith.
+        /// </summary>
         private void RestoreMaterials(MaterialsSaveData data)
         {
             Materials.Restore(data);
-            Bundles.Restore(data.waiting);
+            foreach (WaitingBundleSaveData bundle in data.waiting ?? Array.Empty<WaitingBundleSaveData>())
+            {
+                if (bundle.units > 0 && bundle.material >= 0 && bundle.material < SalvageMaterials.Count)
+                {
+                    Materials.Home.AddOverflow((SalvageMaterial)bundle.material, bundle.units);
+                }
+            }
         }
 
         /// <summary>
@@ -737,12 +751,13 @@ namespace MoonProject.Gameplay
                 return false;
             }
 
-            Bundles = new CargoBundles(transform, services, _salvage.Catalog, _materialCatalog, _cargo,
+            Bundles = new CargoBundles(transform, services, _salvage, _salvage.Catalog, _materialCatalog, _cargo,
                 _friends.Tuning);
+            _salvage.ConnectHeld(Bundles);
             Unload = new DockUnload(services.Events, Materials, _cargo, services.Save);
             LiftStation lift = _lift;
             Fetch = new TillyFetch(Bundles, _relays.Reach, fetcher, _cargo, () => lift.RideSpot);
-            Crates = new CrewCrates(_salvage, _cargo, Cutter, services);
+            Crates = new CrewCrates(_salvage, _cargo, Cutter, services, Bundles);
             Containers.Connect(Crates);
             Transform[] racks = _home.ShelfRacks;
             int seats = _cargo.ShelfSlots * HomeShelves.Seats;

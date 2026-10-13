@@ -14,9 +14,10 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
-    /// Cargo and storage on the real components (docs/features/M3-25): a bundle that does not fit waits beside 07
-    /// and the line says so once a trip; the dock unloads 07 onto home's shelves with no input; a press of E takes the
-    /// waiting bundle once there is room; and Tilly, once home, fetches a bundle waiting inside the station's reach.
+    /// Cargo and storage on the real components (docs/features/M3-25, 0.5.5 §2): a piece cut with no room in the hold
+    /// stays on its wreck, held, its halo amber, and the line says so once a trip; a save keeps it held; the dock
+    /// unloads 07 onto home's shelves with no input; a press of E then takes the held piece; a crew crate's remainder
+    /// waits in its mouth; and Tilly, once home, fetches a held piece inside the station's reach home.
     /// </summary>
     public sealed class CargoSessions : InputTestFixture
     {
@@ -100,68 +101,97 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator AFullHold_LeavesTheBundleWaiting_TheDockUnloads_AndEThenTakesIt()
+        public IEnumerator AFullHold_HoldsTheCutPieceOnItsWreck_ASaveKeepsIt_AndAfterTheDockETakesIt()
         {
-            _fixture = GameplayFixture.Boot(_controls);
+            string slot = BootstrapHarness.NewTestSlot();
+            _fixture = GameplayFixture.Boot(_controls, slot);
             yield return null;
             GameplaySystem gameplay = _fixture.Gameplay;
             EventBus events = _fixture.Bootstrap.Context.Events;
-            var unloaded = new List<CargoUnloaded>();
-            var taken = new List<CargoPickupTaken>();
-            Listen(events, unloaded);
-            Listen(events, taken);
-            _listening.Add(events.Subscribe<FeelBeat>(beat =>
-            {
-                if (beat.Kind == FeelKind.Cargo)
-                {
-                    _cargoBeats.Add(beat);
-                }
-            }));
-
+            var overflowed = new List<CargoOverflowed>();
+            Listen(events, overflowed);
             MaterialStock stock = gameplay.Materials;
             int room = stock.Hold.SlotCount * Stack;
-            Assert.AreEqual(0, stock.Collect(SalvageMaterial.Metal, room), "the hold fills");
+            Assert.AreEqual(0, stock.Collect(SalvageMaterial.Metal, room - stock.Hold.TotalUnits), "the hold fills");
             Assert.IsTrue(stock.Hold.IsFull);
-            Vector3 socket = _fixture.Rover.Position + Vector3.up;
-            Assert.AreEqual(3, stock.Collect(SalvageMaterial.Optics, 3));
-            events.Publish(new CargoOverflowed(SalvageMaterial.Optics, 3, socket));
-            events.Publish(new CargoOverflowed(SalvageMaterial.Wiring, 2, socket));
-            yield return new WaitForSeconds(_fixture.CargoTuning.BundleSettleSeconds + 0.3f);
-            CargoBundles bundles = gameplay.Bundles;
-            Assert.AreEqual(2, bundles.Count, "both wait beside 07");
-            Assert.IsTrue(bundles.IsWaiting(0));
-            Assert.AreEqual(2, stock.Hold.WaitingBundles);
+            SalvagePiece piece = Wiring(_fixture.FindSite("depot"));
+            piece.Progress = 0.97f;
+            yield return CutHeld(piece);
+            yield return null;
+
+            Assert.AreEqual(SalvagePieceState.Held, piece.State, "cut, but held: no room for it");
+            Assert.IsTrue(piece.Body.gameObject.activeSelf, "it stays on its wreck, never on the ground");
+            Assert.Greater(piece.Halo.Intensity, 0f, "its halo shell breathes");
+            Assert.AreEqual(1, overflowed.Count, "the hatch bumps once");
+            Assert.AreEqual(1, gameplay.Bundles.Count);
+            Assert.AreEqual(1, stock.Hold.WaitingBundles);
             var chart = _fixture.Bootstrap.Context.Get<MoonProject.Gameplay.Map.IWaitingBundles>();
-            Assert.AreEqual(2, chart.Count, "a pencil crate on the chart for each");
-            Assert.AreEqual(bundles.RestPosition(1), chart.Position(1));
+            Assert.AreEqual(1, chart.Count, "a pencil crate on the chart");
+            Assert.Less(Vector3.Distance(chart.Position(0), piece.Body.TransformPoint(Vector3.zero)), 2f,
+                "over the held piece");
             Assert.AreEqual(1, _fixture.Events.TickerLine.FindAll(line => line.Value.Key == CargoBundles.TickerFull)
                 .Count, "the line once a trip");
             Assert.IsFalse(gameplay.Hints.TryGet(InteractionKind.PickUp, out _), "no room: no prompt");
-            Vector3 waiting = bundles.RestPosition(0);
+            Assert.IsTrue(_fixture.Bootstrap.Context.Get<ISaveService>().SaveNow());
+            _fixture.Dispose(true);
+            yield return null;
 
-            ChargingDock dock = gameplay.Home.Dock;
-            _fixture.Rover.Place(dock.Position, 0f);
+            _fixture = GameplayFixture.Boot(_controls, slot);
+            yield return null;
+            gameplay = _fixture.Gameplay;
+            stock = gameplay.Materials;
+            piece = Wiring(_fixture.FindSite("depot"));
+            Assert.AreEqual(SalvagePieceState.Held, piece.State, "a save keeps it held on its wreck");
+            Assert.AreEqual(1, gameplay.Bundles.Count);
+            Assert.IsTrue(stock.Hold.IsFull);
+
+            var unloaded = new List<CargoUnloaded>();
+            Listen(_fixture.Bootstrap.Context.Events, unloaded);
+            _fixture.Rover.Place(gameplay.Home.Dock.Position, 0f);
             yield return Waits.Until(() => unloaded.Count > 0, UnloadTimeout);
-            Assert.AreEqual(1, unloaded.Count, "the dock unloads with no input");
-            Assert.AreEqual(room, unloaded[0].UnitsMoved);
-            Assert.IsFalse(unloaded[0].HomeFull);
-            Assert.AreEqual(0, stock.Hold.UsedSlots);
-            Assert.AreEqual(room, stock.Home.Units(SalvageMaterial.Metal));
-            Assert.AreEqual(FeelPhase.Anticipate, _cargoBeats[0].Phase, "the hatch opens");
-            Assert.AreEqual(FeelPhase.Reward, _cargoBeats[_cargoBeats.Count - 1].Phase, "the last crate");
-            Assert.AreEqual(stock.Hold.SlotCount, _cargoBeats.FindAll(beat => beat.Phase == FeelPhase.Act).Count,
-                "one crate per slot");
+            Assert.AreEqual(0, stock.Hold.UsedSlots, "the dock unloads with no input");
 
-            _fixture.Rover.Place(new Vector3(waiting.x, 0f, waiting.z) + Vector3.back * 1.5f, 0f);
-            yield return PickupPress.Take(this, gameplay, 2f, "the waiting bundle");
-            yield return Waits.Until(() => taken.Count > 0, 4f);
-            Assert.AreEqual(1, taken.Count);
-            Assert.AreEqual(1, bundles.Count, "one still waits");
-            Assert.Greater(stock.Hold.TotalUnits, 0, "taken into the hold");
+            int before = _fixture.Events.MaterialSalvaged.Count;
+            yield return Beside(piece);
+            yield return PickupPress.Take(this, gameplay, 2f, "the held piece");
+            yield return Waits.Until(() => piece.State == SalvagePieceState.Taken, 6f);
+            Assert.AreEqual(SalvagePieceState.Taken, piece.State, "with room, it folds and flies in");
+            Assert.Greater(_fixture.Events.MaterialSalvaged.Count, before);
+            Assert.AreEqual(piece.Units, stock.Hold.Units(SalvageMaterial.Wiring));
+            Assert.AreEqual(0, gameplay.Bundles.Count);
         }
 
         [UnityTest]
-        public IEnumerator TillyAtHome_FetchesABundleWaitingInReach_ToTheShelves()
+        public IEnumerator ACrewCrate_OpenedWithAFullHold_HoldsItsStackInItsMouth_AndETakesIt()
+        {
+            string slot = BootstrapHarness.NewTestSlot();
+            _fixture = GameplayFixture.Boot(_controls, slot);
+            yield return null;
+            GameplaySystem gameplay = _fixture.Gameplay;
+            MaterialStock stock = gameplay.Materials;
+            int room = stock.Hold.SlotCount * Stack;
+            stock.Collect(SalvageMaterial.Optics, room - stock.Hold.TotalUnits);
+            Assert.IsTrue(stock.Hold.IsFull);
+            CrewCrate crate = OpenKestrelCrate(gameplay);
+            yield return null;
+            yield return CutCrate(crate);
+            Assert.IsTrue(crate.Opened);
+            Assert.AreEqual(GameplayFixture.CrateUnits, gameplay.Bundles.UnitsAt(0), "its stack waits in its mouth");
+            Assert.Less(Vector3.Distance(gameplay.Bundles.RestPosition(0), crate.Root.position), 1.5f, "in the crate");
+            CratesSaveData saved = gameplay.Crates.Capture();
+            CollectionAssert.AreEqual(new[] { GameplayFixture.CrateUnits }, saved.held,
+                "the crate saves what it holds");
+
+            stock.Hold.Remove(SalvageMaterial.Optics, room);
+            yield return null;
+            yield return PickupPress.Take(this, gameplay, 2f, "the crate's stack");
+            yield return Waits.Until(() => gameplay.Bundles.Count == 0, 6f);
+            Assert.AreEqual(GameplayFixture.CrateUnits, stock.Hold.Units(SalvageMaterial.Metal), "taken into the hold");
+            CollectionAssert.AreEqual(new[] { 0 }, gameplay.Crates.Capture().held);
+        }
+
+        [UnityTest]
+        public IEnumerator TillyAtHome_FetchesAHeldPieceInReach_Home()
         {
             _fixture = GameplayFixture.Boot(_controls);
             yield return null;
@@ -169,10 +199,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             EventBus events = _fixture.Bootstrap.Context.Events;
             var fetched = new List<BundleFetched>();
             Listen(events, fetched);
-            Vector3 near = _fixture.Rover.Position + Vector3.forward * 12f;
-            events.Publish(new CargoOverflowed(SalvageMaterial.Wiring, 3, near));
-            yield return new WaitForSeconds(_fixture.CargoTuning.BundleSettleSeconds + 0.3f);
-            Assert.AreEqual(1, gameplay.Bundles.Count);
+            MaterialStock stock = gameplay.Materials;
+            stock.Collect(SalvageMaterial.Metal, stock.Hold.SlotCount * Stack - stock.Hold.TotalUnits);
+            SalvagePiece piece = Wiring(_fixture.FindSite("depot"));
+            piece.Progress = 0.97f;
+            yield return CutHeld(piece);
+            Assert.AreEqual(SalvagePieceState.Held, piece.State);
+            _fixture.Rover.Place(gameplay.Home.Dock.Position + Vector3.right * 20f, 0f);
             gameplay.Friends.Restore(new FriendsSaveData
             {
                 friends = new[] { new FriendSaveData { id = TillyId, state = (int)FriendState.Awake, welcomed = true } },
@@ -180,9 +213,10 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             const float budget = 40f;
             yield return Waits.Until(() => fetched.Count > 0, budget);
-            Assert.AreEqual(1, fetched.Count, "Tilly brings it home");
-            Assert.AreEqual(3, fetched[0].Units);
-            Assert.AreEqual(3, gameplay.Materials.Home.Units(SalvageMaterial.Wiring), "on the shelves");
+            Assert.AreEqual(1, fetched.Count, "Tilly unclips it and brings it home");
+            Assert.AreEqual(piece.Units, fetched[0].Units);
+            Assert.AreEqual(piece.Units, stock.Home.Units(SalvageMaterial.Wiring), "on the shelves");
+            Assert.AreEqual(SalvagePieceState.Taken, piece.State);
             Assert.AreEqual(0, gameplay.Bundles.Count);
         }
 
@@ -276,6 +310,69 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(0f, crate.Seal.Intensity, 1e-4f, "the seal is dark");
             Assert.IsNull(gameplay.Crates.Candidate, "an empty frame now");
             CollectionAssert.AreEqual(new[] { "site.kestrel" }, gameplay.Crates.Capture().opened);
+        }
+
+        private static SalvagePiece Wiring(SalvageSite site)
+        {
+            foreach (SalvagePiece piece in site.Pieces)
+            {
+                if (piece.Material == SalvageMaterial.Wiring)
+                {
+                    return piece;
+                }
+            }
+
+            Assert.Fail($"{site.Id} has no Wiring piece");
+            return null;
+        }
+
+        /// <summary>07 parks in front of the piece's cut, facing it, and holds E until it is cut through.</summary>
+        private IEnumerator CutHeld(SalvagePiece piece)
+        {
+            yield return Beside(piece);
+            Press(Keyboard.current.eKey);
+            float timeout = _fixture.Gameplay.Cutter.Plan(3, false).TotalSeconds + 3f;
+            yield return Waits.Until(() => piece.State != SalvagePieceState.Attached, timeout);
+            Release(Keyboard.current.eKey);
+        }
+
+        private IEnumerator Beside(SalvagePiece piece)
+        {
+            Vector3 cut = piece.CutPosition;
+            Vector3 away = piece.CutNormal;
+            away.y = 0f;
+            away.Normalize();
+            Vector3 park = cut + away * 4.5f;
+            _fixture.Rover.Place(new Vector3(park.x, 0f, park.z), Mathf.Atan2(-away.x, -away.z) * Mathf.Rad2Deg);
+            _fixture.Rover.Aim(cut + away * 9f + Vector3.up * 3.5f, cut);
+            yield return null;
+            yield return null;
+        }
+
+        private CrewCrate OpenKestrelCrate(GameplaySystem gameplay)
+        {
+            gameplay.Salvage.Restore(new SalvageSaveData
+            {
+                sites = new[]
+                {
+                    new SalvageSiteSaveData
+                    {
+                        id = WorldAnchorIds.SitePrefix + "kestrel", discovered = true, taken = new[] { 0, 1, 2 },
+                    },
+                },
+            });
+            CrewCrate crate = _fixture.FindSite("kestrel").Crate;
+            Vector3 front = crate.CutPoint.position + crate.CutPoint.forward * 3f;
+            _fixture.Rover.Place(new Vector3(front.x, 0f, front.z), 0f);
+            return crate;
+        }
+
+        private IEnumerator CutCrate(CrewCrate crate)
+        {
+            yield return null;
+            Press(Keyboard.current.eKey);
+            yield return Waits.Until(() => crate.Opened, 4f);
+            Release(Keyboard.current.eKey);
         }
 
         private static int Crates(Transform rack, string slot)

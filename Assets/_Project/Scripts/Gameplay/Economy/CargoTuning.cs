@@ -58,23 +58,23 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds between crates riding the belt onto the shelves.")]
         [Range(0.05f, 0.5f)] [SerializeField] private float _unloadStepSeconds = 0.15f;
 
-        [Header("Waiting bundles (§2.3)")]
-        [Tooltip("Metres from 07 where a bundle that did not fit settles (beside 07, never under it).")]
-        [Range(1f, 6f)] [SerializeField] private float _bundleSettleDistance = 2.6f;
-
-        [Tooltip("Seconds between a waiting bundle's slow cyan pulses.")]
+        [Header("Held stacks (§2.3, 0.5.5 §2)")]
+        [Tooltip("Seconds between a held stack's slow breaths (a piece's amber halo, a crate bundle's swell).")]
         [Range(1f, 6f)] [SerializeField] private float _bundlePulseSeconds = 3f;
 
-        [Tooltip("Metres a waiting bundle hovers over the ground.")]
-        [Range(0f, 1.5f)] [SerializeField] private float _bundleHover = 0.45f;
-
-        [Tooltip("Seconds a bundle that bumped the closed hatch takes to settle beside 07.")]
+        [Tooltip("Seconds what did not fit takes to glide back into its crate's mouth.")]
         [Range(0.2f, 2f)] [SerializeField] private float _bundleSettleSeconds = 0.7f;
 
-        [Tooltip("How much a waiting bundle swells on each slow pulse (0.08 = 8%).")]
+        [Tooltip("How much a held stack breathes on each slow pulse (0.08 = 8% swell, or 8% of the halo's glow).")]
         [Range(0f, 0.3f)] [SerializeField] private float _bundlePulse = 0.08f;
 
-        [Tooltip("Waiting bundles that glint from afar at once (more still wait; they just do not glint).")]
+        [Tooltip("Glow of a held piece's halo shell on its wreck: it waits there, cut, for room in the hold.")]
+        [Range(0f, 2f)] [SerializeField] private float _heldHalo = 0.6f;
+
+        [Tooltip("Colour of a held piece's halo shell (HDR, linear): amber, apart from the cyan of a piece to cut.")]
+        [ColorUsage(false, true)] [SerializeField] private Color _heldHaloColor = new Color(1f, 0.55f, 0.16f, 1f);
+
+        [Tooltip("Held stacks that glint from afar at once (more still wait; they just do not glint).")]
         [Range(1, 64)] [SerializeField] private int _bundleGlints = 16;
 
         [Header("Tilly fetches (T3)")]
@@ -167,11 +167,11 @@ namespace MoonProject.Gameplay
         }
         public float UnloadLeadSeconds => _unloadLeadSeconds;
         public float UnloadStepSeconds => _unloadStepSeconds;
-        public float BundleSettleDistance => _bundleSettleDistance;
         public float BundlePulseSeconds => _bundlePulseSeconds;
-        public float BundleHover => _bundleHover;
         public float BundleSettleSeconds => _bundleSettleSeconds;
         public float BundlePulse => _bundlePulse;
+        public float HeldHalo => _heldHalo;
+        public Color HeldHaloColor => _heldHaloColor;
         public int BundleGlints => _bundleGlints;
         public float FetchIntervalSeconds => _fetchIntervalSeconds;
         public float FetchSpeed => _fetchSpeed;

@@ -85,7 +85,10 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>Every piece is folded into 07 or on its way: only the skeleton stays.</summary>
+        /// <summary>
+        /// Every piece is cut: folded into 07, on its way, or held on the wreck for want of room (it waits to be taken,
+        /// but the wreck is done).
+        /// </summary>
         public bool IsPickedClean
         {
             get
@@ -94,7 +97,7 @@ namespace MoonProject.Gameplay
                 {
                     SalvagePieceState state = _pieces[i].State;
                     if (state != SalvagePieceState.Breaking && state != SalvagePieceState.Flying &&
-                        state != SalvagePieceState.Taken)
+                        state != SalvagePieceState.Taken && state != SalvagePieceState.Held)
                     {
                         return false;
                     }

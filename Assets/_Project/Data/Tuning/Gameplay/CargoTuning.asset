@@ -36,11 +36,11 @@ MonoBehaviour:
   _rackLampGlow: 1
   _unloadLeadSeconds: 0.5
   _unloadStepSeconds: 0.15
-  _bundleSettleDistance: 2.6
   _bundlePulseSeconds: 3
-  _bundleHover: 0.45
   _bundleSettleSeconds: 0.7
   _bundlePulse: 0.08
+  _heldHalo: 0.6
+  _heldHaloColor: {r: 1, g: 0.55, b: 0.16, a: 1}
   _bundleGlints: 16
   _fetchFriend: tilly
   _fetchHang: 0.9

@@ -5,10 +5,11 @@ using MoonProject.Core;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Tilly fetches what was left (docs/features/M3-25 T3): once she is home, every so often she flies out to the
-    /// nearest bundle waiting inside the station's reach (the tower's circle or a lit relay's), hooks it under her body
-    /// and brings it to home's shelves at a calm speed, while 07 does anything else. Leading a crawl home comes first:
-    /// she lets the bundle go where she is. One bundle at a time; allocation-free.
+    /// Tilly fetches what was held back (docs/features/M3-25 T3, 0.5.5 §2): once she is home, every so often she flies
+    /// out to the nearest held stack inside the station's reach (the tower's circle or a lit relay's), unclips it from
+    /// its wreck or its crate's mouth, hooks it under her body and brings it home at a calm speed, while 07 does
+    /// anything else. Leading a crawl home comes first: she keeps the stack hanging under her and brings it home
+    /// after; it never drops on the ground. One stack at a time; allocation-free.
     /// </summary>
     public sealed class TillyFetch
     {
@@ -21,6 +22,7 @@ namespace MoonProject.Gameplay
         private Stage _stage;
         private int _bundleId = -1;
         private float _next;
+        private bool _homing;
 
         public TillyFetch(CargoBundles bundles, IStationReach reach, Friend tilly, CargoTuning tuning,
             Func<Vector3> shelves)
@@ -41,7 +43,7 @@ namespace MoonProject.Gameplay
             Back,
         }
 
-        /// <summary>True from her setting off until the bundle is on the shelves.</summary>
+        /// <summary>True from her setting off until the stack is home.</summary>
         public bool Fetching => _stage != Stage.Resting;
 
         public void Step(float now)
@@ -96,27 +98,32 @@ namespace MoonProject.Gameplay
 
             _bundles.Hook(bundle);
             _stage = Stage.Back;
+            _homing = true;
             _body.Fetch(true, _shelves(), _tuning.FetchSpeed, _tuning.FetchHeight);
         }
 
         private void StepBack(bool free, float now)
         {
             int bundle = _bundles.IndexOf(_bundleId);
-            Vector3 hang = _tilly.Position - Vector3.up * _tuning.FetchHang;
+            _bundles.Carry(bundle, _tilly.Position - Vector3.up * _tuning.FetchHang, now);
             if (!free)
             {
-                _bundles.Drop(bundle, hang, now);
-                StandDown(now);
+                _homing = false;
                 return;
             }
 
-            _bundles.Carry(bundle, hang, now);
+            if (!_homing)
+            {
+                _homing = true;
+                _body.Fetch(true, _shelves(), _tuning.FetchSpeed, _tuning.FetchHeight);
+            }
+
             if (SurfaceRules.HorizontalDistance(_tilly.Position, _shelves()) > _tuning.FetchArrive)
             {
                 return;
             }
 
-            _bundles.Deliver(bundle, hang, now);
+            _bundles.Deliver(bundle);
             StandDown(now);
         }
 

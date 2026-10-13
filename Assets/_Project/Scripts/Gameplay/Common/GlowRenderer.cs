@@ -13,6 +13,7 @@ namespace MoonProject.Gameplay
         public const float VisibleThreshold = 0.002f;
 
         private static readonly int IntensityId = Shader.PropertyToID("_Intensity");
+        private static readonly int ColorId = Shader.PropertyToID("_Color");
 
         private readonly Renderer _renderer;
         private readonly MaterialPropertyBlock _block = new MaterialPropertyBlock();
@@ -26,6 +27,15 @@ namespace MoonProject.Gameplay
         public float Intensity { get; private set; }
 
         public Renderer Renderer => _renderer;
+
+        /// <summary>
+        /// Tints the glow <paramref name="color"/> instead of its material's colour (a held piece's amber halo),
+        /// from the next <see cref="Apply"/> on.
+        /// </summary>
+        public void Tint(Color color)
+        {
+            _block.SetColor(ColorId, color);
+        }
 
         public void Apply(float intensity)
         {

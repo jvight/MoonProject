@@ -20,5 +20,11 @@ namespace MoonProject.Gameplay
 
         /// <summary>A drag piece lost off the drivable floor, floating back beside its site (ruling 1).</summary>
         Returning = 5,
+
+        /// <summary>
+        /// Cut through while 07's hold had no room for it: it stays on its wreck, held, until there is room (or Tilly
+        /// fetches it home), its halo breathing amber (0.5.5 §2).
+        /// </summary>
+        Held = 6,
     }
 }

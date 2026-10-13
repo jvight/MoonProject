@@ -58,6 +58,7 @@ namespace MoonProject.Gameplay
         private ISaveService _save;
         private MaterialStock _stock;
         private ExcavationSystem _excavation;
+        private CargoBundles _held;
         private PhysicsMaterial _dragMaterial;
         private FeelVfx _feel;
         private GlowFlashPool _flashes;
@@ -252,6 +253,46 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
+        /// What did not fit is held where it was cut (0.5.5 §2): a piece cut with no room stays on its wreck. Connected
+        /// once the cargo stands, before any save is applied.
+        /// </summary>
+        internal void ConnectHeld(CargoBundles held)
+        {
+            _held = held ?? throw new ArgumentNullException(nameof(held));
+        }
+
+        /// <summary>A held piece, with room for it now: it comes away and folds into 07 like any cut piece.</summary>
+        internal void Release(SalvagePiece piece)
+        {
+            BeginBreak(piece);
+        }
+
+        /// <summary>
+        /// Tilly unclips a held piece (<see cref="TillyFetch"/>): it folds into its bundle on the spot, which she
+        /// carries. It stays held (and saved so) until she sets it down at home.
+        /// </summary>
+        internal Transform Unclip(SalvagePiece piece)
+        {
+            if (piece.WreckCollider != null)
+            {
+                piece.WreckCollider.enabled = false;
+            }
+
+            piece.Halo.Apply(0f);
+            piece.Bundle.SetPositionAndRotation(piece.Body.TransformPoint(piece.LocalCentre), piece.Body.rotation);
+            piece.Bundle.localScale = piece.BundleScale;
+            piece.Bundle.gameObject.SetActive(true);
+            piece.Body.gameObject.SetActive(false);
+            return piece.Bundle;
+        }
+
+        /// <summary>Tilly set a held piece down at home: it is taken for good.</summary>
+        internal void Fetched(SalvagePiece piece)
+        {
+            MarkTaken(piece);
+        }
+
+        /// <summary>
         /// The excavation shares the Excavate hold. Connected once every gameplay part is initialised; salvage runs
         /// from then on.
         /// </summary>
@@ -305,6 +346,10 @@ namespace MoonProject.Gameplay
                     if (piece.State == SalvagePieceState.Taken)
                     {
                         taken.Add(piece.Number);
+                    }
+                    else if (piece.State == SalvagePieceState.Held)
+                    {
+                        pieces.Add(new SalvagePieceSaveData { number = piece.Number, progress = 1f, held = true });
                     }
                     else if (piece.State == SalvagePieceState.Loose)
                     {
@@ -390,7 +435,12 @@ namespace MoonProject.Gameplay
                     }
 
                     piece.Progress = Mathf.Clamp01(pieceData.progress);
-                    if (pieceData.loose && piece.Drag != null)
+                    if (pieceData.held)
+                    {
+                        piece.State = SalvagePieceState.Held;
+                        _held.HoldPiece(piece, false);
+                    }
+                    else if (pieceData.loose && piece.Drag != null)
                     {
                         piece.Drag.RestoreLoose(pieceData.position, pieceData.rotation);
                         piece.State = piece.Drag.IsClear ? SalvagePieceState.Loose : SalvagePieceState.Attached;
@@ -589,6 +639,14 @@ namespace MoonProject.Gameplay
             _cutting = null;
             _events.Publish(new SalvageCutStopped(true));
             SetHold(false);
+            if (_stock.Hold.FreeUnits(piece.Material) < piece.Units)
+            {
+                piece.State = SalvagePieceState.Held;
+                _held.HoldPiece(piece, true);
+                _save.SaveNow();
+                return;
+            }
+
             BeginBreak(piece);
         }
 
@@ -747,9 +805,10 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Salvage folds into 07's hold: a flash, the event, the Collect reward beat and the stock for what fits. What
-        /// does not fit bumps the closed hatch (a Cargo Impact) and is left to wait beside 07 (M3-25 §2.3,
-        /// <see cref="CargoOverflowed"/>). The game saves once nothing else flies.
+        /// Salvage folds into 07's hold: a flash, the event, the Collect reward beat and the stock for what fits. A
+        /// piece is cut only when the hold has room for all of it (else it is held on its wreck); should the hold fill
+        /// while it flies (a crate opened meanwhile), what does not fit bumps the closed hatch and goes to home's
+        /// overflow crates, never onto the ground. The game saves once nothing else flies.
         /// </summary>
         private void Arrive(SalvageMaterial material, int units, Vector3 socket, string siteId, int comboStep)
         {
@@ -767,7 +826,7 @@ namespace MoonProject.Gameplay
             if (left > 0)
             {
                 _events.Publish(new FeelBeat(FeelKind.Cargo, FeelPhase.Impact, socket, Vector3.up, 1f, 0f, material));
-                _events.Publish(new CargoOverflowed(material, left, socket));
+                _stock.Home.AddOverflow(material, left);
             }
 
             _inFlight--;
