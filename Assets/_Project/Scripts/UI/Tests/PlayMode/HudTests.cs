@@ -400,6 +400,30 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator AtTheTower_TheTabChipComesFirst_ThenTheCardFollows()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Hold.Set(6, new MaterialSlot(SalvageMaterial.Metal, 2, 4),
+                new MaterialSlot(SalvageMaterial.Wiring, 1, 4));
+            _rig.Fakes.Upgrade = _rig.TestTower();
+            _rig.Fakes.SetMaterials(2, 1, 0);
+            _rig.Fakes.AtStation = true;
+            yield return Seconds(1.5f);
+            Assert.IsTrue(_rig.Ui.LookUp.IsVisible, "the one Tab chip, first");
+            Assert.AreEqual(Text(UiKeys.HintHold), _rig.Ui.Layout.LookHintWord.text);
+            Assert.IsFalse(_rig.Ui.Tower.IsVisible, "the card and the chip never show together");
+
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(2.5f);
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(2f);
+            Assert.IsTrue(_rig.Ui.Tower.IsVisible, "once the hold has been opened the card follows");
+            Assert.IsFalse(_rig.Ui.LookUp.IsVisible, "and the chip does not come back");
+        }
+
+        [UnityTest]
         public IEnumerator TheDarkTower_NeverPutsWordsOnTheTicker_OtherSleepersDo()
         {
             Boot();
