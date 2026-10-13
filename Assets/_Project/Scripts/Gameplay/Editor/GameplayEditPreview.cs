@@ -64,9 +64,18 @@ namespace MoonProject.Gameplay.Editor
 
             foreach (SalvageSiteEntry derelict in salvage.Catalog.Derelicts)
             {
-                if (anchors.TryGet(derelict.AnchorId, out WorldAnchor anchor))
+                if (anchors.TryGet(derelict.AnchorId, out WorldAnchor anchor) &&
+                    TrySeat(derelict, anchor, salvage.Catalog, root.transform, out WorldAnchor seat))
                 {
-                    Place(derelict.Prefab, anchor, root.transform);
+                    Transform placed = Place(derelict.Prefab, seat, root.transform);
+                    foreach (SocketProp prop in derelict.Props)
+                    {
+                        Transform socket = placed.Find(prop.Socket);
+                        if (socket != null)
+                        {
+                            Hide(Object.Instantiate(prop.Prefab, socket.position, socket.rotation, placed).transform);
+                        }
+                    }
                 }
             }
 
@@ -167,7 +176,7 @@ namespace MoonProject.Gameplay.Editor
 
         /// <summary>The prefab at the anchor, facing its (level) forward as the game places it, hidden like the root.
         /// </summary>
-        private static void Place(GameObject prefab, WorldAnchor anchor, Transform root)
+        private static Transform Place(GameObject prefab, WorldAnchor anchor, Transform root)
         {
             Vector3 forward = anchor.Forward;
             forward.y = 0f;
@@ -175,6 +184,34 @@ namespace MoonProject.Gameplay.Editor
             GameObject instance = Object.Instantiate(prefab, anchor.Position, Quaternion.LookRotation(forward), root);
             instance.name = prefab.name;
             Hide(instance.transform);
+            return instance.transform;
+        }
+
+        /// <summary>
+        /// Where a derelict stands in the preview: on its anchor, or inside its wreck's placed preview on the wreck's
+        /// node (the haul bot in the drill site).
+        /// </summary>
+        private static bool TrySeat(SalvageSiteEntry derelict, WorldAnchor anchor, SalvageCatalog catalog,
+            Transform root, out WorldAnchor seat)
+        {
+            seat = anchor;
+            if (string.IsNullOrEmpty(derelict.HostSocket))
+            {
+                return true;
+            }
+
+            foreach (SalvageSiteEntry wreck in catalog.Sites)
+            {
+                Transform placed = wreck.Id == derelict.AnchorId ? root.Find(wreck.Prefab.name) : null;
+                Transform socket = placed != null ? placed.Find(derelict.HostSocket) : null;
+                if (socket != null)
+                {
+                    seat = new WorldAnchor(derelict.Id, socket.position, socket.forward, anchor.Radius);
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void Hide(Transform node)

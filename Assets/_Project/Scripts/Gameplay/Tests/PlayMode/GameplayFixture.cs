@@ -43,6 +43,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             "depot", "garage", "kestrel", "drill", "lander", "garage",
         };
 
+        /// <summary>The haul bot's id: it stands inside the drill site, as in the content builder.</summary>
+        public const string HaulBot = "derelict.haul_bot";
+
+        /// <summary>The drill site's node the haul bot stands on, and 06's node relay.2's hut is set on.</summary>
+        private const string HaulBotSocket = "HaulBotSocket";
+
+        private const string HutSocket = "HutSocket";
+
         /// <summary>Units in each stand-in crew crate (as the economy's).</summary>
         public const int CrateUnits = 6;
 
@@ -716,12 +724,16 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             GameObject elder = DerelictModel("Derelict_06", false);
             GameObject mule = DerelictModel("Derelict_Mule", true);
+            GameObject haulBot = DerelictModel("Derelict_HaulBot", true);
+            var hut = new[] { new SocketProp(HutSocket, Template("RelayHut", new Vector3(2f, 2f, 1.6f))) };
             var derelicts = new[]
             {
-                SalvageSiteEntry.Derelict(WorldAnchorIds.Micro06, elder, SalvageCutLines.Across(elder),
-                    SmallPieces(elder)),
-                SalvageSiteEntry.Derelict(WorldAnchorIds.MicroMule, mule, SalvageCutLines.Across(mule),
-                    SmallPieces(mule)),
+                SalvageSiteEntry.Derelict(WorldAnchorIds.Micro06, WorldAnchorIds.Micro06, string.Empty, elder,
+                    SalvageCutLines.Across(elder), SmallPieces(elder), hut),
+                SalvageSiteEntry.Derelict(WorldAnchorIds.MicroMule, WorldAnchorIds.MicroMule, string.Empty, mule,
+                    SalvageCutLines.Across(mule), SmallPieces(mule), Array.Empty<SocketProp>()),
+                SalvageSiteEntry.Derelict(HaulBot, WorldAnchorIds.SitePrefix + "drill", HaulBotSocket, haulBot,
+                    SalvageCutLines.Across(haulBot), SmallPieces(haulBot), Array.Empty<SocketProp>()),
             };
             var catalog = Asset<SalvageCatalog>();
             catalog.Populate(sites, derelicts, Template("Material_Metal", Vector3.one * 0.35f),
@@ -765,6 +777,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             Node("Heart", root.transform, Vector3.zero);
+            if (name == "drill")
+            {
+                // The haul bot's seat on clear ground at the rig's right (Art's HaulBotSocket, 0.5.5 §1.7).
+                Node(HaulBotSocket, root.transform, new Vector3(6f, 0f, -2f));
+            }
+
             if (name == "garage")
             {
                 // Kenji's bench beside the port's pad, the spare crate's front toward 07 coming in (0.5.5 §2).
@@ -793,8 +811,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// A stand-in derelict (0.5.5 §1.7) in its anchor's frame: a slumped body, its <c>TapeCaseSocket</c> on the
-        /// ground against its right flank facing out of its side (06's), or one small Metal piece on its back (the
-        /// Mule's track skirt).
+        /// ground against its right flank facing out of its side and its <c>HutSocket</c> on its left (06's), or one
+        /// small Metal piece on its back (the Mule's track skirt, the haul bot's load).
         /// </summary>
         private GameObject DerelictModel(string name, bool piece)
         {
@@ -809,6 +827,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             else
             {
                 Node("TapeCaseSocket", root.transform, new Vector3(1.1f, 0f, 0.2f)).localRotation =
+                    Quaternion.Euler(0f, 90f, 0f);
+                Node(HutSocket, root.transform, new Vector3(-1.9f, 0f, 0.4f)).localRotation =
                     Quaternion.Euler(0f, 90f, 0f);
             }
 

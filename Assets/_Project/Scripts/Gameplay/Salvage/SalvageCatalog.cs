@@ -58,8 +58,7 @@ namespace MoonProject.Gameplay
                 return "has no sites";
             }
 
-            string problem = ValidateList(_sites, WorldAnchorIds.SitePrefix, "site") ??
-                             ValidateList(_derelicts, WorldAnchorIds.MicroPrefix, "derelict");
+            string problem = ValidateList(_sites, false, "site") ?? ValidateList(_derelicts, true, "derelict");
             if (problem != null)
             {
                 return problem;
@@ -69,9 +68,9 @@ namespace MoonProject.Gameplay
             {
                 for (int j = 0; j < _sites.Length; j++)
                 {
-                    if (string.Equals(_sites[j].AnchorId, _derelicts[i].AnchorId, StringComparison.Ordinal))
+                    if (string.Equals(_sites[j].Id, _derelicts[i].Id, StringComparison.Ordinal))
                     {
-                        return $"'{_derelicts[i].AnchorId}' is both a site and a derelict";
+                        return $"'{_derelicts[i].Id}' is both a site and a derelict";
                     }
                 }
             }
@@ -84,11 +83,11 @@ namespace MoonProject.Gameplay
             return null;
         }
 
-        private static string ValidateList(SalvageSiteEntry[] entries, string anchorPrefix, string noun)
+        private static string ValidateList(SalvageSiteEntry[] entries, bool derelicts, string noun)
         {
             for (int i = 0; i < entries.Length; i++)
             {
-                string problem = entries[i] == null ? "is empty" : entries[i].Validate(anchorPrefix);
+                string problem = entries[i] == null ? "is empty" : entries[i].Validate(derelicts);
                 if (problem != null)
                 {
                     return $"{noun} {i} {problem}";
@@ -96,9 +95,9 @@ namespace MoonProject.Gameplay
 
                 for (int j = 0; j < i; j++)
                 {
-                    if (string.Equals(entries[j].AnchorId, entries[i].AnchorId, StringComparison.Ordinal))
+                    if (string.Equals(entries[j].Id, entries[i].Id, StringComparison.Ordinal))
                     {
-                        return $"{noun} '{entries[i].AnchorId}' appears twice";
+                        return $"{noun} '{entries[i].Id}' appears twice";
                     }
                 }
             }

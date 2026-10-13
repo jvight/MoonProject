@@ -208,6 +208,16 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Sphere (m) that must be free of the wreck where 07 parks to dig.</summary>
         private const float ParkClearance = 1.6f;
 
+        /// <summary>Degrees the waypoint beside a mast swings toward its front per try, and at most.</summary>
+        private const float AsideSwingStep = 15f;
+
+        private const float AsideMaxSwing = 75f;
+
+        /// <summary>The probe 07 drives straight along to a waypoint: its height (m) and radius (m).</summary>
+        private const float PathProbeHeight = 0.8f;
+
+        private const float PathProbeRadius = 1f;
+
         /// <summary>07 parks this far (m) in front of a relay mast's junction box to restore it.</summary>
         private const float RelayFoot = 3f;
 
@@ -2542,10 +2552,38 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             Vector3 side = Vector3.Cross(Vector3.up, forward);
             side *= Vector3.Dot(fromMast, side) < 0f ? -1f : 1f;
-            yield return DriveTo(Flat(mast.Anchor.Position + side * RelayAside), WaypointArrive, CanyonThrottle, 60f,
+            yield return DriveTo(OpenAside(mast.Anchor.Position, side, forward), WaypointArrive, CanyonThrottle, 60f,
                 "the side of " + name);
             yield return DriveTo(Flat(mast.Anchor.Position + (side + forward) * RelayAside * 0.5f), WaypointArrive,
                 CanyonThrottle, 60f, "the front of " + name + "'s pad");
+        }
+
+        /// <summary>
+        /// The waypoint beside a mast on 07's side, swung toward the mast's front until it stands on open ground that 07
+        /// can drive straight to: a mast's neighbours (06 and relay.2's hut, 0.5.5 §1.7) may stand in the way.
+        /// </summary>
+        private Vector3 OpenAside(Vector3 pad, Vector3 side, Vector3 forward)
+        {
+            var terrain = _context.Get<ITerrainQuery>();
+            for (float swing = 0f; swing <= AsideMaxSwing; swing += AsideSwingStep)
+            {
+                float radians = swing * Mathf.Deg2Rad;
+                Vector3 spot = Flat(pad + (side * Mathf.Cos(radians) + forward * Mathf.Sin(radians)) * RelayAside);
+                float ground = terrain.SampleHeight(spot.x, spot.z);
+                Vector3 from = new Vector3(_rover.Position.x, ground + PathProbeHeight, _rover.Position.z);
+                Vector3 to = new Vector3(spot.x, ground + PathProbeHeight, spot.z);
+                bool open = !Physics.CheckSphere(new Vector3(spot.x, ground + ParkClearance + 0.2f, spot.z),
+                    ParkClearance, Layers.PropMask, QueryTriggerInteraction.Ignore);
+                bool clear = !Physics.SphereCast(from, PathProbeRadius, (to - from).normalized, out _,
+                    (to - from).magnitude, Layers.PropMask, QueryTriggerInteraction.Ignore);
+                if (open && clear)
+                {
+                    return spot;
+                }
+            }
+
+            Assert.Fail($"no open ground beside the mast at {pad} on its {side} side");
+            return Vector3.zero;
         }
 
         /// <summary>

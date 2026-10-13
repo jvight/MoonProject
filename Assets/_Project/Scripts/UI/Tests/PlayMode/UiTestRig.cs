@@ -298,6 +298,9 @@ namespace MoonProject.UI.PlayModeTests
         }
 
 #if UNITY_EDITOR
+        /// <summary>How many keepsakes the relic catalog holds: the total a memory card's caption counts to.</summary>
+        public static int RelicCount => Load<RelicCatalog>(CatalogPath).Relics.Count;
+
         private static T Load<T>(string path) where T : Object
         {
             var asset = AssetDatabase.LoadAssetAtPath<T>(path);

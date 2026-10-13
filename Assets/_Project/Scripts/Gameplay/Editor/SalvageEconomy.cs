@@ -150,32 +150,39 @@ namespace MoonProject.Gameplay.Editor
         /// <summary>The site standing past the Hover-Jump gate (the canyon supply lander).</summary>
         public const string GatedSite = "lander";
 
-        /// <summary>
-        /// The derelicts left on the routes (0.5.5 §1.7), in catalog order: each World micro-site anchor and Art's
-        /// robot standing on it.
-        /// </summary>
-        public static IReadOnlyList<(string AnchorId, string Prefab)> Derelicts { get; } = new[]
-        {
-            (WorldAnchorIds.Micro06, DerelictBuilder.ElderName),
-            (WorldAnchorIds.MicroMule, DerelictBuilder.MuleName),
-            (WorldAnchorIds.MicroDrone, DerelictBuilder.DroneName),
-        };
+        /// <summary>The haul bot's id: it stands inside the drill site, on no anchor of its own.</summary>
+        public const string HaulBot = "derelict.haul_bot";
 
         /// <summary>
-        /// A derelict's piece sizes: one small cut where Art gives it one (the Mule's track skirt, the drone's camera
-        /// boom); 06 has nothing to cut.
+        /// The derelicts left on the routes (0.5.5 §1.7), in catalog order (saves keep it, append only): each one's
+        /// id, the World anchor it stands on (or the wreck it stands inside, on the wreck's node), and Art's robot.
         /// </summary>
-        public static IReadOnlyList<PieceSize> DerelictPieceClasses(string anchorId)
+        public static IReadOnlyList<(string Id, string AnchorId, string HostSocket, string Prefab)> Derelicts { get; } =
+            new[]
+            {
+                (WorldAnchorIds.Micro06, WorldAnchorIds.Micro06, string.Empty, DerelictBuilder.ElderName),
+                (WorldAnchorIds.MicroMule, WorldAnchorIds.MicroMule, string.Empty, DerelictBuilder.MuleName),
+                (WorldAnchorIds.MicroDrone, WorldAnchorIds.MicroDrone, string.Empty, DerelictBuilder.DroneName),
+                (HaulBot, SiteId("drill"), SiteModelBuilder.HaulBotSocketName, DerelictBuilder.HaulBotName),
+            };
+
+        /// <summary>
+        /// A derelict's piece sizes: a small cut where Art gives it one (the Mule's track skirt, the drone's camera
+        /// boom, the haul bot's strapped crate and cable drum); 06 has nothing to cut.
+        /// </summary>
+        public static IReadOnlyList<PieceSize> DerelictPieceClasses(string id)
         {
-            switch (anchorId)
+            switch (id)
             {
                 case WorldAnchorIds.Micro06:
                     return Array.Empty<PieceSize>();
                 case WorldAnchorIds.MicroMule:
                 case WorldAnchorIds.MicroDrone:
                     return new[] { PieceSize.Small };
+                case HaulBot:
+                    return new[] { PieceSize.Small, PieceSize.Small };
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(anchorId), anchorId, "No such derelict.");
+                    throw new ArgumentOutOfRangeException(nameof(id), id, "No such derelict.");
             }
         }
 

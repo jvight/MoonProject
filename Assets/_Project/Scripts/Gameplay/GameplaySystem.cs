@@ -290,7 +290,7 @@ namespace MoonProject.Gameplay
             Cutter = new Cutter(context.Events, abilities, _cutterTuning);
             Containers = new SealedContainers(_salvage, _cargo, Cutter, services);
             if (!_salvage.Initialize(services, Cutter) || !_relics.Initialize(services, _salvage) ||
-                !_excavation.Initialize(services, _relics, _salvage) ||
+                !_excavation.Initialize(services, _relics, _salvage, Containers) ||
                 !_tether.Initialize(services, _relics, _salvage, abilities) ||
                 !_home.Initialize(services, _relics, Upgrades, lights, _lift) ||
                 !_cradle.Initialize(services, seat, _relics, _home) ||

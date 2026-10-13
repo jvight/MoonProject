@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using MoonProject.Art.Editor;
 using MoonProject.Core;
 using MoonProject.Editor.Builders;
 
@@ -270,14 +271,19 @@ namespace MoonProject.Gameplay.Editor
                     SalvageEconomy.Crate(names[i]));
             }
 
-            IReadOnlyList<(string AnchorId, string Prefab)> derelictNames = SalvageEconomy.Derelicts;
+            IReadOnlyList<(string Id, string AnchorId, string HostSocket, string Prefab)> derelictNames =
+                SalvageEconomy.Derelicts;
             var derelicts = new SalvageSiteEntry[derelictNames.Count];
             for (int i = 0; i < derelicts.Length; i++)
             {
-                string anchorId = derelictNames[i].AnchorId;
-                GameObject prefab = LoadArt(GameplayAssetPaths.DerelictPrefab(derelictNames[i].Prefab));
-                derelicts[i] = SalvageSiteEntry.Derelict(anchorId, prefab, SalvageCutLines.Across(prefab),
-                    SalvageSizes.Deal(prefab, SalvageEconomy.DerelictPieceClasses(anchorId)));
+                (string id, string anchorId, string hostSocket, string name) = derelictNames[i];
+                GameObject prefab = LoadArt(GameplayAssetPaths.DerelictPrefab(name));
+                SocketProp[] props = id == WorldAnchorIds.Micro06
+                    ? new[] { new SocketProp(DerelictBuilder.HutSocketName, LoadArt(GameplayAssetPaths.RelayHut)) }
+                    : Array.Empty<SocketProp>();
+                derelicts[i] = SalvageSiteEntry.Derelict(id, anchorId, hostSocket, prefab,
+                    SalvageCutLines.Across(prefab), SalvageSizes.Deal(prefab, SalvageEconomy.DerelictPieceClasses(id)),
+                    props);
             }
 
             var catalog = ScriptableObject.CreateInstance<SalvageCatalog>();

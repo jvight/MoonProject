@@ -64,16 +64,35 @@ namespace MoonProject.Gameplay.Tests
             GameObject root = GameplayEditPreview.Root(_scratch.Scene);
             Assert.IsNotNull(root, "a generated world preview builds the preview");
             IReadOnlyList<SalvageSiteEntry> sites = salvage.Catalog.Sites;
-            Assert.AreEqual(sites.Count + StandInRelays, root.transform.childCount,
-                "a wreck on every site, a broken mast on every relay, nothing on the other anchors");
+            var inWrecks = new List<SalvageSiteEntry>();
+            foreach (SalvageSiteEntry derelict in salvage.Catalog.Derelicts)
+            {
+                if (!string.IsNullOrEmpty(derelict.HostSocket))
+                {
+                    inWrecks.Add(derelict);
+                }
+            }
+
+            Assert.AreEqual(sites.Count + inWrecks.Count + StandInRelays, root.transform.childCount,
+                "a wreck on every site with the derelicts inside them, a broken mast on every relay, nothing on the " +
+                "other anchors");
             for (int i = 0; i < sites.Count; i++)
             {
                 AssertStandsOn(root.transform.GetChild(i), sites[i].Prefab.name, world, sites[i].AnchorId);
             }
 
+            for (int i = 0; i < inWrecks.Count; i++)
+            {
+                Transform derelict = root.transform.GetChild(sites.Count + i);
+                Transform seat = root.transform.Find(Host(sites, inWrecks[i]).Prefab.name).Find(inWrecks[i].HostSocket);
+                Assert.AreEqual(inWrecks[i].Prefab.name, derelict.name);
+                Assert.Less(Vector3.Distance(seat.position, derelict.position), 1e-3f,
+                    $"{derelict.name} stands inside its wreck on {inWrecks[i].HostSocket}");
+            }
+
             for (int i = 0; i < StandInRelays; i++)
             {
-                AssertStandsOn(root.transform.GetChild(sites.Count + i), MastName, world,
+                AssertStandsOn(root.transform.GetChild(sites.Count + inWrecks.Count + i), MastName, world,
                     WorldAnchorIds.RelayPrefix + i);
             }
 
@@ -252,6 +271,20 @@ namespace MoonProject.Gameplay.Tests
             }
 
             return count;
+        }
+
+        private static SalvageSiteEntry Host(IReadOnlyList<SalvageSiteEntry> sites, SalvageSiteEntry derelict)
+        {
+            foreach (SalvageSiteEntry site in sites)
+            {
+                if (site.Id == derelict.AnchorId)
+                {
+                    return site;
+                }
+            }
+
+            Assert.Fail($"{derelict.Id} stands inside '{derelict.AnchorId}', which is no site.");
+            return null;
         }
 
         private static int Count(Transform root, string prefix)
