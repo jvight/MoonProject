@@ -1960,7 +1960,7 @@
         },
         {
             "key": "ui.bay.row_full",
-            "text": "Fit a part first."
+            "text": "The parts row is full. Fit a part on 07 first."
         }
     ]
 }
