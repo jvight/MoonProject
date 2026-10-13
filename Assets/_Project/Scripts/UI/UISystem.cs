@@ -574,7 +574,7 @@ namespace MoonProject.UI
             DecideGuidance(paused, hopping);
             _card.Tick(hudTime, _glyphs.Cancel(device), device,
                 !_ticker.IsVisible && !hopping && !_hopList.IsBusy && !_placeCard.IsVisible && !_prompt.IsVisible &&
-                !_rewardCard.IsVisible);
+                !_rewardCard.IsVisible && !_lookUpChip.IsVisible);
             _tower.Tick(hudTime, !paused && _slot.Allows(GuidanceKind.Card), input.ExcavateHeld, input.Winch,
                 _services.Tether.State == TetherAimState.Towing, _glyphs.For(RoverAction.Excavate, device), device);
             _kitTitle.Tick(hudTime, !_placeCard.IsVisible);
@@ -638,7 +638,9 @@ namespace MoonProject.UI
             // Its own zone (right of centre): it stands beside a place card, so the tower's card never hides it.
             _recipeCard.Tick(hudTime, _awake && !_kitTitle.IsVisible && CardsOpen(paused) &&
                                       _slot.Allows(GuidanceKind.Card));
-            bool hintOpen = LookHintsOpen() && _slot.Allows(GuidanceKind.Prompt);
+            // The look-up chip is the gentlest of the prompts: a teaching prompt that wants the screen takes it first.
+            bool hintOpen = LookHintsOpen() && _slot.Allows(GuidanceKind.Prompt) &&
+                            !_director.Wants(_services.Hints.Primary);
             float stick = _tuning.Stargaze.FirstPromptStick * _tuning.Stargaze.FirstPromptStick;
             bool looking = !paused && (input.LookDelta.sqrMagnitude > 0f || input.LookRate.sqrMagnitude > stick);
             _firstPrompt.Tick(hudTime, hintOpen, looking, !paused && input.Drive.sqrMagnitude > stick);
@@ -665,7 +667,7 @@ namespace MoonProject.UI
         {
             return !paused && _awake && _sinceAwake >= _tuning.Prompts.StartDelay && !_card.IsBusy &&
                    !_dial.IsBusy && !_hopList.IsBusy && !hopping && !_siteName.IsVisible && !_siteName.IsWaiting &&
-                   !_kitTitle.IsVisible;
+                   !_kitTitle.IsVisible && !_lookUpChip.IsVisible;
         }
 
         private bool CardsOpen(bool paused)

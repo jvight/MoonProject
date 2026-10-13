@@ -924,9 +924,7 @@ namespace MoonProject.UI.PlayModeTests
             fakes.PrimaryHint = new InteractionHint(InteractionKind.Deposit,
                 camera.ViewportToWorldPoint(new Vector3(0.8f, 0.55f, 10f)), true);
             yield return new WaitForSecondsRealtime(_tuning.Guidance.Recipe.FadeIn + 2.5f);
-            Assert.IsTrue(ui.Prompt.IsVisible && ui.RecipeCard.IsVisible);
-            Assert.IsFalse(ui.Layout.Prompt.worldBound.Overlaps(ui.Layout.RecipeCardRoot.worldBound),
-                "the prompt keeps off the recipe card");
+            Assert.IsFalse(ui.Prompt.IsVisible && ui.RecipeCard.IsVisible, "one guidance element at a time");
             yield return Capture(camera, folder, "49e_recipe_card_with_prompt");
             fakes.PrimaryHint = InteractionHint.None;
             fakes.Looked = null;
@@ -1020,7 +1018,7 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Position = tilly + (friendCamera.transform.position - tilly).normalized * 5f;
             fakes.TillyStatus = new FriendStatus(FriendState.PartsGathering, 3, 3, true, true, tilly);
             fakes.PrimaryHint = new InteractionHint(InteractionKind.Repair, tilly, true);
-            yield return Watch(ui, overlaps, _tuning.Prompts.Find(InteractionKind.Repair).DwellSeconds +
+            yield return Watch(ui, overlaps, _tuning.Guidance.Line.FadeOut + _tuning.Prompts.Find(InteractionKind.Repair).DwellSeconds +
                                              _tuning.Prompts.Reveal.FadeIn + 0.5f);
             Assert.IsTrue(ui.Prompt.IsVisible, "the repair prompt was up before the repair");
             yield return Capture(friendCamera, folder, "68_repair_prompt");
