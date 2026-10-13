@@ -60,11 +60,11 @@ namespace MoonProject.Art
         public const float CyanGlow = 1.45f;
 
         /// <summary>
-        /// The most light a lit face receives in the game, in linear RGB: M3-18's paler cyan-white earthlight
-        /// square-on plus the sky's ambient (World's AtmosphereSettings). Surfaces are darkened against it, hue kept,
+        /// The most light a lit face receives in the game, in linear RGB: look A's near-white earthlight square-on
+        /// plus the sky's ambient (World's AtmosphereSettings). Surfaces are darkened against it, hue kept,
         /// until they sit under <see cref="LitCeiling"/>.
         /// </summary>
-        public static readonly Color ReferenceLight = new Color(1.26f, 1.55f, 2f);
+        public static readonly Color ReferenceLight = new Color(1.63f, 1.71f, 1.96f);
 
         // The game's Neutral tonemapper compresses each channel on its own, so a bright WarmLamp drifts towards lemon:
         // warm glows keep less green and blue than the swatch to still read amber once graded.
@@ -77,11 +77,11 @@ namespace MoonProject.Art
         {
             new Color32(0x0B, 0x0E, 0x2A, 0xFF), // SkyTop
             new Color32(0x3B, 0x2A, 0x6B, 0xFF), // SkyHorizon
-            new Color32(0xA7, 0xA9, 0xCC, 0xFF), // DustLight
-            new Color32(0x7C, 0x7F, 0xAE, 0xFF), // DustMid
-            new Color32(0x45, 0x47, 0x7A, 0xFF), // DustShadow
-            new Color32(0x6E, 0x68, 0x94, 0xFF), // RockLight
-            new Color32(0x5A, 0x54, 0x80, 0xFF), // RockDark
+            new Color32(0xA6, 0xA7, 0xAB, 0xFF), // DustLight
+            new Color32(0x78, 0x7A, 0x80, 0xFF), // DustMid
+            new Color32(0x3E, 0x40, 0x48, 0xFF), // DustShadow
+            new Color32(0x6C, 0x6D, 0x72, 0xFF), // RockLight
+            new Color32(0x52, 0x53, 0x59, 0xFF), // RockDark
             new Color32(0xFF, 0xB5, 0x47, 0xFF), // WarmLamp
             new Color32(0xFF, 0x8A, 0x5B, 0xFF), // WarmAccent
             new Color32(0xF4, 0xE6, 0xC8, 0xFF), // Cream
@@ -107,7 +107,7 @@ namespace MoonProject.Art
             new Color32(0xB4, 0x55, 0x2B, 0xFF), // Rust: decades of rust (ruling 12); saturated and warm enough
                                                  // to stay rust, not grey or violet, under the night grade
             new Color32(0xB8, 0xAF, 0xA2, 0xFF), // FadedPaint: crew enamel bleached chalky by decades of sun
-            new Color32(0x8A, 0x89, 0xAE, 0xFF), // CakedDust: dust caked on the top faces of wrecks, a touch over the
+            new Color32(0x93, 0x94, 0x99, 0xFF), // CakedDust: dust caked on the top faces of wrecks, a touch over the
                                                  // lit ground's value so a cap reads as the moon's dust, never as
                                                  // the brightest panel in the frame (M3-18 V8)
             new Color32(0xC6, 0x8F, 0x76, 0xFF), // FadedAccent: 07's orange stripe after decades of sun, chalky
