@@ -112,11 +112,11 @@
         },
         {
             "key": "next.wake",
-            "text": "First job: repair the radio tower."
+            "text": "Repair the radio tower."
         },
         {
             "key": "next.salvage",
-            "text": "The tower needs metal, wiring, optics and the Tower Coil. Salvage them at the Supply Depot."
+            "text": "Salvage at the Supply Depot."
         },
         {
             "key": "next.tower.part",
@@ -180,7 +180,7 @@
         },
         {
             "key": "next.signal",
-            "text": "A faint signal past the dune. Ping, then follow it."
+            "text": "A faint signal. Ping and follow it."
         },
         {
             "key": "next.dig",
@@ -188,15 +188,15 @@
         },
         {
             "key": "next.friend.repair",
-            "text": "All her parts are here. Repair her."
+            "text": "Repair Tilly."
         },
         {
             "key": "next.garage",
-            "text": "Go to Kenji's Garage. A spare part for 07 may still be there."
+            "text": "Go to Kenji's Garage."
         },
         {
             "key": "next.port",
-            "text": "The garage's service port works. Park on its pad to fit the spare."
+            "text": "Park on the port's pad."
         },
         {
             "key": "next.relic",
@@ -216,11 +216,11 @@
         },
         {
             "key": "next.bay.wake",
-            "text": "The bay has no power. Radio Tower level 2 powers it."
+            "text": "Build tower level 2 to power the bay."
         },
         {
             "key": "next.bay",
-            "text": "The bay has power. Park on its turntable to build a kit."
+            "text": "Park on the bay's turntable to build."
         },
         {
             "key": "next.power.part",
@@ -332,19 +332,19 @@
         },
         {
             "key": "notyet.bay",
-            "text": "No power. Radio Tower level 2 powers the bay."
+            "text": "Needs tower level 2."
         },
         {
             "key": "notyet.chart",
-            "text": "No power. Radio Tower level 3 powers the chart."
+            "text": "Needs tower level 3."
         },
         {
             "key": "notyet.tether",
-            "text": "07's tether is missing. Kenji kept a spare in his garage."
+            "text": "07 has no tether. Kenji kept a spare at the garage."
         },
         {
             "key": "ticker.listen.first",
-            "text": "When 07 stops, it listens. A wreck with something left answers with a light."
+            "text": "Stop and 07 listens: a wreck with something left lights up."
         },
         {
             "key": "place.dock.name",
@@ -924,7 +924,7 @@
         },
         {
             "key": "ticker.relay.waiting",
-            "text": "This relay needs a lit relay nearby. Repair the one closer to home first."
+            "text": "Needs a lit relay nearby."
         },
         {
             "key": "hop.node.home",
@@ -1208,7 +1208,7 @@
         },
         {
             "key": "ui.recipecard.tower",
-            "text": "Park on the tower's pad, then feed materials into its hopper."
+            "text": "Park on the pad to build."
         },
         {
             "key": "ui.recipecard.blueprint",
