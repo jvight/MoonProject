@@ -72,6 +72,9 @@ namespace MoonProject.Gameplay.Feel.Tests
             Assert.AreEqual(tuning.SparkPool, vfx.Debris.Flying, "the spark pool is full");
             Assert.AreEqual(tuning.BeadPool, vfx.Debris.Resting, "the bead pool is full");
             Assert.AreEqual(tuning.MotePool, vfx.Charge.MotesShown, "the mote pool is full");
+            PublishScan(events);
+            vfx.Step(Step);
+            Assert.AreEqual(tuning.ScanRibbonBeads, vfx.ScanRibbon.Shown, "the scan ribbon streams");
 
             using (ProfilerRecorder recorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, AllocatedInFrame))
             {
@@ -86,6 +89,7 @@ namespace MoonProject.Gameplay.Feel.Tests
                 long withFeel = long.MaxValue;
                 for (int i = 0; i < MeasuredFrames; i++)
                 {
+                    PublishScan(events);
                     for (int s = 0; s < StepsPerFrame; s++)
                     {
                         vfx.Step(Step);
@@ -114,6 +118,13 @@ namespace MoonProject.Gameplay.Feel.Tests
             vfx.Dispose();
         }
 
+        // A scan's dissolve beginning: the ribbon streams through every measured frame (see Tuning).
+        private static void PublishScan(EventBus events)
+        {
+            events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, new Vector3(0f, 1f, 1.5f), Vector3.up, 1f,
+                0f));
+        }
+
         private static void Publish(EventBus events, FeelPhase phase, float strength, float seconds)
         {
             events.Publish(new FeelBeat(FeelKind.Cut, phase, Vector3.zero, Vector3.back, strength, seconds));
@@ -125,6 +136,10 @@ namespace MoonProject.Gameplay.Feel.Tests
             _created.Add(tuning);
             Set(tuning, "_moteCount", tuning.MotePool);
             Set(tuning, "_sparkRate", new Vector2(400f, 400f));
+
+            // The ribbon streams from its first step and outlasts a measured frame's steps.
+            Set(tuning, "_scanRibbonDelay", 0f);
+            Set(tuning, "_scanRibbonSeconds", 1.5f);
 
             // Beads outlive the test, so once filled the bead pool stays full whatever the timing.
             Set(tuning, "_beadLifetime", new Vector2(BeadLifetime, BeadLifetime));

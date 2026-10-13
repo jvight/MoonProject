@@ -226,6 +226,37 @@ namespace MoonProject.Gameplay
         [Tooltip("How long the emitter's glow fades after the crack (s).")]
         [Range(0.1f, 1.2f)] [SerializeField] private float _emitterFadeSeconds = 0.4f;
 
+        [Header("Scan")]
+        [Tooltip("From the dissolve's start to the ribbon leaving the fragment: its solid fading (s, D2: 0.3).")]
+        [Range(0f, 1f)] [SerializeField] private float _scanRibbonDelay = 0.3f;
+
+        [Tooltip("How long the lines stream into 07's lens, on an ease-in (s, D2: 0.5).")]
+        [Range(0.1f, 1.5f)] [SerializeField] private float _scanRibbonSeconds = 0.5f;
+
+        [Tooltip("Beads drawn along the ribbon.")]
+        [Range(4, 48)] [SerializeField] private int _scanRibbonBeads = 24;
+
+        [Tooltip("How far the ribbon's tail trails its head, as a share of the path.")]
+        [Range(0.05f, 1f)] [SerializeField] private float _scanRibbonLength = 0.45f;
+
+        [Tooltip("How high the ribbon arcs at its middle, as a share of the distance to the lens.")]
+        [Range(0f, 0.6f)] [SerializeField] private float _scanRibbonArc = 0.18f;
+
+        [Tooltip("The ribbon's head bead (m); the tail tapers to a third of it.")]
+        [Range(0.005f, 0.1f)] [SerializeField] private float _scanRibbonSize = 0.035f;
+
+        [Tooltip("The ribbon's and the flare's colour: the drawing's pale line white (linear).")]
+        [SerializeField] private Color _scanRibbonColor = new Color(0.92f, 0.96f, 1f, 1f);
+
+        [Tooltip("How long the lens flares as the last line arrives (s, D2: 0.1).")]
+        [Range(0.03f, 0.4f)] [SerializeField] private float _scanFlareSeconds = 0.1f;
+
+        [Tooltip("The lens flare's size (m).")]
+        [Range(0.05f, 0.6f)] [SerializeField] private float _scanFlareSize = 0.22f;
+
+        [Tooltip("The lens flare light's peak.")]
+        [Range(0f, 4f)] [SerializeField] private float _scanFlareLight = 1.2f;
+
 
         public int MoteCount => Mathf.Min(_moteCount, MotePool);
         public float MoteRadius => _moteRadius;
@@ -299,5 +330,15 @@ namespace MoonProject.Gameplay
         public float CrackFlashSeconds => _crackFlashSeconds;
         public float CrackSpike => _crackSpike;
         public float EmitterFadeSeconds => _emitterFadeSeconds;
+        public float ScanRibbonDelay => _scanRibbonDelay;
+        public float ScanRibbonSeconds => _scanRibbonSeconds;
+        public int ScanRibbonBeads => Mathf.Max(2, _scanRibbonBeads);
+        public float ScanRibbonLength => _scanRibbonLength;
+        public float ScanRibbonArc => _scanRibbonArc;
+        public float ScanRibbonSize => _scanRibbonSize;
+        public Color ScanRibbonColor => _scanRibbonColor;
+        public float ScanFlareSeconds => _scanFlareSeconds;
+        public float ScanFlareSize => _scanFlareSize;
+        public float ScanFlareLight => _scanFlareLight;
     }
 }

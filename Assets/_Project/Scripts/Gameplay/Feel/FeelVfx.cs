@@ -8,7 +8,8 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// The feel kit's look, as one listener of FeelBeats: the cut, and from polish wave 1 the leap's and landing's dust
     /// rings with the coil flash, dust falling off a tethered object, and an install's alignment light and power-on
-    /// sweep (docs/design/polish-pass.md §3.2). For the cut's FeelBeats (docs/design/feel-pass.md §3.1, §6): Anticipate
+    /// sweep (docs/design/polish-pass.md §3.2), and the scan's Reward: its lines streaming into 07's lens and the
+    /// lens's flare (<see cref="ScanRibbon"/>). For the cut's FeelBeats (docs/design/feel-pass.md §3.1, §6): Anticipate
     /// charges
     /// up at the emitter; the first Act ignites (flash, beam, cut light, sparks) and each later Act moves the hot seam
     /// and the spark rate with progress; Cancel disperses a charge or retracts the beam, leaving the seam to cool on
@@ -30,6 +31,7 @@ namespace MoonProject.Gameplay
         private readonly ChargeUp _charge;
         private readonly CutBeam _beam;
         private readonly VacuumDebris _debris;
+        private readonly ScanRibbon _scanRibbon;
         private readonly LightPulse _flashLight;
         private readonly LightPulse _cutLight;
         private readonly LightPulse _installLight;
@@ -68,6 +70,7 @@ namespace MoonProject.Gameplay
             _charge = new ChargeUp(root, tuning, visuals.FeelSprite);
             _beam = new CutBeam(root, tuning, visuals.BeamCore, visuals.BeamSheath);
             _debris = new VacuumDebris(root, tuning, visuals.FeelSprite);
+            _scanRibbon = new ScanRibbon(root, tuning, visuals.FeelSprite);
             _flashLight = new LightPulse("FlashLight", root, Color.white, tuning.FlashRange);
             _cutLight = new LightPulse("CutLight", root, tuning.CutLightColor, tuning.CutRange);
             _installLight = new LightPulse("InstallLight", root, tuning.MoteColor, tuning.EmitterRange);
@@ -83,6 +86,7 @@ namespace MoonProject.Gameplay
         public ChargeUp Charge => _charge;
         public CutBeam Beam => _beam;
         public VacuumDebris Debris => _debris;
+        public ScanRibbon ScanRibbon => _scanRibbon;
         public LightPulse CutLight => _cutLight;
         public LightPulse FlashLight => _flashLight;
 
@@ -111,6 +115,9 @@ namespace MoonProject.Gameplay
                     break;
                 case FeelKind.Install when beat.Phase == FeelPhase.Act:
                     Sweep(beat);
+                    break;
+                case FeelKind.Scan when beat.Phase == FeelPhase.Reward:
+                    _scanRibbon.Begin(beat.Position);
                     break;
             }
         }
@@ -154,6 +161,7 @@ namespace MoonProject.Gameplay
             }
 
             _debris.Step(deltaTime);
+            _scanRibbon.Step(deltaTime, emitter);
             _flashLight.Step(deltaTime);
             _cutLight.Step(deltaTime);
             StepSweep(deltaTime);
