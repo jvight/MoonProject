@@ -82,7 +82,7 @@ and the shelter backup. The lab's recovery panel gains a **Survey** count (§6, 
 | Region | Story beat | The lure | What its finds reveal | Survey piece | Elder at rest there (the protocol's errand) |
 |---|---|---|---|---|---|
 | **Basin + canyon (0.5)** | The station closed: the masts' letters end with "Program closed." | the Peak's red fault beacon; Bell's light across the chasm | **Kestrel-3** wears a foreign livery: "KESTREL-3 · TYCHO CONSORTIUM · MERIDIAN RELAY". The question: what is Meridian? **The drill rig:** Ines's core log, "anomalous". **The blue pebble** is a keepsake. **06's log:** it relayed an Earth signal on the station frequency, so the protocol woke 07. The question: *who is still transmitting?* | 1. **Ines's cores** (the drill rig's logger) | **06**, the relay keeper (canyon mouth) |
-| **The Long Mare (0.6)** | Link begins. Both stations' traffic crossed here. | the swirl and the dish's amber blink | **The comms dish archive:** the crew's group channel for 20 years: Ines's appeal, Theo, Kenji, Ro. Then nothing after 2067. Station-to-station traffic, e.g. "Meridian, this is Lumen relay. Your sounding grid is queued for uplink tonight." (sent the night of the storm). **The survey flock** is Meridian's sounding drones, still logging, still following a lead rover; their prospector (a Meridian derelict) stopped years ago. **The trencher** is Meridian's, lent to Lumen to lay the cable linking the two stations. | 2. **the flock's soundings** (downloaded at a lit mast where they roost); 3. **the dish archive** | **05**, sent to fetch the flock's data (at rest by the dish) |
+| **The Long Mare (0.6)** | Link begins. Both stations' traffic crossed here. | the swirl and the dish's amber blink | **The comms dish archive:** the crew's group channel for 20 years: Ines's appeal, Theo, Kenji, Ro. Then nothing after 2067. Station-to-station traffic, e.g. "Meridian, this is Lumen relay. Your sounding grid is queued for uplink tonight." (sent the night of the storm). **The survey flock** is Meridian's sounding drones, still logging, still following a lead rover; their prospector (a Meridian derelict) stopped years ago. **The trencher** (Lumen's) lays Lumen's half of the cable that was to link the two stations. | 2. **the flock's soundings** (downloaded once 07 repairs the mare comms node in their range); 3. **the dish archive** | **05**, sent to fetch the flock's data (at rest by the dish) |
 | **Rim Terraces (0.7)** | **Meridian Station, found.** A station still working, with no one reading. | from the mare's north shore: the pale steps, and **Meridian's white strobes, still blinking** | Its machines run their queues: cable climbers check live lines; sorters stack samples; its wipers keep its arrays clean. Its **vault** holds decades of soundings, the whole reservoir mapped. Dr. Moreau's last messages to Ines. **Atlas**, Lumen's hauler, sits parked on the interconnect works. | 4. **Meridian's vault** | **04**, sent to fetch the vault's grid (tipped on the terrace wall) |
 | **Shadowed Crater (0.8)** | The ground truth: the ice is there. | from the mare's south-west: the black bowl with a green glow | The **ice tappers** are Meridian's ice prospectors, dormant since the storm cut their cable, beside their sorted sample cache. **Moss**, Theo's garden bot, sampling ice for the station garden's water. | 5. **the ice core** (the tappers' cache) | **03**, sent for the core (no charger in the dark) |
 | **The lava tube (0.8)** | The station's memory, kept safe underground. | the skylight's glow | The **storm shelter** that the crew never reached. It is also the station's protected backup server, and its sealed isotope cell kept it running. The shelter's automated garden timer kept one grow lamp on, so **Theo's moss is alive.** Theo's log to his family: "If anything grows, tell me." | 6. **the shelter backup** (Ines's analysis) | **02**, sent for the backup (couldn't climb out) |
@@ -96,38 +96,59 @@ and the shelter backup. The lab's recovery panel gains a **Survey** count (§6, 
 - They stay where they stopped. 07 completes their tasks.
 
 ## 3. The two stations' machines
-**The rule:** every machine runs its last task queue on a real power source (§1a of the ecology). Lumen's machines
-went dormant when Lumen's grid died. Meridian's high arrays still work, so many of Meridian's machines are still
-active. That is why the two halves of the ecology behave differently.
+### 3.0 The logic base (carried over from v2 §3.1; `0.6-living-moon.md` §1a)
+- **Light:** Lumen sits at a near-polar site.
+  - The Sun skims the horizon. A lunar day lasts two Earth weeks in reality, or 2 hours of play if the owner picks the
+    moving Sun (L1).
+  - High ground (the arrays, the Peak, Meridian's terraces) is almost always sunlit; the Shadowed Crater and the lava
+    tube never are.
+  - Earthshine lights the world but never charges anything.
+- **Dust** settles on any panel nobody cleans, and a dusty array makes less power.
+- **Power sources:**
+  - own solar skin;
+  - an induction pad fed by a clean, sunlit array;
+  - the station grid;
+  - swappable cells;
+  - **sealed isotope cells**, which the crew put only where the Sun can't reach: the storm shelter and the dish
+    station's vault.
+- **The elders are all at rest.** The fault beacon runs on the dish station's own array and pad. The shelter's lights
+  and grow lamp run on its sealed cell, on the automated garden timer. No elder is involved in either.
 
-| | Lumen (crew-built and crew-repaired) | Meridian (remote-run prospecting) |
+### 3.1 Two families (agreed with game design, `0.6-living-moon.md` §1a.6, design/0.6 c21f33d2)
+| | **Lumen** (crew-built, crew-repaired) | **Meridian** (the Tycho Consortium, remote-run) |
 |---|---|---|
-| **Look** | cream enamel and the worn orange stripe; round amber lamps; wheels | white panels with teal markings; hexagonal faces; legs and tracks; white strobe markers instead of lamps |
-| **Run by** | the crew, then the operational Recovery Protocol | task queues uploaded from Earth, never updated since 2047 |
-| **Machines** | elders 01–06 (at rest); 07; Tilly, Bell, Atlas, Moss; panel mites (Kenji's wipers); the sweeper (the mare array's road); Mule (the canyon road's lamps); the haul sled (the drill); the stopped convoy (the dish's spare parts); echo beacons (the shelter's guide lights) | the survey flock (sounding drones); the trencher (lent for the interconnect); the prospector (the flock's lead, derelict on the mare); cable climbers (its terrace power lines); ice tappers (ice prospecting in the crater); sample sorters and array wipers at the station; Kestrel-3 (its relay satellite, fallen) |
-| **Why it still runs, or stopped** | Lumen's tower went dark, so its grid and pads died. Machines without their own sun stopped (dormant or dead), and wake when 07 restores their source. | Meridian's arrays sit in near-eternal sunlight and its own wipers keep them clean, so its station machines never stopped. Its field machines stopped where their link or cable was cut (the prospector, the crater cable) or their cell died. |
+| **Look** | cream enamel and the worn orange stripe; round amber lamps; wheels | white panels with teal markings; hexagonal faces; legs and tracks; white strobe markers |
+| **Charging** | round induction pads with an amber rim; Lumen cells | hexagonal contact docks with a latching plug arm; its own cell format and voltage |
+| **Cross-charging** | **none.** 07 is Lumen-native. The **Charge Adapter** part (0.7, found at Meridian) lets 07 use hex docks. A **Power Bridge** structure converts a charger for both families, and then the other family starts using it. | |
+| **On loss of contact** | Kenji's **"continue"** setting: keep running the task queue | the agency's **safe mode**: finish the step, park, hold position at minimum power, and poll for a command link |
+| **Machines** | elders 01–06 (at rest); 07; Tilly, Bell, Atlas, Moss; panel mites; the sweeper; **the trencher**; Mule; the haul sled; the stopped convoy; echo beacons; Tilly's sister (the drone in the wires) | **the survey flock**; the prospector (the flock's lead, parked on the mare); cable climbers (its terrace lines); ice tappers (crater prospecting); sample sorters and array wipers at the station; Kestrel-3 (its relay satellite, fallen) |
 
-**Machine-by-machine logic** (it matches §1a's sources and ledger):
-- **The survey flock (Meridian):**
-  - goal: sound the ground, log anomalies, follow the prospector;
-  - power: perch-charge on pads;
-  - its lead died, so it follows any rover, 07 included.
-  - Its stored soundings download when it roosts at a mast 07 has lit (survey piece 2).
-- **The trencher (Meridian, on loan):**
-  - goal: lay the interconnect cable from Lumen toward Meridian;
-  - power: Lumen's grid, through the cable trailing back to Lumen's tower;
-  - it stopped at the blackout, and tower L1 restarts it. Its trench is the stations' shared Link, drawn on the
-    ground.
-- **The ice tappers (Meridian):**
-  - goal: tap frost and sort ice samples;
-  - power: a cable from Meridian into the crater, cut by the storm;
-  - the crater pylon wakes them, and their cache is survey piece 5.
-- **The panel mites, the sweeper, Mule, the haul sled and the convoy (Lumen):** as in §1a. The sweeper's breakdown is
-  why the mare dish lost power and the archive stopped.
-- **The fault beacon (01's road):** the dish station's own solar mast powers it. It is plain hardware, still
-  reporting "uplink fault".
-- **The grow lamp (the tube):** the shelter's sealed isotope cell powers it, on the automated garden's timer. It is
-  plain hardware.
+**Why Meridian's vault still filled for decades, despite safe mode:**
+- Safe mode triggers on the loss of a **command link**, and for the station's own machines the command link is
+  **Meridian's local scheduler**, not Earth.
+- Earth was lost in 2047, but the scheduler kept looping its last survey plan in near-eternal sunlight. So **machines
+  in range of Meridian's comms node** (the sorters, the wipers, the cable climbers) kept working, and the soundings
+  kept piling into the vault.
+- **Field machines out of that range went to safe mode and parked:**
+  - the flock's prospector on the mare;
+  - the ice tappers, once the storm cut their crater cable and node link.
+- **Waking them takes contact, not power:** 07 repairs their comms node, and machines in its range resume their last
+  queue (§1a.6, rule 4).
+
+### 3.2 Machine by machine (for game design's ledger)
+| Machine | Family | Goal | Power | Why it still runs, or how it stopped | What wakes or uses it |
+|---|---|---|---|---|---|
+| **The survey flock** | Meridian | an **"escort surface vehicles"** protocol: escort the prospector, sound the ground, log anomalies | hex dock perch-charging on Meridian's mare docks | It is the one field group still active: its docks sit on sunlit outcrops. With its prospector parked, it escorts any surface vehicle, 07 included. | Its soundings (survey piece 2) download when 07 repairs the mare comms node in its range. |
+| **The prospector** | Meridian | lead the flock on the survey route | a hex-dock cell | Parked in safe mode when the mare node lost Meridian's link. | contact (the node) |
+| **The trencher** | Lumen | lay **Lumen's half of the interconnect cable** toward Meridian | Lumen's grid, through the cable it trails back to Lumen's tower | stopped at the blackout | tower L1 restarts it. Its trench is the shared Link, drawn on the ground. |
+| **Cable climbers** | Meridian | inspect the terrace power lines | Meridian's grid, through the cables | still running, inside the node's range | — (they mark the climbable lanes) |
+| **Ice tappers** | Meridian | tap frost and sort ice samples | a Meridian cable into the crater | Parked in safe mode when the storm cut the cable and the node link. | Contact plus a respliced feed: 07's crater pylon fitted with a Power Bridge. Their cache is survey piece 5. |
+| **Sample sorters, array wipers** | Meridian | stack samples; keep the arrays clean | Meridian's grid | never stopped | they fill the vault (survey piece 4) |
+| **Panel mites, the sweeper, Mule, the haul sled, the convoy** | Lumen | as in §1a | as in §1a | as in §1a. The sweeper's breakdown starved the mare dish's array, which is why the archive stopped. | as in §1a |
+| **Echo beacons** | Lumen | blink the way into the shelter | the shelter's sealed cell | they blink only when pinged | listening |
+| **The fault beacon** | hardware | report "uplink fault" | the dish station's array and pad | still blinking | the dish's repair turns it amber |
+| **The grow lamp** | hardware | the shelter garden's timer | the shelter's sealed cell | still on | — |
+| **Elders 01–06** | Lumen | each was sent to fetch one survey piece (§2) | swappable cells | at rest at their gates | their manifests guide; nothing wakes them |
 
 ## 4. How the story is told (no sentimental human-to-robot lines)
 **The owner's rule:**
@@ -147,17 +168,41 @@ active. That is why the two halves of the ecology behave differently.
 | **The radio** | the weather loop, Ro's show (live at the end) | broadcast |
 | **Functional text** | prompts, cards, hints | plain, native Vietnamese (`writing-style.md`) |
 
-**Existing text to rewrite** (it addresses 07 sentimentally, which breaks rule 2; story will redo it once this is
-approved):
-- `log.ro_3` ("I left the radio on for you, 07") becomes Ro's last show note to her listeners;
-- `log.ines_3` ("…07. I need you to know we tried") becomes Ines's appeal to the review board;
-- `log.kenji_3` ("Don't let anyone retire you, 07") becomes Kenji's shutdown note: "Left the rovers on 'continue'.
-  Shutdown takes a day we don't have.";
-- `letter.mast_5`, `letter.mast_9`, and `letter.after_3`, `_4`, `_8` and `_10` are re-addressed to the crew channel
-  or listeners;
-- `ticker.ending.answer` becomes the replies in §1;
-- STORY's premise ("Keep the radio on" as a farewell to 07) becomes the protocol's operational standing order:
-  "RADIO: CONTINUOUS". **07 keeps the radio on because it was set to, and the player learns why that mattered.**
+### 4.1 Audit: lines that speak to a machine sentimentally (proposed rewrites; tables unchanged until the owner approves)
+Scope: en/vi tables, `docs/design/text/*`, crew logs, radio letters, Bell's lines, relic memories.
+
+**Rule applied:**
+- **Rewrite:** a person confiding in a machine, thanking it emotionally, or giving it heartfelt instructions.
+- **Keep:** a person *describing* a machine with dry humour (the duck, Bell's dancing, Moss's humming), because that
+  is people talking about tools. Also keep robots with character through behaviour (the friends' chirps, Bell's
+  ticker).
+
+| Key | Now (en) | Problem | Proposed rewrite (en) | vi (draft) |
+|---|---|---|---|---|
+| `log.ro_3` | Last show before the shuttle. I left the radio on for you, 07. Keep it playing, and we'll find you by the music. | heartfelt instruction to 07 | Last show before the shuttle. The transmitter stays on "continuous". If anyone's still tuned in: Lumen After Dark, signing off for now. — Ro | Buổi phát sóng cuối trước chuyến tàu. Máy phát để chế độ "liên tục". Ai còn dò đúng sóng thì: Lumen After Dark, tạm chào nhé. — Ro |
+| `log.ines_3` | We were coming back, 07. I need you to know we tried. | confides in 07 | To the review board: my cores were anomalous for a reason. The proof is on the station drives. Send us back for them. — I. Kalani | Gửi hội đồng xét duyệt: các mẫu lõi của tôi bất thường là có lý do. Bằng chứng nằm trong ổ dữ liệu của trạm. Hãy cho chúng tôi quay lại lấy. — I. Kalani |
+| `log.kenji_3` | They asked me what to do with the rover, and I said leave it switched on. Don't let anyone retire you, 07. | heartfelt instruction to 07 | They asked what to do with the rovers. I left them on "continue": a full shutdown takes a day we don't have. — Kenji | Người ta hỏi xử lý mấy chiếc rover thế nào. Mình để chúng ở chế độ "tiếp tục": tắt hẳn mất cả ngày, mà tụi mình không còn ngày nào. — Kenji |
+| `log.kenji_1` | … I taught its antenna our call sign, three short, one long, and it blinks it at me whenever I walk past. | affection toward the rover | Fixed the old survey rover today, the seventh thing on this week's list, so it's 07 now. Set its antenna to blink our call sign as a status light: three short, one long. — Kenji | Hôm nay sửa xong chiếc rover khảo sát cũ, món thứ bảy trong danh sách tuần này, nên giờ nó là 07. Cài ăng-ten nháy tín hiệu gọi của trạm làm đèn trạng thái: ba ngắn, một dài. — Kenji |
+| `log.ro_1` | Three listeners and a rover who rolls closer when I play the slow ones. Best audience I've ever had. | treats the rover as an audience | Night one of Lumen After Dark. Three listeners, one basil plant, and a rover parked by the speaker on its charge pad. Best audience I've ever had. — Ro | Đêm đầu tiên của Lumen After Dark. Ba thính giả, một chậu húng quế, và một chiếc rover đỗ cạnh loa trên bệ sạc. Khán giả tuyệt nhất mình từng có. — Ro |
+| `log.ro_2` | … 07 rolled right up to the speaker and stayed there. | the rover as a frightened listener | Read the storm warning on air tonight, tucked between two slow songs so it wouldn't sound so scary. Kenji parked the rovers in the lander's lee. — Ro | Tối nay đọc cảnh báo bão trên sóng, kẹp giữa hai bài chậm cho đỡ đáng sợ. Kenji đã cho mấy chiếc rover đỗ khuất sau tàu đổ bộ. — Ro |
+| `letter.mast_5` | 07, it's Ro. They say nobody's listening up there. I'm sending this anyway. | addressed to 07 | Lumen crew channel, it's Ro. They say nobody's listening up there. I'm sending this anyway. | Kênh phi hành đoàn Lumen, Ro đây. Người ta bảo trên đó chẳng còn ai nghe. Mình vẫn cứ gửi. |
+| `letter.mast_9` | If that old dish ever wakes up, I'll be listening on the station's frequency. You know how to find me: three short, one long. | addressed to 07 | Ines says the proof is still on the station drives. If that dish ever comes back, I'll be listening on the old frequency, Sundays. Three short, one long. — Ro | Ines bảo bằng chứng vẫn nằm trong ổ dữ liệu của trạm. Nếu cái chảo ấy hoạt động lại, Chủ nhật nào mình cũng nghe ở tần số cũ. Ba ngắn, một dài. — Ro |
+| `letter.after_3` | Kenji asked if you still have the odd wheel… | addressed to 07 | Kenji read the telemetry: all six wheels on the old rover match now. He had to sit down. — Ro | Kenji đọc số liệu đo xa: cả sáu bánh của chiếc rover cũ giờ đã giống nhau. Anh ấy phải ngồi xuống. — Ro |
+| `letter.after_4` | Played your song… Best audience since you. | addressed to 07 | Played "for when we come home" on the show tonight. Audience: two neighbours and a very old cat. Best audience since the station. — Ro | Tối nay mình phát bài "cho ngày mình về nhà". Khán giả: hai người hàng xóm và một con mèo đã rất già. Khán giả tuyệt nhất kể từ hồi ở trạm. — Ro |
+| `letter.after_6` | … It's always clear where you are, isn't it? | addressed to 07 | Weather tonight: rain over Lagos. Clear skies over the station, as always: the telemetry says so. — Ro | Thời tiết đêm nay: mưa ở Lagos. Trên trạm thì trời vẫn quang như mọi khi, số liệu bảo vậy. — Ro |
+| `letter.after_8` | … Don't hold your breath; you don't breathe anyway. | addressed to 07 | The four of us wrote to the agency together. Ines says this time they have to read it. — Ro | Bốn đứa tụi mình cùng viết thư cho cơ quan vũ trụ. Ines bảo lần này họ buộc phải đọc. — Ro |
+| `letter.after_10` | Goodnight, 07. Keep the radio on. We'll keep ours on too. | addressed to 07 | Goodnight, Lumen. The show's on every Sunday until the crew lands. — Ro | Ngủ ngon, Lumen. Chủ nhật nào cũng có chương trình, cho đến khi phi hành đoàn hạ cánh. — Ro |
+| `ticker.ending.answer` | I heard you, 07. I'm still here. — Ro | addressed to 07 | Lumen, this is Amadi. We read you. Ines is on her way to the club. (then Houston: "Survey received. A crewed return is being planned.") | Lumen, Amadi đây. Tụi mình nghe rõ. Ines đang trên đường tới câu lạc bộ. (rồi Houston: "Đã nhận dữ liệu khảo sát. Một chuyến quay lại có người đang được lên kế hoạch.") |
+| `ticker.bell.found_2` | Bell says: Ro would have liked that. | a machine speaking for a person's feelings | Bell says: another one for the shelf. | Bell bảo: thêm một món cho kệ. |
+| STORY premise | "Keep the radio on. We'll be back after the storm." as the crew's last words to 07 | a heartfelt instruction | the Recovery Protocol's standing order "RADIO: CONTINUOUS", set by Kenji with the rest of the "continue" settings | — |
+
+**Kept** (people describing tools with humour, or robots with behaviour):
+- `relic.rubber_duck.memory`, `relic.golden_record.memory` ("one rover and a very proud basil plant");
+- `friend.bell.repair_log` ("She dances. I didn't build that part."), `friend.tilly.repair_log`;
+- `log.theo_2` (Moss humming), `log.kenji_2` (the spare wheel, a maintenance note);
+- `crate.garage.note` ("For 07, next time it breaks. It will.", a maintenance note);
+- `ticker.bell.home`, `ticker.bell.found_0/1`, `ticker.set.*`, `map.*` notes;
+- `letter.mast_1–4`, `_6`, `_7`, `_8`, `_10`, and `letter.after_1`, `_2`, `_5`, `_7`, `_9`: already human-to-human.
 
 ## 5. Key moments
 1. **"Not worth returning to"** (0.5, the masts' letters), set against Ines's core log saying "anomalous" and the
@@ -180,5 +225,6 @@ approved):
    ledger decision. Keep the name and tone?
 4. **Survey pieces as must-haves:** all 6 required to transmit, or a threshold (e.g. 4 of 6) with the rest for
    completion?
-5. **Approve the rewrite list** in §4, so that every human line is human-to-human?
+5. **Approve the audit's rewrites** (§4.1), so that every human line is human-to-human?
+7. **The Charge Adapter** (07 charging at Meridian's hex docks) in 0.7, found at Meridian Station?
 6. **Dr. Lena Moreau** as Meridian's human voice (station traffic and Notes), alongside the Lumen crew?
