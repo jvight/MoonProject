@@ -1399,6 +1399,10 @@ namespace MoonProject.Art.Editor
                 40f));
             poses.Add(Pose("full_front", Point(new Vector3(2f * KitSpacing - 2.2f, 1.4f, 3.6f)),
                 Point(new Vector3(2f * KitSpacing, 0.9f, 0f)), 45f));
+            poses.Add(Pose("full_top", Point(new Vector3(2f * KitSpacing, 4.2f, -0.4f)),
+                Point(new Vector3(2f * KitSpacing, 0.6f, -0.1f)), 40f));
+            poses.Add(Pose("full_back", Point(new Vector3(2f * KitSpacing, 1.5f, -3.2f)),
+                Point(new Vector3(2f * KitSpacing, 0.75f, -0.6f)), 40f));
             return new CameraPoseSet { width = 1600, height = 900, postProcessing = true, poses = poses.ToArray() };
         }
 
@@ -1845,7 +1849,7 @@ namespace MoonProject.Art.Editor
 
         /// <summary>
         /// Fits the chosen kit to a rover instance on its sockets, lit as in play (the lamps on, the drums glowing),
-        /// optionally with a relic riding in the cradle, and shows the friends' gifts.
+        /// optionally with a relic riding in the cradle, and shows the friends' gifts with Ro's tape deck on the back.
         /// </summary>
         private static void FitKit(Transform rover, TemporaryObjects temporary, bool lampBar, bool drums, bool cradle,
             bool relic, bool gifts)
@@ -1888,6 +1892,8 @@ namespace MoonProject.Art.Editor
                 {
                     Descendant(rover, gift).gameObject.SetActive(true);
                 }
+
+                Attach(rover, RoverKitBuilder.TapeDeckName, RoverModelBuilder.DeckSocketName, temporary);
             }
         }
 

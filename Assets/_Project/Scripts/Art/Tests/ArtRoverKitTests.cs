@@ -176,6 +176,32 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
+        public void TapeDeck_RidesTheBackCentreline_ClearOfTheHatchRackAndBatteryBar()
+        {
+            Bounds deck = Mounted(RoverKitBuilder.CreateTapeDeck(), RoverModelBuilder.DeckSocketName);
+            Vector3 hinge = RoverModelBuilder.CargoHatchHinge;
+            Assert.AreEqual(0f, deck.center.x, 0.01f, "on the centreline: 07 stays symmetric");
+            Assert.LessOrEqual(deck.max.z, hinge.z, "on the back, out of the rear face");
+            Assert.Greater(deck.min.y, hinge.y, "above the hatch's hinge, so the hatch swings out under it");
+            Assert.Less(deck.max.y, RoverModelBuilder.NeckBase.y, "under the lid and its battery bar");
+            ModelNode rack = RoverKitBuilder.CreateCargoRack();
+            var triangles = new List<Vector3>();
+            SilhouetteCamera.CollectTriangles(rack,
+                SilhouetteCamera.WorldOf(_rover, "CargoSocket") * rack.LocalMatrix.inverse, triangles);
+            for (int t = 0; t < triangles.Count; t += 3)
+            {
+                for (int k = 0; k < 3; k++)
+                {
+                    Vector3 a = triangles[t + k];
+                    Vector3 edge = triangles[t + (k + 1) % 3] - a;
+                    bool crosses = deck.Contains(a) || deck.IntersectRay(new Ray(a, edge), out float hit)
+                        && hit <= edge.magnitude;
+                    Assert.IsFalse(crosses, $"the cargo rack passes through the deck at {a}");
+                }
+            }
+        }
+
+        [Test]
         public void GlowRenderers_AreDarkUntilLit_LampsWarm_DrumCyanLikeTheCoils()
         {
             ModelNode bar = RoverKitBuilder.CreateLampBar();

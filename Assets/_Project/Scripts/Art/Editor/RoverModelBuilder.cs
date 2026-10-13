@@ -76,10 +76,11 @@ namespace MoonProject.Art.Editor
         public const string LensSocketName = "LensSocket";
 
         /// <summary>
-        /// The scan's fan of light (0.5.5 §1.2): <c>ScanFan.prefab</c>, a few hair-thin cyan rays from the lens along +Z,
-        /// <see cref="ScanFanHalfAngle"/> degrees either side and <see cref="ScanFanReach"/> m long, on the glow-off
+        /// The scan's fan of light (0.5.5 §1.2): <c>ScanFan.prefab</c>, a few hair-thin cyan rays from the lens along
+        /// +Z, <see cref="ScanFanHalfAngle"/> degrees either side and <see cref="ScanFanReach"/> m long, on the glow-off
         /// material. Rover mounts it on <c>Neck/Head/Eye/ScanFanSocket</c> with identity, keeps it dark until a scan
-        /// lights it (_EmissionColor) and yaws it to sweep (about its local Y). Its own prefab, so 07's size stays 07's.
+        /// lights it (_EmissionColor) and yaws it to sweep (about its local Y). Its own prefab, so 07's size stays
+        /// 07's.
         /// </summary>
         public const string ScanFanName = "ScanFan";
 
@@ -153,8 +154,9 @@ namespace MoonProject.Art.Editor
         public static readonly Vector3 SpineSocket = new Vector3(0.385f, RoverMeshes.LidTop, -0.2f);
 
         /// <summary>
-        /// Where the old tape deck rides (M3-24 C): on the left flank, high above the middle and rear wheels and behind
-        /// the drum, its bracket on the body side. The node faces out to the left (+X of the deck is 07's -X).
+        /// Where the old tape deck rides (M3-24 C, 0.5.5 §3.5 the Deck socket): on the back's centreline, its bracket
+        /// on the rear stripe above the cargo hatch's hinge and under the battery bar, so 07 stays symmetric. The node
+        /// faces out of the back (+X of the deck is 07's -Z, its +Z runs to 07's right).
         /// </summary>
         public const string DeckSocketName = "DeckSocket";
 
@@ -165,7 +167,11 @@ namespace MoonProject.Art.Editor
 
         public static readonly Vector3 RingSocket = new Vector3(0f, 0.1f, -0.2f);
 
-        public static readonly Vector3 DeckSocket = new Vector3(-RoverMeshes.BodyHalfWidth, 0.78f, -0.45f);
+        public static readonly Vector3 DeckSocket = new Vector3(0f, CargoHatchHinge.y + DeckAboveHinge,
+            RoverMeshes.BodyBack - RoverMeshes.PaintProud - RoverMeshes.PaintThickness * 0.5f);
+
+        // The deck's middle above the hatch hinge: its straps clear the hinge, its keys stay under the battery bar.
+        private const float DeckAboveHinge = 0.085f;
 
         /// <summary>
         /// The equipment screen's socket markers (0.5.5 §3.5): one empty <c>&lt;RoverSocket&gt;Socket</c> per Core
@@ -293,7 +299,7 @@ namespace MoonProject.Art.Editor
             root.Add(new ModelNode(TubeSocketName, TubeSocket, Place.Rotation(new Vector3(0f, 90f, 0f))));
             root.Add(new ModelNode(PartSocketName, PartSocket));
             root.Add(new ModelNode(SpineSocketName, SpineSocket));
-            root.Add(new ModelNode(DeckSocketName, DeckSocket, Place.Rotation(new Vector3(0f, 180f, 0f))));
+            root.Add(new ModelNode(DeckSocketName, DeckSocket, Place.Rotation(new Vector3(0f, 90f, 0f))));
             AddEquipmentSockets(root, eye, head, wing, antenna, middleRight);
             return root;
         }
