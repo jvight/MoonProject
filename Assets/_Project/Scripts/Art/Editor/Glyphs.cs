@@ -49,8 +49,8 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The outline of <paramref name="letter"/> (the upper-case letters signs and name plates need, digits 0, 6 and
-        /// 7, a dash, a full stop and a middle dot).
+        /// The outline of <paramref name="letter"/> (the upper-case letters signs and name plates need, digits 0, 1, 6
+        /// and 7, a dash, a full stop and a middle dot).
         /// </summary>
         public static Vector2[] For(char letter)
         {
@@ -59,6 +59,9 @@ namespace MoonProject.Art.Editor
                 case '0':
                 case 'O':
                     return Zero();
+                case '1':
+                    return Outline(0.05f, 0f, 0.09f, 0f, 0.09f, 0.2f, 0.06f, 0.2f, 0.02f, 0.165f, 0.035f, 0.15f, 0.05f,
+                        0.165f);
                 case '6':
                     return Outline(0.03f, 0f, 0.11f, 0f, 0.14f, 0.03f, 0.14f, 0.09f, 0.11f, 0.12f, 0.04f, 0.12f, 0.04f,
                         0.16f, 0.13f, 0.16f, 0.13f, 0.2f, 0.03f, 0.2f, 0f, 0.17f, 0f, 0.03f);

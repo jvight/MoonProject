@@ -31,9 +31,10 @@ namespace MoonProject.World
         [SerializeField] private Color _bloomTint = new Color(1f, 0.93f, 0.86f);
 
         [Header("Colour")]
-        [Tooltip("Exposure offset in EV. Lifts the lit faces and the warm lights while the shadows keep their black.")]
+        [Tooltip("Exposure offset in EV. Neutral under look A \"Moon grey\": the night reads dark, the lit faces and " +
+            "the warm lights carry the frame.")]
         [Range(-3f, 3f)]
-        [SerializeField] private float _postExposure = 0.5f;
+        [SerializeField] private float _postExposure = 0f;
 
         [Tooltip("Grade in HDR, before tonemapping (the PC pipeline asset's grading mode), so the warm windows grade " +
             "with their full range and the shadows keep a real black.")]
@@ -41,11 +42,12 @@ namespace MoonProject.World
 
         [Tooltip("Contrast (-100..100). Enough for a real black and a real highlight; the night stays calm.")]
         [Range(-100f, 100f)]
-        [SerializeField] private float _contrast = 20f;
+        [SerializeField] private float _contrast = 22f;
 
-        [Tooltip("Saturation (-100..100). Only a touch under neutral: split toning already carries the hue.")]
+        [Tooltip("Saturation (-100..100). Under neutral, so the grey ground stays grey and the warm lamps stand out; " +
+            "split toning carries the hue.")]
         [Range(-100f, 100f)]
-        [SerializeField] private float _saturation = -5f;
+        [SerializeField] private float _saturation = -18f;
 
         [Tooltip("Lift: tints the shadows (rgb) and raises them (w). Cool, but never raised: the frame keeps a black.")]
         [SerializeField] private Vector4 _lift = new Vector4(0.96f, 0.97f, 1.08f, 0f);
@@ -57,14 +59,14 @@ namespace MoonProject.World
         [SerializeField] private Vector4 _gain = new Vector4(1.04f, 1f, 0.95f, 0f);
 
         [Tooltip("Split toning, shadows: the cool hue pushed into the dark tones.")]
-        [SerializeField] private Color _splitShadows = new Color(0.32f, 0.35f, 0.55f);
+        [SerializeField] private Color _splitShadows = new Color(0.36f, 0.39f, 0.46f);
 
         [Tooltip("Split toning, highlights: the warm hue pushed into the light tones.")]
-        [SerializeField] private Color _splitHighlights = new Color(1f, 0.86f, 0.68f);
+        [SerializeField] private Color _splitHighlights = new Color(1f, 0.92f, 0.8f);
 
         [Tooltip("Split toning balance (-100..100): below zero more of the range counts as shadow.")]
         [Range(-100f, 100f)]
-        [SerializeField] private float _splitBalance = -10f;
+        [SerializeField] private float _splitBalance = -15f;
 
         [Header("Ambient occlusion")]
         [Tooltip("SSAO strength. Strong enough that every foot, leg and wheel sits in a dark crease and stops floating.")]
@@ -96,8 +98,8 @@ namespace MoonProject.World
         [Range(0.01f, 1f)]
         [SerializeField] private float _vignetteSmoothness = 0.5f;
 
-        [Tooltip("Vignette colour.")]
-        [SerializeField] private Color _vignetteColor = new Color(0.05f, 0.03f, 0.12f);
+        [Tooltip("Vignette colour: a near-black cool grey, so the frame edges darken without a violet cast.")]
+        [SerializeField] private Color _vignetteColor = new Color(0.03f, 0.035f, 0.05f);
 
         [Tooltip("Film grain strength. Barely there.")]
         [Range(0f, 1f)]

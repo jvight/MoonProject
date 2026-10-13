@@ -40,6 +40,9 @@ namespace MoonProject.Art.Tests
             Bounds body = crate.Mesh.Geometry.Bounds;
             Vector3 deck = RoverKitBuilder.CreateTapeDeck().Mesh.Geometry.Bounds.size;
             Assert.Greater(body.size.x, deck.z, "the deck lies along the crate");
+            ModelNode item = crate.Children.Single(n => n.Name == LootContainerBuilder.ItemSocketName);
+            Assert.Greater(Mathf.Abs((item.LocalRotation * Vector3.forward).x), 0.99f,
+                "the socket turns the deck's length along the crate");
             Assert.Greater(body.size.y, deck.y, "standing upright inside");
             Assert.Greater(body.size.z, deck.x, "and fits front to back");
             Assert.IsTrue(MeshChecks.Swatches(crate.Mesh.Geometry).Contains(PaletteSwatch.Charcoal), "the stencil");

@@ -51,5 +51,7 @@ MonoBehaviour:
   - {fileID: 5700859343141753201, guid: e748af4b4e77c8140a6d8d7eb1aa0913, type: 3}
   - {fileID: 56243224897414047, guid: dabe2b7353936b5459a95661081b2ec8, type: 3}
   - {fileID: 2950383942280905191, guid: 11418394e20d9e54989e2d5fc7191285, type: 3}
+  - {fileID: 7015121732507049066, guid: dc5ab79e320bea54ab2354d459a039da, type: 3}
   _tube: {fileID: 6406814405049052317, guid: 05d82a220aa0cad4baaa68355080287b, type: 3}
   _garagePort: {fileID: 7185882727046098272, guid: 1d34e56cd553dd5418963ef7e6f21fd2, type: 3}
+  _tapeDeck: {fileID: 8103010664265960948, guid: b1f7ee56b0cd5c7419ad482d825915c2, type: 3}

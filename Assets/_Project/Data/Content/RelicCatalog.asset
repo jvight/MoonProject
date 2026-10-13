@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: RelicCatalog
   m_EditorClassIdentifier: 
   _relics:
-  - {fileID: 11400000, guid: 5c58223ff7c2bcf4fa1e4dd1e52a9a4a, type: 2}
   - {fileID: 11400000, guid: bd18ed1e4e8e6fd4296a9101b8c98eb4, type: 2}
   - {fileID: 11400000, guid: 6206d5bec88d04346af221c6e2593d04, type: 2}
   - {fileID: 11400000, guid: 13b2607537a4a204eabccfdeae8d28f7, type: 2}

@@ -4,7 +4,24 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 0000000000000000. LATEST (2026-10-14 ~00:30): main 5bffb082 verified+pushed; look A in flight
+## 00000000000000000. LATEST (2026-10-14 ~01:30): main 235422b1 NOT verified (2 fixes pending); story v3 Qs to owner
+- **main 235422b1** (local, NOT pushed; origin = 5bffb082 + docs) = look A (art 0bac0cfe + world 52432607, one grade
+  source in World PostProcessSettings), C9 (gameplay 2ec38e77; the tape deck is a spare in the SpareCrate; keepsakes 5),
+  audio 27ad1ff9, ui 2d5237c2, VISION's palette = look A.
+- **The verify failed on two things, both asked:**
+  1. ui: HudTests expects "Keepsake 2 of 6" (now 5); read the total from the catalog.
+  2. gameplay: the Playthrough times out at the garage, "relic in the beam's reach" at (-86.9, -74.1); likely art's
+     garage pocket changes. Gameplay is reproducing on main.
+  Land both fixes, then `verify --parallel --push`.
+- **Then:** art's real-scene captures of look A for the owner; gameplay C11b (box/gameplay 0087c582?), C10, C5
+  (IScrapField = 4 lane slots, gameplay writes Core, world registers), C6, D; then verify --explicit, bump 0.5.5,
+  build.
+- **Owner pending:** story v3's 7 questions (docs/design/story-v3.md §6, box/story 34f104d0). Proposals sent:
+  survey row 0/6; Ro hears first, then Houston; keep Tycho Consortium; a 4-of-6 threshold; approve the 16 rewrites;
+  Lena Moreau yes; the Charge Adapter in 0.7. NOTE: the story & flow session's outbound messaging is paused until
+  the owner types in it.
+
+## 0000000000000000. (prev) (2026-10-14 ~00:30): main 5bffb082 verified+pushed; look A in flight
 - Director: session local_0b7c61a2 at ~92% context. A fresh Director starts HERE and recreates cron v4.
 - **Landed since e13afbde (all verified):**
   - feb2157a: the network pulse + its sound;

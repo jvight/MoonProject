@@ -25,10 +25,10 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _EdgeSoftness: 0.5
+    - _EdgeSoftness: 0.9
     - _FadeFar: 380
     - _FadeNear: 160
     m_Colors:
-    - _Color: {r: 1, g: 0.85, b: 0.45, a: 1}
+    - _Color: {r: 1.24, g: 1, b: 0.66, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

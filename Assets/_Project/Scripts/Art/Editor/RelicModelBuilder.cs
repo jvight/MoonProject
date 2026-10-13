@@ -17,7 +17,7 @@ namespace MoonProject.Art.Editor
         /// <summary>Relic ids fixed by the content contract (saves and prefab names use them).</summary>
         public static IReadOnlyList<string> Ids => new[]
         {
-            "cassette_player", "rubber_duck", "golden_record", "astronaut_boot", "teapot", "garden_gnome",
+            "rubber_duck", "golden_record", "astronaut_boot", "teapot", "garden_gnome",
         };
 
         public static string PrefabName(string id)
@@ -42,9 +42,6 @@ namespace MoonProject.Art.Editor
             LowPolyMeshBuilder geometry;
             switch (id)
             {
-                case "cassette_player":
-                    geometry = RoverDeckMeshes.Deck();
-                    break;
                 case "rubber_duck":
                     geometry = RelicMeshes.RubberDuck();
                     break;
@@ -78,8 +75,6 @@ namespace MoonProject.Art.Editor
         {
             switch (id)
             {
-                case "cassette_player":
-                    return 0.27f;
                 case "rubber_duck":
                     return 0.2f;
                 case "golden_record":

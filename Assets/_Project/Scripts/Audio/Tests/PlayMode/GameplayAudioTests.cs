@@ -51,7 +51,7 @@ namespace MoonProject.Audio.PlayModeTests
         {
             string[] relics =
             {
-                "astronaut_boot", "cassette_player", "garden_gnome", "golden_record", "rubber_duck", "teapot",
+                "astronaut_boot", "garden_gnome", "golden_record", "rubber_duck", "teapot",
             };
             foreach (string relic in relics)
             {
