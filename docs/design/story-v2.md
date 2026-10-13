@@ -96,7 +96,7 @@ still doing that job, gently and pointlessly, until 07 gives the job a purpose a
 | Panel mites | Kenji's dust wipers for the solar arrays | they clean panels nobody uses. They cluster on panels that still make power because that's where they recharge, which is why a cluster marks live hardware. |
 | The sweeper | kept the solar-field road clear for the crew's rovers | it still sweeps a road no one drives. 07 is the first wheel on it in decades. Repaired, it sweeps for 07. |
 | The survey flock | Ines's mapping drones, Tilly's sisters | they were built to follow a lead rover and log fresh impacts. They tail 07 because 07 is a rover, and they hover over anomalies because that's what they record. Ro named them. |
-| The trencher | laying the cable trench for the relay link to the Peak | nobody told it to stop. Its decades-long trench across the mare is the Link the protocol needs, drawn on the ground. |
+| The trencher | laying the cable trench for the relay link to the Peak | it runs on the grid through its own cable, so it stopped the day the station went dark. Its trench across the mare is the Link the protocol needs, drawn on the ground, and tower L1 starts it again. |
 | Mule | planting the lamp posts of the crew's canyon road | it fell planting the last one, which stands half-planted beside it |
 | The haul sled | hauling the drill's last load home | it stalled mid-haul, still strapped |
 | The stopped convoy | bringing the mare dish's spare parts home | the lead bot's cell died, and the two behind it are still waiting for it to move. *Option:* repair the lead, and the convoy finishes its trip home and delivers dish parts (a Dish-row lamp). |
@@ -106,40 +106,47 @@ still doing that job, gently and pointlessly, until 07 gives the job a purpose a
 
 ### 3.1 Power and logic: every machine has a source, a loop, a goal and a reason
 The owner: "everything must be extremely logical". Basic facts:
-- a lunar day and night each last about two weeks;
-- solar machines sleep through the night on their cells and wake at dawn;
-- dust slowly settles on any panel nobody cleans;
-- permanent shadow and the lava tube never see the sun;
-- the crew left two kinds of long-life power: **solar masts**, and **sealed crew cells**. A sealed crew cell is a
-  small long-life isotope cell, like the ones real probes carry. The crew installed them only where the sun can't
-  reach: the storm shelter and the dish station's vault.
+- **The light model** (game design's `0.6-living-moon.md` §1a.1). Lumen Station sits at a near-polar site:
+  - the Sun skims the horizon, always low;
+  - high ground (the arrays, the Peak) is almost always sunlit;
+  - the Shadowed Crater never sees the Sun;
+  - Earth hangs fixed and low; its earthshine lights the world but **never charges anything**.
+- **Dust** slowly settles on any panel nobody cleans, and a dusty array makes less power.
+- **The lava tube** never sees the Sun.
+- **The power sources** (the same table as §1a.2):
+  - own solar skin;
+  - an induction pad fed by a clean, sunlit array;
+  - the **station grid** (the tower distributes the high arrays' power along cables);
+  - **swappable cells** (the elders, haul bots, Mule);
+  - long-life **sealed cells**, small isotope cells like the ones real probes carry. The crew installed them only
+    where the Sun can't reach: the storm shelter and the dish station's vault.
 
 **The elders**
 
 | Elder | Power | Goal (its errand) | Why it stopped, or why it still runs | The gate it explains |
 |---|---|---|---|---|
-| **06** | its own cell; its panel cracked in the storm | keep relay.2's receiver listening and pass anything from Earth to the dock | With no working panel, it lived on its cell for years, spending only on listening. When a new Earth signal came, it spent the last of it relaying the signal to 07's dock. | none: it is why 07 woke |
-| **05** | the mare dish's solar array (the field the sweeper kept clean) | keep the dish aimed at Earth and archive what it hears | The sweeper broke, and the array dusted over year by year. One long night its share wasn't enough: 05 drained, and at dawn its own panel was too dusted to wake it. **The archive ends that night.** Repairing the sweeper is what makes the dish's array clean enough to light again. | range |
-| **04** | its own panel | carry a dish part up the terraces to the upper station | It slid back down the terrace wall and came to rest on its side, panel facing the ground, so it could never recharge. | slope |
-| **03** | its own panel | fetch ice for the dish's coolant from the crater | Permanent shadow has no sun to charge from. Its lamp was too weak to find the way back to the sunlit rim, and its cell ran down in the dark. | dark and cold |
+| **06** | a swappable cell, charged at relay.2's pad, which died with the grid | keep relay.2's receiver listening and pass anything from Earth to the dock | With its pad dead, it lived on one cell for years, spending only on listening. When a new Earth signal came, it spent the last of it relaying the signal to 07's dock. | none: it is why 07 woke |
+| **05** | a swappable cell, charged at the mare dish's array pad | keep the dish aimed at Earth and archive what it hears | The sweeper broke, and the array dusted over year by year until its pad gave too little. 05 drained and couldn't charge again. **The archive ends that day.** Repairing the sweeper cleans the array and relights the dish. | range |
+| **04** | a swappable cell | carry a dish part up the terraces to the upper station | It slid back down the terrace wall and came to rest on its side, unable to drive to any pad, until its cell drained. | slope |
+| **03** | a swappable cell | fetch ice for the dish's coolant from the crater | The crater's grid cable was cut by the storm and the Sun never reaches it, so there was nowhere to charge. Its lamp was too weak to find the way back up, and the cell ran down in the dark. | dark and cold |
 | **02** | the storm shelter's **sealed crew cell**, plugged in | fetch the shelter's spare dish coil | It went down the skylight and couldn't climb back up, so it followed the shelter's standing order: keep the lights on until the crew arrives. The sealed cell has powered the shelter, its grow lamp and the echo beacons ever since. **Still awake.** | the drop |
-| **01** | the dish station's **solar mast**: the Peak is in sunlight most of the month, a real "peak of near-eternal light" | reach the dish and keep the way marked | The rockfall and the rifts stopped it at the dish station, and the dish is too heavy for it. Plugged into the mast, it powers the dish's red **fault beacon** (the station's own cells died long ago) so the next machine can find the way. **Still awake.** | rifts, and a lift it can't make (Atlas) |
+| **01** | the dish station's own high array and pad (the Peak is almost always sunlit) | reach the dish and keep the way marked | The rockfall and the rifts stopped it at the dish station, and the dish is too heavy for it. Charging at the station's pad, it powers the dish's red **fault beacon** (the station's own cells died long ago) so the next machine can find the way. **Still awake.** | rifts, and a lift it can't make (Atlas) |
 | **07** | the home dock (its own small solar trickle and cell); its kit sockets | the protocol's last errand | It was kept asleep "for next time" until 06's relay woke it. | — |
 
 **The working machines**
 
 | Machine | Power and recharge loop | Goal | Peers |
 |---|---|---|---|
-| Panel mites | recharge on any panel that still makes power, and sleep on it at night | wipe dust off panels | clusters show which panels still work; they keep the sweeper's array alive once it's swept |
+| Panel mites | their own solar skin, in sunlight on a panel; dormant on the last lit panel when the Sun leaves the array | wipe dust off panels | they make way for rovers (built to clear the way for service rovers), and they keep the sweeper's array making full power |
 | The sweeper | solar, from the array it sweeps; it keeps its own power source clean | keep the solar-field road and array clear | broken, it lets the array dust over (05's end); repaired, it feeds the mare dish and the mites |
 | The survey flock | small cells; they roost on any lit mast or working panel at night | map fresh impacts and follow a lead rover | they follow 07 (a rover), roost on the masts 07 lights, and Tilly chirps to them |
-| The trencher | solar; it trenches by day and parks facing east at night to catch dawn | cut the cable trench for the relay link to the Peak | its cable reel ran out long ago, so the trench is empty; 07's masts finish what it started |
-| Mule | solar | plant the lamp posts of the crew's canyon road | it tipped planting the last post, panel to the ground |
-| The haul sled | solar, through a capacitor bank | haul the drill's last load home | its capacitor bank failed open on the climb (the Boost Coils fragments are that bank) |
-| The stopped convoy | solar; the two behind are idling, alive | bring the mare dish's spare parts home | the lead's cell died, and the two behind are programmed to follow it, so they wait. A new lead (the repair, or 07) lets them finish. |
+| The trencher | the **station grid, through the very cable it lays** | lay the cable for the relay link to the Peak | it stopped the day the station went dark; **tower L1 starts it again** (seen from the mare in 0.6). Its trench is the Link, drawn on the ground. |
+| Mule | a swappable cell | plant the lamp posts of the crew's canyon road | it tipped on a slope above its 20° limit while planting the last post, then its cell drained |
+| The haul sled | a swappable cell, through a capacitor bank | haul the drill's last load home | its capacitor bank failed open on the climb and its cell drained. The open bank is the Boost Coils fragments. |
+| The stopped convoy | swappable cells; the two behind are idling, alive | bring the mare dish's spare parts home | the lead's cell died, and the two behind can't pass on the narrow track and are programmed to follow, so they wait. **Fitting a spare cell** in the lead lets the convoy finish its trip home along the sweeper's road and deliver the dish parts. |
 | Cable climbers (0.7) | the terrace power cables they inspect | check the cables | they cling to the live lines, which marks the climbable lanes |
-| Ice tappers (0.8) | small cells; they climb to the crater's sunlit lip to charge, then go back down | sort ice for Theo's garden | they queue at the sunlit lip like a line of commuters, and Moss tends their ice |
-| Echo beacons (0.8) | the shelter's sealed crew cell (02's circuit) | blink the way into the shelter for anyone listening | they live because 02 keeps the shelter's power on |
+| Ice tappers (0.8) | a grid cable into the crater, **cut by the storm** | sort ice for Theo's garden | dormant since the storm; they wake when 07 builds the crater pylon that restores their cable, and Moss tends their ice |
+| Echo beacons (0.8) | a long-life micro cell | blink the way into the shelter for anyone listening | they blink only when pinged, which saves the cell and is why they answer listening |
 
 **The timeline** (it matches `text/radio-letters.md`):
 - 2047: the storm; the crew evacuates; the program closes.
