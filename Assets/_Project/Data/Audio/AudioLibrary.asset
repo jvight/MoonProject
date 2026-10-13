@@ -253,17 +253,142 @@ MonoBehaviour:
     _volumeMax: 0.55
     _pitchMin: 1
     _pitchMax: 1
-  - _id: charge_lamp
+  - _id: scan_sweep
     _clips:
-    - {fileID: 8300000, guid: 232ca86113379b74bbd6e6779fc44201, type: 3}
-    - {fileID: 8300000, guid: 196497d86167d1745bb1692c9373b948, type: 3}
-    - {fileID: 8300000, guid: ccb2ea9ee49c6274f89d6eb47c5a4b48, type: 3}
-    - {fileID: 8300000, guid: 6bb23c61d4917a0489f254a8de3fe071, type: 3}
-    - {fileID: 8300000, guid: b9416876ea5782b488a90ef41e2c161d, type: 3}
-    - {fileID: 8300000, guid: 474fece6b5e743642958a7c574edbccc, type: 3}
-    - {fileID: 8300000, guid: 5ad3efc9f329db948aad420d0d6229de, type: 3}
-    - {fileID: 8300000, guid: 86839acecf03dac4fb7285d05b5f7d42, type: 3}
-    - {fileID: 8300000, guid: ac2b74f5497814749872ef9cea0cf59d, type: 3}
+    - {fileID: 8300000, guid: 182466c001f96634bb032c87d6052248, type: 3}
+    _variantLabels:
+    - scan_sweep
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: scan_step
+    _clips:
+    - {fileID: 8300000, guid: 1fe2263817c724e4c865f4022486fd0b, type: 3}
+    - {fileID: 8300000, guid: d37c440ee9cbd0b4ca14de285e444d07, type: 3}
+    - {fileID: 8300000, guid: 02f6288aa18517944a37e87f1c49d4d0, type: 3}
+    - {fileID: 8300000, guid: 42bd47831c3df2d4fa9a14661c98084e, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
+    - 04
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: scan_liftoff
+    _clips:
+    - {fileID: 8300000, guid: 7b032e02cffb35e4f940d27966a22286, type: 3}
+    _variantLabels:
+    - scan_liftoff
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: charge_brace
+    _clips:
+    - {fileID: 8300000, guid: 8e6717a1f83f7894984f8446ab7ffcf6, type: 3}
+    _variantLabels:
+    - charge_brace
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: charge_whine
+    _clips:
+    - {fileID: 8300000, guid: 8294e58ffa706394cb7cf82a5495b7b0, type: 3}
+    _variantLabels:
+    - charge_whine
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: charge_hum
+    _clips:
+    - {fileID: 8300000, guid: 42172c23b204ef34c898bf9d7f78ce90, type: 3}
+    _variantLabels:
+    - charge_hum
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: charge_detent
+    _clips:
+    - {fileID: 8300000, guid: 92bbe82fb62321b41a658f1e54ade9ac, type: 3}
+    _variantLabels:
+    - charge_detent
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: charge_lock
+    _clips:
+    - {fileID: 8300000, guid: df712251f03212c4b9d0cc9678fe175c, type: 3}
+    _variantLabels:
+    - charge_lock
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: hold_boot
+    _clips:
+    - {fileID: 8300000, guid: 357e2bacb6b716e43b87ddf475ff934d, type: 3}
+    _variantLabels:
+    - hold_boot
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: type_tick
+    _clips:
+    - {fileID: 8300000, guid: 1396b25f039a35f4889c2b8b6a2c83d0, type: 3}
+    _variantLabels:
+    - type_tick
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.35
+    _volumeMax: 0.35
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: hold_slot
+    _clips:
+    - {fileID: 8300000, guid: ecb9120445744d74f8ad27300b08f55a, type: 3}
+    - {fileID: 8300000, guid: 65f80a0a8aaae0a489f1c4b503a1cfc9, type: 3}
+    - {fileID: 8300000, guid: 4b4cd472d1e6a3b499e63af461beb8ba, type: 3}
+    - {fileID: 8300000, guid: 864c4c4e304072e47a02a6def0a8e808, type: 3}
+    - {fileID: 8300000, guid: 4f835f8b3aa7970438e5a43b91a3b1a9, type: 3}
+    - {fileID: 8300000, guid: 20e4dee79521c8941bbdcf278063402b, type: 3}
+    - {fileID: 8300000, guid: d07ff41411a5d5142b25319c02aa30ae, type: 3}
+    - {fileID: 8300000, guid: 6ac1aa319cea48944be1ccd70d073ac6, type: 3}
     _variantLabels:
     - 01
     - 02
@@ -273,19 +398,44 @@ MonoBehaviour:
     - 06
     - 07
     - 08
-    - 09
     _bus: 2
-    _spatial: 1
+    _spatial: 0
     _loop: 0
-    _volumeMin: 0.55
-    _volumeMax: 0.55
+    _volumeMin: 0.45
+    _volumeMax: 0.45
     _pitchMin: 1
     _pitchMax: 1
-  - _id: charge_inhale
+  - _id: item_slide
     _clips:
-    - {fileID: 8300000, guid: 1b0b8e07f0ffbba49a8472edac773f52, type: 3}
+    - {fileID: 8300000, guid: 29b4972ed3e5f0f4ca017c23e0bdb452, type: 3}
     _variantLabels:
-    - charge_inhale
+    - item_slide
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: stack_transfer
+    _clips:
+    - {fileID: 8300000, guid: a16b765846aaebd4b82278d2aa144859, type: 3}
+    - {fileID: 8300000, guid: 3533ba9482e625148af6677b41c5df0a, type: 3}
+    _variantLabels:
+    - to_home
+    - to_07
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: seal_cut
+    _clips:
+    - {fileID: 8300000, guid: 08ccba767cc688d42a604efeae587eb8, type: 3}
+    _variantLabels:
+    - seal_cut
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -293,11 +443,19 @@ MonoBehaviour:
     _volumeMax: 0.6
     _pitchMin: 1
     _pitchMax: 1
-  - _id: charge_low_d
+  - _id: container_open
     _clips:
-    - {fileID: 8300000, guid: 9967671bbf79d5444ba39b880df3719d, type: 3}
+    - {fileID: 8300000, guid: cd5ccdd4a4258ee49876bd5407295393, type: 3}
+    - {fileID: 8300000, guid: 453db1c342815f942aa10996349c62e9, type: 3}
+    - {fileID: 8300000, guid: 031471c025516dc41b53a2bbb52882f2, type: 3}
+    - {fileID: 8300000, guid: 12eb7d509a5b07c43a84522b3dae78fc, type: 3}
+    - {fileID: 8300000, guid: 9766ae109d9902c428d2059bc51aba80, type: 3}
     _variantLabels:
-    - charge_low_d
+    - cabinet
+    - pod
+    - crate
+    - case
+    - box
     _bus: 2
     _spatial: 1
     _loop: 0
