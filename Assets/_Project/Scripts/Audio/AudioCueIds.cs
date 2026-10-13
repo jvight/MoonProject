@@ -51,6 +51,13 @@ namespace MoonProject.Audio
         public const string ShelfChord = "shelf_chord";
         public const string CrateLatch = "crate_latch";
         public const string TillyFetch = "tilly_fetch";
+        public const string HoldBoot = "hold_boot";
+        public const string TypeTick = "type_tick";
+        public const string HoldSlot = "hold_slot";
+        public const string ItemSlide = "item_slide";
+        public const string StackTransfer = "stack_transfer";
+        public const string SealCut = "seal_cut";
+        public const string ContainerOpen = "container_open";
         public const string PickupLift = "pickup_lift";
         public const string PickupClunk = "pickup_clunk";
         public const string TowerRing = "tower_ring";

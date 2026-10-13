@@ -473,3 +473,91 @@ def tilly_fetch(_variant, gen):
     place(mix, 0.45 * instruments.kalimba(note_freq("A5"), 0.8, gen, decay=0.7), samples(0.3))
     place(mix, 0.5 * instruments.kalimba(note_freq("D6"), 0.9, gen, decay=0.9), samples(0.45))
     return filters.lowpass(mix, 6000.0)
+
+
+# ------------------------------------------------------------------------- 0.5.5 B: 07's hold boots, the transfer
+
+HOLD_SLOT_NOTES = ("D5", "E5", "F#5", "A5", "B5", "D6", "E6", "F#6")
+TRANSFER_LABELS = ("to_home", "to_07")
+
+
+def hold_boot(_variant, gen):
+    """The first Tab press: 07's hold powering on in the dark, a soft rising D3 hum and a faint relay click."""
+    n = samples(1.2)
+    rise = osc.glide(n, note_freq("D3") * 0.94, note_freq("D3"), time_constant=0.25)
+    hum = osc.additive(n, rise, [(1, 1.0), (2, 0.3)])
+    hum *= envelope.segments(n, [(0.0, 0.0), (0.35, 0.8), (1.0, 0.6), (1.2, 0.0)], shape="smooth")
+    mix = 0.15 * filters.lowpass(hum, 900.0)
+    place(mix, 0.2 * _tick(gen, note_freq("A4"), 0.1), samples(0.02))
+    return mix
+
+
+def type_tick(_variant, gen):
+    """One character of 07's system text typing in: a tiny dry tick."""
+    n = samples(0.06)
+    click = filters.bandpass(noise.white(n, gen), 2400.0, 2.0) * envelope.ar(n, 0.0005, 0.008)
+    return filters.lowpass(filters.lowpass(0.25 * click, 4000.0), 4000.0)
+
+
+def hold_slot(variant, gen):
+    """A hold slot's outline lighting (60 ms apart, left to right): a soft tick on the next pentatonic step."""
+    return filters.lowpass(0.25 * _tick(gen, note_freq(HOLD_SLOT_NOTES[variant]), 0.15), 5000.0)
+
+
+def item_slide(_variant, gen):
+    """A starter item sliding into its slot: a short felt slide and a seated tick on D."""
+    n = samples(0.35)
+    slide = filters.bandpass(noise.pink_filter(noise.white(n, gen)), 900.0, 1.4)
+    slide = slide / max(float(np.std(slide)), 1e-9) * envelope.segments(
+        n, [(0.0, 0.0), (0.05, 1.0), (0.2, 0.3), (0.25, 0.0)], shape="smooth")
+    mix = 0.04 * slide
+    place(mix, 0.25 * _tick(gen, note_freq("D5"), 0.1), samples(0.22))
+    return filters.lowpass(mix, 4000.0)
+
+
+def stack_transfer(variant, gen):
+    """One stack moved in the docked Shelves view: a quick slide and a two-note tick, falling A -> D toward home,
+    rising D -> A toward 07."""
+    notes = ("A5", "D5") if TRANSFER_LABELS[variant] == "to_home" else ("D5", "A5")
+    n = samples(0.4)
+    mix = np.zeros(n)
+    place(mix, 0.22 * _tick(gen, note_freq(notes[0]), 0.12), 0)
+    place(mix, 0.25 * _tick(gen, note_freq(notes[1]), 0.15), samples(0.07))
+    slide = filters.bandpass(noise.white(n, gen), 1500.0, 1.2) * envelope.ar(n, 0.01, 0.08)
+    return filters.lowpass(mix + 0.03 * slide, 4500.0)
+
+
+# ------------------------------------------------------------------------- 0.5.5 C: seals and containers
+
+CONTAINER_LABELS = ("cabinet", "pod", "crate", "case", "box")
+CONTAINER_NOTES = {"cabinet": "A3", "pod": "D3", "crate": "E3", "case": "B3", "box": "F#3"}
+
+
+def seal_cut(_variant, gen):
+    """The cut finishing a container's seal: the beam's last bite, a soft pop as the seal lets go and a small ping
+    in the metal on A5, all felt through the chassis (no air)."""
+    n = samples(0.8)
+    mix = np.zeros(n)
+    bite = filters.bandpass(noise.white(samples(0.12), gen), 2200.0, 1.5) * envelope.ar(samples(0.12), 0.002, 0.05)
+    place(mix, 0.1 * bite, 0)
+    place(mix, 0.5 * _chassis_thump(0.1, 90.0), samples(0.08))
+    ping = instruments.glass_chime(note_freq("A5"), 0.6, decay=0.4) * 0.3
+    place(mix, ping, samples(0.1))
+    return filters.lowpass(mix, 5000.0)
+
+
+def container_open(variant, gen):
+    """A container opening and its find sliding out: a low hinge groan on the container's note, a latch knock and a
+    short slide. The note differs by kind (cabinet, pod, crate, case, box), all D major pentatonic."""
+    note = note_freq(CONTAINER_NOTES[CONTAINER_LABELS[variant]])
+    n = samples(1.1)
+    hinge = osc.sine(n, osc.glide(n, note * 0.97, note, time_constant=0.2))
+    hinge *= envelope.segments(n, [(0.0, 0.0), (0.1, 1.0), (0.5, 0.4), (0.7, 0.0)], shape="smooth")
+    mix = 0.12 * filters.lowpass(hinge, 800.0)
+    place(mix, 0.3 * _tick(gen, note * 2.0, 0.15), 0)
+    slide_n = samples(0.3)
+    slide = filters.bandpass(noise.pink_filter(noise.white(slide_n, gen)), 700.0, 1.4)
+    slide = slide / max(float(np.std(slide)), 1e-9) * envelope.segments(
+        slide_n, [(0.0, 0.0), (0.08, 1.0), (0.3, 0.0)], shape="smooth")
+    place(mix, 0.03 * slide, samples(0.6))
+    return filters.lowpass(mix, 4000.0)

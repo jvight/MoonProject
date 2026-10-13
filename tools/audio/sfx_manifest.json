@@ -509,6 +509,231 @@
       "notes": "07's machine voice, greeting (feel-pass 7.2); syllables in chirp_syllables.json."
     },
     {
+      "id": "hold_boot",
+      "category": "ui_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/hold_boot.wav"
+      ],
+      "variantLabels": [
+        "hold_boot"
+      ],
+      "sha256": [
+        "4283bdfa8028c648c6341bd95609b270960f79c95086db1275b4f5c43d9a7301"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 B: the first Tab press, 07's hold powering on in the dark."
+    },
+    {
+      "id": "type_tick",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/type_tick.wav"
+      ],
+      "variantLabels": [
+        "type_tick"
+      ],
+      "sha256": [
+        "3b56b727202404e6d1bf62704030f0ac6099f01a80d33338065ac46d1b60a73c"
+      ],
+      "volumeMin": 0.35,
+      "volumeMax": 0.35,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 B: one character of 07's system text typing in."
+    },
+    {
+      "id": "hold_slot",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/hold_slot_01.wav",
+        "Assets/_Project/Audio/SFX/2D/hold_slot_02.wav",
+        "Assets/_Project/Audio/SFX/2D/hold_slot_03.wav",
+        "Assets/_Project/Audio/SFX/2D/hold_slot_04.wav",
+        "Assets/_Project/Audio/SFX/2D/hold_slot_05.wav",
+        "Assets/_Project/Audio/SFX/2D/hold_slot_06.wav",
+        "Assets/_Project/Audio/SFX/2D/hold_slot_07.wav",
+        "Assets/_Project/Audio/SFX/2D/hold_slot_08.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06",
+        "07",
+        "08"
+      ],
+      "sha256": [
+        "39742abe7d1268a08ad622b56a9ecd4c8dcd92db05f20b5d75982b31c205f8cf",
+        "1a4ff371449786e9f624206b9a7d8d17f41886c851a53ef892bdff8a25814b9f",
+        "e26b280694adf3c49501dc5bb26bfe72992a4611f54e7c1935e7aeb9f414bc77",
+        "6c6a50a5e805284e9ed049cce6dba44580f4f98478cac63a2e5176ad91896479",
+        "03458d0d7c47774cc7f492ac98daa23033dbd76cb1117fe5d49f03eecca561de",
+        "007861c3c0acb323fadd852d14808c8e93ae253e3fb1aabd1bbccb6661789486",
+        "2bd90dbe75238813033c50beca7f06c8e691e46251ab87dd3d90ae2a1834b122",
+        "659202419da307048f27a3eed23691e627a6a846055ca963358cfa5eead71f0b"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 B: a hold slot lighting, a rising pentatonic tick (D5 .. F#6)."
+    },
+    {
+      "id": "item_slide",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/item_slide.wav"
+      ],
+      "variantLabels": [
+        "item_slide"
+      ],
+      "sha256": [
+        "a2930ccb994ddb98eace472da564c9f8064a4d4557604a900a7fb53acfdd7757"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 B: a starter item sliding into its slot."
+    },
+    {
+      "id": "stack_transfer",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/stack_transfer_to_home.wav",
+        "Assets/_Project/Audio/SFX/2D/stack_transfer_to_07.wav"
+      ],
+      "variantLabels": [
+        "to_home",
+        "to_07"
+      ],
+      "sha256": [
+        "397c7aaf99ac6b89814a44a7391a4841e5577fec2c3f3f8019fb6a71e6366455",
+        "fe7619d42a87c8debba400d3321fecd05b6dfc1f2a9e504751602c3dfea34ea6"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 B: a stack moved, falling to home, rising to 07."
+    },
+    {
+      "id": "seal_cut",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/seal_cut.wav"
+      ],
+      "variantLabels": [
+        "seal_cut"
+      ],
+      "sha256": [
+        "b9f1df6581590560ee92a7b6d25fbb0c1e8220f182a21c4acdbac1b796ac491f"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 C: a container's seal cut through: a pop felt through the chassis and a ping on A5."
+    },
+    {
+      "id": "container_open",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/container_open_cabinet.wav",
+        "Assets/_Project/Audio/SFX/container_open_pod.wav",
+        "Assets/_Project/Audio/SFX/container_open_crate.wav",
+        "Assets/_Project/Audio/SFX/container_open_case.wav",
+        "Assets/_Project/Audio/SFX/container_open_box.wav"
+      ],
+      "variantLabels": [
+        "cabinet",
+        "pod",
+        "crate",
+        "case",
+        "box"
+      ],
+      "sha256": [
+        "bc6c8ce5ff22df95a48564a9690f31f49e0ea29b10d998871020c1c11e43ffae",
+        "0e283f80cf69e3a07df2f558a850680c527d6dfdb806dca806fcaa578f599605",
+        "0c6b4f5219feb19b6bbef16f86ea3a1fca29f13e2c659014c9265137ca988a4e",
+        "6d77b30046303edbc101e8de331c57e66f3b42492dd18e337ba1d3ef2c44a05a",
+        "412772e21b56807680e1b0248ee726a9745215f03f43d917265fc8f0d0483fb5"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 C: a container opening and its find sliding out; the hinge note by kind."
+    },
+    {
       "id": "charge_lamp",
       "category": "oneshot_3d",
       "milestone": "M3",
