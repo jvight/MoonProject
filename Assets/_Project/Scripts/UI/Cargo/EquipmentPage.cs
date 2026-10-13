@@ -14,7 +14,7 @@ namespace MoonProject.UI
     /// name until a part for it is known, then it carries the part's name and the small bay icon ("fit at the bay"); a
     /// fitted one carries the part's name. A part is fitted by dragging it onto its own socket (only that one lights) or,
     /// with a gamepad or keyboard, by focusing it and pressing Submit; a fitted part is taken off by dragging it to the
-    /// row. Both work only while 07 rests at the part's station (<see cref="IRoverEquipment.CanFit"/>); elsewhere
+    /// row or by focusing it and pressing Submit. Both work only while 07 rests at the part's station (<see cref="IRoverEquipment.CanFit"/>); elsewhere
     /// nothing happens and nothing pops up. A tooltip (hover or focus) is the part's name and its key glyph, no
     /// sentence. Rewritten only when something changed; an open page with nothing new allocates nothing.
     /// </summary>
@@ -34,6 +34,7 @@ namespace MoonProject.UI
         private readonly IRoverEquipment _equipment;
         private readonly IRoverPortrait _portraitSource;
         private readonly GlyphLabels _glyphs;
+        private readonly EventBus _events;
         private readonly VisualElement _panel;
         private readonly VisualElement _portrait;
         private readonly VisualElement _row;
@@ -54,7 +55,7 @@ namespace MoonProject.UI
         private Vector2 _pressAt;
 
         public EquipmentPage(UiLayout layout, CargoScreenSettings settings, ILocalization localization,
-            IRoverEquipment equipment, IRoverPortrait portrait, GlyphLabels glyphs)
+            IRoverEquipment equipment, IRoverPortrait portrait, GlyphLabels glyphs, EventBus events)
         {
             if (layout == null)
             {
@@ -66,6 +67,7 @@ namespace MoonProject.UI
             _equipment = equipment ?? throw new ArgumentNullException(nameof(equipment));
             _portraitSource = portrait ?? throw new ArgumentNullException(nameof(portrait));
             _glyphs = glyphs ?? throw new ArgumentNullException(nameof(glyphs));
+            _events = events ?? throw new ArgumentNullException(nameof(events));
             VisualElement root = layout.Cargo;
             _panel = Require<VisualElement>(root, "cargo-panel");
             _portrait = Require<VisualElement>(root, "seven-portrait");
@@ -317,6 +319,7 @@ namespace MoonProject.UI
             root.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
             root.RegisterCallback<FocusInEvent>(_ => ShowSocketTooltip(view));
             root.RegisterCallback<FocusOutEvent>(_ => HideTooltip());
+            root.RegisterCallback<NavigationSubmitEvent>(_ => UnequipSocket(view));
             root.RegisterCallback<PointerDownEvent>(e => PressDown(e, true, index, root));
             root.RegisterCallback<PointerMoveEvent>(Move);
             root.RegisterCallback<PointerUpEvent>(e => Release(e, root));
@@ -440,21 +443,18 @@ namespace MoonProject.UI
                 return;
             }
 
+            bool done;
             if (fromSocket)
             {
-                if (_row.worldBound.Contains(at))
-                {
-                    _equipment.TryUnequip(_sockets[index].Id);
-                }
-
-                return;
+                done = _row.worldBound.Contains(at) && _equipment.TryUnequip(_sockets[index].Id);
             }
-
-            SocketView over = SocketAt(at);
-            if (over != null && _equipment.SocketOf(_cards[index].Part) == over.Id)
+            else
             {
-                FitFromRow(index);
+                SocketView over = SocketAt(at);
+                done = over != null && _equipment.SocketOf(_cards[index].Part) == over.Id && FitFromRow(index);
             }
+
+            _events.Publish(new UiCue(done ? UiCueKind.PartDrop : UiCueKind.PartRefuse));
         }
 
         private bool CanBeginDrag()
@@ -471,6 +471,7 @@ namespace MoonProject.UI
         private void BeginDrag()
         {
             _dragging = true;
+            _events.Publish(new UiCue(UiCueKind.PartPick));
             RoverKitPiece part = _dragFromSocket ? _sockets[_dragIndex].Part : _cards[_dragIndex].Part;
             _ghost.text = _localization.Get(PartInfo.NameKey(part));
             _ghost.style.display = DisplayStyle.Flex;
@@ -509,12 +510,25 @@ namespace MoonProject.UI
         }
 
         /// <summary>One press on a waiting part: it is fitted when 07 rests at its station, otherwise nothing.</summary>
-        private void FitFromRow(int index)
+        private bool FitFromRow(int index)
         {
             if (index < _equipment.RowCount && _equipment.CanFit(_equipment.RowPart(index)) &&
                 _equipment.TryFit(index))
             {
                 FitRequested = true;
+                _events.Publish(new UiCue(UiCueKind.PartDrop));
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>A press (Submit) on a fitted part takes it off into the row at its station, otherwise nothing.</summary>
+        private void UnequipSocket(SocketView view)
+        {
+            if (view.Fitted && _equipment.CanFit(view.Part) && _equipment.TryUnequip(view.Id))
+            {
+                _events.Publish(new UiCue(UiCueKind.PartDrop));
             }
         }
 

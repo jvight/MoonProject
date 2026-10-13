@@ -105,7 +105,7 @@ namespace MoonProject.UI
                 Require<VisualElement>(root, "cargo-page-cargo"),
                 Require<VisualElement>(root, "cargo-page-seven"),
             };
-            _seven = new EquipmentPage(layout, settings, localization, equipment, portrait, glyphs);
+            _seven = new EquipmentPage(layout, settings, localization, equipment, portrait, glyphs, events);
             _waiting = Require<Label>(root, "cargo-waiting");
             _bootLine = Require<Label>(root, "cargo-boot");
             _transferHint = Require<Label>(root, "cargo-transfer-hint");

@@ -279,6 +279,40 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator SevenTab_SubmitTakesAFittedPartOff_EveryDropTicks_AndTheInstallBeatBringsTheTabBack()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordHoldBooted();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Hold.Set(8);
+            _rig.Fakes.Equipment.Fit(RoverKitPiece.TetherRing);
+            _rig.Fakes.Equipment.Craft(RoverKitPiece.HoverCoils);
+            _rig.Fakes.Equipment.AtStation = true;
+            var cues = new System.Collections.Generic.List<UiCueKind>();
+            Events.Subscribe<UiCue>(cue => cues.Add(cue.Kind));
+            yield return Seconds(0.3f);
+
+            yield return Tap(keyboard.tabKey);
+            _rig.Ui.Cargo.SelectTab(1);
+            yield return Seconds(0.6f);
+            EquipmentPage seven = _rig.Ui.Cargo.Seven;
+            Submit(seven.SocketElement(RoverSocket.Tether));
+            yield return Seconds(0.3f);
+            Assert.AreEqual(1, _rig.Fakes.Equipment.Removals, "Submit on a fitted part takes it off at the bay");
+            CollectionAssert.Contains(cues, UiCueKind.PartDrop, "and it ticks");
+
+            Submit(seven.CardElement(0));
+            yield return Seconds(0.8f);
+            Assert.AreEqual(1, _rig.Fakes.Equipment.Fits);
+            Assert.IsFalse(_rig.Ui.Cargo.IsOpen, "the screen eases away for the install");
+
+            Events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Reward, Vector3.zero, Vector3.up, 1f, 0f));
+            yield return Seconds(1f);
+            Assert.IsTrue(_rig.Ui.Cargo.IsOpen && _rig.Ui.Cargo.Tab == 1, "the install's Proud chirp brings the 07 tab back");
+        }
+
+        [UnityTest]
         public IEnumerator UnlockCard_SaysWhatAFittedKitLetsSevenDo_AfterTheKitTitle()
         {
             InputSystem.AddDevice<Keyboard>();

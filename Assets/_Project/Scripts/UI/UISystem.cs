@@ -127,6 +127,7 @@ namespace MoonProject.UI
         private bool _digging;
         private float _sinceAwake;
         private float _pickUpGrace;
+        private bool _reopenSeven;
 
         /// <summary>The localization service this system registered (tests and editor tools read it).</summary>
         internal LocalizationService Localization => _localization;
@@ -550,6 +551,7 @@ namespace MoonProject.UI
             _cargo.Tick(deltaTime, ScreenSize(), input.ActiveDevice);
             if (_cargo.IsOpen && ((_cargo.IsTransferView && !_services.Dock.IsDocked) || _cargo.WantsClose))
             {
+                _reopenSeven = _cargo.WantsClose;
                 CloseCargo();
             }
 
@@ -754,6 +756,7 @@ namespace MoonProject.UI
 
         private void OpenCargo()
         {
+            _reopenSeven = false;
             _cargo.Open();
             _services.Input.Disable();
             _cursor.Menu();
@@ -879,6 +882,17 @@ namespace MoonProject.UI
                 if (beat.Kind == FeelKind.Collect && beat.Phase == FeelPhase.Reward)
                 {
                     _director.NotifyUsed(InteractionKind.Salvage);
+                }
+
+                // The install moment ends with its Proud chirp: the 07 tab the player fitted from comes back.
+                if (beat.Kind == FeelKind.Install && beat.Phase == FeelPhase.Reward && _reopenSeven)
+                {
+                    _reopenSeven = false;
+                    if (CanOpenCargo() && !_cargo.IsOpen)
+                    {
+                        _cargo.SelectTab(1);
+                        OpenCargo();
+                    }
                 }
             }
         }
