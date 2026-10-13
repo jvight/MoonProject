@@ -76,6 +76,9 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public const string SpareCrateSocketName = "SpareCrateSocket";
 
+        /// <summary>The garage's clear way out of its caved-in back right (site space), kept free for 07.</summary>
+        public static Bounds GarageBackLane => GarageSite.BackLane;
+
         /// <summary>The blueprint whose fragments lie at each site, and how many.</summary>
         public static (string Blueprint, int Count) FragmentsAt(string id)
         {

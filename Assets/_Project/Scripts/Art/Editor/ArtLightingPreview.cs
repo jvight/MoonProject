@@ -1376,6 +1376,20 @@ namespace MoonProject.Art.Editor
                     Point(anchor + Vector3.up * 1.5f), 40f));
             }
 
+            int garage = 0;
+            while (ids[garage] != "garage")
+            {
+                garage++;
+            }
+
+            Vector3 garageForward = SiteForwards[garage].normalized;
+            poses.Add(Pose("garage_top", Point(SiteAnchors[garage] + garageForward * 2.5f + Vector3.up * 16f),
+                Point(SiteAnchors[garage] + garageForward * 2.6f), 50f));
+            Vector3 garageSide = Quaternion.LookRotation(garageForward) * Vector3.right;
+            Vector3 behind = SiteAnchors[garage] + garageForward * 13f + garageSide * 3f + Vector3.up * 3.5f;
+            Vector3 backLane = SiteAnchors[garage] + garageForward * 6f + garageSide * 1.2f + Vector3.up;
+            poses.Add(Pose("garage_back", Point(behind), Point(backLane), 50f));
+
             Vector3 depot = SiteAnchors[0];
             Vector3 depotForward = SiteForwards[0].normalized;
             Vector3 depotSide = Quaternion.LookRotation(depotForward) * Vector3.right;
