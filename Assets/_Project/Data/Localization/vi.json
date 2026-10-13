@@ -1051,24 +1051,12 @@
             "text": "Khoang hàng của 07"
         },
         {
-            "key": "ui.cargo.home",
-            "text": "Kệ ở nhà"
-        },
-        {
             "key": "ui.cargo.waiting",
             "text": "{0} gói đang chờ"
         },
         {
-            "key": "ui.cargo.shelf",
-            "text": "Kệ {0}"
-        },
-        {
-            "key": "ui.cargo.shelf_free",
-            "text": "Ổ trống. Đỗ vào đây để dựng kệ."
-        },
-        {
             "key": "ui.cargo.summary",
-            "text": "07: {0}/{1} ô · Nhà: {2}/{3} ô"
+            "text": "07: {0}/{1} ô"
         },
         {
             "key": "ui.can.decoded",
@@ -1165,14 +1153,6 @@
         {
             "key": "tech.side_bins.name",
             "text": "Thùng hông"
-        },
-        {
-            "key": "ui.cargo.shelf_cost",
-            "text": "Cần: {0}"
-        },
-        {
-            "key": "ui.cargo.cost_part",
-            "text": "{0} {1}"
         },
         {
             "key": "ui.crate.caption",

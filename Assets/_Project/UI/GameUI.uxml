@@ -288,10 +288,6 @@
                         <ui:Label name="cargo-waiting" class="cargo__note" picking-mode="Ignore" />
                         <ui:VisualElement name="cargo-hold-grid" class="cargo__grid" picking-mode="Ignore" />
                     </ui:VisualElement>
-                    <ui:VisualElement class="cargo__column cargo__column--home" picking-mode="Ignore">
-                        <ui:Label class="cargo__heading loc" text="ui.cargo.home" picking-mode="Ignore" />
-                        <ui:VisualElement name="cargo-shelves" class="cargo__shelves" picking-mode="Ignore" />
-                    </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="cargo-page-can" class="cargo__page" picking-mode="Ignore">
                     <ui:VisualElement name="cargo-can-rows" class="cargo__can" picking-mode="Ignore" />

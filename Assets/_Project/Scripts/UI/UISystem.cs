@@ -39,10 +39,6 @@ namespace MoonProject.UI
         [Tooltip("Every relic (Assets/_Project/Data/Content/RelicCatalog.asset): memory cards check ids against it.")]
         [SerializeField] private RelicCatalog _relics;
 
-        [Tooltip("The shelves' build costs (Assets/_Project/Data/Tuning/Gameplay/CargoTuning.asset): the cargo screen " +
-                 "says what a free socket's shelf takes.")]
-        [SerializeField] private CargoTuning _cargoTuning;
-
         [Tooltip("String tables (Assets/_Project/Data/Localization), the primary language (en) first.")]
         [SerializeField] private TextAsset[] _stringTables = Array.Empty<TextAsset>();
 
@@ -212,9 +208,8 @@ namespace MoonProject.UI
         internal IDisplayControl DisplayControl { get; set; } = new UnityDisplayControl();
 
         internal void Wire(UIDocument document, UiTuning tuning, RelicCatalog relics, TextAsset[] stringTables,
-            WordmarkShape wordmark, TextAsset credits, CargoTuning cargoTuning)
+            WordmarkShape wordmark, TextAsset credits)
         {
-            _cargoTuning = cargoTuning;
             _credits = credits;
             _document = document;
             _wordmark = wordmark;
@@ -301,7 +296,6 @@ namespace MoonProject.UI
                 : _tuning.Validate() != null ? "UiTuning " + _tuning.Validate() + "."
                 : _wordmark == null ? "the WordmarkShape is not assigned (run UI/Wordmark)."
                 : _credits == null ? "the credits asset is not assigned."
-                : _cargoTuning == null ? "the CargoTuning is not assigned."
                 : _wordmark.Validate() != null ? "the wordmark " + _wordmark.Validate() + "."
                 : null;
             if (problem == null)
@@ -351,8 +345,6 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<FeelBeat>(OnFeelBeat));
             _tokens.Add(events.Subscribe<UpgradePurchased>(OnUpgradePurchased));
             _tokens.Add(events.Subscribe<CargoChanged>(_ => _cargo?.MarkDirty()));
-            _tokens.Add(events.Subscribe<HomeStorageChanged>(_ => _cargo?.MarkDirty()));
-            _tokens.Add(events.Subscribe<ShelfBuilt>(_ => _cargo?.MarkDirty()));
             _tokens.Add(events.Subscribe<CrewCrateOpened>(OnCrewCrateOpened));
             _tokens.Add(events.Subscribe<GameSaved>(OnGameSaved));
             _tokens.Add(events.Subscribe<StationNotYet>(OnStationNotYet));
@@ -469,8 +461,8 @@ namespace MoonProject.UI
                 services.Board, services.Materials, services.Hints, _numbers);
             _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
             _rewardCard = new RewardCard(_layout, _tuning.RewardCard, _localization, services.Shop);
-            _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold, services.Home,
-                services.Abilities, services.Tech, _glyphs, _numbers, _cargoTuning);
+            _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold,
+                services.Abilities, services.Tech, _glyphs, _numbers);
             _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization, _glyphs);
             _crateNote = new CrateNote(_layout, _tuning.CrateNote, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,

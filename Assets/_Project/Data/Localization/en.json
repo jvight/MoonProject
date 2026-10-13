@@ -1051,24 +1051,12 @@
             "text": "07's hold"
         },
         {
-            "key": "ui.cargo.home",
-            "text": "Home shelves"
-        },
-        {
             "key": "ui.cargo.waiting",
             "text": "{0} bundles waiting"
         },
         {
-            "key": "ui.cargo.shelf",
-            "text": "Shelf {0}"
-        },
-        {
-            "key": "ui.cargo.shelf_free",
-            "text": "Free socket. Park here to build a shelf."
-        },
-        {
             "key": "ui.cargo.summary",
-            "text": "07: {0} of {1} slots · Home: {2} of {3} slots"
+            "text": "07: {0} of {1} slots"
         },
         {
             "key": "ui.can.decoded",
@@ -1165,14 +1153,6 @@
         {
             "key": "tech.side_bins.name",
             "text": "Side Bins"
-        },
-        {
-            "key": "ui.cargo.shelf_cost",
-            "text": "Cost: {0}"
-        },
-        {
-            "key": "ui.cargo.cost_part",
-            "text": "{0} {1}"
         },
         {
             "key": "ui.crate.caption",

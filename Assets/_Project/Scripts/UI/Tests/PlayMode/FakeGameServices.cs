@@ -111,9 +111,6 @@ namespace MoonProject.UI.PlayModeTests
         /// <summary>07's hold, set by a test.</summary>
         public FakeHold Hold { get; } = new FakeHold();
 
-        /// <summary>Home's shelves, set by a test.</summary>
-        public FakeHome Home { get; } = new FakeHome();
-
         public FakeCatalog Catalog { get; } = new FakeCatalog();
 
         public int Metal => _units[(int)SalvageMaterial.Metal];
@@ -291,7 +288,6 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IWorldLayout>(this);
             context.Register<IRoverAbilities>(this);
             context.Register<ICargoHold>(Hold);
-            context.Register<IHomeStorage>(Home);
             context.Register<IMaterialCatalog>(Catalog);
         }
 

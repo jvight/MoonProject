@@ -106,7 +106,6 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Bootstrap.Context.Events.Publish(new RoverAwoke(Vector3.zero, false));
             _rig.Fakes.Hold.Set(6, new MaterialSlot(SalvageMaterial.Metal, 4, 4),
                 new MaterialSlot(SalvageMaterial.Ilmenite, 3, 6));
-            _rig.Fakes.Home.Lay(2, 2, 12, new MaterialSlot(SalvageMaterial.Optics, 4, 4));
             _rig.Ui.Cargo.Open();
             yield return new WaitForSecondsRealtime(1.5f);
             Assert.IsTrue(_rig.Ui.Cargo.IsOpen);

@@ -18,7 +18,7 @@ namespace MoonProject.UI
         [Range(24f, 64f)]
         [SerializeField] private float _minCell = 34f;
 
-        [Tooltip("Share of the panel's width the two grids may use.")]
+        [Tooltip("Share of the panel's width 07's grid may use.")]
         [Range(0.5f, 1f)]
         [SerializeField] private float _widthShare = 0.82f;
 

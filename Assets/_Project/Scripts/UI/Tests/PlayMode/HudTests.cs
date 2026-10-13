@@ -111,7 +111,6 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Fakes.Hold.Set(5, new MaterialSlot(SalvageMaterial.Metal, 4, 4),
                 new MaterialSlot(SalvageMaterial.Wiring, 2, 4), new MaterialSlot(SalvageMaterial.Ilmenite, 3, 6));
             _rig.Fakes.Hold.WaitingBundles = 3;
-            _rig.Fakes.Home.Lay(2, 2, 12, new MaterialSlot(SalvageMaterial.Metal, 4, 4));
             yield return Seconds(0.3f);
 
             yield return Tap(keyboard.tabKey);
@@ -120,16 +119,8 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsTrue(cargo.IsOpen);
             Assert.AreEqual(1f, Time.timeScale, "the game does not pause");
             Assert.AreEqual(8, cargo.HoldCellCount, "a cell for every slot of 07's hold");
-            Assert.AreEqual(4, cargo.ShelfBlockCount, "two built shelves and two free sockets");
             StringAssert.Contains("3", cargo.WaitingText);
-            Assert.AreEqual(string.Format(Text(UiKeys.CargoSummary), 3, 8, 1, 24), cargo.SummaryText);
-            string metal = Text(UiKeys.MaterialName(SalvageMaterial.Metal));
-            string wiring = Text(UiKeys.MaterialName(SalvageMaterial.Wiring));
-            Assert.AreEqual(string.Format(Text(UiKeys.CargoShelfCost),
-                string.Format(Text(UiKeys.CargoCostPart), 3, metal)), cargo.ShelfCostText(2),
-                "the first free socket says what its shelf takes");
-            Assert.AreEqual(string.Format(Text(UiKeys.CargoShelfCost), string.Format(Text(UiKeys.CargoCostPart), 4, metal) +
-                ", " + string.Format(Text(UiKeys.CargoCostPart), 1, wiring)), cargo.ShelfCostText(3));
+            Assert.AreEqual(string.Format(Text(UiKeys.CargoSummary), 3, 8), cargo.SummaryText);
 
             yield return Tap(keyboard.tabKey);
             yield return Seconds(0.6f);

@@ -22,7 +22,6 @@ namespace MoonProject.UI.Editor
         public const string LocalizationFolder = "Assets/_Project/Data/Localization";
         public const string PrimaryLanguage = "en";
 
-        public const string CargoTuning = "Assets/_Project/Data/Tuning/Gameplay/CargoTuning.asset";
         public const string RelicCatalog = "Assets/_Project/Data/Content/RelicCatalog.asset";
 
         public const string GeneratedFolder = GeneratedAssets.Root + "/UI";
