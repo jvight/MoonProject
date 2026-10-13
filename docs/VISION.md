@@ -40,7 +40,10 @@ The player should exhale in the first 10 seconds and still be smiling after an h
    - **Scale and distance.** The horizon is far and soft: atmospheric falloff fades distant rock toward the sky's
      colour, and a faint glow sits along the horizon line. Near things have contrast; far things dissolve.
    - **Value, not just hue.** The moon is mostly deep, cool shadow with soft-lit planes. A low sun throws long
-     shadows that give the ground rhythm. Pastel flatness reads as a toy; contrast reads as a place.
+     shadows that give the ground rhythm. Lumen Station sits near the Moon's pole: the Sun skims the horizon and
+     circles the sky once per lunar day (2 hours of play), so shadows are always long and slowly turn. High ground is
+     nearly always sunlit, the deepest craters never are, and Earth hangs fixed and low, its cool earthshine lighting
+     the world but never charging anything. Pastel flatness reads as a toy; contrast reads as a place.
    - **Warm points in a cold field.** 07's lamp, the base windows, a lit relay or Bell's dial are the only warm
      lights. From far away the base is a small amber cluster: home, visible and distant.
    - **A living sky.** Stars vary in size and brightness, a few twinkle slowly, the Milky Way is a soft band, and
@@ -179,6 +182,10 @@ The crater rim is a natural, beautiful boundary: rolling lavender dunes rise int
 visible from the very first frame. That is the endgame, and the player will look at it for the whole game.
 
 **Earth** hangs huge and low in the sky (blue-green, softly glowing): emotional anchor and compass.
+
+**Light is physical.** Sunlight (warm-white, low) charges solar panels and 07's wing; earthshine (cool, from Earth's
+fixed place) only lights. Places pass between a sunlit phase and an earthlit phase as the Sun circles; the earthlit
+phase is the lavender night the game is known for. The terminator, where the two meet, is where dust glows.
 The sky is a deep indigo-to-violet gradient with a dense starfield, a faint milky-way band, and the occasional
 slow shooting star.
 
@@ -202,6 +209,9 @@ should feel like coming home on a winter night.
 | Earth | `#3FA7D6` / `#7BD389` | ocean / land |
 | Biolum (eclipse) | `#3CFFC2` / `#FF5FD2` | late-game magic only |
 | Alert-soft | `#FF5A6E` | the peak's blinking light only |
+
+Swatches are authored for the earthlit phase. The sunlit phase warms highlights and rim light (it never changes the
+swatches themselves), and permanently shadowed places never get it.
 
 Rules: max 4 swatches per object (the terrain is the exception: up to 6, the dust family plus Charcoal, which is kept for depth such as the chasm trough), emissive only for things that are *alive* (lamps, scrap, tether, sonar, Earth).
 Weathering ("left alone for decades"), done the low-poly way and never as texture grime:
