@@ -212,7 +212,6 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Fakes.Hold.Set(14, new MaterialSlot(SalvageMaterial.Metal, 4, 4),
                 new MaterialSlot(SalvageMaterial.Ilmenite, 3, 6));
             _rig.Fakes.Hold.WaitingBundles = 2;
-            _rig.Fakes.Home.Lay(3, 1, 12, new MaterialSlot(SalvageMaterial.Optics, 4, 4));
             _rig.Fakes.Grant(RoverAbility.Tether);
             _rig.Fakes.SetTech(TechNodeId.HoverJump, TechNodeState.Decoded);
             yield return Tap(keyboard.tabKey);

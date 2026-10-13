@@ -48,7 +48,7 @@ namespace MoonProject.UI
             _hints = hints ?? throw new ArgumentNullException(nameof(hints));
             _relays = relays ?? throw new ArgumentNullException(nameof(relays));
             _materials = materials ?? throw new ArgumentNullException(nameof(materials));
-            _recipe = new RecipeView(layout.RelayTagRecipe, layout.RelayTagNeed, localization, numbers);
+            _recipe = new RecipeView(layout.RelayTagRecipe, localization, numbers);
             _chip = layout.RelayTag;
             _reveal = new Reveal(layout.RelayTag, settings.Tag);
             _reveal.Snap(false);

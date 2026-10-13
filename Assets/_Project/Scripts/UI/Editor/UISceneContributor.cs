@@ -21,7 +21,6 @@ namespace MoonProject.UI.Editor
             var panel = context.LoadAsset<PanelSettings>(UiAssetPaths.PanelSettings);
             var layout = context.LoadAsset<VisualTreeAsset>(UiAssetPaths.Uxml);
             var catalog = context.LoadAsset<RelicCatalog>(UiAssetPaths.RelicCatalog);
-            var cargo = context.LoadAsset<CargoTuning>(UiAssetPaths.CargoTuning);
             TextAsset[] tables = StringTableAssets.Load();
             string problem = tuning.Validate();
             if (problem != null)
@@ -35,7 +34,7 @@ namespace MoonProject.UI.Editor
             document.visualTreeAsset = layout;
             var system = host.AddComponent<UISystem>();
             system.Wire(document, tuning, catalog, tables, context.LoadAsset<WordmarkShape>(UiAssetPaths.Wordmark),
-                context.LoadAsset<TextAsset>(UiAssetPaths.Credits), cargo);
+                context.LoadAsset<TextAsset>(UiAssetPaths.Credits));
             context.AddSystem(system);
         }
     }

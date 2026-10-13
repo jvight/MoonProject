@@ -74,8 +74,10 @@ namespace MoonProject.Gameplay.PlayModeTests
                     yield return new WaitForSeconds(_fixture.FriendTuning.PartDigSeconds + 0.3f);
                     Release(_keyboard.eKey);
                 }
-
-                yield return PickupPress.Take(this, _fixture.Gameplay, 2f, $"Tilly's part {part}");
+                else
+                {
+                    yield return PickupPress.Take(this, _fixture.Gameplay, 2f, $"Tilly's part {part}");
+                }
                 yield return new WaitForSeconds(_fixture.FriendTuning.PartFlightDuration + 1f);
                 Assert.AreEqual(part + 1, _fixture.Events.FriendPartCollected.Count, $"part {part} gathered");
                 FriendPartCollected collected = _fixture.Events.FriendPartCollected[part].Value;
@@ -197,8 +199,10 @@ namespace MoonProject.Gameplay.PlayModeTests
                     yield return new WaitForSeconds(_fixture.FriendTuning.PartDigSeconds + 0.3f);
                     Release(_keyboard.eKey);
                 }
-
-                yield return PickupPress.Take(this, _fixture.Gameplay, 2f, $"Tilly's part {part}");
+                else
+                {
+                    yield return PickupPress.Take(this, _fixture.Gameplay, 2f, $"Tilly's part {part}");
+                }
                 yield return new WaitForSeconds(_fixture.FriendTuning.PartFlightDuration + 1f);
             }
 

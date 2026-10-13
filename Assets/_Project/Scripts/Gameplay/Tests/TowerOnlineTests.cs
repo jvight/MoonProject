@@ -79,13 +79,13 @@ namespace MoonProject.Gameplay.Tests
             flow.Tick();
             now = ProgressionKeys.NextTowerPad;
             flow.Tick();
-            now = ProgressionKeys.NextTowerHold;
+            now = string.Empty;
             flow.Tick();
             done = true;
             flow.Tick();
             CollectionAssert.AreEqual(new[]
             {
-                ProgressionKeys.NextTowerPart, ProgressionKeys.NextTowerPad, ProgressionKeys.NextTowerHold, string.Empty,
+                ProgressionKeys.NextTowerPart, ProgressionKeys.NextTowerPad, string.Empty,
             }, lines);
         }
     }

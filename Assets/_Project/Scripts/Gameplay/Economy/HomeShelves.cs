@@ -92,6 +92,12 @@ namespace MoonProject.Gameplay
         /// <summary>The free socket 07 can build at now (beside it, the next in order), or -1.</summary>
         public int Candidate { get; private set; } = -1;
 
+        /// <summary>
+        /// True when the next shelf is needed (home's shelves are full): only then does the Build prompt show (text audit
+        /// 0.5.5 §3.6). A hold of E builds it either way.
+        /// </summary>
+        public bool Needed => _home.IsFull;
+
         /// <summary>True while home and 07 together cover <see cref="Candidate"/>'s shelf.</summary>
         public bool Affordable => Candidate >= 0 && _stock.Has(CostOf(Candidate));
 

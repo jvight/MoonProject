@@ -134,11 +134,49 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(CutPhase.Charging, cut.Phase, "never locked: the next piece charges while this one flies");
             Assert.AreEqual(Charge, cut.ChargeSeconds, 1e-5f, "a fresh piece takes the full charge");
             Assert.AreEqual(0f, _beats[_beats.Count - 1].Strength, "a fresh run starts at the battery");
+        }
 
-            cut.Release(next, Vector3.zero, Vector3.up);
-            cut.Tune(0.45f, 0.2f);
-            cut.Engage(next, SalvageMaterial.Wiring, Vector3.zero, Vector3.up);
-            Assert.AreEqual(0.45f, cut.ChargeSeconds, 1e-5f, "a better cutter charges sooner");
+        [Test]
+        public void AStagedCharge_BracesThenLocksEachStage_ThenHoldsItsBreathBeforeIgnition()
+        {
+            var staged = new List<CutChargeStaged>();
+            _events.Subscribe<CutChargeStaged>(staged.Add);
+            var cut = new CutState(_events, FeelKind.Cut, Charge, Resume, Steps);
+            var plan = new ChargePlan(0.5f, 0.45f, 2, 0.12f, false, 0f);
+            cut.Engage(0f, SalvageMaterial.Metal, Vector3.zero, Vector3.up, plan);
+            Assert.AreEqual(FeelPhase.Anticipate, _beats[0].Phase, "the press: the charge's Anticipate...");
+            Assert.AreEqual(1.52f, _beats[0].Seconds, 1e-4f, "0.5 brace + 2 x 0.45 + 0.12 breath (0.5.5 §5.1)");
+            Assert.AreEqual(1, staged.Count, "...then stage 0 as the brace begins");
+            Assert.AreEqual(0, staged[0].Stage);
+            Assert.AreEqual(2, staged[0].StagesNeeded);
+            Assert.IsFalse(staged[0].Warm);
+
+            var lockedAt = new List<float>();
+            float t = 0f;
+            bool ignited = false;
+            while (!ignited && t < 3f)
+            {
+                int before = staged.Count;
+                ignited = cut.Charge(Frame, Vector3.zero, Vector3.up);
+                t += Frame;
+                if (staged.Count > before)
+                {
+                    lockedAt.Add(t);
+                }
+            }
+
+            Assert.AreEqual(3, staged.Count, "stage 1, then the full lock");
+            Assert.AreEqual(0.95f, lockedAt[0], 2f * Frame, "stage 1 locks after the brace and one stage");
+            Assert.IsTrue(staged[2].IsFullLock);
+            Assert.AreEqual(1.4f, lockedAt[1], 2f * Frame);
+            Assert.AreEqual(1.52f, t, 2f * Frame, "ignition after the held breath");
+
+            staged.Clear();
+            cut.Release(0f, Vector3.zero, Vector3.up);
+            cut.Engage(0f, SalvageMaterial.Metal, Vector3.zero, Vector3.up,
+                new ChargePlan(0.5f, 0.27f, 1, 0.12f, true, 0.5f));
+            Assert.AreEqual(0.39f, cut.ChargeSeconds, 1e-4f, "warm: no brace, a quicker stage");
+            Assert.IsTrue(staged[0].Warm);
         }
 
         [Test]

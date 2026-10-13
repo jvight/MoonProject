@@ -253,11 +253,17 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Close enough (m) to a part resting on a mast's pad to draw it in.</summary>
         private const float PartArrive = 1.5f;
 
-        /// <summary>M3-26 §4.3: a small piece (the depot's), press to crack (s).</summary>
-        private const float FirstCut = 1.9f;
+        /// <summary>
+        /// 0.5.5 §5.1: a small piece, press to crack (s): the brace, one stage and the held breath (1.07 s), then
+        /// 1.2 s of cut.
+        /// </summary>
+        private const float FirstCut = 2.3f;
 
-        /// <summary>M3-26 §4.3: nothing in the first half hour takes longer to cut, press to crack (s).</summary>
-        private const float FirstHalfHourCut = 3.2f;
+        /// <summary>
+        /// 0.5.5 §5.1: nothing in the first half hour takes longer, press to crack (s): a fresh medium piece's two
+        /// stages (1.52 s of charge) and 2.5 s of cut.
+        /// </summary>
+        private const float FirstHalfHourCut = 4.1f;
 
         /// <summary>The first half hour of play (s).</summary>
         private const float FirstHalfHour = 1800f;
@@ -775,8 +781,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// M3-26 §4.3, measured: a small piece about 1.9 s from press to crack, and nothing in the first half hour over
-        /// about 3.2 s (each with a little room for 07 easing to a stop as the beam asks it to).
+        /// 0.5.5 §5.1, measured: a small piece about 2.3 s from press to crack, and nothing in the first half hour over
+        /// about 4.1 s (each with a little room for 07 easing to a stop as the beam asks it to).
         /// </summary>
         private void TimeTheCut(float took, PieceSize size)
         {
@@ -1672,8 +1678,10 @@ namespace MoonProject.Gameplay.PlayModeTests
                 {
                     yield return DigTillysLastPart();
                 }
-
-                yield return PickupPress.Take(this, _gameplay, 4f, "one of Tilly's parts");
+                else
+                {
+                    yield return PickupPress.Take(this, _gameplay, 4f, "one of Tilly's parts");
+                }
                 yield return Until(() => tilly.Progress.Collected > before, 6f, "the part drifts into 07");
             }
 

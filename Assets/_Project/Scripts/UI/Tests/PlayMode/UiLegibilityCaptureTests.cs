@@ -18,6 +18,7 @@ namespace MoonProject.UI.PlayModeTests
         private const int LegibleWidth = 1920;
         private const int LegibleHeight = 1080;
         private const float RequiredContrast = 4.5f;
+        private const string TabSkinClass = "settings-tab-wrap";
         private const float FontFloor = 18f;
         private const float PlateSamplePixels = 6f;
 
@@ -87,7 +88,7 @@ namespace MoonProject.UI.PlayModeTests
             fakes.SetMaterials(2, 6, 0);
             yield return new WaitForSecondsRealtime(2f);
             yield return LegibleShot(camera, folder, "74_tower_card", report, layout.TowerTitle,
-                layout.TowerDescription, layout.TowerNeed, layout.TowerRecipe);
+                layout.TowerDescription, layout.TowerRecipe);
             fakes.AtStation = false;
             yield return new WaitForSecondsRealtime(1f);
 
@@ -130,7 +131,7 @@ namespace MoonProject.UI.PlayModeTests
             fakes.AtStation = true;
             yield return new WaitForSecondsRealtime(2f);
             yield return LegibleShot(camera, folder, "78_tower_card_at_150", report, layout.TowerTitle,
-                layout.TowerDescription, layout.TowerNeed, layout.TowerRecipe);
+                layout.TowerDescription, layout.TowerRecipe);
             var problems = new List<string>();
             yield return ScreenFit.Probe(found => ScreenFit.CheckOnScreen(layout.Root, "150% tower card", found),
                 problems);
@@ -142,6 +143,20 @@ namespace MoonProject.UI.PlayModeTests
             }
 
             fakes.AtStation = false;
+            yield return new WaitForSecondsRealtime(1f);
+
+            // The cargo screen's tabs, in each state: selected with the focus (amber), selected without it (blue
+            // glass), and the other one (deep glass). Their labels sit on the tabs' own fill.
+            ui.Cargo.Open();
+            yield return new WaitForSecondsRealtime(1f);
+            VisualElement tabs = layout.Cargo.Q<VisualElement>(className: "cargo__tabs");
+            VisualElement firstSkin = ui.Cargo.FirstTab.parent;
+            firstSkin.AddToClassList("settings-tab-wrap--focus");
+            yield return LegibleShot(camera, folder, "79a_cargo_tab_focused", report, tabs);
+            firstSkin.RemoveFromClassList("settings-tab-wrap--focus");
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return LegibleShot(camera, folder, "79b_cargo_tab_selected", report, tabs);
+            ui.Cargo.Close();
             Assert.IsEmpty(report, "legibility:\n" + string.Join("\n", report));
 #else
             Assert.Ignore("Captures need the editor.");
@@ -218,7 +233,7 @@ namespace MoonProject.UI.PlayModeTests
         {
             VisualElement plate = text;
             while (plate != null && plate.resolvedStyle.backgroundColor.a < 0.3f &&
-                   plate.resolvedStyle.backgroundImage.texture == null)
+                   plate.resolvedStyle.backgroundImage.texture == null && !plate.ClassListContains(TabSkinClass))
             {
                 plate = plate.parent;
             }
@@ -230,7 +245,9 @@ namespace MoonProject.UI.PlayModeTests
 
             Rect box = text.worldBound;
             Color32 brightest = Contrast.BrightestDune;
+            Color32 darkest = Contrast.BrightestDune;
             float best = -1f;
+            float least = float.MaxValue;
             for (int y = Mathf.FloorToInt(box.yMin * scale); y < Mathf.CeilToInt(box.yMax * scale); y++)
             {
                 for (int x = Mathf.FloorToInt(box.xMin * scale); x < Mathf.CeilToInt(box.xMax * scale); x++)
@@ -241,6 +258,12 @@ namespace MoonProject.UI.PlayModeTests
                     {
                         best = l;
                         brightest = over;
+                    }
+
+                    if (l < least)
+                    {
+                        least = l;
+                        darkest = over;
                     }
                 }
             }
@@ -258,7 +281,8 @@ namespace MoonProject.UI.PlayModeTests
                 ui[PixelIndex(Mathf.FloorToInt(box.center.x * scale), Mathf.FloorToInt(sampleY * scale))],
                 Contrast.BrightestDune);
             Color32 background = Contrast.Luminance(beside) < Contrast.Luminance(above) ? beside : above;
-            float ratio = Contrast.Ratio(brightest, background);
+            // Light text reads by its brightest pixel, dark text (on the amber) by its darkest.
+            float ratio = Mathf.Max(Contrast.Ratio(brightest, background), Contrast.Ratio(darkest, background));
             Debug.Log($"[ui-contrast] {shot} '{text.text}' {ratio:0.0}:1 (text {brightest.r},{brightest.g}," +
                       $"{brightest.b} on plate {background.r},{background.g},{background.b})");
             return ratio >= RequiredContrast ? null

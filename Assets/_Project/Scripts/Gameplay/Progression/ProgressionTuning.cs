@@ -45,6 +45,12 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds between two places' first lines, so they come one at a time.")]
         [Range(0f, 20f)] [SerializeField] private float _placeLineGap = 6f;
 
+        [Tooltip("The dock's place card waits until 07's battery is below this share (the first return from a trip).")]
+        [Range(0.5f, 1f)] [SerializeField] private float _dockCardBelow = 0.9f;
+
+        [Tooltip("The first-listen line waits for a listen at least this many metres from the dock (away from home).")]
+        [Range(10f, 200f)] [SerializeField] private float _listenAwayFromHome = 40f;
+
         [Header("The steps wait on this content")]
         [Tooltip("The friend whose faint signal the tower hears first (step 3).")]
         [SerializeField] private string _signalFriend = "tilly";
@@ -148,8 +154,6 @@ namespace MoonProject.Gameplay
         [Tooltip("The relic that is Ro's tape deck (it is fitted on 07, never shelved).")]
         [SerializeField] private string _portDeckRelic = "cassette_player";
 
-        [Tooltip("Before the ring, a loose keepsake within this many metres of 07 says the tether is gone, once.")]
-        [Range(2f, 20f)] [SerializeField] private float _portTetherHintRadius = 7f;
 
         [Header("Recipe cards (M3-24 B)")]
         [Tooltip("Metres from the camera within which a hopper or a board sheet shows its recipe card when looked at.")]
@@ -263,6 +267,8 @@ namespace MoonProject.Gameplay
         public float PlotterLampEase => _plotterLampEase;
 
         public float PlaceLineGap => _placeLineGap;
+        public float ListenAwayFromHome => _listenAwayFromHome;
+        public float DockCardBelow => _dockCardBelow;
 
         public string SignalFriend => _signalFriend;
 
@@ -296,7 +302,6 @@ namespace MoonProject.Gameplay
 
         public string PortDeckRelic => _portDeckRelic;
 
-        public float PortTetherHintRadius => _portTetherHintRadius;
 
         public float RecipeLookDistance => _recipeLookDistance;
 

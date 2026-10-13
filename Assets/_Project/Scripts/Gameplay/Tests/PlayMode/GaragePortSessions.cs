@@ -84,7 +84,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(RoverKitPiece.TetherRing, fittings[0].Piece);
             Assert.IsFalse(fittings[0].Restored);
             Assert.IsTrue(_fixture.Rover.Has(RoverAbility.Tether), "the tether wakes with the ring");
-            Assert.Contains(ProgressionKeys.TickerTetherBack, lines);
 
             Relic deck = LooseAt(Deck, port.TrayPosition + Vector3.up * 0.3f);
             yield return Aim(deck);

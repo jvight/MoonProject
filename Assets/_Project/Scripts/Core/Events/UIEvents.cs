@@ -159,4 +159,61 @@ namespace MoonProject.Core.Events
         /// <summary>How many units are still to come after this one (0 on the roll's last tick).</summary>
         public int Remaining { get; }
     }
+
+    /// <summary>
+    /// The first Tab press began its boot moment (docs/design/0.5.5-owner-feedback.md §3): the screen opens dark and
+    /// 07's hold reports itself. Published once per save. Rover opens 07's rear hatch for it
+    /// (<see cref="RoverHatchCycleRequested"/>); Audio may play the boot's first note.
+    /// </summary>
+    public readonly struct HoldBootStarted
+    {
+    }
+
+    /// <summary>One of the hold's slot outlines lit during the boot: Audio plays a rising tick for it.</summary>
+    public readonly struct HoldSlotLit
+    {
+        public HoldSlotLit(int index, int count)
+        {
+            Index = index;
+            Count = count;
+        }
+
+        /// <summary>Which slot lit, from 0, left to right.</summary>
+        public int Index { get; }
+
+        /// <summary>How many slots the hold has.</summary>
+        public int Count { get; }
+    }
+
+    /// <summary>A held item finished sliding into its slot during the boot.</summary>
+    public readonly struct HoldItemArrived
+    {
+        public HoldItemArrived(int slot)
+        {
+            Slot = slot;
+        }
+
+        public int Slot { get; }
+    }
+
+    /// <summary>
+    /// The docked transfer view moved one stack between 07's hold and home's shelves (one press, one stack).
+    /// Audio plays a soft tick; the 3D shelves already show the new count.
+    /// </summary>
+    public readonly struct StackTransferred
+    {
+        public StackTransferred(SalvageMaterial material, int units, bool toHome)
+        {
+            Material = material;
+            Units = units;
+            ToHome = toHome;
+        }
+
+        public SalvageMaterial Material { get; }
+
+        public int Units { get; }
+
+        /// <summary>True when the stack went from 07 to home, false when it went to 07 for the trip.</summary>
+        public bool ToHome { get; }
+    }
 }

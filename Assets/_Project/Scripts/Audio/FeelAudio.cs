@@ -9,13 +9,14 @@ namespace MoonProject.Audio
     /// The 0.5.2 feel beats in sound (docs/design/feel-pass.md, polish-pass.md section 1.1), at most three layers per
     /// beat and mezzo-piano peaks:
     /// <list type="bullet">
-    /// <item>the cut and the dig (<see cref="FeelBeat"/>, docs/features/M3-26): the charge run, one pentatonic note
-    /// per lamp of <see cref="ICutter.LampCount"/> easing in over <c>Seconds</c> from <c>Strength</c> x the count
-    /// (<see cref="ChargeRun"/>), over a low inhale (plus a sustained low D at the top tier), and a falling A-F# on
-    /// Cancel; ignition's zing and thump, brighter per tier (Act, strength 0); the sizzle through 07's body following
-    /// progress, with a deeper undertone per tier (later Acts); the tick-slide onto the next cut line (Follow 0.5); the
-    /// crack (Impact); a strap tuk at the fold (Follow 1). The beam's singing climb and the collect melody stay
-    /// <see cref="SalvageAudio"/>'s;</item>
+    /// <item>the cut and the dig (<see cref="FeelBeat"/>, docs/features/M3-26, 0.5.5 §5.5): the weighted charge-up on
+    /// <see cref="CutChargeStaged"/>, all through the chassis: the brace's servo chunk and wheel clack (a fresh
+    /// charge), a capacitor whine gliding up onto D, A and D′ at each stage's detent click over a low hum on D, the
+    /// clunk-click of the full lock with the whine held through the breath (<see cref="ChargeVoice"/>), and on a
+    /// release (Cancel) the whine gliding back down; ignition's zing and thump, brighter per tier (Act, strength 0);
+    /// the sizzle through 07's body following progress, with a deeper undertone per tier (later Acts); the tick-slide
+    /// onto the next cut line (Follow 0.5); the crack (Impact); a strap tuk at the fold (Follow 1). The beam's singing
+    /// climb and the collect melody stay <see cref="SalvageAudio"/>'s;</item>
     /// <item>cargo and storage (M3-25): a tok on the full hold's lid; the dock's unload (Kind Cargo) as a small rising
     /// scale, one soft tick per slot, ending on a bell; a crew crate's latch and note; Tilly's fetch;</item>
     /// <item>the dock (Kind Dock): the walls rising (Anticipate), the clamp (Impact), the walls settling (Reward; the
@@ -37,7 +38,7 @@ namespace MoonProject.Audio
     [DisallowMultipleComponent]
     public sealed class FeelAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 14;
+        private const int SubscriptionCount = 15;
         private const float SegmentFollow = 0.5f;
         private const float SilentVolume = 0.001f;
         private const float SemitonesPerOctave = 12f;
@@ -51,18 +52,21 @@ namespace MoonProject.Audio
         private readonly IDisposable[] _subscriptions = new IDisposable[SubscriptionCount];
         private readonly EasedValue _sizzle = new EasedValue(0f);
         private readonly EasedValue _boost = new EasedValue(0f);
-        private readonly ChargeRun _run = new ChargeRun();
+        private readonly ChargeVoice _charge = new ChargeVoice();
         private ICutter _cutter;
-        private Vector3 _runAt;
+        private Vector3 _chargeAt;
+        private AudioSource _whineSource;
+        private AudioSource _humSource;
+        private float _whineCueVolume;
+        private float _humCueVolume;
         private AudioSource _undertoneSource;
         private float _undertoneCueVolume;
         private int _segment;
         private bool _towerChain;
-        private int _lampNotes;
         private int _segmentNotes;
-        private CueHandle _lamp;
-        private CueHandle _inhale;
-        private CueHandle _lowD;
+        private CueHandle _brace;
+        private CueHandle _detent;
+        private CueHandle _lock;
         private CueHandle _segmentSlide;
         private CueHandle _cargoTok;
         private CueHandle _shelfChord;
@@ -122,9 +126,11 @@ namespace MoonProject.Audio
                 return;
             }
 
-            _lamp = director.Resolve(AudioCueIds.ChargeLamp);
-            _inhale = director.Resolve(AudioCueIds.ChargeInhale);
-            _lowD = director.Resolve(AudioCueIds.ChargeLowD);
+            _brace = director.Resolve(AudioCueIds.ChargeBrace);
+            _detent = director.Resolve(AudioCueIds.ChargeDetent);
+            _lock = director.Resolve(AudioCueIds.ChargeLock);
+            CueHandle whine = director.Resolve(AudioCueIds.ChargeWhine);
+            CueHandle hum = director.Resolve(AudioCueIds.ChargeHum);
             CueHandle undertone = director.Resolve(AudioCueIds.CutUndertone);
             _segmentSlide = director.Resolve(AudioCueIds.SegmentSlide);
             _cargoTok = director.Resolve(AudioCueIds.CargoTok);
@@ -155,7 +161,8 @@ namespace MoonProject.Audio
             _towerThoom = director.Resolve(AudioCueIds.TowerThoom);
             _pickupLift = director.Resolve(AudioCueIds.PickupLift);
             _pickupClunk = director.Resolve(AudioCueIds.PickupClunk);
-            if (!(_lamp.IsValid && _inhale.IsValid && _lowD.IsValid && undertone.IsValid && _segmentSlide.IsValid &&
+            if (!(_brace.IsValid && _detent.IsValid && _lock.IsValid && whine.IsValid && hum.IsValid &&
+                  undertone.IsValid && _segmentSlide.IsValid &&
                   _cargoTok.IsValid && _shelfChord.IsValid && _crateLatch.IsValid && _tillyFetch.IsValid &&
                   _cancel.IsValid && _ignite.IsValid && sizzle.IsValid && _crack.IsValid &&
                   _strap.IsValid && _wallsRise.IsValid && _clamp.IsValid && _wallsSettle.IsValid &&
@@ -173,7 +180,10 @@ namespace MoonProject.Audio
             _rover = context.Get<IRoverState>();
             _cutter = context.Get<ICutter>();
             AudioLibrary library = director.Library;
-            _lampNotes = library.GetCue(_lamp).ClipCount;
+            _whineSource = director.CreateLoopSource(transform, "ChargeWhine", whine, 1f);
+            _whineCueVolume = library.GetCue(whine).VolumeMax;
+            _humSource = director.CreateLoopSource(transform, "ChargeHum", hum, 1f);
+            _humCueVolume = library.GetCue(hum).VolumeMax;
             _segmentNotes = library.GetCue(_segmentSlide).ClipCount;
             _undertoneSource = director.CreateLoopSource(transform, "CutUndertone", undertone, 1f);
             _undertoneCueVolume = library.GetCue(undertone).VolumeMax;
@@ -200,6 +210,7 @@ namespace MoonProject.Audio
             _subscriptions[11] = events.Subscribe<CargoOverflowed>(OnCargoOverflowed);
             _subscriptions[12] = events.Subscribe<CrewCrateOpened>(OnCrewCrateOpened);
             _subscriptions[13] = events.Subscribe<BundleFetched>(OnBundleFetched);
+            _subscriptions[14] = events.Subscribe<CutChargeStaged>(OnCutChargeStaged);
         }
 
         private void Update()
@@ -217,11 +228,13 @@ namespace MoonProject.Audio
             Loop(_sizzleSource, sizzle * _sizzleCueVolume * world);
             _undertoneSource.transform.position = _sizzleSource.transform.position;
             Loop(_undertoneSource, sizzle * _tuning.UndertoneAt(_cutter.Tier) * _undertoneCueVolume * world);
-            _run.Advance(dt);
-            while (_run.TryNext(out int lamp))
-            {
-                _director.PlayVariantAt(_lamp, Mathf.Min(lamp, _lampNotes - 1), _runAt);
-            }
+            _charge.Step(dt, _tuning.WhineLevel);
+            _whineSource.transform.position = _chargeAt;
+            _humSource.transform.position = _chargeAt;
+            _whineSource.pitch = _charge.Pitch;
+            Loop(_whineSource, _charge.WhineLevel * _whineCueVolume * world);
+            Loop(_humSource, _charge.HumLevel * _humCueVolume * world);
+
             float boost = _boost.Step(_boosting ? 1f : 0f, dt, _tuning.BoostEase);
             _boostSource.transform.position = _rover.Position;
             Loop(_boostSource, boost * _tuning.BoostVolume * _boostCueVolume * world);
@@ -277,6 +290,27 @@ namespace MoonProject.Audio
             }
         }
 
+        /// <summary>
+        /// A charge stage (0.5.5 §5.1): stage 0 starts the charge (the brace's chunk and clack unless the emitter is
+        /// warm); each lock clicks its detent and steps the whine onto its note; the full lock is the clunk-click.
+        /// </summary>
+        private void OnCutChargeStaged(CutChargeStaged staged)
+        {
+            if (staged.Stage == 0)
+            {
+                _charge.Begin(staged.Warm, _tuning.BraceSeconds, staged.StageSeconds, _tuning.HumAt(0));
+                if (!staged.Warm)
+                {
+                    _director.PlayAt(_brace, _chargeAt);
+                }
+
+                return;
+            }
+
+            _charge.Lock(staged.Stage, staged.StagesNeeded, _tuning.HumAt(staged.Stage));
+            _director.PlayAt(staged.IsFullLock ? _lock : _detent, _chargeAt);
+        }
+
         /// <summary>The tower comes online (feel-pass 8.2); Follow and Reward are the radio's and the UI's.</summary>
         private void OnBuildBeat(FeelBeat beat)
         {
@@ -316,27 +350,19 @@ namespace MoonProject.Audio
             switch (beat.Phase)
             {
                 case FeelPhase.Anticipate:
-                    _runAt = beat.Position;
+                    _chargeAt = beat.Position;
                     _segment = 0;
-                    _run.Begin(_cutter.LampCount, beat.Seconds, beat.Strength);
-                    _director.PlayAt(_inhale, beat.Position);
-                    if (_cutter.Tier >= _tuning.LowDFromTier)
-                    {
-                        _director.PlayAt(_lowD, beat.Position);
-                    }
-
                     break;
                 case FeelPhase.Cancel:
-                    _run.Stop();
+                    _charge.Drain(_tuning.DrainSeconds);
                     _sizzleTarget = 0f;
-                    _director.PlayAt(_cancel, beat.Position);
                     break;
                 case FeelPhase.Act:
                     _sizzleSource.transform.position = beat.Position;
                     _sizzleTarget = Mathf.Lerp(_tuning.SizzleMin, _tuning.SizzleMax, beat.Strength);
                     if (beat.Strength <= 0f)
                     {
-                        _run.Stop();
+                        _charge.Fire();
                         int tiers = _director.Library.GetCue(_ignite).ClipCount;
                         _director.PlayVariantAt(_ignite, Mathf.Clamp(_cutter.Tier, 0, tiers - 1), beat.Position);
                     }

@@ -120,11 +120,11 @@
         },
         {
             "key": "next.tower.part",
-            "text": "The Tower Coil is at the Supply Depot. Drive close and press E to pick it up."
+            "text": "The Tower Coil is in the depot's coil crate."
         },
         {
             "key": "next.tower.pad",
-            "text": "Bring the Tower Coil to the radio tower and park on its pad."
+            "text": "Bring the coil to the tower's pad."
         },
         {
             "key": "next.tower.hold",
@@ -184,7 +184,7 @@
         },
         {
             "key": "next.dig",
-            "text": "The last part is under the dust. Dig it up."
+            "text": "Tilly's parts are in her crashed sled."
         },
         {
             "key": "next.friend.repair",
@@ -352,7 +352,7 @@
         },
         {
             "key": "place.dock.job",
-            "text": "Park here to charge. Charging also saves the game."
+            "text": "Park here to charge and save."
         },
         {
             "key": "place.lander.name",
@@ -568,7 +568,7 @@
         },
         {
             "key": "component.tower_coil.needed",
-            "text": "Needs the Tower Coil. It is at the Supply Depot."
+            "text": "Coil crate · Supply Depot"
         },
         {
             "key": "upgrade.radio_tower.2.title",
@@ -580,7 +580,7 @@
         },
         {
             "key": "component.transformer.needed",
-            "text": "Needs a transformer. Look in Kenji's Garage."
+            "text": "Junction box · Kenji's Garage"
         },
         {
             "key": "upgrade.radio_tower.3.title",
@@ -592,7 +592,7 @@
         },
         {
             "key": "component.relay_spare.needed",
-            "text": "Needs a relay spare part. Repair a relay to get one."
+            "text": "Service cabinet · any relay"
         },
         {
             "key": "upgrade.rover.hover_jump.name",
@@ -1051,28 +1051,16 @@
             "text": "07's hold"
         },
         {
-            "key": "ui.cargo.home",
-            "text": "Home shelves"
-        },
-        {
             "key": "ui.cargo.waiting",
-            "text": "{0} bundles waiting"
-        },
-        {
-            "key": "ui.cargo.shelf",
-            "text": "Shelf {0}"
-        },
-        {
-            "key": "ui.cargo.shelf_free",
-            "text": "Free socket. Park here to build a shelf."
+            "text": "{0} pieces held at wrecks"
         },
         {
             "key": "ui.cargo.summary",
-            "text": "07: {0} of {1} slots · Home: {2} of {3} slots"
+            "text": "07: {0} of {1} slots"
         },
         {
             "key": "ui.can.decoded",
-            "text": "Decoded. Build it in the bay."
+            "text": "Blueprint complete. Build it in the bay."
         },
         {
             "key": "ui.can.tether.verb",
@@ -1165,14 +1153,6 @@
         {
             "key": "tech.side_bins.name",
             "text": "Side Bins"
-        },
-        {
-            "key": "ui.cargo.shelf_cost",
-            "text": "Cost: {0}"
-        },
-        {
-            "key": "ui.cargo.cost_part",
-            "text": "{0} {1}"
         },
         {
             "key": "ui.crate.caption",
@@ -1912,7 +1892,7 @@
         },
         {
             "key": "ticker.cargo.full",
-            "text": "07's hold is full. The rest waits here: come back for it."
+            "text": "07's hold is full. The cut pieces stay on the wreck."
         },
         {
             "key": "ticker.cargo.home_full",
@@ -1997,6 +1977,90 @@
         {
             "key": "upgrade.rover.side_bins.1.effect",
             "text": "Four more slots in 07's hold, so it carries more home each trip."
+        },
+        {
+            "key": "hint.scan",
+            "text": "Scan"
+        },
+        {
+            "key": "scan.fragment",
+            "text": "Fragment {0} of {1} · {2}"
+        },
+        {
+            "key": "scan.known",
+            "text": "Known blueprint · +{0} Metal"
+        },
+        {
+            "key": "scan.complete",
+            "text": "Blueprint complete: {0}. Build it in the bay."
+        },
+        {
+            "key": "scan.site_count",
+            "text": "{0} fragments to scan"
+        },
+        {
+            "key": "hint.hold",
+            "text": "Hold"
+        },
+        {
+            "key": "hint.shelves",
+            "text": "Shelves"
+        },
+        {
+            "key": "ui.hold.boot",
+            "text": "HOLD · {0} SLOTS · OK"
+        },
+        {
+            "key": "ui.transfer.to_trip",
+            "text": "Take for the trip"
+        },
+        {
+            "key": "ui.transfer.to_home",
+            "text": "Store at home"
+        },
+        {
+            "key": "container.coil_crate",
+            "text": "Coil crate"
+        },
+        {
+            "key": "container.junction_box",
+            "text": "Junction box"
+        },
+        {
+            "key": "container.service_cabinet",
+            "text": "Service cabinet"
+        },
+        {
+            "key": "container.supply_pod",
+            "text": "Supply pod"
+        },
+        {
+            "key": "container.tape_case",
+            "text": "Ro's tape case"
+        },
+        {
+            "key": "container.spare_crate",
+            "text": "07 · SPARE"
+        },
+        {
+            "key": "container.survey_sled",
+            "text": "Tilly's sled"
+        },
+        {
+            "key": "site.hut.name",
+            "text": "Relay Service Hut"
+        },
+        {
+            "key": "site.chasm_lip.name",
+            "text": "Kenji's Test Jump"
+        },
+        {
+            "key": "glyph.keyboard.tab",
+            "text": "Tab"
+        },
+        {
+            "key": "glyph.gamepad.select",
+            "text": "View"
         }
     ]
 }

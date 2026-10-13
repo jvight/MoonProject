@@ -360,33 +360,8 @@ def pickup_clunk(_variant, gen):
 
 # ----------------------------------------------------------------------------- M3-26: the charge run and the tiers
 
-CHARGE_LAMP_NOTES = ("D5", "E5", "F#5", "A5", "B5", "D6", "E6", "F#6", "A6")
 CUTTER_TIER_LABELS = ("tier0", "tier1", "tier2", "tier3")
 SEGMENT_NOTES = ("D5", "E5", "F#5", "A5", "B5")
-
-
-def charge_lamp(variant, _gen):
-    """One lamp of the charge run lighting on 07's back (M3-26 section 2): a short glassy note, the next pentatonic
-    step from the battery to the emitter."""
-    n = samples(0.55)
-    mix = np.zeros(n)
-    place(mix, 0.55 * _glass(note_freq(CHARGE_LAMP_NOTES[variant]), 0.5), 0)
-    return filters.lowpass(mix, 6500.0)
-
-
-def charge_inhale(_variant, _gen):
-    """The run's low chassis 'inhale' under the lamps: a D2 hum swelling over 0.7 s, then letting go."""
-    n = samples(0.9)
-    hum = osc.additive(n, note_freq("D2"), [(1, 1.0), (2, 0.3)])
-    hum *= envelope.segments(n, [(0.0, 0.0), (0.7, 1.0), (0.9, 0.0)], shape="smooth")
-    return filters.lowpass(0.3 * hum, 220.0)
-
-
-def charge_low_d(_variant, _gen):
-    """Tier 3's sustained low D under the run: a warm D2/D3 pad, felt through the deck."""
-    pad = instruments.soft_pad(note_freq("D2"), 1.2, 0.3, 0.6, hold=0.3)
-    pad += 0.5 * instruments.soft_pad(note_freq("D3"), 1.2, 0.3, 0.6, hold=0.3)
-    return filters.lowpass(0.2 * pad, 500.0)
 
 
 def cut_ignite_tier(variant, gen):
@@ -473,3 +448,194 @@ def tilly_fetch(_variant, gen):
     place(mix, 0.45 * instruments.kalimba(note_freq("A5"), 0.8, gen, decay=0.7), samples(0.3))
     place(mix, 0.5 * instruments.kalimba(note_freq("D6"), 0.9, gen, decay=0.9), samples(0.45))
     return filters.lowpass(mix, 6000.0)
+
+
+# ------------------------------------------------------------------------- 0.5.5 B: 07's hold boots, the transfer
+
+HOLD_SLOT_NOTES = ("D5", "E5", "F#5", "A5", "B5", "D6", "E6", "F#6")
+TRANSFER_LABELS = ("to_home", "to_07")
+
+
+def hold_boot(_variant, gen):
+    """The first Tab press: 07's hold powering on in the dark, a soft rising D3 hum and a faint relay click."""
+    n = samples(1.2)
+    rise = osc.glide(n, note_freq("D3") * 0.94, note_freq("D3"), time_constant=0.25)
+    hum = osc.additive(n, rise, [(1, 1.0), (2, 0.3)])
+    hum *= envelope.segments(n, [(0.0, 0.0), (0.35, 0.8), (1.0, 0.6), (1.2, 0.0)], shape="smooth")
+    mix = 0.15 * filters.lowpass(hum, 900.0)
+    place(mix, 0.2 * _tick(gen, note_freq("A4"), 0.1), samples(0.02))
+    return mix
+
+
+def type_tick(_variant, gen):
+    """One character of 07's system text typing in: a tiny dry tick."""
+    n = samples(0.06)
+    click = filters.bandpass(noise.white(n, gen), 2400.0, 2.0) * envelope.ar(n, 0.0005, 0.008)
+    return filters.lowpass(filters.lowpass(0.25 * click, 4000.0), 4000.0)
+
+
+def hold_slot(variant, gen):
+    """A hold slot's outline lighting (60 ms apart, left to right): a soft tick on the next pentatonic step."""
+    return filters.lowpass(0.25 * _tick(gen, note_freq(HOLD_SLOT_NOTES[variant]), 0.15), 5000.0)
+
+
+def item_slide(_variant, gen):
+    """A starter item sliding into its slot: a short felt slide and a seated tick on D."""
+    n = samples(0.35)
+    slide = filters.bandpass(noise.pink_filter(noise.white(n, gen)), 900.0, 1.4)
+    slide = slide / max(float(np.std(slide)), 1e-9) * envelope.segments(
+        n, [(0.0, 0.0), (0.05, 1.0), (0.2, 0.3), (0.25, 0.0)], shape="smooth")
+    mix = 0.04 * slide
+    place(mix, 0.25 * _tick(gen, note_freq("D5"), 0.1), samples(0.22))
+    return filters.lowpass(mix, 4000.0)
+
+
+def stack_transfer(variant, gen):
+    """One stack moved in the docked Shelves view: a quick slide and a two-note tick, falling A -> D toward home,
+    rising D -> A toward 07."""
+    notes = ("A5", "D5") if TRANSFER_LABELS[variant] == "to_home" else ("D5", "A5")
+    n = samples(0.4)
+    mix = np.zeros(n)
+    place(mix, 0.22 * _tick(gen, note_freq(notes[0]), 0.12), 0)
+    place(mix, 0.25 * _tick(gen, note_freq(notes[1]), 0.15), samples(0.07))
+    slide = filters.bandpass(noise.white(n, gen), 1500.0, 1.2) * envelope.ar(n, 0.01, 0.08)
+    return filters.lowpass(mix + 0.03 * slide, 4500.0)
+
+
+# ------------------------------------------------------------------------- 0.5.5 C: seals and containers
+
+CONTAINER_LABELS = ("cabinet", "pod", "crate", "case", "box")
+CONTAINER_NOTES = {"cabinet": "A3", "pod": "D3", "crate": "E3", "case": "B3", "box": "F#3"}
+
+
+def seal_cut(_variant, gen):
+    """The cut finishing a container's seal: the beam's last bite, a soft pop as the seal lets go and a small ping
+    in the metal on A5, all felt through the chassis (no air)."""
+    n = samples(0.8)
+    mix = np.zeros(n)
+    bite = filters.bandpass(noise.white(samples(0.12), gen), 2200.0, 1.5) * envelope.ar(samples(0.12), 0.002, 0.05)
+    place(mix, 0.1 * bite, 0)
+    place(mix, 0.5 * _chassis_thump(0.1, 90.0), samples(0.08))
+    ping = instruments.glass_chime(note_freq("A5"), 0.6, decay=0.4) * 0.3
+    place(mix, ping, samples(0.1))
+    return filters.lowpass(mix, 5000.0)
+
+
+def container_open(variant, gen):
+    """A container opening and its find sliding out: a low hinge groan on the container's note, a latch knock and a
+    short slide. The note differs by kind (cabinet, pod, crate, case, box), all D major pentatonic."""
+    note = note_freq(CONTAINER_NOTES[CONTAINER_LABELS[variant]])
+    n = samples(1.1)
+    hinge = osc.sine(n, osc.glide(n, note * 0.97, note, time_constant=0.2))
+    hinge *= envelope.segments(n, [(0.0, 0.0), (0.1, 1.0), (0.5, 0.4), (0.7, 0.0)], shape="smooth")
+    mix = 0.12 * filters.lowpass(hinge, 800.0)
+    place(mix, 0.3 * _tick(gen, note * 2.0, 0.15), 0)
+    slide_n = samples(0.3)
+    slide = filters.bandpass(noise.pink_filter(noise.white(slide_n, gen)), 700.0, 1.4)
+    slide = slide / max(float(np.std(slide)), 1e-9) * envelope.segments(
+        slide_n, [(0.0, 0.0), (0.08, 1.0), (0.3, 0.0)], shape="smooth")
+    place(mix, 0.03 * slide, samples(0.6))
+    return filters.lowpass(mix, 4000.0)
+
+
+# ---------------------------------------------------------- 0.5.5 E: the cut's charge-up has weight (section 5.5)
+
+def charge_brace(_variant, gen):
+    """07 bracing before a fresh charge: a short servo 'chunk' and the wheel-lock clack, through the chassis."""
+    n = samples(0.6)
+    servo_n = samples(0.25)
+    servo = osc.additive(servo_n, osc.glide(servo_n, note_freq("A2"), note_freq("D3"), time_constant=0.06),
+                         [(1, 1.0), (2, 0.4), (3, 0.15)])
+    servo *= envelope.segments(servo_n, [(0.0, 0.0), (0.03, 1.0), (0.2, 0.7), (0.25, 0.0)], shape="smooth")
+    mix = np.zeros(n)
+    place(mix, 0.12 * servo, 0)
+    place(mix, 0.6 * _chassis_thump(0.1, 75.0), samples(0.22))
+    place(mix, 0.3 * _tick(gen, note_freq("D4"), 0.15), samples(0.4))
+    return filters.lowpass(mix, 3500.0)
+
+
+CHARGE_WHINE_LOOP_S = 2.0
+
+
+def charge_whine(_variant, _gen):
+    """The capacitor whine on D5: a soft sine with a filtered-saw edge, steady and seamless; the runtime glides its
+    pitch up the stages (D -> A -> D') and back down on a drain."""
+    n = samples(CHARGE_WHINE_LOOP_S)
+    d5 = loop_freq(note_freq("D5"), n)
+    edge = periodic(osc.saw(n, d5), lambda x: filters.lowpass(x, 1800.0))
+    tone = (osc.sine(n, d5) + 0.25 * edge) * envelope.lfo(n, 6.0 / CHARGE_WHINE_LOOP_S, 0.06, 0.94)
+    return periodic(0.12 * tone, lambda x: filters.lowpass(x, 3000.0))
+
+
+CHARGE_HUM_LOOP_S = 3.0
+
+
+def charge_hum(_variant, _gen):
+    """The low hum on D under the charge, swelling with the stages (the runtime sets its level). Seamless."""
+    n = samples(CHARGE_HUM_LOOP_S)
+    tone = osc.additive(n, loop_freq(note_freq("D2"), n), [(1, 1.0), (2, 0.45), (3, 0.12)])
+    return periodic(0.2 * tone, lambda x: filters.lowpass(x, 500.0))
+
+
+def charge_detent(_variant, gen):
+    """A charge stage locking (the owner's "Cells" charge-up): a capacitor cell's glass sleeve sliding forward (a
+    short, smooth glassy slide), then the discrete detent click, small and mechanical."""
+    n = samples(0.2)
+    slide_n = samples(0.07)
+    slide = filters.bandpass(noise.white(slide_n, gen), 2600.0, 3.0)
+    slide *= envelope.segments(slide_n, [(0.0, 0.0), (0.03, 1.0), (0.07, 0.0)], shape="smooth")
+    mix = np.zeros(n)
+    place(mix, 0.06 * slide, 0)
+    at = samples(0.06)
+    click_n = n - at
+    click = filters.bandpass(noise.white(click_n, gen), 1600.0, 2.0) * envelope.ar(click_n, 0.0008, 0.015)
+    body = osc.sine(click_n, note_freq("A3")) * envelope.ar(click_n, 0.001, 0.03)
+    place(mix, 0.3 * click + 0.25 * body, at)
+    return filters.lowpass(filters.lowpass(mix, 4000.0), 4000.0)
+
+
+def charge_lock(_variant, gen):
+    """The full lock: a firm two-part 'clunk-click' felt through the chassis before the held breath."""
+    n = samples(0.4)
+    mix = 0.8 * np.concatenate((_chassis_thump(0.12, 80.0), np.zeros(n - samples(0.12))))
+    place(mix, 0.3 * osc.sine(samples(0.12), note_freq("D3")) * envelope.ar(samples(0.12), 0.001, 0.05), 0)
+    click_n = samples(0.1)
+    click = filters.bandpass(noise.white(click_n, gen), 1800.0, 2.0) * envelope.ar(click_n, 0.0008, 0.02)
+    place(mix, 0.35 * click, samples(0.07))
+    return filters.lowpass(mix, 4000.0)
+
+
+# ------------------------------------------------------------------------------------- 0.5.5 D: scanning (section 1)
+
+SCAN_SWEEP_LOOP_S = 2.0
+SCAN_STEP_NOTES = ("D5", "E5", "F#5", "A5")
+
+
+def scan_sweep(_variant, gen):
+    """The lens's fan of light sweeping a fragment: a soft airy tone on D5 with a slow shimmer, quiet and calm. The
+    runtime steps its pitch up the pentatonic at each 25% (D -> E -> F# -> A). Seamless."""
+    n = samples(SCAN_SWEEP_LOOP_S)
+    d5 = loop_freq(note_freq("D5"), n)
+    tone = osc.sine(n, d5) + 0.2 * osc.sine(n, 2.0 * d5)
+    air = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 2200.0, 1.2))
+    air = air / max(float(np.std(air)), 1e-9)
+    tone *= envelope.lfo(n, 4.0 / SCAN_SWEEP_LOOP_S, 0.15, 0.85)
+    return periodic(0.08 * tone + 0.01 * air, lambda x: filters.lowpass(x, 3500.0))
+
+
+def scan_step(variant, _gen):
+    """A quarter of a scan drawn: a small glass note on the next step (D E F# A)."""
+    return filters.lowpass(0.4 * _glass(note_freq(SCAN_STEP_NOTES[variant]), 0.5), 5500.0)
+
+
+def scan_liftoff(_variant, _gen):
+    """The dissolve: the line drawing unthreads and streams into 07's lens. A soft rising shimmer (D5 -> D6 glide
+    under glass notes A5, D6) ending in a bright, short lens flare chime on F#6."""
+    n = samples(1.3)
+    glide = osc.sine(n, osc.glide(n, note_freq("D5"), note_freq("D6"), time_constant=0.25))
+    glide *= envelope.segments(n, [(0.0, 0.0), (0.3, 0.6), (0.85, 0.8), (1.0, 0.0)], shape="smooth")
+    mix = 0.12 * glide
+    place(mix, 0.3 * _glass(note_freq("A5"), 0.6), samples(0.25))
+    place(mix, 0.32 * _glass(note_freq("D6"), 0.6), samples(0.5))
+    place(mix, 0.35 * _glass(note_freq("F#6"), 0.5), samples(0.8))
+    return filters.lowpass(mix, 6500.0)

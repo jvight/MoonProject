@@ -7,7 +7,8 @@ namespace MoonProject.UI
     /// <summary>
     /// The low look-hint chip in the prompt chip's style, centred on screen: a glyph and one word (<see cref="HintWord"/>).
     /// "Look up" shows the camera control (the right stick, or the mouse), "Drive" the drive control (the left stick,
-    /// or WASD). <see cref="LookUpHint"/> and <see cref="FirstPrompt"/> decide when it shows; a new word waits until the
+    /// or WASD), "Hold" the cargo control (Tab, or View). <see cref="LookUpHint"/>, <see cref="FirstPrompt"/> and
+    /// <see cref="HoldHint"/> decide when it shows; a new word waits until the
     /// chip has faded out.
     /// </summary>
     internal sealed class LookUpChip
@@ -16,6 +17,8 @@ namespace MoonProject.UI
         private const string MouseGlyphKey = "glyph.mouse.move";
         private const string DrivePadGlyphKey = "glyph.gamepad.leftstick";
         private const string DriveKeysGlyphKey = "glyph.keyboard.wasd";
+        private const string HoldPadGlyphKey = "glyph.gamepad.select";
+        private const string HoldKeysGlyphKey = "glyph.keyboard.tab";
 
         private readonly UiLayout _layout;
         private readonly ILocalization _localization;
@@ -64,12 +67,30 @@ namespace MoonProject.UI
 
         public void Relocalize()
         {
-            _layout.LookHintWord.text = _localization.Get(_word == HintWord.Drive ? UiKeys.Drive : UiKeys.LookUp);
+            _layout.LookHintWord.text = _localization.Get(WordKey());
+        }
+
+        private string WordKey()
+        {
+            switch (_word)
+            {
+                case HintWord.Drive:
+                    return UiKeys.Drive;
+                case HintWord.Hold:
+                    return UiKeys.HintHold;
+                default:
+                    return UiKeys.LookUp;
+            }
         }
 
         private string GlyphKey(InputDeviceKind device)
         {
             bool pad = device == InputDeviceKind.Gamepad;
+            if (_word == HintWord.Hold)
+            {
+                return pad ? HoldPadGlyphKey : HoldKeysGlyphKey;
+            }
+
             if (_word == HintWord.Drive)
             {
                 return pad ? DrivePadGlyphKey : DriveKeysGlyphKey;

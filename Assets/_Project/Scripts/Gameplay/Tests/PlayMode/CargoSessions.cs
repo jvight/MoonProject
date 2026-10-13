@@ -170,7 +170,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture.Rover.Place(racks[2].position + Vector3.forward * 1.5f, 180f);
             yield return null;
             Assert.AreEqual(2, shelves.Candidate);
-            Assert.IsTrue(gameplay.Hints.TryGet(InteractionKind.Build, out InteractionHint hint));
+            Assert.IsFalse(gameplay.Hints.TryGet(InteractionKind.Build, out _), "home has room: no Build prompt");
+            stock.Deliver(SalvageMaterial.Metal, 2 * CargoFixtureSlots * Stack - 6);
+            yield return null;
+            Assert.IsTrue(gameplay.Hints.TryGet(InteractionKind.Build, out InteractionHint hint), "home is full");
             Assert.IsTrue(hint.Ready, "home holds the shelf's metal");
             Press(Keyboard.current.eKey);
             yield return Waits.Until(() => built.Count > 0, _fixture.CargoTuning.BuildHoldSeconds + 1f);
@@ -179,7 +182,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(2, built[0].SocketIndex);
             Assert.IsTrue(racks[2].gameObject.activeSelf, "the third shelf stands");
             Assert.AreEqual(3 * CargoFixtureSlots, stock.Home.SlotCount);
-            Assert.AreEqual(3, stock.Home.Units(SalvageMaterial.Metal), "it took three metal");
+            Assert.AreEqual(2 * CargoFixtureSlots * Stack - 3, stock.Home.Units(SalvageMaterial.Metal),
+                "it took three metal");
             CollectionAssert.AreEqual(new[] { FeelPhase.Impact, FeelPhase.Reward },
                 buildBeats.ConvertAll(beat => beat.Phase), "a shelf is only Impact and Reward (the tower Anticipates)");
         }

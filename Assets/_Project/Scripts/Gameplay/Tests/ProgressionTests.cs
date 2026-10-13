@@ -158,6 +158,7 @@ namespace MoonProject.Gameplay.Tests
             PlaceApproaches places = NewPlaces(() => rackStands);
             const float gap = 2f;
 
+            places.Tick(new Vector3(30f, 0f, 0f), -gap);
             places.Tick(Vector3.zero, 0f);
             places.Tick(Vector3.zero, gap * 0.5f);
             Assert.AreEqual(new[] { ProgressionKeys.PlaceDock }, _places.ToArray(), "dock and ladder, one at a time");
@@ -182,6 +183,18 @@ namespace MoonProject.Gameplay.Tests
             loaded.Tick(Vector3.zero, 0f);
             loaded.Tick(new Vector3(60f, 0f, 0f), gap * 2f);
             Assert.IsEmpty(_places, "a loaded game greets nothing twice");
+        }
+
+        [Test]
+        public void APlace07WakesInside_WaitsUntil07HasLeftAndComesBack()
+        {
+            PlaceApproaches places = NewPlaces(() => true);
+            places.Tick(Vector3.zero, 0f);
+            places.Tick(Vector3.zero, 10f);
+            Assert.IsEmpty(_places, "text audit 0.5.5 §1: no card for the place 07 wakes in");
+            places.Tick(new Vector3(30f, 0f, 0f), 20f);
+            places.Tick(Vector3.zero, 30f);
+            Assert.AreEqual(ProgressionKeys.PlaceDock, _places[0], "back again: now it greets");
         }
 
         private PlaceApproaches NewPlaces(System.Func<bool> rackStands)

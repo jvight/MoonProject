@@ -8,8 +8,10 @@ namespace MoonProject.Gameplay
     /// The press that picks a waiting part up (tower parts, friends' parts, relay spares, blueprint tubes, Ro's tapes).
     /// Each frame the fields offer their resting parts; the nearest one within reach is the candidate, shown as a world
     /// prompt with the key and the verb (<see cref="InteractionKind.PickUp"/>, the part's name from
-    /// <see cref="TryGet"/>), and a fresh Excavate press takes it: only then does it lift onto 07's back. Fields step
-    /// in different components, so a frame's offers are settled on the next frame's first offer. Allocates nothing.
+    /// <see cref="TryGet"/>), and Excavate held takes it, like every other E verb (a tap, or a hold begun before 07
+    /// came up to it, or kept on after digging it free): only then does it lift onto 07's back. Reach is measured
+    /// across the ground, so a part a little above or below 07 still counts. Fields step in different components, so a
+    /// frame's offers are settled on the next frame's first offer. Allocates nothing.
     /// </summary>
     public sealed class PickupReach
     {
@@ -31,8 +33,7 @@ namespace MoonProject.Gameplay
         private const string NounPrefix = "pickup.";
 
         private int _frame = int.MinValue;
-        private bool _wasHeld;
-        private bool _pressed;
+        private bool _held;
         private float _bestSq;
         private bool _nextHas;
         private Vector3 _nextPosition;
@@ -47,14 +48,14 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// Offers the part <paramref name="index"/> of field <paramref name="owner"/> resting at <paramref name="at"/>.
-        /// True when it is the candidate and the player has just pressed: the field lifts it now.
+        /// True when it is the candidate and Excavate is held: the field lifts it now.
         /// </summary>
         public bool Offer(int frame, bool held, int owner, int index, Vector3 at, Vector3 rover, float reach,
             string nounKey)
         {
             Roll(frame, held);
-            float distanceSq = (at - rover).sqrMagnitude;
-            if (distanceSq > reach * reach)
+            float distanceSq = SurfaceRules.HorizontalDistanceSquared(at, rover);
+            if (distanceSq > reach * reach || Mathf.Abs(at.y - rover.y) > reach)
             {
                 return false;
             }
@@ -69,7 +70,7 @@ namespace MoonProject.Gameplay
                 _nextIndex = index;
             }
 
-            return _pressed && _has && _owner == owner && _index == index;
+            return _held && _has && _owner == owner && _index == index;
         }
 
         /// <summary>
@@ -98,8 +99,7 @@ namespace MoonProject.Gameplay
             _noun = _nextNoun;
             _owner = _nextOwner;
             _index = _nextIndex;
-            _pressed = held && !_wasHeld;
-            _wasHeld = held;
+            _held = held;
             _nextHas = false;
             _frame = frame;
         }

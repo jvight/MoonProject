@@ -57,10 +57,12 @@ namespace MoonProject.UI.Tests
             Ticks(line, settings.StillSeconds * 0.5f, 0f, true);
             Assert.IsFalse(line.WantsShown, "a moment of stillness first");
             Ticks(line, settings.StillSeconds, 0f, true);
-            Assert.IsTrue(line.WantsShown, "a teaching step needs no patience (M3-24 B)");
+            Assert.IsFalse(line.WantsShown, "guidance only when it is needed: a short patience first");
+            Ticks(line, settings.TeachingPatienceSeconds, 0f, true);
+            Assert.IsTrue(line.WantsShown, "a teaching step waits only its short patience");
             line.SetKey("next.signal");
-            Ticks(line, settings.StillSeconds + Step, 0f, true);
-            Assert.IsTrue(line.WantsShown, "the next teaching step shows at once too");
+            Ticks(line, settings.StillSeconds + settings.TeachingPatienceSeconds + Step, 0f, true);
+            Assert.IsTrue(line.WantsShown, "the next teaching step shows after the same short wait");
             Ticks(line, Step, 0f, false);
             Assert.IsFalse(line.WantsShown, "Guidance off");
         }
