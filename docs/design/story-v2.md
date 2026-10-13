@@ -1,5 +1,7 @@
 # Story v2: the pull outward (0.5 → 1.0)
 
+> **Superseded by `docs/design/story-v3.md`** after the owner's review (2026-10-13). Kept for history.
+
 > Author: the story & flow session, for the owner's review before anything is built. It builds on `docs/STORY.md`
 > (Lumen Station, the storm, "keep the radio on", Ro answers) and today's additions:
 > - `docs/design/0.6-world-regions.md` and `0.6-living-moon.md`;
