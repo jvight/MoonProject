@@ -268,8 +268,10 @@ box at its foot and guy wires. Meshes only, `M_LowPoly`. It must read as a silho
 (taper, cross braces, dish, lamp housing), never a thin lattice that vanishes at distance.
 ```
 Generated/Art/Relay/RelayMast.prefab  (restored pose; root at the pad centre on the ground, +Z = toward home, +Y up)
-  Base                 footing plinth + junction box + rover-height service cabinet (door shut when broken,
-                       open when restored; relay.2's keeps the Cell Pack II tube) (static)
+  Base                 footing plinth + junction box (static)
+  CabinetSocket        empty beside the footing, foot on the pad, +Z toward the pad: gameplay sets one
+                       Generated/Art/Props/Cabinet.prefab here (a sealed container, Lid door opens about local Y);
+                       the mast's relay spare rests inside it until its seal is cut (0.5.5 §2, RelayRig requires it)
   Mast                 pivot at the mast foot; the broken pose leans it about local X/Z
     Dish               relay dish near the top, pivot at its mount; yaw about local Y to aim home
     Lamp               lamp housing at the top, own glow renderer on M_LowPolyGlowOff (WarmLamp, HDR): dark until

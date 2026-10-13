@@ -4,7 +4,26 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 000000000000000. LATEST (2026-10-13 ~22:30): 0.5.5 nearly done; 0.6 designed; story v3 + concept art pending owner review
+## 0000000000000000. LATEST (2026-10-14 ~00:30): main 5bffb082 verified+pushed; look A in flight
+- Director: session local_0b7c61a2 at ~92% context. A fresh Director starts HERE and recreates cron v4.
+- **Landed since e13afbde (all verified):**
+  - feb2157a: the network pulse + its sound;
+  - 5bffb082: C8 relay cabinets + container seals dimmed (the "blue wash at 06" was over-bright seals);
+  - docs: north-star §4b variety/density and the monotony check, ARCHITECTURE's CabinetSocket.
+- **Owner decisions tonight:**
+  - look: day = C "Low sun", night = A "Moon grey". A ships in 0.5.5 as the game's look; C arrives with 0.6's
+    day/night. The basin variety pass moves to 0.6 (world's PROPOSAL.md in its worktree Logs).
+  - Ruling: Ro's tape deck is a station spare part in Kenji's "07 · SPARE" crate; keepsakes = 5; the cassette_player
+    relic is retired.
+- **In flight (land together):**
+  - look A: art palette (box/art 0bac0cfe+; must raise Palette.ReferenceLight) + world sky/fog/grade (box/world
+    758491da; ONE grade source = World PostProcessSettings);
+  - C9: gameplay 2ec38e77 + art 0bac0cfe (retire the relic) + audio 28a01874 (re-render relic_answer after C9's
+    asset delete).
+  - Then gameplay C11b, C5, C10, C6, D; then verify --explicit, bump 0.5.5, build.
+- **Pending owner review:** story v3 (box/story 34f104d0; ask story & flow for the summary) and concept round 2.
+
+## 000000000000000. (prev) (2026-10-13 ~22:30): 0.5.5 nearly done; 0.6 designed; story v3 + concept art pending owner review
 - Director: session local_0b7c61a2 ("MoonProject Director handoff"); context ~85%; a fresh Director starts HERE.
   Recreate cron v4 (usage log, notice at 85/95%, stall check, no auto-stop).
 - **main e13afbde+ (verified; origin has it).** Since 95f5f746:

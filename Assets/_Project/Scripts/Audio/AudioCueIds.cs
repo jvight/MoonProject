@@ -66,6 +66,8 @@ namespace MoonProject.Audio
         public const string PartPick = "part_pick";
         public const string PartDrop = "part_drop";
         public const string PartRefuse = "part_refuse";
+        public const string PulseNote = "pulse_note";
+        public const string PulseHome = "pulse_home";
         public const string RecycleCrunch = "recycle_crunch";
         public const string PartRemove = "part_remove";
         public const string PickupLift = "pickup_lift";

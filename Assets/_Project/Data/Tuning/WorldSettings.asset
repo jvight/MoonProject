@@ -397,6 +397,10 @@ MonoBehaviour:
     _pilotSharpness: 6
     _topLightLevel: 0.6
     _pilotMinAngle: 0.4
+    _echoTravel: 1.2
+    _echoRise: 0.15
+    _echoTail: 0.9
+    _echoPeak: 1.8
     _buildHoldTimeout: 8
     _towerBeatRadius: 20
     _beaconFlareGain: 3
@@ -621,3 +625,22 @@ MonoBehaviour:
     _litGlow: 0.9
     _chargingGlow: 1.5
     _ease: 0.9
+  _networkPulse:
+    _hopSeconds: 1.4
+    _flashRise: 0.2
+    _flashFall: 1.6
+    _originBoost: 1.4
+    _beadFade: 0.2
+    _arcPerMetre: 0.06
+    _color: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
+    _flashIntensity: 2.4
+    _flashRadius: 1
+    _beadIntensity: 1.8
+    _beadRadius: 0.6
+    _minAngle: 0.8
+    _minAngleFrom: 30
+    _minAngleFull: 60
+    _flashLight: 4
+    _flashLightRange: 14
+    _beadLight: 2.5
+    _beadLightRange: 8

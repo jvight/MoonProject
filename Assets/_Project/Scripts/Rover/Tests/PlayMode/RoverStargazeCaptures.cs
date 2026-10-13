@@ -89,8 +89,8 @@ namespace MoonProject.Rover.PlayModeTests
         /// <summary>The elder capture: 07's distance from the micro.06 site (inside the notice radius), how far off
         /// its nose 06 sits, and the frames' waits.</summary>
         private const float ElderApproach = 9f;
-        private const float ElderOffAxis = 55f;
-        private const float ElderGlanceFrame = 0.9f;
+        private const float ElderOffAxis = 35f;
+        private const float ElderGlanceFrame = 1.3f;
         private const float ElderLetGoFrame = 2.5f;
 
         /// <summary>The cut point ahead of 07, the Cells capture's frame waits, and the share of stage 2 at its frame.
