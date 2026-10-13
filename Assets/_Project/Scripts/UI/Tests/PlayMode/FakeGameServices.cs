@@ -127,10 +127,18 @@ namespace MoonProject.UI.PlayModeTests
         /// <summary>07's equipment, set by a test.</summary>
         public FakeEquipment Equipment { get; } = new FakeEquipment();
 
+        /// <summary>07's portrait, set by a test.</summary>
+        public FakePortrait Portrait { get; } = new FakePortrait();
+
         /// <summary>The docked transfer, moving whole slots between <see cref="Hold"/> and <see cref="Home"/>.</summary>
         public FakeTransfer Transfer => _transfer ?? (_transfer = new FakeTransfer(Hold, Home, Dock));
 
         private FakeTransfer _transfer;
+
+        private void OnDestroy()
+        {
+            Portrait.Dispose();
+        }
 
         public int Metal => _units[(int)SalvageMaterial.Metal];
 
@@ -311,6 +319,7 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IHomeStorage>(Home);
             context.Register<IDockState>(Dock);
             context.Register<IRoverEquipment>(Equipment);
+            context.Register<IRoverPortrait>(Portrait);
             context.Register<IStackTransfer>(Transfer);
         }
 

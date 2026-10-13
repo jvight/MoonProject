@@ -8,8 +8,9 @@ using MoonProject.Core.Input;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The 07 tab's page (docs/design/0.5.5-owner-feedback.md §3.5): 07's portrait with a socket at each place on the
-    /// body, and below it the parts row of crafted parts waiting to be fitted. An empty socket is a dim outline with no
+    /// The 07 tab's page (docs/design/0.5.5-owner-feedback.md §3.5): 07's live portrait (rover's render, fitted parts
+    /// as they really look) with a socket where each mount point lands on it (no marker for a socket the portrait
+    /// cannot place), and below it the parts row of crafted parts waiting to be fitted. An empty socket is a dim outline with no
     /// name until a part for it is known, then it carries the part's name and the small bay icon ("fit at the bay"); a
     /// fitted one carries the part's name. A part is fitted by dragging it onto its own socket (only that one lights) or,
     /// with a gamepad or keyboard, by focusing it and pressing Submit; a fitted part is taken off by dragging it to the
@@ -31,6 +32,7 @@ namespace MoonProject.UI
         private readonly CargoScreenSettings _settings;
         private readonly ILocalization _localization;
         private readonly IRoverEquipment _equipment;
+        private readonly IRoverPortrait _portraitSource;
         private readonly GlyphLabels _glyphs;
         private readonly VisualElement _panel;
         private readonly VisualElement _portrait;
@@ -52,7 +54,7 @@ namespace MoonProject.UI
         private Vector2 _pressAt;
 
         public EquipmentPage(UiLayout layout, CargoScreenSettings settings, ILocalization localization,
-            IRoverEquipment equipment, GlyphLabels glyphs)
+            IRoverEquipment equipment, IRoverPortrait portrait, GlyphLabels glyphs)
         {
             if (layout == null)
             {
@@ -62,6 +64,7 @@ namespace MoonProject.UI
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _equipment = equipment ?? throw new ArgumentNullException(nameof(equipment));
+            _portraitSource = portrait ?? throw new ArgumentNullException(nameof(portrait));
             _glyphs = glyphs ?? throw new ArgumentNullException(nameof(glyphs));
             VisualElement root = layout.Cargo;
             _panel = Require<VisualElement>(root, "cargo-panel");
@@ -72,12 +75,7 @@ namespace MoonProject.UI
             _tooltipGlyphHolder = Require<VisualElement>(root, "seven-tooltip-glyph");
             _tooltipGlyph = new GlyphView(_tooltipGlyphHolder, Require<Label>(root, "seven-tooltip-glyph-label"));
             _ghost = Require<Label>(root, "seven-ghost");
-            if (settings.SocketPositionCount != SocketCount)
-            {
-                throw new InvalidOperationException(
-                    $"{nameof(CargoScreenSettings)} places {settings.SocketPositionCount} sockets, not {SocketCount}.");
-            }
-
+            _portrait.style.backgroundImage = Background.FromRenderTexture(portrait.Texture);
             for (int i = 0; i < SocketCount; i++)
             {
                 _sockets[i] = BuildSocket(i);
@@ -159,6 +157,12 @@ namespace MoonProject.UI
             _dirty = true;
         }
 
+        /// <summary>The page is showing (or not): the portrait renders only then.</summary>
+        public void SetShown(bool shown)
+        {
+            _portraitSource.SetActive(shown);
+        }
+
         /// <param name="device">The active device: its glyph for each part's key.</param>
         public void Tick(InputDeviceKind device)
         {
@@ -168,12 +172,35 @@ namespace MoonProject.UI
                 _dirty = true;
             }
 
+            PlaceSockets();
             int signature = Signature();
             if (_dirty || signature != _signature)
             {
                 _signature = signature;
                 _dirty = false;
                 Refresh();
+            }
+        }
+
+        /// <summary>Puts each socket where its mount lands on the portrait now (it follows 07's bob); none where it cannot.</summary>
+        private void PlaceSockets()
+        {
+            for (int i = 0; i < SocketCount; i++)
+            {
+                SocketView view = _sockets[i];
+                bool placed = _portraitSource.TryGetSocketViewport(view.Id, out Vector2 uv);
+                if (placed != view.Placed)
+                {
+                    view.Placed = placed;
+                    view.Root.style.display = placed ? DisplayStyle.Flex : DisplayStyle.None;
+                }
+
+                if (placed && uv != view.At)
+                {
+                    view.At = uv;
+                    view.Root.style.left = Length.Percent(uv.x * 100f);
+                    view.Root.style.top = Length.Percent((1f - uv.y) * 100f);
+                }
             }
         }
 
@@ -273,9 +300,7 @@ namespace MoonProject.UI
         {
             var root = new VisualElement { pickingMode = PickingMode.Position, focusable = false };
             root.AddToClassList(SocketClass);
-            Vector2 at = _settings.SocketPosition(index);
-            root.style.left = Length.Percent(at.x * 100f);
-            root.style.top = Length.Percent(at.y * 100f);
+            root.style.display = DisplayStyle.None;
             var dot = new VisualElement { pickingMode = PickingMode.Ignore };
             dot.AddToClassList("seven__socket-dot");
             var bay = new VisualElement { pickingMode = PickingMode.Ignore };
@@ -508,6 +533,8 @@ namespace MoonProject.UI
             public RoverKitPiece Part;
             public bool HasPart;
             public bool Fitted;
+            public bool Placed;
+            public Vector2 At = new Vector2(float.NaN, float.NaN);
         }
 
         private sealed class CardView

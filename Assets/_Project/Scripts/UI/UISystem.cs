@@ -474,7 +474,7 @@ namespace MoonProject.UI
             _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
             _rewardCard = new RewardCard(_layout, _tuning.RewardCard, _localization, services.Shop);
             _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold,
-                services.Home, services.Transfer, services.Dock, services.Equipment, _glyphs, _numbers, services.Events,
+                services.Home, services.Transfer, services.Dock, services.Equipment, services.Portrait, _glyphs, _numbers, services.Events,
                 _ledger);
             _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization, _glyphs);
             _crateNote = new CrateNote(_layout, _tuning.CrateNote, _localization);

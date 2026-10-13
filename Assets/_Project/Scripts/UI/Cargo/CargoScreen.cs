@@ -73,7 +73,7 @@ namespace MoonProject.UI
 
         public CargoScreen(UiLayout layout, CargoScreenSettings settings, ILocalization localization,
             ICargoHold hold, IHomeStorage home, IStackTransfer transfer, IDockState dock, IRoverEquipment equipment,
-            GlyphLabels glyphs, IntText numbers, EventBus events, PromptLedger ledger)
+            IRoverPortrait portrait, GlyphLabels glyphs, IntText numbers, EventBus events, PromptLedger ledger)
         {
             if (layout == null)
             {
@@ -105,7 +105,7 @@ namespace MoonProject.UI
                 Require<VisualElement>(root, "cargo-page-cargo"),
                 Require<VisualElement>(root, "cargo-page-seven"),
             };
-            _seven = new EquipmentPage(layout, settings, localization, equipment, glyphs);
+            _seven = new EquipmentPage(layout, settings, localization, equipment, portrait, glyphs);
             _waiting = Require<Label>(root, "cargo-waiting");
             _bootLine = Require<Label>(root, "cargo-boot");
             _transferHint = Require<Label>(root, "cargo-transfer-hint");
@@ -152,6 +152,7 @@ namespace MoonProject.UI
             _summary.style.display = tab == 0 ? StyleKeyword.Null : DisplayStyle.None;
             _dirty = true;
             _seven.MarkDirty();
+            _seven.SetShown(tab == 1 && IsOpen);
         }
 
         /// <summary>True while the screen is up (or easing).</summary>
@@ -206,6 +207,7 @@ namespace MoonProject.UI
             _homeGrid.SetInteractive(_transferView);
             _dirty = true;
             _seven.Opened();
+            _seven.SetShown(_tab == 1);
             _reveal.Show();
             if (!_ledger.HoldBooted && _tab == 0)
             {
@@ -216,6 +218,7 @@ namespace MoonProject.UI
         public void Close()
         {
             _reveal.Hide();
+            _seven.SetShown(false);
             if (_boot.IsRunning)
             {
                 EndBoot(false);

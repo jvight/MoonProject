@@ -213,6 +213,57 @@ namespace MoonProject.UI.PlayModeTests
         }
     }
 
+    /// <summary>07's portrait: a small texture and a socket position for every socket a test places.</summary>
+    public sealed class FakePortrait : IRoverPortrait, System.IDisposable
+    {
+        private const int Width = 96;
+        private const int Height = 64;
+
+        private readonly Dictionary<RoverSocket, UnityEngine.Vector2> _at = new Dictionary<RoverSocket, UnityEngine.Vector2>();
+
+        public FakePortrait()
+        {
+            float x = 0.12f;
+            foreach (RoverSocket socket in System.Enum.GetValues(typeof(RoverSocket)))
+            {
+                _at[socket] = new UnityEngine.Vector2(x, 0.5f + 0.25f * (((int)socket % 2) - 0.5f));
+                x += 0.07f;
+            }
+        }
+
+        private UnityEngine.RenderTexture _texture;
+
+        public UnityEngine.RenderTexture Texture => _texture ?? (_texture = new UnityEngine.RenderTexture(Width, Height, 0));
+
+        /// <summary>Whether the page asked for the portrait to render.</summary>
+        public bool Active { get; private set; }
+
+        public void SetActive(bool active)
+        {
+            Active = active;
+        }
+
+        public bool TryGetSocketViewport(RoverSocket socket, out UnityEngine.Vector2 uv)
+        {
+            return _at.TryGetValue(socket, out uv);
+        }
+
+        /// <summary>Takes a socket out of the frame (art has no node for it).</summary>
+        public void Remove(RoverSocket socket)
+        {
+            _at.Remove(socket);
+        }
+
+        public void Dispose()
+        {
+            if (_texture != null)
+            {
+                _texture.Release();
+                UnityEngine.Object.DestroyImmediate(_texture);
+            }
+        }
+    }
+
     /// <summary>Whether 07 rests on the dock, set by a test.</summary>
     public sealed class FakeDock : IDockState
     {

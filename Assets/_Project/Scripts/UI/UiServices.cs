@@ -18,7 +18,8 @@ namespace MoonProject.UI
             IRelayStatus relays, ISalvageStatus salvage, IGameFlow flow, ISettingsFile settings, IRoverBattery battery,
             IBeamStatus beam, ITechTree tech, IRecoveryProgress recovery, IRecipeLook recipeLook,
             IWorldLayout world, IRoverAbilities abilities, ICargoHold hold, IMaterialCatalog catalog,
-            IDockState dock, IHomeStorage home, IStackTransfer transfer, IRoverEquipment equipment)
+            IDockState dock, IHomeStorage home, IStackTransfer transfer, IRoverEquipment equipment,
+            IRoverPortrait portrait)
         {
             Events = events ?? throw new ArgumentNullException(nameof(events));
             Input = input ?? throw new ArgumentNullException(nameof(input));
@@ -52,6 +53,7 @@ namespace MoonProject.UI
             Home = home ?? throw new ArgumentNullException(nameof(home));
             Transfer = transfer ?? throw new ArgumentNullException(nameof(transfer));
             Equipment = equipment ?? throw new ArgumentNullException(nameof(equipment));
+            Portrait = portrait ?? throw new ArgumentNullException(nameof(portrait));
             Catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         }
 
@@ -112,6 +114,9 @@ namespace MoonProject.UI
         /// <summary>07's equipment: the 07 tab's sockets and parts row.</summary>
         public IRoverEquipment Equipment { get; }
 
+        /// <summary>The live render of 07 behind the 07 tab's sockets.</summary>
+        public IRoverPortrait Portrait { get; }
+
         /// <summary>What each material is called (the pickup feed and the cargo screen).</summary>
         public IMaterialCatalog Catalog { get; }
 
@@ -154,7 +159,8 @@ namespace MoonProject.UI
                 context.Get<IBeamStatus>(), context.Get<ITechTree>(), context.Get<IRecoveryProgress>(),
                 context.Get<IRecipeLook>(), context.Get<IWorldLayout>(), context.Get<IRoverAbilities>(),
                 context.Get<ICargoHold>(), context.Get<IMaterialCatalog>(), context.Get<IDockState>(),
-                context.Get<IHomeStorage>(), context.Get<IStackTransfer>(), context.Get<IRoverEquipment>());
+                context.Get<IHomeStorage>(), context.Get<IStackTransfer>(), context.Get<IRoverEquipment>(),
+                context.Get<IRoverPortrait>());
         }
     }
 }

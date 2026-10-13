@@ -1502,7 +1502,7 @@ namespace MoonProject.UI.PlayModeTests
                 context.Get<ILookSettings>(), context.Get<IFeelSettings>(), save, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes,
                 fakes, context.Get<IGameFlow>(), new SettingsFile(SaveService.DefaultDirectory, _slot), fakes, fakes,
                 fakes, fakes, fakes, context.Get<IWorldLayout>(), fakes, fakes.Hold, fakes.Catalog, fakes.Dock, fakes.Home, fakes.Transfer,
-                fakes.Equipment));
+                fakes.Equipment, fakes.Portrait));
             save.Load();
             return ui;
         }
