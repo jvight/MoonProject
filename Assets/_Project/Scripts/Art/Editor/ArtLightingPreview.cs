@@ -656,6 +656,8 @@ namespace MoonProject.Art.Editor
             Vector3 duck = pocket.position;
             return Poses(
                 Pose("row", new[] { 0f, 1.6f, -3.4f }, new[] { -0.6f, 0.3f, 0f }, 50f),
+                Pose("pod_mast", new[] { 4.5f, 2.2f, -6.5f }, new[] { 1.8f, 1.8f, 0f }, 45f),
+                Pose("pod_far60m", new[] { 30f, 6f, -55f }, new[] { 1.8f, 2f, 0f }, 25f),
                 Pose("sled", new[] { 1.6f, 1.5f, 1.6f }, new[] { 0f, 0.25f, 4f }, 45f),
                 Pose("pocket_close", new[] { duck.x + pocket.forward.x * 1.4f, 0.9f, duck.z + pocket.forward.z * 1.4f },
                     new[] { duck.x, 0.1f, duck.z }, 45f),

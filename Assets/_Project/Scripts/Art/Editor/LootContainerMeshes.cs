@@ -62,8 +62,14 @@ namespace MoonProject.Art.Editor
 
         public static readonly Vector3 PodItem = new Vector3(0f, 0.32f, 0f);
 
-        /// <summary>The supply pod's cracked beacon (pod space), on its nose.</summary>
-        public static readonly Vector3 PodBeacon = new Vector3(0.78f, 0.42f, 0.05f);
+        /// <summary>The supply pod's cracked locator beacon (pod space), atop its bent mast about 3.5 m up, where the
+        /// base can see it (M3-04: the ledge's warm light reads from home).</summary>
+        public static readonly Vector3 PodBeacon = new Vector3(-0.12f, 3.5f, 0.32f);
+
+        // The locator mast: its foot on the pod's tail, the kink the crash bent into it, and its top under the beacon.
+        private static readonly Vector3 MastFoot = new Vector3(-0.42f, 0.72f, 0f);
+        private static readonly Vector3 MastKink = new Vector3(-0.46f, 2.05f, 0.06f);
+        private static readonly Vector3 MastTop = PodBeacon - new Vector3(0f, 0.09f, 0f);
 
         /// <summary>A container's body: a box with a dark band round it, corner feet and a stencil plate.</summary>
         public static LowPolyMeshBuilder Body(Shape shape, float post)
@@ -117,8 +123,9 @@ namespace MoonProject.Art.Editor
 
         /// <summary>
         /// The supply pod (pod space: its middle on the ground, the drum lying along X, +Z its hatch side): a squat
-        /// drum half-sunk in the dust, a cone nose with its cracked beacon housing, fins at the tail and the hatch
-        /// cut-out on top, its edges dented from the fall.
+        /// drum half-sunk in the dust, a cone nose, fins at the tail and the hatch on top, its edges dented from the
+        /// fall; and its locator mast, bent at a kink from the crash, one guy wire still staked and the other snapped and
+        /// hanging, the beacon's housing at its top.
         /// </summary>
         public static LowPolyMeshBuilder PodBody()
         {
@@ -144,8 +151,18 @@ namespace MoonProject.Art.Editor
                     PaletteSwatch.Charcoal);
             }
 
-            b.Frustum(At(PodBeacon - Vector3.right * 0.02f, new Vector3(0f, 0f, -90f)), 0.07f, 0.05f, 0.05f, 8,
+            b.Prism(At(MastFoot + Vector3.up * 0.03f), 0.06f, 0.06f, 8, PaletteSwatch.Charcoal);
+            SiteKit.Bar(b, MastFoot, MastKink, 0.045f, PaletteSwatch.Metal);
+            SiteKit.Bar(b, MastKink, MastTop, 0.04f, PaletteSwatch.Metal);
+            b.Icosphere(At(MastKink), 0.04f, 0, PaletteSwatch.Rust);
+            b.Frustum(At(MastTop + Vector3.up * 0.02f), 0.05f, 0.075f, 0.05f, 8, PaletteSwatch.Charcoal);
+            b.Frustum(At(PodBeacon + Vector3.up * 0.08f), 0.075f, 0.03f, 0.04f, 8, PaletteSwatch.Charcoal);
+            Vector3 guyHigh = Vector3.Lerp(MastKink, MastTop, 0.45f);
+            SiteKit.Cable(b, SiteKit.Sag(guyHigh, new Vector3(-1.6f, 0.02f, 1.1f), 0.06f, 6), 0.006f,
                 PaletteSwatch.Charcoal);
+            b.Box(At(new Vector3(-1.6f, 0.04f, 1.1f)), new Vector3(0.05f, 0.08f, 0.05f), PaletteSwatch.Metal);
+            SiteKit.Cable(b, new[] { guyHigh, guyHigh + new Vector3(0.12f, -0.55f, -0.18f),
+                guyHigh + new Vector3(0.2f, -0.95f, -0.2f) }, 0.006f, PaletteSwatch.Charcoal);
             return b;
         }
 

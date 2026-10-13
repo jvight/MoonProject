@@ -23,8 +23,8 @@ namespace MoonProject.Art.Tests
             Assert.IsNotNull(container.Mesh, "the body");
             MeshChecks.AssertWellFormed(container.Mesh.Geometry);
             ModelNode lid = container.Children.Single(n => n.Name == LootContainerBuilder.LidName);
-            AssertSealedLid(lid, container.Mesh.Geometry.Bounds);
             ModelNode item = container.Children.Single(n => n.Name == LootContainerBuilder.ItemSocketName);
+            AssertSealedLid(lid, item.LocalPosition);
             Assert.IsNull(item.Mesh);
             Assert.IsTrue(container.Mesh.Geometry.Bounds.Contains(item.LocalPosition), "the find sits inside");
             Assert.IsFalse(MeshChecks.Swatches(container.Mesh.Geometry).Any(Palette.IsEmissive),
@@ -38,7 +38,7 @@ namespace MoonProject.Art.Tests
                 .Single(n => n.Name == LootContainerBuilder.GlowName);
             Assert.AreEqual(ModelMaterial.PaletteGlowOff, glow.Material, "dark until World lights it");
             Assert.IsTrue(MeshChecks.Swatches(glow.Mesh.Geometry).All(Palette.IsEmissive));
-            Assert.Greater(glow.LocalPosition.y, 0.2f, "on the pod, not a halo on the ground");
+            Assert.AreEqual(3.5f, glow.LocalPosition.y, 0.25f, "atop its locator mast, about 3.5 m up, seen from home");
         }
 
         [Test]
@@ -54,15 +54,15 @@ namespace MoonProject.Art.Tests
             ModelNode dug = sled.Children.Single(n => n.Name == LootContainerBuilder.PartSocketPrefix + "1");
             Assert.Less(dug.LocalPosition.y, 0.1f, "dug from the gap under the hull");
             ModelNode pod = sled.Children.Single(n => n.Name == LootContainerBuilder.SensorPodName);
-            AssertSealedLid(pod.Children.Single(n => n.Name == LootContainerBuilder.LidName), pod.Mesh.Geometry.Bounds);
-            Assert.IsNotNull(pod.Children.SingleOrDefault(n => n.Name == LootContainerBuilder.PartSocketPrefix + "2"));
+            ModelNode inside = pod.Children.Single(n => n.Name == LootContainerBuilder.PartSocketPrefix + "2");
+            AssertSealedLid(pod.Children.Single(n => n.Name == LootContainerBuilder.LidName), inside.LocalPosition);
         }
 
-        private static void AssertSealedLid(ModelNode lid, Bounds body)
+        private static void AssertSealedLid(ModelNode lid, Vector3 find)
         {
             Assert.IsNotNull(lid.Mesh);
             Assert.AreEqual(Quaternion.identity, lid.LocalRotation, "shut at rest");
-            Assert.Greater(lid.LocalPosition.y, body.center.y, "hinged high on the body");
+            Assert.Greater(lid.LocalPosition.y, find.y, "the lid closes over the find");
             ModelNode cut = lid.Children.Single(n => n.Name == LootContainerBuilder.CutPointName);
             Assert.IsNull(cut.Mesh);
             Assert.Greater(cut.LocalPosition.z, lid.Mesh.Geometry.Bounds.max.z - 0.03f, "on the front seam");
