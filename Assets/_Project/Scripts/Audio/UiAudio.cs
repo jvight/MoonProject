@@ -30,6 +30,9 @@ namespace MoonProject.Audio
         private CueHandle _holdComplete;
         private CueHandle _prompt;
         private CueHandle _slider;
+        private CueHandle _partPick;
+        private CueHandle _partDrop;
+        private CueHandle _partRefuse;
         private AudioSource _holdSwell;
         private float _holdCueVolume;
         private bool _holdStopping;
@@ -60,9 +63,13 @@ namespace MoonProject.Audio
             _holdComplete = director.Resolve(AudioCueIds.UiHoldComplete);
             _prompt = director.Resolve(AudioCueIds.UiPrompt);
             _slider = director.Resolve(AudioCueIds.UiSlider);
+            _partPick = director.Resolve(AudioCueIds.PartPick);
+            _partDrop = director.Resolve(AudioCueIds.PartDrop);
+            _partRefuse = director.Resolve(AudioCueIds.PartRefuse);
             CueHandle holdFill = director.Resolve(AudioCueIds.UiHoldFill);
             if (!(_menuOpen.IsValid && _menuClose.IsValid && _focus.IsValid && _confirm.IsValid && _back.IsValid &&
-                  _card.IsValid && _holdComplete.IsValid && _prompt.IsValid && _slider.IsValid && holdFill.IsValid))
+                  _card.IsValid && _holdComplete.IsValid && _prompt.IsValid && _slider.IsValid && holdFill.IsValid &&
+                  _partPick.IsValid && _partDrop.IsValid && _partRefuse.IsValid))
             {
                 enabled = false;
                 return;
@@ -140,6 +147,15 @@ namespace MoonProject.Audio
                     break;
                 case UiCueKind.SliderStep:
                     PlaySoftened(_slider, _sliderRepeats, _tuning.SliderMinInterval);
+                    break;
+                case UiCueKind.PartPick:
+                    _director.Play2D(_partPick);
+                    break;
+                case UiCueKind.PartDrop:
+                    _director.Play2D(_partDrop);
+                    break;
+                case UiCueKind.PartRefuse:
+                    _director.Play2D(_partRefuse);
                     break;
                 default:
                     Debug.LogError($"{nameof(UiAudio)}: no sound for UI cue {cue.Kind}.", this);
