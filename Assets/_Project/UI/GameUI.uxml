@@ -273,7 +273,12 @@
                         <ui:Label name="cargo-waiting" class="cargo__note" picking-mode="Ignore" />
                         <ui:VisualElement name="cargo-hold-grid" class="cargo__grid" picking-mode="Ignore" />
                     </ui:VisualElement>
+                    <ui:VisualElement name="cargo-home-column" class="cargo__column cargo__column--home" picking-mode="Ignore">
+                        <ui:Label class="cargo__heading loc" text="hint.shelves" picking-mode="Ignore" />
+                        <ui:VisualElement name="cargo-home-grid" class="cargo__grid" picking-mode="Ignore" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
+                <ui:Label name="cargo-transfer-hint" class="cargo__transfer-hint" picking-mode="Ignore" />
                 <ui:Label name="cargo-summary" class="cargo__summary" picking-mode="Ignore" />
             </ui:VisualElement>
         </ui:VisualElement>

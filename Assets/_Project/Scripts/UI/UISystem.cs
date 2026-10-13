@@ -352,6 +352,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<FeelBeat>(OnFeelBeat));
             _tokens.Add(events.Subscribe<UpgradePurchased>(OnUpgradePurchased));
             _tokens.Add(events.Subscribe<CargoChanged>(OnCargoChanged));
+            _tokens.Add(events.Subscribe<HomeStorageChanged>(_ => _cargo?.MarkDirty()));
             _tokens.Add(events.Subscribe<FriendPartCollected>(_ => _director.NotifyUsed(InteractionKind.PickUp)));
             _tokens.Add(events.Subscribe<CrewCrateOpened>(OnCrewCrateOpened));
             _tokens.Add(events.Subscribe<GameSaved>(OnGameSaved));
@@ -471,7 +472,7 @@ namespace MoonProject.UI
             _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
             _rewardCard = new RewardCard(_layout, _tuning.RewardCard, _localization, services.Shop);
             _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold,
-                _numbers, services.Events, _ledger);
+                services.Home, services.Transfer, services.Dock, _numbers, services.Events, _ledger);
             _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization, _glyphs);
             _crateNote = new CrateNote(_layout, _tuning.CrateNote, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
@@ -544,6 +545,11 @@ namespace MoonProject.UI
             bool paused = _pause.IsOpen;
             _map?.Tick(deltaTime, paused);
             _cargo.Tick(deltaTime, ScreenSize());
+            if (_cargo.IsOpen && _cargo.IsTransferView && !_services.Dock.IsDocked)
+            {
+                CloseCargo();
+            }
+
             bool onMap = (_map != null && _map.IsOpen) || _cargo.IsOpen;
             _backdrop.Set(Mathf.Max(Mathf.Max(_pause.Openness, _map != null ? _map.Openness : 0f), _cargo.Openness));
             float hudTime = paused ? 0f : deltaTime;
@@ -745,6 +751,7 @@ namespace MoonProject.UI
             _cargo.Open();
             _services.Input.Disable();
             _cursor.Menu();
+            _cargo.FocusFirst();
             _events.Publish(new UiCue(UiCueKind.Confirm));
         }
 

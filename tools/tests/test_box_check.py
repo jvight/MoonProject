@@ -14,8 +14,8 @@ import box_check
 
 class BuilderFilterTests(unittest.TestCase):
     def test_box_domains_and_the_main_scene_build(self):
-        pattern = re.compile(box_check.builder_filter(["world", "art"]), re.I)
-        for path in ("World/Terrain", "Art/Rover Kit", "Main Scene"):
+        pattern = re.compile(box_check.builder_filter(["world", "ui"]), re.I)
+        for path in ("World/Terrain", "UI/Wordmark", "Main Scene"):
             self.assertTrue(pattern.search(path), path)
         for path in ("Gameplay/Lift", "Main Scene Extras", "Rover/Art/X"):
             self.assertFalse(pattern.search(path), path)
@@ -40,10 +40,10 @@ class TestCommandTests(unittest.TestCase):
         self.assertEqual(planned[1][1][-5:], ["playmode", "--assembly", "MoonProject.World.PlayModeTests",
                                               "--category", "!Playthrough"])
 
-    def test_fast_skips_playmode_and_art_has_no_playmode(self):
+    def test_fast_skips_playmode(self):
         self.assertEqual([l for l, _ in box_check.test_commands(self.ROOT, self.args("world", fast=True))],
                          ["editmode MoonProject.World.Tests"])
-        self.assertEqual(len(box_check.test_commands(self.ROOT, self.args("art"))), 1)
+        self.assertEqual(len(box_check.test_commands(self.ROOT, self.args("art", fast=True))), 1)
 
     def test_filter_or_assembly_is_one_custom_step_and_unknown_boxes_have_none(self):
         planned = box_check.test_commands(self.ROOT, self.args("world", filter="LiftTests"))

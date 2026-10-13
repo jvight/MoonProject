@@ -3,6 +3,7 @@ tools/director.py helpers behind `land --batch`: the builder regex and the workt
 Run: python -m unittest discover -s tools/tests -t tools
 """
 import argparse
+import json
 import os
 import re
 import tempfile
@@ -129,6 +130,47 @@ class PlayModeShardTests(unittest.TestCase):
         self.assertEqual(pool(False, 2), [director.VERIFY_WORKTREE, director.VERIFY_WORKTREE_2])
         self.assertNotIn(director.VERIFY_WORKTREE_2, pool(True, 3))
         self.assertIn(director.VERIFY_WORKTREE_2, pool(True, 2, skip=True))
+
+
+
+class ExplicitSessionTests(unittest.TestCase):
+    def tree(self, tmp):
+        root = Path(tmp)
+        folder = root / "Assets/_Project/Scripts/Gameplay/Tests/PlayMode"
+        folder.mkdir(parents=True)
+        (folder / "G.asmdef").write_text(json.dumps({"name": "MoonProject.Gameplay.PlayModeTests",
+                                                     "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+                                                     "references": ["UnityEngine.TestRunner"]}), encoding="utf-8")
+        (folder / "Lift.cs").write_text(
+            "namespace MoonProject.Gameplay.PlayModeTests\n{\n    /// <summary>x</summary>\n"
+            "    [Explicit(\"slow\")]\n    [Category(\"LiftSession\")]\n    public sealed class LiftSession { }\n"
+            "    public sealed class Quick { }\n}\n", encoding="utf-8")
+        (folder / "Golden.cs").write_text(
+            "namespace MoonProject.Gameplay.PlayModeTests\n{\n    [Explicit]\n    [Category(\"Playthrough\")]\n"
+            "    public sealed class GoldenPath { }\n}\n", encoding="utf-8")
+        return root
+
+    def test_explicit_fixtures_are_found_with_their_category_and_the_playthrough_is_left_out(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            sessions = director.explicit_sessions(self.tree(tmp))
+        self.assertEqual(sessions, [("LiftSession", "MoonProject.Gameplay.PlayModeTests.LiftSession",
+                                     "MoonProject.Gameplay.PlayModeTests")])
+
+    def test_steps_shard_categories_by_measured_time_and_size_their_timeout(self):
+        sessions = [("A", "N.A", "X"), ("B", "N.B", "X"), ("C", "N.C", "X")]
+        steps = director.explicit_steps(sessions, {"N.A": 3000.0, "N.B": 100.0}, 2, ["py", "tests", "--platform"])
+        # The unmeasured C weighs the median measured time (3000 s), so it gets a shard of its own.
+        self.assertEqual([label for label, _ in steps], ["explicit A B", "explicit C"])
+        first, second = steps[0][1], steps[1][1]
+        self.assertEqual(first[first.index("--timeout") + 1], str(int(3100 * 1.5) + 300))
+        self.assertEqual(first[-4:], ["--category", "A", "--category", "B"])
+        # 300 s margin + 600 s unmeasured allowance is under the floor, the Playthrough's 2700 s.
+        self.assertEqual(second[second.index("--timeout") + 1], "2700")
+        self.assertEqual(director.explicit_steps([], {}, 2, ["py"]), [])
+
+    def test_a_fixture_without_a_category_stops_the_plan(self):
+        with self.assertRaises(SystemExit):
+            director.explicit_steps([(None, "N.A", "X")], {}, 1, ["py"])
 
 
 if __name__ == "__main__":

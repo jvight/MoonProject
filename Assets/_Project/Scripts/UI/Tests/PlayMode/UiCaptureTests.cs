@@ -809,6 +809,17 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsTrue(ui.Cargo.IsOpen && !ui.Cargo.IsBooting);
             yield return Capture(camera, folder, "95_cargo_screen");
             ui.Cargo.Close();
+            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeOut + 0.4f);
+            fakes.Home.Set(3, new MaterialSlot(SalvageMaterial.Metal, 4, 4), new MaterialSlot(SalvageMaterial.Wiring, 4, 4),
+                new MaterialSlot(SalvageMaterial.Optics, 2, 4), new MaterialSlot(SalvageMaterial.Ilmenite, 6, 6));
+            fakes.Dock.IsDocked = true;
+            ui.Cargo.Open();
+            ui.Cargo.FocusFirst();
+            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeIn + 0.6f);
+            Assert.IsTrue(ui.Cargo.IsTransferView, "docked, the hold sits beside home's shelves");
+            yield return Capture(camera, folder, "95b_transfer_view");
+            fakes.Dock.IsDocked = false;
+            ui.Cargo.Close();
             yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeOut + 0.6f);
 
             ui.UnlockCard.Gained(RoverAbility.Tether);
@@ -1473,7 +1484,7 @@ namespace MoonProject.UI.PlayModeTests
             ui.Initialize(new UiServices(context.Events, context.Input, fakes, fakes, context.Get<IAudioSettings>(),
                 context.Get<ILookSettings>(), context.Get<IFeelSettings>(), save, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes,
                 fakes, context.Get<IGameFlow>(), new SettingsFile(SaveService.DefaultDirectory, _slot), fakes, fakes,
-                fakes, fakes, fakes, context.Get<IWorldLayout>(), fakes, fakes.Hold, fakes.Catalog));
+                fakes, fakes, fakes, context.Get<IWorldLayout>(), fakes, fakes.Hold, fakes.Catalog, fakes.Dock, fakes.Home, fakes.Transfer));
             save.Load();
             return ui;
         }
