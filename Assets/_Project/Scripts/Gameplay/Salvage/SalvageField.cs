@@ -206,8 +206,13 @@ namespace MoonProject.Gameplay
             {
                 if (!services.Anchors.TryGet(entries[i].AnchorId, out WorldAnchor anchor))
                 {
-                    Fail($"'{entries[i].AnchorId}' stands on a world anchor the World does not publish " +
-                         "(world anchors contract).");
+                    Fail($"'{entries[i].Id}' stands on '{entries[i].AnchorId}', a world anchor the World does not " +
+                         "publish (world anchors contract).");
+                    return false;
+                }
+
+                if (!string.IsNullOrEmpty(entries[i].HostSocket) && !TryHost(entries[i], anchor, out anchor))
+                {
                     return false;
                 }
 
@@ -216,13 +221,33 @@ namespace MoonProject.Gameplay
                     out SalvageSite site);
                 if (problem != null)
                 {
-                    Fail($"'{entries[i].AnchorId}': {problem} (salvage site contract, docs/features/M3-13).");
+                    Fail($"'{entries[i].Id}': {problem} (salvage site contract, docs/features/M3-13).");
                     return false;
                 }
 
                 sites.Add(site);
             }
 
+            return true;
+        }
+
+        /// <summary>
+        /// Where a derelict inside a wreck stands: the wreck's node, with the wreck's footprint. False (logged) when
+        /// the wreck or its node is missing.
+        /// </summary>
+        private bool TryHost(SalvageSiteEntry entry, WorldAnchor wreckAnchor, out WorldAnchor seat)
+        {
+            SalvageSite wreck = Find(entry.AnchorId);
+            Transform socket = wreck != null ? wreck.Root.Find(entry.HostSocket) : null;
+            if (socket == null)
+            {
+                Fail($"'{entry.Id}' stands inside '{entry.AnchorId}' on its '{entry.HostSocket}' node, which " +
+                     $"{(wreck == null ? "is no salvage site" : "it does not have")} (Art's site contract).");
+                seat = default;
+                return false;
+            }
+
+            seat = new WorldAnchor(entry.Id, socket.position, socket.forward, wreckAnchor.Radius);
             return true;
         }
 

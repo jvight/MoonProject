@@ -330,6 +330,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsNotNull(mule, "the Mule stands on micro.mule");
             CollectionAssert.DoesNotContain(salvage.Sites, mule, "a derelict is no wreck site: no sonar, no map");
             Assert.AreEqual(0, elder.Pieces.Count, "06 has nothing to cut");
+            Transform hut = elder.Root.Find("HutSocket/RelayHut");
+            Assert.IsNotNull(hut, "relay.2's hut stands on 06's HutSocket: 06 slumps against it");
+            Assert.IsNotNull(hut.GetComponentInChildren<MeshCollider>(), "solid to 07");
+            SalvageSite haulBot = salvage.FindDerelict(GameplayFixture.HaulBot);
+            Transform seat = _fixture.FindSite("drill").Root.Find("HaulBotSocket");
+            Assert.Less(Vector3.Distance(haulBot.Root.position, seat.position), 1e-3f,
+                "the haul bot stands inside the drill site, on its seat");
+            Assert.AreEqual(1, haulBot.Pieces.Count, "its load to cut");
+            CollectionAssert.Contains(salvage.Pieces, haulBot.Pieces[0]);
             Assert.IsNull(mule.Crate, "and no crew crate");
             Assert.AreEqual(1, mule.Pieces.Count);
             SalvagePiece skirt = mule.Pieces[0];
