@@ -7,6 +7,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Save;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
 
@@ -50,6 +51,29 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture?.Dispose();
             Object.Destroy(_controls);
             base.TearDown();
+        }
+
+        [UnityTest]
+        public IEnumerator ANewGame_Carries07sSpares_AndALoadedSaveKeepsItsOwnHold()
+        {
+            string slot = BootstrapHarness.NewTestSlot();
+            _fixture = GameplayFixture.Boot(_controls, slot, spares: true);
+            yield return null;
+            MaterialStock stock = _fixture.Gameplay.Materials;
+            Recipe spares = _fixture.CargoTuning.StarterItems;
+            Assert.AreEqual(spares.Metal, stock.Hold.Units(SalvageMaterial.Metal), "07's spares, aboard");
+            Assert.AreEqual(spares.Wiring, stock.Hold.Units(SalvageMaterial.Wiring));
+            Assert.AreEqual(spares.Total, stock.Total);
+            Assert.IsTrue(stock.TrySpend(new Recipe(spares.Metal, 0, 0)), "07 spends its metal");
+            Assert.IsTrue(_fixture.Bootstrap.Context.Get<ISaveService>().SaveNow());
+
+            _fixture.Dispose(true);
+            yield return null;
+            _fixture = GameplayFixture.Boot(_controls, slot, spares: true);
+            yield return null;
+            stock = _fixture.Gameplay.Materials;
+            Assert.AreEqual(0, stock.Hold.Units(SalvageMaterial.Metal), "the save's hold, no spares again");
+            Assert.AreEqual(spares.Wiring, stock.Hold.Units(SalvageMaterial.Wiring));
         }
 
         [UnityTest]

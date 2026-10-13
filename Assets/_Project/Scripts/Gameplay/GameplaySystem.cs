@@ -75,6 +75,9 @@ namespace MoonProject.Gameplay
 
         public MaterialStock Materials { get; private set; }
 
+        /// <summary>Cargo and storage tuning (07's spares, the hold, home's shelves).</summary>
+        public CargoTuning Cargo => _cargo;
+
         /// <summary>07's cutter as its fitted kits make it (docs/features/M3-26).</summary>
         public Cutter Cutter { get; private set; }
 
@@ -249,6 +252,7 @@ namespace MoonProject.Gameplay
             var storage = new HomeStorage(context.Events, _materialCatalog, _cargo.ShelfLayout(),
                 _cargo.BuiltInShelves);
             Materials = new MaterialStock(context.Events, hold, storage);
+            Materials.Stow(_cargo.StarterItems);
             var save = context.Get<ISaveService>();
             var services = new GameplayServices(context.Events, context.Input, context.Get<ITerrainQuery>(),
                 context.Get<IWorldLayout>(), context.Get<IWorldAnchors>(), context.Get<IRoverState>(),

@@ -722,7 +722,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             _gameplay.StartCoroutine(TrackTheBattery(_context.Get<IBeamStatus>()));
             _pilot = new Autopilot(_rover);
             _rover.SetDriveSource(_pilot);
-            Assert.AreEqual(0, _gameplay.Materials.Total, "a fresh game (its own save slot)");
+            Recipe spares = _gameplay.Cargo.StarterItems;
+            Assert.AreEqual(spares.Metal, _gameplay.Materials.Hold.Units(SalvageMaterial.Metal),
+                "a fresh game (its own save slot): 07's spares in its hold");
+            Assert.AreEqual(spares.Wiring, _gameplay.Materials.Hold.Units(SalvageMaterial.Wiring));
+            Assert.AreEqual(spares.Total, _gameplay.Materials.Total, "and nothing else");
             SalvageField salvage = _gameplay.Salvage;
             int units = 0;
             foreach (SalvagePiece piece in salvage.Pieces)

@@ -15,6 +15,10 @@ MonoBehaviour:
   _holdSlots: 8
   _cradleSlots: 2
   _sideBinSlots: 4
+  _starterItems:
+    _metal: 2
+    _wiring: 1
+    _optics: 0
   _shelfSlots: 12
   _builtInShelves: 2
   _shelfSockets: 2
