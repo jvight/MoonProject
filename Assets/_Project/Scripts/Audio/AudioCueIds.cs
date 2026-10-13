@@ -63,6 +63,9 @@ namespace MoonProject.Audio
         public const string ScanStep = "scan_step";
         public const string ScanLiftoff = "scan_liftoff";
         public const string SheetComplete = "sheet_complete";
+        public const string PartPick = "part_pick";
+        public const string PartDrop = "part_drop";
+        public const string PartRefuse = "part_refuse";
         public const string RecycleCrunch = "recycle_crunch";
         public const string PartRemove = "part_remove";
         public const string PickupLift = "pickup_lift";

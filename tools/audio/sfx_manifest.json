@@ -509,6 +509,87 @@
       "notes": "07's machine voice, greeting (feel-pass 7.2); syllables in chirp_syllables.json."
     },
     {
+      "id": "part_pick",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/part_pick.wav"
+      ],
+      "variantLabels": [
+        "part_pick"
+      ],
+      "sha256": [
+        "6c28cb8a03417ec71371159746241b150262af26b153f60e215727b4796c52b4"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5: picking a part up in the 07 tab: a light tick rising E5 -> A5."
+    },
+    {
+      "id": "part_drop",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/part_drop.wav"
+      ],
+      "variantLabels": [
+        "part_drop"
+      ],
+      "sha256": [
+        "b2520b591ef9fcd250c255965fa91d3e8f58422a6294f3b14bf4735774ce0fc6"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5: a part dropped on a valid socket: a seated tick on D5 over a felt thud."
+    },
+    {
+      "id": "part_refuse",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/part_refuse.wav"
+      ],
+      "variantLabels": [
+        "part_refuse"
+      ],
+      "sha256": [
+        "8c1eedfb89fd7fa4ad05c1ccf9778a06d44ae3e99ab79d4e5a649225ec7ad07a"
+      ],
+      "volumeMin": 0.4,
+      "volumeMax": 0.4,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5: a drop refused: two soft muted ticks falling B4 -> F#4."
+    },
+    {
       "id": "sheet_complete",
       "category": "stinger_2d",
       "milestone": "M3",

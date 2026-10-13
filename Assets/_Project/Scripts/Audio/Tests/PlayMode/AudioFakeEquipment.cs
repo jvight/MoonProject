@@ -5,7 +5,7 @@ using MoonProject.Core.Events;
 namespace MoonProject.Audio.PlayModeTests
 {
     /// <summary>07's equipment for audio tests: the parts a test says are on 07, as a loaded game has.</summary>
-    public sealed class FakeEquipment : IRoverEquipment
+    public sealed class AudioFakeEquipment : IRoverEquipment
     {
         private readonly Dictionary<RoverSocket, RoverKitPiece> _fitted =
             new Dictionary<RoverSocket, RoverKitPiece>();

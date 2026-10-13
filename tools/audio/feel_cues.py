@@ -678,3 +678,31 @@ def sheet_complete(_variant, gen):
               samples(0.14 * index))
     place(mix, 0.12 * instruments.soft_bell(note_freq("D5"), 2.0, decay=1.6, attack=0.05), samples(0.56))
     return filters.lowpass(mix, 4500.0)
+
+
+# ------------------------------------------------------------------- 0.5.5: the 07 tab's drag and drop (ui)
+
+def part_pick(_variant, gen):
+    """Picking a part up in the 07 tab: a light lift, a tick rising E5 -> A5, soft and tactile."""
+    n = samples(0.25)
+    mix = np.zeros(n)
+    place(mix, 0.2 * _tick(gen, note_freq("E5"), 0.12), 0)
+    place(mix, 0.22 * _tick(gen, note_freq("A5"), 0.15), samples(0.05))
+    return filters.lowpass(mix, 4500.0)
+
+
+def part_drop(_variant, gen):
+    """Dropping a part on a valid socket: a seated tick on D5 over a small felt thud, settling."""
+    n = samples(0.35)
+    mix = 0.25 * np.concatenate((_chassis_thump(0.08, 110.0), np.zeros(n - samples(0.08))))
+    place(mix, 0.25 * _tick(gen, note_freq("D5"), 0.2), samples(0.01))
+    return filters.lowpass(mix, 4000.0)
+
+
+def part_refuse(_variant, gen):
+    """A drop the socket refuses: two soft, muted ticks falling B4 -> F#4, gentle, never a buzzer."""
+    n = samples(0.3)
+    mix = np.zeros(n)
+    place(mix, 0.18 * _tick(gen, note_freq("B4"), 0.1), 0)
+    place(mix, 0.18 * _tick(gen, note_freq("F#4"), 0.15), samples(0.09))
+    return filters.lowpass(mix, 2500.0)
