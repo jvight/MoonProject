@@ -10,7 +10,7 @@ Usage:
                                 [--dry-run] [--worktree PATH]
   python tools/director.py refresh [--filter REGEX] [--scene]
   python tools/director.py outputs -m MESSAGE [-m MESSAGE ...]
-  python tools/director.py verify [--skip-playthrough] [--parallel] [--shards N] [--push]
+  python tools/director.py verify [--skip-playthrough] [--parallel] [--shards N] [--explicit] [--dry-run] [--push]
 
 status   every box branch against main (ahead, behind, uncommitted files in its worktree), main against origin and
          the verification worktree, the batch slots, whether the main editor is idle, and the last status block of
@@ -37,6 +37,10 @@ verify   fast-forwards the verification worktree to main and runs compile_check,
          the shard worktrees (director, then director2 unless it runs the Playthrough, then landtest; each must
          exist, except director2 which is created on first use), balanced on the assembly times of the last full
          run, so it takes the longest shard's time, not the sum; --shards N caps it (1 = one Unity, as before).
+         --explicit also runs every [Explicit] PlayMode session (the slow real-scene sessions box_check and the
+         default verify skip, e.g. LiftSession, CanyonSession) by its [Category], sharded the same way after the
+         PlayMode shards, one PASS/FAIL line per shard; run it before every release build. --dry-run prints the
+         plan (PlayMode shards, explicit shards) and stops without touching a worktree.
          --push pushes the verified commit to origin/main when every step passed.
 
 Each -m is one paragraph of the commit message, as with git.
@@ -570,6 +574,81 @@ def shard(assemblies, seconds, count):
     return [sorted(s) for s in shards]
 
 
+EXPLICIT_RE = re.compile(r"\[\s*(?:NUnit\.Framework\.)?Explicit\b")
+CATEGORY_RE = re.compile(r"\[\s*(?:NUnit\.Framework\.)?Category\s*\(\s*\"([^\"]+)\"")
+CLASS_RE = re.compile(r"\bclass\s+(\w+)")
+NAMESPACE_RE = re.compile(r"\bnamespace\s+([\w.]+)")
+PLAYTHROUGH_CATEGORY = "Playthrough"
+EXPLICIT_TIME_FACTOR = 1.5
+EXPLICIT_MARGIN = 300
+EXPLICIT_UNMEASURED_SECONDS = 600
+
+
+def explicit_sessions(worktree):
+    """[(category or None, fixture full name, assembly)] of every [Explicit] fixture in the PlayMode test
+    assemblies, except the Playthrough (verify runs it as its own step)."""
+    root = worktree / "Assets" / "_Project"
+    playmode = set(playmode_assemblies(worktree))
+    owners = sorted(((p.parent, json.loads(p.read_text(encoding="utf-8-sig"))["name"]) for p in root.rglob("*.asmdef")),
+                    key=lambda t: len(t[0].parts), reverse=True)
+    sessions = []
+    for path in sorted(root.rglob("*.cs")):
+        assembly = next((name for folder, name in owners if folder in path.parents), None)
+        if assembly not in playmode:
+            continue
+        text = path.read_text(encoding="utf-8-sig")
+        namespace = NAMESPACE_RE.search(text)
+        for match in EXPLICIT_RE.finditer(text):
+            declaration = CLASS_RE.search(text, match.end())
+            if declaration is None:
+                continue
+            attributes = text[max(text.rfind("}", 0, match.start()), text.rfind(";", 0, match.start())) + 1:
+                              declaration.start()]
+            categories = CATEGORY_RE.findall(attributes)
+            if PLAYTHROUGH_CATEGORY in categories:
+                continue
+            full_name = (namespace.group(1) + "." if namespace else "") + declaration.group(1)
+            sessions.append((categories[0] if categories else None, full_name, assembly))
+    return sessions
+
+
+def fixture_seconds(worktree):
+    """{fixture full name: seconds} from the newest PlayMode runs in <worktree> that ran each fixture."""
+    seconds = {}
+    for run in sorted((worktree / "Logs" / "batch").glob("*-tests-playmode"), reverse=True):
+        try:
+            root = ElementTree.parse(run / "results.xml").getroot()
+        except (OSError, ElementTree.ParseError):
+            continue
+        for suite in root.iter("test-suite"):
+            if suite.get("type") == "TestFixture":
+                seconds.setdefault(suite.get("fullname", ""), float(suite.get("duration", 0)))
+    return seconds
+
+
+def explicit_steps(sessions, seconds, count, batch):
+    """(label, command) per shard of the explicit sessions' categories, longest fixture first onto the lightest
+    shard. A fixture without a [Category] stops the plan: the runner ANDs a category and a name filter."""
+    missing = [name for category, name, _ in sessions if category is None]
+    if missing:
+        fail("[Explicit] fixtures need a [Category] for verify --explicit: " + ", ".join(missing))
+    weights = {category: seconds[name] for category, name, _ in sessions if name in seconds}
+    categories = sorted({category for category, _, _ in sessions})
+    return [(f"explicit {' '.join(keys)}",
+             batch + ["playmode", "--timeout", str(explicit_timeout(keys, weights))]
+             + [arg for key in keys for arg in ("--category", key)])
+            for keys in (shard(categories, weights, count) if categories else [])]
+
+
+def explicit_timeout(keys, weights):
+    """Seconds one explicit shard may run: half again its measured time plus a margin, and an unmeasured session's
+    allowance for each session never timed; never under the Playthrough's."""
+    known = sum(weights[key] for key in keys if key in weights)
+    unknown = sum(1 for key in keys if key not in weights)
+    return max(PLAYTHROUGH_TIMEOUT, int(known * EXPLICIT_TIME_FACTOR) + EXPLICIT_MARGIN
+               + unknown * EXPLICIT_UNMEASURED_SECONDS)
+
+
 def shard_worktrees(args):
     """Worktrees PlayMode shards run in: director first, director2 when it is not running the Playthrough, then the
     spare landtest worktree when it exists."""
@@ -582,6 +661,9 @@ def shard_worktrees(args):
 
 
 def cmd_verify(args):
+    if args.dry_run:
+        print_plan(args)
+        return
     if not VERIFY_WORKTREE.exists():
         fail(f"no verification worktree at {VERIFY_WORKTREE}")
     with contextlib.ExitStack() as locks:
@@ -592,6 +674,34 @@ def cmd_verify(args):
         verify(args)
 
 
+def plan(args, tree):
+    """(PlayMode shard steps, explicit shard steps) for <tree>, one shard per worktree of the pool."""
+    batch = [sys.executable, "tools/unity_batch.py", "tests", "--platform"]
+    count = len(shard_worktrees(args))
+    shards = shard(playmode_assemblies(tree), last_playmode_seconds(VERIFY_WORKTREE), count)
+    playmode = [(f"playmode {' '.join(a.removeprefix('MoonProject.') for a in names)}",
+                 batch + ["playmode"] + [arg for name in names for arg in ("--assembly", name)]
+                 + ["--category", "!Playthrough"]) for names in shards]
+    explicit = (explicit_steps(explicit_sessions(tree), fixture_seconds(VERIFY_WORKTREE), count, batch)
+                if args.explicit else [])
+    return playmode, explicit
+
+
+def print_plan(args):
+    playmode, explicit = plan(args, ROOT)
+    pool = [path.name for path, _ in shard_worktrees(args)]
+    say(f"verify plan for {git('log', '--oneline', '-1')} (dry run; no worktree touched)")
+    say("compile_check, editmode on " + pool[0])
+    for i, (label, command) in enumerate(playmode):
+        say(f"{label}  [{pool[i]}]")
+    for i, (label, command) in enumerate(explicit):
+        say(f"{label}  [{pool[i]}]  ->  {' '.join(command[3:])}")
+    if args.explicit and not explicit:
+        say("no [Explicit] PlayMode sessions found")
+    if not args.skip_playthrough:
+        say(f"playthrough  [{VERIFY_WORKTREE_2.name if args.parallel else pool[0]}]")
+
+
 def verify(args):
     sha = ready_worktree(VERIFY_WORKTREE, VERIFY_BRANCH)
     batch = [sys.executable, "tools/unity_batch.py", "tests", "--platform"]
@@ -599,10 +709,7 @@ def verify(args):
     for path, branch in pool[1:]:
         if ready_worktree(path, branch) != sha:
             fail(f"{path} is not at {sha[:7]}")
-    shards = shard(playmode_assemblies(VERIFY_WORKTREE), last_playmode_seconds(VERIFY_WORKTREE), len(pool))
-    playmode = [(f"playmode {' '.join(a.removeprefix('MoonProject.') for a in names)}",
-                 batch + ["playmode"] + [arg for name in names for arg in ("--assembly", name)]
-                 + ["--category", "!Playthrough"]) for names in shards]
+    playmode, explicit = plan(args, VERIFY_WORKTREE)
     playthrough = [("playthrough", batch + ["playmode", "--category", "Playthrough", "--timeout",
                                             str(PLAYTHROUGH_TIMEOUT)])]
     out_dir = ROOT / "Logs" / "director"
@@ -616,6 +723,8 @@ def verify(args):
         parallel = args.parallel and not args.skip_playthrough
         chains = [(path, [step], base.with_name(f"{base.name}.shard{i}.log"))
                   for i, ((path, _), step) in enumerate(zip(pool, playmode))]
+        for i, step in enumerate(explicit):
+            chains[i][1].append(step)
         chains[0] = (VERIFY_WORKTREE, [("editmode", batch + ["editmode"])] + chains[0][1],
                      base.with_suffix(".tests.log"))
         if parallel:
@@ -624,6 +733,7 @@ def verify(args):
             chains.append((VERIFY_WORKTREE_2, playthrough, base.with_suffix(".playthrough.log")))
         say(f"verify: EditMode, then PlayMode in {len(playmode)} shard(s) on "
             f"{', '.join(path.name for path, _ in pool[:len(playmode)])}"
+            + (f", then {len(explicit)} explicit shard(s)" if explicit else "")
             + (f", alongside the Playthrough in {VERIFY_WORKTREE_2.name}" if parallel else "")
             + f" (logs {base.name}.*.log)")
         threads = [threading.Thread(target=run_chain, args=(steps, path, log, len(chains) == 1, results))
@@ -641,7 +751,7 @@ def verify(args):
             summary += ["      " + line for line in tail]
     base.with_suffix(".txt").write_text("\n".join(summary) + "\n", encoding="utf-8")
     print("\n".join(summary))
-    expected = 2 + len(playmode) + (0 if args.skip_playthrough else 1)
+    expected = 2 + len(playmode) + len(explicit) + (0 if args.skip_playthrough else 1)
     if len(results) != expected or not all(ok for _, ok, _ in results):
         fail(f"{sha[:7]} did not verify")
     say(f"VERIFIED {sha[:7]}")
@@ -683,6 +793,9 @@ def main():
     verify.add_argument("--push", action="store_true", help="push the verified commit to origin/main")
     verify.add_argument("--parallel", action="store_true",
                         help="run the Playthrough in a second verification worktree alongside the suites")
+    verify.add_argument("--explicit", action="store_true",
+                        help="also run every [Explicit] PlayMode session, sharded, before a release build")
+    verify.add_argument("--dry-run", action="store_true", help="print the plan and stop; touches no worktree")
     verify.add_argument("--shards", type=int, default=MAX_SHARDS,
                         help=f"PlayMode shards, one Unity each (default and maximum {MAX_SHARDS}; 1 = unsharded)")
     args = ap.parse_args()
