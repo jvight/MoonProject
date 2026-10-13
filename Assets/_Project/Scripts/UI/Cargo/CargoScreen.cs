@@ -23,6 +23,7 @@ namespace MoonProject.UI
         public const string EmptyClass = "cargo__cell--empty";
         private const string TabOnClass = "settings-tab--on";
         private const string TabSkinOnClass = "settings-tab-wrap--on";
+        private const string TabFocusClass = "settings-tab-wrap--focus";
         private const float CellGap = 6f;
         private const float ColumnGap = 42f;
         private const float ShelfGap = 22f;
@@ -107,6 +108,8 @@ namespace MoonProject.UI
                 VisualElement skin = _tabs[i].parent;
                 new TabPainter(skin);
                 _tabs[i].clicked += () => SelectTab(tab);
+                _tabs[i].RegisterCallback<FocusInEvent>(_ => skin.AddToClassList(TabFocusClass));
+                _tabs[i].RegisterCallback<FocusOutEvent>(_ => skin.RemoveFromClassList(TabFocusClass));
             }
 
             for (int i = 0; i < _rows.Length; i++)

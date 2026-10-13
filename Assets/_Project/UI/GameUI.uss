@@ -1797,7 +1797,7 @@ Label {
     -unity-text-align: middle-center;
 }
 
-.pause .settings-tab:focus {
+.settings-tab-wrap--focus .settings-tab {
     color: var(--glass-sel-text);
 }
 
@@ -2168,10 +2168,6 @@ Label {
     flex-grow: 0;
     flex-basis: auto;
     width: 220px;
-}
-
-.cargo .settings-tab:focus {
-    color: var(--glass-sel-text);
 }
 
 .cargo__page {
