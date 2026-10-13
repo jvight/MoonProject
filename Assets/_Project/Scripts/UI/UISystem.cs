@@ -388,7 +388,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RelayRestored>(OnRelayRestored));
             _tokens.Add(events.Subscribe<RadioHopListChanged>(OnRadioHopListChanged));
             _tokens.Add(events.Subscribe<StationCued>(OnStationCued));
-            _tokens.Add(events.Subscribe<RoverKitFitted>(OnRoverKitFitted));
+            _tokens.Add(events.Subscribe<PartFitted>(OnPartFitted));
             _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
 
             services.Input.Menu.Enable();
@@ -1040,11 +1040,11 @@ namespace MoonProject.UI
             }
         }
 
-        private void OnRoverKitFitted(RoverKitFitted fitted)
+        private void OnPartFitted(PartFitted fitted)
         {
-            if (!KitNames.TryTitle(fitted, out string key))
+            if (!PartNames.TryTitle(fitted.Part, out string key))
             {
-                Debug.LogError($"{nameof(UISystem)}: {fitted.Piece} settled onto 07 (gift: {fitted.Gift}) with no " +
+                Debug.LogError($"{nameof(UISystem)}: {fitted.Part} settled onto 07 (gift: {fitted.Gift}) with no " +
                                "upgrade or gift to name it.", this);
                 return;
             }
@@ -1055,15 +1055,15 @@ namespace MoonProject.UI
             }
 
             _kitTitle.Enqueue(key);
-            if (AbilityTable.TryAbilityOf(fitted.Piece, out RoverAbility gained))
+            if (AbilityTable.TryAbilityOf(fitted.Part, out RoverAbility gained))
             {
                 _unlockCard.Gained(gained);
                 _cargo.MarkDirty();
             }
 
-            if (!fitted.Gift)
+            if (!fitted.Gift && PartNames.TryUpgradeId(fitted.Part, out string upgradeId))
             {
-                _tower.StationShowed(UpgradeStationKind.Workshop, fitted.UpgradeId);
+                _tower.StationShowed(UpgradeStationKind.Workshop, upgradeId);
             }
         }
 

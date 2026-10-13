@@ -239,7 +239,7 @@ namespace MoonProject.UI.PlayModeTests
             Boot();
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             yield return Seconds(0.3f);
-            Events.Publish(new RoverKitFitted(RoverKitPiece.HoverCoils, false, "rover.hover_jump"));
+            Events.Publish(new PartFitted(RoverSocket.Belly, RoverKitPiece.HoverCoils, false, false, default, 0));
             yield return Seconds(0.5f);
             Assert.IsTrue(_rig.Ui.UnlockCard.IsWaiting || _rig.Ui.UnlockCard.IsVisible);
             float limit = Time.realtimeSinceStartup + 20f;
@@ -682,11 +682,10 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(0, _rig.Fakes.LevelOf(hover.Id), "not the first on the list");
             Assert.IsTrue(panel.IsWorking, "the bay feeds and fits; nothing is said yet");
             Assert.AreEqual(string.Empty, layout.TowerHoldWord.text);
-            Events.Publish(new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty));
-            Events.Publish(new RoverKitInstalling(RoverKitPiece.CargoRack, false));
+            Events.Publish(new PartFitted(RoverSocket.Wing, RoverKitPiece.SolarCell, true, false, default, 0));
             yield return Seconds(StitchDelay);
             Assert.IsTrue(panel.IsWorking, "a gift or the install starting is not the piece set on");
-            Events.Publish(new RoverKitFitted(RoverKitPiece.CargoRack, false, cradle.Id));
+            Events.Publish(new PartFitted(RoverSocket.Hold, RoverKitPiece.CargoRack, false, false, default, 0));
             yield return null;
             Assert.IsTrue(panel.IsCelebrating, "the arms set the piece on: the bay's line comes");
             Assert.AreEqual(Text(UiKeys.BayFitted), layout.TowerHoldWord.text);
@@ -705,7 +704,7 @@ namespace MoonProject.UI.PlayModeTests
             Press(keyboard.eKey);
             yield return Seconds(_rig.Tuning.TowerPanel.TapSeconds + _rig.Tuning.TowerPanel.HoldSeconds + 0.3f);
             Assert.AreEqual(1, _rig.Fakes.LevelOf(hover.Id));
-            Events.Publish(new RoverKitFitted(RoverKitPiece.HoverCoils, false, hover.Id));
+            Events.Publish(new PartFitted(RoverSocket.Belly, RoverKitPiece.HoverCoils, false, false, default, 0));
             yield return Seconds(_rig.Tuning.TowerPanel.CelebrateSeconds + 0.5f);
             Release(keyboard.eKey);
             yield return Seconds(0.3f);
@@ -745,13 +744,11 @@ namespace MoonProject.UI.PlayModeTests
             yield return null;
             const string headlamp = "rover.warm_headlamp";
             KitTitleSettings settings = _rig.Tuning.KitTitle;
-            Events.Publish(new RoverKitInstalling(RoverKitPiece.LampBar, false));
             yield return Seconds(settings.Delay + settings.Reveal.FadeIn);
             Assert.IsFalse(_rig.Ui.KitTitle.IsVisible, "installing, not yet settled: no name before the piece lands");
 
-            Events.Publish(new RoverKitFitted(RoverKitPiece.LampBar, false, headlamp));
-            Events.Publish(new RoverKitInstalling(RoverKitPiece.SolarCell, true));
-            Events.Publish(new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty));
+            Events.Publish(new PartFitted(RoverSocket.Lamp, RoverKitPiece.LampBar, false, false, default, 0));
+            Events.Publish(new PartFitted(RoverSocket.Wing, RoverKitPiece.SolarCell, true, false, default, 0));
             yield return Seconds(settings.Delay + settings.Reveal.FadeIn + 0.2f);
             Assert.IsTrue(_rig.Ui.KitTitle.IsVisible);
             Assert.AreEqual(Text(UiKeys.UpgradeName(headlamp)), _rig.Ui.Layout.KitTitleName.text,
@@ -767,7 +764,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(Text(gift), _rig.Ui.Layout.KitTitleName.text);
 
             LogAssert.Expect(LogType.Error, new Regex("CargoRack settled onto 07"));
-            Events.Publish(new RoverKitFitted(RoverKitPiece.CargoRack, false, string.Empty));
+            Events.Publish(new PartFitted(RoverSocket.Hold, RoverKitPiece.CargoRack, false, false, default, 0));
         }
 
         [UnityTest]

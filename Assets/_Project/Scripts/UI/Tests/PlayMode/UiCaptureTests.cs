@@ -340,10 +340,9 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(_tuning.TowerPanel.TapSeconds + _tuning.TowerPanel.HoldSeconds +
                                                     0.3f);
             Release(keyboard.eKey);
-            context.Events.Publish(new RoverKitInstalling(RoverKitPiece.CargoRack, false));
             yield return new WaitForSecondsRealtime(KitSettleSeconds);
             yield return Capture(camera, folder, "44_bay_working");
-            context.Events.Publish(new RoverKitFitted(RoverKitPiece.CargoRack, false, _bayKit[1].Id));
+            context.Events.Publish(new PartFitted(RoverSocket.Hold, RoverKitPiece.CargoRack, false, false, default, 0));
             yield return new WaitForSecondsRealtime(LineShotSeconds);
             yield return Capture(camera, folder, "44b_bay_fitted_line");
             yield return new WaitForSecondsRealtime(_tuning.KitTitle.Delay + _tuning.KitTitle.Reveal.FadeIn);
@@ -351,9 +350,8 @@ namespace MoonProject.UI.PlayModeTests
             fakes.AtStation = false;
             yield return new WaitForSecondsRealtime(_tuning.KitTitle.HoldSeconds + _tuning.KitTitle.Reveal.FadeOut +
                                                     0.3f);
-            context.Events.Publish(new RoverKitInstalling(RoverKitPiece.SolarCell, true));
             yield return new WaitForSecondsRealtime(KitSettleSeconds);
-            context.Events.Publish(new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty));
+            context.Events.Publish(new PartFitted(RoverSocket.Wing, RoverKitPiece.SolarCell, true, false, default, 0));
             yield return new WaitForSecondsRealtime(_tuning.KitTitle.Delay + _tuning.KitTitle.Reveal.FadeIn + 0.4f);
             yield return Capture(camera, folder, "45_kit_title_gift");
             fakes.Bay = null;
