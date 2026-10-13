@@ -198,10 +198,10 @@ should feel like coming home on a winter night.
 |---|---|---|
 | Sky top | `#0B0E2A` | near-black indigo |
 | Sky horizon | `#3B2A6B` | violet glow band |
-| Moon dust light | `#A7A9CC` | lit dune faces |
-| Moon dust mid | `#7C7FAE` | default ground |
-| Moon dust shadow | `#45477A` | crater walls, shade |
-| Rock | `#5A5480` / `#6E6894` | props, rim mountains |
+| Moon dust light | `#A6A7AB` | lit dune faces |
+| Moon dust mid | `#787A80` | default ground |
+| Moon dust shadow | `#3E4048` | crater walls, shade |
+| Rock | `#525359` / `#6C6D72` | props, rim mountains |
 | Warm lamp | `#FFB547` | rover lamp, base windows |
 | Warm accent | `#FF8A5B` | rover paint, cosy details |
 | Cream | `#F4E6C8` | rover body, labels |
@@ -210,7 +210,7 @@ should feel like coming home on a winter night.
 | Biolum (eclipse) | `#3CFFC2` / `#FF5FD2` | late-game magic only |
 | Alert-soft | `#FF5A6E` | the peak's blinking light only |
 
-Swatches are authored for the earthlit phase. The sunlit phase warms highlights and rim light (it never changes the
+Swatches are authored for the earthlit phase (look A "Moon grey", owner pick 2026-10-13: near-neutral regolith; the sunlit phase is look C "Low sun"). The sunlit phase warms highlights and rim light (it never changes the
 swatches themselves), and permanently shadowed places never get it.
 
 Rules: max 4 swatches per object (the terrain is the exception: up to 6, the dust family plus Charcoal, which is kept for depth such as the chasm trough), emissive only for things that are *alive* (lamps, scrap, tether, sonar, Earth).
