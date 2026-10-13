@@ -17,5 +17,4 @@ MonoBehaviour:
   _prefab: {fileID: 8161168620540788631, guid: cd7c79d8333072543a41ba62af6dc33f, type: 3}
   _answerNote: 1
   _siteId: site.drill
-  _heartOffset: {x: 0, y: 0}
   _crewSet: ines

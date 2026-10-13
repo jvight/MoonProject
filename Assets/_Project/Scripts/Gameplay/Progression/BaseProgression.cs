@@ -326,10 +326,13 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>The depot's last cut opened its heart: the coil glows there, or 07 already has it.</summary>
+        /// <summary>
+        /// The depot's last cut opened its heart: the coil's crate glows there to be cut (0.5.5 §2), or 07 already has
+        /// the coil.
+        /// </summary>
         private bool CoilOut(TowerParts components)
         {
-            return components.StateOf(0) != TowerPartState.Waiting || (_parts != null && _parts.IsResting(0));
+            return components.StateOf(0) != TowerPartState.Waiting || (_parts != null && _parts.IsFound(0));
         }
 
         /// <summary>

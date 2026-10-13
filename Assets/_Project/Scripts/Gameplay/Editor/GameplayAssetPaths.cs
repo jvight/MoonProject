@@ -78,6 +78,12 @@ namespace MoonProject.Gameplay.Editor
             return ArtPaths.SitesFolder + "/Site_" + name + ".prefab";
         }
 
+        /// <summary>Art's derelict prefab (Derelict_06, Derelict_Mule...).</summary>
+        public static string DerelictPrefab(string name)
+        {
+            return ArtPaths.PropFolder + "/" + name + ".prefab";
+        }
+
         /// <summary>Art's bundle a cut piece of <paramref name="material"/> folds into.</summary>
         public static string BundlePrefab(Core.SalvageMaterial material)
         {

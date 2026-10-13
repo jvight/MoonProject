@@ -16,7 +16,8 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// Scripted sessions for salvage (docs/features/M3-13) on the real components behind fakes: cutting a piece with
     /// the beam (progress kept when the hold lets go, ruling 4), the piece folding into the stock with the site's
     /// melody, a drag piece tethered clear and then cut, a lost drag piece floating back beside its site (ruling 1),
-    /// the hold shared with the dig at a site's heart, and a picked-clean site that stays empty after a reboot.
+    /// the hold shared with the dig at a site's heart, a picked-clean site that stays empty after a reboot, and a
+    /// derelict's piece cut like a wreck's (0.5.5 §1.7).
     /// </summary>
     public sealed class SalvageSessions : InputTestFixture
     {
@@ -314,6 +315,44 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(0.5f, _fixture.FindSite("drill").Find(1).Progress, 1e-4f, "a part-cut piece keeps its cut");
             Assert.AreEqual(total, _fixture.Gameplay.Materials.Total);
             Assert.AreEqual(0, _fixture.Events.MaterialSalvaged.Count, "a load is not salvage");
+        }
+
+        [UnityTest]
+        public IEnumerator ADerelictsPiece_CutsLikeAWrecks_AndStaysTaken()
+        {
+            string slot = BootstrapHarness.NewTestSlot();
+            _fixture = GameplayFixture.Boot(_controls, slot);
+            yield return null;
+            SalvageField salvage = _fixture.Gameplay.Salvage;
+            SalvageSite elder = salvage.FindDerelict(WorldAnchorIds.Micro06);
+            SalvageSite mule = salvage.FindDerelict(WorldAnchorIds.MicroMule);
+            Assert.IsNotNull(elder, "06 stands on micro.06");
+            Assert.IsNotNull(mule, "the Mule stands on micro.mule");
+            CollectionAssert.DoesNotContain(salvage.Sites, mule, "a derelict is no wreck site: no sonar, no map");
+            Assert.AreEqual(0, elder.Pieces.Count, "06 has nothing to cut");
+            Assert.IsNull(mule.Crate, "and no crew crate");
+            Assert.AreEqual(1, mule.Pieces.Count);
+            SalvagePiece skirt = mule.Pieces[0];
+            CollectionAssert.Contains(salvage.Pieces, skirt, "its piece is cut like any wreck's");
+            skirt.Progress = 0.97f;
+
+            yield return FaceCut(skirt);
+            Press(_keyboard.eKey);
+            yield return Waits.Until(() => _fixture.Events.MaterialSalvaged.Count > 0, IgnitionTimeout + 5f);
+            Release(_keyboard.eKey);
+            Assert.AreEqual(1, _fixture.Events.MaterialSalvaged.Count, "the track skirt folds into the stock");
+            MaterialSalvaged salvaged = _fixture.Events.MaterialSalvaged[0].Value;
+            Assert.AreEqual(SalvageMaterial.Metal, salvaged.Material);
+            Assert.AreEqual(WorldAnchorIds.MicroMule, salvaged.SiteId);
+            Assert.IsTrue(_fixture.Bootstrap.Context.Get<ISaveService>().SaveNow());
+            _fixture.Dispose(true);
+            yield return null;
+
+            _fixture = GameplayFixture.Boot(_controls, slot);
+            yield return null;
+            skirt = _fixture.Gameplay.Salvage.FindDerelict(WorldAnchorIds.MicroMule).Pieces[0];
+            Assert.AreEqual(SalvagePieceState.Taken, skirt.State, "saved by the derelict's id, it stays taken");
+            Assert.IsFalse(skirt.Body.gameObject.activeSelf, "nothing respawns");
         }
 
         private SalvagePieceSaveData SavedPiece(SalvageSite site, SalvagePiece piece)

@@ -7,7 +7,8 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// One wreck in the world (docs/features/M3-13): Art's site prefab on its World anchor, its pieces, the heart where
     /// its relics rest, and whether it still answers the sonar. Picked clean, the skeleton stays and it falls silent
-    /// (unless a relic still waits in its heart).
+    /// (unless a relic still waits in its heart). A derelict on the routes (0.5.5 §1.7) is one too, with no heart (its
+    /// root stands for it), no relics, no crew crate, and no answer to the sonar.
     /// </summary>
     public sealed class SalvageSite
     {
@@ -49,10 +50,10 @@ namespace MoonProject.Gameplay
         /// <summary>Radius (m) of the site's flat footprint (its World anchor's).</summary>
         public float Radius { get; }
 
-        /// <summary>Its crew supply crate (M3-25 T4).</summary>
+        /// <summary>Its crew supply crate (M3-25 T4); null for a derelict.</summary>
         public CrewCrate Crate { get; internal set; }
 
-        /// <summary>The "Heart" node's world position: where its relics rest.</summary>
+        /// <summary>The "Heart" node's world position: where its relics rest (a derelict's root).</summary>
         public Vector3 Heart { get; }
 
         /// <summary>The rover ability reaching it needs (ungated for the basin's sites).</summary>

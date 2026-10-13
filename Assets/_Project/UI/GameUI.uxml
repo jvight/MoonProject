@@ -276,7 +276,9 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="cargo-page-seven" class="cargo__page seven" picking-mode="Ignore">
-                    <ui:VisualElement name="seven-portrait" class="seven__portrait" picking-mode="Ignore" />
+                    <ui:VisualElement name="seven-portrait" class="seven__portrait" picking-mode="Ignore">
+                        <ui:VisualElement name="seven-leaders" class="seven__leaders" picking-mode="Ignore" />
+                    </ui:VisualElement>
                     <ui:VisualElement name="seven-row" class="seven__row" picking-mode="Ignore" />
                 </ui:VisualElement>
                 <ui:Label name="cargo-transfer-hint" class="cargo__transfer-hint" picking-mode="Ignore" />
