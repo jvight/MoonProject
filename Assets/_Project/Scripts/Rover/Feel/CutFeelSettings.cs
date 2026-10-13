@@ -55,6 +55,9 @@ namespace MoonProject.Rover
         [SerializeField] private int _tickThinEvery = 2;
 
         [Header("Body")]
+        [Tooltip("The charge-up's brace: squat, settle and tremor per stage, stiff rockers, soft rise (0.5.5 §5.3).")]
+        [SerializeField] private ChargeBraceSettings _brace = new ChargeBraceSettings();
+
         [Tooltip("Charge-up: 07 leans slightly into the line (deg forward, held while cutting).")]
         [SerializeField] private NudgeSettings _lean = new NudgeSettings(0f, 1f, 2f, 1f);
 
@@ -106,6 +109,8 @@ namespace MoonProject.Rover
         {
             return index < _tickThinFrom || (index - _tickThinFrom) % _tickThinEvery == 0;
         }
+
+        public ChargeBraceSettings Brace => _brace;
 
         public NudgeSettings Lean => _lean;
 

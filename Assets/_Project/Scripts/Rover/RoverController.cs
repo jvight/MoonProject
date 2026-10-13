@@ -367,6 +367,7 @@ namespace MoonProject.Rover
                 _feel = new RoverFeel(_events, feel.CutFeel, feel.DockFeel, feel.MotionFeel, feelPreferences,
                     new GamepadRumbleMotors(), _visualRig);
                 _visualRig.SetNudge(_feel.Nudge);
+                _visualRig.SetChargeBrace(_feel.Brace);
                 _hatch = new CargoHatch(_events, feel.CargoHatch, _cargoHatch, _hatchCrates, _feel.Rumble);
                 if (_chargeRows.Length > 0)
                 {
@@ -605,6 +606,7 @@ namespace MoonProject.Rover
             _stillness.Reset();
 
             _feel?.Nudge.Reset();
+            _feel?.Brace.Reset();
             _hatch?.Reset();
             _visualRig.Snap(normal);
             _wheelFx.Break();
