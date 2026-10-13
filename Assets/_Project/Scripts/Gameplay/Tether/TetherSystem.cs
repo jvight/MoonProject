@@ -84,6 +84,12 @@ namespace MoonProject.Gameplay
 
         public TetherTuning Tuning => _tuning;
 
+        /// <summary>
+        /// Times the player pressed Tether before the ring was fitted: the moment 07 says it has no tether (a counter,
+        /// so a reader in any update order sees each press).
+        /// </summary>
+        public int AsleepPresses { get; private set; }
+
         /// <summary>Current beam brightness (tests and debugging views).</summary>
         public float BeamIntensity => _glow != null ? _glow.Intensity : 0f;
 
@@ -178,6 +184,11 @@ namespace MoonProject.Gameplay
             if (!_abilities.Has(RoverAbility.Tether))
             {
                 _armed = false;
+                if (_input.TetherHeld && !_wasHeld)
+                {
+                    AsleepPresses++;
+                }
+
                 _wasHeld = _input.TetherHeld;
                 SetHovered(null);
                 DrawBeam(Time.deltaTime);

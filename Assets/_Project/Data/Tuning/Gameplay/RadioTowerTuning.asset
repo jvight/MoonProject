@@ -39,6 +39,8 @@ MonoBehaviour:
   _unpoweredGlow: 0.02
   _poweredGlow: 1
   _offlineLampGlow: 1.2
+  _offlineBlinkSeconds: 1.5
+  _offlineBlinks: 3
   _onlineAnticipateSeconds: 1.2
   _onlineRingSeconds: 0.4
   _onlineImpactAt: 1.6

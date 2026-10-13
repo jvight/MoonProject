@@ -29,6 +29,7 @@ namespace MoonProject.Gameplay
         private readonly SalvageSite _garage;
         private readonly RelicField _relics;
         private readonly IRoverAbilities _abilities;
+        private readonly TetherSystem _tether;
         private readonly IRoverState _rover;
         private readonly ISaveService _save;
         private readonly EventBus _events;
@@ -50,8 +51,9 @@ namespace MoonProject.Gameplay
 
         /// <exception cref="InvalidOperationException">The garage site or Art's port is missing.</exception>
         public GaragePort(Transform parent, GameplayServices services, SalvageField salvage, RelicField relics,
-            IRoverAbilities abilities, ProgressionTuning tuning)
+            IRoverAbilities abilities, ProgressionTuning tuning, TetherSystem tether)
         {
+            _tether = tether != null ? tether : throw new ArgumentNullException(nameof(tether));
             if (services == null || salvage == null)
             {
                 throw new ArgumentNullException(services == null ? nameof(services) : nameof(salvage));
@@ -175,7 +177,6 @@ namespace MoonProject.Gameplay
             _ringFitted = true;
             _abilities.Grant(RoverAbility.Tether);
             _events.Publish(new PortFitting(RoverKitPiece.TetherRing, _armTip.position, false));
-            _events.Publish(new TickerLine(ProgressionKeys.TickerTetherBack));
             _save.SaveNow();
         }
 
@@ -225,26 +226,19 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>Before the ring, a loose keepsake near 07 says, once, where the tether can be found again.</summary>
+        /// <summary>
+        /// Before the ring, the first time the player tries to tow (Tether pressed), 07 says once where the tether can
+        /// be found again (text audit 0.5.5 §3.4: no hint for a problem the player doesn't have yet).
+        /// </summary>
         private void HintTheTether()
         {
-            if (_tetherHinted || _abilities.Has(RoverAbility.Tether))
+            if (_tetherHinted || _abilities.Has(RoverAbility.Tether) || _tether.AsleepPresses == 0)
             {
                 return;
             }
 
-            float reach = _tuning.PortTetherHintRadius;
-            for (int i = 0; i < _relics.Relics.Count; i++)
-            {
-                Relic relic = _relics.Relics[i];
-                if (relic.State == RelicState.Loose &&
-                    (relic.transform.position - _rover.Position).sqrMagnitude <= reach * reach)
-                {
-                    _tetherHinted = true;
-                    _events.Publish(new TickerLine(ProgressionKeys.NotYetTether));
-                    return;
-                }
-            }
+            _tetherHinted = true;
+            _events.Publish(new TickerLine(ProgressionKeys.NotYetTether));
         }
 
         private bool DeckWaitsForTheTray()

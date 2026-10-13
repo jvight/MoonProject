@@ -94,7 +94,7 @@ namespace MoonProject.Gameplay
                     hint = waiting ? new InteractionHint(kind, part, true, noun) : InteractionHint.None;
                     return waiting;
                 case InteractionKind.Build:
-                    int shelf = _shelves.Candidate;
+                    int shelf = _shelves.Needed ? _shelves.Candidate : -1;
                     hint = shelf >= 0
                         ? new InteractionHint(kind, _shelves.RackPosition(shelf), _shelves.Affordable)
                         : InteractionHint.None;
