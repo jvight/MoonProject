@@ -62,6 +62,29 @@ namespace MoonProject.Gameplay.Editor
             return parts;
         }
 
+        /// <summary>Art's sealed containers, the finds' homes (0.5.5 §2).</summary>
+        private static GameObject[] ContainerModels()
+        {
+            string[] names =
+            {
+                LootContainerBuilder.CoilCrateName, LootContainerBuilder.TapeCaseName,
+                LootContainerBuilder.JunctionBoxName, LootContainerBuilder.SupplyPodName,
+                LootContainerBuilder.TillySledName,
+            };
+            var containers = new GameObject[names.Length];
+            for (int i = 0; i < names.Length; i++)
+            {
+                string path = ArtPaths.PropFolder + "/" + names[i] + ".prefab";
+                containers[i] = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (containers[i] == null)
+                {
+                    throw new InvalidOperationException($"{BuilderPath}: Art's container {path} is missing.");
+                }
+            }
+
+            return containers;
+        }
+
         /// <summary>Art's blueprint tube, for a tube waiting on the ground at a world anchor.</summary>
         private static GameObject TubeModel()
         {
@@ -96,6 +119,7 @@ namespace MoonProject.Gameplay.Editor
                 Write(shader, GlowRole.LinkPulse));
             visuals.PopulatePads(Pads(), BaseModelBuilder.PadRadii);
             visuals.PopulateComponents(ComponentModels());
+            visuals.PopulateContainers(ContainerModels());
             visuals.PopulateTube(TubeModel());
             visuals.PopulateGaragePort(GaragePortModel());
             GeneratedAssets.CreateOrReplace(visuals, GameplayAssetPaths.Visuals);

@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Save;
 
 namespace MoonProject.Gameplay
 {
@@ -12,10 +13,12 @@ namespace MoonProject.Gameplay
     /// tower's pad: it offers the first piece not yet bought, breathes softly, glows inviting when that is affordable,
     /// brightly while 07 is parked on it and dims once the bay has nothing left. A purchase flares the ring; then 07,
     /// held still and looking at the hopper by the entrance, feeds it the recipe's materials along its beam
-    /// (<see cref="HopperFeed"/>), and once they are in, the bay starts fitting the piece
-    /// (<see cref="RoverBayFitting"/>: the rover plays the install moment with the bay's arms). When the rover sets
-    /// the piece on (<see cref="RoverKitFitted"/>), the work lamps flare and weld sparks fly from the tip of the arm
-    /// that fitted it (the floor arm's for a belly piece). A purchase made while another is being fed waits its turn.
+    /// (<see cref="HopperFeed"/>), and once they are in, the bay crafts the part into 07's parts row
+    /// (<see cref="RoverEquipment.Craft"/>, 0.5.5 §3.5). A part is fitted by hand while 07 rests here
+    /// (<see cref="ReadyToFit"/>): the rover plays the install moment with the bay's arms on
+    /// <see cref="PartFitted"/>, and as the part seats (its Install Impact beat) the work lamps flare and weld sparks
+    /// fly from the tip of the arm that fitted it (the floor arm's for a belly piece). A purchase made while another
+    /// is being fed waits its turn.
     /// While the bay works (feeding and fitting, and a moment after) a warm point light under each work lamp lights its
     /// interior and arms, easing down to a low glow when it is done, and while the floor arm rises through the
     /// turntable a warm light in the pit and one on its tip light the piece coming up under 07's belly. The lamps
@@ -95,6 +98,9 @@ namespace MoonProject.Gameplay
         private IBlueprintBoard _board;
         private IHomeLights _homeLights;
         private IDisposable _fittings;
+        private IDisposable _seatings;
+        private RoverEquipment _equipment;
+        private ISaveService _save;
         private float _lightLevel;
         private bool _lightShadows;
         private int _fitting;
@@ -104,6 +110,7 @@ namespace MoonProject.Gameplay
         private HopperFeed _feed;
         private PurchaseQueue _waiting;
         private string _feeding;
+        private int _feedingLevel;
         private Quaternion _turntableRest;
         private float _lampLevel;
         private bool _holding;
@@ -114,6 +121,18 @@ namespace MoonProject.Gameplay
         /// </summary>
         public UpgradeDefinition Definition => _definitions.Length == 0 ? null
             : _definitions[_upgrades == null ? 0 : OfferIndex(_definitions, _upgrades, _board)];
+
+        /// <summary>
+        /// True while 07 rests on the turntable with the bay free (nothing being fed or fitted): a part can be fitted,
+        /// swapped or taken off now (0.5.5 §3.5), even once the bay has nothing left to sell and its pad is out.
+        /// </summary>
+        public bool ReadyToFit => _initialized && OnTurntable && !_feed.Feeding && _waiting.Count == 0 && _fitting == 0;
+
+        private bool OnTurntable =>
+            SurfaceRules.HorizontalDistance(_rover.Position, _pad.Centre) <= _tuning.PadLook.Radius;
+
+        /// <summary>Parts bought here whose craft has not finished yet (queued or being fed).</summary>
+        public int PendingCrafts => _waiting.Count + (_feed.Feeding ? 1 : 0);
 
         /// <summary>True while 07 is parked on the turntable.</summary>
         public bool Occupied => _pad != null && _pad.Occupied;
@@ -270,13 +289,16 @@ namespace MoonProject.Gameplay
         /// </param>
         /// <param name="board">Kenji's board: the bay offers only kits whose blueprint is pinned.</param>
         /// <param name="lights">Home's warm points (World): the bay's lamps and lights glow at its share.</param>
+        /// <param name="equipment">07's equipment: a finished craft puts its part in the parts row.</param>
         internal bool Initialize(GameplayServices services, UpgradeService upgrades, SalvageCatalog bundles,
-            RadioTower tower, IBasePower power, IBlueprintBoard board, IHomeLights lights)
+            RadioTower tower, IBasePower power, IBlueprintBoard board, IHomeLights lights, RoverEquipment equipment)
         {
             if (upgrades == null)
             {
                 throw new ArgumentNullException(nameof(upgrades));
             }
+
+            _equipment = equipment ?? throw new ArgumentNullException(nameof(equipment));
 
             _tower = tower != null ? tower : throw new ArgumentNullException(nameof(tower));
             _power = power ?? throw new ArgumentNullException(nameof(power));
@@ -297,6 +319,7 @@ namespace MoonProject.Gameplay
             }
 
             _events = services.Events;
+            _save = services.Save;
             _beamWork = services.Beam;
             _rover = services.Rover;
             _rig = services.Rig;
@@ -330,7 +353,8 @@ namespace MoonProject.Gameplay
                 services.Events);
             _waiting = new PurchaseQueue(PurchaseQueue.CapacityFor(_definitions));
             _purchases = services.Events.Subscribe<UpgradePurchased>(OnPurchased);
-            _fittings = services.Events.Subscribe<RoverKitFitted>(OnKitFitted);
+            _fittings = services.Events.Subscribe<PartFitted>(OnPartFitted);
+            _seatings = services.Events.Subscribe<FeelBeat>(OnSeated);
             _initialized = true;
             return true;
         }
@@ -497,8 +521,8 @@ namespace MoonProject.Gameplay
         /// <summary>07 starts feeding the hopper the recipe of the oldest purchase still waiting.</summary>
         private void FeedNext(float now)
         {
-            _waiting.TryDequeue(out _feeding, out int level);
-            Recipe recipe = _upgrades.Find(_feeding).Levels[level - 1].Recipe;
+            _waiting.TryDequeue(out _feeding, out _feedingLevel);
+            Recipe recipe = _upgrades.Find(_feeding).Levels[_feedingLevel - 1].Recipe;
             _feed.Begin(recipe, _feeding, now);
             Vector3 mouth = _hopperMouth.position;
             _rig.SetGazeTarget(this, mouth, GazePriorities.Focus);
@@ -506,24 +530,43 @@ namespace MoonProject.Gameplay
             _events.Publish(new StationCued(StationCue.FeedStarted, _feeding, mouth));
         }
 
-        /// <summary>The materials are in: the bay starts fitting the piece.</summary>
+        /// <summary>The materials are in: the bay crafts the part into 07's parts row (a save checkpoint).</summary>
         private void Fit()
         {
-            _fitting++;
             _events.Publish(new StationCued(StationCue.Fed, _feeding, _hopperMouth.position));
-            _events.Publish(new RoverBayFitting(_feeding));
+            if (!_upgrades.TryGetPart(_feeding, _feedingLevel, out RoverKitPiece part))
+            {
+                Debug.LogError($"{nameof(Workshop)}: '{_feeding}' level {_feedingLevel} brings no part; the bay sells "
+                    + "only kit (docs/design/0.5.5-owner-feedback.md §3.5).", this);
+            }
+            else if (!_equipment.Craft(part))
+            {
+                Debug.LogError($"{nameof(Workshop)}: the parts row had no room for {part}; the shop refuses a "
+                    + "purchase while the row is full.", this);
+            }
+
             _feeding = null;
+            _save.SaveNow();
         }
 
-        /// <summary>The rover set a piece bought here on 07: the weld.</summary>
-        private void OnKitFitted(RoverKitFitted fitted)
+        /// <summary>A part is going onto 07 here: the bay is fitting until it seats.</summary>
+        private void OnPartFitted(PartFitted fitted)
         {
-            if (fitted.Gift || !Sells(fitted.UpgradeId))
+            if (!fitted.Gift && OnTurntable)
+            {
+                _fitting++;
+            }
+        }
+
+        /// <summary>The part the bay was fitting seats on 07 (its Install Impact beat): the weld.</summary>
+        private void OnSeated(FeelBeat beat)
+        {
+            if (beat.Kind != FeelKind.Install || beat.Phase != FeelPhase.Impact || _fitting == 0)
             {
                 return;
             }
 
-            _fitting = Mathf.Max(0, _fitting - 1);
+            _fitting--;
             _lastWeld = Time.time;
             _lampLevel = Mathf.Max(_lampLevel, _tuning.LampFlare);
             Weld();
@@ -692,6 +735,7 @@ namespace MoonProject.Gameplay
         {
             _purchases?.Dispose();
             _fittings?.Dispose();
+            _seatings?.Dispose();
             _pad?.Dispose();
         }
     }

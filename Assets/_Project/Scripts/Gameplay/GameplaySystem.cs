@@ -72,6 +72,8 @@ namespace MoonProject.Gameplay
         private GlowMeshSet _meshes;
         private IRoverAbilities _abilities;
         private IRoverRig _rig;
+        private EventBus _events;
+        private GiftFitting _wingCell;
 
         public MaterialStock Materials { get; private set; }
 
@@ -96,7 +98,13 @@ namespace MoonProject.Gameplay
         /// <summary>The crew's supply crates, one beside each site's heart (M3-25 T4).</summary>
         public CrewCrates Crates { get; private set; }
 
+        /// <summary>The world's sealed containers: every find that rests in one (0.5.5 §2).</summary>
+        public SealedContainers Containers { get; private set; }
+
         public UpgradeService Upgrades { get; private set; }
+
+        /// <summary>07's equipment (0.5.5 §3.5): its fitted parts and the parts row.</summary>
+        public RoverEquipment Equipment { get; private set; }
 
         public IUpgradeShop Shop { get; private set; }
 
@@ -260,9 +268,14 @@ namespace MoonProject.Gameplay
             GlintVeil veil = services.GlintVeil;
             _flowTokens.Add(context.Events.Subscribe<TitleShown>(_ => veil.Hide()));
             _flowTokens.Add(context.Events.Subscribe<SessionStarted>(_ => veil.Show(Time.time)));
+            _events = context.Events;
             var abilities = context.Get<IRoverAbilities>();
             _abilities = abilities;
-            Upgrades = new UpgradeService(context.Events, Materials, abilities, _upgradeDefinitions);
+            var parts = EquipmentTable.Basin();
+            Equipment = new RoverEquipment(context.Events, abilities, parts, _workshop.Tuning.PartsRowSlots,
+                AtStation, RecycledMetal, DeliverRecycled);
+            Upgrades = new UpgradeService(context.Events, Materials, abilities, Equipment, parts,
+                _upgradeDefinitions);
             Radio = new RadioProgram(context.Events, _cassettes.Catalog.Ids());
             Power = new BasePower(context.Events);
             Blueprints = NewBlueprints(context.Events);
@@ -275,6 +288,7 @@ namespace MoonProject.Gameplay
 
             Vector3 lander = HomeBase.LanderSpot(services.Terrain, services.Layout.BasePosition, _home.Tuning);
             Cutter = new Cutter(context.Events, abilities, _cutterTuning);
+            Containers = new SealedContainers(_salvage, _cargo, Cutter, services);
             if (!_salvage.Initialize(services, Cutter) || !_relics.Initialize(services, _salvage) ||
                 !_excavation.Initialize(services, _relics, _salvage) ||
                 !_tether.Initialize(services, _relics, _salvage, abilities) ||
@@ -283,9 +297,11 @@ namespace MoonProject.Gameplay
                 !_lift.Initialize(services, Power, context.Get<IRoverStillness>(), _tether, _cradle, Blueprints,
                     _progression.Tuning) ||
                 !_tower.Initialize(services, Upgrades, _salvage.Catalog, TowerParts) ||
-                !_workshop.Initialize(services, Upgrades, _salvage.Catalog, _tower, Power, Blueprints, lights) ||
+                !_workshop.Initialize(services, Upgrades, _salvage.Catalog, _tower, Power, Blueprints, lights,
+                    Equipment) ||
                 !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _salvage, _home) ||
-                !_cassettes.Initialize(services, Radio, KeepClearOfCassettes()) || !_logs.Initialize(services) ||
+                !_cassettes.Initialize(services, Radio, KeepClearOfCassettes(), Containers) ||
+                !_logs.Initialize(services) ||
                 !_sonar.Initialize(services, _relics, _friends, _salvage, abilities, Power) ||
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
@@ -342,13 +358,27 @@ namespace MoonProject.Gameplay
 
             _progression.ConnectFinds(Port, TowerPartField);
 
-            Shop = new UpgradeShop(Upgrades, stations, save, Blueprints, TowerParts);
+            Shop = new UpgradeShop(Upgrades, stations, save, Blueprints, TowerParts, RowFullFor);
+            Friend wingGift = _friends.Find(_friends.Tuning.WingCellFriend);
+            if (wingGift == null)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: no friend '{_friends.Tuning.WingCellFriend}' gives the "
+                    + "solar wing's cell (FriendTuning).", this);
+                enabled = false;
+                return;
+            }
+
+            _wingCell = new GiftFitting(Equipment, RoverKitPiece.SolarCell, wingGift, services.Rover,
+                services.Layout.BasePosition, _friends.Tuning);
             RecipeLook = new RecipeLook(services.View, Shop, _tower, _plotter, Blueprints.Kits, _progression.Tuning);
             Hints = new InteractionHints(_excavation, _salvage, _tether, _cradle, _home,
-                stations, Upgrades, TowerParts, _friends, _relays, services.Beam, services.Pickups, Shelves, Crates);
+                stations, Upgrades, TowerParts, _friends, _relays, services.Beam, services.Pickups, Shelves, Crates,
+                Containers);
             context.Register<IMaterialStock>(Materials);
             context.Register<IMaterialCatalog>(_materialCatalog);
             context.Register<ICutter>(Cutter);
+            context.Register<IRoverEquipment>(Equipment);
+            _flowTokens.Add(context.Events.Subscribe<FindDecoded>(decoded => Upgrades.MarkPartsKnown(decoded.KitId)));
             context.Register<ICargoHold>(Materials.Hold);
             context.Register<IHomeStorage>(Materials.Home);
             context.Register<IDockState>(_home.Dock);
@@ -416,6 +446,45 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.BatteryVersion, _battery.Capture, _battery.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<GaragePortSaveData>(GameplaySaveKeys.GaragePort,
                 GameplaySaveKeys.GaragePortVersion, Port.Capture, Port.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<EquipmentSaveData>(GameplaySaveKeys.Equipment,
+                GameplaySaveKeys.EquipmentVersion, Equipment.Capture, Equipment.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<ContainersSaveData>(GameplaySaveKeys.Containers,
+                GameplaySaveKeys.ContainersVersion, Containers.Capture, Containers.Restore)));
+        }
+
+        /// <summary>True while 07 rests at <paramref name="station"/>, free to fit or take off its parts.</summary>
+        private bool AtStation(PartStation station)
+        {
+            return station == PartStation.Bay ? _workshop.ReadyToFit : Port != null && Port.Parked;
+        }
+
+        /// <summary>Metal the bay makes of a swapped-out part: its share of the recipe's Metal.</summary>
+        private int RecycledMetal(RoverKitPiece part)
+        {
+            return Upgrades.TryGetRecipeOf(part, out Recipe recipe)
+                ? Mathf.RoundToInt(recipe.Metal * _workshop.Tuning.RecycleShare)
+                : 0;
+        }
+
+        /// <summary>Recycled Metal goes to home's shelves, else 07's hold, else waits as a bundle at the bay.</summary>
+        private void DeliverRecycled(int metal)
+        {
+            int left = Materials.Deliver(SalvageMaterial.Metal, metal);
+            left = left > 0 ? Materials.Collect(SalvageMaterial.Metal, left) : 0;
+            if (left > 0)
+            {
+                _events.Publish(new CargoOverflowed(SalvageMaterial.Metal, left, _workshop.TurntablePosition));
+            }
+        }
+
+        /// <summary>
+        /// True when the next level of upgrade <paramref name="id"/> brings a part and the parts row, with the crafts
+        /// still queued at the bay, has no room for it: fit a part first.
+        /// </summary>
+        private bool RowFullFor(string id)
+        {
+            return Upgrades.TryGetPart(id, Upgrades.LevelOf(id) + 1, out _) &&
+                   Equipment.RowCount + _workshop.PendingCrafts >= Equipment.RowCapacity;
         }
 
         private void RestoreTowerParts(TowerPartsSaveData data)
@@ -445,7 +514,7 @@ namespace MoonProject.Gameplay
             try
             {
                 return new TowerPartField(TowerParts, transform, services, _salvage, _relays.Reach, _tower,
-                    _friends.Tuning, _progression.Tuning, () => _progression.ChasmSeen);
+                    _friends.Tuning, _progression.Tuning, () => _progression.ChasmSeen, Containers);
             }
             catch (InvalidOperationException exception)
             {
@@ -474,7 +543,8 @@ namespace MoonProject.Gameplay
         {
             try
             {
-                return new GaragePort(transform, services, _salvage, _relics, abilities, _progression.Tuning, _tether);
+                return new GaragePort(transform, services, _salvage, _relics, abilities, _progression.Tuning, _tether,
+                    Equipment);
             }
             catch (InvalidOperationException exception)
             {
@@ -599,6 +669,8 @@ namespace MoonProject.Gameplay
             TowerParts.Announce();
             GroundTubes.Sync();
             Port.Announce();
+            Upgrades.ReturnUnplacedParts();
+            Upgrades.MarkPinnedPartsKnown(Blueprints);
             Tech.Announce();
             Recovery.Announce();
         }
@@ -625,9 +697,11 @@ namespace MoonProject.Gameplay
             Fetch.Step(now);
             Shelves.Step(now, Time.deltaTime);
             Crates.Step(now, Time.deltaTime);
+            Containers.Step(now, Time.deltaTime);
             TowerPartField.Step(now);
             GroundTubes.Step(now);
             Port.Step(Time.deltaTime);
+            _wingCell.Step();
             RecipeLook.Step();
             Tech.Refresh();
             Recovery.Refresh();
@@ -667,6 +741,7 @@ namespace MoonProject.Gameplay
             LiftStation lift = _lift;
             Fetch = new TillyFetch(Bundles, _relays.Reach, fetcher, _cargo, () => lift.RideSpot);
             Crates = new CrewCrates(_salvage, _cargo, Cutter, services);
+            Containers.Connect(Crates);
             Transform[] racks = _home.ShelfRacks;
             int seats = _cargo.ShelfSlots * HomeShelves.Seats;
             var rackSeats = new Transform[racks.Length][];

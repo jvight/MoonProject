@@ -23,6 +23,8 @@ MonoBehaviour:
   _rimDirections: 16
   _restHeight: 0.07
   _restLean: 35
+  _slideOut: 0.45
+  _slideSeconds: 0.7
   _glanceRadius: 16
   _magnetRadius: 4.5
   _flightDuration: 1.1

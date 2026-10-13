@@ -9,6 +9,17 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class FriendTuning : ScriptableObject
     {
+        [Header("Gifts (0.5.5 §3.5)")]
+        [Tooltip("07 counts as home (a repaired friend's waiting gift fits itself) within this distance (m) of the " +
+                 "base.")]
+        [Range(5f, 100f)] [SerializeField] private float _giftHomeRadius = 22f;
+
+        [Tooltip("...and slower than this (m/s), so the gift arrives as 07 settles in, not as it rushes past.")]
+        [Range(0.1f, 10f)] [SerializeField] private float _giftMaxSpeed = 2.5f;
+
+        [Tooltip("The friend whose gift is the solar wing's missing cell (0.5.5 §3.5, the Wing socket).")]
+        [SerializeField] private string _wingCellFriend = "tilly";
+
         [Header("Site")]
         [Tooltip("Candidate spots tried for a friend's site.")]
         [Range(16, 2048)] [SerializeField] private int _siteAttempts = 600;
@@ -320,6 +331,9 @@ namespace MoonProject.Gameplay
         [Tooltip("Brightness of the light pillar a spotted relic raises (softer than a ping's answer).")]
         [Range(0f, 4f)] [SerializeField] private float _spotPillar = 0.7f;
 
+        public float GiftHomeRadius => _giftHomeRadius;
+        public float GiftMaxSpeed => _giftMaxSpeed;
+        public string WingCellFriend => _wingCellFriend;
         public int SiteAttempts => _siteAttempts;
         public float SiteEdgeMargin => _siteEdgeMargin;
         public float SiteMaxSlope => _siteMaxSlope;

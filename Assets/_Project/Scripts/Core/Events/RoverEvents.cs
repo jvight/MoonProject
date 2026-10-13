@@ -142,6 +142,13 @@ namespace MoonProject.Core.Events
         /// §3): faintly cyan at rest, bright while the tether holds.
         /// </summary>
         TetherRing = 8,
+
+        /// <summary>The Focus Lens clipped into 07's eye (M3-26 tier 1; the Cutter socket, 0.5.5 §3.5).</summary>
+        FocusLens = 9,
+
+        /// <summary>The Side Bins, a mirrored pair low between the wheels (M3-25; the Panniers socket, 0.5.5 §3.5).
+        /// </summary>
+        SideBins = 10,
     }
 
     /// <summary>

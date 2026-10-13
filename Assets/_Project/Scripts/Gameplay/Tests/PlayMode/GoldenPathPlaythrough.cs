@@ -136,6 +136,14 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Seconds the bay's arms may take to set a bought piece on 07 (the rover's install moment).</summary>
         private const float BayFitTimeout = 25f;
 
+        /// <summary>Metres in front of a sealed container's cut point 07 stops to cut it (0.5.5 §2).</summary>
+        private const float SealStandOff = 1.6f;
+
+        /// <summary>
+        /// Seconds to cut a container's seal: a crew crate beside it may come first, then the lid swings.
+        /// </summary>
+        private const float SealCutTimeout = 20f;
+
         /// <summary>07 lines up this far (m) in front of the turntable to drive in; it backs out as far.</summary>
         private const float BayApproach = 6f;
 
@@ -355,7 +363,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         private IDisposable _awoke;
         private IDisposable _crawled;
         private IDisposable _lines;
+        private IDisposable _seated;
         private readonly List<string> _tierTwoLines = new List<string>();
+        private int _seats;
         private int _crawls;
         private float _stepMetres;
         private float _stepBeam;
@@ -382,6 +392,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _awoke?.Dispose();
             _crawled?.Dispose();
             _lines?.Dispose();
+            _seated?.Dispose();
             Scene scene = SceneManager.GetSceneByPath(PlaythroughScene.ScenePath);
             if (scene.IsValid() && scene.isLoaded)
             {
@@ -555,6 +566,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             _crawls += lowPower.LowPower && !lowPower.Restored ? 1 : 0;
         }
 
+        /// <summary>Counts parts seating on 07 (the rover's install moment's Install Impact beat).</summary>
+        private void OnSeated(FeelBeat beat)
+        {
+            _seats += beat.Kind == FeelKind.Install && beat.Phase == FeelPhase.Impact ? 1 : 0;
+        }
+
         /// <summary>Notes any line past the teaching steps that is not about a recovery target (M3-21 §3).</summary>
         private void OnNextLine(NextStepChanged changed)
         {
@@ -616,8 +633,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             GaragePort port = _gameplay.Port;
             Assert.IsTrue(port.IsOpen, "the last cut opened the port");
             int fitted = 0;
-            using IDisposable fits = _context.Events.Subscribe<RoverKitFitted>(fit =>
-                fitted += fit.Piece == RoverKitPiece.TetherRing ? 1 : 0);
+            using IDisposable fits = _context.Events.Subscribe<PartFitted>(fit =>
+                fitted += fit.Part == RoverKitPiece.TetherRing ? 1 : 0);
             yield return DriveTo(Flat(port.PadCentre), PortPark, 0.35f, 40f, "Kenji's port pad");
             yield return Until(() => port.RingFitted, 6f, "parked on the pad, the arm fits the ring");
             yield return Until(() => fitted == 1, 6f, "the ring is on 07's eye");
@@ -641,8 +658,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Begin();
             GaragePort port = _gameplay.Port;
             int fitted = 0;
-            using IDisposable fits = _context.Events.Subscribe<RoverKitFitted>(fit =>
-                fitted += fit.Piece == RoverKitPiece.TapeDeck ? 1 : 0);
+            using IDisposable fits = _context.Events.Subscribe<PartFitted>(fit =>
+                fitted += fit.Part == RoverKitPiece.TapeDeck ? 1 : 0);
             _pilot.Target = null;
             yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 rests by the port, the deck on its tether");
             yield return Until(() => port.DeckFitted, 10f, "the port takes the deck onto its tray and fits it");
@@ -718,6 +735,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _events = new EventRecorder(_context.Events);
             _awoke = _context.Events.Subscribe<RoverAwoke>(_ => _awokeAt = Time.time);
             _crawled = _context.Events.Subscribe<LowPowerChanged>(OnLowPower);
+            _seated = _context.Events.Subscribe<FeelBeat>(OnSeated);
             _lines = _context.Events.Subscribe<NextStepChanged>(OnNextLine);
             _gameplay.StartCoroutine(TrackTheBattery(_context.Get<IBeamStatus>()));
             _pilot = new Autopilot(_rover);
@@ -1016,16 +1034,28 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// The tower's component <paramref name="index"/> waits in <paramref name="site"/>'s open heart: round the
-        /// wreck to open ground beside it, ease up and press E: it spirals into 07 (P1).
+        /// The tower's component <paramref name="index"/> rests sealed in Art's container in <paramref name="site"/>'s
+        /// open heart (0.5.5 §2): round the wreck to the container's front and hold E to cut its seal; the lid swings
+        /// open and the part slides out. Then to open ground beside it, ease up and press E: it spirals into 07 (P1).
         /// </summary>
         private IEnumerator PickUpPartInTheHeart(SalvageSite site, int index)
         {
             Begin();
             TowerPartField field = _gameplay.TowerPartField;
             string part = _gameplay.TowerParts.PartAt(index).PartId;
-            yield return Until(() => field.IsResting(index), _gameplay.Progression.Tuning.PartAppearSeconds + 2f,
-                $"{part} eases into view in the heart of {site.Id}");
+            SealedContainer container =
+                _gameplay.Containers.Find(TowerPartField.ContainerId(_gameplay.TowerParts.PartAt(index)));
+            Assert.IsNotNull(container, $"{part} rests sealed in a container in the heart of {site.Id}");
+            yield return Until(() => container.Available, 2f, $"the seal of {part}'s container glows");
+            Vector3 front = container.CutPoint.position + container.Root.forward * SealStandOff;
+            yield return CircleTo(site, Flat(front), 0f);
+            yield return DriveTo(Flat(front), 1f, 0.35f, 30f, $"the seal of {part}'s container");
+            Press(_keyboard.eKey);
+            yield return Until(() => container.Opened, SealCutTimeout, $"held E cuts the seal of {part}'s container");
+            Release(_keyboard.eKey);
+            yield return Until(() => field.IsResting(index), _gameplay.Progression.Tuning.PartAppearSeconds +
+                _gameplay.Cargo.ContainerLidSeconds + 2f, $"{part} slides out of its container");
+            Capture("03-container-" + part);
             Vector3 rest = field.RestPosition(index);
             Assert.IsTrue(OpenSpotBy(rest, _ => true, out Vector3 park, out Vector3 outward),
                 $"open ground beside {part} in the heart of {site.Id}");
@@ -1833,26 +1863,30 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(hint.Ready, "the depot's materials cover Hover-Jump");
             int purchases = _events.UpgradePurchased.Count;
             int cues = _events.StationCued.Count;
-            int fittings = _events.RoverBayFitting.Count;
+            int crafted = _events.PartCrafted.Count;
             Press(_keyboard.eKey);
             yield return Until(() => _events.UpgradePurchased.Count > purchases, 15f, "holding confirm buys it");
             Release(_keyboard.eKey);
             UpgradePurchased purchase = _events.UpgradePurchased[_events.UpgradePurchased.Count - 1].Value;
             Assert.AreEqual(HoverJump, purchase.UpgradeId);
             Assert.AreEqual(1, purchase.Level);
-            Assert.IsTrue(abilities.Has(RoverAbility.HoverJump), "07 can leap now");
+            Assert.IsFalse(abilities.Has(RoverAbility.HoverJump), "bought: the bay crafts the coils first");
             Assert.AreEqual(CargoCradle, bench.Definition.Id, "the bay offers the Cargo Cradle next");
             Assert.IsTrue(bench.Feeding, "07's beam feeds the bay's hopper");
             yield return new WaitForSeconds(0.45f);
             Assert.Greater(bench.BundlesInFlight, 0, "the recipe's bundles fly into the hopper");
             ReviewBay(bench, "13a-bay-hopper-feed");
-            yield return Until(() => _events.RoverBayFitting.Count > fittings, 3f, "the bay starts fitting the kit");
+            yield return Until(() => _events.PartCrafted.Count > crafted, 3f,
+                "the coils come out into the parts row");
             AssertCues(cues, HoverJump, StationCue.FeedStarted, StationCue.BundleDropped, StationCue.BundleDropped,
                 StationCue.BundleDropped, StationCue.Fed);
-            Assert.AreEqual(HoverJump, _events.RoverBayFitting[_events.RoverBayFitting.Count - 1].Value.UpgradeId);
+            Assert.AreEqual(RoverKitPiece.HoverCoils, _events.PartCrafted[_events.PartCrafted.Count - 1].Value.Part);
+            int seats = _seats;
+            yield return FitFromTheRow(bench, RoverKitPiece.HoverCoils, "the coils");
+            Assert.IsTrue(abilities.Has(RoverAbility.HoverJump), "fitted: 07 can leap now");
             Assert.IsTrue(bench.Working, "the bay works: its lights are up");
             Assert.AreEqual(0, bench.SparkCount, "no sparks while the arms are folded");
-            yield return Until(() => Fitted(HoverJump), BayFitTimeout, "the floor arm sets the coils on 07");
+            yield return Until(() => _seats > seats, BayFitTimeout, "the floor arm sets the coils on 07");
             Assert.Greater(bench.PitLevel, 0.5f, "the pit and the floor arm's tip light the coils under 07's belly");
             Vector3 bayFront = Flat(bench.BayForward).normalized;
             Review(bench.PadCentre + bayFront * PitViewDistance + Vector3.up * PitViewHeight,
@@ -1887,8 +1921,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Until(() => _events.UpgradePurchased.Count > purchases, 15f, "holding confirm crafts it");
             Release(_keyboard.eKey);
             Assert.AreEqual(CargoCradle, _events.UpgradePurchased[_events.UpgradePurchased.Count - 1].Value.UpgradeId);
+            yield return Until(() => !bench.Feeding && _gameplay.Equipment.RowCount > 0, BayFitTimeout,
+                "the rack comes out into the parts row");
+            int seats = _seats;
+            yield return FitFromTheRow(bench, RoverKitPiece.CargoRack, "the rack");
             Assert.IsTrue(_context.Get<IRoverAbilities>().Has(RoverAbility.CargoCradle));
-            yield return Until(() => Fitted(CargoCradle), BayFitTimeout, "an arm sets the rack on 07");
+            yield return Until(() => _seats > seats, BayFitTimeout, "an arm sets the rack on 07");
             yield return new WaitForSeconds(SparkDelay);
             Assert.Greater(bench.SparkCount - bench.FloorSparkCount, 0, "weld sparks fly from the fitting arm's tip");
             yield return Until(() => seat.IsFitted, 6f, "the rack is fitted on 07");
@@ -2119,7 +2157,16 @@ namespace MoonProject.Gameplay.PlayModeTests
             float travelled = 0f;
             yield return DriveAlong(terminus.Position, "the terminus", value => travelled = value);
             yield return Until(() => LogFound("ro_1"), 3f, "Ro's log cache opens beside her");
-            yield return Until(() => Collected(AfterDark), 6f, "Lumen After Dark, Vol. 1 drifts into 07");
+            SealedContainer tapeCase = _gameplay.Cassettes.Container(CassetteIndex(AfterDark));
+            Assert.IsNotNull(tapeCase, "her tape rests sealed in Ro's tape case (0.5.5 §2)");
+            Vector3 front = tapeCase.CutPoint.position + tapeCase.Root.forward * SealStandOff;
+            yield return DriveTo(Flat(front), 1f, 0.35f, 30f, "the seal of Ro's tape case");
+            Press(_keyboard.eKey);
+            yield return Until(() => tapeCase.Opened, SealCutTimeout, "held E cuts the seal of Ro's tape case");
+            Release(_keyboard.eKey);
+            yield return Until(() => Collected(AfterDark), _gameplay.Cargo.ContainerLidSeconds +
+                _gameplay.Cassettes.Tuning.SlideSeconds + 6f,
+                "Lumen After Dark, Vol. 1 slides out and drifts into 07");
             yield return Until(() => bell.Progress.ItemsCollected == 1, 1f,
                 "her tape lights her fourth lamp: it is the fourth thing she needs");
             Capture("19b-terminus");
@@ -2429,8 +2476,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             Press(_keyboard.eKey);
             yield return Until(() => _events.UpgradePurchased.Count > purchases, 15f, "holding confirm crafts it");
             Release(_keyboard.eKey);
+            yield return Until(() => !bench.Feeding && _gameplay.Equipment.RowCount > 0, BayFitTimeout,
+                "the spine comes out into the parts row");
+            int seats = _seats;
+            yield return FitFromTheRow(bench, RoverKitPiece.BatterySpine, "the spine");
             Assert.IsTrue(_context.Get<IRoverAbilities>().Has(RoverAbility.CellPack));
-            yield return Until(() => Fitted(CellPack), BayFitTimeout, "an arm sets the battery spine on 07");
+            yield return Until(() => _seats > seats, BayFitTimeout, "an arm sets the battery spine on 07");
             Assert.AreEqual(_gameplay.Battery.Tuning.CellPackCells, battery.Cells, "two more cells, arriving full");
             yield return new WaitForSeconds(1.5f);
             Vector3 back = -Flat(_rover.Rotation * Vector3.forward).normalized;
@@ -2901,19 +2952,23 @@ namespace MoonProject.Gameplay.PlayModeTests
                 bay.BayPosition + Vector3.up, name);
         }
 
-        /// <summary>True once the bay has set a piece bought as <paramref name="upgradeId"/> on 07.</summary>
-        private bool Fitted(string upgradeId)
+        /// <summary>
+        /// Fits the crafted <paramref name="part"/> from the parts row as the player does from Tab's 07 page (0.5.5
+        /// §3.5): the drop on its socket, once the bay is free.
+        /// </summary>
+        private IEnumerator FitFromTheRow(Workshop bench, RoverKitPiece part, string what)
         {
-            for (int i = 0; i < _events.RoverKitFitted.Count; i++)
+            RoverEquipment equipment = _gameplay.Equipment;
+            yield return Until(() => bench.ReadyToFit, BayFitTimeout, $"the bay is free to fit {what}");
+            int index = -1;
+            for (int i = 0; i < equipment.RowCount; i++)
             {
-                RoverKitFitted fitted = _events.RoverKitFitted[i].Value;
-                if (!fitted.Gift && fitted.UpgradeId == upgradeId)
-                {
-                    return true;
-                }
+                index = equipment.RowPart(i) == part ? i : index;
             }
 
-            return false;
+            Assert.GreaterOrEqual(index, 0, $"{what} wait in the parts row");
+            Assert.IsTrue(equipment.TryFit(index), $"dropped on its socket, {what} go on");
+            Assert.IsTrue(equipment.IsFitted(part));
         }
 
         /// <summary>True once a station cued <paramref name="cue"/> after the first <paramref name="from"/>.</summary>

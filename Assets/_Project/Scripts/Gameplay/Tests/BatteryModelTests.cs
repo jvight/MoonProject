@@ -550,6 +550,21 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void TakingThePackOff_FallsBackTo07sOwnCells_KeepingWhatChargeFits()
+        {
+            _battery.GrowTo(6);
+            _cells.Clear();
+            _battery.ShrinkTo(_tuning.StartingCells);
+            Assert.AreEqual(_tuning.StartingCells, _battery.Cells);
+            Assert.AreEqual(_tuning.StartingCells, _battery.Charge, Tolerance, "full cells stay full, the rest go");
+            Assert.AreEqual(1, _cells.Count);
+            Assert.IsFalse(_cells[0].Rising);
+
+            _battery.ShrinkTo(6);
+            Assert.AreEqual(_tuning.StartingCells, _battery.Cells, "shrinking never grows the battery");
+        }
+
+        [Test]
         public void TheSave_RoundTrips_AndALoadedCrawlResumes()
         {
             _battery.GrowTo(6);

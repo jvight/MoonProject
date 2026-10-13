@@ -285,7 +285,7 @@ namespace MoonProject.Gameplay.Tests
         private CassetteDefinition Cassette(string id, GameObject prefab, CassetteSiteRule site, AnchorSpot anchor)
         {
             var cassette = Track(ScriptableObject.CreateInstance<CassetteDefinition>());
-            cassette.Populate(id, prefab, site, anchor, 1, AbilityGate.Open);
+            cassette.Populate(id, prefab, site, anchor, 1, AbilityGate.Open, string.Empty);
             return cassette;
         }
 

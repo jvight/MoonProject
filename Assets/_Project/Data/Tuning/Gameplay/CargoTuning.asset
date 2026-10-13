@@ -53,3 +53,6 @@ MonoBehaviour:
   _lidTilt: 35
   _lidSeconds: 0.8
   _sealGlow: 1
+  _containerCut: 0
+  _containerLidSwing: 105
+  _containerLidSeconds: 0.9
