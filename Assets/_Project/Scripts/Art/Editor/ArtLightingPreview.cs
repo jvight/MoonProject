@@ -670,7 +670,15 @@ namespace MoonProject.Art.Editor
                 Transform mast = Instantiate(broken ? RelayModelBuilder.BrokenMastName : RelayModelBuilder.MastName,
                     temporary, ArtPaths.RelayFolder).transform;
                 mast.position = new Vector3(broken ? -14f : -24f, 0f, 0f);
-                Lit(Descendant(mast, RelayModelBuilder.CabinetSealName), broken ? 1f : 0f);
+                Transform cabinet = Instantiate(LootContainerBuilder.CabinetName, temporary, ArtPaths.PropFolder)
+                    .transform;
+                cabinet.SetParent(Descendant(mast, RelayModelBuilder.CabinetSocketName), false);
+                Lit(Descendant(cabinet, LootContainerBuilder.SealName), broken ? 1f : 0f);
+                if (!broken)
+                {
+                    Descendant(cabinet, LootContainerBuilder.LidName).localRotation =
+                        Quaternion.Euler(0f, LootContainerBuilder.LidOpenDegrees, 0f);
+                }
             }
 
             Vector3 duck = pocket.position;

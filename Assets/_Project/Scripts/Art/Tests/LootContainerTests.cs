@@ -15,6 +15,7 @@ namespace MoonProject.Art.Tests
             yield return new TestCaseData(LootContainerBuilder.CreateTapeCase()).SetName("TapeCase");
             yield return new TestCaseData(LootContainerBuilder.CreateJunctionBox()).SetName("JunctionBox");
             yield return new TestCaseData(LootContainerBuilder.CreateSupplyPod()).SetName("SupplyPod");
+            yield return new TestCaseData(LootContainerBuilder.CreateCabinet()).SetName("Cabinet");
         }
 
         [TestCaseSource(nameof(Containers))]

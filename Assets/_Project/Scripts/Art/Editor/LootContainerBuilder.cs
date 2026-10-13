@@ -15,6 +15,10 @@ namespace MoonProject.Art.Editor
     /// about local X, negative, to lift it open) holding <c>CutPoint</c> (+Z out of the front seam) and <c>Seal</c>
     /// (M_LowPolyGlowOff, the seam's glow until the cut), and an <c>ItemSocket</c> where the find sits inside. The pod
     /// also has <c>Glow</c>, its cracked beacon (M_LowPolyGlowOff, World lights it warm).</item>
+    /// <item><c>Cabinet</c>, a relay mast's service cabinet (the relay spares), set on the mast's
+    /// <c>CabinetSocket</c> with identity: the same layout, but its <c>Lid</c> is a door hinged on its left edge
+    /// (turn it about local Y by <see cref="LidOpenDegrees"/> to swing it open), with <c>CutPoint</c> and
+    /// <c>Seal</c> on its free edge.</item>
     /// <item><c>TillySled</c>, Tilly's crashed survey sled in her crater: <c>PartSocket_0</c> wedged in its frame behind
     /// the <c>Clamp</c> (with <c>CutPoint</c> and <c>Seal</c>; one cut frees it), <c>PartSocket_1</c> in the dark gap
     /// under its tipped hull (dug) and the <c>SensorPod</c> container (its <c>Lid</c>, <c>CutPoint</c>, <c>Seal</c>)
@@ -28,6 +32,7 @@ namespace MoonProject.Art.Editor
         public const string JunctionBoxName = "JunctionBox";
         public const string SupplyPodName = "SupplyPod";
         public const string TillySledName = "TillySled";
+        public const string CabinetName = "Cabinet";
         public const string LidName = "Lid";
         public const string CutPointName = SiteModelBuilder.CutPointName;
         public const string SealName = "Seal";
@@ -37,7 +42,10 @@ namespace MoonProject.Art.Editor
         public const string SensorPodName = "SensorPod";
         public const string PartSocketPrefix = "PartSocket_";
 
-        /// <summary>How far a lid turns about its local X to open (negative lifts it).</summary>
+        /// <summary>
+        /// How far a lid turns to open: about its local X, negative lifts it; a cabinet's door turns about its local
+        /// Y, negative swings it out.
+        /// </summary>
         public const float LidOpenDegrees = -105f;
 
         private const float JunctionPost = 0.5f;
@@ -56,6 +64,7 @@ namespace MoonProject.Art.Editor
             foreach (ModelNode container in new[]
             {
                 CreateCoilCrate(), CreateTapeCase(), CreateJunctionBox(), CreateSupplyPod(), CreateTillySled(),
+                CreateCabinet(),
             })
             {
                 ModelPrefabWriter.Write(GroundOcclusion.Ground(container), ArtPaths.PropFolder, material, glowOff);
@@ -89,6 +98,18 @@ namespace MoonProject.Art.Editor
             root.Add(new ModelNode(GlowName, LootContainerMeshes.PodBeacon, Quaternion.identity,
                 new ModelMesh(SupplyPodName + "_" + GlowName, LootContainerMeshes.PodBeaconGlass()),
                 ModelMaterial.PaletteGlowOff));
+            return root;
+        }
+
+        public static ModelNode CreateCabinet()
+        {
+            var root = new ModelNode(CabinetName, Vector3.zero, new ModelMesh(CabinetName, RelayMeshes.CabinetBody()));
+            ModelNode door = root.Add(new ModelNode(LidName, RelayMeshes.CabinetHinge,
+                new ModelMesh(CabinetName + "_" + LidName, RelayMeshes.CabinetDoor())));
+            door.Add(new ModelNode(CutPointName, RelayMeshes.CabinetSealPoint, Quaternion.identity));
+            door.Add(new ModelNode(SealName, Vector3.zero, Quaternion.identity,
+                new ModelMesh(CabinetName + "_" + SealName, RelayMeshes.CabinetSeal()), ModelMaterial.PaletteGlowOff));
+            root.Add(new ModelNode(ItemSocketName, RelayMeshes.CabinetItem));
             return root;
         }
 
