@@ -9,9 +9,8 @@ namespace MoonProject.Gameplay
     /// The feel kit's look, as one listener of FeelBeats: the cut, and from polish wave 1 the leap's and landing's dust
     /// rings with the coil flash, dust falling off a tethered object, and an install's alignment light and power-on
     /// sweep (docs/design/polish-pass.md §3.2), and the scan's Reward: its lines streaming into 07's lens and the
-    /// lens's flare (<see cref="ScanRibbon"/>). For the cut's FeelBeats (docs/design/feel-pass.md §3.1, §6): Anticipate
-    /// charges
-    /// up at the emitter; the first Act ignites (flash, beam, cut light, sparks) and each later Act moves the hot seam
+    /// lens's flare (<see cref="ScanRibbon"/>). For the cut's FeelBeats (docs/design/feel-pass.md §3.1, §6):
+    /// Anticipate charges up at the emitter; the first Act ignites (flash, beam, cut light, sparks) and each later Act moves the hot seam
     /// and the spark rate with progress; Cancel disperses a charge or retracts the beam, leaving the seam to cool on
     /// the piece; Impact cracks; Follow drops slag off the tumbling piece, then lets its seam go as it folds. Beats
     /// say when, <see cref="IFeelAnchors"/> says where. Its owner calls <see cref="Step"/> once a frame. Every piece is
