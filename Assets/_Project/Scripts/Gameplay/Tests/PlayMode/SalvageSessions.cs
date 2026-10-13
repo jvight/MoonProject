@@ -252,6 +252,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture.Rover.Aim(camera, depot.Heart);
             yield return null;
             yield return null;
+            SealedContainer coilCrate = _fixture.Gameplay.Containers.Find(
+                TowerPartField.ContainerId(_fixture.Gameplay.TowerParts.PartAt(0)));
+            Assert.AreSame(coilCrate, _fixture.Gameplay.Containers.Candidate, "the coil crate's seal glows in reach");
+            Assert.IsNull(_fixture.Gameplay.Excavation.Candidate, "one press, one verb: the seal first, the dig waits");
+            _fixture.Gameplay.Containers.StandOpen(coilCrate.Id);
+            yield return null;
+            yield return null;
             Assert.AreSame(walkman, _fixture.Gameplay.Excavation.Candidate, "looking at the heart: dig");
             Assert.IsNull(_fixture.Gameplay.Salvage.Candidate);
 
