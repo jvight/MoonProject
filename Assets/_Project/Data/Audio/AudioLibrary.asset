@@ -253,6 +253,78 @@ MonoBehaviour:
     _volumeMax: 0.55
     _pitchMin: 1
     _pitchMax: 1
+  - _id: part_pick
+    _clips:
+    - {fileID: 8300000, guid: 3c6bb0bc447f92e4bba634734b0ba5e8, type: 3}
+    _variantLabels:
+    - part_pick
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: part_drop
+    _clips:
+    - {fileID: 8300000, guid: 4398a32e8cef2be45b40e8cf0879f34f, type: 3}
+    _variantLabels:
+    - part_drop
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: part_refuse
+    _clips:
+    - {fileID: 8300000, guid: eeeaf2ee230068a40901f535d2b39b81, type: 3}
+    _variantLabels:
+    - part_refuse
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.4
+    _volumeMax: 0.4
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: sheet_complete
+    _clips:
+    - {fileID: 8300000, guid: f843faffbc2085540911cbc32cc5aff5, type: 3}
+    _variantLabels:
+    - sheet_complete
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: recycle_crunch
+    _clips:
+    - {fileID: 8300000, guid: 418bf3d3ba2552842b1c1c64ffe6e4e4, type: 3}
+    _variantLabels:
+    - recycle_crunch
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: part_remove
+    _clips:
+    - {fileID: 8300000, guid: a00c0c90dcd215b4480aeeab21b216a4, type: 3}
+    _variantLabels:
+    - part_remove
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: scan_sweep
     _clips:
     - {fileID: 8300000, guid: 182466c001f96634bb032c87d6052248, type: 3}

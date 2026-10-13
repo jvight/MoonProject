@@ -22,3 +22,4 @@ MonoBehaviour:
   _gate:
     _gated: 1
     _ability: 0
+  _container: TapeCase
