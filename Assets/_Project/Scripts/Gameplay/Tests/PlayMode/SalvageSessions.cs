@@ -23,6 +23,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Seconds a held press may take to be seen (a slow first frame must not eat it).</summary>
         private const float PressTimeout = 1f;
 
+        /// <summary>Seconds from a press to the beam firing on any piece: the slowest fresh charge (three stages)
+        /// plus the press's own allowance.</summary>
+        private float IgnitionTimeout => _fixture.Gameplay.Cutter.Plan(3, false).TotalSeconds + PressTimeout;
+
         private InputActionAsset _controls;
         private GameplayFixture _fixture;
         private Keyboard _keyboard;
@@ -68,7 +72,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(SalvageMaterial.Metal, status.Material);
 
             Press(_keyboard.eKey);
-            yield return Waits.Until(() => _fixture.Events.SalvageCutStarted.Count > 0, PressTimeout);
+            yield return Waits.Until(() => _fixture.Events.SalvageCutStarted.Count > 0, IgnitionTimeout);
             Assert.AreEqual(1, _fixture.Events.SalvageCutStarted.Count);
             Assert.AreEqual(SalvageMaterial.Metal, _fixture.Events.SalvageCutStarted[0].Value.Material);
             Assert.Less(Vector3.Distance(metal.CutPosition, _fixture.Events.SalvageCutStarted[0].Value.Position),
@@ -258,7 +262,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsNull(_fixture.Gameplay.Excavation.Candidate);
 
             Press(_keyboard.eKey);
-            yield return Waits.Until(() => _fixture.Events.SalvageCutStarted.Count > 0, PressTimeout);
+            yield return Waits.Until(() => _fixture.Events.SalvageCutStarted.Count > 0, IgnitionTimeout);
             Assert.AreEqual(0, _fixture.Events.ExcavationStarted.Count, "one hold, one job");
             Release(_keyboard.eKey);
         }
@@ -382,6 +386,33 @@ namespace MoonProject.Gameplay.PlayModeTests
             Release(_keyboard.eKey);
             Assert.IsFalse(beats.Exists(beat => beat.Phase == FeelPhase.Anticipate), "a full hold keeps it shut");
             Assert.AreEqual(FeelPhase.Impact, beats.Find(beat => beat.Kind == FeelKind.Cargo).Phase, "the bump");
+        }
+
+        [UnityTest]
+        public IEnumerator ACut_BuildsItsStages_AndTheNextCutHereFindsTheEmitterWarm()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            var staged = new List<CutChargeStaged>();
+            using var listening = _fixture.Bootstrap.Context.Events.Subscribe<CutChargeStaged>(staged.Add);
+            SalvagePiece first = _fixture.FindSite("depot").Find(0);
+            first.Progress = 0.95f;
+            yield return FaceCut(first);
+            Press(_keyboard.eKey);
+            yield return Waits.Until(() => _fixture.Events.MaterialSalvaged.Count > 0, 6f);
+            Release(_keyboard.eKey);
+            Assert.AreEqual(0, staged[0].Stage, "stage 0 as the charge starts");
+            Assert.IsFalse(staged[0].Warm, "the first cut braces");
+            Assert.IsTrue(staged[staged.Count - 1].IsFullLock, "a small piece: one stage, the full lock");
+
+            staged.Clear();
+            SalvagePiece next = _fixture.FindSite("depot").Find(1);
+            next.Progress = 0.95f;
+            yield return FaceCut(next);
+            Press(_keyboard.eKey);
+            yield return Waits.Until(() => staged.Count > 0, 2f);
+            Release(_keyboard.eKey);
+            Assert.IsTrue(staged[0].Warm, "0.5.5 §5.1: a re-press at the same site within 6 s skips the brace");
         }
 
         private IEnumerator FaceCut(SalvagePiece piece)

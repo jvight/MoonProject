@@ -159,26 +159,33 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void TheFirstHalfHour_CutsSnappily()
+        public void TheCharge_BuildsTheStagesThePieceNeeds_AsTheSpecsTableSays()
         {
             var tuning = Create<SalvageTuning>();
             var cutter = Create<CutterTuning>();
-            CutterTier bare = cutter.Tier(0);
-            float first = bare.ChargeSeconds + SalvageYield.CutSeconds(PieceSize.Small, bare.SpeedFactor, tuning);
-            Assert.LessOrEqual(first, FirstCut, "M3-26 §4.3: the first cut ever, press to crack, about 1.9 s");
-            foreach (string name in new[] { "depot", "garage" })
-            {
-                foreach (PieceSize size in SalvageEconomy.PieceClasses(name))
-                {
-                    float seconds = bare.ChargeSeconds + SalvageYield.CutSeconds(size, bare.SpeedFactor, tuning);
-                    Assert.LessOrEqual(seconds, FirstHalfHourCut, $"{name}'s {size} piece: nothing over ~3.2 s");
-                }
-            }
+            // 0.5.5 §5.1: the build (brace + stages) per piece and tier, fresh / warm.
+            AssertBuild(cutter, tuning, 0, PieceSize.Small, 0.95f, 0.27f);
+            AssertBuild(cutter, tuning, 0, PieceSize.Medium, 1.40f, 0.54f);
+            AssertBuild(cutter, tuning, 0, PieceSize.Large, 1.85f, 0.81f);
+            AssertBuild(cutter, tuning, 0, PieceSize.Hull, 1.85f, 0.81f);
+            AssertBuild(cutter, tuning, 1, PieceSize.Small, 0.86f, 0.22f);
+            AssertBuild(cutter, tuning, 1, PieceSize.Large, 1.58f, 0.65f);
+            Assert.AreEqual(0.12f, cutter.BreathSeconds, 1e-5f, "the held breath before ignition");
+            Assert.AreEqual(6f, cutter.WarmWindowSeconds, 1e-5f);
 
+            CutterTier bare = cutter.Tier(0);
             CutterTier lens = cutter.Tier(1);
-            Assert.Less(lens.ChargeSeconds, bare.ChargeSeconds, "the Focus Lens charges sooner");
-            Assert.Greater(lens.SpeedFactor, bare.SpeedFactor, "and cuts faster");
+            Assert.Greater(lens.SpeedFactor, bare.SpeedFactor, "the Focus Lens cuts faster");
             Assert.Less(lens.DrainFactor, bare.DrainFactor, "and cheaper");
+        }
+
+        private static void AssertBuild(CutterTuning cutter, SalvageTuning tuning, int tier, PieceSize size,
+            float fresh, float warm)
+        {
+            float stage = cutter.Tier(tier).StageSeconds;
+            int stages = tuning.Size(size).Stages;
+            Assert.AreEqual(fresh, cutter.BraceSeconds + stages * stage, 0.006f, $"tier {tier} {size} fresh");
+            Assert.AreEqual(warm, stages * stage * cutter.WarmFactor, 0.006f, $"tier {tier} {size} warm");
         }
 
         [Test]
@@ -216,12 +223,6 @@ namespace MoonProject.Gameplay.Tests
 
         /// <summary>No single material runs tight: each gives at least this many times its need.</summary>
         private const float LeastPerMaterial = 1.6f;
-
-        /// <summary>M3-26 §4.3: the first cut ever, press to crack (s).</summary>
-        private const float FirstCut = 1.9f;
-
-        /// <summary>M3-26 §4.3: nothing in the first 30 minutes takes longer to cut (s).</summary>
-        private const float FirstHalfHourCut = 3.2f;
 
         private static readonly SalvageMaterial[] Materials =
         {
