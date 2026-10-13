@@ -339,6 +339,7 @@ namespace MoonProject.Gameplay
 
             GameObject instance = UnityEngine.Object.Instantiate(prefab, socket, false);
             instance.name = name;
+            instance.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             ScanFragment fragment = ScanFragment.Read(id, set.KitId, index, set.Count, set.Size(index), hostId,
                 instance.transform, out string problem);
             if (fragment == null)
