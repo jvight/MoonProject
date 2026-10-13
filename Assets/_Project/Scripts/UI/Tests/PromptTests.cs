@@ -66,19 +66,17 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void DoingTheAction_EndsTheShowing_ThenItRestsForItsCooldown()
+        public void DoingTheAction_EndsTheShowing_AndRetiresThePrompt()
         {
             Run(1f, Ready(InteractionKind.Excavate));
             _director.NotifyUsed(InteractionKind.Excavate);
             Assert.IsFalse(_director.WantsShown, "the prompt bows out as soon as the player does it");
             Assert.AreEqual(1, _ledger.Used(InteractionKind.Excavate));
 
-            Run(_settings.RepeatCooldown * 0.5f, Ready(InteractionKind.Excavate));
-            Assert.AreEqual(InteractionKind.None, _director.Displayed, "rests during the cooldown");
             float dwell = _settings.Find(InteractionKind.Excavate).DwellSeconds;
-            Run(_settings.RepeatCooldown * 0.5f + dwell + 1f, Ready(InteractionKind.Excavate));
-            Assert.AreEqual(InteractionKind.Excavate, _director.Displayed, "and may return once");
-            Assert.AreEqual(2, _ledger.Shown(InteractionKind.Excavate));
+            Run(_settings.RepeatCooldown + dwell + 1f, Ready(InteractionKind.Excavate));
+            Assert.AreEqual(InteractionKind.None, _director.Displayed, "done once, the verb is known and never returns");
+            Assert.AreEqual(1, _ledger.Shown(InteractionKind.Excavate));
         }
 
         [Test]

@@ -56,7 +56,8 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual("Where 07 rests.", layout.PlaceCardJob.text);
             Ticks(card, settings.Place.FadeIn + settings.PlaceHoldSeconds + settings.Place.FadeOut + 0.5f);
             Assert.AreEqual("place.ladder.name", card.Current, "the next place waited its turn");
-            Assert.AreEqual("Not made for wheels.", layout.PlaceCardJob.text);
+            Assert.AreEqual(DisplayStyle.None, layout.PlaceCardJob.style.display,
+                "a place whose job nothing else is silent about is its name alone");
             Ticks(card, settings.Place.FadeIn + settings.PlaceHoldSeconds + settings.Place.FadeOut + 0.5f);
             Assert.IsNull(card.Current, "the dock was named once, not twice");
             Assert.IsFalse(card.IsVisible);
