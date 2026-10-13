@@ -71,6 +71,7 @@ namespace MoonProject.Gameplay.Editor
         public const string RelayMast = ArtPaths.RelayFolder + "/RelayMast.prefab";
         public const string RelayMastBroken = ArtPaths.RelayFolder + "/RelayMast_Broken.prefab";
         public const string RelayPart = ArtPaths.RelayFolder + "/Part_RelayModule.prefab";
+        public const string TapeDeck = ArtPaths.Root + "/Rover/Kit_TapeDeck.prefab";
 
         /// <summary>Art's salvage site prefab (Site_depot, Site_kestrel...).</summary>
         public static string SitePrefab(string name)

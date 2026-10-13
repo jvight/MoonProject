@@ -14,13 +14,16 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// <summary>
     /// Kenji's garage port (docs/design/first-hour-v2.md §3) on the real components behind the fake rover: the tether
     /// is asleep and a loose keepsake says so once; the garage's last cut opens the port; parked on its pad 07 has its
-    /// ring fitted and the tether wakes; Ro's tape deck set on the tray with the tether is fitted on 07 and saved; a
+    /// ring fitted and the tether wakes; Kenji's spare crate cut open gives Ro's tape deck, which glides onto the tray
+    /// and is fitted on 07 once it parks, and saved; an older save's keepsake deck stays fitted; a
     /// loaded game has both back at once.
     /// </summary>
     public sealed class GaragePortSessions : InputTestFixture
     {
-        private const string Deck = "cassette_player";
         private const string Duck = "rubber_duck";
+
+        /// <summary>07 stands this far (m) in front of a seal to cut it.</summary>
+        private const float SealStandOff = 1.4f;
 
         private InputActionAsset _controls;
         private GameplayFixture _fixture;
@@ -30,6 +33,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             base.Setup();
             _mouse = InputSystem.AddDevice<Mouse>();
+            InputSystem.AddDevice<Keyboard>();
             _controls = BootstrapHarness.LoadControlsCopy();
         }
 
@@ -41,7 +45,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator ThePort_FitsTheRing_ThenRosDeckSetOnItsTray()
+        public IEnumerator ThePort_FitsTheRing_ThenRosDeckFromKenjisSpareCrate()
         {
             _fixture = GameplayFixture.Boot(_controls, tether: false);
             yield return null;
@@ -86,25 +90,59 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(fittings[0].Gift, "the port's arm fits it");
             Assert.IsTrue(_fixture.Rover.Has(RoverAbility.Tether), "the tether wakes with the ring");
 
-            Relic deck = LooseAt(Deck, port.TrayPosition + Vector3.up * 0.3f);
-            yield return Aim(deck);
-            Press(_mouse.rightButton, queueEventOnly: true);
-            yield return Waits.Until(() => port.DeckFitted, 6f);
-            Release(_mouse.rightButton);
+            SealedContainer crate = port.SpareCrate;
+            Assert.AreEqual(ContainerKind.Crate, crate.Kind, "Kenji's \"07 · SPARE\" crate (0.5.5 §2)");
+            Assert.IsTrue(crate.Available, "with the ring on, its seal glows");
+            Assert.IsNull(gameplay.Relics.Find(TapeDeckMigration.LegacyDeckRelic), "the deck is no keepsake");
+            Vector3 front = crate.CutPoint.position + crate.Root.forward * SealStandOff;
+            front.y = 0f;
+            Vector3 back = -crate.Root.forward;
+            _fixture.Rover.Place(front, Mathf.Atan2(back.x, back.z) * Mathf.Rad2Deg);
+            yield return null;
+            yield return SealCut.Hold(this, gameplay, crate, "Kenji's spare crate");
+            yield return Waits.Until(() => port.DeckInTheCrate,
+                _fixture.ProgressionTuning.PartAppearSeconds + 1f);
+            Assert.IsTrue(port.DeckInTheCrate, "Ro's tape deck rises to the crate's mouth");
+            yield return PickupPress.Take(this, gameplay, 2f, "Ro's tape deck");
+            yield return Waits.Until(() => port.DeckOnTheTray, _fixture.ProgressionTuning.PortTrayGlideSeconds + 1f);
+            Assert.IsTrue(port.DeckOnTheTray, "it glides onto the port's tray");
+            Assert.AreEqual(1, fittings.Count, "on the tray it waits for 07 to park");
+            _fixture.Rover.Place(port.PadCentre, 0f);
+            yield return Waits.Until(() => port.DeckFitted, 4f);
             Assert.AreEqual(2, fittings.Count);
             Assert.AreEqual(RoverKitPiece.TapeDeck, fittings[1].Part, "the arm fits the deck on 07");
             Assert.AreEqual(RoverSocket.Deck, fittings[1].Socket);
-            Assert.AreEqual(RelicState.Fitted, deck.State);
-            Assert.IsFalse(deck.gameObject.activeSelf, "it rides on 07 now, nowhere on the ground");
 
             GaragePortSaveData saved = port.Capture();
-            Assert.IsTrue(saved.ringFitted && saved.placeSeen && saved.tetherHinted);
+            Assert.IsTrue(saved.ringFitted && saved.deckFitted && saved.placeSeen && saved.tetherHinted);
             fittings.Clear();
             port.Restore(saved);
             port.Announce();
             Assert.IsEmpty(fittings, "a load publishes nothing: the rover reads the equipment");
             Assert.IsTrue(gameplay.Equipment.IsFitted(RoverKitPiece.TetherRing), "the ring is back at once");
             Assert.IsTrue(gameplay.Equipment.IsFitted(RoverKitPiece.TapeDeck), "and the deck");
+        }
+
+        [UnityTest]
+        public IEnumerator AnOldSavesKeepsakeDeck_StaysFitted_AndKenjisCrateStandsOpen()
+        {
+            _fixture = GameplayFixture.Boot(_controls, tether: false);
+            yield return null;
+            GaragePort port = _fixture.Gameplay.Port;
+            var relics = new RelicsSaveData
+            {
+                relics = new[] { new RelicSaveData { id = TapeDeckMigration.LegacyDeckRelic, state = 9 } },
+            };
+            Assert.IsTrue(TapeDeckMigration.WasFitted(relics), "the old keepsake deck was fitted on 07");
+            Assert.IsFalse(TapeDeckMigration.WasFitted(new RelicsSaveData
+            {
+                relics = new[] { new RelicSaveData { id = TapeDeckMigration.LegacyDeckRelic, state = 2 } },
+            }), "one only dug up goes back into the crate");
+            port.AdoptLegacyDeck();
+            port.Announce();
+            Assert.IsTrue(port.DeckFitted);
+            Assert.IsTrue(_fixture.Gameplay.Equipment.IsFitted(RoverKitPiece.TapeDeck), "on 07 at once");
+            Assert.IsTrue(port.SpareCrate.StandsOpen, "and the crate it came from stands open");
         }
 
         private Relic LooseAt(string id, Vector3 position)

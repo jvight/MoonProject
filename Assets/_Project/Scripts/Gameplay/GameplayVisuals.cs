@@ -94,6 +94,10 @@ namespace MoonProject.Gameplay
                  "(first-hour v2 §3).")]
         [SerializeField] private GameObject _garagePort;
 
+        [Tooltip("Art's tape deck (Generated/Art/Rover/Kit_TapeDeck.prefab, the piece 07 wears), sealed in Kenji's " +
+                 "spare crate until the port fits it (0.5.5 §2).")]
+        [SerializeField] private GameObject _tapeDeck;
+
         public Material SonarRing => _sonarRing;
         public Material SiteRing => _siteRing;
         public Material SitePillar => _sitePillar;
@@ -116,6 +120,7 @@ namespace MoonProject.Gameplay
         public Material HeatSeam => _heatSeam;
         public FeelVfxTuning FeelTuning => _feelTuning;
         public GameObject GaragePort => _garagePort;
+        public GameObject TapeDeck => _tapeDeck;
 
         /// <summary>Art's station pad (StationPad_&lt;cm&gt;) whose radius is nearest <paramref name="radius"/>.</summary>
         public GameObject PadFor(float radius)
@@ -188,6 +193,7 @@ namespace MoonProject.Gameplay
                 : _heatSeam == null ? "heat seam material is missing (run Gameplay/FeelVfx)"
                 : _feelTuning == null ? "the feel VFX tuning is missing (run Gameplay/FeelVfx)"
                 : _garagePort == null ? "Art's garage port is missing (run Gameplay/Materials)"
+                : _tapeDeck == null ? "Art's tape deck is missing (run Gameplay/Materials)"
                 : null;
         }
 
@@ -225,9 +231,10 @@ namespace MoonProject.Gameplay
             _heatSeam = heatSeam;
         }
 
-        internal void PopulateGaragePort(GameObject port)
+        internal void PopulateGaragePort(GameObject port, GameObject tapeDeck)
         {
             _garagePort = port;
+            _tapeDeck = tapeDeck;
         }
 
         internal void Populate(Material sonarRing, Material siteRing, Material sitePillar, Material tractorBeam,

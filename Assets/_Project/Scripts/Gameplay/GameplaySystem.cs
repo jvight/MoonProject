@@ -538,13 +538,15 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>Kenji's garage port, or null (logged) when its site, its relic or Art's port is missing.</summary>
+        /// <summary>
+        /// Kenji's garage port, or null (logged) when its site, Art's port, its spare crate or the deck is missing.
+        /// </summary>
         private GaragePort NewPort(GameplayServices services, IRoverAbilities abilities)
         {
             try
             {
-                return new GaragePort(transform, services, _salvage, _relics, abilities, _progression.Tuning, _tether,
-                    Equipment);
+                return new GaragePort(transform, services, _salvage, _relics, abilities, _progression.Tuning,
+                    _friends.Tuning, _tether, Equipment, Containers);
             }
             catch (InvalidOperationException exception)
             {
@@ -781,6 +783,11 @@ namespace MoonProject.Gameplay
 
         private void RestoreRelics(RelicsSaveData data)
         {
+            if (TapeDeckMigration.WasFitted(data))
+            {
+                Port.AdoptLegacyDeck();
+            }
+
             _relics.Restore(data);
             _cradle.AdoptRestored();
             _home.SyncDisplays();

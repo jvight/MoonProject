@@ -25,7 +25,6 @@ namespace MoonProject.Gameplay
         private Vector3 _restPosition;
         private Quaternion _restRotation = Quaternion.identity;
         private bool _lifting;
-        private bool _claimed;
 
         // The last known pose, kept in plain fields so a save captured while the scene is being torn down (after
         // this object's transform is gone) still has it.
@@ -91,23 +90,7 @@ namespace MoonProject.Gameplay
 
         Vector3 ITowable.Position => transform.position;
 
-        bool ITowable.WantsRelease => _claimed;
-
-        /// <summary>Kenji's garage port has taken it off the tether (it lets go on the next physics step).</summary>
-        internal void Claim()
-        {
-            _claimed = true;
-        }
-
-        /// <summary>The port has fitted it on 07: it lies nowhere in the world any more.</summary>
-        internal void SetFitted()
-        {
-            _claimed = false;
-            State = RelicState.Fitted;
-            Slot = -1;
-            SetPhysics(false);
-            gameObject.SetActive(false);
-        }
+        bool ITowable.WantsRelease => false;
 
         internal void Setup(RelicDefinition definition, int index, SalvageSite home, RelicSite site,
             RelicTuning tuning, PhysicsMaterial physicsMaterial, Material haloMaterial)
@@ -208,8 +191,7 @@ namespace MoonProject.Gameplay
         internal void BeginCarry(RelicState carryState, int slot)
         {
             if (carryState != RelicState.Depositing && carryState != RelicState.Returning &&
-                carryState != RelicState.Cradled && carryState != RelicState.Riding &&
-                carryState != RelicState.Porting)
+                carryState != RelicState.Cradled && carryState != RelicState.Riding)
             {
                 throw new ArgumentOutOfRangeException(nameof(carryState), carryState, "Not a carried state.");
             }
@@ -251,7 +233,7 @@ namespace MoonProject.Gameplay
         internal RelicSaveData Capture()
         {
             bool riding = State == RelicState.Riding;
-            RelicState saved = riding ? RelicState.Loose : State == RelicState.Porting ? RelicState.Fitted : State;
+            RelicState saved = riding ? RelicState.Loose : State;
             return new RelicSaveData
             {
                 id = Definition.Id,
@@ -291,11 +273,6 @@ namespace MoonProject.Gameplay
                 case RelicState.Cradled:
                     Place(position, rotation);
                     BeginCarry(RelicState.Cradled, -1);
-                    break;
-                case RelicState.Porting:
-                case RelicState.Fitted:
-                    Place(position, rotation);
-                    SetFitted();
                     break;
                 default:
                     Place(position, rotation);

@@ -17,7 +17,6 @@ namespace MoonProject.Gameplay.Editor
     {
         public static readonly RelicRecipe[] All =
         {
-            new RelicRecipe("cassette_player", "ro", 6f, 3, "garage"),
             new RelicRecipe("rubber_duck", "kenji", 3f, 5, "garage"),
             new RelicRecipe("golden_record", "ro", 5f, 0, "kestrel"),
             new RelicRecipe("astronaut_boot", "ines", 9f, 1, "drill"),
