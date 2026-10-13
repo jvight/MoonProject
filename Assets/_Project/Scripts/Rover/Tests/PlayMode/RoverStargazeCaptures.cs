@@ -292,6 +292,51 @@ namespace MoonProject.Rover.PlayModeTests
         }
 
         /// <summary>
+        /// The Tab "07" page's live portrait (0.5.5 §3.5) in the real scene: the texture written out as a PNG with the
+        /// socket positions art has marked, to judge the pose and how 07 reads lit only by the scene and its lamps.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator Portrait_IsCapturedFromItsOwnCamera()
+        {
+            yield return Boot();
+            var portrait = _context.Get<IRoverPortrait>();
+            portrait.SetActive(true);
+            yield return Wait(SettleSeconds);
+            RenderTexture texture = portrait.Texture;
+            RenderTexture previous = RenderTexture.active;
+            RenderTexture.active = texture;
+            var image = new Texture2D(texture.width, texture.height, TextureFormat.RGBA32, false);
+            image.ReadPixels(new Rect(0, 0, texture.width, texture.height), 0, 0);
+            image.Apply();
+            RenderTexture.active = previous;
+            portrait.SetActive(false);
+            Directory.CreateDirectory(CaptureFolder);
+            File.WriteAllBytes(Path.Combine(CaptureFolder, "portrait.png"), image.EncodeToPNG());
+            var report = new StringBuilder("# The Tab 07 portrait" + Environment.NewLine);
+            foreach (RoverSocket socket in Enum.GetValues(typeof(RoverSocket)))
+            {
+                report.AppendLine(portrait.TryGetSocketViewport(socket, out Vector2 uv)
+                    ? $"- {socket}: {uv.x.ToString("F3", CultureInfo.InvariantCulture)}, "
+                    + uv.y.ToString("F3", CultureInfo.InvariantCulture)
+                    : $"- {socket}: no node yet");
+            }
+
+            int shown = 0;
+            foreach (Color32 pixel in image.GetPixels32())
+            {
+                shown += pixel.a > 0 ? 1 : 0;
+            }
+
+            report.AppendLine($"- pixels with 07 in them: {shown} of {texture.width * texture.height}");
+            File.WriteAllText(Path.Combine(CaptureFolder, "portrait.md"), report.ToString());
+            Object.Destroy(image);
+            Assert.Greater(shown, 0, "07 shows in its portrait.");
+        }
+
+        /// <summary>
         /// The charge-up's weight (0.5.5 §5.3, §5.6) from the chase camera: a fresh charge on a hull plate (3 stages)
         /// braces 07 and pushes the camera in; frames at rest, braced, and at the full lock, with the camera's
         /// distance and height from 07 in the report.

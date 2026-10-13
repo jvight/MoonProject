@@ -20,11 +20,11 @@ namespace MoonProject.Rover
 
         [Tooltip("The camera's distance (m) from the point it looks at.")]
         [Range(1f, 10f)]
-        [SerializeField] private float _distance = 3.4f;
+        [SerializeField] private float _distance = 5f;
 
         [Tooltip("The point the camera looks at: its height (m) above 07's root, the middle of the body and head.")]
         [Range(0f, 2f)]
-        [SerializeField] private float _lookHeight = 0.75f;
+        [SerializeField] private float _lookHeight = 0.6f;
 
         [Tooltip("Vertical field of view (deg): long, so 07 reads flat and calm like a spec drawing.")]
         [Range(10f, 60f)]
