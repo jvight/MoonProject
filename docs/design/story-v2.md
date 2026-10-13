@@ -24,6 +24,10 @@ The story is the player finding out that nobody here gave up.
   the crew meant to be back in weeks.
 - Years later, a faint signal from Earth started the **Lumen Recovery Protocol**. The station had no crew, so the
   protocol sent the elders out one by one, each on one errand toward the great dish: fetch, relay, climb, light.
+  - **One at a time,** because the station's last power could keep only one machine awake. When an elder stopped
+    answering, the protocol woke the next.
+  - **07 succeeds where they failed because Kenji built it to grow:** it is the only machine with kit sockets that
+    the bay's arms can fit. The elders were each built for one job and can't be upgraded (§3.1).
 - **Each elder stopped at exactly the obstacle 07 must later overcome:** range, slope, dark and cold, a drop, the
   Peak's rifts. The last one, **06**, stayed near home and spent its final charge relaying Earth's signal to the dock.
   **That is what woke 07.**
@@ -100,6 +104,51 @@ still doing that job, gently and pointlessly, until 07 gives the job a purpose a
 | Ice tappers (0.8) | harvested ice for Theo's garden | they still sort ice into neat piles beside an empty greenhouse |
 | Echo beacons (0.8) | Ines's guide lights to the storm shelter | they blink the safe way in for anyone listening, still waiting for the crew |
 
+### 3.1 Power and logic: every machine has a source, a loop, a goal and a reason
+The owner: "everything must be extremely logical". Basic facts:
+- a lunar day and night each last about two weeks;
+- solar machines sleep through the night on their cells and wake at dawn;
+- dust slowly settles on any panel nobody cleans;
+- permanent shadow and the lava tube never see the sun;
+- the crew left two kinds of long-life power: **solar masts**, and **sealed crew cells**. A sealed crew cell is a
+  small long-life isotope cell, like the ones real probes carry. The crew installed them only where the sun can't
+  reach: the storm shelter and the dish station's vault.
+
+**The elders**
+
+| Elder | Power | Goal (its errand) | Why it stopped, or why it still runs | The gate it explains |
+|---|---|---|---|---|
+| **06** | its own cell; its panel cracked in the storm | keep relay.2's receiver listening and pass anything from Earth to the dock | With no working panel, it lived on its cell for years, spending only on listening. When a new Earth signal came, it spent the last of it relaying the signal to 07's dock. | none: it is why 07 woke |
+| **05** | the mare dish's solar array (the field the sweeper kept clean) | keep the dish aimed at Earth and archive what it hears | The sweeper broke, and the array dusted over year by year. One long night its share wasn't enough: 05 drained, and at dawn its own panel was too dusted to wake it. **The archive ends that night.** Repairing the sweeper is what makes the dish's array clean enough to light again. | range |
+| **04** | its own panel | carry a dish part up the terraces to the upper station | It slid back down the terrace wall and came to rest on its side, panel facing the ground, so it could never recharge. | slope |
+| **03** | its own panel | fetch ice for the dish's coolant from the crater | Permanent shadow has no sun to charge from. Its lamp was too weak to find the way back to the sunlit rim, and its cell ran down in the dark. | dark and cold |
+| **02** | the storm shelter's **sealed crew cell**, plugged in | fetch the shelter's spare dish coil | It went down the skylight and couldn't climb back up, so it followed the shelter's standing order: keep the lights on until the crew arrives. The sealed cell has powered the shelter, its grow lamp and the echo beacons ever since. **Still awake.** | the drop |
+| **01** | the dish station's **solar mast**: the Peak is in sunlight most of the month, a real "peak of near-eternal light" | reach the dish and keep the way marked | The rockfall and the rifts stopped it at the dish station, and the dish is too heavy for it. Plugged into the mast, it powers the dish's red **fault beacon** (the station's own cells died long ago) so the next machine can find the way. **Still awake.** | rifts, and a lift it can't make (Atlas) |
+| **07** | the home dock (its own small solar trickle and cell); its kit sockets | the protocol's last errand | It was kept asleep "for next time" until 06's relay woke it. | — |
+
+**The working machines**
+
+| Machine | Power and recharge loop | Goal | Peers |
+|---|---|---|---|
+| Panel mites | recharge on any panel that still makes power, and sleep on it at night | wipe dust off panels | clusters show which panels still work; they keep the sweeper's array alive once it's swept |
+| The sweeper | solar, from the array it sweeps; it keeps its own power source clean | keep the solar-field road and array clear | broken, it lets the array dust over (05's end); repaired, it feeds the mare dish and the mites |
+| The survey flock | small cells; they roost on any lit mast or working panel at night | map fresh impacts and follow a lead rover | they follow 07 (a rover), roost on the masts 07 lights, and Tilly chirps to them |
+| The trencher | solar; it trenches by day and parks facing east at night to catch dawn | cut the cable trench for the relay link to the Peak | its cable reel ran out long ago, so the trench is empty; 07's masts finish what it started |
+| Mule | solar | plant the lamp posts of the crew's canyon road | it tipped planting the last post, panel to the ground |
+| The haul sled | solar, through a capacitor bank | haul the drill's last load home | its capacitor bank failed open on the climb (the Boost Coils fragments are that bank) |
+| The stopped convoy | solar; the two behind are idling, alive | bring the mare dish's spare parts home | the lead's cell died, and the two behind are programmed to follow it, so they wait. A new lead (the repair, or 07) lets them finish. |
+| Cable climbers (0.7) | the terrace power cables they inspect | check the cables | they cling to the live lines, which marks the climbable lanes |
+| Ice tappers (0.8) | small cells; they climb to the crater's sunlit lip to charge, then go back down | sort ice for Theo's garden | they queue at the sunlit lip like a line of commuters, and Moss tends their ice |
+| Echo beacons (0.8) | the shelter's sealed crew cell (02's circuit) | blink the way into the shelter for anyone listening | they live because 02 keeps the shelter's power on |
+
+**The timeline** (it matches `text/radio-letters.md`):
+- 2047: the storm; the crew evacuates; the program closes.
+- 2048: Ro's first letter. It is the first Earth signal the station hears, and the protocol starts.
+- 2048 onward: the elders go out one at a time. 05 tends the mare dish for twenty years.
+- 2067: Ro's twentieth year, the archive's last letter. Soon after, 05 drains and the dish stops listening.
+- Decades later (the game's present): Ro's jingle, still broadcast, reaches relay.2. 06 relays it, and 07 wakes.
+  **The opening already proves someone on Earth is still on the air**: a hint the player can only read at the end.
+
 ## 4. How the story is told
 **Never:** cutscene exposition, voice acting, quest logs, popups. **Always:** the world first, words last.
 
@@ -143,7 +192,10 @@ still doing that job, gently and pointlessly, until 07 gives the job a purpose a
 2. **01 and 02 still awake:** may they be the only "living" elders (01 the beacon, 02 the moss-keeper), with the
    others at rest? Or should all be at rest?
 3. **The archive's silence (moment 2):** is the fear that Ro stopped writing right for a cozy game, given that the
-   ending resolves it? It lasts from 0.6 to 1.0.
+   ending resolves it? It lasts from 0.6 to 1.0, softened by the opening's jingle, which a player can later read as
+   proof she's still on the air.
+   - Release order: the mare archive now holds all of Ro's letters (`letter.mast_5`–`_10`) and plays them as one
+     rush. The later masts carry the crew's logs instead.
 4. **After the ending: bring the elders home** to berths by the dock ("Kenji's seven"). Keep it, or let them rest
    where they fell?
 5. **The convoy:** repair its lead so it finishes its trip home (a small cozy quest that also feeds the Dish row), or
