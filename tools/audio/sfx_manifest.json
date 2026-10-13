@@ -509,6 +509,96 @@
       "notes": "07's machine voice, greeting (feel-pass 7.2); syllables in chirp_syllables.json."
     },
     {
+      "id": "scan_sweep",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/scan_sweep_loop.wav"
+      ],
+      "variantLabels": [
+        "scan_sweep"
+      ],
+      "sha256": [
+        "81a9c79373c74733f114026757a49cb511603b186f7bd6cfcbfdf88889a8d56b"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 D: the lens's fan sweeping a fragment; pitch steps D E F# A per 25%. 2 s loop."
+    },
+    {
+      "id": "scan_step",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/scan_step_01.wav",
+        "Assets/_Project/Audio/SFX/scan_step_02.wav",
+        "Assets/_Project/Audio/SFX/scan_step_03.wav",
+        "Assets/_Project/Audio/SFX/scan_step_04.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04"
+      ],
+      "sha256": [
+        "f4ed1d6b3afdcb218cfdd690758c0415397a20e3ab5964289ee28de83db554b0",
+        "4403b5896540146c2ad0af45bae1faeea2de816ff523cb7bd230d826a0824531",
+        "041ee82b93212c6dcea9f55b388eae56f3ded7be10c847815c9334127b119555",
+        "f56e7f33a445e0adb706da912b42b6c02e70a50a9876cf62cbc5ebaa08c8dfb9"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "0.5.5 D: a quarter of the scan drawn: a glass note D E F# A."
+    },
+    {
+      "id": "scan_liftoff",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/scan_liftoff.wav"
+      ],
+      "variantLabels": [
+        "scan_liftoff"
+      ],
+      "sha256": [
+        "7072902f1c60d2e4dbac3dacc734063dd400f0f956290d75383e2d54cacf33ea"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 D: the dissolve into the lens: a rising shimmer and a flare chime on F#6."
+    },
+    {
       "id": "charge_brace",
       "category": "oneshot_3d",
       "milestone": "M3",

@@ -619,3 +619,39 @@ def charge_lock(_variant, gen):
     click = filters.bandpass(noise.white(click_n, gen), 1800.0, 2.0) * envelope.ar(click_n, 0.0008, 0.02)
     place(mix, 0.35 * click, samples(0.07))
     return filters.lowpass(mix, 4000.0)
+
+
+# ------------------------------------------------------------------------------------- 0.5.5 D: scanning (section 1)
+
+SCAN_SWEEP_LOOP_S = 2.0
+SCAN_STEP_NOTES = ("D5", "E5", "F#5", "A5")
+
+
+def scan_sweep(_variant, gen):
+    """The lens's fan of light sweeping a fragment: a soft airy tone on D5 with a slow shimmer, quiet and calm. The
+    runtime steps its pitch up the pentatonic at each 25% (D -> E -> F# -> A). Seamless."""
+    n = samples(SCAN_SWEEP_LOOP_S)
+    d5 = loop_freq(note_freq("D5"), n)
+    tone = osc.sine(n, d5) + 0.2 * osc.sine(n, 2.0 * d5)
+    air = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 2200.0, 1.2))
+    air = air / max(float(np.std(air)), 1e-9)
+    tone *= envelope.lfo(n, 4.0 / SCAN_SWEEP_LOOP_S, 0.15, 0.85)
+    return periodic(0.08 * tone + 0.01 * air, lambda x: filters.lowpass(x, 3500.0))
+
+
+def scan_step(variant, _gen):
+    """A quarter of a scan drawn: a small glass note on the next step (D E F# A)."""
+    return filters.lowpass(0.4 * _glass(note_freq(SCAN_STEP_NOTES[variant]), 0.5), 5500.0)
+
+
+def scan_liftoff(_variant, _gen):
+    """The dissolve: the line drawing unthreads and streams into 07's lens. A soft rising shimmer (D5 -> D6 glide
+    under glass notes A5, D6) ending in a bright, short lens flare chime on F#6."""
+    n = samples(1.3)
+    glide = osc.sine(n, osc.glide(n, note_freq("D5"), note_freq("D6"), time_constant=0.25))
+    glide *= envelope.segments(n, [(0.0, 0.0), (0.3, 0.6), (0.85, 0.8), (1.0, 0.0)], shape="smooth")
+    mix = 0.12 * glide
+    place(mix, 0.3 * _glass(note_freq("A5"), 0.6), samples(0.25))
+    place(mix, 0.32 * _glass(note_freq("D6"), 0.6), samples(0.5))
+    place(mix, 0.35 * _glass(note_freq("F#6"), 0.5), samples(0.8))
+    return filters.lowpass(mix, 6500.0)
