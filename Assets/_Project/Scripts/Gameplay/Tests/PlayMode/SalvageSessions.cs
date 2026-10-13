@@ -28,6 +28,13 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// plus the press's own allowance.</summary>
         private float IgnitionTimeout => _fixture.Gameplay.Cutter.Plan(3, false).TotalSeconds + PressTimeout;
 
+        /// <summary>
+        /// Seconds from a press until a nearly cut piece is in the stock: the slowest charge, the last of its cut, and
+        /// its flight into 07 (the arrivals are spaced, so allow a second one's interval too).
+        /// </summary>
+        private float PieceTakenTimeout => IgnitionTimeout + _fixture.SalvageTuning.FlightDuration +
+                                           2f * _fixture.SalvageTuning.MinArrivalInterval + PressTimeout;
+
         private InputActionAsset _controls;
         private GameplayFixture _fixture;
         private Keyboard _keyboard;
@@ -289,11 +296,13 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             for (int i = 0; i < garage.Pieces.Count; i++)
             {
-                int salvaged = _fixture.Events.MaterialSalvaged.Count;
-                yield return FaceCut(garage.Pieces[i]);
+                SalvagePiece piece = garage.Pieces[i];
+                yield return FaceCut(piece);
                 Press(_keyboard.eKey);
-                yield return Waits.Until(() => _fixture.Events.MaterialSalvaged.Count > salvaged, 5f);
+                yield return Waits.Until(() => piece.State == SalvagePieceState.Taken, PieceTakenTimeout);
                 Release(_keyboard.eKey);
+                Assert.AreEqual(SalvagePieceState.Taken, piece.State,
+                    $"the garage's piece {piece.Number} is cut and folds into 07 within its charge, cut and flight");
                 yield return null;
             }
 
