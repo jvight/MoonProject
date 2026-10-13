@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: GameplayVisuals
   m_EditorClassIdentifier: 
   _sonarRing: {fileID: 2100000, guid: ae2673c0628f7e14a9901ddbf06ded53, type: 2}
-  _siteRing: {fileID: 2100000, guid: a18dda9a92f3c6c48a5f00d4ccc49acd, type: 2}
   _sitePillar: {fileID: 2100000, guid: a30a4f7963d8a4e4a9779d07c9bfc25b, type: 2}
   _tractorBeam: {fileID: 2100000, guid: 8bec620e68df94d4986d37792d577f0a, type: 2}
   _tetherBeam: {fileID: 2100000, guid: a7d2f94ed03fe5a4896d87b2b72bfa24, type: 2}
