@@ -11,6 +11,60 @@
 > machine has a power source, a goal and a reason. Tone: cozy, melancholic, hopeful. No villains, no horror, no
 > cutscene exposition, no voice.
 
+## 0. The player's experience (the player-experience skill)
+> `docs/design/north-star.md` (game design) isn't written yet; this section aligns with it when it lands.
+
+1. **Hook** (the first seconds, before understanding):
+   - a small machine opens its eye in the dark because **something on Earth is still broadcasting on a dead
+     station's frequency** (the jingle in the static);
+   - the Peak's red light blinks far away;
+   - in the basin, a wrecked satellite wears **another agency's livery**.
+
+   Three things the player sees or hears before they understand any of them.
+2. **Pull** (the questions in the player's head, in the order the game raises them):
+
+   | When | Question | What raises it |
+   |---|---|---|
+   | 0.5 | *Who is still transmitting?* | 06's log |
+   | 0.5 | *What is Meridian?* | Kestrel-3's livery |
+   | 0.5 | *Was the Moon really worthless?* | "Not worth returning to", set against Ines's "anomalous" core |
+   | 0.6 | *Why did the crew's channel go silent?* | the mare archive stops |
+   | 0.7 | *What did Meridian keep doing all these years?* | its strobes on the terraces |
+   | 0.8 | *Is the ice really there?* | the crater's glow |
+
+   Each region answers one question and opens the next, always as a light or a livery you can see from the region
+   you're in (`0.6-world-regions.md` R1).
+3. **Hold** (why come back): the growth is visible and countable.
+   - 07's kit, in its slots;
+   - the lit network spreading over the chart;
+   - the **Survey** count rising on the lab's panel (n of 6);
+   - the crew's twenty years of letters, read a mast at a time;
+   - Meridian's machines waking where 07 restores contact.
+
+   Every session ends with one more piece of proof in hand and the next light named.
+4. **Finish** (the promise kept): from the first hour, the game promises one thing: *send the proof home*. The
+   recovery panel shows the way (Power → Link → Dish → Answer). The payoff is the one the story set up: Earth reads
+   the data and decides to return, and the silence turns out to have been the station's, never Earth's.
+5. **Feeling:** **"quiet vindication"**, inside **"lonely wonder"**.
+   - **Lonely wonder:** the mare's silence, machines still at their jobs, Earth fixed and low.
+   - **Quiet vindication:** each survey piece is a small "they were right", and the ending is "they were heard".
+   - The feeling comes from timings, not words:
+     - the long pause before the archive's rush;
+     - the beat of stillness at Meridian's sorters;
+     - the silence after the transmission, before Ro's line.
+   - It fits VISION: solitude (pillar 6), calm (no threat), warmth (people still waiting at home).
+
+**Checks against the lens:**
+- **Learn, then improve:**
+  - *Borrowed:* Subnautica's Aurora and Precursor pull, a mystery visible on the horizon that's solved by going
+    deeper. *Why it works there:* the question is physical and always in view.
+  - *Lunarion's difference:* the pull is **hopeful**. You aren't escaping a hostile planet; you're carrying the proof
+    that makes people return. The "aliens" are a second human station whose machines kept working.
+- **Logic:** every machine has a family, a power source, a goal and a reason (§3).
+- **Purpose reads:** survey pieces are physical: a logger, a vault, a core cache, a backup. The panel counts them.
+- **Visible progression:** the panel's Survey count, the lit chart, 07's slots.
+- **Calm:** tension comes from range, dark and the unknown only.
+
 ## 1. The arc in one page
 **The premise, corrected.**
 - 2047: Lumen Station, a four-person radio-relay and research outpost near the Moon's south pole, is evacuated in a
@@ -226,5 +280,22 @@ Scope: en/vi tables, `docs/design/text/*`, crew logs, radio letters, Bell's line
 4. **Survey pieces as must-haves:** all 6 required to transmit, or a threshold (e.g. 4 of 6) with the rest for
    completion?
 5. **Approve the audit's rewrites** (§4.1), so that every human line is human-to-human?
-7. **The Charge Adapter** (07 charging at Meridian's hex docks) in 0.7, found at Meridian Station?
 6. **Dr. Lena Moreau** as Meridian's human voice (station traffic and Notes), alongside the Lumen crew?
+7. **The Charge Adapter** (07 charging at Meridian's hex docks) in 0.7, found at Meridian Station?
+
+## 7. Playtest signals (how we'll know it works)
+Each is one observable behaviour, checked in captures and in the owner's play-through:
+1. **Hook:** during the opening, the player turns the gaze toward the Peak's red light or Earth before any prompt
+   (the jingle and the blink pull the eye).
+2. **The first question:** at Kestrel-3, the player stops and scans the foreign livery (it holds more than 3 s).
+   Within the next session, they open the chart looking for "Meridian".
+3. **Vindication:** after reading "Program closed" and finding Ines's core log, the player keeps the blue pebble
+   (places it on the shelf), and the Survey count is the first thing they check in the lab.
+4. **The silence pulls outward:** after the mare archive goes quiet, **the player's next trip heads to the next
+   region's lure** (the north shore or the crater's glow) rather than back home, within 10 minutes.
+5. **Meridian lands:** at Meridian Station, the player stops driving and watches the sorters work for at least 10 s
+   before scanning anything.
+6. **The finish:** from the first Survey piece onward, the player can say in one sentence why they're going to the
+   Peak ("to send the proof home"). We ask it at the end of the owner's play-through.
+7. **The ending:** the player stays on the final screen through the silence after the transmission, without pressing
+   anything, until Ro's line appears.
