@@ -25,7 +25,6 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private const string Duck = "rubber_duck";
         private const string Gnome = "garden_gnome";
-        private const string CargoCradle = "rover.cargo_cradle";
 
         /// <summary>A spot well out of the museum shelf's reach.</summary>
         private static readonly Vector3 AwayFromHome = new Vector3(-30f, 0f, -20f);
@@ -137,7 +136,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture = GameplayFixture.Boot(_controls, slot);
             yield return null;
             _fixture.GiveMaterials(4, 0, 0);
-            Assert.AreEqual(PurchaseResult.Purchased, _fixture.Gameplay.Upgrades.Purchase(CargoCradle));
+            _fixture.Wear(RoverKitPiece.CargoRack);
 
             // Away from the museum shelf, where a press would set the rack's relic down instead.
             _fixture.Rover.Place(AwayFromHome, 0f);
@@ -210,8 +209,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private void GiveCradle()
         {
-            _fixture.GiveMaterials(4, 0, 0);
-            Assert.AreEqual(PurchaseResult.Purchased, _fixture.Gameplay.Upgrades.Purchase(CargoCradle));
+            _fixture.Wear(RoverKitPiece.CargoRack);
             Assert.IsTrue(_fixture.Rover.IsFitted, "the rack is on 07");
         }
 

@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
 
@@ -62,8 +63,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 masts = new[] { new RelaySaveData { id = "relay.0", part = true, paid = 60, restored = true } },
             });
-            _fixture.GiveMaterials(4, 0, 0);
-            Assert.AreEqual(PurchaseResult.Purchased, gameplay.Upgrades.Purchase("rover.cargo_cradle"));
+            _fixture.Wear(RoverKitPiece.CargoRack);
 
             // Stow and latch out of the museum shelf's reach, where a press would set the rack's relic down instead.
             _fixture.Rover.Place(new Vector3(0f, 0f, -8f), 0f);
