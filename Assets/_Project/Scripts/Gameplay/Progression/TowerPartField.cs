@@ -139,6 +139,15 @@ namespace MoonProject.Gameplay
             return _phases[index] == Phase.Resting;
         }
 
+        /// <summary>
+        /// True once the part at <paramref name="index"/> is there to be found: sealed in its container at a revealed
+        /// heart (the seal glowing to be cut, 0.5.5 §2), or in view.
+        /// </summary>
+        public bool IsFound(int index)
+        {
+            return _containers[index] != null ? _containers[index].Available : _phases[index] == Phase.Resting;
+        }
+
         /// <summary>Where the part at <paramref name="index"/> rests once in view (tests and debugging views).</summary>
         public Vector3 RestPosition(int index)
         {

@@ -19,6 +19,9 @@ namespace MoonProject.Art.Editor
         private const float Rib = 0.15f;
         private const int Segments = 8;
 
+        // How far a snapped rib's broken end hangs below its break: high enough to pass under (BackLane).
+        private const float SnappedDrop = 0.45f;
+
         private static readonly float[] Ribs = { -0.8f, 0.7f, 2.2f, 3.7f, 5.2f, 6.7f };
 
         private static readonly Vector3 Bench = new Vector3(-1.7f, 0.92f, 5.5f);
@@ -52,6 +55,15 @@ namespace MoonProject.Art.Editor
             return BenchWork[index];
         }
 
+        /// <summary>
+        /// The way out of the hut's caved-in back right (site space, a box from min to max): 07 leaving the heart
+        /// that way, or nosing back in toward home, has a lane 1.6 times its width with nothing to wedge on between
+        /// the dust and its head: the drifts stay outside it, the fallen wall strip lies flat in it and the snapped
+        /// ribs hang over it.
+        /// </summary>
+        public static readonly Bounds BackLane = new Bounds(new Vector3(1.25f, 1.075f, 7.55f),
+            new Vector3(2.4f, 1.65f, 3.9f));
+
         public static SiteRecipe Create()
         {
             var site = new SiteRecipe();
@@ -69,9 +81,9 @@ namespace MoonProject.Art.Editor
                 new Vector3(-1.2f, Floor + 0.6f, Ribs[3] + 0.8f),
             }, 0.03f, PaletteSwatch.Charcoal);
             SiteKit.Drift(b, new Vector3(3f, 0f, 2.2f), 6.4f, 3.4f, 1.25f, 4f, 61);
-            SiteKit.Drift(b, new Vector3(3.3f, 0f, 5.4f), 4.2f, 2.6f, 0.85f, -10f, 65);
+            SiteKit.Drift(b, new Vector3(3.95f, 0f, 6f), 4.6f, 2.4f, 0.9f, -10f, 65);
             SiteKit.Drift(b, new Vector3(-3.2f, 0f, 2.6f), 6.5f, 1.5f, 0.75f, 0f, 62);
-            SiteKit.Drift(b, new Vector3(1.3f, 0f, 5.7f), 2.6f, 2f, 0.7f, 30f, 63);
+            SiteKit.Drift(b, new Vector3(3.1f, 0f, 4.4f), 2f, 1.6f, 0.7f, 30f, 63);
             SiteKit.Drift(b, new Vector3(-2.7f, 0f, -0.9f), 1.5f, 1f, 0.4f, 60f, 64);
 
             // First-hour v2 §4: the garage is one trip, three rich seams round Kenji's port (Gameplay doubles their
@@ -132,7 +144,7 @@ namespace MoonProject.Art.Editor
                 if (snapped)
                 {
                     Vector3 broken = OnArch(3 * 180f / Segments, Ribs[r], 0f);
-                    SiteKit.Bar(b, broken, broken + new Vector3(0.35f + r * 0.1f, -1.1f, 0.25f), Rib,
+                    SiteKit.Bar(b, broken, broken + new Vector3(0.35f + r * 0.1f, -SnappedDrop, 0.25f), Rib,
                         PaletteSwatch.Rust);
                 }
             }
@@ -197,8 +209,8 @@ namespace MoonProject.Art.Editor
             b.Box(door * At(0f, 0f, 0.02f), new Vector3(0.74f, 1.8f, 0.04f), PaletteSwatch.FadedPaint);
             SiteKit.RustPatch(b, door * At(0f, 0f, 0.04f), 0.15f, -0.5f, 0.45f);
 
-            Matrix4x4 fallen = SiteKit.Face(new Vector3(1.4f, 0.55f, z - 0.6f), new Vector3(0.2f, 1f, -0.9f),
-                new Vector3(0f, 0.5f, 1f));
+            Matrix4x4 fallen = SiteKit.Face(new Vector3(1.3f, Floor + 0.03f, z - 0.7f), new Vector3(0.02f, 1f, -0.04f),
+                Vector3.forward);
             SiteKit.Sheet(b, fallen, 1.9f, 1.2f, PaletteSwatch.FadedPaint);
         }
 

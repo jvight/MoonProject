@@ -373,6 +373,35 @@ namespace MoonProject.Art.Tests
             }
         }
 
+        [Test]
+        public void Garage_LeavesALaneOutItsCavedInBackRight_NothingTo07sHeightInIt()
+        {
+            ModelNode site = SiteModelBuilder.CreateSite("garage");
+            Bounds lane = SiteModelBuilder.GarageBackLane;
+            Assert.GreaterOrEqual(lane.size.x, 1.6f * 2f * (RoverModelBuilder.WheelTrack + 0.11f),
+                "1.6 times 07's width");
+            ModelNode skeleton = site.Children.Single(n => n.Name == SiteModelBuilder.SkeletonName);
+            LowPolyMeshBuilder mesh = skeleton.Mesh.Geometry;
+            for (int t = 0; t < mesh.TriangleCount; t++)
+            {
+                for (int k = 0; k < 3; k++)
+                {
+                    Vector3 a = mesh.Positions[t * 3 + k];
+                    Vector3 edge = mesh.Positions[t * 3 + (k + 1) % 3] - a;
+                    bool crosses = lane.Contains(a) || lane.IntersectRay(new Ray(a, edge), out float hit)
+                        && hit <= edge.magnitude;
+                    Assert.IsFalse(crosses, $"the garage's back lane is blocked at {a}");
+                }
+            }
+
+            foreach (ModelNode child in site.Children.Where(n => n.Mesh != null && n != skeleton))
+            {
+                Bounds bounds = child.Mesh.Geometry.Bounds;
+                bounds.center += child.LocalPosition;
+                Assert.IsFalse(lane.Intersects(bounds), $"{child.Name} stands in the garage's back lane");
+            }
+        }
+
         [TestCaseSource(nameof(Ids))]
         public void FragmentSockets_SitOnTheWreckItself_NeverOnOpenGround(string id)
         {

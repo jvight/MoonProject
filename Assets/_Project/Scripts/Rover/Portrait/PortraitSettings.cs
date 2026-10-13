@@ -41,6 +41,27 @@ namespace MoonProject.Rover
         [Range(128, 2048)]
         [SerializeField] private int _height = 640;
 
+        [Header("Its own light, so it reads the same day or night")]
+        [Tooltip("The key light: soft and warm, from the camera's side and above.")]
+        [SerializeField] private Color _keyColour = new Color(1f, 0.86f, 0.7f);
+
+        [Tooltip("The key light's intensity.")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _keyIntensity = 1.1f;
+
+        [Tooltip("The key light's direction in 07's frame (pitch down, yaw), deg.")]
+        [SerializeField] private Vector2 _keyAngles = new Vector2(35f, 205f);
+
+        [Tooltip("The rim light: cool, from behind 07, tracing its silhouette.")]
+        [SerializeField] private Color _rimColour = new Color(0.6f, 0.8f, 1f);
+
+        [Tooltip("The rim light's intensity.")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _rimIntensity = 0.9f;
+
+        [Tooltip("The rim light's direction in 07's frame (pitch down, yaw), deg.")]
+        [SerializeField] private Vector2 _rimAngles = new Vector2(20f, 20f);
+
         public PortraitSettings()
         {
         }
@@ -76,5 +97,17 @@ namespace MoonProject.Rover
         public int Height => _height;
 
         public float Aspect => (float)_width / _height;
+
+        public Color KeyColour => _keyColour;
+
+        public float KeyIntensity => _keyIntensity;
+
+        public Quaternion KeyRotation => Quaternion.Euler(_keyAngles.x, _keyAngles.y, 0f);
+
+        public Color RimColour => _rimColour;
+
+        public float RimIntensity => _rimIntensity;
+
+        public Quaternion RimRotation => Quaternion.Euler(_rimAngles.x, _rimAngles.y, 0f);
     }
 }

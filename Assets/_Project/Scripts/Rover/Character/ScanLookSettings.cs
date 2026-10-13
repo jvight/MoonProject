@@ -50,6 +50,17 @@ namespace MoonProject.Rover
         [Range(0.02f, 0.5f)]
         [SerializeField] private float _flareSeconds = 0.1f;
 
+        [Tooltip("Seconds 07 keeps looking after the scan completes: the dissolve's lines streaming in.")]
+        [Range(0f, 3f)]
+        [SerializeField] private float _dissolveSeconds = 0.9f;
+
+        [Tooltip("The lens fan's colour: the scan's tech-cyan.")]
+        [SerializeField] private Color _fanColour = new Color(0.45f, 0.9f, 1f);
+
+        [Tooltip("The lens fan's glow at full: faint, the fragment's own sweep line carries most of the read.")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _fanGlow = 0.6f;
+
         [Tooltip("Gaze priority of the fragment being scanned (above idle glances and the cut's focus).")]
         [Range(0, 10)]
         [SerializeField] private int _gazePriority = 8;
@@ -75,5 +86,11 @@ namespace MoonProject.Rover
         public float FlareSeconds => _flareSeconds;
 
         public int GazePriority => _gazePriority;
+
+        public float DissolveSeconds => _dissolveSeconds;
+
+        public Color FanColour => _fanColour;
+
+        public float FanGlow => _fanGlow;
     }
 }

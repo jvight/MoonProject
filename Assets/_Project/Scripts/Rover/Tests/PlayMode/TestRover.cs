@@ -398,7 +398,10 @@ namespace MoonProject.Rover.PlayModeTests
             var portraitCamera = Node("PortraitCamera", visual, Vector3.zero).gameObject.AddComponent<Camera>();
             portraitCamera.enabled = false;
             var portrait = visual.gameObject.AddComponent<RoverPortrait>();
-            Assign(portrait, ("_tuning", rigTuning), ("_camera", portraitCamera));
+            var portraitKey = Node("PortraitKey", visual, Vector3.zero).gameObject.AddComponent<Light>();
+            var portraitRim = Node("PortraitRim", visual, Vector3.zero).gameObject.AddComponent<Light>();
+            Assign(portrait, ("_tuning", rigTuning), ("_camera", portraitCamera), ("_key", portraitKey),
+                ("_rim", portraitRim));
             Assign(controller, ("_portrait", portrait));
             AssignArray(flank, "_lamps", flankLamps);
             AssignArray(flank, "_glasses", flankGlasses);
@@ -457,7 +460,9 @@ namespace MoonProject.Rover.PlayModeTests
                 ("_head", head), ("_eyelid", eyelid), ("_solarWing", wing),
                 ("_eyeRenderer", eye.GetComponent<MeshRenderer>()),
                 ("_antennaTipRenderer", tip.GetComponent<MeshRenderer>()),
-                ("_eyeLight", eyeLight));
+                ("_eyeLight", eyeLight),
+                ("_scanFan", Shape(PrimitiveType.Cube, eye, Vector3.forward, new Vector3(0.01f, 0.01f, 1f), material)
+                    .GetComponent<MeshRenderer>()));
 
             GameObject cameraRoot = BuildCamera(cameraTuning, out RoverCameraRig cameraRig, out Camera camera);
 

@@ -813,8 +813,16 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Dock.IsDocked = false;
             ui.Cargo.Close();
             yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeOut + 0.4f);
-            fakes.Equipment.Fit(RoverKitPiece.TetherRing);
-            fakes.Equipment.Fit(RoverKitPiece.SolarCell);
+            foreach (RoverKitPiece fitted in new[]
+                     {
+                         RoverKitPiece.TetherRing, RoverKitPiece.SolarCell, RoverKitPiece.LampBar,
+                         RoverKitPiece.CapacitorDrums, RoverKitPiece.BatterySpine, RoverKitPiece.TapeDeck,
+                         RoverKitPiece.CargoRack, RoverKitPiece.SideBins,
+                     })
+            {
+                fakes.Equipment.Fit(fitted);
+            }
+
             fakes.Equipment.Craft(RoverKitPiece.HoverCoils);
             fakes.Equipment.Craft(RoverKitPiece.FocusLens);
             fakes.Equipment.AtStation = false;

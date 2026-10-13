@@ -44,6 +44,9 @@ namespace MoonProject.Rover.Editor
     /// </summary>
     public static class RoverPrefabBuilder
     {
+        /// <summary>Unity's Default layer: the headlamp's dust motes stay there, out of the portrait.</summary>
+        private const int DefaultLayer = 0;
+
         private const int DustMaxParticles = 160;
         private const int LandingMaxParticles = 240;
         private const float DustConeAngle = 30f;
@@ -92,6 +95,7 @@ namespace MoonProject.Rover.Editor
             var tube = BuildWiring.Require<GameObject>(RoverAssetPaths.BlueprintTube, "the Art box's pickup builder");
             var focusLens = BuildWiring.Require<GameObject>(RoverAssetPaths.FocusLens, "the Art box's rover builder");
             var sideBin = BuildWiring.Require<GameObject>(RoverAssetPaths.SideBin, "the Art box's kit builder");
+            var scanFan = BuildWiring.Require<GameObject>(RoverAssetPaths.ScanFan, "the Art box's rover builder");
             var parts = new GameObject[RoverAssetPaths.StoryParts.Length];
             for (int i = 0; i < parts.Length; i++)
             {
@@ -182,9 +186,12 @@ namespace MoonProject.Rover.Editor
                 Mount(scratch, sideBin, BuildWiring.Node(m, RoverModelNodes.BinSocketRight)).gameObject,
             });
 
+            Transform fan = Mount(scratch, scanFan, BuildWiring.Node(m, RoverModelNodes.ScanFanSocket));
+            fan.gameObject.SetActive(true);
             RoverPortrait portrait = BuildPortrait(scratch, visual, m, rigTuning);
             BuildWiring.Assign(controller, ("_portrait", portrait));
             SetLayer(instance.transform, Layers.Rover);
+            SetLayer(lampMotes.transform, DefaultLayer);
 
             BuildWiring.Assign(bodyLanguage,
                 ("_tuning", characterTuning),
@@ -196,7 +203,8 @@ namespace MoonProject.Rover.Editor
                 ("_solarWing", BuildWiring.Node(m, RoverModelNodes.SolarWing)),
                 ("_eyeRenderer", BuildWiring.NodeComponent<MeshRenderer>(m, RoverModelNodes.Eye)),
                 ("_antennaTipRenderer", BuildWiring.NodeComponent<MeshRenderer>(m, RoverModelNodes.AntennaTip)),
-                ("_eyeLight", eyeLight));
+                ("_eyeLight", eyeLight),
+                ("_scanFan", fan.GetComponentInChildren<Renderer>(true)));
 
             return root;
         }
@@ -210,6 +218,10 @@ namespace MoonProject.Rover.Editor
         {
             var camera = Child(scratch, "PortraitCamera", visual.transform).AddComponent<Camera>();
             camera.enabled = false;
+            var key = Child(scratch, "PortraitKey", visual.transform).AddComponent<Light>();
+            var rim = Child(scratch, "PortraitRim", visual.transform).AddComponent<Light>();
+            key.enabled = false;
+            rim.enabled = false;
             var portrait = visual.AddComponent<RoverPortrait>();
             Transform[] nodes = model.GetComponentsInChildren<Transform>(true);
             var sockets = new Object[System.Enum.GetValues(typeof(RoverSocket)).Length];
@@ -218,13 +230,14 @@ namespace MoonProject.Rover.Editor
                 sockets[i] = Find(nodes, RoverModelNodes.EquipmentSocket((RoverSocket)i));
             }
 
-            BuildWiring.Assign(portrait, ("_tuning", tuning), ("_camera", camera));
+            BuildWiring.Assign(portrait, ("_tuning", tuning), ("_camera", camera), ("_key", key), ("_rim", rim));
             BuildWiring.AssignArray(portrait, "_sockets", sockets);
             return portrait;
         }
 
         /// <summary>07's model and its mounted kit on the Rover layer, the only one the portrait camera sees (none
-        /// of it has a collider).</summary>
+        /// of it has a collider); the headlamp's dust motes go back to Default so they stay out of the portrait.
+        /// </summary>
         private static void SetLayer(Transform root, int layer)
         {
             foreach (Transform node in root.GetComponentsInChildren<Transform>(true))

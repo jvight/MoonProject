@@ -24,6 +24,9 @@ namespace MoonProject.Rover.Editor
         /// <summary>The art box's Focus Lens kit (cutter tier 1), mounted on LensSocket. Required.</summary>
         public const string FocusLens = "Assets/_Project/Generated/Art/Rover/FocusLens.prefab";
 
+        /// <summary>The art box's scan fan (0.5.5 §1.2), mounted on the eye's ScanFanSocket. Required.</summary>
+        public const string ScanFan = "Assets/_Project/Generated/Art/Rover/ScanFan.prefab";
+
         /// <summary>The art box's side bin (RoverAbility.SideBins), mounted twice. Required.</summary>
         public const string SideBin = "Assets/_Project/Generated/Art/Rover/Kit_SideBin.prefab";
 
