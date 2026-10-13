@@ -175,7 +175,7 @@ namespace MoonProject.World.Tests
                 if (mesh.name.StartsWith(ChunkPrefix) || mesh.name.StartsWith("TerrainBackdrop") || mesh.name == "Earth"
                     || mesh.name.StartsWith("Pebbles_") || mesh.name.StartsWith("Boulders_")
                     || mesh.name.StartsWith("CanyonGate_") || mesh.name == "WornTracks"
-                    || mesh.name == "VentBeads" || mesh.name.StartsWith("ScrapPlate_"))
+                    || mesh.name == "VentBeads")
                 {
                     count++;
                 }

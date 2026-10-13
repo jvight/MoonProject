@@ -1,74 +1,48 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
-using MoonProject.Art;
 using MoonProject.Core;
 
 namespace MoonProject.World
 {
     /// <summary>
-    /// Builds Kestrel-3's scrap field at boot (0.5.5 §2): rusted hull plates with worn faces, half-buried along the
-    /// furrow, each a chamfered art-kit box with a box collider on <see cref="Layers.Ground"/> so 07 bumps them like
-    /// rock. Scenery only: no glow, nothing to pick up.
+    /// Builds Kestrel-3's scrap field at boot (0.5.5 §2): Art's half-buried hull fragments along the furrow, each mesh
+    /// with a box collider on <see cref="Layers.Ground"/> so 07 bumps them like rock. Scenery only: no glow, nothing
+    /// to pick up.
     /// </summary>
-    public sealed class ScrapFieldBuilder
+    public static class ScrapFieldBuilder
     {
-        private const float Chamfer = 0.03f;
-        private readonly List<Mesh> _meshes = new List<Mesh>();
-
-        public void Build(Transform parent, MoonSurface surface, ScrapFieldSettings settings, int seed,
-            Material material, HideFlags hideFlags)
+        public static void Build(Transform parent, MoonSurface surface, ScrapFieldSettings settings, int seed,
+            GameObject[] fragments, HideFlags hideFlags)
         {
-            if (parent == null || surface == null || settings == null || material == null)
+            if (parent == null || surface == null || settings == null || fragments == null)
             {
                 throw new ArgumentNullException(nameof(parent), "Scrap field build inputs must all be provided.");
             }
 
             var root = new GameObject("KestrelScrapField") { hideFlags = hideFlags };
             root.transform.SetParent(parent, false);
-            List<ScrapPlate> plates = ScrapFieldPlanner.Plan(surface, settings, seed);
-            for (int i = 0; i < plates.Count; i++)
+            List<ScrapPlate> pieces = ScrapFieldPlanner.Plan(surface, settings, fragments.Length, seed);
+            for (int i = 0; i < pieces.Count; i++)
             {
-                ScrapPlate plate = plates[i];
-                var builder = new LowPolyMeshBuilder();
-                builder.Box(Matrix4x4.identity, plate.Size, Paint.WithCaps(PaletteSwatch.Rust, PaletteSwatch.WornPanel),
-                    Chamfer);
-                Mesh mesh = builder.ToMesh($"ScrapPlate_{i}");
-                mesh.hideFlags = hideFlags;
-                _meshes.Add(mesh);
-                var piece = new GameObject($"ScrapPlate_{i}") { hideFlags = hideFlags, layer = Layers.Ground };
-                piece.transform.SetParent(root.transform, false);
-                piece.transform.SetPositionAndRotation(plate.Centre, plate.Rotation);
-                piece.AddComponent<MeshFilter>().sharedMesh = mesh;
-                var meshRenderer = piece.AddComponent<MeshRenderer>();
-                meshRenderer.sharedMaterial = material;
-                meshRenderer.lightProbeUsage = LightProbeUsage.Off;
-                meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
-                piece.AddComponent<BoxCollider>().size = plate.Size;
-            }
-        }
-
-        public void DestroyMeshes()
-        {
-            foreach (Mesh mesh in _meshes)
-            {
-                if (mesh == null)
+                ScrapPlate piece = pieces[i];
+                GameObject model = UnityEngine.Object.Instantiate(fragments[piece.Variant], piece.Position,
+                    piece.Rotation, root.transform);
+                model.name = fragments[piece.Variant].name;
+                foreach (Transform node in model.GetComponentsInChildren<Transform>(true))
                 {
-                    continue;
+                    node.gameObject.hideFlags = hideFlags;
                 }
 
-                if (Application.isPlaying)
+                foreach (MeshFilter part in model.GetComponentsInChildren<MeshFilter>(true))
                 {
-                    UnityEngine.Object.Destroy(mesh);
-                }
-                else
-                {
-                    UnityEngine.Object.DestroyImmediate(mesh);
+                    part.gameObject.layer = Layers.Ground;
+                    Bounds bounds = part.sharedMesh.bounds;
+                    var box = part.gameObject.AddComponent<BoxCollider>();
+                    box.center = bounds.center;
+                    box.size = bounds.size;
                 }
             }
-
-            _meshes.Clear();
         }
     }
 }

@@ -3,20 +3,20 @@ using UnityEngine;
 namespace MoonProject.World
 {
     /// <summary>
-    /// One half-buried hull plate of Kestrel-3's scrap field: its centre, rotation and size (length along X, thickness
-    /// along Y, width along Z).
+    /// One hull fragment of Kestrel-3's scrap field: where its dust line crosses the ground, its yaw, and which of Art's
+    /// HullFragment variants it is.
     /// </summary>
     public readonly struct ScrapPlate
     {
-        public ScrapPlate(Vector3 centre, Quaternion rotation, Vector3 size)
+        public ScrapPlate(Vector3 position, Quaternion rotation, int variant)
         {
-            Centre = centre;
+            Position = position;
             Rotation = rotation;
-            Size = size;
+            Variant = variant;
         }
 
-        public Vector3 Centre { get; }
+        public Vector3 Position { get; }
         public Quaternion Rotation { get; }
-        public Vector3 Size { get; }
+        public int Variant { get; }
     }
 }

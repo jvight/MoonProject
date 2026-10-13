@@ -27,6 +27,11 @@ namespace MoonProject.World.PlayModeTests
         private const string VentBeadMaterialPath = "Assets/_Project/Generated/World/M_VentBeads.mat";
         private const string LandmarkFolder = "Assets/_Project/Generated/Art/Landmarks/";
         private static readonly string[] DishFrames = { "DishFrame_0", "DishFrame_1", "DishFrame_2" };
+        private const string PropFolder = "Assets/_Project/Generated/Art/Props/";
+        private static readonly string[] HullFragments =
+        {
+            "HullFragment_0", "HullFragment_1", "HullFragment_2", "HullFragment_3",
+        };
         private const string PaletteMaterialPath = "Assets/_Project/Generated/Art/Palette/M_LowPoly.mat";
         private const string EarthMaterialPath = "Assets/_Project/Generated/World/M_Earth.mat";
         private const string ControlsPath = "Assets/_Project/Data/Input/Controls.inputactions";
@@ -81,6 +86,14 @@ namespace MoonProject.World.PlayModeTests
             {
                 frames.GetArrayElementAtIndex(i).objectReferenceValue =
                     Load<GameObject>(LandmarkFolder + DishFrames[i] + ".prefab");
+            }
+
+            SerializedProperty fragments = serialized.FindProperty("_landmarkPrefabs._hullFragments");
+            fragments.arraySize = HullFragments.Length;
+            for (int i = 0; i < HullFragments.Length; i++)
+            {
+                fragments.GetArrayElementAtIndex(i).objectReferenceValue =
+                    Load<GameObject>(PropFolder + HullFragments[i] + ".prefab");
             }
             serialized.FindProperty("_earthlight").objectReferenceValue = light;
             serialized.FindProperty("_fillLight").objectReferenceValue = fill;
