@@ -85,6 +85,7 @@ namespace MoonProject.World.Editor
             LandmarkSettings landmarks = LoadSettings().Landmarks;
             var material = new Material(FindShader(WorldPaths.GroundMarkShader));
             material.SetColor("_Color", landmarks.VentTint);
+            material.SetFloat("_EdgeSoftness", landmarks.VentEdgeSoftness);
             material.SetFloat("_FadeNear", landmarks.VentFade.x);
             material.SetFloat("_FadeFar", landmarks.VentFade.y);
             GeneratedAssets.CreateOrReplace(material, WorldPaths.VentBeadMaterial);

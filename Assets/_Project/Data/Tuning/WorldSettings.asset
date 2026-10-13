@@ -568,8 +568,9 @@ MonoBehaviour:
     _ventPatches: 26
     _ventPatchRadius: {x: 1.2, y: 3.6}
     _ventSpread: 1.6
-    _ventTint: {r: 1, g: 0.8, b: 0.38, a: 1}
-    _ventStrength: 0.75
+    _ventTint: {r: 1.24, g: 1, b: 0.66, a: 1}
+    _ventStrength: 0.55
+    _ventEdgeSoftness: 0.9
     _ventFade: {x: 160, y: 380}
   _reachRing:
     _duration: 2
