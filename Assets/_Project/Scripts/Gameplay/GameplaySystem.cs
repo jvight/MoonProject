@@ -351,6 +351,7 @@ namespace MoonProject.Gameplay
             context.Register<ICutter>(Cutter);
             context.Register<ICargoHold>(Materials.Hold);
             context.Register<IHomeStorage>(Materials.Home);
+            context.Register<IDockState>(_home.Dock);
             context.Register<ISalvageStatus>(_salvage);
             context.Register<ITetherAim>(_tether);
             context.Register<IUpgradeShop>(Shop);
