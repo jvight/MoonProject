@@ -32,13 +32,23 @@ namespace MoonProject.Rover.PlayModeTests
             base.Setup();
             _physics = new LunarTestPhysics();
             _world = new TestWorld();
-            _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -250f), 0f);
             _block = new MaterialPropertyBlock();
+        }
+
+        /// <summary>Spawns 07 in the test body, so a loaded game's fitted coils are read on its first frame.</summary>
+        private void Spawn(bool coilsFitted)
+        {
+            _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -250f), 0f);
+            if (coilsFitted)
+            {
+                _rover.Equip(RoverKitPiece.HoverCoils);
+            }
         }
 
         public override void TearDown()
         {
-            _rover.Dispose();
+            _rover?.Dispose();
+            _rover = null;
             _world.Dispose();
             _physics.Dispose();
             base.TearDown();
@@ -62,6 +72,7 @@ namespace MoonProject.Rover.PlayModeTests
         [UnityTest]
         public IEnumerator Coils_StayHiddenUntilFitted_EvenOnceOwned()
         {
+            Spawn(false);
             yield return Frames(0.5f);
             _rover.Drive.JumpHeld = true;
             yield return Frames(1f);
@@ -78,8 +89,8 @@ namespace MoonProject.Rover.PlayModeTests
         [UnityTest]
         public IEnumerator Coils_SquashAndGlowWithTheCharge_SpringOutOnTheLeap_AndGoDark()
         {
+            Spawn(true);
             HoverCoilSettings settings = _rover.RigTuning.HoverCoils;
-            _rover.Equip(RoverKitPiece.HoverCoils);
             yield return Frames(1f);
             Assert.IsTrue(_rover.CoilMount.gameObject.activeSelf, "Fitted from the start: the coils are there.");
             Assert.AreEqual(1f, _rover.CoilMount.localScale.y, 1e-3f, "No pop-in for an ability owned at start-up.");
