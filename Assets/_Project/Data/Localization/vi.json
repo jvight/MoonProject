@@ -351,12 +351,24 @@
             "text": "Tàu đổ bộ"
         },
         {
+            "key": "place.lander.job",
+            "text": "Nhà của phi hành đoàn. Cửa sổ sẽ sáng khi tháp radio có điện."
+        },
+        {
             "key": "place.tower.name",
             "text": "Tháp radio"
         },
         {
+            "key": "place.tower.job",
+            "text": "Cấp điện cho trạm. Mỗi cấp đưa điện tới thêm một phần căn cứ."
+        },
+        {
             "key": "place.bay.name",
             "text": "Xưởng xe của Kenji"
+        },
+        {
+            "key": "place.bay.job",
+            "text": "Đỗ lên bàn xoay để cánh tay máy lắp đồ mới cho 07."
         },
         {
             "key": "place.ladder.name",
@@ -369,6 +381,10 @@
         {
             "key": "place.lift.name",
             "text": "Thang nâng"
+        },
+        {
+            "key": "place.lift.job",
+            "text": "Dừng trên bệ để lên phòng thí nghiệm."
         },
         {
             "key": "place.lab.name",
@@ -389,6 +405,10 @@
         {
             "key": "place.garage_port.name",
             "text": "Cổng bảo trì ở gara"
+        },
+        {
+            "key": "place.garage_port.job",
+            "text": "Đỗ lên bệ để lắp phụ tùng cho 07."
         },
         {
             "key": "ui.blueprint.found",
