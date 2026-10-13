@@ -13,6 +13,7 @@ namespace MoonProject.UI
         private readonly ILocalization _localization;
         private readonly Reveal _reveal;
         private string _key = string.Empty;
+        private bool _showingBattery;
 
         public NextLineView(UiLayout layout, GuidanceSettings settings, ILocalization localization)
         {
@@ -30,25 +31,46 @@ namespace MoonProject.UI
 
         public bool IsVisible => !_reveal.IsHidden;
 
+        /// <summary>True while the line on screen (or easing) is the low-battery hint.</summary>
+        public bool ShowsBattery => !_reveal.IsHidden && _showingBattery;
+
+        /// <summary>True while the line on screen (or easing) is the next line.</summary>
+        public bool ShowsNext => !_reveal.IsHidden && !_showingBattery;
+
         /// <param name="deltaTime">Unscaled seconds.</param>
-        /// <param name="line">The line's rule: its key and whether it wants to show.</param>
-        /// <param name="open">False while something else needs the screen (pause, a card, the title).</param>
-        public void Tick(float deltaTime, NextStepLine line, bool open)
+        /// <param name="line">The next line's rule: its key and whether it wants to show.</param>
+        /// <param name="nextOpen">False while something else needs the screen (pause, a card, the title).</param>
+        /// <param name="battery">The low-battery hint, which takes this same line when the slot gives it the turn.</param>
+        /// <param name="batteryOpen">False while the hint may not show.</param>
+        public void Tick(float deltaTime, NextStepLine line, bool nextOpen, LowBatteryHint battery, bool batteryOpen)
         {
-            bool shown = open && line.WantsShown;
-            if (shown && !ReferenceEquals(_key, line.Key))
+            bool wantBattery = batteryOpen && battery.WantsShown;
+            bool wantNext = !wantBattery && nextOpen && line.WantsShown;
+            bool sameSource = _showingBattery == wantBattery;
+            bool shown = (wantBattery || wantNext) && (sameSource || _reveal.IsHidden);
+            if (shown && (!sameSource || (wantNext && !ReferenceEquals(_key, line.Key))))
             {
-                _key = line.Key;
-                Relocalize();
+                _showingBattery = wantBattery;
+                _key = wantNext ? line.Key : string.Empty;
+                Relocalize(line, battery);
+            }
+            else if (shown && wantBattery)
+            {
+                _layout.NextLineText.text = battery.Text;
             }
 
             _reveal.Set(shown);
             _reveal.Tick(deltaTime);
         }
 
-        public void Relocalize()
+        /// <summary>A new language: the line on screen is written again.</summary>
+        public void Relocalize(NextStepLine line, LowBatteryHint battery)
         {
-            if (_key.Length > 0)
+            if (_showingBattery)
+            {
+                _layout.NextLineText.text = battery.Text;
+            }
+            else if (_key.Length > 0)
             {
                 _layout.NextLineText.text = _localization.Get(_key);
             }

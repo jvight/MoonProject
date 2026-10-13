@@ -19,6 +19,10 @@ namespace MoonProject.UI
         [Range(0f, 600f)]
         [SerializeField] private float _stepPatienceSeconds = 120f;
 
+        [Tooltip("Seconds the low-battery hint rests on screen before it goes (it also goes when a charger starts).")]
+        [Range(2f, 20f)]
+        [SerializeField] private float _lowBatteryHoldSeconds = 8f;
+
         [Tooltip("Seconds on a teaching step without progress before its next line shows (the owner: guidance only " +
                  "when it is needed).")]
         [Range(0f, 120f)]
@@ -57,6 +61,8 @@ namespace MoonProject.UI
         public RevealSettings Line => _line;
 
         public float StepPatienceSeconds => _stepPatienceSeconds;
+
+        public float LowBatteryHoldSeconds => _lowBatteryHoldSeconds;
 
         public float TeachingPatienceSeconds => _teachingPatienceSeconds;
 

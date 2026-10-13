@@ -79,6 +79,7 @@ namespace MoonProject.UI
         private LookUpChip _lookUpChip;
         private NextStepLine _nextStep;
         private NextLineView _nextLine;
+        private LowBatteryHint _lowBattery;
         private BatteryDial _batteryDial;
         private HomeMeter _homeMeter;
         private bool _cellRowRevealed;
@@ -444,6 +445,7 @@ namespace MoonProject.UI
             _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization);
             _nextStep = new NextStepLine(_tuning.Guidance);
             _nextLine = new NextLineView(_layout, _tuning.Guidance, _localization);
+            _lowBattery = new LowBatteryHint(_tuning.Guidance, services.Battery, _localization);
             _batteryDial = new BatteryDial(_layout, _tuning.Battery, services.Battery, services.Beam);
             _homeMeter = new HomeMeter(_layout, _tuning.HomeMeter, services.Rover, services.World, _localization);
             _saveTick = new SaveTick(_layout, _tuning.SaveTick);
@@ -659,7 +661,9 @@ namespace MoonProject.UI
             _lookUpChip.Tick(deltaTime, paused ? HintWord.None : hint, device);
             _nextStep.Tick(hudTime, _services.Rover.Speed, _player.Guidance);
             _placeCard.Tick(hudTime, PlaceCardsOpen() && _slot.Allows(GuidanceKind.Place));
-            _nextLine.Tick(deltaTime, _nextStep, NextLineOpen(paused) && _slot.Allows(GuidanceKind.Next));
+            _lowBattery.Tick(paused ? 0f : deltaTime, _nextLine.ShowsBattery);
+            _nextLine.Tick(deltaTime, _nextStep, NextLineOpen(paused) && _slot.Allows(GuidanceKind.Next), _lowBattery,
+                NextLineOpen(paused) && _slot.Allows(GuidanceKind.Battery));
             bool hudOpen = !paused && _awake && !_stargaze.IsVeiled && !onMap;
             _batteryDial.Tick(deltaTime, _cellRowRevealed, hudOpen);
             _homeMeter.Tick(deltaTime, hudOpen && !_card.IsVisible);
@@ -721,11 +725,13 @@ namespace MoonProject.UI
             _guidanceWants[(int)GuidanceKind.Card] =
                 CardsOpen(paused) && (_tower.Wants || (_awake && !_kitTitle.IsVisible && _recipeCard.Wants));
             _guidanceWants[(int)GuidanceKind.Place] = PlaceCardsOpen() && (_placeCard.IsWaiting || _placeCard.IsVisible);
+            _guidanceWants[(int)GuidanceKind.Battery] = NextLineOpen(paused) && _lowBattery.WantsShown;
             _guidanceWants[(int)GuidanceKind.Next] = NextLineOpen(paused) && _nextStep.WantsShown;
             _guidanceShown[(int)GuidanceKind.Prompt] = _prompt.IsVisible || _lookUpChip.IsVisible;
             _guidanceShown[(int)GuidanceKind.Card] = _tower.IsVisible || _recipeCard.IsVisible;
             _guidanceShown[(int)GuidanceKind.Place] = _placeCard.IsVisible;
-            _guidanceShown[(int)GuidanceKind.Next] = _nextLine.IsVisible;
+            _guidanceShown[(int)GuidanceKind.Battery] = _nextLine.ShowsBattery;
+            _guidanceShown[(int)GuidanceKind.Next] = _nextLine.ShowsNext;
             _slot.Step(_guidanceWants, _guidanceShown);
         }
 
@@ -1099,6 +1105,13 @@ namespace MoonProject.UI
 
         private void OnTickerLine(TickerLine line)
         {
+            // Gameplay's low-charge line is guidance (priority 4 of the slot), never a voice on the ticker.
+            if (LowBatteryHint.IsLowLine(line))
+            {
+                _lowBattery.Offer(line);
+                return;
+            }
+
             _tickerLines.Enqueue(line);
         }
 
@@ -1153,7 +1166,8 @@ namespace MoonProject.UI
             _ticker.Relocalize();
             _homeMeter.Relocalize();
             _lookUpChip.Relocalize();
-            _nextLine.Relocalize();
+            _lowBattery.Relocalize();
+            _nextLine.Relocalize(_nextStep, _lowBattery);
             _placeCard.Relocalize();
             _protocol.Relocalize();
             _recipeCard.Relocalize();

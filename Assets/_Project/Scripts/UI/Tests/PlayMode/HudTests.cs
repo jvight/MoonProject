@@ -557,6 +557,24 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator TheLowBatteryLine_IsTheHintOnTheSharedLine_NotATickerLine()
+        {
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Charge = 1.2f;
+            yield return Seconds(1f);
+            Events.Publish(new TickerLine("battery.low.dock"));
+            yield return Seconds(2f);
+            Assert.IsFalse(_rig.Ui.Ticker.IsVisible, "gameplay's low line is guidance, not a voice on the ticker");
+            Assert.IsTrue(_rig.Ui.NextLine.ShowsBattery, "it shows on the one soft line");
+            Assert.AreEqual(Text("battery.low.dock"), _rig.Ui.Layout.NextLineText.text);
+
+            _rig.Fakes.IsCharging = true;
+            yield return Seconds(2.5f);
+            Assert.IsFalse(_rig.Ui.NextLine.IsVisible, "a charger ends it");
+        }
+
+        [UnityTest]
         public IEnumerator TheDarkTower_NeverPutsWordsOnTheTicker_OtherSleepersDo()
         {
             Boot();
