@@ -4,7 +4,22 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 000000000000000000. LATEST (2026-10-14 ~02:30): main ae1f50d7 verified + pushed; C10 + C5 world half next
+## 0000000000000000000. LATEST (2026-10-14 ~04:00): main caa2d913 verified + pushed; gameplay C6 in progress
+- **main caa2d913 (verified, origin has it)** = gameplay C10 (ground rings gone: a sonar answer, Bell's signal and the
+  charger warning are each a pillar that fades; M_GlowSiteRing.mat deleted) + c48ec7ee flake fix + Core IScrapField;
+  world C5 half (408ccc21: 4 cuttable lane slots, WorldSystem serves IScrapField) + world's look-A shadow tune
+  (e22fb009: fill 0.45, ambient up and neutral, earthlight shadow strength 0.78, grade lift/split toward neutral).
+- **Owner shown:** art's real-scene look-A captures and world's before/after shadow tune (art Logs/look-a, world
+  Logs/look-a-tune). No owner reaction yet.
+- **Gameplay queue:** C6 (held stacks on their wreck, crate remainders at the mouth, Recycled Metal home -> hold ->
+  overflow crates, Tilly never drops, IWaitingBundles on the chart; old saves' ground bundles -> overflow), then C5's
+  gameplay side (pieces at the IScrapField slots), then D scanning. Then verify --explicit, bump 0.5.5, build.
+- **Art, world:** stand by until 0.5.5 ships (no 0.6 work before the owner reviews 0.5.5).
+- **Lesson:** never rewrite a landed commit (even just its subject): the verification worktree's branch keeps the old
+  SHA and `verify` then fails to fast-forward. Write the `merge: ` prefix into `land -m` instead.
+- **Owner pending:** story v3's 7 questions (see the ~01:30 section).
+
+## 000000000000000000. (prev) (2026-10-14 ~02:30): main ae1f50d7 verified + pushed; C10 + C5 world half next
 - **main ae1f50d7 (verified, origin has it)** = look A (art palette + world sky/fog/grade), C9 (the tape deck is a
   station spare; keepsakes 5), audio 27ad1ff9, ui (keepsake total from the catalog), gameplay 59e4e157 (C11b relay.2's
   hut + the haul bot; the relic dig waits for a sealed container's seal).
