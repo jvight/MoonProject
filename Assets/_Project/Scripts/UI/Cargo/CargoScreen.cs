@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Core.Input;
 
 namespace MoonProject.UI
@@ -19,6 +20,8 @@ namespace MoonProject.UI
     {
         public const string CellClass = "cargo__cell";
         public const string EmptyClass = "cargo__cell--empty";
+        public const string UnlitClass = "cargo__cell--unlit";
+        private const string BootingClass = "cargo--booting";
         private const string TabOnClass = "settings-tab--on";
         private const string TabSkinOnClass = "settings-tab-wrap--on";
         private const string TabFocusClass = "settings-tab-wrap--focus";
@@ -33,6 +36,11 @@ namespace MoonProject.UI
         private readonly ITechTree _tech;
         private readonly GlyphLabels _glyphs;
         private readonly IntText _numbers;
+        private readonly EventBus _events;
+        private readonly PromptLedger _ledger;
+        private readonly HoldBoot _boot;
+        private readonly VisualElement _root;
+        private readonly Label _bootLine;
         private readonly Reveal _reveal;
         private readonly VisualElement _panel;
         private readonly Button[] _tabs;
@@ -45,6 +53,10 @@ namespace MoonProject.UI
         private readonly CanRow[] _rows = new CanRow[AbilityTable.Count];
         private readonly Dictionary<int, string> _pairs = new Dictionary<int, string>();
         private readonly string[] _waitingTexts = new string[WaitingCache];
+        private string _bootText = string.Empty;
+        private int _bootTyped = -1;
+        private int _bootLit;
+        private int _bootArrived;
         private int _tab;
         private bool _dirty = true;
         private float _cell;
@@ -55,7 +67,8 @@ namespace MoonProject.UI
         private InputDeviceKind _device = InputDeviceKind.KeyboardMouse;
 
         public CargoScreen(UiLayout layout, CargoScreenSettings settings, ILocalization localization,
-            ICargoHold hold, IRoverAbilities abilities, ITechTree tech, GlyphLabels glyphs, IntText numbers)
+            ICargoHold hold, IRoverAbilities abilities, ITechTree tech, GlyphLabels glyphs, IntText numbers,
+            EventBus events, PromptLedger ledger)
         {
             if (layout == null)
             {
@@ -69,7 +82,11 @@ namespace MoonProject.UI
             _tech = tech ?? throw new ArgumentNullException(nameof(tech));
             _glyphs = glyphs ?? throw new ArgumentNullException(nameof(glyphs));
             _numbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
+            _events = events ?? throw new ArgumentNullException(nameof(events));
+            _ledger = ledger ?? throw new ArgumentNullException(nameof(ledger));
+            _boot = new HoldBoot(settings);
             VisualElement root = layout.Cargo;
+            _root = root;
             _reveal = new Reveal(root, settings.Reveal);
             _reveal.Snap(false);
             _panel = Require<VisualElement>(root, "cargo-panel");
@@ -84,6 +101,7 @@ namespace MoonProject.UI
                 Require<VisualElement>(root, "cargo-page-can"),
             };
             _waiting = Require<Label>(root, "cargo-waiting");
+            _bootLine = Require<Label>(root, "cargo-boot");
             _holdGrid = Require<VisualElement>(root, "cargo-hold-grid");
             _canRows = Require<VisualElement>(root, "cargo-can-rows");
             _summary = Require<Label>(root, "cargo-summary");
@@ -116,6 +134,9 @@ namespace MoonProject.UI
 
         /// <summary>The button to focus when the screen opens (gamepad and keyboard move from it).</summary>
         public Button FirstTab => _tabs[0];
+
+        /// <summary>True while the first-press boot plays (tests and captures).</summary>
+        public bool IsBooting => _boot.IsRunning;
 
         /// <summary>The slot cells on 07's grid now (tests and captures).</summary>
         public int HoldCellCount => _holdCells.Count;
@@ -194,11 +215,19 @@ namespace MoonProject.UI
 
             _dirty = true;
             _reveal.Show();
+            if (!_ledger.HoldBooted && _tab == 0)
+            {
+                StartBoot();
+            }
         }
 
         public void Close()
         {
             _reveal.Hide();
+            if (_boot.IsRunning)
+            {
+                EndBoot(false);
+            }
         }
 
         /// <summary>The hold, the shelves or the abilities changed: write the screen again while it is open.</summary>
@@ -241,6 +270,12 @@ namespace MoonProject.UI
                 return;
             }
 
+            bool booting = _boot.IsRunning;
+            if (booting)
+            {
+                _boot.Step(deltaTime);
+            }
+
             if (device != _device)
             {
                 _device = device;
@@ -272,6 +307,114 @@ namespace MoonProject.UI
                 _dirty = false;
                 Refresh();
             }
+
+            if (booting)
+            {
+                PlayBootFrame();
+            }
+        }
+
+        /// <summary>
+        /// The first Tab press (docs/design/0.5.5-owner-feedback.md §3): the screen opens dark, one line of system text
+        /// types in, the slot outlines light and the items 07 starts with slide in. Once per save.
+        /// </summary>
+        private void StartBoot()
+        {
+            int slots = _hold.SlotCount;
+            int items = 0;
+            for (int i = 0; i < slots; i++)
+            {
+                items += _hold.GetSlot(i).IsEmpty ? 0 : 1;
+            }
+
+            _boot.Start(slots, items);
+            _ledger.RecordHoldBooted();
+            _bootText = string.Format(_localization.Get(UiKeys.HoldBoot), slots);
+            _bootTyped = -1;
+            _bootLit = 0;
+            _bootArrived = 0;
+            _root.AddToClassList(BootingClass);
+            _events.Publish(new HoldBootStarted());
+            _events.Publish(new RoverHatchCycleRequested(_boot.TotalSeconds + _settings.BootHatchLingerSeconds));
+        }
+
+        private void EndBoot(bool completed)
+        {
+            _root.RemoveFromClassList(BootingClass);
+            for (int i = 0; i < _holdCells.Count; i++)
+            {
+                Cell cell = _holdCells[i];
+                cell.Root.RemoveFromClassList(UnlitClass);
+                SetItem(cell, 1f);
+            }
+
+            _boot.Stop();
+            if (completed)
+            {
+                _events.Publish(new RoverChirpRequested(ChirpMood.Affirm, 1f));
+            }
+        }
+
+        private void PlayBootFrame()
+        {
+            int typed = Mathf.CeilToInt(_boot.TypedFraction * _bootText.Length);
+            if (typed != _bootTyped)
+            {
+                _bootTyped = typed;
+                _bootLine.text = _bootText.Substring(0, typed);
+            }
+
+            int lit = _boot.LitCount;
+            for (; _bootLit < lit; _bootLit++)
+            {
+                _events.Publish(new HoldSlotLit(_bootLit, _holdCells.Count));
+            }
+
+            int item = 0;
+            for (int i = 0; i < _holdCells.Count; i++)
+            {
+                Cell cell = _holdCells[i];
+                cell.Root.EnableInClassList(UnlitClass, i >= lit);
+                if (_hold.GetSlot(i).IsEmpty)
+                {
+                    continue;
+                }
+
+                SetItem(cell, _boot.ItemProgress(item));
+                item++;
+            }
+
+            int arrived = _boot.ArrivedCount;
+            int seen = 0;
+            for (int i = 0; i < _holdCells.Count && _bootArrived < arrived; i++)
+            {
+                if (_hold.GetSlot(i).IsEmpty)
+                {
+                    continue;
+                }
+
+                if (seen == _bootArrived)
+                {
+                    _events.Publish(new HoldItemArrived(i));
+                    _bootArrived++;
+                }
+
+                seen++;
+            }
+
+            if (!_boot.IsRunning)
+            {
+                EndBoot(true);
+            }
+        }
+
+        /// <summary>An item at <paramref name="progress"/> of its slide: it comes in from the left, fading up.</summary>
+        private void SetItem(Cell cell, float progress)
+        {
+            float eased = 1f - (1f - progress) * (1f - progress);
+            cell.Icon.style.opacity = eased;
+            cell.Units.style.opacity = eased;
+            cell.Icon.style.translate = new Translate(-_settings.BootSlideDistance * (1f - eased), 0f);
         }
 
         private float FitCell(Vector2 panelSize)
@@ -392,7 +535,7 @@ namespace MoonProject.UI
             root.Add(icon);
             root.Add(units);
             grid.Add(root);
-            return new Cell { Root = root, Painter = painter, Units = units };
+            return new Cell { Root = root, Icon = icon, Painter = painter, Units = units };
         }
 
         private void RefreshAbilities()
@@ -463,6 +606,7 @@ namespace MoonProject.UI
         private sealed class Cell
         {
             public VisualElement Root;
+            public VisualElement Icon;
             public MaterialIconPainter Painter;
             public Label Units;
         }

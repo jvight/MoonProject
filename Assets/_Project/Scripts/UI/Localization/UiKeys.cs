@@ -33,6 +33,8 @@ namespace MoonProject.UI
         public const string JourneyPutAway = "ui.journey.put_away";
         public const string LookUp = "ui.hint.look_up";
         public const string Drive = "ui.hint.drive";
+        public const string HintHold = "hint.hold";
+        public const string HoldBoot = "ui.hold.boot";
         public const string BlueprintFound = "ui.blueprint.found";
         public const string BlueprintDelivered = "ui.blueprint.delivered";
 

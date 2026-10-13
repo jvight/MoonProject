@@ -2053,6 +2053,14 @@
         {
             "key": "site.chasm_lip.name",
             "text": "Kenji's Test Jump"
+        },
+        {
+            "key": "glyph.keyboard.tab",
+            "text": "Tab"
+        },
+        {
+            "key": "glyph.gamepad.select",
+            "text": "View"
         }
     ]
 }

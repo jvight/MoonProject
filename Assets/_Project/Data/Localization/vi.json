@@ -2053,6 +2053,14 @@
         {
             "key": "site.chasm_lip.name",
             "text": "Bãi thử nhảy của Kenji"
+        },
+        {
+            "key": "glyph.keyboard.tab",
+            "text": "Tab"
+        },
+        {
+            "key": "glyph.gamepad.select",
+            "text": "View"
         }
     ]
 }

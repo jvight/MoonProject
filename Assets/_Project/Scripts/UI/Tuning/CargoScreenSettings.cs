@@ -30,6 +30,31 @@ namespace MoonProject.UI
         [Range(0.5f, 0.99f)]
         [SerializeField] private float _shrinkStep = 0.92f;
 
+        [Header("The first Tab press: the hold boots (docs/design/0.5.5-owner-feedback.md §3, about 1.2 s)")]
+        [Tooltip("Seconds 07's one line of system text takes to type in, with the screen dark around it.")]
+        [Range(0.1f, 1f)]
+        [SerializeField] private float _bootTypeSeconds = 0.3f;
+
+        [Tooltip("Seconds between one slot outline lighting and the next, left to right.")]
+        [Range(0.02f, 0.15f)]
+        [SerializeField] private float _bootLightStepSeconds = 0.06f;
+
+        [Tooltip("Seconds between one starter item starting to slide into its slot and the next.")]
+        [Range(0.02f, 0.3f)]
+        [SerializeField] private float _bootItemStepSeconds = 0.1f;
+
+        [Tooltip("Seconds one starter item takes to slide into its slot.")]
+        [Range(0.1f, 0.6f)]
+        [SerializeField] private float _bootSlideSeconds = 0.22f;
+
+        [Tooltip("How far (px at 1080p) a starter item starts from its slot, to the side it comes from.")]
+        [Range(0f, 200f)]
+        [SerializeField] private float _bootSlideDistance = 64f;
+
+        [Tooltip("Seconds the rear hatch stays open past the end of the boot before it shuts.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _bootHatchLingerSeconds = 0.2f;
+
         public RevealSettings Reveal => _reveal;
 
         public float MaxCell => _maxCell;
@@ -41,5 +66,17 @@ namespace MoonProject.UI
         public float HeightShare => _heightShare;
 
         public float ShrinkStep => _shrinkStep;
+
+        public float BootTypeSeconds => _bootTypeSeconds;
+
+        public float BootLightStepSeconds => _bootLightStepSeconds;
+
+        public float BootItemStepSeconds => _bootItemStepSeconds;
+
+        public float BootSlideSeconds => _bootSlideSeconds;
+
+        public float BootSlideDistance => _bootSlideDistance;
+
+        public float BootHatchLingerSeconds => _bootHatchLingerSeconds;
     }
 }

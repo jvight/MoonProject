@@ -136,11 +136,52 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator CargoScreen_FirstTab_BootsOnce_AndAsksForTheHatchAndTheChirp()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Hold.Set(6, new MaterialSlot(SalvageMaterial.Metal, 2, 4),
+                new MaterialSlot(SalvageMaterial.Wiring, 1, 4));
+            int started = 0;
+            int lit = 0;
+            int arrived = 0;
+            float hatch = -1f;
+            ChirpMood? chirp = null;
+            Events.Subscribe<HoldBootStarted>(_ => started++);
+            Events.Subscribe<HoldSlotLit>(_ => lit++);
+            Events.Subscribe<HoldItemArrived>(_ => arrived++);
+            Events.Subscribe<RoverHatchCycleRequested>(request => hatch = request.OpenSeconds);
+            Events.Subscribe<RoverChirpRequested>(request => chirp = request.Mood);
+            yield return Seconds(0.3f);
+
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(0.15f);
+            CargoScreen cargo = _rig.Ui.Cargo;
+            Assert.IsTrue(cargo.IsBooting, "the first press boots the hold");
+            Assert.AreEqual(1, started);
+            Assert.Greater(hatch, 1.2f, "07's hatch is asked to stay open for the whole boot");
+            yield return Seconds(2f);
+            Assert.IsFalse(cargo.IsBooting);
+            Assert.AreEqual(8, lit, "every slot outline lit, once");
+            Assert.AreEqual(2, arrived, "both starter items slid in");
+            Assert.AreEqual(ChirpMood.Affirm, chirp, "07 chirps when the boot is done");
+
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(0.6f);
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(0.5f);
+            Assert.IsFalse(cargo.IsBooting, "never again");
+            Assert.AreEqual(1, started);
+        }
+
+        [UnityTest]
         public IEnumerator CargoScreen_SevenCan_ListsTheAbilitiesOwned_AndDecodedKitsAsPencil()
         {
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             Boot();
             Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Hold.Set(8);
             _rig.Fakes.Grant(RoverAbility.Tether);
             _rig.Fakes.SetTech(TechNodeId.HoverJump, TechNodeState.Decoded);
             yield return Seconds(0.3f);

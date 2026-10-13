@@ -112,6 +112,10 @@ namespace MoonProject.UI
         /// <summary>True while the panel has something to show or is at its work (before the guidance slot decides).</summary>
         public bool Wants { get; private set; }
 
+        /// <summary>True while 07 is at the radio tower with a build to offer (not the bay).</summary>
+        public bool AtRadioTower => _shop.IsAtStation && _shop.StationUpgrade != null &&
+                                    _shop.StationUpgrade.Station == UpgradeStationKind.RadioTower;
+
         /// <summary>0..1 fill of the hold ring.</summary>
         public float HoldProgress => _hold.Progress;
 

@@ -801,8 +801,12 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Grant(RoverAbility.WideSonar);
             fakes.SetTech(TechNodeId.HoverJump, TechNodeState.Decoded);
             ui.Cargo.Open();
-            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeIn + 0.6f);
-            Assert.IsTrue(ui.Cargo.IsOpen);
+            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeIn + _tuning.Cargo.BootTypeSeconds +
+                                                    _tuning.Cargo.BootLightStepSeconds * 3f);
+            Assert.IsTrue(ui.Cargo.IsBooting, "the first press boots the hold");
+            yield return Capture(camera, folder, "94_hold_boot_lights");
+            yield return new WaitForSecondsRealtime(2f);
+            Assert.IsTrue(ui.Cargo.IsOpen && !ui.Cargo.IsBooting);
             yield return Capture(camera, folder, "95_cargo_screen");
             ui.Cargo.SelectTab(1);
             yield return new WaitForSecondsRealtime(0.4f);

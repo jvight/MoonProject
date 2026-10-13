@@ -2190,6 +2190,27 @@ Label {
     color: var(--glass-sel);
 }
 
+/* 07's system line on the first Tab press, typed in over the dark screen */
+.cargo__boot {
+    display: none;
+    margin-bottom: 8px;
+    font-size: 19px;
+    letter-spacing: 2px;
+    color: var(--glass-sel);
+}
+
+.cargo--booting .cargo__boot {
+    display: flex;
+}
+
+.cargo--booting .cargo__summary {
+    opacity: 0;
+}
+
+.cargo__cell--unlit {
+    opacity: 0;
+}
+
 .cargo__grid {
     flex-direction: row;
     flex-wrap: wrap;

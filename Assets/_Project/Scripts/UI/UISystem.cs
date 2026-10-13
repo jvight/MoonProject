@@ -73,6 +73,7 @@ namespace MoonProject.UI
         private RecoveryBoard _board;
         private StargazeVeil _stargaze;
         private LookUpHint _lookUpHint;
+        private HoldHint _holdHint;
         private FirstPrompt _firstPrompt;
         private LookUpChip _lookUpChip;
         private NextStepLine _nextStep;
@@ -437,6 +438,7 @@ namespace MoonProject.UI
                 _layout.FriendNameAnchor, _layout.RelayTagAnchor, _layout.SalvageRingAnchor, _layout.SiteNameAnchor,
                 _layout.TickerLine);
             _lookUpHint = new LookUpHint(_tuning.Stargaze, _ledger);
+            _holdHint = new HoldHint(_tuning.Stargaze, _ledger);
             _firstPrompt = new FirstPrompt(_tuning.Stargaze, _ledger);
             _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization);
             _nextStep = new NextStepLine(_tuning.Guidance);
@@ -472,7 +474,7 @@ namespace MoonProject.UI
             _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
             _rewardCard = new RewardCard(_layout, _tuning.RewardCard, _localization, services.Shop);
             _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold,
-                services.Abilities, services.Tech, _glyphs, _numbers);
+                services.Abilities, services.Tech, _glyphs, _numbers, services.Events, _ledger);
             _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization, _glyphs);
             _crateNote = new CrateNote(_layout, _tuning.CrateNote, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
@@ -645,8 +647,11 @@ namespace MoonProject.UI
             bool looking = !paused && (input.LookDelta.sqrMagnitude > 0f || input.LookRate.sqrMagnitude > stick);
             _firstPrompt.Tick(hudTime, hintOpen, looking, !paused && input.Drive.sqrMagnitude > stick);
             _lookUpHint.Tick(hudTime, hintOpen && _firstPrompt.Word == HintWord.None);
+            _holdHint.Tick(hudTime, hintOpen && !_cargo.IsOpen && _firstPrompt.Word == HintWord.None &&
+                                    !_lookUpHint.WantsShown, AtTower());
             HintWord hint = _firstPrompt.Word != HintWord.None ? _firstPrompt.Word
-                : _lookUpHint.WantsShown ? HintWord.LookUp : HintWord.None;
+                : _lookUpHint.WantsShown ? HintWord.LookUp
+                : _holdHint.WantsShown ? HintWord.Hold : HintWord.None;
             _lookUpChip.Tick(deltaTime, paused ? HintWord.None : hint, device);
             _nextStep.Tick(hudTime, _services.Rover.Speed, _player.Guidance);
             _placeCard.Tick(hudTime, PlaceCardsOpen() && _slot.Allows(GuidanceKind.Place));
@@ -660,6 +665,12 @@ namespace MoonProject.UI
         private void OnBatteryArcRevealed(BatteryArcRevealed revealed)
         {
             _cellRowRevealed = true;
+        }
+
+        /// <summary>07 is at the tower, offered its build (the chip that teaches Tab waits for this).</summary>
+        private bool AtTower()
+        {
+            return _awake && _tower.AtRadioTower;
         }
 
         /// <summary>Everything but the slot that lets the teaching prompt show.</summary>
@@ -699,7 +710,8 @@ namespace MoonProject.UI
         /// </summary>
         private void DecideGuidance(bool paused, bool hopping)
         {
-            bool looks = LookHintsOpen() && (_firstPrompt.Word != HintWord.None || _lookUpHint.WantsShown);
+            bool looks = LookHintsOpen() && (_firstPrompt.Word != HintWord.None || _lookUpHint.WantsShown ||
+                                             _holdHint.Wants(AtTower()));
             _guidanceWants[(int)GuidanceKind.Prompt] =
                 (PromptsOpen(paused, hopping) && _director.Wants(_services.Hints.Primary)) || looks;
             _guidanceWants[(int)GuidanceKind.Card] =

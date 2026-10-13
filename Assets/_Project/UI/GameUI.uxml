@@ -279,6 +279,7 @@
                 <ui:VisualElement name="cargo-page-cargo" class="cargo__page cargo__page--columns" picking-mode="Ignore">
                     <ui:VisualElement class="cargo__column cargo__column--hold" picking-mode="Ignore">
                         <ui:Label class="cargo__heading loc" text="ui.cargo.hold" picking-mode="Ignore" />
+                        <ui:Label name="cargo-boot" class="cargo__boot" picking-mode="Ignore" />
                         <ui:Label name="cargo-waiting" class="cargo__note" picking-mode="Ignore" />
                         <ui:VisualElement name="cargo-hold-grid" class="cargo__grid" picking-mode="Ignore" />
                     </ui:VisualElement>
