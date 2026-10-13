@@ -30,6 +30,8 @@ namespace MoonProject.Gameplay
             PartFlying = new bool[count];
             PartSpotted = new bool[count];
             PartDug = new float[count];
+            PartContainers = new SealedContainer[count];
+            PartShownAt = new float[count];
             PartNouns = new string[count];
             for (int i = 0; i < count; i++)
             {
@@ -78,6 +80,20 @@ namespace MoonProject.Gameplay
         /// the open.
         /// </summary>
         internal int BuriedPart { get; set; } = -1;
+
+        /// <summary>
+        /// The sealed clamp or pod each part rests in (null where none): hidden until it stands open, then presented
+        /// at its open mouth (0.5.5 §2).
+        /// </summary>
+        internal SealedContainer[] PartContainers { get; }
+
+        /// <summary>When each contained part came into view as its container stood open.</summary>
+        internal float[] PartShownAt { get; }
+
+        /// <summary>
+        /// True when its parts rest in its crashed sled: still, at their sockets, never hovering over the ground.
+        /// </summary>
+        internal bool InSled { get; set; }
 
         /// <summary>Seconds of digging each part has had (only the buried one is ever dug).</summary>
         internal float[] PartDug { get; }

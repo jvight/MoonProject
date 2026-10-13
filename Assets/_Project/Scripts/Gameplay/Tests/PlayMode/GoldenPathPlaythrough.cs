@@ -144,6 +144,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// </summary>
         private const float SealCutTimeout = 20f;
 
+        /// <summary>Metres out in front of a seal 07 lines up before easing in to cut it.</summary>
+        private const float SealLineUp = 4f;
+
         /// <summary>07 lines up this far (m) in front of the turntable to drive in; it backs out as far.</summary>
         private const float BayApproach = 6f;
 
@@ -1689,27 +1692,43 @@ namespace MoonProject.Gameplay.PlayModeTests
             End($"Find Tilly ({fromHome:F0} m from home)", "her broken chirp answered the ping");
         }
 
+        /// <summary>
+        /// Tilly's parts rest in her crashed survey sled (0.5.5 §2): cut its clamp and its sensor pod free from in
+        /// front of each seal and take each part with E at the open mouth, then dig the last out of the gap under its
+        /// tipped hull.
+        /// </summary>
         private IEnumerator GatherTillyParts()
         {
             Begin();
             Friend tilly = _gameplay.Friends.Find(TillyId);
             int total = tilly.Progress.PartCount;
             float travelled = 0f;
-            while (tilly.Progress.Collected < total)
+            foreach (int next in TillysPartOrder(tilly))
             {
-                int next = NearestMissingPart(tilly);
                 Vector3 part = tilly.PartRest[next];
                 travelled += SurfaceRules.HorizontalDistance(_rover.Position, part);
                 int before = tilly.Progress.Collected;
-                yield return DriveTo(new Vector3(part.x, 0f, part.z), 1.5f, 0.8f, 60f, "one of Tilly's parts");
-                if (next == tilly.BuriedPart)
+                SealedContainer box = tilly.PartContainers[next];
+                if (box != null)
                 {
-                    yield return DigTillysLastPart();
+                    Vector3 seal = box.CutPoint.position;
+                    Vector3 outward = Flat(box.CutPoint.forward).normalized;
+                    yield return DriveTo(Flat(seal + outward * SealLineUp), 1.5f, 0.8f, 60f,
+                        "a line-up in front of a seal on Tilly's sled");
+                    yield return DriveTo(Flat(seal + outward * SealStandOff), 0.6f, 0.35f, 30f,
+                        "a seal on Tilly's sled");
+                    Press(_keyboard.eKey);
+                    yield return Until(() => box.Opened, SealCutTimeout, "held E cuts the seal over her part");
+                    Release(_keyboard.eKey);
+                    yield return PickupPress.Take(this, _gameplay, 4f + _gameplay.Cargo.ContainerLidSeconds,
+                        "one of Tilly's parts, at the open mouth");
                 }
                 else
                 {
-                    yield return PickupPress.Take(this, _gameplay, 4f, "one of Tilly's parts");
+                    yield return DriveTo(new Vector3(part.x, 0f, part.z), 1.5f, 0.8f, 60f, "the gap under her hull");
+                    yield return DigTillysLastPart();
                 }
+
                 yield return Until(() => tilly.Progress.Collected > before, 6f, "the part drifts into 07");
             }
 
@@ -1719,6 +1738,20 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(total, last.Total);
             Assert.IsTrue(tilly.Progress.CanRepair);
             End("Gather Tilly's parts", $"{total} parts over {travelled:F0} m of driving");
+        }
+
+        /// <summary>Her sealed parts first (the dig waits while a seal is in reach), the dug one last.</summary>
+        private static IEnumerable<int> TillysPartOrder(Friend tilly)
+        {
+            for (int p = 0; p < tilly.Parts.Length; p++)
+            {
+                if (p != tilly.BuriedPart)
+                {
+                    yield return p;
+                }
+            }
+
+            yield return tilly.BuriedPart;
         }
 
         /// <summary>

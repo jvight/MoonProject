@@ -408,7 +408,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             visuals.PopulateContainers(new[]
             {
                 ContainerTemplate("CoilCrate"), ContainerTemplate("TapeCase"), ContainerTemplate("JunctionBox"),
-                ContainerTemplate("SupplyPod"), ContainerTemplate("TillySled"),
+                ContainerTemplate("SupplyPod"), SledTemplate(),
             });
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
@@ -1108,6 +1108,26 @@ namespace MoonProject.Gameplay.PlayModeTests
             socket.transform.SetParent(container.transform, false);
             socket.transform.localPosition = new Vector3(0f, 0.25f, 0f);
             return container;
+        }
+
+        /// <summary>
+        /// A stand-in for Art's TillySled (0.5.5 §2): PartSocket_0 behind its <c>Clamp</c> (with CutPoint and Seal),
+        /// PartSocket_1 under its tipped hull, and its <c>SensorPod</c> container holding PartSocket_2.
+        /// </summary>
+        private GameObject SledTemplate()
+        {
+            GameObject sled = Template(ContainerKinds.TillySled, new Vector3(1.2f, 0.4f, 0.9f));
+            Transform clamp = Node("Clamp", sled.transform, new Vector3(0.38f, 0.32f, 0.18f));
+            Node("CutPoint", clamp, new Vector3(0f, 0f, 0.05f));
+            Block(clamp, Vector3.zero, new Vector3(0.2f, 0.04f, 0.04f)).name = "Seal";
+            Node("PartSocket_0", sled.transform, new Vector3(0.38f, 0.32f, 0.06f));
+            Node("PartSocket_1", sled.transform, new Vector3(-0.1f, 0.02f, -0.22f));
+            Transform pod = Node("SensorPod", sled.transform, new Vector3(0.55f, 0f, 0.75f));
+            Transform lid = Node(SealedContainer.LidPath, pod, new Vector3(0f, 0.3f, -0.15f));
+            Node("CutPoint", lid, new Vector3(0f, 0f, 0.3f));
+            Block(lid, new Vector3(0f, 0f, 0.3f), new Vector3(0.3f, 0.04f, 0.04f)).name = "Seal";
+            Node("PartSocket_2", pod, new Vector3(0f, 0.1f, 0f));
+            return sled;
         }
 
         /// <summary>A stand-in for Art's GaragePort with its Tray node.</summary>

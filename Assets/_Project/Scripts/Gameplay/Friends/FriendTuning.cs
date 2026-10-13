@@ -79,9 +79,19 @@ namespace MoonProject.Gameplay
         [Tooltip("Within this many metres of 07 a waiting part offers its pickup prompt; a press of E lifts it in.")]
         [Range(1f, 15f)] [SerializeField] private float _partReachRadius = 4.5f;
 
-        [Tooltip("The friend whose last part lies half under the dust, so the beam's dig is learned on it " +
-                 "(first-hour v2 §4).")]
+        [Tooltip("The friend whose parts rest in her crashed survey sled (Art's TillySled, 0.5.5 §2): one behind " +
+                 "its clamp and one in its sensor pod, each cut free, and one in the gap under its tipped hull, dug, " +
+                 "so the beam's dig is learned on it (first-hour v2 §4).")]
         [SerializeField] private string _buriedPartFriend = "tilly";
+
+        [Tooltip("Where her sled lies from her own spot (m, in her frame: x to her right, y ahead of her).")]
+        [SerializeField] private Vector2 _sledOffset = new Vector2(3.5f, 2.5f);
+
+        [Tooltip("Degrees the sled lies turned from her facing.")]
+        [Range(-180f, 180f)] [SerializeField] private float _sledYaw = 140f;
+
+        [Tooltip("Seconds a part takes to rise off its sled socket to the open mouth once its clamp or pod opens.")]
+        [Range(0.1f, 3f)] [SerializeField] private float _partRiseSeconds = 0.6f;
 
         [Tooltip("Metres the buried part sits under its rest point before it is dug: half under the dust.")]
         [Range(0f, 1f)] [SerializeField] private float _buriedPartSink = 0.22f;
@@ -355,6 +365,9 @@ namespace MoonProject.Gameplay
         public float PartReachRadius => _partReachRadius;
 
         public string BuriedPartFriend => _buriedPartFriend;
+        public Vector2 SledOffset => _sledOffset;
+        public float SledYaw => _sledYaw;
+        public float PartRiseSeconds => _partRiseSeconds;
 
         public float BuriedPartSink => _buriedPartSink;
 

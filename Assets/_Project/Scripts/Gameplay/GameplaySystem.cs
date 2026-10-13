@@ -299,7 +299,7 @@ namespace MoonProject.Gameplay
                 !_tower.Initialize(services, Upgrades, _salvage.Catalog, TowerParts) ||
                 !_workshop.Initialize(services, Upgrades, _salvage.Catalog, _tower, Power, Blueprints, lights,
                     Equipment) ||
-                !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _salvage, _home) ||
+                !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _salvage, _home, Containers) ||
                 !_cassettes.Initialize(services, Radio, KeepClearOfCassettes(), Containers) ||
                 !_logs.Initialize(services) ||
                 !_sonar.Initialize(services, _relics, _friends, _salvage, abilities, Power) ||

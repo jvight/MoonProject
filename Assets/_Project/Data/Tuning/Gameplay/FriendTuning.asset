@@ -15,6 +15,9 @@ MonoBehaviour:
   _giftHomeRadius: 22
   _giftMaxSpeed: 2.5
   _wingCellFriend: tilly
+  _sledOffset: {x: 3.5, y: 2.5}
+  _sledYaw: 140
+  _partRiseSeconds: 0.6
   _siteAttempts: 600
   _siteEdgeMargin: 12
   _siteMaxSlope: 12

@@ -207,10 +207,17 @@ namespace MoonProject.Gameplay
             container.OpenedAt = float.NegativeInfinity;
         }
 
+        /// <summary>
+        /// The sealed container in reach that 07 faces most squarely: two seals side by side (Tilly's sled's clamp
+        /// and pod) are told apart by where 07 looks, not by a few centimetres.
+        /// </summary>
         private SealedContainer Nearest()
         {
             SealedContainer best = null;
-            float bestSq = _salvage.Tuning.ReachRadius * _salvage.Tuning.ReachRadius;
+            float reachSq = _salvage.Tuning.ReachRadius * _salvage.Tuning.ReachRadius;
+            float bestFacing = float.NegativeInfinity;
+            Vector3 forward = _rover.Rotation * Vector3.forward;
+            forward.y = 0f;
             for (int i = 0; i < _containers.Count; i++)
             {
                 SealedContainer container = _containers[i];
@@ -219,11 +226,17 @@ namespace MoonProject.Gameplay
                     continue;
                 }
 
-                float distanceSq = SurfaceRules.HorizontalDistanceSquared(_rover.Position,
-                    container.CutPoint.position);
-                if (distanceSq <= bestSq)
+                Vector3 toward = container.CutPoint.position - _rover.Position;
+                toward.y = 0f;
+                if (toward.sqrMagnitude > reachSq)
                 {
-                    bestSq = distanceSq;
+                    continue;
+                }
+
+                float facing = toward.sqrMagnitude > 1e-6f ? Vector3.Dot(forward.normalized, toward.normalized) : 1f;
+                if (facing > bestFacing)
+                {
+                    bestFacing = facing;
                     best = container;
                 }
             }
