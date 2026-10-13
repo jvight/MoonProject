@@ -1668,7 +1668,7 @@
         },
         {
             "key": "material.circuit_chips.job",
-            "text": "Electronics: the lab's Reader II, drones, superconductor."
+            "text": "Electronics: drones, superconductor."
         },
         {
             "key": "material.circuit_chips.source",
