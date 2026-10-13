@@ -354,6 +354,25 @@ namespace MoonProject.Art.Tests
             }
         }
 
+        [Test]
+        public void HullFragments_ReadAsAHullsRemains_HalfBuried_EachWithACutPoint()
+        {
+            for (int i = 0; i < PropModelBuilder.HullFragmentVariants; i++)
+            {
+                ModelNode fragment = PropModelBuilder.CreateHullFragment(i);
+                LowPolyMeshBuilder mesh = fragment.Mesh.Geometry;
+                MeshChecks.AssertWellFormed(mesh);
+                Bounds size = mesh.Bounds;
+                Assert.That(Mathf.Max(size.size.x, size.size.z), Is.InRange(1.4f, 3f), $"{fragment.Name} reads at 20 m");
+                Assert.Less(size.min.y, -0.05f, $"{fragment.Name} sinks into the dust");
+                Assert.Greater(size.max.y, 0.4f, $"{fragment.Name} stands out of it");
+                Assert.IsFalse(MeshChecks.Swatches(mesh).Any(Palette.IsEmissive), "nothing glows on the regolith");
+                ModelNode cut = fragment.Children.Single();
+                Assert.AreEqual(SiteModelBuilder.CutPointName, cut.Name);
+                Assert.Greater(cut.LocalPosition.y, 0f, $"{fragment.Name}'s cut is above the dust");
+            }
+        }
+
         private static List<ModelNode> Pieces(ModelNode site)
         {
             return site.Children.Where(node => PieceName.IsMatch(node.Name)).ToList();

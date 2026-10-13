@@ -16,6 +16,16 @@ namespace MoonProject.Art.Editor
         public const string OrangeBeadPatchPrefix = "OrangeBeadPatch_";
         public const int OrangeBeadPatchVariants = OrangeBeadMeshes.PatchVariants;
 
+        /// <summary>
+        /// Kestrel-3's hull fragments for World's scrap field (0.5.5 §2): <c>HullFragment_0..3</c>, a curved skin on its
+        /// ribs, a torn plate, a panel with its hatch and a bare rib cage, each about 2 m across with its root where the
+        /// dust line crosses its middle (place it on the ground; what's below y 0 is buried), +Z its exposed side,
+        /// and a <c>CutPoint</c> (+Z out of its cut face) on the edge 07 cuts.
+        /// </summary>
+        public const string HullFragmentPrefix = "HullFragment_";
+
+        public const int HullFragmentVariants = HullFragmentMeshes.Variants;
+
         [MoonBuilder("Art/Props", 175)]
         public static void Build()
         {
@@ -27,12 +37,25 @@ namespace MoonProject.Art.Editor
                 ModelPrefabWriter.Write(CreateOrangeBeadPatch(i), ArtPaths.PropFolder, material);
             }
 
+            for (int i = 0; i < HullFragmentVariants; i++)
+            {
+                ModelPrefabWriter.Write(CreateHullFragment(i), ArtPaths.PropFolder, material);
+            }
+
             AssetDatabase.SaveAssets();
         }
 
         public static ModelNode CreateLogCache()
         {
             return new ModelNode(LogCacheName, Vector3.zero, new ModelMesh(LogCacheName, LogCacheMeshes.Cache()));
+        }
+
+        public static ModelNode CreateHullFragment(int variant)
+        {
+            string name = HullFragmentPrefix + variant.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            var root = new ModelNode(name, Vector3.zero, new ModelMesh(name, HullFragmentMeshes.Fragment(variant)));
+            root.Add(new ModelNode(SiteModelBuilder.CutPointName, HullFragmentMeshes.CutPoint(variant)));
+            return root;
         }
 
         public static ModelNode CreateOrangeBeadPatch(int variant)
