@@ -47,10 +47,6 @@
             "text": "07"
         },
         {
-            "key": "ui.battery.power",
-            "text": "battery"
-        },
-        {
             "key": "ui.meter.home",
             "text": "home · {0}"
         },
@@ -125,10 +121,6 @@
         {
             "key": "next.tower.pad",
             "text": "Bring the coil to the tower's pad."
-        },
-        {
-            "key": "next.tower.hold",
-            "text": "Hold E on the pad to repair the radio tower."
         },
         {
             "key": "hint.pickup",
@@ -311,10 +303,6 @@
             "text": "Cell Pack II"
         },
         {
-            "key": "ticker.recovery.power",
-            "text": "The station has power."
-        },
-        {
             "key": "ticker.recovery.link",
             "text": "The Link reaches the Peak."
         },
@@ -325,10 +313,6 @@
         {
             "key": "ticker.recovery.answer",
             "text": "Earth has heard us."
-        },
-        {
-            "key": "notyet.tower",
-            "text": "Offline. Needs the Tower Coil and materials: see the tower's card."
         },
         {
             "key": "notyet.bay",
@@ -359,64 +343,32 @@
             "text": "The Lander"
         },
         {
-            "key": "place.lander.job",
-            "text": "The crew's home. Its windows light when the tower has power."
-        },
-        {
             "key": "place.tower.name",
             "text": "Radio Tower"
-        },
-        {
-            "key": "place.tower.job",
-            "text": "Powers the station. Each level brings power to more of home."
         },
         {
             "key": "place.bay.name",
             "text": "Kenji's Rover Bay"
         },
         {
-            "key": "place.bay.job",
-            "text": "Park on the turntable: the arms fit new kit on 07."
-        },
-        {
             "key": "place.ladder.name",
             "text": "Crew's Ladder"
-        },
-        {
-            "key": "place.ladder.job",
-            "text": "The crew's ladder. Wheels can't climb it."
         },
         {
             "key": "place.lift.name",
             "text": "Crew's Lift"
         },
         {
-            "key": "place.lift.job",
-            "text": "Stop on the platform to ride up to the lab."
-        },
-        {
             "key": "place.lab.name",
             "text": "Crew's Lab"
-        },
-        {
-            "key": "place.lab.job",
-            "text": "Bring finds here: the reader decodes them into blueprints."
         },
         {
             "key": "place.rack.name",
             "text": "Tape Rack"
         },
         {
-            "key": "place.rack.job",
-            "text": "Tapes you find play here: music and the crew's voices."
-        },
-        {
             "key": "place.garage_port.name",
             "text": "Kenji's Garage Port"
-        },
-        {
-            "key": "place.garage_port.job",
-            "text": "Park on its pad to fit 07's spare parts."
         },
         {
             "key": "ui.blueprint.found",
@@ -529,14 +481,6 @@
         {
             "key": "ui.card.close",
             "text": "Close"
-        },
-        {
-            "key": "ui.tower.level",
-            "text": "Level {0} of {1}"
-        },
-        {
-            "key": "ui.tower.purchased",
-            "text": "Repairing the tower…"
         },
         {
             "key": "hint.excavate",
@@ -920,7 +864,7 @@
         },
         {
             "key": "ticker.relay.online",
-            "text": "{0} online: 07 can charge here and hop home."
+            "text": "{0} online."
         },
         {
             "key": "ticker.relay.waiting",
@@ -1027,24 +971,12 @@
             "text": "Canyon Supply Lander"
         },
         {
-            "key": "ui.recipe.need",
-            "text": "{0} more {1} to salvage"
-        },
-        {
             "key": "ui.recipe.row",
             "text": "{0} (have {1})"
         },
         {
             "key": "ui.friend.parts",
             "text": "{0}'s parts: {1} of {2}"
-        },
-        {
-            "key": "ui.cargo.tab_cargo",
-            "text": "Cargo"
-        },
-        {
-            "key": "ui.cargo.tab_can",
-            "text": "07 can"
         },
         {
             "key": "ui.cargo.hold",
@@ -1059,88 +991,44 @@
             "text": "07: {0} of {1} slots"
         },
         {
-            "key": "ui.can.decoded",
-            "text": "Blueprint complete. Build it in the bay."
-        },
-        {
             "key": "ui.can.tether.verb",
             "text": "Lift"
-        },
-        {
-            "key": "ui.can.tether.line",
-            "text": "Hold to lift what glows cyan, then drive to tow it."
         },
         {
             "key": "ui.can.hover_jump.verb",
             "text": "Hover-Jump"
         },
         {
-            "key": "ui.can.hover_jump.line",
-            "text": "Hop over rocks and across gaps."
-        },
-        {
             "key": "ui.can.cargo_cradle.verb",
             "text": "Cargo Cradle"
-        },
-        {
-            "key": "ui.can.cargo_cradle.line",
-            "text": "Carries a keepsake on 07's back."
         },
         {
             "key": "ui.can.warm_headlamp.verb",
             "text": "Warm Headlamp"
         },
         {
-            "key": "ui.can.warm_headlamp.line",
-            "text": "Lights the ground ahead after dark."
-        },
-        {
             "key": "ui.can.boost_coils.verb",
             "text": "Boost Coils"
-        },
-        {
-            "key": "ui.can.boost_coils.line",
-            "text": "Drives faster and holds a little spare charge."
         },
         {
             "key": "ui.can.cell_pack.verb",
             "text": "Cell Pack II"
         },
         {
-            "key": "ui.can.cell_pack.line",
-            "text": "Four cells become six: 07 can go farther."
-        },
-        {
             "key": "ui.can.wide_sonar.verb",
             "text": "Wide Sonar"
-        },
-        {
-            "key": "ui.can.wide_sonar.line",
-            "text": "Sonar pings reach farther."
         },
         {
             "key": "ui.can.magnetic_treads.verb",
             "text": "Magnetic Treads"
         },
         {
-            "key": "ui.can.magnetic_treads.line",
-            "text": "The wheels grip steep ground."
-        },
-        {
             "key": "ui.can.side_bins.verb",
             "text": "Side Bins"
         },
         {
-            "key": "ui.can.side_bins.line",
-            "text": "Four more slots in 07's hold."
-        },
-        {
             "key": "ui.can.focus_lens.verb",
             "text": "Focus Lens"
-        },
-        {
-            "key": "ui.can.focus_lens.line",
-            "text": "A tighter cutting beam."
         },
         {
             "key": "hint.build",
@@ -1189,10 +1077,6 @@
         {
             "key": "ui.recipecard.tower",
             "text": "Park on the pad to build."
-        },
-        {
-            "key": "ui.recipecard.blueprint",
-            "text": "Blueprint decoded. Park on the bay's turntable to build it."
         },
         {
             "key": "upgrade.rover.cargo_cradle.name",
@@ -1253,10 +1137,6 @@
         {
             "key": "ui.bay.fitted",
             "text": "Fitted to 07"
-        },
-        {
-            "key": "ui.bay.pick",
-            "text": "tap to see the next"
         },
         {
             "key": "log.kenji_1",
@@ -1775,14 +1655,6 @@
             "text": "Two more cells, six in total: enough to reach the far side of the basin."
         },
         {
-            "key": "ticker.tether.back",
-            "text": "07 can tow things again."
-        },
-        {
-            "key": "ui.pause.can",
-            "text": "07 can"
-        },
-        {
             "key": "ui.settings.text_size",
             "text": "Text size"
         },
@@ -2061,6 +1933,22 @@
         {
             "key": "glyph.gamepad.select",
             "text": "View"
+        },
+        {
+            "key": "micro.06.name",
+            "text": "06"
+        },
+        {
+            "key": "micro.mule.name",
+            "text": "Mule"
+        },
+        {
+            "key": "micro.haul_sled.name",
+            "text": "Haul Sled"
+        },
+        {
+            "key": "micro.drone.name",
+            "text": "Tilly's sister"
         }
     ]
 }
