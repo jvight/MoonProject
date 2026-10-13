@@ -52,7 +52,7 @@ namespace MoonProject.Audio.PlayModeTests
         {
             _rig.Wake(true);
             yield return new WaitForSecondsRealtime(WakeSeconds);
-            _rig.Events.Publish(new RoverKitFitted(RoverKitPiece.TapeDeck, true, string.Empty));
+            _rig.Events.Publish(new PartFitted(RoverSocket.Deck, RoverKitPiece.TapeDeck, false, false, default, 0));
             yield return new WaitForSecondsRealtime(1f);
             Assert.AreEqual(RadioGateStage.Deck, _rig.Radio.GateStage);
             Assert.IsTrue(_rig.Radio.MusicStarted, "the first tape plays once the deck is fitted");
@@ -73,7 +73,7 @@ namespace MoonProject.Audio.PlayModeTests
         {
             _rig.Wake(true);
             yield return new WaitForSecondsRealtime(WakeSeconds);
-            _rig.Events.Publish(new RoverKitFitted(RoverKitPiece.TapeDeck, true, string.Empty));
+            _rig.Events.Publish(new PartFitted(RoverSocket.Deck, RoverKitPiece.TapeDeck, false, false, default, 0));
             yield return new WaitForSecondsRealtime(1f);
 
             _rig.Program.DialUnlocked = true;
@@ -89,11 +89,26 @@ namespace MoonProject.Audio.PlayModeTests
         [UnityTest]
         public IEnumerator ALoadedDeck_PlaysWithoutAFitMoment()
         {
-            _rig.Events.Publish(new RoverKitRestored(RoverKitPiece.TapeDeck));
+            _rig.Dispose();
+            _rig = new AudioTestRig(stationUnlocked: false, deckFitted: true);
+            yield return null;
             _rig.Wake(true);
             yield return new WaitForSecondsRealtime(WakeSeconds);
-            Assert.AreEqual(RadioGateStage.Deck, _rig.Radio.GateStage);
+            Assert.AreEqual(RadioGateStage.Deck, _rig.Radio.GateStage, "read from 07's equipment at boot");
             Assert.IsTrue(_rig.Radio.MusicStarted, "the wake-up finds the deck's tape");
+        }
+
+        [UnityTest]
+        public IEnumerator TakingTheDeckOff_PausesItsTape()
+        {
+            _rig.Wake(true);
+            yield return new WaitForSecondsRealtime(WakeSeconds);
+            _rig.Events.Publish(new PartFitted(RoverSocket.Deck, RoverKitPiece.TapeDeck, false, false, default, 0));
+            yield return new WaitForSecondsRealtime(2f);
+            _rig.Events.Publish(new PartRemoved(RoverSocket.Deck, RoverKitPiece.TapeDeck));
+            Assert.AreEqual(RadioGateStage.Static, _rig.Radio.GateStage);
+            yield return new WaitForSecondsRealtime(2f);
+            Assert.IsFalse(_rig.AnyDeckPlaying(), "the tape stops with the deck off");
         }
     }
 }

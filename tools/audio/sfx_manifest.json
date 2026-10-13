@@ -509,6 +509,60 @@
       "notes": "07's machine voice, greeting (feel-pass 7.2); syllables in chirp_syllables.json."
     },
     {
+      "id": "recycle_crunch",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/recycle_crunch.wav"
+      ],
+      "variantLabels": [
+        "recycle_crunch"
+      ],
+      "sha256": [
+        "6d0852add4f71be55b107efcd361353f503d2cec8510b45d102c4478fbf0f800"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5: the bay recycling a swapped-out part into Metal: a muffled crunch and two settling ticks."
+    },
+    {
+      "id": "part_remove",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/part_remove.wav"
+      ],
+      "variantLabels": [
+        "part_remove"
+      ],
+      "sha256": [
+        "03ab434676a68ce1e0445c8bcc2dadd49d3345ac98e6440182c023cff9930240"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5: a part coming off 07: a latch tick and a servo easing down (the install in reverse)."
+    },
+    {
       "id": "scan_sweep",
       "category": "loop_3d",
       "milestone": "M3",
