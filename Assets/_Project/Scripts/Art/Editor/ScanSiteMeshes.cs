@@ -4,56 +4,41 @@ using static MoonProject.Art.Place;
 namespace MoonProject.Art.Editor
 {
     /// <summary>
-    /// Where scannable fragments rest (0.5.5 owner feedback §1.4): a fallen panel on a little rubble at a site, sized
-    /// to its fragment, so nothing scannable lies on clean regolith; the relay.2 service hut, an open-fronted lean-to
-    /// with the spare cells' shelf; and the chasm lip's crashed test jumper. Each space: its root on the ground, +Z its
-    /// front (the hut's open side, the jumper's nose toward the chasm).
+    /// Structures scanning uses (0.5.5 owner feedback §1.4): the relay.2 service hut, an open-fronted lean-to with an
+    /// empty shelf; and the chasm lip's crashed test jumper, its fragments still on its broken deck. Each space: its
+    /// root on the ground, +Z its front (the hut's open side, the jumper's nose toward the chasm).
     /// </summary>
     internal static class ScanSiteMeshes
     {
-        /// <summary>How thick a rest slab is: the fragment's socket sits on its top.</summary>
-        public const float RestHeight = 0.06f;
-
         private const float HutWidth = 2.2f;
         private const float HutDepth = 1.8f;
         private const float HutHeight = 2.1f;
         private const float ShelfHeight = 0.85f;
         private const float ShelfDepth = 0.42f;
 
-        /// <summary>The hut's shelf sockets (hut space), left to right along the back wall.</summary>
-        public static Vector3 HutShelfSocket(int index)
-        {
-            return new Vector3(-0.6f + index * 0.6f, ShelfHeight + 0.02f, -HutDepth * 0.5f + ShelfDepth * 0.5f + 0.05f);
-        }
+        // The jumper's frame, nosed into the dust.
+        private static Matrix4x4 JumperFrame => At(new Vector3(0f, 0.35f, 0f), new Vector3(-14f, 10f, 6f));
 
-        /// <summary>The jumper wreck's fragment sockets (wreck space): on its broken frame and in the debris.</summary>
-        public static readonly Vector3[] JumperSockets =
+        // Its coils, coil plate and buckled leg still on its deck (frame space).
+        private static readonly Vector3[] JumperDeck =
         {
-            new Vector3(-0.55f, RestHeight, 0.6f), new Vector3(0.6f, 0.44f, -0.05f),
-            new Vector3(0.15f, RestHeight, -0.9f),
+            new Vector3(0.22f, 0.06f, 0.42f), new Vector3(-0.12f, 0.06f, -0.38f), new Vector3(0.25f, 0.06f, -0.1f),
         };
 
-        /// <summary>A rest slab for a fragment of <paramref name="footprint"/> (x, z): a worn panel on two rubble
-        /// stones, its top at <see cref="RestHeight"/>.</summary>
-        public static LowPolyMeshBuilder Rest(Vector2 footprint, int seed)
+        /// <summary>
+        /// Where the Hover-Jump's fragment <paramref name="index"/> lies on the jumper (wreck space) and how: its
+        /// spring, its coil plate and its buckled leg still on its broken deck.
+        /// </summary>
+        public static Vector3 JumperSocket(int index, out Quaternion rotation)
         {
-            var b = new LowPolyMeshBuilder(160);
-            var size = new Vector3(footprint.x + 0.18f, 0.03f, footprint.y + 0.18f);
-            MeshRange plate = b.Box(At(0f, RestHeight - 0.015f, 0f), size, PaletteSwatch.WornPanel, 0.006f);
-            SiteKit.DustCap(b, plate);
-            var random = new System.Random(seed);
-            for (int side = -1; side <= 1; side += 2)
-            {
-                b.Icosphere(At(new Vector3(side * size.x * 0.35f, 0.02f, size.z * 0.3f * side), Quaternion.identity,
-                    new Vector3(1.3f, 0.5f, 1f)), 0.06f + 0.03f * (float)random.NextDouble(), 0, PaletteSwatch.RockDark);
-            }
-
-            return b;
+            Matrix4x4 frame = JumperFrame;
+            rotation = frame.rotation * Quaternion.Euler(0f, index * 70f, 0f);
+            return frame.MultiplyPoint3x4(JumperDeck[index]);
         }
 
         /// <summary>
         /// The relay.2 service hut: an open-fronted lean-to in worn crew panels on a concrete pad, its roof sloping
-        /// back, a shelf along the back wall for the spare cells, and a tired door leaning beside the opening.
+        /// back, an empty shelf along the back wall, and a tired door leaning beside the opening.
         /// </summary>
         public static LowPolyMeshBuilder Hut()
         {
@@ -95,7 +80,7 @@ namespace MoonProject.Art.Editor
         public static LowPolyMeshBuilder JumperWreck()
         {
             var b = new LowPolyMeshBuilder(900);
-            Matrix4x4 frame = At(new Vector3(0f, 0.35f, 0f), new Vector3(-14f, 10f, 6f));
+            Matrix4x4 frame = JumperFrame;
             for (int side = -1; side <= 1; side += 2)
             {
                 SiteKit.Bar(b, frame.MultiplyPoint3x4(new Vector3(side * 0.4f, 0f, -0.7f)),
@@ -120,10 +105,6 @@ namespace MoonProject.Art.Editor
                     Quaternion.identity, new Vector3(1f, 0.6f, 1f)), 0.08f + i * 0.01f, 0, PaletteSwatch.RockDark);
             }
 
-            b.Append(Rest(new Vector2(0.4f, 0.4f), 3), Matrix4x4.Translate(new Vector3(JumperSockets[0].x, 0f,
-                JumperSockets[0].z)));
-            b.Append(Rest(new Vector2(0.5f, 0.4f), 5), Matrix4x4.Translate(new Vector3(JumperSockets[2].x, 0f,
-                JumperSockets[2].z)));
             return b;
         }
     }

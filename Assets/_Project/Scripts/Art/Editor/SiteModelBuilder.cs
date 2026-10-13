@@ -63,13 +63,11 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The scannable fragments' places at a site (0.5.5 §1.3, §1.4): <c>FragmentRest_&lt;Blueprint&gt;_&lt;n&gt;</c>,
-        /// a fallen panel on rubble inside the wreck's front edge sized to its fragment, holding
-        /// <c>FragmentSocket_&lt;Blueprint&gt;_&lt;n&gt;</c> on its top (+Y up, +Z the fragment's front) where gameplay
-        /// sets the fragment.
+        /// The scannable fragments' places at a site (0.5.5 §1.3, §1.4):
+        /// <c>FragmentSocket_&lt;Blueprint&gt;_&lt;n&gt;</c> on the wreck's own geometry (+Y up from the surface the fragment rests on, +Z its front) where gameplay sets
+        /// the fragment, so each reads as a broken piece of its host: Kenji's rack frames on his workbench, the lens
+        /// stack on Kestrel-3's floor inside its split, the panniers inside the lander's torn cargo module.
         /// </summary>
-        public const string FragmentRestPrefix = "FragmentRest_";
-
         public const string FragmentSocketPrefix = "FragmentSocket_";
 
         /// <summary>The blueprint whose fragments lie at each site, and how many.</summary>
@@ -79,8 +77,6 @@ namespace MoonProject.Art.Editor
             {
                 case "garage":
                     return ("CargoCradle", 2);
-                case "drill":
-                    return ("BoostCoils", 3);
                 case "kestrel":
                     return ("FocusLens", 3);
                 case "lander":
@@ -89,10 +85,6 @@ namespace MoonProject.Art.Editor
                     return (string.Empty, 0);
             }
         }
-
-        // How far inside the wreck's front edge the fragments' rests sit, and how far apart.
-        private const float RestInset = 0.45f;
-        private const float RestSpacing = 1.1f;
 
         // How far a pocket's middle sits out from the wreck's edge: close enough that its panel leans on the wreck.
         private const float PocketOutset = 0.3f;
@@ -190,7 +182,7 @@ namespace MoonProject.Art.Editor
             AddCrewCrate(root, name, new Vector3(recipe.Heart.x + CrewCrateBesideHeart, 0f,
                 footprint.max.z + CrewCrateClearOfWreck));
             AddRelicPockets(root, id, footprint);
-            AddFragmentSockets(root, id, footprint);
+            AddFragmentSockets(root, id);
             if (SiteLandmarkMeshes.HasLandmark(id))
             {
                 (Vector3 foot, float yaw) = SiteLandmarkMeshes.Placement(id);
@@ -222,19 +214,30 @@ namespace MoonProject.Art.Editor
             return footprint;
         }
 
-        private static void AddFragmentSockets(ModelNode root, string id, Bounds footprint)
+        private static void AddFragmentSockets(ModelNode root, string id)
         {
             (string blueprint, int count) = FragmentsAt(id);
             for (int i = 0; i < count; i++)
             {
-                Bounds fragment = FragmentBuilder.CreateFragment(blueprint, i).Children[0].Mesh.Geometry.Bounds;
-                var at = new Vector3(footprint.center.x + (i - (count - 1) * 0.5f) * RestSpacing * (1f + fragment.size.x),
-                    0f, footprint.max.z - RestInset - fragment.extents.z);
+                Quaternion rotation;
+                Vector3 at;
+                switch (id)
+                {
+                    case "garage":
+                        at = GarageSite.FragmentHost(i, out rotation);
+                        break;
+                    case "kestrel":
+                        at = KestrelSite.FragmentHost(i, out rotation);
+                        break;
+                    case "lander":
+                        at = LanderSite.FragmentHost(i, out rotation);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(id), id, "This site hosts no fragments.");
+                }
+
                 string tag = blueprint + "_" + i.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                ModelNode rest = root.Add(new ModelNode(FragmentRestPrefix + tag, at, new ModelMesh(
-                    $"Site_{id}_{FragmentRestPrefix}{tag}", ScanSiteMeshes.Rest(new Vector2(fragment.size.x,
-                        fragment.size.z), 40 + i))));
-                rest.Add(new ModelNode(FragmentSocketPrefix + tag, Vector3.up * ScanSiteMeshes.RestHeight));
+                root.Add(new ModelNode(FragmentSocketPrefix + tag, at, rotation));
             }
         }
 

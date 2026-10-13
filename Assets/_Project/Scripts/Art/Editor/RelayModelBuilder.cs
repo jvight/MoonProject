@@ -26,9 +26,8 @@ namespace MoonProject.Art.Editor
         public const string CabinetName = "Cabinet";
 
         /// <summary>
-        /// relay.2's service hut (0.5.5 §1.4), <c>RelayHut</c>: an open-fronted lean-to placed at the mast's foot, its
-        /// root on the ground, +Z its open side, with <c>FragmentSocket_CellPack_0..2</c> on its back shelf for the
-        /// spare cell modules.
+        /// relay.2's service hut (0.5.5 §1.4, §1.7), <c>RelayHut</c>: an open-fronted lean-to placed at the mast's foot,
+        /// its root on the ground, +Z its open side; 06 slumps against it.
         /// </summary>
         public const string HutName = "RelayHut";
 
@@ -85,14 +84,7 @@ namespace MoonProject.Art.Editor
 
         public static ModelNode CreateHut()
         {
-            var hut = new ModelNode(HutName, Vector3.zero, new ModelMesh(HutName, ScanSiteMeshes.Hut()));
-            for (int i = 0; i < 3; i++)
-            {
-                hut.Add(new ModelNode(SiteModelBuilder.FragmentSocketPrefix + "CellPack_" + i,
-                    ScanSiteMeshes.HutShelfSocket(i)));
-            }
-
-            return hut;
+            return new ModelNode(HutName, Vector3.zero, new ModelMesh(HutName, ScanSiteMeshes.Hut()));
         }
 
         public static ModelNode CreatePart()

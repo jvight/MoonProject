@@ -27,21 +27,11 @@ namespace MoonProject.Art.Editor
         public const int HullFragmentVariants = HullFragmentMeshes.Variants;
 
         /// <summary>
-        /// Each hull fragment's <c>FragmentRest</c> beside its exposed side holds a <c>FragmentSocket</c>, where World
-        /// lays the Warm Headlamp's fragments (§1.3) among the scrap field's plates.
-        /// </summary>
-        public const string FragmentRestName = "FragmentRest";
-
-        public const string FragmentSocketName = "FragmentSocket";
-
-        /// <summary>
         /// Kenji's crashed test jumper at the chasm's near lip (0.5.5 §1.3), <c>JumperWreck</c>: its root on the ground,
         /// +Z its nose toward the chasm, holding <c>FragmentSocket_HoverJump_0..2</c> on its frame and the rubble.
         /// </summary>
         public const string JumperWreckName = "JumperWreck";
 
-        // Where a hull fragment's rest sits: out from its exposed side.
-        private static readonly Vector3 HullRest = new Vector3(0.2f, 0f, 1.25f);
 
         [MoonBuilder("Art/Props", 175)]
         public static void Build()
@@ -74,9 +64,6 @@ namespace MoonProject.Art.Editor
             string name = HullFragmentPrefix + variant.ToString(System.Globalization.CultureInfo.InvariantCulture);
             var root = new ModelNode(name, Vector3.zero, new ModelMesh(name, HullFragmentMeshes.Fragment(variant)));
             root.Add(new ModelNode(SiteModelBuilder.CutPointName, HullFragmentMeshes.CutPoint(variant)));
-            ModelNode rest = root.Add(new ModelNode(FragmentRestName, HullRest, new ModelMesh(name + "_" + FragmentRestName,
-                ScanSiteMeshes.Rest(new Vector2(0.5f, 0.5f), 70 + variant))));
-            rest.Add(new ModelNode(FragmentSocketName, Vector3.up * ScanSiteMeshes.RestHeight));
             return root;
         }
 
@@ -84,10 +71,10 @@ namespace MoonProject.Art.Editor
         {
             var root = new ModelNode(JumperWreckName, Vector3.zero,
                 new ModelMesh(JumperWreckName, ScanSiteMeshes.JumperWreck()));
-            for (int i = 0; i < ScanSiteMeshes.JumperSockets.Length; i++)
+            for (int i = 0; i < 3; i++)
             {
-                root.Add(new ModelNode(SiteModelBuilder.FragmentSocketPrefix + "HoverJump_" + i,
-                    ScanSiteMeshes.JumperSockets[i]));
+                Vector3 at = ScanSiteMeshes.JumperSocket(i, out Quaternion rotation);
+                root.Add(new ModelNode(SiteModelBuilder.FragmentSocketPrefix + "HoverJump_" + i, at, rotation));
             }
 
             return root;

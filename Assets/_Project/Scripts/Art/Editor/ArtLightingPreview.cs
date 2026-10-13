@@ -21,7 +21,7 @@ namespace MoonProject.Art.Editor
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
     ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner|
     ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|kitmain|home|homeclean|
-    ///                  builtfor07|shelves|focuslens|orangebeads|containers|hullfragments|scan|fragments|scanplaces|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|lab_dark|lab_lit]
+    ///                  builtfor07|shelves|focuslens|orangebeads|containers|hullfragments|scan|fragments|scanplaces|derelicts|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|lab_dark|lab_lit]
     /// </code>
     /// (default rover; a ';'-separated list captures several scenes in one run)
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the habitat lander and the
@@ -223,6 +223,10 @@ namespace MoonProject.Art.Editor
                     case "scanplaces":
                         NightSetting(material, temporary, 90f, 12f);
                         poses = ScanPlacesScene(temporary);
+                        break;
+                    case "derelicts":
+                        NightSetting(material, temporary, 90f, 12f);
+                        poses = DerelictsScene(temporary);
                         break;
                     case "fragments":
                         NightSetting(material, temporary, 90f, 12f);
@@ -707,7 +711,7 @@ namespace MoonProject.Art.Editor
         private static CameraPoseSet ScanPlacesScene(TemporaryObjects temporary)
         {
             var poses = new List<CameraPose>();
-            string[] sites = { "garage", "drill", "kestrel", "lander" };
+            string[] sites = { "garage", "kestrel", "lander" };
             for (int s = 0; s < sites.Length; s++)
             {
                 Transform site = Instantiate(SiteModelBuilder.SiteName(sites[s]), temporary, ArtPaths.SitesFolder).transform;
@@ -721,16 +725,9 @@ namespace MoonProject.Art.Editor
                 }
 
                 Vector3 middle = Descendant(site, SiteModelBuilder.FragmentSocketPrefix + blueprint + "_0").position;
-                poses.Add(Pose("site_" + sites[s], new[] { middle.x + 2.5f, 2.6f, middle.z + 5f },
-                    new[] { middle.x, 0.3f, middle.z }, 50f));
-            }
-
-            Transform hut = Instantiate(RelayModelBuilder.HutName, temporary, ArtPaths.RelayFolder).transform;
-            hut.position = new Vector3(0f, 0f, 40f);
-            for (int i = 0; i < 3; i++)
-            {
-                SeatFragment(temporary, Descendant(hut, SiteModelBuilder.FragmentSocketPrefix + "CellPack_" + i),
-                    "CellPack", i, InSituStages[i].Progress, InSituStages[i].Dissolve);
+                Vector3 eye = middle + InSituViews[s];
+                poses.Add(Pose("site_" + sites[s], new[] { eye.x, eye.y, eye.z },
+                    new[] { middle.x, middle.y + 0.1f, middle.z }, 50f));
             }
 
             Transform jumper = Instantiate(PropModelBuilder.JumperWreckName, temporary, ArtPaths.PropFolder).transform;
@@ -741,16 +738,59 @@ namespace MoonProject.Art.Editor
                     "HoverJump", i, InSituStages[i + 2].Progress, InSituStages[i + 2].Dissolve);
             }
 
-            poses.Add(Pose("hut", new[] { 1.5f, 1.8f, 44.5f }, new[] { 0f, 0.8f, 40f }, 50f));
             poses.Add(Pose("jumper", new[] { 32.5f, 2f, 44f }, new[] { 30f, 0.3f, 40f }, 50f));
             return Poses(poses.ToArray());
         }
+
+        // Where each site's in-situ view looks from, relative to its first fragment: through the garage's open front at
+        // Kenji's bench, into Kestrel-3's split back, into the lander's torn cargo module.
+        private static readonly Vector3[] InSituViews =
+        {
+            new Vector3(1.9f, 0.8f, -1.6f), new Vector3(-0.4f, 1.1f, -2.3f), new Vector3(0.6f, 0.9f, -2.6f),
+        };
 
         // The scan's stages, shown across the fragments in place: noticed, half swept, drawn, fading, unthreading.
         private static readonly (float Progress, float Dissolve)[] InSituStages =
         {
             (0f, 0f), (0.5f, 0f), (1f, 0f), (1f, 0.18f), (1f, 0.6f),
         };
+
+        /// <summary>
+        /// The robots left behind (0.5.5 §1.7), each where World anchors it with its fragments seated (noticed, brackets
+        /// lit): 06 slumped against relay.2's hut, Mule face-down by its last lamp post, the haul sled bot stalled with
+        /// its load, and the drone caught in its wire; each from a close three-quarter and from 20 m.
+        /// </summary>
+        private static CameraPoseSet DerelictsScene(TemporaryObjects temporary)
+        {
+            var poses = new List<CameraPose>();
+            Transform hut = Instantiate(RelayModelBuilder.HutName, temporary, ArtPaths.RelayFolder).transform;
+            hut.SetPositionAndRotation(new Vector3(-1.9f, 0f, 0.4f), Quaternion.Euler(0f, 90f, 0f));
+            (string name, string blueprint, int count)[] hosts =
+            {
+                (DerelictBuilder.ElderName, "CellPack", 3), (DerelictBuilder.MuleName, "WarmHeadlamp", 2),
+                (DerelictBuilder.HaulBotName, "BoostCoils", 3), (DerelictBuilder.DroneName, string.Empty, 0),
+            };
+            for (int h = 0; h < hosts.Length; h++)
+            {
+                Transform host = Instantiate(hosts[h].name, temporary, ArtPaths.PropFolder).transform;
+                var at = new Vector3(h * 18f, 0f, 0f);
+                host.SetPositionAndRotation(at, Quaternion.identity);
+                for (int i = 0; i < hosts[h].count; i++)
+                {
+                    SeatFragment(temporary,
+                        Descendant(host, SiteModelBuilder.FragmentSocketPrefix + hosts[h].blueprint + "_" + i),
+                        hosts[h].blueprint, i, 0f, 0f);
+                }
+
+                string tag = hosts[h].name.Substring(DerelictBuilder.Prefix.Length);
+                float lift = h == 3 ? 1.2f : 0.4f;
+                poses.Add(Pose("near_" + tag, new[] { at.x + 2.4f, 1.6f + lift, at.z + 2.8f },
+                    new[] { at.x + 0.2f, lift, at.z }, 50f));
+                poses.Add(Pose("far20m_" + tag, new[] { at.x + 9f, 5f, at.z + 18f }, new[] { at.x, lift, at.z }, 35f));
+            }
+
+            return Poses(poses.ToArray());
+        }
 
         private static void SeatFragment(TemporaryObjects temporary, Transform socket, string blueprint, int index,
             float progress, float dissolve)
@@ -827,7 +867,10 @@ namespace MoonProject.Art.Editor
                 }
             }
 
-            temporary.Add(Rover(temporary, new Vector3(0f, 0f, -2.6f), 0f).gameObject);
+            Transform scanning = Rover(temporary, new Vector3(0f, 0f, -2.6f), 0f);
+            temporary.Add(scanning.gameObject);
+            Mount(temporary, RoverModelBuilder.ScanFanName, Descendant(scanning, RoverModelBuilder.ScanFanSocketName));
+            Lit(Descendant(scanning, RoverModelBuilder.ScanFanName), 0.6f);
             return Poses(
                 Pose("stages", new[] { 0f, 3.2f, -6.5f }, new[] { 0f, 0.4f, 1.2f }, 55f),
                 Pose("close", new[] { -3.2f, 1.5f, -2f }, new[] { -2.8f, 0.4f, 0.6f }, 50f));

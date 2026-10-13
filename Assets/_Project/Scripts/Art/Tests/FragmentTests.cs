@@ -68,18 +68,12 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
-        public void RelayHut_ShelvesThreeCellPackFragments_UnderItsRoof()
+        public void RelayHut_IsAnOpenFrontedShell_ForNothingButShelter()
         {
             ModelNode hut = RelayModelBuilder.CreateHut();
             MeshChecks.AssertWellFormed(hut.Mesh.Geometry);
-            Bounds shell = hut.Mesh.Geometry.Bounds;
-            for (int i = 0; i < 3; i++)
-            {
-                string name = SiteModelBuilder.FragmentSocketPrefix + "CellPack_" + i;
-                ModelNode socket = hut.Children.Single(n => n.Name == name);
-                Assert.Greater(socket.LocalPosition.y, 0.5f, "on the shelf, off the ground");
-                Assert.IsTrue(shell.Contains(socket.LocalPosition), "inside the hut");
-            }
+            CollectionAssert.IsEmpty(hut.Children, "06 hosts the cells now (§1.7)");
+            Assert.IsFalse(MeshChecks.Swatches(hut.Mesh.Geometry).Any(Palette.IsEmissive));
         }
 
         [Test]
@@ -92,7 +86,7 @@ namespace MoonProject.Art.Tests
             {
                 string name = SiteModelBuilder.FragmentSocketPrefix + "HoverJump_" + i;
                 ModelNode socket = wreck.Children.Single(n => n.Name == name);
-                Assert.Greater(socket.LocalPosition.y, 0.04f, "on the wreck or a rest, not bare ground");
+                Assert.Greater(socket.LocalPosition.y, 0.2f, "on the jumper's deck, not the dust");
             }
         }
     }

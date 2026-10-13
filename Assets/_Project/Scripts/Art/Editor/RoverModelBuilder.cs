@@ -75,6 +75,19 @@ namespace MoonProject.Art.Editor
         public const string FocusLensGlassName = "Glass";
         public const string LensSocketName = "LensSocket";
 
+        /// <summary>
+        /// The scan's fan of light (0.5.5 §1.2): <c>ScanFan.prefab</c>, a few hair-thin cyan rays from the lens along +Z,
+        /// <see cref="ScanFanHalfAngle"/> degrees either side and <see cref="ScanFanReach"/> m long, on the glow-off
+        /// material. Rover mounts it on <c>Neck/Head/Eye/ScanFanSocket</c> with identity, keeps it dark until a scan
+        /// lights it (_EmissionColor) and yaws it to sweep (about its local Y). Its own prefab, so 07's size stays 07's.
+        /// </summary>
+        public const string ScanFanName = "ScanFan";
+
+        public const string ScanFanSocketName = "ScanFanSocket";
+
+        public const float ScanFanHalfAngle = 12f;
+        public const float ScanFanReach = 4f;
+
         /// <summary>A sleeve's rest seat on its cell (cell space): over the canister's back end.</summary>
         public static readonly Vector3 SleeveRest = new Vector3(0f, 0f, -0.006f);
 
@@ -189,6 +202,8 @@ namespace MoonProject.Art.Editor
                 PaletteAssetBuilder.LoadGlowOffMaterial(), PaletteAssetBuilder.LoadWeatherMaterial());
             ModelPrefabWriter.Write(CreateHoverCoils(), ArtPaths.RoverFolder, material,
                 PaletteAssetBuilder.LoadGlowOffMaterial());
+            ModelPrefabWriter.Write(CreateScanFan(), ArtPaths.RoverFolder, material,
+                PaletteAssetBuilder.LoadGlowOffMaterial());
             ModelPrefabWriter.Write(CreateFocusLens(), ArtPaths.RoverFolder, material,
                 PaletteAssetBuilder.LoadGlowOffMaterial());
             AssetDatabase.SaveAssets();
@@ -229,6 +244,7 @@ namespace MoonProject.Art.Editor
                 new ModelMesh(ModelName + "_Eye", RoverMeshes.Eye())));
             eye.Add(new ModelNode("TetherOrigin", new Vector3(0f, 0f, RoverMeshes.LensFront)));
             eye.Add(new ModelNode(LensSocketName, new Vector3(0f, 0f, RoverMeshes.LensFront)));
+            eye.Add(new ModelNode(ScanFanSocketName, new Vector3(0f, 0f, RoverMeshes.LensFront)));
             AddChargeUp(root, neck, eye);
 
             head.Add(new ModelNode(RingSocketName, RingSocket, Place.Rotation(new Vector3(0f, 180f, 0f))));
@@ -392,6 +408,13 @@ namespace MoonProject.Art.Editor
                 new ModelMesh(prefix + LockRingName, ChargeRunMeshes.LockTrack())));
             ring.Add(new ModelNode(LockGlowName, Vector3.zero, Quaternion.identity,
                 new ModelMesh(prefix + LockGlowName, ChargeRunMeshes.LockRing()), ModelMaterial.PaletteGlowOff));
+        }
+
+        /// <summary>The scan's fan of light (see <see cref="ScanFanName"/>): one glow-off renderer.</summary>
+        public static ModelNode CreateScanFan()
+        {
+            return new ModelNode(ScanFanName, Vector3.zero, Quaternion.identity, new ModelMesh(ScanFanName,
+                ChargeRunMeshes.ScanFan(ScanFanHalfAngle, ScanFanReach)), ModelMaterial.PaletteGlowOff);
         }
 
         /// <summary>The Focus Lens (see <see cref="ChargeRunPrefix"/>), clipped into 07's eye.</summary>
