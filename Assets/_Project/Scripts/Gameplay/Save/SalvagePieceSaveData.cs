@@ -16,6 +16,9 @@ namespace MoonProject.Gameplay
         /// <summary>A drag piece pulled clear of its wreck, lying at <see cref="position"/>.</summary>
         public bool loose;
 
+        /// <summary>Cut through with no room in the hold: it waits on its wreck to be taken (0.5.5 §2).</summary>
+        public bool held;
+
         public Vector3 position;
 
         public Quaternion rotation = Quaternion.identity;

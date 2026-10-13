@@ -26,7 +26,10 @@ namespace MoonProject.Gameplay
         /// <summary>Shelves standing, the built-in ones included.</summary>
         public int shelvesBuilt;
 
-        /// <summary>Bundles waiting in the world because the hold was full.</summary>
+        /// <summary>
+        /// Bundles that waited on the ground in an older save (before 0.5.5 §2), read once into home's overflow crates;
+        /// never written any more.
+        /// </summary>
         public WaitingBundleSaveData[] waiting = Array.Empty<WaitingBundleSaveData>();
     }
 }

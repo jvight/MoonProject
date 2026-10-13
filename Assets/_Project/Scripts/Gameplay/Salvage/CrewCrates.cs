@@ -18,6 +18,7 @@ namespace MoonProject.Gameplay
     public sealed class CrewCrates
     {
         private readonly SalvageField _salvage;
+        private readonly CargoBundles _held;
         private readonly CargoTuning _tuning;
         private readonly Cutter _cutter;
         private readonly MaterialStock _stock;
@@ -30,8 +31,11 @@ namespace MoonProject.Gameplay
         private readonly CutState _cut;
         private CrewCrate _cutting;
 
-        public CrewCrates(SalvageField salvage, CargoTuning tuning, Cutter cutter, GameplayServices services)
+        /// <param name="held">What does not fit waits in the crate's mouth (0.5.5 §2).</param>
+        public CrewCrates(SalvageField salvage, CargoTuning tuning, Cutter cutter, GameplayServices services,
+            CargoBundles held)
         {
+            _held = held ?? throw new ArgumentNullException(nameof(held));
             _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             _cutter = cutter ?? throw new ArgumentNullException(nameof(cutter));
@@ -110,12 +114,13 @@ namespace MoonProject.Gameplay
                 opened += sites[i].Crate.Opened ? 1 : 0;
             }
 
-            var data = new CratesSaveData { opened = new string[opened] };
+            var data = new CratesSaveData { opened = new string[opened], held = new int[opened] };
             int next = 0;
             for (int i = 0; i < sites.Count; i++)
             {
                 if (sites[i].Crate.Opened)
                 {
+                    data.held[next] = _held.HeldIn(sites[i].Crate);
                     data.opened[next++] = sites[i].Id;
                 }
             }
@@ -123,7 +128,9 @@ namespace MoonProject.Gameplay
             return data;
         }
 
-        /// <summary>Crates a save says were opened stand open and empty, their lids up.</summary>
+        /// <summary>
+        /// Crates a save says were opened stand open, their lids up, with what was held in their mouths waiting again.
+        /// </summary>
         public void Restore(CratesSaveData data)
         {
             if (data == null)
@@ -132,12 +139,19 @@ namespace MoonProject.Gameplay
             }
 
             IReadOnlyList<SalvageSite> sites = _salvage.Sites;
+            string[] opened = data.opened ?? Array.Empty<string>();
+            int[] held = data.held ?? Array.Empty<int>();
             for (int i = 0; i < sites.Count; i++)
             {
                 CrewCrate crate = sites[i].Crate;
-                crate.Opened = Array.IndexOf(data.opened ?? Array.Empty<string>(), sites[i].Id) >= 0;
+                int at = Array.IndexOf(opened, sites[i].Id);
+                crate.Opened = at >= 0;
                 crate.Progress = crate.Opened ? 1f : 0f;
                 crate.OpenedAt = float.NegativeInfinity;
+                if (at >= 0 && at < held.Length && held[at] > 0)
+                {
+                    _held.HoldCrate(crate, crate.Contents.Material, held[at], false);
+                }
             }
         }
 
@@ -193,9 +207,7 @@ namespace MoonProject.Gameplay
             int left = contents.Units - fitted;
             if (left > 0)
             {
-                _events.Publish(new FeelBeat(FeelKind.Cargo, FeelPhase.Impact, at, Vector3.up, 1f, 0f,
-                    contents.Material));
-                _events.Publish(new CargoOverflowed(contents.Material, left, at));
+                _held.HoldCrate(crate, contents.Material, left, true);
             }
 
             _events.Publish(new CrewCrateOpened(crate.Site.Id, contents.CrewId, contents.Material, contents.Units, at));
