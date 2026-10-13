@@ -95,6 +95,11 @@ namespace MoonProject.UI.PlayModeTests
             Abilities.Add(ability);
         }
 
+        public void Revoke(RoverAbility ability)
+        {
+            Abilities.Remove(ability);
+        }
+
         public float RumbleStrength { get; set; } = 1f;
 
         /// <summary>True while the next level waits for a component the tower has not been fed (the coil).</summary>

@@ -321,6 +321,18 @@ namespace MoonProject.Rover
             }
         }
 
+        public void Revoke(RoverAbility ability)
+        {
+            _abilities &= ~AbilityBit(ability);
+            if (ability == RoverAbility.SideBins)
+            {
+                foreach (GameObject bin in _sideBins)
+                {
+                    bin.SetActive(false);
+                }
+            }
+        }
+
         private static int AbilityBit(RoverAbility ability)
         {
             return 1 << (int)ability;
