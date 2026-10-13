@@ -284,6 +284,22 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// Asks 07's rear cargo hatch to open and shut once, as a show of the hold (0.5.5 §3: ui's first-Tab boot). It
+    /// eases open, stays open for <see cref="OpenSeconds"/>, then shuts with its soft thunk. Ignored while the hatch is
+    /// already open for a bundle or an unload.
+    /// </summary>
+    public readonly struct RoverHatchCycleRequested
+    {
+        public RoverHatchCycleRequested(float openSeconds)
+        {
+            OpenSeconds = Mathf.Max(0f, openSeconds);
+        }
+
+        /// <summary>Seconds from the request until the hatch starts to shut.</summary>
+        public float OpenSeconds { get; }
+    }
+
+    /// <summary>
     /// A syllable of 07's chirp starts sounding now (docs/design/feel-pass.md §7.2). Published by Audio at each onset,
     /// so 07's eye, antenna and head move in time with its voice.
     /// </summary>
