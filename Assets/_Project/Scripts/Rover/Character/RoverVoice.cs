@@ -59,7 +59,25 @@ namespace MoonProject.Rover
                 events.Subscribe<RoverChirpSyllable>(OnSyllable),
                 events.Subscribe<BasePowerChanged>(OnBasePowerChanged),
                 events.Subscribe<ComponentFound>(OnComponentFound),
+                events.Subscribe<FragmentScanned>(OnFragmentScanned),
+                events.Subscribe<BlueprintCompleted>(_ => Say(ChirpMood.Proud, 1f)),
             };
+        }
+
+        /// <summary>
+        /// A fragment learned (0.5.5 §1.2): Curious for new data, Affirm for a known blueprint's. The set's last new
+        /// fragment stays quiet, since its blueprint's Proud follows at once and must never be lost.
+        /// </summary>
+        private void OnFragmentScanned(FragmentScanned scanned)
+        {
+            if (scanned.Known)
+            {
+                Say(ChirpMood.Affirm, Gentle);
+            }
+            else if (scanned.Index + 1 < scanned.Count)
+            {
+                Say(ChirpMood.Curious, Gentle);
+            }
         }
 
         public void Dispose()

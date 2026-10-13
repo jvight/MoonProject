@@ -64,9 +64,16 @@ namespace MoonProject.Rover
         [Tooltip("Small warm point light inside the eye; breathes with the glow.")]
         [SerializeField] private Light _eyeLight;
 
+        [Tooltip("Art's ScanFan on Eye/ScanFanSocket: the scan's sweeping fan of light, dark until a scan.")]
+        [SerializeField] private Renderer _scanFan;
+
         /// <summary>Owner of 07's own glances in the shared gaze requests.</summary>
         private readonly object _glanceOwner = new object();
         private readonly object _cutOwner = new object();
+        private readonly object _scanOwner = new object();
+        private ScanLook _scanLook;
+        private Quaternion _scanFanRest;
+        private bool _scanGazing;
         private readonly ImpactNudge _headNudge = new ImpactNudge();
         private float _cutFocus;
         private bool _cutting;
@@ -120,6 +127,8 @@ namespace MoonProject.Rover
             _headRest = _head.localRotation;
             _eyelidRest = _eyelid.localRotation;
             _wingRest = _solarWing.localRotation;
+            _scanFanRest = _scanFan.transform.localRotation;
+            _scanLook = new ScanLook(_tuning.ScanLook);
             _yaw.Reset(0f);
             _pitch.Reset(_tuning.TravelHeadPitch);
             _eyeLight.type = LightType.Point;
@@ -213,7 +222,8 @@ namespace MoonProject.Rover
                 & Require(_neck != null && _head != null, "Neck and Head nodes are not assigned.")
                 & Require(_eyelid != null && _solarWing != null, "Eyelid and SolarWing nodes are not assigned.")
                 & Require(_eyeRenderer != null && _antennaTipRenderer != null, "Eye/AntennaTip renderers are missing.")
-                & Require(_eyeLight != null, "Eye light is not assigned.");
+                & Require(_eyeLight != null, "Eye light is not assigned.")
+                & Require(_scanFan != null, "The ScanFan on Eye/ScanFanSocket is not assigned (0.5.5 scan contract).");
         }
 
         private bool Require(bool condition, string message)
@@ -435,6 +445,12 @@ namespace MoonProject.Rover
 
             StepBattery(deltaTime);
             _cutFocus = Smoothing.Damp(_cutFocus, _cutting ? 1f : 0f, _tuning.CutFocus.HalfLife, deltaTime);
+            _scanLook.Step(deltaTime);
+            if (_scanGazing && !_scanLook.HoldsGaze)
+            {
+                _scanGazing = false;
+                _rover.Gaze.Clear(_scanOwner);
+            }
             _chirpPose.Step(deltaTime);
             _sigh = Smoothing.Damp(_sigh, 0f, _tuning.Chirp.SighHalfLife, deltaTime);
             _headNudge.Step(deltaTime);
@@ -525,7 +541,7 @@ namespace MoonProject.Rover
                 * Quaternion.AngleAxis(_wakeTilt + _chirpPose.HeadRoll, Vector3.forward);
             _eyelid.localRotation = _eyelidRest
                 * Quaternion.AngleAxis(Mathf.Max(_mood.LidClosure, _cutFocus * _tuning.CutFocus.IrisNarrow)
-                    * _tuning.EyelidClosedAngle, Vector3.right);
+                    * (1f - _scanLook.Open) * _tuning.EyelidClosedAngle, Vector3.right);
             float wingOpen = Mathf.Max(_mood.WingOpen * Mathf.Lerp(1f, battery.LowWingOpen, _tired),
                 sky * _tuning.StargazeWingOpen);
             _solarWing.localRotation = _wingRest
@@ -535,8 +551,11 @@ namespace MoonProject.Rover
             float eyeGlow = _mood.EyeGlow * Mathf.Lerp(1f, _tuning.StargazeEyeGlow, sky)
                 * Mathf.Lerp(1f, battery.LowEyeGlow, _tired) * Mathf.Lerp(1f, battery.CrawlEyeGlow, _crawl)
                 * Mathf.Lerp(1f, _tuning.CutFocus.EyeGlow, _cutFocus) * _chirpPose.EyeGlow
-                * (1f + _sigh * _tuning.Chirp.SighEye);
+                * (1f + _sigh * _tuning.Chirp.SighEye) * _scanLook.EyeGlow;
             SetGlow(_eyeRenderer, eyeGlow);
+            ScanLookSettings scan = _tuning.ScanLook;
+            _scanFan.transform.localRotation = _scanFanRest * Quaternion.AngleAxis(_scanLook.Sweep, Vector3.up);
+            SetGlow(_scanFan, scan.FanColour.linear * (_scanLook.Fan * scan.FanGlow));
             SetGlow(_antennaTipRenderer, _listen.TipEmission(_mood.TipGlow));
             _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow;
         }
@@ -571,6 +590,12 @@ namespace MoonProject.Rover
             if (beat.Kind == FeelKind.Collect && beat.Phase == FeelPhase.Reward)
             {
                 EndCutFocus();
+                return;
+            }
+
+            if (beat.Kind == FeelKind.Scan)
+            {
+                OnScanBeat(beat);
                 return;
             }
 
@@ -625,6 +650,32 @@ namespace MoonProject.Rover
             if (_cargo.BecameFull(cargo.UsedSlots, cargo.SlotCount))
             {
                 Glance(_rover.CargoSocket.position);
+            }
+        }
+
+        /// <summary>
+        /// A scan through 07's eye (0.5.5 §1.2, <see cref="ScanLook"/>): it looks at the fragment's ScanTarget with
+        /// its lid fully open and the fan sweeping, pulses at each quarter, settles on letting go, and flares once as
+        /// the lines stream in, still looking until the dissolve is done.
+        /// </summary>
+        private void OnScanBeat(FeelBeat beat)
+        {
+            switch (beat.Phase)
+            {
+                case FeelPhase.Anticipate:
+                    _scanLook.Begin();
+                    _scanGazing = true;
+                    _rover.Gaze.Set(_scanOwner, beat.Position, _tuning.ScanLook.GazePriority);
+                    break;
+                case FeelPhase.Act:
+                    _scanLook.Quarter(beat.Strength);
+                    break;
+                case FeelPhase.Cancel:
+                    _scanLook.LetGo();
+                    break;
+                case FeelPhase.Reward:
+                    _scanLook.Learned();
+                    break;
             }
         }
 

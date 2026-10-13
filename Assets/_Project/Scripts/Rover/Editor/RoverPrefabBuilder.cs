@@ -95,6 +95,7 @@ namespace MoonProject.Rover.Editor
             var tube = BuildWiring.Require<GameObject>(RoverAssetPaths.BlueprintTube, "the Art box's pickup builder");
             var focusLens = BuildWiring.Require<GameObject>(RoverAssetPaths.FocusLens, "the Art box's rover builder");
             var sideBin = BuildWiring.Require<GameObject>(RoverAssetPaths.SideBin, "the Art box's kit builder");
+            var scanFan = BuildWiring.Require<GameObject>(RoverAssetPaths.ScanFan, "the Art box's rover builder");
             var parts = new GameObject[RoverAssetPaths.StoryParts.Length];
             for (int i = 0; i < parts.Length; i++)
             {
@@ -185,6 +186,8 @@ namespace MoonProject.Rover.Editor
                 Mount(scratch, sideBin, BuildWiring.Node(m, RoverModelNodes.BinSocketRight)).gameObject,
             });
 
+            Transform fan = Mount(scratch, scanFan, BuildWiring.Node(m, RoverModelNodes.ScanFanSocket));
+            fan.gameObject.SetActive(true);
             RoverPortrait portrait = BuildPortrait(scratch, visual, m, rigTuning);
             BuildWiring.Assign(controller, ("_portrait", portrait));
             SetLayer(instance.transform, Layers.Rover);
@@ -200,7 +203,8 @@ namespace MoonProject.Rover.Editor
                 ("_solarWing", BuildWiring.Node(m, RoverModelNodes.SolarWing)),
                 ("_eyeRenderer", BuildWiring.NodeComponent<MeshRenderer>(m, RoverModelNodes.Eye)),
                 ("_antennaTipRenderer", BuildWiring.NodeComponent<MeshRenderer>(m, RoverModelNodes.AntennaTip)),
-                ("_eyeLight", eyeLight));
+                ("_eyeLight", eyeLight),
+                ("_scanFan", fan.GetComponentInChildren<Renderer>(true)));
 
             return root;
         }

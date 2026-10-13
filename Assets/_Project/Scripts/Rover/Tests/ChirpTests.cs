@@ -43,6 +43,24 @@ namespace MoonProject.Rover.Tests
         private ChirpMood Last => _chirps[_chirps.Count - 1].Mood;
 
         [Test]
+        public void AScan_IsCuriousForNewData_AffirmsAKnownBlueprint_AndTheSetsLastIsProud()
+        {
+            _events.Publish(new FragmentScanned("rover.hover_jump.0", "rover.hover_jump", 0, 3, false, 0));
+            Assert.AreEqual(ChirpMood.Curious, Last, "New data.");
+
+            _now += 60f;
+            _events.Publish(new FragmentScanned("rover.cargo_cradle.1", "rover.cargo_cradle", 1, 2, true, 3));
+            Assert.AreEqual(ChirpMood.Affirm, Last, "A known blueprint: +3 Metal.");
+
+            _now += 60f;
+            int before = _chirps.Count;
+            _events.Publish(new FragmentScanned("rover.hover_jump.2", "rover.hover_jump", 2, 3, false, 0));
+            _events.Publish(new BlueprintCompleted("rover.hover_jump"));
+            Assert.AreEqual(before + 1, _chirps.Count, "The set's last fragment stays quiet...");
+            Assert.AreEqual(ChirpMood.Proud, Last, "...so its Proud is never lost.");
+        }
+
+        [Test]
         public void TheDockLock_Affirms_OrIsRelievedWhenNearlyEmpty()
         {
             _events.Publish(new BatteryChanged(3, 4, false, false));

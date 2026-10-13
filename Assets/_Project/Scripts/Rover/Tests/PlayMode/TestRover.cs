@@ -460,7 +460,9 @@ namespace MoonProject.Rover.PlayModeTests
                 ("_head", head), ("_eyelid", eyelid), ("_solarWing", wing),
                 ("_eyeRenderer", eye.GetComponent<MeshRenderer>()),
                 ("_antennaTipRenderer", tip.GetComponent<MeshRenderer>()),
-                ("_eyeLight", eyeLight));
+                ("_eyeLight", eyeLight),
+                ("_scanFan", Shape(PrimitiveType.Cube, eye, Vector3.forward, new Vector3(0.01f, 0.01f, 1f), material)
+                    .GetComponent<MeshRenderer>()));
 
             GameObject cameraRoot = BuildCamera(cameraTuning, out RoverCameraRig cameraRig, out Camera camera);
 
