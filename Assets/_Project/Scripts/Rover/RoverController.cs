@@ -56,6 +56,9 @@ namespace MoonProject.Rover
         [Tooltip("The amber flank lamps along the stripe: 07's battery (docs/features/M3-20).")]
         [SerializeField] private RoverFlankLamps _flankLamps;
 
+        [Tooltip("The Tab \"07\" page's live portrait of 07 on the Visual root (0.5.5 §3.5).")]
+        [SerializeField] private RoverPortrait _portrait;
+
         [Tooltip("The charge-up's ConduitGlow renderers: the deck pair and the neck's (0.5.5 §5.4).")]
         [SerializeField] private Renderer[] _conduitGlows = new Renderer[0];
 
@@ -387,7 +390,7 @@ namespace MoonProject.Rover
                 _visualRig.SetChargeBrace(_feel.Brace);
                 _hatch = new CargoHatch(_events, feel.CargoHatch, _cargoHatch, _hatchCrates, _feel.Rumble);
                 _chargeCells = new ChargeCellHardware(_events, feel.ChargeCells, _conduitGlows, _stageSleeves, _lockGlow,
-                    CutterChargeSeconds, _tetherOrigin, _focusLens, _focusLensGlass);
+                    Cutter, _tetherOrigin, _focusLens, _focusLensGlass);
             }
 
             bool kitReady = _kit.Initialize(context, this, _visualRig);
@@ -395,7 +398,14 @@ namespace MoonProject.Rover
             bool coilsReady = _hoverCoils.Initialize(context, this);
             bool motesReady = _lampMotes.Initialize(this);
             bool lampsReady = _flankLamps.Initialize(context);
-            _initialized = visualsReady && kitReady && effectsReady && coilsReady && motesReady && lampsReady;
+            bool portraitReady = _portrait.Initialize();
+            if (portraitReady)
+            {
+                context.Register<IRoverPortrait>(_portrait);
+            }
+
+            _initialized = visualsReady && kitReady && effectsReady && coilsReady && motesReady && lampsReady
+                && portraitReady;
             enabled = _initialized;
         }
 
@@ -420,6 +430,7 @@ namespace MoonProject.Rover
             ok &= Require(_hoverCoils != null, "RoverHoverCoils is not assigned.");
             ok &= Require(_lampMotes != null, "RoverLampMotes is not assigned.");
             ok &= Require(_flankLamps != null, "RoverFlankLamps is not assigned.");
+            ok &= Require(_portrait != null, "RoverPortrait is not assigned.");
             ok &= Require(_cargoHatch != null && _hatchCrates.Length > 0 && Array.TrueForAll(_hatchCrates, c => c != null),
                 "The CargoHatch or a HatchCrate is not assigned (M3-25 hatch contract).");
             ok &= Require(_sideBins.Length == 2 && _sideBins[0] != null && _sideBins[1] != null,
@@ -936,13 +947,13 @@ namespace MoonProject.Rover
             return new StillnessSample(_landing.IsGrounded, Speed, drive, _input.LookDelta, _input.LookRate, engaged);
         }
 
-        /// <summary>Rumble never runs while the game window is away.</summary>
-        /// <summary>The cutter's fresh charge length now (ICutter): the bay's test cut runs at it.</summary>
-        private float CutterChargeSeconds()
+        /// <summary>The cutter now (ICutter): its brace, warm window and the bay's test cut's charge.</summary>
+        private ICutter Cutter()
         {
-            return _context.Get<ICutter>().ChargeSeconds;
+            return _context.Get<ICutter>();
         }
 
+        /// <summary>Rumble never runs while the game window is away.</summary>
         private void OnApplicationFocus(bool hasFocus)
         {
             _feel?.SetFocused(hasFocus);

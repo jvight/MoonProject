@@ -380,6 +380,11 @@ namespace MoonProject.Rover.PlayModeTests
                 ("_landingDust", Particles("LandingDust", fxHost, material)));
             Assign(lampMotes, ("_tuning", fxTuning), ("_motes", moteSystem), ("_headlamp", headlamp));
             Assign(flank, ("_tuning", rigTuning));
+            var portraitCamera = Node("PortraitCamera", visual, Vector3.zero).gameObject.AddComponent<Camera>();
+            portraitCamera.enabled = false;
+            var portrait = visual.gameObject.AddComponent<RoverPortrait>();
+            Assign(portrait, ("_tuning", rigTuning), ("_camera", portraitCamera));
+            Assign(controller, ("_portrait", portrait));
             AssignArray(flank, "_lamps", flankLamps);
             AssignArray(flank, "_glasses", flankGlasses);
             Assign(controller, ("_tuning", tuning), ("_body", rigidbody), ("_sphere", collider), ("_visualRig", rig),

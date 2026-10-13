@@ -1,4 +1,5 @@
 using System;
+using MoonProject.Core;
 
 namespace MoonProject.Rover
 {
@@ -46,6 +47,13 @@ namespace MoonProject.Rover
 
         /// <summary>On the eye: where the Focus Lens kit mounts (M3-26).</summary>
         public const string LensSocket = "LensSocket";
+
+        /// <summary>Art's empty node marking where equipment socket <paramref name="socket"/> sits on 07 (0.5.5
+        /// §3.5), e.g. "CutterSocket".</summary>
+        public static string EquipmentSocket(RoverSocket socket)
+        {
+            return socket + "Socket";
+        }
 
         /// <summary>The charge-up's conduit glass cores (the deck pair under the root and the neck's), on the glow-off
         /// material.</summary>

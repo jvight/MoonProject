@@ -182,6 +182,10 @@ namespace MoonProject.Rover.Editor
                 Mount(scratch, sideBin, BuildWiring.Node(m, RoverModelNodes.BinSocketRight)).gameObject,
             });
 
+            RoverPortrait portrait = BuildPortrait(scratch, visual, m, rigTuning);
+            BuildWiring.Assign(controller, ("_portrait", portrait));
+            SetLayer(instance.transform, Layers.Rover);
+
             BuildWiring.Assign(bodyLanguage,
                 ("_tuning", characterTuning),
                 ("_rover", controller),
@@ -195,6 +199,38 @@ namespace MoonProject.Rover.Editor
                 ("_eyeLight", eyeLight));
 
             return root;
+        }
+
+        /// <summary>
+        /// The Tab "07" page's portrait: a disabled camera under Visual and the sockets art has marked so far
+        /// (<see cref="RoverModelNodes.EquipmentSocket"/>; empty where there is none, so the page shows no marker).
+        /// </summary>
+        private static RoverPortrait BuildPortrait(BuilderScratchScene scratch, GameObject visual, Transform model,
+            RoverRigTuning tuning)
+        {
+            var camera = Child(scratch, "PortraitCamera", visual.transform).AddComponent<Camera>();
+            camera.enabled = false;
+            var portrait = visual.AddComponent<RoverPortrait>();
+            Transform[] nodes = model.GetComponentsInChildren<Transform>(true);
+            var sockets = new Object[System.Enum.GetValues(typeof(RoverSocket)).Length];
+            for (int i = 0; i < sockets.Length; i++)
+            {
+                sockets[i] = Find(nodes, RoverModelNodes.EquipmentSocket((RoverSocket)i));
+            }
+
+            BuildWiring.Assign(portrait, ("_tuning", tuning), ("_camera", camera));
+            BuildWiring.AssignArray(portrait, "_sockets", sockets);
+            return portrait;
+        }
+
+        /// <summary>07's model and its mounted kit on the Rover layer, the only one the portrait camera sees (none
+        /// of it has a collider).</summary>
+        private static void SetLayer(Transform root, int layer)
+        {
+            foreach (Transform node in root.GetComponentsInChildren<Transform>(true))
+            {
+                node.gameObject.layer = layer;
+            }
         }
 
         private static GameObject Child(BuilderScratchScene scratch, string name, Transform parent)
