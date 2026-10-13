@@ -111,7 +111,6 @@ namespace MoonProject.UI
         private RelayTag _relayTag;
         private TowerPanel _tower;
         private KitTitle _kitTitle;
-        private FriendReadout _friendReadout;
         private FriendNameTag _friendName;
         private PauseMenu _pause;
         private TextScale _textScale;
@@ -181,7 +180,6 @@ namespace MoonProject.UI
         internal CrateNote CrateNote => _crateNote;
 
 
-        internal FriendReadout FriendReadout => _friendReadout;
 
         internal FriendNameTag FriendName => _friendName;
 
@@ -435,7 +433,7 @@ namespace MoonProject.UI
             _labHud = new LabHud(_layout.LabHud, _tuning.Lab, _localization, _ledger);
             _board = new RecoveryBoard(_layout.LabHud, _tuning.Lab.Board, _localization, services.Tech,
                 services.Recovery);
-            _stargaze = new StargazeVeil(_tuning.Stargaze.Hud, _layout.PromptAnchor, _layout.FriendAnchor,
+            _stargaze = new StargazeVeil(_tuning.Stargaze.Hud, _layout.PromptAnchor,
                 _layout.FriendNameAnchor, _layout.RelayTagAnchor, _layout.SalvageRingAnchor, _layout.SiteNameAnchor,
                 _layout.TickerLine);
             _lookUpHint = new LookUpHint(_tuning.Stargaze, _ledger);
@@ -462,8 +460,6 @@ namespace MoonProject.UI
             _siteName = new SiteNameTag(_layout, _tuning.Salvage, _tuning.Prompts, _localization, services.View);
             _card = new MemoryCard(_layout, _tuning.MemoryCard, _localization, services.Events, _relics,
                 services.Friends);
-            _friendReadout = new FriendReadout(_layout, _tuning.Friends, _tuning.Prompts, services.Friends,
-                services.Rover, services.View, _localization);
             _friendName = new FriendNameTag(_layout, _tuning.Friends, _tuning.Prompts, services.Friends,
                 _localization, services.View);
             _ticker = new RadioTicker(_layout, _tuning.Ticker, _tickerLines);
@@ -602,8 +598,6 @@ namespace MoonProject.UI
 
             Rect panel = _layout.Root.layout;
             Vector2 panelSize = float.IsNaN(panel.width) ? Vector2.zero : panel.size;
-            _friendReadout.Tick(deltaTime, !paused, panelSize,
-                _prompt.StackHeight(InteractionKind.Repair, _tuning.Friends.StackGap));
             _friendName.Tick(hudTime, panelSize);
             _siteName.Tick(hudTime, panelSize, !_prompt.IsVisible && !_placeCard.IsVisible &&
                                                !_lookUpChip.IsVisible && !_ticker.IsVisible && !_kitTitle.IsVisible &&
@@ -1179,7 +1173,6 @@ namespace MoonProject.UI
             _tower.Relocalize();
             _kitTitle.Relocalize();
             _pickups.Relocalize();
-            _friendReadout.Relocalize();
             _rewardCard.Relocalize();
             _cargo.Relocalize();
             _unlockCard.Relocalize();

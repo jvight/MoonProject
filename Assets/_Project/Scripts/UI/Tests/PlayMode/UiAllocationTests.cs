@@ -70,7 +70,7 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Fakes.TillyStatus = new FriendStatus(FriendState.PartsGathering, 1, 3, true, false,
                 new Vector3(-3f, 0f, 12f));
             yield return new WaitForSecondsRealtime(2f);
-            Assert.IsTrue(_rig.Ui.Prompt.IsVisible && _rig.Ui.Reticle.IsVisible && _rig.Ui.FriendReadout.IsVisible);
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible && _rig.Ui.Reticle.IsVisible);
 
             Action update = Bind(_rig.Ui, "Update");
             Action frame = () =>

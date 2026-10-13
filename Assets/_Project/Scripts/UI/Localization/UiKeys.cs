@@ -50,7 +50,6 @@ namespace MoonProject.UI
         private const string ComponentModelPrefix = "Part_";
         public const string RecipeRow = "ui.recipe.row";
         public const string RewardTitle = "ui.reward.title";
-        public const string FriendParts = "ui.friend.parts";
         public const string CargoWaiting = "ui.cargo.waiting";
         public const string CargoSummary = "ui.cargo.summary";
         public const string CrateCaption = "ui.crate.caption";

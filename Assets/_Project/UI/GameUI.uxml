@@ -6,17 +6,6 @@
                 <ui:VisualElement name="reticle-rest" class="reticle__ring reticle__ring--rest" />
                 <ui:VisualElement name="reticle-hover" class="reticle__ring reticle__ring--hover" />
             </ui:VisualElement>
-            <ui:VisualElement name="friend-anchor" class="world-anchor" picking-mode="Ignore">
-                <ui:VisualElement name="friend-center" class="world-anchor__center" picking-mode="Ignore">
-                    <ui:VisualElement name="friend-readout" class="friend-readout" picking-mode="Ignore">
-                        <ui:VisualElement name="friend-readout-shadow" class="soft-shadow soft-shadow--chip" />
-                        <ui:VisualElement class="chip friend-chip">
-                            <ui:Label name="friend-parts-label" class="friend-chip__label" picking-mode="Ignore" />
-                            <ui:VisualElement name="friend-pips" class="friend-pips" picking-mode="Ignore" />
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-                </ui:VisualElement>
-            </ui:VisualElement>
             <ui:VisualElement name="friend-name-anchor" class="world-anchor" picking-mode="Ignore">
                 <ui:VisualElement name="friend-name-center" class="world-anchor__center" picking-mode="Ignore">
                     <ui:VisualElement name="friend-name" class="name-tag" picking-mode="Ignore">

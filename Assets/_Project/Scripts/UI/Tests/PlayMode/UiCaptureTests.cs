@@ -210,15 +210,9 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Camera = friendCamera;
             fakes.Position = tilly + (friendCamera.transform.position - tilly).normalized * 5f;
             fakes.TillyStatus = new FriendStatus(FriendState.Dormant, 0, 3, true, false, tilly);
-            yield return new WaitForSecondsRealtime(1.5f);
-            yield return Capture(friendCamera, folder, "08_tilly_parts_0of3");
-            fakes.TillyStatus = new FriendStatus(FriendState.PartsGathering, 2, 3, true, false, tilly);
-            yield return new WaitForSecondsRealtime(_tuning.Friends.PipFillSeconds * 0.5f);
-            yield return Capture(friendCamera, folder, "09_tilly_parts_filling");
-            yield return new WaitForSecondsRealtime(_tuning.Friends.PipFillSeconds * 2f);
             fakes.TillyStatus = new FriendStatus(FriendState.PartsGathering, 3, 3, true, true, tilly);
             fakes.PrimaryHint = new InteractionHint(InteractionKind.Repair, tilly, true);
-            yield return new WaitForSecondsRealtime(_tuning.Friends.PipFillSeconds + 1.5f);
+            yield return new WaitForSecondsRealtime(1.5f);
             yield return Capture(friendCamera, folder, "10_tilly_repair_prompt");
             fakes.PrimaryHint = InteractionHint.None;
             context.Events.Publish(new FriendRepairStarted("tilly"));
