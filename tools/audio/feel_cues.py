@@ -603,11 +603,20 @@ def charge_hum(_variant, _gen):
 
 
 def charge_detent(_variant, gen):
-    """A charge stage locking: a discrete detent click, small and mechanical."""
-    n = samples(0.15)
-    click = filters.bandpass(noise.white(n, gen), 1600.0, 2.0) * envelope.ar(n, 0.0008, 0.015)
-    body = osc.sine(n, note_freq("A3")) * envelope.ar(n, 0.001, 0.03)
-    return filters.lowpass(0.3 * click + 0.25 * body, 4000.0)
+    """A charge stage locking (the owner's "Cells" charge-up): a capacitor cell's glass sleeve sliding forward (a
+    short, smooth glassy slide), then the discrete detent click, small and mechanical."""
+    n = samples(0.2)
+    slide_n = samples(0.07)
+    slide = filters.bandpass(noise.white(slide_n, gen), 2600.0, 3.0)
+    slide *= envelope.segments(slide_n, [(0.0, 0.0), (0.03, 1.0), (0.07, 0.0)], shape="smooth")
+    mix = np.zeros(n)
+    place(mix, 0.06 * slide, 0)
+    at = samples(0.06)
+    click_n = n - at
+    click = filters.bandpass(noise.white(click_n, gen), 1600.0, 2.0) * envelope.ar(click_n, 0.0008, 0.015)
+    body = osc.sine(click_n, note_freq("A3")) * envelope.ar(click_n, 0.001, 0.03)
+    place(mix, 0.3 * click + 0.25 * body, at)
+    return filters.lowpass(filters.lowpass(mix, 4000.0), 4000.0)
 
 
 def charge_lock(_variant, gen):

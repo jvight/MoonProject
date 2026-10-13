@@ -2491,7 +2491,7 @@ CUES = (
     Cue("charge_hum", "loop_3d", feel.charge_hum, loop=True, file_stem="charge_hum_loop", volume=(0.55, 0.55),
         milestone="M3", notes="0.5.5 E: the low hum on D under the charge, level by stage. 3 s seamless."),
     Cue("charge_detent", "tick_3d", feel.charge_detent, volume=(0.6, 0.6), milestone="M3",
-        notes="0.5.5 E: a charge stage locking: a detent click."),
+        notes="0.5.5 E: a charge stage locking: a cell sleeve slides, then the detent click."),
     Cue("charge_lock", "oneshot_3d", feel.charge_lock, volume=(0.6, 0.6), milestone="M3",
         notes="0.5.5 E: the full lock: a firm clunk-click before the held breath."),
     Cue("hold_boot", "ui_2d", feel.hold_boot, volume=(0.6, 0.6), milestone="M3",

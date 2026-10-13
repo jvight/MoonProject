@@ -693,7 +693,7 @@
         "charge_detent"
       ],
       "sha256": [
-        "84a2ff4fc3471e052a21d70df7a3712fd081c3e61485866182183eb2b7b418a5"
+        "f3754dab845c66a6b1e5d4c27562b4ef84e9c7edc72c8e170d7b3af57eede313"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -704,7 +704,7 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "0.5.5 E: a charge stage locking: a detent click."
+      "notes": "0.5.5 E: a charge stage locking: a cell sleeve slides, then the detent click."
     },
     {
       "id": "charge_lock",
