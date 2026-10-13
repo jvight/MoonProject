@@ -398,7 +398,10 @@ namespace MoonProject.Rover.PlayModeTests
             var portraitCamera = Node("PortraitCamera", visual, Vector3.zero).gameObject.AddComponent<Camera>();
             portraitCamera.enabled = false;
             var portrait = visual.gameObject.AddComponent<RoverPortrait>();
-            Assign(portrait, ("_tuning", rigTuning), ("_camera", portraitCamera));
+            var portraitKey = Node("PortraitKey", visual, Vector3.zero).gameObject.AddComponent<Light>();
+            var portraitRim = Node("PortraitRim", visual, Vector3.zero).gameObject.AddComponent<Light>();
+            Assign(portrait, ("_tuning", rigTuning), ("_camera", portraitCamera), ("_key", portraitKey),
+                ("_rim", portraitRim));
             Assign(controller, ("_portrait", portrait));
             AssignArray(flank, "_lamps", flankLamps);
             AssignArray(flank, "_glasses", flankGlasses);
