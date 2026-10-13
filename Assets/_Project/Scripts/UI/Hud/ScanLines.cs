@@ -9,12 +9,11 @@ namespace MoonProject.UI
         /// <summary>
         /// "Fragment 2 of 3 · Cargo Cradle", or, when the blueprint was already complete, "Known blueprint · +3 Metal".
         /// </summary>
-        /// <param name="knownMetal">The metal gameplay pays for a scan of a known blueprint.</param>
-        public static string Fragment(ILocalization localization, FragmentScanned scanned, int knownMetal)
+        public static string Fragment(ILocalization localization, FragmentScanned scanned)
         {
             if (scanned.Known)
             {
-                return string.Format(localization.Get(UiKeys.ScanKnown), knownMetal);
+                return string.Format(localization.Get(UiKeys.ScanKnown), scanned.Metal);
             }
 
             return string.Format(localization.Get(UiKeys.ScanFragment), scanned.Index + 1, scanned.Count,

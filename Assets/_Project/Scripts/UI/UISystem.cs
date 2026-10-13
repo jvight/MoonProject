@@ -920,7 +920,7 @@ namespace MoonProject.UI
         /// <summary>"Fragment 2 of 3 · Cargo Cradle", or the known blueprint's metal, as a note.</summary>
         private void OnFragmentScanned(FragmentScanned scanned)
         {
-            _crateNote.Scanned(ScanLines.Fragment(_localization, scanned, _tuning.CrateNote.KnownMetal));
+            _crateNote.Scanned(ScanLines.Fragment(_localization, scanned));
         }
 
         private void OnLabLeft(LabLeft left)

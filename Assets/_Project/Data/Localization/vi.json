@@ -1957,6 +1957,10 @@
         {
             "key": "hint.fit",
             "text": "Lắp"
+        },
+        {
+            "key": "ui.bay.row_full",
+            "text": "Hãy lắp một bộ phận trước."
         }
     ]
 }

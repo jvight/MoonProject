@@ -106,7 +106,7 @@ namespace MoonProject.UI.Tests
                          UiKeys.TapeCount, UiKeys.PauseCassettes, UiKeys.PauseRelays,
                          UiKeys.RecipeRow, UiKeys.RewardTitle, UiKeys.StationOffline, UiKeys.FriendParts,
                          UiKeys.CrateCaption, UiKeys.CargoWaiting, UiKeys.CargoSummary,
-                         UiKeys.BayFitted,
+                         UiKeys.BayFitted, UiKeys.RowFull, UiKeys.HintFit, UiKeys.HintHold,
                      })
             {
                 Assert.IsTrue(_english.TryGet(key, out _), key);

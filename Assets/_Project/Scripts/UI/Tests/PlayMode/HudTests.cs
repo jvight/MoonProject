@@ -511,7 +511,7 @@ namespace MoonProject.UI.PlayModeTests
             Boot();
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             yield return Seconds(1f);
-            Events.Publish(new FragmentScanned("fragment.cradle.1", "rover.cargo_cradle", 1, 3, false));
+            Events.Publish(new FragmentScanned("fragment.cradle.1", "rover.cargo_cradle", 1, 3, false, 0));
             yield return Seconds(1.5f);
             Assert.IsTrue(_rig.Ui.CrateNote.IsVisible, "the note is a pickup note, not a card or a line");
             StringAssert.Contains("2", _rig.Ui.CrateNote.Text);
@@ -558,6 +558,26 @@ namespace MoonProject.UI.PlayModeTests
             }
 
             Assert.Greater(shownFrames, 0, "the scene did guide, or the test proves nothing");
+        }
+
+        [UnityTest]
+        public IEnumerator TheBay_RefusesAKitWhileThePartsRowIsFull_WithOneLine()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Ui.Ledger.RecordHoldBooted();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Upgrade = _rig.TestTower();
+            _rig.Fakes.SetMaterials(20, 20, 20);
+            _rig.Fakes.PartsRowFull = true;
+            _rig.Fakes.AtStation = true;
+            yield return Seconds(2f);
+            Press(keyboard.eKey);
+            yield return Seconds(_rig.Tuning.TowerPanel.HoldSeconds + 0.5f);
+            Release(keyboard.eKey);
+            yield return Seconds(1.5f);
+            Assert.AreEqual(0, _rig.Fakes.Purchases, "nothing is spent");
+            Assert.IsTrue(_rig.Ui.Ticker.IsVisible, "one line says to fit a part first");
         }
 
         [UnityTest]

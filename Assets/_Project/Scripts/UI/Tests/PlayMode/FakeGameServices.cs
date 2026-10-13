@@ -127,6 +127,9 @@ namespace MoonProject.UI.PlayModeTests
         /// <summary>07's equipment, set by a test.</summary>
         public FakeEquipment Equipment { get; } = new FakeEquipment();
 
+        /// <summary>The bay refuses a kit: the parts row is full.</summary>
+        public bool PartsRowFull { get; set; }
+
         /// <summary>07's portrait, set by a test.</summary>
         public FakePortrait Portrait { get; } = new FakePortrait();
 
@@ -573,6 +576,11 @@ namespace MoonProject.UI.PlayModeTests
             if (AwaitingPart)
             {
                 return PurchaseResult.NeedsPart;
+            }
+
+            if (PartsRowFull)
+            {
+                return PurchaseResult.RowFull;
             }
 
             Purchases++;

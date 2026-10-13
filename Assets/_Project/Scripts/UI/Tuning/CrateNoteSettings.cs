@@ -22,13 +22,7 @@ namespace MoonProject.UI
         [Range(4f, 20f)]
         [SerializeField] private float _maxSeconds = 12f;
 
-        [Tooltip("Metal gameplay pays when a scan finishes a known blueprint's fragment; the scan note says it.")]
-        [Range(1, 10)]
-        [SerializeField] private int _knownMetal = 3;
-
         public RevealSettings Reveal => _reveal;
-
-        public int KnownMetal => _knownMetal;
 
         /// <summary>Seconds a note of <paramref name="characters"/> characters rests.</summary>
         public float HoldSeconds(int characters)

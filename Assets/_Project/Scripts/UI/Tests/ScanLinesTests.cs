@@ -21,15 +21,15 @@ namespace MoonProject.UI.Tests
         [Test]
         public void ANewFragment_SaysItsPlaceInTheBlueprint()
         {
-            var scanned = new FragmentScanned("fragment.cradle.1", "rover.cargo_cradle", 1, 3, false);
-            Assert.AreEqual("Fragment 2 of 3 · Cargo Cradle", ScanLines.Fragment(_localization, scanned, 3));
+            var scanned = new FragmentScanned("fragment.cradle.1", "rover.cargo_cradle", 1, 3, false, 0);
+            Assert.AreEqual("Fragment 2 of 3 · Cargo Cradle", ScanLines.Fragment(_localization, scanned));
         }
 
         [Test]
         public void AFragmentOfAKnownBlueprint_SaysTheMetalItPaid()
         {
-            var scanned = new FragmentScanned("fragment.cradle.1", "rover.cargo_cradle", 0, 3, true);
-            Assert.AreEqual("Known blueprint · +3 Metal", ScanLines.Fragment(_localization, scanned, 3));
+            var scanned = new FragmentScanned("fragment.cradle.1", "rover.cargo_cradle", 0, 3, true, 3);
+            Assert.AreEqual("Known blueprint · +3 Metal", ScanLines.Fragment(_localization, scanned));
         }
     }
 }

@@ -1024,7 +1024,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return Capture(camera, folder, "64_tower_card");
             yield return Watch(ui, overlaps, _tuning.Guidance.PlaceHoldSeconds + _tuning.Guidance.Place.FadeOut +
                                              0.5f);
-            events.Publish(new FragmentScanned("fragment.cradle.1", "rover.cargo_cradle", 1, 3, false));
+            events.Publish(new FragmentScanned("fragment.cradle.1", "rover.cargo_cradle", 1, 3, false, 0));
             yield return Watch(ui, overlaps, _tuning.CrateNote.Reveal.FadeIn + 0.8f);
             Assert.IsTrue(ui.CrateNote.IsVisible, "the scan's pickup note is up");
             StringAssert.Contains("2", ui.CrateNote.Text);
