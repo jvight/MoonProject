@@ -25,6 +25,13 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public const string CabinetName = "Cabinet";
 
+        /// <summary>
+        /// relay.2's service hut (0.5.5 §1.4), <c>RelayHut</c>: an open-fronted lean-to placed at the mast's foot, its
+        /// root on the ground, +Z its open side, with <c>FragmentSocket_CellPack_0..2</c> on its back shelf for the
+        /// spare cell modules.
+        /// </summary>
+        public const string HutName = "RelayHut";
+
         public const string CabinetDoorName = "Door";
         public const string CabinetSealName = "Seal";
 
@@ -42,6 +49,7 @@ namespace MoonProject.Art.Editor
             ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateMast(false)), ArtPaths.RelayFolder, material, glowOff);
             ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateMast(true)), ArtPaths.RelayFolder, material, glowOff);
             ModelPrefabWriter.Write(CreatePart(), ArtPaths.RelayFolder, material);
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateHut()), ArtPaths.RelayFolder, material);
             AssetDatabase.SaveAssets();
         }
 
@@ -73,6 +81,18 @@ namespace MoonProject.Art.Editor
             root.Add(new ModelNode("ChargeRing", Vector3.zero,
                 new ModelMesh(variant + "_ChargeRing", RelayMeshes.ChargeRing(broken))));
             return root;
+        }
+
+        public static ModelNode CreateHut()
+        {
+            var hut = new ModelNode(HutName, Vector3.zero, new ModelMesh(HutName, ScanSiteMeshes.Hut()));
+            for (int i = 0; i < 3; i++)
+            {
+                hut.Add(new ModelNode(SiteModelBuilder.FragmentSocketPrefix + "CellPack_" + i,
+                    ScanSiteMeshes.HutShelfSocket(i)));
+            }
+
+            return hut;
         }
 
         public static ModelNode CreatePart()

@@ -62,6 +62,38 @@ namespace MoonProject.Art.Editor
             }
         }
 
+        /// <summary>
+        /// The scannable fragments' places at a site (0.5.5 §1.3, §1.4): <c>FragmentRest_&lt;Blueprint&gt;_&lt;n&gt;</c>,
+        /// a fallen panel on rubble inside the wreck's front edge sized to its fragment, holding
+        /// <c>FragmentSocket_&lt;Blueprint&gt;_&lt;n&gt;</c> on its top (+Y up, +Z the fragment's front) where gameplay
+        /// sets the fragment.
+        /// </summary>
+        public const string FragmentRestPrefix = "FragmentRest_";
+
+        public const string FragmentSocketPrefix = "FragmentSocket_";
+
+        /// <summary>The blueprint whose fragments lie at each site, and how many.</summary>
+        public static (string Blueprint, int Count) FragmentsAt(string id)
+        {
+            switch (id)
+            {
+                case "garage":
+                    return ("CargoCradle", 2);
+                case "drill":
+                    return ("BoostCoils", 3);
+                case "kestrel":
+                    return ("FocusLens", 3);
+                case "lander":
+                    return ("SideBins", 2);
+                default:
+                    return (string.Empty, 0);
+            }
+        }
+
+        // How far inside the wreck's front edge the fragments' rests sit, and how far apart.
+        private const float RestInset = 0.45f;
+        private const float RestSpacing = 1.1f;
+
         // How far a pocket's middle sits out from the wreck's edge: close enough that its panel leans on the wreck.
         private const float PocketOutset = 0.3f;
 
@@ -158,6 +190,7 @@ namespace MoonProject.Art.Editor
             AddCrewCrate(root, name, new Vector3(recipe.Heart.x + CrewCrateBesideHeart, 0f,
                 footprint.max.z + CrewCrateClearOfWreck));
             AddRelicPockets(root, id, footprint);
+            AddFragmentSockets(root, id, footprint);
             if (SiteLandmarkMeshes.HasLandmark(id))
             {
                 (Vector3 foot, float yaw) = SiteLandmarkMeshes.Placement(id);
@@ -187,6 +220,22 @@ namespace MoonProject.Art.Editor
             }
 
             return footprint;
+        }
+
+        private static void AddFragmentSockets(ModelNode root, string id, Bounds footprint)
+        {
+            (string blueprint, int count) = FragmentsAt(id);
+            for (int i = 0; i < count; i++)
+            {
+                Bounds fragment = FragmentBuilder.CreateFragment(blueprint, i).Children[0].Mesh.Geometry.Bounds;
+                var at = new Vector3(footprint.center.x + (i - (count - 1) * 0.5f) * RestSpacing * (1f + fragment.size.x),
+                    0f, footprint.max.z - RestInset - fragment.extents.z);
+                string tag = blueprint + "_" + i.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                ModelNode rest = root.Add(new ModelNode(FragmentRestPrefix + tag, at, new ModelMesh(
+                    $"Site_{id}_{FragmentRestPrefix}{tag}", ScanSiteMeshes.Rest(new Vector2(fragment.size.x,
+                        fragment.size.z), 40 + i))));
+                rest.Add(new ModelNode(FragmentSocketPrefix + tag, Vector3.up * ScanSiteMeshes.RestHeight));
+            }
         }
 
         private static void AddRelicPockets(ModelNode root, string id, Bounds footprint)
