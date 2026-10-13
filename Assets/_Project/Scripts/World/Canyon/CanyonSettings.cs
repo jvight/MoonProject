@@ -206,6 +206,23 @@ namespace MoonProject.World
         [Range(0f, 10f)]
         [SerializeField] private float _glowLightIntensity = 1.6f;
 
+        [Tooltip("Seconds of one pulse of the pod's locator beacon: slow, a calm signal.")]
+        [Range(0.5f, 10f)]
+        [SerializeField] private float _beaconPeriod = 3.2f;
+
+        [Tooltip("How short the beacon's peak is within its period (a power of the wave): higher is a crisper flash.")]
+        [Range(1f, 12f)]
+        [SerializeField] private float _beaconSharpness = 3f;
+
+        [Tooltip("The beacon's level between flashes (0..1): it never goes fully dark, so the ledge still reads from " +
+            "home.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _beaconFloor = 0.3f;
+
+        [Tooltip("Glow of the cracked beacon glass at a flash's peak (linear glow multiplier).")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _beaconGlassGlow = 1.6f;
+
         [Header("One-way exit (design ruling 10)")]
         [Tooltip("How far to the left of the canyon the exit runs back to the basin, metres: far enough that solid " +
             "rock always separates it from the chasm.")]
@@ -277,6 +294,10 @@ namespace MoonProject.World
         public float GlowMinAngle => _glowMinAngle;
         public float GlowLightRange => _glowLightRange;
         public float GlowLightIntensity => _glowLightIntensity;
+        public float BeaconPeriod => _beaconPeriod;
+        public float BeaconSharpness => _beaconSharpness;
+        public float BeaconFloor => _beaconFloor;
+        public float BeaconGlassGlow => _beaconGlassGlow;
         public float ExitOffset => _exitOffset;
         public float ExitTurnRadius => _exitTurnRadius;
         public float ExitBranch => _exitBranch;
