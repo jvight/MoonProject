@@ -19,7 +19,7 @@ namespace MoonProject.Gameplay
     {
         private readonly SalvageField _salvage;
         private readonly CargoTuning _tuning;
-        private readonly ICutter _cutter;
+        private readonly Cutter _cutter;
         private readonly MaterialStock _stock;
         private readonly EventBus _events;
         private readonly InputReader _input;
@@ -30,7 +30,7 @@ namespace MoonProject.Gameplay
         private readonly CutState _cut;
         private CrewCrate _cutting;
 
-        public CrewCrates(SalvageField salvage, CargoTuning tuning, ICutter cutter, GameplayServices services)
+        public CrewCrates(SalvageField salvage, CargoTuning tuning, Cutter cutter, GameplayServices services)
         {
             _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
@@ -76,9 +76,8 @@ namespace MoonProject.Gameplay
             if (wants && _cutting == null)
             {
                 _cutting = Candidate;
-                _cut.Tune(_cutter.ChargeSeconds, _cutter.ResumeChargeSeconds);
                 _cut.Engage(_cutting.Progress, _cutting.Contents.Material, _cutting.CutPoint.position,
-                    _cutting.CutPoint.forward);
+                    _cutting.CutPoint.forward, _cutter.Plan(_salvage.Tuning.Size(_tuning.CrateCut).Stages, false));
             }
 
             if (_cutting == null)

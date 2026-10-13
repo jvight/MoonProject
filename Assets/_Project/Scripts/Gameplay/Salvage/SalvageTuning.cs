@@ -57,8 +57,8 @@ namespace MoonProject.Gameplay
                  "tier 0, units.")]
         [SerializeField] private PieceSizeRow[] _sizes =
         {
-            new PieceSizeRow(1, 1.2f, 2), new PieceSizeRow(1, 2.5f, 3), new PieceSizeRow(2, 2.5f, 5),
-            new PieceSizeRow(3, 3.5f, 8),
+            new PieceSizeRow(1, 1, 1.2f, 2), new PieceSizeRow(2, 1, 2.5f, 3), new PieceSizeRow(3, 2, 2.5f, 5),
+            new PieceSizeRow(3, 3, 3.5f, 8),
         };
 
         [Header("Drag pieces")]

@@ -26,16 +26,20 @@ MonoBehaviour:
   _cutSteps: 5
   _segmentSlideSeconds: 0.25
   _sizes:
-  - _segments: 1
+  - _stages: 1
+    _segments: 1
     _segmentSeconds: 1.2
     _units: 2
-  - _segments: 1
+  - _stages: 2
+    _segments: 1
     _segmentSeconds: 2.5
     _units: 3
-  - _segments: 2
+  - _stages: 3
+    _segments: 2
     _segmentSeconds: 2.5
     _units: 5
-  - _segments: 3
+  - _stages: 3
+    _segments: 3
     _segmentSeconds: 3.5
     _units: 8
   _dragClearance: 3

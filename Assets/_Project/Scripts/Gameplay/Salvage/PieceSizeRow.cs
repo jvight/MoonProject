@@ -7,6 +7,9 @@ namespace MoonProject.Gameplay
     [Serializable]
     public struct PieceSizeRow
     {
+        [Tooltip("Charge stages the piece needs before the beam fires (0.5.5 §5.1: small 1, medium 2, large 3).")]
+        [Range(1, 3)] [SerializeField] private int _stages;
+
         [Tooltip("Segments the beam cuts in turn, sliding from one to the next without a new charge.")]
         [Range(1, 3)] [SerializeField] private int _segments;
 
@@ -16,12 +19,15 @@ namespace MoonProject.Gameplay
         [Tooltip("Units of material the piece yields.")]
         [Range(1, 12)] [SerializeField] private int _units;
 
-        public PieceSizeRow(int segments, float segmentSeconds, int units)
+        public PieceSizeRow(int stages, int segments, float segmentSeconds, int units)
         {
+            _stages = stages;
             _segments = segments;
             _segmentSeconds = segmentSeconds;
             _units = units;
         }
+
+        public int Stages => _stages;
 
         public int Segments => _segments;
 

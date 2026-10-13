@@ -509,22 +509,300 @@
       "notes": "07's machine voice, greeting (feel-pass 7.2); syllables in chirp_syllables.json."
     },
     {
-      "id": "charge_lamp",
+      "id": "scan_sweep",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/scan_sweep_loop.wav"
+      ],
+      "variantLabels": [
+        "scan_sweep"
+      ],
+      "sha256": [
+        "81a9c79373c74733f114026757a49cb511603b186f7bd6cfcbfdf88889a8d56b"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 D: the lens's fan sweeping a fragment; pitch steps D E F# A per 25%. 2 s loop."
+    },
+    {
+      "id": "scan_step",
       "category": "oneshot_3d",
       "milestone": "M3",
       "bus": "Sfx",
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/charge_lamp_01.wav",
-        "Assets/_Project/Audio/SFX/charge_lamp_02.wav",
-        "Assets/_Project/Audio/SFX/charge_lamp_03.wav",
-        "Assets/_Project/Audio/SFX/charge_lamp_04.wav",
-        "Assets/_Project/Audio/SFX/charge_lamp_05.wav",
-        "Assets/_Project/Audio/SFX/charge_lamp_06.wav",
-        "Assets/_Project/Audio/SFX/charge_lamp_07.wav",
-        "Assets/_Project/Audio/SFX/charge_lamp_08.wav",
-        "Assets/_Project/Audio/SFX/charge_lamp_09.wav"
+        "Assets/_Project/Audio/SFX/scan_step_01.wav",
+        "Assets/_Project/Audio/SFX/scan_step_02.wav",
+        "Assets/_Project/Audio/SFX/scan_step_03.wav",
+        "Assets/_Project/Audio/SFX/scan_step_04.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04"
+      ],
+      "sha256": [
+        "f4ed1d6b3afdcb218cfdd690758c0415397a20e3ab5964289ee28de83db554b0",
+        "4403b5896540146c2ad0af45bae1faeea2de816ff523cb7bd230d826a0824531",
+        "041ee82b93212c6dcea9f55b388eae56f3ded7be10c847815c9334127b119555",
+        "f56e7f33a445e0adb706da912b42b6c02e70a50a9876cf62cbc5ebaa08c8dfb9"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "0.5.5 D: a quarter of the scan drawn: a glass note D E F# A."
+    },
+    {
+      "id": "scan_liftoff",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/scan_liftoff.wav"
+      ],
+      "variantLabels": [
+        "scan_liftoff"
+      ],
+      "sha256": [
+        "7072902f1c60d2e4dbac3dacc734063dd400f0f956290d75383e2d54cacf33ea"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 D: the dissolve into the lens: a rising shimmer and a flare chime on F#6."
+    },
+    {
+      "id": "charge_brace",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/charge_brace.wav"
+      ],
+      "variantLabels": [
+        "charge_brace"
+      ],
+      "sha256": [
+        "4872eb081ef8b04da88153b5b44eb4dd8a102c31a2f13ba1a8c1649911c13fc6"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 E: 07 bracing before a fresh charge: servo chunk and wheel-lock clack."
+    },
+    {
+      "id": "charge_whine",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/charge_whine_loop.wav"
+      ],
+      "variantLabels": [
+        "charge_whine"
+      ],
+      "sha256": [
+        "f999aac05c0d069b35a1c552dced04585b9531b29b71f092b70c4cebcec73f7f"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 E: the capacitor whine on D5; pitch glides D -> A -> D' at runtime. 2 s seamless."
+    },
+    {
+      "id": "charge_hum",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/charge_hum_loop.wav"
+      ],
+      "variantLabels": [
+        "charge_hum"
+      ],
+      "sha256": [
+        "e7d91cfeeef4fd2ea26312173eb83accb1c0bccb64a3a1e37077cd4cd83cf783"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 E: the low hum on D under the charge, level by stage. 3 s seamless."
+    },
+    {
+      "id": "charge_detent",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/charge_detent.wav"
+      ],
+      "variantLabels": [
+        "charge_detent"
+      ],
+      "sha256": [
+        "f3754dab845c66a6b1e5d4c27562b4ef84e9c7edc72c8e170d7b3af57eede313"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 E: a charge stage locking: a cell sleeve slides, then the detent click."
+    },
+    {
+      "id": "charge_lock",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/charge_lock.wav"
+      ],
+      "variantLabels": [
+        "charge_lock"
+      ],
+      "sha256": [
+        "1ea7febb57fdcf7219a5839cbdda683679660a8ff2bca340b83dc12c02da1e9e"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 E: the full lock: a firm clunk-click before the held breath."
+    },
+    {
+      "id": "hold_boot",
+      "category": "ui_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/hold_boot.wav"
+      ],
+      "variantLabels": [
+        "hold_boot"
+      ],
+      "sha256": [
+        "4283bdfa8028c648c6341bd95609b270960f79c95086db1275b4f5c43d9a7301"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 B: the first Tab press, 07's hold powering on in the dark."
+    },
+    {
+      "id": "type_tick",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/type_tick.wav"
+      ],
+      "variantLabels": [
+        "type_tick"
+      ],
+      "sha256": [
+        "3b56b727202404e6d1bf62704030f0ac6099f01a80d33338065ac46d1b60a73c"
+      ],
+      "volumeMin": 0.35,
+      "volumeMax": 0.35,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 B: one character of 07's system text typing in."
+    },
+    {
+      "id": "hold_slot",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/hold_slot_01.wav",
+        "Assets/_Project/Audio/SFX/2D/hold_slot_02.wav",
+        "Assets/_Project/Audio/SFX/2D/hold_slot_03.wav",
+        "Assets/_Project/Audio/SFX/2D/hold_slot_04.wav",
+        "Assets/_Project/Audio/SFX/2D/hold_slot_05.wav",
+        "Assets/_Project/Audio/SFX/2D/hold_slot_06.wav",
+        "Assets/_Project/Audio/SFX/2D/hold_slot_07.wav",
+        "Assets/_Project/Audio/SFX/2D/hold_slot_08.wav"
       ],
       "variantLabels": [
         "01",
@@ -534,46 +812,101 @@
         "05",
         "06",
         "07",
-        "08",
-        "09"
+        "08"
       ],
       "sha256": [
-        "252f0af6772f74aa68ee49ed205f0c53a30012c4ff3bf3a1a23b913e4aafe07f",
-        "776ce2403397316b2d42276203c0b8efa18ce404f4dde0c4b2ed81a8aa28df8b",
-        "52e59c10920a70c51678d06b90ced94561f1e79d8d2350bf785efeee2e9b635d",
-        "75a2329e3a6cbd7c78a76447f098910d006face45a3e45bf7541e688e85aa41b",
-        "7dd2870f85c2f166d634d22237b4faacb1ac033372e69c95fe3ccd128b1226f5",
-        "b0f54fb01999ed236012ed2544c8c82f91959374a515897277932eaf51454b23",
-        "3e36dd5af51cc0508483cca6c6c079798c8ca93be88b54f3218d927cbdc7be34",
-        "fb43ed12548810accac55834ee1bf35972e1db9a9ad136e57a0deab562fc797b",
-        "6ac73db9703e7c8c56ae65cb215927207edbf418c881e620da3af35ab5baf882"
+        "39742abe7d1268a08ad622b56a9ecd4c8dcd92db05f20b5d75982b31c205f8cf",
+        "1a4ff371449786e9f624206b9a7d8d17f41886c851a53ef892bdff8a25814b9f",
+        "e26b280694adf3c49501dc5bb26bfe72992a4611f54e7c1935e7aeb9f414bc77",
+        "6c6a50a5e805284e9ed049cce6dba44580f4f98478cac63a2e5176ad91896479",
+        "03458d0d7c47774cc7f492ac98daa23033dbd76cb1117fe5d49f03eecca561de",
+        "007861c3c0acb323fadd852d14808c8e93ae253e3fb1aabd1bbccb6661789486",
+        "2bd90dbe75238813033c50beca7f06c8e691e46251ab87dd3d90ae2a1834b122",
+        "659202419da307048f27a3eed23691e627a6a846055ca963358cfa5eead71f0b"
       ],
-      "volumeMin": 0.55,
-      "volumeMax": 0.55,
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
       "pitchMin": 1.0,
       "pitchMax": 1.0,
-      "targetLufs": -18.0,
+      "targetLufs": -28.0,
       "loudnessMode": "momentary",
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "A charge-run lamp lighting (M3-26): the next pentatonic step, D5 up to A6."
+      "tonal": false,
+      "notes": "0.5.5 B: a hold slot lighting, a rising pentatonic tick (D5 .. F#6)."
     },
     {
-      "id": "charge_inhale",
+      "id": "item_slide",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/item_slide.wav"
+      ],
+      "variantLabels": [
+        "item_slide"
+      ],
+      "sha256": [
+        "a2930ccb994ddb98eace472da564c9f8064a4d4557604a900a7fb53acfdd7757"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 B: a starter item sliding into its slot."
+    },
+    {
+      "id": "stack_transfer",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/stack_transfer_to_home.wav",
+        "Assets/_Project/Audio/SFX/2D/stack_transfer_to_07.wav"
+      ],
+      "variantLabels": [
+        "to_home",
+        "to_07"
+      ],
+      "sha256": [
+        "397c7aaf99ac6b89814a44a7391a4841e5577fec2c3f3f8019fb6a71e6366455",
+        "fe7619d42a87c8debba400d3321fecd05b6dfc1f2a9e504751602c3dfea34ea6"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "0.5.5 B: a stack moved, falling to home, rising to 07."
+    },
+    {
+      "id": "seal_cut",
       "category": "oneshot_3d",
       "milestone": "M3",
       "bus": "Sfx",
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/charge_inhale.wav"
+        "Assets/_Project/Audio/SFX/seal_cut.wav"
       ],
       "variantLabels": [
-        "charge_inhale"
+        "seal_cut"
       ],
       "sha256": [
-        "2a2d81735fa1cf1d151d7652aedbc72bbca58c2de8304cc77f695c1b170f74c8"
+        "b9f1df6581590560ee92a7b6d25fbb0c1e8220f182a21c4acdbac1b796ac491f"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -584,23 +917,35 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "The charge run's low chassis inhale: a D2 hum swelling under the lamps."
+      "notes": "0.5.5 C: a container's seal cut through: a pop felt through the chassis and a ping on A5."
     },
     {
-      "id": "charge_low_d",
+      "id": "container_open",
       "category": "oneshot_3d",
       "milestone": "M3",
       "bus": "Sfx",
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/charge_low_d.wav"
+        "Assets/_Project/Audio/SFX/container_open_cabinet.wav",
+        "Assets/_Project/Audio/SFX/container_open_pod.wav",
+        "Assets/_Project/Audio/SFX/container_open_crate.wav",
+        "Assets/_Project/Audio/SFX/container_open_case.wav",
+        "Assets/_Project/Audio/SFX/container_open_box.wav"
       ],
       "variantLabels": [
-        "charge_low_d"
+        "cabinet",
+        "pod",
+        "crate",
+        "case",
+        "box"
       ],
       "sha256": [
-        "ced135acd68eb3a1e71d61ecdcc1e3a41df754d420241840100c46f865c0821b"
+        "bc6c8ce5ff22df95a48564a9690f31f49e0ea29b10d998871020c1c11e43ffae",
+        "0e283f80cf69e3a07df2f558a850680c527d6dfdb806dca806fcaa578f599605",
+        "0c6b4f5219feb19b6bbef16f86ea3a1fca29f13e2c659014c9265137ca988a4e",
+        "6d77b30046303edbc101e8de331c57e66f3b42492dd18e337ba1d3ef2c44a05a",
+        "412772e21b56807680e1b0248ee726a9745215f03f43d917265fc8f0d0483fb5"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -611,7 +956,7 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "Tier 3's sustained low D under the charge run."
+      "notes": "0.5.5 C: a container opening and its find sliding out; the hinge note by kind."
     },
     {
       "id": "cut_ignite_tier",
