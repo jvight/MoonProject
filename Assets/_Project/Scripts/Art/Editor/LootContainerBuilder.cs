@@ -15,6 +15,9 @@ namespace MoonProject.Art.Editor
     /// about local X, negative, to lift it open) holding <c>CutPoint</c> (+Z out of the front seam) and <c>Seal</c>
     /// (M_LowPolyGlowOff, the seam's glow until the cut), and an <c>ItemSocket</c> where the find sits inside. The pod
     /// also has <c>Glow</c>, its cracked beacon (M_LowPolyGlowOff, World lights it warm).</item>
+    /// <item><c>SpareCrate</c>, the tape deck's sealed crate stencilled "07 · SPARE" (0.5.5 §2), the same layout,
+    /// sized for Kenji's bench and set on the garage site's <c>SpareCrateSocket</c> with identity: no dust skirt, it
+    /// stands on the bench, not the ground.</item>
     /// <item><c>Cabinet</c>, a relay mast's service cabinet (the relay spares), set on the mast's
     /// <c>CabinetSocket</c> with identity: the same layout, but its <c>Lid</c> is a door hinged on its left edge
     /// (turn it about local Y by <see cref="LidOpenDegrees"/> to swing it open), with <c>CutPoint</c> and
@@ -33,6 +36,7 @@ namespace MoonProject.Art.Editor
         public const string SupplyPodName = "SupplyPod";
         public const string TillySledName = "TillySled";
         public const string CabinetName = "Cabinet";
+        public const string SpareCrateName = "SpareCrate";
         public const string LidName = "Lid";
         public const string CutPointName = SiteModelBuilder.CutPointName;
         public const string SealName = "Seal";
@@ -70,6 +74,7 @@ namespace MoonProject.Art.Editor
                 ModelPrefabWriter.Write(GroundOcclusion.Ground(container), ArtPaths.PropFolder, material, glowOff);
             }
 
+            ModelPrefabWriter.Write(CreateSpareCrate(), ArtPaths.PropFolder, material, glowOff);
             AssetDatabase.SaveAssets();
         }
 
@@ -98,6 +103,16 @@ namespace MoonProject.Art.Editor
             root.Add(new ModelNode(GlowName, LootContainerMeshes.PodBeacon, Quaternion.identity,
                 new ModelMesh(SupplyPodName + "_" + GlowName, LootContainerMeshes.PodBeaconGlass()),
                 ModelMaterial.PaletteGlowOff));
+            return root;
+        }
+
+        public static ModelNode CreateSpareCrate()
+        {
+            LootContainerMeshes.Shape shape = LootContainerMeshes.SpareCrate;
+            var root = new ModelNode(SpareCrateName, Vector3.zero,
+                new ModelMesh(SpareCrateName, LootContainerMeshes.SpareCrateBody()));
+            AddLid(root, SpareCrateName, shape, shape.Hinge);
+            root.Add(new ModelNode(ItemSocketName, shape.Item));
             return root;
         }
 

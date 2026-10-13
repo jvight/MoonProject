@@ -70,6 +70,12 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public const string FragmentSocketPrefix = "FragmentSocket_";
 
+        /// <summary>
+        /// The garage's seat for the tape deck's crate (0.5.5 §2): <c>SpareCrateSocket</c> on Kenji's workbench top,
+        /// +Y up, +Z the crate's front, where gameplay sets the <c>SpareCrate</c> container with identity.
+        /// </summary>
+        public const string SpareCrateSocketName = "SpareCrateSocket";
+
         /// <summary>The blueprint whose fragments lie at each site, and how many.</summary>
         public static (string Blueprint, int Count) FragmentsAt(string id)
         {
@@ -182,6 +188,12 @@ namespace MoonProject.Art.Editor
             AddCrewCrate(root, name, new Vector3(recipe.Heart.x + CrewCrateBesideHeart, 0f,
                 footprint.max.z + CrewCrateClearOfWreck));
             AddRelicPockets(root, id, footprint);
+            if (id == "garage")
+            {
+                Vector3 seat = GarageSite.SpareCrateHost(out Quaternion turn);
+                root.Add(new ModelNode(SpareCrateSocketName, seat, turn));
+            }
+
             AddFragmentSockets(root, id);
             if (SiteLandmarkMeshes.HasLandmark(id))
             {

@@ -665,6 +665,16 @@ namespace MoonProject.Art.Editor
                 .transform;
             garage.position = new Vector3(14f, 0f, 0f);
             Transform pocket = Descendant(garage, SiteModelBuilder.RelicPocketPrefix + "rubber_duck");
+            Transform spare = Instantiate(LootContainerBuilder.SpareCrateName, temporary, ArtPaths.PropFolder)
+                .transform;
+            spare.SetParent(Descendant(garage, SiteModelBuilder.SpareCrateSocketName), false);
+            Lit(Descendant(spare, LootContainerBuilder.SealName), 1f);
+            for (int i = 0; i < 2; i++)
+            {
+                SeatFragment(temporary, Descendant(garage, SiteModelBuilder.FragmentSocketPrefix + "CargoCradle_" + i),
+                    "CargoCradle", i, 0f, 0f);
+            }
+
             foreach (bool broken in new[] { true, false })
             {
                 Transform mast = Instantiate(broken ? RelayModelBuilder.BrokenMastName : RelayModelBuilder.MastName,
@@ -690,6 +700,7 @@ namespace MoonProject.Art.Editor
                 Pose("pocket_close", new[] { duck.x + pocket.forward.x * 1.4f, 0.9f, duck.z + pocket.forward.z * 1.4f },
                     new[] { duck.x, 0.1f, duck.z }, 45f),
                 Pose("garage_pockets", new[] { 14f, 7f, -9f }, new[] { 14f, 0.5f, 0f }, 50f),
+                Pose("spare_crate", new[] { 13.4f, 1.6f, 3.6f }, new[] { 12.3f, 1f, 5.5f }, 50f),
                 Pose("cabinet_sealed", new[] { -10.9f, 1.5f, -0.5f }, new[] { -12.25f, 0.6f, -2.8f }, 45f),
                 Pose("cabinet_open", new[] { -20.9f, 1.5f, -0.5f }, new[] { -22.25f, 0.6f, -2.8f }, 45f));
         }

@@ -50,7 +50,7 @@ namespace MoonProject.Art.Editor
 
         /// <summary>
         /// The outline of <paramref name="letter"/> (the upper-case letters signs and name plates need, digits 0, 6 and
-        /// 7, a dash and a full stop).
+        /// 7, a dash, a full stop and a middle dot).
         /// </summary>
         public static Vector2[] For(char letter)
         {
@@ -114,6 +114,8 @@ namespace MoonProject.Art.Editor
                     return Outline(0.02f, 0.085f, 0.12f, 0.085f, 0.12f, 0.115f, 0.02f, 0.115f);
                 case '.':
                     return Outline(0.05f, 0f, 0.09f, 0f, 0.09f, 0.04f, 0.05f, 0.04f);
+                case '·':
+                    return Outline(0.05f, 0.08f, 0.09f, 0.08f, 0.09f, 0.12f, 0.05f, 0.12f);
                 default:
                     throw new System.ArgumentException($"No glyph for '{letter}'.", nameof(letter));
             }

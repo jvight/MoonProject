@@ -72,7 +72,7 @@ namespace MoonProject.Art.Tests
             List<ModelNode> pieces = Pieces(site);
             int landmarks = SiteLandmarkMeshes.HasLandmark(id) ? 1 : 0;
             int pockets = SiteModelBuilder.RelicsAt(id).Count;
-            int sockets = SiteModelBuilder.FragmentsAt(id).Count;
+            int sockets = SiteModelBuilder.FragmentsAt(id).Count + (id == "garage" ? 1 : 0);
             Assert.AreEqual(site.Children.Count - 3 - landmarks - pockets - sockets, pieces.Count,
                 "only Skeleton, Salvage_*, Heart, CrewCrate, the relic pockets, the fragment sockets and the landmark");
             Assert.That(pieces.Count, Is.InRange(MinPieces, MaxPieces));
