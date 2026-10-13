@@ -808,9 +808,6 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(2f);
             Assert.IsTrue(ui.Cargo.IsOpen && !ui.Cargo.IsBooting);
             yield return Capture(camera, folder, "95_cargo_screen");
-            ui.Cargo.SelectTab(1);
-            yield return new WaitForSecondsRealtime(0.4f);
-            yield return Capture(camera, folder, "96_seven_can");
             ui.Cargo.Close();
             yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeOut + 0.6f);
 
