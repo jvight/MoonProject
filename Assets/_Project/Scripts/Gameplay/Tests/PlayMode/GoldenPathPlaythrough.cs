@@ -1672,8 +1672,10 @@ namespace MoonProject.Gameplay.PlayModeTests
                 {
                     yield return DigTillysLastPart();
                 }
-
-                yield return PickupPress.Take(this, _gameplay, 4f, "one of Tilly's parts");
+                else
+                {
+                    yield return PickupPress.Take(this, _gameplay, 4f, "one of Tilly's parts");
+                }
                 yield return Until(() => tilly.Progress.Collected > before, 6f, "the part drifts into 07");
             }
 
