@@ -260,6 +260,60 @@ MonoBehaviour:
       _crewId: kenji
       _material: 0
       _units: 6
+  _derelicts:
+  - _anchorId: micro.06
+    _prefab: {fileID: 8324099549516280450, guid: 778a3f2f64673dd4782c8ccc2dd54462, type: 3}
+    _gate:
+      _gated: 0
+      _ability: 0
+    _heartUnderPieces: 0
+    _yieldScale: 1
+    _cutLines: []
+    _sizes: []
+    _crate:
+      _crewId: 
+      _material: 0
+      _units: 0
+  - _anchorId: micro.mule
+    _prefab: {fileID: 7735527072989229440, guid: 83a03e8665ae38446b92512449cca499, type: 3}
+    _gate:
+      _gated: 0
+      _ability: 0
+    _heartUnderPieces: 0
+    _yieldScale: 1
+    _cutLines:
+    - _number: 0
+      _points:
+      - {x: -0.24500003, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.24500003, y: 0, z: 0}
+    _sizes:
+    - _number: 0
+      _size: 0
+    _crate:
+      _crewId: 
+      _material: 0
+      _units: 0
+  - _anchorId: micro.drone
+    _prefab: {fileID: 867618214293557917, guid: 7d47565610f07ce429bec4402197031a, type: 3}
+    _gate:
+      _gated: 0
+      _ability: 0
+    _heartUnderPieces: 0
+    _yieldScale: 1
+    _cutLines:
+    - _number: 0
+      _points:
+      - {x: -0.036635067, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.03298253, y: 0, z: 0}
+    _sizes:
+    - _number: 0
+      _size: 0
+    _crate:
+      _crewId: 
+      _material: 0
+      _units: 0
   _metalBundle: {fileID: 8960714290519639283, guid: 26e27ff987c8ae2478a4f6090ec487d1, type: 3}
   _wiringBundle: {fileID: 8133406963958762877, guid: 20853bd915ffc68498705589c043faee, type: 3}
   _opticsBundle: {fileID: 7272007056206292504, guid: 0c943ef936aaa0d4c8382df341cfd7c4, type: 3}
