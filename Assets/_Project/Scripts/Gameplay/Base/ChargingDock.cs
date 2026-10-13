@@ -13,7 +13,7 @@ namespace MoonProject.Gameplay
     /// (<see cref="DockLock"/>, feel-pass §7.1) raises four walls round 07 while it charges, lights their strips per
     /// cell, sweeps them to gold and lowers them when full, and chases the rim lamps as 07 rolls on.
     /// </summary>
-    public sealed class ChargingDock : IDisposable
+    public sealed class ChargingDock : IDisposable, IDockState
     {
 
         private readonly Transform _anchor;
@@ -96,6 +96,8 @@ namespace MoonProject.Gameplay
 
         /// <summary>True while 07 rests on the dock.</summary>
         public bool Docked => _rest.Docked;
+
+        bool IDockState.IsDocked => _rest.Docked;
 
         /// <summary>Current glow of the dock (tests and debugging views).</summary>
         public float GlowLevel { get; private set; }

@@ -92,7 +92,10 @@ namespace MoonProject.UI.Tests
                 {
                     string key = PlaceCard.KeyBase(place);
                     Assert.IsTrue(table.TryGet(key + ".name", out _), $"{table.Language}: {key}.name");
-                    Assert.IsTrue(table.TryGet(key + ".job", out _), $"{table.Language}: {key}.job");
+                    if (key == "place.dock")
+                    {
+                        Assert.IsTrue(table.TryGet(key + ".job", out _), $"{table.Language}: {key}.job");
+                    }
                 }
 
                 foreach (string line in Lines)

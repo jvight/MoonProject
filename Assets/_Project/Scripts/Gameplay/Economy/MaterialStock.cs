@@ -82,6 +82,24 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
+        /// A new game's spares (0.5.5 D4): <paramref name="spares"/> go into 07's hold. A loaded save lays its own hold
+        /// in over them (<see cref="Restore"/> empties the hold first), so only a new save keeps them.
+        /// </summary>
+        public void Stow(Recipe spares)
+        {
+            foreach (SalvageMaterial material in RecipeMaterials)
+            {
+                int units = spares.Of(material);
+                if (units > 0 && Hold.Add(material, units) != units)
+                {
+                    throw new InvalidOperationException($"07's hold has no room for its spare {material} ({units}).");
+                }
+            }
+
+            Announce();
+        }
+
+        /// <summary>
         /// Moves up to <paramref name="units"/> of <paramref name="material"/> from 07's hold onto home's shelves (the
         /// dock's unload, M3-25 §3.2); returns how many moved. The totals do not change.
         /// </summary>
@@ -95,6 +113,23 @@ namespace MoonProject.Gameplay
 
             Hold.Remove(material, moving);
             Home.Add(material, moving);
+            return moving;
+        }
+
+        /// <summary>
+        /// Moves up to <paramref name="units"/> of <paramref name="material"/> from home's shelves into 07's hold (the
+        /// docked transfer view, 0.5.5 §3); returns how many moved. The totals do not change.
+        /// </summary>
+        public int MoveAboard(SalvageMaterial material, int units)
+        {
+            int moving = Math.Min(Math.Min(units, Home.Units(material)), Hold.FreeUnits(material));
+            if (moving <= 0)
+            {
+                return 0;
+            }
+
+            Home.Remove(material, moving);
+            Hold.Add(material, moving);
             return moving;
         }
 

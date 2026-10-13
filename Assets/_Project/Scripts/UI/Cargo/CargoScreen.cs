@@ -4,16 +4,15 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
 using MoonProject.Core.Events;
-using MoonProject.Core.Input;
 
 namespace MoonProject.UI
 {
     /// <summary>
     /// The cargo screen (docs/features/M3-25 §2.4; the PDA of docs/design/first-hour-qa.md R1): Tab or View opens a
-    /// Moonlight Glass panel over the blur, and the game goes on. The first page is 07's hold only (a grid of slots,
-    /// each with its material's icon and units out of its capacity, empty slots as faint outlines, the waiting
-    /// bundles) with one plain line under it; home's shelves belong to the docked storage view, not to Tab. The second page, "07 can", lists each ability 07 has (its key, its word, one line) and the
-    /// kits decoded but not yet fitted as pencil sheets. Everything is written when the screen opens or something
+    /// Moonlight Glass panel over the blur, and the game goes on. It is 07's hold only (a grid of slots, each with its
+    /// material's icon and units out of its capacity, empty slots as faint outlines, the waiting bundles) with one
+    /// plain line under it; home's shelves belong to the docked storage view, not to Tab. Nothing on it explains what
+    /// 07 can do (the owner: such notes read as wrong). Everything is written when the screen opens or something
     /// changed (<see cref="MarkDirty"/>); an open screen with nothing new allocates nothing.
     /// </summary>
     internal sealed class CargoScreen
@@ -22,9 +21,6 @@ namespace MoonProject.UI
         public const string EmptyClass = "cargo__cell--empty";
         public const string UnlitClass = "cargo__cell--unlit";
         private const string BootingClass = "cargo--booting";
-        private const string TabOnClass = "settings-tab--on";
-        private const string TabSkinOnClass = "settings-tab-wrap--on";
-        private const string TabFocusClass = "settings-tab-wrap--focus";
         private const float CellGap = 6f;
         private const int HoldSlotsAcross = 4;
         private const int WaitingCache = 100;
@@ -32,9 +28,6 @@ namespace MoonProject.UI
         private readonly CargoScreenSettings _settings;
         private readonly ILocalization _localization;
         private readonly ICargoHold _hold;
-        private readonly IRoverAbilities _abilities;
-        private readonly ITechTree _tech;
-        private readonly GlyphLabels _glyphs;
         private readonly IntText _numbers;
         private readonly EventBus _events;
         private readonly PromptLedger _ledger;
@@ -43,32 +36,25 @@ namespace MoonProject.UI
         private readonly Label _bootLine;
         private readonly Reveal _reveal;
         private readonly VisualElement _panel;
-        private readonly Button[] _tabs;
-        private readonly VisualElement[] _pages;
         private readonly Label _waiting;
         private readonly VisualElement _holdGrid;
-        private readonly VisualElement _canRows;
         private readonly Label _summary;
         private readonly List<Cell> _holdCells = new List<Cell>();
-        private readonly CanRow[] _rows = new CanRow[AbilityTable.Count];
         private readonly Dictionary<int, string> _pairs = new Dictionary<int, string>();
         private readonly string[] _waitingTexts = new string[WaitingCache];
         private string _bootText = string.Empty;
         private int _bootTyped = -1;
         private int _bootLit;
         private int _bootArrived;
-        private int _tab;
         private bool _dirty = true;
         private float _cell;
         private float _shrink = 1f;
         private Vector2 _fittedFor;
         private float _writtenCell = -1f;
         private int _writtenSummary = -1;
-        private InputDeviceKind _device = InputDeviceKind.KeyboardMouse;
 
         public CargoScreen(UiLayout layout, CargoScreenSettings settings, ILocalization localization,
-            ICargoHold hold, IRoverAbilities abilities, ITechTree tech, GlyphLabels glyphs, IntText numbers,
-            EventBus events, PromptLedger ledger)
+            ICargoHold hold, IntText numbers, EventBus events, PromptLedger ledger)
         {
             if (layout == null)
             {
@@ -78,9 +64,6 @@ namespace MoonProject.UI
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _hold = hold ?? throw new ArgumentNullException(nameof(hold));
-            _abilities = abilities ?? throw new ArgumentNullException(nameof(abilities));
-            _tech = tech ?? throw new ArgumentNullException(nameof(tech));
-            _glyphs = glyphs ?? throw new ArgumentNullException(nameof(glyphs));
             _numbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _ledger = ledger ?? throw new ArgumentNullException(nameof(ledger));
@@ -90,37 +73,10 @@ namespace MoonProject.UI
             _reveal = new Reveal(root, settings.Reveal);
             _reveal.Snap(false);
             _panel = Require<VisualElement>(root, "cargo-panel");
-            _tabs = new[]
-            {
-                Require<Button>(root, "button-cargo-tab-cargo"),
-                Require<Button>(root, "button-cargo-tab-can"),
-            };
-            _pages = new[]
-            {
-                Require<VisualElement>(root, "cargo-page-cargo"),
-                Require<VisualElement>(root, "cargo-page-can"),
-            };
             _waiting = Require<Label>(root, "cargo-waiting");
             _bootLine = Require<Label>(root, "cargo-boot");
             _holdGrid = Require<VisualElement>(root, "cargo-hold-grid");
-            _canRows = Require<VisualElement>(root, "cargo-can-rows");
             _summary = Require<Label>(root, "cargo-summary");
-            for (int i = 0; i < _tabs.Length; i++)
-            {
-                int tab = i;
-                VisualElement skin = _tabs[i].parent;
-                new TabPainter(skin);
-                _tabs[i].clicked += () => SelectTab(tab);
-                _tabs[i].RegisterCallback<FocusInEvent>(_ => skin.AddToClassList(TabFocusClass));
-                _tabs[i].RegisterCallback<FocusOutEvent>(_ => skin.RemoveFromClassList(TabFocusClass));
-            }
-
-            for (int i = 0; i < _rows.Length; i++)
-            {
-                _rows[i] = BuildCanRow(_canRows);
-            }
-
-            SelectTab(0);
         }
 
         /// <summary>True while the screen is up (or easing).</summary>
@@ -129,78 +85,13 @@ namespace MoonProject.UI
         /// <summary>0..1 how far the screen has come, for the blur behind it.</summary>
         public float Openness => _reveal.Visibility;
 
-        /// <summary>The page shown: 0 cargo, 1 "07 can".</summary>
-        public int Tab => _tab;
-
-        /// <summary>The button to focus when the screen opens (gamepad and keyboard move from it).</summary>
-        public Button FirstTab => _tabs[0];
-
         /// <summary>True while the first-press boot plays (tests and captures).</summary>
         public bool IsBooting => _boot.IsRunning;
 
         /// <summary>The slot cells on 07's grid now (tests and captures).</summary>
         public int HoldCellCount => _holdCells.Count;
 
-        /// <summary>How many rows of the "07 can" page are shown (tests and captures).</summary>
-        public int CanRowCount
-        {
-            get
-            {
-                int shown = 0;
-                for (int i = 0; i < _rows.Length; i++)
-                {
-                    shown += _rows[i].Shown ? 1 : 0;
-                }
-
-                return shown;
-            }
-        }
-
-        /// <summary>The words of shown row <paramref name="shown"/>: verb, then line (tests and captures).</summary>
-        public string CanRowText(int shown)
-        {
-            int seen = 0;
-            for (int i = 0; i < _rows.Length; i++)
-            {
-                if (!_rows[i].Shown)
-                {
-                    continue;
-                }
-
-                if (seen == shown)
-                {
-                    return _rows[i].Verb.text + " | " + _rows[i].Line.text;
-                }
-
-                seen++;
-            }
-
-            throw new ArgumentOutOfRangeException(nameof(shown), shown, "No such shown row.");
-        }
-
-        /// <summary>True when shown row <paramref name="shown"/> is a pencil sheet (tests and captures).</summary>
-        public bool CanRowIsPencil(int shown)
-        {
-            int seen = 0;
-            for (int i = 0; i < _rows.Length; i++)
-            {
-                if (!_rows[i].Shown)
-                {
-                    continue;
-                }
-
-                if (seen == shown)
-                {
-                    return _rows[i].Pencil;
-                }
-
-                seen++;
-            }
-
-            throw new ArgumentOutOfRangeException(nameof(shown), shown, "No such shown row.");
-        }
-
-        /// <summary>The text under both grids (tests and captures).</summary>
+        /// <summary>The text under the grid (tests and captures).</summary>
         public string SummaryText => _summary.text;
 
         /// <summary>The "bundles waiting" note, empty when none wait (tests and captures).</summary>
@@ -215,7 +106,7 @@ namespace MoonProject.UI
 
             _dirty = true;
             _reveal.Show();
-            if (!_ledger.HoldBooted && _tab == 0)
+            if (!_ledger.HoldBooted)
             {
                 StartBoot();
             }
@@ -230,23 +121,9 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>The hold, the shelves or the abilities changed: write the screen again while it is open.</summary>
+        /// <summary>The hold changed: write the screen again while it is open.</summary>
         public void MarkDirty()
         {
-            _dirty = true;
-        }
-
-        /// <summary>Shows one of the pages and marks its tab.</summary>
-        public void SelectTab(int tab)
-        {
-            _tab = tab;
-            for (int i = 0; i < _pages.Length; i++)
-            {
-                _pages[i].style.display = i == tab ? DisplayStyle.Flex : DisplayStyle.None;
-                _tabs[i].EnableInClassList(TabOnClass, i == tab);
-                _tabs[i].parent.EnableInClassList(TabSkinOnClass, i == tab);
-            }
-
             _dirty = true;
         }
 
@@ -261,8 +138,7 @@ namespace MoonProject.UI
 
         /// <param name="deltaTime">Unscaled seconds.</param>
         /// <param name="panelSize">The UI panel's size, for the cell size.</param>
-        /// <param name="device">The active device, for the glyphs on the "07 can" page.</param>
-        public void Tick(float deltaTime, Vector2 panelSize, InputDeviceKind device)
+        public void Tick(float deltaTime, Vector2 panelSize)
         {
             _reveal.Tick(deltaTime);
             if (_reveal.IsHidden)
@@ -274,12 +150,6 @@ namespace MoonProject.UI
             if (booting)
             {
                 _boot.Step(deltaTime);
-            }
-
-            if (device != _device)
-            {
-                _device = device;
-                _dirty = true;
             }
 
             if (panelSize != _fittedFor)
@@ -431,21 +301,6 @@ namespace MoonProject.UI
         private void Refresh()
         {
             _writtenCell = _cell;
-            if (_tab == 0)
-            {
-                RefreshHold();
-                WriteSummary();
-            }
-            else
-            {
-                RefreshAbilities();
-                _summary.text = string.Empty;
-                _writtenSummary = -1;
-            }
-        }
-
-        private void RefreshHold()
-        {
             int count = _hold.SlotCount;
             Fit(count);
             Fill(count);
@@ -456,6 +311,8 @@ namespace MoonProject.UI
             {
                 _waiting.text = WaitingLine(waiting);
             }
+
+            WriteSummary();
         }
 
         private string WaitingLine(int waiting)
@@ -538,65 +395,6 @@ namespace MoonProject.UI
             return new Cell { Root = root, Icon = icon, Painter = painter, Units = units };
         }
 
-        private void RefreshAbilities()
-        {
-            for (int i = 0; i < _rows.Length; i++)
-            {
-                AbilityRow ability = AbilityTable.At(i);
-                CanRow row = _rows[i];
-                bool has = _abilities.Has(ability.Ability);
-                bool sheet = !has && ability.HasNode && _tech.StateOf(ability.Node) == TechNodeState.Decoded;
-                bool shown = has || sheet;
-                if (shown != row.Shown)
-                {
-                    row.Root.style.display = shown ? DisplayStyle.Flex : DisplayStyle.None;
-                    row.Shown = shown;
-                }
-
-                if (!shown)
-                {
-                    continue;
-                }
-
-                row.Pencil = sheet;
-                row.Root.EnableInClassList("can-row--pencil", sheet);
-                row.Verb.text = _localization.Get(ability.VerbKey);
-                row.Line.text = _localization.Get(sheet ? UiKeys.CanDecoded : ability.LineKey);
-                row.Glyph.style.visibility = ability.HasAction && has ? Visibility.Visible : Visibility.Hidden;
-                if (ability.HasAction)
-                {
-                    row.GlyphView.Set(_glyphs.For(ability.Action, _device), _device);
-                }
-            }
-        }
-
-        private static CanRow BuildCanRow(VisualElement container)
-        {
-            var root = new VisualElement { pickingMode = PickingMode.Ignore };
-            root.AddToClassList("can-row");
-            var holder = new VisualElement { pickingMode = PickingMode.Ignore };
-            holder.AddToClassList("can-row__glyph");
-            var glyph = new VisualElement { pickingMode = PickingMode.Ignore };
-            glyph.AddToClassList("glyph");
-            var glyphLabel = new Label { pickingMode = PickingMode.Ignore };
-            glyphLabel.AddToClassList("glyph__label");
-            glyph.Add(glyphLabel);
-            holder.Add(glyph);
-            var verb = new Label { pickingMode = PickingMode.Ignore };
-            verb.AddToClassList("can-row__verb");
-            var line = new Label { pickingMode = PickingMode.Ignore };
-            line.AddToClassList("can-row__line");
-            root.Add(holder);
-            root.Add(verb);
-            root.Add(line);
-            root.style.display = DisplayStyle.None;
-            container.Add(root);
-            return new CanRow
-            {
-                Root = root, Glyph = holder, GlyphView = new GlyphView(glyph, glyphLabel), Verb = verb, Line = line,
-            };
-        }
-
         private static T Require<T>(VisualElement root, string name) where T : VisualElement
         {
             return root.Q<T>(name) ?? throw new InvalidOperationException(
@@ -609,17 +407,6 @@ namespace MoonProject.UI
             public VisualElement Icon;
             public MaterialIconPainter Painter;
             public Label Units;
-        }
-
-        private sealed class CanRow
-        {
-            public VisualElement Root;
-            public VisualElement Glyph;
-            public GlyphView GlyphView;
-            public Label Verb;
-            public Label Line;
-            public bool Shown;
-            public bool Pencil;
         }
     }
 }

@@ -95,7 +95,6 @@
                         </ui:VisualElement>
                         <ui:VisualElement class="unlock-card__text" picking-mode="Ignore">
                             <ui:Label name="unlock-card-verb" class="unlock-card__verb" picking-mode="Ignore" />
-                            <ui:Label name="unlock-card-line" class="unlock-card__line" picking-mode="Ignore" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
@@ -230,7 +229,6 @@
                 <ui:VisualElement name="lab-place" class="name-tag" picking-mode="Ignore">
                     <ui:VisualElement name="lab-place-shadow" class="soft-shadow soft-shadow--name" />
                     <ui:Label name="lab-place-name" class="name-tag__name" picking-mode="Ignore" />
-                    <ui:Label name="lab-place-job" class="place-card__job" picking-mode="Ignore" />
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="lab-board" class="recovery-board" picking-mode="Ignore">
@@ -268,14 +266,6 @@
         </ui:VisualElement>
         <ui:VisualElement name="cargo" class="cargo" picking-mode="Ignore">
             <ui:VisualElement name="cargo-panel" class="cargo__panel" picking-mode="Ignore">
-                <ui:VisualElement class="cargo__tabs" picking-mode="Ignore">
-                    <ui:VisualElement class="settings-tab-wrap settings-tab-wrap--on" picking-mode="Ignore">
-                        <ui:Button name="button-cargo-tab-cargo" class="settings-tab settings-tab--on loc" text="ui.cargo.tab_cargo" />
-                    </ui:VisualElement>
-                    <ui:VisualElement class="settings-tab-wrap" picking-mode="Ignore">
-                        <ui:Button name="button-cargo-tab-can" class="settings-tab loc" text="ui.cargo.tab_can" />
-                    </ui:VisualElement>
-                </ui:VisualElement>
                 <ui:VisualElement name="cargo-page-cargo" class="cargo__page cargo__page--columns" picking-mode="Ignore">
                     <ui:VisualElement class="cargo__column cargo__column--hold" picking-mode="Ignore">
                         <ui:Label class="cargo__heading loc" text="ui.cargo.hold" picking-mode="Ignore" />
@@ -283,9 +273,6 @@
                         <ui:Label name="cargo-waiting" class="cargo__note" picking-mode="Ignore" />
                         <ui:VisualElement name="cargo-hold-grid" class="cargo__grid" picking-mode="Ignore" />
                     </ui:VisualElement>
-                </ui:VisualElement>
-                <ui:VisualElement name="cargo-page-can" class="cargo__page" picking-mode="Ignore">
-                    <ui:VisualElement name="cargo-can-rows" class="cargo__can" picking-mode="Ignore" />
                 </ui:VisualElement>
                 <ui:Label name="cargo-summary" class="cargo__summary" picking-mode="Ignore" />
             </ui:VisualElement>
@@ -351,10 +338,6 @@
                                         <ui:Button name="button-quit-confirm" class="menu-button menu-button--quiet loc"
                                                    text="ui.pause.quit_confirm" />
                                     </ui:VisualElement>
-                                </ui:VisualElement>
-                                <ui:VisualElement name="pause-can" class="pause__can" picking-mode="Ignore">
-                                    <ui:Label class="section-label loc" text="ui.pause.can" />
-                                    <ui:VisualElement name="pause-can-rows" class="pause__can-rows" picking-mode="Ignore" />
                                 </ui:VisualElement>
                             </ui:VisualElement>
                         </ui:VisualElement>

@@ -49,7 +49,6 @@ namespace MoonProject.Audio
         public const string CrateLatch = "crate_latch";
         public const string TillyFetch = "tilly_fetch";
         public const string HoldBoot = "hold_boot";
-        public const string TypeTick = "type_tick";
         public const string HoldSlot = "hold_slot";
         public const string ItemSlide = "item_slide";
         public const string StackTransfer = "stack_transfer";

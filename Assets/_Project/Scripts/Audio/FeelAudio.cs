@@ -38,7 +38,7 @@ namespace MoonProject.Audio
     [DisallowMultipleComponent]
     public sealed class FeelAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 15;
+        private const int SubscriptionCount = 18;
         private const float SegmentFollow = 0.5f;
         private const float SilentVolume = 0.001f;
         private const float SemitonesPerOctave = 12f;
@@ -72,6 +72,10 @@ namespace MoonProject.Audio
         private CueHandle _shelfChord;
         private CueHandle _crateLatch;
         private CueHandle _tillyFetch;
+        private CueHandle _holdBoot;
+        private CueHandle _holdSlot;
+        private CueHandle _itemSlide;
+        private int _slotNotes;
         private AudioDirector _director;
         private IRoverState _rover;
         private AudioSource _sizzleSource;
@@ -137,6 +141,9 @@ namespace MoonProject.Audio
             _shelfChord = director.Resolve(AudioCueIds.ShelfChord);
             _crateLatch = director.Resolve(AudioCueIds.CrateLatch);
             _tillyFetch = director.Resolve(AudioCueIds.TillyFetch);
+            _holdBoot = director.Resolve(AudioCueIds.HoldBoot);
+            _holdSlot = director.Resolve(AudioCueIds.HoldSlot);
+            _itemSlide = director.Resolve(AudioCueIds.ItemSlide);
             _cancel = director.Resolve(AudioCueIds.CutCancel);
             _ignite = director.Resolve(AudioCueIds.CutIgniteTier);
             CueHandle sizzle = director.Resolve(AudioCueIds.CutSizzle);
@@ -164,6 +171,7 @@ namespace MoonProject.Audio
             if (!(_brace.IsValid && _detent.IsValid && _lock.IsValid && whine.IsValid && hum.IsValid &&
                   undertone.IsValid && _segmentSlide.IsValid &&
                   _cargoTok.IsValid && _shelfChord.IsValid && _crateLatch.IsValid && _tillyFetch.IsValid &&
+                  _holdBoot.IsValid && _holdSlot.IsValid && _itemSlide.IsValid &&
                   _cancel.IsValid && _ignite.IsValid && sizzle.IsValid && _crack.IsValid &&
                   _strap.IsValid && _wallsRise.IsValid && _clamp.IsValid && _wallsSettle.IsValid &&
                   _wallsDrop.IsValid && _nodeLight.IsValid && _cableTicks.IsValid && _found.IsValid &&
@@ -185,6 +193,7 @@ namespace MoonProject.Audio
             _humSource = director.CreateLoopSource(transform, "ChargeHum", hum, 1f);
             _humCueVolume = library.GetCue(hum).VolumeMax;
             _segmentNotes = library.GetCue(_segmentSlide).ClipCount;
+            _slotNotes = library.GetCue(_holdSlot).ClipCount;
             _undertoneSource = director.CreateLoopSource(transform, "CutUndertone", undertone, 1f);
             _undertoneCueVolume = library.GetCue(undertone).VolumeMax;
             _nodeVariants = director.Library.GetCue(_nodeLight).ClipCount;
@@ -211,6 +220,9 @@ namespace MoonProject.Audio
             _subscriptions[12] = events.Subscribe<CrewCrateOpened>(OnCrewCrateOpened);
             _subscriptions[13] = events.Subscribe<BundleFetched>(OnBundleFetched);
             _subscriptions[14] = events.Subscribe<CutChargeStaged>(OnCutChargeStaged);
+            _subscriptions[15] = events.Subscribe<HoldBootStarted>(OnHoldBootStarted);
+            _subscriptions[16] = events.Subscribe<HoldSlotLit>(OnHoldSlotLit);
+            _subscriptions[17] = events.Subscribe<HoldItemArrived>(OnHoldItemArrived);
         }
 
         private void Update()
@@ -421,6 +433,23 @@ namespace MoonProject.Audio
         private void OnCrewCrateOpened(CrewCrateOpened opened)
         {
             _director.PlayAt(_crateLatch, opened.Position);
+        }
+
+        /// <summary>The first Tab press (0.5.5 B): 07's hold powers on in the dark.</summary>
+        private void OnHoldBootStarted(HoldBootStarted started)
+        {
+            _director.Play2D(_holdBoot);
+        }
+
+        /// <summary>Each slot outline lighting, left to right: a tick a pentatonic step higher.</summary>
+        private void OnHoldSlotLit(HoldSlotLit lit)
+        {
+            _director.PlayVariant2D(_holdSlot, Mathf.Clamp(lit.Index, 0, _slotNotes - 1));
+        }
+
+        private void OnHoldItemArrived(HoldItemArrived arrived)
+        {
+            _director.Play2D(_itemSlide);
         }
 
         private void OnBundleFetched(BundleFetched fetched)
