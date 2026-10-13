@@ -659,13 +659,13 @@ namespace MoonProject.Gameplay
             return null;
         }
 
-        /// <summary>Core's rover placement for the radio-hop, or null while no domain registers it.</summary>
         /// <summary>The World's scrap field, or null (the salvage field reports it) when none is registered.</summary>
         private static IScrapField ScrapField(GameContext context)
         {
             return context.TryGet(out IScrapField field) ? field : null;
         }
 
+        /// <summary>Core's rover placement for the radio-hop, or null while no domain registers it.</summary>
         private static IRoverPlacement Placement(GameContext context)
         {
             return context.TryGet(out IRoverPlacement placement) ? placement : null;
