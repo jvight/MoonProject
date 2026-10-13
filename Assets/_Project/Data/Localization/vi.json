@@ -1977,6 +1977,82 @@
         {
             "key": "upgrade.rover.side_bins.1.effect",
             "text": "Thêm bốn ô trong khoang hàng của 07, mỗi chuyến chở về được nhiều hơn."
+        },
+        {
+            "key": "hint.scan",
+            "text": "Quét"
+        },
+        {
+            "key": "scan.fragment",
+            "text": "Mảnh {0}/{1} · {2}"
+        },
+        {
+            "key": "scan.known",
+            "text": "Bản vẽ đã có · +{0} Kim loại"
+        },
+        {
+            "key": "scan.complete",
+            "text": "Đã đủ bản vẽ: {0}. Hãy chế tạo ở xưởng xe."
+        },
+        {
+            "key": "scan.site_count",
+            "text": "{0} mảnh cần quét"
+        },
+        {
+            "key": "hint.hold",
+            "text": "Khoang hàng"
+        },
+        {
+            "key": "hint.shelves",
+            "text": "Kệ"
+        },
+        {
+            "key": "ui.hold.boot",
+            "text": "KHOANG · {0} Ô · OK"
+        },
+        {
+            "key": "ui.transfer.to_trip",
+            "text": "Mang theo"
+        },
+        {
+            "key": "ui.transfer.to_home",
+            "text": "Cất ở nhà"
+        },
+        {
+            "key": "container.coil_crate",
+            "text": "Thùng cuộn dây"
+        },
+        {
+            "key": "container.junction_box",
+            "text": "Hộp đấu dây"
+        },
+        {
+            "key": "container.service_cabinet",
+            "text": "Tủ bảo trì"
+        },
+        {
+            "key": "container.supply_pod",
+            "text": "Khoang tiếp tế"
+        },
+        {
+            "key": "container.tape_case",
+            "text": "Hộp băng của Ro"
+        },
+        {
+            "key": "container.spare_crate",
+            "text": "07 · DỰ PHÒNG"
+        },
+        {
+            "key": "container.survey_sled",
+            "text": "Xe trượt của Tilly"
+        },
+        {
+            "key": "site.hut.name",
+            "text": "Chòi bảo trì trạm tiếp sóng"
+        },
+        {
+            "key": "site.chasm_lip.name",
+            "text": "Bãi thử nhảy của Kenji"
         }
     ]
 }

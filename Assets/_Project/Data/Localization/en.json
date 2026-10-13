@@ -1977,6 +1977,82 @@
         {
             "key": "upgrade.rover.side_bins.1.effect",
             "text": "Four more slots in 07's hold, so it carries more home each trip."
+        },
+        {
+            "key": "hint.scan",
+            "text": "Scan"
+        },
+        {
+            "key": "scan.fragment",
+            "text": "Fragment {0} of {1} · {2}"
+        },
+        {
+            "key": "scan.known",
+            "text": "Known blueprint · +{0} Metal"
+        },
+        {
+            "key": "scan.complete",
+            "text": "Blueprint complete: {0}. Build it in the bay."
+        },
+        {
+            "key": "scan.site_count",
+            "text": "{0} fragments to scan"
+        },
+        {
+            "key": "hint.hold",
+            "text": "Hold"
+        },
+        {
+            "key": "hint.shelves",
+            "text": "Shelves"
+        },
+        {
+            "key": "ui.hold.boot",
+            "text": "HOLD · {0} SLOTS · OK"
+        },
+        {
+            "key": "ui.transfer.to_trip",
+            "text": "Take for the trip"
+        },
+        {
+            "key": "ui.transfer.to_home",
+            "text": "Store at home"
+        },
+        {
+            "key": "container.coil_crate",
+            "text": "Coil crate"
+        },
+        {
+            "key": "container.junction_box",
+            "text": "Junction box"
+        },
+        {
+            "key": "container.service_cabinet",
+            "text": "Service cabinet"
+        },
+        {
+            "key": "container.supply_pod",
+            "text": "Supply pod"
+        },
+        {
+            "key": "container.tape_case",
+            "text": "Ro's tape case"
+        },
+        {
+            "key": "container.spare_crate",
+            "text": "07 · SPARE"
+        },
+        {
+            "key": "container.survey_sled",
+            "text": "Tilly's sled"
+        },
+        {
+            "key": "site.hut.name",
+            "text": "Relay Service Hut"
+        },
+        {
+            "key": "site.chasm_lip.name",
+            "text": "Kenji's Test Jump"
         }
     ]
 }

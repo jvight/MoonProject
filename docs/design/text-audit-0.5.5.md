@@ -217,7 +217,7 @@ The owner is still deciding D1–D6, so scan and relic texts sit in their own ke
 **CUT with the tubes** (gameplay and ui remove their code in slice D, then story deletes the keys):
 `pickup.blueprint_tube`, `ui.blueprint.found`, `ui.blueprint.delivered`, `ui.recipecard.blueprint`.
 
-### 6.2 New keys, ready to paste when their slice reads them
+### 6.2 New keys (added to en/vi after the owner's D1–D6, design/0.5.5 a6d8fb50)
 | Proposed key | en | vi | Slice |
 |---|---|---|---|
 | `hint.scan` | Scan | Quét | D |
@@ -233,11 +233,6 @@ The owner is still deciding D1–D6, so scan and relic texts sit in their own ke
 | `container.coil_crate` | Coil crate | Thùng cuộn dây | C |
 | `container.junction_box` | Junction box | Hộp đấu dây | C |
 | `container.service_cabinet` | Service cabinet | Tủ bảo trì | C |
-| `container.tool_locker` | Kenji's tool locker | Tủ đồ nghề của Kenji | C |
-| `container.galley_box` | Galley box | Thùng bếp | C |
-| `container.suit_locker` | Suit locker | Tủ đồ bảo hộ | C |
-| `container.cabin_safe` | Cabin safe | Két buồng lái | C |
-| `container.desk_drawer` | Desk drawer | Ngăn bàn | C |
 | `container.supply_pod` | Supply pod | Khoang tiếp tế | C |
 | `container.tape_case` | Ro's tape case | Hộp băng của Ro | C |
 | `container.spare_crate` | 07 · SPARE | 07 · DỰ PHÒNG | C (the label painted on the crate) |
@@ -246,3 +241,10 @@ The owner is still deciding D1–D6, so scan and relic texts sit in their own ke
 | `site.chasm_lip.name` | Kenji's Test Jump | Bãi thử nhảy của Kenji | D (the jumper debris) |
 
 Container names show only on the prompt chip's noun ("Cut · Coil crate"), never as a separate line.
+
+**D1–D6 (final) applied:**
+- D2: a new blueprint's fragment gives nothing after its dissolve, so there is no note beyond `scan.fragment`; a known
+  one gives `scan.known` (+3 Metal).
+- D6: relics stay buried under their own site's wreck debris, so they need no container names; their prompt stays
+  `hint.excavate` (Dig).
+- D4: the starter items show in the first Tab boot (`ui.hold.boot`); no extra line.
