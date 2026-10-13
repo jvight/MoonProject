@@ -58,6 +58,9 @@ namespace MoonProject.World
         [Tooltip("The warm ring that rolls out over the ground when a reach grows (polish wave 1).")]
         [SerializeField] private ReachRingSettings _reachRing = new ReachRingSettings();
 
+        [Tooltip("Kestrel-3's trail as a field of half-buried hull plates (0.5.5).")]
+        [SerializeField] private ScrapFieldSettings _scrapField = new ScrapFieldSettings();
+
         [Tooltip("The picture through 07's own eye in the opening (docs/design/cutscenes.md §1).")]
         [SerializeField] private LensViewSettings _lensView = new LensViewSettings();
 
@@ -93,6 +96,8 @@ namespace MoonProject.World
         public LandmarkSettings Landmarks => _landmarks;
 
         public ReachRingSettings ReachRing => _reachRing;
+
+        public ScrapFieldSettings ScrapField => _scrapField;
 
         public LensViewSettings LensView => _lensView;
 

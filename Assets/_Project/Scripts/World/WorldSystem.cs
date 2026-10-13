@@ -66,6 +66,7 @@ namespace MoonProject.World
         private readonly TerrainBuilder _terrainBuilder = new TerrainBuilder();
         private readonly ScatterBuilder _scatterBuilder = new ScatterBuilder();
         private readonly CanyonGateBuilder _gateBuilder = new CanyonGateBuilder();
+        private readonly ScrapFieldBuilder _scrapBuilder = new ScrapFieldBuilder();
         private GameObject _generatedRoot;
         private Mesh _earthMesh;
         private Mesh _tracksMesh;
@@ -148,6 +149,8 @@ namespace MoonProject.World
             LastBuild = _terrainBuilder.Build(_generatedRoot.transform, Surface, _settings.Mesh, _settings.Paint,
                 toLight, _groundMaterial, hideFlags);
             _gateBuilder.Build(_generatedRoot.transform, surface.Canyon.Slabs, _paletteMaterial, hideFlags);
+            _scrapBuilder.Build(_generatedRoot.transform, surface, _settings.ScrapField, _settings.Seed,
+                _paletteMaterial, hideFlags);
             LastScatter = _scatterBuilder.Build(_generatedRoot.transform, scatterPlan.GetAwaiter().GetResult(),
                 scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _paletteMaterial, hideFlags);
             BuildEarth(hideFlags);
@@ -264,6 +267,7 @@ namespace MoonProject.World
             _terrainBuilder.DestroyMeshes();
             _scatterBuilder.DestroyMeshes();
             _gateBuilder.DestroyMeshes();
+            _scrapBuilder.DestroyMeshes();
         }
 
         private static void Release(Object target)
