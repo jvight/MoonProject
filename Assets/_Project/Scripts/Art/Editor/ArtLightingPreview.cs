@@ -21,7 +21,7 @@ namespace MoonProject.Art.Editor
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
     ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner|
     ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|kitmain|home|homeclean|
-    ///                  builtfor07|shelves|focuslens|orangebeads|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|lab_dark|lab_lit]
+    ///                  builtfor07|shelves|focuslens|orangebeads|containers|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|lab_dark|lab_lit]
     /// </code>
     /// (default rover; a ';'-separated list captures several scenes in one run)
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the habitat lander and the
@@ -227,6 +227,10 @@ namespace MoonProject.Art.Editor
                     case "orangebeads":
                         NightSetting(material, temporary, 90f, 12f);
                         poses = OrangeBeadsScene(temporary);
+                        break;
+                    case "containers":
+                        NightSetting(material, temporary, 90f, 12f);
+                        poses = ContainersScene(temporary);
                         break;
                     case "shelves":
                         NightSetting(material, temporary, 90f, 12f);
@@ -661,6 +665,70 @@ namespace MoonProject.Art.Editor
             node.SetParent(target, false);
             node.localPosition = Vector3.zero;
             node.localRotation = Quaternion.identity;
+        }
+
+        /// <summary>
+        /// 0.5.5 slice C's places for finds: the coil crate (opened), Ro's tape case, the junction box and the supply pod
+        /// (sealed, their seams lit, the pod's beacon warm) in a row; Tilly's sled with its clamp and pod seals lit; the
+        /// garage's three relic pockets against its wreck; and the relay masts' cabinets, dormant (sealed) and restored.
+        /// </summary>
+        private static CameraPoseSet ContainersScene(TemporaryObjects temporary)
+        {
+            string[] row =
+            {
+                LootContainerBuilder.CoilCrateName, LootContainerBuilder.TapeCaseName,
+                LootContainerBuilder.JunctionBoxName, LootContainerBuilder.SupplyPodName,
+            };
+            for (int i = 0; i < row.Length; i++)
+            {
+                Transform container = Instantiate(row[i], temporary, ArtPaths.PropFolder).transform;
+                container.SetPositionAndRotation(new Vector3(-3f + i * 1.6f, 0f, 0f), Quaternion.Euler(0f, 200f, 0f));
+                foreach (Transform node in container.GetComponentsInChildren<Transform>())
+                {
+                    if (node.name == LootContainerBuilder.SealName || node.name == LootContainerBuilder.GlowName)
+                    {
+                        Lit(node, i == 0 ? 0f : 1f);
+                    }
+                }
+
+                if (i == 0)
+                {
+                    Descendant(container, LootContainerBuilder.LidName).localRotation =
+                        Quaternion.Euler(LootContainerBuilder.LidOpenDegrees, 0f, 0f);
+                }
+            }
+
+            Transform sled = Instantiate(LootContainerBuilder.TillySledName, temporary, ArtPaths.PropFolder).transform;
+            sled.SetPositionAndRotation(new Vector3(0f, 0f, 4f), Quaternion.Euler(0f, 160f, 0f));
+            foreach (Transform node in sled.GetComponentsInChildren<Transform>())
+            {
+                if (node.name == LootContainerBuilder.SealName)
+                {
+                    Lit(node, 1f);
+                }
+            }
+
+            Transform garage = Instantiate(SiteModelBuilder.SiteName("garage"), temporary, ArtPaths.SitesFolder)
+                .transform;
+            garage.position = new Vector3(14f, 0f, 0f);
+            Transform pocket = Descendant(garage, SiteModelBuilder.RelicPocketPrefix + "rubber_duck");
+            foreach (bool broken in new[] { true, false })
+            {
+                Transform mast = Instantiate(broken ? RelayModelBuilder.BrokenMastName : RelayModelBuilder.MastName,
+                    temporary, ArtPaths.RelayFolder).transform;
+                mast.position = new Vector3(broken ? -14f : -24f, 0f, 0f);
+                Lit(Descendant(mast, RelayModelBuilder.CabinetSealName), broken ? 1f : 0f);
+            }
+
+            Vector3 duck = pocket.position;
+            return Poses(
+                Pose("row", new[] { 0f, 1.6f, -3.4f }, new[] { -0.6f, 0.3f, 0f }, 50f),
+                Pose("sled", new[] { 1.6f, 1.5f, 1.6f }, new[] { 0f, 0.25f, 4f }, 45f),
+                Pose("pocket_close", new[] { duck.x + pocket.forward.x * 1.4f, 0.9f, duck.z + pocket.forward.z * 1.4f },
+                    new[] { duck.x, 0.1f, duck.z }, 45f),
+                Pose("garage_pockets", new[] { 14f, 7f, -9f }, new[] { 14f, 0.5f, 0f }, 50f),
+                Pose("cabinet_sealed", new[] { -10.9f, 1.5f, -0.5f }, new[] { -12.25f, 0.6f, -2.8f }, 45f),
+                Pose("cabinet_open", new[] { -20.9f, 1.5f, -0.5f }, new[] { -22.25f, 0.6f, -2.8f }, 45f));
         }
 
         private static CameraPoseSet ShelvesScene(TemporaryObjects temporary)
