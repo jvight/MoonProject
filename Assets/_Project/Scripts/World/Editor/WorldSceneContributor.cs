@@ -75,6 +75,14 @@ namespace MoonProject.World.Editor
             ring.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(reachRing);
 
+            var networkPulse = context.CreateChild("Network Pulse", root).AddComponent<NetworkPulseSystem>();
+            var handshake = new SerializedObject(networkPulse);
+            Assign(handshake, "_settings", settings);
+            Assign(handshake, "_haloMesh", context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh));
+            Assign(handshake, "_haloMaterial", context.LoadAsset<Material>(WorldPaths.BeaconHaloMaterial));
+            handshake.ApplyModifiedPropertiesWithoutUndo();
+            context.AddSystem(networkPulse);
+
             var labLights = context.CreateChild("Lab Lights", root).AddComponent<LabLights>();
             var lab = new SerializedObject(labLights);
             Assign(lab, "_settings", settings);

@@ -376,8 +376,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 definitions[i] = Asset<RelicDefinition>();
                 definitions[i].Populate(RelicIds[i], RelicMasses[i],
                     Template("Relic_" + RelicIds[i], RelicSizes[i]), i,
-                    WorldAnchorIds.SitePrefix + RelicSites[i], i == RelicIds.Length - 1 ? new Vector2(1.2f, 0f)
-                        : Vector2.zero, RelicCrews[i]);
+                    WorldAnchorIds.SitePrefix + RelicSites[i], RelicCrews[i]);
             }
 
             relicCatalog.Populate(definitions);
@@ -408,7 +407,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             visuals.PopulateContainers(new[]
             {
                 ContainerTemplate("CoilCrate"), ContainerTemplate("TapeCase"), ContainerTemplate("JunctionBox"),
-                ContainerTemplate("SupplyPod"), SledTemplate(),
+                ContainerTemplate("SupplyPod"), SledTemplate(), ContainerTemplate(ContainerKinds.Cabinet),
             });
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
@@ -697,7 +696,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// The five salvage sites as stand-in wrecks with the site contract's nodes (the canyon lander past the
-        /// Hover-Jump gate) and the three material bundles, as in the content builder.
+        /// Hover-Jump gate), 06 and the Mule as stand-in derelicts (0.5.5 §1.7) and the three material bundles, as in
+        /// the content builder.
         /// </summary>
         private void BuildSalvage(SalvageField field)
         {
@@ -713,8 +713,17 @@ namespace MoonProject.Gameplay.PlayModeTests
                     new SupplyCrate("kenji", SalvageMaterial.Metal, CrateUnits));
             }
 
+            GameObject elder = DerelictModel("Derelict_06", false);
+            GameObject mule = DerelictModel("Derelict_Mule", true);
+            var derelicts = new[]
+            {
+                SalvageSiteEntry.Derelict(WorldAnchorIds.Micro06, elder, SalvageCutLines.Across(elder),
+                    SmallPieces(elder)),
+                SalvageSiteEntry.Derelict(WorldAnchorIds.MicroMule, mule, SalvageCutLines.Across(mule),
+                    SmallPieces(mule)),
+            };
             var catalog = Asset<SalvageCatalog>();
-            catalog.Populate(sites, Template("Material_Metal", Vector3.one * 0.35f),
+            catalog.Populate(sites, derelicts, Template("Material_Metal", Vector3.one * 0.35f),
                 Template("Material_Wiring", Vector3.one * 0.35f), Template("Material_Optics", Vector3.one * 0.35f));
             field.Wire(SalvageTuning, catalog);
         }
@@ -755,11 +764,46 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             Node("Heart", root.transform, Vector3.zero);
+            for (int i = 0; i < RelicIds.Length; i++)
+            {
+                if (RelicSites[i] == name)
+                {
+                    // Art's relic pocket at the wreck's edge (0.5.5 §2): the gnome beside the duck's.
+                    Transform pocket = Node("RelicPocket_" + RelicIds[i], root.transform,
+                        i == RelicIds.Length - 1 ? new Vector3(1.2f, 0f, 0f) : Vector3.zero);
+                    Node("DigSpot", pocket, Vector3.zero);
+                }
+            }
+
             Transform crate = Named(Block(root.transform, new Vector3(0f, 0.3f, 2.4f), new Vector3(0.8f, 0.6f, 0.6f)),
                 "CrewCrate");
             Transform lid = Named(Block(crate, new Vector3(0f, 0.35f, 0f), new Vector3(0.82f, 0.1f, 0.62f)), "Lid");
             Node("CutPoint", lid, new Vector3(0f, 0f, -0.32f)).localRotation = Quaternion.Euler(0f, 180f, 0f);
             Named(Block(lid, new Vector3(0f, 0f, -0.31f), new Vector3(0.7f, 0.02f, 0.02f)), "Seal");
+            return root;
+        }
+
+        /// <summary>
+        /// A stand-in derelict (0.5.5 §1.7) in its anchor's frame: a slumped body, its <c>TapeCaseSocket</c> on the
+        /// ground against its right flank facing out of its side (06's), or one small Metal piece on its back (the
+        /// Mule's track skirt).
+        /// </summary>
+        private GameObject DerelictModel(string name, bool piece)
+        {
+            var root = new GameObject(name);
+            root.transform.position = new Vector3(0f, -500f, 0f);
+            _created.Add(root);
+            Named(Block(root.transform, new Vector3(0f, 0.5f, 0f), new Vector3(1.2f, 1f, 1.8f)), "Skeleton");
+            if (piece)
+            {
+                Piece(root.transform, "Salvage_0_Metal", new Vector3(0f, 0.4f, -1.3f), Vector3.one * 0.6f);
+            }
+            else
+            {
+                Node("TapeCaseSocket", root.transform, new Vector3(1.1f, 0f, 0.2f)).localRotation =
+                    Quaternion.Euler(0f, 90f, 0f);
+            }
+
             return root;
         }
 
@@ -877,6 +921,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Named(Block(mast, new Vector3(0f, 7.95f, 0f), Vector3.one * 0.5f), RelayRig.LampNode);
             Node(RelayRig.PartSocketNode, root.transform, new Vector3(0f, 0.78f, -1.24f));
             Node(RelayRig.BeamPointNode, root.transform, new Vector3(0f, 1.12f, -1.24f));
+            Node(RelayRig.CabinetSocketNode, root.transform, new Vector3(1.75f, 0f, -2.8f));
             if (broken)
             {
                 mast.localRotation = Quaternion.Euler(-9f, 0f, 10f);
@@ -927,8 +972,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Ro's three tapes as in the content builder: one beside the terminus cache, one on the ledge (both behind the
-        /// Hover-Jump gate) and one planned in the basin.
+        /// Ro's three tapes as in the content builder: one in her case beside the terminus cache, one in the supply pod
+        /// on the ledge (both behind the Hover-Jump gate) and one in her case on 06.
         /// </summary>
         private void BuildCassettes(CassetteField field)
         {
@@ -940,8 +985,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Cassette("after_dark_1", CassetteSiteRule.Anchor,
                     new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.2f, 1.9f)), hoverJump,
                     ContainerKinds.TapeCase),
-                Cassette("dust_and_honey", CassetteSiteRule.BasinPlanner, new AnchorSpot(string.Empty, Vector2.zero),
-                    AbilityGate.Open, string.Empty),
+                Cassette("dust_and_honey", CassetteSiteRule.Derelict, new AnchorSpot(WorldAnchorIds.Micro06,
+                    Vector2.zero), AbilityGate.Open, ContainerKinds.TapeCase),
                 Cassette("slow_orbit", CassetteSiteRule.Anchor,
                     new AnchorSpot(WorldAnchorIds.CanyonLedge, Vector2.zero), hoverJump, ContainerKinds.SupplyPod),
             });
@@ -954,7 +999,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             string container)
         {
             var cassette = Asset<CassetteDefinition>();
-            cassette.Populate(id, Template("Cassette_" + id, CassetteSize), site, anchor, 73, gate, container);
+            cassette.Populate(id, Template("Cassette_" + id, CassetteSize), site, anchor, gate, container);
             return cassette;
         }
 

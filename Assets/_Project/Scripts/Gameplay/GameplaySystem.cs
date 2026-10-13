@@ -300,13 +300,13 @@ namespace MoonProject.Gameplay
                 !_workshop.Initialize(services, Upgrades, _salvage.Catalog, _tower, Power, Blueprints, lights,
                     Equipment) ||
                 !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _salvage, _home, Containers) ||
-                !_cassettes.Initialize(services, Radio, KeepClearOfCassettes(), Containers) ||
+                !_cassettes.Initialize(services, Radio, _salvage, Containers) ||
                 !_logs.Initialize(services) ||
                 !_sonar.Initialize(services, _relics, _friends, _salvage, abilities, Power) ||
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
                 !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context),
-                    _home.Dock.Position) ||
+                    _home.Dock.Position, Containers) ||
                 !_progression.Initialize(services, Power, _home, _workshop, _sonar, _friends, _relays,
                     Upgrades, _lift, _tower, TowerParts, () => _battery.Model.Charge01) ||
                 !_plotter.Initialize(services, Blueprints, _workshop, _progression.Tuning, Upgrades) ||
@@ -513,7 +513,7 @@ namespace MoonProject.Gameplay
         {
             try
             {
-                return new TowerPartField(TowerParts, transform, services, _salvage, _relays.Reach, _tower,
+                return new TowerPartField(TowerParts, transform, services, _salvage, _relays, _tower,
                     _friends.Tuning, _progression.Tuning, () => _progression.ChasmSeen, Containers);
             }
             catch (InvalidOperationException exception)
@@ -777,24 +777,6 @@ namespace MoonProject.Gameplay
             Radio.Restore(data);
             _cassettes.SyncCollected();
             _shelf.Sync();
-        }
-
-        /// <summary>Every salvage site, friend site and friend part: a basin cassette keeps clear of them.</summary>
-        private List<Vector3> KeepClearOfCassettes()
-        {
-            var points = new List<Vector3>();
-            foreach (SalvageSite site in _salvage.Sites)
-            {
-                points.Add(site.Position);
-            }
-
-            foreach (Friend friend in _friends.Friends)
-            {
-                points.Add(friend.Site.Position);
-                points.AddRange(friend.Site.Parts);
-            }
-
-            return points;
         }
 
         private void RestoreRelics(RelicsSaveData data)

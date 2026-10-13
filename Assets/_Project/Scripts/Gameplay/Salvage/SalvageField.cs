@@ -42,6 +42,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private SalvageCatalog _catalog;
 
         private readonly List<SalvageSite> _sites = new List<SalvageSite>();
+        private readonly List<SalvageSite> _derelicts = new List<SalvageSite>();
         private readonly List<SalvagePiece> _pieces = new List<SalvagePiece>();
         private readonly List<SalvageDrag> _drags = new List<SalvageDrag>();
         private EventBus _events;
@@ -72,10 +73,16 @@ namespace MoonProject.Gameplay
 
         public SalvageCatalog Catalog => _catalog;
 
-        /// <summary>Every site, in catalog order.</summary>
+        /// <summary>Every wreck site, in catalog order (the derelicts are not among them).</summary>
         public IReadOnlyList<SalvageSite> Sites => _sites;
 
-        /// <summary>Every piece of every site.</summary>
+        /// <summary>
+        /// The derelicts on the routes (0.5.5 §1.7), in catalog order: their pieces are cut like any site's, but they
+        /// hold no relics or crew crate and never answer the sonar.
+        /// </summary>
+        public IReadOnlyList<SalvageSite> Derelicts => _derelicts;
+
+        /// <summary>Every piece of every site and derelict.</summary>
         public IReadOnlyList<SalvagePiece> Pieces => _pieces;
 
         /// <summary>The pieces that must be tethered clear first (what the tether can latch onto).</summary>
@@ -179,31 +186,43 @@ namespace MoonProject.Gameplay
                 frictionCombine = PhysicsMaterialCombine.Average,
             };
 
-            IReadOnlyList<SalvageSiteEntry> entries = _catalog.Sites;
-            for (int i = 0; i < entries.Count; i++)
+            if (!Stand(_catalog.Sites, false, _sites, services) ||
+                !Stand(_catalog.Derelicts, true, _derelicts, services))
             {
-                if (!services.Anchors.TryGet(entries[i].AnchorId, out WorldAnchor anchor))
-                {
-                    Fail($"site '{entries[i].AnchorId}' stands on a world anchor the World does not publish " +
-                         "(world anchors contract).");
-                    return false;
-                }
-
-                problem = SalvageSiteBuilder.Build(i, entries[i], anchor, transform, services.Terrain, _tuning,
-                    _catalog, services.Visuals.RelicHalo, _dragMaterial, _pieces, _drags, out SalvageSite site);
-                if (problem != null)
-                {
-                    Fail($"site '{entries[i].AnchorId}': {problem} (salvage site contract, docs/features/M3-13).");
-                    return false;
-                }
-
-                _sites.Add(site);
+                return false;
             }
 
             _cadence = new PickupCadence(_tuning.MinArrivalInterval);
             _flashes = new GlowFlashPool(transform, services.Meshes.Sphere, services.Visuals.Flash,
                 _tuning.FlashPoolSize, _tuning.FlashDuration, _tuning.FlashRadius, _tuning.FlashIntensity);
             _feel = new FeelVfx(transform, services.Visuals.FeelTuning, services.Visuals, _events, this);
+            return true;
+        }
+
+        private bool Stand(IReadOnlyList<SalvageSiteEntry> entries, bool derelicts, List<SalvageSite> sites,
+            GameplayServices services)
+        {
+            for (int i = 0; i < entries.Count; i++)
+            {
+                if (!services.Anchors.TryGet(entries[i].AnchorId, out WorldAnchor anchor))
+                {
+                    Fail($"'{entries[i].AnchorId}' stands on a world anchor the World does not publish " +
+                         "(world anchors contract).");
+                    return false;
+                }
+
+                string problem = SalvageSiteBuilder.Build(i, entries[i], derelicts, anchor, transform,
+                    services.Terrain, _tuning, _catalog, services.Visuals.RelicHalo, _dragMaterial, _pieces, _drags,
+                    out SalvageSite site);
+                if (problem != null)
+                {
+                    Fail($"'{entries[i].AnchorId}': {problem} (salvage site contract, docs/features/M3-13).");
+                    return false;
+                }
+
+                sites.Add(site);
+            }
+
             return true;
         }
 
@@ -231,14 +250,28 @@ namespace MoonProject.Gameplay
             return null;
         }
 
+        /// <summary>The derelict on anchor <paramref name="id"/> ("micro.06"), or null.</summary>
+        public SalvageSite FindDerelict(string id)
+        {
+            for (int i = 0; i < _derelicts.Count; i++)
+            {
+                if (string.Equals(_derelicts[i].Id, id, StringComparison.Ordinal))
+                {
+                    return _derelicts[i];
+                }
+            }
+
+            return null;
+        }
+
         internal SalvageSaveData Capture()
         {
-            var data = new SalvageSaveData { sites = new SalvageSiteSaveData[_sites.Count] };
+            var data = new SalvageSaveData { sites = new SalvageSiteSaveData[_sites.Count + _derelicts.Count] };
             var taken = new List<int>();
             var pieces = new List<SalvagePieceSaveData>();
-            for (int s = 0; s < _sites.Count; s++)
+            for (int s = 0; s < data.sites.Length; s++)
             {
-                SalvageSite site = _sites[s];
+                SalvageSite site = s < _sites.Count ? _sites[s] : _derelicts[s - _sites.Count];
                 taken.Clear();
                 pieces.Clear();
                 for (int i = 0; i < site.Pieces.Count; i++)
@@ -295,7 +328,9 @@ namespace MoonProject.Gameplay
             return data;
         }
 
-        /// <summary>Applies saved salvage by site id and piece number (unknown ones are ignored).</summary>
+        /// <summary>
+        /// Applies saved salvage by site or derelict id and piece number (unknown ones are ignored).
+        /// </summary>
         internal void Restore(SalvageSaveData data)
         {
             if (data == null)
@@ -305,7 +340,7 @@ namespace MoonProject.Gameplay
 
             foreach (SalvageSiteSaveData saved in data.sites)
             {
-                SalvageSite site = saved != null ? Find(saved.id) : null;
+                SalvageSite site = saved != null ? Find(saved.id) ?? FindDerelict(saved.id) : null;
                 if (site == null)
                 {
                     continue;
@@ -367,6 +402,11 @@ namespace MoonProject.Gameplay
             {
                 _sites[i].StepPilot(deltaTime);
                 _sites[i].StepShudder(deltaTime, _tuning.ShudderAmplitude, _tuning.ShudderFrequency);
+            }
+
+            for (int i = 0; i < _derelicts.Count; i++)
+            {
+                _derelicts[i].StepShudder(deltaTime, _tuning.ShudderAmplitude, _tuning.ShudderFrequency);
             }
         }
 

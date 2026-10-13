@@ -210,82 +210,35 @@ namespace MoonProject.Gameplay.Tests
             var catalog = Track(ScriptableObject.CreateInstance<CassetteCatalog>());
             var anchored = Cassette("a", prefab, CassetteSiteRule.Anchor, new AnchorSpot(WorldAnchorIds.CanyonLedge,
                 Vector2.zero));
-            var planned = Cassette("b", prefab, CassetteSiteRule.BasinPlanner, new AnchorSpot(string.Empty,
+            var onDerelict = Cassette("b", prefab, CassetteSiteRule.Derelict, new AnchorSpot(WorldAnchorIds.Micro06,
                 Vector2.zero));
-            catalog.Populate(new[] { anchored, planned });
+            catalog.Populate(new[] { anchored, onDerelict });
             Assert.IsNull(catalog.Validate());
             CollectionAssert.AreEqual(new[] { "a", "b" }, catalog.Ids());
 
-            catalog.Populate(new[] { anchored, Cassette("a", prefab, CassetteSiteRule.BasinPlanner,
-                new AnchorSpot(string.Empty, Vector2.zero)) });
+            catalog.Populate(new[] { anchored, Cassette("a", prefab, CassetteSiteRule.Derelict,
+                new AnchorSpot(WorldAnchorIds.Micro06, Vector2.zero)) });
             StringAssert.Contains("twice", catalog.Validate());
             catalog.Populate(new[] { Cassette("c", prefab, CassetteSiteRule.Anchor, new AnchorSpot(" ",
                 Vector2.zero)) });
             StringAssert.Contains("names none", catalog.Validate());
-            catalog.Populate(new[] { Cassette("d", null, CassetteSiteRule.BasinPlanner, new AnchorSpot(string.Empty,
+            catalog.Populate(new[] { Cassette("c", prefab, CassetteSiteRule.Derelict, new AnchorSpot(string.Empty,
                 Vector2.zero)) });
+            StringAssert.Contains("names none", catalog.Validate());
+            catalog.Populate(new[] { Cassette("d", null, CassetteSiteRule.Derelict, new AnchorSpot(
+                WorldAnchorIds.Micro06, Vector2.zero)) });
             StringAssert.Contains("prefab", catalog.Validate());
-        }
-
-        [Test]
-        public void BasinCassette_TucksAgainstASmallCraterRim_InItsBand_Deterministically()
-        {
-            TestWorld world = TestWorld.WithCrater();
-            var tuning = Track(ScriptableObject.CreateInstance<CassetteTuning>());
-            CassetteSite site = CassetteSitePlanner.Plan(world, world, tuning, 73, new List<Vector3>());
-            Assert.IsTrue(site.Tucked, "the flat basin's only rim is the small crater's");
-            Assert.Less(SurfaceRules.HorizontalDistance(site.Position, TestWorld.CraterCentre), 15f, "inside it");
-            float fromHome = SurfaceRules.HorizontalDistance(site.Position, world.BasePosition);
-            Assert.That(fromHome, Is.InRange(tuning.Distance.x, tuning.Distance.y));
-            Assert.IsTrue(world.PlayableArea.Contains(new Vector2(site.Position.x, site.Position.z)));
-            Assert.AreEqual(world.SampleHeight(site.Position.x, site.Position.z), site.Position.y, 1e-4f);
-            float rise = CassetteSitePlanner.Rim(world, site.Position.x, site.Position.z, tuning.RimProbe,
-                tuning.RimDirections, out Vector3 toRim);
-            Assert.That(rise, Is.InRange(tuning.RimRise.x, tuning.RimRise.y));
-            Assert.AreEqual(-1f, Vector3.Dot(toRim, site.Facing), 1e-4f, "its label faces away from the rim");
-
-            CassetteSite again = CassetteSitePlanner.Plan(world, world, tuning, 73, new List<Vector3>());
-            Assert.AreEqual(site.Position, again.Position, "deterministic");
-        }
-
-        [Test]
-        public void BasinCassette_KeepsClearOfRelicsAndFriends()
-        {
-            TestWorld world = TestWorld.WithCrater();
-            var tuning = Track(ScriptableObject.CreateInstance<CassetteTuning>());
-            var keepClear = new List<Vector3> { TestWorld.CraterCentre, new Vector3(60f, 0f, -30f) };
-            CassetteSite site = CassetteSitePlanner.Plan(world, world, tuning, 73, keepClear);
-            foreach (Vector3 point in keepClear)
-            {
-                Assert.GreaterOrEqual(SurfaceRules.HorizontalDistance(site.Position, point), tuning.Clearance);
-            }
-
-            Assert.IsFalse(site.Tucked, "the crater belongs to a friend: the best open spot instead");
-            Assert.IsTrue(SurfaceRules.InsideDrivable(world, site.Position.x, site.Position.z, tuning.EdgeMargin));
-        }
-
-        [Test]
-        public void BasinCassette_ThrowsWhenTheBasinLeavesNoSpot()
-        {
-            TestWorld world = TestWorld.Flat();
-            var tuning = Track(ScriptableObject.CreateInstance<CassetteTuning>());
-            var everywhere = new List<Vector3>();
-            for (float x = -300f; x <= 300f; x += 30f)
-            {
-                for (float z = -300f; z <= 300f; z += 30f)
-                {
-                    everywhere.Add(new Vector3(x, 0f, z));
-                }
-            }
-
-            Assert.Throws<InvalidOperationException>(() =>
-                CassetteSitePlanner.Plan(world, world, tuning, 73, everywhere));
+            var loose = Track(ScriptableObject.CreateInstance<CassetteDefinition>());
+            loose.Populate("e", prefab, CassetteSiteRule.Anchor, new AnchorSpot(WorldAnchorIds.CanyonLedge,
+                Vector2.zero), AbilityGate.Open, string.Empty);
+            catalog.Populate(new[] { loose });
+            StringAssert.Contains("no container", catalog.Validate(), "no tape lies on open ground");
         }
 
         private CassetteDefinition Cassette(string id, GameObject prefab, CassetteSiteRule site, AnchorSpot anchor)
         {
             var cassette = Track(ScriptableObject.CreateInstance<CassetteDefinition>());
-            cassette.Populate(id, prefab, site, anchor, 1, AbilityGate.Open, string.Empty);
+            cassette.Populate(id, prefab, site, anchor, AbilityGate.Open, ContainerKinds.TapeCase);
             return cassette;
         }
 

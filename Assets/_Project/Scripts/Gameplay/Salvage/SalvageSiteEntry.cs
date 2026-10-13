@@ -6,15 +6,18 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// One salvage site in the catalog: its World anchor and Art's site prefab (docs/features/M3-13: a Skeleton, the
-    /// "Salvage_&lt;n&gt;_&lt;Material&gt;[_Drag]" pieces each with a CutPoint, and the Heart where a relic rests).
+    /// "Salvage_&lt;n&gt;_&lt;Material&gt;[_Drag]" pieces each with a CutPoint, and the Heart where a relic rests), or
+    /// one of the derelicts left on the routes (0.5.5 §1.7: a Skeleton and any pieces, no heart, no crew crate).
     /// </summary>
     [Serializable]
     public sealed class SalvageSiteEntry
     {
-        [Tooltip("World anchor the site stands on (Core WorldAnchorIds.SitePrefix + name, e.g. site.depot).")]
+        [Tooltip("World anchor the site stands on (Core WorldAnchorIds.SitePrefix + name, e.g. site.depot; a " +
+                 "derelict's WorldAnchorIds.MicroPrefix + name, e.g. micro.06).")]
         [SerializeField] private string _anchorId = string.Empty;
 
-        [Tooltip("Art's site prefab (Generated/Art/Sites/Site_<name>.prefab), root at the anchor, +Z its forward.")]
+        [Tooltip("Art's site prefab (Generated/Art/Sites/Site_<name>.prefab, a derelict's " +
+                 "Generated/Art/Props/Derelict_<name>.prefab), root at the anchor, +Z its forward.")]
         [SerializeField] private GameObject _prefab;
 
         [Tooltip("The rover ability reaching it needs (the canyon lander stands past the Hover-Jump gate).")]
@@ -37,7 +40,8 @@ namespace MoonProject.Gameplay
                  "pieces, biggest to biggest.")]
         [SerializeField] private PieceSizeEntry[] _sizes = Array.Empty<PieceSizeEntry>();
 
-        [Tooltip("The crew supply crate beside its heart (docs/features/M3-25 T4): whose hand and what stack.")]
+        [Tooltip("The crew supply crate beside its heart (docs/features/M3-25 T4): whose hand and what stack. " +
+                 "A derelict has none (left empty).")]
         [SerializeField] private SupplyCrate _crate;
 
         public SalvageSiteEntry(string anchorId, GameObject prefab, AbilityGate gate, bool heartUnderPieces,
@@ -51,6 +55,15 @@ namespace MoonProject.Gameplay
             _heartUnderPieces = heartUnderPieces;
             _yieldScale = yieldScale;
             _cutLines = cutLines ?? throw new ArgumentNullException(nameof(cutLines));
+        }
+
+        /// <summary>
+        /// A derelict on a micro-site anchor (0.5.5 §1.7): open to 07, the plain yield, no heart and no crew crate.
+        /// </summary>
+        public static SalvageSiteEntry Derelict(string anchorId, GameObject prefab, PieceCutLine[] cutLines,
+            PieceSizeEntry[] sizes)
+        {
+            return new SalvageSiteEntry(anchorId, prefab, AbilityGate.Open, false, 1, cutLines, sizes, default);
         }
 
         /// <summary>The site's id everywhere (saves, events, relic definitions): its anchor id.</summary>
@@ -99,17 +112,19 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>Null when the entry is complete, else what is wrong with it.</summary>
-        public string Validate()
+        /// <param name="anchorPrefix">The anchors its list stands on: <see cref="WorldAnchorIds.SitePrefix"/> for a
+        /// wreck, <see cref="WorldAnchorIds.MicroPrefix"/> for a derelict.</param>
+        public string Validate(string anchorPrefix)
         {
             if (string.IsNullOrWhiteSpace(_anchorId) ||
-                !_anchorId.StartsWith(WorldAnchorIds.SitePrefix, StringComparison.Ordinal))
+                !_anchorId.StartsWith(anchorPrefix, StringComparison.Ordinal))
             {
-                return $"has no '{WorldAnchorIds.SitePrefix}' anchor id ('{_anchorId}')";
+                return $"has no '{anchorPrefix}' anchor id ('{_anchorId}')";
             }
 
             if (_prefab == null)
             {
-                return $"'{_anchorId}' has no prefab (Generated/Art/Sites)";
+                return $"'{_anchorId}' has no prefab (Generated/Art)";
             }
 
             return _gate == null ? $"'{_anchorId}' has no ability gate" : null;

@@ -131,12 +131,16 @@ MonoBehaviour:
       _landerBayArc: 70
       _landerBayDepth: 10
       _landerBayHalfLength: 20
-      _glowHeight: 3.5
+      _podBeacon: {x: -0.12, y: 3.5, z: 0.32}
       _glowIntensity: 0.9
-      _glowRadius: 1.2
+      _glowRadius: 0.2
       _glowMinAngle: 0.3
       _glowLightRange: 14
       _glowLightIntensity: 1.6
+      _beaconPeriod: 3.2
+      _beaconSharpness: 3
+      _beaconFloor: 0.3
+      _beaconGlassGlow: 1.6
       _exitOffset: 40
       _exitTurnRadius: 28
       _exitBranch: 22
@@ -172,7 +176,7 @@ MonoBehaviour:
         _furrowLength: 90
         _furrowHalfWidth: 6
         _furrowTailHalfWidth: 2
-        _furrowDepth: 0.3
+        _furrowDepth: 0.55
         _bermHeight: 0.15
         _bermHalfWidth: 1.5
         _gougeCount: 4
@@ -375,12 +379,36 @@ MonoBehaviour:
   _homeLighting:
     _wakeStagger: 1.2
     _wakeFade: 2.4
-    _cableTravel: 1.5
-    _cableSegmentFade: 0.35
+    _windowSteps: 4
+    _windowStepEase: 0.35
+    _cableTravel: 1.2
+    _cableSegmentFade: 0.12
+    _cablePulsePeak: 4
+    _cablePulseSeconds: 0.6
+    _cableSteady: 0.45
+    _cablePulseLight: 6
+    _cablePulseLightRange: 4
+    _previewTravel: 2.6
+    _previewStagger: 1.3
+    _previewRise: 0.3
+    _previewTail: 1.4
+    _previewPeak: 0.75
     _pilotPeriod: 3.5
     _pilotSharpness: 6
     _topLightLevel: 0.6
     _pilotMinAngle: 0.4
+    _echoTravel: 1.2
+    _echoRise: 0.15
+    _echoTail: 0.9
+    _echoPeak: 1.8
+    _buildHoldTimeout: 8
+    _towerBeatRadius: 20
+    _beaconFlareGain: 3
+    _beaconFlareGrow: 4
+    _beaconFlareSeconds: 1.4
+    _beaconTurnPeriod: 7
+    _beaconSweep: 0.55
+    _beaconSweepSharpness: 4
     _pilotIntensity: 1.4
     _pilotRadius: 0.12
     _pilotHaloFrom: 60
@@ -537,6 +565,34 @@ MonoBehaviour:
     _bridgeLampGlow: 1
     _bridgeSide: 3.5
     _dishSpread: 6.5
+    _ventPatches: 26
+    _ventPatchRadius: {x: 1.2, y: 3.6}
+    _ventSpread: 1.6
+    _ventTint: {r: 1, g: 0.85, b: 0.45, a: 1}
+    _ventStrength: 0.75
+    _ventFade: {x: 160, y: 380}
+  _reachRing:
+    _duration: 2
+    _fadeIn: 0.1
+    _fadeOut: 0.45
+    _halfWidth: 2.5
+    _color: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
+    _intensity: 0.55
+    _relayReach: 80
+    _packReach: 45
+  _scrapField:
+    _pieces: 14
+    _laneHalfWidth: 2.5
+    _spread: 6
+    _laneMargin: 1.2
+    _span: {x: 0.05, y: 0.95}
+    _anchors: 3
+    _anchorScale: {x: 2, y: 2.5}
+    _scale: {x: 1, y: 1.6}
+    _crowding: 1.8
+    _sink: 0.45
+    _tilt: {x: 12, y: 28}
+    _dust: {r: 0.7, g: 0.68, b: 0.74, a: 1}
   _lensView:
     _lidSoftness: 0.14
     _lidCurve: 0.12
@@ -569,3 +625,22 @@ MonoBehaviour:
     _litGlow: 0.9
     _chargingGlow: 1.5
     _ease: 0.9
+  _networkPulse:
+    _hopSeconds: 1.4
+    _flashRise: 0.2
+    _flashFall: 1.6
+    _originBoost: 1.4
+    _beadFade: 0.2
+    _arcPerMetre: 0.06
+    _color: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
+    _flashIntensity: 2.4
+    _flashRadius: 1
+    _beadIntensity: 1.8
+    _beadRadius: 0.6
+    _minAngle: 0.8
+    _minAngleFrom: 30
+    _minAngleFull: 60
+    _flashLight: 4
+    _flashLightRange: 14
+    _beadLight: 2.5
+    _beadLightRange: 8

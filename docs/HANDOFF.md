@@ -4,7 +4,96 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 0000000000000. LATEST (2026-10-13): owner played 0.5.4 -> 0.5.5 "owner feedback" before 0.6
+## 0000000000000000. LATEST (2026-10-14 ~00:30): main 5bffb082 verified+pushed; look A in flight
+- Director: session local_0b7c61a2 at ~92% context. A fresh Director starts HERE and recreates cron v4.
+- **Landed since e13afbde (all verified):**
+  - feb2157a: the network pulse + its sound;
+  - 5bffb082: C8 relay cabinets + container seals dimmed (the "blue wash at 06" was over-bright seals);
+  - docs: north-star §4b variety/density and the monotony check, ARCHITECTURE's CabinetSocket.
+- **Owner decisions tonight:**
+  - look: day = C "Low sun", night = A "Moon grey". A ships in 0.5.5 as the game's look; C arrives with 0.6's
+    day/night. The basin variety pass moves to 0.6 (world's PROPOSAL.md in its worktree Logs).
+  - Ruling: Ro's tape deck is a station spare part in Kenji's "07 · SPARE" crate; keepsakes = 5; the cassette_player
+    relic is retired.
+- **In flight (land together):**
+  - look A: art palette (box/art 0bac0cfe+; must raise Palette.ReferenceLight) + world sky/fog/grade (box/world
+    758491da; ONE grade source = World PostProcessSettings);
+  - C9: gameplay 2ec38e77 + art 0bac0cfe (retire the relic) + audio 28a01874 (re-render relic_answer after C9's
+    asset delete).
+  - Then gameplay C11b, C5, C10, C6, D; then verify --explicit, bump 0.5.5, build.
+- **Pending owner review:** story v3 (box/story 34f104d0; ask story & flow for the summary) and concept round 2.
+
+## 000000000000000. (prev) (2026-10-13 ~22:30): 0.5.5 nearly done; 0.6 designed; story v3 + concept art pending owner review
+- Director: session local_0b7c61a2 ("MoonProject Director handoff"); context ~85%; a fresh Director starts HERE.
+  Recreate cron v4 (usage log, notice at 85/95%, stall check, no auto-stop).
+- **main e13afbde+ (verified; origin has it).** Since 95f5f746:
+  - C11a: derelicts 06/Mule/Drone on their anchors; Dust & Honey in the TapeCase at 06; art's hut + haul-bot sockets;
+    rover's elder glance.
+  - Docs:
+    - 0.6-world-regions.md (Long Mare first via the rille; regions open outward by adjacency; one streamed world;
+      gentle crater cold + Cell Heater; Treads teaser; L1 light model);
+    - 0.6-living-moon.md (machine ecology simulation rules; two machine families: Lumen round induction pads vs the
+      second station's hex docks; the Charge Adapter/Power Bridge);
+    - north-star.md (why Subnautica works; Lunarion's hook/pull/hold/finish/feeling; awe beats; playtest signals;
+      the 9-point spec checklist);
+    - VISION "light is physical" (a low polar Sun circling once per 2 h lunar day; earthshine never charges);
+    - the project skill .claude/skills/player-experience (every design doc starts from the five questions).
+- **0.5.5 remaining (gameplay):**
+  - C8 relay cabinets (4eb6e448 on box/gameplay, unlanded);
+  - the blue-light bug near 06 (gameplay is finding the source);
+  - C9 SpareCrate, C11b (hut + haul bot), C5 scrap.kestrel_trail, C10 drop ground rings, C6 held pieces;
+  - D scanning: derelicts answer the sonar and show as chart pencil marks while they hold anything un-scanned/un-cut.
+  - Waiting on box branches:
+    - rover 1d00b281 (the elder-capture tweak 760b3818);
+    - world: the network pulse (awe beat 7) in progress.
+  - Then verify --explicit, bump 0.5.5, build, Builds/.
+- **Owner reviews pending:**
+  - story v3 (box/story 212fa542; the pull = Ines's buried water-ice discovery + a second station; elders all at rest
+    where they fell; NO human→robot sentimentality; plus an audit of existing sentimental lines);
+  - concept art (box/art b85c5239: the robot lineup, the elders' evolution, Atlas/Moss, region mood frames).
+  - Present both to the owner in Vietnamese, ask with AskUserQuestion, then record the decisions.
+- **New owner memories today:** world-regions, living-moon (logic first; light L1), story-logic, player-experience-first,
+  awe-hooks, derelict-variety, equipment-07, inventory-07-only, scan-fragments, no-floating-loot, cut-charge-weight.
+- **Lesson:** don't push ANY commit (docs included) while a verify runs; it pushes the unverified code under it.
+
+## 00000000000000. (prev) (2026-10-13 ~19:30): 0.5.5 most slices on main (95f5f746, verified + pushed)
+- Director: session local_0b7c61a2 ("MoonProject Director handoff"); cron v4 = job 27877d8f (session-only).
+- **On main, verified:**
+  - A guidance; B hold, transfer view and spares;
+  - E Cells charge-up; equipment (07 tab with a live portrait, sockets, fit at the bay);
+  - Core contracts (equipment, scan, containers);
+  - C1-C4 + C7 (sealed containers with finds at the mouth, Tilly's sled, canyon tapes, keepsakes in RelicPockets);
+  - the art derelicts 06/Mule/HaulBot/Drone (prefabs only, NOT placed yet);
+  - the pod beacon, the scrap field, WorldSettings re-serialised;
+  - rover's scan look + portrait lights; no ability notes; the low-battery hint; the Tilly parts chip removed;
+  - `verify --explicit` (run it before the release build).
+- **Remaining for 0.5.5 (all gameplay-led):**
+  - C8 cabinets, C9 SpareCrate, the 06 TapeCase (dust_and_honey);
+  - C11 place the derelicts (06 first, then rover re-captures its glance; box/rover a7101a38/dbd64207 waits for it);
+  - C5 the scrap.kestrel_trail site (4 Metal);
+  - C10 drop the ground rings;
+  - C6 held pieces (amber; overflow crates);
+  - D scanning (gameplay: fragments at FragmentSocket_*, progress, dissolve start = FeelBeat Scan Reward at ScanTarget, known gives +metal).
+  - Then `verify --explicit --parallel --push`, a version bump to 0.5.5, build_player, Builds/.
+- **Rulings today** (see memories scan-fragments, equipment-07, derelict-variety, inventory-07-only, cut-charge-weight,
+  plain-functional-text, no-floating-loot):
+  - docked Tab = the transfer view; E at the dock stays Hop;
+  - one event per fact (PartFitted replaced the old kit events);
+  - finds rest at the container's mouth, never on the ground;
+  - relics in debris pockets (D6);
+  - the deck on the back centreline;
+  - dust_and_honey in a TapeCase at 06;
+  - the drone fall after D (or 0.6).
+- **Lessons:**
+  - box_check never runs the Playthrough: a slice that changes the first-hour flow must run
+    `--category Playthrough` before it reports (the C2 coil line broke it);
+  - hand-tuned assets (WorldSettings) keep stale values when code defaults change; re-serialise them in the same
+    commit (the 1.2 s cable pulse never ran until today);
+  - a box that edits another domain's tests runs that domain's suites;
+  - pin temp branches and pass --filter on every land.
+- 0.6 backlog: the solar field vs antenna farm (L7) clash; more elders; the drone fall if cut from 0.5.5.
+
+## 0000000000000. (previous) (2026-10-13): owner played 0.5.4 -> 0.5.5 "owner feedback" before 0.6
 - **Owner's verdict on 0.5.4** (memories: plain-functional-text, scan-fragments, no-floating-loot,
   inventory-07-only):
   1. Text is still unfitting and too much: the charger hint shows at boot with a full battery; the tower repair says

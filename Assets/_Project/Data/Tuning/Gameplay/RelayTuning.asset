@@ -26,13 +26,6 @@ MonoBehaviour:
   - _metal: 4
     _wiring: 2
     _optics: 0
-  _partDistance: {x: 14, y: 34}
-  _partPreferred: 22
-  _partRingStep: 4
-  _partAngleStep: 20
-  _partMaxSlope: 14
-  _partMargin: 2
-  _partPathTries: 16
   _restoreRadius: 6
   _restoreHold: 0.8
   _stitch: 2

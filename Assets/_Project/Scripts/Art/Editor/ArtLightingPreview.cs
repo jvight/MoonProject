@@ -783,8 +783,6 @@ namespace MoonProject.Art.Editor
         private static CameraPoseSet DerelictsScene(TemporaryObjects temporary)
         {
             var poses = new List<CameraPose>();
-            Transform hut = Instantiate(RelayModelBuilder.HutName, temporary, ArtPaths.RelayFolder).transform;
-            hut.SetPositionAndRotation(new Vector3(-1.9f, 0f, 0.4f), Quaternion.Euler(0f, 90f, 0f));
             (string name, string blueprint, int count)[] hosts =
             {
                 (DerelictBuilder.ElderName, "CellPack", 3), (DerelictBuilder.MuleName, "WarmHeadlamp", 2),
@@ -804,6 +802,8 @@ namespace MoonProject.Art.Editor
 
                 if (hosts[h].name == DerelictBuilder.ElderName)
                 {
+                    Transform hut = Instantiate(RelayModelBuilder.HutName, temporary, ArtPaths.RelayFolder).transform;
+                    hut.SetParent(Descendant(host, DerelictBuilder.HutSocketName), false);
                     Transform tape = Instantiate(LootContainerBuilder.TapeCaseName, temporary, ArtPaths.PropFolder)
                         .transform;
                     tape.SetParent(Descendant(host, DerelictBuilder.TapeSocketName), false);
@@ -1359,6 +1359,12 @@ namespace MoonProject.Art.Editor
                 Quaternion facing = Quaternion.LookRotation(forward);
                 GameObject site = Instantiate(SiteModelBuilder.SiteName(ids[i]), temporary, ArtPaths.SitesFolder);
                 site.transform.SetPositionAndRotation(anchor, facing);
+                if (ids[i] == "drill")
+                {
+                    Transform bot = Instantiate(DerelictBuilder.HaulBotName, temporary, ArtPaths.PropFolder).transform;
+                    bot.SetParent(Descendant(site.transform, SiteModelBuilder.HaulBotSocketName), false);
+                }
+
                 if (pickedClean)
                 {
                     foreach (Transform child in site.transform)
@@ -1375,6 +1381,20 @@ namespace MoonProject.Art.Editor
                 poses.Add(Pose($"{ids[i]}_30m", Point(anchor - forward * 28f - side * 10f + Vector3.up * 6f),
                     Point(anchor + Vector3.up * 1.5f), 40f));
             }
+
+            int garage = 0;
+            while (ids[garage] != "garage")
+            {
+                garage++;
+            }
+
+            Vector3 garageForward = SiteForwards[garage].normalized;
+            poses.Add(Pose("garage_top", Point(SiteAnchors[garage] + garageForward * 2.5f + Vector3.up * 16f),
+                Point(SiteAnchors[garage] + garageForward * 2.6f), 50f));
+            Vector3 garageSide = Quaternion.LookRotation(garageForward) * Vector3.right;
+            Vector3 behind = SiteAnchors[garage] + garageForward * 13f + garageSide * 3f + Vector3.up * 3.5f;
+            Vector3 backLane = SiteAnchors[garage] + garageForward * 6f + garageSide * 1.2f + Vector3.up;
+            poses.Add(Pose("garage_back", Point(behind), Point(backLane), 50f));
 
             Vector3 depot = SiteAnchors[0];
             Vector3 depotForward = SiteForwards[0].normalized;

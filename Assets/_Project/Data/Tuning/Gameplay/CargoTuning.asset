@@ -56,3 +56,6 @@ MonoBehaviour:
   _containerCut: 0
   _containerLidSwing: 105
   _containerLidSeconds: 0.9
+  _containerSealGlow: 0.8
+  _containerSealNearGlow: 0.1
+  _containerSealFade: {x: 3, y: 9}

@@ -189,8 +189,17 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Click();
             Assert.AreEqual(RadioChannel.LumenAfterDark, radio.Channel, "and round again");
 
-            _fixture.Rover.Place(Flat(basin.Position + basin.Facing * 2f), 0f);
-            yield return new WaitForSeconds(_fixture.CassetteTuning.FlightDuration + 1f);
+            // Teleported across the basin, 07 never stops on a ring to charge (first-hour v2 §5): this session is
+            // about Bell, so the cut at 06 starts from a full battery, not from the crawl's sleeping beam.
+            BatteryModel battery = _fixture.Gameplay.Battery.Model;
+            battery.Restore(new BatterySaveData { cells = battery.Cells, charge = battery.Cells, arcRevealed = true });
+            Vector3 beside = Flat(basin.Position + basin.Facing * 1.6f);
+            _fixture.Rover.Place(beside, Yaw(Flat(basin.Position) - beside));
+            yield return null;
+            yield return SealCut.Hold(this, _fixture.Gameplay,
+                _fixture.Gameplay.Cassettes.Container(IndexOf(DustAndHoney)), "Ro's case on 06");
+            yield return Until(() => _fixture.Events.BellSignalFound.Count > 0,
+                _fixture.CassetteTuning.PresentSeconds + _fixture.CassetteTuning.FlightDuration + 1f);
             Assert.AreEqual(BellSignalTarget.Cassette, _fixture.Events.BellSignalFound[0].Value.Target);
             Assert.IsTrue(HasTicker(BellSignals.FoundLine0), "Bell says: told you so");
             Assert.AreEqual(2, _fixture.Events.BellSignalPicked.Count, "and she picks the next");

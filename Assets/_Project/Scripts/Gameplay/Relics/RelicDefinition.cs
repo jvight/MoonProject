@@ -30,10 +30,6 @@ namespace MoonProject.Gameplay
         [Tooltip("The salvage site whose heart it waits in (its anchor id, e.g. site.depot).")]
         [SerializeField] private string _siteId = string.Empty;
 
-        [Tooltip("Offset (m) from the site's Heart in the site's frame (x to its right, y along its forward), for a " +
-                 "second relic sharing one heart.")]
-        [SerializeField] private Vector2 _heartOffset;
-
         [Tooltip("Whose belongings it is: a crew id (ro, kenji, ines, theo), for the memory cards by crew.")]
         [SerializeField] private string _crewSet = string.Empty;
 
@@ -46,8 +42,6 @@ namespace MoonProject.Gameplay
         public int AnswerNote => _answerNote;
 
         public string SiteId => _siteId;
-
-        public Vector2 HeartOffset => _heartOffset;
 
         public string CrewSet => _crewSet;
 
@@ -75,7 +69,7 @@ namespace MoonProject.Gameplay
         }
 
         internal void Populate(string id, float mass, GameObject prefab, int answerNote, string siteId,
-            Vector2 heartOffset, string crewSet)
+            string crewSet)
         {
             _crewSet = crewSet;
             _id = id;
@@ -83,7 +77,6 @@ namespace MoonProject.Gameplay
             _prefab = prefab;
             _answerNote = answerNote;
             _siteId = siteId;
-            _heartOffset = heartOffset;
         }
     }
 }

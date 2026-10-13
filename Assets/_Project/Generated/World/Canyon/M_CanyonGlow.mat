@@ -29,7 +29,7 @@ Material:
     - _MinAngleFrom: 60
     - _MinAngleFull: 80
     - _MinAngleTan: 0.0052360357
-    - _Radius: 1.2
+    - _Radius: 0.2
     m_Colors:
     - _Color: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
   m_BuildTextureStacks: []

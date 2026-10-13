@@ -706,3 +706,30 @@ def part_refuse(_variant, gen):
     place(mix, 0.18 * _tick(gen, note_freq("B4"), 0.1), 0)
     place(mix, 0.18 * _tick(gen, note_freq("F#4"), 0.15), samples(0.09))
     return filters.lowpass(mix, 2500.0)
+
+
+# ------------------------------------------------------------------------- 0.5.5: the network pulse (handshake)
+
+PULSE_NOTES = ("D5", "E5", "F#5", "A5", "B5", "D6")
+
+
+def pulse_note(variant, gen):
+    """A mast lamp flashing as the network's handshake passes: an airy bell (no glass) with a breath of air around
+    it, one pentatonic step higher per hop, short and calm."""
+    freq = note_freq(PULSE_NOTES[variant])
+    bell = instruments.soft_bell(freq, 1.5, decay=1.1, attack=0.03)
+    n = bell.shape[0]
+    air = filters.bandpass(noise.pink_filter(noise.white(n, gen)), 2.0 * freq, 1.5)
+    air = air / max(float(np.std(air)), 1e-9) * envelope.ar(n, 0.02, 0.5)
+    mix = 0.45 * bell + 0.008 * air
+    return filters.lowpass(mix, 4200.0)
+
+
+def pulse_home(_variant, gen):
+    """The handshake arriving home: a warm two-note resolve, A4 settling onto D5 on felt piano over a soft D3 pad."""
+    n = samples(2.6)
+    mix = np.zeros(n)
+    place(mix, 0.32 * instruments.felt_piano(note_freq("A4"), 1.6, gen, decay=1.2), 0)
+    place(mix, 0.38 * instruments.felt_piano(note_freq("D5"), 2.2, gen, decay=1.6), samples(0.32))
+    place(mix, 0.08 * instruments.soft_pad(note_freq("D3"), 2.2, 0.4, 1.4, hold=0.2), samples(0.32))
+    return filters.lowpass(mix, 4000.0)

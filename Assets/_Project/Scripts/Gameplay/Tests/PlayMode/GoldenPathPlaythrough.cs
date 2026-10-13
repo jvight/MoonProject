@@ -431,11 +431,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(_gameplay.TowerPartField.IsResting(CoilPart), "no coil before the heart is open");
             yield return SalvageTheDepot(depot);
             Assert.IsTrue(depot.HeartRevealed, "the last cut reveals it");
-            yield return ExpectStep(ProgressionKeys.NextTowerPart, "the coil glows in the open heart: bring it to the tower");
+            yield return ExpectStep(ProgressionKeys.NextTowerPart,
+                "the coil's crate glows in the open heart: bring the coil to the tower");
             Assert.IsTrue(_gameplay.Materials.Has(_gameplay.Upgrades.Find(Tower).Levels[0].Recipe),
                 "the depot's materials cover level 1...");
             Assert.IsTrue(_gameplay.TowerParts.NeedsPart(Tower, 1), "...but power is earned by a find (P1)");
-            yield return PickUpPartInTheHeart(depot, CoilPart);
+            yield return PickUpPartInTheHeart(depot, CoilPart, false);
             Assert.IsFalse(depot.AnswersSonar, "picked clean and its coil taken: the depot falls silent");
             yield return BuyTowerLevel(1);
             yield return ExpectStep(ProgressionKeys.NextSignal, "home is powered: the tower hears Tilly");
@@ -1041,7 +1042,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// open heart (0.5.5 §2): round the wreck to the container's front and hold E to cut its seal; the lid swings
         /// open and the part rises to its open mouth. Press E from where 07 stands: it spirals into 07 (P1).
         /// </summary>
-        private IEnumerator PickUpPartInTheHeart(SalvageSite site, int index)
+        /// <param name="roundTheWreck">
+        /// True where the container's front faces away from home and the wreck stands between (the garage's junction
+        /// box faces its way in, home lies behind the garage): 07 goes round the wreck before it heads home.
+        /// </param>
+        private IEnumerator PickUpPartInTheHeart(SalvageSite site, int index, bool roundTheWreck)
         {
             Begin();
             TowerPartField field = _gameplay.TowerPartField;
@@ -1063,26 +1068,52 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Until(() => _gameplay.TowerParts.StateOf(index) == TowerPartState.Carried, 8f,
                 $"{part} spirals into 07");
             Capture("03-part-" + part);
+
+            if (roundTheWreck)
+            {
+                yield return CircleTo(site, Flat(_context.Get<IWorldLayout>().BasePosition), 0f);
+            }
             End($"Pick up {part} in the heart of {site.Id}", "it rides home on 07's back");
         }
 
-        /// <summary>The relay spare waits on the first lit mast's pad: drive up to it and press E (P1, level 3).</summary>
+        /// <summary>
+        /// The relay spare waits on the shelf of the first lit mast's open cabinet: drive up to it and press E (P1,
+        /// level 3).
+        /// </summary>
         private IEnumerator PickUpTheRelaySpare()
         {
             Begin();
             TowerPartField field = _gameplay.TowerPartField;
             yield return Until(() => field.IsResting(SparePart) ||
                                      _gameplay.TowerParts.StateOf(SparePart) != TowerPartState.Waiting,
-                _gameplay.Progression.Tuning.PartAppearSeconds + 2f, "the relay spare shows on the lit mast's pad");
+                _gameplay.Progression.Tuning.PartAppearSeconds + 2f,
+                "the relay spare shows in the lit mast's cabinet");
             if (_gameplay.TowerParts.StateOf(SparePart) == TowerPartState.Waiting)
             {
-                yield return DriveTo(Flat(field.RestPosition(SparePart)), PartArrive, 0.5f, 60f, "the relay spare");
+                Vector3 spare = field.RestPosition(SparePart);
+                Vector3 front = spare + CabinetHolding(spare).Root.forward * SealStandOff;
+                yield return DriveTo(Flat(front), PartArrive, 0.5f, 60f, "the relay spare");
                 yield return PickupPress.Take(this, _gameplay, 4f, "the relay spare");
             }
 
             yield return Until(() => _gameplay.TowerParts.StateOf(SparePart) == TowerPartState.Carried, 8f,
                 "the relay spare spirals into 07");
-            End("Pick up the relay spare on the mast's pad", "level 3's part rides on 07's back");
+            End("Pick up the relay spare in the mast's cabinet", "level 3's part rides on 07's back");
+        }
+
+        /// <summary>The relay mast's service cabinet whose shelf holds <paramref name="point"/>.</summary>
+        private SealedContainer CabinetHolding(Vector3 point)
+        {
+            foreach (RelayMast mast in _gameplay.Relays.Masts)
+            {
+                if (Vector3.Distance(mast.PartRest, point) < 0.01f)
+                {
+                    return mast.Cabinet;
+                }
+            }
+
+            Assert.Fail($"no relay cabinet holds {point}");
+            return null;
         }
 
         /// <summary>
@@ -1187,7 +1218,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Vector3 toGarage = Flat(garage.Position - _rover.Position).normalized;
             yield return DriveTo(Flat(garage.Position - toGarage * SiteApproach), 3f, 1f, 90f, "the garage");
             End("Back to the garage", "Tilly spots the transformer in its heart");
-            yield return PickUpPartInTheHeart(garage, TransformerPart);
+            yield return PickUpPartInTheHeart(garage, TransformerPart, true);
         }
 
         /// <summary>
@@ -1911,6 +1942,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             int seats = _seats;
             yield return FitFromTheRow(bench, RoverKitPiece.HoverCoils, "the coils");
             Assert.IsTrue(abilities.Has(RoverAbility.HoverJump), "fitted: 07 can leap now");
+            yield return null;
             Assert.IsTrue(bench.Working, "the bay works: its lights are up");
             Assert.AreEqual(0, bench.SparkCount, "no sparks while the arms are folded");
             yield return Until(() => _seats > seats, BayFitTimeout, "the floor arm sets the coils on 07");
@@ -2321,16 +2353,22 @@ namespace MoonProject.Gameplay.PlayModeTests
             float distance = SurfaceRules.HorizontalDistance(_rover.Position, tape.Position);
             Vector3 stand = tape.Position + tape.Facing * 6f;
             yield return DriveTo(new Vector3(stand.x, 0f, stand.z), 2f, 0.8f, 90f, "Bell's signal");
-            Review(tape.Position + tape.Facing * 3f + Vector3.up * 1.4f, tape.Position, "28-basin-tape-tucked");
-            yield return DriveTo(new Vector3(tape.Position.x, 0f, tape.Position.z), 1f, 0.5f, 30f, "the tape");
-            yield return Until(() => Collected(DustAndHoney), 6f, "the tape pops out of the dust into 07");
+            Review(tape.Position + tape.Facing * 3f + Vector3.up * 1.4f, tape.Position, "28-tape-case-on-06");
+            SealedContainer tapeCase = _gameplay.Cassettes.Container(CassetteIndex(DustAndHoney));
+            Vector3 front = tapeCase.CutPoint.position + tapeCase.Root.forward * SealStandOff;
+            yield return DriveTo(Flat(front), 1f, 0.35f, 30f, "the seal of Ro's case on 06");
+            Press(_keyboard.eKey);
+            yield return Until(() => tapeCase.Opened, SealCutTimeout, "held E cuts the seal of Ro's case on 06");
+            Release(_keyboard.eKey);
+            yield return Until(() => Collected(DustAndHoney), _gameplay.Cargo.ContainerLidSeconds +
+                _gameplay.Cassettes.Tuning.PresentSeconds + 6f, "Dust & Honey rises in its case and drifts into 07");
             yield return Until(() => _events.BellSignalFound.Count > 0, 2f, "Bell says so");
             Assert.IsTrue(Ticker(BellSignals.FoundLine0), "Bell says: told you so");
             Assert.AreEqual(2, _gameplay.Shelf.Shown, "both tapes stand on her rack");
             Transform corner = _gameplay.Friends.Find(BellId).Home;
             Review(_gameplay.Shelf.transform.position + _gameplay.Shelf.transform.forward * 2.2f + Vector3.up * 1.3f,
                 _gameplay.Shelf.transform.position + Vector3.up * 0.6f, "29-tape-rack");
-            End($"Follow Bell's signal to the basin tape ({distance:F0} m)",
+            End($"Follow Bell's signal to Ro's case on 06 ({distance:F0} m)",
                 $"Dust & Honey on the rack next to Vol. 1 by {corner.name}");
         }
 
@@ -2436,6 +2474,23 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return RestoreRelay(3, "the terminus relay");
         }
 
+        /// <summary>
+        /// 07 drives up to the mast's service cabinet, cuts its seal (0.5.5 §2) and takes the part off its shelf.
+        /// </summary>
+        private IEnumerator TakeTheRelayPart(RelayMast mast, string name)
+        {
+            SealedContainer cabinet = mast.Cabinet;
+            Vector3 front = cabinet.CutPoint.position + cabinet.Root.forward * SealStandOff;
+            yield return DriveTo(Flat(front), 1f, 0.35f, 120f, $"the seal of {name}'s cabinet");
+            Press(_keyboard.eKey);
+            yield return Until(() => cabinet.Opened, SealCutTimeout, $"held E cuts the seal of {name}'s cabinet");
+            Release(_keyboard.eKey);
+            yield return Until(() => cabinet.StandsOpen, _gameplay.Cargo.ContainerLidSeconds + 2f,
+                $"{name}'s cabinet door swings open");
+            yield return PickupPress.Take(this, _gameplay, 4f, "the relay part");
+            yield return Until(() => mast.PartState == RelayPartState.Held, 8f, "the relay part flies into 07");
+        }
+
         /// <summary>A mast's part, then the stitch at its foot; done once it comes online, linked home.</summary>
         private IEnumerator RestoreRelay(int index, string name)
         {
@@ -2445,10 +2500,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(_gameplay.Materials.Has(recipe), $"the stock covers {name}");
             Begin();
             int online = _events.RelayRestored.Count;
-            float partAway = SurfaceRules.HorizontalDistance(mast.PartRest, mast.Anchor.Position);
-            yield return DriveTo(Flat(mast.PartRest), 1.5f, 0.7f, 120f, name + "'s part");
-            yield return PickupPress.Take(this, _gameplay, 4f, "the relay part");
-            yield return Until(() => mast.PartState == RelayPartState.Held, 8f, "the relay part flies into 07");
+            yield return TakeTheRelayPart(mast, name);
             yield return AroundToTheFront(mast, name);
             Vector3 foot = mast.Broken.PartSocket.position + mast.Anchor.Forward * RelayFoot;
             yield return DriveTo(Flat(foot), 1.2f, 0.5f, 60f, name + "'s foot");
@@ -2461,7 +2513,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Until(() => _events.RelayRestored.Count > online, beat.Duration + 2f,
                 name + " comes online, linked home");
             Assert.AreEqual(mast.Id, _events.RelayRestored[_events.RelayRestored.Count - 1].Value.RelayId);
-            End($"Restore {name} ({mast.Id})", $"recipe {recipe}, its part {partAway:F0} m from the mast");
+            End($"Restore {name} ({mast.Id})", $"recipe {recipe}, its part from its cabinet");
         }
 
         /// <summary>
@@ -2561,10 +2613,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Begin();
             Vector3 pad = mast.Anchor.Position;
             Review(pad + mast.Anchor.Forward * 16f + Vector3.up * 2.5f, pad + Vector3.up * 5f, "30-relay-dark");
-            float partAway = SurfaceRules.HorizontalDistance(mast.PartRest, pad);
-            yield return DriveTo(Flat(mast.PartRest), 1.5f, 0.7f, 120f, "the mound relay's part");
-            yield return PickupPress.Take(this, _gameplay, 4f, "the relay part");
-            yield return Until(() => mast.PartState == RelayPartState.Held, 8f, "the relay part flies into 07");
+            yield return TakeTheRelayPart(mast, "the mound relay");
             Vector3 foot = mast.Broken.PartSocket.position + mast.Anchor.Forward * RelayFoot;
             yield return DriveTo(Flat(foot), 1.2f, 0.5f, 60f, "the mound relay's foot");
             yield return Until(() => _gameplay.Hints.TryGet(InteractionKind.Restore, out InteractionHint hint) &&
@@ -2587,7 +2636,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Review(pad + mast.Anchor.Forward * 30f + Vector3.up * 14f, pad + mast.Anchor.Forward * 40f,
                 "33-relay-link-pulse");
             End("Restore the mound relay (relay.0)",
-                $"recipe {recipe} ({mast.Paid} units), its part {partAway:F0} m from the mast, beat " +
+                $"recipe {recipe} ({mast.Paid} units), its part from its cabinet, beat " +
                 $"{beat.Duration:F1} s");
         }
 

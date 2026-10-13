@@ -69,7 +69,7 @@ namespace MoonProject.Gameplay.Editor
             {
                 LootContainerBuilder.CoilCrateName, LootContainerBuilder.TapeCaseName,
                 LootContainerBuilder.JunctionBoxName, LootContainerBuilder.SupplyPodName,
-                LootContainerBuilder.TillySledName,
+                LootContainerBuilder.TillySledName, LootContainerBuilder.CabinetName,
             };
             var containers = new GameObject[names.Length];
             for (int i = 0; i < names.Length; i++)

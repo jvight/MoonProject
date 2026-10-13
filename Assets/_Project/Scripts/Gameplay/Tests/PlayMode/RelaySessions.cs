@@ -23,6 +23,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>07 stands this far (m) in front of a mast's junction box to restore it.</summary>
         private const float FootStandOff = 3f;
 
+        /// <summary>07 stands this far (m) in front of a cabinet's seal to cut it.</summary>
+        private const float CabinetStandOff = 1.4f;
+
         private InputActionAsset _controls;
         private GameplayFixture _fixture;
         private Keyboard _keyboard;
@@ -54,8 +57,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(1, reach.LitCount);
             RelayMast mast = relays.Masts[0];
             Assert.AreEqual("relay.0", mast.Id);
-            Assert.LessOrEqual(SurfaceRules.HorizontalDistance(mast.PartRest, mast.Anchor.Position), 40f,
-                "its part glints nearby");
+            Assert.AreEqual(ContainerKind.Cabinet, mast.Cabinet.Kind, "its part rests in its service cabinet");
+            Assert.AreEqual(RelayField.CabinetId(mast.Id), mast.Cabinet.Id);
+            Assert.Less(SurfaceRules.HorizontalDistance(mast.PartRest, mast.Anchor.Position), 5f, "at the mast's foot");
+            Assert.IsFalse(mast.Cabinet.Opened, "sealed until 07 cuts it");
             Vector3 beyond = mast.Anchor.Position - mast.Anchor.Forward * 80f;
             Assert.IsFalse(reach.IsInReach(beyond), "past the mast, beyond the dark tower's reach");
 
@@ -263,9 +268,17 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(mound.Pulse.Running);
         }
 
+        /// <summary>
+        /// 07 comes up in front of the mast's service cabinet, cuts its seal open (0.5.5 §2) and draws the part off its
+        /// shelf with a press of E.
+        /// </summary>
         private IEnumerator Gather(RelayMast mast)
         {
-            _fixture.Rover.Place(Flat(mast.PartRest), 0f);
+            Vector3 front = Flat(mast.Cabinet.CutPoint.position + mast.Cabinet.Root.forward * CabinetStandOff);
+            _fixture.Rover.Place(front, Yaw(-mast.Cabinet.Root.forward));
+            yield return null;
+            Assert.AreEqual(RelayPartState.Resting, mast.PartState, $"{mast.Id}'s part waits behind the closed door");
+            yield return SealCut.Hold(this, _fixture.Gameplay, mast.Cabinet, $"{mast.Id}'s cabinet");
             yield return PickupPress.Take(this, _fixture.Gameplay, 2f, $"{mast.Id}'s part");
             yield return new WaitForSeconds(_fixture.FriendTuning.PartFlightDuration + 1f);
             Assert.AreEqual(RelayPartState.Held, mast.PartState, $"{mast.Id}'s part is drawn in");

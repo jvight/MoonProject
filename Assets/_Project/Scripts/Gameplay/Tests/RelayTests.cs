@@ -149,32 +149,6 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void Part_LiesInRange_OnGround_07_CanDriveTo_NeverBelowALedge()
-        {
-            TestWorld world = TestWorld.WithStep();
-            var relays = Create<RelayTuning>();
-            var paths = Create<FriendTuning>();
-            var mast = new WorldAnchor("relay.9", new Vector3(-2f, 2.5f, 0f), Vector3.left, 3f);
-            for (int seed = 0; seed < 6; seed++)
-            {
-                Assert.IsTrue(RelayPartPlanner.TryPlan(world, mast, relays, paths, seed, out Vector3 spot,
-                    out string problem), problem);
-                float distance = SurfaceRules.HorizontalDistance(spot, mast.Position);
-                Assert.That(distance, Is.InRange(relays.PartDistance.x, relays.PartDistance.y));
-                Assert.LessOrEqual(distance, 40f, "the design caps it at 40 m");
-                Assert.Less(spot.x, 10f, $"seed {seed}: on the mast's ledge, not below the step");
-                Assert.AreEqual(world.SampleHeight(spot.x, spot.z), spot.y, 1e-4f, "on the surface");
-                Assert.IsNotNull(WalkPathPlanner.Plan(world, mast.Position, spot, paths), "07 can drive there");
-                RelayPartPlanner.TryPlan(world, mast, relays, paths, seed, out Vector3 again, out _);
-                Assert.AreEqual(spot, again, "deterministic");
-            }
-
-            var lost = new WorldAnchor("relay.9", new Vector3(0f, 0f, 400f), Vector3.back, 3f);
-            Assert.IsFalse(RelayPartPlanner.TryPlan(world, lost, relays, paths, 0, out _, out string none));
-            StringAssert.Contains("relay.9", none);
-        }
-
-        [Test]
         public void Beat_Stitches_SlotsThePart_Straightens_ThenWarms()
         {
             var relays = Create<RelayTuning>();
@@ -388,6 +362,7 @@ namespace MoonProject.Gameplay.Tests
             Block(mast, RelayRig.LampNode, new Vector3(0f, 7.95f, 0f), Vector3.one * 0.5f);
             new GameObject(RelayRig.PartSocketNode).transform.SetParent(root.transform, false);
             new GameObject(RelayRig.BeamPointNode).transform.SetParent(root.transform, false);
+            new GameObject(RelayRig.CabinetSocketNode).transform.SetParent(root.transform, false);
             if (broken)
             {
                 mast.localRotation = Quaternion.Euler(-9f, 0f, 10f);

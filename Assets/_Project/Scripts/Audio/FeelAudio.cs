@@ -18,9 +18,9 @@ namespace MoonProject.Audio
     /// onto the next cut line (Follow 0.5); the crack (Impact); a strap tuk at the fold (Follow 1). The beam's singing
     /// climb and the collect melody stay <see cref="SalvageAudio"/>'s;</item>
     /// <item>scanning (Kind Scan, 0.5.5 §1): the sweep tone stepping up per quarter, a glass note each quarter, the
-    /// lift-off chime at the dissolve, and a warm arpeggio when a blueprint's sheet completes; containers (0.5.5 §2):
-    /// the seal cut through, the container opening by kind; the hold's first boot (0.5.5 §3): the power-on, a rising
-    /// tick per slot, the starter items sliding in;</item>
+    /// lift-off chime at the dissolve, the network pulse's bell per hop and home's resolve, and a warm arpeggio when a
+    /// blueprint's sheet completes; containers (0.5.5 §2): the seal cut through, the container opening by kind; the
+    /// hold's first boot (0.5.5 §3): the power-on, a rising tick per slot, the starter items sliding in;</item>
     /// <item>cargo and storage (M3-25): a tok on the full hold's lid; the dock's unload (Kind Cargo) as a small rising
     /// scale, one soft tick per slot, ending on a bell; a crew crate's latch and note; Tilly's fetch;</item>
     /// <item>the dock (Kind Dock): the walls rising (Anticipate), the clamp (Impact), the walls settling (Reward; the
@@ -42,10 +42,11 @@ namespace MoonProject.Audio
     [DisallowMultipleComponent]
     public sealed class FeelAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 21;
+        private const int SubscriptionCount = 22;
         private const float SegmentFollow = 0.5f;
         private const float SilentVolume = 0.001f;
         private const int ScanQuarters = 4;
+        private const string HomeNode = "home";
 
         /// <summary>The scan sweep's pitch at each quarter drawn, on its D5 loop: D, E, F#, A.</summary>
         private static readonly float[] ScanPitches = { 1f, 1.1225f, 1.2599f, 1.4983f };
@@ -89,6 +90,9 @@ namespace MoonProject.Audio
         private CueHandle _scanStep;
         private CueHandle _scanLiftoff;
         private CueHandle _sheetComplete;
+        private CueHandle _pulseNote;
+        private CueHandle _pulseHome;
+        private int _pulseNotes;
         private float _sheetIn = -1f;
         private AudioSource _scanSource;
         private float _scanCueVolume;
@@ -168,6 +172,8 @@ namespace MoonProject.Audio
             _scanStep = director.Resolve(AudioCueIds.ScanStep);
             _scanLiftoff = director.Resolve(AudioCueIds.ScanLiftoff);
             _sheetComplete = director.Resolve(AudioCueIds.SheetComplete);
+            _pulseNote = director.Resolve(AudioCueIds.PulseNote);
+            _pulseHome = director.Resolve(AudioCueIds.PulseHome);
             CueHandle sweep = director.Resolve(AudioCueIds.ScanSweep);
             _cancel = director.Resolve(AudioCueIds.CutCancel);
             _ignite = director.Resolve(AudioCueIds.CutIgniteTier);
@@ -198,7 +204,7 @@ namespace MoonProject.Audio
                   _cargoTok.IsValid && _shelfChord.IsValid && _crateLatch.IsValid && _tillyFetch.IsValid &&
                   _holdBoot.IsValid && _holdSlot.IsValid && _itemSlide.IsValid &&
                   _sealCut.IsValid && _containerOpen.IsValid && _scanStep.IsValid && _scanLiftoff.IsValid &&
-                  _sheetComplete.IsValid &&
+                  _sheetComplete.IsValid && _pulseNote.IsValid && _pulseHome.IsValid &&
                   sweep.IsValid &&
                   _cancel.IsValid && _ignite.IsValid && sizzle.IsValid && _crack.IsValid &&
                   _strap.IsValid && _wallsRise.IsValid && _clamp.IsValid && _wallsSettle.IsValid &&
@@ -223,6 +229,7 @@ namespace MoonProject.Audio
             _segmentNotes = library.GetCue(_segmentSlide).ClipCount;
             _slotNotes = library.GetCue(_holdSlot).ClipCount;
             _containerKinds = library.GetCue(_containerOpen).ClipCount;
+            _pulseNotes = library.GetCue(_pulseNote).ClipCount;
             _scanSource = director.CreateLoopSource(transform, "ScanSweep", sweep, 1f);
             _scanCueVolume = library.GetCue(sweep).VolumeMax;
             _undertoneSource = director.CreateLoopSource(transform, "CutUndertone", undertone, 1f);
@@ -257,6 +264,7 @@ namespace MoonProject.Audio
             _subscriptions[18] = events.Subscribe<ContainerSealCut>(OnContainerSealCut);
             _subscriptions[19] = events.Subscribe<ContainerOpened>(OnContainerOpened);
             _subscriptions[20] = events.Subscribe<BlueprintCompleted>(OnBlueprintCompleted);
+            _subscriptions[21] = events.Subscribe<NetworkPulseReached>(OnNetworkPulseReached);
         }
 
         private void Update()
@@ -542,6 +550,22 @@ namespace MoonProject.Audio
         private void OnBlueprintCompleted(BlueprintCompleted completed)
         {
             _sheetIn = _tuning.SheetCompleteDelay;
+        }
+
+        /// <summary>
+        /// The network's handshake passing a mast lamp (north-star §4a beat 7): an airy bell at the lamp, a pentatonic
+        /// step higher per hop, heard from where it flashes (far masts quiet and distant); home answers with a warm
+        /// two-note resolve.
+        /// </summary>
+        private void OnNetworkPulseReached(NetworkPulseReached reached)
+        {
+            if (string.Equals(reached.NodeId, HomeNode, StringComparison.Ordinal))
+            {
+                _director.PlayAt(_pulseHome, reached.Position);
+                return;
+            }
+
+            _director.PlayVariantAt(_pulseNote, Mathf.Clamp(reached.Hop, 0, _pulseNotes - 1), reached.Position);
         }
 
         private void OnContainerSealCut(ContainerSealCut cut)
