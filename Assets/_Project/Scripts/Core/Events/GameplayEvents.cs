@@ -244,23 +244,6 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// Kenji's Rover Bay starts fitting the kit piece of <see cref="UpgradeId"/> onto 07, parked on its turntable,
-    /// now that 07's beam has fed the hopper (docs/features/M3-14). The install moment plays from here: the Rover
-    /// domain drives the bay's arms through <see cref="IRoverBay"/> to lower the piece onto 07, and the turntable
-    /// turns 07 to show it. The bay throws its weld sparks from the arms' SparkSockets as this is published, so they
-    /// follow the tips wherever the arms are driven.
-    /// </summary>
-    public readonly struct RoverBayFitting
-    {
-        public RoverBayFitting(string upgradeId)
-        {
-            UpgradeId = upgradeId;
-        }
-
-        public string UpgradeId { get; }
-    }
-
-    /// <summary>
     /// 07 came to rest on the charging dock at home (<see cref="Docked"/> true), or left it (false): docked once it
     /// has stood still on the dock's pad for a moment with no drive input; any drive input undocks it at once
     /// (docs/features/M3-14). The rover settles 07 gently onto <see cref="Position"/> and <see cref="Rotation"/> (the
@@ -744,28 +727,6 @@ namespace MoonProject.Core.Events
         public int TowerLevel { get; }
 
         /// <summary>Where 07 picked it up.</summary>
-        public Vector3 Position { get; }
-
-        public bool Restored { get; }
-    }
-
-    /// <summary>
-    /// Kenji's garage port fits <see cref="Piece"/> on 07 (docs/design/first-hour-v2.md §3): the tether ring, then the
-    /// tape deck 07 set on its tray. Its arm reaches from <see cref="Position"/>; Rover plays the install moment and
-    /// publishes <see cref="RoverKitFitted"/>. Restored is true when a loaded game already has the piece (once, after
-    /// the save is applied): it is on 07 at once.
-    /// </summary>
-    public readonly struct PortFitting
-    {
-        public PortFitting(RoverKitPiece piece, Vector3 position, bool restored)
-        {
-            Piece = piece;
-            Position = position;
-            Restored = restored;
-        }
-
-        public RoverKitPiece Piece { get; }
-
         public Vector3 Position { get; }
 
         public bool Restored { get; }

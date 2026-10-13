@@ -16,7 +16,7 @@ namespace MoonProject.Rover
     /// (<see cref="RoverWideShotChanged"/>) its daydream sigh lands with the frame. A relay mast it restored gets a
     /// long look up at its lamp and a perk-up; a new signal pillar of Bell's within range gets a glance; landing from
     /// a radio-hop, 07 rouses and looks around (<see cref="LookAround"/>). Once the Rover Bay has fitted a kit piece
-    /// (<see cref="RoverKitFitted"/>) and lets 07 go, turned to show it, 07 strikes a proud pose (head up, eye bright,
+    /// (its Install Impact) and lets 07 go, turned to show it, 07 strikes a proud pose (head up, eye bright,
     /// antenna wiggle); a friend's gift gets a softer one as it settles; with Tilly's cell in its wing the wing settles
     /// open wider. Its battery shows in it too (docs/features/M3-20): at low charge the eye dims a little, the head
     /// bows and the wing stays flatter, quieter still while it crawls on the reserve; a charger perks it up; a

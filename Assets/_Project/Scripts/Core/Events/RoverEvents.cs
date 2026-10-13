@@ -152,63 +152,6 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// A kit piece is about to be fitted on 07 after a purchase (<see cref="Gift"/> false), or a friend's gift is about
-    /// to appear as 07 comes home (true): the install moment begins and the camera eases round to look. A loaded game
-    /// shows its kit silently, without this.
-    /// </summary>
-    public readonly struct RoverKitInstalling
-    {
-        public RoverKitInstalling(RoverKitPiece piece, bool gift)
-        {
-            Piece = piece;
-            Gift = gift;
-        }
-
-        public RoverKitPiece Piece { get; }
-
-        /// <summary>True for a friend's gift: the soft version of the moment.</summary>
-        public bool Gift { get; }
-    }
-
-    /// <summary>
-    /// The piece is on 07: a crafted piece set on its socket by the Rover Bay's arm (the "fitted" clunk; 07 strikes its
-    /// proud pose as the turntable shows it), or a friend's gift fully there.
-    /// </summary>
-    public readonly struct RoverKitFitted
-    {
-        public RoverKitFitted(RoverKitPiece piece, bool gift, string upgradeId)
-        {
-            Piece = piece;
-            Gift = gift;
-            UpgradeId = upgradeId ?? string.Empty;
-        }
-
-        public RoverKitPiece Piece { get; }
-
-        /// <summary>True for a friend's gift.</summary>
-        public bool Gift { get; }
-
-        /// <summary>
-        /// The upgrade that brought a crafted piece (UI names it by this, "upgrade.&lt;id&gt;.name"); empty for a gift.
-        /// </summary>
-        public string UpgradeId { get; }
-    }
-
-    /// <summary>
-    /// A loaded game's piece already on 07, shown silently without its moment: published once per such piece on the
-    /// kit's first tick of play, so listeners (the tape deck's music) can start in the right state.
-    /// </summary>
-    public readonly struct RoverKitRestored
-    {
-        public RoverKitRestored(RoverKitPiece piece)
-        {
-            Piece = piece;
-        }
-
-        public RoverKitPiece Piece { get; }
-    }
-
-    /// <summary>
     /// The Boost Coils engaged (<see cref="Boosting"/> true: holding Drive at cruise on open, flat-ish ground) or let
     /// go. The boost itself eases in and out over about a second; listeners ease their own response (the hum).
     /// </summary>
