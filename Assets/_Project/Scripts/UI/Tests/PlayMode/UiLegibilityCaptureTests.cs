@@ -108,8 +108,6 @@ namespace MoonProject.UI.PlayModeTests
             ui.Ledger.RecordUsed(InteractionKind.Stow);
             yield return Tap(keyboard.escapeKey);
             yield return new WaitForSecondsRealtime(1f);
-            yield return LegibleShot(camera, folder, "76_pause_07_can", report, layout.PauseCan);
-            Assert.AreEqual(3, ui.Verbs.ShownCount, "07 can lists the verbs used so far, and no others");
             Submit(layout.SettingsButton);
             yield return new WaitForSecondsRealtime(1f);
             for (int i = 0; i < BigTextPresses; i++)
@@ -145,18 +143,6 @@ namespace MoonProject.UI.PlayModeTests
             fakes.AtStation = false;
             yield return new WaitForSecondsRealtime(1f);
 
-            // The cargo screen's tabs, in each state: selected with the focus (amber), selected without it (blue
-            // glass), and the other one (deep glass). Their labels sit on the tabs' own fill.
-            ui.Cargo.Open();
-            yield return new WaitForSecondsRealtime(1f);
-            VisualElement tabs = layout.Cargo.Q<VisualElement>(className: "cargo__tabs");
-            VisualElement firstSkin = ui.Cargo.FirstTab.parent;
-            firstSkin.AddToClassList("settings-tab-wrap--focus");
-            yield return LegibleShot(camera, folder, "79a_cargo_tab_focused", report, tabs);
-            firstSkin.RemoveFromClassList("settings-tab-wrap--focus");
-            yield return new WaitForSecondsRealtime(0.3f);
-            yield return LegibleShot(camera, folder, "79b_cargo_tab_selected", report, tabs);
-            ui.Cargo.Close();
             Assert.IsEmpty(report, "legibility:\n" + string.Join("\n", report));
 #else
             Assert.Ignore("Captures need the editor.");

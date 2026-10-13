@@ -17,7 +17,6 @@ namespace MoonProject.UI
     {
         private const string PlaceId = "place.lab";
         private const string PlaceName = PlaceId + ".name";
-        private const string PlaceJob = PlaceId + ".job";
         private const string TurnWord = "ui.lab.turn";
         private const string LookWord = "ui.lab.look";
         private const string DownWord = "ui.lab.down";
@@ -42,7 +41,6 @@ namespace MoonProject.UI
         private readonly Reveal _root;
         private readonly Reveal _place;
         private readonly Label _placeName;
-        private readonly Label _placeJob;
         private readonly Reveal _placePrompt;
         private readonly GlyphView _placeGlyph;
         private readonly Label _placeWord;
@@ -72,7 +70,6 @@ namespace MoonProject.UI
             _place.Snap(false);
             new ShadowPainter(Require<VisualElement>(root, "lab-place-shadow"));
             _placeName = Require<Label>(root, "lab-place-name");
-            _placeJob = Require<Label>(root, "lab-place-job");
             _placePrompt = new Reveal(Require<VisualElement>(root, "lab-place-prompt"), settings.Chip);
             _placePrompt.Snap(false);
             _placeGlyph = new GlyphView(Require<VisualElement>(root, "lab-place-glyph"),
@@ -155,7 +152,6 @@ namespace MoonProject.UI
         public void Relocalize()
         {
             _placeName.text = _localization.Get(PlaceName);
-            _placeJob.text = _localization.Get(PlaceJob);
             _placeWord.text = _localization.Get(PlaceWord);
             _words[0].text = _localization.Get(TurnWord);
             _words[1].text = _localization.Get(LookWord);

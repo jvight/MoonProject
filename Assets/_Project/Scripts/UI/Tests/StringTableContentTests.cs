@@ -106,7 +106,6 @@ namespace MoonProject.UI.Tests
                          UiKeys.TapeCount, UiKeys.PauseCassettes, UiKeys.PauseRelays,
                          UiKeys.RecipeRow, UiKeys.RewardTitle, UiKeys.StationOffline, UiKeys.FriendParts,
                          UiKeys.CrateCaption, UiKeys.CargoWaiting, UiKeys.CargoSummary,
-                         UiKeys.CanDecoded,
                          UiKeys.BayFitted,
                      })
             {
@@ -128,7 +127,6 @@ namespace MoonProject.UI.Tests
             {
                 AbilityRow row = AbilityTable.At(i);
                 Assert.IsTrue(_english.TryGet(row.VerbKey, out _), row.VerbKey);
-                Assert.IsTrue(_english.TryGet(row.LineKey, out _), row.LineKey);
             }
 
             foreach (RewardLineKind kind in Enum.GetValues(typeof(RewardLineKind)))

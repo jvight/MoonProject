@@ -62,5 +62,11 @@ namespace MoonProject.Core
         /// Cancel the belt stopping because home is full, Reward the last crate on the shelves.
         /// </summary>
         Cargo = 16,
+
+        /// <summary>
+        /// 07 scanning a fragment (0.5.5 §1.2): Anticipate the scan starting, Act at each quarter
+        /// (Strength = progress), Cancel letting go (the progress is kept), Reward the dissolve beginning.
+        /// </summary>
+        Scan = 17,
     }
 }

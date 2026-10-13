@@ -17,7 +17,8 @@ namespace MoonProject.UI
             IUpgradeShop shop, IBlueprintBoard board, IFriendStatuses friends, IRadioProgram radio, IRadioHop hop,
             IRelayStatus relays, ISalvageStatus salvage, IGameFlow flow, ISettingsFile settings, IRoverBattery battery,
             IBeamStatus beam, ITechTree tech, IRecoveryProgress recovery, IRecipeLook recipeLook,
-            IWorldLayout world, IRoverAbilities abilities, ICargoHold hold, IMaterialCatalog catalog)
+            IWorldLayout world, IRoverAbilities abilities, ICargoHold hold, IMaterialCatalog catalog,
+            IDockState dock, IHomeStorage home, IStackTransfer transfer)
         {
             Events = events ?? throw new ArgumentNullException(nameof(events));
             Input = input ?? throw new ArgumentNullException(nameof(input));
@@ -47,6 +48,9 @@ namespace MoonProject.UI
             World = world ?? throw new ArgumentNullException(nameof(world));
             Abilities = abilities ?? throw new ArgumentNullException(nameof(abilities));
             Hold = hold ?? throw new ArgumentNullException(nameof(hold));
+            Dock = dock ?? throw new ArgumentNullException(nameof(dock));
+            Home = home ?? throw new ArgumentNullException(nameof(home));
+            Transfer = transfer ?? throw new ArgumentNullException(nameof(transfer));
             Catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         }
 
@@ -95,6 +99,15 @@ namespace MoonProject.UI
         /// <summary>07's hold: the cargo screen's grid.</summary>
         public ICargoHold Hold { get; }
 
+        /// <summary>Whether 07 rests on the dock: the transfer view is open only then.</summary>
+        public IDockState Dock { get; }
+
+        /// <summary>Home's shelves: the transfer view's right side.</summary>
+        public IHomeStorage Home { get; }
+
+        /// <summary>Moves one stack between the hold and the shelves.</summary>
+        public IStackTransfer Transfer { get; }
+
         /// <summary>What each material is called (the pickup feed and the cargo screen).</summary>
         public IMaterialCatalog Catalog { get; }
 
@@ -136,7 +149,8 @@ namespace MoonProject.UI
                 context.Get<IGameFlow>(), context.Get<ISettingsFile>(), context.Get<IRoverBattery>(),
                 context.Get<IBeamStatus>(), context.Get<ITechTree>(), context.Get<IRecoveryProgress>(),
                 context.Get<IRecipeLook>(), context.Get<IWorldLayout>(), context.Get<IRoverAbilities>(),
-                context.Get<ICargoHold>(), context.Get<IMaterialCatalog>());
+                context.Get<ICargoHold>(), context.Get<IMaterialCatalog>(), context.Get<IDockState>(),
+                context.Get<IHomeStorage>(), context.Get<IStackTransfer>());
         }
     }
 }
