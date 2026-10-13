@@ -13,7 +13,8 @@ namespace MoonProject.Art.Editor
     /// <list type="bullet">
     /// <item><c>Derelict_06</c> (micro.06, slumped against relay.2's hut): Cell Pack II's three sockets round its open
     /// battery bay, and <c>TapeCaseSocket</c> where gameplay sets Ro's <c>TapeCase</c> (with identity) on the ground
-    /// beside the bay.</item>
+    /// beside the bay, and <c>HutSocket</c> where gameplay sets relay.2's <c>RelayHut</c> (with identity), the hut
+    /// 06 slumps against.</item>
     /// <item><c>Derelict_Mule</c> (micro.mule, on the canyon road): the Warm Headlamp's two sockets by its cracked lamp
     /// head, and its track skirt to cut (Metal).</item>
     /// <item><c>Derelict_HaulBot</c> (inside the drill site): the Boost Coils' three sockets on its open side door and
@@ -27,6 +28,7 @@ namespace MoonProject.Art.Editor
     {
         public const string Prefix = "Derelict_";
         public const string TapeSocketName = "TapeCaseSocket";
+        public const string HutSocketName = "HutSocket";
         public const string ElderName = Prefix + "06";
         public const string MuleName = Prefix + "Mule";
         public const string HaulBotName = Prefix + "HaulBot";
@@ -54,6 +56,7 @@ namespace MoonProject.Art.Editor
             }
 
             root.Add(new ModelNode(TapeSocketName, DerelictMeshes.ElderTapeSeat, DerelictMeshes.ElderTapeTurn));
+            root.Add(new ModelNode(HutSocketName, DerelictMeshes.ElderHutSeat, DerelictMeshes.ElderHutTurn));
 
             return root;
         }

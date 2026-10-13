@@ -7,6 +7,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Save;
 using MoonProject.Core.Input;
 using MoonProject.Testing;
 
@@ -95,6 +96,8 @@ namespace MoonProject.Rover.PlayModeTests
             equipment.Fitted(RoverKitPiece.CapacitorDrums);
             equipment.Fitted(RoverKitPiece.CargoRack);
             context.Register<IRoverEquipment>(equipment);
+            context.Register<IWorldAnchors>(new TestAnchors());
+            context.Register<ISaveService>(new TestSave());
             var controller = _rover.GetComponent<RoverController>();
             controller.Initialize(context);
             controller.SetDriveSource(_drive);

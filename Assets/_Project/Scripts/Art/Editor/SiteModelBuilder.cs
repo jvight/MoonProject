@@ -76,6 +76,12 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public const string SpareCrateSocketName = "SpareCrateSocket";
 
+        /// <summary>
+        /// The drill site's seat for the haul sled bot (0.5.5 §1.7): <c>HaulBotSocket</c> on the ground, +Z the sled's
+        /// forward, where gameplay sets <c>Derelict_HaulBot</c> with identity.
+        /// </summary>
+        public const string HaulBotSocketName = "HaulBotSocket";
+
         /// <summary>The garage's clear way out of its caved-in back right (site space), kept free for 07.</summary>
         public static Bounds GarageBackLane => GarageSite.BackLane;
 
@@ -195,6 +201,12 @@ namespace MoonProject.Art.Editor
             {
                 Vector3 seat = GarageSite.SpareCrateHost(out Quaternion turn);
                 root.Add(new ModelNode(SpareCrateSocketName, seat, turn));
+            }
+
+            if (id == "drill")
+            {
+                Vector3 seat = DrillSite.HaulBotHost(out Quaternion turn);
+                root.Add(new ModelNode(HaulBotSocketName, seat, turn));
             }
 
             AddFragmentSockets(root, id);

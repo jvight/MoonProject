@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Save;
 
 namespace MoonProject.Rover
 {
@@ -70,11 +71,19 @@ namespace MoonProject.Rover
         /// <summary>Owner of 07's own glances in the shared gaze requests.</summary>
         private readonly object _glanceOwner = new object();
         private readonly object _cutOwner = new object();
+        /// <summary>Save section "rover.character": what 07 remembers of its own moments. Never rename the key.</summary>
+        private const string SaveKey = "rover.character";
+        private const int SaveVersion = 1;
+
         /// <summary>A fan this faint is off: its dark rays never show at rest (nor in the portrait).</summary>
         private const float FanDark = 1e-3f;
 
         private readonly object _scanOwner = new object();
         private ScanLook _scanLook;
+        private ElderGlance _elderGlance;
+        private Vector3 _elderPoint;
+        private bool _hasElder;
+        private IDisposable _saveToken;
         private Quaternion _scanFanRest;
         private bool _scanGazing;
         private readonly ImpactNudge _headNudge = new ImpactNudge();
@@ -132,6 +141,7 @@ namespace MoonProject.Rover
             _wingRest = _solarWing.localRotation;
             _scanFanRest = _scanFan.transform.localRotation;
             _scanLook = new ScanLook(_tuning.ScanLook);
+            InitializeElder(context);
             _scanFan.enabled = false;
             _yaw.Reset(0f);
             _pitch.Reset(_tuning.TravelHeadPitch);
@@ -410,6 +420,38 @@ namespace MoonProject.Rover
             }
         }
 
+        /// <summary>
+        /// 06, 07's elder, slumped by relay.2's hut (world's micro.06 site), and whether 07 has met it (save section
+        /// "rover.character").
+        /// </summary>
+        private void InitializeElder(GameContext context)
+        {
+            _elderGlance = new ElderGlance(_tuning.ElderGlance);
+            _saveToken = context.Get<ISaveService>().Register(new SaveSection<RoverSaveData>(SaveKey, SaveVersion,
+                () => new RoverSaveData { metElder06 = _elderGlance.Greeted },
+                data => _elderGlance.Restore(data.metElder06)));
+            _hasElder = context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.Micro06, out WorldAnchor site);
+            if (!_hasElder)
+            {
+                Debug.LogError($"{nameof(RoverBodyLanguage)}: the world has no '{WorldAnchorIds.Micro06}' anchor; 07 "
+                    + "cannot look at its elder 06.", this);
+                return;
+            }
+
+            _elderPoint = site.Position + Vector3.up * _tuning.ElderGlance.LookHeight;
+        }
+
+        /// <summary>The first time 07 comes near 06: one held look and a soft, low chirp. No text.</summary>
+        private void StepElder()
+        {
+            if (_hasElder && _elderGlance.Step(_rover.Position, _elderPoint))
+            {
+                ElderGlanceSettings elder = _tuning.ElderGlance;
+                Glance(_elderPoint, elder.GazePriority, elder.HoldSeconds);
+                _voice.Elder(elder.ChirpIntensity);
+            }
+        }
+
         private void Update()
         {
             float deltaTime = Time.deltaTime;
@@ -417,6 +459,8 @@ namespace MoonProject.Rover
             {
                 return;
             }
+
+            StepElder();
 
             _mood.SetEffort(_rover.JumpCharge);
             _mood.SetWingMended(_rover.Kit.HasMendedWing);
@@ -722,6 +766,7 @@ namespace MoonProject.Rover
             }
 
             _voice?.Dispose();
+            _saveToken?.Dispose();
         }
     }
 }
