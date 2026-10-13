@@ -22,6 +22,7 @@ namespace MoonProject.Gameplay.Tests
     {
         private const string MainScene = "Assets/_Project/Scenes/Main.unity";
         private const string SitePrefix = "Site_";
+        private const string DerelictPrefix = "Derelict_";
         private const string MastName = "RelayMast_Broken";
 
         /// <summary>Metres from the lander the nearest site lies at least (the supply depot, ~55 m from home).</summary>
@@ -129,7 +130,7 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void Preview_OnTheBuiltMainScene_ShowsTheWrecksAndMastsInTheBasin_AndStepsAsideForPlay()
+        public void Preview_OnTheBuiltMainScene_ShowsTheWrecksDerelictsAndMastsInTheBasin_AndStepsAsideForPlay()
         {
             _scene = EditorSceneManager.OpenScene(MainScene, OpenSceneMode.Additive);
             IWorldPreview world = Find<IWorldPreview>(_scene,
@@ -140,10 +141,12 @@ namespace MoonProject.Gameplay.Tests
             SalvageField salvage = Find<SalvageField>(_scene, "the gameplay's salvage");
             HomeBase home = Find<HomeBase>(_scene, "the gameplay's base");
             int sites = Count(root.transform, SitePrefix);
+            int derelicts = Count(root.transform, DerelictPrefix);
             int masts = Count(root.transform, MastName);
             Assert.AreEqual(salvage.Catalog.Sites.Count, sites, "every salvage site's wreck");
+            Assert.AreEqual(salvage.Catalog.Derelicts.Count, derelicts, "every derelict on its micro-site");
             Assert.Greater(masts, 0, "the broken relay masts");
-            Assert.AreEqual(sites + masts, root.transform.childCount, "and nothing else");
+            Assert.AreEqual(sites + derelicts + masts, root.transform.childCount, "and nothing else");
             for (int i = 0; i < root.transform.childCount; i++)
             {
                 Transform piece = root.transform.GetChild(i);

@@ -33,7 +33,7 @@ namespace MoonProject.Gameplay
             {
                 CassetteDefinition cassette = _cassettes.Definition(index);
                 return new SignalCandidate(BellSignalTarget.Cassette, cassette.Id, _cassettes.Site(index).Position,
-                    _cassettes.IsWaiting(index), cassette.Gate.IsOpen(_abilities));
+                    !_cassettes.IsCollected(index), cassette.Gate.IsOpen(_abilities));
             }
 
             index -= _cassettes.Count;

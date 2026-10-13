@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 using Unity.Cinemachine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Save;
 using MoonProject.Core.Input;
 using Object = UnityEngine.Object;
 
@@ -162,6 +163,12 @@ namespace MoonProject.Rover.PlayModeTests
         /// <summary>What a loaded game has fitted (set before 07's first frame).</summary>
         public TestEquipment Equipment { get; } = new TestEquipment();
 
+        /// <summary>The world's anchors: only micro.06, where 07's elder sits (far away unless a test places it).</summary>
+        public TestAnchors Anchors { get; } = new TestAnchors();
+
+        /// <summary>The in-memory save 07's own section registers with.</summary>
+        public TestSave Save { get; } = new TestSave();
+
         /// <summary>A loaded game with <paramref name="part"/> fitted and its ability (call before the first frame).
         /// </summary>
         public void Equip(RoverKitPiece part)
@@ -191,8 +198,9 @@ namespace MoonProject.Rover.PlayModeTests
         /// unless <paramref name="asleep"/> asks for the game's first-boot wake-up. <paramref name="wideShotDelay"/>
         /// (seconds) shortens the rest before the wide shot opens, so sessions need not wait the shipped delay.
         /// </summary>
+        /// <param name="prepare">Sets what a loaded game had (anchors, saved sections) before 07 initialises.</param>
         public static TestRover Spawn(TestWorld world, Vector3 position, float yaw, bool asleep = false,
-            float wideShotDelay = 0f)
+            float wideShotDelay = 0f, Action<TestRover> prepare = null)
         {
             var tuning = ScriptableObject.CreateInstance<RoverTuning>();
             var rigTuning = ScriptableObject.CreateInstance<RoverRigTuning>();
@@ -509,7 +517,10 @@ namespace MoonProject.Rover.PlayModeTests
             context.Register<IWorldLayout>(rover.Layout);
             context.Register<IFriendRoster>(rover.Friends);
             context.Register<IRoverEquipment>(rover.Equipment);
+            context.Register<IWorldAnchors>(rover.Anchors);
+            context.Register<ISaveService>(rover.Save);
             rover.Context = context;
+            prepare?.Invoke(rover);
             controller.Initialize(context);
             controller.SetDriveSource(rover.Drive);
             body.Initialize(context);

@@ -86,6 +86,13 @@ namespace MoonProject.Rover.PlayModeTests
         private const float ScanFrameSeconds = 1.2f;
         private const float ScanFlareFrameSeconds = 0.05f;
 
+        /// <summary>The elder capture: 07's distance from the micro.06 site (inside the notice radius), how far off
+        /// its nose 06 sits, and the frames' waits.</summary>
+        private const float ElderApproach = 9f;
+        private const float ElderOffAxis = 55f;
+        private const float ElderGlanceFrame = 0.9f;
+        private const float ElderLetGoFrame = 2.5f;
+
         /// <summary>The cut point ahead of 07, the Cells capture's frame waits, and the share of stage 2 at its frame.
         /// </summary>
         private const float CutReach = 1.4f;
@@ -334,6 +341,51 @@ namespace MoonProject.Rover.PlayModeTests
             Capture("scan-2-learned");
             Directory.CreateDirectory(CaptureFolder);
             File.WriteAllText(Path.Combine(CaptureFolder, "scan.md"), _report.ToString());
+        }
+
+        /// <summary>
+        /// 07 meets its elder 06 (0.5.5 §1.7) in the real scene, from the chase camera: placed on the home side of the
+        /// micro.06 site with 06 ahead and off to one side, it notices 06 and holds its look; a frame mid-glance and
+        /// one as it lets go, with where it looked in the report.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator Elder_IsCapturedMidGlance_FromTheChaseCamera()
+        {
+            yield return Boot();
+            _report.AppendLine("# 07 meets its elder 06 (real Main scene)");
+            _report.AppendLine();
+            _report.AppendLine("| Capture | Orbit elevation (deg) | Camera above dust (m) | 07's gaze | Beat |");
+            _report.AppendLine("|---|---:|---:|---:|---|");
+            Set(_gamepad.rightStick, new Vector2(LookStick, 0f));
+            yield return Wait(StickProbeSeconds);
+            Set(_gamepad.rightStick, Vector2.zero);
+            float opening = Time.time + WakeEaseTimeout;
+            while (_cameraRig.Opening.IsActive)
+            {
+                Assert.Less(Time.time, opening, "The wake hands over first.");
+                yield return null;
+            }
+
+            Assert.IsTrue(_context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.Micro06, out WorldAnchor site),
+                "The world has the micro.06 site.");
+            Vector3 approach = site.Position + site.Forward * ElderApproach;
+            approach.y = _terrain.SampleHeight(approach.x, approach.z);
+            Vector3 toSite = site.Position - approach;
+            float yaw = Mathf.Atan2(toSite.x, toSite.z) * Mathf.Rad2Deg + ElderOffAxis;
+            _context.Get<IRoverPlacement>().PlaceAt(approach, Quaternion.Euler(0f, yaw, 0f));
+            yield return Wait(ElderGlanceFrame);
+            Capture("elder-1-glance");
+            bool looking = _rover.Gaze.TryGetTop(out Vector3 gaze);
+            _report.AppendLine();
+            _report.AppendLine($"Site {site.Position}, 07 at {approach}, gaze {(looking ? gaze.ToString() : "none")}.");
+            yield return Wait(ElderLetGoFrame);
+            Capture("elder-2-after");
+            Directory.CreateDirectory(CaptureFolder);
+            File.WriteAllText(Path.Combine(CaptureFolder, "elder.md"), _report.ToString());
+            Assert.IsTrue(looking, "07 looks at 06.");
         }
 
         /// <summary>

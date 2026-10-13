@@ -12,16 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a5d33786ce6bed0459ce2c2257fffc4d, type: 3}
   m_Name: CassetteTuning
   m_EditorClassIdentifier: 
-  _attempts: 2000
-  _distance: {x: 60, y: 170}
-  _edgeMargin: 10
-  _maxSlope: 14
-  _flatProbe: 2
-  _clearance: 25
-  _rimProbe: 4
-  _rimRise: {x: 0.25, y: 2.5}
-  _rimDirections: 16
-  _restHeight: 0.07
   _restLean: 35
   _presentSeconds: 0.7
   _glanceRadius: 16

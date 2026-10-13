@@ -10,7 +10,8 @@ namespace MoonProject.Gameplay
     /// "Salvage_&lt;n&gt;_&lt;Material&gt;[_Drag]" node becomes a <see cref="SalvagePiece"/> with its cut point, a halo
     /// shell and the hidden bundle it folds into;
     /// a drag piece gets its tetherable <see cref="SalvageDrag"/> body, which never collides with its own wreck; the
-    /// "Heart" is where the site's relics rest. Runs at initialisation (allocates).
+    /// "Heart" is where the site's relics rest. A derelict (0.5.5 §1.7) has no heart and no crew crate, and may have
+    /// no pieces. Runs at initialisation (allocates).
     /// </summary>
     internal static class SalvageSiteBuilder
     {
@@ -28,8 +29,9 @@ namespace MoonProject.Gameplay
         /// Builds the site under <paramref name="parent"/> and adds its pieces and drag bodies to the lists. Null when
         /// it stands, else what breaks the contract.
         /// </summary>
-        public static string Build(int index, SalvageSiteEntry entry, WorldAnchor anchor, Transform parent,
-            ITerrainQuery terrain, SalvageTuning tuning, SalvageCatalog catalog, Material halo,
+        /// <param name="derelict">A derelict: no heart, no crew crate, any number of pieces.</param>
+        public static string Build(int index, SalvageSiteEntry entry, bool derelict, WorldAnchor anchor,
+            Transform parent, ITerrainQuery terrain, SalvageTuning tuning, SalvageCatalog catalog, Material halo,
             PhysicsMaterial dragMaterial, List<SalvagePiece> pieces, List<SalvageDrag> drags, out SalvageSite site)
         {
             site = null;
@@ -41,7 +43,7 @@ namespace MoonProject.Gameplay
             instance.name = entry.Prefab.name;
             Transform root = instance.transform;
             Transform skeleton = Child(root, SkeletonName);
-            Transform heart = Child(root, HeartName);
+            Transform heart = derelict ? root : Child(root, HeartName);
             if (skeleton == null || heart == null)
             {
                 return $"the prefab has no '{(skeleton == null ? SkeletonName : HeartName)}' node";
@@ -55,18 +57,12 @@ namespace MoonProject.Gameplay
 
             var built = new SalvageSite(index, entry.AnchorId, root, anchor.Radius, heart.position, entry.Gate,
                 new ComboCounter(tuning.ChainWindow), entry.HeartUnderPieces);
-            Transform crate = Child(root, CrateName);
-            Transform lid = crate != null ? Child(crate, LidName) : null;
-            Transform cut = lid != null ? Child(lid, CutPointName) : null;
-            Transform seal = lid != null ? Child(lid, SealName) : null;
-            Renderer sealGlow = seal != null ? seal.GetComponent<Renderer>() : null;
-            if (cut == null || sealGlow == null)
+            string problem = derelict ? null : AddCrate(built, entry, root);
+            if (problem != null)
             {
-                return $"the prefab has no '{CrateName}/{LidName}' with its '{CutPointName}' and '{SealName}' glow " +
-                       "(the crew's supply crate, M3-25 T4)";
+                return problem;
             }
 
-            built.Crate = new CrewCrate(built, entry.Crate, crate, lid, cut, sealGlow);
             Transform landmark = Child(root, LandmarkName);
             if (landmark != null)
             {
@@ -91,7 +87,7 @@ namespace MoonProject.Gameplay
                     continue;
                 }
 
-                string problem = AddPiece(built, entry, node, number, material, drag, entry.YieldScale, parent,
+                problem = AddPiece(built, entry, node, number, material, drag, entry.YieldScale, parent,
                     terrain, tuning, catalog, halo, dragMaterial, wreck, drags);
                 if (problem != null)
                 {
@@ -99,7 +95,7 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            if (built.Pieces.Count == 0)
+            if (built.Pieces.Count == 0 && !derelict)
             {
                 return "the prefab has no Salvage_<n>_<Material> pieces";
             }
@@ -115,6 +111,24 @@ namespace MoonProject.Gameplay
 
             pieces.AddRange(built.Pieces);
             site = built;
+            return null;
+        }
+
+        /// <summary>The crew's supply crate beside a wreck's heart (M3-25 T4); null when it stands.</summary>
+        private static string AddCrate(SalvageSite site, SalvageSiteEntry entry, Transform root)
+        {
+            Transform crate = Child(root, CrateName);
+            Transform lid = crate != null ? Child(crate, LidName) : null;
+            Transform cut = lid != null ? Child(lid, CutPointName) : null;
+            Transform seal = lid != null ? Child(lid, SealName) : null;
+            Renderer sealGlow = seal != null ? seal.GetComponent<Renderer>() : null;
+            if (cut == null || sealGlow == null)
+            {
+                return $"the prefab has no '{CrateName}/{LidName}' with its '{CutPointName}' and '{SealName}' glow " +
+                       "(the crew's supply crate, M3-25 T4)";
+            }
+
+            site.Crate = new CrewCrate(site, entry.Crate, crate, lid, cut, sealGlow);
             return null;
         }
 
