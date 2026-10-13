@@ -81,29 +81,8 @@ namespace MoonProject.Gameplay
         [Tooltip("Pillar radius (m).")]
         [Range(0.1f, 3f)] [SerializeField] private float _pillarRadius = 0.6f;
 
-        [Tooltip("Ground ring radius (m) around an answering site, and its band width.")]
-        [SerializeField] private Vector2 _siteRing = new Vector2(1.9f, 0.6f);
-
-        [Tooltip("Brightness of the site ring when the answer arrives (scaled like the pillar).")]
-        [Range(0f, 10f)] [SerializeField] private float _siteRingPulse = 1.6f;
-
-        [Tooltip("Seconds the site ring's answer pulse takes to settle.")]
-        [Range(0.2f, 15f)] [SerializeField] private float _siteRingPulseDuration = 4f;
-
-        [Tooltip("Faint breathing brightness of the ring over a discovered, still-buried site.")]
-        [Range(0f, 2f)] [SerializeField] private float _discoveredGlow = 0.22f;
-
-        [Tooltip("How deeply a discovered site's ring breathes (0 = steady).")]
-        [Range(0f, 1f)] [SerializeField] private float _discoveredBreathDepth = 0.4f;
-
-        [Tooltip("Seconds per breath of a discovered site's ring.")]
-        [Range(0.5f, 15f)] [SerializeField] private float _breathPeriod = 4f;
-
         [Tooltip("Warm (friend) markers read brighter than cyan ones at the same value: their glow is scaled by this.")]
         [Range(0.1f, 1f)] [SerializeField] private float _friendGlowScale = 0.55f;
-
-        [Tooltip("Segments of a site ring.")]
-        [Range(8, 128)] [SerializeField] private int _siteRingSegments = 40;
 
         [Header("07's attention")]
         [Tooltip("Seconds 07 looks toward the nearest answer right after it arrives.")]
@@ -148,13 +127,6 @@ namespace MoonProject.Gameplay
         public float PillarBreathPeriod => _pillarBreathPeriod;
         public float PillarHeight => _pillarHeight;
         public float PillarRadius => _pillarRadius;
-        public Vector2 SiteRing => _siteRing;
-        public float SiteRingPulse => _siteRingPulse;
-        public float SiteRingPulseDuration => _siteRingPulseDuration;
-        public float DiscoveredGlow => _discoveredGlow;
-        public float DiscoveredBreathDepth => _discoveredBreathDepth;
-        public float BreathPeriod => _breathPeriod;
-        public int SiteRingSegments => _siteRingSegments;
         public float FriendGlowScale => _friendGlowScale;
         public float AnswerGaze => _answerGaze;
         public float GlanceInterval => _glanceInterval;

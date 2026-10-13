@@ -247,9 +247,6 @@ namespace MoonProject.Gameplay
         [Tooltip("Brightness of her amber signal pillar (warm, persistent).")]
         [Range(0f, 4f)] [SerializeField] private float _pillarGlow = 0.9f;
 
-        [Tooltip("Brightness of the breathing ring at the pillar's foot.")]
-        [Range(0f, 4f)] [SerializeField] private float _pillarRingGlow = 0.5f;
-
         [Tooltip("Seconds the pillar takes to rise.")]
         [Range(0.1f, 10f)] [SerializeField] private float _pillarRise = 2.5f;
 
@@ -344,7 +341,6 @@ namespace MoonProject.Gameplay
         public float TuneMaxSpeed => _tuneMaxSpeed;
         public float DialTapTime => _dialTapTime;
         public float PillarGlow => _pillarGlow;
-        public float PillarRingGlow => _pillarRingGlow;
         public float PillarRise => _pillarRise;
         public float PillarFade => _pillarFade;
         public float PillarBreathDepth => _pillarBreathDepth;

@@ -1,16 +1,15 @@
 using System;
 using UnityEngine;
 using MoonProject.Core;
-using Object = UnityEngine.Object;
 
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The light a relic (or a broken friend) leaves when it answers: a tall soft pillar that stands on the horizon for
-    /// a while (so the player can navigate by sight instead of pinging again) and a ring on the ground at the spot,
-    /// which keeps breathing faintly over a discovered find that is still waiting there.
+    /// The light a relic, a broken friend or a wreck leaves when it answers: a tall soft pillar that stands on the
+    /// horizon for a while, so the player can navigate by sight instead of pinging again, then fades. Nothing stays on
+    /// the ground (0.5.5 §2): up close the find's own glint on its object marks it.
     /// </summary>
-    public sealed class SiteMarker : IDisposable
+    public sealed class SiteMarker
     {
         /// <summary>If the find moves this far (m) from where it answered, the pillar bows out early.</summary>
         private const float MovedDistance = 3f;
@@ -22,8 +21,6 @@ namespace MoonProject.Gameplay
         private readonly ITerrainQuery _terrain;
         private readonly Transform _pillar;
         private readonly GlowRenderer _pillarGlow;
-        private readonly GlowRenderer _ringGlow;
-        private readonly TerrainRing _ring;
         private Vector3 _position;
         private float _answerTime = float.NegativeInfinity;
         private float _dismissTime = float.PositiveInfinity;
@@ -34,7 +31,7 @@ namespace MoonProject.Gameplay
 
         /// <param name="scale">Brightness scale of every glow of this marker (warm markers read brighter).</param>
         public SiteMarker(string name, Transform parent, SonarTuning tuning, ITerrainQuery terrain,
-            Material pillarMaterial, Material ringMaterial, Mesh pillarMesh, float scale)
+            Material pillarMaterial, Mesh pillarMesh, float scale)
         {
             _scale = scale;
             _tuning = tuning ?? throw new ArgumentNullException(nameof(tuning));
@@ -45,8 +42,6 @@ namespace MoonProject.Gameplay
             _pillar = pillar.transform;
             _pillar.localScale = new Vector3(tuning.PillarRadius, tuning.PillarHeight, tuning.PillarRadius);
             _pillarGlow = new GlowRenderer(pillar);
-            _ring = new TerrainRing(tuning.SiteRingSegments);
-            _ringGlow = new GlowRenderer(GlowObject.Create("Ring", root.transform, _ring.Mesh, ringMaterial));
         }
 
         /// <summary>Where the marker stands (valid after the first answer).</summary>
@@ -54,18 +49,13 @@ namespace MoonProject.Gameplay
 
         public float PillarIntensity => _pillarGlow.Intensity;
 
-        public float RingIntensity => _ringGlow.Intensity;
-
         /// <summary>True while the pillar is still on the horizon.</summary>
         public bool PillarStanding(float now)
         {
             return _hasPosition && now < _dismissTime && now - _answerTime < _tuning.PillarLifetime;
         }
 
-        /// <summary>
-        /// Stands the marker at <paramref name="groundPosition"/> without an answer (a site discovered in an earlier
-        /// session keeps its breathing ring).
-        /// </summary>
+        /// <summary>Stands the marker at <paramref name="groundPosition"/> without an answer.</summary>
         public void Place(Vector3 groundPosition)
         {
             if (_hasPosition && SurfaceRules.HorizontalDistance(groundPosition, _position) <= 0.05f)
@@ -75,8 +65,6 @@ namespace MoonProject.Gameplay
 
             _position = SurfaceRules.OnSurface(_terrain, groundPosition.x, groundPosition.z);
             _pillar.position = _position;
-            Vector2 ring = _tuning.SiteRing;
-            _ring.Rebuild(_terrain, _position, ring.x - ring.y * 0.5f, ring.x + ring.y * 0.5f, _tuning.RingLift);
             _hasPosition = true;
         }
 
@@ -110,11 +98,10 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Updates the glows at <paramref name="now"/> for a find now at <paramref name="position"/> that still
-        /// answers the sonar (<paramref name="answers"/>) and, if <paramref name="waiting"/> (discovered and still in
-        /// place), keeps a breathing ring.
+        /// Updates the pillar at <paramref name="now"/> for a find now at <paramref name="position"/> that still
+        /// answers the sonar (<paramref name="answers"/>): moved away or fallen silent, it bows out.
         /// </summary>
-        public void Tick(Vector3 position, bool answers, bool waiting, float now)
+        public void Tick(Vector3 position, bool answers, float now)
         {
             if (!_hasPosition)
             {
@@ -138,22 +125,6 @@ namespace MoonProject.Gameplay
             }
 
             _pillarGlow.Apply(pillar * _scale);
-
-            float pulse = _brightness / Mathf.Max(0.01f, _tuning.NearBrightness) * _tuning.SiteRingPulse *
-                          MarkerEnvelope.Pulse(age, _tuning.SiteRingPulseDuration);
-            float glow = waiting && !moved
-                ? _tuning.DiscoveredGlow *
-                  (1f - _tuning.DiscoveredBreathDepth * (1f - MarkerEnvelope.Breath(now, _tuning.BreathPeriod)))
-                : 0f;
-            _ringGlow.Apply(Mathf.Max(pulse, glow) * _scale);
-        }
-
-        public void Dispose()
-        {
-            if (_ring.Mesh != null)
-            {
-                Object.Destroy(_ring.Mesh);
-            }
         }
     }
 }
