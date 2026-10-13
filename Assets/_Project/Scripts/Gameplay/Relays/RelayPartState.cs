@@ -3,7 +3,7 @@ namespace MoonProject.Gameplay
     /// <summary>Where a relay mast's part is.</summary>
     internal enum RelayPartState
     {
-        /// <summary>Glinting on the ground near its mast.</summary>
+        /// <summary>In its mast's service cabinet: sealed in, then glinting behind the open door.</summary>
         Resting = 0,
 
         /// <summary>Drawn in toward 07.</summary>

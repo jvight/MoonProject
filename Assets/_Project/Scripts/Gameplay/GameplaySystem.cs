@@ -306,7 +306,7 @@ namespace MoonProject.Gameplay
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
                 !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context),
-                    _home.Dock.Position) ||
+                    _home.Dock.Position, Containers) ||
                 !_progression.Initialize(services, Power, _home, _workshop, _sonar, _friends, _relays,
                     Upgrades, _lift, _tower, TowerParts, () => _battery.Model.Charge01) ||
                 !_plotter.Initialize(services, Blueprints, _workshop, _progression.Tuning, Upgrades) ||
@@ -513,7 +513,7 @@ namespace MoonProject.Gameplay
         {
             try
             {
-                return new TowerPartField(TowerParts, transform, services, _salvage, _relays.Reach, _tower,
+                return new TowerPartField(TowerParts, transform, services, _salvage, _relays, _tower,
                     _friends.Tuning, _progression.Tuning, () => _progression.ChasmSeen, Containers);
             }
             catch (InvalidOperationException exception)
@@ -538,13 +538,15 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>Kenji's garage port, or null (logged) when its site, its relic or Art's port is missing.</summary>
+        /// <summary>
+        /// Kenji's garage port, or null (logged) when its site, Art's port, its spare crate or the deck is missing.
+        /// </summary>
         private GaragePort NewPort(GameplayServices services, IRoverAbilities abilities)
         {
             try
             {
-                return new GaragePort(transform, services, _salvage, _relics, abilities, _progression.Tuning, _tether,
-                    Equipment);
+                return new GaragePort(transform, services, _salvage, _relics, abilities, _progression.Tuning,
+                    _friends.Tuning, _tether, Equipment, Containers);
             }
             catch (InvalidOperationException exception)
             {
@@ -781,6 +783,11 @@ namespace MoonProject.Gameplay
 
         private void RestoreRelics(RelicsSaveData data)
         {
+            if (TapeDeckMigration.WasFitted(data))
+            {
+                Port.AdoptLegacyDeck();
+            }
+
             _relics.Restore(data);
             _cradle.AdoptRestored();
             _home.SyncDisplays();

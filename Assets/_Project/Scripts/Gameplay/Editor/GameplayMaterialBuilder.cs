@@ -69,7 +69,8 @@ namespace MoonProject.Gameplay.Editor
             {
                 LootContainerBuilder.CoilCrateName, LootContainerBuilder.TapeCaseName,
                 LootContainerBuilder.JunctionBoxName, LootContainerBuilder.SupplyPodName,
-                LootContainerBuilder.TillySledName,
+                LootContainerBuilder.TillySledName, LootContainerBuilder.CabinetName,
+                LootContainerBuilder.SpareCrateName,
             };
             var containers = new GameObject[names.Length];
             for (int i = 0; i < names.Length; i++)
@@ -102,6 +103,15 @@ namespace MoonProject.Gameplay.Editor
                 : throw new InvalidOperationException($"{BuilderPath}: Art's garage port {path} is missing.");
         }
 
+        /// <summary>Art's model of Ro's tape deck, which Kenji's spare crate holds (0.5.5 §2).</summary>
+        private static GameObject TapeDeckModel()
+        {
+            var deck = AssetDatabase.LoadAssetAtPath<GameObject>(GameplayAssetPaths.TapeDeck);
+            return deck != null ? deck
+                : throw new InvalidOperationException($"{BuilderPath}: Art's tape deck {GameplayAssetPaths.TapeDeck} " +
+                                                      "is missing.");
+        }
+
         [MoonBuilder(BuilderPath, BuilderOrder)]
         private static void Build()
         {
@@ -121,7 +131,7 @@ namespace MoonProject.Gameplay.Editor
             visuals.PopulateComponents(ComponentModels());
             visuals.PopulateContainers(ContainerModels());
             visuals.PopulateTube(TubeModel());
-            visuals.PopulateGaragePort(GaragePortModel());
+            visuals.PopulateGaragePort(GaragePortModel(), TapeDeckModel());
             GeneratedAssets.CreateOrReplace(visuals, GameplayAssetPaths.Visuals);
             AssetDatabase.SaveAssets();
             Debug.Log($"{BuilderPath}: wrote {Enum.GetValues(typeof(GlowRole)).Length + 1} materials and " +

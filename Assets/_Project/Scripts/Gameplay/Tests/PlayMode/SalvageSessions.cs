@@ -242,7 +242,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             SalvageSite depot = _fixture.FindSite("depot");
             Relic walkman = depot.Relics[0];
-            Assert.AreEqual("cassette_player", walkman.Definition.Id, "the walkman rests in the depot's heart");
+            Assert.AreEqual("walkman", walkman.Definition.Id, "the walkman rests in the depot's heart");
             Assert.Less(SurfaceRules.HorizontalDistance(walkman.Site.Position, depot.Heart), 1e-3f);
             Assert.Greater(walkman.BuriedPosition.y + walkman.RestHeight, depot.Heart.y,
                 "its top peeks out of the dust (the stand-in is as tall above its pivot as below)");

@@ -34,7 +34,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private static readonly string[] RelicIds =
         {
-            "cassette_player", "rubber_duck", "golden_record", "astronaut_boot", "teapot", "garden_gnome",
+            "walkman", "rubber_duck", "golden_record", "astronaut_boot", "teapot", "garden_gnome",
         };
 
         /// <summary>Where each relic rests, as in the content builder (the gnome beside the duck).</summary>
@@ -64,7 +64,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// Each relic stand-in's size (m) at true scale, gently exaggerated (VISION ruling 13, the art report): the
-        /// cassette player 0.25, the duck 0.20, the golden record 0.40, the boot 0.40, the teapot 0.35, the gnome 0.50.
+        /// walkman 0.25, the duck 0.20, the golden record 0.40, the boot 0.40, the teapot 0.35, the gnome 0.50.
         /// </summary>
         private static readonly Vector3[] RelicSizes =
         {
@@ -403,11 +403,12 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Template("Part_RelaySpare", new Vector3(0.4f, 0.3f, 0.5f)),
             });
             visuals.PopulateTube(Template("BlueprintTube", new Vector3(0.7f, 0.14f, 0.14f)));
-            visuals.PopulateGaragePort(PortTemplate());
+            visuals.PopulateGaragePort(PortTemplate(), Template("Kit_TapeDeck", new Vector3(0.3f, 0.15f, 0.12f)));
             visuals.PopulateContainers(new[]
             {
                 ContainerTemplate("CoilCrate"), ContainerTemplate("TapeCase"), ContainerTemplate("JunctionBox"),
-                ContainerTemplate("SupplyPod"), SledTemplate(),
+                ContainerTemplate("SupplyPod"), SledTemplate(), ContainerTemplate(ContainerKinds.Cabinet),
+                ContainerTemplate(ContainerKinds.SpareCrate),
             });
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
@@ -764,6 +765,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             Node("Heart", root.transform, Vector3.zero);
+            if (name == "garage")
+            {
+                // Kenji's bench beside the port's pad, the spare crate's front toward 07 coming in (0.5.5 §2).
+                Node(GaragePort.SpareCrateSocket, root.transform, new Vector3(9f, 0f, -1f)).localRotation =
+                    Quaternion.Euler(0f, 180f, 0f);
+            }
+
             for (int i = 0; i < RelicIds.Length; i++)
             {
                 if (RelicSites[i] == name)
@@ -921,6 +929,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Named(Block(mast, new Vector3(0f, 7.95f, 0f), Vector3.one * 0.5f), RelayRig.LampNode);
             Node(RelayRig.PartSocketNode, root.transform, new Vector3(0f, 0.78f, -1.24f));
             Node(RelayRig.BeamPointNode, root.transform, new Vector3(0f, 1.12f, -1.24f));
+            Node(RelayRig.CabinetSocketNode, root.transform, new Vector3(1.75f, 0f, -2.8f));
             if (broken)
             {
                 mast.localRotation = Quaternion.Euler(-9f, 0f, 10f);
