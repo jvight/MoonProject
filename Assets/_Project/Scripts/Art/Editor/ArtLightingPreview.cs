@@ -101,16 +101,8 @@ namespace MoonProject.Art.Editor
         // spawn heading (RoverTuning) both kitmain 07s face, so Earth and The Peak sit ahead of them.
         private const float ChaseDistance = 7.5f;
 
-        // The 0.5.5 charge pick's symmetric 07: the wing centred and as wide as the antenna allows, the vanes folding
-        // back this far when empty.
+        // The charge-up scenes: full lock pushes the cyan toward white; the warm-emitter window keeps a faint trace.
         private const string ChargeScenePrefix = "charge_";
-        private const float CentredWingHalfWidth = 0.22f;
-        private const float CurrentWingHalfWidth = 0.19f;
-        private const float VaneFoldDegrees = 80f;
-        private const float CoilNotchDegrees = 45f;
-        private const float CellSleeveTravel = 0.065f;
-
-        // Full lock pushes the cyan toward white; the warm-emitter window keeps a faint trace.
         private const float ChargeLockGlow = 2.4f;
         private const float ChargeWarmGlow = 0.3f;
         private static readonly string[] ChargeStates = { "rest", "s1", "s2", "lock", "warm" };
@@ -320,7 +312,7 @@ namespace MoonProject.Art.Editor
                         break;
                     case string charge when charge.StartsWith(ChargeScenePrefix, StringComparison.Ordinal):
                         NightSetting(material, temporary, 90f, 12f);
-                        poses = ChargeVariantScene(temporary, charge);
+                        poses = ChargeUpScene(temporary, charge);
                         break;
                     default:
                         Debug.LogError($"ArtLightingPreview: unknown scene '{scene}' " +
@@ -451,16 +443,16 @@ namespace MoonProject.Art.Editor
             Mount(temporary, RoverModelBuilder.FocusLensName, Descendant(charged, RoverModelBuilder.LensSocketName));
             SetGlow(Descendant(charged, RoverModelBuilder.FocusLensName), RoverModelBuilder.FocusLensGlassName,
                 new[] { string.Empty }, 1f);
-            ShowChargeRun(charged, 1, 1f);
+            PoseCharge(charged, ChargeStates.Length - 2);
             for (int i = 5; i < RoverModelBuilder.HatchCrates; i++)
             {
                 Descendant(charged, RoverModelBuilder.HatchCratePrefix + i).gameObject.SetActive(false);
             }
-            ShowChargeRun(Rover(temporary, new Vector3(-2.4f, 0f, -0.6f), 120f), 0, 1f);
+            PoseCharge(Rover(temporary, new Vector3(-2.4f, 0f, -0.6f), 120f), 1);
             Transform dark = Rover(temporary, new Vector3(2.4f, 0f, -0.6f), 200f);
             temporary.Add(dark.gameObject);
             Mount(temporary, RoverModelBuilder.FocusLensName, Descendant(dark, RoverModelBuilder.LensSocketName));
-            ShowChargeRun(dark, 1, 0f);
+            PoseCharge(dark, 0);
             Transform eyeNode = Descendant(charged, "Eye");
             Vector3 eye = eyeNode.position;
             Vector3 front = eye + eyeNode.forward * 0.9f + eyeNode.right * 0.25f + Vector3.up * 0.15f;
@@ -479,21 +471,32 @@ namespace MoonProject.Art.Editor
                 Pose("pair_chase", new[] { 1.2f, 2.2f, -4.5f }, new[] { 1.2f, 0.9f, 0f }, 45f));
         }
 
-        /// <summary>Shows charge-run row <paramref name="tier"/> lit at <paramref name="intensity"/>, hiding the others.</summary>
-        private static void ShowChargeRun(Transform rover, int tier, float intensity)
+        /// <summary>
+        /// Poses 07's charge-up in <paramref name="state"/> (an index into <see cref="ChargeStates"/>): stages filled up
+        /// to it with their sleeves slid forward and lit, the conduits flowing, full lock pushed toward white with the
+        /// ring lit, or the warm trace on the conduits and the ring alone.
+        /// </summary>
+        private static void PoseCharge(Transform rover, int state)
         {
-            string shown = RoverModelBuilder.ChargeRunPrefix + tier;
-            var block = new MaterialPropertyBlock();
-            block.SetVector("_EmissionColor", new Vector4(intensity, intensity, intensity, 1f));
+            bool warm = state == WarmState;
+            int filled = warm ? 0 : state;
+            float hot = filled == RoverModelBuilder.ChargeStages ? ChargeLockGlow : 1f;
             foreach (Transform node in rover.GetComponentsInChildren<Transform>(true))
             {
-                if (node.name.StartsWith(RoverModelBuilder.ChargeRunPrefix, StringComparison.Ordinal))
+                if (node.name == RoverModelBuilder.ConduitGlowName)
                 {
-                    node.gameObject.SetActive(node.name == shown);
+                    Lit(node, warm ? ChargeWarmGlow : filled > 0 ? hot : 0f);
                 }
-                else if (node.parent != null && node.parent.name == shown)
+                else if (node.name == RoverModelBuilder.LockGlowName)
                 {
-                    node.GetComponent<Renderer>().SetPropertyBlock(block);
+                    Lit(node, warm ? ChargeWarmGlow : filled == RoverModelBuilder.ChargeStages ? ChargeLockGlow : 0f);
+                }
+                else if (node.name.StartsWith(RoverModelBuilder.StageGlowPrefix, StringComparison.Ordinal))
+                {
+                    bool full = node.name[RoverModelBuilder.StageGlowPrefix.Length] - '0' <= filled;
+                    Lit(node, full ? hot : 0f);
+                    node.localPosition = RoverModelBuilder.SleeveRest +
+                                         Vector3.forward * (full ? RoverModelBuilder.ChargeSleeveTravel : 0f);
                 }
             }
         }
@@ -562,85 +565,23 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The 0.5.5 charge-up pick (owner feedback §5.4): <c>charge_&lt;variant&gt;_&lt;state&gt;</c>, a symmetric 07
-        /// (its solar wing on the back's centreline and widened to what the antenna allows, the old lamp rows hidden,
-        /// the Focus Lens fitted) wearing Preview_Charge_&lt;Variant&gt;. States: <c>rest</c>; <c>s1</c>, <c>s2</c>
-        /// (stages filled, their pieces moved, the conduits flowing); <c>lock</c> (all three, everything pushed toward
-        /// white); <c>warm</c> (after firing: the conduits and the ring held faint for the warm-emitter window).
+        /// 07's charge-up (0.5.5 owner feedback §5.4, "Cells"): <c>charge_&lt;state&gt;</c>, 07 with the Focus Lens
+        /// fitted, posed <c>rest</c>; <c>s1</c>, <c>s2</c> (stages filled, sleeves slid forward, the conduits flowing);
+        /// <c>lock</c> (all three, everything pushed toward white, the ring lit); or <c>warm</c> (the trace after
+        /// firing). Seen from the chase camera at 7.5 m and 30 m, from above and from a close three-quarter.
         /// </summary>
-        private static CameraPoseSet ChargeVariantScene(TemporaryObjects temporary, string scene)
+        private static CameraPoseSet ChargeUpScene(TemporaryObjects temporary, string scene)
         {
-            string[] parts = scene.Split('_');
-            string variant = parts.Length == 3
-                ? Array.Find(ChargeVariantBuilder.Variants,
-                    v => string.Equals(v, parts[1], StringComparison.OrdinalIgnoreCase))
-                : null;
-            int state = parts.Length == 3 ? Array.IndexOf(ChargeStates, parts[2]) : -1;
-            if (variant == null || state < 0)
+            int state = Array.IndexOf(ChargeStates, scene.Substring(ChargeScenePrefix.Length));
+            if (state < 0)
             {
-                throw new ArgumentException($"ArtLightingPreview: '{scene}' is not charge_<variant>_<state>.");
+                throw new ArgumentException($"ArtLightingPreview: '{scene}' is not charge_<rest|s1|s2|lock|warm>.");
             }
 
             Transform rover = Rover(temporary, Vector3.zero, 160f);
             temporary.Add(rover.gameObject);
-            foreach (Transform node in rover.GetComponentsInChildren<Transform>(true))
-            {
-                if (node.name.StartsWith(RoverModelBuilder.ChargeRunPrefix, StringComparison.Ordinal))
-                {
-                    node.gameObject.SetActive(false);
-                }
-            }
-
-            Transform wing = Descendant(rover, "SolarWing");
-            wing.localPosition = new Vector3(0f, wing.localPosition.y, wing.localPosition.z);
-            wing.localScale = new Vector3(CentredWingHalfWidth / CurrentWingHalfWidth, 1f, 1f);
             Mount(temporary, RoverModelBuilder.FocusLensName, Descendant(rover, RoverModelBuilder.LensSocketName));
-            Transform kit = Instantiate(ChargeVariantBuilder.PrefabPrefix + variant, temporary, ArtPaths.RoverFolder)
-                .transform;
-            PrefabUtility.UnpackPrefabInstance(kit.gameObject, PrefabUnpackMode.Completely,
-                InteractionMode.AutomatedAction);
-            Reparent(kit, ChargeVariantBuilder.OnRootName, rover);
-            Reparent(kit, ChargeVariantBuilder.OnNeckName, Descendant(rover, "Neck"));
-            Reparent(kit, ChargeVariantBuilder.OnEyeName, Descendant(rover, "Eye"));
-
-            bool warm = state == WarmState;
-            int filled = warm ? 0 : state;
-            float hot = filled == ChargeVariantBuilder.Stages ? ChargeLockGlow : 1f;
-            foreach (Transform node in rover.GetComponentsInChildren<Transform>(true))
-            {
-                if (node.name == ChargeVariantBuilder.ConduitGlowName)
-                {
-                    Lit(node, warm ? ChargeWarmGlow : filled > 0 ? hot : 0f);
-                }
-            }
-
-            Lit(Search(rover, ChargeVariantBuilder.LockGlowName),
-                warm ? ChargeWarmGlow : filled == ChargeVariantBuilder.Stages ? ChargeLockGlow : 0f);
-            foreach (Transform node in rover.GetComponentsInChildren<Transform>(true))
-            {
-                if (!node.name.StartsWith(ChargeVariantBuilder.StagePrefix, StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                int stage = node.name[ChargeVariantBuilder.StagePrefix.Length] - '0';
-                bool full = stage <= filled;
-                Lit(node.GetChild(0), full ? hot : 0f);
-                float outward = Mathf.Sign(node.localPosition.x);
-                if (variant == ChargeVariantMeshes.Coils)
-                {
-                    node.localRotation = Quaternion.Euler(0f, 0f, full ? CoilNotchDegrees : 0f);
-                }
-                else if (variant == ChargeVariantMeshes.Vanes)
-                {
-                    node.localRotation = Quaternion.Euler(0f, 0f, full ? 0f : -outward * VaneFoldDegrees);
-                }
-                else
-                {
-                    node.GetChild(0).localPosition = new Vector3(0f, 0f, full ? CellSleeveTravel : 0f);
-                }
-            }
-
+            PoseCharge(rover, state);
             Transform eye = Descendant(rover, "Eye");
             Vector3 quarter = rover.position - rover.forward * 1.25f + rover.right * 1.05f + Vector3.up * 1.45f;
             return Poses(
@@ -657,14 +598,6 @@ namespace MoonProject.Art.Editor
             var block = new MaterialPropertyBlock();
             block.SetVector("_EmissionColor", new Vector4(intensity, intensity, intensity, 1f));
             node.GetComponent<Renderer>().SetPropertyBlock(block);
-        }
-
-        private static void Reparent(Transform kit, string group, Transform target)
-        {
-            Transform node = Descendant(kit, group);
-            node.SetParent(target, false);
-            node.localPosition = Vector3.zero;
-            node.localRotation = Quaternion.identity;
         }
 
         /// <summary>

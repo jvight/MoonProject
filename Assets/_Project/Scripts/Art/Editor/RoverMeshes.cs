@@ -82,7 +82,7 @@ namespace MoonProject.Art.Editor
         private const float BrowInner = 0.205f;
         private const float BrowOuter = 0.255f;
         private const float WingBar = 0.02f;
-        private const float WingHalfWidth = 0.19f;
+        private const float WingHalfWidth = 0.22f;
         private const float WingLength = 0.62f;
 
         private static readonly Vector2[] Seven =
@@ -275,17 +275,6 @@ namespace MoonProject.Art.Editor
         /// band under a low side light, so the neck's shadow still ties the head's shadow to the body's while the
         /// silhouette keeps its tired desk-lamp posture.
         /// </summary>
-        /// <summary>
-        /// The back of neck clamp <paramref name="index"/> (0 the lower), where a charge-run lamp sits on the
-        /// centreline just behind the fin, and the turn that stands it there (+Y out of the clamp's back), in neck space.
-        /// </summary>
-        public static Vector3 NeckLamp(int index, out Quaternion outward)
-        {
-            outward = Quaternion.Euler(-90f, 0f, 0f);
-            Vector3 onPole = Vector3.Lerp(NeckPoleBase, HeadHinge - NeckPoleTopDrop, NeckClamps[index]);
-            return onPole + new Vector3(0f, 0f, -NeckClampBack);
-        }
-
         public static LowPolyMeshBuilder Neck()
         {
             var b = new LowPolyMeshBuilder(400);
@@ -453,28 +442,14 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
-        // The neck's pole and the two clamps on it; a lamp on a clamp's back clears the fin's trailing edge.
+        // The neck's pole and the two clamps on it.
         private static readonly Vector3 NeckPoleBase = new Vector3(0f, 0.03f, 0f);
         private static readonly Vector3 NeckPoleTopDrop = new Vector3(0f, 0.03f, 0f);
         private static readonly float[] NeckClamps = { 0.38f, 0.7f };
-        private const float NeckClampBack = 0.092f;
 
         private const float BrowLowDegrees = 52f;
         private const float BrowHighDegrees = 160f;
         private const float BrowBackOuter = 0.2f;
-
-        /// <summary>
-        /// A point on the brow's outer curve on the head's centreline, <paramref name="degrees"/> up round the eye's
-        /// axis from its front, and the turn that stands a lamp there (+Y out of the brow), in head space.
-        /// </summary>
-        public static Vector3 BrowPoint(float degrees, out Quaternion outward)
-        {
-            float t = Mathf.InverseLerp(BrowLowDegrees, BrowHighDegrees, degrees);
-            float radius = Mathf.Lerp(BrowOuter, BrowBackOuter, t);
-            var normal = new Vector3(0f, Mathf.Sin(degrees * Mathf.Deg2Rad), Mathf.Cos(degrees * Mathf.Deg2Rad));
-            outward = Quaternion.FromToRotation(Vector3.up, normal);
-            return EyeCentre + normal * radius;
-        }
 
         /// <summary>
         /// The brow, in head space: a solid forehead around the eye's axis whose outer surface rolls forward from
