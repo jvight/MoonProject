@@ -168,3 +168,33 @@ voice. They follow the writing style already and never compete with guidance.
 - **Work:** ui owns the guidance slot and the card trims. Gameplay owns the trigger changes in `PlaceApproaches`,
   `StationNotYet` for the tower, the tether hint and the listen hint. Story writes the new text into the tables once
   the Director accepts this.
+
+## 5. Status (Director accepted d7393cb7)
+**Applied** in en/vi, in the commit after this section: the new text of `next.wake`, `next.salvage`, `next.signal`,
+`next.friend.repair`, `next.garage`, `next.port`, `next.bay.wake`, `next.bay`, `ui.recipecard.tower`, `notyet.bay`,
+`notyet.chart`, `notyet.tether`, `ticker.listen.first` and `ticker.relay.waiting`.
+
+**Pending spec** (game design's 0.5.5 spec may change these flows; text unchanged for now):
+- loose pickups: `next.tower.part`, `next.tower.pad`, `next.dig`, `component.*.needed` (the merge into the part's
+  row), `pickup.*`;
+- blueprint tubes: `ui.blueprint.found`, `ui.blueprint.delivered`, `ui.recipecard.blueprint`;
+- the dock and inventory flow: `place.dock.*` (the new trigger), `ui.cargo.*`, `ticker.cargo.*`.
+
+**CUT keys stay in the tables** until the code that reads them goes. Who removes each, in the same change as the code
+path:
+
+| Key | Code path | Removed by |
+|---|---|---|
+| `next.tower.hold` | `BaseProgression.TowerLine` | gameplay |
+| `notyet.tower` | `BaseProgression` dormant answers (→ plaque lamp + tone) | gameplay |
+| `ticker.tether.back` | `ProgressionKeys.TetherBack` | gameplay |
+| `place.ladder.*` | `PlaceApproaches` (the ladder's place id) | gameplay |
+| `place.tower.job`, `place.lander.job`, `place.bay.job`, `place.lift.job`, `place.garage_port.job` | `PlaceCard` (name only for these places) | ui |
+| `ui.recipe.need` | `RecipeView` | ui |
+| `ui.tower.level` | `TowerPanel` header | ui |
+| `ui.tower.purchased` | `TowerPanel` station line | ui |
+| `ui.bay.pick` | `TowerPanel` / `BayList` | ui |
+| `ticker.recovery.power` | the recovery ticker in UI | ui |
+| `ui.battery.power` | `GameUI.uxml` dial word | ui |
+
+Story deletes the keys from en/vi once the code no longer reads them; the localization tests show it.
