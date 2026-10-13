@@ -222,14 +222,6 @@ namespace MoonProject.UI.PlayModeTests
                 yield return Check(shape, "cargo screen", null);
             }
 
-            _rig.Ui.Cargo.SelectTab(1);
-            yield return Seconds(0.5f);
-            foreach (ScreenShape shape in ScreenShapes.All)
-            {
-                yield return Reframe(shape);
-                yield return Check(shape, "07 can page", null);
-            }
-
             yield return Tap(keyboard.tabKey);
             yield return Seconds(1f);
             events.Publish(new RelicDeposited("rubber_duck", Vector3.zero, 4));

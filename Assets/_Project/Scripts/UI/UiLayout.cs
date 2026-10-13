@@ -139,8 +139,6 @@ namespace MoonProject.UI
             PauseStack = Require<VisualElement>("pause-stack");
             PauseMain = Require<VisualElement>("pause-main");
             PauseMainShadow = Require<VisualElement>("pause-main-shadow");
-            PauseCan = Require<VisualElement>("pause-can");
-            PauseCanRows = Require<VisualElement>("pause-can-rows");
             PauseCassettes = Require<VisualElement>("pause-cassettes");
             PauseCassetteIcon = Require<VisualElement>("pause-cassette-icon");
             PauseCassettesCount = Require<Label>("pause-cassettes-count");
@@ -447,10 +445,6 @@ namespace MoonProject.UI
         public VisualElement PauseMainShadow { get; }
 
         /// <summary>"07 can": the verbs learned so far, on the pause page (docs/design/first-hour-v2 6.5).</summary>
-        public VisualElement PauseCan { get; }
-
-        public VisualElement PauseCanRows { get; }
-
         public VisualElement PauseCassettes { get; }
 
         public VisualElement PauseCassetteIcon { get; }

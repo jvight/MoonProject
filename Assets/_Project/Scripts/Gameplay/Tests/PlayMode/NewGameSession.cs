@@ -81,7 +81,10 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Assert.IsFalse(abilities.Has(ability), $"{ability} is not earned in a new game");
             }
 
-            Assert.AreEqual(0, now.Get<IMaterialStock>().Total, "the stock starts empty");
+            var hold = now.Get<ICargoHold>();
+            Assert.AreEqual(2, hold.Units(SalvageMaterial.Metal), "a new game: 07's spares (0.5.5 D4) in its hold");
+            Assert.AreEqual(1, hold.Units(SalvageMaterial.Wiring));
+            Assert.AreEqual(3, now.Get<IMaterialStock>().Total, "and nothing else");
             Assert.IsFalse(File.Exists(savePath), "the old save is no longer the current one");
             Assert.AreEqual(1, NewGameScene.PutAwayFiles().Length, "it was put away, not deleted");
         }

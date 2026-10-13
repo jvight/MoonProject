@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using MoonProject.App;
 using MoonProject.Core;
+using MoonProject.Core.Save;
 using MoonProject.Gameplay.Lift;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
@@ -167,14 +168,15 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// Builds and boots everything; 07 starts at the base facing +Z, its tether already fitted unless
-        /// <paramref name="tether"/> is false (Kenji's garage port's own tests earn it).
+        /// <paramref name="tether"/> is false (Kenji's garage port's own tests earn it). A new game (no save yet) starts with an empty
+        /// stock unless <paramref name="spares"/> keeps 07's starting spares (0.5.5 D4) in its hold.
         /// </summary>
         /// <param name="cargoSeat">False boots a rover that registers no cargo seat (the boot check's test).</param>
         public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null, bool cargoSeat = true,
-            bool tether = true)
+            bool tether = true, bool spares = false)
         {
             var fixture = new GameplayFixture(controls, saveSlot ?? BootstrapHarness.NewTestSlot(), cargoSeat);
-            fixture.Build();
+            fixture.Build(spares);
             if (tether)
             {
                 fixture.Rover.Grant(RoverAbility.Tether);
@@ -326,7 +328,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Dispose(false);
         }
 
-        private void Build()
+        private void Build(bool spares)
         {
             World = Track(FlatWorldSystem.Create());
             Rover = Track(GameplayFakeRover.Create(Vector3.zero, 0f, _cargoSeat));
@@ -447,6 +449,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
+            // A boot that failed its wiring (the boot checks' tests) has no stock to empty.
+            bool emptyStock = !spares && Gameplay.Materials != null &&
+                              Bootstrap.Context.Get<ISaveService>().LoadResult == SaveLoadResult.NoSave;
+            if (emptyStock && !Gameplay.Materials.TrySpend(CargoTuning.StarterItems))
+            {
+                throw new InvalidOperationException("A new game's hold should carry 07's spares.");
+            }
+
             Events = new EventRecorder(Bootstrap.Context.Events);
         }
 

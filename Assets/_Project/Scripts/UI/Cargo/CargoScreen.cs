@@ -4,17 +4,18 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
 using MoonProject.Core.Events;
-using MoonProject.Core.Input;
 
 namespace MoonProject.UI
 {
     /// <summary>
     /// The cargo screen (docs/features/M3-25 §2.4; the PDA of docs/design/first-hour-qa.md R1): Tab or View opens a
-    /// Moonlight Glass panel over the blur, and the game goes on. The first page is 07's hold only (a grid of slots,
-    /// each with its material's icon and units out of its capacity, empty slots as faint outlines, the waiting
-    /// bundles) with one plain line under it; home's shelves belong to the docked storage view, not to Tab. The second page, "07 can", lists each ability 07 has (its key, its word, one line) and the
-    /// kits decoded but not yet fitted as pencil sheets. Everything is written when the screen opens or something
-    /// changed (<see cref="MarkDirty"/>); an open screen with nothing new allocates nothing.
+    /// Moonlight Glass panel over the blur, and the game goes on. It is 07's hold (a grid of slots, each with its
+    /// material's icon and units out of its capacity, empty slots as faint outlines, the waiting bundles) with one
+    /// plain line under it. Nothing on it explains what 07 can do (the owner: such notes read as wrong). Opened while
+    /// 07 rests on the dock (docs/design/0.5.5-owner-feedback.md §3, ruling B3) it is the transfer view: home's shelves
+    /// beside the hold, every slot a button, and one press moves that slot's stack to the other side; leaving the dock
+    /// closes it. Everything is written when the screen opens or something changed (<see cref="MarkDirty"/>); an open
+    /// screen with nothing new allocates nothing.
     /// </summary>
     internal sealed class CargoScreen
     {
@@ -22,9 +23,8 @@ namespace MoonProject.UI
         public const string EmptyClass = "cargo__cell--empty";
         public const string UnlitClass = "cargo__cell--unlit";
         private const string BootingClass = "cargo--booting";
-        private const string TabOnClass = "settings-tab--on";
-        private const string TabSkinOnClass = "settings-tab-wrap--on";
-        private const string TabFocusClass = "settings-tab-wrap--focus";
+        private const string TransferClass = "cargo--transfer";
+        private const string ButtonClass = "cargo__cell--button";
         private const float CellGap = 6f;
         private const int HoldSlotsAcross = 4;
         private const int WaitingCache = 100;
@@ -32,9 +32,9 @@ namespace MoonProject.UI
         private readonly CargoScreenSettings _settings;
         private readonly ILocalization _localization;
         private readonly ICargoHold _hold;
-        private readonly IRoverAbilities _abilities;
-        private readonly ITechTree _tech;
-        private readonly GlyphLabels _glyphs;
+        private readonly IHomeStorage _home;
+        private readonly IStackTransfer _transfer;
+        private readonly IDockState _dock;
         private readonly IntText _numbers;
         private readonly EventBus _events;
         private readonly PromptLedger _ledger;
@@ -43,31 +43,27 @@ namespace MoonProject.UI
         private readonly Label _bootLine;
         private readonly Reveal _reveal;
         private readonly VisualElement _panel;
-        private readonly Button[] _tabs;
-        private readonly VisualElement[] _pages;
         private readonly Label _waiting;
-        private readonly VisualElement _holdGrid;
-        private readonly VisualElement _canRows;
+        private readonly Label _transferHint;
         private readonly Label _summary;
-        private readonly List<Cell> _holdCells = new List<Cell>();
-        private readonly CanRow[] _rows = new CanRow[AbilityTable.Count];
+        private readonly Grid _holdGrid;
+        private readonly Grid _homeGrid;
         private readonly Dictionary<int, string> _pairs = new Dictionary<int, string>();
         private readonly string[] _waitingTexts = new string[WaitingCache];
         private string _bootText = string.Empty;
         private int _bootTyped = -1;
         private int _bootLit;
         private int _bootArrived;
-        private int _tab;
+        private bool _transferView;
         private bool _dirty = true;
         private float _cell;
         private float _shrink = 1f;
         private Vector2 _fittedFor;
         private float _writtenCell = -1f;
         private int _writtenSummary = -1;
-        private InputDeviceKind _device = InputDeviceKind.KeyboardMouse;
 
         public CargoScreen(UiLayout layout, CargoScreenSettings settings, ILocalization localization,
-            ICargoHold hold, IRoverAbilities abilities, ITechTree tech, GlyphLabels glyphs, IntText numbers,
+            ICargoHold hold, IHomeStorage home, IStackTransfer transfer, IDockState dock, IntText numbers,
             EventBus events, PromptLedger ledger)
         {
             if (layout == null)
@@ -78,9 +74,9 @@ namespace MoonProject.UI
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _hold = hold ?? throw new ArgumentNullException(nameof(hold));
-            _abilities = abilities ?? throw new ArgumentNullException(nameof(abilities));
-            _tech = tech ?? throw new ArgumentNullException(nameof(tech));
-            _glyphs = glyphs ?? throw new ArgumentNullException(nameof(glyphs));
+            _home = home ?? throw new ArgumentNullException(nameof(home));
+            _transfer = transfer ?? throw new ArgumentNullException(nameof(transfer));
+            _dock = dock ?? throw new ArgumentNullException(nameof(dock));
             _numbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _ledger = ledger ?? throw new ArgumentNullException(nameof(ledger));
@@ -90,37 +86,12 @@ namespace MoonProject.UI
             _reveal = new Reveal(root, settings.Reveal);
             _reveal.Snap(false);
             _panel = Require<VisualElement>(root, "cargo-panel");
-            _tabs = new[]
-            {
-                Require<Button>(root, "button-cargo-tab-cargo"),
-                Require<Button>(root, "button-cargo-tab-can"),
-            };
-            _pages = new[]
-            {
-                Require<VisualElement>(root, "cargo-page-cargo"),
-                Require<VisualElement>(root, "cargo-page-can"),
-            };
             _waiting = Require<Label>(root, "cargo-waiting");
             _bootLine = Require<Label>(root, "cargo-boot");
-            _holdGrid = Require<VisualElement>(root, "cargo-hold-grid");
-            _canRows = Require<VisualElement>(root, "cargo-can-rows");
+            _transferHint = Require<Label>(root, "cargo-transfer-hint");
             _summary = Require<Label>(root, "cargo-summary");
-            for (int i = 0; i < _tabs.Length; i++)
-            {
-                int tab = i;
-                VisualElement skin = _tabs[i].parent;
-                new TabPainter(skin);
-                _tabs[i].clicked += () => SelectTab(tab);
-                _tabs[i].RegisterCallback<FocusInEvent>(_ => skin.AddToClassList(TabFocusClass));
-                _tabs[i].RegisterCallback<FocusOutEvent>(_ => skin.RemoveFromClassList(TabFocusClass));
-            }
-
-            for (int i = 0; i < _rows.Length; i++)
-            {
-                _rows[i] = BuildCanRow(_canRows);
-            }
-
-            SelectTab(0);
+            _holdGrid = new Grid(Require<VisualElement>(root, "cargo-hold-grid"), _hold, true);
+            _homeGrid = new Grid(Require<VisualElement>(root, "cargo-home-grid"), _home, false);
         }
 
         /// <summary>True while the screen is up (or easing).</summary>
@@ -129,82 +100,38 @@ namespace MoonProject.UI
         /// <summary>0..1 how far the screen has come, for the blur behind it.</summary>
         public float Openness => _reveal.Visibility;
 
-        /// <summary>The page shown: 0 cargo, 1 "07 can".</summary>
-        public int Tab => _tab;
-
-        /// <summary>The button to focus when the screen opens (gamepad and keyboard move from it).</summary>
-        public Button FirstTab => _tabs[0];
-
         /// <summary>True while the first-press boot plays (tests and captures).</summary>
         public bool IsBooting => _boot.IsRunning;
 
+        /// <summary>True when this opening is the docked transfer view (hold beside shelves).</summary>
+        public bool IsTransferView => _transferView;
+
         /// <summary>The slot cells on 07's grid now (tests and captures).</summary>
-        public int HoldCellCount => _holdCells.Count;
+        public int HoldCellCount => _holdGrid.Cells.Count;
 
-        /// <summary>How many rows of the "07 can" page are shown (tests and captures).</summary>
-        public int CanRowCount
-        {
-            get
-            {
-                int shown = 0;
-                for (int i = 0; i < _rows.Length; i++)
-                {
-                    shown += _rows[i].Shown ? 1 : 0;
-                }
+        /// <summary>The slot cells on home's grid now (tests and captures).</summary>
+        public int HomeCellCount => _homeGrid.Cells.Count;
 
-                return shown;
-            }
-        }
-
-        /// <summary>The words of shown row <paramref name="shown"/>: verb, then line (tests and captures).</summary>
-        public string CanRowText(int shown)
-        {
-            int seen = 0;
-            for (int i = 0; i < _rows.Length; i++)
-            {
-                if (!_rows[i].Shown)
-                {
-                    continue;
-                }
-
-                if (seen == shown)
-                {
-                    return _rows[i].Verb.text + " | " + _rows[i].Line.text;
-                }
-
-                seen++;
-            }
-
-            throw new ArgumentOutOfRangeException(nameof(shown), shown, "No such shown row.");
-        }
-
-        /// <summary>True when shown row <paramref name="shown"/> is a pencil sheet (tests and captures).</summary>
-        public bool CanRowIsPencil(int shown)
-        {
-            int seen = 0;
-            for (int i = 0; i < _rows.Length; i++)
-            {
-                if (!_rows[i].Shown)
-                {
-                    continue;
-                }
-
-                if (seen == shown)
-                {
-                    return _rows[i].Pencil;
-                }
-
-                seen++;
-            }
-
-            throw new ArgumentOutOfRangeException(nameof(shown), shown, "No such shown row.");
-        }
-
-        /// <summary>The text under both grids (tests and captures).</summary>
+        /// <summary>The text under the grids (tests and captures).</summary>
         public string SummaryText => _summary.text;
 
         /// <summary>The "bundles waiting" note, empty when none wait (tests and captures).</summary>
         public string WaitingText => _waiting.text;
+
+        /// <summary>What a press on the focused slot does, under the grids (tests and captures).</summary>
+        public string TransferHintText => _transferHint.text;
+
+        /// <summary>The cell of slot <paramref name="index"/> on 07's side (tests and captures).</summary>
+        public Button HoldCell(int index)
+        {
+            return _holdGrid.Cells[index].Root;
+        }
+
+        /// <summary>The cell of slot <paramref name="index"/> on home's side (tests and captures).</summary>
+        public Button HomeCell(int index)
+        {
+            return _homeGrid.Cells[index].Root;
+        }
 
         public void Open()
         {
@@ -213,9 +140,13 @@ namespace MoonProject.UI
                 return;
             }
 
+            _transferView = _dock.IsDocked;
+            _root.EnableInClassList(TransferClass, _transferView);
+            _holdGrid.SetInteractive(_transferView);
+            _homeGrid.SetInteractive(_transferView);
             _dirty = true;
             _reveal.Show();
-            if (!_ledger.HoldBooted && _tab == 0)
+            if (!_ledger.HoldBooted)
             {
                 StartBoot();
             }
@@ -230,23 +161,19 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>The hold, the shelves or the abilities changed: write the screen again while it is open.</summary>
-        public void MarkDirty()
+        /// <summary>Puts the keyboard and gamepad focus on 07's first slot, in the transfer view.</summary>
+        public void FocusFirst()
         {
-            _dirty = true;
+            if (_transferView)
+            {
+                Refresh();
+                _holdGrid.Cells[0].Root.Focus();
+            }
         }
 
-        /// <summary>Shows one of the pages and marks its tab.</summary>
-        public void SelectTab(int tab)
+        /// <summary>The hold or the shelves changed: write the screen again while it is open.</summary>
+        public void MarkDirty()
         {
-            _tab = tab;
-            for (int i = 0; i < _pages.Length; i++)
-            {
-                _pages[i].style.display = i == tab ? DisplayStyle.Flex : DisplayStyle.None;
-                _tabs[i].EnableInClassList(TabOnClass, i == tab);
-                _tabs[i].parent.EnableInClassList(TabSkinOnClass, i == tab);
-            }
-
             _dirty = true;
         }
 
@@ -261,8 +188,7 @@ namespace MoonProject.UI
 
         /// <param name="deltaTime">Unscaled seconds.</param>
         /// <param name="panelSize">The UI panel's size, for the cell size.</param>
-        /// <param name="device">The active device, for the glyphs on the "07 can" page.</param>
-        public void Tick(float deltaTime, Vector2 panelSize, InputDeviceKind device)
+        public void Tick(float deltaTime, Vector2 panelSize)
         {
             _reveal.Tick(deltaTime);
             if (_reveal.IsHidden)
@@ -274,12 +200,6 @@ namespace MoonProject.UI
             if (booting)
             {
                 _boot.Step(deltaTime);
-            }
-
-            if (device != _device)
-            {
-                _device = device;
-                _dirty = true;
             }
 
             if (panelSize != _fittedFor)
@@ -341,9 +261,10 @@ namespace MoonProject.UI
         private void EndBoot(bool completed)
         {
             _root.RemoveFromClassList(BootingClass);
-            for (int i = 0; i < _holdCells.Count; i++)
+            List<Cell> cells = _holdGrid.Cells;
+            for (int i = 0; i < cells.Count; i++)
             {
-                Cell cell = _holdCells[i];
+                Cell cell = cells[i];
                 cell.Root.RemoveFromClassList(UnlitClass);
                 SetItem(cell, 1f);
             }
@@ -357,6 +278,7 @@ namespace MoonProject.UI
 
         private void PlayBootFrame()
         {
+            List<Cell> cells = _holdGrid.Cells;
             int typed = Mathf.CeilToInt(_boot.TypedFraction * _bootText.Length);
             if (typed != _bootTyped)
             {
@@ -367,13 +289,13 @@ namespace MoonProject.UI
             int lit = _boot.LitCount;
             for (; _bootLit < lit; _bootLit++)
             {
-                _events.Publish(new HoldSlotLit(_bootLit, _holdCells.Count));
+                _events.Publish(new HoldSlotLit(_bootLit, cells.Count));
             }
 
             int item = 0;
-            for (int i = 0; i < _holdCells.Count; i++)
+            for (int i = 0; i < cells.Count; i++)
             {
-                Cell cell = _holdCells[i];
+                Cell cell = cells[i];
                 cell.Root.EnableInClassList(UnlitClass, i >= lit);
                 if (_hold.GetSlot(i).IsEmpty)
                 {
@@ -386,7 +308,7 @@ namespace MoonProject.UI
 
             int arrived = _boot.ArrivedCount;
             int seen = 0;
-            for (int i = 0; i < _holdCells.Count && _bootArrived < arrived; i++)
+            for (int i = 0; i < cells.Count && _bootArrived < arrived; i++)
             {
                 if (_hold.GetSlot(i).IsEmpty)
                 {
@@ -424,38 +346,28 @@ namespace MoonProject.UI
                 return _settings.MaxCell;
             }
 
-            float cell = panelSize.x * _settings.WidthShare / HoldSlotsAcross - CellGap;
+            int columns = _transferView ? 2 : 1;
+            float cell = panelSize.x * _settings.WidthShare / (HoldSlotsAcross * columns) - CellGap;
             return Mathf.Clamp(cell * _shrink, _settings.MinCell, _settings.MaxCell);
         }
 
         private void Refresh()
         {
             _writtenCell = _cell;
-            if (_tab == 0)
+            _holdGrid.Write(this);
+            if (_transferView)
             {
-                RefreshHold();
-                WriteSummary();
+                _homeGrid.Write(this);
             }
-            else
-            {
-                RefreshAbilities();
-                _summary.text = string.Empty;
-                _writtenSummary = -1;
-            }
-        }
 
-        private void RefreshHold()
-        {
-            int count = _hold.SlotCount;
-            Fit(count);
-            Fill(count);
-            _holdGrid.style.width = HoldSlotsAcross * (_cell + CellGap);
             int waiting = _hold.WaitingBundles;
             _waiting.style.display = waiting > 0 ? DisplayStyle.Flex : DisplayStyle.None;
             if (waiting > 0)
             {
                 _waiting.text = WaitingLine(waiting);
             }
+
+            WriteSummary();
         }
 
         private string WaitingLine(int waiting)
@@ -479,42 +391,6 @@ namespace MoonProject.UI
             _summary.text = string.Format(_localization.Get(UiKeys.CargoSummary), holdUsed, holdSlots);
         }
 
-        /// <summary>Grows or trims 07's grid to <paramref name="count"/> cells.</summary>
-        private void Fit(int count)
-        {
-            while (_holdCells.Count < count)
-            {
-                _holdCells.Add(BuildCell(_holdGrid));
-            }
-
-            while (_holdCells.Count > count)
-            {
-                Cell last = _holdCells[_holdCells.Count - 1];
-                _holdGrid.Remove(last.Root);
-                _holdCells.RemoveAt(_holdCells.Count - 1);
-            }
-        }
-
-        private void Fill(int count)
-        {
-            for (int i = 0; i < count; i++)
-            {
-                Cell cell = _holdCells[i];
-                MaterialSlot slot = _hold.GetSlot(i);
-                cell.Root.style.width = _cell;
-                cell.Root.style.height = _cell;
-                if (slot.IsEmpty)
-                {
-                    cell.Root.AddToClassList(EmptyClass);
-                    continue;
-                }
-
-                cell.Root.RemoveFromClassList(EmptyClass);
-                cell.Painter.SetMaterial(slot.Material);
-                cell.Units.text = Pair(slot.Units, slot.Capacity);
-            }
-        }
-
         private string Pair(int units, int capacity)
         {
             int key = units * 256 + capacity;
@@ -523,78 +399,26 @@ namespace MoonProject.UI
                 : _pairs[key] = string.Concat(_numbers.Get(units), "/", _numbers.Get(capacity));
         }
 
-        private static Cell BuildCell(VisualElement grid)
+        /// <summary>One press on a slot: its stack goes to the other side, as much as fits.</summary>
+        private void Press(Grid grid, int index)
         {
-            var root = new VisualElement { pickingMode = PickingMode.Ignore };
-            root.AddToClassList(CellClass);
-            var icon = new VisualElement { pickingMode = PickingMode.Ignore };
-            icon.AddToClassList(MaterialSlots.IconClass);
-            var painter = new MaterialIconPainter(icon, SalvageMaterial.Metal);
-            var units = new Label { pickingMode = PickingMode.Ignore };
-            units.AddToClassList("cargo__units");
-            root.Add(icon);
-            root.Add(units);
-            grid.Add(root);
-            return new Cell { Root = root, Icon = icon, Painter = painter, Units = units };
-        }
-
-        private void RefreshAbilities()
-        {
-            for (int i = 0; i < _rows.Length; i++)
+            MaterialSlot slot = grid.Source.GetSlot(index);
+            if (slot.IsEmpty)
             {
-                AbilityRow ability = AbilityTable.At(i);
-                CanRow row = _rows[i];
-                bool has = _abilities.Has(ability.Ability);
-                bool sheet = !has && ability.HasNode && _tech.StateOf(ability.Node) == TechNodeState.Decoded;
-                bool shown = has || sheet;
-                if (shown != row.Shown)
-                {
-                    row.Root.style.display = shown ? DisplayStyle.Flex : DisplayStyle.None;
-                    row.Shown = shown;
-                }
+                return;
+            }
 
-                if (!shown)
-                {
-                    continue;
-                }
-
-                row.Pencil = sheet;
-                row.Root.EnableInClassList("can-row--pencil", sheet);
-                row.Verb.text = _localization.Get(ability.VerbKey);
-                row.Line.text = _localization.Get(sheet ? UiKeys.CanDecoded : ability.LineKey);
-                row.Glyph.style.visibility = ability.HasAction && has ? Visibility.Visible : Visibility.Hidden;
-                if (ability.HasAction)
-                {
-                    row.GlyphView.Set(_glyphs.For(ability.Action, _device), _device);
-                }
+            SalvageMaterial material = slot.Material;
+            if (_transfer.TryMove(material, grid.ToHome, out int moved) && moved > 0)
+            {
+                _events.Publish(new StackTransferred(material, moved, grid.ToHome));
+                _dirty = true;
             }
         }
 
-        private static CanRow BuildCanRow(VisualElement container)
+        private void WriteTransferHint(Grid grid)
         {
-            var root = new VisualElement { pickingMode = PickingMode.Ignore };
-            root.AddToClassList("can-row");
-            var holder = new VisualElement { pickingMode = PickingMode.Ignore };
-            holder.AddToClassList("can-row__glyph");
-            var glyph = new VisualElement { pickingMode = PickingMode.Ignore };
-            glyph.AddToClassList("glyph");
-            var glyphLabel = new Label { pickingMode = PickingMode.Ignore };
-            glyphLabel.AddToClassList("glyph__label");
-            glyph.Add(glyphLabel);
-            holder.Add(glyph);
-            var verb = new Label { pickingMode = PickingMode.Ignore };
-            verb.AddToClassList("can-row__verb");
-            var line = new Label { pickingMode = PickingMode.Ignore };
-            line.AddToClassList("can-row__line");
-            root.Add(holder);
-            root.Add(verb);
-            root.Add(line);
-            root.style.display = DisplayStyle.None;
-            container.Add(root);
-            return new CanRow
-            {
-                Root = root, Glyph = holder, GlyphView = new GlyphView(glyph, glyphLabel), Verb = verb, Line = line,
-            };
+            _transferHint.text = _localization.Get(grid.ToHome ? UiKeys.TransferToHome : UiKeys.TransferToTrip);
         }
 
         private static T Require<T>(VisualElement root, string name) where T : VisualElement
@@ -605,21 +429,100 @@ namespace MoonProject.UI
 
         private sealed class Cell
         {
-            public VisualElement Root;
+            public Button Root;
             public VisualElement Icon;
             public MaterialIconPainter Painter;
             public Label Units;
         }
 
-        private sealed class CanRow
+        /// <summary>One grid of slots: 07's hold (a press stores at home) or home's shelves (a press takes along).</summary>
+        private sealed class Grid
         {
-            public VisualElement Root;
-            public VisualElement Glyph;
-            public GlyphView GlyphView;
-            public Label Verb;
-            public Label Line;
-            public bool Shown;
-            public bool Pencil;
+            public readonly List<Cell> Cells = new List<Cell>();
+            public readonly IMaterialSlots Source;
+            public readonly bool ToHome;
+            private readonly VisualElement _container;
+            private bool _interactive;
+            private CargoScreen _screen;
+
+            public Grid(VisualElement container, IMaterialSlots source, bool toHome)
+            {
+                _container = container;
+                Source = source;
+                ToHome = toHome;
+            }
+
+            public void SetInteractive(bool interactive)
+            {
+                _interactive = interactive;
+                for (int i = 0; i < Cells.Count; i++)
+                {
+                    Apply(Cells[i]);
+                }
+            }
+
+            /// <summary>Grows or trims the cells to the source's slots and writes each one.</summary>
+            public void Write(CargoScreen screen)
+            {
+                _screen = screen;
+                int count = Source.SlotCount;
+                while (Cells.Count < count)
+                {
+                    Cells.Add(Build());
+                }
+
+                while (Cells.Count > count)
+                {
+                    Cell last = Cells[Cells.Count - 1];
+                    _container.Remove(last.Root);
+                    Cells.RemoveAt(Cells.Count - 1);
+                }
+
+                _container.style.width = HoldSlotsAcross * (screen._cell + CellGap);
+                for (int i = 0; i < count; i++)
+                {
+                    Cell cell = Cells[i];
+                    MaterialSlot slot = Source.GetSlot(i);
+                    cell.Root.style.width = screen._cell;
+                    cell.Root.style.height = screen._cell;
+                    if (slot.IsEmpty)
+                    {
+                        cell.Root.AddToClassList(EmptyClass);
+                        continue;
+                    }
+
+                    cell.Root.RemoveFromClassList(EmptyClass);
+                    cell.Painter.SetMaterial(slot.Material);
+                    cell.Units.text = screen.Pair(slot.Units, slot.Capacity);
+                }
+            }
+
+            private Cell Build()
+            {
+                int index = Cells.Count;
+                var root = new Button { pickingMode = PickingMode.Ignore, focusable = false };
+                root.AddToClassList(CellClass);
+                root.AddToClassList(ButtonClass);
+                var icon = new VisualElement { pickingMode = PickingMode.Ignore };
+                icon.AddToClassList(MaterialSlots.IconClass);
+                var painter = new MaterialIconPainter(icon, SalvageMaterial.Metal);
+                var units = new Label { pickingMode = PickingMode.Ignore };
+                units.AddToClassList("cargo__units");
+                root.Add(icon);
+                root.Add(units);
+                root.clicked += () => _screen.Press(this, index);
+                root.RegisterCallback<FocusInEvent>(_ => _screen.WriteTransferHint(this));
+                _container.Add(root);
+                var cell = new Cell { Root = root, Icon = icon, Painter = painter, Units = units };
+                Apply(cell);
+                return cell;
+            }
+
+            private void Apply(Cell cell)
+            {
+                cell.Root.pickingMode = _interactive ? PickingMode.Position : PickingMode.Ignore;
+                cell.Root.focusable = _interactive;
+            }
         }
     }
 }

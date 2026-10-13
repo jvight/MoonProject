@@ -10,7 +10,7 @@ namespace MoonProject.UI
     internal readonly struct AbilityRow
     {
         public AbilityRow(RoverAbility ability, bool hasAction, RoverAction action, bool hasNode, TechNodeId node,
-            string verbKey, string lineKey)
+            string verbKey)
         {
             Ability = ability;
             HasAction = hasAction;
@@ -18,7 +18,6 @@ namespace MoonProject.UI
             HasNode = hasNode;
             Node = node;
             VerbKey = verbKey;
-            LineKey = lineKey;
         }
 
         public RoverAbility Ability { get; }
@@ -33,16 +32,12 @@ namespace MoonProject.UI
 
         public TechNodeId Node { get; }
 
-        /// <summary>"ui.can.tether.verb": the one word on the "07 can" page and on the unlock card.</summary>
+        /// <summary>"ui.can.tether.verb": the part's name, on the unlock card.</summary>
         public string VerbKey { get; }
-
-        /// <summary>"ui.can.tether.line": the one plain line of what it does.</summary>
-        public string LineKey { get; }
     }
 
     /// <summary>
-    /// What the "07 can" page lists (docs/design/first-hour-qa.md R1), in the order the player meets it, and which
-    /// piece of kit an unlock card is for. Pure logic, EditMode-tested; the words live in the localization tables.
+    /// What 07 can do, in the order the player meets it, and which piece of kit an unlock card is for. Pure logic, EditMode-tested; the words live in the localization tables.
     /// </summary>
     internal static class AbilityTable
     {
@@ -117,7 +112,7 @@ namespace MoonProject.UI
         {
             string snake = Snake(ability.ToString());
             return new AbilityRow(ability, action.HasValue, action ?? default, node.HasValue, node ?? default,
-                "ui.can." + snake + ".verb", "ui.can." + snake + ".line");
+                "ui.can." + snake + ".verb");
         }
 
         private static string Snake(string name)

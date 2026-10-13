@@ -112,9 +112,7 @@ namespace MoonProject.UI
         private FriendReadout _friendReadout;
         private FriendNameTag _friendName;
         private PauseMenu _pause;
-        private VerbList _verbs;
         private TextScale _textScale;
-        private bool _wasPaused;
         private BackdropBlur _backdrop;
         private IMapKnowledge _mapKnowledge;
         private IStationReach _mapReach;
@@ -203,7 +201,6 @@ namespace MoonProject.UI
 
         internal HomeMeter HomeMeter => _homeMeter;
 
-        internal VerbList Verbs => _verbs;
 
         internal UiLayout Layout => _layout;
 
@@ -355,6 +352,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<FeelBeat>(OnFeelBeat));
             _tokens.Add(events.Subscribe<UpgradePurchased>(OnUpgradePurchased));
             _tokens.Add(events.Subscribe<CargoChanged>(OnCargoChanged));
+            _tokens.Add(events.Subscribe<HomeStorageChanged>(_ => _cargo?.MarkDirty()));
             _tokens.Add(events.Subscribe<FriendPartCollected>(_ => _director.NotifyUsed(InteractionKind.PickUp)));
             _tokens.Add(events.Subscribe<CrewCrateOpened>(OnCrewCrateOpened));
             _tokens.Add(events.Subscribe<GameSaved>(OnGameSaved));
@@ -474,14 +472,13 @@ namespace MoonProject.UI
             _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
             _rewardCard = new RewardCard(_layout, _tuning.RewardCard, _localization, services.Shop);
             _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold,
-                services.Abilities, services.Tech, _glyphs, _numbers, services.Events, _ledger);
+                services.Home, services.Transfer, services.Dock, _numbers, services.Events, _ledger);
             _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization, _glyphs);
             _crateNote = new CrateNote(_layout, _tuning.CrateNote, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
                 services.Events, _settings, services.Radio, services.Relays, services.Flow,
                 _numbers, _cursor, Quit,
                 new CreditsView(_layout, _tuning.Credits, _localization, _credits.text));
-            _verbs = new VerbList(_layout, _tuning.Prompts, _ledger, _glyphs, _localization);
             _textScale = new TextScale(_document.panelSettings);
             _backdrop = new BackdropBlur(transform, _tuning.Backdrop);
             if (_mapKnowledge != null)
@@ -547,7 +544,12 @@ namespace MoonProject.UI
             _pause.Tick(deltaTime);
             bool paused = _pause.IsOpen;
             _map?.Tick(deltaTime, paused);
-            _cargo.Tick(deltaTime, ScreenSize(), input.ActiveDevice);
+            _cargo.Tick(deltaTime, ScreenSize());
+            if (_cargo.IsOpen && _cargo.IsTransferView && !_services.Dock.IsDocked)
+            {
+                CloseCargo();
+            }
+
             bool onMap = (_map != null && _map.IsOpen) || _cargo.IsOpen;
             _backdrop.Set(Mathf.Max(Mathf.Max(_pause.Openness, _map != null ? _map.Openness : 0f), _cargo.Openness));
             float hudTime = paused ? 0f : deltaTime;
@@ -562,12 +564,6 @@ namespace MoonProject.UI
 
             InputDeviceKind device = input.ActiveDevice;
             _textScale.Apply(_player.TextScale);
-            if (paused && !_wasPaused)
-            {
-                _verbs.Refresh(device);
-            }
-
-            _wasPaused = paused;
             _labHud.Tick(deltaTime, !paused && !onMap, input.Drive,
                 _services.Hints.TryGet(InteractionKind.Deposit, out _), _glyphs.For(RoverAction.Tether, device), device);
             _board.Tick(deltaTime, !paused);
@@ -755,7 +751,7 @@ namespace MoonProject.UI
             _cargo.Open();
             _services.Input.Disable();
             _cursor.Menu();
-            _cargo.FirstTab.Focus();
+            _cargo.FocusFirst();
             _events.Publish(new UiCue(UiCueKind.Confirm));
         }
 
@@ -1120,7 +1116,6 @@ namespace MoonProject.UI
 
             _glyphs.Clear();
             _staticText.Apply();
-            _verbs.Refresh(_services.Input.ActiveDevice);
             _prompt.Relocalize();
             _card.Relocalize();
             _ticker.Relocalize();
