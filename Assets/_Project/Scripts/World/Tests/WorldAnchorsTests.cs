@@ -96,6 +96,9 @@ namespace MoonProject.World.Tests
             expected.Add(WorldAnchorIds.PlaceAntennaFarm);
             expected.Add(WorldAnchorIds.RegionPeak);
             expected.Add(WorldAnchorIds.RegionTerraces);
+            expected.Add(WorldAnchorIds.Micro06);
+            expected.Add(WorldAnchorIds.MicroMule);
+            expected.Add(WorldAnchorIds.MicroDrone);
             expected.Add(WorldAnchorIds.PlaceOrangeVent);
             expected.Add(WorldAnchorIds.PlaceIlmeniteBand);
             expected.Add(WorldAnchorIds.PlaceShadowedCrater);

@@ -944,48 +944,6 @@ Label {
     translate: -50% -100%;
 }
 
-/* Friend parts readout: warm pips over a broken friend, no glyphs, no numbers */
-
-.friend-chip {
-    flex-direction: row;
-    align-items: center;
-    padding: 9px 16px 9px 16px;
-}
-
-.friend-chip__label {
-    margin-right: 12px;
-    font-size: 20px;
-    color: var(--glass-hi);
-}
-
-.friend-pips {
-    flex-direction: row;
-    align-items: center;
-}
-
-.pip {
-    width: 14px;
-    height: 14px;
-    margin: 0 4px;
-    border-width: 1.5px;
-    border-radius: 7px;
-    border-color: var(--moon-text-faint);
-    justify-content: center;
-    align-items: center;
-}
-
-.pip--full {
-    border-color: var(--moon-warm-lamp);
-    background-color: var(--moon-amber-soft);
-}
-
-.pip__fill {
-    width: 8px;
-    height: 8px;
-    border-radius: 4px;
-    background-color: var(--moon-warm-lamp);
-}
-
 /*
  * The pickup feed (Subnautica's pickup notices): small glass rows at the left, one per material that just grew, each
  * with its icon, name, a "+N" and the new total. A row slides in from the left (PickupFeedSettings.SlideDistance).
@@ -2120,8 +2078,168 @@ Label {
     -unity-slice-scale: 0.5;
 }
 
+.cargo__tabs {
+    flex-direction: row;
+    justify-content: center;
+    margin-bottom: 14px;
+}
+
+.cargo__tabs .settings-tab-wrap {
+    flex-grow: 0;
+    flex-basis: auto;
+    width: 220px;
+}
+
 .cargo__page {
     min-width: 320px;
+}
+
+/* The 07 tab: 07's portrait with a socket at each place on the body, the parts row under it */
+.seven {
+    align-items: center;
+}
+
+.seven__portrait {
+    width: 600px;
+    height: 400px;
+    border-radius: 14px;
+    background-color: rgba(8, 12, 40, 0.5);
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.seven__socket {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    margin-left: -15px;
+    margin-top: -15px;
+    align-items: center;
+    justify-content: center;
+}
+
+.seven__socket-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 11px;
+    border-width: 2px;
+    border-color: var(--glass-rim);
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.seven__socket--unknown .seven__socket-dot {
+    border-color: var(--moon-track);
+}
+
+.seven__socket--fitted .seven__socket-dot {
+    border-color: var(--glass-sel);
+    background-color: var(--glass-btn);
+}
+
+.seven__socket:focus .seven__socket-dot,
+.seven__socket:hover .seven__socket-dot {
+    border-color: var(--glass-hi);
+}
+
+.seven__target .seven__socket-dot,
+.seven__socket.seven__target .seven__socket-dot {
+    border-color: var(--glass-sel);
+    border-width: 3px;
+}
+
+.seven__socket-name {
+    position: absolute;
+    top: 30px;
+    width: 130px;
+    margin-left: -50px;
+    font-size: 15px;
+    -unity-text-align: upper-center;
+    color: var(--glass-hi);
+}
+
+.seven__bay {
+    position: absolute;
+    left: 24px;
+    top: -8px;
+    width: 18px;
+    height: 18px;
+    --bay-icon-color: rgb(255, 214, 120);
+}
+
+.seven__row {
+    flex-direction: row;
+    justify-content: center;
+    min-height: 62px;
+    margin-top: 14px;
+    padding: 6px 10px;
+    border-radius: 12px;
+    border-width: 1.5px;
+    border-color: var(--moon-track);
+}
+
+.seven__row.seven__target {
+    border-color: var(--glass-sel);
+}
+
+.seven__card {
+    flex-direction: row;
+    align-items: center;
+    margin: 0 6px;
+    padding: 8px 14px;
+    border-width: 1.5px;
+    border-radius: 10px;
+    border-color: var(--glass-rim);
+    background-color: var(--glass-btn);
+}
+
+.seven__card:focus,
+.seven__card:hover {
+    border-color: var(--glass-sel);
+}
+
+.seven__card--away {
+    border-color: var(--moon-track);
+}
+
+.seven__card-name {
+    font-size: 18px;
+    color: var(--glass-hi);
+}
+
+.seven__card .seven__bay {
+    position: relative;
+    left: 0;
+    top: 0;
+    margin-left: 8px;
+}
+
+.seven__tooltip {
+    display: none;
+    position: absolute;
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background-color: rgba(8, 12, 40, 0.92);
+}
+
+.seven__tooltip--shown {
+    display: flex;
+}
+
+.seven__tooltip-name {
+    margin-right: 8px;
+    font-size: 18px;
+    color: var(--glass-hi);
+}
+
+.seven__ghost {
+    display: none;
+    position: absolute;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 18px;
+    color: var(--glass-hi);
+    background-color: var(--glass-btn);
 }
 
 .cargo__page--columns {

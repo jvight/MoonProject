@@ -12,8 +12,8 @@ namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
     /// Kenji's Rover Bay fits 07's kit (M3-14, VISION ruling 14: 07 has no hands), through the real wiring on a
-    /// stand-in bay built to the art contract (<see cref="TestRoverBay"/>): bought kit waits for the bay; when the bay
-    /// fits it, 07 is centred on the turntable, an arm carries the piece from under the roof down onto its socket (the
+    /// stand-in bay built to the art contract (<see cref="TestRoverBay"/>): crafted kit waits in the row; when it is
+    /// fitted (<see cref="PartFitted"/>), 07 is centred on the turntable, an arm carries the piece from under the roof down onto its socket (the
     /// piece rides the arm's tip the whole way and is set exactly on its socket, never dropped), the arm folds away,
     /// the turntable turns 07 to show it and 07 strikes its proud pose once it is let go. The drums take two arms,
     /// the Hover-Jump coils ride the floor arm up through the turntable. A socket out of reach is a contract bug,
@@ -43,12 +43,9 @@ namespace MoonProject.Rover.PlayModeTests
         private const float LongestFitting = 7f;
         private const float ShortestFitting = 2.5f;
 
-        private const string WarmHeadlamp = "rover.warm_headlamp";
-        private const string BoostCoils = "rover.boost_coils";
-        private const string HoverJump = "rover.hover_jump";
 
-        private readonly List<RoverKitInstalling> _installing = new List<RoverKitInstalling>();
-        private readonly List<RoverKitFitted> _fitted = new List<RoverKitFitted>();
+        private readonly List<FeelBeat> _installing = new List<FeelBeat>();
+        private readonly List<FeelBeat> _fitted = new List<FeelBeat>();
         private LunarTestPhysics _physics;
         private TestWorld _world;
         private TestRover _rover;
@@ -84,8 +81,7 @@ namespace MoonProject.Rover.PlayModeTests
             _rover = TestRover.Spawn(_world, Centre + new Vector3(0.25f, 0f, 0.3f), ParkedYaw + 8f);
             _rover.Context.Register<IRoverBay>(_bay);
             EventBus events = _rover.Context.Events;
-            events.Subscribe<RoverKitInstalling>(_installing.Add);
-            events.Subscribe<RoverKitFitted>(_fitted.Add);
+            Listen(events);
             yield return Wait(1f);
         }
 
@@ -98,17 +94,33 @@ namespace MoonProject.Rover.PlayModeTests
             }
         }
 
-        /// <summary>A purchase at the bay: the ability is granted just before the purchase is announced.</summary>
-        private void Buy(RoverAbility ability, string upgradeId)
+        /// <summary>The Install beats: the moment's start (Anticipate) and the seat (Impact).</summary>
+        private void Listen(EventBus events)
         {
-            _rover.Context.Get<IRoverAbilities>().Grant(ability);
-            _rover.Context.Events.Publish(new UpgradePurchased(upgradeId, 1));
+            events.Subscribe<FeelBeat>(beat =>
+            {
+                if (beat.Kind == FeelKind.Install && beat.Phase == FeelPhase.Anticipate)
+                {
+                    _installing.Add(beat);
+                }
+                else if (beat.Kind == FeelKind.Install && beat.Phase == FeelPhase.Impact)
+                {
+                    _fitted.Add(beat);
+                }
+            });
         }
 
-        /// <summary>The hopper is fed: the bay starts fitting.</summary>
-        private void Fit(string upgradeId)
+        /// <summary>Crafted at the bay: the part waits in the row, and nothing on 07 changes.</summary>
+        private void Buy(RoverAbility ability)
         {
-            _rover.Context.Events.Publish(new RoverBayFitting(upgradeId));
+            _rover.Context.Get<IRoverAbilities>().Grant(ability);
+        }
+
+        /// <summary>Fitted at the bay pad (Tab, 07): the bay's arms carry it on.</summary>
+        private void Fit(RoverKitPiece piece)
+        {
+            _rover.Context.Events.Publish(new PartFitted(TestEquipment.SocketFor(piece), piece, false, false, default,
+                0));
         }
 
         private float NearestTip(Vector3 point)
@@ -184,16 +196,16 @@ namespace MoonProject.Rover.PlayModeTests
             float plainAngle = _rover.Headlamp.spotAngle;
             Transform bar = _rover.LampBar;
             Vector3 rest = bar.localPosition;
-            Buy(RoverAbility.WarmHeadlamp, WarmHeadlamp);
+            Buy(RoverAbility.WarmHeadlamp);
             yield return Wait(0.5f);
-            Assert.IsFalse(bar.gameObject.activeSelf, "Bought, the bar waits for the bay (07 feeds the hopper first).");
+            Assert.IsFalse(bar.gameObject.activeSelf, "Crafted, the bar waits in the row until it is fitted.");
             Assert.IsEmpty(_installing);
 
-            Fit(WarmHeadlamp);
+            Fit(RoverKitPiece.LampBar);
             yield return null;
             Assert.AreEqual(1, _installing.Count, "The install moment begins as the bay starts fitting.");
-            Assert.AreEqual(RoverKitPiece.LampBar, _installing[0].Piece);
-            Assert.IsFalse(_installing[0].Gift);
+            Assert.AreEqual(1f, _installing[0].Strength, "A fit, not a gift's soft settle.");
+            Assert.Greater(_installing[0].Seconds, 0f, "It says how long until the seat.");
             Assert.IsTrue(_rover.Kit.IsFitting);
             Assert.IsTrue(_rover.Controller.IsCradled, "The bay holds 07.");
             Assert.IsTrue(bar.gameObject.activeSelf, "The bar hangs from an arm...");
@@ -283,8 +295,7 @@ namespace MoonProject.Rover.PlayModeTests
                 + $"07 {body}; camera {camera}, bearing off the front {bearing:0.0} deg, top {cameraHigh:0.00} m; "
                 + $"perk held {proudHeld:0.00} then {proud:0.00}");
             Assert.AreEqual(1, _fitted.Count, "Fitted once.");
-            Assert.AreEqual(RoverKitPiece.LampBar, _fitted[0].Piece);
-            Assert.AreEqual(WarmHeadlamp, _fitted[0].UpgradeId, "The kit's identity rides with it.");
+            Assert.AreEqual(1f, _fitted[0].Strength);
             Assert.That(finishedAt, Is.InRange(ShortestFitting, LongestFitting), "A few eased seconds.");
             Assert.Less(grip, GripTolerance, "The bar rides the arm's tip all the way.");
             Assert.Greater(above, 0.3f, "It comes down onto its socket from above.");
@@ -318,9 +329,9 @@ namespace MoonProject.Rover.PlayModeTests
         public IEnumerator FittingTheDrums_TwoArmsSetOneDrumEach()
         {
             yield return Park();
-            Buy(RoverAbility.BoostCoils, BoostCoils);
+            Buy(RoverAbility.BoostCoils);
             yield return null;
-            Fit(BoostCoils);
+            Fit(RoverKitPiece.CapacitorDrums);
             yield return null;
             Transform[] drums = _rover.Drums;
             Assert.AreNotEqual(NearestArm(drums[0].position), NearestArm(drums[1].position), "One arm per drum.");
@@ -348,7 +359,6 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsFalse(_rover.Kit.IsFitting, "Done in time.");
             Assert.Less(grip, GripTolerance, "Each drum rides its arm's tip.");
             Assert.AreEqual(1, _fitted.Count);
-            Assert.AreEqual(BoostCoils, _fitted[0].UpgradeId);
             Assert.AreEqual(Vector3.zero, drums[0].localPosition, "On its socket.");
             Assert.AreEqual(Vector3.zero, drums[1].localPosition, "On its socket.");
             AssertArmsAtRest();
@@ -358,10 +368,10 @@ namespace MoonProject.Rover.PlayModeTests
         public IEnumerator FittingTheHoverCoils_TheFloorArmCarriesThemUpToTheBelly()
         {
             yield return Park();
-            Buy(RoverAbility.HoverJump, HoverJump);
+            Buy(RoverAbility.HoverJump);
             yield return null;
-            Assert.IsFalse(_rover.CoilMount.gameObject.activeSelf, "Bought, the coils wait for the bay.");
-            Fit(HoverJump);
+            Assert.IsFalse(_rover.CoilMount.gameObject.activeSelf, "Crafted, the coils wait in the row.");
+            Fit(RoverKitPiece.HoverCoils);
             yield return null;
             Transform mount = _rover.CoilMount;
             Vector3 liftRest = _bay.FloorLift.localPosition;
@@ -394,7 +404,6 @@ namespace MoonProject.Rover.PlayModeTests
                 + $"aside the floor tip {aside:0.000} m");
             Assert.IsFalse(_rover.Kit.IsFitting, "Done in time.");
             Assert.AreEqual(1, _fitted.Count);
-            Assert.AreEqual(RoverKitPiece.HoverCoils, _fitted[0].Piece);
             Assert.AreEqual(Vector3.zero, mount.localPosition, "...up onto the CoilSocket.");
             Assert.AreEqual(1f, mount.localScale.x, 1e-3f, "Full size.");
             Assert.AreEqual(liftRest, _bay.FloorLift.localPosition, "The floor arm sinks back into its pit.");
@@ -407,10 +416,10 @@ namespace MoonProject.Rover.PlayModeTests
         public IEnumerator ASocketOutOfReach_IsAContractBug_LoggedLoudly_NeverDropped()
         {
             yield return Park(TestRoverBay.ShortUpperLength, TestRoverBay.ShortLowerLength);
-            Buy(RoverAbility.WarmHeadlamp, WarmHeadlamp);
+            Buy(RoverAbility.WarmHeadlamp);
             yield return null;
             LogAssert.Expect(LogType.Error, new Regex("cannot reach the LampBar socket"));
-            Fit(WarmHeadlamp);
+            Fit(RoverKitPiece.LampBar);
             yield return null;
             yield return null;
             Assert.IsFalse(_rover.Kit.IsFitting, "No moment with arms that cannot reach.");
@@ -425,12 +434,12 @@ namespace MoonProject.Rover.PlayModeTests
         public IEnumerator WithoutABay_TheKitIsAWiringBug_LoggedLoudly()
         {
             _rover = TestRover.Spawn(_world, Centre, ParkedYaw);
-            _rover.Context.Events.Subscribe<RoverKitFitted>(_fitted.Add);
+            Listen(_rover.Context.Events);
             yield return Wait(0.5f);
-            Buy(RoverAbility.CargoCradle, "rover.cargo_cradle");
+            Buy(RoverAbility.CargoCradle);
             yield return null;
             LogAssert.Expect(LogType.Error, new Regex("no IRoverBay is registered"));
-            Fit("rover.cargo_cradle");
+            Fit(RoverKitPiece.CargoRack);
             yield return null;
             yield return null;
             Assert.IsTrue(_rover.CargoRack.gameObject.activeSelf, "The rack is simply on 07.");
@@ -454,8 +463,8 @@ namespace MoonProject.Rover.PlayModeTests
             yield return Wait(1f);
             Assert.Less(_rover.CameraRig.MomentWeight, 0.05f, "...and it stays theirs.");
 
-            Buy(RoverAbility.CargoCradle, "rover.cargo_cradle");
-            Fit("rover.cargo_cradle");
+            Buy(RoverAbility.CargoCradle);
+            Fit(RoverKitPiece.CargoRack);
             yield return Wait(1.6f);
             Assert.Greater(_rover.CameraRig.MomentWeight, 0.9f, "The bay fitting a piece brings the view back.");
         }

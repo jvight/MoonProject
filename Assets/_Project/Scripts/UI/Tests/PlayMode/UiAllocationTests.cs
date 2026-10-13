@@ -70,7 +70,7 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Fakes.TillyStatus = new FriendStatus(FriendState.PartsGathering, 1, 3, true, false,
                 new Vector3(-3f, 0f, 12f));
             yield return new WaitForSecondsRealtime(2f);
-            Assert.IsTrue(_rig.Ui.Prompt.IsVisible && _rig.Ui.Reticle.IsVisible && _rig.Ui.FriendReadout.IsVisible);
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible && _rig.Ui.Reticle.IsVisible);
 
             Action update = Bind(_rig.Ui, "Update");
             Action frame = () =>
@@ -152,7 +152,7 @@ namespace MoonProject.UI.PlayModeTests
             InputSystem.AddDevice<Keyboard>();
             _rig = UiTestRig.Boot(_controls, _slot);
             _rig.Tune("_kitTitle._holdSeconds", LongHoldSeconds);
-            var gift = new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty);
+            var gift = new PartFitted(RoverSocket.Wing, RoverKitPiece.SolarCell, true, false, default, 0);
             _rig.Bootstrap.Context.Events.Publish(gift);
             yield return new WaitForSecondsRealtime(_rig.Tuning.KitTitle.Delay + _rig.Tuning.KitTitle.Reveal.FadeIn +
                                                     0.5f);

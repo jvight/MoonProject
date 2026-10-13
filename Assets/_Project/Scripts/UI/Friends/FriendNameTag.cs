@@ -12,11 +12,13 @@ namespace MoonProject.UI
     /// </summary>
     internal sealed class FriendNameTag
     {
+        private const int NoFriend = -1;
+
         private readonly FriendUiSettings _settings;
         private readonly IFriendStatuses _friends;
         private readonly ILocalization _localization;
         private readonly FloatingName _name;
-        private int _friend = FriendFocus.None;
+        private int _friend = NoFriend;
         private float _lift;
 
         public FriendNameTag(UiLayout layout, FriendUiSettings settings, PromptSettings anchoring,
@@ -48,7 +50,7 @@ namespace MoonProject.UI
         /// <summary>Re-reads the name in the new language (a name on screen changes in place).</summary>
         public void Relocalize()
         {
-            if (_friend != FriendFocus.None)
+            if (_friend != NoFriend)
             {
                 _name.Rename(_localization.Get(UiKeys.FriendName(_friends.Definition(_friend).Id)));
             }
@@ -58,7 +60,7 @@ namespace MoonProject.UI
         /// <param name="panelSize">Size of the UI panel.</param>
         public void Tick(float deltaTime, Vector2 panelSize)
         {
-            if (_friend == FriendFocus.None)
+            if (_friend == NoFriend)
             {
                 return;
             }
@@ -67,7 +69,7 @@ namespace MoonProject.UI
             _name.Tick(status.Position + Vector3.up * _lift, deltaTime, panelSize);
             if (!_name.IsUp)
             {
-                _friend = FriendFocus.None;
+                _friend = NoFriend;
             }
         }
     }

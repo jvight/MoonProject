@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using MoonProject.Art;
 using MoonProject.Art.Editor;
 using MoonProject.Editor.Builders;
 using MoonProject.Editor.SceneBuild;
@@ -23,6 +24,10 @@ namespace MoonProject.World.Editor
         private const string FirstTowerStage = "RadioTower_L1";
         private const string BeaconSocket = "BeaconSocket";
         private const string LanderName = "Lander";
+
+        // Gameplay's fallen supply pod (Art's SupplyPod) and its cracked beacon glass, which World lights (0.5.5).
+        private const string SupplyPodName = "SupplyPod";
+        private const string PodGlowName = "Glow";
         private const string DockAnchor = "DockAnchor";
 
         // Home's places 07 drives to from its dock (Art's lander nodes): the bay, the belly lift, the tower.
@@ -61,6 +66,40 @@ namespace MoonProject.World.Editor
             serialized.ApplyModifiedPropertiesWithoutUndo();
             WireLab(context, lab, Find(gameplay, LanderName));
             CreateHomeMarks(context, gameplay);
+            CreatePodBeacon(context, gameplay);
+        }
+
+        /// <summary>
+        /// The fallen supply pod's locator beacon (0.5.5): World's halo and warm light hung on Art's beacon glass
+        /// (SupplyPod/Glow, the pod Gameplay stands under its root), so they follow the pod to the ledge, and the
+        /// <see cref="PodBeacon"/> that pulses all three.
+        /// </summary>
+        private static void CreatePodBeacon(SceneBuildContext context, Transform gameplay)
+        {
+            WorldSettings world = context.LoadAsset<WorldSettings>(WorldPaths.Settings);
+            Transform glass = Find(Find(gameplay, SupplyPodName), PodGlowName);
+            GameObject halo = context.CreateChild("BeaconHalo", glass);
+            halo.AddComponent<MeshFilter>().sharedMesh = context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh);
+            var haloRenderer = halo.AddComponent<MeshRenderer>();
+            haloRenderer.sharedMaterial = context.LoadAsset<Material>(WorldPaths.CanyonGlowMaterial);
+            haloRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            haloRenderer.receiveShadows = false;
+            haloRenderer.lightProbeUsage = LightProbeUsage.Off;
+            haloRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            var light = halo.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = Palette.Get(PaletteSwatch.WarmLamp);
+            light.range = world.Surface.Canyon.GlowLightRange;
+            light.shadows = LightShadows.None;
+
+            var beacon = context.CreateChild("PodBeacon", context.WorldRoot.transform).AddComponent<PodBeacon>();
+            var serialized = new SerializedObject(beacon);
+            serialized.FindProperty("_settings").objectReferenceValue = world;
+            serialized.FindProperty("_glass").objectReferenceValue = glass.GetComponent<Renderer>();
+            serialized.FindProperty("_halo").objectReferenceValue = haloRenderer;
+            serialized.FindProperty("_light").objectReferenceValue = light;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            context.AddSystem(beacon);
         }
 
         /// <summary>

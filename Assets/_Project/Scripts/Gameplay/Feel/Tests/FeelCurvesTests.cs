@@ -29,6 +29,35 @@ namespace MoonProject.Gameplay.Feel.Tests
         }
 
         [Test]
+        public void ScanRibbon_LeavesTheFragment_EasesIn_AndArrivesWhole()
+        {
+            const float length = 0.45f;
+            Assert.AreEqual(Vector2.zero, FeelCurves.RibbonSpan(0f, length), "starts at the fragment");
+            Assert.AreEqual(Vector2.one, FeelCurves.RibbonSpan(1f, length), "head and tail both reach the lens");
+            Vector2 early = FeelCurves.RibbonSpan(0.25f, length);
+            Vector2 late = FeelCurves.RibbonSpan(0.75f, length);
+            Assert.Less(early.y, 0.25f, "an ease-in: slow to leave the fragment");
+            Assert.Greater(late.y - early.y, early.y, "rushing into the lens at the end");
+            for (float t = 0f; t <= 1f; t += 0.05f)
+            {
+                Vector2 span = FeelCurves.RibbonSpan(t, length);
+                Assert.LessOrEqual(span.x, span.y, $"the tail never passes the head (t {t})");
+            }
+        }
+
+        [Test]
+        public void ScanRibbon_ArcsUpBetweenFragmentAndLens()
+        {
+            var from = new Vector3(0f, 0.2f, 3f);
+            var to = new Vector3(0f, 1.1f, 0f);
+            Assert.AreEqual(from, FeelCurves.RibbonPoint(from, to, 0.18f, 0f));
+            Assert.AreEqual(to, FeelCurves.RibbonPoint(from, to, 0.18f, 1f));
+            Vector3 middle = FeelCurves.RibbonPoint(from, to, 0.18f, 0.5f);
+            Assert.Greater(middle.y, (from.y + to.y) * 0.5f, "lifted at the middle");
+            Assert.AreEqual((from + to) * 0.5f, FeelCurves.RibbonPoint(from, to, 0f, 0.5f), "no arc: straight");
+        }
+
+        [Test]
         public void Motes_StartOnTheSphere_CurlIn_AndArriveAtTheEmitter()
         {
             var start = new Vector3(0f, 0f, 0.6f);

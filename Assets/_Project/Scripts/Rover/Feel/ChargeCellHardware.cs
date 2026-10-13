@@ -33,7 +33,7 @@ namespace MoonProject.Rover
         private readonly GameObject _lens;
         private readonly Renderer _lensGlass;
         private readonly Transform _emitter;
-        private readonly Func<float> _chargeSeconds;
+        private readonly Func<ICutter> _cutter;
         private readonly EventBus _events;
         private readonly MaterialPropertyBlock _block = new MaterialPropertyBlock();
         private readonly TestCut _testCut = new TestCut();
@@ -41,12 +41,12 @@ namespace MoonProject.Rover
         private float _lockBoost = 1f;
 
         /// <param name="sleeves">The stage sleeves, two per stage (left, right), stage 1 first.</param>
-        /// <param name="chargeSeconds">The cutter's fresh charge length now (ICutter), for the bay's test cut.</param>
+        /// <param name="cutter">The cutter now: its brace, its warm window and the bay's test cut's charge.</param>
         /// <param name="emitter">07's beam emitter: the test cut's beats happen there.</param>
         /// <param name="lens">The Focus Lens kit on the eye (from its tier on).</param>
         /// <param name="lensGlass">The lens's glass, glowing with the lock ring.</param>
         public ChargeCellHardware(EventBus events, ChargeCellsSettings settings, Renderer[] conduits,
-            Renderer[] sleeves, Renderer lockGlow, Func<float> chargeSeconds, Transform emitter, GameObject lens,
+            Renderer[] sleeves, Renderer lockGlow, Func<ICutter> cutter, Transform emitter, GameObject lens,
             Renderer lensGlass)
         {
             _events = events ?? throw new ArgumentNullException(nameof(events));
@@ -54,7 +54,7 @@ namespace MoonProject.Rover
             _conduits = conduits ?? throw new ArgumentNullException(nameof(conduits));
             _sleeves = sleeves ?? throw new ArgumentNullException(nameof(sleeves));
             _lockGlow = lockGlow != null ? lockGlow : throw new ArgumentNullException(nameof(lockGlow));
-            _chargeSeconds = chargeSeconds ?? throw new ArgumentNullException(nameof(chargeSeconds));
+            _cutter = cutter ?? throw new ArgumentNullException(nameof(cutter));
             _emitter = emitter;
             _lens = lens;
             _lensGlass = lensGlass;
@@ -127,7 +127,7 @@ namespace MoonProject.Rover
         {
             if (staged.Stage == 0)
             {
-                _cells.Begin(staged.Warm, staged.StagesNeeded, staged.StageSeconds, _settings.BraceSeconds);
+                _cells.Begin(staged.Warm, staged.StagesNeeded, staged.StageSeconds, _cutter().BraceSeconds);
             }
             else
             {
@@ -148,10 +148,10 @@ namespace MoonProject.Rover
                     _cells.Fire();
                     break;
                 case FeelPhase.Cancel:
-                    _cells.Release(_settings.WarmWindowSeconds);
+                    _cells.Release(_cutter().WarmWindowSeconds);
                     break;
                 case FeelPhase.Impact:
-                    _cells.End(_settings.WarmWindowSeconds);
+                    _cells.End(_cutter().WarmWindowSeconds);
                     break;
             }
         }
@@ -166,7 +166,7 @@ namespace MoonProject.Rover
             ShowTier(changed.Tier);
             if (upgrade)
             {
-                _testCut.Start(_settings.TestCutDelay, _chargeSeconds(), _settings.TestCutBurn);
+                _testCut.Start(_settings.TestCutDelay, _cutter().ChargeSeconds, _settings.TestCutBurn);
             }
         }
 
@@ -182,7 +182,7 @@ namespace MoonProject.Rover
                     _cells.Fire();
                     break;
                 case TestCut.Beat.Crack:
-                    _cells.End(_settings.WarmWindowSeconds);
+                    _cells.End(_cutter().WarmWindowSeconds);
                     Vector3 at = _emitter != null ? _emitter.position : Vector3.zero;
                     _events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Reward, at, Vector3.up, 1f, 0f));
                     break;

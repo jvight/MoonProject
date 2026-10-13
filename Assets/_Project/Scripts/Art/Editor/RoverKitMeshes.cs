@@ -215,8 +215,9 @@ namespace MoonProject.Art.Editor
 
         /// <summary>
         /// The cargo cradle: a crate-like rear rack basket on two short arms from the hatch (their plates rusted on), a
-        /// metal tube frame with rust collars at the post feet, three wooden boards along each side standing well over
-        /// the rear wheels and one low across the back, a floor of wooden slats, and two worn orange straps slung
+        /// metal tube frame with rust collars at the post feet, open across its top front where the tape deck rides on
+        /// 07's back, three wooden boards along each side standing well over the rear wheels and one low across the
+        /// back, a floor of wooden slats, and two worn orange straps slung
         /// slack fore and aft over the top, off-centre (from behind they never draw a V), one buckle hanging. Its back
         /// stays under the chase camera's lines to the back "07" and the tail lamp.
         /// </summary>
@@ -247,8 +248,6 @@ namespace MoonProject.Art.Editor
 
             RackTube(b, new Vector3(-RackHalfWidth, RackFloor, RackFront), new Vector3(RackHalfWidth, RackFloor,
                 RackFront));
-            RackTube(b, new Vector3(-RackHalfWidth, RackTop, RackFront),
-                new Vector3(RackHalfWidth, RackTop, RackFront));
             RackTube(b, new Vector3(-RackHalfWidth, RackFloor, RackBack), new Vector3(RackHalfWidth, RackFloor,
                 RackBack));
             RackTube(b, new Vector3(-RackHalfWidth, RackBackTop, RackBack), new Vector3(RackHalfWidth, RackBackTop,

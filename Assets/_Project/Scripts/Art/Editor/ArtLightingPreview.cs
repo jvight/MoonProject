@@ -21,7 +21,7 @@ namespace MoonProject.Art.Editor
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
     ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner|
     ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|kitmain|home|homeclean|
-    ///                  builtfor07|shelves|focuslens|orangebeads|containers|hullfragments|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|lab_dark|lab_lit]
+    ///                  builtfor07|shelves|focuslens|orangebeads|containers|hullfragments|scan|fragments|scanplaces|derelicts|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|lab_dark|lab_lit]
     /// </code>
     /// (default rover; a ';'-separated list captures several scenes in one run)
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the habitat lander and the
@@ -219,6 +219,22 @@ namespace MoonProject.Art.Editor
                     case "orangebeads":
                         NightSetting(material, temporary, 90f, 12f);
                         poses = OrangeBeadsScene(temporary);
+                        break;
+                    case "scanplaces":
+                        NightSetting(material, temporary, 90f, 12f);
+                        poses = ScanPlacesScene(temporary);
+                        break;
+                    case "derelicts":
+                        NightSetting(material, temporary, 90f, 12f);
+                        poses = DerelictsScene(temporary);
+                        break;
+                    case "fragments":
+                        NightSetting(material, temporary, 90f, 12f);
+                        poses = FragmentsScene(temporary);
+                        break;
+                    case "scan":
+                        NightSetting(material, temporary, 90f, 12f);
+                        poses = ScanScene(temporary);
                         break;
                     case "hullfragments":
                         NightSetting(material, temporary, 90f, 12f);
@@ -649,12 +665,30 @@ namespace MoonProject.Art.Editor
                 .transform;
             garage.position = new Vector3(14f, 0f, 0f);
             Transform pocket = Descendant(garage, SiteModelBuilder.RelicPocketPrefix + "rubber_duck");
+            Transform spare = Instantiate(LootContainerBuilder.SpareCrateName, temporary, ArtPaths.PropFolder)
+                .transform;
+            spare.SetParent(Descendant(garage, SiteModelBuilder.SpareCrateSocketName), false);
+            Lit(Descendant(spare, LootContainerBuilder.SealName), 1f);
+            for (int i = 0; i < 2; i++)
+            {
+                SeatFragment(temporary, Descendant(garage, SiteModelBuilder.FragmentSocketPrefix + "CargoCradle_" + i),
+                    "CargoCradle", i, 0f, 0f);
+            }
+
             foreach (bool broken in new[] { true, false })
             {
                 Transform mast = Instantiate(broken ? RelayModelBuilder.BrokenMastName : RelayModelBuilder.MastName,
                     temporary, ArtPaths.RelayFolder).transform;
                 mast.position = new Vector3(broken ? -14f : -24f, 0f, 0f);
-                Lit(Descendant(mast, RelayModelBuilder.CabinetSealName), broken ? 1f : 0f);
+                Transform cabinet = Instantiate(LootContainerBuilder.CabinetName, temporary, ArtPaths.PropFolder)
+                    .transform;
+                cabinet.SetParent(Descendant(mast, RelayModelBuilder.CabinetSocketName), false);
+                Lit(Descendant(cabinet, LootContainerBuilder.SealName), broken ? 1f : 0f);
+                if (!broken)
+                {
+                    Descendant(cabinet, LootContainerBuilder.LidName).localRotation =
+                        Quaternion.Euler(0f, LootContainerBuilder.LidOpenDegrees, 0f);
+                }
             }
 
             Vector3 duck = pocket.position;
@@ -666,6 +700,7 @@ namespace MoonProject.Art.Editor
                 Pose("pocket_close", new[] { duck.x + pocket.forward.x * 1.4f, 0.9f, duck.z + pocket.forward.z * 1.4f },
                     new[] { duck.x, 0.1f, duck.z }, 45f),
                 Pose("garage_pockets", new[] { 14f, 7f, -9f }, new[] { 14f, 0.5f, 0f }, 50f),
+                Pose("spare_crate", new[] { 13.4f, 1.6f, 3.6f }, new[] { 12.3f, 1f, 5.5f }, 50f),
                 Pose("cabinet_sealed", new[] { -10.9f, 1.5f, -0.5f }, new[] { -12.25f, 0.6f, -2.8f }, 45f),
                 Pose("cabinet_open", new[] { -20.9f, 1.5f, -0.5f }, new[] { -22.25f, 0.6f, -2.8f }, 45f));
         }
@@ -686,6 +721,187 @@ namespace MoonProject.Art.Editor
             return Poses(
                 Pose("near", new[] { 3.5f, 2.2f, -1.5f }, new[] { 0f, 0.4f, 5f }, 50f),
                 Pose("far20m", new[] { 8f, 4f, -14f }, new[] { 0f, 0.4f, 7f }, 40f));
+        }
+
+        /// <summary>
+        /// The fragments where they lie (0.5.5 §1.3): set on their sockets at the garage, the drill rig, Kestrel-3 and the
+        /// crashed lander, on relay.2's hut shelf, and round the chasm lip's crashed jumper, brackets lit.
+        /// </summary>
+        private static CameraPoseSet ScanPlacesScene(TemporaryObjects temporary)
+        {
+            var poses = new List<CameraPose>();
+            string[] sites = { "garage", "kestrel", "lander" };
+            for (int s = 0; s < sites.Length; s++)
+            {
+                Transform site = Instantiate(SiteModelBuilder.SiteName(sites[s]), temporary, ArtPaths.SitesFolder).transform;
+                site.position = new Vector3(s * 30f, 0f, 0f);
+                (string blueprint, int count) = SiteModelBuilder.FragmentsAt(sites[s]);
+                for (int i = 0; i < count; i++)
+                {
+                    (float progress, float dissolve) = InSituStages[(s + i) % InSituStages.Length];
+                    SeatFragment(temporary, Descendant(site, SiteModelBuilder.FragmentSocketPrefix + blueprint + "_" + i),
+                        blueprint, i, progress, dissolve);
+                }
+
+                Vector3 middle = Descendant(site, SiteModelBuilder.FragmentSocketPrefix + blueprint + "_0").position;
+                Vector3 eye = middle + InSituViews[s];
+                poses.Add(Pose("site_" + sites[s], new[] { eye.x, eye.y, eye.z },
+                    new[] { middle.x, middle.y + 0.1f, middle.z }, 50f));
+            }
+
+            Transform jumper = Instantiate(PropModelBuilder.JumperWreckName, temporary, ArtPaths.PropFolder).transform;
+            jumper.position = new Vector3(30f, 0f, 40f);
+            for (int i = 0; i < 3; i++)
+            {
+                SeatFragment(temporary, Descendant(jumper, SiteModelBuilder.FragmentSocketPrefix + "HoverJump_" + i),
+                    "HoverJump", i, InSituStages[i + 2].Progress, InSituStages[i + 2].Dissolve);
+            }
+
+            poses.Add(Pose("jumper", new[] { 32.5f, 2f, 44f }, new[] { 30f, 0.3f, 40f }, 50f));
+            return Poses(poses.ToArray());
+        }
+
+        // Where each site's in-situ view looks from, relative to its first fragment: through the garage's open front at
+        // Kenji's bench, into Kestrel-3's split back, into the lander's torn cargo module.
+        private static readonly Vector3[] InSituViews =
+        {
+            new Vector3(1.9f, 0.8f, -1.6f), new Vector3(-0.4f, 1.1f, -2.3f), new Vector3(0.6f, 0.9f, -2.6f),
+        };
+
+        // The scan's stages, shown across the fragments in place: noticed, half swept, drawn, fading, unthreading.
+        private static readonly (float Progress, float Dissolve)[] InSituStages =
+        {
+            (0f, 0f), (0.5f, 0f), (1f, 0f), (1f, 0.18f), (1f, 0.6f),
+        };
+
+        /// <summary>
+        /// The robots left behind (0.5.5 §1.7), each where World anchors it with its fragments seated (noticed, brackets
+        /// lit): 06 slumped against relay.2's hut with Ro's tape case by its bay, Mule face-down by its last lamp post,
+        /// the haul sled bot stalled with its load, and the drone caught in its wire; each from a close three-quarter
+        /// and from 20 m.
+        /// </summary>
+        private static CameraPoseSet DerelictsScene(TemporaryObjects temporary)
+        {
+            var poses = new List<CameraPose>();
+            Transform hut = Instantiate(RelayModelBuilder.HutName, temporary, ArtPaths.RelayFolder).transform;
+            hut.SetPositionAndRotation(new Vector3(-1.9f, 0f, 0.4f), Quaternion.Euler(0f, 90f, 0f));
+            (string name, string blueprint, int count)[] hosts =
+            {
+                (DerelictBuilder.ElderName, "CellPack", 3), (DerelictBuilder.MuleName, "WarmHeadlamp", 2),
+                (DerelictBuilder.HaulBotName, "BoostCoils", 3), (DerelictBuilder.DroneName, string.Empty, 0),
+            };
+            for (int h = 0; h < hosts.Length; h++)
+            {
+                Transform host = Instantiate(hosts[h].name, temporary, ArtPaths.PropFolder).transform;
+                var at = new Vector3(h * 18f, 0f, 0f);
+                host.SetPositionAndRotation(at, Quaternion.identity);
+                for (int i = 0; i < hosts[h].count; i++)
+                {
+                    SeatFragment(temporary,
+                        Descendant(host, SiteModelBuilder.FragmentSocketPrefix + hosts[h].blueprint + "_" + i),
+                        hosts[h].blueprint, i, 0f, 0f);
+                }
+
+                if (hosts[h].name == DerelictBuilder.ElderName)
+                {
+                    Transform tape = Instantiate(LootContainerBuilder.TapeCaseName, temporary, ArtPaths.PropFolder)
+                        .transform;
+                    tape.SetParent(Descendant(host, DerelictBuilder.TapeSocketName), false);
+                    Lit(Descendant(tape, LootContainerBuilder.SealName), 1f);
+                }
+
+                string tag = hosts[h].name.Substring(DerelictBuilder.Prefix.Length);
+                float lift = h == 3 ? 1.2f : 0.4f;
+                poses.Add(Pose("near_" + tag, new[] { at.x + 2.4f, 1.6f + lift, at.z + 2.8f },
+                    new[] { at.x + 0.2f, lift, at.z }, 50f));
+                poses.Add(Pose("far20m_" + tag, new[] { at.x + 9f, 5f, at.z + 18f }, new[] { at.x, lift, at.z }, 35f));
+            }
+
+            return Poses(poses.ToArray());
+        }
+
+        private static void SeatFragment(TemporaryObjects temporary, Transform socket, string blueprint, int index,
+            float progress, float dissolve)
+        {
+            Transform fragment = Instantiate(FragmentBuilder.PrefabName(blueprint, index), temporary,
+                ArtPaths.FragmentFolder).transform;
+            fragment.SetPositionAndRotation(socket.position, socket.rotation);
+            Transform brackets = Descendant(fragment, FragmentBuilder.BracketsName);
+            brackets.gameObject.SetActive(progress <= 0f);
+            Lit(brackets, 1f);
+            var block = new MaterialPropertyBlock();
+            block.SetFloat("_ScanProgress", progress);
+            block.SetFloat("_Dissolve", dissolve);
+            Descendant(fragment, FragmentBuilder.SolidName).GetComponent<Renderer>().SetPropertyBlock(block);
+            Descendant(fragment, FragmentBuilder.LinesName).GetComponent<Renderer>().SetPropertyBlock(block);
+        }
+
+        /// <summary>All 18 fragments in rows by blueprint, as found (solid, brackets lit), for their shapes.</summary>
+        private static CameraPoseSet FragmentsScene(TemporaryObjects temporary)
+        {
+            IReadOnlyList<(string Blueprint, int Count)> sets = FragmentBuilder.Sets;
+            for (int row = 0; row < sets.Count; row++)
+            {
+                for (int i = 0; i < sets[row].Count; i++)
+                {
+                    Transform fragment = Instantiate(FragmentBuilder.PrefabName(sets[row].Blueprint, i), temporary,
+                        ArtPaths.FragmentFolder).transform;
+                    fragment.SetPositionAndRotation(new Vector3((i - 1f) * 1.8f, 0f, row * 1.7f),
+                        Quaternion.Euler(0f, 200f, 0f));
+                    Transform brackets = Descendant(fragment, FragmentBuilder.BracketsName);
+                    brackets.gameObject.SetActive(true);
+                    Lit(brackets, 1f);
+                }
+            }
+
+            return Poses(
+                Pose("rows_near", new[] { 0f, 2.6f, -3.2f }, new[] { 0f, 0.2f, 2.6f }, 55f),
+                Pose("rows_far", new[] { 0f, 3.4f, 3.5f }, new[] { 0f, 0.2f, 9.5f }, 55f));
+        }
+
+        /// <summary>
+        /// A scan's stages side by side (0.5.5 §1, D2), on a large and a medium fragment: noticed (brackets lit), half
+        /// swept, fully drawn, the solid half faded, the lines half unthreaded, and the dust outline left behind; with
+        /// 07 beside them for scale.
+        /// </summary>
+        private static CameraPoseSet ScanScene(TemporaryObjects temporary)
+        {
+            (float progress, float dissolve, bool brackets, bool dust)[] stages =
+            {
+                (0f, 0f, true, false), (0.5f, 0f, false, false), (1f, 0f, false, false), (1f, 0.18f, false, false),
+                (1f, 0.6f, false, false), (1f, 1f, false, true),
+            };
+            string[] fragments = { FragmentBuilder.PrefabName("BoostCoils", 2), FragmentBuilder.PrefabName("CargoCradle", 0) };
+            for (int row = 0; row < fragments.Length; row++)
+            {
+                for (int i = 0; i < stages.Length; i++)
+                {
+                    Transform fragment = Instantiate(fragments[row], temporary, ArtPaths.FragmentFolder).transform;
+                    fragment.SetPositionAndRotation(new Vector3((i - 2.5f) * 1.9f, 0f, row * 2.4f),
+                        Quaternion.Euler(0f, 200f, 0f));
+                    var block = new MaterialPropertyBlock();
+                    block.SetFloat("_ScanProgress", stages[i].progress);
+                    block.SetFloat("_Dissolve", stages[i].dissolve);
+                    Descendant(fragment, FragmentBuilder.SolidName).GetComponent<Renderer>().SetPropertyBlock(block);
+                    Descendant(fragment, FragmentBuilder.LinesName).GetComponent<Renderer>().SetPropertyBlock(block);
+                    Transform brackets = Descendant(fragment, FragmentBuilder.BracketsName);
+                    brackets.gameObject.SetActive(stages[i].brackets);
+                    Lit(brackets, 1f);
+                    Transform dust = Descendant(fragment, FragmentBuilder.DustOutlineName);
+                    dust.gameObject.SetActive(stages[i].dust);
+                    var fade = new MaterialPropertyBlock();
+                    fade.SetFloat("_Fade", 0.4f);
+                    dust.GetComponent<Renderer>().SetPropertyBlock(fade);
+                }
+            }
+
+            Transform scanning = Rover(temporary, new Vector3(0f, 0f, -2.6f), 0f);
+            temporary.Add(scanning.gameObject);
+            Mount(temporary, RoverModelBuilder.ScanFanName, Descendant(scanning, RoverModelBuilder.ScanFanSocketName));
+            Lit(Descendant(scanning, RoverModelBuilder.ScanFanName), 0.6f);
+            return Poses(
+                Pose("stages", new[] { 0f, 3.2f, -6.5f }, new[] { 0f, 0.4f, 1.2f }, 55f),
+                Pose("close", new[] { -3.2f, 1.5f, -2f }, new[] { -2.8f, 0.4f, 0.6f }, 50f));
         }
 
         private static CameraPoseSet ShelvesScene(TemporaryObjects temporary)
@@ -1203,6 +1419,10 @@ namespace MoonProject.Art.Editor
                 40f));
             poses.Add(Pose("full_front", Point(new Vector3(2f * KitSpacing - 2.2f, 1.4f, 3.6f)),
                 Point(new Vector3(2f * KitSpacing, 0.9f, 0f)), 45f));
+            poses.Add(Pose("full_top", Point(new Vector3(2f * KitSpacing, 4.2f, -0.4f)),
+                Point(new Vector3(2f * KitSpacing, 0.6f, -0.1f)), 40f));
+            poses.Add(Pose("full_back", Point(new Vector3(2f * KitSpacing, 1.5f, -3.2f)),
+                Point(new Vector3(2f * KitSpacing, 0.75f, -0.6f)), 40f));
             return new CameraPoseSet { width = 1600, height = 900, postProcessing = true, poses = poses.ToArray() };
         }
 
@@ -1649,7 +1869,7 @@ namespace MoonProject.Art.Editor
 
         /// <summary>
         /// Fits the chosen kit to a rover instance on its sockets, lit as in play (the lamps on, the drums glowing),
-        /// optionally with a relic riding in the cradle, and shows the friends' gifts.
+        /// optionally with a relic riding in the cradle, and shows the friends' gifts with Ro's tape deck on the back.
         /// </summary>
         private static void FitKit(Transform rover, TemporaryObjects temporary, bool lampBar, bool drums, bool cradle,
             bool relic, bool gifts)
@@ -1692,6 +1912,8 @@ namespace MoonProject.Art.Editor
                 {
                     Descendant(rover, gift).gameObject.SetActive(true);
                 }
+
+                Attach(rover, RoverKitBuilder.TapeDeckName, RoverModelBuilder.DeckSocketName, temporary);
             }
         }
 

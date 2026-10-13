@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Cinemachine;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Core.Input;
 using Object = UnityEngine.Object;
 
@@ -137,7 +138,7 @@ namespace MoonProject.Rover.PlayModeTests
 
         public Transform CargoRack { get; private set; }
 
-        /// <summary>The stand-in Kit_TapeDeck on DeckSocket (left flank).</summary>
+        /// <summary>The stand-in Kit_TapeDeck on DeckSocket (the back's centreline, above the hatch).</summary>
         public Transform TapeDeck { get; private set; }
 
         /// <summary>The stand-in Kit_TetherRing on the Eye and its Glow band.</summary>
@@ -157,6 +158,20 @@ namespace MoonProject.Rover.PlayModeTests
 
         /// <summary>Tilly and Bell, dormant until a test wakes them.</summary>
         public TestFriendRoster Friends { get; } = new TestFriendRoster();
+
+        /// <summary>What a loaded game has fitted (set before 07's first frame).</summary>
+        public TestEquipment Equipment { get; } = new TestEquipment();
+
+        /// <summary>A loaded game with <paramref name="part"/> fitted and its ability (call before the first frame).
+        /// </summary>
+        public void Equip(RoverKitPiece part)
+        {
+            Equipment.Fitted(part);
+            if (RoverKitPieces.TryGetAbility(part, out RoverAbility ability))
+            {
+                Context.Get<IRoverAbilities>().Grant(ability);
+            }
+        }
 
         /// <summary>The world's landmarks (a test may move the base to bring 07 home).</summary>
         public TestWorldLayout Layout { get; } = new TestWorldLayout();
@@ -309,8 +324,8 @@ namespace MoonProject.Rover.PlayModeTests
             Transform spineSocket = Node(RoverModelNodes.SpineSocket, model, new Vector3(0.55f, 1.05f, -0.2f));
             Transform spine = Node("Kit_BatterySpine", spineSocket, Vector3.zero);
             Shape(PrimitiveType.Cube, spine, new Vector3(0f, 0.06f, 0f), new Vector3(0.1f, 0.12f, 0.42f), material);
-            Transform deckSocket = Node(RoverModelNodes.DeckSocket, model, new Vector3(-0.55f, 0.85f, -0.45f));
-            deckSocket.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            Transform deckSocket = Node(RoverModelNodes.DeckSocket, model, new Vector3(0f, 0.775f, -0.63f));
+            deckSocket.localRotation = Quaternion.Euler(0f, 90f, 0f);
             Transform deck = Node("Kit_TapeDeck", deckSocket, Vector3.zero);
             Shape(PrimitiveType.Cube, deck, new Vector3(0.05f, 0f, 0f), new Vector3(0.07f, 0.13f, 0.27f), material);
             Transform tetherRing = Node("Kit_TetherRing", model, new Vector3(0f, 1.3f, 0.8f));
@@ -380,6 +395,11 @@ namespace MoonProject.Rover.PlayModeTests
                 ("_landingDust", Particles("LandingDust", fxHost, material)));
             Assign(lampMotes, ("_tuning", fxTuning), ("_motes", moteSystem), ("_headlamp", headlamp));
             Assign(flank, ("_tuning", rigTuning));
+            var portraitCamera = Node("PortraitCamera", visual, Vector3.zero).gameObject.AddComponent<Camera>();
+            portraitCamera.enabled = false;
+            var portrait = visual.gameObject.AddComponent<RoverPortrait>();
+            Assign(portrait, ("_tuning", rigTuning), ("_camera", portraitCamera));
+            Assign(controller, ("_portrait", portrait));
             AssignArray(flank, "_lamps", flankLamps);
             AssignArray(flank, "_glasses", flankGlasses);
             Assign(controller, ("_tuning", tuning), ("_body", rigidbody), ("_sphere", collider), ("_visualRig", rig),
@@ -483,6 +503,7 @@ namespace MoonProject.Rover.PlayModeTests
             context.Register(world.Terrain);
             context.Register<IWorldLayout>(rover.Layout);
             context.Register<IFriendRoster>(rover.Friends);
+            context.Register<IRoverEquipment>(rover.Equipment);
             rover.Context = context;
             controller.Initialize(context);
             controller.SetDriveSource(rover.Drive);

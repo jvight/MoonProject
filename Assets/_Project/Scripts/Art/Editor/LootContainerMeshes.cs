@@ -54,6 +54,13 @@ namespace MoonProject.Art.Editor
         public static readonly Shape JunctionBox = new Shape(new Vector3(0.42f, 0.3f, 0.28f), 0.06f,
             PaletteSwatch.Metal, PaletteSwatch.Honey);
 
+        /// <summary>
+        /// The tape deck's crate at Kenji's port: small enough for his bench, in 07's cream with an orange band, so it
+        /// reads as 07's own spare before the stencil is read.
+        /// </summary>
+        public static readonly Shape SpareCrate = new Shape(new Vector3(0.36f, 0.2f, 0.16f), 0.04f,
+            PaletteSwatch.Cream, PaletteSwatch.WarmAccent);
+
         /// <summary>The supply pod's hatch (on top of its drum, pod space).</summary>
         public static readonly Shape PodHatch = new Shape(new Vector3(0.62f, 0.36f, 0.36f), 0.05f,
             PaletteSwatch.WornPanel, PaletteSwatch.FadedAccent);
@@ -74,7 +81,31 @@ namespace MoonProject.Art.Editor
         /// <summary>A container's body: a box with a dark band round it, corner feet and a stencil plate.</summary>
         public static LowPolyMeshBuilder Body(Shape shape, float post)
         {
-            var b = new LowPolyMeshBuilder(260);
+            LowPolyMeshBuilder b = Shell(shape, post);
+            Vector3 size = shape.Body;
+            b.Box(At(size.x * 0.22f, post + size.y * 0.7f, size.z * 0.5f + 0.004f),
+                new Vector3(size.x * 0.25f, size.y * 0.18f, 0.006f), PaletteSwatch.Cream);
+            return b;
+        }
+
+        /// <summary>The spare crate's body: the shell, "07 · SPARE" stencilled in charcoal over its band.</summary>
+        public static LowPolyMeshBuilder SpareCrateBody()
+        {
+            Shape shape = SpareCrate;
+            LowPolyMeshBuilder b = Shell(shape, 0f);
+            Vector3 size = shape.Body;
+            Matrix4x4 front = SiteKit.Face(new Vector3(0f, size.y * 0.76f, size.z * 0.5f + 0.002f), Vector3.forward,
+                Vector3.up);
+            Glyphs.Write(b, front, SpareStencil, size.y * 0.2f, PaletteSwatch.Charcoal, shape.Paint);
+            return b;
+        }
+
+        /// <summary>The words on the spare crate.</summary>
+        public const string SpareStencil = "07 · SPARE";
+
+        private static LowPolyMeshBuilder Shell(Shape shape, float post)
+        {
+            var b = new LowPolyMeshBuilder(420);
             Vector3 size = shape.Body;
             if (post > 0f)
             {
@@ -85,8 +116,6 @@ namespace MoonProject.Art.Editor
             SiteKit.DustCap(b, box);
             b.Box(At(0f, post + size.y * 0.45f, 0f), new Vector3(size.x + 0.01f, size.y * 0.16f, size.z + 0.01f),
                 shape.Band);
-            b.Box(At(size.x * 0.22f, post + size.y * 0.7f, size.z * 0.5f + 0.004f),
-                new Vector3(size.x * 0.25f, size.y * 0.18f, 0.006f), PaletteSwatch.Cream);
             return b;
         }
 

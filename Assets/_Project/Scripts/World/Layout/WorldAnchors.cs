@@ -87,6 +87,22 @@ namespace MoonProject.World
         private const float IlmeniteBearing = 238f;
         private const float ShadowedFloorRadius = 4f;
 
+        // The micro-sites (0.5.5 §1.7). 06 and the hut stand beside relay.2's pad, to its right seen from home.
+        private const float Micro06Side = 7f;
+        private const float Micro06Radius = 4f;
+
+        // Mule lies left of the canyon road (the route posts stand on its right) at about 160 m on its bearing.
+        private const float MuleBearing = 72f;
+        private const float MuleDistance = 160f;
+        private const float MuleSide = 4.5f;
+        private const float MuleRadius = 4f;
+
+        // The drone hangs in relay.0's back-left guy wire (art's RelayMeshes.GuyStake 0, in the relay's frame), whose
+        // wire runs up toward the mast's footing.
+        private static readonly Vector2 GuyStake = new Vector2(-2.6f, -3.8f);
+        private static readonly Vector2 MastFooting = new Vector2(0f, -2.2f);
+        private const float DroneRadius = 2f;
+
         private readonly WorldAnchor[] _anchors;
         private readonly Dictionary<string, int> _byId = new Dictionary<string, int>(StringComparer.Ordinal);
 
@@ -173,6 +189,7 @@ namespace MoonProject.World
             Vector2 band = MoonSurface.BearingToDirection(IlmeniteBearing);
             anchors.Add(Make(surface, WorldAnchorIds.PlaceIlmeniteBand, TerracesFoot(surface, band), band,
                 TerracesRadius));
+            AddMicroSites(surface, anchors);
             Vector2 shadowed = LargestCrater(surface);
             anchors.Add(Make(surface, WorldAnchorIds.PlaceShadowedCrater, shadowed, shadowed, ShadowedFloorRadius));
 
@@ -286,6 +303,43 @@ namespace MoonProject.World
             }
 
             return true;
+        }
+
+        /// <summary>The mixed micro-sites on the basin's routes (0.5.5 §1.7 M1-M3), seated on the relays and the road.</summary>
+        private static void AddMicroSites(MoonSurface surface, List<WorldAnchor> anchors)
+        {
+            WorldAnchor mouth = Find(anchors, WorldAnchorIds.RelayPrefix + 2);
+            var mouthForward = new Vector2(mouth.Forward.x, mouth.Forward.z);
+            var mouthRight = new Vector2(mouthForward.y, -mouthForward.x);
+            var mouthCentre = new Vector2(mouth.Position.x, mouth.Position.z);
+            anchors.Add(Make(surface, WorldAnchorIds.Micro06,
+                mouthCentre + mouthRight * (mouth.Radius + Micro06Side), mouthForward, Micro06Radius));
+
+            Vector2 road = MoonSurface.BearingToDirection(MuleBearing);
+            var roadLeft = new Vector2(-road.y, road.x);
+            anchors.Add(Make(surface, WorldAnchorIds.MicroMule, road * MuleDistance + roadLeft * MuleSide, road,
+                MuleRadius));
+
+            WorldAnchor mound = Find(anchors, WorldAnchorIds.RelayPrefix + 0);
+            var forward = new Vector2(mound.Forward.x, mound.Forward.z);
+            var right = new Vector2(forward.y, -forward.x);
+            var centre = new Vector2(mound.Position.x, mound.Position.z);
+            Vector2 stake = centre + right * GuyStake.x + forward * GuyStake.y;
+            Vector2 footing = centre + right * MastFooting.x + forward * MastFooting.y;
+            anchors.Add(Make(surface, WorldAnchorIds.MicroDrone, stake, footing - stake, DroneRadius));
+        }
+
+        private static WorldAnchor Find(List<WorldAnchor> anchors, string id)
+        {
+            foreach (WorldAnchor anchor in anchors)
+            {
+                if (anchor.Id == id)
+                {
+                    return anchor;
+                }
+            }
+
+            throw new InvalidOperationException($"The micro-sites need the world anchor '{id}' first.");
         }
 
         /// <summary>The centre of the basin's largest crater that is not a play bowl.</summary>

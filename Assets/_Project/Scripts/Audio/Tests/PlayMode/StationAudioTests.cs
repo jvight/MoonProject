@@ -54,7 +54,6 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.Less(_firstDropPitch, top, "the next feed starts in an empty bin again");
             _rig.Events.Publish(new StationCued(StationCue.Fed, Upgrade, mouth));
 
-            _rig.Events.Publish(new RoverBayFitting(Upgrade));
             Transform upper = _rig.Bay.GetArmJoint(0, RoverBayJoint.Upper);
             Transform tip = _rig.Bay.GetArmJoint(0, RoverBayJoint.Tip);
             AudioSource servo = Stations.ArmSource(0);
@@ -77,7 +76,9 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.IsTrue(RecentlyPlayed("bay_arm_sigh", _rig.Director.PlayCount - plays), "a hydraulic sigh at rest");
 
             _rig.Rover.Position = tip.position + Vector3.down;
-            _rig.Events.Publish(new RoverKitFitted(RoverKitPiece.HoverCoils, false, Upgrade));
+            _rig.Events.Publish(new PartFitted(RoverSocket.Belly, RoverKitPiece.HoverCoils, false, false, default, 0));
+            Install(FeelPhase.Anticipate);
+            Install(FeelPhase.Impact);
             Assert.AreEqual("bay_fitted_chime", LastClip, "done for 07");
             Assert.IsTrue(RecentlyPlayed("bay_weld", 2), "welded on");
 
@@ -97,23 +98,42 @@ namespace MoonProject.Audio.PlayModeTests
         public void AGiftFromAFriend_IsNotWeldedByTheBay()
         {
             int plays = _rig.Director.PlayCount;
-            _rig.Events.Publish(new RoverKitFitted(RoverKitPiece.LampBar, true, string.Empty));
+            _rig.Events.Publish(new PartFitted(RoverSocket.Lamp, RoverKitPiece.LampBar, true, false, default, 0));
+            Install(FeelPhase.Anticipate);
+            Install(FeelPhase.Impact);
             Assert.AreEqual(plays, _rig.Director.PlayCount);
+        }
+
+        [Test]
+        public void ASwap_RecyclesTheOldPart_AndARemoval_PlaysTheMomentInReverse()
+        {
+            _rig.Events.Publish(new PartFitted(RoverSocket.Cutter, RoverKitPiece.HoverCoils, false, true,
+                RoverKitPiece.HoverCoils, 2));
+            Assert.AreEqual("recycle_crunch", LastClip, "the bay turns the old part into Metal");
+            _rig.Events.Publish(new PartRemoved(RoverSocket.Lamp, RoverKitPiece.LampBar));
+            Assert.AreEqual("part_remove", LastClip);
+        }
+
+        private void Install(FeelPhase phase)
+        {
+            _rig.Events.Publish(new FeelBeat(FeelKind.Install, phase, _rig.Rover.Position, Vector3.up, 1f, 1f));
         }
 
         [Test]
         public void KenjisGaragePort_UnfoldsItsArm_FitsTheRing_AndTheRingHumsForTheFirstTime()
         {
-            _rig.Events.Publish(new RoverKitInstalling(RoverKitPiece.TetherRing, false));
+            _rig.Events.Publish(new PartFitted(RoverSocket.Tether, RoverKitPiece.TetherRing, false, false, default, 0));
+            Install(FeelPhase.Anticipate);
             Assert.AreEqual("port_arm", LastClip, "the folded arm reaches for 07");
 
-            _rig.Events.Publish(new RoverKitFitted(RoverKitPiece.TetherRing, false, string.Empty));
+            Install(FeelPhase.Impact);
             Assert.AreEqual("tether_ring_wake", LastClip, "the ring's first hum");
             Assert.IsTrue(RecentlyPlayed("bay_fitted_chime", 2), "the two-note rise");
             Assert.IsTrue(RecentlyPlayed("bay_weld", 3), "sparks");
 
             int plays = _rig.Director.PlayCount;
-            _rig.Events.Publish(new RoverKitInstalling(RoverKitPiece.HoverCoils, false));
+            _rig.Events.Publish(new PartFitted(RoverSocket.Belly, RoverKitPiece.HoverCoils, false, false, default, 0));
+            Install(FeelPhase.Anticipate);
             Assert.AreEqual(plays, _rig.Director.PlayCount, "the bay's arms have their own sounds");
         }
 

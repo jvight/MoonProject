@@ -35,11 +35,7 @@ namespace MoonProject.Art.Tests
                 { "PartSocket", mast.Name },
                 { "BeamPoint", mast.Name },
                 { "ChargeRing", mast.Name },
-                { RelayModelBuilder.CabinetName, mast.Name },
-                { RelayModelBuilder.CabinetDoorName, RelayModelBuilder.CabinetName },
-                { SiteModelBuilder.CutPointName, RelayModelBuilder.CabinetDoorName },
-                { RelayModelBuilder.CabinetSealName, RelayModelBuilder.CabinetDoorName },
-                { LootContainerBuilder.ItemSocketName, RelayModelBuilder.CabinetName },
+                { RelayModelBuilder.CabinetSocketName, mast.Name },
             };
             var parents = new Dictionary<string, string>();
             Collect(mast, parents);
@@ -47,7 +43,7 @@ namespace MoonProject.Art.Tests
             Assert.AreEqual(broken ? "RelayMast_Broken" : "RelayMast", mast.Name);
             CollectionAssert.AreEquivalent(expected, parents);
             Assert.IsNull(mast.Mesh, "the root is an empty at the pad centre");
-            foreach (string empty in new[] { "PartSocket", "BeamPoint" })
+            foreach (string empty in new[] { "PartSocket", "BeamPoint", RelayModelBuilder.CabinetSocketName })
             {
                 Assert.IsNull(mast.GetDescendant(empty).Mesh, $"{empty} is an empty");
             }
@@ -60,17 +56,14 @@ namespace MoonProject.Art.Tests
 
         [TestCase(false)]
         [TestCase(true)]
-        public void Cabinet_SealedWhenDormant_OpenWhenRestored_ItsPartInside(bool broken)
+        public void CabinetSocket_StandsBesideTheFooting_OnThePad_FacingIt(bool broken)
         {
-            ModelNode cabinet = RelayModelBuilder.CreateMast(broken).Children
-                .Single(n => n.Name == RelayModelBuilder.CabinetName);
-            ModelNode door = cabinet.Children.Single(n => n.Name == RelayModelBuilder.CabinetDoorName);
-            float swing = Quaternion.Angle(Quaternion.identity, door.LocalRotation);
-            Assert.AreEqual(broken ? 0f : 105f, swing, 0.5f, broken ? "shut and sealed" : "standing open");
-            ModelNode cut = door.Children.Single(n => n.Name == SiteModelBuilder.CutPointName);
-            Assert.Greater(cut.LocalPosition.x, door.Mesh.Geometry.Bounds.max.x - 0.05f, "the cut is on the free edge");
-            ModelNode item = cabinet.Children.Single(n => n.Name == LootContainerBuilder.ItemSocketName);
-            Assert.Greater(item.LocalPosition.y, 0f, "the part waits inside, off the ground");
+            ModelNode socket = RelayModelBuilder.CreateMast(broken).Children
+                .Single(n => n.Name == RelayModelBuilder.CabinetSocketName);
+            Assert.AreEqual(0f, socket.LocalPosition.y, 1e-5f, "its foot on the pad");
+            Assert.AreEqual(Quaternion.identity, socket.LocalRotation, "the door faces the pad along +Z");
+            Assert.Greater(new Vector2(socket.LocalPosition.x, socket.LocalPosition.z).magnitude, 1.5f,
+                "clear of the footing");
         }
 
         [TestCase(false)]
@@ -87,13 +80,6 @@ namespace MoonProject.Art.Tests
                     CollectionAssert.AreEqual(new[] { PaletteSwatch.SignalGlass }, swatches);
                     Assert.Greater(Palette.GetGlow(PaletteSwatch.SignalGlass).r, Palette.BloomThreshold,
                         "lit at 1 it glows HDR warm, above the bloom threshold");
-                    continue;
-                }
-
-                if (node.Name == RelayModelBuilder.CabinetSealName)
-                {
-                    Assert.AreEqual(ModelMaterial.PaletteGlowOff, node.Material, "the cabinet's seal starts dark");
-                    Assert.IsTrue(swatches.All(Palette.IsEmissive), "the seal is all glass");
                     continue;
                 }
 

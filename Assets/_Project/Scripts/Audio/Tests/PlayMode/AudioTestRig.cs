@@ -47,12 +47,17 @@ namespace MoonProject.Audio.PlayModeTests
 
         /// <param name="stationUnlocked">True (most tests): Bell's dial is open, so the station plays as soon as
         /// 07 wakes. False: a fresh game's radio, whose music is still to be earned (M3-24).</param>
-        public AudioTestRig(int trackSeconds = LongTrackSeconds, bool stationUnlocked = true)
+        /// <param name="deckFitted">True: 07 boots with its tape deck on (a loaded game).</param>
+        public AudioTestRig(int trackSeconds = LongTrackSeconds, bool stationUnlocked = true, bool deckFitted = false)
         {
             InputActionAsset controls = Track(BootstrapHarness.LoadControlsCopy());
             Track(new GameObject("Listener", typeof(AudioListener)));
             Rover = Track(new GameObject("FakeRover")).AddComponent<FakeRoverSystem>();
             Rover.Program.DialUnlocked = stationUnlocked;
+            if (deckFitted)
+            {
+                Rover.Equipment.Fit(RoverSocket.Deck, RoverKitPiece.TapeDeck);
+            }
 
             var playlist = Track(ScriptableObject.CreateInstance<RadioPlaylist>());
             playlist.Populate(new[]

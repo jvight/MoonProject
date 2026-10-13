@@ -30,6 +30,23 @@ namespace MoonProject.Art.Editor
 
         private static Matrix4x4 Bus => At(BusCentre, BusEuler);
 
+        // The nav camera's broken lens stack, spilled across the bus's floor just inside its split back (bus space).
+        private static readonly Vector3[] LensStack =
+        {
+            new Vector3(0.5f, -HalfY + Wall, -1.0f), new Vector3(0.05f, -HalfY + Wall, -1.05f),
+            new Vector3(0.55f, -HalfY + Wall, -0.62f),
+        };
+
+        /// <summary>
+        /// Where the Focus Lens's fragment <paramref name="index"/> lies (site space) and how: on the crumpled bus's
+        /// floor inside its split back, seen through the tear, resting on the tilted floor.
+        /// </summary>
+        public static Vector3 FragmentHost(int index, out Quaternion rotation)
+        {
+            rotation = Rotation(BusEuler) * Quaternion.Euler(0f, index * 40f - 30f, 0f);
+            return Bus.MultiplyPoint3x4(LensStack[index]);
+        }
+
         public static SiteRecipe Create()
         {
             var site = new SiteRecipe();

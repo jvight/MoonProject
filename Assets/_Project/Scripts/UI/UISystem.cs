@@ -74,10 +74,12 @@ namespace MoonProject.UI
         private StargazeVeil _stargaze;
         private LookUpHint _lookUpHint;
         private HoldHint _holdHint;
+        private FitHint _fitHint;
         private FirstPrompt _firstPrompt;
         private LookUpChip _lookUpChip;
         private NextStepLine _nextStep;
         private NextLineView _nextLine;
+        private LowBatteryHint _lowBattery;
         private BatteryDial _batteryDial;
         private HomeMeter _homeMeter;
         private bool _cellRowRevealed;
@@ -109,7 +111,6 @@ namespace MoonProject.UI
         private RelayTag _relayTag;
         private TowerPanel _tower;
         private KitTitle _kitTitle;
-        private FriendReadout _friendReadout;
         private FriendNameTag _friendName;
         private PauseMenu _pause;
         private TextScale _textScale;
@@ -126,6 +127,7 @@ namespace MoonProject.UI
         private bool _digging;
         private float _sinceAwake;
         private float _pickUpGrace;
+        private bool _reopenSeven;
 
         /// <summary>The localization service this system registered (tests and editor tools read it).</summary>
         internal LocalizationService Localization => _localization;
@@ -178,7 +180,6 @@ namespace MoonProject.UI
         internal CrateNote CrateNote => _crateNote;
 
 
-        internal FriendReadout FriendReadout => _friendReadout;
 
         internal FriendNameTag FriendName => _friendName;
 
@@ -369,8 +370,8 @@ namespace MoonProject.UI
                 _cargo?.MarkDirty();
             }));
             _tokens.Add(events.Subscribe<RecoveryProgressChanged>(OnRecoveryProgressChanged));
-            _tokens.Add(events.Subscribe<BlueprintFound>(OnBlueprintFound));
-            _tokens.Add(events.Subscribe<BlueprintDelivered>(OnBlueprintDelivered));
+            _tokens.Add(events.Subscribe<FragmentScanned>(OnFragmentScanned));
+            _tokens.Add(events.Subscribe<BlueprintCompleted>(OnBlueprintCompleted));
             _tokens.Add(events.Subscribe<RoverWideShotChanged>(OnWideShotChanged));
             _tokens.Add(events.Subscribe<RoverWakeBeatReached>(OnWakeBeat));
             _tokens.Add(events.Subscribe<SiteAnswered>(OnSiteAnswered));
@@ -388,7 +389,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RelayRestored>(OnRelayRestored));
             _tokens.Add(events.Subscribe<RadioHopListChanged>(OnRadioHopListChanged));
             _tokens.Add(events.Subscribe<StationCued>(OnStationCued));
-            _tokens.Add(events.Subscribe<RoverKitFitted>(OnRoverKitFitted));
+            _tokens.Add(events.Subscribe<PartFitted>(OnPartFitted));
             _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
 
             services.Input.Menu.Enable();
@@ -432,15 +433,17 @@ namespace MoonProject.UI
             _labHud = new LabHud(_layout.LabHud, _tuning.Lab, _localization, _ledger);
             _board = new RecoveryBoard(_layout.LabHud, _tuning.Lab.Board, _localization, services.Tech,
                 services.Recovery);
-            _stargaze = new StargazeVeil(_tuning.Stargaze.Hud, _layout.PromptAnchor, _layout.FriendAnchor,
+            _stargaze = new StargazeVeil(_tuning.Stargaze.Hud, _layout.PromptAnchor,
                 _layout.FriendNameAnchor, _layout.RelayTagAnchor, _layout.SalvageRingAnchor, _layout.SiteNameAnchor,
                 _layout.TickerLine);
             _lookUpHint = new LookUpHint(_tuning.Stargaze, _ledger);
             _holdHint = new HoldHint(_tuning.Stargaze, _ledger);
+            _fitHint = new FitHint(_tuning.Stargaze, _ledger, services.Equipment);
             _firstPrompt = new FirstPrompt(_tuning.Stargaze, _ledger);
             _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization);
             _nextStep = new NextStepLine(_tuning.Guidance);
             _nextLine = new NextLineView(_layout, _tuning.Guidance, _localization);
+            _lowBattery = new LowBatteryHint(_tuning.Guidance, services.Battery, _localization);
             _batteryDial = new BatteryDial(_layout, _tuning.Battery, services.Battery, services.Beam);
             _homeMeter = new HomeMeter(_layout, _tuning.HomeMeter, services.Rover, services.World, _localization);
             _saveTick = new SaveTick(_layout, _tuning.SaveTick);
@@ -457,8 +460,6 @@ namespace MoonProject.UI
             _siteName = new SiteNameTag(_layout, _tuning.Salvage, _tuning.Prompts, _localization, services.View);
             _card = new MemoryCard(_layout, _tuning.MemoryCard, _localization, services.Events, _relics,
                 services.Friends);
-            _friendReadout = new FriendReadout(_layout, _tuning.Friends, _tuning.Prompts, services.Friends,
-                services.Rover, services.View, _localization);
             _friendName = new FriendNameTag(_layout, _tuning.Friends, _tuning.Prompts, services.Friends,
                 _localization, services.View);
             _ticker = new RadioTicker(_layout, _tuning.Ticker, _tickerLines);
@@ -472,7 +473,8 @@ namespace MoonProject.UI
             _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
             _rewardCard = new RewardCard(_layout, _tuning.RewardCard, _localization, services.Shop);
             _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold,
-                services.Home, services.Transfer, services.Dock, _numbers, services.Events, _ledger);
+                services.Home, services.Transfer, services.Dock, services.Equipment, services.Portrait, _glyphs, _numbers, services.Events,
+                _ledger);
             _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization, _glyphs);
             _crateNote = new CrateNote(_layout, _tuning.CrateNote, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
@@ -544,9 +546,10 @@ namespace MoonProject.UI
             _pause.Tick(deltaTime);
             bool paused = _pause.IsOpen;
             _map?.Tick(deltaTime, paused);
-            _cargo.Tick(deltaTime, ScreenSize());
-            if (_cargo.IsOpen && _cargo.IsTransferView && !_services.Dock.IsDocked)
+            _cargo.Tick(deltaTime, ScreenSize(), input.ActiveDevice);
+            if (_cargo.IsOpen && ((_cargo.IsTransferView && !_services.Dock.IsDocked) || _cargo.WantsClose))
             {
+                _reopenSeven = _cargo.WantsClose;
                 CloseCargo();
             }
 
@@ -595,8 +598,6 @@ namespace MoonProject.UI
 
             Rect panel = _layout.Root.layout;
             Vector2 panelSize = float.IsNaN(panel.width) ? Vector2.zero : panel.size;
-            _friendReadout.Tick(deltaTime, !paused, panelSize,
-                _prompt.StackHeight(InteractionKind.Repair, _tuning.Friends.StackGap));
             _friendName.Tick(hudTime, panelSize);
             _siteName.Tick(hudTime, panelSize, !_prompt.IsVisible && !_placeCard.IsVisible &&
                                                !_lookUpChip.IsVisible && !_ticker.IsVisible && !_kitTitle.IsVisible &&
@@ -645,13 +646,18 @@ namespace MoonProject.UI
             _lookUpHint.Tick(hudTime, hintOpen && _firstPrompt.Word == HintWord.None);
             _holdHint.Tick(hudTime, hintOpen && !_cargo.IsOpen && _firstPrompt.Word == HintWord.None &&
                                     !_lookUpHint.WantsShown, AtTower());
+            _fitHint.Tick(hudTime, hintOpen && !_cargo.IsOpen && _firstPrompt.Word == HintWord.None &&
+                                   !_lookUpHint.WantsShown && !_holdHint.WantsShown, _cargo.IsOpen);
             HintWord hint = _firstPrompt.Word != HintWord.None ? _firstPrompt.Word
                 : _lookUpHint.WantsShown ? HintWord.LookUp
-                : _holdHint.WantsShown ? HintWord.Hold : HintWord.None;
+                : _holdHint.WantsShown ? HintWord.Hold
+                : _fitHint.WantsShown ? HintWord.Fit : HintWord.None;
             _lookUpChip.Tick(deltaTime, paused ? HintWord.None : hint, device);
             _nextStep.Tick(hudTime, _services.Rover.Speed, _player.Guidance);
             _placeCard.Tick(hudTime, PlaceCardsOpen() && _slot.Allows(GuidanceKind.Place));
-            _nextLine.Tick(deltaTime, _nextStep, NextLineOpen(paused) && _slot.Allows(GuidanceKind.Next));
+            _lowBattery.Tick(paused ? 0f : deltaTime, _nextLine.ShowsBattery);
+            _nextLine.Tick(deltaTime, _nextStep, NextLineOpen(paused) && _slot.Allows(GuidanceKind.Next), _lowBattery,
+                NextLineOpen(paused) && _slot.Allows(GuidanceKind.Battery));
             bool hudOpen = !paused && _awake && !_stargaze.IsVeiled && !onMap;
             _batteryDial.Tick(deltaTime, _cellRowRevealed, hudOpen);
             _homeMeter.Tick(deltaTime, hudOpen && !_card.IsVisible);
@@ -707,17 +713,19 @@ namespace MoonProject.UI
         private void DecideGuidance(bool paused, bool hopping)
         {
             bool looks = LookHintsOpen() && (_firstPrompt.Word != HintWord.None || _lookUpHint.WantsShown ||
-                                             _holdHint.Wants(AtTower()));
+                                             _holdHint.Wants(AtTower()) || _fitHint.Wants());
             _guidanceWants[(int)GuidanceKind.Prompt] =
                 (PromptsOpen(paused, hopping) && _director.Wants(_services.Hints.Primary)) || looks;
             _guidanceWants[(int)GuidanceKind.Card] =
                 CardsOpen(paused) && (_tower.Wants || (_awake && !_kitTitle.IsVisible && _recipeCard.Wants));
             _guidanceWants[(int)GuidanceKind.Place] = PlaceCardsOpen() && (_placeCard.IsWaiting || _placeCard.IsVisible);
+            _guidanceWants[(int)GuidanceKind.Battery] = NextLineOpen(paused) && _lowBattery.WantsShown;
             _guidanceWants[(int)GuidanceKind.Next] = NextLineOpen(paused) && _nextStep.WantsShown;
             _guidanceShown[(int)GuidanceKind.Prompt] = _prompt.IsVisible || _lookUpChip.IsVisible;
             _guidanceShown[(int)GuidanceKind.Card] = _tower.IsVisible || _recipeCard.IsVisible;
             _guidanceShown[(int)GuidanceKind.Place] = _placeCard.IsVisible;
-            _guidanceShown[(int)GuidanceKind.Next] = _nextLine.IsVisible;
+            _guidanceShown[(int)GuidanceKind.Battery] = _nextLine.ShowsBattery;
+            _guidanceShown[(int)GuidanceKind.Next] = _nextLine.ShowsNext;
             _slot.Step(_guidanceWants, _guidanceShown);
         }
 
@@ -748,10 +756,16 @@ namespace MoonProject.UI
 
         private void OpenCargo()
         {
+            _reopenSeven = false;
             _cargo.Open();
             _services.Input.Disable();
             _cursor.Menu();
             _cargo.FocusFirst();
+            if (!_cargo.IsTransferView)
+            {
+                _cargo.FirstTab.Focus();
+            }
+
             _events.Publish(new UiCue(UiCueKind.Confirm));
         }
 
@@ -869,6 +883,17 @@ namespace MoonProject.UI
                 {
                     _director.NotifyUsed(InteractionKind.Salvage);
                 }
+
+                // The install moment ends with its Proud chirp: the 07 tab the player fitted from comes back.
+                if (beat.Kind == FeelKind.Install && beat.Phase == FeelPhase.Reward && _reopenSeven)
+                {
+                    _reopenSeven = false;
+                    if (CanOpenCargo() && !_cargo.IsOpen)
+                    {
+                        _cargo.SelectTab(1);
+                        OpenCargo();
+                    }
+                }
             }
         }
 
@@ -906,9 +931,10 @@ namespace MoonProject.UI
             }
         }
 
-        private void OnBlueprintFound(BlueprintFound found)
+        /// <summary>"Fragment 2 of 3 · Cargo Cradle", or the known blueprint's metal, as a note.</summary>
+        private void OnFragmentScanned(FragmentScanned scanned)
         {
-            _placeCard.BlueprintFound(found.KitId);
+            _crateNote.Scanned(ScanLines.Fragment(_localization, scanned));
         }
 
         private void OnLabLeft(LabLeft left)
@@ -938,9 +964,10 @@ namespace MoonProject.UI
             }
         }
 
-        private void OnBlueprintDelivered(BlueprintDelivered delivered)
+        /// <summary>The last fragment is in: one ticker line names the kit and where to build it.</summary>
+        private void OnBlueprintCompleted(BlueprintCompleted completed)
         {
-            _tickerLines.Enqueue(new TickerLine(UiKeys.BlueprintDelivered));
+            _tickerLines.Enqueue(new TickerLine(UiKeys.ScanComplete, UiKeys.UpgradeName(completed.BlueprintId), true));
         }
 
         private void OnNextStepChanged(NextStepChanged changed)
@@ -1038,11 +1065,11 @@ namespace MoonProject.UI
             }
         }
 
-        private void OnRoverKitFitted(RoverKitFitted fitted)
+        private void OnPartFitted(PartFitted fitted)
         {
-            if (!KitNames.TryTitle(fitted, out string key))
+            if (!PartNames.TryTitle(fitted.Part, out string key))
             {
-                Debug.LogError($"{nameof(UISystem)}: {fitted.Piece} settled onto 07 (gift: {fitted.Gift}) with no " +
+                Debug.LogError($"{nameof(UISystem)}: {fitted.Part} settled onto 07 (gift: {fitted.Gift}) with no " +
                                "upgrade or gift to name it.", this);
                 return;
             }
@@ -1053,7 +1080,7 @@ namespace MoonProject.UI
             }
 
             _kitTitle.Enqueue(key);
-            if (AbilityTable.TryAbilityOf(fitted.Piece, out RoverAbility gained))
+            if (AbilityTable.TryAbilityOf(fitted.Part, out RoverAbility gained))
             {
                 _unlockCard.Gained(gained);
                 _cargo.MarkDirty();
@@ -1061,12 +1088,24 @@ namespace MoonProject.UI
 
             if (!fitted.Gift)
             {
-                _tower.StationShowed(UpgradeStationKind.Workshop, fitted.UpgradeId);
+                _ledger.RecordFitTaught();
+            }
+
+            if (!fitted.Gift && PartNames.TryUpgradeId(fitted.Part, out string upgradeId))
+            {
+                _tower.StationShowed(UpgradeStationKind.Workshop, upgradeId);
             }
         }
 
         private void OnTickerLine(TickerLine line)
         {
+            // Gameplay's low-charge line is guidance (priority 4 of the slot), never a voice on the ticker.
+            if (LowBatteryHint.IsLowLine(line))
+            {
+                _lowBattery.Offer(line);
+                return;
+            }
+
             _tickerLines.Enqueue(line);
         }
 
@@ -1121,7 +1160,8 @@ namespace MoonProject.UI
             _ticker.Relocalize();
             _homeMeter.Relocalize();
             _lookUpChip.Relocalize();
-            _nextLine.Relocalize();
+            _lowBattery.Relocalize();
+            _nextLine.Relocalize(_nextStep, _lowBattery);
             _placeCard.Relocalize();
             _protocol.Relocalize();
             _recipeCard.Relocalize();
@@ -1133,7 +1173,6 @@ namespace MoonProject.UI
             _tower.Relocalize();
             _kitTitle.Relocalize();
             _pickups.Relocalize();
-            _friendReadout.Relocalize();
             _rewardCard.Relocalize();
             _cargo.Relocalize();
             _unlockCard.Relocalize();

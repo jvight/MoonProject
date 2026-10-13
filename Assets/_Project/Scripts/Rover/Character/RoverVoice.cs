@@ -47,13 +47,6 @@ namespace MoonProject.Rover
                 events.Subscribe<BatteryWarned>(OnBatteryWarned),
                 events.Subscribe<LowPowerChanged>(OnLowPowerChanged),
                 events.Subscribe<RoverRecovering>(_ => Say(ChirpMood.Worried, Gentle)),
-                events.Subscribe<RoverKitFitted>(fitted =>
-                {
-                    if (fitted.Gift)
-                    {
-                        Say(ChirpMood.Happy, Gentle);
-                    }
-                }),
                 events.Subscribe<FindDecoded>(_ => Say(ChirpMood.Affirm, Gentle)),
                 events.Subscribe<ChargingChanged>(OnChargingChanged),
                 events.Subscribe<CutterTierChanged>(changed => _upgradedCutPending |= !changed.Restored),
@@ -125,7 +118,7 @@ namespace MoonProject.Rover
         {
             if (beat.Phase == FeelPhase.Impact)
             {
-                Say(ChirpMood.Affirm, Gentle);
+                Say(beat.Strength < 1f ? ChirpMood.Happy : ChirpMood.Affirm, Gentle);
             }
             else if (beat.Phase == FeelPhase.Reward)
             {

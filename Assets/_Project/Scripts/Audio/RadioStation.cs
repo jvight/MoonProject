@@ -24,7 +24,7 @@ namespace MoonProject.Audio
     /// (<see cref="RadioHopStarted"/>) eases the set into static as the screen fades, holds through the dark and
     /// resolves into the target node's clarity as the view eases in (<see cref="RadioHop"/>). Music is earned
     /// (<see cref="RadioGate"/>, docs/features/M3-24): a fresh game hears only static, which tower level 1 clears into
-    /// the Earth signal's carrier (no music); 07's tape deck (<see cref="RoverKitPiece.TapeDeck"/>) plays the first
+    /// the Earth signal's carrier (no music); 07's tape deck (<see cref="RoverSocket.Deck"/>) plays the first
     /// tape softly on repeat, eased in at the fit and rounded like an old cassette; Bell's dial brings the station
     /// with a dial turn. A voiced recording ducks the music (<see cref="RadioVoice"/>). Initialised by
     /// <see cref="AudioDirector"/>.
@@ -211,6 +211,12 @@ namespace MoonProject.Audio
             _model = new RadioProgramModel(_program.TotalTapeCount);
             _model.Apply(_program, false, out _);
             _gate.SetDialUnlocked(_model.DialUnlocked);
+            if (context.Get<IRoverEquipment>().TryGetFitted(RoverSocket.Deck, out _))
+            {
+                // A loaded game's deck is already on 07 (nothing is published on load): its tape simply plays.
+                _gate.FitDeck();
+                _deckShare.Snap(_gate.Stage == RadioGateStage.Deck ? 1f : 0f);
+            }
             RebuildPool();
             _staticPresence.Snap(StaticPresenceTarget());
             _subscriptions[0] = context.Events.Subscribe<SignalRadiusChanged>(OnSignalRadiusChanged);
@@ -224,8 +230,8 @@ namespace MoonProject.Audio
             _subscriptions[8] = context.Events.Subscribe<TitleShown>(OnTitleShown);
             _subscriptions[9] = context.Events.Subscribe<SessionStarted>(OnSessionStarted);
             _subscriptions[10] = context.Events.Subscribe<NewGameRequested>(OnNewGameRequested);
-            _subscriptions[11] = context.Events.Subscribe<RoverKitFitted>(OnRoverKitFitted);
-            _subscriptions[12] = context.Events.Subscribe<RoverKitRestored>(OnRoverKitRestored);
+            _subscriptions[11] = context.Events.Subscribe<PartFitted>(OnPartFitted);
+            _subscriptions[12] = context.Events.Subscribe<PartRemoved>(OnPartRemoved);
             _subscriptions[13] = context.Events.Subscribe<BasePowerChanged>(OnBasePowerChanged);
             _subscriptions[14] = context.Events.Subscribe<DockEveningOpened>(OnDockEveningOpened);
             _subscriptions[15] = context.Events.Subscribe<FeelBeat>(OnFeelBeat);
@@ -644,21 +650,22 @@ namespace MoonProject.Audio
             _carrier.Play();
         }
 
-        /// <summary>07's tape deck is fitted: the first tape eases in softly, without a dial swish.</summary>
-        private void OnRoverKitFitted(RoverKitFitted fitted)
+        /// <summary>07's tape deck is fitted (a live fit: a load publishes nothing): the first tape eases in softly,
+        /// without a dial swish.</summary>
+        private void OnPartFitted(PartFitted fitted)
         {
-            if (fitted.Piece == RoverKitPiece.TapeDeck && _gate.FitDeck())
+            if (fitted.Socket == RoverSocket.Deck && _gate.FitDeck())
             {
                 OnGateOpened(_tuning.DeckFitFade);
             }
         }
 
-        /// <summary>A loaded game's deck is already on 07: its tape simply plays.</summary>
-        private void OnRoverKitRestored(RoverKitRestored restored)
+        /// <summary>The deck taken off pauses its tape (the station, once Bell's dial is open, plays on).</summary>
+        private void OnPartRemoved(PartRemoved removed)
         {
-            if (restored.Piece == RoverKitPiece.TapeDeck && _gate.FitDeck())
+            if (removed.Socket == RoverSocket.Deck && _gate.RemoveDeck() && _wake.MusicStarted)
             {
-                OnGateOpened(_tuning.SilentSwitchFade);
+                _mixer.Change(HasMusic(), _tuning.SilentSwitchFade, 0f, _tuning.SilentSwitchFade, 0f);
             }
         }
 

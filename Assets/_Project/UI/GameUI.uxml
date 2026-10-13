@@ -6,17 +6,6 @@
                 <ui:VisualElement name="reticle-rest" class="reticle__ring reticle__ring--rest" />
                 <ui:VisualElement name="reticle-hover" class="reticle__ring reticle__ring--hover" />
             </ui:VisualElement>
-            <ui:VisualElement name="friend-anchor" class="world-anchor" picking-mode="Ignore">
-                <ui:VisualElement name="friend-center" class="world-anchor__center" picking-mode="Ignore">
-                    <ui:VisualElement name="friend-readout" class="friend-readout" picking-mode="Ignore">
-                        <ui:VisualElement name="friend-readout-shadow" class="soft-shadow soft-shadow--chip" />
-                        <ui:VisualElement class="chip friend-chip">
-                            <ui:Label name="friend-parts-label" class="friend-chip__label" picking-mode="Ignore" />
-                            <ui:VisualElement name="friend-pips" class="friend-pips" picking-mode="Ignore" />
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-                </ui:VisualElement>
-            </ui:VisualElement>
             <ui:VisualElement name="friend-name-anchor" class="world-anchor" picking-mode="Ignore">
                 <ui:VisualElement name="friend-name-center" class="world-anchor__center" picking-mode="Ignore">
                     <ui:VisualElement name="friend-name" class="name-tag" picking-mode="Ignore">
@@ -266,6 +255,14 @@
         </ui:VisualElement>
         <ui:VisualElement name="cargo" class="cargo" picking-mode="Ignore">
             <ui:VisualElement name="cargo-panel" class="cargo__panel" picking-mode="Ignore">
+                <ui:VisualElement class="cargo__tabs" picking-mode="Ignore">
+                    <ui:VisualElement class="settings-tab-wrap settings-tab-wrap--on" picking-mode="Ignore">
+                        <ui:Button name="button-cargo-tab-hold" class="settings-tab settings-tab--on loc" text="hint.hold" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="settings-tab-wrap" picking-mode="Ignore">
+                        <ui:Button name="button-cargo-tab-seven" class="settings-tab loc" text="ui.cargo.tab_seven" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
                 <ui:VisualElement name="cargo-page-cargo" class="cargo__page cargo__page--columns" picking-mode="Ignore">
                     <ui:VisualElement class="cargo__column cargo__column--hold" picking-mode="Ignore">
                         <ui:Label class="cargo__heading loc" text="ui.cargo.hold" picking-mode="Ignore" />
@@ -278,8 +275,19 @@
                         <ui:VisualElement name="cargo-home-grid" class="cargo__grid" picking-mode="Ignore" />
                     </ui:VisualElement>
                 </ui:VisualElement>
+                <ui:VisualElement name="cargo-page-seven" class="cargo__page seven" picking-mode="Ignore">
+                    <ui:VisualElement name="seven-portrait" class="seven__portrait" picking-mode="Ignore" />
+                    <ui:VisualElement name="seven-row" class="seven__row" picking-mode="Ignore" />
+                </ui:VisualElement>
                 <ui:Label name="cargo-transfer-hint" class="cargo__transfer-hint" picking-mode="Ignore" />
                 <ui:Label name="cargo-summary" class="cargo__summary" picking-mode="Ignore" />
+                <ui:VisualElement name="seven-tooltip" class="seven__tooltip" picking-mode="Ignore">
+                    <ui:Label name="seven-tooltip-name" class="seven__tooltip-name" picking-mode="Ignore" />
+                    <ui:VisualElement name="seven-tooltip-glyph" class="glyph glyph--small" picking-mode="Ignore">
+                        <ui:Label name="seven-tooltip-glyph-label" class="glyph__label" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Label name="seven-ghost" class="seven__ghost" picking-mode="Ignore" />
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="hop-veil" class="hop-veil" picking-mode="Ignore">

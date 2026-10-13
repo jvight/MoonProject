@@ -9753,6 +9753,9 @@ MonoBehaviour:
   - region.terraces
   - place.orange_vent
   - place.ilmenite_band
+  - micro.06
+  - micro.mule
+  - micro.drone
   - place.shadowed_crater
   _anchorPoints:
   - {x: 266.29584, y: 86.52475}
@@ -9779,4 +9782,7 @@ MonoBehaviour:
   - {x: -222.73862, y: -222.73865}
   - {x: 40.116966, y: -149.7185}
   - {x: -272.22342, y: -170.10413}
+  - {x: 265.42465, y: 84.128975}
+  - {x: 150.77847, y: 53.72247}
+  - {x: 75.67194, y: 133.92146}
   - {x: 179.0304, y: 73.16954}

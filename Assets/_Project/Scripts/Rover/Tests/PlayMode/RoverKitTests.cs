@@ -10,9 +10,10 @@ using MoonProject.Core.Events;
 namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
-    /// Visible progression on 07 (M3-11, real wiring): owned kit is there at once on load, and so is kit granted
-    /// without a purchase (bought kit waits for the Rover Bay to fit it: <see cref="RoverBayTests"/>); the cargo seat
-    /// follows the rack; friends' gifts show silently on load or softly when 07 comes home; the Boost Coils give a
+    /// Visible progression on 07 (M3-11, real wiring): a loaded game's fitted parts are there at once
+    /// (<see cref="IRoverEquipment"/>); an ability alone puts nothing on 07 (bay kit is fitted by the Rover Bay:
+    /// <see cref="RoverBayTests"/>); the cargo seat follows the rack; Tilly's gifted cell and Kenji's port parts grow
+    /// in place when fitted, Bell's gift shows silently on load; a part taken off shrinks away; the Boost Coils give a
     /// gentle extra cruise and the drums glow with it.
     /// </summary>
     public sealed class RoverKitTests : InputTestFixture
@@ -20,8 +21,8 @@ namespace MoonProject.Rover.PlayModeTests
         private LunarTestPhysics _physics;
         private TestWorld _world;
         private TestRover _rover;
-        private readonly List<RoverKitInstalling> _installing = new List<RoverKitInstalling>();
-        private readonly List<RoverKitFitted> _fitted = new List<RoverKitFitted>();
+        private readonly List<FeelBeat> _installing = new List<FeelBeat>();
+        private readonly List<FeelBeat> _fitted = new List<FeelBeat>();
         private readonly List<bool> _boosts = new List<bool>();
 
         public override void Setup()
@@ -51,8 +52,17 @@ namespace MoonProject.Rover.PlayModeTests
         {
             _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -150f), 0f);
             EventBus events = _rover.Context.Events;
-            events.Subscribe<RoverKitInstalling>(_installing.Add);
-            events.Subscribe<RoverKitFitted>(_fitted.Add);
+            events.Subscribe<FeelBeat>(beat =>
+            {
+                if (beat.Kind == FeelKind.Install && beat.Phase == FeelPhase.Anticipate)
+                {
+                    _installing.Add(beat);
+                }
+                else if (beat.Kind == FeelKind.Install && beat.Phase == FeelPhase.Impact)
+                {
+                    _fitted.Add(beat);
+                }
+            });
             events.Subscribe<RoverBoostChanged>(changed => _boosts.Add(changed.Boosting));
         }
 
@@ -66,6 +76,12 @@ namespace MoonProject.Rover.PlayModeTests
         }
 
         private IRoverAbilities Abilities => _rover.Context.Get<IRoverAbilities>();
+
+        /// <summary>Gameplay fits <paramref name="part"/> in play.</summary>
+        private void Fit(RoverKitPiece part, bool gift)
+        {
+            _rover.Context.Events.Publish(new PartFitted(TestEquipment.SocketFor(part), part, gift, false, default, 0));
+        }
 
         [UnityTest]
         public IEnumerator ACarriedStoryPart_ShowsOnItsOwn_UntilDelivered()
@@ -100,9 +116,12 @@ namespace MoonProject.Rover.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator OwnedOnLoad_IsThereAtOnce_NoMoment()
+        public IEnumerator FittedOnLoad_IsThereAtOnce_NoMoment()
         {
             Spawn();
+            _rover.Equipment.Fitted(RoverKitPiece.LampBar);
+            _rover.Equipment.Fitted(RoverKitPiece.CapacitorDrums);
+            _rover.Equipment.Fitted(RoverKitPiece.CargoRack);
             Abilities.Grant(RoverAbility.WarmHeadlamp);
             Abilities.Grant(RoverAbility.BoostCoils);
             Abilities.Grant(RoverAbility.CargoCradle);
@@ -118,18 +137,32 @@ namespace MoonProject.Rover.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator GrantedWithoutAPurchase_IsThereAtOnce_NoMoment()
+        public IEnumerator AnAbilityAlone_PutsNoKitOn07()
         {
             Spawn();
             yield return Wait(0.5f);
             float plainAngle = _rover.Headlamp.spotAngle;
             Abilities.Grant(RoverAbility.WarmHeadlamp);
-            yield return null;
-            Assert.IsTrue(_rover.LampBar.gameObject.activeSelf, "Not bought at the bay: simply there.");
-            Assert.AreEqual(Vector3.zero, _rover.LampBar.localPosition, "At rest on its socket.");
+            yield return Wait(0.5f);
+            Assert.IsFalse(_rover.LampBar.gameObject.activeSelf, "Crafted, the bar waits in the row to be fitted.");
             Assert.IsEmpty(_installing);
-            Assert.IsEmpty(_fitted);
-            Assert.Greater(_rover.Headlamp.spotAngle, plainAngle + 20f, "The warm road light at once.");
+            Assert.AreEqual(plainAngle, _rover.Headlamp.spotAngle, 0.01f, "The plain road light until it is on.");
+        }
+
+        [UnityTest]
+        public IEnumerator APartTakenOff_ShrinksAway()
+        {
+            Spawn();
+            _rover.Equipment.Fitted(RoverKitPiece.CargoRack);
+            yield return Wait(0.5f);
+            Assert.IsTrue(_rover.CargoRack.gameObject.activeSelf);
+            _rover.Context.Events.Publish(new PartRemoved(RoverSocket.Hold, RoverKitPiece.CargoRack));
+            yield return null;
+            yield return null;
+            Assert.IsTrue(_rover.CargoRack.gameObject.activeSelf, "Not gone in a frame: it shrinks away...");
+            Assert.Less(_rover.CargoRack.localScale.x, 1f);
+            yield return Wait(2f);
+            Assert.IsFalse(_rover.CargoRack.gameObject.activeSelf, "...then it is off.");
         }
 
         [UnityTest]
@@ -154,7 +187,7 @@ namespace MoonProject.Rover.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator FriendGifts_ShowSilentlyOnLoad_OrSoftlyWhen07ComesHome()
+        public IEnumerator Gifts_ShowSilentlyOnLoad_OrSettleSoftlyWhenFitted()
         {
             Spawn();
             _rover.Friends.Bell.Activity = FriendActivity.Home;
@@ -165,19 +198,13 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsFalse(_rover.CellFilled.gameObject.activeSelf, "Tilly still broken: the wing's gap remains.");
             Assert.IsEmpty(_installing, "Silently.");
 
-            _rover.Friends.Tilly.Activity = FriendActivity.Following;
-            yield return Wait(2f);
-            Assert.IsFalse(_rover.CellFilled.gameObject.activeSelf, "Repaired out in the field: the gift waits...");
-
-            _rover.Layout.BasePosition = _rover.Controller.Position;
-            yield return null;
-            yield return null;
-            Assert.AreEqual(1, _installing.Count, "...until 07 is home.");
-            Assert.AreEqual(RoverKitPiece.SolarCell, _installing[0].Piece);
-            Assert.IsTrue(_installing[0].Gift, "The soft version.");
+            Fit(RoverKitPiece.SolarCell, true);
+            Assert.AreEqual(1, _installing.Count, "Tilly's cell, fitted when 07 is home: its moment begins.");
+            Assert.AreEqual(0.5f, _installing[0].Strength, "The soft version.");
             yield return Wait(3f);
             Assert.IsTrue(_rover.CellFilled.gameObject.activeSelf, "The cell is in the wing.");
             Assert.AreEqual(1, _fitted.Count);
+            Assert.AreEqual(0.5f, _fitted[0].Strength, "A gift's soft settle.");
             Assert.IsTrue(_rover.Kit.HasMendedWing);
 
             yield return Wait(_rover.CharacterTuning.IdleDelay + 16f);
@@ -190,8 +217,6 @@ namespace MoonProject.Rover.PlayModeTests
         public IEnumerator KenjisPort_FitsTheRingThenTheDeck_EachWithItsMoment()
         {
             Spawn();
-            var restored = new List<RoverKitRestored>();
-            _rover.Context.Events.Subscribe<RoverKitRestored>(restored.Add);
             yield return null;
             Assert.IsFalse(_rover.TetherRing.gameObject.activeSelf, "No ring before Kenji's port (first-hour v2).");
             Assert.IsFalse(_rover.TapeDeck.gameObject.activeSelf, "No deck either.");
@@ -200,45 +225,40 @@ namespace MoonProject.Rover.PlayModeTests
             {
                 _installing.Clear();
                 _fitted.Clear();
-                _rover.Context.Events.Publish(new PortFitting(piece, _rover.Controller.Position, false));
+                Fit(piece, false);
                 Assert.AreEqual(1, _installing.Count, $"{piece}: the port's install moment begins.");
-                Assert.AreEqual(piece, _installing[0].Piece);
-                Assert.IsFalse(_installing[0].Gift, "a port piece, not a friend's gift");
+                Assert.AreEqual(1f, _installing[0].Strength, "a port part, not a friend's gift");
                 yield return Wait(3f);
-                Assert.AreEqual(1, _fitted.Count, $"{piece}: RoverKitFitted once it is on 07.");
-                Assert.AreEqual(piece, _fitted[0].Piece);
-                Assert.IsFalse(_fitted[0].Gift);
+                Assert.AreEqual(1, _fitted.Count, $"{piece}: it seats once it is on 07.");
+                Assert.AreEqual(1f, _fitted[0].Strength);
             }
 
             Assert.IsTrue(_rover.TetherRing.gameObject.activeSelf, "The ring frames the eye.");
             Assert.IsTrue(_rover.TapeDeck.gameObject.activeSelf, "The deck is on 07's flank.");
-            Assert.IsEmpty(restored, "A live fit is not a restore.");
-            _rover.Context.Events.Publish(new PortFitting(RoverKitPiece.TapeDeck, _rover.Controller.Position, true));
-            Assert.IsEmpty(restored, "A piece already on 07 is not restored twice.");
+            _installing.Clear();
+            Fit(RoverKitPiece.TapeDeck, false);
+            Assert.IsEmpty(_installing, "A piece already on 07 has no second moment.");
         }
 
         [UnityTest]
-        public IEnumerator ALoadedGamesPortPieces_AreThereAtOnce_AndAnnouncedRestored()
+        public IEnumerator ALoadedGamesPortParts_AreThereAtOnce_NoMoment()
         {
             Spawn();
-            var restored = new List<RoverKitRestored>();
-            _rover.Context.Events.Subscribe<RoverKitRestored>(restored.Add);
-            _rover.Context.Events.Publish(new PortFitting(RoverKitPiece.TetherRing, _rover.Controller.Position, true));
-            _rover.Context.Events.Publish(new PortFitting(RoverKitPiece.TapeDeck, _rover.Controller.Position, true));
+            _rover.Equipment.Fitted(RoverKitPiece.TetherRing);
+            _rover.Equipment.Fitted(RoverKitPiece.TapeDeck);
             yield return null;
             yield return null;
             Assert.IsTrue(_rover.TetherRing.gameObject.activeSelf && _rover.TapeDeck.gameObject.activeSelf,
                 "There from the first frame.");
             Assert.IsEmpty(_installing, "No moment replayed on load.");
             Assert.IsEmpty(_fitted);
-            Assert.AreEqual(2, restored.Count);
         }
 
         [UnityTest]
         public IEnumerator BoostCoils_GiveAGentleExtraCruise_AndTheDrumsGlowWithIt()
         {
             Spawn();
-            Abilities.Grant(RoverAbility.BoostCoils);
+            _rover.Equip(RoverKitPiece.CapacitorDrums);
             _rover.Drive.Drive = new Vector2(0f, 1f);
             float top = _rover.Tuning.Drive.TopSpeed;
             float fastest = 0f;

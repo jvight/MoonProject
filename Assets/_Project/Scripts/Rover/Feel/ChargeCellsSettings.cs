@@ -52,14 +52,6 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _tierLockBoost = 0.25f;
 
-        [Tooltip("Seconds of the brace before stage 1 fills (gameplay's CutterTuning brace, 0.5 s).")]
-        [Range(0f, 2f)]
-        [SerializeField] private float _braceSeconds = 0.5f;
-
-        [Tooltip("Seconds the warm trace lasts after firing (gameplay's warm-emitter window, 6 s).")]
-        [Range(0f, 20f)]
-        [SerializeField] private float _warmWindowSeconds = 6f;
-
         [Tooltip("The cutter tier from which the Focus Lens is fitted on 07's eye.")]
         [Range(0, 3)]
         [SerializeField] private int _lensFromTier = 1;
@@ -76,10 +68,6 @@ namespace MoonProject.Rover
         public Color Colour => _colour;
 
         public float TierLockBoost => _tierLockBoost;
-
-        public float BraceSeconds => _braceSeconds;
-
-        public float WarmWindowSeconds => _warmWindowSeconds;
 
         public int LensFromTier => _lensFromTier;
 

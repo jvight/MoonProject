@@ -93,6 +93,9 @@ namespace MoonProject.Rover
 
         public float GiftDelay => _giftDelay;
 
+        /// <summary>About how long a gift or port part takes from its moment's start to being fully there.</summary>
+        public float GrowSeconds => _giftDelay + 1f / _giftFrequency;
+
         public float GiftFrequency => _giftFrequency;
 
         public float GiftDamping => _giftDamping;

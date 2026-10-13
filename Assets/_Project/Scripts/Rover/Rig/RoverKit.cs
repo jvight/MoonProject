@@ -9,22 +9,20 @@ namespace MoonProject.Rover
     /// 07's visible progression (VISION ruling 11, docs/features/M3-11): the kit pieces its abilities bring and the
     /// gifts its friends give, each a node hidden until earned.
     /// <list type="bullet">
-    /// <item>Kit by <see cref="IRoverAbilities"/>: the Warm Headlamp's lamp bar, the Boost Coils' capacitor drums, the
-    /// Cargo Cradle's rear rack and the Hover-Jump's coils (shown through <see cref="RoverHoverCoils"/>). Owned when
-    /// the game loads, or granted without a purchase: there at once. Bought (the UpgradePurchased for a "rover." id
-    /// that granted it): hidden until Kenji's Rover Bay fits it (<see cref="RoverBayFitting"/> for that id), then
-    /// <see cref="RoverKitInstalling"/> and the install moment (VISION ruling 14, <see cref="BayFitting"/>): the bay's
-    /// arms, or its floor arm for the coils, carry it onto its socket, and <see cref="RoverKitFitted"/> (with the
-    /// upgrade id) as it is set there. A bay that is missing or cannot reach a socket is a contract bug: logged, and
-    /// the piece simply appears.</item>
-    /// <item>Gifts by <see cref="IFriendRoster"/> (<see cref="FriendGift"/>): Tilly's cell for the solar wing, Bell's
-    /// fresh "07" and pennant. A friend repaired before the game loaded: there at once; repaired during play: the
-    /// soft version of the moment the next time 07 is home.</item>
-    /// <item>Kenji's garage port fits (<see cref="PortFitting"/>, first-hour v2 §3) the tether ring round the eye and
-    /// the old tape deck on the left flank: each grows in place in a short install moment; a loaded game's are there at
-    /// once. The ring's band glows faintly at rest and brightly while the tether holds.</item>
-    /// <item>Every piece a loaded game shows at once is announced (<see cref="RoverKitRestored"/>), so the deck's
-    /// music starts in the right state.</item>
+    /// <item>Equipment (<see cref="IRoverEquipment"/>, 0.5.5 §3.5): what a loaded game has fitted is there at once,
+    /// read on the first tick of play (old saves finish migrating in Gameplay's Start); nothing is announced.</item>
+    /// <item>A part fitted in play (<see cref="PartFitted"/>) plays its moment: bay kit (the Warm Headlamp's lamp bar,
+    /// the Boost Coils' drums, the Cargo Cradle's rack, the Hover-Jump's coils, Cell Pack II's spine) is carried onto
+    /// its socket by the Rover Bay's arms, or its floor arm for the coils (VISION ruling 14, <see cref="BayFitting"/>),
+    /// in turn; Kenji's port parts (the tether ring, the tape deck) and Tilly's gifted cell grow in place. A swap
+    /// takes the old part off first. A bay that is missing or cannot reach a socket is a contract bug: logged, and the
+    /// piece simply appears.</item>
+    /// <item>The moment's beats are <see cref="FeelKind.Install"/>: Anticipate as it starts (Seconds = until the seat;
+    /// Strength 1 for a fit, 0.5 for a gift's soft settle), Impact as it seats. A part taken off
+    /// (<see cref="PartRemoved"/>) shrinks away.</item>
+    /// <item>Bell's gift (<see cref="IFriendRoster"/>, <see cref="FriendGift"/>), the fresh "07" and pennant, is not
+    /// a socket part: repaired before the game loaded, there at once; during play, the soft moment the next time 07 is
+    /// home. The tether ring's band glows faintly at rest and brightly while the tether holds.</item>
     /// <item>The road light: the lamp bar makes it wider and warmer and moves it to the bar's middle glass, and its
     /// three glasses glow; the drums' bands glow with the boost. Both dim while 07 rests on the charging dock.</item>
     /// </list>
@@ -99,9 +97,10 @@ namespace MoonProject.Rover
         [SerializeField] private Transform[] _storyParts = new Transform[0];
 
         private readonly KitFit[] _fits = new KitFit[PieceCount];
-        private readonly FriendGift _tillyGift = new FriendGift();
+        /// <summary>The Install beats' strength for a gift's soft settle (a fit is 1).</summary>
+        private const float GiftStrength = 0.5f;
+
         private readonly FriendGift _bellGift = new FriendGift();
-        private readonly string[] _awaiting = new string[PieceCount];
         private readonly int[] _requested = new int[PieceCount];
         private readonly Transform[] _parts = new Transform[BayFitting.MaxParts];
         private RoverController _rover;
@@ -109,15 +108,14 @@ namespace MoonProject.Rover
         private GameContext _context;
         private EventBus _events;
         private IWorldLayout _world;
-        private IFriendState _tilly;
         private IFriendState _bell;
-        private IDisposable _purchases;
+        private IDisposable _partsFitted;
+        private IDisposable _partsRemoved;
         private IDisposable _tubesFound;
         private IDisposable _tubesDelivered;
         private IDisposable _tubesRestored;
         private IDisposable _partsFound;
         private IDisposable _partsDelivered;
-        private IDisposable _portFitting;
         private IDisposable _tetherAttached;
         private IDisposable _tetherReleased;
         private bool _tetherHolds;
@@ -125,12 +123,10 @@ namespace MoonProject.Rover
         private Vector3[] _storyPartScales;
         private TubeCarry _tubes;
         private Vector3 _tubeScale;
-        private IDisposable _fittings;
         private MaterialPropertyBlock _glowBlock;
         private BayFitting _bayFitting;
         private IRoverBay _bay;
         private BayArm[] _arms;
-        private string _fittingId;
         private int _requests;
         private bool _watching;
         private Vector3 _lampBarScale;
@@ -178,8 +174,8 @@ namespace MoonProject.Rover
         /// <summary>How bright the road light is right now as a share of normal (dimmed while docked).</summary>
         public float LampLevel => _lampLevel;
 
-        /// <summary>Tilly's cell has been given (the solar wing then opens wider at rest).</summary>
-        public bool HasMendedWing => _tillyGift.Given;
+        /// <summary>Tilly's cell is fitted (the solar wing then opens wider at rest).</summary>
+        public bool HasMendedWing => !_fits[(int)RoverKitPiece.SolarCell].IsHidden;
 
         // IRoverCargoSeat
         public bool IsFitted => _rover.Has(RoverAbility.CargoCradle);
@@ -216,8 +212,8 @@ namespace MoonProject.Rover
             CacheRestScales();
             ConfigureHeadlamp();
             HideAll();
-            _purchases = _events.Subscribe<UpgradePurchased>(OnUpgradePurchased);
-            _fittings = _events.Subscribe<RoverBayFitting>(OnBayFitting);
+            _partsFitted = _events.Subscribe<PartFitted>(OnPartFitted);
+            _partsRemoved = _events.Subscribe<PartRemoved>(OnPartRemoved);
             _tubes = new TubeCarry(_tuning.TubeHalfLife);
             _tubeScale = _tube.localScale;
             _tube.gameObject.SetActive(false);
@@ -233,7 +229,6 @@ namespace MoonProject.Rover
 
             _partsFound = _events.Subscribe<ComponentFound>(found => _tubes.PartFound(found.PartId, found.Restored));
             _partsDelivered = _events.Subscribe<ComponentDelivered>(delivered => _tubes.PartDelivered(delivered.PartId));
-            _portFitting = _events.Subscribe<PortFitting>(OnPortFitting);
             _tetherAttached = _events.Subscribe<TetherAttached>(attached => _tetherHolds = true);
             _tetherReleased = _events.Subscribe<TetherReleased>(released => _tetherHolds = false);
             return true;
@@ -396,42 +391,77 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The kit a purchase granted (owned now, still hidden, not yet waiting) waits for the bay to fit it under the
-        /// purchase's id: abilities are granted just before the purchase is announced.
+        /// A part fitted in play: a swap takes the old one off first; bay kit waits its turn for the bay's arms, port
+        /// parts and gifts grow in place. The Focus Lens and Side Bins show through their own drivers, so their moment
+        /// is the seat alone.
         /// </summary>
-        private void OnUpgradePurchased(UpgradePurchased upgrade)
+        private void OnPartFitted(PartFitted fitted)
         {
-            if (!_started || !RoverKitPieces.IsRoverUpgrade(upgrade.UpgradeId))
+            if (fitted.Replaced && (int)fitted.ReplacedPart < PieceCount)
+            {
+                _fits[(int)fitted.ReplacedPart].Remove();
+            }
+
+            float strength = fitted.Gift ? GiftStrength : 1f;
+            int index = (int)fitted.Part;
+            if (index >= PieceCount)
+            {
+                PublishInstall(FeelPhase.Anticipate, strength, 0f);
+                PublishInstall(FeelPhase.Impact, strength, 0f);
+                return;
+            }
+
+            KitFit fit = _fits[index];
+            if (!fit.IsHidden)
             {
                 return;
             }
 
-            for (int i = 0; i < PieceCount; i++)
+            if (RoverKitPieces.TryGetAbility(fitted.Part, out _))
             {
-                if (IsNewKit(i))
+                _requested[index] = ++_requests;
+                return;
+            }
+
+            fit.Install();
+            PublishInstall(FeelPhase.Anticipate, strength, _tuning.Kit.GrowSeconds);
+        }
+
+        /// <summary>A part taken off at its station shrinks away (its ability already paused).</summary>
+        private void OnPartRemoved(PartRemoved removed)
+        {
+            int index = (int)removed.Part;
+            if (index >= PieceCount)
+            {
+                return;
+            }
+
+            _requested[index] = 0;
+            _fits[index].Remove();
+        }
+
+        /// <summary>What a loaded game has fitted is there at once (first tick, after every Start).</summary>
+        private void ShowEquipped()
+        {
+            if (!_context.TryGet(out IRoverEquipment equipment))
+            {
+                Debug.LogError($"{nameof(RoverKit)}: no {nameof(IRoverEquipment)} is registered (Gameplay); "
+                    + "fitted parts cannot show.", this);
+                return;
+            }
+
+            foreach (RoverSocket socket in (RoverSocket[])Enum.GetValues(typeof(RoverSocket)))
+            {
+                if (equipment.TryGetFitted(socket, out RoverKitPiece part) && (int)part < PieceCount)
                 {
-                    _awaiting[i] = upgrade.UpgradeId;
+                    _fits[(int)part].Show();
                 }
             }
         }
 
-        /// <summary>The bay asks to fit the kit bought as <see cref="RoverBayFitting.UpgradeId"/>, in turn.</summary>
-        private void OnBayFitting(RoverBayFitting fitting)
+        private void PublishInstall(FeelPhase phase, float strength, float seconds)
         {
-            for (int i = 0; i < PieceCount; i++)
-            {
-                if (_requested[i] == 0 && string.Equals(_awaiting[i], fitting.UpgradeId, StringComparison.Ordinal))
-                {
-                    _requested[i] = ++_requests;
-                }
-            }
-        }
-
-        /// <summary>Kit 07 owns that is neither on it nor waiting for the bay.</summary>
-        private bool IsNewKit(int index)
-        {
-            return RoverKitPieces.TryGetAbility((RoverKitPiece)index, out RoverAbility ability) && _rover.Has(ability)
-                && _fits[index].IsHidden && _awaiting[index] == null;
+            _events.Publish(new FeelBeat(FeelKind.Install, phase, _rover.Position, Vector3.up, strength, seconds));
         }
 
         public void Tick(float deltaTime)
@@ -439,26 +469,17 @@ namespace MoonProject.Rover
             if (!_started)
             {
                 FindFriends();
+                ShowEquipped();
             }
 
-            for (int i = 0; i < PieceCount; i++)
-            {
-                if (IsNewKit(i))
-                {
-                    ShowRestored((RoverKitPiece)i);
-                }
-            }
-
-            bool home = IsHome();
-            Give(_tillyGift.Step(IsAwake(_tilly), home), RoverKitPiece.SolarCell);
-            Give(_bellGift.Step(IsAwake(_bell), home), RoverKitPiece.FreshPaint);
+            Give(_bellGift.Step(IsAwake(_bell), IsHome()), RoverKitPiece.FreshPaint);
             StepBay(deltaTime);
             for (int i = 0; i < PieceCount; i++)
             {
                 if (_fits[i].Step(deltaTime))
                 {
-                    RoverKitPiece fitted = (RoverKitPiece)i;
-                    _events.Publish(new RoverKitFitted(fitted, !RoverKitPieces.IsPortPiece(fitted), string.Empty));
+                    bool gift = !RoverKitPieces.IsPortPiece((RoverKitPiece)i);
+                    PublishInstall(FeelPhase.Impact, gift ? GiftStrength : 1f, 0f);
                 }
             }
 
@@ -491,20 +512,16 @@ namespace MoonProject.Rover
             for (int i = 0; i < roster.Count; i++)
             {
                 IFriendState friend = roster.Get(i);
-                if (friend.Id == RoverKitPieces.TillyId)
-                {
-                    _tilly = friend;
-                }
-                else if (friend.Id == RoverKitPieces.BellId)
+                if (friend.Id == RoverKitPieces.BellId)
                 {
                     _bell = friend;
                 }
             }
 
-            if (_tilly == null || _bell == null)
+            if (_bell == null)
             {
-                Debug.LogError($"{nameof(RoverKit)}: the friend roster lacks '{RoverKitPieces.TillyId}' or "
-                    + $"'{RoverKitPieces.BellId}'; their gifts cannot show.", this);
+                Debug.LogError($"{nameof(RoverKit)}: the friend roster lacks '{RoverKitPieces.BellId}'; her gift "
+                    + "cannot show.", this);
             }
         }
 
@@ -528,35 +545,13 @@ namespace MoonProject.Rover
             KitFit fit = _fits[(int)piece];
             if (cue == GiftCue.ShowSilently)
             {
-                ShowRestored(piece);
+                fit.Show();
             }
             else if (cue == GiftCue.Present)
             {
                 fit.Install();
-                _events.Publish(new RoverKitInstalling(piece, true));
+                PublishInstall(FeelPhase.Anticipate, GiftStrength, _tuning.Kit.GrowSeconds);
             }
-        }
-
-        /// <summary>
-        /// Kenji's garage port fits a piece: it grows in place in its install moment; a loaded game's piece is there at
-        /// once (and announced as restored).
-        /// </summary>
-        private void OnPortFitting(PortFitting fitting)
-        {
-            KitFit fit = _fits[(int)fitting.Piece];
-            if (!fit.IsHidden)
-            {
-                return;
-            }
-
-            if (fitting.Restored)
-            {
-                ShowRestored(fitting.Piece);
-                return;
-            }
-
-            fit.Install();
-            _events.Publish(new RoverKitInstalling(fitting.Piece, false));
         }
 
         /// <summary>The tether ring's band: faint at rest, bright while the tether holds (written on change).</summary>
@@ -576,13 +571,6 @@ namespace MoonProject.Rover
             _ringGlow.SetPropertyBlock(_glowBlock);
         }
 
-        /// <summary>A loaded game's piece: there at once, no moment, and announced as restored.</summary>
-        private void ShowRestored(RoverKitPiece piece)
-        {
-            _fits[(int)piece].Show();
-            _events.Publish(new RoverKitRestored(piece));
-        }
-
         /// <summary>Starts the next fitting the bay asked for once it is free; steps the one under way.</summary>
         private void StepBay(float deltaTime)
         {
@@ -598,7 +586,7 @@ namespace MoonProject.Rover
                 BayFitSettings settings = _tuning.Kit.Bay;
                 _rig.KickHeave(-settings.SeatHeaveKick);
                 _rig.KickAntenna(settings.SeatAntennaKick);
-                _events.Publish(new RoverKitFitted(piece, false, _fittingId));
+                PublishInstall(FeelPhase.Impact, 1f, 0f);
             }
 
             Watch();
@@ -637,8 +625,6 @@ namespace MoonProject.Rover
             }
 
             var piece = (RoverKitPiece)next;
-            string upgradeId = _awaiting[next];
-            _awaiting[next] = null;
             _requested[next] = 0;
             KitFit fit = _fits[next];
             int count = CollectParts(piece);
@@ -646,13 +632,13 @@ namespace MoonProject.Rover
                     piece == RoverKitPiece.HoverCoils, this))
             {
                 fit.Show();
-                _events.Publish(new RoverKitFitted(piece, false, upgradeId));
+                PublishInstall(FeelPhase.Anticipate, 1f, 0f);
+                PublishInstall(FeelPhase.Impact, 1f, 0f);
                 return;
             }
 
-            _fittingId = upgradeId;
             fit.Carry(_tuning.Kit.Bay.PickScale);
-            _events.Publish(new RoverKitInstalling(piece, false));
+            PublishInstall(FeelPhase.Anticipate, 1f, _bayFitting.SeatSeconds);
         }
 
         /// <summary>Puts the nodes the bay carries for <paramref name="piece"/> in the parts buffer.</summary>
@@ -818,14 +804,13 @@ namespace MoonProject.Rover
 
         private void OnDestroy()
         {
-            _purchases?.Dispose();
-            _fittings?.Dispose();
+            _partsFitted?.Dispose();
+            _partsRemoved?.Dispose();
             _tubesFound?.Dispose();
             _tubesDelivered?.Dispose();
             _tubesRestored?.Dispose();
             _partsFound?.Dispose();
             _partsDelivered?.Dispose();
-            _portFitting?.Dispose();
             _tetherAttached?.Dispose();
             _tetherReleased?.Dispose();
         }

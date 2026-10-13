@@ -51,8 +51,11 @@ namespace MoonProject.Rover.PlayModeTests
         {
             bool installing = false;
             bool fitted = false;
-            using (_events.Subscribe<RoverKitInstalling>(e => installing |= e.Piece == piece && !e.Gift))
-            using (_events.Subscribe<RoverKitFitted>(e => fitted |= e.Piece == piece && !e.Gift))
+            using (_events.Subscribe<FeelBeat>(e =>
+                   {
+                       installing |= e.Kind == FeelKind.Install && e.Phase == FeelPhase.Anticipate;
+                       fitted |= e.Kind == FeelKind.Install && e.Phase == FeelPhase.Impact;
+                   }))
             {
                 Vector3 rest = part.localPosition;
                 float give = Time.time + timeout;

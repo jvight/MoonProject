@@ -16,7 +16,7 @@ namespace MoonProject.Audio
     /// <summary>
     /// The radio's music gate (pure, EditMode-tested). The tape deck on 07 earns the first tape; Bell's dial earns
     /// the station, whether or not the deck came first; tower level 1 only turns the static into the Earth signal's
-    /// carrier, never music. Every step only opens: nothing closes the gate again.
+    /// carrier, never music. Only taking the deck off 07 again closes its step; the dial and the carrier stay.
     /// </summary>
     public sealed class RadioGate
     {
@@ -38,6 +38,14 @@ namespace MoonProject.Audio
         {
             RadioGateStage before = Stage;
             DeckFitted = true;
+            return Stage != before;
+        }
+
+        /// <summary>The tape deck came off 07; returns true when that changed <see cref="Stage"/>.</summary>
+        public bool RemoveDeck()
+        {
+            RadioGateStage before = Stage;
+            DeckFitted = false;
             return Stage != before;
         }
 

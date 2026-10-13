@@ -85,6 +85,12 @@ namespace MoonProject.Art.Editor
         private const float WingHalfWidth = 0.22f;
         private const float WingLength = 0.62f;
 
+        /// <summary>The middle of the solar wing's top face (wing space, hinged at its front edge).</summary>
+        internal static readonly Vector3 WingCentre = new Vector3(0f, 0.011f, -WingLength * 0.5f);
+
+        /// <summary>The middle of a right wheel's outer face (wheel space, +X outboard).</summary>
+        internal static readonly Vector3 WheelOuterFace = new Vector3(WheelHalfWidth, 0f, 0f);
+
         private static readonly Vector2[] Seven =
         {
             new Vector2(-0.036f, 0.055f), new Vector2(0.038f, 0.055f), new Vector2(0.038f, 0.037f),

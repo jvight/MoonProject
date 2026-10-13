@@ -72,6 +72,24 @@ namespace MoonProject.Core
         /// <summary>The dark basalt band on the rim terraces where 0.6's Core Drill finds ilmenite (M3-27).</summary>
         public const string PlaceIlmeniteBand = "place.ilmenite_band";
 
+        /// <summary>
+        /// Prefix of the mixed micro-sites on the basin's routes (0.5.5 §1.7): <see cref="Micro06"/>,
+        /// <see cref="MicroMule"/>, <see cref="MicroDrone"/>.
+        /// </summary>
+        public const string MicroPrefix = "micro.";
+
+        /// <summary>"06 by the hut": beside relay.2's pad, where the service hut and 06 stand; Forward faces home.</summary>
+        public const string Micro06 = "micro.06";
+
+        /// <summary>"Mule on the road": left of the canyon road at about 160 m; Forward runs on toward the mouth.</summary>
+        public const string MicroMule = "micro.mule";
+
+        /// <summary>
+        /// "The drone in the wires": at relay.0's back-left guy-wire stake; Forward points from the stake toward the
+        /// mast's footing, along the wire.
+        /// </summary>
+        public const string MicroDrone = "micro.drone";
+
         /// <summary>The permanently shadowed crater whose floor holds 0.7's water ice (M3-27).</summary>
         public const string PlaceShadowedCrater = "place.shadowed_crater";
     }
