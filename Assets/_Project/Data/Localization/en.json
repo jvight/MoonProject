@@ -120,11 +120,11 @@
         },
         {
             "key": "next.tower.part",
-            "text": "The Tower Coil is at the Supply Depot. Drive close and press E to pick it up."
+            "text": "The Tower Coil is in the depot's coil crate."
         },
         {
             "key": "next.tower.pad",
-            "text": "Bring the Tower Coil to the radio tower and park on its pad."
+            "text": "Bring the coil to the tower's pad."
         },
         {
             "key": "next.tower.hold",
@@ -184,7 +184,7 @@
         },
         {
             "key": "next.dig",
-            "text": "The last part is under the dust. Dig it up."
+            "text": "Tilly's parts are in her crashed sled."
         },
         {
             "key": "next.friend.repair",
@@ -352,7 +352,7 @@
         },
         {
             "key": "place.dock.job",
-            "text": "Park here to charge. Charging also saves the game."
+            "text": "Park here to charge and save."
         },
         {
             "key": "place.lander.name",
@@ -568,7 +568,7 @@
         },
         {
             "key": "component.tower_coil.needed",
-            "text": "Needs the Tower Coil. It is at the Supply Depot."
+            "text": "Coil crate · Supply Depot"
         },
         {
             "key": "upgrade.radio_tower.2.title",
@@ -580,7 +580,7 @@
         },
         {
             "key": "component.transformer.needed",
-            "text": "Needs a transformer. Look in Kenji's Garage."
+            "text": "Junction box · Kenji's Garage"
         },
         {
             "key": "upgrade.radio_tower.3.title",
@@ -592,7 +592,7 @@
         },
         {
             "key": "component.relay_spare.needed",
-            "text": "Needs a relay spare part. Repair a relay to get one."
+            "text": "Service cabinet · any relay"
         },
         {
             "key": "upgrade.rover.hover_jump.name",
@@ -1056,7 +1056,7 @@
         },
         {
             "key": "ui.cargo.waiting",
-            "text": "{0} bundles waiting"
+            "text": "{0} pieces held at wrecks"
         },
         {
             "key": "ui.cargo.shelf",
@@ -1072,7 +1072,7 @@
         },
         {
             "key": "ui.can.decoded",
-            "text": "Decoded. Build it in the bay."
+            "text": "Blueprint complete. Build it in the bay."
         },
         {
             "key": "ui.can.tether.verb",
@@ -1912,7 +1912,7 @@
         },
         {
             "key": "ticker.cargo.full",
-            "text": "07's hold is full. The rest waits here: come back for it."
+            "text": "07's hold is full. The cut pieces stay on the wreck."
         },
         {
             "key": "ticker.cargo.home_full",
