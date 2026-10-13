@@ -4,7 +4,31 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 000000000000. LATEST (2026-10-13 ~03:35): 0.5.4 released for the owner to play
+## 0000000000000. LATEST (2026-10-13): owner played 0.5.4 -> 0.5.5 "owner feedback" before 0.6
+- **Owner's verdict on 0.5.4** (memories: plain-functional-text, scan-fragments, no-floating-loot,
+  inventory-07-only):
+  1. Text is still unfitting and too much: the charger hint shows at boot with a full battery; the tower repair says
+     the same thing three times (banner + card + notice). At most one guidance element; hints only when needed.
+  2. Glowing items lie loose on the ground (also flagged in 0.5.0 and never fixed in placement).
+  3. Tilly's part can't be picked up with E (bug).
+  4. Wants Subnautica-style scanning at derelict stations, scrap fields and wrecks: N scans by complexity; a scanned
+     object disappears; a known blueprint gives raw metal.
+  5. 07's charge-run lamps sit lopsided beside the solar wing; make them symmetric.
+  6. Tab must show 07's hold only; home storage separate. The selected tab label is unreadable.
+  7. The opening teaches Tab like Subnautica: a first-open boot moment and starter items.
+  8. The cut's charge-up is too fast and weightless, its sound doesn't fit, and the lamp row "doesn't look like
+     technology". The solar panel sits off to one side; 07 must be symmetric (memory cut-charge-weight).
+- **Dispatched 2026-10-13:**
+  - game design (high): docs/design/0.5.5-owner-feedback.md covering scanning, re-homing all loose loot, the
+    inventory split + first open, and the guidance budget. Spec comes to the Director before any build.
+  - story & flow: docs/design/text-audit-0.5.5.md, every visible string with a verdict.
+  - gameplay (high): the Tilly pickup bug.
+  - art: 2-3 variants of a symmetric 07 with a tech charge-up, for the owner to pick (rover, gameplay and audio
+    follow the pick and game design's charge-up section).
+  - ui: tab contrast + Tab = 07 only.
+- 0.6 (lunar materials + build pads) waits until 0.5.5 ships.
+
+## 000000000000. (2026-10-13 ~03:35): 0.5.4 released for the owner to play
 - **main e7d15870 = version 0.5.4**, verified at 37276343 and pushed. Build:
   `Builds/Lunarion-0.5.4-20261012-e7d15870.zip` (smoke PASS).
 - **0.5.4 has:**
