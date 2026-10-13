@@ -980,7 +980,7 @@
         },
         {
             "key": "ui.cargo.waiting",
-            "text": "{0} món đang chờ ở xác tàu"
+            "text": "{0} phần để lại tại chỗ: hết chỗ chứa"
         },
         {
             "key": "ui.cargo.summary",

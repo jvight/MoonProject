@@ -980,7 +980,7 @@
         },
         {
             "key": "ui.cargo.waiting",
-            "text": "{0} pieces held at wrecks"
+            "text": "{0} left behind: no room aboard"
         },
         {
             "key": "ui.cargo.summary",
