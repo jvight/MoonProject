@@ -946,4 +946,190 @@ namespace MoonProject.Core.Events
         /// <summary>The needed stage locked: the beam fires after the held breath.</summary>
         public bool IsFullLock => Stage >= StagesNeeded;
     }
+
+    /// <summary>
+    /// The Rover Bay finished crafting <see cref="Part"/>: it waits in the parts row at <see cref="RowIndex"/>
+    /// (docs/design/0.5.5-owner-feedback.md §3.5), never in a hold slot and never fitted by itself.
+    /// </summary>
+    public readonly struct PartCrafted
+    {
+        public PartCrafted(RoverKitPiece part, int rowIndex)
+        {
+            Part = part;
+            RowIndex = rowIndex;
+        }
+
+        public RoverKitPiece Part { get; }
+
+        public int RowIndex { get; }
+    }
+
+    /// <summary>
+    /// <see cref="Part"/> is going onto 07 in <see cref="Socket"/> (§3.5): a crafted part fitted at its station, or a
+    /// friend's gift that fits itself (<see cref="Gift"/>). Rover plays the install moment (a swap when
+    /// <see cref="Replaced"/>: the old part comes off and the new one goes on in one moment) and the Proud chirp. The
+    /// bay recycles a swapped-out part into <see cref="RecycledMetal"/> Metal for home (never lost). A loaded game
+    /// publishes nothing: Rover reads <see cref="IRoverEquipment"/> at boot.
+    /// </summary>
+    public readonly struct PartFitted
+    {
+        public PartFitted(RoverSocket socket, RoverKitPiece part, bool gift, bool replaced, RoverKitPiece replacedPart,
+            int recycledMetal)
+        {
+            Socket = socket;
+            Part = part;
+            Gift = gift;
+            Replaced = replaced;
+            ReplacedPart = replacedPart;
+            RecycledMetal = recycledMetal;
+        }
+
+        public RoverSocket Socket { get; }
+
+        public RoverKitPiece Part { get; }
+
+        /// <summary>True for a friend's gift: the soft version of the moment, no bay arms.</summary>
+        public bool Gift { get; }
+
+        /// <summary>True when a fitted lower tier came off for it.</summary>
+        public bool Replaced { get; }
+
+        /// <summary>The part that came off (meaningful only when <see cref="Replaced"/>).</summary>
+        public RoverKitPiece ReplacedPart { get; }
+
+        /// <summary>Metal the bay made of the part that came off (0 without a swap).</summary>
+        public int RecycledMetal { get; }
+    }
+
+    /// <summary>
+    /// <see cref="Part"/> came off <see cref="Socket"/> into the parts row at its station (§3.5): Rover plays the
+    /// short reverse moment, and the ability it gave pauses until it is refitted.
+    /// </summary>
+    public readonly struct PartRemoved
+    {
+        public PartRemoved(RoverSocket socket, RoverKitPiece part)
+        {
+            Socket = socket;
+            Part = part;
+        }
+
+        public RoverSocket Socket { get; }
+
+        public RoverKitPiece Part { get; }
+    }
+
+    /// <summary>
+    /// 07 started scanning fragment <see cref="FragmentId"/> (docs/design/0.5.5-owner-feedback.md §1.2): it eases to a
+    /// stop, its lid lifts fully and the fan of light sweeps from the lens toward <see cref="Point"/>.
+    /// </summary>
+    public readonly struct ScanStarted
+    {
+        public ScanStarted(string fragmentId, Vector3 point)
+        {
+            FragmentId = fragmentId ?? string.Empty;
+            Point = point;
+        }
+
+        public string FragmentId { get; }
+
+        public Vector3 Point { get; }
+    }
+
+    /// <summary>
+    /// The scan of <see cref="FragmentId"/> stopped short (E let go): <see cref="Progress"/> is kept.
+    /// </summary>
+    public readonly struct ScanStopped
+    {
+        public ScanStopped(string fragmentId, float progress)
+        {
+            FragmentId = fragmentId ?? string.Empty;
+            Progress = progress;
+        }
+
+        public string FragmentId { get; }
+
+        public float Progress { get; }
+    }
+
+    /// <summary>
+    /// Fragment <see cref="FragmentId"/> is fully scanned and its dissolve begins (§1.2, D2): fragment
+    /// <see cref="Index"/> + 1 of <see cref="Count"/> for <see cref="BlueprintId"/>. <see cref="Known"/> when the
+    /// blueprint was already complete: 3 Metal follow the dissolve instead of new knowledge.
+    /// </summary>
+    public readonly struct FragmentScanned
+    {
+        public FragmentScanned(string fragmentId, string blueprintId, int index, int count, bool known)
+        {
+            FragmentId = fragmentId ?? string.Empty;
+            BlueprintId = blueprintId ?? string.Empty;
+            Index = index;
+            Count = count;
+            Known = known;
+        }
+
+        public string FragmentId { get; }
+
+        public string BlueprintId { get; }
+
+        /// <summary>How many of the blueprint's fragments were scanned before this one (0-based).</summary>
+        public int Index { get; }
+
+        public int Count { get; }
+
+        public bool Known { get; }
+    }
+
+    /// <summary>
+    /// The last fragment of <see cref="BlueprintId"/>'s set is scanned (§1.2 step 4): the sheet completes on the
+    /// lab's board, the ticker says so once and 07 chirps Proud. The bay can build it from now on.
+    /// </summary>
+    public readonly struct BlueprintCompleted
+    {
+        public BlueprintCompleted(string blueprintId)
+        {
+            BlueprintId = blueprintId ?? string.Empty;
+        }
+
+        public string BlueprintId { get; }
+    }
+
+    /// <summary>
+    /// The seal of container <see cref="ContainerId"/> is cut through (docs/design/0.5.5-owner-feedback.md §2): the
+    /// cut's own Reward, then the container opens (<see cref="ContainerOpened"/>).
+    /// </summary>
+    public readonly struct ContainerSealCut
+    {
+        public ContainerSealCut(string containerId, ContainerKind kind, Vector3 position)
+        {
+            ContainerId = containerId ?? string.Empty;
+            Kind = kind;
+            Position = position;
+        }
+
+        public string ContainerId { get; }
+
+        public ContainerKind Kind { get; }
+
+        public Vector3 Position { get; }
+    }
+
+    /// <summary>
+    /// Container <see cref="ContainerId"/> stands open and its find slides out (§2). A loaded game's opened containers
+    /// are shown open with no event.
+    /// </summary>
+    public readonly struct ContainerOpened
+    {
+        public ContainerOpened(string containerId, ContainerKind kind, Vector3 position)
+        {
+            ContainerId = containerId ?? string.Empty;
+            Kind = kind;
+            Position = position;
+        }
+
+        public string ContainerId { get; }
+
+        public ContainerKind Kind { get; }
+
+        public Vector3 Position { get; }
+    }
 }
