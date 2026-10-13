@@ -763,6 +763,11 @@ namespace MoonProject.Gameplay.Tests
                 Grants++;
                 _granted.Add(ability);
             }
+
+            public void Revoke(RoverAbility ability)
+            {
+                _granted.Remove(ability);
+            }
         }
 
         /// <summary>A blueprint board with every kit pinned except <c>unpinned</c>.</summary>
