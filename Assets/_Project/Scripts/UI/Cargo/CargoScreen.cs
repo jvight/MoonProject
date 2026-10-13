@@ -11,7 +11,7 @@ namespace MoonProject.UI
     /// <summary>
     /// The cargo screen (docs/features/M3-25 §2.4; the PDA of docs/design/first-hour-qa.md R1): Tab or View opens a
     /// Moonlight Glass panel over the blur, and the game goes on. It is 07's hold (a grid of slots, each with its
-    /// material's icon and units out of its capacity, empty slots as faint outlines, the waiting bundles) with one
+    /// material's icon and units out of its capacity, empty slots as faint outlines, the stacks held back where they were cut) with one
     /// plain line under it. Beside it is the 07 tab (<see cref="EquipmentPage"/>): 07's sockets and the parts row.
     /// Nothing on it explains what 07 can do (the owner: such notes read as wrong). Opened while
     /// 07 rests on the dock (docs/design/0.5.5-owner-feedback.md §3, ruling B3) it is the transfer view: home's shelves
@@ -176,7 +176,7 @@ namespace MoonProject.UI
         /// <summary>The text under the grids (tests and captures).</summary>
         public string SummaryText => _summary.text;
 
-        /// <summary>The "bundles waiting" note, empty when none wait (tests and captures).</summary>
+        /// <summary>The "left behind, no room aboard" note, empty when nothing is held back (tests and captures).</summary>
         public string WaitingText => _waiting.text;
 
         /// <summary>What a press on the focused slot does, under the grids (tests and captures).</summary>

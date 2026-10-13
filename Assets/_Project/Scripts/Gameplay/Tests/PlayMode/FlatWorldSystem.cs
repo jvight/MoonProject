@@ -13,15 +13,19 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// the tower's first level widens home, relay.2 through relay.0, relay.3 through relay.2), the five salvage
     /// sites (the depot just ahead of home; each approached heading +Z, so a test parked south of a heart faces it
     /// over the wreck's pieces), Kestrel-3's furrow leading to its site, and the derelicts' micro-sites (06 beside
-    /// relay.2's pad, the Mule on the way to the canyon). Registers ITerrainQuery, IWorldLayout and IWorldAnchors.
+    /// relay.2's pad, the Mule on the way to the canyon) and Kestrel-3's scrap field (four lane slots down the trail).
+    /// Registers ITerrainQuery, IWorldLayout, IWorldAnchors and IScrapField.
     /// </summary>
-    public sealed class FlatWorldSystem : MonoBehaviour, IGameSystem, ITerrainQuery, IWorldLayout, IWorldAnchors
+    public sealed class FlatWorldSystem : MonoBehaviour, IGameSystem, ITerrainQuery, IWorldLayout, IWorldAnchors,
+        IScrapField
     {
         public const float DrivableRadius = 300f;
         private const float FloorThickness = 1f;
         private const float AnchorRadius = 8f;
         private const float RelayPad = 3f;
         private const float SiteRadius = 9f;
+        private const int ScrapSlots = 4;
+        private const float ScrapSpacing = 6f;
 
         private static readonly Vector3 West = new Vector3(-1f, 0f, 0f);
         private static readonly Vector3 South = new Vector3(0f, 0f, -1f);
@@ -91,11 +95,25 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private StageLights _lights;
 
+        /// <summary>Kestrel-3's scrap field: four cuttable slots, 6 m apart down the trail from its anchor.</summary>
+        int IScrapField.Count => ScrapSlots;
+
+        public Color Dust => new Color(0.6f, 0.6f, 0.6f, 1f);
+
+        public ScrapPlateInfo Slot(int index)
+        {
+            WorldAnchor trail = Anchor(WorldAnchorIds.KestrelTrail);
+            Vector3 along = trail.Forward;
+            return new ScrapPlateInfo(trail.Position + along * (ScrapSpacing * (index + 1)),
+                Quaternion.LookRotation(Vector3.Cross(Vector3.up, along)), 1 + index % 3, 1f);
+        }
+
         public void Initialize(GameContext context)
         {
             context.Register<ITerrainQuery>(this);
             context.Register<IWorldLayout>(this);
             context.Register<IWorldAnchors>(this);
+            context.Register<IScrapField>(this);
             _lights = new StageLights(context.Events);
             context.Register<IHomeLights>(_lights);
         }

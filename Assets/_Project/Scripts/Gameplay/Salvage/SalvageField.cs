@@ -43,6 +43,11 @@ namespace MoonProject.Gameplay
 
         private readonly List<SalvageSite> _sites = new List<SalvageSite>();
         private readonly List<SalvageSite> _derelicts = new List<SalvageSite>();
+
+        /// <summary>Kestrel-3's scrap field (0.5.5 §2): its id everywhere (saves, events).</summary>
+        public const string ScrapFieldId = "scrap.kestrel_trail";
+
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private readonly List<SalvagePiece> _pieces = new List<SalvagePiece>();
         private readonly List<SalvageDrag> _drags = new List<SalvageDrag>();
         private EventBus _events;
@@ -78,8 +83,8 @@ namespace MoonProject.Gameplay
         public IReadOnlyList<SalvageSite> Sites => _sites;
 
         /// <summary>
-        /// The derelicts on the routes (0.5.5 §1.7), in catalog order: their pieces are cut like any site's, but they
-        /// hold no relics or crew crate and never answer the sonar.
+        /// The derelicts on the routes (0.5.5 §1.7), in catalog order, then Kestrel-3's scrap field: their pieces are
+        /// cut like any site's, but they hold no relics or crew crate and never answer the sonar.
         /// </summary>
         public IReadOnlyList<SalvageSite> Derelicts => _derelicts;
 
@@ -156,7 +161,8 @@ namespace MoonProject.Gameplay
         /// Stands every site on its anchor. False (logged) when wiring, an anchor or a prefab node from the site
         /// contract is missing.
         /// </summary>
-        internal bool Initialize(GameplayServices services, Cutter cutter)
+        /// <param name="scrapField">The World's lane slots for Kestrel-3's cuttable hull fragments (0.5.5 §2).</param>
+        internal bool Initialize(GameplayServices services, Cutter cutter, IScrapField scrapField)
         {
             string problem = _tuning == null ? "SalvageTuning is not assigned."
                 : _catalog == null ? "SalvageCatalog is not assigned."
@@ -188,7 +194,7 @@ namespace MoonProject.Gameplay
             };
 
             if (!Stand(_catalog.Sites, false, _sites, services) ||
-                !Stand(_catalog.Derelicts, true, _derelicts, services))
+                !Stand(_catalog.Derelicts, true, _derelicts, services) || !StandScrapField(services, scrapField))
             {
                 return false;
             }
@@ -229,6 +235,65 @@ namespace MoonProject.Gameplay
                 sites.Add(site);
             }
 
+            return true;
+        }
+
+        /// <summary>
+        /// Kestrel-3's scrap field (0.5.5 §2): on each of the World's lane slots Art's hull fragment of its variant,
+        /// dusted with the field's tint, stands as a Metal piece to cut; the field is saved by its id like a site.
+        /// </summary>
+        private bool StandScrapField(GameplayServices services, IScrapField field)
+        {
+            if (field == null || !services.Anchors.TryGet(WorldAnchorIds.KestrelTrail, out WorldAnchor trail))
+            {
+                Fail(field == null
+                    ? "the World serves no IScrapField for Kestrel-3's scrap field (world scrap field contract)."
+                    : $"the World publishes no '{WorldAnchorIds.KestrelTrail}' anchor for the scrap field.");
+                return false;
+            }
+
+            var root = new GameObject("Scrap_kestrel_trail").transform;
+            root.SetParent(transform, false);
+            root.position = trail.Position;
+            var cutLines = new PieceCutLine[field.Count];
+            var sizes = new PieceSizeEntry[field.Count];
+            var dust = new MaterialPropertyBlock();
+            dust.SetVector(BaseColorId, field.Dust);
+            for (int i = 0; i < field.Count; i++)
+            {
+                ScrapPlateInfo slot = field.Slot(i);
+                GameObject prefab = _catalog.ScrapFragment(slot.Variant);
+                Vector3[] seam = _catalog.ScrapCutLine(slot.Variant);
+                if (prefab == null || seam == null)
+                {
+                    Fail($"the scrap field's slot {i} wants hull fragment {slot.Variant}, which the catalog lacks " +
+                         "(run Gameplay/Content).");
+                    return false;
+                }
+
+                Transform piece = Instantiate(prefab, slot.Position, slot.Rotation, root).transform;
+                piece.localScale *= slot.Scale;
+                piece.name = $"Salvage_{i}_{SalvageMaterial.Metal}";
+                foreach (Renderer renderer in piece.GetComponentsInChildren<Renderer>())
+                {
+                    renderer.SetPropertyBlock(dust);
+                }
+
+                cutLines[i] = new PieceCutLine(i, seam);
+                sizes[i] = new PieceSizeEntry(i, _catalog.ScrapSize);
+            }
+
+            string problem = SalvageSiteBuilder.BuildScrap(_derelicts.Count,
+                SalvageSiteEntry.Scrap(ScrapFieldId, WorldAnchorIds.KestrelTrail, cutLines, sizes), root, trail.Radius,
+                transform, services.Terrain, _tuning, _catalog, services.Visuals.RelicHalo, _dragMaterial, _pieces,
+                _drags, out SalvageSite site);
+            if (problem != null)
+            {
+                Fail($"'{ScrapFieldId}': {problem}.");
+                return false;
+            }
+
+            _derelicts.Add(site);
             return true;
         }
 

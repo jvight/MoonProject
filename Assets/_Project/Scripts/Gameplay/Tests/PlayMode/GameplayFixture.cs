@@ -51,6 +51,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private const string HutSocket = "HutSocket";
 
+        /// <summary>Stand-in hull fragment variants for Kestrel-3's scrap field (as Art's).</summary>
+        private const int HullFragments = 4;
+
         /// <summary>Units in each stand-in crew crate (as the economy's).</summary>
         public const int CrateUnits = 6;
 
@@ -735,9 +738,18 @@ namespace MoonProject.Gameplay.PlayModeTests
                 SalvageSiteEntry.Derelict(HaulBot, WorldAnchorIds.SitePrefix + "drill", HaulBotSocket, haulBot,
                     SalvageCutLines.Across(haulBot), SmallPieces(haulBot), Array.Empty<SocketProp>()),
             };
+            var fragments = new GameObject[HullFragments];
+            var seams = new PieceCutLine[HullFragments];
+            for (int i = 0; i < HullFragments; i++)
+            {
+                fragments[i] = HullFragment(i);
+                SalvageCutLines.TryThrough(fragments[i].transform, i, out seams[i]);
+            }
+
             var catalog = Asset<SalvageCatalog>();
             catalog.Populate(sites, derelicts, Template("Material_Metal", Vector3.one * 0.35f),
-                Template("Material_Wiring", Vector3.one * 0.35f), Template("Material_Optics", Vector3.one * 0.35f));
+                Template("Material_Wiring", Vector3.one * 0.35f), Template("Material_Optics", Vector3.one * 0.35f),
+                fragments, seams, PieceSize.Small);
             field.Wire(SalvageTuning, catalog);
         }
 
@@ -1211,6 +1223,22 @@ namespace MoonProject.Gameplay.PlayModeTests
             tray.transform.SetParent(port.transform, false);
             tray.transform.localPosition = new Vector3(-0.85f, 0.65f, 0.45f);
             return port;
+        }
+
+        /// <summary>
+        /// A stand-in for Art's hull fragment <paramref name="variant"/>: a bent plate whose root is the piece, its
+        /// CutPoint on the edge facing +Z.
+        /// </summary>
+        private GameObject HullFragment(int variant)
+        {
+            GameObject plate = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            plate.name = "HullFragment_" + variant;
+            Object.DestroyImmediate(plate.GetComponent<Collider>());
+            plate.transform.position = new Vector3(0f, -500f, 0f);
+            plate.transform.localScale = new Vector3(1.8f, 0.6f, 0.2f);
+            Node("CutPoint", plate.transform, new Vector3(0f, 0f, 0.6f));
+            _created.Add(plate);
+            return plate;
         }
 
         private GameObject Template(string name, Vector3 size)

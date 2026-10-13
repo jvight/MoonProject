@@ -80,6 +80,13 @@ namespace MoonProject.Gameplay.Editor
             return ArtPaths.SitesFolder + "/Site_" + name + ".prefab";
         }
 
+        /// <summary>Art's hull fragment <paramref name="variant"/> for Kestrel-3's scrap field.</summary>
+        public static string HullFragment(int variant)
+        {
+            return ArtPaths.PropFolder + "/" + PropModelBuilder.HullFragmentPrefix +
+                   variant.ToString(System.Globalization.CultureInfo.InvariantCulture) + ".prefab";
+        }
+
         /// <summary>Art's derelict prefab (Derelict_06, Derelict_Mule...).</summary>
         public static string DerelictPrefab(string name)
         {

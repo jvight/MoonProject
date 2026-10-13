@@ -292,7 +292,8 @@ namespace MoonProject.Gameplay
             Vector3 lander = HomeBase.LanderSpot(services.Terrain, services.Layout.BasePosition, _home.Tuning);
             Cutter = new Cutter(context.Events, abilities, _cutterTuning);
             Containers = new SealedContainers(_salvage, _cargo, Cutter, services);
-            if (!_salvage.Initialize(services, Cutter) || !_relics.Initialize(services, _salvage) ||
+            if (!_salvage.Initialize(services, Cutter, ScrapField(context)) ||
+                !_relics.Initialize(services, _salvage) ||
                 !_excavation.Initialize(services, _relics, _salvage, Containers) ||
                 !_tether.Initialize(services, _relics, _salvage, abilities) ||
                 !_home.Initialize(services, _relics, Upgrades, lights, _lift) ||
@@ -659,6 +660,12 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>Core's rover placement for the radio-hop, or null while no domain registers it.</summary>
+        /// <summary>The World's scrap field, or null (the salvage field reports it) when none is registered.</summary>
+        private static IScrapField ScrapField(GameContext context)
+        {
+            return context.TryGet(out IScrapField field) ? field : null;
+        }
+
         private static IRoverPlacement Placement(GameContext context)
         {
             return context.TryGet(out IRoverPlacement placement) ? placement : null;

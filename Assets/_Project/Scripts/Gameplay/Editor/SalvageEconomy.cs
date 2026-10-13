@@ -150,6 +150,12 @@ namespace MoonProject.Gameplay.Editor
         /// <summary>The site standing past the Hover-Jump gate (the canyon supply lander).</summary>
         public const string GatedSite = "lander";
 
+        /// <summary>
+        /// The size of each of Kestrel-3's four hull fragments in its scrap field (0.5.5 §2): small plates, a handful
+        /// of Metal on the way to the wreck.
+        /// </summary>
+        public const PieceSize TrailScrapSize = PieceSize.Small;
+
         /// <summary>The haul bot's id: it stands inside the drill site, on no anchor of its own.</summary>
         public const string HaulBot = "derelict.haul_bot";
 

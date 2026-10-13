@@ -89,6 +89,19 @@ namespace MoonProject.Gameplay
             };
         }
 
+        /// <summary>
+        /// Kestrel-3's scrap field, made at boot from the World's lane slots (0.5.5 §2): open to 07, the plain yield,
+        /// a seam and a size per slot; its pieces are Art's hull fragments the field stands itself.
+        /// </summary>
+        public static SalvageSiteEntry Scrap(string id, string anchorId, PieceCutLine[] cutLines,
+            PieceSizeEntry[] sizes)
+        {
+            return new SalvageSiteEntry(anchorId, null, AbilityGate.Open, false, 1, cutLines, sizes, default)
+            {
+                _id = id,
+            };
+        }
+
         /// <summary>Its id everywhere (saves, events, relic definitions).</summary>
         public string Id => _id;
 
