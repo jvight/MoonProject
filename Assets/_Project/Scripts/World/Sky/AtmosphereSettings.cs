@@ -18,9 +18,9 @@ namespace MoonProject.World
         private const float HazeLevelRise = 1e-3f;
 
         [Header("Earthlight")]
-        [Tooltip("Colour of the directional earthlight: a pale cyan-white, because Earth is blue-green. It differs " +
-            "from the indigo ambient in hue and value, so lit faces and shade faces split.")]
-        [SerializeField] private Color _lightColor = new Color(0.82f, 0.9f, 1f);
+        [Tooltip("Colour of the directional earthlight: a near-white with a faint cool cast, because Earth is " +
+            "blue-green. Much brighter than the dim grey-blue ambient, so lit faces and shade faces split.")]
+        [SerializeField] private Color _lightColor = new Color(0.92f, 0.94f, 1f);
 
         [Tooltip("Intensity of the earthlight. Square-on with the sky's ambient it stays under Art's reference light " +
             "scaled by the bloom threshold, so lit cream and dust never glow like lamps.")]
@@ -73,33 +73,35 @@ namespace MoonProject.World
         [SerializeField] private float _fillBearingOffset = 232f;
 
         [Header("Ambient (trilight)")]
-        [Tooltip("Ambient from above: the deep indigo glow of the sky. Weak, so shadow cores read near-black.")]
-        [SerializeField] private Color _ambientSky = new Color(0.1f, 0.095f, 0.26f);
+        [Tooltip("Ambient from above: the dark sky's faint cool grey-blue (look A \"Moon grey\"). Weak, so shadow " +
+            "cores read near-black.")]
+        [SerializeField] private Color _ambientSky = new Color(0.06f, 0.065f, 0.085f);
 
         [Tooltip("Ambient from the horizon: darker than the sky band, so side faces fade from a lit top to a dark " +
             "foot.")]
-        [SerializeField] private Color _ambientEquator = new Color(0.075f, 0.07f, 0.2f);
+        [SerializeField] private Color _ambientEquator = new Color(0.042f, 0.045f, 0.058f);
 
         [Tooltip("Ambient from below: the faint bounce off the dust, a dark band that grounds every prop's foot.")]
-        [SerializeField] private Color _ambientGround = new Color(0.02f, 0.018f, 0.05f);
+        [SerializeField] private Color _ambientGround = new Color(0.012f, 0.013f, 0.018f);
 
         [Header("Fog")]
-        [Tooltip("Fog colour: matches the sky's horizon glow so distant hills melt into the sky.")]
-        [SerializeField] private Color _fogColor = new Color(0.27f, 0.21f, 0.45f);
+        [Tooltip("Fog colour: a dark cool grey near the sky's horizon, so distant hills melt into the night (look A " +
+            "\"Moon grey\").")]
+        [SerializeField] private Color _fogColor = new Color(0.035f, 0.04f, 0.06f);
 
         [Tooltip("Exponential-squared fog density: near ground keeps its contrast, far rock dissolves toward the " +
-            "horizon. 0.002 fogs ~9% at 150 m, ~30% at 300 m, ~63% at 500 m and ~98% at 1 km.")]
+            "horizon. 0.0006 is thin: the far rim stays crisp, only the distant ranges soften.")]
         [Range(0f, 0.01f)]
-        [SerializeField] private float _fogDensity = 0.002f;
+        [SerializeField] private float _fogDensity = 0.0006f;
 
         [Header("Basin haze")]
-        [Tooltip("Colour of the thin haze lying in the basin: a violet a little lighter than the fog, so the far " +
-            "floor and the foot of the rim sink into one calm plane.")]
-        [SerializeField] private Color _hazeColor = new Color(0.33f, 0.28f, 0.52f);
+        [Tooltip("Colour of the thin haze lying in the basin: the fog's own grey, so the far floor and the foot of " +
+            "the rim sink into one calm plane.")]
+        [SerializeField] private Color _hazeColor = new Color(0.035f, 0.04f, 0.06f);
 
         [Tooltip("Haze density at its base, per metre of view: thin, so ground within play distance stays crisp.")]
         [Range(0f, 0.01f)]
-        [SerializeField] private float _hazeDensity = 0.0007f;
+        [SerializeField] private float _hazeDensity = 0.00021f;
 
         [Tooltip("Height over which the haze thins by e (metres): it lies low, so the rim's crest stays above it.")]
         [Range(0.5f, 40f)]
@@ -111,7 +113,7 @@ namespace MoonProject.World
 
         [Tooltip("The most the haze may cover (0..1).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _hazeMax = 0.55f;
+        [SerializeField] private float _hazeMax = 0.165f;
 
         [Header("Distance desaturation")]
         [Tooltip("Distance (metres) where colour starts to drain from far things.")]

@@ -12,18 +12,18 @@ namespace MoonProject.World
     {
         [Header("Gradient")]
         [Tooltip("Colour at the zenith. The horizon uses the fog colour so distant hills melt into the sky.")]
-        [SerializeField] private Color _skyTop = new Color32(0x0B, 0x0E, 0x2A, 0xFF);
+        [SerializeField] private Color _skyTop = new Color(0.0507f, 0.0702f, 0.1517f);
 
-        [Tooltip("Soft violet glow hugging the horizon (added on top of the gradient).")]
-        [SerializeField] private Color _horizonGlow = new Color(0.2f, 0.13f, 0.34f);
+        [Tooltip("Soft glow hugging the horizon (added on top of the gradient): faint and low under look A.")]
+        [SerializeField] private Color _horizonGlow = new Color(0.1648f, 0.1045f, 0.2855f);
 
         [Tooltip("Height of the horizon glow, as the sine of the elevation where it has faded to ~37%.")]
         [Range(0.01f, 0.6f)]
-        [SerializeField] private float _horizonGlowHeight = 0.16f;
+        [SerializeField] private float _horizonGlowHeight = 0.056f;
 
         [Tooltip("The faint, thin band of light right along the horizon line (added on top of the glow): it sets the " +
             "far rim against the sky and makes the horizon feel far away.")]
-        [SerializeField] private Color _horizonBand = new Color(0.2f, 0.15f, 0.3f);
+        [SerializeField] private Color _horizonBand = new Color(0.1511f, 0.1107f, 0.2319f);
 
         [Tooltip("Height of the thin horizon band, as the sine of the elevation where it has faded to ~37%.")]
         [Range(0.002f, 0.2f)]
