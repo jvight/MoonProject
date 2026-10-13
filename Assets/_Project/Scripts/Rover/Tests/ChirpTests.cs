@@ -92,7 +92,6 @@ namespace MoonProject.Rover.Tests
                     0f)), ChirpMood.Proud),
                 (() => _events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Impact, Vector3.zero, Vector3.up, 0.5f,
                     0f)), ChirpMood.Happy),
-                (() => _events.Publish(new FindDecoded("cargo_cradle")), ChirpMood.Affirm),
                 (() => _events.Publish(new FeelBeat(FeelKind.Build, FeelPhase.Impact, Vector3.zero, Vector3.up, 1f,
                     0f)), ChirpMood.Happy),
                 (() => _events.Publish(new BatteryWarned(BatteryWarning.Low, Vector3.zero)), ChirpMood.Worried),
