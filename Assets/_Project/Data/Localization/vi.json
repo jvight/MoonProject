@@ -47,10 +47,6 @@
             "text": "07"
         },
         {
-            "key": "ui.battery.power",
-            "text": "pin"
-        },
-        {
             "key": "ui.meter.home",
             "text": "nhà · {0}"
         },
@@ -311,10 +307,6 @@
             "text": "Bộ pin II"
         },
         {
-            "key": "ticker.recovery.power",
-            "text": "Trạm đã có điện."
-        },
-        {
             "key": "ticker.recovery.link",
             "text": "Mạng lưới đã nối tới Đỉnh núi."
         },
@@ -359,24 +351,12 @@
             "text": "Tàu đổ bộ"
         },
         {
-            "key": "place.lander.job",
-            "text": "Nhà của phi hành đoàn. Cửa sổ sẽ sáng khi tháp radio có điện."
-        },
-        {
             "key": "place.tower.name",
             "text": "Tháp radio"
         },
         {
-            "key": "place.tower.job",
-            "text": "Cấp điện cho trạm. Mỗi cấp đưa điện tới thêm một phần căn cứ."
-        },
-        {
             "key": "place.bay.name",
             "text": "Xưởng xe của Kenji"
-        },
-        {
-            "key": "place.bay.job",
-            "text": "Đỗ lên bàn xoay để cánh tay máy lắp đồ mới cho 07."
         },
         {
             "key": "place.ladder.name",
@@ -389,10 +369,6 @@
         {
             "key": "place.lift.name",
             "text": "Thang nâng"
-        },
-        {
-            "key": "place.lift.job",
-            "text": "Dừng trên bệ để lên phòng thí nghiệm."
         },
         {
             "key": "place.lab.name",
@@ -413,10 +389,6 @@
         {
             "key": "place.garage_port.name",
             "text": "Cổng bảo trì ở gara"
-        },
-        {
-            "key": "place.garage_port.job",
-            "text": "Đỗ lên bệ để lắp phụ tùng cho 07."
         },
         {
             "key": "ui.blueprint.found",
@@ -529,14 +501,6 @@
         {
             "key": "ui.card.close",
             "text": "Đóng"
-        },
-        {
-            "key": "ui.tower.level",
-            "text": "Cấp {0}/{1}"
-        },
-        {
-            "key": "ui.tower.purchased",
-            "text": "Đang sửa tháp…"
         },
         {
             "key": "hint.excavate",
@@ -920,7 +884,7 @@
         },
         {
             "key": "ticker.relay.online",
-            "text": "{0} đã hoạt động: 07 sạc được ở đây và nhảy sóng về nhà."
+            "text": "{0} đã hoạt động."
         },
         {
             "key": "ticker.relay.waiting",
@@ -1027,24 +991,12 @@
             "text": "Tàu tiếp tế trong hẻm"
         },
         {
-            "key": "ui.recipe.need",
-            "text": "Cần trục vớt thêm {0} {1}"
-        },
-        {
             "key": "ui.recipe.row",
             "text": "{0} (có {1})"
         },
         {
             "key": "ui.friend.parts",
             "text": "Bộ phận của {0}: {1}/{2}"
-        },
-        {
-            "key": "ui.cargo.tab_cargo",
-            "text": "Hàng hóa"
-        },
-        {
-            "key": "ui.cargo.tab_can",
-            "text": "07 làm được"
         },
         {
             "key": "ui.cargo.hold",
@@ -1059,88 +1011,44 @@
             "text": "07: {0}/{1} ô"
         },
         {
-            "key": "ui.can.decoded",
-            "text": "Đã đủ bản vẽ. Hãy chế tạo ở xưởng xe."
-        },
-        {
             "key": "ui.can.tether.verb",
             "text": "Nâng"
-        },
-        {
-            "key": "ui.can.tether.line",
-            "text": "Giữ để nâng vật đang sáng xanh, rồi lái để kéo nó."
         },
         {
             "key": "ui.can.hover_jump.verb",
             "text": "Bật nhảy"
         },
         {
-            "key": "ui.can.hover_jump.line",
-            "text": "Nhảy qua đá và vượt khe hở."
-        },
-        {
             "key": "ui.can.cargo_cradle.verb",
             "text": "Giỏ chở đồ"
-        },
-        {
-            "key": "ui.can.cargo_cradle.line",
-            "text": "Chở kỷ vật trên lưng 07."
         },
         {
             "key": "ui.can.warm_headlamp.verb",
             "text": "Đèn pha ấm"
         },
         {
-            "key": "ui.can.warm_headlamp.line",
-            "text": "Chiếu sáng mặt đất phía trước khi trời tối."
-        },
-        {
             "key": "ui.can.boost_coils.verb",
             "text": "Bộ tăng tốc"
-        },
-        {
-            "key": "ui.can.boost_coils.line",
-            "text": "Chạy nhanh hơn và giữ thêm một chút điện."
         },
         {
             "key": "ui.can.cell_pack.verb",
             "text": "Bộ pin II"
         },
         {
-            "key": "ui.can.cell_pack.line",
-            "text": "Bốn ô pin thành sáu: 07 đi được xa hơn."
-        },
-        {
             "key": "ui.can.wide_sonar.verb",
             "text": "Sonar rộng"
-        },
-        {
-            "key": "ui.can.wide_sonar.line",
-            "text": "Sóng sonar vươn xa hơn."
         },
         {
             "key": "ui.can.magnetic_treads.verb",
             "text": "Bánh từ tính"
         },
         {
-            "key": "ui.can.magnetic_treads.line",
-            "text": "Bánh bám chắc trên dốc."
-        },
-        {
             "key": "ui.can.side_bins.verb",
             "text": "Thùng hông"
         },
         {
-            "key": "ui.can.side_bins.line",
-            "text": "Thêm bốn ô trong khoang hàng của 07."
-        },
-        {
             "key": "ui.can.focus_lens.verb",
             "text": "Thấu kính hội tụ"
-        },
-        {
-            "key": "ui.can.focus_lens.line",
-            "text": "Chùm cắt hẹp và mạnh hơn."
         },
         {
             "key": "hint.build",
@@ -1189,10 +1097,6 @@
         {
             "key": "ui.recipecard.tower",
             "text": "Đỗ lên bệ để xây."
-        },
-        {
-            "key": "ui.recipecard.blueprint",
-            "text": "Đã giải mã bản vẽ. Đỗ lên bàn xoay ở xưởng xe để chế tạo."
         },
         {
             "key": "upgrade.rover.cargo_cradle.name",
@@ -1253,10 +1157,6 @@
         {
             "key": "ui.bay.fitted",
             "text": "Đã lắp cho 07"
-        },
-        {
-            "key": "ui.bay.pick",
-            "text": "nhấn để xem món tiếp theo"
         },
         {
             "key": "log.kenji_1",
@@ -1777,10 +1677,6 @@
         {
             "key": "ticker.tether.back",
             "text": "07 lại kéo được đồ rồi."
-        },
-        {
-            "key": "ui.pause.can",
-            "text": "07 có thể"
         },
         {
             "key": "ui.settings.text_size",
