@@ -246,7 +246,7 @@ namespace MoonProject.Gameplay
                         return problem;
                     }
 
-                    spot = _containers[i].ItemSocket.position + Vector3.up * (_tuning.PresentRise - _tuning.RestHeight);
+                    spot = _containers[i].PresentPoint + Vector3.down * _tuning.RestHeight;
                 }
 
                 _rest[i] = spot + Vector3.up * _tuning.RestHeight;
@@ -292,7 +292,7 @@ namespace MoonProject.Gameplay
 
             root.SetPositionAndRotation(site.Position, Quaternion.LookRotation(site.Facing));
             _containers[i] = SealedContainer.Read(ContainerId(cassette.Id), ContainerKinds.Of(cassette.Container),
-                root, SealedContainer.ItemSocketPath, () => true, out string problem);
+                root, SealedContainer.LidPath, SealedContainer.ItemSocketPath, () => true, out string problem);
             if (_containers[i] == null)
             {
                 return problem;

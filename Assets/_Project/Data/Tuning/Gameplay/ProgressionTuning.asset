@@ -103,7 +103,6 @@ MonoBehaviour:
     _afterTheChasm: 0
     _container:
   _partAppearSeconds: 1.2
-  _partPresentRise: 0.12
   _partFeedSeconds: 1.6
   _partFeedArc: 0.8
   _readerFeedSeconds: 1.2

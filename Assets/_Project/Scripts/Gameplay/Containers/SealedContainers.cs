@@ -238,8 +238,9 @@ namespace MoonProject.Gameplay
         {
             container.Seal.Apply(!container.Opened && container.Available ? _tuning.SealGlow : 0f);
             float t = container.Opened ? Mathf.Clamp01((now - container.OpenedAt) / _tuning.ContainerLidSeconds) : 0f;
-            container.Lid.localRotation =
-                container.LidRest * Quaternion.Euler(-_tuning.ContainerLidSwing * Ease.OutCubic(t), 0f, 0f);
+            container.Lid.localRotation = container.LidRest *
+                                          Quaternion.AngleAxis(-_tuning.ContainerLidSwing * Ease.OutCubic(t),
+                                              container.LidAxis);
             if (container.Opened && !container.StandsOpen && t >= 1f)
             {
                 container.StandsOpen = true;

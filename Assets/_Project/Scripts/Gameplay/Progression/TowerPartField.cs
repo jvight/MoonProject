@@ -304,7 +304,7 @@ namespace MoonProject.Gameplay
             root.name = part.Container;
             root.SetPositionAndRotation(SurfaceRules.OnSurface(_terrain, heart.x, heart.z), site.Root.rotation);
             SealedContainer container = SealedContainer.Read(ContainerId(part), ContainerKinds.Of(part.Container), root,
-                SealedContainer.ItemSocketPath, () => Revealed(i), out string problem);
+                SealedContainer.LidPath, SealedContainer.ItemSocketPath, () => Revealed(i), out string problem);
             if (container == null)
             {
                 throw new InvalidOperationException(problem);
@@ -378,7 +378,7 @@ namespace MoonProject.Gameplay
             SealedContainer container = _containers[i];
             if (container != null)
             {
-                rest = container.ItemSocket.position + Vector3.up * _tuning.PartPresentRise;
+                rest = container.PresentPoint;
                 return container.StandsOpen;
             }
 
