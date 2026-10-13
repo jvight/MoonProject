@@ -289,6 +289,40 @@ MonoBehaviour:
     _volumeMax: 0.4
     _pitchMin: 1
     _pitchMax: 1
+  - _id: pulse_note
+    _clips:
+    - {fileID: 8300000, guid: 3db09a4612c8bf74b9b748f7e9e32eca, type: 3}
+    - {fileID: 8300000, guid: 9c1b63dd5264fba47ae53945bcd30c25, type: 3}
+    - {fileID: 8300000, guid: 135a738e5fde59948b45b56fe7ceb6f5, type: 3}
+    - {fileID: 8300000, guid: e57d46321a482c244bd7fe7a5c09b060, type: 3}
+    - {fileID: 8300000, guid: 4db0713eb3e3bae43ab95ecec26864ac, type: 3}
+    - {fileID: 8300000, guid: 2c5f3cc0fe93f134aa70656063ed6ea6, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
+    - 04
+    - 05
+    - 06
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: pulse_home
+    _clips:
+    - {fileID: 8300000, guid: 5b60ff28f0055cd43bd131cf0f343c1f, type: 3}
+    _variantLabels:
+    - pulse_home
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: sheet_complete
     _clips:
     - {fileID: 8300000, guid: f843faffbc2085540911cbc32cc5aff5, type: 3}
