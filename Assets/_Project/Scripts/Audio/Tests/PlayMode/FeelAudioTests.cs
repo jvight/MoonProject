@@ -35,23 +35,25 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator TheCut_RunsItsLampsIgnitesSizzlesCracksAndStraps()
+        public IEnumerator TheCut_BracesBuildsLocksIgnitesSizzlesCracksAndStraps()
         {
-            int plays = _rig.Director.PlayCount;
-            Beat(FeelKind.Cut, FeelPhase.Anticipate, 0f, 0.65f);
-            Assert.AreEqual("charge_inhale", LastClip, "the run starts with the chassis' inhale");
-            yield return new WaitForSeconds(0.9f);
-            Assert.AreEqual(plays + 1 + 5, _rig.Director.PlayCount, "one note per lamp, five at tier 0");
-            Assert.AreEqual("charge_lamp_05", LastClip, "the fifth lamp, B5, lands on the ignition");
+            AudioSource whine = AudioTestRig.FindChildSource(_rig.Feel.transform, "ChargeWhine");
+            Beat(FeelKind.Cut, FeelPhase.Anticipate, 0f, 1.4f);
+            _rig.Events.Publish(new CutChargeStaged(0, 2, false, 0.45f));
+            Assert.AreEqual("charge_brace", LastClip, "07 plants itself first");
+            yield return new WaitForSeconds(0.3f);
+            Assert.IsFalse(whine.isPlaying, "the whine waits out the brace");
+            yield return new WaitForSeconds(0.5f);
+            Assert.IsTrue(whine.isPlaying, "then the capacitor whine rises");
+            _rig.Events.Publish(new CutChargeStaged(1, 2, false, 0.45f));
+            Assert.AreEqual("charge_detent", LastClip, "a stage locks with a detent click");
+            Assert.AreEqual(1f, whine.pitch, 1e-3f, "on D");
+            yield return new WaitForSeconds(0.45f);
+            _rig.Events.Publish(new CutChargeStaged(2, 2, false, 0.45f));
+            Assert.AreEqual("charge_lock", LastClip, "the full lock's clunk-click");
+            Assert.AreEqual(1.4983f, whine.pitch, 1e-3f, "held on A through the breath");
 
             _rig.Rover.Cutter.Tier = 3;
-            _rig.Rover.Cutter.LampCount = 9;
-            plays = _rig.Director.PlayCount;
-            Beat(FeelKind.Cut, FeelPhase.Anticipate, 0.5f, 0.3f);
-            Assert.AreEqual("charge_low_d", LastClip, "the top tier's sustained low D");
-            yield return new WaitForSeconds(0.6f);
-            Assert.AreEqual(plays + 2 + 5, _rig.Director.PlayCount, "a resume runs from the middle lamp");
-
             Beat(FeelKind.Cut, FeelPhase.Act);
             Assert.AreEqual("cut_ignite_tier_tier3", LastClip, "the hottest ignition at tier 3");
             yield return new WaitForSeconds(0.6f);
@@ -70,8 +72,21 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual("cut_crack", LastClip, "the tumble is silent");
             Beat(FeelKind.Cut, FeelPhase.Follow, 1f);
             Assert.AreEqual("strap_tuk", LastClip, "the fold straps the bundle");
+        }
+
+        [UnityTest]
+        public IEnumerator AWarmCharge_SkipsTheBrace_AndARelease_DrainsTheWhine()
+        {
+            AudioSource whine = AudioTestRig.FindChildSource(_rig.Feel.transform, "ChargeWhine");
+            int plays = _rig.Director.PlayCount;
+            Beat(FeelKind.Cut, FeelPhase.Anticipate, 0f, 0.27f);
+            _rig.Events.Publish(new CutChargeStaged(0, 1, true, 0.27f));
+            Assert.AreEqual(plays, _rig.Director.PlayCount, "no servo brace on a warm emitter");
+            yield return null;
+            Assert.IsTrue(whine.isPlaying, "the whine starts at once");
             Beat(FeelKind.Cut, FeelPhase.Cancel);
-            Assert.AreEqual("cut_cancel", LastClip);
+            yield return new WaitForSeconds(0.6f);
+            Assert.IsFalse(whine.isPlaying, "it glides down and fades");
         }
 
         [Test]

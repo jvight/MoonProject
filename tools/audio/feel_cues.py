@@ -360,33 +360,8 @@ def pickup_clunk(_variant, gen):
 
 # ----------------------------------------------------------------------------- M3-26: the charge run and the tiers
 
-CHARGE_LAMP_NOTES = ("D5", "E5", "F#5", "A5", "B5", "D6", "E6", "F#6", "A6")
 CUTTER_TIER_LABELS = ("tier0", "tier1", "tier2", "tier3")
 SEGMENT_NOTES = ("D5", "E5", "F#5", "A5", "B5")
-
-
-def charge_lamp(variant, _gen):
-    """One lamp of the charge run lighting on 07's back (M3-26 section 2): a short glassy note, the next pentatonic
-    step from the battery to the emitter."""
-    n = samples(0.55)
-    mix = np.zeros(n)
-    place(mix, 0.55 * _glass(note_freq(CHARGE_LAMP_NOTES[variant]), 0.5), 0)
-    return filters.lowpass(mix, 6500.0)
-
-
-def charge_inhale(_variant, _gen):
-    """The run's low chassis 'inhale' under the lamps: a D2 hum swelling over 0.7 s, then letting go."""
-    n = samples(0.9)
-    hum = osc.additive(n, note_freq("D2"), [(1, 1.0), (2, 0.3)])
-    hum *= envelope.segments(n, [(0.0, 0.0), (0.7, 1.0), (0.9, 0.0)], shape="smooth")
-    return filters.lowpass(0.3 * hum, 220.0)
-
-
-def charge_low_d(_variant, _gen):
-    """Tier 3's sustained low D under the run: a warm D2/D3 pad, felt through the deck."""
-    pad = instruments.soft_pad(note_freq("D2"), 1.2, 0.3, 0.6, hold=0.3)
-    pad += 0.5 * instruments.soft_pad(note_freq("D3"), 1.2, 0.3, 0.6, hold=0.3)
-    return filters.lowpass(0.2 * pad, 500.0)
 
 
 def cut_ignite_tier(variant, gen):
