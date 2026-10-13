@@ -4,13 +4,20 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 00000000000000000000. LATEST (2026-10-14 ~05:00): main 33291f98 (C6) verified + pushed; C5 gameplay + D1 next
+## 00000000000000000000. LATEST (2026-10-14 ~06:00): main 500ab26e (C5) verified + pushed; the D1 batch waits on gameplay
 - **main 33291f98 (verified, origin has it)** = gameplay C6: what 07's hold has no room for is held where it was (a cut
   piece on its wreck with an amber halo, a crate's remainder in its mouth); Recycled Metal goes home -> hold -> home's
   overflow crates; Tilly never drops a stack; old saves' ground bundles go to the overflow crates.
+- **Landed + verified since:** main 500ab26e = gameplay C5 side (Kestrel-3's trail is a scrap field: 4 hull fragments
+  to cut on World's lane slots) + ui 45af2a15 (the held-stacks Tab line: "{0} phần để lại tại chỗ: hết chỗ chứa").
+- **D1 batch ready except gameplay** (pinned temp branches): box/rover-d1 a727b1d8 (tube removed; TubeCarry became
+  StoryPartCarry for the tower's story parts), box/audio-d1 ae255641 (tube/reader cues; the lab detent by station
+  name), box/ui-d1 6d441326 (tube strings; the Electronics line no longer promises a Reader II), box/world-d1 079057b3
+  (LabLights' DecodeHandOff light run, HandOffPulse, the hand-off wiring). In the land the Director also deletes
+  DecodeHandOff. Parked for 0.7 design: gdd-v3's "Lab Reader II decodes sealed data cores" must be redesigned
+  under scanning.
 - **Next lands:**
-  1. gameplay C5 side (box/gameplay 5840de30: scrap.kestrel_trail's 4 cuttable pieces on the IScrapField slots),
-     alone, once its box_check + Playthrough pass.
+  1. (done) gameplay C5 side.
   2. **D1 batch** = gameplay D1 (ScanField, fragments, the verb, gameplay.scans save, known -> 3 Metal, completion
      pins the blueprint, JumperWreck at canyon.lip, tubes + LabReader + DockEvening news removed, 0.5.4 migration,
      the Playthrough scanning; a feat(core) commit deletes LabStation.Reader and renumbers Chart 0, Board 1,
