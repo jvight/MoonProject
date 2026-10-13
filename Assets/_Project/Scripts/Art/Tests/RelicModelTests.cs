@@ -42,7 +42,7 @@ namespace MoonProject.Art.Tests
                 Assert.IsTrue(sizes.Add(RelicModelBuilder.CreateModel(id).Mesh.Geometry.Bounds.size), id);
             }
 
-            Assert.AreEqual(6, sizes.Count);
+            Assert.AreEqual(5, sizes.Count);
             Assert.Throws<System.ArgumentException>(() => RelicModelBuilder.CreateModel("spoon"));
         }
     }

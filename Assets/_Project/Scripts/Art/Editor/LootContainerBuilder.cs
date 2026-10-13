@@ -17,7 +17,8 @@ namespace MoonProject.Art.Editor
     /// also has <c>Glow</c>, its cracked beacon (M_LowPolyGlowOff, World lights it warm).</item>
     /// <item><c>SpareCrate</c>, the tape deck's sealed crate stencilled "07 · SPARE" (0.5.5 §2), the same layout,
     /// sized for Kenji's bench and set on the garage site's <c>SpareCrateSocket</c> with identity: no dust skirt, it
-    /// stands on the bench, not the ground.</item>
+    /// stands on the bench, not the ground. Its <c>ItemSocket</c> holds <c>Kit_TapeDeck</c> with identity, turned to
+    /// lie along the crate.</item>
     /// <item><c>Cabinet</c>, a relay mast's service cabinet (the relay spares), set on the mast's
     /// <c>CabinetSocket</c> with identity: the same layout, but its <c>Lid</c> is a door hinged on its left edge
     /// (turn it about local Y by <see cref="LidOpenDegrees"/> to swing it open), with <c>CutPoint</c> and
@@ -53,6 +54,9 @@ namespace MoonProject.Art.Editor
         public const float LidOpenDegrees = -105f;
 
         private const float JunctionPost = 0.5f;
+
+        // The spare crate's ItemSocket turns so Kit_TapeDeck (its length along its own Z) lies along the crate.
+        private const float SpareDeckYaw = 90f;
 
         // The sled's layout (sled space): the frame along X, the hull tipped onto its side at the back, the sensor pod
         // thrown clear in front.
@@ -112,7 +116,7 @@ namespace MoonProject.Art.Editor
             var root = new ModelNode(SpareCrateName, Vector3.zero,
                 new ModelMesh(SpareCrateName, LootContainerMeshes.SpareCrateBody()));
             AddLid(root, SpareCrateName, shape, shape.Hinge);
-            root.Add(new ModelNode(ItemSocketName, shape.Item));
+            root.Add(new ModelNode(ItemSocketName, shape.Item, Quaternion.Euler(0f, SpareDeckYaw, 0f)));
             return root;
         }
 

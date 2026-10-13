@@ -79,6 +79,12 @@ namespace MoonProject.World.PlayModeTests
         private const float VentCloseDistance = 22f;
         private const float VentCloseHeight = 5f;
 
+        // The vent's stain seen from 07's chase eye up close and from 30 m.
+        private const float VentNearDistance = 8f;
+        private const float VentNearHeight = 2.5f;
+        private const float VentChaseDistance = 30f;
+        private const float VentChaseHeight = 3.5f;
+
         // Kestrel-3's scrap field (0.5.5): looking down the furrow from its far end toward the crater.
         private const float ScrapFieldLookAhead = 25f;
 
@@ -234,6 +240,12 @@ namespace MoonProject.World.PlayModeTests
                 trail.Position + trail.Forward * ScrapFieldLookAhead, view.fieldOfView));
             poses.Add(LookPose("orange_vent_close",
                 vent.Position - toVent * VentCloseDistance + Vector3.up * VentCloseHeight, vent.Position,
+                view.fieldOfView));
+            poses.Add(LookPose("orange_vent_near",
+                vent.Position - toVent * VentNearDistance + Vector3.up * VentNearHeight, vent.Position,
+                view.fieldOfView));
+            poses.Add(LookPose("orange_vent_30m",
+                vent.Position - toVent * VentChaseDistance + Vector3.up * VentChaseHeight, vent.Position,
                 view.fieldOfView));
             var report = new StringBuilder();
             report.AppendLine("# Atmosphere session (real Main scene)");

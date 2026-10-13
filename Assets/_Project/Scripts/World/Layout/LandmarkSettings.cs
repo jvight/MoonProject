@@ -53,12 +53,20 @@ namespace MoonProject.World
         [Range(0.5f, 3f)]
         [SerializeField] private float _ventSpread = 1.6f;
 
-        [Tooltip("Tint the bead patches multiply the dust by at full strength: a warm volcanic orange.")]
-        [SerializeField] private Color _ventTint = new Color(1f, 0.85f, 0.45f, 1f);
+        [Tooltip("Tint the bead patches multiply the dust by at full strength: a rusty ochre (Apollo 17's orange " +
+            "glass). HDR: red above 1 and blue below keep the patch about as bright as the dust, so the grade's cool " +
+            "shadow toning never turns it red-violet.")]
+        [ColorUsage(false, true)]
+        [SerializeField] private Color _ventTint = new Color(1.24f, 1f, 0.66f, 1f);
 
         [Tooltip("Strength of the patches at the vent (0..1); they fade toward the field's edge.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _ventStrength = 0.75f;
+        [SerializeField] private float _ventStrength = 0.55f;
+
+        [Tooltip("How much of each patch's radius fades out toward its rim (0..1): high, so the patches blend into " +
+            "the dust like a stain, not a blotch.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _ventEdgeSoftness = 0.9f;
 
         [Tooltip("Distance (metres) where the field starts to fade, and where it is gone: readable across the basin.")]
         [SerializeField] private Vector2 _ventFade = new Vector2(160f, 380f);
@@ -75,6 +83,7 @@ namespace MoonProject.World
         public float VentSpread => _ventSpread;
         public Color VentTint => _ventTint;
         public float VentStrength => _ventStrength;
+        public float VentEdgeSoftness => _ventEdgeSoftness;
         public Vector2 VentFade => _ventFade;
     }
 }

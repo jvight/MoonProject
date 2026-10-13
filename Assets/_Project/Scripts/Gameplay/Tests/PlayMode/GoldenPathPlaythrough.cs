@@ -32,7 +32,7 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// through the UI's hold. The tower's first sweep raises Tilly's pillar; 07 listens when it rests. Then Tilly
     /// (M3-02): gather her parts (the last one dug from the dust), repair her, drive home with her, be greeted, and let
     /// her spot Kenji's garage on the next trip, the tether still asleep. Cut the garage's three seams in one trip; its
-    /// port fits the tether ring, then Ro's tape deck dug beside it and held on the tether, and 07 is home with at least
+    /// port fits the tether ring, then Ro's tape deck from Kenji's sealed spare crate, and 07 is home with at least
     /// a quarter of its charge. Dig Kenji's duck out of the garage's heart, which holds the Cargo Cradle's
     /// blueprint, and tow it home, where the jammed belly lift asks for its stitch (M3-19): stitch it from beside it,
     /// ride up with the duck beside 07, let the lab's reader decode the Cradle's tube (its hand-off pulse waits at the
@@ -316,9 +316,6 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float FacesOut = 0.9f;
 
         private const float KeySeconds = 0.25f;
-        /// <summary>Ro's tape deck: the relic Kenji's port fits on 07's flank (first-hour v2 §3).</summary>
-        private const string Deck = "cassette_player";
-
         /// <summary>The keepsake carried home in the Cargo Cradle once it is built.</summary>
         private const string Gnome = "garden_gnome";
 
@@ -341,7 +338,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Metres 07 backs out from the port's pad before it turns, clear of the garage's walls.</summary>
         private const float PortBackOut = 5f;
 
-        /// <summary>Tether releases before the tow home began (Kenji's port took the tape deck off the tether).</summary>
+        /// <summary>Tether releases before the tow home began.</summary>
         private int _releasesBeforeTow;
 
         private static readonly string ReportPath = Path.Combine(GameplayFixture.CaptureFolder, "playthrough.md");
@@ -453,13 +450,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             SalvageSite garage = _gameplay.Salvage.Find(WorldAnchorIds.SitePrefix + "garage");
             yield return TillySpotsOnTheNextTrip(garage);
             Relic duck = RelicIn(garage, Duck);
-            Relic deck = RelicIn(garage, Deck);
             Relic gnome = RelicIn(garage, Gnome);
             yield return SalvageTheGarage(garage, int.MaxValue, "the garage's three seams, one trip");
             yield return ExpectStep(ProgressionKeys.NextPort, "the last cut opened Kenji's port");
             yield return FitTheTetherRing();
-            yield return Excavate(garage, deck);
-            yield return LatchTether(deck);
             yield return FitTheTapeDeck();
             Lesson("the garage in one trip", 0.25f, 0.4f);
             yield return ChargeAtTheDock("home from the garage in one trip", OneTripArrival);
@@ -654,23 +648,40 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Ro's tape deck, dug up beside the port and held on the tether: resting by the port, 07 has it taken onto the
-        /// tray and fitted on its flank; the first tape plays.
+        /// Kenji's sealed "07 · SPARE" crate on his bench (0.5.5 §2): with the ring on, cut its seal, take Ro's tape
+        /// deck at its mouth with E (it glides onto the port's tray), park on the pad and the arm fits it on 07; the
+        /// first tape plays.
         /// </summary>
         private IEnumerator FitTheTapeDeck()
         {
             Begin();
             GaragePort port = _gameplay.Port;
+            SealedContainer crate = port.SpareCrate;
             int fitted = 0;
             using IDisposable fits = _context.Events.Subscribe<PartFitted>(fit =>
                 fitted += fit.Part == RoverKitPiece.TapeDeck ? 1 : 0);
-            _pilot.Target = null;
-            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 rests by the port, the deck on its tether");
-            yield return Until(() => port.DeckFitted, 10f, "the port takes the deck onto its tray and fits it");
-            Release(_mouse.rightButton);
+            yield return Until(() => crate.Available, 2f, "with the ring on, the spare crate's seal glows");
+            Vector3 front = crate.CutPoint.position + crate.Root.forward * SealStandOff;
+            yield return DriveTo(Flat(front), 1f, 0.35f, 30f, "the seal of Kenji's spare crate");
+            Press(_keyboard.eKey);
+            yield return Until(() => crate.Opened, SealCutTimeout, "held E cuts the seal of Kenji's spare crate");
+            Release(_keyboard.eKey);
+            yield return Until(() => port.DeckInTheCrate, _gameplay.Cargo.ContainerLidSeconds +
+                _gameplay.Progression.Tuning.PartAppearSeconds + 2f, "Ro's tape deck rises to the crate's mouth");
+            Capture("12d-the-spare-crate");
+            yield return PickupPress.Take(this, _gameplay, 4f, "Ro's tape deck");
+            yield return Until(() => port.DeckOnTheTray, _gameplay.Progression.Tuning.PortTrayGlideSeconds + 2f,
+                "the deck glides onto the port's tray");
+            yield return DriveTo(Flat(port.PadCentre), PortPark, 0.35f, 40f, "Kenji's port pad");
+            yield return Until(() => port.DeckFitted, 6f, "parked on the pad, the arm fits the deck");
             yield return Until(() => fitted == 1, 6f, "the deck is on 07's flank");
             Capture("12d-the-tape-deck");
-            End("Kenji's port fits Ro's tape deck", "the first music, earned");
+            _pilot.Reverse = BayThrottle;
+            yield return Until(() => SurfaceRules.HorizontalDistance(_rover.Position, port.PadCentre) > PortBackOut,
+                6f, "07 backs out of Kenji's bay the way it came in");
+            _pilot.Reverse = 0f;
+            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 stops outside the port");
+            End("Kenji's port fits Ro's tape deck from his spare crate", "the first music, earned");
         }
 
         private IEnumerator ChargeAtTheDock(string why, float leastOnArrival = 0f)

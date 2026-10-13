@@ -50,7 +50,7 @@ namespace MoonProject.Art.Editor
             switch (id)
             {
                 case "garage":
-                    return new[] { "cassette_player", "rubber_duck", "garden_gnome" };
+                    return new[] { "rubber_duck", "garden_gnome" };
                 case "kestrel":
                     return new[] { "golden_record" };
                 case "drill":

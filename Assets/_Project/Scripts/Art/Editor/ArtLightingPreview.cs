@@ -352,7 +352,7 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>Dust floor, rocks from <paramref name="clearRadius"/> outwards, moonlight, bloom.</summary>
-        private static void NightSetting(Material material, TemporaryObjects temporary, float floorRadius,
+        internal static void NightSetting(Material material, TemporaryObjects temporary, float floorRadius,
             float clearRadius)
         {
             RenderSettings.skybox = null;
@@ -2177,7 +2177,7 @@ namespace MoonProject.Art.Editor
             throw new InvalidOperationException($"The open scene has no object named {name}.");
         }
 
-        private static float[] Point(Vector3 p)
+        internal static float[] Point(Vector3 p)
         {
             return new[] { p.x, p.y, p.z };
         }
@@ -2223,7 +2223,7 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>07 at rest at a spot with its headlamp on as a warm spot light.</summary>
-        private static Transform Rover(TemporaryObjects temporary, Vector3 position, float yaw)
+        internal static Transform Rover(TemporaryObjects temporary, Vector3 position, float yaw)
         {
             GameObject rover = Instantiate(RoverModelBuilder.ModelName, temporary, ArtPaths.RoverFolder);
             rover.transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yaw, 0f));
@@ -2243,7 +2243,7 @@ namespace MoonProject.Art.Editor
             return rover.transform;
         }
 
-        private static GameObject Instantiate(string prefabName, TemporaryObjects temporary,
+        internal static GameObject Instantiate(string prefabName, TemporaryObjects temporary,
             string folder = ArtPaths.BaseFolder)
         {
             string path = $"{folder}/{prefabName}.prefab";
@@ -2270,17 +2270,17 @@ namespace MoonProject.Art.Editor
             return bounds;
         }
 
-        private static CameraPoseSet Poses(params CameraPose[] poses)
+        internal static CameraPoseSet Poses(params CameraPose[] poses)
         {
             return new CameraPoseSet { width = 1280, height = 720, postProcessing = true, poses = poses };
         }
 
-        private static CameraPose Pose(string name, float[] position, float[] lookAt, float fov)
+        internal static CameraPose Pose(string name, float[] position, float[] lookAt, float fov)
         {
             return new CameraPose { name = name, position = position, lookAt = lookAt, fov = fov };
         }
 
-        private static GameObject MeshObject(string name, Mesh mesh, Material material, TemporaryObjects temporary)
+        internal static GameObject MeshObject(string name, Mesh mesh, Material material, TemporaryObjects temporary)
         {
             temporary.Add(mesh);
             var gameObject = new GameObject(name);
@@ -2289,7 +2289,7 @@ namespace MoonProject.Art.Editor
             return gameObject;
         }
 
-        private static Light NewLight(string name, LightType type, Color color, float intensity)
+        internal static Light NewLight(string name, LightType type, Color color, float intensity)
         {
             var light = new GameObject(name).AddComponent<Light>();
             light.type = type;
@@ -2298,7 +2298,7 @@ namespace MoonProject.Art.Editor
             return light;
         }
 
-        private static GameObject NewVolume(TemporaryObjects temporary)
+        internal static GameObject NewVolume(TemporaryObjects temporary)
         {
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
             temporary.Add(profile);
@@ -2315,7 +2315,7 @@ namespace MoonProject.Art.Editor
             return volumeObject;
         }
 
-        private static Transform Descendant(Transform root, string name)
+        internal static Transform Descendant(Transform root, string name)
         {
             Transform hit = Search(root, name);
             if (hit == null)
@@ -2346,7 +2346,7 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>Everything the preview creates, destroyed afterwards so no state outlives the capture.</summary>
-        private sealed class TemporaryObjects : IDisposable
+        internal sealed class TemporaryObjects : IDisposable
         {
             private readonly List<Object> _objects = new List<Object>();
 

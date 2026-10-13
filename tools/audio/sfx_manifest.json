@@ -2335,7 +2335,6 @@
       "loop": false,
       "files": [
         "Assets/_Project/Audio/SFX/relic_answer_astronaut_boot.wav",
-        "Assets/_Project/Audio/SFX/relic_answer_cassette_player.wav",
         "Assets/_Project/Audio/SFX/relic_answer_garden_gnome.wav",
         "Assets/_Project/Audio/SFX/relic_answer_golden_record.wav",
         "Assets/_Project/Audio/SFX/relic_answer_rubber_duck.wav",
@@ -2343,7 +2342,6 @@
       ],
       "variantLabels": [
         "astronaut_boot",
-        "cassette_player",
         "garden_gnome",
         "golden_record",
         "rubber_duck",
@@ -2351,7 +2349,6 @@
       ],
       "sha256": [
         "ea8dd1c12f0879076632fb29fba8d2e09e8498fdf49e1ca07c0525dda6b098b2",
-        "710f4e1d8335acbccbf5c44ac61ea8c79cf392439e3bee86c73fe7c772169209",
         "ba0501fa5df9bb27a3f939cd11870ffc556a16e2455182db43ffd64492b9cc36",
         "4092f650706e4a0fc837a0c73a01f0c28e3700dbec80429433198128e749c736",
         "d2b3da6b196698e684933a0d52c8492a11b0106595d5ab56205e9a4ebb25c688",

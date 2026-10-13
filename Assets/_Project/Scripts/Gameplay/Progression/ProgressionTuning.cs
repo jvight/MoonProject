@@ -142,17 +142,8 @@ namespace MoonProject.Gameplay
         [Tooltip("Metres from the pad within which the open port's place card shows, once.")]
         [Range(2f, 30f)] [SerializeField] private float _portPlaceRadius = 9f;
 
-        [Tooltip("Metres from the pad within which 07, resting with the tape deck on its tether, has the port take it.")]
-        [Range(1f, 20f)] [SerializeField] private float _portClaimRadius = 12f;
-
-        [Tooltip("Metres from the tray within which a towed tape deck is taken off the tether.")]
-        [Range(0.5f, 4f)] [SerializeField] private float _portTrayRadius = 1.8f;
-
-        [Tooltip("Seconds the tape deck glides from the tether onto the tray before the arm fits it.")]
+        [Tooltip("Seconds the tape deck glides from Kenji's spare crate onto the tray, where the arm fits it.")]
         [Range(0.2f, 4f)] [SerializeField] private float _portTrayGlideSeconds = 1.2f;
-
-        [Tooltip("The relic that is Ro's tape deck (it is fitted on 07, never shelved).")]
-        [SerializeField] private string _portDeckRelic = "cassette_player";
 
 
         [Header("Recipe cards (M3-24 B)")]
@@ -296,13 +287,7 @@ namespace MoonProject.Gameplay
 
         public float PortPlaceRadius => _portPlaceRadius;
 
-        public float PortTrayRadius => _portTrayRadius;
-
-        public float PortClaimRadius => _portClaimRadius;
-
         public float PortTrayGlideSeconds => _portTrayGlideSeconds;
-
-        public string PortDeckRelic => _portDeckRelic;
 
 
         public float RecipeLookDistance => _recipeLookDistance;

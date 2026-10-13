@@ -288,10 +288,10 @@ MonoBehaviour:
     _boulderMaxSlope: 24
     _featureClearance: 8
   _sky:
-    _skyTop: {r: 0.043137256, g: 0.05490196, b: 0.16470589, a: 1}
-    _horizonGlow: {r: 0.2, g: 0.13, b: 0.34, a: 1}
-    _horizonGlowHeight: 0.16
-    _horizonBand: {r: 0.2, g: 0.15, b: 0.3, a: 1}
+    _skyTop: {r: 0.0507, g: 0.0702, b: 0.1517, a: 1}
+    _horizonGlow: {r: 0.1648, g: 0.1045, b: 0.2855, a: 1}
+    _horizonGlowHeight: 0.056
+    _horizonBand: {r: 0.1511, g: 0.1107, b: 0.2319, a: 1}
     _horizonBandHeight: 0.03
     _gradientExponent: 0.55
     _starDensity: 0.45
@@ -352,7 +352,7 @@ MonoBehaviour:
     _mouthArc: -2
     _mouthLateral: 12
   _atmosphere:
-    _lightColor: {r: 0.82, g: 0.9, b: 1, a: 1}
+    _lightColor: {r: 0.92, g: 0.94, b: 1, a: 1}
     _lightIntensity: 1.95
     _lightElevation: 19
     _lightBearingOffset: -60
@@ -363,16 +363,16 @@ MonoBehaviour:
     _fillIntensity: 0.3
     _fillElevation: 6
     _fillBearingOffset: 232
-    _ambientSky: {r: 0.1, g: 0.095, b: 0.26, a: 1}
-    _ambientEquator: {r: 0.075, g: 0.07, b: 0.2, a: 1}
-    _ambientGround: {r: 0.02, g: 0.018, b: 0.05, a: 1}
-    _fogColor: {r: 0.27, g: 0.21, b: 0.45, a: 1}
-    _fogDensity: 0.002
-    _hazeColor: {r: 0.33, g: 0.28, b: 0.52, a: 1}
-    _hazeDensity: 0.0007
+    _ambientSky: {r: 0.06, g: 0.065, b: 0.085, a: 1}
+    _ambientEquator: {r: 0.042, g: 0.045, b: 0.058, a: 1}
+    _ambientGround: {r: 0.012, g: 0.013, b: 0.018, a: 1}
+    _fogColor: {r: 0.035, g: 0.04, b: 0.06, a: 1}
+    _fogDensity: 0.0006
+    _hazeColor: {r: 0.035, g: 0.04, b: 0.06, a: 1}
+    _hazeDensity: 0.00021
     _hazeHeight: 6
     _hazeBase: 0
-    _hazeMax: 0.55
+    _hazeMax: 0.165
     _desaturateStart: 120
     _desaturateEnd: 650
     _desaturateAmount: 0.45
@@ -501,23 +501,23 @@ MonoBehaviour:
     _bloomIntensity: 1.1
     _bloomScatter: 0.7
     _bloomTint: {r: 1, g: 0.93, b: 0.86, a: 1}
-    _postExposure: 0.5
+    _postExposure: 0
     _gradeInHdr: 1
-    _contrast: 20
-    _saturation: -5
+    _contrast: 22
+    _saturation: -18
     _lift: {x: 0.96, y: 0.97, z: 1.08, w: 0}
     _gamma: {x: 1, y: 1, z: 1, w: 0}
     _gain: {x: 1.04, y: 1, z: 0.95, w: 0}
-    _splitShadows: {r: 0.32, g: 0.35, b: 0.55, a: 1}
-    _splitHighlights: {r: 1, g: 0.86, b: 0.68, a: 1}
-    _splitBalance: -10
+    _splitShadows: {r: 0.36, g: 0.39, b: 0.46, a: 1}
+    _splitHighlights: {r: 1, g: 0.92, b: 0.8, a: 1}
+    _splitBalance: -15
     _occlusionIntensity: 1.2
     _occlusionRadius: 1.2
     _occlusionDirectLighting: 0.55
     _wokenSplitBalance: 8
     _vignetteIntensity: 0.3
     _vignetteSmoothness: 0.5
-    _vignetteColor: {r: 0.05, g: 0.03, b: 0.12, a: 1}
+    _vignetteColor: {r: 0.03, g: 0.035, b: 0.05, a: 1}
     _grainIntensity: 0.12
     _grainResponse: 0.8
   _groundMarks:
@@ -568,8 +568,9 @@ MonoBehaviour:
     _ventPatches: 26
     _ventPatchRadius: {x: 1.2, y: 3.6}
     _ventSpread: 1.6
-    _ventTint: {r: 1, g: 0.85, b: 0.45, a: 1}
-    _ventStrength: 0.75
+    _ventTint: {r: 1.24, g: 1, b: 0.66, a: 1}
+    _ventStrength: 0.55
+    _ventEdgeSoftness: 0.9
     _ventFade: {x: 160, y: 380}
   _reachRing:
     _duration: 2
