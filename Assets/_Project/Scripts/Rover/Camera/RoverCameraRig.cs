@@ -103,9 +103,7 @@ namespace MoonProject.Rover
         private readonly HeldShot _held = new HeldShot();
         private bool _onLift;
         private bool _evening;
-        private readonly CutFraming _cutFraming = new CutFraming();
-        private Vector3 _chargePoint;
-        private bool _digFraming;
+        private BeamFraming _beam;
         private bool _charging;
         private float _chargingSeconds;
         private bool _chargeAsks;
@@ -206,6 +204,7 @@ namespace MoonProject.Rover
             _opening = new WakeOpening(_tuning);
             _wide = new WideShot(_tuning.WideShot);
             _look = new LookSettings(_tuning);
+            _beam = new BeamFraming(_tuning);
             ApplyComfort();
             ApplyCinemachineSettings();
             _subscriptions = new[]
@@ -356,9 +355,9 @@ namespace MoonProject.Rover
             }
 
             bool driving = _rover.DriveInput.sqrMagnitude > DriveEpsilon * DriveEpsilon;
-            if (_cutFraming.IsActive && (viewInput || driving))
+            if (_beam.Framing.IsActive && (viewInput || driving))
             {
-                _cutFraming.End(_tuning.CutFrameHandBackSeconds);
+                _beam.Framing.End(_tuning.CutFrameHandBackSeconds);
             }
 
             if (driving && IsTowerMoment)
@@ -379,7 +378,7 @@ namespace MoonProject.Rover
             StepWideShot(deltaTime);
             StepHeldShot(viewInput, deltaTime);
             StepMomentFraming(deltaTime);
-            _cutFraming.Step(deltaTime);
+            _beam.Framing.Step(deltaTime);
             PlaceTarget();
             _orbitState.Step(OrbitInput(look, recenter), deltaTime);
             StepStargaze(deltaTime);
@@ -648,7 +647,7 @@ namespace MoonProject.Rover
         private void PlaceTarget()
         {
             Vector3 point = _rover.Position + Vector3.up * _tuning.TargetHeight + _momentShift;
-            float cut = _cutFraming.Weight;
+            float cut = _beam.Framing.Weight;
             if (cut > 0f)
             {
                 point = Vector3.Lerp(point, BeamMiddle(), cut);
@@ -708,7 +707,7 @@ namespace MoonProject.Rover
                 BlendHeldShot(framed, ref yaw, ref elevation, ref radius, ref fov, ref screen);
             }
 
-            float cutFrame = _cutFraming.Weight;
+            float cutFrame = _beam.Framing.Weight;
             if (cutFrame > 0f)
             {
                 BlendCutFraming(cutFrame, ref yaw, ref elevation, ref radius);
@@ -1108,7 +1107,7 @@ namespace MoonProject.Rover
             _momentLift = 0f;
             _momentPullBack = 0f;
             _momentShift = Vector3.zero;
-            _cutFraming.Reset();
+            _beam.Framing.Reset();
             Snap();
             if (wasWide)
             {
@@ -1194,32 +1193,14 @@ namespace MoonProject.Rover
             }
         }
 
-        /// <summary>
-        /// The charge-up's push-in (0.5.5 §5.6): a fresh charge on a big piece (<see cref="CutFraming.Wanted"/>)
-        /// eases the camera closer and lower toward 07's shoulder on the beam's side over the brace and build, holds
-        /// still through the lock and the cut, and eases back after the fold or a release; look or drive input hands
-        /// it back at once. Small and medium pieces, warm charges and the Gentle camera never move it.
-        /// </summary>
+        /// <summary>The charge-up's stages: <see cref="BeamFraming"/> decides whether the cut pushes in.</summary>
         private void OnChargeStaged(CutChargeStaged staged)
         {
-            if (staged.Stage != 0
-                || !CutFraming.Wanted(staged.Warm, staged.StagesNeeded, _tuning.CutFrameMinStages, _look.GentleCamera))
-            {
-                return;
-            }
-
-            float side = CutFraming.ChooseSide(_rover.Position, _rover.Rotation * Vector3.forward, _chargePoint);
-            _digFraming = false;
-            _cutFraming.Begin(_chargePoint, side, _tuning.CutFrameInSeconds);
+            _beam.OnStaged(staged, _rover.Position, _rover.Rotation * Vector3.forward, _look.GentleCamera);
         }
 
-        /// <summary>
-        /// The beam's beats. The cut's Anticipate says where its beam will run (the push-in waits for the charge's
-        /// stages). The dig's work framing (feel-pass §3.1, as in 0.5.4) starts on its own Anticipate: 07 stands still
-        /// while it digs, so the camera eases over its shoulder on the beam's side and a little higher (half as far and
-        /// slower with the Gentle camera). Either ends after the fold or a release; look or drive input hands it back
-        /// at once.
-        /// </summary>
+        /// <summary>The tower coming online, and the beam's beats for <see cref="BeamFraming"/> (the cut's push-in
+        /// and the dig's shoulder framing; look or drive input hands either back at once).</summary>
         private void OnFeelBeat(FeelBeat beat)
         {
             if (beat.Kind == FeelKind.Build)
@@ -1228,32 +1209,7 @@ namespace MoonProject.Rover
                 return;
             }
 
-            if (beat.Kind != FeelKind.Cut && beat.Kind != FeelKind.Dig)
-            {
-                return;
-            }
-
-            switch (beat.Phase)
-            {
-                case FeelPhase.Anticipate when beat.Kind == FeelKind.Cut:
-                    _chargePoint = beat.Position;
-                    break;
-                case FeelPhase.Anticipate:
-                    float side = CutFraming.ChooseSide(_rover.Position, _rover.Rotation * Vector3.forward,
-                        beat.Position);
-                    _digFraming = true;
-                    _cutFraming.Begin(beat.Position, side,
-                        _look.GentleCamera ? _tuning.DigFrameGentleSeconds : _tuning.DigFrameInSeconds);
-                    break;
-                case FeelPhase.Follow when beat.Strength >= 1f:
-                case FeelPhase.Cancel:
-                    if (_cutFraming.IsActive && _digFraming == (beat.Kind == FeelKind.Dig))
-                    {
-                        _cutFraming.End(_digFraming ? _tuning.DigFrameOutSeconds : _tuning.CutFrameOutSeconds);
-                    }
-
-                    break;
-            }
+            _beam.OnBeat(beat, _rover.Position, _rover.Rotation * Vector3.forward, _look.GentleCamera);
         }
 
         /// <summary>The camera moment running now is the radio tower coming online.</summary>
@@ -1282,7 +1238,7 @@ namespace MoonProject.Rover
         private Vector3 BeamMiddle()
         {
             Vector3 emitter = _rover.Position + Vector3.up * _tuning.TargetHeight;
-            return Vector3.Lerp(emitter, _cutFraming.CutPoint, 0.5f);
+            return Vector3.Lerp(emitter, _beam.Framing.CutPoint, 0.5f);
         }
 
         /// <summary>
@@ -1291,7 +1247,7 @@ namespace MoonProject.Rover
         /// </summary>
         private void BlendCutFraming(float weight, ref float yaw, ref float elevation, ref float radius)
         {
-            if (_digFraming)
+            if (_beam.IsDig)
             {
                 BlendDigFraming(weight, ref yaw, ref elevation, ref radius);
                 return;
@@ -1299,7 +1255,7 @@ namespace MoonProject.Rover
 
             CutFraming.PushIn(weight, _tuning.CutFramePushIn, _tuning.CutFrameLower, ref elevation, ref radius);
             Vector3 emitter = _rover.Position + Vector3.up * _tuning.TargetHeight;
-            Vector3 line = BeamMiddle() - _cutFraming.Eye(emitter, _tuning.CutFrameBack, _tuning.CutFrameSide, 0f);
+            Vector3 line = BeamMiddle() - _beam.Framing.Eye(emitter, _tuning.CutFrameBack, _tuning.CutFrameSide, 0f);
             line.y = 0f;
             if (line.magnitude < MinSubjectDistance)
             {
@@ -1316,7 +1272,7 @@ namespace MoonProject.Rover
         {
             float share = _look.GentleCamera ? _tuning.DigFrameGentleShare : 1f;
             Vector3 emitter = _rover.Position + Vector3.up * _tuning.TargetHeight;
-            Vector3 eye = _cutFraming.Eye(emitter, _tuning.CutFrameBack, _tuning.CutFrameSide * share,
+            Vector3 eye = _beam.Framing.Eye(emitter, _tuning.CutFrameBack, _tuning.CutFrameSide * share,
                 _tuning.DigFrameRise * share);
             Vector3 line = BeamMiddle() - eye;
             float distance = line.magnitude;
