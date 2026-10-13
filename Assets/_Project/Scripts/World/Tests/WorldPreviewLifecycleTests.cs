@@ -36,6 +36,9 @@ namespace MoonProject.World.Tests
             IWorldPreview preview = world;
             Assert.IsTrue(preview.HasGeneratedWorld, "other domains' edit-mode previews see no world");
             Assert.AreSame(world.Anchors, preview.Anchors, "other domains' edit-mode previews read other anchors");
+            IScrapField scrapField = world;
+            Assert.AreEqual(new ScrapFieldSettings().Cuttables, scrapField.Count,
+                "Gameplay's edit-mode preview sees the lane's cuttable slots");
 
             yield return new EnterPlayMode();
             Assert.AreEqual(0, CountChunkObjects(), "play mode kept or rebuilt the edit-mode preview");

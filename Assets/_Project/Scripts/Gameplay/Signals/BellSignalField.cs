@@ -66,7 +66,7 @@ namespace MoonProject.Gameplay
         private SignalPillar CreatePillar(string name, GameplayServices services, SonarTuning sonar)
         {
             return new SignalPillar(name, transform, sonar, services.Terrain, services.Visuals.FriendPillar,
-                services.Visuals.WarmRing, services.Meshes.Pillar);
+                services.Meshes.Pillar);
         }
 
         private void Update()
@@ -120,14 +120,6 @@ namespace MoonProject.Gameplay
             }
 
             _pillars[_lit].Show(_signals.TargetPosition);
-        }
-
-        private void OnDestroy()
-        {
-            foreach (SignalPillar pillar in _pillars)
-            {
-                pillar.Dispose();
-            }
         }
     }
 }

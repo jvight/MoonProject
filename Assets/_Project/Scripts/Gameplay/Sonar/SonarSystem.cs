@@ -90,8 +90,7 @@ namespace MoonProject.Gameplay
                     : friend ? friends.Friends[i - relicCount].Definition.Id
                     : salvage.Sites[i - friendsEnd].Id;
                 _markers[i] = new SiteMarker("Marker_" + id, transform, _tuning, services.Terrain,
-                    friend ? services.Visuals.FriendPillar : services.Visuals.SitePillar,
-                    friend ? services.Visuals.WarmRing : services.Visuals.SiteRing, services.Meshes.Pillar,
+                    friend ? services.Visuals.FriendPillar : services.Visuals.SitePillar, services.Meshes.Pillar,
                     friend ? _tuning.FriendGlowScale : 1f);
             }
 
@@ -149,22 +148,20 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < relicCount; i++)
             {
                 Relic relic = _relics.Relics[i];
-                _markers[i].Tick(relic.SonarPosition, relic.AnswersSonar, false, now);
+                _markers[i].Tick(relic.SonarPosition, relic.AnswersSonar, now);
             }
 
             for (int i = 0; i < _friends.Count; i++)
             {
                 FriendProgress progress = _friends.Friends[i].Progress;
-                _markers[relicCount + i].Tick(_friends.Friends[i].Site.Position, progress.AnswersSonar,
-                    progress.AnswersSonar && progress.Discovered, now);
+                _markers[relicCount + i].Tick(_friends.Friends[i].Site.Position, progress.AnswersSonar, now);
             }
 
             int first = SiteMarkerStart;
             for (int i = 0; i < _salvage.Sites.Count; i++)
             {
                 SalvageSite site = _salvage.Sites[i];
-                bool answers = site.AnswersSonar;
-                _markers[first + i].Tick(site.Position, answers, answers && site.Discovered, now);
+                _markers[first + i].Tick(site.Position, site.AnswersSonar, now);
             }
 
             UpdateGaze(now);
@@ -256,8 +253,8 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// A spotter friend found salvage site <paramref name="siteIndex"/>: it shows on the sonar (a softer pillar and
-        /// its breathing ring) without a listen.
+        /// A spotter friend found salvage site <paramref name="siteIndex"/>: it shows on the sonar (a softer pillar)
+        /// without a listen.
         /// </summary>
         internal void RevealSite(int siteIndex, float brightness)
         {
@@ -461,11 +458,6 @@ namespace MoonProject.Gameplay
             foreach (SonarRing ring in _rings)
             {
                 ring.Dispose();
-            }
-
-            foreach (SiteMarker marker in _markers)
-            {
-                marker.Dispose();
             }
         }
     }

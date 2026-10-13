@@ -391,8 +391,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             var visuals = Asset<GameplayVisuals>();
             Shader shader = LoadShader(ShaderPath);
-            visuals.Populate(GlowMaterial(shader, GlowRole.SonarRing), GlowMaterial(shader, GlowRole.SiteRing),
-                GlowMaterial(shader, GlowRole.SitePillar), GlowMaterial(shader, GlowRole.TractorBeam),
+            visuals.Populate(GlowMaterial(shader, GlowRole.SonarRing), GlowMaterial(shader, GlowRole.SitePillar),
+                GlowMaterial(shader, GlowRole.TractorBeam),
                 GlowMaterial(shader, GlowRole.TetherBeam), GlowMaterial(shader, GlowRole.Flash),
                 GlowMaterial(shader, GlowRole.RelicHalo), GlowMaterial(shader, GlowRole.Dust),
                 GlowMaterial(shader, GlowRole.WarmRing), GlowMaterial(shader, GlowRole.WarmGlow),

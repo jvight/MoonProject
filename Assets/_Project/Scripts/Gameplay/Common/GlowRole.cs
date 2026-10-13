@@ -4,7 +4,6 @@ namespace MoonProject.Gameplay
     public enum GlowRole
     {
         SonarRing = 0,
-        SiteRing = 1,
         SitePillar = 2,
         TractorBeam = 3,
         TetherBeam = 4,

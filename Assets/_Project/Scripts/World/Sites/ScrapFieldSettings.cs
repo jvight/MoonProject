@@ -55,6 +55,29 @@ namespace MoonProject.World
         [Tooltip("Extra tilt of a scenery fragment beyond Art's modelled lean, degrees (x = min, y = max).")]
         [SerializeField] private Vector2 _tilt = new Vector2(12f, 28f);
 
+        [Header("Cuttable slots (Gameplay's salvage pieces)")]
+        [Tooltip("Slots in the clear lane where Gameplay places Kestrel-3's cuttable fragments (IScrapField); World " +
+            "puts nothing there.")]
+        [Range(0, 8)]
+        [SerializeField] private int _cuttables = 4;
+
+        [Tooltip("Span of the furrow the cuttable slots cover, as shares from its far end (0) to the crater's rim " +
+            "(1): spaced evenly, so 07 finds them one after another down the lane.")]
+        [SerializeField] private Vector2 _cuttableSpan = new Vector2(0.15f, 0.85f);
+
+        [Tooltip("Furthest a cuttable slot lies from the lane's middle, metres: inside the lane, never by the " +
+            "scenery.")]
+        [Range(0f, 5f)]
+        [SerializeField] private float _cuttableOffset = 1f;
+
+        [Tooltip("How far a cuttable fragment sinks below its dust line, metres: shallow, so its seam shows.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _cuttableSink = 0.15f;
+
+        [Tooltip("Extra tilt of a cuttable fragment beyond Art's modelled lean, degrees (x = min, y = max): gentler " +
+            "than the scenery's.")]
+        [SerializeField] private Vector2 _cuttableTilt = new Vector2(4f, 10f);
+
         [Tooltip("Dust tint multiplied into the scenery fragments' colour: darker and dustier than the cuttable ones.")]
         [SerializeField] private Color _dust = new Color(0.7f, 0.68f, 0.74f, 1f);
 
@@ -70,5 +93,10 @@ namespace MoonProject.World
         public float Crowding => _crowding;
         public Vector2 Tilt => _tilt;
         public Color Dust => _dust;
+        public int Cuttables => _cuttables;
+        public Vector2 CuttableSpan => _cuttableSpan;
+        public float CuttableOffset => _cuttableOffset;
+        public float CuttableSink => _cuttableSink;
+        public Vector2 CuttableTilt => _cuttableTilt;
     }
 }

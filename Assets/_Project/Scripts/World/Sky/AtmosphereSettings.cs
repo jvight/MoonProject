@@ -39,7 +39,7 @@ namespace MoonProject.World
 
         [Tooltip("Darkness of the earthlight's shadows (1 = fully dark before ambient).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _shadowStrength = 0.88f;
+        [SerializeField] private float _shadowStrength = 0.78f;
 
         [Tooltip("Depth bias of the earthlight's shadows. Low, grazing light needs more than the pipeline default " +
             "so the facets never speckle themselves with shadow acne.")]
@@ -60,7 +60,7 @@ namespace MoonProject.World
         [Tooltip("Intensity of the fill (it casts no shadows). Soft: the faces the earthlight leaves dark show their " +
             "paint, rust and dust instead of a flat violet, while staying far darker than the lit faces.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _fillIntensity = 0.3f;
+        [SerializeField] private float _fillIntensity = 0.45f;
 
         [Tooltip("Elevation the fill shines from, degrees. Near the horizon it lifts walls and leaves top faces " +
             "(and their dust caps) to the earthlight.")]
@@ -75,14 +75,14 @@ namespace MoonProject.World
         [Header("Ambient (trilight)")]
         [Tooltip("Ambient from above: the dark sky's faint cool grey-blue (look A \"Moon grey\"). Weak, so shadow " +
             "cores read near-black.")]
-        [SerializeField] private Color _ambientSky = new Color(0.06f, 0.065f, 0.085f);
+        [SerializeField] private Color _ambientSky = new Color(0.075f, 0.078f, 0.092f);
 
         [Tooltip("Ambient from the horizon: darker than the sky band, so side faces fade from a lit top to a dark " +
             "foot.")]
-        [SerializeField] private Color _ambientEquator = new Color(0.042f, 0.045f, 0.058f);
+        [SerializeField] private Color _ambientEquator = new Color(0.052f, 0.054f, 0.062f);
 
         [Tooltip("Ambient from below: the faint bounce off the dust, a dark band that grounds every prop's foot.")]
-        [SerializeField] private Color _ambientGround = new Color(0.012f, 0.013f, 0.018f);
+        [SerializeField] private Color _ambientGround = new Color(0.02f, 0.021f, 0.028f);
 
         [Header("Fog")]
         [Tooltip("Fog colour: a dark cool grey near the sky's horizon, so distant hills melt into the night (look A " +

@@ -15,9 +15,6 @@ namespace MoonProject.Gameplay
         [Tooltip("Expanding sonar ring on the ground (TechGlow, additive).")]
         [SerializeField] private Material _sonarRing;
 
-        [Tooltip("Ground ring at an answered relic site (TechGlow, additive).")]
-        [SerializeField] private Material _siteRing;
-
         [Tooltip("Light pillar over an answered site, seen from afar (TechGlow, additive, rising bands).")]
         [SerializeField] private Material _sitePillar;
 
@@ -99,7 +96,6 @@ namespace MoonProject.Gameplay
         [SerializeField] private GameObject _tapeDeck;
 
         public Material SonarRing => _sonarRing;
-        public Material SiteRing => _siteRing;
         public Material SitePillar => _sitePillar;
         public Material TractorBeam => _tractorBeam;
         public Material TetherBeam => _tetherBeam;
@@ -166,7 +162,6 @@ namespace MoonProject.Gameplay
         public string Validate()
         {
             return _sonarRing == null ? "sonar ring material is missing"
-                : _siteRing == null ? "site ring material is missing"
                 : _sitePillar == null ? "site pillar material is missing"
                 : _tractorBeam == null ? "tractor beam material is missing"
                 : _tetherBeam == null ? "tether beam material is missing"
@@ -237,13 +232,12 @@ namespace MoonProject.Gameplay
             _tapeDeck = tapeDeck;
         }
 
-        internal void Populate(Material sonarRing, Material siteRing, Material sitePillar, Material tractorBeam,
+        internal void Populate(Material sonarRing, Material sitePillar, Material tractorBeam,
             Material tetherBeam, Material flash, Material relicHalo, Material dust, Material warmRing,
             Material warmGlow, Material partGlint, Material friendPillar, Material spark, Material homeHalo,
             Material linkPulse)
         {
             _sonarRing = sonarRing;
-            _siteRing = siteRing;
             _sitePillar = sitePillar;
             _tractorBeam = tractorBeam;
             _tetherBeam = tetherBeam;

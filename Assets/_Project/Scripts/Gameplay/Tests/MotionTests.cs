@@ -125,8 +125,6 @@ namespace MoonProject.Gameplay.Tests
             Assert.Greater(MarkerEnvelope.Pillar(16f, 20f, 0.6f, 6f), 0.1f, "still visible near the end");
             Assert.Less(MarkerEnvelope.Pillar(19.5f, 20f, 0.6f, 6f), 0.05f);
             Assert.AreEqual(0f, MarkerEnvelope.Pillar(20f, 20f, 0.6f, 6f), 1e-6f);
-            Assert.AreEqual(0f, MarkerEnvelope.Pulse(5f, 4f), 1e-6f);
-            Assert.Greater(MarkerEnvelope.Pulse(0.4f, 4f), 0.9f);
         }
 
         [Test]

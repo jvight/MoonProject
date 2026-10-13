@@ -1,28 +1,25 @@
 using System;
 using UnityEngine;
 using MoonProject.Core;
-using Object = UnityEngine.Object;
 
 namespace MoonProject.Gameplay
 {
     /// <summary>
     /// Bell's amber pillar over what she picked up (design ruling 3's language: the sonar pillar's shape, warm and
-    /// persistent): a tall soft pillar and a breathing ring on the ground. It rises slowly where it is shown, breathes
+    /// persistent): a tall soft pillar, nothing on the ground (0.5.5 §2). It rises slowly where it is shown, breathes
     /// while it stands, never expires, and fades out once hidden. Allocation-free after construction.
     /// </summary>
-    internal sealed class SignalPillar : IDisposable
+    internal sealed class SignalPillar
     {
         private readonly SonarTuning _sonar;
         private readonly ITerrainQuery _terrain;
         private readonly Transform _pillar;
         private readonly GlowRenderer _pillarGlow;
-        private readonly GlowRenderer _ringGlow;
-        private readonly TerrainRing _ring;
         private float _level;
         private bool _shown;
 
         public SignalPillar(string name, Transform parent, SonarTuning sonar, ITerrainQuery terrain,
-            Material pillarMaterial, Material ringMaterial, Mesh pillarMesh)
+            Material pillarMaterial, Mesh pillarMesh)
         {
             _sonar = sonar != null ? sonar : throw new ArgumentNullException(nameof(sonar));
             _terrain = terrain ?? throw new ArgumentNullException(nameof(terrain));
@@ -32,8 +29,6 @@ namespace MoonProject.Gameplay
             _pillar = pillar.transform;
             _pillar.localScale = new Vector3(sonar.PillarRadius, sonar.PillarHeight, sonar.PillarRadius);
             _pillarGlow = new GlowRenderer(pillar);
-            _ring = new TerrainRing(sonar.SiteRingSegments);
-            _ringGlow = new GlowRenderer(GlowObject.Create("Ring", root.transform, _ring.Mesh, ringMaterial));
         }
 
         /// <summary>Where it stands (valid once shown).</summary>
@@ -53,8 +48,6 @@ namespace MoonProject.Gameplay
             _level = 0f;
             Position = SurfaceRules.OnSurface(_terrain, groundPosition.x, groundPosition.z);
             _pillar.position = Position;
-            Vector2 ring = _sonar.SiteRing;
-            _ring.Rebuild(_terrain, Position, ring.x - ring.y * 0.5f, ring.x + ring.y * 0.5f, _sonar.RingLift);
             _shown = true;
         }
 
@@ -72,15 +65,6 @@ namespace MoonProject.Gameplay
                 (1f - MarkerEnvelope.Breath(now, tuning.PillarBreathPeriod));
             float glow = Ease.InOutSine(_level) * breath;
             _pillarGlow.Apply(tuning.PillarGlow * glow);
-            _ringGlow.Apply(tuning.PillarRingGlow * glow);
-        }
-
-        public void Dispose()
-        {
-            if (_ring.Mesh != null)
-            {
-                Object.Destroy(_ring.Mesh);
-            }
         }
     }
 }

@@ -50,7 +50,7 @@ namespace MoonProject.World
         [SerializeField] private float _saturation = -18f;
 
         [Tooltip("Lift: tints the shadows (rgb) and raises them (w). Cool, but never raised: the frame keeps a black.")]
-        [SerializeField] private Vector4 _lift = new Vector4(0.96f, 0.97f, 1.08f, 0f);
+        [SerializeField] private Vector4 _lift = new Vector4(1f, 1f, 1.03f, 0f);
 
         [Tooltip("Gamma: tints and shifts the midtones (rgb, w).")]
         [SerializeField] private Vector4 _gamma = new Vector4(1f, 1f, 1f, 0f);
@@ -59,7 +59,7 @@ namespace MoonProject.World
         [SerializeField] private Vector4 _gain = new Vector4(1.04f, 1f, 0.95f, 0f);
 
         [Tooltip("Split toning, shadows: the cool hue pushed into the dark tones.")]
-        [SerializeField] private Color _splitShadows = new Color(0.36f, 0.39f, 0.46f);
+        [SerializeField] private Color _splitShadows = new Color(0.42f, 0.43f, 0.46f);
 
         [Tooltip("Split toning, highlights: the warm hue pushed into the light tones.")]
         [SerializeField] private Color _splitHighlights = new Color(1f, 0.92f, 0.8f);

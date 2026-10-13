@@ -23,20 +23,6 @@ namespace MoonProject.Gameplay
             return Mathf.Min(up, down);
         }
 
-        /// <summary>
-        /// The site ring's answer pulse: a quick swell that settles over <paramref name="duration"/>.
-        /// </summary>
-        public static float Pulse(float age, float duration)
-        {
-            if (age < 0f || age >= duration || duration <= 0f)
-            {
-                return 0f;
-            }
-
-            float t = age / duration;
-            return t < 0.1f ? Ease.OutCubic(t / 0.1f) : 1f - Ease.InOutSine((t - 0.1f) / 0.9f);
-        }
-
         /// <summary>Slow breathing 0..1 with a period of <paramref name="period"/> seconds.</summary>
         public static float Breath(float time, float period)
         {

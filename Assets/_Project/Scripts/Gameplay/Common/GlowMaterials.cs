@@ -77,10 +77,6 @@ namespace MoonProject.Gameplay
                     material.SetFloat(AcrossInId, 0.8f);
                     material.SetFloat(AcrossOutId, 0.2f);
                     break;
-                case GlowRole.SiteRing:
-                    material.SetFloat(AcrossInId, 0.5f);
-                    material.SetFloat(AcrossOutId, 0.5f);
-                    break;
                 case GlowRole.SitePillar:
                     Set(material, tech, edge: 0f, length: 0.4f, bands: 3f, speed: 0.25f, strength: 0.35f,
                         fresnel: 0f, fresnelPower: 2f, core: 1f, corePower: 1.2f, radial: 0f, additive: true,

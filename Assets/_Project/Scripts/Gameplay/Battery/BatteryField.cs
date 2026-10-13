@@ -133,7 +133,7 @@ namespace MoonProject.Gameplay
             _beam = services.Beam;
             Model = new BatteryModel(_tuning, _events);
             _pillar = new SignalPillar("ChargerPillar", transform, sonar, services.Terrain,
-                services.Visuals.FriendPillar, services.Visuals.WarmRing, services.Meshes.Pillar);
+                services.Visuals.FriendPillar, services.Meshes.Pillar);
             _nodeNames = new string[_reach.NodeCount];
             for (int node = 0; node < _nodeNames.Length; node++)
             {
@@ -431,7 +431,6 @@ namespace MoonProject.Gameplay
             }
 
             _subscriptions.Clear();
-            _pillar?.Dispose();
         }
     }
 }
