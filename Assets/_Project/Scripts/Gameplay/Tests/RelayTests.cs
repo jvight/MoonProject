@@ -362,6 +362,7 @@ namespace MoonProject.Gameplay.Tests
             Block(mast, RelayRig.LampNode, new Vector3(0f, 7.95f, 0f), Vector3.one * 0.5f);
             new GameObject(RelayRig.PartSocketNode).transform.SetParent(root.transform, false);
             new GameObject(RelayRig.BeamPointNode).transform.SetParent(root.transform, false);
+            new GameObject(RelayRig.CabinetSocketNode).transform.SetParent(root.transform, false);
             if (broken)
             {
                 mast.localRotation = Quaternion.Euler(-9f, 0f, 10f);
