@@ -370,6 +370,33 @@ MonoBehaviour:
       _units: 0
     _hostSocket: HaulBotSocket
     _props: []
+  _scrapFragments:
+  - {fileID: 2037638421221605166, guid: ac71eab131dc1ef44a707f8e3f91731d, type: 3}
+  - {fileID: 2710474304211634752, guid: b81e3c820b87ede439646b9fa90896cb, type: 3}
+  - {fileID: 5211233873720822207, guid: a3eac53c63df53544baa4a4a338a3dec, type: 3}
+  - {fileID: 4807920037987281836, guid: 4a5b9d9dbc74c7b49af1b913826c7981, type: 3}
+  _scrapCutLines:
+  - _number: 0
+    _points:
+    - {x: -0.5616907, y: 0, z: 0}
+    - {x: 0, y: 0, z: 0}
+    - {x: 0.6469103, y: 0, z: 0}
+  - _number: 1
+    _points:
+    - {x: -0.82704747, y: 0, z: 0}
+    - {x: 0, y: 0, z: 0}
+    - {x: 0.7111601, y: 0, z: 0}
+  - _number: 2
+    _points:
+    - {x: -0.36590207, y: 0, z: 0}
+    - {x: 0, y: 0, z: 0}
+    - {x: 0.855902, y: 0, z: 0}
+  - _number: 3
+    _points:
+    - {x: -0.26517162, y: 0, z: 0}
+    - {x: 0, y: 0, z: 0}
+    - {x: 0.79692984, y: 0, z: 0}
+  _scrapSize: 0
   _metalBundle: {fileID: 8960714290519639283, guid: 26e27ff987c8ae2478a4f6090ec487d1, type: 3}
   _wiringBundle: {fileID: 8133406963958762877, guid: 20853bd915ffc68498705589c043faee, type: 3}
   _opticsBundle: {fileID: 7272007056206292504, guid: 0c943ef936aaa0d4c8382df341cfd7c4, type: 3}
