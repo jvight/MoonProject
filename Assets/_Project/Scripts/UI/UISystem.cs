@@ -30,6 +30,9 @@ namespace MoonProject.UI
     {
         private const int CachedNumbers = 1000;
 
+        // The hold's change lands a frame or two after the press; the chip stays "the cause" this long.
+        private const float PickUpGraceSeconds = 1.5f;
+
         [Tooltip("The UIDocument showing GameUI.uxml with the Lunarion PanelSettings.")]
         [SerializeField] private UIDocument _document;
 
@@ -123,6 +126,7 @@ namespace MoonProject.UI
         private bool _titleHasSave;
         private bool _digging;
         private float _sinceAwake;
+        private float _pickUpGrace;
 
         /// <summary>The localization service this system registered (tests and editor tools read it).</summary>
         internal LocalizationService Localization => _localization;
@@ -349,7 +353,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<TitleShown>(OnTitleShown));
             _tokens.Add(events.Subscribe<FeelBeat>(OnFeelBeat));
             _tokens.Add(events.Subscribe<UpgradePurchased>(OnUpgradePurchased));
-            _tokens.Add(events.Subscribe<CargoChanged>(_ => _cargo?.MarkDirty()));
+            _tokens.Add(events.Subscribe<CargoChanged>(OnCargoChanged));
+            _tokens.Add(events.Subscribe<FriendPartCollected>(_ => _director.NotifyUsed(InteractionKind.PickUp)));
             _tokens.Add(events.Subscribe<CrewCrateOpened>(OnCrewCrateOpened));
             _tokens.Add(events.Subscribe<GameSaved>(OnGameSaved));
             _tokens.Add(events.Subscribe<StationNotYet>(OnStationNotYet));
@@ -580,6 +585,10 @@ namespace MoonProject.UI
                 device);
             _pickups.Tick(deltaTime);
             bool cutting = _services.Salvage.IsCutting;
+            if (cutting)
+            {
+                _director.Yield(InteractionKind.Salvage);
+            }
 
             if (_director.Displayed == InteractionKind.Reel && _director.WantsShown && input.Winch != 0f)
             {
@@ -594,6 +603,9 @@ namespace MoonProject.UI
             _siteName.Tick(hudTime, panelSize, !_prompt.IsVisible && !_placeCard.IsVisible &&
                                                !_lookUpChip.IsVisible && !_ticker.IsVisible && !_kitTitle.IsVisible &&
                                                !_rewardCard.IsVisible);
+            _pickUpGrace = _services.Hints.Primary.Kind == InteractionKind.PickUp
+                ? PickUpGraceSeconds
+                : Mathf.Max(0f, _pickUpGrace - deltaTime);
             // A standing prompt gives way to a waiting card or site name: those moments pass, the prompt returns.
             _prompt.Tick(deltaTime, PromptsOpen(paused, hopping) && _slot.Allows(GuidanceKind.Prompt),
                 _services.Hints.Primary, device, panelSize);
@@ -771,6 +783,16 @@ namespace MoonProject.UI
             if (_bound)
             {
                 _card.Enqueue(deposited.RelicId, deposited.DisplayedCount);
+            }
+        }
+
+        /// <summary>A prompt retires when its verb completes: the hold gaining a piece just after the pick-up chip.</summary>
+        private void OnCargoChanged(CargoChanged changed)
+        {
+            _cargo?.MarkDirty();
+            if (_pickUpGrace > 0f)
+            {
+                _director.NotifyUsed(InteractionKind.PickUp);
             }
         }
 

@@ -48,8 +48,7 @@ namespace MoonProject.UI
         public bool ShouldTeach(InteractionKind kind)
         {
             PromptEntry entry = _settings.Find(kind);
-            return entry != null && _shown[(int)kind] < _settings.ShowingsToRetire &&
-                   _used[(int)kind] < entry.UsesToRetire;
+            return entry != null && _used[(int)kind] < entry.UsesToRetire;
         }
 
         public void RecordShown(InteractionKind kind)

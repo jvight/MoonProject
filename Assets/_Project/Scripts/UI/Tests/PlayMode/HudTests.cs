@@ -702,7 +702,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsTrue(_rig.Ui.SalvageRing.IsVisible);
             Assert.AreEqual(0.3f, _rig.Ui.SalvageRing.Progress, 1e-3f);
             Assert.AreEqual(SalvageMaterial.Optics, _rig.Ui.SalvageRing.ShownMaterial, "it says what the piece yields");
-            Assert.AreEqual(1, _rig.Ui.Ledger.Used(InteractionKind.Salvage), "cutting is doing it");
+            Assert.AreEqual(0, _rig.Ui.Ledger.Used(InteractionKind.Salvage), "the verb is learned when a piece comes free");
             Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "the prompt bows out once the beam cuts");
 
             _rig.Fakes.IsCutting = false;

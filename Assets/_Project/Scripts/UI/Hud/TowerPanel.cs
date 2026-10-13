@@ -332,7 +332,7 @@ namespace MoonProject.UI
                     _layout.TowerDescription.text = _localization.Get(UiKeys.UpgradeEffect(upgrade.Id, level));
                 }
 
-                _shownAffordable = !offer.CanAfford;
+                _shownAffordable = !(offer.CanAfford && _shop.ComponentNeeded(upgrade.Id) == null);
             }
 
             if (listed)

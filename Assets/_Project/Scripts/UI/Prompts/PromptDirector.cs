@@ -111,6 +111,15 @@ namespace MoonProject.UI
             _ledger.RecordShown(desired);
         }
 
+        /// <summary>The prompt for <paramref name="kind"/> bows out because the verb has begun, not yet learned.</summary>
+        public void Yield(InteractionKind kind)
+        {
+            if (kind == Displayed && !_ending)
+            {
+                EndShowing();
+            }
+        }
+
         /// <summary>The player did <paramref name="kind"/>: it counts as learned, and its prompt bows out.</summary>
         public void NotifyUsed(InteractionKind kind)
         {

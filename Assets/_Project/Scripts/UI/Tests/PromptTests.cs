@@ -88,21 +88,6 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void APrompt_IsRetired_AfterItsShowings()
-        {
-            for (int i = 0; i < _settings.ShowingsToRetire; i++)
-            {
-                Run(_settings.RepeatCooldown + _settings.MaxShowSeconds + 2f, Ready(InteractionKind.Tether));
-            }
-
-            Assert.AreEqual(_settings.ShowingsToRetire, _ledger.Shown(InteractionKind.Tether));
-            Assert.IsFalse(_ledger.ShouldTeach(InteractionKind.Tether));
-            Run(120f, Ready(InteractionKind.Tether));
-            Assert.AreEqual(_settings.ShowingsToRetire, _ledger.Shown(InteractionKind.Tether), "never again");
-            Assert.AreEqual(InteractionKind.None, _director.Displayed);
-        }
-
-        [Test]
         public void APrompt_IsRetired_OnceTheActionIsLearned()
         {
             for (int i = 0; i < _settings.Find(InteractionKind.Excavate).UsesToRetire; i++)
