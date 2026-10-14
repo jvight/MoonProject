@@ -96,9 +96,24 @@ namespace MoonProject.Art.Editor
         private const float SignHeight = 0.42f;
 
         private const float Post = 0.16f;
+        private const float FootHeight = 0.08f;
         private const float Beam = 0.14f;
+        private const float SideRailThickness = 0.08f;
         private const int ArchSegments = 12;
         private const float FacadeDepth = 0.06f;
+        private const float ArchTrimWidth = 0.09f;
+        private const float ArchKeystoneRise = 0.06f;
+        private const float ShutterRollerHeight = 0.16f;
+        private const float ShutterRollerDepth = 0.16f;
+        private const float ShutterRailInset = 0.03f;
+        private const float ShutterRailWidth = 0.07f;
+        private const float ShutterRailDepth = 0.09f;
+        private const float IBeamWebWidth = 0.05f;
+        private const float IBeamWebHeight = 0.17f;
+        private const float IBeamFlangeWidth = 0.18f;
+        private const float IBeamFlangeHeight = 0.03f;
+        private const float IBeamFlangeOffset = 0.1f;
+        private const float BoardAhead = 0.04f;
         private const int HazardSegments = 20;
         private const float TurntableRaise = 0.03f;
         private const float TurntableDepth = 0.09f;
@@ -216,7 +231,7 @@ namespace MoonProject.Art.Editor
                 Matrix4x4 lamp = At(LampGlass(i), LampEuler);
                 b.Prism(lamp * At(0f, 0f, -0.08f) * Matrix4x4.Rotate(Rotation(AlongZ)), 0.15f, 0.16f, 10,
                     PaletteSwatch.FadedPaint);
-                b.Torus(lamp * At(new Vector3(0f, 0f, 0.01f), AlongZ), 0.14f, 0.02f, 10, 3, PaletteSwatch.Metal);
+                b.Torus(lamp * At(new Vector3(0f, 0f, 0.02f), AlongZ), 0.14f, 0.02f, 10, 3, PaletteSwatch.Metal);
                 RecipeKit.Rod(b, LampGlass(i) + new Vector3(0f, 0.1f, -0.1f), new Vector3(LampGlass(i).x, EaveHeight,
                     FrontZ), 0.025f, 5, PaletteSwatch.Metal);
             }
@@ -436,25 +451,28 @@ namespace MoonProject.Art.Editor
         {
             float[] xs = { -HalfWidth, HalfWidth };
             float[] zs = { FrontZ, BackZ };
+            float beamJoint = (Post + Beam) * 0.5f;
+            float railJoint = (Post + SideRailThickness) * 0.5f;
+            float girderSpan = HalfWidth - (Beam + SideRailThickness) * 0.5f;
             foreach (float x in xs)
             {
                 foreach (float z in zs)
                 {
-                    SiteKit.Bar(b, new Vector3(x, Post * 0.5f, z), new Vector3(x, EaveHeight, z), Post,
+                    SiteKit.Bar(b, new Vector3(x, FootHeight + Post * 0.5f, z), new Vector3(x, EaveHeight, z), Post,
                         PaletteSwatch.FadedPaint);
-                    b.Box(At(x, 0.04f, z), new Vector3(0.36f, 0.08f, 0.36f), PaletteSwatch.Charcoal, 0.02f);
+                    b.Box(At(x, 0.04f, z), new Vector3(0.36f, FootHeight, 0.36f), PaletteSwatch.Charcoal, 0.02f);
                 }
 
-                SiteKit.Bar(b, new Vector3(x, EaveHeight, FrontZ), new Vector3(x, EaveHeight, BackZ), Beam,
-                    PaletteSwatch.Metal);
-                SiteKit.Bar(b, new Vector3(x, 1.2f, BackZ), new Vector3(x, 1.2f, FrontZ - 1.4f), 0.08f,
-                    PaletteSwatch.Metal);
+                SiteKit.Bar(b, new Vector3(x, EaveHeight, FrontZ - beamJoint),
+                    new Vector3(x, EaveHeight, BackZ + beamJoint), Beam, PaletteSwatch.Metal);
+                SiteKit.Bar(b, new Vector3(x, 1.2f, BackZ + railJoint), new Vector3(x, 1.2f, FrontZ - 1.4f),
+                    SideRailThickness, PaletteSwatch.Metal);
             }
 
             foreach (float z in zs)
             {
-                SiteKit.Bar(b, new Vector3(-HalfWidth, EaveHeight, z), new Vector3(HalfWidth, EaveHeight, z), Beam,
-                    PaletteSwatch.Metal);
+                SiteKit.Bar(b, new Vector3(-HalfWidth + beamJoint, EaveHeight, z),
+                    new Vector3(HalfWidth - beamJoint, EaveHeight, z), Beam, PaletteSwatch.Metal);
             }
 
             // The arms' crane rail: a square ring of crane-yellow I-beams just under the roof round the turntable, tied
@@ -468,62 +486,73 @@ namespace MoonProject.Art.Editor
             };
             for (int i = 0; i < corners.Length; i++)
             {
-                IBeam(b, corners[i], corners[(i + 1) % corners.Length]);
+                IBeam(b, corners[i], corners[(i + 1) % corners.Length], i % 2 == 0);
             }
 
             foreach (float z in new[] { corners[0].z, corners[2].z })
             {
                 float y = centre.y + 0.06f;
-                SiteKit.Bar(b, new Vector3(-HalfWidth, y, z), new Vector3(HalfWidth, y, z), 0.08f, PaletteSwatch.Metal);
+                SiteKit.Bar(b, new Vector3(-girderSpan, y, z), new Vector3(girderSpan, y, z), SideRailThickness,
+                    PaletteSwatch.Metal);
             }
         }
 
         /// <summary>
         /// A crane-rail I-beam from <paramref name="from"/> to <paramref name="to"/> (level): a web and two flanges,
-        /// running past the corners so the ring's ends overlap.
+        /// with the front/back beams spanning the corners and the side beams abutting them cleanly.
         /// </summary>
-        private static void IBeam(LowPolyMeshBuilder b, Vector3 from, Vector3 to)
+        private static void IBeam(LowPolyMeshBuilder b, Vector3 from, Vector3 to, bool fullCorner)
         {
             Matrix4x4 run = Along(from, to);
-            float length = Vector3.Distance(from, to) + 0.18f;
-            b.Box(run, new Vector3(0.05f, 0.2f, length), PaletteSwatch.Honey);
+            float length = Vector3.Distance(from, to) + (fullCorner ? IBeamFlangeWidth : -IBeamFlangeWidth);
+            b.Box(run, new Vector3(IBeamWebWidth, IBeamWebHeight, length), PaletteSwatch.Honey);
             for (int flange = -1; flange <= 1; flange += 2)
             {
-                b.Box(run * At(0f, flange * 0.1f, 0f), new Vector3(0.18f, 0.03f, length), PaletteSwatch.Honey);
+                b.Box(run * At(0f, flange * IBeamFlangeOffset, 0f),
+                    new Vector3(IBeamFlangeWidth, IBeamFlangeHeight, length), PaletteSwatch.Honey);
             }
         }
 
         /// <summary>
         /// The front: a facade between the front posts with a rover-sized arch cut in it (07 drives in under it with
-        /// a metre to spare), the arch trimmed in 07's orange with a keystone.
+        /// a metre to spare), the arch trimmed in 07's orange with a peaked keystone.
         /// </summary>
         private static void Facade(LowPolyMeshBuilder b)
         {
             float z = FrontZ;
-            for (int side = -1; side <= 1; side += 2)
-            {
-                b.Box(At(side * (ArchHalfSpan + HalfWidth) * 0.5f, EaveHeight * 0.5f, z),
-                    new Vector3(HalfWidth - ArchHalfSpan, EaveHeight, FacadeDepth), PaletteSwatch.FadedPaint);
-            }
-
+            float outer = HalfWidth - Post * 0.5f;
+            float top = EaveHeight - Beam * 0.5f;
             float step = 2f * ArchHalfSpan / ArchSegments;
-            var strip = new Vector2[4];
-            for (int i = 0; i < ArchSegments; i++)
+            var trimRing = new Vector2[2 * (ArchSegments + 1)];
+            var outerArch = new Vector2[ArchSegments + 1];
+            for (int i = 0; i <= ArchSegments; i++)
             {
-                float x0 = -ArchHalfSpan + i * step;
-                float x1 = x0 + step;
-                strip[0] = new Vector2(x0, ArchY(x0));
-                strip[1] = new Vector2(x1, ArchY(x1));
-                strip[2] = new Vector2(x1, EaveHeight);
-                strip[3] = new Vector2(x0, EaveHeight);
-                b.Extrude(At(0f, 0f, z), strip, FacadeDepth, PaletteSwatch.FadedPaint);
-                float trim = z + FacadeDepth * 0.5f + 0.03f;
-                SiteKit.Bar(b, new Vector3(x0, ArchY(x0), trim), new Vector3(x1, ArchY(x1), trim), 0.09f,
-                    PaletteSwatch.WarmAccent);
+                float x = -ArchHalfSpan + i * step;
+                float y = ArchY(x);
+                trimRing[i] = new Vector2(x, y);
+                Vector2 radial = new Vector2(x, y - ArchSpring) / ArchHalfSpan;
+                float trim = ArchTrimWidth + (i == ArchSegments / 2 ? ArchKeystoneRise : 0f);
+                outerArch[i] = new Vector2(0f, ArchSpring) + radial * (ArchHalfSpan + trim);
+                trimRing[trimRing.Length - 1 - i] = outerArch[i];
             }
 
-            b.Box(At(0f, ArchSpring + ArchHalfSpan - 0.02f, z + FacadeDepth * 0.5f + 0.05f),
-                new Vector3(0.24f, 0.3f, 0.1f), PaletteSwatch.WarmAccent, 0.02f);
+            b.Extrude(At(0f, 0f, z), trimRing, FacadeDepth, PaletteSwatch.WarmAccent);
+            var wall = new Vector2[ArchSegments + 9];
+            int p = 0;
+            wall[p++] = new Vector2(-outer, PadTop);
+            wall[p++] = new Vector2(-ArchHalfSpan, PadTop);
+            wall[p++] = new Vector2(-ArchHalfSpan, ArchSpring);
+            for (int i = 0; i <= ArchSegments; i++)
+            {
+                wall[p++] = outerArch[i];
+            }
+
+            wall[p++] = new Vector2(ArchHalfSpan, ArchSpring);
+            wall[p++] = new Vector2(ArchHalfSpan, PadTop);
+            wall[p++] = new Vector2(outer, PadTop);
+            wall[p++] = new Vector2(outer, top);
+            wall[p] = new Vector2(-outer, top);
+            b.Extrude(At(0f, 0f, z), wall, FacadeDepth, PaletteSwatch.FadedPaint);
         }
 
         /// <summary>The arch's height over <paramref name="x"/> (its springing height outside the span).</summary>
@@ -581,11 +610,13 @@ namespace MoonProject.Art.Editor
         {
             Vector3 roller = ShutterRoller;
             float halfWidth = ArchHalfSpan + ShutterOverlap;
-            b.Box(At(roller), new Vector3(2f * halfWidth + 0.16f, 0.24f, 0.26f), PaletteSwatch.Charcoal, 0.02f);
+            float railHeight = roller.y - ShutterRollerHeight * 0.5f;
+            b.Box(At(roller), new Vector3(2f * halfWidth + 0.16f, ShutterRollerHeight, ShutterRollerDepth),
+                PaletteSwatch.Charcoal, 0.02f);
             for (int side = -1; side <= 1; side += 2)
             {
-                b.Box(At(side * (halfWidth + 0.03f), roller.y * 0.5f, roller.z), new Vector3(0.07f, roller.y, 0.09f),
-                    PaletteSwatch.Metal, 0.01f);
+                b.Box(At(side * (halfWidth + ShutterRailInset), railHeight * 0.5f, roller.z),
+                    new Vector3(ShutterRailWidth, railHeight, ShutterRailDepth), PaletteSwatch.Metal, 0.01f);
             }
         }
 
@@ -738,7 +769,7 @@ namespace MoonProject.Art.Editor
         private static void Board(LowPolyMeshBuilder b)
         {
             Matrix4x4 board = At(new Vector3(-(ArchHalfSpan + HalfWidth) * 0.5f, 2.3f, FrontZ + FacadeDepth * 0.5f
-                + 0.03f), new Vector3(0f, 0f, -4f));
+                + BoardAhead), new Vector3(0f, 0f, -4f));
             b.Box(board, new Vector3(0.62f, 0.3f, 0.04f), PaletteSwatch.Enamel, 0.01f);
             Glyphs.Write(b, board * At(0f, 0f, 0.021f), "PIT", 0.18f, PaletteSwatch.Charcoal, PaletteSwatch.Enamel);
         }

@@ -334,6 +334,62 @@ namespace MoonProject.Art.Tests
             MeshChecks.AssertSameModel(_bay, BaseModelBuilder.CreateRoverBay());
         }
 
+        [Test]
+        public void ArchAndWalls_HaveNoCoplanarOverlaps_BuriedSeamSkins_OrPerpendicularWallFins()
+        {
+            const float archHalfSpan = 1.45f;
+            const float archSpring = 1.7f;
+            Bounds inside = BaseModelBuilder.RoverBayInside;
+            LowPolyMeshBuilder bay = _bay.Mesh.Geometry;
+            AssertNoCoplanarOverlaps(bay, "RoverBay");
+            IReadOnlyList<Vector3> positions = bay.Positions;
+            IReadOnlyList<Vector3> normals = bay.Normals;
+            float facadeMinZ = inside.max.z - 0.04f;
+            float facadeMaxZ = inside.max.z + 0.04f;
+            float eaveClear = inside.max.y - 0.08f;
+            int archSoffitFaces = 0;
+            for (int t = 0; t < bay.TriangleCount; t++)
+            {
+                Vector3 c = (positions[t * 3] + positions[t * 3 + 1] + positions[t * 3 + 2]) / 3f;
+                Vector3 n = normals[t * 3];
+                if (c.z >= facadeMinZ && c.z <= facadeMaxZ && c.y > archSpring
+                    && c.y < eaveClear && Mathf.Abs(c.x) < archHalfSpan - 0.01f
+                    && Mathf.Abs(n.z) < 0.5f)
+                {
+                    Vector2 radialInward = new Vector2(-c.x, archSpring - c.y);
+                    if (radialInward.magnitude > archHalfSpan - 0.08f
+                        && radialInward.magnitude < archHalfSpan)
+                    {
+                        archSoffitFaces++;
+                        Assert.Greater(Vector2.Dot(radialInward.normalized, new Vector2(n.x, n.y).normalized), 0.95f,
+                            $"Arch soffit face at {c} must face inward toward the opening, not a vertical seam");
+                    }
+                }
+            }
+
+            Assert.GreaterOrEqual(archSoffitFaces, 24, "the inner arch soffit is present and continuous");
+
+            LowPolyMeshBuilder paint = Child(_bay, Weathering.PaintName).Mesh.Geometry;
+            LowPolyMeshBuilder rust = Child(_bay, Weathering.RustName).Mesh.Geometry;
+            LowPolyMeshBuilder dust = Child(_bay, Weathering.DustName).Mesh.Geometry;
+            foreach (LowPolyMeshBuilder skin in new[] { paint, rust, dust })
+            {
+                IReadOnlyList<Vector3> sp = skin.Positions;
+                IReadOnlyList<Vector3> sn = skin.Normals;
+                for (int t = 0; t < skin.TriangleCount; t++)
+                {
+                    Vector3 c = (sp[t * 3] + sp[t * 3 + 1] + sp[t * 3 + 2]) / 3f;
+                    Vector3 n = sn[t * 3];
+                    if (c.x > inside.min.x - 0.16f && c.x < inside.min.x - 0.12f && c.y > 1.15f && c.y < eaveClear
+                        && c.z > inside.min.z + 0.2f && c.z < inside.max.z - 0.2f && Mathf.Abs(n.y) < 0.5f)
+                    {
+                        Assert.Greater(Mathf.Abs(n.x), 0.999f,
+                            $"Left wall weather skin at {c} has steep ridge-side fin normal {n}");
+                    }
+                }
+            }
+        }
+
         /// <summary>Fails if the segment <paramref name="from"/>..<paramref name="to"/> crosses a triangle.</summary>
         private static void AssertClear(List<Vector3> triangles, Vector3 from, Vector3 to, string what)
         {
@@ -447,6 +503,120 @@ namespace MoonProject.Art.Tests
                 {
                     yield return descendant;
                 }
+            }
+        }
+
+        private static void AssertNoCoplanarOverlaps(LowPolyMeshBuilder mesh, string label)
+        {
+            const float normalDot = 0.999f;
+            const float planeTolerance = 0.0008f;
+            const float minOverlapArea = 1e-4f;
+            IReadOnlyList<Vector3> positions = mesh.Positions;
+            IReadOnlyList<Vector3> normals = mesh.Normals;
+            int count = mesh.TriangleCount;
+            var mins = new Vector3[count];
+            var maxs = new Vector3[count];
+            for (int t = 0; t < count; t++)
+            {
+                Vector3 a = positions[t * 3];
+                Vector3 b = positions[t * 3 + 1];
+                Vector3 c = positions[t * 3 + 2];
+                mins[t] = Vector3.Min(a, Vector3.Min(b, c));
+                maxs[t] = Vector3.Max(a, Vector3.Max(b, c));
+            }
+
+            var piece = new List<Vector2>(6);
+            var scratch = new List<Vector2>(6);
+            var clipper = new Vector2[3];
+            for (int t = 0; t < count; t++)
+            {
+                Vector3 n = normals[t * 3];
+                Vector3 a = positions[t * 3];
+                if (n.y < -0.99f && a.y < 0.01f)
+                {
+                    continue;
+                }
+
+                Vector3 b = positions[t * 3 + 1];
+                Vector3 c = positions[t * 3 + 2];
+                Vector3 uAxis = (b - a).normalized;
+                Vector3 vAxis = Vector3.Cross(n, uAxis);
+                Vector2 b2 = new Vector2(Vector3.Dot(b - a, uAxis), Vector3.Dot(b - a, vAxis));
+                Vector2 c2 = new Vector2(Vector3.Dot(c - a, uAxis), Vector3.Dot(c - a, vAxis));
+                for (int u = t + 1; u < count; u++)
+                {
+                    if (mins[u].x > maxs[t].x + planeTolerance || maxs[u].x < mins[t].x - planeTolerance
+                        || mins[u].y > maxs[t].y + planeTolerance || maxs[u].y < mins[t].y - planeTolerance
+                        || mins[u].z > maxs[t].z + planeTolerance || maxs[u].z < mins[t].z - planeTolerance)
+                    {
+                        continue;
+                    }
+
+                    if (Vector3.Dot(n, normals[u * 3]) < normalDot)
+                    {
+                        continue;
+                    }
+
+                    Vector3 ua = positions[u * 3];
+                    if (Mathf.Abs(Vector3.Dot(n, ua - a)) > planeTolerance)
+                    {
+                        continue;
+                    }
+
+                    Vector3 ub = positions[u * 3 + 1];
+                    Vector3 uc = positions[u * 3 + 2];
+                    Vector2 ua2 = new Vector2(Vector3.Dot(ua - a, uAxis), Vector3.Dot(ua - a, vAxis));
+                    Vector2 ub2 = new Vector2(Vector3.Dot(ub - a, uAxis), Vector3.Dot(ub - a, vAxis));
+                    Vector2 uc2 = new Vector2(Vector3.Dot(uc - a, uAxis), Vector3.Dot(uc - a, vAxis));
+                    float cross = (ub2.x - ua2.x) * (uc2.y - ua2.y) - (ub2.y - ua2.y) * (uc2.x - ua2.x);
+                    clipper[0] = ua2;
+                    clipper[1] = cross < 0f ? uc2 : ub2;
+                    clipper[2] = cross < 0f ? ub2 : uc2;
+                    piece.Clear();
+                    piece.Add(Vector2.zero);
+                    piece.Add(b2);
+                    piece.Add(c2);
+                    ClipPolygon(piece, clipper, scratch);
+                    float area = 0f;
+                    for (int i = 2; i < piece.Count; i++)
+                    {
+                        Vector2 e1 = piece[i - 1] - piece[0];
+                        Vector2 e2 = piece[i] - piece[0];
+                        area += Mathf.Abs(e1.x * e2.y - e1.y * e2.x) * 0.5f;
+                    }
+
+                    Assert.LessOrEqual(area, minOverlapArea,
+                        $"{label} triangles {t} and {u} overlap coplanarly (area {area:F5} m^2) at {(a + b + c) / 3f} with normal {n}");
+                }
+            }
+        }
+
+        private static void ClipPolygon(List<Vector2> polygon, Vector2[] clipper, List<Vector2> scratch)
+        {
+            for (int e = 0; e < clipper.Length && polygon.Count > 0; e++)
+            {
+                Vector2 a = clipper[e];
+                Vector2 b = clipper[(e + 1) % clipper.Length];
+                scratch.Clear();
+                for (int i = 0; i < polygon.Count; i++)
+                {
+                    Vector2 from = polygon[i];
+                    Vector2 to = polygon[(i + 1) % polygon.Count];
+                    float fromSide = (b.x - a.x) * (from.y - a.y) - (b.y - a.y) * (from.x - a.x);
+                    float toSide = (b.x - a.x) * (to.y - a.y) - (b.y - a.y) * (to.x - a.x);
+                    if (fromSide >= 0f)
+                    {
+                        scratch.Add(from);
+                    }
+
+                    if ((fromSide >= 0f) != (toSide >= 0f))
+                    {
+                        scratch.Add(Vector2.Lerp(from, to, fromSide / (fromSide - toSide)));
+                    }
+                }
+
+                polygon.Clear();
+                polygon.AddRange(scratch);
             }
         }
     }

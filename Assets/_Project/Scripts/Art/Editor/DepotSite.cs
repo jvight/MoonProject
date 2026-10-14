@@ -120,7 +120,7 @@ namespace MoonProject.Art.Editor
             int first = b.TriangleCount;
             SiteKit.Sheet(b, roof, 3.7f, 2.3f, PaletteSwatch.WornPanel);
             SiteKit.DustCap(b, b.RangeFrom(first));
-            SiteKit.RustPatch(b, roof * At(0f, 0f, 0.05f), -0.6f, 0.2f, 1.1f);
+            SiteKit.RustPatch(b, roof * At(0f, 0f, SiteKit.SheetFront), -0.6f, 0.2f, 1.1f);
         }
 
         /// <summary>The right wall's back panels and the right half of the back wall; the rest is gone.</summary>
@@ -134,14 +134,14 @@ namespace MoonProject.Art.Editor
                 Matrix4x4 wall = SiteKit.Face(new Vector3(Side + 0.1f, Floor + height * 0.5f, z), Vector3.right,
                     Vector3.up);
                 SiteKit.Sheet(b, wall, panel - 0.02f, height, PaletteSwatch.WornPanel);
-                SiteKit.RustSeam(b, wall * At(0f, 0f, 0.05f), -panel * 0.5f, panel * 0.5f, height * 0.42f,
+                SiteKit.RustSeam(b, wall * At(0f, 0f, SiteKit.SheetFront), -panel * 0.5f, panel * 0.5f, height * 0.42f,
                     height * 0.85f, PanelRunsPerMetre, 300 + i);
             }
 
             Matrix4x4 back = SiteKit.Face(new Vector3(Side * 0.5f, Floor + height * 0.5f, Back + 0.1f), Vector3.forward,
                 Vector3.up);
             SiteKit.Sheet(b, back, Side, height, PaletteSwatch.WornPanel);
-            SiteKit.RustPatch(b, back * At(0f, 0f, 0.05f), 0.6f, -0.4f, 0.8f);
+            SiteKit.RustPatch(b, back * At(0f, 0f, SiteKit.SheetFront), 0.6f, -0.4f, 0.8f);
 
             Matrix4x4 crumpled = SiteKit.Face(new Vector3(-1.6f, 0.75f, Back + 0.35f), new Vector3(0f, 0.55f, 1f),
                 new Vector3(0.3f, 1f, 0f));
@@ -228,9 +228,9 @@ namespace MoonProject.Art.Editor
                 upSlope) * Matrix4x4.Rotate(Rotation(new Vector3(0f, 0f, 4f)));
             SiteKit.Sheet(piece.Geometry, face, 2.7f, 2.5f, PaletteSwatch.WornPanel);
             SiteKit.DustCap(piece.Geometry, piece.Geometry.RangeFrom(0));
-            SiteKit.RustStreak(piece.Geometry, face * At(0f, 0f, 0.05f), -0.7f, 1.05f, 0.8f);
-            SiteKit.RustStreak(piece.Geometry, face * At(0f, 0f, 0.05f), 0.6f, 1.05f, 1.1f);
-            SiteKit.RustPatch(piece.Geometry, face * At(0f, 0f, 0.05f), 0.2f, -0.3f, 0.6f);
+            SiteKit.RustStreak(piece.Geometry, face * At(0f, 0f, SiteKit.SheetFront), -0.7f, 1.05f, 0.8f);
+            SiteKit.RustStreak(piece.Geometry, face * At(0f, 0f, SiteKit.SheetFront), 0.6f, 1.05f, 1.1f);
+            SiteKit.RustPatch(piece.Geometry, face * At(0f, 0f, SiteKit.SheetFront), 0.2f, -0.3f, 0.6f);
             site.Settle(piece);
         }
 
@@ -248,8 +248,8 @@ namespace MoonProject.Art.Editor
                 * SiteKit.Face(new Vector3(0f, -height * 0.5f + 0.08f, -(4f / 3f) * 0.5f + 0.06f), Vector3.right,
                     Vector3.up);
             SiteKit.Sheet(piece.Geometry, hang, 4f / 3f - 0.02f, height, PaletteSwatch.WornPanel);
-            SiteKit.RustStreak(piece.Geometry, hang * At(0f, 0f, 0.05f), 0.2f, height * 0.4f, 1.2f);
-            SiteKit.RustPatch(piece.Geometry, hang * At(0f, 0f, 0.05f), -0.2f, -0.6f, 0.5f);
+            SiteKit.RustStreak(piece.Geometry, hang * At(0f, 0f, SiteKit.SheetFront), 0.2f, height * 0.4f, 1.2f);
+            SiteKit.RustPatch(piece.Geometry, hang * At(0f, 0f, SiteKit.SheetFront), -0.2f, -0.6f, 0.5f);
             piece.Resize(0.5f);
         }
 
