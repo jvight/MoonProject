@@ -37,6 +37,9 @@ namespace MoonProject.Art.Editor
         private const float BracketArm = 0.08f;
         private const float BracketBar = 0.014f;
         private const float OutlineMargin = 0.06f;
+        private const float SweepIntensity = 0.52f;
+        private const float SweepWidth = 0.022f;
+        private static readonly Color LineColor = new Color(0.88f, 0.92f, 0.96f, 1f);
 
         /// <summary>The blueprints with fragments (RoverAbility's names) and how many each has.</summary>
         public static IReadOnlyList<(string Blueprint, int Count)> Sets => FragmentMeshes.Sets;
@@ -102,12 +105,13 @@ namespace MoonProject.Art.Editor
 
             Material material = PaletteAssetBuilder.CreateMaterial(shader, palette.GetTexture("_BaseMap"),
                 palette.GetTexture("_EmissionMap"), true);
-            material.SetColor("_SweepColor", Palette.GetGlow(PaletteSwatch.TechGlow) * 1.6f);
+            material.SetColor("_SweepColor", Palette.Linear(Palette.Get(PaletteSwatch.TechGlow)) * SweepIntensity);
             material.SetColor("_DrawnColor", Palette.GetSurface(PaletteSwatch.Cream));
+            material.SetFloat("_SweepWidth", SweepWidth);
             return material;
         }
 
-        /// <summary>The line drawing's material (not saved): unlit, a touch over white.</summary>
+        /// <summary>The line drawing's material (not saved): unlit, pale blueprint white under the bloom threshold.</summary>
         public static Material CreateScanLinesMaterial()
         {
             var shader = AssetDatabase.LoadAssetAtPath<Shader>(ArtPaths.ScanLinesShader);
@@ -116,7 +120,9 @@ namespace MoonProject.Art.Editor
                 throw new InvalidOperationException($"The scan lines shader is missing at {ArtPaths.ScanLinesShader}.");
             }
 
-            return new Material(shader) { enableInstancing = true };
+            var material = new Material(shader) { enableInstancing = true };
+            material.SetColor("_LineColor", LineColor);
+            return material;
         }
 
         /// <summary>The four corner brackets on the fragment's top corners, each three short bars along the edges
