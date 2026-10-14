@@ -4,7 +4,26 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 000000000000000000000. LATEST (2026-10-14 ~10:00): main 98e82f69 (D1 scanning) verified + pushed; D2 + agy jobs
+## 0000000000000000000000. LATEST (2026-10-14 ~12:30): main 402116ed (D2 gameplay) verified + pushed; D2 UI + sweep on agy
+- **Landed + verified today since 98e82f69:**
+  - 48bb3543: agy's first lands (ui Scan chip 74f2032a; art cleanup f45a1120+667aa4d1: no reader parts, no hand-off,
+    no tube model, 07's TubeSocket -> StoryPartSocket) + ARCHITECTURE (scan-fragment contract, 3 lab stations).
+  - 402116ed: D2 gameplay (box/gameplay 4c14edbe: IScanSites + ScanSiteReached/Emptied, listening answers places with
+    fragments left and the lone derelicts 06/Mule/drone, gameplay.scans v2) + audio dba22927 (micro_* answer voices).
+    Playthrough 1606/1735 s.
+- **In flight (agy, Gemini 4 Argon ONLY, owner rule):**
+  - D:/Project/MoonProject-wt/agy-ui (box/agy-ui, based on ade38ef0): the D2 UI half (place card "N fragments to
+    scan", chart pencil brackets, lab board torn sheets; adds ITechTree.KitOf in Core with UI's fakes). Review the
+    Core change, then land alone.
+  - D:/Project/MoonProject-wt/agy (box/agy): the 0.5.5 acceptance-1 capture sweep (Logs only; report in its
+    Logs/REPORT.md). Route any ISSUE it finds to the owning domain (agy first).
+- **Then 0.5.5:** `verify --explicit --parallel --push`, bump bundleVersion to 0.5.5, `python tools/build_player.py`
+  in MoonProject-wt/director, copy the zip to D:/Project/MoonProject/Builds, tell the owner.
+- Gameplay, world, rover, audio, art, ui stand by. agy quota: the owner upgraded the plan ~11:00 (memory
+  agy-cli-reference).
+- **Owner pending:** story v3's 7 questions.
+
+## 000000000000000000000. (prev) (2026-10-14 ~10:00): main 98e82f69 (D1 scanning) verified + pushed; D2 + agy jobs
 - **main 98e82f69 (verified, origin has it)** = the D1 batch (gameplay a7c29cfc scanning + rover/audio/ui/world
   tube and reader removals; LabStation Chart 0, Board 1, Keepsakes 2) + the Director's Core deletion of
   BlueprintFound, BlueprintDelivered, BlueprintsCarriedRestored, FindDecoded, DecodeHandOff. Playthrough 1602/1735 s.
