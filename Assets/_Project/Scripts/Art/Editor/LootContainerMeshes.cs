@@ -239,5 +239,44 @@ namespace MoonProject.Art.Editor
 
         /// <summary>Where the relic and its glint sit in the pocket, in the gap under the panel's raised edge.</summary>
         public static readonly Vector3 DigSpot = new Vector3(0f, 0.02f, 0.12f);
+
+        /// <summary>Where a buried friend part and its glint sit in the front gap of a <see cref="RockfallPocket"/>.</summary>
+        public static readonly Vector3 RockfallDigSpot = new Vector3(-0.04f, 0.06f, 0.24f);
+
+        /// <summary>
+        /// A small rockfall slumped against a canyon alcove wall (pocket space: root on the ground, -Z against the wall,
+        /// +Z facing out into the alcove): five angular rocks over a talus drift with a dark hollow gap under the front
+        /// lintel slab where Bell's buried part rests at <see cref="RockfallDigSpot"/>.
+        /// </summary>
+        public static LowPolyMeshBuilder RockfallPocket()
+        {
+            var b = new LowPolyMeshBuilder(600);
+            Paint rock = Paint.Facing(PaletteSwatch.RockLight, PaletteSwatch.RockDark, Vector3.up, 0.35f);
+
+            b.Icosphere(At(new Vector3(0f, 0.015f, 0.22f), Quaternion.identity, new Vector3(1f, 0.06f, 0.8f)), 0.38f, 1,
+                PaletteSwatch.Charcoal, new Displacement(71, 0.04f, 5f));
+            b.Icosphere(At(new Vector3(0f, 0.01f, 0.2f), Quaternion.identity, new Vector3(1f, 0.04f, 0.85f)), 0.52f, 1,
+                PaletteSwatch.DustShadow, new Displacement(79, 0.05f, 4f));
+
+            b.Icosphere(At(new Vector3(-0.36f, 0.05f, 0.04f), new Vector3(0f, -18f, 0f), new Vector3(1.1f, 0.32f, 0.9f)),
+                0.34f, 1, PaletteSwatch.DustMid, new Displacement(83, 0.025f, 5f));
+            b.Icosphere(At(new Vector3(0.38f, 0.05f, 0.02f), new Vector3(0f, 22f, 0f), new Vector3(1.1f, 0.32f, 0.9f)),
+                0.32f, 1, PaletteSwatch.DustMid, new Displacement(89, 0.025f, 5f));
+
+            b.Icosphere(At(new Vector3(0.02f, 0.38f, -0.24f), new Vector3(-14f, 8f, -4f), new Vector3(1.15f, 1.15f, 0.9f)),
+                0.34f, 1, rock, new Displacement(101, 0.04f, 4.5f));
+            b.Icosphere(At(new Vector3(-0.42f, 0.25f, -0.14f), new Vector3(-8f, -24f, 10f), new Vector3(1.1f, 0.95f, 0.95f)),
+                0.28f, 1, rock, new Displacement(107, 0.035f, 5f));
+            b.Icosphere(At(new Vector3(0.44f, 0.24f, -0.12f), new Vector3(-10f, 19f, -12f), new Vector3(1.05f, 0.9f, 0.95f)),
+                0.27f, 1, rock, new Displacement(113, 0.035f, 5f));
+            b.Box(At(new Vector3(-0.36f, 0.16f, 0.2f), new Vector3(12f, -28f, -14f)), new Vector3(0.44f, 0.22f, 0.36f),
+                rock, 0.04f, new Displacement(127, 0.02f, 6f));
+            b.Box(At(new Vector3(0.14f, 0.3f, 0.08f), new Vector3(-16f, 18f, 12f)), new Vector3(0.62f, 0.16f, 0.48f),
+                rock, 0.035f, new Displacement(131, 0.02f, 5.5f));
+
+            b.Shave(b.RangeFrom(0), Vector3.down, 0f);
+            return b;
+        }
     }
 }
+

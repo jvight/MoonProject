@@ -356,6 +356,37 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
+        public void RockfallPocket_IsALowRubbleHeap_WithADigSpotInItsFrontGap()
+        {
+            ModelNode pocket = GroundOcclusion.Ground(PropModelBuilder.CreateRockfallPocket());
+            Assert.AreEqual(PropModelBuilder.RockfallPocketName, pocket.Name);
+            LowPolyMeshBuilder mesh = pocket.Mesh.Geometry;
+            MeshChecks.AssertWellFormed(mesh);
+            Bounds bounds = mesh.Bounds;
+            Assert.That(bounds.size.x, Is.InRange(1.2f, 1.8f), "1.2–1.8 m wide across the alcove back");
+            Assert.That(bounds.size.y, Is.InRange(0.6f, 0.9f), "0.6–0.9 m tall slumped rubble heap");
+            Assert.AreEqual(0f, bounds.min.y, 1e-4f, "its foot sits on the ground");
+
+            List<PaletteSwatch> swatches = MeshChecks.Swatches(mesh);
+            CollectionAssert.Contains(swatches, PaletteSwatch.RockDark, "dark angular rock facets");
+            CollectionAssert.Contains(swatches, PaletteSwatch.RockLight, "sky-facing rock facets");
+            CollectionAssert.Contains(swatches, PaletteSwatch.DustMid, "talus dust drift");
+            CollectionAssert.Contains(swatches, PaletteSwatch.Charcoal, "dark hollow gap under the front rocks");
+            CollectionAssert.Contains(swatches, PaletteSwatch.DustShadow, "shaded floor hollow");
+            Assert.IsFalse(swatches.Any(Palette.IsEmissive), "rubble does not glow; the glint is gameplay's");
+
+            ModelNode spot = pocket.Children.Single(n => n.Name == PropModelBuilder.DigSpotName);
+            Assert.IsNull(spot.Mesh, "DigSpot is an empty node");
+            Assert.Less(Vector3.Distance(spot.LocalRotation * Vector3.up, Vector3.up), 1e-4f, "DigSpot has +Y up");
+            Assert.Greater(spot.LocalPosition.z, 0.1f, "DigSpot sits in the front (+Z) gap");
+            Assert.That(spot.LocalPosition.y, Is.InRange(0.02f, 0.2f), "tucked low in the floor hollow");
+            Assert.IsTrue(bounds.Contains(spot.LocalPosition), "DigSpot lies inside the pocket's footprint");
+
+            ModelNode skirt = pocket.Children.Single(n => n.Name == GroundOcclusion.SkirtName);
+            MeshChecks.AssertWellFormed(skirt.Mesh.Geometry);
+        }
+
+        [Test]
         public void HullFragments_ReadAsAHullsRemains_HalfBuried_EachWithACutPoint()
         {
             for (int i = 0; i < PropModelBuilder.HullFragmentVariants; i++)
