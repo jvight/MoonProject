@@ -80,9 +80,6 @@ namespace MoonProject.Gameplay
         /// <summary>Step 4b (P2): Tilly spots Bell's light across the chasm; drive there and look across.</summary>
         public const string NextChasm = "next.chasm";
 
-        /// <summary>Step 4b2: scan the Hover-Jump fragments on Kenji's crashed jumper at the chasm edge.</summary>
-        public const string NextChasmScan = "next.chasm.scan";
-
         /// <summary>Step 5: the bay sleeps until the tower's second level wakes it.</summary>
         public const string NextBayWake = "next.bay.wake";
 

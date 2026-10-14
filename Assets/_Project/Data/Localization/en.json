@@ -219,10 +219,6 @@
             "text": "Drive to the chasm edge and look across."
         },
         {
-            "key": "next.chasm.scan",
-            "text": "Scan the Hover-Jump fragments at the chasm edge."
-        },
-        {
             "key": "next.bay.wake",
             "text": "Get the Transformer at the garage and build tower level 2."
         },

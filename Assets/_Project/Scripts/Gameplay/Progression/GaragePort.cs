@@ -172,12 +172,6 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>True once <paramref name="part"/>'s blueprint is known to 07's equipment.</summary>
-        public bool IsKnown(RoverKitPiece part)
-        {
-            return _equipment.IsKnown(_equipment.SocketOf(part));
-        }
-
         /// <summary>The exact current step of the garage beat (a)-(d), or empty once the deck is fitted.</summary>
         public string StepLine()
         {
@@ -186,14 +180,9 @@ namespace MoonProject.Gameplay
                 return string.Empty;
             }
 
-            if (!IsOpen)
-            {
-                return ProgressionKeys.GarageScrapKey(_garage.Remaining);
-            }
-
             if (!RingFitted)
             {
-                return ProgressionKeys.NextPort;
+                return !IsOpen ? ProgressionKeys.GarageScrapKey(_garage.Remaining) : ProgressionKeys.NextPort;
             }
 
             return !_crate.Opened ? ProgressionKeys.NextGarageCrate : ProgressionKeys.NextGarageDeck;
@@ -271,7 +260,7 @@ namespace MoonProject.Gameplay
                 _placeSeen = true;
             }
 
-            bool parked = toPad <= _tuning.PortPadRadius && _rover.Speed <= _tuning.PortParkSpeed;
+            bool parked = open && toPad <= _tuning.PortPadRadius && _rover.Speed <= _tuning.PortParkSpeed;
             _parked = parked ? _parked + deltaTime : 0f;
             if (open && !_ringFitted && Parked)
             {
