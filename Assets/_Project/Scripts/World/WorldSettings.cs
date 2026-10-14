@@ -70,6 +70,9 @@ namespace MoonProject.World
         [Tooltip("The handshake that runs lamp to lamp when a mast lights (north-star beat 7).")]
         [SerializeField] private NetworkPulseSettings _networkPulse = new NetworkPulseSettings();
 
+        [Tooltip("Named world regions (basin, canyon): volumes, hysteresis and atmosphere profiles.")]
+        [SerializeField] private RegionSettings _regions = new RegionSettings();
+
         public int Seed => _seed;
 
         public SurfaceSettings Surface => _surface;
@@ -108,6 +111,8 @@ namespace MoonProject.World
 
         public NetworkPulseSettings NetworkPulse => _networkPulse;
 
+        public RegionSettings Regions => _regions;
+
         /// <summary>Builds the analytic surface for these settings (throws on invalid settings).</summary>
         public MoonSurface CreateSurface()
         {
@@ -117,7 +122,8 @@ namespace MoonProject.World
         /// <summary>Returns null when every settings block is valid, otherwise the first problem found.</summary>
         public string Validate()
         {
-            return _surface.Validate() ?? _mesh.Validate() ?? _scatter.Validate() ?? _relays.Validate();
+            return _surface.Validate() ?? _mesh.Validate() ?? _scatter.Validate() ?? _relays.Validate()
+                ?? _regions.Validate();
         }
 
         private void OnValidate()

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Rendering;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.World.Map;
 
 namespace MoonProject.World
@@ -10,8 +11,9 @@ namespace MoonProject.World
     /// <summary>
     /// Owns the moon: builds the analytic surface, the terrain (with Whispering Canyon's gate slabs), the rock scatter
     /// and Earth, applies the atmosphere and sky, and registers <see cref="ITerrainQuery"/>,
-    /// <see cref="IWorldLayout"/>, <see cref="IWorldAnchors"/>, the <see cref="ISightline"/> and itself as the
-    /// <see cref="IScrapField"/> (the cuttable slots down Kestrel-3's lane, 0.5.5 C5) in the context. In edit mode it
+    /// <see cref="IWorldLayout"/>, <see cref="IWorldAnchors"/>, <see cref="IWorldRegions"/>, the
+    /// <see cref="ISightline"/> and itself as the <see cref="IScrapField"/> (the cuttable slots down Kestrel-3's lane,
+    /// 0.5.5 C5) in the context. In edit mode it
     /// also builds a preview (HideFlags.DontSave: never saved into the scene, destroyed in OnDisable) so the scene view
     /// and scene captures show the world, and other domains' edit-mode previews read its anchors through
     /// <see cref="IWorldPreview"/> and the scrap field's slots through <see cref="IScrapField"/>;
@@ -68,6 +70,9 @@ namespace MoonProject.World
         private readonly TerrainBuilder _terrainBuilder = new TerrainBuilder();
         private readonly ScatterBuilder _scatterBuilder = new ScatterBuilder();
         private readonly CanyonGateBuilder _gateBuilder = new CanyonGateBuilder();
+        private GameContext _context;
+        private IRoverState _rover;
+        private System.IDisposable _placedSubscription;
         private GameObject _generatedRoot;
         private Mesh _earthMesh;
         private Mesh _tracksMesh;
@@ -79,6 +84,10 @@ namespace MoonProject.World
         public WorldLayout Layout { get; private set; }
 
         public WorldAnchors Anchors { get; private set; }
+
+        public WorldRegions Regions { get; private set; }
+
+        public WorldAtmosphereBlender AtmosphereBlender { get; private set; }
 
         IWorldAnchors IWorldPreview.Anchors => Anchors;
 
@@ -109,10 +118,14 @@ namespace MoonProject.World
                 return;
             }
 
+            _context = context;
             Generate(HideFlags.None);
+            _placedSubscription?.Dispose();
+            _placedSubscription = context.Events.Subscribe<RoverPlaced>(OnRoverPlaced);
             context.Register<ITerrainQuery>(Surface);
             context.Register<IWorldLayout>(Layout);
             context.Register<IWorldAnchors>(Anchors);
+            context.Register<IWorldRegions>(Regions);
             context.Register<ISightline>(new Sightline(Surface));
             context.Register<IScrapField>(this);
             Debug.Log($"{nameof(WorldSystem)}: terrain {LastBuild}; scatter {LastScatter}", this);
@@ -139,7 +152,39 @@ namespace MoonProject.World
 
         private void OnDisable()
         {
+            _placedSubscription?.Dispose();
+            _placedSubscription = null;
+            _rover = null;
+            _context = null;
             DestroyGenerated();
+        }
+
+        private void Update()
+        {
+            if (!Application.isPlaying || _context == null || Regions == null)
+            {
+                return;
+            }
+
+            if (_rover == null && !_context.TryGet(out _rover))
+            {
+                return;
+            }
+
+            Vector3 position = _rover.Position;
+            Regions.Step(position);
+            AtmosphereBlender?.ApplyAt(position);
+        }
+
+        private void OnRoverPlaced(RoverPlaced placed)
+        {
+            if (Regions == null)
+            {
+                return;
+            }
+
+            Regions.PlaceAt(placed.Position);
+            AtmosphereBlender?.ApplyAt(placed.Position);
         }
 
         private void Generate(HideFlags hideFlags)
@@ -149,6 +194,8 @@ namespace MoonProject.World
             Surface = surface;
             Layout = new WorldLayout(surface, _settings.Sky);
             Anchors = new WorldAnchors(surface, _settings.Surface.Canyon, _settings.Relays);
+            Regions = new WorldRegions(Anchors, _settings.Regions, _context?.Events);
+            AtmosphereBlender = new WorldAtmosphereBlender(Regions, _earthlight, _fillLight);
             surface.AttachCraterField(CreateCraterField(surface));
 
             // Scatter planning only reads the analytic surface: it runs on a worker while the terrain is meshed.
@@ -157,6 +204,7 @@ namespace MoonProject.World
                 Task.Run(() => new ScatterPlanner(surface, scatterSettings, Anchors).Plan());
             WorldAtmosphere.Apply(_settings.Atmosphere, _settings.Sky, _earthlight, _fillLight);
             SkyShaderGlobals.Apply(_settings.Sky);
+            AtmosphereBlender.ApplyAt(Layout.BasePosition, true);
 
             _generatedRoot = new GameObject(GeneratedRootName) { hideFlags = hideFlags };
             _generatedRoot.transform.SetParent(transform, false);

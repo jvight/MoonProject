@@ -128,33 +128,36 @@ namespace MoonProject.World
             CanyonPath exit = canyon.ExitPath;
             var anchors = new List<WorldAnchor>
             {
-                Make(surface, WorldAnchorIds.CanyonMouth, main.PointAt(0f), main.TangentAt(0f), MouthRadius),
+                Make(surface, WorldAnchorIds.CanyonMouth, main.PointAt(0f), main.TangentAt(0f), MouthRadius,
+                    RegionIds.Canyon),
                 Make(surface, WorldAnchorIds.CanyonLip, main.PointAt(canyon.LipArc), main.TangentAt(canyon.LipArc),
-                    LipRadius),
+                    LipRadius, RegionIds.Canyon),
             };
 
             float landing = canyon.FarFaceArc + Canyon.SlabHalfDepth + LandingSetback + LandingRadius;
             anchors.Add(Make(surface, WorldAnchorIds.CanyonLanding, main.PointAt(landing), main.TangentAt(landing),
-                LandingRadius));
+                LandingRadius, RegionIds.Canyon));
             anchors.Add(Make(surface, WorldAnchorIds.CanyonLedge, canyon.LedgeCenter,
-                main.RightAt(canyon.LedgeArc) * canyon.LedgeSide, LedgeRadius));
+                main.RightAt(canyon.LedgeArc) * canyon.LedgeSide, LedgeRadius, RegionIds.Canyon));
             for (int i = 0; i < canyon.AlcoveArcs.Count; i++)
             {
                 float arc = canyon.AlcoveArcs[i];
                 float side = canyon.AlcoveSides[i];
                 Vector2 outward = main.RightAt(arc) * side;
                 Vector2 centre = main.PointAt(arc) + outward * (settings.CanyonHalfWidth + settings.AlcoveDepth * 0.5f);
-                anchors.Add(Make(surface, WorldAnchorIds.CanyonAlcovePrefix + i, centre, outward, AlcoveRadius));
+                anchors.Add(Make(surface, WorldAnchorIds.CanyonAlcovePrefix + i, centre, outward, AlcoveRadius,
+                    RegionIds.Canyon));
             }
 
             // The chamber is the corridor's round end cap, its wall foot TerminusRadius beyond the line's end.
             Vector2 intoChamber = main.TangentAt(main.EndArc);
             Vector2 terminus = main.PointAt(main.EndArc)
                 + intoChamber * (settings.TerminusRadius - TerminusWallGap - TerminusSpace);
-            anchors.Add(Make(surface, WorldAnchorIds.CanyonTerminus, terminus, intoChamber, TerminusSpace));
+            anchors.Add(Make(surface, WorldAnchorIds.CanyonTerminus, terminus, intoChamber, TerminusSpace,
+                RegionIds.Canyon));
             float exitTop = canyon.ExitStepArc + Canyon.SlabHalfDepth + ExitTopSetback;
             anchors.Add(Make(surface, WorldAnchorIds.CanyonExit, exit.PointAt(exitTop), -exit.TangentAt(exitTop),
-                ExitRadius));
+                ExitRadius, RegionIds.Canyon));
 
             Vector2 mound = surface.Shaping.RelayMound.Center;
             Vector2 shoulder = RelaySiteFinder.Find(surface, relays.ShoulderBearing, relays.ShoulderBearingSpread,
@@ -163,7 +166,9 @@ namespace MoonProject.World
             Vector2[] masts = { mound, shoulder, mouth, canyon.RelayLedgeCenter };
             for (int i = 0; i < masts.Length; i++)
             {
-                anchors.Add(Make(surface, WorldAnchorIds.RelayPrefix + i, masts[i], -masts[i], relays.PadRadius));
+                string relayRegion = i == 3 ? RegionIds.Canyon : RegionIds.Basin;
+                anchors.Add(Make(surface, WorldAnchorIds.RelayPrefix + i, masts[i], -masts[i], relays.PadRadius,
+                    relayRegion));
             }
 
             GroundShaping shaping = surface.Shaping;
@@ -177,7 +182,8 @@ namespace MoonProject.World
             float bayArc = settings.LanderBayArc;
             Vector2 intoBay = main.RightAt(bayArc) * canyon.LanderSide;
             float bayLateral = settings.ChasmHalfWidth + settings.LanderBayDepth - LanderRadius - LanderWallGap;
-            anchors.Add(Make(surface, Lander, main.PointAt(bayArc) + intoBay * bayLateral, intoBay, LanderRadius));
+            anchors.Add(Make(surface, Lander, main.PointAt(bayArc) + intoBay * bayLateral, intoBay, LanderRadius,
+                RegionIds.Canyon));
             Vector2 farm = MoonSurface.BearingToDirection(AntennaFarmBearing) * AntennaFarmDistance;
             anchors.Add(Make(surface, WorldAnchorIds.PlaceAntennaFarm, farm, farm, AntennaFarmRadius));
             var summit = new Vector2(surface.PeakSummit.x, surface.PeakSummit.z);
@@ -366,11 +372,11 @@ namespace MoonProject.World
         }
 
         private static WorldAnchor Make(MoonSurface surface, string id, Vector2 position, Vector2 forward,
-            float radius)
+            float radius, string regionId = RegionIds.Basin)
         {
             Vector2 flat = forward.normalized;
             var ground = new Vector3(position.x, surface.SampleHeight(position.x, position.y), position.y);
-            return new WorldAnchor(id, ground, new Vector3(flat.x, 0f, flat.y), radius);
+            return new WorldAnchor(id, ground, new Vector3(flat.x, 0f, flat.y), radius, regionId);
         }
     }
 }

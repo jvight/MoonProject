@@ -32,28 +32,11 @@ namespace MoonProject.World
             }
 
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = atmosphere.AmbientSky;
-            RenderSettings.ambientEquatorColor = atmosphere.AmbientEquator;
-            RenderSettings.ambientGroundColor = atmosphere.AmbientGround;
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = atmosphere.FogColor;
-            RenderSettings.fogDensity = atmosphere.FogDensity;
             RenderSettings.sun = earthlight;
-            Color haze = atmosphere.HazeColor.linear;
-            Shader.SetGlobalVector(HazeColorId, new Vector4(haze.r, haze.g, haze.b, atmosphere.HazeMax));
-            Shader.SetGlobalVector(HazeId,
-                new Vector4(atmosphere.HazeDensity, 1f / atmosphere.HazeHeight, atmosphere.HazeBase, 0f));
-            Shader.SetGlobalVector(DesaturateId, new Vector4(atmosphere.DesaturateStart,
-                1f / Mathf.Max(atmosphere.DesaturateEnd - atmosphere.DesaturateStart, 1f),
-                atmosphere.DesaturateAmount, 0f));
-
-            // URP lights with the ambient probe, which is only re-derived from the trilight colours on request.
-            DynamicGI.UpdateEnvironment();
 
             earthlight.type = LightType.Directional;
-            earthlight.color = atmosphere.LightColor;
-            earthlight.intensity = atmosphere.LightIntensity;
             earthlight.shadows = LightShadows.Soft;
             earthlight.shadowStrength = atmosphere.ShadowStrength;
             earthlight.GetUniversalAdditionalLightData().usePipelineSettings = false;
@@ -63,10 +46,49 @@ namespace MoonProject.World
 
             // The earthlight stays the main light (RenderSettings.sun): the fill is a Forward+ additional light.
             fill.type = LightType.Directional;
-            fill.color = atmosphere.FillColor;
-            fill.intensity = atmosphere.FillIntensity;
             fill.shadows = LightShadows.None;
             fill.transform.rotation = Quaternion.LookRotation(-FillSourceDirection(atmosphere, sky));
+
+            BlendedAtmosphere blended = BlendedAtmosphere.FromSettings(atmosphere, sky);
+            ApplyBlended(in blended, earthlight, fill, true);
+        }
+
+        /// <summary>
+        /// Applies blended region atmosphere values to <see cref="RenderSettings"/>, the haze/desaturation shader
+        /// globals, and the directional earthlight and fill light.
+        /// </summary>
+        public static void ApplyBlended(in BlendedAtmosphere atmosphere, Light earthlight, Light fill,
+            bool updateEnvironment = true)
+        {
+            if (earthlight == null || fill == null)
+            {
+                throw new ArgumentNullException(earthlight == null ? nameof(earthlight) : nameof(fill));
+            }
+
+            RenderSettings.ambientSkyColor = atmosphere.AmbientSky;
+            RenderSettings.ambientEquatorColor = atmosphere.AmbientEquator;
+            RenderSettings.ambientGroundColor = atmosphere.AmbientGround;
+            RenderSettings.fogColor = atmosphere.FogColor;
+            RenderSettings.fogDensity = atmosphere.FogDensity;
+
+            Color haze = atmosphere.HazeColor.linear;
+            Shader.SetGlobalVector(HazeColorId, new Vector4(haze.r, haze.g, haze.b, atmosphere.HazeMax));
+            Shader.SetGlobalVector(HazeId,
+                new Vector4(atmosphere.HazeDensity, 1f / atmosphere.HazeHeight, atmosphere.HazeBase, 0f));
+            Shader.SetGlobalVector(DesaturateId, new Vector4(atmosphere.DesaturateStart,
+                1f / Mathf.Max(atmosphere.DesaturateEnd - atmosphere.DesaturateStart, 1f),
+                atmosphere.DesaturateAmount, 0f));
+
+            if (updateEnvironment)
+            {
+                // URP lights with the ambient probe, which is only re-derived from the trilight colours on request.
+                DynamicGI.UpdateEnvironment();
+            }
+
+            earthlight.color = atmosphere.LightColor;
+            earthlight.intensity = atmosphere.LightIntensity;
+            fill.color = atmosphere.FillColor;
+            fill.intensity = atmosphere.FillIntensity;
         }
 
         /// <summary>Unit vector pointing from the ground toward where the earthlight comes from.</summary>

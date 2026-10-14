@@ -134,6 +134,31 @@ namespace MoonProject.World.PlayModeTests
             }
 
             Assert.AreSame(world.Anchors, context.Get<IWorldAnchors>());
+            Assert.AreSame(world.Regions, context.Get<IWorldRegions>());
+            Assert.AreEqual(RegionIds.Basin, world.Regions.CurrentRegionId);
+            Assert.AreEqual(RegionAtmosphereProfile.DefaultFarClipPlane, world.Regions.CurrentFarClipPlane, 1e-4f);
+            Assert.IsTrue(world.Anchors.TryGet(WorldAnchorIds.CanyonLanding, out WorldAnchor canyonLanding));
+            var weightBuffer = new RegionWeight[2];
+            world.Regions.Step(Vector3.zero);
+            world.AtmosphereBlender.ApplyAt(Vector3.zero);
+            world.Regions.GetWeights(Vector3.zero, weightBuffer);
+
+            long allocBefore = System.GC.GetAllocatedBytesForCurrentThread();
+            for (int step = 0; step < 120; step++)
+            {
+                Vector3 pos = Vector3.Lerp(Vector3.zero, canyonLanding.Position, step / 119f);
+                world.Regions.Step(pos);
+                world.AtmosphereBlender.ApplyAt(pos);
+                world.Regions.GetWeights(pos, weightBuffer);
+                world.Regions.SampleDrainMultiplier(pos);
+                world.Regions.SampleSkyOcclusion(pos);
+            }
+
+            long allocAfter = System.GC.GetAllocatedBytesForCurrentThread();
+            Assert.AreEqual(0L, allocAfter - allocBefore, "region and atmosphere updates must be zero-GC per frame");
+            world.Regions.PlaceAt(Vector3.zero);
+            world.AtmosphereBlender.ApplyAt(Vector3.zero);
+
             Canyon canyon = world.Surface.Canyon;
             float exitHalfWidth = settings.Surface.Canyon.ExitHalfWidth;
             AssertSheerFace(world.Surface, canyon.MainPath, canyon.FarFaceArc, settings.Surface.Canyon.ChasmHalfWidth,

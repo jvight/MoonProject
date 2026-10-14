@@ -40,9 +40,8 @@ namespace MoonProject.World
                 throw new System.ArgumentNullException(nameof(sky));
             }
 
-            Shader.SetGlobalVector(SkyTop, WithAlpha(sky.SkyTop.linear, sky.GradientExponent));
-            Shader.SetGlobalVector(HorizonGlow, WithAlpha(sky.HorizonGlow.linear, sky.HorizonGlowHeight));
-            Shader.SetGlobalVector(HorizonBand, WithAlpha(sky.HorizonBand.linear, sky.HorizonBandHeight));
+            ApplyGradient(sky.SkyTop, sky.GradientExponent, sky.HorizonGlow, sky.HorizonGlowHeight,
+                sky.HorizonBand, sky.HorizonBandHeight);
             Shader.SetGlobalVector(StarParams,
                 new Vector4(sky.StarDensity, sky.StarBrightness, sky.StarPowerLaw, sky.StarSize));
             Shader.SetGlobalVector(StarTwinkle,
@@ -80,6 +79,15 @@ namespace MoonProject.World
                 WithAlpha(sky.EarthAtmosphere.linear * sky.EarthRim, EarthRimExponent));
             Shader.SetGlobalVector(ShootingStars,
                 new Vector4(sky.ShootingStarPeriod, sky.ShootingStarDuration, sky.ShootingStarBrightness, 0f));
+        }
+
+        /// <summary>Pushes blended sky gradient and horizon parameters to the sky shader globals.</summary>
+        public static void ApplyGradient(Color skyTop, float gradientExponent, Color horizonGlow,
+            float horizonGlowHeight, Color horizonBand, float horizonBandHeight)
+        {
+            Shader.SetGlobalVector(SkyTop, WithAlpha(skyTop.linear, gradientExponent));
+            Shader.SetGlobalVector(HorizonGlow, WithAlpha(horizonGlow.linear, horizonGlowHeight));
+            Shader.SetGlobalVector(HorizonBand, WithAlpha(horizonBand.linear, horizonBandHeight));
         }
 
         private static Vector4 WithAlpha(Color color, float alpha)
