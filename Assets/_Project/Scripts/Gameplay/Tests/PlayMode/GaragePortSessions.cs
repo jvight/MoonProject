@@ -70,6 +70,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture.Rover.Place(port.PadCentre, 0f);
             yield return new WaitForSeconds(2f);
             Assert.IsFalse(port.IsOpen, "the garage still stands whole: the port waits");
+            Assert.IsTrue(port.AtGarage);
+            StringAssert.StartsWith(ProgressionKeys.NextGarageScrap + ":", port.StepLine(),
+                "step (a): clear the scrap around the garage, with remaining count");
             Assert.IsEmpty(fittings);
 
             gameplay.Salvage.Restore(new SalvageSaveData
@@ -83,8 +86,11 @@ namespace MoonProject.Gameplay.PlayModeTests
                     },
                 },
             });
+            yield return null;
+            Assert.AreEqual(ProgressionKeys.NextPort, port.StepLine(), "step (b): port open, park on the pad");
             yield return Waits.Until(() => port.RingFitted, 4f);
             Assert.IsTrue(port.IsOpen, "the last cut opened it");
+            Assert.AreEqual(ProgressionKeys.NextGarageCrate, port.StepLine(), "step (c): cut the 07 · SPARE crate");
             Assert.AreEqual(RoverKitPiece.TetherRing, fittings[0].Part);
             Assert.AreEqual(RoverSocket.Tether, fittings[0].Socket, "fitted through 07's equipment (0.5.5 §3.5)");
             Assert.IsFalse(fittings[0].Gift, "the port's arm fits it");
@@ -103,12 +109,16 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Waits.Until(() => port.DeckInTheCrate,
                 _fixture.ProgressionTuning.PartAppearSeconds + 1f);
             Assert.IsTrue(port.DeckInTheCrate, "Ro's tape deck rises to the crate's mouth");
+            Assert.AreEqual(ProgressionKeys.NextGarageDeck, port.StepLine(),
+                "step (d): put the tape deck on the tray, then park on the pad again");
             yield return PickupPress.Take(this, gameplay, 2f, "Ro's tape deck");
             yield return Waits.Until(() => port.DeckOnTheTray, _fixture.ProgressionTuning.PortTrayGlideSeconds + 1f);
             Assert.IsTrue(port.DeckOnTheTray, "it glides onto the port's tray");
+            Assert.AreEqual(ProgressionKeys.NextGarageDeck, port.StepLine(), "still step (d) until parked on the pad");
             Assert.AreEqual(1, fittings.Count, "on the tray it waits for 07 to park");
             _fixture.Rover.Place(port.PadCentre, 0f);
             yield return Waits.Until(() => port.DeckFitted, 4f);
+            Assert.AreEqual(string.Empty, port.StepLine(), "clears when the garage beat is done");
             Assert.AreEqual(2, fittings.Count);
             Assert.AreEqual(RoverKitPiece.TapeDeck, fittings[1].Part, "the arm fits the deck on 07");
             Assert.AreEqual(RoverSocket.Deck, fittings[1].Socket);

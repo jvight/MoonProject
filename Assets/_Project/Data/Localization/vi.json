@@ -108,7 +108,7 @@
         },
         {
             "key": "next.wake",
-            "text": "Sửa tháp radio."
+            "text": "Kiểm tra tháp radio."
         },
         {
             "key": "next.salvage",
@@ -116,7 +116,7 @@
         },
         {
             "key": "next.tower.part",
-            "text": "Cuộn dây tháp nằm trong thùng ở Kho tiếp tế."
+            "text": "Cắt mở thùng ở Kho tiếp tế và lấy cuộn dây tháp."
         },
         {
             "key": "next.tower.pad",
@@ -172,7 +172,7 @@
         },
         {
             "key": "next.dig",
-            "text": "Bộ phận của Tilly nằm trong xe trượt bị rơi của cô bé."
+            "text": "Đào bộ phận cuối của Tilly dưới lớp bụi."
         },
         {
             "key": "next.friend.repair",
@@ -183,12 +183,28 @@
             "text": "Đến Gara của Kenji."
         },
         {
+            "key": "next.garage.scrap",
+            "text": "Dọn phế liệu quanh gara (còn {0} mảnh)."
+        },
+        {
             "key": "next.port",
             "text": "Đỗ lên bệ cổng bảo trì."
         },
         {
+            "key": "next.garage.crate",
+            "text": "Cắt mở thùng 07 · SPARE."
+        },
+        {
+            "key": "next.garage.deck",
+            "text": "Đặt đầu băng lên khay rồi đỗ lại lên bệ."
+        },
+        {
+            "key": "next.relic.dig",
+            "text": "Đào kỷ vật ở gara lên."
+        },
+        {
             "key": "next.relic",
-            "text": "Đào kỷ vật lên rồi kéo về nhà."
+            "text": "Kéo kỷ vật về nhà."
         },
         {
             "key": "next.lift.stitch",
@@ -200,11 +216,15 @@
         },
         {
             "key": "next.chasm",
-            "text": "Có ánh đèn bên kia vực. Hiện chưa qua được."
+            "text": "Lái ra bờ vực để quan sát bên kia."
+        },
+        {
+            "key": "next.chasm.scan",
+            "text": "Quét các mảnh thiết kế Nhảy đệm từ ở bờ vực."
         },
         {
             "key": "next.bay.wake",
-            "text": "Xây tháp cấp 2 để có điện cho xưởng xe."
+            "text": "Lấy bộ biến áp ở gara rồi xây tháp cấp 2."
         },
         {
             "key": "next.bay",

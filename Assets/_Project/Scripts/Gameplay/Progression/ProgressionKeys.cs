@@ -47,10 +47,22 @@ namespace MoonProject.Gameplay
         /// <summary>Step 3d: the tower's sweep named Kenji's garage; something of 07's is there.</summary>
         public const string NextGarage = "next.garage";
 
-        /// <summary>Step 3e: the garage's port is open; park on its pad for the spare.</summary>
+        /// <summary>Step 3e (a): at the garage with the port closed; clear the remaining scrap around it.</summary>
+        public const string NextGarageScrap = "next.garage.scrap";
+
+        /// <summary>Step 3e (b): the garage's port is open; park on its pad for the spare.</summary>
         public const string NextPort = "next.port";
 
-        /// <summary>Step 4: dig the first relic and tow it home.</summary>
+        /// <summary>Step 3e (c): the tether ring is fitted; cut open Kenji's "07 · SPARE" crate.</summary>
+        public const string NextGarageCrate = "next.garage.crate";
+
+        /// <summary>Step 3e (d): the tape deck is out; put it on the tray, then park on the pad again.</summary>
+        public const string NextGarageDeck = "next.garage.deck";
+
+        /// <summary>Step 4a: dig the first relic out of the garage's heart.</summary>
+        public const string NextRelicDig = "next.relic.dig";
+
+        /// <summary>Step 4b: tow the surfaced relic home.</summary>
         public const string NextRelic = "next.relic";
 
         /// <summary>Step 4: the belly lift is stuck; stitch its cable.</summary>
@@ -67,6 +79,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>Step 4b (P2): Tilly spots Bell's light across the chasm; drive there and look across.</summary>
         public const string NextChasm = "next.chasm";
+
+        /// <summary>Step 4b2: scan the Hover-Jump fragments on Kenji's crashed jumper at the chasm edge.</summary>
+        public const string NextChasmScan = "next.chasm.scan";
 
         /// <summary>Step 5: the bay sleeps until the tower's second level wakes it.</summary>
         public const string NextBayWake = "next.bay.wake";
@@ -100,6 +115,42 @@ namespace MoonProject.Gameplay
         /// <summary>The ticker line of 07's first listen ever (first-hour v2 §3), once per save.</summary>
         public const string FirstListen = "ticker.listen.first";
 
+        private const string NextGarageScrapPrefix = NextGarageScrap + ":";
+
+        private static readonly string[] GarageScrapKeys = BuildGarageScrapKeys(16);
+
+        /// <summary>Pre-allocated step key encoding how many scrap pieces remain around the garage.</summary>
+        public static string GarageScrapKey(int remaining)
+        {
+            if (remaining <= 0)
+            {
+                return NextGarageScrap;
+            }
+
+            return remaining < GarageScrapKeys.Length
+                ? GarageScrapKeys[remaining]
+                : NextGarageScrapPrefix + remaining;
+        }
+
+        /// <summary>True when <paramref name="lineKey"/> encodes a remaining garage scrap count.</summary>
+        public static bool TryParseGarageScrap(string lineKey, out int remaining)
+        {
+            remaining = 0;
+            return !string.IsNullOrEmpty(lineKey) &&
+                   lineKey.StartsWith(NextGarageScrapPrefix, System.StringComparison.Ordinal) &&
+                   int.TryParse(lineKey.Substring(NextGarageScrapPrefix.Length), out remaining) &&
+                   remaining > 0;
+        }
+
+        /// <summary>True while <paramref name="lineKey"/> is one of the four steps of the garage beat (a)-(d).</summary>
+        public static bool IsGarageBeat(string lineKey)
+        {
+            return !string.IsNullOrEmpty(lineKey) &&
+                   (lineKey == NextGarageScrap || lineKey == NextPort || lineKey == NextGarageCrate ||
+                    lineKey == NextGarageDeck ||
+                    lineKey.StartsWith(NextGarageScrapPrefix, System.StringComparison.Ordinal));
+        }
+
         /// <summary>
         /// True for an empty line or one about a recovery target (Power or Link), the only lines after the teaching
         /// steps (M3-21 §3).
@@ -109,6 +160,18 @@ namespace MoonProject.Gameplay
             return string.IsNullOrEmpty(lineKey) || lineKey == NextPowerPart || lineKey == NextPowerCarried ||
                    lineKey == NextPowerBuild || lineKey == NextLink ||
                    lineKey.StartsWith(NextLinkMastPrefix, System.StringComparison.Ordinal);
+        }
+
+        private static string[] BuildGarageScrapKeys(int max)
+        {
+            var keys = new string[max + 1];
+            keys[0] = NextGarageScrap;
+            for (int i = 1; i <= max; i++)
+            {
+                keys[i] = NextGarageScrapPrefix + i;
+            }
+
+            return keys;
         }
     }
 }

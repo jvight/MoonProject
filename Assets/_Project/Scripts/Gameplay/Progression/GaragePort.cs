@@ -29,6 +29,9 @@ namespace MoonProject.Gameplay
         /// <summary>The deck's name as the pickup prompt says it (its equipment name).</summary>
         private const string DeckNoun = "kit.tape_deck.name";
 
+        private const float ApproachRadius = 22f;
+        private const float LeaveRadius = 40f;
+
         private enum DeckPhase
         {
             Sealed,
@@ -63,6 +66,7 @@ namespace MoonProject.Gameplay
         private float _since;
         private float _glide;
         private float _parked;
+        private bool _atGarage;
         private bool _ringFitted;
         private bool _deckFitted;
         private bool _placeSeen;
@@ -116,6 +120,9 @@ namespace MoonProject.Gameplay
             _deck.gameObject.SetActive(false);
         }
 
+        /// <summary>True while 07 is at the garage site.</summary>
+        public bool AtGarage => _atGarage;
+
         /// <summary>True once the garage's last cut has opened the port.</summary>
         public bool IsOpen => _garage.IsPickedClean;
 
@@ -147,6 +154,50 @@ namespace MoonProject.Gameplay
 
         /// <summary>Where a piece 07 sets down on the tray rests.</summary>
         public Vector3 TrayPosition => _tray.position;
+
+        /// <summary>True once any relic in the world has been surfaced from the ground.</summary>
+        public bool AnyRelicLoose
+        {
+            get
+            {
+                for (int i = 0; i < _relics.Relics.Count; i++)
+                {
+                    if (!_relics.Relics[i].CanBeLifted)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        /// <summary>True once <paramref name="part"/>'s blueprint is known to 07's equipment.</summary>
+        public bool IsKnown(RoverKitPiece part)
+        {
+            return _equipment.IsKnown(_equipment.SocketOf(part));
+        }
+
+        /// <summary>The exact current step of the garage beat (a)-(d), or empty once the deck is fitted.</summary>
+        public string StepLine()
+        {
+            if (DeckFitted)
+            {
+                return string.Empty;
+            }
+
+            if (!IsOpen)
+            {
+                return ProgressionKeys.GarageScrapKey(_garage.Remaining);
+            }
+
+            if (!RingFitted)
+            {
+                return ProgressionKeys.NextPort;
+            }
+
+            return !_crate.Opened ? ProgressionKeys.NextGarageCrate : ProgressionKeys.NextGarageDeck;
+        }
 
         public GaragePortSaveData Capture()
         {
@@ -203,12 +254,21 @@ namespace MoonProject.Gameplay
         public void Step(float deltaTime)
         {
             float now = Time.time;
+            float toGarage = Flat(_rover.Position - _garage.Position).magnitude;
+            if (toGarage <= ApproachRadius)
+            {
+                _atGarage = true;
+            }
+            else if (toGarage > LeaveRadius)
+            {
+                _atGarage = false;
+            }
+
             bool open = IsOpen;
             float toPad = Flat(_rover.Position - _padCentre).magnitude;
             if (open && !_placeSeen && toPad <= _tuning.PortPlaceRadius)
             {
                 _placeSeen = true;
-                _events.Publish(new PlaceFirstApproached(ProgressionKeys.PlaceGaragePort));
             }
 
             bool parked = toPad <= _tuning.PortPadRadius && _rover.Speed <= _tuning.PortParkSpeed;
