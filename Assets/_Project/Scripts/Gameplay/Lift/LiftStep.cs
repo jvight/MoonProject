@@ -8,10 +8,10 @@ namespace MoonProject.Gameplay.Lift
     {
         None = 0,
 
-        /// <summary>Home has power: the lift wakes jammed.</summary>
+        /// <summary>Home has power: the lift wakes jammed and shows it is stuck.</summary>
         Powered = 1,
 
-        /// <summary>07 came home carrying something for the lab: light the pad and ask for the stitch.</summary>
+        /// <summary>07 is near the jammed lift and the jam cue finished: light the pad and ask for the stitch.</summary>
         Called = 2,
 
         /// <summary>07 rests on the pad: its beam starts the stitch.</summary>

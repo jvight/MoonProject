@@ -13,6 +13,11 @@ MonoBehaviour:
   m_Name: LiftTuning
   m_EditorClassIdentifier: 
   _callRadius: 20
+  _guideRadius: 8
+  _jamCueSeconds: 0.8
+  _jamShudderHeight: 0.06
+  _jamShudderCycles: 3
+  _jamSparkCount: 18
   _stitchStandOff: 2.8
   _stitchRadius: 1
   _stitchDelay: 1

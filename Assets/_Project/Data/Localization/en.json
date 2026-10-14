@@ -208,7 +208,7 @@
         },
         {
             "key": "next.lift.stitch",
-            "text": "The lift is stuck. Repair its cable."
+            "text": "Weld the lift's cable."
         },
         {
             "key": "next.lift.ride",

@@ -10,10 +10,31 @@ namespace MoonProject.Gameplay.Lift
     public sealed class LiftTuning : ScriptableObject
     {
         [Header("Jammed and restored")]
-        [Tooltip("07 is home carrying something for the lab within this many metres (horizontal) of the platform: " +
-                 "the lift asks for the stitch.")]
+        [Tooltip("07 is home within this many metres (horizontal) of the platform: the lift shows its jam and asks " +
+                 "for the stitch.")]
         [Range(3f, 40f)]
         [SerializeField] private float _callRadius = 20f;
+
+        [Tooltip("How close (m, horizontal) 07 is to the platform when the lift's own guidance line shows (and " +
+                 "when the jam cue replays if 07 was farther away when power first arrived).")]
+        [Range(2f, 15f)]
+        [SerializeField] private float _guideRadius = 8f;
+
+        [Tooltip("Seconds the jammed lift shudders and sparks to show it is stuck before asking for the stitch.")]
+        [Range(0.2f, 3f)]
+        [SerializeField] private float _jamCueSeconds = 0.8f;
+
+        [Tooltip("How high (m) the jammed platform tries to lift and shudders before stopping.")]
+        [Range(0.01f, 0.2f)]
+        [SerializeField] private float _jamShudderHeight = 0.06f;
+
+        [Tooltip("Oscillations of the platform shudder during the jam cue.")]
+        [Range(1f, 8f)]
+        [SerializeField] private float _jamShudderCycles = 3f;
+
+        [Tooltip("Sparks emitted at the jammed cable during the jam cue.")]
+        [Range(4, 40)]
+        [SerializeField] private int _jamSparkCount = 18;
 
         [Tooltip("How far (m) out from the platform's centre, toward the dock, 07 rests to stitch the jammed cable " +
                  "(just off the platform's edge, facing it).")]
@@ -115,6 +136,16 @@ namespace MoonProject.Gameplay.Lift
         [SerializeField] private int _gazePriority = 6;
 
         public float CallRadius => _callRadius;
+
+        public float GuideRadius => _guideRadius;
+
+        public float JamCueSeconds => _jamCueSeconds;
+
+        public float JamShudderHeight => _jamShudderHeight;
+
+        public float JamShudderCycles => _jamShudderCycles;
+
+        public int JamSparkCount => _jamSparkCount;
 
         public float StitchStandOff => _stitchStandOff;
 

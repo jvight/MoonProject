@@ -4,11 +4,11 @@ using UnityEngine;
 namespace MoonProject.Gameplay.Lift
 {
     /// <summary>
-    /// The crew's belly lift as plain logic (docs/features/M3-19 §4). Dormant until home has power; then jammed and
-    /// silent until 07 first comes home carrying something for the lab, when it asks for the stitch (its pad ring
-    /// lights): 07 rests by the platform and stitches, and the platform eases level. From then on 07 rests on the
-    /// platform to ride up into the lab (at least a breath after the stitch), where it stays until Back brings it
-    /// down. <see cref="Level"/> takes the platform from its jammed pose to level;
+    /// The crew's belly lift as plain logic (docs/features/M3-19 §4). Dormant until home has power; then jammed until
+    /// 07 comes near, when it shudders for <see cref="LiftTuning.JamCueSeconds"/> to show it is stuck and asks for the
+    /// stitch (its pad ring lights): 07 rests by the platform and stitches, and the platform eases level. From then on
+    /// 07 rests on the platform to ride up into the lab (at least a breath after the stitch), where it stays until Back
+    /// brings it down. <see cref="Level"/> takes the platform from its jammed pose to level;
     /// <see cref="Height"/> from the bottom stop to the lab. After a ride down 07 must leave the platform before it can
     /// board again.
     /// </summary>
@@ -32,6 +32,9 @@ namespace MoonProject.Gameplay.Lift
         /// <summary>0 = the bottom stop, 1 = settled in the lab (eased at both ends).</summary>
         public float Height { get; private set; }
 
+        /// <summary>0..1 shudder of the jammed platform while it shows it is stuck (0 outside the jam cue).</summary>
+        public float Shudder { get; private set; }
+
         /// <summary>How far through the ride down, 0..1 (eased like the height; 0 outside it).</summary>
         public float Descent => Phase == LiftPhase.Lowering ? 1f - Height : 0f;
 
@@ -47,6 +50,7 @@ namespace MoonProject.Gameplay.Lift
             Phase = restored ? LiftPhase.Ready : LiftPhase.Dormant;
             Level = restored ? 1f : 0f;
             Height = 0f;
+            Shudder = 0f;
             _elapsed = 0f;
             _mustLeave = false;
             _arrived = false;
@@ -60,7 +64,21 @@ namespace MoonProject.Gameplay.Lift
                 case LiftPhase.Dormant:
                     return input.Powered ? Enter(LiftPhase.Jammed, LiftStep.Powered) : LiftStep.None;
                 case LiftPhase.Jammed:
-                    return input.CarryingHome ? Enter(LiftPhase.Called, LiftStep.Called) : LiftStep.None;
+                    if (!input.NearHome)
+                    {
+                        _elapsed = 0f;
+                        Shudder = 0f;
+                        return LiftStep.None;
+                    }
+
+                    if (_elapsed < _tuning.JamCueSeconds)
+                    {
+                        Shudder = JamShudder(_elapsed, _tuning.JamCueSeconds, _tuning.JamShudderCycles);
+                        return LiftStep.None;
+                    }
+
+                    Shudder = 0f;
+                    return Enter(LiftPhase.Called, LiftStep.Called);
                 case LiftPhase.Called:
                     bool rested = input.AtStitchSpot && input.StillSeconds >= _tuning.StitchDelay;
                     return rested ? Enter(LiftPhase.Stitching, LiftStep.StitchStarted) : LiftStep.None;
@@ -85,6 +103,23 @@ namespace MoonProject.Gameplay.Lift
                 default:
                     throw new InvalidOperationException($"Unknown lift phase {Phase}.");
             }
+        }
+
+        /// <summary>
+        /// The platform's upward shudder (0..1) over <paramref name="duration"/> seconds with <paramref name="cycles"/>
+        /// oscillations, positive throughout the middle of the cue and zero at both ends.
+        /// </summary>
+        public static float JamShudder(float elapsed, float duration, float cycles)
+        {
+            if (duration <= 0f || elapsed <= 0f || elapsed >= duration)
+            {
+                return 0f;
+            }
+
+            float t = Mathf.Clamp01(elapsed / duration);
+            float envelope = 4f * t * (1f - t);
+            float wave = 0.65f + 0.35f * Mathf.Sin(t * cycles * Mathf.PI * 2f);
+            return envelope * wave;
         }
 
         /// <summary>
