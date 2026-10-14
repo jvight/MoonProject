@@ -108,6 +108,57 @@ MonoBehaviour:
     _lampGlanceSeconds: 1.2
     _chargerGlanceSeconds: 2.5
     _chargerGlanceLift: 2
+  _cutFocus:
+    _eyeGlow: 1.3
+    _irisNarrow: 0.25
+    _halfLife: 0.12
+    _gazePriority: 7
+    _followSeconds: 1.5
+    _nod:
+      _distance: 0
+      _angle: 2
+      _frequency: 4
+      _damping: 1
+  _scanLook:
+    _openHalfLife: 0.15
+    _fanHalfLife: 0.12
+    _sweepDegrees: 3
+    _sweepSeconds: 1.4
+    _fanSwell: 0.2
+    _eyeGlow: 1.1
+    _quarterPulse: 0.2
+    _pulseSeconds: 0.15
+    _flare: 0.45
+    _flareSeconds: 0.1
+    _dissolveSeconds: 0.9
+    _fanColour: {r: 0.373, g: 0.953, b: 1, a: 1}
+    _fanGlow: 0.55
+    _gazePriority: 8
+  _elderGlance:
+    _noticeRadius: 12
+    _holdSeconds: 1.5
+    _lookHeight: 0.5
+    _gazePriority: 5
+    _chirpIntensity: 0.25
+  _chirp:
+    _globalCooldown: 6
+    _moodCooldown: 30
+    _affirmCooldown: 3
+    _phraseSeconds: 1.2
+    _relievedBelow: 0.15
+    _eyePulse: 0.25
+    _eyePulseSeconds: 0.08
+    _antennaFlick: 60
+    _curiousTilt: 8
+    _worriedDip: 4
+    _tiredLower: 7
+    _happyBounce: 0.12
+    _poseHalfLife: 0.15
+    _tiredHalfLife: 0.8
+    _poseHold: 0.6
+    _sighWing: 10
+    _sighEye: 0.35
+    _sighHalfLife: 0.9
   _effortSquint: 0.35
   _effortHeadDip: 6
   _effortHalfLife: 0.08
@@ -129,3 +180,14 @@ MonoBehaviour:
   _callSignEdge: 0.06
   _tipRestGlow: 0.01
   _tipPeakGlow: 0.55
+  _listening:
+    _litTint: {r: 0.37, g: 1.2, b: 1.85, a: 1}
+    _litGlow: 0.35
+    _litHalfLife: 0.8
+    _blinkCount: 2
+    _blinkPeriod: 0.5
+    _blinkGlow: 1.2
+    _liftHeight: 0.05
+    _liftRise: 0.35
+    _liftHold: 1.2
+    _liftFall: 0.8

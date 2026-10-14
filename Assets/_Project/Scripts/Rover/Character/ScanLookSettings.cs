@@ -16,11 +16,11 @@ namespace MoonProject.Rover
 
         [Tooltip("Half-life (s) of the lens fan easing in and out: soft, never switched.")]
         [Range(0.02f, 1f)]
-        [SerializeField] private float _fanHalfLife = 0.2f;
+        [SerializeField] private float _fanHalfLife = 0.12f;
 
         [Tooltip("How far (deg) the fan sweeps to each side across the fragment.")]
         [Range(0f, 45f)]
-        [SerializeField] private float _sweepDegrees = 12f;
+        [SerializeField] private float _sweepDegrees = 3f;
 
         [Tooltip("Seconds of one sweep across and back.")]
         [Range(0.2f, 5f)]
@@ -28,15 +28,15 @@ namespace MoonProject.Rover
 
         [Tooltip("How much brighter the fan grows by the scan's end (share): the drawing nears complete.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _fanSwell = 0.3f;
+        [SerializeField] private float _fanSwell = 0.2f;
 
         [Tooltip("The eye's glow while scanning (multiplier): awake, learning.")]
         [Range(1f, 3f)]
-        [SerializeField] private float _eyeGlow = 1.25f;
+        [SerializeField] private float _eyeGlow = 1.1f;
 
         [Tooltip("Each quarter of the scan: the eye's brief pulse (extra glow, share).")]
         [Range(0f, 2f)]
-        [SerializeField] private float _quarterPulse = 0.3f;
+        [SerializeField] private float _quarterPulse = 0.2f;
 
         [Tooltip("Seconds a quarter's pulse takes to fade.")]
         [Range(0.02f, 1f)]
@@ -44,7 +44,7 @@ namespace MoonProject.Rover
 
         [Tooltip("The lines reach the lens: its single flare (extra glow, share).")]
         [Range(0f, 4f)]
-        [SerializeField] private float _flare = 1.5f;
+        [SerializeField] private float _flare = 0.45f;
 
         [Tooltip("Seconds the lens's flare lasts, up and down (100 ms).")]
         [Range(0.02f, 0.5f)]
@@ -55,11 +55,11 @@ namespace MoonProject.Rover
         [SerializeField] private float _dissolveSeconds = 0.9f;
 
         [Tooltip("The lens fan's colour: the scan's tech-cyan.")]
-        [SerializeField] private Color _fanColour = new Color(0.45f, 0.9f, 1f);
+        [SerializeField] private Color _fanColour = new Color(0.373f, 0.953f, 1f);
 
         [Tooltip("The lens fan's glow at full: faint, the fragment's own sweep line carries most of the read.")]
         [Range(0f, 4f)]
-        [SerializeField] private float _fanGlow = 0.6f;
+        [SerializeField] private float _fanGlow = 0.55f;
 
         [Tooltip("Gaze priority of the fragment being scanned (above idle glances and the cut's focus).")]
         [Range(0, 10)]
