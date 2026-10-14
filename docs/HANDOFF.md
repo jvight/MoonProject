@@ -31,6 +31,12 @@ account) can continue without the old conversation.
   Then verify --explicit, bump 0.5.5, build, Builds/.
 - **D rulings (2026-10-14):** Warm Headlamp's fragments on the Mule (§1.3); Kestrel's heart is only a sonar answer
   point now; migration: decoded/pinned/drawn or carried/in-reader tubes -> complete, waiting tubes -> gone.
+- **New worker: agy (owner, 2026-10-14).** Antigravity CLI with Gemini 4 Argon (the owner's Google AI Ultra account)
+  takes well-specified slices to save Claude tokens; the Director still reviews, box_checks and lands. Worktree
+  D:/Project/MoonProject-wt/agy on box/agy; briefs in its Logs/TASK-*.md; run
+  `agy -p ... --model gemini-4-argon-high --dangerously-skip-permissions --output-format json` from that dir
+  (memory agy-cli-reference). First jobs after D1 lands: ui's Scan chip (brief ready), then art's reader/tube cleanup.
+  Keep a scorecard per task. Benchmark so far: box/antigravity 8bd2e0da (a tools task, rules kept, 34 min).
 - **Owner pending:** story v3's 7 questions; look-A captures + shadow tune shown, no reaction yet.
 
 ## 0000000000000000000. (prev) (2026-10-14 ~04:00): main caa2d913 verified + pushed; gameplay C6 in progress
