@@ -4,7 +4,23 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 0000000000000000000000000. LATEST (2026-10-14 ~23:30): 0.5.5 playtest feedback -> 0.5.6 on agy; style lock; master plan
+## 00000000000000000000000000. LATEST (2026-10-15 ~00:40): master plan for the owner (Claude Docs); audition round 2 up
+- **origin/main 36cbf853** unchanged (verified). Nothing landed since.
+- **Master plan for the owner:** Claude Docs "Lunarion – Kế hoạch tổng thể"
+  https://claude.ai/code/artifact/99894654-b2f2-421c-a3b9-f599ffa3d551 (owner comments there; read them with the Docs
+  connector `query`, answer in the thread). Repo copy box/agy-plan 404a6a19 docs/design/master-plan.md (not landed;
+  after the owner's review, export the doc and land it together with docs/design/story-v3.md from box/story).
+  Lesson: agy's round 2 still had ~40 wrong facts (costs, fragment sites, coordinates, field names) found by a Sonnet
+  Explore fact-check; the Director rewrote §2-§4 from verified code. Give agy code-light writing, or always fact-check.
+- **Audio round 2 (agy-audio b5e0b27f):** C + C1 Warm receiver / C2 Radio bench / C3 Lullaby radio, republished on the
+  same audition URL; the owner's pick goes to db doc `audition/choice2` (round 1 stays in `audition/choice`).
+- **Owner decisions pending (plan §9):** D1 style (style board page still to build: images staged in the scratchpad from
+  agy-style + agy-concept; waits for agy-look V0-V3), D2 07 v2, D3 moving sun in 0.6, D4 audio; story S1-S7.
+- **agy running (agy_run2, resumed after the 23:21 quota wait):** agy-ui2 (committed e05dc0c3 + staged edits to Friend
+  assets, FriendTuning, RoverCameraTuning, GameplayContentBuilder: base b700c77a is behind main, expect overlaps with
+  89f30b1d/36cbf853; review scope carefully), agy-look, agy-art.
+
+## 0000000000000000000000000. (prev) (2026-10-14 ~23:30): 0.5.5 playtest feedback -> 0.5.6 on agy; style lock; master plan
 - **origin/main 36cbf853 (verified):** 0.5.5 + 89f30b1d (agy: 07's head no longer pinned toward a cut/dig spot;
   dead friend-part scatter removed) + RoverCameraTuning reserialized.
 - **Owner feedback on 0.5.5 (memories inventory-one-screen, rover-07-v2, audio-feedback-055, no-floating-loot):** Tab must
