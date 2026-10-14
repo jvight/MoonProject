@@ -2491,8 +2491,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                 }
             }
 
-            CollectionAssert.AreEqual(new[] { "TapeDeck (" + AfterDark + ")", "QuietHours", "LumenAfterDark" }, heard,
-                "one click per detent, round again to Ro's show");
+            CollectionAssert.AreEqual(new[] { "TapeDeck (" + DustAndHoney + ")", "QuietHours", "LumenAfterDark" },
+                heard, "one click per detent, round again to Ro's show (the deck holds 06's tape, found first)");
             End("Turn Bell's dial through every station", string.Join(" -> ", heard));
         }
 
