@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Text;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
@@ -29,7 +28,7 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// <see cref="TowerPartField"/>, <see cref="GaragePort"/>, <see cref="ScanField"/>, <see cref="CrewCrates"/>,
     /// <see cref="SealedContainers"/>, <see cref="CargoBundles"/>, <see cref="SonarSystem"/>, and
     /// <see cref="BellSignalField"/>) has initialised and stepped, captures 1920x1080 URP post-processed PNGs for every
-    /// pose in <c>Logs/sweep1/capture_sweep_poses.json</c> (or the path in <c>MOON_SWEEP_POSES</c>) into
+    /// pose in <c>Assets/_Project/Scripts/Gameplay/Tests/PlayMode/capture_sweep_poses.json</c> into
     /// <c>Logs/no-loose-loot/</c>, and then asserts that every pickable, diggable, cuttable, scannable, or glowing lure
     /// object in the world is hosted by a place and never standing alone on bare terrain.
     /// <para>
@@ -96,8 +95,7 @@ namespace MoonProject.Gameplay.PlayModeTests
     [Category("NoLooseLoot")]
     public sealed class NoLooseLootSession
     {
-        private const string PosesEnvVar = "MOON_SWEEP_POSES";
-        private const string OutputEnvVar = "MOON_SWEEP_OUT";
+        private const string PosesPath = "Assets/_Project/Scripts/Gameplay/Tests/PlayMode/capture_sweep_poses.json";
         private const float WakeTimeout = 20f;
         private const float SettleSeconds = 0.5f;
         private const int DefaultWidth = 1920;
@@ -105,10 +103,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float HostMargin = 1.5f;
         private const float HullSocketTolerance = 0.5f;
 
-        private static readonly string DefaultPosesPath =
-            Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "sweep1", "capture_sweep_poses.json"));
-
-        private static readonly string DefaultCaptureFolder =
+        private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "no-loose-loot"));
 
         private readonly List<string> _problems = new List<string>();
@@ -148,12 +143,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             yield return Boot();
 
-            string posesPath = ResolvePath(PosesEnvVar, DefaultPosesPath);
-            string captureFolder = ResolvePath(OutputEnvVar, DefaultCaptureFolder);
-            Directory.CreateDirectory(captureFolder);
-
-            LogWorldInventory();
-            yield return CaptureAllPoses(posesPath, captureFolder);
+            Directory.CreateDirectory(CaptureFolder);
+            yield return CaptureAllPoses();
 
             var offenders = new List<string>();
             VerifyFriendParts(offenders);
@@ -172,7 +163,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 string summary = $"Found {offenders.Count} unhosted item(s)/glint(s) on bare regolith (0.5.5 §2, §7):\n"
                                  + string.Join("\n", offenders);
-                Debug.Log("[moon] OFFENDERS:\n" + summary);
                 Assert.Fail(summary);
             }
         }
@@ -213,15 +203,15 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Renders every pose in <paramref name="posesPath"/> plus diagnostic close-ups of Tilly's sled and Bell's
+        /// Renders every pose in <see cref="PosesPath"/> plus diagnostic close-ups of Tilly's sled and Bell's
         /// three canyon alcoves at 1920x1080 with the game camera's URP post-processing. Before each shot, the view
         /// camera is moved to the pose's eye for one frame while 07 stays on the home pad, so <see cref="PickupGlints"/>
         /// evaluates its distance fade and camera-facing quads from the pose's eye.
         /// </summary>
-        private IEnumerator CaptureAllPoses(string posesPath, string captureFolder)
+        private IEnumerator CaptureAllPoses()
         {
-            Assert.IsTrue(File.Exists(posesPath), $"Sweep poses file not found at '{posesPath}'.");
-            PoseFile file = JsonUtility.FromJson<PoseFile>(File.ReadAllText(posesPath));
+            Assert.IsTrue(File.Exists(PosesPath), $"Sweep poses file not found at '{PosesPath}'.");
+            PoseFile file = JsonUtility.FromJson<PoseFile>(File.ReadAllText(PosesPath));
             Assert.IsNotNull(file, "Parsed sweep poses JSON");
             int width = file.width > 0 ? file.width : DefaultWidth;
             int height = file.height > 0 ? file.height : DefaultHeight;
@@ -264,10 +254,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                     view.fieldOfView = fov;
                     yield return null;
 
-                    string outPath = Path.Combine(captureFolder, pose.name + ".png");
+                    string outPath = Path.Combine(CaptureFolder, pose.name + ".png");
                     Review(view, eye, look, fov, width, height, outPath);
-                    Debug.Log(Format("[moon] captured {0} -> {1} (eye {2}, lookAt {3})",
-                        pose.name, outPath, Vec(eye), Vec(look)));
                 }
             }
             finally
@@ -368,62 +356,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 Object.Destroy(host);
             }
-        }
-
-        private void LogWorldInventory()
-        {
-            var sb = new StringBuilder();
-            sb.AppendLine("[moon] === PLAYMODE RUNTIME SPAWNER INVENTORY ===");
-            for (int f = 0; f < _gameplay.Friends.Friends.Count; f++)
-            {
-                Friend friend = _gameplay.Friends.Friends[f];
-                sb.AppendLine(Format("Friend '{0}': body={1} inSled={2} buriedPart={3}",
-                    friend.Id, Vec(friend.Position), friend.InSled, friend.BuriedPart));
-                Transform friendRoot = _gameplay.Friends.transform.Find("Friend_" + friend.Id);
-                Transform sled = friendRoot != null ? friendRoot.Find(ContainerKinds.TillySled) : null;
-                if (sled != null)
-                {
-                    sb.AppendLine(Format("  Sled '{0}': pos={1}", sled.name, Vec(sled.position)));
-                }
-
-                for (int p = 0; p < friend.Parts.Length; p++)
-                {
-                    Transform part = friend.Parts[p];
-                    SealedContainer box = friend.PartContainers[p];
-                    Transform pocket = friend.PartPockets[p];
-                    sb.AppendLine(Format(
-                        "  Part[{0}] '{1}': active={2} pos={3} rest={4} container={5} pocket={6} buried={7}",
-                        p, part.name, part.gameObject.activeInHierarchy, Vec(part.position), Vec(friend.PartRest[p]),
-                        box != null ? box.Id : "NONE", pocket != null ? pocket.name : "NONE",
-                        friend.IsPartBuried(p)));
-                }
-            }
-
-            for (int i = 0; i < _gameplay.Cassettes.Count; i++)
-            {
-                CassetteDefinition def = _gameplay.Cassettes.Definition(i);
-                SealedContainer box = _gameplay.Cassettes.Container(i);
-                sb.AppendLine(Format("Cassette[{0}] '{1}': waiting={2} container={3} containerPos={4} parent={5}",
-                    i, def.Id, _gameplay.Cassettes.IsWaiting(i), box != null ? box.Id : "NONE",
-                    box != null ? Vec(box.Root.position) : "NONE",
-                    box != null && box.Root.parent != null ? box.Root.parent.name : "NONE"));
-            }
-
-            for (int i = 0; i < _gameplay.Logs.Count; i++)
-            {
-                LogCacheDefinition def = _gameplay.Logs.Definition(i);
-                sb.AppendLine(Format("LogCache[{0}] '{1}': anchor={2} pos={3}",
-                    i, def.LogId, def.Anchor.AnchorId, Vec(_gameplay.Logs.Position(i))));
-            }
-
-            for (int i = 0; i < _gameplay.Containers.Count; i++)
-            {
-                SealedContainer c = _gameplay.Containers.Get(i);
-                sb.AppendLine(Format("SealedContainer[{0}] '{1}': kind={2} root={3} pos={4} cutPoint={5}",
-                    i, c.Id, c.Kind, c.Root.name, Vec(c.Root.position), Vec(c.CutPoint.position)));
-            }
-
-            Debug.Log(sb.ToString());
         }
 
         /// <summary>
@@ -941,12 +873,6 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             hostName = "bare regolith outside every salvage site, derelict, sled, relay mast, friend camp, and base";
             return false;
-        }
-
-        private static string ResolvePath(string envVar, string fallback)
-        {
-            string value = Environment.GetEnvironmentVariable(envVar);
-            return !string.IsNullOrWhiteSpace(value) ? Path.GetFullPath(value) : fallback;
         }
 
         private static string HierarchyPath(Transform t)
