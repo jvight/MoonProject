@@ -993,6 +993,50 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// 07 came within the place <see cref="PlaceId"/> for the first time this save while fragments still lie there
+    /// (docs/design/0.5.5-owner-feedback.md §1.4: every site with fragments says so once): UI's place card shows
+    /// "<see cref="Left"/> fragments to scan" (scan.site_count). Never published on a load.
+    /// </summary>
+    public readonly struct ScanSiteReached
+    {
+        public ScanSiteReached(string placeId, Vector3 position, int left, int count)
+        {
+            PlaceId = placeId ?? string.Empty;
+            Position = position;
+            Left = left;
+            Count = count;
+        }
+
+        /// <summary>The crew map place id (<see cref="IScanSites.PlaceId"/>).</summary>
+        public string PlaceId { get; }
+
+        public Vector3 Position { get; }
+
+        /// <summary>Fragments still to scan there.</summary>
+        public int Left { get; }
+
+        /// <summary>Fragments that lay there in all.</summary>
+        public int Count { get; }
+    }
+
+    /// <summary>
+    /// The last fragment at the place <see cref="PlaceId"/> is scanned (§1.4): the chart's pencil bracket there goes,
+    /// and listening no longer counts it. Never published on a load (read <see cref="IScanSites.Left"/>).
+    /// </summary>
+    public readonly struct ScanSiteEmptied
+    {
+        public ScanSiteEmptied(string placeId, Vector3 position)
+        {
+            PlaceId = placeId ?? string.Empty;
+            Position = position;
+        }
+
+        public string PlaceId { get; }
+
+        public Vector3 Position { get; }
+    }
+
+    /// <summary>
     /// The last fragment of <see cref="BlueprintId"/>'s set is scanned (§1.2 step 4): the sheet completes on the
     /// lab's board, the ticker says so once and 07 chirps Proud. The bay can build it from now on.
     /// </summary>
