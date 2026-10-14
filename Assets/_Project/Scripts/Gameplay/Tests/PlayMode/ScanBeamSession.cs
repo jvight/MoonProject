@@ -33,6 +33,7 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// HDR brightness metrics against the bloom threshold.
     /// </summary>
     [Category("ScanBeamSession")]
+    [Explicit("Real-scene capture of the scan beam with HDR metrics (Task SCAN-BEAM); run on demand.")]
     public sealed class ScanBeamSession : InputTestFixture
     {
         private const string CargoCradleFirst = "rover.cargo_cradle.0";
