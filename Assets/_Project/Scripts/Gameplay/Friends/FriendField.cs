@@ -456,11 +456,6 @@ namespace MoonProject.Gameplay
             var spots = new Vector3[parts.Length];
             bool inSled = definition.Id == _tuning.BuriedPartFriend;
             bool inPockets = definition.Id == _tuning.RockfallPartFriend;
-            for (int p = 0; p < parts.Length; p++)
-            {
-                spots[p] = site.Parts[p] + Vector3.up * _tuning.PartHover;
-            }
-
             if (inSled && !LayTheSled(definition, site, root, services.Visuals, boxes, spots))
             {
                 return null;
@@ -648,7 +643,7 @@ namespace MoonProject.Gameplay
             }
 
             FriendSite site = FriendSitePlanner.Plan(_terrain, services.Layout, definition.Placement, _tuning,
-                _relics.Sites, definition.Parts.Count);
+                _relics.Sites);
             if (!site.InCrater || !site.Visible)
             {
                 Debug.LogWarning($"{nameof(FriendField)}: '{definition.Id}' lies at the best spot found " +
@@ -773,7 +768,6 @@ namespace MoonProject.Gameplay
         {
             Vector3 socket = _rig.CargoSocket.position;
             Vector3 rover = _rover.Position;
-            float bobOmega = 2f * Mathf.PI * _tuning.PartBobFrequency;
             for (int p = 0; p < friend.Parts.Length; p++)
             {
                 if (friend.Progress.IsCollected(p))
@@ -796,11 +790,8 @@ namespace MoonProject.Gameplay
 
                 if (!friend.PartFlying[p])
                 {
-                    bool seated = friend.InSled || friend.PartPockets[p] != null;
-                    Vector3 rest = seated ? InTheSled(friend, p, box, now)
-                        : friend.PartRest[p] + Vector3.up * (Mathf.Sin(now * bobOmega + p) * _tuning.PartBob);
-                    piece.SetPositionAndRotation(rest, Quaternion.Euler(0f,
-                        (seated ? 0f : now * _tuning.PartSpin) + p * PartHeadingStep, 0f));
+                    Vector3 rest = InTheSled(friend, p, box, now);
+                    piece.SetPositionAndRotation(rest, Quaternion.Euler(0f, p * PartHeadingStep, 0f));
                     _glints.Add(friend.PartRest[p], p);
                     if (_pickups.Offer(Time.frameCount, _input.ExcavateHeld, PickupReach.Friends,
                             friend.Index * FriendProgress.MaxParts + p, rest, rover, _tuning.PartReachRadius,

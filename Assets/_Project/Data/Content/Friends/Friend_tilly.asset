@@ -39,7 +39,6 @@ MonoBehaviour:
     _craterDepth: {x: 0.3, y: 2.5}
     _craterRadius: 10
     _visibleFromBase: 1
-    _partDistance: {x: 30, y: 60}
   _anchors:
     _site:
       _anchorId: 

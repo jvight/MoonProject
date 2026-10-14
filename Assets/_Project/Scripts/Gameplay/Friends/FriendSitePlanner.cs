@@ -6,22 +6,15 @@ using MoonProject.Core;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Chooses where a broken friend lies and where its parts are, deterministically from its placement seed and the
-    /// analytic surface: the site is a gentle, drivable spot in the asked distance band and bearing fan, preferably in
-    /// a shallow hollow (a small crater) that can be seen from the edge of the base pad; the parts are spread around
-    /// it, on gentle drivable ground away from home and the relic sites. The best spot is taken when no spot meets
-    /// every preference (the result says which ones it meets). Runs once at initialisation (allocates); throws when the
-    /// surface leaves no drivable spot at all (broken world tuning).
+    /// Chooses where a broken friend lies, deterministically from its placement seed and the analytic surface: the site
+    /// is a gentle, drivable spot in the asked distance band and bearing fan, preferably in a shallow hollow (a small
+    /// crater) that can be seen from the edge of the base pad, away from the relic sites. The best spot is taken when
+    /// no spot meets every preference (the result says which ones it meets). Runs once at initialisation (allocates);
+    /// throws when the surface leaves no drivable spot at all (broken world tuning).
     /// </summary>
     public static class FriendSitePlanner
     {
         private const int RingSamples = 12;
-
-        /// <summary>Decorrelates the part placement stream from the site's (same seed).</summary>
-        private const int PartSalt = 0x5A17;
-
-        /// <summary>Part spacing is relaxed by this factor when no spot satisfies it.</summary>
-        private const float RelaxedSpacingFactor = 0.6f;
 
         // Scores: the view matters most (the player must be able to see the silhouette), then lying in a crater;
         // among spots that have both, the clearer view wins, and a little depth breaks ties.
@@ -30,9 +23,9 @@ namespace MoonProject.Gameplay
         private const float ClearanceCap = 2f;
         private const float DepthWeight = 0.25f;
 
-        /// <summary>Plans the site and <paramref name="partCount"/> part spots around it.</summary>
+        /// <summary>Plans the friend's site.</summary>
         public static FriendSite Plan(ITerrainQuery terrain, IWorldLayout layout, FriendPlacement placement,
-            FriendTuning tuning, IReadOnlyList<RelicSite> relicSites, int partCount)
+            FriendTuning tuning, IReadOnlyList<RelicSite> relicSites)
         {
             if (terrain == null)
             {
@@ -59,21 +52,13 @@ namespace MoonProject.Gameplay
                 throw new ArgumentNullException(nameof(relicSites));
             }
 
-            if (partCount < 1)
-            {
-                throw new ArgumentOutOfRangeException(nameof(partCount), partCount, "A friend has parts.");
-            }
-
             var siteRandom = new DeterministicRandom(placement.Seed);
             Candidate site = ChooseSite(terrain, layout, placement, tuning, relicSites, ref siteRandom);
-            var partRandom = new DeterministicRandom(placement.Seed ^ PartSalt);
-            Vector3[] parts = PlaceParts(terrain, layout, placement, tuning, relicSites, site.Position, partCount,
-                ref partRandom);
             Vector3 toHome = layout.BasePosition - site.Position;
             toHome.y = 0f;
             Vector3 facing = toHome.sqrMagnitude > 1e-6f ? toHome.normalized : Vector3.forward;
             return new FriendSite(site.Position, terrain.SampleNormal(site.Position.x, site.Position.z), facing,
-                parts, site.InCrater, site.Visible);
+                Array.Empty<Vector3>(), site.InCrater, site.Visible);
         }
 
         /// <summary>How much lower (m) (x, z) lies than the ring <paramref name="radius"/> around it.</summary>
@@ -157,77 +142,12 @@ namespace MoonProject.Gameplay
             return best;
         }
 
-        private static Vector3[] PlaceParts(ITerrainQuery terrain, IWorldLayout layout, FriendPlacement placement,
-            FriendTuning tuning, IReadOnlyList<RelicSite> relicSites, Vector3 site, int count,
-            ref DeterministicRandom random)
-        {
-            var parts = new Vector3[count];
-            float minNormalY = SurfaceRules.MinNormalY(tuning.PartMaxSlope);
-            Vector2 distances = placement.PartDistance;
-            float offset = random.Range(0f, 360f);
-            float sector = 360f / count;
-            for (int part = 0; part < count; part++)
-            {
-                float spacing = tuning.PartSpacing;
-                bool placed = false;
-                for (int pass = 0; pass < 2 && !placed; pass++)
-                {
-                    for (int attempt = 0; attempt < tuning.PartAttempts; attempt++)
-                    {
-                        float bearing = offset + part * sector + random.Range(-0.4f, 0.4f) * sector;
-                        Vector3 direction = SurfaceRules.BearingDirection(bearing);
-                        float distance = random.Range(distances.x, distances.y);
-                        float x = site.x + direction.x * distance;
-                        float z = site.z + direction.z * distance;
-                        if (!SurfaceRules.InsideDrivable(terrain, x, z, tuning.PartEdgeMargin) ||
-                            terrain.SampleNormal(x, z).y < minNormalY ||
-                            SurfaceRules.HorizontalDistance(new Vector3(x, 0f, z), layout.BasePosition) <
-                            tuning.PartClearance ||
-                            Near(x, z, relicSites, tuning.PartClearance) ||
-                            NearPlaced(x, z, parts, part, spacing))
-                        {
-                            continue;
-                        }
-
-                        parts[part] = SurfaceRules.OnSurface(terrain, x, z);
-                        placed = true;
-                        break;
-                    }
-
-                    spacing *= RelaxedSpacingFactor;
-                }
-
-                if (!placed)
-                {
-                    throw new InvalidOperationException(
-                        $"{nameof(FriendSitePlanner)}: no gentle, drivable spot for part {part + 1}/{count} " +
-                        $"{distances.x:F0}-{distances.y:F0} m from the friend at {site}.");
-                }
-            }
-
-            return parts;
-        }
-
         private static bool Near(float x, float z, IReadOnlyList<RelicSite> sites, float clearance)
         {
             var point = new Vector3(x, 0f, z);
             for (int i = 0; i < sites.Count; i++)
             {
                 if (SurfaceRules.HorizontalDistance(point, sites[i].Position) < clearance)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static bool NearPlaced(float x, float z, Vector3[] parts, int placed, float spacing)
-        {
-            var point = new Vector3(x, 0f, z);
-            for (int i = 0; i < placed; i++)
-            {
-                if (SurfaceRules.HorizontalDistance(point, parts[i]) < spacing)
                 {
                     return true;
                 }

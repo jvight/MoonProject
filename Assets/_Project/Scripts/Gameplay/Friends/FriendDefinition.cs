@@ -59,7 +59,7 @@ namespace MoonProject.Gameplay
         [Tooltip("Whether its site is planned on the basin floor or taken from the World's anchors.")]
         [SerializeField] private FriendSiteRule _siteRule;
 
-        [Tooltip("Where it lies and where its parts are scattered (Planner rule).")]
+        [Tooltip("Where it lies on the basin floor (Planner rule).")]
         [SerializeField] private FriendPlacement _placement;
 
         [Tooltip("Its anchors: site, parts, driving line and way home (Anchors rule).")]

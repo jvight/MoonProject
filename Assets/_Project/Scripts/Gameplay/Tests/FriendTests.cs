@@ -89,50 +89,24 @@ namespace MoonProject.Gameplay.Tests
         {
             TestWorld world = TestWorld.WithCrater();
             FriendPlacement placement = Tilly();
-            FriendSite site = FriendSitePlanner.Plan(world, world, placement, _tuning, Array.Empty<RelicSite>(), 3);
+            FriendSite site = FriendSitePlanner.Plan(world, world, placement, _tuning, Array.Empty<RelicSite>());
             Assert.IsTrue(site.InCrater, "in the shallow crater");
             Assert.IsTrue(site.Visible, "in view from the base edge");
             Assert.Less(SurfaceRules.HorizontalDistance(site.Position, TestWorld.CraterCentre), 10f);
             float distance = SurfaceRules.HorizontalDistance(site.Position, world.BasePosition);
             Assert.That(distance, Is.InRange(60f, 110f));
             Assert.AreEqual(world.SampleHeight(site.Position.x, site.Position.z), site.Position.y, 1e-4f);
+            Assert.IsEmpty(site.Parts, "parts are hosted by the friend's sled, never scattered on the ground");
 
-            FriendSite again = FriendSitePlanner.Plan(world, world, placement, _tuning, Array.Empty<RelicSite>(), 3);
+            FriendSite again = FriendSitePlanner.Plan(world, world, placement, _tuning, Array.Empty<RelicSite>());
             Assert.AreEqual(site.Position, again.Position, "deterministic");
-            for (int i = 0; i < 3; i++)
-            {
-                Assert.AreEqual(site.Parts[i], again.Parts[i]);
-            }
-        }
-
-        [Test]
-        public void Parts_AreSpreadAroundTheSite_OnGentleDrivableFloor()
-        {
-            TestWorld world = TestWorld.WithCrater();
-            var relics = new[] { new RelicSite(new Vector3(85f, 0f, -40f), Vector3.up) };
-            FriendSite site = FriendSitePlanner.Plan(world, world, Tilly(), _tuning, relics, 3);
-            float minNormalY = SurfaceRules.MinNormalY(_tuning.PartMaxSlope);
-            for (int i = 0; i < site.Parts.Length; i++)
-            {
-                Vector3 part = site.Parts[i];
-                Assert.That(SurfaceRules.HorizontalDistance(part, site.Position), Is.InRange(30f - 1e-3f, 60f + 1e-3f));
-                Assert.IsTrue(world.IsDrivable(part.x, part.z));
-                Assert.GreaterOrEqual(world.SampleNormal(part.x, part.z).y, minNormalY);
-                Assert.GreaterOrEqual(SurfaceRules.HorizontalDistance(part, relics[0].Position),
-                    _tuning.PartClearance);
-                for (int j = 0; j < i; j++)
-                {
-                    Assert.GreaterOrEqual(SurfaceRules.HorizontalDistance(part, site.Parts[j]),
-                        _tuning.PartSpacing * 0.6f - 1e-3f);
-                }
-            }
         }
 
         [Test]
         public void Site_ReportsWhenNoCraterIsFound()
         {
             TestWorld flat = TestWorld.Flat();
-            FriendSite site = FriendSitePlanner.Plan(flat, flat, Tilly(), _tuning, Array.Empty<RelicSite>(), 3);
+            FriendSite site = FriendSitePlanner.Plan(flat, flat, Tilly(), _tuning, Array.Empty<RelicSite>());
             Assert.IsFalse(site.InCrater, "a flat world has no crater: the best spot is taken and the caller warned");
             Assert.IsTrue(site.Visible);
         }
@@ -320,8 +294,7 @@ namespace MoonProject.Gameplay.Tests
 
         private static FriendPlacement Tilly()
         {
-            return new FriendPlacement(41, new Vector2(60f, 110f), 90f, 55f, new Vector2(0.3f, 2.5f), 10f, true,
-                new Vector2(30f, 60f));
+            return new FriendPlacement(41, new Vector2(60f, 110f), 90f, 55f, new Vector2(0.3f, 2.5f), 10f, true);
         }
 
         private sealed class FakeSpots : ISpotTargets
