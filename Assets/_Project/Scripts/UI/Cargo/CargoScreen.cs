@@ -23,6 +23,7 @@ namespace MoonProject.UI
         public const string CellClass = "cargo__cell";
         public const string EmptyClass = "cargo__cell--empty";
         public const string UnlitClass = "cargo__cell--unlit";
+        public const string PartClass = "cargo__part";
         private const string BootingClass = "cargo--booting";
         private const string TransferClass = "cargo--transfer";
         private const string ButtonClass = "cargo__cell--button";
@@ -52,6 +53,7 @@ namespace MoonProject.UI
         private readonly Grid _holdGrid;
         private readonly Grid _homeGrid;
         private readonly Dictionary<int, string> _pairs = new Dictionary<int, string>();
+        private readonly Dictionary<string, string> _partNames = new Dictionary<string, string>(StringComparer.Ordinal);
         private readonly string[] _waitingTexts = new string[WaitingCache];
         private string _bootText = string.Empty;
         private int _bootTyped = -1;
@@ -141,6 +143,13 @@ namespace MoonProject.UI
             return _holdGrid.Cells[index].Root;
         }
 
+        /// <summary>The story part label shown in slot <paramref name="index"/> on 07's side, or empty (tests).</summary>
+        public string HoldPartText(int index)
+        {
+            Cell cell = _holdGrid.Cells[index];
+            return cell.Part.style.display == DisplayStyle.Flex ? cell.Part.text : string.Empty;
+        }
+
         /// <summary>The cell of slot <paramref name="index"/> on home's side (tests and captures).</summary>
         public Button HomeCell(int index)
         {
@@ -202,6 +211,7 @@ namespace MoonProject.UI
         public void Relocalize()
         {
             _pairs.Clear();
+            _partNames.Clear();
             Array.Clear(_waitingTexts, 0, _waitingTexts.Length);
             _writtenSummary = -1;
             _dirty = true;
@@ -259,7 +269,7 @@ namespace MoonProject.UI
             int items = 0;
             for (int i = 0; i < slots; i++)
             {
-                items += _hold.GetSlot(i).IsEmpty ? 0 : 1;
+                items += IsSlotEmpty(i) ? 0 : 1;
             }
 
             _boot.Start(slots, items);
@@ -312,7 +322,7 @@ namespace MoonProject.UI
             {
                 Cell cell = cells[i];
                 cell.Root.EnableInClassList(UnlitClass, i >= lit);
-                if (_hold.GetSlot(i).IsEmpty)
+                if (IsSlotEmpty(i))
                 {
                     continue;
                 }
@@ -325,7 +335,7 @@ namespace MoonProject.UI
             int seen = 0;
             for (int i = 0; i < cells.Count && _bootArrived < arrived; i++)
             {
-                if (_hold.GetSlot(i).IsEmpty)
+                if (IsSlotEmpty(i))
                 {
                     continue;
                 }
@@ -345,13 +355,21 @@ namespace MoonProject.UI
             }
         }
 
+        private bool IsSlotEmpty(int index)
+        {
+            return _hold.GetSlot(index).IsEmpty && string.IsNullOrEmpty(_hold.GetPart(index));
+        }
+
         /// <summary>An item at <paramref name="progress"/> of its slide: it comes in from the left, fading up.</summary>
         private void SetItem(Cell cell, float progress)
         {
             float eased = 1f - (1f - progress) * (1f - progress);
+            Translate slide = new Translate(-_settings.BootSlideDistance * (1f - eased), 0f);
             cell.Icon.style.opacity = eased;
             cell.Units.style.opacity = eased;
-            cell.Icon.style.translate = new Translate(-_settings.BootSlideDistance * (1f - eased), 0f);
+            cell.Part.style.opacity = eased;
+            cell.Icon.style.translate = slide;
+            cell.Part.style.translate = slide;
         }
 
         /// <summary>
@@ -426,6 +444,13 @@ namespace MoonProject.UI
                 : _pairs[key] = string.Concat(_numbers.Get(units), "/", _numbers.Get(capacity));
         }
 
+        private string PartName(string partId)
+        {
+            return _partNames.TryGetValue(partId, out string name)
+                ? name
+                : _partNames[partId] = _localization.Get(UiKeys.PickupName(partId));
+        }
+
         /// <summary>One press on a slot: its stack goes to the other side, as much as fits.</summary>
         private void Press(Grid grid, int index)
         {
@@ -460,6 +485,7 @@ namespace MoonProject.UI
             public VisualElement Icon;
             public MaterialIconPainter Painter;
             public Label Units;
+            public Label Part;
         }
 
         /// <summary>One grid of slots: 07's hold (a press stores at home) or home's shelves (a press takes along).</summary>
@@ -512,17 +538,34 @@ namespace MoonProject.UI
                 {
                     Cell cell = Cells[i];
                     MaterialSlot slot = Source.GetSlot(i);
+                    string part = ToHome ? screen._hold.GetPart(i) : string.Empty;
                     cell.Root.style.width = screen._cell;
                     cell.Root.style.height = screen._cell;
-                    if (slot.IsEmpty)
+                    if (!slot.IsEmpty)
                     {
-                        cell.Root.AddToClassList(EmptyClass);
+                        cell.Root.RemoveFromClassList(EmptyClass);
+                        cell.Icon.style.display = DisplayStyle.Flex;
+                        cell.Units.style.display = DisplayStyle.Flex;
+                        cell.Part.style.display = DisplayStyle.None;
+                        cell.Painter.SetMaterial(slot.Material);
+                        cell.Units.text = screen.Pair(slot.Units, slot.Capacity);
                         continue;
                     }
 
-                    cell.Root.RemoveFromClassList(EmptyClass);
-                    cell.Painter.SetMaterial(slot.Material);
-                    cell.Units.text = screen.Pair(slot.Units, slot.Capacity);
+                    if (!string.IsNullOrEmpty(part))
+                    {
+                        cell.Root.RemoveFromClassList(EmptyClass);
+                        cell.Icon.style.display = DisplayStyle.None;
+                        cell.Units.style.display = DisplayStyle.None;
+                        cell.Part.style.display = DisplayStyle.Flex;
+                        cell.Part.text = screen.PartName(part);
+                        continue;
+                    }
+
+                    cell.Root.AddToClassList(EmptyClass);
+                    cell.Icon.style.display = StyleKeyword.Null;
+                    cell.Units.style.display = StyleKeyword.Null;
+                    cell.Part.style.display = DisplayStyle.None;
                 }
             }
 
@@ -537,12 +580,16 @@ namespace MoonProject.UI
                 var painter = new MaterialIconPainter(icon, SalvageMaterial.Metal);
                 var units = new Label { pickingMode = PickingMode.Ignore };
                 units.AddToClassList("cargo__units");
+                var part = new Label { pickingMode = PickingMode.Ignore };
+                part.AddToClassList(PartClass);
+                part.style.display = DisplayStyle.None;
                 root.Add(icon);
                 root.Add(units);
+                root.Add(part);
                 root.clicked += () => _screen.Press(this, index);
                 root.RegisterCallback<FocusInEvent>(_ => _screen.WriteTransferHint(this));
                 _container.Add(root);
-                var cell = new Cell { Root = root, Icon = icon, Painter = painter, Units = units };
+                var cell = new Cell { Root = root, Icon = icon, Painter = painter, Units = units, Part = part };
                 Apply(cell);
                 return cell;
             }

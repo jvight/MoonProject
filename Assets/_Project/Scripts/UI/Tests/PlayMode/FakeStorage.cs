@@ -11,7 +11,7 @@ namespace MoonProject.UI.PlayModeTests
 
         public int SlotCount => _slots.Count;
 
-        public int UsedSlots
+        public virtual int UsedSlots
         {
             get
             {
@@ -95,7 +95,32 @@ namespace MoonProject.UI.PlayModeTests
     /// <summary>07's hold, set by hand.</summary>
     public sealed class FakeHold : FakeSlots, ICargoHold
     {
+        private readonly List<string> _parts = new List<string>();
+
         public int WaitingBundles { get; set; }
+
+        public override int UsedSlots => base.UsedSlots + _parts.Count;
+
+        public string GetPart(int index)
+        {
+            int part = index - base.UsedSlots;
+            return part >= 0 && part < _parts.Count ? _parts[part] : string.Empty;
+        }
+
+        public bool HasPart(string partId)
+        {
+            return !string.IsNullOrEmpty(partId) && _parts.Contains(partId);
+        }
+
+        public void AddPart(string partId)
+        {
+            _parts.Add(partId);
+        }
+
+        public void RemovePart(string partId)
+        {
+            _parts.Remove(partId);
+        }
     }
 
     /// <summary>Home's shelves, set by hand.</summary>
