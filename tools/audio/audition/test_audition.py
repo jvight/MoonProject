@@ -1,4 +1,4 @@
-"""Unit tests for the AUDIO-AUDITION synthesis directions (A, B, C) and comparison export."""
+"""Unit tests for the AUDIO-AUDITION Round 2 Old Radio refinements (C, C1, C2, C3) and Round 1 modules."""
 import ast
 import json
 import sys
@@ -8,8 +8,10 @@ from pathlib import Path
 
 import numpy as np
 import soundfile as sf
+from scipy.signal import welch
 
 AUDIO_TOOLS_DIR = Path(__file__).resolve().parents[1]
+REPO_ROOT = AUDIO_TOOLS_DIR.parents[1]
 if str(AUDIO_TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(AUDIO_TOOLS_DIR))
 
@@ -17,19 +19,25 @@ import analyze_audio  # noqa: E402
 from audition import (  # noqa: E402
     AUDITION_CUES,
     DIRECTIONS,
+    ROUND1_DIRECTIONS,
     render_all,
     workshop,
 )
-from audition.render_audition import MAX_FILE_BYTES, MAX_TOTAL_BYTES  # noqa: E402
+from audition.render_audition import (  # noqa: E402
+    MAX_AUDITION_PEAK_DB,
+    MAX_FILE_BYTES,
+    MAX_TOTAL_BYTES,
+    ROUND1_OUT_DIR,
+)
 from synth.core import SAMPLE_RATE, rng  # noqa: E402
 
 
 class TestAuditionDirections(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls._tmp = tempfile.TemporaryDirectory(prefix="lunar_audition_test_")
+        cls._tmp = tempfile.TemporaryDirectory(prefix="lunar_audition2_test_")
         cls.out_dir = Path(cls._tmp.name)
-        cls.summary = render_all(cls.out_dir)
+        cls.summary = render_all(cls.out_dir, round_num=2)
 
     @classmethod
     def tearDownClass(cls):
@@ -41,7 +49,8 @@ class TestAuditionDirections(unittest.TestCase):
         rover_cues = [c for c in AUDITION_CUES if c.group == "07"]
         self.assertEqual(len(ui_cues), 8)
         self.assertEqual(len(rover_cues), 6)
-        self.assertEqual(set(DIRECTIONS.keys()), {"A", "B", "C", "current"})
+        self.assertEqual(set(DIRECTIONS.keys()), {"C", "C1", "C2", "C3"})
+        self.assertEqual(set(ROUND1_DIRECTIONS.keys()), {"A", "B", "C", "current"})
 
     def test_workshop_uses_no_pure_oscillators(self):
         source = Path(workshop.__file__).read_text(encoding="utf-8")
@@ -64,14 +73,22 @@ class TestAuditionDirections(unittest.TestCase):
 
     def test_determinism(self):
         ac = AUDITION_CUES[0]
-        for direction in ("A", "B", "C"):
+        for direction in ("C", "C1", "C2", "C3"):
             s1 = ac.renders[direction](rng(f"det_{direction}", 0))
             s2 = ac.renders[direction](rng(f"det_{direction}", 0))
             np.testing.assert_array_equal(s1, s2)
 
-    def test_wav_format_size_and_quality_gates(self):
+    def test_c_matches_round1_reference(self):
+        if not (ROUND1_OUT_DIR / "C").exists():
+            self.skipTest("Round 1 Logs/audition/C not present")
+        for ac in AUDITION_CUES:
+            r1 = (ROUND1_OUT_DIR / "C" / f"{ac.id}.wav").read_bytes()
+            r2 = (self.out_dir / "C" / f"{ac.id}.wav").read_bytes()
+            self.assertEqual(r1, r2, f"C/{ac.id}.wav differs from Round 1 C reference")
+
+    def test_wav_format_size_peak_and_quality_gates(self):
         self.assertLess(self.summary["total_bytes"], MAX_TOTAL_BYTES)
-        for direction in ("A", "B", "C", "current"):
+        for direction in ("C", "C1", "C2", "C3"):
             for ac in AUDITION_CUES:
                 wav_path = self.out_dir / direction / f"{ac.id}.wav"
                 self.assertTrue(wav_path.exists(), f"Missing {wav_path}")
@@ -86,33 +103,76 @@ class TestAuditionDirections(unittest.TestCase):
 
                 m = self.summary["metrics"][direction][ac.id]
                 self.assertEqual(m["failures"], [], f"{direction}/{ac.id}.wav failed gates: {m['failures']}")
+                self.assertLessEqual(
+                    m["peak_db"],
+                    MAX_AUDITION_PEAK_DB,
+                    f"{direction}/{ac.id}.wav peak {m['peak_db']:.2f} dBFS > {MAX_AUDITION_PEAK_DB}",
+                )
+                self.assertLessEqual(
+                    m["true_peak_db"],
+                    MAX_AUDITION_PEAK_DB,
+                    f"{direction}/{ac.id}.wav true peak {m['true_peak_db']:.2f} dBTP > {MAX_AUDITION_PEAK_DB}",
+                )
+                self.assertTrue(m["in_key"], f"{direction}/{ac.id}.wav pitch {m['pitch']} not in D pentatonic")
+                self.assertLessEqual(
+                    abs(m["pitch_cents"]),
+                    analyze_audio.MAX_KEY_ERROR_CENTS,
+                    f"{direction}/{ac.id}.wav pitch error {m['pitch_cents']:.1f}c > 20c",
+                )
 
-                if direction in ("A", "B", "C"):
-                    self.assertTrue(m["in_key"], f"{direction}/{ac.id}.wav pitch {m['pitch']} not in D pentatonic")
-                    self.assertLessEqual(
-                        abs(m["pitch_cents"]),
-                        analyze_audio.MAX_KEY_ERROR_CENTS,
-                        f"{direction}/{ac.id}.wav pitch error {m['pitch_cents']:.1f}c > 20c",
-                    )
+                # Verify no clicks/pops: zero boundary samples and smooth sample-to-sample derivative.
+                sig, _ = sf.read(str(wav_path))
+                self.assertEqual(float(sig[0]), 0.0)
+                self.assertEqual(float(sig[-1]), 0.0)
+                max_step = float(np.max(np.abs(np.diff(sig))))
+                self.assertLess(max_step, 0.15, f"{direction}/{ac.id}.wav has steep step jump {max_step:.3f}")
 
-    def test_directions_are_timbrally_distinct(self):
-        centroids_a = [self.summary["metrics"]["A"][c.id]["centroid_hz"] for c in AUDITION_CUES]
-        centroids_b = [self.summary["metrics"]["B"][c.id]["centroid_hz"] for c in AUDITION_CUES]
-        centroids_c = [self.summary["metrics"]["C"][c.id]["centroid_hz"] for c in AUDITION_CUES]
+    def test_variants_are_clearly_distinct(self):
+        centroids = {
+            d: [self.summary["metrics"][d][c.id]["centroid_hz"] for c in AUDITION_CUES]
+            for d in ("C", "C1", "C2", "C3")
+        }
+        chirp_centroids = {
+            d: [self.summary["metrics"][d][c.id]["centroid_hz"] for c in AUDITION_CUES if c.group == "07"]
+            for d in ("C", "C1", "C2", "C3")
+        }
 
-        # Workshop (metal/mechanical) is brighter than Wood & Felt, which is brighter than band-limited Old Radio.
-        self.assertGreater(float(np.mean(centroids_a)), float(np.mean(centroids_b)) + 150.0)
-        self.assertGreater(float(np.mean(centroids_b)), float(np.mean(centroids_c)) + 80.0)
-
-        # Verify waveforms for the same cue differ across directions.
+        # C1 ("Warm receiver") is significantly warmer/darker with a fuller low-mid body and longer tails than C.
+        self.assertLess(float(np.mean(centroids["C1"])), float(np.mean(centroids["C"])) - 150.0)
         for ac in AUDITION_CUES:
-            a_sig, _ = sf.read(str(self.out_dir / "A" / f"{ac.id}.wav"))
-            b_sig, _ = sf.read(str(self.out_dir / "B" / f"{ac.id}.wav"))
-            c_sig, _ = sf.read(str(self.out_dir / "C" / f"{ac.id}.wav"))
-            n = min(len(a_sig), len(b_sig), len(c_sig))
-            self.assertFalse(np.allclose(a_sig[:n], b_sig[:n]))
-            self.assertFalse(np.allclose(b_sig[:n], c_sig[:n]))
-            self.assertFalse(np.allclose(a_sig[:n], c_sig[:n]))
+            self.assertGreater(
+                self.summary["metrics"]["C1"][ac.id]["duration"],
+                self.summary["metrics"]["C"][ac.id]["duration"],
+                f"C1/{ac.id}.wav should have a longer gentle room tail than C",
+            )
+
+        # C2 ("Radio bench") vocal-formant chirps have higher formant presence than C and C1.
+        self.assertGreater(float(np.mean(chirp_centroids["C2"])), float(np.mean(chirp_centroids["C"])) + 100.0)
+
+        # C3 ("Lullaby radio") celesta/music-box phrases have the highest harmonic overtone centroid.
+        self.assertGreater(float(np.mean(centroids["C3"])), float(np.mean(centroids["C2"])) + 80.0)
+        self.assertGreater(float(np.mean(centroids["C3"])), float(np.mean(centroids["C"])) + 100.0)
+
+        # Measure low-mid (100..350 Hz) energy share to verify C1's fuller low-mid body.
+        low_mid_shares = {d: [] for d in ("C", "C1", "C2", "C3")}
+        for d in ("C", "C1", "C2", "C3"):
+            for ac in AUDITION_CUES:
+                sig, _ = sf.read(str(self.out_dir / d / f"{ac.id}.wav"))
+                f, psd = welch(sig, fs=SAMPLE_RATE, nperseg=min(4096, len(sig)))
+                low_mid_shares[d].append(float(psd[(f >= 100.0) & (f < 350.0)].sum() / psd[1:].sum()))
+        self.assertGreater(float(np.mean(low_mid_shares["C1"])), float(np.mean(low_mid_shares["C"])) + 0.12)
+
+        # Verify pairwise waveform distinctness for every cue across all 4 variants.
+        variants = ("C", "C1", "C2", "C3")
+        for ac in AUDITION_CUES:
+            sigs = {d: sf.read(str(self.out_dir / d / f"{ac.id}.wav"))[0] for d in variants}
+            for i, d1 in enumerate(variants):
+                for d2 in variants[i + 1:]:
+                    n = min(len(sigs[d1]), len(sigs[d2]))
+                    self.assertFalse(
+                        np.allclose(sigs[d1][:n], sigs[d2][:n]),
+                        f"{d1}/{ac.id}.wav and {d2}/{ac.id}.wav are not distinct",
+                    )
 
     def test_index_json_structure(self):
         index_path = self.out_dir / "index.json"
@@ -125,7 +185,7 @@ class TestAuditionDirections(unittest.TestCase):
 
         for entry in data["cues"]:
             self.assertIn("cue", entry)
-            for key in ("A", "B", "C", "current"):
+            for key in ("C", "C1", "C2", "C3"):
                 self.assertIsInstance(entry[key], str)
                 self.assertGreater(len(entry[key].strip()), 15)
                 self.assertNotIn("\n", entry[key].strip())
