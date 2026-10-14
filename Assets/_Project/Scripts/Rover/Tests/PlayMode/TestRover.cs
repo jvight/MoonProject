@@ -514,6 +514,7 @@ namespace MoonProject.Rover.PlayModeTests
             context.Register<IWorldLayout>(rover.Layout);
             context.Register<IFriendRoster>(rover.Friends);
             context.Register<IRoverEquipment>(rover.Equipment);
+            context.Register<ICutter>(rover.Equipment);
             context.Register<IWorldAnchors>(rover.Anchors);
             context.Register<ISaveService>(rover.Save);
             rover.Context = context;
