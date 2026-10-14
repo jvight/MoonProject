@@ -195,13 +195,21 @@ namespace MoonProject.Rover
                 return;
             }
 
+            if (!context.TryGet(out _regions))
+            {
+                Debug.LogError(
+                    $"{nameof(RoverCameraRig)}: no {nameof(IWorldRegions)} is registered (WorldSystem must initialise first).",
+                    this);
+                enabled = false;
+                return;
+            }
+
             _context = context;
             _rover = context.Get<IRoverState>();
             _world = context.Get<IWorldLayout>();
             _stillness = context.Get<IRoverStillness>();
             _fit = context.Get<IBayFitView>();
             _terrain = context.Get<ITerrainQuery>();
-            _regions = context.Get<IWorldRegions>();
             _events = context.Events;
             _input = context.Input;
             _orbitState = new CameraOrbit(_tuning);
@@ -260,7 +268,7 @@ namespace MoonProject.Rover
 
         private void ApplyCinemachineSettings()
         {
-            float farClip = _regions != null ? _regions.CurrentFarClipPlane : _tuning.FarClip;
+            float farClip = _regions.CurrentFarClipPlane;
             _camera.Follow = _target;
             _camera.LookAt = _target;
             _camera.Lens.NearClipPlane = _tuning.NearClip;
@@ -751,7 +759,7 @@ namespace MoonProject.Rover
             float tilt = Mathf.Min(held - elevation, _tuning.MaxLookUpTilt);
             _composer.TargetOffset = Vector3.up * LowOrbit.AimLift(floor, tilt, radius);
             _orbit.Radius = radius;
-            float farClip = _regions != null ? _regions.CurrentFarClipPlane : _tuning.FarClip;
+            float farClip = _regions.CurrentFarClipPlane;
             _camera.Lens.FieldOfView = fov;
             _camera.Lens.FarClipPlane = farClip;
             _viewCamera.farClipPlane = farClip;

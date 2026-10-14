@@ -114,8 +114,8 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreSame(controller.Kit, context.Get<IRoverCargoSeat>(), "The kit's rack is the cargo seat.");
             Assert.AreSame(cameraRig.Camera, context.Get<IViewCamera>().Camera);
             Assert.AreSame(cameraRig, context.Get<ILookSettings>());
-            Assert.AreEqual(TestWorldRegions.DefaultFarClipPlane, cameraRig.Camera.farClipPlane, 1e-3f);
-            Assert.AreEqual(TestWorldRegions.DefaultFarClipPlane, cameraRig.ChaseCamera.Lens.FarClipPlane, 1e-3f);
+            Assert.AreEqual(3200f, cameraRig.Camera.farClipPlane, 1e-3f);
+            Assert.AreEqual(3200f, cameraRig.ChaseCamera.Lens.FarClipPlane, 1e-3f);
 
             regions.CurrentFarClipPlane = 4500f;
             yield return null;
@@ -123,6 +123,8 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(4500f, cameraRig.ChaseCamera.Lens.FarClipPlane, 1e-3f);
             regions.CurrentFarClipPlane = TestWorldRegions.DefaultFarClipPlane;
             yield return null;
+            Assert.AreEqual(3200f, cameraRig.Camera.farClipPlane, 1e-3f);
+            Assert.AreEqual(3200f, cameraRig.ChaseCamera.Lens.FarClipPlane, 1e-3f);
             Camera camera = cameraRig.Camera;
             float openingPitch = Mathf.Asin(-camera.transform.forward.y) * Mathf.Rad2Deg;
             Vector3 roverOnScreen = camera.WorldToViewportPoint(controller.Position);

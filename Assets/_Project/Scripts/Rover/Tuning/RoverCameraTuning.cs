@@ -609,6 +609,11 @@ namespace MoonProject.Rover
 
         public float NearClip => _nearClip;
 
+        /// <summary>
+        /// Far clip plane (m) used by <see cref="Camera.LabCamera"/> (and initial prefab authoring in
+        /// <c>RoverCameraRigBuilder</c>); at runtime <see cref="Camera.RoverCameraRig"/> reads
+        /// <see cref="MoonProject.Core.IWorldRegions.CurrentFarClipPlane"/>.
+        /// </summary>
         public float FarClip => _farClip;
 
         public float BumpPerImpact => _bumpPerImpact;
