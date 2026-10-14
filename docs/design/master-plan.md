@@ -1,558 +1,742 @@
-# Lunarion — Kế Hoạch Tổng Thể (Master Plan)
+# Kế Hoạch Tổng Thể Lunarion (0.5.5 → 1.0)
 
-> **Trạng thái:** Bản trình duyệt Chủ dự án (Owner Review) — Nguồn sự thật duy nhất (Single Source of Truth)
-> **Ngày cập nhật:** 2026-10-14
-> **Nhánh làm việc:** `box/agy-plan`
-> **Phạm vi:** Định nghĩa toàn bộ trò chơi từ `0.5.6` đến `1.0`, hợp nhất `docs/design/gdd-v3.md`, `docs/design/0.5.5-owner-feedback.md`, `Logs/sources/07V2.md`, `Logs/sources/story-v3.md`, `Logs/sources/PLAN.md` và toàn bộ 25 file trong `Logs/owner-memory/`.
-
----
-
-## 0. Tóm tắt một trang (One-Page Summary)
-
-**Lunarion là gì?**
-Một trò chơi khám phá Mặt Trăng góc nhìn thứ ba, yên bình và cô đơn (*cozy, solitary lunar rover game*). Người chơi điều khiển **07** — chiếc xe tự hành khảo sát (*survey rover*) cuối cùng còn hoạt động tại **Trạm Lumen** (*Lumen Station*), một căn cứ nghiên cứu gần cực Nam Mặt Trăng bị sơ tán khẩn cấp sau cơn bão mặt trời tháng 10/2047. Không có thanh máu, không đếm ngược oxy, không kẻ thù, không chiến đấu, không màn hình thua cuộc (*No Fail State*).
-
-**Người chơi làm gì?**
-1. **Rời đế sạc đi khảo sát:** Lái 07 qua địa hình bụi xám, miệng hố, khe nứt dung nham và hẻm núi dưới bầu trời đen thẫm đầy sao và Trái Đất treo thấp trên đường chân trời.
-2. **Tương tác bằng cơ khí thật:** Quét các mảnh bản vẽ công nghệ bị vỡ (*Fragment Blueprints*) bằng mắt quang học; cắt mối hàn phế liệu bằng mỏ cắt mũi xe; đào thiết bị vùi dưới đống đổ nát bằng gầu xúc trước; móc cáp tời kéo hoặc dùng cần trục lưng nâng kỷ vật về nhà; mở cửa khoang hàng sau để thu vật liệu và linh kiện.
-3. **Chế tạo, lắp ráp và mở rộng mạng lưới:** Đổ vật liệu vào phễu Xưởng xe (*Vehicle Bay*) để chế tạo thiết bị mới, lắp trực tiếp lên các ổ cố định trên thân 07, dựng lại tháp tiếp sóng (*Relay Towers*), đặt trụ sạc (*Beacon Chargers*) và đánh thức các robot đồng đội bị kẹt (*Companions*).
-4. **Đi xa dần qua 6 vùng địa chất:** Từ Lòng chảo căn cứ (*The Basin*) qua Hẻm Thì Thầm (*Whispering Canyon*), Biển Dài (*Long Mare*), Bậc thềm vành hố (*Rim Terraces* & *Meridian Station*), Hố Bóng Tối & Ống Dung Nham (*Shadowed Crater* & *Lava Tube*) để vươn tới Đỉnh núi (*The Peak*).
-
-**Cảm giác chủ đạo là gì?**
-**Sự kinh ngạc cô đơn chuyển dần thành niềm tự hào lặng lẽ (*Lonely wonder turning into quiet pride / quiet vindication*).**
-Ban đầu, Mặt Trăng lạnh lẽo, tối tăm và tĩnh mịch; 07 nhỏ bé, pin yếu, đi xa vài trăm mét đã phải quay về. Qua từng giờ chơi, chính tay người chơi làm sáng lại từng tòa nhà, nối từng đường cáp vàng ấm áp trên mặt bụi xám, nghe tiếng máy móc trong lòng chảo rì rầm hoạt động trở lại, và nhìn thấy chiếc xe 07 của mình trưởng thành với đầy đủ thiết bị cơ khí gắn trên thân.
-
-**Vì sao người chơi chơi đến hết (3–5 giờ cho mục tiêu chính)?**
-Khi Trạm Lumen sơ tán năm 2047, Ủy ban Tài nguyên Trái Đất đã đóng cửa chương trình vì kết luận Mặt Trăng "khô cằn, không đáng quay lại" (*not worth returning to*). Nhưng trong quá trình mở rộng mạng lưới, 07 phát hiện ra hai sự thật bị bỏ quên:
-1. Nhà địa chất **Ines Kalani** đã tìm thấy một mạch băng nước cổ đại khổng lồ kèm rêu ngủ đông dưới lòng đất ngay trong đêm bão mặt trời — nhưng kho dữ liệu bị cắt điện trước khi kịp gửi về.
-2. Cạnh Lumen còn có một trạm tự động thứ hai — **Trạm Meridian** (*Meridian Station*) của liên doanh Tycho — cũng đã khoan trúng đúng tầng băng đó từ phía bên kia sườn núi.
-3. Trái Đất chưa bao giờ ngừng gọi vào mỗi kỳ cửa sổ liên lạc, nhưng năm 2067 một con robot quét bụi bị kẹt làm mảng pin của chảo tiếp sóng chính phủ đầy bụi, khiến đường truyền từ Mặt Trăng im bặt.
-
-07 thu thập đủ **6 mảnh dữ liệu Khảo sát (*Survey 6/6*)**, nối điện lên **Chảo ăng-ten Đỉnh núi (*Peak Dish*)**, và gửi bản báo cáo hoàn chỉnh về Trái Đất — chứng minh Mặt Trăng có nước và sự sống, buộc con người phải mở lại chương trình quay về.
+> **Phiên bản tài liệu:** Vòng 2 — Đã đối chiếu trực tiếp với mã nguồn C# trên nhánh `0.5` và tài liệu
+> phản hồi đã chốt [`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md).
+>
+> **Quy ước gắn nhãn bắt buộc (áp dụng xuyên suốt, đặc biệt tại Mục 2, 3, 4 và 7 — không để bất kỳ câu khẳng định nào không có nhãn):**
+> - **`[HIỆN TẠI]`**: Sự thật đang chạy trong mã nguồn C# hôm nay hoặc đã chốt trong
+>   [`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md), kèm đường dẫn file xác thực.
+> - **`[ĐỀ XUẤT]`**: Đề xuất thiết kế trình chủ dự án duyệt (cho các bản `0.5.6`, `0.5.7`, `0.6+` hoặc
+>   bản nháp `story v3`), kèm một dòng lý do cụ thể.
 
 ---
 
-## 1. Trải nghiệm người chơi & Luật bất biến (Player Experience & Non-Negotiable Rules)
+## 1. Tóm tắt cho Chủ dự án (Executive Summary)
 
-### 1.1. Năm trụ cột trải nghiệm (Hook / Pull / Hold / Finish / Feeling)
-*(Trích dẫn: `player-experience-first.md`, 2026-10-13; `awe-hooks.md`, 2026-10-13; `docs/design/north-star.md`)*
+Bản kế hoạch vòng 2 này sửa toàn bộ 12 điểm chưa khớp giữa tài liệu quy hoạch vòng 1 với mã nguồn C#
+thực tế của **Lunarion** và các quyết định của chủ dự án ngày `2026-10-14`:
 
-| Trụ cột | Câu hỏi của người chơi | Câu trả lời cụ thể trong game |
-|---|---|---|
-| **Hook** *(5 giây – 1 giờ đầu)* | *"Thế giới này là gì? Mình đang ở đâu?"* | 07 mở màn trập ống kính trong nắng xiên cực thấp. Trước mặt là Trạm Lumen tắt điện, trên Đỉnh núi cao 240 m có đốm đèn đỏ chớp tắt mỗi 3 giây, bên phải là Trái Đất khổng lồ treo sát chân trời. Radio bắt được tiếng nhạc hiệu rè trong sóng tĩnh. Cách 160 m là xác vệ tinh **Kestrel-3** vừa rơi, mang phù hiệu lạ (*Tycho Consortium · Meridian Relay*) không thuộc về Trạm Lumen. |
-| **Pull** *(Động lực kéo đi)* | *"Chuyện gì đã xảy ra ở đây? Bên kia sườn đồi có gì?"* | Bốn câu hỏi nối tiếp nhau: (1) Ai vẫn đang phát sóng từ Trái Đất? (2) Trạm Meridian là ai và nằm ở đâu? (3) Mặt Trăng có thực sự chết và vô giá trị như lệnh đóng cửa nói không? (4) Vì sao liên lạc tắt hẳn từ năm 2067? Mỗi vùng trả lời một câu hỏi và để lộ một công trình nhìn thấy bằng mắt thường ở vùng kế tiếp. |
-| **Hold** *(Giữ chân mỗi 10 phút)* | *"Mình đang mạnh lên và làm ấm thế giới này thế nào?"* | (1) Thân xe 07 gắn thêm thiết bị thật sau mỗi lần lắp; (2) Căn cứ và mặt đất sáng dần lên nhờ đèn ấm và đường cáp nối; (3) Hệ sinh thái máy móc xung quanh tự chạy lại sau khi 07 sửa xong; (4) Bản đồ địa hình tự vẽ thêm vùng mới + bộ đếm `Khảo sát 0/6 → 6/6` + Sổ ghi chép (*Databank*) mở thêm mục mới. |
-| **Finish** *(Đích đến rõ ràng)* | *"Khi nào mình hoàn thành sứ mệnh?"* | **Bảng Phục Hồi (*Restoration Board*)** tại Trung tâm Liên lạc hiện rõ 4 bước từ phút thứ 20: `[1] Nguồn điện` → `[2] Nối mạng 3 tháp` → `[3] Chảo Đỉnh núi` → `[4] Gửi báo cáo + Khảo sát (6/6)`. Khi phát sóng thành công, **Ro** bắt được tín hiệu qua đài nghiệp dư trước, chuyển tiếp cho **Houston**, và Houston xác nhận mở lại sứ mệnh tàu có người lái. |
-| **Feeling** *(Dư vị đọng lại)* | *"Mình cảm thấy gì khi chơi?"* | Cô đơn nhưng ấm áp, thư thái tuyệt đối khi lăn bánh trên cát bụi xám, xen lẫn những khoảnh khắc đứng lặng ngắm cảnh hùng vĩ (*Awe beats*: nhật thực Trái Đất, tinh thể phát sáng trong ống dung nham, đàn drone bay qua thung lũng) và niềm tự hào của một người thợ máy cần mẫn. |
-
-### 1.2. Mười một luật bất biến chủ dự án đã khóa (Owner-Locked Laws)
-
-Mọi thiết kế, mã nguồn, cảnh 3D và văn bản bắt buộc phải tuân thủ 11 luật sau. Nếu bất kỳ chi tiết nào vi phạm, chi tiết đó bị coi là lỗi (bug):
-
-1. **Cô đơn mà bình yên là ưu tiên số 1 về hình và tiếng** (`feel-priority-solitude.md`, 2026-10-07; `look-too-purple.md`, 2026-10-14):
-   Bầu trời đen, mặt đất xám bụi Mặt Trăng trung tính (không ám tím cảnh mộng mơ), bóng đổ sắc, gió cực êm, tiếng bánh xe lăn trên sỏi mịn và tiếng cơ khí nhỏ nhẹ. Căn cứ là ốc đảo vàng ấm giữa đồng hoang lạnh.
-2. **Tiến trình là xương sống; ký ức chỉ là gia vị** (`progression-first.md`, 2026-10-11):
-   Người chơi mở khóa vùng mới và cảm thấy tiến bộ nhờ **vật liệu → bản vẽ → chế tạo → lắp thiết bị lên 07 → mở cổng vật lý**, tuyệt đối không dùng "điểm ký ức" làm chìa khóa mở vùng. Ký ức chỉ làm giàu ý nghĩa cho chuyến đi.
-3. **Mọi tiến trình đều phải nhìn thấy được bằng mắt ở khoảng cách 30 m** (`visible-progression-priority.md`, 2026-10-08; `equipment-07.md`, 2026-10-13):
-   Không được chỉ cộng số ẩn (`+20% tốc độ`). Mọi nâng cấp của 07 phải gắn một khối hình học 3D mới lên đúng ổ trên thân xe; mọi công trình được sửa phải đổi tư thế cơ khí, bật đèn vàng ấm và nối dây năng lượng trên mặt đất.
-4. **Công dụng của mọi vật thể phải đọc được ngay từ hình dáng, không cần nhãn chữ** (`purpose-must-read.md`, 2026-10-11):
-   Đế sạc có vòng tiếp xúc đồng và cọc đèn; phễu nạp nguyên liệu có miệng phễu nghiêng và băng tải; tháp tiếp sóng có chảo parabol hướng về đỉnh núi; mảnh bản vẽ có khung viền lục giác màu lục lam và nằm trong xác máy hỏng.
-5. **Logic vật lý, cơ khí và sinh thái phải chặt chẽ tuyệt đối** (`living-moon.md`, 2026-10-13; `story-logic.md`, 2026-10-13; `rover-07-v2.md`, 2026-10-14):
-   Không có hành động "phép thuật". Muốn kéo phải có tời và dây cáp căng tới móc; muốn chở phải có giá đỡ hoặc khoang chứa mở nắp; muốn cắt phải có mỏ cắt ở mũi xe; muốn đào phải có gầu xúc cắm xuống đất; một máy móc còn chạy sau 20 năm phải có tấm thu năng lượng mặt trời hoặc cắm vào nguồn điện thật.
-6. **Tuyệt đối không có đồ vật hay vòng sáng phát quang nằm trơ trên mặt đất trống** (`no-floating-loot.md`, 2026-10-13 & 2026-10-14; `derelict-variety.md`, 2026-10-13; `rover-07-v2.md`, 2026-10-14):
-   Mọi vật phẩm thu thập được (mảnh bản vẽ, đá quặng, linh kiện, kỷ vật, băng ghi âm, bộ phận bạn bè) phải gắn trên giá đỡ, kẹt trong khung máy vỡ, nằm trong hộc bảo trì, lộ ra từ mạch đá gốc hoặc vùi một phần dưới đất đá. Kể cả hiệu ứng nghe sonar cũng không được vẽ cột sáng trên trời hay vòng sáng trôi trên mặt đất trống.
-7. **Mọi thay đổi trạng thái đều phải có chuyển động cơ khí + âm thanh ngũ cung của 07** (`polish-every-state.md`, 2026-10-12):
-   Không bao giờ dùng hiệu ứng "bốc hơi/hiện hình tức thì" (*pop-in / pop-out*). Khi nhặt đồ, nạp phễu, sửa tháp, lắp thiết bị hay đánh thức bạn bè, phải có hoạt cảnh cơ khí ngắn (0,4–1,6 giây) kèm tiếng máy và câu chirp 2–4 nốt của 07.
-8. **Giao diện học từ Subnautica nhưng gọn hơn: Kho đồ + Trang bị trên MỘT màn hình cố định duy nhất** (`ui-taste-subnautica.md`, 2026-10-12; `learn-then-improve.md`, 2026-10-12; `inventory-07-only.md`, 2026-10-13; `inventory-one-screen.md`, 2026-10-14):
-   Nhấn `Tab` mở đúng một màn hình cố định: bên trái là lưới Khoang hàng của 07, bên phải là hình chiếc 07 với các ổ thiết bị cố định. Không có tab chuyển trang, không có thanh cuộn, không có cửa sổ trôi theo vị trí xe 3D.
-9. **Tối đa MỘT phần tử hướng dẫn trên màn hình; chỉ nhắc khi cần và không bao giờ lặp lại điều đã biết** (`plain-functional-text.md`, 2026-10-12 & 2026-10-13):
-   Bộ khóa `HudMutex` đảm bảo tại một thời điểm chỉ hiện tối đa 1 dòng nhắc (`Prompt` hoặc `Hint` hoặc `Toast`). Khi người chơi đã thực hiện thành công một thao tác 1 lần, khóa vĩnh viễn gợi ý dạy thao tác đó trong hồ sơ lưu.
-10. **Văn bản chức năng ngắn gọn, tự nhiên; không nhân cách hóa máy móc và không ủy mị** (`plain-functional-text.md`, 2026-10-12; `story-logic.md`, 2026-10-13):
-    Nhãn và gợi ý chỉ nói: *đây là cái gì, bấm nút gì, để được việc gì*. Trong nhật ký và băng ghi âm, các kỹ sư nói chuyện với nhau như đồng nghiệp chuyên nghiệp; họ coi 07 và các drone là thiết bị tốt, không bao giờ tâm sự mùi mẫn kiểu *"Tilly ơi tao nhớ mày"* hay gọi máy móc là *"cô ấy/anh ấy"*.
-11. **Làm theo từng phiên bản hoàn chỉnh; khóa phong cách và thiết kế trước khi dựng hàng loạt** (`phased-releases.md`, 2026-10-08; `rover-07-v2.md`, 2026-10-14):
-    Không xây dựng dàn trải khi chưa chốt hình ảnh và cơ chế nền tảng. Sửa dứt điểm toàn bộ phản hồi `0.5.5` trong bản `0.5.6`, chốt phong cách 3D và âm thanh, dựng chuẩn `07 v2`, rồi mới mở rộng vùng `0.6 → 1.0`.
+1. **Giữ nguyên quyền sử dụng Cắt (`Cutter`) và Đào (`ExcavationSystem`) ngay từ những phút đầu tiên:**
+   - **Cắt (`Cutter`)**: `[HIỆN TẠI]` 07 cắt được các mảnh phế liệu tại Kho tiếp tế, mối hàn thùng tại
+     Gara của Kenji và bãi mảnh vỡ vệ tinh Kestrel-3 ngay từ đầu game với cụm tụ nạp 3 tầng `ChargeCells`
+     ([`Assets/_Project/Scripts/Gameplay/Salvage/Cutter.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Salvage/Cutter.cs),
+     [`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §5).
+     Không khóa cơ chế cắt sau bất kỳ nâng cấp nào.
+   - **Đào (`ExcavationSystem`)**: `[HIỆN TẠI]` 07 đào được kỷ vật chôn dưới đất, ống kính của Tilly
+     dưới xe trượt và 3 bộ phận của Bell dưới các đống đá sạt ngay từ đầu game
+     ([`Assets/_Project/Scripts/Gameplay/Excavation/ExcavationSystem.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Excavation/ExcavationSystem.cs),
+     [`Assets/_Project/Scripts/Gameplay/Friends/FriendField.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Friends/FriendField.cs)).
+     `[ĐỀ XUẤT]` Trong thiết kế `07 v2`, gầu xúc cơ khí phía trước (`DigScoop`) là **thiết bị khởi đầu có
+     sẵn trên 07 từ phút 0** để thay cho phễu sáng hút đồ phi lý từ mắt camera, tuyệt đối không dời kỹ
+     năng đào thành đồ mở khóa ở hẻm núi.
+2. **Khớp 100% thông số Quét, 7 bộ Bản vẽ (`18 mảnh`), Bạn đồng hành, Pin và Lắng nghe với code:**
+   - **Quét (`ScanTuning.cs`)**: `[HIỆN TẠI]` Giữ đúng thời gian quét `1.5 s` (nhỏ) / `2.5 s` (vừa) /
+     `4.0 s` (lớn), tầm `8 m`, góc nón `25°`, tan mảnh `0.9 s`, viền bụi `2.0 s`, mảnh trùng thưởng
+     `+3 Metal`, khung góc hiện từ `15 m`, và `Focus Lens` tăng tốc quét `1.5×` kèm mở rộng khung góc
+     lên `25 m` ([`Assets/_Project/Scripts/Gameplay/Scanning/ScanTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Scanning/ScanTuning.cs)).
+   - **7 bộ bản vẽ 0.5 (`18 mảnh`)**: `[HIỆN TẠI]` Giữ đúng tên và vị trí thực tế của `Cargo Cradle`,
+     `Warm Headlamp`, `Hover-Jump`, `Boost Coils`, `Cell Pack II`, `Focus Lens`, `Side Bins`
+     ([`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §1.3 & §1.7,
+     [`Assets/_Project/Scripts/Gameplay/Progression/TechTree.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Progression/TechTree.cs)).
+   - **Tilly và Bell**: `[HIỆN TẠI]` Tilly (`DroneBody`, drone bay khảo sát) có 3 bộ phận nằm trong xe
+     trượt gặp nạn `TillySled` (1 cắt chốt kẹp, 1 đào dưới gầm nghiêng, 1 cắt bầu cảm biến); sau khi
+     sửa xong sẽ bay chỉ điểm (`spotter`), tự nhặt các bó vật liệu dư về kệ nhà (`TillyFetch`), dẫn
+     đường khi cạn pin (`BatteryField`) và tặng tấm pin mặt trời `SolarCell`.
+     `[HIỆN TẠI]` Bell (`RadioCabinetBody`, robot tủ đài đi bằng 4 chân máy quay phim — không phải drone
+     bay) có 3 bộ phận nằm dưới 3 đống đá sạt `RockfallPocket` trong hốc hẻm núi để 07 đào lên
+     (`FriendField.LayThePockets`); sau khi sửa xong sẽ đi bộ về góc nhà (`BellCorner`), đổi kênh radio
+     khi 07 chạm tia vào núm vặn (`radio_dial`), reo vui khi có kỷ vật mới và bắt sóng tín hiệu (`BellSignals`).
+   - **Pin (`BatteryModel`, `BatteryTuning`, `BatteryField`)**: `[HIỆN TẠI]` Hệ thống tính theo ô pin
+     (`4` ô đầu game, `6` ô khi lắp `Cell Pack II`, tối đa `8` ô): lái xe tốn `1 ô / 120 m` đường bằng
+     (lên dốc `1.5×`, xuống dốc `0.5×` ở `15°`, kéo đồ `1.25×`, tăng tốc `2.0×` trừ vào tụ `Boost Coils`
+     `0.25 ô` trước), dùng tia công cụ tốn `1 ô / 60 s`, `Hover-Jump` tốn `0.05..0.25 ô`, sạc ở Đế sạc
+     nhà `4 s/ô`, sạc ở vòng sáng trạm tiếp sóng `5 s/ô`, pin mặt trời của Tilly sạc nhỏ giọt `180 s/ô`
+     (tối đa `1 ô`), bò dự phòng ở `0` ô giới hạn `35%` tốc độ (tăng lên `55%` sau `5 s` khi Tilly dẫn đường).
+   - **Lắng nghe (`SonarSystem`, `ListenGate`, `SiteMarker`)**: `[HIỆN TẠI]` Cơ chế bị động không nút bấm
+     (từ Tháp cấp 1, sau khi lái `≥ 30 m` và đứng yên `≤ 0.3 m/s` trong `2 s`, sóng mở rộng `140 m` trong
+     `5 s` và dựng cột sáng cao `32 m` trong `20 s`). `[ĐỀ XUẤT]` Bỏ hoàn toàn cột sáng `32 m` trên trời
+     và vòng sóng mặt đất, thay bằng vòng ăng-ten định hướng xoay về mục tiêu + đầu 07 ngoái nhìn + ánh
+     lấp lánh tại vật thể + âm thanh 3D định hướng.
+3. **Tách lộ trình thực tế giữa `0.5.6` (không phụ thuộc khóa art style) và `0.5.7` (sau khi khóa art
+   style + `07 v2`), và đánh dấu rõ `story v3` là bản nháp chờ 7 câu trả lời của chủ dự án ở Mục 9.**
 
 ---
 
-## 2. Mô hình 07 hoàn chỉnh — 07 v2 (Complete Mechanical Architecture of 07)
+## 2. Chẩn đoán Bản 0.5.5 & Phương án Xử lý từng Điểm (Thứ tự Ưu tiên của Chủ dự án)
 
-*(Trích dẫn: `cut-charge-weight.md`, 2026-10-13; `equipment-07.md`, 2026-10-13; `rover-07-v2.md`, 2026-10-14; `Logs/sources/07V2.md`)*
+Mọi mục dưới đây đối chiếu trực tiếp với phản hồi của chủ dự án trong
+[`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §2
+và mã nguồn C# hiện hành:
 
-### 2.1. Triết lý thiết kế 07 v2: Mọi động từ đều có bộ phận cơ khí thật
+### P1. Phong cách nghệ thuật chưa ra chất
+- **Thực trạng vật liệu và hình khối trong game:** `[HIỆN TẠI]` Toàn bộ thế giới và thân xe 07 đang được dựng
+  bằng mesh đa giác thấp sinh tự động bằng code C# (`Procedural low-poly meshes`) dùng chung vật liệu màu
+  đỉnh (`Vertex-color`) trong [`Assets/_Project/Scripts/Art/Editor/RoverMeshes.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Art/Editor/RoverMeshes.cs)
+  và [`Assets/_Project/Scripts/Art/Editor/BuildingMeshes.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Art/Editor/BuildingMeshes.cs),
+  khiến mặt đất, đá và công trình trông phẳng, thiếu độ sâu vật liệu
+  ([`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §2 P1).
+- **Thực trạng lỗi chồng mặt phẳng (z-fight) ở vòm Xưởng xe:** `[HIỆN TẠI]` Khối vòm của Xưởng xe của Kenji
+  (`Repair Bay`) có hai mặt phẳng trùng tọa độ gây nhấp nháy khi xoay camera
+  ([`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §2 P1).
+- **Hướng xử lý:**
+  - `[ĐỀ XUẤT]` Sửa ngay lỗi z-fight ở vòm Xưởng xe trong bản `0.5.6` (nhánh `agy-art`) vì đây là lỗi hình
+    học độc lập, không phụ thuộc vào việc khóa phong cách nghệ thuật.
+  - `[ĐỀ XUẤT]` Trình 2 phương án phong cách nghệ thuật (Phương án A: Low-Poly Stylised nâng cấp ánh sáng
+    và độ nhám bụi regolith; Phương án B: Ghibli / Cel-Shaded ấm áp) tại Mục 5 & Mục 9 để chủ dự án chốt
+    trước khi áp dụng đồng loạt vào bản `0.5.7`.
 
-Trong bản `0.5.5`, 07 bị biến thành một "phù thủy bắn tia từ mắt": mắt camera vừa quét, vừa bắn tia cắt, vừa bắn tia hàn, vừa bắn chùm sáng đào đất, vừa bắn hạt năng lượng vào phễu, lại vừa kéo kỷ vật lơ lửng không cần dây cáp. Chủ dự án đã bác bỏ hoàn toàn cách làm này (`0.5.5-owner-feedback.md`, mục #6, #9, #10, #11; `rover-07-v2.md`).
+### P2. Hạt năng lượng bay về 07, vòng sóng dưới đất và hai cột sáng xanh trên trời không rõ nghĩa
+- **Thực trạng hạt bay khi cắt phế liệu:** `[HIỆN TẠI]` Khi 07 cắt rời một mảnh phế liệu trong
+  [`Assets/_Project/Scripts/Gameplay/Salvage/SalvageField.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Salvage/SalvageField.cs)
+  và [`Assets/_Project/Scripts/Gameplay/Salvage/CargoBundles.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Salvage/CargoBundles.cs),
+  các gói vật liệu (`CargoBundles`) bay về điểm `CargoSocket` (`y = 0.48, z = -0.64`) nằm thấp hơn nắp khoang
+  hàng `CargoHatch` (`y = 0.69`), trông như các hạt sáng chui xuyên qua cản sau đặc
+  ([`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §2 P2).
+- **Thực trạng cơ chế lắng nghe bị động (`ListenGate` & `SonarSystem`):** `[HIỆN TẠI]` Khi Tháp radio đạt từ
+  cấp 1 trở lên, [`Assets/_Project/Scripts/Gameplay/Sonar/ListenGate.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Sonar/ListenGate.cs)
+  (dòng 35–68) tự động kích hoạt lắng nghe sau khi 07 lái ít nhất `30 m` (`_listenSpacing = 30f`, riêng lần
+  đầu tiên trong game là `90 m` `_firstListenSpacing = 90f`) rồi dừng yên `≤ 0.3 m/s` (`_restSpeed = 0.3f`)
+  trong `2.0 s` (`_restSeconds = 2f`).
+- **Thực trạng vòng sóng và cột sáng `32 m` (`SonarTuning` & `SiteMarker`):** `[HIỆN TẠI]` Khi kích hoạt,
+  [`Assets/_Project/Scripts/Gameplay/Sonar/SonarSystem.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Sonar/SonarSystem.cs)
+  (dòng 162–215) và [`Assets/_Project/Scripts/Gameplay/Sonar/SonarTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Sonar/SonarTuning.cs)
+  (dòng 15–52) làm ăng-ten rung `1.2 s` (`14°`), phát một vòng sóng `SonarRing` lan trên mặt đất tới bán kính
+  `140 m` (`_range = 140f`) trong `5.0 s` (`_waveDuration = 5f`), và mọi kỷ vật chưa đào, bạn hỏng, bãi phế
+  liệu hoặc xác tàu còn đồ/mảnh bản vẽ trong tầm `140 m` sẽ dựng một cột sáng thẳng đứng cao `32 m`
+  (`_pillarHeight = 32f`, bán kính `0.45 m`) trong
+  [`Assets/_Project/Scripts/Gameplay/Sonar/SiteMarker.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Sonar/SiteMarker.cs)
+  suốt `20 s` (`_answerDuration = 20f`, kéo dài gấp `1.6×` nếu 07 chiếu `Warm Headlamp` trong góc `35°`).
+- **Thực trạng nút bấm lắng nghe:** `[HIỆN TẠI]` Hiện không có phím bấm lắng nghe thủ công nào trong
+  [`Assets/_Project/Scripts/Core/Input/InputReader.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Core/Input/InputReader.cs)
+  (tuân theo quy tắc không thêm nút phụ `docs/VISION.md` Ruling 14).
+- **Hướng xử lý:**
+  - `[ĐỀ XUẤT]` Trong bản `0.5.6`, xóa hoàn toàn cột sáng `32 m` trên trời trong `SiteMarker.cs` và vòng sóng
+    lan dưới đất trong `SonarRing.cs` để thế giới không còn các cột laser chỉ đường giả tạo
+    ([`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §2 P2).
+  - `[ĐỀ XUẤT]` Thay phản hồi lắng nghe bằng 4 tín hiệu vật lý tự nhiên: (1) vòng ăng-ten định hướng
+    (`SonarLoop`) trên lưng 07 xoay về hướng có tín hiệu gần nhất, (2) đầu của 07 (`RoverHead`) ngoái nhìn
+    nhẹ về hướng đó, (3) bản thân vật thể phát một ánh lấp lánh/chớp đèn cục bộ sát mặt đất khi nằm trong
+    tầm nhìn, và (4) âm thanh phản hồi 3D định hướng phát ra từ vị trí vật thể.
+  - `[ĐỀ XUẤT]` Khi thu hoạch vật liệu hoặc nhặt linh kiện cốt truyện (`TowerCoil`, `Transformer`, `RelaySpare`),
+    mở nắp khoang sau `CargoHatch` (nhánh `agy-hold` ở `0.5.6` và khoang lõm có con lăn `IntakeRoller` ở
+    `0.5.7`) để các kiện đồ bay đúng vào lòng khoang chứa thay vì xuyên qua vỏ xe.
 
-**Quy tắc 07 v2:**
-1. **Mỗi nhóm hành động xuất phát từ đúng một cụm cơ khí chuyên biệt trên thân 07** (7 điểm gốc `IRoverRig`).
-2. **Mắt camera (`EyeOrigin`) chỉ làm nhiệm vụ quang học** (nhìn, biểu cảm màn trập, chiếu chùm sáng quét `ScanFan`). Tuyệt đối không bắn tia công cụ hay phóng vật liệu từ mắt.
-3. **Thân xe 07 giữ tính đối xứng trái–phải qua trục `x = 0`**: Khung gầm, 6 bánh rocker-bogie, boong trước, cửa khoang hàng sau, tời sau, gầu xúc trước và khung nâng lưng đều nằm chính giữa hoặc đối xứng gương hai bên. Riêng cột ăng-ten bên trái `(-0.35 m)` được cân bằng thị giác bằng trụ thông gió pin bên phải `(+0.35 m)`.
+### P3. Gara của Kenji và nhịp hướng dẫn đầu game chồng chéo, khó hiểu bước tiếp theo
+- **Thực trạng cổng bảo trì ở Gara của Kenji (`GaragePort`):** `[HIỆN TẠI]` Trong
+  [`Assets/_Project/Scripts/Gameplay/Progression/GaragePort.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Progression/GaragePort.cs)
+  (dòng 108–195), cổng bảo trì ở Gara của Kenji (`(-190, -140)`) chỉ mở khi 07 cắt sạch toàn bộ các mảnh phế
+  liệu của bãi gara (`_garage.IsPickedClean`); khi 07 đỗ lên bệ `GaragePortPad`, cổng tự động lắp
+  `RoverKitPiece.TetherRing` (`RoverAbility.Tether`) vào `RingSocket`, sau đó làm sáng mối hàn của thùng
+  `"07 · SPARE"` (`container.garage.spare_crate`) để 07 cắt thùng lấy `TapeDeck` (`RoverKitPiece.TapeDeck`),
+  nhấn `E` đưa `TapeDeck` lên khay rồi đỗ lại lên bệ để lắp.
+- **Thực trạng điều phối chữ hướng dẫn trên màn hình (`GuidanceSlot` & `PromptDirector`):** `[HIỆN TẠI]` Mã
+  nguồn đã có lớp [`Assets/_Project/Scripts/UI/Prompts/GuidanceSlot.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/UI/Prompts/GuidanceSlot.cs)
+  (dòng 11–57) phân xử độ ưu tiên `GuidanceKind` (`Card > Prompt > Whisper > Next`) và lớp
+  [`Assets/_Project/Scripts/UI/Prompts/PromptDirector.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/UI/Prompts/PromptDirector.cs)
+  (dòng 17–75) cùng `PromptLedger` quản lý gợi ý ngữ cảnh, lời nhắc tiếp cận (`WhisperChanged`) và mục tiêu
+  góc dưới trái (`NextStepChanged`).
+- **Thực trạng chồng chéo thông báo:** `[HIỆN TẠI]` Dòng chữ băng truyền `RadioTickerMessage` và tên địa danh
+  `LandmarkAnnounced` trong [`Assets/_Project/Scripts/Core/Events/UIEvents.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Core/Events/UIEvents.cs)
+  vẫn hiển thị độc lập với `GuidanceSlot`, nên khi tới Gara của Kenji người chơi bị dội cùng lúc nhiều thông
+  báo và không rõ phải cắt hết phế liệu hay đỗ lên bệ trước
+  ([`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §2 P3).
+- **Thực trạng điều kiện ẩn của thang nâng bụng (`LiftStation`):** `[HIỆN TẠI]` Trong
+  [`Assets/_Project/Scripts/Gameplay/Lift/LiftStation.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Lift/LiftStation.cs)
+  (dòng 353 và 584–593) cùng [`Assets/_Project/Scripts/Gameplay/Lift/LiftCycle.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Lift/LiftCycle.cs)
+  (dòng 62–63), ngay cả khi nhà đã có điện (`BasePowerStage.Home` sau khi xây Tháp cấp 1), thang nâng bụng
+  (`BellyLift`) vẫn nằm im ở trạng thái `LiftPhase.Jammed` và không cho hàn cáp cho đến khi thỏa điều kiện ẩn
+  `Carrying() && NearHome()` (`_tether.Towed != null || _cradle.Carried != null` trong bán kính `_tuning.CallRadius`).
+- **Hướng xử lý:**
+  - `[ĐỀ XUẤT]` Trong bản `0.5.6`, đưa toàn bộ thông báo ticker/địa danh vào chung cơ chế phân xử của
+    `GuidanceSlot` và `PromptDirector` để trên màn hình chỉ xuất hiện đúng **một** thành phần hướng dẫn tại
+    một thời điểm.
+  - `[ĐỀ XUẤT]` Trong bản `0.5.6`, tách nhịp ở Gara của Kenji thành từng bước tuần tự rõ ràng trong
+    `PromptDirector`: (1) khi cổng còn đóng, chỉ dẫn rõ cần dọn phế liệu quanh cổng bảo trì; (2) khi cổng mở
+    và đèn bệ sáng, nhắc đỗ lên bệ `GaragePortPad` để lắp tời kéo; (3) sau khi lắp tời kéo, làm nổi bật thùng
+    `"07 · SPARE"` để cắt lấy `TapeDeck`.
+  - `[ĐỀ XUẤT]` Trong bản `0.5.6`, gỡ bỏ điều kiện ẩn `Carrying() && NearHome()` trong `LiftStation.cs`
+    (dòng 353): ngay khi Tháp cấp 1 cấp điện cho nhà (`BasePowerStage.Home`), thang nâng bụng phát tiếng kẹt
+    cáp và bật vòng sáng `LiftPhase.Called` để 07 có thể hàn sửa cáp (`next.lift.stitch`) và đi lên Phòng thí
+    nghiệm bất cứ lúc nào.
 
-### 2.2. Sơ đồ 7 cụm thiết bị và điểm gốc trên thân 07 (`IRoverRig`)
+### P4. Đào kỷ vật bằng chùm sáng từ mắt camera trông giả tạo; đầu 07 bị ghim cứng vào mục tiêu
+- **Thực trạng đầu 07 bị ghim cứng:** `[HIỆN TẠI]` Lỗi đầu của 07 bị khóa cứng nhìn chằm chằm vào một vật thể
+  từ xa đã được sửa xong ở commit `3ab086d1` trong
+  [`Assets/_Project/Scripts/Rover/RoverHead.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Rover/RoverHead.cs)
+  và [`Assets/_Project/Scripts/Gameplay/Salvage/SalvageField.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Salvage/SalvageField.cs)
+  (`Logs/owner-memory/resume-point.md`).
+- **Thực trạng cơ chế đào (`ExcavationSystem`):** `[HIỆN TẠI]` Trong
+  [`Assets/_Project/Scripts/Gameplay/Excavation/ExcavationSystem.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Excavation/ExcavationSystem.cs)
+  (dòng 120–165) và [`Assets/_Project/Scripts/Gameplay/Excavation/ExcavationTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Excavation/ExcavationTuning.cs),
+  07 có thể đào ngay từ đầu game trong bán kính `5 m` (`DigRadius = 5f`) bằng cách giữ phím `E` trong `1.6 s`
+  (`DigDuration = 1.6f`), nhưng hình ảnh hiện tại lại chiếu một hình nón ánh sáng (`TractorBeam`) từ mắt
+  camera (`_rig.TetherOrigin`) làm kỷ vật bay lơ lửng và tự xoay tròn lên khỏi mặt đất
+  ([`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §2 P4).
+- **Hướng xử lý:**
+  - `[ĐỀ XUẤT]` Trong thiết kế `07 v2` (bản `0.5.7`), giữ nguyên việc 07 **đào được ngay từ phút đầu tiên của
+    game**, nhưng trang bị cho 07 một **gầu xúc cơ khí có răng ở gầm trước (`DigScoop`, điểm gốc `ScoopOrigin`)
+    làm thiết bị khởi đầu mặc định**, xóa bỏ hoàn toàn hình nón `TractorBeam` ở mắt và thay quỹ đạo bay lơ
+    lửng bằng 3 nhịp xúc-bẩy cơ khí hất tung bụi đất để bẩy kỷ vật và bộ phận của Tilly/Bell lên mặt đất.
 
-| Điểm gốc (`IRoverRig`) | Tọa độ local `(x, y, z)` | Cụm bộ phận 3D trên thân 07 | Nhiệm vụ cơ khí duy nhất |
+### P5. Nhặt đồ hiện thẻ ký ức toàn màn hình gây đứt mạch; phím `Tab` cuộn qua nhiều trang rối rắm
+- **Thực trạng thẻ ký ức và màn hình `Tab`:** `[HIỆN TẠI]` Khi 07 đào được kỷ vật hoặc nhặt băng cassette,
+  game từng bật một thẻ ký ức đè lên màn hình (`CardShown` trong
+  [`Assets/_Project/Scripts/Core/Events/UIEvents.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Core/Events/UIEvents.cs)),
+  và phím `Tab` từng mở nhiều trang phải cuộn qua lại
+  ([`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §2 P5).
+- **Hướng xử lý:**
+  - `[ĐỀ XUẤT]` Trong bản `0.5.6` (nhánh `agy-ui2` đang hoàn thiện), bỏ hoàn toàn thẻ ký ức bật lên khi nhặt
+    kỷ vật/băng cassette ngoài thực địa (kỷ vật chỉ đọc tại Kệ kỷ vật trong Phòng thí nghiệm, băng cassette
+    chỉ hiện dòng thông báo nhỏ khi phát), và gộp phím `Tab` thành **đúng một màn hình cố định duy nhất
+    (`TabSheet`)** không cuộn trang, hiển thị gọn: (1) sơ đồ 07 và các thiết bị đã lắp, (2) trạng thái pin và
+    các ô khoang hàng `CargoHold`, (3) tiến độ các bộ bản vẽ của Kenji.
+
+### P6. Nhịp cắt 0.5.5 đã có lực nhưng mọi tia công cụ đều bắn ra từ mắt camera
+- **Thực trạng cơ chế cắt và cụm nạp `ChargeCells`:** `[HIỆN TẠI]` 07 cắt được ngay từ đầu game nhờ
+  [`Assets/_Project/Scripts/Gameplay/Salvage/Cutter.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Salvage/Cutter.cs),
+  [`Assets/_Project/Scripts/Gameplay/Salvage/CutterTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Salvage/CutterTuning.cs)
+  và [`Assets/_Project/Scripts/Rover/Feel/ChargeCells.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Rover/Feel/ChargeCells.cs)
+  (cùng phần cứng `ChargeCellHardware.cs`): 07 có hai đường ống dẫn năng lượng đối xứng chạy dọc boong trước
+  tới vòng khóa quanh mắt, với 3 tầng tụ trượt vỏ kính sáng dần khi nạp (`_braceSeconds = 0.5f`, mỗi tầng
+  `_stageSeconds = 0.45f` ở Bậc 0, nhịp nghỉ `_breathSeconds = 0.12f`, cắt liên tiếp trong cửa sổ ấm
+  `_warmWindowSeconds = 6f` nhanh hơn với hệ số `_warmFactor = 0.6f`)
+  ([`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §5).
+- **Thực trạng điểm phát tia (`IRoverRig`):** `[HIỆN TẠI]` Do
+  [`Assets/_Project/Scripts/Core/IRoverRig.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Core/IRoverRig.cs)
+  hiện chỉ khai báo đúng 2 điểm `TetherOrigin` (tâm mắt camera) và `CargoSocket`, cả tia cắt, tia hàn cáp/sửa
+  bạn, tia quét, tia đào lẫn dây kéo đều phát ra từ chính giữa thấu kính mắt của 07.
+- **Hướng xử lý:**
+  - `[ĐỀ XUẤT]` Trong bản `0.5.6` (nhánh `agy-scan`), nối tia quét bản vẽ (`ScanFan`) trực tiếp từ thấu kính
+    mắt của 07 tới mảnh bản vẽ đang quét để người chơi thấy rõ chùm quét quang học.
+  - `[ĐỀ XUẤT]` Trong bản `0.5.7` (`07 v2`), giữ nguyên cụm tụ nạp 3 tầng đối xứng `ChargeCells` trên boong
+    trước nhưng dẫn thanh cái đồng vào một **đầu cắt plasma & kim hàn vi điểm gắn trên mũi xe
+    (`CutterTurret` / `CutterOrigin`)** nằm dưới tầm nhìn của mắt, để mắt camera (`EyeOrigin`) chỉ làm đúng
+    nhiệm vụ nhìn, biểu cảm và quét quang học.
+
+---
+
+## 3. Thiết kế Chi tiết Rover `07 v2` (Mọi Hành động Đều Có Thiết bị Vật lý Đúng Chức năng)
+
+### 3.1 Nguyên tắc cốt lõi: Giữ trọn bản sắc của 07, tách bạch 7 điểm gốc thiết bị
+- `[HIỆN TẠI]` Thân xe 07 hiện được dựng bởi
+  [`Assets/_Project/Scripts/Art/Editor/RoverModelBuilder.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Art/Editor/RoverModelBuilder.cs)
+  theo hình dáng đầu dò thập niên 1970 kết hợp tủ đài Braun: thân hộp sơn kem (`#F4E6C8`), mặt lưới tản nhiệt
+  trước màu than (`#3E4048`), sọc cam chạy ngang thân (`#FF8A5B`), 6 bánh xe trên hệ treo rocker-bogie
+  (`Wheel_FL..RR`), vết vá màu xanh xô thơm (`#78A582`) và bánh sau bên trái (`Wheel_RL`) khác màu do Kenji
+  từng thay đồ dự phòng, cùng một mắt camera lớn màu hổ phách dưới mí mắt biểu cảm (`Eyelid.cs`) và quy tắc
+  đối xứng trái-phải nghiêm ngặt (`docs/VISION.md` Ruling 13).
+- `[ĐỀ XUẤT]` Thiết kế `07 v2` giữ nguyên 100% hình dáng, bảng màu, 6 bánh rocker-bogie (kèm bánh thay thế
+  `Wheel_RL`) và mắt camera biểu cảm của 07, đồng thời mở rộng hợp đồng
+  [`Assets/_Project/Scripts/Core/IRoverRig.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Core/IRoverRig.cs)
+  từ 2 điểm gốc (`TetherOrigin`, `CargoSocket`) thành **7 điểm gốc vật lý chuyên biệt** để không còn bất kỳ
+  tia công cụ hay dây cáp nào bắn ra từ mắt camera:
+
+```csharp
+// [ĐỀ XUẤT] Mở rộng hợp đồng Assets/_Project/Scripts/Core/IRoverRig.cs trong 0.5.7 (07 v2)
+namespace MoonProject.Core
+{
+    public interface IRoverRig
+    {
+        Transform EyeOrigin { get; }     // Neck/Head/Eye/EyeOrigin: chỉ dùng để nhìn và quét ScanFan
+        Transform CutterOrigin { get; }  // CutterTurret/CutterHead/CutterOrigin: cắt phế liệu & hàn cáp/bạn
+        Transform ScoopOrigin { get; }   // DigScoop/Bucket/ScoopOrigin: gầu xúc khởi đầu để đào kỷ vật/bộ phận
+        Transform HatchOrigin { get; }   // CargoHold/HatchOrigin: miệng khoang hàng & con lăn thu/phóng đồ
+        Transform WinchOrigin { get; }   // WinchMount/WinchOrigin: tời cáp thép cản sau kéo trượt vật nặng
+        Transform CradleOrigin { get; }  // CargoCradle/CradleOrigin: đệm lưng & khung chữ A HoistBail cẩu kỷ vật
+        Transform AntennaOrigin { get; } // Antenna/SonarLoop/AntennaOrigin: vòng ăng-ten xoay định hướng lắng nghe
+    }
+}
+```
+
+### 3.2 Bảng ánh xạ Hành động → Thiết bị vật lý (`[HIỆN TẠI]` so với `[ĐỀ XUẤT]` trong `07 v2`)
+
+| # | Hành động (Verb) | Trạng thái trong game hôm nay (`[HIỆN TẠI]`) | Thiết kế vật lý trong `07 v2` (`[ĐỀ XUẤT]` và lý do) |
 |---|---|---|---|
-| **1. `EyeOrigin`** | `(0.00, 1.31, +0.53)` | Đầu camera đơn (`Head`), màn trập 2 mí (`EyelidUpper/Lower`), vành thấu kính lấy nét (`FocusLens`) | Nhìn mục tiêu, biểu cảm mí mắt, chiếu mặt quạt ánh sáng lục lam (`ScanFan`) khi quét mảnh bản vẽ và đầu đọc dữ liệu. |
-| **2. `CutterOrigin` & `StitchOrigin`** | `(0.00, 1.05, +0.93)` & `(0.00, 1.00, +0.93)` | **Tháp cắt & hàn mũi xe (`CutterTurret`)** ở chính giữa mép trước boong + **2 đường ống tụ điện 3 tầng (`ChargeConduits/Stage_1..3_L/R`)** dọc hai bên sườn boong trước | Cắt mối hàn phế liệu (`LaserCut` ở cự ly gần `3,5 m`) và phóng hồ quang hàn vi điểm (`MicroArcStitch`) khi sửa cáp thang nâng, tháp tiếp sóng, bạn robot. |
-| **3. `ScoopOrigin`** | `(0.00, 0.16, +1.37)` | **Gầu xúc răng cưa trước (`DigScoop`)** gắn vào cản trước dưới qua 2 tay đòn khuỷu (`ScoopArm_L/R`), vươn ra trước lốp trước `23 cm` | Hạ gầu cắm xuống đất, xúc 3 nhịp cơ khí (`1,6 s`) để đào kỷ vật hoặc linh kiện bị vùi dưới đống đổ nát. |
-| **4. `HatchOrigin`** | `(0.00, 0.62, -0.64)` | **Cửa khoang hàng vỏ sò đôi (`CargoHatch`)** ở đuôi xe (nắp trên mở lên `+52°`, máng dưới hạ `-12°`), lòng khoang lõm (`CargoHold`), con lăn cuốn từ tính (`IntakeRoller`) | Mở cửa đuôi xe để: (1) cuốn các bó vật liệu, băng ghi âm, bộ phận bạn bè và linh kiện tháp vào trong bụng xe; (2) bắn trả bó vật liệu theo vòng cung vào miệng phễu trạm (`HopperFeed`). |
-| **5. `WinchOrigin`** | `(0.00, 0.38, -0.86)` | **Trống tời cáp thép (`WinchDrum`)** có mô-tơ và **Móc cáp từ tính (`TowHook`)** gắn ở cản sau dưới | Phóng móc cáp thép vào vòng khuyên của kỷ vật hoặc vật nặng, kéo lê trên mặt đất (`GroundTow`) và thu/nhả độ dài dây (`Q/E`). |
-| **6. `CradleOrigin`** | `(0.00, 0.99, -0.47)` | **Đệm chở hàng trên lưng (`CargoCradle`)** và **Khung cần trục chữ A (`HoistBail`)** khớp bản lề ở `(±0.41, 0.82, -0.58)` | Hạ khung chữ A ra phía sau móc kỷ vật từ tời, nâng bổng qua đuôi xe (`0,9 s`) đặt lên đệm lưng và kẹp chặt để chở đi không ma sát. |
-| **7. `AntennaOrigin`** | `(-0.35, 1.54, -0.48)` | **Cột ăng-ten (`AntennaMast`)** có đầu đèn tín hiệu và **Vòng ăng-ten định hướng xoay được (`SonarLoop`)** ở cao độ `y = 1.11` | Xoay vòng ăng-ten về đúng phương vị có tín hiệu phản hồi khi 07 dừng xe lắng nghe sonar. |
+| **1** | **Nhìn, Biểu cảm & Quét Bản vẽ (`ScanField`)** | `[HIỆN TẠI]` Đầu camera trên cổ xoay (`Neck/Head/Eye`), chớp mí (`Eyelid.cs`) và quét mảnh bản vẽ (`FragmentSocket_*`) qua [`Assets/_Project/Scripts/Gameplay/Scanning/ScanField.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Scanning/ScanField.cs); nâng cấp `Focus Lens` gắn vào `LensSocket` ([`Assets/_Project/Scripts/Gameplay/Equipment/EquipmentTable.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Equipment/EquipmentTable.cs)). | `[ĐỀ XUẤT]` Đổi tên nút gốc thành `EyeOrigin` (`Neck/Head/Eye/EyeOrigin`) và nối màn sáng quét `ScanFan` từ `EyeOrigin` tới vật thể (`0.5.6` `agy-scan`), vì nhìn và quét quang học là hai việc duy nhất thuộc về mắt camera. |
+| **2** | **Cắt Phế liệu & Chốt Thùng (`Cutter`, `SalvageField`)** | `[HIỆN TẠI]` 07 cắt được ngay từ phút đầu (Bậc 0: `1` tầng cho mảnh nhỏ `0.95 s`, `2` tầng cho mảnh vừa `1.40 s`, `3` tầng cho mảnh lớn/tấm vỏ `1.85 s`; cửa sổ ấm `6 s` giảm còn `0.6×`; nâng cấp `Focus Lens` giảm mỗi tầng từ `0.45 s` xuống `0.36 s` và giảm hao pin còn `0.85×`) trong [`Assets/_Project/Scripts/Gameplay/Salvage/CutterTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Salvage/CutterTuning.cs), nhưng tia cắt đang phát ra từ tâm mắt `_rig.TetherOrigin` ([`Assets/_Project/Scripts/Gameplay/Salvage/SalvageField.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Salvage/SalvageField.cs) dòng 194). | `[ĐỀ XUẤT]` Giữ nguyên quyền cắt từ phút đầu và giữ nguyên 2 thanh tụ nạp 3 tầng đối xứng `ChargeConduits/Stage_1..3_L/R` trên boong trước (`ChargeCellHardware.cs`), nhưng dẫn năng lượng vào **Đầu cắt Plasma gắn trên khớp xoay mũi xe (`CutterTurret/CutterHead/CutterOrigin`)** dưới tầm mắt để tia cắt phát ra từ nòng cắt cơ khí thay vì thấu kính mắt. |
+| **3** | **Hàn Cáp & Sửa Bạn / Trạm (`RepairBeam`)** | `[HIỆN TẠI]` Hàn cáp thang nâng bụng ([`Assets/_Project/Scripts/Gameplay/Lift/LiftStation.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Lift/LiftStation.cs) dòng 358), sửa Tilly/Bell ([`Assets/_Project/Scripts/Gameplay/Friends/FriendField.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Friends/FriendField.cs)) và sửa trạm tiếp sóng đều bắn tia `RepairBeam` từ mắt `_rig.TetherOrigin`. | `[ĐỀ XUẤT]` Phát tia hàn từ **Kim hàn đồng dưới nòng cụm mũi xe (`CutterOrigin` / `StitchOrigin`)** để việc hàn cơ khí tách khỏi mắt camera. |
+| **4** | **Đào Kỷ vật & Bộ phận Bạn bị Chôn (`ExcavationSystem`)** | `[HIỆN TẠI]` 07 đào được ngay từ đầu game trong tầm `5 m` bằng cách giữ `E` `1.6 s` cho kỷ vật chôn (`RelicPocket_*`), ống kính của Tilly dưới xe trượt (`PartSocket_1`), và 3 bộ phận của Bell dưới các đống đá sạt (`RockfallPocket` trong [`Assets/_Project/Scripts/Gameplay/Friends/FriendField.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Friends/FriendField.cs) `LayThePockets`), nhưng đang vẽ phễu sáng `TractorBeam` từ mắt `_rig.TetherOrigin` ([`Assets/_Project/Scripts/Gameplay/Excavation/ExcavationSystem.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Excavation/ExcavationSystem.cs) dòng 148–154). | `[ĐỀ XUẤT]` Trang bị **Gầu xúc răng thép có tay cần thủy lực ở gầm trước (`DigScoop` / `ScoopOrigin`, vươn tới `z = +1.37 m` trước lốp trước)** làm **thiết bị khởi đầu có sẵn từ phút 0**; khi giữ `E` (`1.6 s`), gầu hạ xuống xúc-bẩy 3 nhịp làm văng bụi và bẩy vật bị chôn lên mặt đất thay cho tia hút từ mắt. |
+| **5** | **Chứa Phế liệu, Băng, Bộ phận Bạn, Linh kiện Tháp & Nạp Phễu (`CargoHold`, `HopperFeed`)** | `[HIỆN TẠI]` Khoang hàng có `8` ô ban đầu (`_holdSlots = 8`), khởi đầu game mới với `2 Metal + 1 Wiring` (`_starterItems`), tăng thêm `+2` ô khi lắp `Cargo Cradle` (`_cradleSlots = 2`) và `+4` ô khi lắp `Side Bins` (`_sideBinSlots = 4`, tổng `8 → 10 → 14` ô) trong [`Assets/_Project/Scripts/Gameplay/Economy/CargoTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Economy/CargoTuning.cs) và [`Assets/_Project/Scripts/Gameplay/Economy/CargoHold.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Economy/CargoHold.cs). `[HIỆN TẠI]` Nhà có `2` kệ sẵn (`24` ô) và `2` vị trí đóng thêm kệ (`12` ô/kệ, giá `3 Metal` và `4 Metal + 1 Wiring`, tối đa `48` ô kệ nhà). `[HIỆN TẠI]` Linh kiện cốt truyện (`TowerCoil`, `Transformer`, `RelaySpare`) đang nhảy lên nóc phẳng `StoryPartSocket` ([`Assets/_Project/Scripts/Rover/StoryPartCarry.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Rover/StoryPartCarry.cs)), còn khi nạp phễu (`HopperFeed.cs`) 07 lại chiếu tia từ mắt trong khi các gói đồ bật ra từ cản sau đóng kín. | `[ĐỀ XUẤT]` Trong bản `0.5.6` (`agy-hold`), đưa linh kiện cốt truyện (`TowerCoil`, `Transformer`, `RelaySpare`) đi qua nắp khoang `CargoHatch` vào trong bụng xe (xóa `StoryPartSocket` trên nóc). `[ĐỀ XUẤT]` Trong bản `0.5.7` (`07 v2`), thiết kế nắp khoang sau dạng vỏ sò đôi (`CargoHatch` mở cánh trên `+52°`, máng dưới `-12°` tại `HatchOrigin` `y = 0.62 m`) kèm con lăn từ tính `IntakeRoller` để thu đồ vào hốc khoang thật và quay ngược con lăn bắn các bó vật liệu vào phễu trạm khi nạp (`HopperFeed`, bỏ tia mắt khi nạp phễu). |
+| **6** | **Kéo Vật nặng bằng Dây cáp (`TetherSystem`, `WinchControl`)** | `[HIỆN TẠI]` Sau khi cắt sạch phế liệu ở Gara của Kenji và đỗ lên `GaragePortPad`, 07 được lắp `TetherRing` (`RoverAbility.Tether`) vào `RingSocket` (`z = -0.20` sau gáy đầu), nhưng dây kéo lại bắn ra từ mắt trước `_rig.TetherOrigin` và dùng lò xo `TetherSpring` nâng bổng kỷ vật lơ lửng trên không ở độ cao `HoverHeight` trước cả khi có nâng cấp nâng đồ ([`Assets/_Project/Scripts/Gameplay/Tether/TetherSystem.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Tether/TetherSystem.cs), [`Assets/_Project/Scripts/Gameplay/Tether/TetherSpring.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Tether/TetherSpring.cs)). | `[ĐỀ XUẤT]` Trong bản `0.5.7` (`07 v2`), thay vòng sau gáy bằng **Trống tời cáp thép gắn ở cản sau thấp (`WinchDrum` / `WinchOrigin` tại `y = 0.38 m`)** và đặt `HoverHeight = 0f` khi chưa có `Cargo Cradle`: dây cáp thép móc vào kỷ vật và **kéo trượt vật nặng trên mặt đất** (tạo vệt bụi và lực cản tốc độ `1.25×` hao pin), không làm vật bay lơ lửng. |
+| **7** | **Cẩu & Chở Kỷ vật trên Lưng (`CargoCradle`)** | `[HIỆN TẠI]` Sau khi quét 2 mảnh bản vẽ và chế tạo `Cargo Cradle` (*Giỏ chở đồ*, `4 Metal + 2 Wiring`) ở Xưởng xe, nhấn chuột phải làm kỷ vật tự bay theo đường cong spline `GlidePath` lên `CargoSocket` (`y = 0.48, z = -0.64`) đè ngay trước nắp khoang hàng ([`Assets/_Project/Scripts/Gameplay/Upgrades/CargoCradle.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Upgrades/CargoCradle.cs)). | `[ĐỀ XUẤT]` Trong bản `0.5.7` (`07 v2`), đặt đệm chở kỷ vật `CradleSeat` (`CradleOrigin`) lên boong sau cao (`y = 0.99, z = -0.47`) kèm **Khung cẩu chữ A (`HoistBail`)** bắt bản lề hai bên hông sau (`x = ±0.41`, không che `CargoHatch`): khi thu cáp về sát cản sau, khung chữ A hạ xuống ngoạm kỷ vật và **cẩu cơ khí (`0.9 s`) đặt lên lưng 07**, giúp chở kỷ vật đi nhanh, không vướng địa hình và đi thẳng lên thang nâng bụng. |
+| **8** | **Lắng nghe & Định hướng Tín hiệu (`SonarSystem`, `Antenna`)** | `[HIỆN TẠI]` Ăng-ten sau bên trái (`Antenna` tại `(-0.34, 0.95, -0.46)`) chỉ là que thẳng rung nhẹ `1.2 s` khi lắng nghe, phát vòng sóng `140 m` và dựng cột sáng `32 m` ([`Assets/_Project/Scripts/Gameplay/Sonar/SonarSystem.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Sonar/SonarSystem.cs), [`Assets/_Project/Scripts/Gameplay/Sonar/SiteMarker.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Sonar/SiteMarker.cs)). | `[ĐỀ XUẤT]` Thêm **Vòng ăng-ten định hướng xoay được (`Antenna/SonarLoop` / `AntennaOrigin`)** xoay mũi về phía vật thể trả lời gần nhất kết hợp đầu 07 ngoái nhìn, ánh lấp lánh tại vật thể và âm thanh 3D (bỏ cột sáng `32 m`). |
+| **9** | **Pin, Sạc Mặt trời, Đèn pha & Nhảy/Tăng tốc (`BatteryField`, `RoverKitBuilder`)** | `[HIỆN TẠI]` Cánh pin mặt trời `SolarWing` nằm giữa lưng; thanh 8 đèn pin `BatteryLamp_0..7` nằm sau lưng; nâng cấp `Cell Pack II` (`BatterySpine`) đang gắn lệch bên phải tại `SpineSocket` (`x = +0.385`) vi phạm tính đối xứng ([`Assets/_Project/Scripts/Art/Editor/RoverKitBuilder.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Art/Editor/RoverKitBuilder.cs) dòng 28). | `[ĐỀ XUẤT]` Trong `07 v2`, thiết kế lại `BatterySpine` thành **cặp hộp pin đôi đối xứng hai bên cánh mặt trời (`x = ±0.32`)** để giữ đúng quy tắc đối xứng Trái-Phải của 07 (`docs/VISION.md` Ruling 13). |
 
-### 2.3. Bảng tổng hợp: Khả năng → Bộ phận 07 → Cách mở khóa → Trước & Sau khi nâng cấp
+---
 
-| Khả năng / Động từ | Bộ phận 3D trên thân 07 | Cách mở khóa & Nơi lắp | Trước khi mở khóa thì sao? | Sau khi mở khóa / nâng cấp thì sao? |
+## 4. Các Hệ thống Gameplay Cốt lõi, Bạn đồng hành & Bảng Nâng cấp (0.5 → 1.0)
+
+### 4.1 Hệ thống Quét & Bản vẽ (`Scanning` & `Blueprints`)
+
+- **Thông số quét thực tế trong code (`ScanTuning.cs` & `ScanField.cs`):**
+  - `[HIỆN TẠI]` Trong [`Assets/_Project/Scripts/Gameplay/Scanning/ScanTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Scanning/ScanTuning.cs)
+    (dòng 12–66) và [`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §1.2,
+    thời gian giữ chuột phải để quét một mảnh bản vẽ theo kích thước là:
+    - **Mảnh nhỏ (`_smallSeconds`):** **`1.5 s`**.
+    - **Mảnh vừa (`_mediumSeconds`):** **`2.5 s`**.
+    - **Mảnh lớn (`_largeSeconds`):** **`4.0 s`**.
+  - `[HIỆN TẠI]` Tầm quét tối đa là **`8 m`** (`_reach = 8f`), góc nón ngắm từ mắt 07 là **`25°`**
+    (`_coneDegrees = 25f`), và tốc độ tụt tiến độ khi nhả nút giữa chừng là `0.5 /s` (`_decayRate = 0.5f`)
+    ([`Assets/_Project/Scripts/Gameplay/Scanning/ScanTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Scanning/ScanTuning.cs) dòng 12–34).
+  - `[HIỆN TẠI]` Khi quét xong, mảnh bản vẽ tan thành hạt sáng bay về mắt 07 trong **`0.9 s`**
+    (`_dissolveSeconds = 0.9f`) và để lại viền bụi sáng tại chỗ trong **`2.0 s`** (`_outlineSeconds = 2f`);
+    nếu quét một mảnh thuộc bộ bản vẽ đã hoàn thành, mảnh đó thưởng **`+3 Metal`** (`_duplicateMetal = 3`)
+    ([`Assets/_Project/Scripts/Gameplay/Scanning/ScanTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Scanning/ScanTuning.cs) dòng 36–51).
+  - `[HIỆN TẠI]` Khung góc chữ L (`Corner brackets`) quanh mảnh bản vẽ chưa quét hiện lên ở cự ly **`15 m`**
+    (`_bracketRadius = 15f`); sau khi chế tạo nâng cấp **`Focus Lens`** (`RoverAbility.FocusLens`), tốc độ
+    quét tăng gấp **`1.5×`** (`_lensSpeedMultiplier = 1.5f`, rút thời gian quét xuống còn `1.0 s / 1.67 s / 2.67 s`)
+    và khung góc hiện lên từ cự ly **`25 m`** (`_lensBracketRadius = 25f`)
+    ([`Assets/_Project/Scripts/Gameplay/Scanning/ScanTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Scanning/ScanTuning.cs) dòng 53–65).
+  - `[ĐỀ XUẤT]` Trong bản `0.5.6` (nhánh `agy-scan`), giữ nguyên toàn bộ các con số trong `ScanTuning.cs`
+    nói trên và bổ sung màn sáng quang học (`ScanFan`) nối trực tiếp từ thấu kính mắt của 07 tới mảnh bản
+    vẽ đang quét để người chơi thấy rõ tia quét
+    ([`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §2 P6).
+
+- **Danh sách đầy đủ 7 bộ bản vẽ 0.5 (`18 mảnh` tổng cộng) và 2 thiết bị lắp tại Gara của Kenji:**
+  - `[HIỆN TẠI]` Theo [`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §1.3 & §1.7,
+    [`Assets/_Project/Scripts/Gameplay/Progression/TechTree.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Progression/TechTree.cs),
+    [`Assets/_Project/Scripts/Gameplay/Upgrades/Workshop.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Upgrades/Workshop.cs)
+    và [`Assets/_Project/Scripts/Gameplay/Equipment/EquipmentTable.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Equipment/EquipmentTable.cs),
+    toàn bộ trang bị của 07 trong bản `0.5` gồm **2 thiết bị gắn tại Gara của Kenji** và **7 bộ bản vẽ chế
+    tạo tại Xưởng xe của Kenji** (mở khóa khi Tháp radio đạt cấp 2):
+
+| # | Tên thiết bị / Bản vẽ (Key & Tên tiếng Việt) | Trạng thái & Nguồn xác thực | Số mảnh & Vị trí từng mảnh trong thế giới 0.5 | Chi phí chế tạo & Tác dụng thực tế |
 |---|---|---|---|---|
-| **1. Quét quang học** *(Optical Scan — Giữ chuột phải / E)* | Mắt ống kính `Eye` *(có sẵn)* → lắp thêm vành **Thấu kính lấy nét (`FocusLens`)** quanh mắt | Có sẵn từ đầu game. Nâng cấp **Quét Nhanh (*Fast Scan*)** sau khi quét 2 mảnh ở Lòng chảo + chế tạo tại Xưởng xe | Quét mất `2,0 s`, tầm `6 m`, mặt quạt ánh sáng lục lam mảnh xuất phát từ `EyeOrigin` quét dọc bề mặt vật thể. | Vành `FocusLens` xoay lấy nét; thời gian quét giảm còn `1,1 s`, tầm `9 m`, giữ lịch sử quét cho Sổ ghi chép. |
-| **2. Thu & nạp vật liệu, linh kiện** *(Cargo Intake & Hopper Feed)* | Cửa vỏ sò sau `CargoHatch` + khoang `CargoHold` *(8 ô có sẵn)* → lắp thêm **Hộc hông (`SidePanniers_L/R`)** | Có sẵn 8 ô từ đầu. Nâng cấp **Khoang Hàng Rộng (*Cargo Rack*, 16 ô)**: quét 2 mảnh ở Hẻm Thì Thầm + chế tạo tại Xưởng xe (`4 Metal + 1 Circuit`) | Nhặt vật liệu/băng/linh kiện: 07 xoay nhẹ, nắp `CargoHatch` mở ra `0,45 s`, bó hàng bay vào lòng khoang `HatchOrigin` rồi đóng nắp. Khi nạp phễu: cửa sau mở, con lăn phóng từng bó hàng vào miệng phễu (không bắn từ mắt). Tối đa 8 ô. | Hai hộc `SidePanniers_L/R` gắn đối xứng hai bên sườn sau kèm đèn báo mức đầy (xanh → vàng → cam). Sức chứa tăng từ **8 lên 16 ô**. |
-| **3. Móc cáp kéo lê** *(Ground Winch Tow — Phím F)* | **Trống tời cáp (`WinchDrum`)** + **Móc cáp (`TowHook`)** ở cản sau dưới (`WinchOrigin`) | Lắp miễn phí tại **Cổng bảo trì Gara Kenji (*Kenji's Rigging Gantry*)** cách đế sạc 95 m ngay trong 15 phút đầu | **Chưa có tời:** Khi đến gần kỷ vật nặng (như kiện hàng ở Gara Kenji), hiện thông báo rõ: *"Cần Tời cáp sau — lắp tại Gara của Kenji"*. 07 không thể kéo vật nặng bằng tay không hay bằng tia vô hình. | **Đã lắp tời (nhưng chưa có Giá chở):** Phím `F` bắn `TowHook` kèm dây cáp thép thật nối từ `WinchOrigin` tới vật. Kỷ vật **nằm sát mặt đất** (`HoverHeight = 0`), để lại 2 vệt cày sâu trên bụi, có ma sát lớn (07 chạy tối đa `55%` tốc độ, dây căng chùng vật lý, `Q/E` thu/nhả dây `2,2–6,5 m`). Không thể đưa lên thang nâng bụng tàu nếu chỉ kéo lê. |
-| **4. Cần trục nâng & chở trên lưng** *(Hoist & Back Cradle — Phím F)* | **Đệm lưng (`CargoCradle`)** + **Khung cần trục chữ A (`HoistBail`)** + kẹp hông (`CradleClamp_L/R`) | Mở khóa Xưởng xe → Quét 2 mảnh bản vẽ Giá chở hàng → Chế tạo (`3 Metal`) → Đỗ vào Xưởng xe để cần cẩu lắp lên boong sau | Chỉ có thể kéo lê kỷ vật trên mặt đất bằng dây tời với tốc độ chậm `55%`, vướng đá và không vào được thang nâng bụng tàu (`BellyLift`). | Khi bấm `F` vào kỷ vật: tời móc vào vật, khung chữ A `HoistBail` ngả ra sau (`-115°`), nâng bổng kỷ vật lên qua đuôi xe (`0,9 s`), đặt gọn lên `CargoCradle` tại `CradleOrigin` và kẹp chặt. 07 chạy **100% tốc độ**, không ma sát đất, đi thẳng lên thang nâng bụng tàu. Khi giữ `F` để thả: khung chữ A hạ kỷ vật nhẹ nhàng xuống đất phía sau xe. |
-| **5. Cắt phế liệu & Hàn sửa chữa** *(Plasma Cut & Micro-Arc Stitch)* | **Tháp cắt mũi xe (`CutterTurret`)** tại `CutterOrigin` + **2 đường ống tụ điện 3 tầng (`ChargeConduits`)** dọc boong trước | Mở khóa sau khi sửa Tháp tiếp sóng 1 → Quét 2 mảnh ở Bãi đáp vỡ (*Landing Pad*) → Chế tạo tại Xưởng xe (`3 Metal + 2 Quartz`) | Chỉ có kim hàn vi điểm nhỏ ở mũi xe để chấm mối cáp đứt của thang nâng và tháp tiếp sóng. Không thể cắt các tấm vách hoặc khung sắt có vạch mối hàn cam (*Cut Seam*). | Cụm `CutterTurret` và 2 ống tụ điện `Stage_1` gắn lên boong trước. Khi giữ chuột trái cắt: 3 cặp đốt tụ điện sáng dần từ sau ra trước, mỏ cắt xoay hướng và phóng tia plasma vàng cam ngắn (`3,5 m`) từ `CutterOrigin` kèm tia lửa hàn. Nâng cấp **Tụ Cắt Nhanh (*Charge Capacitor*)** ở `0.6` và **Mỏ Cắt Nhiệt (*Thermal Lance*)** ở `0.7` mở thêm đốt `Stage_2` và `Stage_3` để cắt vách hợp kim dày. |
-| **6. Đào đất đá** *(Mechanical Dig Scoop — Phím E)* | **Gầu xúc răng cưa (`DigScoop`)** + 2 tay đòn khuỷu (`ScoopArm_L/R`) ở cản trước dưới (`ScoopOrigin`) | Quét 2 mảnh bản vẽ Gầu đào tại khu khai thác Hẻm Thì Thầm → Chế tạo tại Xưởng xe (`4 Metal + 2 Quartz`) | Không thể lấy các kỷ vật hoặc hộc linh kiện bị đất đá vùi lấp (như bộ phận của Bell dưới chân sườn đá lở). Hiện thông báo: *"Bị vùi dưới đá — cần Gầu đào trước"*. | Khi bấm `E` tại ụ đất/đá lở: 07 tiến sát (`1,5 m`), hạ gầu xúc cắm vào đất và thực hiện **3 nhịp xúc–hất cơ khí (`1,6 s`)** từ `ScoopOrigin` kèm bụi đá văng lên, làm lộ dần vật thể từ dưới đất lên mặt đất. |
-| **7. Nghe Sonar định hướng** *(Passive Sonar Listen)* | **Vòng ăng-ten định hướng (`SonarLoop`)** trên cột ăng-ten trái + đầu đèn `AntennaTip` | Có sẵn từ đầu game. Nâng cấp **Bộ Khuếch Đại Tín Hiệu (*Signal Amp*)** sau khi quét 2 mảnh ở Trạm Thời Tiết (*Weather Station*) | Khi 07 đi hơn `30 m` rồi dừng lại `2,0 s`, vòng `SonarLoop` tự xoay một vòng tìm hướng (bán kính `180 m`) rồi khóa mũi tên vào vật gần nhất; đầu 07 quay nhìn theo; góc kim loại của vật lấp lánh dưới nắng (hoặc đèn cọc công trình chớp 2 lần) kèm tiếng chuông kim loại định hướng 3D. | Thêm hộp khuếch đại và vòng phụ trên cột ăng-ten; bán kính nghe tăng lên **`320 m`**, phân biệt rõ âm sắc giữa kỷ vật (chuông đồng trầm), mảnh bản vẽ (tiếng kính ngân cao) và công trình (nhịp xung đôi). |
-| **8. Năng lượng & Sạc nắng** *(Battery & Solar Canopy)* | Khung pin sau (`BatteryPack`: 2 → 3 → 4 lõi) + **Cánh pin mặt trời gập mở (`SolarPanels_L/R`)** | Pin 2–4 lõi chế tạo tại Xưởng xe (`0.5.6–0.7`). **Cánh Pin Mặt Trời (*Solar Canopy*)** mở ở `0.6` (Biển Dài) | Pin gốc 100 s; dưới ánh nắng chỉ giảm tốc độ hao pin, muốn sạc đầy phải về Đế sạc hoặc Trụ sạc. | Mỗi cấp Pin gắn thêm 1 khối lõi thật vào hộc pin sau (`150 s → 210 s → 280 s`). Cánh pin mặt trời tự bung ngang hai bên khi đỗ dưới nắng, tự sạc lại tối đa 1 ô pin ngay giữa cánh đồng. |
-| **9. Cơ động địa hình** *(Chassis, Boost, Mag-Wheels, Anchor, Heater)* | Động cơ bánh, bình khí nén sau (`BoostThrusters`), **Vành từ tính (`WheelRims`)**, **Tời neo mũi xe (`AnchorWinch`)**, **Lưới sưởi pin (`HeaterGrille`)** | Mở khóa tuần tự từ `0.5.6` đến `0.8` theo từng vùng địa chất | Tốc độ gốc `8 m/s`, leo dốc tối đa `28°`, trượt trên sườn dốc đứng của Bậc thềm vành hố, hao pin gấp đôi trong Hố Bóng Tối lạnh `-200°C`. | **Khung gầm (`0.5.6`):** `10,5 m/s → 13 m/s`. **Bộ đẩy nhảy (`0.5.6`):** nhảy qua khe nứt hẹp. **Bánh từ tính (`0.7`):** bám dốc kim loại/đá từ tính `50°`. **Bộ sưởi pin (`0.8`):** chống đóng băng pin ở Hố Bóng Tối. **Tời neo mũi (`0.8`):** thả dây neo xuống vách Ống Dung Nham. |
+| **G1** | **`TetherRing`** (*Vòng dây kéo* / Tời kéo) | `[HIỆN TẠI]` ([`GaragePort.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Progression/GaragePort.cs) dòng 126–155, [`EquipmentTable.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Equipment/EquipmentTable.cs)) | Không dùng mảnh bản vẽ; nằm sẵn trong cổng bảo trì tại **Gara của Kenji** (`(-190, -140)`), mở cổng khi cắt sạch phế liệu gara (`_garage.IsPickedClean`) và tự lắp khi 07 đỗ lên `GaragePortPad`. | Miễn phí (`RingSocket`, `RoverAbility.Tether`): cho phép móc dây kéo kỷ vật và thu/thả dây (`1.2 m..4.5 m`). `[ĐỀ XUẤT]` Ở `07 v2` (`0.5.7`), đổi thành trống tời cản sau `WinchDrum` chỉ kéo trượt vật nặng trên mặt đất (`HoverHeight = 0f`). |
+| **G2** | **`TapeDeck`** (*Máy phát băng*) | `[HIỆN TẠI]` ([`GaragePort.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Progression/GaragePort.cs) dòng 156–195, [`EquipmentTable.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Equipment/EquipmentTable.cs)) | Nằm trong thùng niêm phong `"07 · SPARE"` (`container.garage.spare_crate`) tại **Gara của Kenji** (`(-190, -140)`); mối hàn thùng sáng lên sau khi lắp `TetherRing`. | Miễn phí (`DeckSocket`, `RoverAbility.TapeDeck`): cắt chốt thùng, nhấn `E` đưa lên khay và đỗ lên `GaragePortPad` để lắp; cho phép phát các cuộn băng cassette của Ro qua loa của 07. |
+| **1** | **`Cargo Cradle`** (`tech.cargo_cradle` — *Giỏ chở đồ*) | `[HIỆN TẠI]` ([`0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §1.3, [`Workshop.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Upgrades/Workshop.cs), [`CargoTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Economy/CargoTuning.cs)) | **2 mảnh:** `1` tại **Gara của Kenji** (`(-190, -140)`), `1` trên **xe chở hàng Mule trên đường hẻm núi** (`(-140, -195)`). | Chi phí: **`4 Metal + 2 Wiring`** (`CargoSocket`, `RoverAbility.CargoCradle`). Đặt kỷ vật lên lưng 07 để chạy nguyên tốc độ không bị cản và cộng thêm **`+2` ô khoang hàng** (`8 → 10` ô). `[ĐỀ XUẤT]` Ở `07 v2` (`0.5.7`), lắp khung chữ A `HoistBail` + `CradleSeat` để cẩu cơ khí kỷ vật từ mặt đất lên lưng. |
+| **2** | **`Warm Headlamp`** (`tech.warm_headlamp` — *Đèn pha ấm*) | `[HIỆN TẠI]` ([`0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §1.3, [`SonarTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Sonar/SonarTuning.cs)) | **2 mảnh:** `1` tại **Gara của Kenji** (`(-190, -140)`), `1` tại **mép gần của khe vực** (`(-140, -245)`). | Chi phí: **`2 Metal + 1 Wiring + 1 Optics`** (`HeadlampSocket`, `RoverAbility.Headlamp`). Chiếu sáng đường đi ban đêm/hốc tối và giữ phản hồi lắng nghe sáng lâu hơn gấp **`1.6×`** khi nhìn thẳng trong góc `35°`. |
+| **3** | **`Hover-Jump`** (`tech.hover_jump` — *Bật nhảy*) | `[HIỆN TẠI]` ([`0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §1.3, [`BatteryTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Battery/BatteryTuning.cs)) | **3 mảnh:** `2` trên **xác xe nhảy thử nghiệm của Kenji ở mép gần khe vực** (`(-140, -245)`), `1` tại **Gara của Kenji** (`(-190, -140)`). | Chi phí: **`5 Metal + 2 Wiring + 1 Optics`** (`CoilSocket`, `RoverAbility.HoverJump`). Giữ `Space` để tích lực và thả ra để bật nhảy qua khe vực hẻm núi sang chỗ Bell (tốn `0.05..0.25` ô pin mỗi cú nhảy). |
+| **4** | **`Boost Coils`** (`tech.capacitor_drums` — *Bộ tăng tốc*) | `[HIỆN TẠI]` ([`0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §1.3, [`BatteryTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Battery/BatteryTuning.cs)) | **3 mảnh:** `2` trên **robot xe trượt chở hàng tại giàn khoan** (`(260, -80)`), `1` trên **xe Mule trên đường hẻm núi** (`(-140, -195)`). | Chi phí: **`4 Metal + 3 Wiring`** (`DrumSocket`, `RoverAbility.CapacitorDrums`). Lắp cặp trống tụ điện hai bên sườn (`0.25` ô pin dự trữ, tự nạp lại trong `6 s` khi lăn xuống dốc `≥ 5°` ở tốc độ `≥ 3.5 m/s`) để giữ `Shift` tăng tốc vọt qua dốc. |
+| **5** | **`Cell Pack II`** (`tech.cell_pack_2` — *Bộ pin II*) | `[HIỆN TẠI]` ([`0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §1.3, [`BatteryTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Battery/BatteryTuning.cs)) | **3 mảnh:** `2` trên **rover đàn anh `06` cạnh nhà trạm tiếp sóng cửa hẻm núi (`relay.2`)** (`(-70, -180)`), `1` tại **giàn khoan** (`(260, -80)`). | Chi phí: **`5 Metal + 3 Wiring + 1 Optics`** (`SpineSocket`, `RoverAbility.BatterySpine`). Nâng tổng số ô pin của 07 từ **`4` ô lên `6` ô** (`StartingCells = 4 → CellPackCells = 6`, tăng tầm lái đường bằng từ `480 m` lên `720 m`). |
+| **6** | **`Focus Lens`** (`tech.focus_lens` — *Ống kính hội tụ*) | `[HIỆN TẠI]` ([`0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §1.3 & §5.1, [`ScanTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Scanning/ScanTuning.cs), [`CutterTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Salvage/CutterTuning.cs)) | **2 mảnh:** cả `2` nằm trong **buồng lái vệ tinh rơi Kestrel-3** (`(180, 140)`). | Chi phí: **`2 Metal + 1 Wiring + 2 Optics`** (`LensSocket`, `RoverAbility.FocusLens`). Giúp quét bản vẽ **nhanh gấp `1.5×`**, hiện khung góc mảnh bản vẽ từ **`25 m`** (thay vì `15 m`), đồng thời nâng đầu cắt lên Bậc 1 (rút mỗi tầng nạp từ `0.45 s` xuống `0.36 s`, nhanh gấp `1.3×`, hao pin cắt giảm còn `0.85×`). |
+| **7** | **`Side Bins`** (`tech.side_bins` — *Thùng hông*) | `[HIỆN TẠI]` ([`0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §1.3, [`CargoTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Economy/CargoTuning.cs)) | **3 mảnh:** `1` tại **tàu đổ bộ bị rơi** (`(-260, 180)`), `1` tại **Gara của Kenji** (`(-190, -140)`), `1` trên **xe Mule** (`(-140, -195)`). | Chi phí: **`6 Metal + 2 Wiring`** (`BinSocket`, `RoverAbility.SideBins`). Lắp hai thùng chứa hai bên hông, cộng thêm **`+4` ô khoang hàng** (`_sideBinSlots = 4`, nâng tổng khoang hàng của 07 lên tối đa `14` ô khi đi cùng `Cargo Cradle`). |
 
-### 2.4. Giải quyết dứt điểm 10 điểm vô lý cơ khí chủ dự án đã chỉ ra ở 0.5.5
+- **Các nâng cấp dự kiến cho các bản mở rộng `0.6 → 0.8`:**
+  - `[ĐỀ XUẤT]` Theo lộ trình trong [`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §1.6 & §5.1,
+    các bản mở rộng sau `0.5` bổ sung các bộ bản vẽ mới mà không làm thay đổi 7 bộ bản vẽ gốc của `0.5`:
+    - **Bản `0.6` (*The Long Mare*):** `[ĐỀ XUẤT]` **`Cutter Ribs`** (Bậc cắt 2: rút mỗi tầng nạp xuống
+      `0.29 s`, cắt được dầm nặng), **`Dust Wiper`** (gạt bụi tấm pin mặt trời), và **`Solar Coat`**
+      (tăng tốc sạc mặt trời trên đường trường).
+    - **Bản `0.7` (*Rim Terraces / Meridian*):** `[ĐỀ XUẤT]` **`Thermal Cutter`** (Bậc cắt 3: rút mỗi tầng
+      nạp xuống `0.22 s`, cắt vách hợp kim dày) và **`Charge Adapter`** (bộ chuyển đổi để 07 sạc được trên
+      đế lục giác của trạm Meridian).
+    - **Bản `0.8` (*Shadowed Crater & Lava Tube*):** `[ĐỀ XUẤT]` **`Cold Lamp`** (đèn soi sương băng trong
+      hố tối vĩnh cửu) và **`Heater`** (bộ sưởi giữ pin không bị sụt áp trong vùng âm độ sâu).
 
-*(Trích dẫn: `docs/design/0.5.5-owner-feedback.md`; `rover-07-v2.md`, 2026-10-14; `resume-point.md`, 2026-10-14)*
+### 4.2 Những người bạn robot (`Friends`: Tilly, Bell và các bạn dự kiến `0.7–0.8`)
 
-| Điểm vô lý trong bản `0.5.5` | Giải pháp cơ khí dứt điểm trong `07 v2` (áp dụng ngay ở `0.5.6`) |
-|---|---|
-| **1. Kéo kỷ vật lơ lửng phía sau xe mà không có dây hay móc** | Bắt buộc phải lắp **Tời cáp sau (`WinchDrum` + `TowHook`)** tại Gara Kenji. Khi kéo, dây cáp thép (`LineRenderer` 12 đốt có độ võng catenary) nối trực tiếp từ `WinchOrigin` `(0, 0.38, -0.86)` tới khuy móc của kỷ vật; kỷ vật trượt sát mặt đất (`HoverHeight = 0`). |
-| **2. Chở kỷ vật trên lưng mà không có giá đỡ hay tay nâng** | Bắt buộc phải chế tạo và lắp **Giá chở hàng (`CargoCradle` + cần trục chữ A `HoistBail`)** tại Xưởng xe. Khi nhặt, cần trục chữ A hạ xuống móc kỷ vật, nhấc bổng qua đuôi xe (`0,9 s`) và kẹp chặt lên đệm lưng tại `CradleOrigin`. |
-| **3. Sửa xong bạn robot lại "rơi ra một thẻ ký ức" trên đất để nhặt** | **Xóa hoàn toàn vật phẩm `MemoryCard` rơi ra khi sửa bạn.** Khi 07 dùng mỏ hàn mũi xe sửa xong bạn robot, người bạn đó tự đứng dậy, lắc đầu, phát câu nhạc chirp cảm ơn và đi làm việc ngay. Ký ức chỉ nằm trong các kỷ vật thật (mũ bảo hộ, ống kính, nhật ký, hộp nhạc) đưa về tàu. |
-| **4. Nhặt linh kiện tháp tiếp sóng thấy nó gắn lơ lửng trên nóc xe; đặt ở chân tháp mà tự biến lên đỉnh tháp** | **Xóa `StoryPartSocket` trên nóc 07.** Linh kiện tháp (`TowerCoil`, `Transformer`, `RelaySpare`) được cất gọn vào **Khoang hàng sau (`CargoHold`)** qua cửa vỏ sò `CargoHatch` và chiếm **1 ô khoang hàng**. Tại chân tháp tiếp sóng, bổ sung **Hộc tiếp nhận ở chân tháp (`Base Service Hatch`)** và đường ống dẫn dọc thân tháp: 07 mở cửa khoang sau đẩy linh kiện vào hộc chân tháp, dùng mỏ hàn mũi xe (`StitchOrigin`) chấm 2 mối cáp ở bảng điện chân tháp, sau đó cơ cấu tời nội bộ của tháp kéo lõi lên kích hoạt chảo đỉnh. |
-| **5. Đào đất bằng cách bắn tia sáng từ mắt camera làm vật trồi lên** | **Xóa hoàn toàn tia đào từ mắt.** Đào bắt buộc dùng **Gầu xúc răng cưa trước (`DigScoop`)** tại `ScoopOrigin`: 07 hạ gầu cắm xuống đất và xúc 3 nhịp cơ khí làm văng đất đá, lộ vật thể ra. |
-| **6. Nạp nguyên liệu vào phễu trạm và sửa công trình bằng cách bắn hạt sáng từ mắt** | **Xóa hoàn toàn hạt sáng bắn từ mắt.** Khi nạp phễu (`HopperFeed`), cửa khoang hàng sau `CargoHatch` mở ra và phóng từng bó kim loại/thạch anh từ `HatchOrigin` bay theo đường parabol rơi vào miệng phễu. Khi sửa cáp thang nâng hoặc tháp, tia hồ quang phóng ra từ **mỏ hàn mũi xe (`StitchOrigin`)**. |
-| **7. Bộ phận của Bell nằm lộ thiên trên mặt đất trống mà trò chơi lại bắt phải có Gầu đào mới lấy được** | Đặt bộ phận của Bell (**Chuông cộng hưởng**, bộ phận thứ 3) **bị vùi 70% dưới chân một vạt đá lở (`Rockslide Mound`)** trong Hẻm Thì Thầm, chỉ lộ một góc vỏ đồng. Nhìn bằng mắt là hiểu ngay vì sao tay không không lấy được và phải dùng `DigScoop` xúc đá ra. |
-| **8. Đầu của 07 và một đường tia laser luôn khóa cứng chỉ về hướng căn cứ** | **Tháo bỏ hoàn toàn ràng buộc hướng về căn cứ trên đầu 07 và tia công cụ.** Đầu 07 (`HeadYaw/HeadPitch`) mặc định nhìn theo hướng lái xe, khi đi ngang điểm thú vị trong tầm `12 m` thì liếc nhẹ sang nhìn rồi trả về phía trước; tia cắt/quét chỉ bật khi người chơi đang giữ nút thao tác và nhắm đúng vào mục tiêu. |
-| **9. Bấm phím Space phát cột sáng khổng lồ xuyên lên bầu trời** | **Xóa phím Space và xóa hoàn toàn cột sáng trên trời (`SiteMarker.Pillar`).** Cũng **không dùng vòng sáng trên mặt đất trống** (bác bỏ đề xuất vòng bụi hổ phách của bản nháp `07V2.md` vì vi phạm `no-floating-loot.md`). Thay bằng phản hồi vật lý: khi 07 dừng xe 2 giây, vòng ăng-ten `SonarLoop` xoay về hướng có tín hiệu, đầu 07 liếc theo, bản thân góc kim loại của kỷ vật trong đống đổ nát lóe sáng phản quang (hoặc đèn cọc công trình chớp 2 lần) kèm âm thanh định hướng 3D. |
-| **10. Gara Kenji ở phút thứ 5 cho kỷ vật ngay nhưng người chơi chưa có công cụ gì để mang về** | Thiết kế lại thành **Nhịp Gara Kenji 2 giai đoạn (*Two-Beat Rigging Gantry*)**: tại Gara Kenji có một cổng bảo trì cơ khí đang treo sẵn cụm **Tời cáp sau (`WinchDrum`)**. 07 lùi vào cổng để cánh tay máy lắp Tời cáp vào cản sau trước, rồi mới dùng chính tời đó móc kéo kiện kỷ vật đầu tiên về căn cứ. Sau khi mở Xưởng xe và lắp **Giá chở hàng (`CargoCradle`)**, các kỷ vật tiếp theo mới được nâng hẳn lên lưng. |
+- **1. Tilly — Drone bay khảo sát của Ines (`0.5`):**
+  - **Hình dáng & Câu chuyện:** `[HIỆN TẠI]` Tilly là một drone bay hai cánh quạt đồng trục (`DroneBody`)
+    từng đi khảo sát dọc vành núi cùng nhà địa chất Ines Kalani
+    ([`Assets/_Project/Scripts/Gameplay/Friends/DroneBody.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Friends/DroneBody.cs),
+    khóa `friend.tilly.repair_log` trong
+    [`Assets/_Project/Data/Localization/vi.json`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Data/Localization/vi.json) dòng 718–719).
+  - **Vị trí & Cách lấy 3 bộ phận:** `[HIỆN TẠI]` Trong
+    [`Assets/_Project/Scripts/Gameplay/Friends/FriendField.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Friends/FriendField.cs)
+    (`LayTheSled`, dòng 618–680) và
+    [`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §1.4,
+    Tilly nằm hỏng tại `(-240, 165)` gần tàu đổ bộ rơi, và cả **3 bộ phận của cô bé đều nằm trong chiếc xe
+    trượt khảo sát bị lật (`TillySled`) ngay cạnh đó**:
+    1. `PartSocket_0` (`pickup.tilly.rotor` — *Cánh quạt của Tilly*): kẹt sau chốt kẹp của xe trượt
+       (`PartBehindClamp = 0`), 07 dùng tia **cắt** chốt để lấy ra.
+    2. `PartSocket_1` (`pickup.tilly.lens` — *ống kính của Tilly*): vùi trong khe đất dưới gầm xe trượt bị
+       nghiêng (`PartUnderHull = 1`), 07 dùng kỹ năng **đào** (`E`) để lấy lên.
+    3. `PartSocket_2` (`pickup.tilly.cell` — *pin của Tilly*): nằm trong bầu cảm biến của xe trượt
+       (`PartInPod = 2`), 07 dùng tia **cắt** mở nắp bầu để lấy ra.
+  - **Sửa chữa & Nhiệm vụ thực tế sau khi thức dậy (`SpotterAbility = "spotter"`):**
+    - `[HIỆN TẠI]` Sau khi 07 gom đủ 3 bộ phận, nạp `2 Metal + 1 Wiring + 1 Optics` (`Recipe(2, 1, 1)`) và
+      hàn thân vỏ trong `2.0 s` (`StitchSeconds = 2f` trong
+      [`Assets/_Project/Scripts/Gameplay/Friends/FriendField.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Friends/FriendField.cs)),
+      Tilly thức dậy và tặng 07 tấm pin mặt trời đã sửa (**`SolarCell`**, gắn lên `SolarWing` của 07).
+    - `[HIỆN TẠI]` **Chỉ điểm (`Spotter`):** Trong
+      [`Assets/_Project/Scripts/Gameplay/Friends/FriendBehaviour.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Friends/FriendBehaviour.cs)
+      và [`Assets/_Project/Scripts/Gameplay/Friends/FriendDefinition.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Friends/FriendDefinition.cs)
+      (`SpotterAbility = "spotter"`), Tilly bay lượn quanh 07 và lao ra chỉ điểm các bãi phế liệu, kỷ vật
+      hoặc bộ phận chưa phát hiện trong bán kính `SpotRadius` (`35 m`).
+    - `[HIỆN TẠI]` **Nhặt vật liệu dư về kệ nhà (`TillyFetch`):** Trong
+      [`Assets/_Project/Scripts/Gameplay/Economy/TillyFetch.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Economy/TillyFetch.cs)
+      (dòng 15–115), mỗi khi khoang hàng của 07 đã đầy mà 07 cắt thêm phế liệu để lại các bó vật liệu chờ
+      ngoài thực địa (`_overflow.WaitingCount > 0`), Tilly tự bay từ nhà ra nhặt từng bó về xếp lên kệ nhà
+      (`_tripSeconds = 8f` mỗi chuyến), rồi đậu nghỉ trên đỉnh Tháp radio (`GetPerchPosition`).
+    - `[HIỆN TẠI]` **Dẫn đường khi 07 cạn pin (`BatteryField`):** Trong
+      [`Assets/_Project/Scripts/Gameplay/Battery/BatteryField.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Battery/BatteryField.cs)
+      (dòng 310–355), khi 07 về `0` ô pin và phải bò dự phòng (`ReserveCrawl`) quá `5 s` (`_leadDelay = 5f`),
+      Tilly bay tới dẫn 07 về trạm sạc sáng đèn gần nhất và nâng trần tốc độ bò của 07 từ `35%` lên **`55%`**
+      (`_leadCap = 0.55f`).
+
+- **2. Bell — Robot tủ đài đi bộ 4 chân của Ro (`0.5`):**
+  - **Hình dáng & Câu chuyện:** `[HIỆN TẠI]` Bell **không phải là drone bay**; trong
+    [`Assets/_Project/Scripts/Gameplay/Bell/RadioCabinetBody.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Bell/RadioCabinetBody.cs)
+    và nhật ký sửa chữa `friend.bell.repair_log`
+    ([`Assets/_Project/Data/Localization/vi.json`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Data/Localization/vi.json)
+    dòng 726–727: *"Mình lắp Bell từ một máy thu hỏng và bốn cái chân máy quay, để đài vẫn phát khi mình
+    ngủ. Cô ấy biết nhảy. Phần đó mình không hề lắp. — Ro"*), Bell là một chiếc tủ radio cổ đi bộ lạch bạch
+    trên **4 chân máy quay phim (tripod legs)**, có mặt số tròn, núm vặn đồng và cần ăng-ten trên nóc.
+  - **Vị trí & Cách lấy 3 bộ phận (Quyết định chủ dự án `2026-10-14`):** `[HIỆN TẠI]` Trong
+    [`Assets/_Project/Scripts/Gameplay/Friends/FriendField.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Friends/FriendField.cs)
+    (`LayThePockets`, dòng 685–730, đã chốt tại commit `4bffd365`), Bell nằm bên kia khe vực hẻm núi tại
+    `(-140, -320)` (cần `Hover-Jump` để nhảy qua), kèm cuộn băng `Items[0]` tại `ItemSocket_0`, và **cả 3
+    bộ phận của cô (`pickup.bell.knob` *núm dò đài của Bell*, `pickup.bell.cone` *màng loa của Bell*,
+    `pickup.bell.valve` *đèn điện tử của Bell*) đều nằm dưới 3 đống đá sạt nhỏ (`RockfallPocket`) trong các
+    hốc đá quanh khu vực đó (`PocketOffset_0..2`) để 07 đào lên bằng phím `E`**.
+  - **Sửa chữa & Nhiệm vụ thực tế sau khi thức dậy (`RadioDialAbility = "radio_dial"`):**
+    - `[HIỆN TẠI]` Sau khi 07 đào đủ 3 bộ phận dưới đá sạt, nạp `3 Metal + 2 Wiring + 1 Optics`
+      (`Recipe(3, 2, 1)`) và hàn thân máy, Bell đứng dậy trên 4 chân và đi bộ về góc nhà (`BellCorner`, tốc
+      độ `WalkSpeed = 1.6 m/s`) trong
+      [`Assets/_Project/Scripts/Gameplay/Bell/BellLife.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Bell/BellLife.cs) (dòng 120–245).
+    - `[HIỆN TẠI]` **Đổi kênh Radio & Nhảy theo nhạc (`BellLife.cs`):** Ở nhà, Bell nhún nhảy theo tiếng nhạc
+      radio; khi 07 đứng trong tầm `4.5 m` (`TuneRange = 4.5f`) và chạm nhẹ tia vào núm vặn của cô trong
+      `0.35 s`, Bell xoay núm `45°` và chuyển vòng tròn giữa 3 kênh radio (`Lumen After Dark`,
+      `Máy phát băng`, `Giờ yên tĩnh` — khi sang `Giờ yên tĩnh`, Bell xếp chân nằm nghỉ).
+    - `[HIỆN TẠI]` **Bắt sóng tín hiệu & Reo vui khi có kỷ vật mới (`BellSignals.cs`, `BellLife.cs`):** Trong
+      [`Assets/_Project/Scripts/Gameplay/Signals/BellSignals.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Signals/BellSignals.cs)
+      (dòng 35–110), Bell dò và chọn các mục tiêu tín hiệu chưa tới (`SignalTarget` — bạn đồng hành, kho
+      hàng, xác tàu) để dẫn dắt vòng lặp dò sóng (`ticker.bell.signal`), đồng thời phát tiếng lách tách vui
+      mừng kèm dòng chữ `ticker.bell.found_0..2` mỗi khi 07 đặt thêm một kỷ vật mới lên kệ trong Phòng thí nghiệm.
+
+- **3. Các bạn đồng hành dự kiến ở các bản mở rộng sau (`0.7` & `0.8`):**
+  - `[ĐỀ XUẤT]` **Atlas (`0.7` — *Rim Terraces*):** Xe kéo hạng nặng 6 bánh của trạm Lumen đang đỗ ở công
+    trường nối cáp trên Thềm Vành Đai; sau khi được sửa sẽ giúp kéo các kiện hàng siêu trường và mở cầu qua
+    khe nứt lớn ([`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §1.6).
+  - `[ĐỀ XUẤT]` **Moss (`0.8` — *Shadowed Crater / Lava Tube*):** Robot chăm vườn của Theo đang lấy mẫu băng
+    ở Hố Đen Vĩnh Cửu; sau khi được sửa sẽ chăm sóc mảng rêu sống dưới đèn hẹn giờ trong hầm trú bão ống
+    dung nham ([`Logs/sources/story-v3.md`](file:///D:/Project/MoonProject-wt/agy-plan/Logs/sources/story-v3.md) §2).
+
+### 4.3 Hệ thống Pin, Năng lượng & Chu kỳ Mặt Trời (`BatteryModel`, `BatteryTuning`, `BatteryField`)
+
+- **Dung lượng ô pin (`Cells`):**
+  - `[HIỆN TẠI]` Trong [`Assets/_Project/Scripts/Gameplay/Battery/BatteryTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Battery/BatteryTuning.cs)
+    (dòng 14–22) và [`Assets/_Project/Scripts/Gameplay/Battery/BatteryModel.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Battery/BatteryModel.cs),
+    pin của 07 được chia thành các ô rời rạc hiển thị trên thanh 8 đèn `BatteryLamp_0..7`: khởi đầu với
+    **`4` ô pin** (`_startingCells = 4`), tăng lên **`6` ô pin** (`_cellPackCells = 6`) khi lắp nâng cấp
+    **`Cell Pack II`** (`RoverAbility.BatterySpine`), và trần thiết kế tối đa là **`8` ô** (`_maxCells = 8`).
+- **Mức tiêu hao năng lượng khi lái xe và dùng công cụ:**
+  - `[HIỆN TẠI]` **Lái xe (`BatteryModel.TickDrive`, `BatteryTuning.cs` dòng 24–43):** Trên mặt đất bằng
+    phẳng, 07 tiêu hao **`1 ô pin cho mỗi 120 m`** di chuyển (`_metresPerCell = 120f`, tức đi được `480 m`
+    với 4 ô hoặc `720 m` với 6 ô). Khi leo dốc (`15°` chuẩn `_referenceSlopeDegrees = 15f`), mức hao tăng
+    tối đa gấp **`1.5×`** (`_uphillMultiplier = 1.5f`); khi xuống dốc giảm còn **`0.5×`**
+    (`_downhillMultiplier = 0.5f`); khi đang kéo kỷ vật (`isTowing`) nhân **`1.25×`** (`_towMultiplier = 1.25f`).
+  - `[HIỆN TẠI]` **Tăng tốc & Tụ điện sườn (`Boost Coils`, `BatteryTuning.cs` dòng 41–55):** Giữ phím tăng
+    tốc (`isBoosting`) nhân mức hao lái xe lên **`2.0×`** (`_boostMultiplier = 2f`), nhưng phần năng lượng
+    tăng thêm này được trừ trước vào cặp trống tụ điện **`Boost Coils`** có dung lượng **`0.25` ô pin**
+    (`_drumCapacityCells = 0.25f`); khi 07 lăn xuống dốc `≥ 5°` (`_regenSlopeDegrees = 5f`) ở tốc độ
+    `≥ 3.5 m/s` (`_regenMinSpeed = 3.5f`), động năng thu hồi sẽ nạp đầy lại trống tụ trong **`6.0 s`**
+    (`_drumRegenSeconds = 6f`).
+  - `[HIỆN TẠI]` **Dùng tia công cụ (`BatteryModel.TickBeam`, `BatteryTuning.cs` dòng 57–60):** Cắt phế
+    liệu, đào đất, hàn cáp hoặc nạp phễu tiêu hao **`1 ô pin cho mỗi 60 s`** hoạt động liên tục
+    (`_beamSecondsPerCell = 60f`; riêng khi cắt có lắp `Focus Lens`, mức hao giảm còn `0.85×` theo
+    [`Assets/_Project/Scripts/Gameplay/Salvage/CutterTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Salvage/CutterTuning.cs) dòng 58).
+  - `[HIỆN TẠI]` **Bật nhảy (`BatteryModel.SpendJump`, `BatteryTuning.cs` dòng 62–67):** Mỗi cú nhảy
+    `Hover-Jump` tiêu hao từ **`0.05` ô pin** (nhấn nhẹ, `_jumpMinCells = 0.05f`) đến **`0.25` ô pin**
+    (tích lực tối đa, `_jumpMaxCells = 0.25f`).
+- **3 nguồn sạc pin trong game hôm nay:**
+  - `[HIỆN TẠI]` **Đế sạc tại Nhà (`Home Dock`):** Sạc với tốc độ **`4.0 s / ô pin`**
+    (`_dockSecondsPerCell = 4f`, đầy 4 ô trong `16 s`) kèm lưu game
+    ([`Assets/_Project/Scripts/Gameplay/Battery/BatteryTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Battery/BatteryTuning.cs) dòng 70).
+  - `[HIỆN TẠI]` **Vòng sạc tại Trạm tiếp sóng đã sửa (`Lit Relay Mast`):** Mỗi trạm tiếp sóng đã thắp sáng
+    có một vòng sạc bán kính `2 m` (đường kính `4 m`); sau khi 07 đỗ yên `≤ 0.3 m/s` trong `0.5 s`
+    (`_settleSpeed = 0.3f`, `_settleSeconds = 0.5f`), trạm sạc cho 07 với tốc độ **`5.0 s / ô pin`**
+    (`_mastSecondsPerCell = 5f`)
+    ([`Assets/_Project/Scripts/Gameplay/Battery/BatteryTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Battery/BatteryTuning.cs) dòng 73–82,
+    [`Assets/_Project/Scripts/Gameplay/Battery/BatteryField.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Battery/BatteryField.cs) dòng 210–255).
+  - `[HIỆN TẠI]` **Tấm pin mặt trời của Tilly (`SolarCell`):** Sau khi sửa xong Tilly, khi 07 đứng yên ngoài
+    nắng (`≤ 0.2 m/s` trong `3.0 s`, `_solarStillSpeed = 0.2f`, `_solarStillSeconds = 3f`), cánh pin mặt
+    trời sạc nhỏ giọt với tốc độ **`180 s / ô pin`** (`_solarSecondsPerCell = 180f`), giới hạn tối đa đến
+    **`1.0` ô pin** (`_trickleCap = 1f`) để 07 luôn có thể tự hồi phục ngoài thực địa
+    ([`Assets/_Project/Scripts/Gameplay/Battery/BatteryTuning.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Battery/BatteryTuning.cs) dòng 84–95).
+- **Cảnh báo pin yếu & Chế độ Bò dự phòng (`Reserve Crawl` — không bao giờ chết):**
+  - `[HIỆN TẠI]` **Cảnh báo `Low` và `VeryLow` (`BatteryTuning.cs` dòng 97–115, `BatteryField.cs`):** Trạng
+    thái `Low` bật khi pin còn **`< 30%`** (`_lowFraction = 0.30f`) HOẶC khi quãng đường bằng còn lại thấp
+    hơn **`1.5 × (khoảng cách tới trạm sạc sáng gần nhất × 1.2)`** (`_returnSafetyFactor = 1.5f`,
+    `_pathDetourFactor = 1.2f`) lúc đang ở cách trạm sạc trên `40 m` (`_nearChargerDistance = 40f`); trạng
+    thái `VeryLow` bật khi pin còn **`< 15%`** (`_veryLowFraction = 0.15f`).
+  - `[HIỆN TẠI]` **Chế độ Bò dự phòng (`ReserveCrawl`, `BatteryTuning.cs` dòng 117–132, `BatteryField.cs`
+    dòng 280–360):** Theo đúng `docs/VISION.md` Ruling 15, 07 không bao giờ chết vì hết pin. Khi về `0` ô
+    pin, 07 chuyển sang `ReserveCrawl`: tốc độ tối đa giảm còn **`35%`** (`_crawlCap = 0.35f`), đèn pha hạ
+    xuống `35%`, khóa `Boost` và `Hover-Jump` nhưng vẫn cho phép cắt/hàn cơ bản; sau **`5.0 s`**
+    (`_leadDelay = 5f`), nếu Tilly đã thức dậy, cô bé bay ra dẫn đường về trạm sạc gần nhất và nâng tốc độ
+    bò của 07 lên **`55%`** (`_leadCap = 0.55f`); chế độ bò kết thúc ngay khi chạm trạm sạc hoặc hồi được
+    **`≥ 0.25` ô pin** (`_crawlExitCells = 0.25f`).
+- **Chu kỳ Ngày / Đêm (`L1`) cho bản `0.6`:**
+  - `[ĐỀ XUẤT]` Trong bản `0.6` (*The Long Mare*), bổ sung chu kỳ Mặt Trời di chuyển chậm sát đường chân
+    trời cực Nam (mỗi chu kỳ dài khoảng `2 giờ` chơi thực tế): khi bóng râm quét qua vùng trũng, các đế sạc
+    mặt trời không có ắc-quy dự trữ sẽ tạm nghỉ cho tới khi nắng quay lại, tạo lý do tự nhiên để người chơi
+    nối cáp lưới điện từ tháp hoặc dùng `Cell Pack II`
+    ([`Logs/sources/story-v3.md`](file:///D:/Project/MoonProject-wt/agy-plan/Logs/sources/story-v3.md) §3.0).
 
 ---
 
-## 3. Vòng lặp và hệ thống (Core Loop & Systems)
+## 5. Phương án Phong cách Nghệ thuật (Art Style Options)
 
-### 3.1. Vòng lặp cốt lõi 3 tầng (Three-Loop Architecture)
+- `[HIỆN TẠI]` Hiện tại game đang dùng mesh đa giác thấp sinh bằng code với vật liệu màu đỉnh phẳng và ánh
+  sáng chiều đơn giản
+  ([`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §2 P1).
+- `[ĐỀ XUẤT]` Để giải quyết triệt để phản hồi P1 của chủ dự án trong bản `0.5.7`, chúng tôi trình 2 phương
+  án nghệ thuật giữ nguyên bảng màu ấm áp của 07 (`#F4E6C8`, `#FF8A5B`, `#3E4048`, `#78A582`):
 
-1. **Vòng lặp từng phút (Micro Loop — 1 đến 3 phút):**
-   Lái xe rời vùng sáng ấm của trạm → quan sát địa hình hoặc dừng xe 2 giây để ăng-ten `SonarLoop` bắt hướng tín hiệu → tiếp cận xác máy hỏng / mạch quặng / đống đổ nát → dùng đúng bộ phận cơ khí trên 07 (**Quét** bằng mắt, **Cắt** bằng tháp mũi, **Đào** bằng gầu trước, **Thu hàng** vào cửa khoang sau, hoặc **Kéo/Nâng** kỷ vật bằng tời và giá lưng) → kiểm tra pin và khoang hàng.
-2. **Vòng lặp mỗi chuyến đi (Session Loop — 10 đến 20 phút):**
-   Quay về Đế sạc hoặc Trụ sạc trước khi cạn pin → đổ vật liệu từ cửa khoang sau vào phễu Xưởng xe → chế tạo và lắp thiết bị mới lên thân 07 (hoặc đặt Bệ xây dựng ngoài thực địa) → đưa kỷ vật/băng ghi âm lên thang nâng bụng tàu để khôi phục nhật ký và đẩy tiến trình **Bảng Phục Hồi (`Restoration Board`)**.
-3. **Vòng lặp toàn cục (Macro Loop — 6 vùng địa chất):**
-   Mỗi thiết bị mới lắp lên 07 mở ra một cổng vật lý thật sang vùng kế tiếp → kích hoạt tháp tiếp sóng vùng đó để vẽ bản đồ địa hình, đánh thức hệ sinh thái máy móc địa phương và thu thập **1 trong 6 mảnh dữ liệu Khảo sát (`Survey 1/6 → 6/6`)** hướng tới việc sửa Chảo Đỉnh núi.
-
-### 3.2. Năng lượng & Chu kỳ ánh sáng cực Nam (Energy & L1 South-Pole Lighting)
-*(Trích dẫn: `0.6-living-moon.md`; `look-too-purple.md`, 2026-10-14)*
-
-- **Mô hình vật lý thực tế tại Cực Nam Mặt Trăng (L1):** Mặt Trời luôn lướt sát đường chân trời (`1,5° – 6°`), không bao giờ đứng bóng. Một chu kỳ ánh sáng đầy đủ kéo dài **2 giờ chơi thực tế**:
-  - **90 phút Ngày cực (*Look C — Low Sun*):** Bầu trời vẫn đen thẫm và có sao mờ, nhưng mặt đất xám bạc ấm rực dưới nắng xiên góc thấp và bóng đổ dài sắc nét.
-  - **30 phút Đêm bóng râm (*Look A — Moon Grey*):** Mặt Trời khuất sau vành núi chính; lòng chảo chìm vào bóng tối mát lạnh dưới ánh sáng phản chiếu từ Trái Đất (*Earthshine*).
-  - **Nhật thực (*Lunar Eclipse*):** Sự kiện đặc biệt khi Trái Đất che khuất Mặt Trời, vành khí quyển Trái Đất rực đỏ đồng và mặt đất chuyển sang sắc đỏ sẫm trong 4 phút.
-- **Quy tắc sạc năng lượng hợp logic vật lý:**
-  - **Tại Đế sạc căn cứ & các Trụ sạc (*Beacon Chargers*):** Sạc đầy **100%** dung lượng pin (tốc độ `+45%/giây`).
-  - **Dưới ánh nắng trực tiếp (khi đã lắp Cánh Pin Mặt Trời ở `0.6`):** Khi 07 dừng xe dưới nắng, cánh pin mở ra và sạc chậm lại tối đa đến **mức dự phòng 1 ô pin (25%)** — đủ để không bao giờ bị kẹt cứng giữa đồng nắng, nhưng vẫn cần mạng lưới Trụ sạc để hoạt động hết công suất.
-  - **Trong bóng tối / Ánh sáng Trái Đất (*Earthshine*):** Không bao giờ sạc được pin. Trong vùng Hố Bóng Tối vĩnh cửu (`0.8`), nhiệt độ `-200°C` làm pin tụt nhanh gấp **2 lần** cho đến khi lắp **Bộ Sưởi Pin (*Battery Heater*)**.
-- **Khi cạn pin (0%) — Không bao giờ phạt xóa đồ:**
-  07 không chết và không mất bất kỳ vật phẩm nào. Đèn pha tắt, 07 chuyển sang **Chế độ dự phòng (*Reserve Crawl*)** bò về ở tốc độ `35%`. Nếu đã sửa xong **Tilly**, Tilly sẽ chạy ra đón dọc đường, bật đèn dẫn đường và truyền điện cảm ứng giúp 07 lăn bánh về trạm ở tốc độ `55%`.
-
-### 3.3. Khoang hàng & Kho nhà: Một màn hình cố định duy nhất (One-Screen Subnautica Inventory)
-*(Trích dẫn: `ui-taste-subnautica.md`, 2026-10-12; `inventory-07-only.md`, 2026-10-13; `inventory-one-screen.md`, 2026-10-14)*
-
-Chủ dự án đã khóa quy tắc: **Tuyệt đối không dùng giao diện nhiều tab, không có thanh cuộn và không vẽ ô đồ trôi lơ lửng theo xe 3D.**
-
-- **Khi nhấn `Tab` ở bất kỳ đâu (Màn hình 07 — Khoang hàng & Thiết bị):**
-  Mở một khung kính mờ tối giản (*Moonlight Glass*) cố định giữa màn hình, chia làm 2 nửa ngang nhau:
-  - **Nửa trái — Lưới Khoang hàng của 07 (`8 ô` ban đầu, mở rộng lên `16 ô` trên cùng một lưới):** Hiển thị các ô vuông rõ ràng chứa vật liệu (`Kim loại`, `Thạch anh`, `Hợp kim Ilmenite`, `Nhôm Anorthite`, `Tinh thể Piezo`, `Băng tinh khiết`), linh kiện tháp (`TowerCoil`, `Transformer`, `RelaySpare`) và bộ phận bạn bè. Di chuột vào ô nào hiện tên và công dụng 1 dòng ở thanh chân trang.
-  - **Nửa phải — Sơ đồ 07 & Các ổ lắp thiết bị cố định (*Equipment Paper-Doll*):** Hiển thị hình chiếc 07 từ góc 3/4 trên xuống với các ổ cắm cố định nối bằng đường chỉ mảnh tới đúng vị trí cơ khí trên thân xe:
-    1. *Ổ Quang học & Ăng-ten (Đầu/Trái):* Thấu kính Quét Nhanh, Bộ Khuếch Đại Tín Hiệu, Đèn Pha Mạnh.
-    2. *Ổ Mũi xe (Trước):* Mỏ Cắt & Hàn, Tụ Cắt Nhanh / Mỏ Cắt Nhiệt, Gầu Đào Trước, Tời Neo Mũi.
-    3. *Ổ Khung gầm & Nguồn (Giữa):* Khung Gầm Cấp 1–2, Pin Cấp 1–3, Cánh Pin Mặt Trời, Bánh Từ Tính, Bộ Sưởi Pin.
-    4. *Ổ Đuôi & Lưng xe (Sau):* Tời Cáp Sau, Giá Chở Hàng Lưng, Khoang Hàng Rộng (16 ô), Bộ Đẩy Nhảy.
-- **Khi đỗ tại Đế sạc căn cứ và mở Kho nhà (`E` tại Locker hoặc `Tab` khi đang đỗ sạc):**
-  Vẫn là một màn hình cố định hai cột: **Bên trái là Lưới Khoang hàng của 07 (8/16 ô)**, **Bên phải là Kệ Kho nhà của Trạm Lumen (`24 ô`)**. Click chuột trái một lần để chuyển tức thì món đồ giữa xe và kho nhà.
-- **Hàng đợi chế tạo ghim góc màn hình (*Pinned Recipe Hint*):**
-  Khi chọn ghim 1 bản vẽ tại Xưởng xe, góc trên phải chỉ hiện đúng 1 dòng nhỏ: `Giá chở hàng: Kim loại 2/3` — tự ẩn ngay khi chế tạo xong.
-
-### 3.4. Quét mảnh bản vẽ, Chế tạo & Lắp đặt (Scan Fragments → Craft → Equip)
-*(Trích dẫn: `scan-fragments.md`, 2026-10-12; `equipment-07.md`, 2026-10-13)*
-
-1. **Quét mảnh bản vẽ (*Fragment Scanning*):**
-   Các thiết bị bị vỡ nằm rải rác tại các xác máy, trạm khảo sát cũ và khu đổ nát. Quét bằng mắt quang học của 07 (`EyeOrigin`). Số mảnh cần quét phụ thuộc vào độ phức tạp của công nghệ (`2–4 mảnh`). Nếu quét một mảnh của bản vẽ đã hoàn thành: thưởng ngay **`+3 Kim loại`** (tự cuốn vào khoang hàng sau nếu còn chỗ).
-2. **Chế tạo tại Xưởng xe (*Vehicle Bay*) & Đặt Bệ xây dựng (*Build Pads*):**
-   - Người chơi lùi 07 vào phễu Xưởng xe, cửa khoang sau `CargoHatch` mở ra phóng đủ số vật liệu vào phễu.
-   - Cần cẩu trần của Xưởng xe hạ xuống lắp trực tiếp thiết bị mới lên đúng ổ trên thân 07 (kèm hoạt cảnh `1,2 s`, tia lửa hàn nhẹ và câu nhạc chirp 4 nốt).
-   - Với công trình ngoài thực địa (**Trụ sạc**, **Đèn chỉ đường**, **Cầu vượt khe nứt**, **Trạm thời tiết phụ**), 07 dừng trước các **Bệ xây dựng có sẵn khung móng (*Pre-sited Build Pads*)**, mở cửa khoang sau nạp vật liệu để khung công trình tự dựng lên và nối cáp vào mạng lưới.
-3. **Bảng đầy đủ 15 Thiết bị & Nâng cấp của 07 từ đầu game đến `1.0`:**
-
-| # | Tên thiết bị (Tiếng Việt / English) | Phiên bản | Số mảnh quét | Công thức chế tạo tại Xưởng xe | Ổ lắp trên thân 07 (`Equipment Paper-Doll`) | Tác dụng cơ khí cụ thể |
-|---|---|---|---|---|---|---|
-| 1 | **Tời Cáp Sau** (*Rear Winch*) | `0.5.6` | *Lắp sẵn tại cổng* | *Miễn phí tại Cổng Gara Kenji* | Ổ Đuôi xe (`WinchOrigin`) | Bắn móc cáp kéo lê kỷ vật trên mặt đất (`55%` tốc độ) & thu/nhả dây `Q/E`. |
-| 2 | **Giá Chở Hàng Lưng** (*Cargo Cradle & Hoist*) | `0.5.6` | `2 mảnh` | `3 Kim loại` | Ổ Lưng xe (`CradleOrigin`) | Cần trục chữ A nâng kỷ vật đặt lên lưng, chạy `100%` tốc độ, vào được thang nâng tàu. |
-| 3 | **Thấu Kính Quét Nhanh** (*Fast Scan Lens*) | `0.5.6` | `2 mảnh` | `2 Kim loại + 2 Thạch anh` | Ổ Quang học (`EyeOrigin`) | Giảm thời gian quét `2,0 s → 1,1 s`, tăng tầm quét `6 m → 9 m`. |
-| 4 | **Mỏ Cắt & Hàn Mũi Xe** (*Plasma Cutter*) | `0.5.6` | `3 mảnh` | `3 Kim loại + 2 Thạch anh` | Ổ Mũi xe (`CutterOrigin` + `Stage_1`) | Cắt các mối hàn cam cấp 1 trên vách sắt, thùng kẹt, dầm cầu. |
-| 5 | **Bộ Khuếch Đại Tín Hiệu** (*Signal Amp*) | `0.5.6` | `2 mảnh` | `2 Kim loại + 3 Thạch anh` | Ổ Ăng-ten (`AntennaOrigin`) | Tăng tầm nghe sonar khi dừng xe từ `180 m` lên `320 m`, tách âm sắc rõ. |
-| 6 | **Gầu Đào Răng Cưa** (*Mechanical Dig Scoop*) | `0.5.6` | `2 mảnh` | `4 Kim loại + 2 Thạch anh` | Ổ Cản trước (`ScoopOrigin`) | Xúc 3 nhịp cơ khí đào kỷ vật và linh kiện bị vùi dưới đất đá. |
-| 7 | **Khoang Hàng Rộng 16 Ô** (*Side Panniers*) | `0.5.6` | `3 mảnh` | `4 Kim loại + 2 Thạch anh` | Ổ Hông sau (`SidePanniers_L/R`) | Gắn 2 hộc hông đối xứng, tăng sức chứa khoang hàng từ `8` lên `16 ô`. |
-| 8 | **Pin Cấp 1–3** (*Battery Cells Mk1–Mk3*) | `0.5.6–0.8` | `2 / 3 / 3 mảnh` | Mk1: `3 Kim loại + 2 Thạch anh`; Mk2: `+2 Hợp kim`; Mk3: `+2 Tinh thể` | Ổ Nguồn sau (`BatteryPack`) | Gắn thêm lõi pin vật lý, tăng thời lượng hoạt động `100 s → 150 s → 210 s → 280 s`. |
-| 9 | **Khung Gầm Cấp 1–2** (*Chassis Mk1–Mk2*) | `0.5.6–0.6` | `2 / 3 mảnh` | Mk1: `4 Kim loại`; Mk2: `3 Hợp kim + 2 Thạch anh` | Ổ Khung gầm (`Suspension`) | Tăng tốc độ tối đa `8 m/s → 10,5 m/s → 13 m/s` và giảm xóc địa hình. |
-| 10 | **Bộ Đẩy Nhảy** (*Jump Thrusters*) | `0.5.6` | `3 mảnh` | `4 Kim loại + 3 Thạch anh` | Ổ Đuôi sau (`BoostThrusters`) | Phun khí nén giúp 07 nhảy vọt qua khe nứt hẹp và gờ đá thấp. |
-| 11 | **Cánh Pin Mặt Trời** (*Solar Canopy*) | `0.6` | `3 mảnh` | `3 Hợp kim + 3 Thạch anh` | Ổ Lưng trên (`SolarPanels_L/R`) | Tự mở 2 cánh pin khi đỗ dưới nắng cực L1, sạc hồi phục tới mức dự phòng `25%` (1 ô). |
-| 12 | **Tụ Cắt Nhanh & Mỏ Cắt Nhiệt** (*Capacitor & Thermal Lance*) | `0.6–0.7` | `3 / 4 mảnh` | Tụ: `3 Hợp kim + 2 Thạch anh`; Nhiệt: `4 Nhôm + 3 Hợp kim` | Ổ Mũi xe (`ChargeConduits Stage_2/3`) | Sáng đủ 3 đốt tụ điện boong trước; cắt nhanh gấp đôi và mở được khoang hợp kim dày (Kestrel-3, Meridian). |
-| 13 | **Bánh Từ Tính** (*Mag-Wheels*) | `0.7` | `3 mảnh` | `4 Nhôm + 3 Hợp kim` | Ổ Bánh xe (`WheelRims`) | Bám chặt sườn đá dốc `45°–50°` ở Bậc thềm vành hố và đường sắt từ tính. |
-| 14 | **Bộ Chuyển Đổi Chuẩn Sạc** (*Cross-Standard Adapter*) | `0.7` | `2 mảnh` | `2 Nhôm + 2 Hợp kim + 2 Thạch anh` | Ổ Gầm xe (`InductiveCoil`) | Cho phép 07 sạc và cấp nguồn cho toàn bộ đế lục giác của Trạm Meridian. |
-| 15 | **Đèn Pha Mạnh, Bộ Sưởi Pin & Tời Neo Mũi** (*High-Beam, Heater & Anchor*) | `0.8` | `2 / 3 / 3 mảnh` | Đèn: `2 Nhôm + 3 Thạch anh`; Sưởi: `3 Hợp kim + 2 Tinh thể`; Neo: `4 Nhôm + 2 Hợp kim` | Ổ Đầu & Mũi xe | Chiếu sáng `80 m` trong Hố Bóng Tối, chống tụt pin ở `-200°C`, và thả cáp neo xuống vách Ống Dung Nham. |
-
-### 3.5. Bạn robot đồng hành (Robot Companions)
-*(Trích dẫn: `polish-every-state.md`, 2026-10-12; `story-logic.md`, 2026-10-13; `0.5.5-owner-feedback.md`, mục #9)*
-
-Mỗi người bạn là một robot chuyên dụng bị hỏng hoặc kẹt trong thế giới. Tìm đủ linh kiện trong các đống đổ nát gần đó và dùng mỏ hàn mũi xe sửa xong, bạn sẽ **tự đứng dậy vận động cơ khí, chirp chào 07 và bắt đầu công việc thật của mình** (không bao giờ rơi ra thẻ ký ức):
-
-| Bạn robot | Vị trí & Cách cứu | Công việc thật giúp 07 sau khi thức dậy |
+| Tiêu chí | Phương án A: Low-Poly Stylised Nâng cấp (`[ĐỀ XUẤT]` — Khuyên dùng) | Phương án B: Ghibli / Cel-Shaded Ấm áp (`[ĐỀ XUẤT]`) |
 |---|---|---|
-| **1. Tilly** *(Rover bảo trì nhỏ — 0.5)* | Cạnh Xưởng xe; tìm 3 bộ phận quanh Lòng chảo (bánh xe ở giàn giáo, ăng-ten ở thùng sườn đồi, lõi nguồn dưới vách tấm pin sau khi có Mỏ cắt). | Quét dọn sân trạm, dẫn đường tới linh kiện gần nhất trong bán kính `60 m`, và chạy ra tiếp điện dẫn 07 về nhà ở tốc độ `55%` khi 07 cạn pin. |
-| **2. Bell** *(Drone âm thanh khảo sát — 0.5)* | Hẻm Thì Thầm; tìm 3 bộ phận (1 ở hộc trạm gác, 1 sau vách sắt cắt được, 1 **vùi dưới sườn đá lở phải dùng Gầu đào `DigScoop` xúc lên**). | Bay lượn quanh cột ăng-ten chính, mở rộng tầm phát hiện kỷ vật quanh trạm và ngân tiếng chuông báo hiệu mỗi khi cửa sổ liên lạc Trái Đất mở. |
-| **3. Atlas** *(Xe tải hạng nặng 8 bánh — 0.7)* | Bậc thềm vành hố (gần Trạm Meridian); kẹt dưới dầm cầu sập. Cần **Mỏ cắt nhiệt** cắt dầm và **Pin cấp 2 + Hợp kim** để khởi động lại. | Tự động chạy tuyến vận chuyển dọc sườn núi, chở các kiện quặng lớn từ mỏ Bậc thềm về thẳng Kho nhà Lumen mỗi 8 phút và làm trạm sạc di động trên đèo. |
-| **4. Moss** *(Robot chăm sóc sinh học — 0.8)* | Vườn ươm ngầm trong Ống Dung Nham; cần nối lại đường ống dẫn nước băng và thay thấu kính quang phổ. | Chăm sóc các lồng rêu Mặt Trăng ngủ đông (*Lunar Bryophyte*), bật đèn quang hợp xanh lục ấm làm sống lại toàn bộ khu vườn ngầm và mở mảnh Khảo sát thứ 5. |
-| **5. Đàn Drone Chị Em (*Sister Drones* — 0.6–0.8)** | 5 drone khảo sát nhỏ bị kẹt rải rác ở các vùng; chỉ cần 1 nhịp cắt hoặc hàn nhanh để giải cứu. | Bay về đậu quanh mái vòm căn cứ Lumen, thắp sáng các cọc tiêu dọc đường cái và làm căn cứ đông vui, ấm cúng. |
-
-### 3.6. Nghe Sonar tự nhiên (Passive Grounded Sonar)
-*(Trích dẫn: `0.5.5-owner-feedback.md`, mục #10; `no-floating-loot.md`, 2026-10-14; `rover-07-v2.md`, 2026-10-14)*
-
-- **Cơ chế kích hoạt:** Không có phím bấm riêng (đã xóa phím `Space`). Khi 07 di chuyển ít nhất `30 m` rồi dừng yên `2,0 s`, hoặc khi người chơi đứng ngắm cảnh từ một mỏm đá cao, 07 tự động lắng nghe.
-- **Biểu hiện cơ khí & âm thanh (Không cột sáng trời, không vòng sáng mặt đất):**
-  1. Vòng ăng-ten định hướng `SonarLoop` trên lưng trái 07 quay một vòng rồi khóa thẳng vào hướng có mục tiêu gần nhất trong tầm (`180 m`, hoặc `320 m` khi có `Signal Amp`).
-  2. Đầu camera của 07 liếc nhẹ về hướng đó trong `1,2 s`.
-  3. Tại vị trí mục tiêu thật: nếu là kỷ vật/mảnh vỡ, **chính cạnh kim loại của vật thể đó** lóe sáng phản quang 2 nhịp; nếu là công trình/tháp, **đèn cọc trên đỉnh công trình** chớp 2 nhịp vàng ấm.
-  4. Âm thanh phản hồi phát ra đúng hướng 3D (tai trái/phải) với âm sắc phân biệt rõ (kỷ vật = tiếng đồng ngân trầm; bản vẽ = tiếng pha lê thanh; công trình = tiếng xung đôi).
-
-### 3.7. Sổ ghi chép Khảo sát (Survey Databank)
-*(Trích dẫn: `scan-fragments.md`, 2026-10-12; `plain-functional-text.md`, 2026-10-12; `0.6-living-moon.md`)*
-
-Mỗi khi 07 quét xong một công nghệ mới, một hiện tượng địa chất, một máy móc thuộc hệ sinh thái hoặc một địa điểm, mục tương ứng được ghi vào **Sổ ghi chép (`Databank` — phím `J`)** chia làm 4 nhóm gọn gàng:
-1. **Máy móc (*Machines*):** Các thiết bị của Lumen (đế sạc tròn cảm ứng) và của Meridian (đế sạc lục giác tiếp xúc), robot dọn bụi, xe khoan, vệ tinh.
-2. **Mặt Trăng (*The Moon*):** Đá bazan, quặng Ilmenite, Anorthite, tinh thể áp điện, băng vĩnh cửu, chu kỳ nắng cực L1.
-3. **Địa điểm (*Places*):** Các khu vực trong 6 vùng, ghi chú kỹ thuật của Kenji, Dr. Moreau và Ines (1–2 câu ngắn gọn, thực tế).
-4. **Sự sống (*Life*):** Rêu Mặt Trăng ngủ đông (*Cryo-bryophyte*), vi khuẩn đá và thí nghiệm nhà kính.
-
-### 3.8. Giao diện & Âm thanh (Moonlight Glass UI & Acoustic Pentatonic Audio)
-*(Trích dẫn: `ui-taste-subnautica.md`, 2026-10-12; `plain-functional-text.md`, 2026-10-12; `audio-feedback-055.md`, 2026-10-14)*
-
-- **Giao diện (*Moonlight Glass*):**
-  - Màn hình khi lái xe cực kỳ sạch: góc dưới trái là thanh Pin ngang mảnh và số ô Khoang hàng (`3/8`); trên đầu màn hình là la bàn mảnh chỉ hướng Bắc/Căn cứ và các tháp đã bật; góc dưới giữa chỉ hiện tối đa **1 dòng nhắc duy nhất** (`HudMutex`).
-  - **Đã xóa vĩnh viễn:** Vòng tròn pin 3D vẽ dưới bánh xe (`RoverEnergyRing`), bộ đếm mảnh bản vẽ ghim cố định góc dưới phải, các nhãn chữ trôi lơ lửng từ xa, và mọi hướng dẫn lặp lại.
-- **Âm thanh (*Acoustic Pentatonic — D Major: D, E, F#, A, B*):**
-  - **Đã xóa vĩnh viễn:** Mọi tiếng bíp điện tử chói tai kiểu "AI khoa học viễn tưởng", tiếng chuông báo thức gắt khi nhặt đồ, tiếng vo ve tần số cao.
-  - Thay bằng tiếng cơ khí vật lý ấm áp (tiếng mô-tơ điện êm, tiếng bánh răng, tiếng chốt cửa khoang hàng *clack*, tiếng đá sỏi lạo xạo dưới bánh xe) kết hợp với giọng chirp 2–4 nốt ngũ cung ấm của 07 và tiếng đàn kalimba / gỗ / dây trầm khi hoàn thành công trình.
+| **Đặc trưng thị giác** | Giữ hình khối đa giác thấp góc cạnh thập niên 1970, nhưng thêm độ nhám bề mặt regolith (micro-normal), đổ bóng khe hẹp (AO), viền sáng rim-light ấm từ ánh phản chiếu Trái Đất và sương bụi mỏng theo địa hình. | Đổ bóng bậc thang 2–3 sắc độ mềm (cel-shading), viền nét mảnh theo độ sâu, mặt đất và sườn đồi chuyển sắc màu phấn ấm như tranh minh họa khoa học viễn tưởng cổ điển. |
+| **Tương thích với code hiện có** | Tận dụng trực tiếp toàn bộ hệ thống `RoverMeshes.cs`, `BuildingMeshes.cs` và mô hình Blender `07 v2` mà không phải làm lại toàn bộ quy trình sinh mesh. | Cần viết lại bộ shader Toon/Outline và điều chỉnh lại pháp tuyến (smooth normals) của toàn bộ đá, địa hình và công trình để mảng bóng không bị gãy. |
+| **Rủi ro & Thời gian** | Thấp (`~3–4 ngày` cho shader địa hình, ánh sáng và hậu kỳ); giữ đúng chất cơ khí sắc nét của 07. | Trung bình–Cao (`~1.5–2 tuần`); dễ làm các chi tiết cơ khí nhỏ trên 07 bị nhòe nếu viền outline dày. |
 
 ---
 
-## 4. Thế giới và lộ trình khám phá (Seamless World & Regional Progression)
+## 6. Phương án Định hướng Âm thanh (Audio Direction — Tinh chỉnh Phương án C)
 
-*(Trích dẫn: `world-regions.md`, 2026-10-13; `living-moon.md`, 2026-10-13; `derelict-variety.md`, 2026-10-13; `0.6-world-regions.md`; `0.6-living-moon.md`)*
+- `[HIỆN TẠI]` Toàn bộ âm thanh trong game hôm nay được tổng hợp bằng code C# (`Procedural audio synthesis`
+  trong `Assets/_Project/Scripts/Audio/`), mang lại âm nền ấm nhưng tiếng cắt, tiếng hàn, tiếng quét và phản
+  hồi sonar còn dùng chung âm sắc sóng sin/tam giác khá giống nhau
+  ([`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §2 P2 & P6).
+- `[ĐỀ XUẤT]` Áp dụng **Phương án C Tinh chỉnh (Hybrid Procedural Synth + Lớp tiếng cơ khí vật lý)** trong
+  bản `0.5.7` để mỗi thiết bị trên `07 v2` có một chữ ký âm thanh riêng biệt mà vẫn giữ dung lượng gọn nhẹ:
+  1. `[ĐỀ XUẤT]` **Gầu xúc trước (`DigScoop`):** 3 nhịp tiếng piston thủy lực rít nhẹ kèm tiếng răng thép
+     cào sỏi regolith và tiếng bật nắp khi kỷ vật trồi lên (thay cho tiếng ngân hư ảo của `TractorBeam`).
+  2. `[ĐỀ XUẤT]` **Đầu cắt mũi xe (`CutterTurret`) & Cụm nạp `ChargeCells`:** Giữ tiếng nạp 3 tầng tăng dần
+     cao độ của `ChargeCells`, thêm tiếng đánh lửa hồ quang giòn khi bắt đầu cắt và tiếng bật chốt kim loại
+     trầm khi mảnh phế liệu rời ra; tách hẳn với tiếng hàn (`RepairBeam`) dùng xung điện lách tách mềm.
+  3. `[ĐỀ XUẤT]` **Trống tời cáp (`WinchDrum`) & Khung cẩu (`HoistBail`):** Tiếng bánh cóc dây cáp quay lạch
+     cạch khi giữ phím thu dây (`Thu dây`), tiếng sỏi trượt dưới đáy kỷ vật khi kéo lê trên đất, và tiếng
+     mô-tơ khung chữ A nâng lên kèm tiếng ngàm khóa kịch vào `CradleSeat`.
+  4. `[ĐỀ XUẤT]` **Nắp khoang hàng (`CargoHatch`) & Con lăn (`IntakeRoller`):** Tiếng ty hơi mở nắp khẽ xì
+     và tiếng con lăn cao su cuốn từng bó vật liệu vào khoang hoặc bắn vào phễu trạm.
+  5. `[ĐỀ XUẤT]` **Lắng nghe (`SonarSystem`):** Thay tiếng ping sonar tàu ngầm bằng tiếng xoay cơ khí khẽ
+     của vòng ăng-ten `SonarLoop` và âm chuông cộng hưởng 3D định hướng (stereo/HRTF) phát ra từ đúng vị
+     trí vật thể trả lời.
 
-### 4.1. Kiến trúc một thế giới liền mạch (Single Seamless World)
+---
 
-- **Không có màn hình nạp cảnh (*Zero Loading Screens*) và không có tường tàng hình:** Toàn bộ Mặt Trăng là một không gian liên tục duy nhất, được chia thành lưới các ô địa hình `64 × 64 m` do `WorldStreamer` tự động nạp trước trong bán kính `384 m` quanh 07.
-- **Bảo toàn nguyên vẹn vùng Lòng chảo gốc:** Toàn bộ khu vực bán kính `r ≤ 345 m` (Lòng chảo Lumen & Hẻm Thì Thầm) được giữ nguyên từng tọa độ công trình và kỷ vật. Từ `r = 345 m` đến `400 m` là vành đai chuyển tiếp mượt sang các vùng mới.
-- **Mở khóa theo tính liền kề (*Adjacency Unlocking*) & Lưu vị trí thật:**
-  Thắp sáng Tháp tiếp sóng của vùng nào sẽ quét mở địa hình vùng liền kề tiếp theo. Khi người chơi thoát game tại bất kỳ Đế sạc hoặc Trụ sạc nào, lần vào lại tiếp theo 07 sẽ thức dậy ngay tại đúng Trụ sạc đó (`lastChargerNodeId` + `position`).
-- **Mật độ điểm thú vị (*Point of Interest Density*):**
-  Cứ mỗi **20–30 giây lái xe (`100–150 m`)** phải có ít nhất một điểm thu hút thị giác (xác máy khảo sát, mạch khoáng sản, bệ xây dựng, trạm đo đạc cũ, hoặc hiện tượng tự nhiên). Tất cả các xác máy đều phải đa dạng câu chuyện (vệ tinh rơi nghiêng, giàn khoan gãy mũi, xe trượt tuyết lật, lều bơm hơi xẹp, cột ăng-ten đổ) — không bao giờ đặt các thùng hàng giống hệt nhau.
+## 7. Cốt truyện, Thế giới Logic & Kiểm toán Lời thoại (`[HIỆN TẠI]` vs Bản nháp `Story v3` `[ĐỀ XUẤT]`)
 
-### 4.2. Sáu vùng địa chất từ Lòng chảo đến Đỉnh núi
+> **Lưu ý quan trọng:** Toàn bộ nội dung mở rộng của `Story v3` dưới đây (bằng chứng khảo sát nước băng của
+> Ines, trạm thứ hai **Meridian** của **Tycho Consortium**, nguyên nhân mảng pin chảo lưu trữ bị phủ bụi năm
+> 2067, và bảng viết lại 14 dòng thoại) đều là **BẢN NHÁP `[ĐỀ XUẤT]` đang chờ chủ dự án trả lời 7 câu hỏi
+> tại Mục 9** (nguồn: [`Logs/sources/story-v3.md`](file:///D:/Project/MoonProject-wt/agy-plan/Logs/sources/story-v3.md)).
+> Các khuyến nghị của nhóm thiết kế chỉ được đặt tại Mục 9.
 
-| Vùng & Phiên bản | Địa hình & Khí quyển | Mồi nhử nhìn thấy từ trước (*Visual Lure*) | Cổng điều kiện vật lý (*Real Gate*) | Tài nguyên & Công nghệ mới | Hệ sinh thái máy móc & Hiện tượng tự nhiên | Mảnh Khảo sát (*Survey Piece*) |
-|---|---|---|---|---|---|---|
-| **1. Lòng Chảo & Hẻm Thì Thầm** *(The Basin & Whispering Canyon — `0.5 / 0.5.6`)* | Miệng hố phẳng `700 × 700 m` bao quanh Trạm Lumen, nối với hẻm núi đá hẹp phía Đông. | Đèn đỏ chớp trên Đỉnh núi; xác vệ tinh **Kestrel-3** cắm nghiêng cách trạm `160 m`; đèn vàng mờ ở cổng Gara Kenji. | Cáp thang nâng đứt (sửa từ đầu) → Vách sắt Bãi đáp cần **Mỏ cắt** → Đá lở vùi bộ phận của Bell cần **Gầu đào**. | `Kim loại (Metal)`, `Thạch anh (Quartz)`. Mở khóa: Tời sau, Giá chở hàng, Quét nhanh, Mỏ cắt, Gầu đào, Khoang hàng 16 ô, Pin 1, Khung gầm 1, Bộ đẩy nhảy. | **Họ máy Lumen** (sơn trắng ngà – vàng đồng, đế sạc tròn cảm ứng): Tilly, Bell, bàn xoay pin mặt trời trên mái trạm tự hướng theo Mặt Trời sau khi có điện. | **Khảo sát 1/6:** Nhật ký sơ tán Lumen & Bản đồ thăm dò ban đầu (tại Tháp tiếp sóng Hẻm núi). |
-| **2. Khe Rãnh & Biển Dài** *(Rille Pass & Long Mare — `0.6`)* | Khe nứt bazan dẫn ra đồng bằng dung nham cổ rộng `1,2 km` màu xám đen phẳng lặng, tầm nhìn cực thoáng. | Từ vành Đông Lòng chảo nhìn thấy **Dàn Ăng-ten Sâu (*Deep-Space Dish Array*)** khổng lồ nằm im lìm giữa cánh đồng bazan. | Khe nứt tại Rille Pass bị chắn bởi dầm cầu sập (cần **Mỏ cắt** + nạp vật liệu vào Bệ cầu hoặc dùng **Bộ đẩy nhảy**) và cự ly xa vượt quá 1 bình pin gốc. | `Quặng Ilmenite` → tinh luyện thành `Hợp kim (Alloy)`. Mở khóa: **Cánh Pin Mặt Trời**, **Tụ Cắt Nhanh**, **Pin Cấp 2**, **Khung Gầm Cấp 2**. | **Robot quét bụi (*Solar Sweepers*)** chạy dọc các dãy tấm pin ở Biển Dài. Một con bị kẹt bánh vào năm 2067 làm cả dàn pin phủ bụi tắt nguồn — khi 07 cắt gỡ thanh sắt kẹt, nó chạy lại, quét sạch bụi và bật sáng cả cánh đồng pin! Kèm hiện tượng **Bụi tĩnh điện lơ lửng (*Electrostatic Dust Levitation*)** khi nắng xiên qua ranh giới sáng–tối. | **Khảo sát 2/6:** Nhật ký đường truyền năm 2067 tại Dàn Ăng-ten Sâu (giải thích vì sao Mặt Trăng mất tiếng). |
-| **3. Bậc Thềm Vành Hố & Trạm Meridian** *(Rim Terraces — `0.7`)* | Những bậc đá trắng Anorthite dốc đứng `35°–50°` uốn quanh sườn núi phía Bắc, nhìn xuống toàn cảnh Lòng chảo. | Từ Biển Dài nhìn lên sườn núi thấy các tháp khung lục giác sơn xanh lam đậm và cần cẩu của **Trạm Meridian** (*Tycho Consortium*). | Dốc đá trơn `45°` làm bánh thường trượt lùi (bắt buộc lắp **Bánh Từ Tính — *Mag-Wheels***) và cửa khoang kín cần **Mỏ Cắt Nhiệt (*Thermal Lance*)**. | `Đá Anorthite` → `Nhôm nhẹ (Aluminium)`. Mở khóa: **Bánh Từ Tính**, **Mỏ Cắt Nhiệt**, **Bộ Chuyển Đổi Chuẩn Sạc (*Cross-Standard Adapter*)**, cứu **Atlas**. | **Họ máy thứ hai — Meridian** (khung lục giác góc cạnh, sơn xanh xám công nghiệp, **đế sạc lục giác tiếp xúc** khác hẳn đế tròn của Lumen). Khi 07 lắp Bộ chuyển đổi và đóng điện Trạm Meridian, các giàn khoan tự động và xe tải **Atlas** thức dậy. | **Khảo sát 3/6:** Hồ sơ khoan thăm dò độc lập của Tycho tại Trạm Meridian (xác nhận mạch nước ngầm từ sườn Bắc). |
-| **4. Hố Bóng Tối Vĩnh Cửu** *(Shadowed Crater — `0.8`)* | Lòng hố sâu phía Nam không bao giờ có ánh nắng Mặt Trời chiếu tới suốt hàng tỷ năm; sương giá trắng xóa và bóng tối đặc quánh. | Vành hố phủ băng lấp lánh dưới ánh sao và những cọc đèn dẫn đường màu xanh băng của đoàn thám hiểm Ines cắm dẫn xuống đáy hố. | Bóng tối tuyệt đối + cái lạnh `-200°C` rút cạn pin gấp đôi. Bắt buộc phải có **Đèn Pha Mạnh (*High-Beam Lamp*)** và **Bộ Sưởi Pin (*Battery Heater*)**. | `Lõi Băng Tinh Khiết (Pure Ice Cores)`. Mở khóa: **Đèn Pha Mạnh**, **Bộ Sưởi Pin**, **Pin Cấp 3**. | Các **Mũi khoan nhiệt (*Thermal Drills*)** của Ines đóng băng nửa chừng. Khi 07 cấp nguồn sưởi lại cho giàn khoan trung tâm, hơi nước ấm bốc lên làm tan lớp băng phủ trên kho dữ liệu hiện trường của Ines. | **Khảo sát 4/6:** Dữ liệu quang phổ lõi băng gốc của Ines Kalani (ghi ngay trong đêm bão mặt trời 2047). |
-| **5. Ống Dung Nham Ngầm** *(Lava Tube & Cryo-Vent — `0.8`)* | Hang vòm bazan khổng lồ chạy ngầm dưới lòng đất nối từ đáy Hố Bóng Tối sang chân Đỉnh núi; vách hang đính tinh thể áp điện. | Luồng hơi băng lấp lánh thoát ra từ cửa hang vòm và hàng dây cáp đồng cổ dẫn sâu vào lòng núi. | Vách vực thẳng đứng ở cửa ống dung nham cần **Tời Neo Mũi Xe (*Anchor Winch*)** để thả cáp hạ 07 xuống an toàn. | `Tinh thể Áp Điện (Piezo Crystal)`. Cứu robot sinh học **Moss** và khôi phục **Vườn ươm rêu ngầm (*Subsurface Bryophyte Dome*)**. | **Hiện tượng Tinh thể Ngân (*Singing Piezo Crystals*):** Khi sóng địa chấn nhẹ đi qua vách hang, các cụm tinh thể phát sáng dịu và ngân hợp âm ngũ cung. Khi Moss bật lại hệ thống sưởi và nước băng, các lồng **Rêu Mặt Trăng (*Lunar Bryophyte*)** mở lá xanh lục dưới ánh đèn ấm. | **Khảo sát 5/6:** Mẫu sinh học Rêu ngủ đông & Bản sao lưu Hầm trú ẩn (*Bunker Backup Drive*). |
-| **6. Đường Lên Đỉnh & Chảo Lớn** *(Peak Road & The Peak — `1.0`)* | Con đường xoắn ốc quanh sườn núi cao nhất (`+240 m`), đi qua các khe vực hẹp, dốc từ tính và cổng vòm đá để lên tới đài quan sát Đỉnh núi. | **Chảo Ăng-ten Đỉnh Núi (*Peak Dish*)** khổng lồ với đốm đèn đỏ chớp tắt đã nhìn thấy từ giây đầu tiên của trò chơi. | Bài kiểm tra tổng hợp mọi bộ phận trên 07: leo dốc bằng **Bánh từ tính**, vượt khe vực bằng **Bộ đẩy nhảy / Tời neo**, cắt khóa cơ khí bằng **Mỏ cắt nhiệt**, và nạp đủ **6/6 mảnh Khảo sát**. | Không thêm vật liệu cày cuốc mới — tập trung hoàn toàn vào cảm xúc chinh phục, sửa chữa Chảo lớn và phát sóng về Trái Đất. | Khi 07 đóng cầu dao cuối cùng, toàn bộ chuỗi Tháp tiếp sóng từ Lòng chảo → Biển Dài → Bậc thềm → Đỉnh núi sáng rực nối tiếp nhau; Chảo lớn xoay hướng thẳng về phía Trái Đất. | **Khảo sát 6/6:** Nhật ký cuối cùng tại Đài quan sát Đỉnh núi — hoàn tất gói dữ liệu gửi về Trái Đất. |
+### 7.1 Những gì đang có trong game hôm nay (`[HIỆN TẠI]`) so với Bản nháp `Story v3` (`[ĐỀ XUẤT]`)
 
-### 4.3. Chi tiết 6 nhịp trong Giờ Chơi Đầu Tiên tại Lòng Chảo (`First-Hour 6-Beat Flow` ở `0.5.6`)
+- **Quy trình Khôi phục Lumen (`Lumen Recovery Protocol`):**
+  - `[HIỆN TẠI]` Trong [`Assets/_Project/Data/Localization/vi.json`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Data/Localization/vi.json)
+    (dòng 238–256), bảng tiến trình trong Phòng thí nghiệm hiện có 4 bước:
+    1. `recovery.power.name`: *Cấp điện cho trạm*.
+    2. `recovery.link.name`: *Nối mạng lưới tới Đỉnh núi*.
+    3. `recovery.dish.name`: *Sửa chảo ăng-ten lớn*.
+    4. `recovery.answer.name`: *Trả lời Trái Đất*.
+  - `[ĐỀ XUẤT]` Bản nháp `Story v3` ([`Logs/sources/story-v3.md`](file:///D:/Project/MoonProject-wt/agy-plan/Logs/sources/story-v3.md) §1)
+    bổ sung động lực xuyên suốt từ `0.5` đến `1.0`: năm 2047, Trạm Lumen (gồm 4 thành viên: trưởng nhóm địa
+    chất **Ines Kalani**, kỹ sư cơ khí **Kenji**, nhà thực vật **Theo**, phát thanh viên **Ro Amadi**) phải
+    sơ tán khẩn cấp trong bão Mặt Trời; chương trình trên Trái Đất bị đóng cửa với kết luận *"không đáng để
+    quay lại"*, nhưng trước khi rời đi Ines đã tìm thấy bằng chứng về một túi nước băng lớn dưới lòng đất
+    (cùng dữ liệu dò sóng khớp từ trạm tự động **Meridian** bên kia vành núi). Cơn bão làm hỏng chảo ăng-ten
+    lớn và làm rơi vệ tinh chuyển tiếp **Kestrel-3** trước khi dữ liệu kịp gửi về, nên 07 thực thi quy trình
+    khôi phục để thu thập **6 mảnh bằng chứng khảo sát (`Survey pieces`)** và truyền về Trái Đất.
+- **Kỷ vật (`Keepsakes`) và Máy phát băng của Ro (`TapeDeck`):**
+  - `[HIỆN TẠI]` Trong [`Assets/_Project/Data/Localization/vi.json`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Data/Localization/vi.json)
+    (dòng 542–588), bảng chuỗi chữ hiện có 6 mục `relic.*`: `relic.cassette_player` (*Cuộn băng của Ro*),
+    `relic.rubber_duck` (*Cố vấn gỡ lỗi cấp cao*), `relic.golden_record` (*Đĩa vàng Lumen*),
+    `relic.astronaut_boot` (*Đôi ủng của Ines*), `relic.teapot` (*Ấm trà thật sự đầu tiên*), và
+    `relic.garden_gnome` (*Trưởng ban An ninh*); đồng thời tại Gara của Kenji đã có thiết bị `TapeDeck`
+    trong thùng `"07 · SPARE"`
+    ([`Assets/_Project/Scripts/Gameplay/Progression/GaragePort.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Progression/GaragePort.cs)).
+  - `[ĐỀ XUẤT]` Theo quyết định trong `Story v3` ([`Logs/sources/story-v3.md`](file:///D:/Project/MoonProject-wt/agy-plan/Logs/sources/story-v3.md) §2),
+    Kệ kỷ vật giữ **5 kỷ vật cá nhân** (vịt cao su, thần lùn giữ vườn, ấm trà, đĩa vàng, đôi ủng của Ines),
+    viên sỏi xanh thuộc về mạch bằng chứng khảo sát của Ines, còn máy phát băng của Ro là **linh kiện vận
+    hành trong thùng `"07 · SPARE"`** (sẽ xóa các khóa `relic.cassette_player.*` khi hoàn tất dọn dẹp C9).
+- **Các rover đàn anh (`01–06`) và sinh thái máy móc hai trạm (`Lumen` & `Meridian`):**
+  - `[HIỆN TẠI]` Trong bản `0.5` hôm nay, đàn anh **`06`** nằm nghỉ cạnh nhà trạm tiếp sóng cửa hẻm núi
+    (`relay.2` tại `(-70, -180)`) và giữ 2 mảnh bản vẽ `Cell Pack II`
+    ([`docs/design/0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §1.3 & §1.7).
+  - `[ĐỀ XUẤT]` Trong bản nháp `Story v3` ([`Logs/sources/story-v3.md`](file:///D:/Project/MoonProject-wt/agy-plan/Logs/sources/story-v3.md) §2 & §3),
+    tất cả các rover đàn anh **`01–06` đều đã dừng nghỉ hẳn** tại đúng chướng ngại vật mà giờ đây 07 vượt qua
+    được nhờ trang bị mới; mỗi đàn anh mang một bảng kê nhiệm vụ kỹ thuật ngắn gọn (ví dụ
+    `03 · TASK: FETCH ICE CORE CACHE · STOPPED: NO CHARGE`), hoàn toàn không có cảnh ủy thác tình cảm hay
+    đánh thức đàn anh.
+  - `[ĐỀ XUẤT]` Bản nháp `Story v3` phân định hai họ máy móc có nguồn điện và mục đích hợp lý:
+    1. **Họ Lumen:** sơn kem sọc cam, đèn hổ phách tròn, đế sạc cảm ứng tròn, cài chế độ `"tiếp tục"` của Kenji.
+    2. **Họ Meridian (`Tycho Consortium`):** vỏ trắng vạch xanh cổ vịt, mặt lục giác, đế sạc tiếp điểm lục
+       giác, tự về `safe mode` khi mất kết nối với bộ điều phối nội bộ, trừ các máy nằm trong tầm nút liên
+       lạc trên Thềm Vành Đai vẫn chạy suốt nhiều thập kỷ dưới nắng cực Nam để chất đầy dữ liệu vào kho
+       **Meridian's vault**.
+- **Giải quyết mạch "Sự im lặng năm 2067" và cái kết một cách hợp lý:**
+  - `[ĐỀ XUẤT]` Trong bản nháp `Story v3` ([`Logs/sources/story-v3.md`](file:///D:/Project/MoonProject-wt/agy-plan/Logs/sources/story-v3.md) §1),
+    chảo liên lạc ở vùng Biển Dài (*The Long Mare*, bản `0.6`) lưu trữ kênh trò chuyện của 4 thành viên suốt
+    20 năm sau ngày sơ tán rồi im bặt vào năm `2067` không phải vì con người bỏ rơi trạm, mà vì **robot quét
+    bụi (`sweeper`) của mảng pin mặt trời nuôi chảo bị hỏng, khiến bụi phủ kín mảng pin và chảo mất điện
+    ngừng thu sóng**.
+  - `[ĐỀ XUẤT]` Khi 07 sửa xong chảo lớn trên Đỉnh núi ở bản `1.0` và truyền kho lưu trữ kèm 6 mảnh bằng
+    chứng khảo sát về Trái Đất, người bắt được tín hiệu đầu tiên là **Ro** (người vẫn phát chương trình
+    *Lumen After Dark* mỗi Chủ nhật qua chảo của câu lạc bộ vô tuyến nghiệp dư trên tần số cũ của trạm —
+    chính tín hiệu đã được `relay.2` và `06` chuyển tiếp để đánh thức 07 ở đầu game), tiếp nối bằng phản hồi
+    chính thức từ Houston lên kế hoạch đưa phi hành đoàn quay lại Mặt Trăng.
 
-| Nhịp (Thời gian) | Việc người chơi làm bằng cơ khí thật của 07 | Phần thưởng nhìn thấy ngay |
+### 7.2 Bảng tổng hợp 6 Vùng từ `0.5` đến `1.0` trong Bản nháp `Story v3` (`[ĐỀ XUẤT]`)
+
+| Vùng & Phiên bản | Trạng thái xác thực | Điểm thu hút tầm nhìn (Lure) | Phát hiện chính trong vùng | Mảnh bằng chứng khảo sát (`Survey piece`) | Đàn anh dừng nghỉ tại vùng |
+|---|---|---|---|---|---|
+| **1. Lòng chảo & Hẻm núi (`0.5`)** | `[HIỆN TẠI]` Địa hình, nhà, gara, giàn khoan, Kestrel-3, khe vực, Tilly & Bell đã có trong game ([`0.5.5-owner-feedback.md`](file:///D:/Project/MoonProject-wt/agy-plan/docs/design/0.5.5-owner-feedback.md) §1.7). `[ĐỀ XUẤT]` Nội dung chữ `Story v3`. | Đèn báo lỗi đỏ trên Đỉnh núi; ánh đèn của Bell bên kia khe vực. | Vệ tinh **Kestrel-3** mang phù hiệu lạ `"TYCHO CONSORTIUM · MERIDIAN RELAY"`; nhật ký lõi khoan `"bất thường"` của Ines tại giàn khoan; nhật ký chuyển tiếp của `06`. | `[ĐỀ XUẤT]` **Mảnh 1:** Dữ liệu lõi khoan của Ines (bộ ghi tại giàn khoan). | **`06`** (`[HIỆN TẠI]` ở nhà trạm `relay.2` cửa hẻm núi). |
+| **2. Biển Dài — *The Long Mare* (`0.6`)** | `[ĐỀ XUẤT]` Mở rộng thế giới `0.6` ([`Logs/sources/story-v3.md`](file:///D:/Project/MoonProject-wt/agy-plan/Logs/sources/story-v3.md) §2). | Vệt xoáy từ trường sáng và đèn chớp hổ phách của chảo lưu trữ. | Kho lưu trữ 20 năm thư từ của nhóm (dừng năm 2067 do hỏng máy quét bụi); bầy drone khảo sát Meridian (`survey flock`); máy đào rãnh cáp liên trạm của Lumen (`trencher`). | `[ĐỀ XUẤT]` **Mảnh 2:** Dữ liệu dò sóng của bầy drone; **Mảnh 3:** Kho lưu trữ chảo liên lạc. | `[ĐỀ XUẤT]` **`05`** (dừng nghỉ cạnh chảo liên lạc). |
+| **3. Thềm Vành Đai — *Rim Terraces* (`0.7`)** | `[ĐỀ XUẤT]` Mở rộng thế giới `0.7` ([`Logs/sources/story-v3.md`](file:///D:/Project/MoonProject-wt/agy-plan/Logs/sources/story-v3.md) §2). | Các bậc đá sáng và đèn chớp trắng của **Trạm Meridian** nhìn thấy từ bờ bắc Biển Dài. | **Trạm Meridian** vẫn hoạt động tự động dưới nắng: máy phân loại mẫu, máy gạt bụi, robot leo cáp; xe kéo **Atlas** của Lumen đỗ tại công trường nối cáp. | `[ĐỀ XUẤT]` **Mảnh 4:** Kho dữ liệu **Meridian's vault** (bản đồ toàn bộ túi nước băng). | `[ĐỀ XUẤT]` **`04`** (nghiêng trên vách thềm đá). |
+| **4. Hố Đen Vĩnh Cửu — *Shadowed Crater* (`0.8`)** | `[ĐỀ XUẤT]` Mở rộng thế giới `0.8` ([`Logs/sources/story-v3.md`](file:///D:/Project/MoonProject-wt/agy-plan/Logs/sources/story-v3.md) §2). | Lòng chảo tối đen có ánh xanh lục ở hướng tây nam Biển Dài. | Các máy dò băng của Meridian (`ice tappers`) nằm chờ nối lại cáp và tín hiệu; robot làm vườn **Moss** của Theo đang lấy mẫu băng. | `[ĐỀ XUẤT]` **Mảnh 5:** Mẫu lõi băng thực chứng (`ice core cache`). | `[ĐỀ XUẤT]` **`03`** (dừng vì hết pin trong bóng tối). |
+| **5. Ống Dung Nham — *The Lava Tube* (`0.8`)** | `[ĐỀ XUẤT]` Mở rộng thế giới `0.8` ([`Logs/sources/story-v3.md`](file:///D:/Project/MoonProject-wt/agy-plan/Logs/sources/story-v3.md) §2). | Ánh sáng hắt lên từ giếng trời tự nhiên (`skylight`). | Hầm trú bão kiêm máy chủ sao lưu chạy bằng pin đồng vị kín; một bóng đèn hẹn giờ vẫn bật nuôi **mảng rêu xanh còn sống** của Theo. | `[ĐỀ XUẤT]` **Mảnh 6:** Bản sao lưu phân tích tổng hợp của Ines (`shelter backup`). | `[ĐỀ XUẤT]` **`02`** (không leo ra khỏi dốc ống được). |
+| **6. Đường lên Đỉnh Núi — *The Peak Road* (`1.0`)** | `[ĐỀ XUẤT]` Kết thúc hành trình `1.0` ([`Logs/sources/story-v3.md`](file:///D:/Project/MoonProject-wt/agy-plan/Logs/sources/story-v3.md) §2). | Đèn báo lỗi đỏ trên đỉnh chảo ăng-ten lớn. | Đống đá sạt từng chặn đường sửa chảo; trạm chảo ăng-ten lớn trên đỉnh vẫn có điện từ cột pin mặt trời cao. | `[ĐỀ XUẤT]` Truyền toàn bộ kho lưu trữ và 6 mảnh khảo sát về Trái Đất. | `[ĐỀ XUẤT]` **`01`** (dừng trước đống đá sạt). |
+
+### 7.3 Kiểm toán Lời thoại: Không viết lời tâm sự mùi mẫn từ người gửi cho máy (`[ĐỀ XUẤT]`)
+
+- `[HIỆN TẠI]` Trong [`Assets/_Project/Data/Localization/vi.json`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Data/Localization/vi.json),
+  hầu hết thư trên cột tiếp sóng (`letter.mast_1..4, 6..8, 10`) và ghi chú sửa chữa (`friend.bell.repair_log`,
+  `friend.tilly.repair_log`, `crate.garage.note`) đã viết theo đúng giọng con người nói với con người hoặc
+  ghi chú kỹ thuật hóm hỉnh về công cụ, nhưng vẫn còn **14 khóa chữ** đang để con người tâm sự trực tiếp với
+  07 như một người bạn tri kỷ.
+- `[ĐỀ XUẤT]` Theo quy tắc của chủ dự án (*"con người coi robot là công cụ; cá tính của 07 thể hiện qua hành
+  vi, không qua lời người khác tâm sự với nó"*), bản nháp `Story v3`
+  ([`Logs/sources/story-v3.md`](file:///D:/Project/MoonProject-wt/agy-plan/Logs/sources/story-v3.md) §4.1)
+  đề xuất viết lại 14 khóa chữ dưới đây (chỉ áp dụng vào `vi.json` / `en.json` sau khi chủ dự án duyệt câu
+  hỏi `S5` ở Mục 9):
+
+| Khóa (`vi.json`) | Trạng thái & Vấn đề hiện tại (`[HIỆN TẠI]`) | Bản viết lại tiếng Việt đề xuất (`[ĐỀ XUẤT]` — chờ duyệt câu S5) |
 |---|---|---|
-| **Nhịp 1 (`0:00–3:00`): Thức dậy & Hàn cáp Thang nâng** | 07 mở màn trập trên Đế sạc → lái `35 m` tới chân tàu chính → dùng kim hàn mũi xe (`StitchOrigin`) chấm 3 mối cáp đứt của thang nâng bụng tàu (`BellyLift`) → nghe đoạn băng đầu tiên của Kenji & Ro. | Thang nâng bụng tàu hạ xuống; đèn vàng ấm quanh tàu bật sáng; la bàn hiện trên HUD. |
-| **Nhịp 2 (`3:00–8:00`): Vệ tinh Kestrel-3 & Gara Kenji** | Lái `95 m` tới **Gara Kenji**: lùi vào Cổng bảo trì để lắp **Tời cáp sau (`WinchDrum`)** → móc dây cáp kéo lê kiện hàng đầu tiên về trạm; ghé xác vệ tinh **Kestrel-3** (`160 m`) quét mảnh bản vẽ đầu tiên và thấy phù hiệu lạ *Meridian*. | Có Tời cáp sau trên xe; nhận 3 Kim loại đầu tiên từ kiện hàng; mở câu hỏi lớn về Trạm Meridian. |
-| **Nhịp 3 (`8:00–18:00`): Mở Xưởng Xe & Lắp Giá Chở Hàng** | Mở cửa khoang sau (`HatchOrigin`) phóng `4 Kim loại` vào phễu **Xưởng xe (`Vehicle Bay`)** → quét đủ 2 mảnh Giá chở hàng → chế tạo và để cần cẩu lắp **Giá chở hàng (`CargoCradle` + `HoistBail`)** lên lưng 07 → nâng kỷ vật đầu tiên (Mũ bảo hộ của Kenji) lên lưng đưa vào thang nâng bụng tàu. | Mái vòm Xưởng xe sáng đèn ấm; 07 có cần trục chữ A và đệm chở hàng trên lưng; chở kỷ vật ở `100%` tốc độ. |
-| **Nhịp 4 (`18:00–30:00`): Trung Tâm Liên Lạc & Tháp Tiếp Sóng 1** | Nạp vật liệu mở **Trung tâm Liên lạc (`Comms Hub`)** → **Bảng Phục Hồi 4 bước** bật sáng → nhặt Cuộn dây tháp (`TowerCoil`) vào **Khoang hàng sau** (1 ô) → chạy lên Đồi Bắc, nạp vào **Hộc chân Tháp tiếp sóng 1** và hàn cáp kích hoạt tháp. | Cáp vàng nối sáng từ trạm lên Đồi Bắc; bản đồ mở vùng phía Tây; mở khóa công thức **Mỏ cắt mũi xe (`Plasma Cutter`)**. |
-| **Nhịp 5 (`30:00–45:00`): Chế tạo Mỏ Cắt, Cứu Tilly & Tháp 2** | Quét 3 mảnh Mỏ cắt ở Bãi đáp vỡ → lắp `CutterTurret` lên mũi xe → cắt tấm vách sắt lấy lõi nguồn thứ 3 để sửa **Tilly** → cắt rào chắn đường vào Rãnh Tây, sửa **Tháp tiếp sóng 2**. | **Tilly** thức dậy chạy quanh sân và đi theo hỗ trợ 07; mở khóa công thức **Gầu đào trước (`DigScoop`)** và **Khoang hàng 16 ô**. |
-| **Nhịp 6 (`45:00–60:00`): Lắp Gầu Đào, Cứu Bell & Tháp Hẻm Núi** | Lắp `DigScoop` ở cản trước → đi vào **Hẻm Thì Thầm**, dùng gầu đào xúc đống đá lở lấy Chuông cộng hưởng để sửa **Bell** → sửa **Tháp tiếp sóng 3** trên đỉnh hẻm núi → nhận **Mảnh Khảo sát 1/6** và nhìn thấy cánh đồng **Biển Dài (`0.6`)** mở ra phía Đông. | **Bell** bay lên đậu ở cột ăng-ten trạm; cả 3 tháp Lòng chảo nối mạng hoàn chỉnh; cổng sang vùng `0.6` mở rộng. |
+| `log.ro_1` | `[HIỆN TẠI]` Coi 07 như thính giả lăn lại gần nghe nhạc (`vi.json` dòng 730). | `[ĐỀ XUẤT]` *"Đêm đầu tiên của Lumen After Dark. Ba thính giả, một chậu húng quế, và một chiếc rover đỗ cạnh loa trên bệ sạc. Khán giả tuyệt nhất mình từng có. — Ro"* |
+| `log.ro_2` | `[HIỆN TẠI]` Mô tả 07 sợ bão nên lăn sát vào loa. | `[ĐỀ XUẤT]` *"Tối nay đọc cảnh báo bão trên sóng, kẹp giữa hai bài chậm cho đỡ đáng sợ. Kenji đã cho mấy chiếc rover đỗ khuất sau tàu đổ bộ. — Ro"* |
+| `log.ro_3` | `[HIỆN TẠI]` Dặn dò mùi mẫn trực tiếp với 07 trước lúc lên tàu sơ tán. | `[ĐỀ XUẤT]` *"Buổi phát sóng cuối trước chuyến tàu. Máy phát để chế độ 'liên tục'. Ai còn dò đúng sóng thì: Lumen After Dark, tạm chào nhé. — Ro"* |
+| `log.ines_3` | `[HIỆN TẠI]` Tâm sự trực tiếp với 07 (*"chị muốn em biết tụi chị đã cố gắng"*). | `[ĐỀ XUẤT]` *"Gửi hội đồng xét duyệt: các mẫu lõi của tôi bất thường là có lý do. Bằng chứng nằm trong ổ dữ liệu của trạm. Hãy cho chúng tôi quay lại lấy. — I. Kalani"* |
+| `log.kenji_1` | `[HIỆN TẠI]` Kể chuyện dạy 07 nháy mắt chào mình mỗi khi đi ngang. | `[ĐỀ XUẤT]` *"Hôm nay sửa xong chiếc rover khảo sát cũ, món thứ bảy trong danh sách tuần này, nên giờ nó là 07. Cài ăng-ten nháy tín hiệu gọi của trạm làm đèn trạng thái: ba ngắn, một dài. — Kenji"* |
+| `log.kenji_3` | `[HIỆN TẠI]` Nhắn nhủ 07 *"đừng để ai cho nghỉ hưu nhé"*. | `[ĐỀ XUẤT]` *"Người ta hỏi xử lý mấy chiếc rover thế nào. Mình để chúng ở chế độ 'tiếp tục': tắt hẳn mất cả ngày, mà tụi mình không còn ngày nào. — Kenji"* |
+| `letter.mast_5` | `[HIỆN TẠI]` Mở đầu thư bằng *"07 à, Ro đây"*. | `[ĐỀ XUẤT]` *"Kênh phi hành đoàn Lumen, Ro đây. Người ta bảo trên đó chẳng còn ai nghe. Mình vẫn cứ gửi."* |
+| `letter.mast_9` | `[HIỆN TẠI]` Nhắn trực tiếp với 07 cách tìm Ro bằng mã nháy đèn. | `[ĐỀ XUẤT]` *"Ines bảo bằng chứng vẫn nằm trong ổ dữ liệu của trạm. Nếu cái chảo ấy hoạt động lại, Chủ nhật nào mình cũng nghe ở tần số cũ. Ba ngắn, một dài. — Ro"* |
+| `letter.after_3` | `[HIỆN TẠI]` Hỏi thăm trực tiếp 07 xem còn giữ chiếc bánh xe lẻ không. | `[ĐỀ XUẤT]` *"Kenji đọc số liệu đo xa: cả sáu bánh của chiếc rover cũ giờ đã giống nhau. Anh ấy phải ngồi xuống. — Ro"* |
+| `letter.after_4` | `[HIỆN TẠI]` Gọi 07 là khán giả tuyệt nhất. | `[ĐỀ XUẤT]` *"Tối nay mình phát bài 'cho ngày mình về nhà'. Khán giả: hai người hàng xóm và một con mèo đã rất già. Khán giả tuyệt nhất kể từ hồi ở trạm. — Ro"* |
+| `letter.after_6` | `[HIỆN TẠI]` Trò chuyện trực tiếp với 07 về bầu trời trên trạm. | `[ĐỀ XUẤT]` *"Thời tiết đêm nay: mưa ở Lagos. Trên trạm thì trời vẫn quang như mọi khi, số liệu bảo vậy. — Ro"* |
+| `letter.after_8` | `[HIỆN TẠI]` Đùa trực tiếp với 07 (*"đừng nín thở nhé, dù đằng ấy có thở đâu"*). | `[ĐỀ XUẤT]` *"Bốn đứa tụi mình cùng viết thư cho cơ quan vũ trụ. Ines bảo lần này họ buộc phải đọc. — Ro"* |
+| `letter.after_10` | `[HIỆN TẠI]` Chúc 07 ngủ ngon trực tiếp. | `[ĐỀ XUẤT]` *"Ngủ ngon, Lumen. Chủ nhật nào cũng có chương trình, cho đến khi phi hành đoàn hạ cánh. — Ro"* |
+| `ticker.ending.answer` & `ticker.bell.found_2` | `[HIỆN TẠI]` Ro trả lời *"Mình nghe thấy cậu rồi, 07"* và Bell đoán cảm xúc của Ro. | `[ĐỀ XUẤT]` Đổi `ticker.ending.answer` thành *"Lumen, Amadi đây. Tụi mình nghe rõ. Ines đang trên đường tới câu lạc bộ."* (rồi Houston xác nhận); đổi `ticker.bell.found_2` thành *"Bell bảo: thêm một món cho kệ."* |
 
 ---
 
-## 5. Cốt truyện và cách kể chuyện (Story v3 & Non-Melodramatic Delivery)
+## 8. Lộ trình Thực thi Khả thi: Tách bạch `0.5.6`, `0.5.7` và `0.6+`
 
-*(Trích dẫn: `story-logic.md`, 2026-10-13; `plain-functional-text.md`, 2026-10-12; `Logs/sources/story-v3.md`; `docs/design/text-audit-0.5.5.md`)*
+Lộ trình dưới đây tách rõ những việc sửa ngay không phụ thuộc khóa phong cách nghệ thuật (`0.5.6`) và những
+việc thực hiện sau khi chủ dự án chốt phong cách nghệ thuật cùng mô hình `07 v2` (`0.5.7`), tiếp nối tới `1.0`:
 
-### 5.1. Mạch truyện chính (The Core Mystery & Resolution)
+### 8.1 Bản `0.5.6` — Sửa lỗi phản hồi 0.5.5 KHÔNG phụ thuộc khóa phong cách nghệ thuật (Art Style Lock)
 
-1. **Bối cảnh năm 2047 (Cuộc sơ tán vội vã):**
-   Trạm Lumen là cơ sở khảo sát cực Nam của Cơ quan Khảo sát Mặt Trăng (*Lunar Survey Authority*). Tháng 10/2047, một cơn bão mặt trời cấp X40 ập tới buộc phi hành đoàn 4 người (**Trưởng trạm Dr. Elise Moreau**, **Kỹ sư trưởng Kenji Sato**, **Nhà địa chất Ines Kalani**, và **Kỹ sư thông tin trẻ Ro**) phải lên tàu rời đi trong vòng 40 phút. Năm tiếp theo (2048), Ủy ban ngân sách trên Trái Đất tuyên bố khu vực cực Nam khô cằn, cắt toàn bộ kinh phí và hủy chuyến tàu quay lại.
-2. **Phát hiện bị chôn vùi của Ines Kalani:**
-   Ngay trước khi lệnh sơ tán vang lên, mũi khoan sâu của Ines ở Hố Bóng Tối và Ống Dung Nham đã xuyên qua lớp đá bazan và chạm vào một **tầng băng nước tinh khiết khổng lồ kèm các bào tử rêu cổ đại đang ngủ đông**. Vì bão mặt trời làm sập lưới điện tiếp sóng, toàn bộ dữ liệu gốc bị kẹt lại trong các ổ lưu trữ địa phương.
-3. **Trạm thứ hai — Meridian Station (Tycho Consortium):**
-   Cách Lumen không xa về phía Bắc là **Trạm Meridian**, một trạm khoan tự động hoàn toàn do tập đoàn Tycho vận hành với triết lý thiết kế máy móc khác hẳn (khung lục giác, sơn xanh công nghiệp). Cơn bão năm 2047 đã đánh rơi vệ tinh chuyển tiếp **Kestrel-3** của Meridian ngay sát Lòng chảo Lumen. Khi 07 mở được khoang Kestrel-3 và leo lên Bậc thềm vành hố, người chơi phát hiện các mũi khoan của Meridian cũng đã xác nhận chính xác túi nước ngầm đó.
-4. **Vì sao năm 2067 đường truyền im bặt?**
-   Sau khi về Trái Đất, cô kỹ sư trẻ **Ro** (nay đã lớn tuổi) vẫn giữ chiếc máy thu phát sóng ngắn tại câu lạc bộ vô tuyến của mình và đều đặn gửi tín hiệu hỏi thăm vào mỗi kỳ cửa sổ liên lạc. Suốt 20 năm (2047–2067), hệ thống tự động của Lumen vẫn trả lời bằng nhịp xung báo cáo trạng thái. Nhưng vào năm **2067**, một con robot quét bụi (*Solar Sweeper*) tại Dàn Ăng-ten Biển Dài bị kẹt bánh vào thanh giằng gãy; bụi Mặt Trăng phủ kín mảng pin mặt trời khiến trạm phát mất nguồn hoàn toàn. Trái Đất tưởng rằng mọi thiết bị trên Mặt Trăng đã chết hẳn.
-5. **Vai trò của các tiền bối 01–06 và cái kết của 07:**
-   Sáu chiếc rover đi trước (**01 đến 06**) không hề bị "bỏ rơi trong đau khổ"; chúng là những cỗ máy khảo sát đã hoàn thành phần việc của mình ở từng vùng (giữ cửa xả áp, neo dây cáp, giữ nguồn sưởi cho vườn rêu, dẫn đường lên đỉnh) trước khi cạn kiệt linh kiện. 07 đi theo dấu bánh xe của 01–06, thu thập đủ **6 mảnh dữ liệu Khảo sát**, sửa lại Chảo Đỉnh núi và phát đi gói bằng chứng hoàn chỉnh (dữ liệu của cả Lumen lẫn Meridian). **Ro** bắt được tín hiệu đầu tiên, chuyển tiếp thẳng cho trung tâm **Houston**, và màn hình kết thúc bằng thông báo xác nhận: **Ủy ban mở lại sứ mệnh tàu có người lái quay về Trạm Lumen**. Sau đoạn kết, người chơi tiếp tục tự do lái 07 khám phá toàn bộ Mặt Trăng.
+| # | Hạng mục công việc trong `0.5.6` | Trạng thái & Nhánh/Commit xác thực |
+|---|---|---|
+| **1** | **Bỏ khóa cứng đầu của 07 (`RoverHead`):** Đầu 07 chỉ ngoái nhìn tự nhiên rồi trả về hướng lái, không bị ghim cứng vào vật thể ở xa. | `[HIỆN TẠI]` **Đã hoàn thành** (commit `3ab086d1` trong [`RoverHead.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Rover/RoverHead.cs) và [`SalvageField.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Salvage/SalvageField.cs)). |
+| **2** | **3 bộ phận của Bell nằm dưới đống đá sạt (`RockfallPocket`):** Đặt 3 bộ phận của Bell dưới 3 đống đá sạt trong hốc hẻm núi để 07 đào lên. | `[HIỆN TẠI]` **Đã hoàn thành** (commit `4bffd365` trong [`FriendField.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Friends/FriendField.cs) `LayThePockets`). |
+| **3** | **Phím `Tab` cố định một màn hình & Bỏ thẻ ký ức bật lên khi nhặt đồ:** Gộp `Tab` thành một bảng `TabSheet` duy nhất (sơ đồ 07, pin, khoang hàng, bản vẽ) và tắt thẻ toàn màn hình khi nhặt kỷ vật/băng ngoài thực địa. | `[ĐỀ XUẤT]` **Đang thực hiện** trên nhánh `agy-ui2` (để không làm đứt nhịp lái xe). |
+| **4** | **Sửa lỗi chồng mặt phẳng (z-fight) ở vòm Xưởng xe của Kenji:** Tách các mặt phẳng trùng tọa độ trên mái vòm `Repair Bay`. | `[ĐỀ XUẤT]` **Đang thực hiện** trên nhánh `agy-art` (sửa lỗi hình học độc lập trước khi khóa art style). |
+| **5** | **Đưa linh kiện cốt truyện (`TowerCoil`, `Transformer`, `RelaySpare`) vào trong khoang hàng qua `CargoHatch`:** Khi nhặt linh kiện tháp/trạm, nắp `CargoHatch` mở ra đón linh kiện vào trong bụng xe, xóa việc đặt cuộn dây lơ lửng trên nóc phẳng `StoryPartSocket`. | `[ĐỀ XUẤT]` **Đang thực hiện** trên nhánh `agy-hold` (giải quyết ngay lỗi logic đặt cuộn dây trên lưng phẳng mà chủ dự án đã chỉ ra). |
+| **6** | **Tia quét bản vẽ (`ScanFan`) nối từ mắt 07 tới vật thể:** Hiển thị chùm sáng quét quang học nối từ thấu kính mắt của 07 tới mảnh bản vẽ đang quét (giữ nguyên thông số `1.5 s / 2.5 s / 4.0 s`, tầm `8 m` trong `ScanTuning.cs`). | `[ĐỀ XUẤT]` **Đang thực hiện** trên nhánh `agy-scan` (làm rõ phản hồi thị giác khi quét). |
+| **7** | **Gỡ bỏ điều kiện ẩn của thang nâng bụng (`LiftStation.cs`):** Bỏ điều kiện `Carrying() && NearHome()` tại dòng 353 của [`LiftStation.cs`](file:///D:/Project/MoonProject-wt/agy-plan/Assets/_Project/Scripts/Gameplay/Lift/LiftStation.cs) để ngay khi Tháp cấp 1 cấp điện cho nhà (`BasePowerStage.Home`), thang nâng bụng bật vòng sáng gọi 07 tới hàn cáp và mở đường lên Phòng thí nghiệm. | `[ĐỀ XUẤT]` Thực hiện trong `0.5.6` để người chơi không bị kẹt trước thang nâng khi về nhà tay không. |
+| **8** | **Làm rõ nhịp hướng dẫn tại Gara của Kenji & Chống chồng chéo chữ (`GuidanceSlot`, `PromptDirector`):** Đưa ticker vào chung bộ phân xử `GuidanceSlot` để chỉ hiện đúng 1 dòng hướng dẫn tại một thời điểm, và dẫn dắt tuần tự từng bước tại `GaragePort` (dọn phế liệu mở cổng → đỗ lắp `TetherRing` → cắt thùng `"07 · SPARE"` lấy `TapeDeck`). | `[ĐỀ XUẤT]` Thực hiện trong `0.5.6` để giải quyết triệt để phản hồi P3 của chủ dự án. |
+| **9** | **Phản hồi lắng nghe (`SonarSystem`, `SiteMarker`) không dùng cột sáng trên trời:** Xóa cột sáng `32 m` trong `SiteMarker.cs` và vòng sóng dưới đất, thay bằng ánh lấp lánh tại vật thể + đầu 07 ngoái nhìn + âm thanh 3D định hướng. | `[ĐỀ XUẤT]` Thực hiện trong `0.5.6` để giải quyết phản hồi P2 của chủ dự án. |
+| **10** | **Rà soát và sửa câu chữ tiếng Việt (`text-audit-0.5.5.md`):** Sửa các chuỗi hướng dẫn, gợi ý và thông báo chưa tự nhiên trong `vi.json`. | `[ĐỀ XUẤT]` Thực hiện trong `0.5.6` để đồng bộ với nhịp hướng dẫn mới. |
 
-### 5.2. Quy tắc viết lời thoại và văn bản: Không ủy mị, không nhân cách hóa máy móc
+### 8.2 Bản `0.5.7` — Áp dụng Khóa Phong cách Nghệ thuật + Thiết kế `07 v2` + Âm thanh C Tinh chỉnh + Tiến trình Kéo/Nâng
 
-Chủ dự án đã khóa quy tắc trong `story-logic.md` (2026-10-13):
-- **Con người nói chuyện với con người; đối xử với robot như những thiết bị cơ khí quý giá:**
-  Trong mọi băng ghi âm và nhật ký, Kenji, Moreau, Ines và Ro trao đổi công việc với nhau. Họ có thể khen *"Con 07 giữ ổn định áp suất tốt đấy"* hoặc ghi sổ bảo trì *"Nhớ thay vòng bi cho cụm tời của chiếc số 3"*, nhưng **tuyệt đối không** nói chuyện tâm tình với robot như với người hay thú cưng (*"Tilly bé nhỏ tội nghiệp của chị, đừng sợ bóng tối nhé"* là cấm tuyệt đối).
-- **16 chuỗi văn bản cũ trong `0.5.5` đã được rà soát và viết lại** trong `docs/design/text-audit-0.5.5.md` để áp dụng ngay ở `0.5.6`: xóa toàn bộ chữ *"Hồi ức"*, *"Tâm sự"*, *"Cô ấy/Anh ấy"* khi chỉ robot, thay bằng ngôn ngữ nhật ký kỹ thuật ngắn gọn, chân thực và giàu sức gợi.
+1. `[ĐỀ XUẤT]` **Áp dụng phong cách nghệ thuật đã khóa (Art Style Lock):**
+   - Triển khai phương án nghệ thuật được chủ dự án chọn ở Mục 9 (Low-Poly Stylised nâng cấp hoặc
+     Ghibli/Cel-Shaded) cho địa hình lòng chảo, hẻm núi, đá và các công trình.
+2. `[ĐỀ XUẤT]` **Triển khai mô hình và hợp đồng `07 v2` (`IRoverRig` 7 điểm gốc vật lý):**
+   - Mở rộng `IRoverRig` thành `EyeOrigin`, `CutterOrigin`, `ScoopOrigin`, `HatchOrigin`, `WinchOrigin`,
+     `CradleOrigin`, `AntennaOrigin`.
+   - Đưa **gầu xúc trước `DigScoop` (`ScoopOrigin`)** vào làm thiết bị khởi đầu từ phút 0 (xóa `TractorBeam`
+     ở mắt).
+   - Đưa **đầu cắt & kim hàn mũi xe (`CutterTurret` / `CutterOrigin`)** vào nối với thanh tụ nạp 3 tầng
+     `ChargeConduits` trên boong trước.
+   - Đưa **nắp khoang đôi `CargoHatch` + con lăn `IntakeRoller` (`HatchOrigin`)** vào vận hành khi thu phế
+     liệu và khi bắn vật liệu vào phễu trạm (`HopperFeed`).
+   - Đưa **vòng ăng-ten định hướng xoay (`SonarLoop` / `AntennaOrigin`)** và **hộp pin đôi đối xứng
+     (`BatterySpine` tại `x = ±0.32`)** lên lưng 07.
+3. `[ĐỀ XUẤT]` **Hoàn thiện tiến trình Kéo trượt mặt đất → Cẩu lên lưng (`WinchDrum` vs `CargoCradle`):**
+   - Trước khi tới Gara của Kenji: chưa có tời sau, chỉ đào được kỷ vật tại chỗ bằng `DigScoop`.
+   - Sau khi lắp `TetherRing` / `WinchDrum` tại Gara của Kenji: kéo trượt kỷ vật trên mặt đất bằng cáp thép
+     (`HoverHeight = 0f`, tạo vệt bụi và lực cản).
+   - Sau khi chế tạo `Cargo Cradle` (*Giỏ chở đồ*) tại Xưởng xe: khung chữ A `HoistBail` cẩu kỷ vật từ cản
+     sau lên `CradleSeat` trên lưng 07 để chạy nguyên tốc độ và đi thẳng lên thang nâng bụng.
+4. `[ĐỀ XUẤT]` **Áp dụng hướng âm thanh C tinh chỉnh:**
+   - Bổ sung đầy đủ lớp âm cơ khí cho gầu xúc, đầu cắt/hàn, tời cáp, khung cẩu, nắp khoang và âm chuông
+     lắng nghe 3D định hướng.
 
-### 5.3. Bảy câu hỏi mở của Story v3 (Chi tiết phương án & Đề xuất tại Mục 9)
+### 8.3 Các bản `0.6 → 1.0` — Mở rộng Thế giới Sống & Hoàn tất Hành trình
 
-Bản thảo `Logs/sources/story-v3.md` để mở 7 quyết định cốt truyện cho chủ dự án (tên chính thức của tập đoàn thứ hai, bản chất mẫu sinh học trong ống dung nham, số phận từng chiếc rover 01–06, hình thức tín hiệu trả lời của Ro và Houston ở cảnh kết, v.v.). Toàn bộ 7 câu hỏi này được trình bày kèm phương án và **Đề xuất** cụ thể tại **Mục 9.3**.
-
----
-
-## 6. Định hướng nghệ thuật và âm thanh (Art, Visual & Audio Direction)
-
-*(Trích dẫn: `feel-priority-solitude.md`, 2026-10-07; `look-too-purple.md`, 2026-10-14; `audio-feedback-055.md`, 2026-10-14; `rover-07-v2.md`, 2026-10-14)*
-
-### 6.1. Những gì Chủ dự án ĐÃ KHÓA (Locked Visual & Audio Pillars)
-
-1. **Bảng màu chuẩn (`PaletteSwatch`):**
-   - Bầu trời: Đen thẫm vũ trụ (`#05070B`), không mây, không sương mù tím.
-   - Bề mặt Mặt Trăng: Xám bụi regolith trung tính (`#7A7E85` ngoài nắng, `#2A2F37` trong bóng tối) — tuyệt đối không ám tím hay xanh neon.
-   - Căn cứ & Công trình đã bật điện: Vàng hổ phách ấm (`#F4A640` / `#FFD27D`).
-   - Công nghệ quét & Bản vẽ: Lục lam sắc nét (`#48D1CC`).
-   - Mối hàn cắt được (*Cut Seam*) & Cảnh báo: Cam nhiệt (`#FF6B35`).
-2. **Hai chế độ ánh sáng đã chốt (`Look A` & `Look C`):**
-   - **Ban đêm / Trong bóng râm — `Look A ("Moon grey")`:** Đã áp dụng trong `0.5.5`. Mặt đất xám bạc mát lạnh dưới ánh Trái Đất, độ tương phản cao với ánh đèn vàng ấm của căn cứ.
-   - **Ban ngày cực Nam — `Look C ("Low sun")`:** Đưa vào ở `0.6` cùng chu kỳ ánh sáng L1. Nắng trắng ấm chiếu xiên góc thấp (`3°–6°`), bóng đổ dài sắc cạnh, bụi bạc lấp lánh trên sườn gờ đá.
-
-### 6.2. Những gì ĐANG CHỜ Chủ dự án chọn (Pending Owner Auditions)
-
-Hiện tại có 3 bộ thử nghiệm trực quan đã được dựng sẵn để chủ dự án duyệt trước khi sản xuất hàng loạt cho `0.5.6`:
-
-1. **Độ mượt bề mặt & Hậu kỳ (`Look Study V0–V3` trong `look-too-purple.md`):**
-   - `V0`: Hiện trạng `0.5.5` (địa hình tam giác sắc cạnh `flat-shaded`, không AO, hơi gắt).
-   - `V1`: Làm mượt pháp tuyến theo góc (`smooth-by-angle normals 35°–45°`) cho đá và gờ hố; giữ mặt phẳng cơ khí trên 07 và nhà cửa.
-   - `V2`: `V1` + lưới địa hình mịn hơn quanh căn cứ + bóng tiếp xúc nhẹ (*Ambient Occlusion*).
-   - `V3`: `V2` + khử răng cưa (*MSAA/TAA*) và viền bóng đổ mềm nhẹ ở xa, nhưng **vẫn giữ nguyên chất liệu màu phẳng (*flat-lit palette*), không dùng texture PBR bóng nhẫy**.
-2. **Phong cách hình khối 3D (`Art Style S1 / S2 / S3` trong `Logs/sources/PLAN.md`):**
-   - `S1 — Soft Toy`: Các cạnh vát bo tròn dày, tỷ lệ bầu bĩnh dễ thương.
-   - `S2 — Clean Low-Poly`: Các mảng phẳng vát cạnh (`chamfered flat-shaded`) sắc sảo, hiện đại.
-   - `S3 — Retro Lunar Hardware`: Tỷ lệ cơ khí Apollo / công nghiệp thập niên 1970–2040, có khớp nối, bulông, lá cách nhiệt vàng và khung giàn rõ ràng.
-3. **Bảng âm thanh 14 hiệu ứng (`Audio Palette A / B / C` tại `Builds/AudioPreview/index.html`):**
-   - `Palette A — Workshop`: Tiếng cơ khí kim loại chính xác, tiếng rơ-le, mô-tơ bước và chuông đồng nhỏ.
-   - `Palette B — Wood & Felt`: Tiếng đàn kalimba, búa dạ gõ dây đàn piano trầm, mộc mạc và êm dịu.
-   - `Palette C — Old Radio`: Tiếng băng từ ấm, tiếng công tắc đài cổ và sóng âm analog.
-   - **14 hiệu ứng âm thanh (cues) trong bộ mẫu thử:** *(1) Nhặt vật liệu vào khoang sau (`CargoIntake`), (2) Khoang hàng đầy (`CargoFull`), (3) Đang quét quang học (`ScanLoop`), (4) Quét hoàn tất mảnh bản vẽ (`ScanComplete`), (5) Ghép đủ bản vẽ mới (`BlueprintUnlocked`), (6) Nạp bó hàng vào phễu (`HopperToss`), (7) Công trình bật điện (`BuildingOnline`), (8) Mỏ cắt plasma hoạt động (`CutterLoop`), (9) Cắt đứt mối hàn (`CutSnap`), (10) Gầu xúc đào đất (`ScoopDig`), (11) Tời móc & Cần trục nâng kỷ vật (`WinchAndHoist`), (12) Phản hồi nghe Sonar định hướng (`SonarEcho`), (13) 07 chirp chào bạn robot (`CompanionGreet`), (14) Tháp tiếp sóng nối mạng (`RelayLinkChime`).*
-
-### 6.3. Cách áp dụng đồng bộ ngay sau khi Chủ dự án chốt
-
-- Ngay khi chủ dự án chọn `S1/S2/S3` và `V1/V2/V3`, `RoverBuilder.cs` sẽ dựng mô hình **07 v2** cùng toàn bộ 15 khối thiết bị gắn ngoài theo đúng một quy chuẩn vát cạnh và góc làm mượt pháp tuyến đó; toàn bộ tảng đá, xác máy và công trình trong `0.5.6–1.0` dùng chung bộ shader và quy tắc vát cạnh này.
-- Ngay khi chủ dự án chọn `Audio A/B/C` (hoặc bản phối lai), `ProceduralSfx.cs` sẽ thay thế toàn bộ 14 cue âm thanh trong game và xóa sạch các hàm phát tiếng bíp điện tử cũ.
+| Phiên bản | Vùng mở rộng & Cơ chế chính (`[ĐỀ XUẤT]`) | Trang bị, Bạn đồng hành & Mảnh khảo sát mới (`[ĐỀ XUẤT]`) |
+|---|---|---|
+| **`0.6`** | **Biển Dài (*The Long Mare*):** Mở rộng về phía đông; thêm chu kỳ Mặt Trời `L1` (~2 giờ/chu kỳ) nếu chủ dự án duyệt; hệ thống bụi phủ tấm pin và máy đào rãnh cáp liên trạm (`trencher`). | Bản vẽ: `Cutter Ribs` (bậc cắt 2: `0.29 s`/tầng), `Dust Wiper`, `Solar Coat`. Sinh thái: bầy drone khảo sát Meridian (`survey flock`), đàn anh `05`. Khảo sát: **Mảnh 2** (dữ liệu bầy drone) & **Mảnh 3** (kho lưu trữ chảo 20 năm). |
+| **`0.7`** | **Thềm Vành Đai (*Rim Terraces* — Trạm Meridian):** Các bậc thềm đá ngập nắng phía bắc; trạm tự động Meridian vẫn chạy bộ điều phối nội bộ; cơ chế nối cầu nguồn `Power Bridge`. | Bản vẽ: `Thermal Cutter` (bậc cắt 3: `0.22 s`/tầng), `Charge Adapter` (sạc trên đế lục giác Meridian). Bạn mới: **Atlas** (xe kéo hạng nặng của Lumen). Đàn anh `04`. Khảo sát: **Mảnh 4** (`Meridian's vault`). |
+| **`0.8`** | **Hố Đen Vĩnh Cửu & Ống Dung Nham (*Shadowed Crater & Lava Tube*):** Vùng tối vĩnh cửu không có nắng mặt trời; hầm trú bão ngầm chạy bằng pin đồng vị kín với đèn hẹn giờ nuôi rêu xanh của Theo. | Bản vẽ: `Cold Lamp`, `Heater`. Bạn mới: **Moss** (robot làm vườn của Theo). Đàn anh `03` và `02`. Khảo sát: **Mảnh 5** (`ice core cache`) & **Mảnh 6** (`shelter backup`). |
+| **`1.0`** | **Đường lên Đỉnh Núi (*The Peak Road* & *Great Dish*):** Vượt qua đống đá sạt nơi đàn anh `01` dừng lại, sửa chảo ăng-ten lớn trên đỉnh và truyền toàn bộ kho lưu trữ kèm 6 mảnh bằng chứng khảo sát về Trái Đất. | Hoàn tất bước 3 & 4 của Quy trình Khôi phục Lumen (`Dish` → `Answer`); nhận tín hiệu trả lời từ Ro Amadi và Houston, mở khóa chế độ tự do khám phá sau cái kết. |
 
 ---
 
-## 7. Lộ trình phiên bản 0.5.6 → 1.0 (Phased Release Roadmap)
+## 9. Các Quyết định Cần Chủ dự án Phê duyệt (Owner Decisions & Recommendations)
 
-*(Trích dẫn: `phased-releases.md`, 2026-10-08; `docs/design/0.5.5-owner-feedback.md`; `Logs/sources/PLAN.md`)*
+Để đội ngũ khóa bản `0.5.6`, `0.5.7` và chốt chính thức bản nháp `Story v3`, xin chủ dự án cho ý kiến về
+**3 quyết định sản phẩm (`D1–D3`)** và **7 câu hỏi cốt truyện (`S1–S7`)** dưới đây (kèm khuyến nghị của nhóm
+thiết kế):
 
-### 7.1. Phiên bản `0.5.6` — Giải quyết triệt để toàn bộ phản hồi `0.5.5` & Dựng `07 v2`
-**Mục tiêu cho người chơi:** Giờ chơi đầu tiên tại Lòng chảo & Hẻm Thì Thầm đạt độ hoàn thiện chuẩn mực; mọi hành động của 07 đều có bộ phận cơ khí thật; giao diện, văn bản và âm thanh sạch lỗi.
+### 9.1 Quyết định Sản phẩm, Nghệ thuật, Thiết kế `07 v2` & Chu kỳ Mặt Trời (`D1–D3`)
 
-**Danh sách 14 hạng mục bắt buộc hoàn thành trong `0.5.6` (đối chiếu 1–1 với phản hồi của Chủ dự án):**
-1. **Khóa phong cách 3D (`S1/S2/S3`), độ mượt (`V0–V3`) và âm thanh (`A/B/C`)** theo quyết định của chủ dự án.
-2. **Dựng mô hình `07 v2` hoàn chỉnh (`RoverBuilder` + `IRoverRig` 7 điểm gốc):** Cửa khoang hàng vỏ sò sau (`CargoHatch`), Tháp cắt & hàn mũi xe (`CutterTurret` + `ChargeConduits`), Gầu xúc răng cưa trước (`DigScoop`), Trống tời cáp sau (`WinchDrum` + `TowHook`), Đệm lưng & Cần trục chữ A (`CargoCradle` + `HoistBail`), Vòng ăng-ten định hướng (`SonarLoop`), Hộc hàng hông (`SidePanniers`).
-3. **Làm lại Nhịp Gara Kenji 2 giai đoạn:** Lắp miễn phí **Tời cáp sau** tại cổng bảo trì Gara Kenji trước → kéo lê kỷ vật đầu tiên trên mặt đất bằng dây cáp thật về trạm → sau khi mở Xưởng xe mới chế tạo và lắp **Giá chở hàng lưng (`CargoCradle`)** để nâng kỷ vật lên lưng.
-4. **Đưa linh kiện tháp tiếp sóng vào Khoang hàng sau & Hộc chân tháp:** Xóa `StoryPartSocket` trên nóc xe; linh kiện tháp đi qua cửa sau `CargoHatch` vào khoang hàng (chiếm 1 ô); khi sửa tháp, nạp vào hộc chân tháp và chấm hàn ở bảng điện chân tháp.
-5. **Thay toàn bộ tia công cụ bắn từ mắt bằng cơ khí thật:** Nạp phễu bằng cách phóng bó hàng từ cửa khoang sau (`HatchOrigin`); đào đất bằng 3 nhịp xúc của gầu trước (`ScoopOrigin`); cắt và hàn từ mỏ mũi xe (`CutterOrigin`/`StitchOrigin`); mắt (`EyeOrigin`) chỉ chiếu quạt sáng quét quang học.
-6. **Xóa thẻ ký ức rơi ra khi sửa bạn robot (`MemoryCard`):** Sửa xong Tilly hoặc Bell là bạn tự thức dậy, cử động, chirp chào và đi làm việc ngay.
-7. **Đặt lại bộ phận thứ 3 của Bell bị vùi dưới sườn đá lở:** Nhìn bằng mắt thấy ngay đống đá đè lên, bắt buộc dùng Gầu đào `DigScoop` xúc đá mới lấy được.
-8. **Giao diện Kho đồ + Trang bị trên MỘT màn hình cố định (`Tab`):** Trái là lưới Khoang hàng `8 → 16 ô`, phải là hình 07 với các ổ lắp cố định; đỗ ở trạm thì trái là khoang 07, phải là Kho nhà `24 ô`. Xóa các tab chuyển trang và xóa vòng tròn pin 3D quanh xe.
-9. **Bỏ phím `Space` và xóa cột sáng trên trời (`SiteMarker.Pillar`):** Thay bằng cơ chế dừng xe 2 giây tự nghe sonar: vòng `SonarLoop` xoay chỉ hướng, đầu 07 liếc nhìn, cạnh vật thể lấp lánh (hoặc đèn cọc chớp 2 lần) kèm âm thanh 3D.
-10. **Sửa lỗi đầu 07 và tia laser khóa cứng về hướng căn cứ:** Đầu 07 nhìn theo hướng lái và chỉ liếc nhìn điểm thú vị gần đó; tia quét/cắt chỉ bật khi người chơi đang thao tác.
-11. **Làm lại hiệu ứng Quét quang học (`ScanFan`):** Chùm sáng dạng quạt mỏng xuất phát từ ống kính `EyeOrigin` quét dọc mặt cắt vật thể từ dưới lên trên.
-12. **Áp dụng toàn bộ 16 bản sửa văn bản từ `text-audit-0.5.5.md` + khóa gợi ý không lặp lại (`HudMutex`):** Nhãn ngắn gọn, tự nhiên, không nhân cách hóa máy móc.
-13. **Cập nhật bộ 14 hiệu ứng âm thanh mới:** Xóa sạch tiếng bíp điện tử gắt.
-14. **Sửa lỗi nhấp nháy mặt phẳng (`z-fighting`) trên mái vòm Xưởng xe và các bệ công trình.**
+1. **D1 — Chọn Phong cách Nghệ thuật cho bản `0.5.7` (Mục 5):**
+   - *Câu hỏi:* Chủ dự án chọn **Phương án A (Low-Poly Stylised nâng cấp ánh sáng, độ nhám regolith và sương
+     bụi)** hay **Phương án B (Ghibli / Cel-Shaded ấm áp)**?
+   - *Khuyến nghị:* **Chọn Phương án A**, vì giữ trọn nét cơ khí thập niên 1970 của 07, tương thích trực tiếp
+     với mô hình `07 v2` và hoàn thành nhanh trong `3–4 ngày` mà không có rủi ro làm nhòe chi tiết nhỏ.
+2. **D2 — Phê duyệt Thiết kế vật lý `07 v2` & Tiến trình Kéo trượt → Cẩu lên lưng (Mục 3):**
+   - *Câu hỏi:* Chủ dự án có đồng ý áp dụng trọn bộ thiết bị vật lý của `07 v2` (gầu xúc trước `DigScoop` có
+     sẵn từ đầu, đầu cắt/hàn mũi xe `CutterTurret`, nắp khoang đôi `CargoHatch` + con lăn, vòng ăng-ten xoay
+     `SonarLoop`, pin đôi đối xứng `BatterySpine`) và tách `WinchDrum` (kéo trượt trên mặt đất ở Gara của
+     Kenji) với `Cargo Cradle` (khung chữ A `HoistBail` cẩu kỷ vật lên lưng ở Xưởng xe) cho bản `0.5.7` không?
+   - *Khuyến nghị:* **Đồng ý trọn bộ**, vì giải quyết tận gốc mọi điểm phi lý mà chủ dự án đã nêu trong đợt
+     chơi thử `0.5.5` (không còn tia cắt/đào/kéo bắn ra từ mắt camera, không còn kỷ vật tự bay lơ lửng trước
+     khi chế tạo giỏ nâng).
+3. **D3 — Chu kỳ Mặt Trời di chuyển (`L1`) ở bản `0.6` (Mục 4.3):**
+   - *Câu hỏi:* Trong bản `0.6`, chủ dự án muốn áp dụng **Mặt Trời di chuyển chậm sát đường chân trời
+     (~2 giờ chơi/chu kỳ)** làm bóng râm dịch chuyển qua các đế sạc mặt trời, hay giữ **góc nắng cố định
+     theo từng vùng địa lý**?
+   - *Khuyến nghị:* **Áp dụng Mặt Trời di chuyển chậm (~2 giờ/chu kỳ)** cho vùng Biển Dài, nhưng giữ các vùng
+     cao (Đỉnh núi, Thềm Vành Đai Meridian) luôn đón nắng và vùng Hố Đen Vĩnh Cửu luôn tối để đúng với địa
+     lý cực Nam Mặt Trăng.
 
-### 7.2. Phiên bản `0.6` — Khe Rãnh, Biển Dài & Mặt Trăng Sống Động
-**Mục tiêu cho người chơi:** Mở rộng ra ngoài Lòng chảo lần đầu tiên trên một thế giới liền mạch; trải nghiệm chu kỳ nắng cực L1 và hệ sinh thái máy móc tự hoạt động.
-- Hệ thống nạp thế giới liền mạch (`WorldStreamer` `64 × 64 m`) + lưu/tải vị trí tại bất kỳ Trụ sạc nào.
-- Vùng **Khe Rãnh (`Rille Pass`)** và **Biển Dài (`Long Mare`)** với Dàn Ăng-ten Sâu và mảnh **Khảo sát 2/6** (bí ẩn năm 2067).
-- Chu kỳ ánh sáng cực Nam L1 (90 phút Ngày `Look C` / 30 phút Đêm `Look A`).
-- Tài nguyên cấp 2 (`Quặng Ilmenite` → `Hợp kim`), mở khóa **Cánh Pin Mặt Trời**, **Tụ Cắt Nhanh**, **Pin Cấp 2**, **Khung Gầm Cấp 2**.
-- Hệ sinh thái máy móc đợt 1 (**Robot quét bụi `Solar Sweepers`**, bàn xoay pin mặt trời, 2 Drone Chị Em đầu tiên) + hiện tượng **Bụi tĩnh điện lơ lửng**.
-- **Sổ ghi chép (`Databank` — phím `J`)** và **4 Bệ xây dựng ngoài thực địa** đầu tiên (Trụ sạc, Cầu vượt, Đèn tiêu).
+### 9.2 7 Câu hỏi Chốt Bản nháp `Story v3` (`S1–S7` từ `Logs/sources/story-v3.md` §6)
 
-### 7.3. Phiên bản `0.7` — Bậc Thềm Vành Hố & Trạm Meridian
-**Mục tiêu cho người chơi:** Khám phá trạm tự động thứ hai với ngôn ngữ thiết kế cơ khí đối lập và leo lên sườn núi dốc đứng.
-- Vùng **Bậc Thềm Vành Hố (`Rim Terraces`)** và khu phức hợp **Trạm Meridian (`Meridian Station`)** với mảnh **Khảo sát 3/6**.
-- Tài nguyên cấp 3 (`Đá Anorthite` → `Nhôm nhẹ`), mở khóa **Bánh Từ Tính (`Mag-Wheels`)**, **Mỏ Cắt Nhiệt (`Thermal Lance`)**, và **Bộ Chuyển Đổi Chuẩn Sạc (`Cross-Standard Adapter`)**.
-- Mở khoang kín của vệ tinh **Kestrel-3** ở Lòng chảo bằng Mỏ cắt nhiệt để lấy khóa giao thức Meridian.
-- Giải cứu bạn robot hạng nặng **Atlas** (chạy tuyến chở quặng tự động về Kho nhà Lumen) và đánh thức họ máy hình lục giác của Meridian.
-
-### 7.4. Phiên bản `0.8` — Hố Bóng Tối, Ống Dung Nham & Phát Hiện Của Ines
-**Mục tiêu cho người chơi:** Đi xuống lòng đất tối thẫm và lạnh giá nhất của Mặt Trăng để tìm ra bằng chứng nước và sự sống.
-- Vùng **Hố Bóng Tối Vĩnh Cửu (`Shadowed Crater`)** và **Ống Dung Nham Ngầm (`Lava Tube`)** với mảnh **Khảo sát 4/6 & 5/6**.
-- Cơ chế hao pin vì lạnh (`-200°C`) và bóng tối tuyệt đối; mở khóa **Đèn Pha Mạnh**, **Bộ Sưởi Pin**, **Tời Neo Mũi Xe (`Anchor Winch`)**, **Pin Cấp 3**.
-- Giải cứu robot sinh học **Moss**, khôi phục **Vườn ươm rêu ngầm (`Subsurface Bryophyte Dome`)**, hiện tượng **Tinh thể Áp điện ngân vang** và sự kiện **Nhật thực Mặt Trăng**.
-
-### 7.5. Phiên bản `1.0` — Đường Lên Đỉnh, Phát Sóng Về Trái Đất & Hoàn Thiện
-**Mục tiêu cho người chơi:** Chinh phục đỉnh núi cao nhất, gửi bằng chứng về Trái Đất, nhận câu trả lời từ con người và tận hưởng thế giới đã được làm ấm hoàn toàn.
-- Vùng **Đường Lên Đỉnh (`Peak Road`)** và **Đài Quan Sát Chảo Lớn (`The Peak`)** với mảnh **Khảo sát 6/6**.
-- Trường đoạn sửa chữa Chảo Đỉnh núi, kích hoạt chuỗi tiếp sóng toàn vùng và phát sóng báo cáo khảo sát về Trái Đất.
-- Cảnh kết (**Ending Cutscene**): Tín hiệu đến đài nghiệp dư của **Ro**, chuyển tiếp tới **Houston**, xác nhận mở lại sứ mệnh tàu có người lái quay về Trạm Lumen, chuyển sang chế độ chơi tự do (*Post-game Free Roam*).
-- Tính năng hoàn thiện `1.0`: **Phòng Sơn (`Paint Bay`)** đổi màu thân xe 07, **Chế độ Chụp ảnh (`Photo Mode`)**, trình đơn Cài đặt đầy đủ và thành tựu (*Achievements*).
-
----
-
-## 8. Cách làm để không sửa đi sửa lại (Workflow to Prevent Rework)
-
-*(Trích dẫn: `phased-releases.md`, 2026-10-08; `polish-every-state.md`, 2026-10-12; `rover-07-v2.md`, 2026-10-14; `CLAUDE.md`)*
-
-### 8.1. Quy trình 4 bước: Thiết kế trước → Duyệt → Dựng → Tự chơi kiểm chứng
-
-1. **Bước 1 — Kiểm tra 10 điểm logic cơ khí trước khi viết bất kỳ dòng code nào:**
-   Trước khi thêm một vật phẩm, công trình hay nâng cấp mới, bắt buộc trả lời 5 câu hỏi: *(1) Bộ phận 3D nào trên 07 thực hiện thao tác này? (2) Điểm gốc `IRoverRig` nào được dùng? (3) Có vật gì bị trôi lơ lửng trên mặt đất trống không? (4) Trạng thái trước và sau khi sửa khác nhau thế nào ở khoảng cách 30 m? (5) Có cần thêm bất kỳ chữ giải thích nào không hay nhìn hình là hiểu?*
-2. **Bước 2 — Duyệt bằng bản xem trước nhẹ (*Preview / Blockout Checkpoint*):**
-   Với các quyết định thẩm mỹ (phong cách 3D, ánh sáng, âm thanh, bố cục màn hình `Tab`), tạo trang xem trước tĩnh hoặc cảnh so sánh A/B/C để chủ dự án chọn trong 1 phút trước khi áp dụng vào toàn bộ dự án.
-3. **Bước 3 — Một nguồn sự thật duy nhất (*Single Source of Truth*):**
-   File `docs/design/master-plan.md` này là tài liệu gốc duy nhất. Khi chủ dự án chốt bất kỳ mục nào trong **Mục 9**, cập nhật quyết định đó vào ngay file này và đồng bộ xuống các file tài liệu con theo bảng ở **Mục 10** trước khi lập trình.
-4. **Bước 4 — Tự chơi thực tế (*Self-Playthrough*) trước khi bàn giao:**
-   Không bao giờ báo cáo "đã xong" chỉ vì code biên dịch không lỗi. Sau mỗi tính năng, phải chạy thử toàn bộ luồng từ góc nhìn người chơi mới (không dùng phím tắt gian lận) để kiểm tra cảm giác lái, góc máy, âm thanh và dòng nhắc.
-
-### 8.2. Ba điểm chốt duyệt của Chủ dự án (Owner Checkpoints)
-
-- **Chốt 1 (Ngay sau khi duyệt văn bản này):** Chủ dự án chốt các quyết định trong **Mục 9** (đặc biệt là Art Style `S1/S2/S3`, Look `V1–V3`, Audio `A/B/C` và các câu hỏi `07 v2` / `story v3`).
-- **Chốt 2 (Giữa kỳ `0.5.6`):** Chủ dự án xem hình chụp mô hình `07 v2` với đầy đủ 7 cụm cơ khí và màn hình `Tab` một trang duy nhất trước khi nối toàn bộ hoạt cảnh.
-- **Chốt 3 (Cuối mỗi phiên bản `0.5.6`, `0.6`, `0.7`, `0.8`, `1.0`):** Bản build chạy độc lập kèm báo cáo kiểm chứng và ảnh chụp các góc nhìn chính.
-
-### 8.3. Thang kiểm chứng kỹ thuật bắt buộc (Verification Ladder)
-
-Mọi thay đổi mã nguồn trước khi commit phải vượt qua đủ 4 tầng kiểm tra:
-1. **Biên dịch sạch (`tools/compile_check.py`):** 0 lỗi (error), 0 cảnh báo mới (warning) trên cả `Lunarion.Runtime`, `Lunarion.Editor` và `Lunarion.Tests`.
-2. **Kiểm thử tự động EditMode (`tests-run EditMode`):** Toàn bộ bài kiểm tra logic kho hàng, năng lượng, tiến trình bản vẽ, hệ thống lưu/tải và quy tắc văn bản phải xanh 100%.
-3. **Kiểm thử tự động PlayMode & Quy tắc Thế giới (`NoLooseLootSession`):**
-   - Kiểm tra tự động mọi điểm đặt vật phẩm: không có mảnh bản vẽ, đá quặng, kỷ vật hay bộ phận bạn bè nào nằm ngoài giá đỡ/xác máy hỏng (`no-floating-loot.md`).
-   - Kiểm tra mọi điểm gốc `IRoverRig` trên `07 v2` tồn tại, đúng tọa độ đối xứng và không có tia công cụ nào xuất phát từ `EyeOrigin` trừ tia quét.
-4. **Kiểm tra thị giác & Trải nghiệm thực tế:** Chụp ảnh kiểm tra ở khoảng cách `5 m` và `30 m`, kiểm tra `HudMutex` (không bao giờ có 2 hướng dẫn cùng lúc) và kiểm tra tốc độ khung hình ổn định.
-
----
-
-## 9. Quyết định còn mở cho Chủ dự án (Open Decisions for Owner Review)
-
-Dưới đây là toàn bộ **16 quyết định còn mở** được tổng hợp từ các bản thử nghiệm nghệ thuật, cơ khí `07 v2` và cốt truyện `story v3`. Mỗi mục đều có các phương án rõ ràng và một **Đề xuất** để chủ dự án có thể duyệt nhanh.
-
-### 9.1. Nhóm Nghệ thuật, Hiển thị & Âm thanh (3 quyết định)
-
-1. **Chọn Phong cách hình khối 3D (`Art Style S1 / S2 / S3`):**
-   - *Phương án A (`S1 — Soft Toy`):* Cạnh bo tròn dày, tỷ lệ bầu bĩnh như đồ chơi để bàn.
-   - *Phương án B (`S2 — Clean Low-Poly`):* Mảng phẳng vát cạnh sắc nét, hiện đại, tối giản.
-   - *Phương án C (`S3 — Retro Lunar Hardware`):* Cơ khí công nghiệp lấy cảm hứng từ tàu Apollo & thiết bị khảo sát thực tế (khung giàn, lá cách nhiệt vàng, khớp nối cơ khí rõ ràng).
-   - **Đề xuất:** Chọn **lai `S3 + S2`** (tỷ lệ cơ khí chân thực, đọc rõ công dụng từng bộ phận của `S3`, nhưng dựng bằng các mảng phẳng vát cạnh sạch sẽ của `S2`, không làm chi tiết rối mắt).
-2. **Chọn Độ mượt bề mặt & Hậu kỳ (`Look Study V0 / V1 / V2 / V3`):**
-   - *Phương án A (`V0`):* Giữ nguyên địa hình đa giác gắt như `0.5.5`.
-   - *Phương án B (`V1`):* Chỉ làm mượt pháp tuyến theo góc (`35°–45°`) trên đá và gờ hố.
-   - *Phương án C (`V2`):* `V1` + địa hình mịn hơn quanh căn cứ + bóng tiếp xúc AO nhẹ.
-   - *Phương án D (`V3`):* `V2` + khử răng cưa và làm mềm viền bóng đổ, giữ nguyên màu phẳng không PBR.
-   - **Đề xuất:** Chọn **`V3`** — loại bỏ hoàn toàn cảm giác "lưới tam giác thô" của địa hình mà vẫn giữ đúng chất màu phẳng cô đơn, sắc nét của Mặt Trăng.
-3. **Chọn Bảng âm thanh chủ đạo (`Audio Palette A / B / C` tại `Builds/AudioPreview/index.html`):**
-   - *Phương án A (`Palette A — Workshop`):* Cơ khí kim loại chính xác, tiếng công tắc, mô-tơ và chuông đồng.
-   - *Phương án B (`Palette B — Wood & Felt`):* Tiếng đàn kalimba, gỗ và búa dạ ấm áp.
-   - *Phương án C (`Palette C — Old Radio`):* Tiếng đài analog và băng từ cổ điển.
-   - **Đề xuất:** Chọn **Phối hợp `A` cho thao tác cơ khí của 07 + `B` cho âm báo hoàn thành/kỷ vật** (mọi chuyển động mở cửa khoang, cắt, đào, kéo tời kêu tiếng cơ khí thật của `A`; còn giọng chirp của 07 và tiếng chuông hoàn thành công trình dùng âm mộc ngũ cung ấm của `B`).
-
-### 9.2. Nhóm Cơ khí 07 v2 & Giao diện (5 quyết định)
-
-4. **Cách nạp vật liệu vào phễu trạm (`HopperFeed`) từ Khoang hàng sau:**
-   - *Phương án A:* 07 chỉ cần đỗ cạnh phễu (bất kể đầu hay đuôi), cửa khoang sau `CargoHatch` mở ra và phóng từng bó vật liệu bay vòng cung qua đầu xe rơi vào miệng phễu.
-   - *Phương án B:* Bắt buộc người chơi phải xoay đuôi xe về phía phễu mới bấm nạp được.
-   - **Đề xuất:** Chọn **Phương án A** (khi bấm `E` nạp phễu, 07 tự xoay nhẹ thân xe 15–20° hoặc phóng bó hàng theo đường cong tự nhiên từ `HatchOrigin` vào miệng phễu — vừa đúng logic vật lý từ khoang sau, vừa không gây khó dễ cho người chơi khi đỗ xe).
-5. **Cách đưa linh kiện vào sửa Tháp tiếp sóng (`Tower Repair Delivery`):**
-   - *Phương án A:* Mỗi chân tháp có một **Hộc tiếp nhận ở chân tháp (`Base Service Hatch`)**; 07 mở khoang sau đẩy linh kiện vào hộc, dùng mỏ hàn mũi xe chấm 2 mối điện, rồi cơ cấu tời nội bộ của tháp kéo linh kiện lên đỉnh.
-   - *Phương án B:* Dùng cần trục lưng `HoistBail` của 07 cẩu trực tiếp linh kiện gắn vào sườn tháp.
-   - **Đề xuất:** Chọn **Phương án A** (vì ở Tháp tiếp sóng 1 đầu game, người chơi chưa mở khóa Giá chở hàng có cần trục `HoistBail`; dùng Hộc tiếp nhận ở chân tháp đảm bảo tính nhất quán cho cả 3 tháp và giải quyết dứt điểm lỗi "đặt dưới đất tự nhảy lên đỉnh").
-6. **Bố cục hiển thị khi mở Kho nhà (`Station Storage UI`):**
-   - *Phương án A:* Dùng chung đúng khung màn hình `Tab` (cột trái là Lưới Khoang hàng 07 `8/16 ô`, cột phải đổi từ sơ đồ thiết bị 07 sang Lưới Kho nhà `24 ô`, có 1 nút nhỏ trên đỉnh cột phải để xem lại Thiết bị 07 nếu cần).
-   - *Phương án B:* Hiển thị cả 3 cột cùng lúc (Khoang hàng 07 + Sơ đồ thiết bị 07 + Kho nhà) trên màn hình rộng.
-   - **Đề xuất:** Chọn **Phương án B khi đỗ tại Đế sạc / Xưởng xe** (hoặc **Phương án A** nếu muốn giữ khung nhỏ gọn ở chính giữa). Khuyến nghị **Phương án A** để giữ đúng tỷ lệ khung 2 cột cân đối của Subnautica và chữ luôn to, dễ đọc.
-7. **Sức chứa của Linh kiện tháp và Bộ phận bạn bè trong Khoang hàng 07:**
-   - *Phương án A:* Mỗi linh kiện tháp (`TowerCoil`, `Transformer`, `RelaySpare`) hoặc bộ phận của Tilly/Bell chiếm **1 ô chuẩn** trong lưới 8/16 ô của Khoang hàng sau (cùng chung lưới với Kim loại và Thạch anh).
-   - *Phương án B:* Mỗi linh kiện lớn chiếm `2 × 2` (4 ô) trong lưới Khoang hàng.
-   - **Đề xuất:** Chọn **Phương án A (1 ô/linh kiện)** để giữ thao tác quản lý kho hàng đầu game đơn giản, trực quan, không bắt người chơi phải vứt bớt Kim loại khi đi nhặt linh kiện tháp.
-8. **Chế độ Kéo lê bằng Tời cáp sau (`Winch Ground-Tow`) sau khi đã lắp Giá chở hàng lưng (`CargoCradle`):**
-   - *Phương án A:* Sau khi đã lắp Giá chở hàng lưng, bấm `F` vào kỷ vật sẽ luôn tự động dùng cần trục nâng thẳng lên lưng xe (`CradleCarry`); Tời cáp sau chuyển sang dùng cho các việc nặng không thể nhấc lên lưng (kéo dầm sắt chắn đường, kéo xe Atlas bị kẹt, neo cáp).
-   - *Phương án B:* Bấm nhanh `F` để nâng lên lưng, giữ `F` nếu vẫn muốn kéo lê dưới đất.
-   - **Đề xuất:** Chọn **Phương án A** — một nút một hành động tối ưu nhất, thể hiện rõ sự tiến bộ vượt bậc trước và sau khi có Giá chở hàng.
-
-### 9.3. Nhóm Cốt truyện Story v3 & Phạm vi Thế giới (8 quyết định)
-
-9. **Tên chính thức và Quốc적/Tổ chức của Trạm thứ hai (`Second Base Identity`):**
-   - *Phương án A:* **Trạm Meridian (`Meridian Station`)** thuộc **Liên doanh Tycho (`Tycho Consortium`)** — một liên doanh khai khoáng tư nhân dùng thiết bị tự động hóa công nghiệp (họ máy lục giác màu xanh xám).
-   - *Phương án B:* Một trạm nghiên cứu của cơ quan vũ trụ quốc gia khác (ví dụ ESA hoặc JAXA).
-   - **Đề xuất:** Chọn **Phương án A (`Meridian Station — Tycho Consortium`)** vì đối lập rõ nét giữa một bên là trạm khoa học công lập (Lumen) và một bên là trạm khảo sát thương mại tự động (Meridian), giải thích hợp lý vì sao hai bên không dùng chung chuẩn sạc và không chia sẻ dữ liệu trước cơn bão 2047.
-10. **Bản chất của phát hiện trong Ống Dung Nham (`The Biological Discovery`):**
-    - *Phương án A:* **Mạch băng nước khổng lồ kèm Rêu Mặt Trăng ngủ đông (`Dormant Lunar Bryophyte / Cryo-moss`)** — bào tử thực vật bậc thấp có nguồn gốc cổ đại hoặc từ thí nghiệm sinh học kín bị rò rỉ và thích nghi được nhờ mạch nước ấm địa nhiệt trong ống dung nham.
-    - *Phương án B:* Chỉ thuần túy là băng nước và khoáng chất quý, hoàn toàn không có yếu tố sinh học.
-    - *Phương án C:* Hóa thạch vi sinh vật ngoài hành tinh cổ đại trong lõi băng.
-    - **Đề xuất:** Chọn **Phương án A (Nước băng + Rêu ngủ đông trong Vườn ươm ngầm của Ines & Moss)** vì tạo ra khoảnh khắc thị giác cực kỳ xúc động ở `0.8`: giữa toàn bộ Mặt Trăng xám đen, 07 và robot Moss thắp sáng một mái vòm nhỏ có sắc xanh lá cây sống động duy nhất, khớp hoàn hảo với mục thứ 4 của Sổ ghi chép (*Sự sống — Life*).
-11. **Số phận của các rover tiền bối `01` đến `06` (`Predecessor Rovers 01–06`):**
-    - *Phương án A:* Cả 6 chiếc đều nằm nghỉ yên tại vị trí công việc cuối cùng của mình ở 6 vùng (ví dụ: `01` giữ chốt cửa xả áp ở Hẻm núi, `02` kẹt cạnh robot quét bụi ở Biển Dài, `03` nằm ở chân dốc Bậc thềm, `04` giữ cáp khoan ở Hố Bóng Tối, `05` cấp nguồn cuối cho Vườn rêu, `06` nằm ngay trước cổng Chảo Đỉnh núi). Khi 07 quét từng chiếc sẽ lấy được nhật ký hành trình và 1 mảnh công nghệ quý.
-    - *Phương án B:* Có thể sửa lại một vài chiếc trong số `01–06` để chúng chạy quanh trạm giống Tilly.
-    - **Đề xuất:** Chọn **Phương án A** (để vai trò bạn đồng hành sống động thuộc về Tilly, Bell, Atlas, Moss và đàn Drone; còn `01–06` là những cột mốc lịch sử lặng lẽ truyền lại di sản cho người em út `07`).
-12. **Hình thức tín hiệu trả lời từ Trái Đất ở cảnh kết `1.0` (`Earth's Response Format`):**
-    - *Phương án A:* Kết hợp **cả chữ trên màn hình thiết bị đầu cuối, biểu đồ sóng âm thanh radio (tiếng Morse / tiếng sóng mang ấm), và giọng đọc ngắn qua bộ lọc radio xa xăm** của Ro rồi đến điều phối viên Houston (không hiện mặt người).
-    - *Phương án B:* Chỉ hiện văn bản chữ trên màn hình máy tính của Trạm Lumen kèm tiếng tín hiệu radio, hoàn toàn không có giọng nói.
-    - **Đề xuất:** Chọn **Phương án A** (với 2 câu thoại radio cực ngắn, điềm tĩnh, chuyên nghiệp — vì sau 4 giờ chơi hoàn toàn tĩnh lặng chỉ có tiếng máy và băng ghi âm cũ, khoảnh khắc nghe thấy một giọng nói trực tiếp *live* vang lên từ Trái Đất sẽ tạo cảm xúc vỡ òa mạnh nhất).
-13. **Cách giải thích vì sao 07 thức dậy sau 20 năm (`Why 07 Wakes Up Now`):**
-    - *Phương án A:* Vệ tinh **Kestrel-3** của Meridian rơi xuống cách trạm 160 m làm rung chấn nhẹ lớp bụi phủ trên tấm pin phụ của nhà kho, vừa đủ tích điện cho bộ hẹn giờ khởi động dự phòng kích hoạt chiếc rover cuối cùng trong hàng (`07`).
-    - *Phương án B:* Bộ hẹn giờ chu kỳ 20 năm của Kenji tự bật theo lịch định sẵn.
-    - **Đề xuất:** Chọn **Phương án A** vì gắn kết chặt chẽ sự kiện mở đầu (xác vệ tinh Kestrel-3 ngay trước mặt người chơi ở phút thứ 2) với lý do 07 tỉnh dậy đúng vào ngày hôm đó.
-14. **Số lượng và vị trí 6 mảnh Khảo sát (`6 Survey Pieces`):**
-    - *Phương án A:* Mỗi vùng trong 6 vùng giữ đúng **1 mảnh Khảo sát chính** (gắn liền với cột mốc lớn nhất của vùng đó: Tháp Hẻm núi → Dàn Ăng-ten Biển Dài → Trung tâm Meridian → Giàn khoan Hố Bóng Tối → Vườn ươm Ống Dung Nham → Đài quan sát Đỉnh núi).
-    - *Phương án B:* Có 10 mảnh rải rác và người chơi chỉ cần tìm bất kỳ 6 mảnh nào.
-    - **Đề xuất:** Chọn **Phương án A (6 mảnh cố định, mỗi vùng 1 mảnh)** để mỗi mảnh Khảo sát là một phần không thể thiếu của câu chuyện tổng thể và dẫn người chơi đi qua trọn vẹn 6 vùng.
-15. **Mức độ tương tác với họ máy của Trạm Meridian (`Meridian Ecosystem Interaction`):**
-    - *Phương án A:* Sau khi chế tạo **Bộ Chuyển Đổi Chuẩn Sạc (`Cross-Standard Adapter`)** ở `0.7`, 07 có thể sạc pin tại các đế sạc lục giác của Meridian và bật lại toàn bộ hệ thống máy tự động của Meridian.
-    - *Phương án B:* Máy móc của Meridian chỉ dùng để quét lấy mảnh bản vẽ, không thể sạc hay kích hoạt lại.
-    - **Đề xuất:** Chọn **Phương án A** — biến việc "hợp nhất hai mạng lưới Lumen và Meridian" thành thành tựu cơ khí lớn nhất của giai đoạn giữa game (`0.7`).
-16. **Thứ tự ưu tiên sau khi hoàn tất `0.5.6`:**
-    - *Phương án A:* Đi tuần tự đúng lộ trình `0.5.6 → 0.6 (Biển Dài & Chu kỳ nắng L1) → 0.7 (Meridian) → 0.8 (Hố tối & Ống dung nham) → 1.0 (Đỉnh núi)`.
-    - *Phương án B:* Đưa tính năng Chu kỳ nắng cực L1 (`Look C`) vào sớm ngay trong `0.5.6` thay vì đợi `0.6`.
-    - **Đề xuất:** Chọn **Phương án A** — giữ phạm vi `0.5.6` tập trung 100% vào việc sửa sạch phản hồi `0.5.5`, hoàn thiện mô hình `07 v2` và khóa phong cách nghệ thuật/âm thanh để giao bản `0.5.6` nhanh và chắc chắn nhất.
-
----
-
-## 10. Mâu thuẫn đã phát hiện giữa các tài liệu cũ và cách giải quyết (Contradictions Resolved & Doc Sync Plan)
-
-Qua quá trình đối chiếu toàn bộ kho tài liệu hiện tại, có **12 mâu thuẫn lớn** giữa các tài liệu cũ và các quyết định mới của chủ dự án. Bảng dưới đây khóa lại quy tắc chuẩn duy nhất và liệt kê chính xác những file cần cập nhật sau khi chủ dự án duyệt bản kế hoạch này (hiện tại **chưa chỉnh sửa** các file cũ theo đúng quy định của nhiệm vụ).
-
-| # | Chủ đề mâu thuẫn | Tài liệu cũ đang viết sai / lỗi thời | Quy tắc chuẩn mới trong `master-plan.md` (Theo lệnh Chủ dự án) | File cần cập nhật sau khi duyệt |
-|---|---|---|---|---|
-| **1** | **Điều kiện mở khóa vùng mới: Ký ức vs Tiến trình cơ khí** | `GDD.md`, `docs/VISION.md`, `docs/DESIGN.md`, `docs/ROADMAP.md` ghi rằng *Ký ức (Memories)* là chìa khóa mở cổng vùng mới và mở công thức chế tạo. | **Tiến trình vật chất là xương sống (`progression-first.md`, 2026-10-11):** Mở vùng mới hoàn toàn bằng thiết bị cơ khí lắp trên 07 (Mỏ cắt, Gầu đào, Cánh pin mặt trời, Bánh từ tính, Đèn pha/Sưởi pin, Tời neo). Ký ức chỉ là phần thưởng cảm xúc. | `GDD.md`, `docs/VISION.md`, `docs/DESIGN.md`, `docs/ROADMAP.md` |
-| **2** | **Cơ chế chế tạo: Mở sẵn theo tầng vs Quét mảnh bản vẽ** | `GDD.md` và `docs/DESIGN.md` mô tả bàn chế tạo mở sẵn công thức khi nâng cấp nhà trạm. | **Quét mảnh bản vẽ (`scan-fragments.md`, 2026-10-12):** Mọi thiết bị nâng cấp đều phải quét đủ `2–4` mảnh vỡ ngoài thực địa bằng mắt quang học của 07 rồi mới chế tạo tại Xưởng xe. Mảnh trùng cho `+3 Kim loại`. | `GDD.md`, `docs/DESIGN.md` |
-| **3** | **Giao diện Kho đồ & Trang bị: Nhiều tab vs Một màn hình cố định** | `docs/design/gdd-v3.md` (§5.3, §12.4) vẫn mô tả giao diện `Tab` có 3 tab riêng biệt (*Rover / Inventory / Blueprints*) và vẽ vòng tròn pin 3D dưới bánh xe. | **Một màn hình cố định duy nhất (`inventory-one-screen.md`, 2026-10-14):** Nhấn `Tab` mở đúng 1 màn hình: trái là lưới Khoang hàng 07 (`8 → 16 ô`), phải là hình 07 với các ổ thiết bị cố định. Xóa sạch các tab chuyển trang và xóa vòng tròn pin 3D quanh xe. | `docs/design/gdd-v3.md`, `docs/design/gdd-v3-vi.md`, `docs/DESIGN.md` |
-| **4** | **Vị trí phát tia công cụ & nạp nguyên liệu trên 07** | `docs/design/first-hour-v2.md` và code `0.5.5` cho mắt camera của 07 bắn cả tia cắt, tia hàn, tia đào đất và bắn hạt nguyên liệu vào phễu. | **Mỗi động từ một bộ phận cơ khí thật (`rover-07-v2.md`, 2026-10-14):** Mắt `EyeOrigin` chỉ nhìn và quét; cắt/hàn từ `CutterTurret` ở mũi xe; đào bằng gầu `DigScoop` ở cản trước; thu hàng và phóng nguyên liệu vào phễu từ cửa khoang hàng sau `CargoHatch`. | `docs/design/first-hour-v2.md`, `docs/design/gdd-v3.md`, `docs/design/gdd-v3-vi.md` |
-| **5** | **Cách kéo và chở kỷ vật (Gara Kenji & Giá chở hàng)** | `docs/design/first-hour-v2.md` cho 07 kéo kỷ vật lơ lửng phía sau xe ngay từ phút thứ 5 mà không có tời cáp hay giá đỡ. | **Nhịp Gara Kenji 2 giai đoạn (`rover-07-v2.md`, 2026-10-14):** Lắp **Tời cáp sau (`WinchDrum`)** tại cổng Gara Kenji trước để móc dây cáp kéo lê kỷ vật trên mặt đất; sau khi mở Xưởng xe mới chế tạo và lắp **Giá chở hàng (`CargoCradle` + `HoistBail`)** để cẩu kỷ vật lên lưng. | `docs/design/first-hour-v2.md`, `docs/design/gdd-v3.md`, `docs/design/gdd-v3-vi.md` |
-| **6** | **Cách chở và lắp linh kiện Tháp tiếp sóng** | Code `0.5.5` và `docs/design/first-hour-v2.md` gắn linh kiện tháp lên một điểm lơ lửng trên nóc xe (`StoryPartSocket`), và khi đặt ở chân tháp thì linh kiện tự biến mất rồi hiện trên đỉnh tháp. | **Cất trong Khoang hàng sau & Nạp vào Hộc chân tháp (`0.5.5-owner-feedback.md` #6, #11):** Xóa `StoryPartSocket`. Linh kiện tháp đi qua cửa sau `CargoHatch` vào khoang hàng (chiếm 1 ô); khi sửa tháp thì nạp vào hộc chân tháp và hàn cáp tại bảng điện chân tháp. | `docs/design/first-hour-v2.md`, `docs/design/gdd-v3.md` |
-| **7** | **Thẻ ký ức (`MemoryCard`) rơi ra khi sửa bạn robot** | `docs/design/first-hour-v2.md` và `docs/design/gdd-v3.md` thiết kế khi sửa xong Tilly/Bell sẽ sinh ra một vật phẩm `MemoryCard` dưới đất để người chơi nhặt về tàu. | **Xóa hoàn toàn thẻ ký ức khi sửa bạn (`0.5.5-owner-feedback.md` #9):** Sửa xong bạn robot là bạn tự thức dậy bằng hoạt cảnh cơ khí + tiếng chirp và bắt đầu làm việc ngay. Ký ức chỉ đến từ các kỷ vật thật của con người. | `docs/design/first-hour-v2.md`, `docs/design/gdd-v3.md`, `docs/design/gdd-v3-vi.md`, `docs/STORY.md` |
-| **8** | **Hiệu ứng Nghe Sonar: Cột sáng trời / Vòng sáng đất vs Phản hồi vật lý** | `docs/design/gdd-v3.md` dùng phím `Space` bắn cột sáng lên trời (`SiteMarker.Pillar`); còn bản nháp `Logs/sources/07V2.md` (§5.1) lại đề xuất vẽ "vòng bụi sáng màu hổ phách trên mặt đất". | **Không cột sáng trời, không vòng sáng trên mặt đất trống (`no-floating-loot.md`, 2026-10-14; `resume-point.md`):** Xóa phím `Space`. Khi dừng xe 2 giây, vòng ăng-ten `SonarLoop` xoay chỉ hướng, đầu 07 quay nhìn, chính góc kim loại của vật thể lấp lánh (hoặc đèn cọc chớp 2 lần) kèm âm thanh định hướng 3D. | `docs/design/gdd-v3.md`, `docs/design/gdd-v3-vi.md`, `Logs/sources/07V2.md` |
-| **9** | **Giọng điệu cốt truyện & Lý do Trạm Lumen bị bỏ hoang** | `docs/STORY.md` và `GDD.md` cũ viết rằng dự án cạn tiền dần rồi bỏ rơi các robot, kèm nhiều câu thoại con người tâm sự uỷ mị với robot như thú cưng. | **Cốt truyện `story-v3` & Văn bản thực tế (`story-logic.md`, 2026-10-13):** Sơ tán khẩn cấp vì bão mặt trời 2047; phát hiện băng nước của Ines & Trạm thứ hai Meridian bị kẹt lại; năm 2067 mất liên lạc do robot quét bụi hỏng. Con người nói chuyện chuyên nghiệp với nhau, không nhân cách hóa máy móc. | `docs/STORY.md`, `GDD.md`, `docs/VISION.md`, `docs/design/writing-style.md` |
-| **10** | **Cấu trúc các vùng thế giới & Thứ tự phiên bản** | `GDD.md` và `docs/ROADMAP.md` cũ chia 5 vùng rời rạc theo kiểu màn chơi và đặt lộ trình `0.1 → 0.5` cũ. | **Một thế giới liền mạch 6 vùng (`0.6-world-regions.md` & `PLAN.md`):** Lòng chảo & Hẻm núi (`0.5.6`) → Khe Rãnh & Biển Dài (`0.6`) → Bậc thềm & Trạm Meridian (`0.7`) → Hố Bóng Tối & Ống Dung Nham (`0.8`) → Đường lên Đỉnh (`1.0`). | `GDD.md`, `docs/ROADMAP.md`, `docs/design/game-flow.md` |
-| **11** | **Chu kỳ ánh sáng và Sạc năng lượng ngoài trời** | `docs/DESIGN.md` cũ cho phép sạc pin dưới ánh sáng Trái Đất (*Earthshine*) hoặc có các vùng năng lượng trôi nổi giữa đồng. | **Chu kỳ nắng cực L1 thực tế (`0.6-living-moon.md`):** Ánh sáng Trái Đất không bao giờ sạc được pin. Chỉ sạc đầy 100% tại Đế sạc / Trụ sạc, và sạc dự phòng tối đa 1 ô (25%) dưới ánh nắng trực tiếp khi đã lắp Cánh Pin Mặt Trời. | `docs/DESIGN.md`, `docs/design/gdd-v3.md` |
-| **12** | **Sổ ghi chép (`Databank`)** | `docs/design/gdd-v3.md` (§5.8) từng ghi *"Không có Codex hay danh sách văn bản"*. | **Có Sổ ghi chép Khảo sát 4 mục gọn nhẹ (`scan-fragments.md`, 2026-10-12; `0.6-living-moon.md`):** Gồm *Máy móc, Mặt Trăng, Địa điểm, Sự sống* với hình vẽ nét quét của 07 và ghi chú kỹ thuật 1–2 câu của phi hành đoàn. | `docs/design/gdd-v3.md`, `docs/design/gdd-v3-vi.md` |
-
----
-
-### Bảng kiểm tra nhanh trước khi kết thúc (Master Plan Checklist)
-- [x] Ngôn ngữ: Tiếng Việt rõ ràng, tự nhiên, thuật ngữ gốc tiếng Anh đặt trong ngoặc đơn.
-- [x] Đầy đủ 11 mục (`0` đến `10`) theo đúng cấu trúc `Logs/TASK.md`.
-- [x] Trích dẫn đầy đủ toàn bộ các quy tắc trong `Logs/owner-memory/` kèm tên file và ngày tháng.
-- [x] Tích hợp toàn diện `Logs/sources/07V2.md`, `Logs/sources/story-v3.md`, `Logs/sources/PLAN.md` và `docs/design/0.5.5-owner-feedback.md`.
-- [x] Không tự ý bịa quyết định của chủ dự án; mọi đề xuất đều đánh dấu rõ là **Đề xuất**.
-- [x] Không chỉnh sửa bất kỳ tài liệu được theo dõi (tracked docs) nào khác ngoài `docs/design/master-plan.md`.
+1. **S1 — Hiển thị tiến độ 6 mảnh khảo sát (`Survey` `0/6`) trên bảng Quy trình Khôi phục trong Phòng thí nghiệm:**
+   - *Câu hỏi:* Thêm **`Survey (0/6)`** thành dòng thứ 5 trên bảng Quy trình Khôi phục (`Power → Link → Dish →
+     Survey → Answer`), hay gộp nó vào bên trong bước thứ 4 **`Answer`** (phải đủ khảo sát mới truyền tin được)?
+   - *Khuyến nghị:* **Thêm thành một dòng đếm rõ ràng (`Survey 0/6`) ngay trên bước `Answer`**, để người chơi
+     nhìn thấy tiến độ thu thập bằng chứng tăng lên trực quan sau mỗi vùng.
+2. **S2 — Ai là người nghe thấy tín hiệu truyền về đầu tiên ở cái kết `1.0`:**
+   - *Câu hỏi:* Giữ kịch bản **Ro Amadi nghe thấy trước** qua chảo của câu lạc bộ vô tuyến nghiệp dư (khép
+     kín vòng lặp hợp lý với tín hiệu Chủ nhật đã đánh thức 07 ở đầu game, sau đó Houston trả lời chính thức),
+     hay để **Houston trả lời trực tiếp ngay từ đầu**?
+   - *Khuyến nghị:* **Giữ kịch bản Ro nghe thấy trước rồi tới Houston**, vì nó giải thích trọn vẹn bằng logic
+     kỹ thuật câu hỏi *"Ai vẫn đang phát sóng trên tần số cũ lúc mở đầu game?"* mà không cần lời thoại ủy mị.
+3. **S3 — Tên và sắc thái của cơ quan vận hành Trạm Meridian:**
+   - *Câu hỏi:* Giữ tên **`Tycho Consortium`** như một tổ chức khảo sát thương mại đã dừng dự án vì bài toán
+     chi phí (không phải phản diện, chỉ là quyết định sổ sách), hay đổi sang tên khác?
+   - *Khuyến nghị:* **Giữ tên `Tycho Consortium` và sắc thái trung tính**, đúng với tinh thần không có kẻ ác
+     hay âm mưu của `docs/VISION.md`.
+4. **S4 — Điều kiện số mảnh khảo sát để truyền tín hiệu ở Đỉnh núi (`1.0`):**
+   - *Câu hỏi:* Bắt buộc thu thập **đủ cả `6/6` mảnh khảo sát** mới truyền tín hiệu kết thúc được, hay chỉ
+     cần đạt ngưỡng (ví dụ `4/6` mảnh) còn `6/6` dành cho người chơi hoàn thành 100%?
+   - *Khuyến nghị:* **Yêu cầu đủ `6/6` mảnh khảo sát**, vì mỗi vùng trên đường từ `0.5` đến `0.8` đều gắn tự
+     nhiên với đúng 1–2 mảnh khảo sát chính.
+5. **S5 — Phê duyệt bảng viết lại 14 dòng thoại trong Kiểm toán Lời thoại (Mục 7.3):**
+   - *Câu hỏi:* Chủ dự án có duyệt áp dụng 14 bản viết lại trong `Logs/sources/story-v3.md` §4.1 vào
+     `vi.json` / `en.json` để xóa toàn bộ các câu con người tâm sự mùi mẫn với 07, chuyển thành lời người
+     nói với người và ghi chú bảo trì không?
+   - *Khuyến nghị:* **Duyệt áp dụng ngay trong đợt rà soát chữ `0.5.6`**, vì bám sát quy tắc *"con người coi
+     robot là công cụ"* của chủ dự án.
+6. **S6 — Tiến sĩ Lena Moreau làm tiếng nói con người phía Trạm Meridian:**
+   - *Câu hỏi:* Giữ nhân vật **TS. Lena Moreau** (trưởng nhóm khoa học của Meridian ở dưới Trái Đất, trao
+     đổi dữ liệu với Ines và viết ghi chú thực địa về máy móc Meridian trong mục Notes) bên cạnh 4 thành
+     viên Lumen không?
+   - *Khuyến nghị:* **Giữ TS. Lena Moreau**, vì tạo đối trọng khoa học tự nhiên với Ines Kalani và giúp các
+     ghi chú kỹ thuật về máy móc họ Meridian có tác giả hợp lý.
+7. **S7 — Thiết bị chuyển đổi sạc `Charge Adapter` ở bản `0.7`:**
+   - *Câu hỏi:* Giữ thiết bị **`Charge Adapter`** (tìm thấy tại Trạm Meridian ở bản `0.7`, giúp 07 sạc trực
+     tiếp trên các đế sạc lục giác của Meridian bên cạnh việc xây cầu nguồn `Power Bridge`) không?
+   - *Khuyến nghị:* **Giữ `Charge Adapter` ở bản `0.7`**, vì mang lại phần thưởng khám phá rõ rệt khi người
+     chơi đặt chân tới Trạm Meridian và giữ đúng logic hai chuẩn điện áp khác nhau giữa hai trạm.
