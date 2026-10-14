@@ -24,9 +24,9 @@ MonoBehaviour:
     _cutLines:
     - _number: 0
       _points:
-      - {x: -0.35884166, y: 0, z: 0}
+      - {x: -0.3552563, y: 0, z: 0}
       - {x: 0, y: 0, z: 0}
-      - {x: 0.4091577, y: 0, z: 0}
+      - {x: 0.40915775, y: 0, z: 0}
     - _number: 1
       _points:
       - {x: -0.8915839, y: 0, z: 0}
