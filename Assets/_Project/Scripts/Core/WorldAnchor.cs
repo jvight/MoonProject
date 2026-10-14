@@ -8,15 +8,22 @@ namespace MoonProject.Core
     /// </summary>
     public readonly struct WorldAnchor
     {
-        public WorldAnchor(string id, Vector3 position, Vector3 forward, float radius)
+        /// <summary>Creates a world anchor on the surface.</summary>
+        public WorldAnchor(string id, Vector3 position, Vector3 forward, float radius,
+            string regionId = RegionIds.Basin)
         {
             Id = id;
             Position = position;
             Forward = forward;
             Radius = radius;
+            RegionId = string.IsNullOrEmpty(regionId) ? RegionIds.Basin : regionId;
         }
 
+        /// <summary>Stable anchor identifier (<see cref="WorldAnchorIds"/>).</summary>
         public string Id { get; }
+
+        /// <summary>Stable region identifier (<see cref="RegionIds"/>) this anchor belongs to.</summary>
+        public string RegionId { get; }
 
         /// <summary>On the surface (y = terrain height), so content can stand on it directly.</summary>
         public Vector3 Position { get; }

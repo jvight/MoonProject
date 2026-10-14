@@ -49,4 +49,28 @@ namespace MoonProject.Core.Events
         /// <summary>Hops to the farthest node this handshake reaches.</summary>
         public int Hops { get; }
     }
+
+    /// <summary>
+    /// Published by the World box when the dominant region at the rover changes (after hysteresis) or when the rover
+    /// is placed at boot, respawn, or unstuck.
+    /// </summary>
+    public readonly struct RegionEntered
+    {
+        /// <summary>Newly dominant region id (<see cref="RegionIds"/>).</summary>
+        public string RegionId { get; }
+
+        /// <summary>Previously dominant region id, or <see cref="string.Empty"/> on initial placement.</summary>
+        public string PreviousRegionId { get; }
+
+        /// <summary>True when published in response to rover placement rather than driving across a boundary.</summary>
+        public bool Placed { get; }
+
+        /// <summary>Creates a region entry event.</summary>
+        public RegionEntered(string regionId, string previousRegionId, bool placed)
+        {
+            RegionId = regionId ?? string.Empty;
+            PreviousRegionId = previousRegionId ?? string.Empty;
+            Placed = placed;
+        }
+    }
 }
