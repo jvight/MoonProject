@@ -124,6 +124,8 @@ namespace MoonProject.UI.PlayModeTests
                 frame = NewFrame(frameWidth, frameHeight);
                 framedPanel = Object.Instantiate(panel);
                 framedPanel.targetTexture = frame;
+                framedPanel.clearColor = true;
+                framedPanel.colorClearValue = Color.clear;
                 panel = framedPanel;
             }
 

@@ -51,7 +51,7 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void EveryFriend_HasANameAndARepairLog_InEveryLanguage()
+        public void EveryFriend_HasAName_InEveryLanguage()
         {
             var catalog = AssetDatabase.LoadAssetAtPath<FriendCatalog>(FriendCatalogPath);
             Assert.IsNotNull(catalog, FriendCatalogPath);
@@ -68,13 +68,9 @@ namespace MoonProject.UI.Tests
                 foreach (string id in ids)
                 {
                     Assert.IsTrue(table.TryGet(UiKeys.FriendName(id), out _), $"{table.Language}: {id} name");
-                    Assert.IsTrue(table.TryGet(UiKeys.FriendRepairLog(id), out string log),
-                        $"{table.Language}: {id} repair log");
-                    Assert.Less(log.Length, 220, "a log is a sticky note, one or two sentences");
                 }
 
                 Assert.IsTrue(table.TryGet(UiKeys.Hint(InteractionKind.Repair), out _), table.Language);
-                Assert.IsTrue(table.TryGet(UiKeys.LogCaption, out _), table.Language);
             }
         }
     }

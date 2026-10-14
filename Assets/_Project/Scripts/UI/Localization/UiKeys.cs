@@ -15,7 +15,6 @@ namespace MoonProject.UI
         public const string CardCaption = "ui.card.caption";
         public const string CardClose = "ui.card.close";
         public const string BayFitted = "ui.bay.fitted";
-        public const string LogCaption = "ui.card.log_caption";
         public const string CrewLogCaption = "ui.card.crew_log";
         public const string LinerCaption = "ui.card.liner_caption";
         public const string TapeCount = "ui.card.tape_count";
@@ -75,12 +74,6 @@ namespace MoonProject.UI
         public static string FriendName(string friendId)
         {
             return "friend." + friendId + ".name";
-        }
-
-        /// <summary>"friend.tilly.repair_log": the crew log a friend remembers when it wakes.</summary>
-        public static string FriendRepairLog(string friendId)
-        {
-            return "friend." + friendId + ".repair_log";
         }
 
         /// <summary>"log.ro_1": a crew log's text.</summary>

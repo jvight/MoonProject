@@ -127,7 +127,7 @@ namespace MoonProject.UI
         private bool _digging;
         private float _sinceAwake;
         private float _pickUpGrace;
-        private bool _reopenSeven;
+        private bool _reopenCargo;
 
         /// <summary>The localization service this system registered (tests and editor tools read it).</summary>
         internal LocalizationService Localization => _localization;
@@ -463,8 +463,7 @@ namespace MoonProject.UI
                 services.Catalog, services.Events);
             _salvageRing = new SalvageRing(_layout, _tuning.Salvage, _tuning.Prompts, services.Salvage, services.View);
             _siteName = new SiteNameTag(_layout, _tuning.Salvage, _tuning.Prompts, _localization, services.View);
-            _card = new MemoryCard(_layout, _tuning.MemoryCard, _localization, services.Events, _relics,
-                services.Friends);
+            _card = new MemoryCard(_layout, _tuning.MemoryCard, _localization, services.Events, _relics);
             _friendName = new FriendNameTag(_layout, _tuning.Friends, _tuning.Prompts, services.Friends,
                 _localization, services.View);
             _ticker = new RadioTicker(_layout, _tuning.Ticker, _tickerLines);
@@ -554,7 +553,7 @@ namespace MoonProject.UI
             _cargo.Tick(deltaTime, ScreenSize(), input.ActiveDevice);
             if (_cargo.IsOpen && ((_cargo.IsTransferView && !_services.Dock.IsDocked) || _cargo.WantsClose))
             {
-                _reopenSeven = _cargo.WantsClose;
+                _reopenCargo = _cargo.WantsClose;
                 CloseCargo();
             }
 
@@ -761,16 +760,11 @@ namespace MoonProject.UI
 
         private void OpenCargo()
         {
-            _reopenSeven = false;
+            _reopenCargo = false;
             _cargo.Open();
             _services.Input.Disable();
             _cursor.Menu();
             _cargo.FocusFirst();
-            if (!_cargo.IsTransferView)
-            {
-                _cargo.FirstTab.Focus();
-            }
-
             _events.Publish(new UiCue(UiCueKind.Confirm));
         }
 
@@ -889,13 +883,12 @@ namespace MoonProject.UI
                     _director.NotifyUsed(InteractionKind.Salvage);
                 }
 
-                // The install moment ends with its Proud chirp: the 07 tab the player fitted from comes back.
-                if (beat.Kind == FeelKind.Install && beat.Phase == FeelPhase.Reward && _reopenSeven)
+                // The install moment ends with its Proud chirp: the cargo screen the player fitted from comes back.
+                if (beat.Kind == FeelKind.Install && beat.Phase == FeelPhase.Reward && _reopenCargo)
                 {
-                    _reopenSeven = false;
+                    _reopenCargo = false;
                     if (CanOpenCargo() && !_cargo.IsOpen)
                     {
-                        _cargo.SelectTab(1);
                         OpenCargo();
                     }
                 }
@@ -1163,8 +1156,6 @@ namespace MoonProject.UI
                     break;
                 }
             }
-
-            _card.EnqueueLog(repaired.FriendId);
         }
 
         private void OnLanguageChanged(LanguageChanged changed)

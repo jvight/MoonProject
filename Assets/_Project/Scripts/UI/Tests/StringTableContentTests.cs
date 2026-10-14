@@ -102,7 +102,7 @@ namespace MoonProject.UI.Tests
             foreach (string key in new[]
                      {
                          UiKeys.CardCaption, UiKeys.CardClose,
-                         UiKeys.LogCaption, UiKeys.CrewLogCaption, UiKeys.LinerCaption,
+                         UiKeys.CrewLogCaption, UiKeys.LinerCaption,
                          UiKeys.TapeCount, UiKeys.PauseCassettes, UiKeys.PauseRelays,
                          UiKeys.RecipeRow, UiKeys.RewardTitle, UiKeys.StationOffline,
                          UiKeys.CrateCaption, UiKeys.CargoWaiting, UiKeys.CargoSummary,
