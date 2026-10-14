@@ -308,13 +308,29 @@ namespace MoonProject.Gameplay.PlayModeTests
                 "it rests in the crate's open mouth, never on the ground");
             Assert.Greater(crate.PresentPoint.y, crate.ItemSocket.position.y,
                 "lifted off the crate's floor to its rim, where it reads from outside");
+            CargoHold hold = gameplay.Materials.Hold;
+            hold.Clear();
+            Assert.AreEqual(0, gameplay.Materials.Collect(SalvageMaterial.Metal, hold.SlotCount * 4),
+                "fill every hold slot with Metal");
+            Assert.IsFalse(hold.HasFreeSlot);
+            yield return null;
             yield return null;
             Assert.IsNull(gameplay.Containers.Candidate, "an open crate has nothing more to cut");
+            Assert.IsFalse(gameplay.Hints.TryGet(InteractionKind.PickUp, out _),
+                "a full hold offers no pickup for the coil: it stays where it was found");
+            Assert.IsTrue(field.IsResting(0), "still resting in the crate's mouth");
+            Assert.AreEqual(TowerPartState.Waiting, parts.StateOf(0));
+
+            hold.Clear();
+            yield return null;
             yield return PickupPress.Take(this, _fixture.Gameplay, 2f, "the coil");
             yield return Waits.Until(() => found.Count > 0, 5f);
             Assert.AreEqual("Part_TowerCoil", found[0].PartId);
             Assert.AreEqual(1, found[0].TowerLevel);
-            Assert.AreEqual(TowerPartState.Carried, parts.StateOf(0), "it rides home on 07's back");
+            Assert.AreEqual(TowerPartState.Carried, parts.StateOf(0), "it rides home in 07's hold");
+            Assert.IsTrue(hold.HasPart("Part_TowerCoil"), "stored in the hold");
+            Assert.AreEqual("Part_TowerCoil", hold.GetPart(0));
+            Assert.AreEqual(1, hold.UsedSlots, "one hold slot used");
             Assert.IsFalse(field.IsResting(0));
             Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase(Tower));
 
@@ -322,6 +338,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Waits.Until(() => delivered.Count > 0, 2f);
             Assert.AreEqual("Part_TowerCoil", delivered[0].PartId);
             Assert.AreEqual(0, field.Feeding, "parked on the pad, 07 hands the coil to the port");
+            Assert.IsFalse(hold.HasPart("Part_TowerCoil"), "delivering it frees the hold slot");
+            Assert.AreEqual(0, hold.UsedSlots);
             yield return Waits.Until(() => field.Feeding < 0, _fixture.ProgressionTuning.PartFeedSeconds + 1f);
             Assert.AreEqual(TowerPartState.Delivered, parts.StateOf(0));
             Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out hint));

@@ -163,6 +163,46 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void StoryParts_TakeAHoldSlot_StayPutWhenFull_LeaveOnDelivery_AndLoadFromA055SaveIntoTheHold()
+        {
+            var parts = new TowerParts(_events, "radio_tower", new[]
+            {
+                new TowerPart("Part_TowerCoil", 1, TowerPartSource.SiteHeart, "site.depot", Vector2.zero),
+                new TowerPart("Part_Transformer", 2, TowerPartSource.SiteHeart, "site.garage", Vector2.zero),
+            }, _stock);
+            _stock.Collect(SalvageMaterial.Metal, 4);
+            Assert.IsTrue(parts.PickUp(0, Vector3.zero), "picked up: the coil takes a free hold slot");
+            Assert.AreEqual(TowerPartState.Carried, parts.StateOf(0));
+            Assert.AreEqual(2, _stock.Hold.UsedSlots, "1 material slot + 1 story part slot");
+            Assert.AreEqual(1, _stock.Hold.MaterialSlots);
+            Assert.IsTrue(_stock.Hold.HasPart("Part_TowerCoil"));
+            Assert.AreEqual(string.Empty, _stock.Hold.GetPart(0), "slot 0 holds the Metal stack");
+            Assert.AreEqual("Part_TowerCoil", _stock.Hold.GetPart(1), "slot 1 holds the carried coil");
+
+            Assert.AreEqual(0, _stock.Collect(SalvageMaterial.Metal, 6 * 4), "6 more material slots fill the 8-slot hold");
+            Assert.AreEqual(8, _stock.Hold.UsedSlots);
+            Assert.IsFalse(_stock.Hold.HasFreeSlot, "no free slot left");
+            Assert.IsFalse(parts.PickUp(1, Vector3.zero), "a full hold keeps the transformer where it was");
+            Assert.AreEqual(TowerPartState.Waiting, parts.StateOf(1));
+            Assert.IsFalse(_stock.Hold.HasPart("Part_Transformer"));
+
+            parts.Deliver(0, Vector3.zero);
+            Assert.AreEqual(TowerPartState.Delivered, parts.StateOf(0));
+            Assert.IsFalse(_stock.Hold.HasPart("Part_TowerCoil"), "delivering the coil frees its slot");
+            Assert.AreEqual(7, _stock.Hold.UsedSlots);
+            Assert.IsTrue(_stock.Hold.HasFreeSlot);
+
+            Assert.AreEqual(0, _stock.Collect(SalvageMaterial.Wiring, 4), "the freed 8th slot takes Wiring");
+            Assert.AreEqual(8, _stock.Hold.UsedSlots);
+            parts.Restore(new TowerPartsSaveData { carried = new[] { "Part_Transformer" } });
+            Assert.AreEqual(TowerPartState.Carried, parts.StateOf(1));
+            Assert.IsTrue(_stock.Hold.HasPart("Part_Transformer"), "a 0.5.5 save with a part carried loads it into the hold");
+            Assert.AreEqual(8, _stock.Hold.UsedSlots);
+            Assert.AreEqual("Part_Transformer", _stock.Hold.GetPart(7));
+            Assert.AreEqual(4, _stock.Home.Units(SalvageMaterial.Wiring), "the displaced stack went to home's shelves: nothing lost");
+        }
+
+        [Test]
         public void TheCatalog_KnowsEachMaterialsStackAndKeys()
         {
             Assert.AreEqual(Enum.GetValues(typeof(SalvageMaterial)).Length, SalvageMaterials.Count);

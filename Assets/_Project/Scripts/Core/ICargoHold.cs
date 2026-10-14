@@ -9,5 +9,11 @@ namespace MoonProject.Core
     {
         /// <summary>Bundles waiting in the world because the hold was full.</summary>
         int WaitingBundles { get; }
+
+        /// <summary>The story part id occupying slot <paramref name="index"/> (0..<see cref="IMaterialSlots.SlotCount"/> - 1), or empty.</summary>
+        string GetPart(int index);
+
+        /// <summary>True when story part <paramref name="partId"/> is in the hold.</summary>
+        bool HasPart(string partId);
     }
 }

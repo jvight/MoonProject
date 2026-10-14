@@ -71,8 +71,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(crate.Opened, "a new game's crate is sealed");
             gameplay.TowerParts.Restore(new TowerPartsSaveData { carried = new[] { "Part_TowerCoil" } });
             gameplay.TowerPartField.Sync();
-            Assert.IsTrue(crate.StandsOpen, "the coil already rides on 07: its crate stands open");
+            Assert.IsTrue(crate.StandsOpen, "the coil already rides in 07's hold: its crate stands open");
             Assert.IsFalse(gameplay.TowerPartField.IsResting(0), "and holds nothing");
+            Assert.IsTrue(gameplay.Materials.Hold.HasPart("Part_TowerCoil"), "held in 07's hold");
         }
 
         private static SealedContainer Coil(GameplaySystem gameplay)

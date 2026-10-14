@@ -9,7 +9,7 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// The tower's components (docs/features/M3-16 P1): a tower level with a part needs it besides materials, so power
     /// is earned by a find. A part waits where it lies until 07 picks it up (<see cref="PickUp"/>, publishing
-    /// <see cref="ComponentFound"/>), rides on 07's back, and is fed to the tower's port (<see cref="Deliver"/>,
+    /// <see cref="ComponentFound"/>), rides in 07's hold, and is fed to the tower's port (<see cref="Deliver"/>,
     /// publishing <see cref="ComponentDelivered"/>); only then can its level be built. Parts are kept in level order.
     /// </summary>
     public sealed class TowerParts : IComponentGate
@@ -18,9 +18,10 @@ namespace MoonProject.Gameplay
         private readonly string _towerId;
         private readonly TowerPart[] _parts;
         private readonly TowerPartState[] _states;
+        private readonly MaterialStock _stock;
 
         /// <param name="towerId">The radio tower's upgrade id: the only upgrade whose levels need parts.</param>
-        public TowerParts(EventBus events, string towerId, IReadOnlyList<TowerPart> parts)
+        public TowerParts(EventBus events, string towerId, IReadOnlyList<TowerPart> parts, MaterialStock stock = null)
         {
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _towerId = string.IsNullOrEmpty(towerId)
@@ -31,6 +32,7 @@ namespace MoonProject.Gameplay
                 throw new ArgumentNullException(nameof(parts));
             }
 
+            _stock = stock;
             _parts = new TowerPart[parts.Count];
             for (int i = 0; i < _parts.Length; i++)
             {
@@ -83,26 +85,35 @@ namespace MoonProject.Gameplay
             return null;
         }
 
-        /// <summary>The lowest-level part riding on 07, or -1.</summary>
+        /// <summary>The lowest-level part carried in 07's hold, or -1.</summary>
         public int FirstCarried()
         {
             return Array.IndexOf(_states, TowerPartState.Carried);
         }
 
-        /// <summary>07 picked up the waiting part at <paramref name="index"/> at <paramref name="position"/>.</summary>
-        public void PickUp(int index, Vector3 position)
+        /// <summary>
+        /// 07 picked up the waiting part at <paramref name="index"/> at <paramref name="position"/> into its hold;
+        /// false when the part is not waiting or the hold has no free slot.
+        /// </summary>
+        public bool PickUp(int index, Vector3 position)
         {
             if (_states[index] != TowerPartState.Waiting)
             {
-                return;
+                return false;
+            }
+
+            if (_stock != null && !_stock.Hold.TryAddPart(_parts[index].PartId))
+            {
+                return false;
             }
 
             _states[index] = TowerPartState.Carried;
             _events.Publish(new ComponentFound(_parts[index].PartId, _parts[index].TowerLevel, position, false));
+            return true;
         }
 
         /// <summary>
-        /// The carried part at <paramref name="index"/> went into the port's hopper at <paramref name="port"/>.
+        /// The carried part at <paramref name="index"/> left 07's hold for the port's hopper at <paramref name="port"/>.
         /// </summary>
         public void Deliver(int index, Vector3 port)
         {
@@ -111,6 +122,7 @@ namespace MoonProject.Gameplay
                 return;
             }
 
+            _stock?.Hold.RemovePart(_parts[index].PartId);
             _states[index] = TowerPartState.Delivered;
             _events.Publish(new ComponentDelivered(_parts[index].PartId, _parts[index].TowerLevel, port));
         }
@@ -137,6 +149,7 @@ namespace MoonProject.Gameplay
         /// <summary>Puts each part where the save says, silently (a loaded game); unknown ids are ignored.</summary>
         public void Restore(TowerPartsSaveData data)
         {
+            _stock?.Hold.ClearParts();
             for (int i = 0; i < _parts.Length; i++)
             {
                 string id = _parts[i].PartId;
@@ -145,12 +158,17 @@ namespace MoonProject.Gameplay
                     : data != null && Array.IndexOf(data.carried ?? Array.Empty<string>(), id) >= 0
                         ? TowerPartState.Carried
                         : TowerPartState.Waiting;
+                if (_states[i] == TowerPartState.Carried && _stock != null)
+                {
+                    _stock.MakeRoomForPart();
+                    _stock.Hold.TryAddPart(id);
+                }
             }
         }
 
         /// <summary>
-        /// Tells Rover which parts ride on 07 as the game starts (<see cref="ComponentFound"/> with Restored, at no
-        /// particular position), so they are on its back at once.
+        /// Publishes which parts 07 carries in its hold as the game starts (<see cref="ComponentFound"/> with Restored,
+        /// at no particular position).
         /// </summary>
         public void Announce()
         {
