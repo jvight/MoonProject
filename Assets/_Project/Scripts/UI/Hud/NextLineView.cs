@@ -1,5 +1,6 @@
 using System;
 using MoonProject.Core;
+using MoonProject.Gameplay;
 
 namespace MoonProject.UI
 {
@@ -47,8 +48,9 @@ namespace MoonProject.UI
             bool wantBattery = batteryOpen && battery.WantsShown;
             bool wantNext = !wantBattery && nextOpen && line.WantsShown;
             bool sameSource = _showingBattery == wantBattery;
-            bool shown = (wantBattery || wantNext) && (sameSource || _reveal.IsHidden);
-            if (shown && (!sameSource || (wantNext && !ReferenceEquals(_key, line.Key))))
+            bool sameStep = sameSource && (!wantNext || _key.Length == 0 || SameStep(_key, line.Key));
+            bool shown = (wantBattery || wantNext) && (sameStep || _reveal.IsHidden);
+            if (shown && (!sameSource || (wantNext && !string.Equals(_key, line.Key, StringComparison.Ordinal))))
             {
                 _showingBattery = wantBattery;
                 _key = wantNext ? line.Key : string.Empty;
@@ -70,10 +72,20 @@ namespace MoonProject.UI
             {
                 _layout.NextLineText.text = battery.Text;
             }
+            else if (ProgressionKeys.TryParseGarageScrap(_key, out int remaining))
+            {
+                _layout.NextLineText.text = string.Format(_localization.Get(ProgressionKeys.NextGarageScrap), remaining);
+            }
             else if (_key.Length > 0)
             {
                 _layout.NextLineText.text = _localization.Get(_key);
             }
+        }
+
+        private static bool SameStep(string a, string b)
+        {
+            return string.Equals(a, b, StringComparison.Ordinal) ||
+                   (ProgressionKeys.TryParseGarageScrap(a, out _) && ProgressionKeys.TryParseGarageScrap(b, out _));
         }
     }
 }

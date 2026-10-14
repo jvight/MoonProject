@@ -44,6 +44,12 @@ namespace MoonProject.UI
         {
             _onStep += deltaTime;
             _still = speed < _settings.StillSpeed ? _still + deltaTime : 0f;
+            if (ProgressionKeys.IsGarageBeat(Key))
+            {
+                WantsShown = guidance;
+                return;
+            }
+
             float patience = ProgressionKeys.SpeaksOfTargets(Key) ? _settings.StepPatienceSeconds
                 : _settings.TeachingPatienceSeconds;
             WantsShown = guidance && Key.Length > 0 && _onStep >= patience && _still >= _settings.StillSeconds;

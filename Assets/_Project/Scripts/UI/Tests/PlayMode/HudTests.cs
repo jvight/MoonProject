@@ -618,6 +618,9 @@ namespace MoonProject.UI.PlayModeTests
         {
             Boot();
             yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new TickerLine(UiTestRig.HomeLine));
+            Events.Publish(new PlaceFirstApproached("place.tower"));
             _rig.Fakes.Upgrade = _rig.TestTower();
             _rig.Fakes.SetMaterials(3, 1, 0);
             _rig.Fakes.AtStation = true;
@@ -625,8 +628,9 @@ namespace MoonProject.UI.PlayModeTests
             float until = Time.realtimeSinceStartup + 8f;
             while (Time.realtimeSinceStartup < until)
             {
-                int up = (_rig.Ui.Prompt.IsVisible ? 1 : 0) + (_rig.Ui.Tower.IsVisible ? 1 : 0) +
-                         (_rig.Ui.RecipeCard.IsVisible ? 1 : 0) + (_rig.Ui.PlaceCard.IsVisible ? 1 : 0) +
+                int up = (_rig.Ui.Prompt.IsVisible ? 1 : 0) + (_rig.Ui.LookUp.IsVisible ? 1 : 0) +
+                         (_rig.Ui.Tower.IsVisible ? 1 : 0) + (_rig.Ui.RecipeCard.IsVisible ? 1 : 0) +
+                         (_rig.Ui.PlaceCard.IsVisible ? 1 : 0) + (_rig.Ui.Ticker.IsVisible ? 1 : 0) +
                          (_rig.Ui.NextLine.IsVisible ? 1 : 0);
                 shownFrames += up > 0 ? 1 : 0;
                 Assert.LessOrEqual(up, 1, "one guidance element at a time");
@@ -634,6 +638,49 @@ namespace MoonProject.UI.PlayModeTests
             }
 
             Assert.Greater(shownFrames, 0, "the scene did guide, or the test proves nothing");
+        }
+
+        [UnityTest]
+        public IEnumerator GarageBeat_ShowsEachStepAlone_InOrder_AndClearsWhenDone()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, new Vector3(0f, 0f, 6f), true);
+            Events.Publish(new PlaceFirstApproached("place.dock"));
+            Events.Publish(new TickerLine(UiTestRig.HomeLine));
+
+            Events.Publish(new NextStepChanged(ProgressionKeys.GarageScrapKey(3)));
+            yield return Seconds(_rig.Tuning.Guidance.Line.FadeIn + 0.3f);
+            Assert.IsTrue(_rig.Ui.NextLine.ShowsNext);
+            Assert.AreEqual(string.Format(Text(ProgressionKeys.NextGarageScrap), 3), _rig.Ui.Layout.NextLineText.text);
+            Assert.IsFalse(_rig.Ui.Prompt.IsVisible || _rig.Ui.PlaceCard.IsVisible || _rig.Ui.Ticker.IsVisible,
+                "only the garage step is on screen");
+
+            Events.Publish(new NextStepChanged(ProgressionKeys.GarageScrapKey(1)));
+            yield return null;
+            Assert.IsTrue(_rig.Ui.NextLine.ShowsNext, "piece count updates in place without fading out");
+            Assert.AreEqual(string.Format(Text(ProgressionKeys.NextGarageScrap), 1), _rig.Ui.Layout.NextLineText.text);
+
+            foreach (string key in new[]
+                     {
+                         ProgressionKeys.NextPort,
+                         ProgressionKeys.NextGarageCrate,
+                         ProgressionKeys.NextGarageDeck,
+                     })
+            {
+                Events.Publish(new NextStepChanged(key));
+                yield return Seconds(_rig.Tuning.Guidance.Line.FadeOut + _rig.Tuning.Guidance.Line.FadeIn + 0.3f);
+                Assert.IsTrue(_rig.Ui.NextLine.ShowsNext, key);
+                Assert.AreEqual(Text(key), _rig.Ui.Layout.NextLineText.text);
+                Assert.IsFalse(_rig.Ui.Prompt.IsVisible || _rig.Ui.PlaceCard.IsVisible || _rig.Ui.Ticker.IsVisible,
+                    $"only {key} is on screen");
+            }
+
+            _rig.Fakes.PrimaryHint = InteractionHint.None;
+            Events.Publish(new NextStepChanged(string.Empty));
+            yield return Seconds(_rig.Tuning.Guidance.Line.FadeOut + 0.2f);
+            Assert.IsFalse(_rig.Ui.NextLine.IsVisible, "clears when the garage beat is done");
         }
 
         [UnityTest]

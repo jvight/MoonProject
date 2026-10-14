@@ -59,6 +59,9 @@ namespace MoonProject.UI
         /// <summary>True while the line should be visible; false while it eases out or waits.</summary>
         public bool WantsShown => _phase == Phase.Showing;
 
+        /// <summary>True while a line is waiting, showing, or returning to claim the guidance slot.</summary>
+        public bool WantsSlot => (_phase != Phase.Idle && _phase != Phase.Leaving) || _waiting.Count > 0;
+
         /// <summary>True from the moment a line starts until it has eased out for good.</summary>
         public bool HasLine => _phase != Phase.Idle;
 
@@ -79,6 +82,26 @@ namespace MoonProject.UI
 
         /// <summary>Grows each time a line starts (not when a yielded line comes back).</summary>
         public int Starts { get; private set; }
+
+        /// <summary>True while <paramref name="key"/> is waiting or active on the ticker.</summary>
+        public bool HasKey(string key)
+        {
+            if (_phase != Phase.Idle && _phase != Phase.Leaving &&
+                string.Equals(_line.Key, key, StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            for (int i = 0; i < _waiting.Count; i++)
+            {
+                if (string.Equals(_waiting[i].Key, key, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         /// <summary>
         /// Keeps the current line up for at least <paramref name="seconds"/> of rest when it is
