@@ -543,11 +543,22 @@ namespace MoonProject.UI.PlayModeTests
         [UnityTest]
         public IEnumerator AScan_ShowsItsPickupNote_AndACompletedBlueprintOneTickerLine()
         {
+            InputSystem.AddDevice<Keyboard>();
             Boot();
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            yield return Seconds(1f);
-            Events.Publish(new FragmentScanned("fragment.cradle.1", "rover.cargo_cradle", 1, 3, false, 0));
+            var fragment = new Vector3(0f, 0.5f, 4f);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Scan, fragment, true);
             yield return Seconds(1.5f);
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "the first fragment teaches the scan");
+            Assert.AreEqual(Text(UiKeys.Hint(InteractionKind.Scan)), _rig.Ui.Layout.PromptWord.text);
+            Assert.AreEqual("E", _rig.Ui.Layout.PromptGlyphLabel.text);
+
+            Events.Publish(new FragmentScanned("fragment.cradle.1", "rover.cargo_cradle", 1, 3, false, 0));
+            _rig.Fakes.PrimaryHint = InteractionHint.None;
+            yield return Seconds(1.5f);
+            Assert.AreEqual(1, _rig.Ui.Ledger.Used(InteractionKind.Scan));
+            Assert.IsFalse(_rig.Ui.Ledger.ShouldTeach(InteractionKind.Scan), "retired after the first scan");
+            Assert.IsFalse(_rig.Ui.Prompt.IsVisible);
             Assert.IsTrue(_rig.Ui.CrateNote.IsVisible, "the note is a pickup note, not a card or a line");
             StringAssert.Contains("2", _rig.Ui.CrateNote.Text);
             StringAssert.Contains(Text(UiKeys.UpgradeName("rover.cargo_cradle")), _rig.Ui.CrateNote.Text);
