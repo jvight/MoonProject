@@ -1253,8 +1253,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             Begin();
             CassetteSite tape = _gameplay.Cassettes.Site(CassetteIndex(DustAndHoney));
-            Vector3 stand = tape.Position + tape.Facing * 6f;
-            yield return DriveTo(new Vector3(stand.x, 0f, stand.z), 2f, 0.8f, 90f, "06 beside the mouth relay's hut");
+            Vector3 stand = Flat(tape.Position + tape.Facing * 6f);
+            Vector3 elder = Flat(_gameplay.Salvage.FindDerelict(WorldAnchorIds.Micro06).Root.position);
+            yield return CircleRound(elder, Anchor(WorldAnchorIds.Micro06).Radius + RingMargin, stand);
+            yield return DriveTo(stand, 2f, 0.8f, 90f, "06 beside the mouth relay's hut");
             Review(tape.Position + tape.Facing * 3f + Vector3.up * 1.4f, tape.Position, "28-tape-case-on-06");
             SealedContainer tapeCase = _gameplay.Cassettes.Container(CassetteIndex(DustAndHoney));
             Vector3 front = tapeCase.CutPoint.position + tapeCase.Root.forward * SealStandOff;
