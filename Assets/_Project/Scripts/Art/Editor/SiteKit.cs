@@ -19,8 +19,15 @@ namespace MoonProject.Art.Editor
         // Only the flat crest of a drift takes the lighter dust; lumps keep it from reading as a dome.
         private const float DriftTop = 0.97f;
         private const float DriftLumps = 0.09f;
+        public const float SheetFront = SheetThickness * 0.5f + RidgeRise;
         private const float SheetThickness = 0.04f;
         private const float RidgePitch = 0.45f;
+        private const float RidgeWidth = 0.14f;
+        private const float RidgeBevel = 0.05f;
+        private const float RidgeRise = 0.001f;
+        private const float SheetRustHeight = 0.2f;
+        private const float SheetRustShare = 0.3f;
+        private const float SheetRustFacing = 0.5f;
         private const int CableSides = 5;
         private const float StreakWidth = 0.05f;
 
@@ -59,16 +66,33 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public static void Sheet(LowPolyMeshBuilder b, Matrix4x4 face, float width, float height, PaletteSwatch paint)
         {
-            b.Box(face, new Vector3(width, height, SheetThickness), paint);
             int ridges = Mathf.Max(2, Mathf.RoundToInt(width / RidgePitch));
+            float halfWidth = width * 0.5f;
+            float halfDepth = SheetThickness * 0.5f;
+            float crest = halfDepth + RidgeRise;
+            float halfRidge = RidgeWidth * 0.5f;
+            float halfCrest = halfRidge - RidgeBevel;
+            var profile = new Vector2[4 + 4 * ridges];
+            int p = 0;
+            profile[p++] = new Vector2(halfWidth, -halfDepth);
+            profile[p++] = new Vector2(-halfWidth, -halfDepth);
+            profile[p++] = new Vector2(-halfWidth, halfDepth);
             for (int i = 0; i < ridges; i++)
             {
-                float x = -width * 0.5f + (i + 0.5f) * width / ridges;
-                b.Box(face * At(x, 0f, 0.035f), new Vector3(0.07f, height, 0.03f), paint);
+                float x = -halfWidth + (i + 0.5f) * width / ridges;
+                profile[p++] = new Vector2(x - halfRidge, halfDepth);
+                profile[p++] = new Vector2(x - halfCrest, crest);
+                profile[p++] = new Vector2(x + halfCrest, crest);
+                profile[p++] = new Vector2(x + halfRidge, halfDepth);
             }
 
-            b.Box(face * At(0f, -height * 0.5f + 0.14f, 0.024f), new Vector3(width * 0.85f, 0.2f, 0.008f),
-                PaletteSwatch.Rust);
+            profile[p] = new Vector2(halfWidth, halfDepth);
+            float rustHeight = Mathf.Min(SheetRustHeight, height * SheetRustShare);
+            float upperHeight = height - rustHeight;
+            b.Extrude(face * At(new Vector3(0f, rustHeight * 0.5f, 0f), AlongZ), profile, upperHeight, paint);
+            Vector3 outward = face.MultiplyVector(Vector3.forward);
+            b.Extrude(face * At(new Vector3(0f, -height * 0.5f + rustHeight * 0.5f, 0f), AlongZ), profile, rustHeight,
+                Paint.Facing(PaletteSwatch.Rust, paint, outward, SheetRustFacing));
         }
 
         /// <summary>

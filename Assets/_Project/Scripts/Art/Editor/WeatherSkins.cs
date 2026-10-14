@@ -57,6 +57,13 @@ namespace MoonProject.Art.Editor
         // Faces starting above this share of the rust's or the dust's reach would barely shade: they are left out.
         private const float GradientReach = 0.85f;
 
+        // Corrugation flutes sharing a panelled wall's quantized normal and within FluteOffsetTolerance share its
+        // plane; faces pressed flush against an opposite face inside a joint are left unskinned.
+        private const float FluteNormalDot = 0.999f;
+        private const float FluteOffsetTolerance = 0.002f;
+        private const float BuriedNormalDot = -0.99f;
+        private const float BuriedPlaneTolerance = 0.002f;
+
         /// <summary>The faces of <paramref name="surface"/> (glowing glass left out) by plane and paint.</summary>
         public static List<SkinPlane> Planes(LowPolyMeshBuilder surface)
         {
@@ -64,10 +71,22 @@ namespace MoonProject.Art.Editor
             var lookup = new Dictionary<long, SkinPlane>();
             IReadOnlyList<Vector3> positions = surface.Positions;
             IReadOnlyList<Vector3> normals = surface.Normals;
-            for (int t = 0; t < surface.TriangleCount; t++)
+            int count = surface.TriangleCount;
+            var mins = new Vector3[count];
+            var maxs = new Vector3[count];
+            for (int t = 0; t < count; t++)
+            {
+                Vector3 a = positions[t * 3];
+                Vector3 b = positions[t * 3 + 1];
+                Vector3 c = positions[t * 3 + 2];
+                mins[t] = Vector3.Min(a, Vector3.Min(b, c));
+                maxs[t] = Vector3.Max(a, Vector3.Max(b, c));
+            }
+
+            for (int t = 0; t < count; t++)
             {
                 PaletteSwatch swatch = surface.SwatchOf(t);
-                if (Palette.IsEmissive(swatch))
+                if (Palette.IsEmissive(swatch) || IsBuried(surface, t, mins, maxs))
                 {
                     continue;
                 }
@@ -85,6 +104,26 @@ namespace MoonProject.Art.Editor
                 }
 
                 plane.Add(t, positions[t * 3], positions[t * 3 + 1], positions[t * 3 + 2]);
+            }
+
+            for (int i = planes.Count - 1; i >= 0; i--)
+            {
+                SkinPlane flute = planes[i];
+                if (Panelled(flute))
+                {
+                    continue;
+                }
+
+                SkinPlane host = FindFluteHost(planes, flute, positions);
+                if (host != null)
+                {
+                    foreach (int t in flute.Triangles)
+                    {
+                        host.Add(t, positions[t * 3], positions[t * 3 + 1], positions[t * 3 + 2]);
+                    }
+
+                    planes.RemoveAt(i);
+                }
             }
 
             return planes;
@@ -158,8 +197,8 @@ namespace MoonProject.Art.Editor
                                 continue;
                             }
 
-                            Lift(piece, flat, corners, normal * lift, points);
-                            MeshRange range = skin.Polygon(points, normal, plane.Swatch);
+                            Lift(piece, flat, corners, plane.Normal * lift, points);
+                            MeshRange range = skin.Polygon(points, plane.Normal, plane.Swatch);
                             Tone(skin, range, plane.Swatch, Roll(plane.Key, i, j, 0, profile.Seed), profile);
                         }
                     }
@@ -293,7 +332,7 @@ namespace MoonProject.Art.Editor
             int bolt = skin.TriangleCount;
             run.Clear();
             Bloom(run, new Vector2(stain.X, stain.Top - stain.Width * 0.6f), stain.Width * 0.75f);
-            Lay(skin, surface, plane, run, corners, flat, scratch, points, lift + 0.001f, PaletteSwatch.Rust);
+            Lay(skin, surface, plane, run, corners, flat, scratch, points, lift + 0.0015f, PaletteSwatch.Rust);
             skin.Shade(skin.RangeFrom(bolt), dark, 1f);
         }
 
@@ -373,9 +412,8 @@ namespace MoonProject.Art.Editor
                     continue;
                 }
 
-                Vector3 normal = surface.Normals[t * 3];
-                Lift(piece, flat, corners, normal * lift, points);
-                skin.Polygon(points, normal, swatch);
+                Lift(piece, flat, corners, plane.Normal * lift, points);
+                skin.Polygon(points, plane.Normal, swatch);
             }
         }
 
@@ -486,6 +524,146 @@ namespace MoonProject.Art.Editor
         {
             IReadOnlyList<Vector3> p = builder.Positions;
             return Mathf.Min(p[triangle * 3].y, Mathf.Min(p[triangle * 3 + 1].y, p[triangle * 3 + 2].y));
+        }
+
+        /// <summary>
+        /// Whether triangle <paramref name="triangle"/> lies flush against an opposite-facing face of
+        /// <paramref name="surface"/> (an internal seam between two abutting parts that should not be skinned).
+        /// </summary>
+        private static bool IsBuried(LowPolyMeshBuilder surface, int triangle, Vector3[] mins, Vector3[] maxs)
+        {
+            IReadOnlyList<Vector3> positions = surface.Positions;
+            IReadOnlyList<Vector3> normals = surface.Normals;
+            Vector3 normal = normals[triangle * 3];
+            Vector3 a = positions[triangle * 3];
+            Vector3 b = positions[triangle * 3 + 1];
+            Vector3 c = positions[triangle * 3 + 2];
+            Vector3 min = mins[triangle];
+            Vector3 max = maxs[triangle];
+            Vector3 edge = b - a;
+            if (edge.sqrMagnitude < 1e-12f)
+            {
+                return true;
+            }
+
+            Vector3 uAxis = edge.normalized;
+            Vector3 vAxis = Vector3.Cross(normal, uAxis);
+            Vector2 b2 = new Vector2(Vector3.Dot(b - a, uAxis), Vector3.Dot(b - a, vAxis));
+            Vector2 c2 = new Vector2(Vector3.Dot(c - a, uAxis), Vector3.Dot(c - a, vAxis));
+            float twiceArea = Mathf.Abs(Cross(b2, c2));
+            if (twiceArea <= 1e-8f)
+            {
+                return true;
+            }
+
+            List<Vector2> piece = null;
+            List<Vector2> scratch = null;
+            Vector2[] clipper = null;
+            float covered = 0f;
+            int count = surface.TriangleCount;
+            for (int other = 0; other < count; other++)
+            {
+                if (other == triangle)
+                {
+                    continue;
+                }
+
+                Vector3 otherMin = mins[other];
+                Vector3 otherMax = maxs[other];
+                if (otherMin.x > max.x + BuriedPlaneTolerance || otherMax.x < min.x - BuriedPlaneTolerance
+                    || otherMin.y > max.y + BuriedPlaneTolerance || otherMax.y < min.y - BuriedPlaneTolerance
+                    || otherMin.z > max.z + BuriedPlaneTolerance || otherMax.z < min.z - BuriedPlaneTolerance)
+                {
+                    continue;
+                }
+
+                if (Vector3.Dot(normal, normals[other * 3]) > BuriedNormalDot)
+                {
+                    continue;
+                }
+
+                Vector3 oa = positions[other * 3];
+                if (Mathf.Abs(Vector3.Dot(normal, oa - a)) > BuriedPlaneTolerance)
+                {
+                    continue;
+                }
+
+                piece ??= new List<Vector2>(6);
+                scratch ??= new List<Vector2>(6);
+                clipper ??= new Vector2[3];
+                Vector3 ob = positions[other * 3 + 1];
+                Vector3 oc = positions[other * 3 + 2];
+                Vector2 oa2 = new Vector2(Vector3.Dot(oa - a, uAxis), Vector3.Dot(oa - a, vAxis));
+                Vector2 ob2 = new Vector2(Vector3.Dot(ob - a, uAxis), Vector3.Dot(ob - a, vAxis));
+                Vector2 oc2 = new Vector2(Vector3.Dot(oc - a, uAxis), Vector3.Dot(oc - a, vAxis));
+                bool clockwise = Cross(ob2 - oa2, oc2 - oa2) < 0f;
+                clipper[0] = oa2;
+                clipper[1] = clockwise ? oc2 : ob2;
+                clipper[2] = clockwise ? ob2 : oc2;
+                piece.Clear();
+                piece.Add(Vector2.zero);
+                piece.Add(b2);
+                piece.Add(c2);
+                ClipConvex(piece, clipper, scratch);
+                covered += TwicePolygonArea(piece);
+                if (covered >= twiceArea * 0.5f)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static float TwicePolygonArea(List<Vector2> polygon)
+        {
+            float sum = 0f;
+            for (int i = 2; i < polygon.Count; i++)
+            {
+                sum += Mathf.Abs(Cross(polygon[i - 1] - polygon[0], polygon[i] - polygon[0]));
+            }
+
+            return sum;
+        }
+
+        /// <summary>
+        /// Finds the panelled wall or roof plane that a shallow corrugation flute belongs to, if any.
+        /// </summary>
+        private static SkinPlane FindFluteHost(List<SkinPlane> planes, SkinPlane flute,
+            IReadOnlyList<Vector3> positions)
+        {
+            Vector3 sample = positions[flute.Triangles[0] * 3];
+            SkinPlane best = null;
+            float bestOffset = FluteOffsetTolerance;
+            foreach (SkinPlane candidate in planes)
+            {
+                if (candidate == flute || candidate.Swatch != flute.Swatch || !Panelled(candidate))
+                {
+                    continue;
+                }
+
+                if (Vector3.Dot(candidate.Normal, flute.Normal) < FluteNormalDot)
+                {
+                    continue;
+                }
+
+                Vector2 projected = candidate.Project(sample);
+                if (projected.x < candidate.Min.x - OffsetStep || projected.x > candidate.Max.x + OffsetStep
+                    || projected.y < candidate.Min.y - OffsetStep || projected.y > candidate.Max.y + OffsetStep)
+                {
+                    continue;
+                }
+
+                Vector3 hostPoint = positions[candidate.Triangles[0] * 3];
+                float offset = Mathf.Abs(Vector3.Dot(candidate.Normal, sample - hostPoint));
+                if (offset <= bestOffset)
+                {
+                    bestOffset = offset;
+                    best = candidate;
+                }
+            }
+
+            return best;
         }
 
         private static long Key(Vector3Int normal, int offset, PaletteSwatch swatch)
