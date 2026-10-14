@@ -89,6 +89,7 @@ namespace MoonProject.Gameplay.Map
         private static Entry SiteEntry(SalvageSite site, IBlueprintBoard board, ScanField scans)
         {
             string kit = scans.KitAt(site.Id);
+            int place = scans.IndexOf(site.Id);
 
             bool HeartWaits()
             {
@@ -116,7 +117,8 @@ namespace MoonProject.Gameplay.Map
                         }
                     }
 
-                    return site.Remaining < site.Pieces.Count;
+                    return site.Remaining < site.Pieces.Count ||
+                           place >= 0 && scans.Left(place) < scans.FragmentCount(place);
                 },
                 Deeds = () =>
                 {
@@ -134,7 +136,7 @@ namespace MoonProject.Gameplay.Map
                     return deeds;
                 },
                 StateLine = () => HeartWaits() ? MapKeys.StateHeartWaiting
-                    : site.IsPickedClean ? MapKeys.StatePickedClean
+                    : !site.AnswersSonar ? MapKeys.StatePickedClean
                     : null,
             };
         }

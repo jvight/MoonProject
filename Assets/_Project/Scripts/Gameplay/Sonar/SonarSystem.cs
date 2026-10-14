@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
@@ -8,9 +9,9 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// 07's listening, the sonar with no button (docs/design/first-hour-v2.md §3). From tower level 1 on, once 07 has
     /// rested a moment after driving somewhere new (<see cref="ListenGate"/>), it listens: <see cref="SonarPinged"/>
-    /// is published (the antenna lifts, the kalimba sounds) and a ring rolls over the ground; every salvage site with
-    /// something left to find (a piece to cut or a relic in its heart) answers when the ring has touched it (closer
-    /// ones sooner and brighter),
+    /// is published (the antenna lifts, the kalimba sounds) and a ring rolls over the ground; every salvage site and
+    /// every derelict standing alone with something left to find (a piece to cut, a relic in its heart, fragments to
+    /// scan, D2) answers when the ring has touched it (closer ones sooner and brighter); emptied, it falls quiet,
     /// publishing <see cref="SiteAnswered"/> and raising a light pillar on the horizon that stands for a while. A relic
     /// lying loose out in the world answers on its own (<see cref="RelicAnswered"/>), and a broken friend with its
     /// broken chirp (<see cref="FriendAnswered"/>) and a warm pillar. 07 turns to the nearest answer, then keeps
@@ -30,7 +31,8 @@ namespace MoonProject.Gameplay
         private IRoverRig _rig;
         private RelicField _relics;
         private FriendField _friends;
-        private SalvageField _salvage;
+        /// <summary>Every salvage site, then every derelict standing alone: what answers as a site.</summary>
+        private readonly List<SalvageSite> _answering = new List<SalvageSite>();
         private IRoverAbilities _abilities;
         private SonarSchedule _schedule;
         private SonarRing[] _rings = Array.Empty<SonarRing>();
@@ -70,10 +72,23 @@ namespace MoonProject.Gameplay
             _rig = services.Rig;
             _relics = relics ?? throw new ArgumentNullException(nameof(relics));
             _friends = friends != null ? friends : throw new ArgumentNullException(nameof(friends));
-            _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
+            if (salvage == null)
+            {
+                throw new ArgumentNullException(nameof(salvage));
+            }
+
             _abilities = abilities ?? throw new ArgumentNullException(nameof(abilities));
             int relicCount = relics.Relics.Count;
-            int answerers = relicCount + friends.Count + salvage.Sites.Count;
+            _answering.AddRange(salvage.Sites);
+            foreach (SalvageSite derelict in salvage.Derelicts)
+            {
+                if (salvage.StandsAlone(derelict))
+                {
+                    _answering.Add(derelict);
+                }
+            }
+
+            int answerers = relicCount + friends.Count + _answering.Count;
             _schedule = new SonarSchedule(answerers);
             _rings = new SonarRing[_tuning.RingPoolSize];
             for (int i = 0; i < _rings.Length; i++)
@@ -88,7 +103,7 @@ namespace MoonProject.Gameplay
                 bool friend = i >= relicCount && i < friendsEnd;
                 string id = i < relicCount ? relics.Relics[i].Definition.Id
                     : friend ? friends.Friends[i - relicCount].Definition.Id
-                    : salvage.Sites[i - friendsEnd].Id;
+                    : _answering[i - friendsEnd].Id;
                 _markers[i] = new SiteMarker("Marker_" + id, transform, _tuning, services.Terrain,
                     friend ? services.Visuals.FriendPillar : services.Visuals.SitePillar, services.Meshes.Pillar,
                     friend ? _tuning.FriendGlowScale : 1f);
@@ -98,13 +113,15 @@ namespace MoonProject.Gameplay
             return true;
         }
 
-        /// <summary>After a load: discovered sites with something left to find breathe on the sonar again.</summary>
+        /// <summary>
+        /// After a load: discovered sites and derelicts with something left to find breathe on the sonar again.
+        /// </summary>
         internal void RefreshDiscoveredSites()
         {
             int first = SiteMarkerStart;
-            for (int i = 0; i < _salvage.Sites.Count; i++)
+            for (int i = 0; i < _answering.Count; i++)
             {
-                SalvageSite site = _salvage.Sites[i];
+                SalvageSite site = _answering[i];
                 if (site.Discovered && site.AnswersSonar)
                 {
                     _markers[first + i].Place(site.Position);
@@ -158,9 +175,9 @@ namespace MoonProject.Gameplay
             }
 
             int first = SiteMarkerStart;
-            for (int i = 0; i < _salvage.Sites.Count; i++)
+            for (int i = 0; i < _answering.Count; i++)
             {
-                SalvageSite site = _salvage.Sites[i];
+                SalvageSite site = _answering[i];
                 _markers[first + i].Tick(site.Position, site.AnswersSonar, now);
             }
 
@@ -238,9 +255,9 @@ namespace MoonProject.Gameplay
             }
 
             int first = SiteMarkerStart;
-            for (int i = 0; i < _salvage.Sites.Count; i++)
+            for (int i = 0; i < _answering.Count; i++)
             {
-                SalvageSite site = _salvage.Sites[i];
+                SalvageSite site = _answering[i];
                 if (!site.AnswersSonar)
                 {
                     continue;
@@ -253,18 +270,18 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// A spotter friend found salvage site <paramref name="siteIndex"/>: it shows on the sonar (a softer pillar)
-        /// without a listen.
+        /// A spotter friend found salvage site <paramref name="siteIndex"/> (its index among the wrecks, which come first
+        /// among what answers): it shows on the sonar (a softer pillar) without a listen.
         /// </summary>
         internal void RevealSite(int siteIndex, float brightness)
         {
-            SalvageSite site = _salvage.Sites[siteIndex];
+            SalvageSite site = _answering[siteIndex];
             site.MarkDiscovered();
             _markers[SiteMarkerStart + siteIndex].Answer(site.Position, brightness, Time.time);
         }
 
         /// <summary>
-        /// The tower's listening sweep at the dock's evening (M3-16 P6): the nearest salvage site to
+        /// The tower's listening sweep at the dock's evening (M3-16 P6): the nearest salvage site or derelict to
         /// <paramref name="home"/> that still has something to find and has not been heard yet raises its pillar, or,
         /// with none left, the nearest broken friend not heard yet. False when nothing is left unheard.
         /// </summary>
@@ -272,9 +289,9 @@ namespace MoonProject.Gameplay
         {
             int site = -1;
             float best = float.PositiveInfinity;
-            for (int i = 0; i < _salvage.Sites.Count; i++)
+            for (int i = 0; i < _answering.Count; i++)
             {
-                SalvageSite candidate = _salvage.Sites[i];
+                SalvageSite candidate = _answering[i];
                 float distance = SurfaceRules.HorizontalDistance(home, candidate.Position);
                 if (!candidate.Discovered && candidate.AnswersSonar && distance < best)
                 {
@@ -328,7 +345,7 @@ namespace MoonProject.Gameplay
             int first = SiteMarkerStart;
             if (index >= first)
             {
-                SalvageSite site = _salvage.Sites[index - first];
+                SalvageSite site = _answering[index - first];
                 if (!site.AnswersSonar)
                 {
                     return;

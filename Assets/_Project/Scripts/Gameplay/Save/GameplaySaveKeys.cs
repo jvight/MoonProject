@@ -56,6 +56,6 @@ namespace MoonProject.Gameplay
         public const string Containers = "gameplay.containers";
         public const int ContainersVersion = 1;
         public const string Scans = "gameplay.scans";
-        public const int ScansVersion = 1;
+        public const int ScansVersion = 2;
     }
 }

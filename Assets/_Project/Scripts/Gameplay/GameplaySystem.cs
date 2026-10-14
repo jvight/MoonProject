@@ -417,6 +417,7 @@ namespace MoonProject.Gameplay
             context.Register<IBeamStatus>(services.Beam);
             context.Register<ITechTree>(Tech);
             context.Register<IRecoveryProgress>(Recovery);
+            context.Register<IScanSites>(Scans);
             Upgrades.PublishSignals();
             RegisterSaveSections(save);
         }
@@ -463,7 +464,7 @@ namespace MoonProject.Gameplay
             _saveTokens.Add(save.Register(new SaveSection<ContainersSaveData>(GameplaySaveKeys.Containers,
                 GameplaySaveKeys.ContainersVersion, Containers.Capture, Containers.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<ScansSaveData>(GameplaySaveKeys.Scans,
-                GameplaySaveKeys.ScansVersion, Scans.Capture, Scans.Restore)));
+                GameplaySaveKeys.ScansVersion, Scans.Capture, Scans.Restore, ScansSaveMigrations.Migrate)));
         }
 
         /// <summary>True while 07 rests at <paramref name="station"/>, free to fit or take off its parts.</summary>
@@ -550,12 +551,16 @@ namespace MoonProject.Gameplay
             string problem = null;
             foreach (SalvageSite site in _salvage.Sites)
             {
-                problem = problem ?? scans.AddHost(site.Id, site.Root);
+                SalvageSite heard = site;
+                problem = problem ?? scans.AddHost(site.Id, site.Root, site.Id, site.Position, site.Radius,
+                    () => heard.Discovered);
             }
 
             foreach (SalvageSite derelict in _salvage.Derelicts)
             {
-                problem = problem ?? scans.AddHost(derelict.Id, derelict.Root);
+                SalvageSite place = _salvage.HostOf(derelict) ?? derelict;
+                problem = problem ?? scans.AddHost(derelict.Id, derelict.Root, place.Id, place.Position, place.Radius,
+                    () => place.Discovered);
             }
 
             problem = problem ?? PlaceJumper(services, scans) ?? scans.Validate(Blueprints.Kits);
@@ -565,7 +570,63 @@ namespace MoonProject.Gameplay
                 return null;
             }
 
+            ConnectFinds(scans);
             return scans;
+        }
+
+        /// <summary>
+        /// Listening and the spotters count what else waits at a site (D2): its fragments still to scan and a derelict
+        /// inside it with pieces left; a derelict standing alone, its own fragments.
+        /// </summary>
+        private void ConnectFinds(ScanField scans)
+        {
+            foreach (SalvageSite site in _salvage.Sites)
+            {
+                int place = scans.IndexOf(site.Id);
+                var guests = new List<SalvageSite>();
+                foreach (SalvageSite derelict in _salvage.Derelicts)
+                {
+                    if (_salvage.HostOf(derelict) == site)
+                    {
+                        guests.Add(derelict);
+                    }
+                }
+
+                site.ConnectFinds(() => FragmentsLeft(scans, place) || PiecesLeft(guests));
+            }
+
+            foreach (SalvageSite derelict in _salvage.Derelicts)
+            {
+                if (_salvage.StandsAlone(derelict))
+                {
+                    int place = scans.IndexOf(derelict.Id);
+                    derelict.ConnectFinds(() => FragmentsLeft(scans, place));
+                }
+            }
+        }
+
+        /// <summary>The chasm's lip answers no listen: 07 knows it once it has been there.</summary>
+        private static bool NeverHeard()
+        {
+            return false;
+        }
+
+        private static bool FragmentsLeft(ScanField scans, int place)
+        {
+            return place >= 0 && scans.Left(place) > 0;
+        }
+
+        private static bool PiecesLeft(List<SalvageSite> sites)
+        {
+            for (int i = 0; i < sites.Count; i++)
+            {
+                if (!sites[i].IsPickedClean)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -589,7 +650,8 @@ namespace MoonProject.Gameplay
             jumper.name = services.Visuals.JumperWreck.name;
             return SalvageSiteBuilder.MakeSolid(jumper.transform) == null
                 ? "Art's jumper wreck has no mesh on its root"
-                : scans.AddHost(WorldAnchorIds.CanyonLip, jumper.transform);
+                : scans.AddHost(WorldAnchorIds.CanyonLip, jumper.transform, WorldAnchorIds.CanyonLip, lip.Position,
+                    lip.Radius, NeverHeard);
         }
 
         /// <summary>Another E verb is on offer: a scan waits for it (0.5.5 §1.2).</summary>

@@ -16,7 +16,7 @@ namespace MoonProject.Core.Map
         /// <summary>A friend was found here.</summary>
         Friend = 1 << 1,
 
-        /// <summary>A blueprint tube was found here.</summary>
+        /// <summary>The blueprint whose fragments lay here is learned.</summary>
         Blueprint = 1 << 2,
 
         /// <summary>The mast here was lit.</summary>

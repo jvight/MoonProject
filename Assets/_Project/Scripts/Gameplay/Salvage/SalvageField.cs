@@ -43,6 +43,8 @@ namespace MoonProject.Gameplay
 
         private readonly List<SalvageSite> _sites = new List<SalvageSite>();
         private readonly List<SalvageSite> _derelicts = new List<SalvageSite>();
+        private readonly Dictionary<string, SalvageSite> _hosts =
+            new Dictionary<string, SalvageSite>(StringComparer.Ordinal);
 
         /// <summary>Kestrel-3's scrap field (0.5.5 §2): its id everywhere (saves, events).</summary>
         public const string ScrapFieldId = "scrap.kestrel_trail";
@@ -84,9 +86,29 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// The derelicts on the routes (0.5.5 §1.7), in catalog order, then Kestrel-3's scrap field: their pieces are
-        /// cut like any site's, but they hold no relics or crew crate and never answer the sonar.
+        /// cut like any site's, but they hold no relics or crew crate. Those standing alone answer the sonar
+        /// (<see cref="StandsAlone"/>); one inside a wreck counts as its wreck's.
         /// </summary>
         public IReadOnlyList<SalvageSite> Derelicts => _derelicts;
+
+        /// <summary>
+        /// The wreck <paramref name="derelict"/> stands inside (the haul bot in the drill site), or null for one on its
+        /// own anchor.
+        /// </summary>
+        public SalvageSite HostOf(SalvageSite derelict)
+        {
+            return derelict != null && _hosts.TryGetValue(derelict.Id, out SalvageSite wreck) ? wreck : null;
+        }
+
+        /// <summary>
+        /// A derelict on its own anchor, not inside a wreck and not Kestrel-3's scrap field: a place of its own that
+        /// listening answers and the crew's map draws (D2).
+        /// </summary>
+        public bool StandsAlone(SalvageSite derelict)
+        {
+            return derelict != null && HostOf(derelict) == null &&
+                   !string.Equals(derelict.Id, ScrapFieldId, StringComparison.Ordinal);
+        }
 
         /// <summary>Every piece of every site and derelict.</summary>
         public IReadOnlyList<SalvagePiece> Pieces => _pieces;
@@ -218,7 +240,8 @@ namespace MoonProject.Gameplay
                     return false;
                 }
 
-                if (!string.IsNullOrEmpty(entries[i].HostSocket) && !TryHost(entries[i], anchor, out anchor))
+                SalvageSite wreck = null;
+                if (!string.IsNullOrEmpty(entries[i].HostSocket) && !TryHost(entries[i], anchor, out anchor, out wreck))
                 {
                     return false;
                 }
@@ -233,6 +256,10 @@ namespace MoonProject.Gameplay
                 }
 
                 sites.Add(site);
+                if (wreck != null)
+                {
+                    _hosts.Add(site.Id, wreck);
+                }
             }
 
             return true;
@@ -301,9 +328,10 @@ namespace MoonProject.Gameplay
         /// Where a derelict inside a wreck stands: the wreck's node, with the wreck's footprint. False (logged) when
         /// the wreck or its node is missing.
         /// </summary>
-        private bool TryHost(SalvageSiteEntry entry, WorldAnchor wreckAnchor, out WorldAnchor seat)
+        private bool TryHost(SalvageSiteEntry entry, WorldAnchor wreckAnchor, out WorldAnchor seat,
+            out SalvageSite wreck)
         {
-            SalvageSite wreck = Find(entry.AnchorId);
+            wreck = Find(entry.AnchorId);
             Transform socket = wreck != null ? wreck.Root.Find(entry.HostSocket) : null;
             if (socket == null)
             {
