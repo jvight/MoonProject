@@ -656,21 +656,6 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// The lab's reader took a blueprint tube 07 carried up (docs/features/M3-19 §5): the tube leaves 07's back into the
-    /// slot and the reader starts decoding it (<see cref="FindDecoded"/> follows). Rover hides the tube; Audio plays
-    /// the slot taking it and the reel.
-    /// </summary>
-    public readonly struct BlueprintDelivered
-    {
-        public BlueprintDelivered(string kitId)
-        {
-            KitId = kitId;
-        }
-
-        public string KitId { get; }
-    }
-
-    /// <summary>
     /// Kenji's pen plotter on the bay's back wall started drawing the sheet of decoded kit <see cref="KitId"/>
     /// (docs/features/M3-19 §5): the hand-off pulse arrived, or the bay woke with sheets waiting. Audio plays the pen
     /// scratch at <see cref="Position"/> while it draws for <see cref="Seconds"/>.
@@ -689,21 +674,6 @@ namespace MoonProject.Core.Events
         public Vector3 Position { get; }
 
         public float Seconds { get; }
-    }
-
-    /// <summary>
-    /// On load, how many blueprint tubes 07 had scanned but not yet fed to the lab's reader (docs/features/M3-16 P7,
-    /// M3-19). Gameplay publishes it once after the save is applied, also when <see cref="Count"/> is 0; Rover shows that
-    /// many tubes on 07's back at once, with no ride-in.
-    /// </summary>
-    public readonly struct BlueprintsCarriedRestored
-    {
-        public BlueprintsCarriedRestored(int count)
-        {
-            Count = count;
-        }
-
-        public int Count { get; }
     }
 
     /// <summary>
@@ -774,31 +744,6 @@ namespace MoonProject.Core.Events
         /// recovery row completed (docs/features/M3-21 §2); the tower's sweep waits as long.
         /// </summary>
         public float TowerHold { get; }
-    }
-
-    /// <summary>
-    /// 07 scanned a blueprint tube in a salvage site's heart (docs/features/M3-16 "Blueprints", P7): the tube rides home
-    /// on 07's back until the lab's reader takes it (<see cref="BlueprintDelivered"/>) and decodes the kit
-    /// <see cref="KitId"/> (<see cref="FindDecoded"/>).
-    /// </summary>
-    public readonly struct BlueprintFound
-    {
-        public BlueprintFound(string kitId, string siteId, Vector3 position)
-        {
-            KitId = kitId;
-            SiteId = siteId;
-            Position = position;
-        }
-
-        public string KitId { get; }
-
-        /// <summary>
-        /// The salvage site whose heart held the tube ("site.garage", ...), or the world anchor it lay at
-        /// ("canyon.lip").
-        /// </summary>
-        public string SiteId { get; }
-
-        public Vector3 Position { get; }
     }
 
     /// <summary>A beat of the crew's belly lift that Audio voices (docs/features/M3-19 §4): see <see cref="LiftCued"/>.
