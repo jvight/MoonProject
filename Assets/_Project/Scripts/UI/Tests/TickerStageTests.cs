@@ -46,7 +46,7 @@ namespace MoonProject.UI.Tests
                 Home, "Bell got home before you.", "Bell về nhà trước bạn rồi.");
             _tuning = ScriptableObject.CreateInstance<UiTuning>();
             var layout = new UiLayout(uxml.Instantiate());
-            var card = new MemoryCard(layout, _tuning.MemoryCard, localization, events, catalog, new NoFriends());
+            var card = new MemoryCard(layout, _tuning.MemoryCard, localization, events, catalog);
             var lines = new TickerQueue(_tuning.Ticker, new TickerText(localization));
             var ticker = new RadioTicker(layout, _tuning.Ticker, lines);
 

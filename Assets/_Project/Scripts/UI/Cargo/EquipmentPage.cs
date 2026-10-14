@@ -176,6 +176,36 @@ namespace MoonProject.UI
             _portraitSource.SetActive(shown);
         }
 
+        /// <summary>Puts keyboard/gamepad focus on the first waiting part in the row, or the first focusable socket.</summary>
+        public void FocusFirst()
+        {
+            int signature = Signature();
+            if (_dirty || signature != _signature)
+            {
+                _signature = signature;
+                _dirty = false;
+                Refresh();
+            }
+
+            for (int i = 0; i < _cards.Length; i++)
+            {
+                if (_cards[i].Root.style.display != DisplayStyle.None)
+                {
+                    _cards[i].Root.Focus();
+                    return;
+                }
+            }
+
+            for (int i = 0; i < SocketCount; i++)
+            {
+                if (_sockets[i].Root.style.display != DisplayStyle.None && _sockets[i].Root.focusable)
+                {
+                    _sockets[i].Root.Focus();
+                    return;
+                }
+            }
+        }
+
         /// <param name="device">The active device: its glyph for each part's key.</param>
         public void Tick(InputDeviceKind device)
         {
@@ -207,7 +237,7 @@ namespace MoonProject.UI
             for (int i = 0; i < SocketCount; i++)
             {
                 SocketView view = _sockets[i];
-                bool placed = _portraitSource.TryGetSocketViewport(view.Id, out Vector2 uv);
+                bool placed = _portraitSource.TryGetSocketViewport(view.Id, out Vector2 uv) && sized;
                 if (placed != view.Placed)
                 {
                     view.Placed = placed;
@@ -232,7 +262,10 @@ namespace MoonProject.UI
             LabelLayout.Place(_points, _wantsLabel, area.width, area.height, _settings.LabelHeight, _settings.LabelGap,
                 _labelY, _rightColumn);
             _leaders.Clear();
-            float inner = _settings.LabelMargin + _settings.LabelWidth;
+            float scale = area.width > 0f ? Mathf.Min(1f, area.width / 720f) : 1f;
+            float labelWidth = Mathf.Floor(_settings.LabelWidth * scale);
+            float labelMargin = Mathf.Floor(_settings.LabelMargin * scale);
+            float inner = labelMargin + labelWidth;
             for (int i = 0; i < SocketCount; i++)
             {
                 SocketView view = _sockets[i];
@@ -249,14 +282,16 @@ namespace MoonProject.UI
                 }
 
                 bool right = _rightColumn[i];
-                if (right != view.LabelRight || !Mathf.Approximately(_labelY[i], view.LabelY))
+                if (right != view.LabelRight || !Mathf.Approximately(_labelY[i], view.LabelY) ||
+                    !Mathf.Approximately(area.width, view.AreaWidth))
                 {
                     view.LabelRight = right;
                     view.LabelY = _labelY[i];
+                    view.AreaWidth = area.width;
                     view.Name.EnableInClassList(RightColumnClass, right);
-                    view.Name.style.width = _settings.LabelWidth;
+                    view.Name.style.width = labelWidth;
                     view.Name.style.height = _settings.LabelHeight;
-                    view.Name.style.left = right ? area.width - inner : _settings.LabelMargin;
+                    view.Name.style.left = right ? area.width - inner : labelMargin;
                     view.Name.style.top = _labelY[i] - _settings.LabelHeight * 0.5f;
                 }
 
@@ -448,8 +483,15 @@ namespace MoonProject.UI
             }
 
             Rect target = _panel.WorldToLocal(anchor.worldBound);
+            float panelHeight = _panel.resolvedStyle.height;
+            float top = target.yMax + _settings.TooltipGap;
+            if (!float.IsNaN(panelHeight) && panelHeight > 0f && top + 40f > panelHeight)
+            {
+                top = Mathf.Max(4f, target.yMin - 36f - _settings.TooltipGap);
+            }
+
             _tooltip.style.left = target.xMin;
-            _tooltip.style.top = target.yMax + _settings.TooltipGap;
+            _tooltip.style.top = top;
             _tooltip.AddToClassList(TooltipShownClass);
         }
 
@@ -625,6 +667,7 @@ namespace MoonProject.UI
             public bool Placed;
             public Vector2 At = new Vector2(float.NaN, float.NaN);
             public float LabelY = float.NaN;
+            public float AreaWidth = float.NaN;
             public bool LabelRight;
             public bool LabelShown;
         }

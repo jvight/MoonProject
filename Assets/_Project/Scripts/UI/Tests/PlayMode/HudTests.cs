@@ -198,8 +198,11 @@ namespace MoonProject.UI.PlayModeTests
             yield return Tap(keyboard.tabKey);
             yield return Seconds(0.5f);
             CargoScreen cargo = _rig.Ui.Cargo;
-            Assert.IsFalse(cargo.IsTransferView, "away from home Tab is the plain hold");
+            Assert.IsFalse(cargo.IsTransferView, "away from home Tab is the hold beside 07's sockets");
             Assert.IsFalse(cargo.HoldCell(0).focusable, "no slot is a button away from the dock");
+            Vector2 fieldPanelSize = cargo.PanelRect.size;
+            Assert.Greater(fieldPanelSize.x, 0f);
+            Assert.Greater(fieldPanelSize.y, 0f);
             yield return Tap(keyboard.tabKey);
             yield return Seconds(0.5f);
 
@@ -207,6 +210,10 @@ namespace MoonProject.UI.PlayModeTests
             yield return Tap(keyboard.tabKey);
             yield return Seconds(0.5f);
             Assert.IsTrue(cargo.IsOpen && cargo.IsTransferView, "docked, Tab opens the transfer view");
+            Assert.AreEqual(fieldPanelSize.x, cargo.PanelRect.width, 0.5f,
+                "the docked transfer view reuses the same fixed panel width");
+            Assert.AreEqual(fieldPanelSize.y, cargo.PanelRect.height, 0.5f,
+                "the docked transfer view reuses the same fixed panel height");
             Assert.AreEqual(8, cargo.HoldCellCount);
             Assert.AreEqual(7, cargo.HomeCellCount, "home's shelves sit beside the hold");
             Assert.AreEqual(Text(UiKeys.TransferToHome), cargo.TransferHintText, "the focus starts on 07's first slot");
@@ -246,9 +253,13 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(0.3f);
 
             yield return Tap(keyboard.tabKey);
-            _rig.Ui.Cargo.SelectTab(1);
             yield return Seconds(0.6f);
-            EquipmentPage seven = _rig.Ui.Cargo.Seven;
+            CargoScreen cargo = _rig.Ui.Cargo;
+            EquipmentPage seven = cargo.Seven;
+            Assert.AreEqual(8, cargo.HoldCellCount, "Tab opens one panel with both the hold grid and 07's sockets");
+            Assert.AreEqual(DisplayStyle.Flex, seven.SocketElement(RoverSocket.Tether).resolvedStyle.display,
+                "07's sockets are shown in the same panel");
+            Vector2 fieldPanelSize = cargo.PanelRect.size;
             Assert.AreEqual(Text("ui.can.tether.verb"), seven.SocketName(RoverSocket.Tether), "a fitted part carries its name");
             Assert.AreEqual(Text("ui.can.hover_jump.verb"), seven.SocketName(RoverSocket.Belly),
                 "a crafted part's socket is named, with the bay icon");
@@ -272,6 +283,8 @@ namespace MoonProject.UI.PlayModeTests
 
             _rig.Fakes.Equipment.AtStation = true;
             yield return Seconds(0.3f);
+            Assert.AreEqual(fieldPanelSize.x, cargo.PanelRect.width, 0.5f);
+            Assert.AreEqual(fieldPanelSize.y, cargo.PanelRect.height, 0.5f);
             Submit(seven.CardElement(0));
             yield return Seconds(0.8f);
             Assert.AreEqual(1, _rig.Fakes.Equipment.Fits, "at the bay one press fits the part");
@@ -294,7 +307,6 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(0.3f);
 
             yield return Tap(keyboard.tabKey);
-            _rig.Ui.Cargo.SelectTab(1);
             yield return Seconds(0.6f);
             EquipmentPage seven = _rig.Ui.Cargo.Seven;
             Submit(seven.SocketElement(RoverSocket.Tether));
@@ -309,7 +321,7 @@ namespace MoonProject.UI.PlayModeTests
 
             Events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Reward, Vector3.zero, Vector3.up, 1f, 0f));
             yield return Seconds(1f);
-            Assert.IsTrue(_rig.Ui.Cargo.IsOpen && _rig.Ui.Cargo.Tab == 1, "the install's Proud chirp brings the 07 tab back");
+            Assert.IsTrue(_rig.Ui.Cargo.IsOpen, "the install's Proud chirp brings the cargo screen back");
         }
 
         [UnityTest]

@@ -218,10 +218,8 @@ namespace MoonProject.UI.PlayModeTests
             context.Events.Publish(new FriendRepairStarted("tilly"));
             fakes.TillyStatus = new FriendStatus(FriendState.Awake, 3, 3, true, false, tilly + Vector3.up * 1.5f);
             context.Events.Publish(new FriendRepaired("tilly"));
-            yield return new WaitForSecondsRealtime(_tuning.MemoryCard.AppearDelay +
-                                                    _tuning.MemoryCard.Reveal.FadeIn + 0.5f);
+            yield return new WaitForSecondsRealtime(_tuning.Friends.Name.FadeIn + 0.5f);
             yield return Capture(friendCamera, folder, "11_tilly_awake_log");
-            ui.Card.Dismiss();
             fakes.Camera = camera;
             yield return new WaitForSecondsRealtime(_tuning.Friends.NameHoldSeconds + 2f);
 
@@ -445,12 +443,6 @@ namespace MoonProject.UI.PlayModeTests
             yield return Capture(camera, folder, "16_memory_card_vi");
             ui.Card.Dismiss();
             yield return new WaitForSecondsRealtime(1.5f);
-            context.Events.Publish(new FriendRepaired("tilly"));
-            yield return new WaitForSecondsRealtime(_tuning.MemoryCard.AppearDelay +
-                                                    _tuning.MemoryCard.Reveal.FadeIn + 0.5f);
-            yield return Capture(camera, folder, "17_tilly_log_vi");
-            ui.Card.Dismiss();
-            yield return new WaitForSecondsRealtime(_tuning.MemoryCard.Reveal.FadeOut + 0.3f);
 
             context.Events.Publish(new TickerLine(UiTestRig.HomeLine));
             yield return new WaitForSecondsRealtime(TickerEntrance());
@@ -518,7 +510,6 @@ namespace MoonProject.UI.PlayModeTests
             context.Events.Publish(new FriendRepaired(TillyId));
             yield return new WaitForSecondsRealtime(_tuning.Friends.Name.FadeIn + 0.5f);
             yield return Capture(tillyCamera, folder, "50_tilly_name_over_earth");
-            ui.Card.Dismiss();
             yield return new WaitForSecondsRealtime(_tuning.Friends.NameHoldSeconds + _tuning.Friends.Name.FadeOut +
                                                     0.3f);
 
@@ -530,7 +521,6 @@ namespace MoonProject.UI.PlayModeTests
             context.Events.Publish(new FriendRepaired(BellId));
             yield return new WaitForSecondsRealtime(_tuning.Friends.Name.FadeIn + 0.5f);
             yield return Capture(bellCamera, folder, "51_bell_name_over_earth");
-            ui.Card.Dismiss();
             yield return new WaitForSecondsRealtime(_tuning.Friends.NameHoldSeconds + _tuning.Friends.Name.FadeOut +
                                                     0.3f);
 
@@ -784,10 +774,13 @@ namespace MoonProject.UI.PlayModeTests
             GameContext context = FindBootstrap().Context;
             Camera camera = context.Get<IViewCamera>().Camera;
             UISystem ui = BuildUi(context, out FakeGameServices fakes, out _);
+            Reframe(1920, 1080);
             FreezeWorld();
             yield return null;
             string folder = Path.GetFullPath(OutputFolder);
+            string logsFolder = Path.GetFullPath("Logs");
             Directory.CreateDirectory(folder);
+            Directory.CreateDirectory(logsFolder);
             context.Events.Publish(new RoverAwoke(Vector3.zero, false));
             yield return new WaitForSecondsRealtime(0.5f);
             fakes.Hold.Set(3, new MaterialSlot(SalvageMaterial.Metal, 4, 4), new MaterialSlot(SalvageMaterial.Metal, 2, 4),
@@ -797,27 +790,6 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Grant(RoverAbility.Tether);
             fakes.Grant(RoverAbility.WideSonar);
             fakes.SetTech(TechNodeId.HoverJump, TechNodeState.Decoded);
-            ui.Cargo.Open();
-            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeIn + _tuning.Cargo.BootTypeSeconds +
-                                                    _tuning.Cargo.BootLightStepSeconds * 3f);
-            Assert.IsTrue(ui.Cargo.IsBooting, "the first press boots the hold");
-            yield return Capture(camera, folder, "94_hold_boot_lights");
-            yield return new WaitForSecondsRealtime(2f);
-            Assert.IsTrue(ui.Cargo.IsOpen && !ui.Cargo.IsBooting);
-            yield return Capture(camera, folder, "95_cargo_screen");
-            ui.Cargo.Close();
-            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeOut + 0.4f);
-            fakes.Home.Set(3, new MaterialSlot(SalvageMaterial.Metal, 4, 4), new MaterialSlot(SalvageMaterial.Wiring, 4, 4),
-                new MaterialSlot(SalvageMaterial.Optics, 2, 4), new MaterialSlot(SalvageMaterial.Ilmenite, 6, 6));
-            fakes.Dock.IsDocked = true;
-            ui.Cargo.Open();
-            ui.Cargo.FocusFirst();
-            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeIn + 0.6f);
-            Assert.IsTrue(ui.Cargo.IsTransferView, "docked, the hold sits beside home's shelves");
-            yield return Capture(camera, folder, "95b_transfer_view");
-            fakes.Dock.IsDocked = false;
-            ui.Cargo.Close();
-            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeOut + 0.4f);
             foreach (RoverKitPiece fitted in new[]
                      {
                          RoverKitPiece.TetherRing, RoverKitPiece.SolarCell, RoverKitPiece.LampBar,
@@ -831,14 +803,32 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Equipment.Craft(RoverKitPiece.HoverCoils);
             fakes.Equipment.Craft(RoverKitPiece.FocusLens);
             fakes.Equipment.AtStation = false;
-            ui.Cargo.SelectTab(1);
             ui.Cargo.Open();
-            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeIn + 0.6f);
+            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeIn + _tuning.Cargo.BootTypeSeconds +
+                                                    _tuning.Cargo.BootLightStepSeconds * 3f);
+            Assert.IsTrue(ui.Cargo.IsBooting, "the first press boots the hold");
+            yield return Capture(camera, folder, "94_hold_boot_lights");
+            yield return new WaitForSecondsRealtime(2f);
+            Assert.IsTrue(ui.Cargo.IsOpen && !ui.Cargo.IsBooting);
+            yield return Capture(camera, folder, "95_cargo_screen");
             yield return Capture(camera, folder, "96_seven_tab_away");
+            yield return Capture(camera, logsFolder, "tab_field_1920x1080");
             fakes.Equipment.AtStation = true;
             yield return new WaitForSecondsRealtime(0.4f);
             yield return Capture(camera, folder, "96b_seven_tab_at_the_bay");
-            ui.Cargo.SelectTab(0);
+            yield return Capture(camera, logsFolder, "tab_bay_1920x1080");
+            ui.Cargo.Close();
+            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeOut + 0.4f);
+            fakes.Home.Set(3, new MaterialSlot(SalvageMaterial.Metal, 4, 4), new MaterialSlot(SalvageMaterial.Wiring, 4, 4),
+                new MaterialSlot(SalvageMaterial.Optics, 2, 4), new MaterialSlot(SalvageMaterial.Ilmenite, 6, 6));
+            fakes.Dock.IsDocked = true;
+            ui.Cargo.Open();
+            ui.Cargo.FocusFirst();
+            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeIn + 0.6f);
+            Assert.IsTrue(ui.Cargo.IsTransferView, "docked, the hold sits beside home's shelves");
+            yield return Capture(camera, folder, "95b_transfer_view");
+            yield return Capture(camera, logsFolder, "tab_transfer_1920x1080");
+            fakes.Dock.IsDocked = false;
             ui.Cargo.Close();
             yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeOut + 0.6f);
 
@@ -1062,9 +1052,10 @@ namespace MoonProject.UI.PlayModeTests
             events.Publish(new FriendRepairStarted(TillyId));
             fakes.TillyStatus = new FriendStatus(FriendState.Awake, 3, 3, true, false, tilly + Vector3.up * TillyRise);
             events.Publish(new FriendRepaired(TillyId));
-            yield return Watch(ui, overlaps, _tuning.Prompts.Reveal.FadeOut + _tuning.MemoryCard.Reveal.FadeIn + 0.5f);
+            yield return Watch(ui, overlaps, _tuning.Prompts.Reveal.FadeOut + _tuning.Friends.Name.FadeIn + 0.5f);
             yield return Capture(friendCamera, folder, "69_tilly_card");
-            Assert.IsTrue(ui.Card.IsVisible, "Tilly's card came once the prompt had gone");
+            Assert.IsTrue(ui.FriendName.IsVisible, "Tilly's name floats over her as she wakes");
+            Assert.IsFalse(ui.Card.IsVisible || ui.Card.IsBusy, "no memory card on a friend's wake");
             Assert.IsEmpty(overlaps, "one voice at a time:\n" + string.Join("\n", overlaps));
 #else
             Assert.Ignore("Captures need the editor.");
@@ -1459,6 +1450,11 @@ namespace MoonProject.UI.PlayModeTests
 
         private UISystem BuildUi(GameContext context, out FakeGameServices fakes, out SaveService save)
         {
+            foreach (UISystem existing in Object.FindObjectsByType<UISystem>(FindObjectsSortMode.None))
+            {
+                existing.gameObject.SetActive(false);
+            }
+
             _fakesHost = new GameObject("CaptureFakes");
             fakes = _fakesHost.AddComponent<FakeGameServices>();
             _tower = UiTestRig.CopyCosting(UiTestRig.UpgradePath, new Recipe(2, 1, 0), new Recipe(4, 2, 1),

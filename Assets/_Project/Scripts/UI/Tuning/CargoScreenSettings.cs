@@ -10,25 +10,29 @@ namespace MoonProject.UI
         [Tooltip("The screen easing in and out (about 200 ms: the grids slide in with it).")]
         [SerializeField] private RevealSettings _reveal = new RevealSettings(0.2f, 0.18f, 18f, 0.98f, 1.8f, 0.7f);
 
+        [Tooltip("Fixed width of the unified cargo panel (px at 1080p); clamped to WidthShare on narrow screens.")]
+        [Range(720f, 1600f)]
+        [SerializeField] private float _panelWidth = 1120f;
+
+        [Tooltip("Fixed height of the unified cargo panel (px at 1080p); clamped to HeightShare on short screens.")]
+        [Range(400f, 900f)]
+        [SerializeField] private float _panelHeight = 560f;
+
         [Tooltip("Largest slot cell (px at 1080p); the cells shrink to fit when the screen is narrow or the text big.")]
         [Range(32f, 96f)]
-        [SerializeField] private float _maxCell = 62f;
+        [SerializeField] private float _maxCell = 60f;
 
         [Tooltip("Smallest slot cell (px): below this the screen would be unreadable, so it stops shrinking.")]
         [Range(24f, 64f)]
         [SerializeField] private float _minCell = 34f;
 
-        [Tooltip("Share of the panel's width 07's grid may use.")]
+        [Tooltip("Share of the screen's width the panel may use before clamping.")]
         [Range(0.5f, 1f)]
-        [SerializeField] private float _widthShare = 0.82f;
+        [SerializeField] private float _widthShare = 0.94f;
 
-        [Tooltip("Share of the panel's height the screen may use; the cells shrink until it fits.")]
+        [Tooltip("Share of the screen's height the panel may use before clamping.")]
         [Range(0.6f, 1f)]
-        [SerializeField] private float _heightShare = 0.94f;
-
-        [Tooltip("How much the cells shrink in one step while the screen is too tall (0.92 = 8 % smaller).")]
-        [Range(0.5f, 0.99f)]
-        [SerializeField] private float _shrinkStep = 0.92f;
+        [SerializeField] private float _heightShare = 0.92f;
 
         [Header("The first Tab press: the hold boots (docs/design/0.5.5-owner-feedback.md §3, about 1.2 s)")]
         [Tooltip("Seconds 07's one line of system text takes to type in, with the screen dark around it.")]
@@ -55,7 +59,7 @@ namespace MoonProject.UI
         [Range(0f, 1f)]
         [SerializeField] private float _bootHatchLingerSeconds = 0.2f;
 
-        [Header("The 07 tab (docs/design/0.5.5-owner-feedback.md §3.5)")]
+        [Header("07's portrait and equipment sockets (docs/design/0.5.5-owner-feedback.md §3.5)")]
         [Tooltip("Pixels the pointer must move with a part held before it counts as a drag and not a press.")]
         [Range(2f, 20f)]
         [SerializeField] private float _dragThreshold = 6f;
@@ -82,6 +86,10 @@ namespace MoonProject.UI
 
         public RevealSettings Reveal => _reveal;
 
+        public float PanelWidth => _panelWidth;
+
+        public float PanelHeight => _panelHeight;
+
         public float MaxCell => _maxCell;
 
         public float MinCell => _minCell;
@@ -89,8 +97,6 @@ namespace MoonProject.UI
         public float WidthShare => _widthShare;
 
         public float HeightShare => _heightShare;
-
-        public float ShrinkStep => _shrinkStep;
 
         public float DragThreshold => _dragThreshold;
 

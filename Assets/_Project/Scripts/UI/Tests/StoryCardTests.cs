@@ -53,7 +53,7 @@ namespace MoonProject.UI.Tests
                 UiKeys.CassetteNote(Tape), "It isn't. I checked.", "Không đâu. Tôi thử rồi.");
             _tuning = ScriptableObject.CreateInstance<UiTuning>();
             _layout = new UiLayout(uxml.Instantiate());
-            _card = new MemoryCard(_layout, _tuning.MemoryCard, _localization, events, catalog, new NoFriends());
+            _card = new MemoryCard(_layout, _tuning.MemoryCard, _localization, events, catalog);
         }
 
         [TearDown]

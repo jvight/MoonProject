@@ -11,10 +11,9 @@ namespace MoonProject.UI
 {
     /// <summary>
     /// The story card. When a relic settles on the keepsake shelf it tells its memory of Earth (the localized
-    /// "relic.&lt;id&gt;.name" and "relic.&lt;id&gt;.memory" strings); when a friend wakes it shows the crew log the
-    /// friend remembers ("friend.&lt;id&gt;.name" and "friend.&lt;id&gt;.repair_log"); a crew log found in the world
-    /// shows its "log.&lt;id&gt;" text; a collected cassette turns it into a smaller, warmer liner-note card with the
-    /// tape's title, Ro's note ("cassette.&lt;id&gt;.title" and ".note") and how many tapes 07 now owns. It fades in a
+    /// "relic.&lt;id&gt;.name" and "relic.&lt;id&gt;.memory" strings); a crew log found in the world shows its
+    /// "log.&lt;id&gt;" text; a collected cassette turns it into a smaller, warmer liner-note card with the tape's
+    /// title, Ro's note ("cassette.&lt;id&gt;.title" and ".note") and how many tapes 07 now owns. It fades in a
     /// moment later, stays long enough to read at a calm pace (longer texts stay longer), then fades away. It never
     /// takes input focus, so driving is never blocked; the cancel button (shown on the card) closes it early. Every
     /// kind shares one queue, so cards never overlap, and a card never appears while the radio ticker's line is still
@@ -32,7 +31,6 @@ namespace MoonProject.UI
         private readonly ILocalization _localization;
         private readonly EventBus _events;
         private readonly RelicCatalog _catalog;
-        private readonly IFriendStatuses _friends;
         private readonly Reveal _reveal;
         private readonly VisualElement _card;
         private readonly Label _caption;
@@ -48,7 +46,7 @@ namespace MoonProject.UI
         private Memory _shown;
 
         public MemoryCard(UiLayout layout, MemoryCardSettings settings, ILocalization localization, EventBus events,
-            RelicCatalog catalog, IFriendStatuses friends)
+            RelicCatalog catalog)
         {
             if (layout == null)
             {
@@ -59,7 +57,6 @@ namespace MoonProject.UI
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _catalog = catalog != null ? catalog : throw new ArgumentNullException(nameof(catalog));
-            _friends = friends ?? throw new ArgumentNullException(nameof(friends));
             _reveal = new Reveal(layout.MemoryCard, settings.Reveal);
             _reveal.Snap(false);
             _card = layout.MemoryCard;
@@ -91,7 +88,7 @@ namespace MoonProject.UI
         /// <summary>True while a card is up and can be closed with the cancel button.</summary>
         public bool CanDismiss => _phase == Phase.Reading;
 
-        /// <summary>The id of the relic, friend, crew log or cassette whose card is up (null when none).</summary>
+        /// <summary>The id of the relic, crew log or cassette whose card is up (null when none).</summary>
         public string Current => _shown.Id;
 
         /// <summary>
@@ -106,21 +103,6 @@ namespace MoonProject.UI
             }
 
             _pending.Enqueue(Memory.Relic(relicId, displayedCount));
-        }
-
-        /// <summary>
-        /// Queues the log friend <paramref name="friendId"/> remembers on waking; an unknown id is a wiring bug and is
-        /// logged.
-        /// </summary>
-        public void EnqueueLog(string friendId)
-        {
-            if (!IsFriend(friendId))
-            {
-                Debug.LogError($"{nameof(MemoryCard)}: friend '{friendId}' is not in the friend roster; no card.");
-                return;
-            }
-
-            _pending.Enqueue(Memory.Log(friendId));
         }
 
         /// <summary>
@@ -249,9 +231,6 @@ namespace MoonProject.UI
                     _caption.text = string.Format(_localization.Get(UiKeys.CardCaption), memory.Count,
                         _catalog.Relics.Count);
                     break;
-                case MemoryKind.FriendLog:
-                    _caption.text = string.Format(_localization.Get(UiKeys.LogCaption), name);
-                    break;
                 case MemoryKind.CrewLog:
                     _caption.text = _localization.Get(UiKeys.CrewLogCaption);
                     break;
@@ -285,26 +264,10 @@ namespace MoonProject.UI
             return false;
         }
 
-        private bool IsFriend(string friendId)
-        {
-            for (int i = 0; i < _friends.Count; i++)
-            {
-                if (string.Equals(_friends.Definition(i).Id, friendId, StringComparison.Ordinal))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
         private enum MemoryKind
         {
             /// <summary>A relic's memory of Earth, numbered among the keepsakes.</summary>
             Relic,
-
-            /// <summary>The crew log a friend remembers when it wakes.</summary>
-            FriendLog,
 
             /// <summary>A crew log found in the world (a cache).</summary>
             CrewLog,
@@ -344,12 +307,6 @@ namespace MoonProject.UI
             {
                 return new Memory(relicId, MemoryKind.Relic, displayedCount, 0, UiKeys.RelicName(relicId),
                     UiKeys.RelicMemory(relicId));
-            }
-
-            public static Memory Log(string friendId)
-            {
-                return new Memory(friendId, MemoryKind.FriendLog, 0, 0, UiKeys.FriendName(friendId),
-                    UiKeys.FriendRepairLog(friendId));
             }
 
             public static Memory CrewLog(string logId, string textKey)
