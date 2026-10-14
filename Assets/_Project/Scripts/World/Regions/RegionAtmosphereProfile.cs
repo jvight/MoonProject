@@ -33,13 +33,6 @@ namespace MoonProject.World
         [Range(200f, 8000f)]
         [SerializeField] private float _farClipPlane = DefaultFarClipPlane;
 
-        [Tooltip("Battery idle/drive drain multiplier inside this region (1 in standard regions).")]
-        [Range(0.1f, 5f)]
-        [SerializeField] private float _ambientDrainMultiplier = 1f;
-
-        [Tooltip("True when a solid ceiling blocks sky visibility and direct radio reach.")]
-        [SerializeField] private bool _blocksSkyAndRadio;
-
         [Header("Earthlight & Fill")]
         [Tooltip("Colour of the directional earthlight in this region.")]
         [SerializeField] private Color _lightColor = new Color(0.92f, 0.94f, 1f);
@@ -136,8 +129,6 @@ namespace MoonProject.World
             float outerRadius,
             float blendBand,
             float farClipPlane = DefaultFarClipPlane,
-            float ambientDrainMultiplier = 1f,
-            bool blocksSkyAndRadio = false,
             float fogDensity = 0.0006f,
             float lightIntensity = 1.95f)
         {
@@ -145,8 +136,6 @@ namespace MoonProject.World
             _outerRadius = outerRadius;
             _blendBand = blendBand;
             _farClipPlane = farClipPlane;
-            _ambientDrainMultiplier = ambientDrainMultiplier;
-            _blocksSkyAndRadio = blocksSkyAndRadio;
             _fogDensity = fogDensity;
             _lightIntensity = lightIntensity;
         }
@@ -155,8 +144,6 @@ namespace MoonProject.World
         public float OuterRadius => _outerRadius;
         public float BlendBand => _blendBand;
         public float FarClipPlane => _farClipPlane;
-        public float AmbientDrainMultiplier => _ambientDrainMultiplier;
-        public bool BlocksSkyAndRadio => _blocksSkyAndRadio;
         public Color LightColor => _lightColor;
         public float LightIntensity => _lightIntensity;
         public Color FillColor => _fillColor;
@@ -209,11 +196,6 @@ namespace MoonProject.World
             if (_farClipPlane <= 0f)
             {
                 return $"Regions ({_regionId}): farClipPlane must be positive.";
-            }
-
-            if (_ambientDrainMultiplier <= 0f)
-            {
-                return $"Regions ({_regionId}): ambientDrainMultiplier must be positive.";
             }
 
             if (_hazeHeight <= 0f)

@@ -40,8 +40,8 @@ namespace MoonProject.World
 
             _slots = new[]
             {
-                CreateSlot(canyonVolume, canyon),
-                CreateSlot(basinVolume, basin),
+                new RegionSlot(canyonVolume, canyon),
+                new RegionSlot(basinVolume, basin),
             };
             _fallbackIndex = 1;
             _fallbackBlendBand = basinVolume.BlendBand;
@@ -53,7 +53,7 @@ namespace MoonProject.World
             CurrentFarClipPlane = BlendFarClip(_currentWeights);
         }
 
-        public string CurrentRegionId => _slots[_currentRegionIndex].Info.Id;
+        public string CurrentRegionId => _slots[_currentRegionIndex].Profile.RegionId;
 
         public float CurrentFarClipPlane { get; private set; }
 
@@ -77,9 +77,9 @@ namespace MoonProject.World
             int candidate = DominantIndex(_currentWeights);
             if (candidate != _currentRegionIndex && _currentWeights[candidate] >= _hysteresisThreshold)
             {
-                string previous = _slots[_currentRegionIndex].Info.Id;
+                string previous = _slots[_currentRegionIndex].Profile.RegionId;
                 _currentRegionIndex = candidate;
-                _events?.Publish(new RegionEntered(_slots[_currentRegionIndex].Info.Id, previous, false));
+                _events?.Publish(new RegionEntered(_slots[_currentRegionIndex].Profile.RegionId, previous, false));
             }
         }
 
@@ -95,44 +95,16 @@ namespace MoonProject.World
 
             int dominant = DominantIndex(_currentWeights);
             bool changed = !_hasPlaced || dominant != _currentRegionIndex;
-            string previous = _hasPlaced ? _slots[_currentRegionIndex].Info.Id : string.Empty;
+            string previous = _hasPlaced ? _slots[_currentRegionIndex].Profile.RegionId : string.Empty;
             _currentRegionIndex = dominant;
             _hasPlaced = true;
             if (changed)
             {
-                _events?.Publish(new RegionEntered(_slots[_currentRegionIndex].Info.Id, previous, true));
+                _events?.Publish(new RegionEntered(_slots[_currentRegionIndex].Profile.RegionId, previous, true));
             }
         }
 
-        public float SampleDrainMultiplier(Vector3 position)
-        {
-            Span<float> weights = stackalloc float[_slots.Length];
-            EvaluateWeights(position, weights);
-            float drain = 0f;
-            for (int i = 0; i < _slots.Length; i++)
-            {
-                drain += weights[i] * _slots[i].Info.AmbientDrainMultiplier;
-            }
-
-            return drain;
-        }
-
-        public float SampleSkyOcclusion(Vector3 position)
-        {
-            Span<float> weights = stackalloc float[_slots.Length];
-            EvaluateWeights(position, weights);
-            float occlusion = 0f;
-            for (int i = 0; i < _slots.Length; i++)
-            {
-                if (_slots[i].Info.BlocksSkyAndRadio)
-                {
-                    occlusion += weights[i];
-                }
-            }
-
-            return Mathf.Clamp01(occlusion);
-        }
-
+        /// <summary>0..1 smooth blend weight of <paramref name="regionId"/> at <paramref name="position"/>.</summary>
         public float SampleWeight(string regionId, Vector3 position)
         {
             int index = FindSlotIndex(regionId);
@@ -146,46 +118,18 @@ namespace MoonProject.World
             return weights[index];
         }
 
+        /// <summary>Dominant region id at an arbitrary world <paramref name="position"/>.</summary>
         public string SampleRegionId(Vector3 position)
         {
             Span<float> weights = stackalloc float[_slots.Length];
             EvaluateWeights(position, weights);
-            return _slots[DominantIndex(weights)].Info.Id;
+            return _slots[DominantIndex(weights)].Profile.RegionId;
         }
 
-        public bool TryGetRegion(string regionId, out RegionInfo info)
+        /// <summary>True when <paramref name="regionId"/> is a known region in this world.</summary>
+        public bool HasRegion(string regionId)
         {
-            int index = FindSlotIndex(regionId);
-            if (index >= 0)
-            {
-                info = _slots[index].Info;
-                return true;
-            }
-
-            info = default;
-            return false;
-        }
-
-        public int GetWeights(Vector3 position, RegionWeight[] buffer)
-        {
-            if (buffer == null || buffer.Length == 0)
-            {
-                return 0;
-            }
-
-            Span<float> weights = stackalloc float[_slots.Length];
-            EvaluateWeights(position, weights);
-            int written = 0;
-            for (int i = 0; i < _slots.Length && written < buffer.Length; i++)
-            {
-                float weight = weights[i];
-                if (weight > 0f)
-                {
-                    buffer[written++] = new RegionWeight(_slots[i].Info.Id, weight);
-                }
-            }
-
-            return written;
+            return FindSlotIndex(regionId) >= 0;
         }
 
         /// <summary>Evaluates normalised region weights at <paramref name="position"/> into <paramref name="weights"/>.</summary>
@@ -225,7 +169,7 @@ namespace MoonProject.World
             float farClip = 0f;
             for (int i = 0; i < _slots.Length; i++)
             {
-                farClip += weights[i] * _slots[i].Info.FarClipPlane;
+                farClip += weights[i] * _slots[i].Profile.FarClipPlane;
             }
 
             return farClip;
@@ -256,7 +200,7 @@ namespace MoonProject.World
 
             for (int i = 0; i < _slots.Length; i++)
             {
-                if (_slots[i].Info.Id == regionId)
+                if (_slots[i].Profile.RegionId == regionId)
                 {
                     return i;
                 }
@@ -265,29 +209,15 @@ namespace MoonProject.World
             return -1;
         }
 
-        private static RegionSlot CreateSlot(RegionVolume volume, RegionAtmosphereProfile profile)
-        {
-            var info = new RegionInfo(
-                profile.RegionId,
-                volume.Centre,
-                volume.OuterRadius,
-                profile.FarClipPlane,
-                profile.AmbientDrainMultiplier,
-                profile.BlocksSkyAndRadio);
-            return new RegionSlot(volume, profile, info);
-        }
-
         private readonly struct RegionSlot
         {
             public RegionVolume Volume { get; }
             public RegionAtmosphereProfile Profile { get; }
-            public RegionInfo Info { get; }
 
-            public RegionSlot(RegionVolume volume, RegionAtmosphereProfile profile, RegionInfo info)
+            public RegionSlot(RegionVolume volume, RegionAtmosphereProfile profile)
             {
                 Volume = volume;
                 Profile = profile;
-                Info = info;
             }
         }
     }

@@ -37,14 +37,13 @@ namespace MoonProject.World.Tests
         [Test]
         public void Weights_SumToOne_AcrossGridAndExtremePositions()
         {
-            var buffer = new RegionWeight[4];
             for (int iz = 0; iz < GridSteps; iz++)
             {
                 float z = Mathf.Lerp(-GridExtent, GridExtent, iz / (float)(GridSteps - 1));
                 for (int ix = 0; ix < GridSteps; ix++)
                 {
                     float x = Mathf.Lerp(-GridExtent, GridExtent, ix / (float)(GridSteps - 1));
-                    AssertWeightsAt(new Vector3(x, 0f, z), buffer);
+                    AssertWeightsAt(new Vector3(x, 0f, z));
                 }
             }
 
@@ -58,7 +57,7 @@ namespace MoonProject.World.Tests
             };
             foreach (Vector3 extreme in extremes)
             {
-                AssertWeightsAt(extreme, buffer);
+                AssertWeightsAt(extreme);
             }
         }
 
@@ -151,19 +150,16 @@ namespace MoonProject.World.Tests
         [Test]
         public void Anchors_HaveValidRegionIds_MatchingSampledRegions()
         {
-            Assert.IsTrue(_regions.TryGetRegion(RegionIds.Basin, out RegionInfo basinInfo));
-            Assert.AreEqual(RegionIds.Basin, basinInfo.Id);
-            Assert.IsTrue(_regions.TryGetRegion(RegionIds.Canyon, out RegionInfo canyonInfo));
-            Assert.AreEqual(RegionIds.Canyon, canyonInfo.Id);
-            Assert.IsFalse(_regions.TryGetRegion("nonexistent", out _));
+            Assert.IsTrue(_regions.HasRegion(RegionIds.Basin));
+            Assert.IsTrue(_regions.HasRegion(RegionIds.Canyon));
+            Assert.IsFalse(_regions.HasRegion("nonexistent"));
 
             for (int i = 0; i < _anchors.Count; i++)
             {
                 WorldAnchor anchor = _anchors.Get(i);
                 Assert.IsFalse(string.IsNullOrEmpty(anchor.RegionId), $"{anchor.Id} has an empty RegionId");
-                Assert.IsTrue(_regions.TryGetRegion(anchor.RegionId, out RegionInfo info),
+                Assert.IsTrue(_regions.HasRegion(anchor.RegionId),
                     $"{anchor.Id} references unknown region '{anchor.RegionId}'");
-                Assert.AreEqual(anchor.RegionId, info.Id);
 
                 bool expectedCanyon = anchor.Id.StartsWith("canyon.", System.StringComparison.Ordinal)
                     || anchor.Id == WorldAnchorIds.RelayPrefix + 3
@@ -190,7 +186,9 @@ namespace MoonProject.World.Tests
             BlendedAtmosphere atTerminus = blender.BlendAt(terminus.Position);
             Assert.IsTrue(atBase.ApproximatelyEquals(in expectedLookA), "basin default profile must match Look A");
             Assert.IsTrue(atTerminus.ApproximatelyEquals(in expectedLookA), "canyon default profile must match Look A");
-            Assert.AreEqual(RegionAtmosphereProfile.DefaultFarClipPlane, _regions.CurrentFarClipPlane, 1e-4f);
+            Assert.AreEqual(3200f, _regionSettings.Basin.FarClipPlane, 1e-4f);
+            Assert.AreEqual(3200f, _regionSettings.Canyon.FarClipPlane, 1e-4f);
+            Assert.AreEqual(3200f, _regions.CurrentFarClipPlane, 1e-4f);
 
             // Verify interpolation when profiles differ.
             var customBasin = new RegionAtmosphereProfile(
@@ -198,8 +196,6 @@ namespace MoonProject.World.Tests
                 RegionAtmosphereProfile.DefaultBasinOuterRadius,
                 RegionAtmosphereProfile.DefaultBasinBlendBand,
                 farClipPlane: 3200f,
-                ambientDrainMultiplier: 1f,
-                blocksSkyAndRadio: false,
                 fogDensity: 0.0005f,
                 lightIntensity: 2.0f);
             var customCanyon = new RegionAtmosphereProfile(
@@ -207,8 +203,6 @@ namespace MoonProject.World.Tests
                 RegionAtmosphereProfile.DefaultCanyonHalfWidth,
                 RegionAtmosphereProfile.DefaultCanyonBlendBand,
                 farClipPlane: 2200f,
-                ambientDrainMultiplier: 1.5f,
-                blocksSkyAndRadio: true,
                 fogDensity: 0.0015f,
                 lightIntensity: 1.0f);
             var customRegions = new WorldRegions(_anchors, new RegionSettings(customBasin, customCanyon));
@@ -223,27 +217,15 @@ namespace MoonProject.World.Tests
             Assert.AreEqual(Mathf.Lerp(3200f, 2200f, w), customRegions.CurrentFarClipPlane, 1e-2f);
             Assert.AreEqual(Mathf.Lerp(0.0005f, 0.0015f, w), midBlend.FogDensity, 1e-6f);
             Assert.AreEqual(Mathf.Lerp(2.0f, 1.0f, w), midBlend.LightIntensity, 1e-4f);
-            Assert.AreEqual(Mathf.Lerp(1f, 1.5f, w), customRegions.SampleDrainMultiplier(midSeam), 1e-4f);
-            Assert.AreEqual(w, customRegions.SampleSkyOcclusion(midSeam), 1e-4f);
         }
 
-        private void AssertWeightsAt(Vector3 position, RegionWeight[] buffer)
+        private void AssertWeightsAt(Vector3 position)
         {
-            int count = _regions.GetWeights(position, buffer);
-            Assert.That(count, Is.InRange(1, 2), $"unexpected active weight count at {position}");
-            float sum = 0f;
-            for (int i = 0; i < count; i++)
-            {
-                Assert.That(buffer[i].Weight, Is.GreaterThan(0f).And.LessThanOrEqualTo(1f));
-                sum += buffer[i].Weight;
-            }
-
-            Assert.AreEqual(1f, sum, WeightTolerance, $"weights do not sum to 1 at {position}");
-            float sampledSum = _regions.SampleWeight(RegionIds.Basin, position)
-                + _regions.SampleWeight(RegionIds.Canyon, position);
-            Assert.AreEqual(1f, sampledSum, WeightTolerance);
-            Assert.AreEqual(1f, _regions.SampleDrainMultiplier(position), WeightTolerance);
-            Assert.AreEqual(0f, _regions.SampleSkyOcclusion(position), WeightTolerance);
+            float basin = _regions.SampleWeight(RegionIds.Basin, position);
+            float canyon = _regions.SampleWeight(RegionIds.Canyon, position);
+            Assert.That(basin, Is.GreaterThanOrEqualTo(0f).And.LessThanOrEqualTo(1f));
+            Assert.That(canyon, Is.GreaterThanOrEqualTo(0f).And.LessThanOrEqualTo(1f));
+            Assert.AreEqual(1f, basin + canyon, WeightTolerance, $"weights do not sum to 1 at {position}");
         }
 
         private void AssertContinuityAlongLine(Vector3 from, Vector3 to)
