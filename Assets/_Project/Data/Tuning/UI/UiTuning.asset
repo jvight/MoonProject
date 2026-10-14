@@ -147,10 +147,14 @@ MonoBehaviour:
       _dwellSeconds: 0.4
       _liftMetres: 0.9
       _usesToRetire: 2
+    - _kind: 15
+      _action: 1
+      _dwellSeconds: 0.4
+      _liftMetres: 0.6
+      _usesToRetire: 1
     _startDelay: 9
     _maxShowSeconds: 7
     _repeatCooldown: 25
-    _showingsToRetire: 3
     _followHalfLife: 0.08
     _screenMargin: 72
     _cardGap: 18
@@ -241,6 +245,18 @@ MonoBehaviour:
     _widthShare: 0.82
     _heightShare: 0.94
     _shrinkStep: 0.92
+    _bootTypeSeconds: 0.3
+    _bootLightStepSeconds: 0.06
+    _bootItemStepSeconds: 0.1
+    _bootSlideSeconds: 0.22
+    _bootSlideDistance: 64
+    _bootHatchLingerSeconds: 0.2
+    _dragThreshold: 6
+    _labelWidth: 150
+    _labelHeight: 24
+    _labelGap: 4
+    _labelMargin: 8
+    _tooltipGap: 10
   _unlockCard:
     _reveal:
       _fadeIn: 0.7
@@ -250,19 +266,18 @@ MonoBehaviour:
       _springFrequency: 1
       _springDamping: 0.7
     _holdSeconds: 4
+  _crateNote:
+    _reveal:
+      _fadeIn: 0.9
+      _fadeOut: 1.4
+      _slide: 12
+      _scaleFrom: 0.97
+      _springFrequency: 1
+      _springDamping: 0.7
+    _baseSeconds: 3.5
+    _secondsPerCharacter: 0.055
+    _maxSeconds: 12
   _friends:
-    _readout:
-      _fadeIn: 0.5
-      _fadeOut: 0.6
-      _slide: 8
-      _scaleFrom: 0.9
-      _springFrequency: 1.4
-      _springDamping: 0.6
-    _showDistance: 16
-    _hideDistance: 20
-    _readoutLiftMetres: 0.8
-    _stackGap: 8
-    _pipFillSeconds: 0.7
     _name:
       _fadeIn: 0.9
       _fadeOut: 1.4
@@ -374,6 +389,8 @@ MonoBehaviour:
       _springFrequency: 1.4
       _springDamping: 0.6
     _stepPatienceSeconds: 120
+    _lowBatteryHoldSeconds: 8
+    _teachingPatienceSeconds: 20
     _stillSpeed: 0.4
     _stillSeconds: 1.2
     _place:

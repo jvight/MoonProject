@@ -44,9 +44,8 @@ namespace MoonProject.Rover
         public const string DrumSocketLeft = "DrumSocket_L";
         public const string DrumSocketRight = "DrumSocket_R";
 
-        /// <summary>The node on 07's back (art's, still named for the retired blueprint tube) where the tower's story
-        /// parts ride.</summary>
-        public const string TubeSocket = "TubeSocket";
+        /// <summary>The node on 07's back where the tower's story parts ride.</summary>
+        public const string StoryPartSocket = "StoryPartSocket";
 
         /// <summary>On the eye: where the Focus Lens kit mounts (M3-26).</summary>
         public const string LensSocket = "LensSocket";

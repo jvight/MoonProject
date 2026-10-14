@@ -4,9 +4,9 @@ using static MoonProject.Art.Place;
 namespace MoonProject.Art.Editor
 {
     /// <summary>
-    /// The tower's three story parts (M3-16 P1): found in the wrecks, carried home on 07's back (its TubeSocket) and
-    /// fed to the tower's port. True scale, each under half a metre, chunky enough to read from the chase camera, and
-    /// left alone for decades like everything else (ruling 12): faded paint, rust at seams and bolts, dust on top.
+    /// The tower's three story parts (M3-16 P1): found in the wrecks, carried home on 07's back (its StoryPartSocket)
+    /// and fed to the tower's port. True scale, each under half a metre, chunky enough to read from the chase camera,
+    /// and left alone for decades like everything else (ruling 12): faded paint, rust at seams and bolts, dust on top.
     /// Each is centred on its mass, like the other pickups.
     /// </summary>
     internal static class StoryPartMeshes

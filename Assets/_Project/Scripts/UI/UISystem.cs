@@ -370,6 +370,7 @@ namespace MoonProject.UI
                 _cargo?.MarkDirty();
             }));
             _tokens.Add(events.Subscribe<RecoveryProgressChanged>(OnRecoveryProgressChanged));
+            _tokens.Add(events.Subscribe<ScanStarted>(_ => _director.Yield(InteractionKind.Scan)));
             _tokens.Add(events.Subscribe<FragmentScanned>(OnFragmentScanned));
             _tokens.Add(events.Subscribe<BlueprintCompleted>(OnBlueprintCompleted));
             _tokens.Add(events.Subscribe<RoverWideShotChanged>(OnWideShotChanged));
@@ -934,7 +935,11 @@ namespace MoonProject.UI
         /// <summary>"Fragment 2 of 3 · Cargo Cradle", or the known blueprint's metal, as a note.</summary>
         private void OnFragmentScanned(FragmentScanned scanned)
         {
-            _crateNote.Scanned(ScanLines.Fragment(_localization, scanned));
+            _director.NotifyUsed(InteractionKind.Scan);
+            if (_bound)
+            {
+                _crateNote.Scanned(ScanLines.Fragment(_localization, scanned));
+            }
         }
 
         private void OnLabLeft(LabLeft left)

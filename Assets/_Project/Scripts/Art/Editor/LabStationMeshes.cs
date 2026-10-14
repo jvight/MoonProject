@@ -4,14 +4,12 @@ using static MoonProject.Art.Place;
 namespace MoonProject.Art.Editor
 {
     /// <summary>
-    /// The lab's four stations (docs/features/M3-19 §5), each in its station space: the origin at the station's face
+    /// The lab's three stations (docs/features/M3-19 §5), each in its station space: the origin at the station's face
     /// at 07's lens height, +Z out of the station toward the turntable's axis, +Y up, +X to the left as 07 looks at
     /// it. The wall is <see cref="WallZ"/> behind and the floor <see cref="FloorY"/> below. Ines's survey chart (its
-    /// light table is <see cref="ChartTableMeshes"/>, with her notes pinned round the big porthole), the reader (a
-    /// squat machine 07 feeds with its beam: a tube slot at lens height, a reel and its paper tape, never a desk),
-    /// Kenji's tech board (a pin, a sheet and a lamp per 0.5 node under the recovery panel's four rows) and the
-    /// keepsake shelf (deep open cubbies in four crew sections, brass name plates, dust outlines, a reading lamp
-    /// each).
+    /// light table is <see cref="ChartTableMeshes"/>, with her notes pinned round the big porthole), Kenji's tech board
+    /// (a pin, a sheet and a lamp per 0.5 node under the recovery panel's four rows) and the keepsake shelf (deep open
+    /// cubbies in four crew sections, brass name plates, dust outlines, a reading lamp each).
     /// </summary>
     internal static class LabStationMeshes
     {
@@ -24,31 +22,6 @@ namespace MoonProject.Art.Editor
         /// back from the station's face so the big porthole frames it from behind.
         /// </summary>
         public static readonly Vector3 TableCentre = new Vector3(0f, 1.05f + FloorY, -0.2f);
-
-        /// <summary>The paper tape's height above the floor, from the reader's reel round the front wall.</summary>
-        public const float TapeHeight = 0.68f;
-
-        // The reader: a squat machine against the wall.
-        private const float ReaderWidth = 0.9f;
-        private const float ReaderTop = 1.45f;
-        private const float ReaderDepth = 0.5f;
-        private const float ReelRadius = 0.22f;
-
-        /// <summary>The reader's tube slot, centred at 07's lens height on its front.</summary>
-        public static Vector3 ReaderSlot => new Vector3(0.12f, 0f, WallZ + ReaderDepth + 0.01f);
-
-        /// <summary>The top of the reader's hood, where the hand-off's conduit leaves it for the ceiling.</summary>
-        public static Vector3 ReaderHood => new Vector3(0f, FloorY + ReaderTop + 0.12f, WallZ + 0.1f);
-
-        /// <summary>The reader's reel hub on its front, below the slot toward the board's side.</summary>
-        public static Vector3 ReaderReel =>
-            new Vector3(-0.18f, TapeHeight + ReelRadius + FloorY, WallZ + ReaderDepth + 0.03f);
-
-        /// <summary>Where the tape leaves the reel: it runs from here along -X toward the board.</summary>
-        public static Vector3 TapeStart => new Vector3(ReaderReel.x, TapeHeight + FloorY, ReaderReel.z + 0.02f);
-
-        /// <summary>The tape's full run, out to the face's corner (its local X scale 1).</summary>
-        public static float TapeLength => LanderMeshes.HalfSide(LabMeshes.LiningApothem) + TapeStart.x;
 
         // The board: cork on a wooden frame, the recovery panel across its head.
         private const float BoardWidth = 1.9f;
@@ -99,86 +72,6 @@ namespace MoonProject.Art.Editor
                 b.Box(At(new Vector3(notes[i], y, WallZ + 0.005f), new Vector3(0f, 0f, (i % 3 - 1) * 6f)),
                     new Vector3(0.18f, 0.13f, 0.004f), PaletteSwatch.Cream);
                 b.Icosphere(At(notes[i], y + 0.05f, WallZ + 0.012f), 0.012f, 0, PaletteSwatch.WarmAccent);
-            }
-
-            return b;
-        }
-
-        /// <summary>
-        /// The reader: a squat enamel machine with a brass-rimmed tube slot at lens height, a hood with a vent, the
-        /// reel's spindle and guide rollers, a tape tray along its side and a cable to the board.
-        /// </summary>
-        public static LowPolyMeshBuilder Reader()
-        {
-            var b = new LowPolyMeshBuilder(600);
-            float front = WallZ + ReaderDepth;
-            float height = ReaderTop;
-            b.Box(At(0f, FloorY + height * 0.5f, WallZ + ReaderDepth * 0.5f), new Vector3(ReaderWidth, height,
-                ReaderDepth), PaletteSwatch.Enamel, 0.03f);
-            b.Box(At(0f, FloorY + 0.04f, WallZ + ReaderDepth * 0.5f + 0.02f), new Vector3(ReaderWidth + 0.04f, 0.08f,
-                ReaderDepth + 0.04f), PaletteSwatch.Charcoal, 0.01f);
-            b.Box(At(0f, FloorY + height + 0.06f, WallZ + ReaderDepth * 0.45f), new Vector3(ReaderWidth - 0.1f, 0.12f,
-                ReaderDepth * 0.8f), PaletteSwatch.WarmAccent, 0.02f);
-            for (int i = 0; i < 4; i++)
-            {
-                b.Box(At(0.18f, FloorY + height - 0.2f - i * 0.05f, front + 0.005f), new Vector3(0.36f, 0.018f, 0.01f),
-                    PaletteSwatch.Charcoal);
-            }
-
-            Vector3 slot = ReaderSlot;
-            b.Box(At(slot), new Vector3(0.36f, 0.16f, 0.03f), PaletteSwatch.Honey, 0.01f);
-            b.Box(At(slot + Vector3.forward * 0.01f), new Vector3(0.28f, 0.09f, 0.02f), PaletteSwatch.Charcoal);
-            b.Prism(At(ReaderReel - Vector3.forward * 0.015f, AlongZ), 0.04f, 0.05f, 8, PaletteSwatch.Metal);
-            for (int side = -1; side <= 1; side += 2)
-            {
-                b.Prism(At(new Vector3(-ReaderWidth * 0.5f + 0.06f, TapeStart.y + side * 0.03f, TapeStart.z), AlongZ),
-                    0.02f, 0.06f, 6, PaletteSwatch.Metal);
-            }
-
-            b.Box(At(-ReaderWidth * 0.5f - 0.02f, TapeStart.y - 0.04f, TapeStart.z - 0.02f), new Vector3(0.06f, 0.02f,
-                0.12f), PaletteSwatch.Charcoal);
-            SiteKit.Cable(b, SiteKit.Sag(new Vector3(ReaderWidth * 0.5f - 0.1f, FloorY + 0.12f, WallZ + 0.05f),
-                new Vector3(ReaderWidth * 0.5f + 0.25f, FloorY + 0.01f, WallZ + 0.12f), 0.03f, 3), 0.02f,
-                PaletteSwatch.Charcoal);
-            return b;
-        }
-
-        /// <summary>
-        /// The reel (reel space: its hub at the origin, spinning about Z): two flanges and the wound paper.
-        /// </summary>
-        public static LowPolyMeshBuilder Reel()
-        {
-            var b = new LowPolyMeshBuilder(200);
-            for (int side = -1; side <= 1; side += 2)
-            {
-                b.Prism(At(new Vector3(0f, 0f, side * 0.03f), AlongZ), ReelRadius, 0.012f, 12, PaletteSwatch.Honey);
-            }
-
-            b.Prism(Matrix4x4.Rotate(Rotation(AlongZ)), ReelRadius * 0.72f, 0.05f, 12, PaletteSwatch.Cream);
-            b.Prism(Matrix4x4.Rotate(Rotation(AlongZ)), 0.05f, 0.08f, 8, PaletteSwatch.Charcoal);
-            for (int spoke = 0; spoke < 3; spoke++)
-            {
-                Vector3 dir = Rotation(new Vector3(0f, 0f, spoke * 120f)) * Vector3.up;
-                b.Box(At(dir * ReelRadius * 0.5f + Vector3.forward * 0.038f, new Vector3(0f, 0f, spoke * 120f)),
-                    new Vector3(0.025f, ReelRadius * 0.8f, 0.01f), PaletteSwatch.Honey);
-            }
-
-            return b;
-        }
-
-        /// <summary>
-        /// The paper tape (tape space: it leaves the reel at the origin and runs along -X): a narrow strip with the
-        /// decoded marks punched along it. Scaled along X by how much has run out.
-        /// </summary>
-        public static LowPolyMeshBuilder Tape()
-        {
-            var b = new LowPolyMeshBuilder(120);
-            float length = TapeLength;
-            b.Box(At(-length * 0.5f, 0f, 0f), new Vector3(length, 0.05f, 0.003f), PaletteSwatch.Cream);
-            for (int i = 1; i < 12; i++)
-            {
-                float x = -length * i / 12f;
-                b.Box(At(x, (i % 3 - 1) * 0.012f, 0.002f), new Vector3(0.012f, 0.012f, 0.002f), PaletteSwatch.Charcoal);
             }
 
             return b;

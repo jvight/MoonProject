@@ -9,19 +9,18 @@ namespace MoonProject.Art.Tests
     /// <summary>
     /// The crew's lab inside the habitat lander (docs/ARCHITECTURE.md, "Contract: the lab (M3-19)"): the stations'
     /// frames round the turntable in LabStation order, the camera's ring rail that never meets anything, the big
-    /// porthole's lamp ring, the tech board with its recovery panel, the keepsake shelf, the reader, and the hand-off's
-    /// path from the reader to the bay.
+    /// porthole's lamp ring, the tech board with its recovery panel, and the keepsake shelf.
     /// </summary>
     public sealed class LabModelTests
     {
         // The lab's stations, warm lamps and room cost at most this many triangles all the way down.
         private const int LabBudget = 16000;
 
-        // Nothing of the lab or the conduit comes this near the ring-rail camera's path (it rides just under the rail).
+        // Nothing of the lab comes this near the ring-rail camera's path (it rides just under the rail).
         private const float CameraClearance = 0.12f;
         private const float CameraDrop = 0.08f;
 
-        private static readonly string[] Stations = { "Chart", "Reader", "Board", "Keepsakes" };
+        private static readonly string[] Stations = { "Chart", "Board", "Keepsakes" };
 
         private ModelNode _lander;
         private ModelNode _lab;
@@ -105,10 +104,6 @@ namespace MoonProject.Art.Tests
             }
 
             things.AddRange(_lab.Mesh.Geometry.Positions);
-            var conduit = new List<Vector3>();
-            SilhouetteCamera.CollectTriangles(_lander.GetDescendant(BaseModelBuilder.HandOffCableName),
-                Matrix4x4.Translate(-_lab.LocalPosition), conduit);
-            things.AddRange(conduit);
             foreach (Vector3 p in things)
             {
                 float across = new Vector2(p.x, p.z).magnitude - radius;
@@ -148,19 +143,6 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
-        public void Reader_FeedsAtLensHeight_ReelsAndRunsItsTape()
-        {
-            ModelNode reader = _lab.GetDescendant(BaseModelBuilder.StationPrefix + "Reader");
-            ModelNode slot = reader.GetDescendant(BaseModelBuilder.ReaderSlotName);
-            Assert.IsNull(slot.Mesh, "the slot is an empty");
-            Assert.Less(Mathf.Abs(slot.LocalPosition.y), 0.1f, "at 07's lens height");
-            Assert.IsNotNull(reader.GetDescendant(BaseModelBuilder.ReaderReelName).Mesh, "a reel");
-            Bounds tape = reader.GetDescendant(BaseModelBuilder.ReaderTapeName).Mesh.Geometry.Bounds;
-            Assert.AreEqual(0f, tape.max.x, 0.01f, "the tape leaves the reel at its origin");
-            Assert.Less(tape.min.x, -0.5f, "and runs out along -X, toward the board");
-        }
-
-        [Test]
         public void Keepsakes_HaveSixCubbies_AndAReadingLampPerCrewSection()
         {
             ModelNode shelf = _lab.GetDescendant(BaseModelBuilder.StationPrefix + "Keepsakes");
@@ -178,33 +160,6 @@ namespace MoonProject.Art.Tests
             }
 
             Assert.IsNull(shelf.GetDescendant(BaseModelBuilder.ReadingLampPrefix + 4), "four crew, four lamps");
-        }
-
-        [Test]
-        public void HandOff_RunsFromTheReaderDownTheLeg_ToTheBaysBackWall()
-        {
-            ModelNode path = _lander.GetDescendant(BaseModelBuilder.HandOffPathName);
-            List<Vector3> points = path.Children.Select(c => c.LocalPosition).ToList();
-            Assert.Greater(points.Count, 10);
-            Matrix4x4 reader = _lab.LocalMatrix * _lab.GetDescendant(BaseModelBuilder.StationPrefix + "Reader")
-                .LocalMatrix;
-            Vector3 slot = reader.MultiplyPoint3x4(_lab.GetDescendant(BaseModelBuilder.ReaderSlotName).LocalPosition);
-            Assert.Less(Vector3.Distance(points[0], slot), 0.01f, "it starts at the reader's slot");
-            Vector3 bay = BaseModelBuilder.WorkshopAnchor;
-            Vector3 end = points[points.Count - 1];
-            Assert.Less(Mathf.Abs(end.x - bay.x), 0.5f, "it ends at the bay's back wall");
-            Assert.Less(end.z, bay.z, "behind the bay");
-            Assert.IsTrue(points.Any(p => p.y < 0.05f), "it runs along the ground");
-            ModelNode cable = _lander.GetDescendant(BaseModelBuilder.HandOffCableName);
-            Assert.Greater(cable.Children.Count, 10, "a row of beads for the pulse");
-            Vector3 previous = points[0];
-            foreach (ModelNode bead in cable.Children)
-            {
-                Assert.AreEqual(ModelMaterial.PaletteGlowOff, bead.Material, $"{bead.Name} starts dark");
-                Vector3 centre = bead.Mesh.Geometry.Bounds.center;
-                Assert.Less(Vector3.Distance(centre, previous), 2.6f, $"{bead.Name} follows on from the one before");
-                previous = centre;
-            }
         }
 
         [Test]

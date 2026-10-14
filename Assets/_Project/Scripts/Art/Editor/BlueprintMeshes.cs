@@ -5,11 +5,11 @@ namespace MoonProject.Art.Editor
 {
     /// <summary>
     /// Kenji's blueprints (M3-16 P7, M3-19 D7): an old pen plotter on brackets on the Rover Bay's back wall draws a
-    /// kit's sheet when the lab's reader hands a decoded tube off, and the drawn sheets hang from wooden pegs on a cord
-    /// along the bay's wall, one per kit (no hands pin anything, ruling 14). Each sheet is slate-blue paper with the
-    /// kit drawn in chalky cream lines (no words). Plus the blueprint tube found in a wreck's heart. Sheets are in their
-    /// own space (centre at the origin, facing +Z); the cord and slots in the cord's space (its pegs along X, the
-    /// wall behind -Z); the plotter in its own space (+Z its front, the wall behind it).
+    /// kit's sheet when 07 scans its fragments, and the drawn sheets hang from wooden pegs on a cord along the bay's
+    /// wall, one per kit (no hands pin anything, ruling 14). Each sheet is slate-blue paper with the kit drawn in
+    /// chalky cream lines (no words). Sheets are in their own space (centre at the origin, facing +Z); the cord and
+    /// slots in the cord's space (its pegs along X, the wall behind -Z); the plotter in its own space (+Z its front,
+    /// the wall behind it).
     /// </summary>
     internal static class BlueprintMeshes
     {
@@ -49,9 +49,6 @@ namespace MoonProject.Art.Editor
         private const float BedWidth = 1f;
         private const float BedHeight = 0.74f;
         private const float LegHalfSpan = 0.48f;
-
-        private const float TubeRadius = 0.045f;
-        private const float TubeLength = 0.42f;
 
         /// <summary>The plotter's bed frame (local X across, Y up the bed, Z out of it), in plotter space.</summary>
         public static Matrix4x4 Bed => At(BedCentre, BedTilt);
@@ -257,27 +254,6 @@ namespace MoonProject.Art.Editor
             var b = new LowPolyMeshBuilder(40);
             b.Prism(Matrix4x4.Rotate(Rotation(AlongZ)), 0.022f, 0.012f, 8, PaletteSwatch.LampGlass);
             return b;
-        }
-
-        /// <summary>
-        /// The blueprint tube a wreck's heart holds: a worn sage tube with metal caps, an orange band and a rusted
-        /// cap rim, centred on its mass.
-        /// </summary>
-        public static LowPolyMeshBuilder Tube()
-        {
-            var b = new LowPolyMeshBuilder(200);
-            b.Prism(At(Vector3.zero, AlongX), TubeRadius, TubeLength, 10, PaletteSwatch.Sage);
-            for (int end = -1; end <= 1; end += 2)
-            {
-                b.Prism(At(new Vector3(end * (TubeLength * 0.5f + 0.012f), 0f, 0f), AlongX), TubeRadius + 0.006f,
-                    0.03f, 10, PaletteSwatch.Metal);
-            }
-
-            b.Prism(At(new Vector3(0.06f, 0f, 0f), AlongX), TubeRadius + 0.002f, 0.05f, 10, PaletteSwatch.WarmAccent,
-                false);
-            b.Prism(At(new Vector3(-TubeLength * 0.5f + 0.004f, 0f, 0f), AlongX), TubeRadius + 0.008f, 0.008f, 10,
-                PaletteSwatch.Rust, false);
-            return RecipeKit.CentredOnMass(b);
         }
 
         /// <summary>07 seen from the side, small: a body and three wheels.</summary>

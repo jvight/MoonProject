@@ -118,6 +118,52 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void TheScanPrompt_NamesInteract_ShowsBeforeTheFirstScan_AndNeverAfterEvenAcrossASave()
+        {
+            PromptEntry scan = _settings.Find(InteractionKind.Scan);
+            Assert.IsNotNull(scan, "the first fragment scan is taught");
+            Assert.AreEqual(RoverAction.Excavate, scan.Action, "a scan is held with Interact");
+            Assert.AreEqual(1, scan.UsesToRetire, "one completed scan and the player knows how to scan");
+
+            InteractionHint hint = Ready(InteractionKind.Scan);
+            Assert.IsTrue(_director.Wants(hint), "offered before the first scan");
+            Run(scan.DwellSeconds + 0.1f, hint);
+            Assert.AreEqual(InteractionKind.Scan, _director.Displayed);
+            Assert.IsTrue(_director.WantsShown);
+
+            _director.Yield(InteractionKind.Scan);
+            Assert.IsFalse(_director.WantsShown, "starting the sweep hides the chip while the beam draws");
+            Assert.IsTrue(_ledger.ShouldTeach(InteractionKind.Scan), "letting go early has not yet completed a scan");
+
+            _director.NotifyUsed(InteractionKind.Scan);
+            Assert.AreEqual(1, _ledger.Used(InteractionKind.Scan));
+            Assert.IsFalse(_ledger.ShouldTeach(InteractionKind.Scan), "the first completed scan retires the prompt");
+            Assert.IsFalse(_director.Wants(hint), "never offered again");
+            Run(_settings.RepeatCooldown + 60f, hint);
+            Assert.AreEqual(InteractionKind.None, _director.Displayed);
+            Assert.AreEqual(1, _ledger.Shown(InteractionKind.Scan));
+
+            string json = JsonUtility.ToJson(_ledger.Capture());
+            StringAssert.Contains("\"Scan\"", json, "saved by kind name in the prompt ledger");
+            var restoredLedger = new PromptLedger(_settings);
+            restoredLedger.Restore(JsonUtility.FromJson<PromptsSaveData>(json));
+            Assert.AreEqual(1, restoredLedger.Used(InteractionKind.Scan));
+            Assert.IsFalse(restoredLedger.ShouldTeach(InteractionKind.Scan), "still retired after loading the save");
+
+            var restoredDirector = new PromptDirector(_settings, restoredLedger);
+            var restoredChip = new Fade(_settings.Reveal);
+            Assert.IsFalse(restoredDirector.Wants(hint));
+            for (float t = 0f; t < 60f; t += Frame)
+            {
+                restoredDirector.Step(Frame, true, hint, restoredChip.IsHidden);
+                restoredChip.Set(restoredDirector.WantsShown);
+                restoredChip.Step(Frame);
+            }
+
+            Assert.AreEqual(InteractionKind.None, restoredDirector.Displayed, "never offered after loading the save");
+        }
+
+        [Test]
         public void TheRelayPrompts_TeachRestoreAndHop_WithInteract()
         {
             foreach (InteractionKind kind in new[] { InteractionKind.Restore, InteractionKind.Hop })
@@ -151,6 +197,7 @@ namespace MoonProject.UI.Tests
         {
             var tuning = AssetDatabase.LoadAssetAtPath<UiTuning>(UiAssetPaths.Tuning);
             Assert.IsNotNull(tuning, UiAssetPaths.Tuning);
+            Assert.IsNotNull(tuning.Prompts.Find(InteractionKind.Scan), "the shipped tuning includes the scan prompt");
             foreach (PromptEntry entry in tuning.Prompts.Entries)
             {
                 Assert.That(entry.UsesToRetire, Is.InRange(1, 10),
@@ -216,6 +263,7 @@ namespace MoonProject.UI.Tests
             InteractionKind[] taught =
             {
                 InteractionKind.Excavate, InteractionKind.Tether, InteractionKind.Deposit, InteractionKind.Reel,
+                InteractionKind.Scan,
             };
             foreach (InteractionKind kind in taught)
             {
