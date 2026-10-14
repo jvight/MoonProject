@@ -90,7 +90,7 @@ namespace MoonProject.Rover
         [Tooltip("RoverModel 'Antenna/Pennant': Bell's radio pennant (hidden until her gift).")]
         [SerializeField] private Transform _pennant;
 
-        [Tooltip("Art's tower story parts on TubeSocket, each named as its part's id: the one 07 carries shows.")]
+        [Tooltip("Art's tower story parts on StoryPartSocket, each named as its part's id: the one 07 carries shows.")]
         [SerializeField] private Transform[] _storyParts = new Transform[0];
 
         private readonly KitFit[] _fits = new KitFit[PieceCount];
@@ -231,7 +231,7 @@ namespace MoonProject.Rover
                 & Require(_tapeDeck != null, "The tape deck (Kit_TapeDeck on DeckSocket) is not assigned.")
                 & Require(_tetherRing != null && _ringGlow != null,
                     "The tether ring (Kit_TetherRing on the Eye) or its Glow band is not assigned.")
-                & Require(StoryPartsWired(), "A tower story part on TubeSocket is not assigned (Part_TowerCoil...).")
+                & Require(StoryPartsWired(), "A tower story part on StoryPartSocket is not assigned (Part_TowerCoil...).")
                 & Require(_solarCell != null && _freshSerial != null && _pennant != null,
                     "A gift node (CellFilled, Decal07Fresh, Pennant) is not assigned.")
                 & Require(AllSet(_lamps, RoverModelNodes.KitLampCount), "The lamp bar needs its three glasses.")
@@ -240,7 +240,7 @@ namespace MoonProject.Rover
             return ok;
         }
 
-        /// <summary>The story part 07 carries shows on TubeSocket, eased on and off; the others stay hidden.</summary>
+        /// <summary>The story part 07 carries shows on StoryPartSocket, eased on and off; the others stay hidden.</summary>
         private void StepParts(float deltaTime)
         {
             _carry.Step(deltaTime);

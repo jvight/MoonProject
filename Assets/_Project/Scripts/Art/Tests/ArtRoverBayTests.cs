@@ -264,7 +264,7 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
-        public void Blueprints_OnlyHoverJumpsHangs_UntilThePlotterDrawsMore_AndTheTubeIsSmall()
+        public void Blueprints_OnlyHoverJumpsHangs_UntilThePlotterDrawsMore()
         {
             ModelNode board = _bay.GetDescendant(BaseModelBuilder.BlueprintsName);
             Assert.IsNull(board.Mesh, "the sheets' node is an empty: their cord and pegs are on Kenji's bench");
@@ -282,10 +282,6 @@ namespace MoonProject.Art.Tests
             Assert.AreEqual(ModelMaterial.PaletteGlowOff,
                 plotter.GetDescendant(BaseModelBuilder.PlotterLampName).Material, "the plotter sleeps dark");
             Assert.AreEqual(ModelMaterial.Palette, plotter.GetDescendant(BaseModelBuilder.PenHeadName).Material);
-
-            Bounds tube = SiteModelBuilder.CreateBlueprintTube().Mesh.Geometry.Bounds;
-            Assert.LessOrEqual(Mathf.Max(tube.size.x, Mathf.Max(tube.size.y, tube.size.z)), 0.5f,
-                "a small personal thing stays small (ruling 13)");
         }
 
         [Test]

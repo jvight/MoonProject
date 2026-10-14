@@ -129,7 +129,6 @@ namespace MoonProject.Art.Editor
             }
 
             ModelPrefabWriter.Write(CreateOrangeBeadsBundle(), ArtPaths.PickupFolder, material);
-            ModelPrefabWriter.Write(CreateBlueprintTube(), ArtPaths.PickupFolder, material);
             foreach (string part in StoryPartNames)
             {
                 ModelPrefabWriter.Write(CreateStoryPart(part), ArtPaths.PickupFolder, material);
@@ -137,10 +136,8 @@ namespace MoonProject.Art.Editor
             AssetDatabase.SaveAssets();
         }
 
-        public const string BlueprintTubeName = "BlueprintTube";
-
         /// <summary>
-        /// The tower's story parts (M3-16 P1), pickups 07 carries home on its TubeSocket and feeds to the tower's port.
+        /// The tower's story parts (M3-16 P1), pickups 07 carries home on its StoryPartSocket and feeds to the tower's port.
         /// </summary>
         public static readonly string[] StoryPartNames = { "Part_TowerCoil", "Part_Transformer", "Part_RelaySpare" };
 
@@ -332,16 +329,6 @@ namespace MoonProject.Art.Editor
         {
             return new ModelNode(OrangeBeadsBundleName, Vector3.zero,
                 new ModelMesh(OrangeBeadsBundleName, RecipeKit.CentredOnMass(OrangeBeadMeshes.Bundle())));
-        }
-
-        /// <summary>
-        /// The blueprint tube a salvage site's heart holds (M3-16): Gameplay places it and pins its kit's sheet on
-        /// Kenji's board once 07 scans it.
-        /// </summary>
-        public static ModelNode CreateBlueprintTube()
-        {
-            return new ModelNode(BlueprintTubeName, Vector3.zero,
-                new ModelMesh(BlueprintTubeName, BlueprintMeshes.Tube()));
         }
 
         private static SiteRecipe Recipe(string id)

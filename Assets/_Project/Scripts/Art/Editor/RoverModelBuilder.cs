@@ -129,16 +129,16 @@ namespace MoonProject.Art.Editor
         public const string Decal07FreshName = "Decal07Fresh";
 
         /// <summary>
-        /// Where a found blueprint tube rides home strapped on 07's lid (M3-16 P7): right of the solar wing, ahead of
-        /// the antenna; its +X runs fore and aft, along the tube (the BlueprintTube prefab lies along its X).
+        /// Where a tower story part rides home on 07's lid (M3-16 P1): right of the solar wing, ahead of the antenna;
+        /// its +X runs fore and aft.
         /// </summary>
-        public const string TubeSocketName = "TubeSocket";
+        public const string StoryPartSocketName = "StoryPartSocket";
 
-        public static readonly Vector3 TubeSocket = new Vector3(0.25f, RoverMeshes.LidTop + 0.055f, -0.25f);
+        public static readonly Vector3 StoryPartSocket = new Vector3(0.25f, RoverMeshes.LidTop + 0.055f, -0.25f);
 
         /// <summary>
-        /// Where a carried story part stands on 07's lid (M3-16 P1): right of the neck, ahead of the tube's front end
-        /// with a hand's gap, so a part and a tube carried together read apart from the chase camera. +Y up; the
+        /// Where a second lid-mounted part stands on 07's lid (M3-16 P1): right of the neck, ahead of
+        /// <see cref="StoryPartSocket"/> with a hand's gap, so both read apart from the chase camera. +Y up; the
         /// part's base sits on it.
         /// </summary>
         public const string PartSocketName = "PartSocket";
@@ -147,7 +147,8 @@ namespace MoonProject.Art.Editor
 
         /// <summary>
         /// Where Cell Pack II's battery spine stands (M3-20, the back slot): along the lid's right edge, outboard of
-        /// the blueprint tube and ahead of the antenna, the only stretch of lid the folded wing leaves free. +Y up.
+        /// <see cref="StoryPartSocket"/> and ahead of the antenna, the only stretch of lid the folded wing leaves free.
+        /// +Y up.
         /// </summary>
         public const string SpineSocketName = "SpineSocket";
 
@@ -296,7 +297,7 @@ namespace MoonProject.Art.Editor
             root.Add(new ModelNode("DrumSocket_R", DrumSocket));
             root.Add(new ModelNode("BinSocket_L", MirrorX(BinSocket), Place.Rotation(new Vector3(0f, 180f, 0f))));
             root.Add(new ModelNode("BinSocket_R", BinSocket));
-            root.Add(new ModelNode(TubeSocketName, TubeSocket, Place.Rotation(new Vector3(0f, 90f, 0f))));
+            root.Add(new ModelNode(StoryPartSocketName, StoryPartSocket, Place.Rotation(new Vector3(0f, 90f, 0f))));
             root.Add(new ModelNode(PartSocketName, PartSocket));
             root.Add(new ModelNode(SpineSocketName, SpineSocket));
             root.Add(new ModelNode(DeckSocketName, DeckSocket, Place.Rotation(new Vector3(0f, 90f, 0f))));
