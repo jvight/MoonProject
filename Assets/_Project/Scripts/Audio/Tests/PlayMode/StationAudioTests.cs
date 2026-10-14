@@ -214,31 +214,25 @@ namespace MoonProject.Audio.PlayModeTests
 
             _rig.Events.Publish(new BlueprintDrawing("kit.cargo", winch, 6f));
             Assert.AreEqual("plotter_draw", LastClip);
-            _rig.Events.Publish(new BlueprintFound("kit.cargo", "site.garage", winch));
-            Assert.AreEqual("blueprint_found", LastClip);
         }
 
         [UnityTest]
-        public IEnumerator TheLab_HasItsRoomTone_DetentsInKey_TheReaderDecodes_AndTheMapInks()
+        public IEnumerator TheLab_HasItsRoomTone_DetentsInKey_AndTheMapInks()
         {
-            _rig.Events.Publish(new LabEntered(LabStation.Reader));
+            _rig.Events.Publish(new LabEntered(LabStation.Board));
             yield return new WaitForSeconds(0.6f);
             Assert.IsTrue(_rig.Lab.RoomSource.isPlaying, "the lab's room tone comes in");
+            _rig.Events.Publish(new LabStationFaced(LabStation.Chart));
+            Assert.AreEqual("lab_detent_01", LastClip, "each station settles on its own pentatonic note");
             _rig.Events.Publish(new LabStationFaced(LabStation.Board));
-            Assert.AreEqual("lab_detent_03", LastClip, "each station settles on its own pentatonic note");
-            _rig.Events.Publish(new BlueprintDelivered("kit.cargo"));
-            Assert.AreEqual("reader_take", LastClip);
-            yield return new WaitForSeconds(0.4f);
-            Assert.IsTrue(_rig.Lab.ReelSource.isPlaying, "the reel turns while it decodes");
-            _rig.Events.Publish(new FindDecoded("kit.cargo"));
-            Assert.AreEqual("reader_decode_chime", LastClip);
+            Assert.AreEqual("lab_detent_02", LastClip);
+            _rig.Events.Publish(new LabStationFaced(LabStation.Keepsakes));
+            Assert.AreEqual("lab_detent_03", LastClip);
             _rig.Events.Publish(new RecoveryProgressChanged(RecoveryTarget.Power, 3, 3, true));
             _rig.Events.Publish(new RecoveryProgressChanged(RecoveryTarget.Link, 1, 3, false));
-            Assert.AreEqual("reader_decode_chime", LastClip, "a load or a lamp alone plays no chord");
+            Assert.AreEqual("lab_detent_03", LastClip, "a load or a lamp alone plays no chord");
             _rig.Events.Publish(new RecoveryProgressChanged(RecoveryTarget.Power, 3, 3, false));
             Assert.AreEqual("recovery_row_chord", LastClip, "Power restored: the row's warm chord");
-            yield return new WaitForSeconds(0.6f);
-            Assert.IsFalse(_rig.Lab.ReelSource.isPlaying, "and stops once decoded");
             _rig.Events.Publish(new MapPlaceSeen("site.depot", Vector3.zero));
             Assert.AreEqual("map_pencil", LastClip);
             _rig.Events.Publish(new MapInkCued("site.depot", Vector3.zero, 1));

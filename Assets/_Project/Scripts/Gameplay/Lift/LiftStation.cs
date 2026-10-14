@@ -13,7 +13,7 @@ namespace MoonProject.Gameplay.Lift
     /// (docs/ARCHITECTURE.md "Contract: the lab"):
     /// <list type="bullet">
     /// <item>Dormant until home has power, then jammed (built in its tilt, one side low) and silent. The first time 07
-    /// comes home carrying something for the lab (a relic or a blueprint tube) the platform creaks and its pad ring
+    /// comes home carrying something for the lab (a relic) the platform creaks and its pad ring
     /// lights; 07 rests just off its edge, facing it, and stitches the cable (no feeding): the platform eases level,
     /// the jam and the dust drift go and the second cable hangs taut. Saved.</item>
     /// <item>The ride: 07 rests on the platform and after a breath it rises by itself (ruling 14: no button). The hatch
@@ -21,10 +21,10 @@ namespace MoonProject.Gameplay.Lift
     /// beside it. Rover holds 07 on the platform (<see cref="LiftRideChanged"/>) and flies its camera up through the
     /// hatch. The lab is shown only while 07 rides or is up in it.</item>
     /// <item>Inside, the platform is the turntable: it turns by itself to the station that wants what 07 carries (a
-    /// tube to the reader, a relic to the keepsake shelf; otherwise 07 arrives facing the survey chart), left and right
-    /// turn it softly to the next station, forward looks at the station and back comes away from a look or brings the
-    /// platform down, turning so 07 drives out forward toward the dock. The reader (<see cref="LabReader"/>) runs here
-    /// too; the keepsake shelf is <see cref="HomeBase"/>'s, the chart's map the map system's.</item>
+    /// relic to the keepsake shelf; otherwise 07 arrives facing the survey chart), left and right turn it softly to
+    /// the next station, forward looks at the station and back comes away from a look or brings the platform down,
+    /// turning so 07 drives out forward toward the dock. The keepsake shelf is <see cref="HomeBase"/>'s, the chart's
+    /// map the map system's.</item>
     /// <item>The ladder look: the first time near the crew's ladder, 07 looks up it, then down at the belly
     /// lift.</item>
     /// </list>
@@ -82,13 +82,9 @@ namespace MoonProject.Gameplay.Lift
         [Tooltip("Lab: the cabin interior, shown while 07 rides or is up in it.")]
         [SerializeField] private Transform _labRoot;
 
-        [Tooltip("The lab's stations in LabStation order: the survey chart, the reader, the tech board, the " +
-                 "keepsakes.")]
+        [Tooltip("The lab's stations in LabStation order: the survey chart, the tech board, the keepsakes.")]
         [SerializeField] private Transform[] _stations = Array.Empty<Transform>();
 
-        [SerializeField] private Transform _readerSlot;
-        [SerializeField] private Transform _readerReel;
-        [SerializeField] private Transform _readerTape;
         [SerializeField] private Transform _dock;
 
         private readonly LabCommandLatch _commands = new LabCommandLatch();
@@ -96,10 +92,8 @@ namespace MoonProject.Gameplay.Lift
         private LiftCycle _cycle;
         private Turntable _turntable;
         private LabInterior _lab;
-        private LabReader _reader;
         private ISurveyChart _chart;
         private BasePower _power;
-        private Blueprints _blueprints;
         private TetherSystem _tether;
         private CargoCradle _cradle;
         private IRoverState _rover;
@@ -151,9 +145,6 @@ namespace MoonProject.Gameplay.Lift
         /// <summary>The turntable is turning between stations.</summary>
         public bool Turning => _turntable != null && _turntable.Turning;
 
-        /// <summary>The reader's phase (tests and capture sessions).</summary>
-        public ReaderPhase ReaderPhase => _reader != null ? _reader.Phase : ReaderPhase.Idle;
-
         /// <summary>The relic that rode up beside 07 and waits to be placed, or null.</summary>
         public Relic Rider => _rider;
 
@@ -195,7 +186,7 @@ namespace MoonProject.Gameplay.Lift
             Transform down, Transform up, Quaternion levelRotation, Transform roverSpot, Renderer padGlow,
             Transform dust, Transform hatchLeft, Transform hatchRight, float hatchTravel, Transform cableLeft,
             Transform cableRight, float cableBuiltLength, Transform cableJam, Transform stitchPoint, Transform labRoot,
-            Transform[] stations, Transform readerSlot, Transform readerReel, Transform readerTape, Transform dock)
+            Transform[] stations, Transform dock)
         {
             _tuning = tuning;
             _looks = looks;
@@ -217,17 +208,14 @@ namespace MoonProject.Gameplay.Lift
             _stitchPoint = stitchPoint;
             _labRoot = labRoot;
             _stations = stations;
-            _readerSlot = readerSlot;
-            _readerReel = readerReel;
-            _readerTape = readerTape;
             _dock = dock;
         }
 
         /// <summary>Wires the lift once home stands in place (after <see cref="HomeBase"/>).</summary>
         internal bool Initialize(GameplayServices services, BasePower power, IRoverStillness stillness,
-            TetherSystem tether, CargoCradle cradle, Blueprints blueprints, ProgressionTuning progression)
+            TetherSystem tether, CargoCradle cradle)
         {
-            string problem = WiringProblem(power, stillness, tether, cradle, blueprints, progression);
+            string problem = WiringProblem(power, stillness, tether, cradle);
             if (problem != null)
             {
                 Debug.LogError($"{nameof(LiftStation)}: {problem}", this);
@@ -236,7 +224,6 @@ namespace MoonProject.Gameplay.Lift
             }
 
             _power = power;
-            _blueprints = blueprints;
             _tether = tether;
             _cradle = cradle;
             _rover = services.Rover;
@@ -249,8 +236,6 @@ namespace MoonProject.Gameplay.Lift
             _cycle = new LiftCycle(_tuning);
             _turntable = new Turntable(_tuning.TurnSecondsPerQuarter, _tuning.TurnMinSeconds);
             _lab = new LabInterior(_events);
-            _reader = new LabReader(transform, _readerSlot, _readerReel, _readerTape, services.Visuals.TetherBeam,
-                blueprints, progression, _events, _save);
             _jammedPosition = _platform.localPosition;
             _jammedRotation = _platform.localRotation;
             _hatchLeftRest = _hatchLeft.localPosition;
@@ -300,14 +285,6 @@ namespace MoonProject.Gameplay.Lift
             ApplyHatch();
         }
 
-        /// <summary>
-        /// A loaded game: a tube the reader had taken decodes again (after the blueprints are restored).
-        /// </summary>
-        internal void RestoreReader()
-        {
-            _reader.Restore();
-        }
-
         /// <summary>The keepsake shelf takes the relic that rode up.</summary>
         internal void LetRiderGo(Relic relic)
         {
@@ -318,7 +295,7 @@ namespace MoonProject.Gameplay.Lift
         }
 
         private string WiringProblem(BasePower power, IRoverStillness stillness, TetherSystem tether,
-            CargoCradle cradle, Blueprints blueprints, ProgressionTuning progression)
+            CargoCradle cradle)
         {
             if (_tuning == null || _looks == null)
             {
@@ -328,16 +305,15 @@ namespace MoonProject.Gameplay.Lift
             if (_platform == null || _platform.parent == null || _platformBody == null || _down == null || _up == null
                 || _roverSpot == null || _padGlow == null || _dust == null || _hatchLeft == null || _hatchRight == null
                 || _cableLeft == null || _cableRight == null || _cableJam == null || _stitchPoint == null
-                || _labRoot == null || _readerSlot == null || _readerReel == null || _readerTape == null
-                || _dock == null)
+                || _labRoot == null || _dock == null)
             {
                 return "a belly lift or lab node is not assigned (see docs/ARCHITECTURE.md \"Contract: the lab\").";
             }
 
             if (_stations == null || _stations.Length != LabInterior.StationCount || Array.IndexOf(_stations, null) >= 0)
             {
-                return $"the lab needs its {LabInterior.StationCount} stations (Lab/Station_Chart, Station_Reader, "
-                    + "Station_Board, Station_Keepsakes).";
+                return $"the lab needs its {LabInterior.StationCount} stations (Lab/Station_Chart, Station_Board, "
+                    + "Station_Keepsakes).";
             }
 
             float dockToPlatform = SurfaceRules.HorizontalDistance(_dock.position, _platform.parent.TransformPoint(
@@ -348,10 +324,8 @@ namespace MoonProject.Gameplay.Lift
                        $"({_tuning.CallRadius} m): a find carried home to the dock would never call the lift.";
             }
 
-            return power == null || stillness == null || tether == null || cradle == null || blueprints == null
-                   || progression == null
-                ? "the base power, 07's stillness, the tether, the cradle, the blueprints or ProgressionTuning is "
-                  + "missing."
+            return power == null || stillness == null || tether == null || cradle == null
+                ? "the base power, 07's stillness, the tether or the cradle is missing."
                 : null;
         }
 
@@ -383,7 +357,6 @@ namespace MoonProject.Gameplay.Lift
             bool stitching = _cycle.Phase == LiftPhase.Stitching;
             _stitch.Step(stitching, true, eye, _stitchPoint.position, now, deltaTime);
             StepLab(now, deltaTime);
-            _reader.Step(Faces(LabStation.Reader), eye, now, deltaTime);
             StepLadderLook(now);
             Hold(stitching || _cycle.Holds07);
             bool lit = _cycle.Phase == LiftPhase.Called || _cycle.Phase == LiftPhase.Ready;
@@ -439,7 +412,7 @@ namespace MoonProject.Gameplay.Lift
                         return false;
                     }
 
-                    return !_reader.Feeding;
+                    return true;
                 default:
                     return false;
             }
@@ -602,24 +575,16 @@ namespace MoonProject.Gameplay.Lift
             _chartAt = _lab.Facing == LabStation.Chart && news ? now + _tuning.ChartBreath : float.PositiveInfinity;
         }
 
-        /// <summary>
-        /// The station that wants what 07 carries: a tube the reader (until it has decoded, so the reel's run and the
-        /// chime are seen), a relic the shelf; else the chart.
-        /// </summary>
+        /// <summary>The station that wants what 07 carries: a relic the shelf; else the chart.</summary>
         private LabStation Wanted()
         {
-            if (_reader.Wants || _reader.Busy)
-            {
-                return LabStation.Reader;
-            }
-
             return _rider != null || _cradle.Carried != null ? LabStation.Keepsakes : LabStation.Chart;
         }
 
-        /// <summary>07 carries something for the lab: a blueprint tube, a towed relic or one in the cradle.</summary>
+        /// <summary>07 carries something for the lab: a towed relic or one in the cradle.</summary>
         private bool Carrying()
         {
-            return _blueprints.IsCarrying || _tether.Towed != null || _cradle.Carried != null;
+            return _tether.Towed != null || _cradle.Carried != null;
         }
 
         private bool NearHome()

@@ -490,12 +490,6 @@ MonoBehaviour:
     _tableLookEase: 1.2
     _chartRadius: 320
     _penTravel: 0.45
-    _handOffBeadGlow: 3
-    _handOffWidth: 0.06
-    _handOffAfterglow: 1.2
-    _handOffLightIntensity: 1.6
-    _handOffLightRange: 2.2
-    _handOffLightColour: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
   _postProcessing:
     _bloomThreshold: 1.25
     _bloomIntensity: 1.1

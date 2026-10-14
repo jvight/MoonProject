@@ -2,7 +2,7 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// Kenji's blueprint board (docs/features/M3-16): one sheet per kit the bay can build, pinned once found. UI lists
-    /// the bay's kits with it; <see cref="Core.Events.BlueprintFound"/> tells when a sheet is pinned.
+    /// the bay's kits with it; <see cref="Core.Events.BlueprintCompleted"/> tells when a sheet is pinned.
     /// </summary>
     public interface IBlueprintBoard
     {

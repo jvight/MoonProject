@@ -44,6 +44,10 @@ namespace MoonProject.Gameplay
         [Tooltip("07's cutter tiers (Assets/_Project/Data/Tuning/Gameplay/CutterTuning.asset).")]
         [SerializeField] private CutterTuning _cutterTuning;
 
+        [Tooltip("The blueprints' fragment sets and the scan verb (Assets/_Project/Data/Tuning/Gameplay/" +
+                 "ScanTuning.asset).")]
+        [SerializeField] private ScanTuning _scanTuning;
+
         [Tooltip("Every upgrade crafted from materials (Assets/_Project/Data/Content/Upgrades).")]
         [SerializeField] private UpgradeDefinition[] _upgradeDefinitions = Array.Empty<UpgradeDefinition>();
 
@@ -66,6 +70,14 @@ namespace MoonProject.Gameplay
         [SerializeField] private BlueprintPlotter _plotter;
         [SerializeField] private LiftStation _lift;
         [SerializeField] private BatteryField _battery;
+
+        /// <summary>The E verbs a scan yields to (0.5.5 §1.2: scanning comes last).</summary>
+        private static readonly InteractionKind[] VerbsBeforeScan =
+        {
+            InteractionKind.PickUp, InteractionKind.Build, InteractionKind.Repair, InteractionKind.Restore,
+            InteractionKind.Tune, InteractionKind.Hop, InteractionKind.Upgrade, InteractionKind.Salvage,
+            InteractionKind.Excavate,
+        };
 
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private readonly List<IDisposable> _flowTokens = new List<IDisposable>();
@@ -127,8 +139,8 @@ namespace MoonProject.Gameplay
         /// <summary>The components in the world: waiting, flying into 07, fed to the tower's port.</summary>
         public TowerPartField TowerPartField { get; private set; }
 
-        /// <summary>The blueprint tubes waiting on the ground at world anchors (docs/features/M3-21).</summary>
-        public GroundTubes GroundTubes { get; private set; }
+        /// <summary>The blueprints' fragments, scanned to learn them (0.5.5 §1).</summary>
+        public ScanField Scans { get; private set; }
 
         /// <summary>Kenji's garage service port: the tether ring, then the tape deck (first-hour v2 §3).</summary>
         public GaragePort Port { get; private set; }
@@ -216,6 +228,11 @@ namespace MoonProject.Gameplay
             _cutterTuning = cutter;
         }
 
+        internal void WireScans(ScanTuning scans)
+        {
+            _scanTuning = scans;
+        }
+
         internal void WireBattery(BatteryField battery)
         {
             _battery = battery;
@@ -298,8 +315,7 @@ namespace MoonProject.Gameplay
                 !_tether.Initialize(services, _relics, _salvage, abilities) ||
                 !_home.Initialize(services, _relics, Upgrades, lights, _lift) ||
                 !_cradle.Initialize(services, seat, _relics, _home) ||
-                !_lift.Initialize(services, Power, context.Get<IRoverStillness>(), _tether, _cradle, Blueprints,
-                    _progression.Tuning) ||
+                !_lift.Initialize(services, Power, context.Get<IRoverStillness>(), _tether, _cradle) ||
                 !_tower.Initialize(services, Upgrades, _salvage.Catalog, TowerParts) ||
                 !_workshop.Initialize(services, Upgrades, _salvage.Catalog, _tower, Power, Blueprints, lights,
                     Equipment) ||
@@ -334,15 +350,6 @@ namespace MoonProject.Gameplay
             _salvage.Connect(_excavation);
             _tether.Connect(_cradle, _home);
 
-            string tubeSite = UnknownTubeSite();
-            if (tubeSite != null)
-            {
-                Debug.LogError($"{nameof(GameplaySystem)}: a blueprint tube lies at '{tubeSite}', which is no " +
-                               "salvage site or relay mast.", this);
-                enabled = false;
-                return;
-            }
-
             if (!NewCargo(services))
             {
                 enabled = false;
@@ -352,9 +359,9 @@ namespace MoonProject.Gameplay
             context.Register<Map.IWaitingBundles>(Bundles);
 
             TowerPartField = NewTowerPartField(services);
-            GroundTubes = TowerPartField != null ? NewGroundTubes(services) : null;
-            Port = GroundTubes != null ? NewPort(services, abilities) : null;
-            if (Port == null || !NewGoals(context.Events))
+            Port = TowerPartField != null ? NewPort(services, abilities) : null;
+            Scans = Port != null ? NewScans(services, abilities) : null;
+            if (Scans == null || !NewGoals(context.Events))
             {
                 enabled = false;
                 return;
@@ -377,12 +384,13 @@ namespace MoonProject.Gameplay
             RecipeLook = new RecipeLook(services.View, Shop, _tower, _plotter, Blueprints.Kits, _progression.Tuning);
             Hints = new InteractionHints(_excavation, _salvage, _tether, _cradle, _home,
                 stations, Upgrades, TowerParts, _friends, _relays, services.Beam, services.Pickups, Shelves, Crates,
-                Containers);
+                Containers, Scans);
             context.Register<IMaterialStock>(Materials);
             context.Register<IMaterialCatalog>(_materialCatalog);
             context.Register<ICutter>(Cutter);
             context.Register<IRoverEquipment>(Equipment);
-            _flowTokens.Add(context.Events.Subscribe<FindDecoded>(decoded => Upgrades.MarkPartsKnown(decoded.KitId)));
+            _flowTokens.Add(context.Events.Subscribe<BlueprintCompleted>(
+                completed => Upgrades.MarkPartsKnown(completed.BlueprintId)));
             context.Register<ICargoHold>(Materials.Hold);
             context.Register<IHomeStorage>(Materials.Home);
             context.Register<IDockState>(_home.Dock);
@@ -454,6 +462,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.EquipmentVersion, Equipment.Capture, Equipment.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<ContainersSaveData>(GameplaySaveKeys.Containers,
                 GameplaySaveKeys.ContainersVersion, Containers.Capture, Containers.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<ScansSaveData>(GameplaySaveKeys.Scans,
+                GameplaySaveKeys.ScansVersion, Scans.Capture, Scans.Restore)));
         }
 
         /// <summary>True while 07 rests at <paramref name="station"/>, free to fit or take off its parts.</summary>
@@ -530,19 +540,70 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>The tubes waiting on the ground, or null (logged) when a tube's anchor is missing.</summary>
-        private GroundTubes NewGroundTubes(GameplayServices services)
+        /// <summary>
+        /// The fragments on every host's sockets: the salvage sites, the derelicts and Kenji's crashed test jumper at
+        /// the chasm's near lip. Null (logged) when a host or a set is broken.
+        /// </summary>
+        private ScanField NewScans(GameplayServices services, IRoverAbilities abilities)
         {
-            try
+            var scans = new ScanField(_scanTuning, services, abilities, Blueprints, OtherVerbOnOffer);
+            string problem = null;
+            foreach (SalvageSite site in _salvage.Sites)
             {
-                return new GroundTubes(Blueprints, Upgrades, _progression.Tuning.Tubes, transform, services,
-                    _friends.Tuning, _progression.Tuning);
+                problem = problem ?? scans.AddHost(site.Id, site.Root);
             }
-            catch (InvalidOperationException exception)
+
+            foreach (SalvageSite derelict in _salvage.Derelicts)
             {
-                Debug.LogError($"{nameof(GameplaySystem)}: {exception.Message}", this);
+                problem = problem ?? scans.AddHost(derelict.Id, derelict.Root);
+            }
+
+            problem = problem ?? PlaceJumper(services, scans) ?? scans.Validate(Blueprints.Kits);
+            if (problem != null)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: scanning: {problem} (0.5.5 §1).", this);
                 return null;
             }
+
+            return scans;
+        }
+
+        /// <summary>
+        /// Kenji's crashed test jumper, set back from the chasm's near lip toward the basin and to the left of the
+        /// leap's run-up, its nose to the chasm (0.5.5 §1.3); null when it stands, else what is broken.
+        /// </summary>
+        private string PlaceJumper(GameplayServices services, ScanField scans)
+        {
+            if (!services.Anchors.TryGet(WorldAnchorIds.CanyonLip, out WorldAnchor lip))
+            {
+                return $"the chasm's near lip '{WorldAnchorIds.CanyonLip}' is no world anchor";
+            }
+
+            Vector3 forward = lip.Forward;
+            forward.y = 0f;
+            forward = forward.sqrMagnitude > 1e-6f ? forward.normalized : Vector3.forward;
+            Vector3 left = Vector3.Cross(forward, Vector3.up);
+            Vector3 back = lip.Position - forward * _scanTuning.JumperSetback + left * _scanTuning.JumperSide;
+            GameObject jumper = Instantiate(services.Visuals.JumperWreck,
+                SurfaceRules.OnSurface(services.Terrain, back.x, back.z), Quaternion.LookRotation(forward), transform);
+            jumper.name = services.Visuals.JumperWreck.name;
+            return SalvageSiteBuilder.MakeSolid(jumper.transform) == null
+                ? "Art's jumper wreck has no mesh on its root"
+                : scans.AddHost(WorldAnchorIds.CanyonLip, jumper.transform);
+        }
+
+        /// <summary>Another E verb is on offer: a scan waits for it (0.5.5 §1.2).</summary>
+        private bool OtherVerbOnOffer()
+        {
+            for (int i = 0; i < VerbsBeforeScan.Length; i++)
+            {
+                if (Hints.TryGet(VerbsBeforeScan[i], out _))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -577,7 +638,7 @@ namespace MoonProject.Gameplay
 
             try
             {
-                Tech = new TechTree(events, () => _tower.ShownLevel, () => _relays.LitMasts, Blueprints.IsDecoded,
+                Tech = new TechTree(events, () => _tower.ShownLevel, () => _relays.LitMasts, Blueprints.IsLearned,
                     Upgrades.LevelOf, _progression.Tuning.TechKits);
                 Recovery = new RecoveryProgress(events, () => _tower.ShownLevel, _tower.Definition.MaxLevel,
                     () => _relays.LitChainMasts, _relays.ChainMastCount, _progression.Tuning.RecoveryLamps);
@@ -593,12 +654,10 @@ namespace MoonProject.Gameplay
         private void RestoreBlueprints(BlueprintsSaveData data)
         {
             Blueprints.Restore(data);
-            GroundTubes.Sync();
-            _lift.RestoreReader();
             _plotter.SyncSheets();
         }
 
-        /// <summary>The board over the bay's kits, or null (logged) when its tubes are miswired.</summary>
+        /// <summary>The board over the bay's kits, or null (logged) when a kit is listed twice.</summary>
         private Blueprints NewBlueprints(EventBus events)
         {
             var kits = new List<string>();
@@ -612,7 +671,7 @@ namespace MoonProject.Gameplay
 
             try
             {
-                return new Blueprints(events, kits, _progression.Tuning.Tubes, SiteOfRelic);
+                return new Blueprints(events, kits);
             }
             catch (ArgumentException exception)
             {
@@ -621,51 +680,13 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>The salvage site whose heart held relic <paramref name="relicId"/>, or null.</summary>
-        private string SiteOfRelic(string relicId)
-        {
-            foreach (Relic relic in _relics.Relics)
-            {
-                if (relic.Definition.Id == relicId)
-                {
-                    return relic.Home != null ? relic.Home.Id : null;
-                }
-            }
-
-            return null;
-        }
-
-        private string UnknownTubeSite()
-        {
-            foreach (BlueprintTube tube in _progression.Tuning.Tubes)
-            {
-                if (tube.IsAtAnchor)
-                {
-                    continue;
-                }
-
-                bool found = _relays.Reach.IndexOf(tube.SiteId) > StationReach.Home;
-                foreach (SalvageSite site in _salvage.Sites)
-                {
-                    found |= site.Id == tube.SiteId;
-                }
-
-                if (!found)
-                {
-                    return tube.SiteId;
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>Core's rover placement for the radio-hop, or null while no domain registers it.</summary>
         /// <summary>The World's scrap field, or null (the salvage field reports it) when none is registered.</summary>
         private static IScrapField ScrapField(GameContext context)
         {
             return context.TryGet(out IScrapField field) ? field : null;
         }
 
+        /// <summary>Core's rover placement for the radio-hop, or null while no domain registers it.</summary>
         private static IRoverPlacement Placement(GameContext context)
         {
             return context.TryGet(out IRoverPlacement placement) ? placement : null;
@@ -673,16 +694,15 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// The save is loaded (Start runs after it): Audio and UI start from the real radio program, Rover puts the
-        /// carried blueprint tubes and components on 07's back, and the tech board, the porthole and the recovery
-        /// panel show what is known at once.
+        /// carried components on 07's back, the fragments of blueprints already known lie scanned, and the tech board,
+        /// the porthole and the recovery panel show what is known at once.
         /// </summary>
         private void Start()
         {
             Radio.Announce();
             Power.Announce();
-            Blueprints.Announce();
             TowerParts.Announce();
-            GroundTubes.Sync();
+            Scans.Sync();
             Port.Announce();
             Upgrades.ReturnUnplacedParts();
             Upgrades.MarkPinnedPartsKnown(Blueprints);
@@ -714,7 +734,7 @@ namespace MoonProject.Gameplay
             Crates.Step(now, Time.deltaTime);
             Containers.Step(now, Time.deltaTime);
             TowerPartField.Step(now);
-            GroundTubes.Step(now);
+            Scans.Step(now, Time.deltaTime);
             Port.Step(Time.deltaTime);
             _wingCell.Step();
             RecipeLook.Step();
@@ -861,6 +881,7 @@ namespace MoonProject.Gameplay
                 : _materialCatalog.Validate() != null ? "MaterialCatalog: " + _materialCatalog.Validate() + "."
                 : _cargo == null ? "CargoTuning is not assigned."
                 : _cutterTuning == null ? "CutterTuning is not assigned."
+                : _scanTuning == null ? "ScanTuning is not assigned."
                 : _upgradeDefinitions == null || _upgradeDefinitions.Length == 0 ? "no upgrade definitions."
                 : _salvage == null ? "SalvageField is not assigned."
                 : _relics == null ? "RelicField is not assigned."
@@ -901,9 +922,7 @@ namespace MoonProject.Gameplay
             }
 
             _flowTokens.Clear();
-            Blueprints?.Dispose();
             TowerPartField?.Dispose();
-            GroundTubes?.Dispose();
             Bundles?.Dispose();
             Shelves?.Dispose();
             Port?.Dispose();

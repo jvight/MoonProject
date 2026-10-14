@@ -8,7 +8,7 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// The dock's evening (docs/features/M3-16 P6), the homecoming and the "one more trip" hook. Something new woke or
-    /// was found since 07 last rested (power came back, a part, a tube or a memory came home, a friend was stitched, a
+    /// was found since 07 last rested (power came back, a part or a memory came home, a friend was stitched, a
     /// mast lit, a tape or a log turned up); when 07 then comes to rest on its dock, <see cref="DockEveningOpened"/> is
     /// published once (Rover eases out to the wide shot, Audio swells). Once the shot has settled, after
     /// <c>sweepDelay</c> seconds still docked, the tower's listening sweep runs: <see cref="Tick"/> returns true once,
@@ -38,7 +38,6 @@ namespace MoonProject.Gameplay
             _subscriptions.Add(events.Subscribe<RoverDockChanged>(OnDock));
             _subscriptions.Add(events.Subscribe<BasePowerChanged>(evt => _news |= !evt.Restored));
             _subscriptions.Add(events.Subscribe<ComponentFound>(evt => _news |= !evt.Restored));
-            _subscriptions.Add(events.Subscribe<BlueprintFound>(_ => _news = true));
             _subscriptions.Add(events.Subscribe<RelicDeposited>(_ => _news = true));
             _subscriptions.Add(events.Subscribe<FriendRepaired>(_ => _news = true));
             _subscriptions.Add(events.Subscribe<RelayRestored>(_ => _news = true));

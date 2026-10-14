@@ -9,12 +9,10 @@ namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
     /// The crew's lab (docs/features/M3-19 §5): the turntable's eased turns, the stick's one command per push, the
-    /// lab's announcements and the reader's feed and decode.
+    /// lab's announcements.
     /// </summary>
     public sealed class LabTests
     {
-        private const float Frame = 1f / 60f;
-
         [Test]
         public void TheTurntable_TurnsEased_TakesLongerTheFurtherItGoes_AndRestsAtTheStop()
         {
@@ -73,57 +71,24 @@ namespace MoonProject.Gameplay.Tests
             lab.Look(true);
             Assert.IsEmpty(log, "nothing to look at from outside");
 
-            lab.Enter(LabStation.Reader);
+            lab.Enter(LabStation.Board);
             lab.Faced();
             lab.Look(true);
             lab.Look(true);
-            lab.TurnTo(LabInterior.Next(LabStation.Reader, 1));
-            Assert.AreEqual(LabStation.Board, lab.Facing);
+            lab.TurnTo(LabInterior.Next(LabStation.Board, 1));
+            Assert.AreEqual(LabStation.Keepsakes, lab.Facing);
             lab.Faced();
             lab.Look(true);
             lab.Leave();
             lab.Leave();
             CollectionAssert.AreEqual(new[]
             {
-                "entered Reader", "faced Reader", "look Reader", "away Reader", "faced Board", "look Board",
-                "away Board", "left",
+                "entered Board", "faced Board", "look Board", "away Board", "faced Keepsakes", "look Keepsakes",
+                "away Keepsakes", "left",
             }, log);
             Assert.IsFalse(lab.IsInside);
             Assert.AreEqual(LabStation.Keepsakes, LabInterior.Next(LabStation.Chart, -1), "round the ring");
-        }
-
-        [Test]
-        public void TheReader_FeedsTheTubeIn_ThenDecodesIt_OneAtATime()
-        {
-            var reader = new ReaderDecode(1f, 4f);
-            Assert.AreEqual(ReaderStep.None, reader.Step(1f), "idle: nothing to read");
-            reader.Feed("rover.cargo_cradle");
-            Assert.AreEqual(ReaderPhase.Feeding, reader.Phase);
-            Assert.Throws<System.InvalidOperationException>(() => reader.Feed("rover.boost_coils"), "one at a time");
-            Assert.AreEqual(ReaderStep.None, Run(reader, 0.9f));
-            Assert.AreEqual(ReaderStep.Taken, Run(reader, 0.2f), "the beam has fed the tube in");
-            Assert.AreEqual(ReaderPhase.Decoding, reader.Phase);
-            Run(reader, 2f);
-            Assert.That(reader.DecodeProgress, Is.InRange(0.5f, 0.56f), "about halfway (the feed's last frame counts)");
-            Assert.AreEqual(ReaderStep.Decoded, Run(reader, 2.1f));
-            Assert.AreEqual(ReaderPhase.Idle, reader.Phase);
-            Assert.AreEqual("rover.cargo_cradle", reader.Kit);
-
-            reader.Resume("rover.boost_coils");
-            Assert.AreEqual(ReaderPhase.Decoding, reader.Phase, "a loaded tube decodes again, no feeding");
-            Assert.AreEqual(ReaderStep.Decoded, Run(reader, 4.1f));
-        }
-
-        private static ReaderStep Run(ReaderDecode reader, float seconds)
-        {
-            ReaderStep first = ReaderStep.None;
-            for (float t = 0f; t < seconds; t += Frame)
-            {
-                ReaderStep step = reader.Step(Frame);
-                first = first == ReaderStep.None ? step : first;
-            }
-
-            return first;
+            Assert.AreEqual(LabStation.Chart, LabInterior.Next(LabStation.Keepsakes, 1), "three stations round it");
         }
     }
 }

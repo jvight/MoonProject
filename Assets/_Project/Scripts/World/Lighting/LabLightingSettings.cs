@@ -90,30 +90,6 @@ namespace MoonProject.World
         [Range(0.05f, 2f)]
         [SerializeField] private float _penTravel = 0.45f;
 
-        [Header("Hand-off pulse")]
-        [Tooltip("Glow of a bead on the hand-off conduit as the pulse passes it.")]
-        [Range(0f, 8f)]
-        [SerializeField] private float _handOffBeadGlow = 3f;
-
-        [Tooltip("Width of the travelling pulse, as a share of the whole path from the reader to the bay.")]
-        [Range(0.01f, 0.5f)]
-        [SerializeField] private float _handOffWidth = 0.06f;
-
-        [Tooltip("Seconds the pulse's glow lingers at the bay once it arrives.")]
-        [Range(0f, 4f)]
-        [SerializeField] private float _handOffAfterglow = 1.2f;
-
-        [Tooltip("Intensity of the small warm light that travels with the pulse along the ground.")]
-        [Range(0f, 6f)]
-        [SerializeField] private float _handOffLightIntensity = 1.6f;
-
-        [Tooltip("Range (metres) of the pulse's travelling light: a soft spot of warmth on the dust beside the cable.")]
-        [Range(0.5f, 6f)]
-        [SerializeField] private float _handOffLightRange = 2.2f;
-
-        [Tooltip("Colour of the pulse's travelling light: the lamps' own warm.")]
-        [SerializeField] private Color _handOffLightColour = Palette.Get(PaletteSwatch.WarmLamp);
-
         public float BellyLampGlow => _bellyLampGlow;
         public float HatchRimGlow => _hatchRimGlow;
         public float CabinLampGlow => _cabinLampGlow;
@@ -132,11 +108,5 @@ namespace MoonProject.World
         public float TableLookEase => _tableLookEase;
         public float ChartRadius => _chartRadius;
         public float PenTravel => _penTravel;
-        public float HandOffBeadGlow => _handOffBeadGlow;
-        public float HandOffWidth => _handOffWidth;
-        public float HandOffAfterglow => _handOffAfterglow;
-        public float HandOffLightIntensity => _handOffLightIntensity;
-        public float HandOffLightRange => _handOffLightRange;
-        public Color HandOffLightColour => _handOffLightColour;
     }
 }

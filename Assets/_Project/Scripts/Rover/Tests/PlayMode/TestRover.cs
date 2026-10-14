@@ -37,7 +37,7 @@ namespace MoonProject.Rover.PlayModeTests
         private const float DrumSocketY = 0.87f;
         private const float DrumSocketZ = -0.12f;
 
-        /// <summary>The blueprint tube stand-in's socket on 07's back (art's TubeSocket).</summary>
+        /// <summary>The story part stand-ins' socket on 07's back (art's TubeSocket).</summary>
         private const float TubeSocketY = 1.1f;
         private const float TubeSocketZ = -0.6f;
 
@@ -350,9 +350,6 @@ namespace MoonProject.Rover.PlayModeTests
                 new Vector3(0.01f, 0.06f, 0.1f), material);
             pennant.name = RoverModelNodes.Pennant;
             Transform tubeSocket = Node(RoverModelNodes.TubeSocket, model, new Vector3(0f, TubeSocketY, TubeSocketZ));
-            Transform tube = Shape(PrimitiveType.Cylinder, tubeSocket, Vector3.zero, new Vector3(0.08f, 0.3f, 0.08f),
-                material);
-            tube.name = "BlueprintTube";
             var parts = new Transform[StoryParts.Length];
             for (int i = 0; i < parts.Length; i++)
             {
@@ -385,8 +382,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assign(kit, ("_tuning", rigTuning), ("_headlamp", headlamp), ("_lampBar", lampBar), ("_cargoRack", rack),
                 ("_spine", spine), ("_tapeDeck", deck), ("_tetherRing", tetherRing),
                 ("_ringGlow", ringGlow.GetComponent<MeshRenderer>()),
-                ("_relicSeat", seat), ("_solarCell", cell), ("_freshSerial", serial), ("_pennant", pennant),
-                ("_tube", tube));
+                ("_relicSeat", seat), ("_solarCell", cell), ("_freshSerial", serial), ("_pennant", pennant));
             AssignArray(kit, "_lamps", lamps);
             AssignArray(kit, "_storyParts", parts);
             AssignArray(kit, "_drums", drums);

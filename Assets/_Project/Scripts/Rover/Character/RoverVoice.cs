@@ -47,7 +47,6 @@ namespace MoonProject.Rover
                 events.Subscribe<BatteryWarned>(OnBatteryWarned),
                 events.Subscribe<LowPowerChanged>(OnLowPowerChanged),
                 events.Subscribe<RoverRecovering>(_ => Say(ChirpMood.Worried, Gentle)),
-                events.Subscribe<FindDecoded>(_ => Say(ChirpMood.Affirm, Gentle)),
                 events.Subscribe<ChargingChanged>(OnChargingChanged),
                 events.Subscribe<CutterTierChanged>(changed => _upgradedCutPending |= !changed.Restored),
                 events.Subscribe<FriendRepaired>(_ => Say(ChirpMood.Happy, Gentle)),

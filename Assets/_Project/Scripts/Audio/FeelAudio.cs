@@ -32,7 +32,7 @@ namespace MoonProject.Audio
     /// (<see cref="RadioStation"/>). A lone Build Impact is a shelf built: its warm chord;</item>
     /// <item>picking a part up (Kind Collect): a soft servo lift (Act) and a solid little clunk on 07's back
     /// (Impact); the bundle's Reward melody step stays <see cref="SalvageAudio"/>'s;</item>
-    /// <item>the first hour's small moments: a tech node lighting, the decode's cable ticks, a component found, the
+    /// <item>the first hour's small moments: a tech node lighting, a component found, the
     /// drums' boost whine and release, a relic strapped into the cradle, a new step's page tick, one save tick per
     /// burst, the dock evening's swell, the stock count rolling up (one rising tick per unit, rate-capped and topping
     /// out on the highest note for a big haul) and home's windows waking (one warm click per step, rising).</item>
@@ -42,7 +42,7 @@ namespace MoonProject.Audio
     [DisallowMultipleComponent]
     public sealed class FeelAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 22;
+        private const int SubscriptionCount = 21;
         private const float SegmentFollow = 0.5f;
         private const float SilentVolume = 0.001f;
         private const int ScanQuarters = 4;
@@ -118,7 +118,6 @@ namespace MoonProject.Audio
         private CueHandle _wallsSettle;
         private CueHandle _wallsDrop;
         private CueHandle _nodeLight;
-        private CueHandle _cableTicks;
         private CueHandle _found;
         private CueHandle _boostRelease;
         private CueHandle _pageTick;
@@ -185,7 +184,6 @@ namespace MoonProject.Audio
             _wallsSettle = director.Resolve(AudioCueIds.DockWallsSettle);
             _wallsDrop = director.Resolve(AudioCueIds.DockWallsDrop);
             _nodeLight = director.Resolve(AudioCueIds.NodeLight);
-            _cableTicks = director.Resolve(AudioCueIds.CableTicks);
             _found = director.Resolve(AudioCueIds.ComponentFound);
             CueHandle boost = director.Resolve(AudioCueIds.BoostWhine);
             _boostRelease = director.Resolve(AudioCueIds.BoostRelease);
@@ -208,7 +206,7 @@ namespace MoonProject.Audio
                   sweep.IsValid &&
                   _cancel.IsValid && _ignite.IsValid && sizzle.IsValid && _crack.IsValid &&
                   _strap.IsValid && _wallsRise.IsValid && _clamp.IsValid && _wallsSettle.IsValid &&
-                  _wallsDrop.IsValid && _nodeLight.IsValid && _cableTicks.IsValid && _found.IsValid &&
+                  _wallsDrop.IsValid && _nodeLight.IsValid && _found.IsValid &&
                   boost.IsValid && _boostRelease.IsValid && _pageTick.IsValid && _saveTick.IsValid &&
                   _eveningSwell.IsValid && _countTick.IsValid && _windowClick.IsValid &&
                   _towerHum.IsValid && _towerRing.IsValid && _towerThoom.IsValid &&
@@ -245,26 +243,25 @@ namespace MoonProject.Audio
             EventBus events = context.Events;
             _subscriptions[0] = events.Subscribe<FeelBeat>(OnFeelBeat);
             _subscriptions[1] = events.Subscribe<TechNodeChanged>(OnTechNodeChanged);
-            _subscriptions[2] = events.Subscribe<DecodeHandOff>(OnDecodeHandOff);
-            _subscriptions[3] = events.Subscribe<ComponentFound>(OnComponentFound);
-            _subscriptions[4] = events.Subscribe<RoverBoostChanged>(OnBoostChanged);
-            _subscriptions[5] = events.Subscribe<RelicStowed>(OnRelicStowed);
-            _subscriptions[6] = events.Subscribe<NextStepChanged>(OnNextStepChanged);
-            _subscriptions[7] = events.Subscribe<GameSaved>(OnGameSaved);
-            _subscriptions[8] = events.Subscribe<DockEveningOpened>(OnDockEveningOpened);
-            _subscriptions[9] = events.Subscribe<StockCountTicked>(OnStockCountTicked);
-            _subscriptions[10] = events.Subscribe<HomeWindowLit>(OnHomeWindowLit);
-            _subscriptions[11] = events.Subscribe<CargoOverflowed>(OnCargoOverflowed);
-            _subscriptions[12] = events.Subscribe<CrewCrateOpened>(OnCrewCrateOpened);
-            _subscriptions[13] = events.Subscribe<BundleFetched>(OnBundleFetched);
-            _subscriptions[14] = events.Subscribe<CutChargeStaged>(OnCutChargeStaged);
-            _subscriptions[15] = events.Subscribe<HoldBootStarted>(OnHoldBootStarted);
-            _subscriptions[16] = events.Subscribe<HoldSlotLit>(OnHoldSlotLit);
-            _subscriptions[17] = events.Subscribe<HoldItemArrived>(OnHoldItemArrived);
-            _subscriptions[18] = events.Subscribe<ContainerSealCut>(OnContainerSealCut);
-            _subscriptions[19] = events.Subscribe<ContainerOpened>(OnContainerOpened);
-            _subscriptions[20] = events.Subscribe<BlueprintCompleted>(OnBlueprintCompleted);
-            _subscriptions[21] = events.Subscribe<NetworkPulseReached>(OnNetworkPulseReached);
+            _subscriptions[2] = events.Subscribe<ComponentFound>(OnComponentFound);
+            _subscriptions[3] = events.Subscribe<RoverBoostChanged>(OnBoostChanged);
+            _subscriptions[4] = events.Subscribe<RelicStowed>(OnRelicStowed);
+            _subscriptions[5] = events.Subscribe<NextStepChanged>(OnNextStepChanged);
+            _subscriptions[6] = events.Subscribe<GameSaved>(OnGameSaved);
+            _subscriptions[7] = events.Subscribe<DockEveningOpened>(OnDockEveningOpened);
+            _subscriptions[8] = events.Subscribe<StockCountTicked>(OnStockCountTicked);
+            _subscriptions[9] = events.Subscribe<HomeWindowLit>(OnHomeWindowLit);
+            _subscriptions[10] = events.Subscribe<CargoOverflowed>(OnCargoOverflowed);
+            _subscriptions[11] = events.Subscribe<CrewCrateOpened>(OnCrewCrateOpened);
+            _subscriptions[12] = events.Subscribe<BundleFetched>(OnBundleFetched);
+            _subscriptions[13] = events.Subscribe<CutChargeStaged>(OnCutChargeStaged);
+            _subscriptions[14] = events.Subscribe<HoldBootStarted>(OnHoldBootStarted);
+            _subscriptions[15] = events.Subscribe<HoldSlotLit>(OnHoldSlotLit);
+            _subscriptions[16] = events.Subscribe<HoldItemArrived>(OnHoldItemArrived);
+            _subscriptions[17] = events.Subscribe<ContainerSealCut>(OnContainerSealCut);
+            _subscriptions[18] = events.Subscribe<ContainerOpened>(OnContainerOpened);
+            _subscriptions[19] = events.Subscribe<BlueprintCompleted>(OnBlueprintCompleted);
+            _subscriptions[20] = events.Subscribe<NetworkPulseReached>(OnNetworkPulseReached);
         }
 
         private void Update()
@@ -610,11 +607,6 @@ namespace MoonProject.Audio
             {
                 _director.PlayVariant2D(_nodeLight, (int)changed.Node % _nodeVariants);
             }
-        }
-
-        private void OnDecodeHandOff(DecodeHandOff handOff)
-        {
-            _director.Play2D(_cableTicks);
         }
 
         private void OnComponentFound(ComponentFound found)

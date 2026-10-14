@@ -54,8 +54,8 @@ namespace MoonProject.Gameplay
         Stow = 12,
 
         /// <summary>
-        /// A part waits within reach (a tower part, a friend's part, a relay spare, a blueprint tube): press Excavate to
-        /// lift it onto 07's back. The hint's <see cref="InteractionHint.NounKey"/> names the part.
+        /// A part waits within reach (a tower part, a friend's part, a relay spare): press Excavate to lift it onto
+        /// 07's back. The hint's <see cref="InteractionHint.NounKey"/> names the part.
         /// </summary>
         PickUp = 13,
 
@@ -64,5 +64,11 @@ namespace MoonProject.Gameplay
         /// build its shelf (Ready once home and 07 cover its recipe).
         /// </summary>
         Build = 14,
+
+        /// <summary>
+        /// A fragment still to scan lies in reach and 07's view rests on it, with no other Excavate verb before it
+        /// (0.5.5 §1.2): hold Excavate to scan it.
+        /// </summary>
+        Scan = 15,
     }
 }

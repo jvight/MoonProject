@@ -52,8 +52,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             Listen(events, BellSignalPicked, false);
             Listen(events, BellSignalFound, false);
             Listen(events, StationNotYet, false);
-            Listen(events, BlueprintFound, false);
-            Listen(events, BlueprintDelivered, false);
+            Listen(events, ScanStarted, false);
+            Listen(events, ScanStopped, false);
+            Listen(events, FragmentScanned, false);
+            Listen(events, BlueprintCompleted, false);
             Listen(events, TickerLine, false);
             Listen(events, BellCued, false);
             Listen(events, RelayCued, false);
@@ -117,10 +119,12 @@ namespace MoonProject.Gameplay.PlayModeTests
         public List<Timed<BellSignalPicked>> BellSignalPicked { get; } = new List<Timed<BellSignalPicked>>();
         public List<Timed<BellSignalFound>> BellSignalFound { get; } = new List<Timed<BellSignalFound>>();
         public List<Timed<StationNotYet>> StationNotYet { get; } = new List<Timed<StationNotYet>>();
-        public List<Timed<BlueprintFound>> BlueprintFound { get; } = new List<Timed<BlueprintFound>>();
+        public List<Timed<ScanStarted>> ScanStarted { get; } = new List<Timed<ScanStarted>>();
+        public List<Timed<ScanStopped>> ScanStopped { get; } = new List<Timed<ScanStopped>>();
+        public List<Timed<FragmentScanned>> FragmentScanned { get; } = new List<Timed<FragmentScanned>>();
 
-        public List<Timed<BlueprintDelivered>> BlueprintDelivered { get; } =
-            new List<Timed<BlueprintDelivered>>();
+        public List<Timed<BlueprintCompleted>> BlueprintCompleted { get; } =
+            new List<Timed<BlueprintCompleted>>();
         public List<Timed<TickerLine>> TickerLine { get; } = new List<Timed<TickerLine>>();
         public List<Timed<BellCued>> BellCued { get; } = new List<Timed<BellCued>>();
 

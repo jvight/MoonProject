@@ -13,7 +13,7 @@ namespace MoonProject.Gameplay.Lift
     public sealed class LabInterior : ILabInterior
     {
         /// <summary>The stations round the turntable.</summary>
-        public const int StationCount = 4;
+        public const int StationCount = 3;
 
         private readonly EventBus _events;
 

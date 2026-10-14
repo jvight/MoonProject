@@ -11,8 +11,8 @@ namespace MoonProject.Gameplay
         [Tooltip("The tech board's pin for this kit.")]
         [SerializeField] private TechNodeId _node;
 
-        [Tooltip("The bay's upgrade id that fits the kit (e.g. rover.hover_jump): decoded once its blueprint is " +
-                 "read, built once fitted.")]
+        [Tooltip("The bay's upgrade id that fits the kit (e.g. rover.hover_jump): decoded once its blueprint's " +
+                 "fragments are scanned, built once fitted.")]
         [SerializeField] private string _kitId;
 
         public TechKit(TechNodeId node, string kitId)

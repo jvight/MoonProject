@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using MoonProject.Art.Editor;
@@ -86,13 +87,32 @@ namespace MoonProject.Gameplay.Editor
             return containers;
         }
 
-        /// <summary>Art's blueprint tube, for a tube waiting on the ground at a world anchor.</summary>
-        private static GameObject TubeModel()
+        /// <summary>Art's scan fragments, every set's (0.5.5 §1).</summary>
+        private static GameObject[] FragmentModels()
         {
-            string path = ArtPaths.PickupFolder + "/" + SiteModelBuilder.BlueprintTubeName + ".prefab";
-            var tube = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-            return tube != null ? tube
-                : throw new InvalidOperationException($"{BuilderPath}: Art's blueprint tube {path} is missing.");
+            var fragments = new List<GameObject>();
+            foreach ((string blueprint, int count) in FragmentBuilder.Sets)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    string path = ArtPaths.FragmentFolder + "/" + FragmentBuilder.PrefabName(blueprint, i) + ".prefab";
+                    var fragment = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                    fragments.Add(fragment != null ? fragment
+                        : throw new InvalidOperationException($"{BuilderPath}: Art's fragment {path} is missing."));
+                }
+            }
+
+            return fragments.ToArray();
+        }
+
+        /// <summary>Kenji's crashed test jumper at the chasm's near lip, with the Hover-Jump fragments' sockets.
+        /// </summary>
+        private static GameObject JumperWreckModel()
+        {
+            string path = ArtPaths.PropFolder + "/" + PropModelBuilder.JumperWreckName + ".prefab";
+            var wreck = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            return wreck != null ? wreck
+                : throw new InvalidOperationException($"{BuilderPath}: Art's jumper wreck {path} is missing.");
         }
 
         private static GameObject GaragePortModel()
@@ -130,7 +150,7 @@ namespace MoonProject.Gameplay.Editor
             visuals.PopulatePads(Pads(), BaseModelBuilder.PadRadii);
             visuals.PopulateComponents(ComponentModels());
             visuals.PopulateContainers(ContainerModels());
-            visuals.PopulateTube(TubeModel());
+            visuals.PopulateScans(FragmentModels(), JumperWreckModel());
             visuals.PopulateGaragePort(GaragePortModel(), TapeDeckModel());
             GeneratedAssets.CreateOrReplace(visuals, GameplayAssetPaths.Visuals);
             AssetDatabase.SaveAssets();
