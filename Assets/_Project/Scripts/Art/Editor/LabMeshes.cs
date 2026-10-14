@@ -45,10 +45,10 @@ namespace MoonProject.Art.Editor
         private static readonly float PortholeHeight = LanderMeshes.BigPortholeHeight - LanderMeshes.FloorY;
 
         /// <summary>The stations' yaws round the turntable, clockwise from above in <c>LabStation</c> order.</summary>
-        public static readonly float[] StationYaws = { LanderMeshes.BigPortholeYaw, -45f, 45f, 135f };
+        public static readonly float[] StationYaws = { LanderMeshes.BigPortholeYaw, 45f, 135f };
 
         /// <summary>The station names, in the same order (the <c>LabStation</c> enum's).</summary>
-        public static readonly string[] StationNames = { "Chart", "Reader", "Board", "Keepsakes" };
+        public static readonly string[] StationNames = { "Chart", "Board", "Keepsakes" };
 
         /// <summary>
         /// Station <paramref name="index"/>'s frame in lab space: at its face, at 07's lens height, +Z out of the
@@ -111,7 +111,6 @@ namespace MoonProject.Art.Editor
                 LampShade(b, CabinLamp(i));
             }
 
-            TapeRun(b);
             return b;
         }
 
@@ -173,24 +172,6 @@ namespace MoonProject.Art.Editor
             b.Torus(at * Matrix4x4.Rotate(Rotation(AlongZ)), radius + 0.04f, 0.06f, 16, 4, PaletteSwatch.Charcoal);
             b.Prism(Wall(yaw, 0.005f) * At(0f, height, 0f) * Matrix4x4.Rotate(Rotation(AlongZ)), radius, 0.01f, 16,
                 PaletteSwatch.SkyHorizon);
-        }
-
-        /// <summary>
-        /// The reader's paper tape carried on along the front wall to the board: a strip held by little clips, so
-        /// what the reader decodes visibly runs on to Kenji's plans.
-        /// </summary>
-        private static void TapeRun(LowPolyMeshBuilder b)
-        {
-            float half = LanderMeshes.HalfSide(LiningApothem);
-            Matrix4x4 front = Wall(0f, 0.03f);
-            b.Box(front * At(0f, LabStationMeshes.TapeHeight, 0f), new Vector3(half * 2f + 0.1f, 0.05f, 0.004f),
-                PaletteSwatch.Cream);
-            for (int i = -2; i <= 2; i++)
-            {
-                b.Box(front * At(i * half * 0.45f, LabStationMeshes.TapeHeight, 0.006f),
-                    new Vector3(0.03f, 0.07f, 0.01f),
-                    PaletteSwatch.Metal);
-            }
         }
 
         /// <summary>

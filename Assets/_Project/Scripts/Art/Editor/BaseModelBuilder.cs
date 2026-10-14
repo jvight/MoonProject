@@ -225,9 +225,6 @@ namespace MoonProject.Art.Editor
 
         public const string RingRailName = "RingRail";
         public const string StationPrefix = "Station_";
-        public const string ReaderSlotName = "Slot";
-        public const string ReaderReelName = "Reel";
-        public const string ReaderTapeName = "Tape";
         public const string RecoveryPanelName = "RecoveryPanel";
         public const string RowPrefix = "Row_";
         public const string PinPrefix = "Pin_";
@@ -284,16 +281,6 @@ namespace MoonProject.Art.Editor
 
         public const int PortholeLampCount = LanderMeshes.PortholeLampCount;
 
-        /// <summary>
-        /// The hand-off pulse (DecodeHandOff): HandOffPath/Point_n empties from the reader's slot to the bay's back
-        /// wall, and HandOffCable/Glow_n, the glass beads it lights along the way, in the same order.
-        /// </summary>
-        public const string HandOffPathName = "HandOffPath";
-
-        public const string HandOffPointPrefix = "Point_";
-
-        public const string HandOffCableName = "HandOffCable";
-
         public static Quaternion HomeSignUpright => Place.Rotation(LanderMeshes.HomeSignUpright);
 
         /// <summary>
@@ -314,7 +301,7 @@ namespace MoonProject.Art.Editor
         public const string BlueprintPrefix = "Blueprint_";
 
         /// <summary>
-        /// Kenji's pen plotter beside his bench (M3-16 P7): it draws a kit's sheet when 07 brings its tube home.
+        /// Kenji's pen plotter beside his bench (M3-16 P7): it draws a kit's sheet when 07 scans its fragments.
         /// Plotter/PenCarriage rides across the tilted bed along its local X from 0 to <see cref="PlotterDrawWidth"/>;
         /// its child PenHead moves along local Y from 0 to <see cref="PlotterDrawHeight"/>; Plotter/PlotterSheet
         /// (hidden) is the sheet on the bed while it is drawn; Plotter/PlotterLamp is a dark glow renderer, its ready
@@ -519,7 +506,6 @@ namespace MoonProject.Art.Editor
             AddBellyLift(lander);
             AddBigPorthole(lander);
             AddLab(lander);
-            AddHandOff(lander);
             AddShelves(lander);
             Weathering.Weather(lander, LanderName, hull, LanderWeather, LanderMeshes.Rust(), LanderMeshes.Drifts());
             return lander;
@@ -642,7 +628,7 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The crew's lab (see <see cref="LabName"/>): the room, the camera's ring rail, the four stations on their
+        /// The crew's lab (see <see cref="LabName"/>): the room, the camera's ring rail, the three stations on their
         /// frames and the wall lamps.
         /// </summary>
         private static void AddLab(ModelNode lander)
@@ -655,9 +641,8 @@ namespace MoonProject.Art.Editor
             lab.Add(new ModelNode(CabinLampsName, Vector3.zero, Quaternion.identity,
                 new ModelMesh(prefix + "_" + CabinLampsName, LabMeshes.CabinLamps()), ModelMaterial.PaletteGlowOff));
             AddChart(Station(lab, 0, LabStationMeshes.ChartStation()));
-            AddReader(Station(lab, 1, LabStationMeshes.Reader()));
-            AddBoard(Station(lab, 2, LabStationMeshes.Board()));
-            AddKeepsakes(Station(lab, 3, LabStationMeshes.Keepsakes()));
+            AddBoard(Station(lab, 1, LabStationMeshes.Board()));
+            AddKeepsakes(Station(lab, 2, LabStationMeshes.Keepsakes()));
         }
 
         private static ModelNode Station(ModelNode lab, int index, LowPolyMeshBuilder mesh)
@@ -687,17 +672,6 @@ namespace MoonProject.Art.Editor
                 new ModelMesh(prefix + "_" + ChartPenCarriageName, ChartTableMeshes.Carriage())));
             carriage.Add(new ModelNode(ChartPenHeadName, Vector3.zero,
                 new ModelMesh(prefix + "_" + ChartPenHeadName, BlueprintMeshes.PenHead())));
-        }
-
-        /// <summary>The reader's slot (where the beam feeds), its reel and the paper tape it runs out.</summary>
-        private static void AddReader(ModelNode station)
-        {
-            string prefix = LanderName + "_Reader";
-            station.Add(new ModelNode(ReaderSlotName, LabStationMeshes.ReaderSlot));
-            station.Add(new ModelNode(ReaderReelName, LabStationMeshes.ReaderReel,
-                new ModelMesh(prefix + "_" + ReaderReelName, LabStationMeshes.Reel())));
-            station.Add(new ModelNode(ReaderTapeName, LabStationMeshes.TapeStart,
-                new ModelMesh(prefix + "_" + ReaderTapeName, LabStationMeshes.Tape())));
         }
 
         /// <summary>
@@ -752,30 +726,6 @@ namespace MoonProject.Art.Editor
             {
                 station.Add(new ModelNode(ReadingLampPrefix + i.ToString(CultureInfo.InvariantCulture),
                     LabStationMeshes.ReadingLamp(i), Quaternion.identity, bulb, ModelMaterial.PaletteGlowOff));
-            }
-        }
-
-        /// <summary>
-        /// The hand-off pulse's path and the glass beads it lights (see <see cref="HandOffPathName"/>).
-        /// </summary>
-        private static void AddHandOff(ModelNode lander)
-        {
-            ModelNode path = lander.Add(new ModelNode(HandOffPathName, Vector3.zero));
-            IReadOnlyList<Vector3> points = HandOffMeshes.Points();
-            for (int i = 0; i < points.Count; i++)
-            {
-                path.Add(new ModelNode(HandOffPointPrefix + i.ToString(CultureInfo.InvariantCulture), points[i]));
-            }
-
-            ModelNode cable = lander.Add(new ModelNode(HandOffCableName, Vector3.zero,
-                new ModelMesh(LanderName + "_" + HandOffCableName, HandOffMeshes.Sheath())));
-            List<LowPolyMeshBuilder> beads = HandOffMeshes.Beads();
-            for (int k = 0; k < beads.Count; k++)
-            {
-                string segment = CableGlowPrefix + k.ToString(CultureInfo.InvariantCulture);
-                cable.Add(new ModelNode(segment, Vector3.zero, Quaternion.identity,
-                    new ModelMesh(LanderName + "_" + HandOffCableName + "_" + segment, beads[k]),
-                    ModelMaterial.PaletteGlowOff));
             }
         }
 
