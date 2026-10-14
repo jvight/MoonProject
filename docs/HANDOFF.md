@@ -5,7 +5,12 @@ It records how the project is run, where it stands, and what comes next, so a ne
 account) can continue without the old conversation.
 
 ## 00000000000000000000000000. LATEST (2026-10-15 ~00:40): master plan for the owner (Claude Docs); audition round 2 up
-- **origin/main 36cbf853** unchanged (verified). Nothing landed since.
+- **origin/main 6a06f8d6 (verified, pushed ~01:10):** + agy-ui2 (Tab = one fixed frame: 07's hold left, 07's
+  portrait + sockets right, the docked transfer view in the same frame; no memory card at a friend's wake).
+- **Style board for the owner (D1):** https://claude.ai/artifact/1cef9FuajG1R6aeYR3Uj93 (in-game V0-V3 at 5 poses +
+  S1/S2/S3 blockouts and concepts; choice in db doc `styleboard/choice`). Director's suggestion: S2 with S3 details, V2.
+  box/agy-look 3e2b52fb is an EXPERIMENT (variants behind editor menus, touches many builders/shaders): do not land it;
+  after the owner picks, brief a clean slice for the chosen level only.
 - **Master plan for the owner:** Claude Docs "Lunarion – Kế hoạch tổng thể"
   https://claude.ai/code/artifact/99894654-b2f2-421c-a3b9-f599ffa3d551 (owner comments there; read them with the Docs
   connector `query`, answer in the thread). Repo copy box/agy-plan 404a6a19 docs/design/master-plan.md (not landed;
@@ -16,9 +21,9 @@ account) can continue without the old conversation.
   same audition URL; the owner's pick goes to db doc `audition/choice2` (round 1 stays in `audition/choice`).
 - **Owner decisions pending (plan §9):** D1 style (style board page still to build: images staged in the scratchpad from
   agy-style + agy-concept; waits for agy-look V0-V3), D2 07 v2, D3 moving sun in 0.6, D4 audio; story S1-S7.
-- **agy running (agy_run2, resumed after the 23:21 quota wait):** agy-ui2 (committed e05dc0c3 + staged edits to Friend
-  assets, FriendTuning, RoverCameraTuning, GameplayContentBuilder: base b700c77a is behind main, expect overlaps with
-  89f30b1d/36cbf853; review scope carefully), agy-look, agy-art.
+- **agy running (agy_run2):** agy-hold (story parts into the hold, base 6a06f8d6), agy-scan (scan beam, base
+  6a06f8d6, told to stay out of the hold code), agy-art (bay arch). Next for 0.5.6 after these: the lift's hidden
+  condition, the garage beat (ticker into GuidanceSlot), listening without sky pillars, the vi text pass.
 
 ## 0000000000000000000000000. (prev) (2026-10-14 ~23:30): 0.5.5 playtest feedback -> 0.5.6 on agy; style lock; master plan
 - **origin/main 36cbf853 (verified):** 0.5.5 + 89f30b1d (agy: 07's head no longer pinned toward a cut/dig spot;
