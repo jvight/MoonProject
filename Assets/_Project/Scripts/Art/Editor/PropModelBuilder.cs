@@ -44,23 +44,50 @@ namespace MoonProject.Art.Editor
         [MoonBuilder("Art/Props", 175)]
         public static void Build()
         {
-            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateLogCache()), ArtPaths.PropFolder,
-                PaletteAssetBuilder.LoadMaterial());
+            Build(0f);
+        }
+
+        public static void Build(float smoothAngle)
+        {
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(SmoothNode(CreateLogCache(), smoothAngle)),
+                ArtPaths.PropFolder, PaletteAssetBuilder.LoadMaterial());
             Material material = PaletteAssetBuilder.LoadMaterial();
             for (int i = 0; i < OrangeBeadPatchVariants; i++)
             {
-                ModelPrefabWriter.Write(CreateOrangeBeadPatch(i), ArtPaths.PropFolder, material);
+                ModelPrefabWriter.Write(SmoothNode(CreateOrangeBeadPatch(i), smoothAngle), ArtPaths.PropFolder, material);
             }
 
             for (int i = 0; i < HullFragmentVariants; i++)
             {
-                ModelPrefabWriter.Write(CreateHullFragment(i), ArtPaths.PropFolder, material);
+                ModelPrefabWriter.Write(SmoothNode(CreateHullFragment(i), smoothAngle), ArtPaths.PropFolder, material);
             }
 
-            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateJumperWreck()), ArtPaths.PropFolder, material);
-            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateRockfallPocket()), ArtPaths.PropFolder, material);
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(SmoothNode(CreateJumperWreck(), smoothAngle)),
+                ArtPaths.PropFolder, material);
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(SmoothNode(CreateRockfallPocket(), smoothAngle)),
+                ArtPaths.PropFolder, material);
 
             AssetDatabase.SaveAssets();
+        }
+
+        private static ModelNode SmoothNode(ModelNode node, float smoothAngle)
+        {
+            if (smoothAngle <= 0f)
+            {
+                return node;
+            }
+
+            if (node.Mesh != null && !node.Name.StartsWith("Weather_", System.StringComparison.Ordinal))
+            {
+                MeshNormalSmoother.SmoothAdaptive(node.Mesh.Geometry, smoothAngle, Mathf.Max(smoothAngle, 62f), 0.16f);
+            }
+
+            for (int i = 0; i < node.Children.Count; i++)
+            {
+                SmoothNode(node.Children[i], smoothAngle);
+            }
+
+            return node;
         }
 
         public static ModelNode CreateLogCache()

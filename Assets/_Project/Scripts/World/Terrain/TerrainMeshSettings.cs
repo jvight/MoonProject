@@ -74,6 +74,27 @@ namespace MoonProject.World
         [Range(0f, 20f)]
         [SerializeField] private float _backdropSink = 3f;
 
+        [Header("Soft low-poly look variants")]
+        [Tooltip("Radius within which terrain chunks receive smooth-by-angle normals (0 = flat-shaded V0).")]
+        [Range(0f, 1000f)]
+        [SerializeField] private float _smoothNormalRadius;
+
+        [Tooltip("Smooth-by-angle threshold on dust facets (degrees).")]
+        [Range(0f, 90f)]
+        [SerializeField] private float _dustSmoothAngle = 42f;
+
+        [Tooltip("Smooth-by-angle threshold on rock facets (degrees).")]
+        [Range(0f, 90f)]
+        [SerializeField] private float _rockSmoothAngle = 30f;
+
+        [Tooltip("Denser near-camera cell size used inside NearFineRadius (V3).")]
+        [Range(0.5f, 8f)]
+        [SerializeField] private float _nearFineCellSize = 2f;
+
+        [Tooltip("Radius around the base and key capture sites that uses NearFineCellSize (0 = disabled).")]
+        [Range(0f, 500f)]
+        [SerializeField] private float _nearFineRadius;
+
         public float ChunkSize => _chunkSize;
         public float GridHalfExtent => _gridHalfExtent;
         public float FineCellSize => _fineCellSize;
@@ -89,6 +110,38 @@ namespace MoonProject.World
         public int BackdropRings => _backdropRings;
         public int BackdropSegments => _backdropSegments;
         public float BackdropSink => _backdropSink;
+        public float SmoothNormalRadius => _smoothNormalRadius;
+        public float DustSmoothAngle => _dustSmoothAngle;
+        public float RockSmoothAngle => _rockSmoothAngle;
+        public float NearFineCellSize => _nearFineCellSize;
+        public float NearFineRadius => _nearFineRadius;
+        public Vector2 SecondaryFineFocus { get; set; }
+
+        /// <summary>Configures soft-normal and near-camera cell density parameters for look variants V0..V3.</summary>
+        public void ConfigureForVariant(int variant)
+        {
+            if (variant <= 0)
+            {
+                _smoothNormalRadius = 0f;
+                _nearFineCellSize = _fineCellSize;
+                _nearFineRadius = 0f;
+                return;
+            }
+
+            _smoothNormalRadius = 380f;
+            _dustSmoothAngle = 42f;
+            _rockSmoothAngle = 30f;
+            if (variant >= 3)
+            {
+                _nearFineCellSize = 1f;
+                _nearFineRadius = 90f;
+            }
+            else
+            {
+                _nearFineCellSize = _fineCellSize;
+                _nearFineRadius = 0f;
+            }
+        }
 
         /// <summary>Returns null when the settings are consistent, otherwise a description of the problem.</summary>
         public string Validate()
@@ -102,6 +155,12 @@ namespace MoonProject.World
                 || !IsMultiple(_coarseCellSize, _midCellSize) || !IsMultiple(_midCellSize, _fineCellSize))
             {
                 return "Cell sizes must nest: each tier divides the next, and the far tier divides the chunk size.";
+            }
+
+            if (_nearFineRadius > 0f && (!IsMultiple(_fineCellSize, _nearFineCellSize)
+                || _chunkSize / _nearFineCellSize > 90f))
+            {
+                return "Near-fine cell size must divide the fine cell size and stay under 65k vertices per chunk.";
             }
 
             if (_chunkSize / _fineCellSize > 90f)

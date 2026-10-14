@@ -25,6 +25,10 @@ namespace MoonProject.World
         private readonly TerrainPainter _painter;
         private readonly float _jitter;
         private readonly float _chunkSize;
+        private readonly float _fineCellSize;
+        private readonly float _smoothNormalRadius;
+        private readonly float _dustSmoothCos;
+        private readonly float _rockSmoothCos;
         private readonly uint _seed;
 
         public TerrainChunkMesher(MoonSurface surface, TerrainPainter painter, TerrainMeshSettings settings)
@@ -38,6 +42,10 @@ namespace MoonProject.World
 
             _jitter = settings.Jitter;
             _chunkSize = settings.ChunkSize;
+            _fineCellSize = settings.FineCellSize;
+            _smoothNormalRadius = settings.SmoothNormalRadius;
+            _dustSmoothCos = Mathf.Cos(settings.DustSmoothAngle * Mathf.Deg2Rad);
+            _rockSmoothCos = Mathf.Cos(settings.RockSmoothAngle * Mathf.Deg2Rad);
             _seed = (uint)surface.Seed;
         }
 
@@ -62,8 +70,13 @@ namespace MoonProject.World
             }
 
             var origin = new Vector3(plan.Origin.x, 0f, plan.Origin.y);
-            var vertices = new TerrainVertex[cells * cells * 6];
-            var indices = new int[cells * cells * 6];
+            int triCount = cells * cells * 2;
+            var vertices = new TerrainVertex[triCount * 3];
+            var indices = new int[triCount * 3];
+            bool smoothNormals = ShouldSmooth(plan);
+            Vector3[] faceNormals = smoothNormals ? new Vector3[triCount] : null;
+            Vector3[] weightedNormals = smoothNormals ? new Vector3[triCount] : null;
+            bool[] isRock = smoothNormals ? new bool[triCount] : null;
             uint cellKey = CellKey(plan.CellSize);
             int written = 0;
             for (int j = 0; j < cells; j++)
@@ -94,18 +107,24 @@ namespace MoonProject.World
                     if (mainDiagonal)
                     {
                         Emit(positions, regions, groundColors, a, c, d, origin, paintHash, vertices, indices,
-                            ref written);
+                            faceNormals, weightedNormals, isRock, ref written);
                         Emit(positions, regions, groundColors, a, d, b, origin, Hashing.Mix(paintHash), vertices,
-                            indices, ref written);
+                            indices, faceNormals, weightedNormals, isRock, ref written);
                     }
                     else
                     {
                         Emit(positions, regions, groundColors, a, c, b, origin, paintHash, vertices, indices,
-                            ref written);
+                            faceNormals, weightedNormals, isRock, ref written);
                         Emit(positions, regions, groundColors, b, c, d, origin, Hashing.Mix(paintHash), vertices,
-                            indices, ref written);
+                            indices, faceNormals, weightedNormals, isRock, ref written);
                     }
                 }
+            }
+
+            if (smoothNormals)
+            {
+                ApplySmoothNormals(positions, stride, cells, vertices, indices, faceNormals, weightedNormals, isRock,
+                    written);
             }
 
             var colliderVertices = new Vector3[positions.Length];
@@ -125,13 +144,93 @@ namespace MoonProject.World
                 indices, bounds);
         }
 
+        private bool ShouldSmooth(TerrainChunkPlan plan)
+        {
+            if (_smoothNormalRadius <= 0f)
+            {
+                return false;
+            }
+
+            if (plan.CellSize <= _fineCellSize)
+            {
+                return true;
+            }
+
+            float nearestX = Mathf.Clamp(0f, plan.Origin.x, plan.Origin.x + plan.Size);
+            float nearestZ = Mathf.Clamp(0f, plan.Origin.y, plan.Origin.y + plan.Size);
+            return nearestX * nearestX + nearestZ * nearestZ <= _smoothNormalRadius * _smoothNormalRadius;
+        }
+
+        private void ApplySmoothNormals(Vector3[] positions, int stride, int cells, TerrainVertex[] vertices,
+            int[] indices, Vector3[] faceNormals, Vector3[] weightedNormals, bool[] isRock, int written)
+        {
+            var head = new int[positions.Length];
+            for (int g = 0; g < head.Length; g++)
+            {
+                head[g] = -1;
+            }
+
+            var next = new int[written];
+            for (int v = 0; v < written; v++)
+            {
+                int g = indices[v];
+                next[v] = head[g];
+                head[g] = v;
+            }
+
+            for (int v = 0; v < written; v++)
+            {
+                int triA = v / 3;
+                int g = indices[v];
+                bool rockA = isRock[triA];
+                Vector3 normalA = faceNormals[triA];
+                float minDot = rockA ? _rockSmoothCos : _dustSmoothCos;
+                Vector3 sum = Vector3.zero;
+                for (int other = head[g]; other != -1; other = next[other])
+                {
+                    int triB = other / 3;
+                    if (isRock[triB] == rockA && (triA == triB || Vector3.Dot(normalA, faceNormals[triB]) >= minDot))
+                    {
+                        sum += weightedNormals[triB];
+                    }
+                }
+
+                Vector3 smoothed = sum.sqrMagnitude > 1e-12f ? sum.normalized : normalA;
+                if (!rockA)
+                {
+                    int gx = g % stride;
+                    int gz = g / stride;
+                    int borderDist = Mathf.Min(Mathf.Min(gx, cells - gx), Mathf.Min(gz, cells - gz));
+                    if (borderDist <= 1)
+                    {
+                        Vector3 p = positions[g];
+                        Vector3 analytic = _surface.SampleNormal(p.x, p.z);
+                        if (Vector3.Dot(normalA, analytic) >= minDot)
+                        {
+                            smoothed = borderDist == 0
+                                ? analytic
+                                : Vector3.Slerp(analytic, smoothed, 0.5f).normalized;
+                        }
+                    }
+                }
+
+                if (smoothed.y > 1e-4f)
+                {
+                    TerrainVertex current = vertices[v];
+                    vertices[v] = new TerrainVertex(current.Position, smoothed, current.Color);
+                }
+            }
+        }
+
         private void Emit(Vector3[] positions, SurfaceSample[] regions, Color32[] groundColors, int i0, int i1,
-            int i2, Vector3 origin, uint hash, TerrainVertex[] vertices, int[] indices, ref int written)
+            int i2, Vector3 origin, uint hash, TerrainVertex[] vertices, int[] indices, Vector3[] faceNormals,
+            Vector3[] weightedNormals, bool[] isRock, ref int written)
         {
             Vector3 p0 = positions[i0];
             Vector3 p1 = positions[i1];
             Vector3 p2 = positions[i2];
-            Vector3 normal = Vector3.Cross(p1 - p0, p2 - p0).normalized;
+            Vector3 cross = Vector3.Cross(p1 - p0, p2 - p0);
+            Vector3 normal = cross.normalized;
             SurfaceSample r0 = regions[i0];
             SurfaceSample r1 = regions[i1];
             SurfaceSample r2 = regions[i2];
@@ -140,6 +239,13 @@ namespace MoonProject.World
                 (r0.CanyonFloor + r1.CanyonFloor + r2.CanyonFloor) / 3f, (r0.Chasm + r1.Chasm + r2.Chasm) / 3f);
             bool rock = _painter.IsRock(normal, region);
             Color32 face = rock ? _painter.Rock(normal, (p0 + p1 + p2) / 3f, region, hash) : default;
+            if (faceNormals != null)
+            {
+                int tri = written / 3;
+                faceNormals[tri] = normal;
+                weightedNormals[tri] = cross;
+                isRock[tri] = rock;
+            }
 
             indices[written] = i0;
             vertices[written++] = new TerrainVertex(p0 - origin, normal, rock ? face : groundColors[i0]);

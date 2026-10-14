@@ -67,6 +67,11 @@ namespace MoonProject.Art.Editor
         [MoonBuilder("Art/Containers", 176)]
         public static void Build()
         {
+            Build(0f);
+        }
+
+        public static void Build(float smoothAngleDegrees)
+        {
             Material material = PaletteAssetBuilder.LoadMaterial();
             Material glowOff = PaletteAssetBuilder.LoadGlowOffMaterial();
             foreach (ModelNode container in new[]
@@ -75,11 +80,33 @@ namespace MoonProject.Art.Editor
                 CreateCabinet(),
             })
             {
-                ModelPrefabWriter.Write(GroundOcclusion.Ground(container), ArtPaths.PropFolder, material, glowOff);
+                ModelPrefabWriter.Write(GroundOcclusion.Ground(SmoothNode(container, smoothAngleDegrees)),
+                    ArtPaths.PropFolder, material, glowOff);
             }
 
-            ModelPrefabWriter.Write(CreateSpareCrate(), ArtPaths.PropFolder, material, glowOff);
+            ModelPrefabWriter.Write(SmoothNode(CreateSpareCrate(), smoothAngleDegrees), ArtPaths.PropFolder, material,
+                glowOff);
             AssetDatabase.SaveAssets();
+        }
+
+        private static ModelNode SmoothNode(ModelNode node, float smoothAngleDegrees)
+        {
+            if (smoothAngleDegrees <= 0f)
+            {
+                return node;
+            }
+
+            if (node.Mesh != null)
+            {
+                MeshNormalSmoother.SmoothAdaptive(node.Mesh.Geometry, smoothAngleDegrees);
+            }
+
+            for (int i = 0; i < node.Children.Count; i++)
+            {
+                SmoothNode(node.Children[i], smoothAngleDegrees);
+            }
+
+            return node;
         }
 
         public static ModelNode CreateCoilCrate()

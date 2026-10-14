@@ -15,10 +15,16 @@ namespace MoonProject.Art.Editor
         [MoonBuilder("Art/Rocks", 110)]
         public static void Build()
         {
+            Build(0f, 0f);
+        }
+
+        /// <summary>Builds the rock prefabs with optional smooth-by-angle normals and vertex AO.</summary>
+        public static void Build(float smoothAngleDegrees, float aoStrength)
+        {
             Material material = PaletteAssetBuilder.LoadMaterial();
             for (int i = 0; i < VariantCount; i++)
             {
-                ModelPrefabWriter.Write(CreateModel(i), ArtPaths.RockFolder, material);
+                ModelPrefabWriter.Write(CreateModel(i, smoothAngleDegrees, aoStrength), ArtPaths.RockFolder, material);
             }
 
             AssetDatabase.SaveAssets();
@@ -27,9 +33,28 @@ namespace MoonProject.Art.Editor
         /// <summary>Variant <paramref name="index"/> (0 = smallest) as a single-node model.</summary>
         public static ModelNode CreateModel(int index)
         {
+            return CreateModel(index, 0f, 0f);
+        }
+
+        /// <summary>Variant <paramref name="index"/> with optional smooth-by-angle normals and vertex AO.</summary>
+        public static ModelNode CreateModel(int index, float smoothAngleDegrees, float aoStrength)
+        {
             Variant(index, out int seed, out float size, out RockStyle style);
             var builder = new LowPolyMeshBuilder(style == RockStyle.Boulder ? 320 : 80);
-            RockGenerator.Build(builder, seed, size, style, Matrix4x4.identity);
+            MeshRange range = RockGenerator.Build(builder, seed, size, style, Matrix4x4.identity);
+            if (smoothAngleDegrees > 0f)
+            {
+                float angle = style == RockStyle.Slab || style == RockStyle.Jagged
+                    ? Mathf.Min(smoothAngleDegrees, 38f)
+                    : smoothAngleDegrees;
+                MeshNormalSmoother.Smooth(builder, range, angle);
+            }
+
+            if (aoStrength > 0f)
+            {
+                MeshNormalSmoother.BakeRockOcclusion(builder, aoStrength);
+            }
+
             string name = $"Rock_{index:00}";
             return new ModelNode(name, Vector3.zero, new ModelMesh(name, builder));
         }

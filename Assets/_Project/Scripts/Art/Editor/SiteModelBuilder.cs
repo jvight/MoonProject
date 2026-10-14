@@ -115,11 +115,22 @@ namespace MoonProject.Art.Editor
         [MoonBuilder("Art/Sites", 190)]
         public static void Build()
         {
+            Build(0f);
+        }
+
+        public static void Build(float smoothAngleDegrees)
+        {
             Material material = PaletteAssetBuilder.LoadMaterial();
             Material glowOff = PaletteAssetBuilder.LoadGlowOffMaterial();
             foreach (string id in Ids)
             {
-                ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateSite(id)), ArtPaths.SitesFolder, material,
+                ModelNode site = CreateSite(id);
+                if (smoothAngleDegrees > 0f)
+                {
+                    SmoothNodeMeshes(site, smoothAngleDegrees, new HashSet<ModelMesh>());
+                }
+
+                ModelPrefabWriter.Write(GroundOcclusion.Ground(site), ArtPaths.SitesFolder, material,
                     glowOff);
             }
 
@@ -134,6 +145,19 @@ namespace MoonProject.Art.Editor
                 ModelPrefabWriter.Write(CreateStoryPart(part), ArtPaths.PickupFolder, material);
             }
             AssetDatabase.SaveAssets();
+        }
+
+        private static void SmoothNodeMeshes(ModelNode node, float smoothAngleDegrees, HashSet<ModelMesh> smoothed)
+        {
+            if (node.Mesh != null && smoothed.Add(node.Mesh))
+            {
+                MeshNormalSmoother.SmoothAdaptive(node.Mesh.Geometry, smoothAngleDegrees);
+            }
+
+            for (int i = 0; i < node.Children.Count; i++)
+            {
+                SmoothNodeMeshes(node.Children[i], smoothAngleDegrees, smoothed);
+            }
         }
 
         /// <summary>

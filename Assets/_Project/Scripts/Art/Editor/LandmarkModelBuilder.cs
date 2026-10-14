@@ -29,19 +29,48 @@ namespace MoonProject.Art.Editor
         [MoonBuilder("Art/Landmarks", 195)]
         public static void Build()
         {
+            Build(0f);
+        }
+
+        public static void Build(float smoothAngle)
+        {
             Material material = PaletteAssetBuilder.LoadMaterial();
             Material glowOff = PaletteAssetBuilder.LoadGlowOffMaterial();
             string folder = ArtPaths.LandmarksFolder;
-            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateRoutePost()), folder, material, glowOff);
-            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateBridgeNear()), folder, material, glowOff);
-            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateBridgeFar()), folder, material, glowOff);
-            ModelPrefabWriter.Write(CreateBridgeCable(), folder, material, glowOff);
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(SmoothNode(CreateRoutePost(), smoothAngle)),
+                folder, material, glowOff);
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(SmoothNode(CreateBridgeNear(), smoothAngle)),
+                folder, material, glowOff);
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(SmoothNode(CreateBridgeFar(), smoothAngle)),
+                folder, material, glowOff);
+            ModelPrefabWriter.Write(SmoothNode(CreateBridgeCable(), smoothAngle), folder, material, glowOff);
             for (int variant = 0; variant < LandmarkMeshes.DishVariants; variant++)
             {
-                ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateDishFrame(variant)), folder, material, glowOff);
+                ModelPrefabWriter.Write(GroundOcclusion.Ground(SmoothNode(CreateDishFrame(variant), smoothAngle)),
+                    folder, material, glowOff);
             }
 
             AssetDatabase.SaveAssets();
+        }
+
+        private static ModelNode SmoothNode(ModelNode node, float smoothAngle)
+        {
+            if (smoothAngle <= 0f)
+            {
+                return node;
+            }
+
+            if (node.Mesh != null && !node.Name.StartsWith("Weather_", System.StringComparison.Ordinal))
+            {
+                MeshNormalSmoother.SmoothAdaptive(node.Mesh.Geometry, smoothAngle, Mathf.Max(smoothAngle, 62f), 0.16f);
+            }
+
+            for (int i = 0; i < node.Children.Count; i++)
+            {
+                SmoothNode(node.Children[i], smoothAngle);
+            }
+
+            return node;
         }
 
         public static ModelNode CreateRoutePost()

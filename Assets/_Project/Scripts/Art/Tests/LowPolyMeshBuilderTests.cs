@@ -728,6 +728,48 @@ namespace MoonProject.Art.Tests
             }
         }
 
+        [Test]
+        public void MeshNormalSmoother_SmoothsShallowAngles_AndKeepsSharpCreasesCrisp()
+        {
+            var prism = new LowPolyMeshBuilder();
+            MeshRange range = prism.Prism(Matrix4x4.identity, 1f, 2f, 12, PaletteSwatch.Metal);
+            MeshNormalSmoother.Smooth(prism, range, 45f);
+
+            int sharedSideNormals = 0;
+            int capCreases = 0;
+            for (int i = 0; i < prism.VertexCount; i++)
+            {
+                Vector3 pi = prism.Positions[i];
+                Vector3 ni = prism.Normals[i];
+                Assert.AreEqual(1f, ni.magnitude, 1e-4f);
+                for (int j = i + 1; j < prism.VertexCount; j++)
+                {
+                    if ((pi - prism.Positions[j]).sqrMagnitude > 1e-8f)
+                    {
+                        continue;
+                    }
+
+                    Vector3 nj = prism.Normals[j];
+                    if (Mathf.Abs(ni.y) < 0.1f && Mathf.Abs(nj.y) < 0.1f)
+                    {
+                        Assert.Greater(Vector3.Dot(ni, nj), 0.999f, "12-gon side facets (30 deg) share smoothed normal");
+                        sharedSideNormals++;
+                    }
+                    else if (Mathf.Abs(ni.y) > 0.9f && Mathf.Abs(nj.y) < 0.1f)
+                    {
+                        Assert.Less(Mathf.Abs(Vector3.Dot(ni, nj)), 0.01f, "90-deg cap crease stays crisp");
+                        capCreases++;
+                    }
+                }
+            }
+
+            Assert.Greater(sharedSideNormals, 0);
+            Assert.Greater(capCreases, 0);
+
+            MeshNormalSmoother.BakeRockOcclusion(prism, 0.5f);
+            Assert.AreEqual(prism.VertexCount, prism.Occlusion.Count);
+        }
+
         private static LowPolyMeshBuilder DisplacedSphere(int seed)
         {
             var builder = new LowPolyMeshBuilder();

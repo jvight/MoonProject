@@ -12,5 +12,8 @@ namespace MoonProject.Core
 
         /// <summary>The world's anchors; meaningful only while <see cref="HasGeneratedWorld"/> is true.</summary>
         IWorldAnchors Anchors { get; }
+
+        /// <summary>Generates the edit-mode world preview if it is not already present.</summary>
+        void EnsurePreviewInEditor();
     }
 }

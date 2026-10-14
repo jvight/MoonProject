@@ -63,7 +63,6 @@ namespace MoonProject.Art.Editor
             var planes = new List<SkinPlane>();
             var lookup = new Dictionary<long, SkinPlane>();
             IReadOnlyList<Vector3> positions = surface.Positions;
-            IReadOnlyList<Vector3> normals = surface.Normals;
             for (int t = 0; t < surface.TriangleCount; t++)
             {
                 PaletteSwatch swatch = surface.SwatchOf(t);
@@ -72,7 +71,7 @@ namespace MoonProject.Art.Editor
                     continue;
                 }
 
-                Vector3 normal = normals[t * 3];
+                Vector3 normal = surface.FaceNormal(t);
                 var step = new Vector3Int(Mathf.RoundToInt(normal.x / NormalStep),
                     Mathf.RoundToInt(normal.y / NormalStep), Mathf.RoundToInt(normal.z / NormalStep));
                 int offset = Mathf.RoundToInt(Vector3.Dot(normal, positions[t * 3]) / OffsetStep);
@@ -103,6 +102,7 @@ namespace MoonProject.Art.Editor
             var piece = new List<Vector2>(8);
             var scratch = new List<Vector2>(8);
             var points = new List<Vector3>(8);
+            var normals = new List<Vector3>(8);
             foreach (SkinPlane plane in planes)
             {
                 PanelGrid grid = Panelled(plane) ? new PanelGrid(plane, profile) : null;
@@ -115,7 +115,7 @@ namespace MoonProject.Art.Editor
                         continue;
                     }
 
-                    Vector3 normal = surface.Normals[t * 3];
+                    Vector3 normal = surface.FaceNormal(t);
                     if (grid == null)
                     {
                         Vector3 centre = (corners[0] + corners[1] + corners[2]) / 3f;
@@ -126,11 +126,16 @@ namespace MoonProject.Art.Editor
                                 Mathf.FloorToInt(centre.y / profile.PanelHeight),
                                 Mathf.FloorToInt(centre.z / profile.PanelWidth), profile.Seed);
                         points.Clear();
-                        points.Add(corners[0] + normal * lift);
-                        points.Add(corners[1] + normal * lift);
-                        points.Add(corners[2] + normal * lift);
+                        normals.Clear();
+                        for (int k = 0; k < 3; k++)
+                        {
+                            Vector3 nk = surface.Normals[t * 3 + k];
+                            points.Add(corners[k] + nk * lift);
+                            normals.Add(nk);
+                        }
+
                         Weathering.PanelTone(plane.Swatch, roll, false, out PaletteSwatch toward, out float amount);
-                        MeshRange facet = skin.Polygon(points, normal, plane.Swatch);
+                        MeshRange facet = skin.Polygon(points, normals, normal, plane.Swatch);
                         skin.Shade(facet, Palette.GetSurface(toward), amount * profile.PaintWear);
                         skin.Shade(facet, Palette.GetSurface(PaletteSwatch.Charcoal), AgeVeil * profile.PaintWear);
                         continue;
@@ -158,8 +163,8 @@ namespace MoonProject.Art.Editor
                                 continue;
                             }
 
-                            Lift(piece, flat, corners, normal * lift, points);
-                            MeshRange range = skin.Polygon(points, normal, plane.Swatch);
+                            Lift(piece, flat, corners, surface, t, lift, points, normals);
+                            MeshRange range = skin.Polygon(points, normals, normal, plane.Swatch);
                             Tone(skin, range, plane.Swatch, Roll(plane.Key, i, j, 0, profile.Seed), profile);
                         }
                     }
@@ -253,7 +258,7 @@ namespace MoonProject.Art.Editor
             foreach (LowPolyMeshBuilder layer in layers)
             {
                 MeshRange range = skin.AppendWhere(layer,
-                    t => layer.Normals[t * 3].y >= SkyFacing || (grounded && MinY(layer, t) < reach), lift);
+                    t => layer.FaceNormal(t).y >= SkyFacing || (grounded && MinY(layer, t) < reach), lift);
                 if (grounded)
                 {
                     skin.ShadeByHeight(range, dust, 0f, profile.Tide, profile.GroundDust);
@@ -351,6 +356,7 @@ namespace MoonProject.Art.Editor
             float lift, PaletteSwatch swatch)
         {
             var piece = new List<Vector2>(shape.Count + 3);
+            var normals = new List<Vector3>(shape.Count + 3);
             var clipper = new Vector2[3];
             foreach (int t in plane.Triangles)
             {
@@ -373,23 +379,30 @@ namespace MoonProject.Art.Editor
                     continue;
                 }
 
-                Vector3 normal = surface.Normals[t * 3];
-                Lift(piece, flat, corners, normal * lift, points);
-                skin.Polygon(points, normal, swatch);
+                Vector3 normal = surface.FaceNormal(t);
+                Lift(piece, flat, corners, surface, t, lift, points, normals);
+                skin.Polygon(points, normals, normal, swatch);
             }
         }
 
         /// <summary>The 3D points of a 2D piece cut from triangle (corners, flat), each pushed by offset.</summary>
-        private static void Lift(List<Vector2> piece, List<Vector2> flat, Vector3[] corners, Vector3 offset,
-            List<Vector3> points)
+        private static void Lift(List<Vector2> piece, List<Vector2> flat, Vector3[] corners,
+            LowPolyMeshBuilder surface, int triangle, float lift, List<Vector3> points, List<Vector3> normals)
         {
             points.Clear();
+            normals.Clear();
+            Vector3 n0 = surface.Normals[triangle * 3];
+            Vector3 n1 = surface.Normals[triangle * 3 + 1];
+            Vector3 n2 = surface.Normals[triangle * 3 + 2];
             float area = Cross(flat[1] - flat[0], flat[2] - flat[0]);
             foreach (Vector2 p in piece)
             {
                 float wb = Cross(p - flat[0], flat[2] - flat[0]) / area;
                 float wc = Cross(flat[1] - flat[0], p - flat[0]) / area;
-                points.Add(corners[0] + (corners[1] - corners[0]) * wb + (corners[2] - corners[0]) * wc + offset);
+                float wa = 1f - wb - wc;
+                Vector3 n = n0 == n1 && n1 == n2 ? n0 : (n0 * wa + n1 * wb + n2 * wc).normalized;
+                points.Add(corners[0] + (corners[1] - corners[0]) * wb + (corners[2] - corners[0]) * wc + n * lift);
+                normals.Add(n);
             }
         }
 

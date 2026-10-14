@@ -38,13 +38,39 @@ namespace MoonProject.Art.Editor
         [MoonBuilder("Art/Derelicts", 177)]
         public static void Build()
         {
+            Build(0f);
+        }
+
+        public static void Build(float smoothAngleDegrees)
+        {
             Material material = PaletteAssetBuilder.LoadMaterial();
             foreach (ModelNode derelict in new[] { CreateElder(), CreateMule(), CreateHaulBot(), CreateDrone() })
             {
-                ModelPrefabWriter.Write(GroundOcclusion.Ground(derelict), ArtPaths.PropFolder, material);
+                ModelPrefabWriter.Write(GroundOcclusion.Ground(SmoothNode(derelict, smoothAngleDegrees)),
+                    ArtPaths.PropFolder, material);
             }
 
             AssetDatabase.SaveAssets();
+        }
+
+        private static ModelNode SmoothNode(ModelNode node, float smoothAngleDegrees)
+        {
+            if (smoothAngleDegrees <= 0f)
+            {
+                return node;
+            }
+
+            if (node.Mesh != null)
+            {
+                MeshNormalSmoother.SmoothAdaptive(node.Mesh.Geometry, smoothAngleDegrees);
+            }
+
+            for (int i = 0; i < node.Children.Count; i++)
+            {
+                SmoothNode(node.Children[i], smoothAngleDegrees);
+            }
+
+            return node;
         }
 
         public static ModelNode CreateElder()

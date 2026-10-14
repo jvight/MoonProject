@@ -220,8 +220,14 @@ namespace MoonProject.Art.Editor
         [MoonBuilder("Art/Rover", 120)]
         public static void Build()
         {
+            Build(0f, false);
+        }
+
+        /// <summary>Writes the rover meshes and prefab with optional smooth-by-angle normals and vertex AO.</summary>
+        public static void Build(float smoothAngleDegrees, bool bakeAo)
+        {
             Material material = PaletteAssetBuilder.LoadMaterial();
-            ModelPrefabWriter.Write(CreateModel(), ArtPaths.RoverFolder, material,
+            ModelPrefabWriter.Write(CreateModel(smoothAngleDegrees, bakeAo), ArtPaths.RoverFolder, material,
                 PaletteAssetBuilder.LoadGlowOffMaterial(), PaletteAssetBuilder.LoadWeatherMaterial());
             ModelPrefabWriter.Write(CreateHoverCoils(), ArtPaths.RoverFolder, material,
                 PaletteAssetBuilder.LoadGlowOffMaterial());
@@ -235,17 +241,28 @@ namespace MoonProject.Art.Editor
         /// <summary>The rig as a node tree; pure geometry, no assets touched.</summary>
         public static ModelNode CreateModel()
         {
-            var bogieRight = new ModelMesh(ModelName + "_BogieR", RoverMeshes.Bogie());
+            return CreateModel(0f, false);
+        }
+
+        /// <summary>The rig as a node tree with optional smooth-by-angle normals and vertex AO.</summary>
+        public static ModelNode CreateModel(float smoothAngleDegrees, bool bakeAo)
+        {
+            LowPolyMeshBuilder bogieGeom = SmoothIfNeeded(RoverMeshes.Bogie(), smoothAngleDegrees);
+            var bogieRight = new ModelMesh(ModelName + "_BogieR", bogieGeom);
             var bogieLeft = new ModelMesh(ModelName + "_BogieL", Mirrored(bogieRight.Geometry));
-            var wheelRight = new ModelMesh(ModelName + "_WheelR", RoverMeshes.Wheel());
+            LowPolyMeshBuilder wheelGeom = SmoothIfNeeded(RoverMeshes.Wheel(), smoothAngleDegrees);
+            var wheelRight = new ModelMesh(ModelName + "_WheelR", wheelGeom);
             var wheelLeft = new ModelMesh(ModelName + "_WheelL", Mirrored(wheelRight.Geometry));
-            var spareLeft = new ModelMesh(ModelName + "_WheelSpareL", Mirrored(RoverMeshes.SpareWheel()));
+            LowPolyMeshBuilder spareGeom = SmoothIfNeeded(RoverMeshes.SpareWheel(), smoothAngleDegrees);
+            var spareLeft = new ModelMesh(ModelName + "_WheelSpareL", Mirrored(spareGeom));
 
             var root = new ModelNode(ModelName, Vector3.zero);
-            LowPolyMeshBuilder shell = RoverMeshes.Body();
+            LowPolyMeshBuilder shell = SmoothIfNeeded(RoverMeshes.Body(), smoothAngleDegrees);
             ModelNode body = root.Add(new ModelNode("Body", Vector3.zero, new ModelMesh(ModelName + "_Body", shell)));
             body.Add(Gift(Decal07FreshName, Vector3.zero, ModelName + "_Decal07Fresh", RoverGiftMeshes.FreshSerial()));
-            Weathering.Weather(body, ModelName, shell, BodyWeather, RoverMeshes.Rust(), RoverMeshes.DustPatches());
+            Weathering.Weather(body, ModelName, shell, BodyWeather,
+                SmoothIfNeeded(RoverMeshes.Rust(), smoothAngleDegrees),
+                SmoothIfNeeded(RoverMeshes.DustPatches(), smoothAngleDegrees));
             BatteryBar(body);
             var coats = new Dictionary<(ModelMesh, string), ModelMesh>();
             Grimed(root.Add(new ModelNode("Bogie_L", MirrorX(BogieHinge), bogieLeft)), coats);
@@ -259,13 +276,14 @@ namespace MoonProject.Art.Editor
             Dusty(root.Add(new ModelNode("Wheel_RR", WheelCentre(1f, -1f), wheelRight)), coats);
 
             ModelNode neck = root.Add(new ModelNode("Neck", NeckBase,
-                new ModelMesh(ModelName + "_Neck", RoverMeshes.Neck())));
-            LowPolyMeshBuilder hooded = RoverMeshes.Head();
+                new ModelMesh(ModelName + "_Neck", SmoothIfNeeded(RoverMeshes.Neck(), smoothAngleDegrees))));
+            LowPolyMeshBuilder hooded = SmoothIfNeeded(RoverMeshes.Head(), smoothAngleDegrees);
             ModelNode head = neck.Add(new ModelNode("Head", RoverMeshes.HeadHinge,
                 new ModelMesh(ModelName + "_Head", hooded)));
-            Weathering.Weather(head, ModelName + "_Head", hooded, HeadWeather, RoverMeshes.HoodScuffs(), null, null);
+            Weathering.Weather(head, ModelName + "_Head", hooded, HeadWeather,
+                SmoothIfNeeded(RoverMeshes.HoodScuffs(), smoothAngleDegrees), null, null);
             ModelNode eye = head.Add(new ModelNode("Eye", RoverMeshes.EyeCentre,
-                new ModelMesh(ModelName + "_Eye", RoverMeshes.Eye())));
+                new ModelMesh(ModelName + "_Eye", SmoothIfNeeded(RoverMeshes.Eye(), smoothAngleDegrees))));
             eye.Add(new ModelNode("TetherOrigin", new Vector3(0f, 0f, RoverMeshes.LensFront)));
             eye.Add(new ModelNode(LensSocketName, new Vector3(0f, 0f, RoverMeshes.LensFront)));
             eye.Add(new ModelNode(ScanFanSocketName, new Vector3(0f, 0f, RoverMeshes.LensFront)));
@@ -273,14 +291,14 @@ namespace MoonProject.Art.Editor
 
             head.Add(new ModelNode(RingSocketName, RingSocket, Place.Rotation(new Vector3(0f, 180f, 0f))));
             head.Add(new ModelNode("Eyelid", RoverMeshes.EyeCentre,
-                new ModelMesh(ModelName + "_Eyelid", RoverMeshes.Eyelid())));
+                new ModelMesh(ModelName + "_Eyelid", SmoothIfNeeded(RoverMeshes.Eyelid(), smoothAngleDegrees))));
 
             ModelNode wing = root.Add(new ModelNode("SolarWing", SolarWingHinge,
                 new ModelMesh(ModelName + "_SolarWing", RoverMeshes.SolarWing())));
             wing.Add(Gift(CellFilledName, RoverGiftMeshes.CellFilledCentre, ModelName + "_CellFilled",
                 RoverGiftMeshes.ReplacementCell()));
             ModelNode antenna = root.Add(new ModelNode("Antenna", AntennaBase,
-                new ModelMesh(ModelName + "_Antenna", RoverMeshes.Antenna())));
+                new ModelMesh(ModelName + "_Antenna", SmoothIfNeeded(RoverMeshes.Antenna(), smoothAngleDegrees))));
             antenna.Add(new ModelNode("AntennaTip", RoverMeshes.AntennaTipPosition,
                 new ModelMesh(ModelName + "_AntennaTip", RoverMeshes.AntennaTip())));
             antenna.Add(Gift(PennantName, RoverGiftMeshes.PennantClip, ModelName + "_Pennant",
@@ -302,6 +320,11 @@ namespace MoonProject.Art.Editor
             root.Add(new ModelNode(SpineSocketName, SpineSocket));
             root.Add(new ModelNode(DeckSocketName, DeckSocket, Place.Rotation(new Vector3(0f, 90f, 0f))));
             AddEquipmentSockets(root, eye, head, wing, antenna, middleRight);
+            if (bakeAo)
+            {
+                BakeNodeOcclusion(root, Matrix4x4.identity, new HashSet<ModelMesh>());
+            }
+
             return root;
         }
 
@@ -486,6 +509,30 @@ namespace MoonProject.Art.Editor
             var mirrored = new LowPolyMeshBuilder(source.TriangleCount);
             mirrored.Append(source, Place.MirrorX);
             return mirrored;
+        }
+
+        private static LowPolyMeshBuilder SmoothIfNeeded(LowPolyMeshBuilder builder, float smoothAngleDegrees)
+        {
+            if (builder != null && smoothAngleDegrees > 0f)
+            {
+                MeshNormalSmoother.SmoothAdaptive(builder, smoothAngleDegrees);
+            }
+
+            return builder;
+        }
+
+        private static void BakeNodeOcclusion(ModelNode node, Matrix4x4 toRoot, HashSet<ModelMesh> baked)
+        {
+            if (node.Mesh != null && node.Active && baked.Add(node.Mesh))
+            {
+                MeshNormalSmoother.BakeRootOcclusion(node.Mesh.Geometry, toRoot);
+            }
+
+            for (int i = 0; i < node.Children.Count; i++)
+            {
+                ModelNode child = node.Children[i];
+                BakeNodeOcclusion(child, toRoot * child.LocalMatrix, baked);
+            }
         }
     }
 }

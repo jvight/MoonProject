@@ -397,16 +397,21 @@ namespace MoonProject.Art.Editor
         [MoonBuilder("Art/Base", 140)]
         public static void Build()
         {
+            Build(0f);
+        }
+
+        public static void Build(float smoothAngleDegrees)
+        {
             Material material = PaletteAssetBuilder.LoadMaterial();
             Material glowOff = PaletteAssetBuilder.LoadGlowOffMaterial();
             Material weather = PaletteAssetBuilder.LoadWeatherMaterial();
             var grounded = new List<ModelNode>
             {
-                CreateLander(), CreateRoverBay(), CreateCassetteShelf(),
+                CreateLander(smoothAngleDegrees), CreateRoverBay(smoothAngleDegrees), CreateCassetteShelf(),
             };
             for (int level = RadioTowerMeshes.MinLevel; level <= RadioTowerMeshes.MaxLevel; level++)
             {
-                grounded.Add(CreateTower(level));
+                grounded.Add(CreateTower(level, smoothAngleDegrees));
             }
 
             foreach (ModelNode model in grounded)
@@ -470,8 +475,14 @@ namespace MoonProject.Art.Editor
 
         public static ModelNode CreateLander()
         {
+            return CreateLander(0f);
+        }
+
+        public static ModelNode CreateLander(float smoothAngleDegrees)
+        {
             LowPolyMeshBuilder hull = LanderMeshes.Hull();
             BellyLiftMeshes.Frame(hull);
+            SmoothIfNeeded(hull, smoothAngleDegrees);
             var lander = new ModelNode(LanderName, Vector3.zero, new ModelMesh(LanderName, hull));
             ModelNode windows = lander.Add(new ModelNode("Windows", Vector3.zero, Quaternion.identity,
                 new ModelMesh(LanderName + "_Windows", LanderMeshes.Pane(0)), ModelMaterial.PaletteGlowOff));
@@ -507,7 +518,9 @@ namespace MoonProject.Art.Editor
             AddBigPorthole(lander);
             AddLab(lander);
             AddShelves(lander);
-            Weathering.Weather(lander, LanderName, hull, LanderWeather, LanderMeshes.Rust(), LanderMeshes.Drifts());
+            Weathering.Weather(lander, LanderName, hull, LanderWeather,
+                SmoothIfNeeded(LanderMeshes.Rust(), smoothAngleDegrees),
+                SmoothIfNeeded(LanderMeshes.Drifts(), smoothAngleDegrees));
             return lander;
         }
 
@@ -741,9 +754,14 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public static ModelNode CreateRoverBay()
         {
-            LowPolyMeshBuilder frame = RoverBayMeshes.Frame();
+            return CreateRoverBay(0f);
+        }
+
+        public static ModelNode CreateRoverBay(float smoothAngleDegrees)
+        {
+            LowPolyMeshBuilder frame = SmoothIfNeeded(RoverBayMeshes.Frame(), smoothAngleDegrees);
             var bay = new ModelNode(RoverBayName, Vector3.zero, new ModelMesh(RoverBayName, frame));
-            LowPolyMeshBuilder disc = RoverBayMeshes.Turntable();
+            LowPolyMeshBuilder disc = SmoothIfNeeded(RoverBayMeshes.Turntable(), smoothAngleDegrees);
             ModelNode turntable = bay.Add(new ModelNode("Turntable", RoverBayMeshes.TurntableCentre,
                 Place.Rotation(new Vector3(0f, 180f, 0f)), new ModelMesh(RoverBayName + "_Turntable", disc)));
             Weathering.Weather(turntable, RoverBayName + "_Turntable", disc, TurntableWeather, null, null);
@@ -773,8 +791,9 @@ namespace MoonProject.Art.Editor
                     Place.Rotation(RoverBayMeshes.LampEuler), glass, ModelMaterial.PaletteGlowOff));
             }
 
-            Weathering.Weather(bay, RoverBayName, frame, RoverBayWeather, RoverBayMeshes.Rust(),
-                RoverBayMeshes.Drifts());
+            Weathering.Weather(bay, RoverBayName, frame, RoverBayWeather,
+                SmoothIfNeeded(RoverBayMeshes.Rust(), smoothAngleDegrees),
+                SmoothIfNeeded(RoverBayMeshes.Drifts(), smoothAngleDegrees));
             return bay;
         }
 
@@ -878,8 +897,13 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public static ModelNode CreateTower(int level)
         {
+            return CreateTower(level, 0f);
+        }
+
+        public static ModelNode CreateTower(int level, float smoothAngleDegrees)
+        {
             string name = TowerPrefix + level.ToString(CultureInfo.InvariantCulture);
-            LowPolyMeshBuilder structure = RadioTowerMeshes.Structure(level);
+            LowPolyMeshBuilder structure = SmoothIfNeeded(RadioTowerMeshes.Structure(level), smoothAngleDegrees);
             var tower = new ModelNode(name, Vector3.zero, new ModelMesh(name, structure));
             ModelNode lights = tower.Add(new ModelNode(TowerLightsName, Vector3.zero,
                 new ModelMesh(name + "_Lights", RadioTowerMeshes.Lights(level, 0))));
@@ -904,9 +928,20 @@ namespace MoonProject.Art.Editor
             plaque.Add(new ModelNode(OfflineLampName, RadioTowerMeshes.OfflineLamp, Quaternion.identity,
                 new ModelMesh(name + "_" + OfflineLampName, RadioTowerMeshes.OfflineLampGlass()),
                 ModelMaterial.PaletteGlowOff));
-            Weathering.Weather(tower, name, structure, TowerWeather(level), RadioTowerMeshes.Rust(level),
-                RadioTowerMeshes.Drifts());
+            Weathering.Weather(tower, name, structure, TowerWeather(level),
+                SmoothIfNeeded(RadioTowerMeshes.Rust(level), smoothAngleDegrees),
+                SmoothIfNeeded(RadioTowerMeshes.Drifts(), smoothAngleDegrees));
             return tower;
+        }
+
+        private static LowPolyMeshBuilder SmoothIfNeeded(LowPolyMeshBuilder builder, float smoothAngleDegrees)
+        {
+            if (builder != null && smoothAngleDegrees > 0f)
+            {
+                MeshNormalSmoother.SmoothAdaptive(builder, smoothAngleDegrees);
+            }
+
+            return builder;
         }
 
         /// <summary>A tower stage's weather: the tallest thing at home, out in it as long as the lander.</summary>

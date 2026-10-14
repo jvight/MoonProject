@@ -32,6 +32,7 @@ namespace MoonProject.World
             new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3),
             new VertexAttributeDescriptor(VertexAttribute.Normal, VertexAttributeFormat.Float32, 3),
             new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float32, 2),
+            new VertexAttributeDescriptor(VertexAttribute.TexCoord1, VertexAttributeFormat.Float32, 2),
         };
 
         private readonly List<Mesh> _meshes = new List<Mesh>();
@@ -184,7 +185,8 @@ namespace MoonProject.World
                 for (int v = 0; v < shape.Positions.Length; v++)
                 {
                     Vector3 position = offset + rotation * (shape.Positions[v] * scale);
-                    vertices[written++] = new ScatterVertex(position, rotation * shape.Normals[v], shape.Uvs[v]);
+                    vertices[written++] = new ScatterVertex(position, rotation * shape.Normals[v], shape.Uvs[v],
+                        shape.Occlusions[v]);
                     min = Vector3.Min(min, position);
                     max = Vector3.Max(max, position);
                 }
@@ -276,15 +278,20 @@ namespace MoonProject.World
                 Vector3[] positions = mesh.vertices;
                 Vector3[] normals = mesh.normals;
                 Vector2[] uvs = mesh.uv;
+                Vector2[] uv2 = mesh.uv2;
+                bool hasUv2 = uv2 != null && uv2.Length == positions.Length;
                 int[] triangles = mesh.triangles;
                 Positions = new Vector3[triangles.Length];
                 Normals = new Vector3[triangles.Length];
                 Uvs = new Vector2[triangles.Length];
+                Occlusions = new Vector2[triangles.Length];
                 for (int i = 0; i < triangles.Length; i++)
                 {
-                    Positions[i] = positions[triangles[i]];
-                    Normals[i] = normals[triangles[i]];
-                    Uvs[i] = uvs[triangles[i]];
+                    int idx = triangles[i];
+                    Positions[i] = positions[idx];
+                    Normals[i] = normals[idx];
+                    Uvs[i] = uvs[idx];
+                    Occlusions[i] = hasUv2 ? uv2[idx] : Vector2.zero;
                 }
 
                 Bounds bounds = mesh.bounds;
@@ -296,6 +303,8 @@ namespace MoonProject.World
             public Vector3[] Normals { get; }
 
             public Vector2[] Uvs { get; }
+
+            public Vector2[] Occlusions { get; }
 
             /// <summary>The larger of the X and Z sizes: the rock's "size" in RockGenerator terms.</summary>
             public float HorizontalExtent { get; }

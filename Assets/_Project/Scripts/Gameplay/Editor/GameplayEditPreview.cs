@@ -49,6 +49,7 @@ namespace MoonProject.Gameplay.Editor
             SalvageField salvage = FindInScene<SalvageField>(scene);
             RelayField relays = FindInScene<RelayField>(scene);
             IWorldPreview world = FindInScene<IWorldPreview>(scene);
+            world?.EnsurePreviewInEditor();
             if (salvage == null || relays == null || world == null || !world.HasGeneratedWorld)
             {
                 return;

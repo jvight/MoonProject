@@ -39,13 +39,41 @@ namespace MoonProject.Art.Editor
         [MoonBuilder("Art/Relay", 180)]
         public static void Build()
         {
+            Build(0f);
+        }
+
+        public static void Build(float smoothAngle)
+        {
             Material material = PaletteAssetBuilder.LoadMaterial();
             Material glowOff = PaletteAssetBuilder.LoadGlowOffMaterial();
-            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateMast(false)), ArtPaths.RelayFolder, material, glowOff);
-            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateMast(true)), ArtPaths.RelayFolder, material, glowOff);
-            ModelPrefabWriter.Write(CreatePart(), ArtPaths.RelayFolder, material);
-            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateHut()), ArtPaths.RelayFolder, material);
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(SmoothNode(CreateMast(false), smoothAngle)),
+                ArtPaths.RelayFolder, material, glowOff);
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(SmoothNode(CreateMast(true), smoothAngle)),
+                ArtPaths.RelayFolder, material, glowOff);
+            ModelPrefabWriter.Write(SmoothNode(CreatePart(), smoothAngle), ArtPaths.RelayFolder, material);
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(SmoothNode(CreateHut(), smoothAngle)),
+                ArtPaths.RelayFolder, material);
             AssetDatabase.SaveAssets();
+        }
+
+        private static ModelNode SmoothNode(ModelNode node, float smoothAngle)
+        {
+            if (smoothAngle <= 0f)
+            {
+                return node;
+            }
+
+            if (node.Mesh != null && !node.Name.StartsWith("Weather_", System.StringComparison.Ordinal))
+            {
+                MeshNormalSmoother.SmoothAdaptive(node.Mesh.Geometry, smoothAngle, Mathf.Max(smoothAngle, 62f), 0.16f);
+            }
+
+            for (int i = 0; i < node.Children.Count; i++)
+            {
+                SmoothNode(node.Children[i], smoothAngle);
+            }
+
+            return node;
         }
 
         /// <summary>The mast restored (<paramref name="broken"/> false) or as 07 finds it.</summary>

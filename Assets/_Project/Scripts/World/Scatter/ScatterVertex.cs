@@ -13,12 +13,14 @@ namespace MoonProject.World
         public Vector3 Position;
         public Vector3 Normal;
         public Vector2 Uv;
+        public Vector2 Occlusion;
 
-        public ScatterVertex(Vector3 position, Vector3 normal, Vector2 uv)
+        public ScatterVertex(Vector3 position, Vector3 normal, Vector2 uv, Vector2 occlusion = default)
         {
             Position = position;
             Normal = normal;
             Uv = uv;
+            Occlusion = occlusion;
         }
     }
 }

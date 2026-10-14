@@ -22,9 +22,10 @@ namespace MoonProject.World
                 {
                     float minX = start + column * size;
                     float minZ = start + row * size;
+                    float cell = CellSizeFor(minX, minZ, size, settings);
                     cells[column, row] = needsFine(new Rect(minX, minZ, size, size))
-                        ? settings.FineCellSize
-                        : CellSizeFor(minX, minZ, size, settings);
+                        ? Mathf.Min(cell, settings.FineCellSize)
+                        : cell;
                 }
             }
 
@@ -48,9 +49,20 @@ namespace MoonProject.World
 
         private static float CellSizeFor(float minX, float minZ, float size, TerrainMeshSettings settings)
         {
-            float nearestX = Mathf.Clamp(0f, minX, minX + size);
-            float nearestZ = Mathf.Clamp(0f, minZ, minZ + size);
-            float distance = Mathf.Sqrt(nearestX * nearestX + nearestZ * nearestZ);
+            float distance = DistanceToRect(0f, 0f, minX, minZ, size);
+            if (settings.NearFineRadius > 0f && settings.NearFineCellSize < settings.FineCellSize)
+            {
+                float siteRadius = settings.NearFineRadius * 0.5f;
+                Vector2 extra = settings.SecondaryFineFocus;
+                if (distance < settings.NearFineRadius
+                    || DistanceToRect(-12.9f, 184.5f, minX, minZ, size) < siteRadius
+                    || DistanceToRect(285f, 92f, minX, minZ, size) < siteRadius
+                    || (extra.sqrMagnitude > 1f && DistanceToRect(extra.x, extra.y, minX, minZ, size) < siteRadius))
+                {
+                    return settings.NearFineCellSize;
+                }
+            }
+
             if (distance < settings.FineRadius)
             {
                 return settings.FineCellSize;
@@ -62,6 +74,13 @@ namespace MoonProject.World
             }
 
             return distance < settings.CoarseRadius ? settings.CoarseCellSize : settings.FarCellSize;
+        }
+
+        private static float DistanceToRect(float x, float z, float minX, float minZ, float size)
+        {
+            float dx = Mathf.Clamp(x, minX, minX + size) - x;
+            float dz = Mathf.Clamp(z, minZ, minZ + size) - z;
+            return Mathf.Sqrt(dx * dx + dz * dz);
         }
     }
 }

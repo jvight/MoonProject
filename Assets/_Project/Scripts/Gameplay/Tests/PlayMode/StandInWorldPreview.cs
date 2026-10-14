@@ -20,6 +20,10 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public int Count => _anchors.Count;
 
+        public void EnsurePreviewInEditor()
+        {
+        }
+
         /// <summary>Generates the stand-in world with exactly <paramref name="anchors"/>.</summary>
         public void Generate(IEnumerable<WorldAnchor> anchors)
         {

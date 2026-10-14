@@ -202,6 +202,127 @@ namespace MoonProject.Editor.Automation
             return written;
         }
 
+        /// <summary>
+        /// Renders every pose of <paramref name="poses"/> to &lt;outputDirectory&gt;/&lt;pose&gt;/&lt;variantTag&gt;.png
+        /// and returns the average GPU-synchronised frame render time in milliseconds across <paramref name="timingPasses"/>
+        /// full sweeps of the pose set.
+        /// </summary>
+        public static double CapturePoseVariants(CameraPoseSet poses, string outputDirectory, string variantTag,
+            bool antiAliasing, int timingPasses, out double cpuFrameMs)
+        {
+            cpuFrameMs = 0.0;
+            if (poses?.poses == null || poses.poses.Length == 0)
+            {
+                Debug.LogError("CapturePoseVariants: the pose file has no poses.");
+                return 0.0;
+            }
+
+            int width = poses.width > 0 ? poses.width : DefaultSceneWidth;
+            int height = poses.height > 0 ? poses.height : DefaultSceneHeight;
+            var cameraObject = new GameObject("[CaptureCamera]") { hideFlags = HideFlags.HideAndDontSave };
+            try
+            {
+                var camera = cameraObject.AddComponent<Camera>();
+                camera.clearFlags = CameraClearFlags.Skybox;
+                camera.nearClipPlane = SceneNearClip;
+                camera.farClipPlane = SceneFarClip;
+                camera.allowHDR = true;
+                camera.allowMSAA = antiAliasing;
+                UniversalAdditionalCameraData cameraData = camera.GetUniversalAdditionalCameraData();
+                cameraData.renderPostProcessing = poses.postProcessing;
+                cameraData.antialiasing = antiAliasing
+                    ? AntialiasingMode.SubpixelMorphologicalAntiAliasing
+                    : AntialiasingMode.None;
+                cameraData.antialiasingQuality = AntialiasingQuality.High;
+                cameraData.renderShadows = true;
+                using (new SynchronousShaders())
+                {
+                    foreach (CameraPose pose in poses.poses)
+                    {
+                        if (!TryApplyPose(camera, pose))
+                        {
+                            continue;
+                        }
+
+                        string path = Path.Combine(outputDirectory, pose.name, $"{variantTag}.png");
+                        FrameCapture.SavePng(camera, width, height, path);
+                        BatchRunner.Log($"capture {path}");
+                    }
+
+                    return MeasureFrameTime(camera, poses.poses, width, height, antiAliasing,
+                        Mathf.Max(1, timingPasses), out cpuFrameMs);
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(cameraObject);
+            }
+        }
+
+        private static double MeasureFrameTime(Camera camera, CameraPose[] poses, int width, int height,
+            bool antiAliasing, int passes, out double cpuFrameMs)
+        {
+            var descriptor = new RenderTextureDescriptor(width, height,
+                UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_SFloat, 32)
+            {
+                msaaSamples = antiAliasing ? FrameCapture.Msaa : 1,
+            };
+            RenderTexture target = RenderTexture.GetTemporary(descriptor);
+            RenderTexture sync = RenderTexture.GetTemporary(1, 1, 0, RenderTextureFormat.ARGB32);
+            var pixel = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+            RenderTexture previousTarget = camera.targetTexture;
+            RenderTexture previousActive = RenderTexture.active;
+            try
+            {
+                camera.targetTexture = target;
+                foreach (CameraPose pose in poses)
+                {
+                    if (TryApplyPose(camera, pose))
+                    {
+                        camera.Render();
+                    }
+                }
+
+                Graphics.Blit(target, sync);
+                RenderTexture.active = sync;
+                pixel.ReadPixels(new Rect(0, 0, 1, 1), 0, 0, false);
+
+                int frames = 0;
+                var cpuWatch = new System.Diagnostics.Stopwatch();
+                var totalWatch = System.Diagnostics.Stopwatch.StartNew();
+                for (int pass = 0; pass < passes; pass++)
+                {
+                    for (int i = 0; i < poses.Length; i++)
+                    {
+                        if (!TryApplyPose(camera, poses[i]))
+                        {
+                            continue;
+                        }
+
+                        cpuWatch.Start();
+                        camera.Render();
+                        cpuWatch.Stop();
+                        Graphics.Blit(target, sync);
+                        RenderTexture.active = sync;
+                        pixel.ReadPixels(new Rect(0, 0, 1, 1), 0, 0, false);
+                        frames++;
+                    }
+                }
+
+                totalWatch.Stop();
+                cpuFrameMs = frames > 0 ? cpuWatch.Elapsed.TotalMilliseconds / frames : 0.0;
+                return frames > 0 ? totalWatch.Elapsed.TotalMilliseconds / frames : 0.0;
+            }
+            finally
+            {
+                camera.targetTexture = previousTarget;
+                RenderTexture.active = previousActive;
+                Object.DestroyImmediate(pixel);
+                RenderTexture.ReleaseTemporary(sync);
+                RenderTexture.ReleaseTemporary(target);
+            }
+        }
+
         private static bool TryApplyPose(Camera camera, CameraPose pose)
         {
             if (pose == null || string.IsNullOrWhiteSpace(pose.name) || pose.position == null ||

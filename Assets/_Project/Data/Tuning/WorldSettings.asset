@@ -217,6 +217,11 @@ MonoBehaviour:
     _backdropRings: 26
     _backdropSegments: 192
     _backdropSink: 3
+    _smoothNormalRadius: 0
+    _dustSmoothAngle: 42
+    _rockSmoothAngle: 30
+    _nearFineCellSize: 2
+    _nearFineRadius: 0
   _paint:
     _rockSlope: 32
     _rimRockSlope: 22

@@ -29,16 +29,41 @@ namespace MoonProject.Art.Editor
         [MoonBuilder("Art/RoverKit", 121)]
         public static void Build()
         {
+            Build(0f);
+        }
+
+        public static void Build(float smoothAngleDegrees)
+        {
             Material material = PaletteAssetBuilder.LoadMaterial();
             Material glowOff = PaletteAssetBuilder.LoadGlowOffMaterial();
-            ModelPrefabWriter.Write(CreateLampBar(), ArtPaths.RoverFolder, material, glowOff);
-            ModelPrefabWriter.Write(CreateCapacitorDrum(), ArtPaths.RoverFolder, material, glowOff);
-            ModelPrefabWriter.Write(CreateCargoRack(), ArtPaths.RoverFolder, material);
-            ModelPrefabWriter.Write(CreateBatterySpine(), ArtPaths.RoverFolder, material);
-            ModelPrefabWriter.Write(CreateTapeDeck(), ArtPaths.RoverFolder, material);
-            ModelPrefabWriter.Write(CreateTetherRing(), ArtPaths.RoverFolder, material, glowOff);
-            ModelPrefabWriter.Write(CreateSideBin(), ArtPaths.RoverFolder, material);
+            ModelPrefabWriter.Write(SmoothNode(CreateLampBar(), smoothAngleDegrees), ArtPaths.RoverFolder, material, glowOff);
+            ModelPrefabWriter.Write(SmoothNode(CreateCapacitorDrum(), smoothAngleDegrees), ArtPaths.RoverFolder, material, glowOff);
+            ModelPrefabWriter.Write(SmoothNode(CreateCargoRack(), smoothAngleDegrees), ArtPaths.RoverFolder, material);
+            ModelPrefabWriter.Write(SmoothNode(CreateBatterySpine(), smoothAngleDegrees), ArtPaths.RoverFolder, material);
+            ModelPrefabWriter.Write(SmoothNode(CreateTapeDeck(), smoothAngleDegrees), ArtPaths.RoverFolder, material);
+            ModelPrefabWriter.Write(SmoothNode(CreateTetherRing(), smoothAngleDegrees), ArtPaths.RoverFolder, material, glowOff);
+            ModelPrefabWriter.Write(SmoothNode(CreateSideBin(), smoothAngleDegrees), ArtPaths.RoverFolder, material);
             AssetDatabase.SaveAssets();
+        }
+
+        private static ModelNode SmoothNode(ModelNode node, float smoothAngleDegrees)
+        {
+            if (smoothAngleDegrees <= 0f)
+            {
+                return node;
+            }
+
+            if (node.Mesh != null)
+            {
+                MeshNormalSmoother.SmoothAdaptive(node.Mesh.Geometry, smoothAngleDegrees);
+            }
+
+            for (int i = 0; i < node.Children.Count; i++)
+            {
+                SmoothNode(node.Children[i], smoothAngleDegrees);
+            }
+
+            return node;
         }
 
         public static ModelNode CreateLampBar()

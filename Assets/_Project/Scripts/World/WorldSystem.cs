@@ -128,6 +128,14 @@ namespace MoonProject.World
             }
         }
 
+        public void EnsurePreviewInEditor()
+        {
+            if (!Application.isPlaying && _generatedRoot == null && HasValidSetup(false))
+            {
+                Generate(HideFlags.DontSave);
+            }
+        }
+
         private void OnEnable()
         {
             // Unwired is normal while a scene builder is still assigning references: stay quiet until then.

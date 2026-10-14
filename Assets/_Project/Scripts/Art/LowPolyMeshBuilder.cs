@@ -108,6 +108,31 @@ namespace MoonProject.Art
             _occlusion[vertex] = new Vector2(kept, 0f);
         }
 
+        /// <summary>Geometric unit normal of triangle <paramref name="triangle"/> from its winding.</summary>
+        public Vector3 FaceNormal(int triangle)
+        {
+            if (triangle < 0 || triangle >= TriangleCount)
+            {
+                throw new ArgumentOutOfRangeException(nameof(triangle));
+            }
+
+            int v = triangle * 3;
+            Vector3 cross = Vector3.Cross(_positions[v + 1] - _positions[v], _positions[v + 2] - _positions[v]);
+            float sqr = cross.sqrMagnitude;
+            return sqr > DegenerateCrossSqr ? cross / Mathf.Sqrt(sqr) : _normals[v];
+        }
+
+        /// <summary>Replaces a vertex's normal (used by soft-normal smoothing).</summary>
+        public void SetNormal(int vertex, Vector3 normal)
+        {
+            if (vertex < 0 || vertex >= VertexCount)
+            {
+                throw new ArgumentOutOfRangeException(nameof(vertex));
+            }
+
+            _normals[vertex] = normal;
+        }
+
         /// <summary>The range from <paramref name="firstTriangle"/> to the current end (groups primitives).</summary>
         public MeshRange RangeFrom(int firstTriangle)
         {
@@ -300,7 +325,12 @@ namespace MoonProject.Art
                     (cb, cc) = (cc, cb);
                 }
 
+                int before = VertexCount;
                 AddFlatTriangle(a, b, c, source._uvs[v], ca, cb, cc);
+                if (VertexCount > before)
+                {
+                    CopyCustomVertexAttributes(source, v, before, placement, mirrored);
+                }
             }
 
             return new MeshRange(first, TriangleCount - first);
@@ -325,10 +355,15 @@ namespace MoonProject.Art
                 int v = t * 3;
                 if (!IsGlowing(source._uvs[v]) && keepTriangle(t))
                 {
-                    Vector3 offset = source._normals[v] * lift;
-                    AddFlatTriangle(source._positions[v] + offset, source._positions[v + 1] + offset,
-                        source._positions[v + 2] + offset, source._uvs[v], source.ColourAt(v), source.ColourAt(v + 1),
-                        source.ColourAt(v + 2));
+                    int before = VertexCount;
+                    AddFlatTriangle(source._positions[v] + source._normals[v] * lift,
+                        source._positions[v + 1] + source._normals[v + 1] * lift,
+                        source._positions[v + 2] + source._normals[v + 2] * lift,
+                        source._uvs[v], source.ColourAt(v), source.ColourAt(v + 1), source.ColourAt(v + 2));
+                    if (VertexCount > before)
+                    {
+                        CopyCustomVertexAttributes(source, v, before, Matrix4x4.identity, false);
+                    }
                 }
             }
 
@@ -350,7 +385,7 @@ namespace MoonProject.Art
             int first = TriangleCount;
             for (int v = 0; v < source.VertexCount; v += 3)
             {
-                if (Vector3.Dot(source._normals[v], axis) >= minDot && !IsGlowing(source._uvs[v]))
+                if (Vector3.Dot(source.FaceNormal(v / 3), axis) >= minDot && !IsGlowing(source._uvs[v]))
                 {
                     AddLifted(source._positions[v], source._positions[v + 1], source._positions[v + 2],
                         source._normals[v], lift, uv);
@@ -411,6 +446,14 @@ namespace MoonProject.Art
         /// </summary>
         public MeshRange Polygon(IReadOnlyList<Vector3> points, Vector3 facing, PaletteSwatch swatch)
         {
+            return Polygon(points, null, facing, swatch);
+        }
+
+        /// <summary>As <see cref="Polygon(IReadOnlyList{Vector3}, Vector3, PaletteSwatch)"/> with optional per-vertex
+        /// smoothed normals.</summary>
+        public MeshRange Polygon(IReadOnlyList<Vector3> points, IReadOnlyList<Vector3> normals, Vector3 facing,
+            PaletteSwatch swatch)
+        {
             if (points == null)
             {
                 throw new ArgumentNullException(nameof(points));
@@ -423,12 +466,26 @@ namespace MoonProject.Art
                 Vector3 a = points[0];
                 Vector3 b = points[i - 1];
                 Vector3 c = points[i];
-                if (Vector3.Dot(Vector3.Cross(b - a, c - a), facing) < 0f)
+                bool flip = Vector3.Dot(Vector3.Cross(b - a, c - a), facing) < 0f;
+                if (flip)
                 {
                     (b, c) = (c, b);
                 }
 
+                int before = VertexCount;
                 AddFlatTriangle(a, b, c, uv);
+                if (normals != null && VertexCount > before)
+                {
+                    Vector3 na = normals[0];
+                    Vector3 nb = normals[flip ? i : i - 1];
+                    Vector3 nc = normals[flip ? i - 1 : i];
+                    if (na != nb || nb != nc || Vector3.Dot(na, _normals[before]) < 0.99999f)
+                    {
+                        _normals[before] = na;
+                        _normals[before + 1] = nb;
+                        _normals[before + 2] = nc;
+                    }
+                }
             }
 
             return new MeshRange(first, TriangleCount - first);
@@ -469,7 +526,7 @@ namespace MoonProject.Art
             for (int t = range.FirstTriangle; t < range.EndTriangle; t++)
             {
                 int v = t * 3;
-                if (Vector3.Dot(_normals[v], axis) < minDot)
+                if (Vector3.Dot(FaceNormal(t), axis) < minDot)
                 {
                     continue;
                 }
@@ -984,6 +1041,34 @@ namespace MoonProject.Art
                 _colours.Add(ca);
                 _colours.Add(cb);
                 _colours.Add(cc);
+            }
+        }
+
+        private void CopyCustomVertexAttributes(LowPolyMeshBuilder source, int sourceVertex, int targetVertex,
+            Matrix4x4 placement, bool mirrored)
+        {
+            Vector3 face = source.FaceNormal(sourceVertex / 3);
+            Vector3 n0 = source._normals[sourceVertex];
+            Vector3 n1 = source._normals[sourceVertex + 1];
+            Vector3 n2 = source._normals[sourceVertex + 2];
+            if (n0 != n1 || n1 != n2 || Vector3.Dot(n0, face) < 0.99999f)
+            {
+                _normals[targetVertex] = placement.MultiplyVector(n0).normalized;
+                _normals[targetVertex + 1] = placement.MultiplyVector(mirrored ? n2 : n1).normalized;
+                _normals[targetVertex + 2] = placement.MultiplyVector(mirrored ? n1 : n2).normalized;
+            }
+
+            if (source._occlusion.Count > sourceVertex)
+            {
+                float o0 = source._occlusion[sourceVertex].x;
+                float o1 = sourceVertex + 1 < source._occlusion.Count ? source._occlusion[sourceVertex + 1].x : 0f;
+                float o2 = sourceVertex + 2 < source._occlusion.Count ? source._occlusion[sourceVertex + 2].x : 0f;
+                if (o0 > 0f || o1 > 0f || o2 > 0f)
+                {
+                    Occlude(targetVertex, o0);
+                    Occlude(targetVertex + 1, mirrored ? o2 : o1);
+                    Occlude(targetVertex + 2, mirrored ? o1 : o2);
+                }
             }
         }
 
