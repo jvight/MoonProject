@@ -600,8 +600,8 @@ namespace MoonProject.Gameplay
             _scanning = fragment;
             _quarter = Mathf.FloorToInt(fragment.Progress * Quarters);
             _events.Publish(new ScanStarted(fragment.FragmentId, fragment.Point));
-            _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Anticipate, fragment.Point, Vector3.up,
-                fragment.Progress, (1f - fragment.Progress) * Seconds(fragment, lens)));
+            _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Anticipate, fragment.Point,
+                fragment.SweepSpan, fragment.Progress, (1f - fragment.Progress) * Seconds(fragment, lens)));
         }
 
         private void Advance(ScanFragment fragment, float now, float deltaTime, bool lens)

@@ -30,6 +30,7 @@ namespace MoonProject.Gameplay
         private readonly ChargeUp _charge;
         private readonly CutBeam _beam;
         private readonly VacuumDebris _debris;
+        private readonly ScanBeam _scanBeam;
         private readonly ScanRibbon _scanRibbon;
         private readonly LightPulse _flashLight;
         private readonly LightPulse _cutLight;
@@ -69,6 +70,7 @@ namespace MoonProject.Gameplay
             _charge = new ChargeUp(root, tuning, visuals.FeelSprite);
             _beam = new CutBeam(root, tuning, visuals.BeamCore, visuals.BeamSheath);
             _debris = new VacuumDebris(root, tuning, visuals.FeelSprite);
+            _scanBeam = new ScanBeam(root, tuning, visuals.BeamCore, visuals.FeelSprite);
             _scanRibbon = new ScanRibbon(root, tuning, visuals.FeelSprite);
             _flashLight = new LightPulse("FlashLight", root, Color.white, tuning.FlashRange);
             _cutLight = new LightPulse("CutLight", root, tuning.CutLightColor, tuning.CutRange);
@@ -85,6 +87,7 @@ namespace MoonProject.Gameplay
         public ChargeUp Charge => _charge;
         public CutBeam Beam => _beam;
         public VacuumDebris Debris => _debris;
+        public ScanBeam ScanBeam => _scanBeam;
         public ScanRibbon ScanRibbon => _scanRibbon;
         public LightPulse CutLight => _cutLight;
         public LightPulse FlashLight => _flashLight;
@@ -115,7 +118,27 @@ namespace MoonProject.Gameplay
                 case FeelKind.Install when beat.Phase == FeelPhase.Act:
                     Sweep(beat);
                     break;
-                case FeelKind.Scan when beat.Phase == FeelPhase.Reward:
+                case FeelKind.Scan:
+                    HandleScan(beat);
+                    break;
+            }
+        }
+
+        private void HandleScan(FeelBeat beat)
+        {
+            switch (beat.Phase)
+            {
+                case FeelPhase.Anticipate:
+                    _scanBeam.Begin(beat.Position, beat.Normal, beat.Strength, beat.Seconds);
+                    break;
+                case FeelPhase.Act:
+                    _scanBeam.Sync(beat.Strength);
+                    break;
+                case FeelPhase.Cancel:
+                    _scanBeam.End();
+                    break;
+                case FeelPhase.Reward:
+                    _scanBeam.End();
                     _scanRibbon.Begin(beat.Position);
                     break;
             }
@@ -160,6 +183,7 @@ namespace MoonProject.Gameplay
             }
 
             _debris.Step(deltaTime);
+            _scanBeam.Step(deltaTime, emitter);
             _scanRibbon.Step(deltaTime, emitter);
             _flashLight.Step(deltaTime);
             _cutLight.Step(deltaTime);

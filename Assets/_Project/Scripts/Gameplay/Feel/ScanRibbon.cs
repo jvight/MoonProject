@@ -62,7 +62,12 @@ namespace MoonProject.Gameplay
         /// <summary>Advances the ribbon toward <paramref name="lens"/>, 07's lens this frame (world).</summary>
         public void Step(float deltaTime, Vector3 lens)
         {
-            _flareLight.MoveTo(lens);
+            Vector3 toFrom = _from - lens;
+            float distance = toFrom.magnitude;
+            Vector3 aperture = distance > 1e-4f
+                ? lens + (toFrom / distance) * Mathf.Min(_tuning.ScanApertureOffset * 1.15f, distance * 0.35f)
+                : lens;
+            _flareLight.MoveTo(aperture);
             _flareLight.Step(deltaTime);
             _sprites.Begin();
             _flare.Begin();
@@ -71,11 +76,11 @@ namespace MoonProject.Gameplay
                 _age += deltaTime;
                 if (_age >= StreamEnd)
                 {
-                    Flare(lens, (_age - StreamEnd) / _tuning.ScanFlareSeconds);
+                    Flare(aperture, (_age - StreamEnd) / _tuning.ScanFlareSeconds);
                 }
                 else if (_age >= _tuning.ScanRibbonDelay)
                 {
-                    Stream(lens, (_age - _tuning.ScanRibbonDelay) / _tuning.ScanRibbonSeconds);
+                    Stream(aperture, (_age - _tuning.ScanRibbonDelay) / _tuning.ScanRibbonSeconds);
                 }
             }
 
@@ -88,17 +93,37 @@ namespace MoonProject.Gameplay
             Vector2 span = FeelCurves.RibbonSpan(t, _tuning.ScanRibbonLength);
             int beads = _tuning.ScanRibbonBeads;
             float arc = _tuning.ScanRibbonArc;
-            float gap = (span.y - span.x) / (beads - 1);
-            Color color = _tuning.ScanRibbonColor;
+            float gap = Mathf.Max((span.y - span.x) / (beads - 1), 1f / beads);
+            Color baseColor = _tuning.ScanRibbonColor;
+            float baseAlpha = baseColor.a;
             for (int i = 0; i < beads; i++)
             {
                 float toHead = (float)i / (beads - 1);
                 float along = Mathf.Lerp(span.x, span.y, toHead);
                 float weight = Mathf.Lerp(TailShare, 1f, toHead);
+                float s0 = Mathf.Min(along, 1f - gap);
+                Vector3 tangentStart = FeelCurves.RibbonPoint(_from, lens, arc, s0);
+                Vector3 tangentEnd = FeelCurves.RibbonPoint(_from, lens, arc, s0 + gap);
+                Vector3 streak = (tangentEnd - tangentStart) * Overlap;
                 Vector3 at = FeelCurves.RibbonPoint(_from, lens, arc, along);
-                Vector3 ahead = FeelCurves.RibbonPoint(_from, lens, arc, along + gap);
-                color.a = weight;
-                _sprites.Add(at, _tuning.ScanRibbonSize * weight, color, (ahead - at) * Overlap);
+                if (along + gap > 1f)
+                {
+                    float intoLens = Mathf.InverseLerp(1f - gap, 1f, along);
+                    at -= streak * (0.5f * intoLens);
+                }
+
+                float lensTaper = 1f - 0.55f * Mathf.InverseLerp(0.8f, 1f, along);
+                Color color = baseColor;
+                color.a = baseAlpha * weight * lensTaper;
+                _sprites.Add(at, _tuning.ScanRibbonSize * weight, color, streak);
+            }
+
+            if (span.y > 0.35f)
+            {
+                float catchWeight = Mathf.InverseLerp(0.35f, 1f, span.y);
+                Color lensCatch = _tuning.ScanCoreColor;
+                lensCatch.a = _tuning.ScanLensCoreAlpha * (1.45f + 0.55f * catchWeight);
+                _flare.Add(lens, _tuning.ScanLensCoreSize * (1f + 0.2f * catchWeight), lensCatch, Vector3.zero);
             }
         }
 
@@ -112,8 +137,8 @@ namespace MoonProject.Gameplay
             }
 
             float u = Mathf.Clamp01(t);
-            Color color = _tuning.ScanRibbonColor;
-            color.a = 1f - u * u;
+            Color color = _tuning.ScanCoreColor;
+            color.a = _tuning.ScanLensCoreAlpha * (1f - u * u);
             _flare.Add(lens, _tuning.ScanFlareSize * (1f + FlareSwell * u), color, Vector3.zero);
         }
     }

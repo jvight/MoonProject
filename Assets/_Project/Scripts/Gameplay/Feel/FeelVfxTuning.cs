@@ -226,36 +226,82 @@ namespace MoonProject.Gameplay
         [Tooltip("How long the emitter's glow fades after the crack (s).")]
         [Range(0.1f, 1.2f)] [SerializeField] private float _emitterFadeSeconds = 0.4f;
 
+        [Header("Scan beam")]
+        [Tooltip("Width of the scan beam's thin inner core (m).")]
+        [Range(0.003f, 0.05f)] [SerializeField] private float _scanCoreWidth = 0.015f;
+
+        [Tooltip("Width of the scan beam's soft outer sheath (m).")]
+        [Range(0.01f, 0.12f)] [SerializeField] private float _scanSheathWidth = 0.038f;
+
+        [Tooltip("How long the scan beam takes to ease in when a scan begins (s).")]
+        [Range(0.02f, 0.5f)] [SerializeField] private float _scanEaseInSeconds = 0.14f;
+
+        [Tooltip("How long the scan beam takes to ease out when let go or completed (s).")]
+        [Range(0.02f, 0.5f)] [SerializeField] private float _scanEaseOutSeconds = 0.18f;
+
+        [Tooltip("Fallback vertical scan span when a beat gives none (m).")]
+        [Range(0.1f, 1.5f)] [SerializeField] private float _scanDefaultHeight = 0.45f;
+
+        [Tooltip("How far forward along the beam from TetherOrigin the lens aperture point sits, clearing 07's hood (m).")]
+        [Range(0f, 0.7f)] [SerializeField] private float _scanApertureOffset = 0.56f;
+
+        [Tooltip("How far toward 07's lens the contact point stands off the fragment's sweep line so it sits on the surface (m).")]
+        [Range(0f, 0.6f)] [SerializeField] private float _scanContactOffset = 0.03f;
+
+        [Tooltip("The scan beam sheath's tech-cyan colour and alpha (TechGlow family, under bloom threshold).")]
+        [SerializeField] private Color _scanBeamColor = new Color(0.12f, 0.9f, 1f, 0.42f);
+
+        [Tooltip("The scan beam core's pale tech-cyan colour and alpha (under bloom threshold).")]
+        [SerializeField] private Color _scanCoreColor = new Color(0.28f, 0.95f, 1f, 0.72f);
+
+        [Tooltip("Diameter of the tiny aperture point at 07's lens while scanning (m).")]
+        [Range(0.01f, 0.2f)] [SerializeField] private float _scanLensCoreSize = 0.055f;
+
+        [Tooltip("Alpha of the tiny lens aperture point (the only scan point allowed just over the bloom threshold).")]
+        [Range(0f, 1f)] [SerializeField] private float _scanLensCoreAlpha = 0.3f;
+
+        [Tooltip("Diameter of the soft aperture halo at 07's lens (m).")]
+        [Range(0.03f, 0.4f)] [SerializeField] private float _scanLensHaloSize = 0.11f;
+
+        [Tooltip("Alpha of the soft aperture halo at 07's lens.")]
+        [Range(0f, 1f)] [SerializeField] private float _scanLensHaloAlpha = 0.06f;
+
+        [Tooltip("Diameter of the soft contact point where the scan beam meets the sweep line on the object (m).")]
+        [Range(0.02f, 0.4f)] [SerializeField] private float _scanContactSize = 0.09f;
+
+        [Tooltip("Alpha of the soft contact point on the object (under bloom threshold).")]
+        [Range(0f, 1f)] [SerializeField] private float _scanContactAlpha = 0.05f;
+
         [Header("Scan")]
         [Tooltip("From the dissolve's start to the ribbon leaving the fragment: its solid fading (s, D2: 0.3).")]
-        [Range(0f, 1f)] [SerializeField] private float _scanRibbonDelay = 0.3f;
+        [Range(0f, 1f)] [SerializeField] private float _scanRibbonDelay = 0.08f;
 
         [Tooltip("How long the lines stream into 07's lens, on an ease-in (s, D2: 0.5).")]
-        [Range(0.1f, 1.5f)] [SerializeField] private float _scanRibbonSeconds = 0.5f;
+        [Range(0.1f, 1.5f)] [SerializeField] private float _scanRibbonSeconds = 0.65f;
 
         [Tooltip("Beads drawn along the ribbon.")]
         [Range(4, 48)] [SerializeField] private int _scanRibbonBeads = 24;
 
         [Tooltip("How far the ribbon's tail trails its head, as a share of the path.")]
-        [Range(0.05f, 1f)] [SerializeField] private float _scanRibbonLength = 0.45f;
+        [Range(0.05f, 1f)] [SerializeField] private float _scanRibbonLength = 0.8f;
 
         [Tooltip("How high the ribbon arcs at its middle, as a share of the distance to the lens.")]
-        [Range(0f, 0.6f)] [SerializeField] private float _scanRibbonArc = 0.18f;
+        [Range(0f, 0.6f)] [SerializeField] private float _scanRibbonArc = 0.05f;
 
         [Tooltip("The ribbon's head bead (m); the tail tapers to a third of it.")]
-        [Range(0.005f, 0.1f)] [SerializeField] private float _scanRibbonSize = 0.035f;
+        [Range(0.005f, 0.1f)] [SerializeField] private float _scanRibbonSize = 0.028f;
 
-        [Tooltip("The ribbon's and the flare's colour: the drawing's pale line white (linear).")]
-        [SerializeField] private Color _scanRibbonColor = new Color(0.92f, 0.96f, 1f, 1f);
+        [Tooltip("The ribbon's and the flare's colour: pale tech-cyan line white (linear, alpha keeps stream under bloom).")]
+        [SerializeField] private Color _scanRibbonColor = new Color(0.35f, 0.95f, 1f, 0.24f);
 
         [Tooltip("How long the lens flares as the last line arrives (s, D2: 0.1).")]
-        [Range(0.03f, 0.4f)] [SerializeField] private float _scanFlareSeconds = 0.1f;
+        [Range(0.03f, 0.4f)] [SerializeField] private float _scanFlareSeconds = 0.14f;
 
         [Tooltip("The lens flare's size (m).")]
-        [Range(0.05f, 0.6f)] [SerializeField] private float _scanFlareSize = 0.22f;
+        [Range(0.05f, 0.6f)] [SerializeField] private float _scanFlareSize = 0.14f;
 
         [Tooltip("The lens flare light's peak.")]
-        [Range(0f, 4f)] [SerializeField] private float _scanFlareLight = 1.2f;
+        [Range(0f, 4f)] [SerializeField] private float _scanFlareLight = 0.25f;
 
 
         public int MoteCount => Mathf.Min(_moteCount, MotePool);
@@ -330,6 +376,21 @@ namespace MoonProject.Gameplay
         public float CrackFlashSeconds => _crackFlashSeconds;
         public float CrackSpike => _crackSpike;
         public float EmitterFadeSeconds => _emitterFadeSeconds;
+        public float ScanCoreWidth => _scanCoreWidth;
+        public float ScanSheathWidth => _scanSheathWidth;
+        public float ScanEaseInSeconds => _scanEaseInSeconds;
+        public float ScanEaseOutSeconds => _scanEaseOutSeconds;
+        public float ScanDefaultHeight => _scanDefaultHeight;
+        public float ScanApertureOffset => _scanApertureOffset;
+        public float ScanContactOffset => _scanContactOffset;
+        public Color ScanBeamColor => _scanBeamColor;
+        public Color ScanCoreColor => _scanCoreColor;
+        public float ScanLensCoreSize => _scanLensCoreSize;
+        public float ScanLensCoreAlpha => _scanLensCoreAlpha;
+        public float ScanLensHaloSize => _scanLensHaloSize;
+        public float ScanLensHaloAlpha => _scanLensHaloAlpha;
+        public float ScanContactSize => _scanContactSize;
+        public float ScanContactAlpha => _scanContactAlpha;
         public float ScanRibbonDelay => _scanRibbonDelay;
         public float ScanRibbonSeconds => _scanRibbonSeconds;
         public int ScanRibbonBeads => Mathf.Max(2, _scanRibbonBeads);

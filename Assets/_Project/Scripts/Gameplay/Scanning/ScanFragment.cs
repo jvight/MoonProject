@@ -26,6 +26,9 @@ namespace MoonProject.Gameplay
         private static readonly int DissolveId = Shader.PropertyToID("_Dissolve");
         private static readonly int FadeId = Shader.PropertyToID("_Fade");
 
+        private const float EndBandShare = 0.15f;
+        private const float MinBandHeight = 0.01f;
+
         private readonly Renderer _solid;
         private readonly Renderer _lines;
         private readonly Renderer _outline;
@@ -48,6 +51,7 @@ namespace MoonProject.Gameplay
             _outline = outline;
             _target = target;
             _brackets = brackets;
+            SweepSpan = ComputeSweepSpan(solid);
         }
 
         /// <summary>"&lt;kit id&gt;.&lt;n&gt;", e.g. "rover.cargo_cradle.0". Saved: never rename.</summary>
@@ -72,6 +76,9 @@ namespace MoonProject.Gameplay
         public Transform Root { get; }
 
         public Vector3 Point => _target.position;
+
+        /// <summary>World-space vector from the bottom of the solid to its top along the tilted fragment.</summary>
+        public Vector3 SweepSpan { get; }
 
         public float Progress { get; internal set; }
 
@@ -174,6 +181,51 @@ namespace MoonProject.Gameplay
         {
             Transform node = root.Find(name);
             return node != null ? node.GetComponent<Renderer>() : null;
+        }
+
+        private static Vector3 ComputeSweepSpan(Renderer solid)
+        {
+            Bounds bounds = solid.bounds;
+            MeshFilter filter = solid.GetComponent<MeshFilter>();
+            Mesh mesh = filter != null ? filter.sharedMesh : null;
+            if (mesh == null)
+            {
+                return new Vector3(0f, bounds.size.y, 0f);
+            }
+
+            Vector3[] vertices = mesh.vertices;
+            Transform tr = solid.transform;
+            float minY = bounds.min.y;
+            float maxY = bounds.max.y;
+            float band = Mathf.Max(bounds.size.y * EndBandShare, MinBandHeight);
+            Vector3 bottomSum = Vector3.zero;
+            int bottomCount = 0;
+            Vector3 topSum = Vector3.zero;
+            int topCount = 0;
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                Vector3 w = tr.TransformPoint(vertices[i]);
+                if (w.y <= minY + band)
+                {
+                    bottomSum += w;
+                    bottomCount++;
+                }
+
+                if (w.y >= maxY - band)
+                {
+                    topSum += w;
+                    topCount++;
+                }
+            }
+
+            if (bottomCount == 0 || topCount == 0)
+            {
+                return new Vector3(0f, bounds.size.y, 0f);
+            }
+
+            Vector3 bottom = bottomSum / bottomCount;
+            Vector3 top = topSum / topCount;
+            return new Vector3(top.x - bottom.x, bounds.size.y, top.z - bottom.z);
         }
     }
 }
