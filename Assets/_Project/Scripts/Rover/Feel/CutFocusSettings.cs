@@ -26,6 +26,10 @@ namespace MoonProject.Rover
         [Range(0, 20)]
         [SerializeField] private int _gazePriority = 7;
 
+        [Tooltip("How long (s) 07 keeps looking after the break or a piece's last follow beat before letting go.")]
+        [Range(0.2f, 3f)]
+        [SerializeField] private float _followSeconds = 1.5f;
+
         [Tooltip("Ignition: the head's nod (deg down), recovering in ~250 ms.")]
         [SerializeField] private NudgeSettings _nod = new NudgeSettings(0f, 2f, 4f, 1f);
 
@@ -36,6 +40,8 @@ namespace MoonProject.Rover
         public float HalfLife => _halfLife;
 
         public int GazePriority => _gazePriority;
+
+        public float FollowSeconds => _followSeconds;
 
         public NudgeSettings Nod => _nod;
     }
