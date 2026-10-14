@@ -42,6 +42,7 @@ namespace MoonProject.UI
         public const string ScanFragment = "scan.fragment";
         public const string ScanKnown = "scan.known";
         public const string ScanComplete = "scan.complete";
+        public const string ScanSiteCount = "scan.site_count";
         public const string HintShelves = "hint.shelves";
         public const string TransferToTrip = "ui.transfer.to_trip";
         public const string TransferToHome = "ui.transfer.to_home";
@@ -223,6 +224,16 @@ namespace MoonProject.UI
         public static string SiteName(string siteId)
         {
             return siteId + ".name";
+        }
+
+        /// <summary>
+        /// "map.site.depot.name" for a crew-map place ("site.*" and "canyon.lip"), "micro.06.name" for a micro-site.
+        /// </summary>
+        public static string ScanPlaceName(string placeId)
+        {
+            return placeId != null && placeId.StartsWith("micro.", StringComparison.Ordinal)
+                ? placeId + ".name"
+                : "map." + placeId + ".name";
         }
 
         /// <summary>"ui.display.mode.borderless": how the window sits on the screen, in words.</summary>

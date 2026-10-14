@@ -185,6 +185,8 @@ namespace MoonProject.UI
 
         internal PlaceCard PlaceCard => _placeCard;
 
+        internal RecoveryBoard Board => _board;
+
         internal ProtocolReadout Protocol => _protocol;
 
         internal RecipeCard RecipeCard => _recipeCard;
@@ -361,6 +363,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<StargazingChanged>(OnStargazingChanged));
             _tokens.Add(events.Subscribe<NextStepChanged>(OnNextStepChanged));
             _tokens.Add(events.Subscribe<PlaceFirstApproached>(OnPlaceFirstApproached));
+            _tokens.Add(events.Subscribe<ScanSiteReached>(OnScanSiteReached));
+            _tokens.Add(events.Subscribe<FragmentScanned>(OnBoardFragmentScanned));
             _tokens.Add(events.Subscribe<LabEntered>(_ => _labHud.Enter()));
             _tokens.Add(events.Subscribe<LabLeft>(OnLabLeft));
             _tokens.Add(events.Subscribe<LabStationLooked>(OnLabStationLooked));
@@ -433,7 +437,7 @@ namespace MoonProject.UI
             _hud.Snap(true);
             _labHud = new LabHud(_layout.LabHud, _tuning.Lab, _localization, _ledger);
             _board = new RecoveryBoard(_layout.LabHud, _tuning.Lab.Board, _localization, services.Tech,
-                services.Recovery);
+                services.Recovery, services.ScanSites);
             _stargaze = new StargazeVeil(_tuning.Stargaze.Hud, _layout.PromptAnchor,
                 _layout.FriendNameAnchor, _layout.RelayTagAnchor, _layout.SalvageRingAnchor, _layout.SiteNameAnchor,
                 _layout.TickerLine);
@@ -487,7 +491,7 @@ namespace MoonProject.UI
             if (_mapKnowledge != null)
             {
                 _map = new MapView(root.Q("pause"), _mapSheet, _mapTuning, _mapKnowledge, _mapReach, _mapOverlay,
-                    _localization, services.Events, services.Input);
+                    _localization, services.Events, services.Input, services.ScanSites);
             }
 
             _bound = true;
@@ -967,6 +971,18 @@ namespace MoonProject.UI
             {
                 _tickerLines.Enqueue(new TickerLine(UiKeys.RecoveryComplete(changed.Target)));
             }
+        }
+
+        /// <summary>A scan site's name and remaining fragment count, the first time 07 reaches it.</summary>
+        private void OnScanSiteReached(ScanSiteReached reached)
+        {
+            _placeCard?.Reached(reached);
+        }
+
+        /// <summary>Updates the lab board's torn sheets when a blueprint fragment is scanned.</summary>
+        private void OnBoardFragmentScanned(FragmentScanned scanned)
+        {
+            _board?.OnFragmentScanned(scanned);
         }
 
         /// <summary>The last fragment is in: one ticker line names the kit and where to build it.</summary>

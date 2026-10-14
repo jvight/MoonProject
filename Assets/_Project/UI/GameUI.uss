@@ -1943,6 +1943,7 @@ Label {
 .recovery-board__nodes {
     flex-direction: row;
     flex-wrap: wrap;
+    align-items: center;
 }
 
 .recovery-board__node {
@@ -1955,6 +1956,13 @@ Label {
 .recovery-board__node--decoded {
     color: var(--moon-text);
     opacity: 0.75;
+}
+
+.recovery-board__node--torn {
+    width: 34px;
+    height: 24px;
+    --sheet-color: var(--moon-cream);
+    --sheet-fill: var(--moon-cream-glow);
 }
 
 /*
