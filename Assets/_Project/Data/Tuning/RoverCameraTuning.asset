@@ -123,6 +123,30 @@ MonoBehaviour:
     _lift: 14
     _pullBack: 0.5
     _maxFocusDistance: 40
+  _towerMoment:
+    _easeIn: 1.2
+    _hold: 0.6
+    _easeOut: 1.4
+    _lookShare: 0.45
+    _yawShare: 0.8
+    _maxLookShift: 8
+    _minYawSwing: 10
+    _maxYawSwing: 70
+    _lift: 10
+    _pullBack: 0.45
+    _maxFocusDistance: 120
+  _gentleTowerMoment:
+    _easeIn: 2
+    _hold: 0.6
+    _easeOut: 2
+    _lookShare: 0.3
+    _yawShare: 0.4
+    _maxLookShift: 5
+    _minYawSwing: 0
+    _maxYawSwing: 35
+    _lift: 6
+    _pullBack: 0.3
+    _maxFocusDistance: 120
   _relayMoment:
     _easeIn: 3
     _hold: 2.6
@@ -205,6 +229,8 @@ MonoBehaviour:
   _kitViews:
     _solarCell: -35
     _freshPaint: -90
+    _tapeDeck: 60
+    _tetherRing: 155
     _subjectDistance: 6
   _momentCancelEaseOut: 0.6
   _momentBlendHalfLife: 0.3
@@ -379,6 +405,19 @@ MonoBehaviour:
     _breathDistancePeriod: 29
   _heldShotClearance: 0.5
   _heldShotYawStep: 25
+  _cutFrameMinStages: 3
+  _cutFramePushIn: 0.06
+  _cutFrameLower: 0.3
+  _cutFrameSide: 1.2
+  _cutFrameBack: 2.4
+  _cutFrameInSeconds: 1
+  _cutFrameOutSeconds: 1.2
+  _digFrameRise: 0.5
+  _digFrameInSeconds: 1.2
+  _digFrameOutSeconds: 1
+  _digFrameGentleShare: 0.5
+  _digFrameGentleSeconds: 2
+  _cutFrameHandBackSeconds: 0.3
   _eveningHoldSeconds: 11
   _eveningFillHoldMax: 16
   _positionDamping: {x: 1.1, y: 0.9, z: 1.3}
