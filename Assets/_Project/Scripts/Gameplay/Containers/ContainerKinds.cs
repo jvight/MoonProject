@@ -16,6 +16,7 @@ namespace MoonProject.Gameplay
         public const string TillySled = "TillySled";
         public const string Cabinet = "Cabinet";
         public const string SpareCrate = "SpareCrate";
+        public const string RockfallPocket = "RockfallPocket";
 
         /// <summary>
         /// The kind of Art's container prefab <paramref name="prefab"/>; an unknown name is a wiring bug.

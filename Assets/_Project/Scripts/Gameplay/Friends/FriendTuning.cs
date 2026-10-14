@@ -102,6 +102,22 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds of holding the beam that dig the buried part free; it rises as it is dug.")]
         [Range(0.3f, 8f)] [SerializeField] private float _partDigSeconds = 2.4f;
 
+        [Tooltip("The friend whose missing parts lie half-buried under small rockfalls (Art's RockfallPocket, 0.5.5 §2) " +
+                 "in her canyon alcoves, each dug free with the beam.")]
+        [SerializeField] private string _rockfallPartFriend = "bell";
+
+        [Tooltip("How far (m) into a canyon alcove the rockfall pocket probes for the back wall.")]
+        [Range(1f, 10f)] [SerializeField] private float _pocketWallProbe = 4.5f;
+
+        [Tooltip("Height (m) above the alcove floor at which the rockfall pocket probes for the back wall.")]
+        [Range(0.1f, 2f)] [SerializeField] private float _pocketWallProbeHeight = 0.45f;
+
+        [Tooltip("Metres from the rockfall pocket's root to its back (-Z) against the alcove wall.")]
+        [Range(0.1f, 2f)] [SerializeField] private float _pocketBackReach = 0.45f;
+
+        [Tooltip("Furthest metres the rockfall pocket sets back from the alcove's middle toward the wall.")]
+        [Range(0f, 4f)] [SerializeField] private float _pocketMaxSetback = 1.6f;
+
         [Tooltip("Flight time (s) of a part right next to 07.")]
         [Range(0.2f, 4f)] [SerializeField] private float _partFlightDuration = 1f;
 
@@ -374,6 +390,11 @@ namespace MoonProject.Gameplay
         public float PartDigRadius => _partDigRadius;
 
         public float PartDigSeconds => _partDigSeconds;
+        public string RockfallPartFriend => _rockfallPartFriend;
+        public float PocketWallProbe => _pocketWallProbe;
+        public float PocketWallProbeHeight => _pocketWallProbeHeight;
+        public float PocketBackReach => _pocketBackReach;
+        public float PocketMaxSetback => _pocketMaxSetback;
         public float PartFlightDuration => _partFlightDuration;
         public float PartFlightPerMetre => _partFlightPerMetre;
         public float PartFlightLift => _partFlightLift;

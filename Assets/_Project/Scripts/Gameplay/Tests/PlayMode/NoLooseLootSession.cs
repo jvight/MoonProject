@@ -229,11 +229,18 @@ namespace MoonProject.Gameplay.PlayModeTests
             var allPoses = new List<Pose>(file.poses ?? Array.Empty<Pose>());
             AppendDiagnosticPoses(allPoses);
 
-            Camera view = _context.Get<IViewCamera>().Camera;
+            IViewCamera viewCamera = _context.Get<IViewCamera>();
+            Camera view = viewCamera.Camera;
             Vector3 savedPosition = view.transform.position;
             Quaternion savedRotation = view.transform.rotation;
             float savedFov = view.fieldOfView;
             var disabled = new List<Behaviour>();
+            if (viewCamera is Behaviour rigBehaviour && rigBehaviour.enabled)
+            {
+                rigBehaviour.enabled = false;
+                disabled.Add(rigBehaviour);
+            }
+
             foreach (Behaviour behaviour in view.GetComponents<Behaviour>())
             {
                 if (behaviour != null && behaviour.enabled && !(behaviour is Camera) &&
@@ -300,15 +307,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 for (int p = 0; p < bell.Parts.Length; p++)
                 {
-                    Vector3 partPos = bell.Parts[p].position;
+                    Vector3 partPos = bell.PartRest[p];
                     Vector3 intoAlcove = Vector3.forward;
                     if (anchors.TryGet(WorldAnchorIds.CanyonAlcovePrefix + p, out WorldAnchor alcove))
                     {
                         intoAlcove = new Vector3(alcove.Forward.x, 0f, alcove.Forward.z).normalized;
                     }
 
-                    Vector3 eye = partPos - intoAlcove * 4.5f + Vector3.up * 1.4f;
-                    poses.Add(MakePose($"17_bell_alcove_{p}_close", eye, partPos, 60f));
+                    Vector3 eye = partPos - intoAlcove * 5.2f + Vector3.up * 1.4f;
+                    poses.Add(MakePose($"17_bell_alcove_{p}_close", eye, partPos, 55f));
                 }
             }
         }
@@ -344,6 +351,15 @@ namespace MoonProject.Gameplay.PlayModeTests
                     target.dithering = source.dithering;
                 }
 
+                var lamp = host.AddComponent<Light>();
+                lamp.type = LightType.Spot;
+                lamp.range = 16f;
+                lamp.spotAngle = 80f;
+                lamp.innerSpotAngle = 45f;
+                lamp.intensity = 3.2f;
+                lamp.color = new Color(1f, 0.95f, 0.88f);
+                lamp.shadows = LightShadows.None;
+
                 host.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(look - eye));
                 camera.fieldOfView = fov;
                 FrameCapture.SavePng(camera, width, height, path);
@@ -374,10 +390,12 @@ namespace MoonProject.Gameplay.PlayModeTests
                 {
                     Transform part = friend.Parts[p];
                     SealedContainer box = friend.PartContainers[p];
+                    Transform pocket = friend.PartPockets[p];
                     sb.AppendLine(Format(
-                        "  Part[{0}] '{1}': active={2} pos={3} rest={4} container={5} buried={6}",
+                        "  Part[{0}] '{1}': active={2} pos={3} rest={4} container={5} pocket={6} buried={7}",
                         p, part.name, part.gameObject.activeInHierarchy, Vec(part.position), Vec(friend.PartRest[p]),
-                        box != null ? box.Id : "NONE", p == friend.BuriedPart));
+                        box != null ? box.Id : "NONE", pocket != null ? pocket.name : "NONE",
+                        friend.IsPartBuried(p)));
                 }
             }
 
@@ -410,9 +428,10 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// Checks every friend's parts (<see cref="FriendField"/>). A friend part is hosted only if it is sealed inside
-        /// a <see cref="SealedContainer"/> (<c>friend.PartContainers[p] != null</c>) or rests in/under Tilly's crashed
-        /// survey sled (<c>friend.InSled</c> at <c>TillySled/PartSocket_*</c>). Parts hovering on open ground with no
-        /// container or sled (and emitting <see cref="PickupGlints"/> on bare terrain) are offenders.
+        /// a <see cref="SealedContainer"/> (<c>friend.PartContainers[p] != null</c>), rests in/under Tilly's crashed
+        /// survey sled (<c>friend.InSled</c> at <c>TillySled/PartSocket_*</c>), or rests buried in a
+        /// <c>RockfallPocket</c> (<c>friend.PartPockets[p]/DigSpot</c>). Parts hovering on open ground with no
+        /// container, sled, or pocket (and emitting <see cref="PickupGlints"/> on bare terrain) are offenders.
         /// </summary>
         private void VerifyFriendParts(List<string> offenders)
         {
@@ -450,12 +469,23 @@ namespace MoonProject.Gameplay.PlayModeTests
                         }
                     }
 
+                    Transform pocket = friend.PartPockets[p];
+                    if (pocket != null && friend.IsPartBuried(p))
+                    {
+                        Transform digSpot = pocket.Find("DigSpot");
+                        if (digSpot != null &&
+                            Vector3.Distance(friend.PartRest[p], digSpot.position) <= HullSocketTolerance)
+                        {
+                            continue;
+                        }
+                    }
+
                     float groundY = terrain.SampleHeight(pos.x, pos.z);
                     offenders.Add(Format(
                         "Friend part '{0}' (friend '{1}', part '{2}' [{3}]) at world {4} (rest {5}, {6:F2} m above " +
                         "bare regolith y={7:F2}) — spawned by FriendField.Spawn / FriendAnchorPlanner.Plan with " +
-                        "InSled=false, PartContainers[{3}]=null, and active PickupGlints on bare regolith; breaks " +
-                        "docs/design/0.5.5-owner-feedback.md §2 lines 171-173 & §7 line 501.",
+                        "InSled=false, PartContainers[{3}]=null, PartPockets[{3}]=null, and active PickupGlints on " +
+                        "bare regolith; breaks docs/design/0.5.5-owner-feedback.md §2 lines 171-173 & §7 line 501.",
                         HierarchyPath(part), friend.Id, friend.Definition.Parts[p].Id, p, Vec(pos),
                         Vec(friend.PartRest[p]), pos.y - groundY, groundY));
                 }

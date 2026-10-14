@@ -423,7 +423,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 ContainerTemplate("CoilCrate"), ContainerTemplate("TapeCase"), ContainerTemplate("JunctionBox"),
                 ContainerTemplate("SupplyPod"), SledTemplate(), ContainerTemplate(ContainerKinds.Cabinet),
-                ContainerTemplate(ContainerKinds.SpareCrate),
+                ContainerTemplate(ContainerKinds.SpareCrate), PocketTemplate(),
             });
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
@@ -1290,6 +1290,17 @@ namespace MoonProject.Gameplay.PlayModeTests
             Block(lid, new Vector3(0f, 0f, 0.3f), new Vector3(0.3f, 0.04f, 0.04f)).name = "Seal";
             Node("PartSocket_2", pod, new Vector3(0f, 0.1f, 0f));
             return sled;
+        }
+
+        /// <summary>
+        /// A stand-in for Art's RockfallPocket (0.5.5 §2): a slumped rubble heap with an empty <c>DigSpot</c> (+Y up)
+        /// in its front gap.
+        /// </summary>
+        private GameObject PocketTemplate()
+        {
+            GameObject pocket = Template(ContainerKinds.RockfallPocket, new Vector3(1.5f, 0.75f, 1f));
+            Node("DigSpot", pocket.transform, new Vector3(-0.04f, 0.06f, 0.24f));
+            return pocket;
         }
 
         /// <summary>A stand-in for Art's GaragePort with its Tray node.</summary>

@@ -29,8 +29,10 @@ namespace MoonProject.Gameplay
             PartFlightDuration = new float[count];
             PartFlying = new bool[count];
             PartSpotted = new bool[count];
+            PartBuried = new bool[count];
             PartDug = new float[count];
             PartContainers = new SealedContainer[count];
+            PartPockets = new Transform[count];
             PartShownAt = new float[count];
             PartNouns = new string[count];
             for (int i = 0; i < count; i++)
@@ -81,6 +83,17 @@ namespace MoonProject.Gameplay
         /// </summary>
         internal int BuriedPart { get; set; } = -1;
 
+        /// <summary>True for each part that lies half-buried in a rockfall pocket or under a sled hull.</summary>
+        internal bool[] PartBuried { get; }
+
+        /// <summary>The rockfall pocket each part rests in (null where none).</summary>
+        internal Transform[] PartPockets { get; }
+
+        internal bool IsPartBuried(int part)
+        {
+            return PartBuried[part] || part == BuriedPart;
+        }
+
         /// <summary>
         /// The sealed clamp or pod each part rests in (null where none): hidden until it stands open, then presented
         /// at its open mouth (0.5.5 §2).
@@ -95,7 +108,7 @@ namespace MoonProject.Gameplay
         /// </summary>
         internal bool InSled { get; set; }
 
-        /// <summary>Seconds of digging each part has had (only the buried one is ever dug).</summary>
+        /// <summary>Seconds of digging each part has had (only buried parts are ever dug).</summary>
         internal float[] PartDug { get; }
 
         internal Vector3[] PartStart { get; }

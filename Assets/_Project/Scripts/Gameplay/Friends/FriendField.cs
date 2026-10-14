@@ -38,6 +38,7 @@ namespace MoonProject.Gameplay
         private const int SledClampPart = 0;
         private const int SledHullPart = 1;
         private const int SledPodPart = 2;
+        private const string DigSpotNode = "DigSpot";
 
         /// <summary>Degrees the buried part leans while half under the dust, easing upright as it is dug.</summary>
         private const float BuriedTilt = 28f;
@@ -273,6 +274,7 @@ namespace MoonProject.Gameplay
                     bool collected = friend.Progress.IsCollected(part);
                     SealedContainer box = friend.PartContainers[part];
                     friend.PartFlying[part] = false;
+                    friend.PartDug[part] = collected ? _tuning.PartDigSeconds : 0f;
                     friend.Parts[part].gameObject.SetActive(!collected && (box == null || box.StandsOpen));
                     if (collected && box != null)
                     {
@@ -450,14 +452,21 @@ namespace MoonProject.Gameplay
             root.SetParent(transform, false);
             var parts = new Transform[definition.Parts.Count];
             var boxes = new SealedContainer[parts.Length];
+            var pockets = new Transform[parts.Length];
             var spots = new Vector3[parts.Length];
             bool inSled = definition.Id == _tuning.BuriedPartFriend;
+            bool inPockets = definition.Id == _tuning.RockfallPartFriend;
             for (int p = 0; p < parts.Length; p++)
             {
                 spots[p] = site.Parts[p] + Vector3.up * _tuning.PartHover;
             }
 
             if (inSled && !LayTheSled(definition, site, root, services.Visuals, boxes, spots))
+            {
+                return null;
+            }
+
+            if (inPockets && !LayThePockets(definition, site, root, services, pockets, spots))
             {
                 return null;
             }
@@ -490,18 +499,90 @@ namespace MoonProject.Gameplay
             {
                 friend.InSled = true;
                 friend.BuriedPart = SledHullPart;
+                friend.PartBuried[SledHullPart] = true;
                 for (int p = 0; p < parts.Length; p++)
                 {
                     friend.PartContainers[p] = boxes[p];
                     parts[p].gameObject.SetActive(boxes[p] == null);
                 }
             }
+
+            if (inPockets)
+            {
+                friend.BuriedPart = 0;
+                for (int p = 0; p < parts.Length; p++)
+                {
+                    friend.PartBuried[p] = true;
+                    friend.PartPockets[p] = pockets[p];
+                }
+            }
+
             if (definition.AbilityId == FriendDefinition.RadioDialAbility)
             {
                 DialFriend = friend;
             }
 
             return friend;
+        }
+
+        /// <summary>
+        /// Lays Art's rockfall pockets at the friend's part anchors (0.5.5 §2), each set against the alcove's back wall
+        /// facing out toward the canyon floor (-alcove.Forward), grounded on the terrain, with the part resting at its
+        /// DigSpot. False (logged) when the pocket or its DigSpot node is missing.
+        /// </summary>
+        private bool LayThePockets(FriendDefinition definition, FriendSite site, Transform parent,
+            GameplayServices services, Transform[] pockets, Vector3[] spots)
+        {
+            GameObject prefab = services.Visuals.Container(ContainerKinds.RockfallPocket);
+            if (prefab == null)
+            {
+                Debug.LogError($"{nameof(FriendField)}: '{definition.Id}' rests her parts in Art's " +
+                               $"{ContainerKinds.RockfallPocket}, which is not in GameplayVisuals " +
+                               "(run Art/Props and Gameplay/Materials).", this);
+                return false;
+            }
+
+            for (int p = 0; p < spots.Length; p++)
+            {
+                Vector3 back = -site.Facing;
+                float maxSetback = _tuning.PocketMaxSetback;
+                if (definition.SiteRule == FriendSiteRule.Anchors &&
+                    services.Anchors.TryGet(definition.Anchors.PartAnchorPrefix + p, out WorldAnchor alcove))
+                {
+                    var flat = new Vector3(alcove.Forward.x, 0f, alcove.Forward.z);
+                    if (flat.sqrMagnitude > 1e-4f)
+                    {
+                        back = flat.normalized;
+                    }
+
+                    maxSetback = Mathf.Min(alcove.Radius, _tuning.PocketMaxSetback);
+                }
+
+                Vector3 at = site.Parts[p];
+                Vector3 origin = at + Vector3.up * _tuning.PocketWallProbeHeight;
+                if (Physics.Raycast(origin, back, out RaycastHit wall, _tuning.PocketWallProbe, Layers.DriveableMask,
+                        QueryTriggerInteraction.Ignore))
+                {
+                    float reach = Mathf.Clamp(wall.distance - _tuning.PocketBackReach, 0f, maxSetback);
+                    at += back * reach;
+                }
+
+                Transform pocket = Instantiate(prefab, parent).transform;
+                pocket.name = ContainerKinds.RockfallPocket + "_" + p;
+                pocket.SetPositionAndRotation(SurfaceRules.OnSurface(_terrain, at.x, at.z),
+                    Quaternion.LookRotation(-back));
+                Transform digSpot = pocket.Find(DigSpotNode);
+                if (digSpot == null)
+                {
+                    Debug.LogError($"{nameof(FriendField)}: '{pocket.name}' has no '{DigSpotNode}'.", this);
+                    return false;
+                }
+
+                pockets[p] = pocket;
+                spots[p] = digSpot.position;
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -707,7 +788,7 @@ namespace MoonProject.Gameplay
                     continue;
                 }
 
-                if (p == friend.BuriedPart && friend.PartDug[p] < _tuning.PartDigSeconds)
+                if (friend.IsPartBuried(p) && friend.PartDug[p] < _tuning.PartDigSeconds)
                 {
                     StepBuried(friend, p, piece, rover, deltaTime);
                     continue;
@@ -715,10 +796,11 @@ namespace MoonProject.Gameplay
 
                 if (!friend.PartFlying[p])
                 {
-                    Vector3 rest = friend.InSled ? InTheSled(friend, p, box, now)
+                    bool seated = friend.InSled || friend.PartPockets[p] != null;
+                    Vector3 rest = seated ? InTheSled(friend, p, box, now)
                         : friend.PartRest[p] + Vector3.up * (Mathf.Sin(now * bobOmega + p) * _tuning.PartBob);
                     piece.SetPositionAndRotation(rest, Quaternion.Euler(0f,
-                        (friend.InSled ? 0f : now * _tuning.PartSpin) + p * PartHeadingStep, 0f));
+                        (seated ? 0f : now * _tuning.PartSpin) + p * PartHeadingStep, 0f));
                     _glints.Add(friend.PartRest[p], p);
                     if (_pickups.Offer(Time.frameCount, _input.ExcavateHeld, PickupReach.Friends,
                             friend.Index * FriendProgress.MaxParts + p, rest, rover, _tuning.PartReachRadius,
