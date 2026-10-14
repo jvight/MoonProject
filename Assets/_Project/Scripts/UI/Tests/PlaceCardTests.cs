@@ -26,7 +26,7 @@ namespace MoonProject.UI.Tests
             "next.wake", "next.salvage", "next.tower.part", "next.tower.pad", "next.signal", "next.dig",
             "next.friend.repair", "next.garage", "next.garage.scrap", "next.port", "next.garage.crate",
             "next.garage.deck", "next.relic.dig", "next.relic", "next.lift.stitch", "next.lift.ride",
-            "next.chasm", "next.chasm.scan", "next.bay.wake", "next.bay", "next.power.part", "next.power.carried",
+            "next.chasm", "next.bay.wake", "next.bay", "next.power.part", "next.power.carried",
             "next.power.build", "next.link.relay.0", "next.link.relay.1", "next.link", "notyet.bay",
             "notyet.chart", "ui.lab.turn", "ui.lab.look", "ui.lab.down", "glyph.lab.turn", "glyph.lab.turn.pad",
             "glyph.lab.look", "glyph.lab.look.pad", "glyph.lab.down", "glyph.lab.down.pad", UiKeys.ScanFragment,
