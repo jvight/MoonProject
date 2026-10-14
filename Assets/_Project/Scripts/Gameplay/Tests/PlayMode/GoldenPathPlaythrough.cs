@@ -259,12 +259,13 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float PadArrival = 5f;
 
         /// <summary>
-        /// Seconds the golden path may take: steps 0-8 end to end measured 1461 s on 2026-10-12 at the battery's spec
+        /// Seconds the golden path may take: steps 0-8 end to end measured 1605 s on 2026-10-14 at the battery's spec
         /// tuning (M3-20's charger-to-charger route: docks between trips, the garage's cuts over two trips, the mound,
-        /// mouth and terminus masts and their rings, Cell Pack II, the radio-hops), with the same ~8% margin the path
-        /// has always had.
+        /// mouth and terminus masts and their rings, Cell Pack II, the radio-hops; since D1 the three scanned sets,
+        /// Ro's case on 06 and Bell's signal up to the canyon's ledge), with the same ~8% margin the path has always
+        /// had.
         /// </summary>
-        private const float TotalBudget = 1580f;
+        private const float TotalBudget = 1735f;
 
         /// <summary>
         /// NUnit's hard stop: the budget plus the scene boot and teardown, so the budget's own assertion (with its
