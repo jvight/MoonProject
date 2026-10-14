@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Core.Input;
 using MoonProject.Core.Save;
 using Object = UnityEngine.Object;
@@ -14,10 +15,11 @@ namespace MoonProject.Gameplay
     /// the chasm, P2) its seal glows to be cut, and as the lid stands open the part rises off its ItemSocket to the
     /// open mouth and glints there, never touching the ground. The relay spare waits on the shelf of the open service
     /// cabinet at the foot of the first mast 07 restores, once the tower's next level is its own (07 charges on that
-    /// mast's pad long before, M3-20). A press of E beside a waiting part (<see cref="PickupReach"/>) draws it into 07
-    /// to ride home (<see cref="TowerParts.PickUp"/>; Rover shows it). Parked on the tower's pad, 07 hands each carried
-    /// part to the port, lowest level first: it leaves 07's back (<see cref="TowerParts.Deliver"/>) and glides on a
-    /// soft arc into the hopper while 07 watches it go.
+    /// mast's pad long before, M3-20). A press of E beside a waiting part (<see cref="PickupReach"/>) draws it into
+    /// 07's hold through the hatch (<see cref="TowerParts.PickUp"/>), or leaves it where it rests when the hold has no
+    /// free slot. Parked on the tower's pad, 07 hands each carried part to the port, lowest level first: it leaves
+    /// through the hatch (<see cref="TowerParts.Deliver"/>) and glides on a soft arc into the hopper while 07 watches
+    /// it go.
     /// </summary>
     public sealed class TowerPartField : IDisposable
     {
@@ -46,6 +48,7 @@ namespace MoonProject.Gameplay
         private readonly EventBus _events;
         private readonly InputReader _input;
         private readonly PickupReach _pickups;
+        private readonly CargoHold _hold;
         private readonly string[] _nouns;
         private readonly PickupGlints _glints;
         private readonly Transform[] _models;
@@ -89,6 +92,7 @@ namespace MoonProject.Gameplay
             _events = services.Events;
             _input = services.Input;
             _pickups = services.Pickups;
+            _hold = services.Materials.Hold;
             int count = parts.Count;
             _nouns = new string[count];
             _sites = new SalvageSite[count];
@@ -223,6 +227,11 @@ namespace MoonProject.Gameplay
                 case Phase.Resting:
                     Vector3 at = Present(i, now);
                     _glints.Add(_rest[i], i);
+                    if (!_hold.HasFreeSlot)
+                    {
+                        break;
+                    }
+
                     if (_pickups.Offer(Time.frameCount, _input.ExcavateHeld, PickupReach.TowerParts, i, at,
                             _rover.Position, _friends.PartReachRadius, _nouns[i]))
                     {
@@ -232,6 +241,8 @@ namespace MoonProject.Gameplay
                         _flight[i] = PickupFlight.Duration(Vector3.Distance(at, _rig.CargoSocket.position),
                             _friends.PartFlightDuration, _friends.PartFlightPerMetre);
                         PickupReach.Lifted(_events, at, _flight[i]);
+                        _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Anticipate, at, Vector3.up, 1f,
+                            _flight[i]));
                     }
 
                     break;
@@ -239,11 +250,19 @@ namespace MoonProject.Gameplay
                     float progress = (now - _since[i]) / _flight[i];
                     if (progress >= 1f)
                     {
+                        if (!_parts.PickUp(i, _from[i]))
+                        {
+                            _phases[i] = Phase.Resting;
+                            Present(i, now);
+                            break;
+                        }
+
                         _phases[i] = Phase.Riding;
                         model.gameObject.SetActive(false);
                         model.localScale = _scales[i];
-                        _parts.PickUp(i, _from[i]);
-                        PickupReach.Landed(_events, _rig.CargoSocket.position);
+                        Vector3 socket = _rig.CargoSocket.position;
+                        PickupReach.Landed(_events, socket);
+                        _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Reward, socket, Vector3.up, 1f, 0f));
                         _save.SaveNow();
                         break;
                     }
@@ -340,6 +359,7 @@ namespace MoonProject.Gameplay
                 _models[next].gameObject.SetActive(true);
                 _rig.SetGazeTarget(this, _tower.HopperMouth, GazePriorities.Focus);
                 _parts.Deliver(next, _tower.HopperMouth);
+                _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Anticipate, _from[next], Vector3.up, 1f, 0f));
                 _save.SaveNow();
             }
 
@@ -350,6 +370,8 @@ namespace MoonProject.Gameplay
                 _phases[_feeding] = Phase.Fed;
                 model.gameObject.SetActive(false);
                 model.localScale = _scales[_feeding];
+                _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Reward, _rig.CargoSocket.position, Vector3.up,
+                    1f, 0f));
                 ClearFeed();
                 return;
             }

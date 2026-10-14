@@ -223,6 +223,24 @@ namespace MoonProject.Gameplay
             Announce();
         }
 
+        /// <summary>
+        /// Frees one hold slot for a restored story part from a 0.5.5 save whose hold was full of materials: the last
+        /// material stack moves to home's shelves (or home's overflow crates), so nothing is lost.
+        /// </summary>
+        internal void MakeRoomForPart()
+        {
+            while (!Hold.HasFreeSlot && Hold.MaterialSlots > 0)
+            {
+                MaterialSlot slot = Hold.GetSlot(Hold.MaterialSlots - 1);
+                int taken = Hold.Remove(slot.Material, slot.Units);
+                int shelved = taken > 0 ? Home.Add(slot.Material, taken) : 0;
+                if (taken > shelved)
+                {
+                    Home.AddOverflow(slot.Material, taken - shelved);
+                }
+            }
+        }
+
         private static void Copy(int[] from, int[] to, string what)
         {
             if (from == null)

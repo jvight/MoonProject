@@ -517,7 +517,7 @@ namespace MoonProject.Gameplay
             try
             {
                 return new TowerParts(events, _tower.Definition != null ? _tower.Definition.Id : null,
-                    _progression.Tuning.TowerParts);
+                    _progression.Tuning.TowerParts, Materials);
             }
             catch (ArgumentException exception)
             {

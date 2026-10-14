@@ -75,6 +75,8 @@ MonoBehaviour:
       _showRack: 0
       _showSpine: 180
       _showCoils: 90
+      _showLens: 180
+      _showBins: 90
     _giftDelay: 0.9
     _giftFrequency: 1.4
     _giftDamping: 0.6
@@ -88,6 +90,237 @@ MonoBehaviour:
     _warmColor: {r: 1, g: 0.62, b: 0.33, a: 1}
     _drumGlow: 1.4
     _drumIdleGlow: 0.05
+    _ringRestGlow: 0
+    _ringHoldGlow: 1.4
+  _cutFeel:
+    _charge:
+      _lowStart: 0
+      _lowEnd: 0.08
+      _highStart: 0
+      _highEnd: 0.04
+      _seconds: 0.65
+      _holdsEnd: 1
+    _ignition:
+      _lowStart: 0.25
+      _lowEnd: 0.25
+      _highStart: 0.25
+      _highEnd: 0.25
+      _seconds: 0.09
+      _holdsEnd: 0
+    _sustain:
+      _lowStart: 1
+      _lowEnd: 1
+      _highStart: 0.6
+      _highEnd: 0.6
+      _seconds: 0
+      _holdsEnd: 1
+    _sustainIgnited: 0.12
+    _sustainStart: 0.1
+    _sustainEnd: 0.18
+    _releaseFade: 0.15
+    _crack:
+      _lowStart: 0.35
+      _lowEnd: 0.35
+      _highStart: 0.3
+      _highEnd: 0.3
+      _seconds: 0.12
+      _holdsEnd: 0
+    _fold:
+      _lowStart: 0.05
+      _lowEnd: 0.05
+      _highStart: 0.05
+      _highEnd: 0.05
+      _seconds: 0.04
+      _holdsEnd: 0
+    _receivedTick:
+      _lowStart: 0.05
+      _lowEnd: 0.05
+      _highStart: 0.05
+      _highEnd: 0.05
+      _seconds: 0.04
+      _holdsEnd: 0
+    _tickThinFrom: 6
+    _tickThinEvery: 2
+    _brace:
+      _squat: 0.03
+      _squatFrequency: 2.4
+      _settlePerStage: 0.005
+      _settleFrequency: 8
+      _tremor: 0.0015
+      _tremorSeconds: 0.06
+      _tremorFrequency: 40
+      _stiffenHalfLife: 0.06
+      _riseFrequency: 2.6
+      _riseDamping: 0.5
+    _lean:
+      _distance: 0
+      _angle: 1
+      _frequency: 2
+      _damping: 1
+    _recoil:
+      _distance: 0.015
+      _angle: 0
+      _frequency: 4
+      _damping: 1
+    _sustainJitter: 0.3
+    _sustainJitterRate: 2.5
+    _crackDip:
+      _distance: 0.02
+      _angle: 0
+      _frequency: 3
+      _damping: 0.6
+    _rearDip:
+      _distance: 0
+      _angle: 1
+      _frequency: 2.5
+      _damping: 0.45
+    _antennaWiggle: 120
+  _dockFeel:
+    _lockDip:
+      _distance: 0.02
+      _angle: 0
+      _frequency: 3
+      _damping: 0.6
+    _lockRumble:
+      _lowStart: 0.15
+      _lowEnd: 0.15
+      _highStart: 0.1
+      _highEnd: 0.1
+      _seconds: 0.08
+      _holdsEnd: 0
+  _motionFeel:
+    _startSpeed: 0.6
+    _stopSpeed: 0.25
+    _startSquat:
+      _distance: 0
+      _angle: 1.5
+      _frequency: 2.5
+      _damping: 0.8
+    _stopDip:
+      _distance: 0
+      _angle: 2
+      _frequency: 2.5
+      _damping: 0.6
+    _startRumble:
+      _lowStart: 0.05
+      _lowEnd: 0
+      _highStart: 0.03
+      _highEnd: 0
+      _seconds: 0.25
+      _holdsEnd: 0
+    _stopRumble:
+      _lowStart: 0.06
+      _lowEnd: 0.06
+      _highStart: 0.04
+      _highEnd: 0.04
+      _seconds: 0.12
+      _holdsEnd: 0
+    _crouch: 0.08
+    _crouchSpring:
+      _distance: 0
+      _angle: 0
+      _frequency: 3
+      _damping: 1
+    _chargeRumbleBase: 0.04
+    _chargeRumbleFull: 0.12
+    _chargeRumble:
+      _lowStart: 1
+      _lowEnd: 1
+      _highStart: 0.5
+      _highEnd: 0.5
+      _seconds: 0
+      _holdsEnd: 1
+    _launchStretch:
+      _distance: 0.02
+      _angle: 0
+      _frequency: 4
+      _damping: 0.7
+    _launchRumble:
+      _lowStart: 0.25
+      _lowEnd: 0.25
+      _highStart: 0.2
+      _highEnd: 0.2
+      _seconds: 0.09
+      _holdsEnd: 0
+    _landRumble:
+      _lowStart: 1
+      _lowEnd: 1
+      _highStart: 0.7
+      _highEnd: 0.7
+      _seconds: 0.12
+      _holdsEnd: 0
+    _landRumbleSoft: 0.1
+    _landRumbleHard: 0.3
+    _hardLanding: 6
+    _seatRumble:
+      _lowStart: 0.2
+      _lowEnd: 0.2
+      _highStart: 0.15
+      _highEnd: 0.15
+      _seconds: 0.1
+      _holdsEnd: 0
+    _powerDown:
+      _lowStart: 0.06
+      _lowEnd: 0
+      _highStart: 0.03
+      _highEnd: 0
+      _seconds: 0.6
+      _holdsEnd: 0
+    _sagPerQuarter: 0.01
+    _sagHalfLife: 0.4
+    _towerOnline:
+      _lowStart: 0.3
+      _lowEnd: 0.3
+      _highStart: 0.25
+      _highEnd: 0.25
+      _seconds: 0.12
+      _holdsEnd: 0
+    _boost:
+      _lowStart: 0.06
+      _lowEnd: 0.06
+      _highStart: 0.03
+      _highEnd: 0.03
+      _seconds: 0
+      _holdsEnd: 1
+  _chargeCells:
+    _colour: {r: 0.45, g: 0.9, b: 1, a: 1}
+    _sleeveTravel: 0.065
+    _stageGlow: 1
+    _lockGlow: 2.4
+    _lockWhite: 0.6
+    _lockSeconds: 0.08
+    _drainSeconds: 0.2
+    _fadeSeconds: 0.4
+    _warmGlow: 0.3
+    _tierLockBoost: 0.25
+    _lensFromTier: 1
+    _testCutDelay: 1.2
+    _testCutBurn: 0.25
+  _cargoHatch:
+    _openAngle: 70
+    _openLead: 0.12
+    _swingFrequency: 3.5
+    _swingDamping: 0.9
+    _thunkBounce: 0.2
+    _closePush: 15
+    _thunkMinSpeed: 30
+    _bumpShake: 4
+    _shakeFrequency: 9
+    _shakeDamping: 0.3
+    _thunkRumble:
+      _lowStart: 0.05
+      _lowEnd: 0.05
+      _highStart: 0.04
+      _highEnd: 0.04
+      _seconds: 0.06
+      _holdsEnd: 0
+    _bumpRumble:
+      _lowStart: 0.05
+      _lowEnd: 0.05
+      _highStart: 0.05
+      _highEnd: 0.05
+      _seconds: 0.08
+      _holdsEnd: 0
   _flankLamps:
     _litGlow: 2.6
     _breathPeriod: 2.6
@@ -96,7 +329,21 @@ MonoBehaviour:
     _halfLife: 0.18
     _crawlHeadlamp: 0.35
     _wakeInterval: 0.4
-  _storyPartHalfLife: 0.2
+  _portrait:
+    _yaw: 55
+    _elevation: 14
+    _distance: 5
+    _lookHeight: 0.6
+    _fieldOfView: 30
+    _clip: {x: 0.1, y: 12}
+    _width: 960
+    _height: 640
+    _keyColour: {r: 1, g: 0.86, b: 0.7, a: 1}
+    _keyIntensity: 1.1
+    _keyAngles: {x: 35, y: 205}
+    _rimColour: {r: 0.6, g: 0.8, b: 1, a: 1}
+    _rimIntensity: 0.9
+    _rimAngles: {x: 20, y: 20}
   _antennaFrequency: 2.4
   _antennaDamping: 0.15
   _antennaDegreesPerAcceleration: 2.2

@@ -110,6 +110,7 @@ namespace MoonProject.UI.PlayModeTests
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             _rig.Fakes.Hold.Set(5, new MaterialSlot(SalvageMaterial.Metal, 4, 4),
                 new MaterialSlot(SalvageMaterial.Wiring, 2, 4), new MaterialSlot(SalvageMaterial.Ilmenite, 3, 6));
+            _rig.Fakes.Hold.AddPart("Part_TowerCoil");
             _rig.Fakes.Hold.WaitingBundles = 3;
             yield return Seconds(0.3f);
 
@@ -119,8 +120,11 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsTrue(cargo.IsOpen);
             Assert.AreEqual(1f, Time.timeScale, "the game does not pause");
             Assert.AreEqual(8, cargo.HoldCellCount, "a cell for every slot of 07's hold");
+            Assert.AreEqual(Text(UiKeys.PickupName("Part_TowerCoil")), cargo.HoldPartText(3),
+                "the carried story part shows in its hold slot with its localized name");
+            Assert.IsFalse(cargo.HoldCell(3).ClassListContains(CargoScreen.EmptyClass));
             StringAssert.Contains("3", cargo.WaitingText);
-            Assert.AreEqual(string.Format(Text(UiKeys.CargoSummary), 3, 8), cargo.SummaryText);
+            Assert.AreEqual(string.Format(Text(UiKeys.CargoSummary), 4, 8), cargo.SummaryText);
 
             yield return Tap(keyboard.tabKey);
             yield return Seconds(0.6f);

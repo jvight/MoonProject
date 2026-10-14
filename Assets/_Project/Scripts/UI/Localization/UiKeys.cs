@@ -248,6 +248,12 @@ namespace MoonProject.UI
             return "upgrade." + upgradeId + ".name";
         }
 
+        /// <summary>"pickup.part_towercoil": the name of pickup or story part <paramref name="partId"/>.</summary>
+        public static string PickupName(string partId)
+        {
+            return "pickup." + partId.ToLowerInvariant();
+        }
+
         /// <summary>
         /// "upgrade.radio_tower.2.title": the name of level <paramref name="level"/> (1 = the first bought).
         /// </summary>

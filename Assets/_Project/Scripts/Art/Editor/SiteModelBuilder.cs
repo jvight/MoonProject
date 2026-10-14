@@ -137,7 +137,7 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The tower's story parts (M3-16 P1), pickups 07 carries home on its StoryPartSocket and feeds to the tower's port.
+        /// The tower's story parts (M3-16 P1), pickups 07 carries home in its hold and feeds to the tower's port.
         /// </summary>
         public static readonly string[] StoryPartNames = { "Part_TowerCoil", "Part_Transformer", "Part_RelaySpare" };
 

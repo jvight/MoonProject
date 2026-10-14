@@ -50,10 +50,10 @@ namespace MoonProject.Gameplay
             DockedNow = docked && !_wasDocked;
             bool left = !docked && _wasDocked;
             _wasDocked = docked;
-            if (DockedNow && _stock.Hold.UsedSlots > 0)
+            if (DockedNow && _stock.Hold.MaterialSlots > 0)
             {
                 _running = true;
-                _slots = _stock.Hold.UsedSlots;
+                _slots = _stock.Hold.MaterialSlots;
                 _done = 0;
                 _moved = 0;
                 _next = now + _tuning.UnloadLeadSeconds;
@@ -93,7 +93,7 @@ namespace MoonProject.Gameplay
 
             _done++;
             Publish(FeelPhase.Act, hatch, Progress(), 0f);
-            if (_stock.Hold.UsedSlots == 0)
+            if (_stock.Hold.MaterialSlots == 0)
             {
                 Publish(FeelPhase.Reward, hatch, 1f, 0f);
                 Finish(false);

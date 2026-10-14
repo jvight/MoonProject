@@ -162,10 +162,6 @@ namespace MoonProject.Rover
         [Tooltip("The live portrait's fixed side-three-quarter camera and its render size (0.5.5 §3.5).")]
         [SerializeField] private PortraitSettings _portrait = new PortraitSettings();
 
-        [Tooltip("Half-life (s) of a tower story part popping on to, or off, 07's back.")]
-        [Range(0.02f, 2f)]
-        [SerializeField] private float _storyPartHalfLife = 0.2f;
-
         [Header("Antenna")]
         [Tooltip("Spring frequency (Hz) of the antenna wobble.")]
         [Range(0.2f, 10f)]
@@ -276,8 +272,6 @@ namespace MoonProject.Rover
         public ChargeCellsSettings ChargeCells => _chargeCells;
 
         public CargoHatchSettings CargoHatch => _cargoHatch;
-
-        public float StoryPartHalfLife => _storyPartHalfLife;
 
         public float AntennaFrequency => _antennaFrequency;
 
