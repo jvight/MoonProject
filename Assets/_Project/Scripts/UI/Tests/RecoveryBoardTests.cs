@@ -5,14 +5,16 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.UI.Editor;
 
 namespace MoonProject.UI.Tests
 {
     /// <summary>
-    /// The tech board's labels (docs/features/M3-21): the recovery panel's rows with their lamps and the pins the board
-    /// knows show only while 07 looks at the board; the components', targets' and completion lines exist in every
-    /// language.
+    /// The tech board's labels (docs/features/M3-21, M3-19 §3.2): the recovery panel's rows with their lamps and the
+    /// pins the board knows show only while 07 looks at the board; an unknown kit with scanned fragments shows a torn
+    /// sheet growing piece by piece until it joins into the full decoded sheet; the components', targets' and
+    /// completion lines exist in every language.
     /// </summary>
     public sealed class RecoveryBoardTests
     {
@@ -26,7 +28,7 @@ namespace MoonProject.UI.Tests
             ILocalization localization = new LocalizationService(new EventBus(), RealTables());
             var settings = new LabHudSettings();
             var game = new Game();
-            var board = new RecoveryBoard(layout.LabHud, settings.Board, localization, game, game);
+            var board = new RecoveryBoard(layout.LabHud, settings.Board, localization, game, game, game);
             VisualElement root = layout.LabHud.Q("lab-board");
             List<VisualElement> lamps = root.Query(className: "recovery-board__lamp").ToList();
             Assert.AreEqual(3 + 3 + 4 + 1, lamps.Count, "Power 3, Link 3, Dish 4, Answer 1");
@@ -53,6 +55,75 @@ namespace MoonProject.UI.Tests
             board.Look(false);
             Ticks(board, settings.Board.FadeOut + 0.5f, true);
             Assert.AreEqual(DisplayStyle.None, root.style.display.value, "looking away hides them");
+        }
+
+        [Test]
+        public void TornSheets_GrowPieceByPieceForUnknownKits_AndJoinIntoFullSheetWhenCompleted()
+        {
+            var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(UiAssetPaths.Uxml);
+            var layout = new UiLayout(uxml.Instantiate());
+            ILocalization localization = new LocalizationService(new EventBus(), RealTables());
+            var settings = new LabHudSettings();
+            var game = new Game();
+            game.SetSizes["rover.cargo_cradle"] = 2;
+            game.SetSizes["rover.warm_headlamp"] = 3;
+            var board = new RecoveryBoard(layout.LabHud, settings.Board, localization, game, game, game);
+            VisualElement root = layout.LabHud.Q("lab-board");
+            List<Label> nodes = root.Query<Label>(className: "recovery-board__node").ToList();
+            Label cradle = nodes[(int)TechNodeId.CargoCradle];
+            Label headlamp = nodes[(int)TechNodeId.WarmHeadlamp];
+
+            board.Look(true);
+            Ticks(board, settings.Board.FadeIn + 0.5f, true);
+            Assert.AreEqual(DisplayStyle.None, cradle.style.display.value, "s == 0: bare pin, hidden on the board");
+            Assert.IsFalse(board.IsNodeTorn(TechNodeId.CargoCradle));
+            Assert.AreEqual(0, board.NodePieceCount(TechNodeId.CargoCradle));
+
+            game.Scanned["rover.cargo_cradle"] = 1;
+            int readsBefore = game.ScanReads;
+            Ticks(board, 0.5f, true);
+            Assert.AreEqual(readsBefore, game.ScanReads, "never polled per frame without an event");
+
+            board.OnFragmentScanned(new FragmentScanned("frag.cradle.1", "rover.cargo_cradle", 0, 2, false, 0));
+            Ticks(board, Step, true);
+            int readsAfterRefresh = game.ScanReads;
+            Assert.Greater(readsAfterRefresh, readsBefore, "refreshes on FragmentScanned");
+            Ticks(board, 0.5f, true);
+            Assert.AreEqual(readsAfterRefresh, game.ScanReads, "refreshes once, not per frame");
+            Assert.AreEqual(DisplayStyle.Flex, cradle.style.display.value, "0 < s < z: torn sheet with 1 of 2 pieces");
+            Assert.IsTrue(cradle.ClassListContains(RecoveryBoard.TornClass));
+            Assert.IsFalse(cradle.ClassListContains("recovery-board__node--decoded"));
+            Assert.IsTrue(board.IsNodeTorn(TechNodeId.CargoCradle));
+            Assert.AreEqual(1, board.NodePieceCount(TechNodeId.CargoCradle));
+            Assert.AreEqual(2, board.NodeSetSize(TechNodeId.CargoCradle));
+            Assert.AreEqual(string.Empty, cradle.text, "a pencil-and-paper mark, not a number badge or label");
+            Assert.AreEqual(DisplayStyle.None, headlamp.style.display.value, "other unknown kits with s == 0 stay hidden");
+
+            game.Scanned["rover.warm_headlamp"] = 2;
+            board.OnFragmentScanned(new FragmentScanned("frag.lamp.2", "rover.warm_headlamp", 1, 3, false, 0));
+            Ticks(board, Step, true);
+            Assert.IsTrue(board.IsNodeTorn(TechNodeId.WarmHeadlamp));
+            Assert.AreEqual(2, board.NodePieceCount(TechNodeId.WarmHeadlamp), "2 of 3 pieces");
+            Assert.AreEqual(3, board.NodeSetSize(TechNodeId.WarmHeadlamp));
+
+            game.Scanned["rover.cargo_cradle"] = 2;
+            game.States[(int)TechNodeId.CargoCradle] = TechNodeState.Decoded;
+            board.OnFragmentScanned(new FragmentScanned("frag.cradle.2", "rover.cargo_cradle", 1, 2, false, 0));
+            board.MarkDirty();
+            Ticks(board, Step, true);
+            Assert.IsFalse(board.IsNodeTorn(TechNodeId.CargoCradle), "completed set joins into the full sheet");
+            Assert.AreEqual(0, board.NodePieceCount(TechNodeId.CargoCradle));
+            Assert.IsFalse(cradle.ClassListContains(RecoveryBoard.TornClass));
+            Assert.IsTrue(cradle.ClassListContains("recovery-board__node--decoded"));
+            Assert.AreEqual("Cargo Cradle", cradle.text);
+
+            game.States[(int)TechNodeId.CargoCradle] = TechNodeState.Built;
+            board.MarkDirty();
+            Ticks(board, Step, true);
+            Assert.IsFalse(board.IsNodeTorn(TechNodeId.CargoCradle));
+            Assert.IsFalse(cradle.ClassListContains(RecoveryBoard.TornClass));
+            Assert.IsFalse(cradle.ClassListContains("recovery-board__node--decoded"));
+            Assert.AreEqual("Cargo Cradle", cradle.text);
         }
 
         [Test]
@@ -160,17 +231,61 @@ namespace MoonProject.UI.Tests
             }
         }
 
-        private sealed class Game : ITechTree, IRecoveryProgress
+        private sealed class Game : ITechTree, IRecoveryProgress, IScanSites
         {
             public readonly TechNodeState[] States = new TechNodeState[Enum.GetValues(typeof(TechNodeId)).Length];
             public readonly int[] Lit = new int[4];
+            public readonly Dictionary<string, int> Scanned = new Dictionary<string, int>(StringComparer.Ordinal);
+            public readonly Dictionary<string, int> SetSizes = new Dictionary<string, int>(StringComparer.Ordinal);
             private readonly int[] _lamps = { 3, 3, 4, 1 };
 
             public int KnownCount => Array.FindAll(States, state => state != TechNodeState.Unknown).Length;
 
+            public int Count => 0;
+
             public TechNodeState StateOf(TechNodeId node)
             {
                 return States[(int)node];
+            }
+
+            public string KitOf(TechNodeId node)
+            {
+                switch (node)
+                {
+                    case TechNodeId.HoverJump: return "rover.hover_jump";
+                    case TechNodeId.CargoCradle: return "rover.cargo_cradle";
+                    case TechNodeId.WarmHeadlamp: return "rover.warm_headlamp";
+                    case TechNodeId.CapacitorDrums: return "rover.capacitor_drums";
+                    case TechNodeId.CellPackII: return "rover.cell_pack_2";
+                    case TechNodeId.FocusLens: return "rover.focus_lens";
+                    case TechNodeId.SideBins: return "rover.side_bins";
+                    default: return null;
+                }
+            }
+
+            public string PlaceId(int index) => string.Empty;
+
+            public Vector3 Position(int index) => Vector3.zero;
+
+            public bool IsKnown(int index) => false;
+
+            public int Left(int index) => 0;
+
+            public int FragmentCount(int index) => 0;
+
+            public int IndexOf(string placeId) => -1;
+
+            public int ScanReads { get; private set; }
+
+            public int ScannedOf(string blueprintId)
+            {
+                ScanReads++;
+                return blueprintId != null && Scanned.TryGetValue(blueprintId, out int s) ? s : 0;
+            }
+
+            public int SetSize(string blueprintId)
+            {
+                return blueprintId != null && SetSizes.TryGetValue(blueprintId, out int z) ? z : 0;
             }
 
             public int LitLamps(RecoveryTarget target)

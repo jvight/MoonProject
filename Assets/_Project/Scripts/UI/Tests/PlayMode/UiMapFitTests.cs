@@ -97,12 +97,15 @@ namespace MoonProject.UI.PlayModeTests
             knowledge.Poll(Vector3.zero, 0f, false, false);
             knowledge.MarkVisited(1);
             knowledge.MarkSeen(2);
+            _rig.Fakes.ScanSites.Sites.Add(("micro.06", new Vector3(120f, 0f, -90f), true, 2, 2));
             _view = new MapView(_rig.Ui.Layout.Pause, _sheet, _tuning, knowledge, reach, new HomeOverlay(),
-                new LocalizationService(events, tables), events, _rig.Bootstrap.Context.Input);
+                new LocalizationService(events, tables), events, _rig.Bootstrap.Context.Input, _rig.Fakes.ScanSites);
             yield return null;
 
             events.Publish(new MapLookStarted(Vector3.zero, false));
+            Assert.AreEqual(1, _view.BracketPositions.Count, "one pencil bracket drawn for the known scan site");
             var problems = new List<string>();
+            bool capturedBracket = false;
             foreach (ScreenShape shape in ScreenShapes.All)
             {
                 _rig.Reframe(shape.Width, shape.Height);
@@ -116,8 +119,35 @@ namespace MoonProject.UI.PlayModeTests
                 _view.Tick(Step, false);
                 yield return ScreenFit.Probe(found =>
                     ScreenFit.CheckOnScreen(_rig.Ui.Layout.Root, shape.Name + " map", found), problems);
-                WriteShot(shape.Name);
+                WriteShot(ShapeFolder, shape.Name + "_map.png");
+                if (!capturedBracket)
+                {
+                    capturedBracket = true;
+                    WriteShot("Logs/ui-captures", "d2_chart_bracket.png");
+                }
             }
+
+            events.Publish(new MapLookEnded());
+            for (float t = 0f; t < OpenSeconds; t += Step)
+            {
+                _view.Tick(Step, false);
+                yield return null;
+            }
+
+            _rig.Reframe(first.Width, first.Height);
+            _rig.Fakes.SetLitLamps(RecoveryTarget.Power, 2);
+            _rig.Fakes.SetTech(TechNodeId.TowerL1, TechNodeState.Built);
+            _rig.Fakes.SetTech(TechNodeId.HoverJump, TechNodeState.Decoded);
+            _rig.Fakes.ScanSites.SetSizes["rover.cargo_cradle"] = 2;
+            _rig.Fakes.ScanSites.Scanned["rover.cargo_cradle"] = 1;
+            events.Publish(new LabEntered(LabStation.Board));
+            events.Publish(new LabStationLooked(LabStation.Board, true));
+            events.Publish(new FragmentScanned("frag.cradle.1", "rover.cargo_cradle", 0, 2, false, 0));
+            yield return new WaitForSecondsRealtime(1f);
+            Assert.IsTrue(_rig.Ui.Board.IsNodeTorn(TechNodeId.CargoCradle));
+            yield return ScreenFit.Probe(found =>
+                ScreenFit.CheckOnScreen(_rig.Ui.Layout.Root, "lab board torn sheet", found), problems);
+            WriteShot("Logs/ui-captures", "d2_board_torn_sheet.png");
 
             Assert.IsEmpty(problems, "the map stays on every screen shape:\n" + string.Join("\n", problems));
 #else
@@ -127,8 +157,8 @@ namespace MoonProject.UI.PlayModeTests
         }
 
 #if UNITY_EDITOR
-        /// <summary>The map as rendered, over black, next to the other shape shots (Logs/ui-captures/shapes).</summary>
-        private void WriteShot(string shape)
+        /// <summary>The UI frame as rendered, over black, saved to <paramref name="relativeFolder"/>.</summary>
+        private void WriteShot(string relativeFolder, string fileName)
         {
             RenderTexture frame = _rig.Frame;
             var texture = new Texture2D(frame.width, frame.height, TextureFormat.RGBA32, false, false);
@@ -144,9 +174,9 @@ namespace MoonProject.UI.PlayModeTests
 
             texture.SetPixels32(pixels);
             texture.Apply(false);
-            string folder = Path.GetFullPath(ShapeFolder);
+            string folder = Path.GetFullPath(relativeFolder);
             Directory.CreateDirectory(folder);
-            File.WriteAllBytes(Path.Combine(folder, shape + "_map.png"), texture.EncodeToPNG());
+            File.WriteAllBytes(Path.Combine(folder, fileName), texture.EncodeToPNG());
             Object.Destroy(texture);
         }
 #endif

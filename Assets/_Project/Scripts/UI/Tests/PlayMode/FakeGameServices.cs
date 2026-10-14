@@ -133,6 +133,9 @@ namespace MoonProject.UI.PlayModeTests
         /// <summary>07's portrait, set by a test.</summary>
         public FakePortrait Portrait { get; } = new FakePortrait();
 
+        /// <summary>Scan sites and blueprint fragment counts, set by a test.</summary>
+        public FakeScanSites ScanSites { get; } = new FakeScanSites();
+
         /// <summary>The docked transfer, moving whole slots between <see cref="Hold"/> and <see cref="Home"/>.</summary>
         public FakeTransfer Transfer => _transfer ?? (_transfer = new FakeTransfer(Hold, Home, Dock));
 
@@ -324,6 +327,7 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IRoverEquipment>(Equipment);
             context.Register<IRoverPortrait>(Portrait);
             context.Register<IStackTransfer>(Transfer);
+            context.Register<IScanSites>(ScanSites);
         }
 
         public int KnownCount
@@ -343,6 +347,21 @@ namespace MoonProject.UI.PlayModeTests
         public TechNodeState StateOf(TechNodeId node)
         {
             return _techStates[(int)node];
+        }
+
+        public string KitOf(TechNodeId node)
+        {
+            switch (node)
+            {
+                case TechNodeId.HoverJump: return "rover.hover_jump";
+                case TechNodeId.CargoCradle: return "rover.cargo_cradle";
+                case TechNodeId.WarmHeadlamp: return "rover.warm_headlamp";
+                case TechNodeId.CapacitorDrums: return "rover.capacitor_drums";
+                case TechNodeId.CellPackII: return "rover.cell_pack_2";
+                case TechNodeId.FocusLens: return "rover.focus_lens";
+                case TechNodeId.SideBins: return "rover.side_bins";
+                default: return null;
+            }
         }
 
         /// <summary>Sets what the tech board knows of <paramref name="node"/>.</summary>

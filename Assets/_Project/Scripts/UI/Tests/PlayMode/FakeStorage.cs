@@ -346,4 +346,52 @@ namespace MoonProject.UI.PlayModeTests
             return UiKeys.MaterialName(material) + ".source";
         }
     }
+
+    /// <summary>Scan sites and blueprint fragment counts set by a test.</summary>
+    public sealed class FakeScanSites : IScanSites
+    {
+        public readonly List<(string id, UnityEngine.Vector3 pos, bool known, int left, int total)> Sites =
+            new List<(string id, UnityEngine.Vector3 pos, bool known, int left, int total)>();
+
+        public readonly Dictionary<string, int> Scanned =
+            new Dictionary<string, int>(System.StringComparer.Ordinal);
+
+        public readonly Dictionary<string, int> SetSizes =
+            new Dictionary<string, int>(System.StringComparer.Ordinal);
+
+        public int Count => Sites.Count;
+
+        public string PlaceId(int index) => Sites[index].id;
+
+        public UnityEngine.Vector3 Position(int index) => Sites[index].pos;
+
+        public bool IsKnown(int index) => Sites[index].known;
+
+        public int Left(int index) => Sites[index].left;
+
+        public int FragmentCount(int index) => Sites[index].total;
+
+        public int IndexOf(string placeId)
+        {
+            for (int i = 0; i < Sites.Count; i++)
+            {
+                if (Sites[i].id == placeId)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        public int ScannedOf(string blueprintId)
+        {
+            return blueprintId != null && Scanned.TryGetValue(blueprintId, out int s) ? s : 0;
+        }
+
+        public int SetSize(string blueprintId)
+        {
+            return blueprintId != null && SetSizes.TryGetValue(blueprintId, out int z) ? z : 0;
+        }
+    }
 }
