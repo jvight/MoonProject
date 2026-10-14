@@ -4,7 +4,19 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 00000000000000000000000. LATEST (2026-10-14 ~17:20): 0.5.5 release candidate febadf78 (LOCAL, not pushed); 2 explicit tests to fix
+## 000000000000000000000000. LATEST (2026-10-14 ~18:30): 0.5.5 RELEASED (a507ed24); owner to play; next 0.6
+- **0.5.5 = origin/main a507ed24**, `verify --explicit` all PASS (incl. NoLooseLootSession, LiftSession, Playthrough).
+  Build: D:/Project/MoonProject/Builds/Lunarion-0.5.5-20261014-a507ed24.zip (78.9 MB, smoke PASS).
+- **Since the ~17:20 entry:** agy's release fixes landed (19a82d1e NoLooseLootSession reads committed poses
+  Gameplay/Tests/PlayMode/capture_sweep_poses.json; 18f9630f LiftSession fits the Cargo Cradle in its save).
+- **Next:** the owner plays 0.5.5 and gives feedback; then 0.6 (per phased releases: open 0.6 only after the owner's
+  review). 0.6 is designed (docs/design/0.6-world-regions.md, 0.6-living-moon.md, north-star.md; look C day/night,
+  the basin variety pass with world's PROPOSAL.md; the sweeper model trial box/agy-model 97b677e0 to refine).
+- **Workers:** agy (Gemini 4 Argon ONLY, CLI account taapstudios@gmail.com; memory agy-worker / agy-cli-reference) takes
+  well-specified slices first; Claude sessions stand by for the critical path and hard design work.
+- **Owner pending:** story v3's 7 questions (docs/design/story-v3.md on box/story).
+
+## 00000000000000000000000. (prev) (2026-10-14 ~17:20): 0.5.5 release candidate febadf78 (LOCAL, not pushed); 2 explicit tests to fix
 - **Local main febadf78 (NOT pushed; origin = 1fed6c2a):** 13a4ec70 D2 UI (agy-ui 7a4e809f: place card count, chart
   pencil brackets, torn sheets, ITechTree.KitOf); 5851c869 Bell's parts under a RockfallPocket in each canyon alcove,
   dug out (agy 50c71957 + 0752bad7) + NoLooseLootSession (agy 4244ec13, explicit real-scene check: every find/glint is
