@@ -32,6 +32,14 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public const string JumperWreckName = "JumperWreck";
 
+        /// <summary>
+        /// A small rockfall slumped against a canyon alcove wall (0.5.5 Bell parts): its root on the ground, -Z against
+        /// the wall, +Z its front with a dark hollow gap holding an empty <c>DigSpot</c> (+Y up) where a buried part lies.
+        /// </summary>
+        public const string RockfallPocketName = "RockfallPocket";
+
+        public const string DigSpotName = SiteModelBuilder.DigSpotName;
+
 
         [MoonBuilder("Art/Props", 175)]
         public static void Build()
@@ -50,6 +58,7 @@ namespace MoonProject.Art.Editor
             }
 
             ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateJumperWreck()), ArtPaths.PropFolder, material);
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateRockfallPocket()), ArtPaths.PropFolder, material);
 
             AssetDatabase.SaveAssets();
         }
@@ -57,6 +66,14 @@ namespace MoonProject.Art.Editor
         public static ModelNode CreateLogCache()
         {
             return new ModelNode(LogCacheName, Vector3.zero, new ModelMesh(LogCacheName, LogCacheMeshes.Cache()));
+        }
+
+        public static ModelNode CreateRockfallPocket()
+        {
+            var root = new ModelNode(RockfallPocketName, Vector3.zero,
+                new ModelMesh(RockfallPocketName, LootContainerMeshes.RockfallPocket()));
+            root.Add(new ModelNode(DigSpotName, LootContainerMeshes.RockfallDigSpot, Quaternion.identity));
+            return root;
         }
 
         public static ModelNode CreateHullFragment(int variant)
@@ -87,3 +104,4 @@ namespace MoonProject.Art.Editor
         }
     }
 }
+

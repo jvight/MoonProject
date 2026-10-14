@@ -63,7 +63,7 @@ namespace MoonProject.Gameplay.Editor
             return parts;
         }
 
-        /// <summary>Art's sealed containers, the finds' homes (0.5.5 §2).</summary>
+        /// <summary>Art's sealed containers and rockfall pocket, the finds' homes (0.5.5 §2).</summary>
         private static GameObject[] ContainerModels()
         {
             string[] names =
@@ -71,13 +71,19 @@ namespace MoonProject.Gameplay.Editor
                 LootContainerBuilder.CoilCrateName, LootContainerBuilder.TapeCaseName,
                 LootContainerBuilder.JunctionBoxName, LootContainerBuilder.SupplyPodName,
                 LootContainerBuilder.TillySledName, LootContainerBuilder.CabinetName,
-                LootContainerBuilder.SpareCrateName,
+                LootContainerBuilder.SpareCrateName, PropModelBuilder.RockfallPocketName,
             };
             var containers = new GameObject[names.Length];
             for (int i = 0; i < names.Length; i++)
             {
                 string path = ArtPaths.PropFolder + "/" + names[i] + ".prefab";
                 containers[i] = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (containers[i] == null && names[i] == PropModelBuilder.RockfallPocketName)
+                {
+                    PropModelBuilder.Build();
+                    containers[i] = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                }
+
                 if (containers[i] == null)
                 {
                     throw new InvalidOperationException($"{BuilderPath}: Art's container {path} is missing.");

@@ -2410,7 +2410,13 @@ namespace MoonProject.Gameplay.PlayModeTests
 
                 int before = bell.Progress.Collected;
                 yield return DriveAlong(part, "one of Bell's parts", value => travelled += value);
-                yield return PickupPress.Take(this, _gameplay, 4f, "one of Bell's parts");
+                _pilot.Target = null;
+                yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 stops at the rockfall pocket");
+                yield return Until(() => _gameplay.Hints.TryGet(InteractionKind.Excavate, out _), 3f,
+                    "the Dig prompt is offered at the rockfall pocket");
+                Press(_keyboard.eKey);
+                yield return new WaitForSeconds(_gameplay.Friends.Tuning.PartDigSeconds + 0.5f);
+                Release(_keyboard.eKey);
                 yield return Until(() => bell.Progress.Collected > before, 6f, "the part drifts into 07");
             }
 

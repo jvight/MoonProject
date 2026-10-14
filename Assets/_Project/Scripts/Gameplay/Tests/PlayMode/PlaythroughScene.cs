@@ -24,12 +24,21 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private const string Folder = "Assets/_Project/Generated/Gameplay/Playthrough";
         private const string SceneSlotLine = "_saveSlot: main";
+        private const string RockfallPocketPrefab = "Assets/_Project/Generated/Art/Props/RockfallPocket.prefab";
+        private bool _builtRockfallPocket;
 
         public void Setup()
         {
 #if UNITY_EDITOR
             BootstrapHarness.DeleteSaveFiles(SaveSlot);
             DeleteCopy();
+            if (AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(RockfallPocketPrefab) == null)
+            {
+                Type builder = Type.GetType("MoonProject.Art.Editor.PropModelBuilder, MoonProject.Art.Editor");
+                builder?.GetMethod("Build")?.Invoke(null, null);
+                _builtRockfallPocket = true;
+            }
+
             if (!AssetDatabase.IsValidFolder(Folder))
             {
                 AssetDatabase.CreateFolder("Assets/_Project/Generated/Gameplay", "Playthrough");
@@ -52,6 +61,12 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
 #if UNITY_EDITOR
             DeleteCopy();
+            if (_builtRockfallPocket)
+            {
+                AssetDatabase.DeleteAsset(RockfallPocketPrefab);
+                _builtRockfallPocket = false;
+            }
+
             BootstrapHarness.DeleteSaveFiles(SaveSlot);
 #endif
         }

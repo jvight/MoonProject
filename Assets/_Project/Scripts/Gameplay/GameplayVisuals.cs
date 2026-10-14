@@ -145,7 +145,12 @@ namespace MoonProject.Gameplay
                 }
             }
 
+#if UNITY_EDITOR
+            return UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/Generated/Art/Props/" + name + ".prefab");
+#else
             return null;
+#endif
         }
 
         /// <summary>Art's scan fragment named <paramref name="name"/> (its prefab name), or null.</summary>

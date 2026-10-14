@@ -59,7 +59,16 @@ namespace MoonProject.Gameplay.PlayModeTests
             for (int part = 0; part < 3; part++)
             {
                 WorldAnchor alcove = _fixture.World.Anchor(WorldAnchorIds.CanyonAlcovePrefix + part);
-                Assert.Less(SurfaceRules.HorizontalDistance(bell.PartRest[part], alcove.Position), 1e-3f,
+                Transform pocket = bell.PartPockets[part];
+                Assert.IsNotNull(pocket, $"part {part} rests in a RockfallPocket");
+                Assert.IsTrue(bell.IsPartBuried(part), $"part {part} is buried under the rockfall");
+                Assert.Less(Vector3.Distance(pocket.forward, -alcove.Forward), 1e-3f,
+                    $"pocket {part} faces out toward the canyon floor");
+                Transform digSpot = pocket.Find("DigSpot");
+                Assert.IsNotNull(digSpot, $"pocket {part} has a DigSpot");
+                Assert.Less(Vector3.Distance(bell.PartRest[part], digSpot.position), 1e-3f,
+                    $"part {part} rests at its pocket's DigSpot");
+                Assert.Less(SurfaceRules.HorizontalDistance(bell.PartRest[part], alcove.Position), alcove.Radius,
                     $"part {part} waits in alcove {part}");
             }
 
@@ -72,7 +81,38 @@ namespace MoonProject.Gameplay.PlayModeTests
             for (int part = 0; part < 3; part++)
             {
                 _fixture.Rover.Place(Flat(bell.PartRest[part]), 0f);
-                yield return PickupPress.Take(this, _fixture.Gameplay, 2f, $"Bell's part {part}");
+                if (part == 0)
+                {
+                    friends.Restore(new FriendsSaveData
+                    {
+                        friends = new[]
+                        {
+                            new FriendSaveData { id = BellId, state = (int)FriendState.PartsGathering, parts = 1 },
+                        },
+                    });
+                    Assert.IsTrue(bell.Progress.IsCollected(0), "a saved collected Bell part stays collected");
+                    Assert.IsFalse(bell.Parts[0].gameObject.activeSelf, "collected part stays hidden");
+                    Assert.AreEqual(_fixture.FriendTuning.PartDigSeconds, bell.PartDug[0], 1e-4f);
+                    Assert.IsFalse(bell.Progress.IsCollected(1), "uncollected Bell part stays uncollected");
+                    Assert.AreEqual(0f, bell.PartDug[1], 1e-4f, "uncollected Bell part loads buried");
+                    yield return null;
+                    Assert.IsFalse(friends.HasDigCandidate, "no pocket left to dig for a collected part");
+                    friends.Restore(new FriendsSaveData
+                    {
+                        friends = new[]
+                        {
+                            new FriendSaveData { id = BellId, state = (int)FriendState.PartsGathering, parts = 0 },
+                        },
+                    });
+                }
+
+                yield return null;
+                yield return null;
+                Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Excavate, out _),
+                    $"Bell's part {part} offers Dig at its rockfall pocket");
+                Press(_keyboard.eKey);
+                yield return new WaitForSeconds(_fixture.FriendTuning.PartDigSeconds + 0.3f);
+                Release(_keyboard.eKey);
                 yield return new WaitForSeconds(_fixture.FriendTuning.PartFlightDuration + 1f);
             }
 
