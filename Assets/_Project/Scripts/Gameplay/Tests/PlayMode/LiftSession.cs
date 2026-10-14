@@ -68,12 +68,15 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>07 is carried up: it rose at least this much short of the platform's rise (m).</summary>
         private const float CarriedTolerance = 0.6f;
 
-        // Home powered (tower L1) and the rubber duck riding in the Cargo Cradle (RelicState.Cradled), in Core's
-        // envelope and Gameplay's upgrades and relics (version 1) section formats.
+        // Home powered (tower L1), the Cargo Cradle fitted on 07 (RoverKitPiece.CargoRack = 3), and the rubber duck
+        // riding in it (RelicState.Cradled = 6), in Core's envelope and Gameplay's upgrades, equipment and relics
+        // (version 1) section formats.
         private const string LabSave =
             "{\"formatVersion\":1,\"contentVersion\":\"0.5.0\",\"savedAtUtc\":\"2026-10-10T00:00:00Z\"," +
             "\"sections\":[{\"key\":\"gameplay.upgrades\",\"version\":1,\"json\":\"{\\\"upgrades\\\":[" +
-            "{\\\"id\\\":\\\"radio_tower\\\",\\\"level\\\":1}]}\"}," +
+            "{\\\"id\\\":\\\"radio_tower\\\",\\\"level\\\":1}," +
+            "{\\\"id\\\":\\\"rover.cargo_cradle\\\",\\\"level\\\":1}]}\"}," +
+            "{\"key\":\"gameplay.equipment\",\"version\":1,\"json\":\"{\\\"fitted\\\":[3]}\"}," +
             "{\"key\":\"gameplay.relics\",\"version\":1,\"json\":\"{\\\"relics\\\":[" +
             "{\\\"id\\\":\\\"rubber_duck\\\",\\\"state\\\":6}]}\"}]}";
 
