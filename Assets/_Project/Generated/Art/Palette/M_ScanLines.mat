@@ -28,6 +28,6 @@ Material:
     - _Dissolve: 0
     - _ScanProgress: 0
     m_Colors:
-    - _LineColor: {r: 1.2, g: 1.22, b: 1.28, a: 1}
+    - _LineColor: {r: 0.88, g: 0.92, b: 0.96, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
