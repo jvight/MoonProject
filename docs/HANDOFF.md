@@ -4,7 +4,27 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 00000000000000000000. LATEST (2026-10-14 ~06:00): main 500ab26e (C5) verified + pushed; the D1 batch waits on gameplay
+## 000000000000000000000. LATEST (2026-10-14 ~10:00): main 98e82f69 (D1 scanning) verified + pushed; D2 + agy jobs
+- **main 98e82f69 (verified, origin has it)** = the D1 batch (gameplay a7c29cfc scanning + rover/audio/ui/world
+  tube and reader removals; LabStation Chart 0, Board 1, Keepsakes 2) + the Director's Core deletion of
+  BlueprintFound, BlueprintDelivered, BlueprintsCarriedRestored, FindDecoded, DecodeHandOff. Playthrough 1602/1735 s.
+- **In flight:**
+  - gameplay D2 (listening/sonar for places with fragments or uncut pieces, data for chart + place cards); its report
+    must include a standalone UI brief -> the UI half goes to agy.
+  - agy (Antigravity CLI, Gemini 4 Argon; memory agy-worker / agy-cli-reference; launch with
+    `bash D:/Project/MoonProject-wt/agy-install/agy_run.sh <worktree>` in the background, it notifies on Logs/DONE):
+    - D:/Project/MoonProject-wt/agy (box/agy): ui's Scan chip (InteractionKind.Scan -> hint.scan, first scan only);
+    - D:/Project/MoonProject-wt/agy-art (box/agy-art): art cleanup (reader parts, hand-off pulse, tube prefab;
+      rover node TubeSocket -> StoryPartSocket + rover's one constant).
+    Review each like any box (scope, own box_check, code review), then land.
+  - The Director still owes ARCHITECTURE edits for D1 (scratchpad notes: lab stations 0..2, no Station_Reader /
+    HandOff*, the scan-fragment contract); do them after agy-art lands (it reports the final node names).
+- **Model trial (agy + Blender MCP, not landing):** box/agy-model 97b677e0 tools/blender/sweeper.py (0.6 sweeper),
+  shown to the owner; refine when 0.6 opens.
+- **Then:** D2 lands; verify --explicit; bump 0.5.5; build; Builds/.
+- **Owner pending:** story v3's 7 questions.
+
+## 00000000000000000000. (prev) (2026-10-14 ~06:00): main 500ab26e (C5) verified + pushed; the D1 batch waits on gameplay
 - **main 33291f98 (verified, origin has it)** = gameplay C6: what 07's hold has no room for is held where it was (a cut
   piece on its wreck with an amber halo, a crate's remainder in its mouth); Recycled Metal goes home -> hold -> home's
   overflow crates; Tilly never drops a stack; old saves' ground bundles go to the overflow crates.
