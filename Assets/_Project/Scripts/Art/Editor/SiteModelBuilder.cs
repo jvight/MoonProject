@@ -24,6 +24,7 @@ namespace MoonProject.Art.Editor
         public const string DragSuffix = "_Drag";
         public const string LandmarkName = "Landmark";
         public const string LandmarkPilotName = "LandmarkPilot";
+        public const string AnswerLampName = "AnswerLamp";
 
         /// <summary>
         /// The crew's supply crate (M3-25 T4), one per site beside its heart: <c>CrewCrate</c> (the sealed body, which stays
@@ -218,7 +219,34 @@ namespace MoonProject.Art.Editor
                     ModelMaterial.PaletteGlowOff));
             }
 
+            root.Add(new ModelNode(AnswerLampName, AnswerLampSpot(id), Quaternion.identity,
+                new ModelMesh($"{name}_{AnswerLampName}", AnswerLampMesh()), ModelMaterial.PaletteGlowOff));
             return root;
+        }
+
+        /// <summary>A small physical lamp lens on a site or derelict that blinks when it answers a listen.</summary>
+        public static LowPolyMeshBuilder AnswerLampMesh()
+        {
+            return SiteLandmarkMeshes.Pilot();
+        }
+
+        private static Vector3 AnswerLampSpot(string id)
+        {
+            switch (id)
+            {
+                case "depot":
+                    return new Vector3(3.3f, 2.41f, -0.5f);
+                case "kestrel":
+                    return new Vector3(-0.04f, 2.21f, 1.45f);
+                case "drill":
+                    return new Vector3(-2.65f, 2.58f, 2.7f);
+                case "garage":
+                    return new Vector3(-2.18f, 1.92f, -0.8f);
+                case "lander":
+                    return new Vector3(-1.85f, 2.91f, 0.9f);
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(id), id, "Unknown salvage site.");
+            }
         }
 
         /// <summary>The ground the site's wreck covers: its skeleton and every piece where it hangs.</summary>

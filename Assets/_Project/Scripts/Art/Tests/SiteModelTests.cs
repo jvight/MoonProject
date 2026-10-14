@@ -73,8 +73,10 @@ namespace MoonProject.Art.Tests
             int landmarks = SiteLandmarkMeshes.HasLandmark(id) ? 1 : 0;
             int pockets = SiteModelBuilder.RelicsAt(id).Count;
             int sockets = SiteModelBuilder.FragmentsAt(id).Count + (id == "garage" || id == "drill" ? 1 : 0);
-            Assert.AreEqual(site.Children.Count - 3 - landmarks - pockets - sockets, pieces.Count,
-                "only Skeleton, Salvage_*, Heart, CrewCrate, the relic pockets, the fragment sockets and the landmark");
+            ModelNode answerLamp = site.Children.Single(node => node.Name == SiteModelBuilder.AnswerLampName);
+            Assert.AreEqual(ModelMaterial.PaletteGlowOff, answerLamp.Material);
+            Assert.AreEqual(site.Children.Count - 4 - landmarks - pockets - sockets, pieces.Count,
+                "only Skeleton, Salvage_*, Heart, CrewCrate, AnswerLamp, the relic pockets, the fragment sockets and the landmark");
             Assert.That(pieces.Count, Is.InRange(MinPieces, MaxPieces));
             Assert.LessOrEqual(pieces.Count(IsDrag), 1, "at most one drag piece");
             for (int i = 0; i < pieces.Count; i++)
