@@ -4,7 +4,26 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 000000000000000000000000. LATEST (2026-10-14 ~18:30): 0.5.5 RELEASED (a507ed24); owner to play; next 0.6
+## 0000000000000000000000000. LATEST (2026-10-14 ~23:30): 0.5.5 playtest feedback -> 0.5.6 on agy; style lock; master plan
+- **origin/main 36cbf853 (verified):** 0.5.5 + 89f30b1d (agy: 07's head no longer pinned toward a cut/dig spot;
+  dead friend-part scatter removed) + RoverCameraTuning reserialized.
+- **Owner feedback on 0.5.5 (memories inventory-one-screen, rover-07-v2, audio-feedback-055, no-floating-loot):** Tab must
+  be ONE fixed screen (hold left, 07 sockets right); no memory card at a friend's wake; story parts into the hold via the
+  CargoHatch; 07 needs a redesign (every verb a real device; no eye beams for tow/dig); sky pillars, the garage beat and
+  the hidden lift condition are confusing; the bay arch z-fights; sounds too electronic (owner picked audio C "Old
+  Radio", wants it refined); graphics "a bit smoother" (soft low-poly). The owner gave FULL AUTHORITY (director-mode).
+- **agy worktrees (D:/Project/MoonProject-wt/agy-*; Argon only; launch with agy-install/agy_run2.sh):**
+  - running: agy-ui2 (Tab one screen + no memory card), agy-art (bay arch), agy-look (soft low-poly V0-V3),
+    agy-audio (round 2: C1/C2/C3), agy-plan (master plan round 2, tagged [HIỆN TẠI]/[ĐỀ XUẤT]).
+  - done, for the owner's style board: agy-style (Blender blockouts S1/S2/S3), agy-concept (image-generator concepts).
+  - done, design: agy-07v2 Logs/07V2.md (devices per verb; drop its "amber ground rings").
+  - pinned 0.6: box/agy-s1 fec31424 (regions + atmosphere, reviewed).
+  - queued: agy-hold (story parts into the hold) after agy-ui2 lands; scan beam + 07 v2 after the style lock.
+- **Plan:** 0.5.6 = feedback fixes not depending on the style; 0.5.7 = style lock applied + 07 v2 + audio C; then 0.6.
+- **Owner pages:** audio audition https://claude.ai/artifact/3e4eXr4c2fLz8nXuo7V8kd (round 2 to republish); a style
+  board page to build when agy-look finishes.
+
+## 000000000000000000000000. (prev) (2026-10-14 ~18:30): 0.5.5 RELEASED (a507ed24); owner to play; next 0.6
 - **0.5.5 = origin/main a507ed24**, `verify --explicit` all PASS (incl. NoLooseLootSession, LiftSession, Playthrough).
   Build: D:/Project/MoonProject/Builds/Lunarion-0.5.5-20261014-a507ed24.zip (78.9 MB, smoke PASS).
 - **Since the ~17:20 entry:** agy's release fixes landed (19a82d1e NoLooseLootSession reads committed poses
