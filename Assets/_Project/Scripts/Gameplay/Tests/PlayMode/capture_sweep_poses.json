@@ -1,0 +1,497 @@
+{
+  "width": 1920,
+  "height": 1080,
+  "postProcessing": true,
+  "poses": [
+    {
+      "name": "01_site_depot_mid",
+      "position": [
+        -31.47,
+        1.92,
+        29.34
+      ],
+      "lookAt": [
+        -40.66,
+        0.12,
+        40.66
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "01_site_depot_close",
+      "position": [
+        -35.36,
+        1.32,
+        36.06
+      ],
+      "lookAt": [
+        -40.66,
+        -0.08,
+        41.37
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "01_site_depot_back_close",
+      "position": [
+        -44.55,
+        1.32,
+        48.08
+      ],
+      "lookAt": [
+        -41.79,
+        -0.28,
+        42.78
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "02_site_kestrel_mid",
+      "position": [
+        -18.12,
+        6.78,
+        173.15
+      ],
+      "lookAt": [
+        -12.2,
+        4.77,
+        185.89
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "02_site_kestrel_close",
+      "position": [
+        -15.85,
+        5.9,
+        180.83
+      ],
+      "lookAt": [
+        -12.49,
+        4.47,
+        185.68
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "02_site_kestrel_back_close",
+      "position": [
+        -11.54,
+        6.22,
+        194.16
+      ],
+      "lookAt": [
+        -11.71,
+        4.37,
+        187.84
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "03_site_drill_mid",
+      "position": [
+        124.42,
+        5.39,
+        -54.44
+      ],
+      "lookAt": [
+        136.91,
+        3.48,
+        -60.07
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "03_site_drill_close",
+      "position": [
+        132.17,
+        4.88,
+        -56.65
+      ],
+      "lookAt": [
+        137.58,
+        3.28,
+        -60.03
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "03_site_drill_haulbot_close",
+      "position": [
+        128.98,
+        4.88,
+        -62.9
+      ],
+      "lookAt": [
+        134.41,
+        3.28,
+        -61.62
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "04_site_garage_mid",
+      "position": [
+        -80.16,
+        2.76,
+        -63.89
+      ],
+      "lookAt": [
+        -92.59,
+        0.87,
+        -72.34
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "04_site_garage_close",
+      "position": [
+        -87.43,
+        2.07,
+        -68.06
+      ],
+      "lookAt": [
+        -93.28,
+        0.67,
+        -73.89
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "04_site_garage_back_close",
+      "position": [
+        -96.74,
+        2.07,
+        -80.02
+      ],
+      "lookAt": [
+        -94.34,
+        0.67,
+        -74.98
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "05_site_lander_mid",
+      "position": [
+        331.62,
+        12.08,
+        110.38
+      ],
+      "lookAt": [
+        335.86,
+        10.29,
+        97.67
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "05_site_lander_close",
+      "position": [
+        333.94,
+        11.48,
+        103.25
+      ],
+      "lookAt": [
+        335.86,
+        10.09,
+        97.67
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "06_tilly_crater_mid",
+      "position": [
+        66.33,
+        -0.1,
+        37.69
+      ],
+      "lookAt": [
+        77.63,
+        -3.09,
+        44.11
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "06_tilly_crater_close",
+      "position": [
+        72.42,
+        -1.29,
+        41.15
+      ],
+      "lookAt": [
+        77.63,
+        -3.29,
+        44.11
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "07_relay_0_mid",
+      "position": [
+        79.3,
+        5.13,
+        141.85
+      ],
+      "lookAt": [
+        73.58,
+        4.83,
+        133.01
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "07_relay_0_close",
+      "position": [
+        75.52,
+        6.01,
+        135.94
+      ],
+      "lookAt": [
+        72.99,
+        4.73,
+        132.76
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "07_relay_0_drone_close",
+      "position": [
+        79.51,
+        5.71,
+        134.91
+      ],
+      "lookAt": [
+        74.86,
+        4.63,
+        133.68
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "08_relay_1_mid",
+      "position": [
+        -216.64,
+        9.8,
+        -77.26
+      ],
+      "lookAt": [
+        -206.43,
+        9.17,
+        -74.6
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "08_relay_1_close",
+      "position": [
+        -210.15,
+        10.24,
+        -75.21
+      ],
+      "lookAt": [
+        -206.15,
+        8.87,
+        -74.5
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "09_relay_2_mid",
+      "position": [
+        279.42,
+        9.16,
+        82.31
+      ],
+      "lookAt": [
+        267.86,
+        6.74,
+        79.1
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "09_relay_2_close",
+      "position": [
+        273.43,
+        8.14,
+        74.73
+      ],
+      "lookAt": [
+        269.39,
+        6.64,
+        74.33
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "09_relay_2_micro06_close",
+      "position": [
+        260.47,
+        7.84,
+        83.27
+      ],
+      "lookAt": [
+        265.42,
+        6.48,
+        84.13
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "10_relay_3_mid",
+      "position": [
+        468.01,
+        38.56,
+        -18.58
+      ],
+      "lookAt": [
+        458.05,
+        37.55,
+        -17.22
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "10_relay_3_close",
+      "position": [
+        461.72,
+        38.48,
+        -18.05
+      ],
+      "lookAt": [
+        457.75,
+        37.25,
+        -17.21
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "11_canyon_ledge_mid",
+      "position": [
+        415.33,
+        20.12,
+        127.15
+      ],
+      "lookAt": [
+        422.41,
+        19.55,
+        137.03
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "11_canyon_ledge_close",
+      "position": [
+        419.85,
+        20.78,
+        132.95
+      ],
+      "lookAt": [
+        422.41,
+        19.35,
+        137.03
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "12_canyon_terminus_mid",
+      "position": [
+        470.67,
+        36.48,
+        -35.3
+      ],
+      "lookAt": [
+        471.27,
+        34.2,
+        -50.31
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "12_canyon_terminus_close",
+      "position": [
+        471.01,
+        35.53,
+        -44.3
+      ],
+      "lookAt": [
+        471.29,
+        34.0,
+        -50.51
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "13_kestrel_lane_mid",
+      "position": [
+        -49.0,
+        3.62,
+        86.0
+      ],
+      "lookAt": [
+        -36.45,
+        1.6,
+        120.22
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "13_kestrel_lane_close_lower",
+      "position": [
+        -46.2,
+        3.12,
+        95.5
+      ],
+      "lookAt": [
+        -44.43,
+        1.0,
+        100.78
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "13_kestrel_lane_close_upper",
+      "position": [
+        -30.5,
+        4.47,
+        134.0
+      ],
+      "lookAt": [
+        -25.4,
+        2.5,
+        149.7
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "14_bonus_home_pad_supplypod",
+      "position": [
+        0.0,
+        2.2,
+        -6.5
+      ],
+      "lookAt": [
+        0.0,
+        0.8,
+        0.0
+      ],
+      "fov": 60.0
+    },
+    {
+      "name": "15_bonus_micro_mule_close",
+      "position": [
+        145.56,
+        3.79,
+        53.6
+      ],
+      "lookAt": [
+        150.78,
+        2.34,
+        53.72
+      ],
+      "fov": 60.0
+    }
+  ]
+}
