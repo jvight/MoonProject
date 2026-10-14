@@ -138,20 +138,17 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The scan's fan of light from the lens (0.5.5 §1.2), lens space, along +Z: a few hair-thin rays spread
-        /// <paramref name="halfAngle"/> degrees either side and reaching <paramref name="reach"/> metres, faint and
-        /// stylised so the fragment's own sweep stays the main read.
+        /// The scan's aperture glow at the lens mouth (0.5.5 §1.2), lens space, along +Z: a compact cyan aperture
+        /// collar and focal point at the emitter mouth where the connected scan beam leaves 07's lens.
         /// </summary>
         public static LowPolyMeshBuilder ScanFan(float halfAngle, float reach)
         {
-            var b = new LowPolyMeshBuilder(60);
-            for (int i = -2; i <= 2; i++)
-            {
-                Vector3 direction = Quaternion.Euler(0f, halfAngle * i / 2f, 0f) * Vector3.forward;
-                b.Box(Along(Vector3.forward * 0.02f, direction * reach), new Vector3(0.004f, 0.004f, reach),
-                    PaletteSwatch.EyeGlass);
-            }
-
+            var b = new LowPolyMeshBuilder(160);
+            float radius = Mathf.Clamp(halfAngle * 0.003f, 0.024f, 0.048f);
+            float depth = Mathf.Clamp(reach * 0.003f, 0.008f, 0.02f);
+            b.Torus(At(new Vector3(0f, 0f, depth * 0.5f), new Vector3(90f, 0f, 0f)), radius, 0.0045f, 12, 3,
+                PaletteSwatch.EyeGlass);
+            b.Prism(At(new Vector3(0f, 0f, depth), AlongZ), radius * 0.32f, 0.006f, 6, PaletteSwatch.EyeGlass);
             return b;
         }
 

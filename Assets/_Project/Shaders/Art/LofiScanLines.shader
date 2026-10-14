@@ -6,7 +6,7 @@ Shader "MoonProject/Art/LofiScanLines"
 {
     Properties
     {
-        [HDR] _LineColor("Line drawing (linear)", Color) = (1.2, 1.22, 1.28, 1)
+        [HDR] _LineColor("Line drawing (linear)", Color) = (0.88, 0.92, 0.96, 1)
         _ScanProgress("Scan progress", Range(0, 1)) = 0
         _Dissolve("Dissolve", Range(0, 1)) = 0
     }

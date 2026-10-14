@@ -74,6 +74,7 @@ namespace MoonProject.Gameplay.Feel.Tests
             Assert.AreEqual(tuning.MotePool, vfx.Charge.MotesShown, "the mote pool is full");
             PublishScan(events);
             vfx.Step(Step);
+            Assert.IsTrue(vfx.ScanBeam.Shown, "the scan beam connects 07 to the fragment");
             Assert.AreEqual(tuning.ScanRibbonBeads, vfx.ScanRibbon.Shown, "the scan ribbon streams");
 
             using (ProfilerRecorder recorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, AllocatedInFrame))
@@ -118,11 +119,12 @@ namespace MoonProject.Gameplay.Feel.Tests
             vfx.Dispose();
         }
 
-        // A scan's dissolve beginning: the ribbon streams through every measured frame (see Tuning).
+        // A scan beam active and a dissolve ribbon streaming through every measured frame (see Tuning).
         private static void PublishScan(EventBus events)
         {
-            events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, new Vector3(0f, 1f, 1.5f), Vector3.up, 1f,
-                0f));
+            var point = new Vector3(0f, 1f, 1.5f);
+            events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, point, Vector3.up, 1f, 0f));
+            events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Anticipate, point, Vector3.up * 0.5f, 0.25f, 3f));
         }
 
         private static void Publish(EventBus events, FeelPhase phase, float strength, float seconds)

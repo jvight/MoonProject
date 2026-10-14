@@ -15,9 +15,9 @@ Shader "MoonProject/Art/LofiScanSolid"
         _Surface("Surface", Float) = 0.0
         _MoonRim("Rim (brightness, exponent, up cutoff, horizon lean)", Vector) = (0, 3, 0.6, 0.6)
         _MoonAoTint("Foot occlusion tint", Color) = (0.3, 0.3, 0.4, 1)
-        [HDR] _SweepColor("Sweep (the scan's line, linear)", Color) = (0.4, 2.2, 2.6, 1)
+        [HDR] _SweepColor("Sweep (the scan's line, linear)", Color) = (0.06, 0.47, 0.52, 1)
         _DrawnColor("Drawn (paper the scanned part pales toward)", Color) = (0.86, 0.88, 0.92, 1)
-        _SweepWidth("Sweep width (share of the height)", Range(0.005, 0.2)) = 0.04
+        _SweepWidth("Sweep width (share of the height)", Range(0.005, 0.2)) = 0.022
         _ScanProgress("Scan progress", Range(0, 1)) = 0
         _Dissolve("Dissolve", Range(0, 1)) = 0
         _Fade("Fade", Range(0, 1)) = 0
@@ -123,7 +123,7 @@ Shader "MoonProject/Art/LofiScanSolid"
                 surface.positionCS = input.positionCS;
                 surface.albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).rgb * _BaseColor.rgb;
                 surface.albedo = lerp(surface.albedo, _MoonAoTint.rgb, input.occlusion);
-                surface.albedo = lerp(surface.albedo, _DrawnColor.rgb, drawn * 0.65);
+                surface.albedo = lerp(surface.albedo, _DrawnColor.rgb, drawn * 0.65) * (1.0 - 0.35 * sweep);
                 surface.emission = SAMPLE_TEXTURE2D(_EmissionMap, sampler_EmissionMap, input.uv).rgb
                     * _EmissionColor.rgb + _SweepColor.rgb * sweep;
                 surface.vertexLight = input.fogFactorAndVertexLight.yzw;
