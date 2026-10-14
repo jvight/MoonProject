@@ -4,7 +4,28 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 0000000000000000000000. LATEST (2026-10-14 ~12:30): main 402116ed (D2 gameplay) verified + pushed; D2 UI + sweep on agy
+## 00000000000000000000000. LATEST (2026-10-14 ~17:20): 0.5.5 release candidate febadf78 (LOCAL, not pushed); 2 explicit tests to fix
+- **Local main febadf78 (NOT pushed; origin = 1fed6c2a):** 13a4ec70 D2 UI (agy-ui 7a4e809f: place card count, chart
+  pencil brackets, torn sheets, ITechTree.KitOf); 5851c869 Bell's parts under a RockfallPocket in each canyon alcove,
+  dug out (agy 50c71957 + 0752bad7) + NoLooseLootSession (agy 4244ec13, explicit real-scene check: every find/glint is
+  hosted by a place); 6e2688ea FriendTuning.asset reserialized; febadf78 bundleVersion 0.5.5.
+- **`verify --explicit` on febadf78: everything PASS (compile, EditMode, PlayMode, Playthrough 1614.7/1735) except 2
+  explicit sessions** (logs Logs/director/20261014-161827-verify-febadf7.*):
+  1. NoLooseLootSession reads its capture poses from a git-ignored Logs/sweep1 file -> commit the poses as test data,
+     drop its verbose inventory dump;
+  2. LiftSession.TheBellyLift_IsStitched... times out "still Jammed": D1 re-seeded it (relic in the Cradle instead of a
+     tube) without running it; fix the test's seeding (the Playthrough goes through the lift fine).
+  Brief ready: D:/Project/MoonProject-wt/agy/Logs/TASK.md (RELEASE-FIX; box/agy = febadf78). agy's CLI got 429
+  "Resets in 1h54m" at 17:07 (owner's app page showed 91% left: the CLI quota seems separate). A one-shot cron at
+  19:05 retries; if agy still can't, the gameplay Claude session can do it (owner's choice).
+- **Then:** `verify --explicit --parallel --push` on the fixed main; `python tools/build_player.py` in
+  MoonProject-wt/director; copy the zip to D:/Project/MoonProject/Builds; tell the owner (Vietnamese).
+- agy (Gemini 4 Argon ONLY; memory agy-worker, agy-cli-reference): launch with
+  `bash D:/Project/MoonProject-wt/agy-install/agy_run.sh <worktree> [model] [max_s]` (v2: waits out short rate limits and
+  resumes the conversation; never edit it while a run is active). Model trial box/agy-model 97b677e0 (0.6 sweeper) kept.
+- All Claude worker sessions stand by. Owner pending: story v3's 7 questions.
+
+## 0000000000000000000000. (prev) (2026-10-14 ~12:30): main 402116ed (D2 gameplay) verified + pushed; D2 UI + sweep on agy
 - **Landed + verified today since 98e82f69:**
   - 48bb3543: agy's first lands (ui Scan chip 74f2032a; art cleanup f45a1120+667aa4d1: no reader parts, no hand-off,
     no tube model, 07's TubeSocket -> StoryPartSocket) + ARCHITECTURE (scan-fragment contract, 3 lab stations).
