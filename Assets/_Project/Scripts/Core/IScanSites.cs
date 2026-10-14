@@ -5,8 +5,9 @@ namespace MoonProject.Core
     /// <summary>
     /// The places that hold scan fragments (docs/design/0.5.5-owner-feedback.md §1.4), registered by Gameplay: the
     /// salvage sites (a derelict standing inside a wreck counts as its wreck), the derelicts on the routes and the
-    /// chasm's near lip. Each place id is a crew map place id (<see cref="Map.MapPlace.Id"/>: "site.garage",
-    /// "micro.06", "canyon.lip"). The list is fixed after initialisation, in a stable order; queries never allocate.
+    /// chasm's near lip. A place id is the crew map id (<see cref="Map.MapPlace.Id"/>) for the sites and the lip
+    /// ("site.garage", "canyon.lip"), the derelict's micro.* id otherwise ("micro.06": no crew map place). The list
+    /// is fixed after initialisation, in a stable order; queries never allocate.
     /// <see cref="Events.ScanSiteReached"/> and <see cref="Events.ScanSiteEmptied"/> tell the moments; a loaded game
     /// is read from here.
     /// </summary>
@@ -14,7 +15,7 @@ namespace MoonProject.Core
     {
         int Count { get; }
 
-        /// <summary>The place's map id.</summary>
+        /// <summary>The place's id: its crew map id, or a derelict's micro.* id.</summary>
         string PlaceId(int index);
 
         /// <summary>Where the place is on the surface (its map place's position).</summary>
