@@ -741,18 +741,6 @@ MonoBehaviour:
     _volumeMax: 0.55
     _pitchMin: 1
     _pitchMax: 1
-  - _id: cable_ticks
-    _clips:
-    - {fileID: 8300000, guid: 6f27fed54e0dfa8428282c14a7605d15, type: 3}
-    _variantLabels:
-    - cable_ticks
-    _bus: 2
-    _spatial: 0
-    _loop: 0
-    _volumeMin: 0.5
-    _volumeMax: 0.5
-    _pitchMin: 1
-    _pitchMax: 1
   - _id: component_found
     _clips:
     - {fileID: 8300000, guid: 1a8ee462e4337db4daaf9f916d37e016, type: 3}
@@ -2320,12 +2308,10 @@ MonoBehaviour:
     - {fileID: 8300000, guid: a397a0c94249af64e8d90bf21075b678, type: 3}
     - {fileID: 8300000, guid: 78c256e8e8c738d49b700eed30e3053f, type: 3}
     - {fileID: 8300000, guid: d31a106524d73984c8c8092f6af1396c, type: 3}
-    - {fileID: 8300000, guid: fc98f7a4c3b56034d89c0fc1c4e13eb3, type: 3}
     _variantLabels:
     - 01
     - 02
     - 03
-    - 04
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -2343,42 +2329,6 @@ MonoBehaviour:
     _loop: 1
     _volumeMin: 0.7
     _volumeMax: 0.7
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: reader_reel
-    _clips:
-    - {fileID: 8300000, guid: 1b71fdb54c2108d40a1f68966f681350, type: 3}
-    _variantLabels:
-    - reader_reel
-    _bus: 2
-    _spatial: 1
-    _loop: 1
-    _volumeMin: 0.45
-    _volumeMax: 0.45
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: reader_take
-    _clips:
-    - {fileID: 8300000, guid: e4094ad216550ed4d9863ed535abba5a, type: 3}
-    _variantLabels:
-    - reader_take
-    _bus: 2
-    _spatial: 1
-    _loop: 0
-    _volumeMin: 0.5
-    _volumeMax: 0.5
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: reader_decode_chime
-    _clips:
-    - {fileID: 8300000, guid: 8effb5ffd5848a542acf5a0d654f1cb1, type: 3}
-    _variantLabels:
-    - reader_decode_chime
-    _bus: 2
-    _spatial: 0
-    _loop: 0
-    _volumeMin: 0.55
-    _volumeMax: 0.55
     _pitchMin: 1
     _pitchMax: 1
   - _id: recovery_row_chord
@@ -2437,18 +2387,6 @@ MonoBehaviour:
     _loop: 1
     _volumeMin: 0.4
     _volumeMax: 0.4
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: blueprint_found
-    _clips:
-    - {fileID: 8300000, guid: 520e7962942727f42a4d640f0f60d95a, type: 3}
-    _variantLabels:
-    - blueprint_found
-    _bus: 2
-    _spatial: 1
-    _loop: 0
-    _volumeMin: 0.5
-    _volumeMax: 0.5
     _pitchMin: 1
     _pitchMax: 1
   - _id: dock_evening_swell

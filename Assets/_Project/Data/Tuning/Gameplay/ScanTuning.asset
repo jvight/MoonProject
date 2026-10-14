@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e30e611b5bbba2429b30649ca14e4f4, type: 3}
+  m_Name: ScanTuning
+  m_EditorClassIdentifier: 
+  _sets:
+  - _blueprint: CargoCradle
+    _kitId: rover.cargo_cradle
+    _sizes: 0100000001000000
+  - _blueprint: WarmHeadlamp
+    _kitId: rover.warm_headlamp
+    _sizes: 0000000001000000
+  - _blueprint: HoverJump
+    _kitId: rover.hover_jump
+    _sizes: 000000000100000001000000
+  - _blueprint: BoostCoils
+    _kitId: rover.boost_coils
+    _sizes: 010000000100000002000000
+  - _blueprint: CellPack
+    _kitId: rover.cell_pack
+    _sizes: 000000000000000001000000
+  - _blueprint: FocusLens
+    _kitId: rover.focus_lens
+    _sizes: 000000000000000000000000
+  - _blueprint: SideBins
+    _kitId: rover.side_bins
+    _sizes: 0100000002000000
+  _smallSeconds: 1.5
+  _mediumSeconds: 2.5
+  _largeSeconds: 4
+  _lensFactor: 1.5
+  _bracketRange: 15
+  _lensBracketRange: 25
+  _reach: 8
+  _cone: 25
+  _distanceWeight: 0.2
+  _engageSpeed: 0.4
+  _dissolveSeconds: 0.9
+  _outlineSeconds: 2
+  _knownMetal: 3
+  _jumperSetback: 6
+  _jumperSide: 6
