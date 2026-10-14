@@ -21,13 +21,13 @@ namespace MoonProject.Art.Tests
             "Neck/Head/Weather_Paint", "Neck/Head/Weather_Dust", "Neck/Head/Eye/LensSocket",
             "SolarWing", "SolarWing/CellFilled", "Antenna", "Antenna/AntennaTip", "Antenna/Pennant",
             "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket", "DrumSocket_L",
-            "DrumSocket_R", "StoryPartSocket", "PartSocket", "SpineSocket", "DeckSocket", "BinSocket_L", "BinSocket_R",
+            "DrumSocket_R", "PartSocket", "SpineSocket", "DeckSocket", "BinSocket_L", "BinSocket_R",
         };
 
         private static readonly string[] EmptyNodes =
         {
             "TetherOrigin", "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket",
-            "DrumSocket_L", "DrumSocket_R", "StoryPartSocket", "PartSocket", "SpineSocket", "DeckSocket", "RingSocket",
+            "DrumSocket_L", "DrumSocket_R", "PartSocket", "SpineSocket", "DeckSocket", "RingSocket",
             "LensSocket", "BinSocket_L", "BinSocket_R", "ScanFanSocket",
         };
 
@@ -368,14 +368,16 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
-        public void PartSocket_StandsOnTheLid_ApartFromStoryPartSocket_SoBothReadFromTheChase()
+        public void PartSocket_StandsOnTheLid_ApartFromSpineSocket_AndStoryPartSocketIsGone()
         {
+            Assert.IsNull(_rover.GetDescendant("StoryPartSocket"),
+                "StoryPartSocket is gone: story parts ride in the hold.");
             Vector3 part = _rover.GetDescendant(RoverModelBuilder.PartSocketName).LocalPosition;
-            Vector3 storyPart = _rover.GetDescendant(RoverModelBuilder.StoryPartSocketName).LocalPosition;
+            Vector3 spine = _rover.GetDescendant(RoverModelBuilder.SpineSocketName).LocalPosition;
             Assert.AreEqual(RoverModelBuilder.NeckBase.y, part.y, 0.02f, "a part stands on the lid");
-            Assert.Greater(new Vector2(part.x - storyPart.x, part.z - storyPart.z).magnitude, 0.5f,
+            Assert.Greater(new Vector2(part.x - spine.x, part.z - spine.z).magnitude, 0.5f,
                 "both lid sockets never overlap");
-            Assert.Greater(part.z, storyPart.z, "PartSocket rides ahead of StoryPartSocket, seen over the lid from the chase");
+            Assert.Greater(part.z, spine.z, "PartSocket rides ahead of SpineSocket, seen over the lid from the chase");
         }
 
         private static HashSet<PaletteSwatch> Swatches(LowPolyMeshBuilder geometry)
