@@ -2460,7 +2460,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Until(() => _gameplay.Hints.Primary.Kind == InteractionKind.Tune, 3f,
                 "the Tune prompt is offered in front of her");
             var heard = new List<string>();
-            for (int turn = 0; turn < 3; turn++)
+            for (int turn = 0; turn < 4; turn++)
             {
                 int cues = _events.BellCued.Count;
                 Press(_keyboard.eKey, queueEventOnly: true);
@@ -2491,8 +2491,11 @@ namespace MoonProject.Gameplay.PlayModeTests
                 }
             }
 
-            CollectionAssert.AreEqual(new[] { "TapeDeck (" + DustAndHoney + ")", "QuietHours", "LumenAfterDark" },
-                heard, "one click per detent, round again to Ro's show (the deck holds 06's tape, found first)");
+            CollectionAssert.AreEqual(new[]
+                {
+                    "TapeDeck (" + DustAndHoney + ")", "TapeDeck (" + AfterDark + ")", "QuietHours", "LumenAfterDark",
+                }, heard, "one click per detent: each of Ro's two tapes on the deck (06's found first), then round " +
+                          "again to Ro's show");
             End("Turn Bell's dial through every station", string.Join(" -> ", heard));
         }
 
