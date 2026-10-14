@@ -4497,7 +4497,10 @@
         "Assets/_Project/Audio/SFX/site_answer_kestrel.wav",
         "Assets/_Project/Audio/SFX/site_answer_kestrel_relic.wav",
         "Assets/_Project/Audio/SFX/site_answer_lander.wav",
-        "Assets/_Project/Audio/SFX/site_answer_lander_relic.wav"
+        "Assets/_Project/Audio/SFX/site_answer_lander_relic.wav",
+        "Assets/_Project/Audio/SFX/site_answer_micro_06.wav",
+        "Assets/_Project/Audio/SFX/site_answer_micro_mule.wav",
+        "Assets/_Project/Audio/SFX/site_answer_micro_drone.wav"
       ],
       "variantLabels": [
         "depot",
@@ -4509,7 +4512,10 @@
         "kestrel",
         "kestrel_relic",
         "lander",
-        "lander_relic"
+        "lander_relic",
+        "micro_06",
+        "micro_mule",
+        "micro_drone"
       ],
       "sha256": [
         "6631ee536aec6e289fd1e2346bfddfa5f341348c932fb56be5e0689cd14966c6",
@@ -4521,7 +4527,10 @@
         "ccd65732f4268f6ae49493ed9595f627bfc9fb0df7844cfdb2e3a07f0b097c0c",
         "fe9fca43e7f46efc4456392035e221ff944cc17b2033cc3abf25051efd6a70a4",
         "577fa5cbda7dbdcc8c6c9829211f8905f858f7843a6a3f3a6371283b404a4aae",
-        "bbffdaaca0b111f640bbbe043cfd2c71ac3ae9efdf4d229c4ac30bf81d4c3392"
+        "bbffdaaca0b111f640bbbe043cfd2c71ac3ae9efdf4d229c4ac30bf81d4c3392",
+        "f88dee46bd60b454ae5da2e83c52af8462c2cb4db86ebb1a81d14c5ff6e172d2",
+        "307096491a91b32031e8e58834d38962619f46cf91cc2cbdb6f30960b2352a33",
+        "20c5eba3445fa2b52edbe8f77d28f9df2cf4a1851a9d7ffb1ae8a5bb362b3d51"
       ],
       "volumeMin": 0.8,
       "volumeMax": 0.8,
@@ -4532,7 +4541,7 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": true,
-      "notes": "A site answering a ping: hull resonance on its note (depot D4, garage E4, drill F#4, kestrel A4, lander B4); '_relic' answers warmer with its octave and a D5 glow."
+      "notes": "A site answering a ping: hull resonance on its note (depot D4, garage E4, drill F#4, kestrel A4, lander B4); '_relic' answers warmer with its octave and a D5 glow; the lone derelicts (micro_06 F#5, micro_mule D5, micro_drone A5) answer thinner and shorter, an octave above."
     },
     {
       "id": "hopper_feed_hum",

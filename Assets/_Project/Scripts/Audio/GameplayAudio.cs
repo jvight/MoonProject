@@ -23,6 +23,7 @@ namespace MoonProject.Audio
     {
         private const int SubscriptionCount = 14;
         private const string SiteRelicSuffix = "_relic";
+        private const string MicroLabelPrefix = "micro_";
 
         /// <summary>Upgrades sold at Kenji's workbench (rover abilities) use this id prefix.</summary>
         private const string WorkshopUpgradePrefix = "rover.";
@@ -38,7 +39,8 @@ namespace MoonProject.Audio
         private readonly LoopFader _rumbleFader = new LoopFader();
         private readonly Dictionary<string, int> _relicVoices = new Dictionary<string, int>(StringComparer.Ordinal);
 
-        // Site answers by site id ("site.depot"): the plain voice and the warmer one while a relic waits there.
+        // Site answers by site id ("site.depot", "micro.mule"): the plain voice and the warmer one while a relic waits
+        // there (the lone derelicts have only the plain one).
         private readonly Dictionary<string, int> _siteVoices = new Dictionary<string, int>(StringComparer.Ordinal);
         private readonly Dictionary<string, int> _siteRelicVoices =
             new Dictionary<string, int>(StringComparer.Ordinal);
@@ -138,6 +140,11 @@ namespace MoonProject.Audio
                 {
                     _siteRelicVoices[WorldAnchorIds.SitePrefix + label.Substring(0, label.Length -
                                                                                   SiteRelicSuffix.Length)] = i;
+                }
+                else if (label.StartsWith(MicroLabelPrefix, StringComparison.Ordinal))
+                {
+                    // A lone derelict (WorldAnchorIds.MicroPrefix + name): its label spells the id with an underscore.
+                    _siteVoices[WorldAnchorIds.MicroPrefix + label.Substring(MicroLabelPrefix.Length)] = i;
                 }
                 else
                 {

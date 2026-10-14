@@ -1708,13 +1708,36 @@ def salvage_break(variant, gen):
 
 # Site names after their anchor's "site." prefix; the runtime maps SiteAnswered.SiteId to these labels.
 SITE_ANSWER_NOTES = (("depot", "D4"), ("garage", "E4"), ("drill", "F#4"), ("kestrel", "A4"), ("lander", "B4"))
-SITE_ANSWER_LABELS = tuple(label for site, _ in SITE_ANSWER_NOTES for label in (site, f"{site}_relic"))
+# The basin's lone derelicts (0.5.5 section 1.7) answer the listen too: ids "micro.<name>", labelled "micro_<name>" (the
+# runtime maps the label back). Machines on their own, not stations: a higher, thinner octave, shorter and drier, each
+# on its own note and colour: (label, note, low-pass Hz, knock gain).
+MICRO_ANSWER_VOICES = (("micro_06", "F#5", 4200.0, 0.04), ("micro_mule", "D5", 2800.0, 0.08),
+                       ("micro_drone", "A5", 5200.0, 0.02))
+SITE_ANSWER_LABELS = (
+    tuple(label for site, _ in SITE_ANSWER_NOTES for label in (site, f"{site}_relic"))
+    + tuple(label for label, _, _, _ in MICRO_ANSWER_VOICES))
+
+
+def _micro_answer(voice, gen):
+    """A lone derelict answering the listen: a small, thin hull ring an octave above the stations' (a single detuned
+    twin, a faint octave), short and dry, so it reads as one machine rather than a place."""
+    _, note, cutoff, knock_gain = voice
+    freq = note_freq(note)
+    n = samples(2.2)
+    ring = (instruments.partial(n, freq, 1.0, 0.1, 1.4)
+            + instruments.partial(n, freq, 0.5, 0.1, 1.3, detune_cents=8.0)
+            + instruments.partial(n, 2.0 * freq, 0.1, 0.08, 0.6))
+    knock = filters.lowpass(noise.white(n, gen), 700.0) * envelope.ar(n, 0.002, 0.03)
+    mix = 0.45 * ring + knock_gain * knock / max(float(np.max(np.abs(knock))), 1e-9)
+    return _mono_reverb(filters.lowpass(mix, cutoff), room=0.45, damping=0.7, wet=0.18, dry=1.0)
 
 
 def site_answer(variant, gen):
     """A salvage site answering 07's ping on its own note: a soft, hollow hull resonance swelling up (detuned twins,
     a slow beat) and settling. A site still holding a crew relic answers warmer: its octave and a D5 glow rise
     with it."""
+    if variant >= 2 * len(SITE_ANSWER_NOTES):
+        return _micro_answer(MICRO_ANSWER_VOICES[variant - 2 * len(SITE_ANSWER_NOTES)], gen)
     note = SITE_ANSWER_NOTES[variant // 2][1]
     holds_relic = variant % 2 == 1
     freq = note_freq(note)
@@ -2738,7 +2761,8 @@ CUES = (
     Cue("site_answer", "oneshot_3d", site_answer, variants=len(SITE_ANSWER_LABELS), variant_labels=SITE_ANSWER_LABELS,
         volume=(0.8, 0.8), fade_out=0.25, milestone="M3", tonal=True,
         notes="A site answering a ping: hull resonance on its note (depot D4, garage E4, drill F#4, kestrel A4, "
-              "lander B4); '_relic' answers warmer with its octave and a D5 glow."),
+              "lander B4); '_relic' answers warmer with its octave and a D5 glow; the lone derelicts "
+              "(micro_06 F#5, micro_mule D5, micro_drone A5) answer thinner and shorter, an octave above."),
     Cue("hopper_feed_hum", "loop_3d", hopper_feed_hum, loop=True, file_stem="hopper_feed_hum_loop",
         volume=(0.45, 0.45), milestone="M3", tonal=True, notes="07's beam feeding a hopper: soft D3/A3 hum + air."),
     Cue("hopper_clunk", "oneshot_3d", hopper_clunk, variants=2, volume=(0.55, 0.6), fade_out=0.1, milestone="M3",

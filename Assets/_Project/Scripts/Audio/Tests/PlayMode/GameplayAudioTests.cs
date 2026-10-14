@@ -108,6 +108,18 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [Test]
+        public void SiteAnswered_TheLoneDerelicts_EachAnswerInTheirOwnVoice()
+        {
+            var at = new Vector3(12f, 0f, -8f);
+            _rig.Events.Publish(new SiteAnswered(WorldAnchorIds.Micro06, at, 20f, false));
+            AssertLastPlayed("site_answer_micro_06", at);
+            _rig.Events.Publish(new SiteAnswered(WorldAnchorIds.MicroMule, at, 20f, false));
+            AssertLastPlayed("site_answer_micro_mule", at);
+            _rig.Events.Publish(new SiteAnswered(WorldAnchorIds.MicroDrone, at, 20f, false));
+            AssertLastPlayed("site_answer_micro_drone", at);
+        }
+
+        [Test]
         public void SiteAnswered_UnknownSite_IsReportedAndSilent()
         {
             int plays = _rig.Director.PlayCount;
