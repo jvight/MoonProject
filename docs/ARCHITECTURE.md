@@ -168,9 +168,10 @@ Generated/Art/Rover/Kit_CargoRack.prefab     strapped rear rack basket, root at 
   RelicSeat                                  empty where a carried relic rests (+Y up)
 RoverModel additions:
   DrumSocket_L, DrumSocket_R                 empties on the flanks, +X outward
-  TubeSocket                                 empty on the lid right of the wing, +X fore and aft (the BlueprintTube)
-  PartSocket                                 empty on the lid right of the neck, ahead of the tube, +Y up (a story part)
-  SpineSocket                                empty on the lid's right edge, outboard of the tube, +Y up: Cell Pack II's
+  StoryPartSocket                            empty on the lid right of the wing, +X fore and aft: the tower's story
+                                             parts ride here (Part_<id> children; rover's StoryPartCarry shows one)
+  PartSocket                                 empty on the lid right of the neck, ahead of StoryPartSocket, +Y up
+  SpineSocket                                empty on the lid's right edge, outboard of StoryPartSocket, +Y up: Cell Pack II's
                                              Kit_BatterySpine (two cream cells on a rail, brass bands; M3-20)
   SolarWing/CellFilled                       the replacement cell, hidden until Tilly's gift
   Body/Decal07Fresh                          a freshly stencilled "07", hidden until Bell's gift (the faded one hides then)
@@ -368,18 +369,14 @@ Generated/Art/Base/Lander.prefab   (kept GUID) root on the ground under the cabi
     RingRail                       the camera's ring, centred on the axis at the rail's height; radius LabRingRadius
                                    (0.4 m in from the wall, under the ceiling)
     Station_Chart                  frame at each station's face: +Z out of the station toward the axis, +Y up, at
-    Station_Reader                 07's lens height; clockwise from above Chart, Reader, Board, Keepsakes (LabStation
-    Station_Board                  order), Chart on the wall that faces the Peak under the big porthole
-    Station_Keepsakes
+    Station_Board                  07's lens height; clockwise from above Chart, Board, Keepsakes (LabStation 0..2),
+    Station_Keepsakes              Chart on the wall that faces the Peak under the big porthole; the old reader's
+                                   wall is plain lining
     Station_Chart/LightTable       Ines's table (M3-07 space: +X across, +Y up its slope, +Z out of it)
       LightTableGlow               glow: the lit panel under the paper (home light ChartTable)
       MapSheet                     the paper
       ChartPen/ChartPenCarriage/ChartPenHead   as M3-07: carriage along local X 0..ChartDrawWidth, head along local
                                    Y 0..ChartDrawHeight
-    Station_Reader/Slot            the tube slot at lens height, +Z out of its mouth: the beam feeds here
-    Station_Reader/Reel            the reel, spins about local Z
-    Station_Reader/Tape            the paper tape from the reel toward the board; its local X scale 0..1 is how much
-                                   has run out
     Station_Board/Pin_<n>          one pin per 0.5 tech node, n = (int)TechNodeId
     Station_Board/Sheet_<n>        the node's sheet, hidden until decoded
     Station_Board/Lamp_<n>         glow: the node's lamp, lit once built
@@ -388,10 +385,6 @@ Generated/Art/Base/Lander.prefab   (kept GUID) root on the ground under the cabi
                                    as 07 looks: Ines 0, Ro 1-2, Theo 3-4, Kenji 5 (BaseModelBuilder.KeepsakeSection)
     Station_Keepsakes/ReadingLamp_<n>  glow: one warm lamp per crew section, brightening per keepsake
     CabinLamps                     glow: the lab's four wall lamps (home light LabLamps)
-  HandOffPath                      the hand-off pulse's polyline (DecodeHandOff): Point_<n> empties in order from the
-                                   reader's slot over the lab's ceiling, down the back-right leg and along the ground
-                                   to a junction box on the bay's back wall
-  HandOffCable/Glow_<n>            glow: the pulse's glass segments along the path, in the same order
 ```
 - **Removed from the lander:** `LiftPlatform`, `LiftBottom`, `LiftTop`, `LiftCable_L|R`, `LiftCableR_Snapped`,
   `WinchLamp`, `LiftHopperMouth`, `ShelfAnchor`, `DeckHatch` (the deck lookout is cut), `PowerCable_Lift`. The
@@ -401,10 +394,25 @@ Generated/Art/Base/Lander.prefab   (kept GUID) root on the ground under the cabi
   their names and axes; the plotter hangs on the back wall above the turntable and the bench goes.
 - **Driven by World from events** (no Gameplay wiring needed): the porthole lamps, the board's sheets and lamps
   (`TechNodeChanged`), the recovery rows (`RecoveryProgressChanged`), the light table's glow and the chart pen
-  (`MapLookStarted`, `MapInkCued`, `MapLookEnded`), the hand-off pulse (`DecodeHandOff`), and every lamp's
+  (`MapLookStarted`, `MapInkCued`, `MapLookEnded`), and every lamp's
   `IHomeLights` level (HomeLight: `LiftLamps` = the belly lamp and hatch rim and `LabLamps` wake with Home,
-  `ChartTable` with Chart). Gameplay moves the platform, the hatch leaves, the cables, the reel and the tape, shows
+  `ChartTable` with Chart). Gameplay moves the platform, the hatch leaves and the cables, shows
   and hides `Lab` and the jam, and lights `PadGlow` and `RimLamps`.
+
+## Contract: scan fragments (Art -> Gameplay; Rover, Audio and UI listen)
+- **Hosts:** any salvage site's or derelict's prefab, or `Props/JumperWreck` (Gameplay places it 6 m back from
+  `canyon.lip` and 6 m left of the run-up, nose +Z to the chasm). They hold `FragmentSocket_<Blueprint>_<n>` empties
+  anywhere under their root; Blueprint is ScanTuning's set name, n runs 0..count-1. Every set lies in the world exactly
+  once, and every bay kit has one set.
+- **Fragments:** `Generated/Art/Fragments/Fragment_<Blueprint>_<n>` is instanced on its socket with identity. Nodes:
+  `Solid` and `Lines` (MPB `_ScanProgress` and `_Dissolve`, 0..1), `ScanTarget`, `Brackets` (inactive; shown within the
+  bracket range while unscanned), `DustOutline` (inactive; shown after the dissolve with `_Fade` 0..1 over
+  OutlineSeconds, then the fragment hides).
+- **Events:** `ScanStarted`/`ScanStopped`, `FeelBeat(Scan)`, `FragmentScanned` (id "<kit>.<n>", Index = how many were
+  scanned before it), then `BlueprintCompleted`; the places: `IScanSites` (Gameplay registers it; per place Left/Known,
+  per set ScannedOf/SetSize), `ScanSiteReached`, `ScanSiteEmptied`. A scan comes after every other E verb on offer.
+- **Save:** `gameplay.scans`; `gameplay.blueprints` carried/reading tubes are read once from 0.5.4 saves and never
+  written (they load as learned).
 
 ## Contract: world anchors (World -> Gameplay, Audio)
 World registers `Core/IWorldAnchors` (Count / Get(index) / TryGet(id)): named `WorldAnchor`s (id, surface position,
