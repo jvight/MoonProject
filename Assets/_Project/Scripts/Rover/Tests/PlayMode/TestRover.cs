@@ -183,6 +183,9 @@ namespace MoonProject.Rover.PlayModeTests
         /// <summary>The world's landmarks (a test may move the base to bring 07 home).</summary>
         public TestWorldLayout Layout { get; } = new TestWorldLayout();
 
+        /// <summary>The world's regions (a test may vary the blended far clip plane).</summary>
+        public TestWorldRegions Regions { get; } = new TestWorldRegions();
+
         public RoverTuning Tuning => (RoverTuning)_tunings[0];
 
         public RoverRigTuning RigTuning => (RoverRigTuning)_tunings[1];
@@ -512,6 +515,7 @@ namespace MoonProject.Rover.PlayModeTests
             var context = new GameContext(new EventBus(), input);
             context.Register(world.Terrain);
             context.Register<IWorldLayout>(rover.Layout);
+            context.Register<IWorldRegions>(rover.Regions);
             context.Register<IFriendRoster>(rover.Friends);
             context.Register<IRoverEquipment>(rover.Equipment);
             context.Register<IWorldAnchors>(rover.Anchors);

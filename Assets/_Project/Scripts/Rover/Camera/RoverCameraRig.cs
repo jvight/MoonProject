@@ -117,6 +117,7 @@ namespace MoonProject.Rover
         private float _shotWeight;
         private float _appliedCameraRadius = -1f;
         private ITerrainQuery _terrain;
+        private IWorldRegions _regions;
         private EventBus _events;
         private InputReader _input;
         private CameraOrbit _orbitState;
@@ -200,6 +201,7 @@ namespace MoonProject.Rover
             _stillness = context.Get<IRoverStillness>();
             _fit = context.Get<IBayFitView>();
             _terrain = context.Get<ITerrainQuery>();
+            _regions = context.Get<IWorldRegions>();
             _events = context.Events;
             _input = context.Input;
             _orbitState = new CameraOrbit(_tuning);
@@ -258,10 +260,12 @@ namespace MoonProject.Rover
 
         private void ApplyCinemachineSettings()
         {
+            float farClip = _regions != null ? _regions.CurrentFarClipPlane : _tuning.FarClip;
             _camera.Follow = _target;
             _camera.LookAt = _target;
             _camera.Lens.NearClipPlane = _tuning.NearClip;
-            _camera.Lens.FarClipPlane = _tuning.FarClip;
+            _camera.Lens.FarClipPlane = farClip;
+            _viewCamera.farClipPlane = farClip;
 
             _orbit.OrbitStyle = CinemachineOrbitalFollow.OrbitStyles.Sphere;
             _orbit.Radius = _tuning.Distance;
@@ -747,7 +751,10 @@ namespace MoonProject.Rover
             float tilt = Mathf.Min(held - elevation, _tuning.MaxLookUpTilt);
             _composer.TargetOffset = Vector3.up * LowOrbit.AimLift(floor, tilt, radius);
             _orbit.Radius = radius;
+            float farClip = _regions != null ? _regions.CurrentFarClipPlane : _tuning.FarClip;
             _camera.Lens.FieldOfView = fov;
+            _camera.Lens.FarClipPlane = farClip;
+            _viewCamera.farClipPlane = farClip;
             ScreenComposerSettings composition = _composer.Composition;
             composition.ScreenPosition = screen;
             _composer.Composition = composition;

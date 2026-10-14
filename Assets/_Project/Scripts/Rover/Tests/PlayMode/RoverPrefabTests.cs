@@ -89,6 +89,8 @@ namespace MoonProject.Rover.PlayModeTests
             var context = new GameContext(new EventBus(), _input);
             context.Register(_world.Terrain);
             context.Register<IWorldLayout>(new TestWorldLayout());
+            var regions = new TestWorldRegions();
+            context.Register<IWorldRegions>(regions);
             context.Register<IFriendRoster>(new TestFriendRoster());
             var equipment = new TestEquipment();
             equipment.Fitted(RoverKitPiece.HoverCoils);
@@ -112,8 +114,14 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreSame(controller.Kit, context.Get<IRoverCargoSeat>(), "The kit's rack is the cargo seat.");
             Assert.AreSame(cameraRig.Camera, context.Get<IViewCamera>().Camera);
             Assert.AreSame(cameraRig, context.Get<ILookSettings>());
+            Assert.AreEqual(TestWorldRegions.DefaultFarClipPlane, cameraRig.Camera.farClipPlane, 1e-3f);
+            Assert.AreEqual(TestWorldRegions.DefaultFarClipPlane, cameraRig.ChaseCamera.Lens.FarClipPlane, 1e-3f);
 
+            regions.CurrentFarClipPlane = 4500f;
             yield return null;
+            Assert.AreEqual(4500f, cameraRig.Camera.farClipPlane, 1e-3f);
+            Assert.AreEqual(4500f, cameraRig.ChaseCamera.Lens.FarClipPlane, 1e-3f);
+            regions.CurrentFarClipPlane = TestWorldRegions.DefaultFarClipPlane;
             yield return null;
             Camera camera = cameraRig.Camera;
             float openingPitch = Mathf.Asin(-camera.transform.forward.y) * Mathf.Rad2Deg;
