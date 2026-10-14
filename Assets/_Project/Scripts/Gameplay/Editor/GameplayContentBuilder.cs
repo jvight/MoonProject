@@ -104,9 +104,9 @@ namespace MoonProject.Gameplay.Editor
         }
 
         /// <summary>
-        /// Tilly, Ines's survey drone (docs/features/M3-02-friends-tilly.md): she lies in a shallow crater 60-110 m
-        /// east of home, in view from the base edge, her rotor, lens and cell scattered 30-60 m around her; repaired,
-        /// she perches on the lander and spots for 07. Bell, Ro's radio cabinet on legs (docs/features/M3-05): she
+        /// Tilly, Ines's survey drone (docs/features/M3-02-friends-tilly.md): she lies in a shallow crater 80-110 m
+        /// east of home, in view from the base edge, her rotor, lens and cell in her crashed survey sled beside her;
+        /// repaired, she perches on the lander and spots for 07. Bell, Ro's radio cabinet on legs (docs/features/M3-05): she
         /// leans against the back wall of the canyon terminus (4.85 m in from its anchor, where her back, 1.03 m
         /// behind her root, meets the sheer wall), her knob, cone and valve in the three alcoves (or along the way in),
         /// and Lumen After Dark, Vol. 1 is the fourth thing she needs; repaired she walks home to her corner by the
@@ -124,8 +124,7 @@ namespace MoonProject.Gameplay.Editor
                     new FriendPart("cell", LoadArt(GameplayAssetPaths.FriendPrefab("Part_TillyCell"))),
                 }, Array.Empty<string>(), FriendHome.Lander, "FriendSocket_tilly", false,
                 FriendDefinition.SpotterAbility, 3.5f, "tilly",
-                new FriendPlacement(41, new Vector2(80f, 110f), 77.5f, 17.5f, new Vector2(0.3f, 2.5f), 10f, true,
-                    new Vector2(30f, 60f)));
+                new FriendPlacement(41, new Vector2(80f, 110f), 77.5f, 17.5f, new Vector2(0.3f, 2.5f), 10f, true));
             var bell = ScriptableObject.CreateInstance<FriendDefinition>();
             bell.Populate("bell", LoadArt(GameplayAssetPaths.FriendPrefab("Bell_Broken")),
                 LoadArt(GameplayAssetPaths.FriendPrefab("Bell")), FriendBodyKind.RadioCabinet, new[]

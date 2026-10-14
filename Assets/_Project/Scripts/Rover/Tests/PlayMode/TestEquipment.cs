@@ -9,7 +9,7 @@ namespace MoonProject.Rover.PlayModeTests
     /// <see cref="IRoverEquipment"/> stand-in: what a loaded game has fitted, set by a test before 07's first frame
     /// (<see cref="Fitted"/>). Fitting in play is Gameplay's; tests publish <see cref="PartFitted"/> themselves.
     /// </summary>
-    public sealed class TestEquipment : IRoverEquipment
+    public sealed class TestEquipment : IRoverEquipment, ICutter
     {
         private const int Capacity = 4;
 
@@ -18,6 +18,22 @@ namespace MoonProject.Rover.PlayModeTests
         public int RowCapacity => Capacity;
 
         public int RowCount => 0;
+
+        public int Tier => 0;
+
+        public int LampCount => 2;
+
+        public float ChargeSeconds => 0.65f;
+
+        public float ResumeChargeSeconds => 0.3f;
+
+        public float BraceSeconds => 0.5f;
+
+        public float WarmWindowSeconds => 6f;
+
+        public float SpeedFactor => 1f;
+
+        public float DrainFactor => 1f;
 
         /// <summary>The socket each piece fits (0.5.5 §3.5's table).</summary>
         public static RoverSocket SocketFor(RoverKitPiece part)

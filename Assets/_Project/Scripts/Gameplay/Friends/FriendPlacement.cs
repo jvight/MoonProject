@@ -3,11 +3,11 @@ using UnityEngine;
 
 namespace MoonProject.Gameplay
 {
-    /// <summary>Where a friend lies and where its parts are scattered (see <see cref="FriendSitePlanner"/>).</summary>
+    /// <summary>Where a friend lies (see <see cref="FriendSitePlanner"/>).</summary>
     [Serializable]
     public sealed class FriendPlacement
     {
-        [Tooltip("Seed of this friend's placement: the same seed and world always give the same site and parts.")]
+        [Tooltip("Seed of this friend's placement: the same seed and world always give the same site.")]
         [SerializeField] private int _seed = 41;
 
         [Tooltip("Distance range (m) of the site from the base centre.")]
@@ -28,11 +28,8 @@ namespace MoonProject.Gameplay
         [Tooltip("The site must be in clear view (a silhouette on the dust) from the edge of the base pad.")]
         [SerializeField] private bool _visibleFromBase = true;
 
-        [Tooltip("Distance range (m) of the parts from the site.")]
-        [SerializeField] private Vector2 _partDistance = new Vector2(30f, 60f);
-
         public FriendPlacement(int seed, Vector2 siteDistance, float siteBearing, float siteBearingSpread,
-            Vector2 craterDepth, float craterRadius, bool visibleFromBase, Vector2 partDistance)
+            Vector2 craterDepth, float craterRadius, bool visibleFromBase)
         {
             _seed = seed;
             _siteDistance = siteDistance;
@@ -41,7 +38,6 @@ namespace MoonProject.Gameplay
             _craterDepth = craterDepth;
             _craterRadius = craterRadius;
             _visibleFromBase = visibleFromBase;
-            _partDistance = partDistance;
         }
 
         public int Seed => _seed;
@@ -51,7 +47,6 @@ namespace MoonProject.Gameplay
         public Vector2 CraterDepth => Ordered(_craterDepth);
         public float CraterRadius => _craterRadius;
         public bool VisibleFromBase => _visibleFromBase;
-        public Vector2 PartDistance => Ordered(_partDistance);
 
         private static Vector2 Ordered(Vector2 range)
         {

@@ -40,7 +40,6 @@ MonoBehaviour:
     _craterDepth: {x: 0, y: 0}
     _craterRadius: 0
     _visibleFromBase: 0
-    _partDistance: {x: 0, y: 0}
   _anchors:
     _site:
       _anchorId: canyon.terminus

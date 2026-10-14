@@ -3,7 +3,7 @@ using UnityEngine;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// How every friend behaves: site and part placement rules, the part pickups, the repair and boot-up, flying,
+    /// How every friend behaves: site placement rules, the part pickups, the repair and boot-up, flying,
     /// following, walking home unseen, home life, greetings and the spotter ability. Created by the Gameplay/Tuning
     /// builder; runtime code only reads it.
     /// </summary>
@@ -49,30 +49,6 @@ namespace MoonProject.Gameplay
         [Range(8, 256)] [SerializeField] private int _sightSamples = 64;
 
         [Header("Parts")]
-        [Tooltip("Candidate spots tried per part.")]
-        [Range(8, 512)] [SerializeField] private int _partAttempts = 96;
-
-        [Tooltip("Steepest ground (degrees) a part may lie on.")]
-        [Range(2f, 30f)] [SerializeField] private float _partMaxSlope = 14f;
-
-        [Tooltip("Metres kept between a part and the edge of the drivable floor.")]
-        [Range(0f, 60f)] [SerializeField] private float _partEdgeMargin = 8f;
-
-        [Tooltip("Minimum metres between two parts of a friend.")]
-        [Range(1f, 60f)] [SerializeField] private float _partSpacing = 15f;
-
-        [Tooltip("No part closer than this (m) to the base centre or to a relic site.")]
-        [Range(0f, 60f)] [SerializeField] private float _partClearance = 12f;
-
-        [Tooltip("Height (m) a part floats above the ground.")]
-        [Range(0.1f, 2f)] [SerializeField] private float _partHover = 0.55f;
-
-        [Tooltip("Bob amplitude (m) of a waiting part.")]
-        [Range(0f, 0.5f)] [SerializeField] private float _partBob = 0.1f;
-
-        [Tooltip("Bob frequency (Hz) of a waiting part.")]
-        [Range(0.05f, 2f)] [SerializeField] private float _partBobFrequency = 0.3f;
-
         [Tooltip("Idle turn (degrees per second) of a waiting part.")]
         [Range(0f, 180f)] [SerializeField] private float _partSpin = 30f;
 
@@ -369,14 +345,6 @@ namespace MoonProject.Gameplay
         public float ViewerEyeHeight => _viewerEyeHeight;
         public float SiteViewHeight => _siteViewHeight;
         public int SightSamples => _sightSamples;
-        public int PartAttempts => _partAttempts;
-        public float PartMaxSlope => _partMaxSlope;
-        public float PartEdgeMargin => _partEdgeMargin;
-        public float PartSpacing => _partSpacing;
-        public float PartClearance => _partClearance;
-        public float PartHover => _partHover;
-        public float PartBob => _partBob;
-        public float PartBobFrequency => _partBobFrequency;
         public float PartSpin => _partSpin;
         public float PartReachRadius => _partReachRadius;
 

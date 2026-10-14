@@ -24,14 +24,6 @@ MonoBehaviour:
   _viewerEyeHeight: 1.6
   _siteViewHeight: 0.5
   _sightSamples: 64
-  _partAttempts: 96
-  _partMaxSlope: 14
-  _partEdgeMargin: 8
-  _partSpacing: 15
-  _partClearance: 12
-  _partHover: 0.55
-  _partBob: 0.1
-  _partBobFrequency: 0.3
   _partSpin: 30
   _partReachRadius: 4.5
   _buriedPartFriend: tilly

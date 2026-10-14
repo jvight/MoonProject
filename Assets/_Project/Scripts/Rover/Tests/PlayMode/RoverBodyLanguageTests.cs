@@ -188,6 +188,48 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.Greater(_peakPerk, first + 0.1f, "Chained pickups make 07 visibly happier.");
         }
 
+        [UnityTest]
+        public IEnumerator CutWithoutCollectReward_AndDig_ReleaseGazeSoHeadReturnsForward()
+        {
+            Spawn(false);
+            yield return Wait(1f);
+
+            EventBus events = _rover.Context.Events;
+            Vector3 sealOnRight = _rover.Controller.Position + Vector3.right * 6f + Vector3.forward * 2f;
+            events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Anticipate, sealOnRight, Vector3.back, 0f, 0.5f));
+            events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Act, sealOnRight, Vector3.back, 0f, 0f));
+            yield return Wait(1f);
+            Assert.Greater(NeckYaw, TurnedHead, "07 turns its head to the container seal while cutting.");
+
+            events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Impact, sealOnRight, Vector3.back, 1f, 0f));
+            yield return Wait(4f);
+            Assert.AreEqual(0f, NeckYaw, 5f,
+                "After a seal cut completes without Collect.Reward, 07 releases cut gaze and looks ahead again.");
+
+            Vector3 relicOnRight = _rover.Controller.Position + Vector3.right * 6f + Vector3.forward * 2f;
+            events.Publish(new FeelBeat(FeelKind.Dig, FeelPhase.Anticipate, relicOnRight, Vector3.up, 0f, 0.5f));
+            events.Publish(new FeelBeat(FeelKind.Dig, FeelPhase.Impact, relicOnRight, Vector3.up, 1f, 0f));
+            events.Publish(new FeelBeat(FeelKind.Dig, FeelPhase.Follow, relicOnRight, Vector3.up, 0f, 0f));
+            events.Publish(new RelicSurfaced(relicOnRight, "teapot"));
+            yield return Wait(1f);
+            Assert.Greater(NeckYaw, TurnedHead, "07 glances at the surfaced relic.");
+
+            yield return Wait(4.5f);
+            Assert.AreEqual(0f, NeckYaw, 5f,
+                "After the surfaced-relic glance expires, 07 looks ahead again instead of staying stuck to one side.");
+
+            events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Anticipate, sealOnRight, Vector3.back, 0f, 0.5f));
+            events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Impact, sealOnRight, Vector3.back, 1f, 0f));
+            events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Act, sealOnRight, Vector3.up, 1f, 0.42f));
+            events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Impact, _rover.Controller.CargoSocket.position,
+                Vector3.up, 1f, 0f));
+            _rover.Drive.Drive = new Vector2(-1f, 1f);
+            yield return Wait(2f);
+            Assert.Less(NeckYaw, -5f,
+                "Carrying a part away from a cut container and steering left, 07 looks into the left turn.");
+            _rover.Drive.Drive = Vector2.zero;
+        }
+
         private IEnumerator PeakPerkAfter(MaterialSalvaged salvage)
         {
             _peakPerk = 0f;

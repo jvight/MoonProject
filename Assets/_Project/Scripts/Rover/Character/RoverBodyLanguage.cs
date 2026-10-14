@@ -89,6 +89,7 @@ namespace MoonProject.Rover
         private readonly ImpactNudge _headNudge = new ImpactNudge();
         private float _cutFocus;
         private bool _cutting;
+        private float _cutEnds = -1f;
         private RoverVoice _voice;
         private ChirpPose _chirpPose;
         private readonly CargoLoad _cargo = new CargoLoad();
@@ -283,6 +284,11 @@ namespace MoonProject.Rover
 
         private void OnRelicSurfaced(RelicSurfaced relic)
         {
+            if (!_cutting)
+            {
+                EndCutFocus();
+            }
+
             Glance(relic.Position);
             PerkUp(_tuning.RelicSurfacedPerk);
         }
@@ -491,6 +497,11 @@ namespace MoonProject.Rover
                 _glanceEnds = -1f;
             }
 
+            if (!_cutting && _cutEnds >= 0f && Time.time >= _cutEnds)
+            {
+                EndCutFocus();
+            }
+
             StepBattery(deltaTime);
             _cutFocus = Smoothing.Damp(_cutFocus, _cutting ? 1f : 0f, _tuning.CutFocus.HalfLife, deltaTime);
             _scanLook.Step(deltaTime);
@@ -619,8 +630,8 @@ namespace MoonProject.Rover
 
         /// <summary>
         /// The cut through 07's head (docs/design/feel-pass.md §3.1): it turns to the cut point with a narrowed,
-        /// brighter lens, nods at ignition, follows the piece as it tumbles, and lets go once the bundle is received or
-        /// the player releases. The dig is answered the same way.
+        /// brighter lens, nods at ignition, follows the piece as it tumbles, and lets go once the bundle or part is
+        /// received, the follow window expires, or the player releases. The dig is answered the same way.
         /// </summary>
         private void OnFeelBeat(FeelBeat beat)
         {
@@ -644,7 +655,15 @@ namespace MoonProject.Rover
                 return;
             }
 
-            if (beat.Kind == FeelKind.Collect && beat.Phase == FeelPhase.Reward)
+            if (beat.Kind == FeelKind.Collect
+                && (beat.Phase == FeelPhase.Reward || beat.Phase == FeelPhase.Impact)
+                && !_cutting)
+            {
+                EndCutFocus();
+                return;
+            }
+
+            if (beat.Kind == FeelKind.Cargo && beat.Phase == FeelPhase.Impact && !_cutting)
             {
                 EndCutFocus();
                 return;
@@ -665,6 +684,7 @@ namespace MoonProject.Rover
             {
                 case FeelPhase.Anticipate:
                     _cutting = true;
+                    _cutEnds = -1f;
                     _rover.Gaze.Set(_cutOwner, beat.Position, focus.GazePriority);
                     break;
                 case FeelPhase.Act:
@@ -673,12 +693,19 @@ namespace MoonProject.Rover
                         _headNudge.KickPitch(focus.Nod);
                     }
 
+                    _rover.Gaze.Set(_cutOwner, beat.Position, focus.GazePriority);
                     break;
                 case FeelPhase.Impact:
                     _cutting = false;
+                    _cutEnds = Time.time + focus.FollowSeconds;
                     break;
                 case FeelPhase.Follow:
-                    _rover.Gaze.Set(_cutOwner, beat.Position, focus.GazePriority);
+                    if (!_cutting)
+                    {
+                        _rover.Gaze.Set(_cutOwner, beat.Position, focus.GazePriority);
+                        _cutEnds = Time.time + focus.FollowSeconds;
+                    }
+
                     break;
                 case FeelPhase.Cancel:
                     EndCutFocus();
@@ -739,6 +766,7 @@ namespace MoonProject.Rover
         private void EndCutFocus()
         {
             _cutting = false;
+            _cutEnds = -1f;
             _rover.Gaze.Clear(_cutOwner);
         }
 

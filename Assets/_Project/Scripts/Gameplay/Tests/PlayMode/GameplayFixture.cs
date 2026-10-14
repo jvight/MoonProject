@@ -954,8 +954,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                     new FriendPart("cell", Template("Part_TillyCell", Vector3.one * 0.3f)),
                 }, Array.Empty<string>(), FriendHome.Lander, "FriendSocket_tilly", false,
                 FriendDefinition.SpotterAbility, 2f, "tilly",
-                new FriendPlacement(41, new Vector2(60f, 110f), 90f, 55f, new Vector2(0f, 4f), 10f, true,
-                    new Vector2(30f, 60f)));
+                new FriendPlacement(41, new Vector2(60f, 110f), 90f, 55f, new Vector2(0f, 4f), 10f, true));
             Bell = Asset<FriendDefinition>();
             Bell.Populate("bell", BellModel("Bell_Broken", true), BellModel("Bell", false),
                 FriendBodyKind.RadioCabinet, new[]
