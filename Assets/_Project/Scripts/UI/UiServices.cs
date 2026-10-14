@@ -19,7 +19,7 @@ namespace MoonProject.UI
             IBeamStatus beam, ITechTree tech, IRecoveryProgress recovery, IRecipeLook recipeLook,
             IWorldLayout world, IRoverAbilities abilities, ICargoHold hold, IMaterialCatalog catalog,
             IDockState dock, IHomeStorage home, IStackTransfer transfer, IRoverEquipment equipment,
-            IRoverPortrait portrait)
+            IRoverPortrait portrait, IScanSites scanSites = null)
         {
             Events = events ?? throw new ArgumentNullException(nameof(events));
             Input = input ?? throw new ArgumentNullException(nameof(input));
@@ -55,6 +55,7 @@ namespace MoonProject.UI
             Equipment = equipment ?? throw new ArgumentNullException(nameof(equipment));
             Portrait = portrait ?? throw new ArgumentNullException(nameof(portrait));
             Catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
+            ScanSites = scanSites;
         }
 
         public EventBus Events { get; }
@@ -120,6 +121,9 @@ namespace MoonProject.UI
         /// <summary>What each material is called (the pickup feed and the cargo screen).</summary>
         public IMaterialCatalog Catalog { get; }
 
+        /// <summary>Every scan site and each blueprint's fragment count (the map's brackets and the board's torn sheets).</summary>
+        public IScanSites ScanSites { get; }
+
         public IGameFlow Flow { get; }
 
         public ISettingsFile Settings { get; }
@@ -149,6 +153,7 @@ namespace MoonProject.UI
                 throw new ArgumentNullException(nameof(context));
             }
 
+            context.TryGet(out IScanSites scanSites);
             return new UiServices(context.Events, context.Input, context.Get<IViewCamera>(), context.Get<IRoverState>(),
                 context.Get<IAudioSettings>(), context.Get<ILookSettings>(), context.Get<IFeelSettings>(),
                 context.Get<ISaveService>(),
@@ -160,7 +165,7 @@ namespace MoonProject.UI
                 context.Get<IRecipeLook>(), context.Get<IWorldLayout>(), context.Get<IRoverAbilities>(),
                 context.Get<ICargoHold>(), context.Get<IMaterialCatalog>(), context.Get<IDockState>(),
                 context.Get<IHomeStorage>(), context.Get<IStackTransfer>(), context.Get<IRoverEquipment>(),
-                context.Get<IRoverPortrait>());
+                context.Get<IRoverPortrait>(), scanSites);
         }
     }
 }

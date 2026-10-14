@@ -35,6 +35,7 @@ namespace MoonProject.UI.Tests.Map
         private MapViewTuning _tuning;
         private Reach _reach;
         private Overlay _overlay;
+        private ScanSites _scanSites;
         private MapKnowledge _knowledge;
         private VisualElement _pause;
         private MapView _view;
@@ -60,6 +61,7 @@ namespace MoonProject.UI.Tests.Map
             _tuning = ScriptableObject.CreateInstance<MapViewTuning>();
             _reach = new Reach();
             _overlay = new Overlay();
+            _scanSites = new ScanSites();
             var places = new List<MapPlace>
             {
                 new MapPlace(MapPlaces.HomeId, Vector3.zero, MapPlaceKind.Home, 20f),
@@ -84,7 +86,7 @@ namespace MoonProject.UI.Tests.Map
             _pause = new VisualElement();
             root.Add(_pause);
             _view = new MapView(_pause, _sheet, _tuning, _knowledge, _reach, _overlay, _localization, _events,
-                _reader);
+                _reader, _scanSites);
         }
 
         [TearDown]
@@ -265,6 +267,112 @@ namespace MoonProject.UI.Tests.Map
             Assert.AreEqual(_overlay.LinkPointCount, _overlay.LinkPointsRead, "the Link runs home, then the lit mast");
             _view.Tick(0.1f, false);
             Assert.IsTrue(_view.IsOpen);
+        }
+
+        [Test]
+        public void ScanBrackets_DrawOnlyForKnownSitesWithFragmentsLeft_IncludingMicro_AndVanishWhenEmptied()
+        {
+            var space = new PaperSpace(_sheet.Centre, _sheet.Radius, _tuning.PaperSize);
+            var posA = new Vector3(120f, 8f, -90f);
+            var posB = new Vector3(0f, 0f, 200f);
+            var posC = new Vector3(-200f, 0f, 150f);
+            _scanSites.Add("micro.06", posA, known: true, left: 2, total: 2);
+            _scanSites.Add("site.drill", posB, known: true, left: 0, total: 2);
+            _scanSites.Add("site.kestrel", posC, known: false, left: 3, total: 3);
+            int marksBefore = _view.Marks.Count;
+
+            _events.Publish(new MapLookStarted(Vector3.zero, false));
+            Assert.AreEqual(marksBefore, _view.Marks.Count, "micro.* adds no crew-map place or label");
+            Assert.AreEqual(1, _view.BracketPositions.Count, "only known sites with Left > 0 get a pencil bracket (A)");
+            Assert.AreEqual(space.ToPaper(posA), _view.BracketPositions[0]);
+            Assert.AreEqual(6, _view.BracketStrokes, "two 3-segment bracket halves at A");
+
+            _view.Tick(0.1f, false);
+            int readsAfterOpen = _scanSites.Reads;
+            TestDelegate frame = () => _view.Tick(0.1f, false);
+            frame();
+            Assert.That(frame, Is.Not.AllocatingGCMemory(), "no per-frame allocation in the look");
+            Assert.AreEqual(readsAfterOpen, _scanSites.Reads, "nothing read per frame during the look");
+
+            _scanSites.SetLeft("micro.06", 0);
+            _events.Publish(new ScanSiteEmptied("micro.06", posA));
+            Assert.AreEqual(0, _view.BracketPositions.Count, "ScanSiteEmptied during a look removes the bracket");
+            Assert.AreEqual(0, _view.BracketStrokes);
+
+            _events.Publish(new MapLookEnded());
+            _events.Publish(new MapLookStarted(Vector3.zero, false));
+            Assert.AreEqual(0, _view.BracketPositions.Count, "the next look draws none");
+            Assert.AreEqual(0, _view.BracketStrokes);
+        }
+
+        private sealed class ScanSites : IScanSites
+        {
+            private readonly List<Site> _sites = new List<Site>();
+
+            public int Reads { get; private set; }
+
+            public int Count
+            {
+                get
+                {
+                    Reads++;
+                    return _sites.Count;
+                }
+            }
+
+            public void Add(string placeId, Vector3 position, bool known, int left, int total)
+            {
+                _sites.Add(new Site { PlaceId = placeId, Position = position, Known = known, Left = left, Total = total });
+            }
+
+            public void SetLeft(string placeId, int left)
+            {
+                for (int i = 0; i < _sites.Count; i++)
+                {
+                    if (_sites[i].PlaceId == placeId)
+                    {
+                        Site site = _sites[i];
+                        site.Left = left;
+                        _sites[i] = site;
+                    }
+                }
+            }
+
+            public string PlaceId(int index) => _sites[index].PlaceId;
+
+            public Vector3 Position(int index) => _sites[index].Position;
+
+            public bool IsKnown(int index) => _sites[index].Known;
+
+            public int Left(int index) => _sites[index].Left;
+
+            public int FragmentCount(int index) => _sites[index].Total;
+
+            public int IndexOf(string placeId)
+            {
+                for (int i = 0; i < _sites.Count; i++)
+                {
+                    if (_sites[i].PlaceId == placeId)
+                    {
+                        return i;
+                    }
+                }
+
+                return -1;
+            }
+
+            public int ScannedOf(string kitId) => 0;
+
+            public int SetSize(string kitId) => 0;
+
+            private struct Site
+            {
+                public string PlaceId;
+                public Vector3 Position;
+                public bool Known;
+                public int Left;
+                public int Total;
+            }
         }
 
         /// <summary>The dock and one lit chain mast west of home, the Peak to the north (M3-21).</summary>

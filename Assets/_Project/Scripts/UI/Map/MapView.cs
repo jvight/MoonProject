@@ -42,6 +42,10 @@ namespace MoonProject.UI.Map
         private const uint MarkSeed = 0xA511E5u;
         private const uint ChargerSeed = 0xC4A26Eu;
         private const uint LinkSeed = 0x11D4C0u;
+        private const uint BracketSeed = 0xB2AC4Eu;
+        private const float BracketReach = 1.22f;
+        private const float BracketInner = 0.94f;
+        private const float BracketHalfHeight = 0.75f;
         private const float ArrowAngle = 0.5f;
         private const int ContourIndexEvery = 5;
 
@@ -49,6 +53,7 @@ namespace MoonProject.UI.Map
         private readonly IMapKnowledge _knowledge;
         private readonly IStationReach _reach;
         private readonly IChartOverlay _overlay;
+        private readonly IScanSites _scanSites;
         private readonly ILocalization _text;
         private readonly InputReader _input;
         private readonly PaperSpace _space;
@@ -56,12 +61,15 @@ namespace MoonProject.UI.Map
         private readonly List<MapMark> _marks = new List<MapMark>();
         private readonly Dictionary<string, MapMark> _byId = new Dictionary<string, MapMark>(StringComparer.Ordinal);
         private readonly List<Vector2> _scratch = new List<Vector2>();
+        private readonly List<Vector2> _bracketPositions = new List<Vector2>();
         private readonly StrokeBuffer _sheet = new StrokeBuffer();
         private readonly StrokeBuffer _glow = new StrokeBuffer();
         private readonly StrokeBuffer _pencil = new StrokeBuffer();
+        private readonly StrokeBuffer _brackets = new StrokeBuffer();
         private readonly StrokeBuffer _tallyStrokes = new StrokeBuffer();
         private readonly VisualElement _root;
         private readonly VisualElement _paper;
+        private readonly VisualElement _pencilLayer;
         private readonly VisualElement _inkLayer;
         private readonly VisualElement _tally;
         private readonly Label _title;
@@ -90,7 +98,8 @@ namespace MoonProject.UI.Map
         private MapMark _focus;
 
         public MapView(VisualElement before, MapSheet sheet, MapViewTuning tuning, IMapKnowledge knowledge,
-            IStationReach reach, IChartOverlay overlay, ILocalization text, EventBus events, InputReader input)
+            IStationReach reach, IChartOverlay overlay, ILocalization text, EventBus events, InputReader input,
+            IScanSites scanSites = null)
         {
             if (before == null || before.parent == null)
             {
@@ -101,6 +110,7 @@ namespace MoonProject.UI.Map
             _knowledge = knowledge ?? throw new ArgumentNullException(nameof(knowledge));
             _reach = reach ?? throw new ArgumentNullException(nameof(reach));
             _overlay = overlay ?? throw new ArgumentNullException(nameof(overlay));
+            _scanSites = scanSites;
             _text = text ?? throw new ArgumentNullException(nameof(text));
             _input = input ?? throw new ArgumentNullException(nameof(input));
             if (sheet == null || sheet.Validate() != null)
@@ -124,7 +134,8 @@ namespace MoonProject.UI.Map
             viewport.Add(_paper);
             _paper.Add(Layer("crew-map-glow", size, _glow.Draw));
             _paper.Add(Layer("crew-map-sheet", size, _sheet.Draw));
-            _paper.Add(Layer("crew-map-pencil", size, _pencil.Draw));
+            _pencilLayer = Layer("crew-map-pencil", size, PaintPencil);
+            _paper.Add(_pencilLayer);
             _inkLayer = Layer("crew-map-ink", size, PaintInk);
             _paper.Add(_inkLayer);
 
@@ -176,6 +187,7 @@ namespace MoonProject.UI.Map
             _tokens.Add(events.Subscribe<MapLookStarted>(OnLookStarted));
             _tokens.Add(events.Subscribe<MapLookEnded>(OnLookEnded));
             _tokens.Add(events.Subscribe<MapInkCued>(OnInkCued));
+            _tokens.Add(events.Subscribe<ScanSiteEmptied>(OnScanSiteEmptied));
             _tokens.Add(events.Subscribe<LanguageChanged>(OnLanguageChanged));
         }
 
@@ -194,6 +206,12 @@ namespace MoonProject.UI.Map
 
         /// <summary>The marks on the paper, in place order (tests and capture sessions).</summary>
         public IReadOnlyList<MapMark> Marks => _marks;
+
+        /// <summary>Paper positions of the scan brackets drawn on the chart (tests).</summary>
+        public IReadOnlyList<Vector2> BracketPositions => _bracketPositions;
+
+        /// <summary>Stroke quads in the scan brackets (tests).</summary>
+        public int BracketStrokes => _brackets.QuadCount;
 
         /// <summary>Strokes in Ines's tally (tests).</summary>
         public int TallyStrokes => _tallyStrokes.QuadCount;
@@ -284,6 +302,15 @@ namespace MoonProject.UI.Map
             Relabel();
         }
 
+        private void OnScanSiteEmptied(ScanSiteEmptied emptied)
+        {
+            if (_shown)
+            {
+                RefreshBrackets();
+                _pencilLayer.MarkDirtyRepaint();
+            }
+        }
+
         /// <summary>
         /// Reads what the station knows into the marks, the pencil, the glow and the tally: called as the view opens,
         /// never per frame.
@@ -332,6 +359,7 @@ namespace MoonProject.UI.Map
             }
 
             DrawChargersAndLink();
+            RefreshBrackets();
             _pencil.Finish();
             _glow.Finish();
             BuildTally(found);
@@ -514,6 +542,12 @@ namespace MoonProject.UI.Map
             _cardLine.text = Text(line ?? MapKeys.Prefix + id + MapKeys.NoteSuffix);
         }
 
+        private void PaintPencil(MeshGenerationContext context)
+        {
+            _pencil.Draw(context);
+            _brackets.Draw(context);
+        }
+
         private void PaintInk(MeshGenerationContext context)
         {
             foreach (MapMark mark in _marks)
@@ -527,6 +561,51 @@ namespace MoonProject.UI.Map
                     mark.Ink.Write(context, Mathf.CeilToInt(mark.Reveal * mark.Ink.QuadCount), 1f);
                 }
             }
+        }
+
+        /// <summary>
+        /// A small pencil bracket (Ines's pencil hand: no ink, no name) at the world position of each known scan site
+        /// that still holds unscanned fragments.
+        /// </summary>
+        private void RefreshBrackets()
+        {
+            _brackets.Clear();
+            _bracketPositions.Clear();
+            if (_scanSites == null)
+            {
+                _brackets.Finish();
+                return;
+            }
+
+            float radius = _tuning.RingRadius;
+            float x = radius * BracketReach;
+            float inner = radius * BracketInner;
+            float y = radius * BracketHalfHeight;
+            float width = _tuning.ThinWidth * 1.5f;
+            int count = _scanSites.Count;
+            for (int i = 0; i < count; i++)
+            {
+                if (!_scanSites.IsKnown(i) || _scanSites.Left(i) <= 0)
+                {
+                    continue;
+                }
+
+                Vector2 centre = _space.ToPaper(_scanSites.Position(i));
+                _bracketPositions.Add(centre);
+                uint seed = BracketSeed ^ (uint)(i * 31);
+                for (int side = -1; side <= 1; side += 2)
+                {
+                    _scratch.Clear();
+                    _scratch.Add(centre + new Vector2(side * inner, -y));
+                    _scratch.Add(centre + new Vector2(side * x, -y));
+                    _scratch.Add(centre + new Vector2(side * x, y));
+                    _scratch.Add(centre + new Vector2(side * inner, y));
+                    _brackets.AddLine(_scratch, false, width, _tuning.Pencil, _tuning.Wobble, _tuning.WobbleLength,
+                        _tuning.Grain, seed + (uint)(side + 1));
+                }
+            }
+
+            _brackets.Finish();
         }
 
         /// <summary>Ines's lines, traced once: contours (every fifth darker), the rim, the canyon, the craters.</summary>

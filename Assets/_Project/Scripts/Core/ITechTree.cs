@@ -10,6 +10,9 @@ namespace MoonProject.Core
     {
         TechNodeState StateOf(TechNodeId node);
 
+        /// <summary>The kit id of a kit node, or null for a station node or a node this version leaves off the board.</summary>
+        string KitOf(TechNodeId node);
+
         /// <summary>Nodes that are decoded or built: the porthole's lamp count.</summary>
         int KnownCount { get; }
     }
