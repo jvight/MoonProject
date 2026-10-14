@@ -32,11 +32,13 @@ namespace MoonProject.UI
         private readonly Reveal _reveal;
         private readonly Queue<string> _waiting = new Queue<string>();
         private readonly Queue<string> _waitingLines = new Queue<string>();
+        private readonly Queue<int> _waitingCounts = new Queue<int>();
         private readonly Queue<float> _readyAt = new Queue<float>();
         private readonly HashSet<string> _seen = new HashSet<string>(StringComparer.Ordinal);
         private float _rest;
         private float _clock;
         private string _lineKey;
+        private int _lineCount;
 
         public PlaceCard(UiLayout layout, GuidanceSettings settings, ILocalization localization, EventBus events)
         {
@@ -70,7 +72,32 @@ namespace MoonProject.UI
             {
                 _waiting.Enqueue(KeyBase(placeId) + ".name");
                 _waitingLines.Enqueue(JobPlaces.Contains(KeyBase(placeId)) ? KeyBase(placeId) + ".job" : null);
+                _waitingCounts.Enqueue(0);
                 _readyAt.Enqueue(_clock + (KeyBase(placeId) == TowerPlace ? _settings.TowerCardDelay : 0f));
+            }
+        }
+
+        /// <summary>Queues the scan card for <paramref name="reached"/>, once per place.</summary>
+        public void Reached(ScanSiteReached reached)
+        {
+            Reached(reached.PlaceId, reached.Left);
+        }
+
+        /// <summary>Queues the scan card for <paramref name="placeId"/> with <paramref name="left"/> fragments, once.</summary>
+        public void Reached(string placeId, int left)
+        {
+            if (string.IsNullOrEmpty(placeId) || left <= 0)
+            {
+                return;
+            }
+
+            string nameKey = UiKeys.ScanPlaceName(placeId);
+            if (_seen.Add(nameKey))
+            {
+                _waiting.Enqueue(nameKey);
+                _waitingLines.Enqueue(UiKeys.ScanSiteCount);
+                _waitingCounts.Enqueue(left);
+                _readyAt.Enqueue(_clock);
             }
         }
 
@@ -96,6 +123,7 @@ namespace MoonProject.UI
             {
                 Current = _waiting.Dequeue();
                 _lineKey = _waitingLines.Dequeue();
+                _lineCount = _waitingCounts.Dequeue();
                 _readyAt.Dequeue();
                 Write();
                 _rest = _settings.PlaceHoldSeconds;
@@ -126,7 +154,8 @@ namespace MoonProject.UI
             _layout.PlaceCardJob.style.display = job ? DisplayStyle.Flex : DisplayStyle.None;
             if (job)
             {
-                _layout.PlaceCardJob.text = _localization.Get(_lineKey);
+                string line = _localization.Get(_lineKey);
+                _layout.PlaceCardJob.text = _lineCount > 0 ? string.Format(line, _lineCount) : line;
             }
         }
     }
