@@ -21,7 +21,7 @@ namespace MoonProject.Audio
         [Min(0f)] [SerializeField] private float _answerNearDistance = 10f;
 
         [Tooltip("Distance (m) at and beyond which the answer is quietest and darkest.")]
-        [Min(1f)] [SerializeField] private float _answerFarDistance = 90f;
+        [Min(1f)] [SerializeField] private float _answerFarDistance = 140f;
 
         [Tooltip("Volume scale of a near answer.")]
         [Range(0f, 1f)] [SerializeField] private float _answerNearVolume = 1f;

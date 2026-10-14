@@ -20,7 +20,7 @@ MonoBehaviour:
   _flatVoices: 8
   _rolloffMode: 0
   _minDistance: 6
-  _maxDistance: 120
+  _maxDistance: 160
   _dopplerLevel: 0
   _spread: 30
   _thumpMinImpact: 0.6
