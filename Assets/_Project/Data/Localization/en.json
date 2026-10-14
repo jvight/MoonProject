@@ -108,7 +108,7 @@
         },
         {
             "key": "next.wake",
-            "text": "Repair the radio tower."
+            "text": "Check the radio tower."
         },
         {
             "key": "next.salvage",
@@ -116,7 +116,7 @@
         },
         {
             "key": "next.tower.part",
-            "text": "The Tower Coil is in the depot's coil crate."
+            "text": "Cut open the depot's crate and take the Tower Coil."
         },
         {
             "key": "next.tower.pad",
@@ -172,7 +172,7 @@
         },
         {
             "key": "next.dig",
-            "text": "Tilly's parts are in her crashed sled."
+            "text": "Dig Tilly's last part out of the dust."
         },
         {
             "key": "next.friend.repair",
@@ -183,12 +183,28 @@
             "text": "Go to Kenji's Garage."
         },
         {
+            "key": "next.garage.scrap",
+            "text": "Clear the scrap around the garage ({0} left)."
+        },
+        {
             "key": "next.port",
             "text": "Park on the port's pad."
         },
         {
+            "key": "next.garage.crate",
+            "text": "Cut open the 07 · SPARE crate."
+        },
+        {
+            "key": "next.garage.deck",
+            "text": "Put the tape deck on the tray, then park on the pad again."
+        },
+        {
+            "key": "next.relic.dig",
+            "text": "Dig up the keepsake at the garage."
+        },
+        {
             "key": "next.relic",
-            "text": "Dig up the keepsake and tow it home."
+            "text": "Tow the keepsake home."
         },
         {
             "key": "next.lift.stitch",
@@ -200,11 +216,11 @@
         },
         {
             "key": "next.chasm",
-            "text": "A light across the chasm. You can't cross it yet."
+            "text": "Drive to the chasm edge and look across."
         },
         {
             "key": "next.bay.wake",
-            "text": "Build tower level 2 to power the bay."
+            "text": "Get the Transformer at the garage and build tower level 2."
         },
         {
             "key": "next.bay",

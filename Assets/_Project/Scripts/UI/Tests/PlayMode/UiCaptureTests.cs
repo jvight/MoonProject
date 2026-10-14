@@ -733,6 +733,66 @@ namespace MoonProject.UI.PlayModeTests
 #endif
         }
 
+        /// <summary>
+        /// The garage beat steps (a)-(d) at 1920x1080 in Vietnamese over the real garage site in Main.unity, saved to
+        /// Logs/captures/. Rerun with --filter CaptureGarageBeat.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CaptureGarageBeat_InVietnamese_AtFullHd()
+        {
+#if UNITY_EDITOR
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out FakeGameServices fakes, out _);
+            Reframe(1920, 1080);
+            FreezeWorld();
+            yield return null;
+            string folder = Path.GetFullPath("Logs/captures");
+            Directory.CreateDirectory(folder);
+            if (!context.Get<IWorldAnchors>().TryGet("site.garage", out MoonProject.Core.WorldAnchor garage))
+            {
+                throw new InvalidOperationException("The world has no 'site.garage' anchor.");
+            }
+
+            Camera garageCamera = SiteCamera(garage, camera);
+            fakes.Camera = garageCamera;
+            fakes.Position = garage.Position;
+            ui.Localization.SetLanguage("vi");
+            context.Events.Publish(new RoverAwoke(garage.Position, false));
+            yield return new WaitForSecondsRealtime(0.5f);
+
+            fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, garage.Position, true);
+            context.Events.Publish(new PlaceFirstApproached("place.dock"));
+            context.Events.Publish(new TickerLine(UiTestRig.HomeLine));
+
+            (string key, string shot)[] steps =
+            {
+                (ProgressionKeys.GarageScrapKey(4), "garage_a_scrap_vi"),
+                (ProgressionKeys.NextPort, "garage_b_port_vi"),
+                (ProgressionKeys.NextGarageCrate, "garage_c_crate_vi"),
+                (ProgressionKeys.NextGarageDeck, "garage_d_deck_vi"),
+            };
+
+            for (int i = 0; i < steps.Length; i++)
+            {
+                context.Events.Publish(new NextStepChanged(steps[i].key));
+                float wait = (i > 0 ? _tuning.Guidance.Line.FadeOut : 0f) + _tuning.Guidance.Line.FadeIn + 0.4f;
+                yield return new WaitForSecondsRealtime(wait);
+                Assert.IsTrue(ui.NextLine.ShowsNext, steps[i].shot);
+                int guidanceCount = (ui.Prompt.IsVisible ? 1 : 0) + (ui.LookUp.IsVisible ? 1 : 0) +
+                                    (ui.Tower.IsVisible ? 1 : 0) + (ui.RecipeCard.IsVisible ? 1 : 0) +
+                                    (ui.PlaceCard.IsVisible ? 1 : 0) + (ui.Ticker.IsVisible ? 1 : 0) +
+                                    (ui.NextLine.IsVisible ? 1 : 0);
+                Assert.AreEqual(1, guidanceCount, $"{steps[i].shot}: exactly one guidance element on screen");
+                yield return Capture(garageCamera, folder, steps[i].shot);
+            }
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
         /// <summary>The settings' three tabs over the title (captures 92-94). Rerun with --filter CaptureSettingsTabs.</summary>
         [UnityTest]
         public IEnumerator CaptureSettingsTabs_SoundCameraDisplay()

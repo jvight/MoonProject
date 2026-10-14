@@ -175,9 +175,11 @@ namespace MoonProject.Gameplay
                 () => tillyAwake() || signal.Progress.Collected >= signal.Progress.PartCount - 1);
             _steps.Add(ProgressionKeys.NextDig, () => tillyAwake() || signal.Progress.AllPartsGathered);
             _steps.Add(ProgressionKeys.NextFriendRepair, tillyAwake);
-            _steps.Add(ProgressionKeys.NextGarage, () => _port != null && (_port.IsOpen || _port.RingFitted));
-            _steps.Add(ProgressionKeys.NextPort, () => _port != null && _port.RingFitted);
-            _steps.Add(ProgressionKeys.NextRelic, () => lift.Phase >= LiftPhase.Called || home.DisplayedCount > 0);
+            _steps.Add(ProgressionKeys.NextGarage,
+                () => _port != null && (_port.AtGarage || _port.IsOpen || _port.RingFitted || _port.DeckFitted));
+            _steps.Add(() => _port != null ? _port.StepLine() : string.Empty,
+                () => _port != null && (_port.DeckFitted || (_port.RingFitted && !_port.AtGarage)));
+            _steps.Add(RelicLine, () => lift.Phase >= LiftPhase.Called || home.DisplayedCount > 0);
             _steps.Add(ProgressionKeys.NextLiftStitch, () => lift.Phase >= LiftPhase.Ready || home.DisplayedCount > 0);
             _steps.Add(ProgressionKeys.NextLiftRide, () => home.DisplayedCount > 0);
             _steps.Add(ProgressionKeys.NextChasm, () => _chasmSeen || upgrades.LevelOf(_tuning.LeapKit) > 0);
@@ -211,6 +213,13 @@ namespace MoonProject.Gameplay
             }
 
             _steps.AddNeed(ProgressionKeys.NextLink, () => relays.LitChainMasts >= relays.ChainMastCount, always);
+        }
+
+        private string RelicLine()
+        {
+            return _port != null && _port.RingFitted && _port.AnyRelicLoose
+                ? ProgressionKeys.NextRelic
+                : ProgressionKeys.NextRelicDig;
         }
 
         /// <summary>Where the component of the tower's next level is (Delivered when that level needs none).</summary>

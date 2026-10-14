@@ -17,20 +17,22 @@ namespace MoonProject.UI
         /// <summary>The low-battery hint: at 30% on a trip, once.</summary>
         Battery = 3,
 
+        /// <summary>The radio ticker line: waits for prompts, cards, places, and battery warnings, and precedes the idle next line.</summary>
+        Ticker = 4,
+
         /// <summary>The next line, after a while without progress.</summary>
-        Next = 4,
+        Next = 5,
     }
 
     /// <summary>
     /// The one guidance slot (pure, EditMode-tested): of everything that wants to guide the player, one element shows at
     /// a time, the highest priority first. A lower element waits (never stacks) and an element that holds the slot
     /// gives it up, by fading, when a higher one wants it; the slot passes on only once the screen is clear, so no two
-    /// guidance elements are ever visible together, not even while one fades. Voices (letters, Bell, the radio) are not
-    /// guidance and do not come here.
+    /// guidance elements are ever visible together, not even while one fades.
     /// </summary>
     internal sealed class GuidanceSlot
     {
-        public const int KindCount = 5;
+        public const int KindCount = 6;
 
         /// <summary>The element that may show now, or null while the slot is held back for a fade.</summary>
         public GuidanceKind? Granted { get; private set; }

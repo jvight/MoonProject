@@ -84,6 +84,33 @@ namespace MoonProject.UI.Tests
             Assert.IsFalse(restored.Guidance);
         }
 
+        [Test]
+        public void AGarageBeatStep_ShowsAtOnce_EvenWhileDriving_AndClearsWhenDone()
+        {
+            var settings = new GuidanceSettings();
+            var line = new NextStepLine(settings);
+            line.SetKey("next.garage.scrap:3");
+            line.Tick(Step, 4f, true);
+            Assert.IsTrue(line.WantsShown, "garage step (a) shows at once without waiting for stillness or patience");
+
+            line.SetKey("next.garage.scrap:2");
+            line.Tick(Step, 4f, true);
+            Assert.IsTrue(line.WantsShown);
+            Assert.AreEqual("next.garage.scrap:2", line.Key);
+
+            foreach (string step in new[] { "next.port", "next.garage.crate", "next.garage.deck" })
+            {
+                line.SetKey(step);
+                line.Tick(Step, 3f, true);
+                Assert.IsTrue(line.WantsShown, step);
+                Assert.AreEqual(step, line.Key);
+            }
+
+            line.SetKey(string.Empty);
+            line.Tick(Step, 0f, true);
+            Assert.IsFalse(line.WantsShown, "leaves when the garage beat is done");
+        }
+
         private static void Ticks(NextStepLine line, float seconds, float speed, bool guidance)
         {
             for (float t = 0f; t < seconds; t += Step)
