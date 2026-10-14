@@ -15,9 +15,6 @@ MonoBehaviour:
   _giftHomeRadius: 22
   _giftMaxSpeed: 2.5
   _wingCellFriend: tilly
-  _sledOffset: {x: 3.5, y: 2.5}
-  _sledYaw: 140
-  _partRiseSeconds: 0.6
   _siteAttempts: 600
   _siteEdgeMargin: 12
   _siteMaxSlope: 12
@@ -37,6 +34,18 @@ MonoBehaviour:
   _partBobFrequency: 0.3
   _partSpin: 30
   _partReachRadius: 4.5
+  _buriedPartFriend: tilly
+  _sledOffset: {x: 3.5, y: 2.5}
+  _sledYaw: 140
+  _partRiseSeconds: 0.6
+  _buriedPartSink: 0.22
+  _partDigRadius: 5
+  _partDigSeconds: 2.4
+  _rockfallPartFriend: bell
+  _pocketWallProbe: 4.5
+  _pocketWallProbeHeight: 0.45
+  _pocketBackReach: 0.45
+  _pocketMaxSetback: 1.6
   _partFlightDuration: 1
   _partFlightPerMetre: 0.08
   _partFlightLift: 1.3
