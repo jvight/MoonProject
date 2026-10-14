@@ -323,14 +323,14 @@ namespace MoonProject.Gameplay
                 !_cassettes.Initialize(services, Radio, _salvage, Containers) ||
                 !_logs.Initialize(services) ||
                 !_sonar.Initialize(services, _relics, _friends, _salvage, abilities, Power) ||
-                !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
+                !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities) ||
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
                 !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context),
                     _home.Dock.Position, Containers) ||
                 !_progression.Initialize(services, Power, _home, _workshop, _sonar, _friends, _relays,
                     Upgrades, _lift, _tower, TowerParts, () => _battery.Model.Charge01) ||
                 !_plotter.Initialize(services, Blueprints, _workshop, _progression.Tuning, Upgrades) ||
-                !_battery.Initialize(services, _relays.Reach, _tether, _home, abilities, _friends, _sonar.Tuning))
+                !_battery.Initialize(services, _relays.Reach, _tether, _home, abilities, _friends))
 
             {
                 enabled = false;
@@ -895,7 +895,6 @@ namespace MoonProject.Gameplay
             _relics.Restore(data);
             _cradle.AdoptRestored();
             _home.SyncDisplays();
-            _sonar.RefreshDiscoveredSites();
         }
 
         private void RestoreUpgrades(UpgradesSaveData data)

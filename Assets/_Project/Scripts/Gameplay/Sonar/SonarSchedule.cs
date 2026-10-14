@@ -4,10 +4,10 @@ using UnityEngine;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// When each relic answers a ping. The ring spreads with an ease-out (fast near 07, slowing as it reaches the
-    /// edge of its range), and a relic answers a fixed lag after the ring touches it, so closer relics answer sooner.
-    /// Answers are kept in time order; a relic already waiting to answer keeps its earlier time. Preallocated: pinging
-    /// and popping never allocate.
+    /// When each place or relic answers a listen. A listen sweeps out with an ease-out (fast near 07, slowing as it
+    /// reaches the edge of its range), and a place answers a fixed lag after the sweep reaches it, so closer answers
+    /// come sooner. Answers are kept in time order; a place already waiting to answer keeps its earlier time.
+    /// Preallocated: listening and popping never allocate.
     /// </summary>
     public sealed class SonarSchedule
     {
@@ -30,30 +30,24 @@ namespace MoonProject.Gameplay
         /// <summary>Answers still to come.</summary>
         public int Pending { get; private set; }
 
-        /// <summary>Ring radius <paramref name="elapsed"/> seconds after a ping.</summary>
-        public static float RingRadius(float elapsed, float duration, float range)
-        {
-            return duration <= 0f ? range : range * Ease.OutQuad(elapsed / duration);
-        }
-
-        /// <summary>Seconds after a ping when the ring reaches <paramref name="distance"/> metres.</summary>
-        public static float RingArrival(float distance, float duration, float range)
+        /// <summary>Seconds after a listen when the sweep reaches <paramref name="distance"/> metres.</summary>
+        public static float Arrival(float distance, float duration, float range)
         {
             return range <= 0f ? 0f : duration * Ease.InverseOutQuad(distance / range);
         }
 
         /// <summary>
-        /// Schedules relic <paramref name="relic"/>, <paramref name="distance"/> metres from a ping made at
+        /// Schedules answerer <paramref name="relic"/>, <paramref name="distance"/> metres from a listen made at
         /// <paramref name="pingTime"/>. Returns false when it is out of range.
         /// </summary>
-        public bool Add(int relic, float distance, float pingTime, float range, float ringDuration, float lag)
+        public bool Add(int relic, float distance, float pingTime, float range, float sweepDuration, float lag)
         {
             if (distance > range)
             {
                 return false;
             }
 
-            float time = pingTime + RingArrival(distance, ringDuration, range) + lag;
+            float time = pingTime + Arrival(distance, sweepDuration, range) + lag;
             for (int i = 0; i < Pending; i++)
             {
                 if (_relic[i] != relic)
@@ -107,7 +101,7 @@ namespace MoonProject.Gameplay
             return true;
         }
 
-        /// <summary>Drops a relic's pending answer (it was dug up or grabbed meanwhile).</summary>
+        /// <summary>Drops an answerer's pending answer (it was dug up or grabbed meanwhile).</summary>
         public void Cancel(int relic)
         {
             for (int i = 0; i < Pending; i++)

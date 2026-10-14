@@ -145,8 +145,7 @@ namespace MoonProject.Gameplay.Editor
             Shader glint = LoadShader(GameplayAssetPaths.GlintShader);
 
             var visuals = ScriptableObject.CreateInstance<GameplayVisuals>();
-            visuals.Populate(Write(shader, GlowRole.SonarRing), Write(shader, GlowRole.SitePillar),
-                Write(shader, GlowRole.TractorBeam),
+            visuals.Populate(Write(shader, GlowRole.TractorBeam),
                 Write(shader, GlowRole.TetherBeam), Write(shader, GlowRole.Flash), Write(shader, GlowRole.RelicHalo),
                 Write(shader, GlowRole.Dust), Write(shader, GlowRole.WarmRing), Write(shader, GlowRole.WarmGlow),
                 GeneratedAssets.CreateOrReplace(GlintMaterials.CreatePart(glint),

@@ -91,6 +91,8 @@ MonoBehaviour:
   _pillarFade: 2.2
   _pillarBreathDepth: 0.25
   _pillarBreathPeriod: 5
+  _pillarHeight: 32
+  _pillarRadius: 0.6
   _shelfLift: 0.11
   _shelfSettle: 0.9
   _shelfOvershoot: 1.6

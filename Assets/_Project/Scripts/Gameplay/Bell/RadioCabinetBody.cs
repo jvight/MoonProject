@@ -54,6 +54,7 @@ namespace MoonProject.Gameplay
         private bool _awake;
         private bool _tapeIn;
         private bool _swept;
+        private float _answerBlink;
 
         public RadioCabinetBody(FriendTuning friends, BellTuning bell, ITerrainQuery terrain, IRoverState rover,
             IRoverRig roverRig, IViewCamera view, IRadioProgram radio, EventBus events, FriendProgress progress,
@@ -94,6 +95,8 @@ namespace MoonProject.Gameplay
 
         public Vector3 Position => _swapped ? _position : _site;
 
+        public Vector3 AnswerPosition => (_swapped ? _repaired : _broken).DialLamp.position;
+
         public Vector3 BeamTarget => (_swapped ? _repaired : _broken).TapeSlot.position;
 
         public FriendActivity Activity { get; private set; } = FriendActivity.Dormant;
@@ -117,6 +120,11 @@ namespace MoonProject.Gameplay
             return _sequence.Beaming(t);
         }
 
+        public void SetAnswerBlink(float intensity)
+        {
+            _answerBlink = intensity;
+        }
+
         public void SetLamp(int lamp, float intensity)
         {
             (_swapped ? _repaired : _broken).SetLamp(lamp, intensity);
@@ -126,7 +134,7 @@ namespace MoonProject.Gameplay
         {
             Activity = FriendActivity.Dormant;
             Motor = 0f;
-            _broken.SetDialLamp(BrokenFlicker(now));
+            _broken.SetDialLamp(Mathf.Max(BrokenFlicker(now), _answerBlink));
         }
 
         public void StepRepair(float t, float now, float deltaTime)

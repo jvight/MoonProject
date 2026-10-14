@@ -72,16 +72,6 @@ namespace MoonProject.Gameplay
                 fresnelPower: 2f, core: 0f, corePower: 1.5f, radial: 0f, additive: true, cull: CullMode.Off);
             switch (role)
             {
-                case GlowRole.SonarRing:
-                    // A calm wave: a soft leading edge (outside) and a long, fading tail behind it (inside).
-                    material.SetFloat(AcrossInId, 0.8f);
-                    material.SetFloat(AcrossOutId, 0.2f);
-                    break;
-                case GlowRole.SitePillar:
-                    Set(material, tech, edge: 0f, length: 0.4f, bands: 3f, speed: 0.25f, strength: 0.35f,
-                        fresnel: 0f, fresnelPower: 2f, core: 1f, corePower: 1.2f, radial: 0f, additive: true,
-                        cull: CullMode.Off);
-                    break;
                 case GlowRole.FriendPillar:
                     Set(material, warm, edge: 0f, length: 0.4f, bands: 3f, speed: 0.18f, strength: 0.35f,
                         fresnel: 0f, fresnelPower: 2f, core: 1f, corePower: 1.2f, radial: 0f, additive: true,

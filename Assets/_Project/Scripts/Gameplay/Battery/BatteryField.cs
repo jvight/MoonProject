@@ -98,7 +98,7 @@ namespace MoonProject.Gameplay
         }
 
         internal bool Initialize(GameplayServices services, StationReach reach, TetherSystem tether, HomeBase home,
-            IRoverAbilities abilities, FriendField friends, SonarTuning sonar)
+            IRoverAbilities abilities, FriendField friends)
         {
             if (services == null)
             {
@@ -132,7 +132,7 @@ namespace MoonProject.Gameplay
             _save = services.Save;
             _beam = services.Beam;
             Model = new BatteryModel(_tuning, _events);
-            _pillar = new SignalPillar("ChargerPillar", transform, sonar, services.Terrain,
+            _pillar = new SignalPillar("ChargerPillar", transform, _pillarLook, services.Terrain,
                 services.Visuals.FriendPillar, services.Meshes.Pillar);
             _nodeNames = new string[_reach.NodeCount];
             for (int node = 0; node < _nodeNames.Length; node++)

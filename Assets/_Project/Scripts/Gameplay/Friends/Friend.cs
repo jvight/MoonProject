@@ -62,6 +62,9 @@ namespace MoonProject.Gameplay
         /// <summary>Where it is now: its site while broken, its body once it is up.</summary>
         public Vector3 Position => Body.Position;
 
+        /// <summary>Its own light (eye or dial lamp) that blinks back when a listen reaches it.</summary>
+        public Vector3 AnswerPosition => Body.AnswerPosition;
+
         /// <summary>It lives at the base right now.</summary>
         public bool IsHome => Progress.State == FriendState.Awake && Body.IsHome;
 
@@ -69,6 +72,11 @@ namespace MoonProject.Gameplay
         internal string HomecomingLine { get; }
 
         internal IFriendBody Body { get; }
+
+        internal void SetAnswerBlink(float intensity)
+        {
+            Body.SetAnswerBlink(intensity);
+        }
 
         /// <summary>Its home socket at the base (FriendSocket_tilly on the lander, BellCorner by the tower).</summary>
         internal Transform Home { get; }

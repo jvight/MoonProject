@@ -259,6 +259,12 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds per pillar breath.")]
         [Range(0.5f, 20f)] [SerializeField] private float _pillarBreathPeriod = 5f;
 
+        [Tooltip("Height (m) of the pillar.")]
+        [Range(8f, 60f)] [SerializeField] private float _pillarHeight = 32f;
+
+        [Tooltip("Radius (m) of the pillar.")]
+        [Range(0.2f, 2f)] [SerializeField] private float _pillarRadius = 0.6f;
+
         [Header("Cassette shelf")]
         [Tooltip("Height (m) of a tape's pivot above its shelf slot (art: about 0.11).")]
         [Range(0f, 0.5f)] [SerializeField] private float _shelfLift = 0.11f;
@@ -345,6 +351,8 @@ namespace MoonProject.Gameplay
         public float PillarFade => _pillarFade;
         public float PillarBreathDepth => _pillarBreathDepth;
         public float PillarBreathPeriod => _pillarBreathPeriod;
+        public float PillarHeight => _pillarHeight;
+        public float PillarRadius => _pillarRadius;
         public float ShelfLift => _shelfLift;
         public float ShelfSettle => _shelfSettle;
         public float ShelfOvershoot => _shelfOvershoot;

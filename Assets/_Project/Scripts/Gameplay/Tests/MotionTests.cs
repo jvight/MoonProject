@@ -118,13 +118,16 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void MarkerPillar_RisesHoldsAndFadesWithinItsLifetime()
+        public void MarkerBlink_BlinksAndThenFadesToZero()
         {
-            Assert.AreEqual(0f, MarkerEnvelope.Pillar(0f, 20f, 0.6f, 6f), 1e-6f);
-            Assert.AreEqual(1f, MarkerEnvelope.Pillar(5f, 20f, 0.6f, 6f), 1e-6f);
-            Assert.Greater(MarkerEnvelope.Pillar(16f, 20f, 0.6f, 6f), 0.1f, "still visible near the end");
-            Assert.Less(MarkerEnvelope.Pillar(19.5f, 20f, 0.6f, 6f), 0.05f);
-            Assert.AreEqual(0f, MarkerEnvelope.Pillar(20f, 20f, 0.6f, 6f), 1e-6f);
+            const float period = 1.8f;
+            const float duration = 3f * period;
+            Assert.AreEqual(0f, MarkerEnvelope.Blink(0f, duration, period), 1e-6f);
+            Assert.AreEqual(1f, MarkerEnvelope.Blink(0.25f * period, duration, period), 1e-3f, "first blink peak");
+            Assert.Less(MarkerEnvelope.Blink(0.75f * period, duration, period), 0.25f, "dip between blinks");
+            Assert.AreEqual(1f, MarkerEnvelope.Blink(1.25f * period, duration, period), 1e-3f, "second blink peak");
+            Assert.AreEqual(1f, MarkerEnvelope.Blink(2.25f * period, duration, period), 1e-3f, "third blink peak");
+            Assert.AreEqual(0f, MarkerEnvelope.Blink(duration, duration, period), 1e-6f);
         }
 
         [Test]

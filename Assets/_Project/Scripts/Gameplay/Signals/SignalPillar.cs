@@ -11,23 +11,26 @@ namespace MoonProject.Gameplay
     /// </summary>
     internal sealed class SignalPillar
     {
-        private readonly SonarTuning _sonar;
         private readonly ITerrainQuery _terrain;
         private readonly Transform _pillar;
         private readonly GlowRenderer _pillarGlow;
         private float _level;
         private bool _shown;
 
-        public SignalPillar(string name, Transform parent, SonarTuning sonar, ITerrainQuery terrain,
+        public SignalPillar(string name, Transform parent, BellTuning tuning, ITerrainQuery terrain,
             Material pillarMaterial, Mesh pillarMesh)
         {
-            _sonar = sonar != null ? sonar : throw new ArgumentNullException(nameof(sonar));
+            if (tuning == null)
+            {
+                throw new ArgumentNullException(nameof(tuning));
+            }
+
             _terrain = terrain ?? throw new ArgumentNullException(nameof(terrain));
             var root = new GameObject(name);
             root.transform.SetParent(parent, false);
             MeshRenderer pillar = GlowObject.Create("Pillar", root.transform, pillarMesh, pillarMaterial);
             _pillar = pillar.transform;
-            _pillar.localScale = new Vector3(sonar.PillarRadius, sonar.PillarHeight, sonar.PillarRadius);
+            _pillar.localScale = new Vector3(tuning.PillarRadius, tuning.PillarHeight, tuning.PillarRadius);
             _pillarGlow = new GlowRenderer(pillar);
         }
 

@@ -30,7 +30,7 @@ namespace MoonProject.Gameplay
         internal SignalPillar Pillar => _lit >= 0 ? _pillars[_lit] : null;
 
         internal bool Initialize(GameplayServices services, FriendField friends, CassetteField cassettes,
-            LogCacheField logs, RelicField relics, IRoverAbilities abilities, SonarTuning sonar)
+            LogCacheField logs, RelicField relics, IRoverAbilities abilities)
         {
             _friends = friends != null ? friends : throw new ArgumentNullException(nameof(friends));
             if (friends.DialFriend == null || friends.BellTuning == null)
@@ -46,8 +46,8 @@ namespace MoonProject.Gameplay
             _signals = new BellSignals(services.Events, targets, services.Layout.BasePosition);
             _pillars = new[]
             {
-                CreatePillar("SignalPillar_A", services, sonar), CreatePillar("SignalPillar_B", services, sonar),
-                CreatePillar("SignalPillar_C", services, sonar),
+                CreatePillar("SignalPillar_A", services), CreatePillar("SignalPillar_B", services),
+                CreatePillar("SignalPillar_C", services),
             };
             _initialized = true;
             return true;
@@ -63,9 +63,9 @@ namespace MoonProject.Gameplay
             _signals.Restore(data);
         }
 
-        private SignalPillar CreatePillar(string name, GameplayServices services, SonarTuning sonar)
+        private SignalPillar CreatePillar(string name, GameplayServices services)
         {
-            return new SignalPillar(name, transform, sonar, services.Terrain, services.Visuals.FriendPillar,
+            return new SignalPillar(name, transform, _tuning, services.Terrain, services.Visuals.FriendPillar,
                 services.Meshes.Pillar);
         }
 
