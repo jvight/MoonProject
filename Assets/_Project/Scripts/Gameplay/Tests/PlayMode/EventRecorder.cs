@@ -56,6 +56,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Listen(events, ScanStopped, false);
             Listen(events, FragmentScanned, false);
             Listen(events, BlueprintCompleted, false);
+            Listen(events, ScanSiteReached, false);
+            Listen(events, ScanSiteEmptied, false);
             Listen(events, TickerLine, false);
             Listen(events, BellCued, false);
             Listen(events, RelayCued, false);
@@ -125,6 +127,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public List<Timed<BlueprintCompleted>> BlueprintCompleted { get; } =
             new List<Timed<BlueprintCompleted>>();
+
+        public List<Timed<ScanSiteReached>> ScanSiteReached { get; } = new List<Timed<ScanSiteReached>>();
+        public List<Timed<ScanSiteEmptied>> ScanSiteEmptied { get; } = new List<Timed<ScanSiteEmptied>>();
         public List<Timed<TickerLine>> TickerLine { get; } = new List<Timed<TickerLine>>();
         public List<Timed<BellCued>> BellCued { get; } = new List<Timed<BellCued>>();
 

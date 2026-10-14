@@ -63,8 +63,11 @@ namespace MoonProject.Gameplay
 
         public ScanSize Size { get; }
 
-        /// <summary>The site, derelict or place it lies at (its host's id).</summary>
+        /// <summary>The site, derelict or place it lies on (its host's id).</summary>
         public string HostId { get; }
+
+        /// <summary>Its place in the scan field's place list (<see cref="IScanSites"/>).</summary>
+        internal int Place { get; set; }
 
         public Transform Root { get; }
 

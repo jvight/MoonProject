@@ -18,6 +18,7 @@ namespace MoonProject.Gameplay
         private readonly bool _heartUnderPieces;
         private EmissionGlow _pilotGlow;
         private LandmarkPilotLevel _pilot;
+        private Func<bool> _moreToFind = NothingMore;
         private Vector3 _shudderRest;
         private float _shudderLeft;
         private float _shudderDuration;
@@ -144,8 +145,11 @@ namespace MoonProject.Gameplay
         /// <summary>Glow of the landmark pilot (0 without a landmark or before the heart is found).</summary>
         public float PilotLevel => _pilot != null ? _pilot.Level : 0f;
 
-        /// <summary>It answers a ping while something is left to find: a piece to cut or a relic to lift.</summary>
-        public bool AnswersSonar => !IsPickedClean || HoldsRelic;
+        /// <summary>
+        /// It answers a ping while something is left to find: a piece to cut, a relic to lift, or what else waits there
+        /// (<see cref="ConnectFinds"/>: fragments to scan, a derelict inside it with pieces left).
+        /// </summary>
+        public bool AnswersSonar => !IsPickedClean || HoldsRelic || _moreToFind();
 
         /// <summary>The salvage melody of this site: consecutive pieces climb a step.</summary>
         internal ComboCounter Combo { get; }
@@ -172,6 +176,20 @@ namespace MoonProject.Gameplay
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// What else waits at the site besides its pieces and relics (D2: its fragments to scan, a derelict standing
+        /// inside it with pieces left). Connected once every find stands; until then nothing else waits.
+        /// </summary>
+        internal void ConnectFinds(Func<bool> moreToFind)
+        {
+            _moreToFind = moreToFind ?? throw new ArgumentNullException(nameof(moreToFind));
+        }
+
+        private static bool NothingMore()
+        {
+            return false;
         }
 
         /// <summary>It answered (or was spotted): its relics count as found too.</summary>

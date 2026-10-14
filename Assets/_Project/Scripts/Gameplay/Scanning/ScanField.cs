@@ -18,13 +18,23 @@ namespace MoonProject.Gameplay
     /// progress). Fully scanned, it dissolves into its drawing (<see cref="FragmentScanned"/>, Reward at its scan
     /// point), leaves a dust outline that fades, and the set's last fragment completes the blueprint
     /// (<see cref="Blueprints.Learn"/>). A fragment of a blueprint already known pays Metal after its dissolve. A save
-    /// keeps what is scanned and how far. Allocation-free per frame.
+    /// keeps what is scanned and how far. As <see cref="IScanSites"/> it tells the map, the chart and the place cards
+    /// which places hold fragments and how many are left (D2): the first time 07 comes within a place with fragments
+    /// left, <see cref="ScanSiteReached"/>, once per save; its last fragment scanned, <see cref="ScanSiteEmptied"/>.
+    /// Allocation-free per frame.
     /// </summary>
-    public sealed class ScanField
+    public sealed class ScanField : IScanSites
     {
         private const int Quarters = 4;
 
         private readonly List<ScanFragment> _fragments = new List<ScanFragment>();
+        private readonly List<string> _placeIds = new List<string>();
+        private readonly List<Vector3> _placePositions = new List<Vector3>();
+        private readonly List<float> _placeRadii = new List<float>();
+        private readonly List<int> _placeCounts = new List<int>();
+        private readonly List<int> _placeLeft = new List<int>();
+        private readonly List<bool> _reached = new List<bool>();
+        private readonly List<Func<bool>> _heard = new List<Func<bool>>();
         private readonly ScanTuning _tuning;
         private readonly EventBus _events;
         private readonly InputReader _input;
@@ -79,20 +89,26 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// Sets Art's fragments on every FragmentSocket_&lt;Blueprint&gt;_&lt;n&gt; node under <paramref name="root"/>
-        /// (at initialisation). Null when they all stand, else what breaks the contract.
+        /// (at initialisation), at the crew map place <paramref name="placeId"/> (its position and the radius that
+        /// counts as being there; a derelict inside a wreck gives its wreck's). <paramref name="heard"/> says when 07
+        /// knows the place is there without having come to it (it answered a listen or was spotted). Null when they
+        /// all stand, else what breaks the contract.
         /// </summary>
-        public string AddHost(string hostId, Transform root)
+        public string AddHost(string hostId, Transform root, string placeId, Vector3 placePosition, float placeRadius,
+            Func<bool> heard)
         {
-            if (string.IsNullOrEmpty(hostId) || root == null)
+            if (string.IsNullOrEmpty(hostId) || root == null || string.IsNullOrEmpty(placeId) || heard == null)
             {
-                throw new ArgumentException("A scan host needs an id and a root.", nameof(hostId));
+                throw new ArgumentException("A scan host needs an id, a root, a place and its hearing.",
+                    nameof(hostId));
             }
 
             var sockets = new List<Transform>();
             Sockets(root, sockets);
+            int place = sockets.Count > 0 ? Place(placeId, placePosition, placeRadius, heard) : -1;
             foreach (Transform socket in sockets)
             {
-                string problem = AddFragment(hostId, socket);
+                string problem = AddFragment(hostId, place, socket);
                 if (problem != null)
                 {
                     return $"'{hostId}': {problem}";
@@ -153,12 +169,13 @@ namespace MoonProject.Gameplay
             return null;
         }
 
-        /// <summary>The kit whose fragments lie at <paramref name="hostId"/>, or null.</summary>
-        public string KitAt(string hostId)
+        /// <summary>The kit whose fragments lie at the place <paramref name="placeId"/>, or null.</summary>
+        public string KitAt(string placeId)
         {
-            for (int i = 0; i < _fragments.Count; i++)
+            int place = IndexOf(placeId);
+            for (int i = 0; i < _fragments.Count && place >= 0; i++)
             {
-                if (string.Equals(_fragments[i].HostId, hostId, StringComparison.Ordinal))
+                if (_fragments[i].Place == place)
                 {
                     return _fragments[i].BlueprintId;
                 }
@@ -167,17 +184,67 @@ namespace MoonProject.Gameplay
             return null;
         }
 
-        /// <summary>How many fragments at <paramref name="hostId"/> are still to scan.</summary>
-        public int Left(string hostId)
+        /// <summary>How many fragments at the place <paramref name="placeId"/> are still to scan.</summary>
+        public int Left(string placeId)
         {
-            int left = 0;
-            for (int i = 0; i < _fragments.Count; i++)
+            int place = IndexOf(placeId);
+            return place >= 0 ? _placeLeft[place] : 0;
+        }
+
+        /// <summary>The places that hold fragments.</summary>
+        public int PlaceCount => _placeIds.Count;
+
+        int IScanSites.Count => _placeIds.Count;
+
+        public string PlaceId(int index)
+        {
+            return _placeIds[index];
+        }
+
+        public Vector3 Position(int index)
+        {
+            return _placePositions[index];
+        }
+
+        public int FragmentCount(int index)
+        {
+            return _placeCounts[index];
+        }
+
+        public int Left(int index)
+        {
+            return _placeLeft[index];
+        }
+
+        public bool IsKnown(int index)
+        {
+            return _reached[index] || _heard[index]();
+        }
+
+        public int IndexOf(string placeId)
+        {
+            for (int i = 0; i < _placeIds.Count; i++)
             {
-                ScanFragment fragment = _fragments[i];
-                left += !fragment.Scanned && string.Equals(fragment.HostId, hostId, StringComparison.Ordinal) ? 1 : 0;
+                if (string.Equals(_placeIds[i], placeId, StringComparison.Ordinal))
+                {
+                    return i;
+                }
             }
 
-            return left;
+            return -1;
+        }
+
+        public int SetSize(string blueprintId)
+        {
+            foreach (ScanSet set in _tuning.Sets)
+            {
+                if (string.Equals(set.KitId, blueprintId, StringComparison.Ordinal))
+                {
+                    return set.Count;
+                }
+            }
+
+            return 0;
         }
 
         public void Step(float now, float deltaTime)
@@ -188,6 +255,8 @@ namespace MoonProject.Gameplay
             {
                 StepLook(_fragments[i], now, bracketRange);
             }
+
+            StepReach();
 
             bool held = _input.ExcavateHeld;
             bool claimed = _othersClaim();
@@ -240,11 +309,26 @@ namespace MoonProject.Gameplay
                 owed += fragment.Owed;
             }
 
+            int reached = 0;
+            for (int i = 0; i < _reached.Count; i++)
+            {
+                reached += _reached[i] ? 1 : 0;
+            }
+
             var data = new ScansSaveData
             {
                 scanned = new string[scanned], partialIds = new string[partial], partials = new float[partial],
-                owedMetal = owed,
+                owedMetal = owed, reached = new string[reached],
             };
+            reached = 0;
+            for (int i = 0; i < _reached.Count; i++)
+            {
+                if (_reached[i])
+                {
+                    data.reached[reached++] = _placeIds[i];
+                }
+            }
+
             scanned = 0;
             partial = 0;
             for (int i = 0; i < _fragments.Count; i++)
@@ -265,8 +349,8 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// A loaded game's scans, silently: scanned fragments are gone, partial ones show their drawing so far, and
-        /// Metal still owed arrives. Unknown ids are ignored.
+        /// A loaded game's scans, silently: scanned fragments are gone, partial ones show their drawing so far, Metal
+        /// still owed arrives, and the places already reached stay told. Unknown ids are ignored.
         /// </summary>
         public void Restore(ScansSaveData data)
         {
@@ -300,6 +384,15 @@ namespace MoonProject.Gameplay
             {
                 Pay(data.owedMetal);
             }
+
+            foreach (string id in data.reached ?? Array.Empty<string>())
+            {
+                int place = IndexOf(id);
+                if (place >= 0)
+                {
+                    _reached[place] = true;
+                }
+            }
         }
 
         /// <summary>"&lt;kit id&gt;.&lt;n&gt;": a fragment's saved id.</summary>
@@ -308,7 +401,26 @@ namespace MoonProject.Gameplay
             return kitId + "." + index.ToString(CultureInfo.InvariantCulture);
         }
 
-        private string AddFragment(string hostId, Transform socket)
+        /// <summary>The index of the place <paramref name="placeId"/>, added the first time a fragment lies there.</summary>
+        private int Place(string placeId, Vector3 position, float radius, Func<bool> heard)
+        {
+            int place = IndexOf(placeId);
+            if (place >= 0)
+            {
+                return place;
+            }
+
+            _placeIds.Add(placeId);
+            _placePositions.Add(position);
+            _placeRadii.Add(radius);
+            _placeCounts.Add(0);
+            _placeLeft.Add(0);
+            _reached.Add(false);
+            _heard.Add(heard);
+            return _placeIds.Count - 1;
+        }
+
+        private string AddFragment(string hostId, int place, Transform socket)
         {
             string tail = socket.name.Substring(ScanFragment.SocketPrefix.Length);
             int split = tail.LastIndexOf('_');
@@ -348,6 +460,9 @@ namespace MoonProject.Gameplay
             }
 
             fragment.ShowBrackets(false);
+            fragment.Place = place;
+            _placeCounts[place]++;
+            _placeLeft[place]++;
             _fragments.Add(fragment);
             return null;
         }
@@ -410,6 +525,24 @@ namespace MoonProject.Gameplay
 
             fragment.Gone = true;
             fragment.Hide();
+        }
+
+        /// <summary>
+        /// The first time 07 comes within a place that still holds fragments, it is told once (the place card's "N
+        /// fragments to scan").
+        /// </summary>
+        private void StepReach()
+        {
+            for (int i = 0; i < _placeIds.Count; i++)
+            {
+                if (!_reached[i] && _placeLeft[i] > 0 &&
+                    SurfaceRules.HorizontalDistance(_rover.Position, _placePositions[i]) <= _placeRadii[i])
+                {
+                    _reached[i] = true;
+                    _events.Publish(new ScanSiteReached(_placeIds[i], _placePositions[i], _placeLeft[i],
+                        _placeCounts[i]));
+                }
+            }
         }
 
         /// <summary>
@@ -514,6 +647,7 @@ namespace MoonProject.Gameplay
             fragment.ScannedAt = now;
             fragment.Owed = known ? _tuning.KnownMetal : 0;
             fragment.ShowBrackets(false);
+            _placeLeft[fragment.Place]--;
             _events.Publish(new FragmentScanned(fragment.FragmentId, fragment.BlueprintId, before, fragment.Count,
                 known, fragment.Owed));
             _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, fragment.Point, Vector3.up, 1f, 0f));
@@ -522,16 +656,21 @@ namespace MoonProject.Gameplay
                 _blueprints.Learn(fragment.BlueprintId);
             }
 
+            if (_placeLeft[fragment.Place] == 0)
+            {
+                _events.Publish(new ScanSiteEmptied(_placeIds[fragment.Place], _placePositions[fragment.Place]));
+            }
+
             _save.SaveNow();
         }
 
-        private int ScannedOf(string kitId)
+        public int ScannedOf(string blueprintId)
         {
             int scanned = 0;
             for (int i = 0; i < _fragments.Count; i++)
             {
                 ScanFragment fragment = _fragments[i];
-                scanned += fragment.Scanned && string.Equals(fragment.BlueprintId, kitId, StringComparison.Ordinal)
+                scanned += fragment.Scanned && string.Equals(fragment.BlueprintId, blueprintId, StringComparison.Ordinal)
                     ? 1
                     : 0;
             }
@@ -539,8 +678,9 @@ namespace MoonProject.Gameplay
             return scanned;
         }
 
-        private static void LieScanned(ScanFragment fragment)
+        private void LieScanned(ScanFragment fragment)
         {
+            _placeLeft[fragment.Place] -= fragment.Scanned ? 0 : 1;
             fragment.Scanned = true;
             fragment.Progress = 1f;
             fragment.Gone = true;
