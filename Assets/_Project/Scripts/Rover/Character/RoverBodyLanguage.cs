@@ -103,7 +103,10 @@ namespace MoonProject.Rover
         private ISkyGaze _sky;
         private EventBus _events;
         private IDisposable[] _subscriptions;
+        private readonly object _listenOwner = new object();
         private float _glanceEnds = -1f;
+        private float _listenEnds = -1f;
+        private bool _listenAnswerPending;
         private MaterialPropertyBlock _glowBlock;
         private DampedSpring _yaw;
         private DampedSpring _pitch;
@@ -158,6 +161,8 @@ namespace MoonProject.Rover
             {
                 events.Subscribe<RoverLanded>(OnLanded),
                 events.Subscribe<MaterialSalvaged>(OnMaterialSalvaged),
+                events.Subscribe<SiteAnswered>(OnSiteAnswered),
+                events.Subscribe<FriendAnswered>(OnFriendAnswered),
                 events.Subscribe<RelicAnswered>(OnRelicAnswered),
                 events.Subscribe<RelicSurfaced>(OnRelicSurfaced),
                 events.Subscribe<RelicDeposited>(OnRelicDeposited),
@@ -276,9 +281,34 @@ namespace MoonProject.Rover
             PerkUp(Mathf.Min(strength, _tuning.SalvagePerkMax));
         }
 
+        private void OnSiteAnswered(SiteAnswered answer)
+        {
+            if (_listenAnswerPending)
+            {
+                _listenAnswerPending = false;
+                LookAtAnswer(answer.Position);
+            }
+        }
+
+        private void OnFriendAnswered(FriendAnswered answer)
+        {
+            if (_listenAnswerPending)
+            {
+                _listenAnswerPending = false;
+                LookAtAnswer(answer.Position);
+            }
+        }
+
         private void OnRelicAnswered(RelicAnswered answer)
         {
-            Glance(answer.Position);
+            _listenAnswerPending = false;
+            LookAtAnswer(answer.Position);
+        }
+
+        private void LookAtAnswer(Vector3 point)
+        {
+            _rover.Gaze.Set(_listenOwner, point, _tuning.ReactionGazePriority);
+            _listenEnds = Time.time + _tuning.RelicGlanceSeconds;
             PerkUp(_tuning.RelicAnsweredPerk);
         }
 
@@ -406,10 +436,11 @@ namespace MoonProject.Rover
             }
         }
 
-        /// <summary>07 listens: the antenna lifts and its tip blinks.</summary>
+        /// <summary>07 listens: the antenna lifts, its tip blinks, and it turns to the nearest answer.</summary>
         private void OnListened(SonarPinged listened)
         {
             _listen.Listen();
+            _listenAnswerPending = true;
         }
 
         private void OnLanded(RoverLanded landed)
@@ -495,6 +526,12 @@ namespace MoonProject.Rover
             {
                 _rover.Gaze.Clear(_glanceOwner);
                 _glanceEnds = -1f;
+            }
+
+            if (_listenEnds >= 0f && Time.time >= _listenEnds)
+            {
+                _rover.Gaze.Clear(_listenOwner);
+                _listenEnds = -1f;
             }
 
             if (!_cutting && _cutEnds >= 0f && Time.time >= _cutEnds)

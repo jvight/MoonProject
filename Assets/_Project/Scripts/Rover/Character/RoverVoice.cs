@@ -33,6 +33,8 @@ namespace MoonProject.Rover
         private readonly IDisposable[] _subscriptions;
         private float _charge = 1f;
         private bool _upgradedCutPending;
+        private bool _listening;
+        private bool _chirpedThisListen;
 
         public RoverVoice(EventBus events, ChirpSettings settings, Func<float> clock)
         {
@@ -51,6 +53,11 @@ namespace MoonProject.Rover
                 events.Subscribe<CutterTierChanged>(changed => _upgradedCutPending |= !changed.Restored),
                 events.Subscribe<FriendRepaired>(_ => Say(ChirpMood.Happy, Gentle)),
                 events.Subscribe<FriendGreeted>(_ => Say(ChirpMood.Greeting, Gentle)),
+                events.Subscribe<SonarPinged>(_ =>
+                {
+                    _listening = true;
+                    _chirpedThisListen = false;
+                }),
                 events.Subscribe<FriendAnswered>(answer => FirstAnswer("friend." + answer.FriendId)),
                 events.Subscribe<SiteAnswered>(answer => FirstAnswer(answer.SiteId)),
                 events.Subscribe<RelicAnswered>(answer => FirstAnswer(answer.RelicId)),
@@ -182,7 +189,24 @@ namespace MoonProject.Rover
 
         private void FirstAnswer(string id)
         {
-            if (!string.IsNullOrEmpty(id) && _answered.Add(id))
+            if (string.IsNullOrEmpty(id))
+            {
+                return;
+            }
+
+            bool isNew = _answered.Add(id);
+            if (_listening)
+            {
+                if (!_chirpedThisListen)
+                {
+                    _chirpedThisListen = true;
+                    Say(ChirpMood.Curious, Gentle);
+                }
+
+                return;
+            }
+
+            if (isNew)
             {
                 Say(ChirpMood.Curious, Gentle);
             }
