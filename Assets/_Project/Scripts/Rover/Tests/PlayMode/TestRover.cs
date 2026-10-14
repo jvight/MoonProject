@@ -37,10 +37,6 @@ namespace MoonProject.Rover.PlayModeTests
         private const float DrumSocketY = 0.87f;
         private const float DrumSocketZ = -0.12f;
 
-        /// <summary>The story part stand-ins' socket on 07's back (art's StoryPartSocket).</summary>
-        private const float StoryPartSocketY = 1.1f;
-        private const float StoryPartSocketZ = -0.6f;
-
         /// <summary>The side bins' stand-in sockets on the front flanks.</summary>
         private const float SideBinX = 0.5f;
         private const float SideBinY = 0.9f;
@@ -55,9 +51,6 @@ namespace MoonProject.Rover.PlayModeTests
         private const float HatchY = 0.65f;
         private const float HatchZ = -0.7f;
         private const int HatchCrateCount = 8;
-
-        /// <summary>Art's tower story part names (stand-ins on StoryPartSocket).</summary>
-        public static readonly string[] StoryParts = { "Part_TowerCoil", "Part_Transformer", "Part_RelaySpare" };
 
         private const float SeatHeight = 0.045f;
         private const float SeatBack = -0.26f;
@@ -144,9 +137,6 @@ namespace MoonProject.Rover.PlayModeTests
 
         /// <summary>The stand-in Kit_TetherRing on the Eye and its Glow band.</summary>
         public Transform TetherRing { get; private set; }
-
-        /// <summary>The tower story part stand-ins on StoryPartSocket, in <see cref="StoryParts"/> order.</summary>
-        public Transform[] StoryPartNodes { get; private set; }
 
         public Transform RelicSeat { get; private set; }
 
@@ -349,14 +339,6 @@ namespace MoonProject.Rover.PlayModeTests
             Transform pennant = Shape(PrimitiveType.Cube, antenna, new Vector3(0f, 0.6f, -0.05f),
                 new Vector3(0.01f, 0.06f, 0.1f), material);
             pennant.name = RoverModelNodes.Pennant;
-            Transform storyPartSocket = Node(RoverModelNodes.StoryPartSocket, model,
-                new Vector3(0f, StoryPartSocketY, StoryPartSocketZ));
-            var parts = new Transform[StoryParts.Length];
-            for (int i = 0; i < parts.Length; i++)
-            {
-                parts[i] = Shape(PrimitiveType.Cube, storyPartSocket, Vector3.zero, Vector3.one * 0.2f, material);
-                parts[i].name = StoryParts[i];
-            }
             var flankLamps = new Transform[RoverModelNodes.FlankLampCount];
             var flankGlasses = new Renderer[RoverModelNodes.FlankLampCount];
             for (int i = 0; i < flankLamps.Length; i++)
@@ -385,7 +367,6 @@ namespace MoonProject.Rover.PlayModeTests
                 ("_ringGlow", ringGlow.GetComponent<MeshRenderer>()),
                 ("_relicSeat", seat), ("_solarCell", cell), ("_freshSerial", serial), ("_pennant", pennant));
             AssignArray(kit, "_lamps", lamps);
-            AssignArray(kit, "_storyParts", parts);
             AssignArray(kit, "_drums", drums);
             AssignArray(kit, "_drumGlows", drumGlows);
             AssignArray(rig, "_wheels", wheels);
@@ -502,7 +483,6 @@ namespace MoonProject.Rover.PlayModeTests
                 CargoRack = rack,
                 TapeDeck = deck,
                 TetherRing = tetherRing,
-                StoryPartNodes = parts,
                 RelicSeat = seat,
                 CellFilled = cell,
                 FreshSerial = serial,

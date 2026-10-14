@@ -31,8 +31,6 @@ namespace MoonProject.Rover.Editor
     ///           Kit_TetherRing (nested prefab, inactive until Kenji's garage port fits it)
     ///         DeckSocket
     ///           Kit_TapeDeck (nested prefab, inactive until 07 has picked up Tilly's tape deck)
-    ///         StoryPartSocket (the story parts' socket)
-    ///           Part_TowerCoil, Part_Transformer, Part_RelaySpare (nested prefabs, one shown while 07 carries it)
     ///         CoilSocket
     ///           HoverCoils (nested prefab, inactive until 07 owns the Hover-Jump)
     ///           CoilGlow   soft cyan point light, off until the jump charges
@@ -94,11 +92,6 @@ namespace MoonProject.Rover.Editor
             var focusLens = BuildWiring.Require<GameObject>(RoverAssetPaths.FocusLens, "the Art box's rover builder");
             var sideBin = BuildWiring.Require<GameObject>(RoverAssetPaths.SideBin, "the Art box's kit builder");
             var scanFan = BuildWiring.Require<GameObject>(RoverAssetPaths.ScanFan, "the Art box's rover builder");
-            var parts = new GameObject[RoverAssetPaths.StoryParts.Length];
-            for (int i = 0; i < parts.Length; i++)
-            {
-                parts[i] = BuildWiring.Require<GameObject>(RoverAssetPaths.StoryParts[i], "the Art box's site builder");
-            }
 
             var tuning = BuildWiring.Require<RoverTuning>(RoverAssetPaths.RoverTuning, "Rover/Tuning");
             var rigTuning = BuildWiring.Require<RoverRigTuning>(RoverAssetPaths.RigTuning, "Rover/Tuning");
@@ -152,8 +145,7 @@ namespace MoonProject.Rover.Editor
             BuildWiring.AssignArray(rig, "_wheels", wheels);
             Transform coilSocket = BuildWiring.Node(m, RoverModelNodes.CoilSocket);
             RoverHoverCoils hoverCoils = BuildHoverCoils(scratch, visual, coilSocket, coils, rigTuning);
-            RoverKit kit = BuildKit(scratch, visual, m, headlamp, rigTuning, lampBar, drum, rack, spine, deck, ring,
-                parts);
+            RoverKit kit = BuildKit(scratch, visual, m, headlamp, rigTuning, lampBar, drum, rack, spine, deck, ring);
 
             RoverFlankLamps flankLamps = BuildFlankLamps(visual, m, rigTuning);
             RoverWheelFx wheelFx = BuildWheelFx(scratch, root.transform, m, fxTuning, trackMaterial, dustMaterial);
@@ -350,8 +342,7 @@ namespace MoonProject.Rover.Editor
         /// </summary>
         private static RoverKit BuildKit(BuilderScratchScene scratch, GameObject host, Transform model, Light headlamp,
             RoverRigTuning tuning, GameObject lampBarPrefab, GameObject drumPrefab, GameObject rackPrefab,
-            GameObject spinePrefab, GameObject deckPrefab, GameObject ringPrefab,
-            GameObject[] partPrefabs)
+            GameObject spinePrefab, GameObject deckPrefab, GameObject ringPrefab)
         {
             Transform lampBar = Mount(scratch, lampBarPrefab, BuildWiring.Node(model, RoverModelNodes.HeadlampSocket));
             var lamps = new Object[RoverModelNodes.KitLampCount];
@@ -366,14 +357,6 @@ namespace MoonProject.Rover.Editor
             Transform spine = Mount(scratch, spinePrefab, BuildWiring.Node(model, RoverModelNodes.SpineSocket));
             Transform deck = Mount(scratch, deckPrefab, BuildWiring.Node(model, RoverModelNodes.DeckSocket));
             Transform ring = Mount(scratch, ringPrefab, BuildWiring.Node(model, RoverModelNodes.RingSocket));
-            Transform storyPartSocket = BuildWiring.Node(model, RoverModelNodes.StoryPartSocket);
-            var parts = new Object[partPrefabs.Length];
-            for (int i = 0; i < parts.Length; i++)
-            {
-                Transform part = Mount(scratch, partPrefabs[i], storyPartSocket);
-                part.name = partPrefabs[i].name;
-                parts[i] = part;
-            }
 
             var kit = host.AddComponent<RoverKit>();
             BuildWiring.Assign(kit,
@@ -390,7 +373,6 @@ namespace MoonProject.Rover.Editor
                 ("_freshSerial", BuildWiring.Node(model, RoverModelNodes.Decal07Fresh)),
                 ("_pennant", BuildWiring.Node(model, RoverModelNodes.Pennant)));
             BuildWiring.AssignArray(kit, "_lamps", lamps);
-            BuildWiring.AssignArray(kit, "_storyParts", parts);
             BuildWiring.AssignArray(kit, "_drums", new Object[] { drumLeft, drumRight });
             BuildWiring.AssignArray(kit, "_drumGlows", new Object[]
             {
