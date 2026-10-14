@@ -2097,6 +2097,9 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 7955051805288df41b472e87b9a065c4, type: 3}
     - {fileID: 8300000, guid: 243320a7085503442900e2b754e3a294, type: 3}
     - {fileID: 8300000, guid: 8bc9a22cd2ecce14a82ba1bd5d1fe35f, type: 3}
+    - {fileID: 8300000, guid: 81bbdc54f45c4364a83486f4146b73c5, type: 3}
+    - {fileID: 8300000, guid: beda9eaea40a8ec4a86ce7d1ed7ed47e, type: 3}
+    - {fileID: 8300000, guid: 281886f2ca8586e46a68a9beedf084cf, type: 3}
     _variantLabels:
     - depot
     - depot_relic
@@ -2108,6 +2111,9 @@ MonoBehaviour:
     - kestrel_relic
     - lander
     - lander_relic
+    - micro_06
+    - micro_mule
+    - micro_drone
     _bus: 2
     _spatial: 1
     _loop: 0
