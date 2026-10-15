@@ -114,33 +114,22 @@ namespace MoonProject.World
         [Range(1f, 40f)]
         [SerializeField] private float _earthDiameter = 13f;
 
-        [Tooltip("Subdivisions of Earth's icosphere: 2 = 320 chunky facets.")]
-        [Range(1, 4)]
-        [SerializeField] private int _earthSubdivisions = 2;
-
-        [Tooltip("Fraction of Earth's faces that are land.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _earthLandFraction = 0.36f;
-
-        [Tooltip("Fraction of Earth's faces that are cloud or ice.")]
-        [Range(0f, 0.5f)]
-        [SerializeField] private float _earthCloudFraction = 0.1f;
-
-        [Tooltip("Direction of the sun lighting Earth, relative to the viewer: x = right, y = up, " +
-            "z = toward the viewer. Sets Earth's phase.")]
+        [Tooltip("Direction of the sun lighting Earth in the static edit-mode preview, relative to the viewer: " +
+            "x = right, y = up, z = toward the viewer.")]
         [SerializeField] private Vector3 _earthSunDirection = new Vector3(-0.75f, 0.35f, 0.55f);
 
         [Tooltip("Pale, cool haze Earth's ocean, land and cloud fade toward: far away and calm, a cool jewel rather " +
             "than saturated cyan.")]
         [SerializeField] private Color _earthHaze = new Color(0.72f, 0.78f, 0.9f);
 
-        [Tooltip("How far Earth's face colours fade toward the haze (0 = the palette's own ocean and land).")]
+        [Tooltip("How far Earth's colours fade toward the haze (0 = the palette's own ocean and land).")]
         [Range(0f, 1f)]
         [SerializeField] private float _earthPaleness = 0.3f;
 
-        [Tooltip("Brightness of Earth's night side (0 = black).")]
+        [Tooltip("Brightness of Earth's unlit night side (0 = black). Kept very low so the night hemisphere reads " +
+            "as a dark disc with faint city lights while the sunlit crescent stands out.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _earthNightBrightness = 0.22f;
+        [SerializeField] private float _earthNightBrightness = 0.02f;
 
         [Tooltip("Emissive strength of Earth's lit side. Keep it soft: Earth is cool and beautiful, but the warm " +
             "lamps of home must win the eye (and the bloom).")]
@@ -151,7 +140,7 @@ namespace MoonProject.World
             "a cyan ring around it.")]
         [SerializeField] private Color _earthAtmosphere = new Color(0.6f, 0.72f, 0.95f);
 
-        [Tooltip("Strength of the atmosphere rim along Earth's facets (on top of the lit side).")]
+        [Tooltip("Strength of the atmosphere rim along Earth's lit limb.")]
         [Range(0f, 2f)]
         [SerializeField] private float _earthRim = 0.35f;
 
@@ -213,9 +202,6 @@ namespace MoonProject.World
         public float EarthBearing => _earthBearing;
         public float EarthElevation => _earthElevation;
         public float EarthDiameter => _earthDiameter;
-        public int EarthSubdivisions => _earthSubdivisions;
-        public float EarthLandFraction => _earthLandFraction;
-        public float EarthCloudFraction => _earthCloudFraction;
         public Vector3 EarthSunDirection => _earthSunDirection;
         public Color EarthHaze => _earthHaze;
         public float EarthPaleness => _earthPaleness;

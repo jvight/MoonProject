@@ -79,6 +79,7 @@ Shader "MoonProject/World/LofiTerrain"
             // width. Zero when no ring is rolling out.
             float4 _MoonReachRing;
             float4 _MoonReachRingColor;
+            float4 _MoonSunlitGround;
 
             half3 ReachRing(float3 positionWS)
             {
@@ -91,6 +92,16 @@ Shader "MoonProject/World/LofiTerrain"
             {
                 half attenuation = light.distanceAttenuation * light.shadowAttenuation;
                 return light.color * (saturate(dot(normal, light.direction)) * attenuation);
+            }
+
+            half3 MainSunDiffuse(Light light, float3 normal, half sunlit)
+            {
+                half attenuation = light.distanceAttenuation * light.shadowAttenuation;
+                half ndotl = saturate(dot(normal, light.direction));
+                // Lunar regolith backscatters low-angle sunlight strongly across flat basins and rims while keeping
+                // steep faces capped below the bloom threshold. Zero in look A (sunlit == 0).
+                half regolith = lerp(ndotl, pow(ndotl, 0.56) * 1.42, sunlit);
+                return light.color * (regolith * attenuation);
             }
 
             half4 Frag(Varyings input) : SV_Target
@@ -116,8 +127,9 @@ Shader "MoonProject/World/LofiTerrain"
                 directOcclusion = occlusion.directAmbientOcclusion;
                 #endif
 
+                half sunlit = saturate((half)_MoonSunlitGround.x);
                 Light mainLight = GetMainLight(inputData.shadowCoord, positionWS, half4(1, 1, 1, 1));
-                half3 light = ambient + Diffuse(mainLight, normal) * directOcclusion;
+                half3 light = ambient + MainSunDiffuse(mainLight, normal, sunlit) * directOcclusion;
 
                 #if defined(_ADDITIONAL_LIGHTS)
                 uint lightCount = GetAdditionalLightsCount();

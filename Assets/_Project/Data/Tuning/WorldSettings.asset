@@ -313,13 +313,10 @@ MonoBehaviour:
     _earthBearing: 338
     _earthElevation: 16
     _earthDiameter: 13
-    _earthSubdivisions: 2
-    _earthLandFraction: 0.36
-    _earthCloudFraction: 0.1
     _earthSunDirection: {x: -0.75, y: 0.35, z: 0.55}
     _earthHaze: {r: 0.72, g: 0.78, b: 0.9, a: 1}
     _earthPaleness: 0.3
-    _earthNightBrightness: 0.22
+    _earthNightBrightness: 0.02
     _earthGlow: 0.72
     _earthAtmosphere: {r: 0.6, g: 0.72, b: 0.95, a: 1}
     _earthRim: 0.35
