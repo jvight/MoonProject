@@ -152,6 +152,50 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
+        public void EarthLitDirection_FollowsSunBearingFromNewCrescentHalfToFull()
+        {
+            Vector3 toEarth = _sky.EarthDirection;
+            Vector3 frontNormal = -toEarth;
+            Vector3 rightLimb = Vector3.Cross(Vector3.up, toEarth).normalized;
+            float earthBearing = _sky.EarthBearing;
+            float earthElevation = _sky.EarthElevation;
+
+            // 1. New Earth (Sun directly behind Earth): lit direction points away from the Moon (dot frontNormal == -1).
+            Vector3 newDir = SkyShaderGlobals.EarthLitDirection(_sky, earthBearing, earthElevation);
+            Assert.AreEqual(-1f, Vector3.Dot(frontNormal, newDir), ValueTolerance,
+                "new Earth has lit direction opposite the Moon-facing normal");
+            Assert.AreEqual(0f, Vector3.Dot(rightLimb, newDir), ValueTolerance);
+
+            // 2. Thin waxing crescent (EarthPhase ~ 0.02, Sun ~16.3 deg clockwise of Earth): lit on the right limb,
+            // while the centre of Earth's disc stays in shadow (dot frontNormal < -0.95).
+            Vector3 crescentDir = SkyShaderGlobals.EarthLitDirection(_sky, earthBearing + 16.3f, earthElevation);
+            Assert.Greater(Vector3.Dot(rightLimb, crescentDir), 0.25f,
+                "thin waxing crescent lights Earth's right (Sunward) limb");
+            Assert.Less(Vector3.Dot(frontNormal, crescentDir), -0.95f,
+                "thin waxing crescent leaves Earth's disc centre on the dark night side");
+
+            // 3. First quarter (Sun 90 deg clockwise of Earth, EarthPhase == 0.5): lit direction is +rightLimb.
+            Vector3 halfRightDir = SkyShaderGlobals.EarthLitDirection(_sky, earthBearing + 90f, 0f);
+            Assert.AreEqual(1f, Vector3.Dot(rightLimb, halfRightDir), ValueTolerance,
+                "at +90 deg elongation the right half of Earth's disc is lit");
+            Assert.AreEqual(0f, Vector3.Dot(frontNormal, halfRightDir), ValueTolerance,
+                "at +90 deg elongation the terminator bisects Earth's disc centre");
+
+            // 4. Third quarter (Sun 90 deg counter-clockwise of Earth, EarthPhase == 0.5): lit direction is -rightLimb.
+            Vector3 halfLeftDir = SkyShaderGlobals.EarthLitDirection(_sky, earthBearing - 90f, 0f);
+            Assert.AreEqual(-1f, Vector3.Dot(rightLimb, halfLeftDir), ValueTolerance,
+                "at -90 deg elongation the left half of Earth's disc is lit");
+            Assert.AreEqual(0f, Vector3.Dot(frontNormal, halfLeftDir), ValueTolerance);
+
+            // 5. Full Earth (Sun 180 deg opposite Earth, EarthPhase == 1.0): lit direction points straight at the Moon
+            // (dot frontNormal == +1).
+            Vector3 fullDir = SkyShaderGlobals.EarthLitDirection(_sky, earthBearing + 180f, -4.5f);
+            Assert.AreEqual(1f, Vector3.Dot(frontNormal, fullDir), ValueTolerance,
+                "at 180 deg elongation Earth's Moon-facing hemisphere is fully lit");
+            Assert.AreEqual(0f, Vector3.Dot(rightLimb, fullDir), ValueTolerance);
+        }
+
+        [Test]
         public void OpeningHold_HoldsUntilReleased_AndReleasesAutomaticallyAtMaxHold()
         {
             var clock = new SunClock(_cycle, _sky);

@@ -33,6 +33,7 @@ namespace MoonProject.World
         private IDisposable _saveToken;
         private SunClock _clock;
         private bool _saveResolved;
+        private bool _loggedMissingRover;
         private float _smoothedSunlight;
         private float _lastProbeSunlight = -1f;
         private float _lastProbeEclipse = -1f;
@@ -108,14 +109,11 @@ namespace MoonProject.World
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _terrain = context.Get<ITerrainQuery>();
             _layout = context.Get<IWorldLayout>();
+            _save = context.Get<ISaveService>();
             _clock = new SunClock(_settings.SkyCycle, _settings.Sky);
             _saveResolved = false;
-
-            if (context.TryGet(out ISaveService save))
-            {
-                _save = save;
-                _saveToken = save.Register(_clock.CreateSaveSection());
-            }
+            _loggedMissingRover = false;
+            _saveToken = _save.Register(_clock.CreateSaveSection());
 
             context.Register<ISunlight>(this);
         }
@@ -196,18 +194,7 @@ namespace MoonProject.World
 
         private void EnsureSaveResolved()
         {
-            if (_saveResolved || _clock == null)
-            {
-                return;
-            }
-
-            if (_save == null)
-            {
-                _saveResolved = true;
-                return;
-            }
-
-            if (!_save.IsLoaded)
+            if (_saveResolved || _clock == null || !_save.IsLoaded)
             {
                 return;
             }
@@ -232,12 +219,21 @@ namespace MoonProject.World
 
         private Vector3 SampleFocusPosition()
         {
-            if (_rover == null && _context != null && _context.TryGet(out IRoverState rover))
+            if (_rover == null && !_context.TryGet(out _rover))
             {
-                _rover = rover;
+                if (!_loggedMissingRover)
+                {
+                    _loggedMissingRover = true;
+                    Debug.LogError(
+                        $"{nameof(SkyCycleSystem)}: {nameof(IRoverState)} is missing from {nameof(GameContext)}; " +
+                        $"using {nameof(IWorldLayout)}.{nameof(IWorldLayout.BasePosition)}.",
+                        this);
+                }
+
+                return _layout.BasePosition;
             }
 
-            return _rover != null ? _rover.Position : _layout != null ? _layout.BasePosition : Vector3.zero;
+            return _rover.Position;
         }
 
         private string SetupProblem()

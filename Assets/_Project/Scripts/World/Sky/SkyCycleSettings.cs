@@ -98,52 +98,52 @@ namespace MoonProject.World
         [Header("Look C (Low sun) lighting")]
         [Tooltip("Colour of the directional Sun key light in full sunlit (look C 'Low sun'): warm-white so high " +
             "ground catches warm gold while staying under Art's reference light.")]
-        [SerializeField] private Color _sunlitKeyColor = new Color(1.0f, 0.93f, 0.80f);
+        [SerializeField] private Color _sunlitKeyColor = new Color(1.0f, 0.96f, 0.87f);
 
         [Tooltip("Warmer golden-amber tint of the Sun key light right at dawn break-out and sunset.")]
-        [SerializeField] private Color _dawnKeyColor = new Color(1.0f, 0.80f, 0.56f);
+        [SerializeField] private Color _dawnKeyColor = new Color(1.0f, 0.84f, 0.62f);
 
         [Tooltip("Intensity of the directional Sun key light in full sunlit. Kept under Art's bloom cap so lit dust " +
             "and cream panels never glow like lamps.")]
-        [Range(0.5f, 3f)]
-        [SerializeField] private float _sunlitKeyIntensity = 1.92f;
+        [Range(0.5f, 3.5f)]
+        [SerializeField] private float _sunlitKeyIntensity = 2.08f;
 
         [Tooltip("Shadow strength of the directional Sun key light in full sunlit: crisp long shadows.")]
         [Range(0.5f, 1f)]
-        [SerializeField] private float _sunlitShadowStrength = 0.84f;
+        [SerializeField] private float _sunlitShadowStrength = 0.86f;
 
         [Tooltip("Colour of the shadowless fill opposite the Sun in look C: cool sky bounce so shadows stay deep and " +
             "cool while built props keep their facets.")]
-        [SerializeField] private Color _sunlitFillColor = new Color(0.62f, 0.72f, 0.96f);
+        [SerializeField] private Color _sunlitFillColor = new Color(0.60f, 0.72f, 0.96f);
 
         [Tooltip("Intensity of the shadowless fill in look C.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _sunlitFillIntensity = 0.48f;
+        [SerializeField] private float _sunlitFillIntensity = 0.52f;
 
-        [Tooltip("Trilight sky ambient in look C: deep cool slate-blue so shadows stay dark and cool (never a " +
-            "purple wash, never bright midday).")]
-        [SerializeField] private Color _sunlitAmbientSky = new Color(0.082f, 0.086f, 0.102f);
+        [Tooltip("Trilight sky ambient in look C: cool slate-blue so shadows stay deep, cool and readable.")]
+        [SerializeField] private Color _sunlitAmbientSky = new Color(0.27f, 0.31f, 0.40f);
 
         [Tooltip("Trilight equator ambient in look C.")]
-        [SerializeField] private Color _sunlitAmbientEquator = new Color(0.058f, 0.060f, 0.072f);
+        [SerializeField] private Color _sunlitAmbientEquator = new Color(0.19f, 0.22f, 0.29f);
 
         [Tooltip("Trilight ground ambient in look C.")]
-        [SerializeField] private Color _sunlitAmbientGround = new Color(0.026f, 0.027f, 0.034f);
+        [SerializeField] private Color _sunlitAmbientGround = new Color(0.11f, 0.12f, 0.16f);
 
-        [Tooltip("Fog colour in look C: dark neutral-cool slate so the far rim stays grounded without a purple wash.")]
-        [SerializeField] private Color _sunlitFogColor = new Color(0.044f, 0.045f, 0.056f);
+        [Tooltip("Fog colour in look C: dark neutral-cool slate so the airless sky stays black while the far rim " +
+            "stays grounded.")]
+        [SerializeField] private Color _sunlitFogColor = new Color(0.048f, 0.052f, 0.068f);
 
-        [Tooltip("Basin haze colour in look C.")]
-        [SerializeField] private Color _sunlitHazeColor = new Color(0.048f, 0.046f, 0.054f);
+        [Tooltip("Basin haze colour in look C: warm sunlit dust veil over the low basin floor.")]
+        [SerializeField] private Color _sunlitHazeColor = new Color(0.25f, 0.23f, 0.20f);
 
-        [Tooltip("Zenith sky colour in look C: deep airless space indigo.")]
-        [SerializeField] private Color _sunlitSkyTop = new Color(0.032f, 0.046f, 0.105f);
+        [Tooltip("Zenith sky colour in look C: deep black airless space.")]
+        [SerializeField] private Color _sunlitSkyTop = new Color(0.010f, 0.014f, 0.028f);
 
-        [Tooltip("Soft horizon glow colour in look C: subtle warm-amber rim instead of night violet.")]
-        [SerializeField] private Color _sunlitHorizonGlow = new Color(0.19f, 0.14f, 0.11f);
+        [Tooltip("Soft horizon glow colour in look C: warm golden-amber rim and silhouette bounce.")]
+        [SerializeField] private Color _sunlitHorizonGlow = new Color(0.28f, 0.20f, 0.12f);
 
-        [Tooltip("Thin horizon band colour in look C: warm gold rim setting the far mountains against the sky.")]
-        [SerializeField] private Color _sunlitHorizonBand = new Color(0.24f, 0.19f, 0.14f);
+        [Tooltip("Thin horizon band colour in look C: warm gold rim setting the far mountains against the black sky.")]
+        [SerializeField] private Color _sunlitHorizonBand = new Color(0.36f, 0.27f, 0.17f);
 
         [Tooltip("Colour of the Sun's disc in the sky.")]
         [SerializeField] private Color _sunDiscColor = new Color(1.0f, 0.95f, 0.84f);
@@ -155,11 +155,17 @@ namespace MoonProject.World
 
         [Tooltip("Linear strength of the soft corona around the Sun's disc; kept well below the bloom threshold.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _sunCoronaStrength = 0.45f;
+        [SerializeField] private float _sunCoronaStrength = 0.42f;
 
-        [Tooltip("Star brightness multiplier during full sunlight (airless lunar sky keeps its stars, slightly calmer).")]
-        [Range(0.2f, 1.2f)]
-        [SerializeField] private float _sunlitStarScale = 0.75f;
+        [Tooltip("Star brightness multiplier during full sunlight (stars dim strongly while the eye is adapted to " +
+            "bright sunlit ground and return at sunset).")]
+        [Range(0f, 1.2f)]
+        [SerializeField] private float _sunlitStarScale = 0.08f;
+
+        [Tooltip("Milky Way brightness multiplier during full sunlight (dims strongly while the eye is adapted to " +
+            "sunlit ground and returns at sunset).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _sunlitMilkyWayScale = 0.03f;
 
         [Header("Eclipse and Earthshine")]
         [Tooltip("Colour of the thin red-orange ring of refracted sunlight around Earth's disc during the eclipse.")]
@@ -180,7 +186,7 @@ namespace MoonProject.World
 
         [Tooltip("Brightness of the faint city lights on Earth's night side during the eclipse.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _eclipseCityLightStrength = 0.42f;
+        [SerializeField] private float _eclipseCityLightStrength = 0.45f;
 
         [Tooltip("Star brightness multiplier during the eclipse (stars at their brightest).")]
         [Range(1f, 2.5f)]
@@ -238,6 +244,7 @@ namespace MoonProject.World
         public float SunCoreIntensity => _sunCoreIntensity;
         public float SunCoronaStrength => _sunCoronaStrength;
         public float SunlitStarScale => _sunlitStarScale;
+        public float SunlitMilkyWayScale => _sunlitMilkyWayScale;
         public Color EclipseRingColor => _eclipseRingColor;
         public float EclipseRingStrength => _eclipseRingStrength;
         public float EclipseRingWidth => _eclipseRingWidth;

@@ -34,12 +34,15 @@ namespace MoonProject.World.PlayModeTests
     {
         private const int CaptureWidth = 1600;
         private const int CaptureHeight = 900;
+        private const int CloseCropSize = 900;
         private const float WakeTimeout = 20f;
         private const float SettleSeconds = 1.5f;
         private const float StepDt = 0.05f;
         private const float ReleaseFiveSeconds = 5f;
         private const float ReleaseTwentySeconds = 20f;
         private const float SunlitTimeSeconds = 210f;
+        private const float HalfPhaseTimeSeconds = 1676f;
+        private const float FullPhaseTimeSeconds = 3476f;
         private const float SunsetSearchStartSeconds = 1200f;
         private const float SunsetSearchEndSeconds = 3250f;
         private const float EarthlitTimeSeconds = 4816f;
@@ -49,6 +52,7 @@ namespace MoonProject.World.PlayModeTests
         private const float TowardEarthYawOffsetDeg = 5f;
         private const float AwayFromEarthPitchDeg = 6f;
         private const float CameraFov = 60f;
+        private const float EarthCloseFov = 21f;
         private const int BenchmarkWarmupIterations = 200;
         private const int BenchmarkTimedIterations = 2000;
 
@@ -152,6 +156,8 @@ namespace MoonProject.World.PlayModeTests
                 // 1. Opening eclipse hold (t = 0 s, holding = true).
                 skyCycle.SetClockTime(0f, true);
                 yield return null;
+                WarmupCamera(camera);
+                yield return null;
                 CaptureState(camera, skyCycle, roverPos, "01-eclipse-hold", report);
                 Assert.AreEqual(SkyPhase.Eclipse, skyCycle.Phase);
                 Assert.AreEqual(1f, skyCycle.EclipseFactor, 1e-4f);
@@ -171,7 +177,7 @@ namespace MoonProject.World.PlayModeTests
                 CaptureState(camera, skyCycle, roverPos, "03-release-20s", report);
                 Assert.AreEqual(0f, skyCycle.EclipseFactor, 1e-4f, "By 20 s after release the Sun disc is clear of Earth.");
 
-                // 4. Full sunlit (looking toward Earth & the low northern Sun).
+                // 4. Full sunlit (looking toward Earth & the low northern Sun, EarthPhase ~ 0.021).
                 skyCycle.SetClockTime(SunlitTimeSeconds, false);
                 yield return null;
                 CaptureState(camera, skyCycle, roverPos, "04-full-sunlit", report);
@@ -197,6 +203,35 @@ namespace MoonProject.World.PlayModeTests
                 PlaceBehindRover(camera, roverPos, -toEarthFlat, AwayFromEarthPitchDeg);
                 yield return null;
                 CaptureState(camera, skyCycle, roverPos, "07-sunlit-away-from-earth", report);
+
+                // 8-13. Earth phase progression & 100%-zoom close crops (eclipse, ~0.02, ~0.50, ~1.00).
+                skyCycle.SetClockTime(0f, true);
+                PlaceEarthCloseup(camera, roverPos, earthDir);
+                yield return null;
+                CaptureState(camera, skyCycle, roverPos, "08-earth-close-eclipse", report, CloseCropSize, CloseCropSize);
+
+                skyCycle.SetClockTime(SunlitTimeSeconds, false);
+                PlaceEarthCloseup(camera, roverPos, earthDir);
+                yield return null;
+                CaptureState(camera, skyCycle, roverPos, "09-earth-close-phase-002", report, CloseCropSize, CloseCropSize);
+
+                skyCycle.SetClockTime(HalfPhaseTimeSeconds, false);
+                PlaceBehindRover(camera, roverPos, towardEarthForward, TowardEarthPitchDeg);
+                yield return null;
+                CaptureState(camera, skyCycle, roverPos, "10-earth-wide-phase-050", report);
+                PlaceEarthCloseup(camera, roverPos, earthDir);
+                yield return null;
+                CaptureState(camera, skyCycle, roverPos, "11-earth-close-phase-050", report, CloseCropSize, CloseCropSize);
+                Assert.AreEqual(0.5f, skyCycle.EarthPhase, 0.01f);
+
+                skyCycle.SetClockTime(FullPhaseTimeSeconds, false);
+                PlaceBehindRover(camera, roverPos, towardEarthForward, TowardEarthPitchDeg);
+                yield return null;
+                CaptureState(camera, skyCycle, roverPos, "12-earth-wide-phase-100", report);
+                PlaceEarthCloseup(camera, roverPos, earthDir);
+                yield return null;
+                CaptureState(camera, skyCycle, roverPos, "13-earth-close-phase-100", report, CloseCropSize, CloseCropSize);
+                Assert.AreEqual(1.0f, skyCycle.EarthPhase, 0.01f);
 
                 // Measure CPU budgets for SunlightAt and StepFrame.
                 skyCycle.SetClockTime(SunlitTimeSeconds, false);
@@ -297,15 +332,43 @@ namespace MoonProject.World.PlayModeTests
             camera.fieldOfView = CameraFov;
         }
 
+        private static void PlaceEarthCloseup(Camera camera, Vector3 roverPos, Vector3 earthDir)
+        {
+            Vector3 eye = roverPos + Vector3.up * CameraHeightOffset;
+            Quaternion rotation = Quaternion.LookRotation(earthDir.normalized, Vector3.up);
+            camera.transform.SetPositionAndRotation(eye, rotation);
+            camera.fieldOfView = EarthCloseFov;
+        }
+
+        private static void WarmupCamera(Camera camera)
+        {
+            RenderTexture rt = RenderTexture.GetTemporary(CaptureWidth, CaptureHeight, 24, RenderTextureFormat.ARGB32);
+            CameraClearFlags prevFlags = camera.clearFlags;
+            RenderTexture prevTarget = camera.targetTexture;
+            try
+            {
+                camera.targetTexture = rt;
+                camera.Render();
+            }
+            finally
+            {
+                camera.targetTexture = prevTarget;
+                camera.clearFlags = prevFlags;
+                RenderTexture.ReleaseTemporary(rt);
+            }
+        }
+
         private static void CaptureState(
             Camera camera,
             SkyCycleSystem skyCycle,
             Vector3 roverPos,
             string fileName,
-            StringBuilder report)
+            StringBuilder report,
+            int width = CaptureWidth,
+            int height = CaptureHeight)
         {
             string fullPath = Path.Combine(CaptureFolder, fileName + ".png");
-            FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight, fullPath);
+            FrameCapture.SavePng(camera, width, height, fullPath);
             float rawSunlight = skyCycle.SunlightAt(roverPos);
             report.AppendLine(string.Format(
                 CultureInfo.InvariantCulture,

@@ -90,37 +90,110 @@ Shader "MoonProject/World/LofiSky"
                 return lerp(lerp(a, b, f.y), lerp(c, d, f.y), f.z);
             }
 
-            // One layer of stars: at most one star per 3D cell of the direction scaled by `cells`. A star is kept
-            // only when its projection on the sphere lies well inside its own cell, so no star is cut by a border.
-            // Its brightness follows a power law from `faintest` up (N(>b) ~ b^-exponent, capped), its size follows
-            // the brightness (a few big stars among many fine ones), its core is a round anti-aliased disc, only the
-            // brightest few carry a soft glow (and clear the bloom threshold), and only a few twinkle, slowly.
-            float3 StarLayer(float3 dir, float cells, float density, float pixel, float faintest, float seed)
+            // Projects a 3D unit direction onto an equal-angle 2D cubemap face (face index 0..5, uv in 0..1) and
+            // reconstructs the 3D unit direction from (face, uv). Unlike a 3D cubic voxel grid sliced by the unit
+            // sphere, every 2D face cell is a well-proportioned square patch on the sky, so stars and their glows are
+            // never clipped into tiny triangles, squares or diamonds.
+            void DirectionToCubeFace(float3 dir, out float face, out float2 uv)
             {
-                float3 p = dir * cells;
-                float3 cell = floor(p);
-                float3 h = Hash33(cell + seed);
+                float3 a = abs(dir);
+                float ma;
+                float2 sc;
+                if (a.x >= a.y && a.x >= a.z)
+                {
+                    ma = a.x;
+                    sc = float2(dir.x >= 0.0 ? -dir.z : dir.z, dir.y);
+                    face = dir.x >= 0.0 ? 0.0 : 1.0;
+                }
+                else if (a.y >= a.z)
+                {
+                    ma = a.y;
+                    sc = float2(dir.x, dir.y >= 0.0 ? -dir.z : dir.z);
+                    face = dir.y >= 0.0 ? 2.0 : 3.0;
+                }
+                else
+                {
+                    ma = a.z;
+                    sc = float2(dir.z >= 0.0 ? dir.x : -dir.x, dir.y);
+                    face = dir.z >= 0.0 ? 4.0 : 5.0;
+                }
+
+                uv = atan(sc / max(ma, 1e-6)) * (2.0 / 3.14159265) + 0.5;
+            }
+
+            float3 CubeFaceToDirection(float face, float2 uv)
+            {
+                float2 t = tan((uv - 0.5) * (3.14159265 * 0.5));
+                float3 v;
+                if (face < 0.5)
+                {
+                    v = float3(1.0, t.y, -t.x);
+                }
+                else if (face < 1.5)
+                {
+                    v = float3(-1.0, t.y, t.x);
+                }
+                else if (face < 2.5)
+                {
+                    v = float3(t.x, 1.0, -t.y);
+                }
+                else if (face < 3.5)
+                {
+                    v = float3(t.x, -1.0, t.y);
+                }
+                else if (face < 4.5)
+                {
+                    v = float3(t.x, t.y, 1.0);
+                }
+                else
+                {
+                    v = float3(-t.x, t.y, -1.0);
+                }
+
+                return normalize(v);
+            }
+
+            // One layer of stars on the equal-angle cubemap grid: at most one star per 2D face cell, kept well inside
+            // [0.32, 0.68]^2 of its cell, with true 3D angular distance in screen pixels so every star is a soft round
+            // point with a crisp circular core and never clips against cell boundaries.
+            float3 StarLayer(float3 dir, float cells, float density, float pixel, float faintest, float maxBright, float seed)
+            {
+                float face;
+                float2 uv;
+                DirectionToCubeFace(dir, face, uv);
+
+                float faceCells = max(floor(cells * 0.75), 4.0);
+                float2 grid = uv * faceCells;
+                float2 cell = floor(grid);
+                float2 local = grid - cell;
+
+                float3 cellId = float3(cell, face * 17.0 + seed);
+                float3 h = Hash33(cellId);
                 if (h.x > density)
                 {
                     return 0;
                 }
 
-                float3 star = normalize(cell + 0.2 + 0.6 * Hash33(cell + seed + 19.19)) * cells;
-                float3 local = star - cell;
-                if (any(local < 0.2) || any(local > 0.8))
-                {
-                    return 0;
-                }
+                float2 starLocal = 0.32 + 0.36 * Hash33(cellId + 19.19).xy;
+                float3 starDir = CubeFaceToDirection(face, (cell + starLocal) / faceCells);
 
-                // The glow is a Gaussian a few pixels wide, so it has faded to nothing long before the cell's edge.
-                float brightness = min(faintest * pow(max(h.y, 1e-3), -1.0 / _MoonStarParams.z), _MoonStarShape.y);
-                float distancePx = length(p - star) / cells / pixel;
+                float brightness = min(faintest * pow(max(h.y, 1e-3), -1.0 / _MoonStarParams.z), min(_MoonStarShape.y, maxBright));
+                float distancePx = length(dir - starDir) / pixel;
+
+                // Minimum distance in screen pixels from the star center to the nearest cell edge.
+                float starMargin = min(min(starLocal.x, 1.0 - starLocal.x), min(starLocal.y, 1.0 - starLocal.y));
+                float maxCellRadiusPx = max((0.785398 / faceCells) * starMargin / pixel - 0.85, 0.38);
+
                 // Sizes are relative to a faint star of brightness 0.1, the sky's typical dust.
-                float radius = _MoonStarParams.w * pow(brightness * 10.0, _MoonStarShape.x);
+                float radius = min(_MoonStarParams.w * 1.42 * pow(max(brightness * 10.0, 1e-4), _MoonStarShape.x), maxCellRadiusPx);
                 // A star smaller than a pixel lights one pixel in proportion to its area: faint stars stay fine dust.
                 float coverage = saturate(radius * 2.0);
-                float core = saturate(max(radius, 0.5) + 0.5 - distancePx) * coverage * coverage;
-                float spread = distancePx / (radius * 2.5);
+                float coreRadius = clamp(radius, 0.52, maxCellRadiusPx);
+                float core = smoothstep(coreRadius + 0.62, max(coreRadius - 0.35, 0.0), distancePx)
+                    * coverage * coverage;
+                float spread = distancePx / max(radius * 1.85, 0.65);
+                float borderDist = min(min(local.x, 1.0 - local.x), min(local.y, 1.0 - local.y));
+                float borderFade = smoothstep(0.04, 0.18, borderDist);
                 float glow = exp(-spread * spread) * _MoonStarTwinkle.w * saturate(brightness - _MoonStarShape.z);
 
                 float twinkle = 1.0;
@@ -131,7 +204,7 @@ Shader "MoonProject/World/LofiSky"
 
                 float3 tint = lerp(float3(0.72, 0.8, 1.0), float3(1.0, 0.88, 0.78), h.z);
                 tint = lerp(tint, float3(0.86, 0.78, 1.0), saturate(h.y * 2.0 - 1.0));
-                return tint * (core + glow) * brightness * twinkle;
+                return tint * (core + glow) * borderFade * brightness * twinkle;
             }
 
             float3 ShootingStar(float3 dir, float pixel)
@@ -183,9 +256,9 @@ Shader "MoonProject/World/LofiSky"
             {
                 float3 dir = normalize(input.direction);
                 float up = dir.y;
-                float pixel = max(length(fwidth(dir)), 1e-5);
+                float pixel = max(max(length(ddx(dir)), length(ddy(dir))), 1e-5);
 
-                float rise = pow(saturate(up), _MoonSkyTop.a);
+                float rise = up > 1e-4 ? pow(saturate(up), _MoonSkyTop.a) : 0.0;
                 float3 color = lerp(unity_FogColor.rgb, _MoonSkyTop.rgb, rise);
                 color += _MoonHorizonGlow.rgb * exp(-max(up, 0.0) / _MoonHorizonGlow.a);
                 color += _MoonHorizonBand.rgb * exp(-abs(up) / _MoonHorizonBand.a);
@@ -197,23 +270,29 @@ Shader "MoonProject/World/LofiSky"
                 color += _MoonMilkyWayColor.rgb * bandMask * smoothstep(0.25, 0.85, haze) * _MoonMilkyWayAxis.w
                     * above;
 
-                float3 stars = StarLayer(dir, 150.0, _MoonStarParams.x, pixel, 0.08, 0.0);
-                stars += StarLayer(dir, 70.0, _MoonStarParams.x * 0.6, pixel, 0.15, 41.0);
-                stars += StarLayer(dir, 24.0, _MoonStarParams.x * 0.5, pixel, 0.4, 67.0);
-                stars += StarLayer(dir, 260.0, _MoonStarParams.x * bandMask, pixel, 0.06, 83.0);
+                float3 stars = StarLayer(dir, 140.0, _MoonStarParams.x, pixel, 0.08, 1.5, 0.0);
+                stars += StarLayer(dir, 68.0, _MoonStarParams.x * 0.6, pixel, 0.15, 4.2, 41.0);
+                stars += StarLayer(dir, 24.0, _MoonStarParams.x * 0.5, pixel, 0.4, 8.0, 67.0);
+                stars += StarLayer(dir, 220.0, _MoonStarParams.x * bandMask, pixel, 0.06, 0.95, 83.0);
                 color += stars * _MoonStarParams.y * above;
 
                 float earthAngle = acos(clamp(dot(dir, _MoonEarthDirection.xyz), -1.0, 1.0));
                 float radius = _MoonEarthDirection.w;
                 float outside = max(earthAngle - radius, 0.0);
-                float halo = exp(-outside / max(radius * _MoonEarthHalo.a, 1e-4) * 2.2);
-                color += _MoonEarthHalo.rgb * halo;
 
-                // The thin atmospheric limb, brightest on Earth's sunlit side.
+                // 3D outward normal at Earth's visible limb in direction `dir`, so the outer limb and halo follow
+                // Earth's real sunlit crescent/half/full phase.
                 float3 across = dir - _MoonEarthDirection.xyz * dot(dir, _MoonEarthDirection.xyz);
-                float sunward = dot(normalize(across + 1e-6), _MoonEarthSun.xyz);
+                float3 acrossUnit = normalize(across + 1e-6);
+                float3 limbNormal = normalize(acrossUnit * 0.98 - _MoonEarthDirection.xyz * 0.20);
+                float limbLit = smoothstep(-0.03, 0.22, dot(limbNormal, _MoonEarthSun.xyz));
+                float sunward = dot(acrossUnit, _MoonEarthSun.xyz);
+
+                float halo = exp(-outside / max(radius * _MoonEarthHalo.a, 1e-4) * 2.2);
+                color += _MoonEarthHalo.rgb * halo * (0.12 + 0.88 * limbLit);
+
                 float limb = exp(-outside / max(radius * _MoonEarthLimb.a, 1e-5));
-                color += _MoonEarthLimb.rgb * limb * saturate(0.3 + 0.7 * sunward);
+                color += _MoonEarthLimb.rgb * limb * (0.03 + 0.97 * limbLit);
 
                 if (_MoonEclipseRing.a > 0.0)
                 {
