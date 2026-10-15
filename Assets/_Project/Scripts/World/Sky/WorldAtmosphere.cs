@@ -82,6 +82,103 @@ namespace MoonProject.World
                 atmosphere.FillElevation);
         }
 
+        /// <summary>
+        /// Updates the scene's single shadow-casting key light (<paramref name="keyLight"/>), shadowless fill
+        /// (<paramref name="fillLight"/>), trilight ambient, fog and basin haze for the live <see cref="SunClock"/> and
+        /// smoothed local sunlight <paramref name="smoothedSunlight"/> (0..1 at 07's position).
+        /// <para>
+        /// To prevent any shadow pop when transitioning between the Sun and the earthlight, the key light's intensity
+        /// and shadow strength dip to 0 at <c>smoothedSunlight = 0.5</c>: for <c>&gt; 0.5</c> the key light is the Sun
+        /// (pointing along <see cref="SunClock.SunDirection"/>), and for <c>&lt;= 0.5</c> it is the earthlight
+        /// (pointing along <see cref="LightSourceDirection"/>). The key light's direction only switches at the zero
+        /// trough, while the shadowless fill bridges the midpoint so the scene's overall brightness stays continuous.
+        /// </para>
+        /// </summary>
+        public static void ApplyCycle(AtmosphereSettings atmosphere, SkySettings sky, SkyCycleSettings cycle,
+            SunClock clock, float smoothedSunlight, Light keyLight, Light fillLight, bool updateAmbientProbe = false)
+        {
+            if (atmosphere == null || sky == null || cycle == null || clock == null
+                || keyLight == null || fillLight == null)
+            {
+                throw new ArgumentNullException(atmosphere == null ? nameof(atmosphere)
+                    : sky == null ? nameof(sky) : cycle == null ? nameof(cycle) : clock == null ? nameof(clock)
+                    : keyLight == null ? nameof(keyLight) : nameof(fillLight));
+            }
+
+            float sunlit = Mathf.Clamp01(smoothedSunlight);
+            float eclipse = Mathf.Clamp01(clock.EclipseFactor);
+            float ambientEclipseScale = Mathf.Lerp(1f, cycle.EclipseAmbientScale, eclipse * (1f - sunlit));
+
+            RenderSettings.ambientSkyColor =
+                Color.Lerp(atmosphere.AmbientSky, cycle.SunlitAmbientSky, sunlit) * ambientEclipseScale;
+            RenderSettings.ambientEquatorColor =
+                Color.Lerp(atmosphere.AmbientEquator, cycle.SunlitAmbientEquator, sunlit) * ambientEclipseScale;
+            RenderSettings.ambientGroundColor =
+                Color.Lerp(atmosphere.AmbientGround, cycle.SunlitAmbientGround, sunlit) * ambientEclipseScale;
+            RenderSettings.fogColor =
+                Color.Lerp(atmosphere.FogColor, cycle.SunlitFogColor, sunlit) * ambientEclipseScale;
+            RenderSettings.fogDensity = atmosphere.FogDensity;
+
+            Color haze = (Color.Lerp(atmosphere.HazeColor, cycle.SunlitHazeColor, sunlit) * ambientEclipseScale).linear;
+            Shader.SetGlobalVector(HazeColorId, new Vector4(haze.r, haze.g, haze.b, atmosphere.HazeMax));
+
+            if (updateAmbientProbe)
+            {
+                DynamicGI.UpdateEnvironment();
+            }
+
+            float phaseScale = Mathf.Lerp(cycle.MinEarthPhaseLight, 1f, Mathf.SmoothStep(0f, 0.7f, clock.EarthPhase));
+            float earthKeyIntensity = Mathf.Lerp(atmosphere.LightIntensity * phaseScale, cycle.EclipseKeyIntensity,
+                eclipse);
+            float earthFillIntensity = Mathf.Lerp(atmosphere.FillIntensity * phaseScale, cycle.EclipseFillIntensity,
+                eclipse);
+
+            // Midpoint bridge: when the directional key dips to 0 at sunlit == 0.5, the shadowless fill lifts slightly
+            // so the transition between Sun and earthlight never darkens the ground.
+            float crossfadeBridge = 4f * sunlit * (1f - sunlit) * 0.22f;
+
+            if (sunlit > 0.5f)
+            {
+                float sunWeight = Mathf.SmoothStep(0f, 1f, (sunlit - 0.5f) * 2f);
+                float twilightSpan = Mathf.Max(cycle.MaxElevation - 1.5f - cycle.TwilightElevation * 0.75f, 1f);
+                float twilightT = Mathf.Clamp01((cycle.MaxElevation - 1.5f - clock.Elevation) / twilightSpan);
+                float lowElevationWarmth = twilightT * twilightT * (3f - 2f * twilightT);
+                float dawnReleaseWarmth = 1f - Mathf.Clamp01(
+                    clock.TimeSeconds / Mathf.Max(cycle.DawnSweepSeconds * 2.5f, 1f));
+                float warmth = Mathf.Clamp01(Mathf.Max(lowElevationWarmth * 0.85f, dawnReleaseWarmth * 0.65f));
+
+                keyLight.color = Color.Lerp(cycle.SunlitKeyColor, cycle.DawnKeyColor, warmth);
+                keyLight.intensity = cycle.SunlitKeyIntensity * sunWeight;
+                keyLight.shadowStrength = cycle.SunlitShadowStrength * sunWeight;
+
+                Vector3 toSun = clock.SunDirection;
+                if (toSun.y < 0.035f)
+                {
+                    toSun = new Vector3(toSun.x, 0.035f, toSun.z).normalized;
+                }
+
+                keyLight.transform.rotation = Quaternion.LookRotation(-toSun);
+
+                Vector3 toFill = SourceDirection(clock.Bearing + atmosphere.FillBearingOffset, atmosphere.FillElevation);
+                fillLight.color = Color.Lerp(atmosphere.FillColor, cycle.SunlitFillColor, sunWeight);
+                fillLight.intensity = Mathf.Lerp(earthFillIntensity, cycle.SunlitFillIntensity, sunWeight)
+                    + crossfadeBridge;
+                fillLight.transform.rotation = Quaternion.LookRotation(-toFill);
+            }
+            else
+            {
+                float earthWeight = Mathf.SmoothStep(0f, 1f, (0.5f - sunlit) * 2f);
+                keyLight.color = atmosphere.LightColor;
+                keyLight.intensity = earthKeyIntensity * earthWeight;
+                keyLight.shadowStrength = atmosphere.ShadowStrength * (1f - eclipse * 0.45f) * earthWeight;
+                keyLight.transform.rotation = Quaternion.LookRotation(-LightSourceDirection(atmosphere, sky));
+
+                fillLight.color = atmosphere.FillColor;
+                fillLight.intensity = earthFillIntensity + crossfadeBridge;
+                fillLight.transform.rotation = Quaternion.LookRotation(-FillSourceDirection(atmosphere, sky));
+            }
+        }
+
         private static float LightBearing(AtmosphereSettings atmosphere, SkySettings sky)
         {
             return sky.EarthBearing + atmosphere.LightBearingOffset;

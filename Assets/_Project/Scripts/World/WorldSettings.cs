@@ -70,6 +70,9 @@ namespace MoonProject.World
         [Tooltip("The handshake that runs lamp to lamp when a mast lights (north-star beat 7).")]
         [SerializeField] private NetworkPulseSettings _networkPulse = new NetworkPulseSettings();
 
+        [Tooltip("The low circling Sun, the opening eclipse and the look C sunlit atmosphere (0.5.7 SKY-CYCLE).")]
+        [SerializeField] private SkyCycleSettings _skyCycle = new SkyCycleSettings();
+
         public int Seed => _seed;
 
         public SurfaceSettings Surface => _surface;
@@ -108,6 +111,8 @@ namespace MoonProject.World
 
         public NetworkPulseSettings NetworkPulse => _networkPulse;
 
+        public SkyCycleSettings SkyCycle => _skyCycle;
+
         /// <summary>Builds the analytic surface for these settings (throws on invalid settings).</summary>
         public MoonSurface CreateSurface()
         {
@@ -117,7 +122,8 @@ namespace MoonProject.World
         /// <summary>Returns null when every settings block is valid, otherwise the first problem found.</summary>
         public string Validate()
         {
-            return _surface.Validate() ?? _mesh.Validate() ?? _scatter.Validate() ?? _relays.Validate();
+            return _surface.Validate() ?? _mesh.Validate() ?? _scatter.Validate() ?? _relays.Validate()
+                ?? _skyCycle.Validate();
         }
 
         private void OnValidate()

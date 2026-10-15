@@ -62,6 +62,14 @@ namespace MoonProject.World.Editor
             serialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(world);
 
+            var skyCycle = context.CreateChild("Sky Cycle", root).AddComponent<SkyCycleSystem>();
+            var skySerialized = new SerializedObject(skyCycle);
+            Assign(skySerialized, "_settings", settings);
+            Assign(skySerialized, "_keyLight", earthlight);
+            Assign(skySerialized, "_fillLight", fill);
+            skySerialized.ApplyModifiedPropertiesWithoutUndo();
+            context.AddSystem(skyCycle);
+
             var homeLighting = context.CreateChild("Home Lighting", root).AddComponent<HomeLightingSystem>();
             var lighting = new SerializedObject(homeLighting);
             Assign(lighting, "_settings", settings);
