@@ -1,0 +1,20 @@
+{
+    "name": "MoonProject.Rover.Face.Editor",
+    "rootNamespace": "MoonProject.Rover.Face.Editor",
+    "references": [
+        "MoonProject.Core",
+        "MoonProject.Editor",
+        "MoonProject.Rover"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

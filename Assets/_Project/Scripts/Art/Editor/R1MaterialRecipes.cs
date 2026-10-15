@@ -14,6 +14,8 @@ namespace MoonProject.Art.Editor
     {
         public const string ShaderName = "MoonProject/R1/Lit";
         public const string ShaderPath = ArtPaths.R1LitShader;
+        public const string CrtFaceShaderName = "MoonProject/R1/CrtFace";
+        public const string CrtFaceShaderPath = ArtPaths.R1CrtFaceShader;
 
         public const string RootFolder = "Assets/_Project/Art/R1";
         public const string TexturesFolder = RootFolder + "/Textures";
@@ -39,7 +41,7 @@ namespace MoonProject.Art.Editor
         public const string SolarCellSlot = "R1_SolarCell";
         public const string ScreenSlot = "R1_Screen";
         public const string BrassSlot = "R1_Brass";
-        public const string ScreenPlaceholderMaterialName = "R1_ScreenPlaceholder";
+        public const string CrtFaceMaterialName = "R1_CrtFace";
 
         public const float DefaultBloomSafeMax = 1.06f;
         public const float DefaultHotCoreThreshold = 0.85f;
@@ -262,10 +264,10 @@ namespace MoonProject.Art.Editor
             new R1MaterialSpec(
                 R1MaterialSlot.Screen,
                 ScreenSlot,
-                ScreenPlaceholderMaterialName,
+                CrtFaceMaterialName,
                 "T_R1_DarkGlass",
-                "Plain dark-glass placeholder assigned to the R1_Screen slot and reserved for the CRT face shader slice.",
-                new Color(0.07f, 0.10f, 0.14f, 1f),
+                "Expressive warm-amber CRT face material driven by FaceDisplay and MoonProject/R1/CrtFace.",
+                new Color(0.125f, 0.078f, 0.039f, 1f),
                 0.30f,
                 1.00f,
                 0.72f,
@@ -276,8 +278,8 @@ namespace MoonProject.Art.Editor
                 0.80f,
                 0.06f,
                 false,
-                Color.black,
-                0f),
+                new Color(1.00f, 0.68f, 0.22f, 1f),
+                1.00f),
             new R1MaterialSpec(
                 R1MaterialSlot.Brass,
                 BrassSlot,
