@@ -25,6 +25,7 @@ ALLOWED_MATERIALS: tuple[str, ...] = (
     "R1_SagePatch",
     "R1_LampAmber",
     "R1_SolarCell",
+    "R1_Basalt",
 )
 
 
@@ -135,6 +136,15 @@ MATERIAL_SPECS: dict[str, dict[str, object]] = {
         "dust_color": _srgb_to_linear("#747284"),
         "metallic": 0.30,
         "roughness": 0.18,
+        "emission": (0.0, 0.0, 0.0, 1.0),
+        "emission_strength": 0.0,
+    },
+    "R1_Basalt": {
+        "base_color": _srgb_to_linear("#6B6E75"),
+        "wear_color": _srgb_to_linear("#A3A8B2"),
+        "dust_color": _srgb_to_linear("#757A89"),
+        "metallic": 0.03,
+        "roughness": 0.80,
         "emission": (0.0, 0.0, 0.0, 1.0),
         "emission_strength": 0.0,
     },
@@ -1299,6 +1309,110 @@ class MeshBuilder:
             )
         return faces
 
+    def add_fractured_rock(
+        self,
+        center_u: tuple[float, float, float],
+        size_u: tuple[float, float, float],
+        cuts_u: Sequence[tuple[tuple[float, float, float], float]],
+        mat: str = "R1_Basalt",
+        bevel: float = 0.032,
+        bevel_segments: int = 1,
+        rot_deg_u: tuple[float, float, float] = (0.0, 0.0, 0.0),
+    ) -> list[bmesh.types.BMFace]:
+        """Add a closed, bevelled fractured basalt block/slab sliced by half-space planes in normalized [-1, 1]^3 space."""
+        wx, hy, dz = size_u
+        res = bmesh.ops.create_cube(self.bm, size=2.0)
+        shell_verts = list(res["verts"])
+        for v in shell_verts:
+            if v.co.z > 0.0:
+                v.co.x = v.co.x * 0.62 + 0.10
+                v.co.y = v.co.y * 0.64 - 0.08
+                v.co.z += 0.18 * v.co.x - 0.14 * v.co.y
+            else:
+                v.co.x = v.co.x * 0.96 - 0.04
+                v.co.y = v.co.y * 0.95 + 0.04
+        shell_faces = _unique(f for v in shell_verts for f in v.link_faces if f.is_valid)
+        shell_edges = _unique(e for f in shell_faces for e in f.edges if e.is_valid)
+
+        for norm_u, dist_frac in cuts_u:
+            n_b = u_vec(*norm_u)
+            if n_b.length < 1e-6:
+                continue
+            n_b.normalize()
+            p_co = n_b * float(dist_frac)
+            geom = [v for v in shell_verts if v.is_valid] + [e for e in shell_edges if e.is_valid] + [
+                f for f in shell_faces if f.is_valid
+            ]
+            if not geom:
+                break
+            b_res = bmesh.ops.bisect_plane(
+                self.bm,
+                geom=geom,
+                dist=1e-5,
+                plane_co=p_co,
+                plane_no=n_b,
+                clear_outer=True,
+                clear_inner=False,
+            )
+            cut_edges = [
+                g for g in b_res.get("geom_cut", []) if isinstance(g, bmesh.types.BMEdge) and g.is_valid
+            ]
+            if len(cut_edges) >= 3:
+                fill_res = bmesh.ops.edgeloop_fill(self.bm, edges=cut_edges)
+                new_faces = [f for f in fill_res.get("faces", []) if isinstance(f, bmesh.types.BMFace) and f.is_valid]
+            else:
+                new_faces = []
+
+            surviving_verts = [
+                g for g in b_res.get("geom", []) if isinstance(g, bmesh.types.BMVert) and g.is_valid
+            ]
+            shell_faces = _unique(
+                [f for v in surviving_verts for f in v.link_faces if f.is_valid] + new_faces
+            )
+            shell_verts = _unique(v for f in shell_faces for v in f.verts if v.is_valid)
+            shell_edges = _unique(e for f in shell_faces for e in f.edges if e.is_valid)
+
+        if shell_verts:
+            bmesh.ops.remove_doubles(self.bm, verts=shell_verts, dist=0.18)
+            shell_faces = _unique(f for f in shell_faces if f.is_valid and len(f.verts) >= 3)
+            shell_verts = _unique(v for f in shell_faces for v in f.verts if v.is_valid)
+            shell_edges = _unique(e for f in shell_faces for e in f.edges if e.is_valid)
+
+        # Normalize bounding box to [-0.5, 0.5]^3 and scale to (wx, dz, hy)
+        if shell_verts:
+            xs = [v.co.x for v in shell_verts]
+            ys = [v.co.y for v in shell_verts]
+            zs = [v.co.z for v in shell_verts]
+            min_x, max_x = min(xs), max(xs)
+            min_y, max_y = min(ys), max(ys)
+            min_z, max_z = min(zs), max(zs)
+            span_x = max(1e-4, max_x - min_x)
+            span_y = max(1e-4, max_y - min_y)
+            span_z = max(1e-4, max_z - min_z)
+            cx0 = 0.5 * (min_x + max_x)
+            cy0 = 0.5 * (min_y + max_y)
+            cz0 = 0.5 * (min_z + max_z)
+            for v in shell_verts:
+                v.co.x = ((v.co.x - cx0) / span_x) * wx
+                v.co.y = ((v.co.y - cy0) / span_y) * dz
+                v.co.z = ((v.co.z - cz0) / span_z) * hy
+
+        bmesh.ops.recalc_face_normals(self.bm, faces=shell_faces)
+        self._assign_faces(shell_faces, mat)
+        all_faces, all_verts = self._bevel_edges(shell_faces, shell_edges, bevel, bevel_segments, mat)
+
+        rot_b = Euler(
+            (
+                math.radians(rot_deg_u[0]),
+                math.radians(rot_deg_u[2]),
+                math.radians(-rot_deg_u[1]),
+            ),
+            "XYZ",
+        ).to_matrix()
+        bmesh.ops.rotate(self.bm, verts=all_verts, cent=(0.0, 0.0, 0.0), matrix=rot_b)
+        bmesh.ops.translate(self.bm, verts=all_verts, vec=self._to_local_b(center_u))
+        return all_faces
+
     def build_object(
         self,
         parent: bpy.types.Object | None = None,
@@ -1427,6 +1541,39 @@ class MeshBuilder:
         return obj
 
 
+def apply_triplanar_uvs(obj: bpy.types.Object, texel_scale: float = 0.85) -> None:
+    """Assign deterministic dominant-axis box-projected UVs (`UVMap`) to all mesh objects under `obj`."""
+    for mesh_obj in collect_hierarchy(obj):
+        if mesh_obj.type != "MESH" or mesh_obj.data is None:
+            continue
+        me = mesh_obj.data
+        uv_layer = me.uv_layers.get("UVMap")
+        if uv_layer is None:
+            uv_layer = me.uv_layers.new(name="UVMap")
+        me.uv_layers.active = uv_layer
+        me.uv_layers.active_index = 0
+
+        verts = me.vertices
+        loops = me.loops
+        uv_data = uv_layer.data
+        for poly in me.polygons:
+            n = poly.normal
+            ax, ay, az = abs(n.x), abs(n.y), abs(n.z)
+            for loop_idx in poly.loop_indices:
+                v_co = verts[loops[loop_idx].vertex_index].co
+                if az >= ax and az >= ay:
+                    u = v_co.x * texel_scale + 0.5
+                    v = v_co.y * texel_scale + 0.5
+                elif ax >= ay:
+                    u = v_co.y * texel_scale + 0.5
+                    v = v_co.z * texel_scale + 0.5
+                else:
+                    u = v_co.x * texel_scale + 0.5
+                    v = v_co.z * texel_scale + 0.5
+                uv_data[loop_idx].uv = (round(u, 5), round(v, 5))
+        me.update()
+
+
 def collect_hierarchy(root: bpy.types.Object) -> list[bpy.types.Object]:
     """Collect root and all descendants in deterministic depth-first sorted order."""
     result = [root]
@@ -1445,7 +1592,11 @@ def count_triangles(root: bpy.types.Object) -> int:
     return total
 
 
-def bake_vertex_colors(root: bpy.types.Object, footprint_radius: float = 2.0) -> None:
+def bake_vertex_colors(
+    root: bpy.types.Object,
+    footprint_radius: float = 2.0,
+    bevel_wear_width: float = 0.022,
+) -> None:
     """Bake Cycles AO into R, convex edge wear into G, crease/cavity dust into B, and 1.0 into A."""
     mesh_objs = [o for o in collect_hierarchy(root) if o.type == "MESH" and len(o.data.polygons) > 0]
     if not mesh_objs:
@@ -1503,6 +1654,10 @@ def bake_vertex_colors(root: bpy.types.Object, footprint_radius: float = 2.0) ->
     bpy.data.objects.remove(ground_obj, do_unlink=True)
     bpy.data.meshes.remove(ground_mesh)
 
+    border_thresh = 0.036 if bevel_wear_width <= 0.022 else bevel_wear_width * 1.6
+    wear_full = bevel_wear_width
+    wear_fade = 0.030 if bevel_wear_width <= 0.022 else bevel_wear_width * 1.36
+
     # Compute curvature (G = convex wear, B = crease/cavity where dust settles) per mesh loop
     for obj in mesh_objs:
         me = obj.data
@@ -1542,11 +1697,11 @@ def bake_vertex_colors(root: bpy.types.Object, footprint_radius: float = 2.0) ->
 
             # Distinguish true bevel strips and sharp corners from smooth cylindrical/tubular segmentation
             is_sharp_corner = abs(signed_ang) >= 0.95
-            is_bevel_border = min_fw < 0.036 and (max_fw > 1.30 * min_fw or min_fw < 0.014)
+            is_bevel_border = min_fw < border_thresh and (max_fw > 1.30 * min_fw or min_fw < 0.014)
             if not (is_sharp_corner or is_bevel_border):
                 continue
 
-            bevel_boost = 1.85 if min_fw < 0.036 else 1.0
+            bevel_boost = 1.85 if min_fw < border_thresh else 1.0
 
             if signed_ang > 0.04:
                 val = min(1.0, (signed_ang / 0.85) * bevel_boost)
@@ -1565,9 +1720,10 @@ def bake_vertex_colors(root: bpy.types.Object, footprint_radius: float = 2.0) ->
 
         v_convex_smooth = v_convex.copy()
         v_concave_smooth = v_concave.copy()
+        nbr_dist = 0.04 if bevel_wear_width <= 0.022 else max(0.04, bevel_wear_width * 1.8)
         for v in bm.verts:
             vi = v.index
-            nbrs = [e.other_vert(v).index for e in v.link_edges if e.calc_length() < 0.04]
+            nbrs = [e.other_vert(v).index for e in v.link_edges if e.calc_length() < nbr_dist]
             if nbrs:
                 v_convex_smooth[vi] = max(
                     v_convex[vi],
@@ -1587,10 +1743,10 @@ def bake_vertex_colors(root: bpy.types.Object, footprint_radius: float = 2.0) ->
             up_weight = float(np.clip(f_norm_w.z * 0.45 + 0.65, 0.25, 1.0))
             min_edge_len = float(face_widths[f.index])
             # Confine G (convex edge wear) to bevel strips, ridges, bolts, and narrow chamfers
-            if min_edge_len <= 0.022:
+            if min_edge_len <= wear_full:
                 face_wear_mask = 1.0
-            elif min_edge_len < 0.030:
-                face_wear_mask = (0.030 - min_edge_len) / (0.030 - 0.022)
+            elif min_edge_len < wear_fade:
+                face_wear_mask = (wear_fade - min_edge_len) / (wear_fade - wear_full)
             else:
                 face_wear_mask = 0.0
 
@@ -1599,10 +1755,10 @@ def bake_vertex_colors(root: bpy.types.Object, footprint_radius: float = 2.0) ->
             ]
             face_ao_floor = (
                 float(np.percentile(face_ao_vals, 72)) * 0.94
-                if min_edge_len >= 0.030 and max(face_ao_vals) > 0.72
+                if min_edge_len >= wear_fade and max(face_ao_vals) > 0.72
                 else 0.0
             )
-            cavity_face_scale = 0.22 if min_edge_len >= 0.030 else 0.95
+            cavity_face_scale = 0.22 if min_edge_len >= wear_fade else 0.95
 
             for l in f.loops:
                 vi = l.vert.index
