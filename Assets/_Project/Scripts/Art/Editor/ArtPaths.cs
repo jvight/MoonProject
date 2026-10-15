@@ -59,5 +59,10 @@ namespace MoonProject.Art.Editor
         public const string ScanSolidMaterial = PaletteFolder + "/M_ScanSolid.mat";
         public const string ScanLinesMaterial = PaletteFolder + "/M_ScanLines.mat";
         public const string FragmentFolder = Root + "/Fragments";
+
+        public const string R1Root = Root + "/R1";
+        public const string R1MaterialsFolder = R1Root + "/Materials";
+        public const string R1ModelsFolder = R1Root + "/Models";
+        public const string R1LitShader = "Assets/_Project/Shaders/R1/R1Lit.shader";
     }
 }
