@@ -1,0 +1,538 @@
+<title>Phòng duyệt mẫu 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<style>
+/* Layout: a model rail on the left, the turntable stage in the middle, the review desk on the right; references
+   in a strip under the stage. One column on a phone. Lunar greys with the game's lamp-amber as the accent. */
+:root {
+  --ground: #eceae4;
+  --panel: #f8f7f3;
+  --stage: #d9d8d2;
+  --ink: #1d2026;
+  --muted: #5d6170;
+  --line: #cfccc2;
+  --accent: #b8650f;
+  --accent-ink: #ffffff;
+  --ok: #2f7d4f;
+  --ok-soft: #dcefe2;
+  --warn: #b0452a;
+  --warn-soft: #f6dfd6;
+  --idle-soft: #e4e2db;
+  --pin: #e8892a;
+  --display: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --body: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #15171c; --panel: #1d2027; --stage: #262a32; --ink: #e9e7e1; --muted: #a2a6b3; --line: #343844;
+    --accent: #f0a14a; --accent-ink: #1b1306; --ok: #6cc690; --ok-soft: #1e3427; --warn: #ef8a6a; --warn-soft: #3a231c;
+    --idle-soft: #2b2f38; --pin: #f0a14a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #15171c; --panel: #1d2027; --stage: #262a32; --ink: #e9e7e1; --muted: #a2a6b3; --line: #343844;
+  --accent: #f0a14a; --accent-ink: #1b1306; --ok: #6cc690; --ok-soft: #1e3427; --warn: #ef8a6a; --warn-soft: #3a231c;
+  --idle-soft: #2b2f38; --pin: #f0a14a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.shell { display: grid; grid-template-columns: 240px minmax(0, 1fr) 340px; gap: 16px; padding-inline: 16px; padding-block: 16px 32px; max-width: 1600px; margin: 0 auto; }
+@media (max-width: 1100px) { .shell { grid-template-columns: 220px minmax(0, 1fr); } .desk { grid-column: 1 / -1; } }
+@media (max-width: 720px) { .shell { grid-template-columns: minmax(0, 1fr); } }
+h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; }
+h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.label { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rail, .desk { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.rail header { display: flex; flex-direction: column; gap: 4px; padding-block: 4px 8px; }
+.models { display: flex; flex-direction: column; gap: 6px; }
+@media (max-width: 720px) { .models { flex-direction: row; overflow-x: auto; padding-bottom: 4px; } .model { min-width: 180px; } }
+.model { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; align-items: center; text-align: left; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: inherit; cursor: pointer; }
+.model:hover { border-color: var(--muted); }
+.model[aria-current="true"] { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.model .name { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.chip { font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.chip.approved { background: var(--ok-soft); color: var(--ok); }
+.chip.changes { background: var(--warn-soft); color: var(--warn); }
+.chip.pending { background: var(--idle-soft); color: var(--muted); }
+.stagewrap { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.stagehead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+.rounds { display: flex; flex-wrap: wrap; gap: 6px; }
+.round { font: 500 13px var(--mono); background: transparent; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+.round[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+.stage { position: relative; background: var(--stage); border-radius: 10px; overflow: hidden; aspect-ratio: 4 / 3; max-width: 100%; min-height: 320px; }
+.stage.pinning { outline: 2px solid var(--pin); outline-offset: -2px; }
+model-viewer { width: 100%; height: 100%; background: transparent; --poster-color: transparent; }
+.stage.pinning model-viewer { cursor: crosshair; }
+.toolbar { position: absolute; left: 12px; top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+.tool { font: 500 13px var(--body); background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; cursor: pointer; }
+.tool[aria-pressed="true"] { background: var(--pin); color: #1b1306; border-color: var(--pin); }
+.hint { position: absolute; left: 12px; bottom: 12px; right: 12px; font-size: 13px; color: var(--muted); }
+.stage-msg { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); }
+.pin { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff; background: var(--pin); color: #1b1306; font: 700 12px var(--mono); display: grid; place-items: center; cursor: pointer; padding: 0; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35); }
+.pin[data-visible="false"] { opacity: 0.35; }
+.pin.draft { background: #fff; color: #1b1306; border-color: var(--pin); }
+.pin.focus { transform: scale(1.25); }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.changed { margin: 0; color: var(--ink); max-width: 70ch; }
+.refs { display: flex; flex-direction: column; gap: 10px; }
+.strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; }
+.thumb { flex: 0 0 auto; display: flex; flex-direction: column; gap: 4px; background: none; border: 0; padding: 0; cursor: zoom-in; color: var(--muted); font: 12px var(--body); text-align: left; max-width: 220px; }
+.thumb img { height: 140px; width: auto; max-width: 220px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); background: var(--stage); }
+.empty { color: var(--muted); font-size: 13px; margin: 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.verdicts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.verdict { font: 600 14px var(--body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+.verdict.approve[aria-pressed="true"] { background: var(--ok); color: #fff; border-color: var(--ok); }
+.verdict.changes[aria-pressed="true"] { background: var(--warn); color: #fff; border-color: var(--warn); }
+textarea { width: 100%; min-height: 84px; resize: vertical; font: inherit; color: var(--ink); background: var(--ground); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.primary { font: 600 14px var(--body); background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px; padding: 9px 14px; cursor: pointer; }
+.secondary { font: 500 13px var(--body); background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.pins { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pins li { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 6px; border-radius: 6px; }
+.pins li:hover, .pins li.focus { background: var(--idle-soft); }
+.pins .num { font: 700 12px var(--mono); width: 22px; height: 22px; border-radius: 50%; background: var(--pin); color: #1b1306; display: grid; place-items: center; }
+.pins .text { overflow-wrap: anywhere; cursor: pointer; }
+.link { font: 12px var(--body); color: var(--muted); background: none; border: 0; padding: 2px; cursor: pointer; text-decoration: underline; }
+.link.danger { color: var(--warn); }
+.status { font-size: 13px; color: var(--muted); min-height: 1.5em; margin: 0; }
+.notice { font-size: 13px; color: var(--warn); margin: 0; }
+button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+dialog { border: 0; padding: 0; background: transparent; max-width: 96vw; max-height: 92vh; }
+dialog::backdrop { background: rgba(10, 11, 14, 0.82); }
+dialog img { max-width: 96vw; max-height: 86vh; display: block; border-radius: 6px; }
+dialog p { color: #e9e7e1; margin: 6px 0 0; font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .pin.focus { transform: none; } }
+</style>
+
+<div class="shell">
+  <aside class="rail" aria-label="Danh sách mẫu">
+    <header>
+      <h1>Phòng duyệt mẫu 3D</h1>
+      <span class="label">Lunarion · R1</span>
+    </header>
+    <div class="models" id="models"><p class="empty">Đang tải danh sách mẫu…</p></div>
+  </aside>
+
+  <main class="stagewrap">
+    <div class="stagehead">
+      <div>
+        <h2 id="model-title">Chưa chọn mẫu</h2>
+      </div>
+      <div class="rounds" id="rounds" role="group" aria-label="Vòng duyệt"></div>
+    </div>
+    <div class="stage" id="stage">
+      <model-viewer id="viewer" camera-controls touch-action="pan-y" shadow-intensity="0.9" exposure="1.05"
+        environment-image="neutral" interaction-prompt="none" alt="Mẫu 3D đang duyệt"></model-viewer>
+      <div class="toolbar">
+        <button class="tool" id="pin-mode" type="button" aria-pressed="false">Ghim ghi chú</button>
+        <button class="tool" id="reset-view" type="button">Đặt lại góc nhìn</button>
+      </div>
+      <p class="hint" id="hint">Kéo để xoay, cuộn hoặc chụm hai ngón để phóng to.</p>
+      <div class="stage-msg" id="stage-msg" hidden></div>
+    </div>
+    <div class="meta">
+      <span class="label" id="stats"></span>
+      <span class="label" id="staged"></span>
+    </div>
+    <p class="changed" id="changed"></p>
+    <section class="refs" aria-label="Tham chiếu">
+      <h2>Bản vẽ đã duyệt</h2>
+      <div class="strip" id="concepts"></div>
+      <h2>Ảnh chụp của vòng này</h2>
+      <div class="strip" id="captures"></div>
+    </section>
+  </main>
+
+  <aside class="desk" aria-label="Đánh giá">
+    <section class="card">
+      <h2>Kết luận vòng này</h2>
+      <div class="verdicts">
+        <button class="verdict approve" id="v-approve" type="button" aria-pressed="false">Duyệt</button>
+        <button class="verdict changes" id="v-changes" type="button" aria-pressed="false">Cần sửa</button>
+      </div>
+      <label class="label" for="note">Ghi chú chung</label>
+      <textarea id="note" placeholder="Nhận xét chung về mẫu ở vòng này"></textarea>
+      <div class="row">
+        <button class="primary" id="save-review" type="button">Lưu đánh giá</button>
+        <span class="label" id="review-when"></span>
+      </div>
+      <p class="status" id="review-status" role="status"></p>
+    </section>
+    <section class="card">
+      <div class="row">
+        <h2>Ghim trên mẫu</h2>
+        <span class="label" id="pin-count"></span>
+      </div>
+      <div id="draft" hidden>
+        <label class="label" for="draft-text">Ghi chú cho ghim mới</label>
+        <textarea id="draft-text" placeholder="Ví dụ: bánh xe quá nhỏ so với bản vẽ"></textarea>
+        <div class="row">
+          <button class="primary" id="draft-save" type="button">Lưu ghim</button>
+          <button class="secondary" id="draft-cancel" type="button">Huỷ</button>
+        </div>
+      </div>
+      <ol class="pins" id="pins"></ol>
+      <p class="empty" id="pins-empty">Chưa có ghim. Bấm "Ghim ghi chú" rồi chạm vào chỗ cần góp ý trên mẫu.</p>
+    </section>
+    <p class="notice" id="db-notice" hidden>Không lưu được ghim và đánh giá ở chế độ xem này. Bạn vẫn xem được mẫu và ảnh.</p>
+  </aside>
+</div>
+
+<dialog id="lightbox"><img id="lightbox-img" alt=""><p id="lightbox-cap"></p></dialog>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const VERDICT_LABEL = { approved: "Đã duyệt", changes: "Cần sửa" };
+const CLICK_SLOP = 6;
+const state = { models: [], modelId: null, round: null, reviews: {}, pins: [], pinMode: false, draft: null,
+  verdict: null, focusPin: null, db: null, writable: true, loaded: null, blobUrl: null };
+
+const key = () => `${state.modelId}-r${state.round}`;
+const model = () => state.models.find((m) => m.id === state.modelId);
+const roundEntry = () => model()?.rounds.find((r) => r.round === state.round);
+const latest = (m) => m.rounds[m.rounds.length - 1];
+
+function statusOf(m, round) {
+  const review = state.reviews[`${m.id}-r${round}`];
+  return review && VERDICT_LABEL[review.verdict] ? review.verdict : "pending";
+}
+
+function chip(status) {
+  const span = document.createElement("span");
+  span.className = `chip ${status}`;
+  span.textContent = VERDICT_LABEL[status] || "Chờ duyệt";
+  return span;
+}
+
+function renderModels() {
+  const host = $("models");
+  host.replaceChildren();
+  if (!state.models.length) {
+    const p = document.createElement("p");
+    p.className = "empty";
+    p.textContent = "Chưa có mẫu nào được đưa lên.";
+    host.append(p);
+    return;
+  }
+  for (const m of state.models) {
+    const last = latest(m);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "model";
+    button.setAttribute("aria-current", String(m.id === state.modelId));
+    const name = document.createElement("span");
+    name.className = "name";
+    name.textContent = m.name;
+    const round = document.createElement("span");
+    round.className = "label";
+    round.textContent = `Vòng ${last.round}`;
+    button.append(name, chip(statusOf(m, last.round)), round);
+    button.addEventListener("click", () => select(m.id, latest(m).round));
+    host.append(button);
+  }
+}
+
+function renderRounds() {
+  const host = $("rounds");
+  host.replaceChildren();
+  const m = model();
+  if (!m) return;
+  for (const r of m.rounds) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "round";
+    b.setAttribute("aria-pressed", String(r.round === state.round));
+    b.textContent = `Vòng ${r.round}` + (r === latest(m) ? " · mới nhất" : "");
+    b.addEventListener("click", () => select(m.id, r.round));
+    host.append(b);
+  }
+}
+
+function thumbs(host, items, emptyText) {
+  host.replaceChildren();
+  if (!items.length) {
+    const p = document.createElement("p");
+    p.className = "empty";
+    p.textContent = emptyText;
+    host.append(p);
+    return;
+  }
+  for (const item of items) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "thumb";
+    const img = document.createElement("img");
+    img.src = item.src;
+    img.alt = item.label;
+    img.loading = "lazy";
+    const cap = document.createElement("span");
+    cap.textContent = item.label;
+    b.append(img, cap);
+    b.addEventListener("click", () => {
+      $("lightbox-img").src = item.src;
+      $("lightbox-img").alt = item.label;
+      $("lightbox-cap").textContent = item.label;
+      $("lightbox").showModal();
+    });
+    host.append(b);
+  }
+}
+
+function renderStage() {
+  const m = model();
+  const r = roundEntry();
+  $("model-title").textContent = m ? `${m.name} · vòng ${r.round}` : "Chưa chọn mẫu";
+  if (r && state.loaded !== r.glb) loadModel(r.glb);
+  const s = r?.stats || {};
+  $("stats").textContent = s.triangles ? `${s.triangles.toLocaleString("vi-VN")} tam giác · ${s.meshes} khối` : "";
+  $("staged").textContent = r?.staged ? `đưa lên ${r.staged}` : "";
+  $("changed").textContent = r?.changed ? `Thay đổi: ${r.changed}` : "";
+  thumbs($("concepts"), r?.concepts || [], "Chưa có bản vẽ cho mẫu này.");
+  thumbs($("captures"), r?.captures || [], "Vòng này chưa có ảnh chụp.");
+}
+
+/** The page cannot be served a .glb, so each model is published as base64 text and handed to the viewer as a blob. */
+async function loadModel(path) {
+  state.loaded = path;
+  $("stage-msg").hidden = true;
+  try {
+    const res = await fetch(path);
+    if (!res.ok) throw new Error(String(res.status));
+    const text = (await res.text()).trim();
+    const bytes = Uint8Array.from(atob(text), (c) => c.charCodeAt(0));
+    if (state.loaded !== path) return;
+    const url = URL.createObjectURL(new Blob([bytes], { type: "model/gltf-binary" }));
+    if (state.blobUrl) URL.revokeObjectURL(state.blobUrl);
+    state.blobUrl = url;
+    $("viewer").setAttribute("src", url);
+  } catch (err) {
+    if (state.loaded !== path) return;
+    $("stage-msg").textContent = "Không tải được mẫu của vòng này. Có thể tệp chưa được đưa lên trang.";
+    $("stage-msg").hidden = false;
+  }
+}
+
+function pinsHere() {
+  return state.pins.filter((p) => p.key === key()).sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""));
+}
+
+function renderPins() {
+  const viewer = $("viewer");
+  viewer.querySelectorAll(".pin").forEach((el) => el.remove());
+  const list = $("pins");
+  list.replaceChildren();
+  const pins = pinsHere();
+  pins.forEach((p, i) => {
+    const hotspot = document.createElement("button");
+    hotspot.type = "button";
+    hotspot.className = "pin" + (state.focusPin === p.id ? " focus" : "");
+    hotspot.slot = `hotspot-${p.id}`;
+    hotspot.dataset.position = p.position;
+    hotspot.dataset.normal = p.normal;
+    hotspot.textContent = String(i + 1);
+    hotspot.title = p.text;
+    hotspot.addEventListener("click", () => focusPin(p.id));
+    viewer.append(hotspot);
+
+    const li = document.createElement("li");
+    if (state.focusPin === p.id) li.className = "focus";
+    const num = document.createElement("span");
+    num.className = "num";
+    num.textContent = String(i + 1);
+    const text = document.createElement("span");
+    text.className = "text";
+    text.textContent = p.text;
+    text.addEventListener("click", () => focusPin(p.id));
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "link danger";
+    del.textContent = "Xoá";
+    del.disabled = !state.writable;
+    del.addEventListener("click", () => {
+      if (del.dataset.armed) { removePin(p.id); return; }
+      del.dataset.armed = "1";
+      del.textContent = "Xoá thật?";
+      setTimeout(() => { delete del.dataset.armed; del.textContent = "Xoá"; }, 3000);
+    });
+    li.append(num, text, del);
+    list.append(li);
+  });
+  if (state.draft) {
+    const draft = document.createElement("button");
+    draft.type = "button";
+    draft.className = "pin draft";
+    draft.slot = "hotspot-draft";
+    draft.dataset.position = state.draft.position;
+    draft.dataset.normal = state.draft.normal;
+    draft.textContent = "+";
+    viewer.append(draft);
+  }
+  $("pins-empty").hidden = pins.length > 0;
+  $("pin-count").textContent = pins.length ? `${pins.length} ghim` : "";
+}
+
+function renderReview() {
+  const review = state.reviews[key()];
+  if (state.verdict === null) state.verdict = review?.verdict || null;
+  $("v-approve").setAttribute("aria-pressed", String(state.verdict === "approved"));
+  $("v-changes").setAttribute("aria-pressed", String(state.verdict === "changes"));
+  $("review-when").textContent = review?.updatedAt ? `lưu lúc ${new Date(review.updatedAt).toLocaleString("vi-VN")}` : "";
+  for (const id of ["v-approve", "v-changes", "note", "save-review", "pin-mode"]) $(id).disabled = !state.writable;
+}
+
+function focusPin(id) {
+  state.focusPin = state.focusPin === id ? null : id;
+  renderPins();
+}
+
+function select(modelId, round) {
+  state.modelId = modelId;
+  state.round = round;
+  state.draft = null;
+  state.focusPin = null;
+  state.verdict = null;
+  $("draft").hidden = true;
+  $("review-status").textContent = "";
+  $("note").value = state.reviews[key()]?.note || "";
+  try { localStorage.setItem("review3d.selection", JSON.stringify({ modelId, round })); } catch (e) { /* storage blocked */ }
+  renderModels();
+  renderRounds();
+  renderStage();
+  renderPins();
+  renderReview();
+}
+
+function setPinMode(on) {
+  state.pinMode = on;
+  $("pin-mode").setAttribute("aria-pressed", String(on));
+  $("stage").classList.toggle("pinning", on);
+  $("hint").textContent = on ? "Chạm vào chỗ cần góp ý trên mẫu để đặt ghim." : "Kéo để xoay, cuộn hoặc chụm hai ngón để phóng to.";
+}
+
+let downAt = null;
+$("viewer").addEventListener("pointerdown", (e) => { downAt = { x: e.clientX, y: e.clientY }; });
+$("viewer").addEventListener("pointerup", (e) => {
+  if (!state.pinMode || !downAt || e.target.closest?.(".pin")) return;
+  const moved = Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y);
+  downAt = null;
+  if (moved > CLICK_SLOP) return;
+  const hit = $("viewer").positionAndNormalFromPoint(e.clientX, e.clientY);
+  if (!hit) return;
+  state.draft = { position: hit.position.toString(), normal: hit.normal.toString() };
+  $("draft").hidden = false;
+  $("draft-text").value = "";
+  $("draft-text").focus();
+  renderPins();
+});
+
+$("pin-mode").addEventListener("click", () => setPinMode(!state.pinMode));
+$("reset-view").addEventListener("click", () => {
+  const v = $("viewer");
+  v.cameraOrbit = "auto auto auto";
+  v.cameraTarget = "auto auto auto";
+  v.fieldOfView = "auto";
+  v.jumpCameraToGoal();
+});
+$("draft-cancel").addEventListener("click", () => { state.draft = null; $("draft").hidden = true; renderPins(); });
+$("draft-save").addEventListener("click", async () => {
+  const text = $("draft-text").value.trim();
+  if (!state.draft || !text || !state.db) return;
+  const pin = { key: key(), position: state.draft.position, normal: state.draft.normal, text, createdAt: new Date().toISOString() };
+  $("draft-save").disabled = true;
+  try {
+    await state.db.collection("pins").add(pin);
+    state.draft = null;
+    $("draft").hidden = true;
+    renderPins();
+  } catch (err) {
+    $("review-status").textContent = writeError(err);
+  } finally {
+    $("draft-save").disabled = false;
+  }
+});
+
+async function removePin(id) {
+  try { await state.db.collection("pins").doc(id).delete(); } catch (err) { $("review-status").textContent = writeError(err); }
+}
+
+for (const [id, verdict] of [["v-approve", "approved"], ["v-changes", "changes"]]) {
+  $(id).addEventListener("click", () => { state.verdict = verdict; renderReview(); });
+}
+$("save-review").addEventListener("click", async () => {
+  if (!state.db) return;
+  if (!state.verdict) { $("review-status").textContent = "Chọn Duyệt hoặc Cần sửa trước khi lưu."; return; }
+  $("save-review").disabled = true;
+  try {
+    await state.db.doc(`reviews/${key()}`).set({ verdict: state.verdict, note: $("note").value.trim(), updatedAt: new Date().toISOString() });
+    $("review-status").textContent = "Đã lưu đánh giá.";
+  } catch (err) {
+    $("review-status").textContent = writeError(err);
+  } finally {
+    $("save-review").disabled = !state.writable;
+  }
+});
+
+function writeError(err) {
+  if (err?.code === "invalid_argument") {
+    state.writable = false;
+    renderReview();
+    renderPins();
+    return "Bạn chỉ có quyền xem trang này, không lưu được thay đổi.";
+  }
+  return "Chưa lưu được. Kiểm tra kết nối rồi thử lại.";
+}
+
+$("viewer").addEventListener("error", () => {
+  $("stage-msg").textContent = "Không tải được mẫu của vòng này. Có thể tệp chưa được đưa lên trang.";
+  $("stage-msg").hidden = false;
+});
+$("lightbox").addEventListener("click", () => $("lightbox").close());
+
+async function connectStore() {
+  const db = await window.claude?.use?.("db");
+  if (!db) { state.writable = false; $("db-notice").hidden = false; renderReview(); return; }
+  state.db = db;
+  const user = await window.claude.use("user");
+  if (user && (await user.can("data.write")) === false) { state.writable = false; renderReview(); }
+  db.collection("reviews").onSnapshot((snap) => {
+    const reviews = {};
+    for (const d of snap.docs) reviews[d.id] = d.data();
+    const firstForThisRound = !state.reviews[key()] && reviews[key()];
+    state.reviews = reviews;
+    if (firstForThisRound && !$("note").value) $("note").value = reviews[key()].note || "";
+    renderModels();
+    renderReview();
+  }, () => { $("db-notice").hidden = false; });
+  db.collection("pins").onSnapshot((snap) => {
+    state.pins = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderPins();
+  }, () => { $("db-notice").hidden = false; });
+}
+
+async function start() {
+  try {
+    const res = await fetch("manifest.json", { cache: "no-store" });
+    state.models = (await res.json()).models.filter((m) => m.rounds?.length);
+  } catch (err) {
+    $("models").textContent = "Không đọc được danh sách mẫu (manifest.json).";
+    return;
+  }
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem("review3d.selection") || "null"); } catch (e) { saved = null; }
+  const first = state.models.find((m) => m.id === saved?.modelId) || state.models[0];
+  if (first) {
+    const round = first.rounds.some((r) => r.round === saved?.round) ? saved.round : latest(first).round;
+    select(first.id, round);
+  } else {
+    renderModels();
+  }
+  connectStore();
+}
+
+start();
+</script>
