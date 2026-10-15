@@ -34,8 +34,10 @@ from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parent
 GENERATED = "Assets/_Project/Generated"
+DATA_CONTENT = "Assets/_Project/Data/Content"
+DATA_TUNING = "Assets/_Project/Data/Tuning"
 MAIN_SCENE = "Assets/_Project/Scenes/Main.unity"
-BUILDER_OUTPUTS = (GENERATED, MAIN_SCENE)
+BUILDER_OUTPUTS = (GENERATED, DATA_CONTENT, DATA_TUNING, MAIN_SCENE)
 MAIN_SCENE_BUILDER = "Main Scene"
 RUN_BUILDERS = "MoonProject.Editor.Automation.BuildAutomation.RunBuilders"
 # Feature slices span several domains (an alternation inside the builder regex).
@@ -202,6 +204,22 @@ def last_block(text):
     return text[start + 1:].strip()
 
 
+def box_list(box_arg):
+    return [box_arg] if isinstance(box_arg, str) else list(box_arg)
+
+
+def merge_assemblies(mapping, boxes):
+    seen = []
+    for b in boxes:
+        raw = mapping.get(b)
+        if not raw:
+            continue
+        for asm in raw.split(";"):
+            if asm and asm not in seen:
+                seen.append(asm)
+    return ";".join(seen) if seen else None
+
+
 def test_commands(root, args):
     """[(label, command)] of the tests steps: the box's EditMode then PlayMode assembly (no PlayMode with --fast), or
     one custom step for --filter / --assembly; [] when the box has no default tests. PlayMode excludes the
@@ -216,9 +234,10 @@ def test_commands(root, args):
     if args.assembly:
         return [(f"{args.platform} {' '.join(args.assembly)}",
                  command(args.platform, [arg for name in args.assembly for arg in ("--assembly", name)]))]
-    defaults = [("editmode", DEFAULT_TESTS.get(args.box))]
+    boxes = box_list(args.box)
+    defaults = [("editmode", merge_assemblies(DEFAULT_TESTS, boxes))]
     if not args.fast:
-        defaults.append(("playmode", DEFAULT_PLAYMODE.get(args.box)))
+        defaults.append(("playmode", merge_assemblies(DEFAULT_PLAYMODE, boxes)))
     return [(f"{platform} {name}", command(platform, ["--assembly", name])) for platform, name in defaults if name]
 
 
@@ -259,7 +278,7 @@ def abort_trial_merge(root):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("box", help="box name (art, world, rover, gameplay, audio, ui, foundation, ...)")
+    ap.add_argument("box", nargs="+", help="box name(s) (art, world, rover, gameplay, audio, ui, foundation, ...)")
     ap.add_argument("--fast", action="store_true", help="skip the PlayMode step (quick iterations)")
     ap.add_argument("--filter", help="one tests step with this filter instead of the box's defaults")
     ap.add_argument("--assembly", action="append", help="one tests step on these assemblies (repeatable)")
@@ -268,6 +287,8 @@ def main():
     ap.add_argument("--no-tests", action="store_true", help="skip the tests steps")
     ap.add_argument("--no-merge", action="store_true", help="test the working tree as it is, without main")
     args = ap.parse_args()
+    boxes = box_list(args.box)
+    box_label = "+".join(boxes)
 
     root = Path(git(Path.cwd(), "rev-parse", "--show-toplevel")).resolve()
     if root == main_checkout(root):
@@ -275,7 +296,7 @@ def main():
     if (Path(git(root, "rev-parse", "--absolute-git-dir")) / "MERGE_HEAD").exists():
         raise SystemExit("a merge is in progress in this worktree; finish it or run git merge --abort first")
     if dirty_outputs(root):
-        raise SystemExit(f"{GENERATED} or {MAIN_SCENE} has changes; box_check restores them afterwards, so start "
+        raise SystemExit(f"{', '.join(BUILDER_OUTPUTS)} has changes; box_check restores them afterwards, so start "
                          "from a clean copy (git checkout HEAD -- them)")
     merge = not args.no_merge and needs_merge(root)
     if merge and git(root, "status", "--porcelain", "--untracked-files=no"):
@@ -308,12 +329,12 @@ def main():
     try:
         ok = not steps and step("compile_check", "compile.log", lambda log: compile_step(root, log))
         if ok:
-            ok = step(f"builders + Main Scene {builder_filter([args.box])}", "builders.log",
-                      lambda log: builders_step(root, [args.box], log))
+            ok = step(f"builders + Main Scene {builder_filter(boxes)}", "builders.log",
+                      lambda log: builders_step(root, boxes, log))
         if ok and not args.no_tests:
             planned = test_commands(root, args)
             if not planned:
-                notes.append(f"no default tests for box {args.box}; pass --filter or --assembly")
+                notes.append(f"no default tests for box {box_label}; pass --filter or --assembly")
             for label, cmd in planned:
                 if not ok:
                     break
@@ -331,11 +352,12 @@ def main():
     leftover = [line[3:] for line in git(root, "status", "--porcelain").splitlines()]
     if leftover:
         notes.append(f"left in the worktree: {len(leftover)} change(s): " + ", ".join(leftover[:5]))
-    block = format_block(stamp, args.box, tested, steps, notes)
-    board = board_dir(root) / f"{args.box}.md"
-    append_block(board, block)
+    block = format_block(stamp, box_label, tested, steps, notes)
     print(block, end="")
-    say(f"board: {board}")
+    for b in boxes:
+        board = board_dir(root) / f"{b}.md"
+        append_block(board, block)
+        say(f"board: {board}")
     sys.exit(0 if steps and all(s[1] for s in steps) else 1)
 
 
