@@ -133,33 +133,6 @@ namespace MoonProject.Rover.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator ListenNearestAnswer_TurnsTheHeadChirpsOnce_AndReleasesToDrivingLook()
-        {
-            Spawn(false);
-            yield return Wait(1f);
-            EventBus events = _rover.Context.Events;
-            var chirps = new List<RoverChirpRequested>();
-            using (events.Subscribe<RoverChirpRequested>(chirps.Add))
-            {
-                Vector3 nearestOnRight = _rover.Controller.Position + Vector3.right * 20f + Vector3.forward * 8f;
-                Vector3 fartherOnLeft = _rover.Controller.Position + Vector3.left * 60f + Vector3.forward * 10f;
-                events.Publish(new SonarPinged(_rover.Controller.Position, 140f));
-                events.Publish(new SiteAnswered("site.depot", nearestOnRight, 22f, true));
-                yield return Wait(0.2f);
-                events.Publish(new SiteAnswered("site.garage", fartherOnLeft, 61f, true));
-                yield return Wait(0.8f);
-
-                Assert.Greater(NeckYaw, TurnedHead, "07 turns its head toward the nearest answering site.");
-                Assert.AreEqual(1, chirps.Count, "07 chirps once for the nearest answer, not for every answer.");
-                Assert.AreEqual(ChirpMood.Curious, chirps[0].Mood);
-
-                yield return Wait(3.5f);
-                Assert.AreEqual(0f, NeckYaw, 5f,
-                    "After the listen moment ends, 07 releases its gaze owner and looks forward again.");
-            }
-        }
-
-        [UnityTest]
         public IEnumerator LeftAlone_DaydreamsUpTowardEarth()
         {
             Spawn(false);

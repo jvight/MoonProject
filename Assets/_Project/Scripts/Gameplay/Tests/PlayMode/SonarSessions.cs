@@ -81,6 +81,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(GazePriorities.Interest, gazePriority);
             Assert.Less(Vector3.Distance(_fixture.FindSite("depot").AnswerPosition, gazePoint), 0.01f,
                 "looks at the nearest answering lamp");
+            yield return Waits.Until(() => _fixture.Events.SiteAnswered.Count > 1,
+                tuning.SweepDuration + tuning.AnswerLag);
+            Assert.IsTrue(_fixture.Rover.TryGetGaze(sonar, out gazePoint, out _));
+            Assert.Less(Vector3.Distance(_fixture.FindSite("depot").AnswerPosition, gazePoint), 0.01f,
+                "farther answers do not overwrite the gaze on the nearest answer");
 
             float remaining = Mathf.Max(0f, pingTime + tuning.SweepDuration + tuning.AnswerLag - Time.time);
             yield return new WaitForSeconds(remaining);
