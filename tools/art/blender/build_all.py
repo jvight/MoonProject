@@ -106,6 +106,17 @@ def main(argv: list[str] | None = None) -> None:
             out_path=renders_dir / "family.png",
         )
 
+        before_dir = Path(r"D:\Project\MoonProject-wt\agy-structs\Logs\renders")
+        slugs = ("charging_pad", "solar_array", "power_pylon")
+        before_paths = [before_dir / f"{s}_three_quarter.png" for s in slugs]
+        after_paths = [renders_dir / f"{s}_three_quarter.png" for s in slugs]
+        if all(p.exists() for p in before_paths) and all(p.exists() for p in after_paths):
+            r1kit.compose_before_after_grid(
+                before_paths=before_paths,
+                after_paths=after_paths,
+                out_path=renders_dir / "structures_before_after.png",
+            )
+
 
 if __name__ == "__main__":
     cli_args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []

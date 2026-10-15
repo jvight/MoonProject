@@ -831,6 +831,198 @@ class MeshBuilder:
                 )
         return faces
 
+    def add_rounded_panel(
+        self,
+        width_x: float,
+        y_bot: float,
+        y_top: float,
+        r_bot: float,
+        r_top: float,
+        thickness: float,
+        mat: str,
+        z_front: float = 0.0,
+        cyl_radius: float | None = None,
+        yaw_deg: float = 0.0,
+        corner_segments: int = 8,
+        cols: int = 10,
+        bevel: float = 0.010,
+    ) -> list[bmesh.types.BMFace]:
+        """Add a flat or cylindrical-shell panel with rounded top/bottom corners and clean all-quad rims."""
+        _ = bevel
+        hw = width_x * 0.5
+        h_total = y_top - y_bot
+        rb = max(0.0, min(r_bot, hw - 0.04, h_total * 0.46))
+        rt = max(0.0, min(r_top, hw - 0.04, h_total * 0.46))
+
+        def _build_grid(z_off: float) -> list[list[bmesh.types.BMVert]]:
+            rows_yh: list[tuple[float, float]] = []
+            if rb > 1e-4:
+                for i in range(corner_segments + 1):
+                    ang = (math.pi * 0.5) * (1.0 - i / corner_segments)
+                    ry = (y_bot + rb) - rb * math.sin(ang)
+                    rx = (hw - rb) + rb * math.cos(ang)
+                    rows_yh.append((ry, rx))
+            else:
+                rows_yh.append((y_bot, hw))
+
+            if rt > 1e-4:
+                for i in range(corner_segments + 1):
+                    ang = (math.pi * 0.5) * (i / corner_segments)
+                    ry = (y_top - rt) + rt * math.sin(ang)
+                    rx = (hw - rt) + rt * math.cos(ang)
+                    rows_yh.append((ry, rx))
+            else:
+                rows_yh.append((y_top, hw))
+
+            grid: list[list[bmesh.types.BMVert]] = []
+            yaw_rad = math.radians(yaw_deg)
+            for ry, rx in rows_yh:
+                row_verts: list[bmesh.types.BMVert] = []
+                for c in range(cols + 1):
+                    u = -1.0 + 2.0 * (c / cols)
+                    sx = u * rx
+                    if cyl_radius is None:
+                        pt = (sx, ry, z_front - thickness + z_off)
+                    else:
+                        theta = yaw_rad + (sx / cyl_radius)
+                        rad = cyl_radius + z_off
+                        pt = (rad * math.sin(theta), ry, rad * math.cos(theta))
+                    row_verts.append(self.bm.verts.new(self._to_local_b(pt)))
+                grid.append(row_verts)
+            return grid
+
+        g_in = _build_grid(0.0)
+        g_out = _build_grid(thickness)
+
+        n_rows = len(g_out)
+        faces: list[bmesh.types.BMFace] = []
+
+        for r in range(n_rows - 1):
+            for c in range(cols):
+                faces.append(self.bm.faces.new([g_out[r][c], g_out[r][c + 1], g_out[r + 1][c + 1], g_out[r + 1][c]]))
+                faces.append(self.bm.faces.new([g_in[r][c + 1], g_in[r][c], g_in[r + 1][c], g_in[r + 1][c + 1]]))
+
+        def _perim(g: list[list[bmesh.types.BMVert]]) -> list[bmesh.types.BMVert]:
+            p: list[bmesh.types.BMVert] = []
+            for c in range(cols):
+                p.append(g[0][c])
+            for r in range(n_rows - 1):
+                p.append(g[r][cols])
+            for c in range(cols, 0, -1):
+                p.append(g[n_rows - 1][c])
+            for r in range(n_rows - 1, 0, -1):
+                p.append(g[r][0])
+            return p
+
+        ra = _perim(g_in)
+        rb_ring = _perim(g_out)
+        m_len = len(ra)
+        for i in range(m_len):
+            j = (i + 1) % m_len
+            faces.append(self.bm.faces.new([ra[i], ra[j], rb_ring[j], rb_ring[i]]))
+
+        bmesh.ops.recalc_face_normals(self.bm, faces=faces)
+        self._assign_faces(faces, mat)
+        return faces
+
+    def add_rounded_portal_ring(
+        self,
+        w_in: float,
+        y_bot_in: float,
+        y_top_in: float,
+        r_bot_in: float,
+        r_top_in: float,
+        w_out: float,
+        y_bot_out: float,
+        y_top_out: float,
+        r_bot_out: float,
+        r_top_out: float,
+        thickness: float,
+        mat: str,
+        z_front: float = 0.0,
+        cyl_radius: float | None = None,
+        yaw_deg: float = 0.0,
+        corner_segments: int = 10,
+        sub_rings: int = 1,
+        bevel: float = 0.016,
+    ) -> list[bmesh.types.BMFace]:
+        """Add a closed all-quad portal frame or cylindrical surround panel between two rounded-corner contours."""
+        _ = (sub_rings, bevel)
+        horiz_segs = 6
+
+        def _contour(width: float, yb: float, yt: float, rb: float, rt: float) -> list[tuple[float, float]]:
+            hw = width * 0.5
+            h_tot = yt - yb
+            rb_c = max(0.004, min(rb, hw - 0.01, h_tot * 0.48))
+            rt_c = max(0.004, min(rt, hw - 0.01, h_tot * 0.48))
+            pts: list[tuple[float, float]] = []
+            # Bottom-right corner (-pi/2 .. 0)
+            for i in range(corner_segments + 1):
+                ang = -math.pi * 0.5 + (math.pi * 0.5) * (i / corner_segments)
+                pts.append(((hw - rb_c) + rb_c * math.cos(ang), (yb + rb_c) + rb_c * math.sin(ang)))
+            # Top-right corner (0 .. pi/2)
+            for i in range(corner_segments + 1):
+                ang = (math.pi * 0.5) * (i / corner_segments)
+                pts.append(((hw - rt_c) + rt_c * math.cos(ang), (yt - rt_c) + rt_c * math.sin(ang)))
+            # Top horizontal span (hw - rt_c .. -hw + rt_c) so cylindrical panels follow the cylinder arc
+            for s in range(1, horiz_segs):
+                u = s / horiz_segs
+                pts.append(((hw - rt_c) * (1.0 - u) + (-hw + rt_c) * u, yt))
+            # Top-left corner (pi/2 .. pi)
+            for i in range(corner_segments + 1):
+                ang = math.pi * 0.5 + (math.pi * 0.5) * (i / corner_segments)
+                pts.append(((-hw + rt_c) + rt_c * math.cos(ang), (yt - rt_c) + rt_c * math.sin(ang)))
+            # Bottom-left corner (pi .. 3*pi/2)
+            for i in range(corner_segments + 1):
+                ang = math.pi + (math.pi * 0.5) * (i / corner_segments)
+                pts.append(((-hw + rb_c) + rb_c * math.cos(ang), (yb + rb_c) + rb_c * math.sin(ang)))
+            # Bottom horizontal span (-hw + rb_c .. hw - rb_c) so cylindrical panels follow the cylinder arc
+            for s in range(1, horiz_segs):
+                u = s / horiz_segs
+                pts.append(((-hw + rb_c) * (1.0 - u) + (hw - rb_c) * u, yb))
+            return pts
+
+        c_in = _contour(w_in, y_bot_in, y_top_in, r_bot_in, r_top_in)
+        c_out = _contour(w_out, y_bot_out, y_top_out, r_bot_out, r_top_out)
+        m_pts = len(c_in)
+        yaw_rad = math.radians(yaw_deg)
+
+        def _make_ring(t_lerp: float, z_off: float) -> list[bmesh.types.BMVert]:
+            ring_verts: list[bmesh.types.BMVert] = []
+            for k in range(m_pts):
+                sx = c_in[k][0] * (1.0 - t_lerp) + c_out[k][0] * t_lerp
+                sy = c_in[k][1] * (1.0 - t_lerp) + c_out[k][1] * t_lerp
+                if cyl_radius is None:
+                    pt = (sx, sy, z_front - thickness + z_off)
+                else:
+                    theta = yaw_rad + (sx / cyl_radius)
+                    rad = cyl_radius + z_off
+                    pt = (rad * math.sin(theta), sy, rad * math.cos(theta))
+                ring_verts.append(self.bm.verts.new(self._to_local_b(pt)))
+            return ring_verts
+
+        profile_specs: list[tuple[float, float]] = [
+            (0.0, thickness),
+            (1.0, thickness),
+            (1.0, 0.0),
+            (0.0, 0.0),
+        ]
+
+        loops = [_make_ring(t_val, z_val) for t_val, z_val in profile_specs]
+        faces: list[bmesh.types.BMFace] = []
+        n_loops = len(loops)
+        for l_idx in range(n_loops):
+            la = loops[l_idx]
+            lb = loops[(l_idx + 1) % n_loops]
+            for i in range(m_pts):
+                j = (i + 1) % m_pts
+                faces.append(self.bm.faces.new([la[i], lb[i], lb[j], la[j]]))
+
+        bmesh.ops.recalc_face_normals(self.bm, faces=faces)
+        self._assign_faces(faces, mat)
+        return faces
+
+
     def add_bolt_row(
         self,
         start_u: tuple[float, float, float],
@@ -1492,10 +1684,18 @@ def export_fbx(root: bpy.types.Object, filepath: Path) -> None:
     ensure_materials(use_vertex_color_shading=False)
     _install_deterministic_fbx_hooks()
 
+    baked_leaf_rots: list[tuple[bpy.types.Object, Euler, Matrix]] = []
     bpy.ops.object.select_all(action="DESELECT")
     for obj in collect_hierarchy(root):
         obj.hide_viewport = False
         obj.hide_render = False
+        if obj.type == "MESH" and not obj.children and obj.data is not None and math.cos(obj.rotation_euler.z) < 0.0:
+            saved_rot = obj.rotation_euler.copy()
+            rot_mat = saved_rot.to_matrix().to_4x4()
+            obj.data.transform(rot_mat)
+            obj.data.update()
+            obj.rotation_euler = (0.0, 0.0, 0.0)
+            baked_leaf_rots.append((obj, saved_rot, rot_mat.inverted()))
         obj.select_set(True)
     bpy.context.view_layer.objects.active = root
 
@@ -1525,6 +1725,12 @@ def export_fbx(root: bpy.types.Object, filepath: Path) -> None:
         axis_forward="-Z",
         axis_up="Y",
     )
+
+    for obj, saved_rot, inv_mat in baked_leaf_rots:
+        obj.data.transform(inv_mat)
+        obj.data.update()
+        obj.rotation_euler = saved_rot
+    bpy.context.view_layer.update()
 
 
 def _setup_preview_lighting_and_plinth(footprint_radius: float) -> list[bpy.types.Object]:
@@ -2033,6 +2239,56 @@ def compose_side_by_side(
     comp.save()
     bpy.data.images.remove(comp)
     return out_path
+
+
+def compose_before_after_grid(
+    before_paths: Sequence[Path],
+    after_paths: Sequence[Path],
+    out_path: Path,
+    cell_height: int = 540,
+    divider_px: int = 8,
+) -> Path:
+    """Compose a 2-row (top=before, bottom=after) x N-column comparison sheet using Blender image buffers."""
+    out_path = Path(out_path).resolve()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def _load_cell(p: Path) -> np.ndarray:
+        img = bpy.data.images.load(str(Path(p).resolve()))
+        orig_w, orig_h = img.size
+        new_w = max(1, int(round(orig_w * (cell_height / orig_h))))
+        img.scale(new_w, cell_height)
+        buf = np.zeros(new_w * cell_height * 4, dtype=np.float32)
+        img.pixels.foreach_get(buf)
+        bpy.data.images.remove(img)
+        return buf.reshape(cell_height, new_w, 4)
+
+    top_cells = [_load_cell(p) for p in before_paths]
+    bot_cells = [_load_cell(p) for p in after_paths]
+    col_widths = [max(t.shape[1], b.shape[1]) for t, b in zip(top_cells, bot_cells)]
+    total_w = sum(col_widths) + divider_px * max(0, len(col_widths) - 1)
+    total_h = cell_height * 2 + divider_px
+
+    canvas = np.zeros((total_h, total_w, 4), dtype=np.float32)
+    canvas[:, :, 0:3] = 0.04
+    canvas[:, :, 3] = 1.0
+
+    x_off = 0
+    for c_w, top_arr, bot_arr in zip(col_widths, top_cells, bot_cells):
+        tw = top_arr.shape[1]
+        bw = bot_arr.shape[1]
+        # In Blender image buffer, row 0 is bottom of image, so top row is y = cell_height + divider_px .. total_h
+        canvas[cell_height + divider_px : total_h, x_off : x_off + tw, :] = top_arr
+        canvas[0:cell_height, x_off : x_off + bw, :] = bot_arr
+        x_off += c_w + divider_px
+
+    comp = bpy.data.images.new("_BeforeAfterGrid", width=total_w, height=total_h, alpha=True)
+    comp.pixels.foreach_set(canvas.reshape(-1))
+    comp.filepath_raw = str(out_path)
+    comp.file_format = "PNG"
+    comp.save()
+    bpy.data.images.remove(comp)
+    return out_path
+
 
 
 def render_family_lineup(

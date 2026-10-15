@@ -1,0 +1,38 @@
+{
+  "model": "solar_array",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Copper",
+    "R1_CreamEnamel",
+    "R1_DarkGlass",
+    "R1_GoldFoil",
+    "R1_GreyMetal",
+    "R1_LampAmber",
+    "R1_OrangeStripe",
+    "R1_Rubber",
+    "R1_SagePatch",
+    "R1_Screen",
+    "R1_SolarCell"
+  ],
+  "max_triangles": 5000,
+  "max_meshes": 16,
+  "max_draw_calls": 32,
+  "allow_rotation": ["Elevation", "Wing_*", "Socket_Power_*"],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "SolarArray": { "pivot": [0.0, 0.0, 0.0] },
+    "Stage_1": { "pivot": [0.0, 0.0, 0.0] },
+    "Stage_2": { "pivot": [0.0, 0.0, 0.0] },
+    "Stage_3": { "pivot": [0.0, 0.0, 0.0] },
+    "Stage_4": { "pivot": [0.0, 0.0, 0.0] },
+    "StatusLamp": { "pivot": [0.0, 0.42, 0.85] },
+    "Azimuth": { "pivot": [0.0, 0.0, 1.04] },
+    "Elevation": { "pivot": [0.0, 0.0, 1.35] },
+    "Wing_L": { "pivot": [0.075, -0.14745, 1.45324] },
+    "Wing_R": { "pivot": [-0.075, -0.14745, 1.45324] },
+    "Socket_Power_1": { "pivot": [-0.15, 0.26, 0.68] }
+  }
+}
