@@ -1061,7 +1061,7 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            _dialBeam.Step(_tapping, _cabinet != null, _rig.TetherOrigin.position,
+            _dialBeam.Step(_tapping, _cabinet != null, _rig.CutterOrigin.position,
                 _cabinet != null ? _cabinet.Knob : Vector3.zero, now, deltaTime);
         }
 
@@ -1078,7 +1078,7 @@ namespace MoonProject.Gameplay
                 _beamWork.Work(deltaTime);
             }
 
-            _beam.Step(beaming, repairing != null, _rig.TetherOrigin.position,
+            _beam.Step(beaming, repairing != null, _rig.CutterOrigin.position,
                 repairing != null ? repairing.Body.BeamTarget : Vector3.zero, now, deltaTime);
         }
 

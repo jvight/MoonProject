@@ -17,7 +17,7 @@ namespace MoonProject.Rover
         [Header("Gaze")]
         [Tooltip("How far (deg) the neck can turn either way.")]
         [Range(0f, 170f)]
-        [SerializeField] private float _neckYawLimit = 110f;
+        [SerializeField] private float _neckYawLimit = 125f;
 
         [Tooltip("How far (deg) the head can tilt up (Earth is high in the sky).")]
         [Range(0f, 89f)]
@@ -477,7 +477,7 @@ namespace MoonProject.Rover
         [Tooltip("The antenna once 07 can listen: the cyan tip from tower level 1, the lift and blink of a listen.")]
         [SerializeField] private AntennaListenSettings _listening = new AntennaListenSettings();
 
-        public float NeckYawLimit => _neckYawLimit;
+        public float NeckYawLimit => Mathf.Approximately(_neckYawLimit, 110f) ? 125f : _neckYawLimit;
 
         public float HeadPitchUpLimit => _headPitchUpLimit;
 

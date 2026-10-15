@@ -475,7 +475,7 @@ namespace MoonProject.Gameplay
                 _beamWork.Work(deltaTime);
             }
 
-            _beam.Step(beaming, _restoring != null, _rig.TetherOrigin.position,
+            _beam.Step(beaming, _restoring != null, _rig.CutterOrigin.position,
                 _restoring != null ? _restoring.Shown.BeamPoint.position : Vector3.zero, now, deltaTime);
             SetHold(beaming);
             _hop.Step(deltaTime, _candidate == null && _input.ExcavateHeld, _input.Drive);

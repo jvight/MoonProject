@@ -34,6 +34,7 @@ namespace MoonProject.Rover
         private const uint MoodSeed = 7u;
 
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
+        private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
 
         [Tooltip("Character tuning (Assets/_Project/Data/Tuning/RoverCharacterTuning.asset).")]
         [SerializeField] private RoverCharacterTuning _tuning;
@@ -47,14 +48,29 @@ namespace MoonProject.Rover
         [Tooltip("RoverModel 'Neck' (yaw = local Y).")]
         [SerializeField] private Transform _neck;
 
-        [Tooltip("RoverModel 'Head' (pitch = local X).")]
-        [SerializeField] private Transform _head;
+        [Tooltip("RoverModel 'NeckLift' (local X: + = droop/sag, - = alert lift).")]
+        [SerializeField] private Transform _neckLift;
 
-        [Tooltip("RoverModel 'Eyelid' (local X: 0 = open, + = closing).")]
-        [SerializeField] private Transform _eyelid;
+        [Tooltip("RoverModel 'Head' (pitch = local X, roll = local Z).")]
+        [SerializeField] private Transform _head;
 
         [Tooltip("RoverModel 'SolarWing' (local X: 0 = folded, + = opening).")]
         [SerializeField] private Transform _solarWing;
+
+        [Tooltip("RoverModel 'CutterTurret' (chest cutter yaw = local Y).")]
+        [SerializeField] private Transform _cutterTurret;
+
+        [Tooltip("RoverModel 'CutterHead' (chest cutter pitch = local X).")]
+        [SerializeField] private Transform _cutterHead;
+
+        [Tooltip("RoverModel 'ScoopArms' (belly scoop arms pitch = local X).")]
+        [SerializeField] private Transform _scoopArms;
+
+        [Tooltip("RoverModel 'ScoopBucket' (belly scoop bucket curl = local X).")]
+        [SerializeField] private Transform _scoopBucket;
+
+        [Tooltip("RoverModel 'WinchSpool' (chest winch spool spin = local X).")]
+        [SerializeField] private Transform _winchSpool;
 
         [Tooltip("MeshRenderer of RoverModel 'Eye' (glow modulated through _EmissionColor).")]
         [SerializeField] private Renderer _eyeRenderer;
@@ -89,6 +105,18 @@ namespace MoonProject.Rover
         private readonly ImpactNudge _headNudge = new ImpactNudge();
         private float _cutFocus;
         private bool _cutting;
+        private bool _isCutTool;
+        private Vector3 _cutTarget;
+        private float _cutterYaw;
+        private float _cutterPitch;
+        private bool _digging;
+        private float _digFocus;
+        private float _scoopKick;
+        private bool _tetherActive;
+        private float _winchReel;
+        private float _winchAngle;
+        private float _cargoTarget;
+        private float _cargoSag;
         private float _cutEnds = -1f;
         private RoverVoice _voice;
         private ChirpPose _chirpPose;
@@ -108,9 +136,14 @@ namespace MoonProject.Rover
         private DampedSpring _yaw;
         private DampedSpring _pitch;
         private Quaternion _neckRest;
+        private Quaternion _neckLiftRest;
         private Quaternion _headRest;
-        private Quaternion _eyelidRest;
         private Quaternion _wingRest;
+        private Quaternion _cutterTurretRest;
+        private Quaternion _cutterHeadRest;
+        private Quaternion _scoopArmsRest;
+        private Quaternion _scoopBucketRest;
+        private Quaternion _winchSpoolRest;
         private bool _proudPending;
         private float _wakeTilt;
         private BatteryLink _battery;
@@ -137,9 +170,14 @@ namespace MoonProject.Rover
             _glowBlock = new MaterialPropertyBlock();
             _battery = new BatteryLink(context);
             _neckRest = _neck.localRotation;
+            _neckLiftRest = _neckLift != null ? _neckLift.localRotation : Quaternion.identity;
             _headRest = _head.localRotation;
-            _eyelidRest = _eyelid.localRotation;
             _wingRest = _solarWing.localRotation;
+            _cutterTurretRest = _cutterTurret != null ? _cutterTurret.localRotation : Quaternion.identity;
+            _cutterHeadRest = _cutterHead != null ? _cutterHead.localRotation : Quaternion.identity;
+            _scoopArmsRest = _scoopArms != null ? _scoopArms.localRotation : Quaternion.identity;
+            _scoopBucketRest = _scoopBucket != null ? _scoopBucket.localRotation : Quaternion.identity;
+            _winchSpoolRest = _winchSpool != null ? _winchSpool.localRotation : Quaternion.identity;
             _scanFanRest = _scanFan.transform.localRotation;
             _scanLook = new ScanLook(_tuning.ScanLook);
             InitializeElder(context);
@@ -161,6 +199,7 @@ namespace MoonProject.Rover
                 events.Subscribe<RelicAnswered>(OnRelicAnswered),
                 events.Subscribe<RelicSurfaced>(OnRelicSurfaced),
                 events.Subscribe<RelicDeposited>(OnRelicDeposited),
+                events.Subscribe<TetherAttached>(OnTetherAttached),
                 events.Subscribe<TetherReleased>(OnTetherReleased),
                 events.Subscribe<RoverRecovering>(OnRecovering),
                 events.Subscribe<RoverJumped>(OnJumped),
@@ -234,8 +273,9 @@ namespace MoonProject.Rover
         {
             return Require(_tuning != null, "RoverCharacterTuning is not assigned.")
                 & Require(_rover != null && _rig != null, "RoverController and RoverVisualRig must be assigned.")
-                & Require(_neck != null && _head != null, "Neck and Head nodes are not assigned.")
-                & Require(_eyelid != null && _solarWing != null, "Eyelid and SolarWing nodes are not assigned.")
+                & Require(_neck != null && _neckLift != null && _head != null,
+                    "Neck, NeckLift and Head nodes are not assigned.")
+                & Require(_solarWing != null, "SolarWing node is not assigned.")
                 & Require(_eyeRenderer != null && _antennaTipRenderer != null, "Eye/AntennaTip renderers are missing.")
                 & Require(_eyeLight != null, "Eye light is not assigned.")
                 & Require(_scanFan != null, "The ScanFan on Eye/ScanFanSocket is not assigned (0.5.5 scan contract).");
@@ -308,8 +348,15 @@ namespace MoonProject.Rover
             PerkUp(_tuning.RecoveryPerk);
         }
 
+        private void OnTetherAttached(TetherAttached attached)
+        {
+            _tetherActive = true;
+            _winchReel = 1f;
+        }
+
         private void OnTetherReleased(TetherReleased release)
         {
+            _tetherActive = false;
             if (release.Snapped)
             {
                 _mood.Sigh(_tuning.SnapSigh);
@@ -502,7 +549,9 @@ namespace MoonProject.Rover
             }
 
             StepBattery(deltaTime);
-            _cutFocus = Smoothing.Damp(_cutFocus, _cutting ? 1f : 0f, _tuning.CutFocus.HalfLife, deltaTime);
+            float focusHalfLife = _tuning.CutFocus.HalfLife;
+            _cutFocus = Smoothing.Damp(_cutFocus, _cutting ? 1f : 0f, focusHalfLife, deltaTime);
+            StepTools(focusHalfLife, deltaTime);
             _scanLook.Step(deltaTime);
             if (_scanGazing && !_scanLook.HoldsGaze)
             {
@@ -511,6 +560,7 @@ namespace MoonProject.Rover
             }
             _chirpPose.Step(deltaTime);
             _sigh = Smoothing.Damp(_sigh, 0f, _tuning.Chirp.SighHalfLife, deltaTime);
+            _cargoSag = Smoothing.Damp(_cargoSag, _cargoTarget, 0.25f, deltaTime);
             _headNudge.Step(deltaTime);
             _listen.Step(deltaTime);
             _rig.SetAntennaLift(_listen.Lift);
@@ -518,6 +568,30 @@ namespace MoonProject.Rover
             float sky = SkyLift();
             StepGaze(sky, deltaTime);
             Apply(sky);
+        }
+
+        private void StepTools(float halfLife, float deltaTime)
+        {
+            float targetCutterYaw = 0f;
+            float targetCutterPitch = 0f;
+            if (_cutting && _isCutTool && _cutterTurret != null && _cutterHead != null)
+            {
+                Transform frame = _cutterTurret.parent != null ? _cutterTurret.parent : _cutterTurret;
+                Vector3 localDir = frame.InverseTransformDirection(_cutTarget - _cutterHead.position);
+                float horiz = Mathf.Sqrt(localDir.x * localDir.x + localDir.z * localDir.z);
+                if (horiz > 1e-4f || Mathf.Abs(localDir.y) > 1e-4f)
+                {
+                    targetCutterYaw = Mathf.Clamp(Mathf.Atan2(localDir.x, localDir.z) * Mathf.Rad2Deg, -55f, 55f);
+                    targetCutterPitch = Mathf.Clamp(-Mathf.Atan2(localDir.y, horiz) * Mathf.Rad2Deg, -35f, 35f);
+                }
+            }
+
+            _cutterYaw = Smoothing.Damp(_cutterYaw, targetCutterYaw, halfLife, deltaTime);
+            _cutterPitch = Smoothing.Damp(_cutterPitch, targetCutterPitch, halfLife, deltaTime);
+            _digFocus = Smoothing.Damp(_digFocus, _digging ? 1f : 0f, halfLife, deltaTime);
+            _scoopKick = Smoothing.Damp(_scoopKick, 0f, halfLife, deltaTime);
+            _winchReel = Smoothing.Damp(_winchReel, _tetherActive ? 1f : 0f, 0.15f, deltaTime);
+            _winchAngle = Mathf.Repeat(_winchAngle + _winchReel * 360f * deltaTime, 360f);
         }
 
         /// <summary>The tired look below the Low share and the quieter crawl, each eased in and out.</summary>
@@ -595,11 +669,42 @@ namespace MoonProject.Rover
                 - _chirpPose.HeadDip;
 
             _neck.localRotation = _neckRest * Quaternion.AngleAxis(_yaw.Value, Vector3.up);
+            if (_neckLift != null)
+            {
+                float neckDroop = 35f * _mood.Wake.Sleep + 15f * _tired + 15f * _crawl + 8f * _cargoSag
+                    - 10f * Mathf.Clamp01(_mood.Perk);
+                _neckLift.localRotation = _neckLiftRest * Quaternion.AngleAxis(neckDroop, Vector3.right);
+            }
+
             _head.localRotation = _headRest * Quaternion.AngleAxis(-pitch, Vector3.right)
                 * Quaternion.AngleAxis(_wakeTilt + _chirpPose.HeadRoll, Vector3.forward);
-            _eyelid.localRotation = _eyelidRest
-                * Quaternion.AngleAxis(Mathf.Max(_mood.LidClosure, _cutFocus * _tuning.CutFocus.IrisNarrow)
-                    * (1f - _scanLook.Open) * _tuning.EyelidClosedAngle, Vector3.right);
+            if (_cutterTurret != null)
+            {
+                _cutterTurret.localRotation = _cutterTurretRest * Quaternion.AngleAxis(_cutterYaw, Vector3.up);
+            }
+
+            if (_cutterHead != null)
+            {
+                _cutterHead.localRotation = _cutterHeadRest * Quaternion.AngleAxis(_cutterPitch, Vector3.right);
+            }
+
+            if (_scoopArms != null)
+            {
+                _scoopArms.localRotation = _scoopArmsRest
+                    * Quaternion.AngleAxis(25f * _digFocus - 12f * _scoopKick, Vector3.right);
+            }
+
+            if (_scoopBucket != null)
+            {
+                _scoopBucket.localRotation = _scoopBucketRest
+                    * Quaternion.AngleAxis(35f * _digFocus + 20f * _scoopKick, Vector3.right);
+            }
+
+            if (_winchSpool != null)
+            {
+                _winchSpool.localRotation = _winchSpoolRest * Quaternion.AngleAxis(_winchAngle, Vector3.right);
+            }
+
             float wingOpen = Mathf.Max(_mood.WingOpen * Mathf.Lerp(1f, battery.LowWingOpen, _tired),
                 sky * _tuning.StargazeWingOpen);
             _solarWing.localRotation = _wingRest
@@ -674,15 +779,34 @@ namespace MoonProject.Rover
                 return;
             }
 
+            if (beat.Kind == FeelKind.Tether)
+            {
+                _winchReel = 1f;
+                if (beat.Phase == FeelPhase.Anticipate || beat.Phase == FeelPhase.Act)
+                {
+                    _tetherActive = true;
+                }
+                else if (beat.Phase == FeelPhase.Cancel || beat.Phase == FeelPhase.Reward)
+                {
+                    _tetherActive = false;
+                }
+
+                return;
+            }
+
             if (beat.Kind != FeelKind.Cut && beat.Kind != FeelKind.Dig)
             {
                 return;
             }
 
+            bool isDig = beat.Kind == FeelKind.Dig;
             switch (beat.Phase)
             {
                 case FeelPhase.Anticipate:
                     _cutting = true;
+                    _isCutTool = !isDig;
+                    _cutTarget = beat.Position;
+                    _digging = isDig;
                     _cutEnds = -1f;
                     _rover.Gaze.Set(_cutOwner, beat.Position, focus.GazePriority);
                     break;
@@ -692,10 +816,19 @@ namespace MoonProject.Rover
                         _headNudge.KickPitch(focus.Nod);
                     }
 
+                    _isCutTool = !isDig;
+                    _cutTarget = beat.Position;
+                    _digging = isDig;
                     _rover.Gaze.Set(_cutOwner, beat.Position, focus.GazePriority);
                     break;
                 case FeelPhase.Impact:
                     _cutting = false;
+                    _digging = false;
+                    if (isDig)
+                    {
+                        _scoopKick = 1f;
+                    }
+
                     _cutEnds = Time.time + focus.FollowSeconds;
                     break;
                 case FeelPhase.Follow:
@@ -730,6 +863,7 @@ namespace MoonProject.Rover
         /// <summary>The hold has just filled: 07 glances back once at its load (M3-25).</summary>
         private void OnCargoChanged(CargoChanged cargo)
         {
+            _cargoTarget = cargo.SlotCount > 0 ? Mathf.Clamp01((float)cargo.UsedSlots / cargo.SlotCount) : 0f;
             if (_cargo.BecameFull(cargo.UsedSlots, cargo.SlotCount))
             {
                 Glance(_rover.CargoSocket.position);
@@ -765,6 +899,7 @@ namespace MoonProject.Rover
         private void EndCutFocus()
         {
             _cutting = false;
+            _digging = false;
             _cutEnds = -1f;
             _rover.Gaze.Clear(_cutOwner);
         }
@@ -776,6 +911,8 @@ namespace MoonProject.Rover
 
         private void SetGlow(Renderer target, Color emission)
         {
+            float peak = Mathf.Max(emission.r, Mathf.Max(emission.g, emission.b));
+            _glowBlock.SetFloat(EmissionStrengthId, Mathf.Clamp01(peak));
             _glowBlock.SetVector(EmissionColorId, emission);
             target.SetPropertyBlock(_glowBlock);
         }

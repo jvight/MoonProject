@@ -3,8 +3,8 @@ namespace MoonProject.Rover.Editor
     /// <summary>Every asset the Rover builders read or write.</summary>
     public static class RoverAssetPaths
     {
-        /// <summary>The art box's model (rig contract in docs/ARCHITECTURE.md). Required; never substituted.</summary>
-        public const string RoverModel = "Assets/_Project/Generated/Art/Rover/RoverModel.prefab";
+        /// <summary>The art box's R1 07 v3 model (rig contract in docs/ARCHITECTURE.md). Required; never substituted.</summary>
+        public const string RoverModel = "Assets/_Project/Generated/Art/R1/Models/Rover/RoverModel.prefab";
 
         /// <summary>The art box's Hover-Jump coils, mounted on RoverModel 'CoilSocket'. Required.</summary>
         public const string HoverCoils = "Assets/_Project/Generated/Art/Rover/HoverCoils.prefab";
@@ -16,7 +16,7 @@ namespace MoonProject.Rover.Editor
         public const string LensGlass = "Assets/_Project/Generated/Art/Rover/LensGlass.prefab";
         public const string KitCapacitorDrum = "Assets/_Project/Generated/Art/Rover/Kit_CapacitorDrum.prefab";
         public const string KitBatterySpine = "Assets/_Project/Generated/Art/Rover/Kit_BatterySpine.prefab";
-        public const string KitTapeDeck = "Assets/_Project/Generated/Art/Rover/Kit_TapeDeck.prefab";
+        public const string KitTapeDeck = "Assets/_Project/Generated/Art/R1/Models/Rover/Kit_TapeDeck.prefab";
         public const string KitTetherRing = "Assets/_Project/Generated/Art/Rover/Kit_TetherRing.prefab";
         public const string KitCargoRack = "Assets/_Project/Generated/Art/Rover/Kit_CargoRack.prefab";
 

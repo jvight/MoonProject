@@ -95,10 +95,10 @@ namespace MoonProject.Gameplay.Feel.Editor
             Vector3 normalLocal = cut.localRotation * Vector3.forward;
             Vector3 cutWorld = cut.position;
             Vector3 outward = Vector3.ProjectOnPlane(piece.TransformDirection(normalLocal), Vector3.up).normalized;
-            GameObject rover = Spawn(ArtPaths.RoverFolder + "/" + RoverModelBuilder.ModelName + ".prefab", temporary);
+            GameObject rover = Spawn(ArtPaths.R1ModelsFolder + "/Rover/" + RoverModelBuilder.ModelName + ".prefab", temporary);
             rover.transform.SetPositionAndRotation(Ground(cutWorld + outward * StandOff),
                 Quaternion.LookRotation(-outward, Vector3.up));
-            Transform emitter = Descendant(rover.transform, "TetherOrigin");
+            Transform emitter = Descendant(rover.transform, "CutterOrigin");
             var anchors = new FeelCaptureAnchors(emitter, piece, cut.localPosition, normalLocal, CutHalfLength);
             var host = new GameObject("FeelCaptureHost");
             temporary.Add(host);

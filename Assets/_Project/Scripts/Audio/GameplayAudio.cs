@@ -90,10 +90,11 @@ namespace MoonProject.Audio
             }
 
             _director = director;
-            _tetherOrigin = context.Get<IRoverRig>().TetherOrigin;
+            IRoverRig rig = context.Get<IRoverRig>();
+            _tetherOrigin = rig.WinchOrigin != null ? rig.WinchOrigin : rig.TetherOrigin;
             if (_tetherOrigin == null)
             {
-                Debug.LogError($"{nameof(GameplayAudio)}: {nameof(IRoverRig)}.TetherOrigin is null.", this);
+                Debug.LogError($"{nameof(GameplayAudio)}: {nameof(IRoverRig)}.WinchOrigin is null.", this);
                 enabled = false;
                 return;
             }

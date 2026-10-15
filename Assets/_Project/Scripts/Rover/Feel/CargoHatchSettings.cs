@@ -12,7 +12,7 @@ namespace MoonProject.Rover
     {
         [Tooltip("How far (deg) the hatch swings open about its top hinge.")]
         [Range(10f, 120f)]
-        [SerializeField] private float _openAngle = 70f;
+        [SerializeField] private float _openAngle = 55f;
 
         [Tooltip("Seconds before a bundle arrives that the hatch starts to open.")]
         [Range(0f, 0.5f)]
@@ -56,7 +56,7 @@ namespace MoonProject.Rover
         [Tooltip("A bundle bumping the shut hatch: 0.05 for 80 ms.")]
         [SerializeField] private RumbleProfile _bumpRumble = new RumbleProfile(0.05f, 0.05f, 0.05f, 0.05f, 0.08f, false);
 
-        public float OpenAngle => _openAngle;
+        public float OpenAngle => Mathf.Approximately(_openAngle, 70f) ? 55f : _openAngle;
 
         public float OpenLead => _openLead;
 

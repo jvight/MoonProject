@@ -681,7 +681,7 @@ namespace MoonProject.Gameplay
 
         private void StepFeed(float now, float deltaTime)
         {
-            if (_feed.Step(_rig.TetherOrigin.position, _rig.CargoSocket.position, _hopperMouth.position, now,
+            if (_feed.Step(_rig.CutterOrigin.position, _rig.CargoSocket.position, _hopperMouth.position, now,
                     deltaTime))
             {
                 Fit();

@@ -23,6 +23,7 @@ namespace MoonProject.Rover
     public sealed class ChargeCellHardware : IDisposable
     {
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
+        private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
 
         private readonly ChargeCellsSettings _settings;
         private readonly ChargeCells _cells;
@@ -66,6 +67,7 @@ namespace MoonProject.Rover
             }
 
             ShowTier(0);
+            ApplyGlow();
             _subscriptions = new[]
             {
                 events.Subscribe<CutChargeStaged>(OnStaged),
@@ -82,6 +84,11 @@ namespace MoonProject.Rover
         {
             StepTestCut(deltaTime);
             _cells.Step(deltaTime);
+            ApplyGlow();
+        }
+
+        private void ApplyGlow()
+        {
             Color colour = _cells.Colour.linear;
             for (int i = 0; i < _conduits.Length; i++)
             {
@@ -107,6 +114,7 @@ namespace MoonProject.Rover
         public void Reset()
         {
             _cells.Reset();
+            ApplyGlow();
         }
 
         public void Dispose()
@@ -120,6 +128,7 @@ namespace MoonProject.Rover
         private void Emit(Renderer renderer, Color colour, float glow)
         {
             _block.SetVector(EmissionColorId, colour * glow);
+            _block.SetFloat(EmissionStrengthId, Mathf.Clamp01(glow));
             renderer.SetPropertyBlock(_block);
         }
 

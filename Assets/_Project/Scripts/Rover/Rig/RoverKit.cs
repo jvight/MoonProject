@@ -41,6 +41,7 @@ namespace MoonProject.Rover
         private const float GlowEpsilon = 1e-4f;
 
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
+        private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
 
         [Tooltip("Rig tuning (Assets/_Project/Data/Tuning/RoverRigTuning.asset): 'Visible kit and gifts', 'Headlamp'.")]
         [SerializeField] private RoverRigTuning _tuning;
@@ -475,6 +476,7 @@ namespace MoonProject.Rover
             _ringLevel = level;
             _glowBlock.Clear();
             _glowBlock.SetVector(EmissionColorId, new Vector4(level, level, level, 1f));
+            _glowBlock.SetFloat(EmissionStrengthId, Mathf.Clamp01(level));
             _ringGlow.SetPropertyBlock(_glowBlock);
         }
 
@@ -703,6 +705,7 @@ namespace MoonProject.Rover
         private void SetGlow(Renderer[] renderers, float intensity)
         {
             _glowBlock.SetVector(EmissionColorId, new Vector4(intensity, intensity, intensity, 1f));
+            _glowBlock.SetFloat(EmissionStrengthId, Mathf.Clamp01(intensity));
             for (int i = 0; i < renderers.Length; i++)
             {
                 renderers[i].SetPropertyBlock(_glowBlock);

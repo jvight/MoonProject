@@ -52,6 +52,14 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public Transform TetherOrigin => _eye;
 
+        public Transform CutterOrigin => _eye;
+
+        public Transform ScanOrigin => _eye;
+
+        public Transform WinchOrigin => _eye;
+
+        public Transform ScoopOrigin => _eye;
+
         public Transform CargoSocket => _cargo;
 
         public Rigidbody PhysicsBody => _body;

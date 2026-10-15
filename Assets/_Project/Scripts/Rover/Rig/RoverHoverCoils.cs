@@ -17,6 +17,7 @@ namespace MoonProject.Rover
     public sealed class RoverHoverCoils : MonoBehaviour
     {
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
+        private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
 
         [Tooltip("Rig tuning (Assets/_Project/Data/Tuning/RoverRigTuning.asset), 'Hover-Jump coils'.")]
         [SerializeField] private RoverRigTuning _tuning;
@@ -149,6 +150,7 @@ namespace MoonProject.Rover
             HoverCoilSettings settings = _tuning.HoverCoils;
             float emission = settings.GlowPeak * Mathf.Pow(glow, settings.GlowCurve);
             _glowBlock.SetVector(EmissionColorId, new Vector4(emission, emission, emission, 1f));
+            _glowBlock.SetFloat(EmissionStrengthId, Mathf.Clamp01(emission));
             for (int i = 0; i < _glows.Length; i++)
             {
                 _glows[i].SetPropertyBlock(_glowBlock);

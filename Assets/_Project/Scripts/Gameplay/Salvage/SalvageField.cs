@@ -162,8 +162,11 @@ namespace MoonProject.Gameplay
         /// <summary>The cut's vacuum sparks and slag (tests and debugging views).</summary>
         internal VacuumDebris Sparks => _feel.Debris;
 
-        /// <summary>07's beam emitter: the cut's charge-up and beam leave from it.</summary>
-        public Vector3 Emitter => _rig.TetherOrigin.position;
+        /// <summary>07's cutter beam emitter: the cut's charge-up and beam leave from it.</summary>
+        public Vector3 Emitter => _rig.CutterOrigin.position;
+
+        /// <summary>07's scan lens emitter: the scan beam and ribbon connect to it.</summary>
+        public Vector3 ScanEmitter => _rig.ScanOrigin.position;
 
         /// <summary>The aimed piece's CutPoint, the space its cut line lives in (it tumbles with the piece).</summary>
         public Transform CutPiece => Aimed != null ? Aimed.CutPoint : null;

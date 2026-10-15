@@ -183,8 +183,9 @@ namespace MoonProject.Gameplay
             }
 
             _debris.Step(deltaTime);
-            _scanBeam.Step(deltaTime, emitter);
-            _scanRibbon.Step(deltaTime, emitter);
+            Vector3 scanEmitter = _anchors.ScanEmitter;
+            _scanBeam.Step(deltaTime, scanEmitter);
+            _scanRibbon.Step(deltaTime, scanEmitter);
             _flashLight.Step(deltaTime);
             _cutLight.Step(deltaTime);
             StepSweep(deltaTime);

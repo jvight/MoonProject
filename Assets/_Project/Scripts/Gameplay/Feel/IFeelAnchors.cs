@@ -9,8 +9,11 @@ namespace MoonProject.Gameplay
     /// </summary>
     public interface IFeelAnchors
     {
-        /// <summary>07's beam emitter, the same point the cutting beam leaves from.</summary>
+        /// <summary>07's cutter beam emitter, the same point the cutting beam leaves from.</summary>
         Vector3 Emitter { get; }
+
+        /// <summary>07's scan lens emitter, the point the scan beam and ribbon connect to.</summary>
+        Vector3 ScanEmitter { get; }
 
         /// <summary>Where the beam meets the piece (world).</summary>
         Vector3 CutPoint { get; }

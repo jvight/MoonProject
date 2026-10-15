@@ -80,7 +80,13 @@ namespace MoonProject.Rover.Editor
         /// <summary>The Rover hierarchy described above, built in <paramref name="scratch"/> and not saved.</summary>
         public static GameObject Assemble(BuilderScratchScene scratch)
         {
-            var model = BuildWiring.Require<GameObject>(RoverAssetPaths.RoverModel, "the Art box's rover builder");
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(RoverAssetPaths.RoverModel);
+            if (model == null || model.transform.Find(RoverModelNodes.SolarWing + "/" + RoverModelNodes.CellFilled) == null)
+            {
+                MoonProject.Art.Editor.R1ModelBuilder.Build();
+            }
+
+            model = BuildWiring.Require<GameObject>(RoverAssetPaths.RoverModel, "the Art box's rover builder");
             var coils = BuildWiring.Require<GameObject>(RoverAssetPaths.HoverCoils, "the Art box's rover builder");
             var lampBar = BuildWiring.Require<GameObject>(RoverAssetPaths.KitLampBar, "the Art box's kit builder");
             var lensGlass = BuildWiring.Require<GameObject>(RoverAssetPaths.LensGlass, "the Art box's glass builder");
@@ -131,18 +137,27 @@ namespace MoonProject.Rover.Editor
             Mount(scratch, lensGlass, BuildWiring.Node(m, RoverModelNodes.Eye)).gameObject.SetActive(true);
 
             var wheels = new Object[RoverModelNodes.WheelCount];
+            var arms = new Object[RoverModelNodes.WheelCount];
+            var shocks = new Object[RoverModelNodes.WheelCount];
             for (int i = 0; i < wheels.Length; i++)
             {
                 wheels[i] = BuildWiring.Node(m, RoverModelNodes.Wheel(i));
+                arms[i] = BuildWiring.Node(m, RoverModelNodes.Arm(i));
+                shocks[i] = BuildWiring.Node(m, RoverModelNodes.Shock(i));
             }
 
             BuildWiring.Assign(rig,
                 ("_tuning", rigTuning),
                 ("_chassis", chassis.transform),
-                ("_bogieLeft", BuildWiring.Node(m, RoverModelNodes.BogieLeft)),
-                ("_bogieRight", BuildWiring.Node(m, RoverModelNodes.BogieRight)),
                 ("_antenna", BuildWiring.Node(m, RoverModelNodes.Antenna)));
             BuildWiring.AssignArray(rig, "_wheels", wheels);
+            BuildWiring.AssignArray(rig, "_arms", arms);
+            BuildWiring.AssignArray(rig, "_shocks", shocks);
+
+            BuildWiring.Node(m, RoverModelNodes.DrumSocketLeft).localRotation = Quaternion.Euler(0f, 180f, 0f);
+            BuildWiring.Node(m, RoverModelNodes.BinSocketLeft).localRotation = Quaternion.Euler(0f, 180f, 0f);
+            BuildWiring.Node(m, RoverModelNodes.RingSocket).localRotation = Quaternion.Euler(0f, 180f, 0f);
+
             Transform coilSocket = BuildWiring.Node(m, RoverModelNodes.CoilSocket);
             RoverHoverCoils hoverCoils = BuildHoverCoils(scratch, visual, coilSocket, coils, rigTuning);
             RoverKit kit = BuildKit(scratch, visual, m, headlamp, rigTuning, lampBar, drum, rack, spine, deck, ring);
@@ -151,6 +166,7 @@ namespace MoonProject.Rover.Editor
             RoverWheelFx wheelFx = BuildWheelFx(scratch, root.transform, m, fxTuning, trackMaterial, dustMaterial);
             RoverLampMotes lampMotes = BuildLampMotes(scratch, headlamp, fxTuning, moteMaterial);
 
+            Transform eyeOrigin = BuildWiring.Node(m, RoverModelNodes.EyeOrigin);
             BuildWiring.Assign(controller,
                 ("_tuning", tuning),
                 ("_body", body),
@@ -161,7 +177,11 @@ namespace MoonProject.Rover.Editor
                 ("_lampMotes", lampMotes),
                 ("_flankLamps", flankLamps),
                 ("_kit", kit),
-                ("_tetherOrigin", BuildWiring.Node(m, RoverModelNodes.TetherOrigin)),
+                ("_tetherOrigin", eyeOrigin),
+                ("_cutterOrigin", BuildWiring.Node(m, RoverModelNodes.CutterOrigin)),
+                ("_scanOrigin", eyeOrigin),
+                ("_winchOrigin", BuildWiring.Node(m, RoverModelNodes.WinchOrigin)),
+                ("_scoopOrigin", BuildWiring.Node(m, RoverModelNodes.ScoopOrigin)),
                 ("_cargoSocket", BuildWiring.Node(m, RoverModelNodes.CargoSocket)));
             AssignChargeCells(controller, m);
             Transform lens = Mount(scratch, focusLens, BuildWiring.Node(m, RoverModelNodes.LensSocket));
@@ -169,7 +189,7 @@ namespace MoonProject.Rover.Editor
                 ("_focusLensGlass", BuildWiring.NodeComponent<Renderer>(lens, "Glass")));
             Transform hatch = BuildWiring.Node(m, RoverModelNodes.CargoHatch);
             BuildWiring.Assign(controller, ("_cargoHatch", hatch));
-            BuildWiring.AssignArray(controller, "_hatchCrates", HatchCrates(hatch));
+            BuildWiring.AssignArray(controller, "_hatchCrates", HatchCrates(m));
             BuildWiring.AssignArray(controller, "_sideBins", new Object[]
             {
                 Mount(scratch, sideBin, BuildWiring.Node(m, RoverModelNodes.BinSocketLeft)).gameObject,
@@ -188,9 +208,14 @@ namespace MoonProject.Rover.Editor
                 ("_rover", controller),
                 ("_rig", rig),
                 ("_neck", BuildWiring.Node(m, RoverModelNodes.Neck)),
+                ("_neckLift", BuildWiring.Node(m, RoverModelNodes.NeckLift)),
                 ("_head", BuildWiring.Node(m, RoverModelNodes.Head)),
-                ("_eyelid", BuildWiring.Node(m, RoverModelNodes.Eyelid)),
                 ("_solarWing", BuildWiring.Node(m, RoverModelNodes.SolarWing)),
+                ("_cutterTurret", BuildWiring.Node(m, RoverModelNodes.CutterTurret)),
+                ("_cutterHead", BuildWiring.Node(m, RoverModelNodes.CutterHead)),
+                ("_scoopArms", BuildWiring.Node(m, RoverModelNodes.ScoopArms)),
+                ("_scoopBucket", BuildWiring.Node(m, RoverModelNodes.ScoopBucket)),
+                ("_winchSpool", BuildWiring.Node(m, RoverModelNodes.WinchSpool)),
                 ("_eyeRenderer", BuildWiring.NodeComponent<MeshRenderer>(m, RoverModelNodes.Eye)),
                 ("_antennaTipRenderer", BuildWiring.NodeComponent<MeshRenderer>(m, RoverModelNodes.AntennaTip)),
                 ("_eyeLight", eyeLight),
@@ -358,6 +383,13 @@ namespace MoonProject.Rover.Editor
             Transform deck = Mount(scratch, deckPrefab, BuildWiring.Node(model, RoverModelNodes.DeckSocket));
             Transform ring = Mount(scratch, ringPrefab, BuildWiring.Node(model, RoverModelNodes.RingSocket));
 
+            Transform solarCell = BuildWiring.Node(model, RoverModelNodes.CellFilled);
+            Transform freshSerial = BuildWiring.Node(model, RoverModelNodes.Decal07Fresh);
+            Transform pennant = BuildWiring.Node(model, RoverModelNodes.Pennant);
+            solarCell.gameObject.SetActive(false);
+            freshSerial.gameObject.SetActive(false);
+            pennant.gameObject.SetActive(false);
+
             var kit = host.AddComponent<RoverKit>();
             BuildWiring.Assign(kit,
                 ("_tuning", tuning),
@@ -369,9 +401,9 @@ namespace MoonProject.Rover.Editor
                 ("_tetherRing", ring),
                 ("_ringGlow", BuildWiring.NodeComponent<MeshRenderer>(ring, RoverModelNodes.RingGlow)),
                 ("_relicSeat", BuildWiring.Node(rack, RoverModelNodes.RelicSeat)),
-                ("_solarCell", BuildWiring.Node(model, RoverModelNodes.CellFilled)),
-                ("_freshSerial", BuildWiring.Node(model, RoverModelNodes.Decal07Fresh)),
-                ("_pennant", BuildWiring.Node(model, RoverModelNodes.Pennant)));
+                ("_solarCell", solarCell),
+                ("_freshSerial", freshSerial),
+                ("_pennant", pennant));
             BuildWiring.AssignArray(kit, "_lamps", lamps);
             BuildWiring.AssignArray(kit, "_drums", new Object[] { drumLeft, drumRight });
             BuildWiring.AssignArray(kit, "_drumGlows", new Object[]
@@ -384,7 +416,7 @@ namespace MoonProject.Rover.Editor
 
         /// <summary>
         /// The charge-up's Cells (0.5.5 §5.4): every ConduitGlow renderer (the deck pair and the neck's), the
-        /// StageGlow_n sleeve of each Stage_n_L and Stage_n_R (stage 1 first), and the eye's LockGlow.
+        /// StageGlow_n_L/R sleeve of each Stage_n_L and Stage_n_R (stage 1 first), and the eye's LockGlow.
         /// </summary>
         private static void AssignChargeCells(RoverController controller, Transform model)
         {
@@ -408,9 +440,10 @@ namespace MoonProject.Rover.Editor
             {
                 for (int side = 0; side < 2; side++)
                 {
-                    Transform cell = BuildWiring.Node(model, RoverModelNodes.StageCell(stage, side == 0));
+                    bool left = side == 0;
+                    Transform cell = BuildWiring.Node(model, RoverModelNodes.StageCell(stage, left));
                     sleeves[2 * (stage - 1) + side] =
-                        BuildWiring.NodeComponent<Renderer>(cell, RoverModelNodes.StageGlow(stage));
+                        BuildWiring.NodeComponent<Renderer>(cell, RoverModelNodes.StageGlow(stage, left));
                 }
             }
 
@@ -421,9 +454,9 @@ namespace MoonProject.Rover.Editor
         }
 
         /// <summary>The hatch window's HatchCrate_0, HatchCrate_1, ... nodes in order; at least one, no gaps.</summary>
-        private static Object[] HatchCrates(Transform hatch)
+        private static Object[] HatchCrates(Transform model)
         {
-            Transform[] nodes = hatch.GetComponentsInChildren<Transform>(true);
+            Transform[] nodes = model.GetComponentsInChildren<Transform>(true);
             var crates = new List<Object>();
             for (int i = 0; ; i++)
             {
@@ -433,6 +466,7 @@ namespace MoonProject.Rover.Editor
                     break;
                 }
 
+                crate.gameObject.SetActive(false);
                 crates.Add(crate.gameObject);
             }
 

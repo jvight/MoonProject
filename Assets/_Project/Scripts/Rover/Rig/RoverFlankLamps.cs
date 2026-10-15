@@ -66,6 +66,11 @@ namespace MoonProject.Rover
             _title = _events.Subscribe<TitleShown>(OnTitleShown);
             _block = new MaterialPropertyBlock();
             _levels = new float[RoverModelNodes.FlankLampCount];
+            for (int i = 0; i < RoverModelNodes.FlankLampCount; i++)
+            {
+                Apply(i, 0f);
+            }
+
             ShowCells(0);
             return true;
         }
@@ -161,9 +166,12 @@ namespace MoonProject.Rover
             }
         }
 
+        private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
+
         private void Apply(int socket, float level)
         {
             _block.SetVector(EmissionColorId, new Vector4(level, level, level, 1f));
+            _block.SetFloat(EmissionStrengthId, Mathf.Clamp01(level));
             _glasses[socket].SetPropertyBlock(_block);
         }
     }
