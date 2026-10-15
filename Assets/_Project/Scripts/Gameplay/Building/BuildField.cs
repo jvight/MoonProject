@@ -1088,5 +1088,23 @@ namespace MoonProject.Gameplay
 
             _subscriptions.Clear();
         }
+
+        private void OnValidate()
+        {
+#if UNITY_EDITOR
+            if (UnityEditor.EditorApplication.isUpdating)
+            {
+                return;
+            }
+#endif
+            if (_catalog != null)
+            {
+                string problem = _catalog.Validate();
+                if (problem != null)
+                {
+                    Debug.LogError($"{nameof(BuildField)}: {problem}", this);
+                }
+            }
+        }
     }
 }

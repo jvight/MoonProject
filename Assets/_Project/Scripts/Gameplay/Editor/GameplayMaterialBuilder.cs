@@ -157,16 +157,9 @@ namespace MoonProject.Gameplay.Editor
             visuals.PopulateContainers(ContainerModels());
             visuals.PopulateScans(FragmentModels(), JumperWreckModel());
             visuals.PopulateGaragePort(GaragePortModel(), TapeDeckModel());
-            var holoValid = AssetDatabase.LoadAssetAtPath<Material>(ArtPaths.HologramMaterial);
-            var holoInvalid = AssetDatabase.LoadAssetAtPath<Material>(ArtPaths.HologramInvalidMaterial);
-            if (holoValid == null || holoInvalid == null)
-            {
-                HologramMaterialBuilder.Build();
-                holoValid = HologramMaterialBuilder.LoadMaterial(false);
-                holoInvalid = HologramMaterialBuilder.LoadMaterial(true);
-            }
-
-            visuals.PopulateHologram(holoValid, holoInvalid);
+            visuals.PopulateHologram(
+                HologramMaterialBuilder.LoadMaterial(false),
+                HologramMaterialBuilder.LoadMaterial(true));
             GeneratedAssets.CreateOrReplace(visuals, GameplayAssetPaths.Visuals);
             AssetDatabase.SaveAssets();
             Debug.Log($"{BuilderPath}: wrote {Enum.GetValues(typeof(GlowRole)).Length + 1} materials and " +

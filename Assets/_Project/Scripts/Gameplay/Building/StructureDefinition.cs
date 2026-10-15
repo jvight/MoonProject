@@ -233,5 +233,25 @@ namespace MoonProject.Gameplay
 
             return null;
         }
+
+        private void OnValidate()
+        {
+#if UNITY_EDITOR
+            if (UnityEditor.EditorApplication.isUpdating)
+            {
+                return;
+            }
+#endif
+            if (string.IsNullOrEmpty(_id))
+            {
+                return;
+            }
+
+            string problem = Validate();
+            if (problem != null)
+            {
+                Debug.LogError($"{nameof(StructureDefinition)} '{name}': {problem}", this);
+            }
+        }
     }
 }

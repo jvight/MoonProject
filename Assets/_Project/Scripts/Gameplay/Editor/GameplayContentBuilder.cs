@@ -58,7 +58,7 @@ namespace MoonProject.Gameplay.Editor
         internal static void BuildStructures()
         {
             BaseStructureRecipes.BuildRuntimePrefabs();
-            StructureDefinition[] definitions = BaseStructureRecipes.CreateDefinitions();
+            StructureDefinition[] definitions = BaseStructureRecipes.CreateDefinitions(requireRuntimePrefabs: true);
             for (int i = 0; i < definitions.Length; i++)
             {
                 StructureDefinition definition = definitions[i];

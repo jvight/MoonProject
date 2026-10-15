@@ -55,5 +55,15 @@ namespace MoonProject.Gameplay
             _weldRange = weldRange;
             _deconstructRefundShare = Mathf.Clamp01(deconstructRefundShare);
         }
+
+        private void OnValidate()
+        {
+            if (_maxPlacementDistance < _minPlacementDistance)
+            {
+                _maxPlacementDistance = _minPlacementDistance;
+            }
+
+            _deconstructRefundShare = Mathf.Clamp01(_deconstructRefundShare);
+        }
     }
 }

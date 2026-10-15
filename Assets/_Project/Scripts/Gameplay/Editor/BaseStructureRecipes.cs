@@ -179,7 +179,7 @@ namespace MoonProject.Gameplay.Editor
         /// Creates the in-memory <see cref="StructureDefinition"/> instances for every entry in <see cref="All"/>
         /// (used by <see cref="GameplayContentBuilder"/> and EditMode tests).
         /// </summary>
-        public static StructureDefinition[] CreateDefinitions()
+        public static StructureDefinition[] CreateDefinitions(bool requireRuntimePrefabs = false)
         {
             var definitions = new StructureDefinition[All.Length];
             for (int i = 0; i < All.Length; i++)
@@ -195,13 +195,22 @@ namespace MoonProject.Gameplay.Editor
                     prefab = AssetDatabase.LoadAssetAtPath<GameObject>(runtimePath);
                     if (prefab == null)
                     {
-                        prefab = BuildRuntimePrefab(entry);
+                        if (requireRuntimePrefabs)
+                        {
+                            throw new InvalidOperationException(
+                                $"BaseStructureRecipes: missing runtime structure prefab at '{runtimePath}' (run {GameplayContentBuilder.BuilderPath}).");
+                        }
+
+                        string r1Path = GameplayAssetPaths.R1StructurePrefab(entry.R1ModelName);
+                        prefab = AssetDatabase.LoadAssetAtPath<GameObject>(r1Path);
+                        if (prefab == null)
+                        {
+                            throw new InvalidOperationException(
+                                $"BaseStructureRecipes: missing R1 structure prefab at '{r1Path}'.");
+                        }
                     }
 
-                    if (prefab != null)
-                    {
-                        ExtractBoundsAndPorts(prefab.transform, entry.Clearance, ref footprint, out ports);
-                    }
+                    ExtractBoundsAndPorts(prefab.transform, entry.Clearance, ref footprint, out ports);
                 }
 
                 var definition = ScriptableObject.CreateInstance<StructureDefinition>();

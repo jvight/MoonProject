@@ -50,36 +50,6 @@ namespace MoonProject.Gameplay.Editor
 
         public void Contribute(SceneBuildContext context)
         {
-            var existingVisuals = UnityEditor.AssetDatabase.LoadAssetAtPath<GameplayVisuals>(GameplayAssetPaths.Visuals);
-            if (existingVisuals != null && (existingVisuals.HologramValid == null || existingVisuals.HologramInvalid == null))
-            {
-                var holoValid = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(ArtPaths.HologramMaterial);
-                var holoInvalid = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(ArtPaths.HologramInvalidMaterial);
-                if (holoValid == null || holoInvalid == null)
-                {
-                    HologramMaterialBuilder.Build();
-                    holoValid = HologramMaterialBuilder.LoadMaterial(false);
-                    holoInvalid = HologramMaterialBuilder.LoadMaterial(true);
-                }
-
-                existingVisuals.PopulateHologram(holoValid, holoInvalid);
-                UnityEditor.EditorUtility.SetDirty(existingVisuals);
-            }
-
-            if (UnityEditor.AssetDatabase.LoadAssetAtPath<BuildingTuning>(GameplayAssetPaths.BuildingTuning) == null)
-            {
-                MoonProject.Editor.Builders.GeneratedAssets.CreateOrReplace(
-                    ScriptableObject.CreateInstance<BuildingTuning>(),
-                    GameplayAssetPaths.BuildingTuning);
-            }
-
-            var existingStructures = UnityEditor.AssetDatabase.LoadAssetAtPath<StructureCatalog>(GameplayAssetPaths.StructureCatalog);
-            if (existingStructures == null || !string.IsNullOrEmpty(existingStructures.Validate()))
-            {
-                GameplayContentBuilder.BuildStructures();
-                UnityEditor.AssetDatabase.SaveAssets();
-            }
-
             var visuals = context.LoadAsset<GameplayVisuals>(GameplayAssetPaths.Visuals);
             var sonarTuning = context.LoadAsset<SonarTuning>(GameplayAssetPaths.SonarTuning);
             var relicTuning = context.LoadAsset<RelicTuning>(GameplayAssetPaths.RelicTuning);

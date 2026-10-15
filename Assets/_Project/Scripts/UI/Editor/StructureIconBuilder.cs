@@ -37,6 +37,19 @@ namespace MoonProject.UI.Editor
         internal static void Build()
         {
             var catalog = AssetDatabase.LoadAssetAtPath<StructureCatalog>(UiAssetPaths.StructureCatalog);
+            if (catalog == null)
+            {
+                throw new InvalidOperationException(
+                    $"{BuilderPath}: {UiAssetPaths.StructureCatalog} is missing (run Gameplay/Content).");
+            }
+
+            string problem = catalog.Validate();
+            if (problem != null)
+            {
+                throw new InvalidOperationException(
+                    $"{BuilderPath}: {UiAssetPaths.StructureCatalog} is invalid: {problem}.");
+            }
+
             GeneratedAssets.EnsureFolder(UiAssetPaths.StructureIconFolder);
 
             bool previousAsync = ShaderUtil.allowAsyncCompilation;
@@ -44,46 +57,18 @@ namespace MoonProject.UI.Editor
             int renderedCount = 0;
             try
             {
-                if (catalog != null)
+                for (int i = 0; i < catalog.Count; i++)
                 {
-                    for (int i = 0; i < catalog.Count; i++)
+                    StructureDefinition definition = catalog.StructureAt(i);
+                    if (definition == null || definition.ArtPending)
                     {
-                        StructureDefinition definition = catalog.StructureAt(i);
-                        if (definition == null || definition.ArtPending)
-                        {
-                            continue;
-                        }
-
-                        GameObject prefab = definition.Prefab != null
-                            ? definition.Prefab
-                            : LoadArtFallbackPrefab(definition.Id);
-                        if (prefab == null)
-                        {
-                            continue;
-                        }
-
-                        Texture2D icon = RenderStructureIcon(prefab);
-                        string iconPath = UiAssetPaths.StructureIcon(definition.Id);
-                        WriteIcon(iconPath, icon);
-                        renderedCount++;
+                        continue;
                     }
-                }
-                else
-                {
-                    string[] fallbackIds = { StructureIds.ChargingPad, StructureIds.SolarArray, StructureIds.PowerPylon };
-                    for (int i = 0; i < fallbackIds.Length; i++)
-                    {
-                        GameObject prefab = LoadArtFallbackPrefab(fallbackIds[i]);
-                        if (prefab == null)
-                        {
-                            continue;
-                        }
 
-                        Texture2D icon = RenderStructureIcon(prefab);
-                        string iconPath = UiAssetPaths.StructureIcon(fallbackIds[i]);
-                        WriteIcon(iconPath, icon);
-                        renderedCount++;
-                    }
+                    Texture2D icon = RenderStructureIcon(definition.Prefab);
+                    string iconPath = UiAssetPaths.StructureIcon(definition.Id);
+                    WriteIcon(iconPath, icon);
+                    renderedCount++;
                 }
             }
             finally
@@ -92,62 +77,6 @@ namespace MoonProject.UI.Editor
             }
 
             Debug.Log($"{BuilderPath}: wrote {renderedCount} structure icon(s) under {UiAssetPaths.StructureIconFolder}");
-        }
-
-        private static GameObject LoadArtFallbackPrefab(string structureId)
-        {
-            const string folder = "Assets/_Project/Generated/Art/R1/Models/Structures/";
-            switch (structureId)
-            {
-                case StructureIds.ChargingPad:
-                    return AssetDatabase.LoadAssetAtPath<GameObject>(folder + "ChargingPad.prefab");
-                case StructureIds.SolarArray:
-                    return AssetDatabase.LoadAssetAtPath<GameObject>(folder + "SolarArray.prefab");
-                case StructureIds.PowerPylon:
-                    return AssetDatabase.LoadAssetAtPath<GameObject>(folder + "PowerPylon.prefab");
-                default:
-                    return null;
-            }
-        }
-
-        private static void NormalizePreviewTransforms(Transform root)
-        {
-            for (int i = 0; i < root.childCount; i++)
-            {
-                Transform stage = root.GetChild(i);
-                if (!stage.name.StartsWith("Stage_", StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                bool stageIsEmpty = stage.GetComponent<MeshFilter>() == null && stage.GetComponent<Renderer>() == null;
-                if (!stageIsEmpty)
-                {
-                    continue;
-                }
-
-                Vector3 sp = stage.localPosition;
-                if (Mathf.Abs(sp.z) > 1e-4f && Mathf.Abs(sp.y) < 1e-4f)
-                {
-                    stage.localPosition = new Vector3(-sp.x, sp.z, sp.y);
-                }
-
-                stage.localRotation = Quaternion.identity;
-                stage.localScale = Vector3.one;
-
-                for (int c = 0; c < stage.childCount; c++)
-                {
-                    Transform child = stage.GetChild(c);
-                    Vector3 cp = child.localPosition;
-                    Quaternion cr = child.localRotation;
-                    if (Mathf.Abs(cr.w) < 0.99f)
-                    {
-                        child.localPosition = new Vector3(-cp.x, cp.z, cp.y);
-                        child.localRotation = Quaternion.identity;
-                        child.localScale = Vector3.one;
-                    }
-                }
-            }
         }
 
         private static Texture2D RenderStructureIcon(GameObject prefab)
@@ -163,7 +92,6 @@ namespace MoonProject.UI.Editor
             {
                 GameObject model = Object.Instantiate(prefab, stageRoot.transform, false);
                 model.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-                NormalizePreviewTransforms(model.transform);
                 SetLayerRecursively(model.transform, StudioLayer);
 
                 if (!MeshBounds.TryLocal(model.transform, model.transform, out Bounds localBounds))
