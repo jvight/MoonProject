@@ -211,6 +211,19 @@ def _generate_surface_maps(
         smoothness += (grain - 0.5) * 0.07
         normal_strength = 4.0
 
+    elif style == "brass":
+        # Seamless warm golden turned/brushed brass for lamp bezels, lens rings, and fittings
+        grain_raw = _tileable_noise(res, 36, seed + 53)
+        grain = (
+            0.50 * grain_raw
+            + 0.30 * np.roll(grain_raw, 1, axis=1)
+            + 0.20 * np.roll(grain_raw, -1, axis=1)
+        )
+        height = 0.50 + (grain - 0.5) * 0.022 - scratches * 0.010
+        albedo *= 0.96 + 0.08 * grain[..., None]
+        smoothness += (grain - 0.5) * 0.06
+        normal_strength = 3.6
+
     elif style == "patch":
         # Seamless sage-green coated fabric/composite patch with subtle woven texture (no perimeter frame)
         weave_u = 0.5 + 0.5 * np.sin(u * 48.0 * np.pi * 2.0)
@@ -395,6 +408,7 @@ def main() -> None:
         ("SagePatch", (0.54, 0.64, 0.55), 0.04, 0.46, 909, "patch"),
         ("LampAmber", (0.98, 0.74, 0.32), 0.05, 0.86, 1010, "lamp"),
         ("SolarCell", (0.20, 0.22, 0.44), 0.08, 0.90, 1111, "solar"),
+        ("Brass", (0.86, 0.69, 0.32), 0.92, 0.76, 1212, "brass"),
     ]
 
     surfaces: list[dict[str, np.ndarray]] = []

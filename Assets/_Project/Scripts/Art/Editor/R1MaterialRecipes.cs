@@ -5,7 +5,7 @@ using UnityEngine;
 namespace MoonProject.Art.Editor
 {
     /// <summary>
-    /// Authoritative Editor-side recipe table for the 12 R1 stylized-realism material slots, their source texture paths
+    /// Authoritative Editor-side recipe table for the 13 R1 stylized-realism material slots, their source texture paths
     /// under <c>Assets/_Project/Art/R1/Textures/</c>, their generated <c>.mat</c> output paths under
     /// <see cref="ArtPaths.R1MaterialsFolder"/>, and the pure slot-mapping functions used by the postprocessor and
     /// model builder.
@@ -38,6 +38,7 @@ namespace MoonProject.Art.Editor
         public const string LampAmberSlot = "R1_LampAmber";
         public const string SolarCellSlot = "R1_SolarCell";
         public const string ScreenSlot = "R1_Screen";
+        public const string BrassSlot = "R1_Brass";
         public const string ScreenPlaceholderMaterialName = "R1_ScreenPlaceholder";
 
         public const float DefaultBloomSafeMax = 1.06f;
@@ -276,10 +277,29 @@ namespace MoonProject.Art.Editor
                 0.06f,
                 false,
                 Color.black,
+                0f),
+            new R1MaterialSpec(
+                R1MaterialSlot.Brass,
+                BrassSlot,
+                BrassSlot,
+                "T_R1_Brass",
+                "Warm golden machined brass for lamp bezels, chest lens ring, cheek lens, and fittings.",
+                new Color(0.86f, 0.69f, 0.32f, 1f),
+                0.65f,
+                1.00f,
+                0.34f,
+                0.82f,
+                new Color(0.96f, 0.84f, 0.50f, 1f),
+                0.52f,
+                0.96f,
+                0.84f,
+                0.14f,
+                false,
+                Color.black,
                 0f)
         };
 
-        /// <summary>All 12 fixed R1 material slot specifications in slot enum order.</summary>
+        /// <summary>All 13 fixed R1 material slot specifications in slot enum order.</summary>
         public static IReadOnlyList<R1MaterialSpec> All => Specs;
 
         /// <summary>Returns the specification for a given <see cref="R1MaterialSlot"/>.</summary>

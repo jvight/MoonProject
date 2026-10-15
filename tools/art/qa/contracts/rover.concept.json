@@ -1,0 +1,9 @@
+{
+  "model": "rover",
+  "concept": "D:/Project/MoonProject-wt/agy-face/Logs/v3/turnaround.png",
+  "views": {"front": [0, 190, 318, 565], "side": [318, 200, 705, 565], "back": [705, 200, 1032, 565], "top": [1032, 170, 1376, 625]},
+  "reference": {"view": "front", "axis": "height", "metres": 1.59},
+  "front_axis": "+Y",
+  "metres_per_pixel": 0.004,
+  "min_iou": 0.85
+}
