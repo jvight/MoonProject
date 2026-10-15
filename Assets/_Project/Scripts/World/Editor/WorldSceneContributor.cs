@@ -23,7 +23,7 @@ namespace MoonProject.World.Editor
         {
             var settings = context.LoadAsset<WorldSettings>(WorldPaths.Settings);
             var groundMaterial = context.LoadAsset<Material>(WorldPaths.GroundMaterial);
-            var paletteMaterial = context.LoadAsset<Material>(ArtPaths.LowPolyMaterial);
+            var paletteMaterial = context.LoadAsset<Material>(WorldPaths.R1BasaltMaterial);
             var earthMaterial = context.LoadAsset<Material>(WorldPaths.EarthMaterial);
             var skyMaterial = context.LoadAsset<Material>(WorldPaths.SkyMaterial);
             var profile = context.LoadAsset<VolumeProfile>(WorldPaths.VolumeProfile);
@@ -149,7 +149,7 @@ namespace MoonProject.World.Editor
             for (int i = 0; i < names.Length; i++)
             {
                 property.GetArrayElementAtIndex(i).objectReferenceValue =
-                    context.LoadAsset<Mesh>($"{ArtPaths.RockFolder}/{names[i]}.asset");
+                    context.LoadAsset<Mesh>($"{WorldPaths.R1RocksFolder}/{names[i]}.fbx");
             }
         }
 

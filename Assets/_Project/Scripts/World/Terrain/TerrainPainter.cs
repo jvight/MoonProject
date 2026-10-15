@@ -104,6 +104,35 @@ namespace MoonProject.World
             return Color.Lerp(rock > 0f ? _rockLight : _rockDark, _charcoal, _settings.RimFaceShade * face);
         }
 
+        /// <summary>
+        /// Smooth per-vertex colour blending regolith dust on gentle ground with exposed basalt rock on steep slopes
+        /// and the outer crater rim wall.
+        /// </summary>
+        public Color32 PaintVertex(Vector3 position, Vector3 normal, SurfaceSample region)
+        {
+            Color32 ground32 = Ground(position, region);
+            float slope = Mathf.Acos(Mathf.Clamp(normal.y, -1f, 1f)) * Mathf.Rad2Deg;
+            float rimWeight = SmoothMath.Smootherstep(0f, _settings.RimZoneStart, region.RimZone);
+            float rockSlopeThreshold = Mathf.Lerp(_settings.RockSlope, _settings.RimRockSlope, rimWeight);
+            float rockWeight = SmoothMath.Smootherstep(rockSlopeThreshold - 10f, rockSlopeThreshold + 10f, slope);
+            if (rockWeight <= 1e-4f)
+            {
+                return ground32;
+            }
+
+            float faceFacing = normal.x * _lightX + normal.z * _lightZ;
+            float rockTone = (_settings.RockLightSlope - slope) / (_settings.RockSlopeBlend * 1.8f)
+                + (position.y - _settings.RockLightHeight) / _settings.RockHeightBlend
+                + Patch(position) * _settings.RockMottle + faceFacing * (_settings.RockFacing * 0.45f);
+            float lightMix = SmoothMath.Smootherstep(-1.2f, 1.2f, rockTone);
+            Color rockColor = Color.Lerp(_rockDark, _rockLight, lightMix);
+            float face = rimWeight
+                * (1f - SmoothMath.Smootherstep(_settings.CrestZone - _settings.CrestBlend * 1.6f,
+                    _settings.CrestZone + _settings.CrestBlend * 1.6f, region.RimZone));
+            rockColor = Color.Lerp(rockColor, _charcoal, _settings.RimFaceShade * face);
+            return Color.Lerp((Color)ground32, rockColor, rockWeight);
+        }
+
         /// <summary>The dust colour at a vertex.</summary>
         /// <param name="position">World-space vertex position.</param>
         /// <param name="region">Region weights there (height unused).</param>

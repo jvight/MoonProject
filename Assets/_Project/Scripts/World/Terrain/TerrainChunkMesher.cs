@@ -4,11 +4,12 @@ using UnityEngine;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Turns one <see cref="TerrainChunkPlan"/> into flat-shaded, painted mesh data plus a matching collider.
-    /// Heights always come from the analytic surface; only the XZ lattice is jittered for a handmade look.
+    /// Turns one <see cref="TerrainChunkPlan"/> into smooth-shaded, indexed painted mesh data plus a matching collider.
+    /// Heights and normals come from the analytic surface; only the XZ lattice is jittered for an organic layout.
     /// Chunk borders are shared exactly with the neighbour: border vertices only slide along the border (seeded by
     /// world position, so both chunks agree), corners never move, and where a finer chunk meets a coarser one its
-    /// in-between border vertices sit on the coarse edge, so the seam is watertight. Immutable and thread-safe.
+    /// in-between border vertices interpolate both position and normal along the coarse edge, so the seam is
+    /// watertight and shading-continuous. Immutable and thread-safe.
     /// </summary>
     public sealed class TerrainChunkMesher
     {
@@ -16,7 +17,6 @@ namespace MoonProject.World
         private const uint JitterZSalt = 0xA54FF53Au;
         private const uint BorderSalt = 0x510E527Fu;
         private const uint DiagonalSalt = 0x9B05688Cu;
-        private const uint PaintSalt = 0x1F83D9ABu;
 
         // Lattice coordinates are whole multiples of the cell size; this absorbs float rounding when snapping.
         private const float LatticeEpsilon = 1e-3f;
@@ -45,24 +45,34 @@ namespace MoonProject.World
         {
             int cells = plan.Cells;
             int stride = cells + 1;
-            var positions = new Vector3[stride * stride];
-            var regions = new SurfaceSample[stride * stride];
+            int vertexCount = stride * stride;
+            var positions = new Vector3[vertexCount];
+            var normals = new Vector3[vertexCount];
+            var regions = new SurfaceSample[vertexCount];
             for (int j = 0; j <= cells; j++)
             {
                 for (int i = 0; i <= cells; i++)
                 {
-                    PlaceVertex(plan, i, j, out positions[j * stride + i], out regions[j * stride + i]);
+                    int idx = j * stride + i;
+                    PlaceVertex(plan, i, j, out positions[idx], out normals[idx], out regions[idx]);
                 }
             }
 
-            var groundColors = new Color32[positions.Length];
-            for (int i = 0; i < positions.Length; i++)
+            var origin = new Vector3(plan.Origin.x, 0f, plan.Origin.y);
+            var vertices = new TerrainVertex[vertexCount];
+            var colliderVertices = new Vector3[vertexCount];
+            Vector3 min = positions[0] - origin;
+            Vector3 max = min;
+            for (int i = 0; i < vertexCount; i++)
             {
-                groundColors[i] = _painter.Ground(positions[i], regions[i]);
+                Vector3 local = positions[i] - origin;
+                colliderVertices[i] = local;
+                Color32 color = _painter.PaintVertex(positions[i], normals[i], regions[i]);
+                vertices[i] = new TerrainVertex(local, normals[i], color);
+                min = Vector3.Min(min, local);
+                max = Vector3.Max(max, local);
             }
 
-            var origin = new Vector3(plan.Origin.x, 0f, plan.Origin.y);
-            var vertices = new TerrainVertex[cells * cells * 6];
             var indices = new int[cells * cells * 6];
             uint cellKey = CellKey(plan.CellSize);
             int written = 0;
@@ -77,9 +87,8 @@ namespace MoonProject.World
                     int gi = Mathf.RoundToInt(plan.Origin.x / plan.CellSize) + i;
                     int gj = Mathf.RoundToInt(plan.Origin.y / plan.CellSize) + j;
                     uint quadHash = Hashing.Hash(gi, gj, _seed ^ DiagonalSalt ^ cellKey);
-                    uint paintHash = Hashing.Hash(gi, gj, _seed ^ PaintSalt ^ cellKey);
 
-                    // Each quad picks one of its two diagonals at random (no grid-aligned stripes in the facets),
+                    // Each quad picks one of its two diagonals at random (no grid-aligned stripes),
                     // unless jitter made the quad non-convex and that diagonal would fold a triangle over.
                     bool mainDiagonal = (quadHash & 1u) == 0u;
                     if (mainDiagonal && !(FacesUp(positions, a, c, d) && FacesUp(positions, a, d, b)))
@@ -93,60 +102,29 @@ namespace MoonProject.World
 
                     if (mainDiagonal)
                     {
-                        Emit(positions, regions, groundColors, a, c, d, origin, paintHash, vertices, indices,
-                            ref written);
-                        Emit(positions, regions, groundColors, a, d, b, origin, Hashing.Mix(paintHash), vertices,
-                            indices, ref written);
+                        indices[written++] = a;
+                        indices[written++] = c;
+                        indices[written++] = d;
+                        indices[written++] = a;
+                        indices[written++] = d;
+                        indices[written++] = b;
                     }
                     else
                     {
-                        Emit(positions, regions, groundColors, a, c, b, origin, paintHash, vertices, indices,
-                            ref written);
-                        Emit(positions, regions, groundColors, b, c, d, origin, Hashing.Mix(paintHash), vertices,
-                            indices, ref written);
+                        indices[written++] = a;
+                        indices[written++] = c;
+                        indices[written++] = b;
+                        indices[written++] = b;
+                        indices[written++] = c;
+                        indices[written++] = d;
                     }
                 }
-            }
-
-            var colliderVertices = new Vector3[positions.Length];
-            Vector3 min = positions[0] - origin;
-            Vector3 max = min;
-            for (int i = 0; i < positions.Length; i++)
-            {
-                Vector3 local = positions[i] - origin;
-                colliderVertices[i] = local;
-                min = Vector3.Min(min, local);
-                max = Vector3.Max(max, local);
             }
 
             var bounds = new Bounds();
             bounds.SetMinMax(min, max);
             return new TerrainMeshData($"TerrainChunk_{plan.Column}_{plan.Row}", origin, vertices, colliderVertices,
-                indices, bounds);
-        }
-
-        private void Emit(Vector3[] positions, SurfaceSample[] regions, Color32[] groundColors, int i0, int i1,
-            int i2, Vector3 origin, uint hash, TerrainVertex[] vertices, int[] indices, ref int written)
-        {
-            Vector3 p0 = positions[i0];
-            Vector3 p1 = positions[i1];
-            Vector3 p2 = positions[i2];
-            Vector3 normal = Vector3.Cross(p1 - p0, p2 - p0).normalized;
-            SurfaceSample r0 = regions[i0];
-            SurfaceSample r1 = regions[i1];
-            SurfaceSample r2 = regions[i2];
-            var region = new SurfaceSample(0f, (r0.CraterBowl + r1.CraterBowl + r2.CraterBowl) / 3f,
-                (r0.CraterRim + r1.CraterRim + r2.CraterRim) / 3f, (r0.RimZone + r1.RimZone + r2.RimZone) / 3f,
-                (r0.CanyonFloor + r1.CanyonFloor + r2.CanyonFloor) / 3f, (r0.Chasm + r1.Chasm + r2.Chasm) / 3f);
-            bool rock = _painter.IsRock(normal, region);
-            Color32 face = rock ? _painter.Rock(normal, (p0 + p1 + p2) / 3f, region, hash) : default;
-
-            indices[written] = i0;
-            vertices[written++] = new TerrainVertex(p0 - origin, normal, rock ? face : groundColors[i0]);
-            indices[written] = i1;
-            vertices[written++] = new TerrainVertex(p1 - origin, normal, rock ? face : groundColors[i1]);
-            indices[written] = i2;
-            vertices[written++] = new TerrainVertex(p2 - origin, normal, rock ? face : groundColors[i2]);
+                indices, bounds, indices);
         }
 
         /// <summary>True when the triangle's XZ projection keeps the upward winding (it is not folded).</summary>
@@ -158,7 +136,8 @@ namespace MoonProject.World
             return (p1.z - p0.z) * (p2.x - p0.x) - (p1.x - p0.x) * (p2.z - p0.z) > 0f;
         }
 
-        private void PlaceVertex(TerrainChunkPlan plan, int i, int j, out Vector3 position, out SurfaceSample region)
+        private void PlaceVertex(TerrainChunkPlan plan, int i, int j, out Vector3 position, out Vector3 normal,
+            out SurfaceSample region)
         {
             int cells = plan.Cells;
             float cell = plan.CellSize;
@@ -169,17 +148,17 @@ namespace MoonProject.World
 
             if (onVerticalBorder && onHorizontalBorder)
             {
-                Sample(x, z, out position, out region);
+                Sample(x, z, out position, out normal, out region);
             }
             else if (onVerticalBorder)
             {
                 float neighbour = i == 0 ? plan.WestCellSize : plan.EastCellSize;
-                BorderVertex(x, z, cell, neighbour, true, out position, out region);
+                BorderVertex(x, z, cell, neighbour, true, out position, out normal, out region);
             }
             else if (onHorizontalBorder)
             {
                 float neighbour = j == 0 ? plan.SouthCellSize : plan.NorthCellSize;
-                BorderVertex(z, x, cell, neighbour, false, out position, out region);
+                BorderVertex(z, x, cell, neighbour, false, out position, out normal, out region);
             }
             else
             {
@@ -189,7 +168,7 @@ namespace MoonProject.World
                 float amplitude = _jitter * cell;
                 float jx = Hashing.ToSigned(Hashing.Hash(gi, gj, key ^ JitterXSalt)) * amplitude;
                 float jz = Hashing.ToSigned(Hashing.Hash(gi, gj, key ^ JitterZSalt)) * amplitude;
-                Sample(x + jx, z + jz, out position, out region);
+                Sample(x + jx, z + jz, out position, out normal, out region);
             }
         }
 
@@ -198,21 +177,23 @@ namespace MoonProject.World
         /// horizontal one; <paramref name="along"/> = the coordinate along the border).
         /// </summary>
         private void BorderVertex(float line, float along, float ownCell, float neighbourCell, bool vertical,
-            out Vector3 position, out SurfaceSample region)
+            out Vector3 position, out Vector3 normal, out SurfaceSample region)
         {
             float anchorCell = Mathf.Max(ownCell, neighbourCell);
             float fineCell = Mathf.Min(ownCell, neighbourCell);
             float steps = along / anchorCell;
             int k = Mathf.FloorToInt(steps + LatticeEpsilon);
             float t = steps - k;
-            Anchor(line, k, anchorCell, fineCell, vertical, out position, out region);
+            Anchor(line, k, anchorCell, fineCell, vertical, out position, out normal, out region);
             if (t <= LatticeEpsilon)
             {
                 return;
             }
 
-            Anchor(line, k + 1, anchorCell, fineCell, vertical, out Vector3 next, out SurfaceSample nextRegion);
+            Anchor(line, k + 1, anchorCell, fineCell, vertical, out Vector3 next, out Vector3 nextNormal,
+                out SurfaceSample nextRegion);
             position = Vector3.Lerp(position, next, t);
+            normal = Vector3.Lerp(normal, nextNormal, t).normalized;
             region = new SurfaceSample(position.y,
                 Mathf.Lerp(region.CraterBowl, nextRegion.CraterBowl, t),
                 Mathf.Lerp(region.CraterRim, nextRegion.CraterRim, t),
@@ -223,7 +204,7 @@ namespace MoonProject.World
         }
 
         private void Anchor(float line, int k, float anchorCell, float fineCell, bool vertical, out Vector3 position,
-            out SurfaceSample region)
+            out Vector3 normal, out SurfaceSample region)
         {
             float along = k * anchorCell;
             float corner = along / _chunkSize;
@@ -237,18 +218,28 @@ namespace MoonProject.World
 
             if (vertical)
             {
-                Sample(line, along + slide, out position, out region);
+                Sample(line, along + slide, out position, out normal, out region);
             }
             else
             {
-                Sample(along + slide, line, out position, out region);
+                Sample(along + slide, line, out position, out normal, out region);
             }
         }
 
-        private void Sample(float x, float z, out Vector3 position, out SurfaceSample region)
+        private void Sample(float x, float z, out Vector3 position, out Vector3 normal, out SurfaceSample region)
         {
             region = _surface.Sample(x, z);
             position = new Vector3(x, region.Height, z);
+            if (region.RimZone <= 1e-4f)
+            {
+                normal = _surface.SampleNormal(x, z);
+                return;
+            }
+
+            float step = Mathf.Lerp(0.25f, 3.6f, SmoothMath.Smootherstep(0f, 0.2f, region.RimZone));
+            float dx = _surface.SampleHeight(x + step, z) - _surface.SampleHeight(x - step, z);
+            float dz = _surface.SampleHeight(x, z + step) - _surface.SampleHeight(x, z - step);
+            normal = new Vector3(-dx, 2f * step, -dz).normalized;
         }
 
         private static uint CellKey(float cellSize)

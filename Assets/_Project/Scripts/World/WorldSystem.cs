@@ -25,17 +25,17 @@ namespace MoonProject.World
         [Tooltip("World tuning (Assets/_Project/Data/Tuning/WorldSettings.asset).")]
         [SerializeField] private WorldSettings _settings;
 
-        [Tooltip("Material drawing the terrain (Generated/World/M_Ground.mat, shader MoonProject/World/LofiTerrain).")]
+        [Tooltip("Material drawing the terrain (Generated/World/M_Ground.mat, shader MoonProject/World/R1Terrain).")]
         [SerializeField] private Material _groundMaterial;
 
-        [Tooltip("Shared low-poly palette material for the scatter rocks and gate slabs " +
-            "(Generated/Art/Palette/M_LowPoly.mat).")]
+        [Tooltip("Shared R1 basalt material for the scatter rocks and gate slabs " +
+            "(Generated/Art/R1/Materials/R1_Basalt.mat).")]
         [SerializeField] private Material _paletteMaterial;
 
-        [Tooltip("Art rock meshes the pebbles are made of (Generated/Art/Rocks, CPU-readable).")]
+        [Tooltip("R1 rock meshes the pebbles are made of (Art/R1/Models/Rocks, CPU-readable).")]
         [SerializeField] private Mesh[] _pebbleRocks = new Mesh[0];
 
-        [Tooltip("Art rock meshes the boulders are made of; also their convex colliders.")]
+        [Tooltip("R1 rock meshes the boulders are made of; also their convex colliders.")]
         [SerializeField] private Mesh[] _boulderRocks = new Mesh[0];
 
         [Tooltip("Material drawing Earth (Generated/World/M_Earth.mat, shader MoonProject/World/LofiEarth).")]

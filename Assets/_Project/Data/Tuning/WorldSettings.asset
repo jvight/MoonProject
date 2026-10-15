@@ -209,13 +209,13 @@ MonoBehaviour:
     _coarseCellSize: 8
     _farCellSize: 16
     _fineRadius: 345
-    _midRadius: 420
-    _coarseRadius: 470
+    _midRadius: 430
+    _coarseRadius: 486
     _jitter: 0.25
     _backdropInnerRadius: 500
     _backdropOuterRadius: 2800
-    _backdropRings: 26
-    _backdropSegments: 192
+    _backdropRings: 36
+    _backdropSegments: 256
     _backdropSink: 3
   _paint:
     _rockSlope: 32

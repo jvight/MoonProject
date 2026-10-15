@@ -32,12 +32,12 @@ namespace MoonProject.World.PlayModeTests
         {
             "HullFragment_0", "HullFragment_1", "HullFragment_2", "HullFragment_3",
         };
-        private const string PaletteMaterialPath = "Assets/_Project/Generated/Art/Palette/M_LowPoly.mat";
+        private const string PaletteMaterialPath = "Assets/_Project/Generated/Art/R1/Materials/R1_Basalt.mat";
         private const string EarthMaterialPath = "Assets/_Project/Generated/World/M_Earth.mat";
         private const string ControlsPath = "Assets/_Project/Data/Input/Controls.inputactions";
-        private const string RockFolder = "Assets/_Project/Generated/Art/Rocks/";
-        private static readonly string[] PebbleRocks = { "Rock_00", "Rock_01", "Rock_03" };
-        private static readonly string[] BoulderRocks = { "Rock_02", "Rock_04", "Rock_05" };
+        private const string RockFolder = "Assets/_Project/Art/R1/Models/Rocks/";
+        private static readonly string[] PebbleRocks = { "Rock_00", "Rock_01", "Rock_02" };
+        private static readonly string[] BoulderRocks = { "Rock_03", "Rock_04", "Rock_05" };
 
         private const double BootBudgetMs = 1500.0;
         private const float ColliderTolerance = 0.25f;
@@ -230,7 +230,7 @@ namespace MoonProject.World.PlayModeTests
             property.arraySize = names.Length;
             for (int i = 0; i < names.Length; i++)
             {
-                property.GetArrayElementAtIndex(i).objectReferenceValue = Load<Mesh>(RockFolder + names[i] + ".asset");
+                property.GetArrayElementAtIndex(i).objectReferenceValue = Load<Mesh>(RockFolder + names[i] + ".fbx");
             }
         }
 

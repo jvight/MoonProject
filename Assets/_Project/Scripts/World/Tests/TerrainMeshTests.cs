@@ -197,16 +197,19 @@ namespace MoonProject.World.Tests
 
                 for (int t = 0; t < chunk.TriangleCount; t++)
                 {
-                    Vector3 world = chunk.Vertices[t * 3].Position + chunk.Origin;
+                    int i0 = chunk.ColliderIndices[t * 3];
+                    int i1 = chunk.ColliderIndices[t * 3 + 1];
+                    int i2 = chunk.ColliderIndices[t * 3 + 2];
+                    Vector3 world = chunk.Vertices[i0].Position + chunk.Origin;
                     if (new Vector2(world.x, world.z).magnitude > floorRadius
                         || !_surface.IsDrivable(world.x, world.z))
                     {
                         continue;
                     }
 
-                    float l0 = Luminance(chunk.Vertices[t * 3].Color);
-                    float l1 = Luminance(chunk.Vertices[t * 3 + 1].Color);
-                    float l2 = Luminance(chunk.Vertices[t * 3 + 2].Color);
+                    float l0 = Luminance(chunk.Vertices[i0].Color);
+                    float l1 = Luminance(chunk.Vertices[i1].Color);
+                    float l2 = Luminance(chunk.Vertices[i2].Color);
                     float step = Mathf.Max(Mathf.Abs(l0 - l1), Mathf.Max(Mathf.Abs(l1 - l2), Mathf.Abs(l2 - l0)));
                     steepest = Mathf.Max(steepest, step);
                     if (OnOpenFloor(chunk, t))
@@ -237,7 +240,8 @@ namespace MoonProject.World.Tests
         {
             for (int k = 0; k < 3; k++)
             {
-                Vector3 p = chunk.Vertices[triangle * 3 + k].Position + chunk.Origin;
+                int idx = chunk.ColliderIndices[triangle * 3 + k];
+                Vector3 p = chunk.Vertices[idx].Position + chunk.Origin;
                 SurfaceSample sample = _surface.Sample(p.x, p.z);
                 // Kestrel-3's scorch (M3-13) is a deliberate dark scar like a crater's shaded wall: its soft edge spans
                 // several facets, yet steps more within one than the open floor's patches do.
@@ -261,11 +265,12 @@ namespace MoonProject.World.Tests
             foreach (TerrainMeshData chunk in _chunks)
             {
                 Assert.IsTrue(chunk.HasCollider);
-                Assert.AreEqual(chunk.Vertices.Length, chunk.ColliderIndices.Length);
+                Assert.AreEqual(chunk.Vertices.Length, chunk.ColliderVertices.Length);
+                Assert.AreSame(chunk.Indices, chunk.ColliderIndices);
                 int mismatches = 0;
                 for (int i = 0; i < chunk.Vertices.Length; i++)
                 {
-                    if (chunk.ColliderVertices[chunk.ColliderIndices[i]] != chunk.Vertices[i].Position)
+                    if (chunk.ColliderVertices[i] != chunk.Vertices[i].Position)
                     {
                         mismatches++;
                     }
