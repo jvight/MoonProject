@@ -4,7 +4,22 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 000000000000000000000000000. LATEST (2026-10-15 ~08:10): 0.5.6 mostly landed; art direction R1; 07 redesign rounds
+## 0000000000000000000000000000. LATEST (2026-10-15 ~12:35): 0.5.6 RELEASED (5eadae15); 07 v3 + R1 decided for 0.5.7
+- **0.5.6 = origin/main 5eadae15**, `verify --explicit` all PASS. Build D:/Project/MoonProject/Builds/
+  Lunarion-0.5.6-20261015-5eadae15.zip (79 MB, smoke PASS). Contents: Tab one frame + no memory card, story parts in
+  the hold, garage one-step guidance + ticker in the slot, scan beam, bay arch, belly lift without the hidden
+  condition, listening without pillars or ring (own-lamp blinks, one gaze owner), Bell's signal blinks the target's lamp.
+- **0.5.7 decided (memory art-direction-r1):** look R1 "stylized realism"; 07 v3 from concept S-A "Amber CRT" — spec
+  `agy-face/Logs/v3/SPEC.md` with the owner decisions appended (four wheels; lens left cheek, tape deck right cheek;
+  no solar panel at start, it becomes Tilly's gift; folding dig scoop + staged dig beat + front intake slot). Owner pages:
+  07 v3 https://claude.ai/artifact/BhtzwQqqi8q6icS2YJ4ZRy, CRT face prototype https://claude.ai/artifact/DNbb7EBsn1GvnegyqCsNQo,
+  style board (rounds 1-4) https://claude.ai/artifact/1cef9FuajG1R6aeYR3Uj93. R1 look lab = box/agy-r1 8fadca0e
+  (experiment; feasible and cheap; lighting/terrain/art pass needed).
+- **agy quota:** weekly ~11% at ~10:00, refresh ~19:00. 503 outages happen (probe and relaunch).
+- **Next:** owner plays 0.5.6; plan 0.5.7 slices (R1 material/lighting foundation, 07 v3 model + rig + CRT face shader
+  + 4-wheel controller retune, then home base, sites, terrain) once the quota refreshes.
+
+## 000000000000000000000000000. (prev) (2026-10-15 ~08:10): 0.5.6 mostly landed; art direction R1; 07 redesign rounds
 - **origin/main fdc9a2b8 (verified, pushed).** 0.5.6 landed since 6a06f8d6: story parts ride in 07's hold through the
   CargoHatch (7cc5fa82), garage clarity + the ticker in the guidance slot (0e776c01; d16f6dbc fixed a stale key in
   PlaceCardTests), the scan beam (036de26c), the bay arch z-fight (57dbe6b6), the belly lift without its hidden
