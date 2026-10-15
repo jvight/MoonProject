@@ -73,11 +73,62 @@ def create_empty_node(name, unity_loc, parent=None, empty_size=0.04):
     return obj
 
 
+def apply_weighted_normals(mesh, sharp_angle_deg=42.0, area_power=1.6):
+    """
+    Compute and assign face-area-weighted custom split normals so large flat/gently-curved panels
+    have 100% flat interior shading while 1-2 cm 2-segment bevels and turned cylinders shade smoothly.
+    """
+    mesh.polygons.foreach_set("use_smooth", [True] * len(mesh.polygons))
+    n_polys = len(mesh.polygons)
+    n_loops = len(mesh.loops)
+    if n_polys == 0 or n_loops == 0:
+        return
+
+    cos_sharp = math.cos(math.radians(sharp_angle_deg))
+    # 17.5 deg groups both coplanar panel triangles (0 deg) and >=22-seg cylinder strips (<=16.4 deg)
+    cos_coplanar = math.cos(math.radians(17.5))
+
+    poly_normals = [Vector(p.normal) for p in mesh.polygons]
+    poly_areas = [max(p.area, 1e-8) for p in mesh.polygons]
+
+    vert_to_polys = [[] for _ in range(len(mesh.vertices))]
+    for p in mesh.polygons:
+        p_idx = p.index
+        for v_idx in p.vertices:
+            vert_to_polys[v_idx].append(p_idx)
+
+    loop_normals = [None] * n_loops
+    for p in mesh.polygons:
+        p_idx = p.index
+        n_this = poly_normals[p_idx]
+        for loop_idx in p.loop_indices:
+            v_idx = mesh.loops[loop_idx].vertex_index
+            inc_polys = vert_to_polys[v_idx]
+            accum = Vector((0.0, 0.0, 0.0))
+            for other_p in inc_polys:
+                n_other = poly_normals[other_p]
+                if n_this.dot(n_other) < cos_sharp:
+                    continue
+                coplanar_area = 0.0
+                for cp_poly in inc_polys:
+                    if n_other.dot(poly_normals[cp_poly]) >= cos_coplanar:
+                        coplanar_area += poly_areas[cp_poly]
+                weight = poly_areas[other_p] * (coplanar_area ** area_power)
+                accum += n_other * weight
+            if accum.length > UNIT_EPSILON:
+                accum.normalize()
+                loop_normals[loop_idx] = (accum.x, accum.y, accum.z)
+            else:
+                loop_normals[loop_idx] = (n_this.x, n_this.y, n_this.z)
+
+    mesh.normals_split_custom_set(loop_normals)
+
+
 def create_mesh_node(name, bm, unity_loc, parent=None, mat_list=None, custom_uv=False, cfg=None):
-    """Finalize a BMesh into a smooth-shaded, n-gon-free Blender Mesh object with clean UVs and materials."""
+    """Finalize a BMesh into a weighted-normal smooth-shaded Blender Mesh object with clean UVs and materials."""
     bm.normal_update()
     if not custom_uv:
-        assign_box_uvs(bm, cfg)
+        assign_box_uvs(bm, cfg, mat_list=mat_list)
 
     # Triangulate any polygon with >4 vertices so FBX tangent-space export has zero n-gon warnings
     ngon_faces = [f for f in bm.faces if len(f.verts) > 4]
@@ -89,8 +140,9 @@ def create_mesh_node(name, bm, unity_loc, parent=None, mat_list=None, custom_uv=
     bm.to_mesh(mesh)
     bm.free()
 
-    for poly in mesh.polygons:
-        poly.use_smooth = True
+    sharp_deg = cfg.get("weighted_normal_sharp_deg", 42.0) if cfg else 42.0
+    area_pow = cfg.get("weighted_normal_area_power", 1.6) if cfg else 1.6
+    apply_weighted_normals(mesh, sharp_angle_deg=sharp_deg, area_power=area_pow)
 
     if mat_list:
         for mat in mat_list:
@@ -106,8 +158,12 @@ def create_mesh_node(name, bm, unity_loc, parent=None, mat_list=None, custom_uv=
     return obj
 
 
-def assign_box_uvs(bm, cfg=None):
-    """Assign deterministic triplanar box-projected UVs to a BMesh for shared library tiling materials."""
+def assign_box_uvs(bm, cfg=None, mat_list=None):
+    """
+    Assign deterministic triplanar box-projected UVs to a BMesh for shared library tiling materials,
+    and center each contiguous R1_LampAmber island on UV (0.5, 0.5) so T_R1_LampAmber_Emission's
+    radial hot core illuminates every lamp dome, indicator bar segment, and vent slot.
+    """
     uv_scale = cfg["uv_tile_scale"] if cfg else FLAT_UV_SCALE
     uv_layer = bm.loops.layers.uv.verify()
     for face in bm.faces:
@@ -123,12 +179,112 @@ def assign_box_uvs(bm, cfg=None):
                 u, v = co.x * uv_scale, co.y * uv_scale
             loop[uv_layer].uv = (u + FLAT_UV_SCALE, v + FLAT_UV_SCALE)
 
+    if not mat_list:
+        return
+
+    amber_indices = {
+        idx for idx, mat in enumerate(mat_list) if mat is not None and mat.name.startswith("R1_LampAmber")
+    }
+    if not amber_indices:
+        return
+
+    amber_faces = [f for f in bm.faces if f.material_index in amber_indices]
+    if not amber_faces:
+        return
+
+    visited = set()
+    amber_set = set(amber_faces)
+    for start_f in amber_faces:
+        if start_f in visited:
+            continue
+        island = []
+        queue = [start_f]
+        visited.add(start_f)
+        while queue:
+            cur = queue.pop()
+            island.append(cur)
+            for v in cur.verts:
+                for lf in v.link_faces:
+                    if lf in amber_set and lf not in visited:
+                        visited.add(lf)
+                        queue.append(lf)
+
+        avg_n = Vector((0.0, 0.0, 0.0))
+        for f in island:
+            avg_n += f.normal * max(f.calc_area(), 1e-8)
+        ax, ay, az = abs(avg_n.x), abs(avg_n.y), abs(avg_n.z)
+
+        us, vs = [], []
+        for f in island:
+            for loop in f.loops:
+                co = loop.vert.co
+                if ax >= ay and ax >= az:
+                    u_val, v_val = co.y, co.z
+                elif ay >= ax and ay >= az:
+                    u_val, v_val = co.x, co.z
+                else:
+                    u_val, v_val = co.x, co.y
+                us.append(u_val)
+                vs.append(v_val)
+
+        u_min, u_max = min(us), max(us)
+        v_min, v_max = min(vs), max(vs)
+        u_span = max(u_max - u_min, 1e-5)
+        v_span = max(v_max - v_min, 1e-5)
+        u_mid = 0.5 * (u_min + u_max)
+        v_mid = 0.5 * (v_min + v_max)
+
+        for f in island:
+            for loop in f.loops:
+                co = loop.vert.co
+                if ax >= ay and ax >= az:
+                    u_val, v_val = co.y, co.z
+                elif ay >= ax and ay >= az:
+                    u_val, v_val = co.x, co.z
+                else:
+                    u_val, v_val = co.x, co.y
+                u_norm = 0.5 + ((u_val - u_mid) / u_span) * 0.44
+                v_norm = 0.5 + ((v_val - v_mid) / v_span) * 0.44
+                loop[uv_layer].uv = (u_norm, v_norm)
+
+
+def _unity_rot_matrix(rot_euler):
+    """Build a 4x4 Blender rotation Matrix from Unity Euler angles (rx, ry, rz) in radians."""
+    if not any(abs(a) > UNIT_EPSILON for a in rot_euler):
+        return Matrix.Identity(4)
+    return (
+        Matrix.Rotation(rot_euler[1], 4, "Z")
+        @ Matrix.Rotation(rot_euler[0], 4, "X")
+        @ Matrix.Rotation(rot_euler[2], 4, "Y")
+    )
+
+
+def _axis_align_matrix(axis):
+    """Return a 4x4 rotation Matrix mapping local +Z onto Unity axis ('X', 'Y', or 'Z') in Blender space."""
+    if axis == "Z":
+        return Matrix.Rotation(-HALF_PI_RAD, 4, "X")
+    if axis == "X":
+        return Matrix.Rotation(HALF_PI_RAD, 4, "Y")
+    return Matrix.Identity(4)
+
+
+def _copy_temp_to_bm(temp, bm, trans_mat, default_mat_idx=0, preserve_face_mats=False):
+    """Transform all verts/faces from temp into bm and free temp."""
+    vert_map = {}
+    for v in temp.verts:
+        vert_map[v] = bm.verts.new(trans_mat @ v.co)
+    for f in temp.faces:
+        nf = bm.faces.new([vert_map[v] for v in f.verts])
+        nf.material_index = f.material_index if preserve_face_mats else default_mat_idx
+        nf.smooth = True
+    temp.free()
+
 
 def append_beveled_box(
     bm,
     size_xyz,
     center_xyz=(0.0, 0.0, 0.0),
-    bevel_width=0.02,
+    bevel_width=0.015,
     bevel_segments=2,
     mat_idx=0,
     rot_euler=(0.0, 0.0, 0.0),
@@ -136,11 +292,12 @@ def append_beveled_box(
     taper_front_xz=(1.0, 1.0),
     pillow_amount=0.0,
     subdiv_cuts=0,
+    guard_inset=True,
 ):
     """
-    Append a smoothly beveled (and optionally tapered/pillowed) box in Unity local coordinates (x, y, z).
-    Automatically adds a coplanar support-loop inset on the 6 main faces after beveling so flat interiors
-    have smudge-free normals and zero vertex-color wear bleed.
+    Append a crisply beveled (and optionally tapered) box in Unity local coordinates (x, y, z).
+    Automatically adds a coplanar support-loop inset on large panel faces after beveling so flat
+    interiors have smudge-free normals and zero vertex-color wear bleed.
     """
     sx, sy, sz = size_xyz
     cx, cy, cz = center_xyz
@@ -164,18 +321,42 @@ def append_beveled_box(
         bmesh.ops.subdivide_edges(temp, edges=list(temp.edges), cuts=subdiv_cuts, use_grid_fill=True)
         ensure_outward_normals(temp)
 
+    orig_faces = list(temp.faces)
     if bevel_width > UNIT_EPSILON and bevel_segments > 0:
-        sharp_edges = [e for e in temp.edges if e.calc_face_angle(0.0) > 0.35]
+        eff_segments = 1 if max(sx, sy, sz) < 0.065 else bevel_segments
+        sharp_edges = [e for e in temp.edges if e.calc_face_angle(0.0) > 0.30]
         if sharp_edges:
             bmesh.ops.bevel(
                 temp,
                 geom=sharp_edges,
                 offset=bevel_width,
                 offset_type="OFFSET",
-                segments=bevel_segments,
+                segments=eff_segments,
                 profile=0.5,
                 affect="EDGES",
                 clamp_overlap=True,
+            )
+
+    if (
+        guard_inset
+        and subdiv_cuts == 0
+        and abs(pillow_amount) <= UNIT_EPSILON
+        and max(sx, sy, sz) >= 0.08
+        and min(sx, sy, sz) > bevel_width * 3.8
+    ):
+        inset_t = min(bevel_width * 0.95, 0.015)
+        valid_main = [
+            f
+            for f in orig_faces
+            if f.is_valid and min((e.calc_length() for e in f.edges), default=0.0) > inset_t * 3.2
+        ]
+        if valid_main:
+            bmesh.ops.inset_individual(
+                temp,
+                faces=valid_main,
+                thickness=inset_t,
+                depth=0.0,
+                use_even_offset=True,
             )
 
     if abs(pillow_amount) > UNIT_EPSILON:
@@ -194,25 +375,8 @@ def append_beveled_box(
             v.co.z += math.copysign(pillow_amount * bulge_z, v.co.z) if abs(v.co.z) > UNIT_EPSILON else 0.0
 
     ensure_outward_normals(temp)
-
-    rot_mat = Matrix.Identity(4)
-    if any(abs(a) > UNIT_EPSILON for a in rot_euler):
-        rot_mat = (
-            Matrix.Rotation(rot_euler[1], 4, "Z")
-            @ Matrix.Rotation(rot_euler[0], 4, "X")
-            @ Matrix.Rotation(rot_euler[2], 4, "Y")
-        )
-    trans_mat = Matrix.Translation(unity_to_blender_pos(cx, cy, cz)) @ rot_mat
-
-    vert_map = {}
-    for v in temp.verts:
-        nv = bm.verts.new((trans_mat @ v.co))
-        vert_map[v] = nv
-    for f in temp.faces:
-        nf = bm.faces.new([vert_map[v] for v in f.verts])
-        nf.material_index = mat_idx
-        nf.smooth = True
-    temp.free()
+    trans_mat = Matrix.Translation(unity_to_blender_pos(cx, cy, cz)) @ _unity_rot_matrix(rot_euler)
+    _copy_temp_to_bm(temp, bm, trans_mat, default_mat_idx=mat_idx)
 
 
 def append_cylinder(
@@ -243,7 +407,13 @@ def append_cylinder(
     ensure_outward_normals(temp)
 
     if bevel_width > UNIT_EPSILON and cap_ends and bevel_segments > 0:
-        rim_edges = [e for e in temp.edges if e.calc_face_angle(0.0) > 0.5]
+        # Select ONLY cap-to-side rim edges (never vertical side edges between circumference segments)
+        rim_edges = [
+            e
+            for e in temp.edges
+            if len(e.link_faces) == 2
+            and abs(abs(e.link_faces[0].normal.z) - abs(e.link_faces[1].normal.z)) > 0.45
+        ]
         if rim_edges:
             bmesh.ops.bevel(
                 temp,
@@ -257,30 +427,12 @@ def append_cylinder(
             )
 
     ensure_outward_normals(temp)
-
-    align_mat = Matrix.Identity(4)
-    if axis == "Z":
-        align_mat = Matrix.Rotation(-HALF_PI_RAD, 4, "X")
-    elif axis == "X":
-        align_mat = Matrix.Rotation(HALF_PI_RAD, 4, "Y")
-
-    rot_mat = Matrix.Identity(4)
-    if any(abs(a) > UNIT_EPSILON for a in rot_euler):
-        rot_mat = (
-            Matrix.Rotation(rot_euler[1], 4, "Z")
-            @ Matrix.Rotation(rot_euler[0], 4, "X")
-            @ Matrix.Rotation(rot_euler[2], 4, "Y")
-        )
-    trans_mat = Matrix.Translation(unity_to_blender_pos(*center_xyz)) @ rot_mat @ align_mat
-
-    vert_map = {}
-    for v in temp.verts:
-        vert_map[v] = bm.verts.new(trans_mat @ v.co)
-    for f in temp.faces:
-        nf = bm.faces.new([vert_map[v] for v in f.verts])
-        nf.material_index = mat_idx
-        nf.smooth = True
-    temp.free()
+    trans_mat = (
+        Matrix.Translation(unity_to_blender_pos(*center_xyz))
+        @ _unity_rot_matrix(rot_euler)
+        @ _axis_align_matrix(axis)
+    )
+    _copy_temp_to_bm(temp, bm, trans_mat, default_mat_idx=mat_idx)
 
 
 def append_torus(
@@ -293,6 +445,7 @@ def append_torus(
     minor_seg=8,
     mat_idx=0,
     scale_xyz=(1.0, 1.0, 1.0),
+    rot_euler=(0.0, 0.0, 0.0),
 ):
     """Append a smooth torus ring aligned with its normal along Unity axis ('X', 'Y', or 'Z')."""
     temp = bmesh.new()
@@ -320,32 +473,387 @@ def append_torus(
             f.smooth = True
 
     ensure_outward_normals(temp)
-
-    align_mat = Matrix.Identity(4)
-    if axis == "Z":
-        align_mat = Matrix.Rotation(-HALF_PI_RAD, 4, "X")
-    elif axis == "X":
-        align_mat = Matrix.Rotation(HALF_PI_RAD, 4, "Y")
-
     sx, sy, sz = scale_xyz
     scale_mat = Matrix.Diagonal((sx, sz, sy, 1.0))
-    trans_mat = Matrix.Translation(unity_to_blender_pos(*center_xyz)) @ scale_mat @ align_mat
+    trans_mat = (
+        Matrix.Translation(unity_to_blender_pos(*center_xyz))
+        @ _unity_rot_matrix(rot_euler)
+        @ scale_mat
+        @ _axis_align_matrix(axis)
+    )
+    _copy_temp_to_bm(temp, bm, trans_mat, default_mat_idx=mat_idx)
 
-    vert_map = {}
-    for v in temp.verts:
-        vert_map[v] = bm.verts.new(trans_mat @ v.co)
-    for f in temp.faces:
-        nf = bm.faces.new([vert_map[v] for v in f.verts])
-        nf.material_index = mat_idx
-        nf.smooth = True
-    temp.free()
+
+def _chamfer_lathe_profile(profile_rz, ring_mat_indices, default_mat_idx, chamfer=0.0024):
+    """
+    Insert a crisp 2-point axial micro-chamfer at sharp interior corners (>28 deg) of a lathe polyline
+    so turned brass rings and wheel rims have clean beveled specular highlights and no flat-cap normal bleed.
+    """
+    n = len(profile_rz)
+    if n < 3 or chamfer <= UNIT_EPSILON:
+        mats = [
+            ring_mat_indices[k] if (ring_mat_indices is not None and k < len(ring_mat_indices)) else default_mat_idx
+            for k in range(max(0, n - 1))
+        ]
+        return list(profile_rz), mats
+
+    orig_mats = [
+        ring_mat_indices[k] if (ring_mat_indices is not None and k < len(ring_mat_indices)) else default_mat_idx
+        for k in range(n - 1)
+    ]
+    new_pts = [profile_rz[0]]
+    new_mats = []
+
+    for k in range(1, n - 1):
+        r_prev, z_prev = profile_rz[k - 1]
+        r_curr, z_curr = profile_rz[k]
+        r_next, z_next = profile_rz[k + 1]
+        dr0, dz0 = r_curr - r_prev, z_curr - z_prev
+        dr1, dz1 = r_next - r_curr, z_next - z_curr
+        len0 = math.hypot(dr0, dz0)
+        len1 = math.hypot(dr1, dz1)
+        m_prev = orig_mats[k - 1]
+        m_next = orig_mats[k]
+
+        if r_curr > 0.004 and len0 > chamfer * 2.6 and len1 > chamfer * 2.6:
+            dot_dir = (dr0 * dr1 + dz0 * dz1) / (len0 * len1)
+            if dot_dir < math.cos(math.radians(28.0)):
+                c0 = min(chamfer, len0 * 0.28)
+                c1 = min(chamfer, len1 * 0.28)
+                p_a = (r_curr - (dr0 / len0) * c0, z_curr - (dz0 / len0) * c0)
+                p_b = (r_curr + (dr1 / len1) * c1, z_curr + (dz1 / len1) * c1)
+                new_pts.append(p_a)
+                new_mats.append(m_prev)
+                new_pts.append(p_b)
+                new_mats.append(m_prev if m_prev == m_next else m_next)
+                continue
+
+        new_pts.append((r_curr, z_curr))
+        new_mats.append(m_prev)
+
+    new_pts.append(profile_rz[-1])
+    new_mats.append(orig_mats[-1])
+    return new_pts, new_mats
+
+
+def append_lathe_profile(
+    bm,
+    profile_rz,
+    axis="Z",
+    center_xyz=(0.0, 0.0, 0.0),
+    segments=24,
+    mat_idx=0,
+    rot_euler=(0.0, 0.0, 0.0),
+    ring_mat_indices=None,
+    auto_chamfer=True,
+):
+    """
+    Revolve a 2D (radius, axial_z) polyline around Unity axis ('X', 'Y', or 'Z').
+    Points with r <= 1e-6 become single pole vertices (triangle fan caps); rings connect with quads.
+    """
+    if len(profile_rz) < 2:
+        return
+    if auto_chamfer:
+        pts_rz, seg_mats = _chamfer_lathe_profile(profile_rz, ring_mat_indices, mat_idx)
+    else:
+        pts_rz = list(profile_rz)
+        seg_mats = [
+            ring_mat_indices[k] if (ring_mat_indices is not None and k < len(ring_mat_indices)) else mat_idx
+            for k in range(len(pts_rz) - 1)
+        ]
+
+    temp = bmesh.new()
+    rings = []
+    for r_val, z_val in pts_rz:
+        if r_val <= UNIT_EPSILON:
+            rings.append([temp.verts.new((0.0, 0.0, float(z_val)))])
+        else:
+            ring_v = []
+            for i in range(segments):
+                theta = FULL_CIRCLE_RAD * i / segments
+                ring_v.append(
+                    temp.verts.new((r_val * math.cos(theta), r_val * math.sin(theta), float(z_val)))
+                )
+            rings.append(ring_v)
+
+    for k in range(len(rings) - 1):
+        r0 = rings[k]
+        r1 = rings[k + 1]
+        m_idx = seg_mats[k] if k < len(seg_mats) else mat_idx
+        if len(r0) == 1 and len(r1) == 1:
+            continue
+        if len(r0) == 1:
+            pole = r0[0]
+            for i in range(segments):
+                ni = (i + 1) % segments
+                f = temp.faces.new((pole, r1[ni], r1[i]))
+                f.material_index = m_idx
+                f.smooth = True
+        elif len(r1) == 1:
+            pole = r1[0]
+            for i in range(segments):
+                ni = (i + 1) % segments
+                f = temp.faces.new((r0[i], r0[ni], pole))
+                f.material_index = m_idx
+                f.smooth = True
+        else:
+            for i in range(segments):
+                ni = (i + 1) % segments
+                if r0[i].co == r1[i].co and r0[ni].co == r1[ni].co:
+                    continue
+                f = temp.faces.new((r0[i], r0[ni], r1[ni], r1[i]))
+                f.material_index = m_idx
+                f.smooth = True
+
+    ensure_outward_normals(temp)
+    trans_mat = (
+        Matrix.Translation(unity_to_blender_pos(*center_xyz))
+        @ _unity_rot_matrix(rot_euler)
+        @ _axis_align_matrix(axis)
+    )
+    _copy_temp_to_bm(temp, bm, trans_mat, default_mat_idx=mat_idx, preserve_face_mats=True)
+
+
+def append_spherical_dome(
+    bm,
+    radius,
+    dome_height,
+    axis="Z",
+    center_xyz=(0.0, 0.0, 0.0),
+    segments=24,
+    rings=5,
+    mat_idx=0,
+    rot_euler=(0.0, 0.0, 0.0),
+    collar_depth=0.008,
+):
+    """
+    Append a smooth convex spherical glass dome (with a short cylindrical seating skirt)
+    oriented along Unity axis ('X', 'Y', or 'Z').
+    """
+    h = max(0.004, min(dome_height, radius * 0.95))
+    sph_r = (radius * radius + h * h) / (2.0 * h)
+    z_sph_center = h - sph_r
+    alpha_max = math.asin(min(1.0, radius / sph_r))
+
+    profile = [(radius * 0.96, -collar_depth), (radius, 0.0)]
+    for k in range(1, rings):
+        alpha = alpha_max * (1.0 - k / rings)
+        rk = sph_r * math.sin(alpha)
+        zk = z_sph_center + sph_r * math.cos(alpha)
+        profile.append((rk, zk))
+    profile.append((0.0, h))
+
+    append_lathe_profile(
+        bm,
+        profile,
+        axis=axis,
+        center_xyz=center_xyz,
+        segments=segments,
+        mat_idx=mat_idx,
+        rot_euler=rot_euler,
+        auto_chamfer=False,
+    )
+
+
+def append_helical_coil(
+    bm,
+    coil_radius,
+    wire_radius,
+    length,
+    turns=5.5,
+    axis="Y",
+    center_xyz=(0.0, 0.0, 0.0),
+    segs_per_turn=10,
+    wire_segs=5,
+    mat_idx=0,
+    rot_euler=(0.0, 0.0, 0.0),
+):
+    """Append a real 3D helical spring or wound wire coil along Unity axis ('X', 'Y', or 'Z')."""
+    temp = bmesh.new()
+    total_steps = max(4, int(round(turns * segs_per_turn)))
+    ring_verts = []
+
+    for step in range(total_steps + 1):
+        t = step / total_steps
+        theta = FULL_CIRCLE_RAD * turns * t
+        z_c = (-0.5 + t) * length
+        cx = coil_radius * math.cos(theta)
+        cy = coil_radius * math.sin(theta)
+        center_pt = Vector((cx, cy, z_c))
+        radial = Vector((math.cos(theta), math.sin(theta), 0.0))
+        tangent = Vector((-coil_radius * FULL_CIRCLE_RAD * turns * math.sin(theta),
+                          coil_radius * FULL_CIRCLE_RAD * turns * math.cos(theta),
+                          length)).normalized()
+        binorm = tangent.cross(radial).normalized()
+
+        ring = []
+        for j in range(wire_segs):
+            phi = FULL_CIRCLE_RAD * j / wire_segs
+            pt = center_pt + wire_radius * (math.cos(phi) * radial + math.sin(phi) * binorm)
+            ring.append(temp.verts.new(pt))
+        ring_verts.append(ring)
+
+    for step in range(total_steps):
+        r0 = ring_verts[step]
+        r1 = ring_verts[step + 1]
+        for j in range(wire_segs):
+            nj = (j + 1) % wire_segs
+            f = temp.faces.new((r0[j], r0[nj], r1[nj], r1[j]))
+            f.smooth = True
+
+    f_start = temp.faces.new(list(reversed(ring_verts[0])))
+    f_start.smooth = True
+    f_end = temp.faces.new(ring_verts[-1])
+    f_end.smooth = True
+
+    ensure_outward_normals(temp)
+    trans_mat = (
+        Matrix.Translation(unity_to_blender_pos(*center_xyz))
+        @ _unity_rot_matrix(rot_euler)
+        @ _axis_align_matrix(axis)
+    )
+    _copy_temp_to_bm(temp, bm, trans_mat, default_mat_idx=mat_idx)
+
+
+def append_prism_extrusion(
+    bm,
+    poly_2d,
+    depth,
+    axis="X",
+    center_xyz=(0.0, 0.0, 0.0),
+    bevel_width=0.008,
+    bevel_segments=2,
+    mat_idx=0,
+    rot_euler=(0.0, 0.0, 0.0),
+):
+    """
+    Extrude a 2D polygon [(u, v), ...] along Unity axis ('X', 'Y', or 'Z') by depth:
+      - axis='X': (u, v) = (uz, uy), extruded along ux in [-depth/2, +depth/2]
+      - axis='Z': (u, v) = (ux, uy), extruded along uz in [-depth/2, +depth/2]
+      - axis='Y': (u, v) = (ux, uz), extruded along uy in [-depth/2, +depth/2]
+    """
+    if len(poly_2d) < 3:
+        return
+    temp = bmesh.new()
+    half_d = depth * FLAT_UV_SCALE
+    front_ring = []
+    back_ring = []
+
+    for u_val, v_val in poly_2d:
+        if axis == "X":
+            p_neg = unity_to_blender_pos(-half_d, v_val, u_val)
+            p_pos = unity_to_blender_pos(half_d, v_val, u_val)
+        elif axis == "Z":
+            p_neg = unity_to_blender_pos(u_val, v_val, -half_d)
+            p_pos = unity_to_blender_pos(u_val, v_val, half_d)
+        else:
+            p_neg = unity_to_blender_pos(u_val, -half_d, v_val)
+            p_pos = unity_to_blender_pos(u_val, half_d, v_val)
+        back_ring.append(temp.verts.new(p_neg))
+        front_ring.append(temp.verts.new(p_pos))
+
+    n_pts = len(poly_2d)
+    for i in range(n_pts):
+        ni = (i + 1) % n_pts
+        f = temp.faces.new((back_ring[i], back_ring[ni], front_ring[ni], front_ring[i]))
+        f.smooth = True
+
+    f_b = temp.faces.new(list(reversed(back_ring)))
+    f_b.smooth = True
+    f_f = temp.faces.new(front_ring)
+    f_f.smooth = True
+
+    ensure_outward_normals(temp)
+
+    if bevel_width > UNIT_EPSILON and bevel_segments > 0:
+        eff_segments = 1 if depth < 0.045 else bevel_segments
+        sharp_edges = [e for e in temp.edges if e.calc_face_angle(0.0) > 0.45]
+        if sharp_edges:
+            bmesh.ops.bevel(
+                temp,
+                geom=sharp_edges,
+                offset=bevel_width,
+                offset_type="OFFSET",
+                segments=eff_segments,
+                profile=0.5,
+                affect="EDGES",
+                clamp_overlap=True,
+            )
+            ensure_outward_normals(temp)
+
+    trans_mat = Matrix.Translation(unity_to_blender_pos(*center_xyz)) @ _unity_rot_matrix(rot_euler)
+    _copy_temp_to_bm(temp, bm, trans_mat, default_mat_idx=mat_idx)
+
+
+def append_hex_bolt(
+    bm,
+    radius,
+    height,
+    axis="Z",
+    center_xyz=(0.0, 0.0, 0.0),
+    mat_idx=0,
+    rot_euler=(0.0, 0.0, 0.0),
+    include_washer=True,
+):
+    """Append a compact 6-sided hex bolt head with a chamfered crown and optional washer base."""
+    hh = height * 0.5
+    profile = (
+        [(radius * 1.24, -hh), (radius * 1.24, -hh * 0.35), (radius, -hh * 0.35)]
+        if include_washer
+        else [(radius, -hh)]
+    )
+    profile.extend([
+        (radius, hh * 0.65),
+        (radius * 0.78, hh),
+        (0.0, hh),
+    ])
+    append_lathe_profile(
+        bm,
+        profile,
+        axis=axis,
+        center_xyz=center_xyz,
+        segments=6,
+        mat_idx=mat_idx,
+        rot_euler=rot_euler,
+        auto_chamfer=False,
+    )
+
+
+def append_dome_rivet(
+    bm,
+    radius,
+    height,
+    axis="X",
+    center_xyz=(0.0, 0.0, 0.0),
+    segments=8,
+    mat_idx=0,
+    rot_euler=(0.0, 0.0, 0.0),
+):
+    """Append a compact flanged hemispherical button-head rivet oriented along Unity axis ('X', 'Y', or 'Z')."""
+    profile = [
+        (radius * 1.15, -height * 0.20),
+        (radius, 0.0),
+        (radius * 0.78, height * 0.56),
+        (radius * 0.42, height * 0.88),
+        (0.0, height),
+    ]
+    append_lathe_profile(
+        bm,
+        profile,
+        axis=axis,
+        center_xyz=center_xyz,
+        segments=segments,
+        mat_idx=mat_idx,
+        rot_euler=rot_euler,
+        auto_chamfer=False,
+    )
 
 
 def compute_mesh_curvature(mesh, cfg):
     """
-    Compute per-loop (convex_wear, concave_cavity) in [0, 1] from real beveled mesh geometry.
-    Uses face-width ratio gating across edges so narrow bevel strips, ridges, and rounded corners
-    receive full curvature while large flat panel faces remain strictly 0.0 (no flat-face bleed).
+    Compute per-vertex and per-face (convex_wear, concave_cavity) in [0, 1] from real beveled mesh geometry.
+    Uses face-width gating across edges so narrow bevel strips, ridges, arch lips, visor brims, and
+    scoop lips receive strong convex edge wear (0.88..1.00) while flat panel interiors remain strictly 0.0.
     """
     bm = bmesh.new()
     bm.from_mesh(mesh)
@@ -364,9 +872,16 @@ def compute_mesh_curvature(mesh, cfg):
     concave_v = [0.0] * n_verts
     face_convex = [0.0] * n_faces
     face_concave = [0.0] * n_faces
+    face_touching_flat = [False] * n_faces
 
     min_angle = cfg["curvature_min_angle"]
     ref_len = cfg["curvature_ref_edge_len"]
+
+    # Precompute approximate strip width of every face: area / max_edge_len
+    face_widths = [0.0] * n_faces
+    for f in bm.faces:
+        max_elen = max((e.calc_length() for e in f.edges), default=cfg["curvature_min_edge_len"])
+        face_widths[f.index] = f.calc_area() / max(max_elen, cfg["curvature_min_edge_len"])
 
     for edge in bm.edges:
         if len(edge.link_faces) != 2:
@@ -384,37 +899,47 @@ def compute_mesh_curvature(mesh, cfg):
         if delta_c.length < UNIT_EPSILON:
             continue
 
-        edge_len = max(edge.calc_length(), cfg["curvature_min_edge_len"])
-        w0 = f0.calc_area() / edge_len
-        w1 = f1.calc_area() / edge_len
+        w0 = face_widths[f0.index]
+        w1 = face_widths[f1.index]
         bevel_strip_width = max(min(w0, w1), cfg["curvature_min_edge_len"])
 
         # Positive when normals diverge across the edge (convex ridge/bevel); negative when they converge (concave crease)
         alignment = (n1 - n0).dot(delta_c.normalized())
-        if abs(alignment) < 0.04:
+        if abs(alignment) < 0.03:
             continue
 
         density_boost = min(cfg["curvature_max_density_boost"], math.sqrt(ref_len / bevel_strip_width))
-        strength = ((angle - min_angle) / (HALF_PI_RAD * 0.55)) * density_boost
+        strength = ((angle - min_angle) / (HALF_PI_RAD * 0.42)) * density_boost
 
-        # A face receives edge curvature only if it is NOT a wide flat panel bordering a narrow bevel strip
-        f0_is_bevel_or_curve = (w0 <= 2.1 * w1) and (w0 < 0.045)
-        f1_is_bevel_or_curve = (w1 <= 2.1 * w0) and (w1 < 0.045)
+        # A face is a bevel/lip/rim strip if its strip width is narrow (< 1.65 cm, or < 3.8 cm on sharp >35 deg edges)
+        f0_is_bevel = (w0 <= 2.2 * w1) and (w0 < 0.0165 or (w0 < 0.038 and angle > 0.62))
+        f1_is_bevel = (w1 <= 2.2 * w0) and (w1 < 0.0165 or (w1 < 0.038 and angle > 0.62))
 
         if alignment > 0.0:
-            if f0_is_bevel_or_curve:
+            if f0_is_bevel:
                 face_convex[f0.index] = max(face_convex[f0.index], strength)
-            if f1_is_bevel_or_curve:
+            else:
+                face_touching_flat[f0.index] = True
+            if f1_is_bevel:
                 face_convex[f1.index] = max(face_convex[f1.index], strength)
-            for v in edge.verts:
-                convex_v[v.index] = max(convex_v[v.index], strength)
+            else:
+                face_touching_flat[f1.index] = True
+            if f0_is_bevel or f1_is_bevel:
+                for v in edge.verts:
+                    convex_v[v.index] = max(convex_v[v.index], strength)
         else:
-            if f0_is_bevel_or_curve:
-                face_concave[f0.index] = max(face_concave[f0.index], strength)
-            if f1_is_bevel_or_curve:
-                face_concave[f1.index] = max(face_concave[f1.index], strength)
+            # Concave seams and grooves always register strong cavity curvature on narrow groove walls/bottoms
+            if w0 < 0.065:
+                face_concave[f0.index] = max(face_concave[f0.index], strength * 1.25)
+            if w1 < 0.065:
+                face_concave[f1.index] = max(face_concave[f1.index], strength * 1.25)
             for v in edge.verts:
-                concave_v[v.index] = max(concave_v[v.index], strength)
+                concave_v[v.index] = max(concave_v[v.index], strength * 1.25)
+
+    # Ensure flat panel interiors and broad smooth contour fillets (>= 1.65 cm wide) stay strictly at 0.0 convex wear
+    for f_idx in range(n_faces):
+        if face_widths[f_idx] >= 0.0165 and face_touching_flat[f_idx]:
+            face_convex[f_idx] = 0.0
 
     convex_out = [
         min(1.0, max(0.0, (val - cfg["convex_bias"]) * cfg["convex_gain"])) for val in convex_v
@@ -435,9 +960,9 @@ def compute_mesh_curvature(mesh, cfg):
 def bake_model_vertex_colors(mesh_objects, cfg, include_ground_occluder=True):
     """
     Bake ONE vertex color attribute ('Col') across mesh_objects:
-      R = ambient occlusion (1 = open), baked in Cycles
-      G = edge wear amount from convex curvature (0 = none)
-      B = crease/cavity amount where dust settles (0 = none)
+      R = ambient occlusion (1 = open, dark under visor, inside wheel arches, inside scoop, in seams)
+      G = edge wear amount (strong on exposed convex bevels/rims, 0.0 on panel interiors & smooth contours)
+      B = crease/cavity dust (strong in seams, wheel arches, tread grooves, and lower body)
       A = 1.0
     """
     scene = bpy.context.scene
@@ -486,22 +1011,84 @@ def bake_model_vertex_colors(mesh_objects, cfg, include_ground_occluder=True):
         bpy.data.objects.remove(ground_obj, do_unlink=True)
         bpy.data.meshes.remove(gnd_data, do_unlink=True)
 
+    optical_mats = {"R1_LampAmber", "R1_DarkGlass", "R1_Screen", "R1_SolarCell"}
+    enamel_mats = {"R1_CreamEnamel", "R1_OrangeStripe", "R1_SagePatch"}
+
     for obj in mesh_objects:
         mesh = obj.data
         ca = mesh.color_attributes[COLOR_ATTR_NAME]
         convex_v, concave_v, face_c, face_v = compute_mesh_curvature(mesh, cfg)
+        world_mat = obj.matrix_world
+        rot_mat = world_mat.to_3x3()
+
+        # Precompute world-space Unity position (ux, uy, uz) per vertex
+        v_unity_pos = []
+        for v in mesh.vertices:
+            wp = world_mat @ v.co
+            v_unity_pos.append((wp.x, wp.z, wp.y))
+
         for poly in mesh.polygons:
             p_idx = poly.index
-            fc_gate = 1.0 if (p_idx < len(face_c) and face_c[p_idx] > 0.02) else 0.0
-            fv_gate = 1.0 if (p_idx < len(face_v) and face_v[p_idx] > 0.02) else 0.0
+            fc_val = face_c[p_idx] if p_idx < len(face_c) else 0.0
+            fv_val = face_v[p_idx] if p_idx < len(face_v) else 0.0
+            wn = (rot_mat @ poly.normal).normalized()
+            un_x, un_y, un_z = wn.x, wn.z, wn.y
+
+            mat_name = ""
+            if poly.material_index < len(mesh.materials) and mesh.materials[poly.material_index] is not None:
+                mat_name = mesh.materials[poly.material_index].name
+
+            is_optical = mat_name in optical_mats
+            is_enamel = mat_name in enamel_mats
+
             for loop_idx in poly.loop_indices:
                 v_idx = mesh.loops[loop_idx].vertex_index
+                ux, uy, uz = v_unity_pos[v_idx]
                 baked_ao = float(ca.data[loop_idx].color[0])
                 ao_val = min(1.0, max(cfg["ao_min_floor"], math.pow(max(0.0, baked_ao), cfg["ao_gamma"])))
-                wear_g = (convex_v[v_idx] * (0.35 + 0.65 * face_c[p_idx])) * fc_gate if v_idx < len(convex_v) else 0.0
-                geom_cav = (concave_v[v_idx] * (0.35 + 0.65 * face_v[p_idx])) * fv_gate if v_idx < len(concave_v) else 0.0
-                ao_cavity = max(0.0, (0.68 - ao_val) * cfg["cavity_from_ao_weight"])
-                dust_b = min(1.0, max(geom_cav, ao_cavity))
+
+                if is_optical:
+                    ca.data[loop_idx].color = (max(ao_val, 0.92), 0.0, 0.0, DEFAULT_ALPHA)
+                    continue
+
+                # Deepen AO under visor brow, inside wheel arches, inside scoop bucket, and in concave seams
+                if include_ground_occluder:
+                    # 1. Under visor overhang / inner visor soffit
+                    if 1.00 <= uy <= 1.52 and 0.24 <= uz <= 0.54 and abs(ux) <= 0.40:
+                        if un_y < -0.15 or abs(un_x) > 0.65:
+                            ao_val = min(ao_val, 0.22)
+                    # 2. Inside wheel arches & suspension pockets
+                    for axle_z in (-cfg["wheel_base"], cfg["wheel_base"]):
+                        if abs(uz - axle_z) < 0.36 and 0.28 <= uy <= 0.64 and 0.34 <= abs(ux) <= 0.56:
+                            ao_val = min(ao_val, 0.24)
+                    # 3. Inside hollow scoop bucket
+                    if uz > 0.78 and uy < 0.38 and abs(ux) < 0.32 and (un_y > 0.15 or un_z < -0.15):
+                        ao_val = min(ao_val, 0.25)
+
+                if fv_val > 0.35:
+                    ao_val = min(ao_val, max(cfg["ao_min_floor"], 1.0 - 0.68 * fv_val))
+
+                # Edge wear (G): crisp chipped paint on narrow 1-2 cm enamel bevels (0.60..0.82)
+                # and strong metal edge wear (0.80..1.00) on bumper bars, arch lips, visor brim & scoop lip
+                cv_val = convex_v[v_idx] if v_idx < len(convex_v) else 0.0
+                if fc_val > 0.08 and cv_val > 0.10:
+                    raw_wear = 0.55 * fc_val + 0.45 * cv_val
+                    if is_enamel:
+                        wear_g = min(0.82, 0.58 + 0.24 * raw_wear)
+                    else:
+                        wear_g = min(1.0, 0.78 + 0.22 * raw_wear)
+                else:
+                    wear_g = 0.0
+
+                # Cavity dust (B): strong in seams, wheel arches, tread grooves, and lower body
+                cv_concave = concave_v[v_idx] if v_idx < len(concave_v) else 0.0
+                geom_cav = max(fv_val, cv_concave * (0.45 + 0.55 * fv_val)) if fv_val > 0.04 else 0.0
+                ao_cavity = max(0.0, (0.74 - ao_val) * cfg["cavity_from_ao_weight"])
+                lower_body_dust = 0.0
+                if include_ground_occluder and uy < 0.62:
+                    lower_body_dust = max(0.0, min(0.78, (0.62 - uy) / 0.58 * 0.72))
+                dust_b = min(1.0, max(geom_cav, ao_cavity, lower_body_dust * (0.55 + 0.45 * (1.0 - ao_val))))
+
                 ca.data[loop_idx].color = (ao_val, wear_g, dust_b, DEFAULT_ALPHA)
 
 
@@ -533,3 +1120,4 @@ def export_fbx(filepath, objects_to_export):
         axis_forward="Y",
         axis_up="Z",
     )
+

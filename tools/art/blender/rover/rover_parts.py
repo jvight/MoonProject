@@ -11,6 +11,12 @@ from mesh_ops import (
     UNIT_EPSILON,
     append_beveled_box,
     append_cylinder,
+    append_dome_rivet,
+    append_helical_coil,
+    append_hex_bolt,
+    append_lathe_profile,
+    append_prism_extrusion,
+    append_spherical_dome,
     append_torus,
     create_empty_node,
     create_mesh_node,
@@ -202,11 +208,11 @@ def configure_procedural_crt_screen_shader(mat, props):
 
 def _sample_rounded_rect_ring(hx, z_min, z_max, corner_r):
     """
-    Generate a 32-point counter-clockwise horizontal perimeter ring in Unity (ux, uz)
-    with 4 rounded corners (5 segments each) and 3 segments along each straight side so
-    flat flanks have coplanar interior vertices.
+    Generate a counter-clockwise horizontal perimeter ring in Unity (ux, uz) with 4 crisp
+    rounded corners (3 segments each) and 14 segments along each left/right straight flank
+    so semicircular wheel-arch cutouts and central rocker skirts have smooth, accurate curves.
     """
-    rc = min(corner_r, hx * 0.45, (z_max - z_min) * 0.22)
+    rc = min(corner_r, hx * 0.35, (z_max - z_min) * 0.18)
     x_in = hx - rc
     zf_in = z_max - rc
     zr_in = z_min + rc
@@ -214,40 +220,58 @@ def _sample_rounded_rect_ring(hx, z_min, z_max, corner_r):
     pts = []
 
     def add_line_pts(p0, p1, segs=2):
-        for s in range(1, segs):
-            t = s / segs
+        # Coplanar guard vertices right next to each rounded corner prevent normal/AO/wear bleed onto flat flanks
+        t_vals = [0.015] + [s / segs for s in range(1, segs)] + [0.985]
+        for t in t_vals:
             pts.append((p0[0] + t * (p1[0] - p0[0]), p0[1] + t * (p1[1] - p0[1])))
 
-    def add_arc_pts(cx, cz, a0, a1, segs=4):
+    def add_arc_pts(cx, cz, a0, a1, segs=3):
         for s in range(segs + 1):
             a = a0 + (a1 - a0) * (s / segs)
             pts.append((cx + rc * math.cos(a), cz + rc * math.sin(a)))
 
     # 1. Front-Right corner (0 -> pi/2)
-    add_arc_pts(x_in, zf_in, 0.0, HALF_PI_RAD)
+    add_arc_pts(x_in, zf_in, 0.0, HALF_PI_RAD, segs=3)
     # Front straight edge (+x_in -> -x_in at z = z_max)
-    add_line_pts((x_in, z_max), (-x_in, z_max))
+    add_line_pts((x_in, z_max), (-x_in, z_max), segs=2)
     # 2. Front-Left corner (pi/2 -> pi)
-    add_arc_pts(-x_in, zf_in, HALF_PI_RAD, math.pi)
-    # Left straight edge (z = zf_in -> zr_in at x = -hx)
-    add_line_pts((-hx, zf_in), (-hx, zr_in))
+    add_arc_pts(-x_in, zf_in, HALF_PI_RAD, math.pi, segs=3)
+    # Left straight edge (z = zf_in -> zr_in at x = -hx) — 10 segments + 2 guard verts for smooth wheel arches
+    add_line_pts((-hx, zf_in), (-hx, zr_in), segs=10)
     # 3. Rear-Left corner (pi -> 3*pi/2)
-    add_arc_pts(-x_in, zr_in, math.pi, 1.5 * math.pi)
+    add_arc_pts(-x_in, zr_in, math.pi, 1.5 * math.pi, segs=3)
     # Rear straight edge (-x_in -> +x_in at z = z_min)
-    add_line_pts((-x_in, z_min), (x_in, z_min))
+    add_line_pts((-x_in, z_min), (x_in, z_min), segs=2)
     # 4. Rear-Right corner (3*pi/2 -> 2*pi)
-    add_arc_pts(x_in, zr_in, 1.5 * math.pi, FULL_CIRCLE_RAD)
-    # Right straight edge (z = zr_in -> zf_in at x = +hx)
-    add_line_pts((hx, zr_in), (hx, zf_in))
+    add_arc_pts(x_in, zr_in, 1.5 * math.pi, FULL_CIRCLE_RAD, segs=3)
+    # Right straight edge (z = zr_in -> zf_in at x = +hx) — 10 segments + 2 guard verts for smooth wheel arches
+    add_line_pts((hx, zr_in), (hx, zf_in), segs=10)
 
     return pts
 
 
+def _wheel_arch_cutout_y(uz):
+    """
+    Return the lower hull arch cutout height y_cut(uz) at longitudinal coordinate uz.
+    Between the wheels (|uz| <= 0.21 m), the central hull rocker drops down to y = 0.400 m.
+    Over the front (uz = +0.50 m) and rear (uz = -0.50 m) wheels, a circular arch of radius 0.295 m
+    lifts the lower hull edge up to y = 0.585 m, exposing Shock_FL..RR and Arm_FL..RR.
+    """
+    y_base = 0.400
+    for wz in (-0.50, 0.50):
+        dz = abs(uz - wz)
+        if dz < 0.295:
+            arch_h = math.sqrt(max(0.0, 0.295 * 0.295 - dz * dz)) * 0.63
+            y_base = max(y_base, 0.400 + arch_h)
+    return y_base
+
+
 def _append_pillowed_body_tub(bm, cfg):
     """
-    Build the main rounded-cream + orange-beltline Body tub as a pure-quad horizontal-ring loft.
-    Eliminates bevel-clamp overlaps and bisect_plane triangles so smooth shading is 100% pinch-free
-    and the horizontal beltline (y = 0.56..0.65 m) has razor-sharp horizontal borders.
+    Build the continuous contoured rounded car-body hull with:
+      - Crisp 1.6 cm 2-segment bevels on upper deck shoulders and lower rocker edges
+      - Deep semicircular wheel-arch cutouts into the lower flanks over all 4 wheels
+      - Real 3D recessed dark seam channels (R1_GreyMetal) above and below the orange beltline
     """
     temp = bmesh.new()
     half_w = cfg["body_tub_width"] * FLAT_UV_SCALE
@@ -259,29 +283,29 @@ def _append_pillowed_body_tub(bm, cfg):
     belt_bot = cfg["body_belt_y_bottom"]
     belt_top = cfg["body_belt_y_top"]
 
-    # (uy, inset_x, inset_z_rear, inset_z_front)
+    # (uy, inset_x, inset_z_rear, inset_z_front, ring_role)
     ring_specs = (
-        (0.435, 0.140, 0.140, 0.140),  # 0: bottom inner flat ring
-        (0.435, 0.036, 0.036, 0.036),  # 1: bottom flat guard ring
-        (0.448, 0.012, 0.012, 0.012),  # 2: bottom bevel
-        (0.468, 0.000, 0.000, 0.000),  # 3: lower flank bottom guard
-        (0.545, 0.000, 0.000, 0.000),  # 4: lower flank top guard
-        (belt_bot, 0.000, 0.000, 0.000),      # 5: exact bottom of orange beltline (0.560 m)
-        (0.574, -0.002, -0.002, -0.002),      # 6: beltline lower guard
-        (0.636, -0.002, -0.002, -0.002),      # 7: beltline upper guard
-        (belt_top, 0.000, 0.000, 0.000),      # 8: exact top of orange beltline (0.650 m)
-        (0.665, 0.000, 0.000, 0.004),  # 9: upper flank bottom guard
-        (0.770, 0.006, 0.006, 0.065),  # 10: upper flank top guard + front hood glacis start
-        (0.822, 0.022, 0.022, 0.118),  # 11: pillowed shoulder bevel seg 1
-        (0.865, 0.048, 0.048, 0.168),  # 12: pillowed shoulder bevel seg 2
-        (0.894, 0.082, 0.080, 0.212),  # 13: pillowed shoulder bevel seg 3
-        (0.908, 0.118, 0.115, 0.248),  # 14: pillowed shoulder bevel seg 4
-        (0.910, 0.142, 0.140, 0.272),  # 15: top deck flat guard ring
-        (0.910, 0.260, 0.260, 0.380),  # 16: top deck inner flat ring
+        (0.400, 0.110, 0.110, 0.110, "bottom"),       # 0: bottom inner flat ring
+        (0.400, 0.018, 0.018, 0.018, "bottom"),       # 1: bottom bevel guard
+        (0.408, 0.006, 0.006, 0.006, "lower_cream"),  # 2: lower bevel seg 1 (8 mm)
+        (0.418, 0.000, 0.000, 0.000, "lower_cream"),  # 3: lower bevel seg 2 (1.8 cm total)
+        (0.550, 0.000, 0.000, 0.000, "lower_cream"),  # 4: lower flank top before belt seam
+        (0.555, 0.005, 0.005, 0.005, "seam"),         # 5: recessed lower beltline cut seam
+        (belt_bot, 0.005, 0.005, 0.005, "seam"),      # 6: recessed lower beltline cut seam top
+        (0.564, -0.001, -0.001, -0.001, "belt"),      # 7: orange beltline lower chamfer lip
+        (0.644, -0.001, -0.001, -0.001, "belt"),      # 8: orange beltline upper chamfer lip
+        (belt_top, 0.005, 0.005, 0.005, "seam"),      # 9: recessed upper beltline cut seam bottom
+        (0.654, 0.005, 0.005, 0.005, "seam"),         # 10: recessed upper beltline cut seam top
+        (0.660, 0.000, 0.000, 0.002, "upper_cream"),  # 11: upper flank bottom chamfer lip
+        (0.888, 0.024, 0.022, 0.215, "upper_cream"),  # 12: upper flank top (sloped front bonnet)
+        (0.901, 0.034, 0.032, 0.228, "upper_cream"),  # 13: crisp 1.8 cm shoulder bevel seg 1
+        (0.910, 0.046, 0.044, 0.242, "upper_cream"),  # 14: crisp 1.8 cm shoulder bevel seg 2 (deck edge)
+        (0.910, 0.066, 0.064, 0.262, "upper_cream"),  # 15: top deck coplanar guard ring
+        (0.910, 0.220, 0.220, 0.360, "upper_cream"),  # 16: top deck inner flat ring
     )
 
     ring_verts = []
-    for r_idx, (uy, in_x, in_zr, in_zf) in enumerate(ring_specs):
+    for r_idx, (uy, in_x, in_zr, in_zf, _role) in enumerate(ring_specs):
         hx = max(0.08, half_w - in_x)
         z_min = z_min_base + in_zr
         z_max = z_max_base - in_zf
@@ -289,33 +313,46 @@ def _append_pillowed_body_tub(bm, cfg):
         v_row = []
         for ux, uz in pts_2d:
             adj_y = uy
-            # Gentle wheel-arch relief on the lower side skirt below the beltline guard
-            if r_idx in (1, 2, 3) and abs(ux) > half_w * 0.72:
-                for axle_z in (-cfg["wheel_base"], cfg["wheel_base"]):
-                    dz = abs(uz - axle_z)
-                    if dz < cfg["wheel_arch_radius"]:
-                        lift = 0.042 * math.sqrt(max(0.0, 1.0 - (dz / cfg["wheel_arch_radius"]) ** 2))
-                        adj_y = min(0.532, max(adj_y, 0.435 + lift))
-            v_row.append(temp.verts.new(unity_to_blender_pos(ux, adj_y, uz)))
+            adj_x = ux
+            # Deep semicircular wheel-arch cutout into the lower flanks over all 4 wheels
+            if r_idx <= 7 and abs(ux) > half_w * 0.72:
+                y_arch = _wheel_arch_cutout_y(uz)
+                if y_arch > 0.402:
+                    if r_idx == 0:
+                        adj_y = max(uy, y_arch - 0.012)
+                    elif r_idx == 1:
+                        adj_y = max(uy, y_arch - 0.008)
+                    elif r_idx == 2:
+                        adj_y = max(uy, y_arch - 0.003)
+                    elif r_idx <= 6:
+                        adj_y = max(uy, y_arch)
+                    elif r_idx == 7:
+                        adj_y = max(uy, y_arch + 0.006)
+            v_row.append(temp.verts.new(unity_to_blender_pos(adj_x, adj_y, uz)))
         ring_verts.append(v_row)
 
     n_perim = len(ring_verts[0])
-    # Connect quad strips between consecutive rings
     for r_idx in range(len(ring_specs) - 1):
         r0 = ring_verts[r_idx]
         r1 = ring_verts[r_idx + 1]
-        is_belt_band = 5 <= r_idx <= 7
-        is_bottom_band = r_idx <= 1
-        mat_idx = 1 if is_belt_band else (2 if is_bottom_band else 0)
+        role0 = ring_specs[r_idx][4]
+        role1 = ring_specs[r_idx + 1] [4]
+        if role0 == "seam" or role1 == "seam":
+            mat_idx = 2  # R1_GreyMetal dark recessed seam channel
+        elif role0 == "belt" and role1 == "belt":
+            mat_idx = 1  # R1_OrangeStripe
+        elif role0 == "bottom":
+            mat_idx = 2  # R1_GreyMetal underbody
+        else:
+            mat_idx = 0  # R1_CreamEnamel
         for i in range(n_perim):
             ni = (i + 1) % n_perim
             f = temp.faces.new((r0[i], r0[ni], r1[ni], r1[i]))
             f.material_index = mat_idx
             f.smooth = True
 
-    # Cap bottom inner ring (Ring 0) and top inner ring (Ring 16) around central vertices (which lie inside flat guard rings)
-    bot_center = temp.verts.new(unity_to_blender_pos(0.0, 0.435, z_center))
-    top_center = temp.verts.new(unity_to_blender_pos(0.0, 0.910, z_center - 0.05))
+    bot_center = temp.verts.new(unity_to_blender_pos(0.0, 0.400, z_center))
+    top_center = temp.verts.new(unity_to_blender_pos(0.0, 0.910, z_center - 0.06))
     for i in range(n_perim):
         ni = (i + 1) % n_perim
         fb = temp.faces.new((ring_verts[0][ni], ring_verts[0][i], bot_center))
@@ -334,17 +371,372 @@ def _append_pillowed_body_tub(bm, cfg):
     temp.free()
 
 
+def _append_body_cut_panels_and_seams(bm, _cfg):
+    """
+    Add flush 3D panel cut seams (with small chamfers and recessed R1_GreyMetal dark grooves)
+    along the hull flanks and sloped front bonnet without thick cabinet blocks or sticking-out bars.
+    """
+    for sx in (-1.0, 1.0):
+        # Vertical panel cut lines on upper & beltline flanks at uz = -0.18 m and uz = +0.20 m
+        # Note: rot_euler[2] = -sx * 0.105 tilts top inward to match the 10.5 deg hull tumblehome!
+        for seam_z in (-0.180, 0.200):
+            append_beveled_box(
+                bm,
+                size_xyz=(0.008, 0.224, 0.009),
+                center_xyz=(sx * 0.476, 0.774, seam_z),
+                bevel_width=0.002,
+                bevel_segments=1,
+                mat_idx=2,
+                rot_euler=(0.0, 0.0, -sx * 0.105),
+                guard_inset=False,
+            )
+            append_beveled_box(
+                bm,
+                size_xyz=(0.008, 0.084, 0.009),
+                center_xyz=(sx * 0.489, 0.604, seam_z),
+                bevel_width=0.002,
+                bevel_segments=1,
+                mat_idx=2,
+                guard_inset=False,
+            )
+
+        # Flush recessed service latch handle on the central flank panel
+        append_beveled_box(
+            bm,
+            size_xyz=(0.010, 0.032, 0.064),
+            center_xyz=(sx * 0.473, 0.805, 0.095),
+            bevel_width=0.003,
+            bevel_segments=1,
+            mat_idx=2,
+            rot_euler=(0.0, 0.0, -sx * 0.105),
+            guard_inset=False,
+        )
+        append_beveled_box(
+            bm,
+            size_xyz=(0.008, 0.016, 0.044),
+            center_xyz=(sx * 0.476, 0.805, 0.095),
+            bevel_width=0.002,
+            bevel_segments=1,
+            mat_idx=5,
+            rot_euler=(0.0, 0.0, -sx * 0.105),
+            guard_inset=False,
+        )
+
+        # Sloped front bonnet recessed hood seam grooves (rot_x = -0.75 rad slopes nose-DOWN with bonnet!)
+        append_beveled_box(
+            bm,
+            size_xyz=(0.010, 0.010, 0.305),
+            center_xyz=(sx * 0.175, 0.782, 0.592),
+            bevel_width=0.002,
+            bevel_segments=1,
+            mat_idx=2,
+            rot_euler=(-0.75, 0.0, 0.0),
+            guard_inset=False,
+        )
+
+
+def _append_wheel_arch_flares_and_liners(bm, cfg):
+    """
+    Build curved chamfered dark-charcoal fender arch lips (R1_GreyMetal) and deep recessed wheel-well
+    splash liners over all 4 wheels so Shock_FL..RR and Arm_FL..RR are clearly visible inside the arches.
+    """
+    # Semicircular fender arch polygon in (uz, uy) local to each wheel center
+    arch_outer = []
+    arch_inner = []
+    n_arch = 10
+    for i in range(n_arch + 1):
+        ang = math.pi * (1.0 - i / n_arch)
+        ca, sa = math.cos(ang), math.sin(ang)
+        arch_outer.append((0.285 * ca, 0.405 + 0.195 * sa))
+        arch_inner.append((0.245 * ca, 0.405 + 0.160 * sa))
+    arch_poly = arch_outer + list(reversed(arch_inner))
+
+    for sx in (-1.0, 1.0):
+        for sz in (-1.0, 1.0):
+            arch_cz = sz * cfg["fender_lip_z"]
+            append_prism_extrusion(
+                bm,
+                arch_poly,
+                depth=0.028,
+                axis="X",
+                center_xyz=(sx * 0.478, 0.0, arch_cz),
+                bevel_width=0.006,
+                bevel_segments=2,
+                mat_idx=2,
+            )
+            # Deep inboard splash liner at |ux| = 0.355 m (inboard of Shock_FL..RR at |ux| = 0.44 m)
+            append_beveled_box(
+                bm,
+                size_xyz=(0.020, 0.185, 0.420),
+                center_xyz=(sx * 0.355, 0.500, arch_cz),
+                bevel_width=0.004,
+                bevel_segments=1,
+                mat_idx=2,
+                guard_inset=False,
+            )
+
+
+def _append_body_small_hardware(bm, cfg):
+    """
+    Add small honest hardware to Body:
+      - 10 dome rivets + rubber gasket around SagePatch_RL (flush on the left flank in front of RL wheel arch)
+      - Front bumper hex bolts & forward clevis brackets with pivot pins
+      - Rear bumper small red/amber tail lamps flanking the winch
+      - Armored rubber cable run with copper/steel P-clips along lower chassis rails
+      - Recessed 3-slot side cooling vents on rear lower flanks
+      - Tubular steel grab handles on upper rear shoulders
+    """
+    # 1. Riveted Sage-Green field-repair patch (SagePatch_RL) on the left flank (#9 in callouts.png)
+    patch_x = -0.482
+    patch_y = 0.530
+    patch_z = -0.140
+    ph = 0.240
+    pl = 0.220
+
+    # Dark backing seam gasket under SagePatch_RL
+    append_beveled_box(
+        bm,
+        size_xyz=(0.012, ph + 0.010, pl + 0.010),
+        center_xyz=(patch_x + 0.002, patch_y, patch_z),
+        bevel_width=0.003,
+        bevel_segments=1,
+        mat_idx=2,
+        guard_inset=False,
+    )
+    # Crisp 6 mm 2-segment beveled SagePatch_RL plate
+    append_beveled_box(
+        bm,
+        size_xyz=(0.014, ph, pl),
+        center_xyz=(patch_x, patch_y, patch_z),
+        bevel_width=0.006,
+        bevel_segments=2,
+        mat_idx=3,
+    )
+    # 10 hemispherical steel dome rivets around the perimeter of SagePatch_RL
+    rivet_coords = []
+    for ry in (-0.39, -0.13, 0.13, 0.39):
+        for rz in (-0.40, 0.40):
+            rivet_coords.append((patch_y + ry * ph, patch_z + rz * pl))
+    rivet_coords.append((patch_y + 0.39 * ph, patch_z))
+    rivet_coords.append((patch_y - 0.39 * ph, patch_z))
+
+    for r_y, r_z in rivet_coords:
+        append_dome_rivet(
+            bm,
+            radius=cfg["rivet_radius"],
+            height=0.007,
+            axis="X",
+            center_xyz=(patch_x - 0.006, r_y, r_z),
+            segments=8,
+            mat_idx=5,
+            rot_euler=(0.0, math.pi, 0.0),
+        )
+
+    # 2. Front bumper bar hex mounting bolts & forward scoop clevis brackets (#7 in callouts.png)
+    fb_z = cfg["front_bumper_z"] + cfg["bumper_depth"] * FLAT_UV_SCALE
+    by_c = cfg["bumper_y_center"]
+    append_beveled_box(
+        bm,
+        size_xyz=(cfg["bumper_width"] * 0.86, 0.024, 0.016),
+        center_xyz=(0.0, by_c, fb_z - 0.004),
+        bevel_width=0.004,
+        bevel_segments=1,
+        mat_idx=2,
+        guard_inset=False,
+    )
+    for bx in (-0.42, -0.32, -0.14, 0.14, 0.32, 0.42):
+        append_hex_bolt(
+            bm,
+            radius=0.010,
+            height=0.012,
+            axis="Z",
+            center_xyz=(bx, by_c, fb_z + 0.002),
+            mat_idx=5,
+        )
+    # Two prominent forward clevis brackets at x = +/-0.24 m with steel pivot pins for the scoop arms
+    for sx in (-1.0, 1.0):
+        for ear_off in (-0.024, 0.024):
+            append_beveled_box(
+                bm,
+                size_xyz=(0.014, 0.068, 0.078),
+                center_xyz=(sx * 0.24 + ear_off, by_c - 0.012, fb_z + 0.022),
+                bevel_width=0.004,
+                bevel_segments=1,
+                mat_idx=2,
+                guard_inset=False,
+            )
+        append_cylinder(
+            bm,
+            radius1=0.026,
+            radius2=0.026,
+            length=0.062,
+            axis="X",
+            center_xyz=(sx * 0.24, by_c - 0.012, fb_z + 0.038),
+            segments=14,
+            bevel_width=0.004,
+            bevel_segments=1,
+            mat_idx=2,
+        )
+        append_hex_bolt(
+            bm,
+            radius=0.013,
+            height=0.074,
+            axis="X",
+            center_xyz=(sx * 0.24, by_c - 0.012, fb_z + 0.038),
+            mat_idx=5,
+        )
+
+    # 3. Rear bumper small red/amber tail lamps flanking the winch (x = +/-0.355 m, #12 in callouts.png)
+    rb_z = cfg["rear_bumper_z"] - cfg["bumper_depth"] * FLAT_UV_SCALE
+    for sx in (-1.0, 1.0):
+        tl_x = sx * 0.355
+        append_beveled_box(
+            bm,
+            size_xyz=(0.102, 0.054, 0.026),
+            center_xyz=(tl_x, by_c + 0.004, rb_z + 0.004),
+            bevel_width=0.006,
+            bevel_segments=2,
+            mat_idx=2,
+            guard_inset=False,
+        )
+        append_beveled_box(
+            bm,
+            size_xyz=(0.088, 0.042, 0.022),
+            center_xyz=(tl_x, by_c + 0.004, rb_z - 0.002),
+            bevel_width=0.004,
+            bevel_segments=1,
+            mat_idx=5,
+            guard_inset=False,
+        )
+        append_beveled_box(
+            bm,
+            size_xyz=(0.074, 0.030, 0.020),
+            center_xyz=(tl_x, by_c + 0.004, rb_z - 0.006),
+            bevel_width=0.004,
+            bevel_segments=1,
+            mat_idx=1,
+            guard_inset=False,
+        )
+        append_beveled_box(
+            bm,
+            size_xyz=(0.044, 0.016, 0.018),
+            center_xyz=(tl_x, by_c + 0.004, rb_z - 0.009),
+            bevel_width=0.003,
+            bevel_segments=1,
+            mat_idx=8,
+            guard_inset=False,
+        )
+        for bolt_x in (sx * 0.44, sx * 0.25):
+            append_hex_bolt(
+                bm,
+                radius=0.009,
+                height=0.012,
+                axis="Z",
+                center_xyz=(bolt_x, by_c + 0.004, rb_z - 0.002),
+                mat_idx=5,
+            )
+
+    # 4. Armored rubber cable run + copper/steel P-clips along lower central rocker rail (both flanks)
+    for sx in (-1.0, 1.0):
+        cable_x = sx * 0.483
+        for cy_off in (-0.008, 0.008):
+            append_cylinder(
+                bm,
+                radius1=0.006,
+                radius2=0.006,
+                length=0.40,
+                axis="Z",
+                center_xyz=(cable_x, 0.412 + cy_off, 0.0),
+                segments=8,
+                mat_idx=9,
+            )
+        for clip_z in (-0.16, 0.0, 0.16):
+            append_beveled_box(
+                bm,
+                size_xyz=(0.014, 0.032, 0.014),
+                center_xyz=(cable_x, 0.412, clip_z),
+                bevel_width=0.002,
+                bevel_segments=1,
+                mat_idx=6,
+                guard_inset=False,
+            )
+            append_dome_rivet(
+                bm,
+                radius=0.004,
+                height=0.005,
+                axis="X",
+                center_xyz=(cable_x + sx * 0.006, 0.412, clip_z),
+                segments=8,
+                mat_idx=5,
+                rot_euler=(0.0, 0.0 if sx > 0 else math.pi, 0.0),
+            )
+
+    # 5. Recessed 3-slot side cooling louver vents on lower central flanks
+    for sx in (-1.0, 1.0):
+        vz_c = 0.06 if sx < 0 else -0.06
+        append_beveled_box(
+            bm,
+            size_xyz=(0.014, 0.062, 0.105),
+            center_xyz=(sx * 0.480, 0.482, vz_c),
+            bevel_width=0.004,
+            bevel_segments=1,
+            mat_idx=2,
+            guard_inset=False,
+        )
+        for s_i in (-1, 0, 1):
+            append_beveled_box(
+                bm,
+                size_xyz=(0.012, 0.009, 0.086),
+                center_xyz=(sx * 0.484, 0.482 + s_i * 0.016, vz_c),
+                bevel_width=0.002,
+                bevel_segments=1,
+                mat_idx=5,
+                guard_inset=False,
+            )
+
+    # 6. Tubular steel grab handles on upper rear shoulders
+    for sx in (-1.0, 1.0):
+        gx = sx * 0.405
+        gy = 0.908
+        gz = -0.46
+        append_cylinder(
+            bm,
+            radius1=0.0065,
+            radius2=0.0065,
+            length=0.13,
+            axis="Z",
+            center_xyz=(gx, gy + 0.020, gz),
+            segments=8,
+            bevel_width=0.002,
+            bevel_segments=1,
+            mat_idx=5,
+        )
+        for end_z in (-0.060, 0.060):
+            append_cylinder(
+                bm,
+                radius1=0.008,
+                radius2=0.011,
+                length=0.024,
+                axis="Y",
+                center_xyz=(gx, gy + 0.009, gz + end_z),
+                segments=8,
+                mat_idx=2,
+            )
+
+
 def build_contoured_body_mesh(cfg, mats):
     """
-    Build the soft, pillowed, compact buggy Body hull matching turnaround.png:
-      - Material 0: R1_CreamEnamel (main rounded tub & central nose boss)
-      - Material 1: R1_OrangeStripe (single continuous horizontal beltline y = 0.56..0.65 m)
-      - Material 2: R1_GreyMetal (front/rear bumper beams, belly pan, arched wheel-well lips, solar rails)
+    Build the hard-surface buggy Body hull matching turnaround.png & callouts.png:
+      - Material 0: R1_CreamEnamel (smooth contoured car body with crisp 1.6 cm bevels & rear deck cover)
+      - Material 1: R1_OrangeStripe (horizontal beltline + rear tail lamp surrounds)
+      - Material 2: R1_GreyMetal (recessed panel seams, bumpers, belly pan, wheel arch lips)
       - Material 3: R1_SagePatch (riveted vertical sage-green repair plate on left flank)
-      - Material 4: R1_GoldFoil (quilted thermal blanket pad between the solar mounting rails)
-      - Material 5: R1_BareSteel (rivets and rail tie-downs)
-      - Material 6: R1_Copper (solar rail end-clamps & shoulder trim)
-      - Material 7: R1_DarkGlass (recessed upper-rear solar mounting bay liner)
+      - Material 4: R1_GoldFoil (thermal insulation trim)
+      - Material 5: R1_BareSteel (10 dome rivets, bumper hex bolts, clevis pins, grab handles, deck screws)
+      - Material 6: R1_Copper (cable P-clips)
+      - Material 7: R1_DarkGlass (optical trim)
+      - Material 8: R1_LampAmber (rear tail lamp glowing cores)
+      - Material 9: R1_Rubber (armored lower-chassis conduit cables)
     """
     bm = bmesh.new()
     mat_list = [
@@ -356,23 +748,43 @@ def build_contoured_body_mesh(cfg, mats):
         mats["R1_BareSteel"],
         mats["R1_Copper"],
         mats["R1_DarkGlass"],
+        mats["R1_LampAmber"],
+        mats["R1_Rubber"],
     ]
 
-    # 1. Pure-quad pillowed cream + orange tub loft
+    # 1. Contoured rounded car-body tub with beltline seam channels & semicircular wheel-arch cutouts
     _append_pillowed_body_tub(bm, cfg)
 
-    # 2. Central raised rounded cream nose boss framing the chest CutterTurret (as in turnaround.png & callouts.png)
-    append_beveled_box(
+    # 2. Flush 3D flank/bonnet panel seams & service latches
+    _append_body_cut_panels_and_seams(bm, cfg)
+
+    # 3. Sculpted arched cream chest lens hood boss (#5 in callouts.png) with dark recessed seam collar
+    append_cylinder(
         bm,
-        size_xyz=(0.28, 0.22, 0.26),
-        center_xyz=(0.0, 0.67, 0.60),
-        bevel_width=0.052,
-        bevel_segments=3,
+        radius1=0.132,
+        radius2=0.118,
+        length=0.22,
+        axis="Z",
+        center_xyz=(0.0, 0.685, 0.625),
+        segments=24,
+        bevel_width=0.012,
+        bevel_segments=2,
+        mat_idx=2,
+    )
+    append_cylinder(
+        bm,
+        radius1=0.126,
+        radius2=0.114,
+        length=0.22,
+        axis="Z",
+        center_xyz=(0.0, 0.688, 0.632),
+        segments=24,
+        bevel_width=0.014,
+        bevel_segments=2,
         mat_idx=0,
-        taper_top_xy=(0.82, 0.85),
     )
 
-    # 3. Full-width dark-charcoal front & rear bumper beams and lower chassis pan
+    # 4. Full-width dark-charcoal front & rear bumper bars and central lower belly pan
     append_beveled_box(
         bm,
         size_xyz=(cfg["bumper_width"], cfg["bumper_height"], cfg["bumper_depth"]),
@@ -393,211 +805,225 @@ def build_contoured_body_mesh(cfg, mats):
         bm,
         size_xyz=(cfg["belly_pan_width"], cfg["belly_pan_height"], cfg["belly_pan_length"]),
         center_xyz=(0.0, cfg["belly_pan_y"], 0.0),
-        bevel_width=0.018,
+        bevel_width=0.014,
         bevel_segments=2,
         mat_idx=2,
     )
 
-    # 4. Arched dark-charcoal fender flare lips over all 4 wheel wells (meeting the tyres cleanly)
-    for sx in (-1.0, 1.0):
-        for sz in (-1.0, 1.0):
-            append_beveled_box(
-                bm,
-                size_xyz=(cfg["fender_lip_width"], cfg["fender_lip_height"], cfg["fender_lip_length"]),
-                center_xyz=(sx * cfg["fender_lip_x"], cfg["fender_lip_y"], sz * cfg["fender_lip_z"]),
-                bevel_width=0.016,
-                bevel_segments=2,
-                mat_idx=2,
-            )
+    # 5. Semicircular wheel-arch fender flare lips & deep splash liners over all 4 wheels
+    _append_wheel_arch_flares_and_liners(bm, cfg)
 
-    # 5. Riveted vertical Sage-Green field-repair patch (SagePatch_RL) on the left flank
-    patch_x = -cfg["sage_patch_x"]
+    # 6. Riveted SagePatch_RL, bumper bolts/clevises, tail lamps, cable run, side vents & grab handles
+    _append_body_small_hardware(bm, cfg)
+
+    # 7. Clean painted cream rear top DeckCover panel behind the head with recessed dark seam & 4 corner screws
+    # (Ready for SolarWing.fbx to mount on Socket_Solar per Logs/TASK.md)
+    deck_panel_w = 0.56
+    deck_panel_l = 0.44
+    deck_panel_y = 0.910
+    deck_panel_z = -0.27
     append_beveled_box(
         bm,
-        size_xyz=(cfg["sage_patch_thickness"], cfg["sage_patch_height"], cfg["sage_patch_length"]),
-        center_xyz=(patch_x, cfg["sage_patch_y"], cfg["sage_patch_z"]),
+        size_xyz=(deck_panel_w + 0.016, 0.012, deck_panel_l + 0.016),
+        center_xyz=(0.0, deck_panel_y - 0.002, deck_panel_z),
+        bevel_width=0.004,
+        bevel_segments=1,
+        mat_idx=2,
+        guard_inset=False,
+    )
+    append_beveled_box(
+        bm,
+        size_xyz=(deck_panel_w, 0.014, deck_panel_l),
+        center_xyz=(0.0, deck_panel_y + 0.002, deck_panel_z),
         bevel_width=0.008,
         bevel_segments=2,
-        mat_idx=3,
+        mat_idx=0,
     )
-    for ry in (-1.0, 0.0, 1.0):
-        for rz in (-1.0, 1.0):
-            append_cylinder(
+    for sx in (-1.0, 1.0):
+        for sz in (-1.0, 1.0):
+            append_dome_rivet(
                 bm,
-                radius1=cfg["rivet_radius"],
-                radius2=cfg["rivet_radius"],
-                length=0.012,
-                axis="X",
+                radius=0.006,
+                height=0.005,
+                axis="Y",
                 center_xyz=(
-                    patch_x - 0.006,
-                    cfg["sage_patch_y"] + ry * (cfg["sage_patch_height"] * 0.38),
-                    cfg["sage_patch_z"] + rz * (cfg["sage_patch_length"] * 0.40),
+                    sx * (deck_panel_w * 0.43),
+                    deck_panel_y + 0.009,
+                    deck_panel_z + sz * (deck_panel_l * 0.42),
                 ),
                 segments=8,
                 mat_idx=5,
             )
-
-    # 6. Empty Solar Mounting Rails + Dark Recessed Bay + Gold-Foil pad on the upper-rear deck
-    slope_rad = math.radians(cfg["solar_deck_slope_deg"])
-    for sx in (-1.0, 1.0):
-        append_beveled_box(
-            bm,
-            size_xyz=(cfg["solar_rail_width"], cfg["solar_rail_height"], cfg["solar_rail_length"]),
-            center_xyz=(sx * cfg["solar_rail_x"], cfg["solar_rail_y"], cfg["solar_rail_z"]),
-            bevel_width=0.006,
-            bevel_segments=2,
-            mat_idx=2,
-            rot_euler=(slope_rad, 0.0, 0.0),
-        )
-        append_beveled_box(
-            bm,
-            size_xyz=(cfg["solar_rail_width"] * 1.05, 0.010, cfg["solar_rail_length"] * 0.96),
-            center_xyz=(sx * cfg["solar_rail_x"], cfg["solar_rail_y"] + 0.012, cfg["solar_rail_z"]),
-            bevel_width=0.003,
-            bevel_segments=1,
-            mat_idx=6,
-            rot_euler=(slope_rad, 0.0, 0.0),
-        )
-
-    # Dark recessed bay liner + central gold-foil thermal pad between the empty rails
-    append_beveled_box(
-        bm,
-        size_xyz=(cfg["solar_pad_width"], 0.014, cfg["solar_pad_length"]),
-        center_xyz=(0.0, cfg["solar_rail_y"] - 0.004, cfg["solar_rail_z"]),
-        bevel_width=0.005,
-        bevel_segments=1,
-        mat_idx=7,
-        rot_euler=(slope_rad, 0.0, 0.0),
-    )
-    append_beveled_box(
-        bm,
-        size_xyz=(cfg["solar_pad_width"] * 0.56, 0.016, cfg["solar_pad_length"] * 0.56),
-        center_xyz=(0.0, cfg["solar_rail_y"] - 0.002, cfg["solar_rail_z"]),
-        bevel_width=0.004,
-        bevel_segments=1,
-        mat_idx=4,
-        rot_euler=(slope_rad, 0.0, 0.0),
-    )
 
     return create_mesh_node("Body", bm, (0.0, 0.0, 0.0), mat_list=mat_list, cfg=cfg)
 
 
 def build_head_assembly(rover_root, cfg, mats):
     """
-    Build the hero 80%-width pillowed CRT Head assembly (Neck -> NeckLift -> Head -> Screen, Visor,
-    RearVentStrip, Eye + sockets, DeckSocket, DeckCover) matching turnaround.png.
+    Build the hero 80%-width hard-surface CRT Head assembly (Neck -> NeckLift -> Head -> Screen, Visor,
+    RearVentStrip, Eye + sockets, DeckSocket, DeckCover) matching turnaround.png & callouts.png.
     """
-    # 1. Neck (base collar ring at (0, 0.92, +0.24))
+    # 1. Neck (molded collar ring + bolted flange + 4-ribbed accordion rubber bellows at (0, 0.92, +0.24))
     bm_neck = bmesh.new()
-    append_cylinder(
+    flange_r = cfg["neck_base_flange_radius"]
+    bellows_r = cfg["neck_bellows_radius"]
+
+    collar_profile = [
+        (flange_r * 1.08, -0.016),
+        (flange_r * 1.05, -0.002),
+        (flange_r * 0.96, 0.012),
+        (flange_r * 0.88, 0.018),
+        (bellows_r * 0.82, 0.018),
+    ]
+    append_lathe_profile(
         bm_neck,
-        radius1=cfg["neck_base_flange_radius"],
-        radius2=cfg["neck_base_flange_radius"] * 0.92,
-        length=0.045,
+        collar_profile,
         axis="Y",
-        center_xyz=(0.0, 0.005, 0.0),
-        segments=24,
-        bevel_width=0.008,
-        bevel_segments=2,
+        center_xyz=(0.0, 0.0, 0.0),
+        segments=20,
         mat_idx=0,
+        ring_mat_indices=[2, 0, 0, 0],
     )
-    append_torus(
+    for b_i in range(8):
+        ang = FULL_CIRCLE_RAD * b_i / 8
+        append_hex_bolt(
+            bm_neck,
+            radius=0.0075,
+            height=0.009,
+            axis="Y",
+            center_xyz=(flange_r * 0.92 * math.cos(ang), 0.015, flange_r * 0.92 * math.sin(ang)),
+            mat_idx=3,
+        )
+
+    # 4-ribbed accordion rubber bellows (R1_Rubber, #4 in callouts.png)
+    bellows_profile = [(bellows_r * 0.78, 0.014)]
+    for rib_i in range(4):
+        y_base = 0.018 + rib_i * 0.0185
+        r_peak = bellows_r * (1.0 - 0.02 * rib_i)
+        r_val = bellows_r * (0.78 - 0.015 * rib_i)
+        bellows_profile.extend([
+            (r_val, y_base),
+            (r_peak * 0.95, y_base + 0.004),
+            (r_peak, y_base + 0.009),
+            (r_peak * 0.95, y_base + 0.014),
+            (r_val, y_base + 0.0185),
+        ])
+    bellows_profile.append((bellows_r * 0.70, 0.094))
+    append_lathe_profile(
         bm_neck,
-        major_radius=cfg["neck_bellows_radius"],
-        minor_radius=0.022,
+        bellows_profile,
         axis="Y",
-        center_xyz=(0.0, 0.035, 0.0),
-        major_seg=24,
-        minor_seg=8,
+        center_xyz=(0.0, 0.0, 0.0),
+        segments=20,
         mat_idx=1,
+        auto_chamfer=False,
     )
-    append_torus(
-        bm_neck,
-        major_radius=cfg["neck_bellows_radius"] * 0.96,
-        minor_radius=0.020,
-        axis="Y",
-        center_xyz=(0.0, 0.068, 0.0),
-        major_seg=24,
-        minor_seg=8,
-        mat_idx=1,
-    )
+
     neck_obj = create_mesh_node(
         "Neck",
         bm_neck,
         cfg["piv_neck"],
         parent=rover_root,
-        mat_list=[mats["R1_GreyMetal"], mats["R1_Rubber"]],
+        mat_list=[mats["R1_GreyMetal"], mats["R1_Rubber"], mats["R1_CreamEnamel"], mats["R1_BareSteel"]],
         cfg=cfg,
     )
 
-    # 2. NeckLift (telescopic inner column at (0, 0, 0) local to Neck)
+    # 2. NeckLift (telescopic inner column + gimbal yoke at (0, 0, 0) local to Neck)
     bm_lift = bmesh.new()
     append_cylinder(
         bm_lift,
-        radius1=cfg["neck_bellows_radius"] * 0.80,
-        radius2=cfg["neck_bellows_radius"] * 0.80,
-        length=0.16,
+        radius1=bellows_r * 0.70,
+        radius2=bellows_r * 0.68,
+        length=0.14,
         axis="Y",
         center_xyz=(0.0, 0.11, 0.0),
-        segments=20,
-        bevel_width=0.006,
+        segments=18,
+        bevel_width=0.004,
         bevel_segments=1,
         mat_idx=0,
+    )
+    append_beveled_box(
+        bm_lift,
+        size_xyz=(0.24, 0.032, 0.15),
+        center_xyz=(0.0, 0.185, 0.01),
+        bevel_width=0.006,
+        bevel_segments=2,
+        mat_idx=1,
     )
     neck_lift_obj = create_mesh_node(
         "NeckLift",
         bm_lift,
         (0.0, 0.0, 0.0),
         parent=neck_obj,
-        mat_list=[mats["R1_GreyMetal"]],
+        mat_list=[mats["R1_GreyMetal"], mats["R1_BareSteel"]],
         cfg=cfg,
     )
 
-    # 3. Head (pillowed cream CRT housing at (0, 0.26, 0) local to NeckLift -> (0, 1.18, +0.24) world)
+    # 3. Head (cohesive molded front cream bezel + circumferential cut seam + tapered rear shell)
     bm_head = bmesh.new()
     head_w = cfg["head_cream_width"]
     head_h = cfg["head_cream_height"]
-    head_d = cfg["head_cream_depth"]
     head_cy = cfg["head_local_center_y"]
-    head_cz = cfg["head_local_center_z"]
-
-    # Main pillowed cream CRT monitor shell (front face stays behind z = +0.24 m local so Screen is 100% clear)
-    append_beveled_box(
-        bm_head,
-        size_xyz=(head_w, head_h, head_d),
-        center_xyz=(0.0, head_cy, head_cz),
-        bevel_width=cfg["head_corner_bevel"],
-        bevel_segments=cfg["head_bevel_segments"],
-        mat_idx=0,
-        taper_front_xz=(1.03, 1.02),
-    )
-    # Softly stepped rear cathode-gun housing pillow on the back of Head (rear face at z = -0.24 m local)
-    append_beveled_box(
-        bm_head,
-        size_xyz=(head_w * 0.82, head_h * 0.76, 0.08),
-        center_xyz=(0.0, head_cy, head_cz - head_d * FLAT_UV_SCALE - 0.015),
-        bevel_width=0.028,
-        bevel_segments=3,
-        mat_idx=0,
-    )
-    # Dark-charcoal inner screen surround gasket frame recessed behind Screen
+    h_bev = 0.022
     screen_front_z = cfg["piv_screen_local"][2]
-    bezel_frame_w = cfg["screen_width"] + 0.036
-    bezel_frame_h = cfg["screen_height"] + 0.036
+    sw, sh = cfg["screen_width"], cfg["screen_height"]
+
+    # 3a. Cohesive 1-piece front cream CRT bezel housing section (z = +0.068 .. +0.248 m local)
     append_beveled_box(
         bm_head,
-        size_xyz=(bezel_frame_w, bezel_frame_h, 0.025),
-        center_xyz=(0.0, head_cy, screen_front_z - 0.012),
-        bevel_width=0.012,
+        size_xyz=(head_w, head_h, 0.180),
+        center_xyz=(0.0, head_cy, 0.158),
+        bevel_width=h_bev,
+        bevel_segments=2,
+        mat_idx=0,
+    )
+    # Recessed dark charcoal screen gasket surround immediately behind Screen
+    append_beveled_box(
+        bm_head,
+        size_xyz=(sw + 0.022, sh + 0.022, 0.020),
+        center_xyz=(0.0, head_cy, screen_front_z - 0.008),
+        bevel_width=0.006,
         bevel_segments=2,
         mat_idx=1,
     )
+
+    # 3b. Real 3D circumferential cut seam channel between front cream bezel & rear shell (z = +0.052..+0.068 m)
+    append_beveled_box(
+        bm_head,
+        size_xyz=(head_w - 0.014, head_h - 0.014, 0.024),
+        center_xyz=(0.0, head_cy, 0.060),
+        bevel_width=0.004,
+        bevel_segments=1,
+        mat_idx=1,
+    )
+
+    # 3c. Tapered rear cream shell (z = -0.198..+0.052 m local, tapering back ~12%)
+    append_beveled_box(
+        bm_head,
+        size_xyz=(head_w * 0.90, head_h * 0.88, 0.250),
+        center_xyz=(0.0, head_cy, -0.073),
+        bevel_width=h_bev,
+        bevel_segments=2,
+        mat_idx=0,
+        taper_front_xz=(1.10, 1.12),
+    )
+    # Softly stepped rear louver housing boss (z = -0.244..-0.188 m local)
+    append_beveled_box(
+        bm_head,
+        size_xyz=(head_w * 0.78, head_h * 0.72, 0.060),
+        center_xyz=(0.0, head_cy, -0.214),
+        bevel_width=0.016,
+        bevel_segments=2,
+        mat_idx=0,
+        taper_front_xz=(1.06, 1.06),
+    )
+
     head_obj = create_mesh_node(
         "Head",
         bm_head,
         cfg["piv_head_local"],
         parent=neck_lift_obj,
-        mat_list=[mats["R1_CreamEnamel"], mats["R1_GreyMetal"]],
+        mat_list=[mats["R1_CreamEnamel"], mats["R1_GreyMetal"], mats["R1_BareSteel"]],
         cfg=cfg,
     )
 
@@ -613,26 +1039,26 @@ def build_head_assembly(rover_root, cfg, mats):
         cfg=cfg,
     )
 
-    # 5. Visor (seamless inverted-U dark-charcoal wrap-around anti-glare hood spanning 0.80 m width)
+    # 5. Visor (smooth curved dark-charcoal cap brim projecting forward over Screen & tapering down upper 2/3 of sides)
     bm_visor = build_wrap_visor_bmesh(cfg)
     create_mesh_node(
         "Visor",
         bm_visor,
         cfg["piv_visor_local"],
         parent=head_obj,
-        mat_list=[mats["R1_GreyMetal"]],
+        mat_list=[mats["R1_GreyMetal"], mats["R1_BareSteel"]],
         cfg=cfg,
     )
 
-    # 6. RearVentStrip (0.46 m W x 0.25 m H 5-bar glowing amber louver grille on the back of Head)
+    # 6. RearVentStrip (recessed dark frame + 6 angled louver slats + inner amber glow on back of Head, #4 in callouts.png)
     bm_vent = bmesh.new()
     vw = cfg["rear_vent_width"]
     vh = cfg["rear_vent_height"]
     append_beveled_box(
         bm_vent,
         size_xyz=(vw, vh, 0.026),
-        center_xyz=(0.0, 0.0, 0.0),
-        bevel_width=0.010,
+        center_xyz=(0.0, 0.0, 0.004),
+        bevel_width=0.008,
         bevel_segments=2,
         mat_idx=0,
     )
@@ -642,66 +1068,110 @@ def build_head_assembly(rover_root, cfg, mats):
         by = -bar_span_y * FLAT_UV_SCALE + (bar_span_y * i / max(1, bar_count - 1))
         append_beveled_box(
             bm_vent,
-            size_xyz=(vw * 0.88, vh / (bar_count * 2.0), 0.022),
-            center_xyz=(0.0, by, -0.008),
+            size_xyz=(vw * 0.88, 0.014, 0.024),
+            center_xyz=(0.0, by, -0.006),
             bevel_width=0.003,
             bevel_segments=1,
-            mat_idx=1,
+            mat_idx=0,
+            rot_euler=(-0.32, 0.0, 0.0),
+            guard_inset=False,
         )
+    append_beveled_box(
+        bm_vent,
+        size_xyz=(vw * 0.84, vh * 0.74, 0.012),
+        center_xyz=(0.0, 0.0, -0.008),
+        bevel_width=0.003,
+        bevel_segments=1,
+        mat_idx=1,
+        guard_inset=False,
+    )
+    for sx in (-1.0, 1.0):
+        for sy in (-1.0, 1.0):
+            append_hex_bolt(
+                bm_vent,
+                radius=0.006,
+                height=0.008,
+                axis="Z",
+                center_xyz=(sx * (vw * 0.44), sy * (vh * 0.41), -0.009),
+                mat_idx=2,
+            )
     create_mesh_node(
         "RearVentStrip",
         bm_vent,
         cfg["piv_rear_vent_local"],
         parent=head_obj,
-        mat_list=[mats["R1_GreyMetal"], mats["R1_LampAmber"]],
+        mat_list=[mats["R1_GreyMetal"], mats["R1_LampAmber"], mats["R1_BareSteel"]],
         cfg=cfg,
     )
 
-    # 7. Eye (Left-cheek turned brass & charcoal optical scan lens pod, outer diameter = 0.24 m)
+    # 7. Eye (Left-cheek coaxial layered concentric brass & steel viewfinder lens pod, outer diameter = 0.24 m, #3 in callouts.png)
     bm_eye = bmesh.new()
     eye_r = cfg["eye_outer_radius"]
-    append_cylinder(
+    pod_w = cfg["eye_pod_width"]
+
+    # Coaxial stepped brass & dark-steel viewfinder barrel (axis='X', facing left cheek -X)
+    # Note: in axis='X', axial_z > 0 maps to +X (inboard toward Head), axial_z < 0 maps to -X (outboard on left cheek)
+    eye_drum_profile = [
+        (0.0, -pod_w * 0.42),            # Inner recessed dark glass seat
+        (eye_r * 0.56, -pod_w * 0.42),
+        (eye_r * 0.58, -pod_w * 0.58),   # Inner brushed-steel aperture lip
+        (eye_r * 0.68, -pod_w * 0.58),
+        (eye_r * 0.70, -pod_w * 0.46),   # Stepped dark charcoal groove
+        (eye_r * 0.82, -pod_w * 0.46),
+        (eye_r * 0.86, -pod_w * 0.62),   # Outer turned brass bezel crown
+        (eye_r * 0.98, -pod_w * 0.56),   # Outer brass barrel shoulder
+        (eye_r * 1.00, -pod_w * 0.16),   # Main brass drum wall
+        (eye_r * 0.94, -pod_w * 0.10),   # Recessed dark collar ring
+        (eye_r * 0.94, pod_w * 0.08),
+        (eye_r * 1.02, pod_w * 0.14),    # Cheek mounting brass flange
+        (eye_r * 1.02, pod_w * 0.36),
+        (eye_r * 0.85, pod_w * 0.36),
+    ]
+    append_lathe_profile(
         bm_eye,
-        radius1=eye_r,
-        radius2=eye_r,
-        length=cfg["eye_pod_width"],
+        eye_drum_profile,
         axis="X",
         center_xyz=(0.0, 0.0, 0.0),
-        segments=24,
-        bevel_width=0.012,
-        bevel_segments=2,
+        segments=22,
         mat_idx=0,
+        ring_mat_indices=[2, 3, 3, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1],
     )
-    append_cylinder(
+    # Smooth convex R1_DarkGlass dome seated inside the left-facing (-X) brass viewfinder bezel
+    append_spherical_dome(
         bm_eye,
-        radius1=eye_r * 0.84,
-        radius2=eye_r * 0.84,
-        length=cfg["eye_pod_width"] + 0.018,
+        radius=eye_r * 0.56,
+        dome_height=0.024,
         axis="X",
-        center_xyz=(-0.006, 0.0, 0.0),
-        segments=24,
-        bevel_width=0.010,
-        bevel_segments=2,
-        mat_idx=1,
-    )
-    append_cylinder(
-        bm_eye,
-        radius1=eye_r * 0.46,
-        radius2=eye_r * 0.40,
-        length=0.048,
-        axis="Z",
-        center_xyz=(-0.01, 0.0, 0.042),
+        center_xyz=(-pod_w * 0.40, 0.0, 0.0),
         segments=20,
-        bevel_width=0.006,
-        bevel_segments=2,
+        rings=4,
         mat_idx=2,
+        rot_euler=(0.0, math.pi, 0.0),
     )
+    # 6 small radial steel focus-ring grip lugs around the outer brass barrel
+    for g_i in range(6):
+        ang = FULL_CIRCLE_RAD * g_i / 6
+        append_beveled_box(
+            bm_eye,
+            size_xyz=(0.018, 0.010, 0.012),
+            center_xyz=(
+                -pod_w * 0.34,
+                eye_r * 0.99 * math.sin(ang),
+                eye_r * 0.99 * math.cos(ang),
+            ),
+            bevel_width=0.002,
+            bevel_segments=1,
+            mat_idx=3,
+            rot_euler=(ang, 0.0, 0.0),
+            guard_inset=False,
+        )
+
     eye_obj = create_mesh_node(
         "Eye",
         bm_eye,
         cfg["piv_eye_local"],
         parent=head_obj,
-        mat_list=[mats["R1_Copper"], mats["R1_GreyMetal"], mats["R1_DarkGlass"]],
+        mat_list=[mats["R1_Copper"], mats["R1_GreyMetal"], mats["R1_DarkGlass"], mats["R1_BareSteel"]],
         cfg=cfg,
     )
 
@@ -712,11 +1182,11 @@ def build_head_assembly(rover_root, cfg, mats):
     bm_lock = bmesh.new()
     append_torus(
         bm_lock,
-        major_radius=eye_r * 0.48,
-        minor_radius=0.008,
-        axis="Z",
-        center_xyz=(-0.01, 0.0, 0.0),
-        major_seg=20,
+        major_radius=eye_r * 0.62,
+        minor_radius=0.006,
+        axis="X",
+        center_xyz=(-pod_w * 0.56, 0.0, -0.05),
+        major_seg=24,
         minor_seg=8,
         mat_idx=0,
     )
@@ -732,11 +1202,11 @@ def build_head_assembly(rover_root, cfg, mats):
     bm_lglow = bmesh.new()
     append_torus(
         bm_lglow,
-        major_radius=eye_r * 0.42,
-        minor_radius=0.005,
-        axis="Z",
-        center_xyz=(-0.01, 0.0, 0.004),
-        major_seg=20,
+        major_radius=eye_r * 0.54,
+        minor_radius=0.004,
+        axis="X",
+        center_xyz=(-pod_w * 0.58, 0.0, -0.05),
+        major_seg=24,
         minor_seg=6,
         mat_idx=0,
     )
@@ -749,23 +1219,43 @@ def build_head_assembly(rover_root, cfg, mats):
         cfg=cfg,
     )
 
-    # 8. DeckSocket & DeckCover on the right cheek of Head
+    # 8. DeckSocket & flush painted cream DeckCover on the right cheek of Head (with 4 corner screws)
     create_empty_node("DeckSocket", cfg["piv_deck_socket_local"], parent=head_obj)
     bm_dcov = bmesh.new()
     append_beveled_box(
         bm_dcov,
-        size_xyz=(0.022, 0.15, 0.16),
-        center_xyz=(0.0, 0.0, 0.0),
-        bevel_width=0.006,
+        size_xyz=(0.008, 0.164, 0.174),
+        center_xyz=(-0.008, 0.0, 0.0),
+        bevel_width=0.003,
+        bevel_segments=1,
+        mat_idx=1,
+        guard_inset=False,
+    )
+    append_beveled_box(
+        bm_dcov,
+        size_xyz=(0.010, 0.156, 0.166),
+        center_xyz=(-0.005, 0.0, 0.0),
+        bevel_width=0.005,
         bevel_segments=2,
         mat_idx=0,
     )
+    for sy in (-0.060, 0.060):
+        for sz in (-0.064, 0.064):
+            append_dome_rivet(
+                bm_dcov,
+                radius=0.0045,
+                height=0.004,
+                axis="X",
+                center_xyz=(0.001, sy, sz),
+                segments=8,
+                mat_idx=2,
+            )
     create_mesh_node(
         "DeckCover",
         bm_dcov,
         cfg["piv_deck_socket_local"],
         parent=head_obj,
-        mat_list=[mats["R1_GreyMetal"]],
+        mat_list=[mats["R1_CreamEnamel"], mats["R1_GreyMetal"], mats["R1_BareSteel"]],
         cfg=cfg,
     )
     return neck_obj, head_obj
@@ -814,83 +1304,129 @@ def build_crt_screen_bmesh(cfg):
 
 def build_wrap_visor_bmesh(cfg):
     """
-    Build the dark-charcoal Visor as a single seamless inverted-U arch hood wrapping the top
-    and sides of the CRT head (0.80 m outer width, no corner seam overlaps).
+    Build the dark-charcoal Visor (R1_GreyMetal, #2 in callouts.png) as a smooth curved cap brim
+    that projects forward over the CRT screen at the brow (+0.078 m) and sweeps backward down the
+    upper 2/3 of the sides, leaving the thin front cream bezel and lower cheek exposed.
     """
     bm = bmesh.new()
     outer_w = cfg["head_visor_width"] * FLAT_UV_SCALE
-    inner_w = outer_w - cfg["head_visor_thickness"]
-    top_outer_y = cfg["head_visor_height"] * FLAT_UV_SCALE + cfg["head_visor_thickness"] * 0.45
-    top_inner_y = top_outer_y - cfg["head_visor_thickness"]
-    bot_y = -cfg["head_visor_height"] * FLAT_UV_SCALE + 0.02
-    z_front = 0.03
-    z_back = -cfg["head_visor_depth"] + 0.03
+    thick = cfg["head_visor_thickness"]
+    top_outer_y = cfg["head_visor_height"] * FLAT_UV_SCALE + thick * 0.45
+    bot_y = -0.075  # Tapers down upper ~2/3 of the head sides, curving above Eye center
+    corner_r = 0.135
+
+    arch_stations = []
+    y_corner_start = top_outer_y - corner_r
+    # Left side stations (bottom tip -> upper corner start)
+    for s_i in range(4):
+        t = s_i / 4.0
+        sy = bot_y + t * (y_corner_start - bot_y)
+        arch_stations.append((-outer_w, sy, -1.0, 0.0))
+    # Smooth 9-segment left upper corner + gently arched top brow + 9-segment right upper corner
+    cx_l = -outer_w + corner_r
+    cx_r = outer_w - corner_r
+    for c_i in range(9):
+        t = c_i / 8.0
+        ang = math.pi - t * HALF_PI_RAD
+        arch_stations.append((
+            cx_l + corner_r * math.cos(ang),
+            y_corner_start + corner_r * math.sin(ang),
+            math.cos(ang),
+            math.sin(ang),
+        ))
+    for b_i in range(1, 6):
+        t = b_i / 6.0
+        bx = cx_l + t * (cx_r - cx_l)
+        by = top_outer_y + 0.010 * math.sin(t * math.pi)
+        arch_stations.append((bx, by, 0.0, 1.0))
+    for c_i in range(9):
+        t = c_i / 8.0
+        ang = HALF_PI_RAD - t * HALF_PI_RAD
+        arch_stations.append((
+            cx_r + corner_r * math.cos(ang),
+            y_corner_start + corner_r * math.sin(ang),
+            math.cos(ang),
+            math.sin(ang),
+        ))
+    # Right side stations (upper corner start -> bottom tip)
+    for s_i in range(1, 5):
+        t = s_i / 4.0
+        sy = y_corner_start - t * (y_corner_start - bot_y)
+        arch_stations.append((outer_w, sy, 1.0, 0.0))
 
     temp = bmesh.new()
-    pts_2d = [
-        (-outer_w, bot_y),
-        (-outer_w, top_outer_y),
-        (outer_w, top_outer_y),
-        (outer_w, bot_y),
-        (inner_w, bot_y),
-        (inner_w, top_inner_y),
-        (-inner_w, top_inner_y),
-        (-inner_w, bot_y),
-    ]
-    z_rings = (z_back, z_front)
-    ring_verts = []
-    for rz in z_rings:
-        r_list = []
-        for px, py in pts_2d:
-            cheek_in = -0.015 if py < 0.0 else 0.0
-            adj_x = px + math.copysign(cheek_in, px)
-            adj_z = rz + (0.025 if (rz > 0.0 and py > 0.0) else 0.0)
-            r_list.append(temp.verts.new(unity_to_blender_pos(adj_x, py, adj_z)))
-        ring_verts.append(r_list)
+    front_outer = []
+    front_inner = []
+    back_outer = []
+    back_inner = []
 
-    u_quads = ((0, 1, 6, 7), (1, 2, 5, 6), (2, 3, 4, 5))
-    for a, b, c, d in u_quads:
-        f_back = temp.faces.new((ring_verts[0][d], ring_verts[0][c], ring_verts[0][b], ring_verts[0][a]))
-        f_back.smooth = True
-        f_front = temp.faces.new((ring_verts[-1][a], ring_verts[-1][b], ring_verts[-1][c], ring_verts[-1][d]))
-        f_front.smooth = True
+    for ox, oy, nx, ny in arch_stations:
+        h_fac = max(0.0, min(1.0, (oy - bot_y) / (top_outer_y - bot_y)))
+        local_thick = thick * (0.52 + 0.48 * (h_fac ** 0.5))
+        ix = ox - nx * local_thick
+        iy = oy - ny * local_thick
 
-    perim_pairs = ((0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 0))
-    for r_i in range(len(z_rings) - 1):
-        r0 = ring_verts[r_i]
-        r1 = ring_verts[r_i + 1]
-        for i0, i1 in perim_pairs:
-            f_side = temp.faces.new((r0[i0], r0[i1], r1[i1], r1[i0]))
-            f_side.smooth = True
+        # Smooth cap brim projecting forward at the brow (+0.076 m) and sweeping back down the sides
+        zf_out = -0.048 + 0.124 * (h_fac ** 1.30)
+        zf_in = zf_out - 0.008
+        zb = -0.155 - 0.035 * h_fac
+
+        front_outer.append(temp.verts.new(unity_to_blender_pos(ox, oy, zf_out)))
+        front_inner.append(temp.verts.new(unity_to_blender_pos(ix, iy, zf_in)))
+        back_outer.append(temp.verts.new(unity_to_blender_pos(ox, oy, zb)))
+        back_inner.append(temp.verts.new(unity_to_blender_pos(ix, iy, zb)))
+
+    n_st = len(arch_stations)
+    for i in range(n_st - 1):
+        f_out = temp.faces.new((back_outer[i], back_outer[i + 1], front_outer[i + 1], front_outer[i]))
+        f_out.smooth = True
+        f_in = temp.faces.new((front_inner[i], front_inner[i + 1], back_inner[i + 1], back_inner[i]))
+        f_in.smooth = True
+        f_fr = temp.faces.new((front_outer[i], front_outer[i + 1], front_inner[i + 1], front_inner[i]))
+        f_fr.smooth = True
+        f_bk = temp.faces.new((back_inner[i], back_inner[i + 1], back_outer[i + 1], back_outer[i]))
+        f_bk.smooth = True
+
+    f_tip_l = temp.faces.new((back_outer[0], front_outer[0], front_inner[0], back_inner[0]))
+    f_tip_l.smooth = True
+    f_tip_r = temp.faces.new((back_inner[-1], front_inner[-1], front_outer[-1], back_outer[-1]))
+    f_tip_r.smooth = True
 
     ensure_outward_normals(temp)
-    sharp = [e for e in temp.edges if e.calc_face_angle(0.0) > 0.35]
+    # Bevel ONLY the outer perimeter rim edges (>50 deg), never the smooth arch cross-ribs!
+    sharp = [e for e in temp.edges if e.calc_face_angle(0.0) > 0.88]
     if sharp:
         bmesh.ops.bevel(
             temp,
             geom=sharp,
-            offset=0.012,
+            offset=0.006,
             offset_type="OFFSET",
-            segments=3,
+            segments=2,
             profile=0.5,
             affect="EDGES",
             clamp_overlap=True,
         )
-
     ensure_outward_normals(temp)
+
     vert_map = {v: bm.verts.new(v.co) for v in temp.verts}
     for f in temp.faces:
         nf = bm.faces.new([vert_map[v] for v in f.verts])
         nf.material_index = 0
         nf.smooth = True
     temp.free()
+
     return bm
 
 
 def build_balloon_wheel(name, unity_loc, is_mismatched_rl, rover_root, cfg, mats):
     """
-    Build a seamless, single-surface plump balloon tyre where the 14 chevron tread bars are
-    sculpted directly into the toroidal mesh (zero intersecting boxes, ~2,000 tris per wheel).
+    Build a chunky off-road tyre (R1_Rubber) with:
+      - 16 paired (32 total) sharp-edged 3D chevron tread blocks wrapping onto the shoulder
+      - Raised sidewall bead rings on both outer and inner sidewalls
+      - Deep-dish wheel hub with 8 hex lug bolts (R1_BareSteel)
+      - Wheel_RL: dark dish + bold orange X-brace (R1_OrangeStripe)
+      - Wheel_FL: sage-green deep dish hub (R1_SagePatch) as in callouts.png & turnaround.png
+      - Wheel_FR & Wheel_RR: cream enamel deep dish hub (R1_CreamEnamel)
     """
     bm = bmesh.new()
     side_sign = 1.0 if unity_loc[0] >= 0.0 else -1.0
@@ -899,133 +1435,203 @@ def build_balloon_wheel(name, unity_loc, is_mismatched_rl, rover_root, cfg, mats
     inboard_ext = tyre_w - outboard_ext
     local_center_x = side_sign * (outboard_ext - inboard_ext) * FLAT_UV_SCALE
 
-    base_r = cfg["wheel_radius"] - cfg["wheel_lug_height"]
+    wheel_r = cfg["wheel_radius"]
     lug_h = cfg["wheel_lug_height"]
+    root_r = wheel_r - lug_h
     rim_r = cfg["wheel_rim_radius"]
-    mid_r = FLAT_UV_SCALE * (base_r + rim_r)
-    minor_r = (base_r - rim_r) * FLAT_UV_SCALE
     half_w = tyre_w * FLAT_UV_SCALE
 
-    num_lugs = cfg["wheel_lug_count"]
-    rings_per_lug = cfg["wheel_rings_per_lug"]
-    n_theta = num_lugs * rings_per_lug
-    n_phi = cfg["wheel_profile_segments"]
-    chevron_skew = math.radians(cfg["wheel_chevron_deg"]) * 0.22
-
-    # Crisp flat-topped plateau waveform across each lug pitch: [valley, top, top, valley]
-    lug_wave_table = (0.0, 0.96, 0.96, 0.0) if rings_per_lug == 4 else (0.0, 0.45, 1.0, 1.0, 0.45, 0.0)
-
-    temp_tyre = bmesh.new()
-    tyre_verts = []
-    for i in range(n_theta):
-        sub_i = i % rings_per_lug
-        lug_w = lug_wave_table[sub_i]
-        base_theta = FULL_CIRCLE_RAD * i / n_theta
-        row = []
-        for j in range(n_phi):
-            phi = FULL_CIRCLE_RAD * j / n_phi
-            cp, sp = math.cos(phi), math.sin(phi)
-            ux_off = half_w * math.copysign(abs(sp) ** 0.82, sp)
-            ux = local_center_x + ux_off
-
-            tread_mask = max(0.0, min(1.0, (cp - 0.15) / 0.55)) ** 1.4
-            center_groove = min(1.0, (abs(sp) / 0.14) ** 2)
-            shoulder_fade = max(0.0, min(1.0, (0.92 - abs(sp)) / 0.25))
-            lug_relief = lug_h * lug_w * tread_mask * center_groove * shoulder_fade
-
-            theta = base_theta + chevron_skew * (1.0 - abs(sp)) * tread_mask
-            r = mid_r + minor_r * cp + lug_relief
-            uy = r * math.sin(theta)
-            uz = r * math.cos(theta)
-            row.append(temp_tyre.verts.new(unity_to_blender_pos(ux, uy, uz)))
-        tyre_verts.append(row)
-
-    for i in range(n_theta):
-        ni = (i + 1) % n_theta
-        for j in range(n_phi):
-            nj = (j + 1) % n_phi
-            f = temp_tyre.faces.new((tyre_verts[i][j], tyre_verts[ni][j], tyre_verts[ni][nj], tyre_verts[i][nj]))
-            f.smooth = True
-
-    ensure_outward_normals(temp_tyre)
-    t_map = {v: bm.verts.new(v.co) for v in temp_tyre.verts}
-    for f in temp_tyre.faces:
-        nf = bm.faces.new([t_map[v] for v in f.verts])
-        nf.material_index = 0
-        nf.smooth = True
-    temp_tyre.free()
-
-    # Wheel hub dish
-    append_cylinder(
+    # 1. Plump tyre carcass with sculpted raised sidewall bead rings on both sidewalls (28 segments)
+    carcass_half_profile = [
+        (rim_r * 0.96, -half_w * 0.74),
+        (rim_r * 1.02, -half_w * 0.82),   # Rim bead lip
+        (rim_r * 1.15, -half_w * 0.92),
+        (rim_r * 1.25, -half_w * 0.96),   # Sidewall bead ring inner shoulder
+        (rim_r * 1.28, -half_w * 1.00),   # Raised sidewall bead ring peak
+        (rim_r * 1.33, -half_w * 1.00),   # Raised sidewall bead ring outer peak
+        (rim_r * 1.36, -half_w * 0.95),   # Sidewall bead ring step
+        (root_r * 0.90, -half_w * 0.94),  # Upper sidewall bulge
+        (root_r * 0.97, -half_w * 0.84),  # Tread shoulder corner
+        (root_r, -half_w * 0.65),         # Tread root left
+        (root_r * 0.985, 0.0),            # Central circumferential drainage groove
+    ]
+    carcass_profile = list(carcass_half_profile) + [
+        (r_v, -z_v) for r_v, z_v in reversed(carcass_half_profile[:-1])
+    ]
+    append_lathe_profile(
         bm,
-        radius1=rim_r * 1.02,
-        radius2=rim_r * 1.02,
-        length=tyre_w * 0.72,
+        carcass_profile,
+        axis="X",
+        center_xyz=(local_center_x, 0.0, 0.0),
+        segments=24,
+        mat_idx=0,
+        auto_chamfer=False,
+    )
+
+    # 2. 16 paired (32 individual) sharp-edged 3D chevron tread lug blocks wrapping onto the shoulder
+    num_lugs = cfg["wheel_lug_count"]
+    chev_rad = math.radians(cfg["wheel_chevron_deg"])
+    lug_arc_half = (FULL_CIRCLE_RAD / num_lugs) * 0.30
+    x_inner_edge = 0.014
+    x_shoulder_top = half_w * 0.78
+    x_shoulder_wrap = half_w * 0.93
+
+    for i in range(num_lugs):
+        base_theta = FULL_CIRCLE_RAD * i / num_lugs
+        for side_s in (-1.0, 1.0):
+            theta_c = base_theta + (0.5 * FULL_CIRCLE_RAD / num_lugs if side_s < 0 else 0.0)
+            temp_lug = bmesh.new()
+
+            # 3-ring (12-vert) pre-beveled chevron block: base -> shoulder bevel -> flat crown (22 tris/lug)
+            pts_spec = [
+                # Ring 0: base sunk into carcass + wrapping down shoulder
+                (side_s * x_inner_edge, -lug_arc_half + 0.04, root_r - 0.008),
+                (side_s * x_inner_edge, lug_arc_half + 0.04, root_r - 0.008),
+                (side_s * x_shoulder_wrap, lug_arc_half - chev_rad * 0.14, root_r * 0.87),
+                (side_s * x_shoulder_wrap, -lug_arc_half - chev_rad * 0.14, root_r * 0.87),
+                # Ring 1: lower bevel shoulder (3.5 mm below crown)
+                (side_s * (x_inner_edge + 0.003), -lug_arc_half * 0.90 + 0.04, wheel_r - 0.0045),
+                (side_s * (x_inner_edge + 0.003), lug_arc_half * 0.90 + 0.04, wheel_r - 0.0045),
+                (side_s * (x_shoulder_top + 0.005), lug_arc_half * 0.90 - chev_rad * 0.14, wheel_r - 0.006),
+                (side_s * (x_shoulder_top + 0.005), -lug_arc_half * 0.90 - chev_rad * 0.14, wheel_r - 0.006),
+                # Ring 2: crisp flat tread crown at wheel_r
+                (side_s * (x_inner_edge + 0.007), -lug_arc_half * 0.80 + 0.04, wheel_r - 0.0005),
+                (side_s * (x_inner_edge + 0.007), lug_arc_half * 0.80 + 0.04, wheel_r - 0.0005),
+                (side_s * x_shoulder_top, lug_arc_half * 0.80 - chev_rad * 0.14, wheel_r - 0.0015),
+                (side_s * x_shoulder_top, -lug_arc_half * 0.80 - chev_rad * 0.14, wheel_r - 0.0015),
+            ]
+            l_verts = []
+            for lx_off, d_th, rad in pts_spec:
+                th = theta_c + d_th
+                ux = local_center_x + lx_off
+                uy = rad * math.sin(th)
+                uz = rad * math.cos(th)
+                l_verts.append(temp_lug.verts.new(unity_to_blender_pos(ux, uy, uz)))
+
+            quad_indices = (
+                (0, 1, 5, 4),
+                (1, 2, 6, 5),
+                (2, 3, 7, 6),
+                (3, 0, 4, 7),
+                (4, 5, 9, 8),
+                (5, 6, 10, 9),
+                (6, 7, 11, 10),
+                (7, 4, 8, 11),
+                (8, 9, 10, 11),
+            )
+            for a, b, c, d in quad_indices:
+                f = temp_lug.faces.new((l_verts[a], l_verts[b], l_verts[c], l_verts[d]))
+                f.smooth = True
+
+            ensure_outward_normals(temp_lug)
+
+            v_map = {v: bm.verts.new(v.co) for v in temp_lug.verts}
+            for f in temp_lug.faces:
+                nf = bm.faces.new([v_map[v] for v in f.verts])
+                nf.material_index = 0
+                nf.smooth = True
+            temp_lug.free()
+
+    # 3. Deep-dish wheel hub + 8 hex lug bolts + custom hub styling per wheel
+    is_green_fl = name == "Wheel_FL"
+    dish_mat_idx = 1 if is_mismatched_rl else (5 if is_green_fl else 2)
+
+    out_x = half_w * 0.78
+    in_x = -half_w * 0.72
+    hub_profile_unsigned = [
+        (0.0, in_x),
+        (rim_r * 0.92, in_x),
+        (rim_r * 1.01, in_x * 0.85),
+        (rim_r * 1.01, out_x * 0.92),     # Outer beadlock flange
+        (rim_r * 0.86, out_x * 0.98),     # Outer rim lip
+        (rim_r * 0.82, out_x * 0.86),     # Step into deep dish
+        (rim_r * 0.62, out_x * 0.56),     # Conical deep dish wall
+        (rim_r * 0.34, out_x * 0.56),     # Recessed lug-bolt flat
+        (rim_r * 0.28, out_x * 0.88),     # Central axle cap boss
+        (0.0, out_x * 0.92),
+    ]
+    hub_profile = [
+        (r_v, side_sign * z_v) for r_v, z_v in (
+            hub_profile_unsigned if side_sign > 0 else reversed(hub_profile_unsigned)
+        )
+    ]
+    ring_mats_pos = [1, 1, 1, 1, 1, dish_mat_idx, dish_mat_idx, 3, 3]
+    ring_mats = ring_mats_pos if side_sign > 0 else list(reversed(ring_mats_pos))
+
+    append_lathe_profile(
+        bm,
+        hub_profile,
         axis="X",
         center_xyz=(local_center_x, 0.0, 0.0),
         segments=20,
-        bevel_width=0.010,
-        bevel_segments=1,
-        mat_idx=1,
-    )
-    outer_hub_x = local_center_x + side_sign * (tyre_w * 0.35)
-    append_torus(
-        bm,
-        major_radius=rim_r * 0.86,
-        minor_radius=0.026,
-        axis="X",
-        center_xyz=(outer_hub_x, 0.0, 0.0),
-        major_seg=22,
-        minor_seg=8,
-        mat_idx=1 if is_mismatched_rl else 2,
+        mat_idx=dish_mat_idx,
+        ring_mat_indices=ring_mats,
     )
 
+    # Circle of 8 hex lug bolts inside the deep dish
+    bolt_x = local_center_x + side_sign * (out_x * 0.60)
+    bolt_count = cfg["wheel_bolt_count"]
+    for b_i in range(bolt_count):
+        ang = FULL_CIRCLE_RAD * b_i / bolt_count
+        by = rim_r * 0.48 * math.sin(ang)
+        bz = rim_r * 0.48 * math.cos(ang)
+        append_hex_bolt(
+            bm,
+            radius=0.011,
+            height=0.016,
+            axis="X",
+            center_xyz=(bolt_x, by, bz),
+            mat_idx=3,
+        )
+
     if is_mismatched_rl:
-        # Kenji's rear-left replacement wheel: charcoal dish + central steel cap + 4 bold orange cross-bars
+        # Kenji's rear-left wheel: bold raised orange X-brace (R1_OrangeStripe) + central steel cap
+        brace_x = local_center_x + side_sign * (out_x * 0.82)
         for diag_angle in (math.pi * 0.25, -math.pi * 0.25):
             append_beveled_box(
                 bm,
-                size_xyz=(0.024, 0.030, rim_r * 1.62),
-                center_xyz=(outer_hub_x + side_sign * 0.010, 0.0, 0.0),
+                size_xyz=(0.028, 0.036, rim_r * 1.66),
+                center_xyz=(brace_x, 0.0, 0.0),
                 bevel_width=0.005,
-                bevel_segments=1,
+                bevel_segments=2,
                 mat_idx=4,
                 rot_euler=(diag_angle, 0.0, 0.0),
+                guard_inset=False,
             )
+        append_torus(
+            bm,
+            major_radius=rim_r * 0.34,
+            minor_radius=0.014,
+            axis="X",
+            center_xyz=(brace_x + side_sign * 0.004, 0.0, 0.0),
+            major_seg=18,
+            minor_seg=6,
+            mat_idx=4,
+        )
         append_cylinder(
             bm,
-            radius1=rim_r * 0.28,
-            radius2=rim_r * 0.25,
-            length=0.042,
+            radius1=rim_r * 0.22,
+            radius2=rim_r * 0.19,
+            length=0.038,
             axis="X",
-            center_xyz=(outer_hub_x + side_sign * 0.012, 0.0, 0.0),
-            segments=16,
-            bevel_width=0.006,
-            bevel_segments=1,
+            center_xyz=(brace_x + side_sign * 0.008, 0.0, 0.0),
+            segments=14,
+            bevel_width=0.005,
+            bevel_segments=2,
             mat_idx=3,
         )
     else:
+        # Sculpted inner dish rib ring (green on Wheel_FL, cream on Wheel_FR & Wheel_RR)
+        rib_x = local_center_x + side_sign * (out_x * 0.74)
         append_torus(
             bm,
-            major_radius=rim_r * 0.56,
-            minor_radius=0.022,
+            major_radius=rim_r * 0.64,
+            minor_radius=0.018,
             axis="X",
-            center_xyz=(outer_hub_x + side_sign * 0.006, 0.0, 0.0),
+            center_xyz=(rib_x, 0.0, 0.0),
             major_seg=20,
-            minor_seg=8,
-            mat_idx=2,
-        )
-        append_cylinder(
-            bm,
-            radius1=rim_r * 0.34,
-            radius2=rim_r * 0.30,
-            length=0.038,
-            axis="X",
-            center_xyz=(outer_hub_x + side_sign * 0.008, 0.0, 0.0),
-            segments=16,
-            bevel_width=0.006,
-            bevel_segments=1,
-            mat_idx=3,
+            minor_seg=6,
+            mat_idx=dish_mat_idx,
         )
 
     mat_list = [
@@ -1034,59 +1640,64 @@ def build_balloon_wheel(name, unity_loc, is_mismatched_rl, rover_root, cfg, mats
         mats["R1_CreamEnamel"],
         mats["R1_BareSteel"],
         mats["R1_OrangeStripe"],
+        mats["R1_SagePatch"],
     ]
     return create_mesh_node(name, bm, unity_loc, parent=rover_root, mat_list=mat_list, cfg=cfg)
 
 
 def build_front_tools_and_lamps(rover_root, body_obj, cfg, mats):
-    """Build Headlamp_L/R, FrontIntake, CutterTurret + CutterHead, and DigScoop visible below the nose."""
+    """
+    Build Headlamp_L/R + Glass_L/R (#6 in callouts.png), FrontIntake, CutterTurret + CutterHead
+    (#5 in callouts.png) in deep turned brass bezels with convex spherical glass domes, and
+    DigScoop (#7 in callouts.png) with mounting bolts, rolled top lip, and 6 chisel teeth.
+    """
     for side_label, sx in (("L", -1.0), ("R", 1.0)):
         piv = (sx * cfg["piv_headlamp_x"], cfg["piv_headlamp_y"], cfg["piv_headlamp_z"])
         bm_hl = bmesh.new()
-        lamp_r = cfg["headlamp_outer_radius"]
+        lamp_r = 0.088
         y_off = cfg["headlamp_visual_y_offset"]
-        append_cylinder(
+
+        # Deep turned brass bezel seated at z_local = +0.048 m so its reflector cup & Glass_L/R sit proud of Body!
+        hl_profile = [
+            (lamp_r * 0.90, -0.068),
+            (lamp_r * 0.98, -0.012),
+            (lamp_r * 1.02, 0.008),
+            (lamp_r * 1.02, 0.052),
+            (lamp_r * 0.94, 0.068),
+            (lamp_r * 0.80, 0.068),
+            (lamp_r * 0.76, 0.044),
+            (lamp_r * 0.70, 0.044),
+            (lamp_r * 0.68, 0.014),
+            (0.0, 0.014),
+        ]
+        append_lathe_profile(
             bm_hl,
-            radius1=lamp_r,
-            radius2=lamp_r * 0.96,
-            length=0.14,
+            hl_profile,
             axis="Z",
-            center_xyz=(0.0, y_off, -0.015),
+            center_xyz=(0.0, y_off, 0.048),
             segments=22,
-            bevel_width=0.010,
-            bevel_segments=2,
-            mat_idx=1,
-        )
-        append_torus(
-            bm_hl,
-            major_radius=lamp_r * 0.90,
-            minor_radius=0.018,
-            axis="Z",
-            center_xyz=(0.0, y_off, 0.052),
-            major_seg=22,
-            minor_seg=8,
             mat_idx=0,
+            ring_mat_indices=[1, 0, 0, 0, 0, 0, 2, 1, 1],
         )
         hl_obj = create_mesh_node(
             f"Headlamp_{side_label}",
             bm_hl,
             piv,
             parent=body_obj,
-            mat_list=[mats["R1_Copper"], mats["R1_GreyMetal"]],
+            mat_list=[mats["R1_Copper"], mats["R1_GreyMetal"], mats["R1_BareSteel"]],
             cfg=cfg,
         )
 
+        # Smooth convex spherical glass dome (Glass_L / Glass_R) seated proud inside the brass bezel rim
         bm_gl = bmesh.new()
-        append_cylinder(
+        append_spherical_dome(
             bm_gl,
-            radius1=lamp_r * 0.78,
-            radius2=lamp_r * 0.66,
-            length=0.034,
+            radius=lamp_r * 0.72,
+            dome_height=0.032,
             axis="Z",
-            center_xyz=(0.0, y_off, 0.036),
-            segments=22,
-            bevel_width=0.010,
-            bevel_segments=2,
+            center_xyz=(0.0, y_off, 0.046),
+            segments=20,
+            rings=4,
             mat_idx=0,
         )
         create_mesh_node(
@@ -1101,10 +1712,10 @@ def build_front_tools_and_lamps(rover_root, body_obj, cfg, mats):
     bm_fi = bmesh.new()
     append_beveled_box(
         bm_fi,
-        size_xyz=(0.28, 0.048, 0.045),
+        size_xyz=(0.28, 0.046, 0.046),
         center_xyz=(0.0, -0.03, 0.01),
         bevel_width=0.006,
-        bevel_segments=1,
+        bevel_segments=2,
         mat_idx=0,
     )
     fi_obj = create_mesh_node(
@@ -1123,7 +1734,7 @@ def build_front_tools_and_lamps(rover_root, body_obj, cfg, mats):
         length=0.22,
         axis="X",
         center_xyz=(0.0, -0.03, 0.01),
-        segments=14,
+        segments=12,
         mat_idx=0,
     )
     create_mesh_node(
@@ -1135,59 +1746,71 @@ def build_front_tools_and_lamps(rover_root, body_obj, cfg, mats):
         cfg=cfg,
     )
 
+    # Chest CutterTurret & CutterHead (#5 in callouts.png): deep stepped turned brass barrel + convex glass dome
     bm_ct = bmesh.new()
-    ct_r = cfg["cutter_outer_radius"]
+    ct_r = 0.098
     ct_y_off = cfg["cutter_visual_y_offset"]
-    append_cylinder(
+    ct_profile = [
+        (ct_r * 0.94, -0.068),
+        (ct_r * 1.00, -0.005),
+        (ct_r * 1.00, 0.038),
+        (ct_r * 0.90, 0.056),
+        (ct_r * 0.78, 0.056),
+        (ct_r * 0.76, 0.028),
+        (0.0, 0.028),
+    ]
+    append_lathe_profile(
         bm_ct,
-        radius1=ct_r,
-        radius2=ct_r * 0.94,
-        length=0.14,
+        ct_profile,
         axis="Z",
-        center_xyz=(0.0, ct_y_off, -0.01),
+        center_xyz=(0.0, ct_y_off, 0.0),
         segments=24,
-        bevel_width=0.012,
-        bevel_segments=2,
         mat_idx=0,
+        ring_mat_indices=[0, 0, 0, 0, 1, 1],
     )
     ct_obj = create_mesh_node(
         "CutterTurret",
         bm_ct,
         cfg["piv_cutter_turret"],
         parent=rover_root,
-        mat_list=[mats["R1_Copper"], mats["R1_GreyMetal"]],
+        mat_list=[mats["R1_Copper"], mats["R1_GreyMetal"], mats["R1_BareSteel"]],
         cfg=cfg,
     )
 
     bm_ch = bmesh.new()
-    append_cylinder(
+    ch_profile = [
+        (ct_r * 0.76, -0.024),
+        (ct_r * 0.76, 0.018),
+        (ct_r * 0.66, 0.034),
+        (ct_r * 0.56, 0.034),
+        (ct_r * 0.52, 0.016),
+        (0.0, 0.016),
+    ]
+    append_lathe_profile(
         bm_ch,
-        radius1=ct_r * 0.76,
-        radius2=ct_r * 0.68,
-        length=0.09,
+        ch_profile,
         axis="Z",
         center_xyz=(0.0, ct_y_off, 0.0),
-        segments=20,
-        bevel_width=0.010,
-        bevel_segments=2,
-        mat_idx=0,
-    )
-    append_torus(
-        bm_ch,
-        major_radius=ct_r * 0.44,
-        minor_radius=0.012,
-        axis="Z",
-        center_xyz=(0.0, ct_y_off - 0.01, 0.045),
-        major_seg=20,
-        minor_seg=8,
+        segments=24,
         mat_idx=1,
+        ring_mat_indices=[1, 1, 1, 3, 2],
+    )
+    append_spherical_dome(
+        bm_ch,
+        radius=ct_r * 0.52,
+        dome_height=0.020,
+        axis="Z",
+        center_xyz=(0.0, ct_y_off, 0.014),
+        segments=20,
+        rings=4,
+        mat_idx=2,
     )
     ch_obj = create_mesh_node(
         "CutterHead",
         bm_ch,
         cfg["piv_cutter_head_local"],
         parent=ct_obj,
-        mat_list=[mats["R1_GreyMetal"], mats["R1_Copper"]],
+        mat_list=[mats["R1_GreyMetal"], mats["R1_Copper"], mats["R1_DarkGlass"], mats["R1_BareSteel"]],
         cfg=cfg,
     )
     create_empty_node("CutterOrigin", cfg["piv_cutter_origin_local"], parent=ch_obj)
@@ -1195,47 +1818,99 @@ def build_front_tools_and_lamps(rover_root, body_obj, cfg, mats):
     create_empty_node("StitchOrigin", cfg["piv_stitch_origin_local"], parent=ch_obj)
     create_empty_node("CoilSocket_T1", cfg["piv_coil_socket_t1_local"], parent=ch_obj)
 
+    # DigScoop (#7 in callouts.png): cross-tube + bolted pivot collars hanging from front bumper bar
     bm_ds = bmesh.new()
-    append_beveled_box(
+    append_cylinder(
         bm_ds,
-        size_xyz=(0.54, 0.055, 0.075),
-        center_xyz=(0.0, 0.02, 0.0),
-        bevel_width=0.008,
+        radius1=0.022,
+        radius2=0.022,
+        length=0.52,
+        axis="X",
+        center_xyz=(0.0, 0.03, 0.03),
+        segments=14,
+        bevel_width=0.004,
         bevel_segments=1,
         mat_idx=0,
     )
+    for sx in (-1.0, 1.0):
+        append_beveled_box(
+            bm_ds,
+            size_xyz=(0.048, 0.064, 0.074),
+            center_xyz=(sx * 0.24, 0.03, 0.03),
+            bevel_width=0.006,
+            bevel_segments=2,
+            mat_idx=0,
+        )
+        append_hex_bolt(
+            bm_ds,
+            radius=0.014,
+            height=0.068,
+            axis="X",
+            center_xyz=(sx * 0.24, 0.03, 0.03),
+            mat_idx=1,
+        )
     ds_obj = create_mesh_node(
         "DigScoop",
         bm_ds,
         cfg["piv_dig_scoop"],
         parent=rover_root,
-        mat_list=[mats["R1_GreyMetal"]],
+        mat_list=[mats["R1_GreyMetal"], mats["R1_BareSteel"]],
         cfg=cfg,
     )
 
+    # ScoopArms: contoured loader arms reaching forward (+0.30 m) ahead of the front tyres
     bm_arms = bmesh.new()
+    # In axis='X', (u, v) = (uz, uy) local to DigScoop (0, 0.36, 0.70)
+    arm_poly = [
+        (0.01, 0.055),
+        (0.06, 0.055),
+        (0.30, -0.105),
+        (0.30, -0.155),
+        (0.24, -0.155),
+        (-0.01, 0.005),
+    ]
     for sx in (-1.0, 1.0):
-        append_beveled_box(
+        append_prism_extrusion(
             bm_arms,
-            size_xyz=(0.040, 0.050, 0.28),
-            center_xyz=(sx * 0.25, -0.07, 0.11),
-            bevel_width=0.007,
-            bevel_segments=1,
-            mat_idx=0,
-            rot_euler=(0.48, 0.0, 0.0),
-        )
-        append_cylinder(
-            bm_arms,
-            radius1=0.026,
-            radius2=0.026,
-            length=0.055,
+            arm_poly,
+            depth=0.038,
             axis="X",
-            center_xyz=(sx * 0.25, 0.01, 0.02),
-            segments=14,
-            bevel_width=0.004,
-            bevel_segments=1,
-            mat_idx=1,
+            center_xyz=(sx * 0.24, 0.0, 0.0),
+            bevel_width=0.006,
+            bevel_segments=2,
+            mat_idx=0,
         )
+        for py, pz in ((0.030, 0.025), (-0.130, 0.275)):
+            append_cylinder(
+                bm_arms,
+                radius1=0.026,
+                radius2=0.026,
+                length=0.050,
+                axis="X",
+                center_xyz=(sx * 0.24, py, pz),
+                segments=14,
+                bevel_width=0.004,
+                bevel_segments=1,
+                mat_idx=0,
+            )
+            append_hex_bolt(
+                bm_arms,
+                radius=0.013,
+                height=0.062,
+                axis="X",
+                center_xyz=(sx * 0.24, py, pz),
+                mat_idx=1,
+            )
+    append_cylinder(
+        bm_arms,
+        radius1=0.015,
+        radius2=0.015,
+        length=0.46,
+        axis="X",
+        center_xyz=(0.0, -0.055, 0.155),
+        segments=12,
+        mat_idx=0,
+    )
     arms_obj = create_mesh_node(
         "ScoopArms",
         bm_arms,
@@ -1245,48 +1920,129 @@ def build_front_tools_and_lamps(rover_root, body_obj, cfg, mats):
         cfg=cfg,
     )
 
+    # ScoopBucket: hollowed C-profile bucket extended forward (+0.11 m local Z) with rolled top lip & 6 chisel teeth
     bm_bkt = bmesh.new()
-    bw = cfg["scoop_bucket_width"]
-    bh = cfg["scoop_bucket_height"]
-    bd = cfg["scoop_bucket_depth"]
-    append_beveled_box(
+    bw = 0.62
+    bh = 0.23
+    bd = 0.25
+    zf = 0.11  # Forward offset so bucket sits clearly ahead of front tyres as in turnaround.png & callouts.png #7
+
+    # Hollowed C-profile trough wall in (uz, uy) extruded across width bw
+    trough_poly = [
+        (zf - bd * 0.34, bh * 0.48),
+        (zf - bd * 0.44, bh * 0.12),
+        (zf - bd * 0.38, -bh * 0.44),
+        (zf + bd * 0.44, -bh * 0.44),
+        (zf + bd * 0.44, -bh * 0.33),
+        (zf - bd * 0.27, -bh * 0.33),
+        (zf - bd * 0.33, bh * 0.08),
+        (zf - bd * 0.22, bh * 0.42),
+    ]
+    append_prism_extrusion(
         bm_bkt,
-        size_xyz=(bw, bh, bd * 0.35),
-        center_xyz=(0.0, 0.02, -bd * 0.25),
-        bevel_width=0.012,
+        trough_poly,
+        depth=bw - 0.024,
+        axis="X",
+        center_xyz=(0.0, 0.0, 0.0),
+        bevel_width=0.006,
         bevel_segments=2,
         mat_idx=0,
-        rot_euler=(0.18, 0.0, 0.0),
     )
-    append_beveled_box(
+
+    # Rolled cylindrical top lip + bare-steel top wear strip across full bucket width
+    append_cylinder(
         bm_bkt,
-        size_xyz=(bw, bh * 0.22, bd),
-        center_xyz=(0.0, -bh * 0.38, 0.04),
-        bevel_width=0.008,
-        bevel_segments=1,
+        radius1=0.020,
+        radius2=0.020,
+        length=bw + 0.008,
+        axis="X",
+        center_xyz=(0.0, bh * 0.46, zf - bd * 0.27),
+        segments=16,
+        bevel_width=0.004,
+        bevel_segments=2,
         mat_idx=0,
     )
+    append_cylinder(
+        bm_bkt,
+        radius1=0.011,
+        radius2=0.011,
+        length=bw * 0.94,
+        axis="X",
+        center_xyz=(0.0, bh * 0.50, zf - bd * 0.24),
+        segments=12,
+        bevel_width=0.003,
+        bevel_segments=1,
+        mat_idx=1,
+    )
+
+    # Beveled side cheek plates with corner gussets & pivot bolts
+    cheek_poly = [
+        (zf - bd * 0.44, bh * 0.48),
+        (zf - bd * 0.44, -bh * 0.44),
+        (zf + bd * 0.46, -bh * 0.44),
+        (zf + bd * 0.20, bh * 0.02),
+        (zf - bd * 0.22, bh * 0.48),
+    ]
     for sx in (-1.0, 1.0):
-        append_beveled_box(
+        cheek_x = sx * (bw * FLAT_UV_SCALE - 0.012)
+        append_prism_extrusion(
             bm_bkt,
-            size_xyz=(0.030, bh * 0.88, bd * 0.88),
-            center_xyz=(sx * (bw * FLAT_UV_SCALE - 0.014), -0.01, 0.02),
-            bevel_width=0.007,
-            bevel_segments=1,
+            cheek_poly,
+            depth=0.024,
+            axis="X",
+            center_xyz=(cheek_x, 0.0, 0.0),
+            bevel_width=0.006,
+            bevel_segments=2,
             mat_idx=0,
         )
-    tooth_count = cfg["scoop_tooth_count"]
-    tooth_span = bw * 0.78
-    for i in range(tooth_count):
-        tx = -tooth_span * FLAT_UV_SCALE + tooth_span * i / max(1, tooth_count - 1)
-        append_beveled_box(
+        append_hex_bolt(
             bm_bkt,
-            size_xyz=(0.046, 0.024, 0.062),
-            center_xyz=(tx, -bh * 0.44, bd * 0.52),
-            bevel_width=0.004,
-            bevel_segments=1,
+            radius=0.011,
+            height=0.034,
+            axis="X",
+            center_xyz=(cheek_x, -0.02, zf - bd * 0.28),
             mat_idx=1,
         )
+
+    # Beveled bare-steel cutting blade + 6 individual wedge-shaped chisel teeth
+    append_beveled_box(
+        bm_bkt,
+        size_xyz=(bw - 0.016, 0.022, 0.054),
+        center_xyz=(0.0, -bh * 0.40, zf + bd * 0.42),
+        bevel_width=0.005,
+        bevel_segments=2,
+        mat_idx=1,
+    )
+    tooth_poly = [
+        (-0.026, 0.013),
+        (-0.026, -0.013),
+        (0.054, -0.013),
+        (0.058, -0.003),
+        (0.012, 0.015),
+    ]
+    tooth_count = cfg["scoop_tooth_count"]
+    tooth_span = bw * 0.80
+    for i in range(tooth_count):
+        tx = -tooth_span * FLAT_UV_SCALE + tooth_span * i / max(1, tooth_count - 1)
+        append_prism_extrusion(
+            bm_bkt,
+            tooth_poly,
+            depth=0.042,
+            axis="X",
+            center_xyz=(tx, -bh * 0.41, zf + bd * 0.50),
+            bevel_width=0.004,
+            bevel_segments=2,
+            mat_idx=1,
+        )
+        append_hex_bolt(
+            bm_bkt,
+            radius=0.0055,
+            height=0.009,
+            axis="Y",
+            center_xyz=(tx, -bh * 0.34, zf + bd * 0.46),
+            mat_idx=1,
+        )
+
     bkt_obj = create_mesh_node(
         "ScoopBucket",
         bm_bkt,
@@ -1297,43 +2053,62 @@ def build_front_tools_and_lamps(rover_root, body_obj, cfg, mats):
     )
     create_empty_node("ScoopOrigin", cfg["piv_scoop_origin_local"], parent=bkt_obj)
 
+    # ScoopCyl_L & ScoopCyl_R: hydraulic barrel + brass gland collar + bare-steel piston rod
     for side_label, sx in (("L", -1.0), ("R", 1.0)):
         bm_cyl = bmesh.new()
-        append_cylinder(
+        cyl_profile = [
+            (0.020, -0.065),
+            (0.020, 0.025),
+            (0.024, 0.028),
+            (0.024, 0.046),
+            (0.012, 0.048),
+            (0.012, 0.145),
+            (0.017, 0.148),
+            (0.017, 0.165),
+            (0.0, 0.165),
+        ]
+        append_lathe_profile(
             bm_cyl,
-            radius1=0.020,
-            radius2=0.020,
-            length=0.15,
+            cyl_profile,
             axis="Z",
-            center_xyz=(0.0, -0.04, 0.05),
+            center_xyz=(0.0, -0.05, 0.08),
             segments=14,
-            bevel_width=0.003,
-            bevel_segments=1,
             mat_idx=0,
-            rot_euler=(0.45, 0.0, 0.0),
+            rot_euler=(-0.48, 0.0, 0.0),
+            ring_mat_indices=[2, 0, 0, 0, 1, 1, 2, 2],
         )
         create_mesh_node(
             f"ScoopCyl_{side_label}",
             bm_cyl,
             (sx * cfg["piv_scoop_cyl_x"], cfg["piv_scoop_cyl_y"], cfg["piv_scoop_cyl_z"]),
             parent=ds_obj,
-            mat_list=[mats["R1_Copper"], mats["R1_BareSteel"]],
+            mat_list=[mats["R1_Copper"], mats["R1_BareSteel"], mats["R1_GreyMetal"]],
             cfg=cfg,
         )
 
 
 def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
-    """Build BatteryLamp_0..7, Stage_1..3_L/R, ChargeConduits, CargoHold, CargoHatch, WinchSocket, Antenna."""
-    span_x = cfg["battery_bar_span_x"]
+    """
+    Build BatteryLamp_0..7 & HatchWindow/HatchCrate_0..7 (recessed into the upper rear roof indicator
+    frame #10 in callouts.png), Stage_1..3_L/R, ChargeConduits, CargoHold, full-height clamshell
+    CargoHatch (#12 in callouts.png with 4 real exterior barrel hinges & central latches), WinchSocket
+    (with 4-roller fairlead, wound steel cable turns on WinchSpool, and forged TowHook), and Antenna.
+    """
+    # Offset BatteryLamp_0..7 mesh vertices up to the upper rear roof indicator bar (y = 0.860 m, z = -0.666 m)
+    # while preserving their exact Round 2 node pivot coordinates!
+    span_x = 0.44
+    bl_dy = 0.860 - cfg["piv_battery_lamp_y"]
+    bl_dz = -0.666 - cfg["piv_battery_lamp_z"]
     for i in range(8):
         bx = -span_x * FLAT_UV_SCALE + span_x * i / 7.0
+        local_dx = (-0.189 + 0.054 * i) - round(bx, 4)
         bm_bl = bmesh.new()
         append_beveled_box(
             bm_bl,
-            size_xyz=(0.060, 0.030, 0.042),
-            center_xyz=(0.0, 0.0, 0.0),
-            bevel_width=0.005,
-            bevel_segments=1,
+            size_xyz=(0.054, 0.038, 0.034),
+            center_xyz=(local_dx, bl_dy, bl_dz),
+            bevel_width=0.004,
+            bevel_segments=2,
             mat_idx=0,
         )
         bl_obj = create_mesh_node(
@@ -1341,16 +2116,16 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
             bm_bl,
             (round(bx, 4), cfg["piv_battery_lamp_y"], cfg["piv_battery_lamp_z"]),
             parent=body_obj,
-            mat_list=[mats["R1_GreyMetal"]],
+            mat_list=[mats["R1_GreyMetal"], mats["R1_BareSteel"]],
             cfg=cfg,
         )
         bm_bg = bmesh.new()
         append_beveled_box(
             bm_bg,
-            size_xyz=(0.046, 0.020, 0.022),
-            center_xyz=(0.0, 0.004, -0.012),
+            size_xyz=(0.040, 0.022, 0.028),
+            center_xyz=(local_dx, bl_dy - 0.006, bl_dz - 0.007),
             bevel_width=0.003,
-            bevel_segments=1,
+            bevel_segments=2,
             mat_idx=0,
         )
         create_mesh_node(
@@ -1367,15 +2142,15 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
     for sx in (-1.0, 1.0):
         append_beveled_box(
             bm_cc,
-            size_xyz=(0.020, 0.012, 0.22),
+            size_xyz=(0.022, 0.012, 0.20),
             center_xyz=(sx * 0.22, 0.82, 0.24),
             bevel_width=0.003,
-            bevel_segments=1,
+            bevel_segments=2,
             mat_idx=0,
         )
         append_beveled_box(
             bm_cg,
-            size_xyz=(0.010, 0.008, 0.20),
+            size_xyz=(0.012, 0.008, 0.18),
             center_xyz=(sx * 0.22, 0.824, 0.24),
             bevel_width=0.002,
             bevel_segments=1,
@@ -1386,7 +2161,7 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
         bm_cc,
         (0.0, 0.0, 0.0),
         parent=body_obj,
-        mat_list=[mats["R1_GreyMetal"]],
+        mat_list=[mats["R1_GreyMetal"], mats["R1_BareSteel"]],
         cfg=cfg,
     )
     create_mesh_node(
@@ -1404,10 +2179,10 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
             bm_st = bmesh.new()
             append_beveled_box(
                 bm_st,
-                size_xyz=(0.024, 0.014, 0.032),
+                size_xyz=(0.026, 0.014, 0.034),
                 center_xyz=(0.0, -0.02, 0.0),
                 bevel_width=0.003,
-                bevel_segments=1,
+                bevel_segments=2,
                 mat_idx=0,
             )
             st_obj = create_mesh_node(
@@ -1439,10 +2214,10 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
     bm_hold = bmesh.new()
     append_beveled_box(
         bm_hold,
-        size_xyz=(0.54, 0.30, 0.34),
-        center_xyz=(0.0, 0.02, -0.04),
+        size_xyz=(0.54, 0.32, 0.34),
+        center_xyz=(0.0, 0.01, -0.04),
         bevel_width=0.012,
-        bevel_segments=1,
+        bevel_segments=2,
         mat_idx=0,
     )
     hold_obj = create_mesh_node(
@@ -1456,21 +2231,42 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
     create_empty_node("HatchOrigin", cfg["piv_hatch_origin_local"], parent=hold_obj)
     create_empty_node("StoryRackSocket", cfg["piv_story_rack_local"], parent=hold_obj)
 
+    # HatchWindow (#10 in callouts.png): recessed 8-cell dark indicator frame at upper rear roof edge (y = 0.860 m)
     bm_hw = bmesh.new()
     append_beveled_box(
         bm_hw,
-        size_xyz=(0.48, 0.030, 0.038),
-        center_xyz=(0.0, 0.0, -0.02),
+        size_xyz=(0.50, 0.040, 0.036),
+        center_xyz=(0.0, 0.030, -0.036),
         bevel_width=0.005,
-        bevel_segments=1,
+        bevel_segments=2,
         mat_idx=0,
     )
+    for div_i in range(9):
+        dx = -0.216 + 0.054 * div_i
+        append_beveled_box(
+            bm_hw,
+            size_xyz=(0.008, 0.038, 0.044),
+            center_xyz=(dx, 0.030, -0.042),
+            bevel_width=0.002,
+            bevel_segments=1,
+            mat_idx=0,
+            guard_inset=False,
+        )
+    for sx in (-0.235, 0.235):
+        append_hex_bolt(
+            bm_hw,
+            radius=0.005,
+            height=0.008,
+            axis="Z",
+            center_xyz=(sx, 0.030, -0.056),
+            mat_idx=1,
+        )
     hw_obj = create_mesh_node(
         "HatchWindow",
         bm_hw,
         cfg["piv_hatch_window_local"],
         parent=hold_obj,
-        mat_list=[mats["R1_GreyMetal"]],
+        mat_list=[mats["R1_GreyMetal"], mats["R1_BareSteel"]],
         cfg=cfg,
     )
     for i in range(8):
@@ -1478,10 +2274,10 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
         bm_hc = bmesh.new()
         append_beveled_box(
             bm_hc,
-            size_xyz=(0.034, 0.014, 0.022),
-            center_xyz=(0.0, 0.0, -0.018),
-            bevel_width=0.002,
-            bevel_segments=1,
+            size_xyz=(0.040, 0.022, 0.028),
+            center_xyz=(0.0, 0.030, -0.036),
+            bevel_width=0.003,
+            bevel_segments=2,
             mat_idx=0,
         )
         create_mesh_node(
@@ -1493,67 +2289,107 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
             cfg=cfg,
         )
 
+    # CargoHatch (#12 in callouts.png): full-height clamshell double doors spanning y = 0.45..0.83 m
+    # CargoHatch pivot is at (0, 0.80, -0.64)
     hatch_emp = create_empty_node("CargoHatch", cfg["piv_cargo_hatch"], parent=body_obj)
     bm_up = bmesh.new()
     hw_w = cfg["cargo_hatch_width"]
+
+    # Recessed dark perimeter frame & central vertical door-split seam channel
     append_beveled_box(
         bm_up,
-        size_xyz=(hw_w, 0.24, 0.05),
-        center_xyz=(0.0, -0.10, -0.03),
+        size_xyz=(hw_w, 0.28, 0.044),
+        center_xyz=(0.0, -0.11, -0.028),
         bevel_width=0.010,
         bevel_segments=2,
         mat_idx=2,
     )
     for sx in (-1.0, 1.0):
+        # Upper cream door leaf (y = 0.642..0.825 m -> local y = -0.158..+0.025 m, center -0.066 m)
         append_beveled_box(
             bm_up,
-            size_xyz=(hw_w * 0.43, 0.14, 0.045),
-            center_xyz=(sx * (hw_w * 0.235), -0.06, -0.038),
-            bevel_width=0.008,
-            bevel_segments=1,
+            size_xyz=(hw_w * 0.445, 0.180, 0.046),
+            center_xyz=(sx * (hw_w * 0.238), -0.066, -0.038),
+            bevel_width=0.010,
+            bevel_segments=2,
             mat_idx=0,
         )
+        # Orange beltline band across the clamshell door (y = 0.560..0.642 m -> local y = -0.240..-0.158 m)
         append_beveled_box(
             bm_up,
-            size_xyz=(hw_w * 0.43, 0.092, 0.046),
-            center_xyz=(sx * (hw_w * 0.235), -0.175, -0.038),
-            bevel_width=0.007,
-            bevel_segments=1,
+            size_xyz=(hw_w * 0.445, 0.082, 0.047),
+            center_xyz=(sx * (hw_w * 0.238), -0.199, -0.038),
+            bevel_width=0.008,
+            bevel_segments=2,
             mat_idx=1,
         )
-    append_beveled_box(
-        bm_up,
-        size_xyz=(0.046, 0.092, 0.054),
-        center_xyz=(0.0, -0.14, -0.042),
-        bevel_width=0.006,
-        bevel_segments=1,
-        mat_idx=2,
-    )
+        # 2 real exterior barrel hinges per outer door jamb (4 total)
+        for hy in (-0.040, -0.215):
+            hx = sx * (hw_w * 0.485)
+            append_beveled_box(
+                bm_up,
+                size_xyz=(0.034, 0.034, 0.018),
+                center_xyz=(hx - sx * 0.010, hy, -0.055),
+                bevel_width=0.003,
+                bevel_segments=1,
+                mat_idx=2,
+                guard_inset=False,
+            )
+            append_cylinder(
+                bm_up,
+                radius1=0.009,
+                radius2=0.009,
+                length=0.038,
+                axis="Y",
+                center_xyz=(hx + sx * 0.004, hy, -0.060),
+                segments=10,
+                bevel_width=0.002,
+                bevel_segments=1,
+                mat_idx=3,
+            )
+        # Vertical bare-steel door grab handle / latch bar flanking the center split seam (#12 in callouts.png)
+        append_beveled_box(
+            bm_up,
+            size_xyz=(0.014, 0.095, 0.022),
+            center_xyz=(sx * 0.036, -0.115, -0.060),
+            bevel_width=0.003,
+            bevel_segments=1,
+            mat_idx=3,
+            guard_inset=False,
+        )
+
     create_mesh_node(
         "UpperCanopy",
         bm_up,
         (0.0, 0.0, 0.0),
         parent=hatch_emp,
-        mat_list=[mats["R1_CreamEnamel"], mats["R1_OrangeStripe"], mats["R1_GreyMetal"], mats["R1_BareSteel"]],
+        mat_list=[
+            mats["R1_CreamEnamel"],
+            mats["R1_OrangeStripe"],
+            mats["R1_GreyMetal"],
+            mats["R1_BareSteel"],
+            mats["R1_Copper"],
+        ],
         cfg=cfg,
     )
 
+    # LowerChute: lower cream section of the clamshell doors (y = 0.455..0.558 m -> local y = -0.025..+0.078 m)
     bm_low = bmesh.new()
     append_beveled_box(
         bm_low,
-        size_xyz=(hw_w, 0.085, 0.05),
-        center_xyz=(0.0, 0.04, -0.032),
+        size_xyz=(hw_w, 0.105, 0.044),
+        center_xyz=(0.0, 0.026, -0.028),
         bevel_width=0.008,
-        bevel_segments=1,
+        bevel_segments=2,
         mat_idx=0,
     )
     for sx in (-1.0, 1.0):
         append_beveled_box(
             bm_low,
-            size_xyz=(hw_w * 0.43, 0.055, 0.046),
-            center_xyz=(sx * (hw_w * 0.235), 0.04, -0.038),
-            bevel_width=0.006,
-            bevel_segments=1,
+            size_xyz=(hw_w * 0.445, 0.096, 0.046),
+            center_xyz=(sx * (hw_w * 0.238), 0.028, -0.038),
+            bevel_width=0.008,
+            bevel_segments=2,
             mat_idx=1,
         )
     create_mesh_node(
@@ -1561,19 +2397,21 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
         bm_low,
         cfg["piv_lower_chute_local"],
         parent=hatch_emp,
-        mat_list=[mats["R1_GreyMetal"], mats["R1_CreamEnamel"]],
+        mat_list=[mats["R1_GreyMetal"], mats["R1_CreamEnamel"], mats["R1_BareSteel"]],
         cfg=cfg,
     )
 
     bm_ir = bmesh.new()
     append_cylinder(
         bm_ir,
-        radius1=0.016,
-        radius2=0.016,
+        radius1=0.015,
+        radius2=0.015,
         length=hw_w * 0.82,
         axis="X",
         center_xyz=(0.0, 0.0, -0.015),
         segments=14,
+        bevel_width=0.003,
+        bevel_segments=1,
         mat_idx=0,
     )
     create_mesh_node(
@@ -1585,36 +2423,115 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
         cfg=cfg,
     )
 
+    # WinchSocket: side mounting cheeks, motor canister, and 4-roller hawse fairlead
     bm_ws = bmesh.new()
     append_beveled_box(
         bm_ws,
-        size_xyz=(0.28, 0.11, 0.12),
-        center_xyz=(0.0, 0.02, -0.04),
-        bevel_width=0.012,
-        bevel_segments=1,
+        size_xyz=(0.28, 0.115, 0.115),
+        center_xyz=(0.0, 0.02, -0.035),
+        bevel_width=0.010,
+        bevel_segments=2,
         mat_idx=0,
     )
+    for sx in (-1.0, 1.0):
+        append_beveled_box(
+            bm_ws,
+            size_xyz=(0.026, 0.125, 0.135),
+            center_xyz=(sx * 0.125, 0.02, -0.045),
+            bevel_width=0.005,
+            bevel_segments=2,
+            mat_idx=0,
+        )
+        for by_off in (-0.02, 0.06):
+            append_hex_bolt(
+                bm_ws,
+                radius=0.008,
+                height=0.012,
+                axis="X",
+                center_xyz=(sx * 0.140, by_off, -0.055),
+                mat_idx=2,
+            )
+    append_cylinder(
+        bm_ws,
+        radius1=0.038,
+        radius2=0.036,
+        length=0.065,
+        axis="X",
+        center_xyz=(-0.165, 0.02, -0.045),
+        segments=16,
+        bevel_width=0.005,
+        bevel_segments=2,
+        mat_idx=1,
+    )
+    for ry_off in (-0.028, 0.048):
+        append_cylinder(
+            bm_ws,
+            radius1=0.009,
+            radius2=0.009,
+            length=0.16,
+            axis="X",
+            center_xyz=(0.0, ry_off, -0.108),
+            segments=10,
+            mat_idx=2,
+        )
+    for rx_off in (-0.075, 0.075):
+        append_cylinder(
+            bm_ws,
+            radius1=0.009,
+            radius2=0.009,
+            length=0.095,
+            axis="Y",
+            center_xyz=(rx_off, 0.010, -0.108),
+            segments=10,
+            mat_idx=2,
+        )
     ws_obj = create_mesh_node(
         "WinchSocket",
         bm_ws,
         cfg["piv_winch_socket"],
         parent=rover_root,
-        mat_list=[mats["R1_GreyMetal"], mats["R1_Copper"]],
+        mat_list=[mats["R1_GreyMetal"], mats["R1_Copper"], mats["R1_BareSteel"]],
         cfg=cfg,
     )
     create_empty_node("TetherSocket", (0.0, 0.0, 0.0), parent=ws_obj)
 
+    # WinchSpool: flanged drum + 10.5 visible turns of wound braided steel cable
     bm_sp = bmesh.new()
     append_cylinder(
         bm_sp,
-        radius1=0.040,
-        radius2=0.040,
-        length=0.16,
+        radius1=0.036,
+        radius2=0.036,
+        length=0.17,
         axis="X",
         center_xyz=(0.0, 0.02, -0.05),
         segments=16,
-        bevel_width=0.005,
+        bevel_width=0.004,
         bevel_segments=1,
+        mat_idx=1,
+    )
+    for sx in (-0.082, 0.082):
+        append_cylinder(
+            bm_sp,
+            radius1=0.054,
+            radius2=0.054,
+            length=0.012,
+            axis="X",
+            center_xyz=(sx, 0.02, -0.05),
+            segments=18,
+            bevel_width=0.003,
+            bevel_segments=1,
+            mat_idx=1,
+        )
+    append_helical_coil(
+        bm_sp,
+        coil_radius=0.044,
+        wire_radius=0.0068,
+        length=0.145,
+        turns=10.5,
+        axis="X",
+        center_xyz=(0.0, 0.02, -0.05),
+        segs_per_turn=10,
+        wire_segs=5,
         mat_idx=0,
     )
     create_mesh_node(
@@ -1622,27 +2539,62 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
         bm_sp,
         (0.0, 0.0, 0.0),
         parent=ws_obj,
-        mat_list=[mats["R1_BareSteel"]],
+        mat_list=[mats["R1_BareSteel"], mats["R1_GreyMetal"]],
         cfg=cfg,
     )
 
+    # TowHook: clevis shackle block + curved forged-steel crane hook
     bm_th = bmesh.new()
     append_beveled_box(
         bm_th,
-        size_xyz=(0.068, 0.058, 0.058),
-        center_xyz=(0.0, 0.01, 0.04),
+        size_xyz=(0.064, 0.054, 0.058),
+        center_xyz=(0.0, 0.015, 0.045),
         bevel_width=0.006,
-        bevel_segments=1,
+        bevel_segments=2,
         mat_idx=0,
     )
-    append_torus(
+    append_beveled_box(
         bm_th,
-        major_radius=0.025,
-        minor_radius=0.007,
+        size_xyz=(0.068, 0.022, 0.036),
+        center_xyz=(0.0, 0.015, 0.032),
+        bevel_width=0.004,
+        bevel_segments=1,
+        mat_idx=2,
+        guard_inset=False,
+    )
+    append_hex_bolt(
+        bm_th,
+        radius=0.011,
+        height=0.078,
         axis="X",
-        center_xyz=(0.0, -0.02, 0.02),
-        major_seg=16,
-        minor_seg=6,
+        center_xyz=(0.0, 0.015, 0.042),
+        mat_idx=1,
+    )
+    hook_poly = [
+        (0.035, 0.020),
+        (0.012, 0.020),
+        (-0.015, -0.005),
+        (-0.026, -0.038),
+        (-0.012, -0.068),
+        (0.022, -0.072),
+        (0.044, -0.048),
+        (0.038, -0.020),
+        (0.024, -0.024),
+        (0.024, -0.042),
+        (0.012, -0.050),
+        (-0.004, -0.044),
+        (-0.004, -0.018),
+        (0.018, 0.002),
+        (0.035, 0.002),
+    ]
+    append_prism_extrusion(
+        bm_th,
+        hook_poly,
+        depth=0.026,
+        axis="X",
+        center_xyz=(0.0, 0.0, 0.0),
+        bevel_width=0.004,
+        bevel_segments=2,
         mat_idx=1,
     )
     th_obj = create_mesh_node(
@@ -1656,26 +2608,30 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
     create_empty_node("WinchOrigin", (0.0, 0.0, 0.0), parent=th_obj)
 
     bm_ant = bmesh.new()
-    append_cylinder(
+    append_lathe_profile(
         bm_ant,
-        radius1=0.034,
-        radius2=0.026,
-        length=0.10,
+        [
+            (0.038, -0.010),
+            (0.036, 0.018),
+            (0.028, 0.024),
+            (0.028, 0.078),
+            (0.020, 0.092),
+            (0.0, 0.092),
+        ],
         axis="Y",
-        center_xyz=(0.0, 0.03, 0.0),
+        center_xyz=(0.0, 0.0, 0.0),
         segments=16,
-        bevel_width=0.005,
-        bevel_segments=1,
         mat_idx=0,
+        ring_mat_indices=[0, 2, 1, 2, 0],
     )
     append_cylinder(
         bm_ant,
         radius1=0.010,
-        radius2=0.008,
+        radius2=0.007,
         length=0.62,
         axis="Y",
         center_xyz=(0.015, 0.34, -0.02),
-        segments=12,
+        segments=10,
         mat_idx=1,
         rot_euler=(0.05, 0.0, -0.04),
     )
@@ -1696,9 +2652,19 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
         minor_radius=0.008,
         axis="Z",
         center_xyz=(0.0, -0.08, 0.0),
-        major_seg=20,
+        major_seg=18,
         minor_seg=6,
         mat_idx=0,
+    )
+    append_cylinder(
+        bm_loop,
+        radius1=0.005,
+        radius2=0.005,
+        length=0.105,
+        axis="X",
+        center_xyz=(0.0, -0.08, 0.0),
+        segments=8,
+        mat_idx=1,
     )
     loop_obj = create_mesh_node(
         "SonarLoop",
@@ -1711,17 +2677,16 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
     create_empty_node("AntennaOrigin", (0.0, 0.0, 0.0), parent=loop_obj)
 
     bm_tip = bmesh.new()
-    append_cylinder(
+    append_spherical_dome(
         bm_tip,
-        radius1=0.020,
-        radius2=0.018,
-        length=0.052,
+        radius=0.020,
+        dome_height=0.022,
         axis="Y",
         center_xyz=(0.0, 0.0, 0.0),
         segments=14,
-        bevel_width=0.005,
-        bevel_segments=1,
+        rings=4,
         mat_idx=0,
+        collar_depth=0.024,
     )
     create_mesh_node(
         "AntennaTip",
@@ -1734,7 +2699,11 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
 
 
 def build_suspension_and_sockets(rover_root, cfg, mats):
-    """Build Arm_FL..RR, Shock_FL..RR, Wheel_FL..RR, and all remaining upgrade/equipment Empty sockets."""
+    """
+    Build Arm_FL..RR (twin-spar wishbones with bolted knuckles), Shock_FL..RR (real 3D helical
+    coil-over springs & hydraulic dampers clearly visible inside the open wheel arches, #8 in callouts.png),
+    Wheel_FL..RR, and all remaining upgrade/equipment Empty sockets.
+    """
     for end_label, sz in (("F", 1.0), ("R", -1.0)):
         for side_label, sx in (("L", -1.0), ("R", 1.0)):
             tag = f"{end_label}{side_label}"
@@ -1742,13 +2711,34 @@ def build_suspension_and_sockets(rover_root, cfg, mats):
             bm_arm = bmesh.new()
             append_beveled_box(
                 bm_arm,
-                size_xyz=(0.056, 0.060, 0.35),
-                center_xyz=(sx * 0.03, -0.06, sz * 0.15),
+                size_xyz=(0.062, 0.054, 0.36),
+                center_xyz=(sx * 0.025, -0.065, sz * 0.16),
                 bevel_width=0.008,
-                bevel_segments=1,
+                bevel_segments=2,
                 mat_idx=0,
-                rot_euler=(sz * 0.32, 0.0, 0.0),
+                rot_euler=(sz * (-0.30), 0.0, 0.0),
             )
+            for kn_y, kn_z in ((0.0, 0.0), (-0.115, sz * 0.32)):
+                append_cylinder(
+                    bm_arm,
+                    radius1=0.030,
+                    radius2=0.030,
+                    length=0.072,
+                    axis="X",
+                    center_xyz=(sx * 0.025, kn_y, kn_z),
+                    segments=12,
+                    bevel_width=0.004,
+                    bevel_segments=1,
+                    mat_idx=0,
+                )
+                append_hex_bolt(
+                    bm_arm,
+                    radius=0.014,
+                    height=0.086,
+                    axis="X",
+                    center_xyz=(sx * 0.025, kn_y, kn_z),
+                    mat_idx=1,
+                )
             create_mesh_node(
                 f"Arm_{tag}",
                 bm_arm,
@@ -1758,34 +2748,63 @@ def build_suspension_and_sockets(rover_root, cfg, mats):
                 cfg=cfg,
             )
 
+            # Shock_FL..RR (#8 in callouts.png): real 3D helical coil-over spring + damper cylinder inside open wheel arch
             shock_piv = (sx * cfg["piv_shock_x"], cfg["piv_shock_y"], sz * cfg["piv_shock_z"])
             bm_sh = bmesh.new()
+            sh_tilt = (sz * 0.18, 0.0, 0.0)
+            sh_center = (sx * 0.018, -0.105, sz * 0.025)
+
             append_cylinder(
                 bm_sh,
                 radius1=0.024,
-                radius2=0.022,
-                length=0.22,
+                radius2=0.024,
+                length=0.15,
                 axis="Y",
-                center_xyz=(sx * 0.01, -0.11, sz * 0.04),
-                segments=14,
+                center_xyz=(sh_center[0], -0.055, sz * 0.015),
+                segments=12,
                 bevel_width=0.003,
                 bevel_segments=1,
                 mat_idx=0,
-                rot_euler=(sz * (-0.28), 0.0, 0.0),
+                rot_euler=sh_tilt,
             )
-            for ring_i in range(4):
-                ry = -0.05 - 0.036 * ring_i
-                rz = sz * (0.015 + 0.010 * ring_i)
-                append_torus(
+            append_cylinder(
+                bm_sh,
+                radius1=0.014,
+                radius2=0.014,
+                length=0.13,
+                axis="Y",
+                center_xyz=(sh_center[0], -0.155, sz * 0.035),
+                segments=10,
+                mat_idx=2,
+                rot_euler=sh_tilt,
+            )
+            for py_off, pz_off in ((-0.022, sz * 0.008), (-0.182, sz * 0.042)):
+                append_cylinder(
                     bm_sh,
-                    major_radius=0.034,
-                    minor_radius=0.008,
+                    radius1=0.046,
+                    radius2=0.044,
+                    length=0.018,
                     axis="Y",
-                    center_xyz=(sx * 0.01, ry, rz),
-                    major_seg=14,
-                    minor_seg=5,
-                    mat_idx=1,
+                    center_xyz=(sh_center[0], py_off, pz_off),
+                    segments=14,
+                    bevel_width=0.003,
+                    bevel_segments=1,
+                    mat_idx=2,
+                    rot_euler=sh_tilt,
                 )
+            append_helical_coil(
+                bm_sh,
+                coil_radius=0.038,
+                wire_radius=0.0080,
+                length=0.160,
+                turns=6.5,
+                axis="Y",
+                center_xyz=sh_center,
+                segs_per_turn=10,
+                wire_segs=5,
+                mat_idx=1,
+                rot_euler=sh_tilt,
+            )
             create_mesh_node(
                 f"Shock_{tag}",
                 bm_sh,
@@ -1872,11 +2891,13 @@ def build_solar_wing_model(cfg, mats, parent=None, unity_loc=(0.0, 0.0, 0.0)):
     cols, rows = 2, 3
     cell_w = (sw_w * 0.84) / cols
     cell_l = (sw_l * 0.84) / rows
+    frame_cz = -sw_l * FLAT_UV_SCALE
     for c in range(cols):
         cx = (-0.5 + c) * (cell_w + 0.018)
         for r in range(rows):
-            cz_local = -0.09 - r * (cell_l + 0.016)
-            cy_local = -cz_local * math.tan(slope_rad) + 0.012
+            dz_rel = (1 - r) * (cell_l + 0.016)
+            cz_local = frame_cz + dz_rel * math.cos(slope_rad)
+            cy_local = dz_rel * math.sin(slope_rad) + 0.012
             append_beveled_box(
                 bm,
                 size_xyz=(cell_w, 0.010, cell_l),

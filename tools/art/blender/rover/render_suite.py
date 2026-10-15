@@ -82,8 +82,17 @@ def alpha_paste_onto(canvas_rgba, src_rgba, left_x, top_y):
 def enhance_materials_with_vertex_color_for_render(mats):
     """
     Wire the baked 'Col' vertex color attribute (R=AO, G=wear, B=cavity) into the Principled BSDF
-    materials for the renders so AO, edge wear, and dust cavities read clearly in the renders.
+    materials for the renders using the same 0.52 edge-wear threshold as R1LitCore.hlsl.
     """
+    wear_targets = {
+        "R1_CreamEnamel": (0.48, 0.45, 0.40, 1.0),
+        "R1_OrangeStripe": (0.62, 0.58, 0.52, 1.0),
+        "R1_SagePatch": (0.54, 0.56, 0.53, 1.0),
+        "R1_GreyMetal": (0.52, 0.55, 0.60, 1.0),
+        "R1_Copper": (0.90, 0.66, 0.34, 1.0),
+        "R1_BareSteel": (0.72, 0.75, 0.78, 1.0),
+        "R1_Rubber": (0.20, 0.19, 0.18, 1.0),
+    }
     for name, mat in mats.items():
         if name in ("R1_Screen", "R1_LampAmber"):
             continue
@@ -105,23 +114,30 @@ def enhance_materials_with_vertex_color_for_render(mats):
         ao_map = nodes.new(type="ShaderNodeMapRange")
         ao_map.inputs["From Min"].default_value = 0.0
         ao_map.inputs["From Max"].default_value = 1.0
-        ao_map.inputs["To Min"].default_value = 0.42
+        ao_map.inputs["To Min"].default_value = 0.26
         ao_map.inputs["To Max"].default_value = 1.0
         links.new(sep_rgb.outputs["Red"], ao_map.inputs["Value"])
 
+        wear_map = nodes.new(type="ShaderNodeMapRange")
+        wear_map.clamp = True
+        wear_map.inputs["From Min"].default_value = 0.52
+        wear_map.inputs["From Max"].default_value = 1.0
+        wear_map.inputs["To Min"].default_value = 0.0
+        wear_map.inputs["To Max"].default_value = 0.65 if name != "R1_Rubber" else 0.35
+        links.new(sep_rgb.outputs["Green"], wear_map.inputs["Value"])
+
         wear_mix = nodes.new(type="ShaderNodeMix")
         wear_mix.data_type = "RGBA"
-        wear_scale = nodes.new(type="ShaderNodeMath")
-        wear_scale.operation = "MULTIPLY"
-        links.new(sep_rgb.outputs["Green"], wear_scale.inputs[0])
-        wear_scale.inputs[1].default_value = 0.22
-        links.new(wear_scale.outputs[0], wear_mix.inputs["Factor"])
+        links.new(wear_map.outputs["Result"], wear_mix.inputs["Factor"])
         wear_mix.inputs["A"].default_value = base_rgba
-        wear_mix.inputs["B"].default_value = (
-            min(1.0, base_rgba[0] * 1.12 + 0.06),
-            min(1.0, base_rgba[1] * 1.10 + 0.05),
-            min(1.0, base_rgba[2] * 1.08 + 0.04),
-            1.0,
+        wear_mix.inputs["B"].default_value = wear_targets.get(
+            name,
+            (
+                min(1.0, base_rgba[0] * 1.25 + 0.12),
+                min(1.0, base_rgba[1] * 1.22 + 0.11),
+                min(1.0, base_rgba[2] * 1.20 + 0.10),
+                1.0,
+            ),
         )
 
         cav_mix = nodes.new(type="ShaderNodeMix")
@@ -129,15 +145,18 @@ def enhance_materials_with_vertex_color_for_render(mats):
         cav_scale = nodes.new(type="ShaderNodeMath")
         cav_scale.operation = "MULTIPLY"
         links.new(sep_rgb.outputs["Blue"], cav_scale.inputs[0])
-        cav_scale.inputs[1].default_value = 0.28
+        cav_scale.inputs[1].default_value = 0.42
         links.new(cav_scale.outputs[0], cav_mix.inputs["Factor"])
         links.new(wear_mix.outputs["Result"], cav_mix.inputs["A"])
-        cav_mix.inputs["B"].default_value = (
-            base_rgba[0] * 0.62,
-            base_rgba[1] * 0.60,
-            base_rgba[2] * 0.58,
-            1.0,
-        )
+        if name in ("R1_Rubber", "R1_GreyMetal"):
+            cav_mix.inputs["B"].default_value = (0.19, 0.18, 0.16, 1.0)
+        else:
+            cav_mix.inputs["B"].default_value = (
+                base_rgba[0] * 0.48 + 0.05,
+                base_rgba[1] * 0.46 + 0.05,
+                base_rgba[2] * 0.44 + 0.04,
+                1.0,
+            )
 
         ao_mul = nodes.new(type="ShaderNodeVectorMath")
         ao_mul.operation = "SCALE"
@@ -342,8 +361,8 @@ def render_perspective_acceptance_views(cam_obj, rover_root, renders_dir, cfg, m
     scoop_arms = bpy.data.objects.get("ScoopArms")
     scoop_bkt = bpy.data.objects.get("ScoopBucket")
     if scoop_arms and scoop_bkt:
-        scoop_arms.rotation_euler = (math.radians(24.0), 0.0, 0.0)
-        scoop_bkt.rotation_euler = (math.radians(18.0), 0.0, 0.0)
+        scoop_arms.rotation_euler = (math.radians(-18.0), 0.0, 0.0)
+        scoop_bkt.rotation_euler = (math.radians(12.0), 0.0, 0.0)
         bpy.context.view_layer.update()
     dropped_path = renders_dir / "_scoop_dropped.png"
     render_to_file(dropped_path, 768, 768)
