@@ -24,123 +24,128 @@ import r1kit
 
 
 CARGO_LANDER_DIMS: dict[str, Any] = {
-    # Overall envelope & scale targets (height 5.2-5.8 m, footprint 6.0-7.5 m, wingspan <= 10.5 m)
-    "target_height": 5.56,
-    "footprint_radius": 3.42,
-    # Lower bay hull section (tier 1)
-    "hull_y_bot": 0.36,
-    "hull_y_mid": 2.48,
-    "hull_oct_radius": 1.66,
+    # Overall envelope & scale targets (height 5.2-5.8 m, footprint 6.0-7.5 m)
+    "target_height": 5.58,
+    "footprint_radius": 3.56,
+    # Lower capsule section (continuous circular capsule flowing down to ~0.54 m skirt)
+    "hull_y_bot": 0.54,
+    "hull_y_mid": 2.68,
+    "low_core_radius": 1.90,
+    "low_panel_radius": 1.92,
+    "low_panel_thick": 0.042,
+    "low_stripe_y": 1.24,
+    "low_stripe_h": 0.15,
+    # Arched rover bay opening cut into the lower capsule (>= 1.9 m x >= 1.9 m inside)
     "bay_width": 1.94,
     "bay_height": 1.96,
-    "bay_y_floor": 0.36,
-    "bay_y_ceil": 2.32,
-    "bay_z_front": 1.58,
-    "bay_z_back": -1.22,
-    # Underbelly thermal blanket & descent engine
-    "belly_y_bot": 0.20,
-    "belly_oct_radius": 1.48,
-    "engine_y_center": 0.24,
-    "engine_r_top": 0.34,
-    "engine_r_bot": 0.56,
-    "engine_len": 0.34,
-    # 4 splayed landing legs (collinear straight primary strut from upper clevis to ankle)
+    "bay_y_floor": 0.48,
+    "bay_y_ceil": 2.44,
+    "bay_arch_radius": 0.42,
+    "bay_z_front": 1.66,
+    "bay_z_back": -1.18,
+    # Underbelly thermal blanket & descent engine nozzle
+    "belly_y_bot": 0.36,
+    "belly_radius": 1.68,
+    "engine_y_center": 0.36,
+    "engine_r_top": 0.38,
+    "engine_r_bot": 0.62,
+    "engine_len": 0.36,
+    # 4 splayed landing legs (dark charcoal struts, gold foil only on upper damper sleeve, visible joints, saucer pads)
     "leg_angles_deg": (45.0, 135.0, 225.0, 315.0),
-    "leg_upper_r": 1.62,
-    "leg_upper_y": 2.06,
-    "leg_foot_r": 3.12,
-    "leg_foot_y": 0.08,
-    "leg_inner_r": 1.46,
-    "leg_inner_y": 0.62,
-    "leg_foil_t0": 0.36,
-    "leg_foil_t1": 0.74,
-    "leg_brace_t": 0.58,
-    "leg_foil_radius": 0.118,
-    "leg_aux_foil_radius": 0.082,
-    "leg_tube_radius": 0.088,
-    "leg_piston_radius": 0.064,
-    "footpad_radius": 0.29,
-    "footpad_height": 0.08,
-    # Middle cylindrical cargo drum (tier 2)
-    "drum_y_bot": 2.48,
-    "drum_y_top": 4.18,
-    "drum_core_radius": 1.53,
-    "drum_panel_radius": 1.54,
-    "drum_panel_thick": 0.038,
-    "stripe_y": 3.26,
-    "stripe_h": 0.18,
+    "leg_upper_r": 1.88,
+    "leg_upper_y": 2.18,
+    "leg_foot_r": 3.22,
+    "leg_foot_y": 0.09,
+    "leg_inner_r": 1.72,
+    "leg_inner_y": 0.68,
+    "leg_foil_t0": 0.42,
+    "leg_foil_t1": 0.66,
+    "leg_brace_t": 0.68,
+    "leg_foil_radius": 0.124,
+    "leg_tube_radius": 0.092,
+    "leg_piston_radius": 0.068,
+    "footpad_radius": 0.34,
+    "footpad_height": 0.09,
+    # Middle cylindrical capsule section (tier 2)
+    "drum_y_bot": 2.68,
+    "drum_y_top": 4.42,
+    "drum_core_radius": 1.78,
+    "drum_panel_radius": 1.80,
+    "drum_panel_thick": 0.040,
+    "stripe_y": 3.48,
+    "stripe_h": 0.19,
     "sage_patch_angle_deg": 46.0,
     "sage_patch_span_deg": 28.0,
-    "sage_patch_h": 0.58,
+    "sage_patch_h": 0.62,
     # Upper cargo hold compartment (behind CargoHatch on +Z)
-    "hold_width": 0.98,
+    "hold_width": 1.04,
     "hold_height": 1.18,
-    "hold_y_floor": 2.78,
-    "hold_y_ceil": 3.96,
-    "hold_z_front": 1.42,
-    "hold_z_back": 0.54,
-    "hatch_pivot_u": (-0.50, 3.37, 1.58),
+    "hold_y_floor": 2.92,
+    "hold_y_ceil": 4.10,
+    "hold_z_front": 1.66,
+    "hold_z_back": 0.68,
+    "hatch_pivot_u": (-0.52, 3.51, 1.72),
     # Battery Crate & CrateLid inside the upper hold
-    "crate_pivot_u": (0.0, 2.78, 0.98),
-    "crate_size_u": (0.72, 0.44, 0.52),
-    "crate_lid_pivot_u": (0.0, 3.22, 0.72),
-    "crate_lid_size_u": (0.74, 0.07, 0.54),
-    "crate_cell_offsets_x": (-0.20, 0.0, 0.20),
-    "crate_cell_radius": 0.078,
+    "crate_pivot_u": (0.0, 2.92, 1.14),
+    "crate_size_u": (0.74, 0.44, 0.52),
+    "crate_lid_pivot_u": (0.0, 3.36, 0.88),
+    "crate_lid_size_u": (0.76, 0.07, 0.54),
+    "crate_cell_offsets_x": (-0.21, 0.0, 0.21),
+    "crate_cell_radius": 0.080,
     "crate_cell_height": 0.34,
-    # Solar wing mounts & Wing_L / Wing_R
-    "wing_mount_x": 1.54,
-    "wing_pivot_x": 1.68,
-    "wing_pivot_y": 3.72,
+    # Round mid-body solar wing gimbals & large Wing_L / Wing_R (each wing ~as wide as body is tall)
+    "wing_mount_x": 1.80,
+    "wing_pivot_x": 1.94,
+    "wing_pivot_y": 3.48,
     "wing_pivot_z": 0.0,
-    "wing_drum_radius": 0.38,
-    "wing_drum_length": 0.28,
-    "wing_panel_start": 0.46,
-    "wing_panel_length": 2.54,
-    "wing_panel_chord": 1.24,
-    "wing_panel_thick": 0.042,
-    "wing_collector_tilt_deg": 32.0,
-    "wing_sub_cols": 4,
+    "wing_drum_radius": 0.52,
+    "wing_drum_length": 0.34,
+    "wing_panel_start": 0.42,
+    "wing_panel_length": 4.20,
+    "wing_panel_chord": 2.18,
+    "wing_panel_thick": 0.048,
+    "wing_collector_tilt_deg": 38.0,
+    "wing_sub_cols": 5,
     "wing_sub_rows": 2,
-    # Upper conical crew / avionics module (tier 3)
-    "cone_y_bot": 4.18,
-    "cone_y_top": 5.26,
-    "cone_r_bot": 1.52,
-    "cone_r_top": 0.94,
-    "cone_panel_thick": 0.036,
-    "rcs_y": 4.62,
-    "rcs_radius": 1.34,
+    # Upper conical crew / avionics capsule section (tier 3)
+    "cone_y_bot": 4.42,
+    "cone_y_top": 5.38,
+    "cone_r_bot": 1.78,
+    "cone_r_top": 1.06,
+    "cone_panel_thick": 0.038,
+    "rcs_y": 4.82,
+    "rcs_radius": 1.56,
     "rcs_angles_deg": (68.0, 158.0, -158.0, -68.0),
-    # Top docking collar & antenna mast
-    "cap_y_bot": 5.26,
-    "cap_y_top": 5.42,
-    "cap_radius": 0.92,
-    # RampDoor geometry & pose angles
-    "ramp_pivot_u": (0.0, 0.36, 1.58),
+    # Top docking collar & dome cap
+    "cap_y_bot": 5.38,
+    "cap_y_top": 5.58,
+    "cap_radius": 1.04,
+    # RampDoor geometry & pose angles (1.94 m length from y=0.48 sill -> 13.6 deg slope <= 15 deg)
+    "ramp_pivot_u": (0.0, 0.48, 1.66),
     "ramp_width": 1.92,
     "ramp_length": 1.94,
-    "ramp_thick": 0.082,
-    "ramp_open_deg": 101.2,
+    "ramp_thick": 0.084,
+    "ramp_open_deg": 103.6,
     "hatch_open_deg": -108.0,
     "crate_lid_open_deg": -74.0,
-    "wing_fold_deg": 78.0,
-    "wing_track_pitch_deg": 24.0,
+    "wing_fold_deg": -76.0,
+    "wing_track_pitch_deg": 18.0,
     "charge_contacts_lift_y": 0.16,
     # Bay lights
-    "bay_light_1_pivot_u": (0.0, 2.45, 1.66),
-    "bay_light_2_pivot_u": (0.0, 2.30, 0.24),
+    "bay_light_1_pivot_u": (0.0, 2.55, 1.81),
+    "bay_light_2_pivot_u": (0.0, 2.40, 0.24),
     "bay_light_3_pivot_u": (0.92, 1.54, 0.32),
     "bay_light_4_pivot_u": (-0.92, 1.54, 0.32),
     # ChargeContacts & Bay repair parts
-    "charge_contacts_pivot_u": (0.0, 0.36, 0.20),
-    "bay_cable_pivot_u": (-0.88, 1.06, 0.22),
-    "bay_socket_pivot_u": (-0.88, 1.20, -0.36),
-    # Power sockets on lower hull
+    "charge_contacts_pivot_u": (0.0, 0.48, 0.20),
+    "bay_cable_pivot_u": (-0.88, 1.16, 0.22),
+    "bay_socket_pivot_u": (-0.88, 1.30, -0.36),
+    # Power sockets at the tips of the 4 downward-curving lower-capsule cable stubs
     "power_sockets_u": {
-        "Socket_Power_1": (1.58, 0.92, 0.56),
-        "Socket_Power_2": (1.58, 0.92, -0.56),
-        "Socket_Power_3": (-1.58, 0.92, 0.56),
-        "Socket_Power_4": (-1.58, 0.92, -0.56),
+        "Socket_Power_1": (2.10, 0.58, 0.48),
+        "Socket_Power_2": (2.10, 0.58, -0.48),
+        "Socket_Power_3": (-2.10, 0.58, 0.48),
+        "Socket_Power_4": (-2.10, 0.58, -0.48),
     },
     # Rover 07 scale stand-in
     "rover_07_width": 1.52,
@@ -149,325 +154,553 @@ CARGO_LANDER_DIMS: dict[str, Any] = {
 }
 
 
-def _add_lower_hull_and_bay(mb: r1kit.MeshBuilder, d: dict[str, Any]) -> None:
-    """Build the lower octagonal cream hull, recessed >= 1.9 m x 1.9 m rover bay, underbelly gold foil, and descent thruster."""
+def _add_lower_capsule_and_bay(mb: r1kit.MeshBuilder, d: dict[str, Any]) -> None:
+    """Build the continuous circular lower capsule, arched >= 1.9 m x 1.9 m rover bay, underbelly foil, and cable stubs."""
     y_bot = d["hull_y_bot"]
     y_mid = d["hull_y_mid"]
     hull_h = y_mid - y_bot
     hull_cy = (y_bot + y_mid) * 0.5
+    core_r = d["low_core_radius"]
+    panel_r = d["low_panel_radius"]
+    panel_t = d["low_panel_thick"]
     bay_w = d["bay_width"]
+    bay_y_floor = d["bay_y_floor"]
+    bay_y_ceil = d["bay_y_ceil"]
+    bay_arch_r = d["bay_arch_radius"]
     bay_z_front = d["bay_z_front"]
     bay_z_back = d["bay_z_back"]
 
-    # Underbelly gold Kapton thermal blanket octagon
+    # Circular gold Kapton thermal blanket underbelly disk & central descent thruster nozzle bell
     belly_h = y_bot - d["belly_y_bot"]
     belly_cy = (d["belly_y_bot"] + y_bot) * 0.5
-    belly_w = d["belly_oct_radius"] * 2.0
-    mb.add_oct_prism(
+    mb.add_cylinder(
         center_u=(0.0, belly_cy, 0.0),
-        width_x=belly_w,
-        height_y=belly_h,
-        depth_z=belly_w,
-        chamfer=belly_w * 0.28,
+        radius=d["belly_radius"] * 0.92,
+        radius_top=d["belly_radius"],
+        length=belly_h,
         mat="R1_GoldFoil",
-        bevel=0.016,
+        axis_u="Y",
+        segments=28,
+        bevel=0.018,
         bevel_segments=1,
     )
-
-    # Central descent thruster nozzle bell under belly
     mb.add_cylinder(
-        center_u=(0.0, d["engine_y_center"] + 0.10, 0.0),
-        radius=d["engine_r_top"] * 1.12,
+        center_u=(0.0, d["engine_y_center"] + 0.09, 0.0),
+        radius=d["engine_r_top"] * 1.14,
         length=0.10,
         mat="R1_Copper",
         axis_u="Y",
-        segments=14,
+        segments=20,
         bevel=0.008,
+        bevel_segments=1,
     )
     mb.add_cylinder(
-        center_u=(0.0, d["engine_y_center"] - 0.04, 0.0),
+        center_u=(0.0, d["engine_y_center"] - 0.05, 0.0),
         radius=d["engine_r_bot"],
         radius_top=d["engine_r_top"],
         length=d["engine_len"],
         mat="R1_BareSteel",
         axis_u="Y",
-        segments=16,
-        bevel=0.008,
+        segments=24,
+        bevel=0.010,
         bevel_segments=1,
     )
 
-    # Lower dark base skirt ring & warm CreamEnamel waist transition ring at y_mid (matching opening_dawn.png)
-    hull_w = d["hull_oct_radius"] * 2.0
-    mb.add_oct_prism(
-        center_u=(0.0, y_bot + 0.05, 0.0),
-        width_x=hull_w,
-        height_y=0.10,
-        depth_z=hull_w,
-        chamfer=hull_w * 0.28,
+    # Recessed dark cylindrical seam core across the 298 deg arc outside the +Z rover bay opening
+    mb.add_curved_patch(
+        center_y=hull_cy,
+        height_y=hull_h - 0.04,
+        cyl_radius=core_r - 0.05,
+        thickness=0.06,
+        angle_center_deg=180.0,
+        angle_span_deg=298.0,
+        mat="R1_DarkGlass",
+        arc_segments=24,
+        bevel=0.0,
+    )
+
+    # Smooth circular lower capsule skirt collars (y_bot ≈ 0.54 m) across the non-bay arc + full waist transition collar
+    mb.add_curved_patch(
+        center_y=y_bot + 0.045,
+        height_y=0.09,
+        cyl_radius=panel_r - 0.02,
+        thickness=panel_t + 0.026,
+        angle_center_deg=180.0,
+        angle_span_deg=298.0,
         mat="R1_GreyMetal",
-        bevel=0.012,
-        bevel_segments=1,
+        arc_segments=24,
+        bevel=0.008,
     )
-    mb.add_cylinder(
-        center_u=(0.0, y_mid - 0.07, 0.0),
-        radius=d["hull_oct_radius"] - 0.02,
-        length=0.14,
+    mb.add_curved_patch(
+        center_y=y_bot + 0.12,
+        height_y=0.09,
+        cyl_radius=panel_r,
+        thickness=panel_t + 0.014,
+        angle_center_deg=180.0,
+        angle_span_deg=298.0,
         mat="R1_CreamEnamel",
-        axis_u="Y",
-        segments=24,
-        bevel=0.016,
-        bevel_segments=1,
+        arc_segments=24,
+        bevel=0.010,
     )
-    # Thin dark seam ring between lower bay hull and middle drum
+
+    # Smooth circular waist transition collar at y_mid stepping from lower capsule (1.92 m) to middle drum (1.80 m)
+    mb.add_curved_patch(
+        center_y=y_mid - 0.06,
+        height_y=0.12,
+        cyl_radius=panel_r - 0.01,
+        thickness=panel_t + 0.018,
+        angle_center_deg=180.0,
+        angle_span_deg=296.0,
+        mat="R1_CreamEnamel",
+        arc_segments=24,
+        bevel=0.010,
+    )
     mb.add_cylinder(
         center_u=(0.0, y_mid, 0.0),
-        radius=d["drum_panel_radius"] + 0.01,
+        radius=d["drum_panel_radius"] + d["drum_panel_thick"] + 0.008,
         length=0.028,
         mat="R1_GreyMetal",
         axis_u="Y",
-        segments=24,
+        segments=32,
         bevel=0.004,
     )
 
-    # Left and right lower hull walls (leaving the central 1.94 m x 1.96 m rover bay open on +Z)
-    side_wall_w = 0.22
-    side_wall_x = bay_w * 0.5 + side_wall_w * 0.5
-    bay_depth = bay_z_front - bay_z_back
-    bay_cz = (bay_z_front + bay_z_back) * 0.5
+    # 7 curved cylindrical CreamEnamel armor panel sectors around the lower capsule (continuing seams, stripe, bolts, hatches)
+    low_sector_specs = (
+        (51.0, 38.0),
+        (90.0, 38.0),
+        (135.0, 42.0),
+        (180.0, 44.0),
+        (-135.0, 42.0),
+        (-90.0, 38.0),
+        (-51.0, 38.0),
+    )
+    low_band0_y0 = y_bot + 0.18
+    low_band0_y1 = d["low_stripe_y"] - d["low_stripe_h"] * 0.5 - 0.015
+    low_band1_y0 = d["low_stripe_y"] + d["low_stripe_h"] * 0.5 + 0.015
+    low_band1_y1 = y_mid - 0.12
 
-    for sign_x in (-1.0, 1.0):
-        # Primary side sheer bulkheads flanking the bay
-        mb.add_bevel_box(
-            center_u=(sign_x * side_wall_x, hull_cy, bay_cz),
-            size_u=(side_wall_w, hull_h - 0.14, bay_depth),
+    for ang, span in low_sector_specs:
+        mb.add_curved_patch(
+            center_y=(low_band0_y0 + low_band0_y1) * 0.5,
+            height_y=low_band0_y1 - low_band0_y0,
+            cyl_radius=panel_r,
+            thickness=panel_t,
+            angle_center_deg=ang,
+            angle_span_deg=span,
             mat="R1_CreamEnamel",
-            bevel=0.018,
+            arc_segments=5,
+            bevel=0.008,
+        )
+        # On ±90 deg sectors, the upper panel has a recessed rounded service hatch built via add_rounded_portal_ring below
+        if abs(abs(ang) - 90.0) > 1.0:
+            mb.add_curved_patch(
+                center_y=(low_band1_y0 + low_band1_y1) * 0.5,
+                height_y=low_band1_y1 - low_band1_y0,
+                cyl_radius=panel_r,
+                thickness=panel_t,
+                angle_center_deg=ang,
+                angle_span_deg=span,
+                mat="R1_CreamEnamel",
+                arc_segments=5,
+                bevel=0.008,
+            )
+        mb.add_curved_patch(
+            center_y=d["low_stripe_y"],
+            height_y=d["low_stripe_h"],
+            cyl_radius=panel_r + 0.004,
+            thickness=panel_t + 0.008,
+            angle_center_deg=ang,
+            angle_span_deg=span,
+            mat="R1_OrangeStripe",
+            arc_segments=5,
+            bevel=0.004,
+        )
+
+        # Corner panel bolts along each lower-capsule armor plate
+        bolt_r = panel_r + panel_t + 0.005
+        half_span = span * 0.5 - 3.2
+        for off_deg in (-half_span, half_span):
+            brad = math.radians(ang + off_deg)
+            bx = math.sin(brad) * bolt_r
+            bz = math.cos(brad) * bolt_r
+            for by in (low_band0_y0 + 0.08, low_band1_y1 - 0.08):
+                mb.add_bolts(
+                    [(bx, by, bz)],
+                    radius=0.015,
+                    height=0.012,
+                    axis_u="Z" if abs(bz) >= abs(bx) else "X",
+                    bevel_segments=0,
+                )
+
+    # Flush curved service hatches on the ±90 deg lower-capsule flanks & louver cooling grilles on ±135 deg
+    side_arc_w = panel_r * math.radians(38.0)
+    for side_ang in (-90.0, 90.0):
+        mb.add_rounded_portal_ring(
+            w_in=0.58,
+            y_bot_in=1.54,
+            y_top_in=2.34,
+            r_bot_in=0.12,
+            r_top_in=0.12,
+            w_out=side_arc_w,
+            y_bot_out=low_band1_y0,
+            y_top_out=low_band1_y1,
+            r_bot_out=0.01,
+            r_top_out=0.01,
+            thickness=panel_t,
+            mat="R1_CreamEnamel",
+            cyl_radius=panel_r,
+            yaw_deg=side_ang,
+            corner_segments=4,
+            sub_rings=1,
+            bevel=0.006,
+        )
+        mb.add_rounded_portal_ring(
+            w_in=0.54,
+            y_bot_in=1.56,
+            y_top_in=2.32,
+            r_bot_in=0.10,
+            r_top_in=0.10,
+            w_out=0.60,
+            y_bot_out=1.53,
+            y_top_out=2.35,
+            r_bot_out=0.13,
+            r_top_out=0.13,
+            thickness=0.036,
+            mat="R1_GreyMetal",
+            cyl_radius=panel_r - 0.006,
+            yaw_deg=side_ang,
+            corner_segments=4,
+            sub_rings=1,
+            bevel=0.005,
+        )
+        mb.add_rounded_panel(
+            width_x=0.54,
+            y_bot=1.56,
+            y_top=2.32,
+            r_bot=0.10,
+            r_top=0.10,
+            thickness=panel_t,
+            mat="R1_CreamEnamel",
+            cyl_radius=panel_r,
+            yaw_deg=side_ang,
+            corner_segments=4,
+            cols=4,
+            bevel=0.006,
+        )
+        sign_x = 1.0 if side_ang > 0.0 else -1.0
+        mb.add_bevel_box(
+            center_u=(sign_x * (panel_r + panel_t + 0.008), 1.94, -0.17),
+            size_u=(0.028, 0.16, 0.07),
+            mat="R1_GreyMetal",
+            bevel=0.004,
             segments=1,
         )
-        # Outer rounded cheek bays on +/- X
-        mb.add_bevel_box(
-            center_u=(sign_x * (side_wall_x + 0.22), hull_cy, 0.0),
-            size_u=(0.24, hull_h - 0.18, 1.44),
-            mat="R1_CreamEnamel",
-            bevel=0.018,
-            segments=1,
-        )
-        # Louvered side avionics cooling vents
+
+    hatch_shell_r = panel_r + panel_t
+    for vent_ang in (-135.0, 135.0):
+        vrad = math.radians(vent_ang)
+        vr = hatch_shell_r + 0.008
         mb.add_vent_grille(
-            center_u=(sign_x * (side_wall_x + 0.34), y_bot + 1.46, 0.0),
+            center_u=(math.sin(vrad) * vr, 1.94, math.cos(vrad) * vr),
             width=0.52,
-            height=0.30,
+            height=0.32,
             depth=0.032,
             slat_count=4,
-            rot_deg_u=(0.0, 90.0 if sign_x > 0 else -90.0, 0.0),
+            rot_deg_u=(0.0, vent_ang, 0.0),
         )
-        # Diagonal bevelled corner piers where the 4 splayed landing legs attach
-        for sign_z in (-1.0, 1.0):
-            ang_y = (45.0 if sign_z > 0 else 135.0) * sign_x
-            mb.add_bevel_box(
-                center_u=(sign_x * 1.12, hull_cy, sign_z * 1.12),
-                size_u=(0.68, hull_h - 0.14, 0.24),
-                mat="R1_CreamEnamel",
-                bevel=0.016,
-                segments=1,
-                rot_deg_u=(0.0, ang_y, 0.0),
-            )
 
-    # Rear lower hull bulkhead closing the back of the bay (-Z)
-    mb.add_bevel_box(
-        center_u=(0.0, hull_cy, bay_z_back - 0.16),
-        size_u=(bay_w + 0.58, hull_h - 0.14, 0.32),
-        mat="R1_CreamEnamel",
-        bevel=0.018,
-        segments=1,
-    )
-    for tank_x in (-0.42, 0.42):
+    # Rear lower-capsule external propellant/coolant bottles on -Z (integrated onto the curved rear capsule wall)
+    for tank_x in (-0.44, 0.44):
         mb.add_cylinder(
-            center_u=(tank_x, hull_cy + 0.06, bay_z_back - 0.44),
-            radius=0.21,
-            length=1.08,
+            center_u=(tank_x, hull_cy + 0.08, -panel_r - 0.18),
+            radius=0.22,
+            length=1.14,
             mat="R1_CreamEnamel",
             axis_u="Y",
-            segments=12,
-            bevel=0.014,
+            segments=16,
+            bevel=0.016,
+            bevel_segments=1,
         )
         mb.add_cylinder(
-            center_u=(tank_x, hull_cy + 0.26, bay_z_back - 0.44),
-            radius=0.216,
-            length=0.14,
+            center_u=(tank_x, hull_cy + 0.28, -panel_r - 0.18),
+            radius=0.226,
+            length=0.15,
             mat="R1_OrangeStripe",
             axis_u="Y",
-            segments=12,
+            segments=16,
             bevel=0.005,
         )
 
-    # Front bay portal surround on +Z: sculpted CreamEnamel outer shroud + GreyMetal inner door gasket frame
-    pillar_w = 0.20
-    pillar_x = bay_w * 0.5 + pillar_w * 0.5
-    for sign_x in (-1.0, 1.0):
-        # CreamEnamel portal cheek column
-        mb.add_bevel_box(
-            center_u=(sign_x * pillar_x, hull_cy - 0.02, bay_z_front - 0.04),
-            size_u=(pillar_w, hull_h - 0.10, 0.24),
-            mat="R1_CreamEnamel",
-            bevel=0.022,
-            segments=1,
-        )
-        # Inner GreyMetal door seal jamb
-        mb.add_bevel_box(
-            center_u=(sign_x * (bay_w * 0.5 + 0.03), hull_cy - 0.02, bay_z_front + 0.02),
-            size_u=(0.06, hull_h - 0.16, 0.16),
-            mat="R1_GreyMetal",
-            bevel=0.008,
-            segments=1,
-        )
-        mb.add_bolt_row(
-            start_u=(sign_x * pillar_x, y_bot + 0.45, bay_z_front + 0.08),
-            end_u=(sign_x * pillar_x, y_mid - 0.35, bay_z_front + 0.08),
-            count=4,
-            radius=0.015,
-            height=0.012,
-            axis_u="Z",
-        )
-
-    # CreamEnamel portal header beam (houses BayLight_1 above the bay opening) & GreyMetal sill
-    mb.add_bevel_box(
-        center_u=(0.0, y_mid - 0.08, bay_z_front - 0.03),
-        size_u=(bay_w + pillar_w * 2.0, 0.16, 0.26),
+    # Arched rover bay portal cut directly into the front (+Z) of the circular lower capsule
+    # 1. Thick R1_CreamEnamel arched portal shroud framing the rover bay entrance (embedded into ±32 deg capsule flanks)
+    mb.add_rounded_portal_ring(
+        w_in=bay_w + 0.04,
+        y_bot_in=bay_y_floor,
+        y_top_in=bay_y_ceil + 0.02,
+        r_bot_in=0.05,
+        r_top_in=bay_arch_r + 0.02,
+        w_out=bay_w + 0.34,
+        y_bot_out=bay_y_floor - 0.02,
+        y_top_out=y_mid - 0.01,
+        r_bot_out=0.04,
+        r_top_out=0.14,
+        thickness=0.34,
         mat="R1_CreamEnamel",
+        z_front=bay_z_front + 0.14,
+        cyl_radius=None,
+        corner_segments=12,
+        sub_rings=1,
         bevel=0.018,
-        segments=1,
     )
+
+    # 2. Inner recessed R1_GreyMetal arched door-seal gasket frame (clear opening = 1.94 m wide x 1.96 m high)
+    mb.add_rounded_portal_ring(
+        w_in=bay_w,
+        y_bot_in=bay_y_floor,
+        y_top_in=bay_y_ceil,
+        r_bot_in=0.04,
+        r_top_in=bay_arch_r,
+        w_out=bay_w + 0.09,
+        y_bot_out=bay_y_floor - 0.01,
+        y_top_out=bay_y_ceil + 0.05,
+        r_bot_out=0.06,
+        r_top_out=bay_arch_r + 0.04,
+        thickness=0.28,
+        mat="R1_GreyMetal",
+        z_front=bay_z_front + 0.08,
+        cyl_radius=None,
+        corner_segments=10,
+        sub_rings=1,
+        bevel=0.012,
+    )
+
+    # Sill threshold beam under the arched portal entrance
     mb.add_bevel_box(
-        center_u=(0.0, y_bot + 0.04, bay_z_front - 0.04),
-        size_u=(bay_w + pillar_w * 2.0, 0.09, 0.26),
+        center_u=(0.0, bay_y_floor - 0.03, bay_z_front - 0.03),
+        size_u=(bay_w + 0.32, 0.08, 0.28),
         mat="R1_GreyMetal",
         bevel=0.010,
         segments=1,
     )
 
-    # Interior bay floor deck, wheel guide tracks, warm cream ribbed walls, and rear bay diagnostic locker
+    # Perimeter bolts following the vertical jambs and rounded arch of the bay frame
+    arch_bolt_pts: list[tuple[float, float, float]] = []
+    jamb_x = bay_w * 0.5 + 0.10
+    bolt_z = bay_z_front + 0.14
+    for sign_x in (-1.0, 1.0):
+        for by in (0.72, 1.12, 1.52, 1.92):
+            arch_bolt_pts.append((sign_x * jamb_x, by, bolt_z))
+        arch_cx = sign_x * (bay_w * 0.5 - bay_arch_r)
+        arch_cy = bay_y_ceil - bay_arch_r
+        arch_r_bolt = bay_arch_r + 0.10
+        for a_deg in (24.0, 62.0):
+            arad = math.radians(a_deg)
+            arch_bolt_pts.append(
+                (
+                    arch_cx + sign_x * arch_r_bolt * math.cos(arad),
+                    arch_cy + arch_r_bolt * math.sin(arad),
+                    bolt_z,
+                )
+            )
+    mb.add_bolts(arch_bolt_pts, radius=0.015, height=0.012, axis_u="Z", bevel_segments=0)
+
+    # Interior rover bay floor deck, wheel guide tracks, side bulkheads, and arched ceiling vault (all inside R_low)
+    bay_depth = bay_z_front - bay_z_back
+    bay_cz = (bay_z_front + bay_z_back) * 0.5
     mb.add_bevel_box(
-        center_u=(0.0, d["bay_y_floor"] - 0.03, bay_cz),
-        size_u=(bay_w + 0.08, 0.08, bay_depth + 0.08),
+        center_u=(0.0, bay_y_floor - 0.035, bay_cz),
+        size_u=(bay_w + 0.10, 0.07, bay_depth + 0.08),
         mat="R1_GreyMetal",
         bevel=0.008,
         segments=1,
     )
     for sign_x in (-1.0, 1.0):
         mb.add_bevel_box(
-            center_u=(sign_x * 0.84, d["bay_y_floor"] + 0.024, bay_cz),
-            size_u=(0.08, 0.048, bay_depth - 0.18),
+            center_u=(sign_x * 0.84, bay_y_floor + 0.022, bay_cz),
+            size_u=(0.08, 0.044, bay_depth - 0.18),
             mat="R1_BareSteel",
             bevel=0.006,
             segments=1,
         )
+        # Interior side walls closing the bay cleanly inside the cylindrical capsule
+        mb.add_bevel_box(
+            center_u=(sign_x * (bay_w * 0.5 + 0.04), (bay_y_floor + bay_y_ceil) * 0.5, bay_cz),
+            size_u=(0.08, bay_y_ceil - bay_y_floor + 0.04, bay_depth),
+            mat="R1_CreamEnamel",
+            bevel=0.008,
+            segments=1,
+        )
 
+    # Interior rear bulkhead wall & bay ceiling deck
     mb.add_bevel_box(
-        center_u=(0.0, d["bay_y_ceil"] + 0.04, bay_cz),
-        size_u=(bay_w + 0.08, 0.08, bay_depth + 0.08),
+        center_u=(0.0, (bay_y_floor + bay_y_ceil) * 0.5, bay_z_back - 0.04),
+        size_u=(bay_w + 0.12, bay_y_ceil - bay_y_floor + 0.06, 0.08),
         mat="R1_CreamEnamel",
         bevel=0.008,
         segments=1,
     )
-    for rib_z in (-0.85, -0.18, 0.48, 1.12):
-        mb.add_bevel_box(
-            center_u=(0.0, d["bay_y_ceil"] - 0.025, rib_z),
-            size_u=(bay_w - 0.04, 0.05, 0.07),
+    mb.add_bevel_box(
+        center_u=(0.0, bay_y_ceil + 0.035, bay_cz),
+        size_u=(bay_w + 0.10, 0.07, bay_depth + 0.08),
+        mat="R1_CreamEnamel",
+        bevel=0.008,
+        segments=1,
+    )
+
+    # Arched structural bay ribs matching the rounded portal opening
+    for rib_z in (-0.82, 0.0, 0.82):
+        mb.add_rounded_portal_ring(
+            w_in=bay_w - 0.06,
+            y_bot_in=bay_y_floor + 0.01,
+            y_top_in=bay_y_ceil - 0.03,
+            r_bot_in=0.04,
+            r_top_in=bay_arch_r - 0.02,
+            w_out=bay_w + 0.02,
+            y_bot_out=bay_y_floor,
+            y_top_out=bay_y_ceil + 0.02,
+            r_bot_out=0.05,
+            r_top_out=bay_arch_r + 0.02,
+            thickness=0.065,
             mat="R1_GreyMetal",
-            bevel=0.005,
-            segments=1,
+            z_front=rib_z + 0.032,
+            cyl_radius=None,
+            corner_segments=3,
+            sub_rings=1,
+            bevel=0.0,
         )
-        for sign_x in (-1.0, 1.0):
-            mb.add_bevel_box(
-                center_u=(sign_x * (bay_w * 0.5 - 0.025), hull_cy, rib_z),
-                size_u=(0.05, hull_h - 0.24, 0.07),
-                mat="R1_GreyMetal",
-                bevel=0.005,
-                segments=1,
-            )
 
     # Interior left wall (+X) equipment locker
     mb.add_bevel_box(
-        center_u=(bay_w * 0.5 - 0.08, 1.12, -0.25),
-        size_u=(0.14, 0.62, 1.16),
+        center_u=(bay_w * 0.5 - 0.07, 1.22, -0.25),
+        size_u=(0.13, 0.62, 1.14),
         mat="R1_CreamEnamel",
         bevel=0.010,
         segments=1,
     )
     mb.add_bevel_box(
-        center_u=(bay_w * 0.5 - 0.145, 1.12, -0.25),
-        size_u=(0.02, 0.10, 1.12),
+        center_u=(bay_w * 0.5 - 0.138, 1.22, -0.25),
+        size_u=(0.02, 0.10, 1.10),
         mat="R1_OrangeStripe",
         bevel=0.003,
         segments=1,
     )
     # Interior right wall (-X) power bus panel & upstream trunk cable feeding Bay_CableGap / Bay_CableFixed
     mb.add_bevel_box(
-        center_u=(-bay_w * 0.5 + 0.05, 1.12, -0.08),
-        size_u=(0.08, 0.84, 1.64),
+        center_u=(-bay_w * 0.5 + 0.045, 1.22, -0.08),
+        size_u=(0.08, 0.84, 1.62),
         mat="R1_GreyMetal",
         bevel=0.008,
         segments=1,
     )
     c_piv_x, c_piv_y, c_piv_z = d["bay_cable_pivot_u"]
     mb.add_pipe(
-        p0_u=(c_piv_x, c_piv_y, bay_z_front - 0.32),
+        p0_u=(c_piv_x, c_piv_y, bay_z_front - 0.34),
         p1_u=(c_piv_x, c_piv_y, c_piv_z + 0.24),
         radius=0.034,
         mat="R1_Rubber",
-        segments=8,
+        segments=10,
     )
     # Interior rear bulkhead power transformer & copper coil
     mb.add_bevel_box(
-        center_u=(0.32, 1.34, bay_z_back + 0.10),
+        center_u=(0.32, 1.42, bay_z_back + 0.09),
         size_u=(0.68, 0.82, 0.18),
         mat="R1_GreyMetal",
         bevel=0.010,
         segments=1,
     )
     mb.add_cylinder(
-        center_u=(-0.44, 1.28, bay_z_back + 0.12),
+        center_u=(-0.44, 1.36, bay_z_back + 0.11),
         radius=0.18,
         length=0.76,
         mat="R1_Copper",
         axis_u="Y",
-        segments=10,
+        segments=12,
         bevel=0.008,
     )
 
-    # Power socket manifold housings on lower hull sides matching Socket_Power_1..4
+    # Thick power cable root glands on lower capsule flanks + short downward-curving cable stubs to Socket_Power_1..4
     for _, (sx, sy, sz) in sorted(d["power_sockets_u"].items()):
         sign_x = 1.0 if sx >= 0.0 else -1.0
+        hull_x_at_z = math.sqrt(max(0.5, (panel_r + panel_t) ** 2 - sz * sz))
+        gland_x = sign_x * (hull_x_at_z - 0.02)
+        gland_y = 1.12
+        gland_z = sz
+
+        # Bolted GreyMetal angled bulkhead gland housing on the lower capsule wall
         mb.add_bevel_box(
-            center_u=(sx - sign_x * 0.04, sy, sz),
-            size_u=(0.12, 0.26, 0.26),
+            center_u=(gland_x, gland_y, gland_z),
+            size_u=(0.18, 0.26, 0.24),
             mat="R1_GreyMetal",
-            bevel=0.010,
+            bevel=0.014,
             segments=1,
+            rot_deg_u=(0.0, 0.0, -sign_x * 16.0),
+        )
+        mb.add_cylinder(
+            center_u=(gland_x + sign_x * 0.08, gland_y - 0.02, gland_z),
+            radius=0.088,
+            radius_top=0.076,
+            length=0.13,
+            mat="R1_Copper",
+            axis_u="X",
+            segments=14,
+            bevel=0.008,
+            bevel_segments=1,
+            rot_deg_u=(0.0, 0.0, -sign_x * 24.0),
+        )
+
+        # Smooth downward-curving thick R1_Rubber cable stub ending at Socket_Power_1..4
+        cable_pts: list[tuple[float, float, float]] = []
+        n_curve = 6
+        p0 = (gland_x + sign_x * 0.09, gland_y - 0.03, gland_z)
+        p1 = (sx + sign_x * 0.03, gland_y - 0.10, gland_z)
+        p2 = (sx + sign_x * 0.04, sy + 0.22, sz)
+        p3 = (sx, sy + 0.03, sz)
+        for c_i in range(n_curve + 1):
+            t = c_i / n_curve
+            u = 1.0 - t
+            pt = tuple(
+                (u**3) * p0[k]
+                + 3.0 * (u**2) * t * p1[k]
+                + 3.0 * u * (t**2) * p2[k]
+                + (t**3) * p3[k]
+                for k in range(3)
+            )
+            cable_pts.append(pt)
+
+        mb.add_tube_path(
+            points_u=cable_pts,
+            radius=0.062,
+            mat="R1_Rubber",
+            segments=12,
+            cap_ends=True,
+        )
+
+        # Terminal coupling ferrule & socket receptacle right at the Socket_Power_1..4 empty
+        mb.add_cylinder(
+            center_u=(sx, sy + 0.04, sz),
+            radius=0.078,
+            length=0.08,
+            mat="R1_GreyMetal",
+            axis_u="Y",
+            segments=14,
+            bevel=0.008,
+            bevel_segments=1,
         )
         mb.add_cylinder(
             center_u=(sx, sy, sz),
-            radius=0.082,
-            length=0.08,
-            mat="R1_Copper",
-            axis_u="X",
-            segments=10,
-            bevel=0.006,
-        )
-        mb.add_cylinder(
-            center_u=(sx + sign_x * 0.025, sy, sz),
-            radius=0.048,
+            radius=0.070,
             length=0.05,
-            mat="R1_DarkGlass",
-            axis_u="X",
-            segments=8,
-            bevel=0.003,
+            mat="R1_Copper",
+            axis_u="Y",
+            segments=14,
+            bevel=0.006,
+            bevel_segments=1,
         )
 
 
 def _add_splayed_landing_legs(mb: r1kit.MeshBuilder, d: dict[str, Any]) -> None:
-    """Build the 4 collinear splayed landing legs with arched cream clevis mounts, gold foil wraps, and saucer footpads."""
+    """Build the 4 dark charcoal splayed legs with gold foil only on the upper damper sleeve, visible joints, and saucer pads."""
     for ang_deg in d["leg_angles_deg"]:
         rad = math.radians(ang_deg)
         sx = math.sin(rad)
@@ -479,7 +712,6 @@ def _add_splayed_landing_legs(mb: r1kit.MeshBuilder, d: dict[str, Any]) -> None:
         p_foot = (sx * d["leg_foot_r"], d["leg_foot_y"], cz * d["leg_foot_r"])
         p_in = (sx * d["leg_inner_r"], d["leg_inner_y"], cz * d["leg_inner_r"])
 
-        # Collinear points along the straight main leg axis from p_up to p_foot
         t_foil0 = d["leg_foil_t0"]
         t_foil1 = d["leg_foil_t1"]
         t_brace = d["leg_brace_t"]
@@ -487,10 +719,10 @@ def _add_splayed_landing_legs(mb: r1kit.MeshBuilder, d: dict[str, Any]) -> None:
         p_foil1 = tuple(p_up[k] * (1.0 - t_foil1) + p_foot[k] * t_foil1 for k in range(3))
         p_brace = tuple(p_up[k] * (1.0 - t_brace) + p_foot[k] * t_brace for k in range(3))
 
-        # Sculpted CreamEnamel upper clevis housing + GreyMetal inner yoke (matching opening_dawn.png)
+        # 1. Upper hull trunnion fairing (R1_CreamEnamel) + visible dark GreyMetal clevis yoke & BareSteel pivot pin
         mb.add_bevel_box(
-            center_u=(p_up[0] - sx * 0.10, p_up[1] - 0.06, p_up[2] - cz * 0.10),
-            size_u=(0.36, 0.56, 0.34),
+            center_u=(p_up[0] - sx * 0.10, p_up[1] - 0.04, p_up[2] - cz * 0.10),
+            size_u=(0.34, 0.50, 0.32),
             mat="R1_CreamEnamel",
             bevel=0.028,
             segments=1,
@@ -498,8 +730,8 @@ def _add_splayed_landing_legs(mb: r1kit.MeshBuilder, d: dict[str, Any]) -> None:
             top_scale_xz=(0.82, 0.85),
         )
         mb.add_bevel_box(
-            center_u=(p_up[0] - sx * 0.02, p_up[1] - 0.04, p_up[2] - cz * 0.02),
-            size_u=(0.24, 0.42, 0.28),
+            center_u=(p_up[0] - sx * 0.01, p_up[1] - 0.02, p_up[2] - cz * 0.01),
+            size_u=(0.24, 0.36, 0.28),
             mat="R1_GreyMetal",
             bevel=0.014,
             segments=1,
@@ -507,103 +739,153 @@ def _add_splayed_landing_legs(mb: r1kit.MeshBuilder, d: dict[str, Any]) -> None:
         )
         mb.add_cylinder(
             center_u=p_up,
-            radius=0.052,
-            length=0.38,
+            radius=0.054,
+            length=0.36,
             mat="R1_BareSteel",
             axis_u="X",
-            segments=8,
-            bevel=0.005,
+            segments=10,
+            bevel=0.006,
             rot_deg_u=(0.0, ang_deg, 0.0),
         )
 
-        # Continuous straight primary leg tube from upper clevis to ankle
+        # 2. Dark charcoal (R1_GreyMetal) upper primary strut & lower telescoping strut
         mb.add_pipe(
             p0_u=p_up,
-            p1_u=p_foil1,
+            p1_u=p_brace,
             radius=d["leg_tube_radius"],
             mat="R1_GreyMetal",
-            segments=10,
+            segments=14,
         )
         mb.add_pipe(
-            p0_u=p_foil1,
+            p0_u=p_brace,
             p1_u=p_foot,
             radius=d["leg_piston_radius"],
             mat="R1_GreyMetal",
-            segments=10,
+            segments=14,
         )
 
-        # Gold Kapton thermal foil sleeve wrapping the middle third of the primary leg strut
+        # 3. Gold Kapton thermal foil wrap ONLY on the upper damper sleeve (t = 0.42..0.66)
         mb.add_foil_wrap(
             p0_u=p_foil0,
             p1_u=p_foil1,
             radius=d["leg_foil_radius"],
-            rings=5,
-            segments=10,
+            rings=4,
+            segments=14,
             foil_mat="R1_GoldFoil",
             band_mat="R1_Rubber",
         )
 
-        # Diagonal inner damper strut from lower hull out to the leg's gold-foil section, wrapped in gold foil
+        # 4. Visible mid-leg knee / damper clevis joint at p_brace (t = 0.68) with BareSteel cross-pin
+        mb.add_bevel_box(
+            center_u=(p_brace[0] - sx * 0.03, p_brace[1] - 0.02, p_brace[2] - cz * 0.03),
+            size_u=(0.24, 0.22, 0.26),
+            mat="R1_GreyMetal",
+            bevel=0.014,
+            segments=1,
+            rot_deg_u=(0.0, ang_deg, 0.0),
+        )
+        mb.add_cylinder(
+            center_u=p_brace,
+            radius=0.048,
+            length=0.30,
+            mat="R1_BareSteel",
+            axis_u="X",
+            segments=10,
+            bevel=0.005,
+            rot_deg_u=(0.0, ang_deg, 0.0),
+        )
+
+        # 5. Lower hull inner trunnion joint at p_in + dark charcoal diagonal damper strut (no gold foil)
+        mb.add_bevel_box(
+            center_u=(p_in[0] - sx * 0.04, p_in[1], p_in[2] - cz * 0.04),
+            size_u=(0.24, 0.24, 0.22),
+            mat="R1_GreyMetal",
+            bevel=0.012,
+            segments=1,
+            rot_deg_u=(0.0, ang_deg, 0.0),
+        )
+        mb.add_cylinder(
+            center_u=p_in,
+            radius=0.044,
+            length=0.28,
+            mat="R1_BareSteel",
+            axis_u="X",
+            segments=10,
+            bevel=0.005,
+            rot_deg_u=(0.0, ang_deg, 0.0),
+        )
         mb.add_pipe(
             p0_u=p_in,
             p1_u=p_brace,
-            radius=0.042,
+            radius=0.048,
             mat="R1_GreyMetal",
-            segments=8,
-        )
-        brace_f0 = tuple(p_in[k] * 0.82 + p_brace[k] * 0.18 for k in range(3))
-        brace_f1 = tuple(p_in[k] * 0.16 + p_brace[k] * 0.84 for k in range(3))
-        mb.add_foil_wrap(
-            p0_u=brace_f0,
-            p1_u=brace_f1,
-            radius=d["leg_aux_foil_radius"],
-            rings=4,
-            segments=8,
-            foil_mat="R1_GoldFoil",
-            band_mat="R1_Rubber",
+            segments=12,
         )
 
         # Secondary A-frame side tie-rods flanking the central damper strut
         for side_sign in (-1.0, 1.0):
-            spread = 0.24 * side_sign
-            p_in_side = (p_in[0] + tx * spread, p_in[1] - 0.04, p_in[2] + tz * spread)
-            p_mid_side = (p_brace[0] + tx * (spread * 0.35), p_brace[1] - 0.04, p_brace[2] + tz * (spread * 0.35))
+            spread = 0.26 * side_sign
+            p_in_side = (p_in[0] + tx * spread, p_in[1] - 0.03, p_in[2] + tz * spread)
+            p_mid_side = (p_brace[0] + tx * (spread * 0.36), p_brace[1] - 0.03, p_brace[2] + tz * (spread * 0.36))
             mb.add_pipe(
                 p0_u=p_in_side,
                 p1_u=p_mid_side,
-                radius=0.024,
-                mat="R1_BareSteel",
-                segments=6,
+                radius=0.026,
+                mat="R1_GreyMetal",
+                segments=8,
             )
 
-        # Circular saucer footpad resting flat on y = 0.0
+        # 6. Smooth circular saucer footpad resting flat on y = 0.0 with visible ankle ball-joint yoke
         pad_r = d["footpad_radius"]
         pad_h = d["footpad_height"]
         fx, _, fz = p_foot
         mb.add_cylinder(
-            center_u=(fx, pad_h * 0.5, fz),
+            center_u=(fx, pad_h * 0.32, fz),
             radius=pad_r,
-            radius_top=pad_r * 0.78,
-            length=pad_h,
+            radius_top=pad_r * 0.92,
+            length=pad_h * 0.64,
             mat="R1_GreyMetal",
             axis_u="Y",
-            segments=14,
+            segments=24,
+            bevel=0.012,
+            bevel_segments=1,
+        )
+        mb.add_cylinder(
+            center_u=(fx, pad_h * 0.78, fz),
+            radius=pad_r * 0.88,
+            radius_top=pad_r * 0.46,
+            length=pad_h * 0.44,
+            mat="R1_GreyMetal",
+            axis_u="Y",
+            segments=24,
             bevel=0.010,
             bevel_segments=1,
         )
         mb.add_cylinder(
-            center_u=(fx, pad_h + 0.025, fz),
-            radius=pad_r * 0.42,
-            length=0.05,
+            center_u=(fx, pad_h + 0.035, fz),
+            radius=pad_r * 0.36,
+            radius_top=pad_r * 0.28,
+            length=0.08,
             mat="R1_BareSteel",
             axis_u="Y",
+            segments=16,
+            bevel=0.006,
+            bevel_segments=1,
+        )
+        mb.add_cylinder(
+            center_u=(fx, pad_h + 0.055, fz),
+            radius=0.038,
+            length=0.24,
+            mat="R1_BareSteel",
+            axis_u="X",
             segments=10,
-            bevel=0.005,
+            bevel=0.004,
+            rot_deg_u=(0.0, ang_deg, 0.0),
         )
 
 
 def _add_middle_cargo_drum_and_hold(mb: r1kit.MeshBuilder, d: dict[str, Any]) -> None:
-    """Build the middle cylindrical cargo drum, thin dark seam channels, orange stripe, sage patch, and open upper cargo hold."""
+    """Build the middle cylindrical capsule drum, orange stripe, sage patch, round wing gimbals, and upper cargo hold."""
     y_bot = d["drum_y_bot"]
     y_top = d["drum_y_top"]
     drum_h = y_top - y_bot
@@ -612,7 +894,7 @@ def _add_middle_cargo_drum_and_hold(mb: r1kit.MeshBuilder, d: dict[str, Any]) ->
     panel_r = d["drum_panel_radius"]
     panel_t = d["drum_panel_thick"]
 
-    # Recessed dark seam core across the 316 deg arc outside the +Z Upper Cargo Hold opening (keeps the hold unobstructed!)
+    # Recessed dark seam core across the 316 deg arc outside the +Z Upper Cargo Hold opening
     mb.add_curved_patch(
         center_y=drum_cy,
         height_y=drum_h - 0.04,
@@ -621,11 +903,11 @@ def _add_middle_cargo_drum_and_hold(mb: r1kit.MeshBuilder, d: dict[str, Any]) ->
         angle_center_deg=180.0,
         angle_span_deg=316.0,
         mat="R1_DarkGlass",
-        arc_segments=20,
-        bevel=0.004,
+        arc_segments=24,
+        bevel=0.0,
     )
 
-    # Warm CreamEnamel structural waist collars at bottom and top of the middle drum (matching opening_dawn.png)
+    # Smooth CreamEnamel structural collars at bottom and top of the middle drum
     for ring_y in (y_bot + 0.055, y_top - 0.055):
         mb.add_cylinder(
             center_u=(0.0, ring_y, 0.0),
@@ -633,24 +915,23 @@ def _add_middle_cargo_drum_and_hold(mb: r1kit.MeshBuilder, d: dict[str, Any]) ->
             length=0.09,
             mat="R1_CreamEnamel",
             axis_u="Y",
-            segments=24,
-            bevel=0.012,
+            segments=32,
+            bevel=0.014,
             bevel_segments=1,
         )
-    # Thin dark separation seam at top of drum (y_top)
     mb.add_cylinder(
         center_u=(0.0, y_top, 0.0),
         radius=panel_r + panel_t + 0.002,
         length=0.024,
         mat="R1_GreyMetal",
         axis_u="Y",
-        segments=24,
+        segments=32,
         bevel=0.004,
     )
 
-    # Segmented curved CreamEnamel armor panels around the drum (leaving 0 deg +Z open for the Upper Cargo Hold + CargoHatch)
+    # 7 smooth curved CreamEnamel armor panel sectors around the middle drum
     panel_angles = (45.0, 90.0, 135.0, 180.0, -135.0, -90.0, -45.0)
-    lower_band_h = 0.64
+    lower_band_h = 0.66
     lower_band_y = y_bot + 0.09 + lower_band_h * 0.5
     upper_band_h = 0.72
     upper_band_y = y_top - 0.09 - upper_band_h * 0.5
@@ -665,7 +946,7 @@ def _add_middle_cargo_drum_and_hold(mb: r1kit.MeshBuilder, d: dict[str, Any]) ->
             angle_center_deg=ang,
             angle_span_deg=span,
             mat="R1_CreamEnamel",
-            arc_segments=4,
+            arc_segments=5,
             bevel=0.008,
         )
         mb.add_curved_patch(
@@ -676,10 +957,9 @@ def _add_middle_cargo_drum_and_hold(mb: r1kit.MeshBuilder, d: dict[str, Any]) ->
             angle_center_deg=ang,
             angle_span_deg=span,
             mat="R1_CreamEnamel",
-            arc_segments=4,
+            arc_segments=5,
             bevel=0.008,
         )
-        # Continuous horizontal R1_OrangeStripe mission band around y = 3.26 m
         mb.add_curved_patch(
             center_y=d["stripe_y"],
             height_y=d["stripe_h"],
@@ -688,16 +968,16 @@ def _add_middle_cargo_drum_and_hold(mb: r1kit.MeshBuilder, d: dict[str, Any]) ->
             angle_center_deg=ang,
             angle_span_deg=span,
             mat="R1_OrangeStripe",
-            arc_segments=4,
+            arc_segments=5,
             bevel=0.004,
         )
 
-    # Corner panel rivets/bolts on the front-right (-45 deg) and front-left (+45 deg) drum panels (matching opening_dawn.png)
+    # Corner panel rivets/bolts on the front-right (-45 deg) and front-left (+45 deg) drum panels
     bolt_r = panel_r + panel_t + 0.006
     for p_ang in (-45.0, 45.0):
         for off_deg in (-16.0, 16.0):
             brad = math.radians(p_ang + off_deg)
-            for by in (y_bot + 0.16, y_bot + 0.66, y_top - 0.72, y_top - 0.16):
+            for by in (y_bot + 0.16, y_bot + 0.68, y_top - 0.74, y_top - 0.16):
                 mb.add_bolts(
                     [(math.sin(brad) * bolt_r, by, math.cos(brad) * bolt_r)],
                     radius=0.015,
@@ -707,21 +987,19 @@ def _add_middle_cargo_drum_and_hold(mb: r1kit.MeshBuilder, d: dict[str, Any]) ->
                 )
 
     # Bolted R1_SagePatch field-service replacement plate on the +46 deg front-left flank
-    sage_ang = d["sage_patch_angle_deg"]
-    sage_span = d["sage_patch_span_deg"]
     mb.add_curved_patch(
         center_y=upper_band_y,
         height_y=d["sage_patch_h"],
         cyl_radius=panel_r + 0.006,
         thickness=panel_t + 0.010,
-        angle_center_deg=sage_ang,
-        angle_span_deg=sage_span,
+        angle_center_deg=d["sage_patch_angle_deg"],
+        angle_span_deg=d["sage_patch_span_deg"],
         mat="R1_SagePatch",
-        arc_segments=4,
+        arc_segments=5,
         bevel=0.007,
     )
 
-    # Upper Cargo Hold recessed compartment on +Z (housing Crate behind CargoHatch)
+    # Upper Cargo Hold recessed compartment on +Z with rounded portal surround (housing Crate behind CargoHatch)
     hold_w = d["hold_width"]
     hold_h = d["hold_height"]
     hold_y_floor = d["hold_y_floor"]
@@ -732,31 +1010,61 @@ def _add_middle_cargo_drum_and_hold(mb: r1kit.MeshBuilder, d: dict[str, Any]) ->
     hold_depth = hold_z_front - hold_z_back
     hold_cz = (hold_z_front + hold_z_back) * 0.5
 
-    # CreamEnamel curved filler panels above and below the CargoHatch on the 0 deg (+Z) sector
-    mb.add_curved_patch(
-        center_y=(y_bot + 0.08 + hold_y_floor) * 0.5,
-        height_y=hold_y_floor - (y_bot + 0.08),
-        cyl_radius=panel_r,
+    # Curved 0 deg (+Z) sector surround with square outer seams matching ±45 deg panels and rounded inner CargoHatch opening
+    drum_sector_arc_w = panel_r * math.radians(43.2)
+    mb.add_rounded_portal_ring(
+        w_in=hold_w + 0.02,
+        y_bot_in=hold_y_floor,
+        y_top_in=hold_y_ceil,
+        r_bot_in=0.14,
+        r_top_in=0.14,
+        w_out=drum_sector_arc_w,
+        y_bot_out=y_bot + 0.09,
+        y_top_out=y_top - 0.09,
+        r_bot_out=0.01,
+        r_top_out=0.01,
         thickness=panel_t,
-        angle_center_deg=0.0,
-        angle_span_deg=43.2,
         mat="R1_CreamEnamel",
-        arc_segments=4,
-        bevel=0.006,
+        cyl_radius=panel_r,
+        yaw_deg=0.0,
+        corner_segments=5,
+        sub_rings=1,
+        bevel=0.008,
     )
-    mb.add_curved_patch(
-        center_y=(hold_y_ceil + y_top - 0.08) * 0.5,
-        height_y=(y_top - 0.08) - hold_y_ceil,
-        cyl_radius=panel_r,
-        thickness=panel_t,
-        angle_center_deg=0.0,
-        angle_span_deg=43.2,
-        mat="R1_CreamEnamel",
-        arc_segments=4,
+    # Continuation of R1_OrangeStripe across the left and right cheeks of the 0 deg sector surround
+    for sign_x in (-1.0, 1.0):
+        mb.add_curved_patch(
+            center_y=d["stripe_y"],
+            height_y=d["stripe_h"],
+            cyl_radius=panel_r + 0.004,
+            thickness=panel_t + 0.006,
+            angle_center_deg=sign_x * 19.2,
+            angle_span_deg=4.8,
+            mat="R1_OrangeStripe",
+            arc_segments=2,
+            bevel=0.003,
+        )
+    mb.add_rounded_portal_ring(
+        w_in=hold_w - 0.02,
+        y_bot_in=hold_y_floor + 0.02,
+        y_top_in=hold_y_ceil - 0.02,
+        r_bot_in=0.12,
+        r_top_in=0.12,
+        w_out=hold_w + 0.06,
+        y_bot_out=hold_y_floor - 0.02,
+        y_top_out=hold_y_ceil + 0.02,
+        r_bot_out=0.15,
+        r_top_out=0.15,
+        thickness=0.05,
+        mat="R1_GreyMetal",
+        cyl_radius=panel_r - 0.012,
+        yaw_deg=0.0,
+        corner_segments=5,
+        sub_rings=1,
         bevel=0.006,
     )
 
-    # Interior hold floor shelf, ceiling, back wall, and CreamEnamel side cheek surrounds
+    # Interior hold floor shelf, ceiling, back wall, and side cheek walls
     mb.add_bevel_box(
         center_u=(0.0, hold_y_floor - 0.03, hold_cz),
         size_u=(hold_w + 0.12, 0.06, hold_depth),
@@ -795,7 +1103,7 @@ def _add_middle_cargo_drum_and_hold(mb: r1kit.MeshBuilder, d: dict[str, Any]) ->
             segments=1,
         )
 
-    # Left (+X) and Right (-X) circular solar-wing deployment gimbal drums (matching opening_dawn.png)
+    # Prominent round mid-body solar-wing deployment gimbal drums on +X and -X
     wx = d["wing_mount_x"]
     wy = d["wing_pivot_y"]
     wz = d["wing_pivot_z"]
@@ -804,44 +1112,45 @@ def _add_middle_cargo_drum_and_hold(mb: r1kit.MeshBuilder, d: dict[str, Any]) ->
     for sign_x in (-1.0, 1.0):
         mb.add_cylinder(
             center_u=(sign_x * wx, wy, wz),
-            radius=w_rad * 1.10,
-            length=w_len * 0.52,
+            radius=w_rad * 1.12,
+            length=w_len * 0.54,
             mat="R1_CreamEnamel",
             axis_u="X",
-            segments=16,
+            segments=24,
+            bevel=0.018,
+            bevel_segments=1,
+        )
+        mb.add_cylinder(
+            center_u=(sign_x * (wx + sign_x * 0.065), wy, wz),
+            radius=w_rad * 0.86,
+            length=w_len * 0.64,
+            mat="R1_GreyMetal",
+            axis_u="X",
+            segments=24,
             bevel=0.014,
             bevel_segments=1,
         )
         mb.add_cylinder(
-            center_u=(sign_x * (wx + sign_x * 0.055), wy, wz),
-            radius=w_rad * 0.84,
-            length=w_len * 0.62,
-            mat="R1_GreyMetal",
-            axis_u="X",
-            segments=14,
-            bevel=0.012,
-            bevel_segments=1,
-        )
-        mb.add_cylinder(
-            center_u=(sign_x * (wx + sign_x * 0.12), wy, wz),
-            radius=w_rad * 0.48,
-            length=0.07,
+            center_u=(sign_x * (wx + sign_x * 0.14), wy, wz),
+            radius=w_rad * 0.50,
+            length=0.08,
             mat="R1_GoldFoil",
             axis_u="X",
-            segments=12,
-            bevel=0.006,
+            segments=18,
+            bevel=0.008,
+            bevel_segments=1,
         )
         drum_bolts: list[tuple[float, float, float]] = []
         for b_i in range(8):
             ba = (2.0 * math.pi * b_i) / 8.0
-            by = wy + math.sin(ba) * (w_rad * 0.95)
-            bz = wz + math.cos(ba) * (w_rad * 0.95)
-            drum_bolts.append((sign_x * (wx + sign_x * 0.075), by, bz))
+            by = wy + math.sin(ba) * (w_rad * 0.96)
+            bz = wz + math.cos(ba) * (w_rad * 0.96)
+            drum_bolts.append((sign_x * (wx + sign_x * 0.085), by, bz))
         mb.add_bolts(drum_bolts, radius=0.015, height=0.012, axis_u="X", bevel_segments=0)
 
 
 def _add_upper_conical_section_and_top(mb: r1kit.MeshBuilder, d: dict[str, Any]) -> None:
-    """Build the upper tapered conical crew/avionics section, viewports, 4 RCS thruster quads, and top docking cap."""
+    """Build the smooth upper tapered conical crew/avionics section, viewports, 4 RCS thruster quads, and top docking cap."""
     y_bot = d["cone_y_bot"]
     y_top = d["cone_y_top"]
     r_bot = d["cone_r_bot"]
@@ -849,7 +1158,7 @@ def _add_upper_conical_section_and_top(mb: r1kit.MeshBuilder, d: dict[str, Any])
     cone_h = y_top - y_bot
     cone_cy = (y_bot + y_top) * 0.5
 
-    # Recessed dark frustum core inside the conical section so narrow panel seams read cleanly
+    # Smooth recessed dark frustum core inside the conical section
     mb.add_cylinder(
         center_u=(0.0, cone_cy, 0.0),
         radius=r_bot - 0.015,
@@ -857,11 +1166,11 @@ def _add_upper_conical_section_and_top(mb: r1kit.MeshBuilder, d: dict[str, Any])
         length=cone_h,
         mat="R1_DarkGlass",
         axis_u="Y",
-        segments=24,
-        bevel=0.006,
+        segments=28,
+        bevel=0.0,
     )
 
-    # 8 tapered trapezoidal CreamEnamel armor panels with tight 1.8 deg seam channels (matching opening_dawn.png)
+    # 8 smooth tapered conical CreamEnamel armor panels (5 arc segments each = 40 segments around circle)
     for idx in range(8):
         ang = idx * 45.0
         mb.add_conical_panel(
@@ -873,10 +1182,9 @@ def _add_upper_conical_section_and_top(mb: r1kit.MeshBuilder, d: dict[str, Any])
             angle_center_deg=ang,
             angle_span_deg=43.2,
             mat="R1_CreamEnamel",
-            arc_segments=4,
+            arc_segments=5,
             bevel=0.008,
         )
-        # Lower perimeter bolts along the base of each conical panel
         for b_off in (-15.0, 15.0):
             brad = math.radians(ang + b_off)
             br = r_bot + d["cone_panel_thick"]
@@ -888,9 +1196,9 @@ def _add_upper_conical_section_and_top(mb: r1kit.MeshBuilder, d: dict[str, Any])
                 bevel_segments=0,
             )
 
-    # Recessed dark-glass avionics / crew observation viewports on forward panels (-35 deg, 0 deg, +35 deg)
-    vp_y_bot = y_bot + 0.30
-    vp_y_top = y_bot + 0.72
+    # Smooth curved dark-glass avionics / observation viewports on forward panels (-36 deg, 0 deg, +36 deg)
+    vp_y_bot = y_bot + 0.26
+    vp_y_top = y_bot + 0.68
     vp_t0 = (vp_y_bot - y_bot) / cone_h
     vp_t1 = (vp_y_top - y_bot) / cone_h
     vp_r0 = r_bot * (1.0 - vp_t0) + r_top * vp_t0 + d["cone_panel_thick"]
@@ -901,11 +1209,11 @@ def _add_upper_conical_section_and_top(mb: r1kit.MeshBuilder, d: dict[str, Any])
             y_top=vp_y_top + 0.025,
             r_bot=vp_r0 - 0.004,
             r_top=vp_r1 - 0.004,
-            thickness=0.020,
+            thickness=0.022,
             angle_center_deg=vp_ang,
             angle_span_deg=21.0,
             mat="R1_GreyMetal",
-            arc_segments=3,
+            arc_segments=4,
             bevel=0.005,
         )
         mb.add_conical_panel(
@@ -913,11 +1221,11 @@ def _add_upper_conical_section_and_top(mb: r1kit.MeshBuilder, d: dict[str, Any])
             y_top=vp_y_top,
             r_bot=vp_r0 + 0.006,
             r_top=vp_r1 + 0.006,
-            thickness=0.016,
+            thickness=0.018,
             angle_center_deg=vp_ang,
             angle_span_deg=17.0,
             mat="R1_DarkGlass",
-            arc_segments=3,
+            arc_segments=4,
             bevel=0.003,
         )
 
@@ -929,103 +1237,115 @@ def _add_upper_conical_section_and_top(mb: r1kit.MeshBuilder, d: dict[str, Any])
         mb.add_thruster_quad(
             center_u=(rx, d["rcs_y"], rz),
             outward_yaw_deg=rcs_ang,
-            pod_size=0.20,
-            nozzle_length=0.12,
-            nozzle_radius=0.044,
+            pod_size=0.22,
+            nozzle_length=0.13,
+            nozzle_radius=0.048,
         )
 
-    # Top docking collar ring, gold thermal blanket ring, dome hatch, and comms antennas
+    # Smooth circular top docking collar ring, gold thermal blanket ring, dome hatch, and comms antenna
     cap_y0 = d["cap_y_bot"]
     cap_y1 = d["cap_y_top"]
     cap_r = d["cap_radius"]
     mb.add_cylinder(
-        center_u=(0.0, cap_y0 + 0.035, 0.0),
+        center_u=(0.0, cap_y0 + 0.04, 0.0),
         radius=cap_r + 0.03,
-        length=0.07,
+        length=0.08,
         mat="R1_CreamEnamel",
         axis_u="Y",
-        segments=20,
-        bevel=0.010,
+        segments=28,
+        bevel=0.014,
         bevel_segments=1,
     )
     mb.add_cylinder(
-        center_u=(0.0, cap_y0 + 0.085, 0.0),
+        center_u=(0.0, cap_y0 + 0.095, 0.0),
         radius=cap_r * 0.86,
-        length=0.04,
+        length=0.045,
         mat="R1_GoldFoil",
         axis_u="Y",
-        segments=16,
-        bevel=0.006,
+        segments=24,
+        bevel=0.008,
+        bevel_segments=1,
     )
     mb.add_cylinder(
-        center_u=(0.0, (cap_y0 + cap_y1) * 0.5 + 0.03, 0.0),
+        center_u=(0.0, (cap_y0 + cap_y1) * 0.5 + 0.04, 0.0),
         radius=cap_r * 0.76,
-        radius_top=cap_r * 0.60,
+        radius_top=cap_r * 0.58,
         length=cap_y1 - cap_y0,
         mat="R1_CreamEnamel",
         axis_u="Y",
-        segments=16,
-        bevel=0.012,
+        segments=24,
+        bevel=0.016,
         bevel_segments=1,
     )
     mb.add_cylinder(
-        center_u=(-0.26, cap_y1 + 0.08, -0.16),
+        center_u=(-0.28, cap_y1 + 0.08, -0.18),
         radius=0.028,
         radius_top=0.014,
         length=0.18,
         mat="R1_BareSteel",
         axis_u="Y",
-        segments=8,
+        segments=10,
         bevel=0.003,
     )
 
 
 def _build_ramp_door(root: bpy.types.Object, d: dict[str, Any]) -> bpy.types.Object:
-    """Build the hinged `RampDoor` that covers the 1.94 x 1.96 m rover bay and lowers to <= 15 deg."""
+    """Build the hinged `RampDoor` with an arched top matching the rover bay opening and <= 15 deg lowered slope."""
     piv = d["ramp_pivot_u"]
     px, py, pz = piv
     rw = d["ramp_width"]
     rl = d["ramp_length"]
     rt = d["ramp_thick"]
+    arch_r = d["bay_arch_radius"] - 0.02
 
     mb = r1kit.MeshBuilder("RampDoor", pivot_u=piv)
 
-    # Main structural ramp frame (extends from y = py to py + rl when closed at rotation = 0)
-    mb.add_bevel_box(
-        center_u=(px, py + rl * 0.5, pz),
-        size_u=(rw, rl, rt),
+    # Main arched-top structural ramp slab (extends from y = py to py + rl when closed)
+    mb.add_rounded_panel(
+        width_x=rw,
+        y_bot=py,
+        y_top=py + rl,
+        r_bot=0.05,
+        r_top=arch_r,
+        thickness=rt,
         mat="R1_GreyMetal",
+        z_front=pz + rt * 0.5,
+        cyl_radius=None,
+        corner_segments=8,
+        cols=4,
         bevel=0.014,
+    )
+
+    # Outer armoured CreamEnamel skin panels (+Z side when closed, upper panel arched to match door contour)
+    mb.add_bevel_box(
+        center_u=(px, py + 0.53, pz + rt * 0.5 + 0.008),
+        size_u=(rw - 0.14, 0.86, 0.024),
+        mat="R1_CreamEnamel",
+        bevel=0.007,
         segments=1,
     )
-    # Outer armoured CreamEnamel skin panels (+Z side when closed)
-    for seg_i, (sy0, sy1) in enumerate(((0.12, 0.94), (0.98, 1.80))):
-        seg_h = sy1 - sy0
-        seg_cy = py + (sy0 + sy1) * 0.5
-        mb.add_bevel_box(
-            center_u=(px, seg_cy, pz + rt * 0.5 + 0.008),
-            size_u=(rw - 0.14, seg_h, 0.022),
-            mat="R1_CreamEnamel",
-            bevel=0.008,
-            segments=1,
-        )
-        if seg_i == 0:
-            mb.add_bevel_box(
-                center_u=(px, py + 0.40, pz + rt * 0.5 + 0.016),
-                size_u=(rw - 0.12, 0.13, 0.012),
-                mat="R1_OrangeStripe",
-                bevel=0.004,
-                segments=1,
-            )
+    mb.add_rounded_panel(
+        width_x=rw - 0.14,
+        y_bot=py + 1.00,
+        y_top=py + rl - 0.08,
+        r_bot=0.05,
+        r_top=max(0.12, arch_r - 0.07),
+        thickness=0.024,
+        mat="R1_CreamEnamel",
+        z_front=pz + rt * 0.5 + 0.020,
+        cyl_radius=None,
+        corner_segments=8,
+        cols=4,
+        bevel=0.007,
+    )
 
-    # Leading-edge tapered toe transition lip at top of door (touches ground when lowered)
+    # Continuation of the lower capsule R1_OrangeStripe across the RampDoor exterior
     mb.add_bevel_box(
-        center_u=(px, py + rl - 0.05, pz - 0.01),
-        size_u=(rw - 0.04, 0.12, rt * 0.86),
-        mat="R1_BareSteel",
-        bevel=0.008,
+        center_u=(px, d["low_stripe_y"], pz + rt * 0.5 + 0.024),
+        size_u=(rw - 0.12, d["low_stripe_h"], 0.014),
+        mat="R1_OrangeStripe",
+        bevel=0.004,
         segments=1,
-        top_scale_xz=(0.98, 0.35),
     )
 
     # Heavy 3-knuckle bottom barrel hinges along the sill axis
@@ -1037,42 +1357,49 @@ def _build_ramp_door(root: bpy.types.Object, d: dict[str, Any]) -> bpy.types.Obj
             knuckle_radius=0.032,
         )
 
-    # Inner deck side wheel-guide curbs + twin recessed CreamEnamel tread plates (matching opening_dawn.png)
+    # Inner deck side wheel-guide curbs + recessed CreamEnamel tread plate (-Z side when closed, top when lowered)
     for sign_x in (-1.0, 1.0):
         mb.add_bevel_box(
-            center_u=(px + sign_x * (rw * 0.5 - 0.06), py + rl * 0.5, pz - rt * 0.5 - 0.025),
-            size_u=(0.10, rl - 0.12, 0.055),
+            center_u=(px + sign_x * (rw * 0.5 - 0.06), py + (rl - arch_r) * 0.5 + 0.04, pz - rt * 0.5 - 0.024),
+            size_u=(0.10, rl - arch_r - 0.08, 0.052),
             mat="R1_GreyMetal",
             bevel=0.008,
             segments=1,
         )
-    for sy0, sy1 in ((0.14, 0.94), (1.00, 1.80)):
-        mb.add_bevel_box(
-            center_u=(px, py + (sy0 + sy1) * 0.5, pz - rt * 0.5 - 0.008),
-            size_u=(rw - 0.28, sy1 - sy0, 0.018),
-            mat="R1_CreamEnamel",
-            bevel=0.006,
-            segments=1,
-        )
+    mb.add_rounded_panel(
+        width_x=rw - 0.28,
+        y_bot=py + 0.12,
+        y_top=py + rl - 0.12,
+        r_bot=0.05,
+        r_top=max(0.10, arch_r - 0.12),
+        thickness=0.020,
+        mat="R1_CreamEnamel",
+        z_front=pz - rt * 0.5 + 0.004,
+        cyl_radius=None,
+        corner_segments=6,
+        cols=4,
+        bevel=0.005,
+    )
 
     return mb.build_object(parent=root)
 
 
 def _build_solar_wing(root: bpy.types.Object, name: str, sign_x: float, d: dict[str, Any]) -> bpy.types.Object:
-    """Build `Wing_L` (+X) or `Wing_R` (-X) with root yoke, diagonal spreader struts, and tilted 2x4 solar cell array."""
+    """Build large `Wing_L` (+X) or `Wing_R` (-X) mounted on the round mid-body gimbal with a 2x5 solar cell array."""
     piv = (sign_x * d["wing_pivot_x"], d["wing_pivot_y"], d["wing_pivot_z"])
     px, py, pz = piv
     mb = r1kit.MeshBuilder(name, pivot_u=piv)
 
-    # Gimbal root hub at pivot
+    # Smooth circular gimbal root hub at pivot
     mb.add_cylinder(
-        center_u=(px + sign_x * 0.08, py, pz),
-        radius=0.14,
-        length=0.22,
+        center_u=(px + sign_x * 0.09, py, pz),
+        radius=0.18,
+        length=0.26,
         mat="R1_GreyMetal",
         axis_u="X",
-        segments=12,
-        bevel=0.010,
+        segments=18,
+        bevel=0.012,
+        bevel_segments=1,
     )
 
     p_start = d["wing_panel_start"]
@@ -1085,71 +1412,70 @@ def _build_solar_wing(root: bpy.types.Object, name: str, sign_x: float, d: dict[
     sin_t = math.sin(tilt_rad)
     panel_cx = px + sign_x * (p_start + p_len * 0.5)
 
-    # Helper to convert panel-local (y_normal, z_chord) offsets into tilted world Unity coordinates
     def _panel_yz(local_y: float, local_z: float) -> tuple[float, float]:
         wy = py + local_y * cos_t - local_z * sin_t
         wz = pz + local_y * sin_t + local_z * cos_t
         return wy, wz
 
-    # Diagonal Y-yoke spreader struts from root hub to inner corners of tilted solar wing frame
+    # Heavy diagonal Y-yoke spreader struts from round gimbal hub to inner corners & mid-span of solar wing frame
     for sign_z in (-1.0, 1.0):
         corner_y, corner_z = _panel_yz(0.0, sign_z * (p_chord * 0.42))
         mb.add_strut(
             p0_u=(px + sign_x * 0.12, py, pz),
-            p1_u=(px + sign_x * (p_start + 0.06), corner_y, corner_z),
-            width=0.052,
-            thickness=0.052,
+            p1_u=(px + sign_x * (p_start + 0.08), corner_y, corner_z),
+            width=0.064,
+            thickness=0.064,
             mat="R1_GreyMetal",
-            bevel=0.005,
+            bevel=0.006,
         )
-        brace_y, brace_z = _panel_yz(-0.03, sign_z * (p_chord * 0.34))
+        brace_y, brace_z = _panel_yz(-0.04, sign_z * (p_chord * 0.36))
         mb.add_pipe(
-            p0_u=(px + sign_x * 0.08, py - 0.18, pz + sign_z * 0.08),
-            p1_u=(px + sign_x * (p_start + p_len * 0.32), brace_y, brace_z),
-            radius=0.022,
+            p0_u=(px + sign_x * 0.10, py - 0.24, pz + sign_z * 0.10),
+            p1_u=(px + sign_x * (p_start + p_len * 0.30), brace_y, brace_z),
+            radius=0.028,
             mat="R1_BareSteel",
-            segments=6,
+            segments=8,
         )
 
-    # Main rectangular solar wing structural frame tilted toward +Z so cells read clearly from front/3-quarter views
+    # Main large solar wing structural frame
     mb.add_bevel_box(
         center_u=(panel_cx, py, pz),
         size_u=(p_len, p_thick, p_chord),
         mat="R1_GreyMetal",
-        bevel=0.008,
+        bevel=0.010,
         segments=1,
         rot_deg_u=(-tilt_deg, 0.0, 0.0),
     )
     # Underside gold Kapton thermal foil backing sheet (-Y local face of solar wing)
-    back_y, back_z = _panel_yz(-p_thick * 0.5 - 0.005, 0.0)
+    back_y, back_z = _panel_yz(-p_thick * 0.5 - 0.006, 0.0)
     mb.add_bevel_box(
         center_u=(panel_cx, back_y, back_z),
-        size_u=(p_len - 0.08, 0.012, p_chord - 0.08),
+        size_u=(p_len - 0.10, 0.014, p_chord - 0.10),
         mat="R1_GoldFoil",
-        bevel=0.003,
+        bevel=0.004,
         segments=1,
         rot_deg_u=(-tilt_deg, 0.0, 0.0),
     )
 
-    # 2 x 4 sub-panel grid of deep-blue R1_SolarCell modules with silver R1_BareSteel busbars on top (+Y local)
+    # 2 x 5 sub-panel grid of deep-blue R1_SolarCell modules with silver R1_BareSteel busbars on top (+Y local)
     cols = d["wing_sub_cols"]
     rows = d["wing_sub_rows"]
-    margin_x = 0.07
-    margin_z = 0.06
+    margin_x = 0.08
+    margin_z = 0.08
     usable_x = p_len - margin_x * 2.0
     usable_z = p_chord - margin_z * 2.0
     step_x = usable_x / cols
     step_z = usable_z / rows
-    cell_w = step_x - 0.042
-    cell_d = step_z - 0.042
+    cell_w = step_x - 0.048
+    cell_d = step_z - 0.048
 
-    # Central longitudinal silver divider bar along the wing span
-    mid_bar_y, mid_bar_z = _panel_yz(p_thick * 0.5 + 0.008, 0.0)
+    # Central longitudinal silver divider bar along the full wing span
+    mid_bar_y, mid_bar_z = _panel_yz(p_thick * 0.5 + 0.009, 0.0)
     mb.add_bevel_box(
         center_u=(panel_cx, mid_bar_y, mid_bar_z),
-        size_u=(p_len - 0.04, 0.016, 0.032),
+        size_u=(p_len - 0.06, 0.018, 0.038),
         mat="R1_BareSteel",
-        bevel=0.003,
+        bevel=0.004,
         segments=1,
         rot_deg_u=(-tilt_deg, 0.0, 0.0),
     )
@@ -1159,30 +1485,30 @@ def _build_solar_wing(root: bpy.types.Object, name: str, sign_x: float, d: dict[
         cx_world = px + sign_x * cx_local
         if c_idx > 0:
             rib_x = px + sign_x * (p_start + margin_x + step_x * c_idx)
-            rib_y, rib_z = _panel_yz(p_thick * 0.5 + 0.008, 0.0)
+            rib_y, rib_z = _panel_yz(p_thick * 0.5 + 0.009, 0.0)
             mb.add_bevel_box(
                 center_u=(rib_x, rib_y, rib_z),
-                size_u=(0.032, 0.018, p_chord - 0.02),
+                size_u=(0.036, 0.020, p_chord - 0.04),
                 mat="R1_BareSteel",
-                bevel=0.003,
+                bevel=0.004,
                 segments=1,
                 rot_deg_u=(-tilt_deg, 0.0, 0.0),
             )
         for r_idx in range(rows):
             cz_local = -usable_z * 0.5 + step_z * (r_idx + 0.5)
-            cell_y, cell_z = _panel_yz(p_thick * 0.5 + 0.006, cz_local)
+            cell_y, cell_z = _panel_yz(p_thick * 0.5 + 0.007, cz_local)
             mb.add_bevel_box(
                 center_u=(cx_world, cell_y, cell_z),
-                size_u=(cell_w, 0.014, cell_d),
+                size_u=(cell_w, 0.016, cell_d),
                 mat="R1_SolarCell",
-                bevel=0.003,
+                bevel=0.004,
                 segments=1,
                 rot_deg_u=(-tilt_deg, 0.0, 0.0),
             )
-            bus_y, bus_z = _panel_yz(p_thick * 0.5 + 0.014, cz_local)
+            bus_y, bus_z = _panel_yz(p_thick * 0.5 + 0.016, cz_local)
             mb.add_bevel_box(
                 center_u=(cx_world, bus_y, bus_z),
-                size_u=(cell_w - 0.03, 0.006, 0.016),
+                size_u=(cell_w - 0.04, 0.007, 0.018),
                 mat="R1_BareSteel",
                 bevel=0.002,
                 segments=1,
@@ -1193,42 +1519,49 @@ def _build_solar_wing(root: bpy.types.Object, name: str, sign_x: float, d: dict[
 
 
 def _build_cargo_hatch(root: bpy.types.Object, d: dict[str, Any]) -> bpy.types.Object:
-    """Build `CargoHatch` covering the upper cargo hold above the bay, hinged on its -X vertical edge."""
+    """Build curved rounded-corner `CargoHatch` covering the upper cargo hold above the bay, hinged on its -X edge."""
     piv = d["hatch_pivot_u"]
     px, py, pz = piv
+    hw = d["hold_width"]
     hh = d["hold_height"]
+    panel_r = d["drum_panel_radius"]
+    panel_t = d["drum_panel_thick"]
 
     mb = r1kit.MeshBuilder("CargoHatch", pivot_u=piv)
 
-    # Curved outer CreamEnamel hatch door flush with the middle drum
-    mb.add_curved_patch(
-        center_y=py,
-        height_y=hh,
-        cyl_radius=d["drum_panel_radius"],
-        thickness=d["drum_panel_thick"] + 0.008,
-        angle_center_deg=0.0,
-        angle_span_deg=35.5,
+    # Smooth curved rounded-corner outer CreamEnamel hatch door flush with the middle drum
+    mb.add_rounded_panel(
+        width_x=hw,
+        y_bot=py - hh * 0.5,
+        y_top=py + hh * 0.5,
+        r_bot=0.13,
+        r_top=0.13,
+        thickness=panel_t + 0.008,
         mat="R1_CreamEnamel",
-        arc_segments=4,
+        cyl_radius=panel_r,
+        yaw_deg=0.0,
+        corner_segments=5,
+        cols=4,
         bevel=0.008,
     )
     # Continuation of the horizontal R1_OrangeStripe band across the full width of CargoHatch
+    hatch_span_deg = math.degrees(hw / panel_r)
     mb.add_curved_patch(
         center_y=d["stripe_y"],
         height_y=d["stripe_h"],
-        cyl_radius=d["drum_panel_radius"] + 0.005,
-        thickness=d["drum_panel_thick"] + 0.012,
+        cyl_radius=panel_r + 0.005,
+        thickness=panel_t + 0.012,
         angle_center_deg=0.0,
-        angle_span_deg=35.5,
+        angle_span_deg=hatch_span_deg,
         mat="R1_OrangeStripe",
-        arc_segments=4,
+        arc_segments=5,
         bevel=0.004,
     )
 
-    # Two side barrel hinges along the -X vertical hinge axis (matching opening_dawn.png)
-    for hy_off in (-0.34, 0.34):
+    # Two side barrel hinges along the -X vertical hinge axis
+    for hy_off in (-0.32, 0.32):
         mb.add_hinge(
-            center_u=(px + 0.03, py + hy_off, pz - 0.03),
+            center_u=(px + 0.01, py + hy_off, pz + 0.055),
             axis_u="Y",
             length=0.18,
             knuckle_radius=0.026,
@@ -1236,23 +1569,26 @@ def _build_cargo_hatch(root: bpy.types.Object, d: dict[str, Any]) -> bpy.types.O
 
     # Right-hand (+X) recessed vertical dog-latch handle slot
     mb.add_bevel_box(
-        center_u=(0.35, py - 0.18, pz + 0.008),
-        size_u=(0.09, 0.22, 0.036),
+        center_u=(0.36, py - 0.18, pz + 0.095),
+        size_u=(0.09, 0.22, 0.038),
         mat="R1_GreyMetal",
         bevel=0.006,
         segments=1,
     )
 
-    # Curved inner structural backing frame on CargoHatch (never pokes through the curved front skin)
-    mb.add_curved_patch(
-        center_y=py,
-        height_y=hh - 0.08,
-        cyl_radius=d["drum_panel_radius"] - 0.024,
+    # Curved rounded-corner inner structural backing frame on CargoHatch
+    mb.add_rounded_panel(
+        width_x=hw - 0.08,
+        y_bot=py - hh * 0.5 + 0.04,
+        y_top=py + hh * 0.5 - 0.04,
+        r_bot=0.10,
+        r_top=0.10,
         thickness=0.024,
-        angle_center_deg=0.0,
-        angle_span_deg=33.5,
         mat="R1_GreyMetal",
-        arc_segments=4,
+        cyl_radius=panel_r - 0.024,
+        yaw_deg=0.0,
+        corner_segments=4,
+        cols=4,
         bevel=0.005,
     )
 
@@ -1306,7 +1642,7 @@ def _build_crate_and_lid(root: bpy.types.Object, d: dict[str, Any]) -> tuple[bpy
             segments=1,
         )
 
-    # 3 cylindrical spare R1 battery cells seated inside the crate rack
+    # 3 smooth cylindrical spare R1 battery cells seated inside the crate rack
     cell_r = d["crate_cell_radius"]
     cell_h = d["crate_cell_height"]
     for off_x in d["crate_cell_offsets_x"]:
@@ -1318,8 +1654,9 @@ def _build_crate_and_lid(root: bpy.types.Object, d: dict[str, Any]) -> tuple[bpy
             length=cell_h,
             mat="R1_CreamEnamel",
             axis_u="Y",
-            segments=10,
+            segments=12,
             bevel=0.008,
+            bevel_segments=1,
         )
         mb.add_cylinder(
             center_u=(bx, by + 0.04, cz),
@@ -1327,7 +1664,7 @@ def _build_crate_and_lid(root: bpy.types.Object, d: dict[str, Any]) -> tuple[bpy
             length=0.06,
             mat="R1_OrangeStripe",
             axis_u="Y",
-            segments=10,
+            segments=12,
             bevel=0.003,
         )
         mb.add_cylinder(
@@ -1336,7 +1673,7 @@ def _build_crate_and_lid(root: bpy.types.Object, d: dict[str, Any]) -> tuple[bpy
             length=0.04,
             mat="R1_Copper",
             axis_u="Y",
-            segments=8,
+            segments=10,
             bevel=0.004,
         )
 
@@ -1367,7 +1704,7 @@ def _build_crate_and_lid(root: bpy.types.Object, d: dict[str, Any]) -> tuple[bpy
 
 
 def _build_bay_lights(root: bpy.types.Object, d: dict[str, Any]) -> list[bpy.types.Object]:
-    """Build `BayLight_1` (exterior header porch light) and `BayLight_2`..`BayLight_4` (interior bay lights)."""
+    """Build `BayLight_1` (exterior arch crown porch light) and `BayLight_2`..`BayLight_4` (interior bay lights)."""
     lights: list[bpy.types.Object] = []
 
     p1 = d["bay_light_1_pivot_u"]
@@ -1377,7 +1714,7 @@ def _build_bay_lights(root: bpy.types.Object, d: dict[str, Any]) -> list[bpy.typ
         size_u=(0.64, 0.12, 0.12),
         mat="R1_GreyMetal",
         bevel=0.010,
-        segments=1,
+        segments=2,
     )
     mb1.add_bevel_box(
         center_u=(p1[0], p1[1] - 0.005, p1[2] + 0.048),
@@ -1464,7 +1801,7 @@ def _build_charge_contacts(root: bpy.types.Object, d: dict[str, Any]) -> bpy.typ
             size_u=(0.18, 0.042, 0.42),
             mat="R1_Copper",
             bevel=0.008,
-            segments=1,
+            segments=2,
         )
 
     return mb.build_object(parent=root)
@@ -1488,7 +1825,7 @@ def _build_bay_repair_parts(root: bpy.types.Object, d: dict[str, Any]) -> dict[s
             p1_u=(cx + 0.03, cy - 0.03, stub_z1),
             radius=0.036,
             mat="R1_Rubber",
-            segments=8,
+            segments=12,
         )
         mb_gap.add_cylinder(
             center_u=(cx + 0.03, cy - 0.03, stub_z1),
@@ -1496,7 +1833,7 @@ def _build_bay_repair_parts(root: bpy.types.Object, d: dict[str, Any]) -> dict[s
             length=0.04,
             mat="R1_GreyMetal",
             axis_u="Z",
-            segments=8,
+            segments=12,
             bevel=0.004,
         )
         for strand_dy, strand_dx, mat_name in (
@@ -1509,7 +1846,7 @@ def _build_bay_repair_parts(root: bpy.types.Object, d: dict[str, Any]) -> dict[s
                 p1_u=(cx + 0.03 + strand_dx, cy - 0.03 + strand_dy, cz + sign_z * 0.04),
                 radius=0.011,
                 mat=mat_name,
-                segments=6,
+                segments=8,
             )
     parts["Bay_CableGap"] = mb_gap.build_object(parent=root)
 
@@ -1535,7 +1872,7 @@ def _build_bay_repair_parts(root: bpy.types.Object, d: dict[str, Any]) -> dict[s
         length=0.05,
         mat="R1_DarkGlass",
         axis_u="X",
-        segments=10,
+        segments=14,
         bevel=0.004,
     )
     for pin_y, pin_z in ((-0.026, -0.026), (-0.026, 0.026), (0.026, 0.0)):
@@ -1545,7 +1882,7 @@ def _build_bay_repair_parts(root: bpy.types.Object, d: dict[str, Any]) -> dict[s
             length=0.035,
             mat="R1_Copper",
             axis_u="X",
-            segments=6,
+            segments=8,
             bevel=0.002,
         )
     parts["Bay_ConnectorSocket"] = mb_sock.build_object(parent=root)
@@ -1557,7 +1894,7 @@ def _build_bay_repair_parts(root: bpy.types.Object, d: dict[str, Any]) -> dict[s
         p1_u=(cx, cy, cz + 0.25),
         radius=0.038,
         mat="R1_Rubber",
-        segments=10,
+        segments=14,
     )
     for collar_z in (-0.14, 0.14):
         mb_fix.add_cylinder(
@@ -1566,7 +1903,7 @@ def _build_bay_repair_parts(root: bpy.types.Object, d: dict[str, Any]) -> dict[s
             length=0.075,
             mat="R1_Copper",
             axis_u="Z",
-            segments=10,
+            segments=14,
             bevel=0.006,
         )
     mb_fix.add_bevel_box(
@@ -1593,7 +1930,7 @@ def _build_bay_repair_parts(root: bpy.types.Object, d: dict[str, Any]) -> dict[s
         length=0.11,
         mat="R1_Copper",
         axis_u="X",
-        segments=12,
+        segments=16,
         bevel=0.008,
     )
     mb_con.add_bevel_box(
@@ -1608,7 +1945,7 @@ def _build_bay_repair_parts(root: bpy.types.Object, d: dict[str, Any]) -> dict[s
         p1_u=(cx, cy, cz - 0.24),
         radius=0.036,
         mat="R1_Rubber",
-        segments=8,
+        segments=12,
     )
     parts["Bay_Connector"] = mb_con.build_object(parent=root)
 
@@ -1671,7 +2008,7 @@ def build_asset() -> bpy.types.Object:
 
     # Static merged lander body
     body_mb = r1kit.MeshBuilder("Body", pivot_u=(0.0, 0.0, 0.0))
-    _add_lower_hull_and_bay(body_mb, d)
+    _add_lower_capsule_and_bay(body_mb, d)
     _add_splayed_landing_legs(body_mb, d)
     _add_middle_cargo_drum_and_hold(body_mb, d)
     _add_upper_conical_section_and_top(body_mb, d)
@@ -1693,7 +2030,7 @@ def build_asset() -> bpy.types.Object:
 
     # Bake vertex colours with doors separated so both exterior and interior faces receive clean AO
     _prepare_ao_bake_pose(root)
-    r1kit.bake_vertex_colors(root, footprint_radius=d["footprint_radius"] * 1.35)
+    r1kit.bake_vertex_colors(root, footprint_radius=d["footprint_radius"] * 1.45)
     pose_rest(root)
     bpy.context.view_layer.update()
     return root
@@ -1718,7 +2055,7 @@ def render_cargo_lander_suite(root: bpy.types.Object, out_dir: Path) -> list[Pat
     rendered: list[Path] = []
 
     r1kit.ensure_materials(use_vertex_color_shading=True)
-    temp_objs = r1kit._setup_preview_lighting_and_plinth(d["footprint_radius"] * 1.38)
+    temp_objs = r1kit._setup_preview_lighting_and_plinth(d["footprint_radius"] * 1.55)
 
     # Warm dawn sun lighting matching opening_dawn.png (shining from front-left onto the front face)
     for tob in temp_objs:
@@ -1735,17 +2072,17 @@ def render_cargo_lander_suite(root: bpy.types.Object, out_dir: Path) -> list[Pat
     bpy.context.scene.camera = cam_obj
     temp_objs.append(cam_obj)
 
-    mid_y = d["target_height"] * 0.47
+    mid_y = d["target_height"] * 0.48
     pose_rest(root)
     _set_bay_repair_visibility(root, repaired=True)
     bpy.context.view_layer.update()
 
     # 1. Standard views: front, side, back, three_quarter
     standard_views = {
-        "cargo_lander_front.png": ((0.0, mid_y + 0.25, 11.6), (0.0, mid_y, 0.0), 45.0),
-        "cargo_lander_side.png": ((-11.4, mid_y + 0.25, 0.0), (0.0, mid_y, 0.0), 45.0),
-        "cargo_lander_back.png": ((0.0, mid_y + 0.25, -11.6), (0.0, mid_y, 0.0), 45.0),
-        "cargo_lander_three_quarter.png": ((-3.6, mid_y + 0.45, 10.6), (0.0, mid_y, 0.0), 45.0),
+        "cargo_lander_front.png": ((0.0, mid_y + 0.30, 14.2), (0.0, mid_y, 0.0), 42.0),
+        "cargo_lander_side.png": ((-12.8, mid_y + 0.25, 0.0), (0.0, mid_y, 0.0), 42.0),
+        "cargo_lander_back.png": ((0.0, mid_y + 0.30, -14.2), (0.0, mid_y, 0.0), 42.0),
+        "cargo_lander_three_quarter.png": ((-4.4, mid_y + 0.55, 13.0), (0.0, mid_y, 0.0), 42.0),
     }
     for fname, (c_pos, c_tgt, lens) in standard_views.items():
         r1kit._aim_camera_at(cam_obj, c_pos, c_tgt, lens_mm=lens)
@@ -1764,11 +2101,11 @@ def render_cargo_lander_suite(root: bpy.types.Object, out_dir: Path) -> list[Pat
     bay_lamp_objs: list[bpy.types.Object] = []
     for l_idx, (l_pos_u, l_energy) in enumerate(
         (
-            ((0.0, 2.30, 1.68), 95.0),
-            ((0.0, 2.18, 0.25), 115.0),
-            ((0.76, 1.48, 0.32), 65.0),
-            ((-0.76, 1.48, 0.32), 65.0),
-            ((0.0, 3.55, 1.45), 75.0),
+            ((0.0, 2.40, 1.76), 105.0),
+            ((0.0, 2.28, 0.25), 125.0),
+            ((0.76, 1.54, 0.32), 70.0),
+            ((-0.76, 1.54, 0.32), 70.0),
+            ((0.0, 3.65, 1.60), 80.0),
         )
     ):
         pt_data = bpy.data.lights.new(name=f"_BayPt_{l_idx}", type="POINT")
@@ -1781,21 +2118,21 @@ def render_cargo_lander_suite(root: bpy.types.Object, out_dir: Path) -> list[Pat
         bay_lamp_objs.append(pt_obj)
 
     bpy.context.view_layer.update()
-    r1kit._aim_camera_at(cam_obj, (-2.8, 1.85, 6.4), (0.0, 1.22, 0.55), lens_mm=44.0)
+    r1kit._aim_camera_at(cam_obj, (-2.85, 1.92, 6.8), (0.0, 1.32, 0.55), lens_mm=44.0)
     p_ramp = out_dir / "cargo_lander_ramp_open_bay_lit.png"
     r1kit._render_to_file(p_ramp, res_x=1120, res_y=840)
     rendered.append(p_ramp)
 
     # 3. Scale shot with a 1.52 x 1.55 m stand-in for 07 at the ramp + concept comparison (matching opening_dawn.png)
     rover_standin = r1kit.build_rover_07_standin(
-        pos_u=(1.85, 0.0, 4.15),
+        pos_u=(1.95, 0.0, 4.35),
         rover_width=d["rover_07_width"],
         rover_height=d["rover_07_height"],
         rover_length=d["rover_07_length"],
         yaw_deg_u=-142.0,
     )
     bpy.context.view_layer.update()
-    r1kit._aim_camera_at(cam_obj, (-2.65, 1.82, 8.8), (0.35, 2.22, 0.50), lens_mm=40.0)
+    r1kit._aim_camera_at(cam_obj, (-3.10, 1.90, 9.8), (0.35, 2.35, 0.50), lens_mm=38.0)
     p_scale = out_dir / "cargo_lander_scale_07.png"
     r1kit._render_to_file(p_scale, res_x=1120, res_y=840)
     rendered.append(p_scale)
@@ -1816,7 +2153,7 @@ def render_cargo_lander_suite(root: bpy.types.Object, out_dir: Path) -> list[Pat
     children["Wing_L"].rotation_euler = r1kit.u_rot(0.0, 0.0, -d["wing_fold_deg"])
     children["Wing_R"].rotation_euler = r1kit.u_rot(0.0, 0.0, d["wing_fold_deg"])
     bpy.context.view_layer.update()
-    r1kit._aim_camera_at(cam_obj, (-3.8, mid_y + 0.5, 10.4), (0.0, mid_y, 0.0), lens_mm=45.0)
+    r1kit._aim_camera_at(cam_obj, (-4.2, mid_y + 0.55, 12.6), (0.0, mid_y, 0.0), lens_mm=42.0)
     p_wings_folded = out_dir / "cargo_lander_wings_folded.png"
     r1kit._render_to_file(p_wings_folded, res_x=960, res_y=720)
     rendered.append(p_wings_folded)
@@ -1840,7 +2177,7 @@ def render_cargo_lander_suite(root: bpy.types.Object, out_dir: Path) -> list[Pat
     children["CargoHatch"].rotation_euler = r1kit.u_rot(0.0, d["hatch_open_deg"], 0.0)
     children["CrateLid"].rotation_euler = r1kit.u_rot(d["crate_lid_open_deg"], 0.0, 0.0)
     bpy.context.view_layer.update()
-    r1kit._aim_camera_at(cam_obj, (0.85, 3.65, 3.25), (-0.05, 3.12, 1.02), lens_mm=44.0)
+    r1kit._aim_camera_at(cam_obj, (0.88, 3.82, 3.55), (-0.05, 3.26, 1.18), lens_mm=44.0)
     p_hold = out_dir / "cargo_lander_hold_open_crate.png"
     r1kit._render_to_file(p_hold, res_x=1120, res_y=840)
     rendered.append(p_hold)
@@ -1850,7 +2187,7 @@ def render_cargo_lander_suite(root: bpy.types.Object, out_dir: Path) -> list[Pat
     children["RampDoor"].rotation_euler = r1kit.u_rot(d["ramp_open_deg"], 0.0, 0.0)
     _set_bay_repair_visibility(root, repaired=False)
     bpy.context.view_layer.update()
-    r1kit._aim_camera_at(cam_obj, (0.52, 1.38, 1.48), (-0.86, 1.12, -0.08), lens_mm=42.0)
+    r1kit._aim_camera_at(cam_obj, (0.52, 1.48, 1.54), (-0.86, 1.22, -0.08), lens_mm=42.0)
     p_bay_broken = out_dir / "cargo_lander_bay_broken.png"
     r1kit._render_to_file(p_bay_broken, res_x=960, res_y=720)
     rendered.append(p_bay_broken)
@@ -1875,7 +2212,7 @@ def render_cargo_lander_suite(root: bpy.types.Object, out_dir: Path) -> list[Pat
     pose_rest(root)
     _set_bay_repair_visibility(root, repaired=True)
     bpy.context.view_layer.update()
-    r1kit._aim_camera_at(cam_obj, (-3.6, mid_y + 0.45, 10.6), (0.0, mid_y, 0.0), lens_mm=45.0)
+    r1kit._aim_camera_at(cam_obj, (-4.4, mid_y + 0.55, 13.0), (0.0, mid_y, 0.0), lens_mm=42.0)
     p_vcol = out_dir / "cargo_lander_vertex_color.png"
     r1kit.render_vertex_color_grid(root, p_vcol, res_x=640, res_y=480)
     rendered.append(p_vcol)
