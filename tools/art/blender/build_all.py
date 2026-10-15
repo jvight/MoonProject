@@ -94,7 +94,7 @@ def main(argv: list[str] | None = None) -> None:
         ]
     )
 
-    # 5. Build & export Rock_00..Rock_05
+    # 5. Build & export Rock_00..Rock_09
     rocks.main(
         [
             "--out-dir",

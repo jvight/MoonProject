@@ -5,7 +5,7 @@
   "slots": [
     "R1_Basalt"
   ],
-  "max_triangles": 300,
+  "max_triangles": 180,
   "max_meshes": 1,
   "max_draw_calls": 1,
   "allow_rotation": [],
