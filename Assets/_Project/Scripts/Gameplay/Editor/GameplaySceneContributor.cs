@@ -58,7 +58,9 @@ namespace MoonProject.Gameplay.Editor
 
             if (UnityEditor.AssetDatabase.LoadAssetAtPath<BuildingTuning>(GameplayAssetPaths.BuildingTuning) == null)
             {
-                GameplayTuningBuilder.Build();
+                MoonProject.Editor.Builders.GeneratedAssets.CreateOrReplace(
+                    ScriptableObject.CreateInstance<BuildingTuning>(),
+                    GameplayAssetPaths.BuildingTuning);
             }
 
             var existingStructures = UnityEditor.AssetDatabase.LoadAssetAtPath<StructureCatalog>(GameplayAssetPaths.StructureCatalog);
