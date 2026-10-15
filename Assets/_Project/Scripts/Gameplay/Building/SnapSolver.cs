@@ -143,13 +143,6 @@ namespace MoonProject.Gameplay
                             continue;
                         }
 
-                        Vector3 sourceFreePos = sourcePort.WorldPosition(freePose);
-                        float distSq = SurfaceRules.HorizontalDistanceSquared(sourceFreePos, targetWorldPos);
-                        if (distSq > bestDistSq)
-                        {
-                            continue;
-                        }
-
                         Vector3 sourceFreeDir = sourcePort.WorldDirection(freePose);
                         float angle = Vector3.Angle(sourceFreeDir, desiredCandidateDir);
                         if (angle > snapAngleDegrees)
@@ -166,15 +159,50 @@ namespace MoonProject.Gameplay
                             targetWorldPos.x - rotatedOffset.x,
                             freePose.Position.y,
                             targetWorldPos.z - rotatedOffset.z);
+                        var candidatePose = new StructurePose(snappedPosition, snappedYaw);
+
+                        if (PlacementRules.Overlaps(candidate, candidatePose, neighbourDef, neighbour.Pose))
+                        {
+                            float minSeparation = ClearanceReachAlong(neighbourDef, neighbour.Pose, targetWorldDir) +
+                                                  ClearanceReachAlong(candidate, candidatePose, desiredCandidateDir) +
+                                                  0.01f;
+                            Vector3 lateral = snappedPosition - neighbour.Pose.Position;
+                            lateral.y = 0f;
+                            float along = Vector3.Dot(lateral, targetWorldDir);
+                            if (along < minSeparation)
+                            {
+                                snappedPosition += targetWorldDir * (minSeparation - along);
+                                candidatePose = new StructurePose(snappedPosition, snappedYaw);
+                            }
+                        }
+
+                        Vector3 sourceFreePos = sourcePort.WorldPosition(freePose);
+                        float distSq = Mathf.Min(
+                            SurfaceRules.HorizontalDistanceSquared(sourceFreePos, targetWorldPos),
+                            SurfaceRules.HorizontalDistanceSquared(freePose.Position, snappedPosition));
+                        if (distSq > bestDistSq)
+                        {
+                            continue;
+                        }
 
                         bestDistSq = distSq;
-                        bestPose = new StructurePose(snappedPosition, snappedYaw);
+                        bestPose = candidatePose;
                         found = true;
                     }
                 }
             }
 
             return found;
+        }
+
+        private static float ClearanceReachAlong(StructureDefinition def, StructurePose pose, Vector3 worldDir)
+        {
+            float hx = def.Width * 0.5f + def.Clearance;
+            float hz = def.Depth * 0.5f + def.Clearance;
+            Vector3 r = pose.Right;
+            Vector3 f = pose.Forward;
+            return Mathf.Abs(r.x * worldDir.x + r.z * worldDir.z) * hx +
+                   Mathf.Abs(f.x * worldDir.x + f.z * worldDir.z) * hz;
         }
 
         private static bool TrySnapEdges(

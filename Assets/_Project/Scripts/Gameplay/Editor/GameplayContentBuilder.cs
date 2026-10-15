@@ -55,8 +55,9 @@ namespace MoonProject.Gameplay.Editor
         /// The ten player-built base structures (<see cref="BaseStructureRecipes"/>) and their catalog
         /// (<see cref="StructureCatalog"/>).
         /// </summary>
-        private static void BuildStructures()
+        internal static void BuildStructures()
         {
+            BaseStructureRecipes.BuildRuntimePrefabs();
             StructureDefinition[] definitions = BaseStructureRecipes.CreateDefinitions();
             for (int i = 0; i < definitions.Length; i++)
             {

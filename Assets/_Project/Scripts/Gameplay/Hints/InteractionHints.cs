@@ -14,7 +14,7 @@ namespace MoonProject.Gameplay
             InteractionKind.PickUp, InteractionKind.Build, InteractionKind.Deposit, InteractionKind.Repair,
             InteractionKind.Restore, InteractionKind.Tune, InteractionKind.Hop, InteractionKind.Upgrade,
             InteractionKind.Salvage, InteractionKind.Excavate, InteractionKind.Stow, InteractionKind.Tether,
-            InteractionKind.Reel, InteractionKind.Scan,
+            InteractionKind.Reel, InteractionKind.Scan, InteractionKind.Deconstruct,
         };
 
         private readonly ExcavationSystem _excavation;
@@ -33,6 +33,7 @@ namespace MoonProject.Gameplay
         private readonly CrewCrates _crates;
         private readonly SealedContainers _containers;
         private readonly ScanField _scans;
+        private readonly BuildField _building;
 
         /// <param name="beam">
         /// 07's beam work: while new work sleeps (the crawl, docs/features/M3-20) a beam verb's hint shows as not ready.
@@ -40,7 +41,8 @@ namespace MoonProject.Gameplay
         public InteractionHints(ExcavationSystem excavation,
             SalvageField salvage, TetherSystem tether, CargoCradle cradle, HomeBase home, IUpgradeStation[] stations,
             UpgradeService upgrades, IComponentGate parts, FriendField friends, RelayField relays, BeamWork beam,
-            PickupReach pickups, HomeShelves shelves, CrewCrates crates, SealedContainers containers, ScanField scans)
+            PickupReach pickups, HomeShelves shelves, CrewCrates crates, SealedContainers containers, ScanField scans,
+            BuildField building = null)
         {
             _scans = scans ?? throw new ArgumentNullException(nameof(scans));
             _crates = crates ?? throw new ArgumentNullException(nameof(crates));
@@ -58,6 +60,7 @@ namespace MoonProject.Gameplay
             _friends = friends != null ? friends : throw new ArgumentNullException(nameof(friends));
             _relays = relays != null ? relays : throw new ArgumentNullException(nameof(relays));
             _beam = beam ?? throw new ArgumentNullException(nameof(beam));
+            _building = building;
         }
 
         public InteractionHint Primary
@@ -99,11 +102,26 @@ namespace MoonProject.Gameplay
                     hint = waiting ? new InteractionHint(kind, part, true, noun) : InteractionHint.None;
                     return waiting;
                 case InteractionKind.Build:
+                    if (_building != null && _building.TryGetWeldCandidate(out Vector3 weldPoint))
+                    {
+                        hint = new InteractionHint(kind, weldPoint, _building.IsWelding || _beam.MayStart);
+                        return true;
+                    }
+
                     int shelf = _shelves.Needed ? _shelves.Candidate : -1;
                     hint = shelf >= 0
                         ? new InteractionHint(kind, _shelves.RackPosition(shelf), _shelves.Affordable)
                         : InteractionHint.None;
                     return shelf >= 0;
+                case InteractionKind.Deconstruct:
+                    if (_building != null && _building.TryGetDeconstructCandidate(out Vector3 deconstructPoint))
+                    {
+                        hint = new InteractionHint(kind, deconstructPoint, true);
+                        return true;
+                    }
+
+                    hint = InteractionHint.None;
+                    return false;
                 case InteractionKind.Salvage:
                     SalvagePiece piece = _salvage.Cutting ?? _salvage.Candidate;
                     CrewCrate crate = _crates.Candidate;

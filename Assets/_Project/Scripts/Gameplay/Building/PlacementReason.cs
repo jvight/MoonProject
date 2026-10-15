@@ -22,5 +22,8 @@ namespace MoonProject.Gameplay
 
         /// <summary>The footprint + clearance overlaps an already-placed structure's footprint + clearance.</summary>
         Overlaps = 5,
+
+        /// <summary>A world prop or collider on <c>Layers.Prop</c> blocks the structure's footprint.</summary>
+        Blocked = 6,
     }
 }

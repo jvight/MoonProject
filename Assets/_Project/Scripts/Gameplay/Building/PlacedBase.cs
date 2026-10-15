@@ -20,18 +20,26 @@ namespace MoonProject.Gameplay
         private readonly StructureCatalog _catalog;
         private readonly BuildingTuning _tuning;
         private readonly EventBus _events;
+        private readonly KnownStructures _known;
         private readonly PowerGrid _powerGrid = new PowerGrid();
         private readonly List<PlacedStructure> _structures = new List<PlacedStructure>();
         private readonly List<BuildJob> _jobs = new List<BuildJob>();
         private readonly List<bool> _powerPublished = new List<bool>();
         private int _nextInstanceId = 1;
 
-        public PlacedBase(StructureCatalog catalog, BuildingTuning tuning, EventBus events)
+        public PlacedBase(
+            StructureCatalog catalog,
+            BuildingTuning tuning,
+            EventBus events,
+            KnownStructures known = null)
         {
             _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
             _tuning = tuning ?? throw new ArgumentNullException(nameof(tuning));
             _events = events ?? throw new ArgumentNullException(nameof(events));
+            _known = known ?? new KnownStructures(_catalog, _events);
         }
+
+        public KnownStructures Known => _known;
 
         public IReadOnlyList<PlacedStructure> Structures => _structures;
 
@@ -303,13 +311,14 @@ namespace MoonProject.Gameplay
                 Restore));
         }
 
-        /// <summary>Captures all placed structures into a serializable <see cref="BuildingSaveData"/> DTO.</summary>
+        /// <summary>Captures all placed structures and learned structure ids into a serializable <see cref="BuildingSaveData"/> DTO.</summary>
         public BuildingSaveData Capture()
         {
             int count = _structures.Count;
+            string[] knownIds = _known.Capture();
             if (count == 0)
             {
-                return new BuildingSaveData();
+                return new BuildingSaveData { known = knownIds };
             }
 
             var entries = new PlacedStructureSaveData[count];
@@ -326,12 +335,17 @@ namespace MoonProject.Gameplay
                 };
             }
 
-            return new BuildingSaveData { structures = entries };
+            return new BuildingSaveData
+            {
+                structures = entries,
+                known = knownIds,
+            };
         }
 
         /// <summary>
-        /// Restores placed structures from <paramref name="data"/>. An entry whose structure id is not in
-        /// <see cref="StructureCatalog"/> logs an error via <see cref="Debug.LogError(object)"/> and is skipped.
+        /// Restores placed structures and learned structure ids from <paramref name="data"/>. An entry whose structure
+        /// id is not in <see cref="StructureCatalog"/> logs an error via <see cref="Debug.LogError(object)"/> and is
+        /// skipped.
         /// </summary>
         public void Restore(BuildingSaveData data)
         {
@@ -340,6 +354,7 @@ namespace MoonProject.Gameplay
             _powerPublished.Clear();
             _powerGrid.Clear();
             _nextInstanceId = 1;
+            _known.Restore(data != null ? data.known : null);
 
             if (data == null || data.structures == null)
             {

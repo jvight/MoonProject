@@ -149,6 +149,16 @@ namespace MoonProject.Gameplay.Editor
             return StructureFolder + "/Structure_" + id + ".asset";
         }
 
+        public static string RuntimeStructurePrefab(string id)
+        {
+            return GeneratedFolder + "/Structures/" + id + ".prefab";
+        }
+
+        public static string R1StructurePrefab(string prefabName)
+        {
+            return ArtPaths.R1StructuresModelFolder + "/" + prefabName + ".prefab";
+        }
+
         public static string Material(GlowRole role)
         {
             return MaterialFolder + "/M_Glow" + role + ".mat";

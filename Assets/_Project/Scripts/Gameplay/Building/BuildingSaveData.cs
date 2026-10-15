@@ -9,5 +9,6 @@ namespace MoonProject.Gameplay
     public sealed class BuildingSaveData
     {
         public PlacedStructureSaveData[] structures = Array.Empty<PlacedStructureSaveData>();
+        public string[] known = Array.Empty<string>();
     }
 }

@@ -70,6 +70,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private BlueprintPlotter _plotter;
         [SerializeField] private LiftStation _lift;
         [SerializeField] private BatteryField _battery;
+        [SerializeField] private BuildField _building;
 
         /// <summary>The E verbs a scan yields to (0.5.5 §1.2: scanning comes last).</summary>
         private static readonly InteractionKind[] VerbsBeforeScan =
@@ -193,6 +194,18 @@ namespace MoonProject.Gameplay
         /// <summary>07's battery: drains, chargers, the crawl and the warnings (docs/features/M3-20).</summary>
         public BatteryField Battery => _battery;
 
+        /// <summary>07's free-placement base building field (0.5.7 slice 6).</summary>
+        public BuildField Building => _building;
+
+        /// <summary>07's free-placement base building field (0.5.7 slice 6).</summary>
+        public BuildField Build => _building;
+
+        /// <summary>What base structures 07 knows how to build (0.5.7 slice 6).</summary>
+        public KnownStructures KnownStructures => _building != null ? _building.Known : null;
+
+        /// <summary>The placed base structures and their power grid (0.5.7 slice 6).</summary>
+        public PlacedBase PlacedBase => _building != null ? _building.PlacedBase : null;
+
         internal void Wire(GameplayVisuals visuals, GlintTuning glints, UpgradeDefinition[] upgradeDefinitions,
             SalvageField salvage, RelicField relics, SonarSystem sonar, ExcavationSystem excavation,
             TetherSystem tether, HomeBase home, CargoCradle cradle, RadioTower tower, Workshop workshop,
@@ -236,6 +249,11 @@ namespace MoonProject.Gameplay
         internal void WireBattery(BatteryField battery)
         {
             _battery = battery;
+        }
+
+        internal void WireBuilding(BuildField building)
+        {
+            _building = building;
         }
 
         internal void WireCargo(MaterialCatalog catalog, CargoTuning cargo)
@@ -370,6 +388,12 @@ namespace MoonProject.Gameplay
 
             _progression.ConnectFinds(Port, TowerPartField);
 
+            if (_building != null && !_building.Initialize(services, _workshop.Tuning, _friends.Tuning))
+            {
+                enabled = false;
+                return;
+            }
+
             Shop = new UpgradeShop(Upgrades, stations, save, Blueprints, TowerParts, RowFullFor);
             Friend wingGift = _friends.Find(_friends.Tuning.WingCellFriend);
             if (wingGift == null)
@@ -385,7 +409,7 @@ namespace MoonProject.Gameplay
             RecipeLook = new RecipeLook(services.View, Shop, _tower, _plotter, Blueprints.Kits, _progression.Tuning);
             Hints = new InteractionHints(_excavation, _salvage, _tether, _cradle, _home,
                 stations, Upgrades, TowerParts, _friends, _relays, services.Beam, services.Pickups, Shelves, Crates,
-                Containers, Scans);
+                Containers, Scans, _building);
             context.Register<IMaterialStock>(Materials);
             context.Register<IMaterialCatalog>(_materialCatalog);
             context.Register<ICutter>(Cutter);
@@ -419,6 +443,11 @@ namespace MoonProject.Gameplay
             context.Register<ITechTree>(Tech);
             context.Register<IRecoveryProgress>(Recovery);
             context.Register<IScanSites>(Scans);
+            if (_building != null)
+            {
+                context.Register<BuildField>(_building);
+            }
+
             Upgrades.PublishSignals();
             RegisterSaveSections(save);
         }
@@ -466,6 +495,10 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.ContainersVersion, Containers.Capture, Containers.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<ScansSaveData>(GameplaySaveKeys.Scans,
                 GameplaySaveKeys.ScansVersion, Scans.Capture, Scans.Restore, ScansSaveMigrations.Migrate)));
+            if (_building != null)
+            {
+                _saveTokens.Add(_building.RegisterSave(save));
+            }
         }
 
         /// <summary>True while 07 rests at <paramref name="station"/>, free to fit or take off its parts.</summary>
