@@ -3,11 +3,11 @@ namespace MoonProject.Gameplay.Lift
     /// <summary>What the lift's cycle reads each frame from the world around it.</summary>
     public readonly struct LiftInput
     {
-        public LiftInput(bool powered, bool carryingHome, bool atStitchSpot, bool onPlatform, float stillSeconds,
+        public LiftInput(bool powered, bool nearHome, bool atStitchSpot, bool onPlatform, float stillSeconds,
             bool down)
         {
             Powered = powered;
-            CarryingHome = carryingHome;
+            NearHome = nearHome;
             AtStitchSpot = atStitchSpot;
             OnPlatform = onPlatform;
             StillSeconds = stillSeconds;
@@ -17,8 +17,8 @@ namespace MoonProject.Gameplay.Lift
         /// <summary>The base power has reached home (tower L1).</summary>
         public bool Powered { get; }
 
-        /// <summary>07 is home carrying something for the lab: a relic.</summary>
-        public bool CarryingHome { get; }
+        /// <summary>07 is home near the lift (within the call radius).</summary>
+        public bool NearHome { get; }
 
         /// <summary>07 rests by the jammed platform, at the spot it stitches the cable from.</summary>
         public bool AtStitchSpot { get; }

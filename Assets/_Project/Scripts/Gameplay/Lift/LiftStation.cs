@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Rendering;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Core.Input;
@@ -12,10 +13,11 @@ namespace MoonProject.Gameplay.Lift
     /// <see cref="LiftCycle"/>, the <see cref="Turntable"/> and the <see cref="LabInterior"/> on Art's nodes
     /// (docs/ARCHITECTURE.md "Contract: the lab"):
     /// <list type="bullet">
-    /// <item>Dormant until home has power, then jammed (built in its tilt, one side low) and silent. The first time 07
-    /// comes home carrying something for the lab (a relic) the platform creaks and its pad ring
-    /// lights; 07 rests just off its edge, facing it, and stitches the cable (no feeding): the platform eases level,
-    /// the jam and the dust drift go and the second cable hangs taut. Saved.</item>
+    /// <item>Dormant until home has power, then jammed (built in its tilt, one side low). When home gets power (and
+    /// when 07 approaches the jammed lift) the platform shudders, the winch creaks and sparks burst at the jammed cable
+    /// before its pad ring lights and the guidance line asks for the stitch; 07 rests just off its edge, facing it, and
+    /// stitches the cable (no feeding): the platform eases level, the jam and the dust drift go and the second cable
+    /// hangs taut. Saved.</item>
     /// <item>The ride: 07 rests on the platform and after a breath it rises by itself (ruling 14: no button). The hatch
     /// leaves slide open, the platform rises eased at both ends along the shaft and a relic 07 was towing rides up
     /// beside it. Rover holds 07 on the platform (<see cref="LiftRideChanged"/>) and flies its camera up through the
@@ -33,6 +35,12 @@ namespace MoonProject.Gameplay.Lift
     public sealed class LiftStation : MonoBehaviour
     {
         private const string StitchId = "lift";
+        private const float SparkConeRadius = 0.04f;
+        private const float SparkGravity = 0.17f;
+        private const float SparkStreak = 0.08f;
+        private const float SparkEndSize = 0.3f;
+        private const float JamTiltShare = 0.25f;
+        private const float JamFeelStrength = 0.35f;
 
         private enum LadderLook
         {
@@ -104,7 +112,9 @@ namespace MoonProject.Gameplay.Lift
         private ISaveService _save;
         private RepairBeam _stitch;
         private EmissionGlow _pad;
+        private ParticleSystem _jamSparks;
         private IDisposable _approaches;
+        private IDisposable _steps;
         private Transform _frame;
         private Vector3 _jammedPosition;
         private Quaternion _jammedRotation;
@@ -131,6 +141,15 @@ namespace MoonProject.Gameplay.Lift
         private float _riderTime;
         private float _ladderLookStarted = float.NegativeInfinity;
         private LadderLook _ladderLook;
+        private string _progressionStep = string.Empty;
+        private string _shownStep = string.Empty;
+        private bool _publishingStep;
+        private bool _overridingStep;
+        private bool _jamCued;
+        private bool _jamCuedClose;
+        private float _jamCueStarted = float.NegativeInfinity;
+        private float _shudder;
+        private bool _ridden;
         private bool _gazing;
         private bool _wasOnPlatform;
         private bool _holding;
@@ -138,6 +157,12 @@ namespace MoonProject.Gameplay.Lift
 
         /// <summary>The lift's phase (tests and capture sessions).</summary>
         public LiftPhase Phase => _cycle != null ? _cycle.Phase : LiftPhase.Dormant;
+
+        /// <summary>Current platform shudder (0..1) during the jam cue.</summary>
+        public float CurrentShudder => _shudder;
+
+        /// <summary>Live sparks at the jammed cable during the jam cue.</summary>
+        public int JamSparkCount => _jamSparks != null ? _jamSparks.particleCount : 0;
 
         /// <summary>The lab as 07 sees it (registered as <see cref="ILabInterior"/>).</summary>
         public LabInterior Lab => _lab;
@@ -245,6 +270,7 @@ namespace MoonProject.Gameplay.Lift
             _stitch = new RepairBeam("LiftStitch", transform, services.Visuals.TetherBeam, _looks.StitchRate,
                 _looks.StitchSpread);
             _pad = new EmissionGlow(_padGlow);
+            _jamSparks = BuildJamSparks(services.Visuals.Spark);
             Vector3 axis = _frame.TransformPoint(_up.localPosition);
             for (int i = 0; i < _stationYaw.Length; i++)
             {
@@ -253,6 +279,7 @@ namespace MoonProject.Gameplay.Lift
 
             _exitYaw = FrameYaw(_dock.position - RideSpot);
             _approaches = _events.Subscribe<PlaceFirstApproached>(OnPlaceFirstApproached);
+            _steps = _events.Subscribe<NextStepChanged>(OnNextStepChanged);
             Restore(null);
             _initialized = true;
             return true;
@@ -281,6 +308,12 @@ namespace MoonProject.Gameplay.Lift
             _pad.Apply(_padLevel);
             _hatch = 0f;
             _hatchTarget = 0f;
+            _jamCued = restored;
+            _jamCuedClose = restored;
+            _jamCueStarted = float.NegativeInfinity;
+            _shudder = 0f;
+            _ridden = restored;
+            _jamSparks?.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             ApplyPose(true);
             ApplyHatch();
         }
@@ -321,7 +354,7 @@ namespace MoonProject.Gameplay.Lift
             if (dockToPlatform > _tuning.CallRadius)
             {
                 return $"07's dock is {dockToPlatform:F2} m from the platform, outside LiftTuning's call radius " +
-                       $"({_tuning.CallRadius} m): a find carried home to the dock would never call the lift.";
+                       $"({_tuning.CallRadius} m): 07 at the dock would never call the lift.";
             }
 
             return power == null || stillness == null || tether == null || cradle == null
@@ -350,17 +383,23 @@ namespace MoonProject.Gameplay.Lift
             }
 
             _wasOnPlatform = onPlatform;
-            var input = new LiftInput(_power.HasReached(BasePowerStage.Home), Carrying() && NearHome(),
+            bool nearHome = NearHome();
+            bool nearLift = NearLift();
+            var input = new LiftInput(_power.HasReached(BasePowerStage.Home), nearHome,
                 AtStitchSpot(), onPlatform, _stillness.StillSeconds, down);
             Play(_cycle.Step(input, deltaTime), now);
+            StepJamCue(now, nearHome, nearLift);
+            bool jamCuePlaying = JamCuePlaying(now);
+            StepGuidance(nearLift, jamCuePlaying);
 
             bool stitching = _cycle.Phase == LiftPhase.Stitching;
             _stitch.Step(stitching, true, eye, _stitchPoint.position, now, deltaTime);
             StepLab(now, deltaTime);
             StepLadderLook(now);
             Hold(stitching || _cycle.Holds07);
-            bool lit = _cycle.Phase == LiftPhase.Called || _cycle.Phase == LiftPhase.Ready;
-            _padLevel = Damp.Toward(_padLevel, lit ? _tuning.PadGlow : 0f, _tuning.PadEase, deltaTime);
+            bool lit = (_cycle.Phase == LiftPhase.Called && !jamCuePlaying) || _cycle.Phase == LiftPhase.Ready;
+            float targetGlow = jamCuePlaying ? _shudder * _tuning.PadGlow : lit ? _tuning.PadGlow : 0f;
+            _padLevel = Damp.Toward(_padLevel, targetGlow, _tuning.PadEase, deltaTime);
             _pad.Apply(_padLevel);
             _hatch = Mathf.MoveTowards(_hatch, _hatchTarget, deltaTime / _tuning.HatchSeconds);
             ApplyHatch();
@@ -433,9 +472,6 @@ namespace MoonProject.Gameplay.Lift
         {
             switch (step)
             {
-                case LiftStep.Called:
-                    _events.Publish(new LiftCued(LiftCue.WinchCreaked, _stitchPoint.position));
-                    break;
                 case LiftStep.StitchStarted:
                     _rig.SetGazeTarget(this, _stitchPoint.position, _tuning.GazePriority);
                     _gazing = true;
@@ -488,6 +524,181 @@ namespace MoonProject.Gameplay.Lift
                     Feel(FeelPhase.Impact, 0.5f, 0f);
                     break;
             }
+        }
+
+        private void StepJamCue(float now, bool nearHome, bool nearLift)
+        {
+            if (_cycle.Phase >= LiftPhase.Stitching)
+            {
+                _shudder = 0f;
+                return;
+            }
+
+            if (_cycle.Phase == LiftPhase.Jammed && nearHome && !_jamCued)
+            {
+                _jamCued = true;
+                _jamCuedClose = nearLift;
+                _jamCueStarted = now;
+                TriggerJamBurst();
+            }
+            else if (_cycle.Phase == LiftPhase.Called && nearLift && !_jamCuedClose)
+            {
+                _jamCuedClose = true;
+                _jamCueStarted = now;
+                TriggerJamBurst();
+            }
+
+            float approachShudder = _jamCueStarted > float.NegativeInfinity
+                ? LiftCycle.JamShudder(now - _jamCueStarted, _tuning.JamCueSeconds, _tuning.JamShudderCycles)
+                : 0f;
+            _shudder = Mathf.Max(_cycle.Shudder, approachShudder);
+        }
+
+        private void TriggerJamBurst()
+        {
+            _events.Publish(new LiftCued(LiftCue.WinchCreaked, _stitchPoint.position));
+            Feel(FeelPhase.Impact, JamFeelStrength, _tuning.JamCueSeconds);
+            if (_jamSparks != null)
+            {
+                _jamSparks.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                _jamSparks.Play(true);
+            }
+        }
+
+        private bool JamCuePlaying(float now)
+        {
+            return (_cycle.Phase == LiftPhase.Jammed && _jamCued)
+                || (_cycle.Phase == LiftPhase.Called && now - _jamCueStarted < _tuning.JamCueSeconds);
+        }
+
+        private void OnNextStepChanged(NextStepChanged changed)
+        {
+            string key = changed.LineKey ?? string.Empty;
+            _shownStep = key;
+            if (!_publishingStep)
+            {
+                _progressionStep = key;
+                _overridingStep = false;
+            }
+        }
+
+        private void StepGuidance(bool nearLift, bool jamCuePlaying)
+        {
+            if (_progressionStep.Length > 0 && ProgressionKeys.SpeaksOfTargets(_progressionStep))
+            {
+                return;
+            }
+
+            if (_cycle.Phase == LiftPhase.Inside)
+            {
+                _ridden = true;
+            }
+
+            string wanted = null;
+            if (jamCuePlaying && (nearLift || _shownStep == ProgressionKeys.NextLiftStitch))
+            {
+                wanted = string.Empty;
+            }
+            else if (nearLift)
+            {
+                if (_cycle.Phase == LiftPhase.Called || _cycle.Phase == LiftPhase.Stitching)
+                {
+                    wanted = ProgressionKeys.NextLiftStitch;
+                }
+                else if (_cycle.Phase == LiftPhase.Ready && !_ridden)
+                {
+                    wanted = ProgressionKeys.NextLiftRide;
+                }
+            }
+            else if (_shownStep == ProgressionKeys.NextLiftStitch && !_jamCuedClose)
+            {
+                wanted = string.Empty;
+            }
+
+            if (wanted != null)
+            {
+                _overridingStep = true;
+                PublishStep(wanted);
+            }
+            else if (_overridingStep)
+            {
+                _overridingStep = false;
+                PublishStep(_progressionStep);
+            }
+        }
+
+        private void PublishStep(string key)
+        {
+            if (string.Equals(_shownStep, key, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _publishingStep = true;
+            try
+            {
+                _events.Publish(new NextStepChanged(key));
+            }
+            finally
+            {
+                _publishingStep = false;
+            }
+        }
+
+        private ParticleSystem BuildJamSparks(Material material)
+        {
+            var host = new GameObject("JamSparks");
+            host.transform.SetParent(_stitchPoint, false);
+            var particles = host.AddComponent<ParticleSystem>();
+            particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+            int count = Mathf.Max(4, _tuning.JamSparkCount);
+            ParticleSystem.MainModule main = particles.main;
+            main.loop = false;
+            main.playOnAwake = false;
+            main.duration = _tuning.JamCueSeconds;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.45f, 0.85f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(1.5f, 3.4f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.16f);
+            main.startColor = Color.white;
+            main.gravityModifier = SparkGravity;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.maxParticles = count * 3;
+
+            ParticleSystem.EmissionModule emission = particles.emission;
+            emission.rateOverTime = 0f;
+            emission.SetBursts(new[]
+            {
+                new ParticleSystem.Burst(0f, (short)count),
+                new ParticleSystem.Burst(_tuning.JamCueSeconds * 0.2f, (short)Mathf.Max(4, count * 2 / 3)),
+                new ParticleSystem.Burst(_tuning.JamCueSeconds * 0.45f, (short)Mathf.Max(2, count / 2)),
+            });
+
+            ParticleSystem.ShapeModule shape = particles.shape;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = SparkConeRadius;
+
+            var fade = new Gradient();
+            fade.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0.85f, 0.55f), new GradientAlphaKey(0f, 1f) });
+            ParticleSystem.ColorOverLifetimeModule color = particles.colorOverLifetime;
+            color.enabled = true;
+            color.color = fade;
+
+            ParticleSystem.SizeOverLifetimeModule size = particles.sizeOverLifetime;
+            size.enabled = true;
+            size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 1f, 1f, SparkEndSize));
+
+            var particleRenderer = host.GetComponent<ParticleSystemRenderer>();
+            particleRenderer.sharedMaterial = material;
+            particleRenderer.renderMode = ParticleSystemRenderMode.Stretch;
+            particleRenderer.velocityScale = SparkStreak;
+            particleRenderer.lengthScale = 1.6f;
+            particleRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            particleRenderer.receiveShadows = false;
+            particleRenderer.lightProbeUsage = LightProbeUsage.Off;
+            particleRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            return particles;
         }
 
         /// <summary>
@@ -581,15 +792,14 @@ namespace MoonProject.Gameplay.Lift
             return _rider != null || _cradle.Carried != null ? LabStation.Keepsakes : LabStation.Chart;
         }
 
-        /// <summary>07 carries something for the lab: a towed relic or one in the cradle.</summary>
-        private bool Carrying()
-        {
-            return _tether.Towed != null || _cradle.Carried != null;
-        }
-
         private bool NearHome()
         {
             return SurfaceRules.HorizontalDistance(_rover.Position, RideSpot) <= _tuning.CallRadius;
+        }
+
+        private bool NearLift()
+        {
+            return SurfaceRules.HorizontalDistance(_rover.Position, RideSpot) <= _tuning.GuideRadius;
         }
 
         /// <summary>The towed relic comes aboard and floats to its place beside 07.</summary>
@@ -663,13 +873,14 @@ namespace MoonProject.Gameplay.Lift
         /// </summary>
         private void ApplyPose(bool instant)
         {
-            float level = _cycle.Level;
+            float level = Mathf.Max(_cycle.Level, _shudder * JamTiltShare);
             Vector3 travel = Vector3.Lerp(_down.localPosition, _up.localPosition, _cycle.Height);
             float yaw = _cycle.Phase == LiftPhase.Lowering
                 ? _descentFrom + _descentDelta * _cycle.Descent
                 : _turntable.Yaw;
             Quaternion levelRotation = _levelRotation * Quaternion.Euler(0f, yaw, 0f);
-            Vector3 local = Vector3.Lerp(_jammedPosition, travel, level);
+            Vector3 local = Vector3.Lerp(_jammedPosition, travel, level)
+                + Vector3.up * (_shudder * _tuning.JamShudderHeight);
             Quaternion localRotation = Quaternion.Slerp(_jammedRotation, levelRotation, level);
             _posePosition = _frame.TransformPoint(local);
             _poseRotation = _frame.rotation * localRotation;
@@ -808,6 +1019,7 @@ namespace MoonProject.Gameplay.Lift
         private void OnDestroy()
         {
             _approaches?.Dispose();
+            _steps?.Dispose();
         }
     }
 }
