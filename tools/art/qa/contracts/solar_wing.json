@@ -1,0 +1,12 @@
+{
+  "model": "solar_wing",
+  "pivot_tolerance": 0.015,
+  "nodes": {
+    "SolarWing": {"pivot": [0.0, 0.0, 0.0]},
+    "WingSocket": {"pivot": [0.0, -0.24, 0.02]}
+  },
+  "require_vertex_colors": true,
+  "max_triangles": 4000,
+  "max_meshes": 2,
+  "max_draw_calls": 8
+}

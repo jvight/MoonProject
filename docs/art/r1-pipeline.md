@@ -45,9 +45,9 @@ R1 hard-surface forms rely on **chamfered silhouettes** that catch both cold dir
 
 ## 4. Fixed Blender Material Slot Names & Generated Assets
 
-Every mesh primitive exported under `Assets/_Project/Art/R1/Models/` must assign **only** material slots from the 12 fixed names below (`R1MaterialRecipes` in `Assets/_Project/Scripts/Art/Editor/R1MaterialRecipes.cs`):
+Every mesh primitive exported under `Assets/_Project/Art/R1/Models/` must assign **only** material slots from the 13 fixed names below (`R1MaterialRecipes` in `Assets/_Project/Scripts/Art/Editor/R1MaterialRecipes.cs`):
 
-- **Generated Materials (`[MoonBuilder("Art/R1Materials", 105)]`):** `R1MaterialLibrary.BuildMaterials` generates all 12 `.mat` assets into `Assets/_Project/Generated/Art/R1/Materials/` using `GeneratedAssets.CreateOrReplace`. Nothing under `Generated/` is committed to git.
+- **Generated Materials (`[MoonBuilder("Art/R1Materials", 105)]`):** `R1MaterialLibrary.BuildMaterials` generates all 13 `.mat` assets into `Assets/_Project/Generated/Art/R1/Materials/` using `GeneratedAssets.CreateOrReplace`. Nothing under `Generated/` is committed to git.
 - **Import Validation (`R1ModelPostprocessor`):** Sets `ImportViaMaterialDescription` + `InPrefab`, validates each source material name in `OnPreprocessMaterialDescription` (logging `Debug.LogError` with the model path and slot name on unknown names), and validates vertex colours in `OnPostprocessModel`.
 - **Generated Prefabs (`[MoonBuilder("Art/R1Models", 106)]`):** `R1ModelBuilder.Build` wraps each FBX under `Assets/_Project/Art/R1/Models/` into `Assets/_Project/Generated/Art/R1/Models/<same relative path>.prefab` using `GeneratedAssets.SavePrefab`, replacing every renderer's material with the generated library material matching its source slot name.
 
@@ -65,6 +65,7 @@ Every mesh primitive exported under `Assets/_Project/Art/R1/Models/` must assign
 | `R1_LampAmber` | `R1_LampAmber.mat` | Smooth glowing warm amber indicator lamps, porch floodlight lenses, and beacon emitters with a small hot core. |
 | `R1_SolarCell` | `R1_SolarCell.mat` | Deep blue-violet photovoltaic glass cells with fine silver busbars and collector grid for solar arrays and Tilly's solar wing. |
 | `R1_Screen` | `R1_ScreenPlaceholder.mat` | Plain dark-glass placeholder assigned to the `R1_Screen` slot and reserved for the CRT face shader slice. |
+| `R1_Brass` | `R1_Brass.mat` | Warm golden machined brass for lamp bezels, chest lens ring, cheek lens, and fittings. |
 
 ---
 
@@ -78,14 +79,14 @@ Every mesh primitive exported under `Assets/_Project/Art/R1/Models/` must assign
   - `UV0` (`TEXCOORD0`): Primary material UVs. Each slot owns a seamless `[0, 1]` tileable texture set (`T_R1_<Surface>_Albedo/Normal/Mask`). Keep UV islands aligned horizontally (`U` along panel length, `V` along panel height) so brushed metal grain and solar cell busbars orient consistently.
   - `UV1` (`TEXCOORD1`): Optional static lightmap UV (`Pack Islands` with `Margin >= 0.02`).
 - **Regenerating Library Textures:**
-  - Run `python tools/art/r1/generate_r1_textures.py` to deterministically regenerate all 38 PNG maps in `Assets/_Project/Art/R1/Textures/`.
+  - Run `python tools/art/r1/generate_r1_textures.py` to deterministically regenerate all 41 PNG maps in `Assets/_Project/Art/R1/Textures/`.
 
 ---
 
 ## 6. Per-Model Vertex Colours (`COLOR`) & `_MaskMap` Packing
 
 ### Per-Model Vertex Colour Attribute (`COLOR`)
-Because 20+ models share the 12 library materials, **ambient occlusion, convex edge wear, and crease/cavity dust come from each mesh's baked vertex colours**, not from shared 2D textures:
+Because 20+ models share the 13 library materials, **ambient occlusion, convex edge wear, and crease/cavity dust come from each mesh's baked vertex colours**, not from shared 2D textures:
 
 | Vertex Colour Channel | Content | Neutral / Default | Shader Usage (`R1LitCore.hlsl`) |
 | :--- | :--- | :--- | :--- |

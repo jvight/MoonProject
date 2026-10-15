@@ -65,6 +65,7 @@ namespace MoonProject.Art.Editor
         public const string R1ModelsFolder = R1Root + "/Models";
         public const string R1StructuresModelFolder = R1ModelsFolder + "/Structures";
         public const string R1LitShader = "Assets/_Project/Shaders/R1/R1Lit.shader";
+        public const string R1CrtFaceShader = "Assets/_Project/Shaders/R1/R1CrtFace.shader";
 
         /// <summary>The translucent cyan + warm-amber Fresnel hologram shader for build ghosts and un-welded stages.</summary>
         public const string HologramShader = "Assets/_Project/Shaders/Art/LofiHologram.shader";

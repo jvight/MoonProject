@@ -1,0 +1,18 @@
+{
+  "model": "tape_deck",
+  "pivot_tolerance": 0.015,
+  "nodes": {
+    "Kit_TapeDeck": {"pivot": [0.0, 0.0, 0.0]},
+    "CassetteDoor": {"pivot": [0.035, 0.0, -0.04]},
+    "Reel_L": {"pivot": [0.03, 0.035, 0.0]},
+    "Reel_R": {"pivot": [0.03, -0.035, 0.0]},
+    "Key_Play": {"pivot": [0.025, 0.04, 0.072]},
+    "Key_Stop": {"pivot": [0.025, 0.0, 0.072]},
+    "Key_FF": {"pivot": [0.025, -0.04, 0.072]},
+    "RunLED": {"pivot": [0.038, 0.065, 0.052]}
+  },
+  "require_vertex_colors": true,
+  "max_triangles": 3000,
+  "max_meshes": 8,
+  "max_draw_calls": 20
+}

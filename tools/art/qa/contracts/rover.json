@@ -1,0 +1,869 @@
+{
+  "model": "rover",
+  "pivot_tolerance": 0.01,
+  "nodes": {
+    "Antenna": {
+      "pivot": [
+        0.36,
+        -0.46,
+        0.91
+      ]
+    },
+    "AntennaOrigin": {
+      "pivot": [
+        0.36,
+        -0.46,
+        1.05
+      ]
+    },
+    "AntennaSocket": {
+      "pivot": [
+        0.36,
+        -0.46,
+        0.91
+      ]
+    },
+    "AntennaTip": {
+      "pivot": [
+        0.36,
+        -0.46,
+        1.57
+      ]
+    },
+    "Arm_FL": {
+      "pivot": [
+        -0.42,
+        0.31,
+        0.46
+      ]
+    },
+    "Arm_FR": {
+      "pivot": [
+        0.42,
+        0.31,
+        0.46
+      ]
+    },
+    "Arm_RL": {
+      "pivot": [
+        -0.42,
+        -0.31,
+        0.46
+      ]
+    },
+    "Arm_RR": {
+      "pivot": [
+        0.42,
+        -0.31,
+        0.46
+      ]
+    },
+    "BackSocket": {
+      "pivot": [
+        0.0,
+        -0.08,
+        0.96
+      ]
+    },
+    "BatteryGlass_0": {
+      "pivot": [
+        -0.22,
+        -0.605,
+        0.468
+      ]
+    },
+    "BatteryGlass_1": {
+      "pivot": [
+        -0.1571,
+        -0.605,
+        0.468
+      ]
+    },
+    "BatteryGlass_2": {
+      "pivot": [
+        -0.0943,
+        -0.605,
+        0.468
+      ]
+    },
+    "BatteryGlass_3": {
+      "pivot": [
+        -0.0314,
+        -0.605,
+        0.468
+      ]
+    },
+    "BatteryGlass_4": {
+      "pivot": [
+        0.0314,
+        -0.605,
+        0.468
+      ]
+    },
+    "BatteryGlass_5": {
+      "pivot": [
+        0.0943,
+        -0.605,
+        0.468
+      ]
+    },
+    "BatteryGlass_6": {
+      "pivot": [
+        0.1571,
+        -0.605,
+        0.468
+      ]
+    },
+    "BatteryGlass_7": {
+      "pivot": [
+        0.22,
+        -0.605,
+        0.468
+      ]
+    },
+    "BatteryLamp_0": {
+      "pivot": [
+        -0.22,
+        -0.6,
+        0.462
+      ]
+    },
+    "BatteryLamp_1": {
+      "pivot": [
+        -0.1571,
+        -0.6,
+        0.462
+      ]
+    },
+    "BatteryLamp_2": {
+      "pivot": [
+        -0.0943,
+        -0.6,
+        0.462
+      ]
+    },
+    "BatteryLamp_3": {
+      "pivot": [
+        -0.0314,
+        -0.6,
+        0.462
+      ]
+    },
+    "BatteryLamp_4": {
+      "pivot": [
+        0.0314,
+        -0.6,
+        0.462
+      ]
+    },
+    "BatteryLamp_5": {
+      "pivot": [
+        0.0943,
+        -0.6,
+        0.462
+      ]
+    },
+    "BatteryLamp_6": {
+      "pivot": [
+        0.1571,
+        -0.6,
+        0.462
+      ]
+    },
+    "BatteryLamp_7": {
+      "pivot": [
+        0.22,
+        -0.6,
+        0.462
+      ]
+    },
+    "BellySocket": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.28
+      ]
+    },
+    "BinSocket_L": {
+      "pivot": [
+        -0.46,
+        0.02,
+        0.6
+      ]
+    },
+    "BinSocket_R": {
+      "pivot": [
+        0.46,
+        0.02,
+        0.6
+      ]
+    },
+    "Body": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "CargoHatch": {
+      "pivot": [
+        0.0,
+        -0.58,
+        0.8
+      ]
+    },
+    "CargoHold": {
+      "pivot": [
+        0.0,
+        -0.42,
+        0.64
+      ]
+    },
+    "CargoSocket": {
+      "pivot": [
+        0.0,
+        -0.58,
+        0.48
+      ]
+    },
+    "ChargeConduits": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "CoilSocket": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.28
+      ]
+    },
+    "CoilSocket_T1": {
+      "pivot": [
+        0.0,
+        0.64,
+        0.72
+      ]
+    },
+    "ConduitGlow": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "CradleSocket": {
+      "pivot": [
+        0.0,
+        -0.38,
+        0.96
+      ]
+    },
+    "CutterHead": {
+      "pivot": [
+        0.0,
+        0.6,
+        0.72
+      ]
+    },
+    "CutterOrigin": {
+      "pivot": [
+        0.0,
+        0.72,
+        0.73
+      ]
+    },
+    "CutterSocket": {
+      "pivot": [
+        0.0,
+        0.72,
+        0.73
+      ]
+    },
+    "CutterTurret": {
+      "pivot": [
+        0.0,
+        0.55,
+        0.72
+      ]
+    },
+    "DeckCover": {
+      "pivot": [
+        0.365,
+        0.04,
+        1.23
+      ]
+    },
+    "DeckSocket": {
+      "pivot": [
+        0.365,
+        0.04,
+        1.23
+      ]
+    },
+    "DigScoop": {
+      "pivot": [
+        0.0,
+        0.54,
+        0.35
+      ]
+    },
+    "DrumSocket_L": {
+      "pivot": [
+        -0.46,
+        -0.14,
+        0.84
+      ]
+    },
+    "DrumSocket_R": {
+      "pivot": [
+        0.46,
+        -0.14,
+        0.84
+      ]
+    },
+    "DustSocket_L": {
+      "pivot": [
+        -0.61,
+        -0.53,
+        0.0
+      ]
+    },
+    "DustSocket_R": {
+      "pivot": [
+        0.61,
+        -0.53,
+        0.0
+      ]
+    },
+    "Eye": {
+      "pivot": [
+        -0.365,
+        0.04,
+        1.23
+      ]
+    },
+    "EyeOrigin": {
+      "pivot": [
+        -0.365,
+        0.12,
+        1.23
+      ]
+    },
+    "FlanksSocket": {
+      "pivot": [
+        0.46,
+        -0.14,
+        0.84
+      ]
+    },
+    "FrontIntake": {
+      "pivot": [
+        0.0,
+        0.58,
+        0.5
+      ]
+    },
+    "FrontIntakeRoller": {
+      "pivot": [
+        0.0,
+        0.592,
+        0.49
+      ]
+    },
+    "Glass_L": {
+      "pivot": [
+        -0.26,
+        0.58,
+        0.628
+      ]
+    },
+    "Glass_R": {
+      "pivot": [
+        0.26,
+        0.58,
+        0.628
+      ]
+    },
+    "HatchCrate_0": {
+      "pivot": [
+        -0.189,
+        -0.592,
+        0.83
+      ]
+    },
+    "HatchCrate_1": {
+      "pivot": [
+        -0.135,
+        -0.592,
+        0.83
+      ]
+    },
+    "HatchCrate_2": {
+      "pivot": [
+        -0.081,
+        -0.592,
+        0.83
+      ]
+    },
+    "HatchCrate_3": {
+      "pivot": [
+        -0.027,
+        -0.592,
+        0.83
+      ]
+    },
+    "HatchCrate_4": {
+      "pivot": [
+        0.027,
+        -0.592,
+        0.83
+      ]
+    },
+    "HatchCrate_5": {
+      "pivot": [
+        0.081,
+        -0.592,
+        0.83
+      ]
+    },
+    "HatchCrate_6": {
+      "pivot": [
+        0.135,
+        -0.592,
+        0.83
+      ]
+    },
+    "HatchCrate_7": {
+      "pivot": [
+        0.189,
+        -0.592,
+        0.83
+      ]
+    },
+    "HatchOrigin": {
+      "pivot": [
+        0.0,
+        -0.58,
+        0.6
+      ]
+    },
+    "HatchWindow": {
+      "pivot": [
+        0.0,
+        -0.58,
+        0.83
+      ]
+    },
+    "Head": {
+      "pivot": [
+        0.0,
+        0.13,
+        1.18
+      ]
+    },
+    "HeadlampSocket": {
+      "pivot": [
+        0.0,
+        0.62,
+        0.66
+      ]
+    },
+    "Headlamp_L": {
+      "pivot": [
+        -0.26,
+        0.56,
+        0.63
+      ]
+    },
+    "Headlamp_R": {
+      "pivot": [
+        0.26,
+        0.56,
+        0.63
+      ]
+    },
+    "HoldSocket": {
+      "pivot": [
+        0.0,
+        -0.58,
+        0.48
+      ]
+    },
+    "IntakeRoller": {
+      "pivot": [
+        0.0,
+        -0.6,
+        0.52
+      ]
+    },
+    "LampSocket": {
+      "pivot": [
+        0.0,
+        0.62,
+        0.66
+      ]
+    },
+    "LensSocket": {
+      "pivot": [
+        -0.365,
+        0.12,
+        1.23
+      ]
+    },
+    "LockGlow": {
+      "pivot": [
+        -0.365,
+        0.09,
+        1.23
+      ]
+    },
+    "LockRing": {
+      "pivot": [
+        -0.365,
+        0.09,
+        1.23
+      ]
+    },
+    "LowerChute": {
+      "pivot": [
+        0.0,
+        -0.58,
+        0.48
+      ]
+    },
+    "Neck": {
+      "pivot": [
+        0.0,
+        0.13,
+        0.92
+      ]
+    },
+    "NeckLift": {
+      "pivot": [
+        0.0,
+        0.13,
+        0.92
+      ]
+    },
+    "PanniersSocket": {
+      "pivot": [
+        0.46,
+        0.02,
+        0.6
+      ]
+    },
+    "RearVentStrip": {
+      "pivot": [
+        0.0,
+        -0.145,
+        1.26
+      ]
+    },
+    "RoverModel": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "ScanFanSocket": {
+      "pivot": [
+        -0.365,
+        0.12,
+        1.23
+      ]
+    },
+    "ScoopArms": {
+      "pivot": [
+        0.0,
+        0.54,
+        0.35
+      ]
+    },
+    "ScoopBucket": {
+      "pivot": [
+        0.0,
+        0.7,
+        0.22
+      ]
+    },
+    "ScoopCyl_L": {
+      "pivot": [
+        -0.24,
+        0.58,
+        0.43
+      ]
+    },
+    "ScoopCyl_R": {
+      "pivot": [
+        0.24,
+        0.58,
+        0.43
+      ]
+    },
+    "ScoopOrigin": {
+      "pivot": [
+        0.0,
+        0.88,
+        0.14
+      ]
+    },
+    "Screen": {
+      "pivot": [
+        0.0,
+        0.425,
+        1.26
+      ]
+    },
+    "Shock_FL": {
+      "pivot": [
+        -0.42,
+        0.43,
+        0.66
+      ]
+    },
+    "Shock_FR": {
+      "pivot": [
+        0.42,
+        0.43,
+        0.66
+      ]
+    },
+    "Shock_RL": {
+      "pivot": [
+        -0.42,
+        -0.43,
+        0.66
+      ]
+    },
+    "Shock_RR": {
+      "pivot": [
+        0.42,
+        -0.43,
+        0.66
+      ]
+    },
+    "SolarWing": {
+      "pivot": [
+        0.0,
+        -0.06,
+        0.96
+      ]
+    },
+    "SonarLoop": {
+      "pivot": [
+        0.36,
+        -0.46,
+        1.05
+      ]
+    },
+    "SpineSocket": {
+      "pivot": [
+        0.0,
+        -0.08,
+        0.96
+      ]
+    },
+    "StageGlow_1_L": {
+      "pivot": [
+        -0.26,
+        0.094,
+        0.88
+      ]
+    },
+    "StageGlow_1_R": {
+      "pivot": [
+        0.26,
+        0.094,
+        0.88
+      ]
+    },
+    "StageGlow_2_L": {
+      "pivot": [
+        -0.26,
+        0.214,
+        0.85
+      ]
+    },
+    "StageGlow_2_R": {
+      "pivot": [
+        0.26,
+        0.214,
+        0.85
+      ]
+    },
+    "StageGlow_3_L": {
+      "pivot": [
+        -0.26,
+        0.334,
+        0.8
+      ]
+    },
+    "StageGlow_3_R": {
+      "pivot": [
+        0.26,
+        0.334,
+        0.8
+      ]
+    },
+    "Stage_1_L": {
+      "pivot": [
+        -0.26,
+        0.1,
+        0.88
+      ]
+    },
+    "Stage_1_R": {
+      "pivot": [
+        0.26,
+        0.1,
+        0.88
+      ]
+    },
+    "Stage_2_L": {
+      "pivot": [
+        -0.26,
+        0.22,
+        0.85
+      ]
+    },
+    "Stage_2_R": {
+      "pivot": [
+        0.26,
+        0.22,
+        0.85
+      ]
+    },
+    "Stage_3_L": {
+      "pivot": [
+        -0.26,
+        0.34,
+        0.8
+      ]
+    },
+    "Stage_3_R": {
+      "pivot": [
+        0.26,
+        0.34,
+        0.8
+      ]
+    },
+    "StitchOrigin": {
+      "pivot": [
+        0.0,
+        0.71,
+        0.68
+      ]
+    },
+    "StoryRackSocket": {
+      "pivot": [
+        0.0,
+        -0.4,
+        0.61
+      ]
+    },
+    "TetherSocket": {
+      "pivot": [
+        0.0,
+        -0.6,
+        0.38
+      ]
+    },
+    "TowHook": {
+      "pivot": [
+        0.0,
+        -0.72,
+        0.38
+      ]
+    },
+    "UpperCanopy": {
+      "pivot": [
+        0.0,
+        -0.58,
+        0.8
+      ]
+    },
+    "Visor": {
+      "pivot": [
+        0.0,
+        0.435,
+        1.26
+      ]
+    },
+    "Wheel_FL": {
+      "pivot": [
+        -0.61,
+        0.53,
+        0.35
+      ]
+    },
+    "Wheel_FR": {
+      "pivot": [
+        0.61,
+        0.53,
+        0.35
+      ]
+    },
+    "Wheel_RL": {
+      "pivot": [
+        -0.61,
+        -0.53,
+        0.35
+      ]
+    },
+    "Wheel_RR": {
+      "pivot": [
+        0.61,
+        -0.53,
+        0.35
+      ]
+    },
+    "WheelsSocket": {
+      "pivot": [
+        0.73,
+        -0.53,
+        0.35
+      ]
+    },
+    "WinchOrigin": {
+      "pivot": [
+        0.0,
+        -0.72,
+        0.38
+      ]
+    },
+    "WinchSocket": {
+      "pivot": [
+        0.0,
+        -0.6,
+        0.38
+      ]
+    },
+    "WinchSpool": {
+      "pivot": [
+        0.0,
+        -0.6,
+        0.38
+      ]
+    },
+    "WingSocket": {
+      "pivot": [
+        0.0,
+        -0.3,
+        0.96
+      ]
+    }
+  },
+  "require_vertex_colors": true,
+  "max_triangles": 80000,
+  "max_meshes": 30,
+  "max_draw_calls": 95,
+  "allow_rotation": [
+    "ScoopCyl_*",
+    "Shock_*"
+  ],
+  "allow_boundary_edges": true
+}

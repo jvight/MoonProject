@@ -17,6 +17,7 @@ namespace MoonProject.Art.Editor
         SagePatch = 8,
         LampAmber = 9,
         SolarCell = 10,
-        Screen = 11
+        Screen = 11,
+        Brass = 12
     }
 }
