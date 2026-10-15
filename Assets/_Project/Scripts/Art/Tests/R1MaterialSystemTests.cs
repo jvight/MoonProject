@@ -51,6 +51,38 @@ namespace MoonProject.Art.Tests
             "_HotCorePeak"
         };
 
+        private static readonly string[] ExpectedCrtFaceShaderProperties =
+        {
+            "_ScreenBaseColor",
+            "_ScreenEdgeColor",
+            "_PhosphorColor",
+            "_PhosphorGlowColor",
+            "_HotCoreColor",
+            "_BloomSafeMax",
+            "_HotCorePeak",
+            "_Smoothness",
+            "_Curvature",
+            "_ScanlineCount",
+            "_ScanlineDepth",
+            "_GlowRadius",
+            "_TrailAlpha",
+            "_EyeLeftRect",
+            "_EyeLeftShape",
+            "_EyeLeftMode",
+            "_EyeRightRect",
+            "_EyeRightShape",
+            "_EyeRightMode",
+            "_GhostLeftRect",
+            "_GhostLeftShape",
+            "_GhostLeftMode",
+            "_GhostRightRect",
+            "_GhostRightShape",
+            "_GhostRightMode",
+            "_FaceSymbol",
+            "_FaceCrtState",
+            "_FacePhases"
+        };
+
         [Test]
         public void R1LitShader_CompilesWithoutErrors_AndExposesExpectedProperties()
         {
@@ -66,6 +98,29 @@ namespace MoonProject.Art.Tests
                 foreach (string prop in ExpectedShaderProperties)
                 {
                     Assert.IsTrue(mat.HasProperty(prop), $"R1Lit shader is missing expected property '{prop}'.");
+                }
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(mat);
+            }
+        }
+
+        [Test]
+        public void R1CrtFaceShader_CompilesWithoutErrors_AndExposesExpectedProperties()
+        {
+            Shader shader = R1MaterialLibrary.LoadCrtFaceShader();
+            Assert.IsNotNull(shader, "MoonProject/R1/CrtFace shader must exist.");
+            Assert.AreEqual(R1MaterialRecipes.CrtFaceShaderName, shader.name);
+            Assert.IsTrue(shader.isSupported, "MoonProject/R1/CrtFace shader must be supported on the active target.");
+            Assert.IsFalse(ShaderUtil.ShaderHasError(shader), "MoonProject/R1/CrtFace shader must compile without errors.");
+
+            var mat = new Material(shader);
+            try
+            {
+                foreach (string prop in ExpectedCrtFaceShaderProperties)
+                {
+                    Assert.IsTrue(mat.HasProperty(prop), $"R1CrtFace shader is missing expected property '{prop}'.");
                 }
             }
             finally
@@ -91,10 +146,21 @@ namespace MoonProject.Art.Tests
 
                 Material material = R1MaterialLibrary.LoadMaterial(spec.Slot);
                 Assert.IsNotNull(material, $"Generated material asset missing at '{matPath}' for slot '{spec.SlotName}'.");
-                Assert.AreEqual(R1MaterialRecipes.ShaderName, material.shader.name,
-                    $"Material '{spec.MaterialAssetName}' must use '{R1MaterialRecipes.ShaderName}'.");
                 Assert.IsTrue(material.enableInstancing,
                     $"Material '{spec.MaterialAssetName}' must have GPU instancing enabled.");
+
+                if (spec.Slot == R1MaterialSlot.Screen)
+                {
+                    Assert.AreEqual(R1MaterialRecipes.CrtFaceMaterialName, spec.MaterialAssetName);
+                    Assert.AreEqual(R1MaterialRecipes.CrtFaceShaderName, material.shader.name,
+                        $"Material '{spec.MaterialAssetName}' must use '{R1MaterialRecipes.CrtFaceShaderName}'.");
+                    Assert.Less(material.GetFloat("_BloomSafeMax"), Palette.BloomThreshold);
+                    Assert.Greater(material.GetFloat("_HotCorePeak"), Palette.BloomThreshold);
+                    continue;
+                }
+
+                Assert.AreEqual(R1MaterialRecipes.ShaderName, material.shader.name,
+                    $"Material '{spec.MaterialAssetName}' must use '{R1MaterialRecipes.ShaderName}'.");
 
                 Assert.IsNotNull(material.GetTexture("_BaseMap"),
                     $"Material '{spec.MaterialAssetName}' is missing _BaseMap.");
@@ -213,7 +279,7 @@ namespace MoonProject.Art.Tests
             var root = new GameObject("CodeConstructedModel");
             var matCreamPlaceholder = new Material(shader) { name = R1MaterialRecipes.CreamEnamelSlot };
             var matSolarPlaceholder = new Material(shader) { name = R1MaterialRecipes.SolarCellSlot };
-            var matScreenPlaceholder = new Material(shader) { name = R1MaterialRecipes.ScreenSlot + " (Instance)" };
+            var matScreenSlot = new Material(shader) { name = R1MaterialRecipes.ScreenSlot + " (Instance)" };
             var matBogus = new Material(shader) { name = "R1_InvalidSlotName" };
 
             try
@@ -221,7 +287,7 @@ namespace MoonProject.Art.Tests
                 var filter = root.AddComponent<MeshFilter>();
                 filter.sharedMesh = mesh;
                 var renderer = root.AddComponent<MeshRenderer>();
-                renderer.sharedMaterials = new[] { matCreamPlaceholder, matSolarPlaceholder, matScreenPlaceholder };
+                renderer.sharedMaterials = new[] { matCreamPlaceholder, matSolarPlaceholder, matScreenSlot };
 
                 R1ModelBuilder.AssignLibraryMaterials(root, ModelPath);
 
@@ -230,7 +296,7 @@ namespace MoonProject.Art.Tests
                 Assert.AreSame(R1MaterialLibrary.LoadMaterial(R1MaterialSlot.CreamEnamel), assigned[0]);
                 Assert.AreSame(R1MaterialLibrary.LoadMaterial(R1MaterialSlot.SolarCell), assigned[1]);
                 Assert.AreSame(R1MaterialLibrary.LoadMaterial(R1MaterialSlot.Screen), assigned[2]);
-                Assert.AreEqual(R1MaterialRecipes.ScreenPlaceholderMaterialName, assigned[2].name);
+                Assert.AreEqual(R1MaterialRecipes.CrtFaceMaterialName, assigned[2].name);
 
                 renderer.sharedMaterials = new[] { matBogus };
                 var ex = Assert.Throws<InvalidOperationException>(() =>
@@ -246,8 +312,30 @@ namespace MoonProject.Art.Tests
                 UnityEngine.Object.DestroyImmediate(mesh);
                 UnityEngine.Object.DestroyImmediate(matCreamPlaceholder);
                 UnityEngine.Object.DestroyImmediate(matSolarPlaceholder);
-                UnityEngine.Object.DestroyImmediate(matScreenPlaceholder);
+                UnityEngine.Object.DestroyImmediate(matScreenSlot);
                 UnityEngine.Object.DestroyImmediate(matBogus);
+            }
+        }
+
+        [Test]
+        public void CrtFaceState_AllFeelingsBlinksBootAndLowPower_PassEditModeContract()
+        {
+            var suite = new MoonProject.Rover.Face.Tests.FaceStateTests();
+            suite.SetUp();
+            try
+            {
+                suite.Easing_ConvergesTowardEachFeeling_AndMatchesPrototypeSpecs();
+                suite.Blinks_NeverHappenWhileAsleep();
+                suite.Blink_ClosesAndReopensWithinItsLength();
+                suite.BootSequence_ShowsHorizontalLineFirst_ThenOpensEyesVertically();
+                suite.CuriousFeeling_ProducesAsymmetricLeftAndRightEyes();
+                suite.LowPowerAmount_ClampsToZeroOne_AndDimsBrightness();
+                suite.PhosphorGhostTrail_LagsBehindEyeMovement_AndConverges();
+                suite.FaceDisplay_PushesPropertyBlockVectorsToRenderer();
+            }
+            finally
+            {
+                suite.TearDown();
             }
         }
     }
