@@ -64,5 +64,6 @@ namespace MoonProject.Art.Editor
         public const string R1MaterialsFolder = R1Root + "/Materials";
         public const string R1ModelsFolder = R1Root + "/Models";
         public const string R1LitShader = "Assets/_Project/Shaders/R1/R1Lit.shader";
+        public const string R1CrtFaceShader = "Assets/_Project/Shaders/R1/R1CrtFace.shader";
     }
 }

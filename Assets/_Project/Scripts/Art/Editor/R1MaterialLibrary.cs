@@ -61,19 +61,21 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// Builds all 12 R1 library materials into <c>Assets/_Project/Generated/Art/R1/Materials/</c> using
+        /// Builds all 13 R1 library materials into <c>Assets/_Project/Generated/Art/R1/Materials/</c> using
         /// <see cref="GeneratedAssets.CreateOrReplace{T}"/>. Throws <see cref="InvalidOperationException"/> if
-        /// <c>R1Lit.shader</c> or any required texture asset is missing.
+        /// <c>R1Lit.shader</c>, <c>R1CrtFace.shader</c>, or any required texture asset is missing.
         /// </summary>
         [MoonBuilder("Art/R1Materials", 105)]
         public static void BuildMaterials()
         {
-            Shader shader = LoadShader();
+            Shader litShader = LoadShader();
+            Shader crtFaceShader = LoadCrtFaceShader();
             IReadOnlyList<R1MaterialSpec> specs = R1MaterialRecipes.All;
             for (int i = 0; i < specs.Count; i++)
             {
                 R1MaterialSpec spec = specs[i];
-                Material material = CreateMaterial(shader, spec);
+                Shader targetShader = spec.Slot == R1MaterialSlot.Screen ? crtFaceShader : litShader;
+                Material material = CreateMaterial(targetShader, spec);
                 GeneratedAssets.CreateOrReplace(material, R1MaterialRecipes.GetMaterialPath(spec));
             }
 
@@ -91,6 +93,22 @@ namespace MoonProject.Art.Editor
             {
                 throw new InvalidOperationException(
                     $"R1Lit shader is missing at '{R1MaterialRecipes.ShaderPath}' ({R1MaterialRecipes.ShaderName}).");
+            }
+
+            return shader;
+        }
+
+        /// <summary>
+        /// Loads the R1 <c>MoonProject/R1/CrtFace</c> shader strictly from <see cref="R1MaterialRecipes.CrtFaceShaderPath"/>.
+        /// Throws <see cref="InvalidOperationException"/> if the shader asset is missing.
+        /// </summary>
+        public static Shader LoadCrtFaceShader()
+        {
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>(R1MaterialRecipes.CrtFaceShaderPath);
+            if (shader == null)
+            {
+                throw new InvalidOperationException(
+                    $"R1CrtFace shader is missing at '{R1MaterialRecipes.CrtFaceShaderPath}' ({R1MaterialRecipes.CrtFaceShaderName}).");
             }
 
             return shader;
@@ -161,6 +179,12 @@ namespace MoonProject.Art.Editor
             {
                 throw new InvalidOperationException(
                     $"Cannot configure R1 material '{spec.MaterialAssetName}': R1Lit shader is null.");
+            }
+
+            if (spec.Slot == R1MaterialSlot.Screen)
+            {
+                ConfigureCrtFaceMaterial(material, shader, spec);
+                return;
             }
 
             Func<string, Texture2D> loadTex = textureLoader ?? AssetDatabase.LoadAssetAtPath<Texture2D>;
@@ -249,6 +273,52 @@ namespace MoonProject.Art.Editor
             material.globalIlluminationFlags = spec.HasEmission
                 ? MaterialGlobalIlluminationFlags.RealtimeEmissive
                 : MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            material.enableInstancing = true;
+        }
+
+        private static void ConfigureCrtFaceMaterial(Material material, Shader shader, R1MaterialSpec spec)
+        {
+            material.shader = shader;
+            material.name = spec.MaterialAssetName;
+
+            material.SetColor("_ScreenBaseColor", new Color(0.125f, 0.078f, 0.039f, 1f));
+            material.SetColor("_ScreenEdgeColor", new Color(0.071f, 0.043f, 0.020f, 1f));
+            material.SetColor("_PhosphorColor", new Color(1.000f, 0.682f, 0.220f, 1f));
+            material.SetColor("_PhosphorGlowColor", new Color(0.784f, 0.416f, 0.078f, 1f));
+            material.SetColor("_HotCoreColor", new Color(1.000f, 0.953f, 0.800f, 1f));
+            material.SetFloat("_BloomSafeMax", R1MaterialRecipes.DefaultBloomSafeMax);
+            material.SetFloat("_HotCorePeak", R1MaterialRecipes.DefaultHotCorePeak);
+            material.SetFloat("_Smoothness", 0.86f);
+            material.SetFloat("_Curvature", 0.08f);
+            material.SetFloat("_ScanlineCount", 180.0f);
+            material.SetFloat("_ScanlineDepth", 0.16f);
+            material.SetFloat("_GlowRadius", 0.028f);
+            material.SetFloat("_TrailAlpha", 0.28f);
+
+            var defaultLeftRect = new Vector4(0.31f, 0.50f, 0.2006f, 0.4012f);
+            var defaultRightRect = new Vector4(0.69f, 0.50f, 0.2006f, 0.4012f);
+            var defaultShape = new Vector4(0f, 0f, 0f, 1f);
+            var defaultMode = new Vector4(0f, 0f, 0f, 1f);
+
+            material.SetVector("_EyeLeftRect", defaultLeftRect);
+            material.SetVector("_EyeLeftShape", defaultShape);
+            material.SetVector("_EyeLeftMode", defaultMode);
+            material.SetVector("_EyeRightRect", defaultRightRect);
+            material.SetVector("_EyeRightShape", defaultShape);
+            material.SetVector("_EyeRightMode", defaultMode);
+
+            material.SetVector("_GhostLeftRect", defaultLeftRect);
+            material.SetVector("_GhostLeftShape", defaultShape);
+            material.SetVector("_GhostLeftMode", defaultMode);
+            material.SetVector("_GhostRightRect", defaultRightRect);
+            material.SetVector("_GhostRightShape", defaultShape);
+            material.SetVector("_GhostRightMode", defaultMode);
+
+            material.SetVector("_FaceSymbol", Vector4.zero);
+            material.SetVector("_FaceCrtState", new Vector4(1f, 1f, 0f, 0f));
+            material.SetVector("_FacePhases", new Vector4(0f, 0f, 0.45f, 0.30f));
+
+            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
             material.enableInstancing = true;
         }
 
