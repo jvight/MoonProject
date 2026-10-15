@@ -222,22 +222,23 @@ namespace MoonProject.Art.Editor
             material.SetFloat("_SmoothnessMax", spec.SmoothnessMax);
             material.SetFloat("_OcclusionStrength", 1.0f);
 
+            bool isBasalt = spec.Slot == R1MaterialSlot.Basalt;
             material.SetColor("_EdgeWearColor", spec.EdgeWearColor);
             material.SetFloat("_EdgeWearAmount", spec.EdgeWearAmount);
-            material.SetFloat("_EdgeWearThreshold", 0.52f);
-            material.SetFloat("_EdgeWearSharpness", 4.0f);
+            material.SetFloat("_EdgeWearThreshold", isBasalt ? 0.42f : 0.52f);
+            material.SetFloat("_EdgeWearSharpness", isBasalt ? 2.2f : 4.0f);
             material.SetFloat("_EdgeWearMetallic", spec.EdgeWearMetallic);
             material.SetFloat("_EdgeWearSmoothness", spec.EdgeWearSmoothness);
 
-            material.SetColor("_DustColor", R1MaterialRecipes.DefaultDustColor);
+            material.SetColor("_DustColor", isBasalt ? new Color(0.60f, 0.60f, 0.64f, 1f) : R1MaterialRecipes.DefaultDustColor);
             material.SetFloat("_DustAmount", spec.DustAmount);
-            material.SetFloat("_DustSharpness", 2.0f);
-            material.SetFloat("_DustUpThreshold", 0.12f);
-            material.SetFloat("_DustOcclusionWeight", 0.42f);
-            material.SetFloat("_DustSmoothness", 0.12f);
+            material.SetFloat("_DustSharpness", isBasalt ? 1.55f : 2.0f);
+            material.SetFloat("_DustUpThreshold", isBasalt ? 0.14f : 0.12f);
+            material.SetFloat("_DustOcclusionWeight", isBasalt ? 0.36f : 0.42f);
+            material.SetFloat("_DustSmoothness", isBasalt ? 0.07f : 0.12f);
 
-            material.SetFloat("_ColorVarScale", 1.8f);
-            material.SetFloat("_ColorVarAmount", 0.025f);
+            material.SetFloat("_ColorVarScale", isBasalt ? 0.65f : 1.8f);
+            material.SetFloat("_ColorVarAmount", isBasalt ? 0.085f : 0.025f);
 
             material.SetTexture("_EmissionMap", emissionMap);
             material.SetColor("_EmissionColor", spec.EmissionColor);

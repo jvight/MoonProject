@@ -295,40 +295,91 @@ def _generate_surface_maps(
         normal_strength = 4.5
 
     elif style == "basalt":
-        # Fractured lunar basalt stone: matte volcanic grain, small vesicles, and subtle mineral flecks
+        # Weathered lunar basalt / breccia stone: matte volcanic grain, concave vesicle pits,
+        # sub-angular mineral clasts, and soft conchoidal fracture steps
         coarse = _fbm(res, 4, seed + 19)
-        vesicles = np.clip((ultra_fine - 0.70) * 3.4, 0.0, 1.0)
-        flecks = np.clip((fine - 0.68) * 3.1, 0.0, 1.0)
+        med = _fbm(res, 10, seed + 37)
         cleave = 1.0 - np.abs(mottle * 2.0 - 1.0)
+
+        rng = np.random.default_rng(seed + 410)
+        vesicle_bowl = np.zeros((res, res), dtype=np.float32)
+        vesicle_rim = np.zeros((res, res), dtype=np.float32)
+        # 110 concave circular/oval gas vesicle pits across scales
+        for i in range(110):
+            vx = float(rng.random())
+            vy = float(rng.random())
+            vr = float(rng.uniform(0.010, 0.042)) if i < 45 else float(rng.uniform(0.005, 0.016))
+            vdepth = float(rng.uniform(0.45, 0.95))
+            aspect = float(rng.uniform(0.72, 1.38))
+            ang = float(rng.uniform(0.0, np.pi))
+            dx = (u - vx + 0.5) % 1.0 - 0.5
+            dy = (v - vy + 0.5) % 1.0 - 0.5
+            rx = (dx * np.cos(ang) + dy * np.sin(ang)) * aspect
+            ry = -dx * np.sin(ang) + dy * np.cos(ang)
+            rn = np.sqrt(rx * rx + ry * ry) / vr
+            pit = (np.clip(1.0 - rn * rn, 0.0, 1.0) ** 1.6) * vdepth
+            rim = np.exp(-(((rn - 1.05) / 0.22) ** 2)) * vdepth * 0.28
+            vesicle_bowl = np.maximum(vesicle_bowl, pit)
+            vesicle_rim = np.maximum(vesicle_rim, rim)
+
+        # 36 sub-angular breccia mineral clasts
+        clasts = np.zeros((res, res), dtype=np.float32)
+        for _ in range(36):
+            cx = float(rng.random())
+            cy = float(rng.random())
+            cr = float(rng.uniform(0.016, 0.048))
+            ch = float(rng.uniform(0.30, 0.85))
+            dx = (u - cx + 0.5) % 1.0 - 0.5
+            dy = (v - cy + 0.5) % 1.0 - 0.5
+            rn = (np.abs(dx) ** 1.6 + np.abs(dy) ** 1.6) ** (1.0 / 1.6) / cr
+            clast = np.clip(1.0 - rn * rn, 0.0, 1.0) ** 0.85 * ch
+            clasts = np.maximum(clasts, clast)
+
+        flecks = np.clip((fine - 0.64) * 2.8, 0.0, 1.0)
         height = (
             0.50
-            + (coarse - 0.5) * 0.045
-            + (cleave - 0.5) * 0.032
-            + (fine - 0.5) * 0.020
-            - vesicles * 0.038
-            + flecks * 0.014
+            + (coarse - 0.5) * 0.055
+            + (med - 0.5) * 0.035
+            + (cleave - 0.5) * 0.028
+            + (fine - 0.5) * 0.018
+            + clasts * 0.032
+            + vesicle_rim * 0.022
+            - vesicle_bowl * 0.085
+            + flecks * 0.012
         )
         albedo = np.empty((res, res, 3), dtype=np.float32)
         albedo[..., 0] = base_rgb[0]
         albedo[..., 1] = base_rgb[1]
         albedo[..., 2] = base_rgb[2]
         albedo *= (
-            0.93
-            + 0.11 * coarse[..., None]
-            + 0.05 * (cleave[..., None] - 0.5)
-            + 0.06 * flecks[..., None]
-            - 0.09 * vesicles[..., None]
+            0.92
+            + 0.12 * coarse[..., None]
+            + 0.06 * (med[..., None] - 0.5)
+            + 0.09 * clasts[..., None]
+            + 0.05 * flecks[..., None]
+            + 0.03 * vesicle_rim[..., None]
+            - 0.24 * vesicle_bowl[..., None]
         )
-        metallic = np.full((res, res), metallic_val, dtype=np.float32) + flecks * 0.04
+        metallic = np.full((res, res), metallic_val, dtype=np.float32) + flecks * 0.03
         smoothness = (
             np.full((res, res), smoothness_val, dtype=np.float32)
-            + (coarse - 0.5) * 0.06
-            + flecks * 0.08
-            - vesicles * 0.07
+            + (coarse - 0.5) * 0.04
+            + clasts * 0.05
+            + flecks * 0.05
+            - vesicle_bowl * 0.09
         )
-        micro_wear = np.clip(0.48 + (cleave - 0.5) * 0.45 + flecks * 0.28, 0.0, 1.0)
-        micro_cavity = np.clip(0.56 - vesicles * 0.42 - (0.5 - coarse) * 0.30, 0.0, 1.0)
-        normal_strength = 5.8
+        # Mask.g feeds microAo in R1LitCore.hlsl: darken strongly inside vesicle pits and crevices
+        micro_wear = np.clip(
+            0.78 - vesicle_bowl * 0.72 - np.clip(0.5 - coarse, 0.0, 0.5) * 0.45 + clasts * 0.14,
+            0.04,
+            1.0,
+        )
+        micro_cavity = np.clip(
+            0.72 - vesicle_bowl * 0.65 - (0.5 - coarse) * 0.35,
+            0.04,
+            1.0,
+        )
+        normal_strength = 8.4
 
     normal_rgb = _height_to_normal(height, normal_strength=normal_strength)
 
@@ -365,83 +416,125 @@ def _generate_regolith_maps(res: int = 512, seed: int = 2026) -> dict[str, np.nd
     fine = _tileable_noise(res, 32, seed + 33)
     ultra_fine = _tileable_noise(res, 64, seed + 71)
     grain = _tileable_noise(res, 96, seed + 113)
+    micro_grit = _tileable_noise(res, 128, seed + 157)
 
-    # Subtle wind/impact regolith micro-ripples (tileable periodic phase)
-    phase = u * 6.0 * np.pi * 2.0 + v * 2.0 * np.pi * 2.0 + (broad - 0.5) * 2.2
+    # Subtle impact/gardening regolith micro-undulation (tileable periodic phase)
+    phase = u * 5.0 * np.pi * 2.0 + v * 2.0 * np.pi * 2.0 + (broad - 0.5) * 2.6
     ripple = 0.5 + 0.5 * np.sin(phase)
 
     crater_bowl = np.zeros((res, res), dtype=np.float32)
     crater_rim = np.zeros((res, res), dtype=np.float32)
+    crater_ejecta = np.zeros((res, res), dtype=np.float32)
     pebbles = np.zeros((res, res), dtype=np.float32)
+    pebble_moat = np.zeros((res, res), dtype=np.float32)
+    pebble_tone = np.zeros((res, res), dtype=np.float32)
 
     rng = np.random.default_rng(seed + 500)
-    # 85 seamless wrap-around micro-craters across [0, 1]^2
-    for _ in range(85):
+    # 55 subtle, organic micro-pits across [0, 1]^2 (warped by fine noise so they never read as compass circles)
+    for i in range(55):
         cx = float(rng.random())
         cy = float(rng.random())
-        radius = float(rng.uniform(0.014, 0.058))
-        depth = float(rng.uniform(0.35, 0.85)) * (radius / 0.045) ** 0.45
+        radius = float(rng.uniform(0.008, 0.014)) if i < 18 else float(rng.uniform(0.004, 0.009))
+        depth = float(rng.uniform(0.35, 0.72)) * (radius / 0.012) ** 0.35
+        aspect = float(rng.uniform(0.82, 1.22))
+        ang = float(rng.uniform(0.0, np.pi))
         dx = (u - cx + 0.5) % 1.0 - 0.5
         dy = (v - cy + 0.5) % 1.0 - 0.5
-        rn = np.sqrt(dx * dx + dy * dy) / radius
+        rx = (dx * np.cos(ang) + dy * np.sin(ang)) * aspect
+        ry = -dx * np.sin(ang) + dy * np.cos(ang)
+        rn = (np.sqrt(rx * rx + ry * ry) + (fine - 0.5) * radius * 0.28) / radius
 
-        bowl = np.clip(1.0 - rn * rn, 0.0, 1.0) ** 1.35 * depth
-        rim = np.exp(-(((rn - 1.06) / 0.26) ** 2)) * depth * 0.42
+        bowl = (np.clip(1.0 - rn * rn, 0.0, 1.0) ** 1.55) * depth
+        rim = np.exp(-(((rn - 1.03) / 0.22) ** 2)) * depth * 0.58
+        ejecta = np.exp(-(((rn - 1.20) / 0.38) ** 2)) * depth * 0.24
         crater_bowl = np.maximum(crater_bowl, bowl)
         crater_rim = np.maximum(crater_rim, rim)
+        crater_ejecta = np.maximum(crater_ejecta, ejecta)
 
-    # 140 tiny half-buried basalt clasts / regolith pebbles
-    for _ in range(140):
+    # 620 tiny irregular basalt/breccia clasts and regolith pebbles
+    for _ in range(620):
         px = float(rng.random())
         py = float(rng.random())
-        pr = float(rng.uniform(0.006, 0.018))
-        ph = float(rng.uniform(0.25, 0.65))
+        pr = float(rng.uniform(0.0024, 0.0105))
+        ph = float(rng.uniform(0.35, 0.92))
+        tone = float(rng.uniform(-0.95, 0.85))
+        aspect = float(rng.uniform(0.65, 1.48))
+        ang = float(rng.uniform(0.0, np.pi))
         dx = (u - px + 0.5) % 1.0 - 0.5
         dy = (v - py + 0.5) % 1.0 - 0.5
-        rn = np.sqrt(dx * dx + dy * dy) / pr
-        dome = (np.clip(1.0 - rn * rn, 0.0, 1.0) ** 1.5) * ph
-        pebbles = np.maximum(pebbles, dome)
+        rx = (dx * np.cos(ang) + dy * np.sin(ang)) * aspect
+        ry = -dx * np.sin(ang) + dy * np.cos(ang)
+        rn = (np.sqrt(rx * rx + ry * ry) + (ultra_fine - 0.5) * pr * 0.32) / pr
+        dome = (np.clip(1.0 - rn * rn, 0.0, 1.0) ** 1.20) * ph
+        moat = np.exp(-(((rn - 1.06) / 0.20) ** 2)) * ph * 0.45
+        mask_update = dome > pebbles
+        pebbles = np.where(mask_update, dome, pebbles)
+        pebble_tone = np.where(mask_update, dome * tone, pebble_tone)
+        pebble_moat = np.maximum(pebble_moat, moat)
+
+    ridge_grit = (0.5 - np.abs(grain - 0.5)) * 0.6 + (0.5 - np.abs(micro_grit - 0.5)) * 0.4 - 0.25
+    crunchy_grain = 0.45 * (grain - 0.5) + 0.35 * (micro_grit - 0.5) + 0.20 * ridge_grit
 
     height = (
         0.50
-        + (broad - 0.5) * 0.045
+        + (broad - 0.5) * 0.036
         + (medium - 0.5) * 0.032
-        + (ripple - 0.5) * 0.014
-        + (fine - 0.5) * 0.020
-        + (ultra_fine - 0.5) * 0.012
-        + (grain - 0.5) * 0.008
+        + (ripple - 0.5) * 0.009
+        + (fine - 0.5) * 0.032
+        + (ultra_fine - 0.5) * 0.028
+        + crunchy_grain * 0.034
         + crater_rim * 0.042
-        - crater_bowl * 0.068
-        + pebbles * 0.036
+        - crater_bowl * 0.052
+        + pebbles * 0.072
+        - pebble_moat * 0.018
     )
 
-    normal_rgb = _height_to_normal(height, normal_strength=6.8)
+    normal_rgb = _height_to_normal(height, normal_strength=9.5)
 
-    # Near-neutral grey regolith albedo (no purple wash); subtle brighten on rims/clasts, darken in bowls
+    # Near-neutral grey regolith albedo; crunchy mineral grit, dark/light clast specks, subtle raised rims (no dark circular stains)
     lum = (
-        0.76
-        + (broad - 0.5) * 0.08
-        + (medium - 0.5) * 0.06
-        + (fine - 0.5) * 0.04
-        + (grain - 0.5) * 0.03
-        + crater_rim * 0.06
-        + pebbles * 0.04
-        - crater_bowl * 0.09
+        0.75
+        + (broad - 0.5) * 0.068
+        + (medium - 0.5) * 0.055
+        + (fine - 0.5) * 0.052
+        + (ultra_fine - 0.5) * 0.038
+        + crunchy_grain * 0.068
+        + crater_rim * 0.034
+        + crater_ejecta * 0.018
+        + pebbles * 0.025
+        + pebble_tone * 0.082
+        - pebble_moat * 0.038
+        - crater_bowl * 0.016
     )
-    lum = np.clip(lum, 0.52, 0.94)
+    lum = np.clip(lum, 0.54, 0.94)
     albedo_rgb = np.stack([lum * 0.995, lum * 1.000, lum * 1.005], axis=-1)
     albedo_rgba = np.concatenate(
         [np.clip(albedo_rgb, 0.0, 1.0), np.ones((res, res, 1), dtype=np.float32)], axis=-1
     )
 
-    # Mask channels for R1Terrain:
-    # R = pore/grain variation, G = clast/rim ridge mask, B = micro-cavity AO, A = micro-smoothness
-    pore_var = np.clip(0.50 + (medium - 0.5) * 0.35 + (fine - 0.5) * 0.25 + crater_rim * 0.20 - crater_bowl * 0.25, 0.0, 1.0)
-    clast_mask = np.clip(pebbles * 0.85 + crater_rim * 0.55 + (ultra_fine - 0.5) * 0.25, 0.0, 1.0)
-    micro_ao = np.clip(0.84 - crater_bowl * 0.42 - np.clip(0.5 - medium, 0.0, 0.5) * 0.28 - pebbles * 0.08, 0.25, 1.0)
-    smoothness = np.clip(0.09 + pebbles * 0.11 + (grain - 0.5) * 0.04 - crater_bowl * 0.03, 0.04, 0.26)
+    # Mask channels for R1Terrain (matching R1 standard R=Metallic, G=AO, B=Detail, A=Smoothness):
+    metallic = np.zeros((res, res), dtype=np.float32)
+    micro_ao = np.clip(
+        0.89
+        - crater_bowl * 0.16
+        - pebble_moat * 0.28
+        - np.clip(0.5 - medium, 0.0, 0.5) * 0.16
+        - np.clip(-crunchy_grain, 0.0, 0.5) * 0.22,
+        0.48,
+        1.0,
+    )
+    clast_detail = np.clip(
+        0.50 + pebbles * 0.38 + crater_rim * 0.20 - crater_bowl * 0.14 + crunchy_grain * 0.34,
+        0.0,
+        1.0,
+    )
+    smoothness = np.clip(
+        0.08 + pebbles * 0.11 + crunchy_grain * 0.05 - crater_bowl * 0.02,
+        0.03,
+        0.22,
+    )
 
-    mask_rgba = np.stack([pore_var, clast_mask, micro_ao, smoothness], axis=-1)
+    mask_rgba = np.stack([metallic, micro_ao, clast_detail, smoothness], axis=-1)
     return {
         "albedo": albedo_rgba,
         "normal": normal_rgb,
