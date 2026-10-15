@@ -15,7 +15,7 @@ namespace MoonProject.Rover
     /// combo climbs), a relic answering or surfacing (a glance and a perk-up), a deposit (a contented nod), a snapped
     /// tether (a sigh), and hard landings (a small "oof"). When the camera opens to the lonely wide shot
     /// (<see cref="RoverWideShotChanged"/>) its daydream sigh lands with the frame. A relay mast it restored gets a
-    /// long look up at its lamp and a perk-up; a new signal pillar of Bell's within range gets a glance; landing from
+    /// long look up at its lamp and a perk-up; a new signal of Bell's within range gets a glance; landing from
     /// a radio-hop, 07 rouses and looks around (<see cref="LookAround"/>). Once the Rover Bay has fitted a kit piece
     /// (its Install Impact) and lets 07 go, turned to show it, 07 strikes a proud pose (head up, eye bright,
     /// antenna wiggle); a friend's gift gets a softer one as it settles; with Tilly's cell in its wing the wing settles
@@ -276,9 +276,9 @@ namespace MoonProject.Rover
             PerkUp(Mathf.Min(strength, _tuning.SalvagePerkMax));
         }
 
-        private void OnRelicAnswered(RelicAnswered answer)
+        private void OnRelicAnswered(RelicAnswered relic)
         {
-            Glance(answer.Position);
+            Glance(relic.Position);
             PerkUp(_tuning.RelicAnsweredPerk);
         }
 
@@ -328,7 +328,7 @@ namespace MoonProject.Rover
             PerkUp(_tuning.RelayRestoredPerk);
         }
 
-        /// <summary>Bell pointed at something: a glance toward the new pillar of light if it is within range.</summary>
+        /// <summary>Bell pointed at something: a glance toward the new signal if it is within range.</summary>
         private void OnBellSignalPicked(BellSignalPicked signal)
         {
             Vector3 offset = signal.Position - _rover.Position;
@@ -406,7 +406,6 @@ namespace MoonProject.Rover
             }
         }
 
-        /// <summary>07 listens: the antenna lifts and its tip blinks.</summary>
         private void OnListened(SonarPinged listened)
         {
             _listen.Listen();

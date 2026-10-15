@@ -39,9 +39,10 @@ namespace MoonProject.Art.Editor
         public static void Build()
         {
             Material material = PaletteAssetBuilder.LoadMaterial();
+            Material glowOff = PaletteAssetBuilder.LoadGlowOffMaterial();
             foreach (ModelNode derelict in new[] { CreateElder(), CreateMule(), CreateHaulBot(), CreateDrone() })
             {
-                ModelPrefabWriter.Write(GroundOcclusion.Ground(derelict), ArtPaths.PropFolder, material);
+                ModelPrefabWriter.Write(GroundOcclusion.Ground(derelict), ArtPaths.PropFolder, material, glowOff);
             }
 
             AssetDatabase.SaveAssets();
@@ -57,6 +58,7 @@ namespace MoonProject.Art.Editor
 
             root.Add(new ModelNode(TapeSocketName, DerelictMeshes.ElderTapeSeat, DerelictMeshes.ElderTapeTurn));
             root.Add(new ModelNode(HutSocketName, DerelictMeshes.ElderHutSeat, DerelictMeshes.ElderHutTurn));
+            AddAnswerLamp(root, ElderName, new Vector3(-0.18f, 1.38f, -0.35f));
 
             return root;
         }
@@ -72,6 +74,7 @@ namespace MoonProject.Art.Editor
                 AddSocket(root, "WarmHeadlamp", i, DerelictMeshes.MuleSocket(i, out Quaternion rotation), rotation);
             }
 
+            AddAnswerLamp(root, MuleName, new Vector3(1.32f, 1.57f, 0.5f));
             return root;
         }
 
@@ -98,7 +101,15 @@ namespace MoonProject.Art.Editor
             root.Add(new ModelNode(DroneNodeName, DerelictMeshes.DroneHang,
                 Place.Rotation(DerelictMeshes.DroneHangEuler),
                 new ModelMesh(DroneName + "_" + DroneNodeName, DerelictMeshes.Drone())));
+            AddAnswerLamp(root, DroneName, new Vector3(-0.02f, 1.07f, 0.3f));
             return root;
+        }
+
+        private static void AddAnswerLamp(ModelNode root, string name, Vector3 position)
+        {
+            root.Add(new ModelNode(SiteModelBuilder.AnswerLampName, position, Quaternion.identity,
+                new ModelMesh(name + "_" + SiteModelBuilder.AnswerLampName, SiteModelBuilder.AnswerLampMesh()),
+                ModelMaterial.PaletteGlowOff));
         }
 
         private static ModelNode Root(string name, LowPolyMeshBuilder skeleton)

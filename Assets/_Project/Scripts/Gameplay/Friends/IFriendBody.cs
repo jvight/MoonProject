@@ -13,6 +13,9 @@ namespace MoonProject.Gameplay
         /// <summary>Where it is now (voices, prompts and 07's gaze follow it).</summary>
         Vector3 Position { get; }
 
+        /// <summary>Its own light (eye or dial lamp) that blinks back when a listen reaches it.</summary>
+        Vector3 AnswerPosition { get; }
+
         /// <summary>Where 07's stitching beam lands.</summary>
         Vector3 BeamTarget { get; }
 
@@ -29,6 +32,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>07 holds still and its beam reaches the friend at <paramref name="t"/> s into the repair.</summary>
         bool Beaming(float t);
+
+        /// <summary>Blinks its own light in answer to a listen while it still lies broken.</summary>
+        void SetAnswerBlink(float intensity);
 
         /// <summary>Lights lamp <paramref name="lamp"/> (parts first, then items) on the rig in view.</summary>
         void SetLamp(int lamp, float intensity);

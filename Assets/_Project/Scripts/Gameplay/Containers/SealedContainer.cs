@@ -80,6 +80,9 @@ namespace MoonProject.Gameplay
         /// <summary>True once the lid has swung fully open and the find may slide out.</summary>
         public bool StandsOpen { get; internal set; }
 
+        /// <summary>Extra blink glow on the seal while Bell's signal points at this container.</summary>
+        internal float SignalBlink { get; set; }
+
         /// <summary>True while its owner lets it be cut.</summary>
         public bool Available => _available();
 

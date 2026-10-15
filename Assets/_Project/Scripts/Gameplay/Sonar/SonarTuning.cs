@@ -3,9 +3,9 @@ using UnityEngine;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The sonar: when 07 listens, the ring that rolls over the ground, how relics answer, the light pillars they leave
-    /// on the horizon and how 07 keeps glancing at them. Created by the Gameplay/Tuning builder; runtime code only
-    /// reads it.
+    /// The sonar: when 07 listens, how places and relics answer in distance order, the warm blink each answering lamp
+    /// gives on the object itself, and how the Warm Headlamp holds a lit blink a little longer. Created by the
+    /// Gameplay/Tuning builder; runtime code only reads it.
     /// </summary>
     public sealed class SonarTuning : ScriptableObject
     {
@@ -23,124 +23,86 @@ namespace MoonProject.Gameplay
         [Tooltip("Metres a listen reaches; relics farther away stay silent.")]
         [Range(10f, 500f)] [SerializeField] private float _range = 140f;
 
-        [Header("Ring")]
-        [Tooltip("Seconds the ring takes to reach full range (it slows as it spreads: ease-out).")]
-        [Range(0.5f, 15f)] [SerializeField] private float _ringDuration = 5f;
-
-        [Tooltip("Ring band width (m) at the start and at full range: a thin, calm wave.")]
-        [SerializeField] private Vector2 _ringWidth = new Vector2(0.6f, 2.8f);
-
-        [Tooltip("Seconds the ring takes to fade in.")]
-        [Range(0f, 1f)] [SerializeField] private float _ringFadeIn = 0.15f;
-
-        [Tooltip("Height (m) of the ring above the surface.")]
-        [Range(0f, 1f)] [SerializeField] private float _ringLift = 0.25f;
-
-        [Tooltip("Ring segments (more hug dunes better at full range).")]
-        [Range(16, 512)] [SerializeField] private int _ringSegments = 192;
-
-        [Tooltip("Ring brightness at the start. Keep it at or below 1 so the ring stays cyan instead of " +
-                 "blooming white.")]
-        [Range(0f, 4f)] [SerializeField] private float _ringIntensity = 0.85f;
-
-        [Tooltip("How the ring fades as it travels: brightness = (1 - progress) ^ this. Above 1 fades early and long.")]
-        [Range(0.5f, 4f)] [SerializeField] private float _ringFadeCurve = 1.6f;
-
-        [Tooltip("Rings that can be on screen at once.")]
-        [Range(1, 4)] [SerializeField] private int _ringPoolSize = 2;
-
         [Header("Answers")]
-        [Tooltip("Seconds after the ring touches a relic before it answers.")]
+        [Tooltip("Seconds a listen takes to reach full range (ease-out, so closer answers come first).")]
+        [Range(0.5f, 15f)] [SerializeField] private float _sweepDuration = 5f;
+
+        [Tooltip("Seconds after a listen reaches a place before it answers.")]
         [Range(0f, 2f)] [SerializeField] private float _answerLag = 0.3f;
 
-        [Tooltip("Pillar brightness of an answer right next to 07 (closer answers glow brighter).")]
-        [Range(0f, 10f)] [SerializeField] private float _nearBrightness = 1.6f;
+        [Tooltip("Blink brightness of an answer right next to 07 (closer answers glow brighter).")]
+        [Range(0f, 10f)] [SerializeField] private float _nearBrightness = 1.5f;
 
-        [Tooltip("Pillar brightness of an answer at the edge of the range.")]
-        [Range(0f, 10f)] [SerializeField] private float _farBrightness = 1f;
+        [Tooltip("Blink brightness of an answer at the edge of the range.")]
+        [Range(0f, 10f)] [SerializeField] private float _farBrightness = 1.25f;
 
-        [Header("Markers")]
-        [Tooltip("Seconds an answer's light pillar stays on the horizon.")]
-        [Range(1f, 120f)] [SerializeField] private float _pillarLifetime = 20f;
+        [Header("Blink")]
+        [Tooltip("Slow blinks each answering lamp gives before fading.")]
+        [Range(1, 5)] [SerializeField] private int _blinkCount = 3;
 
-        [Tooltip("Seconds the pillar takes to fade in.")]
-        [Range(0.05f, 6f)] [SerializeField] private float _pillarRise = 1.5f;
+        [Tooltip("Seconds per blink of an answering lamp.")]
+        [Range(0.4f, 5f)] [SerializeField] private float _blinkPeriod = 1.8f;
 
-        [Tooltip("Seconds over which the pillar fades out at the end of its life.")]
-        [Range(0.5f, 30f)] [SerializeField] private float _pillarFade = 8f;
+        [Tooltip("World-space radius (m) of an answer lamp's halo up close.")]
+        [Range(0.05f, 2f)] [SerializeField] private float _blinkSize = 0.25f;
 
-        [Tooltip("How deeply a standing pillar breathes (0 = steady, 0.5 = dims to half).")]
-        [Range(0f, 0.8f)] [SerializeField] private float _pillarBreathDepth = 0.25f;
+        [Tooltip("Minimum apparent half-angle (degrees) of an answer's halo so a 140 m answer stays a few warm " +
+                 "pixels on screen.")]
+        [Range(0.05f, 2f)] [SerializeField] private float _blinkMinAngle = 0.4f;
 
-        [Tooltip("Seconds per breath of a standing pillar.")]
-        [Range(0.5f, 15f)] [SerializeField] private float _pillarBreathPeriod = 3.5f;
-
-        [Tooltip("Pillar height (m): tall enough to read over dunes from far away.")]
-        [Range(2f, 100f)] [SerializeField] private float _pillarHeight = 32f;
-
-        [Tooltip("Pillar radius (m).")]
-        [Range(0.1f, 3f)] [SerializeField] private float _pillarRadius = 0.6f;
-
-        [Tooltip("Warm (friend) markers read brighter than cyan ones at the same value: their glow is scaled by this.")]
-        [Range(0.1f, 1f)] [SerializeField] private float _friendGlowScale = 0.55f;
+        [Tooltip("Height (m) of a loose relic's answer blink above its position.")]
+        [Range(0.05f, 2f)] [SerializeField] private float _relicBlinkLift = 0.35f;
 
         [Header("07's attention")]
-        [Tooltip("Seconds 07 looks toward the nearest answer right after it arrives.")]
-        [Range(0f, 10f)] [SerializeField] private float _answerGaze = 2.5f;
-
-        [Tooltip("While pillars stand, 07 glances at the nearest one every this many seconds...")]
-        [Range(1f, 60f)] [SerializeField] private float _glanceInterval = 6f;
-
-        [Tooltip("...for this many seconds.")]
-        [Range(0.2f, 10f)] [SerializeField] private float _glanceDuration = 1.6f;
+        [Tooltip("Seconds 07 looks toward the nearest answer right after it arrives, before releasing back to driving look.")]
+        [Range(0f, 10f)] [SerializeField] private float _answerGaze = 1.6f;
 
         [Header("Warm Headlamp (M3-11)")]
-        [Tooltip("With the Warm Headlamp fitted, a site's or relic's pillar within this half-angle (degrees) of " +
-                 "07's heading counts as faced...")]
+        [Tooltip("With the Warm Headlamp fitted, an answer within this half-angle (degrees) of 07's heading counts " +
+                 "as lit...")]
         [Range(1f, 90f)] [SerializeField] private float _headlampCone = 22f;
 
-        [Tooltip("...and ages this much slower while faced (0 = as usual, 1 = not at all): it stands a little longer.")]
+        [Tooltip("...and ages this much slower while lit (0 = as usual, 1 = not at all): it keeps blinking longer.")]
         [Range(0f, 1f)] [SerializeField] private float _headlampLinger = 0.6f;
 
-        [Tooltip("At most this many extra seconds per answer, so a pillar still bows out in the end.")]
-        [Range(0f, 120f)] [SerializeField] private float _headlampMaxLinger = 25f;
+        [Tooltip("At most this many extra seconds per answer, so a lit blink still fades out in the end.")]
+        [Range(0f, 120f)] [SerializeField] private float _headlampMaxLinger = 6f;
 
         public float RestSeconds => _restSeconds;
         public float RestSpeed => _restSpeed;
         public float ListenSpacing => _listenSpacing;
         public float Range => _range;
-        public float RingDuration => _ringDuration;
-        public Vector2 RingWidth => _ringWidth;
-        public float RingFadeIn => _ringFadeIn;
-        public float RingLift => _ringLift;
-        public int RingSegments => _ringSegments;
-        public float RingIntensity => _ringIntensity;
-        public float RingFadeCurve => _ringFadeCurve;
-        public int RingPoolSize => _ringPoolSize;
+        public float SweepDuration => _sweepDuration;
         public float AnswerLag => _answerLag;
         public float NearBrightness => _nearBrightness;
         public float FarBrightness => _farBrightness;
-        public float PillarLifetime => _pillarLifetime;
-        public float PillarRise => _pillarRise;
-        public float PillarFade => _pillarFade;
-        public float PillarBreathDepth => _pillarBreathDepth;
-        public float PillarBreathPeriod => _pillarBreathPeriod;
-        public float PillarHeight => _pillarHeight;
-        public float PillarRadius => _pillarRadius;
-        public float FriendGlowScale => _friendGlowScale;
+        public int BlinkCount => _blinkCount;
+        public float BlinkPeriod => _blinkPeriod;
+        public float BlinkDuration => _blinkCount * _blinkPeriod;
+        public float BlinkSize => _blinkSize;
+        public float BlinkMinAngle => _blinkMinAngle;
+        public float RelicBlinkLift => _relicBlinkLift;
         public float AnswerGaze => _answerGaze;
-        public float GlanceInterval => _glanceInterval;
-        public float GlanceDuration => _glanceDuration;
         public float HeadlampCone => _headlampCone;
         public float HeadlampLinger => _headlampLinger;
         public float HeadlampMaxLinger => _headlampMaxLinger;
 
         /// <summary>
-        /// Answer brightness for a relic <paramref name="distance"/> metres away: closer is brighter.
+        /// Answer brightness for a place <paramref name="distance"/> metres away: closer is brighter.
         /// </summary>
         public float BrightnessAt(float distance)
         {
             return Mathf.Lerp(_nearBrightness, _farBrightness, Mathf.Clamp01(distance / _range));
+        }
+
+        /// <summary>
+        /// World-space halo radius (m) for an answer <paramref name="distance"/> metres from the camera: at least
+        /// <see cref="BlinkSize"/> up close, and at least <see cref="BlinkMinAngle"/> degrees across at range.
+        /// </summary>
+        public float BlinkRadiusAt(float distance)
+        {
+            float minRadius = distance * Mathf.Tan(_blinkMinAngle * Mathf.Deg2Rad);
+            return Mathf.Max(_blinkSize, minRadius);
         }
     }
 }

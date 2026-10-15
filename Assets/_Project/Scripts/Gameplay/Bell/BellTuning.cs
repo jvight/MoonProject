@@ -243,21 +243,12 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds 07's beam taps her dial before she turns it (07 has no hands, VISION ruling 14).")]
         [Range(0.05f, 1.5f)] [SerializeField] private float _dialTapTime = 0.35f;
 
-        [Header("Signal pillar")]
-        [Tooltip("Brightness of her amber signal pillar (warm, persistent).")]
-        [Range(0f, 4f)] [SerializeField] private float _pillarGlow = 0.9f;
+        [Header("Signal blink")]
+        [Tooltip("Peak brightness of the signal target's blinking lamp (under the 1.2 bloom threshold).")]
+        [Range(0f, 1.1f)] [SerializeField] private float _signalGlow = 0.85f;
 
-        [Tooltip("Seconds the pillar takes to rise.")]
-        [Range(0.1f, 10f)] [SerializeField] private float _pillarRise = 2.5f;
-
-        [Tooltip("Seconds the pillar takes to fade once its target is found.")]
-        [Range(0.1f, 10f)] [SerializeField] private float _pillarFade = 2.2f;
-
-        [Tooltip("How deep (0..1) the pillar breathes.")]
-        [Range(0f, 1f)] [SerializeField] private float _pillarBreathDepth = 0.25f;
-
-        [Tooltip("Seconds per pillar breath.")]
-        [Range(0.5f, 20f)] [SerializeField] private float _pillarBreathPeriod = 5f;
+        [Tooltip("Seconds between calm blink bursts while Bell's signal points at a target.")]
+        [Range(2f, 20f)] [SerializeField] private float _signalInterval = 5.5f;
 
         [Header("Cassette shelf")]
         [Tooltip("Height (m) of a tape's pivot above its shelf slot (art: about 0.11).")]
@@ -340,11 +331,8 @@ namespace MoonProject.Gameplay
         public float TuneRadius => _tuneRadius;
         public float TuneMaxSpeed => _tuneMaxSpeed;
         public float DialTapTime => _dialTapTime;
-        public float PillarGlow => _pillarGlow;
-        public float PillarRise => _pillarRise;
-        public float PillarFade => _pillarFade;
-        public float PillarBreathDepth => _pillarBreathDepth;
-        public float PillarBreathPeriod => _pillarBreathPeriod;
+        public float SignalGlow => _signalGlow;
+        public float SignalInterval => _signalInterval;
         public float ShelfLift => _shelfLift;
         public float ShelfSettle => _shelfSettle;
         public float ShelfOvershoot => _shelfOvershoot;

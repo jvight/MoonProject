@@ -9,14 +9,14 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// 07's listening, the sonar with no button (docs/design/first-hour-v2.md §3). From tower level 1 on, once 07 has
     /// rested a moment after driving somewhere new (<see cref="ListenGate"/>), it listens: <see cref="SonarPinged"/>
-    /// is published (the antenna lifts, the kalimba sounds) and a ring rolls over the ground; every salvage site and
-    /// every derelict standing alone with something left to find (a piece to cut, a relic in its heart, fragments to
-    /// scan, D2) answers when the ring has touched it (closer ones sooner and brighter); emptied, it falls quiet,
-    /// publishing <see cref="SiteAnswered"/> and raising a light pillar on the horizon that stands for a while. A relic
-    /// lying loose out in the world answers on its own (<see cref="RelicAnswered"/>), and a broken friend with its
-    /// broken chirp (<see cref="FriendAnswered"/>) and a warm pillar. 07 turns to the nearest answer, then keeps
-    /// glancing at the nearest standing pillar now and then. A spotter friend can also reveal a site softly. With the
-    /// Warm Headlamp fitted, a site's or relic's pillar 07 is heading toward stands a little longer.
+    /// is published (the antenna lifts, the kalimba sounds); every salvage site and every derelict standing alone with
+    /// something left to find (a piece to cut, a relic in its heart, fragments to scan, D2) answers in distance order
+    /// (closer ones sooner and brighter); emptied, it falls quiet, publishing <see cref="SiteAnswered"/> and giving a
+    /// short, calm blink of its own lamp. A relic lying loose out in the world answers on its own
+    /// (<see cref="RelicAnswered"/>), and a broken friend with its broken chirp (<see cref="FriendAnswered"/>) and a
+    /// blink of its eye or dial lamp. 07 turns its head toward the nearest answer for a moment and then releases back
+    /// to normal driving look. A spotter friend can also reveal a site softly. With the Warm Headlamp fitted, an answer
+    /// lit by the headlamp keeps blinking longer.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class SonarSystem : MonoBehaviour
@@ -35,21 +35,16 @@ namespace MoonProject.Gameplay
         private readonly List<SalvageSite> _answering = new List<SalvageSite>();
         private IRoverAbilities _abilities;
         private SonarSchedule _schedule;
-        private SonarRing[] _rings = Array.Empty<SonarRing>();
-        private SiteMarker[] _markers = Array.Empty<SiteMarker>();
+        private AnswerBlink[] _blinks = Array.Empty<AnswerBlink>();
         private bool _firstAnswerPending;
-        private float _gazeUntil = float.NegativeInfinity;
-        private float _nextGlance;
+        private float _gazeUntil = -1f;
         private bool _gazing;
         private bool _initialized;
 
         public SonarTuning Tuning => _tuning;
 
-        /// <summary>The ring pool (tests and debug views read ring radius and brightness).</summary>
-        internal SonarRing[] Rings => _rings;
-
-        /// <summary>One marker per relic (by relic index), then one per friend, then one per salvage site.</summary>
-        internal SiteMarker[] Markers => _markers;
+        /// <summary>One blink per relic (by relic index), then one per friend, then one per salvage site.</summary>
+        internal AnswerBlink[] Blinks => _blinks;
 
         internal void Wire(SonarTuning tuning)
         {
@@ -90,47 +85,24 @@ namespace MoonProject.Gameplay
 
             int answerers = relicCount + friends.Count + _answering.Count;
             _schedule = new SonarSchedule(answerers);
-            _rings = new SonarRing[_tuning.RingPoolSize];
-            for (int i = 0; i < _rings.Length; i++)
-            {
-                _rings[i] = new SonarRing(transform, _tuning, services.Terrain, services.Visuals.SonarRing);
-            }
-
-            _markers = new SiteMarker[answerers];
+            _blinks = new AnswerBlink[answerers];
             int friendsEnd = relicCount + friends.Count;
-            for (int i = 0; i < _markers.Length; i++)
+            for (int i = 0; i < _blinks.Length; i++)
             {
                 bool friend = i >= relicCount && i < friendsEnd;
                 string id = i < relicCount ? relics.Relics[i].Definition.Id
                     : friend ? friends.Friends[i - relicCount].Definition.Id
                     : _answering[i - friendsEnd].Id;
-                _markers[i] = new SiteMarker("Marker_" + id, transform, _tuning, services.Terrain,
-                    friend ? services.Visuals.FriendPillar : services.Visuals.SitePillar, services.Meshes.Pillar,
-                    friend ? _tuning.FriendGlowScale : 1f);
+                _blinks[i] = new AnswerBlink("Blink_" + id, transform, _tuning, services.Visuals.HomeHalo,
+                    services.Meshes.Quad);
             }
 
             _initialized = true;
             return true;
         }
 
-        /// <summary>
-        /// After a load: discovered sites and derelicts with something left to find breathe on the sonar again.
-        /// </summary>
-        internal void RefreshDiscoveredSites()
-        {
-            int first = SiteMarkerStart;
-            for (int i = 0; i < _answering.Count; i++)
-            {
-                SalvageSite site = _answering[i];
-                if (site.Discovered && site.AnswersSonar)
-                {
-                    _markers[first + i].Place(site.Position);
-                }
-            }
-        }
-
-        /// <summary>Index of the first salvage site's marker.</summary>
-        private int SiteMarkerStart => _relics.Relics.Count + _friends.Count;
+        /// <summary>Index of the first salvage site's blink.</summary>
+        private int SiteBlinkStart => _relics.Relics.Count + _friends.Count;
 
         private void Update()
         {
@@ -151,44 +123,43 @@ namespace MoonProject.Gameplay
                 Answer(relic, distance, now);
             }
 
-            for (int i = 0; i < _rings.Length; i++)
-            {
-                _rings[i].Tick(now);
-            }
-
             if (_abilities.Has(RoverAbility.WarmHeadlamp))
             {
-                LingerFacedPillars(now, Time.deltaTime);
+                LingerFacedBlinks(now, Time.deltaTime);
             }
 
             int relicCount = _relics.Relics.Count;
             for (int i = 0; i < relicCount; i++)
             {
                 Relic relic = _relics.Relics[i];
-                _markers[i].Tick(relic.SonarPosition, relic.AnswersSonar, now);
+                Vector3 position = relic.SonarPosition + Vector3.up * _tuning.RelicBlinkLift;
+                _blinks[i].Tick(position, relic.AnswersSonar, now);
             }
 
             for (int i = 0; i < _friends.Count; i++)
             {
-                FriendProgress progress = _friends.Friends[i].Progress;
-                _markers[relicCount + i].Tick(_friends.Friends[i].Site.Position, progress.AnswersSonar, now);
+                Friend friend = _friends.Friends[i];
+                AnswerBlink blink = _blinks[relicCount + i];
+                blink.Tick(friend.AnswerPosition, friend.Progress.AnswersSonar, now);
+                friend.SetAnswerBlink(blink.Intensity);
             }
 
-            int first = SiteMarkerStart;
+            int first = SiteBlinkStart;
             for (int i = 0; i < _answering.Count; i++)
             {
                 SalvageSite site = _answering[i];
-                _markers[first + i].Tick(site.Position, site.AnswersSonar, now);
+                AnswerBlink blink = _blinks[first + i];
+                blink.Tick(site.AnswerPosition, site.AnswersSonar, now);
+                site.SetAnswerBlink(blink.Intensity);
             }
 
             UpdateGaze(now);
         }
 
         /// <summary>
-        /// The Warm Headlamp's gift to the sonar: a site's or relic's pillar 07 is heading toward stands a little
-        /// longer (friends' warm pillars keep their own time).
+        /// The Warm Headlamp's gift to the sonar: an answer lit by 07's headlamp keeps blinking a little longer.
         /// </summary>
-        private void LingerFacedPillars(float now, float deltaTime)
+        private void LingerFacedBlinks(float now, float deltaTime)
         {
             Vector3 heading = _rover.Rotation * Vector3.forward;
             heading.y = 0f;
@@ -201,21 +172,20 @@ namespace MoonProject.Gameplay
             float minCos = Mathf.Cos(_tuning.HeadlampCone * Mathf.Deg2Rad);
             float seconds = deltaTime * _tuning.HeadlampLinger;
             Vector3 rover = _rover.Position;
-            int friendsEnd = _relics.Relics.Count + _friends.Count;
-            for (int i = 0; i < _markers.Length; i++)
+            for (int i = 0; i < _blinks.Length; i++)
             {
-                if (i >= _relics.Relics.Count && i < friendsEnd)
+                AnswerBlink blink = _blinks[i];
+                if (!blink.Blinking(now))
                 {
                     continue;
                 }
 
-                SiteMarker marker = _markers[i];
-                Vector3 toMarker = marker.Position - rover;
-                toMarker.y = 0f;
-                float distance = toMarker.magnitude;
-                if (distance > 1e-3f && Vector3.Dot(heading, toMarker) >= minCos * distance)
+                Vector3 toBlink = blink.Position - rover;
+                toBlink.y = 0f;
+                float distance = toBlink.magnitude;
+                if (distance > 1e-3f && Vector3.Dot(heading, toBlink) >= minCos * distance)
                 {
-                    marker.Linger(seconds, _tuning.HeadlampMaxLinger, now);
+                    blink.Linger(seconds, _tuning.HeadlampMaxLinger, now);
                 }
             }
         }
@@ -224,7 +194,6 @@ namespace MoonProject.Gameplay
         {
             Vector3 origin = _rover.Position;
             _events.Publish(new SonarPinged(origin, _tuning.Range));
-            OldestRing().Begin(origin, now);
 
             _firstAnswerPending = false;
             for (int i = 0; i < _relics.Relics.Count; i++)
@@ -236,7 +205,7 @@ namespace MoonProject.Gameplay
                 }
 
                 float distance = SurfaceRules.HorizontalDistance(origin, relic.SonarPosition);
-                _firstAnswerPending |= _schedule.Add(i, distance, now, _tuning.Range, _tuning.RingDuration,
+                _firstAnswerPending |= _schedule.Add(i, distance, now, _tuning.Range, _tuning.SweepDuration,
                     _tuning.AnswerLag);
             }
 
@@ -251,10 +220,10 @@ namespace MoonProject.Gameplay
 
                 float distance = SurfaceRules.HorizontalDistance(origin, friend.Site.Position);
                 _firstAnswerPending |= _schedule.Add(relicCount + i, distance, now, _tuning.Range,
-                    _tuning.RingDuration, _tuning.AnswerLag);
+                    _tuning.SweepDuration, _tuning.AnswerLag);
             }
 
-            int first = SiteMarkerStart;
+            int first = SiteBlinkStart;
             for (int i = 0; i < _answering.Count; i++)
             {
                 SalvageSite site = _answering[i];
@@ -264,25 +233,25 @@ namespace MoonProject.Gameplay
                 }
 
                 float distance = SurfaceRules.HorizontalDistance(origin, site.Position);
-                _firstAnswerPending |= _schedule.Add(first + i, distance, now, _tuning.Range, _tuning.RingDuration,
+                _firstAnswerPending |= _schedule.Add(first + i, distance, now, _tuning.Range, _tuning.SweepDuration,
                     _tuning.AnswerLag);
             }
         }
 
         /// <summary>
         /// A spotter friend found salvage site <paramref name="siteIndex"/> (its index among the wrecks, which come first
-        /// among what answers): it shows on the sonar (a softer pillar) without a listen.
+        /// among what answers): it blinks on the sonar without a listen.
         /// </summary>
         internal void RevealSite(int siteIndex, float brightness)
         {
             SalvageSite site = _answering[siteIndex];
             site.MarkDiscovered();
-            _markers[SiteMarkerStart + siteIndex].Answer(site.Position, brightness, Time.time);
+            _blinks[SiteBlinkStart + siteIndex].Answer(site.AnswerPosition, brightness, Time.time);
         }
 
         /// <summary>
         /// The tower's listening sweep at the dock's evening (M3-16 P6): the nearest salvage site or derelict to
-        /// <paramref name="home"/> that still has something to find and has not been heard yet raises its pillar, or,
+        /// <paramref name="home"/> that still has something to find and has not been heard yet blinks its lamp, or,
         /// with none left, the nearest broken friend not heard yet. False when nothing is left unheard.
         /// </summary>
         internal bool RevealNextUnheard(Vector3 home, float brightness)
@@ -328,21 +297,22 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// A spotter friend saw friend <paramref name="friendIndex"/>'s light from afar (M3-16 P2): its warm pillar
-        /// rises without a listen, and rises again (a pulse) each time this is called.
+        /// A spotter friend saw friend <paramref name="friendIndex"/>'s light from afar (M3-16 P2): its lamp blinks
+        /// without a listen, and blinks again each time this is called.
         /// </summary>
         internal void RevealFriend(int friendIndex, float brightness)
         {
             Friend friend = _friends.Friends[friendIndex];
             friend.Progress.MarkDiscovered();
-            _markers[_relics.Relics.Count + friendIndex].Answer(friend.Site.Position, brightness, Time.time);
+            _blinks[_relics.Relics.Count + friendIndex].Answer(friend.AnswerPosition, brightness, Time.time);
         }
 
         private void Answer(int index, float distance, float now)
         {
             Vector3 position;
+            Vector3 blinkPosition;
             int relicCount = _relics.Relics.Count;
-            int first = SiteMarkerStart;
+            int first = SiteBlinkStart;
             if (index >= first)
             {
                 SalvageSite site = _answering[index - first];
@@ -352,6 +322,7 @@ namespace MoonProject.Gameplay
                 }
 
                 position = site.Position;
+                blinkPosition = site.AnswerPosition;
                 site.MarkDiscovered();
                 _events.Publish(new SiteAnswered(site.Id, position, distance, site.HoldsRelic));
             }
@@ -364,6 +335,7 @@ namespace MoonProject.Gameplay
                 }
 
                 position = friend.Site.Position;
+                blinkPosition = friend.AnswerPosition;
                 friend.Progress.MarkDiscovered();
                 _events.Publish(new FriendAnswered(friend.Definition.Id, position));
             }
@@ -376,105 +348,47 @@ namespace MoonProject.Gameplay
                 }
 
                 position = relic.SonarPosition;
+                blinkPosition = position + Vector3.up * _tuning.RelicBlinkLift;
                 relic.MarkDiscovered();
                 _events.Publish(new RelicAnswered(position, distance, relic.Definition.Id));
             }
 
-            _markers[index].Answer(position, _tuning.BrightnessAt(distance), now);
+            _blinks[index].Answer(blinkPosition, _tuning.BrightnessAt(distance), now);
             if (_firstAnswerPending)
             {
                 // Answers arrive nearest first, so the first one of a listen is the closest.
                 _firstAnswerPending = false;
-                _rig.SetGazeTarget(this, _markers[index].Position, GazePriorities.Interest);
+                _rig.SetGazeTarget(this, blinkPosition, GazePriorities.Interest);
                 _gazing = true;
                 _gazeUntil = now + _tuning.AnswerGaze;
-                _nextGlance = now + _tuning.GlanceInterval;
             }
         }
 
         private void UpdateGaze(float now)
         {
-            if (now < _gazeUntil)
+            if (_gazing && now >= _gazeUntil)
             {
-                return;
-            }
-
-            if (now >= _nextGlance)
-            {
-                _nextGlance = now + _tuning.GlanceInterval;
-                int nearest = NearestStandingPillar(now);
-                if (nearest >= 0)
-                {
-                    _rig.SetGazeTarget(this, _markers[nearest].Position, GazePriorities.Interest);
-                    _gazing = true;
-                    _gazeUntil = now + _tuning.GlanceDuration;
-                    return;
-                }
-            }
-
-            if (_gazing)
-            {
-                _rig.ClearGazeTarget(this);
                 _gazing = false;
+                _gazeUntil = -1f;
+                _rig.ClearGazeTarget(this);
             }
-        }
-
-        private int NearestStandingPillar(float now)
-        {
-            Vector3 rover = _rover.Position;
-            int nearest = -1;
-            float best = float.MaxValue;
-            for (int i = 0; i < _markers.Length; i++)
-            {
-                if (!_markers[i].PillarStanding(now))
-                {
-                    continue;
-                }
-
-                float distance = SurfaceRules.HorizontalDistanceSquared(rover, _markers[i].Position);
-                if (distance < best)
-                {
-                    best = distance;
-                    nearest = i;
-                }
-            }
-
-            return nearest;
-        }
-
-        private SonarRing OldestRing()
-        {
-            SonarRing oldest = _rings[0];
-            for (int i = 0; i < _rings.Length; i++)
-            {
-                if (!_rings[i].Active)
-                {
-                    return _rings[i];
-                }
-
-                if (_rings[i].StartTime < oldest.StartTime)
-                {
-                    oldest = _rings[i];
-                }
-            }
-
-            return oldest;
         }
 
         private void OnDisable()
         {
             if (_gazing)
             {
-                _rig.ClearGazeTarget(this);
                 _gazing = false;
+                _gazeUntil = -1f;
+                _rig.ClearGazeTarget(this);
             }
         }
 
         private void OnDestroy()
         {
-            foreach (SonarRing ring in _rings)
+            foreach (AnswerBlink blink in _blinks)
             {
-                ring.Dispose();
+                blink.Dispose();
             }
         }
     }

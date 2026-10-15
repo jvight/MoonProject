@@ -17,14 +17,6 @@ namespace MoonProject.Gameplay
             return Tube(sides, 0f, true, "GlowCone");
         }
 
-        /// <summary>
-        /// Open unit cylinder from y = 0 to y = 1 with radius 1. uv.x = height (0 at the bottom), uv.y goes around.
-        /// </summary>
-        public static Mesh Pillar(int sides)
-        {
-            return Tube(sides, 1f, false, "GlowPillar");
-        }
-
         /// <summary>Unit-radius UV sphere with outward normals (fresnel glows: flashes, beacons).</summary>
         public static Mesh Sphere(int rings, int segments)
         {

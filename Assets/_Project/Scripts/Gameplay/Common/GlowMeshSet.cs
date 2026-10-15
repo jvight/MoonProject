@@ -10,21 +10,17 @@ namespace MoonProject.Gameplay
     public sealed class GlowMeshSet : IDisposable
     {
         private const int ConeSides = 24;
-        private const int PillarSides = 12;
         private const int SphereRings = 8;
         private const int SphereSegments = 12;
 
         public GlowMeshSet()
         {
             Cone = GlowMeshes.Cone(ConeSides);
-            Pillar = GlowMeshes.Pillar(PillarSides);
             Sphere = GlowMeshes.Sphere(SphereRings, SphereSegments);
             Quad = GlowMeshes.Quad();
         }
 
         public Mesh Cone { get; }
-
-        public Mesh Pillar { get; }
 
         public Mesh Sphere { get; }
 
@@ -33,7 +29,6 @@ namespace MoonProject.Gameplay
         public void Dispose()
         {
             Destroy(Cone);
-            Destroy(Pillar);
             Destroy(Sphere);
             Destroy(Quad);
         }

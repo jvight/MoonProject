@@ -39,7 +39,7 @@ namespace MoonProject.Audio
         [Min(0.1f)] [SerializeField] private float _minDistance = 6f;
 
         [Tooltip("Metres beyond which 3D sounds stop getting quieter.")]
-        [Min(1f)] [SerializeField] private float _maxDistance = 120f;
+        [Min(1f)] [SerializeField] private float _maxDistance = 160f;
 
         [Tooltip("Pitch shift from relative velocity. 0 keeps every tonal cue in key.")]
         [Range(0f, 1f)] [SerializeField] private float _dopplerLevel;

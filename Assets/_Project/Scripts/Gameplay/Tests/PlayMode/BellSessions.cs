@@ -204,13 +204,16 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.Less(SurfaceRules.HorizontalDistance(picked.Position, basin.Position), 1e-3f,
                 "not Slow Orbit up on the ledge: 07 cannot leap yet");
             Assert.IsTrue(HasTicker("ticker.bell.signal", string.Empty), "Bell's picking something up");
-            yield return new WaitForSeconds(_fixture.BellTuning.PillarRise);
-            Assert.Greater(_fixture.Gameplay.Signals.Pillar.Intensity, _fixture.BellTuning.PillarGlow * 0.5f,
-                "an amber pillar stands over it");
+            yield return new WaitForSeconds(0.4f);
+            Assert.Greater(_fixture.Gameplay.Signals.BlinkIntensity, _fixture.BellTuning.SignalGlow * 0.2f,
+                "the signal target's lamp blinks");
+            Assert.LessOrEqual(_fixture.Gameplay.Signals.BlinkIntensity, 1f, "under the bloom threshold");
+            SalvageSite elder = _fixture.Gameplay.Salvage.FindDerelict(WorldAnchorIds.Micro06);
+            Assert.Greater(elder.AnswerBlinkIntensity, 0.15f, "06's own AnswerLamp blinks with the signal");
             _fixture.Rover.Aim(_fixture.BellCorner.position + _fixture.BellCorner.forward * 5f + Vector3.up * 2f,
                 _fixture.BellCorner.position + Vector3.up * 0.8f);
             _fixture.Capture("25-bell-home");
-            _fixture.Rover.Aim(new Vector3(0f, 6f, 0f), basin.Position + Vector3.up * 10f);
+            _fixture.Rover.Aim(basin.Position + new Vector3(0f, 2.2f, -5.5f), basin.Position + Vector3.up * 1.1f);
             _fixture.Capture("26-bell-signal");
 
             yield return null;

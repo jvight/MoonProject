@@ -16,6 +16,8 @@ namespace MoonProject.Gameplay
         private readonly List<Relic> _relics = new List<Relic>();
 
         private readonly bool _heartUnderPieces;
+        private Transform _answerLamp;
+        private EmissionGlow _answerLampGlow;
         private EmissionGlow _pilotGlow;
         private LandmarkPilotLevel _pilot;
         private Func<bool> _moreToFind = NothingMore;
@@ -23,6 +25,8 @@ namespace MoonProject.Gameplay
         private float _shudderLeft;
         private float _shudderDuration;
         private float _shudderTime;
+        private float _answerBlink;
+        private float _signalBlink;
 
         internal SalvageSite(int index, string id, Transform root, float radius, Vector3 heart, AbilityGate gate,
             ComboCounter combo, bool heartUnderPieces)
@@ -47,6 +51,9 @@ namespace MoonProject.Gameplay
         public Transform Root { get; }
 
         public Vector3 Position => Root.position;
+
+        /// <summary>The wreck's own lamp that blinks back when a listen reaches it.</summary>
+        public Vector3 AnswerPosition => _answerLamp != null ? _answerLamp.position : Position + Vector3.up * 1.5f;
 
         /// <summary>Radius (m) of the site's flat footprint (its World anchor's).</summary>
         public float Radius { get; }
@@ -145,6 +152,11 @@ namespace MoonProject.Gameplay
         /// <summary>Glow of the landmark pilot (0 without a landmark or before the heart is found).</summary>
         public float PilotLevel => _pilot != null ? _pilot.Level : 0f;
 
+        /// <summary>Glow of the wreck's answer lamp (0 when not blinking).</summary>
+        public float AnswerBlinkIntensity => _answerLamp != null
+            ? _answerLampGlow.Intensity
+            : Mathf.Max(_answerBlink, _signalBlink);
+
         /// <summary>
         /// It answers a ping while something is left to find: a piece to cut, a relic to lift, or what else waits there
         /// (<see cref="ConnectFinds"/>: fragments to scan, a derelict inside it with pieces left).
@@ -199,6 +211,34 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < _relics.Count; i++)
             {
                 _relics[i].MarkDiscovered();
+            }
+        }
+
+        /// <summary>Wires the wreck's answer lamp (dark until a listen reaches it).</summary>
+        internal void AttachAnswerLamp(Transform lamp, Renderer renderer)
+        {
+            _answerLamp = lamp;
+            _answerLampGlow = new EmissionGlow(renderer);
+            _answerLampGlow.Apply(0f);
+        }
+
+        /// <summary>Blinks the wreck's own lamp in answer to a listen.</summary>
+        internal void SetAnswerBlink(float intensity)
+        {
+            _answerBlink = intensity;
+            if (_answerLamp != null)
+            {
+                _answerLampGlow.Apply(Mathf.Max(_answerBlink, _signalBlink));
+            }
+        }
+
+        /// <summary>Blinks the wreck's own lamp while Bell's signal points at it.</summary>
+        internal void SetSignalBlink(float intensity)
+        {
+            _signalBlink = intensity;
+            if (_answerLamp != null)
+            {
+                _answerLampGlow.Apply(Mathf.Max(_answerBlink, _signalBlink));
             }
         }
 

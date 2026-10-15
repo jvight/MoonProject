@@ -12,12 +12,6 @@ namespace MoonProject.Gameplay
         /// <summary>Art's GaragePort node where a set-down piece rests.</summary>
         public const string PortTrayNode = "Tray";
 
-        [Tooltip("Expanding sonar ring on the ground (TechGlow, additive).")]
-        [SerializeField] private Material _sonarRing;
-
-        [Tooltip("Light pillar over an answered site, seen from afar (TechGlow, additive, rising bands).")]
-        [SerializeField] private Material _sitePillar;
-
         [Tooltip("Tractor beam cone from 07's eye (TechGlow, additive, flowing bands).")]
         [SerializeField] private Material _tractorBeam;
 
@@ -41,9 +35,6 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Camera-facing glints over a friend's missing parts (Glint shader, WarmLamp amber).")]
         [SerializeField] private Material _partGlint;
-
-        [Tooltip("Light pillar over a broken friend that answered (WarmLamp, additive, rising bands).")]
-        [SerializeField] private Material _friendPillar;
 
         [Tooltip("The Rover Bay's weld sparks (WarmLamp, additive, soft round sprites).")]
         [SerializeField] private Material _spark;
@@ -99,8 +90,6 @@ namespace MoonProject.Gameplay
                  "spare crate until the port fits it (0.5.5 §2).")]
         [SerializeField] private GameObject _tapeDeck;
 
-        public Material SonarRing => _sonarRing;
-        public Material SitePillar => _sitePillar;
         public Material TractorBeam => _tractorBeam;
         public Material TetherBeam => _tetherBeam;
         public Material Flash => _flash;
@@ -109,7 +98,6 @@ namespace MoonProject.Gameplay
         public Material WarmRing => _warmRing;
         public Material WarmGlow => _warmGlow;
         public Material PartGlint => _partGlint;
-        public Material FriendPillar => _friendPillar;
         public Material Spark => _spark;
         public Material HomeHalo => _homeHalo;
         public Material LinkPulse => _linkPulse;
@@ -184,9 +172,7 @@ namespace MoonProject.Gameplay
         /// <summary>Null when every material is assigned, else the first missing one.</summary>
         public string Validate()
         {
-            return _sonarRing == null ? "sonar ring material is missing"
-                : _sitePillar == null ? "site pillar material is missing"
-                : _tractorBeam == null ? "tractor beam material is missing"
+            return _tractorBeam == null ? "tractor beam material is missing"
                 : _tetherBeam == null ? "tether beam material is missing"
                 : _flash == null ? "flash material is missing"
                 : _relicHalo == null ? "relic halo material is missing"
@@ -194,7 +180,6 @@ namespace MoonProject.Gameplay
                 : _warmRing == null ? "warm ring material is missing"
                 : _warmGlow == null ? "warm glow material is missing"
                 : _partGlint == null ? "part glint material is missing"
-                : _friendPillar == null ? "friend pillar material is missing"
                 : _spark == null ? "spark material is missing"
                 : _homeHalo == null ? "home halo material is missing"
                 : _linkPulse == null ? "link pulse material is missing"
@@ -258,13 +243,11 @@ namespace MoonProject.Gameplay
             _tapeDeck = tapeDeck;
         }
 
-        internal void Populate(Material sonarRing, Material sitePillar, Material tractorBeam,
+        internal void Populate(Material tractorBeam,
             Material tetherBeam, Material flash, Material relicHalo, Material dust, Material warmRing,
-            Material warmGlow, Material partGlint, Material friendPillar, Material spark, Material homeHalo,
+            Material warmGlow, Material partGlint, Material spark, Material homeHalo,
             Material linkPulse)
         {
-            _sonarRing = sonarRing;
-            _sitePillar = sitePillar;
             _tractorBeam = tractorBeam;
             _tetherBeam = tetherBeam;
             _flash = flash;
@@ -273,7 +256,6 @@ namespace MoonProject.Gameplay
             _warmRing = warmRing;
             _warmGlow = warmGlow;
             _partGlint = partGlint;
-            _friendPillar = friendPillar;
             _spark = spark;
             _homeHalo = homeHalo;
             _linkPulse = linkPulse;

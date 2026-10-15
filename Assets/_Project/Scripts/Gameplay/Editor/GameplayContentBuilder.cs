@@ -257,6 +257,11 @@ namespace MoonProject.Gameplay.Editor
         private static void BuildSalvage()
         {
             IReadOnlyList<string> names = SalvageEconomy.SiteNames;
+            if (LoadArt(GameplayAssetPaths.SitePrefab(names[0])).transform.Find(SiteModelBuilder.AnswerLampName) == null)
+            {
+                SiteModelBuilder.Build();
+            }
+
             var sites = new SalvageSiteEntry[names.Count];
             for (int i = 0; i < sites.Length; i++)
             {
@@ -272,6 +277,12 @@ namespace MoonProject.Gameplay.Editor
 
             IReadOnlyList<(string Id, string AnchorId, string HostSocket, string Prefab)> derelictNames =
                 SalvageEconomy.Derelicts;
+            if (LoadArt(GameplayAssetPaths.DerelictPrefab(derelictNames[0].Prefab)).transform
+                    .Find(SiteModelBuilder.AnswerLampName) == null)
+            {
+                DerelictBuilder.Build();
+            }
+
             var derelicts = new SalvageSiteEntry[derelictNames.Count];
             for (int i = 0; i < derelicts.Length; i++)
             {

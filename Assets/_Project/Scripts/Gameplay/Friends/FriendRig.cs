@@ -36,9 +36,10 @@ namespace MoonProject.Gameplay
         {
             Root = root != null ? root.transform : throw new ArgumentNullException(nameof(root));
             Body = Node(BodyNode);
+            Eye = Node(EyeNode);
             TetherPoint = Node(TetherPointNode);
             Antenna = Node(AntennaNode);
-            _eye = new EmissionGlow(Renderer(Node(EyeNode)));
+            _eye = new EmissionGlow(Renderer(Eye));
             _rotors = new Transform[RotorNodes.Length];
             _rotorRest = new Quaternion[RotorNodes.Length];
             for (int i = 0; i < RotorNodes.Length; i++)
@@ -71,6 +72,8 @@ namespace MoonProject.Gameplay
         public Transform Root { get; }
 
         public Transform Body { get; }
+
+        public Transform Eye { get; }
 
         public Transform TetherPoint { get; }
 

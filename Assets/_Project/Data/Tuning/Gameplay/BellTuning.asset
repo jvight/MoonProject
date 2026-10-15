@@ -86,11 +86,8 @@ MonoBehaviour:
   _tuneRadius: 1.6
   _tuneMaxSpeed: 0.8
   _dialTapTime: 0.35
-  _pillarGlow: 0.9
-  _pillarRise: 2.5
-  _pillarFade: 2.2
-  _pillarBreathDepth: 0.25
-  _pillarBreathPeriod: 5
+  _signalGlow: 0.85
+  _signalInterval: 5.5
   _shelfLift: 0.11
   _shelfSettle: 0.9
   _shelfOvershoot: 1.6

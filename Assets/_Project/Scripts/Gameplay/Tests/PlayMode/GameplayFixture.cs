@@ -397,13 +397,12 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             var visuals = Asset<GameplayVisuals>();
             Shader shader = LoadShader(ShaderPath);
-            visuals.Populate(GlowMaterial(shader, GlowRole.SonarRing), GlowMaterial(shader, GlowRole.SitePillar),
-                GlowMaterial(shader, GlowRole.TractorBeam),
+            visuals.Populate(GlowMaterial(shader, GlowRole.TractorBeam),
                 GlowMaterial(shader, GlowRole.TetherBeam), GlowMaterial(shader, GlowRole.Flash),
                 GlowMaterial(shader, GlowRole.RelicHalo), GlowMaterial(shader, GlowRole.Dust),
                 GlowMaterial(shader, GlowRole.WarmRing), GlowMaterial(shader, GlowRole.WarmGlow),
                 Track(GlintMaterials.CreatePart(LoadShader(GlintShaderPath))),
-                GlowMaterial(shader, GlowRole.FriendPillar), GlowMaterial(shader, GlowRole.Spark),
+                GlowMaterial(shader, GlowRole.Spark),
                 GlowMaterial(shader, GlowRole.HomeHalo), GlowMaterial(shader, GlowRole.LinkPulse));
 
             visuals.PopulatePads(new[] { Pad(1.6f), Pad(2.4f), Pad(3f) }, new[] { 1.6f, 2.4f, 3f });
@@ -832,6 +831,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Transform lid = Named(Block(crate, new Vector3(0f, 0.35f, 0f), new Vector3(0.82f, 0.1f, 0.62f)), "Lid");
             Node("CutPoint", lid, new Vector3(0f, 0f, -0.32f)).localRotation = Quaternion.Euler(0f, 180f, 0f);
             Named(Block(lid, new Vector3(0f, 0f, -0.31f), new Vector3(0.7f, 0.02f, 0.02f)), "Seal");
+            Named(Block(root.transform, new Vector3(0f, 2.2f, 4.5f), Vector3.one * 0.16f), "AnswerLamp");
             return root;
         }
 
@@ -863,6 +863,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             FragmentSockets(root.transform, name == "Derelict_06" ? "CellPack"
                 : name == "Derelict_Mule" ? "WarmHeadlamp"
                 : "BoostCoils", new Vector3(-1.4f, 0f, -12f));
+            Named(Block(root.transform, new Vector3(0f, 1.1f, 0f), Vector3.one * 0.12f), "AnswerLamp");
             return root;
         }
 

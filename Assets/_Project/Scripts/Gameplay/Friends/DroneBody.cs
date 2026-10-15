@@ -76,6 +76,8 @@ namespace MoonProject.Gameplay
 
         public Vector3 Position => _swapped ? _repaired.Root.position : _site;
 
+        public Vector3 AnswerPosition => (_swapped ? _repaired : _broken).Eye.position;
+
         public Vector3 BeamTarget => _broken.Visible ? _broken.TetherPoint.position : _repaired.TetherPoint.position;
 
         public FriendActivity Activity { get; private set; } = FriendActivity.Dormant;
@@ -89,6 +91,14 @@ namespace MoonProject.Gameplay
         public bool Beaming(float t)
         {
             return _sequence.Stitching(t);
+        }
+
+        public void SetAnswerBlink(float intensity)
+        {
+            if (!_swapped)
+            {
+                _broken.SetEye(intensity);
+            }
         }
 
         public void SetLamp(int lamp, float intensity)

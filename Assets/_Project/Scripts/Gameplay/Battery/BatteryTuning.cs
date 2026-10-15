@@ -119,7 +119,7 @@ namespace MoonProject.Gameplay
 
         [Header("Warnings (gentle, early, no red)")]
         [Tooltip("Charge (share of capacity) below which the Low warning plays once per discharge: the two-note, " +
-                 "the eye dims, the nearest charger's pillar, a ticker line.")]
+                 "the eye dims, a ticker line.")]
         [Range(0.05f, 0.9f)] [SerializeField] private float _lowThreshold = 0.3f;
 
         [Tooltip("The Low warning also plays when the range left is under this many times the way to the nearest " +
@@ -139,12 +139,9 @@ namespace MoonProject.Gameplay
         [Tooltip("The HUD arc reveals itself the first time the charge drops below this share of capacity.")]
         [Range(0.1f, 1f)] [SerializeField] private float _arcReveal = 0.7f;
 
-        [Tooltip("Times the Low warning's ticker line is shown in a whole game; after that the sound, the eye and " +
-                 "the pillar carry it.")]
+        [Tooltip("Times the Low warning's ticker line is shown in a whole game; after that the sound and the eye " +
+                 "carry it.")]
         [Range(0, 10)] [SerializeField] private int _lowLines = 3;
-
-        [Tooltip("Seconds the nearest charger's pillar stands after the Low warning.")]
-        [Range(1f, 60f)] [SerializeField] private float _pillarSeconds = 20f;
 
         public int StartingCells => _startingCells;
         public int CellPackCells => _cellPackCells;
@@ -184,6 +181,5 @@ namespace MoonProject.Gameplay
         public float VeryLowThreshold => _veryLowThreshold;
         public float ArcReveal => _arcReveal;
         public int LowLines => _lowLines;
-        public float PillarSeconds => _pillarSeconds;
     }
 }

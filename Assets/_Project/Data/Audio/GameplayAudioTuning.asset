@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: GameplayAudioTuning
   m_EditorClassIdentifier: 
   _answerNearDistance: 10
-  _answerFarDistance: 90
+  _answerFarDistance: 140
   _answerNearVolume: 1
   _answerFarVolume: 0.55
   _answerNearCutoff: 16000

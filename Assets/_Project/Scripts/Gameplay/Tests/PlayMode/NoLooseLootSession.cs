@@ -157,6 +157,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             VerifyScanFragments(offenders);
             VerifySalvageAndBundles(offenders);
             VerifyBeaconsAndHalos(offenders);
+            yield return CaptureListenNearHome();
 
             Assert.IsEmpty(_problems, "Unexpected errors in the Unity log:\n" + string.Join("\n", _problems));
             if (offenders.Count > 0)
@@ -356,6 +357,152 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 Object.Destroy(host);
             }
+        }
+
+        /// <summary>
+        /// Triggers one listen near home with answers at ~30 m (<c>site.depot</c>), ~80 m (<c>Friend_tilly</c>), and
+        /// ~130 m (<c>site.garage</c>) and captures 1920x1080 frames at the peak of each answer's blink into
+        /// <c>Logs/captures/</c>.
+        /// </summary>
+        private IEnumerator CaptureListenNearHome()
+        {
+            string folder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "captures"));
+            Directory.CreateDirectory(folder);
+            ITerrainQuery terrain = _context.Get<ITerrainQuery>();
+            var roverComponent = _context.Get<IRoverState>() as Component;
+            Assert.IsNotNull(roverComponent, "IRoverState is a Component");
+            Transform roverTransform = roverComponent.transform;
+            var roverBody = roverComponent.GetComponent<Rigidbody>();
+            Vector3 savedRoverPos = roverTransform.position;
+            Quaternion savedRoverRot = roverTransform.rotation;
+            bool wasKinematic = roverBody != null && roverBody.isKinematic;
+
+            IViewCamera viewCamera = _context.Get<IViewCamera>();
+            Camera view = viewCamera.Camera;
+            Vector3 savedCamPos = view.transform.position;
+            Quaternion savedCamRot = view.transform.rotation;
+            float savedFov = view.fieldOfView;
+            var disabled = new List<Behaviour>();
+            if (viewCamera is Behaviour rigBehaviour && rigBehaviour.enabled)
+            {
+                rigBehaviour.enabled = false;
+                disabled.Add(rigBehaviour);
+            }
+
+            foreach (Behaviour behaviour in view.GetComponents<Behaviour>())
+            {
+                if (behaviour != null && behaviour.enabled && !(behaviour is Camera) &&
+                    !(behaviour is AudioListener) && !(behaviour is UniversalAdditionalCameraData))
+                {
+                    behaviour.enabled = false;
+                    disabled.Add(behaviour);
+                }
+            }
+
+            try
+            {
+                if (roverBody != null)
+                {
+                    roverBody.linearVelocity = Vector3.zero;
+                    roverBody.angularVelocity = Vector3.zero;
+                    roverBody.isKinematic = true;
+                }
+
+                var origin = new Vector3(-6.5f, terrain.SampleHeight(-6.5f, 29f) + 0.35f, 29f);
+                roverTransform.SetPositionAndRotation(origin, Quaternion.identity);
+                yield return null;
+
+                SalvageSite depot = FindSite("site.depot");
+                Friend tilly = _gameplay.Friends.Find("tilly");
+                SalvageSite garage = FindSite("site.garage");
+                AnswerBlink tillyBlink = _gameplay.Sonar.Blinks[_gameplay.Relics.Relics.Count];
+
+                int pingCount = 0;
+                using IDisposable pingSub = _context.Events.Subscribe<SonarPinged>(_ => pingCount++);
+                _gameplay.Power.Restore(1);
+                float pingDeadline = Time.time + _gameplay.Sonar.Tuning.RestSeconds + 2f;
+                while (pingCount == 0 && Time.time < pingDeadline)
+                {
+                    yield return null;
+                }
+
+                Assert.Greater(pingCount, 0, "07 listened once near home");
+
+                yield return WaitAndFrameBlink(depot.AnswerPosition, () => depot.AnswerBlinkIntensity > 0.4f,
+                    origin, terrain, roverTransform, view, Path.Combine(folder, "listen_30m_depot.png"));
+                yield return WaitAndFrameBlink(tilly.AnswerPosition, () => tillyBlink.Intensity > 0.4f,
+                    origin, terrain, roverTransform, view, Path.Combine(folder, "listen_80m_tilly.png"));
+                yield return WaitAndFrameBlink(garage.AnswerPosition, () => garage.AnswerBlinkIntensity > 0.4f,
+                    origin, terrain, roverTransform, view, Path.Combine(folder, "listen_130m_garage.png"));
+
+                _gameplay.Signals.Signals.Start();
+                yield return null;
+                Vector3 signalTarget = _gameplay.Signals.BlinkPosition;
+                Vector3 toCenter = new Vector3(-signalTarget.x, 0f, -signalTarget.z);
+                toCenter = toCenter.sqrMagnitude > 1e-4f ? toCenter.normalized : Vector3.back;
+                Vector3 signalOrigin = signalTarget + toCenter * 25f;
+                signalOrigin.y = terrain.SampleHeight(signalOrigin.x, signalOrigin.z) + 0.35f;
+                yield return WaitAndFrameBlink(signalTarget, () => _gameplay.Signals.BlinkIntensity > 0.4f,
+                    signalOrigin, terrain, roverTransform, view, Path.Combine(folder, "bell_signal_06.png"));
+            }
+            finally
+            {
+                _gameplay.Signals.Restore(new BellSignalSaveData());
+                _gameplay.Power.Restore(0);
+                if (roverBody != null)
+                {
+                    roverBody.isKinematic = wasKinematic;
+                }
+
+                roverTransform.SetPositionAndRotation(savedRoverPos, savedRoverRot);
+                for (int i = 0; i < disabled.Count; i++)
+                {
+                    if (disabled[i] != null)
+                    {
+                        disabled[i].enabled = true;
+                    }
+                }
+
+                view.transform.SetPositionAndRotation(savedCamPos, savedCamRot);
+                view.fieldOfView = savedFov;
+            }
+        }
+
+        private static IEnumerator WaitAndFrameBlink(Vector3 target, Func<bool> blinking, Vector3 origin,
+            ITerrainQuery terrain, Transform roverTransform, Camera view, string outPath)
+        {
+            float deadline = Time.time + 8f;
+            while (!blinking() && Time.time < deadline)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(blinking(), $"Answer blink appeared for {Path.GetFileName(outPath)}");
+            yield return new WaitForSeconds(0.25f);
+
+            Vector3 dir = target - origin;
+            dir.y = 0f;
+            dir = dir.sqrMagnitude > 1e-4f ? dir.normalized : Vector3.forward;
+            roverTransform.SetPositionAndRotation(origin, Quaternion.LookRotation(dir));
+            Vector3 eye = origin - dir * 5.2f + Vector3.up * 2.2f;
+            eye.y = Mathf.Max(eye.y, terrain.SampleHeight(eye.x, eye.z) + 2f);
+            view.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(target - eye));
+            view.fieldOfView = 55f;
+            yield return null;
+            FrameCapture.SavePng(view, DefaultWidth, DefaultHeight, outPath);
+        }
+
+        private SalvageSite FindSite(string id)
+        {
+            for (int i = 0; i < _gameplay.Salvage.Sites.Count; i++)
+            {
+                if (_gameplay.Salvage.Sites[i].Id == id)
+                {
+                    return _gameplay.Salvage.Sites[i];
+                }
+            }
+
+            throw new InvalidOperationException($"Missing salvage site '{id}'.");
         }
 
         /// <summary>
@@ -717,10 +864,10 @@ namespace MoonProject.Gameplay.PlayModeTests
                 }
             }
 
-            if (_gameplay.Signals.Pillar != null && _gameplay.Signals.Pillar.Level > 0.001f)
+            if (_gameplay.Signals.BlinkIntensity > 0.001f)
             {
-                offenders.Add(Format("BellSignalField pillar is lit (level {0:F2}) at {1} in a fresh game.",
-                    _gameplay.Signals.Pillar.Level, Vec(_gameplay.Signals.Signals.TargetPosition)));
+                offenders.Add(Format("BellSignalField blink is lit (intensity {0:F2}) at {1} in a fresh game.",
+                    _gameplay.Signals.BlinkIntensity, Vec(_gameplay.Signals.Signals.TargetPosition)));
             }
         }
 

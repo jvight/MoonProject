@@ -137,7 +137,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 _fixture.SonarTuning.RestSeconds + 1f);
             Assert.Greater(_fixture.Events.SonarPinged.Count, 0, "07 listens once it has rested at level 1");
             yield return Waits.Until(() => elder.Discovered,
-                _fixture.SonarTuning.RingDuration + _fixture.SonarTuning.AnswerLag + 1f);
+                _fixture.SonarTuning.SweepDuration + _fixture.SonarTuning.AnswerLag + 1f);
             Assert.IsTrue(elder.Discovered, "06 answered");
             Assert.IsTrue(Answered(WorldAnchorIds.Micro06), "with its own id: UI names it micro.06.name");
             Assert.IsFalse(Answered(SalvageField.ScrapFieldId), "the scrap field never answers");

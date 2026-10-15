@@ -126,14 +126,23 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void LoadedState_AndRepeatAnswers_StayQuiet()
+        public void LoadedState_AndRepeatAnswers_StayQuiet_WhileEachListenChirpsOnce()
         {
             _events.Publish(new LowPowerChanged(true, true));
             Assert.IsEmpty(_chirps, "A loaded empty battery doesn't chirp.");
             _events.Publish(new SiteAnswered("site.depot", Vector3.zero, 10f, true));
             _now += 60f;
             _events.Publish(new SiteAnswered("site.depot", Vector3.zero, 10f, true));
-            Assert.AreEqual(1, _chirps.Count, "Only the first answer of a kind.");
+            Assert.AreEqual(1, _chirps.Count, "Without a new listen, repeat answers stay quiet.");
+
+            _now += 60f;
+            _events.Publish(new SonarPinged(Vector3.zero, 140f));
+            _events.Publish(new SiteAnswered("site.depot", Vector3.zero, 10f, false));
+            _now += 60f;
+            _events.Publish(new SiteAnswered("site.garage", Vector3.zero, 50f, false));
+            _events.Publish(new FriendAnswered("tilly", Vector3.zero));
+            Assert.AreEqual(2, _chirps.Count, "Each listen chirps once on the nearest answer, not for every answer.");
+            Assert.AreEqual(ChirpMood.Curious, Last);
         }
 
         [Test]

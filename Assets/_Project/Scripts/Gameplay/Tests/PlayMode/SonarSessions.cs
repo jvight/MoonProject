@@ -13,7 +13,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// Scripted sessions for 07's listening (first-hour v2 §3), on the real components behind fakes: no button, it
-    /// listens once rested from tower level 1 on, and again only after a drive to somewhere new.
+    /// listens once rested from tower level 1 on, raises no pillar and no ring, blinks each answering place's own lamp
+    /// and then stops, turns 07's head toward the nearest answer and releases, and holds a headlamp-lit blink longer.
     /// </summary>
     public sealed class SonarSessions : InputTestFixture
     {
@@ -36,7 +37,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator Listen_RollsARing_AndSitesAnswerNearestFirst()
+        public IEnumerator Listen_BlinksAnsweringPlacesNearestFirst_TurnsAndReleasesGaze_AndRaisesNoPillarOrRing()
         {
             _fixture = GameplayFixture.Boot(_controls);
             yield return null;
@@ -46,6 +47,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return new WaitForSeconds(tuning.RestSeconds + 0.5f);
             Release(_keyboard.spaceKey);
             Assert.IsEmpty(_fixture.Events.SonarPinged, "before the tower wakes 07 never listens, and space is no ping");
+
+            for (int i = 0; i < sonar.transform.childCount; i++)
+            {
+                string childName = sonar.transform.GetChild(i).name;
+                StringAssert.DoesNotContain("Pillar", childName, "no sky pillar");
+                StringAssert.DoesNotContain("Ring", childName, "no ground ring");
+            }
 
             var distances = new List<float>();
             foreach (SalvageSite site in _fixture.Gameplay.Salvage.Sites)
@@ -66,13 +74,21 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(tuning.Range, _fixture.Events.SonarPinged[0].Value.Range);
 
             _fixture.Rover.Aim(new Vector3(0f, 26f, -40f), new Vector3(0f, 0f, 45f));
-            yield return new WaitForSeconds(0.6f);
-            Assert.IsTrue(sonar.Rings[0].Active);
-            Assert.Greater(sonar.Rings[0].Radius, 10f, "the ring rolls outward");
-            Assert.Greater(sonar.Rings[0].Intensity, 0.1f);
-            _fixture.Capture("02-sonar-ring");
+            yield return Waits.Until(() => _fixture.Events.SiteAnswered.Count > 0,
+                tuning.SweepDuration + tuning.AnswerLag);
+            Assert.IsTrue(_fixture.Rover.TryGetGaze(sonar, out Vector3 gazePoint, out int gazePriority),
+                "07 turns toward the nearest answer when it arrives");
+            Assert.AreEqual(GazePriorities.Interest, gazePriority);
+            Assert.Less(Vector3.Distance(_fixture.FindSite("depot").AnswerPosition, gazePoint), 0.01f,
+                "looks at the nearest answering lamp");
+            yield return Waits.Until(() => _fixture.Events.SiteAnswered.Count > 1,
+                tuning.SweepDuration + tuning.AnswerLag);
+            Assert.IsTrue(_fixture.Rover.TryGetGaze(sonar, out gazePoint, out _));
+            Assert.Less(Vector3.Distance(_fixture.FindSite("depot").AnswerPosition, gazePoint), 0.01f,
+                "farther answers do not overwrite the gaze on the nearest answer");
 
-            yield return new WaitForSeconds(tuning.RingDuration + tuning.AnswerLag);
+            float remaining = Mathf.Max(0f, pingTime + tuning.SweepDuration + tuning.AnswerLag - Time.time);
+            yield return new WaitForSeconds(remaining);
             List<EventRecorder.Timed<SiteAnswered>> answers = _fixture.Events.SiteAnswered;
             Assert.AreEqual(1, _fixture.Events.SonarPinged.Count, "sitting still never listens again");
             Assert.AreEqual(distances.Count, answers.Count, "every site in range answers once");
@@ -82,25 +98,31 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Assert.AreEqual(distances[i], answers[i].Value.Distance, 0.01f, "nearest first");
                 StringAssert.StartsWith("site.", answers[i].Value.SiteId, "each answers with its own id (tone)");
                 Assert.IsTrue(answers[i].Value.HoldsRelic, "every site still holds its relic");
-                float expected = pingTime + SonarSchedule.RingArrival(distances[i], tuning.RingDuration,
+                float expected = pingTime + SonarSchedule.Arrival(distances[i], tuning.SweepDuration,
                     tuning.Range) + tuning.AnswerLag;
-                Assert.AreEqual(expected, answers[i].Time, 0.1f, "answers when the ring has touched it");
+                Assert.AreEqual(expected, answers[i].Time, 0.1f, "answers when the listen reaches it");
             }
 
             Assert.IsTrue(_fixture.Rover.GazeLog.Contains(nameof(SonarSystem) + ":" + GazePriorities.Interest),
-                "07 turns toward the nearest answer");
+                "07 turned toward the nearest answer");
+            Assert.IsFalse(_fixture.Rover.TryGetGaze(sonar, out _, out _),
+                "and released its gaze cleanly back to driving look");
+
             int relicCount = _fixture.Gameplay.Relics.Relics.Count;
             int firstSite = relicCount + _fixture.Gameplay.Friends.Count;
-            int standing = 0;
-            for (int i = firstSite; i < sonar.Markers.Length; i++)
+            int blinking = 0;
+            for (int i = firstSite; i < sonar.Blinks.Length; i++)
             {
-                if (sonar.Markers[i].PillarIntensity > 0.1f)
+                if (sonar.Blinks[i].Intensity > 0.1f)
                 {
-                    standing++;
+                    blinking++;
                 }
             }
 
-            Assert.AreEqual(answers.Count, standing, "each answer leaves a light pillar on the horizon");
+            Assert.AreEqual(answers.Count, blinking, "each answering site blinks its own lamp");
+            Assert.Greater(_fixture.FindSite("depot").AnswerBlinkIntensity, 0.1f,
+                "the wreck's own AnswerLamp mesh glows while blinking");
+
             Friend tilly = _fixture.Gameplay.Friends.Find("tilly");
             bool tillyInRange = SurfaceRules.HorizontalDistance(tilly.Site.Position, Vector3.zero) <= tuning.Range;
             Assert.AreEqual(tillyInRange ? 1 : 0, _fixture.Events.FriendAnswered.Count,
@@ -108,9 +130,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             if (tillyInRange)
             {
                 Assert.AreEqual("tilly", _fixture.Events.FriendAnswered[0].Value.FriendId);
-                Assert.Greater(sonar.Markers[relicCount].PillarIntensity, 0.1f, "and leaves a warm pillar");
+                Assert.Greater(sonar.Blinks[relicCount].Intensity, 0.1f, "and blinks its own lamp");
                 Assert.IsTrue(tilly.Progress.Discovered);
             }
+
             foreach (SalvageSite site in _fixture.Gameplay.Salvage.Sites)
             {
                 bool answered = SurfaceRules.HorizontalDistance(site.Position, Vector3.zero) <= tuning.Range;
@@ -121,7 +144,17 @@ namespace MoonProject.Gameplay.PlayModeTests
                 }
             }
 
-            _fixture.Capture("03-sonar-pillars");
+            _fixture.Capture("03-sonar-blinks");
+
+            yield return new WaitForSeconds(tuning.BlinkDuration + 0.2f);
+            for (int i = 0; i < sonar.Blinks.Length; i++)
+            {
+                Assert.IsFalse(sonar.Blinks[i].Blinking(Time.time), $"blink {i} stopped after its slow blinks");
+                Assert.AreEqual(0f, sonar.Blinks[i].Intensity, 1e-4f, $"blink {i} faded to zero");
+            }
+
+            Assert.AreEqual(0f, _fixture.FindSite("depot").AnswerBlinkIntensity, 1e-4f,
+                "the wreck's AnswerLamp mesh also faded back to off");
         }
 
         [UnityTest]
@@ -150,7 +183,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(walkman.AnswersSonar, "the loose relic answers itself");
 
             yield return Listen();
-            yield return new WaitForSeconds(_fixture.SonarTuning.RingDuration + _fixture.SonarTuning.AnswerLag);
+            yield return new WaitForSeconds(_fixture.SonarTuning.SweepDuration + _fixture.SonarTuning.AnswerLag);
             foreach (EventRecorder.Timed<SiteAnswered> answer in _fixture.Events.SiteAnswered)
             {
                 Assert.AreNotEqual(depot.Id, answer.Value.SiteId, "the emptied depot stays silent");
@@ -162,7 +195,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator WarmHeadlamp_HoldsUpThePillarAhead_AWhileLonger()
+        public IEnumerator WarmHeadlamp_HoldsUpTheBlinkAhead_AWhileLonger()
         {
             _fixture = GameplayFixture.Boot(_controls);
             yield return null;
@@ -170,15 +203,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             SonarSystem sonar = _fixture.Gameplay.Sonar;
             SonarTuning tuning = _fixture.SonarTuning;
             int firstSite = _fixture.Gameplay.Relics.Relics.Count + _fixture.Gameplay.Friends.Count;
-            SiteMarker ahead = sonar.Markers[firstSite + _fixture.FindSite("depot").Index];
-            SiteMarker behind = sonar.Markers[firstSite + _fixture.FindSite("garage").Index];
+            AnswerBlink ahead = sonar.Blinks[firstSite + _fixture.FindSite("depot").Index];
+            AnswerBlink behind = sonar.Blinks[firstSite + _fixture.FindSite("garage").Index];
 
             yield return Listen();
-            yield return new WaitForSeconds(tuning.PillarLifetime + tuning.RingDuration + tuning.AnswerLag + 0.5f);
-            Assert.IsFalse(behind.PillarStanding(Time.time), "the pillar behind 07 bows out on time");
-            Assert.IsTrue(ahead.PillarStanding(Time.time), "the one 07 heads for, in the headlamp, stands longer");
+            yield return new WaitForSeconds(tuning.BlinkDuration + tuning.SweepDuration + tuning.AnswerLag);
+            Assert.IsFalse(behind.Blinking(Time.time), "the blink behind 07 fades out on time");
+            Assert.IsTrue(ahead.Blinking(Time.time), "the one 07 heads for, in the headlamp, keeps blinking longer");
             yield return new WaitForSeconds(tuning.HeadlampMaxLinger);
-            Assert.IsFalse(ahead.PillarStanding(Time.time), "but only a little longer");
+            Assert.IsFalse(ahead.Blinking(Time.time), "but only a little longer");
         }
 
         [UnityTest]

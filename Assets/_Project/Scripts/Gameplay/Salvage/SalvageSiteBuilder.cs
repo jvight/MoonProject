@@ -21,6 +21,7 @@ namespace MoonProject.Gameplay
         private const string HaloName = "Halo";
         private const string LandmarkName = "Landmark";
         private const string LandmarkPilotName = "LandmarkPilot";
+        private const string AnswerLampName = "AnswerLamp";
         private const string CrateName = "CrewCrate";
         private const string LidName = "Lid";
         private const string SealName = "Seal";
@@ -98,6 +99,18 @@ namespace MoonProject.Gameplay
                 }
 
                 built.AttachPilot(lamp, tuning);
+            }
+
+            Transform answerLamp = Child(root, AnswerLampName);
+            if (answerLamp != null)
+            {
+                Renderer lamp = answerLamp.GetComponent<Renderer>();
+                if (lamp == null)
+                {
+                    return $"'{AnswerLampName}' has no renderer";
+                }
+
+                built.AttachAnswerLamp(answerLamp, lamp);
             }
 
             int firstDrag = drags.Count;

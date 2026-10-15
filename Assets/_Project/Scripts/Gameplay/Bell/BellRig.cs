@@ -87,6 +87,7 @@ namespace MoonProject.Gameplay
             }
 
             _dialLamp = new EmissionGlow(_pose.RendererOf(DialLampNode));
+            DialLamp = _pose.Node(_pose.IndexOf(DialLampNode));
             _lamps = new EmissionGlow[partLamps];
             for (int i = 0; i < partLamps; i++)
             {
@@ -95,6 +96,9 @@ namespace MoonProject.Gameplay
         }
 
         public Transform Root { get; }
+
+        /// <summary>Her dial lamp: flickers while she lies broken and blinks back when a listen reaches her.</summary>
+        public Transform DialLamp { get; }
 
         /// <summary>The cassette door on her front (+Z out): where 07's beam slides the tape in.</summary>
         public Transform TapeSlot { get; }
