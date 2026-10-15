@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: R1_SagePatch
+  m_Shader: {fileID: 4800000, guid: 00a89cf31eeaf494da92361e20e22284, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: 71f7e4c86d2b33a46a82658ab24c256d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 2800000, guid: 495f16ec990bcd3418e11e4ce6cdb3d0, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MaskMap:
+        m_Texture: {fileID: 2800000, guid: d1c0578c1b0e2ed4ab33d853d8c2804a, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BloomSafeMax: 1.06
+    - _BumpScale: 0.95
+    - _ColorVarAmount: 0.035
+    - _ColorVarScale: 1.8
+    - _DustAmount: 0.26
+    - _DustOcclusionWeight: 0.42
+    - _DustSharpness: 2
+    - _DustSmoothness: 0.12
+    - _DustUpThreshold: 0.12
+    - _EdgeWearAmount: 0.36
+    - _EdgeWearMetallic: 0.55
+    - _EdgeWearSharpness: 3.5
+    - _EdgeWearSmoothness: 0.48
+    - _EdgeWearThreshold: 0.56
+    - _EmissionStrength: 0
+    - _HotCorePeak: 1.65
+    - _HotCoreThreshold: 0.85
+    - _MetallicScale: 1
+    - _OcclusionStrength: 1
+    - _SmoothnessMax: 0.56
+    - _SmoothnessMin: 0.12
+    - _SmoothnessScale: 1
+    m_Colors:
+    - _BaseColor: {r: 0.54, g: 0.65, b: 0.56, a: 1}
+    - _DustColor: {r: 0.42, g: 0.44, b: 0.5, a: 1}
+    - _EdgeWearColor: {r: 0.75, g: 0.78, b: 0.76, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
