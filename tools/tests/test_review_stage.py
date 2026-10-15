@@ -24,7 +24,7 @@ def tiny_glb(path, names):
 class PaletteTests(unittest.TestCase):
     def test_every_r1_slot_is_read_from_the_recipes(self):
         palette = r1_palette.load_palette(REPO)
-        self.assertEqual(len(palette), 12)
+        self.assertEqual(len(palette), 13)
         self.assertEqual(palette["R1_BareSteel"].metallic, 1.0)
         self.assertEqual(palette["R1_CreamEnamel"].metallic, 0.0)
         self.assertTrue(any(palette["R1_LampAmber"].emissive))

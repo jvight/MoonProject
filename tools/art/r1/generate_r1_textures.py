@@ -294,6 +294,42 @@ def _generate_surface_maps(
         height = 0.50 + 0.035 * silver_mask - 0.045 * gap_mask + (fine - 0.5) * 0.005
         normal_strength = 4.5
 
+    elif style == "basalt":
+        # Fractured lunar basalt stone: matte volcanic grain, small vesicles, and subtle mineral flecks
+        coarse = _fbm(res, 4, seed + 19)
+        vesicles = np.clip((ultra_fine - 0.70) * 3.4, 0.0, 1.0)
+        flecks = np.clip((fine - 0.68) * 3.1, 0.0, 1.0)
+        cleave = 1.0 - np.abs(mottle * 2.0 - 1.0)
+        height = (
+            0.50
+            + (coarse - 0.5) * 0.045
+            + (cleave - 0.5) * 0.032
+            + (fine - 0.5) * 0.020
+            - vesicles * 0.038
+            + flecks * 0.014
+        )
+        albedo = np.empty((res, res, 3), dtype=np.float32)
+        albedo[..., 0] = base_rgb[0]
+        albedo[..., 1] = base_rgb[1]
+        albedo[..., 2] = base_rgb[2]
+        albedo *= (
+            0.93
+            + 0.11 * coarse[..., None]
+            + 0.05 * (cleave[..., None] - 0.5)
+            + 0.06 * flecks[..., None]
+            - 0.09 * vesicles[..., None]
+        )
+        metallic = np.full((res, res), metallic_val, dtype=np.float32) + flecks * 0.04
+        smoothness = (
+            np.full((res, res), smoothness_val, dtype=np.float32)
+            + (coarse - 0.5) * 0.06
+            + flecks * 0.08
+            - vesicles * 0.07
+        )
+        micro_wear = np.clip(0.48 + (cleave - 0.5) * 0.45 + flecks * 0.28, 0.0, 1.0)
+        micro_cavity = np.clip(0.56 - vesicles * 0.42 - (0.5 - coarse) * 0.30, 0.0, 1.0)
+        normal_strength = 5.8
+
     normal_rgb = _height_to_normal(height, normal_strength=normal_strength)
 
     mask_rgba = np.stack(
@@ -316,6 +352,100 @@ def _generate_surface_maps(
         "normal": normal_rgb,
         "mask": mask_rgba,
         "emission": emission,
+    }
+
+
+def _generate_regolith_maps(res: int = 512, seed: int = 2026) -> dict[str, np.ndarray]:
+    """Generate seamless, tileable lunar regolith detail textures (512x512) for R1Terrain.shader."""
+    coords = (np.arange(res, dtype=np.float32) + 0.5) / float(res)
+    u, v = np.meshgrid(coords, coords)
+
+    broad = _fbm(res, 4, seed)
+    medium = _fbm(res, 12, seed + 17)
+    fine = _tileable_noise(res, 32, seed + 33)
+    ultra_fine = _tileable_noise(res, 64, seed + 71)
+    grain = _tileable_noise(res, 96, seed + 113)
+
+    # Subtle wind/impact regolith micro-ripples (tileable periodic phase)
+    phase = u * 6.0 * np.pi * 2.0 + v * 2.0 * np.pi * 2.0 + (broad - 0.5) * 2.2
+    ripple = 0.5 + 0.5 * np.sin(phase)
+
+    crater_bowl = np.zeros((res, res), dtype=np.float32)
+    crater_rim = np.zeros((res, res), dtype=np.float32)
+    pebbles = np.zeros((res, res), dtype=np.float32)
+
+    rng = np.random.default_rng(seed + 500)
+    # 85 seamless wrap-around micro-craters across [0, 1]^2
+    for _ in range(85):
+        cx = float(rng.random())
+        cy = float(rng.random())
+        radius = float(rng.uniform(0.014, 0.058))
+        depth = float(rng.uniform(0.35, 0.85)) * (radius / 0.045) ** 0.45
+        dx = (u - cx + 0.5) % 1.0 - 0.5
+        dy = (v - cy + 0.5) % 1.0 - 0.5
+        rn = np.sqrt(dx * dx + dy * dy) / radius
+
+        bowl = np.clip(1.0 - rn * rn, 0.0, 1.0) ** 1.35 * depth
+        rim = np.exp(-(((rn - 1.06) / 0.26) ** 2)) * depth * 0.42
+        crater_bowl = np.maximum(crater_bowl, bowl)
+        crater_rim = np.maximum(crater_rim, rim)
+
+    # 140 tiny half-buried basalt clasts / regolith pebbles
+    for _ in range(140):
+        px = float(rng.random())
+        py = float(rng.random())
+        pr = float(rng.uniform(0.006, 0.018))
+        ph = float(rng.uniform(0.25, 0.65))
+        dx = (u - px + 0.5) % 1.0 - 0.5
+        dy = (v - py + 0.5) % 1.0 - 0.5
+        rn = np.sqrt(dx * dx + dy * dy) / pr
+        dome = (np.clip(1.0 - rn * rn, 0.0, 1.0) ** 1.5) * ph
+        pebbles = np.maximum(pebbles, dome)
+
+    height = (
+        0.50
+        + (broad - 0.5) * 0.045
+        + (medium - 0.5) * 0.032
+        + (ripple - 0.5) * 0.014
+        + (fine - 0.5) * 0.020
+        + (ultra_fine - 0.5) * 0.012
+        + (grain - 0.5) * 0.008
+        + crater_rim * 0.042
+        - crater_bowl * 0.068
+        + pebbles * 0.036
+    )
+
+    normal_rgb = _height_to_normal(height, normal_strength=6.8)
+
+    # Near-neutral grey regolith albedo (no purple wash); subtle brighten on rims/clasts, darken in bowls
+    lum = (
+        0.76
+        + (broad - 0.5) * 0.08
+        + (medium - 0.5) * 0.06
+        + (fine - 0.5) * 0.04
+        + (grain - 0.5) * 0.03
+        + crater_rim * 0.06
+        + pebbles * 0.04
+        - crater_bowl * 0.09
+    )
+    lum = np.clip(lum, 0.52, 0.94)
+    albedo_rgb = np.stack([lum * 0.995, lum * 1.000, lum * 1.005], axis=-1)
+    albedo_rgba = np.concatenate(
+        [np.clip(albedo_rgb, 0.0, 1.0), np.ones((res, res, 1), dtype=np.float32)], axis=-1
+    )
+
+    # Mask channels for R1Terrain:
+    # R = pore/grain variation, G = clast/rim ridge mask, B = micro-cavity AO, A = micro-smoothness
+    pore_var = np.clip(0.50 + (medium - 0.5) * 0.35 + (fine - 0.5) * 0.25 + crater_rim * 0.20 - crater_bowl * 0.25, 0.0, 1.0)
+    clast_mask = np.clip(pebbles * 0.85 + crater_rim * 0.55 + (ultra_fine - 0.5) * 0.25, 0.0, 1.0)
+    micro_ao = np.clip(0.84 - crater_bowl * 0.42 - np.clip(0.5 - medium, 0.0, 0.5) * 0.28 - pebbles * 0.08, 0.25, 1.0)
+    smoothness = np.clip(0.09 + pebbles * 0.11 + (grain - 0.5) * 0.04 - crater_bowl * 0.03, 0.04, 0.26)
+
+    mask_rgba = np.stack([pore_var, clast_mask, micro_ao, smoothness], axis=-1)
+    return {
+        "albedo": albedo_rgba,
+        "normal": normal_rgb,
+        "mask": mask_rgba,
     }
 
 
@@ -409,6 +539,7 @@ def main() -> None:
         ("LampAmber", (0.98, 0.74, 0.32), 0.05, 0.86, 1010, "lamp"),
         ("SolarCell", (0.20, 0.22, 0.44), 0.08, 0.90, 1111, "solar"),
         ("Brass", (0.86, 0.69, 0.32), 0.92, 0.76, 1212, "brass"),
+        ("Basalt", (0.39, 0.40, 0.43), 0.03, 0.22, 1212, "basalt"),
     ]
 
     surfaces: list[dict[str, np.ndarray]] = []
@@ -426,6 +557,11 @@ def main() -> None:
     _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_TrimSheet_Normal.png", trim["normal"])
     _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_TrimSheet_Mask.png", trim["mask"])
     _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_TrimSheet_Emission.png", trim["emission"])
+
+    regolith = _generate_regolith_maps(512, 2026)
+    _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_Regolith_Albedo.png", regolith["albedo"])
+    _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_Regolith_Normal.png", regolith["normal"])
+    _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_Regolith_Mask.png", regolith["mask"])
 
     print(f"Generated {len(list(OUTPUT_DIR.glob('*.png')))} PNG textures in {OUTPUT_DIR}")
 

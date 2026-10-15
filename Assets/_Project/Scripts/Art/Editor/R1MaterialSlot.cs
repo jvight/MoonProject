@@ -18,6 +18,7 @@ namespace MoonProject.Art.Editor
         LampAmber = 9,
         SolarCell = 10,
         Screen = 11,
-        Brass = 12
+        Brass = 12,
+        Basalt = 13
     }
 }
