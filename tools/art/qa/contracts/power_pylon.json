@@ -1,0 +1,41 @@
+{
+  "model": "power_pylon",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Copper",
+    "R1_CreamEnamel",
+    "R1_DarkGlass",
+    "R1_GoldFoil",
+    "R1_GreyMetal",
+    "R1_LampAmber",
+    "R1_OrangeStripe",
+    "R1_Rubber",
+    "R1_SagePatch",
+    "R1_Screen",
+    "R1_SolarCell"
+  ],
+  "max_triangles": 5000,
+  "max_meshes": 16,
+  "max_draw_calls": 32,
+  "allow_rotation": ["CableDrum_*", "KnifeSwitch", "Socket_Power_*"],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "PowerPylon": { "pivot": [0.0, 0.0, 0.0] },
+    "Stage_1": { "pivot": [0.0, 0.0, 0.0] },
+    "Stage_2": { "pivot": [0.0, 0.0, 0.0] },
+    "Stage_3": { "pivot": [0.0, 0.0, 0.0] },
+    "Stage_4": { "pivot": [0.0, 0.0, 0.0] },
+    "CableDrum_1": { "pivot": [0.28495, 0.07635, 0.36] },
+    "CableDrum_2": { "pivot": [-0.07635, -0.28495, 0.36] },
+    "CableDrum_3": { "pivot": [-0.2086, 0.2086, 0.36] },
+    "KnifeSwitch": { "pivot": [0.125, 0.0, 1.22] },
+    "Yoke": { "pivot": [0.0, 0.0, 1.62] },
+    "PathLamp": { "pivot": [0.0, 0.3, 1.695] },
+    "Socket_Power_1": { "pivot": [-0.09748, 0.26781, 0.3] },
+    "Socket_Power_2": { "pivot": [0.28067, -0.04949, 0.3] },
+    "Socket_Power_3": { "pivot": [-0.18319, -0.21832, 0.3] }
+  }
+}
