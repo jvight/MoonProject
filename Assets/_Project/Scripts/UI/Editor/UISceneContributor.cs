@@ -35,6 +35,19 @@ namespace MoonProject.UI.Editor
             var system = host.AddComponent<UISystem>();
             system.Wire(document, tuning, catalog, tables, context.LoadAsset<WordmarkShape>(UiAssetPaths.Wordmark),
                 context.LoadAsset<TextAsset>(UiAssetPaths.Credits));
+            if (UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(UiAssetPaths.StructureIcon(StructureIds.ChargingPad)) == null ||
+                UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(UiAssetPaths.StructureIcon(StructureIds.SolarArray)) == null ||
+                UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(UiAssetPaths.StructureIcon(StructureIds.PowerPylon)) == null)
+            {
+                StructureIconBuilder.Build();
+            }
+
+            system.WireStructureIcons(new[]
+            {
+                context.LoadAsset<Texture2D>(UiAssetPaths.StructureIcon(StructureIds.ChargingPad)),
+                context.LoadAsset<Texture2D>(UiAssetPaths.StructureIcon(StructureIds.SolarArray)),
+                context.LoadAsset<Texture2D>(UiAssetPaths.StructureIcon(StructureIds.PowerPylon)),
+            });
             context.AddSystem(system);
         }
     }

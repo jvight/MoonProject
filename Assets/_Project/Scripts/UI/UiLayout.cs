@@ -196,6 +196,21 @@ namespace MoonProject.UI
             LanguageButton = Require<Button>("button-language");
             TextSizeButton = Require<Button>("button-text-size");
             SettingsBackButton = Require<Button>("button-settings-back");
+
+            BuildReasonAnchor = Require<VisualElement>("build-reason-anchor");
+            BuildReason = Require<VisualElement>("build-reason");
+            BuildReasonShadow = Require<VisualElement>("build-reason-shadow");
+            BuildReasonText = Require<Label>("build-reason-text");
+            BuildStrip = Require<VisualElement>("build-strip");
+            BuildStripShadow = Require<VisualElement>("build-strip-shadow");
+            BuildStripTitle = Require<Label>("build-strip-title");
+            BuildStripStatus = Require<Label>("build-strip-status");
+            BuildStripCards = Require<VisualElement>("build-strip-cards");
+            BuildStripName = Require<Label>("build-strip-name");
+            BuildStripDesc = Require<Label>("build-strip-desc");
+            BuildStripRecipe = Require<VisualElement>("build-strip-recipe");
+            BuildStripHintPrimary = Require<Label>("build-strip-hint-primary");
+            BuildStripHintSecondary = Require<Label>("build-strip-hint-secondary");
         }
 
         public VisualElement Root { get; }
@@ -563,6 +578,34 @@ namespace MoonProject.UI
 
         /// <summary>Cycles the text size: 100, 125, 150%.</summary>
         public Button TextSizeButton { get; }
+
+        public VisualElement BuildReasonAnchor { get; }
+
+        public VisualElement BuildReason { get; }
+
+        public VisualElement BuildReasonShadow { get; }
+
+        public Label BuildReasonText { get; }
+
+        public VisualElement BuildStrip { get; }
+
+        public VisualElement BuildStripShadow { get; }
+
+        public Label BuildStripTitle { get; }
+
+        public Label BuildStripStatus { get; }
+
+        public VisualElement BuildStripCards { get; }
+
+        public Label BuildStripName { get; }
+
+        public Label BuildStripDesc { get; }
+
+        public VisualElement BuildStripRecipe { get; }
+
+        public Label BuildStripHintPrimary { get; }
+
+        public Label BuildStripHintSecondary { get; }
 
         private T Require<T>(string name) where T : VisualElement
         {

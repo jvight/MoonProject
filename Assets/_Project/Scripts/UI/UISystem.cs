@@ -54,6 +54,7 @@ namespace MoonProject.UI
         [Tooltip("The title's Lunarion wordmark (Generated/UI/Wordmark.asset, built by UI/Wordmark).")]
         [SerializeField] private WordmarkShape _wordmark;
         [SerializeField] private TextAsset _credits;
+        [SerializeField] private Texture2D[] _structureIcons = Array.Empty<Texture2D>();
 
         private readonly List<IDisposable> _tokens = new List<IDisposable>();
         private readonly JourneyNotice _journey = new JourneyNotice();
@@ -110,6 +111,7 @@ namespace MoonProject.UI
         private HopFade _hopFade;
         private RelayTag _relayTag;
         private TowerPanel _tower;
+        private BuildStripView _buildStrip;
         private KitTitle _kitTitle;
         private FriendNameTag _friendName;
         private PauseMenu _pause;
@@ -165,6 +167,8 @@ namespace MoonProject.UI
         internal RelayTag RelayTag => _relayTag;
 
         internal TowerPanel Tower => _tower;
+
+        internal BuildStripView BuildStrip => _buildStrip;
 
         internal KitTitle KitTitle => _kitTitle;
 
@@ -226,6 +230,11 @@ namespace MoonProject.UI
             _tuning = tuning;
             _relics = relics;
             _stringTables = stringTables;
+        }
+
+        internal void WireStructureIcons(Texture2D[] icons)
+        {
+            _structureIcons = icons ?? Array.Empty<Texture2D>();
         }
 
         /// <summary>The crew's map (docs/features/M3-07): its sheet and its view's tuning.</summary>
@@ -396,6 +405,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<StationCued>(OnStationCued));
             _tokens.Add(events.Subscribe<PartFitted>(OnPartFitted));
             _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
+            _tokens.Add(events.Subscribe<StructurePlaced>(_ => _director.NotifyUsed(InteractionKind.Build)));
+            _tokens.Add(events.Subscribe<StructureRemoved>(_ => _director.NotifyUsed(InteractionKind.Deconstruct)));
 
             services.Input.Menu.Enable();
             _cursor.Drive();
@@ -440,7 +451,7 @@ namespace MoonProject.UI
                 services.Recovery, services.ScanSites);
             _stargaze = new StargazeVeil(_tuning.Stargaze.Hud, _layout.PromptAnchor,
                 _layout.FriendNameAnchor, _layout.RelayTagAnchor, _layout.SalvageRingAnchor, _layout.SiteNameAnchor,
-                _layout.TickerLine);
+                _layout.BuildReasonAnchor, _layout.TickerLine);
             _lookUpHint = new LookUpHint(_tuning.Stargaze, _ledger);
             _holdHint = new HoldHint(_tuning.Stargaze, _ledger);
             _fitHint = new FitHint(_tuning.Stargaze, _ledger, services.Equipment);
@@ -458,7 +469,7 @@ namespace MoonProject.UI
                 services.Materials, services.RecipeLook);
             _reticle = new TetherReticle(_layout.Reticle, _layout.ReticleRest, _layout.ReticleHover, _tuning.Reticle);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
-                services.Events, new[] { _layout.RecipeCardRoot, _layout.TowerPanel });
+                services.Events, new[] { _layout.RecipeCardRoot, _layout.TowerPanel, _layout.BuildStrip });
             _pickups = new PickupFeed(_layout, _tuning.PickupFeed, _numbers, _localization, services.Materials,
                 services.Catalog, services.Events);
             _salvageRing = new SalvageRing(_layout, _tuning.Salvage, _tuning.Prompts, services.Salvage, services.View);
@@ -474,6 +485,8 @@ namespace MoonProject.UI
                 services.Materials, _localization, services.View, _numbers);
             _tower = new TowerPanel(_layout, _tuning.TowerPanel, _localization, services.Events, services.Shop,
                 services.Board, services.Materials, services.Hints, _numbers);
+            _buildStrip = new BuildStripView(_layout, _tuning.TowerPanel.Reveal, _tuning.Prompts, _localization,
+                _numbers, services.Materials, services.View, services.BuildField, _structureIcons);
             _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
             _rewardCard = new RewardCard(_layout, _tuning.RewardCard, _localization, services.Shop);
             _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold,
@@ -605,6 +618,7 @@ namespace MoonProject.UI
 
             Rect panel = _layout.Root.layout;
             Vector2 panelSize = float.IsNaN(panel.width) ? Vector2.zero : panel.size;
+            _buildStrip?.Tick(hudTime, !paused && _awake && !onMap && !_labHud.Inside, panelSize);
             _friendName.Tick(hudTime, panelSize);
             _siteName.Tick(hudTime, panelSize, !_prompt.IsVisible && !_placeCard.IsVisible &&
                                                !_lookUpChip.IsVisible && !_ticker.IsVisible && !_kitTitle.IsVisible &&
@@ -687,7 +701,8 @@ namespace MoonProject.UI
         {
             return !paused && _awake && _sinceAwake >= _tuning.Prompts.StartDelay && !_card.IsBusy &&
                    !_dial.IsBusy && !_hopList.IsBusy && !hopping && !_siteName.IsVisible && !_siteName.IsWaiting &&
-                   !_kitTitle.IsVisible && !_lookUpChip.IsVisible && !GarageBeatActive();
+                   !_kitTitle.IsVisible && !_lookUpChip.IsVisible && !GarageBeatActive() &&
+                   (_buildStrip == null || !_buildStrip.IsOpen);
         }
 
         private bool CardsOpen(bool paused)
@@ -699,7 +714,8 @@ namespace MoonProject.UI
         private bool PlaceCardsOpen()
         {
             return _awake && !_protocol.IsVisible && !_kitTitle.IsVisible && !_card.IsVisible &&
-                   !_rewardCard.IsVisible && !_siteName.IsVisible && !GarageBeatActive();
+                   !_rewardCard.IsVisible && !_siteName.IsVisible && !GarageBeatActive() &&
+                   (_buildStrip == null || !_buildStrip.IsOpen);
         }
 
         private bool TickerOpen(bool hopping)
@@ -707,19 +723,20 @@ namespace MoonProject.UI
             return _awake && !_card.IsBusy && !_digging && !_services.Salvage.IsCutting &&
                    !_reticle.IsVisible && !_dial.IsBusy && !_hopList.IsBusy && !hopping &&
                    !_siteName.IsVisible && !_kitTitle.IsVisible && !_rewardCard.IsVisible && !_rewardCard.IsWaiting &&
-                   !GarageBeatActive();
+                   !GarageBeatActive() && (_buildStrip == null || !_buildStrip.IsOpen);
         }
 
         private bool NextLineOpen(bool paused)
         {
             return !paused && _awake && !_stargaze.IsVeiled && !_protocol.IsVisible && !_rewardCard.IsVisible &&
-                   !_kitTitle.IsVisible && !_unlockCard.IsVisible;
+                   !_kitTitle.IsVisible && !_unlockCard.IsVisible && (_buildStrip == null || !_buildStrip.IsOpen);
         }
 
         private bool LookHintsOpen()
         {
             return !_protocol.IsVisible && !_card.IsVisible && !_kitTitle.IsVisible && !_dial.IsBusy &&
-                   !_hopList.IsBusy && !_siteName.IsVisible && !GarageBeatActive();
+                   !_hopList.IsBusy && !_siteName.IsVisible && !GarageBeatActive() &&
+                   (_buildStrip == null || !_buildStrip.IsOpen);
         }
 
         /// <summary>
@@ -1185,6 +1202,7 @@ namespace MoonProject.UI
             _hopList.Relocalize();
             _friendName.Relocalize();
             _tower.Relocalize();
+            _buildStrip?.Relocalize();
             _kitTitle.Relocalize();
             _pickups.Relocalize();
             _rewardCard.Relocalize();
