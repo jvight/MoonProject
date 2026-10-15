@@ -32,6 +32,7 @@ namespace MoonProject.Gameplay.Editor
             BuildFriends();
             BuildCassettes();
             BuildLogCaches();
+            BuildStructures();
             AssetDatabase.SaveAssets();
         }
 
@@ -48,6 +49,34 @@ namespace MoonProject.Gameplay.Editor
 
             GeneratedAssets.CreateOrReplace(catalog, GameplayAssetPaths.MaterialCatalog);
             Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.MaterialCatalog}");
+        }
+
+        /// <summary>
+        /// The ten player-built base structures (<see cref="BaseStructureRecipes"/>) and their catalog
+        /// (<see cref="StructureCatalog"/>).
+        /// </summary>
+        private static void BuildStructures()
+        {
+            StructureDefinition[] definitions = BaseStructureRecipes.CreateDefinitions();
+            for (int i = 0; i < definitions.Length; i++)
+            {
+                StructureDefinition definition = definitions[i];
+                definitions[i] = GeneratedAssets.CreateOrReplace(
+                    definition,
+                    GameplayAssetPaths.StructureDefinition(definition.Id));
+            }
+
+            var catalog = ScriptableObject.CreateInstance<StructureCatalog>();
+            catalog.Populate(definitions);
+            string problem = catalog.Validate();
+            if (problem != null)
+            {
+                throw new InvalidOperationException($"{BuilderPath}: the structure catalog is broken: {problem}.");
+            }
+
+            GeneratedAssets.CreateOrReplace(catalog, GameplayAssetPaths.StructureCatalog);
+            Debug.Log($"{BuilderPath}: wrote {definitions.Length} structure definitions and " +
+                      GameplayAssetPaths.StructureCatalog);
         }
 
         /// <summary>
