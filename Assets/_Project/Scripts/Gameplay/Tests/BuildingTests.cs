@@ -8,6 +8,7 @@ using UnityEngine.TestTools;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Core.Save;
+using MoonProject.Gameplay.Editor;
 using Object = UnityEngine.Object;
 
 namespace MoonProject.Gameplay.Tests
@@ -21,7 +22,7 @@ namespace MoonProject.Gameplay.Tests
         [SetUp]
         public void SetUp()
         {
-            _catalog = StructureCatalog.CreateDefault();
+            _catalog = BaseStructureRecipes.CreateCatalog();
             _tuning = ScriptableObject.CreateInstance<BuildingTuning>();
             _tuning.Populate(
                 minPlacementDistance: 2.0f,
