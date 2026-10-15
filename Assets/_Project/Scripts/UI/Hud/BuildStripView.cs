@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
+using MoonProject.Core.Input;
 using MoonProject.Gameplay;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -33,6 +34,9 @@ namespace MoonProject.UI
         private readonly ILocalization _localization;
         private readonly IMaterialStock _stock;
         private readonly BuildField _buildField;
+        private readonly GlyphLabels _glyphs;
+        private readonly GlyphView _primaryGlyph;
+        private readonly GlyphView _secondaryGlyph;
         private readonly Reveal _stripReveal;
         private readonly Reveal _reasonReveal;
         private readonly WorldAnchor _reasonAnchor;
@@ -49,6 +53,7 @@ namespace MoonProject.UI
         private int _shownOptics = -1;
         private BuildModeState _shownState = BuildModeState.Closed;
         private bool _shownSnapped;
+        private InputDeviceKind _shownDevice = (InputDeviceKind)(-1);
         private PlacementReason _shownReason = PlacementReason.Valid;
         private bool _stale = true;
 
@@ -61,7 +66,8 @@ namespace MoonProject.UI
             IMaterialStock stock,
             IViewCamera view,
             BuildField buildField = null,
-            Texture2D[] structureIcons = null)
+            Texture2D[] structureIcons = null,
+            GlyphLabels glyphs = null)
         {
             _layout = layout ?? throw new ArgumentNullException(nameof(layout));
             if (stripReveal == null)
@@ -77,6 +83,9 @@ namespace MoonProject.UI
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _stock = stock ?? throw new ArgumentNullException(nameof(stock));
             _buildField = buildField;
+            _glyphs = glyphs;
+            _primaryGlyph = new GlyphView(layout.BuildStripGlyphPrimary, layout.BuildStripGlyphPrimaryLabel);
+            _secondaryGlyph = new GlyphView(layout.BuildStripGlyphSecondary, layout.BuildStripGlyphSecondaryLabel);
 
             _stripReveal = new Reveal(layout.BuildStrip, stripReveal);
             _stripReveal.Snap(false);
@@ -125,7 +134,11 @@ namespace MoonProject.UI
         /// <summary>Number of structure cards currently displayed in the strip.</summary>
         public int CardCount => _shownAvailableCount > 0 ? _shownAvailableCount : 0;
 
-        public void Tick(float deltaTime, bool gateOpen, Vector2 panelSize)
+        public void Tick(
+            float deltaTime,
+            bool gateOpen,
+            Vector2 panelSize,
+            InputDeviceKind device = InputDeviceKind.KeyboardMouse)
         {
             BuildModeController controller = _buildField != null ? _buildField.Controller : null;
             BuildModeState state = controller != null ? controller.State : BuildModeState.Closed;
@@ -136,7 +149,7 @@ namespace MoonProject.UI
                               controller.AvailableStructures.Count > 0;
             if (wantsStrip)
             {
-                RefreshStrip(controller, state);
+                RefreshStrip(controller, state, device);
             }
 
             _stripReveal.Set(wantsStrip);
@@ -166,7 +179,7 @@ namespace MoonProject.UI
             _shownReason = PlacementReason.Valid;
         }
 
-        private void RefreshStrip(BuildModeController controller, BuildModeState state)
+        private void RefreshStrip(BuildModeController controller, BuildModeState state, InputDeviceKind device)
         {
             IReadOnlyList<StructureDefinition> available = controller.AvailableStructures;
             int count = available.Count;
@@ -182,8 +195,9 @@ namespace MoonProject.UI
             bool selectionChanged = selectedIndex != _shownSelectedIndex ||
                                     (selected != null && !ReferenceEquals(selected.Id, _shownSelectedId));
             bool modeChanged = state != _shownState || snapped != _shownSnapped;
+            bool deviceChanged = device != _shownDevice;
 
-            if (!cardsChanged && !stockChanged && !selectionChanged && !modeChanged)
+            if (!cardsChanged && !stockChanged && !selectionChanged && !modeChanged && !deviceChanged)
             {
                 return;
             }
@@ -235,15 +249,25 @@ namespace MoonProject.UI
                 _layout.BuildStrip.EnableInClassList(ShortStripClass, !affordable);
             }
 
-            if (_stale || modeChanged)
+            if (_stale || modeChanged || deviceChanged)
             {
+                string excavateGlyph = _glyphs != null
+                    ? _glyphs.For(RoverAction.Excavate, device)
+                    : (device == InputDeviceKind.Gamepad ? "X" : "E");
+                string winchGlyph = _glyphs != null
+                    ? _glyphs.For(RoverAction.Winch, device)
+                    : (device == InputDeviceKind.Gamepad ? "D-Pad" : "Scroll");
                 if (state == BuildModeState.Menu)
                 {
+                    _primaryGlyph.Set(excavateGlyph, device);
+                    _secondaryGlyph.Set(winchGlyph, device);
                     _layout.BuildStripHintPrimary.text = _localization.Get(UiKeys.BuildHintPlace);
                     _layout.BuildStripHintSecondary.text = _localization.Get(UiKeys.BuildHintRotate);
                 }
                 else
                 {
+                    _primaryGlyph.Set(winchGlyph, device);
+                    _secondaryGlyph.Set(excavateGlyph, device);
                     _layout.BuildStripHintPrimary.text = _localization.Get(UiKeys.BuildHintRotate);
                     _layout.BuildStripHintSecondary.text = _localization.Get(
                         snapped ? UiKeys.BuildHintSnap : UiKeys.BuildHintPlace);
@@ -258,6 +282,7 @@ namespace MoonProject.UI
             _shownOptics = optics;
             _shownState = state;
             _shownSnapped = snapped;
+            _shownDevice = device;
             _stale = false;
         }
 

@@ -209,7 +209,11 @@ namespace MoonProject.UI
             BuildStripName = Require<Label>("build-strip-name");
             BuildStripDesc = Require<Label>("build-strip-desc");
             BuildStripRecipe = Require<VisualElement>("build-strip-recipe");
+            BuildStripGlyphPrimary = Require<VisualElement>("build-strip-glyph-primary");
+            BuildStripGlyphPrimaryLabel = Require<Label>("build-strip-glyph-primary-label");
             BuildStripHintPrimary = Require<Label>("build-strip-hint-primary");
+            BuildStripGlyphSecondary = Require<VisualElement>("build-strip-glyph-secondary");
+            BuildStripGlyphSecondaryLabel = Require<Label>("build-strip-glyph-secondary-label");
             BuildStripHintSecondary = Require<Label>("build-strip-hint-secondary");
         }
 
@@ -603,7 +607,15 @@ namespace MoonProject.UI
 
         public VisualElement BuildStripRecipe { get; }
 
+        public VisualElement BuildStripGlyphPrimary { get; }
+
+        public Label BuildStripGlyphPrimaryLabel { get; }
+
         public Label BuildStripHintPrimary { get; }
+
+        public VisualElement BuildStripGlyphSecondary { get; }
+
+        public Label BuildStripGlyphSecondaryLabel { get; }
 
         public Label BuildStripHintSecondary { get; }
 

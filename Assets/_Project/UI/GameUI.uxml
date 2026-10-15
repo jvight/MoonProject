@@ -237,8 +237,18 @@
                             <ui:VisualElement name="build-strip-recipe" class="recipe build-strip__recipe" picking-mode="Ignore" />
                         </ui:VisualElement>
                         <ui:VisualElement name="build-strip-footer" class="build-strip__footer" picking-mode="Ignore">
-                            <ui:Label name="build-strip-hint-primary" class="build-strip__hint" picking-mode="Ignore" />
-                            <ui:Label name="build-strip-hint-secondary" class="build-strip__hint" picking-mode="Ignore" />
+                            <ui:VisualElement class="build-strip__hint-item" picking-mode="Ignore">
+                                <ui:VisualElement name="build-strip-glyph-primary" class="glyph glyph--small" picking-mode="Ignore">
+                                    <ui:Label name="build-strip-glyph-primary-label" class="glyph__label" picking-mode="Ignore" />
+                                </ui:VisualElement>
+                                <ui:Label name="build-strip-hint-primary" class="build-strip__hint" picking-mode="Ignore" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="build-strip__hint-item" picking-mode="Ignore">
+                                <ui:VisualElement name="build-strip-glyph-secondary" class="glyph glyph--small" picking-mode="Ignore">
+                                    <ui:Label name="build-strip-glyph-secondary-label" class="glyph__label" picking-mode="Ignore" />
+                                </ui:VisualElement>
+                                <ui:Label name="build-strip-hint-secondary" class="build-strip__hint" picking-mode="Ignore" />
+                            </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>

@@ -486,7 +486,7 @@ namespace MoonProject.UI
             _tower = new TowerPanel(_layout, _tuning.TowerPanel, _localization, services.Events, services.Shop,
                 services.Board, services.Materials, services.Hints, _numbers);
             _buildStrip = new BuildStripView(_layout, _tuning.TowerPanel.Reveal, _tuning.Prompts, _localization,
-                _numbers, services.Materials, services.View, services.BuildField, _structureIcons);
+                _numbers, services.Materials, services.View, services.BuildField, _structureIcons, _glyphs);
             _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
             _rewardCard = new RewardCard(_layout, _tuning.RewardCard, _localization, services.Shop);
             _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold,
@@ -618,7 +618,7 @@ namespace MoonProject.UI
 
             Rect panel = _layout.Root.layout;
             Vector2 panelSize = float.IsNaN(panel.width) ? Vector2.zero : panel.size;
-            _buildStrip?.Tick(hudTime, !paused && _awake && !onMap && !_labHud.Inside, panelSize);
+            _buildStrip?.Tick(hudTime, !paused && _awake && !onMap && !_labHud.Inside, panelSize, device);
             _friendName.Tick(hudTime, panelSize);
             _siteName.Tick(hudTime, panelSize, !_prompt.IsVisible && !_placeCard.IsVisible &&
                                                !_lookUpChip.IsVisible && !_ticker.IsVisible && !_kitTitle.IsVisible &&

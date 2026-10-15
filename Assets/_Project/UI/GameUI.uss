@@ -2531,6 +2531,16 @@ Label {
     border-top-color: var(--moon-track);
 }
 
+.build-strip__hint-item {
+    flex-direction: row;
+    align-items: center;
+}
+
+.build-strip__hint-item .glyph--small.glyph--pad {
+    width: auto;
+    padding: 0 8px;
+}
+
 .build-strip__hint {
     font-size: 17px;
     color: var(--moon-text-faint);

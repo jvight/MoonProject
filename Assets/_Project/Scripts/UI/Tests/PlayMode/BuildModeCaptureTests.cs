@@ -160,6 +160,8 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(BuildModeState.Menu, build.State);
             yield return SettleUi(0.65f);
             Assert.IsTrue(_ui.BuildStrip.IsVisible, "Build strip must be visible in Menu state.");
+            Assert.AreEqual("E", _document.rootVisualElement.Q<Label>("build-strip-glyph-primary-label")?.text);
+            Assert.AreEqual("Scroll", _document.rootVisualElement.Q<Label>("build-strip-glyph-secondary-label")?.text);
             yield return CaptureComposite(viewCamera, "01-build-menu");
 
             // Now add plenty of Metal, Wiring, and Optics onto home's shelves for placing and welding all structures.
