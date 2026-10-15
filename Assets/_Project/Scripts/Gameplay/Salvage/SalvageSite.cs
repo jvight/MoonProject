@@ -25,6 +25,8 @@ namespace MoonProject.Gameplay
         private float _shudderLeft;
         private float _shudderDuration;
         private float _shudderTime;
+        private float _answerBlink;
+        private float _signalBlink;
 
         internal SalvageSite(int index, string id, Transform root, float radius, Vector3 heart, AbilityGate gate,
             ComboCounter combo, bool heartUnderPieces)
@@ -151,7 +153,9 @@ namespace MoonProject.Gameplay
         public float PilotLevel => _pilot != null ? _pilot.Level : 0f;
 
         /// <summary>Glow of the wreck's answer lamp (0 when not blinking).</summary>
-        public float AnswerBlinkIntensity => _answerLamp != null ? _answerLampGlow.Intensity : 0f;
+        public float AnswerBlinkIntensity => _answerLamp != null
+            ? _answerLampGlow.Intensity
+            : Mathf.Max(_answerBlink, _signalBlink);
 
         /// <summary>
         /// It answers a ping while something is left to find: a piece to cut, a relic to lift, or what else waits there
@@ -221,9 +225,20 @@ namespace MoonProject.Gameplay
         /// <summary>Blinks the wreck's own lamp in answer to a listen.</summary>
         internal void SetAnswerBlink(float intensity)
         {
+            _answerBlink = intensity;
             if (_answerLamp != null)
             {
-                _answerLampGlow.Apply(intensity);
+                _answerLampGlow.Apply(Mathf.Max(_answerBlink, _signalBlink));
+            }
+        }
+
+        /// <summary>Blinks the wreck's own lamp while Bell's signal points at it.</summary>
+        internal void SetSignalBlink(float intensity)
+        {
+            _signalBlink = intensity;
+            if (_answerLamp != null)
+            {
+                _answerLampGlow.Apply(Mathf.Max(_answerBlink, _signalBlink));
             }
         }
 

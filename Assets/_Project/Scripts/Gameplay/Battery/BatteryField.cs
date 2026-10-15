@@ -13,8 +13,7 @@ namespace MoonProject.Gameplay
     /// or a lit relay mast's 4 m ring, once stopped) and steps <see cref="BatteryModel"/>, which other domains read
     /// as
     /// <see cref="IRoverBattery"/>. Leaps are paid as they happen. While 07 crawls, new beam work sleeps. The Low
-    /// warning raises the nearest charger's pillar (lit or dormant: a dormant mast's pillar is the "masts charge"
-    /// promise) and, the first few times, a ticker line naming home or a lit charger only. Once Tilly is home her
+    /// warning shows, the first few times, a ticker line naming home or a lit charger only. Once Tilly is home her
     /// repaired solar cell trickles a still 07 back up, and a few seconds into a crawl she flies out to lead toward
     /// the nearest lit charger until 07 charges. A finished charge keeps the day (saves). Allocation-free per frame.
     /// </summary>
@@ -44,15 +43,12 @@ namespace MoonProject.Gameplay
         private StationReach _reach;
         private TetherSystem _tether;
         private ChargingDock _dock;
-        private BellTuning _pillarLook;
-        private SignalPillar _pillar;
         private Friend _leader;
         private DroneBody _leaderBody;
         private Vector3 _nearestLit;
         private int _nearestLitNode = Dock;
         private string[] _nodeNames = Array.Empty<string>();
         private Vector3 _lastPosition;
-        private float _pillarUntil;
         private bool _docked;
         private bool _boosting;
         private bool _placed;
@@ -89,9 +85,6 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>The Low warning's pillar stands (or is still rising).</summary>
-        public bool PillarShown => _pillar != null && _pillar.Shown;
-
         internal void Wire(BatteryTuning tuning)
         {
             _tuning = tuning;
@@ -116,7 +109,11 @@ namespace MoonProject.Gameplay
             _tether = tether != null ? tether : throw new ArgumentNullException(nameof(tether));
             _dock = home != null ? home.Dock : throw new ArgumentNullException(nameof(home));
             _abilities = abilities ?? throw new ArgumentNullException(nameof(abilities));
-            _pillarLook = friends != null ? friends.BellTuning : throw new ArgumentNullException(nameof(friends));
+            if (friends == null)
+            {
+                throw new ArgumentNullException(nameof(friends));
+            }
+
             _leader = friends.Find(_tuning.LeadFriend);
             _leaderBody = _leader != null ? _leader.Body as DroneBody : null;
             if (_leaderBody == null)
@@ -132,8 +129,6 @@ namespace MoonProject.Gameplay
             _save = services.Save;
             _beam = services.Beam;
             Model = new BatteryModel(_tuning, _events);
-            _pillar = new SignalPillar("ChargerPillar", transform, _pillarLook, services.Terrain,
-                services.Visuals.FriendPillar, services.Meshes.Pillar);
             _nodeNames = new string[_reach.NodeCount];
             for (int node = 0; node < _nodeNames.Length; node++)
             {
@@ -185,7 +180,6 @@ namespace MoonProject.Gameplay
             StepFeel();
             _beam.SetAsleep(Model.IsLowPower);
             _leaderBody.Lead(Model.FriendLeads && !Model.IsCharging, _nearestLit);
-            StepPillar(Time.time, deltaTime);
         }
 
         /// <summary>
@@ -339,47 +333,23 @@ namespace MoonProject.Gameplay
             return Mathf.Atan(rise) * Mathf.Rad2Deg;
         }
 
-        private void StepPillar(float now, float deltaTime)
-        {
-            if (_pillar.Shown && now >= _pillarUntil)
-            {
-                _pillar.Hide();
-            }
-
-            _pillar.Tick(now, deltaTime, _pillarLook);
-        }
-
         private void OnWarned(BatteryWarned warned)
         {
-            if (warned.Warning != BatteryWarning.Low)
+            if (warned.Warning != BatteryWarning.Low || !Model.TakeLowLine())
             {
                 return;
             }
 
-            Vector3 position = _rover.Position;
-            _pillar.Show(ChargerPosition(NearestCharger(position, false)));
-            _pillarUntil = Time.time + _tuning.PillarSeconds;
-            if (!Model.TakeLowLine())
-            {
-                return;
-            }
-
-            int lit = NearestCharger(position, true);
+            int lit = NearestCharger(_rover.Position, true);
             _events.Publish(lit == Dock
                 ? new TickerLine(LowDockLine)
                 : new TickerLine(LowMastLine, _nodeNames[lit], true));
         }
 
-        /// <summary>A finished charge keeps the day; a charge beginning lets the pillar go.</summary>
+        /// <summary>A finished charge keeps the day.</summary>
         private void OnChargingChanged(ChargingChanged changed)
         {
-            if (changed.Charging)
-            {
-                _pillar.Hide();
-                return;
-            }
-
-            if (Model.FullCells == Model.Cells)
+            if (!changed.Charging && Model.FullCells == Model.Cells)
             {
                 _save.SaveNow();
             }

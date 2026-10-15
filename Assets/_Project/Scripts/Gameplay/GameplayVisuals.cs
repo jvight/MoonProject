@@ -36,9 +36,6 @@ namespace MoonProject.Gameplay
         [Tooltip("Camera-facing glints over a friend's missing parts (Glint shader, WarmLamp amber).")]
         [SerializeField] private Material _partGlint;
 
-        [Tooltip("Light pillar over a broken friend that answered (WarmLamp, additive, rising bands).")]
-        [SerializeField] private Material _friendPillar;
-
         [Tooltip("The Rover Bay's weld sparks (WarmLamp, additive, soft round sprites).")]
         [SerializeField] private Material _spark;
 
@@ -101,7 +98,6 @@ namespace MoonProject.Gameplay
         public Material WarmRing => _warmRing;
         public Material WarmGlow => _warmGlow;
         public Material PartGlint => _partGlint;
-        public Material FriendPillar => _friendPillar;
         public Material Spark => _spark;
         public Material HomeHalo => _homeHalo;
         public Material LinkPulse => _linkPulse;
@@ -184,7 +180,6 @@ namespace MoonProject.Gameplay
                 : _warmRing == null ? "warm ring material is missing"
                 : _warmGlow == null ? "warm glow material is missing"
                 : _partGlint == null ? "part glint material is missing"
-                : _friendPillar == null ? "friend pillar material is missing"
                 : _spark == null ? "spark material is missing"
                 : _homeHalo == null ? "home halo material is missing"
                 : _linkPulse == null ? "link pulse material is missing"
@@ -250,7 +245,7 @@ namespace MoonProject.Gameplay
 
         internal void Populate(Material tractorBeam,
             Material tetherBeam, Material flash, Material relicHalo, Material dust, Material warmRing,
-            Material warmGlow, Material partGlint, Material friendPillar, Material spark, Material homeHalo,
+            Material warmGlow, Material partGlint, Material spark, Material homeHalo,
             Material linkPulse)
         {
             _tractorBeam = tractorBeam;
@@ -261,7 +256,6 @@ namespace MoonProject.Gameplay
             _warmRing = warmRing;
             _warmGlow = warmGlow;
             _partGlint = partGlint;
-            _friendPillar = friendPillar;
             _spark = spark;
             _homeHalo = homeHalo;
             _linkPulse = linkPulse;

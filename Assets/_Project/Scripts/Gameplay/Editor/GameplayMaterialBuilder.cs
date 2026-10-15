@@ -149,7 +149,7 @@ namespace MoonProject.Gameplay.Editor
                 Write(shader, GlowRole.TetherBeam), Write(shader, GlowRole.Flash), Write(shader, GlowRole.RelicHalo),
                 Write(shader, GlowRole.Dust), Write(shader, GlowRole.WarmRing), Write(shader, GlowRole.WarmGlow),
                 GeneratedAssets.CreateOrReplace(GlintMaterials.CreatePart(glint),
-                    GameplayAssetPaths.PartGlintMaterial), Write(shader, GlowRole.FriendPillar),
+                    GameplayAssetPaths.PartGlintMaterial),
                 Write(shader, GlowRole.Spark), Write(shader, GlowRole.HomeHalo),
                 Write(shader, GlowRole.LinkPulse));
             visuals.PopulatePads(Pads(), BaseModelBuilder.PadRadii);

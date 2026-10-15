@@ -250,7 +250,8 @@ namespace MoonProject.Gameplay
         /// </summary>
         private void StepLid(SealedContainer container, float now)
         {
-            container.Seal.Apply(!container.Opened && container.Available ? SealGlow(container) : 0f);
+            float glow = !container.Opened && container.Available ? SealGlow(container) : 0f;
+            container.Seal.Apply(Mathf.Max(glow, container.SignalBlink));
             float t = container.Opened ? Mathf.Clamp01((now - container.OpenedAt) / _tuning.ContainerLidSeconds) : 0f;
             container.Lid.localRotation = container.LidRest *
                                           Quaternion.AngleAxis(-_tuning.ContainerLidSwing * Ease.OutCubic(t),

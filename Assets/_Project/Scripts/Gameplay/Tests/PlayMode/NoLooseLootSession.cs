@@ -434,9 +434,20 @@ namespace MoonProject.Gameplay.PlayModeTests
                     origin, terrain, roverTransform, view, Path.Combine(folder, "listen_80m_tilly.png"));
                 yield return WaitAndFrameBlink(garage.AnswerPosition, () => garage.AnswerBlinkIntensity > 0.4f,
                     origin, terrain, roverTransform, view, Path.Combine(folder, "listen_130m_garage.png"));
+
+                _gameplay.Signals.Signals.Start();
+                yield return null;
+                Vector3 signalTarget = _gameplay.Signals.BlinkPosition;
+                Vector3 toCenter = new Vector3(-signalTarget.x, 0f, -signalTarget.z);
+                toCenter = toCenter.sqrMagnitude > 1e-4f ? toCenter.normalized : Vector3.back;
+                Vector3 signalOrigin = signalTarget + toCenter * 25f;
+                signalOrigin.y = terrain.SampleHeight(signalOrigin.x, signalOrigin.z) + 0.35f;
+                yield return WaitAndFrameBlink(signalTarget, () => _gameplay.Signals.BlinkIntensity > 0.4f,
+                    signalOrigin, terrain, roverTransform, view, Path.Combine(folder, "bell_signal_06.png"));
             }
             finally
             {
+                _gameplay.Signals.Restore(new BellSignalSaveData());
                 _gameplay.Power.Restore(0);
                 if (roverBody != null)
                 {
@@ -853,10 +864,10 @@ namespace MoonProject.Gameplay.PlayModeTests
                 }
             }
 
-            if (_gameplay.Signals.Pillar != null && _gameplay.Signals.Pillar.Level > 0.001f)
+            if (_gameplay.Signals.BlinkIntensity > 0.001f)
             {
-                offenders.Add(Format("BellSignalField pillar is lit (level {0:F2}) at {1} in a fresh game.",
-                    _gameplay.Signals.Pillar.Level, Vec(_gameplay.Signals.Signals.TargetPosition)));
+                offenders.Add(Format("BellSignalField blink is lit (intensity {0:F2}) at {1} in a fresh game.",
+                    _gameplay.Signals.BlinkIntensity, Vec(_gameplay.Signals.Signals.TargetPosition)));
             }
         }
 

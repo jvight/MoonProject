@@ -402,7 +402,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 GlowMaterial(shader, GlowRole.RelicHalo), GlowMaterial(shader, GlowRole.Dust),
                 GlowMaterial(shader, GlowRole.WarmRing), GlowMaterial(shader, GlowRole.WarmGlow),
                 Track(GlintMaterials.CreatePart(LoadShader(GlintShaderPath))),
-                GlowMaterial(shader, GlowRole.FriendPillar), GlowMaterial(shader, GlowRole.Spark),
+                GlowMaterial(shader, GlowRole.Spark),
                 GlowMaterial(shader, GlowRole.HomeHalo), GlowMaterial(shader, GlowRole.LinkPulse));
 
             visuals.PopulatePads(new[] { Pad(1.6f), Pad(2.4f), Pad(3f) }, new[] { 1.6f, 2.4f, 3f });

@@ -10,7 +10,6 @@ namespace MoonProject.Gameplay
         Dust = 7,
         WarmRing = 8,
         WarmGlow = 9,
-        FriendPillar = 10,
         Spark = 11,
         HomeHalo = 12,
         LinkPulse = 13,
