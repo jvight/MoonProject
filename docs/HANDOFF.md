@@ -4,7 +4,21 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 0000000000000000000000000000. LATEST (2026-10-15 ~12:35): 0.5.6 RELEASED (5eadae15); 07 v3 + R1 decided for 0.5.7
+## 00000000000000000000000000000. LATEST (2026-10-15 ~19:45): base-building pivot approved; 0.5.7 slices on agy
+- **Owner pivot (memory base-building):** no prebuilt home. 07 wakes beside the crew's cargo lander during an Earth
+  eclipse, swaps spare cells, repairs the lander's charging bay, dawn powers it; then learns by scanning the Lumen
+  station RUINS and builds its own robot base (free placement + soft snapping, power grid) and later vehicles.
+  Design doc https://claude.ai/artifact/UYJCh1YaK4oELycWr2TVAT; concept art (approved as direction)
+  https://claude.ai/artifact/Tf7TuNa545fnJRFUq66D6f. Proposed split: 0.5.7 foundation (R1, 07 v3, placement + power with
+  3 structures, eclipse opening) and 0.5.8 full base (other structures, ruins, new first hour).
+- **Running on agy (base main 42891851):** agy-r1base (production R1 material system + Blender import convention +
+  docs/art/r1-pipeline.md), agy-build (Gameplay/Building logic core: definitions, placement rules, snapping, power grid,
+  build job, save; land only together with the integration slice that uses it), agy-07model (07 v3 in Blender per
+  agy-face/Logs/v3/SPEC.md + owner decisions). Shared slot names R1_CreamEnamel .. R1_Screen.
+- **Next slices:** 07 v3 integration (rig, CRT face shader from the prototype, 4-wheel controller), structure models
+  (charging pad, solar array, pylon), build mode + UI, eclipse opening + lander, then the 0.5.8 set.
+
+## 0000000000000000000000000000. (prev) (2026-10-15 ~12:35): 0.5.6 RELEASED (5eadae15); 07 v3 + R1 decided for 0.5.7
 - **0.5.6 = origin/main 5eadae15**, `verify --explicit` all PASS. Build D:/Project/MoonProject/Builds/
   Lunarion-0.5.6-20261015-5eadae15.zip (79 MB, smoke PASS). Contents: Tab one frame + no memory card, story parts in
   the hold, garage one-step guidance + ticker in the slot, scan beam, bay arch, belly lift without the hidden
