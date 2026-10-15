@@ -98,4 +98,21 @@ namespace MoonProject.Core.Events
 
         public bool Restored { get; }
     }
+
+    /// <summary>
+    /// 07 learned how to build a structure (<see cref="StructureId"/>), or a save restored it as known
+    /// (<see cref="Restored"/> = true).
+    /// </summary>
+    public readonly struct StructureLearned
+    {
+        public StructureLearned(string structureId, bool restored = false)
+        {
+            StructureId = structureId;
+            Restored = restored;
+        }
+
+        public string StructureId { get; }
+
+        public bool Restored { get; }
+    }
 }

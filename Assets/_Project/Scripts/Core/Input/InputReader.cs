@@ -22,6 +22,8 @@ namespace MoonProject.Core.Input
         private readonly InputAction _winch;
         private readonly InputAction _jump;
         private readonly InputAction _recenter;
+        private readonly InputAction _build;
+        private readonly InputAction _deconstruct;
         private readonly Action<InputAction.CallbackContext> _onPerformed;
 
         /// <param name="actions">The Controls asset. Missing maps/actions throw immediately (wiring bug).</param>
@@ -41,6 +43,8 @@ namespace MoonProject.Core.Input
             _winch = _roverMap.FindAction("Winch", throwIfNotFound: true);
             _jump = _roverMap.FindAction("Jump", throwIfNotFound: true);
             _recenter = _roverMap.FindAction("Recenter", throwIfNotFound: true);
+            _build = _roverMap.FindAction("Build", throwIfNotFound: true);
+            _deconstruct = _roverMap.FindAction("Deconstruct", throwIfNotFound: true);
             Menu = new MenuInput(actions.FindActionMap(MenuInput.MapName, throwIfNotFound: true));
 
             _onPerformed = OnPerformed;
@@ -58,6 +62,8 @@ namespace MoonProject.Core.Input
         public Vector2 LookRate => _lookRate.ReadValue<Vector2>();
 
         public bool ExcavateHeld => _excavate.IsPressed();
+
+        public bool ExcavatePressed => _excavate.WasPressedThisFrame();
 
         public bool TetherHeld => _tether.IsPressed();
 
@@ -77,6 +83,14 @@ namespace MoonProject.Core.Input
 
         /// <summary>The camera's recenter button (middle mouse, the right stick's click) went down this frame.</summary>
         public bool RecenterPressed => _recenter.WasPressedThisFrame();
+
+        /// <summary>The build-mode button (B on keyboard, Y / buttonNorth on gamepad) went down this frame.</summary>
+        public bool BuildPressed => _build.WasPressedThisFrame();
+
+        /// <summary>The deconstruct button (X on keyboard, RB / rightShoulder on gamepad) is held.</summary>
+        public bool DeconstructHeld => _deconstruct.IsPressed();
+
+        public bool DeconstructPressed => _deconstruct.WasPressedThisFrame();
 
         /// <summary>
         /// The "UI" map: pause, back, menu focus and cursor recapture. Enabled and disabled by the UI.
@@ -147,6 +161,10 @@ namespace MoonProject.Core.Input
                     return _jump;
                 case RoverAction.Recenter:
                     return _recenter;
+                case RoverAction.Build:
+                    return _build;
+                case RoverAction.Deconstruct:
+                    return _deconstruct;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(action), action, "Unknown rover action.");
             }

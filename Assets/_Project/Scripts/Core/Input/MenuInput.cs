@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace MoonProject.Core.Input
@@ -29,6 +30,9 @@ namespace MoonProject.Core.Input
             _click = map.FindAction("Click", throwIfNotFound: true);
             _cargo = map.FindAction("Cargo", throwIfNotFound: true);
         }
+
+        /// <summary>Current menu navigation direction (-1..1 on x and y).</summary>
+        public Vector2 Navigate => _navigate.ReadValue<Vector2>();
 
         /// <summary>A menu direction (arrows, WASD, d-pad, stick) started being pushed this frame.</summary>
         public bool NavigatePressed => _navigate.WasPressedThisFrame();
