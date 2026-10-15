@@ -1,0 +1,26 @@
+{
+    "name": "MoonProject.R1Lab.Editor",
+    "rootNamespace": "MoonProject.R1Lab.Editor",
+    "references": [
+        "MoonProject.Core",
+        "MoonProject.Art",
+        "MoonProject.Art.Editor",
+        "MoonProject.World",
+        "MoonProject.World.Editor",
+        "MoonProject.Rover",
+        "MoonProject.Editor",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

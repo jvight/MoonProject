@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_R1_Rock
+  m_Shader: {fileID: 4800000, guid: 9e5c75522184c324c8f687b1b75e10db, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BakeMap:
+        m_Texture: {fileID: 2800000, guid: b26874fc870a1da4aafb407002d48930, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: 0405bac0b717f7b4baf90f2c9bfa1c64, type: 3}
+        m_Scale: {x: 1.4, y: 1.4}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 2800000, guid: cc46289153875b64ca5d97fa5ff3914c, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MaskMap:
+        m_Texture: {fileID: 2800000, guid: cafa2ddfd3e33aa4aae4eb3683a0ab05, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BloomSafeMax: 1.05
+    - _BumpScale: 0.85
+    - _ColorVarScale: 0.55
+    - _ColorVarStrength: 0.08
+    - _DustCreaseWeight: 0.9
+    - _DustGroundFade: 0.26
+    - _DustGroundHeight: 0.22
+    - _DustGroundStrength: 0.65
+    - _DustSmoothness: 0.13
+    - _DustStrength: 0.38
+    - _DustUpThreshold: 0.52
+    - _EdgeWearMetallic: 0.04
+    - _EdgeWearSmoothness: 0.34
+    - _EdgeWearStrength: 0.85
+    - _EdgeWearThreshold: 0.53
+    - _EmissionStrength: 1
+    - _HotCorePeak: 1.42
+    - _HotCoreThreshold: 0.86
+    - _Metallic: 1
+    - _OcclusionStrength: 0.92
+    - _Smoothness: 1
+    - _UseUV1ForBake: 1
+    m_Colors:
+    - _BaseColor: {r: 0.68, g: 0.7, b: 0.75, a: 1}
+    - _DustColor: {r: 0.58, g: 0.59, b: 0.63, a: 1}
+    - _EdgeWearColor: {r: 0.62, g: 0.64, b: 0.69, a: 1}
+    - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
