@@ -56,7 +56,7 @@ namespace MoonProject.World.Editor
             }
         }
 
-        /// <summary>The terrain's material: R1Terrain draws painted vertex colours with multi-scale regolith detail.</summary>
+        /// <summary>The terrain's material: R1Terrain draws painted vertex colours with multi-scale regolith and triplanar rock detail.</summary>
         [MoonBuilder("World/Ground Material", 205)]
         public static void BuildGroundMaterial()
         {
@@ -65,6 +65,9 @@ namespace MoonProject.World.Editor
             material.SetTexture("_BaseMap", LoadTexture(WorldPaths.RegolithAlbedoTexture));
             material.SetTexture("_BumpMap", LoadTexture(WorldPaths.RegolithNormalTexture));
             material.SetTexture("_MaskMap", LoadTexture(WorldPaths.RegolithMaskTexture));
+            material.SetTexture("_RockMap", LoadTexture(WorldPaths.BasaltAlbedoTexture));
+            material.SetTexture("_RockBumpMap", LoadTexture(WorldPaths.BasaltNormalTexture));
+            material.SetTexture("_RockMaskMap", LoadTexture(WorldPaths.BasaltMaskTexture));
             GeneratedAssets.CreateOrReplace(material, WorldPaths.GroundMaterial);
             AssetDatabase.SaveAssets();
         }

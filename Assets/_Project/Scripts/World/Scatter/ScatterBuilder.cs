@@ -186,15 +186,21 @@ namespace MoonProject.World
                 ScatterInstance instance = instances[member];
                 RockShape shape = shapes[instance.Variant % shapes.Length];
                 Quaternion rotation = Orientation(instance);
-                float scale = instance.Size / shape.HorizontalExtent;
-                Vector3 offset = instance.Position - origin;
+                float baseScale = instance.Size / shape.HorizontalExtent;
+                Vector3 scale3D = instance.ScaleAspect * baseScale;
+                Vector3 invScale3D = new Vector3(
+                    1f / Mathf.Max(1e-4f, scale3D.x),
+                    1f / Mathf.Max(1e-4f, scale3D.y),
+                    1f / Mathf.Max(1e-4f, scale3D.z));
+                Vector3 buriedPosition = instance.Position - instance.Normal * instance.BurialDepth;
+                Vector3 offset = buriedPosition - origin;
                 int baseVertex = writtenVertices;
                 for (int v = 0; v < shape.Positions.Length; v++)
                 {
-                    Vector3 position = offset + rotation * (shape.Positions[v] * scale);
-                    Vector3 normal = rotation * shape.Normals[v];
+                    Vector3 position = offset + rotation * Vector3.Scale(shape.Positions[v], scale3D);
+                    Vector3 normal = (rotation * Vector3.Scale(shape.Normals[v], invScale3D)).normalized;
                     Vector4 srcTangent = shape.Tangents[v];
-                    Vector3 rotTangent = rotation * new Vector3(srcTangent.x, srcTangent.y, srcTangent.z);
+                    Vector3 rotTangent = (rotation * Vector3.Scale(new Vector3(srcTangent.x, srcTangent.y, srcTangent.z), scale3D)).normalized;
                     var tangent = new Vector4(rotTangent.x, rotTangent.y, rotTangent.z, srcTangent.w);
                     vertices[writtenVertices++] = new ScatterVertex(position, normal, tangent, shape.Colors[v],
                         shape.Uvs[v]);
@@ -253,7 +259,7 @@ namespace MoonProject.World
             chunk.AddComponent<MeshFilter>().sharedMesh = mesh;
             var meshRenderer = chunk.AddComponent<MeshRenderer>();
             meshRenderer.sharedMaterial = material;
-            meshRenderer.shadowCastingMode = group.Boulders ? ShadowCastingMode.On : ShadowCastingMode.Off;
+            meshRenderer.shadowCastingMode = ShadowCastingMode.On;
             meshRenderer.lightProbeUsage = LightProbeUsage.Off;
             meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
             return meshRenderer;
@@ -274,8 +280,10 @@ namespace MoonProject.World
                 int variant = instance.Variant % boulderShapes.Length;
                 var collider = new GameObject("Boulder") { hideFlags = hideFlags, layer = Layers.Prop };
                 collider.transform.SetParent(colliders.transform, false);
-                collider.transform.SetPositionAndRotation(instance.Position, Orientation(instance));
-                collider.transform.localScale = Vector3.one * (instance.Size / boulderShapes[variant].HorizontalExtent);
+                Vector3 buriedPosition = instance.Position - instance.Normal * instance.BurialDepth;
+                collider.transform.SetPositionAndRotation(buriedPosition, Orientation(instance));
+                float baseScale = instance.Size / boulderShapes[variant].HorizontalExtent;
+                collider.transform.localScale = instance.ScaleAspect * baseScale;
                 var meshCollider = collider.AddComponent<MeshCollider>();
                 meshCollider.convex = true;
                 meshCollider.sharedMesh = boulderRocks[variant];

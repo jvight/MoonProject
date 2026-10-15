@@ -17,7 +17,7 @@ namespace MoonProject.World
 
         [Tooltip("Clear ground kept around the base pad, metres beyond the pad radius.")]
         [Range(0f, 60f)]
-        [SerializeField] private float _padClearance = 12f;
+        [SerializeField] private float _padClearance = 3.5f;
 
         [Tooltip("Extra clear ground (metres) kept around every world anchor's radius, beyond the rock's own size: " +
             "anchor spaces (a relay mast's pad, an alcove, the terminus) stay uncluttered.")]
@@ -50,11 +50,11 @@ namespace MoonProject.World
         [Header("Clusters")]
         [Tooltip("Size of the rocky and clean patches, metres.")]
         [Range(10f, 500f)]
-        [SerializeField] private float _clusterWavelength = 75f;
+        [SerializeField] private float _clusterWavelength = 58f;
 
         [Tooltip("How strongly rocks gather into clusters (0 = even, 1 = strongly clumped).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _clusterContrast = 0.75f;
+        [SerializeField] private float _clusterContrast = 0.85f;
 
         [Header("Pebbles (no colliders)")]
         [Tooltip("Minimum distance between pebbles, metres.")]
@@ -62,7 +62,7 @@ namespace MoonProject.World
         [SerializeField] private float _pebbleSpacing = 5f;
 
         [Tooltip("Pebble size range (x = min, y = max), metres.")]
-        [SerializeField] private Vector2 _pebbleSize = new Vector2(0.2f, 0.4f);
+        [SerializeField] private Vector2 _pebbleSize = new Vector2(0.18f, 0.46f);
 
         [Tooltip("Average fraction of pebble sites that get a pebble.")]
         [Range(0f, 1f)]
@@ -79,23 +79,23 @@ namespace MoonProject.World
         [Header("Boulders (colliders on Layers.Prop)")]
         [Tooltip("Minimum distance between boulders, metres.")]
         [Range(2f, 80f)]
-        [SerializeField] private float _boulderSpacing = 15f;
+        [SerializeField] private float _boulderSpacing = 4.2f;
 
         [Tooltip("Boulder size range (x = min, y = max), metres.")]
-        [SerializeField] private Vector2 _boulderSize = new Vector2(1.4f, 3.8f);
+        [SerializeField] private Vector2 _boulderSize = new Vector2(0.85f, 3.6f);
 
         [Tooltip("Base fraction of boulder sites that get a boulder on the open floor.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _boulderDensity = 0.11f;
+        [SerializeField] private float _boulderDensity = 0.025f;
 
         [Tooltip("Extra boulder chance on raised crater rims (ejecta).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _craterRimBoulders = 0.55f;
+        [SerializeField] private float _craterRimBoulders = 0.82f;
 
         [Tooltip("Extra boulder chance in the talus band at the foot of the rim: a boulder apron, so the wall " +
             "stands on its own fallen rock.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _talusBoulders = 1f;
+        [SerializeField] private float _talusBoulders = 0.55f;
 
         [Tooltip("Centre of the talus band: metres outside the floor edge (negative = on the floor).")]
         [Range(-60f, 60f)]

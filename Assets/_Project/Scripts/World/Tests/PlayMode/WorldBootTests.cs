@@ -36,8 +36,8 @@ namespace MoonProject.World.PlayModeTests
         private const string EarthMaterialPath = "Assets/_Project/Generated/World/M_Earth.mat";
         private const string ControlsPath = "Assets/_Project/Data/Input/Controls.inputactions";
         private const string RockFolder = "Assets/_Project/Art/R1/Models/Rocks/";
-        private static readonly string[] PebbleRocks = { "Rock_00", "Rock_01", "Rock_02" };
-        private static readonly string[] BoulderRocks = { "Rock_03", "Rock_04", "Rock_05" };
+        private static readonly string[] PebbleRocks = { "Rock_00", "Rock_01", "Rock_02", "Rock_03", "Rock_04" };
+        private static readonly string[] BoulderRocks = { "Rock_05", "Rock_06", "Rock_07", "Rock_08", "Rock_09" };
 
         private const double BootBudgetMs = 1500.0;
         private const float ColliderTolerance = 0.25f;

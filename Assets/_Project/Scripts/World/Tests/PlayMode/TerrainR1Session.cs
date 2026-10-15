@@ -190,6 +190,18 @@ namespace MoonProject.World.PlayModeTests
                 yield return null;
                 frameTimes["05_wide_vista"] = CaptureAndMeasure(camera, $"{prefix}_05_wide_vista");
 
+                // 5. Close-up at the concept's low camera height next to 07 and the lander.
+                skyCycle.SetClockTime(SunlitTimeSeconds, false);
+                Vector3 rightFlat = Vector3.Cross(Vector3.up, towardEarthForward).normalized;
+                Vector3 conceptEye = roverPos - towardEarthForward * 4.35f + rightFlat * 0.55f + Vector3.up * 0.98f;
+                Quaternion conceptPitch = Quaternion.AngleAxis(-8.2f, rightFlat);
+                Quaternion conceptYaw = Quaternion.AngleAxis(-8.5f, Vector3.up);
+                camera.transform.SetPositionAndRotation(conceptEye,
+                    Quaternion.LookRotation(conceptYaw * (conceptPitch * towardEarthForward), Vector3.up));
+                camera.fieldOfView = 52f;
+                yield return null;
+                frameTimes["06_concept_ground_closeup"] = CaptureAndMeasure(camera, $"{prefix}_06_concept_ground_closeup");
+
                 skyCycle.SetClockTime(0f, true);
             }
             finally
@@ -275,24 +287,26 @@ namespace MoonProject.World.PlayModeTests
             Vector3 toEarthFlat, out Vector3 eye, out Vector3 look)
         {
             List<ScatterInstance> instances = new ScatterPlanner(surface, scatterSettings, anchors).Plan();
+            WorldSystem.AddHomeApronStones(instances, surface);
             ScatterInstance bestBoulder = default;
             float bestScore = float.NegativeInfinity;
+            Vector3 viewDir = Quaternion.Euler(0f, 142f, 0f) * toEarthFlat;
 
             for (int i = 0; i < instances.Count; i++)
             {
                 ScatterInstance candidate = instances[i];
-                if (candidate.Kind != ScatterKind.Boulder || candidate.Size < 1.25f)
+                if (candidate.Kind != ScatterKind.Boulder || candidate.Size < 1.35f)
                 {
                     continue;
                 }
 
                 float distFromHome = new Vector2(candidate.Position.x, candidate.Position.z).magnitude;
-                if (distFromHome < 40f || distFromHome > 240f)
+                if (distFromHome < 40f || distFromHome > 235f)
                 {
                     continue;
                 }
 
-                int tightBoulders = 0;
+                int corridorBoulders = 0;
                 int tightPebbles = 0;
                 for (int j = 0; j < instances.Count; j++)
                 {
@@ -301,21 +315,27 @@ namespace MoonProject.World.PlayModeTests
                         continue;
                     }
 
-                    float dSq = (instances[j].Position - candidate.Position).sqrMagnitude;
-                    if (dSq < 42f)
+                    Vector3 delta = instances[j].Position - candidate.Position;
+                    float dSq = delta.sqrMagnitude;
+                    if (dSq < 36f && instances[j].Kind == ScatterKind.Pebble)
                     {
-                        if (instances[j].Kind == ScatterKind.Boulder)
+                        tightPebbles++;
+                    }
+                    else if (dSq < 550f && instances[j].Kind == ScatterKind.Boulder)
+                    {
+                        float forward = Vector3.Dot(delta, viewDir);
+                        if (forward > -2f && forward < 22f)
                         {
-                            tightBoulders++;
-                        }
-                        else
-                        {
-                            tightPebbles++;
+                            float lateral = Vector3.Cross(viewDir, delta).magnitude;
+                            if (lateral < 6.5f)
+                            {
+                                corridorBoulders++;
+                            }
                         }
                     }
                 }
 
-                float score = candidate.Size * 3.5f + tightBoulders * 6.0f + tightPebbles * 1.2f;
+                float score = candidate.Size * 4.0f + corridorBoulders * 9.0f + tightPebbles * 1.2f;
                 if (score > bestScore)
                 {
                     bestScore = score;
@@ -324,10 +344,9 @@ namespace MoonProject.World.PlayModeTests
             }
 
             // Look at 142 degrees from toEarthFlat so the northern Sun rakes across the front-left of the rock cluster.
-            Vector3 viewDir = Quaternion.Euler(0f, 142f, 0f) * toEarthFlat;
-            Vector3 target = bestBoulder.Position + viewDir * 0.65f + Vector3.up * (bestBoulder.Size * 0.18f);
-            Vector3 camPos = bestBoulder.Position - viewDir * (bestBoulder.Size * 2.15f + 1.25f);
-            camPos.y = surface.SampleHeight(camPos.x, camPos.z) + 1.15f;
+            Vector3 target = bestBoulder.Position + viewDir * 0.55f + Vector3.up * (bestBoulder.Size * 0.08f);
+            Vector3 camPos = bestBoulder.Position - viewDir * (bestBoulder.Size * 2.10f + 1.15f);
+            camPos.y = surface.SampleHeight(camPos.x, camPos.z) + 1.05f;
             eye = camPos;
             look = target;
         }

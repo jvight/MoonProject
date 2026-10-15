@@ -35,13 +35,16 @@ namespace MoonProject.World.Editor
         public const string RegolithAlbedoTexture = "Assets/_Project/Art/R1/Textures/T_R1_Regolith_Albedo.png";
         public const string RegolithNormalTexture = "Assets/_Project/Art/R1/Textures/T_R1_Regolith_Normal.png";
         public const string RegolithMaskTexture = "Assets/_Project/Art/R1/Textures/T_R1_Regolith_Mask.png";
+        public const string BasaltAlbedoTexture = "Assets/_Project/Art/R1/Textures/T_R1_Basalt_Albedo.png";
+        public const string BasaltNormalTexture = "Assets/_Project/Art/R1/Textures/T_R1_Basalt_Normal.png";
+        public const string BasaltMaskTexture = "Assets/_Project/Art/R1/Textures/T_R1_Basalt_Mask.png";
         public const string R1BasaltMaterial = "Assets/_Project/Generated/Art/R1/Materials/R1_Basalt.mat";
         public const string R1RocksFolder = "Assets/_Project/Art/R1/Models/Rocks";
-        /// <summary>R1 basalt rocks (Art/R1/Models/Rocks) used as pebbles: small slab and cobble shapes.</summary>
-        public static readonly string[] PebbleRocks = { "Rock_00", "Rock_01", "Rock_02" };
+        /// <summary>R1 basalt rocks (Art/R1/Models/Rocks) used as pebbles: 5 irregular rounded cobble and lump shapes.</summary>
+        public static readonly string[] PebbleRocks = { "Rock_00", "Rock_01", "Rock_02", "Rock_03", "Rock_04" };
 
-        /// <summary>R1 basalt rocks used as boulders: faceted boulder, weathered monolith, and fractured block shapes.</summary>
-        public static readonly string[] BoulderRocks = { "Rock_03", "Rock_04", "Rock_05" };
+        /// <summary>R1 basalt rocks used as boulders: 5 weathered lunar breccia and basalt boulder shapes.</summary>
+        public static readonly string[] BoulderRocks = { "Rock_05", "Rock_06", "Rock_07", "Rock_08", "Rock_09" };
 
         /// <summary>Art's warm light-decal disc (1 m radius, additive) for the disc light pools.</summary>
         public const string LightPoolPrefab = "Assets/_Project/Generated/Art/Props/LightPool.prefab";

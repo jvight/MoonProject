@@ -23,6 +23,7 @@ namespace MoonProject.World
 
         private readonly MoonSurface _surface;
         private readonly TerrainPainter _painter;
+        private readonly GradientNoise _pocketNoise;
         private readonly float _jitter;
         private readonly float _chunkSize;
         private readonly uint _seed;
@@ -39,6 +40,7 @@ namespace MoonProject.World
             _jitter = settings.Jitter;
             _chunkSize = settings.ChunkSize;
             _seed = (uint)surface.Seed;
+            _pocketNoise = new GradientNoise(Hashing.Mix(_seed ^ 0x4B1D7E31u));
         }
 
         public TerrainMeshData Build(TerrainChunkPlan plan)
@@ -230,16 +232,27 @@ namespace MoonProject.World
         {
             region = _surface.Sample(x, z);
             position = new Vector3(x, region.Height, z);
-            if (region.RimZone <= 1e-4f)
+            float r = Mathf.Sqrt(x * x + z * z);
+            if (region.RimZone <= 1e-4f || r <= 1f)
             {
                 normal = _surface.SampleNormal(x, z);
                 return;
             }
 
-            float step = Mathf.Lerp(0.25f, 3.6f, SmoothMath.Smootherstep(0f, 0.2f, region.RimZone));
-            float dx = _surface.SampleHeight(x + step, z) - _surface.SampleHeight(x - step, z);
-            float dz = _surface.SampleHeight(x, z + step) - _surface.SampleHeight(x, z - step);
-            normal = new Vector3(-dx, 2f * step, -dz).normalized;
+            float tRim = SmoothMath.Smootherstep(0f, 0.2f, region.RimZone);
+            float pocket = _pocketNoise.Fractal(x / 68f, z / 68f, 2, 2f, 0.5f);
+            float slumpPocket = SmoothMath.Smootherstep(-0.05f, 0.35f, pocket);
+            float stepR = Mathf.Lerp(0.25f, Mathf.Lerp(4.8f, 1.35f, slumpPocket), tRim);
+            float stepT = Mathf.Lerp(0.25f, 1.1f, tRim);
+            float urx = x / r;
+            float urz = z / r;
+            float utx = -urz;
+            float utz = urx;
+            float gr = (_surface.SampleHeight(x + stepR * urx, z + stepR * urz)
+                - _surface.SampleHeight(x - stepR * urx, z - stepR * urz)) / (2f * stepR);
+            float gt = (_surface.SampleHeight(x + stepT * utx, z + stepT * utz)
+                - _surface.SampleHeight(x - stepT * utx, z - stepT * utz)) / (2f * stepT);
+            normal = new Vector3(-(gr * urx + gt * utx), 1f, -(gr * urz + gt * utz)).normalized;
         }
 
         private static uint CellKey(float cellSize)

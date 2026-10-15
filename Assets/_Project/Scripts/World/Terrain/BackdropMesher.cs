@@ -27,6 +27,7 @@ namespace MoonProject.World
             int rings = settings.BackdropRings;
             int segments = settings.BackdropSegments;
             uint seed = (uint)surface.Seed;
+            var pocketNoise = new GradientNoise(Hashing.Mix(seed ^ 0x4B1D7E31u));
             float growth = Mathf.Pow(settings.BackdropOuterRadius / settings.BackdropInnerRadius, 1f / rings);
             float segmentAngle = Mathf.PI * 2f / segments;
             int vertexCount = (rings + 1) * segments;
@@ -44,10 +45,29 @@ namespace MoonProject.World
                     float x = Mathf.Sin(angle) * radius;
                     float z = Mathf.Cos(angle) * radius;
                     SurfaceSample sample = surface.Sample(x, z);
-                    const float NormalStep = 4.0f;
-                    float dx = surface.SampleHeight(x + NormalStep, z) - surface.SampleHeight(x - NormalStep, z);
-                    float dz = surface.SampleHeight(x, z + NormalStep) - surface.SampleHeight(x, z - NormalStep);
-                    Vector3 normal = new Vector3(-dx, 2f * NormalStep, -dz).normalized;
+                    float r = Mathf.Sqrt(x * x + z * z);
+                    Vector3 normal;
+                    if (r > 1f && sample.RimZone > 1e-4f)
+                    {
+                        float tRim = SmoothMath.Smootherstep(0f, 0.2f, sample.RimZone);
+                        float pocket = pocketNoise.Fractal(x / 68f, z / 68f, 2, 2f, 0.5f);
+                        float slumpPocket = SmoothMath.Smootherstep(-0.05f, 0.35f, pocket);
+                        float stepR = Mathf.Lerp(0.25f, Mathf.Lerp(4.8f, 1.35f, slumpPocket), tRim);
+                        float stepT = Mathf.Lerp(0.25f, 1.1f, tRim);
+                        float urx = x / r;
+                        float urz = z / r;
+                        float utx = -urz;
+                        float utz = urx;
+                        float gr = (surface.SampleHeight(x + stepR * urx, z + stepR * urz)
+                            - surface.SampleHeight(x - stepR * urx, z - stepR * urz)) / (2f * stepR);
+                        float gt = (surface.SampleHeight(x + stepT * utx, z + stepT * utz)
+                            - surface.SampleHeight(x - stepT * utx, z - stepT * utz)) / (2f * stepT);
+                        normal = new Vector3(-(gr * urx + gt * utx), 1f, -(gr * urz + gt * utz)).normalized;
+                    }
+                    else
+                    {
+                        normal = surface.SampleNormal(x, z);
+                    }
                     float square = Mathf.Max(Mathf.Abs(x), Mathf.Abs(z));
                     float sink = settings.BackdropSink * (1f - SmoothMath.Smootherstep(
                         settings.GridHalfExtent - SinkFadeInside, settings.GridHalfExtent + SinkFadeOutside, square));
