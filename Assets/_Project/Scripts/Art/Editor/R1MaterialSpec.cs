@@ -1,10 +1,10 @@
 using UnityEngine;
 
-namespace MoonProject.Art
+namespace MoonProject.Art.Editor
 {
     /// <summary>
-    /// Immutable specification of one R1 library material, linking its fixed Blender slot name, Unity material asset
-    /// name, texture prefix, one-line intended use description, and physically-based surface parameters.
+    /// Immutable recipe of one R1 library material, linking its fixed Blender slot name, generated Unity material asset
+    /// name, source texture prefix, one-line intended use description, and physically-based surface parameters.
     /// </summary>
     public readonly struct R1MaterialSpec
     {

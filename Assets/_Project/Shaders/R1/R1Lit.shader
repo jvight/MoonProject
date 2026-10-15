@@ -1,6 +1,7 @@
 // R1 stylized-realism hard-surface shader for MoonProject (0.5.7 R1-FOUNDATION).
-// Combines URP physically-based lighting with a packed MaskMap (R=Metallic, G=AO, B=Curvature, A=Smoothness),
-// procedural curvature edge wear, world-up + crevice lunar dust, subtle world-space colour variation,
+// Combines URP physically-based lighting with a packed MaskMap (R=Metallic, G=MicroAO, B=MicroDetail, A=Smoothness),
+// per-model vertex colours (R=Ambient Occlusion, G=Convex Edge Wear, B=Crease/Cavity Dust, A=Unused),
+// procedural edge wear, world-up + cavity lunar dust, subtle world-space colour variation,
 // bloom-safe emission with a small HDR hot core, and MoonAtmosphere distance fog.
 Shader "MoonProject/R1/Lit"
 {
@@ -12,7 +13,7 @@ Shader "MoonProject/R1/Lit"
         [NoScaleOffset] _BumpMap("Normal Map", 2D) = "bump" {}
         _BumpScale("Normal Scale", Range(0.0, 2.0)) = 1.0
 
-        [NoScaleOffset] _MaskMap("Mask Map (R=Metal, G=AO, B=Curv, A=Smooth)", 2D) = "white" {}
+        [NoScaleOffset] _MaskMap("Mask Map (R=Metal, G=MicroAO, B=MicroDetail, A=Smooth)", 2D) = "white" {}
         _MetallicScale("Metallic Scale", Range(0.0, 1.0)) = 1.0
         _SmoothnessScale("Smoothness Scale", Range(0.0, 1.0)) = 1.0
         _SmoothnessMin("Smoothness Min", Range(0.0, 1.0)) = 0.08
@@ -22,8 +23,8 @@ Shader "MoonProject/R1/Lit"
         [Header(Procedural Edge Wear)]
         _EdgeWearColor("Edge Wear Color", Color) = (0.76, 0.78, 0.82, 1)
         _EdgeWearAmount("Edge Wear Amount", Range(0.0, 1.0)) = 0.35
-        _EdgeWearThreshold("Edge Wear Threshold", Range(0.5, 0.99)) = 0.58
-        _EdgeWearSharpness("Edge Wear Sharpness", Range(1.0, 24.0)) = 4.0
+        _EdgeWearThreshold("Edge Wear Threshold", Range(0.0, 0.95)) = 0.22
+        _EdgeWearSharpness("Edge Wear Sharpness", Range(1.0, 24.0)) = 2.0
         _EdgeWearMetallic("Edge Wear Metallic", Range(0.0, 1.0)) = 0.65
         _EdgeWearSmoothness("Edge Wear Smoothness", Range(0.0, 1.0)) = 0.58
 

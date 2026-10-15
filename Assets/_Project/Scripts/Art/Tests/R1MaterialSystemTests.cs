@@ -1,5 +1,5 @@
+using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEditor;
@@ -11,14 +11,12 @@ namespace MoonProject.Art.Tests
 {
     /// <summary>
     /// Verifies the R1 stylized-realism foundation: <c>MoonProject/R1/Lit</c> shader compilation and property contract,
-    /// the 11 library materials and trim-sheet/per-slot textures, and <see cref="R1ModelPostprocessor"/> FBX import
-    /// settings and Blender material slot mapping.
+    /// the 12 generated library materials and textures, pure slot mapping, <see cref="R1ModelPostprocessor"/> validation
+    /// of slot names and vertex colours, and <see cref="R1ModelBuilder"/> material replacement on a code-constructed
+    /// mesh and renderer.
     /// </summary>
     public sealed class R1MaterialSystemTests
     {
-        private const string TempFolderName = "__R1ModelPostprocessorTest__";
-        private readonly List<string> _createdFolders = new List<string>();
-
         private static readonly string[] ExpectedShaderProperties =
         {
             "_BaseMap",
@@ -53,35 +51,12 @@ namespace MoonProject.Art.Tests
             "_HotCorePeak"
         };
 
-        [OneTimeSetUp]
-        public void OneTimeSetUp()
-        {
-            R1MaterialLibrary.EnsureInMemoryBindings();
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            for (int i = _createdFolders.Count - 1; i >= 0; i--)
-            {
-                AssetDatabase.DeleteAsset(_createdFolders[i]);
-            }
-
-            foreach (string folder in _createdFolders)
-            {
-                Assert.IsFalse(Directory.Exists(folder), $"{folder} was not cleaned up.");
-                Assert.IsFalse(File.Exists(folder + ".meta"), $"{folder}.meta was not cleaned up.");
-            }
-
-            _createdFolders.Clear();
-        }
-
         [Test]
         public void R1LitShader_CompilesWithoutErrors_AndExposesExpectedProperties()
         {
             Shader shader = R1MaterialLibrary.LoadShader();
             Assert.IsNotNull(shader, "MoonProject/R1/Lit shader must exist.");
-            Assert.AreEqual(R1MaterialCatalog.ShaderName, shader.name);
+            Assert.AreEqual(R1MaterialRecipes.ShaderName, shader.name);
             Assert.IsTrue(shader.isSupported, "MoonProject/R1/Lit shader must be supported on the active target.");
             Assert.IsFalse(ShaderUtil.ShaderHasError(shader), "MoonProject/R1/Lit shader must compile without errors.");
 
@@ -95,15 +70,15 @@ namespace MoonProject.Art.Tests
             }
             finally
             {
-                Object.DestroyImmediate(mat);
+                UnityEngine.Object.DestroyImmediate(mat);
             }
         }
 
         [Test]
-        public void MaterialLibrary_AllElevenMaterialsExist_AndHaveTexturesAssigned()
+        public void MaterialLibrary_AllTwelveMaterialsExist_AndHaveTexturesAssigned()
         {
-            IReadOnlyList<R1MaterialSpec> specs = R1MaterialCatalog.All;
-            Assert.AreEqual(11, specs.Count, "R1MaterialCatalog must define all 11 fixed Blender material slots.");
+            IReadOnlyList<R1MaterialSpec> specs = R1MaterialRecipes.All;
+            Assert.AreEqual(12, specs.Count, "R1MaterialRecipes must define all 12 fixed Blender material slots.");
 
             for (int i = 0; i < specs.Count; i++)
             {
@@ -111,11 +86,13 @@ namespace MoonProject.Art.Tests
                 Assert.IsFalse(string.IsNullOrWhiteSpace(spec.IntendedUse),
                     $"Slot '{spec.SlotName}' must document its one-line intended use.");
 
-                string matPath = R1MaterialCatalog.GetMaterialPath(spec);
-                var material = AssetDatabase.LoadAssetAtPath<Material>(matPath);
-                Assert.IsNotNull(material, $"Material asset missing at '{matPath}' for slot '{spec.SlotName}'.");
-                Assert.AreEqual(R1MaterialCatalog.ShaderName, material.shader.name,
-                    $"Material '{spec.MaterialAssetName}' must use '{R1MaterialCatalog.ShaderName}'.");
+                string matPath = R1MaterialRecipes.GetMaterialPath(spec);
+                StringAssert.StartsWith("Assets/_Project/Generated/Art/R1/Materials/", matPath);
+
+                Material material = R1MaterialLibrary.LoadMaterial(spec.Slot);
+                Assert.IsNotNull(material, $"Generated material asset missing at '{matPath}' for slot '{spec.SlotName}'.");
+                Assert.AreEqual(R1MaterialRecipes.ShaderName, material.shader.name,
+                    $"Material '{spec.MaterialAssetName}' must use '{R1MaterialRecipes.ShaderName}'.");
                 Assert.IsTrue(material.enableInstancing,
                     $"Material '{spec.MaterialAssetName}' must have GPU instancing enabled.");
 
@@ -137,92 +114,141 @@ namespace MoonProject.Art.Tests
                 }
             }
 
-            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialCatalog.TrimSheetAlbedoPath));
-            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialCatalog.TrimSheetNormalPath));
-            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialCatalog.TrimSheetMaskPath));
-            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialCatalog.TrimSheetEmissionPath));
+            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialRecipes.TrimSheetAlbedoPath));
+            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialRecipes.TrimSheetNormalPath));
+            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialRecipes.TrimSheetMaskPath));
+            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialRecipes.TrimSheetEmissionPath));
 
-            var normalImporter = (TextureImporter)AssetImporter.GetAtPath(R1MaterialCatalog.TrimSheetNormalPath);
-            var maskImporter = (TextureImporter)AssetImporter.GetAtPath(R1MaterialCatalog.TrimSheetMaskPath);
-            var albedoImporter = (TextureImporter)AssetImporter.GetAtPath(R1MaterialCatalog.TrimSheetAlbedoPath);
+            var normalImporter = (TextureImporter)AssetImporter.GetAtPath(R1MaterialRecipes.TrimSheetNormalPath);
+            var maskImporter = (TextureImporter)AssetImporter.GetAtPath(R1MaterialRecipes.TrimSheetMaskPath);
+            var albedoImporter = (TextureImporter)AssetImporter.GetAtPath(R1MaterialRecipes.TrimSheetAlbedoPath);
             Assert.AreEqual(TextureImporterType.NormalMap, normalImporter.textureType);
             Assert.IsFalse(maskImporter.sRGBTexture, "Mask map must be imported as linear (non-sRGB).");
             Assert.IsTrue(albedoImporter.sRGBTexture, "Albedo map must be imported as sRGB.");
         }
 
         [Test]
-        public void ModelPostprocessor_MapsAllKnownSlots_AndEnforcesFbxImportSettings()
+        public void MaterialLibrary_ThrowsInvalidOperationException_WhenShaderOrTextureMissing()
         {
-            IReadOnlyList<R1MaterialSpec> specs = R1MaterialCatalog.All;
+            R1MaterialSpec spec = R1MaterialRecipes.Get(R1MaterialSlot.CreamEnamel);
+            Shader shader = R1MaterialLibrary.LoadShader();
+
+            var nullShaderEx = Assert.Throws<InvalidOperationException>(() =>
+                R1MaterialLibrary.CreateMaterial(null, spec));
+            StringAssert.Contains("R1Lit shader", nullShaderEx.Message);
+
+            var missingTexEx = Assert.Throws<InvalidOperationException>(() =>
+                R1MaterialLibrary.CreateMaterial(shader, spec, _ => null));
+            StringAssert.Contains(R1MaterialRecipes.GetAlbedoTexturePath(spec), missingTexEx.Message);
+        }
+
+        [Test]
+        public void SlotMapping_MapsAllTwelveKnownSlots_AndRejectsUnknownSlots()
+        {
+            IReadOnlyList<R1MaterialSpec> specs = R1MaterialRecipes.All;
             for (int i = 0; i < specs.Count; i++)
             {
                 R1MaterialSpec spec = specs[i];
-                bool ok = R1ModelPostprocessor.TryResolveSlotMaterial(
-                    spec.SlotName,
-                    "Assets/_Project/Art/R1/Models/UnitTest.fbx",
-                    out Material resolved);
-                Assert.IsTrue(ok, $"Expected known slot '{spec.SlotName}' to resolve.");
-                Assert.IsNotNull(resolved);
-                Assert.AreEqual(spec.MaterialAssetName, resolved.name);
+                Assert.IsTrue(R1MaterialRecipes.TryMapSlotName(spec.SlotName, out R1MaterialSlot mapped));
+                Assert.AreEqual(spec.Slot, mapped);
+
+                Assert.IsTrue(R1MaterialRecipes.TryMapSlotName(spec.SlotName + " (Instance)", out R1MaterialSlot mappedInstance));
+                Assert.AreEqual(spec.Slot, mappedInstance);
             }
 
-            string fbxPath = R1MaterialCatalog.ModelsFolder + "/" + TempFolderName + "/test_valid.fbx";
-            byte[] fbxBytes = R1ModelPostprocessor.CreateMinimalAsciiFbxBytes(
-                R1MaterialCatalog.CreamEnamelSlot,
-                R1MaterialCatalog.ScreenSlot);
-            ImportTempFile(fbxPath, fbxBytes);
+            Assert.IsFalse(R1MaterialRecipes.TryMapSlotName("R1_UnknownBogusSlot", out _));
+            Assert.IsFalse(R1MaterialRecipes.TryMapSlotName(string.Empty, out _));
 
-            var importer = (ModelImporter)AssetImporter.GetAtPath(fbxPath);
-            Assert.IsNotNull(importer);
-            Assert.AreEqual(1f, importer.globalScale, 1e-5f);
-            Assert.IsTrue(importer.useFileUnits);
-            Assert.IsTrue(importer.bakeAxisConversion);
-            Assert.IsFalse(importer.isReadable);
-            Assert.AreEqual(ModelImporterNormals.Import, importer.importNormals);
-            Assert.AreEqual(ModelImporterTangents.CalculateMikk, importer.importTangents);
-            Assert.AreEqual(ModelImporterMaterialImportMode.None, importer.materialImportMode);
+            var ex = Assert.Throws<InvalidOperationException>(() =>
+                R1ModelBuilder.MapSlotOrThrow("R1_UnknownBogusSlot", "Assets/_Project/Art/R1/Models/UnitTest.fbx"));
+            StringAssert.Contains("Assets/_Project/Art/R1/Models/UnitTest.fbx", ex.Message);
+            StringAssert.Contains("R1_UnknownBogusSlot", ex.Message);
+        }
 
-            var importedModel = AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath);
-            Assert.IsNotNull(importedModel);
-            var renderer = importedModel.GetComponentInChildren<Renderer>();
-            Assert.IsNotNull(renderer);
-            Assert.GreaterOrEqual(renderer.sharedMaterials.Length, 1);
-            Assert.AreEqual(R1MaterialCatalog.CreamEnamelSlot, renderer.sharedMaterials[0].name);
-            if (renderer.sharedMaterials.Length > 1)
+        [Test]
+        public void ModelPostprocessor_ValidatesSlotNames_AndRequiresVertexColors()
+        {
+            const string ModelPath = "Assets/_Project/Art/R1/Models/UnitTest.fbx";
+            Assert.IsTrue(R1ModelPostprocessor.ValidateSlotName(R1MaterialRecipes.SolarCellSlot, ModelPath));
+
+            LogAssert.Expect(LogType.Error, new Regex(@"UnitTest\.fbx.*R1_BogusSlot"));
+            Assert.IsFalse(R1ModelPostprocessor.ValidateSlotName("R1_BogusSlot", ModelPath));
+
+            Mesh validMesh = R1MaterialLibrary.CreateBevelledCubeMesh(0.5f, 0.06f);
+            var validRoot = new GameObject("ValidModelRoot");
+            validRoot.AddComponent<MeshFilter>().sharedMesh = validMesh;
+
+            var invalidMesh = new Mesh { name = "UncolouredMesh" };
+            invalidMesh.vertices = new[] { Vector3.zero, Vector3.right, Vector3.up };
+            invalidMesh.triangles = new[] { 0, 2, 1 };
+            var invalidRoot = new GameObject("InvalidModelRoot");
+            invalidRoot.AddComponent<MeshFilter>().sharedMesh = invalidMesh;
+
+            try
             {
-                Assert.AreEqual(R1MaterialCatalog.ScreenPlaceholderMaterialName, renderer.sharedMaterials[1].name);
+                Assert.IsTrue(R1ModelPostprocessor.ValidateVertexColors(validRoot, ModelPath));
+
+                LogAssert.Expect(LogType.Error, new Regex(@"UnitTest\.fbx"));
+                Assert.IsFalse(R1ModelPostprocessor.ValidateVertexColors(invalidRoot, ModelPath));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(validRoot);
+                UnityEngine.Object.DestroyImmediate(validMesh);
+                UnityEngine.Object.DestroyImmediate(invalidRoot);
+                UnityEngine.Object.DestroyImmediate(invalidMesh);
             }
         }
 
         [Test]
-        public void ModelPostprocessor_RejectsUnknownSlot_WithLogErrorContainingModelPath()
+        public void ModelBuilder_ReplacesRendererMaterialsWithLibraryMaterials_AndThrowsOnUnknownSlot()
         {
-            string fbxPath = R1MaterialCatalog.ModelsFolder + "/" + TempFolderName + "/test_invalid.fbx";
-            LogAssert.Expect(LogType.Error, new Regex(@"test_invalid\.fbx.*R1_UnknownBogusSlot"));
+            const string ModelPath = "Assets/_Project/Art/R1/Models/Rover/TestPart.fbx";
+            Assert.AreEqual(
+                "Assets/_Project/Generated/Art/R1/Models/Rover/TestPart.prefab",
+                R1ModelBuilder.GetGeneratedPrefabPath(ModelPath));
 
-            byte[] fbxBytes = R1ModelPostprocessor.CreateMinimalAsciiFbxBytes("R1_UnknownBogusSlot");
-            ImportTempFile(fbxPath, fbxBytes);
-        }
+            Shader shader = R1MaterialLibrary.LoadShader();
+            Mesh mesh = R1MaterialLibrary.CreateBevelledCubeMesh(0.5f, 0.05f);
+            var root = new GameObject("CodeConstructedModel");
+            var matCreamPlaceholder = new Material(shader) { name = R1MaterialRecipes.CreamEnamelSlot };
+            var matSolarPlaceholder = new Material(shader) { name = R1MaterialRecipes.SolarCellSlot };
+            var matScreenPlaceholder = new Material(shader) { name = R1MaterialRecipes.ScreenSlot + " (Instance)" };
+            var matBogus = new Material(shader) { name = "R1_InvalidSlotName" };
 
-        private void ImportTempFile(string assetPath, byte[] bytes)
-        {
-            string folder = Path.GetDirectoryName(assetPath)?.Replace('\\', '/');
-            EnsureFolderTracked(folder);
-            File.WriteAllBytes(assetPath, bytes);
-            AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceSynchronousImport);
-        }
-
-        private void EnsureFolderTracked(string folder)
-        {
-            if (string.IsNullOrEmpty(folder) || AssetDatabase.IsValidFolder(folder))
+            try
             {
-                return;
-            }
+                var filter = root.AddComponent<MeshFilter>();
+                filter.sharedMesh = mesh;
+                var renderer = root.AddComponent<MeshRenderer>();
+                renderer.sharedMaterials = new[] { matCreamPlaceholder, matSolarPlaceholder, matScreenPlaceholder };
 
-            string parent = Path.GetDirectoryName(folder)?.Replace('\\', '/');
-            EnsureFolderTracked(parent);
-            AssetDatabase.CreateFolder(parent, Path.GetFileName(folder));
-            _createdFolders.Add(folder);
+                R1ModelBuilder.AssignLibraryMaterials(root, ModelPath);
+
+                Material[] assigned = renderer.sharedMaterials;
+                Assert.AreEqual(3, assigned.Length);
+                Assert.AreSame(R1MaterialLibrary.LoadMaterial(R1MaterialSlot.CreamEnamel), assigned[0]);
+                Assert.AreSame(R1MaterialLibrary.LoadMaterial(R1MaterialSlot.SolarCell), assigned[1]);
+                Assert.AreSame(R1MaterialLibrary.LoadMaterial(R1MaterialSlot.Screen), assigned[2]);
+                Assert.AreEqual(R1MaterialRecipes.ScreenPlaceholderMaterialName, assigned[2].name);
+
+                renderer.sharedMaterials = new[] { matBogus };
+                var ex = Assert.Throws<InvalidOperationException>(() =>
+                    R1ModelBuilder.AssignLibraryMaterials(root, ModelPath));
+                StringAssert.Contains(ModelPath, ex.Message);
+                StringAssert.Contains("R1_InvalidSlotName", ex.Message);
+
+                Assert.DoesNotThrow(() => R1ModelBuilder.Build());
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+                UnityEngine.Object.DestroyImmediate(mesh);
+                UnityEngine.Object.DestroyImmediate(matCreamPlaceholder);
+                UnityEngine.Object.DestroyImmediate(matSolarPlaceholder);
+                UnityEngine.Object.DestroyImmediate(matScreenPlaceholder);
+                UnityEngine.Object.DestroyImmediate(matBogus);
+            }
         }
     }
 }

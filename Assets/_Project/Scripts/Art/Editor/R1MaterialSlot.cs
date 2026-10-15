@@ -1,7 +1,8 @@
-namespace MoonProject.Art
+namespace MoonProject.Art.Editor
 {
     /// <summary>
-    /// Fixed R1 stylized-realism material slots shared between Blender FBX models and the Unity material library.
+    /// Fixed R1 stylized-realism material slots shared between Blender FBX models and the generated Unity material
+    /// library under <see cref="ArtPaths.R1MaterialsFolder"/>.
     /// </summary>
     public enum R1MaterialSlot
     {
@@ -15,6 +16,7 @@ namespace MoonProject.Art
         Copper = 7,
         SagePatch = 8,
         LampAmber = 9,
-        Screen = 10
+        SolarCell = 10,
+        Screen = 11
     }
 }

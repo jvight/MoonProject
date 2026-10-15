@@ -12,6 +12,7 @@ struct R1LitAttributes
     float4 tangentOS        : TANGENT;
     float2 texcoord         : TEXCOORD0;
     float2 staticLightmapUV : TEXCOORD1;
+    half4  color            : COLOR;
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -23,6 +24,7 @@ struct R1LitVaryings
     float3 normalWS                 : TEXCOORD2;
     float4 tangentWS                : TEXCOORD3;
     half   fogFactor                : TEXCOORD4;
+    half4  vertexColor              : COLOR;
     DECLARE_LIGHTMAP_OR_SH(staticLightmapUV, vertexSH, 5);
 #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
     float4 shadowCoord              : TEXCOORD6;
@@ -89,6 +91,7 @@ R1LitVaryings R1LitVert(R1LitAttributes input)
     output.normalWS = normInputs.normalWS;
     output.tangentWS = float4(normInputs.tangentWS, input.tangentOS.w * GetOddNegativeScale());
     output.fogFactor = ComputeFogFactor(posInputs.positionCS.z);
+    output.vertexColor = input.color;
 
     OUTPUT_LIGHTMAP_UV(input.staticLightmapUV, unity_LightmapST, output.staticLightmapUV);
     OUTPUT_SH(output.normalWS, output.vertexSH);
@@ -131,11 +134,14 @@ half4 R1LitFrag(R1LitVaryings input) : SV_Target
     half3 albedo = baseSample.rgb * _BaseColor.rgb;
     half alpha = baseSample.a * _BaseColor.a;
 
-    // MaskMap channels: R = Metallic, G = Occlusion, B = Curvature (0.5 neutral, >0.5 convex, <0.5 concave), A = Smoothness
+    // Per-material MaskMap: R = Metallic, G = Micro-AO, B = Micro-Detail, A = Smoothness.
+    // Per-model Vertex Colour: R = Ambient Occlusion (1=open), G = Convex Edge Wear (0=none), B = Crease/Cavity (0=none).
     half4 maskSample = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, uv);
+    half4 vcol = saturate(input.vertexColor);
     half metallic = saturate(maskSample.r * _MetallicScale);
-    half occlusion = lerp(1.0h, maskSample.g, _OcclusionStrength);
-    half curvature = maskSample.b;
+    half microAo = lerp(1.0h, maskSample.g, 0.35h);
+    half occlusion = lerp(1.0h, saturate(vcol.r * microAo), _OcclusionStrength);
+    half microDetail = maskSample.b;
     half smoothness = lerp(_SmoothnessMin, _SmoothnessMax, saturate(maskSample.a * _SmoothnessScale));
 
     // Normal mapping in world space
@@ -148,29 +154,31 @@ half4 R1LitFrag(R1LitVaryings input) : SV_Target
     float3x3 tangentToWorld = float3x3(tangentWS, bitangentWS, normalWS);
     float3 finalNormalWS = normalize(mul(normalTS, tangentToWorld));
 
-    // 1. Subtle large-scale world-space colour variation
+    // 1. Subtle large-scale world-space colour variation + subtle cavity/AO grounding
     float worldNoise = R1Fbm3D(input.positionWS * _ColorVarScale);
     half colorShift = (half)((worldNoise - 0.5) * 2.0) * _ColorVarAmount;
     albedo = saturate(albedo * (1.0h + colorShift));
+    albedo *= lerp(1.0h, occlusion, 0.28h);
 
-    // 2. Procedural edge wear from curvature mask (B > 0.5 convex edge) broken up with 3D noise
+    // 2. Procedural edge wear from vertex colour G (0 = none, 1 = convex edge) broken up with 3D noise + micro grain
     float edgeNoise = R1Fbm3D(input.positionWS * 6.5 + 3.1);
-    half convexEdge = saturate((curvature - _EdgeWearThreshold) / max(1.0h - _EdgeWearThreshold, 1e-3h));
-    half noisyEdge = saturate(convexEdge * (0.72h + 0.56h * (half)edgeNoise));
+    half microEdge = lerp(0.85h, 1.15h, microDetail);
+    half convexEdge = saturate((vcol.g - _EdgeWearThreshold) / max(1.0h - _EdgeWearThreshold, 1e-3h));
+    half noisyEdge = saturate(convexEdge * (0.72h + 0.56h * (half)edgeNoise) * microEdge);
     half edgeMask = saturate(pow(max(noisyEdge, 0.0h), _EdgeWearSharpness) * _EdgeWearAmount);
 
     albedo = lerp(albedo, _EdgeWearColor.rgb, edgeMask);
     metallic = lerp(metallic, _EdgeWearMetallic, edgeMask);
     smoothness = lerp(smoothness, _EdgeWearSmoothness, edgeMask);
 
-    // 3. Procedural lunar dust layer from world-up (normalWS.y) + ambient occlusion / concave crevices
+    // 3. Procedural lunar dust layer from world-up (normalWS.y) + vertex colour B (creases/cavities) and vertex AO (1 - vcol.r)
     float dustNoise = R1Fbm3D(input.positionWS * 3.8 + 17.4);
     half upFactor = saturate(((half)finalNormalWS.y - _DustUpThreshold) / max(1.0h - _DustUpThreshold, 1e-3h));
-    half cavityFactor = saturate((1.0h - maskSample.g) + saturate(0.5h - curvature) * 1.5h);
+    half cavityFactor = saturate(vcol.b + (1.0h - vcol.r) * 0.65h);
     half rawDust = saturate(lerp(upFactor, cavityFactor, _DustOcclusionWeight) * (0.75h + 0.50h * (half)dustNoise));
     half dustMask = saturate(pow(max(rawDust, 0.0h), _DustSharpness) * _DustAmount);
     // Reduce dust on worn high-convex edges so bevel highlights stay crisp
-    dustMask *= (1.0h - edgeMask * 0.65h);
+    dustMask *= (1.0h - edgeMask * 0.75h);
 
     albedo = lerp(albedo, _DustColor.rgb, dustMask);
     metallic = lerp(metallic, 0.0h, dustMask * 0.85h);

@@ -2,17 +2,17 @@
 """Deterministic procedural texture generator for the R1 stylized-realism material library.
 
 Generates under Assets/_Project/Art/R1/Textures/:
-- Shared 8-row trim sheet (512x512):
-    T_R1_TrimSheet_Albedo.png
-    T_R1_TrimSheet_Normal.png
-    T_R1_TrimSheet_Mask.png     (R=Metallic, G=AO, B=Curvature, A=Smoothness)
-    T_R1_TrimSheet_Emission.png
-- Per-material [0,1] texture sets (256x256) for each R1 library surface so any
-  Blender UV unwrap on a material slot never bleeds across neighbouring trim rows:
+- Per-material seamless, tileable surface detail texture sets (256x256) for each R1 library slot
+  (grain, fine scratches, slight mottling; no baked panel frames, seam bands, bolts, or ribs):
     T_R1_<Surface>_Albedo.png
     T_R1_<Surface>_Normal.png
-    T_R1_<Surface>_Mask.png
+    T_R1_<Surface>_Mask.png     (R=Metallic, G=MicroWearNoise, B=MicroCavityNoise, A=Smoothness)
     T_R1_LampAmber_Emission.png
+- Shared 8-row trim sheet (512x512) with panel seams, fasteners, and surface strips:
+    T_R1_TrimSheet_Albedo.png
+    T_R1_TrimSheet_Normal.png
+    T_R1_TrimSheet_Mask.png
+    T_R1_TrimSheet_Emission.png
 """
 
 from __future__ import annotations
@@ -59,10 +59,21 @@ def _fbm(res: int, base_freq: int, seed: int) -> np.ndarray:
     )
 
 
-def _height_to_normal_and_curvature(
-    height: np.ndarray, normal_strength: float, curv_strength: float
-) -> tuple[np.ndarray, np.ndarray]:
-    """Convert a 2D height field in [0, 1] to tangent-space normal RGB [0..1] and curvature [0..1]."""
+def _fine_scratches(res: int, seed: int) -> np.ndarray:
+    """Seamless high-frequency directional micro-scratches in [0, 1]."""
+    n1 = _tileable_noise(res, 24, seed + 303)
+    n2 = _tileable_noise(res, 48, seed + 404)
+    aniso_x = 0.65 * np.roll(n1, 1, axis=1) + 0.35 * np.roll(n2, -1, axis=1)
+    aniso_y = 0.65 * np.roll(n1, 1, axis=0) + 0.35 * np.roll(n2, -1, axis=0)
+    scratches = np.maximum(
+        np.clip(1.0 - np.abs(aniso_x - 0.5) * 10.0, 0.0, 1.0),
+        np.clip(1.0 - np.abs(aniso_y - 0.5) * 12.0, 0.0, 1.0) * 0.7,
+    )
+    return scratches.astype(np.float32)
+
+
+def _height_to_normal(height: np.ndarray, normal_strength: float) -> np.ndarray:
+    """Convert a 2D height field in [0, 1] to tangent-space normal RGB [0..1]."""
     dh_dx = (np.roll(height, -1, axis=1) - np.roll(height, 1, axis=1)) * 0.5
     dh_dy = (np.roll(height, -1, axis=0) - np.roll(height, 1, axis=0)) * 0.5
 
@@ -75,16 +86,7 @@ def _height_to_normal_and_curvature(
     nz *= inv_len
 
     normal_rgb = np.stack([nx * 0.5 + 0.5, ny * 0.5 + 0.5, nz * 0.5 + 0.5], axis=-1)
-
-    laplacian = (
-        np.roll(height, -1, axis=1)
-        + np.roll(height, 1, axis=1)
-        + np.roll(height, -1, axis=0)
-        + np.roll(height, 1, axis=0)
-        - 4.0 * height
-    )
-    curvature = np.clip(0.5 - laplacian * curv_strength, 0.0, 1.0)
-    return np.clip(normal_rgb, 0.0, 1.0), curvature
+    return np.clip(normal_rgb, 0.0, 1.0)
 
 
 def _save_rgba_or_rgb(path: Path, array_01: np.ndarray) -> None:
@@ -92,19 +94,6 @@ def _save_rgba_or_rgb(path: Path, array_01: np.ndarray) -> None:
     mode = "RGBA" if clamped.shape[-1] == 4 else "RGB"
     # Flip vertically so V=0 is bottom in Unity UV space
     Image.fromarray(np.flipud(clamped), mode=mode).save(path, compress_level=9)
-
-
-def _panel_bevel_frame(u: np.ndarray, v: np.ndarray, margin: float = 0.06) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Return (height, ao, convex_boost) for a subtle bevelled panel border so [0,1] unwraps have edge definition."""
-    edge_dist = np.minimum(np.minimum(u, 1.0 - u), np.minimum(v, 1.0 - v))
-    groove = np.clip(edge_dist / max(margin, 1e-4), 0.0, 1.0)
-    groove_smooth = groove * groove * (3.0 - 2.0 * groove)
-    # Slight raised lip just inside the seam so curvature B > 0.5 catches edge wear
-    lip = np.exp(-((edge_dist - margin * 1.15) ** 2) / (2.0 * (margin * 0.38) ** 2))
-    height = 0.50 * groove_smooth + 0.14 * lip
-    ao = 0.72 + 0.28 * groove_smooth
-    convex = 0.26 * lip
-    return height, ao, convex
 
 
 def _generate_surface_maps(
@@ -118,133 +107,187 @@ def _generate_surface_maps(
 ) -> dict[str, np.ndarray]:
     coords = (np.arange(res, dtype=np.float32) + 0.5) / float(res)
     u, v = np.meshgrid(coords, coords)
-    noise = _fbm(res, 4, seed)
-    fine = _tileable_noise(res, 16, seed + 55)
+    mottle = _fbm(res, 6, seed)
+    fine = _tileable_noise(res, 24, seed + 55)
+    ultra_fine = _tileable_noise(res, 48, seed + 88)
+    scratches = _fine_scratches(res, seed + 123)
 
-    frame_h, frame_ao, frame_convex = _panel_bevel_frame(u, v, margin=0.055)
-    height = frame_h + (noise - 0.5) * 0.06 + (fine - 0.5) * 0.025
-    ao = frame_ao.copy()
-    convex_extra = frame_convex.copy()
+    # Seamless, tileable micro-surface height (no panel frames, bolts, or ribs)
+    height = 0.50 + (mottle - 0.5) * 0.025 + (fine - 0.5) * 0.018 + (ultra_fine - 0.5) * 0.010
 
     albedo = np.empty((res, res, 3), dtype=np.float32)
     albedo[..., 0] = base_rgb[0]
     albedo[..., 1] = base_rgb[1]
     albedo[..., 2] = base_rgb[2]
-    albedo *= 0.95 + 0.10 * noise[..., None]
+    albedo *= 0.97 + 0.06 * mottle[..., None] + 0.02 * (fine[..., None] - 0.5)
 
     metallic = np.full((res, res), metallic_val, dtype=np.float32)
-    smoothness = np.full((res, res), smoothness_val, dtype=np.float32) + (noise - 0.5) * 0.06
+    smoothness = np.full((res, res), smoothness_val, dtype=np.float32) + (mottle - 0.5) * 0.04
+    micro_wear = np.clip(0.5 + (fine - 0.5) * 0.45 + scratches * 0.25, 0.0, 1.0)
+    micro_cavity = np.clip(0.5 + (1.0 - mottle - 0.5) * 0.45, 0.0, 1.0)
     emission = np.zeros((res, res, 3), dtype=np.float32)
+    normal_strength = 4.0
 
     if style == "enamel":
-        # Subtle horizontal seam at mid-height + 4 corner fasteners
-        mid_seam = np.exp(-((v - 0.5) ** 2) / (2.0 * 0.008**2))
-        mid_lip = np.exp(-((np.abs(v - 0.5) - 0.022) ** 2) / (2.0 * 0.009**2))
-        height -= 0.18 * mid_seam
-        height += 0.08 * mid_lip
-        ao *= 1.0 - 0.22 * mid_seam
-        convex_extra += 0.20 * mid_lip
-        for cx, cy in ((0.12, 0.12), (0.88, 0.12), (0.12, 0.88), (0.88, 0.88)):
-            r = np.sqrt((u - cx) ** 2 + (v - cy) ** 2)
-            bolt = np.clip(1.0 - r / 0.028, 0.0, 1.0)
-            ring = np.exp(-((r - 0.030) ** 2) / (2.0 * 0.006**2))
-            height += 0.12 * bolt - 0.08 * ring
-            ao *= 1.0 - 0.18 * ring
-            convex_extra += 0.18 * bolt
+        # Smooth baked cream enamel with subtle orange-peel micro-grain and fine hairline scratches
+        height += (fine - 0.5) * 0.012 - scratches * 0.008
+        smoothness += (fine - 0.5) * 0.03 - scratches * 0.04
+        normal_strength = 3.0
 
     elif style == "stripe":
-        # Subtle worn orange trim with diagonal weave/scuff variation
-        diag = 0.5 + 0.5 * np.sin((u * 3.0 + v * 1.0) * np.pi * 2.0)
-        scuff = (noise * 0.7 + fine * 0.3) * (0.85 + 0.15 * diag)
-        height += (scuff - 0.5) * 0.08
-        convex_extra += np.clip(scuff - 0.58, 0.0, 0.4) * 0.45
-        smoothness -= (1.0 - scuff) * 0.08
+        # Warm, slightly dusty orange painted stripe with subtle paint roller grain and scuff mottling
+        paint_grain = 0.6 * fine + 0.4 * ultra_fine
+        height += (paint_grain - 0.5) * 0.022 - scratches * 0.012
+        albedo *= 0.97 + 0.06 * paint_grain[..., None]
+        smoothness -= scratches * 0.05
+        normal_strength = 3.5
 
     elif style == "greymetal":
-        # Painted structural metal with subtle horizontal rib ridges
-        ribs = 0.5 + 0.5 * np.cos(v * 6.0 * np.pi * 2.0)
-        height += 0.07 * ribs
-        convex_extra += 0.14 * np.clip(ribs - 0.65, 0.0, 1.0)
-        ao *= 0.92 + 0.08 * ribs
+        # Seamless painted structural grey metal with fine bead-blasted grain and micro-scratches
+        blast = 0.5 * fine + 0.5 * ultra_fine
+        height += (blast - 0.5) * 0.028 - scratches * 0.015
+        albedo *= 0.96 + 0.08 * blast[..., None]
+        smoothness += (blast - 0.5) * 0.05 - scratches * 0.04
+        normal_strength = 4.2
 
     elif style == "steel":
-        # Anisotropic brushed bare steel
-        brush = _tileable_noise(res, 32, seed + 77)
-        brush_h = 0.65 * np.roll(brush, 1, axis=1) + 0.35 * brush
-        height += (brush_h - 0.5) * 0.07
-        albedo *= 0.94 + 0.12 * brush_h[..., None]
-        smoothness += (brush_h - 0.5) * 0.10
-        convex_extra += 0.12 * np.clip(brush_h - 0.6, 0.0, 1.0)
+        # Seamless anisotropic brushed bare steel
+        brush_raw = _tileable_noise(res, 40, seed + 77)
+        brush = (
+            0.40 * brush_raw
+            + 0.35 * np.roll(brush_raw, 1, axis=1)
+            + 0.25 * np.roll(brush_raw, -1, axis=1)
+        )
+        height = 0.50 + (brush - 0.5) * 0.035 - scratches * 0.015
+        albedo *= 0.95 + 0.10 * brush[..., None]
+        smoothness += (brush - 0.5) * 0.08
+        normal_strength = 4.5
 
     elif style == "rubber":
-        # Ribbed dark matte rubber bellow/gasket
-        ribs = 0.5 + 0.5 * np.sin(v * 10.0 * np.pi * 2.0)
-        height = 0.25 + 0.42 * ribs + (fine - 0.5) * 0.04
-        ao = 0.68 + 0.32 * ribs
-        convex_extra = 0.18 * np.clip(ribs - 0.65, 0.0, 1.0)
+        # Seamless matte dark elastomer with fine stippled vulcanized grain (no baked ribs)
+        stipple = 0.55 * ultra_fine + 0.45 * fine
+        height = 0.50 + (stipple - 0.5) * 0.032
+        albedo *= 0.96 + 0.08 * stipple[..., None]
+        smoothness += (stipple - 0.5) * 0.03
+        normal_strength = 4.5
 
     elif style == "foil":
-        # Crinkled multi-facet Kapton gold foil
-        crinkle_a = _tileable_noise(res, 10, seed + 13)
-        crinkle_b = _tileable_noise(res, 18, seed + 29)
-        ridges = 1.0 - np.abs(crinkle_a * 2.0 - 1.0)
-        facets = 1.0 - np.abs(crinkle_b * 2.0 - 1.0)
-        crinkle_h = 0.55 * ridges + 0.45 * facets
-        height = 0.20 + 0.55 * crinkle_h
-        ao = 0.78 + 0.22 * crinkle_h
-        convex_extra = 0.30 * np.clip(crinkle_h - 0.60, 0.0, 1.0)
-        albedo *= 0.90 + 0.20 * crinkle_h[..., None]
+        # Fine-crinkled golden Kapton thermal foil with sharp small angular facets and glints
+        c1 = _tileable_noise(res, 24, seed + 13)
+        c2 = _tileable_noise(res, 40, seed + 29)
+        c3 = _tileable_noise(res, 64, seed + 47)
+        c4 = _tileable_noise(res, 48, seed + 71)
+        r1 = 1.0 - np.abs(c1 * 2.0 - 1.0)
+        r2 = 1.0 - np.abs(c2 * 2.0 - 1.0)
+        r3 = 1.0 - np.abs(c3 * 2.0 - 1.0)
+        r4 = 1.0 - np.abs(c4 * 2.0 - 1.0)
+        # Sharp crease network + small angular glint facets
+        crinkle_h = 0.30 * (r1**1.4) + 0.35 * (r2**1.6) + 0.20 * (r3**1.8) + 0.15 * r4
+        glints = np.clip((r2 * r3 - 0.42) * 3.2, 0.0, 1.0)
+        height = 0.35 + 0.35 * crinkle_h + 0.08 * glints
+        # Keep hue distinctly golden-yellow (never orange) with bright pale-gold glints
+        gold_tint = np.empty_like(albedo)
+        gold_tint[..., 0] = base_rgb[0] * (0.94 + 0.08 * crinkle_h) + 0.06 * glints
+        gold_tint[..., 1] = base_rgb[1] * (0.93 + 0.09 * crinkle_h) + 0.11 * glints
+        gold_tint[..., 2] = base_rgb[2] * (0.90 + 0.12 * crinkle_h) + 0.22 * glints
+        albedo = np.clip(gold_tint, 0.0, 1.0)
+        smoothness = np.clip(smoothness_val + (crinkle_h - 0.5) * 0.14 + glints * 0.12, 0.55, 0.96)
+        micro_wear = np.clip(0.5 + (crinkle_h - 0.5) * 0.6, 0.0, 1.0)
+        normal_strength = 9.5
 
     elif style == "glass":
-        # Smooth dark visor glass with crisp bevel frame
-        height = frame_h * 0.45 + (noise - 0.5) * 0.01
-        ao = 0.88 + 0.12 * (frame_ao - 0.72) / 0.28
-        convex_extra = frame_convex * 0.7
+        # Seamless smooth dark optical glass (no baked frame)
+        height = 0.50 + (mottle - 0.5) * 0.005 + (fine - 0.5) * 0.003
+        albedo *= 0.98 + 0.04 * mottle[..., None]
+        smoothness = np.full((res, res), smoothness_val, dtype=np.float32) + (fine - 0.5) * 0.015
+        normal_strength = 1.5
 
     elif style == "copper":
-        # Turned/brushed copper with subtle concentric/linear grain
-        grain = _tileable_noise(res, 20, seed + 41)
-        height += (grain - 0.5) * 0.06
-        albedo *= 0.94 + 0.12 * grain[..., None]
-        convex_extra += 0.15 * np.clip(grain - 0.60, 0.0, 1.0)
+        # Seamless brownish-pink brushed copper metal
+        grain_raw = _tileable_noise(res, 32, seed + 41)
+        grain = 0.55 * grain_raw + 0.45 * np.roll(grain_raw, 1, axis=1)
+        height = 0.50 + (grain - 0.5) * 0.028 - scratches * 0.012
+        albedo *= 0.95 + 0.10 * grain[..., None]
+        smoothness += (grain - 0.5) * 0.07
+        normal_strength = 4.0
 
     elif style == "patch":
-        # Sage-green repair patch with stitched/riveted perimeter inset
-        inset_dist = np.minimum(np.minimum(u, 1.0 - u), np.minimum(v, 1.0 - v))
-        seam_ring = np.exp(-((inset_dist - 0.09) ** 2) / (2.0 * 0.010**2))
-        height -= 0.14 * seam_ring
-        ao *= 1.0 - 0.20 * seam_ring
-        convex_extra += 0.16 * np.exp(-((inset_dist - 0.065) ** 2) / (2.0 * 0.012**2))
+        # Seamless sage-green coated fabric/composite patch with subtle woven texture (no perimeter frame)
+        weave_u = 0.5 + 0.5 * np.sin(u * 48.0 * np.pi * 2.0)
+        weave_v = 0.5 + 0.5 * np.sin(v * 48.0 * np.pi * 2.0)
+        weave = (0.5 * weave_u + 0.5 * weave_v) * 0.35 + fine * 0.65
+        height = 0.50 + (weave - 0.5) * 0.024
+        albedo *= 0.96 + 0.08 * weave[..., None]
+        smoothness += (weave - 0.5) * 0.04
+        normal_strength = 3.8
 
     elif style == "lamp":
-        # Warm amber lamp lens with Fresnel concentric ribs and hot central filament core
+        # Smooth glowing warm amber lens with a small hot core (no concentric bullseye rings)
         rx = (u - 0.5) * 2.0
         ry = (v - 0.5) * 2.0
         r = np.sqrt(rx * rx + ry * ry)
-        fresnel_rings = 0.5 + 0.5 * np.cos(np.clip(r, 0.0, 1.0) * 5.0 * np.pi * 2.0)
-        dome = np.clip(1.0 - r * r * 0.65, 0.1, 1.0)
-        height = 0.30 + 0.45 * dome + 0.08 * fresnel_rings
-        ao = 0.75 + 0.25 * dome
-        # Radial glow profile: warm body across the lens, >0.85 hot core in the centre
-        core_profile = np.exp(-(r * r) / (2.0 * 0.26**2))
-        body_profile = np.clip(1.0 - 0.42 * r, 0.35, 1.0) * (0.92 + 0.08 * fresnel_rings)
-        em_level = np.clip(0.58 * body_profile + 0.42 * core_profile, 0.0, 1.0)
+        height = 0.50 + (mottle - 0.5) * 0.006 + (fine - 0.5) * 0.004
+        normal_strength = 1.5
+        # Smooth radial glow: warm amber body below bloom threshold + small hot centre core (> 0.85)
+        core_profile = np.exp(-(r * r) / (2.0 * 0.17**2))
+        halo_profile = np.exp(-(r * r) / (2.0 * 0.52**2))
+        body_profile = 0.54 + 0.24 * halo_profile
+        em_level = np.clip(body_profile + 0.36 * core_profile, 0.0, 1.0)
         emission[..., 0] = em_level * 1.00
-        emission[..., 1] = em_level * 0.68 + 0.20 * (core_profile**2)
-        emission[..., 2] = em_level * 0.22 + 0.32 * (core_profile**3)
+        emission[..., 1] = em_level * 0.70 + 0.22 * (core_profile**2)
+        emission[..., 2] = em_level * 0.24 + 0.34 * (core_profile**3)
 
-    normal_rgb, curvature = _height_to_normal_and_curvature(
-        height,
-        normal_strength=10.0 if style == "foil" else 6.0,
-        curv_strength=3.2,
-    )
-    curvature = np.clip(curvature + convex_extra, 0.0, 1.0)
+    elif style == "solar":
+        # Tileable photovoltaic solar cell: deep blue-violet glass cells + fine silver busbars and collector grid
+        # 2x2 cells per [0, 1] UV tile so individual cells and busbars read clearly on both spheres and panels
+        cell_u = (u * 2.0) % 1.0
+        cell_v = (v * 2.0) % 1.0
+
+        # Thin dark inter-cell gap at cell boundary (width ~ 1.8% of cell)
+        edge_u = np.minimum(cell_u, 1.0 - cell_u)
+        edge_v = np.minimum(cell_v, 1.0 - cell_v)
+        cell_edge = np.minimum(edge_u, edge_v)
+        gap_mask = 1.0 - np.clip((cell_edge - 0.008) / 0.010, 0.0, 1.0)
+
+        # Two vertical silver busbars per cell at cell_u = 0.26 and 0.74
+        busbar_dist = np.minimum(np.abs(cell_u - 0.26), np.abs(cell_u - 0.74))
+        busbar_mask = (1.0 - np.clip((busbar_dist - 0.014) / 0.008, 0.0, 1.0)) * (1.0 - gap_mask)
+
+        # Fine horizontal silver collector fingers (10 per cell)
+        finger_phase = np.abs(((cell_v * 10.0 + 0.5) % 1.0) - 0.5)
+        finger_mask = (1.0 - np.clip((finger_phase - 0.035) / 0.025, 0.0, 1.0)) * (1.0 - gap_mask) * 0.85
+
+        silver_mask = np.clip(np.maximum(busbar_mask, finger_mask), 0.0, 1.0)
+
+        # Deep blue-violet silicon cell base with subtle crystalline wafer variation
+        wafer_var = 0.96 + 0.08 * (0.6 * mottle + 0.4 * fine)
+        cell_rgb = np.stack(
+            [
+                base_rgb[0] * wafer_var,
+                base_rgb[1] * wafer_var,
+                base_rgb[2] * (0.97 + 0.06 * mottle),
+            ],
+            axis=-1,
+        )
+        silver_rgb = np.array([0.86, 0.88, 0.92], dtype=np.float32)
+        gap_rgb = np.array([0.10, 0.12, 0.22], dtype=np.float32)
+
+        albedo = cell_rgb * (1.0 - gap_mask[..., None]) + gap_rgb * gap_mask[..., None]
+        albedo = albedo * (1.0 - silver_mask[..., None]) + silver_rgb * silver_mask[..., None]
+
+        # Metallic/smooth on the silver grid; high smoothness low-metallic glass on the blue-violet cell
+        metallic = 0.06 * (1.0 - silver_mask) + 0.92 * silver_mask
+        smoothness = 0.90 * (1.0 - silver_mask) + 0.82 * silver_mask - 0.35 * gap_mask
+        height = 0.50 + 0.035 * silver_mask - 0.045 * gap_mask + (fine - 0.5) * 0.005
+        normal_strength = 4.5
+
+    normal_rgb = _height_to_normal(height, normal_strength=normal_strength)
 
     mask_rgba = np.stack(
         [
             np.clip(metallic, 0.0, 1.0),
-            np.clip(ao, 0.0, 1.0),
-            np.clip(curvature, 0.0, 1.0),
+            np.clip(micro_wear, 0.0, 1.0),
+            np.clip(micro_cavity, 0.0, 1.0),
             np.clip(smoothness, 0.0, 1.0),
         ],
         axis=-1,
@@ -281,7 +324,7 @@ def _generate_trim_sheet(res: int, surfaces: list[dict[str, np.ndarray]]) -> dic
     # Row 4: Rubber
     # Row 5: GoldFoil
     # Row 6: DarkGlass (left half) + Copper (right half)
-    # Row 7: SagePatch (left half) + LampAmber (right half)
+    # Row 7: SagePatch (left third) + SolarCell (middle third) + LampAmber (right third)
     single_rows = [
         (0, "CreamEnamel"),
         (1, "OrangeStripe"),
@@ -294,7 +337,6 @@ def _generate_trim_sheet(res: int, surfaces: list[dict[str, np.ndarray]]) -> dic
     for row_idx, surf_name in single_rows:
         s = by_name[surf_name]
         y0, y1 = row_idx * band_h, (row_idx + 1) * band_h
-        # Tile horizontally twice across the 512 width, resample vertically to band_h
         s_alb = np.repeat(s["albedo"][::4, :, :], 2, axis=1)[:band_h, :res]
         s_nrm = np.repeat(s["normal"][::4, :, :], 2, axis=1)[:band_h, :res]
         s_msk = np.repeat(s["mask"][::4, :, :], 2, axis=1)[:band_h, :res]
@@ -302,25 +344,32 @@ def _generate_trim_sheet(res: int, surfaces: list[dict[str, np.ndarray]]) -> dic
         normal[y0:y1] = s_nrm
         mask[y0:y1] = s_msk
 
-    split_rows = [
-        (6, "DarkGlass", "Copper"),
-        (7, "SagePatch", "LampAmber"),
-    ]
+    # Row 6: DarkGlass + Copper
     half_w = res // 2
-    for row_idx, left_name, right_name in split_rows:
-        y0, y1 = row_idx * band_h, (row_idx + 1) * band_h
-        left = by_name[left_name]
-        right = by_name[right_name]
+    y0, y1 = 6 * band_h, 7 * band_h
+    for x0, x1, name in ((0, half_w, "DarkGlass"), (half_w, res, "Copper")):
+        part = by_name[name]
+        w = x1 - x0
+        albedo[y0:y1, x0:x1] = part["albedo"][::4, :w]
+        normal[y0:y1, x0:x1] = part["normal"][::4, :w]
+        mask[y0:y1, x0:x1] = part["mask"][::4, :w]
+        emission[y0:y1, x0:x1] = part["emission"][::4, :w]
 
-        albedo[y0:y1, :half_w] = left["albedo"][::4, :half_w]
-        normal[y0:y1, :half_w] = left["normal"][::4, :half_w]
-        mask[y0:y1, :half_w] = left["mask"][::4, :half_w]
-        emission[y0:y1, :half_w] = left["emission"][::4, :half_w]
-
-        albedo[y0:y1, half_w:] = right["albedo"][::4, :half_w]
-        normal[y0:y1, half_w:] = right["normal"][::4, :half_w]
-        mask[y0:y1, half_w:] = right["mask"][::4, :half_w]
-        emission[y0:y1, half_w:] = right["emission"][::4, :half_w]
+    # Row 7: SagePatch + SolarCell + LampAmber
+    third_w = res // 3
+    y0, y1 = 7 * band_h, 8 * band_h
+    splits = [
+        (0, third_w, "SagePatch"),
+        (third_w, 2 * third_w, "SolarCell"),
+        (2 * third_w, res, "LampAmber"),
+    ]
+    for x0, x1, name in splits:
+        part = by_name[name]
+        w = x1 - x0
+        albedo[y0:y1, x0:x1] = part["albedo"][::4, :w]
+        normal[y0:y1, x0:x1] = part["normal"][::4, :w]
+        mask[y0:y1, x0:x1] = part["mask"][::4, :w]
+        emission[y0:y1, x0:x1] = part["emission"][::4, :w]
 
     return {
         "albedo": albedo,
@@ -335,16 +384,17 @@ def main() -> None:
     surf_res = 256
 
     specs = [
-        ("CreamEnamel", (0.91, 0.89, 0.83), 0.04, 0.72, 101, "enamel"),
-        ("OrangeStripe", (0.90, 0.43, 0.14), 0.05, 0.58, 202, "stripe"),
-        ("GreyMetal", (0.43, 0.46, 0.51), 0.35, 0.56, 303, "greymetal"),
-        ("BareSteel", (0.68, 0.71, 0.75), 0.88, 0.68, 404, "steel"),
-        ("Rubber", (0.14, 0.15, 0.18), 0.02, 0.22, 505, "rubber"),
-        ("GoldFoil", (0.92, 0.69, 0.22), 0.92, 0.78, 606, "foil"),
-        ("DarkGlass", (0.07, 0.09, 0.13), 0.10, 0.92, 707, "glass"),
-        ("Copper", (0.83, 0.46, 0.27), 0.90, 0.72, 808, "copper"),
-        ("SagePatch", (0.50, 0.61, 0.52), 0.04, 0.48, 909, "patch"),
-        ("LampAmber", (0.98, 0.72, 0.28), 0.05, 0.84, 1010, "lamp"),
+        ("CreamEnamel", (0.92, 0.89, 0.82), 0.04, 0.72, 101, "enamel"),
+        ("OrangeStripe", (0.85, 0.55, 0.35), 0.04, 0.56, 202, "stripe"),
+        ("GreyMetal", (0.48, 0.51, 0.56), 0.32, 0.56, 303, "greymetal"),
+        ("BareSteel", (0.74, 0.77, 0.81), 0.88, 0.68, 404, "steel"),
+        ("Rubber", (0.17, 0.18, 0.21), 0.02, 0.20, 505, "rubber"),
+        ("GoldFoil", (0.94, 0.79, 0.36), 0.94, 0.82, 606, "foil"),
+        ("DarkGlass", (0.09, 0.12, 0.16), 0.10, 0.92, 707, "glass"),
+        ("Copper", (0.76, 0.53, 0.49), 0.90, 0.72, 808, "copper"),
+        ("SagePatch", (0.54, 0.64, 0.55), 0.04, 0.46, 909, "patch"),
+        ("LampAmber", (0.98, 0.74, 0.32), 0.05, 0.86, 1010, "lamp"),
+        ("SolarCell", (0.20, 0.22, 0.44), 0.08, 0.90, 1111, "solar"),
     ]
 
     surfaces: list[dict[str, np.ndarray]] = []
