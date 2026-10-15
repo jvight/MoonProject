@@ -97,10 +97,14 @@ namespace MoonProject.Gameplay
             return false;
         }
 
-        /// <summary>Returns the material refund when deconstructing this job at <paramref name="refundShare"/> (0..1).</summary>
+        /// <summary>
+        /// Returns the material refund when removing this structure: an unfinished frame (<c>!IsDone</c>) returns the
+        /// full <see cref="BuildCost"/>; a finished structure (<see cref="IsDone"/>) returns <paramref name="refundShare"/>
+        /// (0..1) of <see cref="BuildCost"/>.
+        /// </summary>
         public Recipe Deconstruct(float refundShare)
         {
-            return CalculateRefund(BuildCost, refundShare);
+            return IsDone ? CalculateRefund(BuildCost, refundShare) : BuildCost;
         }
 
         /// <summary>Calculates the tuned share (0..1) of <paramref name="buildCost"/> returned on deconstruction.</summary>

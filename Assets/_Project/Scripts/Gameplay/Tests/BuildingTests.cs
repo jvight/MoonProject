@@ -17,6 +17,7 @@ namespace MoonProject.Gameplay.Tests
     {
         private StructureCatalog _catalog;
         private BuildingTuning _tuning;
+        private EventBus _events;
         private string _tempSaveDir;
 
         [SetUp]
@@ -31,6 +32,7 @@ namespace MoonProject.Gameplay.Tests
                 snapAngleDegrees: 20f,
                 weldRange: 6.0f,
                 deconstructRefundShare: 0.75f);
+            _events = new EventBus();
             _tempSaveDir = Path.Combine(Path.GetTempPath(), "moon-building-tests", Guid.NewGuid().ToString("N"));
         }
 
@@ -363,6 +365,48 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void PowerGrid_IsolatedBatteryBank_GetsNoSupplyConnectionWithoutSourceOrPylon()
+        {
+            StructureDefinition battery = _catalog.Find(StructureIds.BatteryBank);
+            StructureDefinition smelter = _catalog.Find(StructureIds.Smelter);
+            StructureDefinition pylon = _catalog.Find(StructureIds.PowerPylon);
+
+            var grid = new PowerGrid();
+            grid.AddNode(new PowerNode(
+                1,
+                new Vector3(0f, 0f, 0f),
+                battery.ProduceWatts,
+                battery.ConsumeWatts,
+                battery.StoreWattHours,
+                battery.ConnectionRadius,
+                storedWattHours: 240f));
+            grid.AddNode(new PowerNode(
+                2,
+                new Vector3(3f, 0f, 0f),
+                smelter.ProduceWatts,
+                smelter.ConsumeWatts,
+                smelter.StoreWattHours,
+                smelter.ConnectionRadius));
+
+            Assert.IsFalse(grid.AreConnected(1, 2), "Battery bank without a source or pylon does not form a grid.");
+            grid.Step(PowerGrid.SecondsPerHour * 0.5f, sunlight01: 0f);
+            Assert.AreEqual(0f, grid.GetSupplyRatio(2), 1e-4f, "Consumer next to isolated battery receives 0 supply.");
+            Assert.AreEqual(240f, grid.GetStoredWattHours(1), 1e-4f, "Isolated battery does not discharge.");
+
+            grid.AddNode(new PowerNode(
+                3,
+                new Vector3(1.5f, 0f, 0f),
+                pylon.ProduceWatts,
+                pylon.ConsumeWatts,
+                pylon.StoreWattHours,
+                pylon.ConnectionRadius));
+
+            Assert.IsTrue(grid.AreConnected(1, 2), "Pylon in reach connects the battery bank and consumer.");
+            grid.Step(PowerGrid.SecondsPerHour * 0.5f, sunlight01: 0f);
+            Assert.AreEqual(1f, grid.GetSupplyRatio(2), 1e-4f, "Connected battery supplies the smelter via pylon.");
+        }
+
+        [Test]
         public void BuildJob_AdvancesWhileInRangeAndWelding_PausesWhen07Leaves_AndRefundsShare()
         {
             var cost = new Recipe(8, 4, 2);
@@ -371,12 +415,14 @@ namespace MoonProject.Gameplay.Tests
 
             Assert.IsFalse(job.IsDone);
             Assert.IsTrue(job.IsPaused);
+            Assert.AreEqual(cost, job.Deconstruct(0.75f), "Unfinished frame at 0% returns the full build cost.");
 
             bool finished = job.Step(1.5f, structurePos, new Vector3(0f, 0f, 2f), weldRange: 5f, isWelding: true);
             Assert.IsFalse(finished);
             Assert.IsFalse(job.IsPaused);
             Assert.IsTrue(job.IsWeldingActive);
             Assert.AreEqual(0.375f, job.Progress01, 1e-4f);
+            Assert.AreEqual(cost, job.Deconstruct(0.75f), "Partially welded frame still returns the full build cost.");
 
             finished = job.Step(10f, structurePos, new Vector3(0f, 0f, 20f), weldRange: 5f, isWelding: true);
             Assert.IsFalse(finished);
@@ -402,20 +448,66 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void PlacedBase_RequiresTuningAndEvents_AndRefundsFullCostForUnfinishedOrTunedShareForFinished()
+        {
+            Assert.Throws<ArgumentNullException>(() => new PlacedBase(null, _tuning, _events));
+            Assert.Throws<ArgumentNullException>(() => new PlacedBase(_catalog, null, _events));
+            Assert.Throws<ArgumentNullException>(() => new PlacedBase(_catalog, _tuning, null));
+
+            var removedEvents = new List<StructureRemoved>();
+            _events.Subscribe<StructureRemoved>(e => removedEvents.Add(e));
+
+            var placedBase = new PlacedBase(_catalog, _tuning, _events);
+            TestWorld flat = TestWorld.Flat();
+            Vector3 roverPos = Vector3.zero;
+            StructureDefinition fabricator = _catalog.Find(StructureIds.Fabricator);
+
+            Assert.IsTrue(placedBase.TryPlace(
+                fabricator,
+                new StructurePose(new Vector3(0f, 0f, 5f), 0f),
+                flat,
+                roverPos,
+                out int unfinishedId,
+                out _));
+            placedBase.StepWeld(unfinishedId, fabricator.BuildSeconds * 0.4f, roverPos, isWelding: true);
+
+            Assert.IsTrue(placedBase.TryDeconstruct(unfinishedId, out Recipe unfinishedRefund));
+            Assert.AreEqual(fabricator.BuildCost, unfinishedRefund, "Removing an unfinished frame refunds full cost.");
+            Assert.AreEqual(0, placedBase.Count);
+            Assert.AreEqual(1, removedEvents.Count);
+
+            Assert.IsTrue(placedBase.TryPlace(
+                fabricator,
+                new StructurePose(new Vector3(0f, 0f, 5f), 0f),
+                flat,
+                roverPos,
+                out int finishedId,
+                out _));
+            Assert.IsTrue(placedBase.StepWeld(finishedId, fabricator.BuildSeconds, roverPos, isWelding: true));
+
+            Assert.IsTrue(placedBase.TryDeconstruct(finishedId, out Recipe finishedRefund));
+            Assert.AreEqual(
+                BuildJob.CalculateRefund(fabricator.BuildCost, _tuning.DeconstructRefundShare),
+                finishedRefund,
+                "Removing a finished structure refunds the tuned share.");
+            Assert.AreEqual(0, placedBase.Count);
+            Assert.AreEqual(2, removedEvents.Count);
+        }
+
+        [Test]
         public void PlacedBase_SaveAndLoad_RoundTripsAndSkipsUnknownIdWithError()
         {
-            var events = new EventBus();
             var placedEvents = new List<StructurePlaced>();
             var builtEvents = new List<StructureBuilt>();
             var removedEvents = new List<StructureRemoved>();
             var powerEvents = new List<StructurePowerChanged>();
 
-            events.Subscribe<StructurePlaced>(e => placedEvents.Add(e));
-            events.Subscribe<StructureBuilt>(e => builtEvents.Add(e));
-            events.Subscribe<StructureRemoved>(e => removedEvents.Add(e));
-            events.Subscribe<StructurePowerChanged>(e => powerEvents.Add(e));
+            _events.Subscribe<StructurePlaced>(e => placedEvents.Add(e));
+            _events.Subscribe<StructureBuilt>(e => builtEvents.Add(e));
+            _events.Subscribe<StructureRemoved>(e => removedEvents.Add(e));
+            _events.Subscribe<StructurePowerChanged>(e => powerEvents.Add(e));
 
-            var writerBase = new PlacedBase(_catalog, _tuning, events);
+            var writerBase = new PlacedBase(_catalog, _tuning, _events);
             TestWorld flat = TestWorld.Flat();
             Vector3 roverPos = Vector3.zero;
 
@@ -462,7 +554,7 @@ namespace MoonProject.Gameplay.Tests
                 Assert.IsTrue(saveWriter.SaveNow());
             }
 
-            var readerBase = new PlacedBase(_catalog, _tuning, events);
+            var readerBase = new PlacedBase(_catalog, _tuning, _events);
             var saveReader = new SaveService(_tempSaveDir, "building_slot", "0.5.7");
             using (readerBase.RegisterSave(saveReader))
             {

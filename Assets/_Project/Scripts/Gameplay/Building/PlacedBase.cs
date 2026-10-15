@@ -16,12 +16,6 @@ namespace MoonProject.Gameplay
     public sealed class PlacedBase
     {
         private const float SupplyChangeEpsilon = 1e-4f;
-        private const float DefaultMinDistance = 2.0f;
-        private const float DefaultMaxDistance = 12.0f;
-        private const float DefaultSnapDistance = 0.6f;
-        private const float DefaultSnapAngle = 20f;
-        private const float DefaultWeldRange = 6.0f;
-        private const float DefaultRefundShare = 0.75f;
 
         private readonly StructureCatalog _catalog;
         private readonly BuildingTuning _tuning;
@@ -32,11 +26,11 @@ namespace MoonProject.Gameplay
         private readonly List<bool> _powerPublished = new List<bool>();
         private int _nextInstanceId = 1;
 
-        public PlacedBase(StructureCatalog catalog, BuildingTuning tuning = null, EventBus events = null)
+        public PlacedBase(StructureCatalog catalog, BuildingTuning tuning, EventBus events)
         {
             _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
-            _tuning = tuning;
-            _events = events;
+            _tuning = tuning ?? throw new ArgumentNullException(nameof(tuning));
+            _events = events ?? throw new ArgumentNullException(nameof(events));
         }
 
         public IReadOnlyList<PlacedStructure> Structures => _structures;
@@ -79,9 +73,13 @@ namespace MoonProject.Gameplay
         /// <summary>Solves soft snapping for <paramref name="definition"/> against currently placed structures.</summary>
         public StructurePose SolveSnap(StructureDefinition definition, StructurePose freePose, bool snapEnabled = true)
         {
-            float snapDist = _tuning != null ? _tuning.SnapDistance : DefaultSnapDistance;
-            float snapAngle = _tuning != null ? _tuning.SnapAngleDegrees : DefaultSnapAngle;
-            return SnapSolver.Solve(definition, freePose, _structures, snapDist, snapAngle, snapEnabled);
+            return SnapSolver.Solve(
+                definition,
+                freePose,
+                _structures,
+                _tuning.SnapDistance,
+                _tuning.SnapAngleDegrees,
+                snapEnabled);
         }
 
         /// <summary>Evaluates whether <paramref name="definition"/> may be placed at <paramref name="pose"/>.</summary>
@@ -91,15 +89,22 @@ namespace MoonProject.Gameplay
             ITerrainQuery terrain,
             Vector3 roverPosition)
         {
-            float minDist = _tuning != null ? _tuning.MinPlacementDistance : DefaultMinDistance;
-            float maxDist = _tuning != null ? _tuning.MaxPlacementDistance : DefaultMaxDistance;
-            return PlacementRules.Evaluate(definition, pose, terrain, _structures, roverPosition, minDist, maxDist);
+            return PlacementRules.Evaluate(
+                definition,
+                pose,
+                terrain,
+                _structures,
+                roverPosition,
+                _tuning.MinPlacementDistance,
+                _tuning.MaxPlacementDistance);
         }
 
         /// <summary>
-        /// Validates placement with <see cref="PlacementRules"/> and, when valid, places the structure and publishes
-        /// <see cref="StructurePlaced"/> (plus <see cref="StructureBuilt"/> when <paramref name="initialProgress01"/>
-        /// is already 1).
+        /// Validates placement with <see cref="PlacementRules"/> and, when valid, places the structure frame and
+        /// publishes <see cref="StructurePlaced"/> (plus <see cref="StructureBuilt"/> when
+        /// <paramref name="initialProgress01"/> is already 1). The full <see cref="StructureDefinition.BuildCost"/> is
+        /// paid up-front when the frame is placed (Subnautica-style); <see cref="PlacedBase"/> stays inventory-free and
+        /// the build-mode slice spends the recipe.
         /// </summary>
         public bool TryPlace(
             StructureDefinition definition,
@@ -152,12 +157,12 @@ namespace MoonProject.Gameplay
             _jobs.Add(job);
             _powerPublished.Add(false);
 
-            _events?.Publish(new StructurePlaced(instanceId, definition.Id, pose.Position, pose.Yaw, restored));
+            _events.Publish(new StructurePlaced(instanceId, definition.Id, pose.Position, pose.Yaw, restored));
 
             if (job.IsDone)
             {
                 AddPowerNodeFor(placed);
-                _events?.Publish(new StructureBuilt(instanceId, definition.Id, pose.Position, pose.Yaw, restored));
+                _events.Publish(new StructureBuilt(instanceId, definition.Id, pose.Position, pose.Yaw, restored));
             }
 
             return instanceId;
@@ -182,8 +187,7 @@ namespace MoonProject.Gameplay
                 return false;
             }
 
-            float weldRange = _tuning != null ? _tuning.WeldRange : DefaultWeldRange;
-            bool completedNow = job.Step(deltaTime, current.Pose.Position, roverPosition, weldRange, isWelding);
+            bool completedNow = job.Step(deltaTime, current.Pose.Position, roverPosition, _tuning.WeldRange, isWelding);
 
             var updated = new PlacedStructure(
                 current.InstanceId,
@@ -197,7 +201,7 @@ namespace MoonProject.Gameplay
             if (completedNow)
             {
                 AddPowerNodeFor(updated);
-                _events?.Publish(new StructureBuilt(
+                _events.Publish(new StructureBuilt(
                     updated.InstanceId,
                     updated.Definition.Id,
                     updated.Pose.Position,
@@ -246,7 +250,7 @@ namespace MoonProject.Gameplay
                     (!hadPublished || Mathf.Abs(node.SupplyRatio - previousRatio) > SupplyChangeEpsilon))
                 {
                     _powerPublished[i] = true;
-                    _events?.Publish(new StructurePowerChanged(
+                    _events.Publish(new StructurePowerChanged(
                         current.InstanceId,
                         current.Definition.Id,
                         current.Pose.Position,
@@ -257,8 +261,10 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Deconstructs and removes structure <paramref name="instanceId"/>, returning the tuned share of its build
-        /// cost and publishing <see cref="StructureRemoved"/>.
+        /// Deconstructs and removes structure <paramref name="instanceId"/>, returning the full
+        /// <see cref="StructureDefinition.BuildCost"/> when the frame is unfinished or
+        /// <see cref="BuildingTuning.DeconstructRefundShare"/> when finished, and publishes
+        /// <see cref="StructureRemoved"/>.
         /// </summary>
         public bool TryDeconstruct(int instanceId, out Recipe refund)
         {
@@ -271,15 +277,14 @@ namespace MoonProject.Gameplay
 
             PlacedStructure removed = _structures[index];
             BuildJob job = _jobs[index];
-            float refundShare = _tuning != null ? _tuning.DeconstructRefundShare : DefaultRefundShare;
-            refund = job.Deconstruct(refundShare);
+            refund = job.Deconstruct(_tuning.DeconstructRefundShare);
 
             _powerGrid.RemoveNode(instanceId);
             _structures.RemoveAt(index);
             _jobs.RemoveAt(index);
             _powerPublished.RemoveAt(index);
 
-            _events?.Publish(new StructureRemoved(instanceId, removed.Definition.Id, removed.Pose.Position));
+            _events.Publish(new StructureRemoved(instanceId, removed.Definition.Id, removed.Pose.Position));
             return true;
         }
 
