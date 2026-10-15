@@ -11,6 +11,7 @@ if str(THIS_DIR) not in sys.path:
     sys.path.insert(0, str(THIS_DIR))
 sys.dont_write_bytecode = True
 
+import cargo_lander  # noqa: E402
 import charging_pad  # noqa: E402
 import power_pylon  # noqa: E402
 import r1kit  # noqa: E402
@@ -19,12 +20,17 @@ import solar_array  # noqa: E402
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
-        description="Build ChargingPad, SolarArray, and PowerPylon FBX models and preview renders."
+        description="Build ChargingPad, SolarArray, PowerPylon, and CargoLander FBX models and preview renders."
     )
     parser.add_argument(
         "--models-dir",
         type=Path,
         default=Path("Assets/_Project/Art/R1/Models/Structures"),
+    )
+    parser.add_argument(
+        "--lander-out",
+        type=Path,
+        default=Path("Assets/_Project/Art/R1/Models/Lander/CargoLander.fbx"),
     )
     parser.add_argument(
         "--renders-dir",
@@ -71,7 +77,18 @@ def main(argv: list[str] | None = None) -> None:
         ]
     )
 
-    # 4. Build all three together in a fresh scene and render Logs/renders/family.png alongside 07's 1.46 m stand-in box
+    # 4. Build & export CargoLander (+ diagnostic and showcase renders)
+    cargo_lander.main(
+        [
+            "--fbx-out",
+            str(args.lander_out),
+            "--renders-dir",
+            str(renders_dir),
+            *skip_flag,
+        ]
+    )
+
+    # 5. Build all three structures together in a fresh scene and render Logs/renders/family.png alongside 07's 1.46 m stand-in box
     if not args.skip_renders:
         r1kit.reset_scene()
         cp_root = charging_pad.build_charging_pad()
