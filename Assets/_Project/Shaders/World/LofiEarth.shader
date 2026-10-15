@@ -229,13 +229,14 @@ Shader "MoonProject/World/LofiEarth"
 
                 float3 albedo = lerp(surfaceColor, _MoonEarthCloud.rgb * 1.04, cloudMask * 0.90);
 
-                // Phase lighting: crisp terminator at ndotl == 0 with Lommel-Seeliger limb brightening on thin crescents.
+                // Phase lighting: an air-softened twilight band at the terminator; Lommel-Seeliger limb brightening keeps
+                // thin crescents bright, while the Lambert-like term darkens the day side gently toward the terminator.
                 float ndotl = dot(normalWS, _MoonEarthSun.xyz);
                 float viewFacing = saturate(z);
                 float posNdotL = max(ndotl, 0.0);
                 float seeliger = posNdotL / (posNdotL + viewFacing * 0.32 + 0.035);
-                float terminator = smoothstep(-0.015, 0.03, ndotl);
-                float lit = terminator * lerp(seeliger, pow(max(posNdotL, 1e-4), 0.55), 0.32);
+                float terminator = smoothstep(-0.06, 0.14, ndotl);
+                float lit = terminator * lerp(seeliger, pow(max(posNdotL, 1e-4), 0.55), 0.62);
 
                 // Subtle wave-perturbed sun glint on the lit ocean where clear of clouds and ice.
                 float3 viewDir = _MoonEarthAxisZ.xyz;
