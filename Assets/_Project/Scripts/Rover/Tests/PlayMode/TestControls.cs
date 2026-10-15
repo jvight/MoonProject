@@ -19,6 +19,8 @@ namespace MoonProject.Rover.PlayModeTests
             map.AddAction("Winch", InputActionType.Value, "<Gamepad>/rightTrigger", expectedControlLayout: "Axis");
             map.AddAction("Jump", InputActionType.Button, "<Gamepad>/buttonSouth");
             map.AddAction("Recenter", InputActionType.Button, "<Gamepad>/rightStickPress");
+            map.AddAction("Build", InputActionType.Button, "<Gamepad>/buttonNorth");
+            map.AddAction("Deconstruct", InputActionType.Button, "<Gamepad>/rightShoulder");
             InputActionMap menu = asset.AddActionMap(MenuInput.MapName);
             menu.AddAction("Navigate", InputActionType.Value, "<Gamepad>/dpad", expectedControlLayout: "Vector2");
             menu.AddAction("Cancel", InputActionType.Button, "<Gamepad>/buttonEast");
