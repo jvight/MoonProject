@@ -226,6 +226,13 @@
         0.48
       ]
     },
+    "CellFilled": {
+      "pivot": [
+        0.1266,
+        -0.3,
+        0.972
+      ]
+    },
     "ChargeConduits": {
       "pivot": [
         0.0,
@@ -287,6 +294,13 @@
         0.0,
         0.55,
         0.72
+      ]
+    },
+    "Decal07Fresh": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.605
       ]
     },
     "DeckCover": {
@@ -555,11 +569,25 @@
         0.6
       ]
     },
+    "Pennant": {
+      "pivot": [
+        0.36,
+        -0.46,
+        1.47
+      ]
+    },
     "RearVentStrip": {
       "pivot": [
         0.0,
         -0.145,
         1.26
+      ]
+    },
+    "RingSocket": {
+      "pivot": [
+        0.0,
+        0.04,
+        1.23
       ]
     },
     "RoverModel": {
@@ -859,8 +887,8 @@
   },
   "require_vertex_colors": true,
   "max_triangles": 80000,
-  "max_meshes": 30,
-  "max_draw_calls": 95,
+  "max_meshes": 65,
+  "max_draw_calls": 130,
   "allow_rotation": [
     "ScoopCyl_*",
     "Shock_*"
