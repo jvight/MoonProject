@@ -43,13 +43,26 @@ namespace MoonProject.Core.Input
             _winch = _roverMap.FindAction("Winch", throwIfNotFound: true);
             _jump = _roverMap.FindAction("Jump", throwIfNotFound: true);
             _recenter = _roverMap.FindAction("Recenter", throwIfNotFound: true);
-            _build = _roverMap.FindAction("Build", throwIfNotFound: true);
-            _deconstruct = _roverMap.FindAction("Deconstruct", throwIfNotFound: true);
+            _build = FindOrAddButton(_roverMap, "Build");
+            _deconstruct = FindOrAddButton(_roverMap, "Deconstruct");
             Menu = new MenuInput(actions.FindActionMap(MenuInput.MapName, throwIfNotFound: true));
 
             _onPerformed = OnPerformed;
             Track(_roverMap, true);
             Track(Menu.Map, true);
+        }
+
+        private static InputAction FindOrAddButton(InputActionMap map, string name)
+        {
+            InputAction existing = map.FindAction(name, throwIfNotFound: false);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            return map.enabled
+                ? new InputAction(name, InputActionType.Button)
+                : map.AddAction(name, InputActionType.Button);
         }
 
         /// <summary>x = steer, y = throttle, each -1..1.</summary>
