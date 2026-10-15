@@ -154,6 +154,18 @@ def u_vec(dx_right: float, dy_up: float, dz_fwd: float) -> Vector:
     return Vector((float(dx_right), float(dz_fwd), float(dy_up)))
 
 
+def u_rot(rx_deg: float, ry_deg: float, rz_deg: float) -> Euler:
+    """Convert Unity left-handed Euler angles (rx_deg, ry_deg, rz_deg) to Blender right-handed Euler."""
+    return Euler(
+        (
+            math.radians(-float(rx_deg)),
+            math.radians(-float(rz_deg)),
+            math.radians(-float(ry_deg)),
+        ),
+        "XYZ",
+    )
+
+
 def reset_scene() -> bpy.types.Scene:
     """Reset Blender to a clean empty scene in metric units (metres)."""
     bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -336,6 +348,10 @@ class MeshBuilder:
         else:
             combined = list(faces)
         valid_faces = _unique(f for f in combined if f.is_valid)
+        valid_verts = _unique(v for f in valid_faces for v in f.verts if v.is_valid)
+        if valid_verts:
+            bmesh.ops.remove_doubles(self.bm, verts=valid_verts, dist=1e-5)
+        valid_faces = _unique(f for f in valid_faces if f.is_valid)
         self._assign_faces(valid_faces, mat)
         valid_verts = _unique(v for f in valid_faces for v in f.verts if v.is_valid)
         return valid_faces, valid_verts
@@ -650,6 +666,17 @@ class MeshBuilder:
         self._assign_faces(faces, mat)
         return faces
 
+    def add_pipe(
+        self,
+        p0_u: tuple[float, float, float],
+        p1_u: tuple[float, float, float],
+        radius: float,
+        mat: str,
+        segments: int = 10,
+    ) -> list[bmesh.types.BMFace]:
+        """Add a straight cylindrical pipe connecting Unity points p0_u and p1_u."""
+        return self.add_tube_path([p0_u, p1_u], radius=radius, mat=mat, segments=segments, cap_ends=True)
+
     def add_bolts(
         self,
         positions_u: Sequence[tuple[float, float, float]],
@@ -737,13 +764,355 @@ class MeshBuilder:
                 )
         return faces
 
+    def add_conical_panel(
+        self,
+        y_bot: float,
+        y_top: float,
+        r_bot: float,
+        r_top: float,
+        thickness: float,
+        angle_center_deg: float,
+        angle_span_deg: float,
+        mat: str,
+        arc_segments: int = 8,
+        bevel: float = 0.006,
+    ) -> list[bmesh.types.BMFace]:
+        """Add a curved conical-frustum armor panel or window frame around the vertical Y axis."""
+        a0 = math.radians(angle_center_deg - angle_span_deg * 0.5)
+        a1 = math.radians(angle_center_deg + angle_span_deg * 0.5)
+
+        bot_in: list[bmesh.types.BMVert] = []
+        bot_out: list[bmesh.types.BMVert] = []
+        top_in: list[bmesh.types.BMVert] = []
+        top_out: list[bmesh.types.BMVert] = []
+
+        for i in range(arc_segments + 1):
+            t = i / arc_segments
+            ang = a0 + (a1 - a0) * t
+            sx = math.sin(ang)
+            cz = math.cos(ang)
+            bot_in.append(self.bm.verts.new(self._to_local_b((r_bot * sx, y_bot, r_bot * cz))))
+            bot_out.append(
+                self.bm.verts.new(self._to_local_b(((r_bot + thickness) * sx, y_bot, (r_bot + thickness) * cz)))
+            )
+            top_in.append(self.bm.verts.new(self._to_local_b((r_top * sx, y_top, r_top * cz))))
+            top_out.append(
+                self.bm.verts.new(self._to_local_b(((r_top + thickness) * sx, y_top, (r_top + thickness) * cz)))
+            )
+
+        faces: list[bmesh.types.BMFace] = []
+        for i in range(arc_segments):
+            j = i + 1
+            faces.append(self.bm.faces.new([bot_out[i], bot_out[j], top_out[j], top_out[i]]))
+            faces.append(self.bm.faces.new([bot_in[j], bot_in[i], top_in[i], top_in[j]]))
+            faces.append(self.bm.faces.new([top_in[i], top_out[i], top_out[j], top_in[j]]))
+            faces.append(self.bm.faces.new([bot_out[i], bot_in[i], bot_in[j], bot_out[j]]))
+
+        faces.append(self.bm.faces.new([bot_in[0], bot_out[0], top_out[0], top_in[0]]))
+        faces.append(self.bm.faces.new([bot_out[-1], bot_in[-1], top_in[-1], top_out[-1]]))
+
+        bmesh.ops.recalc_face_normals(self.bm, faces=faces)
+        self._assign_faces(faces, mat)
+
+        if bevel > 0.0:
+            outer_edges = _unique(
+                e
+                for f in faces
+                for e in f.edges
+                if e.is_manifold and e.calc_face_angle(0.0) > math.radians(55.0)
+            )
+            if outer_edges:
+                faces, _ = self._bevel_edges(
+                    faces,
+                    outer_edges,
+                    min(bevel, thickness * 0.42),
+                    1,
+                    mat,
+                )
+        return faces
+
+    def add_bolt_row(
+        self,
+        start_u: tuple[float, float, float],
+        end_u: tuple[float, float, float],
+        count: int,
+        radius: float = 0.016,
+        height: float = 0.012,
+        axis_u: str = "Z",
+        mat: str = "R1_BareSteel",
+        bevel_segments: int = 1,
+    ) -> None:
+        """Add a linear row of evenly spaced 6-sided hex bolts between start_u and end_u."""
+        if count <= 0:
+            return
+        if count == 1:
+            mid = tuple((start_u[k] + end_u[k]) * 0.5 for k in range(3))
+            self.add_bolts([mid], radius=radius, height=height, axis_u=axis_u, mat=mat, bevel_segments=bevel_segments)
+            return
+        pts: list[tuple[float, float, float]] = []
+        for i in range(count):
+            t = i / (count - 1)
+            pts.append(tuple(start_u[k] * (1.0 - t) + end_u[k] * t for k in range(3)))
+        self.add_bolts(pts, radius=radius, height=height, axis_u=axis_u, mat=mat, bevel_segments=bevel_segments)
+
+    def add_hinge(
+        self,
+        center_u: tuple[float, float, float],
+        axis_u: str = "X",
+        length: float = 0.22,
+        knuckle_radius: float = 0.028,
+        leaf_width: float = 0.085,
+        leaf_thickness: float = 0.018,
+        rot_deg_u: tuple[float, float, float] = (0.0, 0.0, 0.0),
+        mat_body: str = "R1_GreyMetal",
+        mat_pin: str = "R1_BareSteel",
+    ) -> None:
+        """Add a heavy industrial 3-knuckle barrel hinge with mounting leaf plate and steel hinge pin."""
+        cx, cy, cz = center_u
+        seg_len = length * 0.28
+        offsets = (-length * 0.34, 0.0, length * 0.34)
+        for idx, off in enumerate(offsets):
+            if axis_u == "X":
+                k_pos = (cx + off, cy, cz)
+            elif axis_u == "Y":
+                k_pos = (cx, cy + off, cz)
+            else:
+                k_pos = (cx, cy, cz + off)
+            self.add_cylinder(
+                center_u=k_pos,
+                radius=knuckle_radius * (1.04 if idx == 1 else 1.0),
+                length=seg_len,
+                mat=mat_body,
+                axis_u=axis_u,
+                segments=10,
+                bevel=knuckle_radius * 0.16,
+                bevel_segments=1,
+                rot_deg_u=rot_deg_u,
+            )
+        # Central steel hinge pin extending slightly past the outer knuckles
+        self.add_cylinder(
+            center_u=center_u,
+            radius=knuckle_radius * 0.56,
+            length=length * 1.08,
+            mat=mat_pin,
+            axis_u=axis_u,
+            segments=8,
+            bevel=knuckle_radius * 0.10,
+            bevel_segments=1,
+            rot_deg_u=rot_deg_u,
+        )
+        # Mounting leaf strap behind the knuckles
+        if axis_u == "X":
+            leaf_size = (length * 0.92, leaf_width, leaf_thickness)
+        elif axis_u == "Y":
+            leaf_size = (leaf_width, length * 0.92, leaf_thickness)
+        else:
+            leaf_size = (leaf_width, leaf_thickness, length * 0.92)
+        self.add_bevel_box(
+            center_u=center_u,
+            size_u=leaf_size,
+            mat=mat_body,
+            bevel=min(leaf_thickness * 0.3, 0.005),
+            segments=1,
+            rot_deg_u=rot_deg_u,
+        )
+
+    def add_vent_grille(
+        self,
+        center_u: tuple[float, float, float],
+        width: float,
+        height: float,
+        depth: float = 0.032,
+        slat_count: int = 5,
+        rot_deg_u: tuple[float, float, float] = (0.0, 0.0, 0.0),
+        frame_mat: str = "R1_GreyMetal",
+        back_mat: str = "R1_DarkGlass",
+    ) -> None:
+        """Add a bevelled rectangular louver vent grille with dark recessed backing and angled slats."""
+        # Outer bevelled frame housing
+        self.add_bevel_box(
+            center_u=center_u,
+            size_u=(width, height, depth),
+            mat=frame_mat,
+            bevel=0.008,
+            segments=1,
+            rot_deg_u=rot_deg_u,
+        )
+        # Dark recessed shadow backing
+        self.add_bevel_box(
+            center_u=center_u,
+            size_u=(max(0.02, width - 0.044), max(0.02, height - 0.044), depth + 0.006),
+            mat=back_mat,
+            bevel=0.003,
+            segments=1,
+            rot_deg_u=rot_deg_u,
+        )
+        if slat_count <= 0:
+            return
+        usable_h = max(0.04, height - 0.06)
+        step_y = usable_h / slat_count
+        slat_h = step_y * 0.52
+        yaw_rad = math.radians(rot_deg_u[1])
+        fwd_x = math.sin(yaw_rad) * (depth * 0.36)
+        fwd_z = math.cos(yaw_rad) * (depth * 0.36)
+        for i in range(slat_count):
+            local_y = -usable_h * 0.5 + step_y * (i + 0.5)
+            self.add_bevel_box(
+                center_u=(center_u[0] + fwd_x, center_u[1] + local_y, center_u[2] + fwd_z),
+                size_u=(max(0.02, width - 0.056), slat_h, depth * 0.48),
+                mat=frame_mat,
+                bevel=0.003,
+                segments=1,
+                rot_deg_u=(rot_deg_u[0] - 22.0, rot_deg_u[1], rot_deg_u[2]),
+            )
+
+    def add_thruster_quad(
+        self,
+        center_u: tuple[float, float, float],
+        outward_yaw_deg: float,
+        pod_size: float = 0.24,
+        nozzle_length: float = 0.14,
+        nozzle_radius: float = 0.052,
+        pod_mat: str = "R1_GreyMetal",
+        nozzle_mat: str = "R1_BareSteel",
+    ) -> None:
+        """Add a spacecraft 4-nozzle RCS attitude-control thruster pod oriented at outward_yaw_deg around Y."""
+        cx, cy, cz = center_u
+        yaw_rad = math.radians(outward_yaw_deg)
+        out_x = math.sin(yaw_rad)
+        out_z = math.cos(yaw_rad)
+        tan_x = math.cos(yaw_rad)
+        tan_z = -math.sin(yaw_rad)
+
+        # Base mounting collar & sculpted RCS manifold block
+        self.add_bevel_box(
+            center_u=(cx - out_x * 0.03, cy, cz - out_z * 0.03),
+            size_u=(pod_size * 0.92, pod_size * 0.92, pod_size * 0.65),
+            mat="R1_Copper",
+            bevel=0.008,
+            segments=1,
+            rot_deg_u=(0.0, outward_yaw_deg, 0.0),
+        )
+        self.add_bevel_box(
+            center_u=(cx + out_x * 0.02, cy, cz + out_z * 0.02),
+            size_u=(pod_size, pod_size, pod_size * 0.72),
+            mat=pod_mat,
+            bevel=0.014,
+            segments=2,
+            rot_deg_u=(0.0, outward_yaw_deg, 0.0),
+            top_scale_xz=(0.86, 0.86),
+        )
+
+        # 4 conical De Laval thruster bells: Up (+Y), Down (-Y), Left-Tangential (+T), Right-Tangential (-T)
+        reach = pod_size * 0.50 + nozzle_length * 0.42
+        for sign_y in (-1.0, 1.0):
+            ny = cy + sign_y * reach
+            r_bot = nozzle_radius if sign_y < 0.0 else nozzle_radius * 0.48
+            r_top = nozzle_radius * 0.48 if sign_y < 0.0 else nozzle_radius
+            self.add_cylinder(
+                center_u=(cx + out_x * 0.03, ny, cz + out_z * 0.03),
+                radius=r_bot,
+                radius_top=r_top,
+                length=nozzle_length,
+                mat=nozzle_mat,
+                axis_u="Y",
+                segments=10,
+                bevel=0.003,
+                bevel_segments=1,
+            )
+        for sign_t in (-1.0, 1.0):
+            nx = cx + out_x * 0.03 + sign_t * tan_x * reach
+            nz = cz + out_z * 0.03 + sign_t * tan_z * reach
+            r_bot = nozzle_radius if sign_t < 0.0 else nozzle_radius * 0.48
+            r_top = nozzle_radius * 0.48 if sign_t < 0.0 else nozzle_radius
+            self.add_cylinder(
+                center_u=(nx, cy, nz),
+                radius=r_bot,
+                radius_top=r_top,
+                length=nozzle_length,
+                mat=nozzle_mat,
+                axis_u="X",
+                segments=10,
+                bevel=0.003,
+                bevel_segments=1,
+                rot_deg_u=(0.0, outward_yaw_deg, 0.0),
+            )
+
+    def add_foil_wrap(
+        self,
+        p0_u: tuple[float, float, float],
+        p1_u: tuple[float, float, float],
+        radius: float,
+        rings: int = 5,
+        segments: int = 10,
+        foil_mat: str = "R1_GoldFoil",
+        band_mat: str = "R1_Rubber",
+    ) -> list[bmesh.types.BMFace]:
+        """Add a crinkled multi-layer gold Kapton foil sleeve between p0_u and p1_u with end retaining bands."""
+        v0 = self._to_local_b(p0_u)
+        v1 = self._to_local_b(p1_u)
+        delta = v1 - v0
+        length = delta.length
+        if length < 1e-4:
+            return []
+
+        direction = delta.normalized()
+        up_axis = "Y" if abs(direction.y) < 0.92 else "X"
+        quat = direction.to_track_quat("Z", up_axis)
+
+        ring_verts: list[list[bmesh.types.BMVert]] = []
+        total_rings = max(3, rings + 1)
+        for r_idx in range(total_rings):
+            t = r_idx / (total_rings - 1)
+            center_pt = v0.lerp(v1, t)
+            is_end = r_idx == 0 or r_idx == total_rings - 1
+            ring_scale = 0.94 if is_end else (1.035 if r_idx % 2 == 1 else 0.985)
+            twist = 0.0 if is_end else ((math.pi / segments) * 0.16 * (1.0 if r_idx % 2 == 1 else -1.0))
+            ring: list[bmesh.types.BMVert] = []
+            for s in range(segments):
+                ang = (2.0 * math.pi * s) / segments + twist
+                crinkle = 1.0 if is_end else (1.0 + 0.028 * math.sin(s * 2.0 + r_idx * 1.7))
+                rad = radius * ring_scale * crinkle
+                local_pt = Vector((rad * math.cos(ang), rad * math.sin(ang), 0.0))
+                ring.append(self.bm.verts.new(center_pt + (quat @ local_pt)))
+            ring_verts.append(ring)
+
+        faces: list[bmesh.types.BMFace] = []
+        for r_idx in range(len(ring_verts) - 1):
+            r0 = ring_verts[r_idx]
+            r1 = ring_verts[r_idx + 1]
+            for s in range(segments):
+                sn = (s + 1) % segments
+                faces.append(self.bm.faces.new([r0[s], r0[sn], r1[sn], r1[s]]))
+        faces.append(self.bm.faces.new(list(reversed(ring_verts[0]))))
+        faces.append(self.bm.faces.new(ring_verts[-1]))
+
+        bmesh.ops.recalc_face_normals(self.bm, faces=faces)
+        self._assign_faces(faces, foil_mat)
+        cap_edges = _unique(list(faces[-2].edges) + list(faces[-1].edges))
+        faces, _ = self._bevel_edges(faces, cap_edges, min(0.005, radius * 0.06), 1, foil_mat)
+
+        # Add dark retaining collar bands at both ends of the foil wrap
+        band_len = min(0.048, length * 0.14)
+        for t_band in (0.04, 0.96):
+            pt_a = tuple(p0_u[k] * (1.0 - (t_band - 0.03)) + p1_u[k] * (t_band - 0.03) for k in range(3))
+            pt_b = tuple(p0_u[k] * (1.0 - (t_band + 0.03)) + p1_u[k] * (t_band + 0.03) for k in range(3))
+            self.add_strut(
+                p0_u=pt_a,
+                p1_u=pt_b,
+                width=radius * 2.02,
+                thickness=radius * 2.02,
+                mat=band_mat,
+                bevel=min(0.006, band_len * 0.25),
+            )
+        return faces
+
     def build_object(
         self,
         parent: bpy.types.Object | None = None,
         smooth_angle_deg: float = 52.0,
     ) -> bpy.types.Object:
         """Finalize bmesh into a Blender Mesh Object with canonical vertex/face/loop order and smooth bevel normals."""
-        bmesh.ops.remove_doubles(self.bm, verts=self.bm.verts[:], dist=1e-5)
         bmesh.ops.recalc_face_normals(self.bm, faces=self.bm.faces[:])
 
         # Remap material indices so obj.data.materials is in canonical ALLOWED_MATERIALS order
@@ -795,6 +1164,31 @@ class MeshBuilder:
                 cf.smooth = True
             except ValueError:
                 continue
+
+        cbm.faces.index_update()
+        cbm.normal_update()
+
+        # Guarantee every closed shell has positive signed volume (outward normals)
+        seen_shell_faces: set[int] = set()
+        for face in cbm.faces:
+            if face.index in seen_shell_faces:
+                continue
+            stack = [face]
+            shell: list[bmesh.types.BMFace] = []
+            seen_shell_faces.add(face.index)
+            while stack:
+                cur = stack.pop()
+                shell.append(cur)
+                for edge in cur.edges:
+                    for other in edge.link_faces:
+                        if other.index not in seen_shell_faces:
+                            seen_shell_faces.add(other.index)
+                            stack.append(other)
+            if all(len(e.link_faces) == 2 for sf in shell for e in sf.edges):
+                vol = sum(sf.calc_center_median().dot(sf.normal) * sf.calc_area() for sf in shell) / 3.0
+                if vol < 0.0:
+                    bmesh.ops.reverse_faces(cbm, faces=shell)
+        cbm.normal_update()
 
         cbm.edges.index_update()
         for e in cbm.edges:
@@ -1012,10 +1406,11 @@ def bake_vertex_colors(root: bpy.types.Object, footprint_radius: float = 2.0) ->
                 float(ao_loop[loop_idx + k]) for k in range(len(f.loops))
             ]
             face_ao_floor = (
-                float(np.percentile(face_ao_vals, 65)) * 0.88
-                if min_edge_len >= 0.030 and max(face_ao_vals) > 0.75
+                float(np.percentile(face_ao_vals, 72)) * 0.94
+                if min_edge_len >= 0.030 and max(face_ao_vals) > 0.72
                 else 0.0
             )
+            cavity_face_scale = 0.22 if min_edge_len >= 0.030 else 0.95
 
             for l in f.loops:
                 vi = l.vert.index
@@ -1036,7 +1431,7 @@ def bake_vertex_colors(root: bpy.types.Object, footprint_radius: float = 2.0) ->
 
                 # B: Crease / cavity where dust settles (0 = none on open flat panels)
                 ground_factor = float(np.clip(1.0 - (w_pos.z / 0.32), 0.0, 1.0)) * 0.22
-                ao_cavity = max(0.0, (0.78 - r_chan) / 0.78) * 0.95
+                ao_cavity = max(0.0, (0.72 - r_chan) / 0.72) * cavity_face_scale
                 raw_cavity = max(float(v_concave_smooth[vi]), ao_cavity) * up_weight + ground_factor * (1.0 - 0.6 * r_chan)
                 b_chan = float(np.clip(raw_cavity * (1.0 - 0.80 * g_chan), 0.0, 1.0))
                 if b_chan < 0.03:
@@ -1112,12 +1507,12 @@ def export_fbx(root: bpy.types.Object, filepath: Path) -> None:
         apply_unit_scale=True,
         apply_scale_options="FBX_SCALE_ALL",
         use_space_transform=True,
-        bake_space_transform=True,
+        bake_space_transform=False,
         object_types={"EMPTY", "MESH"},
         use_mesh_modifiers=True,
         use_mesh_modifiers_render=True,
         mesh_smooth_type="OFF",
-        colors_type="LINEAR",
+        colors_type="SRGB",
         prioritize_active_color=True,
         use_subsurf=False,
         use_mesh_edges=False,
@@ -1127,7 +1522,7 @@ def export_fbx(root: bpy.types.Object, filepath: Path) -> None:
         bake_anim=False,
         path_mode="STRIP",
         embed_textures=False,
-        axis_forward="Z",
+        axis_forward="-Z",
         axis_up="Y",
     )
 
@@ -1252,6 +1647,88 @@ def _render_to_file(filepath: Path, res_x: int = 960, res_y: int = 720, freestyl
         ls.linestyle.thickness = 1.35
     scene.render.filepath = str(filepath)
     bpy.ops.render.render(write_still=True)
+
+
+def render_vertex_color_grid(
+    root: bpy.types.Object,
+    out_path: Path,
+    res_x: int = 640,
+    res_y: int = 480,
+) -> Path:
+    """Render a 2x2 vertex-colour inspection sheet (R=AO, G=Wear, B=Cavity, RGB) using the active scene camera."""
+    out_path = Path(out_path).resolve()
+    out_dir = out_path.parent
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    mesh_objs = [o for o in collect_hierarchy(root) if o.type == "MESH"]
+    saved_mats: dict[bpy.types.Object, list[bpy.types.Material]] = {}
+    for obj in mesh_objs:
+        saved_mats[obj] = list(obj.data.materials)
+
+    vcol_mat = bpy.data.materials.new("_VColInspectMat")
+    vcol_mat.use_nodes = True
+    v_nt = vcol_mat.node_tree
+    v_nt.nodes.clear()
+    v_out = v_nt.nodes.new("ShaderNodeOutputMaterial")
+    v_emit = v_nt.nodes.new("ShaderNodeEmission")
+    v_attr = v_nt.nodes.new("ShaderNodeVertexColor")
+    v_attr.layer_name = VCOL_ATTRIBUTE_NAME
+    v_sep = v_nt.nodes.new("ShaderNodeSeparateColor")
+    v_comb = v_nt.nodes.new("ShaderNodeCombineColor")
+    v_nt.links.new(v_attr.outputs["Color"], v_sep.inputs["Color"])
+    v_nt.links.new(v_emit.outputs["Emission"], v_out.inputs["Surface"])
+
+    for obj in mesh_objs:
+        obj.data.materials.clear()
+        obj.data.materials.append(vcol_mat)
+
+    prev_vt = bpy.context.scene.view_settings.view_transform
+    bpy.context.scene.view_settings.view_transform = "Standard"
+    channel_imgs: list[np.ndarray] = []
+    for ch_mode in ("RGB", "Red", "Green", "Blue"):
+        for link in list(v_nt.links):
+            if link.to_node in (v_emit, v_comb):
+                v_nt.links.remove(link)
+        if ch_mode == "RGB":
+            v_nt.links.new(v_attr.outputs["Color"], v_emit.inputs["Color"])
+        else:
+            v_nt.links.new(v_sep.outputs[ch_mode], v_comb.inputs["Red"])
+            v_nt.links.new(v_sep.outputs[ch_mode], v_comb.inputs["Green"])
+            v_nt.links.new(v_sep.outputs[ch_mode], v_comb.inputs["Blue"])
+            v_nt.links.new(v_comb.outputs["Color"], v_emit.inputs["Color"])
+
+        tmp_path = out_dir / f"_tmp_vcol_{ch_mode}.png"
+        _render_to_file(tmp_path, res_x=res_x, res_y=res_y, freestyle=False)
+        img = bpy.data.images.load(str(tmp_path))
+        w, h = img.size
+        buf = np.zeros(w * h * 4, dtype=np.float32)
+        img.pixels.foreach_get(buf)
+        bpy.data.images.remove(img)
+        tmp_path.unlink(missing_ok=True)
+        channel_imgs.append(buf.reshape(h, w, 4))
+    bpy.context.scene.view_settings.view_transform = prev_vt
+
+    h, w, _ = channel_imgs[0].shape
+    grid = np.zeros((h * 2, w * 2, 4), dtype=np.float32)
+    grid[h : 2 * h, 0:w, :] = channel_imgs[1]       # Top-left: R (AO)
+    grid[h : 2 * h, w : 2 * w, :] = channel_imgs[2] # Top-right: G (Edge wear)
+    grid[0:h, 0:w, :] = channel_imgs[3]             # Bottom-left: B (Crease/cavity)
+    grid[0:h, w : 2 * w, :] = channel_imgs[0]       # Bottom-right: RGB combined
+
+    comp_img = bpy.data.images.new("_CompVCol", width=w * 2, height=h * 2, alpha=True)
+    comp_img.pixels.foreach_set(grid.reshape(-1))
+    comp_img.filepath_raw = str(out_path)
+    comp_img.file_format = "PNG"
+    comp_img.save()
+    bpy.data.images.remove(comp_img)
+
+    for obj, mats_list in saved_mats.items():
+        obj.data.materials.clear()
+        for m in mats_list:
+            obj.data.materials.append(m)
+    if vcol_mat.name in bpy.data.materials:
+        bpy.data.materials.remove(vcol_mat)
+    return out_path
 
 
 def render_structure_suite(
@@ -1379,80 +1856,21 @@ def render_structure_suite(
         if "_PreviewWire" in obj.modifiers:
             obj.modifiers.remove(obj.modifiers["_PreviewWire"])
 
-    # 5. Vertex-colour view showing R (AO), G (Edge Wear), B (Cavity/Dust), and RGB
-    vcol_mat = bpy.data.materials.new("_VColInspectMat")
-    vcol_mat.use_nodes = True
-    v_nt = vcol_mat.node_tree
-    v_nt.nodes.clear()
-    v_out = v_nt.nodes.new("ShaderNodeOutputMaterial")
-    v_emit = v_nt.nodes.new("ShaderNodeEmission")
-    v_attr = v_nt.nodes.new("ShaderNodeVertexColor")
-    v_attr.layer_name = VCOL_ATTRIBUTE_NAME
-    v_sep = v_nt.nodes.new("ShaderNodeSeparateColor")
-    v_comb = v_nt.nodes.new("ShaderNodeCombineColor")
-    v_nt.links.new(v_attr.outputs["Color"], v_sep.inputs["Color"])
-    v_nt.links.new(v_emit.outputs["Emission"], v_out.inputs["Surface"])
-
-    for obj in mesh_objs:
-        obj.data.materials.clear()
-        obj.data.materials.append(vcol_mat)
-
-    prev_vt = bpy.context.scene.view_settings.view_transform
-    bpy.context.scene.view_settings.view_transform = "Standard"
-    channel_imgs: list[np.ndarray] = []
-    for ch_mode in ("RGB", "Red", "Green", "Blue"):
-        for link in list(v_nt.links):
-            if link.to_node in (v_emit, v_comb):
-                v_nt.links.remove(link)
-        if ch_mode == "RGB":
-            v_nt.links.new(v_attr.outputs["Color"], v_emit.inputs["Color"])
-        else:
-            v_nt.links.new(v_sep.outputs[ch_mode], v_comb.inputs["Red"])
-            v_nt.links.new(v_sep.outputs[ch_mode], v_comb.inputs["Green"])
-            v_nt.links.new(v_sep.outputs[ch_mode], v_comb.inputs["Blue"])
-            v_nt.links.new(v_comb.outputs["Color"], v_emit.inputs["Color"])
-
-        tmp_path = out_dir / f"_tmp_vcol_{ch_mode}.png"
-        _render_to_file(tmp_path, res_x=640, res_y=480, freestyle=False)
-        img = bpy.data.images.load(str(tmp_path))
-        w, h = img.size
-        buf = np.zeros(w * h * 4, dtype=np.float32)
-        img.pixels.foreach_get(buf)
-        bpy.data.images.remove(img)
-        tmp_path.unlink(missing_ok=True)
-        channel_imgs.append(buf.reshape(h, w, 4))
-    bpy.context.scene.view_settings.view_transform = prev_vt
-
-    # Compose 2x2 grid: Top-Left = R (AO), Top-Right = G (Wear), Bottom-Left = B (Cavity), Bottom-Right = RGB
-    h, w, _ = channel_imgs[0].shape
-    grid = np.zeros((h * 2, w * 2, 4), dtype=np.float32)
-    # Blender image pixels are bottom-to-top: row 0..h is bottom, row h..2h is top
-    grid[h : 2 * h, 0:w, :] = channel_imgs[1]       # Top-left: R (AO)
-    grid[h : 2 * h, w : 2 * w, :] = channel_imgs[2] # Top-right: G (Edge wear)
-    grid[0:h, 0:w, :] = channel_imgs[3]             # Bottom-left: B (Crease/cavity)
-    grid[0:h, w : 2 * w, :] = channel_imgs[0]       # Bottom-right: RGB combined
-
-    p_vcol = out_dir / f"{slug}_vertex_color.png"
-    comp_img = bpy.data.images.new("_CompVCol", width=w * 2, height=h * 2, alpha=True)
-    comp_img.pixels.foreach_set(grid.reshape(-1))
-    comp_img.filepath_raw = str(p_vcol)
-    comp_img.file_format = "PNG"
-    comp_img.save()
-    bpy.data.images.remove(comp_img)
-    rendered_paths.append(p_vcol)
-
-    # Restore original materials on all meshes
     for obj, mats_list in saved_mats.items():
         obj.data.materials.clear()
         for m in mats_list:
             obj.data.materials.append(m)
+
+    # 5. Vertex-colour view showing R (AO), G (Edge Wear), B (Cavity/Dust), and RGB
+    p_vcol = render_vertex_color_grid(root, out_dir / f"{slug}_vertex_color.png")
+    rendered_paths.append(p_vcol)
 
     # Cleanup temporary objects
     for tob in temp_objs:
         if tob.name in bpy.data.objects:
             bpy.data.objects.remove(tob, do_unlink=True)
     ground_mat = bpy.data.materials.get("_PreviewGroundMat")
-    for m_tmp in (wire_mat, clay_mat, vcol_mat, ground_mat):
+    for m_tmp in (wire_mat, clay_mat, ground_mat):
         if m_tmp is not None and m_tmp.name in bpy.data.materials:
             bpy.data.materials.remove(m_tmp)
 
@@ -1476,6 +1894,147 @@ def _init_solid_vcol(obj: bpy.types.Object, rgba: tuple[float, float, float, flo
     ca.data.foreach_set("color", arr)
 
 
+def build_rover_07_standin(
+    pos_u: tuple[float, float, float],
+    rover_width: float = 1.52,
+    rover_height: float = 1.55,
+    rover_length: float = 2.04,
+    yaw_deg_u: float = 0.0,
+) -> bpy.types.Object:
+    """Build a 1.52 x 1.55 m scale reference stand-in for Rover 07 with R1 belt stripe, sage patch, and CRT visor."""
+    rx, ry, rz = pos_u
+    mb = MeshBuilder("_Rover07StandIn", pivot_u=pos_u)
+
+    # 4 wheels spanning the exact 1.52 m width
+    wheel_r = 0.29
+    wheel_w = 0.24
+    wheel_x = rover_width * 0.5 - wheel_w * 0.5
+    for sx in (-1.0, 1.0):
+        for sz in (-0.62, 0.62):
+            mb.add_cylinder(
+                center_u=(rx + sx * wheel_x, ry + wheel_r, rz + sz),
+                radius=wheel_r,
+                length=wheel_w,
+                mat="R1_Rubber",
+                axis_u="X",
+                segments=14,
+                bevel=0.025,
+                bevel_segments=1,
+            )
+            mb.add_cylinder(
+                center_u=(rx + sx * (wheel_x + sx * 0.01), ry + wheel_r, rz + sz),
+                radius=wheel_r * 0.52,
+                length=wheel_w + 0.01,
+                mat="R1_GreyMetal",
+                axis_u="X",
+                segments=10,
+                bevel=0.008,
+                bevel_segments=1,
+            )
+
+    # Rounded cream chassis body (y = 0.34 .. 0.98 m)
+    body_w = rover_width - 0.22
+    body_h = 0.62
+    body_cy = ry + 0.65
+    mb.add_bevel_box(
+        center_u=(rx, body_cy, rz),
+        size_u=(body_w, body_h, rover_length * 0.92),
+        mat="R1_CreamEnamel",
+        bevel=0.11,
+        segments=2,
+    )
+    mb.add_bevel_box(
+        center_u=(rx, body_cy - 0.02, rz),
+        size_u=(body_w + 0.016, 0.09, rover_length * 0.92 + 0.016),
+        mat="R1_OrangeStripe",
+        bevel=0.006,
+        segments=1,
+    )
+    for sx in (-1.0, 1.0):
+        mb.add_bevel_box(
+            center_u=(rx + sx * (body_w * 0.5 + 0.008), body_cy - 0.02, rz - 0.10),
+            size_u=(0.02, 0.30, 0.52),
+            mat="R1_SagePatch",
+            bevel=0.006,
+            segments=1,
+        )
+
+    # CRT monitor head reaching up to exact rover_height (1.55 m)
+    head_h = rover_height - 0.96
+    head_cy = ry + 0.96 + head_h * 0.5
+    head_z = rz + 0.26
+    mb.add_bevel_box(
+        center_u=(rx, head_cy, head_z),
+        size_u=(0.76, head_h, 0.68),
+        mat="R1_CreamEnamel",
+        bevel=0.08,
+        segments=2,
+    )
+    mb.add_bevel_box(
+        center_u=(rx, head_cy, head_z + 0.34),
+        size_u=(0.56, head_h * 0.68, 0.04),
+        mat="R1_DarkGlass",
+        bevel=0.01,
+        segments=1,
+    )
+    for eye_x in (-0.12, 0.12):
+        mb.add_bevel_box(
+            center_u=(rx + eye_x, head_cy + 0.02, head_z + 0.355),
+            size_u=(0.085, 0.11, 0.02),
+            mat="R1_LampAmber",
+            bevel=0.005,
+            segments=1,
+        )
+    rover_box = mb.build_object()
+    rover_box.rotation_euler = (0.0, 0.0, math.radians(-yaw_deg_u))
+    _init_solid_vcol(rover_box, (0.94, 0.06, 0.0, 1.0))
+    return rover_box
+
+
+def compose_side_by_side(
+    left_path: Path,
+    right_path: Path,
+    out_path: Path,
+    target_height: int = 768,
+    divider_px: int = 8,
+) -> Path:
+    """Compose two PNG images side-by-side at matching height `target_height` using Blender image buffers."""
+    left_path = Path(left_path).resolve()
+    right_path = Path(right_path).resolve()
+    out_path = Path(out_path).resolve()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def _load_resized(p: Path) -> np.ndarray:
+        img = bpy.data.images.load(str(p))
+        orig_w, orig_h = img.size
+        new_w = max(1, int(round(orig_w * (target_height / orig_h))))
+        img.scale(new_w, target_height)
+        buf = np.zeros(new_w * target_height * 4, dtype=np.float32)
+        img.pixels.foreach_get(buf)
+        bpy.data.images.remove(img)
+        return buf.reshape(target_height, new_w, 4)
+
+    arr_l = _load_resized(left_path)
+    arr_r = _load_resized(right_path)
+    h, wl, _ = arr_l.shape
+    _, wr, _ = arr_r.shape
+    total_w = wl + divider_px + wr
+
+    canvas = np.zeros((h, total_w, 4), dtype=np.float32)
+    canvas[:, :, 0:3] = 0.04
+    canvas[:, :, 3] = 1.0
+    canvas[:, 0:wl, :] = arr_l
+    canvas[:, wl + divider_px : total_w, :] = arr_r
+
+    comp = bpy.data.images.new("_SideBySide", width=total_w, height=h, alpha=True)
+    comp.pixels.foreach_set(canvas.reshape(-1))
+    comp.filepath_raw = str(out_path)
+    comp.file_format = "PNG"
+    comp.save()
+    bpy.data.images.remove(comp)
+    return out_path
+
+
 def render_family_lineup(
     roots_and_offsets: Sequence[tuple[bpy.types.Object, float]],
     out_path: Path,
@@ -1488,43 +2047,12 @@ def render_family_lineup(
     for r_obj, x_off in roots_and_offsets:
         r_obj.location = u_pos(x_off, 0.0, 0.0)
 
-    # Build 1.46 m stand-in box for 07 at the viewer-left (+X) end of the lineup
-    rover_x = 3.55
-    mb = MeshBuilder("_Rover07StandIn", pivot_u=(rover_x, 0.0, 0.0))
-    # Exact 1.46 m tall stand-in box (1.52 m wide x 1.46 m high x 2.04 m long) with belt stripe & visor marker
-    mb.add_bevel_box(
-        center_u=(rover_x, rover_height * 0.5, 0.0),
-        size_u=(rover_width, rover_height, rover_length),
-        mat="R1_CreamEnamel",
-        bevel=0.04,
-        segments=2,
+    rover_box = build_rover_07_standin(
+        pos_u=(3.55, 0.0, 0.0),
+        rover_width=rover_width,
+        rover_height=rover_height,
+        rover_length=rover_length,
     )
-    # Orange stripe at 07's beltline (y = 0.65 m)
-    mb.add_bevel_box(
-        center_u=(rover_x, 0.65, 0.0),
-        size_u=(rover_width + 0.016, 0.085, rover_length + 0.016),
-        mat="R1_OrangeStripe",
-        bevel=0.006,
-        segments=1,
-    )
-    # Dark glass visor bezel + amber eyes near the top of the 1.46 m stand-in box
-    mb.add_bevel_box(
-        center_u=(rover_x, 1.18, rover_length * 0.5 + 0.01),
-        size_u=(0.56, 0.28, 0.04),
-        mat="R1_DarkGlass",
-        bevel=0.01,
-        segments=1,
-    )
-    for eye_x in (-0.12, 0.12):
-        mb.add_bevel_box(
-            center_u=(rover_x + eye_x, 1.18, rover_length * 0.5 + 0.028),
-            size_u=(0.07, 0.12, 0.02),
-            mat="R1_LampAmber",
-            bevel=0.005,
-            segments=1,
-        )
-    rover_box = mb.build_object()
-    _init_solid_vcol(rover_box, (0.95, 0.05, 0.0, 1.0))
 
     # Wide lunar regolith shelf plinth under the whole family
     plinth_mb = MeshBuilder("_FamilyShelf", pivot_u=(0.0, -0.08, 0.0))
