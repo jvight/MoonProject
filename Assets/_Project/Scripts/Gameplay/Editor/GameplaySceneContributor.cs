@@ -51,9 +51,19 @@ namespace MoonProject.Gameplay.Editor
         public void Contribute(SceneBuildContext context)
         {
             var existingVisuals = UnityEditor.AssetDatabase.LoadAssetAtPath<GameplayVisuals>(GameplayAssetPaths.Visuals);
-            if (existingVisuals == null || existingVisuals.HologramValid == null || existingVisuals.HologramInvalid == null)
+            if (existingVisuals != null && (existingVisuals.HologramValid == null || existingVisuals.HologramInvalid == null))
             {
-                GameplayMaterialBuilder.Build();
+                var holoValid = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(ArtPaths.HologramMaterial);
+                var holoInvalid = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(ArtPaths.HologramInvalidMaterial);
+                if (holoValid == null || holoInvalid == null)
+                {
+                    HologramMaterialBuilder.Build();
+                    holoValid = HologramMaterialBuilder.LoadMaterial(false);
+                    holoInvalid = HologramMaterialBuilder.LoadMaterial(true);
+                }
+
+                existingVisuals.PopulateHologram(holoValid, holoInvalid);
+                UnityEditor.EditorUtility.SetDirty(existingVisuals);
             }
 
             if (UnityEditor.AssetDatabase.LoadAssetAtPath<BuildingTuning>(GameplayAssetPaths.BuildingTuning) == null)

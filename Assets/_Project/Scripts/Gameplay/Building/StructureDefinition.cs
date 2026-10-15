@@ -233,14 +233,5 @@ namespace MoonProject.Gameplay
 
             return null;
         }
-
-        private void OnValidate()
-        {
-            string problem = Validate(out _);
-            if (problem != null)
-            {
-                Debug.LogError($"{nameof(StructureDefinition)}: {problem}.", this);
-            }
-        }
     }
 }

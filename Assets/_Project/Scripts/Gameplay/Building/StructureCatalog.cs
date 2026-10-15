@@ -104,19 +104,5 @@ namespace MoonProject.Gameplay
 
             return null;
         }
-
-        private void OnValidate()
-        {
-            if (_structures == null || _structures.Length == 0)
-            {
-                return;
-            }
-
-            string problem = Validate(out _);
-            if (problem != null)
-            {
-                Debug.LogError($"{nameof(StructureCatalog)}: {problem}.", this);
-            }
-        }
     }
 }
