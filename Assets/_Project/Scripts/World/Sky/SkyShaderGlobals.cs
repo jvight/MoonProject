@@ -32,6 +32,10 @@ namespace MoonProject.World
         private static readonly int EarthGlow = Shader.PropertyToID("_MoonEarthGlow");
         private static readonly int EarthAtmosphere = Shader.PropertyToID("_MoonEarthAtmosphere");
         private static readonly int ShootingStars = Shader.PropertyToID("_MoonShootingStars");
+        private static readonly int SunDirection = Shader.PropertyToID("_MoonSunDirection");
+        private static readonly int SunColor = Shader.PropertyToID("_MoonSunColor");
+        private static readonly int EclipseRing = Shader.PropertyToID("_MoonEclipseRing");
+        private static readonly int EarthEclipse = Shader.PropertyToID("_MoonEarthEclipse");
 
         public static void Apply(SkySettings sky)
         {
@@ -80,6 +84,84 @@ namespace MoonProject.World
                 WithAlpha(sky.EarthAtmosphere.linear * sky.EarthRim, EarthRimExponent));
             Shader.SetGlobalVector(ShootingStars,
                 new Vector4(sky.ShootingStarPeriod, sky.ShootingStarDuration, sky.ShootingStarBrightness, 0f));
+            Shader.SetGlobalVector(SunDirection, Vector4.zero);
+            Shader.SetGlobalVector(SunColor, Vector4.zero);
+            Shader.SetGlobalVector(EclipseRing, Vector4.zero);
+            Shader.SetGlobalVector(EarthEclipse, Vector4.zero);
+        }
+
+        /// <summary>
+        /// Updates the sky and Earth shader globals for the live <see cref="SunClock"/> state and smoothed local
+        /// sunlight blend (0 = earthlit night / eclipse, 1 = look C sunlit). Allocation-free.
+        /// </summary>
+        public static void ApplyCycle(SkySettings sky, SkyCycleSettings cycle, SunClock clock, float sunlitBlend)
+        {
+            if (sky == null || cycle == null || clock == null)
+            {
+                throw new System.ArgumentNullException(sky == null ? nameof(sky)
+                    : cycle == null ? nameof(cycle) : nameof(clock));
+            }
+
+            float sunlit = Mathf.Clamp01(sunlitBlend);
+            float eclipse = Mathf.Clamp01(clock.EclipseFactor);
+
+            Color skyTop = Color.Lerp(sky.SkyTop, cycle.SunlitSkyTop, sunlit).linear;
+            Color horizonGlow = Color.Lerp(sky.HorizonGlow, cycle.SunlitHorizonGlow, sunlit).linear * (1f - eclipse * 0.55f);
+            Color horizonBand = Color.Lerp(sky.HorizonBand, cycle.SunlitHorizonBand, sunlit).linear * (1f - eclipse * 0.45f);
+            Shader.SetGlobalVector(SkyTop, WithAlpha(skyTop, sky.GradientExponent));
+            Shader.SetGlobalVector(HorizonGlow, WithAlpha(horizonGlow, sky.HorizonGlowHeight));
+            Shader.SetGlobalVector(HorizonBand, WithAlpha(horizonBand, sky.HorizonBandHeight));
+
+            float starScale = Mathf.Lerp(Mathf.Lerp(1f, cycle.SunlitStarScale, sunlit), cycle.EclipseStarScale, eclipse);
+            Shader.SetGlobalVector(StarParams,
+                new Vector4(sky.StarDensity, sky.StarBrightness * starScale, sky.StarPowerLaw, sky.StarSize));
+
+            Vector3 toEarth = sky.EarthDirection;
+            Vector3 toSun = clock.SunDirection;
+            float earthRadiusRad = sky.EarthDiameter * 0.5f * Mathf.Deg2Rad;
+            float sunRadiusRad = cycle.SunDiameter * 0.5f * Mathf.Deg2Rad;
+
+            // Keep a soft red-orange atmospheric ring while the Sun is behind or grazing Earth's limb.
+            float separation = Mathf.Acos(Mathf.Clamp(Vector3.Dot(toSun, toEarth), -1f, 1f));
+            float limbProximity = 1f - SmoothStep01(earthRadiusRad - sunRadiusRad,
+                earthRadiusRad + sunRadiusRad * 3.5f, separation);
+            float ringWeight = Mathf.Max(eclipse, limbProximity * 0.75f);
+
+            float normalAtmoScale = 1f - ringWeight * 0.75f;
+            Shader.SetGlobalVector(EarthHalo,
+                WithAlpha(sky.EarthAtmosphere.linear * (sky.EarthHaloStrength * normalAtmoScale), sky.EarthHaloSize));
+            Shader.SetGlobalVector(EarthLimb,
+                WithAlpha(sky.EarthAtmosphere.linear * (sky.EarthLimb * normalAtmoScale), sky.EarthLimbWidth));
+
+            // LofiEarth's visible hemisphere has normalWS pointing along +toEarth at disc centre (because axisZ = -toEarth
+            // reflects triangle winding), so reflecting toSun along toEarth makes dot(normalWS, earthSun) = -1 when the
+            // Sun is behind Earth (new Earth in eclipse) and +1 when the Sun is opposite Earth (full Earth at night),
+            // while preserving the right/up crescent direction.
+            Vector3 earthSun = (toSun - 2f * Vector3.Dot(toSun, toEarth) * toEarth).normalized;
+            float nightBrightness = Mathf.Lerp(sky.EarthNightBrightness, sky.EarthNightBrightness * 0.25f, ringWeight);
+            Shader.SetGlobalVector(EarthSun, WithAlpha(earthSun, nightBrightness));
+
+            float nightSideFacing = 1f - SmoothStep01(0.0f, 0.25f, clock.EarthPhase);
+            Color cityColor = cycle.EclipseCityLightColor.linear * (cycle.EclipseCityLightStrength * nightSideFacing);
+            Shader.SetGlobalVector(EarthEclipse, WithAlpha(cityColor, ringWeight));
+
+            Color ringColor = cycle.EclipseRingColor.linear * (cycle.EclipseRingStrength * ringWeight);
+            Shader.SetGlobalVector(EclipseRing, WithAlpha(ringColor, ringWeight > 1e-4f ? cycle.EclipseRingWidth : 0f));
+
+            Shader.SetGlobalVector(SunDirection, WithAlpha(toSun, sunRadiusRad));
+            Shader.SetGlobalVector(SunColor,
+                WithAlpha(cycle.SunDiscColor.linear * cycle.SunCoreIntensity, cycle.SunCoronaStrength));
+        }
+
+        private static float SmoothStep01(float edge0, float edge1, float x)
+        {
+            if (Mathf.Abs(edge1 - edge0) < 1e-6f)
+            {
+                return x >= edge1 ? 1f : 0f;
+            }
+
+            float t = Mathf.Clamp01((x - edge0) / (edge1 - edge0));
+            return t * t * (3f - 2f * t);
         }
 
         private static Vector4 WithAlpha(Color color, float alpha)

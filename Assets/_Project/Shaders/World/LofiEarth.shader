@@ -42,6 +42,8 @@ Shader "MoonProject/World/LofiEarth"
             float4 _MoonEarthSun;        // xyz world direction toward the sun lighting Earth, w night brightness
             float4 _MoonEarthGlow;       // x lit-side emissive boost, y spin speed (radians per second)
             float4 _MoonEarthAtmosphere; // rgb rim colour (linear), a fresnel exponent
+            float4 _MoonEarthEclipse;    // rgb night-side city light colour (linear), a eclipse rim blend (0..1)
+            float4 _MoonEclipseRing;     // rgb refracted eclipse ring colour (linear), a ring width
 
             struct Attributes
             {
@@ -56,6 +58,7 @@ Shader "MoonProject/World/LofiEarth"
                 float3 normalWS : TEXCOORD0;
                 float3 viewWS : TEXCOORD1;
                 float3 color : TEXCOORD2;
+                float3 positionOS : TEXCOORD3;
             };
 
             float3 Spin(float3 v, float s, float c)
@@ -72,7 +75,8 @@ Shader "MoonProject/World/LofiEarth"
             {
                 float s, c;
                 sincos(_Time.y * _MoonEarthGlow.y, s, c);
-                float3 offset = (_MoonEarthDirection.xyz + ToWorld(Spin(input.positionOS, s, c)) * _MoonEarthAxisX.w)
+                float3 spunPos = Spin(input.positionOS, s, c);
+                float3 offset = (_MoonEarthDirection.xyz + ToWorld(spunPos) * _MoonEarthAxisX.w)
                     * EARTH_DISTANCE;
 
                 Varyings output;
@@ -85,6 +89,7 @@ Shader "MoonProject/World/LofiEarth"
                 output.normalWS = ToWorld(Spin(input.normalOS, s, c));
                 output.viewWS = -normalize(offset);
                 output.color = input.color.rgb;
+                output.positionOS = input.positionOS;
                 return output;
             }
 
@@ -93,8 +98,19 @@ Shader "MoonProject/World/LofiEarth"
                 float3 normal = normalize(input.normalWS);
                 float lit = smoothstep(-0.12, 0.4, dot(normal, _MoonEarthSun.xyz));
                 float3 color = input.color * lerp(_MoonEarthSun.w, 1.0, lit) * _MoonEarthGlow.x;
-                float rim = pow(1.0 - saturate(dot(normal, input.viewWS)), _MoonEarthAtmosphere.a);
-                color += _MoonEarthAtmosphere.rgb * rim * (0.3 + 0.7 * lit);
+
+                // Faint warm city lights on dark continent facets when Earth's night side faces us.
+                float isLand = step(input.color.b, input.color.g) * step(input.color.r, input.color.g);
+                float3 cell = floor(input.positionOS * 22.0);
+                float h = frac(sin(dot(cell, float3(12.9898, 78.233, 37.719))) * 43758.5453);
+                float speck = smoothstep(0.72, 0.90, h) * isLand * (1.0 - lit);
+                color += _MoonEarthEclipse.rgb * speck;
+
+                float viewFacing = saturate(dot(normal, -input.viewWS));
+                float rim = pow(1.0 - viewFacing, _MoonEarthAtmosphere.a);
+                float3 normalRim = _MoonEarthAtmosphere.rgb * (0.3 + 0.7 * lit);
+                float3 eclipseRim = _MoonEclipseRing.rgb * 0.55;
+                color += lerp(normalRim, eclipseRim, _MoonEarthEclipse.a) * rim;
                 return half4(color, 1.0);
             }
             ENDHLSL

@@ -40,6 +40,9 @@ Shader "MoonProject/World/LofiSky"
             float4 _MoonEarthLimb;       // rgb limb colour (linear), a limb width as a fraction of the radius
             float4 _MoonEarthSun;        // xyz world direction toward the sun lighting Earth
             float4 _MoonShootingStars;   // x period, y duration, z brightness
+            float4 _MoonSunDirection;    // xyz unit direction to the Sun, w angular radius (radians)
+            float4 _MoonSunColor;        // rgb hot core colour (linear), a soft corona strength (linear)
+            float4 _MoonEclipseRing;     // rgb refracted eclipse ring colour (linear), a ring width fraction of radius
 
             struct Attributes
             {
@@ -211,6 +214,27 @@ Shader "MoonProject/World/LofiSky"
                 float sunward = dot(normalize(across + 1e-6), _MoonEarthSun.xyz);
                 float limb = exp(-outside / max(radius * _MoonEarthLimb.a, 1e-5));
                 color += _MoonEarthLimb.rgb * limb * saturate(0.3 + 0.7 * sunward);
+
+                if (_MoonEclipseRing.a > 0.0)
+                {
+                    float ringBand = abs(earthAngle - radius) / max(radius * _MoonEclipseRing.a, 1e-4);
+                    float eclipseRing = exp(-ringBand * ringBand * 1.6);
+                    color += _MoonEclipseRing.rgb * eclipseRing * (0.65 + 0.35 * saturate(sunward));
+                }
+
+                if (_MoonSunDirection.w > 0.0)
+                {
+                    float sunRadius = _MoonSunDirection.w;
+                    float sunAngle = acos(clamp(dot(dir, _MoonSunDirection.xyz), -1.0, 1.0));
+                    float sunOutside = max(sunAngle - sunRadius, 0.0);
+                    float earthMask = smoothstep(radius * 0.992, radius * 1.006, earthAngle);
+                    float horizonMask = smoothstep(-sunRadius, sunRadius * 0.5, up);
+                    float core = smoothstep(sunRadius, sunRadius * 0.35, sunAngle);
+                    float corona = exp(-sunOutside / max(sunRadius * 2.2, 1e-4));
+                    float3 sunTone = _MoonSunColor.rgb;
+                    float3 coronaTone = sunTone / max(max(sunTone.r, max(sunTone.g, sunTone.b)), 1.0);
+                    color += (sunTone * core + coronaTone * (_MoonSunColor.a * corona)) * earthMask * horizonMask;
+                }
 
                 color += ShootingStar(dir, pixel) * above;
                 return half4(color, 1.0);
