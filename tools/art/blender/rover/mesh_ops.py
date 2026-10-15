@@ -137,16 +137,15 @@ def create_mesh_node(name, bm, unity_loc, parent=None, mat_list=None, custom_uv=
     bm.normal_update()
 
     mesh = bpy.data.meshes.new(name)
+    if mat_list:
+        for mat in mat_list:
+            mesh.materials.append(mat)
     bm.to_mesh(mesh)
     bm.free()
 
     sharp_deg = cfg.get("weighted_normal_sharp_deg", 42.0) if cfg else 42.0
     area_pow = cfg.get("weighted_normal_area_power", 1.6) if cfg else 1.6
     apply_weighted_normals(mesh, sharp_angle_deg=sharp_deg, area_power=area_pow)
-
-    if mat_list:
-        for mat in mat_list:
-            mesh.materials.append(mat)
 
     obj = bpy.data.objects.new(name, mesh)
     bpy.context.scene.collection.objects.link(obj)
@@ -156,6 +155,117 @@ def create_mesh_node(name, bm, unity_loc, parent=None, mat_list=None, custom_uv=
     obj.rotation_euler = (0.0, 0.0, 0.0)
     obj.scale = (1.0, 1.0, 1.0)
     return obj
+
+
+def merge_child_meshes_into_host(host_obj, child_names, cfg=None):
+    """
+    Merge each named child MESH object in child_names into host_obj's Mesh data in world space,
+    converting the child object in-place into an EMPTY node at the exact same pivot and preserving
+    all parent-child relationships and hierarchy node names.
+    """
+    bpy.context.view_layer.update()
+    host_mesh = host_obj.data
+    mat_list = [m for m in host_mesh.materials if m is not None]
+    bm_host = bmesh.new()
+    bm_host.from_mesh(host_mesh)
+    uv_host = bm_host.loops.layers.uv.verify()
+    host_inv = host_obj.matrix_world.inverted()
+
+    for child_name in child_names:
+        child_obj = bpy.data.objects.get(child_name)
+        if child_obj is None or child_obj.type != "MESH" or child_obj == host_obj:
+            continue
+
+        rel_mat = host_inv @ child_obj.matrix_world
+        child_mesh = child_obj.data
+        child_mats = list(child_mesh.materials)
+        mat_remap = {}
+        for idx, c_mat in enumerate(child_mats):
+            if c_mat is None:
+                mat_remap[idx] = 0
+                continue
+            existing_idx = next((i for i, m in enumerate(mat_list) if m.name == c_mat.name), None)
+            if existing_idx is None:
+                existing_idx = len(mat_list)
+                mat_list.append(c_mat)
+            mat_remap[idx] = existing_idx
+
+        bm_child = bmesh.new()
+        bm_child.from_mesh(child_mesh)
+        uv_child = bm_child.loops.layers.uv.verify()
+
+        vert_map = {}
+        for v in bm_child.verts:
+            vert_map[v] = bm_host.verts.new(rel_mat @ v.co)
+        for f in bm_child.faces:
+            nf = bm_host.faces.new([vert_map[v] for v in f.verts])
+            nf.material_index = mat_remap.get(f.material_index, 0)
+            nf.smooth = True
+            for loop_h, loop_c in zip(nf.loops, f.loops):
+                loop_h[uv_host].uv = tuple(loop_c[uv_child].uv)
+        bm_child.free()
+
+        parent_obj = child_obj.parent
+        loc = Vector(child_obj.location)
+        rot = tuple(child_obj.rotation_euler)
+        scl = Vector(child_obj.scale)
+        direct_children = list(child_obj.children)
+
+        child_obj.name = f"__obsolete_{child_name}"
+        empty_obj = bpy.data.objects.new(child_name, None)
+        empty_obj.empty_display_type = "PLAIN_AXES"
+        empty_obj.empty_display_size = 0.03
+        bpy.context.scene.collection.objects.link(empty_obj)
+        if parent_obj is not None:
+            empty_obj.parent = parent_obj
+        empty_obj.location = loc
+        empty_obj.rotation_euler = rot
+        empty_obj.scale = scl
+
+        for ch in direct_children:
+            ch_loc = Vector(ch.location)
+            ch_rot = tuple(ch.rotation_euler)
+            ch_scl = Vector(ch.scale)
+            ch.parent = empty_obj
+            ch.location = ch_loc
+            ch.rotation_euler = ch_rot
+            ch.scale = ch_scl
+
+        bpy.data.objects.remove(child_obj, do_unlink=True)
+        if child_mesh.users == 0:
+            bpy.data.meshes.remove(child_mesh, do_unlink=True)
+        bpy.context.view_layer.update()
+
+    bm_host.normal_update()
+    host_mesh.materials.clear()
+    for mat in mat_list:
+        host_mesh.materials.append(mat)
+    bm_host.to_mesh(host_mesh)
+    bm_host.free()
+
+    sharp_deg = cfg.get("weighted_normal_sharp_deg", 42.0) if cfg else 42.0
+    area_pow = cfg.get("weighted_normal_area_power", 1.6) if cfg else 1.6
+    apply_weighted_normals(host_mesh, sharp_angle_deg=sharp_deg, area_power=area_pow)
+
+
+def prune_unused_materials(mesh_objects):
+    """Remove any material slots that have zero polygons assigned to them to minimize draw calls."""
+    for obj in mesh_objects:
+        if obj.type != "MESH" or obj.data is None:
+            continue
+        mesh = obj.data
+        if len(mesh.polygons) == 0 or len(mesh.materials) <= 1:
+            continue
+        used_indices = sorted({p.material_index for p in mesh.polygons if 0 <= p.material_index < len(mesh.materials)})
+        if not used_indices or len(used_indices) == len(mesh.materials):
+            continue
+        remap = {old_idx: new_idx for new_idx, old_idx in enumerate(used_indices)}
+        new_mats = [mesh.materials[old_idx] for old_idx in used_indices]
+        remapped_indices = [remap.get(p.material_index, 0) for p in mesh.polygons]
+        mesh.materials.clear()
+        for m in new_mats:
+            mesh.materials.append(m)
+        mesh.polygons.foreach_set("material_index", remapped_indices)
 
 
 def assign_box_uvs(bm, cfg=None, mat_list=None):

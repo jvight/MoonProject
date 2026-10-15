@@ -90,10 +90,12 @@ def enhance_materials_with_vertex_color_for_render(mats):
         "R1_SagePatch": (0.54, 0.56, 0.53, 1.0),
         "R1_GreyMetal": (0.52, 0.55, 0.60, 1.0),
         "R1_Copper": (0.90, 0.66, 0.34, 1.0),
+        "R1_Brass": (0.96, 0.84, 0.50, 1.0),
         "R1_BareSteel": (0.72, 0.75, 0.78, 1.0),
         "R1_Rubber": (0.20, 0.19, 0.18, 1.0),
     }
     for name, mat in mats.items():
+        mat.use_backface_culling = True
         if name in ("R1_Screen", "R1_LampAmber"):
             continue
         nt = mat.node_tree
