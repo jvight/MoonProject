@@ -4,7 +4,25 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 00000000000000000000000000. LATEST (2026-10-15 ~00:40): master plan for the owner (Claude Docs); audition round 2 up
+## 000000000000000000000000000. LATEST (2026-10-15 ~08:10): 0.5.6 mostly landed; art direction R1; 07 redesign rounds
+- **origin/main fdc9a2b8 (verified, pushed).** 0.5.6 landed since 6a06f8d6: story parts ride in 07's hold through the
+  CargoHatch (7cc5fa82), garage clarity + the ticker in the guidance slot (0e776c01; d16f6dbc fixed a stale key in
+  PlaceCardTests), the scan beam (036de26c), the bay arch z-fight (57dbe6b6), the belly lift without its hidden
+  condition (fdc9a2b8).
+- **0.5.6 still open:** listening without sky pillars (agy-listen: 4 commits, resumed to finish checks + report), the
+  vi text pass (`docs/design/text-audit-0.5.5.md`), then bundleVersion 0.5.6, `verify --explicit`, build.
+  Cleanup candidate: `LiftStation.StepGuidance` re-publishes `NextStepChanged` over progression's line; move the lift's
+  lines into the progression step flow.
+- **Owner decisions (memory art-direction-r1):** look = **R1 "stylized realism"** (Subnautica-like), not low-poly.
+  07: three heads (round 1) and eight body ideas (round 2, `agy-face/Logs/round2`) rejected; the owner wants a 07 whose
+  **screen shows its feelings** -> agy-face round 3 (five screen-face 07s) running. Style board (rounds) at
+  https://claude.ai/artifact/1cef9FuajG1R6aeYR3Uj93 (db docs styleboard/choice2, choice3).
+- **R1 look lab:** agy-r1 (experiment branch, never land as is): URP R1 shader with edge wear + dust, regolith material,
+  crate/rocks/wreck panel modelled in Blender via MCP, a lab scene, captures + numbers.
+- **agy notes:** box_check trial merges leave staged residue in worktrees (reset before landing); briefs must say
+  "box_check every touched domain on the FINAL commit" and "run Unity batch work in the foreground".
+
+## 00000000000000000000000000. (prev) (2026-10-15 ~00:40): master plan for the owner (Claude Docs); audition round 2 up
 - **origin/main 6a06f8d6 (verified, pushed ~01:10):** + agy-ui2 (Tab = one fixed frame: 07's hold left, 07's
   portrait + sockets right, the docked transfer view in the same frame; no memory card at a friend's wake).
 - **Style board for the owner (D1):** https://claude.ai/artifact/1cef9FuajG1R6aeYR3Uj93 (in-game V0-V3 at 5 poses +
