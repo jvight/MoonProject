@@ -1,0 +1,41 @@
+{
+  "model": "vehicle_pad",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Copper",
+    "R1_CreamEnamel",
+    "R1_DarkGlass",
+    "R1_GoldFoil",
+    "R1_GreyMetal",
+    "R1_LampAmber",
+    "R1_OrangeStripe",
+    "R1_Rubber",
+    "R1_SagePatch",
+    "R1_Screen",
+    "R1_SolarCell"
+  ],
+  "max_triangles": 7000,
+  "max_meshes": 16,
+  "max_draw_calls": 32,
+  "allow_rotation": ["Socket_Power_*"],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "VehiclePad": { "pivot": [0.0, 0.0, 0.0] },
+    "Stage_1": { "pivot": [0.0, 0.0, 0.0] },
+    "Stage_2": { "pivot": [0.0, 0.0, 0.0] },
+    "Stage_3": { "pivot": [0.0, 0.0, 0.0] },
+    "Stage_4": { "pivot": [0.0, 0.0, 0.0] },
+    "Socket_Power_1": { "pivot": [-1.36, -0.36, 0.16] },
+    "CraneBoom": { "pivot": [-1.18, -0.62, 1.56] },
+    "HoistHook": { "pivot": [0.08, 0.08, 1.66] },
+    "BoomLamp": { "pivot": [-0.12, -0.04, 1.58] },
+    "RampLip": { "pivot": [0.0, 1.24, 0.12] },
+    "BollardLamp_1": { "pivot": [1.36, 0.98, 0.4] },
+    "BollardLamp_2": { "pivot": [-1.36, 0.98, 0.4] },
+    "BollardLamp_3": { "pivot": [1.36, -0.98, 0.4] },
+    "BollardLamp_4": { "pivot": [-1.36, -0.98, 0.4] }
+  }
+}

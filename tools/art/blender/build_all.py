@@ -11,17 +11,20 @@ if str(THIS_DIR) not in sys.path:
     sys.path.insert(0, str(THIS_DIR))
 sys.dont_write_bytecode = True
 
+import antenna_mast  # noqa: E402
 import cargo_lander  # noqa: E402
 import charging_pad  # noqa: E402
 import power_pylon  # noqa: E402
 import r1kit  # noqa: E402
 import rocks  # noqa: E402
 import solar_array  # noqa: E402
+import upgrade_bay  # noqa: E402
+import vehicle_pad  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
-        description="Build ChargingPad, SolarArray, PowerPylon, CargoLander, and Rock_00..05 FBX models and preview renders."
+        description="Build ChargingPad, SolarArray, PowerPylon, UpgradeBay, AntennaMast, VehiclePad, CargoLander, and Rock_00..09 FBX models and preview renders."
     )
     parser.add_argument(
         "--models-dir",
@@ -83,7 +86,40 @@ def main(argv: list[str] | None = None) -> None:
         ]
     )
 
-    # 4. Build & export CargoLander (+ diagnostic and showcase renders)
+    # 4. Build & export UpgradeBay (+ diagnostic, scale_07, and compare renders)
+    upgrade_bay.main(
+        [
+            "--fbx-out",
+            str(models_dir / "UpgradeBay.fbx"),
+            "--renders-dir",
+            str(renders_dir),
+            *skip_flag,
+        ]
+    )
+
+    # 5. Build & export AntennaMast (+ diagnostic and compare renders)
+    antenna_mast.main(
+        [
+            "--fbx-out",
+            str(models_dir / "AntennaMast.fbx"),
+            "--renders-dir",
+            str(renders_dir),
+            *skip_flag,
+        ]
+    )
+
+    # 6. Build & export VehiclePad (+ diagnostic and compare renders)
+    vehicle_pad.main(
+        [
+            "--fbx-out",
+            str(models_dir / "VehiclePad.fbx"),
+            "--renders-dir",
+            str(renders_dir),
+            *skip_flag,
+        ]
+    )
+
+    # 7. Build & export CargoLander (+ diagnostic and showcase renders)
     cargo_lander.main(
         [
             "--fbx-out",
@@ -94,7 +130,7 @@ def main(argv: list[str] | None = None) -> None:
         ]
     )
 
-    # 5. Build & export Rock_00..Rock_09
+    # 8. Build & export Rock_00..Rock_09
     rocks.main(
         [
             "--out-dir",
