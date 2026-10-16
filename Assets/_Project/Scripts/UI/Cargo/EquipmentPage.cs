@@ -48,6 +48,7 @@ namespace MoonProject.UI
         private readonly VisualElement _tooltipGlyphHolder;
         private readonly Label _ghost;
         private readonly LeaderPainter _leaders;
+        private readonly RoverDiagramPainter _diagram;
         private readonly Vector2[] _points = new Vector2[SocketCount];
         private readonly bool[] _placedMask = new bool[SocketCount];
         private readonly bool[] _wantsLabel = new bool[SocketCount];
@@ -88,7 +89,7 @@ namespace MoonProject.UI
             _tooltipGlyph = new GlyphView(_tooltipGlyphHolder, Require<Label>(root, "seven-tooltip-glyph-label"));
             _ghost = Require<Label>(root, "seven-ghost");
             _leaders = new LeaderPainter(Require<VisualElement>(root, "seven-leaders"), SocketCount);
-            _portrait.style.backgroundImage = Background.FromRenderTexture(portrait.Texture);
+            _diagram = new RoverDiagramPainter(_portrait);
             for (int i = 0; i < SocketCount; i++)
             {
                 _sockets[i] = BuildSocket(i);
@@ -237,7 +238,8 @@ namespace MoonProject.UI
             for (int i = 0; i < SocketCount; i++)
             {
                 SocketView view = _sockets[i];
-                bool placed = _portraitSource.TryGetSocketViewport(view.Id, out Vector2 uv) && sized;
+                bool placed = _portraitSource.TryGetSocketViewport(view.Id, out Vector2 _) && sized;
+                Vector2 uv = RoverDiagramPainter.SocketViewport(view.Id);
                 if (placed != view.Placed)
                 {
                     view.Placed = placed;
@@ -303,16 +305,12 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// Where the portrait's picture sits inside its element: as large as fits, centred, so the columns of names
-        /// can take the room left and right of it.
+        /// Where the 07 v3 schematic diagram sits inside its element: as large as fits, centred, so the columns of
+        /// names can take the room left and right of it.
         /// </summary>
-        private Rect ImageRect(Rect area)
+        private static Rect ImageRect(Rect area)
         {
-            RenderTexture texture = _portraitSource.Texture;
-            float aspect = (float)texture.width / texture.height;
-            float width = Mathf.Min(area.width, area.height * aspect);
-            float height = width / aspect;
-            return new Rect((area.width - width) * 0.5f, (area.height - height) * 0.5f, width, height);
+            return RoverDiagramPainter.FrameRect(new Rect(0f, 0f, area.width, area.height));
         }
 
         /// <summary>
