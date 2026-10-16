@@ -148,3 +148,44 @@ When exporting from Blender (`File -> Export -> FBX (.fbx)`) into `Assets/_Proje
 - `importAnimation = false`, `importCameras = false`, `importLights = false`
 - Validates all source material slot names against `R1MaterialRecipes` in `OnPreprocessMaterialDescription` and validates `mesh.colors32.Length > 0` in `OnPostprocessModel`.
 - `R1ModelBuilder` (`Art/R1Models`, order 106) wraps each FBX into `Assets/_Project/Generated/Art/R1/Models/<same relative path>.prefab` with generated library materials assigned.
+
+---
+
+## 9. Shared Blender Modelling Kit (`tools/art/blender/r1kit.py`)
+
+All procedural Blender builders across the project — the 10 base structures, `CargoLander`, `Rock_00..09`, the 5 Lumen Station ruins, Rover 07 (`RoverModel`, `SolarWing`, `Kit_TapeDeck`), and all 10 rover upgrade kits (`Kit_LampBar` .. `ScanFan`) — share a single unified modelling kit at `tools/art/blender/r1kit.py`. Do not create duplicate mesh/UV/vertex-colour/export helpers in sub-packages.
+
+### Core Capabilities & Entry Points
+1. **Scene Reset & Deterministic FBX Hooks (`reset_scene`)**
+   - `r1kit.reset_scene()` clears all Blender objects, meshes, materials, lights, cameras, and collections, sets metric units (`scale_length = 1.0`) and `30 fps`, and installs deterministic FBX timestamp/UUID hooks (`_install_deterministic_fbx_hooks`) so repeated builds produce byte-identical `.fbx` files.
+2. **Coordinate Mapping (`u_pos`, `u_vec`)**
+   - Converts Unity coordinates `(ux, uy, uz)` (`+X` right, `+Y` up, `+Z` forward) to Blender world coordinates `(ux, uz, uy)` (`+X` right, `+Y` forward, `+Z` up). Accepts either three floats or a 3-sequence.
+3. **Scene Hierarchy & Node Creation (`create_empty`, `create_mesh_node`, `merge_child_meshes_into_host`, `prune_unused_materials`)**
+   - `create_empty(name, parent=None, pivot_u=(0, 0, 0), *, local_space=False, empty_size=0.12)`: creates an Empty node in either world-space Unity coordinates (`local_space=False`, compensating for parent `location`) or parent-local Unity coordinates (`local_space=True`, used by Rover 07 and its kits).
+   - `create_mesh_node(name, bm, unity_loc=(0, 0, 0), parent=None, mat_list=None, sharp_deg=42.0, cfg=None)`: converts a `BMesh` into a scene `MESH` object, ensures outward normals per shell, applies area-weighted loop normals, projects triplanar UVs, and initialises the `Col` byte colour layer.
+   - `merge_child_meshes_into_host(host_obj, child_names, cfg)`: merges static child meshes into their animated parent mesh while preserving empty socket/locator transforms.
+4. **BMesh Primitives & High-Level `MeshBuilder`**
+   - **Direct `BMesh` primitives** (operating in Unity `(ux, uy, uz)` coordinates with automatic conversion into Blender `BMesh` space):
+     - `append_beveled_box(bm, size_xyz, center_xyz, bevel_width, bevel_segments, mat_idx, rot_euler, guard_inset=True, *, in_place=False)`
+     - `append_cylinder(bm, radius1, radius2, length, axis, center_xyz, segments, bevel_width, bevel_segments, mat_idx, rot_euler, *, cap_tris=True, in_place=False)`
+     - `append_torus(bm, major_radius, minor_radius, axis, center_xyz, major_seg, minor_seg, mat_idx, rot_euler, *, in_place=False)`
+     - `append_lathe_profile(bm, profile_rz, axis, center_xyz, segments, mat_idx, rot_euler, ring_mat_indices=None, auto_chamfer=True)`
+     - `append_prism_extrusion(bm, poly_2d, depth, axis, center_xyz, bevel_width, bevel_segments, mat_idx, rot_euler)`
+     - `append_spherical_dome(bm, radius, dome_height, axis, center_xyz, segments, rings, mat_idx, rot_euler, *, collar_depth=0.008, closed_bottom=False)`
+     - `append_helical_coil(...)`, `append_hex_bolt(..., include_washer=True, closed_bottom=False, segments=6)`, `append_dome_rivet(...)`
+   - **`MeshBuilder` class** (fluent builder used by structures, lander, rocks, and ruins):
+     - Wraps `append_beveled_box(..., in_place=True)`, `append_cylinder(..., cap_tris=False, in_place=True)`, and `append_torus(..., in_place=True)` alongside domain helpers (`add_sphere`, `add_cone`, `add_lathe`, `add_extruded_polygon`, `add_tube_along_points`, `add_bolt_circle`, `add_rivet_row`, `add_signage_plate`) and finalises via `build_object(...)`.
+5. **Normals, UVs, Vertex Colours & FBX Export**
+   - `ensure_outward_normals(bm, *, per_shell=False)`: ensures outward-facing winding (`per_shell=True` inspects each disconnected manifold island independently; `per_shell=False` uses `bmesh.ops.recalc_face_normals`).
+   - `apply_weighted_normals(target, sharp_angle_deg=42.0, area_power=1.6, *, use_modifier=False, weight=50)`: computes face-area-weighted custom split normals directly (`use_modifier=False`, default for rover/kits) or applies Blender's `WEIGHTED_NORMAL` modifier (`use_modifier=True`, used by structures/ruins/rocks/lander).
+   - `apply_triplanar_uvs(target, texel_scale=0.85, *, center_lamp_amber=False, mat_list=None)`: applies box/triplanar UV projection onto `UVMap` (`center_lamp_amber=True` maps `R1_LampAmber` faces into the hot-core centre of the emission texture).
+   - `bake_vertex_colors(root, footprint_radius=2.0, bevel_wear_width=0.022, *, rover_cfg=None, include_ground_occluder=True)`: bakes `Col` (`R=AO`, `G=EdgeWear`, `B=Cavity`, `A=1.0`) across a root hierarchy or mesh list (`rover_cfg=None` uses the analytical curvature + vertical AO formulation for structures/rocks/ruins; passing `rover_cfg=DIMENSIONS` uses BVHTree 64-ray hemisphere AO + BMesh dihedral curvature for Rover 07 and its kits).
+   - `export_fbx(root, filepath, *, bake_space_transform=False)`: exports a root hierarchy or explicit object list to `.fbx` with `-Z Forward`, `Y Up`, and `bake_space_transform=True` for Rover 07 / kits or `False` for structures/ruins/rocks/lander.
+
+### Master Build Entry Point (`tools/art/blender/build_all.py`)
+Run all 39 R1 FBX models in a single headless Blender invocation:
+```powershell
+D:/Blender/blender.exe -b --factory-startup --python-exit-code 1 -P tools/art/blender/build_all.py -- --skip-renders
+```
+Omit `--skip-renders` to also regenerate the diagnostic and showcase PNG sheets under `Logs/renders/`.
+

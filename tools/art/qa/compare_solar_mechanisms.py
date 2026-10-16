@@ -43,14 +43,15 @@ def run_in_blender() -> int:
     from mathutils.bvhtree import BVHTree
 
     root = worktree_root()
-    rover_dir = root / "tools" / "art" / "blender" / "rover"
+    blender_dir = root / "tools" / "art" / "blender"
+    rover_dir = blender_dir / "rover"
     qa_dir = root / "tools" / "art" / "qa"
-    for p in (str(rover_dir), str(qa_dir)):
+    for p in (str(blender_dir), str(rover_dir), str(qa_dir)):
         if p not in sys.path:
             sys.path.insert(0, p)
 
     import build_rover
-    import mesh_ops
+    import r1kit
     import render_suite
     import rover_clearance
     import rover_parts
@@ -132,7 +133,7 @@ def run_in_blender() -> int:
                             adj_y = max(uy, y_arch)
                         else:
                             adj_y = max(uy, y_arch + 0.006)
-                v_row.append(temp.verts.new(rover_parts.unity_to_blender_pos(adj_x, adj_y, uz)))
+                v_row.append(temp.verts.new(rover_parts.u_pos(adj_x, adj_y, uz)))
             ring_verts.append(v_row)
 
         n_perim = len(ring_verts[0])
@@ -155,8 +156,8 @@ def run_in_blender() -> int:
                 f.material_index = mat_idx
                 f.smooth = True
 
-        bot_center = temp.verts.new(rover_parts.unity_to_blender_pos(0.0, 0.415, z_center))
-        top_center = temp.verts.new(rover_parts.unity_to_blender_pos(0.0, 0.902, -0.506))
+        bot_center = temp.verts.new(rover_parts.u_pos(0.0, 0.415, z_center))
+        top_center = temp.verts.new(rover_parts.u_pos(0.0, 0.902, -0.506))
         for i in range(n_perim):
             ni = (i + 1) % n_perim
             fb = temp.faces.new((ring_verts[0][ni], ring_verts[0][i], bot_center))
@@ -185,12 +186,12 @@ def run_in_blender() -> int:
                 tx = -1.0 + 2.0 * (ix / n_hx)
                 ux = tx * hw_x
                 uy = hy_top + h_crown * (1.0 - tx * tx)
-                row_v.append(hood_Temp.verts.new(rover_parts.unity_to_blender_pos(ux, uy, hz)))
+                row_v.append(hood_Temp.verts.new(rover_parts.u_pos(ux, uy, hz)))
             for ix in range(n_hx, -1, -1):
                 tx = -1.0 + 2.0 * (ix / n_hx)
                 ux = tx * (hw_x * 0.92)
                 uy = hy_top - 0.045
-                row_v.append(hood_Temp.verts.new(rover_parts.unity_to_blender_pos(ux, uy, hz)))
+                row_v.append(hood_Temp.verts.new(rover_parts.u_pos(ux, uy, hz)))
             hood_rings.append(row_v)
 
         n_hr = len(hood_rings[0])
@@ -203,8 +204,8 @@ def run_in_blender() -> int:
                 f.material_index = 0
                 f.smooth = True
 
-        back_c = hood_Temp.verts.new(rover_parts.unity_to_blender_pos(0.0, 0.82, 0.24))
-        front_c = hood_Temp.verts.new(rover_parts.unity_to_blender_pos(0.0, 0.66, 0.73))
+        back_c = hood_Temp.verts.new(rover_parts.u_pos(0.0, 0.82, 0.24))
+        front_c = hood_Temp.verts.new(rover_parts.u_pos(0.0, 0.66, 0.73))
         for i in range(n_hr):
             ni = (i + 1) % n_hr
             fb = hood_Temp.faces.new((hood_rings[0][ni], hood_rings[0][i], back_c))
@@ -368,7 +369,7 @@ def run_in_blender() -> int:
                     bevel_width=0.003, bevel_segments=1, mat_idx=4,
                 )
                 sw_obj = rover_parts.create_mesh_node("SolarWing", bm, unity_loc, parent=parent, mat_list=mat_list, cfg=cfg)
-                rover_parts.create_empty_node("WingSocket", wing_socket_loc, parent=sw_obj)
+                rover_parts.create_empty("WingSocket", wing_socket_loc, parent=sw_obj)
                 if gift_cell_bm is not None:
                     rover_parts.create_mesh_node(
                         "CellFilled", gift_cell_bm, gift_cell_loc, parent=sw_obj,
@@ -378,8 +379,8 @@ def run_in_blender() -> int:
 
             elif mechanism == "B":
                 # Mechanism B ("butterfly halves"): two 1x3 half-panels hinged along the spine
-                sw_root = rover_parts.create_empty_node("SolarWing", unity_loc, parent=parent)
-                rover_parts.create_empty_node("WingSocket", wing_socket_loc, parent=sw_root)
+                sw_root = rover_parts.create_empty("SolarWing", unity_loc, parent=parent)
+                rover_parts.create_empty("WingSocket", wing_socket_loc, parent=sw_root)
                 half_w = sw_w * 0.46
                 frame_cz = -sw_l * 0.5
                 for side_name, sx in (("SolarWing_L", -1.0), ("SolarWing_R", 1.0)):
@@ -437,7 +438,7 @@ def run_in_blender() -> int:
                         center_xyz=(sx * 0.145, 0.0, 0.0), segments=14, bevel_width=0.002, bevel_segments=1, mat_idx=1,
                     )
                 sw_obj = rover_parts.create_mesh_node("SolarWing", bm, unity_loc, parent=parent, mat_list=mat_list, cfg=cfg)
-                rover_parts.create_empty_node("WingSocket", (0.0, 0.018, frame_cz), parent=sw_obj)
+                rover_parts.create_empty("WingSocket", (0.0, 0.018, frame_cz), parent=sw_obj)
                 return sw_obj
 
         return _builder
@@ -508,7 +509,7 @@ def run_in_blender() -> int:
     results = {}
 
     for mech in ("A", "B", "C"):
-        mesh_ops.clear_scene()
+        r1kit.reset_scene()
         cfg = copy.deepcopy(build_rover.DIMENSIONS)
         cfg["solar_wing_width"] = 0.40
         cfg["solar_wing_length"] = 0.220
@@ -522,7 +523,7 @@ def run_in_blender() -> int:
         mats = rover_parts.create_material_library(build_rover.MATERIALS, for_render=True)
         rover_root = rover_parts.build_rover_model_hierarchy(cfg, mats)
         rv_meshes = [o for o in bpy.data.objects if o.type == "MESH"]
-        mesh_ops.bake_model_vertex_colors(rv_meshes, cfg, include_ground_occluder=True)
+        r1kit.bake_vertex_colors(rv_meshes, cfg, include_ground_occluder=True)
 
         mount_kits_in_scene()
 

@@ -183,6 +183,7 @@ def main() -> int:
 
     problems = quality_report(cue_ids, results, out_root, args.jobs)
 
+    from r1.catalog import CATALOG as R1_CATALOG
     previous = {}
     if MANIFEST.exists():
         previous = {c["id"]: c for c in json.loads(MANIFEST.read_text(encoding="utf-8"))["cues"]}
@@ -194,6 +195,12 @@ def main() -> int:
             entries.append(previous[cue.id])
         else:
             print(f"manifest: cue '{cue.id}' has never been rendered (run without --only)")
+            problems += 1
+    for spec in R1_CATALOG:
+        if spec.cue_id in previous:
+            entries.append(previous[spec.cue_id])
+        else:
+            print(f"manifest: R1 cue '{spec.cue_id}' missing (run tools/audio/r1/export_game.py)")
             problems += 1
     text = manifest_text(entries)
 

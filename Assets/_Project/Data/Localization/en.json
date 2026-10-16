@@ -1961,6 +1961,14 @@
         {
             "key": "ui.bay.row_full",
             "text": "The parts row is full. Fit a part on 07 first."
+        },
+        {
+            "key": "ui.title.continue_note",
+            "text": "SAVE · 02:14"
+        },
+        {
+            "key": "ui.title.key_hint",
+            "text": "[W/S · D-PAD] SELECT    [ENTER / A] CONFIRM"
         }
     ]
 }

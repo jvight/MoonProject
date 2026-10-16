@@ -151,8 +151,13 @@ namespace MoonProject.UI
             QuitConfirmButton = Require<Button>("button-quit-confirm");
             PageNewGame = Require<VisualElement>("page-new-game");
             PageLanguage = Require<VisualElement>("page-language");
+            TitleCrt = Require<VisualElement>("title-crt");
             TitleScreen = Require<VisualElement>("title-screen");
             TitleWordmark = Require<VisualElement>("title-wordmark");
+            TitleSubtitlePrefix = Require<Label>("title-subtitle-prefix");
+            TitleRule = Require<VisualElement>("title-rule");
+            TitleKeyHint = Require<Label>("title-key-hint");
+            TitleCrtOverlay = Require<VisualElement>("title-crt-overlay");
             Curtain = Require<VisualElement>("curtain");
             SaveTick = Require<VisualElement>("save-tick");
             CreditsButton = Require<Button>("button-credits");
@@ -464,11 +469,26 @@ namespace MoonProject.UI
         /// <summary>The first boot's language step: one button per language, made from code.</summary>
         public VisualElement PageLanguage { get; }
 
+        /// <summary>The full-monitor CRT background and right-pane 2D line-art scene for TITLE-SCREEN v1.</summary>
+        public VisualElement TitleCrt { get; }
+
         /// <summary>The title's wordmark and subtitle, shown while the pause menu is the title's.</summary>
         public VisualElement TitleScreen { get; }
 
         /// <summary>The drawn Lunarion wordmark (WordmarkPainter) inside <see cref="TitleScreen"/>.</summary>
         public VisualElement TitleWordmark { get; }
+
+        /// <summary>The cyan comment prefix ("// ") beside the title subtitle.</summary>
+        public Label TitleSubtitlePrefix { get; }
+
+        /// <summary>The warm amber divider rule beneath the title subtitle.</summary>
+        public VisualElement TitleRule { get; }
+
+        /// <summary>The bottom-left control key hint on the title screen.</summary>
+        public Label TitleKeyHint { get; }
+
+        /// <summary>The full-monitor CRT scanlines, refresh band, vignette, and curved bezel over the title screen.</summary>
+        public VisualElement TitleCrtOverlay { get; }
 
         /// <summary>A soft dark over everything, drawn before the scene reloads (New Game, Quit to title, Quit).</summary>
         public VisualElement Curtain { get; }

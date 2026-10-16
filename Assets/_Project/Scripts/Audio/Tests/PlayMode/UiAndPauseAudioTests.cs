@@ -47,10 +47,10 @@ namespace MoonProject.Audio.PlayModeTests
         {
             (UiCueKind kind, string clip)[] expected =
             {
-                (UiCueKind.MenuOpen, "ui_menu_open"), (UiCueKind.FocusMove, "ui_focus_"),
-                (UiCueKind.Confirm, "ui_confirm"), (UiCueKind.SliderStep, "ui_slider_"),
-                (UiCueKind.Back, "ui_back"), (UiCueKind.MenuClose, "ui_menu_close"),
-                (UiCueKind.CardShown, "ui_card"), (UiCueKind.PromptShown, "ui_prompt"),
+                (UiCueKind.MenuOpen, "ui_panel_open"), (UiCueKind.FocusMove, "ui_cursor_move"),
+                (UiCueKind.Confirm, "ui_confirm"), (UiCueKind.SliderStep, "ui_cursor_move"),
+                (UiCueKind.Back, "ui_cancel"), (UiCueKind.MenuClose, "ui_panel_close"),
+                (UiCueKind.CardShown, "ui_toast"), (UiCueKind.PromptShown, "ui_toast"),
                 (UiCueKind.HoldComplete, "ui_hold_complete"), (UiCueKind.PartPick, "part_pick"),
                 (UiCueKind.PartDrop, "part_drop"), (UiCueKind.PartRefuse, "part_refuse"),
             };
@@ -64,6 +64,14 @@ namespace MoonProject.Audio.PlayModeTests
 
             Assert.AreEqual(Enum.GetValues(typeof(UiCueKind)).Length, expected.Length + 2,
                 "the remaining kinds (HoldFill, HoldRelease) drive the hold swell, tested below");
+
+            _rig.Events.Publish(new UiTypewriterTick(UiTypeKind.Card));
+            AssertLastFlat("ui_type_card");
+            yield return null;
+
+            _rig.Events.Publish(new UiTypewriterTick(UiTypeKind.Terminal));
+            AssertLastFlat("ui_type_terminal");
+            yield return null;
         }
 
         [UnityTest]
@@ -121,7 +129,7 @@ namespace MoonProject.Audio.PlayModeTests
                 Publish(UiCueKind.FocusMove);
             }
 
-            Assert.AreEqual(1, CountPlaying("ui_focus_"), "same-frame repeats collapse into one tick");
+            Assert.AreEqual(1, CountPlaying("ui_cursor_move"), "same-frame repeats collapse into one tick");
             float first = Last.volume;
 
             float quietest = first;
@@ -178,6 +186,52 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.Greater(hum.volume, 0f);
             Assert.Greater(crunch.volume, 0f);
             Assert.Greater(radioFilter.cutoffFrequency, 20000f);
+        }
+
+        [UnityTest]
+        public IEnumerator RoverFaceCues_And_SkyPhaseTransitions_PlayTheirR1CuesAndCrossfadeAmbience()
+        {
+            _rig.Wake(true);
+            yield return null;
+
+            (RoverFaceCueKind kind, string clip)[] faceExpected =
+            {
+                (RoverFaceCueKind.Boot, "face_boot"),
+                (RoverFaceCueKind.Blink, "face_blink"),
+                (RoverFaceCueKind.Happy, "face_happy"),
+                (RoverFaceCueKind.Worried, "face_worried"),
+                (RoverFaceCueKind.Asleep, "face_asleep"),
+                (RoverFaceCueKind.Startled, "face_startled"),
+                (RoverFaceCueKind.Proud, "face_proud"),
+            };
+
+            foreach ((RoverFaceCueKind kind, string clip) in faceExpected)
+            {
+                _rig.Events.Publish(new RoverFaceCued(kind));
+                Assert.IsNotNull(Last);
+                Assert.AreEqual(clip, Last.clip.name);
+                Assert.AreEqual(1f, Last.spatialBlend, $"{clip} is a 3D face sound");
+                yield return null;
+            }
+
+            // Sky transitions: Eclipse -> Sunrise (diamond ring) -> Earthlit (nightfall settle) -> Sunrise (dawn sweep)
+            _rig.Events.Publish(new SkyPhaseChanged(SkyPhase.Eclipse, 1f));
+            yield return new WaitForSecondsRealtime(0.2f);
+            Assert.IsTrue(_rig.Ambience.EclipseSource.isPlaying);
+            Assert.Greater(_rig.Ambience.EclipseSource.volume, 0f);
+
+            _rig.Events.Publish(new SkyPhaseChanged(SkyPhase.Sunrise, 0f));
+            AssertLastFlat("sky_diamond_ring");
+            yield return new WaitForSecondsRealtime(0.2f);
+            Assert.IsTrue(_rig.Ambience.DaySource.isPlaying);
+            Assert.Greater(_rig.Ambience.DaySource.volume, 0f);
+
+            _rig.Events.Publish(new SkyPhaseChanged(SkyPhase.Earthlit, 0f));
+            AssertLastFlat("sky_nightfall_settle");
+            yield return null;
+
+            _rig.Events.Publish(new SkyPhaseChanged(SkyPhase.Sunrise, 0f));
+            AssertLastFlat("sky_dawn_sweep");
         }
 
         private int CountPlaying(string clipPrefix)

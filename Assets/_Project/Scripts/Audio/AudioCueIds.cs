@@ -76,7 +76,6 @@ namespace MoonProject.Audio
         public const string WindowClick = "window_click";
         public const string RadioTune = "radio_tune";
         public const string RadioDialClick = "radio_dial_click";
-        public const string AmbienceBed = "ambience_bed";
         public const string SonarPing = "sonar_ping";
         public const string RelicAnswer = "relic_answer";
         public const string TetherAttach = "tether_attach";
@@ -88,16 +87,16 @@ namespace MoonProject.Audio
         public const string RecoverySettle = "recovery_settle";
         public const string ExcavationRumble = "excavation_rumble";
         public const string SurfacingSparkle = "surfacing_sparkle";
+        public const string UiPanelOpen = "ui_panel_open";
+        public const string UiPanelClose = "ui_panel_close";
+        public const string UiCursorMove = "ui_cursor_move";
         public const string UiConfirm = "ui_confirm";
-        public const string UiBack = "ui_back";
-        public const string UiMenuOpen = "ui_menu_open";
-        public const string UiMenuClose = "ui_menu_close";
-        public const string UiFocus = "ui_focus";
-        public const string UiSlider = "ui_slider";
-        public const string UiPrompt = "ui_prompt";
+        public const string UiCancel = "ui_cancel";
+        public const string UiToast = "ui_toast";
+        public const string UiTypeCard = "ui_type_card";
+        public const string UiTypeTerminal = "ui_type_terminal";
         public const string UiHoldFill = "ui_hold_fill";
         public const string UiHoldComplete = "ui_hold_complete";
-        public const string UiCard = "ui_card";
         public const string UpgradeArpeggio = "upgrade_arpeggio";
         public const string CassettePickup = "cassette_pickup";
         public const string CrewLogFound = "crew_log_found";
@@ -166,6 +165,47 @@ namespace MoonProject.Audio
         public const string LeapFizzle = "leap_fizzle";
         public const string LampTick = "lamp_tick";
         public const string BellKnobTap = "bell_knob_tap";
+
+        // R1 Group 1: 07's face
+        public const string FaceBoot = "face_boot";
+        public const string FaceBlink = "face_blink";
+        public const string FaceHappy = "face_happy";
+        public const string FaceWorried = "face_worried";
+        public const string FaceAsleep = "face_asleep";
+        public const string FaceStartled = "face_startled";
+        public const string FaceProud = "face_proud";
+
+        // R1 Group 2: Sky
+        public const string SkyDiamondRing = "sky_diamond_ring";
+        public const string SkyDawnSweep = "sky_dawn_sweep";
+        public const string SkyNightfallSettle = "sky_nightfall_settle";
+
+        // R1 Group 3: Building
+        public const string BuildGhost = "build_ghost";
+        public const string BuildSnap = "build_snap";
+        public const string BuildInvalid = "build_invalid";
+        public const string BuildPlace = "build_place";
+        public const string BuildWeldLoop = "build_weld_loop";
+        public const string BuildStageComplete = "build_stage_complete";
+        public const string BuildStructureComplete = "build_structure_complete";
+        public const string BuildDeconstruct = "build_deconstruct";
+
+        // R1 Group 4: Machines
+        public const string MachineSolarTrack = "machine_solar_track";
+        public const string MachineWingsUnfold = "machine_wings_unfold";
+        public const string MachineWingsFold = "machine_wings_fold";
+        public const string MachinePadContacts = "machine_pad_contacts";
+        public const string MachineTransformerLoop = "machine_transformer_loop";
+        public const string MachinePylonSwitch = "machine_pylon_switch";
+        public const string MachineCableDrums = "machine_cable_drums";
+        public const string MachineLanderRamp = "machine_lander_ramp";
+        public const string MachineCargoHatch = "machine_cargo_hatch";
+        public const string MachineCrateLid = "machine_crate_lid";
+
+        // R1 Group 6: Ambience beds
+        public const string AmbienceEarthlitNight = "ambience_earthlit_night";
+        public const string AmbienceSunlitDay = "ambience_sunlit_day";
+        public const string AmbienceEclipse = "ambience_eclipse";
 
         /// <summary>A friend's chirp cue, <c>&lt;friendId&gt;_&lt;mood&gt;</c> (e.g. tilly_curious). Builds a string:
         /// call at initialisation only.</summary>

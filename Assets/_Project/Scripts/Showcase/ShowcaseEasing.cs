@@ -83,5 +83,29 @@ namespace MoonProject.Showcase
         {
             return Mathf.DeltaAngle(0f, degrees);
         }
+
+        /// <summary>
+        /// Evaluates the vertical offset in metres for a build stage rising from <c>-riseDepthMeters</c>, gently
+        /// cresting to <c>+settleOvershootMeters</c>, and settling softly to <c>0</c> at <paramref name="progress01"/> = 1.
+        /// </summary>
+        public static float EvaluateRiseAndSettleVerticalOffset(
+            float progress01,
+            float riseDepthMeters,
+            float settleOvershootMeters)
+        {
+            float p = Mathf.Clamp01(progress01);
+            const float crestPoint = 0.72f;
+            float depth = Mathf.Max(0f, riseDepthMeters);
+            float overshoot = Mathf.Max(0f, settleOvershootMeters);
+
+            if (p <= crestPoint)
+            {
+                float riseT = SmoothStep01(p / crestPoint);
+                return Mathf.Lerp(-depth, overshoot, riseT);
+            }
+
+            float settleT = SmoothStep01((p - crestPoint) / (1f - crestPoint));
+            return Mathf.Lerp(overshoot, 0f, settleT);
+        }
     }
 }

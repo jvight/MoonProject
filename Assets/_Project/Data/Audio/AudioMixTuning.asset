@@ -33,3 +33,4 @@ MonoBehaviour:
   _resumeTime: 0.8
   _pausedWorldGain: 0
   _ambienceFadeIn: 4
+  _ambienceCrossfade: 6

@@ -22,24 +22,33 @@ import math
 import bmesh
 import bpy
 
-from mesh_ops import (
+import sys
+from pathlib import Path
+
+_BLENDER_DIR = Path(__file__).resolve().parent.parent
+if str(_BLENDER_DIR) not in sys.path:
+    sys.path.insert(0, str(_BLENDER_DIR))
+
+from r1kit import (
     FULL_CIRCLE_RAD,
+    HALF_PI_RAD as HALF_PI,
     append_beveled_box,
     append_cylinder,
     append_helical_coil,
+    append_hex_bolt,
     append_lathe_profile,
     append_prism_extrusion,
+    append_spherical_dome,
     append_torus,
-    bake_model_vertex_colors,
-    clear_scene,
-    create_empty_node,
+    bake_vertex_colors,
+    count_model_stats,
+    create_empty,
     create_mesh_node,
     export_fbx,
+    reset_scene,
 )
 from rover_parts import create_material_library
-from build_rover import DIMENSIONS, MATERIALS, count_model_stats
-
-HALF_PI = math.pi * 0.5
+from build_rover import DIMENSIONS, MATERIALS
 
 
 # ==============================================================================
@@ -58,34 +67,17 @@ def append_closed_bolt(
     segments=6,
 ):
     """Append a 100% closed-manifold hex bolt + optional washer (pole-capped at both ends)."""
-    hh = height * 0.5
-    if include_washer:
-        profile = [
-            (0.0, -hh),
-            (radius * 1.25, -hh),
-            (radius * 1.25, -hh + height * 0.25),
-            (radius * 0.98, -hh + height * 0.28),
-            (radius * 0.98, hh * 0.78),
-            (radius * 0.78, hh),
-            (0.0, hh),
-        ]
-    else:
-        profile = [
-            (0.0, -hh),
-            (radius, -hh),
-            (radius, hh * 0.76),
-            (radius * 0.78, hh),
-            (0.0, hh),
-        ]
-    append_lathe_profile(
+    append_hex_bolt(
         bm,
-        profile,
+        radius,
+        height,
         axis=axis,
         center_xyz=center_xyz,
-        segments=segments,
         mat_idx=mat_idx,
         rot_euler=rot_euler,
-        auto_chamfer=False,
+        include_washer=include_washer,
+        closed_bottom=True,
+        segments=segments,
     )
 
 
@@ -102,27 +94,18 @@ def append_closed_dome(
     rot_euler=(0.0, 0.0, 0.0),
 ):
     """Append a 100% closed-manifold convex lens/lamp dome with a flat back cap."""
-    profile = [
-        (0.0, -collar_depth),
-        (radius * 0.96, -collar_depth),
-        (radius, 0.0),
-    ]
-    for r_i in range(1, rings):
-        t = r_i / float(rings)
-        ang = t * HALF_PI
-        r = radius * math.cos(ang)
-        z = dome_height * math.sin(ang)
-        profile.append((r, z))
-    profile.append((0.0, dome_height))
-    append_lathe_profile(
+    append_spherical_dome(
         bm,
-        profile,
+        radius,
+        dome_height,
         axis=axis,
         center_xyz=center_xyz,
         segments=segments,
+        rings=rings,
         mat_idx=mat_idx,
         rot_euler=rot_euler,
-        auto_chamfer=False,
+        collar_depth=collar_depth,
+        closed_bottom=True,
     )
 
 
@@ -1065,7 +1048,7 @@ def build_kit_cargo_rack_model(cfg=DIMENSIONS, mats=None, parent=None, unity_loc
     )
 
     # Required empty child node 'RelicSeat' with localPosition.z < 0
-    create_empty_node("RelicSeat", (0.0, 0.08, -0.30), parent=root_obj)
+    create_empty("RelicSeat", parent=root_obj, pivot_u=(0.0, 0.08, -0.30), local_space=True, empty_size=0.04)
 
     bpy.context.view_layer.update()
     return root_obj
@@ -1823,15 +1806,15 @@ def build_and_export_kit(kit_name: str, fbx_out_path: str | None = None):
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    clear_scene()
+    reset_scene()
     mats = create_material_library(MATERIALS, for_render=False)
     builder_fn = KIT_BUILDERS[kit_name]
     builder_fn(DIMENSIONS, mats)
 
     objs = list(bpy.data.objects)
     meshes = [o for o in objs if o.type == "MESH"]
-    bake_model_vertex_colors(meshes, DIMENSIONS, include_ground_occluder=False)
-    export_fbx(out_path, objs)
+    bake_vertex_colors(meshes, rover_cfg=DIMENSIONS, include_ground_occluder=False)
+    export_fbx(objs, out_path, bake_space_transform=True)
     stats = count_model_stats(objs)
     print(
         f"[{kit_name}] Exported {out_path.name}: "

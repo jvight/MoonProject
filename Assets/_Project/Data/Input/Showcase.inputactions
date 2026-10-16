@@ -238,6 +238,33 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "CameraTour",
+                    "type": "Button",
+                    "id": "11a10000-22b2-43c3-84d4-55e50000001c",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "StageSequence",
+                    "type": "Button",
+                    "id": "11a10000-22b2-43c3-84d4-55e50000001d",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "DemoMode",
+                    "type": "Button",
+                    "id": "11a10000-22b2-43c3-84d4-55e50000001e",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -695,7 +722,7 @@
                 {
                     "name": "",
                     "id": "11a10000-22b2-43c3-84d4-55e50000012a",
-                    "path": "<Keyboard>/o",
+                    "path": "<Keyboard>/u",
                     "interactions": "",
                     "processors": "",
                     "groups": "Keyboard&Mouse",
@@ -766,6 +793,39 @@
                     "processors": "",
                     "groups": "Keyboard&Mouse",
                     "action": "Action6",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "11a10000-22b2-43c3-84d4-55e500000131",
+                    "path": "<Keyboard>/o",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "CameraTour",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "11a10000-22b2-43c3-84d4-55e500000132",
+                    "path": "<Keyboard>/j",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "StageSequence",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "11a10000-22b2-43c3-84d4-55e500000133",
+                    "path": "<Keyboard>/k",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "DemoMode",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
