@@ -18,7 +18,7 @@ namespace MoonProject.UI.Tests
 
         private static readonly string[] RequiredLicences =
         {
-            "OFL-NunitoSans.txt", "OFL-Exo2.txt", "OFL-BeVietnamPro.txt", "CC-BY-4.0.txt", "Apache-2.0.txt",
+            "OFL-IBMPlexMono.txt", "OFL-ChakraPetch.txt", "OFL-BeVietnamPro.txt", "CC-BY-4.0.txt", "Apache-2.0.txt",
         };
 
         [Test]

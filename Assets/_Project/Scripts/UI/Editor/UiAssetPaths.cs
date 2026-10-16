@@ -36,28 +36,35 @@ namespace MoonProject.UI.Editor
         public const string Palette = GeneratedFolder + "/Palette.uss";
         public const string GeneratedFontFolder = GeneratedFolder + "/Fonts";
 
-        /// <summary>The Moonlight Glass textures (UI/Glass builder), drawn at 2x.</summary>
+        /// <summary>The CRT panel and scanline textures (UI/Glass builder), drawn at 2x.</summary>
         public const string GlassFolder = GeneratedFolder + "/Glass";
         public const string GlassPanel = GlassFolder + "/GlassPanel.png";
         public const string GlassPill = GlassFolder + "/GlassPill.png";
         public const string GlassBubble = GlassFolder + "/GlassBubble.png";
         public const string GlassDial = GlassFolder + "/GlassDial.png";
 
-        /// <summary>Text: body, buttons, toasts (Moonlight Glass; file names NunitoSans-&lt;style&gt;.ttf).</summary>
-        public const string TextFamily = "NunitoSans";
+        /// <summary>Text: body, buttons, toasts, terminal readouts (file names IBMPlexMono-&lt;style&gt;.ttf).</summary>
+        public const string TextFamily = "IBMPlexMono";
 
-        /// <summary>Numbers and titles: dials, the meter, names, headings (file names Exo2-&lt;style&gt;.ttf).</summary>
-        public const string NumberFamily = "Exo2";
+        /// <summary>Numbers and titles: dials, the meter, names, headings (file names ChakraPetch-&lt;style&gt;.ttf).</summary>
+        public const string NumberFamily = "ChakraPetch";
+
+        /// <summary>Crew documents and paper notes (file names BeVietnamPro-&lt;style&gt;.ttf).</summary>
+        public const string PaperFamily = "BeVietnamPro";
 
         /// <summary>Every font the UI builds and uses, as family and style.</summary>
         public static readonly string[][] Fonts =
         {
             new[] { TextFamily, "Regular" },
+            new[] { TextFamily, "Medium" },
             new[] { TextFamily, "SemiBold" },
             new[] { TextFamily, "Bold" },
             new[] { NumberFamily, "Medium" },
             new[] { NumberFamily, "SemiBold" },
             new[] { NumberFamily, "Bold" },
+            new[] { PaperFamily, "Regular" },
+            new[] { PaperFamily, "Medium" },
+            new[] { PaperFamily, "SemiBold" },
         };
 
         public static string SourceFont(string family, string style)
