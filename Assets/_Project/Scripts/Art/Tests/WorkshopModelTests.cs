@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
-using UnityEditor;
 using UnityEngine;
 using MoonProject.Art.Editor;
 
@@ -15,15 +14,6 @@ namespace MoonProject.Art.Tests
     {
         private const string RoverPrefabPath = "Assets/_Project/Generated/Art/R1/Models/Rover/RoverModel.prefab";
         private const string HoverCoilsPrefabPath = "Assets/_Project/Generated/Art/R1/Models/Rover/HoverCoils.prefab";
-
-        [OneTimeSetUp]
-        public void EnsureR1Built()
-        {
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(HoverCoilsPrefabPath) == null)
-            {
-                R1ModelBuilder.Build();
-            }
-        }
 
         [Test]
         public void Lander_HasTheWorkshopAnchor_WhereGameplayExpectsIt()
@@ -50,8 +40,7 @@ namespace MoonProject.Art.Tests
         [Test]
         public void HoverCoils_HaveSquashableSprings_AndGlowOffRings()
         {
-            GameObject coils = AssetDatabase.LoadAssetAtPath<GameObject>(HoverCoilsPrefabPath);
-            Assert.IsNotNull(coils, HoverCoilsPrefabPath);
+            GameObject coils = MeshChecks.LoadGeneratedPrefab(HoverCoilsPrefabPath);
             string[] corners = { "FL", "FR", "RL", "RR" };
             string lampMatName = R1MaterialRecipes.Get(R1MaterialSlot.LampAmber).MaterialAssetName;
 
@@ -79,30 +68,19 @@ namespace MoonProject.Art.Tests
         [Test]
         public void HoverCoils_OnTheCoilSocket_FitUnderTheBelly_AboveTheGround()
         {
-            GameObject rover = AssetDatabase.LoadAssetAtPath<GameObject>(RoverPrefabPath);
-            GameObject coils = AssetDatabase.LoadAssetAtPath<GameObject>(HoverCoilsPrefabPath);
-            Assert.IsNotNull(rover, RoverPrefabPath);
-            Assert.IsNotNull(coils, HoverCoilsPrefabPath);
-
+            GameObject rover = MeshChecks.LoadGeneratedPrefab(RoverPrefabPath);
             Transform socket = rover.transform.Find("CoilSocket");
             Assert.IsNotNull(socket, "CoilSocket");
             Assert.IsNull(socket.GetComponent<Renderer>());
             Assert.AreEqual(Quaternion.identity, socket.localRotation);
 
-            foreach (MeshFilter filter in coils.GetComponentsInChildren<MeshFilter>(true))
-            {
-                Mesh mesh = filter.sharedMesh;
-                Assert.IsNotNull(mesh, filter.name);
-                Matrix4x4 toCoilsRoot = coils.transform.worldToLocalMatrix * filter.transform.localToWorldMatrix;
-                foreach (Vector3 v in mesh.vertices)
-                {
-                    Vector3 local = toCoilsRoot.MultiplyPoint3x4(v);
-                    Vector3 p = socket.localPosition + local;
-                    Assert.Less(Mathf.Abs(p.x), 0.4f, "between the bogies");
-                    Assert.Greater(p.y, 0.1f, "clear of the ground");
-                    Assert.LessOrEqual(p.y, socket.localPosition.y + 1e-3f, "under the belly");
-                }
-            }
+            Bounds bounds = MeshChecks.PrefabBounds(HoverCoilsPrefabPath);
+            Vector3 min = socket.localPosition + bounds.min;
+            Vector3 max = socket.localPosition + bounds.max;
+            Assert.Greater(min.x, -0.4f, "between the bogies");
+            Assert.Less(max.x, 0.4f, "between the bogies");
+            Assert.Greater(min.y, 0.1f, "clear of the ground");
+            Assert.LessOrEqual(max.y, socket.localPosition.y + 1e-3f, "under the belly");
         }
     }
 }

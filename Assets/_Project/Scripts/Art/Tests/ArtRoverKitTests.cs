@@ -38,7 +38,6 @@ namespace MoonProject.Art.Tests
         [OneTimeSetUp]
         public void BuildOnce()
         {
-            R1ModelBuilder.Build();
             _roverPrefab = LoadPrefab(RoverModelBuilder.ModelName);
         }
 
@@ -269,12 +268,9 @@ namespace MoonProject.Art.Tests
             return socketToRover;
         }
 
-        private GameObject LoadPrefab(string name)
+        private static GameObject LoadPrefab(string name)
         {
-            string path = PrefabFolder + name + ".prefab";
-            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-            Assert.IsNotNull(prefab, $"Missing generated prefab at '{path}'.");
-            return prefab;
+            return MeshChecks.LoadGeneratedPrefab(PrefabFolder + name + ".prefab");
         }
 
         private static void AssertHasMesh(Transform node, string label)
@@ -327,44 +323,12 @@ namespace MoonProject.Art.Tests
 
         private Bounds MountedBounds(string kitName, string socketPath)
         {
-            GameObject kit = LoadPrefab(kitName);
-            Matrix4x4 socketToRover = SocketToRoverMatrix(socketPath);
-
-            var min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
-            Vector3 max = -min;
-            foreach (MeshFilter filter in kit.GetComponentsInChildren<MeshFilter>(true))
-            {
-                Matrix4x4 toRover = socketToRover * (kit.transform.worldToLocalMatrix * filter.transform.localToWorldMatrix);
-                foreach (Vector3 v in filter.sharedMesh.vertices)
-                {
-                    Vector3 p = toRover.MultiplyPoint3x4(v);
-                    min = Vector3.Min(min, p);
-                    max = Vector3.Max(max, p);
-                }
-            }
-
-            return new Bounds((min + max) * 0.5f, max - min);
+            return MeshChecks.PrefabBounds(LoadPrefab(kitName), SocketToRoverMatrix(socketPath));
         }
 
         private static float MaxHorizontalReach(GameObject root, Matrix4x4 rootToRover)
         {
-            float reach = 0f;
-            foreach (MeshFilter filter in root.GetComponentsInChildren<MeshFilter>(true))
-            {
-                if (filter.sharedMesh == null)
-                {
-                    continue;
-                }
-
-                Matrix4x4 toRover = rootToRover * (root.transform.worldToLocalMatrix * filter.transform.localToWorldMatrix);
-                foreach (Vector3 v in filter.sharedMesh.vertices)
-                {
-                    Vector3 p = toRover.MultiplyPoint3x4(v);
-                    reach = Mathf.Max(reach, new Vector2(p.x, p.z).magnitude);
-                }
-            }
-
-            return reach;
+            return MeshChecks.PrefabPoints(root, rootToRover).Max(p => new Vector2(p.x, p.z).magnitude);
         }
     }
 }
