@@ -523,9 +523,9 @@ MonoBehaviour:
       _scaleFrom: 0.98
       _springFrequency: 1.8
       _springDamping: 0.7
-    _panelWidth: 1220
-    _panelHeight: 560
-    _maxCell: 60
+    _panelWidth: 1152
+    _panelHeight: 768
+    _maxCell: 86
     _minCell: 34
     _widthShare: 0.94
     _heightShare: 0.92
@@ -536,18 +536,81 @@ MonoBehaviour:
     _bootSlideDistance: 64
     _bootHatchLingerSeconds: 0.2
     _dragThreshold: 6
-    _labelWidth: 158
-    _leftLabelWidth: 158
-    _labelHeight: 24
-    _labelGap: 6
-    _labelMargin: 8
-    _portraitReferenceWidth: 798
     _tooltipGap: 10
-    _diagramYaw: 55
-    _diagramElevation: 14
-    _diagramDistance: 3.9
-    _diagramLookHeight: 0.56
-    _diagramFieldOfView: 30
+    _holdGridX: 48
+    _holdGridY: 58
+    _shelfGridX: 504
+    _cellGapX: 10
+    _cellGapY: 7
+    _dividerX: 474
+    _bubbleRadius: 31
+    _roverOriginX: 804
+    _roverOriginY: 456
+    _roverScale: 154
+    _toastDurationSeconds: 3.5
+    _roverWheelRadius: 0.35
+    _roverWheelRimRadius: 0.185
+    _roverWheelbaseHalf: 0.53
+    _roverWheelLugCount: 12
+    _roverWheelSpokeCount: 6
+    _roverFarWheelScale: 0.94
+    _roverFarWheelAlpha: 0.42
+    _roverFarWheelOffset: {x: 6, y: -4}
+    _roverBodyPivotHeight: 0.58
+    _roverWheelAngle: 0.42
+    _roverHeadNod: -0.06
+    _roverWingTilt: -0.11
+    _roverAntennaSway: 0.04
+    _headlampBeamLength: 1.15
+    _headlampBeamSliceAlpha: 0.028
+    _leaderEmptyColor:
+      serializedVersion: 2
+      rgba: 1145345740
+    _leaderEmptyWidth: 1
+    _leaderEmptyDotRadius: 2
+    _leaderInstalledColor:
+      serializedVersion: 2
+      rgba: 1616031464
+    _leaderInstalledWidth: 1.25
+    _leaderInstalledDotRadius: 2.4
+    _leaderFocusColor:
+      serializedVersion: 2
+      rgba: 3959419743
+    _leaderFocusWidth: 1.9
+    _leaderFocusDotRadius: 3.2
+    _cellBackground:
+      serializedVersion: 2
+      rgba: 3943042066
+    _cellFocusBackground:
+      serializedVersion: 2
+      rgba: 4111866906
+    _plateBackground:
+      serializedVersion: 2
+      rgba: 4161079566
+    _amberBright:
+      serializedVersion: 2
+      rgba: 4286633727
+    _amberText:
+      serializedVersion: 2
+      rgba: 4284269311
+    _amberDim:
+      serializedVersion: 2
+      rgba: 4283608808
+    _amberFaint:
+      serializedVersion: 2
+      rgba: 2772735692
+    _amberMuted:
+      serializedVersion: 2
+      rgba: 1598330572
+    _amberLocked:
+      serializedVersion: 2
+      rgba: 1145345740
+    _cyanAccent:
+      serializedVersion: 2
+      rgba: 4294964063
+    _cyanDim:
+      serializedVersion: 2
+      rgba: 3036475538
   _unlockCard:
     _reveal:
       _fadeIn: 0.7

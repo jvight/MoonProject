@@ -9,7 +9,8 @@ namespace MoonProject.UI.Editor
     /// <summary>
     /// Builds <see cref="UiAssetPaths.RoverDiagram"/> by reading the equipment socket transforms from the generated
     /// 07 v3 prefab (<see cref="UiAssetPaths.RoverModelPrefab"/>; socket names in
-    /// <c>tools/art/qa/contracts/rover.json</c>). Fails loudly if the prefab or any socket transform is missing.
+    /// <c>tools/art/qa/contracts/rover.json</c>) and the 30 SVG icons from <see cref="UiAssetPaths.IconsFolder"/>.
+    /// Fails loudly if the prefab, any socket transform, or any icon is missing.
     /// </summary>
     public static class RoverDiagramBuilder
     {
@@ -38,7 +39,7 @@ namespace MoonProject.UI.Editor
                 RoverSocket socket = values[i];
                 string primaryName = socket + "Socket";
                 RequireNode(nodes, primaryName, "RoverSocket." + socket);
-                string anchorName = SocketNodeName(socket);
+                string anchorName = RoverDiagramData.SocketNodeName(socket);
                 Transform anchor = RequireNode(nodes, anchorName, "RoverSocket." + socket);
                 sockets[i] = root.InverseTransformPoint(anchor.position);
             }
@@ -54,6 +55,7 @@ namespace MoonProject.UI.Editor
             var data = ScriptableObject.CreateInstance<RoverDiagramData>();
             data.SetSockets(sockets);
             data.SetWheels(wheels);
+            data.SetIcons(UiIconBuilder.ParseAllIcons());
             string problem = data.Validate();
             if (problem != null)
             {
@@ -61,13 +63,6 @@ namespace MoonProject.UI.Editor
             }
 
             GeneratedAssets.CreateOrReplace(data, UiAssetPaths.RoverDiagram);
-        }
-
-        private static string SocketNodeName(RoverSocket socket)
-        {
-            // Side Bins (RoverSocket.Panniers) are a mirrored pair on BinSocket_L and BinSocket_R; the left-flank bin
-            // sits in the right half of the 3/4 schematic view, balancing the 6-left / 4-right label columns.
-            return socket == RoverSocket.Panniers ? "BinSocket_L" : socket + "Socket";
         }
 
         private static Transform RequireNode(Transform[] nodes, string name, string role)

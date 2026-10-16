@@ -980,7 +980,7 @@
         },
         {
             "key": "ui.cargo.hold",
-            "text": "Khoang hàng của 07"
+            "text": "KHOANG HÀNG"
         },
         {
             "key": "ui.cargo.waiting",
@@ -1952,7 +1952,7 @@
         },
         {
             "key": "ui.cargo.tab_seven",
-            "text": "07"
+            "text": "TRANG BỊ"
         },
         {
             "key": "hint.fit",
@@ -1969,6 +1969,66 @@
         {
             "key": "ui.title.key_hint",
             "text": "[W/S · D-PAD] DI CHUYỂN  [ENTER / A] XÁC NHẬN"
+        },
+        {
+            "key": "ui.cargo.fit_at_bay",
+            "text": "Lắp hoặc tháo trang bị tại Bệ Xe Tự Hành"
+        },
+        {
+            "key": "pickup.tilly.cell.job",
+            "text": "Pin nguồn dự phòng để khôi phục Tilly"
+        },
+        {
+            "key": "pickup.bell.valve.job",
+            "text": "Bóng đèn chân không cho đài thu của Bell"
+        },
+        {
+            "key": "ui.kit.cutter.desc",
+            "text": "Cắt mối hàn phế liệu và mạch đá lấy vật tư."
+        },
+        {
+            "key": "ui.kit.tether.desc",
+            "text": "Móc kéo kiện hàng nặng và tời 07 lên dốc."
+        },
+        {
+            "key": "ui.kit.lamp.desc",
+            "text": "Chiếu sáng miệng hố tối và sườn núi phía trước."
+        },
+        {
+            "key": "ui.kit.belly.desc",
+            "text": "Phóng xung từ dưới gầm để nhảy qua tảng đá."
+        },
+        {
+            "key": "ui.kit.flanks.desc",
+            "text": "Tăng tốc hành trình khi chạy trên mặt phẳng."
+        },
+        {
+            "key": "ui.kit.panniers.desc",
+            "text": "Mở thêm bốn ô chứa hàng bên hông giữa các bánh."
+        },
+        {
+            "key": "ui.kit.back.desc",
+            "text": "Lắp thêm hai ngăn pin dự trữ dọc sống lưng."
+        },
+        {
+            "key": "ui.kit.hold.desc",
+            "text": "Mở rộng giá hàng phía sau thêm bốn ô chứa."
+        },
+        {
+            "key": "ui.kit.wing.desc",
+            "text": "Tự sạc pin chậm khi đứng dưới ánh nắng."
+        },
+        {
+            "key": "ui.kit.deck.desc",
+            "text": "Phát các cuộn băng thu âm của đội trên đường."
+        },
+        {
+            "key": "ui.kit.wheels.desc",
+            "text": "Bám chặt vách miệng hố dốc mà không trượt."
+        },
+        {
+            "key": "ui.kit.antenna.desc",
+            "text": "Mở rộng tầm phát sóng dò khắp lòng chảo."
         }
     ]
 }

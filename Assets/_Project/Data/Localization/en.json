@@ -980,7 +980,7 @@
         },
         {
             "key": "ui.cargo.hold",
-            "text": "07's hold"
+            "text": "INVENTORY"
         },
         {
             "key": "ui.cargo.waiting",
@@ -1740,7 +1740,7 @@
         },
         {
             "key": "material.coolant.job",
-            "text": "Keeps hot tools cool: the Thermal Cutter, the Power Core."
+            "text": "Keeps hot tools cool: Thermal Cutter, Power Core."
         },
         {
             "key": "material.coolant.source",
@@ -1952,7 +1952,7 @@
         },
         {
             "key": "ui.cargo.tab_seven",
-            "text": "07"
+            "text": "EQUIPPED"
         },
         {
             "key": "hint.fit",
@@ -1969,6 +1969,66 @@
         {
             "key": "ui.title.key_hint",
             "text": "[W/S · D-PAD] SELECT    [ENTER / A] CONFIRM"
+        },
+        {
+            "key": "ui.cargo.fit_at_bay",
+            "text": "Fit or remove kit at the Rover Bay"
+        },
+        {
+            "key": "pickup.tilly.cell.job",
+            "text": "Spare power cell for Tilly's frame"
+        },
+        {
+            "key": "pickup.bell.valve.job",
+            "text": "Vacuum radio tube for Bell's receiver"
+        },
+        {
+            "key": "ui.kit.cutter.desc",
+            "text": "Cuts salvage joints and vents for materials."
+        },
+        {
+            "key": "ui.kit.tether.desc",
+            "text": "Grapples heavy crates and pulls 07 up slopes."
+        },
+        {
+            "key": "ui.kit.lamp.desc",
+            "text": "Lights dark craters and shadowed ridges ahead."
+        },
+        {
+            "key": "ui.kit.belly.desc",
+            "text": "Pulses magnetic coils to hop over low rocks."
+        },
+        {
+            "key": "ui.kit.flanks.desc",
+            "text": "Builds cruise speed across open lunar flats."
+        },
+        {
+            "key": "ui.kit.panniers.desc",
+            "text": "Adds four side cargo slots between the wheels."
+        },
+        {
+            "key": "ui.kit.back.desc",
+            "text": "Adds two extra battery cells along the spine."
+        },
+        {
+            "key": "ui.kit.hold.desc",
+            "text": "Expands the rear hold rack by four more slots."
+        },
+        {
+            "key": "ui.kit.wing.desc",
+            "text": "Recharges 07 slowly while in sunlight."
+        },
+        {
+            "key": "ui.kit.deck.desc",
+            "text": "Plays recovered crew cassettes on the road."
+        },
+        {
+            "key": "ui.kit.wheels.desc",
+            "text": "Grips steep crater walls without slipping."
+        },
+        {
+            "key": "ui.kit.antenna.desc",
+            "text": "Extends sonar ping range across the basin."
         }
     ]
 }

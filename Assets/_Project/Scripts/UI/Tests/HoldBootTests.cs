@@ -150,18 +150,12 @@ namespace MoonProject.UI.Tests
             Assert.IsNotNull(tuning, $"{UiAssetPaths.Tuning} is missing");
             CargoScreenSettings asset = tuning.Cargo;
             Assert.IsNull(asset.Validate());
+            Assert.AreEqual(FaceInventoryView.ReferenceWidth, asset.PanelWidth);
+            Assert.AreEqual(FaceInventoryView.ReferenceHeight, asset.PanelHeight);
             Assert.AreEqual(_settings.PanelWidth, asset.PanelWidth);
-            Assert.AreEqual(_settings.LabelWidth, asset.LabelWidth);
-            Assert.AreEqual(_settings.LeftLabelWidth, asset.LeftLabelWidth);
-            Assert.AreEqual(_settings.LabelHeight, asset.LabelHeight);
-            Assert.AreEqual(_settings.LabelGap, asset.LabelGap);
-            Assert.AreEqual(_settings.LabelMargin, asset.LabelMargin);
-            Assert.AreEqual(_settings.PortraitReferenceWidth, asset.PortraitReferenceWidth);
-            Assert.AreEqual(_settings.DiagramYaw, asset.DiagramYaw);
-            Assert.AreEqual(_settings.DiagramElevation, asset.DiagramElevation);
-            Assert.AreEqual(_settings.DiagramDistance, asset.DiagramDistance);
-            Assert.AreEqual(_settings.DiagramLookHeight, asset.DiagramLookHeight);
-            Assert.AreEqual(_settings.DiagramFieldOfView, asset.DiagramFieldOfView);
+            Assert.AreEqual(_settings.PanelHeight, asset.PanelHeight);
+            Assert.AreEqual(_settings.MaxCell, asset.MaxCell);
+            Assert.AreEqual(_settings.DragThreshold, asset.DragThreshold);
         }
 
         [Test]
@@ -183,7 +177,7 @@ namespace MoonProject.UI.Tests
             for (int i = 0; i < RoverDiagramData.SocketCount; i++)
             {
                 var socket = (RoverSocket)i;
-                string expectedName = socket == RoverSocket.Panniers ? "BinSocket_L" : socket + "Socket";
+                string expectedName = RoverDiagramData.SocketNodeName(socket);
                 Transform match = FindNode(nodes, expectedName);
                 Assert.IsNotNull(match, $"Missing {expectedName} on {UiAssetPaths.RoverModelPrefab}");
                 Vector3 expected = prefab.transform.InverseTransformPoint(match.position);
@@ -203,114 +197,153 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void RoverDiagramLayout_InEnglishAndVietnamese_At1080pAnd720p_NeverOverlapsDrawingOrLeavesFrame()
+        public void UiIcons_AllThirtySvgsParseAndValidate_AndUnknownIconIdThrowsLoudly()
         {
+            UiIconBuilder.Build();
+            RoverDiagramBuilder.Build();
+
+            var icons = AssetDatabase.LoadAssetAtPath<UiIconSet>(UiAssetPaths.Icons);
+            Assert.IsNotNull(icons, $"{UiAssetPaths.Icons} is missing: run UI/Icons");
+            Assert.IsNull(icons.Validate());
+            Assert.AreEqual(UiIconSet.ExpectedIconCount, icons.Count);
+
             var diagram = AssetDatabase.LoadAssetAtPath<RoverDiagramData>(UiAssetPaths.RoverDiagram);
-            if (diagram == null || diagram.Validate() != null)
+            Assert.IsNotNull(diagram, $"{UiAssetPaths.RoverDiagram} is missing: run UI/Rover Diagram");
+            Assert.IsNull(diagram.Validate());
+
+            foreach (SalvageMaterial material in System.Enum.GetValues(typeof(SalvageMaterial)))
             {
-                RoverDiagramBuilder.Build();
-                diagram = AssetDatabase.LoadAssetAtPath<RoverDiagramData>(UiAssetPaths.RoverDiagram);
+                UiIconShape shape = diagram.GetIcon(material);
+                Assert.IsNull(shape.Validate(), $"Invalid icon for material {material}: {shape.Validate()}");
             }
 
-            var tuning = AssetDatabase.LoadAssetAtPath<UiTuning>(UiAssetPaths.Tuning);
-            Assert.IsNotNull(tuning);
-            CargoScreenSettings cargo = tuning.Cargo;
+            for (int i = 0; i < RoverDiagramData.SocketCount; i++)
+            {
+                var socket = (RoverSocket)i;
+                UiIconShape socketShape = diagram.GetIcon(socket);
+                Assert.IsNull(socketShape.Validate(), $"Invalid icon for socket {socket}: {socketShape.Validate()}");
+                RoverKitPiece piece = PartInfo.DefaultPartFor(socket);
+                UiIconShape kitShape = diagram.GetIcon(piece);
+                Assert.IsNull(kitShape.Validate(), $"Invalid icon for kit piece {piece}: {kitShape.Validate()}");
+            }
+
+            foreach (string partId in new[]
+                     {
+                         "Part_TowerCoil", "Part_Transformer", "Part_RelaySpare",
+                         "Part_TillyCell", "tilly.cell", "Part_BellValve", "bell.valve",
+                     })
+            {
+                UiIconShape partShape = diagram.GetPartIcon(partId);
+                Assert.IsNull(partShape.Validate(), $"Invalid icon for story part {partId}: {partShape.Validate()}");
+            }
+
+            Assert.Throws<System.InvalidOperationException>(() => icons.GetIcon("item_does_not_exist"));
+            Assert.Throws<System.InvalidOperationException>(() => diagram.GetIcon("kit_does_not_exist"));
+            Assert.Throws<System.InvalidOperationException>(() => diagram.GetPartIcon("Part_Unknown"));
+        }
+
+        [Test]
+        public void FaceInventoryLayout_CellsAndOrbitalSocketsNeverOverlap_AndTextBudgetHoldsInEnAndVi()
+        {
+            for (int i = 0; i < FaceInventoryView.MaxHoldCells; i++)
+            {
+                Rect r = FaceInventoryView.GetHoldCellReferenceRect(i);
+                Assert.AreEqual(FaceInventoryView.CellSize, r.width, 1e-3f);
+                Assert.AreEqual(FaceInventoryView.CellSize, r.height, 1e-3f);
+                Assert.GreaterOrEqual(r.xMin, FaceInventoryView.HoldGridX - 1e-3f);
+                Assert.LessOrEqual(r.xMax, FaceInventoryView.DividerX - 24f);
+                Assert.GreaterOrEqual(r.yMin, FaceInventoryView.HoldGridY - 1e-3f);
+                Assert.LessOrEqual(r.yMax, 690f);
+
+                for (int j = i + 1; j < FaceInventoryView.MaxHoldCells; j++)
+                {
+                    Assert.IsFalse(r.Overlaps(FaceInventoryView.GetHoldCellReferenceRect(j)),
+                        $"Hold cell {i} overlaps hold cell {j}");
+                }
+            }
+
+            float minDistance = FaceInventoryView.BubbleRadius * 2f + 8f;
+            for (int i = 0; i < FaceInventoryView.OrbitalSocketCount; i++)
+            {
+                Vector2 c = FaceInventoryView.GetOrbitalSocketReferenceCenter(i);
+                Assert.GreaterOrEqual(c.x - FaceInventoryView.BubbleRadius, FaceInventoryView.DividerX + 16f);
+                Assert.LessOrEqual(c.x + FaceInventoryView.BubbleRadius, FaceInventoryView.ReferenceWidth - 16f);
+                Assert.GreaterOrEqual(c.y - FaceInventoryView.BubbleRadius, 60f);
+                Assert.LessOrEqual(c.y + FaceInventoryView.BubbleRadius, 630f);
+
+                RoverSocket socket = FaceInventoryView.OrbitalSockets[i];
+                Vector2 mount = RoverLineArtPainter.GetSocketMountPoint(socket,
+                    new Vector2(FaceInventoryView.RoverOriginX, FaceInventoryView.RoverOriginY),
+                    FaceInventoryView.RoverScale);
+                Assert.Greater(Vector2.Distance(c, mount), FaceInventoryView.BubbleRadius + 6f,
+                    $"Orbital bubble {socket} is too close to its mount point on 07");
+
+                for (int j = i + 1; j < FaceInventoryView.OrbitalSocketCount; j++)
+                {
+                    Vector2 other = FaceInventoryView.GetOrbitalSocketReferenceCenter(j);
+                    Assert.GreaterOrEqual(Vector2.Distance(c, other), minDistance,
+                        $"Orbital bubble {i} overlaps orbital bubble {j}");
+                }
+            }
+
+            var uiTuning = AssetDatabase.LoadAssetAtPath<UiTuning>(UiAssetPaths.Tuning);
+            Assert.IsNotNull(uiTuning);
+            Assert.IsNull(uiTuning.Validate());
+            CargoScreenSettings cargo = uiTuning.Cargo;
+            TitleSettings title = uiTuning.Title;
+            Assert.AreEqual(title.WheelRadius, cargo.RoverWheelRadius, 1e-4f, "Rover wheel radius matches title screen");
+            Assert.AreEqual(title.WheelRimRadius, cargo.RoverWheelRimRadius, 1e-4f, "Rover wheel rim radius matches title screen");
+            Assert.AreEqual(title.WheelbaseHalf, cargo.RoverWheelbaseHalf, 1e-4f, "Rover half-wheelbase matches title screen");
+            Assert.AreEqual(title.FarWheelScale, cargo.RoverFarWheelScale, 1e-4f, "Far wheel scale matches title screen");
+            Assert.AreEqual(title.FarWheelAlpha, cargo.RoverFarWheelAlpha, 1e-4f, "Far wheel alpha matches title screen");
+            Assert.AreEqual(new Vector2(6f, -4f), cargo.RoverFarWheelOffset, "Far wheel offset is (+6, -4) at 82px/m");
+            float headlampTipX = cargo.RoverOriginX + cargo.HeadlampBeamLength * cargo.RoverScale;
+            float lampBubbleLeftEdge = FaceInventoryView.GetOrbitalSocketReferenceCenter(
+                FaceInventoryView.OrbitalIndexOf(RoverSocket.Lamp)).x - cargo.BubbleRadius;
+            Assert.Less(headlampTipX, lampBubbleLeftEdge - 20f,
+                "Headlamp 3-slice gradient cone stops well short of the Lamp socket bubble");
+            Assert.LessOrEqual(cargo.LeaderEmptyColor.a, 78, "Empty socket leader line is faint (~25-30% alpha)");
+            Assert.Greater(cargo.LeaderInstalledColor.a, cargo.LeaderEmptyColor.a,
+                "Installed socket leader is slightly brighter than empty leader");
+            Assert.LessOrEqual(cargo.LeaderInstalledColor.a, 115, "Installed socket leader remains subtle");
+            Assert.GreaterOrEqual(cargo.LeaderFocusColor.a, 220, "Focused/drag-target leader is bright cyan");
+
             var enAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(UiAssetPaths.StringTable("en"));
             var viAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(UiAssetPaths.StringTable("vi"));
             var localization = new LocalizationService(new EventBus(),
                 new[] { StringTable.Parse(enAsset.text, "en"), StringTable.Parse(viAsset.text, "vi") });
-            var painter = new RoverDiagramPainter(new UnityEngine.UIElements.VisualElement(), diagram, cargo);
 
-            // PanelSettings scales 1280x720 from 1920x1080 (match=1), so the portrait element is 798.5x410 in panel space;
-            // we also verify a narrower 720p-scaled portrait (532.3x273.3) to prove proportional column scaling.
-            Rect[] frames =
-            {
-                new Rect(0f, 0f, 798.5f, 410f),
-                new Rect(0f, 0f, 532.3f, 273.3f),
-            };
-            string[] languages = { "en", "vi" };
-            var points = new Vector2[RoverDiagramData.SocketCount];
-            var wants = new bool[RoverDiagramData.SocketCount];
-            var heights = new float[RoverDiagramData.SocketCount];
-            var centreY = new float[RoverDiagramData.SocketCount];
-            var rightCol = new bool[RoverDiagramData.SocketCount];
-            var labelRects = new Rect[RoverDiagramData.SocketCount];
+            localization.SetLanguage("en");
+            Assert.AreEqual("INVENTORY", localization.Get(UiKeys.CargoHold));
+            Assert.AreEqual("EQUIPPED", localization.Get(UiKeys.CargoTabSeven));
 
-            foreach (string lang in languages)
+            localization.SetLanguage("vi");
+            Assert.AreEqual("KHOANG HÀNG", localization.Get(UiKeys.CargoHold));
+            Assert.AreEqual("TRANG BỊ", localization.Get(UiKeys.CargoTabSeven));
+
+            foreach (string lang in new[] { "en", "vi" })
             {
                 localization.SetLanguage(lang);
-                foreach (Rect area in frames)
+                foreach (SalvageMaterial material in System.Enum.GetValues(typeof(SalvageMaterial)))
                 {
-                    Rect drawing = painter.DrawingBounds(area);
-                    float widthShare = drawing.width / area.width;
-                    Assert.That(widthShare, Is.InRange(0.54f, 0.60f),
-                        $"{lang} {area.width}x{area.height}: drawing width share {widthShare:P1} outside 55-60%");
-                    Assert.GreaterOrEqual(drawing.xMin, 0f, $"{lang}: drawing left leaves frame");
-                    Assert.GreaterOrEqual(drawing.yMin, 0f, $"{lang}: drawing top leaves frame");
-                    Assert.LessOrEqual(drawing.xMax, area.width, $"{lang}: drawing right leaves frame");
-                    Assert.LessOrEqual(drawing.yMax, area.height, $"{lang}: drawing bottom leaves frame");
+                    string desc = PartInfo.MaterialDescription(material, localization);
+                    Assert.IsNotEmpty(desc);
+                    Assert.LessOrEqual(desc.Length, FaceInventoryView.MaxTooltipDescriptionChars,
+                        $"{lang} {material} description exceeds 52 chars: '{desc}'");
+                }
 
-                    Rect image = RoverDiagramPainter.FrameRect(area);
-                    float scale = Mathf.Min(1f, area.width / cargo.PortraitReferenceWidth);
-                    float leftWidth = Mathf.Floor(cargo.LeftLabelWidth * scale);
-                    float rightWidth = Mathf.Floor(cargo.LabelWidth * scale);
-                    float margin = Mathf.Floor(cargo.LabelMargin * scale);
-                    float lineH = cargo.LabelHeight * scale;
-                    float gap = cargo.LabelGap * scale;
-                    float charW = 10.8f * scale;
-
-                    for (int i = 0; i < RoverDiagramData.SocketCount; i++)
-                    {
-                        var socket = (RoverSocket)i;
-                        Vector2 uv = painter.SocketViewport(socket);
-                        points[i] = new Vector2(image.x + uv.x * image.width, image.y + (1f - uv.y) * image.height);
-                        wants[i] = PartInfo.TryDefaultPart(socket, out RoverKitPiece part);
-                        string text = wants[i] ? localization.Get(PartInfo.NameKey(part)) : string.Empty;
-                        float colW = points[i].x >= area.width * 0.5f ? rightWidth : leftWidth;
-                        heights[i] = wants[i] && text.Length * charW > colW - 2f ? lineH * 2f : lineH;
-                    }
-
-                    LabelLayout.Place(points, wants, area.width, area.height, heights, gap, centreY, rightCol);
-                    for (int i = 0; i < RoverDiagramData.SocketCount; i++)
-                    {
-                        if (!wants[i])
-                        {
-                            continue;
-                        }
-
-                        float w = rightCol[i] ? rightWidth : leftWidth;
-                        float h = heights[i];
-                        float x = rightCol[i] ? area.width - margin - w : margin;
-                        float y = centreY[i] - h * 0.5f;
-                        var rect = new Rect(x, y, w, h);
-                        labelRects[i] = rect;
-
-                        Assert.GreaterOrEqual(rect.xMin, -0.01f, $"{lang} {(RoverSocket)i} leaves left of frame");
-                        Assert.GreaterOrEqual(rect.yMin, -0.01f, $"{lang} {(RoverSocket)i} leaves top of frame");
-                        Assert.LessOrEqual(rect.xMax, area.width + 0.01f, $"{lang} {(RoverSocket)i} leaves right of frame");
-                        Assert.LessOrEqual(rect.yMax, area.height + 0.01f, $"{lang} {(RoverSocket)i} leaves bottom of frame");
-                        Assert.IsFalse(rect.Overlaps(drawing),
-                            $"{lang} {(RoverSocket)i} label {rect} overlaps drawing bounds {drawing}");
-                    }
-
-                    for (int i = 0; i < RoverDiagramData.SocketCount; i++)
-                    {
-                        if (!wants[i])
-                        {
-                            continue;
-                        }
-
-                        for (int j = i + 1; j < RoverDiagramData.SocketCount; j++)
-                        {
-                            if (!wants[j])
-                            {
-                                continue;
-                            }
-
-                            Assert.IsFalse(labelRects[i].Overlaps(labelRects[j]),
-                                $"{lang}: {(RoverSocket)i} overlaps {(RoverSocket)j}");
-                        }
-                    }
+                for (int i = 0; i < RoverDiagramData.SocketCount; i++)
+                {
+                    var socket = (RoverSocket)i;
+                    string sDesc = PartInfo.SocketDescription(socket, localization);
+                    Assert.IsNotEmpty(sDesc);
+                    Assert.LessOrEqual(sDesc.Length, FaceInventoryView.MaxTooltipDescriptionChars,
+                        $"{lang} socket {socket} description exceeds 52 chars: '{sDesc}'");
+                    RoverKitPiece piece = PartInfo.DefaultPartFor(socket);
+                    string pDesc = PartInfo.PartDescription(piece, localization);
+                    Assert.IsNotEmpty(pDesc);
+                    Assert.LessOrEqual(pDesc.Length, FaceInventoryView.MaxTooltipDescriptionChars,
+                        $"{lang} kit {piece} description exceeds 52 chars: '{pDesc}'");
                 }
             }
         }
