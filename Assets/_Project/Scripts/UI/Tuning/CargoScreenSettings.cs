@@ -66,7 +66,7 @@ namespace MoonProject.UI
 
         [Tooltip("Width (px) of the column down each side of the portrait where socket names sit.")]
         [Range(80f, 240f)]
-        [SerializeField] private float _labelWidth = 150f;
+        [SerializeField] private float _labelWidth = 176f;
 
         [Tooltip("Height (px) of one socket name.")]
         [Range(14f, 40f)]
@@ -78,7 +78,7 @@ namespace MoonProject.UI
 
         [Tooltip("Gap (px) between the portrait's edge and a column of names.")]
         [Range(0f, 40f)]
-        [SerializeField] private float _labelMargin = 8f;
+        [SerializeField] private float _labelMargin = 10f;
 
         [Tooltip("Gap (px) between a socket or part and the tooltip that names it.")]
         [Range(0f, 40f)]

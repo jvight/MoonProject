@@ -261,12 +261,13 @@ namespace MoonProject.UI
                 _wantsLabel[i] = sized && placed && view.Name.text.Length > 0;
             }
 
-            LabelLayout.Place(_points, _wantsLabel, area.width, area.height, _settings.LabelHeight, _settings.LabelGap,
+            LabelLayout.Place(_points, _wantsLabel, area.width, area.height,
+                Mathf.Max(_settings.LabelHeight, 24f), Mathf.Max(_settings.LabelGap, 6f),
                 _labelY, _rightColumn);
             _leaders.Clear();
             float scale = area.width > 0f ? Mathf.Min(1f, area.width / 720f) : 1f;
-            float labelWidth = Mathf.Floor(_settings.LabelWidth * scale);
-            float labelMargin = Mathf.Floor(_settings.LabelMargin * scale);
+            float labelWidth = Mathf.Floor(Mathf.Max(_settings.LabelWidth, 176f) * scale);
+            float labelMargin = Mathf.Floor(Mathf.Max(_settings.LabelMargin, 10f) * scale);
             float inner = labelMargin + labelWidth;
             for (int i = 0; i < SocketCount; i++)
             {

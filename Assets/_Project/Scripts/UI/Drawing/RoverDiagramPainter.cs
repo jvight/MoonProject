@@ -18,7 +18,7 @@ namespace MoonProject.UI
 
         private const float YawRad = 55f * Mathf.Deg2Rad;
         private const float ElevRad = 14f * Mathf.Deg2Rad;
-        private const float CameraDistance = 5f;
+        private const float CameraDistance = 5.6f;
         private const float LookHeight = 0.6f;
         private const float TanHalfFov = 0.26794919f; // tan(15 deg)
 
@@ -46,18 +46,18 @@ namespace MoonProject.UI
         // Core.RoverSocket enum order (0..11).
         private static readonly Vector3[] SocketPoints =
         {
-            new Vector3(0.00f, 0.78f, 0.66f),  // 0 Cutter (front chest cutter turret)
-            new Vector3(0.00f, 0.36f, -0.62f), // 1 Tether (rear tow hook)
-            new Vector3(-0.12f, 0.65f, 0.66f), // 2 Lamp (front twin headlamps)
-            new Vector3(0.00f, 0.28f, 0.08f),  // 3 Belly (under-chassis belly plate)
-            new Vector3(0.46f, 0.80f, -0.18f), // 4 Flanks (upper flank capacitor mount)
-            new Vector3(0.42f, 0.58f, 0.34f),  // 5 Panniers (right flank side bin)
-            new Vector3(0.00f, 0.90f, -0.12f), // 6 Back (rear-top spine mount)
-            new Vector3(0.00f, 0.54f, -0.58f), // 7 Hold (rear clamshell hatch)
-            new Vector3(-0.08f, 0.98f, -0.28f), // 8 Wing (roof solar wing)
-            new Vector3(0.36f, 1.23f, 0.04f),  // 9 Deck (right cheek tape deck pod)
-            new Vector3(0.64f, 0.35f, 0.53f),  // 10 Wheels (front-right wheel hub)
-            new Vector3(0.36f, 1.12f, -0.46f), // 11 Antenna (rear whip antenna + sonar loop)
+            new Vector3(-0.04f, 0.88f, 0.58f),  // 0 Cutter (front chest cutter turret)
+            new Vector3(0.00f, 0.36f, -0.66f),  // 1 Tether (rear tow hook)
+            new Vector3(-0.18f, 0.68f, 0.65f),  // 2 Lamp (front twin headlamps)
+            new Vector3(-0.06f, 0.24f, 0.66f),  // 3 Belly (under-chassis hover/belly mount)
+            new Vector3(0.48f, 0.78f, -0.18f),  // 4 Flanks (upper flank capacitor mount)
+            new Vector3(-0.12f, 0.48f, 0.60f),  // 5 Panniers (front-flank side bin mount)
+            new Vector3(0.08f, 0.84f, -0.36f),  // 6 Back (rear-top spine mount)
+            new Vector3(0.12f, 0.56f, -0.58f),  // 7 Hold (rear clamshell hatch)
+            new Vector3(0.12f, 0.97f, -0.28f),  // 8 Wing (roof solar wing)
+            new Vector3(0.34f, 1.23f, 0.04f),   // 9 Deck (right cheek tape deck pod)
+            new Vector3(-0.48f, 0.28f, 0.56f),  // 10 Wheels (front wheel drive hub)
+            new Vector3(0.36f, 1.14f, -0.46f),  // 11 Antenna (rear whip antenna + sonar loop)
         };
 
         private Color _lineColor = new Color(1f, 0.71f, 0.28f, 0.95f);
@@ -143,10 +143,6 @@ namespace MoonProject.UI
         {
             if (!nearSide)
             {
-                _painter.lineWidth = 1f;
-                _painter.strokeColor = _gridColor;
-                Segment(P(0f, 0f, -0.95f), P(0f, 0f, 1.05f));
-                Segment(P(-0.85f, 0f, 0f), P(0.85f, 0f, 0f));
                 PaintWheel(new Vector3(-0.62f, 0.35f, -0.53f), false);
                 PaintWheel(new Vector3(-0.62f, 0.35f, 0.53f), false);
                 return;
@@ -167,7 +163,7 @@ namespace MoonProject.UI
             _painter.strokeColor = near ? _lineColor : _dimColor;
             _painter.lineWidth = near ? 2f : 1.4f;
 
-            PaintWheelRing(new Vector3(xIn, center.y, center.z), r, false);
+            PaintWheelRing(new Vector3(xIn, center.y, center.z), r, true);
             PaintWheelTreads(center, r);
             PaintWheelRing(new Vector3(xOut, center.y, center.z), r, true);
             PaintWheelRing(new Vector3(xOut, center.y, center.z), r * 0.55f, false);
@@ -206,7 +202,7 @@ namespace MoonProject.UI
         {
             float x0 = center.x - 0.13f;
             float x1 = center.x + 0.13f;
-            for (int i = 0; i < 12; i++)
+            for (int i = -2; i <= 4; i++)
             {
                 float a = i * (Mathf.PI * 2f / 12f);
                 float aMid = a + 0.14f;
@@ -255,7 +251,9 @@ namespace MoonProject.UI
 
             // Lower chassis tub & upper beetle carapace dome.
             QuadFill(new Vector3(-0.46f, 0.38f, -0.58f), new Vector3(0.46f, 0.38f, -0.58f),
-                new Vector3(0.46f, 0.62f, -0.58f), new Vector3(-0.46f, 0.62f, -0.58f));
+                new Vector3(0.46f, 0.72f, -0.52f), new Vector3(-0.46f, 0.72f, -0.52f));
+            QuadFill(new Vector3(-0.46f, 0.38f, 0.60f), new Vector3(0.46f, 0.38f, 0.60f),
+                new Vector3(0.44f, 0.72f, 0.56f), new Vector3(-0.44f, 0.72f, 0.56f));
             QuadFill(new Vector3(0.46f, 0.38f, -0.58f), new Vector3(0.46f, 0.38f, 0.60f),
                 new Vector3(0.44f, 0.72f, 0.56f), new Vector3(0.44f, 0.72f, -0.52f));
             QuadFill(new Vector3(-0.44f, 0.72f, -0.52f), new Vector3(0.44f, 0.72f, -0.52f),

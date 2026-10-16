@@ -351,11 +351,12 @@ Label {
 }
 
 .bay-row__recipe .material-slot {
-    margin: 0 6px;
+    margin: 0 4px;
 }
 
 .bay-row__recipe .material-slot__count {
     min-width: 0;
+    font-size: 20px;
 }
 
 .recipe__part {
@@ -852,7 +853,7 @@ Label {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 5%;
+    bottom: 9%;
     align-items: center;
 }
 
@@ -1389,7 +1390,7 @@ Label {
     position: absolute;
     right: 0;
     bottom: 24px;
-    width: 520px;
+    width: 544px;
 }
 
 .tower-panel__heading {
@@ -2433,8 +2434,9 @@ Label {
 }
 
 .cargo__cell .material-icon {
-    width: 55%;
-    height: 55%;
+    width: 44%;
+    height: 44%;
+    margin-bottom: 14px;
 }
 
 .cargo__units {
