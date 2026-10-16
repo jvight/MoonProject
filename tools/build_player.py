@@ -33,6 +33,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from moonbatch import logscan, procutil  # noqa: E402
 
 BUILD_METHOD = "MoonProject.Editor.Build.PlayerBuild.BuildWindows"
+SHOWCASE_BUILD_METHOD = "MoonProject.Editor.Build.PlayerBuild.BuildShowcase"
 INFO_FILE = "build_info.txt"
 BOOT_MARKER = re.compile(r"^WorldSystem: terrain")
 # Release players log engine errors as bare lines (no severity, no stack), so these words count as failures.
@@ -81,8 +82,9 @@ def mb(size):
     return f"{size / (1024 * 1024):.1f} MB"
 
 
-def build(root, out_dir, skip_builders, timeout):
-    cmd = [sys.executable, str(Path(__file__).resolve().parent / "unity_batch.py"), "exec", "--method", BUILD_METHOD,
+def build(root, out_dir, skip_builders, timeout, showcase=False):
+    method = SHOWCASE_BUILD_METHOD if showcase else BUILD_METHOD
+    cmd = [sys.executable, str(Path(__file__).resolve().parent / "unity_batch.py"), "exec", "--method", method,
            "--project", str(root), "--timeout", str(timeout), "--arg", f"out={out_dir}",
            "--arg", f"builders={'false' if skip_builders else 'true'}"]
     say("building the player through unity_batch (first builds compile player shaders and take several minutes)")
@@ -104,10 +106,11 @@ def copy_licenses(root, out_dir):
     return True
 
 
-def make_zip(root, out_dir, version):
+def make_zip(root, out_dir, version, showcase=False):
     builds = root / "Builds"
     builds.mkdir(exist_ok=True)
-    name = f"Lunarion-{version}"
+    prefix = "Lunarion-Showcase" if showcase else "Lunarion"
+    name = f"{prefix}-{version}"
     archive = builds / f"{name}.zip"
     if archive.exists():
         archive.unlink()
@@ -124,7 +127,7 @@ def delete_slot_files(saves_dir, slot):
             file.unlink()
 
 
-def smoke(root, out_dir, info, seconds):
+def smoke(root, out_dir, info, seconds, showcase=False):
     exe = out_dir / info["exe"]
     log_path = root / "Logs" / "batch" / f"{time.strftime('%Y%m%d-%H%M%S')}-smoke-player.log"
     log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -156,7 +159,7 @@ def smoke(root, out_dir, info, seconds):
                         boot_seconds = time.monotonic() - started
                         boot_line = line
                         break
-                if boot_seconds is not None and slot_in_use != SMOKE_SLOT:
+                if boot_seconds is not None and not showcase and slot_in_use != SMOKE_SLOT:
                     break
             time.sleep(0.25)
     finally:
@@ -171,12 +174,13 @@ def smoke(root, out_dir, info, seconds):
     for line, count in native:
         say(f"smoke: player log problem x{count}: {line}")
     ok = True
-    if slot_in_use != SMOKE_SLOT:
-        say(f"smoke: FAIL - the player did not confirm save slot '{SMOKE_SLOT}' (got {slot_in_use!r}); "
-            "the build predates -saveSlot or ignored it, so it was stopped as soon as it booted")
-        ok = False
-    else:
-        say(f"smoke: the player used save slot '{SMOKE_SLOT}' (deleted again)")
+    if not showcase:
+        if slot_in_use != SMOKE_SLOT:
+            say(f"smoke: FAIL - the player did not confirm save slot '{SMOKE_SLOT}' (got {slot_in_use!r}); "
+                "the build predates -saveSlot or ignored it, so it was stopped as soon as it booted")
+            ok = False
+        else:
+            say(f"smoke: the player used save slot '{SMOKE_SLOT}' (deleted again)")
     if exited_early is not None:
         say(f"smoke: FAIL - the player exited by itself after {time.monotonic() - started:.1f}s (code {exited_early})")
         ok = False
@@ -205,7 +209,8 @@ def player_problems(text):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--out", help="build folder (default Builds/Lunarion-Windows in the worktree)")
+    ap.add_argument("--showcase", action="store_true", help="build Showcase.unity into Builds/Lunarion-Showcase-<ver>.zip")
+    ap.add_argument("--out", help="build folder (default Builds/Lunarion-Windows or Builds/Lunarion-Showcase)")
     ap.add_argument("--skip-builders", action="store_true", help="build the player without re-running builders")
     ap.add_argument("--no-build", action="store_true", help="reuse the existing build folder (zip + smoke only)")
     ap.add_argument("--no-smoke", action="store_true", help="skip launching the built player")
@@ -214,9 +219,10 @@ def main():
     args = ap.parse_args()
 
     root = git_toplevel()
+    default_out = "Builds/Lunarion-Showcase" if args.showcase else "Builds/Lunarion-Windows"
     out_dir = (Path(args.out) if args.out and Path(args.out).is_absolute() else root / (args.out or
-               "Builds/Lunarion-Windows")).resolve()
-    if not args.no_build and not build(root, out_dir, args.skip_builders, args.timeout):
+               default_out)).resolve()
+    if not args.no_build and not build(root, out_dir, args.skip_builders, args.timeout, showcase=args.showcase):
         say("RESULT: FAIL (player build failed; see the unity_batch output above)")
         sys.exit(1)
     if not (out_dir / INFO_FILE).exists():
@@ -228,16 +234,17 @@ def main():
     if not copy_licenses(root, out_dir):
         say("RESULT: FAIL")
         sys.exit(1)
-    archive = make_zip(root, out_dir, info["version"])
+    archive = make_zip(root, out_dir, info["version"], showcase=args.showcase)
     say(f"version {info['version']}  exe {mb(exe.stat().st_size)}  build folder {mb(folder_size(out_dir))}")
     say(f"zip {mb(archive.stat().st_size)}: {archive}")
 
     ok = True
     if not args.no_smoke:
-        ok, _, _ = smoke(root, out_dir, info, args.smoke_seconds)
+        ok, _, _ = smoke(root, out_dir, info, args.smoke_seconds, showcase=args.showcase)
     say("RESULT: " + ("PASS" if ok else "FAIL"))
     sys.exit(0 if ok else 1)
 
 
 if __name__ == "__main__":
     main()
+
