@@ -156,8 +156,20 @@ def build_fully_upgraded_rover_scene():
     return rover_root, mats
 
 
+def _set_hierarchy_hidden(root_name: str, hidden: bool):
+    """Toggle hide_render and hide_viewport on `root_name` and all of its descendants."""
+    root_obj = bpy.data.objects.get(root_name)
+    if root_obj is None:
+        return
+    root_obj.hide_render = hidden
+    root_obj.hide_viewport = hidden
+    for child in root_obj.children_recursive:
+        child.hide_render = hidden
+        child.hide_viewport = hidden
+
+
 def render_all_kit_previews(renders_dir: Path | None = None):
-    """Render all 10 kit close-ups and `compare_upgraded.png` into `Logs/renders/`."""
+    """Render all 10 kit close-ups, `compare_upgraded.png`, and `compare_scanfan_focuslens.png` into `Logs/renders/`."""
     repo_root = SCRIPT_DIR.parents[3]
     if renders_dir is None:
         renders_dir = repo_root / "Logs" / "renders"
@@ -167,6 +179,9 @@ def render_all_kit_previews(renders_dir: Path | None = None):
     concept_upgraded = repo_root.parent / "agy-face" / "Logs" / "v3" / "upgraded.png"
 
     build_fully_upgraded_rover_scene()
+    # Keep ScanFan hidden during default full-upgrade & FocusLens renders (matching ShowcaseSceneBuilder)
+    _set_hierarchy_hidden("ScanFan", True)
+
     cam_obj, _ = setup_studio_lighting_and_camera(DIMENSIONS)
     cam_obj.data.type = "PERSP"
     cam_obj.data.lens = 35.0
@@ -202,15 +217,35 @@ def render_all_kit_previews(renders_dir: Path | None = None):
         ("kit_cargo_rack.png", (-1.18, 1.02, -1.62), (0.0, 0.64, -0.88)),
         ("kit_side_bin.png", (-1.22, 0.68, 0.44), (-0.52, 0.60, 0.02)),
         ("kit_hover_coils.png", (-0.88, 0.14, 0.02), (0.0, 0.22, 0.0)),
-        ("kit_focus_lens.png", (-0.92, 1.28, 0.48), (-0.42, 1.23, 0.12)),
+        ("kit_focus_lens.png", (-0.88, 1.30, 0.46), (-0.43, 1.23, 0.13)),
         ("kit_lens_glass.png", (-0.92, 1.25, 0.14), (-0.41, 1.23, 0.04)),
-        ("kit_scan_fan.png", (-0.88, 1.22, 0.52), (-0.42, 1.23, 0.16)),
+        ("kit_scan_fan.png", (-0.88, 1.30, 0.46), (-0.43, 1.23, 0.13)),
     )
     cam_obj.data.lens = 58.0
     for filename, c_pos, t_pos in closeup_shots:
+        if filename == "kit_scan_fan.png":
+            _set_hierarchy_hidden("FocusLens", True)
+            _set_hierarchy_hidden("ScanFan", False)
+        else:
+            _set_hierarchy_hidden("FocusLens", False)
+            _set_hierarchy_hidden("ScanFan", True)
         aim_camera_at(cam_obj, c_pos, t_pos)
         render_to_file(renders_dir / filename, 768, 768)
+
+    _set_hierarchy_hidden("FocusLens", False)
+    _set_hierarchy_hidden("ScanFan", True)
+
+    # 4. Composite FocusLens (left) vs ScanFan (right) side-by-side -> compare_scanfan_focuslens.png
+    lens_rgba = load_image_rgba(renders_dir / "kit_focus_lens.png")
+    fan_rgba = load_image_rgba(renders_dir / "kit_scan_fan.png")
+    lh, lw, _ = lens_rgba.shape
+    if (fan_rgba.shape[0], fan_rgba.shape[1]) != (lh, lw):
+        fan_rgba = resize_rgba_bilinear(fan_rgba, lh, lw)
+    comp_sf = np.concatenate([lens_rgba, fan_rgba], axis=1)
+    comp_sf[:, lw - 1 : lw + 1, :3] = 0.38
+    save_image_rgba(renders_dir / "compare_scanfan_focuslens.png", comp_sf, include_alpha=False)
 
 
 if __name__ == "__main__":
     render_all_kit_previews()
+

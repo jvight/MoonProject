@@ -55,6 +55,16 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
+            <ui:VisualElement name="build-reason-anchor" class="world-anchor" picking-mode="Ignore">
+                <ui:VisualElement name="build-reason-center" class="world-anchor__center" picking-mode="Ignore">
+                    <ui:VisualElement name="build-reason" class="build-reason" picking-mode="Ignore">
+                        <ui:VisualElement name="build-reason-shadow" class="soft-shadow soft-shadow--chip" />
+                        <ui:VisualElement name="build-reason-body" class="chip build-reason__body" picking-mode="Ignore">
+                            <ui:Label name="build-reason-text" class="chip__word build-reason__text" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
             <ui:VisualElement name="hud-frame" class="safe-frame" picking-mode="Ignore">
                 <ui:VisualElement name="home-meter" class="home-meter" picking-mode="Ignore">
                     <ui:VisualElement name="home-meter-arc" class="home-meter__arc" picking-mode="Ignore" />
@@ -207,6 +217,37 @@
                                 <ui:VisualElement name="tower-pick-glyph" class="glyph glyph--small">
                                     <ui:Label name="tower-pick-glyph-label" class="glyph__label" />
                                 </ui:VisualElement>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="build-strip" class="build-strip" picking-mode="Ignore">
+                    <ui:VisualElement name="build-strip-shadow" class="soft-shadow soft-shadow--panel" />
+                    <ui:VisualElement name="build-strip-body" class="panel build-strip__body" picking-mode="Ignore">
+                        <ui:VisualElement class="build-strip__header" picking-mode="Ignore">
+                            <ui:Label name="build-strip-title" class="caption build-strip__title" picking-mode="Ignore" />
+                            <ui:Label name="build-strip-status" class="caption caption--quiet build-strip__status" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="build-strip-cards" class="build-strip__cards" picking-mode="Ignore" />
+                        <ui:VisualElement class="build-strip__detail" picking-mode="Ignore">
+                            <ui:VisualElement class="build-strip__info" picking-mode="Ignore">
+                                <ui:Label name="build-strip-name" class="build-strip__name" picking-mode="Ignore" />
+                                <ui:Label name="build-strip-desc" class="build-strip__desc" picking-mode="Ignore" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="build-strip-recipe" class="recipe build-strip__recipe" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="build-strip-footer" class="build-strip__footer" picking-mode="Ignore">
+                            <ui:VisualElement class="build-strip__hint-item" picking-mode="Ignore">
+                                <ui:VisualElement name="build-strip-glyph-primary" class="glyph glyph--small" picking-mode="Ignore">
+                                    <ui:Label name="build-strip-glyph-primary-label" class="glyph__label" picking-mode="Ignore" />
+                                </ui:VisualElement>
+                                <ui:Label name="build-strip-hint-primary" class="build-strip__hint" picking-mode="Ignore" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="build-strip__hint-item" picking-mode="Ignore">
+                                <ui:VisualElement name="build-strip-glyph-secondary" class="glyph glyph--small" picking-mode="Ignore">
+                                    <ui:Label name="build-strip-glyph-secondary-label" class="glyph__label" picking-mode="Ignore" />
+                                </ui:VisualElement>
+                                <ui:Label name="build-strip-hint-secondary" class="build-strip__hint" picking-mode="Ignore" />
                             </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>

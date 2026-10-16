@@ -661,6 +661,7 @@ def main() -> None:
     _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_Signage_Albedo.png", signage["albedo"])
     _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_Signage_Normal.png", signage["normal"])
     _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_Signage_Mask.png", signage["mask"])
+    _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_Signage_Emission.png", signage["emission"])
 
     print(f"Generated {len(list(OUTPUT_DIR.glob('*.png')))} PNG textures in {OUTPUT_DIR}")
 

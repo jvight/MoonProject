@@ -55,6 +55,10 @@ namespace MoonProject.UI.Tests
         [TestCase(RoverAction.Winch, InputDeviceKind.Gamepad, "D-Pad")]
         [TestCase(RoverAction.Jump, InputDeviceKind.KeyboardMouse, "Space")]
         [TestCase(RoverAction.Jump, InputDeviceKind.Gamepad, "A")]
+        [TestCase(RoverAction.Build, InputDeviceKind.KeyboardMouse, "B")]
+        [TestCase(RoverAction.Build, InputDeviceKind.Gamepad, "Y")]
+        [TestCase(RoverAction.Deconstruct, InputDeviceKind.KeyboardMouse, "X")]
+        [TestCase(RoverAction.Deconstruct, InputDeviceKind.Gamepad, "RB")]
         public void English_Keycaps(RoverAction action, InputDeviceKind device, string expected)
         {
             Assert.AreEqual(expected, _glyphs.For(action, device));
@@ -102,6 +106,32 @@ namespace MoonProject.UI.Tests
         {
             Assert.IsFalse(string.IsNullOrWhiteSpace(label), what);
             Assert.LessOrEqual(label.Length, MaxKeycapCharacters, $"{what}: '{label}' does not fit a keycap");
+        }
+
+        [Test]
+        public void BuildStripFooterGlyphs_MatchActiveDevice()
+        {
+            var uxml = AssetDatabase.LoadAssetAtPath<UnityEngine.UIElements.VisualTreeAsset>(UiAssetPaths.Uxml);
+            Assert.IsNotNull(uxml);
+            UnityEngine.UIElements.VisualElement root = uxml.Instantiate();
+            var layout = new UiLayout(root);
+
+            var primary = new GlyphView(layout.BuildStripGlyphPrimary, layout.BuildStripGlyphPrimaryLabel);
+            var secondary = new GlyphView(layout.BuildStripGlyphSecondary, layout.BuildStripGlyphSecondaryLabel);
+
+            primary.Set(_glyphs.For(RoverAction.Excavate, InputDeviceKind.KeyboardMouse), InputDeviceKind.KeyboardMouse);
+            secondary.Set(_glyphs.For(RoverAction.Winch, InputDeviceKind.KeyboardMouse), InputDeviceKind.KeyboardMouse);
+            Assert.AreEqual("E", layout.BuildStripGlyphPrimaryLabel.text);
+            Assert.AreEqual("Scroll", layout.BuildStripGlyphSecondaryLabel.text);
+            Assert.IsFalse(layout.BuildStripGlyphPrimary.ClassListContains(GlyphView.PadClass));
+            Assert.IsFalse(layout.BuildStripGlyphSecondary.ClassListContains(GlyphView.PadClass));
+
+            primary.Set(_glyphs.For(RoverAction.Excavate, InputDeviceKind.Gamepad), InputDeviceKind.Gamepad);
+            secondary.Set(_glyphs.For(RoverAction.Winch, InputDeviceKind.Gamepad), InputDeviceKind.Gamepad);
+            Assert.AreEqual("X", layout.BuildStripGlyphPrimaryLabel.text);
+            Assert.AreEqual("D-Pad", layout.BuildStripGlyphSecondaryLabel.text);
+            Assert.IsTrue(layout.BuildStripGlyphPrimary.ClassListContains(GlyphView.PadClass));
+            Assert.IsTrue(layout.BuildStripGlyphSecondary.ClassListContains(GlyphView.PadClass));
         }
     }
 }

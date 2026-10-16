@@ -1935,6 +1935,150 @@
             "text": "View"
         },
         {
+            "key": "hint.deconstruct",
+            "text": "Deconstruct"
+        },
+        {
+            "key": "build.strip.title",
+            "text": "BUILD"
+        },
+        {
+            "key": "build.cost.affordable",
+            "text": "Ready to place"
+        },
+        {
+            "key": "build.cost.short",
+            "text": "Not enough salvage"
+        },
+        {
+            "key": "build.reason.steep",
+            "text": "Too steep"
+        },
+        {
+            "key": "build.reason.overlaps",
+            "text": "Something is in the way"
+        },
+        {
+            "key": "build.reason.close",
+            "text": "Too close"
+        },
+        {
+            "key": "build.reason.far",
+            "text": "Too far"
+        },
+        {
+            "key": "build.reason.outside",
+            "text": "Outside base reach"
+        },
+        {
+            "key": "build.reason.blocked",
+            "text": "Clear the ground first"
+        },
+        {
+            "key": "build.hint.rotate",
+            "text": "Rotate"
+        },
+        {
+            "key": "build.hint.snap",
+            "text": "Snap"
+        },
+        {
+            "key": "build.hint.place",
+            "text": "Place"
+        },
+        {
+            "key": "build.hint.weld",
+            "text": "Hold to weld"
+        },
+        {
+            "key": "build.hint.deconstruct",
+            "text": "Hold to deconstruct"
+        },
+        {
+            "key": "structure.charging_pad.name",
+            "text": "Charging Pad"
+        },
+        {
+            "key": "structure.charging_pad.desc",
+            "text": "A warm dock pad that charges 07's battery when powered."
+        },
+        {
+            "key": "structure.solar_array.name",
+            "text": "Solar Array"
+        },
+        {
+            "key": "structure.solar_array.desc",
+            "text": "Panels tilted to the low sun that feed power into nearby structures."
+        },
+        {
+            "key": "structure.battery_bank.name",
+            "text": "Battery Bank"
+        },
+        {
+            "key": "structure.battery_bank.desc",
+            "text": "Stores spare watt-hours so the base stays lit through shadow."
+        },
+        {
+            "key": "structure.power_pylon.name",
+            "text": "Power Pylon"
+        },
+        {
+            "key": "structure.power_pylon.desc",
+            "text": "A relay post that extends the base's power reach and lights the ground."
+        },
+        {
+            "key": "structure.smelter.name",
+            "text": "Smelter"
+        },
+        {
+            "key": "structure.smelter.desc",
+            "text": "Refines lunar ore and orange beads into alloy and glass."
+        },
+        {
+            "key": "structure.fabricator.name",
+            "text": "Fabricator"
+        },
+        {
+            "key": "structure.fabricator.desc",
+            "text": "Prints spare components and precision parts at a warm work light."
+        },
+        {
+            "key": "structure.storage_rack.name",
+            "text": "Storage Rack"
+        },
+        {
+            "key": "structure.storage_rack.desc",
+            "text": "Holds extra crates of salvaged metal, wiring, and optics at home."
+        },
+        {
+            "key": "structure.upgrade_bay.name",
+            "text": "Upgrade Bay"
+        },
+        {
+            "key": "structure.upgrade_bay.desc",
+            "text": "A gantry frame for fitting new kits and tools onto 07's chassis."
+        },
+        {
+            "key": "structure.antenna_mast.name",
+            "text": "Antenna Mast"
+        },
+        {
+            "key": "structure.antenna_mast.desc",
+            "text": "Carries the station signal farther out across the crater rim."
+        },
+        {
+            "key": "structure.vehicle_pad.name",
+            "text": "Vehicle Pad"
+        },
+        {
+            "key": "structure.vehicle_pad.desc",
+            "text": "A broad, level deck for parking and servicing rovers and sleds."
+        },
+        {
+            "key": "build.locked",
+            "text": "Blueprint not yet found"
+        },
+        {
             "key": "micro.06.name",
             "text": "06"
         },

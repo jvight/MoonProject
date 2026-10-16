@@ -139,7 +139,7 @@ namespace MoonProject.Gameplay.Editor
         }
 
         [MoonBuilder(BuilderPath, BuilderOrder)]
-        private static void Build()
+        internal static void Build()
         {
             Shader shader = LoadShader(GameplayAssetPaths.Shader);
             Shader glint = LoadShader(GameplayAssetPaths.GlintShader);
@@ -157,6 +157,9 @@ namespace MoonProject.Gameplay.Editor
             visuals.PopulateContainers(ContainerModels());
             visuals.PopulateScans(FragmentModels(), JumperWreckModel());
             visuals.PopulateGaragePort(GaragePortModel(), TapeDeckModel());
+            visuals.PopulateHologram(
+                HologramMaterialBuilder.LoadMaterial(false),
+                HologramMaterialBuilder.LoadMaterial(true));
             GeneratedAssets.CreateOrReplace(visuals, GameplayAssetPaths.Visuals);
             AssetDatabase.SaveAssets();
             Debug.Log($"{BuilderPath}: wrote {Enum.GetValues(typeof(GlowRole)).Length + 1} materials and " +

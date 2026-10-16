@@ -181,6 +181,10 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public RelayTuning RelayTuning { get; private set; }
 
+        public BuildingTuning BuildingTuning { get; private set; }
+
+        public StructureCatalog StructureCatalog { get; private set; }
+
         /// <summary>
         /// Builds and boots everything; 07 starts at the base facing +Z, its tether already fitted unless
         /// <paramref name="tether"/> is false (Kenji's garage port's own tests earn it). A new game (no save yet) starts with an empty
@@ -418,6 +422,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             ScanTuning = Asset<ScanTuning>();
             visuals.PopulateScans(FragmentTemplates(), JumperTemplate());
             visuals.PopulateGaragePort(PortTemplate(), Template("Kit_TapeDeck", new Vector3(0.3f, 0.15f, 0.12f)));
+            visuals.PopulateHologram(GlowMaterial(shader, GlowRole.TractorBeam), GlowMaterial(shader, GlowRole.TetherBeam));
             visuals.PopulateContainers(new[]
             {
                 ContainerTemplate("CoilCrate"), ContainerTemplate("TapeCase"), ContainerTemplate("JunctionBox"),
@@ -444,11 +449,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             var battery = Child<BatteryField>(root, "Battery");
             var progression = Child<BaseProgression>(root, "Progression");
             var plotter = Child<BlueprintPlotter>(root, "Plotter");
+            var build = Child<BuildField>(root, "Build");
             Lift = Child<LiftStation>(root, "CrewLift");
             CassetteShelf shelf = BuildBase(root.transform, home, tower, workshop, progression, plotter);
             BuildFriends(friends);
             BuildCassettes(cassettes);
             BuildLogCaches(logs);
+            BuildStructures(build);
             RelayTuning = Asset<RelayTuning>();
             relays.Wire(RelayTuning, RelayModel("RelayMast", false), RelayModel("RelayMast_Broken", true),
                 Template("Part_RelayModule", Vector3.one * 0.3f));
@@ -476,6 +483,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Gameplay.WireCargo(materials, CargoTuning);
             Gameplay.WireCutter(Asset<CutterTuning>());
             Gameplay.WireScans(ScanTuning);
+            Gameplay.WireBuilding(build);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
@@ -1136,6 +1144,72 @@ namespace MoonProject.Gameplay.PlayModeTests
             var catalog = Asset<LogCacheCatalog>();
             catalog.Populate(new[] { ro });
             field.Wire(catalog, LogCacheTuning);
+        }
+
+        private void BuildStructures(BuildField field)
+        {
+            BuildingTuning = Asset<BuildingTuning>();
+            StructureCatalog = Asset<StructureCatalog>();
+            var ports = new[] { new StructurePort(new Vector3(0f, 0.2f, -1.1f), Vector3.back) };
+            StructureCatalog.Populate(new[]
+            {
+                StructureDef(StructureIds.ChargingPad, new Vector3(2.2f, 0.4f, 2.2f), 12f, 0.25f, 0f, 120f, 0f, 0f,
+                    new Recipe(4, 2, 0), 3f, ports, false),
+                StructureDef(StructureIds.SolarArray, new Vector3(2.0f, 1.8f, 2.0f), 18f, 0.25f, 180f, 0f, 0f, 14f,
+                    new Recipe(3, 2, 1), 3f, ports, false),
+                StructureDef(StructureIds.BatteryBank, new Vector3(1.4f, 1.2f, 1.4f), 15f, 0.25f, 0f, 0f, 360f, 0f,
+                    new Recipe(3, 3, 0), 2.5f, ports, true),
+                StructureDef(StructureIds.PowerPylon, new Vector3(0.8f, 2.4f, 0.8f), 22f, 0.2f, 0f, 15f, 0f, 16f,
+                    new Recipe(2, 1, 0), 1.5f, ports, false),
+                StructureDef(StructureIds.Smelter, new Vector3(2.0f, 1.8f, 2.0f), 12f, 0.3f, 0f, 150f, 0f, 0f,
+                    new Recipe(6, 2, 0), 4f, ports, true),
+                StructureDef(StructureIds.Fabricator, new Vector3(2.2f, 1.6f, 1.8f), 12f, 0.3f, 0f, 140f, 0f, 0f,
+                    new Recipe(5, 3, 1), 4f, ports, true),
+                StructureDef(StructureIds.StorageRack, new Vector3(1.8f, 1.5f, 1.0f), 16f, 0.2f, 0f, 10f, 0f, 0f,
+                    new Recipe(4, 0, 0), 2f, ports, true),
+                StructureDef(StructureIds.UpgradeBay, new Vector3(2.6f, 2.0f, 2.6f), 10f, 0.35f, 0f, 160f, 0f, 0f,
+                    new Recipe(6, 4, 2), 5f, ports, true),
+                StructureDef(StructureIds.AntennaMast, new Vector3(1.6f, 3.5f, 1.6f), 15f, 0.3f, 0f, 90f, 0f, 0f,
+                    new Recipe(4, 3, 2), 4.5f, ports, true),
+                StructureDef(StructureIds.VehiclePad, new Vector3(3.2f, 0.5f, 3.2f), 10f, 0.4f, 0f, 100f, 0f, 0f,
+                    new Recipe(8, 3, 1), 5f, ports, true),
+            });
+            field.Wire(StructureCatalog, BuildingTuning);
+        }
+
+        private StructureDefinition StructureDef(string id, Vector3 footprint, float maxSlope, float clearance,
+            float produceW, float consumeW, float storeWh, float radius, Recipe cost, float seconds,
+            StructurePort[] ports, bool artPending)
+        {
+            var def = Asset<StructureDefinition>();
+            GameObject prefab = artPending ? null : StructureTemplate(id, footprint);
+            def.Populate(id, StructureIds.NameKey(id), footprint, maxSlope, clearance, produceW, consumeW, storeWh,
+                radius, cost, seconds, ports, prefab, artPending);
+            return def;
+        }
+
+        private GameObject StructureTemplate(string id, Vector3 footprint)
+        {
+            var root = new GameObject("Structure_" + id);
+            root.layer = Layers.Prop;
+            root.transform.position = new Vector3(0f, -500f, 0f);
+            _created.Add(root);
+            var stages = new Transform[4];
+            for (int i = 0; i < 4; i++)
+            {
+                float sliceH = footprint.y * 0.25f;
+                Transform stage = Named(Block(root.transform, new Vector3(0f, sliceH * (i + 0.5f), 0f),
+                    new Vector3(footprint.x, sliceH, footprint.z)), "Stage_" + (i + 1));
+                stage.gameObject.layer = Layers.Prop;
+                stages[i] = stage;
+            }
+
+            var collider = root.AddComponent<BoxCollider>();
+            collider.center = new Vector3(0f, footprint.y * 0.5f, 0f);
+            collider.size = footprint;
+            var view = root.AddComponent<StructureView>();
+            view.Populate(stages, new[] { stages[3].GetComponent<Renderer>() }, new Collider[] { collider });
+            return root;
         }
 
         private GameObject FriendModel(string name, bool broken)

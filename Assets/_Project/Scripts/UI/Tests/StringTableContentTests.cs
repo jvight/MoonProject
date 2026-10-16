@@ -107,10 +107,34 @@ namespace MoonProject.UI.Tests
                          UiKeys.TitleContinueNote, UiKeys.TitleKeyHint,
                          UiKeys.RecipeRow, UiKeys.RewardTitle, UiKeys.StationOffline,
                          UiKeys.CrateCaption, UiKeys.CargoWaiting, UiKeys.CargoSummary,
-                         UiKeys.BayFitted, UiKeys.RowFull, UiKeys.HintFit, UiKeys.HintHold,
-                     })
+                          UiKeys.BayFitted, UiKeys.RowFull, UiKeys.HintFit, UiKeys.HintHold,
+                          UiKeys.BuildStripTitle, UiKeys.BuildCostAffordable, UiKeys.BuildCostShort,
+                          UiKeys.BuildHintRotate, UiKeys.BuildHintSnap, UiKeys.BuildHintPlace,
+                          UiKeys.BuildHintWeld, UiKeys.BuildHintDeconstruct, UiKeys.BuildLocked,
+                      })
             {
                 Assert.IsTrue(_english.TryGet(key, out _), key);
+            }
+
+            foreach (PlacementReason reason in Enum.GetValues(typeof(PlacementReason)))
+            {
+                string reasonKey = UiKeys.PlacementReasonKey(reason);
+                if (reasonKey != null)
+                {
+                    Assert.IsTrue(_english.TryGet(reasonKey, out _), reasonKey);
+                }
+            }
+
+            foreach (string id in new[]
+                     {
+                         StructureIds.ChargingPad, StructureIds.SolarArray, StructureIds.BatteryBank,
+                         StructureIds.PowerPylon, StructureIds.Smelter, StructureIds.Fabricator,
+                         StructureIds.StorageRack, StructureIds.UpgradeBay, StructureIds.AntennaMast,
+                         StructureIds.VehiclePad,
+                     })
+            {
+                Assert.IsTrue(_english.TryGet(UiKeys.StructureName(id), out _), UiKeys.StructureName(id));
+                Assert.IsTrue(_english.TryGet(UiKeys.StructureDescription(id), out _), UiKeys.StructureDescription(id));
             }
 
             foreach (RadioChannel channel in Enum.GetValues(typeof(RadioChannel)))

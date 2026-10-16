@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1fbbda03fd574f4f8b2018a5e07ca28, type: 3}
+  m_Name: Structure_smelter
+  m_EditorClassIdentifier: 
+  _id: smelter
+  _nameKey: structure.smelter.name
+  _width: 3.266811
+  _depth: 1.859
+  _height: 2.38
+  _maxGroundSlope: 12
+  _clearance: 0.3
+  _produceWatts: 0
+  _consumeWatts: 150
+  _storeWattHours: 0
+  _connectionRadius: 0
+  _buildCost:
+    _metal: 6
+    _wiring: 2
+    _optics: 0
+  _buildSeconds: 4
+  _ports:
+  - _localPosition: {x: -0.13, y: 0.42000014, z: -0.9499998}
+    _localDirection: {x: -0.1355786, y: 0, z: -0.9907666}
+  - _localPosition: {x: 0.13, y: 0.42000014, z: -0.9499998}
+    _localDirection: {x: 0.1355786, y: 0, z: -0.9907666}
+  _prefab: {fileID: 4559272590218765163, guid: 5ef9417be714fa04ab26b0affaa304af, type: 3}
+  _artPending: 0

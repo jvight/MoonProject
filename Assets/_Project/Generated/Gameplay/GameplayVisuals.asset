@@ -71,3 +71,5 @@ MonoBehaviour:
   _jumperWreck: {fileID: 1674659952243876744, guid: 98accec21c6d577448134f3f8f7b0fc2, type: 3}
   _garagePort: {fileID: 7185882727046098272, guid: 1d34e56cd553dd5418963ef7e6f21fd2, type: 3}
   _tapeDeck: {fileID: 8103010664265960948, guid: b1f7ee56b0cd5c7419ad482d825915c2, type: 3}
+  _hologramValid: {fileID: 2100000, guid: 3652bba78b6499f46b3aa88a5fb63f39, type: 2}
+  _hologramInvalid: {fileID: 2100000, guid: 824a0ff8388a8ec4a8c0c7c48826c3a8, type: 2}

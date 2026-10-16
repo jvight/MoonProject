@@ -184,9 +184,14 @@ namespace MoonProject.Art.Tests
 
             R1MaterialSpec signageSpec = R1MaterialRecipes.Get(R1MaterialSlot.Signage);
             Assert.AreEqual(R1MaterialRecipes.SignageSlot, signageSpec.SlotName);
+            Assert.IsTrue(signageSpec.HasEmission, "R1_Signage must enable emission for the AIRLOCK_STATUS cell mask.");
             Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialRecipes.GetAlbedoTexturePath(signageSpec)));
             Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialRecipes.GetNormalTexturePath(signageSpec)));
             Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialRecipes.GetMaskTexturePath(signageSpec)));
+            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialRecipes.GetEmissionTexturePath(signageSpec)));
+
+            var signageEmissionImporter = (TextureImporter)AssetImporter.GetAtPath(R1MaterialRecipes.GetEmissionTexturePath(signageSpec));
+            Assert.IsTrue(signageEmissionImporter.sRGBTexture, "Signage emission map must be imported as sRGB.");
 
             Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialRecipes.TrimSheetAlbedoPath));
             Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialRecipes.TrimSheetNormalPath));
@@ -323,6 +328,74 @@ namespace MoonProject.Art.Tests
                 UnityEngine.Object.DestroyImmediate(matScreenSlot);
                 UnityEngine.Object.DestroyImmediate(matBogus);
             }
+        }
+
+        [Test]
+        public void HabitatModulesAirlockPanel_UsesSignageStatusMaterial_AndNeverCrtFaceScreen()
+        {
+            const string HabitatFbxPath = "Assets/_Project/Art/R1/Models/Ruins/HabitatModules.fbx";
+            GameObject habitatFbx = AssetDatabase.LoadAssetAtPath<GameObject>(HabitatFbxPath);
+            Assert.IsNotNull(habitatFbx, $"Missing '{HabitatFbxPath}'.");
+
+            Transform panelNode = habitatFbx.transform.Find("AirlockPanel");
+            Assert.IsNotNull(panelNode, "HabitatModules.fbx must contain child node 'AirlockPanel'.");
+
+            var panelRenderer = panelNode.GetComponent<MeshRenderer>();
+            Assert.IsNotNull(panelRenderer, "AirlockPanel must have a MeshRenderer.");
+
+            Material[] materials = panelRenderer.sharedMaterials;
+            Assert.AreEqual(2, materials.Length,
+                "AirlockPanel must use exactly 2 material slots (R1_GreyMetal housing + R1_Signage status face).");
+
+            bool hasSignage = false;
+            for (int i = 0; i < materials.Length; i++)
+            {
+                Assert.IsNotNull(materials[i]);
+                Assert.IsTrue(R1MaterialRecipes.TryMapSlotName(materials[i].name, out R1MaterialSlot slot),
+                    $"AirlockPanel material '{materials[i].name}' must map to a valid R1 slot.");
+                Assert.AreNotEqual(R1MaterialSlot.Screen, slot,
+                    "AirlockPanel must never use R1_Screen / R1_CrtFace (07's eye shader).");
+                if (slot == R1MaterialSlot.Signage)
+                {
+                    hasSignage = true;
+                }
+            }
+
+            Assert.IsTrue(hasSignage, "AirlockPanel must include R1_Signage for the SEALED · 1988 · STANDBY status display.");
+        }
+
+        [Test]
+        public void ScanFanAndFocusLens_HaveDistinctSilhouettes_AndPreserveKitContracts()
+        {
+            const string ScanFanFbxPath = "Assets/_Project/Art/R1/Models/Rover/ScanFan.fbx";
+            const string FocusLensFbxPath = "Assets/_Project/Art/R1/Models/Rover/FocusLens.fbx";
+
+            GameObject scanFanFbx = AssetDatabase.LoadAssetAtPath<GameObject>(ScanFanFbxPath);
+            GameObject focusLensFbx = AssetDatabase.LoadAssetAtPath<GameObject>(FocusLensFbxPath);
+            Assert.IsNotNull(scanFanFbx, $"Missing '{ScanFanFbxPath}'.");
+            Assert.IsNotNull(focusLensFbx, $"Missing '{FocusLensFbxPath}'.");
+
+            var scanFanFilter = scanFanFbx.GetComponent<MeshFilter>();
+            var scanFanRenderer = scanFanFbx.GetComponent<MeshRenderer>();
+            Assert.IsNotNull(scanFanFilter, "ScanFan root must have a MeshFilter.");
+            Assert.IsNotNull(scanFanRenderer, "ScanFan root must have a MeshRenderer.");
+            Assert.IsTrue(
+                R1MaterialRecipes.TryMapSlotName(scanFanRenderer.sharedMaterials[0].name, out R1MaterialSlot slot0) &&
+                slot0 == R1MaterialSlot.LampAmber,
+                "ScanFan material slot 0 must be R1_LampAmber for RoverBodyLanguage glow.");
+
+            var focusLensFilter = focusLensFbx.GetComponent<MeshFilter>();
+            Assert.IsNotNull(focusLensFilter, "FocusLens root must have a MeshFilter.");
+            Assert.IsNotNull(focusLensFbx.transform.Find("Glass"), "FocusLens must preserve child node 'Glass'.");
+
+            Vector3 fanSize = scanFanFilter.sharedMesh.bounds.size;
+            Vector3 lensSize = focusLensFilter.sharedMesh.bounds.size;
+            float fanWidthToHeight = fanSize.x / Mathf.Max(1e-4f, fanSize.y);
+            float lensWidthToHeight = lensSize.x / Mathf.Max(1e-4f, lensSize.y);
+            Assert.Greater(fanWidthToHeight, 1.35f,
+                $"ScanFan must read as a wide horizontal louvred scanner dish (width/height = {fanWidthToHeight:F2}).");
+            Assert.Greater(fanWidthToHeight - lensWidthToHeight, 0.35f,
+                "ScanFan and FocusLens must have clearly distinct width-to-height silhouettes.");
         }
 
         [Test]

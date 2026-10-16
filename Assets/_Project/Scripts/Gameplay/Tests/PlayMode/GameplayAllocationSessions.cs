@@ -107,7 +107,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                      {
                          gameplay.Salvage, gameplay.Relics, gameplay.Sonar, gameplay.Excavation, gameplay.Tether,
                          gameplay.Home, gameplay.Tower, gameplay.Friends, gameplay.Cassettes, gameplay.Logs,
-                         gameplay.Signals, gameplay.Shelf, gameplay.Relays,
+                         gameplay.Signals, gameplay.Shelf, gameplay.Relays, gameplay.Build,
                      })
             {
                 updates.Add(Method(part, "Update"));
@@ -130,7 +130,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(0L, allocated,
                 "bytes allocated by 300 frames of salvage, relics, sonar, excavation, tether, the cradle, home, " +
                 "tower, friends, " +
-                "cassettes, caches, Bell's signals, her rack, the relays, the reach and hints");
+                "cassettes, caches, Bell's signals, her rack, the relays, the reach, build mode and hints");
         }
 
         [UnityTest]
@@ -186,6 +186,17 @@ namespace MoonProject.Gameplay.PlayModeTests
             Release(_keyboard.eKey);
             Assert.IsTrue(gameplay.Friends.TappingDial, "07's beam taps Bell's dial");
             AssertAllocatesNothing(Method(gameplay.Friends, "Update"), "07's beam tapping Bell's dial");
+            yield return new WaitForSeconds(1f);
+
+            _fixture.Rover.Place(new Vector3(0f, 0f, -20f), 0f);
+            _fixture.Rover.Aim(new Vector3(0f, 1.5f, -20f), new Vector3(0f, 0f, -15f));
+            gameplay.KnownStructures.Learn(StructureIds.ChargingPad);
+            Assert.IsTrue(gameplay.Build.Controller.TryOpenMenu());
+            Assert.IsTrue(gameplay.Build.Controller.PickStructure(StructureIds.ChargingPad));
+            yield return null;
+            Assert.AreEqual(BuildModeState.Placing, gameplay.Build.State);
+            AssertAllocatesNothing(Method(gameplay.Build, "Update"), "build mode ghost placement");
+            gameplay.Build.Controller.Close();
         }
 
         /// <summary>Warms <paramref name="update"/> up, then asserts 300 more frames of it allocate nothing.</summary>

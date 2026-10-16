@@ -67,7 +67,7 @@ Every mesh primitive exported under `Assets/_Project/Art/R1/Models/` must assign
 | `R1_Screen` | `R1_CrtFace.mat` | Expressive warm-amber CRT face and status screen material driven by `MoonProject/R1/CrtFace`. |
 | `R1_Brass` | `R1_Brass.mat` | Warm golden machined brass for lamp bezels, chest lens ring, cheek lens, and fittings. |
 | `R1_Basalt` | `R1_Basalt.mat` | Fractured lunar basalt stone for boulders, rock slabs, pebbles, and canyon gate monoliths. |
-| `R1_Signage` | `R1_Signage.mat` | 1980s stencil signage atlas (`LUMEN`, `SEC-04`, `HABITAT & LAB`, `WORKSHOP`, `EVAC 1988`, programme logo mark, hazard stripes, and 4 pictograms). |
+| `R1_Signage` | `R1_Signage.mat` | 1980s stencil signage atlas (`LUMEN`, `SEC-04`, `HABITAT & LAB`, `WORKSHOP`, `EVAC 1988`, sealed airlock status panel `SEALED · 1988 · STANDBY` / `SUIT 01-04 · OFFLINE` with amber emission mask, programme logo mark, hazard stripes, and 4 pictograms). |
 
 ---
 
@@ -79,14 +79,14 @@ Every mesh primitive exported under `Assets/_Project/Art/R1/Models/` must assign
   - Never bake rectangular panel frames, seam bands, corner bolts, ribs, or bullseye lens rings into per-material textures; panel seams, bolts, and vents belong on the trim sheet (`T_R1_TrimSheet_*`) or in geometry.
 - **Signage Atlas Cells (`R1_Signage` / `T_R1_Signage_*`, `512x512`, `V = 0` at bottom):**
   - `Row 3 (V = 0.75..1.00)`: `LOGO` (`U = 0.00..0.25`, circular Lumen crescent mark), `LUMEN` (`U = 0.25..0.75`, stencil `LUMEN`), `EVAC_1988` (`U = 0.75..1.00`, stencil `EVAC 1988`).
-  - `Row 2 (V = 0.50..0.75)`: `SEC04_HABITAT` (`U = 0.00..0.50`, stacked `SEC-04 / HABITAT & LAB`), `SEC_04` (`U = 0.50..0.75`, `SEC-04`), `HABITAT_LAB` (`U = 0.75..1.00`, `HABITAT & LAB`).
+  - `Row 2 (V = 0.50..0.75)`: `SEC04_HABITAT` (`U = 0.00..0.50`, stacked `SEC-04 / HABITAT & LAB`), `AIRLOCK_STATUS` (`U = 0.50..1.00`, dark CRT-style sealed airlock status panel reading `SEALED · 1988 · STANDBY` above a dimmer `SUIT 01-04 · OFFLINE` line in amber stencil/segment text, paired with `T_R1_Signage_Emission.png` so `HabitatModules/AirlockPanel` glows warm amber without ever using `R1_Screen` / `R1_CrtFace`). (Sub-regions `SEC_04` and `HABITAT_LAB` alias into `SEC04_HABITAT`.)
   - `Row 1 (V = 0.25..0.50)`: `WORKSHOP` (`U = 0.00..0.50`, stencil `WORKSHOP`), `HAZARD` (`U = 0.50..1.00`, 45° diagonal amber/charcoal hazard stripes).
   - `Row 0 (V = 0.00..0.25)`: 4 cassette-futurism pictogram tiles on warm orange band: `PICT_ROVER` (`U = 0.00..0.25`), `PICT_RADIO` (`U = 0.25..0.50`), `PICT_BOTANY` (`U = 0.50..0.75`), `PICT_AIRLOCK` (`U = 0.75..1.00`).
 - **UV Channel Contract:**
   - `UV0` (`TEXCOORD0`): Primary material UVs. Each slot owns a seamless `[0, 1]` tileable texture set (`T_R1_<Surface>_Albedo/Normal/Mask`), or maps signage quads directly into `T_R1_Signage_*` cells. Keep UV islands aligned horizontally (`U` along panel length, `V` along panel height) so brushed metal grain and solar cell busbars orient consistently.
   - `UV1` (`TEXCOORD1`): Optional static lightmap UV (`Pack Islands` with `Margin >= 0.02`).
 - **Regenerating Library Textures:**
-  - Run `python tools/art/r1/generate_r1_textures.py` to deterministically regenerate all 50 PNG maps in `Assets/_Project/Art/R1/Textures/`.
+  - Run `python tools/art/r1/generate_r1_textures.py` to deterministically regenerate all 51 PNG maps in `Assets/_Project/Art/R1/Textures/`.
 
 ---
 

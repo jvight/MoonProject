@@ -325,7 +325,7 @@ namespace MoonProject.Art.Editor
                 SignageSlot,
                 SignageSlot,
                 "T_R1_Signage",
-                "1980s stencil signage atlas (LUMEN, SEC-04, HABITAT & LAB, WORKSHOP, EVAC 1988, programme logo mark, hazard stripes, and 4 pictograms).",
+                "1980s stencil signage atlas (LUMEN, SEC-04, HABITAT & LAB, WORKSHOP, EVAC 1988, programme logo mark, hazard stripes, 4 pictograms, and emissive amber AIRLOCK_STATUS readout SEALED · 1988 · STANDBY / SUIT 01-04 · OFFLINE).",
                 new Color(0.92f, 0.89f, 0.82f, 1f),
                 0.65f,
                 1.00f,
@@ -336,9 +336,9 @@ namespace MoonProject.Art.Editor
                 0.65f,
                 0.52f,
                 0.24f,
-                false,
-                Color.black,
-                0f)
+                true,
+                new Color(1.00f, 0.74f, 0.30f, 1f),
+                1.00f)
         };
 
         /// <summary>All 15 fixed R1 material slot specifications in slot enum order.</summary>

@@ -1,5 +1,7 @@
 # M3-22: Build pads and structures
 
+> **Superseded (2026-10-15, 0.5.7):** Replaced by free placement with soft snapping and staged welding (`Assets/_Project/Scripts/Gameplay/Building/`, owner base-building design https://claude.ai/artifact/UYJCh1YaK4oELycWr2TVAT).
+
 > Owner: Director (design). Version: **0.6** (owner, 2026-10-11: structures are not in 0.5). Source:
 > `docs/design/gdd-v3.md` §6.2 and §3.3, approved by the owner on 2026-10-11 (decision 7: "the player builds
 > structures for crafting and operations on predefined pads"). This spec fixes the rules and contracts now so 0.5's

@@ -42,6 +42,13 @@ namespace MoonProject.UI.Editor
             system.Wire(document, tuning, catalog, tables, context.LoadAsset<WordmarkShape>(UiAssetPaths.Wordmark),
                 context.LoadAsset<RoverDiagramData>(UiAssetPaths.RoverDiagram),
                 context.LoadAsset<TextAsset>(UiAssetPaths.Credits), faceDocument);
+            var structureIcons = new Texture2D[StructureIds.All.Length];
+            for (int i = 0; i < StructureIds.All.Length; i++)
+            {
+                structureIcons[i] = context.LoadAsset<Texture2D>(UiAssetPaths.StructureIcon(StructureIds.All[i]));
+            }
+
+            system.WireStructureIcons(structureIcons);
             context.AddSystem(system);
         }
     }

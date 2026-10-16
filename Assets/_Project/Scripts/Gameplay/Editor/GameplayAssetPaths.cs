@@ -31,6 +31,7 @@ namespace MoonProject.Gameplay.Editor
         public const string CargoTuning = TuningFolder + "/CargoTuning.asset";
         public const string CutterTuning = TuningFolder + "/CutterTuning.asset";
         public const string ScanTuning = TuningFolder + "/ScanTuning.asset";
+        public const string BuildingTuning = TuningFolder + "/BuildingTuning.asset";
         public const string MapTuning = TuningFolder + "/MapTuning.asset";
 
         public const string ContentFolder = "Assets/_Project/Data/Content";
@@ -53,6 +54,8 @@ namespace MoonProject.Gameplay.Editor
         public const string CassetteCatalog = ContentFolder + "/CassetteCatalog.asset";
         public const string LogCacheFolder = ContentFolder + "/LogCaches";
         public const string LogCacheCatalog = ContentFolder + "/LogCacheCatalog.asset";
+        public const string StructureFolder = ContentFolder + "/Structures";
+        public const string StructureCatalog = ContentFolder + "/StructureCatalog.asset";
 
         public const string GeneratedFolder = GeneratedAssets.Root + "/Gameplay";
         public const string MaterialFolder = GeneratedFolder + "/Materials";
@@ -140,6 +143,21 @@ namespace MoonProject.Gameplay.Editor
         public static string RelicPrefab(string id)
         {
             return ArtRelicFolder + "/Relic_" + id + ".prefab";
+        }
+
+        public static string StructureDefinition(string id)
+        {
+            return StructureFolder + "/Structure_" + id + ".asset";
+        }
+
+        public static string RuntimeStructurePrefab(string id)
+        {
+            return GeneratedFolder + "/Structures/" + id + ".prefab";
+        }
+
+        public static string R1StructurePrefab(string prefabName)
+        {
+            return ArtPaths.R1StructuresModelFolder + "/" + prefabName + ".prefab";
         }
 
         public static string Material(GlowRole role)

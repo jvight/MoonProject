@@ -8,9 +8,8 @@ with the following UV layout (V=0 at bottom, V=1 at top):
     - LUMEN         (U = 0.25 .. 0.75): Bold stencil 'LUMEN' + 'INTERNATIONAL LUNAR PROGRAMME'
     - EVAC_1988     (U = 0.75 .. 1.00): Stencil plaque 'EVAC 1988'
   Row 2 (V = 0.50 .. 0.75):
-    - SEC04_HABITAT (U = 0.00 .. 0.50): Two-line stencil 'SEC-04' / 'HABITAT & LAB'
-    - SEC_04        (U = 0.50 .. 0.75): Large stencil 'SEC-04'
-    - HABITAT_LAB   (U = 0.75 .. 1.00): Stencil 'HABITAT & LAB'
+    - SEC04_HABITAT  (U = 0.00 .. 0.50): Two-line stencil 'SEC-04' / 'HABITAT & LAB'
+    - AIRLOCK_STATUS (U = 0.50 .. 1.00): Amber status display 'SEALED · 1988 · STANDBY' / 'SUIT 01-04 · OFFLINE'
   Row 1 (V = 0.25 .. 0.50):
     - WORKSHOP      (U = 0.00 .. 0.50): Bold stencil 'WORKSHOP'
     - HAZARD        (U = 0.50 .. 1.00): Diagonal 45-deg amber/charcoal hazard warning stripes
@@ -34,6 +33,7 @@ SIGNAGE_UV_CELLS: dict[str, tuple[float, float, float, float]] = {
     "LUMEN": (0.25, 0.75, 0.75, 1.00),
     "EVAC_1988": (0.75, 0.75, 1.00, 1.00),
     "SEC04_HABITAT": (0.00, 0.50, 0.50, 0.75),
+    "AIRLOCK_STATUS": (0.50, 0.50, 1.00, 0.75),
     "SEC_04": (0.50, 0.50, 0.75, 0.75),
     "HABITAT_LAB": (0.75, 0.50, 1.00, 0.75),
     "WORKSHOP": (0.00, 0.25, 0.50, 0.50),
@@ -53,6 +53,13 @@ ORANGE_BAND = (224, 114, 68)
 AMBER_STRIPE = (232, 164, 56)
 HAZARD_DARK = (36, 40, 50)
 SAGE_ACCENT = (134, 162, 138)
+STATUS_BEZEL_BG = (16, 12, 9)
+STATUS_SCREEN_BG = (22, 15, 10)
+STATUS_SCANLINE = (30, 20, 12)
+STATUS_AMBER_BRIGHT = (255, 192, 78)
+STATUS_AMBER_CORE = (255, 234, 164)
+STATUS_AMBER_DIM = (182, 114, 38)
+STATUS_AMBER_RULE = (132, 82, 28)
 
 
 def _draw_thick_seg(
@@ -197,6 +204,11 @@ GLYPH_STROKES: dict[str, list[tuple[float, float, float, float]]] = {
         (0.26, 0.96, 0.50, 0.34),
         (0.50, 0.34, 0.74, 0.96),
         (0.74, 0.96, 0.94, 0.04),
+    ],
+    "Y": [
+        (0.10, 0.04, 0.50, 0.52),
+        (0.90, 0.04, 0.50, 0.52),
+        (0.50, 0.52, 0.50, 0.96),
     ],
     "-": [(0.18, 0.50, 0.82, 0.50)],
     ".": [(0.44, 0.84, 0.56, 0.84)],
@@ -559,7 +571,7 @@ def generate_signage_maps(res: int = 512, seed: int = 1988) -> dict[str, np.ndar
 
     # -------------------------------------------------------------------------
     # Row 2 (y = 256 .. 512 -> UV V = 0.50 .. 0.75):
-    #   SEC04_HABITAT (0..512), SEC_04 (512..768), HABITAT_LAB (768..1024)
+    #   SEC04_HABITAT (0..512), AIRLOCK_STATUS (512..1024)
     # -------------------------------------------------------------------------
     # Combined two-line SEC-04 / HABITAT & LAB (matching identity_v1_helios_lumen.png top-right)
     _draw_stencil_text(
@@ -589,46 +601,114 @@ def generate_signage_maps(res: int = 512, seed: int = 1988) -> dict[str, np.ndar
         stencil_bridges=True,
     )
 
-    # Standalone SEC-04 (x = 512..768, y = 256..512)
+    # AIRLOCK_STATUS cell (x = 512..1024, y = 256..512 -> UV U = 0.50..1.00, V = 0.50..0.75):
+    # Dark status display backing with warm amber stencil/segment text:
+    #   Primary line:   SEALED · 1988 · STANDBY
+    #   Secondary line: SUIT 01-04 · OFFLINE (dimmer)
+    emissive_canvas = Image.new("RGB", (hi_res, hi_res), color=(0, 0, 0))
+    em_draw = ImageDraw.Draw(emissive_canvas)
+
+    draw.rectangle([512, 256, 1023, 511], fill=STATUS_BEZEL_BG)
+    draw.rounded_rectangle(
+        [524, 270, 1012, 498],
+        radius=14,
+        fill=STATUS_SCREEN_BG,
+        outline=STATUS_AMBER_DIM,
+        width=5,
+    )
+    em_draw.rounded_rectangle(
+        [524, 270, 1012, 498],
+        radius=14,
+        fill=(14, 8, 2),
+        outline=(92, 56, 18),
+        width=5,
+    )
+    for sy in range(278, 492, 8):
+        draw.line([(530, sy), (1006, sy)], fill=STATUS_SCANLINE, width=2)
+
+    # Primary status line: SEALED · 1988 · STANDBY
     _draw_stencil_text(
         draw,
-        "SEC-04",
-        cx=640.0,
-        cy=384.0,
-        char_w=32.0,
-        char_h=64.0,
-        stroke_w=9.0,
-        spacing=7.0,
-        color=STENCIL_DARK,
-        bg_color=CREAM_BG,
+        "SEALED · 1988 · STANDBY",
+        cx=768.0,
+        cy=342.0,
+        char_w=15.0,
+        char_h=46.0,
+        stroke_w=6.0,
+        spacing=4.2,
+        color=STATUS_AMBER_BRIGHT,
+        bg_color=STATUS_SCREEN_BG,
+        stencil_bridges=True,
+    )
+    _draw_stencil_text(
+        draw,
+        "SEALED · 1988 · STANDBY",
+        cx=768.0,
+        cy=342.0,
+        char_w=15.0,
+        char_h=46.0,
+        stroke_w=2.6,
+        spacing=4.2,
+        color=STATUS_AMBER_CORE,
+        bg_color=STATUS_SCREEN_BG,
+        stencil_bridges=True,
+    )
+    _draw_stencil_text(
+        em_draw,
+        "SEALED · 1988 · STANDBY",
+        cx=768.0,
+        cy=342.0,
+        char_w=15.0,
+        char_h=46.0,
+        stroke_w=6.2,
+        spacing=4.2,
+        color=(236, 168, 62),
+        bg_color=(14, 8, 2),
+        stencil_bridges=True,
+    )
+    _draw_stencil_text(
+        em_draw,
+        "SEALED · 1988 · STANDBY",
+        cx=768.0,
+        cy=342.0,
+        char_w=15.0,
+        char_h=46.0,
+        stroke_w=2.8,
+        spacing=4.2,
+        color=(255, 236, 172),
+        bg_color=(14, 8, 2),
         stencil_bridges=True,
     )
 
-    # Standalone HABITAT & LAB (x = 768..1024, y = 256..512)
+    # Horizontal status divider rule
+    _draw_thick_seg(draw, 548.0, 394.0, 988.0, 394.0, 3.0, STATUS_AMBER_RULE)
+    _draw_thick_seg(em_draw, 548.0, 394.0, 988.0, 394.0, 3.0, (78, 48, 16))
+
+    # Secondary dimmer status line: SUIT 01-04 · OFFLINE
     _draw_stencil_text(
         draw,
-        "HABITAT",
-        cx=896.0,
-        cy=342.0,
-        char_w=24.0,
-        char_h=46.0,
-        stroke_w=7.5,
-        spacing=6.0,
-        color=STENCIL_DARK,
-        bg_color=CREAM_BG,
+        "SUIT 01-04 · OFFLINE",
+        cx=768.0,
+        cy=440.0,
+        char_w=14.0,
+        char_h=34.0,
+        stroke_w=4.6,
+        spacing=4.2,
+        color=STATUS_AMBER_DIM,
+        bg_color=STATUS_SCREEN_BG,
         stencil_bridges=True,
     )
     _draw_stencil_text(
-        draw,
-        "& LAB",
-        cx=896.0,
-        cy=424.0,
-        char_w=26.0,
-        char_h=46.0,
-        stroke_w=7.5,
-        spacing=7.0,
-        color=STENCIL_DARK,
-        bg_color=CREAM_BG,
+        em_draw,
+        "SUIT 01-04 · OFFLINE",
+        cx=768.0,
+        cy=440.0,
+        char_w=14.0,
+        char_h=34.0,
+        stroke_w=4.6,
+        spacing=4.2,
+        color=(142, 86, 26),
+        bg_color=(14, 8, 2),
         stencil_bridges=True,
     )
 
@@ -676,10 +756,19 @@ def generate_signage_maps(res: int = 512, seed: int = 1988) -> dict[str, np.ndar
 
     # Downsample 1024 -> 512 with high-quality box/lanczos filter
     img_512 = canvas.resize((res, res), resample=Image.Resampling.LANCZOS)
+    em_512 = emissive_canvas.resize((res, res), resample=Image.Resampling.LANCZOS)
     # Flip vertically so row 0 of the returned numpy array corresponds to V=0 (bottom),
     # matching generate_r1_textures._save_rgba_or_rgb which calls np.flipud() on save.
     albedo_topdown = np.asarray(img_512, dtype=np.float32) / 255.0
     albedo_v0 = np.flipud(albedo_topdown).copy()
+    emission_topdown = np.asarray(em_512, dtype=np.float32) / 255.0
+    emission_v0 = np.clip(np.flipud(emission_topdown).copy(), 0.0, 1.0)
+    # Zero out any filter ringing outside the AIRLOCK_STATUS cell (U = 0.50..1.00, V = 0.50..0.75)
+    u_mid = res // 2
+    v_lo = res // 2
+    v_hi = (res * 3) // 4
+    emission_clean = np.zeros_like(emission_v0)
+    emission_clean[v_lo:v_hi, u_mid:res] = emission_v0[v_lo:v_hi, u_mid:res]
 
     # Add subtle deterministic baked-enamel micro-grain & stencil paint wear
     rng = np.random.default_rng(seed)
@@ -704,11 +793,12 @@ def generate_signage_maps(res: int = 512, seed: int = 1988) -> dict[str, np.ndar
         axis=-1,
     )
 
-    # Mask map: R=Metallic (0.04), G=MicroWear, B=MicroCavity, A=Smoothness (0.64 on cream, 0.46 on matte ink)
+    # Mask map: R=Metallic (0.04), G=MicroWear, B=MicroCavity, A=Smoothness (0.64 on cream, 0.46 on matte ink, 0.84 on status glass)
     metallic = np.full((res, res), 0.04, dtype=np.float32)
     micro_wear = np.clip(0.50 + grain * 14.0, 0.0, 1.0)
     micro_cavity = np.clip(0.50 - grain * 12.0, 0.0, 1.0)
     smoothness = np.clip(0.64 - 0.18 * ink_mask + grain * 2.0, 0.20, 0.85)
+    smoothness[v_lo:v_hi, u_mid:res] = 0.84
     mask_rgba = np.stack([metallic, micro_wear, micro_cavity, smoothness], axis=-1)
 
     albedo_rgba = np.concatenate(
@@ -720,6 +810,7 @@ def generate_signage_maps(res: int = 512, seed: int = 1988) -> dict[str, np.ndar
         "albedo": albedo_rgba,
         "normal": np.clip(normal_rgb, 0.0, 1.0),
         "mask": mask_rgba,
+        "emission": emission_clean,
     }
 
 
@@ -727,7 +818,6 @@ def _save_png(path: Path, arr: np.ndarray) -> None:
     u8 = np.clip(np.rint(arr * 255.0), 0, 255).astype(np.uint8)
     mode = "RGBA" if u8.shape[-1] == 4 else "RGB"
     Image.fromarray(np.flipud(u8), mode=mode).save(path, compress_level=9)
-
 
 
 def main() -> None:
@@ -739,7 +829,8 @@ def main() -> None:
     _save_png(out_dir / "T_R1_Signage_Albedo.png", maps["albedo"])
     _save_png(out_dir / "T_R1_Signage_Normal.png", maps["normal"])
     _save_png(out_dir / "T_R1_Signage_Mask.png", maps["mask"])
-    print(f"Saved T_R1_Signage_Albedo/Normal/Mask.png to {out_dir}")
+    _save_png(out_dir / "T_R1_Signage_Emission.png", maps["emission"])
+    print(f"Saved T_R1_Signage_Albedo/Normal/Mask/Emission.png to {out_dir}")
 
 
 if __name__ == "__main__":

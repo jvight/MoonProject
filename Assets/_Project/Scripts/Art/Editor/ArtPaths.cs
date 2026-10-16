@@ -63,7 +63,17 @@ namespace MoonProject.Art.Editor
         public const string R1Root = Root + "/R1";
         public const string R1MaterialsFolder = R1Root + "/Materials";
         public const string R1ModelsFolder = R1Root + "/Models";
+        public const string R1StructuresModelFolder = R1ModelsFolder + "/Structures";
         public const string R1LitShader = "Assets/_Project/Shaders/R1/R1Lit.shader";
         public const string R1CrtFaceShader = "Assets/_Project/Shaders/R1/R1CrtFace.shader";
+
+        /// <summary>The translucent cyan + warm-amber Fresnel hologram shader for build ghosts and un-welded stages.</summary>
+        public const string HologramShader = "Assets/_Project/Shaders/Art/LofiHologram.shader";
+
+        /// <summary>Valid placement / un-welded stage hologram material (LofiHologram).</summary>
+        public const string HologramMaterial = PaletteFolder + "/M_Hologram.mat";
+
+        /// <summary>Invalid placement hologram material (LofiHologram with _Invalid = 1).</summary>
+        public const string HologramInvalidMaterial = PaletteFolder + "/M_HologramInvalid.mat";
     }
 }

@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1fbbda03fd574f4f8b2018a5e07ca28, type: 3}
+  m_Name: Structure_antenna_mast
+  m_EditorClassIdentifier: 
+  _id: antenna_mast
+  _nameKey: structure.antenna_mast.name
+  _width: 1.5533789
+  _depth: 1.2645398
+  _height: 2.797027
+  _maxGroundSlope: 15
+  _clearance: 0.3
+  _produceWatts: 0
+  _consumeWatts: 90
+  _storeWattHours: 0
+  _connectionRadius: 0
+  _buildCost:
+    _metal: 4
+    _wiring: 3
+    _optics: 2
+  _buildSeconds: 4.5
+  _ports:
+  - _localPosition: {x: -0.49, y: 0.43999997, z: 0.000000059604645}
+    _localDirection: {x: -1, y: 0, z: 0.00000012164213}
+  _prefab: {fileID: 807213875758285937, guid: c2aeba673b8f46f4bb4959359fd5e8ff, type: 3}
+  _artPending: 0
