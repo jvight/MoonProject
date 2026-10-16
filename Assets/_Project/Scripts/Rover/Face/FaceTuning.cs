@@ -132,6 +132,35 @@ namespace MoonProject.Rover
         [Range(0.01f, 1.0f)]
         [SerializeField] private float _rollingBandSpeed = 0.12f;
 
+        [Header("Screen Content Mode (FACE-INV)")]
+        [Tooltip("Lead-in duration in seconds while 07 brakes and lifts its head before collapsing the CRT eyes into a horizontal line (0.18 s).")]
+        [Range(0.00f, 0.40f)]
+        [SerializeField] private float _screenLeadInSeconds = 0.18f;
+
+        [Tooltip("Duration in seconds for 07's eyes to collapse into a horizontal phosphor line when opening the screen UI (0.16 s).")]
+        [Range(0.04f, 0.50f)]
+        [SerializeField] private float _screenCollapseSeconds = 0.16f;
+
+        [Tooltip("Hold duration in seconds for the bright horizontal CRT carrier line as the camera arrives at 07's face (0.16 s).")]
+        [Range(0.00f, 0.30f)]
+        [SerializeField] private float _screenLineHoldSeconds = 0.16f;
+
+        [Tooltip("Duration in seconds for the horizontal phosphor line to expand into the screen UI content when opening (0.22 s).")]
+        [Range(0.04f, 0.60f)]
+        [SerializeField] private float _screenExpandSeconds = 0.22f;
+
+        [Tooltip("Duration in seconds for the screen UI content to collapse back to a horizontal phosphor line when closing (0.14 s).")]
+        [Range(0.04f, 0.50f)]
+        [SerializeField] private float _screenCloseCollapseSeconds = 0.14f;
+
+        [Tooltip("Duration in seconds for the horizontal phosphor line to expand back into 07's eyes when closing (0.16 s).")]
+        [Range(0.04f, 0.50f)]
+        [SerializeField] private float _screenCloseExpandSeconds = 0.16f;
+
+        [Tooltip("Hold duration in seconds for the small happy blink (^ ^) after closing the screen UI.")]
+        [Range(0.05f, 1.00f)]
+        [SerializeField] private float _screenCloseHappyHoldSeconds = 0.35f;
+
         public IReadOnlyList<FaceFeelingSpec> Feelings => _feelings;
         public float AsymmetricLeftScale => _asymmetricLeftScale;
         public float AsymmetricRightScale => _asymmetricRightScale;
@@ -160,6 +189,13 @@ namespace MoonProject.Rover
         public float LowPowerJitterFrequency => _lowPowerJitterFrequency;
         public float ScanlineSpeed => _scanlineSpeed;
         public float RollingBandSpeed => _rollingBandSpeed;
+        public float ScreenLeadInSeconds => _screenLeadInSeconds;
+        public float ScreenCollapseSeconds => _screenCollapseSeconds;
+        public float ScreenLineHoldSeconds => _screenLineHoldSeconds;
+        public float ScreenExpandSeconds => _screenExpandSeconds;
+        public float ScreenCloseCollapseSeconds => _screenCloseCollapseSeconds;
+        public float ScreenCloseExpandSeconds => _screenCloseExpandSeconds;
+        public float ScreenCloseHappyHoldSeconds => _screenCloseHappyHoldSeconds;
 
         /// <summary>Returns the authored <see cref="FaceFeelingSpec"/> for <paramref name="feeling"/>.</summary>
         public FaceFeelingSpec GetFeelingSpec(FaceFeeling feeling)

@@ -114,6 +114,18 @@ namespace MoonProject.Rover
         /// <summary>Current head-space look vector computed from <see cref="RoverBodyLanguage"/> gaze.</summary>
         public Vector3 CurrentLookDirection => _explicitGazeHeadSpace;
 
+        /// <summary>True when the CRT face is in (or transitioning into) screen content mode.</summary>
+        public bool IsScreenModeOpen => _state.IsScreenModeOpen;
+
+        /// <summary>
+        /// Enters or exits screen content mode alongside 07's feelings, playing the channel-switch transition on
+        /// <see cref="FaceState"/>.
+        /// </summary>
+        public void SetScreenMode(bool open)
+        {
+            _state.SetScreenMode(open);
+        }
+
         /// <summary>
         /// Scene start notification. Starts the CRT boot sequence only when <paramref name="isNewGame"/> is true,
         /// then settles into <see cref="FaceFeeling.Calm"/>.

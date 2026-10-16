@@ -430,3 +430,14 @@ MonoBehaviour:
   _occlusionDamping: 0.15
   _occlusionSmoothing: 0.3
   _terrainProbe: 12
+  _faceInspectOpenSeconds: 0.55
+  _faceInspectCloseSeconds: 0.5
+  _faceInspectScreenHeight: 0.32
+  _faceInspectHeightFill: 0.75
+  _faceInspectDistance: 0.67
+  _faceInspectMinDistance: 0.42
+  _faceInspectHeadPitch: 10
+  _faceInspectLookOffsetY: -0.01
+  _faceInspectSideYaw: 28
+  _faceInspectProbeRadius: 0.18
+  _faceInspectNearClip: 0.05

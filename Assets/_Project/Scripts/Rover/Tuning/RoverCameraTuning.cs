@@ -501,6 +501,51 @@ namespace MoonProject.Rover
         [Range(1f, 50f)]
         [SerializeField] private float _terrainProbe = 12f;
 
+        [Header("Face inspect (FACE-INV)")]
+        [Tooltip("Seconds the camera takes to ease into the face-inspect shot when opening the screen UI.")]
+        [Range(0.15f, 2f)]
+        [SerializeField] private float _faceInspectOpenSeconds = 0.55f;
+
+        [Tooltip("Seconds the camera takes to ease back to the chase camera when closing the screen UI.")]
+        [Range(0.15f, 2f)]
+        [SerializeField] private float _faceInspectCloseSeconds = 0.50f;
+
+        [Tooltip("World-space height (m) of 07's CRT Screen and inner bezel framed in face-inspect mode.")]
+        [Range(0.10f, 0.60f)]
+        [SerializeField] private float _faceInspectScreenHeight = 0.32f;
+
+        [Tooltip("Target share of the viewport height (0..1) filled by 07's CRT Screen in face-inspect mode.")]
+        [Range(0.40f, 0.90f)]
+        [SerializeField] private float _faceInspectHeightFill = 0.75f;
+
+        [Tooltip("Default camera distance (m) from 07's CRT Screen in face-inspect mode.")]
+        [Range(0.35f, 1.50f)]
+        [SerializeField] private float _faceInspectDistance = 0.67f;
+
+        [Tooltip("Closest pulled-in camera distance (m) allowed when rocks or terrain occlude the default and side views.")]
+        [Range(0.25f, 1.00f)]
+        [SerializeField] private float _faceInspectMinDistance = 0.42f;
+
+        [Tooltip("Upward head pitch (deg) 07 lifts to meet the face-inspect camera.")]
+        [Range(0f, 25f)]
+        [SerializeField] private float _faceInspectHeadPitch = 10f;
+
+        [Tooltip("Vertical look-target offset (m) along Screen.up so the head crown and antenna sit in frame.")]
+        [Range(-0.10f, 0.10f)]
+        [SerializeField] private float _faceInspectLookOffsetY = -0.01f;
+
+        [Tooltip("Neck yaw offset (deg) tried to the left (-yaw) and right (+yaw) when the default front view is occluded.")]
+        [Range(10f, 35f)]
+        [SerializeField] private float _faceInspectSideYaw = 28f;
+
+        [Tooltip("Sphere-cast clearance radius (m) used when probing for rocks or terrain in face-inspect mode.")]
+        [Range(0.05f, 0.50f)]
+        [SerializeField] private float _faceInspectProbeRadius = 0.18f;
+
+        [Tooltip("Camera near clip plane (m) while in face-inspect mode so the head bezel never clips.")]
+        [Range(0.02f, 0.25f)]
+        [SerializeField] private float _faceInspectNearClip = 0.05f;
+
         public float MouseSensitivity => _mouseSensitivity;
 
         public float StickRate => _stickRate;
@@ -726,5 +771,27 @@ namespace MoonProject.Rover
         public float TerrainProbe => _terrainProbe;
 
         public OpeningSettings Opening => _opening;
+
+        public float FaceInspectOpenSeconds => _faceInspectOpenSeconds;
+
+        public float FaceInspectCloseSeconds => _faceInspectCloseSeconds;
+
+        public float FaceInspectScreenHeight => _faceInspectScreenHeight;
+
+        public float FaceInspectHeightFill => _faceInspectHeightFill;
+
+        public float FaceInspectDistance => _faceInspectDistance;
+
+        public float FaceInspectMinDistance => _faceInspectMinDistance;
+
+        public float FaceInspectHeadPitch => _faceInspectHeadPitch;
+
+        public float FaceInspectLookOffsetY => _faceInspectLookOffsetY;
+
+        public float FaceInspectSideYaw => _faceInspectSideYaw;
+
+        public float FaceInspectProbeRadius => _faceInspectProbeRadius;
+
+        public float FaceInspectNearClip => _faceInspectNearClip;
     }
 }

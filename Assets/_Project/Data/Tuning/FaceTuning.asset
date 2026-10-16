@@ -166,3 +166,10 @@ MonoBehaviour:
   _lowPowerJitterFrequency: 2
   _scanlineSpeed: 2.5
   _rollingBandSpeed: 0.12
+  _screenLeadInSeconds: 0.18
+  _screenCollapseSeconds: 0.16
+  _screenLineHoldSeconds: 0.16
+  _screenExpandSeconds: 0.22
+  _screenCloseCollapseSeconds: 0.14
+  _screenCloseExpandSeconds: 0.16
+  _screenCloseHappyHoldSeconds: 0.35
