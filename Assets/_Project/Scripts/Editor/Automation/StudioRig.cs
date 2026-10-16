@@ -1,4 +1,5 @@
 using System;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -25,6 +26,7 @@ namespace MoonProject.Editor.Automation
         private const float RimIntensity = 0.9f;
         private const float FloorRadiusScale = 20f;
         private const float FloorSmoothness = 0.1f;
+        private const string UrpLitShaderPath = "Packages/com.unity.render-pipelines.universal/Shaders/Lit.shader";
 
         private readonly GameObject _root;
         private readonly Light _key;
@@ -64,10 +66,10 @@ namespace MoonProject.Editor.Automation
 
             if (withFloor)
             {
-                Shader lit = Shader.Find("Universal Render Pipeline/Lit");
+                var lit = AssetDatabase.LoadAssetAtPath<Shader>(UrpLitShaderPath);
                 if (lit == null)
                 {
-                    throw new InvalidOperationException("URP Lit shader not found; is URP the active pipeline?");
+                    throw new InvalidOperationException($"URP Lit shader is missing at '{UrpLitShaderPath}'.");
                 }
 
                 _floorMaterial = new Material(lit) { name = "StudioFloor" };
