@@ -286,6 +286,28 @@ namespace MoonProject.UI.Tests
                 }
             }
 
+            var uiTuning = AssetDatabase.LoadAssetAtPath<UiTuning>(UiAssetPaths.Tuning);
+            Assert.IsNotNull(uiTuning);
+            Assert.IsNull(uiTuning.Validate());
+            CargoScreenSettings cargo = uiTuning.Cargo;
+            TitleSettings title = uiTuning.Title;
+            Assert.AreEqual(title.WheelRadius, cargo.RoverWheelRadius, 1e-4f, "Rover wheel radius matches title screen");
+            Assert.AreEqual(title.WheelRimRadius, cargo.RoverWheelRimRadius, 1e-4f, "Rover wheel rim radius matches title screen");
+            Assert.AreEqual(title.WheelbaseHalf, cargo.RoverWheelbaseHalf, 1e-4f, "Rover half-wheelbase matches title screen");
+            Assert.AreEqual(title.FarWheelScale, cargo.RoverFarWheelScale, 1e-4f, "Far wheel scale matches title screen");
+            Assert.AreEqual(title.FarWheelAlpha, cargo.RoverFarWheelAlpha, 1e-4f, "Far wheel alpha matches title screen");
+            Assert.AreEqual(new Vector2(6f, -4f), cargo.RoverFarWheelOffset, "Far wheel offset is (+6, -4) at 82px/m");
+            float headlampTipX = cargo.RoverOriginX + cargo.HeadlampBeamLength * cargo.RoverScale;
+            float lampBubbleLeftEdge = FaceInventoryView.GetOrbitalSocketReferenceCenter(
+                FaceInventoryView.OrbitalIndexOf(RoverSocket.Lamp)).x - cargo.BubbleRadius;
+            Assert.Less(headlampTipX, lampBubbleLeftEdge - 20f,
+                "Headlamp 3-slice gradient cone stops well short of the Lamp socket bubble");
+            Assert.LessOrEqual(cargo.LeaderEmptyColor.a, 78, "Empty socket leader line is faint (~25-30% alpha)");
+            Assert.Greater(cargo.LeaderInstalledColor.a, cargo.LeaderEmptyColor.a,
+                "Installed socket leader is slightly brighter than empty leader");
+            Assert.LessOrEqual(cargo.LeaderInstalledColor.a, 115, "Installed socket leader remains subtle");
+            Assert.GreaterOrEqual(cargo.LeaderFocusColor.a, 220, "Focused/drag-target leader is bright cyan");
+
             var enAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(UiAssetPaths.StringTable("en"));
             var viAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(UiAssetPaths.StringTable("vi"));
             var localization = new LocalizationService(new EventBus(),

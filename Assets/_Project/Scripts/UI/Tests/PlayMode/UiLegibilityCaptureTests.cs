@@ -421,7 +421,9 @@ namespace MoonProject.UI.PlayModeTests
             FreezeWorld();
             yield return null;
             string capturesFolder = Path.GetFullPath(CapturesFolder);
+            string r2Folder = Path.GetFullPath("Logs/r2");
             Directory.CreateDirectory(capturesFolder);
+            Directory.CreateDirectory(r2Folder);
             var report = new List<string>();
             UiLayout layout = ui.Layout;
             ui.Ledger.RecordLookTaught();
@@ -435,7 +437,7 @@ namespace MoonProject.UI.PlayModeTests
             Reframe(1920, 1080);
             yield return new WaitForSecondsRealtime(1.5f);
 
-            // 1. Tier 8 (8 unlocked / 16 locked): early game, 3 sockets installed.
+            // 1. Tier 8 (8 unlocked / 16 locked): early game, Wing + Flanks installed, HoverCoils waiting kit.
             fakes.Hold.ClearParts();
             fakes.Equipment.Clear();
             fakes.Hold.Set(4,
@@ -446,9 +448,8 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Hold.AddPart("tilly.cell");
             fakes.Hold.WaitingBundles = 1;
             fakes.Equipment.Fit(RoverKitPiece.SolarCell);
-            fakes.Equipment.Fit(RoverKitPiece.TetherRing);
-            fakes.Equipment.Fit(RoverKitPiece.LampBar);
-            fakes.Equipment.Craft(RoverKitPiece.CapacitorDrums);
+            fakes.Equipment.Fit(RoverKitPiece.CapacitorDrums);
+            fakes.Equipment.Craft(RoverKitPiece.HoverCoils);
             fakes.Equipment.AtStation = false;
 
             ui.Localization.SetLanguage("vi");
@@ -458,12 +459,19 @@ namespace MoonProject.UI.PlayModeTests
             yield return null;
             Assert.AreEqual(8, ui.Cargo.View.UnlockedCellCount, "Tier 8 has 8 unlocked cells");
             Assert.AreEqual(16, ui.Cargo.View.LockedCellCount, "Tier 8 has 16 locked cells");
+            Assert.LessOrEqual(ui.Cargo.View.GetSocketLeaderColor(RoverSocket.Lamp).a, 78,
+                "Empty Lamp socket leader line is faint");
+            Assert.Greater(ui.Cargo.View.GetSocketLeaderColor(RoverSocket.Wing).a,
+                ui.Cargo.View.GetSocketLeaderColor(RoverSocket.Lamp).a,
+                "Installed Wing socket leader is slightly brighter than empty Lamp leader");
             yield return LegibleShot(camera, capturesFolder, "face_inv_8_vi", report, layout.Cargo);
+            File.Copy(Path.Combine(capturesFolder, "face_inv_8_vi.png"), Path.Combine(r2Folder, "face_inv_8_vi.png"), true);
 
             ui.Cargo.View.FocusHoldCell(0);
             yield return new WaitForSecondsRealtime(0.15f);
             Assert.IsTrue(ui.Cargo.View.IsTooltipVisible, "Hover/focus shows tooltip");
             yield return LegibleShot(camera, capturesFolder, "face_inv_hover_vi", report, layout.Cargo);
+            File.Copy(Path.Combine(capturesFolder, "face_inv_hover_vi.png"), Path.Combine(r2Folder, "face_inv_hover_vi.png"), true);
             ui.Cargo.View.ClearFocus();
             yield return null;
 
@@ -471,10 +479,12 @@ namespace MoonProject.UI.PlayModeTests
             ui.Cargo.View.ClearFocus();
             yield return new WaitForSecondsRealtime(0.2f);
             yield return LegibleShot(camera, capturesFolder, "face_inv_8_en", report, layout.Cargo);
+            File.Copy(Path.Combine(capturesFolder, "face_inv_8_en.png"), Path.Combine(r2Folder, "face_inv_8_en.png"), true);
 
-            // 2. Tier 16 (16 unlocked / 8 locked): mid-game with CargoRack fitted, 6 sockets installed + drag state.
+            // 2. Tier 16 (16 unlocked / 8 locked): mid-game with CargoRack fitted, 5 sockets installed + drag state.
             fakes.Hold.ClearParts();
             fakes.Equipment.Clear();
+            fakes.Hold.WaitingBundles = 0;
             fakes.Hold.Set(7,
                 new MaterialSlot(SalvageMaterial.Metal, 4, 4),
                 new MaterialSlot(SalvageMaterial.Metal, 2, 4),
@@ -487,10 +497,9 @@ namespace MoonProject.UI.PlayModeTests
                 new MaterialSlot(SalvageMaterial.CircuitChips, 4, 6));
             fakes.Hold.AddPart("tilly.cell");
             fakes.Equipment.Fit(RoverKitPiece.SolarCell);
-            fakes.Equipment.Fit(RoverKitPiece.TetherRing);
-            fakes.Equipment.Fit(RoverKitPiece.LampBar);
             fakes.Equipment.Fit(RoverKitPiece.CapacitorDrums);
             fakes.Equipment.Fit(RoverKitPiece.CargoRack);
+            fakes.Equipment.Fit(RoverKitPiece.TapeDeck);
             fakes.Equipment.Fit(RoverKitPiece.BatterySpine);
             fakes.Equipment.Craft(RoverKitPiece.HoverCoils);
             fakes.Equipment.Craft(RoverKitPiece.FocusLens);
@@ -502,6 +511,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(16, ui.Cargo.View.UnlockedCellCount, "Tier 16 has 16 unlocked cells");
             Assert.AreEqual(8, ui.Cargo.View.LockedCellCount, "Tier 16 has 8 locked cells");
             yield return LegibleShot(camera, capturesFolder, "face_inv_16_vi", report, layout.Cargo);
+            File.Copy(Path.Combine(capturesFolder, "face_inv_16_vi.png"), Path.Combine(r2Folder, "face_inv_16_vi.png"), true);
 
             int hoverCoilsCell = ui.Cargo.View.WaitingKitCellIndex(0);
             Assert.GreaterOrEqual(hoverCoilsCell, 0, "HoverCoils waiting kit sits in the hold grid");
@@ -509,7 +519,10 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(0.15f);
             Assert.IsTrue(ui.Cargo.View.IsDraggingKit, "Kit drag is active");
             Assert.IsTrue(ui.Cargo.View.IsSocketLeaderCyan(RoverSocket.Belly), "Target socket leader is cyan during drag");
+            Assert.GreaterOrEqual(ui.Cargo.View.GetSocketLeaderColor(RoverSocket.Belly).a, 220,
+                "Target socket leader has bright cyan alpha during drag");
             yield return LegibleShot(camera, capturesFolder, "face_inv_drag_vi", report, layout.Cargo);
+            File.Copy(Path.Combine(capturesFolder, "face_inv_drag_vi.png"), Path.Combine(r2Folder, "face_inv_drag_vi.png"), true);
             ui.Cargo.View.CompleteKitDrag(null);
             ui.Cargo.View.ClearFocus();
             yield return null;
@@ -518,10 +531,12 @@ namespace MoonProject.UI.PlayModeTests
             ui.Cargo.View.ClearFocus();
             yield return new WaitForSecondsRealtime(0.2f);
             yield return LegibleShot(camera, capturesFolder, "face_inv_16_en", report, layout.Cargo);
+            File.Copy(Path.Combine(capturesFolder, "face_inv_16_en.png"), Path.Combine(r2Folder, "face_inv_16_en.png"), true);
 
             // 3. Tier 24 (24 unlocked / 0 locked): full capacity with CargoRack + SideBins fitted, 9 sockets installed.
             fakes.Hold.ClearParts();
             fakes.Equipment.Clear();
+            fakes.Hold.WaitingBundles = 0;
             fakes.Hold.Set(10,
                 new MaterialSlot(SalvageMaterial.Metal, 4, 4),
                 new MaterialSlot(SalvageMaterial.Metal, 4, 4),
@@ -558,11 +573,13 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(24, ui.Cargo.View.UnlockedCellCount, "Tier 24 has 24 unlocked cells");
             Assert.AreEqual(0, ui.Cargo.View.LockedCellCount, "Tier 24 has 0 locked cells");
             yield return LegibleShot(camera, capturesFolder, "face_inv_24_vi", report, layout.Cargo);
+            File.Copy(Path.Combine(capturesFolder, "face_inv_24_vi.png"), Path.Combine(r2Folder, "face_inv_24_vi.png"), true);
 
             ui.Localization.SetLanguage("en");
             ui.Cargo.View.ClearFocus();
             yield return new WaitForSecondsRealtime(0.2f);
             yield return LegibleShot(camera, capturesFolder, "face_inv_24_en", report, layout.Cargo);
+            File.Copy(Path.Combine(capturesFolder, "face_inv_24_en.png"), Path.Combine(r2Folder, "face_inv_24_en.png"), true);
 
             ui.Cargo.Close();
             Assert.IsEmpty(report, "face_inv legibility:\n" + string.Join("\n", report));

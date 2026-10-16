@@ -273,7 +273,8 @@ namespace MoonProject.UI
 
         /// <summary>
         /// True only when <paramref name="socket"/>'s leader line to 07 is bright cyan (focused, hovered, or active drag
-        /// target). By Director's tweak, all other leader lines are faint even when a kit is installed.
+        /// target). By Director's tweak, default leader lines are faint (~27% alpha) and installed leader lines are subtle
+        /// amber (~38% alpha).
         /// </summary>
         public bool IsSocketLeaderCyan(RoverSocket socket)
         {
@@ -285,6 +286,32 @@ namespace MoonProject.UI
 
             int activeSocket = _isDraggingKit ? _dragTargetSocketIndex : _focusedSocketIndex;
             return idx == activeSocket;
+        }
+
+        /// <summary>Returns the current leader-line stroke color for <paramref name="socket"/> from <see cref="CargoScreenSettings"/>.</summary>
+        public Color32 GetSocketLeaderColor(RoverSocket socket)
+        {
+            if (IsSocketLeaderCyan(socket))
+            {
+                return _settings.LeaderFocusColor;
+            }
+
+            return _equipment.TryGetFitted(socket, out _)
+                ? _settings.LeaderInstalledColor
+                : _settings.LeaderEmptyColor;
+        }
+
+        /// <summary>Returns the current leader-line stroke width (px at 1152x768) for <paramref name="socket"/>.</summary>
+        public float GetSocketLeaderWidth(RoverSocket socket)
+        {
+            if (IsSocketLeaderCyan(socket))
+            {
+                return _settings.LeaderFocusWidth;
+            }
+
+            return _equipment.TryGetFitted(socket, out _)
+                ? _settings.LeaderInstalledWidth
+                : _settings.LeaderEmptyWidth;
         }
 
         /// <summary>Localized item or part name for hold cell <paramref name="index"/>, or empty.</summary>
@@ -1445,48 +1472,80 @@ namespace MoonProject.UI
                 }
             }
 
-            Vector2 roverOrigin = new Vector2(RoverOriginX * s, RoverOriginY * s);
-            float roverScale = RoverScale * s;
+            Vector2 roverOrigin = new Vector2(_settings.RoverOriginX * s, _settings.RoverOriginY * s);
+            float roverScale = _settings.RoverScale * s;
             var pose = new RoverPose
             {
-                WheelAngle = 0.25f,
+                WheelAngle = _settings.RoverWheelAngle,
                 Bob = 0f,
                 Pitch = 0f,
+                BumpRear = 0f,
+                BumpFront = 0f,
+                MoonDropAtAxle = 0f,
                 ScoopNod = 0f,
                 SolarTilt = 0f,
-                AntennaSway = 0f,
-                HeadNod = -0.05f,
+                AntennaSway = _settings.RoverAntennaSway,
+                HeadNod = _settings.RoverHeadNod,
                 MorseOn = true,
                 EyeBlink = false,
+                DrawGroundArc = true,
+                AlwaysDrawHeadlampBeam = false,
                 InstalledSocketsMask = mask,
             };
 
-            RoverLineArtPainter.DrawRover07(painter, roverOrigin, roverScale, in pose);
+            RoverLineArtPainter.DrawRover07(painter, roverOrigin, roverScale, in pose, null, _settings);
 
             int activeSocket = _isDraggingKit ? _dragTargetSocketIndex : _focusedSocketIndex;
-            float r = BubbleRadius * s;
+            float r = _settings.BubbleRadius * s;
 
-            // 1. Leader lines from orbital bubbles to 07 mount anchors
-            for (int i = 0; i < OrbitalSocketCount; i++)
+            // 1. Leader lines from orbital bubbles to 07 mount anchors:
+            //    default (empty) = faint (~27% alpha, 1.0px), installed = subtle amber (~38% alpha, 1.25px),
+            //    focused or active drag-target = bright cyan (~92% alpha, 1.9px).
+            for (int pass = 0; pass < 2; pass++)
             {
-                RoverSocket socket = OrbitalSockets[i];
-                Vector2 b = OrbitalCenters[i] * s;
-                Vector2 m = RoverLineArtPainter.GetSocketMountPoint(socket, roverOrigin, roverScale);
-                Vector2 dir = m - b;
-                float dist = dir.magnitude;
-                if (dist <= r + 2f)
+                bool drawCyanPass = pass == 1;
+                for (int i = 0; i < OrbitalSocketCount; i++)
                 {
-                    continue;
-                }
+                    bool isCyanLeader = i == activeSocket;
+                    if (isCyanLeader != drawCyanPass)
+                    {
+                        continue;
+                    }
 
-                Vector2 p0 = b + (dir / dist) * r;
-                bool isCyanLeader = i == activeSocket;
-                Color32 lineCol = isCyanLeader
-                    ? RoverLineArtPainter.WithAlpha(Cyan, 225)
-                    : AmberMuted;
-                RoverLineArtPainter.DrawLine(painter, p0, m, lineCol, isCyanLeader ? 1.8f : 1.1f);
-                RoverLineArtPainter.FillCircle(painter, m, isCyanLeader ? 3.2f * s : 2.2f * s,
-                    isCyanLeader ? Cyan : RoverLineArtPainter.WithAlpha(AmberDim, 140));
+                    RoverSocket socket = OrbitalSockets[i];
+                    bool installed = (mask & (1u << (int)socket)) != 0u;
+                    Vector2 b = OrbitalCenters[i] * s;
+                    Vector2 m = RoverLineArtPainter.GetSocketMountPoint(socket, roverOrigin, roverScale,
+                        pose.Pitch, pose.HeadNod, _settings.RoverBodyPivotHeight, _settings.RoverWingTilt);
+                    Vector2 dir = m - b;
+                    float dist = dir.magnitude;
+                    if (dist <= r + 2f)
+                    {
+                        continue;
+                    }
+
+                    Vector2 p0 = b + (dir / dist) * r;
+                    if (isCyanLeader)
+                    {
+                        Color32 focusCol = _settings.LeaderFocusColor;
+                        RoverLineArtPainter.DrawLine(painter, p0, m,
+                            RoverLineArtPainter.WithAlpha(focusCol, 48), 4.5f * s);
+                        RoverLineArtPainter.DrawLine(painter, p0, m, focusCol, _settings.LeaderFocusWidth * s);
+                        RoverLineArtPainter.FillCircle(painter, m, _settings.LeaderFocusDotRadius * s, focusCol);
+                    }
+                    else if (installed)
+                    {
+                        Color32 instCol = _settings.LeaderInstalledColor;
+                        RoverLineArtPainter.DrawLine(painter, p0, m, instCol, _settings.LeaderInstalledWidth * s);
+                        RoverLineArtPainter.FillCircle(painter, m, _settings.LeaderInstalledDotRadius * s, instCol);
+                    }
+                    else
+                    {
+                        Color32 emptyCol = _settings.LeaderEmptyColor;
+                        RoverLineArtPainter.DrawLine(painter, p0, m, emptyCol, _settings.LeaderEmptyWidth * s);
+                        RoverLineArtPainter.FillCircle(painter, m, _settings.LeaderEmptyDotRadius * s, emptyCol);
+                    }
+                }
             }
 
             // 2. 10 orbital socket bubbles
@@ -1494,7 +1553,7 @@ namespace MoonProject.UI
             {
                 RoverSocket socket = OrbitalSockets[i];
                 Vector2 b = OrbitalCenters[i] * s;
-                bool installed = _equipment.TryGetFitted(socket, out _);
+                bool installed = (mask & (1u << (int)socket)) != 0u;
                 bool focused = i == activeSocket;
 
                 RoverLineArtPainter.FillCircle(painter, b, r, BgCell);
@@ -1537,7 +1596,7 @@ namespace MoonProject.UI
             if (_isDraggingKit && _dragTargetSocketIndex >= 0 && _dragTargetSocketIndex < OrbitalSocketCount)
             {
                 Vector2 b = OrbitalCenters[_dragTargetSocketIndex] * s;
-                Vector2 from = new Vector2(b.x, b.y + BubbleRadius * s);
+                Vector2 from = new Vector2(b.x, b.y + _settings.BubbleRadius * s);
                 Vector2 to = new Vector2(Mathf.Clamp(b.x, tx + 24f * s, tx + tw - 24f * s), ty);
                 RoverLineArtPainter.DrawLine(painter, from, to, RoverLineArtPainter.WithAlpha(Cyan, 195), 1.5f);
             }
@@ -1550,10 +1609,14 @@ namespace MoonProject.UI
             }
             else if (!_dock.IsDocked && _focusedSocketIndex >= 0 && _focusedSocketIndex < OrbitalSocketCount)
             {
-                Vector2 b = OrbitalCenters[_focusedSocketIndex] * s;
-                Vector2 from = new Vector2(b.x, b.y + BubbleRadius * s);
-                Vector2 to = new Vector2(Mathf.Clamp(b.x, tx + 24f * s, tx + tw - 24f * s), ty);
-                RoverLineArtPainter.DrawLine(painter, from, to, RoverLineArtPainter.WithAlpha(Cyan, 175), 1.3f);
+                Vector2 b = OrbitalCenters[_focusedSocketIndex];
+                if (b.y > 460f)
+                {
+                    Vector2 bs = b * s;
+                    Vector2 from = new Vector2(bs.x, bs.y + _settings.BubbleRadius * s);
+                    Vector2 to = new Vector2(Mathf.Clamp(bs.x, tx + 24f * s, tx + tw - 24f * s), ty);
+                    RoverLineArtPainter.DrawLine(painter, from, to, RoverLineArtPainter.WithAlpha(Cyan, 175), 1.3f);
+                }
             }
         }
 
@@ -1566,17 +1629,22 @@ namespace MoonProject.UI
 
             Vector2 start = _dragStartRefPos * s;
             Vector2 cur = _dragCurrentRefPos * s;
-            RoverLineArtPainter.StrokeDashedLine(painter, start, cur,
-                RoverLineArtPainter.WithAlpha(Cyan, 185), 1.8f, 6f * s, 4f * s);
+            Vector2 ctrl = new Vector2((start.x + cur.x) * 0.5f, Mathf.Max(start.y, cur.y) + 42f * s);
+            RoverLineArtPainter.StrokeDashedQuadratic(painter, start, ctrl, cur,
+                RoverLineArtPainter.WithAlpha(Cyan, 195), 1.8f * s, 6f * s, 4f * s);
+            RoverLineArtPainter.FillCircle(painter, start, 4.0f * s, RoverLineArtPainter.WithAlpha(Cyan, 185));
 
-            float half = 32f * s;
+            float half = 34f * s;
+            RoverLineArtPainter.StrokeRect(painter, cur.x - half - 3f * s, cur.y - half - 3f * s,
+                (half + 3f * s) * 2f, (half + 3f * s) * 2f,
+                RoverLineArtPainter.WithAlpha(Cyan, 70), 2.0f);
             RoverLineArtPainter.FillRect(painter, cur.x - half, cur.y - half, half * 2f, half * 2f, BgPlate);
             RoverLineArtPainter.StrokeRect(painter, cur.x - half, cur.y - half, half * 2f, half * 2f, Cyan, 2.2f);
             RoverLineArtPainter.DrawCornerTicks(painter, cur.x - half, cur.y - half, half * 2f, half * 2f,
                 7f * s, Cyan, 2.0f);
 
             UiIconShape icon = _diagram.GetIcon(_dragKitPiece);
-            UiIconPainter.Draw(painter, in icon, cur, 46f * s, UiIconState.Cyan);
+            UiIconPainter.Draw(painter, in icon, cur, 48f * s, UiIconState.Cyan);
         }
 
         private void DrawToastDot(Painter2D painter, float s)

@@ -539,12 +539,17 @@ namespace MoonProject.UI
                 WheelAngle = _state.WheelAngleRadians,
                 Bob = _state.BodyBob,
                 Pitch = _state.BodyPitch,
+                BumpRear = _state.BumpRear,
+                BumpFront = _state.BumpFront,
+                MoonDropAtAxle = moonDropAtAxle,
                 ScoopNod = _state.ScoopNod,
                 SolarTilt = _state.SolarTilt,
                 AntennaSway = _state.AntennaSway,
                 HeadNod = _state.HeadNod,
                 MorseOn = _state.MorseLit,
                 EyeBlink = _state.EyeBlinking,
+                DrawGroundArc = false,
+                AlwaysDrawHeadlampBeam = true,
                 InstalledSocketsMask = 0u,
             };
 

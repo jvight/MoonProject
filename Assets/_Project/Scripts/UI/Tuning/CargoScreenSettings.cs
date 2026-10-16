@@ -112,6 +112,100 @@ namespace MoonProject.UI
         [Range(1f, 8f)]
         [SerializeField] private float _toastDurationSeconds = 3.5f;
 
+        [Header("Rover 07 diagram pose, wheels & headlamp (matches TitleSettings side-3/4 profile)")]
+        [Tooltip("Outer tire radius in rover-local units (multiplied by RoverScale). Matches TitleSettings.WheelRadius.")]
+        [Range(0.2f, 0.55f)]
+        [SerializeField] private float _roverWheelRadius = 0.35f;
+
+        [Tooltip("Inner hub rim radius in rover-local units. Matches TitleSettings.WheelRimRadius.")]
+        [Range(0.1f, 0.35f)]
+        [SerializeField] private float _roverWheelRimRadius = 0.185f;
+
+        [Tooltip("Half-wheelbase in rover-local units (distance from rover center X to front/rear axle). Matches TitleSettings.WheelbaseHalf.")]
+        [Range(0.3f, 0.8f)]
+        [SerializeField] private float _roverWheelbaseHalf = 0.53f;
+
+        [Tooltip("Number of outer tread lugs per wheel. Matches TitleSettings.WheelLugCount.")]
+        [Range(4, 24)]
+        [SerializeField] private int _roverWheelLugCount = 12;
+
+        [Tooltip("Number of spokes per wheel. Matches TitleSettings.WheelSpokeCount.")]
+        [Range(3, 12)]
+        [SerializeField] private int _roverWheelSpokeCount = 6;
+
+        [Tooltip("Scale multiplier for the two far-side wheels in 3/4 view. Matches TitleSettings.FarWheelScale.")]
+        [Range(0.8f, 1f)]
+        [SerializeField] private float _roverFarWheelScale = 0.94f;
+
+        [Tooltip("Opacity multiplier for the two far-side wheels in 3/4 view (no interior disc fill). Matches TitleSettings.FarWheelAlpha.")]
+        [Range(0.1f, 0.8f)]
+        [SerializeField] private float _roverFarWheelAlpha = 0.42f;
+
+        [Tooltip("Far-side wheel offset (px at 82 px/m reference scale) behind the near-side wheels (+x forward, -y up).")]
+        [SerializeField] private Vector2 _roverFarWheelOffset = new Vector2(6f, -4f);
+
+        [Tooltip("Height of the chassis pitch pivot above ground in rover-local units. Matches TitleSettings.BodyPivotHeight.")]
+        [Range(0.3f, 0.9f)]
+        [SerializeField] private float _roverBodyPivotHeight = 0.58f;
+
+        [Tooltip("Static wheel rotation angle (radians) for the inventory diagram pose.")]
+        [Range(-3.14f, 3.14f)]
+        [SerializeField] private float _roverWheelAngle = 0.42f;
+
+        [Tooltip("Static CRT head nod angle (radians) for the inventory diagram pose. Matches TitleSettings.HeadNodBase.")]
+        [Range(-0.4f, 0.4f)]
+        [SerializeField] private float _roverHeadNod = -0.06f;
+
+        [Tooltip("Base solar wing tilt angle (radians) on the roof deck.")]
+        [Range(-0.4f, 0.4f)]
+        [SerializeField] private float _roverWingTilt = -0.11f;
+
+        [Tooltip("Static whip antenna sway offset (rover-local units) for the inventory diagram pose.")]
+        [Range(-0.3f, 0.3f)]
+        [SerializeField] private float _roverAntennaSway = 0.04f;
+
+        [Tooltip("Forward reach (in rover-local units) of the short 3-slice headlamp gradient cone when Lamp is installed; stops well short of the Lamp bubble.")]
+        [Range(0.75f, 1.65f)]
+        [SerializeField] private float _headlampBeamLength = 1.15f;
+
+        [Tooltip("Alpha of each of the 3 overlapping borderless slices of the headlamp gradient cone when Lamp is installed.")]
+        [Range(0f, 0.12f)]
+        [SerializeField] private float _headlampBeamSliceAlpha = 0.028f;
+
+        [Header("Orbital socket leader lines (faint default, slightly brighter installed, cyan only on focus/drag)")]
+        [Tooltip("Faint amber stroke (~27% alpha) for empty socket leader lines so the 10 spokes do not compete with 07.")]
+        [SerializeField] private Color32 _leaderEmptyColor = new Color32(204, 150, 68, 68);
+
+        [Tooltip("Stroke width (px at 1152x768) for empty socket leader lines.")]
+        [Range(0.5f, 3f)]
+        [SerializeField] private float _leaderEmptyWidth = 1.0f;
+
+        [Tooltip("Mount anchor dot radius (px at 1152x768) on 07 for empty socket leader lines.")]
+        [Range(1f, 5f)]
+        [SerializeField] private float _leaderEmptyDotRadius = 2.0f;
+
+        [Tooltip("Subtle warm amber stroke (~38% alpha) for installed socket leader lines.")]
+        [SerializeField] private Color32 _leaderInstalledColor = new Color32(232, 174, 82, 96);
+
+        [Tooltip("Stroke width (px at 1152x768) for installed socket leader lines.")]
+        [Range(0.5f, 3f)]
+        [SerializeField] private float _leaderInstalledWidth = 1.25f;
+
+        [Tooltip("Mount anchor dot radius (px at 1152x768) on 07 for installed socket leader lines.")]
+        [Range(1f, 5f)]
+        [SerializeField] private float _leaderInstalledDotRadius = 2.4f;
+
+        [Tooltip("Bright cyan stroke for the single focused, hovered, or active drag-target socket's leader line.")]
+        [SerializeField] private Color32 _leaderFocusColor = new Color32(95, 243, 255, 235);
+
+        [Tooltip("Stroke width (px at 1152x768) for the focused or drag-target socket leader line.")]
+        [Range(1f, 4f)]
+        [SerializeField] private float _leaderFocusWidth = 1.9f;
+
+        [Tooltip("Mount anchor dot radius (px at 1152x768) on 07 for the focused or drag-target socket leader line.")]
+        [Range(1.5f, 6f)]
+        [SerializeField] private float _leaderFocusDotRadius = 3.2f;
+
         [Header("Two-colour CRT palette (amber + cyan, docs/design/screen-ui.md)")]
         [Tooltip("Dark warm CRT fill inside an unlocked inventory cell or socket bubble.")]
         [SerializeField] private Color32 _cellBackground = new Color32(18, 12, 6, 235);
@@ -186,6 +280,54 @@ namespace MoonProject.UI
 
         public float ToastDurationSeconds => _toastDurationSeconds;
 
+        public float RoverWheelRadius => _roverWheelRadius;
+
+        public float RoverWheelRimRadius => _roverWheelRimRadius;
+
+        public float RoverWheelbaseHalf => _roverWheelbaseHalf;
+
+        public int RoverWheelLugCount => _roverWheelLugCount;
+
+        public int RoverWheelSpokeCount => _roverWheelSpokeCount;
+
+        public float RoverFarWheelScale => _roverFarWheelScale;
+
+        public float RoverFarWheelAlpha => _roverFarWheelAlpha;
+
+        public Vector2 RoverFarWheelOffset => _roverFarWheelOffset;
+
+        public float RoverBodyPivotHeight => _roverBodyPivotHeight;
+
+        public float RoverWheelAngle => _roverWheelAngle;
+
+        public float RoverHeadNod => _roverHeadNod;
+
+        public float RoverWingTilt => _roverWingTilt;
+
+        public float RoverAntennaSway => _roverAntennaSway;
+
+        public float HeadlampBeamLength => _headlampBeamLength;
+
+        public float HeadlampBeamSliceAlpha => _headlampBeamSliceAlpha;
+
+        public Color32 LeaderEmptyColor => _leaderEmptyColor;
+
+        public float LeaderEmptyWidth => _leaderEmptyWidth;
+
+        public float LeaderEmptyDotRadius => _leaderEmptyDotRadius;
+
+        public Color32 LeaderInstalledColor => _leaderInstalledColor;
+
+        public float LeaderInstalledWidth => _leaderInstalledWidth;
+
+        public float LeaderInstalledDotRadius => _leaderInstalledDotRadius;
+
+        public Color32 LeaderFocusColor => _leaderFocusColor;
+
+        public float LeaderFocusWidth => _leaderFocusWidth;
+
+        public float LeaderFocusDotRadius => _leaderFocusDotRadius;
+
         public Color32 CellBackground => _cellBackground;
 
         public Color32 CellFocusBackground => _cellFocusBackground;
@@ -230,6 +372,12 @@ namespace MoonProject.UI
             if (_panelWidth <= 0f || _panelHeight <= 0f || _maxCell <= 0f || _bubbleRadius <= 0f || _roverScale <= 0f)
             {
                 return "cargo layout or diagram framing is non-positive";
+            }
+
+            if (_roverWheelRadius <= 0f || _roverWheelRimRadius <= 0f || _roverWheelbaseHalf <= 0f ||
+                _leaderEmptyWidth <= 0f || _leaderInstalledWidth <= 0f || _leaderFocusWidth <= 0f)
+            {
+                return "cargo rover diagram or leader line settings are non-positive";
             }
 
             return null;

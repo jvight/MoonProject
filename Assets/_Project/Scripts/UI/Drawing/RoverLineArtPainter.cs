@@ -13,12 +13,17 @@ namespace MoonProject.UI
         public float WheelAngle;
         public float Bob;
         public float Pitch;
+        public float BumpRear;
+        public float BumpFront;
+        public float MoonDropAtAxle;
         public float ScoopNod;
         public float SolarTilt;
         public float AntennaSway;
         public float HeadNod;
         public bool MorseOn;
         public bool EyeBlink;
+        public bool DrawGroundArc;
+        public bool AlwaysDrawHeadlampBeam;
         public uint InstalledSocketsMask;
 
         public bool IsInstalled(RoverSocket socket)
@@ -34,16 +39,10 @@ namespace MoonProject.UI
     /// </summary>
     internal static class RoverLineArtPainter
     {
-        private static readonly float[] WheelOffsets = { -1f, 0f, 1f };
+        public const float RefRoverScale = 82f;
 
         private static readonly Vector2[] ScratchQuad = new Vector2[4];
-        private static readonly Vector2[] ScratchHex = new Vector2[6];
-        private static readonly Vector2[] ScratchOct = new Vector2[8];
         private static readonly Vector2[] ScratchBeam = new Vector2[4];
-        private static readonly Vector2[] ScratchScoop = new Vector2[4];
-        private static readonly Vector2[] ScratchWing = new Vector2[4];
-        private static readonly Vector2[] ScratchHead = new Vector2[4];
-        private static readonly Vector2[] ScratchVisor = new Vector2[4];
 
         // Default CRT palette matching TitleSettings and Variant A (screen-ui.md Round 2).
         public static readonly Color32 DefaultBgWarm = new Color32(28, 19, 10, 255);
@@ -57,457 +56,733 @@ namespace MoonProject.UI
 
         /// <summary>
         /// Draws Rover 07 in side-3/4 profile at <paramref name="origin"/> with meter-to-pixel scale <paramref name="s"/>.
+        /// Matches the title-screen 4-wheel beetle-carapace Rover 07: two near wheels at <c>±halfWheelbase</c> and two
+        /// faint, non-occluding far-side wheels offset behind (<c>+6, -4</c> at <c>RefRoverScale = 82</c>).
         /// When <paramref name="pose"/> has <see cref="RoverPose.InstalledSocketsMask"/> bits set, the corresponding
-        /// kit hardware on 07 (belly coils, rear rack, spine pack, side bins, flank drum, lamp beam, solar wing, tape
-        /// deck, tether collar, focus lens) is drawn and lit.
+        /// kit hardware on 07 is highlighted.
         /// </summary>
         public static void DrawRover07(Painter2D painter, Vector2 origin, float s, in RoverPose pose,
-            TitleSettings settings = null)
+            TitleSettings titleSettings = null, CargoScreenSettings cargoSettings = null)
         {
-            float rWheel = (settings != null ? settings.WheelRadius : 0.35f) * s;
-            float rRim = (settings != null ? settings.WheelRimRadius : 0.185f) * s;
-            float wb = (settings != null ? settings.WheelbaseHalf : 0.53f) * s;
-            float farScale = settings != null ? settings.FarWheelScale : 0.94f;
-            float farAlpha = settings != null ? settings.FarWheelAlpha : 0.42f;
-            int lugCount = settings != null ? settings.WheelLugCount : 12;
-            int spokeCount = settings != null ? settings.WheelSpokeCount : 6;
-            float pivotHeight = settings != null ? settings.BodyPivotHeight : 0.58f;
+            float sc = s / RefRoverScale;
+            float wheelR = (cargoSettings != null
+                ? cargoSettings.RoverWheelRadius
+                : (titleSettings != null ? titleSettings.WheelRadius : 0.35f)) * s;
+            float rimR = (cargoSettings != null
+                ? cargoSettings.RoverWheelRimRadius
+                : (titleSettings != null ? titleSettings.WheelRimRadius : 0.185f)) * s;
+            float halfWheelbase = (cargoSettings != null
+                ? cargoSettings.RoverWheelbaseHalf
+                : (titleSettings != null ? titleSettings.WheelbaseHalf : 0.53f)) * s;
+            float farScale = cargoSettings != null
+                ? cargoSettings.RoverFarWheelScale
+                : (titleSettings != null ? titleSettings.FarWheelScale : 0.94f);
+            float farAlpha = cargoSettings != null
+                ? cargoSettings.RoverFarWheelAlpha
+                : (titleSettings != null ? titleSettings.FarWheelAlpha : 0.42f);
+            Vector2 farOffsetRef = cargoSettings != null
+                ? cargoSettings.RoverFarWheelOffset
+                : new Vector2(6f, -4f);
+            int lugCount = cargoSettings != null
+                ? cargoSettings.RoverWheelLugCount
+                : (titleSettings != null ? titleSettings.WheelLugCount : 12);
+            int spokeCount = cargoSettings != null
+                ? cargoSettings.RoverWheelSpokeCount
+                : (titleSettings != null ? titleSettings.WheelSpokeCount : 6);
+            float pivotHeight = cargoSettings != null
+                ? cargoSettings.RoverBodyPivotHeight
+                : (titleSettings != null ? titleSettings.BodyPivotHeight : 0.58f);
+            float baseWingTilt = cargoSettings != null ? cargoSettings.RoverWingTilt : -0.11f;
 
-            Color32 bgWarm = settings != null ? settings.BgWarm : DefaultBgWarm;
-            Color32 amber = settings != null ? settings.Amber : DefaultAmber;
-            Color32 amberHi = settings != null ? settings.AmberHi : DefaultAmberHi;
-            Color32 cream = settings != null ? settings.Cream : DefaultCream;
-            Color32 amberDim = settings != null ? settings.AmberDim : DefaultAmberDim;
-            Color32 amberFaint = settings != null ? settings.AmberFaint : DefaultAmberFaint;
-            Color32 cyan = settings != null ? settings.Cyan : DefaultCyan;
-            Color32 cyanDim = settings != null ? settings.CyanDim : DefaultCyanDim;
+            Color32 bgWarm = titleSettings != null ? (Color32)titleSettings.BgWarm : DefaultBgWarm;
+            Color32 amber = cargoSettings != null
+                ? cargoSettings.AmberText
+                : (titleSettings != null ? (Color32)titleSettings.Amber : DefaultAmber);
+            Color32 amberHi = cargoSettings != null
+                ? cargoSettings.AmberBright
+                : (titleSettings != null ? (Color32)titleSettings.AmberHi : DefaultAmberHi);
+            Color32 cream = titleSettings != null ? (Color32)titleSettings.Cream : DefaultCream;
+            Color32 amberDim = cargoSettings != null
+                ? cargoSettings.AmberDim
+                : (titleSettings != null ? (Color32)titleSettings.AmberDim : DefaultAmberDim);
+            Color32 amberFaint = cargoSettings != null
+                ? cargoSettings.AmberFaint
+                : (titleSettings != null ? (Color32)titleSettings.AmberFaint : DefaultAmberFaint);
+            Color32 cyan = cargoSettings != null
+                ? cargoSettings.CyanAccent
+                : (titleSettings != null ? (Color32)titleSettings.Cyan : DefaultCyan);
+            Color32 cyanDim = cargoSettings != null
+                ? cargoSettings.CyanDim
+                : (titleSettings != null ? (Color32)titleSettings.CyanDim : DefaultCyanDim);
 
-            float ox = origin.x;
-            float oy = origin.y + pose.Bob * s;
-            float cp = Mathf.Cos(pose.Pitch);
-            float sp = Mathf.Sin(pose.Pitch);
-            float pivX = ox;
-            float pivY = oy - pivotHeight * s;
+            float crownX = origin.x;
+            float crownY = origin.y;
+            float wxRear = crownX - halfWheelbase;
+            float wxFront = crownX + halfWheelbase;
+            float wyRear = (crownY + pose.MoonDropAtAxle) - wheelR + pose.BumpRear * s;
+            float wyFront = (crownY + pose.MoonDropAtAxle) - wheelR + pose.BumpFront * s;
 
-            Vector2 R(float lx, float ly)
+            // 0. Subtle lunar ground arc & contact shadow under 07 (in inventory diagram mode)
+            if (pose.DrawGroundArc)
             {
-                float dx = lx * s;
-                float dy = ly * s + pivotHeight * s;
-                return new Vector2(pivX + dx * cp - dy * sp, pivY + dx * sp + dy * cp);
+                StrokeQuadratic(painter,
+                    new Vector2(crownX - 1.35f * s, crownY + 14f * sc),
+                    new Vector2(crownX, crownY - 6f * sc),
+                    new Vector2(crownX + 1.35f * s, crownY + 18f * sc),
+                    WithAlpha(amberFaint, 110), 1.5f);
+                FillEllipse(painter, new Vector2(crownX, crownY + 2f * sc), 0.86f * s, 11f * sc, 0f,
+                    new Color32(10, 6, 3, 140));
             }
 
-            // 0. Ground contact shadow
-            FillEllipse(painter, new Vector2(ox, oy + 0.02f * s), wb * 1.38f, 0.10f * s, 0f,
-                new Color32(8, 5, 2, 165));
+            // 1. Far-side wheels (2 wheels in 3/4 depth offset, drawn behind chassis without interior disc fill)
+            float farOffX = farOffsetRef.x * sc;
+            float farOffY = farOffsetRef.y * sc;
+            DrawWheel(painter, new Vector2(wxRear + farOffX, wyRear + farOffY), wheelR * farScale, rimR * farScale,
+                pose.WheelAngle, lugCount, spokeCount, farAlpha, true, sc, bgWarm, amber, amberHi, amberDim);
+            DrawWheel(painter, new Vector2(wxFront + farOffX, wyFront + farOffY), wheelR * farScale, rimR * farScale,
+                pose.WheelAngle + 0.7f, lugCount, spokeCount, farAlpha, true, sc, bgWarm, amber, amberHi, amberDim);
 
-            // 1. Far-side 3 wheels
-            float yFar = -0.05f * s;
-            float xFar = 0.06f * s;
-            for (int wi = 0; wi < 3; wi++)
+            // Body transform: origin at (crownX, crownY + Bob * s), pivoted around -pivotHeight * s
+            float bodyOriginX = crownX;
+            float bodyOriginY = crownY + pose.Bob * s;
+            float pivotOffsetY = -pivotHeight * s;
+            float cosP = Mathf.Cos(pose.Pitch);
+            float sinP = Mathf.Sin(pose.Pitch);
+            float pivotX = bodyOriginX;
+            float pivotY = bodyOriginY + pivotOffsetY;
+
+            Vector2 B(float bx, float by)
             {
-                float wx = ox + WheelOffsets[wi] * wb + xFar;
-                float wy = oy - rWheel + yFar;
-                DrawWheel(painter, new Vector2(wx, wy), rWheel * farScale, rRim * farScale,
-                    pose.WheelAngle + wi * 0.4f, lugCount, spokeCount, farAlpha, bgWarm, amber, amberDim, amberFaint);
+                float dy = by - pivotOffsetY;
+                return new Vector2(
+                    pivotX + bx * cosP - dy * sinP,
+                    pivotY + bx * sinP + dy * cosP);
             }
 
-            // 2. Rocker-bogie suspension struts
-            Vector2 w0 = R(-0.53f, -0.35f);
-            Vector2 w1 = R(0f, -0.35f);
-            Vector2 w2 = R(0.53f, -0.35f);
-            Vector2 hubPiv = R(-0.08f, -0.52f);
-            Vector2 frontJoin = R(0.24f, -0.46f);
-            Vector2 rearJoin = R(-0.32f, -0.46f);
+            // 2. Underbody chassis rails & suspension struts to the 2 axles
+            DrawLine(painter, B(-0.58f * s, -0.40f * s), B(0.58f * s, -0.40f * s), WithAlpha(amberDim, 230), 2.0f * sc);
+            DrawLine(painter, B(-0.42f * s, -0.42f * s), new Vector2(wxRear, wyRear), WithAlpha(amber, 240), 2.2f * sc);
+            DrawLine(painter, B(0.42f * s, -0.42f * s), new Vector2(wxFront, wyFront), WithAlpha(amber, 240), 2.2f * sc);
 
-            DrawLine(painter, w0, rearJoin, WithAlpha(amberDim, 210), 2.8f);
-            DrawLine(painter, rearJoin, hubPiv, WithAlpha(amberDim, 210), 2.8f);
-            DrawLine(painter, w1, rearJoin, WithAlpha(amberDim, 190), 2.3f);
-            DrawLine(painter, hubPiv, frontJoin, WithAlpha(amberDim, 210), 2.8f);
-            DrawLine(painter, frontJoin, w2, WithAlpha(amberDim, 210), 2.8f);
-            FillCircle(painter, hubPiv, 3.6f, bgWarm);
-            StrokeCircle(painter, hubPiv, 3.6f, WithAlpha(amber, 230), 1.6f);
-
-            // 2b. Underbody belly hover coils (when Belly is installed)
             if (pose.IsInstalled(RoverSocket.Belly))
             {
-                for (int ci = 0; ci < 2; ci++)
-                {
-                    float cxOff = ci == 0 ? -0.22f : 0.20f;
-                    Vector2 cTop = R(cxOff - 0.09f, -0.36f);
-                    Vector2 cBot = R(cxOff + 0.09f, -0.22f);
-                    float rx = Mathf.Min(cTop.x, cBot.x);
-                    float ry = Mathf.Min(cTop.y, cBot.y);
-                    float rw = Mathf.Abs(cBot.x - cTop.x);
-                    float rh = Mathf.Abs(cBot.y - cTop.y);
-                    FillRect(painter, rx, ry, rw, rh, bgWarm);
-                    StrokeRect(painter, rx, ry, rw, rh, WithAlpha(amberHi, 235), 1.6f);
-                    DrawLine(painter, new Vector2(rx + 2f, ry + rh * 0.45f),
-                        new Vector2(rx + rw - 2f, ry + rh * 0.45f), WithAlpha(cyan, 210), 1.3f);
-                    Vector2 padC = R(cxOff, -0.17f);
-                    DrawLine(painter, new Vector2(padC.x - 6f, padC.y - 2f), new Vector2(padC.x, padC.y + 3f),
-                        WithAlpha(cyan, 185), 1.3f);
-                    DrawLine(painter, new Vector2(padC.x, padC.y + 3f), new Vector2(padC.x + 6f, padC.y - 2f),
-                        WithAlpha(cyan, 185), 1.3f);
-                }
+                ScratchQuad[0] = B(-0.24f * s, -0.40f * s);
+                ScratchQuad[1] = B(0.34f * s, -0.40f * s);
+                ScratchQuad[2] = B(0.34f * s, -0.33f * s);
+                ScratchQuad[3] = B(-0.24f * s, -0.33f * s);
+                FillPolygon(painter, ScratchQuad, 4, bgWarm);
+                StrokePolygon(painter, ScratchQuad, 4, WithAlpha(amberHi, 225), 1.8f * sc);
             }
 
-            // 3. Rear cargo rack (expanded when Hold is installed)
-            ScratchQuad[0] = R(-0.68f, -0.52f);
-            ScratchQuad[1] = R(-0.46f, -0.52f);
-            ScratchQuad[2] = R(-0.46f, -0.74f);
-            ScratchQuad[3] = R(-0.66f, -0.72f);
+            // 3. Rear stowed cargo / sample rack behind main tub
+            ScratchQuad[0] = B(-0.74f * s, -0.50f * s);
+            ScratchQuad[1] = B(-0.74f * s, -0.78f * s);
+            ScratchQuad[2] = B(-0.56f * s, -0.78f * s);
+            ScratchQuad[3] = B(-0.56f * s, -0.50f * s);
             FillPolygon(painter, ScratchQuad, 4, bgWarm);
-            StrokePolygon(painter, ScratchQuad, 4,
-                WithAlpha(pose.IsInstalled(RoverSocket.Hold) ? amberHi : amberDim, 210), 1.8f);
-            for (int ri = 0; ri < 3; ri++)
-            {
-                float ry = -0.56f - ri * 0.055f;
-                DrawLine(painter, R(-0.66f, ry), R(-0.47f, ry), WithAlpha(amberFaint, 175), 1.2f);
-            }
+            StrokePolygon(painter, ScratchQuad, 4, WithAlpha(amberDim, 230), 1.6f * sc);
+            DrawLine(painter, B(-0.74f * s, -0.64f * s), B(-0.56f * s, -0.64f * s), WithAlpha(amberDim, 215), 1.2f * sc);
 
             if (pose.IsInstalled(RoverSocket.Hold))
             {
-                ScratchQuad[0] = R(-0.78f, -0.49f);
-                ScratchQuad[1] = R(-0.48f, -0.49f);
-                ScratchQuad[2] = R(-0.48f, -0.78f);
-                ScratchQuad[3] = R(-0.75f, -0.75f);
-                StrokePolygon(painter, ScratchQuad, 4, WithAlpha(amberHi, 240), 2.0f);
-                DrawLine(painter, R(-0.62f, -0.49f), R(-0.62f, -0.76f), WithAlpha(cyan, 200), 1.4f);
+                ScratchQuad[0] = B(-0.84f * s, -0.52f * s);
+                ScratchQuad[1] = B(-0.84f * s, -0.82f * s);
+                ScratchQuad[2] = B(-0.56f * s, -0.82f * s);
+                ScratchQuad[3] = B(-0.56f * s, -0.52f * s);
+                StrokePolygon(painter, ScratchQuad, 4, WithAlpha(amberHi, 235), 1.9f * sc);
             }
 
-            // 4. Main chassis tub
-            ScratchOct[0] = R(-0.50f, -0.40f);
-            ScratchOct[1] = R(0.46f, -0.40f);
-            ScratchOct[2] = R(0.56f, -0.50f);
-            ScratchOct[3] = R(0.50f, -0.74f);
-            ScratchOct[4] = R(0.30f, -0.78f);
-            ScratchOct[5] = R(-0.46f, -0.78f);
-            ScratchOct[6] = R(-0.54f, -0.68f);
-            ScratchOct[7] = R(-0.54f, -0.46f);
-            FillPolygon(painter, ScratchOct, 8, bgWarm);
-            StrokePolygon(painter, ScratchOct, 8, WithAlpha(amber, 248), 2.3f);
+            // 4. Main rounded beetle-carapace body tub (opaque bgWarm fill occludes upper far wheels)
+            painter.fillColor = bgWarm;
+            painter.BeginPath();
+            Vector2 tubStart = B(-0.58f * s, -0.44f * s);
+            painter.MoveTo(tubStart);
+            painter.LineTo(B(-0.62f * s, -0.68f * s));
+            AppendQuadraticTo(painter, B(-0.62f * s, -0.68f * s), B(-0.62f * s, -0.96f * s), B(-0.32f * s, -0.96f * s), 12);
+            painter.LineTo(B(0.28f * s, -0.96f * s));
+            AppendQuadraticTo(painter, B(0.28f * s, -0.96f * s), B(0.64f * s, -0.96f * s), B(0.68f * s, -0.58f * s), 12);
+            painter.LineTo(B(0.60f * s, -0.44f * s));
+            painter.ClosePath();
+            painter.Fill();
 
-            DrawLine(painter, R(-0.52f, -0.57f), R(0.53f, -0.57f), WithAlpha(amberDim, 175), 1.3f);
-            for (int vi = 0; vi < 4; vi++)
+            for (int pass = 0; pass < 2; pass++)
             {
-                float vx = -0.38f + vi * 0.065f;
-                DrawLine(painter, R(vx, -0.63f), R(vx, -0.72f), WithAlpha(amberFaint, 185), 1.3f);
+                bool isGlow = pass == 0;
+                painter.strokeColor = WithAlpha(amber, (byte)(isGlow ? 48 : 245));
+                painter.lineWidth = (isGlow ? 6.6f : 2.3f) * sc;
+                painter.lineCap = LineCap.Round;
+                painter.lineJoin = LineJoin.Round;
+                painter.BeginPath();
+                painter.MoveTo(tubStart);
+                painter.LineTo(B(-0.62f * s, -0.68f * s));
+                AppendQuadraticTo(painter, B(-0.62f * s, -0.68f * s), B(-0.62f * s, -0.96f * s), B(-0.32f * s, -0.96f * s), 12);
+                painter.LineTo(B(0.28f * s, -0.96f * s));
+                AppendQuadraticTo(painter, B(0.28f * s, -0.96f * s), B(0.64f * s, -0.96f * s), B(0.68f * s, -0.58f * s), 12);
+                painter.LineTo(B(0.60f * s, -0.44f * s));
+                painter.ClosePath();
+                painter.Stroke();
             }
 
-            DrawZeroSeven(painter, R(0.18f, -0.61f), s * 0.075f, WithAlpha(amberHi, 240));
+            // 5. Wheel-arch fenders over the rear and front wheels
+            StrokeArcRad(painter, B(-halfWheelbase, -0.42f * s), wheelR * 1.10f,
+                Mathf.PI * 1.06f + pose.Pitch, Mathf.PI * 1.94f + pose.Pitch,
+                WithAlpha(amberHi, 225), 1.8f * sc, 16);
+            StrokeArcRad(painter, B(halfWheelbase, -0.42f * s), wheelR * 1.10f,
+                Mathf.PI * 1.06f + pose.Pitch, Mathf.PI * 1.94f + pose.Pitch,
+                WithAlpha(amberHi, 225), 1.8f * sc, 16);
 
-            // 4b. Spine battery pack on back deck (when Back is installed)
-            if (pose.IsInstalled(RoverSocket.Back))
+            // 6. Horizontal chassis beltline seams
+            DrawLine(painter, B(-0.60f * s, -0.60f * s), B(0.65f * s, -0.60f * s), WithAlpha(amberDim, 210), 1.2f * sc);
+            DrawLine(painter, B(-0.56f * s, -0.78f * s), B(0.56f * s, -0.78f * s), WithAlpha(amberFaint, 175), 1.0f * sc);
+
+            // 7. Side inspection hatch + 4 vertical louver vents (highlighted when Panniers is installed)
+            bool hasPanniers = pose.IsInstalled(RoverSocket.Panniers);
+            ScratchQuad[0] = B(-0.34f * s, -0.75f * s);
+            ScratchQuad[1] = B(0.06f * s, -0.75f * s);
+            ScratchQuad[2] = B(0.06f * s, -0.48f * s);
+            ScratchQuad[3] = B(-0.34f * s, -0.48f * s);
+            StrokePolygon(painter, ScratchQuad, 4,
+                WithAlpha(hasPanniers ? amberHi : amberDim, (byte)(hasPanniers ? 235 : 210)),
+                (hasPanniers ? 1.9f : 1.3f) * sc);
+            for (int v = 0; v < 4; v++)
             {
-                ScratchQuad[0] = R(-0.46f, -0.78f);
-                ScratchQuad[1] = R(0.02f, -0.78f);
-                ScratchQuad[2] = R(-0.02f, -0.91f);
-                ScratchQuad[3] = R(-0.44f, -0.91f);
-                FillPolygon(painter, ScratchQuad, 4, bgWarm);
-                StrokePolygon(painter, ScratchQuad, 4, WithAlpha(amberHi, 240), 1.8f);
-                for (int bi = 0; bi < 3; bi++)
+                float vx = (-0.27f + v * 0.065f) * s;
+                DrawLine(painter, B(vx, -0.71f * s), B(vx, -0.52f * s), WithAlpha(amberFaint, 195), 1.0f * sc);
+            }
+
+            // 8. 6-segment side battery charge indicator bar (highlighted when Flanks is installed)
+            bool hasFlanks = pose.IsInstalled(RoverSocket.Flanks);
+            float bx0 = 0.14f * s;
+            float by0 = -0.74f * s;
+            float bw = 0.34f * s;
+            float bh = 0.11f * s;
+            ScratchQuad[0] = B(bx0, by0);
+            ScratchQuad[1] = B(bx0 + bw, by0);
+            ScratchQuad[2] = B(bx0 + bw, by0 + bh);
+            ScratchQuad[3] = B(bx0, by0 + bh);
+            StrokePolygon(painter, ScratchQuad, 4,
+                WithAlpha(hasFlanks ? amberHi : amberDim, (byte)(hasFlanks ? 235 : 210)),
+                (hasFlanks ? 1.9f : 1.2f) * sc);
+
+            const int segs = 6;
+            float segW = (bw - 4f * sc) / segs;
+            for (int i = 0; i < segs; i++)
+            {
+                float sx = bx0 + 2f * sc + i * segW;
+                ScratchQuad[0] = B(sx + 0.8f * sc, by0 + 2f * sc);
+                ScratchQuad[1] = B(sx + segW - 1.2f * sc, by0 + 2f * sc);
+                ScratchQuad[2] = B(sx + segW - 1.2f * sc, by0 + bh - 2f * sc);
+                ScratchQuad[3] = B(sx + 0.8f * sc, by0 + bh - 2f * sc);
+                if (i < 5)
                 {
-                    float bx = -0.35f + bi * 0.12f;
-                    DrawLine(painter, R(bx, -0.78f), R(bx, -0.90f), WithAlpha(amberDim, 200), 1.2f);
-                    FillCircle(painter, R(bx - 0.04f, -0.84f), 1.8f, WithAlpha(cyan, 215));
+                    FillPolygon(painter, ScratchQuad, 4, WithAlpha(amberHi, (byte)(hasFlanks ? 210 : 158)));
+                }
+
+                StrokePolygon(painter, ScratchQuad, 4, WithAlpha(amberDim, 195), 0.9f * sc);
+            }
+
+            // 9. Front lower dig scoop / blade
+            Vector2 scoopPivot = B(0.60f * s, -0.46f * s);
+            float scoopAng = pose.Pitch + pose.ScoopNod;
+            float cosS = Mathf.Cos(scoopAng);
+            float sinS = Mathf.Sin(scoopAng);
+            Vector2 S(float sx, float sy)
+            {
+                return new Vector2(
+                    scoopPivot.x + sx * cosS - sy * sinS,
+                    scoopPivot.y + sx * sinS + sy * cosS);
+            }
+
+            DrawLine(painter, scoopPivot, S(12f * sc, 5f * sc), WithAlpha(amber, 235), 1.8f * sc);
+            DrawLine(painter, S(0f, 4f * sc), S(12f * sc, -3f * sc), WithAlpha(amber, 235), 1.8f * sc);
+            StrokeArcRad(painter, S(15f * sc, 1f * sc), 7f * sc,
+                -0.42f * Mathf.PI + scoopAng, 0.45f * Mathf.PI + scoopAng,
+                WithAlpha(amberHi, 240), 2.0f * sc, 10);
+
+            // 10. Rear tow hook
+            StrokeArcRad(painter, B(-0.64f * s, -0.44f * s), 4.5f * sc,
+                0.5f * Mathf.PI + pose.Pitch, 1.6f * Mathf.PI + pose.Pitch,
+                WithAlpha(amberDim, 225), 1.6f * sc, 10);
+
+            // 11. Front headlamp dome + short 3-slice soft gradient cone (borderless)
+            Vector2 lampCenter = B(0.67f * s, -0.62f * s);
+            FillArcRad(painter, lampCenter, 6f * sc, -Mathf.PI * 0.5f + pose.Pitch, Mathf.PI * 0.5f + pose.Pitch,
+                bgWarm, 10);
+            StrokeArcRad(painter, lampCenter, 6f * sc, -Mathf.PI * 0.5f + pose.Pitch, Mathf.PI * 0.5f + pose.Pitch,
+                WithAlpha(amberHi, 245), 2.0f * sc, 10);
+            FillCircle(painter, B(0.71f * s, -0.62f * s), 1.8f * sc, cream);
+
+            bool drawBeam = pose.AlwaysDrawHeadlampBeam || pose.IsInstalled(RoverSocket.Lamp);
+            if (drawBeam)
+            {
+                float maxReach = pose.AlwaysDrawHeadlampBeam
+                    ? 1.58f
+                    : (cargoSettings != null ? cargoSettings.HeadlampBeamLength : 1.15f);
+                float minReach = pose.AlwaysDrawHeadlampBeam ? 0.98f : Mathf.Min(0.84f, maxReach * 0.72f);
+                float sliceAlphaFloat = pose.AlwaysDrawHeadlampBeam
+                    ? 0.032f
+                    : (cargoSettings != null ? cargoSettings.HeadlampBeamSliceAlpha : 0.028f);
+                byte sliceAlpha = (byte)Mathf.Clamp(Mathf.RoundToInt(sliceAlphaFloat * 255f), 0, 255);
+                if (sliceAlpha > 0)
+                {
+                    Color32 beamCol = WithAlpha(amberHi, sliceAlpha);
+                    for (int slice = 0; slice < 3; slice++)
+                    {
+                        float t = slice / 2f;
+                        float reach = Mathf.Lerp(minReach, maxReach, t) * s;
+                        float spreadTop = Mathf.Lerp(-0.70f, pose.AlwaysDrawHeadlampBeam ? -0.78f : -0.72f, t) * s;
+                        float spreadBot = Mathf.Lerp(-0.52f, pose.AlwaysDrawHeadlampBeam ? -0.34f : -0.48f, t) * s;
+                        ScratchBeam[0] = B(0.73f * s, -0.64f * s);
+                        ScratchBeam[1] = B(reach, spreadTop);
+                        ScratchBeam[2] = B(reach, spreadBot);
+                        ScratchBeam[3] = B(0.73f * s, -0.59f * s);
+                        FillPolygon(painter, ScratchBeam, 4, beamCol);
+                    }
                 }
             }
 
-            // 4c. Side panniers bin low between wheels (when Panniers is installed)
-            if (pose.IsInstalled(RoverSocket.Panniers))
+            // 11b. Installed Back / Deck module highlights on upper rear deck
+            if (pose.IsInstalled(RoverSocket.Back))
             {
-                ScratchQuad[0] = R(-0.22f, -0.44f);
-                ScratchQuad[1] = R(0.18f, -0.44f);
-                ScratchQuad[2] = R(0.20f, -0.27f);
-                ScratchQuad[3] = R(-0.24f, -0.27f);
+                ScratchQuad[0] = B(-0.34f * s, -1.03f * s);
+                ScratchQuad[1] = B(-0.14f * s, -1.03f * s);
+                ScratchQuad[2] = B(-0.14f * s, -0.96f * s);
+                ScratchQuad[3] = B(-0.34f * s, -0.96f * s);
                 FillPolygon(painter, ScratchQuad, 4, bgWarm);
-                StrokePolygon(painter, ScratchQuad, 4, WithAlpha(amberHi, 235), 1.8f);
-                DrawLine(painter, R(-0.10f, -0.44f), R(-0.10f, -0.27f), WithAlpha(amberDim, 210), 1.3f);
-                DrawLine(painter, R(0.06f, -0.44f), R(0.06f, -0.27f), WithAlpha(amberDim, 210), 1.3f);
-                FillCircle(painter, R(-0.02f, -0.35f), 2.0f, WithAlpha(cyan, 225));
+                StrokePolygon(painter, ScratchQuad, 4, WithAlpha(amberHi, 235), 1.8f * sc);
             }
 
-            // 5. Flank capacitor drum
-            Vector2 drumA = R(-0.34f, -0.58f);
-            Vector2 drumB = R(0.06f, -0.43f);
-            float dLeft = Mathf.Min(drumA.x, drumB.x);
-            float dTop = Mathf.Min(drumA.y, drumB.y);
-            float dWidth = Mathf.Abs(drumB.x - drumA.x);
-            float dHeight = Mathf.Abs(drumB.y - drumA.y);
-            bool hasFlanks = pose.IsInstalled(RoverSocket.Flanks);
-            FillRect(painter, dLeft, dTop, dWidth, dHeight, bgWarm);
-            StrokeRect(painter, dLeft, dTop, dWidth, dHeight,
-                WithAlpha(hasFlanks ? amberHi : amber, 235), hasFlanks ? 2.1f : 1.7f);
-            DrawLine(painter, R(-0.24f, -0.58f), R(-0.24f, -0.43f), WithAlpha(amberDim, 200), 1.3f);
-            DrawLine(painter, R(-0.04f, -0.58f), R(-0.04f, -0.43f), WithAlpha(amberDim, 200), 1.3f);
-            if (hasFlanks)
+            if (pose.IsInstalled(RoverSocket.Deck))
             {
-                DrawLine(painter, R(-0.14f, -0.57f), R(-0.14f, -0.44f), WithAlpha(cyan, 230), 2.0f);
+                ScratchQuad[0] = B(-0.54f * s, -1.03f * s);
+                ScratchQuad[1] = B(-0.38f * s, -1.03f * s);
+                ScratchQuad[2] = B(-0.38f * s, -0.96f * s);
+                ScratchQuad[3] = B(-0.54f * s, -0.96f * s);
+                FillPolygon(painter, ScratchQuad, 4, bgWarm);
+                StrokePolygon(painter, ScratchQuad, 4, WithAlpha(amberHi, 235), 1.8f * sc);
             }
 
-            // 6. Front lamp bar + headlamp beam cone
-            bool hasLamp = pose.IsInstalled(RoverSocket.Lamp);
-            Vector2 lampPos = R(0.56f, -0.52f);
-            ScratchBeam[0] = lampPos;
-            ScratchBeam[1] = R(1.85f, -0.82f);
-            ScratchBeam[2] = R(1.85f, -0.10f);
-            ScratchBeam[3] = lampPos;
-            FillPolygon(painter, ScratchBeam, 3, new Color32(amber.r, amber.g, amber.b, (byte)(hasLamp ? 34 : 16)));
-            DrawLine(painter, lampPos, R(1.55f, -0.75f), WithAlpha(amberDim, (byte)(hasLamp ? 115 : 55)), 1.1f);
-            DrawLine(painter, lampPos, R(1.55f, -0.22f), WithAlpha(amberDim, (byte)(hasLamp ? 115 : 55)), 1.1f);
-
-            Vector2 lA = R(0.50f, -0.60f);
-            Vector2 lB = R(0.58f, -0.45f);
-            FillRect(painter, Mathf.Min(lA.x, lB.x), Mathf.Min(lA.y, lB.y),
-                Mathf.Abs(lB.x - lA.x), Mathf.Abs(lB.y - lA.y), bgWarm);
-            StrokeRect(painter, Mathf.Min(lA.x, lB.x), Mathf.Min(lA.y, lB.y),
-                Mathf.Abs(lB.x - lA.x), Mathf.Abs(lB.y - lA.y), WithAlpha(amberHi, 245), 1.8f);
-            FillCircle(painter, lampPos, hasLamp ? 4.4f : 3.2f, WithAlpha(cream, 250));
-
-            // 7. Front scoop / excavator blade
-            float scoopY = pose.ScoopNod;
-            ScratchScoop[0] = R(0.50f, -0.35f);
-            ScratchScoop[1] = R(0.74f, -0.21f + scoopY);
-            ScratchScoop[2] = R(0.79f, -0.32f + scoopY);
-            ScratchScoop[3] = R(0.54f, -0.43f);
-            FillPolygon(painter, ScratchScoop, 4, bgWarm);
-            StrokePolygon(painter, ScratchScoop, 4, WithAlpha(amber, 235), 1.9f);
-            DrawLine(painter, R(0.46f, -0.42f), R(0.66f, -0.29f + scoopY), WithAlpha(amberDim, 200), 1.7f);
-
-            // 8. Near-side 3 wheels
-            for (int wi = 0; wi < 3; wi++)
-            {
-                float wx = ox + WheelOffsets[wi] * wb;
-                float wy = oy - rWheel;
-                DrawWheel(painter, new Vector2(wx, wy), rWheel, rRim,
-                    pose.WheelAngle + wi * 0.4f, lugCount, spokeCount, 1.0f, bgWarm, amber, amberDim, amberFaint);
-            }
-
-            // 9. Tilted solar wing on top deck
+            // 12. Tilted roof solar panel wing
             bool hasWing = pose.IsInstalled(RoverSocket.Wing);
-            float wTilt = pose.SolarTilt;
-            ScratchWing[0] = R(-0.50f, -0.80f);
-            ScratchWing[1] = R(0.14f, -0.80f + wTilt);
-            ScratchWing[2] = R(0.19f, -0.87f + wTilt);
-            ScratchWing[3] = R(-0.45f, -0.87f);
-            FillPolygon(painter, ScratchWing, 4, bgWarm);
-            StrokePolygon(painter, ScratchWing, 4, WithAlpha(hasWing ? amberHi : amber, 240), 1.9f);
-            for (int si = 1; si < 4; si++)
+            Vector2 wingPivot = B(-0.08f * s, -0.96f * s);
+            float wingAng = pose.Pitch + baseWingTilt + pose.SolarTilt;
+            float cosW = Mathf.Cos(wingAng);
+            float sinW = Mathf.Sin(wingAng);
+            Vector2 W(float wx, float wy)
             {
-                float frac = si / 4f;
-                Vector2 topP = Vector2.Lerp(ScratchWing[0], ScratchWing[1], frac);
-                Vector2 botP = Vector2.Lerp(ScratchWing[3], ScratchWing[2], frac);
-                DrawLine(painter, topP, botP, WithAlpha(amberFaint, 195), 1.1f);
+                return new Vector2(
+                    wingPivot.x + wx * cosW - wy * sinW,
+                    wingPivot.y + wx * sinW + wy * cosW);
             }
 
-            if (hasWing)
+            DrawLine(painter, W(-18f * sc, 0f), W(-18f * sc, -6f * sc), WithAlpha(amberDim, 230), 1.5f * sc);
+            DrawLine(painter, W(18f * sc, 0f), W(18f * sc, -6f * sc), WithAlpha(amberDim, 230), 1.5f * sc);
+            ScratchQuad[0] = W(-32f * sc, -9f * sc);
+            ScratchQuad[1] = W(26f * sc, -9f * sc);
+            ScratchQuad[2] = W(26f * sc, -6f * sc);
+            ScratchQuad[3] = W(-32f * sc, -6f * sc);
+            FillPolygon(painter, ScratchQuad, 4, bgWarm);
+            StrokePolygon(painter, ScratchQuad, 4,
+                WithAlpha(hasWing ? amberHi : amber, 240), (hasWing ? 2.1f : 1.8f) * sc);
+            for (int c = -20; c <= 16; c += 12)
             {
-                FillCircle(painter, Vector2.Lerp(ScratchWing[1], ScratchWing[2], 0.5f) + new Vector2(-5f, 0f),
-                    2.2f, WithAlpha(cyan, 230));
+                DrawLine(painter, W(c * sc, -9f * sc), W(c * sc, -6f * sc), WithAlpha(amberDim, 210), 1.0f * sc);
             }
 
-            // 10. Rear antenna mast + sonar loop + blinking Morse beacon
-            Vector2 antBase = R(-0.42f, -0.78f);
-            Vector2 antTip = R(-0.46f + pose.AntennaSway, -1.36f);
-            DrawLine(painter, antBase, antTip, WithAlpha(amber, 235), 1.9f);
-            Vector2 loopC = R(-0.44f + pose.AntennaSway * 0.6f, -1.08f);
-            StrokeEllipse(painter, loopC, 0.065f * s, 0.11f * s, -0.15f, WithAlpha(amberDim, 215), 1.5f);
+            // 13. Rear whip antenna + diamond sonar loop + Morse beacon
+            Vector2 antBase = B(-0.48f * s, -0.95f * s);
+            Vector2 antCtrl = B((-0.54f + pose.AntennaSway * 0.4f) * s, -1.24f * s);
+            Vector2 antTip = B((-0.44f + pose.AntennaSway) * s, -1.50f * s);
+            StrokeQuadratic(painter, antBase, antCtrl, antTip, WithAlpha(amber, 235), 1.6f * sc);
 
+            Vector2 loopC = B((-0.50f + pose.AntennaSway * 0.3f) * s, -1.14f * s);
+            ScratchQuad[0] = loopC + new Vector2(0f, -6f * sc);
+            ScratchQuad[1] = loopC + new Vector2(5f * sc, 0f);
+            ScratchQuad[2] = loopC + new Vector2(0f, 6f * sc);
+            ScratchQuad[3] = loopC + new Vector2(-5f * sc, 0f);
+            StrokePolygon(painter, ScratchQuad, 4, WithAlpha(amberDim, 225), 1.2f * sc);
+
+            StrokeCircle(painter, antTip, 2.6f * sc, WithAlpha(pose.MorseOn ? amberHi : amber, 240), 1.5f * sc);
             if (pose.MorseOn)
             {
-                FillCircle(painter, antTip, 4.2f, WithAlpha(cyan, 245));
-                StrokeCircle(painter, antTip, 8.5f, WithAlpha(cyanDim, 145), 1.3f);
-                StrokeCircle(painter, antTip, 14.0f, WithAlpha(cyanDim, 68), 1.0f);
+                FillCircle(painter, antTip, 2.0f * sc, cream);
+                StrokeCircle(painter, antTip, 7f * sc, WithAlpha(amberHi, 115), 1.1f * sc);
+                StrokeCircle(painter, antTip, 13f * sc, WithAlpha(amber, 55), 0.9f * sc);
+            }
+
+            // 14. Ribbed rubber neck bellows (3 stacked collars)
+            for (int r = 0; r < 3; r++)
+            {
+                float ny = (-0.985f - r * 0.036f) * s;
+                float nrw = (10.5f - r * 0.8f) * sc;
+                Vector2 neckC = B(0.15f * s, ny);
+                FillEllipse(painter, neckC, nrw, 2.6f * sc, pose.Pitch, bgWarm, 16);
+                StrokeEllipse(painter, neckC, nrw, 2.6f * sc, pose.Pitch, WithAlpha(amberDim, 230), 1.3f * sc, 16);
+            }
+
+            // 15. Expressive CRT Monitor Head
+            Vector2 headPivot = B(0.15f * s, -1.06f * s);
+            float headAng = pose.Pitch + pose.HeadNod;
+            float cosH = Mathf.Cos(headAng);
+            float sinH = Mathf.Sin(headAng);
+            Vector2 H(float hx, float hy)
+            {
+                return new Vector2(
+                    headPivot.x + hx * cosH - hy * sinH,
+                    headPivot.y + hx * sinH + hy * cosH);
+            }
+
+            float hw = 0.25f * s;
+            float hh = 0.22f * s;
+            float hr = 6f * sc;
+
+            // Outer rounded CRT head housing
+            BeginRoundedHeadPath(painter, headPivot, cosH, sinH, -hw * 0.85f, -hh, hw * 1.85f, hh, hr);
+            painter.fillColor = bgWarm;
+            painter.Fill();
+
+            for (int pass = 0; pass < 2; pass++)
+            {
+                bool isGlow = pass == 0;
+                painter.strokeColor = WithAlpha(amber, (byte)(isGlow ? 48 : 248));
+                painter.lineWidth = (isGlow ? 6.4f : 2.3f) * sc;
+                BeginRoundedHeadPath(painter, headPivot, cosH, sinH, -hw * 0.85f, -hh, hw * 1.85f, hh, hr);
+                painter.Stroke();
+            }
+
+            // Inner CRT screen bezel
+            float inset = 3.5f * sc;
+            ScratchQuad[0] = H(-hw * 0.50f, -hh + inset);
+            ScratchQuad[1] = H(hw - inset, -hh + inset);
+            ScratchQuad[2] = H(hw - inset, -inset);
+            ScratchQuad[3] = H(-hw * 0.50f, -inset);
+            StrokePolygon(painter, ScratchQuad, 4, WithAlpha(amberDim, 225), 1.3f * sc);
+
+            // Side brass lens pod on cheek
+            Vector2 cheekC = H(-hw * 0.38f, -hh * 0.48f);
+            FillCircle(painter, cheekC, 4.2f * sc, bgWarm);
+            StrokeCircle(painter, cheekC, 4.2f * sc, WithAlpha(amber, 235), 1.5f * sc);
+            StrokeCircle(painter, cheekC, 1.5f * sc, WithAlpha(amberHi, 235), 1.2f * sc);
+
+            // Forehead brow ridge / sun visor
+            DrawLine(painter, H(-hw + 3.5f * sc, -hh - 2.5f * sc), H(hw + 2f * sc, -hh - 2.5f * sc),
+                WithAlpha(amberHi, 240), 1.8f * sc);
+
+            // Glowing eye inside CRT face
+            float eyeX = hw * 0.14f;
+            float eyeY = -hh * 0.50f;
+            if (pose.EyeBlink)
+            {
+                DrawLine(painter, H(eyeX - 5f * sc, eyeY), H(eyeX + 5f * sc, eyeY), WithAlpha(amberHi, 240), 2.0f * sc);
             }
             else
             {
-                FillCircle(painter, antTip, 2.8f, WithAlpha(amberHi, 205));
+                Vector2 eyeCenter = H(eyeX, eyeY);
+                StrokeCircle(painter, eyeCenter, 6.2f * sc, WithAlpha(amberHi, 225), 1.4f * sc);
+                FillCircle(painter, eyeCenter, 3.6f * sc, amberHi);
+                FillCircle(painter, H(eyeX + 1.1f * sc, eyeY - 1.0f * sc), 1.3f * sc, cream);
             }
 
-            // 10b. Tape deck on rear-left flank (shown when Deck is installed, or faint outline otherwise)
-            bool hasDeck = pose.IsInstalled(RoverSocket.Deck);
-            Vector2 tdA = R(-0.50f, -0.68f);
-            Vector2 tdB = R(-0.26f, -0.52f);
-            float tdX = Mathf.Min(tdA.x, tdB.x);
-            float tdY = Mathf.Min(tdA.y, tdB.y);
-            float tdW = Mathf.Abs(tdB.x - tdA.x);
-            float tdH = Mathf.Abs(tdB.y - tdA.y);
-            FillRect(painter, tdX, tdY, tdW, tdH, bgWarm);
-            StrokeRect(painter, tdX, tdY, tdW, tdH,
-                WithAlpha(hasDeck ? amberHi : amberFaint, (byte)(hasDeck ? 240 : 120)), hasDeck ? 1.8f : 1.1f);
-            StrokeCircle(painter, R(-0.43f, -0.60f), 0.038f * s,
-                WithAlpha(hasDeck ? amberHi : amberFaint, (byte)(hasDeck ? 235 : 110)), 1.2f);
-            StrokeCircle(painter, R(-0.33f, -0.60f), 0.038f * s,
-                WithAlpha(hasDeck ? amberHi : amberFaint, (byte)(hasDeck ? 235 : 110)), 1.2f);
-            if (hasDeck)
+            // Installed Cutter / Tether highlights on head
+            if (pose.IsInstalled(RoverSocket.Cutter))
             {
-                FillCircle(painter, R(-0.38f, -0.55f), 1.8f, WithAlpha(cyan, 230));
+                Vector2 cPt = H(hw * 0.12f, -hh - 4.5f * sc);
+                DrawLine(painter, H(-hw * 0.15f, -hh - 4.5f * sc), H(hw * 0.45f, -hh - 4.5f * sc),
+                    WithAlpha(amberHi, 245), 2.2f * sc);
+                FillCircle(painter, cPt, 2.2f * sc, WithAlpha(cyan, 235));
             }
-
-            // 11. Articulated camera mast & head with lens + visor + cyan eye
-            Vector2 mastBase = R(0.24f, -0.78f);
-            Vector2 mastKnee = R(0.30f, -0.98f);
-            Vector2 headPiv = R(0.28f, -1.08f);
-            DrawLine(painter, mastBase, mastKnee, WithAlpha(amber, 245), 3.0f);
-            DrawLine(painter, mastKnee, headPiv, WithAlpha(amber, 245), 3.0f);
-            FillCircle(painter, mastKnee, 3.0f, bgWarm);
-            StrokeCircle(painter, mastKnee, 3.0f, WithAlpha(amberHi, 230), 1.4f);
-
-            float ch = Mathf.Cos(pose.HeadNod);
-            float sh = Mathf.Sin(pose.HeadNod);
-
-            Vector2 H(float hx, float hy)
-            {
-                float dx = hx * s;
-                float dy = hy * s;
-                return new Vector2(headPiv.x + dx * ch - dy * sh, headPiv.y + dx * sh + dy * ch);
-            }
-
-            ScratchHead[0] = H(-0.14f, -0.11f);
-            ScratchHead[1] = H(0.18f, -0.11f);
-            ScratchHead[2] = H(0.21f, 0.09f);
-            ScratchHead[3] = H(-0.14f, 0.09f);
-            FillPolygon(painter, ScratchHead, 4, bgWarm);
-            StrokePolygon(painter, ScratchHead, 4, WithAlpha(amber, 250), 2.1f);
-
-            ScratchVisor[0] = H(0.14f, -0.11f);
-            ScratchVisor[1] = H(0.27f, -0.07f);
-            ScratchVisor[2] = H(0.24f, 0.03f);
-            ScratchVisor[3] = H(0.18f, 0.03f);
-            StrokePolygon(painter, ScratchVisor, 4, WithAlpha(amberHi, 235), 1.7f);
-
-            Vector2 eyeC = H(0.17f, -0.01f);
-            float eyeR = 0.068f * s;
-            FillCircle(painter, eyeC, eyeR, bgWarm);
-            StrokeCircle(painter, eyeC, eyeR, WithAlpha(amberHi, 250), 1.9f);
 
             if (pose.IsInstalled(RoverSocket.Tether))
             {
-                StrokeCircle(painter, eyeC, eyeR + 3.2f, WithAlpha(cyan, 210), 1.5f);
+                Vector2 tPt = H(hw + 2.5f * sc, -hh * 0.45f);
+                StrokeCircle(painter, tPt, 4.2f * sc, WithAlpha(amberHi, 240), 1.8f * sc);
+                FillCircle(painter, tPt, 1.8f * sc, WithAlpha(cyan, 235));
             }
 
-            if (pose.IsInstalled(RoverSocket.Cutter))
-            {
-                Vector2 cutterTip = H(0.27f, -0.01f);
-                DrawLine(painter, eyeC + new Vector2(eyeR, 0f), cutterTip, WithAlpha(amberHi, 240), 1.8f);
-                FillCircle(painter, cutterTip, 2.2f, WithAlpha(cyan, 230));
-            }
+            // 16. Near-side wheels (2 wheels drawn in front of body with dark interior disc fill)
+            DrawWheel(painter, new Vector2(wxRear, wyRear), wheelR, rimR,
+                pose.WheelAngle, lugCount, spokeCount, 1.0f, false, sc, bgWarm, amber, amberHi, amberDim);
+            DrawWheel(painter, new Vector2(wxFront, wyFront), wheelR, rimR,
+                pose.WheelAngle + 0.7f, lugCount, spokeCount, 1.0f, false, sc, bgWarm, amber, amberHi, amberDim);
+        }
 
-            if (!pose.EyeBlink)
-            {
-                FillCircle(painter, eyeC + new Vector2(1.4f, 0f), eyeR * 0.46f, WithAlpha(cyan, 245));
-                FillCircle(painter, eyeC + new Vector2(2.2f, -1.2f), eyeR * 0.18f, WithAlpha(cream, 255));
-            }
-            else
-            {
-                DrawLine(painter, eyeC + new Vector2(-eyeR * 0.6f, 0f), eyeC + new Vector2(eyeR * 0.6f, 0f),
-                    WithAlpha(amberHi, 235), 1.8f);
-            }
+        private static Vector2 TransformHeadPoint(Vector2 headPivot, float cosH, float sinH, float hx, float hy)
+        {
+            return new Vector2(
+                headPivot.x + hx * cosH - hy * sinH,
+                headPivot.y + hx * sinH + hy * cosH);
+        }
+
+        private static void BeginRoundedHeadPath(Painter2D painter, Vector2 headPivot, float cosH, float sinH,
+            float x0, float y0, float w, float h, float r)
+        {
+            float x1 = x0 + w;
+            float y1 = y0 + h;
+            painter.BeginPath();
+            painter.MoveTo(TransformHeadPoint(headPivot, cosH, sinH, x0 + r, y0));
+            painter.LineTo(TransformHeadPoint(headPivot, cosH, sinH, x1 - r, y0));
+            AppendQuadraticTo(painter,
+                TransformHeadPoint(headPivot, cosH, sinH, x1 - r, y0),
+                TransformHeadPoint(headPivot, cosH, sinH, x1, y0),
+                TransformHeadPoint(headPivot, cosH, sinH, x1, y0 + r), 5);
+            painter.LineTo(TransformHeadPoint(headPivot, cosH, sinH, x1, y1 - r));
+            AppendQuadraticTo(painter,
+                TransformHeadPoint(headPivot, cosH, sinH, x1, y1 - r),
+                TransformHeadPoint(headPivot, cosH, sinH, x1, y1),
+                TransformHeadPoint(headPivot, cosH, sinH, x1 - r, y1), 5);
+            painter.LineTo(TransformHeadPoint(headPivot, cosH, sinH, x0 + r, y1));
+            AppendQuadraticTo(painter,
+                TransformHeadPoint(headPivot, cosH, sinH, x0 + r, y1),
+                TransformHeadPoint(headPivot, cosH, sinH, x0, y1),
+                TransformHeadPoint(headPivot, cosH, sinH, x0, y1 - r), 5);
+            painter.LineTo(TransformHeadPoint(headPivot, cosH, sinH, x0, y0 + r));
+            AppendQuadraticTo(painter,
+                TransformHeadPoint(headPivot, cosH, sinH, x0, y0 + r),
+                TransformHeadPoint(headPivot, cosH, sinH, x0, y0),
+                TransformHeadPoint(headPivot, cosH, sinH, x0 + r, y0), 5);
+            painter.ClosePath();
         }
 
         /// <summary>
-        /// Returns the 2D screen/canvas anchor point on Rover 07 for <paramref name="socket"/>'s leader line.
+        /// Returns the 2D screen/canvas anchor point on Rover 07 for <paramref name="socket"/>'s leader line,
+        /// matching the side-3/4 Rover 07 geometry.
         /// </summary>
         public static Vector2 GetSocketMountPoint(RoverSocket socket, Vector2 origin, float s, float pitch = 0f,
-            float headNod = -0.05f, float pivotHeight = 0.58f)
+            float headNod = -0.06f, float pivotHeight = 0.58f, float wingTilt = -0.11f)
         {
-            float cp = Mathf.Cos(pitch);
-            float sp = Mathf.Sin(pitch);
-            float pivX = origin.x;
-            float pivY = origin.y - pivotHeight * s;
+            float sc = s / RefRoverScale;
+            float pivotOffsetY = -pivotHeight * s;
+            float cosP = Mathf.Cos(pitch);
+            float sinP = Mathf.Sin(pitch);
+            float pivotX = origin.x;
+            float pivotY = origin.y + pivotOffsetY;
 
-            Vector2 R(float lx, float ly)
+            Vector2 B(float bx, float by)
             {
-                float dx = lx * s;
-                float dy = ly * s + pivotHeight * s;
-                return new Vector2(pivX + dx * cp - dy * sp, pivY + dx * sp + dy * cp);
+                float dy = by - pivotOffsetY;
+                return new Vector2(
+                    pivotX + bx * cosP - dy * sinP,
+                    pivotY + bx * sinP + dy * cosP);
             }
 
-            Vector2 headPiv = R(0.28f, -1.08f);
-            float ch = Mathf.Cos(headNod);
-            float sh = Mathf.Sin(headNod);
-
+            Vector2 headPivot = B(0.15f * s, -1.06f * s);
+            float headAng = pitch + headNod;
+            float cosH = Mathf.Cos(headAng);
+            float sinH = Mathf.Sin(headAng);
             Vector2 H(float hx, float hy)
             {
-                float dx = hx * s;
-                float dy = hy * s;
-                return new Vector2(headPiv.x + dx * ch - dy * sh, headPiv.y + dx * sh + dy * ch);
+                return new Vector2(
+                    headPivot.x + hx * cosH - hy * sinH,
+                    headPivot.y + hx * sinH + hy * cosH);
+            }
+
+            Vector2 wingPivot = B(-0.08f * s, -0.96f * s);
+            float wingAng = pitch + wingTilt;
+            float cosW = Mathf.Cos(wingAng);
+            float sinW = Mathf.Sin(wingAng);
+            Vector2 W(float wx, float wy)
+            {
+                return new Vector2(
+                    wingPivot.x + wx * cosW - wy * sinW,
+                    wingPivot.y + wx * sinW + wy * cosW);
             }
 
             switch (socket)
             {
-                case RoverSocket.Wing: return R(-0.18f, -0.84f);
-                case RoverSocket.Cutter: return H(0.27f, -0.02f);
-                case RoverSocket.Tether: return H(0.20f, 0.04f);
-                case RoverSocket.Lamp: return R(0.56f, -0.52f);
-                case RoverSocket.Flanks: return R(-0.14f, -0.50f);
-                case RoverSocket.Belly: return R(0.0f, -0.27f);
-                case RoverSocket.Panniers: return R(-0.02f, -0.35f);
-                case RoverSocket.Hold: return R(-0.62f, -0.60f);
-                case RoverSocket.Deck: return R(-0.38f, -0.60f);
-                case RoverSocket.Back: return R(-0.20f, -0.84f);
-                case RoverSocket.Wheels: return R(0.0f, -0.18f);
-                case RoverSocket.Antenna: return R(-0.46f, -1.20f);
-                default: return R(0f, -0.55f);
+                case RoverSocket.Wing: return W(-0.04f * s, -9f * sc);
+                case RoverSocket.Cutter: return H(0.03f * s, -0.31f * s);
+                case RoverSocket.Tether: return H(0.08f * s, -0.15f * s);
+                case RoverSocket.Lamp: return B(0.70f * s, -0.62f * s);
+                case RoverSocket.Flanks: return B(0.35f * s, -0.69f * s);
+                case RoverSocket.Belly: return B(0.06f * s, -0.36f * s);
+                case RoverSocket.Panniers: return B(-0.06f * s, -0.46f * s);
+                case RoverSocket.Hold: return B(-0.75f * s, -0.66f * s);
+                case RoverSocket.Deck: return B(-0.47f * s, -0.96f * s);
+                case RoverSocket.Back: return B(-0.24f * s, -0.96f * s);
+                case RoverSocket.Wheels: return B(0.0f, -0.35f * s);
+                case RoverSocket.Antenna: return B(-0.46f * s, -1.35f * s);
+                default: return B(0f, -0.60f * s);
             }
         }
 
         private static void DrawWheel(Painter2D painter, Vector2 center, float rOuter, float rRim, float angle,
-            int lugCount, int spokeCount, float alphaScale, Color32 bgWarm, Color32 amber, Color32 amberDim,
-            Color32 amberFaint)
+            int lugCount, int spokeCount, float alphaScale, bool isFarSide, float sc, Color32 bgWarm, Color32 amber,
+            Color32 amberHi, Color32 amberDim)
         {
-            byte aMain = (byte)Mathf.RoundToInt(245f * alphaScale);
-            byte aDim = (byte)Mathf.RoundToInt(175f * alphaScale);
-            byte aHub = (byte)Mathf.RoundToInt(215f * alphaScale);
+            byte aMain = (byte)Mathf.RoundToInt(242f * alphaScale);
+            byte aDim = (byte)Mathf.RoundToInt(215f * alphaScale);
+            byte aHi = (byte)Mathf.RoundToInt(248f * alphaScale);
 
-            FillCircle(painter, center, rOuter, bgWarm);
-            StrokeCircle(painter, center, rOuter, WithAlpha(amber, aMain), 2.1f);
+            if (!isFarSide)
+            {
+                // Dark interior disc so background lines do not show through near-side wheels.
+                FillCircle(painter, center, rOuter, bgWarm);
+                StrokeCircle(painter, center, rOuter, WithAlpha(amber, 48), 6.2f * sc);
+            }
 
+            // Outer tire ring & inner tread ring
+            StrokeCircle(painter, center, rOuter, WithAlpha(amber, aMain), (isFarSide ? 1.5f : 2.2f) * sc);
+            StrokeCircle(painter, center, rOuter * 0.86f, WithAlpha(amberDim, aDim), 1.1f * sc);
+
+            // Radial tread lugs
             for (int i = 0; i < lugCount; i++)
             {
-                float a = angle + i * (Mathf.PI * 2f / lugCount);
-                Vector2 p0 = new Vector2(center.x + Mathf.Cos(a) * (rOuter - 1.5f),
-                    center.y + Mathf.Sin(a) * (rOuter - 1.5f));
-                Vector2 p1 = new Vector2(center.x + Mathf.Cos(a) * (rOuter + 3.6f),
-                    center.y + Mathf.Sin(a) * (rOuter + 3.6f));
-                DrawLine(painter, p0, p1, WithAlpha(amber, aMain), 2.3f);
+                float a = angle + (i * Mathf.PI * 2f) / lugCount;
+                Vector2 dir = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+                DrawLine(painter, center + dir * (rOuter * 0.86f), center + dir * (rOuter * 1.04f),
+                    WithAlpha(amber, aMain), (isFarSide ? 1.1f : 1.5f) * sc);
             }
 
-            StrokeCircle(painter, center, rRim, WithAlpha(amberDim, aDim), 1.4f);
+            // Hub rim circle
+            StrokeCircle(painter, center, rRim, WithAlpha(amber, aMain), 1.5f * sc);
 
+            // 6 spokes
+            float capR = 4.5f * sc;
             for (int i = 0; i < spokeCount; i++)
             {
-                float a = angle + i * (Mathf.PI * 2f / spokeCount);
-                Vector2 p0 = new Vector2(center.x + Mathf.Cos(a) * (rRim * 0.36f),
-                    center.y + Mathf.Sin(a) * (rRim * 0.36f));
-                Vector2 p1 = new Vector2(center.x + Mathf.Cos(a) * rRim, center.y + Mathf.Sin(a) * rRim);
-                DrawLine(painter, p0, p1, WithAlpha(amberFaint, aDim), 1.3f);
+                float a = angle + (i * Mathf.PI * 2f) / spokeCount;
+                Vector2 dir = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+                DrawLine(painter, center + dir * capR, center + dir * rRim, WithAlpha(amberDim, aDim), 1.3f * sc);
             }
 
-            FillCircle(painter, center, rRim * 0.36f, bgWarm);
-            StrokeCircle(painter, center, rRim * 0.36f, WithAlpha(amber, aHub), 1.5f);
+            // Center axle cap
+            if (!isFarSide)
+            {
+                FillCircle(painter, center, capR, bgWarm);
+            }
+
+            StrokeCircle(painter, center, capR, WithAlpha(amberHi, aHi), 1.4f * sc);
         }
 
-        private static void DrawZeroSeven(Painter2D painter, Vector2 center, float size, Color32 color)
+        private static void AppendQuadraticTo(Painter2D painter, Vector2 p0, Vector2 control, Vector2 p1, int steps)
         {
-            float w = size * 0.72f;
-            float h = size * 1.15f;
-            float gap = size * 0.35f;
+            for (int i = 1; i <= steps; i++)
+            {
+                float t = (float)i / steps;
+                float mt = 1f - t;
+                Vector2 pt = mt * mt * p0 + 2f * mt * t * control + t * t * p1;
+                painter.LineTo(pt);
+            }
+        }
 
-            float x0 = center.x - w - gap * 0.5f;
-            float y0 = center.y - h * 0.5f;
-            StrokeRect(painter, x0, y0, w, h, color, 1.5f);
+        public static void StrokeQuadratic(Painter2D painter, Vector2 p0, Vector2 control, Vector2 p1, Color32 color,
+            float width, int steps = 16)
+        {
+            if (color.a == 0 || steps < 2)
+            {
+                return;
+            }
 
-            float x7 = center.x + gap * 0.5f;
             painter.strokeColor = color;
-            painter.lineWidth = 1.5f;
+            painter.lineWidth = width;
             painter.lineCap = LineCap.Round;
             painter.lineJoin = LineJoin.Round;
             painter.BeginPath();
-            painter.MoveTo(new Vector2(x7, y0));
-            painter.LineTo(new Vector2(x7 + w, y0));
-            painter.LineTo(new Vector2(x7 + w * 0.35f, y0 + h));
+            painter.MoveTo(p0);
+            AppendQuadraticTo(painter, p0, control, p1, steps);
             painter.Stroke();
+        }
+
+        public static void StrokeDashedQuadratic(Painter2D painter, Vector2 p0, Vector2 control, Vector2 p1,
+            Color32 color, float width, float dash = 6f, float gap = 4f, int steps = 48)
+        {
+            if (color.a == 0 || steps < 2)
+            {
+                return;
+            }
+
+            Vector2 prev = p0;
+            float phase = 0f;
+            float period = Mathf.Max(1f, dash + gap);
+            for (int i = 1; i <= steps; i++)
+            {
+                float t = (float)i / steps;
+                float mt = 1f - t;
+                Vector2 cur = mt * mt * p0 + 2f * mt * t * control + t * t * p1;
+                float segLen = Vector2.Distance(prev, cur);
+                if (segLen > 0.01f)
+                {
+                    Vector2 dir = (cur - prev) / segLen;
+                    float pos = 0f;
+                    while (pos < segLen)
+                    {
+                        float cyclePos = phase % period;
+                        if (cyclePos < dash)
+                        {
+                            float step = Mathf.Min(dash - cyclePos, segLen - pos);
+                            DrawLine(painter, prev + dir * pos, prev + dir * (pos + step), color, width);
+                            pos += step;
+                            phase += step;
+                        }
+                        else
+                        {
+                            float step = Mathf.Min(period - cyclePos, segLen - pos);
+                            pos += step;
+                            phase += step;
+                        }
+                    }
+                }
+
+                prev = cur;
+            }
+        }
+
+        private static void StrokeArcRad(Painter2D painter, Vector2 center, float radius, float a0, float a1,
+            Color32 color, float width, int steps)
+        {
+            if (radius <= 0f || color.a == 0 || steps < 2)
+            {
+                return;
+            }
+
+            painter.strokeColor = color;
+            painter.lineWidth = width;
+            painter.lineCap = LineCap.Round;
+            painter.lineJoin = LineJoin.Round;
+            painter.BeginPath();
+            for (int i = 0; i <= steps; i++)
+            {
+                float a = a0 + (a1 - a0) * i / steps;
+                Vector2 pt = new Vector2(center.x + Mathf.Cos(a) * radius, center.y + Mathf.Sin(a) * radius);
+                if (i == 0)
+                {
+                    painter.MoveTo(pt);
+                }
+                else
+                {
+                    painter.LineTo(pt);
+                }
+            }
+
+            painter.Stroke();
+        }
+
+        private static void FillArcRad(Painter2D painter, Vector2 center, float radius, float a0, float a1,
+            Color32 color, int steps)
+        {
+            if (radius <= 0f || color.a == 0 || steps < 2)
+            {
+                return;
+            }
+
+            painter.fillColor = color;
+            painter.BeginPath();
+            for (int i = 0; i <= steps; i++)
+            {
+                float a = a0 + (a1 - a0) * i / steps;
+                Vector2 pt = new Vector2(center.x + Mathf.Cos(a) * radius, center.y + Mathf.Sin(a) * radius);
+                if (i == 0)
+                {
+                    painter.MoveTo(pt);
+                }
+                else
+                {
+                    painter.LineTo(pt);
+                }
+            }
+
+            painter.ClosePath();
+            painter.Fill();
         }
 
         /// <summary>Draws a tiny locked-cell padlock icon centred at <paramref name="center"/>.</summary>
