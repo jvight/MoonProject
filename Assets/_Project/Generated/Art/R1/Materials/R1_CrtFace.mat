@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: R1_CrtFace
+  m_Shader: {fileID: 4800000, guid: 8e182cf16566f3540ae2a9261bcda3ff, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 1
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _BloomSafeMax: 1.06
+    - _Curvature: 0.08
+    - _GlowRadius: 0.028
+    - _HotCorePeak: 1.65
+    - _ScanlineCount: 180
+    - _ScanlineDepth: 0.16
+    - _Smoothness: 0.86
+    - _TrailAlpha: 0.28
+    m_Colors:
+    - _EyeLeftMode: {r: 0, g: 0, b: 0, a: 1}
+    - _EyeLeftRect: {r: 0.31, g: 0.5, b: 0.2006, a: 0.4012}
+    - _EyeLeftShape: {r: 0, g: 0, b: 0, a: 1}
+    - _EyeRightMode: {r: 0, g: 0, b: 0, a: 1}
+    - _EyeRightRect: {r: 0.69, g: 0.5, b: 0.2006, a: 0.4012}
+    - _EyeRightShape: {r: 0, g: 0, b: 0, a: 1}
+    - _FaceCrtState: {r: 1, g: 1, b: 0, a: 0}
+    - _FacePhases: {r: 0, g: 0, b: 0.45, a: 0.3}
+    - _FaceSymbol: {r: 0, g: 0, b: 0, a: 0}
+    - _GhostLeftMode: {r: 0, g: 0, b: 0, a: 1}
+    - _GhostLeftRect: {r: 0.31, g: 0.5, b: 0.2006, a: 0.4012}
+    - _GhostLeftShape: {r: 0, g: 0, b: 0, a: 1}
+    - _GhostRightMode: {r: 0, g: 0, b: 0, a: 1}
+    - _GhostRightRect: {r: 0.69, g: 0.5, b: 0.2006, a: 0.4012}
+    - _GhostRightShape: {r: 0, g: 0, b: 0, a: 1}
+    - _HotCoreColor: {r: 1, g: 0.953, b: 0.8, a: 1}
+    - _PhosphorColor: {r: 1, g: 0.682, b: 0.22, a: 1}
+    - _PhosphorGlowColor: {r: 0.784, g: 0.416, b: 0.078, a: 1}
+    - _ScreenBaseColor: {r: 0.125, g: 0.078, b: 0.039, a: 1}
+    - _ScreenEdgeColor: {r: 0.071, g: 0.043, b: 0.02, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

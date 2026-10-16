@@ -4,6 +4,7 @@
     "references": [
         "MoonProject.Art",
         "MoonProject.Editor",
+        "MoonProject.Rover",
         "Unity.RenderPipelines.Core.Runtime",
         "Unity.RenderPipelines.Universal.Runtime",
         "Unity.RenderPipelines.Universal.Editor"

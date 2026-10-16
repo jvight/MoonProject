@@ -8,6 +8,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using MoonProject.Editor.Automation;
+using MoonProject.Rover;
 
 namespace MoonProject.Art.Editor
 {
@@ -39,10 +40,6 @@ namespace MoonProject.Art.Editor
         private const int TopCyFromTop = 366;
 
         private static readonly Color32 TurnaroundBgSrgb = new Color32(52, 60, 71, 255);
-        private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
-        private static readonly int EmissionMapId = Shader.PropertyToID("_EmissionMap");
-        private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
-        private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
         private static readonly int MoonHazeColorId = Shader.PropertyToID("_MoonHazeColor");
         private static readonly int MoonHazeId = Shader.PropertyToID("_MoonHaze");
         private static readonly int MoonDesaturateId = Shader.PropertyToID("_MoonDesaturate");
@@ -394,64 +391,18 @@ namespace MoonProject.Art.Editor
                 return;
             }
 
-            const int TexSize = 256;
-            var faceTex = new Texture2D(TexSize, TexSize, TextureFormat.RGBA32, false, false)
+            var tuning = ScriptableObject.CreateInstance<FaceTuning>();
+            temporary.Add(tuning);
+
+            var display = screenNode.GetComponent<FaceDisplay>();
+            if (display == null)
             {
-                name = "R1_CRT_FacePreview",
-                wrapMode = TextureWrapMode.Clamp,
-                filterMode = FilterMode.Bilinear,
-            };
-            temporary.Add(faceTex);
-
-            var pixels = new Color32[TexSize * TexSize];
-            for (int y = 0; y < TexSize; y++)
-            {
-                float v = (y + 0.5f) / TexSize;
-                float scan = Mathf.Lerp(0.88f, 1.04f, 0.5f + 0.5f * Mathf.Sin(v * 220f));
-                for (int x = 0; x < TexSize; x++)
-                {
-                    float u = (x + 0.5f) / TexSize;
-                    float dx = u - 0.5f;
-                    float dy = v - 0.5f;
-                    float radSq = dx * dx + dy * dy;
-                    float vig = Mathf.SmoothStep(0.46f, 0.05f, radSq);
-
-                    Color bgAmber = Color.Lerp(
-                        new Color(0.52f, 0.24f, 0.04f, 1f),
-                        new Color(0.92f, 0.52f, 0.12f, 1f),
-                        vig);
-
-                    float leftEye = EvalPillEyeMask(u, v, 0.35f, 0.50f, 0.068f, 0.165f);
-                    float rightEye = EvalPillEyeMask(u, v, 0.65f, 0.50f, 0.068f, 0.165f);
-                    float eyeMask = Mathf.Max(leftEye, rightEye);
-
-                    Color finalCol = Color.Lerp(bgAmber, new Color(1.0f, 0.94f, 0.58f, 1f), eyeMask) * scan;
-                    pixels[y * TexSize + x] = new Color32(
-                        (byte)Mathf.Clamp(Mathf.RoundToInt(finalCol.r * 255f), 0, 255),
-                        (byte)Mathf.Clamp(Mathf.RoundToInt(finalCol.g * 255f), 0, 255),
-                        (byte)Mathf.Clamp(Mathf.RoundToInt(finalCol.b * 255f), 0, 255),
-                        255);
-                }
+                display = screenNode.gameObject.AddComponent<FaceDisplay>();
             }
 
-            faceTex.SetPixels32(pixels);
-            faceTex.Apply(false);
-
-            var block = new MaterialPropertyBlock();
-            renderer.GetPropertyBlock(block);
-            block.SetTexture(BaseMapId, faceTex);
-            block.SetTexture(EmissionMapId, faceTex);
-            block.SetVector(EmissionColorId, new Vector4(1.0f, 0.78f, 0.32f, 1.0f));
-            block.SetFloat(EmissionStrengthId, 1.35f);
-            renderer.SetPropertyBlock(block);
-        }
-
-        private static float EvalPillEyeMask(float u, float v, float cx, float cy, float halfW, float halfH)
-        {
-            float nu = Mathf.Abs(u - cx) / halfW;
-            float nv = Mathf.Abs(v - cy) / halfH;
-            float dist = Mathf.Pow(nu, 2.6f) + Mathf.Pow(nv, 2.6f);
-            return Mathf.SmoothStep(1.40f, 0.40f, dist);
+            display.Initialize(tuning, renderer, 42);
+            display.State.SnapToFeeling(FaceFeeling.Calm);
+            display.ApplyToRenderer();
         }
 
         private static void RenderPerspectiveShot(

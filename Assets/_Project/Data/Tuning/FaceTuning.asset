@@ -1,0 +1,168 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e5936016a1ec4349b3cae1147b2dee5, type: 3}
+  m_Name: FaceTuning
+  m_EditorClassIdentifier: 
+  _feelings:
+  - _feeling: 0
+    _width: 0.17
+    _height: 0.34
+    _open: 1
+    _tilt: 0
+    _cut: 0
+    _squint: 0
+    _arc: 0
+    _ring: 0
+    _closed: 0
+    _lookX: 0
+    _lookY: 0
+    _symbol: 0
+    _asymmetric: 0
+  - _feeling: 1
+    _width: 0.17
+    _height: 0.34
+    _open: 1
+    _tilt: 0.2
+    _cut: 0.1
+    _squint: 0
+    _arc: 0
+    _ring: 0
+    _closed: 0
+    _lookX: 0.06
+    _lookY: -0.04
+    _symbol: 1
+    _asymmetric: 1
+  - _feeling: 2
+    _width: 0.19
+    _height: 0.3
+    _open: 1
+    _tilt: 0
+    _cut: 0
+    _squint: 0
+    _arc: 1
+    _ring: 0
+    _closed: 0
+    _lookX: 0
+    _lookY: -0.02
+    _symbol: 0
+    _asymmetric: 0
+  - _feeling: 3
+    _width: 0.19
+    _height: 0.34
+    _open: 1
+    _tilt: -0.12
+    _cut: 0.12
+    _squint: 0.35
+    _arc: 0.4
+    _ring: 0
+    _closed: 0
+    _lookX: 0
+    _lookY: -0.06
+    _symbol: 0
+    _asymmetric: 0
+  - _feeling: 4
+    _width: 0.16
+    _height: 0.32
+    _open: 0.9
+    _tilt: -0.62
+    _cut: 0.36
+    _squint: 0
+    _arc: 0
+    _ring: 0
+    _closed: 0
+    _lookX: 0
+    _lookY: 0.02
+    _symbol: 2
+    _asymmetric: 0
+  - _feeling: 5
+    _width: 0.18
+    _height: 0.32
+    _open: 1
+    _tilt: 0
+    _cut: 0.52
+    _squint: 0.1
+    _arc: 0
+    _ring: 0
+    _closed: 0
+    _lookX: 0
+    _lookY: 0.07
+    _symbol: 0
+    _asymmetric: 0
+  - _feeling: 6
+    _width: 0.16
+    _height: 0.3
+    _open: 0.85
+    _tilt: -0.72
+    _cut: 0.44
+    _squint: 0
+    _arc: 0
+    _ring: 0
+    _closed: 0
+    _lookX: 0
+    _lookY: 0.09
+    _symbol: 0
+    _asymmetric: 0
+  - _feeling: 7
+    _width: 0.2
+    _height: 0.36
+    _open: 1
+    _tilt: 0
+    _cut: 0
+    _squint: 0
+    _arc: 0
+    _ring: 1
+    _closed: 0
+    _lookX: 0
+    _lookY: -0.02
+    _symbol: 0
+    _asymmetric: 0
+  - _feeling: 8
+    _width: 0.18
+    _height: 0.3
+    _open: 1
+    _tilt: 0
+    _cut: 0
+    _squint: 0
+    _arc: 0
+    _ring: 0
+    _closed: 1
+    _lookX: 0
+    _lookY: 0.05
+    _symbol: 3
+    _asymmetric: 0
+  _asymmetricLeftScale: 1.12
+  _asymmetricRightScale: 0.9
+  _asymmetricRightCut: 0.42
+  _asymmetricRightTilt: 0.15
+  _eyeSeparation: 0.19
+  _lookMaxOffsetX: 0.1
+  _lookMaxOffsetY: 0.07
+  _easeRate: 7
+  _symbolEaseRate: 5
+  _trailEaseRate: 18
+  _trailAlpha: 0.28
+  _blinkMinInterval: 2.2
+  _blinkMaxInterval: 5.7
+  _blinkDuration: 0.16
+  _saccadeMinInterval: 1.2
+  _saccadeMaxInterval: 3.6
+  _saccadeRangeX: 0.04
+  _saccadeRangeY: 0.02
+  _bootRate: 0.9
+  _bootLineEnd: 0.45
+  _bootOpenSpan: 0.3
+  _sleepBrightness: 0.7
+  _lowPowerMinBrightness: 0.55
+  _lowPowerJitterAmplitude: 0.004
+  _lowPowerJitterFrequency: 2
+  _scanlineSpeed: 2.5
+  _rollingBandSpeed: 0.12
