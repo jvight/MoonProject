@@ -1656,113 +1656,262 @@ def build_lens_glass_model(cfg=DIMENSIONS, mats=None, parent=None, unity_loc=(0.
 
 def build_scan_fan_model(cfg=DIMENSIONS, mats=None, parent=None, unity_loc=(0.0, 0.0, 0.0)):
     """
-    Build ScanFan: optical laser-curtain projector shroud & radial collimator vane array
-    mounted at Eye/ScanFanSocket outboard of the CRT head cheek. Material slot 0 is
-    R1_LampAmber so RoverBodyLanguage's MaterialPropertyBlock emission glow drives the fan emitter.
+    Build ScanFan: wide horizontal louvred scanner dish with an amber sweep slot,
+    9 angled radial collimator louvres, vertical-axis rotary azimuth gimbal, and
+    top-mounted 6-blade rotating scanner fan rotor at Eye/ScanFanSocket.
+    Material slot 0 is R1_LampAmber so RoverBodyLanguage's MaterialPropertyBlock
+    emission glow drives the sweep-slot emitter and rotor beacon.
     """
     if mats is None:
         mats = create_material_library(MATERIALS, for_render=False)
 
     bm = bmesh.new()
     # Slot 0 MUST be R1_LampAmber so RoverBodyLanguage._scanFan glow drives the emitter!
-    # 0: R1_LampAmber, 1: R1_GreyMetal, 2: R1_Brass, 3: R1_Copper, 4: R1_BareSteel
+    # 0: R1_LampAmber, 1: R1_GreyMetal, 2: R1_BareSteel, 3: R1_Copper, 4: R1_Brass, 5: R1_OrangeStripe
     mat_list = [
         mats["R1_LampAmber"],
         mats["R1_GreyMetal"],
-        mats["R1_Brass"],
-        mats["R1_Copper"],
         mats["R1_BareSteel"],
+        mats["R1_Copper"],
+        mats["R1_Brass"],
+        mats["R1_OrangeStripe"],
     ]
 
-    fan_cx = -0.056
-    fan_cz = 0.032
+    dish_cx = -0.090
+    dish_cz = 0.022
+    dish_yaw = math.radians(-18.0)
+    ca, sa = math.cos(dish_yaw), math.sin(dish_yaw)
 
-    # 1. Base brass & dark-charcoal collimator collar ring
-    collar_profile = [
-        (0.0, -0.012),
-        (0.040, -0.012),
-        (0.046, -0.006),
-        (0.046, 0.012),
-        (0.042, 0.018),
-        (0.032, 0.018),
-        (0.0, 0.008),
-    ]
-    append_lathe_profile(
+    def _dish_pt(lx: float, lz: float) -> tuple[float, float]:
+        """Transform local (lx, lz) in dish space into ScanFan (X, Z) space."""
+        return (
+            dish_cx + lx * ca + lz * sa,
+            dish_cz - lx * sa + lz * ca,
+        )
+
+    # 1. Recessed glowing R1_LampAmber horizontal sweep-slot emitter core FIRST (mat_idx=0)
+    # so Polygon 0 in the exported FBX uses R1_LampAmber and Unity's FBX importer places R1_LampAmber at slot 0.
+    sx_core, sz_core = _dish_pt(0.0, 0.014)
+    append_beveled_box(
         bm,
-        collar_profile,
-        axis="Z",
-        center_xyz=(fan_cx, 0.0, fan_cz),
-        segments=24,
-        mat_idx=2,
-        ring_mat_indices=[1, 1, 2, 3, 4, 0],
+        size_xyz=(0.106, 0.018, 0.014),
+        center_xyz=(sx_core, 0.0, sz_core),
+        bevel_width=0.002,
+        bevel_segments=1,
+        mat_idx=0,
+        rot_euler=(0.0, dish_yaw, 0.0),
     )
 
-    # 2. Flared upper & lower fan-curtain shroud plates (prism extrusion)
-    shroud_poly = [
-        (-0.032, 0.006),
-        (0.032, 0.006),
-        (0.056, 0.046),
-        (-0.056, 0.046),
+    # 2. Inboard mounting arm clamping cleanly onto Eye's outer brass rim (clear of Eye's dark glass)
+    append_beveled_box(
+        bm,
+        size_xyz=(0.052, 0.036, 0.040),
+        center_xyz=(-0.036, 0.0, -0.024),
+        bevel_width=0.004,
+        bevel_segments=2,
+        mat_idx=1,
+    )
+    append_beveled_box(
+        bm,
+        size_xyz=(0.048, 0.028, 0.034),
+        center_xyz=(-0.064, 0.0, -0.008),
+        bevel_width=0.0035,
+        bevel_segments=2,
+        mat_idx=2,
+        rot_euler=(0.0, dish_yaw, 0.0),
+    )
+    for by in (-0.011, 0.011):
+        append_closed_bolt(
+            bm,
+            radius=0.0045,
+            height=0.008,
+            axis="X",
+            center_xyz=(-0.056, by, -0.026),
+            mat_idx=4,
+        )
+
+    # 3. Vertical-axis (Y) rotary azimuth turret spindle & copper slip-ring drum (distinct from FocusLens Z barrel)
+    turret_profile = [
+        (0.0, -0.040),
+        (0.022, -0.040),
+        (0.026, -0.032),
+        (0.026, -0.018),
+        (0.020, -0.014),
+        (0.020, 0.018),
+        (0.028, 0.022),
+        (0.028, 0.036),
+        (0.0, 0.036),
     ]
-    for sy in (-0.018, 0.018):
+    tx, tz = _dish_pt(0.0, -0.012)
+    append_lathe_profile(
+        bm,
+        turret_profile,
+        axis="Y",
+        center_xyz=(tx, 0.0, tz),
+        segments=20,
+        mat_idx=1,
+        ring_mat_indices=[1, 2, 3, 2, 1, 2, 1, 1],
+    )
+
+    # 4. Wide flared horizontal louvred dish hood (upper & lower visor plates + tapered rear backing shell)
+    dish_plate_poly = [
+        (-0.038, -0.016),
+        (0.038, -0.016),
+        (0.066, 0.034),
+        (0.054, 0.044),
+        (-0.054, 0.044),
+        (-0.066, 0.034),
+    ]
+    for sy in (-0.022, 0.022):
         append_prism_extrusion(
             bm,
-            shroud_poly,
+            dish_plate_poly,
             depth=0.007,
             axis="Y",
-            center_xyz=(fan_cx, sy, fan_cz),
+            center_xyz=(dish_cx, sy, dish_cz),
             bevel_width=0.002,
             bevel_segments=2,
             mat_idx=1,
+            rot_euler=(0.0, dish_yaw, 0.0),
         )
 
-    # 3. 7 radial collimator vanes + glowing R1_LampAmber emitter bars fanning across +/-24 deg
-    for v_i in range(-3, 4):
-        yaw = math.radians(v_i * 8.0)
-        vx = fan_cx + 0.028 * math.sin(yaw)
-        vz = fan_cz + 0.028 * math.cos(yaw)
-        # Brushed-steel collimator vane
-        append_beveled_box(
-            bm,
-            size_xyz=(0.0045, 0.030, 0.028),
-            center_xyz=(vx, 0.0, vz),
-            bevel_width=0.001,
-            bevel_segments=1,
-            mat_idx=4,
-            rot_euler=(0.0, yaw, 0.0),
-        )
-        # Glowing amber laser-curtain emitter bar at the leading edge of each vane
-        gx = fan_cx + 0.042 * math.sin(yaw)
-        gz = fan_cz + 0.042 * math.cos(yaw)
-        append_beveled_box(
-            bm,
-            size_xyz=(0.0065, 0.026, 0.010),
-            center_xyz=(gx, 0.0, gz),
-            bevel_width=0.0015,
-            bevel_segments=1,
-            mat_idx=0,
-            rot_euler=(0.0, yaw, 0.0),
-        )
-
-    # 4. Horizontal glowing amber scan-line emitter bar & copper harmonic ring across the fan aperture
+    # Rear backing manifold housing of the scanner dish
+    bx_back, bz_back = _dish_pt(0.0, -0.006)
     append_beveled_box(
         bm,
-        size_xyz=(0.098, 0.010, 0.014),
-        center_xyz=(fan_cx, 0.0, fan_cz + 0.040),
-        bevel_width=0.0025,
+        size_xyz=(0.082, 0.042, 0.022),
+        center_xyz=(bx_back, 0.0, bz_back),
+        bevel_width=0.003,
         bevel_segments=2,
-        mat_idx=0,
+        mat_idx=1,
+        rot_euler=(0.0, dish_yaw, 0.0),
     )
+
+    # Flared left & right cheek baffle wings + orange range-marker tabs framing the wide horizontal sweep slot
+    for side_s in (-1.0, 1.0):
+        wing_yaw = dish_yaw + side_s * math.radians(-22.0)
+        wx, wz = _dish_pt(side_s * 0.050, 0.012)
+        append_beveled_box(
+            bm,
+            size_xyz=(0.009, 0.046, 0.048),
+            center_xyz=(wx, 0.0, wz),
+            bevel_width=0.002,
+            bevel_segments=1,
+            mat_idx=2,
+            rot_euler=(0.0, wing_yaw, 0.0),
+        )
+        # High-visibility R1_OrangeStripe scanner alignment tab on the outer dish ear
+        ox, oz = _dish_pt(side_s * 0.057, 0.022)
+        append_beveled_box(
+            bm,
+            size_xyz=(0.007, 0.024, 0.020),
+            center_xyz=(ox, 0.0, oz),
+            bevel_width=0.0015,
+            bevel_segments=1,
+            mat_idx=5,
+            rot_euler=(0.0, wing_yaw, 0.0),
+        )
+
+    # Upper/lower steel slot lips framing the sweep slot
+    sx_lip, sz_lip = _dish_pt(0.0, 0.028)
+    for lip_y in (-0.013, 0.013):
+        append_beveled_box(
+            bm,
+            size_xyz=(0.114, 0.0045, 0.016),
+            center_xyz=(sx_lip, lip_y, sz_lip),
+            bevel_width=0.001,
+            bevel_segments=1,
+            mat_idx=2,
+            rot_euler=(0.0, dish_yaw, 0.0),
+        )
+
+    # 5. 9 angled radial collimator louvre slats + glowing amber sweep bars across the wide dish mouth
+    for v_i in range(-4, 5):
+        local_yaw = math.radians(v_i * 8.0)
+        total_yaw = dish_yaw + local_yaw
+        arc_r = 0.028
+        vx, vz = _dish_pt(arc_r * math.sin(local_yaw), 0.004 + arc_r * math.cos(local_yaw))
+        # Brushed-steel collimator louvre vane
+        append_beveled_box(
+            bm,
+            size_xyz=(0.0038, 0.034, 0.024),
+            center_xyz=(vx, 0.0, vz),
+            bevel_width=0.0008,
+            bevel_segments=1,
+            mat_idx=2,
+            rot_euler=(0.0, total_yaw, 0.0),
+        )
+        # Glowing R1_LampAmber laser-curtain emitter fin at the leading edge of each louvre
+        gx, gz = _dish_pt((arc_r + 0.009) * math.sin(local_yaw), 0.004 + (arc_r + 0.009) * math.cos(local_yaw))
+        append_beveled_box(
+            bm,
+            size_xyz=(0.0055, 0.015, 0.008),
+            center_xyz=(gx, 0.0, gz),
+            bevel_width=0.001,
+            bevel_segments=1,
+            mat_idx=0,
+            rot_euler=(0.0, total_yaw, 0.0),
+        )
+
+    # 6. Top-mounted vertical-axis rotating scanner fan / impeller rotor & protective guard ring
+    rotor_y = 0.038
+    rx_rot, rz_rot = _dish_pt(0.0, 0.006)
+    # Protective brushed-steel shroud ring around the top rotating fan
     append_torus(
         bm,
-        major_radius=0.043,
+        major_radius=0.042,
         minor_radius=0.0045,
-        axis="Z",
-        center_xyz=(fan_cx, 0.0, fan_cz + 0.004),
-        major_seg=22,
+        axis="Y",
+        center_xyz=(rx_rot, rotor_y + 0.006, rz_rot),
+        major_seg=24,
         minor_seg=8,
-        mat_idx=3,
+        mat_idx=2,
     )
+    # Central brass & glowing amber rotor hub
+    hub_profile = [
+        (0.0, -0.012),
+        (0.015, -0.012),
+        (0.015, 0.008),
+        (0.011, 0.014),
+        (0.0, 0.016),
+    ]
+    append_lathe_profile(
+        bm,
+        hub_profile,
+        axis="Y",
+        center_xyz=(rx_rot, rotor_y, rz_rot),
+        segments=18,
+        mat_idx=4,
+        ring_mat_indices=[4, 4, 0, 0],
+    )
+    # 6 pitched copper & brass scanner fan blades radiating from the vertical-axis rotor hub
+    for b_i in range(6):
+        b_ang = FULL_CIRCLE_RAD * b_i / 6.0 + math.radians(15.0)
+        bx = rx_rot + 0.025 * math.cos(b_ang)
+        bz = rz_rot + 0.025 * math.sin(b_ang)
+        append_beveled_box(
+            bm,
+            size_xyz=(0.024, 0.008, 0.009),
+            center_xyz=(bx, rotor_y + 0.003, bz),
+            bevel_width=0.0012,
+            bevel_segments=1,
+            mat_idx=3 if (b_i % 2 == 0) else 4,
+            rot_euler=(math.radians(28.0), -b_ang, 0.0),
+        )
+
+    # 7. Under-slung copper waveguide feed horn & telemetry coil under the scanner dish
+    ux_horn, uz_horn = _dish_pt(0.0, 0.006)
+    append_beveled_box(
+        bm,
+        size_xyz=(0.052, 0.016, 0.034),
+        center_xyz=(ux_horn, -0.032, uz_horn),
+        bevel_width=0.0025,
+        bevel_segments=1,
+        mat_idx=3,
+        rot_euler=(0.0, dish_yaw, 0.0),
+    )
+
+    bm.faces.sort(key=lambda f: f.material_index)
 
     root_obj = create_mesh_node(
         "ScanFan",

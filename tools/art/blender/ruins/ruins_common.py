@@ -35,6 +35,7 @@ import r1kit  # noqa: E402
 RUINS_FBX_DIR = REPO_ROOT / "Assets" / "_Project" / "Art" / "R1" / "Models" / "Ruins"
 RENDERS_DIR = REPO_ROOT / "Logs" / "renders"
 SIGNAGE_ALBEDO_PATH = REPO_ROOT / "Assets" / "_Project" / "Art" / "R1" / "Textures" / "T_R1_Signage_Albedo.png"
+SIGNAGE_EMISSION_PATH = REPO_ROOT / "Assets" / "_Project" / "Art" / "R1" / "Textures" / "T_R1_Signage_Emission.png"
 
 # UV rects (u0, v0, u1, v1) in OpenGL/Unity UV space (V=0 bottom, V=1 top)
 # matching tools/art/r1/generate_signage_atlas.py
@@ -45,6 +46,7 @@ SIGNAGE_UV_CELLS: Dict[str, Tuple[float, float, float, float]] = {
     "EVAC_1988": (0.765, 0.765, 0.985, 0.985),
     # Row 2 (Upper-middle row, V = 0.50..0.75)
     "SEC04_HABITAT": (0.020, 0.515, 0.480, 0.735),
+    "AIRLOCK_STATUS": (0.512, 0.515, 0.988, 0.735),
     "SEC_04": (0.510, 0.520, 0.740, 0.730),
     "HABITAT_LAB": (0.760, 0.520, 0.985, 0.730),
     # Row 1 (Lower-middle row, V = 0.25..0.50)
@@ -844,7 +846,18 @@ def bake_ruins_vertex_colors(root: bpy.types.Object, footprint_radius: float = 3
         col_attr.data.foreach_get("color", rgba)
         rgba = rgba.reshape(-1, 4)
 
+        is_airlock_panel = obj.name == "AirlockPanel"
+        mat_names = [m.name if m else "" for m in mesh.materials]
+        signage_mat_idx = mat_names.index("R1_Signage") if "R1_Signage" in mat_names else -1
+
         for poly in mesh.polygons:
+            if is_airlock_panel and poly.material_index == signage_mat_idx:
+                for li in poly.loop_indices:
+                    rgba[li, 0] = 1.0
+                    rgba[li, 1] = 0.0
+                    rgba[li, 2] = 0.0
+                    rgba[li, 3] = 1.0
+                continue
             poly_wnorm = (rot_mw @ poly.normal).normalized()
             face_up_dust = (max(0.0, poly_wnorm.z) ** 1.4) * 0.50
             for li in poly.loop_indices:
@@ -1111,6 +1124,14 @@ def attach_signage_texture_for_render(use_vertex_color_shading: bool = True) -> 
                 tex_node.location = (-680, 320)
                 tex_node.image = bpy.data.images.load(str(SIGNAGE_ALBEDO_PATH), check_existing=True)
                 nt.links.new(tex_node.outputs["Color"], wear_mix.inputs[6])
+                if SIGNAGE_EMISSION_PATH.exists():
+                    em_node = nt.nodes.new("ShaderNodeTexImage")
+                    em_node.location = (-680, -320)
+                    em_node.image = bpy.data.images.load(str(SIGNAGE_EMISSION_PATH), check_existing=True)
+                    if "Emission Color" in bsdf.inputs:
+                        nt.links.new(em_node.outputs["Color"], bsdf.inputs["Emission Color"])
+                    if "Emission Strength" in bsdf.inputs:
+                        bsdf.inputs["Emission Strength"].default_value = 2.4
 
 
 def _configure_fast_cycles(scene: bpy.types.Scene, res_x: int, res_y: int) -> None:
