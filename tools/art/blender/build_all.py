@@ -46,12 +46,47 @@ def main(argv: list[str] | None = None) -> None:
         default=Path("Assets/_Project/Art/R1/Models/Rocks"),
     )
     parser.add_argument(
+        "--rover-kits-dir",
+        type=Path,
+        default=Path("Assets/_Project/Art/R1/Models/Rover"),
+    )
+    parser.add_argument(
         "--renders-dir",
         type=Path,
         default=Path("Logs/renders"),
     )
     parser.add_argument("--skip-renders", action="store_true")
     args = parser.parse_args(argv)
+    rover_dir = str(THIS_DIR / "rover")
+    if rover_dir not in sys.path:
+        sys.path.insert(0, rover_dir)
+    import build_focus_lens
+    import build_hover_coils
+    import build_kit_battery_spine
+    import build_kit_capacitor_drum
+    import build_kit_cargo_rack
+    import build_kit_lamp_bar
+    import build_kit_side_bin
+    import build_kit_tether_ring
+    import build_lens_glass
+    import build_scan_fan
+    import render_kits
+
+    for kit_mod, fbx_name in (
+        (build_kit_lamp_bar, "Kit_LampBar.fbx"),
+        (build_kit_capacitor_drum, "Kit_CapacitorDrum.fbx"),
+        (build_kit_battery_spine, "Kit_BatterySpine.fbx"),
+        (build_kit_tether_ring, "Kit_TetherRing.fbx"),
+        (build_kit_cargo_rack, "Kit_CargoRack.fbx"),
+        (build_kit_side_bin, "Kit_SideBin.fbx"),
+        (build_hover_coils, "HoverCoils.fbx"),
+        (build_focus_lens, "FocusLens.fbx"),
+        (build_lens_glass, "LensGlass.fbx"),
+        (build_scan_fan, "ScanFan.fbx"),
+    ):
+        kit_mod.main(["--fbx-out", str(args.rover_kits_dir / fbx_name)])
+    if not args.skip_renders:
+        render_kits.render_all_kit_previews(args.renders_dir)
 
     models_dir = args.models_dir
     renders_dir = args.renders_dir

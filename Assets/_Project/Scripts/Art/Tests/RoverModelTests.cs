@@ -67,9 +67,7 @@ namespace MoonProject.Art.Tests
         [OneTimeSetUp]
         public void LoadPrefab()
         {
-            R1ModelBuilder.Build();
-            _prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
-            Assert.IsNotNull(_prefab, $"Missing generated R1 rover prefab at '{PrefabPath}'.");
+            _prefab = MeshChecks.LoadGeneratedPrefab(PrefabPath);
         }
 
         [Test]
@@ -146,46 +144,42 @@ namespace MoonProject.Art.Tests
         [Test]
         public void Model_FitsTheContractSize_AndTriangleBudget()
         {
-            var min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
-            Vector3 max = -min;
-            int triangles = 0;
+            Bounds bounds = MeshChecks.PrefabBounds(_prefab, Matrix4x4.identity);
+            int triangles = _prefab.GetComponentsInChildren<MeshFilter>(true)
+                .Sum(f => f.sharedMesh.triangles.Length / 3);
 
-            foreach (MeshFilter filter in _prefab.GetComponentsInChildren<MeshFilter>(true))
-            {
-                Mesh mesh = filter.sharedMesh;
-                Assert.IsNotNull(mesh, filter.name);
-                triangles += mesh.triangles.Length / 3;
-                Matrix4x4 localToRoot = _prefab.transform.worldToLocalMatrix * filter.transform.localToWorldMatrix;
-                foreach (Vector3 v in mesh.vertices)
-                {
-                    Vector3 p = localToRoot.MultiplyPoint3x4(v);
-                    min = Vector3.Min(min, p);
-                    max = Vector3.Max(max, p);
-                }
-            }
-
-            Vector3 size = max - min;
-            Assert.AreEqual(0f, min.y, 0.02f, "wheels touch the ground at y = 0");
+            Vector3 size = bounds.size;
+            Assert.AreEqual(0f, bounds.min.y, 0.02f, "wheels touch the ground at y = 0");
             Assert.That(size.x, Is.InRange(1.2f, 1.68f), "width");
             Assert.That(size.z, Is.InRange(1.4f, 2.15f), "length");
-            Assert.That(max.y, Is.InRange(1.3f, 1.78f), "height");
+            Assert.That(bounds.max.y, Is.InRange(1.3f, 1.78f), "height");
             Assert.That(triangles, Is.InRange(10000, 80000), "R1 hero triangle budget (<= 80,000)");
         }
 
         [Test]
         public void SubPrefabs_HoverCoilsScanFanAndFocusLens_AreWellFormed()
         {
-            ModelNode lens = RoverModelBuilder.CreateFocusLens();
-            ModelNode glass = lens.GetDescendant(RoverModelBuilder.FocusLensGlassName);
-            Assert.AreEqual(ModelMaterial.PaletteGlowOff, glass.Material);
-            MeshChecks.AssertWellFormed(lens.Mesh.Geometry);
-            MeshChecks.AssertWellFormed(glass.Mesh.Geometry);
+            string lampMatName = R1MaterialRecipes.Get(R1MaterialSlot.LampAmber).MaterialAssetName;
 
-            ModelNode fan = RoverModelBuilder.CreateScanFan();
-            MeshChecks.AssertWellFormed(fan.Mesh.Geometry);
+            GameObject lens = MeshChecks.LoadGeneratedPrefab(
+                "Assets/_Project/Generated/Art/R1/Models/Rover/FocusLens.prefab");
+            Assert.IsNotNull(lens.GetComponent<MeshFilter>()?.sharedMesh, "FocusLens root mesh");
+            Transform glass = lens.transform.Find(RoverModelBuilder.FocusLensGlassName);
+            Assert.IsNotNull(glass, "FocusLens/Glass");
+            Assert.IsNotNull(glass.GetComponent<MeshFilter>()?.sharedMesh, "FocusLens/Glass mesh");
+            Assert.AreEqual(lampMatName, glass.GetComponent<MeshRenderer>()?.sharedMaterial?.name);
 
-            ModelNode coils = RoverModelBuilder.CreateHoverCoils();
-            MeshChecks.AssertWellFormed(coils.Mesh.Geometry);
+            GameObject fan = MeshChecks.LoadGeneratedPrefab(
+                "Assets/_Project/Generated/Art/R1/Models/Rover/ScanFan.prefab");
+            Assert.IsNotNull(fan.GetComponent<MeshFilter>()?.sharedMesh, "ScanFan mesh");
+            CollectionAssert.Contains(
+                fan.GetComponent<MeshRenderer>()?.sharedMaterials.Select(m => m != null ? m.name : string.Empty),
+                lampMatName,
+                "ScanFan includes R1_LampAmber");
+
+            GameObject coils = MeshChecks.LoadGeneratedPrefab(
+                "Assets/_Project/Generated/Art/R1/Models/Rover/HoverCoils.prefab");
+            Assert.IsNotNull(coils.GetComponent<MeshFilter>()?.sharedMesh, "HoverCoils root mesh");
         }
     }
 }

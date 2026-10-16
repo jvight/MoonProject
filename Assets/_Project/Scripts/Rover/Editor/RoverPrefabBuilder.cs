@@ -81,7 +81,9 @@ namespace MoonProject.Rover.Editor
         public static GameObject Assemble(BuilderScratchScene scratch)
         {
             var model = AssetDatabase.LoadAssetAtPath<GameObject>(RoverAssetPaths.RoverModel);
-            if (model == null || model.transform.Find(RoverModelNodes.SolarWing + "/" + RoverModelNodes.CellFilled) == null)
+            if (model == null
+                || model.transform.Find(RoverModelNodes.SolarWing + "/" + RoverModelNodes.CellFilled) == null
+                || AssetDatabase.LoadAssetAtPath<GameObject>(RoverAssetPaths.KitLampBar) == null)
             {
                 MoonProject.Art.Editor.R1ModelBuilder.Build();
             }

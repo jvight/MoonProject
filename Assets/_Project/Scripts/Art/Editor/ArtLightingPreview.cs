@@ -1803,9 +1803,9 @@ namespace MoonProject.Art.Editor
                 return rover;
             }
 
-            Transform bar = Attach(rover, RoverKitBuilder.LampBarName, "HeadlampSocket", temporary);
-            SetGlow(bar, RoverKitBuilder.LampPrefix, RoverKitMeshes.LampCount, LampBarGlow);
-            road.transform.position = Descendant(bar, RoverKitBuilder.LampPrefix + "1").position;
+            Transform bar = Attach(rover, RoverModelBuilder.LampBarName, "HeadlampSocket", temporary);
+            SetGlow(bar, RoverModelBuilder.LampPrefix, RoverModelBuilder.LampCount, LampBarGlow);
+            road.transform.position = Descendant(bar, RoverModelBuilder.LampPrefix + "1").position;
             road.color = WarmLightColor;
             road.intensity = WarmLightIntensity;
             road.range = WarmLightRange;
@@ -1813,13 +1813,13 @@ namespace MoonProject.Art.Editor
             road.innerSpotAngle = WarmLightInnerAngle;
             foreach (string drumSocket in new[] { "DrumSocket_L", "DrumSocket_R" })
             {
-                Transform drum = Attach(rover, RoverKitBuilder.CapacitorDrumName, drumSocket, temporary);
-                SetGlow(drum, RoverKitBuilder.DrumGlowName, new[] { string.Empty }, DrumIdleGlow);
+                Transform drum = Attach(rover, RoverModelBuilder.CapacitorDrumName, drumSocket, temporary);
+                SetGlow(drum, RoverModelBuilder.DrumGlowName, new[] { string.Empty }, DrumIdleGlow);
             }
 
-            Attach(rover, RoverKitBuilder.CargoRackName, "CargoSocket", temporary);
-            Attach(rover, RoverKitBuilder.SideBinName, "BinSocket_L", temporary);
-            Attach(rover, RoverKitBuilder.SideBinName, "BinSocket_R", temporary);
+            Attach(rover, RoverModelBuilder.CargoRackName, "CargoSocket", temporary);
+            Attach(rover, RoverModelBuilder.SideBinName, "BinSocket_L", temporary);
+            Attach(rover, RoverModelBuilder.SideBinName, "BinSocket_R", temporary);
             Attach(rover, RoverModelBuilder.HoverCoilsName, "CoilSocket", temporary);
             foreach (string gift in new[]
             {
@@ -1896,25 +1896,25 @@ namespace MoonProject.Art.Editor
         {
             if (lampBar)
             {
-                Transform bar = Attach(rover, RoverKitBuilder.LampBarName, "HeadlampSocket", temporary);
-                SetGlow(bar, RoverKitBuilder.LampPrefix, RoverKitMeshes.LampCount, 1f);
+                Transform bar = Attach(rover, RoverModelBuilder.LampBarName, "HeadlampSocket", temporary);
+                SetGlow(bar, RoverModelBuilder.LampPrefix, RoverModelBuilder.LampCount, 1f);
             }
 
             if (drums)
             {
                 foreach (string socket in new[] { "DrumSocket_L", "DrumSocket_R" })
                 {
-                    Transform drum = Attach(rover, RoverKitBuilder.CapacitorDrumName, socket, temporary);
-                    SetGlow(drum, RoverKitBuilder.DrumGlowName, new[] { "" }, 1f);
+                    Transform drum = Attach(rover, RoverModelBuilder.CapacitorDrumName, socket, temporary);
+                    SetGlow(drum, RoverModelBuilder.DrumGlowName, new[] { "" }, 1f);
                 }
             }
 
             if (cradle)
             {
-                Transform rack = Attach(rover, RoverKitBuilder.CargoRackName, "CargoSocket", temporary);
+                Transform rack = Attach(rover, RoverModelBuilder.CargoRackName, "CargoSocket", temporary);
                 if (relic)
                 {
-                    Transform seat = Descendant(rack, RoverKitBuilder.RelicSeatName);
+                    Transform seat = Descendant(rack, RoverModelBuilder.RelicSeatName);
                     GameObject carried = Instantiate(RelicModelBuilder.PrefabName("teapot"), temporary,
                         ArtPaths.RelicFolder);
                     float lift = carried.transform.position.y - RendererBounds(carried).min.y;
@@ -1933,7 +1933,7 @@ namespace MoonProject.Art.Editor
                     Descendant(rover, gift).gameObject.SetActive(true);
                 }
 
-                Attach(rover, RoverKitBuilder.TapeDeckName, RoverModelBuilder.DeckSocketName, temporary);
+                Attach(rover, RoverModelBuilder.TapeDeckName, RoverModelBuilder.DeckSocketName, temporary);
             }
         }
 

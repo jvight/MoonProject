@@ -151,7 +151,8 @@ namespace MoonProject.Art.Tests
                 "the hazard rim is painted on the disc, so it turns with it");
 
             float hole = Hole(turntable.Mesh.Geometry);
-            float coils = Reach(MeshChecks.Points(RoverModelBuilder.CreateHoverCoils(), Matrix4x4.identity, false));
+            float coils = Reach(MeshChecks.PrefabPoints(
+                "Assets/_Project/Generated/Art/R1/Models/Rover/HoverCoils.prefab"));
             float floorArm = Reach(MeshChecks.Points(_bay.GetDescendant("FloorLift"), Matrix4x4.identity));
             Assert.Greater(hole, coils + HoleRoom, "the Hover-Jump coils ride up through the hole");
             Assert.Greater(hole, floorArm + HoleRoom, "the floor arm rises through the hole without touching it");
