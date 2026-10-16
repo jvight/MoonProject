@@ -328,6 +328,81 @@ namespace MoonProject.UI.PlayModeTests
 #endif
         }
 
+        /// <summary>
+        /// Captures the Tab ("07" equipment diagram) screen over Main.unity at 1920x1080 (en and vi) and 1280x720 (vi)
+        /// into <c>Logs/r4/</c>. Rerun with <c>--filter CaptureTabScreen_InEnglishAndVietnamese_At1080pAnd720p</c>.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CaptureTabScreen_InEnglishAndVietnamese_At1080pAnd720p()
+        {
+#if UNITY_EDITOR
+            InputSystem.AddDevice<Keyboard>();
+            InputSystem.AddDevice<Mouse>();
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out FakeGameServices fakes, out _);
+            FreezeWorld();
+            yield return null;
+            string r4Folder = Path.GetFullPath("Logs/r4");
+            string capturesFolder = Path.GetFullPath(CapturesFolder);
+            Directory.CreateDirectory(r4Folder);
+            Directory.CreateDirectory(capturesFolder);
+            var report = new List<string>();
+            UiLayout layout = ui.Layout;
+            ui.Ledger.RecordLookTaught();
+            ui.Ledger.RecordDriveTaught();
+            ui.Ledger.RecordLookUpHinted();
+            ui.Ledger.RecordHoldChipShown();
+            ui.Ledger.RecordFitTaught();
+            ui.Ledger.RecordHoldBooted();
+            context.Events.Publish(new RoverAwoke(Vector3.zero, false));
+            fakes.Fade = 0f;
+            yield return new WaitForSecondsRealtime(0.5f);
+
+            fakes.Hold.Set(3, new MaterialSlot(SalvageMaterial.Metal, 4, 4), new MaterialSlot(SalvageMaterial.Metal, 2, 4),
+                new MaterialSlot(SalvageMaterial.Wiring, 3, 4), new MaterialSlot(SalvageMaterial.Optics, 1, 4),
+                new MaterialSlot(SalvageMaterial.Ilmenite, 5, 6));
+            fakes.Hold.WaitingBundles = 3;
+            foreach (RoverKitPiece fitted in new[]
+                     {
+                         RoverKitPiece.TetherRing, RoverKitPiece.SolarCell, RoverKitPiece.LampBar,
+                         RoverKitPiece.CapacitorDrums, RoverKitPiece.BatterySpine, RoverKitPiece.TapeDeck,
+                         RoverKitPiece.CargoRack, RoverKitPiece.SideBins,
+                     })
+            {
+                fakes.Equipment.Fit(fitted);
+            }
+
+            fakes.Equipment.Craft(RoverKitPiece.HoverCoils);
+            fakes.Equipment.Craft(RoverKitPiece.FocusLens);
+            fakes.Equipment.AtStation = false;
+
+            Reframe(1920, 1080);
+            ui.Localization.SetLanguage("en");
+            ui.Cargo.Open();
+            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeIn + 0.6f);
+            yield return LegibleShot(camera, r4Folder, "tab_en_1080", report, layout.Cargo);
+            yield return Capture(camera, capturesFolder, "tab");
+
+            ui.Localization.SetLanguage("vi");
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return LegibleShot(camera, r4Folder, "tab_vi_1080", report, layout.Cargo);
+            yield return Capture(camera, capturesFolder, "tab_vi");
+
+            Reframe(1280, 720);
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Capture(camera, r4Folder, "tab_vi_720");
+
+            ui.Cargo.Close();
+            ui.Localization.SetLanguage("en");
+            Assert.IsEmpty(report, "tab legibility:\n" + string.Join("\n", report));
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
 #if UNITY_EDITOR
         /// <summary>
         /// Captures the shot, then measures every text under <paramref name="texts"/> and the font floor over the

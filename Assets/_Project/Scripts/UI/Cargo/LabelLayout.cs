@@ -31,17 +31,37 @@ namespace MoonProject.UI
                 throw new ArgumentException("One entry per socket.");
             }
 
+            Span<float> heights = stackalloc float[points.Length];
+            for (int i = 0; i < points.Length; i++)
+            {
+                heights[i] = labelHeight;
+                right[i] = points[i].x >= width * 0.5f;
+            }
+
+            PlaceColumn(points, wants, right, false, height, heights, gap, centreY);
+            PlaceColumn(points, wants, right, true, height, heights, gap, centreY);
+        }
+
+        public static void Place(Vector2[] points, bool[] wants, float width, float height, float[] labelHeights,
+            float gap, float[] centreY, bool[] right)
+        {
+            if (points.Length != wants.Length || points.Length != labelHeights.Length ||
+                points.Length != centreY.Length || points.Length != right.Length)
+            {
+                throw new ArgumentException("One entry per socket.");
+            }
+
             for (int i = 0; i < points.Length; i++)
             {
                 right[i] = points[i].x >= width * 0.5f;
             }
 
-            PlaceColumn(points, wants, right, false, height, labelHeight, gap, centreY);
-            PlaceColumn(points, wants, right, true, height, labelHeight, gap, centreY);
+            PlaceColumn(points, wants, right, false, height, labelHeights, gap, centreY);
+            PlaceColumn(points, wants, right, true, height, labelHeights, gap, centreY);
         }
 
         private static void PlaceColumn(Vector2[] points, bool[] wants, bool[] right, bool rightColumn, float height,
-            float labelHeight, float gap, float[] centreY)
+            ReadOnlySpan<float> labelHeights, float gap, float[] centreY)
         {
             Span<int> order = stackalloc int[points.Length];
             int count = 0;
@@ -62,19 +82,57 @@ namespace MoonProject.UI
                 order[at] = i;
             }
 
-            float half = labelHeight * 0.5f;
-            float pitch = labelHeight + gap;
+            if (count == 0)
+            {
+                return;
+            }
+
+            Span<float> half = stackalloc float[count];
             for (int k = 0; k < count; k++)
             {
-                float y = Mathf.Clamp(points[order[k]].y, half, height - half);
-                centreY[order[k]] = k == 0 ? y : Mathf.Max(y, centreY[order[k - 1]] + pitch);
+                half[k] = labelHeights[order[k]] * 0.5f;
+                centreY[order[k]] = Mathf.Clamp(points[order[k]].y, half[k], Mathf.Max(half[k], height - half[k]));
+            }
+
+            for (int pass = 0; pass < 6; pass++)
+            {
+                for (int k = 1; k < count; k++)
+                {
+                    int prev = order[k - 1];
+                    int curr = order[k];
+                    float minSep = half[k - 1] + half[k] + gap;
+                    if (centreY[curr] < centreY[prev] + minSep)
+                    {
+                        float mid = (centreY[prev] + centreY[curr]) * 0.5f;
+                        centreY[prev] = mid - minSep * 0.5f;
+                        centreY[curr] = mid + minSep * 0.5f;
+                    }
+                }
+
+                ClampColumn(order, half, count, height, gap, centreY);
+            }
+        }
+
+        private static void ClampColumn(ReadOnlySpan<int> order, ReadOnlySpan<float> half, int count, float height,
+            float gap, float[] centreY)
+        {
+            for (int k = 0; k < count; k++)
+            {
+                int idx = order[k];
+                float min = k == 0
+                    ? half[k]
+                    : centreY[order[k - 1]] + half[k - 1] + half[k] + gap;
+                centreY[idx] = Mathf.Max(centreY[idx], min);
             }
 
             // Names pushed past the bottom edge come back up, keeping their order and spacing.
             for (int k = count - 1; k >= 0; k--)
             {
-                float limit = k == count - 1 ? height - half : centreY[order[k + 1]] - pitch;
-                centreY[order[k]] = Mathf.Min(centreY[order[k]], limit);
+                int idx = order[k];
+                float max = k == count - 1
+                    ? Mathf.Max(half[k], height - half[k])
+                    : centreY[order[k + 1]] - (half[k + 1] + half[k] + gap);
+                centreY[idx] = Mathf.Clamp(centreY[idx], half[k], max);
             }
         }
     }

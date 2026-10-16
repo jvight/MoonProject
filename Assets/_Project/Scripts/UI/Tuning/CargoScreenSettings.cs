@@ -66,11 +66,11 @@ namespace MoonProject.UI
 
         [Tooltip("Width (px) of the right-hand column down the side of the portrait where socket names sit.")]
         [Range(80f, 280f)]
-        [SerializeField] private float _labelWidth = 184f;
+        [SerializeField] private float _labelWidth = 158f;
 
         [Tooltip("Width (px) of the left-hand column down the side of the portrait where socket names sit.")]
         [Range(80f, 320f)]
-        [SerializeField] private float _leftLabelWidth = 244f;
+        [SerializeField] private float _leftLabelWidth = 158f;
 
         [Tooltip("Height (px) of one socket name.")]
         [Range(14f, 40f)]
@@ -86,7 +86,7 @@ namespace MoonProject.UI
 
         [Tooltip("Portrait width (px at 1080p) at which socket label columns use their full width before scaling down.")]
         [Range(400f, 1200f)]
-        [SerializeField] private float _portraitReferenceWidth = 740f;
+        [SerializeField] private float _portraitReferenceWidth = 798f;
 
         [Tooltip("Gap (px) between a socket or part and the tooltip that names it.")]
         [Range(0f, 40f)]
@@ -103,11 +103,11 @@ namespace MoonProject.UI
 
         [Tooltip("Camera distance (m) from the look point in the 3/4 schematic diagram.")]
         [Range(2f, 12f)]
-        [SerializeField] private float _diagramDistance = 6.6f;
+        [SerializeField] private float _diagramDistance = 3.9f;
 
         [Tooltip("Height (m above 07's root) of the point the 3/4 schematic diagram camera looks at.")]
         [Range(0f, 2f)]
-        [SerializeField] private float _diagramLookHeight = 0.6f;
+        [SerializeField] private float _diagramLookHeight = 0.56f;
 
         [Tooltip("Vertical field of view (deg) of the 3/4 schematic diagram camera.")]
         [Range(10f, 60f)]

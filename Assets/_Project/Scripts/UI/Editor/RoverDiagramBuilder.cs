@@ -37,14 +37,23 @@ namespace MoonProject.UI.Editor
             {
                 RoverSocket socket = values[i];
                 string primaryName = socket + "Socket";
-                RequireNode(nodes, primaryName, socket);
+                RequireNode(nodes, primaryName, "RoverSocket." + socket);
                 string anchorName = SocketNodeName(socket);
-                Transform anchor = RequireNode(nodes, anchorName, socket);
+                Transform anchor = RequireNode(nodes, anchorName, "RoverSocket." + socket);
                 sockets[i] = root.InverseTransformPoint(anchor.position);
+            }
+
+            var wheels = new Vector3[RoverDiagramData.WheelCount];
+            for (int i = 0; i < RoverDiagramData.WheelCount; i++)
+            {
+                string wheelName = RoverDiagramData.WheelNodeName(i);
+                Transform wheel = RequireNode(nodes, wheelName, wheelName);
+                wheels[i] = root.InverseTransformPoint(wheel.position);
             }
 
             var data = ScriptableObject.CreateInstance<RoverDiagramData>();
             data.SetSockets(sockets);
+            data.SetWheels(wheels);
             string problem = data.Validate();
             if (problem != null)
             {
@@ -61,7 +70,7 @@ namespace MoonProject.UI.Editor
             return socket == RoverSocket.Panniers ? "BinSocket_L" : socket + "Socket";
         }
 
-        private static Transform RequireNode(Transform[] nodes, string name, RoverSocket socket)
+        private static Transform RequireNode(Transform[] nodes, string name, string role)
         {
             for (int i = 0; i < nodes.Length; i++)
             {
@@ -72,7 +81,7 @@ namespace MoonProject.UI.Editor
             }
 
             throw new InvalidOperationException(
-                $"UI/Rover Diagram: '{UiAssetPaths.RoverModelPrefab}' has no socket transform named '{name}' for RoverSocket.{socket}.");
+                $"UI/Rover Diagram: '{UiAssetPaths.RoverModelPrefab}' has no transform named '{name}' for {role}.");
         }
     }
 }

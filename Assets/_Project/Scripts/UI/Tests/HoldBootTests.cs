@@ -2,6 +2,7 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.UI.Editor;
 
 namespace MoonProject.UI.Tests
@@ -167,6 +168,12 @@ namespace MoonProject.UI.Tests
         public void RoverDiagramAsset_MatchesRoverModelPrefabSocketTransforms()
         {
             var diagram = AssetDatabase.LoadAssetAtPath<RoverDiagramData>(UiAssetPaths.RoverDiagram);
+            if (diagram == null || diagram.Validate() != null)
+            {
+                RoverDiagramBuilder.Build();
+                diagram = AssetDatabase.LoadAssetAtPath<RoverDiagramData>(UiAssetPaths.RoverDiagram);
+            }
+
             Assert.IsNotNull(diagram, $"{UiAssetPaths.RoverDiagram} is missing: run UI/Rover Diagram");
             Assert.IsNull(diagram.Validate());
 
@@ -177,21 +184,148 @@ namespace MoonProject.UI.Tests
             {
                 var socket = (RoverSocket)i;
                 string expectedName = socket == RoverSocket.Panniers ? "BinSocket_L" : socket + "Socket";
-                Transform match = null;
-                for (int j = 0; j < nodes.Length; j++)
-                {
-                    if (nodes[j] != null && nodes[j].name == expectedName)
-                    {
-                        match = nodes[j];
-                        break;
-                    }
-                }
-
+                Transform match = FindNode(nodes, expectedName);
                 Assert.IsNotNull(match, $"Missing {expectedName} on {UiAssetPaths.RoverModelPrefab}");
                 Vector3 expected = prefab.transform.InverseTransformPoint(match.position);
                 Vector3 actual = diagram.SocketPosition(socket);
                 Assert.Less(Vector3.Distance(expected, actual), 1e-4f, $"Socket {socket} ({expectedName}) drifted");
             }
+
+            for (int i = 0; i < RoverDiagramData.WheelCount; i++)
+            {
+                string wheelName = RoverDiagramData.WheelNodeName(i);
+                Transform match = FindNode(nodes, wheelName);
+                Assert.IsNotNull(match, $"Missing {wheelName} on {UiAssetPaths.RoverModelPrefab}");
+                Vector3 expected = prefab.transform.InverseTransformPoint(match.position);
+                Vector3 actual = diagram.WheelPosition(i);
+                Assert.Less(Vector3.Distance(expected, actual), 1e-4f, $"Wheel {wheelName} drifted");
+            }
+        }
+
+        [Test]
+        public void RoverDiagramLayout_InEnglishAndVietnamese_At1080pAnd720p_NeverOverlapsDrawingOrLeavesFrame()
+        {
+            var diagram = AssetDatabase.LoadAssetAtPath<RoverDiagramData>(UiAssetPaths.RoverDiagram);
+            if (diagram == null || diagram.Validate() != null)
+            {
+                RoverDiagramBuilder.Build();
+                diagram = AssetDatabase.LoadAssetAtPath<RoverDiagramData>(UiAssetPaths.RoverDiagram);
+            }
+
+            var tuning = AssetDatabase.LoadAssetAtPath<UiTuning>(UiAssetPaths.Tuning);
+            Assert.IsNotNull(tuning);
+            CargoScreenSettings cargo = tuning.Cargo;
+            var enAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(UiAssetPaths.StringTable("en"));
+            var viAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(UiAssetPaths.StringTable("vi"));
+            var localization = new LocalizationService(new EventBus(),
+                new[] { StringTable.Parse(enAsset.text, "en"), StringTable.Parse(viAsset.text, "vi") });
+            var painter = new RoverDiagramPainter(new UnityEngine.UIElements.VisualElement(), diagram, cargo);
+
+            // PanelSettings scales 1280x720 from 1920x1080 (match=1), so the portrait element is 798.5x410 in panel space;
+            // we also verify a narrower 720p-scaled portrait (532.3x273.3) to prove proportional column scaling.
+            Rect[] frames =
+            {
+                new Rect(0f, 0f, 798.5f, 410f),
+                new Rect(0f, 0f, 532.3f, 273.3f),
+            };
+            string[] languages = { "en", "vi" };
+            var points = new Vector2[RoverDiagramData.SocketCount];
+            var wants = new bool[RoverDiagramData.SocketCount];
+            var heights = new float[RoverDiagramData.SocketCount];
+            var centreY = new float[RoverDiagramData.SocketCount];
+            var rightCol = new bool[RoverDiagramData.SocketCount];
+            var labelRects = new Rect[RoverDiagramData.SocketCount];
+
+            foreach (string lang in languages)
+            {
+                localization.SetLanguage(lang);
+                foreach (Rect area in frames)
+                {
+                    Rect drawing = painter.DrawingBounds(area);
+                    float widthShare = drawing.width / area.width;
+                    Assert.That(widthShare, Is.InRange(0.54f, 0.60f),
+                        $"{lang} {area.width}x{area.height}: drawing width share {widthShare:P1} outside 55-60%");
+                    Assert.GreaterOrEqual(drawing.xMin, 0f, $"{lang}: drawing left leaves frame");
+                    Assert.GreaterOrEqual(drawing.yMin, 0f, $"{lang}: drawing top leaves frame");
+                    Assert.LessOrEqual(drawing.xMax, area.width, $"{lang}: drawing right leaves frame");
+                    Assert.LessOrEqual(drawing.yMax, area.height, $"{lang}: drawing bottom leaves frame");
+
+                    Rect image = RoverDiagramPainter.FrameRect(area);
+                    float scale = Mathf.Min(1f, area.width / cargo.PortraitReferenceWidth);
+                    float leftWidth = Mathf.Floor(cargo.LeftLabelWidth * scale);
+                    float rightWidth = Mathf.Floor(cargo.LabelWidth * scale);
+                    float margin = Mathf.Floor(cargo.LabelMargin * scale);
+                    float lineH = cargo.LabelHeight * scale;
+                    float gap = cargo.LabelGap * scale;
+                    float charW = 10.8f * scale;
+
+                    for (int i = 0; i < RoverDiagramData.SocketCount; i++)
+                    {
+                        var socket = (RoverSocket)i;
+                        Vector2 uv = painter.SocketViewport(socket);
+                        points[i] = new Vector2(image.x + uv.x * image.width, image.y + (1f - uv.y) * image.height);
+                        wants[i] = PartInfo.TryDefaultPart(socket, out RoverKitPiece part);
+                        string text = wants[i] ? localization.Get(PartInfo.NameKey(part)) : string.Empty;
+                        float colW = points[i].x >= area.width * 0.5f ? rightWidth : leftWidth;
+                        heights[i] = wants[i] && text.Length * charW > colW - 2f ? lineH * 2f : lineH;
+                    }
+
+                    LabelLayout.Place(points, wants, area.width, area.height, heights, gap, centreY, rightCol);
+                    for (int i = 0; i < RoverDiagramData.SocketCount; i++)
+                    {
+                        if (!wants[i])
+                        {
+                            continue;
+                        }
+
+                        float w = rightCol[i] ? rightWidth : leftWidth;
+                        float h = heights[i];
+                        float x = rightCol[i] ? area.width - margin - w : margin;
+                        float y = centreY[i] - h * 0.5f;
+                        var rect = new Rect(x, y, w, h);
+                        labelRects[i] = rect;
+
+                        Assert.GreaterOrEqual(rect.xMin, -0.01f, $"{lang} {(RoverSocket)i} leaves left of frame");
+                        Assert.GreaterOrEqual(rect.yMin, -0.01f, $"{lang} {(RoverSocket)i} leaves top of frame");
+                        Assert.LessOrEqual(rect.xMax, area.width + 0.01f, $"{lang} {(RoverSocket)i} leaves right of frame");
+                        Assert.LessOrEqual(rect.yMax, area.height + 0.01f, $"{lang} {(RoverSocket)i} leaves bottom of frame");
+                        Assert.IsFalse(rect.Overlaps(drawing),
+                            $"{lang} {(RoverSocket)i} label {rect} overlaps drawing bounds {drawing}");
+                    }
+
+                    for (int i = 0; i < RoverDiagramData.SocketCount; i++)
+                    {
+                        if (!wants[i])
+                        {
+                            continue;
+                        }
+
+                        for (int j = i + 1; j < RoverDiagramData.SocketCount; j++)
+                        {
+                            if (!wants[j])
+                            {
+                                continue;
+                            }
+
+                            Assert.IsFalse(labelRects[i].Overlaps(labelRects[j]),
+                                $"{lang}: {(RoverSocket)i} overlaps {(RoverSocket)j}");
+                        }
+                    }
+                }
+            }
+        }
+
+        private static Transform FindNode(Transform[] nodes, string name)
+        {
+            for (int i = 0; i < nodes.Length; i++)
+            {
+                if (nodes[i] != null && nodes[i].name == name)
+                {
+                    return nodes[i];
+                }
+            }
+
+            return null;
         }
 
         private void Run(float seconds)

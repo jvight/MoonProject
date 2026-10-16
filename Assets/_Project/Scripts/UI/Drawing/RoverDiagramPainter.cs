@@ -16,6 +16,7 @@ namespace MoonProject.UI
     internal sealed class RoverDiagramPainter : StylePainter
     {
         public const float Aspect = 1.5f;
+        private const float MaxFrameWidthShare = 0.77f;
 
         private static readonly CustomStyleProperty<Color> LineColorProperty =
             new CustomStyleProperty<Color>("--diagram-line");
@@ -39,6 +40,18 @@ namespace MoonProject.UI
         private Color _dimColor = new Color(1f, 0.71f, 0.28f, 0.52f);
         private Color _fillColor = new Color(0.055f, 0.035f, 0.02f, 0.96f);
         private Color _gridColor = new Color(0.37f, 0.95f, 1f, 0.22f);
+        private Vector3 _wheelFL;
+        private Vector3 _wheelFR;
+        private Vector3 _wheelRL;
+        private Vector3 _wheelRR;
+        private float _wheelHalfW;
+        private float _wheelR;
+        private float _bodyHalfX;
+        private float _bodyBotY;
+        private float _bodyMidY;
+        private float _bodyTopY;
+        private float _bodyRearZ;
+        private float _bodyFrontZ;
         private float _cachedYaw = float.NaN;
         private float _cachedElevation = float.NaN;
         private float _cachedDistance = float.NaN;
@@ -49,6 +62,17 @@ namespace MoonProject.UI
         private Vector3 _camUp;
         private Vector3 _camFwd;
         private float _tanHalfFov;
+        private bool _measuringBounds;
+        private float _rawUMin;
+        private float _rawUMax;
+        private float _rawVMin;
+        private float _rawVMax;
+        private float _uShift;
+        private float _vShift;
+        private float _uMin;
+        private float _uMax;
+        private float _vMin;
+        private float _vMax;
         private Painter2D _painter;
         private Rect _frame;
 
@@ -57,6 +81,7 @@ namespace MoonProject.UI
         {
             _data = data ?? throw new ArgumentNullException(nameof(data));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            CacheModelExtents();
             EnsureFraming();
         }
 
@@ -67,18 +92,24 @@ namespace MoonProject.UI
             return ProjectUv(_data.SocketPosition(socket));
         }
 
+        /// <summary>Pixel bounding box inside <paramref name="box"/> of the rendered 07 schematic strokes.</summary>
+        public Rect DrawingBounds(Rect box)
+        {
+            EnsureFraming();
+            Rect frame = FrameRect(box);
+            float xMin = frame.x + _uMin * frame.width;
+            float xMax = frame.x + _uMax * frame.width;
+            float yMin = frame.y + (1f - _vMax) * frame.height;
+            float yMax = frame.y + (1f - _vMin) * frame.height;
+            return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
+        }
+
         /// <summary>Aspect-fitted 3:2 frame inside <paramref name="box"/> where the diagram and sockets live.</summary>
         public static Rect FrameRect(Rect box)
         {
-            float boxAspect = box.height > 0f ? box.width / box.height : Aspect;
-            if (boxAspect > Aspect)
-            {
-                float width = box.height * Aspect;
-                return new Rect(box.x + (box.width - width) * 0.5f, box.y, width, box.height);
-            }
-
-            float height = box.width / Aspect;
-            return new Rect(box.x, box.y + (box.height - height) * 0.5f, box.width, height);
+            float width = Mathf.Min(box.width * MaxFrameWidthShare, box.height * Aspect);
+            float height = width / Aspect;
+            return new Rect(box.x + (box.width - width) * 0.5f, box.y + (box.height - height) * 0.5f, width, height);
         }
 
         protected override void ReadStyle(ICustomStyle style)
@@ -103,14 +134,42 @@ namespace MoonProject.UI
             _painter = context.painter2D;
             _painter.lineCap = LineCap.Round;
             _painter.lineJoin = LineJoin.Round;
+            PaintScene();
+            _painter = null;
+        }
 
+        private void PaintScene()
+        {
             PaintGridAndWheelPair(false);
             PaintUndercarriageAndScoop();
             PaintCarapaceAndRear();
             PaintFrontRigAndRoof();
             PaintHeadAndAntenna();
             PaintGridAndWheelPair(true);
-            _painter = null;
+        }
+
+        private void CacheModelExtents()
+        {
+            _wheelFL = _data.WheelPosition(0);
+            _wheelFR = _data.WheelPosition(1);
+            _wheelRL = _data.WheelPosition(2);
+            _wheelRR = _data.WheelPosition(3);
+            Vector3 wheelsSock = _data.SocketPosition(RoverSocket.Wheels);
+            Vector3 tether = _data.SocketPosition(RoverSocket.Tether);
+            Vector3 lamp = _data.SocketPosition(RoverSocket.Lamp);
+            Vector3 flanks = _data.SocketPosition(RoverSocket.Flanks);
+            Vector3 cutter = _data.SocketPosition(RoverSocket.Cutter);
+            Vector3 wing = _data.SocketPosition(RoverSocket.Wing);
+            Vector3 hold = _data.SocketPosition(RoverSocket.Hold);
+
+            _wheelHalfW = Mathf.Max(0.08f, Mathf.Abs(wheelsSock.x - _wheelRR.x));
+            _wheelR = Mathf.Max(0.20f, _wheelFR.y * 0.97f);
+            _bodyHalfX = flanks.x;
+            _bodyBotY = tether.y;
+            _bodyMidY = cutter.y - 0.01f;
+            _bodyTopY = wing.y - 0.02f;
+            _bodyRearZ = hold.z;
+            _bodyFrontZ = lamp.z - 0.02f;
         }
 
         private void EnsureFraming()
@@ -140,31 +199,50 @@ namespace MoonProject.UI
             _camRight = new Vector3(-Mathf.Cos(yawRad), 0f, Mathf.Sin(yawRad));
             _camUp = Vector3.Cross(_camFwd, _camRight);
             _tanHalfFov = Mathf.Max(0.05f, Mathf.Tan(0.5f * fov * Mathf.Deg2Rad));
+
+            _rawUMin = float.MaxValue;
+            _rawUMax = float.MinValue;
+            _rawVMin = float.MaxValue;
+            _rawVMax = float.MinValue;
+            _uShift = 0f;
+            _vShift = 0f;
+            _measuringBounds = true;
+            PaintScene();
+            _measuringBounds = false;
+            _uShift = 0.5f - (_rawUMin + _rawUMax) * 0.5f;
+            _vShift = 0.5f - (_rawVMin + _rawVMax) * 0.5f;
+            _uMin = _rawUMin + _uShift;
+            _uMax = _rawUMax + _uShift;
+            _vMin = _rawVMin + _vShift;
+            _vMax = _rawVMax + _vShift;
         }
 
         private void PaintGridAndWheelPair(bool nearSide)
         {
             if (!nearSide)
             {
-                PaintWheel(new Vector3(-0.62f, 0.35f, -0.53f), false);
-                PaintWheel(new Vector3(-0.62f, 0.35f, 0.53f), false);
+                PaintWheel(_wheelRL, false);
+                PaintWheel(_wheelFL, false);
                 return;
             }
 
-            PaintWheel(new Vector3(0.62f, 0.35f, -0.53f), true);
-            PaintWheel(new Vector3(0.62f, 0.35f, 0.53f), true);
+            PaintWheel(_wheelRR, true);
+            PaintWheel(_wheelFR, true);
         }
 
         private void PaintWheel(Vector3 center, bool near)
         {
-            float halfW = 0.13f;
-            float r = 0.34f;
+            float halfW = _wheelHalfW;
+            float r = _wheelR;
             float xOut = center.x + (center.x > 0f ? halfW : -halfW);
             float xIn = center.x - (center.x > 0f ? halfW : -halfW);
 
-            _painter.fillColor = _fillColor;
-            _painter.strokeColor = near ? _lineColor : _dimColor;
-            _painter.lineWidth = near ? 2f : 1.4f;
+            if (_painter != null)
+            {
+                _painter.fillColor = _fillColor;
+                _painter.strokeColor = near ? _lineColor : _dimColor;
+                _painter.lineWidth = near ? 2f : 1.4f;
+            }
 
             PaintWheelRing(new Vector3(xIn, center.y, center.z), r, true);
             PaintWheelTreads(center, r);
@@ -176,12 +254,21 @@ namespace MoonProject.UI
         private void PaintWheelRing(Vector3 faceCenter, float radius, bool fill)
         {
             const int steps = 16;
-            _painter.BeginPath();
+            if (_painter != null)
+            {
+                _painter.BeginPath();
+            }
+
             for (int i = 0; i <= steps; i++)
             {
                 float a = i * (Mathf.PI * 2f / steps);
                 Vector2 pt = P(faceCenter.x, faceCenter.y + Mathf.Sin(a) * radius,
                     faceCenter.z + Mathf.Cos(a) * radius);
+                if (_painter == null)
+                {
+                    continue;
+                }
+
                 if (i == 0)
                 {
                     _painter.MoveTo(pt);
@@ -190,6 +277,11 @@ namespace MoonProject.UI
                 {
                     _painter.LineTo(pt);
                 }
+            }
+
+            if (_painter == null)
+            {
+                return;
             }
 
             _painter.ClosePath();
@@ -203,8 +295,8 @@ namespace MoonProject.UI
 
         private void PaintWheelTreads(Vector3 center, float radius)
         {
-            float x0 = center.x - 0.13f;
-            float x1 = center.x + 0.13f;
+            float x0 = center.x - _wheelHalfW;
+            float x1 = center.x + _wheelHalfW;
             for (int i = -2; i <= 4; i++)
             {
                 float a = i * (Mathf.PI * 2f / 12f);
@@ -220,147 +312,304 @@ namespace MoonProject.UI
 
         private void PaintUndercarriageAndScoop()
         {
-            _painter.fillColor = _fillColor;
-            _painter.strokeColor = _dimColor;
-            _painter.lineWidth = 1.6f;
+            Vector3 pannier = _data.SocketPosition(RoverSocket.Panniers);
+            Vector3 flanks = _data.SocketPosition(RoverSocket.Flanks);
+            Vector3 belly = _data.SocketPosition(RoverSocket.Belly);
+            Vector3 tether = _data.SocketPosition(RoverSocket.Tether);
+            Vector3 hold = _data.SocketPosition(RoverSocket.Hold);
+            Vector3 cutter = _data.SocketPosition(RoverSocket.Cutter);
+
+            if (_painter != null)
+            {
+                _painter.fillColor = _fillColor;
+                _painter.strokeColor = _dimColor;
+                _painter.lineWidth = 1.6f;
+            }
 
             // Left-flank pannier bin (BinSocket_L) & undercarriage belly plate (BellySocket).
-            QuadFill(new Vector3(-0.54f, 0.50f, -0.14f), new Vector3(-0.54f, 0.50f, 0.18f),
-                new Vector3(-0.46f, 0.66f, 0.18f), new Vector3(-0.46f, 0.66f, -0.14f));
-            QuadFill(new Vector3(-0.34f, 0.28f, -0.44f), new Vector3(0.34f, 0.28f, -0.44f),
-                new Vector3(0.34f, 0.28f, 0.44f), new Vector3(-0.34f, 0.28f, 0.44f));
+            float binOutX = pannier.x - _wheelHalfW * 0.67f;
+            float binInX = pannier.x;
+            float binBotY = pannier.y - 0.10f;
+            float binTopY = pannier.y + 0.06f;
+            float binRearZ = flanks.z;
+            float binFrontZ = pannier.z + (pannier.z - flanks.z);
+            QuadFill(new Vector3(binOutX, binBotY, binRearZ), new Vector3(binOutX, binBotY, binFrontZ),
+                new Vector3(binInX, binTopY, binFrontZ), new Vector3(binInX, binTopY, binRearZ));
+
+            float bellyHalfX = _bodyHalfX * 0.74f;
+            float bellyY = belly.y;
+            float bellyHalfZ = _wheelFR.z * 0.83f;
+            QuadFill(new Vector3(-bellyHalfX, bellyY, -bellyHalfZ), new Vector3(bellyHalfX, bellyY, -bellyHalfZ),
+                new Vector3(bellyHalfX, bellyY, bellyHalfZ), new Vector3(-bellyHalfX, bellyY, bellyHalfZ));
 
             // Suspension arms & struts to right wheels + rear tow hook (TetherSocket).
-            Segment(P(0.36f, 0.46f, 0.42f), P(0.56f, 0.35f, 0.53f));
-            Segment(P(0.36f, 0.46f, -0.42f), P(0.56f, 0.35f, -0.53f));
-            _painter.strokeColor = _lineColor;
-            Segment(P(0f, 0.42f, -0.54f), P(0f, 0.34f, -0.66f));
-            Segment(P(0f, 0.34f, -0.66f), P(0f, 0.41f, -0.68f));
+            float strutInX = _bodyHalfX * 0.78f;
+            float strutInY = hold.y - 0.02f;
+            float strutInZ = _wheelFR.z * 0.79f;
+            float wheelHubX = _wheelFR.x - _wheelHalfW * 0.42f;
+            Segment(P(strutInX, strutInY, strutInZ), P(wheelHubX, _wheelFR.y, _wheelFR.z));
+            Segment(P(strutInX, strutInY, -strutInZ), P(wheelHubX, _wheelRR.y, _wheelRR.z));
+            if (_painter != null)
+            {
+                _painter.strokeColor = _lineColor;
+            }
+
+            Segment(P(tether.x, tether.y + 0.04f, _bodyRearZ + 0.04f),
+                P(tether.x, tether.y - 0.04f, tether.z - 0.06f));
+            Segment(P(tether.x, tether.y - 0.04f, tether.z - 0.06f),
+                P(tether.x, tether.y + 0.03f, tether.z - 0.08f));
 
             // Front dig scoop blade, hydraulic arms & 5 cutting teeth.
-            Segment(P(0.36f, 0.44f, 0.54f), P(0.44f, 0.30f, 0.78f));
-            Segment(P(-0.36f, 0.44f, 0.54f), P(-0.44f, 0.30f, 0.78f));
-            QuadFill(new Vector3(-0.50f, 0.42f, 0.74f), new Vector3(0.50f, 0.42f, 0.74f),
-                new Vector3(0.54f, 0.20f, 0.90f), new Vector3(-0.54f, 0.20f, 0.90f));
+            float armOutX = _bodyHalfX * 0.96f;
+            float scoopTopY = _bodyBotY + 0.04f;
+            float scoopBotY = belly.y - 0.08f;
+            float scoopRearZ = cutter.z + 0.02f;
+            float scoopFrontZ = cutter.z + _wheelR * 0.53f;
+            Segment(P(strutInX, scoopTopY + 0.02f, _bodyFrontZ - 0.06f),
+                P(armOutX, belly.y + 0.02f, scoopRearZ + 0.04f));
+            Segment(P(-strutInX, scoopTopY + 0.02f, _bodyFrontZ - 0.06f),
+                P(-armOutX, belly.y + 0.02f, scoopRearZ + 0.04f));
+            float bladeTopX = _bodyHalfX * 1.09f;
+            float bladeBotX = _bodyHalfX * 1.17f;
+            QuadFill(new Vector3(-bladeTopX, scoopTopY, scoopRearZ), new Vector3(bladeTopX, scoopTopY, scoopRearZ),
+                new Vector3(bladeBotX, scoopBotY, scoopFrontZ), new Vector3(-bladeBotX, scoopBotY, scoopFrontZ));
+            float toothStepX = _bodyHalfX * 0.41f;
+            float toothHalfW = _wheelHalfW * 0.42f;
+            float toothTipY = scoopBotY - 0.04f;
+            float toothTipZ = scoopFrontZ + 0.06f;
             for (int t = -2; t <= 2; t++)
             {
-                float tx = t * 0.19f;
-                Segment(P(tx - 0.05f, 0.20f, 0.90f), P(tx, 0.16f, 0.96f));
-                Segment(P(tx, 0.16f, 0.96f), P(tx + 0.05f, 0.20f, 0.90f));
+                float tx = t * toothStepX;
+                Segment(P(tx - toothHalfW, scoopBotY, scoopFrontZ), P(tx, toothTipY, toothTipZ));
+                Segment(P(tx, toothTipY, toothTipZ), P(tx + toothHalfW, scoopBotY, scoopFrontZ));
             }
         }
 
         private void PaintCarapaceAndRear()
         {
-            _painter.fillColor = _fillColor;
-            _painter.strokeColor = _lineColor;
-            _painter.lineWidth = 2.1f;
+            Vector3 pannier = _data.SocketPosition(RoverSocket.Panniers);
+            Vector3 flanks = _data.SocketPosition(RoverSocket.Flanks);
+            Vector3 hold = _data.SocketPosition(RoverSocket.Hold);
 
-            // Lower chassis tub & upper beetle carapace dome.
-            QuadFill(new Vector3(-0.46f, 0.38f, -0.58f), new Vector3(0.46f, 0.38f, -0.58f),
-                new Vector3(0.46f, 0.72f, -0.52f), new Vector3(-0.46f, 0.72f, -0.52f));
-            QuadFill(new Vector3(-0.46f, 0.38f, 0.60f), new Vector3(0.46f, 0.38f, 0.60f),
-                new Vector3(0.44f, 0.72f, 0.56f), new Vector3(-0.44f, 0.72f, 0.56f));
-            QuadFill(new Vector3(0.46f, 0.38f, -0.58f), new Vector3(0.46f, 0.38f, 0.60f),
-                new Vector3(0.44f, 0.72f, 0.56f), new Vector3(0.44f, 0.72f, -0.52f));
-            QuadFill(new Vector3(-0.44f, 0.72f, -0.52f), new Vector3(0.44f, 0.72f, -0.52f),
-                new Vector3(0.38f, 0.94f, 0.42f), new Vector3(-0.38f, 0.94f, 0.42f));
-            QuadFill(new Vector3(-0.44f, 0.72f, 0.56f), new Vector3(0.44f, 0.72f, 0.56f),
-                new Vector3(0.38f, 0.90f, 0.44f), new Vector3(-0.38f, 0.90f, 0.44f));
+            if (_painter != null)
+            {
+                _painter.fillColor = _fillColor;
+                _painter.strokeColor = _lineColor;
+                _painter.lineWidth = 2.1f;
+            }
+
+            // Lower chassis tub & upper beetle carapace dome derived from socket/body extents.
+            float midHalfX = _bodyHalfX - _wheelHalfW * 0.16f;
+            float topHalfX = _bodyHalfX * 0.83f;
+            float midRearZ = _bodyRearZ + 0.06f;
+            float midFrontZ = _bodyFrontZ - 0.04f;
+            float topFrontZ = _wheelFR.z * 0.80f;
+            float noseTopY = _bodyTopY - 0.04f;
+            QuadFill(new Vector3(-_bodyHalfX, _bodyBotY, _bodyRearZ), new Vector3(_bodyHalfX, _bodyBotY, _bodyRearZ),
+                new Vector3(_bodyHalfX, _bodyMidY, midRearZ), new Vector3(-_bodyHalfX, _bodyMidY, midRearZ));
+            QuadFill(new Vector3(-_bodyHalfX, _bodyBotY, _bodyFrontZ), new Vector3(_bodyHalfX, _bodyBotY, _bodyFrontZ),
+                new Vector3(midHalfX, _bodyMidY, midFrontZ), new Vector3(-midHalfX, _bodyMidY, midFrontZ));
+            QuadFill(new Vector3(_bodyHalfX, _bodyBotY, _bodyRearZ), new Vector3(_bodyHalfX, _bodyBotY, _bodyFrontZ),
+                new Vector3(midHalfX, _bodyMidY, midFrontZ), new Vector3(midHalfX, _bodyMidY, midRearZ));
+            QuadFill(new Vector3(-midHalfX, _bodyMidY, midRearZ), new Vector3(midHalfX, _bodyMidY, midRearZ),
+                new Vector3(topHalfX, _bodyTopY, topFrontZ), new Vector3(-topHalfX, _bodyTopY, topFrontZ));
+            QuadFill(new Vector3(-midHalfX, _bodyMidY, midFrontZ), new Vector3(midHalfX, _bodyMidY, midFrontZ),
+                new Vector3(topHalfX, noseTopY, topFrontZ), new Vector3(-topHalfX, noseTopY, topFrontZ));
 
             // Beltline & right-flank pannier bin (BinSocket_R / PanniersSocket) + capacitor drum (FlanksSocket).
-            _painter.lineWidth = 1.5f;
-            Segment(P(0.47f, 0.62f, -0.56f), P(0.47f, 0.62f, 0.58f));
-            QuadFill(new Vector3(0.47f, 0.50f, -0.14f), new Vector3(0.47f, 0.50f, 0.18f),
-                new Vector3(0.54f, 0.66f, 0.18f), new Vector3(0.54f, 0.66f, -0.14f));
-            QuadFill(new Vector3(0.45f, 0.74f, -0.32f), new Vector3(0.45f, 0.74f, -0.04f),
-                new Vector3(0.52f, 0.86f, -0.04f), new Vector3(0.52f, 0.86f, -0.32f));
+            if (_painter != null)
+            {
+                _painter.lineWidth = 1.5f;
+            }
+
+            float beltX = _bodyHalfX + 0.01f;
+            float beltY = pannier.y + 0.02f;
+            Segment(P(beltX, beltY, _bodyRearZ + 0.02f), P(beltX, beltY, _bodyFrontZ - 0.02f));
+            float binOutX = -pannier.x + _wheelHalfW * 0.67f;
+            float binBotY = pannier.y - 0.10f;
+            float binTopY = pannier.y + 0.06f;
+            float binRearZ = flanks.z;
+            float binFrontZ = pannier.z + (pannier.z - flanks.z);
+            QuadFill(new Vector3(beltX, binBotY, binRearZ), new Vector3(beltX, binBotY, binFrontZ),
+                new Vector3(binOutX, binTopY, binFrontZ), new Vector3(binOutX, binTopY, binRearZ));
+            QuadFill(new Vector3(_bodyHalfX - 0.01f, flanks.y - 0.10f, flanks.z - 0.18f),
+                new Vector3(_bodyHalfX - 0.01f, flanks.y - 0.10f, flanks.z + 0.10f),
+                new Vector3(_bodyHalfX + 0.06f, flanks.y + 0.02f, flanks.z + 0.10f),
+                new Vector3(_bodyHalfX + 0.06f, flanks.y + 0.02f, flanks.z - 0.18f));
 
             // Rear clamshell hatch (HoldSocket) & 8-segment battery bar along rear lip.
-            QuadStroke(new Vector3(-0.34f, 0.44f, -0.59f), new Vector3(0.34f, 0.44f, -0.59f),
-                new Vector3(0.32f, 0.70f, -0.56f), new Vector3(-0.32f, 0.70f, -0.56f));
-            _painter.strokeColor = _brightColor;
+            float hatchHalfX = _bodyHalfX * 0.74f;
+            float hatchTopX = _bodyHalfX * 0.70f;
+            QuadStroke(new Vector3(-hatchHalfX, hold.y - 0.04f, _bodyRearZ - 0.01f),
+                new Vector3(hatchHalfX, hold.y - 0.04f, _bodyRearZ - 0.01f),
+                new Vector3(hatchTopX, _bodyMidY - 0.02f, _bodyRearZ + 0.02f),
+                new Vector3(-hatchTopX, _bodyMidY - 0.02f, _bodyRearZ + 0.02f));
+            if (_painter != null)
+            {
+                _painter.strokeColor = _brightColor;
+            }
+
+            float barY = _bodyMidY + 0.03f;
+            float barZ = _bodyRearZ + 0.04f;
+            float barStart = -_bodyHalfX * 0.65f;
+            float barStep = (_bodyHalfX * 1.30f) / 7.65f;
             for (int b = 0; b < 8; b++)
             {
-                float bx = -0.30f + b * 0.085f;
-                Segment(P(bx, 0.75f, -0.54f), P(bx + 0.055f, 0.75f, -0.54f));
+                float bx = barStart + b * barStep;
+                Segment(P(bx, barY, barZ), P(bx + barStep * 0.65f, barY, barZ));
             }
         }
 
         private void PaintFrontRigAndRoof()
         {
+            Vector3 lamp = _data.SocketPosition(RoverSocket.Lamp);
+            Vector3 cutter = _data.SocketPosition(RoverSocket.Cutter);
+            Vector3 wing = _data.SocketPosition(RoverSocket.Wing);
+            Vector3 back = _data.SocketPosition(RoverSocket.Back);
+
             // Twin front headlamps & lamp bar (LampSocket) + chest cutter turret (CutterSocket).
-            _painter.strokeColor = _brightColor;
-            _painter.lineWidth = 1.8f;
-            PaintHeadlamp(new Vector3(-0.18f, 0.65f, 0.64f));
-            PaintHeadlamp(new Vector3(0.18f, 0.65f, 0.64f));
-            Segment(P(-0.18f, 0.66f, 0.62f), P(0.18f, 0.66f, 0.62f));
-            QuadFill(new Vector3(-0.11f, 0.70f, 0.52f), new Vector3(0.11f, 0.70f, 0.52f),
-                new Vector3(0.09f, 0.82f, 0.72f), new Vector3(-0.09f, 0.82f, 0.72f));
-            Segment(P(0f, 0.73f, 0.72f), P(0f, 0.73f, 0.82f));
+            if (_painter != null)
+            {
+                _painter.strokeColor = _brightColor;
+                _painter.lineWidth = 1.8f;
+            }
+
+            float lampSpanX = _bodyHalfX * 0.39f;
+            PaintHeadlamp(new Vector3(-lampSpanX, lamp.y - 0.01f, lamp.z + 0.02f));
+            PaintHeadlamp(new Vector3(lampSpanX, lamp.y - 0.01f, lamp.z + 0.02f));
+            Segment(P(-lampSpanX, lamp.y, lamp.z), P(lampSpanX, lamp.y, lamp.z));
+            float turretRearX = _bodyHalfX * 0.24f;
+            float turretFrontX = _bodyHalfX * 0.20f;
+            QuadFill(new Vector3(-turretRearX, cutter.y - 0.03f, _bodyFrontZ - 0.08f),
+                new Vector3(turretRearX, cutter.y - 0.03f, _bodyFrontZ - 0.08f),
+                new Vector3(turretFrontX, cutter.y + 0.09f, cutter.z),
+                new Vector3(-turretFrontX, cutter.y + 0.09f, cutter.z));
+            Segment(P(cutter.x, cutter.y, cutter.z), P(cutter.x, cutter.y, cutter.z + 0.10f));
 
             // Roof solar wing (WingSocket) & rear spine (BackSocket).
-            _painter.strokeColor = _lineColor;
-            _painter.lineWidth = 1.7f;
-            QuadFill(new Vector3(-0.34f, 0.96f, -0.46f), new Vector3(0.34f, 0.96f, -0.46f),
-                new Vector3(0.34f, 0.96f, -0.06f), new Vector3(-0.34f, 0.96f, -0.06f));
-            _painter.strokeColor = _dimColor;
-            _painter.lineWidth = 1.1f;
-            Segment(P(-0.11f, 0.965f, -0.46f), P(-0.11f, 0.965f, -0.06f));
-            Segment(P(0.11f, 0.965f, -0.46f), P(0.11f, 0.965f, -0.06f));
-            Segment(P(-0.34f, 0.965f, -0.26f), P(0.34f, 0.965f, -0.26f));
+            if (_painter != null)
+            {
+                _painter.strokeColor = _lineColor;
+                _painter.lineWidth = 1.7f;
+            }
+
+            float wingHalfX = _bodyHalfX * 0.74f;
+            float wingRearZ = wing.z - 0.16f;
+            float wingFrontZ = back.z + 0.02f;
+            QuadFill(new Vector3(-wingHalfX, wing.y, wingRearZ), new Vector3(wingHalfX, wing.y, wingRearZ),
+                new Vector3(wingHalfX, wing.y, wingFrontZ), new Vector3(-wingHalfX, wing.y, wingFrontZ));
+            if (_painter != null)
+            {
+                _painter.strokeColor = _dimColor;
+                _painter.lineWidth = 1.1f;
+            }
+
+            float wingThirdX = wingHalfX / 3f;
+            float wingMidZ = (wingRearZ + wingFrontZ) * 0.5f;
+            Segment(P(-wingThirdX, wing.y + 0.005f, wingRearZ), P(-wingThirdX, wing.y + 0.005f, wingFrontZ));
+            Segment(P(wingThirdX, wing.y + 0.005f, wingRearZ), P(wingThirdX, wing.y + 0.005f, wingFrontZ));
+            Segment(P(-wingHalfX, wing.y + 0.005f, wingMidZ), P(wingHalfX, wing.y + 0.005f, wingMidZ));
         }
 
         private void PaintHeadAndAntenna()
         {
-            // Rear whip antenna & diamond sonar loop (AntennaSocket).
-            _painter.strokeColor = _lineColor;
-            _painter.lineWidth = 1.7f;
-            Segment(P(0.36f, 0.88f, -0.46f), P(0.36f, 1.44f, -0.48f));
-            QuadStroke(new Vector3(0.36f, 1.16f, -0.47f), new Vector3(0.43f, 1.24f, -0.47f),
-                new Vector3(0.36f, 1.32f, -0.47f), new Vector3(0.29f, 1.24f, -0.47f));
+            Vector3 antenna = _data.SocketPosition(RoverSocket.Antenna);
+            Vector3 wing = _data.SocketPosition(RoverSocket.Wing);
+            Vector3 deck = _data.SocketPosition(RoverSocket.Deck);
 
-            // Ribbed neck, left cheek lens pod & CRT monitor head box.
-            for (int r = 0; r < 3; r++)
+            // Rear whip antenna & diamond sonar loop (AntennaSocket).
+            if (_painter != null)
             {
-                float ny = 0.95f + r * 0.045f;
-                Segment(P(-0.09f, ny, 0.04f), P(0.09f, ny, 0.04f));
+                _painter.strokeColor = _lineColor;
+                _painter.lineWidth = 1.7f;
             }
 
-            QuadFill(new Vector3(-0.38f, 1.16f, -0.04f), new Vector3(-0.27f, 1.16f, -0.04f),
-                new Vector3(-0.27f, 1.30f, 0.14f), new Vector3(-0.38f, 1.30f, 0.14f));
-            _painter.lineWidth = 2.1f;
-            QuadFill(new Vector3(-0.27f, 1.07f, -0.14f), new Vector3(0.27f, 1.07f, -0.14f),
-                new Vector3(0.27f, 1.41f, -0.14f), new Vector3(-0.27f, 1.41f, -0.14f));
-            QuadFill(new Vector3(0.27f, 1.07f, -0.14f), new Vector3(0.27f, 1.07f, 0.22f),
-                new Vector3(0.27f, 1.41f, 0.22f), new Vector3(0.27f, 1.41f, -0.14f));
-            QuadFill(new Vector3(-0.27f, 1.07f, 0.22f), new Vector3(0.27f, 1.07f, 0.22f),
-                new Vector3(0.27f, 1.41f, 0.22f), new Vector3(-0.27f, 1.41f, 0.22f));
+            float antBaseY = antenna.y - 0.03f;
+            float antTipY = antenna.y + _wheelR * 1.56f;
+            Segment(P(antenna.x, antBaseY, antenna.z), P(antenna.x, antTipY, antenna.z - 0.02f));
+            float loopMidY = (antBaseY + antTipY) * 0.5f + 0.08f;
+            float loopSpan = _wheelHalfW * 0.58f;
+            QuadStroke(new Vector3(antenna.x, loopMidY - 0.08f, antenna.z - 0.01f),
+                new Vector3(antenna.x + loopSpan, loopMidY, antenna.z - 0.01f),
+                new Vector3(antenna.x, loopMidY + 0.08f, antenna.z - 0.01f),
+                new Vector3(antenna.x - loopSpan, loopMidY, antenna.z - 0.01f));
+
+            // Ribbed neck, left cheek lens pod & CRT monitor head box derived from DeckSocket & WingSocket.
+            float neckHalfX = deck.x * 0.25f;
+            for (int r = 0; r < 3; r++)
+            {
+                float ny = wing.y - 0.01f + r * 0.045f;
+                Segment(P(-neckHalfX, ny, deck.z), P(neckHalfX, ny, deck.z));
+            }
+
+            float headHalfX = deck.x - _wheelHalfW * 0.78f;
+            float podOutX = deck.x + _wheelHalfW * 0.21f;
+            float headBotY = deck.y - _wheelR * 0.47f;
+            float headTopY = deck.y + _wheelR * 0.53f;
+            float headRearZ = deck.z - _wheelR * 0.53f;
+            float headFrontZ = deck.z + _wheelR * 0.53f;
+            QuadFill(new Vector3(-podOutX, deck.y - 0.07f, deck.z - 0.08f),
+                new Vector3(-headHalfX, deck.y - 0.07f, deck.z - 0.08f),
+                new Vector3(-headHalfX, deck.y + 0.07f, deck.z + 0.10f),
+                new Vector3(-podOutX, deck.y + 0.07f, deck.z + 0.10f));
+            if (_painter != null)
+            {
+                _painter.lineWidth = 2.1f;
+            }
+
+            QuadFill(new Vector3(-headHalfX, headBotY, headRearZ), new Vector3(headHalfX, headBotY, headRearZ),
+                new Vector3(headHalfX, headTopY, headRearZ), new Vector3(-headHalfX, headTopY, headRearZ));
+            QuadFill(new Vector3(headHalfX, headBotY, headRearZ), new Vector3(headHalfX, headBotY, headFrontZ),
+                new Vector3(headHalfX, headTopY, headFrontZ), new Vector3(headHalfX, headTopY, headRearZ));
+            QuadFill(new Vector3(-headHalfX, headBotY, headFrontZ), new Vector3(headHalfX, headBotY, headFrontZ),
+                new Vector3(headHalfX, headTopY, headFrontZ), new Vector3(-headHalfX, headTopY, headFrontZ));
 
             // CRT screen bezel, friendly amber eyes & right-cheek tape deck pod (DeckSocket).
-            _painter.strokeColor = _brightColor;
-            _painter.lineWidth = 1.7f;
-            QuadStroke(new Vector3(-0.21f, 1.13f, 0.23f), new Vector3(0.21f, 1.13f, 0.23f),
-                new Vector3(0.21f, 1.35f, 0.23f), new Vector3(-0.21f, 1.35f, 0.23f));
-            Segment(P(-0.13f, 1.25f, 0.235f), P(-0.04f, 1.25f, 0.235f));
-            Segment(P(0.04f, 1.25f, 0.235f), P(0.13f, 1.25f, 0.235f));
-            QuadFill(new Vector3(0.28f, 1.15f, -0.07f), new Vector3(0.39f, 1.15f, -0.07f),
-                new Vector3(0.39f, 1.31f, 0.13f), new Vector3(0.28f, 1.31f, 0.13f));
+            if (_painter != null)
+            {
+                _painter.strokeColor = _brightColor;
+                _painter.lineWidth = 1.7f;
+            }
+
+            float screenHalfX = headHalfX * 0.78f;
+            float screenZ = headFrontZ + 0.01f;
+            QuadStroke(new Vector3(-screenHalfX, headBotY + 0.06f, screenZ),
+                new Vector3(screenHalfX, headBotY + 0.06f, screenZ),
+                new Vector3(screenHalfX, headTopY - 0.06f, screenZ),
+                new Vector3(-screenHalfX, headTopY - 0.06f, screenZ));
+            float eyeY = deck.y + 0.02f;
+            Segment(P(-screenHalfX * 0.62f, eyeY, screenZ + 0.005f), P(-screenHalfX * 0.19f, eyeY, screenZ + 0.005f));
+            Segment(P(screenHalfX * 0.19f, eyeY, screenZ + 0.005f), P(screenHalfX * 0.62f, eyeY, screenZ + 0.005f));
+            QuadFill(new Vector3(headHalfX + 0.01f, deck.y - 0.08f, deck.z - 0.11f),
+                new Vector3(podOutX, deck.y - 0.08f, deck.z - 0.11f),
+                new Vector3(podOutX, deck.y + 0.08f, deck.z + 0.09f),
+                new Vector3(headHalfX + 0.01f, deck.y + 0.08f, deck.z + 0.09f));
         }
 
         private void PaintHeadlamp(Vector3 pos)
         {
-            Segment(P(pos.x - 0.05f, pos.y - 0.04f, pos.z), P(pos.x + 0.05f, pos.y - 0.04f, pos.z));
-            Segment(P(pos.x - 0.05f, pos.y + 0.04f, pos.z), P(pos.x + 0.05f, pos.y + 0.04f, pos.z));
+            float halfW = _wheelHalfW * 0.38f;
+            float halfH = _wheelR * 0.12f;
+            Segment(P(pos.x - halfW, pos.y - halfH, pos.z), P(pos.x + halfW, pos.y - halfH, pos.z));
+            Segment(P(pos.x - halfW, pos.y + halfH, pos.z), P(pos.x + halfW, pos.y + halfH, pos.z));
         }
 
         private void QuadFill(Vector3 a, Vector3 b, Vector3 c, Vector3 d)
         {
+            Vector2 pa = P(a.x, a.y, a.z);
+            Vector2 pb = P(b.x, b.y, b.z);
+            Vector2 pc = P(c.x, c.y, c.z);
+            Vector2 pd = P(d.x, d.y, d.z);
+            if (_painter == null)
+            {
+                return;
+            }
+
             _painter.BeginPath();
-            _painter.MoveTo(P(a.x, a.y, a.z));
-            _painter.LineTo(P(b.x, b.y, b.z));
-            _painter.LineTo(P(c.x, c.y, c.z));
-            _painter.LineTo(P(d.x, d.y, d.z));
+            _painter.MoveTo(pa);
+            _painter.LineTo(pb);
+            _painter.LineTo(pc);
+            _painter.LineTo(pd);
             _painter.ClosePath();
             _painter.Fill();
             _painter.Stroke();
@@ -368,17 +617,31 @@ namespace MoonProject.UI
 
         private void QuadStroke(Vector3 a, Vector3 b, Vector3 c, Vector3 d)
         {
+            Vector2 pa = P(a.x, a.y, a.z);
+            Vector2 pb = P(b.x, b.y, b.z);
+            Vector2 pc = P(c.x, c.y, c.z);
+            Vector2 pd = P(d.x, d.y, d.z);
+            if (_painter == null)
+            {
+                return;
+            }
+
             _painter.BeginPath();
-            _painter.MoveTo(P(a.x, a.y, a.z));
-            _painter.LineTo(P(b.x, b.y, b.z));
-            _painter.LineTo(P(c.x, c.y, c.z));
-            _painter.LineTo(P(d.x, d.y, d.z));
+            _painter.MoveTo(pa);
+            _painter.LineTo(pb);
+            _painter.LineTo(pc);
+            _painter.LineTo(pd);
             _painter.ClosePath();
             _painter.Stroke();
         }
 
         private void Segment(Vector2 a, Vector2 b)
         {
+            if (_painter == null)
+            {
+                return;
+            }
+
             _painter.BeginPath();
             _painter.MoveTo(a);
             _painter.LineTo(b);
@@ -387,11 +650,43 @@ namespace MoonProject.UI
 
         private Vector2 P(float x, float y, float z)
         {
+            if (_measuringBounds)
+            {
+                Vector2 raw = RawProjectUv(new Vector3(x, y, z));
+                if (raw.x < _rawUMin)
+                {
+                    _rawUMin = raw.x;
+                }
+
+                if (raw.x > _rawUMax)
+                {
+                    _rawUMax = raw.x;
+                }
+
+                if (raw.y < _rawVMin)
+                {
+                    _rawVMin = raw.y;
+                }
+
+                if (raw.y > _rawVMax)
+                {
+                    _rawVMax = raw.y;
+                }
+
+                return Vector2.zero;
+            }
+
             Vector2 uv = ProjectUv(new Vector3(x, y, z));
             return new Vector2(_frame.x + uv.x * _frame.width, _frame.y + (1f - uv.y) * _frame.height);
         }
 
         private Vector2 ProjectUv(Vector3 point)
+        {
+            Vector2 raw = RawProjectUv(point);
+            return new Vector2(raw.x + _uShift, raw.y + _vShift);
+        }
+
+        private Vector2 RawProjectUv(Vector3 point)
         {
             Vector3 d = point - _camPos;
             // _camPos lies in the vertical plane spanned by _camFwd and +Y, so Dot(_camPos, _camRight) == 0.

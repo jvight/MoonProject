@@ -53,6 +53,7 @@ namespace MoonProject.UI
         private readonly bool[] _placedMask = new bool[SocketCount];
         private readonly bool[] _wantsLabel = new bool[SocketCount];
         private readonly bool[] _rightColumn = new bool[SocketCount];
+        private readonly float[] _labelHeights = new float[SocketCount];
         private readonly float[] _labelY = new float[SocketCount];
         private readonly SocketView[] _sockets = new SocketView[SocketCount];
         private readonly CardView[] _cards;
@@ -113,10 +114,23 @@ namespace MoonProject.UI
                 : " [" + _tooltipGlyphHolder.Q<Label>().text + "]")
             : string.Empty;
 
+        /// <summary>The diagram frame element (<c>seven-portrait</c>, tests and captures).</summary>
+        public VisualElement PortraitElement => _portrait;
+
+        /// <summary>Pixel bounds of the 07 diagram strokes inside <see cref="PortraitElement"/> (tests and captures).</summary>
+        public Rect DrawingBounds =>
+            _diagram.DrawingBounds(new Rect(0f, 0f, _portrait.contentRect.width, _portrait.contentRect.height));
+
         /// <summary>A socket's element (tests and captures).</summary>
         public VisualElement SocketElement(RoverSocket socket)
         {
             return _sockets[(int)socket].Root;
+        }
+
+        /// <summary>A socket's name label element (tests and captures).</summary>
+        public Label SocketLabelElement(RoverSocket socket)
+        {
+            return _sockets[(int)socket].Name;
         }
 
         /// <summary>The name a socket carries now, empty when it has none (tests and captures).</summary>
@@ -217,7 +231,6 @@ namespace MoonProject.UI
                 _dirty = true;
             }
 
-            PlaceSockets();
             int signature = Signature();
             if (_dirty || signature != _signature)
             {
@@ -225,6 +238,8 @@ namespace MoonProject.UI
                 _dirty = false;
                 Refresh();
             }
+
+            PlaceSockets();
         }
 
         /// <summary>
@@ -236,6 +251,12 @@ namespace MoonProject.UI
             Rect area = _portrait.contentRect;
             bool sized = area.width > 0f && area.height > 0f;
             Rect image = ImageRect(area);
+            float scale = area.width > 0f && _settings.PortraitReferenceWidth > 0f
+                ? Mathf.Min(1f, area.width / _settings.PortraitReferenceWidth)
+                : 1f;
+            float leftWidth = Mathf.Floor(_settings.LeftLabelWidth * scale);
+            float rightWidth = Mathf.Floor(_settings.LabelWidth * scale);
+            float labelMargin = Mathf.Floor(_settings.LabelMargin * scale);
             for (int i = 0; i < SocketCount; i++)
             {
                 SocketView view = _sockets[i];
@@ -259,19 +280,18 @@ namespace MoonProject.UI
                 }
 
                 _points[i] = point;
-                _wantsLabel[i] = sized && placed && view.Name.text.Length > 0;
+                bool wants = sized && placed && view.Name.text.Length > 0;
+                _wantsLabel[i] = wants;
+                float colWidth = point.x >= area.width * 0.5f ? rightWidth : leftWidth;
+                _labelHeights[i] = wants && IsTwoLineLabel(view.Name.text, colWidth)
+                    ? _settings.LabelHeight * 2f
+                    : _settings.LabelHeight;
             }
 
             LabelLayout.Place(_points, _wantsLabel, area.width, area.height,
-                _settings.LabelHeight, _settings.LabelGap,
+                _labelHeights, _settings.LabelGap,
                 _labelY, _rightColumn);
             _leaders.Clear();
-            float scale = area.width > 0f && _settings.PortraitReferenceWidth > 0f
-                ? Mathf.Min(1f, area.width / _settings.PortraitReferenceWidth)
-                : 1f;
-            float leftWidth = Mathf.Floor(_settings.LeftLabelWidth * scale);
-            float rightWidth = Mathf.Floor(_settings.LabelWidth * scale);
-            float labelMargin = Mathf.Floor(_settings.LabelMargin * scale);
             for (int i = 0; i < SocketCount; i++)
             {
                 SocketView view = _sockets[i];
@@ -289,18 +309,21 @@ namespace MoonProject.UI
 
                 bool right = _rightColumn[i];
                 float labelWidth = right ? rightWidth : leftWidth;
+                float labelHeight = _labelHeights[i];
                 float inner = labelMargin + labelWidth;
                 if (right != view.LabelRight || !Mathf.Approximately(_labelY[i], view.LabelY) ||
+                    !Mathf.Approximately(labelHeight, view.LabelHeight) ||
                     !Mathf.Approximately(area.width, view.AreaWidth))
                 {
                     view.LabelRight = right;
                     view.LabelY = _labelY[i];
+                    view.LabelHeight = labelHeight;
                     view.AreaWidth = area.width;
                     view.Name.EnableInClassList(RightColumnClass, right);
                     view.Name.style.width = labelWidth;
-                    view.Name.style.height = _settings.LabelHeight;
+                    view.Name.style.height = labelHeight;
                     view.Name.style.left = right ? area.width - inner : labelMargin;
-                    view.Name.style.top = _labelY[i] - _settings.LabelHeight * 0.5f;
+                    view.Name.style.top = _labelY[i] - labelHeight * 0.5f;
                 }
 
                 float edge = right ? area.width - inner - LeaderGap : inner + LeaderGap;
@@ -308,6 +331,12 @@ namespace MoonProject.UI
             }
 
             _leaders.Apply();
+        }
+
+        private static bool IsTwoLineLabel(string text, float columnWidth)
+        {
+            // IBM Plex Mono Regular at 18 px has a 10.8 px advance per glyph; strings wider than the column wrap to 2 lines.
+            return !string.IsNullOrEmpty(text) && text.Length * 10.8f > columnWidth - 2f;
         }
 
         /// <summary>
@@ -407,7 +436,13 @@ namespace MoonProject.UI
             view.Root.EnableInClassList(UnknownClass, !known);
             view.Root.EnableInClassList(FittedClass, fitted);
             view.Root.focusable = known && view.HasPart;
-            view.Name.text = known && view.HasPart ? _localization.Get(PartInfo.NameKey(part)) : string.Empty;
+            string nextName = known && view.HasPart ? _localization.Get(PartInfo.NameKey(part)) : string.Empty;
+            if (!string.Equals(view.Name.text, nextName, StringComparison.Ordinal))
+            {
+                view.Name.text = nextName;
+                view.LabelHeight = float.NaN;
+            }
+
             view.Bay.style.display = known && !fitted ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
@@ -671,6 +706,7 @@ namespace MoonProject.UI
             public bool Placed;
             public Vector2 At = new Vector2(float.NaN, float.NaN);
             public float LabelY = float.NaN;
+            public float LabelHeight = float.NaN;
             public float AreaWidth = float.NaN;
             public bool LabelRight;
             public bool LabelShown;

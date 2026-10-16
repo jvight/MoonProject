@@ -2237,6 +2237,7 @@ Label {
 .seven__socket-label {
     position: absolute;
     font-size: 18px;
+    white-space: normal;
     -unity-text-align: middle-right;
     color: var(--glass-hi);
 }

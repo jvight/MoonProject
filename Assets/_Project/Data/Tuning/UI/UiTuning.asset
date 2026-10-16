@@ -253,17 +253,17 @@ MonoBehaviour:
     _bootSlideDistance: 64
     _bootHatchLingerSeconds: 0.2
     _dragThreshold: 6
-    _labelWidth: 184
-    _leftLabelWidth: 244
+    _labelWidth: 158
+    _leftLabelWidth: 158
     _labelHeight: 24
     _labelGap: 6
     _labelMargin: 8
-    _portraitReferenceWidth: 740
+    _portraitReferenceWidth: 798
     _tooltipGap: 10
     _diagramYaw: 55
     _diagramElevation: 14
-    _diagramDistance: 6.6
-    _diagramLookHeight: 0.6
+    _diagramDistance: 3.9
+    _diagramLookHeight: 0.56
     _diagramFieldOfView: 30
   _unlockCard:
     _reveal:
