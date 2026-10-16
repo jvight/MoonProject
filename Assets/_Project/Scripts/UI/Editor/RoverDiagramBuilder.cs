@@ -1,0 +1,78 @@
+using System;
+using UnityEditor;
+using UnityEngine;
+using MoonProject.Core;
+using MoonProject.Editor.Builders;
+
+namespace MoonProject.UI.Editor
+{
+    /// <summary>
+    /// Builds <see cref="UiAssetPaths.RoverDiagram"/> by reading the equipment socket transforms from the generated
+    /// 07 v3 prefab (<see cref="UiAssetPaths.RoverModelPrefab"/>; socket names in
+    /// <c>tools/art/qa/contracts/rover.json</c>). Fails loudly if the prefab or any socket transform is missing.
+    /// </summary>
+    public static class RoverDiagramBuilder
+    {
+        [MoonBuilder("UI/Rover Diagram", UiTuningBuilder.BuilderOrder + 3)]
+        public static void Build()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(UiAssetPaths.RoverModelPrefab);
+            if (prefab == null)
+            {
+                throw new InvalidOperationException(
+                    $"UI/Rover Diagram: missing rover model prefab at '{UiAssetPaths.RoverModelPrefab}' (run Art/R1/Rover Model first).");
+            }
+
+            Transform root = prefab.transform;
+            Transform[] nodes = prefab.GetComponentsInChildren<Transform>(true);
+            RoverSocket[] values = (RoverSocket[])Enum.GetValues(typeof(RoverSocket));
+            if (values.Length != RoverDiagramData.SocketCount)
+            {
+                throw new InvalidOperationException(
+                    $"UI/Rover Diagram: expected {RoverDiagramData.SocketCount} RoverSocket values, found {values.Length}.");
+            }
+
+            var sockets = new Vector3[values.Length];
+            for (int i = 0; i < values.Length; i++)
+            {
+                RoverSocket socket = values[i];
+                string primaryName = socket + "Socket";
+                RequireNode(nodes, primaryName, socket);
+                string anchorName = SocketNodeName(socket);
+                Transform anchor = RequireNode(nodes, anchorName, socket);
+                sockets[i] = root.InverseTransformPoint(anchor.position);
+            }
+
+            var data = ScriptableObject.CreateInstance<RoverDiagramData>();
+            data.SetSockets(sockets);
+            string problem = data.Validate();
+            if (problem != null)
+            {
+                throw new InvalidOperationException($"UI/Rover Diagram: RoverDiagramData {problem}.");
+            }
+
+            GeneratedAssets.CreateOrReplace(data, UiAssetPaths.RoverDiagram);
+        }
+
+        private static string SocketNodeName(RoverSocket socket)
+        {
+            // Side Bins (RoverSocket.Panniers) are a mirrored pair on BinSocket_L and BinSocket_R; the left-flank bin
+            // sits in the right half of the 3/4 schematic view, balancing the 6-left / 4-right label columns.
+            return socket == RoverSocket.Panniers ? "BinSocket_L" : socket + "Socket";
+        }
+
+        private static Transform RequireNode(Transform[] nodes, string name, RoverSocket socket)
+        {
+            for (int i = 0; i < nodes.Length; i++)
+            {
+                if (nodes[i] != null && string.Equals(nodes[i].name, name, StringComparison.Ordinal))
+                {
+                    return nodes[i];
+                }
+            }
+
+            throw new InvalidOperationException(
+                $"UI/Rover Diagram: '{UiAssetPaths.RoverModelPrefab}' has no socket transform named '{name}' for RoverSocket.{socket}.");
+        }
+    }
+}

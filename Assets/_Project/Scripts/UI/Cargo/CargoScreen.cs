@@ -68,7 +68,8 @@ namespace MoonProject.UI
 
         public CargoScreen(UiLayout layout, CargoScreenSettings settings, ILocalization localization,
             ICargoHold hold, IHomeStorage home, IStackTransfer transfer, IDockState dock, IRoverEquipment equipment,
-            IRoverPortrait portrait, GlyphLabels glyphs, IntText numbers, EventBus events, PromptLedger ledger)
+            IRoverPortrait portrait, RoverDiagramData diagram, GlyphLabels glyphs, IntText numbers, EventBus events,
+            PromptLedger ledger)
         {
             if (layout == null)
             {
@@ -90,7 +91,7 @@ namespace MoonProject.UI
             _reveal = new Reveal(root, settings.Reveal);
             _reveal.Snap(false);
             _panel = Require<VisualElement>(root, "cargo-panel");
-            _seven = new EquipmentPage(layout, settings, localization, equipment, portrait, glyphs, events);
+            _seven = new EquipmentPage(layout, settings, localization, equipment, portrait, diagram, glyphs, events);
             _waiting = Require<Label>(root, "cargo-waiting");
             _bootLine = Require<Label>(root, "cargo-boot");
             _transferHint = Require<Label>(root, "cargo-transfer-hint");

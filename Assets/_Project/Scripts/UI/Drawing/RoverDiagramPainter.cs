@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
@@ -9,18 +10,12 @@ namespace MoonProject.UI
     /// on the Tab "07" equipment screen: four wheels with chevron treads, suspension struts, beetle carapace body,
     /// front toothed dig scoop, twin headlamps, chest cutter turret, ribbed neck, CRT monitor head with visor, left
     /// lens pod, right cassette tape deck, roof solar wing, rear clamshell hatch + 8-segment battery bar, tow hook,
-    /// and rear antenna with sonar loop. Projected with the same 3/4 camera framing as the 12 socket anchors so every
-    /// socket dot and cyan leader line lands directly on its physical component.
+    /// and rear antenna with sonar loop. Socket anchor positions come from <see cref="RoverDiagramData"/> (extracted at
+    /// build time from <c>RoverModel.prefab</c>) and camera framing comes from <see cref="CargoScreenSettings"/>.
     /// </summary>
     internal sealed class RoverDiagramPainter : StylePainter
     {
         public const float Aspect = 1.5f;
-
-        private const float YawRad = 55f * Mathf.Deg2Rad;
-        private const float ElevRad = 14f * Mathf.Deg2Rad;
-        private const float CameraDistance = 6.6f;
-        private const float LookHeight = 0.6f;
-        private const float TanHalfFov = 0.26794919f; // tan(15 deg)
 
         private static readonly CustomStyleProperty<Color> LineColorProperty =
             new CustomStyleProperty<Color>("--diagram-line");
@@ -37,61 +32,39 @@ namespace MoonProject.UI
         private static readonly CustomStyleProperty<Color> GridColorProperty =
             new CustomStyleProperty<Color>("--diagram-grid");
 
-        private static readonly Vector3 CamPos;
-        private static readonly Vector3 CamRight;
-        private static readonly Vector3 CamUp;
-        private static readonly Vector3 CamFwd;
-
-        // 07 v3 socket anchor positions in Unity rover-local metres (+X right, +Y up, +Z forward), matching
-        // Core.RoverSocket enum order (0..11).
-        private static readonly Vector3[] SocketPoints =
-        {
-            new Vector3(-0.04f, 0.88f, 0.58f),  // 0 Cutter (front chest cutter turret)
-            new Vector3(0.00f, 0.36f, -0.66f),  // 1 Tether (rear tow hook)
-            new Vector3(-0.18f, 0.68f, 0.65f),  // 2 Lamp (front twin headlamps)
-            new Vector3(-0.06f, 0.24f, 0.66f),  // 3 Belly (under-chassis hover/belly mount)
-            new Vector3(0.48f, 0.78f, -0.18f),  // 4 Flanks (upper flank capacitor mount)
-            new Vector3(-0.12f, 0.48f, 0.60f),  // 5 Panniers (front-flank side bin mount)
-            new Vector3(0.08f, 0.84f, -0.36f),  // 6 Back (rear-top spine mount)
-            new Vector3(0.12f, 0.56f, -0.58f),  // 7 Hold (rear clamshell hatch)
-            new Vector3(0.12f, 0.97f, -0.28f),  // 8 Wing (roof solar wing)
-            new Vector3(0.34f, 1.23f, 0.04f),   // 9 Deck (right cheek tape deck pod)
-            new Vector3(-0.48f, 0.28f, 0.56f),  // 10 Wheels (front wheel drive hub)
-            new Vector3(0.36f, 1.14f, -0.46f),  // 11 Antenna (rear whip antenna + sonar loop)
-        };
-
+        private readonly RoverDiagramData _data;
+        private readonly CargoScreenSettings _settings;
         private Color _lineColor = new Color(1f, 0.71f, 0.28f, 0.95f);
         private Color _brightColor = new Color(1f, 0.84f, 0.50f, 1f);
         private Color _dimColor = new Color(1f, 0.71f, 0.28f, 0.52f);
         private Color _fillColor = new Color(0.055f, 0.035f, 0.02f, 0.96f);
         private Color _gridColor = new Color(0.37f, 0.95f, 1f, 0.22f);
+        private float _cachedYaw = float.NaN;
+        private float _cachedElevation = float.NaN;
+        private float _cachedDistance = float.NaN;
+        private float _cachedLookHeight = float.NaN;
+        private float _cachedFov = float.NaN;
+        private Vector3 _camPos;
+        private Vector3 _camRight;
+        private Vector3 _camUp;
+        private Vector3 _camFwd;
+        private float _tanHalfFov;
         private Painter2D _painter;
         private Rect _frame;
 
-        static RoverDiagramPainter()
+        public RoverDiagramPainter(VisualElement element, RoverDiagramData data, CargoScreenSettings settings)
+            : base(element)
         {
-            float cosElev = Mathf.Cos(ElevRad);
-            var dir = new Vector3(Mathf.Sin(YawRad) * cosElev, Mathf.Sin(ElevRad), Mathf.Cos(YawRad) * cosElev);
-            CamPos = new Vector3(0f, LookHeight, 0f) + dir * CameraDistance;
-            CamFwd = -dir;
-            CamRight = new Vector3(CamFwd.z, 0f, -CamFwd.x).normalized;
-            CamUp = Vector3.Cross(CamFwd, CamRight);
-        }
-
-        public RoverDiagramPainter(VisualElement element) : base(element)
-        {
+            _data = data ?? throw new ArgumentNullException(nameof(data));
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            EnsureFraming();
         }
 
         /// <summary>Viewport coordinates (0..1, bottom-left origin) for <paramref name="socket"/> on 07 v3.</summary>
-        public static Vector2 SocketViewport(RoverSocket socket)
+        public Vector2 SocketViewport(RoverSocket socket)
         {
-            int index = (int)socket;
-            if (index < 0 || index >= SocketPoints.Length)
-            {
-                return new Vector2(0.5f, 0.5f);
-            }
-
-            return ProjectUv(SocketPoints[index]);
+            EnsureFraming();
+            return ProjectUv(_data.SocketPosition(socket));
         }
 
         /// <summary>Aspect-fitted 3:2 frame inside <paramref name="box"/> where the diagram and sockets live.</summary>
@@ -125,6 +98,7 @@ namespace MoonProject.UI
                 return;
             }
 
+            EnsureFraming();
             _frame = FrameRect(box);
             _painter = context.painter2D;
             _painter.lineCap = LineCap.Round;
@@ -137,6 +111,35 @@ namespace MoonProject.UI
             PaintHeadAndAntenna();
             PaintGridAndWheelPair(true);
             _painter = null;
+        }
+
+        private void EnsureFraming()
+        {
+            float yaw = _settings.DiagramYaw;
+            float elevation = _settings.DiagramElevation;
+            float distance = _settings.DiagramDistance;
+            float lookHeight = _settings.DiagramLookHeight;
+            float fov = _settings.DiagramFieldOfView;
+            if (yaw == _cachedYaw && elevation == _cachedElevation && distance == _cachedDistance &&
+                lookHeight == _cachedLookHeight && fov == _cachedFov)
+            {
+                return;
+            }
+
+            _cachedYaw = yaw;
+            _cachedElevation = elevation;
+            _cachedDistance = distance;
+            _cachedLookHeight = lookHeight;
+            _cachedFov = fov;
+            float yawRad = yaw * Mathf.Deg2Rad;
+            float elevRad = elevation * Mathf.Deg2Rad;
+            float cosElev = Mathf.Cos(elevRad);
+            var dir = new Vector3(Mathf.Sin(yawRad) * cosElev, Mathf.Sin(elevRad), Mathf.Cos(yawRad) * cosElev);
+            _camPos = new Vector3(0f, lookHeight, 0f) + dir * distance;
+            _camFwd = -dir;
+            _camRight = new Vector3(-Mathf.Cos(yawRad), 0f, Mathf.Sin(yawRad));
+            _camUp = Vector3.Cross(_camFwd, _camRight);
+            _tanHalfFov = Mathf.Max(0.05f, Mathf.Tan(0.5f * fov * Mathf.Deg2Rad));
         }
 
         private void PaintGridAndWheelPair(bool nearSide)
@@ -220,10 +223,14 @@ namespace MoonProject.UI
             _painter.fillColor = _fillColor;
             _painter.strokeColor = _dimColor;
             _painter.lineWidth = 1.6f;
+
+            // Left-flank pannier bin (BinSocket_L) & undercarriage belly plate (BellySocket).
+            QuadFill(new Vector3(-0.54f, 0.50f, -0.14f), new Vector3(-0.54f, 0.50f, 0.18f),
+                new Vector3(-0.46f, 0.66f, 0.18f), new Vector3(-0.46f, 0.66f, -0.14f));
             QuadFill(new Vector3(-0.34f, 0.28f, -0.44f), new Vector3(0.34f, 0.28f, -0.44f),
                 new Vector3(0.34f, 0.28f, 0.44f), new Vector3(-0.34f, 0.28f, 0.44f));
 
-            // Suspension arms & struts to right wheels + rear tow hook (Tether socket).
+            // Suspension arms & struts to right wheels + rear tow hook (TetherSocket).
             Segment(P(0.36f, 0.46f, 0.42f), P(0.56f, 0.35f, 0.53f));
             Segment(P(0.36f, 0.46f, -0.42f), P(0.56f, 0.35f, -0.53f));
             _painter.strokeColor = _lineColor;
@@ -261,15 +268,15 @@ namespace MoonProject.UI
             QuadFill(new Vector3(-0.44f, 0.72f, 0.56f), new Vector3(0.44f, 0.72f, 0.56f),
                 new Vector3(0.38f, 0.90f, 0.44f), new Vector3(-0.38f, 0.90f, 0.44f));
 
-            // Beltline & right-flank pannier bin (Panniers) + capacitor drum (Flanks).
+            // Beltline & right-flank pannier bin (BinSocket_R / PanniersSocket) + capacitor drum (FlanksSocket).
             _painter.lineWidth = 1.5f;
             Segment(P(0.47f, 0.62f, -0.56f), P(0.47f, 0.62f, 0.58f));
-            QuadFill(new Vector3(0.47f, 0.50f, 0.18f), new Vector3(0.47f, 0.50f, 0.46f),
-                new Vector3(0.54f, 0.66f, 0.46f), new Vector3(0.54f, 0.66f, 0.18f));
+            QuadFill(new Vector3(0.47f, 0.50f, -0.14f), new Vector3(0.47f, 0.50f, 0.18f),
+                new Vector3(0.54f, 0.66f, 0.18f), new Vector3(0.54f, 0.66f, -0.14f));
             QuadFill(new Vector3(0.45f, 0.74f, -0.32f), new Vector3(0.45f, 0.74f, -0.04f),
                 new Vector3(0.52f, 0.86f, -0.04f), new Vector3(0.52f, 0.86f, -0.32f));
 
-            // Rear clamshell hatch (Hold) & 8-segment battery bar along rear lip.
+            // Rear clamshell hatch (HoldSocket) & 8-segment battery bar along rear lip.
             QuadStroke(new Vector3(-0.34f, 0.44f, -0.59f), new Vector3(0.34f, 0.44f, -0.59f),
                 new Vector3(0.32f, 0.70f, -0.56f), new Vector3(-0.32f, 0.70f, -0.56f));
             _painter.strokeColor = _brightColor;
@@ -282,30 +289,31 @@ namespace MoonProject.UI
 
         private void PaintFrontRigAndRoof()
         {
-            // Twin front headlamps (Lamp) & chest cutter turret (Cutter).
+            // Twin front headlamps & lamp bar (LampSocket) + chest cutter turret (CutterSocket).
             _painter.strokeColor = _brightColor;
             _painter.lineWidth = 1.8f;
             PaintHeadlamp(new Vector3(-0.18f, 0.65f, 0.64f));
             PaintHeadlamp(new Vector3(0.18f, 0.65f, 0.64f));
-            QuadFill(new Vector3(-0.11f, 0.72f, 0.50f), new Vector3(0.11f, 0.72f, 0.50f),
-                new Vector3(0.09f, 0.84f, 0.68f), new Vector3(-0.09f, 0.84f, 0.68f));
-            Segment(P(0f, 0.78f, 0.68f), P(0f, 0.78f, 0.80f));
+            Segment(P(-0.18f, 0.66f, 0.62f), P(0.18f, 0.66f, 0.62f));
+            QuadFill(new Vector3(-0.11f, 0.70f, 0.52f), new Vector3(0.11f, 0.70f, 0.52f),
+                new Vector3(0.09f, 0.82f, 0.72f), new Vector3(-0.09f, 0.82f, 0.72f));
+            Segment(P(0f, 0.73f, 0.72f), P(0f, 0.73f, 0.82f));
 
-            // Roof solar wing (Wing) & rear spine (Back).
+            // Roof solar wing (WingSocket) & rear spine (BackSocket).
             _painter.strokeColor = _lineColor;
             _painter.lineWidth = 1.7f;
-            QuadFill(new Vector3(-0.34f, 0.97f, -0.46f), new Vector3(0.34f, 0.97f, -0.46f),
-                new Vector3(0.34f, 0.97f, -0.06f), new Vector3(-0.34f, 0.97f, -0.06f));
+            QuadFill(new Vector3(-0.34f, 0.96f, -0.46f), new Vector3(0.34f, 0.96f, -0.46f),
+                new Vector3(0.34f, 0.96f, -0.06f), new Vector3(-0.34f, 0.96f, -0.06f));
             _painter.strokeColor = _dimColor;
             _painter.lineWidth = 1.1f;
-            Segment(P(-0.11f, 0.975f, -0.46f), P(-0.11f, 0.975f, -0.06f));
-            Segment(P(0.11f, 0.975f, -0.46f), P(0.11f, 0.975f, -0.06f));
-            Segment(P(-0.34f, 0.975f, -0.26f), P(0.34f, 0.975f, -0.26f));
+            Segment(P(-0.11f, 0.965f, -0.46f), P(-0.11f, 0.965f, -0.06f));
+            Segment(P(0.11f, 0.965f, -0.46f), P(0.11f, 0.965f, -0.06f));
+            Segment(P(-0.34f, 0.965f, -0.26f), P(0.34f, 0.965f, -0.26f));
         }
 
         private void PaintHeadAndAntenna()
         {
-            // Rear whip antenna & diamond sonar loop (Antenna).
+            // Rear whip antenna & diamond sonar loop (AntennaSocket).
             _painter.strokeColor = _lineColor;
             _painter.lineWidth = 1.7f;
             Segment(P(0.36f, 0.88f, -0.46f), P(0.36f, 1.44f, -0.48f));
@@ -329,7 +337,7 @@ namespace MoonProject.UI
             QuadFill(new Vector3(-0.27f, 1.07f, 0.22f), new Vector3(0.27f, 1.07f, 0.22f),
                 new Vector3(0.27f, 1.41f, 0.22f), new Vector3(-0.27f, 1.41f, 0.22f));
 
-            // CRT screen bezel, friendly amber eyes & right-cheek tape deck pod (Deck).
+            // CRT screen bezel, friendly amber eyes & right-cheek tape deck pod (DeckSocket).
             _painter.strokeColor = _brightColor;
             _painter.lineWidth = 1.7f;
             QuadStroke(new Vector3(-0.21f, 1.13f, 0.23f), new Vector3(0.21f, 1.13f, 0.23f),
@@ -383,14 +391,15 @@ namespace MoonProject.UI
             return new Vector2(_frame.x + uv.x * _frame.width, _frame.y + (1f - uv.y) * _frame.height);
         }
 
-        private static Vector2 ProjectUv(Vector3 point)
+        private Vector2 ProjectUv(Vector3 point)
         {
-            Vector3 d = point - CamPos;
-            float cx = Vector3.Dot(d, CamRight);
-            float cy = Vector3.Dot(d, CamUp);
-            float cz = Mathf.Max(0.1f, Vector3.Dot(d, CamFwd));
-            float u = 0.5f + cx / (cz * TanHalfFov * Aspect) * 0.5f;
-            float v = 0.5f + cy / (cz * TanHalfFov) * 0.5f;
+            Vector3 d = point - _camPos;
+            // _camPos lies in the vertical plane spanned by _camFwd and +Y, so Dot(_camPos, _camRight) == 0.
+            float cx = Vector3.Dot(point, _camRight);
+            float cy = Vector3.Dot(d, _camUp);
+            float cz = Mathf.Max(0.1f, Vector3.Dot(d, _camFwd));
+            float u = 0.5f + cx / (cz * _tanHalfFov * Aspect) * 0.5f;
+            float v = 0.5f + cy / (cz * _tanHalfFov) * 0.5f;
             return new Vector2(u, v);
         }
     }

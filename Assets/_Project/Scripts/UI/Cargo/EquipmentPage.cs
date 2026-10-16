@@ -66,7 +66,8 @@ namespace MoonProject.UI
         private Vector2 _pressAt;
 
         public EquipmentPage(UiLayout layout, CargoScreenSettings settings, ILocalization localization,
-            IRoverEquipment equipment, IRoverPortrait portrait, GlyphLabels glyphs, EventBus events)
+            IRoverEquipment equipment, IRoverPortrait portrait, RoverDiagramData diagram, GlyphLabels glyphs,
+            EventBus events)
         {
             if (layout == null)
             {
@@ -89,7 +90,7 @@ namespace MoonProject.UI
             _tooltipGlyph = new GlyphView(_tooltipGlyphHolder, Require<Label>(root, "seven-tooltip-glyph-label"));
             _ghost = Require<Label>(root, "seven-ghost");
             _leaders = new LeaderPainter(Require<VisualElement>(root, "seven-leaders"), SocketCount);
-            _diagram = new RoverDiagramPainter(_portrait);
+            _diagram = new RoverDiagramPainter(_portrait, diagram, settings);
             for (int i = 0; i < SocketCount; i++)
             {
                 _sockets[i] = BuildSocket(i);
@@ -239,7 +240,7 @@ namespace MoonProject.UI
             {
                 SocketView view = _sockets[i];
                 bool placed = _portraitSource.TryGetSocketViewport(view.Id, out Vector2 _) && sized;
-                Vector2 uv = RoverDiagramPainter.SocketViewport(view.Id);
+                Vector2 uv = _diagram.SocketViewport(view.Id);
                 if (placed != view.Placed)
                 {
                     view.Placed = placed;
@@ -262,13 +263,15 @@ namespace MoonProject.UI
             }
 
             LabelLayout.Place(_points, _wantsLabel, area.width, area.height,
-                Mathf.Max(_settings.LabelHeight, 24f), Mathf.Max(_settings.LabelGap, 6f),
+                _settings.LabelHeight, _settings.LabelGap,
                 _labelY, _rightColumn);
             _leaders.Clear();
-            float scale = area.width > 0f ? Mathf.Min(1f, area.width / 740f) : 1f;
-            float leftWidth = Mathf.Floor(Mathf.Max(_settings.LabelWidth, 244f) * scale);
-            float rightWidth = Mathf.Floor(Mathf.Max(_settings.LabelWidth, 184f) * scale);
-            float labelMargin = Mathf.Floor(8f * scale);
+            float scale = area.width > 0f && _settings.PortraitReferenceWidth > 0f
+                ? Mathf.Min(1f, area.width / _settings.PortraitReferenceWidth)
+                : 1f;
+            float leftWidth = Mathf.Floor(_settings.LeftLabelWidth * scale);
+            float rightWidth = Mathf.Floor(_settings.LabelWidth * scale);
+            float labelMargin = Mathf.Floor(_settings.LabelMargin * scale);
             for (int i = 0; i < SocketCount; i++)
             {
                 SocketView view = _sockets[i];

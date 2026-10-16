@@ -1,4 +1,8 @@
 using NUnit.Framework;
+using UnityEditor;
+using UnityEngine;
+using MoonProject.Core;
+using MoonProject.UI.Editor;
 
 namespace MoonProject.UI.Tests
 {
@@ -136,6 +140,58 @@ namespace MoonProject.UI.Tests
             hint.Tick(Frame, true, true);
             hint.Tick(stargaze.HintHoldSeconds + 1f, true, true);
             Assert.IsFalse(hint.WantsShown);
+        }
+
+        [Test]
+        public void CargoScreenSettings_InUiTuningAsset_MatchesDefaultsAndValidates()
+        {
+            var tuning = AssetDatabase.LoadAssetAtPath<UiTuning>(UiAssetPaths.Tuning);
+            Assert.IsNotNull(tuning, $"{UiAssetPaths.Tuning} is missing");
+            CargoScreenSettings asset = tuning.Cargo;
+            Assert.IsNull(asset.Validate());
+            Assert.AreEqual(_settings.PanelWidth, asset.PanelWidth);
+            Assert.AreEqual(_settings.LabelWidth, asset.LabelWidth);
+            Assert.AreEqual(_settings.LeftLabelWidth, asset.LeftLabelWidth);
+            Assert.AreEqual(_settings.LabelHeight, asset.LabelHeight);
+            Assert.AreEqual(_settings.LabelGap, asset.LabelGap);
+            Assert.AreEqual(_settings.LabelMargin, asset.LabelMargin);
+            Assert.AreEqual(_settings.PortraitReferenceWidth, asset.PortraitReferenceWidth);
+            Assert.AreEqual(_settings.DiagramYaw, asset.DiagramYaw);
+            Assert.AreEqual(_settings.DiagramElevation, asset.DiagramElevation);
+            Assert.AreEqual(_settings.DiagramDistance, asset.DiagramDistance);
+            Assert.AreEqual(_settings.DiagramLookHeight, asset.DiagramLookHeight);
+            Assert.AreEqual(_settings.DiagramFieldOfView, asset.DiagramFieldOfView);
+        }
+
+        [Test]
+        public void RoverDiagramAsset_MatchesRoverModelPrefabSocketTransforms()
+        {
+            var diagram = AssetDatabase.LoadAssetAtPath<RoverDiagramData>(UiAssetPaths.RoverDiagram);
+            Assert.IsNotNull(diagram, $"{UiAssetPaths.RoverDiagram} is missing: run UI/Rover Diagram");
+            Assert.IsNull(diagram.Validate());
+
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(UiAssetPaths.RoverModelPrefab);
+            Assert.IsNotNull(prefab, $"{UiAssetPaths.RoverModelPrefab} is missing");
+            Transform[] nodes = prefab.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < RoverDiagramData.SocketCount; i++)
+            {
+                var socket = (RoverSocket)i;
+                string expectedName = socket == RoverSocket.Panniers ? "BinSocket_L" : socket + "Socket";
+                Transform match = null;
+                for (int j = 0; j < nodes.Length; j++)
+                {
+                    if (nodes[j] != null && nodes[j].name == expectedName)
+                    {
+                        match = nodes[j];
+                        break;
+                    }
+                }
+
+                Assert.IsNotNull(match, $"Missing {expectedName} on {UiAssetPaths.RoverModelPrefab}");
+                Vector3 expected = prefab.transform.InverseTransformPoint(match.position);
+                Vector3 actual = diagram.SocketPosition(socket);
+                Assert.Less(Vector3.Distance(expected, actual), 1e-4f, $"Socket {socket} ({expectedName}) drifted");
+            }
         }
 
         private void Run(float seconds)

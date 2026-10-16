@@ -34,6 +34,7 @@ namespace MoonProject.UI.Editor
             document.visualTreeAsset = layout;
             var system = host.AddComponent<UISystem>();
             system.Wire(document, tuning, catalog, tables, context.LoadAsset<WordmarkShape>(UiAssetPaths.Wordmark),
+                context.LoadAsset<RoverDiagramData>(UiAssetPaths.RoverDiagram),
                 context.LoadAsset<TextAsset>(UiAssetPaths.Credits));
             context.AddSystem(system);
         }
