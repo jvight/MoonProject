@@ -1,14 +1,18 @@
 """Build HabitatModules.fbx (R1 Lumen Station ruins — 3 connected pressurized modules).
 
 Includes:
-- ModuleA_Main: Sealed main pressurized cylinder on cradle footings with airlock vestibule,
-  hatch door, ladder, roof radiator louvres, and SEC-04 HABITAT & LAB stencil signage.
-- AirlockPanel: Separate child mesh node with R1_Screen status display beside the airlock door.
-- BellowsJoints: Two corrugated expansion bellows joints with tie-rods and clamping rings.
-- ModuleB_Lab: Secondary pressurized botany/lab cylinder with sage-green stripe, dome cap,
-  and copper/brass umbilical manifold.
-- ModuleC_Crushed: Depressurized crushed/holed module with buckled hull plates, exposed
-  internal ring frames, torn gold Kapton MLI foil, and damaged cradle footing.
+- ModuleA_Main: Smooth 36-segment pressurized cylinder with domed front bulkhead, round/arched
+  airlock door, recessed keypad box beside it, one warm-orange horizontal stripe band, and
+  umbilical ground cables.
+- AirlockPanel: Separate child mesh node mounted above the round airlock door with R1_Screen
+  displaying `SEALED · 1988 · STANDBY`.
+- BellowsJoints: Two solid, non-see-through dark rubber accordion bellows joints with smooth
+  36-segment steel collars and tie-lugs.
+- ModuleB_Lab: Smooth 36-segment pressurized cylinder with one warm-orange horizontal band,
+  riveted sage patch, trapezoidal footings, and one readable `SEC-04 HABITAT & LAB` stencil sign.
+- ModuleC_Crushed: Smooth 36-segment pressurized cylinder with domed end cap, one warm-orange
+  horizontal band, trapezoidal footings, and caved-in structural hull dents (weathering in
+  vertex colours; no coloured squares).
 - Scan_1, Scan_2, Scan_3: Empty scan target nodes.
 """
 
@@ -17,6 +21,7 @@ from __future__ import annotations
 import math
 import sys
 from pathlib import Path
+from typing import Callable, Optional, Tuple
 
 THIS_DIR = Path(__file__).resolve().parent
 BLENDER_DIR = THIS_DIR.parent
@@ -27,356 +32,523 @@ import r1kit  # noqa: E402
 from ruins import ruins_common  # noqa: E402
 
 
-def _add_cradle_footing(mb: r1kit.MeshBuilder, x_u: float, z_u: float, radius: float, center_y: float, damaged: bool = False) -> None:
-    """Add a heavy steel saddle cradle + twin legs + footing pads down to y_u = 0."""
-    tilt_z = -7.5 if damaged else 0.0
-    # Saddle arc beam under cylinder
-    mb.add_bevel_box(
-        (x_u, center_y - radius * 0.78, z_u),
-        (0.32, 0.36, radius * 1.85),
-        bevel=0.025,
-        mat="R1_GreyMetal",
-        rot_deg_u=(tilt_z, 0.0, 0.0),
-        segs=1,
-    )
-    for sz in (-1.0, 1.0):
-        leg_z = z_u + sz * (radius * 0.78)
-        leg_h = center_y - radius * 0.65
-        # Vertical/angled H-beam leg
-        mb.add_bevel_box(
-            (x_u, leg_h * 0.5 + 0.08, leg_z),
-            (0.24, leg_h, 0.26),
-            bevel=0.02,
-            mat="R1_GreyMetal",
-            rot_deg_u=(sz * -6.0 + tilt_z, 0.0, 0.0),
-            segs=1,
-        )
-        # Diagonal knee brace
-        mb.add_bevel_box(
-            (x_u, leg_h * 0.68, leg_z - sz * 0.24),
-            (0.14, leg_h * 0.55, 0.14),
-            bevel=0.015,
-            mat="R1_BareSteel",
-            rot_deg_u=(sz * 28.0, 0.0, 0.0),
-            segs=1,
-        )
-        # Footing pad on regolith at y_u = 0
-        mb.add_cylinder(
-            (x_u, 0.05, leg_z + sz * 0.06),
-            radius=0.34,
-            height=0.10,
-            segs=8,
-            axis="y",
-            mat="R1_GreyMetal",
-            bevel=0.015,
-        )
+def _add_trapezoidal_footings(
+    mb: r1kit.MeshBuilder,
+    x_positions: tuple[float, ...],
+    z_center: float,
+    radius: float,
+    cy: float,
+    axis: str = "x",
+) -> None:
+    """Add low, sturdy angled trapezoidal support footings along the bottom of a habitat cylinder."""
+    for pos in x_positions:
+        for side in (-1.0, 1.0):
+            if axis == "x":
+                fx = pos
+                fz = z_center + side * (radius * 0.72)
+                rot = (side * -14.0, 0.0, 0.0)
+                pad_size = (0.46, 0.10, 0.44)
+                leg_size = (0.38, 0.62, 0.34)
+                pad_pos = (fx, 0.05, fz + side * 0.10)
+                leg_pos = (fx, 0.32, fz)
+            else:
+                fx = z_center + side * (radius * 0.72)
+                fz = pos
+                rot = (0.0, 0.0, side * 14.0)
+                pad_size = (0.44, 0.10, 0.46)
+                leg_size = (0.34, 0.62, 0.38)
+                pad_pos = (fx + side * 0.10, 0.05, fz)
+                leg_pos = (fx, 0.32, fz)
+
+            mb.add_bevel_box(
+                leg_pos,
+                leg_size,
+                bevel=0.02,
+                mat="R1_CreamEnamel",
+                rot_deg_u=rot,
+                top_scale_xz=(0.82, 0.82),
+                segs=1,
+            )
+            mb.add_bevel_box(
+                pad_pos,
+                pad_size,
+                bevel=0.015,
+                mat="R1_GreyMetal",
+                segs=1,
+            )
+
+
+def _add_module_orange_band(
+    mb: r1kit.MeshBuilder,
+    cyl_center_u: Tuple[float, float, float],
+    radius: float,
+    bays: tuple[Tuple[float, float], ...],
+    axis: str = "x",
+    segs: int = 32,
+    dent_fn: Optional[Callable[[float, float, float], Tuple[float, float, float]]] = None,
+) -> None:
+    """Add ONE horizontal warm-orange stripe band (plus thin upper pin-stripe) along the cylinder sides."""
+    if axis.lower() == "z":
+        main_angles = ((158.0, 175.0),)
+        pin_angles = ((179.0, 181.5),)
+    else:
+        main_angles = ((-85.0, -68.0), (68.0, 85.0))
+        pin_angles = ((-90.0, -87.5), (87.5, 90.0))
+
+    for t0, t1 in bays:
+        for ang0, ang1 in main_angles:
+            ruins_common.add_curved_cyl_band(
+                mb,
+                cyl_center_u=cyl_center_u,
+                radius=radius,
+                thickness=0.014,
+                t0=t0,
+                t1=t1,
+                ang0_deg=ang0,
+                ang1_deg=ang1,
+                mat="R1_OrangeStripe",
+                axis=axis,
+                segs=segs,
+                axial_segs=1,
+                clip_min_y_u=None,
+                dent_fn=dent_fn,
+            )
+        for ang0, ang1 in pin_angles:
+            ruins_common.add_curved_cyl_band(
+                mb,
+                cyl_center_u=cyl_center_u,
+                radius=radius,
+                thickness=0.012,
+                t0=t0,
+                t1=t1,
+                ang0_deg=ang0,
+                ang1_deg=ang1,
+                mat="R1_OrangeStripe",
+                axis=axis,
+                segs=segs,
+                axial_segs=1,
+                clip_min_y_u=None,
+                dent_fn=dent_fn,
+            )
 
 
 def _build_main_module(root) -> None:
+    """Build ModuleA_Main: leftmost front airlock dome module with round airlock door & keypad box."""
     mb = r1kit.MeshBuilder()
-    cy = 1.92
-    rad = 1.62
-    # Main cylinder spans X = -1.10 to +4.10 (length 5.20m) along X axis
-    cx = 1.50
-    length = 5.20
+    cx = -3.45
+    cy = 1.60
+    cz = -0.08
+    rad = 1.54
+    segs = 32
 
-    # Primary cream enamel pressure hull
-    mb.add_cylinder((cx, cy, 0.0), radius=rad, height=length, segs=14, axis="x", mat="R1_CreamEnamel", bevel=0.04)
-
-    # End bulkheads
-    for ex in (-1.10, 4.10):
-        mb.add_cylinder((ex, cy, 0.0), radius=rad * 0.94, height=0.22, segs=12, axis="x", mat="R1_GreyMetal", bevel=0.03)
-        mb.add_ring((ex, cy, 0.0), r_outer=rad * 1.02, r_inner=rad * 0.88, height=0.14, segs=12, axis="x", mat="R1_BareSteel")
-
-    # Warm orange identity stripe bands & structural stiffening rings along X
-    for rx in (-0.75, 0.55, 2.35, 3.75):
-        mb.add_ring((rx, cy, 0.0), r_outer=rad + 0.045, r_inner=rad - 0.02, height=0.18, segs=12, axis="x", mat="R1_GreyMetal")
-
-    for ox in (-0.25, 3.25):
-        mb.add_ring((ox, cy, 0.0), r_outer=rad + 0.018, r_inner=rad - 0.01, height=0.42, segs=12, axis="x", mat="R1_OrangeStripe")
-
-    # Longitudinal upper & side stringer conduits
-    for angle_deg in (35.0, 145.0, -25.0):
-        a = math.radians(angle_deg)
-        sy = cy + (rad + 0.04) * math.sin(a)
-        sz = (rad + 0.04) * math.cos(a)
-        mb.add_cylinder((cx, sy, sz), radius=0.035, height=length - 0.35, segs=8, axis="x", mat="R1_BareSteel", bevel=0.005)
-
-    # Gold Kapton thermal blanket recessed bay on front-left & back
-    mb.add_bevel_box((0.05, cy + 0.38, -rad + 0.04), (0.95, 0.62, 0.12), bevel=0.015, mat="R1_GreyMetal", segs=1)
-    mb.add_bevel_box((0.05, cy + 0.38, -rad - 0.01), (0.84, 0.50, 0.04), bevel=0.008, mat="R1_GoldFoil", segs=1)
-
-    # Dark glass porthole windows on front (-Z) and back (+Z)
-    for wx in (0.05, 3.05):
-        for sz in (-1.0, 1.0):
-            wz = sz * (rad - 0.02)
-            mb.add_cylinder((wx, cy + 0.15, wz), radius=0.30, height=0.12, segs=10, axis="z", mat="R1_GreyMetal", bevel=0.018)
-            mb.add_cylinder((wx, cy + 0.15, wz + sz * 0.03), radius=0.22, height=0.08, segs=10, axis="z", mat="R1_DarkGlass", bevel=0.008)
-
-    # Roof ECS heat-exchanger unit & louvre rack
-    mb.add_bevel_box((1.45, cy + rad + 0.18, 0.0), (2.20, 0.34, 1.05), bevel=0.025, mat="R1_GreyMetal", segs=1)
-    for lx in range(5):
-        mb.add_bevel_box((0.70 + lx * 0.38, cy + rad + 0.36, 0.0), (0.22, 0.06, 0.88), bevel=0.008, mat="R1_BareSteel", segs=1)
-    # Copper coolant pipes into roof ECS
-    for pz in (-0.32, 0.32):
-        mb.add_cylinder((2.75, cy + rad + 0.12, pz), radius=0.032, height=0.55, segs=8, axis="x", mat="R1_Copper", bevel=0.005)
-
-    # Three heavy cradle footings under Main Module
-    for fx in (-0.55, 1.45, 3.55):
-        _add_cradle_footing(mb, fx, 0.0, rad, cy, damaged=False)
-
-    # Sealed Airlock Vestibule projecting toward -Z at X = 1.65
-    ax = 1.65
-    az = -rad - 0.42
-    # Vestibule tunnel & collar
-    mb.add_bevel_box((ax, cy - 0.08, az + 0.18), (1.56, 2.15, 0.92), bevel=0.035, mat="R1_CreamEnamel", segs=1)
-    mb.add_bevel_box((ax, cy - 0.08, az - 0.26), (1.64, 2.22, 0.18), bevel=0.025, mat="R1_GreyMetal", segs=1)
-    # Sealed pressure hatch door recessed in frame
-    mb.add_bevel_box((ax - 0.08, cy - 0.12, az - 0.32), (1.02, 1.72, 0.10), bevel=0.025, mat="R1_CreamEnamel", segs=1)
-    mb.add_bevel_box((ax - 0.08, cy - 0.12, az - 0.35), (0.86, 1.54, 0.06), bevel=0.015, mat="R1_GreyMetal", segs=1)
-    # Hatch window & dogging wheel
-    mb.add_cylinder((ax - 0.08, cy + 0.28, az - 0.37), radius=0.18, height=0.06, segs=10, axis="z", mat="R1_DarkGlass", bevel=0.008)
-    mb.add_ring((ax - 0.08, cy - 0.25, az - 0.39), r_outer=0.16, r_inner=0.04, height=0.05, segs=10, axis="z", mat="R1_BareSteel")
-    # Overhead amber airlock beacon
-    mb.add_bevel_box((ax - 0.08, cy + 0.92, az - 0.36), (0.28, 0.12, 0.12), bevel=0.015, mat="R1_GreyMetal", segs=1)
-    mb.add_bevel_box((ax - 0.08, cy + 0.92, az - 0.41), (0.22, 0.08, 0.06), bevel=0.01, mat="R1_LampAmber", segs=1)
-
-    # Airlock access platform, steps & safety handrails down to y_u = 0
-    mb.add_bevel_box((ax - 0.08, 0.72, az - 0.68), (1.42, 0.10, 0.68), bevel=0.015, mat="R1_GreyMetal", segs=1)
-    for step_i in range(3):
-        sy = 0.18 + step_i * 0.20
-        sz = az - 1.18 + step_i * 0.18
-        mb.add_bevel_box((ax - 0.08, sy, sz), (1.12, 0.06, 0.22), bevel=0.008, mat="R1_BareSteel", segs=1)
-    for hx_side in (-0.64, 0.48):
-        mb.add_cylinder((ax + hx_side, 0.62, az - 0.85), radius=0.024, height=1.24, segs=8, axis="y", mat="R1_OrangeStripe", bevel=0.004)
-        mb.add_cylinder((ax + hx_side, 1.18, az - 0.62), radius=0.024, height=0.55, segs=8, axis="z", mat="R1_OrangeStripe", bevel=0.004)
-
-    # Stencil Signage plates on Main Module (facing -Z toward viewer, rot_deg_u = (0, 180, 0))
-    # Proud hull mounting boss for main SEC-04 HABITAT & LAB plaque so it never clips into cylinder curvature
-    mb.add_bevel_box((2.95, cy + 0.62, -rad + 0.12), (1.24, 0.62, 0.32), bevel=0.018, mat="R1_GreyMetal", segs=1)
-    ruins_common.add_signage_plate(
+    # Smooth 32-segment main pressurized cylinder with domed front & rear bulkheads (aligned along Z)
+    ruins_common.add_domed_cylinder(
         mb,
-        center_u=(2.95, cy + 0.62, -rad - 0.06),
-        width=1.18,
-        height=0.56,
-        cell_name="SEC04_HABITAT",
-        rot_deg_u=(0.0, 180.0, 0.0),
+        center_u=(cx, cy, cz),
+        radius=rad,
+        total_length=2.68,
+        dome_depth=0.34,
+        mat="R1_CreamEnamel",
+        axis="z",
+        segs=segs,
+        barrel_rings=1,
+        cap_rings=3,
+        clip_min_y_u=None,
     )
-    ruins_common.add_signage_plate(
+
+    # Thick smooth 32-segment dark-grey perimeter collar rings at front (-Z) and rear (+Z)
+    for tz in (-1.02, 1.02):
+        ruins_common.add_curved_cyl_band(
+            mb,
+            cyl_center_u=(cx, cy, cz),
+            radius=rad,
+            thickness=0.062,
+            t0=tz - 0.13,
+            t1=tz + 0.13,
+            ang0_deg=0.0,
+            ang1_deg=360.0,
+            mat="R1_GreyMetal",
+            axis="z",
+            segs=segs,
+            clip_min_y_u=None,
+        )
+
+    # ONE horizontal warm-orange stripe band along the outer side of ModuleA_Main
+    _add_module_orange_band(
         mb,
-        center_u=(ax - 0.08, cy + 1.16, az - 0.22),
-        width=0.92,
-        height=0.34,
-        cell_name="LUMEN",
-        rot_deg_u=(0.0, 180.0, 0.0),
+        cyl_center_u=(cx, cy, cz),
+        radius=rad,
+        bays=((-0.86, 0.86),),
+        axis="z",
+        segs=segs,
     )
-    ruins_common.add_signage_plate(
+
+    # Side transition tunnel on the right (+X) connecting ModuleA_Main into Bellows 1 at x = -1.98
+    ruins_common.add_domed_cylinder(
         mb,
-        center_u=(ax - 0.68, cy + 0.42, az - 0.35),
-        width=0.26,
-        height=0.26,
-        cell_name="LOGO",
-        rot_deg_u=(0.0, 180.0, 0.0),
-        rivets=False,
+        center_u=(-2.32, cy, 0.05),
+        radius=1.26,
+        total_length=0.84,
+        dome_depth=0.06,
+        mat="R1_CreamEnamel",
+        axis="x",
+        segs=24,
+        barrel_rings=1,
+        cap_rings=2,
+        clip_min_y_u=None,
     )
-    ruins_common.add_signage_plate(
-        mb,
-        center_u=(ax - 0.68, cy + 0.08, az - 0.35),
-        width=0.26,
-        height=0.26,
-        cell_name="EVAC_1988",
-        rot_deg_u=(0.0, 180.0, 0.0),
-        rivets=False,
+
+    # Low trapezoidal footings under ModuleA_Main
+    _add_trapezoidal_footings(mb, (-0.58, 0.48), cx, rad, cy, axis="z")
+
+    # Front Domed Bulkhead Seams (vertical center seam above door + horizontal mid-seam + top bolts)
+    front_z = cz - 1.31
+    mb.add_bevel_box((cx, 2.48, front_z), (0.028, 0.96, 0.08), bevel=0.004, mat="R1_GreyMetal", segs=1)
+    for bx_off in (-0.08, 0.08):
+        mb.add_Detail_Bolt((cx + bx_off, 2.86, front_z - 0.04), radius=0.022, height=0.018, axis="z", mat="R1_BareSteel")
+    for sx in (-1.0, 1.0):
+        mb.add_bevel_box((cx + sx * 0.96, 1.34, front_z + 0.04), (0.68, 0.026, 0.10), bevel=0.004, mat="R1_GreyMetal", segs=1)
+
+    # Round / Arched Airlock Door centered on the lower front bulkhead (matching ruins_v1_dawn.png)
+    door_z = cz - 1.29
+    # Outer thick dark-grey rounded-arch door bezel frame (24 smooth arch segments)
+    mb.add_arch_housing(
+        base_center_u=(cx, 0.03, door_z),
+        width_x=1.22,
+        height_y=1.48,
+        depth_z=0.18,
+        arch_radius=0.60,
+        mat="R1_GreyMetal",
+        bevel=0.022,
+        arch_segments=12,
+        arch_axis_u="X",
     )
-    ruins_common.add_signage_plate(
-        mb,
-        center_u=(ax - 0.68, cy - 0.26, az - 0.35),
-        width=0.26,
-        height=0.26,
-        cell_name="PICT_AIRLOCK",
-        rot_deg_u=(0.0, 180.0, 0.0),
-        rivets=False,
+    # Recessed cream-enamel arched door leaf
+    mb.add_arch_housing(
+        base_center_u=(cx, 0.05, door_z - 0.03),
+        width_x=0.96,
+        height_y=1.32,
+        depth_z=0.15,
+        arch_radius=0.47,
+        mat="R1_CreamEnamel",
+        bevel=0.016,
+        arch_segments=12,
+        arch_axis_u="X",
     )
-    ruins_common.add_signage_plate(
-        mb,
-        center_u=(ax - 0.08, 0.72, az - 1.03),
-        width=1.32,
-        height=0.14,
-        cell_name="HAZARD",
-        rot_deg_u=(0.0, 180.0, 0.0),
-        frame_mat=None,
-        rivets=False,
+    # Vertical center door split seam + central circular locking mechanism (wheel bezel & hub)
+    mb.add_bevel_box((cx, 0.70, door_z - 0.09), (0.024, 1.24, 0.04), bevel=0.003, mat="R1_GreyMetal", segs=1)
+    mb.add_ring(
+        (cx, 0.72, door_z - 0.10),
+        r_outer=0.22,
+        r_inner=0.14,
+        height=0.05,
+        segs=24,
+        axis="z",
+        mat="R1_GreyMetal",
     )
+    mb.add_cylinder(
+        (cx, 0.72, door_z - 0.10),
+        radius=0.14,
+        height=0.05,
+        segs=20,
+        axis="z",
+        mat="R1_CreamEnamel",
+        bevel=0.008,
+    )
+    mb.add_bevel_box((cx - 0.03, 0.72, door_z - 0.125), (0.12, 0.036, 0.03), bevel=0.005, mat="R1_Copper", segs=1)
+
+    # Recessed Keypad Box beside the round airlock door on the left (matching ruins_v1_dawn.png)
+    kx, ky, kz = cx - 0.84, 0.84, door_z + 0.05
+    mb.add_bevel_box((kx, ky, kz), (0.36, 0.48, 0.14), bevel=0.016, mat="R1_GreyMetal", segs=1)
+    mb.add_bevel_box((kx, ky + 0.02, kz - 0.04), (0.28, 0.38, 0.08), bevel=0.010, mat="R1_CreamEnamel", segs=1)
+    # Upper small dark status slot & amber LED
+    mb.add_bevel_box((kx, ky + 0.12, kz - 0.075), (0.22, 0.11, 0.03), bevel=0.004, mat="R1_DarkGlass", segs=1)
+    mb.add_bevel_box((kx - 0.05, ky + 0.13, kz - 0.088), (0.07, 0.022, 0.02), bevel=0.003, mat="R1_LampAmber", segs=1)
+    # Angled lower keypad shelf with 3x3 tactile keys
+    mb.add_bevel_box(
+        (kx, ky - 0.09, kz - 0.085),
+        (0.22, 0.18, 0.08),
+        bevel=0.008,
+        mat="R1_GreyMetal",
+        rot_deg_u=(-26.0, 0.0, 0.0),
+        segs=1,
+    )
+    for row_i in range(3):
+        for col_i in range(3):
+            bx = kx + (col_i - 1) * 0.055
+            by = ky - 0.045 - row_i * 0.045
+            bz = kz - 0.115 - row_i * 0.018
+            mb.add_bevel_box(
+                (bx, by, bz),
+                (0.036, 0.028, 0.025),
+                bevel=0.003,
+                mat="R1_CreamEnamel",
+                rot_deg_u=(-26.0, 0.0, 0.0),
+                segs=1,
+            )
+
+    # Two dark rubber umbilical cables emerging from the lower-right of ModuleA_Main into the regolith
+    for c_idx, z_off in enumerate((-0.72, -0.52)):
+        pts = [
+            (cx + 1.15, 0.36, z_off),
+            (cx + 1.42, 0.22, z_off - 0.14),
+            (cx + 1.72, 0.10, z_off - 0.28),
+            (cx + 2.02, 0.05, z_off - 0.42 - c_idx * 0.06),
+        ]
+        mb.add_tube_path(pts, radius=0.042, mat="R1_Rubber", segments=10, cap_ends=True)
 
     ruins_common.to_ruin_object(mb, "ModuleA_Main", parent=root)
 
 
 def _build_airlock_panel(root) -> None:
-    """Build the required separate `AirlockPanel` child mesh node using R1_Screen."""
+    """Build the separate `AirlockPanel` child mesh node (`SEALED · 1988 · STANDBY` above the round airlock door)."""
     mb = r1kit.MeshBuilder()
-    px, py, pz = 2.22, 1.84, -2.38
+    px, py, pz = -3.45, 1.78, -1.36
 
-    mb.add_bevel_box((px, py, pz), (0.38, 0.52, 0.14), bevel=0.018, mat="R1_GreyMetal", segs=1)
-    mb.add_bevel_box((px, py + 0.07, pz - 0.06), (0.30, 0.26, 0.04), bevel=0.008, mat="R1_Rubber", segs=1)
-    mb.add_bevel_box((px, py + 0.07, pz - 0.078), (0.25, 0.21, 0.02), bevel=0.004, mat="R1_Screen", segs=1)
-    for kx in (-0.08, 0.0, 0.08):
-        mb.add_bevel_box((px + kx, py - 0.12, pz - 0.07), (0.045, 0.045, 0.03), bevel=0.004, mat="R1_CreamEnamel", segs=1)
-    mb.add_cylinder((px - 0.09, py - 0.19, pz - 0.07), radius=0.022, height=0.04, segs=8, axis="z", mat="R1_Brass", bevel=0.003)
-    mb.add_cylinder((px + 0.08, py - 0.19, pz - 0.07), radius=0.020, height=0.03, segs=8, axis="z", mat="R1_LampAmber", bevel=0.003)
+    # Outer dark-grey bezel housing
+    mb.add_bevel_box((px, py, pz), (1.20, 0.35, 0.12), bevel=0.022, mat="R1_GreyMetal", segs=1)
+    # Recessed dark rubber gasket trim
+    mb.add_bevel_box((px, py, pz - 0.045), (1.10, 0.26, 0.05), bevel=0.010, mat="R1_Rubber", segs=1)
+    # Screen mesh using R1_Screen (registered for clean [0..1] UVs and SEALED · 1988 · STANDBY display)
+    screen_center = (px, py, pz - 0.064)
+    mb.add_bevel_box(screen_center, (1.04, 0.22, 0.024), bevel=0.004, mat="R1_Screen", rot_deg_u=(0.0, 180.0, 0.0), segs=1)
+    ruins_common.register_screen_uv_plate(
+        mb,
+        center_u=(px, py, pz - 0.076),
+        width=1.04,
+        height=0.22,
+        rot_deg_u=(0.0, 180.0, 0.0),
+    )
 
     ruins_common.to_ruin_object(mb, "AirlockPanel", parent=root)
 
 
 def _build_bellows_joints(root) -> None:
-    """Build corrugated expansion bellows joints connecting the 3 modules."""
+    """Build two solid, non-see-through dark rubber accordion bellows joints with smooth 32-seg collars."""
     mb = r1kit.MeshBuilder()
-    cy = 1.92
+    cy = 1.60
+    segs = 32
 
-    for i in range(4):
-        bx = -1.22 - i * 0.24
-        mb.add_cylinder((bx, cy, 0.0), radius=1.38, height=0.16, segs=10, axis="x", mat="R1_Rubber", bevel=0.025)
-        mb.add_ring((bx - 0.10, cy, 0.0), r_outer=1.43, r_inner=1.30, height=0.05, segs=10, axis="x", mat="R1_BareSteel")
-    for a_deg in (35.0, 145.0, -35.0, -145.0):
-        a = math.radians(a_deg)
-        mb.add_cylinder((-1.62, cy + 1.44 * math.sin(a), 1.44 * math.cos(a)), radius=0.028, height=1.18, segs=6, axis="x", mat="R1_BareSteel")
-
-    bx2 = 2.85
-    for i in range(4):
-        bz = 1.68 + i * 0.24
-        mb.add_cylinder((bx2, cy, bz), radius=1.32, height=0.16, segs=10, axis="z", mat="R1_Rubber", bevel=0.025)
-        mb.add_ring((bx2, cy, bz + 0.10), r_outer=1.37, r_inner=1.24, height=0.05, segs=10, axis="z", mat="R1_BareSteel")
-    for a_deg in (35.0, 145.0, -35.0, -145.0):
-        a = math.radians(a_deg)
-        mb.add_cylinder((bx2 + 1.38 * math.cos(a), cy + 1.38 * math.sin(a), 2.08), radius=0.028, height=1.12, segs=6, axis="z", mat="R1_BareSteel")
+    for bx, r_val, r_pk, r_col in ((-1.52, 1.32, 1.45, 1.60), (2.12, 1.30, 1.43, 1.58)):
+        # Solid, watertight revolved rubber accordion rings (nothing see-through)
+        ruins_common.add_accordion_bellows(
+            mb,
+            center_u=(bx, cy, 0.0),
+            length=0.94,
+            r_valley=r_val,
+            r_peak=r_pk,
+            num_pleats=3,
+            mat="R1_Rubber",
+            axis="x",
+            segs=segs,
+            clip_min_y_u=None,
+        )
+        # Smooth 32-segment dark-grey structural end collars framing the bellows
+        for end_off in (-0.44, 0.44):
+            ruins_common.add_curved_cyl_band(
+                mb,
+                cyl_center_u=(bx, cy, 0.0),
+                radius=r_col - 0.055,
+                thickness=0.060,
+                t0=end_off - 0.08,
+                t1=end_off + 0.08,
+                ang0_deg=0.0,
+                ang1_deg=360.0,
+                mat="R1_GreyMetal",
+                axis="x",
+                segs=segs,
+                clip_min_y_u=None,
+            )
+        # Short horizontal collar tie-lugs bridging the dark grey rings (matching ruins_v1_dawn.png)
+        for ang_deg in (-145.0, -120.0, -95.0, -55.0, 55.0, 95.0, 120.0, 145.0):
+            ang = math.radians(ang_deg)
+            ly = cy - (r_col - 0.02) * math.cos(ang)
+            lz = (r_col - 0.02) * math.sin(ang)
+            if ly > 0.25:
+                mb.add_bevel_box(
+                    (bx, ly, lz),
+                    (0.92, 0.055, 0.055),
+                    bevel=0.008,
+                    mat="R1_GreyMetal",
+                    segs=1,
+                )
 
     ruins_common.to_ruin_object(mb, "BellowsJoints", parent=root)
 
 
 def _build_lab_module(root) -> None:
-    """Build ModuleB_Lab (connected behind ModuleA_Main along +Z at x=2.85, z=2.55..6.35)."""
+    """Build ModuleB_Lab: middle smooth 32-segment cylinder with one orange band, sage patch & SEC-04 sign."""
     mb = r1kit.MeshBuilder()
-    bx = 2.85
-    cy = 1.92
-    rad = 1.48
-    cz = 4.45
-    length = 3.80
+    cx = 0.30
+    cy = 1.60
+    rad = 1.54
+    segs = 32
 
-    mb.add_cylinder((bx, cy, cz), radius=rad, height=length, segs=12, axis="z", mat="R1_CreamEnamel", bevel=0.04)
-    mb.add_ring((bx, cy, cz - 0.65), r_outer=rad + 0.02, r_inner=rad - 0.01, height=0.48, segs=12, axis="z", mat="R1_SagePatch")
-    for rz in (2.85, 4.45, 6.05):
-        mb.add_ring((bx, cy, rz), r_outer=rad + 0.045, r_inner=rad - 0.02, height=0.16, segs=12, axis="z", mat="R1_GreyMetal")
-
-    mb.add_cylinder((bx, cy, 6.42), radius=rad * 0.88, height=0.24, segs=12, axis="z", mat="R1_GreyMetal", bevel=0.03)
-    mb.add_cylinder((bx, cy, 6.56), radius=0.52, height=0.16, segs=10, axis="z", mat="R1_BareSteel", bevel=0.02)
-    for px_off in (-0.28, 0.28):
-        mb.add_cylinder((bx + px_off, cy - 0.25, 6.62), radius=0.06, height=0.22, segs=8, axis="z", mat="R1_Copper", bevel=0.008)
-        mb.add_cylinder((bx + px_off, cy + 0.25, 6.62), radius=0.05, height=0.20, segs=8, axis="z", mat="R1_Brass", bevel=0.006)
-
-    for fz in (3.25, 5.55):
-        mb.add_bevel_box((bx, cy - rad * 0.78, fz), (rad * 1.85, 0.34, 0.30), bevel=0.025, mat="R1_GreyMetal", segs=1)
-        for sx in (-1.0, 1.0):
-            lx = bx + sx * (rad * 0.78)
-            leg_h = cy - rad * 0.65
-            mb.add_bevel_box((lx, leg_h * 0.5 + 0.08, fz), (0.24, leg_h, 0.24), bevel=0.02, mat="R1_GreyMetal", segs=1)
-            mb.add_cylinder((lx, 0.05, fz), radius=0.32, height=0.10, segs=8, axis="y", mat="R1_GreyMetal", bevel=0.015)
-
-    ruins_common.add_signage_plate(
+    # Smooth 32-segment cream pressure hull with rounded end caps
+    ruins_common.add_domed_cylinder(
         mb,
-        center_u=(bx + rad + 0.02, cy + 0.25, 4.10),
-        width=0.72,
-        height=0.48,
-        cell_name="HABITAT_LAB",
-        rot_deg_u=(0.0, 90.0, 0.0),
+        center_u=(cx, cy, 0.0),
+        radius=rad,
+        total_length=2.82,
+        dome_depth=0.22,
+        mat="R1_CreamEnamel",
+        axis="x",
+        segs=segs,
+        barrel_rings=1,
+        cap_rings=2,
+        clip_min_y_u=None,
+    )
+
+    # Smooth 32-segment dark-grey stiffening rings at left, center, and right
+    for rx in (-0.94, 0.0, 0.94):
+        ruins_common.add_curved_cyl_band(
+            mb,
+            cyl_center_u=(cx, cy, 0.0),
+            radius=rad,
+            thickness=0.055,
+            t0=rx - 0.09,
+            t1=rx + 0.09,
+            ang0_deg=0.0,
+            ang1_deg=360.0,
+            mat="R1_GreyMetal",
+            axis="x",
+            segs=segs,
+            clip_min_y_u=None,
+        )
+
+    # ONE horizontal warm-orange stripe band across both bays of ModuleB_Lab
+    _add_module_orange_band(
+        mb,
+        cyl_center_u=(cx, cy, 0.0),
+        radius=rad,
+        bays=((-0.85, -0.09), (0.09, 0.85)),
+        axis="x",
+        segs=segs,
+    )
+
+    # Curved riveted sage patch below the warm-orange stripe on the left bay (matching identity_v1_helios_lumen.png)
+    ruins_common.add_curved_cyl_band(
+        mb,
+        cyl_center_u=(cx, cy, 0.0),
+        radius=rad,
+        thickness=0.016,
+        t0=-0.64,
+        t1=-0.24,
+        ang0_deg=-65.0,
+        ang1_deg=-48.0,
+        mat="R1_SagePatch",
+        axis="x",
+        segs=segs,
+        clip_min_y_u=None,
+    )
+
+    # Low angled trapezoidal support footings
+    _add_trapezoidal_footings(mb, (-0.18, 0.78), 0.0, rad, cy, axis="x")
+
+    # ONE stencil signage board on the Habitat building: `SEC-04 HABITAT & LAB` above the orange band
+    sign_x = cx - 0.46
+    sign_y = cy + 0.48
+    sign_z = -rad + 0.06
+    mb.add_bevel_box(
+        (sign_x, sign_y, sign_z + 0.08),
+        (1.06, 0.50, 0.18),
+        bevel=0.014,
+        mat="R1_GreyMetal",
+        rot_deg_u=(-18.0, 180.0, 0.0),
+        segs=1,
     )
     ruins_common.add_signage_plate(
         mb,
-        center_u=(bx + rad + 0.02, cy + 0.25, 4.82),
-        width=0.34,
-        height=0.34,
-        cell_name="PICT_BOTANY",
-        rot_deg_u=(0.0, 90.0, 0.0),
-        rivets=False,
+        center_u=(sign_x, sign_y, sign_z - 0.02),
+        width=1.00,
+        height=0.44,
+        cell_name="SEC04_HABITAT",
+        rot_deg_u=(-18.0, 180.0, 0.0),
     )
 
     ruins_common.to_ruin_object(mb, "ModuleB_Lab", parent=root)
 
 
+def _crushed_dent_offset(ux: float, uy: float, uz: float) -> Tuple[float, float, float]:
+    """Smooth inward structural buckling on the upper roof & upper-front shoulder of ModuleC_Crushed."""
+    if uy <= 0.15:
+        return (0.0, 0.0, 0.0)
+
+    # Primary roof-and-front impact basin centered around ux = -0.15, uz = -0.45
+    d1_sq = ((ux + 0.15) / 0.92) ** 2 + ((uz + 0.45) / 0.88) ** 2
+    dent1 = 0.36 * math.exp(-d1_sq * 1.65)
+
+    # Secondary crease basin centered around ux = +0.55, uz = -0.25
+    d2_sq = ((ux - 0.55) / 0.68) ** 2 + ((uz + 0.25) / 0.78) ** 2
+    dent2 = 0.24 * math.exp(-d2_sq * 1.85)
+
+    top_weight = min(1.0, max(0.0, (uy - 0.15) / 0.75))
+    inward = (dent1 + dent2) * top_weight
+
+    r_yz = math.hypot(uy, uz)
+    if r_yz < 1e-4:
+        return (0.0, -inward, 0.0)
+    return (0.0, -inward * (uy / r_yz) * 1.12, -inward * (uz / r_yz) * 0.82)
+
+
 def _build_crushed_module(root) -> None:
-    """Build ModuleC_Crushed (crushed/holed module on left X = -2.15 .. -6.15 with hull breach)."""
+    """Build ModuleC_Crushed: rightmost 32-seg cylinder with domed end cap, one orange band & roof dents."""
     mb = r1kit.MeshBuilder()
-    cy = 1.82
-    rad = 1.54
+    cx = 4.02
+    cy = 1.56
+    rad = 1.52
+    segs = 32
 
-    mb.add_cylinder((-2.85, cy + 0.06, 0.0), radius=rad, height=1.40, segs=12, axis="x", mat="R1_CreamEnamel", bevel=0.03)
-    mb.add_ring((-2.25, cy + 0.06, 0.0), r_outer=rad + 0.04, r_inner=rad - 0.02, height=0.16, segs=12, axis="x", mat="R1_GreyMetal")
-
-    mb.add_cylinder(
-        (-5.35, cy - 0.14, -0.06),
-        radius=rad * 0.96,
-        height=1.45,
-        segs=12,
-        axis="x",
-        mat="R1_CreamEnamel",
-        bevel=0.03,
-        rot_deg_u=(3.0, 2.0, 5.5),
-    )
-    mb.add_ring((-5.95, cy - 0.20, -0.08), r_outer=rad * 0.98, r_inner=rad * 0.82, height=0.16, segs=12, axis="x", mat="R1_GreyMetal")
-    mb.add_cylinder((-6.05, cy - 0.20, -0.08), radius=rad * 0.88, height=0.18, segs=12, axis="x", mat="R1_GreyMetal", bevel=0.025)
-
-    mb.add_cylinder((-4.10, cy - 0.04, 0.0), radius=rad * 0.82, height=1.50, segs=10, axis="x", mat="R1_Rubber", bevel=0.02)
-
-    for rx, _tilt in ((-3.62, -6.0), (-4.10, 8.0), (-4.58, -5.0)):
-        mb.add_ring(
-            (rx, cy - 0.02, 0.0),
-            r_outer=rad * 0.99,
-            r_inner=rad * 0.83,
-            height=0.12,
-            segs=12,
-            axis="x",
-            mat="R1_GreyMetal",
-        )
-    for angle_deg, bend_deg in ((65.0, -14.0), (115.0, 9.0), (-45.0, 12.0), (-110.0, -8.0), (165.0, 6.0)):
-        a = math.radians(angle_deg)
-        sy = cy + (rad * 0.92) * math.sin(a)
-        sz = (rad * 0.92) * math.cos(a)
-        mb.add_bevel_box(
-            (-4.10, sy, sz),
-            (1.48, 0.08, 0.09),
-            bevel=0.01,
-            mat="R1_BareSteel",
-            rot_deg_u=(bend_deg, -bend_deg * 0.6, bend_deg * 0.8),
-            segs=1,
-        )
-
-    torn_panels = [
-        ((-3.82, cy + 1.05, -0.95), (0.68, 0.52, 0.08), (28.0, 14.0, -18.0), "R1_CreamEnamel"),
-        ((-4.38, cy + 0.88, -1.12), (0.62, 0.48, 0.08), (-32.0, -18.0, 22.0), "R1_CreamEnamel"),
-        ((-4.08, cy - 0.42, -1.36), (0.85, 0.56, 0.08), (16.0, -8.0, 9.0), "R1_OrangeStripe"),
-        ((-4.12, cy + 0.58, -1.15), (0.58, 0.44, 0.05), (42.0, -15.0, 18.0), "R1_GoldFoil"),
-        ((-3.75, cy + 0.25, -1.24), (0.46, 0.38, 0.05), (-24.0, 20.0, -15.0), "R1_GoldFoil"),
-        ((-4.45, cy + 1.18, -0.52), (0.54, 0.42, 0.06), (18.0, 25.0, -28.0), "R1_GoldFoil"),
-    ]
-    for pos, size, rot, mat in torn_panels:
-        mb.add_bevel_box(pos, size, bevel=0.01, mat=mat, rot_deg_u=rot, segs=1)
-
-    mb.add_cylinder((-3.85, cy + 0.42, -0.88), radius=0.038, height=0.72, segs=8, axis="x", mat="R1_Copper", rot_deg_u=(15.0, -22.0, 18.0))
-    mb.add_cylinder((-4.32, cy + 0.15, -0.92), radius=0.032, height=0.65, segs=8, axis="x", mat="R1_BareSteel", rot_deg_u=(-18.0, 26.0, -14.0))
-
-    _add_cradle_footing(mb, -2.75, 0.0, rad, cy + 0.06, damaged=False)
-    _add_cradle_footing(mb, -5.35, -0.06, rad * 0.95, cy - 0.12, damaged=True)
-
-    mb.add_bevel_box((-5.25, cy + 0.18, -rad + 0.08), (0.68, 0.42, 0.22), bevel=0.015, mat="R1_GreyMetal", segs=1)
-    ruins_common.add_signage_plate(
+    # Smooth 32-segment cylinder with domed right end-cap and smooth structural dents (no coloured squares)
+    ruins_common.add_domed_cylinder(
         mb,
-        center_u=(-5.25, cy + 0.18, -rad - 0.06),
-        width=0.64,
-        height=0.38,
-        cell_name="SEC_04",
-        rot_deg_u=(0.0, 180.0, 0.0),
+        center_u=(cx, cy, 0.0),
+        radius=rad,
+        total_length=2.96,
+        dome_depth=0.44,
+        mat="R1_CreamEnamel",
+        axis="x",
+        segs=segs,
+        barrel_rings=5,
+        cap_rings=2,
+        clip_min_y_u=None,
+        dent_fn=_crushed_dent_offset,
     )
+
+    # Smooth 32-segment dark-grey stiffening rings (deformed by the same dent function)
+    for rx in (-1.04, -0.06, 0.94):
+        ruins_common.add_curved_cyl_band(
+            mb,
+            cyl_center_u=(cx, cy, 0.0),
+            radius=rad,
+            thickness=0.055,
+            t0=rx - 0.09,
+            t1=rx + 0.09,
+            ang0_deg=0.0,
+            ang1_deg=360.0,
+            mat="R1_GreyMetal",
+            axis="x",
+            segs=segs,
+            axial_segs=1,
+            clip_min_y_u=None,
+            dent_fn=_crushed_dent_offset,
+        )
+
+    # ONE horizontal warm-orange stripe band across both bays of ModuleC_Crushed
+    _add_module_orange_band(
+        mb,
+        cyl_center_u=(cx, cy, 0.0),
+        radius=rad,
+        bays=((-0.95, -0.15), (0.03, 0.85)),
+        axis="x",
+        segs=segs,
+        dent_fn=_crushed_dent_offset,
+    )
+
+    # Low angled trapezoidal support footings
+    _add_trapezoidal_footings(mb, (3.42, 4.62), 0.0, rad, cy, axis="x")
 
     ruins_common.to_ruin_object(mb, "ModuleC_Crushed", parent=root)
-
 
 
 def build(skip_renders: bool = False) -> None:
@@ -390,21 +562,20 @@ def build(skip_renders: bool = False) -> None:
     _build_crushed_module(root)
 
     # Scan points as empties named Scan_<n>
-    r1kit.add_empty("Scan_1", (2.22, 1.84, -2.46), parent=root)   # Airlock status panel
-    r1kit.add_empty("Scan_2", (-4.10, 2.25, -1.25), parent=root)  # Crushed module hull breach
-    r1kit.add_empty("Scan_3", (2.95, 2.48, -1.52), parent=root)   # SEC-04 HABITAT & LAB main signage
+    r1kit.add_empty("Scan_1", (-3.45, 1.78, -1.44), parent=root)  # AirlockPanel (`SEALED · 1988 · STANDBY`)
+    r1kit.add_empty("Scan_2", (3.88, 2.68, -0.45), parent=root)   # Dented/crushed module upper hull
+    r1kit.add_empty("Scan_3", (-0.16, 2.04, -1.46), parent=root)  # `SEC-04 HABITAT & LAB` stencil signage
 
     fbx_path, dawn_path, night_path = ruins_common.finalize_ruin_and_export(
         root,
         slug="habitat_modules",
         fbx_name="HabitatModules.fbx",
         footprint_radius=6.2,
-        cam_angle_deg=32.0,
-        cam_elev_deg=21.0,
+        cam_angle_deg=26.0,
+        cam_elev_deg=16.0,
         skip_renders=skip_renders,
     )
     print(f"[habitat_modules] Exported {fbx_path} and rendered {dawn_path.name}, {night_path.name}")
-
 
 
 if __name__ == "__main__":
