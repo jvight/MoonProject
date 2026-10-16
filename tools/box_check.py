@@ -23,6 +23,9 @@ Usage (from inside the box worktree):
   python tools/box_check.py <box> --platform playmode --assembly MoonProject.World.PlayModeTests
   python tools/box_check.py <box> --no-tests
   python tools/box_check.py <box> --no-merge              # the working tree as it is, without main
+  python tools/box_check.py gameplay ui world rover art   # a cross-domain task: one run over several boxes
+Several boxes share one run: the builders of all their domains, then their EditMode assemblies together and their
+PlayMode assemblies together; the board block goes to <box>+<box>....md.
 The trial merge needs a committed tip (no tracked changes). Each step's time goes into the board block.
 Exit code 0 when every step passed.
 """
@@ -102,6 +105,8 @@ DEFAULT_PLAYMODE = {"art": "MoonProject.Gameplay.Feel.PlayModeTests;MoonProject.
 # The Playthrough is [Explicit], yet an --assembly filter selects it (the runner counts a matching assembly as an
 # explicit match), and it outlasts the PlayMode timeout; verify runs it on the merged main.
 NO_PLAYTHROUGH = ["--category", "!Playthrough"]
+# unity_batch's PlayMode timeout (PLAYMODE_TIMEOUT) fits one box's suites; a run over several boxes gets it per box.
+PLAYMODE_SECONDS_PER_BOX = 2400
 BOARD_HEADER = "## "
 
 
@@ -152,10 +157,10 @@ def branch_changed_boxes(root):
     return changed_boxes(git(root, "diff", "--name-only", "main...HEAD").splitlines())
 
 
-def builder_boxes(box, changed):
-    """The named box, then every box the branch changes: a branch that edits the Rover builder must not run another
+def builder_boxes(boxes, changed):
+    """The named boxes, then every box the branch changes: a branch that edits the Rover builder must not run another
     box's tests against a stale Generated/Rover."""
-    return [box] + [b for b in changed if b != box]
+    return list(boxes) + [b for b in changed if b not in boxes]
 
 
 def run_logged(name, cmd, cwd, log_path):
@@ -341,9 +346,19 @@ def last_block(text):
     return text[start + 1:].strip()
 
 
+def box_assemblies(table, boxes):
+    """The boxes' assemblies from a DEFAULT_TESTS-style table as one ';' list (each once, in box order), or None."""
+    names = []
+    for box in boxes:
+        for name in (table.get(box) or "").split(";"):
+            if name and name not in names:
+                names.append(name)
+    return ";".join(names) or None
+
+
 def test_commands(root, args):
-    """[(label, command)] of the tests steps: the box's EditMode then PlayMode assembly (no PlayMode with --fast), or
-    one custom step for --filter / --assembly; [] when the box has no default tests. PlayMode excludes the
+    """[(label, command)] of the tests steps: the boxes' EditMode then PlayMode assemblies (no PlayMode with --fast),
+    or one custom step for --filter / --assembly; [] when the boxes have no default tests. PlayMode excludes the
     Playthrough."""
     base = [sys.executable, str(root / "tools" / "unity_batch.py"), "tests", "--project", str(root), "--platform"]
 
@@ -355,10 +370,13 @@ def test_commands(root, args):
     if args.assembly:
         return [(f"{args.platform} {' '.join(args.assembly)}",
                  command(args.platform, [arg for name in args.assembly for arg in ("--assembly", name)]))]
-    defaults = [("editmode", DEFAULT_TESTS.get(args.box))]
+    defaults = [("editmode", box_assemblies(DEFAULT_TESTS, args.boxes))]
     if not args.fast:
-        defaults.append(("playmode", DEFAULT_PLAYMODE.get(args.box)))
-    return [(f"{platform} {name}", command(platform, ["--assembly", name])) for platform, name in defaults if name]
+        defaults.append(("playmode", box_assemblies(DEFAULT_PLAYMODE, args.boxes)))
+    budget = ["--timeout", str(PLAYMODE_SECONDS_PER_BOX * len(args.boxes))] if len(args.boxes) > 1 else []
+    return [(f"{platform} {name}",
+             command(platform, (budget if platform == "playmode" else []) + ["--assembly", name]))
+            for platform, name in defaults if name]
 
 
 def needs_merge(root):
@@ -404,15 +422,17 @@ def abort_trial_merge(root, before=None):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("box", help="box name (art, world, rover, gameplay, audio, ui, foundation, ...)")
+    ap.add_argument("boxes", nargs="+", metavar="box",
+                    help="box name(s) (art, world, rover, gameplay, audio, ui, foundation, ...); several share one run")
     ap.add_argument("--fast", action="store_true", help="skip the PlayMode step (quick iterations)")
-    ap.add_argument("--filter", help="one tests step with this filter instead of the box's defaults")
+    ap.add_argument("--filter", help="one tests step with this filter instead of the boxes' defaults")
     ap.add_argument("--assembly", action="append", help="one tests step on these assemblies (repeatable)")
     ap.add_argument("--platform", default="editmode", choices=["editmode", "playmode"], type=str.lower,
                     help="platform of the --filter / --assembly step")
     ap.add_argument("--no-tests", action="store_true", help="skip the tests steps")
     ap.add_argument("--no-merge", action="store_true", help="test the working tree as it is, without main")
     args = ap.parse_args()
+    box = "+".join(args.boxes)
 
     root = Path(git(Path.cwd(), "rev-parse", "--show-toplevel")).resolve()
     if root == main_checkout(root):
@@ -438,8 +458,8 @@ def main():
     else:
         tested = f"{branch} @ {sha}, " + ("without main @ " + main_sha if needs_merge(root) else "contains main")
     changed = branch_changed_boxes(root)
-    build_boxes = builder_boxes(args.box, changed)
-    say(f"builder filter {builder_filter(build_boxes)}: box {args.box} + boxes the branch changes "
+    build_boxes = builder_boxes(args.boxes, changed)
+    say(f"builder filter {builder_filter(build_boxes)}: box {box} + boxes the branch changes "
         f"(git diff --name-only main...HEAD): {', '.join(changed) or 'none'}")
 
     def step(name, log_name, run):
@@ -463,7 +483,7 @@ def main():
         if ok and not args.no_tests:
             planned = test_commands(root, args)
             if not planned:
-                notes.append(f"no default tests for box {args.box}; pass --filter or --assembly")
+                notes.append(f"no default tests for box {box}; pass --filter or --assembly")
             for label, cmd in planned:
                 if not ok:
                     break
@@ -481,8 +501,8 @@ def main():
         notes.append(f"left in the worktree: {len(leftover)} change(s): " + ", ".join(leftover[:5]))
     else:
         notes.append("worktree clean")
-    block = format_block(stamp, args.box, tested, steps, notes)
-    board = board_dir(root) / f"{args.box}.md"
+    block = format_block(stamp, box, tested, steps, notes)
+    board = board_dir(root) / f"{box}.md"
     append_block(board, block)
     print(block, end="")
     say(f"board: {board}")

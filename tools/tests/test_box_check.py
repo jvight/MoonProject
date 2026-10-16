@@ -50,14 +50,18 @@ class ChangedDomainTests(unittest.TestCase):
     def test_gameplay_on_a_rover_builder_branch_also_runs_the_rover_builders(self):
         # 2026-10-16: box_check gameplay on box/agy-facewire ran ^((Gameplay)/|Main Scene$) against a stale
         # Generated/Rover/Rover.prefab, and two PlayMode fixtures rebuilt it themselves.
-        boxes = box_check.builder_boxes("gameplay", ["rover", "director", "gameplay"])
+        boxes = box_check.builder_boxes(["gameplay"], ["rover", "director", "gameplay"])
         self.assertEqual(boxes, ["gameplay", "rover", "director"])
         pattern = re.compile(box_check.builder_filter(boxes))
         for path in ("Gameplay/Playthrough", "Rover/Prefab", "Main Scene"):
             self.assertTrue(pattern.search(path), path)
         self.assertFalse(pattern.search("World/Terrain"))
-        self.assertEqual(box_check.builder_filter(box_check.builder_boxes("gameplay", [])),
+        self.assertEqual(box_check.builder_filter(box_check.builder_boxes(["gameplay"], [])),
                          "^((Gameplay)/|Main Scene$)")
+
+    def test_several_named_boxes_keep_their_order_before_the_changed_ones(self):
+        boxes = box_check.builder_boxes(["ui", "world"], ["rover", "world"])
+        self.assertEqual(boxes, ["ui", "world", "rover"])
 
     def test_only_the_branch_side_of_main_counts(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -75,8 +79,8 @@ class ChangedDomainTests(unittest.TestCase):
 class TestCommandTests(unittest.TestCase):
     ROOT = Path("D:/wt/world")
 
-    def args(self, box, **kw):
-        values = dict(box=box, filter=None, assembly=None, platform="editmode", fast=False)
+    def args(self, *boxes, **kw):
+        values = dict(boxes=list(boxes), filter=None, assembly=None, platform="editmode", fast=False)
         values.update(kw)
         return argparse.Namespace(**values)
 
@@ -87,6 +91,20 @@ class TestCommandTests(unittest.TestCase):
         self.assertEqual(planned[0][1][-3:], ["editmode", "--assembly", "MoonProject.World.Tests"])
         self.assertEqual(planned[1][1][-5:], ["playmode", "--assembly", "MoonProject.World.PlayModeTests",
                                               "--category", "!Playthrough"])
+
+    def test_several_boxes_share_one_step_per_platform_with_each_assembly_once(self):
+        planned = box_check.test_commands(self.ROOT, self.args("gameplay", "world", "art"))
+        self.assertEqual([label for label, _ in planned], [
+            "editmode MoonProject.Gameplay.Tests;MoonProject.World.Tests;MoonProject.Art.Tests;"
+            "MoonProject.Gameplay.Feel.Tests;MoonProject.Rover.Tests",
+            "playmode MoonProject.Gameplay.PlayModeTests;MoonProject.World.PlayModeTests;"
+            "MoonProject.Gameplay.Feel.PlayModeTests;MoonProject.Rover.PlayModeTests",
+        ])
+        self.assertEqual(planned[1][1][-2:], ["--category", "!Playthrough"])
+        self.assertEqual(planned[1][1][planned[1][1].index("--timeout") + 1], "7200")
+        self.assertNotIn("--timeout", planned[0][1])
+        self.assertNotIn("--timeout", box_check.test_commands(self.ROOT, self.args("art"))[1][1])
+        self.assertEqual(box_check.box_assemblies(box_check.DEFAULT_TESTS, ["music", "lyrics"]), None)
 
     def test_fast_skips_playmode(self):
         self.assertEqual([l for l, _ in box_check.test_commands(self.ROOT, self.args("world", fast=True))],

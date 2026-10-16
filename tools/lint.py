@@ -56,7 +56,7 @@ RULES = {r.id: r for r in (
     Rule("hidden-default-override", "property or getter compares a serialized field to a literal and returns another "
                                     "literal", True),
     Rule("scene-contributor-asset", "scene contributor (*SceneContributor*.cs / ISceneContributor) creates assets or "
-                                    "calls *Builder.Build*", False),
+                                    "calls *Builder.Build*", True),
     Rule("runtime-input-action", "runtime InputAction creation (AddAction(, new InputAction() outside tests", True,
          (RUNTIME, EDITOR)),
     Rule("shader-find", "Shader.Find( outside editor tests", False, (RUNTIME, EDITOR)),
