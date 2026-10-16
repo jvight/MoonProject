@@ -131,7 +131,27 @@ def main(argv: list[str] | None = None) -> None:
                 out_path=renders_dir / "structures_before_after.png",
             )
 
+    # 6. Build & export Lumen Station Ruins (HabitatModules, RadioTower, KenjiWorkshop, FallenSolarArray, ScatterSet)
+    from ruins import (
+        fallen_solar_array,
+        habitat_modules,
+        kenji_workshop,
+        radio_tower,
+        render_cluster_and_scale,
+        scatter_set,
+    )
+
+    habitat_modules.build(skip_renders=args.skip_renders)
+    radio_tower.build(skip_renders=args.skip_renders)
+    kenji_workshop.build(skip_renders=args.skip_renders)
+    fallen_solar_array.build(skip_renders=args.skip_renders)
+    scatter_set.build(skip_renders=args.skip_renders)
+
+    if not args.skip_renders:
+        render_cluster_and_scale.build()
+
 
 if __name__ == "__main__":
     cli_args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
     main(cli_args)
+
