@@ -213,11 +213,11 @@ namespace MoonProject.World
         [SerializeField] private Vector2 _craterDepthRatio = new Vector2(0.06f, 0.095f);
 
         [Tooltip("Raised rim height as a fraction of the crater radius (x = min, y = max). Low = old, soft crater.")]
-        [SerializeField] private Vector2 _craterRimRatio = new Vector2(0.026f, 0.05f);
+        [SerializeField] private Vector2 _craterRimRatio = new Vector2(0.02f, 0.045f);
 
         [Tooltip("Width of the raised rim as a fraction of the crater radius.")]
         [Range(0.1f, 1f)]
-        [SerializeField] private float _craterRimWidth = 0.6f;
+        [SerializeField] private float _craterRimWidth = 0.65f;
 
         [Tooltip("Extra clearance kept between crater footprints and other features, metres.")]
         [Range(0f, 40f)]

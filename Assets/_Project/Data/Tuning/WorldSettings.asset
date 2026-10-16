@@ -63,8 +63,8 @@ MonoBehaviour:
     _smallCraterRadius: {x: 6, y: 13}
     _mediumCraterRadius: {x: 16, y: 34}
     _craterDepthRatio: {x: 0.06, y: 0.095}
-    _craterRimRatio: {x: 0.026, y: 0.052}
-    _craterRimWidth: 0.55
+    _craterRimRatio: {x: 0.02, y: 0.045}
+    _craterRimWidth: 0.65
     _craterClearance: 6
     _ramps:
     - _bearing: 38
