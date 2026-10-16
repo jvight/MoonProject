@@ -5,3 +5,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("MoonProject.UI.Editor")]
 [assembly: InternalsVisibleTo("MoonProject.UI.Tests")]
 [assembly: InternalsVisibleTo("MoonProject.UI.PlayModeTests")]
+[assembly: InternalsVisibleTo("MoonProject.Rover.PlayModeTests")]

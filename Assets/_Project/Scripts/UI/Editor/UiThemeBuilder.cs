@@ -74,6 +74,7 @@ namespace MoonProject.UI.Editor
             facePanel.match = HeightMatch;
             facePanel.clearColor = true;
             facePanel.colorClearValue = FaceClearColor;
+            facePanel.sortingOrder = 1f;
             facePanel.targetTexture = loadedFaceTarget;
             GeneratedAssets.CreateOrReplace(facePanel, UiAssetPaths.FacePanelSettings);
 

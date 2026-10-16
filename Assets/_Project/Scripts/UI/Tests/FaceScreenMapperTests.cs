@@ -89,6 +89,32 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual(768, faceTarget.height);
             Assert.AreEqual(new Vector2Int(1152, 768), facePanel.referenceResolution);
             Assert.AreSame(faceTarget, facePanel.targetTexture);
+            Assert.AreEqual(1f, facePanel.sortingOrder, 1e-4f, "Face panel must sort above the main HUD panel.");
+        }
+
+        [Test]
+        public void TryPanelToUv_InvertsTryUvToPanelAcrossHoldAndOrbitalSocketCoordinates()
+        {
+            Vector2 size = FaceScreenMapper.DefaultPanelSize;
+            const float curvature = 0.08f;
+            Vector2[] targets =
+            {
+                FaceInventoryView.GetHoldCellReferenceRect(0).center,
+                FaceInventoryView.GetHoldCellReferenceRect(7).center,
+                FaceInventoryView.GetOrbitalSocketReferenceCenter(FaceInventoryView.OrbitalIndexOf(RoverSocket.Wing)),
+                FaceInventoryView.GetOrbitalSocketReferenceCenter(FaceInventoryView.OrbitalIndexOf(RoverSocket.Belly)),
+                FaceInventoryView.GetOrbitalSocketReferenceCenter(FaceInventoryView.OrbitalIndexOf(RoverSocket.Deck)),
+            };
+
+            foreach (Vector2 target in targets)
+            {
+                Assert.IsTrue(FaceScreenMapper.TryPanelToUv(target, curvature, size, out Vector2 uv),
+                    $"TryPanelToUv must succeed for {target}");
+                Assert.IsTrue(FaceScreenMapper.TryUvToPanel(uv, curvature, size, out Vector2 roundTrip),
+                    $"TryUvToPanel must succeed for inverted UV {uv}");
+                Assert.AreEqual(target.x, roundTrip.x, 0.05f);
+                Assert.AreEqual(target.y, roundTrip.y, 0.05f);
+            }
         }
 
         private sealed class FakeFaceScreen : IRoverFaceScreen

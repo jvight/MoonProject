@@ -87,5 +87,110 @@ namespace MoonProject.UI
                 ? panelPosition
                 : OutsidePanel;
         }
+
+        /// <summary>
+        /// Inverts <see cref="TryUvToPanel"/>: converts a UI Toolkit panel coordinate (<c>0..panelSize.x</c>,
+        /// <c>0..panelSize.y</c>) back into the un-mirrored <c>Screen</c> mesh UV (<c>0..1</c>).
+        /// </summary>
+        public static bool TryPanelToUv(Vector2 panelPosition, float curvature, Vector2 panelSize, out Vector2 meshUv)
+        {
+            if (panelSize.x <= 0f || panelSize.y <= 0f ||
+                float.IsNaN(panelPosition.x) || float.IsNaN(panelPosition.y) ||
+                panelPosition.x < 0f || panelPosition.x > panelSize.x ||
+                panelPosition.y < 0f || panelPosition.y > panelSize.y)
+            {
+                meshUv = OutsidePanel;
+                return false;
+            }
+
+            var targetWarped = new Vector2(panelPosition.x / panelSize.x, 1f - panelPosition.y / panelSize.y);
+            Vector2 mirrored = targetWarped;
+            for (int i = 0; i < 8; i++)
+            {
+                Vector2 error = WarpUv(mirrored, curvature) - targetWarped;
+                mirrored -= error;
+            }
+
+            meshUv = MirrorUv(mirrored);
+            if (meshUv.x < 0f || meshUv.x > 1f || meshUv.y < 0f || meshUv.y > 1f)
+            {
+                meshUv = OutsidePanel;
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Finds the camera screen-space pixel position (bottom-left origin, matching <c>Mouse.current.position</c> and
+        /// <see cref="Camera.ScreenPointToRay(Vector3)"/>) whose ray through <paramref name="camera"/> hits
+        /// <paramref name="faceScreen"/> at <paramref name="panelPosition"/> (<c>0..panelSize.x</c>, <c>0..panelSize.y</c>).
+        /// </summary>
+        public static bool TryPanelToScreen(Vector2 panelPosition, Camera camera, IRoverFaceScreen faceScreen,
+            Vector2 panelSize, out Vector2 cameraScreenPosition, float screenHeight = 0f)
+        {
+            if (camera == null || faceScreen == null || !faceScreen.IsOpen ||
+                panelSize.x <= 0f || panelSize.y <= 0f)
+            {
+                cameraScreenPosition = OutsidePanel;
+                return false;
+            }
+
+            float width = camera.pixelWidth > 0 ? camera.pixelWidth : Screen.width;
+            float height = screenHeight > 0f
+                ? screenHeight
+                : camera.pixelHeight > 0 ? camera.pixelHeight : Screen.height;
+            var guess = new Vector2(width * 0.5f, height * 0.5f);
+            const float deltaPixels = 4f;
+            for (int iter = 0; iter < 8; iter++)
+            {
+                var uiGuess = new Vector2(guess.x, height - guess.y);
+                Vector2 current = ScreenToPanel(uiGuess, camera, faceScreen, panelSize, height);
+                if (float.IsNaN(current.x))
+                {
+                    break;
+                }
+
+                Vector2 err = panelPosition - current;
+                if (err.sqrMagnitude < 0.04f)
+                {
+                    cameraScreenPosition = guess;
+                    return true;
+                }
+
+                Vector2 px = ScreenToPanel(new Vector2(guess.x + deltaPixels, height - guess.y), camera, faceScreen,
+                    panelSize, height);
+                Vector2 py = ScreenToPanel(new Vector2(guess.x, height - (guess.y + deltaPixels)), camera, faceScreen,
+                    panelSize, height);
+                if (float.IsNaN(px.x) || float.IsNaN(py.x))
+                {
+                    break;
+                }
+
+                Vector2 dPdx = (px - current) / deltaPixels;
+                Vector2 dPdy = (py - current) / deltaPixels;
+                float det = dPdx.x * dPdy.y - dPdx.y * dPdy.x;
+                if (Mathf.Abs(det) < 1e-5f)
+                {
+                    break;
+                }
+
+                float stepX = (err.x * dPdy.y - err.y * dPdy.x) / det;
+                float stepY = (dPdx.x * err.y - dPdx.y * err.x) / det;
+                guess.x += Mathf.Clamp(stepX, -width * 0.35f, width * 0.35f);
+                guess.y += Mathf.Clamp(stepY, -height * 0.35f, height * 0.35f);
+            }
+
+            var finalUi = new Vector2(guess.x, height - guess.y);
+            Vector2 finalPanel = ScreenToPanel(finalUi, camera, faceScreen, panelSize, height);
+            if (!float.IsNaN(finalPanel.x) && (finalPanel - panelPosition).sqrMagnitude <= 4f)
+            {
+                cameraScreenPosition = guess;
+                return true;
+            }
+
+            cameraScreenPosition = OutsidePanel;
+            return false;
+        }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace MoonProject.Core.Input
@@ -33,6 +34,9 @@ namespace MoonProject.Core.Input
         /// <summary>A menu direction (arrows, WASD, d-pad, stick) started being pushed this frame.</summary>
         public bool NavigatePressed => _navigate.WasPressedThisFrame();
 
+        /// <summary>Current 2D navigation vector read from the UI Navigate action.</summary>
+        public Vector2 NavigateVector => _navigate.ReadValue<Vector2>();
+
         /// <summary>Back out of the topmost thing (Esc, gamepad East).</summary>
         public bool CancelPressed => _cancel.WasPressedThisFrame();
 
@@ -44,6 +48,13 @@ namespace MoonProject.Core.Input
 
         /// <summary>Primary mouse button pressed this frame (used to recapture the cursor).</summary>
         public bool ClickPressed => _click.WasPressedThisFrame();
+
+        /// <summary>Primary mouse button released this frame.</summary>
+        public bool ClickReleased => _click.WasReleasedThisFrame();
+
+        /// <summary>Current mouse pointer screen position (bottom-left origin), or NaN when no mouse is present.</summary>
+        public Vector2 PointerPosition =>
+            Mouse.current != null ? Mouse.current.position.ReadValue() : new Vector2(float.NaN, float.NaN);
 
         public bool Enabled => _map.enabled;
 

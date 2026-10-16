@@ -139,6 +139,9 @@ namespace MoonProject.UI
         private Vector2 _dragCurrentRefPos;
         private bool _isDraggingKit;
         private int _dragTargetSocketIndex = -1;
+        private int _lastPointerDownFrame = -1;
+        private int _lastPointerUpFrame = -1;
+        private int _lastNavigationFrame = -1;
 
         private string _transientToastKey;
         private float _transientToastTimer;
@@ -164,6 +167,7 @@ namespace MoonProject.UI
             _numbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
             _events = events ?? throw new ArgumentNullException(nameof(events));
 
+            _panel.pickingMode = PickingMode.Position;
             _canvas = Require<VisualElement>(_panel, "cargo-canvas");
             _holdTitle = Require<Label>(_panel, "cargo-hold-title");
             _rightTitle = Require<Label>(_panel, "cargo-right-title");
@@ -206,6 +210,11 @@ namespace MoonProject.UI
 
         /// <summary>The currently focused or hovered orbital socket index (0..9), or -1.</summary>
         public int FocusedSocketIndex => _focusedSocketIndex;
+
+        /// <summary>The currently focused or hovered home shelf cell index (0..23), or -1.</summary>
+        public int FocusedHomeCell => _focusedHomeCell;
+
+        internal int LastNavigationFrame => _lastNavigationFrame;
 
         public string LeftHeaderText => _holdTitle.text;
 
@@ -372,6 +381,11 @@ namespace MoonProject.UI
 
         public void Tick(float deltaTime)
         {
+            if (!_bootRunning && !_isDraggingKit)
+            {
+                SyncPendingFocus();
+            }
+
             if (_transientToastTimer > 0f)
             {
                 _transientToastTimer -= deltaTime;
@@ -539,8 +553,7 @@ namespace MoonProject.UI
             {
                 HoldCellState state = _holdStates[i];
                 bool isUnlocked = i < _unlockedHoldCount;
-                bool canFocusCell = isUnlocked && (docked ? state.Kind == HoldCellKind.Material : state.Kind != HoldCellKind.Empty);
-                _holdCells[i].focusable = canFocusCell;
+                _holdCells[i].focusable = isUnlocked;
                 _holdCells[i].pickingMode = isUnlocked ? PickingMode.Position : PickingMode.Ignore;
                 _holdCells[i].EnableInClassList(CargoScreen.EmptyClass, state.Kind == HoldCellKind.Empty || state.Kind == HoldCellKind.Locked);
                 _holdCells[i].EnableInClassList(CargoScreen.LockedClass, state.Kind == HoldCellKind.Locked);
@@ -572,6 +585,7 @@ namespace MoonProject.UI
                 _homeCells[i].style.display = active ? DisplayStyle.Flex : DisplayStyle.None;
                 if (!active)
                 {
+                    _homeCells[i].focusable = false;
                     _homeBadges[i].style.display = DisplayStyle.None;
                     continue;
                 }
@@ -582,7 +596,7 @@ namespace MoonProject.UI
                     _demoValidateMaterialIcon(slot.Material);
                 }
 
-                _homeCells[i].focusable = !slot.IsEmpty;
+                _homeCells[i].focusable = true;
                 _homeCells[i].EnableInClassList(CargoScreen.EmptyClass, slot.IsEmpty);
                 bool showBadge = !slot.IsEmpty && slot.Units > 1;
                 _homeBadges[i].style.display = showBadge ? DisplayStyle.Flex : DisplayStyle.None;
@@ -599,40 +613,39 @@ namespace MoonProject.UI
 
         public void FocusFirst()
         {
+            bool docked = _dock.IsDocked;
             for (int i = 0; i < _unlockedHoldCount; i++)
             {
-                if (_holdCells[i].focusable)
+                HoldCellState state = _holdStates[i];
+                bool hasDefaultTarget = docked ? state.Kind == HoldCellKind.Material : state.Kind != HoldCellKind.Empty;
+                if (hasDefaultTarget)
                 {
-                    _holdCells[i].Focus();
-                    _focusedHoldCell = i;
-                    _focusedSocketIndex = -1;
-                    _focusedHomeCell = -1;
-                    UpdateTooltip();
-                    _canvas.MarkDirtyRepaint();
+                    FocusHoldCell(i);
                     return;
                 }
             }
 
-            if (_dock.IsDocked)
+            if (docked)
             {
                 for (int i = 0; i < _homeSlotCount; i++)
                 {
-                    if (_homeCells[i].focusable)
+                    if (!_home.GetSlot(i).IsEmpty)
                     {
-                        _homeCells[i].Focus();
-                        _focusedHomeCell = i;
-                        UpdateTooltip();
-                        _canvas.MarkDirtyRepaint();
+                        FocusHomeCell(i);
                         return;
                     }
                 }
             }
-            else if (OrbitalSocketCount > 0)
+
+            if (_unlockedHoldCount > 0)
             {
-                _socketBubbles[0].Focus();
-                _focusedSocketIndex = 0;
-                UpdateTooltip();
-                _canvas.MarkDirtyRepaint();
+                FocusHoldCell(0);
+                return;
+            }
+
+            if (!docked && OrbitalSocketCount > 0)
+            {
+                FocusSocket(OrbitalSockets[0]);
             }
         }
 
@@ -661,6 +674,21 @@ namespace MoonProject.UI
             if (idx >= 0)
             {
                 _socketBubbles[idx].Focus();
+            }
+
+            UpdateTooltip();
+            _canvas.MarkDirtyRepaint();
+        }
+
+        /// <summary>Focuses home shelf cell <paramref name="index"/> when docked.</summary>
+        public void FocusHomeCell(int index)
+        {
+            _focusedHomeCell = index;
+            _focusedHoldCell = -1;
+            _focusedSocketIndex = -1;
+            if (index >= 0 && index < MaxShelfCells)
+            {
+                _homeCells[index].Focus();
             }
 
             UpdateTooltip();
@@ -724,6 +752,8 @@ namespace MoonProject.UI
             _dragHoldCell = -1;
             _dragRowIndex = -1;
             _dragTargetSocketIndex = -1;
+            UpdateTooltip();
+            _canvas.MarkDirtyRepaint();
 
             RoverSocket matchingSocket = _equipment.SocketOf(piece);
             if (!dropSocket.HasValue || dropSocket.Value != matchingSocket)
@@ -733,6 +763,113 @@ namespace MoonProject.UI
             }
 
             return TryFitKitAtRow(rowIndex);
+        }
+
+        /// <summary>
+        /// Handles a pointer-down at <paramref name="panelPos"/> in panel coordinates (mapped from 07's curved CRT
+        /// <c>Screen</c> mesh via <see cref="FaceScreenMapper.ScreenToPanel"/>).
+        /// </summary>
+        public void PointerDownAtPanel(Vector2 panelPos)
+        {
+            if (_bootRunning || _lastPointerDownFrame == Time.frameCount)
+            {
+                return;
+            }
+
+            _lastPointerDownFrame = Time.frameCount;
+            HandlePointerDownAtReferencePos(PanelToReference(panelPos));
+        }
+
+        /// <summary>
+        /// Handles a pointer-move/hover at <paramref name="panelPos"/> in panel coordinates (mapped from 07's curved CRT
+        /// <c>Screen</c> mesh via <see cref="FaceScreenMapper.ScreenToPanel"/>).
+        /// </summary>
+        public void PointerMoveAtPanel(Vector2 panelPos)
+        {
+            if (_bootRunning)
+            {
+                return;
+            }
+
+            HandlePointerMoveAtReferencePos(PanelToReference(panelPos));
+        }
+
+        /// <summary>
+        /// Handles a pointer-up at <paramref name="panelPos"/> in panel coordinates (mapped from 07's curved CRT
+        /// <c>Screen</c> mesh via <see cref="FaceScreenMapper.ScreenToPanel"/>).
+        /// </summary>
+        public void PointerUpAtPanel(Vector2 panelPos)
+        {
+            if (_bootRunning || _lastPointerUpFrame == Time.frameCount)
+            {
+                return;
+            }
+
+            _lastPointerUpFrame = Time.frameCount;
+            HandlePointerUpAtReferencePos(PanelToReference(panelPos));
+        }
+
+        /// <summary>
+        /// Steps focus in <paramref name="direction"/> across the hold grid and 07's 10 orbital socket bubbles (or home
+        /// shelf cells when docked).
+        /// </summary>
+        public bool Navigate(NavigationMoveEvent.Direction direction)
+        {
+            if (_bootRunning || _isDraggingKit || direction == NavigationMoveEvent.Direction.None)
+            {
+                return false;
+            }
+
+            _lastNavigationFrame = Time.frameCount;
+            if (_focusedHoldCell >= 0 && _focusedHoldCell < _unlockedHoldCount)
+            {
+                NavigateFromHoldCell(_focusedHoldCell, direction);
+                return true;
+            }
+
+            if (!_dock.IsDocked && _focusedSocketIndex >= 0 && _focusedSocketIndex < OrbitalSocketCount)
+            {
+                NavigateFromSocket(_focusedSocketIndex, direction);
+                return true;
+            }
+
+            if (_dock.IsDocked && _focusedHomeCell >= 0 && _focusedHomeCell < _homeSlotCount)
+            {
+                NavigateFromHomeCell(_focusedHomeCell, direction);
+                return true;
+            }
+
+            FocusFirst();
+            return _focusedHoldCell >= 0 || _focusedSocketIndex >= 0 || _focusedHomeCell >= 0;
+        }
+
+        private void SyncPendingFocus()
+        {
+            Focusable current = _panel.panel?.focusController?.focusedElement;
+            if (_focusedHoldCell >= 0 && _focusedHoldCell < _unlockedHoldCount)
+            {
+                VisualElement target = _holdCells[_focusedHoldCell];
+                if (current != target && target.canGrabFocus)
+                {
+                    target.Focus();
+                }
+            }
+            else if (!_dock.IsDocked && _focusedSocketIndex >= 0 && _focusedSocketIndex < OrbitalSocketCount)
+            {
+                VisualElement target = _socketBubbles[_focusedSocketIndex];
+                if (current != target && target.canGrabFocus)
+                {
+                    target.Focus();
+                }
+            }
+            else if (_dock.IsDocked && _focusedHomeCell >= 0 && _focusedHomeCell < _homeSlotCount)
+            {
+                VisualElement target = _homeCells[_focusedHomeCell];
+                if (current != target && target.canGrabFocus)
+                {
+                    target.Focus();
+                }
+            }
         }
 
         private void _demoValidateMaterialIcon(SalvageMaterial material)
@@ -777,8 +914,9 @@ namespace MoonProject.UI
                 bubble.RegisterCallback<PointerEnterEvent>(_ => OnSocketHover(orbitalIdx));
                 bubble.RegisterCallback<PointerDownEvent>(evt =>
                 {
-                    if (evt.button == 0)
+                    if (evt.button == 0 && _lastPointerDownFrame != Time.frameCount)
                     {
+                        _lastPointerDownFrame = Time.frameCount;
                         OnSocketSubmit(orbitalIdx);
                     }
                 });
@@ -806,12 +944,14 @@ namespace MoonProject.UI
                 cell.RegisterCallback<PointerEnterEvent>(_ => OnHomeCellFocus(index));
                 cell.RegisterCallback<PointerDownEvent>(evt =>
                 {
-                    if (evt.button == 0)
+                    if (evt.button == 0 && _lastPointerDownFrame != Time.frameCount)
                     {
+                        _lastPointerDownFrame = Time.frameCount;
                         OnHomeCellSubmit(index);
                     }
                 });
                 cell.RegisterCallback<NavigationSubmitEvent>(_ => OnHomeCellSubmit(index));
+                cell.RegisterCallback<NavigationMoveEvent>(evt => OnHomeNavigationMove(index, evt));
 
                 _homeCells[i] = cell;
                 _homeBadges[i] = badge;
@@ -889,11 +1029,43 @@ namespace MoonProject.UI
 
         private void OnHoldCellPointerDown(int index, PointerDownEvent evt)
         {
-            if (evt.button != 0 || index >= _unlockedHoldCount)
+            if (evt.button != 0 || index >= _unlockedHoldCount || _lastPointerDownFrame == Time.frameCount)
             {
                 return;
             }
 
+            _lastPointerDownFrame = Time.frameCount;
+            if (evt.pointerId >= 0)
+            {
+                _panel.CapturePointer(evt.pointerId);
+            }
+
+            BeginHoldCellPress(index, EventToReference(evt));
+        }
+
+        private void OnPanelPointerMove(PointerMoveEvent evt)
+        {
+            HandlePointerMoveAtReferencePos(EventToReference(evt));
+        }
+
+        private void OnPanelPointerUp(PointerUpEvent evt)
+        {
+            if (evt.pointerId >= 0 && _panel.HasPointerCapture(evt.pointerId))
+            {
+                _panel.ReleasePointer(evt.pointerId);
+            }
+
+            if (_lastPointerUpFrame == Time.frameCount)
+            {
+                return;
+            }
+
+            _lastPointerUpFrame = Time.frameCount;
+            HandlePointerUpAtReferencePos(EventToReference(evt));
+        }
+
+        private void BeginHoldCellPress(int index, Vector2 refPos)
+        {
             OnHoldCellFocus(index);
             HoldCellState state = _holdStates[index];
             if (!_dock.IsDocked && state.Kind == HoldCellKind.WaitingKit)
@@ -901,8 +1073,8 @@ namespace MoonProject.UI
                 _dragHoldCell = index;
                 _dragRowIndex = state.RowIndex;
                 _dragKitPiece = state.KitPiece;
-                _dragStartRefPos = PanelToReference((Vector2)evt.position - _panel.worldBound.position);
-                _dragCurrentRefPos = _dragStartRefPos;
+                _dragStartRefPos = refPos;
+                _dragCurrentRefPos = refPos;
                 _isDraggingKit = false;
                 _dragTargetSocketIndex = -1;
                 return;
@@ -911,29 +1083,83 @@ namespace MoonProject.UI
             OnHoldCellSubmit(index);
         }
 
-        private void OnPanelPointerMove(PointerMoveEvent evt)
+        private void HandlePointerDownAtReferencePos(Vector2 refPos)
         {
-            if (_dragHoldCell < 0 || _dragRowIndex < 0)
+            int holdIdx = FindHoldCellAtReferencePos(refPos);
+            if (holdIdx >= 0)
             {
+                BeginHoldCellPress(holdIdx, refPos);
                 return;
             }
 
-            Vector2 refPos = PanelToReference(evt.localPosition);
-            _dragCurrentRefPos = refPos;
-            if (!_isDraggingKit && Vector2.Distance(refPos, _dragStartRefPos) >= _settings.DragThreshold)
+            if (!_dock.IsDocked)
             {
-                _isDraggingKit = true;
+                int socketIdx = FindSocketAtReferencePos(refPos);
+                if (socketIdx >= 0)
+                {
+                    OnSocketFocus(socketIdx);
+                    OnSocketSubmit(socketIdx);
+                }
             }
-
-            if (_isDraggingKit)
+            else
             {
-                _dragTargetSocketIndex = FindSocketAtReferencePos(refPos);
-                UpdateTooltip();
-                _canvas.MarkDirtyRepaint();
+                int homeIdx = FindHomeCellAtReferencePos(refPos);
+                if (homeIdx >= 0)
+                {
+                    OnHomeCellFocus(homeIdx);
+                    OnHomeCellSubmit(homeIdx);
+                }
             }
         }
 
-        private void OnPanelPointerUp(PointerUpEvent evt)
+        private void HandlePointerMoveAtReferencePos(Vector2 refPos)
+        {
+            if (_dragHoldCell >= 0 && _dragRowIndex >= 0)
+            {
+                _dragCurrentRefPos = refPos;
+                if (!_isDraggingKit && Vector2.Distance(refPos, _dragStartRefPos) >= _settings.DragThreshold)
+                {
+                    _isDraggingKit = true;
+                    _focusedHoldCell = -1;
+                    _focusedSocketIndex = -1;
+                }
+
+                if (_isDraggingKit)
+                {
+                    _dragTargetSocketIndex = FindSocketAtReferencePos(refPos);
+                    UpdateTooltip();
+                    _canvas.MarkDirtyRepaint();
+                }
+
+                return;
+            }
+
+            int holdIdx = FindHoldCellAtReferencePos(refPos);
+            if (holdIdx >= 0)
+            {
+                OnHoldCellHover(holdIdx);
+                return;
+            }
+
+            if (!_dock.IsDocked)
+            {
+                int socketIdx = FindSocketAtReferencePos(refPos);
+                if (socketIdx >= 0)
+                {
+                    OnSocketHover(socketIdx);
+                }
+            }
+            else
+            {
+                int homeIdx = FindHomeCellAtReferencePos(refPos);
+                if (homeIdx >= 0)
+                {
+                    OnHomeCellFocus(homeIdx);
+                }
+            }
+        }
+
+        private void HandlePointerUpAtReferencePos(Vector2 refPos)
         {
             if (_dragHoldCell < 0)
             {
@@ -942,7 +1168,6 @@ namespace MoonProject.UI
 
             if (_isDraggingKit)
             {
-                Vector2 refPos = PanelToReference(evt.localPosition);
                 int hitSocket = FindSocketAtReferencePos(refPos);
                 RoverSocket? dropSocket = hitSocket >= 0 ? OrbitalSockets[hitSocket] : (RoverSocket?)null;
                 CompleteKitDrag(dropSocket);
@@ -953,6 +1178,39 @@ namespace MoonProject.UI
             _dragHoldCell = -1;
             _dragRowIndex = -1;
             OnHoldCellSubmit(clickedCell);
+        }
+
+        private int FindHoldCellAtReferencePos(Vector2 refPos)
+        {
+            for (int i = 0; i < _unlockedHoldCount; i++)
+            {
+                if (GetHoldCellReferenceRect(i).Contains(refPos))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private int FindHomeCellAtReferencePos(Vector2 refPos)
+        {
+            for (int i = 0; i < _homeSlotCount; i++)
+            {
+                int col = i % GridColumns;
+                int row = i / GridColumns;
+                var rect = new Rect(
+                    ShelfGridX + col * (CellSize + CellGapX),
+                    ShelfGridY + row * (CellSize + CellGapY),
+                    CellSize,
+                    CellSize);
+                if (rect.Contains(refPos))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         private int FindSocketAtReferencePos(Vector2 refPos)
@@ -1088,9 +1346,42 @@ namespace MoonProject.UI
 
         private void OnHoldNavigationMove(int index, NavigationMoveEvent evt)
         {
+            if (_lastNavigationFrame != Time.frameCount)
+            {
+                _lastNavigationFrame = Time.frameCount;
+                NavigateFromHoldCell(index, evt.direction);
+            }
+
+            evt.StopPropagation();
+        }
+
+        private void OnSocketNavigationMove(int orbitalIdx, NavigationMoveEvent evt)
+        {
+            if (_lastNavigationFrame != Time.frameCount)
+            {
+                _lastNavigationFrame = Time.frameCount;
+                NavigateFromSocket(orbitalIdx, evt.direction);
+            }
+
+            evt.StopPropagation();
+        }
+
+        private void OnHomeNavigationMove(int index, NavigationMoveEvent evt)
+        {
+            if (_lastNavigationFrame != Time.frameCount)
+            {
+                _lastNavigationFrame = Time.frameCount;
+                NavigateFromHomeCell(index, evt.direction);
+            }
+
+            evt.StopPropagation();
+        }
+
+        private void NavigateFromHoldCell(int index, NavigationMoveEvent.Direction direction)
+        {
             int col = index % GridColumns;
             int row = index / GridColumns;
-            switch (evt.direction)
+            switch (direction)
             {
                 case NavigationMoveEvent.Direction.Right:
                     if (col + 1 < GridColumns && index + 1 < _unlockedHoldCount)
@@ -1103,11 +1394,9 @@ namespace MoonProject.UI
                     }
                     else if (_homeSlotCount > 0)
                     {
-                        OnHomeCellFocus(0);
-                        _homeCells[0].Focus();
+                        FocusHomeCell(0);
                     }
 
-                    evt.StopPropagation();
                     break;
                 case NavigationMoveEvent.Direction.Left:
                     if (col > 0)
@@ -1115,7 +1404,6 @@ namespace MoonProject.UI
                         FocusHoldCell(index - 1);
                     }
 
-                    evt.StopPropagation();
                     break;
                 case NavigationMoveEvent.Direction.Down:
                     if ((row + 1) * GridColumns + col < _unlockedHoldCount)
@@ -1123,7 +1411,6 @@ namespace MoonProject.UI
                         FocusHoldCell((row + 1) * GridColumns + col);
                     }
 
-                    evt.StopPropagation();
                     break;
                 case NavigationMoveEvent.Direction.Up:
                     if (row > 0)
@@ -1131,19 +1418,17 @@ namespace MoonProject.UI
                         FocusHoldCell((row - 1) * GridColumns + col);
                     }
 
-                    evt.StopPropagation();
                     break;
             }
         }
 
-        private void OnSocketNavigationMove(int orbitalIdx, NavigationMoveEvent evt)
+        private void NavigateFromSocket(int orbitalIdx, NavigationMoveEvent.Direction direction)
         {
-            switch (evt.direction)
+            switch (direction)
             {
                 case NavigationMoveEvent.Direction.Right:
                 case NavigationMoveEvent.Direction.Down:
                     FocusSocket(OrbitalSockets[(orbitalIdx + 1) % OrbitalSocketCount]);
-                    evt.StopPropagation();
                     break;
                 case NavigationMoveEvent.Direction.Left:
                     if (OrbitalSockets[orbitalIdx] == RoverSocket.Deck ||
@@ -1157,11 +1442,50 @@ namespace MoonProject.UI
                         FocusSocket(OrbitalSockets[(orbitalIdx + OrbitalSocketCount - 1) % OrbitalSocketCount]);
                     }
 
-                    evt.StopPropagation();
                     break;
                 case NavigationMoveEvent.Direction.Up:
                     FocusSocket(OrbitalSockets[(orbitalIdx + OrbitalSocketCount - 1) % OrbitalSocketCount]);
-                    evt.StopPropagation();
+                    break;
+            }
+        }
+
+        private void NavigateFromHomeCell(int index, NavigationMoveEvent.Direction direction)
+        {
+            int col = index % GridColumns;
+            int row = index / GridColumns;
+            switch (direction)
+            {
+                case NavigationMoveEvent.Direction.Right:
+                    if (col + 1 < GridColumns && index + 1 < _homeSlotCount)
+                    {
+                        FocusHomeCell(index + 1);
+                    }
+
+                    break;
+                case NavigationMoveEvent.Direction.Left:
+                    if (col > 0)
+                    {
+                        FocusHomeCell(index - 1);
+                    }
+                    else if (_unlockedHoldCount > 0)
+                    {
+                        FocusHoldCell(Mathf.Min(_unlockedHoldCount - 1, row * GridColumns + GridColumns - 1));
+                    }
+
+                    break;
+                case NavigationMoveEvent.Direction.Down:
+                    if ((row + 1) * GridColumns + col < _homeSlotCount)
+                    {
+                        FocusHomeCell((row + 1) * GridColumns + col);
+                    }
+
+                    break;
+                case NavigationMoveEvent.Direction.Up:
+                    if (row > 0)
+                    {
+                        FocusHomeCell((row - 1) * GridColumns + col);
+                    }
+
                     break;
             }
         }
@@ -1655,6 +1979,15 @@ namespace MoonProject.UI
             }
 
             RoverLineArtPainter.FillCircle(painter, new Vector2(54f * s, 733f * s), 3.5f * s, AmberBright);
+        }
+
+        private Vector2 EventToReference(IPointerEvent evt)
+        {
+            Rect wb = _panel.worldBound;
+            Vector2 local = !float.IsNaN(wb.width) && wb.width > 0f
+                ? (Vector2)evt.position - wb.position
+                : (Vector2)evt.localPosition;
+            return PanelToReference(local);
         }
 
         private Vector2 PanelToReference(Vector2 localPos)

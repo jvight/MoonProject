@@ -13,6 +13,7 @@ using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Core.Save;
 using MoonProject.Testing;
+using MoonProject.UI;
 using Object = UnityEngine.Object;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -26,8 +27,9 @@ namespace MoonProject.Rover.PlayModeTests
     /// Boots <c>Main.unity</c> via <see cref="RoverSessionScene"/>, presses <c>Tab</c> through the real input system,
     /// verifies the 6-beat choreography (chase -> 07 brakes &amp; lifts head -> eyes collapse to horizontal CRT line ->
     /// camera arrives with backdrop blur -> line expands into <c>CargoScreen</c> on 07's curved CRT face -> closing
-    /// collapses to line and returns with a happy <c>^ ^</c> blink), verifies screen UV raycasting, sound hooks,
-    /// night vs. day lighting, and rock occlusion avoidance, and writes all required PNGs to <c>Logs/captures/</c>.
+    /// collapses to line and returns with a happy <c>^ ^</c> blink), verifies curved-screen UV raycasting, hover
+    /// tooltips, kit drag onto a socket bubble, gamepad/keyboard focus order, <see cref="RoverFaceCued"/> sound cues,
+    /// night vs. day lighting (<c>vi</c>), and rock occlusion avoidance, and writes all required PNGs to <c>Logs/r2/</c>.
     /// </summary>
     public sealed class RoverFaceInventoryPlayModeTests : InputTestFixture
     {
@@ -40,6 +42,8 @@ namespace MoonProject.Rover.PlayModeTests
 
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "captures"));
+        private static readonly string R2CaptureFolder =
+            Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "r2"));
 
         private GameContext _context;
         private RoverController _rover;
@@ -47,11 +51,14 @@ namespace MoonProject.Rover.PlayModeTests
         private RoverBodyLanguage _body;
         private RoverFaceDirector _faceDirector;
         private FaceDisplay _faceDisplay;
+        private UISystem _uiSystem;
         private ISunlight _sunlight;
         private Camera _view;
         private Keyboard _keyboard;
+        private Mouse _mouse;
         private IDisposable _awokeSub;
         private readonly List<IDisposable> _eventSubs = new List<IDisposable>();
+        private readonly List<RoverFaceCueKind> _faceCues = new List<RoverFaceCueKind>();
         private GameObject _rockObstacle;
         private bool _awake;
 
@@ -60,6 +67,7 @@ namespace MoonProject.Rover.PlayModeTests
             base.Setup();
             Time.captureDeltaTime = FrameTime;
             _awake = false;
+            _faceCues.Clear();
         }
 
         public override void TearDown()
@@ -73,6 +81,7 @@ namespace MoonProject.Rover.PlayModeTests
             }
 
             _eventSubs.Clear();
+            _faceCues.Clear();
 
             if (_rockObstacle != null)
             {
@@ -100,17 +109,24 @@ namespace MoonProject.Rover.PlayModeTests
         public IEnumerator RealScene_TabOpensInventoryOnCrtFace_CapturesSixBeatsNightDayAndRockOcclusion()
         {
             Directory.CreateDirectory(CaptureFolder);
+            Directory.CreateDirectory(R2CaptureFolder);
             _keyboard = InputSystem.AddDevice<Keyboard>();
-            InputSystem.AddDevice<Mouse>();
+            _mouse = InputSystem.AddDevice<Mouse>();
 
             yield return BootRealScene();
 
             Assert.IsNotNull(_faceDirector, "RoverFaceDirector must be wired in the real scene.");
             Assert.IsNotNull(_faceDisplay, "FaceDisplay must be wired on Screen in the real scene.");
+            Assert.IsNotNull(_uiSystem, "UISystem must be wired in the real scene.");
+            Assert.IsNotNull(_uiSystem.Cargo?.View, "FaceInventoryView must be hosted by CargoScreen in UISystem.");
+            FaceInventoryView view = _uiSystem.Cargo.View;
 
             IRoverFaceScreen faceScreen = _context.Get<IRoverFaceScreen>();
             Assert.IsNotNull(faceScreen, "IRoverFaceScreen must be registered in GameContext by RoverController.");
             Assert.IsFalse(faceScreen.IsOpen, "Face screen must start closed.");
+
+            // Switch to Vietnamese (vi) so the face inventory captures show the full localized Vietnamese UI.
+            _context.Get<ILocalization>().SetLanguage("vi");
 
             // Populate hold (4 stacks: 4+1 Metal, 3 Wiring, 2 Optics) and equipment before placing 07 on open basin ground.
             PopulateHoldAndEquipment();
@@ -190,6 +206,8 @@ namespace MoonProject.Rover.PlayModeTests
 
             Assert.Greater(faceState.ScreenVerticalPinch, 0.85f, "Beat 3: CRT face must pinch vertically into a horizontal line.");
             Assert.Greater(faceState.ScreenLineGlow, 0.85f, "Beat 3: horizontal CRT line glow must be hot.");
+            CollectionAssert.Contains(_faceCues, RoverFaceCueKind.ScreenOpen, "CRT channel-switch open must publish RoverFaceCued(ScreenOpen).");
+            CollectionAssert.Contains(_faceCues, RoverFaceCueKind.Blink, "Blinking on channel switch must publish RoverFaceCued(Blink).");
             Capture("face-inv-beat-3-line-collapse");
 
             // BEAT 4: Camera Arrives at Screen (~0.45 s: camera settles in front of Screen while CRT carrier line holds)
@@ -227,9 +245,73 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(0.5f, hitUv.x, 0.10f, "Center ray must hit near horizontal center of Screen.");
             Assert.AreEqual(0.5f, hitUv.y, 0.10f, "Center ray must hit near vertical center of Screen.");
 
-            // BEAT 5: Line Expands into Inventory (and Night Open capture)
+            // BEAT 5: Line Expands into Inventory (and Night Open capture in Vietnamese)
+            view.ClearFocus();
+            yield return null;
+            Assert.IsFalse(view.IsTooltipVisible, "Resting night capture starts with no tooltip visible.");
             Capture("face-inv-beat-5-inventory-expand");
             Capture("face-inv-night-open");
+            Capture("face-inv-night-open-vi");
+
+            // CURVED SCREEN INPUT 1: Hover tooltip on 07's curved 3D CRT face.
+            Vector2 cell0Panel = FaceInventoryView.GetHoldCellReferenceRect(0).center;
+            Assert.IsTrue(FaceScreenMapper.TryPanelToScreen(cell0Panel, _view, faceScreen, FaceScreenMapper.DefaultPanelSize, out Vector2 cell0Screen),
+                "Hold cell 0 center must project onto 07's curved 3D CRT screen in viewport coordinates.");
+            Set(_mouse.position, cell0Screen);
+            yield return null;
+            yield return null;
+            Assert.IsTrue(view.IsTooltipVisible, "Hovering hold cell 0 on 07's curved CRT face must show the tooltip.");
+            StringAssert.AreEqualIgnoringCase("Kim loại", view.TooltipNameText,
+                "Tooltip on 07's face must display the Vietnamese material name.");
+            Capture("face-inv-hover-tooltip");
+
+            // CURVED SCREEN INPUT 2: Drag waiting kit (HoverCoils in hold cell 5) across 07's curved CRT screen onto Belly socket bubble.
+            Vector2 kitCellPanel = FaceInventoryView.GetHoldCellReferenceRect(5).center;
+            Vector2 bellySocketPanel = FaceInventoryView.GetOrbitalSocketReferenceCenter(FaceInventoryView.OrbitalIndexOf(RoverSocket.Belly));
+            Assert.IsTrue(FaceScreenMapper.TryPanelToScreen(kitCellPanel, _view, faceScreen, FaceScreenMapper.DefaultPanelSize, out Vector2 kitScreen),
+                "Waiting kit hold cell 5 must project onto 07's curved 3D CRT screen.");
+            Assert.IsTrue(FaceScreenMapper.TryPanelToScreen(bellySocketPanel, _view, faceScreen, FaceScreenMapper.DefaultPanelSize, out Vector2 bellyScreen),
+                "Belly orbital socket bubble must project onto 07's curved 3D CRT screen.");
+
+            Set(_mouse.position, kitScreen);
+            yield return null;
+            Press(_mouse.leftButton);
+            yield return null;
+
+            Set(_mouse.position, bellyScreen);
+            yield return null;
+            yield return null;
+            Assert.IsTrue(view.IsDraggingKit,
+                "Pressing left mouse on a waiting kit cell and dragging across 07's curved face must begin a kit drag.");
+            Assert.IsTrue(view.IsSocketLeaderCyan(RoverSocket.Belly),
+                "Dragging HoverCoils over the Belly orbital socket bubble must light its leader line cyan.");
+            Capture("face-inv-drag-socket");
+
+            // Release the drag back over the hold grid so HoverCoils remains in the hold for subsequent captures.
+            Set(_mouse.position, cell0Screen);
+            yield return null;
+            Release(_mouse.leftButton);
+            yield return null;
+            Assert.IsFalse(view.IsDraggingKit, "Releasing mouse over the hold grid must end the drag without fitting.");
+
+            // CURVED SCREEN INPUT 3: Verify keyboard/gamepad focus order across hold cells and into/out of 07's 10 orbital sockets.
+            view.FocusFirst();
+            yield return null;
+            Assert.AreEqual(0, view.FocusedHoldCell, "FocusFirst must focus hold cell 0.");
+            yield return TapKey(_keyboard.rightArrowKey);
+            Assert.AreEqual(1, view.FocusedHoldCell);
+            yield return TapKey(_keyboard.rightArrowKey);
+            Assert.AreEqual(2, view.FocusedHoldCell);
+            yield return TapKey(_keyboard.rightArrowKey);
+            Assert.AreEqual(3, view.FocusedHoldCell);
+            yield return TapKey(_keyboard.rightArrowKey);
+            Assert.AreEqual(FaceInventoryView.OrbitalIndexOf(RoverSocket.Deck), view.FocusedSocketIndex,
+                "Navigating Right from column 3 of row 0 must focus RoverSocket.Deck.");
+            yield return TapKey(_keyboard.downArrowKey);
+            Assert.AreEqual(FaceInventoryView.OrbitalIndexOf(RoverSocket.Back), view.FocusedSocketIndex,
+                "Navigating Down from Deck must move around the orbit to RoverSocket.Back.");
+            yield return TapKey(_keyboard.leftArrowKey);
+            Assert.AreEqual(3, view.FocusedHoldCell, "Navigating Left from Back must return focus to hold cell 3.");
 
             // BEAT 6: Close Returns with Happy Blink (^ ^)
             int happyBlinksBefore = faceState.ClosingHappyBlinkCount;
@@ -248,6 +330,7 @@ namespace MoonProject.Rover.PlayModeTests
 
             Assert.AreEqual(0f, faceState.ScreenContentMix, 1e-4f, "Beat 6: screen must have returned to eye mode.");
             Assert.Greater(faceState.LeftEye.Arc, 0.5f, "Beat 6: closing must show happy curved arc eyes (^ ^).");
+            CollectionAssert.Contains(_faceCues, RoverFaceCueKind.ScreenClose, "CRT channel-switch close must publish RoverFaceCued(ScreenClose).");
             Capture("face-inv-beat-6-close-happy-blink");
 
             // Wait for camera to finish easing back to chase view.
@@ -275,7 +358,10 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsTrue(faceScreen.IsOpen);
             Assert.AreEqual(1f, faceState.ScreenContentMix, 1e-4f);
             Assert.AreEqual(0f, faceState.ScreenVerticalPinch, 1e-4f);
+            view.ClearFocus();
+            yield return null;
             Capture("face-inv-day-open");
+            Capture("face-inv-day-open-vi");
 
             yield return TapTab();
             yield return WaitSeconds(0.60f);
@@ -357,6 +443,14 @@ namespace MoonProject.Rover.PlayModeTests
             Release(_keyboard.tabKey);
         }
 
+        private IEnumerator TapKey(UnityEngine.InputSystem.Controls.KeyControl key)
+        {
+            Press(key);
+            yield return null;
+            Release(key);
+            yield return null;
+        }
+
         private IEnumerator BootRealScene()
         {
             Directory.CreateDirectory(SaveService.DefaultDirectory);
@@ -379,6 +473,7 @@ namespace MoonProject.Rover.PlayModeTests
                 _rover = _rover != null ? _rover : root.GetComponentInChildren<RoverController>(true);
                 _cameraRig = _cameraRig != null ? _cameraRig : root.GetComponentInChildren<RoverCameraRig>(true);
                 _body = _body != null ? _body : root.GetComponentInChildren<RoverBodyLanguage>(true);
+                _uiSystem = _uiSystem != null ? _uiSystem : root.GetComponentInChildren<UISystem>(true);
             }
 
             Assert.IsNotNull(bootstrap, "Main scene must contain GameBootstrap.");
@@ -392,6 +487,7 @@ namespace MoonProject.Rover.PlayModeTests
             _faceDirector = _body.FaceDirector;
             _faceDisplay = _faceDirector != null ? _faceDirector.Display : null;
 
+            _eventSubs.Add(_context.Events.Subscribe<RoverFaceCued>(c => _faceCues.Add(c.Kind)));
             _awokeSub = _context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
             float start = Time.time;
             while (!_awake || _body.Mood.Wake.Sleep > 0.05f)
@@ -406,6 +502,10 @@ namespace MoonProject.Rover.PlayModeTests
             string path = Path.Combine(CaptureFolder, name + ".png");
             FrameCapture.SavePng(_view, CaptureWidth, CaptureHeight, path);
             Assert.IsTrue(File.Exists(path), $"Capture must be written to {path}.");
+
+            string r2Path = Path.Combine(R2CaptureFolder, name + ".png");
+            File.Copy(path, r2Path, true);
+            Assert.IsTrue(File.Exists(r2Path), $"Capture must be written to {r2Path}.");
         }
 
         private static IEnumerator WaitSeconds(float seconds)

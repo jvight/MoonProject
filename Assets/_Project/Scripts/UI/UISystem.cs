@@ -523,7 +523,7 @@ namespace MoonProject.UI
         {
             if (_bound)
             {
-                Tick(Time.unscaledDeltaTime);
+                Tick(Time.captureDeltaTime > 0f ? Time.captureDeltaTime : Time.unscaledDeltaTime);
             }
         }
 
@@ -570,6 +570,11 @@ namespace MoonProject.UI
             _map?.Tick(deltaTime, paused);
             SetFacePanelVisible(_cargo.IsOpen || _cargo.Openness > 0f);
             _cargo.Tick(deltaTime, CargoScreenSize(), input.ActiveDevice);
+            if (_cargo.IsOpen && !_cargo.IsBooting)
+            {
+                StepCargoInput(menu);
+            }
+
             if (_cargo.IsOpen && ((_cargo.IsTransferView && !_services.Dock.IsDocked) || _cargo.WantsClose))
             {
                 _reopenCargo = _cargo.WantsClose;
@@ -768,6 +773,8 @@ namespace MoonProject.UI
             _slot.Step(_guidanceWants, _guidanceShown);
         }
 
+        private Vector2 _lastFaceMouseScreenPos = new Vector2(float.NaN, float.NaN);
+
         private void BindFacePanel(VisualElement root)
         {
             if (_faceDocument == null)
@@ -792,6 +799,7 @@ namespace MoonProject.UI
             _cargo.FillPanelHeight = true;
             if (_faceDocument.panelSettings != null)
             {
+                _faceDocument.panelSettings.sortingOrder = 1f;
                 _faceDocument.panelSettings.SetScreenToPanelSpaceFunction(ScreenToFacePanel);
             }
 
@@ -862,6 +870,78 @@ namespace MoonProject.UI
                 CargoScreenSize());
         }
 
+        private void StepCargoInput(MenuInput menu)
+        {
+            FaceInventoryView view = _cargo.View;
+            if (menu.NavigatePressed && view.LastNavigationFrame != Time.frameCount)
+            {
+                Vector2 nav = menu.NavigateVector;
+                NavigationMoveEvent.Direction dir = Mathf.Abs(nav.x) >= Mathf.Abs(nav.y)
+                    ? (nav.x > 0.2f ? NavigationMoveEvent.Direction.Right
+                        : nav.x < -0.2f ? NavigationMoveEvent.Direction.Left
+                        : NavigationMoveEvent.Direction.None)
+                    : (nav.y > 0.2f ? NavigationMoveEvent.Direction.Up
+                        : nav.y < -0.2f ? NavigationMoveEvent.Direction.Down
+                        : NavigationMoveEvent.Direction.None);
+                if (dir != NavigationMoveEvent.Direction.None)
+                {
+                    view.Navigate(dir);
+                }
+                else if (view.FocusedHoldCell < 0 && view.FocusedSocketIndex < 0 && view.FocusedHomeCell < 0)
+                {
+                    _cargo.FocusFirst();
+                }
+            }
+
+            if (_faceDocument == null || _services.FaceScreen == null || !_services.FaceScreen.IsOpen)
+            {
+                return;
+            }
+
+            Vector2 rawMouse = menu.PointerPosition;
+            if (float.IsNaN(rawMouse.x) || float.IsNaN(rawMouse.y))
+            {
+                return;
+            }
+
+            bool moved = float.IsNaN(_lastFaceMouseScreenPos.x)
+                ? rawMouse.sqrMagnitude > 0.01f
+                : (rawMouse - _lastFaceMouseScreenPos).sqrMagnitude > 0.01f;
+            bool down = menu.ClickPressed;
+            bool up = menu.ClickReleased;
+            if (!moved && !down && !up)
+            {
+                return;
+            }
+
+            _lastFaceMouseScreenPos = rawMouse;
+            Camera cam = _services.View?.Camera;
+            float height = cam != null && cam.pixelHeight > 0 ? cam.pixelHeight : Screen.height;
+            var uiScreenPos = new Vector2(rawMouse.x, height - rawMouse.y);
+            Vector2 panelPos = FaceScreenMapper.ScreenToPanel(uiScreenPos, cam, _services.FaceScreen, CargoScreenSize(),
+                height);
+            if (!float.IsNaN(panelPos.x) && !float.IsNaN(panelPos.y))
+            {
+                if (down)
+                {
+                    view.PointerDownAtPanel(panelPos);
+                }
+                else if (moved)
+                {
+                    view.PointerMoveAtPanel(panelPos);
+                }
+
+                if (up)
+                {
+                    view.PointerUpAtPanel(panelPos);
+                }
+            }
+            else if (up && view.IsDraggingKit)
+            {
+                view.CompleteKitDrag(null);
+            }
+        }
+
         private Texture FaceTargetTexture()
         {
             return _faceDocument != null && _faceDocument.panelSettings != null
@@ -878,6 +958,7 @@ namespace MoonProject.UI
         private void OpenCargo()
         {
             _reopenCargo = false;
+            _lastFaceMouseScreenPos = _services.Input.Menu.PointerPosition;
             SetFacePanelVisible(true);
             _cargo.Open();
             _services.FaceScreen?.SetScreenOpen(true, FaceTargetTexture());

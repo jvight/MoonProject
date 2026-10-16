@@ -4,6 +4,7 @@
     "references": [
         "MoonProject.Core",
         "MoonProject.Rover",
+        "MoonProject.UI",
         "MoonProject.App",
         "MoonProject.Testing",
         "Unity.Cinemachine",
