@@ -1188,87 +1188,87 @@
         },
         {
             "key": "letter.mast_1",
-            "text": "17 MAR 2047 · Lumen Station, this is Houston relay. All four crew landed safely. Program review postponed. Stand by."
+            "text": "02 OCT 1988 · Lumen Station, this is Geneva Departure Control. Tenth harvest winter confirmed across both hemispheres. Final surface lifts to the L4 and L5 Arks complete this month."
         },
         {
             "key": "letter.mast_2",
-            "text": "2 APR 2047 · Lumen Station, this is Houston relay. A return window is under study. Keep station systems on standby."
+            "text": "14 OCT 1988 · Lumen Station, this is Ark IV relay at L5. Shallow polar cores read dry; lunar settlement is ruled out. Pack the station for pickup on the 29th."
         },
         {
             "key": "letter.mast_3",
-            "text": "11 MAY 2047 · Lumen Station, this is Houston relay. Return window cancelled. Program review continues."
+            "text": "18 OCT 1988 · Lena, it's Ines at Lumen. The dry verdict is wrong—Core 41 came up wet from below the basalt cap. Can you point Meridian's automated radar under our basin?"
         },
         {
             "key": "letter.mast_4",
-            "text": "29 SEP 2047 · Lumen Station, this is Houston relay. Program closed. This channel will no longer be monitored. Thank you, Lumen."
+            "text": "22 OCT 1988 · Ines, Lena here aboard Ark IV. I've locked Meridian's automated sounders onto a deep loop through Lumen's link. The reflection under your basin is huge—it's a buried glacier."
         },
         {
             "key": "letter.mast_5",
-            "text": "07, it's Ro. They say nobody's listening up there. I'm sending this anyway. — Ro, 9 Jun 2048"
+            "text": "25 OCT 1988 · Ro, half of Ark IV tunes in to Lumen After Dark on Sundays while we seal the hull rings. I've registered your Sunday frequency for Ines's water survey uplink. — Lena Moreau"
         },
         {
             "key": "letter.mast_6",
-            "text": "Ines took a desk job. She still walks round the block every morning to check Earth is still there. — Ro, 14 Jul 2049"
+            "text": "27 OCT 1988 · Ark IV Watch, this is Kalani at Lumen Station. We broke through the basalt at 140 metres—pure water ice, enough to bring the whole fleet down. Full survey transmits from the Peak dish tomorrow at 22:00."
         },
         {
             "key": "letter.mast_7",
-            "text": "Theo says the basil on my windowsill isn't as good as yours was. Don't tell him I agree. — Ro, 2 Aug 2051"
+            "text": "28 OCT 1988 · 19:30 · Lumen Station, this is pickup shuttle Transfer-19. Coronal storm front is two hours out. Leave the survey drives and board the ascent pod now, or we lose the orbital window."
         },
         {
             "key": "letter.mast_8",
-            "text": "Kenji fixed my kettle with a paperclip and a long speech about tolerances. He says hello to the duck. — Ro, 30 Oct 2054"
+            "text": "28 OCT 1988 · 21:20 · Transfer-19, this is Morrow at Lumen. The storm jammed the Peak dish at fourteen percent. All four of us are in suits securing the backup drives and setting the rovers to continue—hold orbit till dawn."
         },
         {
             "key": "letter.mast_9",
-            "text": "If that old dish ever wakes up, I'll be listening on the station's frequency. You know how to find me: three short, one long. — Ro, 2 Jun 2059"
+            "text": "29 OCT 1988 · 05:00 · Ark IV Control, this is Transfer-19. Lumen habitat seal failed in the storm; suit transponders 01 through 04 went offline at 04:12. Radiation is past our limit—we are returning to L5 without them."
         },
         {
             "key": "letter.mast_10",
-            "text": "It's been twenty years. I still play the long-drive tape on Sundays. — Ro, 13 Mar 2067"
+            "text": "06 NOV 1988 · Lumen Station buffer, this is Dr. Lena Moreau on Ark IV. Without your full packet, the Council ruled the Moon dry and locked us into L5 halo orbit. I am keeping Ro's Sunday listening schedule open—three short, one long—for as long as I live."
         },
         {
             "key": "ticker.ending.answer",
-            "text": "I heard you, 07. I'm still here. — Ro"
+            "text": "Lumen Station, this is Moreau on Ark IV. Thirty-six years of Sundays, and your survey finally came through. We're coming home. — L. Moreau"
         },
         {
             "key": "letter.after_1",
-            "text": "Told the others. Theo cried, then blamed hay fever. — Ro"
+            "text": "OCT 2024 · ARK IV BULLETIN: Hydrological packet verified—all six survey sectors intact. After thirty-six years at L5, the Fleet Council has voted unanimously to bring the Arks down to the Moon. — L. Moreau"
         },
         {
             "key": "letter.after_2",
-            "text": "Ines went out at midnight to look at the Moon. She says it's still there. — Ro"
+            "text": "OCT 2024 · ARK IV BULLETIN: The Council named the primary landing zone Kalani–Morrow Basin. I walked the observation ring at midnight just to look at the Moon and know we finally have ground beneath us. — L. Moreau"
         },
         {
             "key": "letter.after_3",
-            "text": "Kenji asked if you still have the odd wheel. I told him all six match now, and he had to sit down. — Ro"
+            "text": "NOV 2024 · ARK IV ENGINEERING: Station telemetry shows unit 07 completed the Peak climb on six matching magnetic treads. Our mechanics cheered—Morrow's 1988 maintenance queue actually finished the job. — L. Moreau"
         },
         {
             "key": "letter.after_4",
-            "text": "Played your song on my show tonight. Audience: two neighbours and a very old cat. Best audience since you. — Ro"
+            "text": "NOV 2024 · ARK IV COMMS: We piped Ro Amadi's archived tape—the side labelled 'for when we come home'—across all twelve Arks tonight. Every corridor from Deck A to the engine ring was listening. — L. Moreau"
         },
         {
             "key": "letter.after_5",
-            "text": "I told Theo about the dome. He's been unbearable all week. — Ro"
+            "text": "DEC 2024 · ARK IV BOTANY: Camera frames from the lava-tube shelter confirm Theo Lindqvist's moss strain is still green under its isotope lamp. The botany team is already clearing bay space for the cuttings. — L. Moreau"
         },
         {
             "key": "letter.after_6",
-            "text": "Weather tonight: rain over Lagos. It's always clear where you are, isn't it? — Ro"
+            "text": "DEC 2024 · ARK IV METEOROLOGY: Earth's aerosol veil will take another century to settle, but the skies over Lumen Station are clear, as always. Our advance ice-drilling crew launches next month. — L. Moreau"
         },
         {
             "key": "letter.after_7",
-            "text": "Ines's daughter wants to be an astronaut. Ines is pretending to be worried. — Ro"
+            "text": "JAN 2025 · ARK IV SURVEY DESK: My youngest student asked for the first geology berth on Lander One. She carries Ines's 1988 field notes in her pocket and checks the lunar horizon every morning. — L. Moreau"
         },
         {
             "key": "letter.after_8",
-            "text": "The four of us wrote to the agency together. Don't hold your breath; you don't breathe anyway. — Ro"
+            "text": "JAN 2025 · TYCHO–ILC JOINT DESK: Meridian's automated sorters never missed a shift in thirty-six years. The advance team will link Lumen's grid to the Rim Terraces first so both stations power the new domes. — L. Moreau"
         },
         {
             "key": "letter.after_9",
-            "text": "Kenji's grandson won a rubber duck at the fair. Kenji says it's a sign. — Ro"
+            "text": "FEB 2025 · ARK IV FLIGHT DECK: The shipyard crew stencilled a yellow rubber duck onto the nose of Landing Tug One for good luck. Even the Flight Director didn't have the heart to paint over it. — L. Moreau"
         },
         {
             "key": "letter.after_10",
-            "text": "Goodnight, 07. Keep the radio on. We'll keep ours on too. — Ro"
+            "text": "MAR 2025 · ARK IV VANGUARD: Descent burn begins at dawn. Keep the station beacons lit and the receiver on the Sunday frequency—after thirty-six years, the first crew is coming down to Lumen. — L. Moreau"
         },
         {
             "key": "map.sheet.title",
