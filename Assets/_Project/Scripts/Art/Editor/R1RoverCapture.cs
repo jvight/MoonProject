@@ -69,11 +69,24 @@ namespace MoonProject.Art.Editor
                 bool studioOk = CaptureStudioAndTurnaround(roverPrefab, rendersDir);
                 bool mainOk = CaptureMainSceneEarthlitNight(roverPrefab, rendersDir);
 
+                string frontStudio = Path.Combine(rendersDir, "unity_studio_front_3q.png");
+                string backStudio = Path.Combine(rendersDir, "unity_studio_back_3q.png");
+                if (File.Exists(frontStudio))
+                {
+                    File.Copy(frontStudio, Path.Combine(rendersDir, "rover_unity_front.png"), true);
+                }
+                if (File.Exists(backStudio))
+                {
+                    File.Copy(backStudio, Path.Combine(rendersDir, "rover_unity_back.png"), true);
+                }
+
                 string batchOutDir = Path.Combine(args.OutputDirectory, "r1_rover");
                 Directory.CreateDirectory(batchOutDir);
                 foreach (string name in new[]
                 {
                     "compare_unity.png",
+                    "rover_unity_front.png",
+                    "rover_unity_back.png",
                     "unity_studio_front_3q.png",
                     "unity_studio_back_3q.png",
                     "unity_upgraded_front_3q.png",
@@ -811,6 +824,251 @@ namespace MoonProject.Art.Editor
                         Mathf.Abs(cur.b - TurnaroundBgSrgb.b) <= 3)
                     {
                         destSheet[rowOffset + x + dx] = lineColor;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Batch entry point for SolarWing before/after proof captures in four states
+        /// (closed, idle open, stargaze fully open, sigh) x three head turns (left, centre, right),
+        /// plus at the home pad at night from the owner's angle (behind, above).
+        /// Invoke via:
+        /// <c>python tools/unity_batch.py exec --method MoonProject.Art.Editor.R1RoverCapture.CaptureSolarWingProof --arg tag=before</c>
+        /// </summary>
+        public static void CaptureSolarWingProof()
+        {
+            BatchRunner.Run(nameof(CaptureSolarWingProof), args =>
+            {
+                string tag = args.GetString("tag", "after");
+                AssetDatabase.Refresh();
+                R1MaterialLibrary.BuildMaterials();
+                R1ModelBuilder.Build();
+
+                var roverPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(RoverPrefabPath);
+                if (roverPrefab == null)
+                {
+                    Debug.LogError($"R1RoverCapture: Missing generated prefab at '{RoverPrefabPath}'.");
+                    return false;
+                }
+
+                var tuning = AssetDatabase.LoadAssetAtPath<RoverCharacterTuning>(
+                    "Assets/_Project/Data/Tuning/RoverCharacterTuning.asset");
+                if (tuning == null)
+                {
+                    Debug.LogError("R1RoverCapture: Missing RoverCharacterTuning.asset.");
+                    return false;
+                }
+
+                string rendersDir = Path.GetFullPath("Logs/renders");
+                Directory.CreateDirectory(rendersDir);
+
+                bool statesOk = CaptureSolarWingStateGrid(roverPrefab, tuning, rendersDir, tag);
+                bool nightOk = CaptureSolarWingHomeNightOwnerAngle(roverPrefab, tuning, rendersDir, tag);
+                return statesOk && nightOk;
+            });
+        }
+
+        private static bool CaptureSolarWingStateGrid(
+            GameObject roverPrefab,
+            RoverCharacterTuning tuning,
+            string rendersDir,
+            string tag)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temporary = new ArtLightingPreview.TemporaryObjects();
+            bool prevAsync = ShaderUtil.allowAsyncCompilation;
+            ShaderUtil.allowAsyncCompilation = false;
+            try
+            {
+                SetupNeutralStudioLighting(temporary, out GameObject _, out GameObject _);
+                var roverInstance = (GameObject)PrefabUtility.InstantiatePrefab(roverPrefab);
+                roverInstance.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+                temporary.Add(roverInstance);
+
+                ApplyProceduralCrtFace(roverInstance, temporary);
+                Transform cellFilled = roverInstance.transform.Find("SolarWing/CellFilled");
+                if (cellFilled != null)
+                {
+                    cellFilled.gameObject.SetActive(true);
+                }
+
+                Transform neck = roverInstance.transform.Find("Neck");
+                Transform neckLift = roverInstance.transform.Find("Neck/NeckLift");
+                Transform head = roverInstance.transform.Find("Neck/NeckLift/Head");
+                Transform solarWing = roverInstance.transform.Find("SolarWing");
+                if (neck == null || neckLift == null || head == null || solarWing == null)
+                {
+                    Debug.LogError("R1RoverCapture: Missing rig nodes on RoverModel.");
+                    return false;
+                }
+
+                Quaternion neckRest = neck.localRotation;
+                Quaternion neckLiftRest = neckLift.localRotation;
+                Quaternion headRest = head.localRotation;
+                Quaternion wingRest = solarWing.localRotation;
+
+                float openMax = tuning.WingOpenAngle;
+                float sighWing = tuning.Chirp.SighWing;
+                float idleOpen = tuning.WingIdleOpenMended * openMax;
+                float sighOpen = Mathf.Min(
+                    openMax + sighWing,
+                    (tuning.WingIdleOpenMended + tuning.WingSighAmount) * openMax + sighWing);
+
+                (string stateName, float wingDeg, float liftDeg, float pitchDeg)[] states =
+                {
+                    ("closed", 0f, 0f, 0f),
+                    ("idle", idleOpen, 0f, 0f),
+                    ("stargaze", openMax, -5f, tuning.StargazeHeadPitch),
+                    ("sigh", sighOpen, 7.5f, -tuning.SighHeadDrop),
+                };
+
+                float yawLimit = tuning.NeckYawLimit;
+                (string yawName, float yawDeg)[] yaws =
+                {
+                    ("left", -yawLimit),
+                    ("centre", 0f),
+                    ("right", yawLimit),
+                };
+
+                const int tileSize = 512;
+                int gridW = tileSize * yaws.Length;
+                int gridH = tileSize * states.Length;
+                var gridTex = new Texture2D(gridW, gridH, TextureFormat.RGBA32, false, false);
+                temporary.Add(gridTex);
+
+                Vector3 camPos = new Vector3(-1.32f, 1.72f, -1.62f);
+                Vector3 lookAt = new Vector3(0.0f, 0.96f, -0.04f);
+
+                for (int r = 0; r < states.Length; r++)
+                {
+                    (string stateName, float wingDeg, float liftDeg, float pitchDeg) = states[r];
+                    for (int c = 0; c < yaws.Length; c++)
+                    {
+                        (string yawName, float yawDeg) = yaws[c];
+
+                        neck.localRotation = neckRest * Quaternion.AngleAxis(yawDeg, Vector3.up);
+                        neckLift.localRotation = neckLiftRest * Quaternion.AngleAxis(liftDeg, Vector3.right);
+                        head.localRotation = headRest * Quaternion.AngleAxis(-pitchDeg, Vector3.right);
+                        solarWing.localRotation = wingRest * Quaternion.AngleAxis(wingDeg, Vector3.right);
+
+                        string shotPath = Path.Combine(rendersDir, $"solar_{tag}_{stateName}_{yawName}.png");
+                        RenderPerspectiveShot(camPos, lookAt, 38f, tileSize, tileSize, shotPath);
+
+                        var tileTex = new Texture2D(2, 2, TextureFormat.RGBA32, false, false);
+                        temporary.Add(tileTex);
+                        if (tileTex.LoadImage(File.ReadAllBytes(shotPath)))
+                        {
+                            int dstY = (states.Length - 1 - r) * tileSize;
+                            int dstX = c * tileSize;
+                            gridTex.SetPixels(dstX, dstY, tileSize, tileSize, tileTex.GetPixels());
+                        }
+                    }
+                }
+
+                gridTex.Apply(false);
+                string gridPath = Path.Combine(rendersDir, $"solar_{tag}_grid.png");
+                File.WriteAllBytes(gridPath, gridTex.EncodeToPNG());
+                BatchRunner.Log($"capture {gridPath}");
+                return true;
+            }
+            finally
+            {
+                ShaderUtil.allowAsyncCompilation = prevAsync;
+                temporary.Dispose();
+            }
+        }
+
+        private static bool CaptureSolarWingHomeNightOwnerAngle(
+            GameObject roverPrefab,
+            RoverCharacterTuning tuning,
+            string rendersDir,
+            string tag)
+        {
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(CaptureAutomation.MainScenePath) == null)
+            {
+                Debug.LogError($"R1RoverCapture: Missing scene at '{CaptureAutomation.MainScenePath}'.");
+                return false;
+            }
+
+            EditorSceneManager.OpenScene(CaptureAutomation.MainScenePath, OpenSceneMode.Single);
+            var temporary = new ArtLightingPreview.TemporaryObjects();
+            var hiddenObjects = new List<GameObject>();
+            bool prevAsync = ShaderUtil.allowAsyncCompilation;
+            ShaderUtil.allowAsyncCompilation = false;
+            try
+            {
+                GameObject existingRover = FindSceneObject("[Rover]");
+                if (existingRover != null && existingRover.activeSelf)
+                {
+                    existingRover.SetActive(false);
+                    hiddenObjects.Add(existingRover);
+                }
+
+                DynamicGI.UpdateEnvironment();
+
+                Vector3 homePos = new Vector3(0.4f, 0.0f, 2.2f);
+                Quaternion homeRot = Quaternion.Euler(0f, 185f, 0f);
+                var roverInstance = (GameObject)PrefabUtility.InstantiatePrefab(roverPrefab);
+                roverInstance.transform.SetPositionAndRotation(homePos, homeRot);
+                temporary.Add(roverInstance);
+
+                ApplyProceduralCrtFace(roverInstance, temporary);
+                Transform cellFilled = roverInstance.transform.Find("SolarWing/CellFilled");
+                if (cellFilled != null)
+                {
+                    cellFilled.gameObject.SetActive(true);
+                }
+
+                Transform solarWing = roverInstance.transform.Find("SolarWing");
+                if (solarWing != null)
+                {
+                    float idleDeg = tuning.WingIdleOpenMended * tuning.WingOpenAngle;
+                    solarWing.localRotation = solarWing.localRotation * Quaternion.AngleAxis(idleDeg, Vector3.right);
+                }
+
+                Light homeWarmLight = ArtLightingPreview.NewLight(
+                    "R1HomePorchWarmLight",
+                    LightType.Point,
+                    new Color(1.0f, 0.72f, 0.42f, 1f),
+                    3.8f);
+                homeWarmLight.transform.position = homePos + homeRot * new Vector3(-2.1f, 1.85f, 1.6f);
+                homeWarmLight.range = 9.0f;
+                homeWarmLight.shadows = LightShadows.Soft;
+                temporary.Add(homeWarmLight.gameObject);
+
+                Light moonRimFill = ArtLightingPreview.NewLight(
+                    "R1EarthlightRimFill",
+                    LightType.Point,
+                    new Color(0.62f, 0.72f, 0.96f, 1f),
+                    2.4f);
+                moonRimFill.transform.position = homePos + homeRot * new Vector3(1.8f, 2.3f, -2.0f);
+                moonRimFill.range = 10.0f;
+                moonRimFill.shadows = LightShadows.None;
+                temporary.Add(moonRimFill.gameObject);
+
+                // Owner's camera angle: behind and above 07 at the home pad at night
+                Vector3 ownerCamPos = homePos + homeRot * new Vector3(-0.55f, 1.88f, -1.95f);
+                Vector3 ownerLookAt = homePos + homeRot * new Vector3(0.0f, 0.92f, -0.05f);
+                RenderPerspectiveShot(
+                    ownerCamPos,
+                    ownerLookAt,
+                    38f,
+                    PerspectiveSize,
+                    PerspectiveSize,
+                    Path.Combine(rendersDir, $"solar_{tag}_home_night.png"));
+
+                return true;
+            }
+            finally
+            {
+                ShaderUtil.allowAsyncCompilation = prevAsync;
+                temporary.Dispose();
+                for (int i = 0; i < hiddenObjects.Count; i++)
+                {
+                    if (hiddenObjects[i] != null)
+                    {
+                        hiddenObjects[i].SetActive(true);
                     }
                 }
             }

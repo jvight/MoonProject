@@ -3,7 +3,7 @@
   "pivot_tolerance": 0.015,
   "nodes": {
     "SolarWing": {"pivot": [0.0, 0.0, 0.0]},
-    "WingSocket": {"pivot": [0.0, -0.24, 0.02]}
+    "WingSocket": {"pivot": [0.0, -0.11, 0.014]}
   },
   "require_vertex_colors": true,
   "max_triangles": 4000,

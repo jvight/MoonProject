@@ -496,8 +496,9 @@ namespace MoonProject.Rover
         /// <summary>Directly sets whether Earth is in view; triggers a gentle <see cref="FaceFeeling.Curious"/> glance when off cooldown.</summary>
         public void SetEarthInView(bool inView)
         {
+            bool enteredView = inView && !_earthInView;
             _earthInView = inView;
-            if (_earthInView && _earthGlanceCooldownTimer <= 0f && CanStartEarthGlance())
+            if (enteredView && _earthGlanceCooldownTimer <= 0f && CanStartEarthGlance())
             {
                 _activeBeat = BeatKind.EarthGlance;
                 _beatTimer = _tuning.EarthGlanceHoldSeconds;
@@ -638,13 +639,6 @@ namespace MoonProject.Rover
                 }
             }
 
-            if (_earthInView && _earthGlanceCooldownTimer <= 0f && CanStartEarthGlance())
-            {
-                _activeBeat = BeatKind.EarthGlance;
-                _beatTimer = _tuning.EarthGlanceHoldSeconds;
-                _earthGlanceCooldownTimer = _tuning.EarthGlanceHoldSeconds + _tuning.EarthGlanceCooldownSeconds;
-            }
-
             EvaluateImmediate();
 
             bool wantLowPower = _isLowPower && !_isCharging;
@@ -702,6 +696,11 @@ namespace MoonProject.Rover
             {
                 _activeBeat = kind;
                 _beatTimer = Mathf.Max(_beatTimer, holdSeconds);
+            }
+
+            if (kind != BeatKind.EarthGlance)
+            {
+                _earthGlanceCooldownTimer = Mathf.Max(_earthGlanceCooldownTimer, _beatTimer + _tuning.MinFeelingHoldSeconds + 1.0f);
             }
 
             EvaluateImmediate();
