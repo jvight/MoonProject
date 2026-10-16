@@ -52,10 +52,37 @@ namespace MoonProject.UI
         private const string ComponentModelPrefix = "Part_";
         public const string RecipeRow = "ui.recipe.row";
         public const string RewardTitle = "ui.reward.title";
+        public const string CargoHold = "ui.cargo.hold";
+        public const string CargoTabSeven = "ui.cargo.tab_seven";
         public const string CargoWaiting = "ui.cargo.waiting";
         public const string CargoSummary = "ui.cargo.summary";
+        public const string CargoFitAtBay = "ui.cargo.fit_at_bay";
+        public const string TillyCellJob = "pickup.tilly.cell.job";
+        public const string BellValveJob = "pickup.bell.valve.job";
         public const string CrateCaption = "ui.crate.caption";
         public const string StationOffline = "ui.station.offline";
+
+        /// <summary>"ui.kit.wing.desc": the short (&lt;= 52 char) tooltip line for <paramref name="socket"/>.</summary>
+        public static string KitDescription(RoverSocket socket)
+        {
+            switch (socket)
+            {
+                case RoverSocket.Cutter: return "ui.kit.cutter.desc";
+                case RoverSocket.Tether: return "ui.kit.tether.desc";
+                case RoverSocket.Lamp: return "ui.kit.lamp.desc";
+                case RoverSocket.Belly: return "ui.kit.belly.desc";
+                case RoverSocket.Flanks: return "ui.kit.flanks.desc";
+                case RoverSocket.Panniers: return "ui.kit.panniers.desc";
+                case RoverSocket.Back: return "ui.kit.back.desc";
+                case RoverSocket.Hold: return "ui.kit.hold.desc";
+                case RoverSocket.Wing: return "ui.kit.wing.desc";
+                case RoverSocket.Deck: return "ui.kit.deck.desc";
+                case RoverSocket.Wheels: return "ui.kit.wheels.desc";
+                case RoverSocket.Antenna: return "ui.kit.antenna.desc";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(socket), socket, "This socket has no description key.");
+            }
+        }
 
         /// <summary>"hint.excavate": the one word of the prompt teaching <paramref name="kind"/>.</summary>
         public static string Hint(InteractionKind kind)
