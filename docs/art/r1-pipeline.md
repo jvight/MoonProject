@@ -45,9 +45,9 @@ R1 hard-surface forms rely on **chamfered silhouettes** that catch both cold dir
 
 ## 4. Fixed Blender Material Slot Names & Generated Assets
 
-Every mesh primitive exported under `Assets/_Project/Art/R1/Models/` must assign **only** material slots from the 13 fixed names below (`R1MaterialRecipes` in `Assets/_Project/Scripts/Art/Editor/R1MaterialRecipes.cs`):
+Every mesh primitive exported under `Assets/_Project/Art/R1/Models/` must assign **only** material slots from the 15 fixed names below (`R1MaterialRecipes` in `Assets/_Project/Scripts/Art/Editor/R1MaterialRecipes.cs`):
 
-- **Generated Materials (`[MoonBuilder("Art/R1Materials", 105)]`):** `R1MaterialLibrary.BuildMaterials` generates all 13 `.mat` assets into `Assets/_Project/Generated/Art/R1/Materials/` using `GeneratedAssets.CreateOrReplace`. Nothing under `Generated/` is committed to git.
+- **Generated Materials (`[MoonBuilder("Art/R1Materials", 105)]`):** `R1MaterialLibrary.BuildMaterials` generates all 15 `.mat` assets into `Assets/_Project/Generated/Art/R1/Materials/` using `GeneratedAssets.CreateOrReplace`. Nothing under `Generated/` is committed to git.
 - **Import Validation (`R1ModelPostprocessor`):** Sets `ImportViaMaterialDescription` + `InPrefab`, validates each source material name in `OnPreprocessMaterialDescription` (logging `Debug.LogError` with the model path and slot name on unknown names), and validates vertex colours in `OnPostprocessModel`.
 - **Generated Prefabs (`[MoonBuilder("Art/R1Models", 106)]`):** `R1ModelBuilder.Build` wraps each FBX under `Assets/_Project/Art/R1/Models/` into `Assets/_Project/Generated/Art/R1/Models/<same relative path>.prefab` using `GeneratedAssets.SavePrefab`, replacing every renderer's material with the generated library material matching its source slot name.
 
@@ -64,8 +64,10 @@ Every mesh primitive exported under `Assets/_Project/Art/R1/Models/` must assign
 | `R1_SagePatch` | `R1_SagePatch.mat` | Muted sage-green field-repair patches, stowage covers, and secondary maintenance access panels. |
 | `R1_LampAmber` | `R1_LampAmber.mat` | Smooth glowing warm amber indicator lamps, porch floodlight lenses, and beacon emitters with a small hot core. |
 | `R1_SolarCell` | `R1_SolarCell.mat` | Deep blue-violet photovoltaic glass cells with fine silver busbars and collector grid for solar arrays and Tilly's solar wing. |
-| `R1_Screen` | `R1_ScreenPlaceholder.mat` | Plain dark-glass placeholder assigned to the `R1_Screen` slot and reserved for the CRT face shader slice. |
+| `R1_Screen` | `R1_CrtFace.mat` | Expressive warm-amber CRT face and status screen material driven by `MoonProject/R1/CrtFace`. |
 | `R1_Brass` | `R1_Brass.mat` | Warm golden machined brass for lamp bezels, chest lens ring, cheek lens, and fittings. |
+| `R1_Basalt` | `R1_Basalt.mat` | Fractured lunar basalt stone for boulders, rock slabs, pebbles, and canyon gate monoliths. |
+| `R1_Signage` | `R1_Signage.mat` | 1980s stencil signage atlas (`LUMEN`, `SEC-04`, `HABITAT & LAB`, `WORKSHOP`, `EVAC 1988`, programme logo mark, hazard stripes, and 4 pictograms). |
 
 ---
 
@@ -73,20 +75,25 @@ Every mesh primitive exported under `Assets/_Project/Art/R1/Models/` must assign
 
 - **Target Texel Density:** `256 px/m` (`2.56 px/cm`) for hero rover/companion/habitat surfaces using `256x256` per-slot detail maps or the `512x512` shared trim sheet (`T_R1_TrimSheet_*`).
 - **Seamless Per-Material Textures (`T_R1_<Surface>_*`):**
-  - Library materials are **seamless, tileable surface detail only** (grain, fine scratches, slight mottling, fine foil crinkles, or tileable solar cell grid for `R1_SolarCell`).
+  - Library materials are **seamless, tileable surface detail only** (grain, fine scratches, slight mottling, fine foil crinkles, or tileable solar cell grid for `R1_SolarCell`), except `R1_Signage` which is a 4-row UV signage atlas (`512x512`).
   - Never bake rectangular panel frames, seam bands, corner bolts, ribs, or bullseye lens rings into per-material textures; panel seams, bolts, and vents belong on the trim sheet (`T_R1_TrimSheet_*`) or in geometry.
+- **Signage Atlas Cells (`R1_Signage` / `T_R1_Signage_*`, `512x512`, `V = 0` at bottom):**
+  - `Row 3 (V = 0.75..1.00)`: `LOGO` (`U = 0.00..0.25`, circular Lumen crescent mark), `LUMEN` (`U = 0.25..0.75`, stencil `LUMEN`), `EVAC_1988` (`U = 0.75..1.00`, stencil `EVAC 1988`).
+  - `Row 2 (V = 0.50..0.75)`: `SEC04_HABITAT` (`U = 0.00..0.50`, stacked `SEC-04 / HABITAT & LAB`), `SEC_04` (`U = 0.50..0.75`, `SEC-04`), `HABITAT_LAB` (`U = 0.75..1.00`, `HABITAT & LAB`).
+  - `Row 1 (V = 0.25..0.50)`: `WORKSHOP` (`U = 0.00..0.50`, stencil `WORKSHOP`), `HAZARD` (`U = 0.50..1.00`, 45° diagonal amber/charcoal hazard stripes).
+  - `Row 0 (V = 0.00..0.25)`: 4 cassette-futurism pictogram tiles on warm orange band: `PICT_ROVER` (`U = 0.00..0.25`), `PICT_RADIO` (`U = 0.25..0.50`), `PICT_BOTANY` (`U = 0.50..0.75`), `PICT_AIRLOCK` (`U = 0.75..1.00`).
 - **UV Channel Contract:**
-  - `UV0` (`TEXCOORD0`): Primary material UVs. Each slot owns a seamless `[0, 1]` tileable texture set (`T_R1_<Surface>_Albedo/Normal/Mask`). Keep UV islands aligned horizontally (`U` along panel length, `V` along panel height) so brushed metal grain and solar cell busbars orient consistently.
+  - `UV0` (`TEXCOORD0`): Primary material UVs. Each slot owns a seamless `[0, 1]` tileable texture set (`T_R1_<Surface>_Albedo/Normal/Mask`), or maps signage quads directly into `T_R1_Signage_*` cells. Keep UV islands aligned horizontally (`U` along panel length, `V` along panel height) so brushed metal grain and solar cell busbars orient consistently.
   - `UV1` (`TEXCOORD1`): Optional static lightmap UV (`Pack Islands` with `Margin >= 0.02`).
 - **Regenerating Library Textures:**
-  - Run `python tools/art/r1/generate_r1_textures.py` to deterministically regenerate all 41 PNG maps in `Assets/_Project/Art/R1/Textures/`.
+  - Run `python tools/art/r1/generate_r1_textures.py` to deterministically regenerate all 50 PNG maps in `Assets/_Project/Art/R1/Textures/`.
 
 ---
 
 ## 6. Per-Model Vertex Colours (`COLOR`) & `_MaskMap` Packing
 
 ### Per-Model Vertex Colour Attribute (`COLOR`)
-Because 20+ models share the 13 library materials, **ambient occlusion, convex edge wear, and crease/cavity dust come from each mesh's baked vertex colours**, not from shared 2D textures:
+Because 20+ models share the 15 library materials, **ambient occlusion, convex edge wear, and crease/cavity dust come from each mesh's baked vertex colours**, not from shared 2D textures:
 
 | Vertex Colour Channel | Content | Neutral / Default | Shader Usage (`R1LitCore.hlsl`) |
 | :--- | :--- | :--- | :--- |
@@ -141,3 +148,44 @@ When exporting from Blender (`File -> Export -> FBX (.fbx)`) into `Assets/_Proje
 - `importAnimation = false`, `importCameras = false`, `importLights = false`
 - Validates all source material slot names against `R1MaterialRecipes` in `OnPreprocessMaterialDescription` and validates `mesh.colors32.Length > 0` in `OnPostprocessModel`.
 - `R1ModelBuilder` (`Art/R1Models`, order 106) wraps each FBX into `Assets/_Project/Generated/Art/R1/Models/<same relative path>.prefab` with generated library materials assigned.
+
+---
+
+## 9. Shared Blender Modelling Kit (`tools/art/blender/r1kit.py`)
+
+All procedural Blender builders across the project — the 10 base structures, `CargoLander`, `Rock_00..09`, the 5 Lumen Station ruins, Rover 07 (`RoverModel`, `SolarWing`, `Kit_TapeDeck`), and all 10 rover upgrade kits (`Kit_LampBar` .. `ScanFan`) — share a single unified modelling kit at `tools/art/blender/r1kit.py`. Do not create duplicate mesh/UV/vertex-colour/export helpers in sub-packages.
+
+### Core Capabilities & Entry Points
+1. **Scene Reset & Deterministic FBX Hooks (`reset_scene`)**
+   - `r1kit.reset_scene()` clears all Blender objects, meshes, materials, lights, cameras, and collections, sets metric units (`scale_length = 1.0`) and `30 fps`, and installs deterministic FBX timestamp/UUID hooks (`_install_deterministic_fbx_hooks`) so repeated builds produce byte-identical `.fbx` files.
+2. **Coordinate Mapping (`u_pos`, `u_vec`)**
+   - Converts Unity coordinates `(ux, uy, uz)` (`+X` right, `+Y` up, `+Z` forward) to Blender world coordinates `(ux, uz, uy)` (`+X` right, `+Y` forward, `+Z` up). Accepts either three floats or a 3-sequence.
+3. **Scene Hierarchy & Node Creation (`create_empty`, `create_mesh_node`, `merge_child_meshes_into_host`, `prune_unused_materials`)**
+   - `create_empty(name, parent=None, pivot_u=(0, 0, 0), *, local_space=False, empty_size=0.12)`: creates an Empty node in either world-space Unity coordinates (`local_space=False`, compensating for parent `location`) or parent-local Unity coordinates (`local_space=True`, used by Rover 07 and its kits).
+   - `create_mesh_node(name, bm, unity_loc=(0, 0, 0), parent=None, mat_list=None, sharp_deg=42.0, cfg=None)`: converts a `BMesh` into a scene `MESH` object, ensures outward normals per shell, applies area-weighted loop normals, projects triplanar UVs, and initialises the `Col` byte colour layer.
+   - `merge_child_meshes_into_host(host_obj, child_names, cfg)`: merges static child meshes into their animated parent mesh while preserving empty socket/locator transforms.
+4. **BMesh Primitives & High-Level `MeshBuilder`**
+   - **Direct `BMesh` primitives** (operating in Unity `(ux, uy, uz)` coordinates with automatic conversion into Blender `BMesh` space):
+     - `append_beveled_box(bm, size_xyz, center_xyz, bevel_width, bevel_segments, mat_idx, rot_euler, guard_inset=True, *, in_place=False)`
+     - `append_cylinder(bm, radius1, radius2, length, axis, center_xyz, segments, bevel_width, bevel_segments, mat_idx, rot_euler, *, cap_tris=True, in_place=False)`
+     - `append_torus(bm, major_radius, minor_radius, axis, center_xyz, major_seg, minor_seg, mat_idx, rot_euler, *, in_place=False)`
+     - `append_lathe_profile(bm, profile_rz, axis, center_xyz, segments, mat_idx, rot_euler, ring_mat_indices=None, auto_chamfer=True)`
+     - `append_prism_extrusion(bm, poly_2d, depth, axis, center_xyz, bevel_width, bevel_segments, mat_idx, rot_euler)`
+     - `append_spherical_dome(bm, radius, dome_height, axis, center_xyz, segments, rings, mat_idx, rot_euler, *, collar_depth=0.008, closed_bottom=False)`
+     - `append_helical_coil(...)`, `append_hex_bolt(..., include_washer=True, closed_bottom=False, segments=6)`, `append_dome_rivet(...)`
+   - **`MeshBuilder` class** (fluent builder used by structures, lander, rocks, and ruins):
+     - Wraps `append_beveled_box(..., in_place=True)`, `append_cylinder(..., cap_tris=False, in_place=True)`, and `append_torus(..., in_place=True)` alongside domain helpers (`add_sphere`, `add_cone`, `add_lathe`, `add_extruded_polygon`, `add_tube_along_points`, `add_bolt_circle`, `add_rivet_row`, `add_signage_plate`) and finalises via `build_object(...)`.
+5. **Normals, UVs, Vertex Colours & FBX Export**
+   - `ensure_outward_normals(bm, *, per_shell=False)`: ensures outward-facing winding (`per_shell=True` inspects each disconnected manifold island independently; `per_shell=False` uses `bmesh.ops.recalc_face_normals`).
+   - `apply_weighted_normals(target, sharp_angle_deg=42.0, area_power=1.6, *, use_modifier=False, weight=50)`: computes face-area-weighted custom split normals directly (`use_modifier=False`, default for rover/kits) or applies Blender's `WEIGHTED_NORMAL` modifier (`use_modifier=True`, used by structures/ruins/rocks/lander).
+   - `apply_triplanar_uvs(target, texel_scale=0.85, *, center_lamp_amber=False, mat_list=None)`: applies box/triplanar UV projection onto `UVMap` (`center_lamp_amber=True` maps `R1_LampAmber` faces into the hot-core centre of the emission texture).
+   - `bake_vertex_colors(root, footprint_radius=2.0, bevel_wear_width=0.022, *, rover_cfg=None, include_ground_occluder=True)`: bakes `Col` (`R=AO`, `G=EdgeWear`, `B=Cavity`, `A=1.0`) across a root hierarchy or mesh list (`rover_cfg=None` uses the analytical curvature + vertical AO formulation for structures/rocks/ruins; passing `rover_cfg=DIMENSIONS` uses BVHTree 64-ray hemisphere AO + BMesh dihedral curvature for Rover 07 and its kits).
+   - `export_fbx(root, filepath, *, bake_space_transform=False)`: exports a root hierarchy or explicit object list to `.fbx` with `-Z Forward`, `Y Up`, and `bake_space_transform=True` for Rover 07 / kits or `False` for structures/ruins/rocks/lander.
+
+### Master Build Entry Point (`tools/art/blender/build_all.py`)
+Run all 39 R1 FBX models in a single headless Blender invocation:
+```powershell
+D:/Blender/blender.exe -b --factory-startup --python-exit-code 1 -P tools/art/blender/build_all.py -- --skip-renders
+```
+Omit `--skip-renders` to also regenerate the diagnostic and showcase PNG sheets under `Logs/renders/`.
+

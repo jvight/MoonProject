@@ -104,6 +104,7 @@ namespace MoonProject.UI.Tests
                          UiKeys.CardCaption, UiKeys.CardClose,
                          UiKeys.CrewLogCaption, UiKeys.LinerCaption,
                          UiKeys.TapeCount, UiKeys.PauseCassettes, UiKeys.PauseRelays,
+                         UiKeys.TitleContinueNote, UiKeys.TitleKeyHint,
                          UiKeys.RecipeRow, UiKeys.RewardTitle, UiKeys.StationOffline,
                          UiKeys.CrateCaption, UiKeys.CargoWaiting, UiKeys.CargoSummary,
                           UiKeys.BayFitted, UiKeys.RowFull, UiKeys.HintFit, UiKeys.HintHold,

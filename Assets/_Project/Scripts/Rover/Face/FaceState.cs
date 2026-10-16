@@ -90,6 +90,12 @@ namespace MoonProject.Rover
         /// <summary>Normalized boot progress in [0..1].</summary>
         public float BootProgress { get; private set; }
 
+        /// <summary>True while the power-on boot sequence is still progressing (<c>BootProgress &lt; 1</c>).</summary>
+        public bool IsBooting => BootProgress < 1.0f;
+
+        /// <summary>True when an external gaze target is active.</summary>
+        public bool HasLookTarget => Math.Abs(_targetExternalLookX) > 1e-5f || Math.Abs(_targetExternalLookY) > 1e-5f;
+
         /// <summary>True while the boot sequence is in its initial horizontal power-on line stage (<c>&lt; 0.45</c>).</summary>
         public bool IsBootLineStage => BootProgress < _tuning.BootLineEnd;
 
@@ -131,6 +137,12 @@ namespace MoonProject.Rover
         public void SetFeeling(FaceFeeling feeling)
         {
             Feeling = feeling;
+            FaceFeelingSpec spec = _tuning.GetFeelingSpec(feeling);
+            if (spec.Symbol != FaceSymbol.None)
+            {
+                ActiveSymbol = spec.Symbol;
+            }
+
             if (feeling == FaceFeeling.Asleep)
             {
                 _blinkElapsed = _tuning.BlinkDuration;

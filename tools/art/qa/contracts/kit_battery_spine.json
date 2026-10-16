@@ -1,0 +1,12 @@
+{
+  "model": "kit_battery_spine",
+  "pivot_tolerance": 0.015,
+  "nodes": {
+    "Kit_BatterySpine": {"pivot": [0.0, 0.0, 0.0]}
+  },
+  "require_vertex_colors": true,
+  "allow_boundary_edges": false,
+  "max_triangles": 3000,
+  "max_meshes": 1,
+  "max_draw_calls": 8
+}

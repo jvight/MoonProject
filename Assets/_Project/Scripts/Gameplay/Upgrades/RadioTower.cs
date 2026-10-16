@@ -405,7 +405,7 @@ namespace MoonProject.Gameplay
         /// <summary>The port's moment: feed, hatch open, stitch while the stage swaps, hatch shut, next.</summary>
         private void StepMoment(float now, float deltaTime)
         {
-            Vector3 eye = _rig.TetherOrigin.position;
+            Vector3 eye = _rig.CutterOrigin.position;
             if (_feed.Step(eye, _rig.CargoSocket.position, HopperMouth, now, deltaTime))
             {
                 _fedAt = now;

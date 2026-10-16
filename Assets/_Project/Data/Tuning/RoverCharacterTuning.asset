@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3d753362110c3842b09106496e7da1c, type: 3}
   m_Name: RoverCharacterTuning
   m_EditorClassIdentifier: 
-  _neckYawLimit: 110
+  _neckYawLimit: 125
   _headPitchUpLimit: 55
   _stargazeHeadPitch: 45
   _stargazeWingOpen: 0.25

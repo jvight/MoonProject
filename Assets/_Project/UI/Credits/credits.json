@@ -10,16 +10,16 @@
             "headingKey": "ui.credits.fonts",
             "entries": [
                 {
-                    "name": "Nunito Sans",
-                    "family": "NunitoSans",
+                    "name": "IBM Plex Mono",
+                    "family": "IBMPlexMono",
                     "detail": "SIL Open Font License 1.1",
-                    "note": "Copyright 2016 The Nunito Sans Project Authors (https://github.com/Fonthausen/NunitoSans)"
+                    "note": "Copyright © 2017 IBM Corp. with Reserved Font Name \"Plex\""
                 },
                 {
-                    "name": "Exo 2",
-                    "family": "Exo2",
+                    "name": "Chakra Petch",
+                    "family": "ChakraPetch",
                     "detail": "SIL Open Font License 1.1",
-                    "note": "Copyright 2013 The Exo 2 Project Authors (https://github.com/googlefonts/Exo-2.0)"
+                    "note": "Copyright 2018 The Chakra Petch Project Authors (https://github.com/m4rc1e/Chakra-Petch.git)"
                 },
                 {
                     "name": "Be Vietnam Pro",

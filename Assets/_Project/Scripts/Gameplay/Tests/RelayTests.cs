@@ -417,6 +417,14 @@ namespace MoonProject.Gameplay.Tests
 
             public Transform TetherOrigin => null;
 
+            public Transform CutterOrigin => null;
+
+            public Transform ScanOrigin => null;
+
+            public Transform WinchOrigin => null;
+
+            public Transform ScoopOrigin => null;
+
             public Transform CargoSocket => null;
 
             public Rigidbody PhysicsBody => null;

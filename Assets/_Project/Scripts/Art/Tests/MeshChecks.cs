@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using MoonProject.Art.Editor;
 
@@ -153,6 +154,53 @@ namespace MoonProject.Art.Tests
                     yield return p;
                 }
             }
+        }
+
+        /// <summary>Loads a generated R1 prefab at <paramref name="path"/>, failing fast if the builder has not run.</summary>
+        public static GameObject LoadGeneratedPrefab(string path)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            Assert.IsNotNull(prefab, $"{path}: run the R1 model builder");
+            return prefab;
+        }
+
+        /// <summary>Every mesh vertex under <paramref name="prefab"/>, transformed by <paramref name="rootToSpace"/>.</summary>
+        public static IEnumerable<Vector3> PrefabPoints(GameObject prefab, Matrix4x4 rootToSpace)
+        {
+            foreach (MeshFilter filter in prefab.GetComponentsInChildren<MeshFilter>(true))
+            {
+                Mesh mesh = filter.sharedMesh;
+                Assert.IsNotNull(mesh, filter.name);
+                Matrix4x4 toSpace = rootToSpace * (prefab.transform.worldToLocalMatrix * filter.transform.localToWorldMatrix);
+                foreach (Vector3 v in mesh.vertices)
+                {
+                    yield return toSpace.MultiplyPoint3x4(v);
+                }
+            }
+        }
+
+        public static IEnumerable<Vector3> PrefabPoints(string path)
+        {
+            return PrefabPoints(LoadGeneratedPrefab(path), Matrix4x4.identity);
+        }
+
+        /// <summary>Combined mesh bounds of <paramref name="prefab"/> transformed by <paramref name="rootToSpace"/>.</summary>
+        public static Bounds PrefabBounds(GameObject prefab, Matrix4x4 rootToSpace)
+        {
+            var min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+            Vector3 max = -min;
+            foreach (Vector3 p in PrefabPoints(prefab, rootToSpace))
+            {
+                min = Vector3.Min(min, p);
+                max = Vector3.Max(max, p);
+            }
+
+            return new Bounds((min + max) * 0.5f, max - min);
+        }
+
+        public static Bounds PrefabBounds(string path)
+        {
+            return PrefabBounds(LoadGeneratedPrefab(path), Matrix4x4.identity);
         }
 
         /// <summary>Same names, poses, materials, active states and bit-identical meshes all the way down.</summary>

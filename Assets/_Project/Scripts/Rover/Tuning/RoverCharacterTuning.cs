@@ -17,7 +17,7 @@ namespace MoonProject.Rover
         [Header("Gaze")]
         [Tooltip("How far (deg) the neck can turn either way.")]
         [Range(0f, 170f)]
-        [SerializeField] private float _neckYawLimit = 110f;
+        [SerializeField] private float _neckYawLimit = 125f;
 
         [Tooltip("How far (deg) the head can tilt up (Earth is high in the sky).")]
         [Range(0f, 89f)]

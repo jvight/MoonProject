@@ -135,7 +135,7 @@ def main() -> int:
         for p in map(Path, args.paths):
             files += sorted(p.rglob("*.wav")) if p.is_dir() else [p]
         for f in files:
-            m = analyze_file(f, loop="loop" in f.stem, hf_cutoff=args.hf_cutoff)
+            m = analyze_file(f, loop=("loop" in f.stem or f.stem.startswith("ambience_")), hf_cutoff=args.hf_cutoff)
             fails = evaluate(m)
             failed += bool(fails)
             print(format_row(m, fails))

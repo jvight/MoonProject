@@ -16,6 +16,7 @@ namespace MoonProject.Gameplay
         private const float Epsilon = 0.001f;
 
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
+        private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
 
         private readonly Renderer _renderer;
         private readonly MaterialPropertyBlock _block = new MaterialPropertyBlock();
@@ -49,9 +50,13 @@ namespace MoonProject.Gameplay
 
             _applied = intensity;
             _tint = tint;
+            float r = tint.r * intensity;
+            float g = tint.g * intensity;
+            float b = tint.b * intensity;
+            float peak = Mathf.Max(r, Mathf.Max(g, b));
             _renderer.GetPropertyBlock(_block);
-            _block.SetVector(EmissionColorId,
-                new Vector4(tint.r * intensity, tint.g * intensity, tint.b * intensity, 1f));
+            _block.SetVector(EmissionColorId, new Vector4(r, g, b, 1f));
+            _block.SetFloat(EmissionStrengthId, Mathf.Clamp01(peak));
             _renderer.SetPropertyBlock(_block);
         }
     }

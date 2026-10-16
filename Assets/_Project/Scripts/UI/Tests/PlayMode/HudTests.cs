@@ -329,6 +329,91 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator SevenTab_InEnglishAndVietnamese_At1080pAnd720p_DrawingIsCenteredAndNoLabelOverlapsOrLeavesFrame()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            _rig = UiTestRig.Boot(_controls, _slot, 1920, 1080);
+            _rig.Ui.Ledger.RecordHoldBooted();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Hold.Set(3, new MaterialSlot(SalvageMaterial.Metal, 4, 4),
+                new MaterialSlot(SalvageMaterial.Wiring, 3, 4));
+            foreach (RoverKitPiece fitted in new[]
+                     {
+                         RoverKitPiece.TetherRing, RoverKitPiece.SolarCell, RoverKitPiece.LampBar,
+                         RoverKitPiece.CapacitorDrums, RoverKitPiece.BatterySpine, RoverKitPiece.TapeDeck,
+                         RoverKitPiece.CargoRack, RoverKitPiece.SideBins,
+                     })
+            {
+                _rig.Fakes.Equipment.Fit(fitted);
+            }
+
+            _rig.Fakes.Equipment.Craft(RoverKitPiece.HoverCoils);
+            _rig.Fakes.Equipment.Craft(RoverKitPiece.FocusLens);
+            _rig.Fakes.Equipment.AtStation = false;
+            yield return Seconds(0.2f);
+            yield return Tap(keyboard.tabKey);
+            yield return Seconds(0.5f);
+
+            EquipmentPage seven = _rig.Ui.Cargo.Seven;
+            (int w, int h)[] sizes = { (1920, 1080), (1280, 720) };
+            string[] languages = { "en", "vi" };
+            foreach (string lang in languages)
+            {
+                _rig.Ui.Localization.SetLanguage(lang);
+                foreach ((int w, int h) in sizes)
+                {
+                    _rig.Reframe(w, h);
+                    yield return null;
+                    yield return null;
+
+                    Rect frame = seven.PortraitElement.worldBound;
+                    Rect localDrawing = seven.DrawingBounds;
+                    var worldDrawing = new Rect(frame.x + localDrawing.x, frame.y + localDrawing.y,
+                        localDrawing.width, localDrawing.height);
+                    float widthShare = worldDrawing.width / frame.width;
+                    Assert.That(widthShare, Is.InRange(0.54f, 0.60f),
+                        $"{lang} {w}x{h}: drawing width share {widthShare:P1} outside 55-60%");
+                    Assert.GreaterOrEqual(worldDrawing.xMin, frame.xMin - 1f, $"{lang} {w}x{h}: drawing left out");
+                    Assert.LessOrEqual(worldDrawing.xMax, frame.xMax + 1f, $"{lang} {w}x{h}: drawing right out");
+
+                    for (int i = 0; i < RoverDiagramData.SocketCount; i++)
+                    {
+                        var socket = (RoverSocket)i;
+                        Label label = seven.SocketLabelElement(socket);
+                        if (!ScreenFit.IsShown(label) || string.IsNullOrEmpty(label.text))
+                        {
+                            continue;
+                        }
+
+                        Rect box = label.worldBound;
+                        Assert.GreaterOrEqual(box.xMin, frame.xMin - 1f,
+                            $"{lang} {w}x{h}: {socket} '{label.text}' leaves left of frame");
+                        Assert.GreaterOrEqual(box.yMin, frame.yMin - 1f,
+                            $"{lang} {w}x{h}: {socket} '{label.text}' leaves top of frame");
+                        Assert.LessOrEqual(box.xMax, frame.xMax + 1f,
+                            $"{lang} {w}x{h}: {socket} '{label.text}' leaves right of frame");
+                        Assert.LessOrEqual(box.yMax, frame.yMax + 1f,
+                            $"{lang} {w}x{h}: {socket} '{label.text}' leaves bottom of frame");
+                        Assert.IsFalse(box.Overlaps(worldDrawing),
+                            $"{lang} {w}x{h}: {socket} '{label.text}' {box} overlaps drawing {worldDrawing}");
+
+                        for (int j = i + 1; j < RoverDiagramData.SocketCount; j++)
+                        {
+                            Label other = seven.SocketLabelElement((RoverSocket)j);
+                            if (!ScreenFit.IsShown(other) || string.IsNullOrEmpty(other.text))
+                            {
+                                continue;
+                            }
+
+                            Assert.IsFalse(box.Overlaps(other.worldBound),
+                                $"{lang} {w}x{h}: {socket} '{label.text}' overlaps {(RoverSocket)j} '{other.text}'");
+                        }
+                    }
+                }
+            }
+        }
+
+        [UnityTest]
         public IEnumerator UnlockCard_SaysWhatAFittedKitLetsSevenDo_AfterTheKitTitle()
         {
             InputSystem.AddDevice<Keyboard>();

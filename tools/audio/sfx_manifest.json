@@ -2246,33 +2246,6 @@
       "notes": "Dial-tuning swish (static swell + sweeping resonant band) under the crossfade between tracks."
     },
     {
-      "id": "ambience_bed",
-      "category": "ambience_2d",
-      "milestone": "M1",
-      "bus": "Ambience",
-      "spatial": false,
-      "loop": true,
-      "files": [
-        "Assets/_Project/Audio/Ambience/ambience_bed_loop.wav"
-      ],
-      "variantLabels": [
-        "ambience_bed"
-      ],
-      "sha256": [
-        "86b076bc5d91395f5607ae365879833d44acc9c5fb8faf0ee64e06cc641ee813"
-      ],
-      "volumeMin": 0.8,
-      "volumeMax": 0.8,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -30.0,
-      "loudnessMode": "integrated",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": false,
-      "notes": "72 s seamless stereo lunar hush with 10 sparse distant pentatonic tones in a long reverb."
-    },
-    {
       "id": "sonar_ping",
       "category": "oneshot_3d",
       "milestone": "M2",
@@ -2630,150 +2603,6 @@
       "notes": "Rising glassy run D5..D6 over an upward whoosh."
     },
     {
-      "id": "ui_menu_open",
-      "category": "ui_2d",
-      "milestone": "M1",
-      "bus": "Sfx",
-      "spatial": false,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/2D/ui_menu_open.wav"
-      ],
-      "variantLabels": [
-        "ui_menu_open"
-      ],
-      "sha256": [
-        "b50b3b0e0b118bc03a2f0e380efbf4cf48a2f47015f32f6804278140112201cf"
-      ],
-      "volumeMin": 0.6,
-      "volumeMax": 0.6,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -22.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "UiCue MenuOpen: felt piano D4 A4 D5 rolled upward."
-    },
-    {
-      "id": "ui_menu_close",
-      "category": "ui_2d",
-      "milestone": "M1",
-      "bus": "Sfx",
-      "spatial": false,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/2D/ui_menu_close.wav"
-      ],
-      "variantLabels": [
-        "ui_menu_close"
-      ],
-      "sha256": [
-        "192846e1270218a954dc9239a908388a876c61e2041a085438ba889da073f859"
-      ],
-      "volumeMin": 0.5,
-      "volumeMax": 0.5,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -22.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "UiCue MenuClose: felt piano A4 -> D4."
-    },
-    {
-      "id": "ui_focus",
-      "category": "ui_2d",
-      "milestone": "M1",
-      "bus": "Sfx",
-      "spatial": false,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/2D/ui_focus_A4.wav",
-        "Assets/_Project/Audio/SFX/2D/ui_focus_B4.wav",
-        "Assets/_Project/Audio/SFX/2D/ui_focus_D5.wav"
-      ],
-      "variantLabels": [
-        "A4",
-        "B4",
-        "D5"
-      ],
-      "sha256": [
-        "a7fb31dd21e7f936cd13a85406c2d372a2ed1ea7e53ea70b2e588742e76e87fc",
-        "2e26f72351566d45ee012cee120b513dd18397843a63be55a9a5aad396850945",
-        "5fd415ec1c914cd267d1eb9a9bc57c824c2867415ddd0250a889a687b5443f99"
-      ],
-      "volumeMin": 0.26,
-      "volumeMax": 0.3,
-      "pitchMin": 0.985,
-      "pitchMax": 1.015,
-      "targetLufs": -22.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "UiCue FocusMove: tiny wooden tick; the runtime rate-limits and softens rapid repeats."
-    },
-    {
-      "id": "ui_slider",
-      "category": "ui_2d",
-      "milestone": "M1",
-      "bus": "Sfx",
-      "spatial": false,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/2D/ui_slider_D5.wav",
-        "Assets/_Project/Audio/SFX/2D/ui_slider_E5.wav"
-      ],
-      "variantLabels": [
-        "D5",
-        "E5"
-      ],
-      "sha256": [
-        "0cb33dcecff86559f57b2d08fca11b1edbca353ee545dfc93433195bae8b93a4",
-        "4484bb76b213c39dd93159f9c11f84b85eb3fe9d21dfaf008eab25917c816180"
-      ],
-      "volumeMin": 0.22,
-      "volumeMax": 0.26,
-      "pitchMin": 0.985,
-      "pitchMax": 1.015,
-      "targetLufs": -22.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "UiCue SliderStep: muted kalimba tap; rate-limited and softened under repeats."
-    },
-    {
-      "id": "ui_prompt",
-      "category": "ui_2d",
-      "milestone": "M1",
-      "bus": "Sfx",
-      "spatial": false,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/2D/ui_prompt.wav"
-      ],
-      "variantLabels": [
-        "ui_prompt"
-      ],
-      "sha256": [
-        "67f575fdcec06028f70dc73ec549b6c24b7434b7e9d03b5421c8e4b1a9ae3845"
-      ],
-      "volumeMin": 0.4,
-      "volumeMax": 0.4,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -22.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "UiCue PromptShown: barely-there E5 -> A5 felt-piano grace note."
-    },
-    {
       "id": "ui_hold_fill",
       "category": "ui_2d",
       "milestone": "M1",
@@ -2826,87 +2655,6 @@
       "hfMaxDb": -30.0,
       "tonal": true,
       "notes": "UiCue HoldComplete: soft resolved D major felt-piano chord + music-box D6."
-    },
-    {
-      "id": "ui_card",
-      "category": "ui_2d",
-      "milestone": "M1",
-      "bus": "Sfx",
-      "spatial": false,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/2D/ui_card.wav"
-      ],
-      "variantLabels": [
-        "ui_card"
-      ],
-      "sha256": [
-        "4fe3a4a261395f544b6c446b61d9efad8e3b27228893d0a7a002f42c84151f7b"
-      ],
-      "volumeMin": 0.5,
-      "volumeMax": 0.5,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -22.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "UiCue CardShown: music-box phrase A5 F#5 A5 -> D6 over D5."
-    },
-    {
-      "id": "ui_confirm",
-      "category": "ui_2d",
-      "milestone": "M1",
-      "bus": "Sfx",
-      "spatial": false,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/2D/ui_confirm.wav"
-      ],
-      "variantLabels": [
-        "ui_confirm"
-      ],
-      "sha256": [
-        "1c4d3144ffd066b4d3ebc73114a620471aeacfe4f6b45eaafd40b098c26c328d"
-      ],
-      "volumeMin": 0.7,
-      "volumeMax": 0.7,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -22.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "Rising D5 -> A5."
-    },
-    {
-      "id": "ui_back",
-      "category": "ui_2d",
-      "milestone": "M1",
-      "bus": "Sfx",
-      "spatial": false,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/2D/ui_back.wav"
-      ],
-      "variantLabels": [
-        "ui_back"
-      ],
-      "sha256": [
-        "09d2558b090a562ff7e6f17baba41a4207af9622196cf4e1b97fa3c007ca4f49"
-      ],
-      "volumeMin": 0.65,
-      "volumeMax": 0.65,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -22.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": true,
-      "notes": "Falling A4 -> D4."
     },
     {
       "id": "tilly_broken",
@@ -5568,6 +5316,1059 @@
       "hfMaxDb": -30.0,
       "tonal": true,
       "notes": "Soft kalimba D4 A4 D5 F#5 A5, stereo, over a quiet D/A pad."
+    },
+    {
+      "id": "face_boot",
+      "category": "oneshot_face",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/face_boot.wav"
+      ],
+      "variantLabels": [
+        "face_boot"
+      ],
+      "sha256": [
+        "32a82029cf095d0986bfa476a1f04afa3df1e16bf47e6842ca72316adf549ee2"
+      ],
+      "volumeMin": 0.72,
+      "volumeMax": 0.72,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A thể hiện đúng chất bàn vô tuyến đèn (C2 Radio bench): tiếng tim đèn ấm lên và tia quét mở mắt qua màng loa giấy nghe rất gần gũi."
+    },
+    {
+      "id": "face_blink",
+      "category": "oneshot_face",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/face_blink.wav"
+      ],
+      "variantLabels": [
+        "face_blink"
+      ],
+      "sha256": [
+        "8917924787fa174ad29b60b9ed22ec6f251662edd381d147f9cf276c0b7d65d0"
+      ],
+      "volumeMin": 0.62,
+      "volumeMax": 0.62,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -23.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản B dùng cơ cấu lá chắn cửa trập (aperture shutter) kết hợp âm gỗ dịu cực kỳ tự nhiên cho hành động chớp mắt mà không gây mỏi tai khi lặp nhiều lần."
+    },
+    {
+      "id": "face_happy",
+      "category": "oneshot_face",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/face_happy.wav"
+      ],
+      "variantLabels": [
+        "face_happy"
+      ],
+      "sha256": [
+        "5618a1a48e19536b39d6e153f4cae0c9974170def7ac272f571770753ed40180"
+      ],
+      "volumeMin": 0.7,
+      "volumeMax": 0.7,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A giữ trọn độ ấm của loa giấy cổ điển và độ ngân nhẹ của mạch đèn, nghe như 07 đang mỉm cười thật sự."
+    },
+    {
+      "id": "face_worried",
+      "category": "oneshot_face",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/face_worried.wav"
+      ],
+      "variantLabels": [
+        "face_worried"
+      ],
+      "sha256": [
+        "80ea52505ba1258b7eb209504a7bba946ac7d865b969a068165ec6fde868dee6"
+      ],
+      "volumeMin": 0.68,
+      "volumeMax": 0.68,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -21.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A truyền tải sự ngập ngừng, lo lắng nhẹ nhàng qua độ chùng áp đèn (voltage sag) đúng tinh thần cô đơn nhưng bình yên."
+    },
+    {
+      "id": "face_asleep",
+      "category": "oneshot_face",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/face_asleep.wav"
+      ],
+      "variantLabels": [
+        "face_asleep"
+      ],
+      "sha256": [
+        "3ada5cfc2042434a4ed3bc198bbc7dd5bc5a28048a7bb2719f5c378d9120952e"
+      ],
+      "volumeMin": 0.65,
+      "volumeMax": 0.65,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A tái hiện tiếng thở tim đèn (slow tube purr) ấm áp và yên tĩnh của một thiết bị vô tuyến đang nghỉ ngơi."
+    },
+    {
+      "id": "face_startled",
+      "category": "oneshot_face",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/face_startled.wav"
+      ],
+      "variantLabels": [
+        "face_startled"
+      ],
+      "sha256": [
+        "43f1e24794ae069f2e53889c469d826914cbe3dfc027d4597d6c219f69fc7ddc"
+      ],
+      "volumeMin": 0.72,
+      "volumeMax": 0.72,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A bắt được phản xạ giật mình của rơ-le và màng loa giấy rất duyên mà vẫn hoàn toàn nằm trong ngũ cung Rê trưởng êm dịu."
+    },
+    {
+      "id": "face_proud",
+      "category": "oneshot_face",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/face_proud.wav"
+      ],
+      "variantLabels": [
+        "face_proud"
+      ],
+      "sha256": [
+        "338d980ec48bb4da9a383dc89d63785713d685ab21c6b5736b665e17a73db475"
+      ],
+      "volumeMin": 0.74,
+      "volumeMax": 0.74,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -19.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản B có tiếng servo nâng nhẹ đầu của 07 kèm hợp âm chuông đồng và phím nỉ nghe rất tự hào và sống động."
+    },
+    {
+      "id": "sky_diamond_ring",
+      "category": "oneshot_sky",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/sky_diamond_ring.wav"
+      ],
+      "variantLabels": [
+        "sky_diamond_ring"
+      ],
+      "sha256": [
+        "0ec808ec77cb407a78b78167e626db22b7b3b543bb18b684b01bcbae02097117"
+      ],
+      "volumeMin": 0.74,
+      "volumeMax": 0.74,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Khoảnh khắc vòng kim cương nhật thực rất hợp với chất âm kính kéo cung (bowed glass) kết hợp đàn lưỡi gà của bản B: vừa kỳ ảo vừa hữu cơ."
+    },
+    {
+      "id": "sky_dawn_sweep",
+      "category": "oneshot_sky",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/sky_dawn_sweep.wav"
+      ],
+      "variantLabels": [
+        "sky_dawn_sweep"
+      ],
+      "sha256": [
+        "06a3bb1b808134fe748d4faeaa7afa6dca5e62640a457771149de9413ccd1be0"
+      ],
+      "volumeMin": 0.75,
+      "volumeMax": 0.75,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -19.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A mang lại cảm giác cả trạm vô tuyến và cánh pin mặt trời từ từ ấm lên dưới nắng sớm, rất gắn kết với thế giới C2 Radio bench."
+    },
+    {
+      "id": "sky_nightfall_settle",
+      "category": "oneshot_sky",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/sky_nightfall_settle.wav"
+      ],
+      "variantLabels": [
+        "sky_nightfall_settle"
+      ],
+      "sha256": [
+        "10783fa466560242ea45aa038fd055d04ea21958bbbb76712c433005466cc8c7"
+      ],
+      "volumeMin": 0.72,
+      "volumeMax": 0.72,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A khép lại ngày làm việc bằng tiếng công tắc ngắt tải và âm đèn trầm ấm lắng xuống, gợi cảm giác bình yên dưới ánh Trái Đất."
+    },
+    {
+      "id": "build_ghost",
+      "category": "oneshot_build",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/build_ghost.wav"
+      ],
+      "variantLabels": [
+        "build_ghost"
+      ],
+      "sha256": [
+        "2749ed7960ac54307523b17bc211565632eeff957bf89c428e5cae4a38f0217d"
+      ],
+      "volumeMin": 0.64,
+      "volumeMax": 0.64,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -23.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A đúng nghĩa tiếng máy chiếu CRT (CRT projector hum) rất nhẹ và ấm, giúp người chơi di chuyển bóng công trình liên tục mà không mỏi tai."
+    },
+    {
+      "id": "build_snap",
+      "category": "oneshot_build",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/build_snap.wav"
+      ],
+      "variantLabels": [
+        "build_snap"
+      ],
+      "sha256": [
+        "30e43faf52530360ad76691834a8fc6751efb369572e3b4051e51587fbb65a2b"
+      ],
+      "volumeMin": 0.68,
+      "volumeMax": 0.68,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -21.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản B có cảm giác cơ khí bi-lò-xo bắt vào ngàm (detent ball-lock) cực kỳ rõ ràng, phản hồi xúc giác chính xác khi căn khớp lưới xây dựng."
+    },
+    {
+      "id": "build_invalid",
+      "category": "oneshot_build",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/build_invalid.wav"
+      ],
+      "variantLabels": [
+        "build_invalid"
+      ],
+      "sha256": [
+        "6e8b221bdeb91a2dcce11a46a925f230432c6551a25f4c60016245eb6d86fc8e"
+      ],
+      "volumeMin": 0.68,
+      "volumeMax": 0.68,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -21.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A truyền đạt rõ 'không đặt được' bằng tiếng công tắc vướng cơ học và nhịp trầm ấm, hoàn toàn tránh tiếng buzzer điện tử khó chịu."
+    },
+    {
+      "id": "build_place",
+      "category": "oneshot_build",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/build_place.wav"
+      ],
+      "variantLabels": [
+        "build_place"
+      ],
+      "sha256": [
+        "d4254b37095ab2ae5279139953fca8e1c34b389e0809c2fac005cc5417a38f04"
+      ],
+      "volumeMin": 0.76,
+      "volumeMax": 0.76,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -19.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A cân bằng hoàn hảo giữa sức nặng vật lý của khung thép và âm xác nhận ấm áp của bàn đài C2."
+    },
+    {
+      "id": "build_weld_loop",
+      "category": "loop_3d",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/build_weld_loop.wav"
+      ],
+      "variantLabels": [
+        "build_weld_loop"
+      ],
+      "sha256": [
+        "d8531862cc690bf27f68c821e06cc466dd7d4f3a231e89170ddbfba184453fd6"
+      ],
+      "volumeMin": 0.68,
+      "volumeMax": 0.68,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -21.5,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A nghe như nghe tiếng máy hàn qua hệ thống liên lạc nội bộ bằng bóng đèn: êm, dày và lặp hoàn toàn không thấy mối nối."
+    },
+    {
+      "id": "build_stage_complete",
+      "category": "oneshot_build",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/build_stage_complete.wav"
+      ],
+      "variantLabels": [
+        "build_stage_complete"
+      ],
+      "sha256": [
+        "d24e94b27619a1eed9d711bdfb5d31ddb298a0f82db07679d60c85ee08ea2f7d"
+      ],
+      "volumeMin": 0.74,
+      "volumeMax": 0.74,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -19.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản B dùng tiếng chốt bánh cóc và búa nỉ gõ thanh đồng tạo cảm giác một tầng kết cấu vừa được khóa xong rất sảng khoái."
+    },
+    {
+      "id": "build_structure_complete",
+      "category": "oneshot_build",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/build_structure_complete.wav"
+      ],
+      "variantLabels": [
+        "build_structure_complete"
+      ],
+      "sha256": [
+        "66105664d9d06c9e4db96b57a94062c947e840201e9dff5ba829370f23093e68"
+      ],
+      "volumeMin": 0.76,
+      "volumeMax": 0.76,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A mang lại cảm giác thành tựu tròn đầy, ấm cúng đúng hình ảnh 'ngọn đèn bật sáng' trên công trình vừa hoàn thiện."
+    },
+    {
+      "id": "build_deconstruct",
+      "category": "oneshot_build",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/build_deconstruct.wav"
+      ],
+      "variantLabels": [
+        "build_deconstruct"
+      ],
+      "sha256": [
+        "577e74d2424334761dc8fc0dcaeab090208d97e5dcb8987f714c201922ff69cd"
+      ],
+      "volumeMin": 0.72,
+      "volumeMax": 0.72,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A kết hợp tiếng tháo chốt tuần tự, hơi xả êm và giai điệu đi xuống nhẹ nhàng, tạo cảm giác tháo dỡ cẩn thận chứ không phá hủy."
+    },
+    {
+      "id": "machine_solar_track",
+      "category": "oneshot_machine",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/machine_solar_track.wav"
+      ],
+      "variantLabels": [
+        "machine_solar_track"
+      ],
+      "sha256": [
+        "b687ffda22854b6832bcb7b6fb26ed73e4679b0ed5bcea15786b2c70b9335988"
+      ],
+      "volumeMin": 0.68,
+      "volumeMax": 0.68,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -21.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A có tiếng mô-tơ trục vít (worm-gear) rất êm pha chút ấm của mạch đèn, hoàn hảo cho chuyển động xoay theo mặt trời."
+    },
+    {
+      "id": "machine_wings_unfold",
+      "category": "oneshot_machine",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/machine_wings_unfold.wav"
+      ],
+      "variantLabels": [
+        "machine_wings_unfold"
+      ],
+      "sha256": [
+        "937baecd31971d116e2c6921e5851b97d8b37bcd92692ccf808f233ffd72d48b"
+      ],
+      "volumeMin": 0.74,
+      "volumeMax": 0.74,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -19.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản B mô tả cực kỳ sống động các đốt bản lề cơ khí nối tiếp nhau bung ra và khóa chặt ở vị trí mở hoàn toàn."
+    },
+    {
+      "id": "machine_wings_fold",
+      "category": "oneshot_machine",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/machine_wings_fold.wav"
+      ],
+      "variantLabels": [
+        "machine_wings_fold"
+      ],
+      "sha256": [
+        "b7518d4b8673bd81c8788b9481fbd4889de58be83a337388cddc90c4295f5c4b"
+      ],
+      "volumeMin": 0.72,
+      "volumeMax": 0.72,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản B đồng bộ ngôn ngữ cơ khí pantograph với bản mở cánh, tạo cặp âm thanh đóng-mở cánh pin rất thuyết phục."
+    },
+    {
+      "id": "machine_pad_contacts",
+      "category": "oneshot_machine",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/machine_pad_contacts.wav"
+      ],
+      "variantLabels": [
+        "machine_pad_contacts"
+      ],
+      "sha256": [
+        "fd1a70c2460120256032a7c07ab39f1d218162b8006f5154fc954bfd394d774a"
+      ],
+      "volumeMin": 0.74,
+      "volumeMax": 0.74,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -19.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A thể hiện rõ cả ba lớp clunk-hiss-hum: tiếng má đồng chạm cơ học, hơi khí nén và dòng điện ấm bắt đầu chạy qua."
+    },
+    {
+      "id": "machine_transformer_loop",
+      "category": "loop_3d",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/machine_transformer_loop.wav"
+      ],
+      "variantLabels": [
+        "machine_transformer_loop"
+      ],
+      "sha256": [
+        "6f2e88d849506813fe7e284a637c0aea0504a3985b636bc8c55fbb2de89bee90"
+      ],
+      "volumeMin": 0.66,
+      "volumeMax": 0.66,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A là tiếng ngân biến áp ấm chuẩn mực của C2 Radio bench: dày, êm, đứng cạnh lâu vẫn dễ chịu."
+    },
+    {
+      "id": "machine_pylon_switch",
+      "category": "oneshot_machine",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/machine_pylon_switch.wav"
+      ],
+      "variantLabels": [
+        "machine_pylon_switch"
+      ],
+      "sha256": [
+        "bd9a5ca8f808aa8c56e6cefd996a10e1dc5eab9d2ba281f999e56eede5b68f00"
+      ],
+      "volumeMin": 0.74,
+      "volumeMax": 0.74,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -19.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A có tiếng gạt cầu dao lưỡi đồng và tiếng đóng công-tắc-tơ rất đầm, vừa nghe đã biết mạng điện vừa thông mạch."
+    },
+    {
+      "id": "machine_cable_drums",
+      "category": "oneshot_machine",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/machine_cable_drums.wav"
+      ],
+      "variantLabels": [
+        "machine_cable_drums"
+      ],
+      "sha256": [
+        "093b1798bbebeeb163d1a48ee351efaf18d4136b382a37dd4a7ae93a06ed575c"
+      ],
+      "volumeMin": 0.7,
+      "volumeMax": 0.7,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A diễn tả rõ từng vòng quay của tang trống cáp và tiếng cá hãm cuối hành trình rất gọn gàng."
+    },
+    {
+      "id": "machine_lander_ramp",
+      "category": "oneshot_machine",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/machine_lander_ramp.wav"
+      ],
+      "variantLabels": [
+        "machine_lander_ramp"
+      ],
+      "sha256": [
+        "990ccf9d5665fe3afd1e1b0a605c38d013aa3af3abbe6faf3ee398273fab06d8"
+      ],
+      "volumeMin": 0.78,
+      "volumeMax": 0.78,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A tạo được quy mô lớn nhất trong nhóm máy móc nhờ tiếng thủy lực dày và cú chạm đất rỗng trầm ấm, uy nghi."
+    },
+    {
+      "id": "machine_cargo_hatch",
+      "category": "oneshot_machine",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/machine_cargo_hatch.wav"
+      ],
+      "variantLabels": [
+        "machine_cargo_hatch"
+      ],
+      "sha256": [
+        "56eaed79828ba3f0180379c8637aac809bb170d81e5c7abc4dabc56d10de9911"
+      ],
+      "volumeMin": 0.74,
+      "volumeMax": 0.74,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -19.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản B có tiếng xoay vô-lăng khóa và lò xo đối trọng nâng nắp hầm rất giàu chi tiết cơ khí."
+    },
+    {
+      "id": "machine_crate_lid",
+      "category": "oneshot_machine",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/machine_crate_lid.wav"
+      ],
+      "variantLabels": [
+        "machine_crate_lid"
+      ],
+      "sha256": [
+        "cb40cfbcdbcc1f35b62b747e67a780b19654c15cb037157635187bfa86ae8a91"
+      ],
+      "volumeMin": 0.7,
+      "volumeMax": 0.7,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A tái hiện đúng chiếc hòm thiết bị vô tuyến cổ điển với hai khóa gạt bên hông và lớp lót nỉ bên trong."
+    },
+    {
+      "id": "ui_panel_open",
+      "category": "ui",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/ui_panel_open.wav"
+      ],
+      "variantLabels": [
+        "ui_panel_open"
+      ],
+      "sha256": [
+        "9a76866e217998bbac93a1507ed84edb14bf900ba42c68c461ee3b1d24b4e961"
+      ],
+      "volumeMin": 0.48,
+      "volumeMax": 0.48,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A rất êm và gọn, mở bảng giao diện như mở một ngăn phiếu trên bàn vô tuyến mà không lấn át âm thanh thế giới."
+    },
+    {
+      "id": "ui_panel_close",
+      "category": "ui",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/ui_panel_close.wav"
+      ],
+      "variantLabels": [
+        "ui_panel_close"
+      ],
+      "sha256": [
+        "c6756dacc4feda14782ad6e8792ba0998547a1e4f606530cd2445349f230ef37"
+      ],
+      "volumeMin": 0.48,
+      "volumeMax": 0.48,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A tạo cặp đối xứng hoàn hảo với ui_panel_open bản A, đóng lại êm như đặt tay lên chốt nỉ."
+    },
+    {
+      "id": "ui_cursor_move",
+      "category": "ui",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/ui_cursor_move.wav"
+      ],
+      "variantLabels": [
+        "ui_cursor_move"
+      ],
+      "sha256": [
+        "5fc1bda4d5e384a11df73d027b13a97e9e91dcc93b7159dab84ad6abcb27b055"
+      ],
+      "volumeMin": 0.42,
+      "volumeMax": 0.42,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -30.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A là âm thanh nhỏ nhất trong toàn bộ bộ mẫu: khấc xoay wafer ấm và ngắn, lướt qua hàng chục mục vẫn êm tai."
+    },
+    {
+      "id": "ui_confirm",
+      "category": "ui",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/ui_confirm.wav"
+      ],
+      "variantLabels": [
+        "ui_confirm"
+      ],
+      "sha256": [
+        "74be8c0624d8723db130c98f5ffb05fe67782d703320213f39cdad891ac197ed"
+      ],
+      "volumeMin": 0.48,
+      "volumeMax": 0.48,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A cho cảm giác bấm nút vật lý thật tay kèm độ ấm đèn D4–A4 rất thân thiện, không hề giống tiếng bíp điện tử."
+    },
+    {
+      "id": "ui_cancel",
+      "category": "ui",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/ui_cancel.wav"
+      ],
+      "variantLabels": [
+        "ui_cancel"
+      ],
+      "sha256": [
+        "c530a4e2ac6c6bbc37f76167dcbe7a6027b6ef3bbfe356cce313eb243f6a1d1d"
+      ],
+      "volumeMin": 0.46,
+      "volumeMax": 0.46,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -29.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A nghe như nhả một nút khóa trên mặt máy vô tuyến: nhẹ nhàng thu hồi lệnh mà không mang sắc thái trách phạt."
+    },
+    {
+      "id": "ui_toast",
+      "category": "ui",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/ui_toast.wav"
+      ],
+      "variantLabels": [
+        "ui_toast"
+      ],
+      "sha256": [
+        "a65f7d0fdd52a8d7a71b783366e7cad8d782eb098308bff706c39608d8349f13"
+      ],
+      "volumeMin": 0.48,
+      "volumeMax": 0.48,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.5,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản B gợi hình ảnh một phiếu tin nhắn vừa trượt ra kèm tiếng chuông đồng bọc nỉ rất đặc trưng và tinh tế."
+    },
+    {
+      "id": "ui_type_card",
+      "category": "ui",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/ui_type_card.wav"
+      ],
+      "variantLabels": [
+        "ui_type_card"
+      ],
+      "sha256": [
+        "4d561338ecab986ede303ab155471e06d76f18be72a126e15572d2f725e9b9de"
+      ],
+      "volumeMin": 0.44,
+      "volumeMax": 0.44,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -30.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A có chất giấy bìa trên trục lăn cao su (rubber platen) rất đầm và ấm, gõ cả đoạn văn dài trên thẻ vẫn rất êm."
+    },
+    {
+      "id": "ui_type_terminal",
+      "category": "ui",
+      "milestone": "R1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/R1/ui_type_terminal.wav"
+      ],
+      "variantLabels": [
+        "ui_type_terminal"
+      ],
+      "sha256": [
+        "cff7d170fa3106fcfc8bc261bb551ffb7507e7985d71ab4e614f244c627aa893"
+      ],
+      "volumeMin": 0.44,
+      "volumeMax": 0.44,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -30.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A phân biệt rõ với tiếng gõ thẻ giấy nhờ tiếng rơ-le lá từ (reed relay) và xung cuộn lái tia trên màn hình của 07."
+    },
+    {
+      "id": "ambience_earthlit_night",
+      "category": "ambience",
+      "milestone": "R1",
+      "bus": "Ambience",
+      "spatial": false,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/Ambience/R1/ambience_earthlit_night.wav"
+      ],
+      "variantLabels": [
+        "ambience_earthlit_night"
+      ],
+      "sha256": [
+        "0c1eebe0d82fb16c59755d72a8dbbc654bdd3cd79852b956049ab4de8d713df6"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -24.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A định hình trọn vẹn bầu không khí đêm C2 Radio bench: cô đơn nhưng ấm áp, yên bình bên chiếc bàn vô tuyến đang thức."
+    },
+    {
+      "id": "ambience_sunlit_day",
+      "category": "ambience",
+      "milestone": "R1",
+      "bus": "Ambience",
+      "spatial": false,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/Ambience/R1/ambience_sunlit_day.wav"
+      ],
+      "variantLabels": [
+        "ambience_sunlit_day"
+      ],
+      "sha256": [
+        "b1544d03505936ab85df0f75e7c67ae8636c34754fa785170f8a6bec8a99ce00"
+      ],
+      "volumeMin": 0.62,
+      "volumeMax": 0.62,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -23.5,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản A mang sắc nắng vàng ấm áp qua các hợp âm đèn thong thả và nhịp rơ-le pin mặt trời, tạo nền làm việc thư thái suốt ban ngày."
+    },
+    {
+      "id": "ambience_eclipse",
+      "category": "ambience",
+      "milestone": "R1",
+      "bus": "Ambience",
+      "spatial": false,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/Ambience/R1/ambience_eclipse.wav"
+      ],
+      "variantLabels": [
+        "ambience_eclipse"
+      ],
+      "sha256": [
+        "b0a4ab062cf674b99c94db798d0403ac6af85346e59b3a989c3cc091e30b84fc"
+      ],
+      "volumeMin": 0.58,
+      "volumeMax": 0.58,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -24.5,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bản B dùng âm chuông đồng mềm và thanh kính tạo chiều sâu không gian kỳ vĩ, khác biệt rõ rệt khi bóng Trái Đất che khuất Mặt Trời."
     }
   ]
 }

@@ -34,6 +34,8 @@ namespace MoonProject.Gameplay.Feel.Editor
 
         public Vector3 Emitter => _emitter.position;
 
+        public Vector3 ScanEmitter => _emitter.position;
+
         public Vector3 CutPoint => CutPiece.TransformPoint(Along(Progress));
 
         public Vector3 CutNormal => CutPiece.TransformDirection(_faceNormal);

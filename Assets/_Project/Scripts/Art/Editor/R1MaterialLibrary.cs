@@ -114,6 +114,24 @@ namespace MoonProject.Art.Editor
             return shader;
         }
 
+        /// <summary>URP's Lit shader, the matte floor and backdrop of the neutral studio captures.</summary>
+        public const string UrpLitShaderPath = "Packages/com.unity.render-pipelines.universal/Shaders/Lit.shader";
+
+        /// <summary>
+        /// Loads URP's Lit shader from <see cref="UrpLitShaderPath"/>. Throws
+        /// <see cref="InvalidOperationException"/> if the shader asset is missing.
+        /// </summary>
+        public static Shader LoadUrpLitShader()
+        {
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>(UrpLitShaderPath);
+            if (shader == null)
+            {
+                throw new InvalidOperationException($"URP Lit shader is missing at '{UrpLitShaderPath}'.");
+            }
+
+            return shader;
+        }
+
         /// <summary>
         /// Creates an in-memory <see cref="Material"/> configured for <paramref name="spec"/>. Throws
         /// <see cref="InvalidOperationException"/> if <paramref name="shader"/> or any required texture is missing.
@@ -246,22 +264,23 @@ namespace MoonProject.Art.Editor
             material.SetFloat("_SmoothnessMax", spec.SmoothnessMax);
             material.SetFloat("_OcclusionStrength", 1.0f);
 
+            bool isBasalt = spec.Slot == R1MaterialSlot.Basalt;
             material.SetColor("_EdgeWearColor", spec.EdgeWearColor);
             material.SetFloat("_EdgeWearAmount", spec.EdgeWearAmount);
-            material.SetFloat("_EdgeWearThreshold", 0.52f);
-            material.SetFloat("_EdgeWearSharpness", 4.0f);
+            material.SetFloat("_EdgeWearThreshold", isBasalt ? 0.42f : 0.52f);
+            material.SetFloat("_EdgeWearSharpness", isBasalt ? 2.2f : 4.0f);
             material.SetFloat("_EdgeWearMetallic", spec.EdgeWearMetallic);
             material.SetFloat("_EdgeWearSmoothness", spec.EdgeWearSmoothness);
 
-            material.SetColor("_DustColor", R1MaterialRecipes.DefaultDustColor);
+            material.SetColor("_DustColor", isBasalt ? new Color(0.60f, 0.60f, 0.64f, 1f) : R1MaterialRecipes.DefaultDustColor);
             material.SetFloat("_DustAmount", spec.DustAmount);
-            material.SetFloat("_DustSharpness", 2.0f);
-            material.SetFloat("_DustUpThreshold", 0.12f);
-            material.SetFloat("_DustOcclusionWeight", 0.42f);
-            material.SetFloat("_DustSmoothness", 0.12f);
+            material.SetFloat("_DustSharpness", isBasalt ? 1.55f : 2.0f);
+            material.SetFloat("_DustUpThreshold", isBasalt ? 0.14f : 0.12f);
+            material.SetFloat("_DustOcclusionWeight", isBasalt ? 0.36f : 0.42f);
+            material.SetFloat("_DustSmoothness", isBasalt ? 0.07f : 0.12f);
 
-            material.SetFloat("_ColorVarScale", 1.8f);
-            material.SetFloat("_ColorVarAmount", 0.025f);
+            material.SetFloat("_ColorVarScale", isBasalt ? 0.65f : 1.8f);
+            material.SetFloat("_ColorVarAmount", isBasalt ? 0.085f : 0.025f);
 
             material.SetTexture("_EmissionMap", emissionMap);
             material.SetColor("_EmissionColor", spec.EmissionColor);
@@ -496,33 +515,29 @@ namespace MoonProject.Art.Editor
             DynamicGI.UpdateEnvironment();
 
             // Full-frustum neutral matte grey studio floor and back wall cyclorama (drops the flat blue skybox fallback)
-            Shader urpLit = Shader.Find("Universal Render Pipeline/Lit");
-            if (urpLit != null)
-            {
-                var backdropMat = new Material(urpLit) { name = "R1StudioBackdrop" };
-                backdropMat.SetColor("_BaseColor", new Color(0.28f, 0.28f, 0.28f, 1f));
-                backdropMat.SetFloat("_Smoothness", 0.06f);
-                backdropMat.SetFloat("_Metallic", 0.0f);
-                temporary.Add(backdropMat);
+            var backdropMat = new Material(LoadUrpLitShader()) { name = "R1StudioBackdrop" };
+            backdropMat.SetColor("_BaseColor", new Color(0.28f, 0.28f, 0.28f, 1f));
+            backdropMat.SetFloat("_Smoothness", 0.06f);
+            backdropMat.SetFloat("_Metallic", 0.0f);
+            temporary.Add(backdropMat);
 
-                GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
-                floor.name = "StudioFloor";
-                UnityEngine.Object.DestroyImmediate(floor.GetComponent<Collider>());
-                floor.transform.position = new Vector3(0f, 0.0f, 0f);
-                floor.transform.localScale = new Vector3(20f, 1f, 20f);
-                floor.GetComponent<MeshRenderer>().sharedMaterial = backdropMat;
-                temporary.Add(floor);
+            GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            floor.name = "StudioFloor";
+            UnityEngine.Object.DestroyImmediate(floor.GetComponent<Collider>());
+            floor.transform.position = new Vector3(0f, 0.0f, 0f);
+            floor.transform.localScale = new Vector3(20f, 1f, 20f);
+            floor.GetComponent<MeshRenderer>().sharedMaterial = backdropMat;
+            temporary.Add(floor);
 
-                GameObject backWall = GameObject.CreatePrimitive(PrimitiveType.Plane);
-                backWall.name = "StudioBackWall";
-                UnityEngine.Object.DestroyImmediate(backWall.GetComponent<Collider>());
-                backWall.transform.SetPositionAndRotation(
-                    new Vector3(0f, 10f, 6.5f),
-                    Quaternion.Euler(-90f, 0f, 0f));
-                backWall.transform.localScale = new Vector3(20f, 1f, 10f);
-                backWall.GetComponent<MeshRenderer>().sharedMaterial = backdropMat;
-                temporary.Add(backWall);
-            }
+            GameObject backWall = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            backWall.name = "StudioBackWall";
+            UnityEngine.Object.DestroyImmediate(backWall.GetComponent<Collider>());
+            backWall.transform.SetPositionAndRotation(
+                new Vector3(0f, 10f, 6.5f),
+                Quaternion.Euler(-90f, 0f, 0f));
+            backWall.transform.localScale = new Vector3(20f, 1f, 10f);
+            backWall.GetComponent<MeshRenderer>().sharedMaterial = backdropMat;
+            temporary.Add(backWall);
 
             // Neutral tonemapping + bloom above Palette.BloomThreshold
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();

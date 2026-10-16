@@ -2,6 +2,7 @@ using UnityEditor;
 using UnityEngine;
 using MoonProject.Editor.Builders;
 using MoonProject.Gameplay.Lift;
+using MoonProject.Gameplay.Map;
 
 namespace MoonProject.Gameplay.Editor
 {
@@ -38,6 +39,7 @@ namespace MoonProject.Gameplay.Editor
             EnsureExists<CutterTuning>(GameplayAssetPaths.CutterTuning);
             EnsureExists<ScanTuning>(GameplayAssetPaths.ScanTuning);
             EnsureExists<BuildingTuning>(GameplayAssetPaths.BuildingTuning);
+            EnsureExists<MapTuning>(GameplayAssetPaths.MapTuning);
         }
 
         private static void EnsureExists<T>(string path) where T : ScriptableObject

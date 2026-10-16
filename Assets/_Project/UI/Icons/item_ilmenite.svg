@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M31 21C31 21 37 27 37 27C37 27 29 35 29 35C29 35 31 21 31 21Z"/>
+    <path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M8 47C8 47 11 26 11 26C11 26 22 11 22 11C22 11 31 21 31 21C31 21 44 9 44 9C44 9 56 25 56 25C56 25 52 48 52 48C52 48 35 54 35 54C35 54 8 47 8 47Z"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M22 11C22 11 29 35 29 35M31 21C31 21 29 35 29 35M44 9C44 9 42 33 42 33M42 33C42 33 29 35 29 35M8 47C8 47 29 35 29 35M29 35C29 35 35 54 35 54M42 33C42 33 52 48 52 48M11 26C11 26 29 35 29 35"/>
+  </g>
+</svg>

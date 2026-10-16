@@ -76,6 +76,8 @@ namespace MoonProject.Art.Editor
                     "compare_unity.png",
                     "unity_studio_front_3q.png",
                     "unity_studio_back_3q.png",
+                    "unity_upgraded_front_3q.png",
+                    "unity_upgraded_back_3q.png",
                     "unity_main_front_3q.png",
                     "unity_main_back_3q.png",
                 })
@@ -182,12 +184,97 @@ namespace MoonProject.Art.Editor
                 temporary.Add(topTex);
 
                 string comparePath = Path.Combine(rendersDir, "compare_unity.png");
-                return BuildTurnaroundComparison(frontTex, sideTex, backTex, topTex, comparePath, temporary);
+                bool compareOk = BuildTurnaroundComparison(frontTex, sideTex, backTex, topTex, comparePath, temporary);
+
+                // 3. Re-enable backdrop, mount all 10 R1 upgrade kits + Kit_TapeDeck, and capture upgraded studio shots
+                if (floorObj != null)
+                {
+                    floorObj.SetActive(true);
+                }
+
+                if (wallObj != null)
+                {
+                    wallObj.SetActive(true);
+                }
+
+                MountAllUpgrades(roverInstance, temporary);
+
+                RenderPerspectiveShot(
+                    new Vector3(-1.95f, 1.45f, 2.38f),
+                    new Vector3(0.0f, 0.78f, 0.05f),
+                    36f,
+                    PerspectiveSize,
+                    PerspectiveSize,
+                    Path.Combine(rendersDir, "unity_upgraded_front_3q.png"));
+
+                RenderPerspectiveShot(
+                    new Vector3(2.05f, 1.48f, -2.42f),
+                    new Vector3(0.0f, 0.76f, -0.08f),
+                    36f,
+                    PerspectiveSize,
+                    PerspectiveSize,
+                    Path.Combine(rendersDir, "unity_upgraded_back_3q.png"));
+
+                return compareOk;
             }
             finally
             {
                 ShaderUtil.allowAsyncCompilation = prevAsync;
                 temporary.Dispose();
+            }
+        }
+
+        private static void MountAllUpgrades(GameObject roverInstance, ArtLightingPreview.TemporaryObjects temporary)
+        {
+            foreach (string flippedSocket in new[] { "DrumSocket_L", "BinSocket_L", "Neck/NeckLift/Head/RingSocket" })
+            {
+                Transform s = roverInstance.transform.Find(flippedSocket);
+                if (s != null)
+                {
+                    s.localRotation = Quaternion.Euler(0f, 180f, 0f);
+                }
+            }
+
+            const string folder = "Assets/_Project/Generated/Art/R1/Models/Rover/";
+            (string kit, string socketPath)[] mounts =
+            {
+                ("Kit_LampBar", "HeadlampSocket"),
+                ("Kit_CapacitorDrum", "DrumSocket_L"),
+                ("Kit_CapacitorDrum", "DrumSocket_R"),
+                ("Kit_BatterySpine", "SpineSocket"),
+                ("Kit_TetherRing", "Neck/NeckLift/Head/RingSocket"),
+                ("Kit_CargoRack", "CargoSocket"),
+                ("Kit_SideBin", "BinSocket_L"),
+                ("Kit_SideBin", "BinSocket_R"),
+                ("HoverCoils", "CoilSocket"),
+                ("FocusLens", "Neck/NeckLift/Head/Eye/LensSocket"),
+                ("LensGlass", "Neck/NeckLift/Head/Eye"),
+                ("Kit_TapeDeck", "Neck/NeckLift/Head/DeckSocket"),
+            };
+
+            foreach ((string kitName, string socketPath) in mounts)
+            {
+                Transform socket = roverInstance.transform.Find(socketPath);
+                GameObject kitPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(folder + kitName + ".prefab");
+                if (socket == null || kitPrefab == null)
+                {
+                    continue;
+                }
+
+                var kitInstance = (GameObject)PrefabUtility.InstantiatePrefab(kitPrefab, socket);
+                kitInstance.transform.localPosition = Vector3.zero;
+                kitInstance.transform.localRotation = Quaternion.identity;
+                kitInstance.transform.localScale = Vector3.one;
+                temporary.Add(kitInstance);
+            }
+
+            foreach (string giftPath in new[] { "Body/Decal07Fresh", "SolarWing/CellFilled", "Antenna/Pennant" })
+            {
+                Transform gift = roverInstance.transform.Find(giftPath);
+                if (gift != null)
+                {
+                    gift.gameObject.SetActive(true);
+                }
             }
         }
 

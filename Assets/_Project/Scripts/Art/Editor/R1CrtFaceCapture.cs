@@ -468,21 +468,17 @@ namespace MoonProject.Art.Editor
             fillLight.shadows = LightShadows.None;
             temporary.Add(fillLight.gameObject);
 
-            Shader urpLit = Shader.Find("Universal Render Pipeline/Lit");
-            if (urpLit != null)
-            {
-                var floorMat = new Material(urpLit) { name = "R1FaceStudioFloorMat" };
-                floorMat.SetColor("_BaseColor", new Color(0.16f, 0.18f, 0.22f, 1f));
-                floorMat.SetFloat("_Smoothness", 0.08f);
-                temporary.Add(floorMat);
+            var floorMat = new Material(R1MaterialLibrary.LoadUrpLitShader()) { name = "R1FaceStudioFloorMat" };
+            floorMat.SetColor("_BaseColor", new Color(0.16f, 0.18f, 0.22f, 1f));
+            floorMat.SetFloat("_Smoothness", 0.08f);
+            temporary.Add(floorMat);
 
-                GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
-                floor.name = "R1FaceStudioFloor";
-                UnityEngine.Object.DestroyImmediate(floor.GetComponent<Collider>());
-                floor.transform.localScale = new Vector3(25f, 1f, 25f);
-                floor.GetComponent<MeshRenderer>().sharedMaterial = floorMat;
-                temporary.Add(floor);
-            }
+            GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            floor.name = "R1FaceStudioFloor";
+            UnityEngine.Object.DestroyImmediate(floor.GetComponent<Collider>());
+            floor.transform.localScale = new Vector3(25f, 1f, 25f);
+            floor.GetComponent<MeshRenderer>().sharedMaterial = floorMat;
+            temporary.Add(floor);
 
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
             temporary.Add(profile);

@@ -1,0 +1,21 @@
+{
+  "model": "kenji_workshop",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "max_triangles": 12000,
+  "max_meshes": 12,
+  "max_draw_calls": 48,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "KenjiWorkshop": { "pivot": [0.0, 0.0, 0.0] },
+    "QuonsetShell": { "pivot": [0.0, 0.0, 0.0] },
+    "HoistRail": { "pivot": [0.0, 0.0, 0.0] },
+    "HangingLamp": { "pivot": [0.0, 0.0, 0.0] },
+    "WorkbenchAndRacks": { "pivot": [0.0, 0.0, 0.0] },
+    "Scan_1": { "pivot": [-0.78, 0.28, 0.92] },
+    "Scan_2": { "pivot": [-0.10, -1.62, 1.44] },
+    "Scan_3": { "pivot": [0.88, -1.56, 1.54] }
+  }
+}

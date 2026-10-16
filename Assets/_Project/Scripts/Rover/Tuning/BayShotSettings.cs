@@ -108,15 +108,15 @@ namespace MoonProject.Rover
         [Header("07's bulk, which the camera must see past to the piece")]
         [Tooltip("Half the length (m) of 07's body.")]
         [Range(0.2f, 1.5f)]
-        [SerializeField] private float _bodyHalfLength = 0.6f;
+        [SerializeField] private float _bodyHalfLength = 0.58f;
 
         [Tooltip("Half the width (m) of 07's body.")]
         [Range(0.2f, 1.5f)]
-        [SerializeField] private float _bodyHalfWidth = 0.5f;
+        [SerializeField] private float _bodyHalfWidth = 0.45f;
 
         [Tooltip("Height (m) of 07's body above its pivot (its head and antenna are thin enough to see past).")]
         [Range(0.3f, 2f)]
-        [SerializeField] private float _bodyHeight = 0.85f;
+        [SerializeField] private float _bodyHeight = 0.76f;
 
         [Tooltip("The last stretch (m) of the sight line to the piece on 07 that 07's bulk may cover.")]
         [Range(0f, 1f)]

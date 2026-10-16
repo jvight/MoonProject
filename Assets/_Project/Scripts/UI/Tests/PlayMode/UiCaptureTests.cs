@@ -946,6 +946,54 @@ namespace MoonProject.UI.PlayModeTests
 #endif
         }
 
+        /// <summary>
+        /// Captures TITLE-SCREEN v1 in Vietnamese and English at 1920x1080, Vietnamese at 1280x720, and the three
+        /// standalone animation frames (t = 1.1s, 5.1s, 9.0s) into Logs/. Rerun with --filter CaptureTitleScreenV1.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CaptureTitleScreenV1()
+        {
+#if UNITY_EDITOR
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out _, out _);
+            FreezeWorld();
+            yield return null;
+            string logsFolder = Path.GetFullPath("Logs");
+            Directory.CreateDirectory(logsFolder);
+
+            Reframe(1920, 1080);
+            ui.Localization.SetLanguage("vi");
+            context.Events.Publish(new TitleShown(true));
+            yield return new WaitForSecondsRealtime(_tuning.Title.Curtain.FadeOut + _tuning.Title.Reveal.FadeIn + 0.3f);
+
+            ui.Pause.SetTitleAnimationTime(1.1f, false);
+            yield return Capture(camera, logsFolder, "title_vi_1920x1080");
+
+            ui.Localization.SetLanguage("en");
+            ui.Pause.SetTitleAnimationTime(1.1f, false);
+            yield return Capture(camera, logsFolder, "title_en_1920x1080");
+
+            Reframe(1280, 720);
+            ui.Localization.SetLanguage("vi");
+            ui.Pause.SetTitleAnimationTime(1.1f, false);
+            yield return Capture(camera, logsFolder, "title_vi_1280x720");
+
+            ui.Pause.SetTitleAnimationTime(1.1f, true);
+            yield return Capture(camera, logsFolder, "title_anim_1_1s");
+
+            ui.Pause.SetTitleAnimationTime(5.1f, true);
+            yield return Capture(camera, logsFolder, "title_anim_5_1s");
+
+            ui.Pause.SetTitleAnimationTime(9.0f, true);
+            yield return Capture(camera, logsFolder, "title_anim_9_0s");
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
         [UnityTest]
         public IEnumerator CaptureGuidance()
         {
@@ -1555,6 +1603,7 @@ namespace MoonProject.UI.PlayModeTests
                     AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.EnglishPath),
                     AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.VietnamesePath),
                 }, AssetDatabase.LoadAssetAtPath<WordmarkShape>(UiTestRig.WordmarkPath),
+                AssetDatabase.LoadAssetAtPath<RoverDiagramData>(UiTestRig.RoverDiagramPath),
                 AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.CreditsPath));
             ui.QuitAction = () => { };
             _uiHost.SetActive(true);

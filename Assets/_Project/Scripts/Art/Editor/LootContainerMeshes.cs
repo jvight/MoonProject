@@ -54,12 +54,20 @@ namespace MoonProject.Art.Editor
         public static readonly Shape JunctionBox = new Shape(new Vector3(0.42f, 0.3f, 0.28f), 0.06f,
             PaletteSwatch.Metal, PaletteSwatch.Honey);
 
+        // The R1 Kit_TapeDeck's dimensions in DeckSocket space (depth along X, height along Y, length along Z) and
+        // the packing margin inside SpareCrate when ItemSocket turns the deck's length along the crate's X.
+        private static readonly Vector3 SpareDeckSize = new Vector3(0.096f, 0.2184f, 0.2184f);
+        private static readonly Vector3 SpareCrateMargin = new Vector3(0.15f, 0.05f, 0.064f);
+        private const float SpareStencilHeight = 0.04f;
+
         /// <summary>
-        /// The tape deck's crate at Kenji's port: small enough for his bench, in 07's cream with an orange band, so it
-        /// reads as 07's own spare before the stencil is read.
+        /// The tape deck's crate at Kenji's port: sized from the R1 tape deck's dimensions plus a margin, small enough
+        /// for his bench, in 07's cream with an orange band, so it reads as 07's own spare before the stencil is read.
         /// </summary>
-        public static readonly Shape SpareCrate = new Shape(new Vector3(0.36f, 0.2f, 0.16f), 0.04f,
-            PaletteSwatch.Cream, PaletteSwatch.WarmAccent);
+        public static readonly Shape SpareCrate = new Shape(
+            new Vector3(SpareDeckSize.z + SpareCrateMargin.x, SpareDeckSize.y + SpareCrateMargin.y,
+                SpareDeckSize.x + SpareCrateMargin.z),
+            0.04f, PaletteSwatch.Cream, PaletteSwatch.WarmAccent);
 
         /// <summary>The supply pod's hatch (on top of its drum, pod space).</summary>
         public static readonly Shape PodHatch = new Shape(new Vector3(0.62f, 0.36f, 0.36f), 0.05f,
@@ -96,7 +104,7 @@ namespace MoonProject.Art.Editor
             Vector3 size = shape.Body;
             Matrix4x4 front = SiteKit.Face(new Vector3(0f, size.y * 0.76f, size.z * 0.5f + 0.002f), Vector3.forward,
                 Vector3.up);
-            Glyphs.Write(b, front, SpareStencil, size.y * 0.2f, PaletteSwatch.Charcoal, shape.Paint);
+            Glyphs.Write(b, front, SpareStencil, SpareStencilHeight, PaletteSwatch.Charcoal, shape.Paint);
             return b;
         }
 

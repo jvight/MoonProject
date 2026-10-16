@@ -70,11 +70,11 @@ namespace MoonProject.Rover
 
         [Tooltip("Front wheel steering angle (deg) at full steering input.")]
         [Range(0f, 45f)]
-        [SerializeField] private float _frontSteerAngle = 24f;
+        [SerializeField] private float _frontSteerAngle = 28f;
 
-        [Tooltip("Rear wheels steer opposite to the front by this fraction (all-wheel steering look).")]
+        [Tooltip("Rear wheels steer opposite to the front by this fraction (0 on the 4-wheel v3 rig).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _rearSteerFactor = 0.4f;
+        [SerializeField] private float _rearSteerFactor = 0f;
 
         [Header("Jelly lean")]
         [Tooltip("Spring frequency (Hz) of the chassis pitch/roll lean.")]

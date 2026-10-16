@@ -23,12 +23,64 @@ class BuilderFilterTests(unittest.TestCase):
     def test_a_box_without_builders_still_builds_the_scene(self):
         self.assertEqual(box_check.builder_filter(["foundation"]), "^(Main Scene$)")
 
+    def test_overlapping_boxes_list_each_domain_once(self):
+        self.assertEqual(box_check.builder_filter(["art", "rover", "director"]),
+                         "^((Art|Gameplay|Rover)/|Main Scene$)")
+
+
+class ChangedDomainTests(unittest.TestCase):
+    def run_git(self, root, *args):
+        subprocess.run(["git", "-c", "safe.directory=*", "-c", "user.name=t", "-c", "user.email=t@t", *args],
+                       cwd=root, check=True, capture_output=True)
+
+    def commit(self, root, rel, text):
+        path = root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        self.run_git(root, "add", rel)
+        self.run_git(root, "commit", "-q", "-m", rel)
+
+    def test_paths_map_to_boxes_the_way_lint_owns_them(self):
+        paths = ["Assets/_Project/Scripts/Rover/Editor/RoverPrefabBuilder.cs",
+                 "Assets/_Project/Scripts/Gameplay/Tests/PlayMode/PlaythroughScene.cs",
+                 "Assets/_Project/Scripts/Rover/Face/FaceDisplay.cs",
+                 "Assets/_Project/Data/Tuning/FaceDirectorTuning.asset", "tools/box_check.py"]
+        self.assertEqual(box_check.changed_boxes(paths), ["rover", "gameplay", "director"])
+
+    def test_gameplay_on_a_rover_builder_branch_also_runs_the_rover_builders(self):
+        # 2026-10-16: box_check gameplay on box/agy-facewire ran ^((Gameplay)/|Main Scene$) against a stale
+        # Generated/Rover/Rover.prefab, and two PlayMode fixtures rebuilt it themselves.
+        boxes = box_check.builder_boxes(["gameplay"], ["rover", "director", "gameplay"])
+        self.assertEqual(boxes, ["gameplay", "rover", "director"])
+        pattern = re.compile(box_check.builder_filter(boxes))
+        for path in ("Gameplay/Playthrough", "Rover/Prefab", "Main Scene"):
+            self.assertTrue(pattern.search(path), path)
+        self.assertFalse(pattern.search("World/Terrain"))
+        self.assertEqual(box_check.builder_filter(box_check.builder_boxes(["gameplay"], [])),
+                         "^((Gameplay)/|Main Scene$)")
+
+    def test_several_named_boxes_keep_their_order_before_the_changed_ones(self):
+        boxes = box_check.builder_boxes(["ui", "world"], ["rover", "world"])
+        self.assertEqual(boxes, ["ui", "world", "rover"])
+
+    def test_only_the_branch_side_of_main_counts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.run_git(root, "init", "-q", "-b", "main")
+            self.commit(root, "a.txt", "a")
+            self.run_git(root, "checkout", "-q", "-b", "box")
+            self.commit(root, "Assets/_Project/Scripts/Rover/Editor/RoverPrefabBuilder.cs", "rover")
+            self.run_git(root, "checkout", "-q", "main")
+            self.commit(root, "Assets/_Project/Scripts/World/Terrain.cs", "world")
+            self.run_git(root, "checkout", "-q", "box")
+            self.assertEqual(box_check.branch_changed_boxes(root), ["rover"])
+
 
 class TestCommandTests(unittest.TestCase):
     ROOT = Path("D:/wt/world")
 
-    def args(self, box, **kw):
-        values = dict(box=box, filter=None, assembly=None, platform="editmode", fast=False)
+    def args(self, *boxes, **kw):
+        values = dict(boxes=list(boxes), filter=None, assembly=None, platform="editmode", fast=False)
         values.update(kw)
         return argparse.Namespace(**values)
 
@@ -39,6 +91,20 @@ class TestCommandTests(unittest.TestCase):
         self.assertEqual(planned[0][1][-3:], ["editmode", "--assembly", "MoonProject.World.Tests"])
         self.assertEqual(planned[1][1][-5:], ["playmode", "--assembly", "MoonProject.World.PlayModeTests",
                                               "--category", "!Playthrough"])
+
+    def test_several_boxes_share_one_step_per_platform_with_each_assembly_once(self):
+        planned = box_check.test_commands(self.ROOT, self.args("gameplay", "world", "art"))
+        self.assertEqual([label for label, _ in planned], [
+            "editmode MoonProject.Gameplay.Tests;MoonProject.World.Tests;MoonProject.Art.Tests;"
+            "MoonProject.Gameplay.Feel.Tests;MoonProject.Rover.Tests",
+            "playmode MoonProject.Gameplay.PlayModeTests;MoonProject.World.PlayModeTests;"
+            "MoonProject.Gameplay.Feel.PlayModeTests;MoonProject.Rover.PlayModeTests",
+        ])
+        self.assertEqual(planned[1][1][-2:], ["--category", "!Playthrough"])
+        self.assertEqual(planned[1][1][planned[1][1].index("--timeout") + 1], "7200")
+        self.assertNotIn("--timeout", planned[0][1])
+        self.assertNotIn("--timeout", box_check.test_commands(self.ROOT, self.args("art"))[1][1])
+        self.assertEqual(box_check.box_assemblies(box_check.DEFAULT_TESTS, ["music", "lyrics"]), None)
 
     def test_fast_skips_playmode(self):
         self.assertEqual([l for l, _ in box_check.test_commands(self.ROOT, self.args("world", fast=True))],
@@ -121,17 +187,81 @@ class TrialMergeAbortTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             self.assertEqual(box_check.abort_trial_merge(self.repo(tmp)), "")
 
+    def test_cleanup_restores_staged_merge_residue_main_unity_generated_data_init_scene_and_index_lock(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.repo(tmp)
+            scene = root / "Assets/_Project/Scenes/Main.unity"
+            scene.parent.mkdir(parents=True, exist_ok=True)
+            scene.write_text("clean scene", encoding="utf-8")
+            self.run_git(root, "add", "Assets/_Project/Scenes/Main.unity")
+            self.run_git(root, "commit", "-q", "-m", "add scene")
+
+            # Pre-existing dirty and untracked files before box_check starts: must be preserved.
+            (root / "a.txt").write_text("user edit before box_check", encoding="utf-8")
+            pre_untracked = root / "Assets/_Project/Data/Tuning/PreExisting.asset"
+            pre_untracked.parent.mkdir(parents=True, exist_ok=True)
+            pre_untracked.write_text("keep me", encoding="utf-8")
+            before = box_check.snapshot_status(root)
+
+            # Simulate trial-merge staged residue (even if MERGE_HEAD was lost), modified Main.unity,
+            # new untracked files in Generated/, Data/Content, Data/Tuning, Assets/InitTestScene*, and stale index.lock.
+            (root / "b.txt").write_text("staged from main", encoding="utf-8")
+            self.run_git(root, "add", "b.txt")
+            scene.write_text("dirty scene from builder", encoding="utf-8")
+            for rel in (
+                "Assets/_Project/Generated/Mesh.asset",
+                "Assets/_Project/Data/Content/NewCatalog.asset",
+                "Assets/_Project/Data/Tuning/NewTuning.asset",
+                "Data/Content/AltContent.asset",
+                "Data/Tuning/AltTuning.asset",
+                "Assets/InitTestScene639001.unity",
+                "Assets/InitTestScene639001.unity.meta",
+                "Assets/_Project/Scripts/NewScript.cs.meta",
+            ):
+                p = root / rel
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_text("residue", encoding="utf-8")
+            lock = box_check.git_dir(root) / "index.lock"
+            lock.write_text("stale", encoding="utf-8")
+
+            restored, new_outputs, metas, problem = box_check.cleanup_worktree(root, before)
+            self.assertEqual(problem, "")
+            self.assertFalse(lock.exists(), "stale index.lock must be removed")
+            self.assertFalse((root / "b.txt").exists(), "staged file from main merge must be removed")
+            self.assertEqual(scene.read_text(encoding="utf-8"), "clean scene")
+            self.assertGreaterEqual(restored, 2)
+            self.assertGreaterEqual(new_outputs, 6)
+            self.assertEqual(metas, 1)
+            for rel in (
+                "Assets/_Project/Generated/Mesh.asset",
+                "Assets/_Project/Data/Content/NewCatalog.asset",
+                "Assets/_Project/Data/Tuning/NewTuning.asset",
+                "Data/Content/AltContent.asset",
+                "Data/Tuning/AltTuning.asset",
+                "Assets/InitTestScene639001.unity",
+                "Assets/InitTestScene639001.unity.meta",
+                "Assets/_Project/Scripts/NewScript.cs.meta",
+            ):
+                self.assertFalse((root / rel).exists(), f"{rel} should be cleaned up")
+
+            # Pre-existing files are untouched.
+            self.assertEqual((root / "a.txt").read_text(encoding="utf-8"), "user edit before box_check")
+            self.assertTrue(pre_untracked.exists())
+            after = box_check.snapshot_status(root)
+            self.assertEqual(after, before)
+
 
 class BoardTests(unittest.TestCase):
     def test_block_verdict_and_last_block(self):
         first = box_check.format_block("20261011-100000", "world", "box/world @ abc1234 + main @ 1111111, trial merge",
-                                       [("compile_check", True, "Logs/c.log", 41.2)], ["restored 3"])
+                                       [("compile_check", True, "Logs/c.log", 41.2)], ["restored 3", "worktree clean"])
         second = box_check.format_block("20261011-110000", "world", "box/world @ def5678, contains main",
                                         [("compile_check", True, "", 40.0), ("builders", False, "Logs/b.log", 95.6)],
-                                        [])
+                                        ["worktree clean"])
         self.assertTrue(first.startswith("## 20261011-100000 box_check world: PASS (box/world @ abc1234 + main @ "
                                          "1111111, trial merge)"))
         self.assertIn("- PASS compile_check 41 s (log Logs/c.log)", first)
+        self.assertIn("- worktree clean", first)
         self.assertIn("- FAIL builders 96 s (log Logs/b.log)", second)
         self.assertEqual(box_check.last_block("\n" + first + "\n" + second), second.strip())
         self.assertEqual(box_check.last_block(first), first.strip())

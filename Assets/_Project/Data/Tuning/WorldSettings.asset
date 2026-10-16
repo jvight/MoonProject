@@ -33,10 +33,10 @@ MonoBehaviour:
     _ridgeSoftness: 0.08
     _saddleDepth: 0.6
     _saddleWavelength: 330
-    _wallGullyHeight: 4
+    _wallGullyHeight: 6.5
     _wallGullyCount: 70
     _strataSpacing: 14
-    _strataStrength: 0.4
+    _strataStrength: 0.24
     _strataRiser: 0.4
     _peakBearing: 12
     _peakDistance: 440
@@ -192,10 +192,10 @@ MonoBehaviour:
       _fieldThreshold: -0.05
       _radius: {x: 2.5, y: 6}
       _sizePower: 2.2
-      _depth: 0.045
-      _rimHeight: 0.015
-      _rimWidth: 0.7
-      _bowlShade: 0.65
+      _depth: 0.058
+      _rimHeight: 0.026
+      _rimWidth: 0.55
+      _bowlShade: 0.72
       _clearance: 6
     _farRangeStart: 950
     _farRangeFull: 1700
@@ -209,39 +209,39 @@ MonoBehaviour:
     _coarseCellSize: 8
     _farCellSize: 16
     _fineRadius: 345
-    _midRadius: 420
-    _coarseRadius: 470
+    _midRadius: 430
+    _coarseRadius: 486
     _jitter: 0.25
     _backdropInnerRadius: 500
     _backdropOuterRadius: 2800
-    _backdropRings: 26
-    _backdropSegments: 192
+    _backdropRings: 36
+    _backdropSegments: 256
     _backdropSink: 3
   _paint:
-    _rockSlope: 32
-    _rimRockSlope: 22
-    _rimZoneStart: 0.3
-    _rockLightSlope: 42
-    _rockSlopeBlend: 14
+    _rockSlope: 26
+    _rimRockSlope: 17
+    _rimZoneStart: 0.24
+    _rockLightSlope: 36
+    _rockSlopeBlend: 10
     _rockLightHeight: 70
     _rockHeightBlend: 80
     _rockMottle: 0.6
     _rockFacing: 2.5
     _rockDither: 0.2
     _patchWavelength: 140
-    _patchStrength: 1.1
+    _patchStrength: 1.3
     _detailPatchWavelength: 22
-    _detailPatchStrength: 0.35
+    _detailPatchStrength: 0.48
     _toneBias: -0.1
     _shadowReach: 1.1
     _lightReach: 1.1
     _lightShare: 0.55
     _canyonMidShare: 0.85
     _chasmDark: 0.5
-    _craterShadow: 0.12
-    _craterFloor: 0.7
-    _craterWallShade: 0.6
-    _craterRimLight: 0.5
+    _craterShadow: 0.15
+    _craterFloor: 0.8
+    _craterWallShade: 0.7
+    _craterRimLight: 0.78
     _highlandZone: 0.65
     _highlandShade: 0.8
     _scorchShade: 0.85
@@ -254,12 +254,12 @@ MonoBehaviour:
     _apronReach: 70
     _apronShare: 0.3
     _dustDarken: 0.2
-    _rimFaceShade: 0.45
+    _rimFaceShade: 0.48
     _crestZone: 0.88
     _crestBlend: 0.05
   _scatter:
     _extentRadius: 370
-    _padClearance: 12
+    _padClearance: 3.5
     _anchorClearance: 1.5
     _scorchClear: 0.05
     _laneHalfWidth: 13
@@ -271,18 +271,18 @@ MonoBehaviour:
     - 250
     _canyonPebbleClear: 0.65
     _laneKeptPebbles: 0.5
-    _clusterWavelength: 75
-    _clusterContrast: 0.75
+    _clusterWavelength: 58
+    _clusterContrast: 0.85
     _pebbleSpacing: 5
-    _pebbleSize: {x: 0.2, y: 0.4}
+    _pebbleSize: {x: 0.18, y: 0.46}
     _pebbleDensity: 0.34
     _pebbleMaxSlope: 28
     _pebbleCullDistance: 150
-    _boulderSpacing: 15
-    _boulderSize: {x: 1.4, y: 3.8}
-    _boulderDensity: 0.11
-    _craterRimBoulders: 0.55
-    _talusBoulders: 1
+    _boulderSpacing: 4.2
+    _boulderSize: {x: 0.85, y: 3.6}
+    _boulderDensity: 0.025
+    _craterRimBoulders: 0.82
+    _talusBoulders: 0.55
     _talusOffset: 8
     _talusHalfWidth: 26
     _boulderMaxSlope: 24
@@ -325,6 +325,11 @@ MonoBehaviour:
     _earthLimb: 0.5
     _earthLimbWidth: 0.06
     _earthSpinPeriod: 900
+    _earthAuroraColor: {r: 0.36, g: 0.86, b: 0.72, a: 1}
+    _earthAuroraIntensity: 0.085
+    _earthAuroraLatitude: 0.84
+    _earthAuroraWidth: 0.045
+    _earthAuroraDriftSpeed: 0.06
     _shootingStarPeriod: 38
     _shootingStarDuration: 2.4
     _shootingStarBrightness: 3
@@ -521,14 +526,14 @@ MonoBehaviour:
     _step: 1.5
     _wander: 3.5
     _wanderWavelength: 45
-    _strength: 0.85
+    _strength: 0.92
     _patchiness: 0.8
     _patchWavelength: 9
     _scuff: 0.7
     _scuffWavelength: 3
     _endFade: 8
     _lift: 0.05
-    _tint: {r: 0.62, g: 0.62, b: 0.76, a: 1}
+    _tint: {r: 0.58, g: 0.58, b: 0.72, a: 1}
     _fadeNear: 45
     _fadeFar: 130
     _scarRadius: 13

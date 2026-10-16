@@ -53,6 +53,9 @@ namespace MoonProject.UI
 
         [Tooltip("The title's Lunarion wordmark (Generated/UI/Wordmark.asset, built by UI/Wordmark).")]
         [SerializeField] private WordmarkShape _wordmark;
+
+        [Tooltip("07's socket diagram (Generated/UI/RoverDiagram.asset, built by UI/Rover Diagram).")]
+        [SerializeField] private RoverDiagramData _roverDiagram;
         [SerializeField] private TextAsset _credits;
         [SerializeField] private Texture2D[] _structureIcons = Array.Empty<Texture2D>();
 
@@ -222,11 +225,12 @@ namespace MoonProject.UI
         internal IDisplayControl DisplayControl { get; set; } = new UnityDisplayControl();
 
         internal void Wire(UIDocument document, UiTuning tuning, RelicCatalog relics, TextAsset[] stringTables,
-            WordmarkShape wordmark, TextAsset credits)
+            WordmarkShape wordmark, RoverDiagramData roverDiagram, TextAsset credits)
         {
             _credits = credits;
             _document = document;
             _wordmark = wordmark;
+            _roverDiagram = roverDiagram;
             _tuning = tuning;
             _relics = relics;
             _stringTables = stringTables;
@@ -314,8 +318,10 @@ namespace MoonProject.UI
                 : Array.IndexOf(_stringTables, null) >= 0 ? "a string table slot is empty."
                 : _tuning.Validate() != null ? "UiTuning " + _tuning.Validate() + "."
                 : _wordmark == null ? "the WordmarkShape is not assigned (run UI/Wordmark)."
+                : _roverDiagram == null ? "the RoverDiagramData is not assigned (run UI/Rover Diagram)."
                 : _credits == null ? "the credits asset is not assigned."
                 : _wordmark.Validate() != null ? "the wordmark " + _wordmark.Validate() + "."
+                : _roverDiagram.Validate() != null ? "RoverDiagram " + _roverDiagram.Validate() + "."
                 : null;
             if (problem == null)
             {
@@ -490,8 +496,8 @@ namespace MoonProject.UI
             _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
             _rewardCard = new RewardCard(_layout, _tuning.RewardCard, _localization, services.Shop);
             _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold,
-                services.Home, services.Transfer, services.Dock, services.Equipment, services.Portrait, _glyphs, _numbers, services.Events,
-                _ledger);
+                services.Home, services.Transfer, services.Dock, services.Equipment, services.Portrait, _roverDiagram,
+                _glyphs, _numbers, services.Events, _ledger);
             _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization, _glyphs);
             _crateNote = new CrateNote(_layout, _tuning.CrateNote, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,

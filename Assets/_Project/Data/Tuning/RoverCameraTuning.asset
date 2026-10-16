@@ -210,9 +210,9 @@ MonoBehaviour:
       _frameClearShare: 0.5
       _frontPreference: 15
       _shortfallPenalty: 20
-      _bodyHalfLength: 0.6
-      _bodyHalfWidth: 0.5
-      _bodyHeight: 0.85
+      _bodyHalfLength: 0.58
+      _bodyHalfWidth: 0.45
+      _bodyHeight: 0.76
       _socketMargin: 0.35
   _giftMoment:
     _easeIn: 1.4

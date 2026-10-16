@@ -100,6 +100,10 @@ namespace MoonProject.Rover.Tests
         {
             var events = new EventBus();
             var root = new GameObject("CargoHatch");
+            var canopy = new GameObject(RoverModelNodes.UpperCanopy);
+            canopy.transform.SetParent(root.transform, false);
+            var chute = new GameObject(RoverModelNodes.LowerChute);
+            chute.transform.SetParent(root.transform, false);
             var crates = new GameObject[8];
             for (int i = 0; i < crates.Length; i++)
             {
@@ -113,6 +117,15 @@ namespace MoonProject.Rover.Tests
             Assert.IsTrue(crates[0].activeSelf && crates[2].activeSelf && !crates[3].activeSelf);
             events.Publish(new FeelBeat(FeelKind.Cargo, FeelPhase.Anticipate, Vector3.zero, Vector3.up, 1f, 0.5f));
             Assert.IsTrue(driver.Motion.IsOpening, "The dock unload opens it.");
+            for (int i = 0; i < 240; i++)
+            {
+                driver.Tick(Frame);
+            }
+
+            Assert.AreEqual(_settings.OpenAngle, Mathf.DeltaAngle(0f, canopy.transform.localEulerAngles.x), 1f,
+                "UpperCanopy swings open around +X.");
+            Assert.AreEqual(-22f, Mathf.DeltaAngle(0f, chute.transform.localEulerAngles.x), 1f,
+                "LowerChute swings down around -X.");
             events.Publish(new CargoChanged(0, 8));
             Assert.IsFalse(driver.Motion.IsOpening, "An empty hold shuts it.");
             Assert.IsFalse(crates[0].activeSelf);

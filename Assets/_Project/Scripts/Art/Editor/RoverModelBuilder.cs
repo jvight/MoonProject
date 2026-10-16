@@ -44,6 +44,18 @@ namespace MoonProject.Art.Editor
         public static readonly Vector3 CoilSocket = new Vector3(0f, 0.28f, 0.03f);
 
         public const string HoverCoilsName = "HoverCoils";
+        public const string LampBarName = "Kit_LampBar";
+        public const string LampPrefix = "Lamp_";
+        public const int LampCount = 3;
+        public const string CapacitorDrumName = "Kit_CapacitorDrum";
+        public const string DrumGlowName = "Glow";
+        public const string CargoRackName = "Kit_CargoRack";
+        public const string RelicSeatName = "RelicSeat";
+        public const string BatterySpineName = "Kit_BatterySpine";
+        public const string TapeDeckName = "Kit_TapeDeck";
+        public const string TetherRingName = "Kit_TetherRing";
+        public const string SideBinName = "Kit_SideBin";
+        public const string LensGlassName = "LensGlass";
 
         /// <summary>
         /// The cutter's charge-up (0.5.5 owner feedback §5.4, the owner's pick "Cells"), every glow on the glow-off
@@ -206,20 +218,9 @@ namespace MoonProject.Art.Editor
         public const string BatteryLampPrefix = "BatteryLamp_";
         public const string BatteryGlassPrefix = "BatteryGlass_";
 
-        /// <summary>Writes the rover meshes and prefab (the palette material must exist).</summary>
-        [MoonBuilder("Art/Rover", 120)]
         public static void Build()
         {
-            Material material = PaletteAssetBuilder.LoadMaterial();
-            ModelPrefabWriter.Write(CreateModel(), ArtPaths.RoverFolder, material,
-                PaletteAssetBuilder.LoadGlowOffMaterial(), PaletteAssetBuilder.LoadWeatherMaterial());
-            ModelPrefabWriter.Write(CreateHoverCoils(), ArtPaths.RoverFolder, material,
-                PaletteAssetBuilder.LoadGlowOffMaterial());
-            ModelPrefabWriter.Write(CreateScanFan(), ArtPaths.RoverFolder, material,
-                PaletteAssetBuilder.LoadGlowOffMaterial());
-            ModelPrefabWriter.Write(CreateFocusLens(), ArtPaths.RoverFolder, material,
-                PaletteAssetBuilder.LoadGlowOffMaterial());
-            AssetDatabase.SaveAssets();
+            R1ModelBuilder.Build();
         }
 
         /// <summary>The rig as a node tree; pure geometry, no assets touched.</summary>
@@ -350,28 +351,6 @@ namespace MoonProject.Art.Editor
                 ModelMaterial.Palette, false);
         }
 
-        /// <summary>
-        /// The Hover-Jump coils (HoverCoils.prefab), mounted on CoilSocket with identity: a plate, Coil_FL/FR/RL/RR
-        /// springs pivoted at their tops (squash them by local Y while charging) and a Glow_* ring under each, on
-        /// the glow-off material so it lights only when gameplay raises its _EmissionColor.
-        /// </summary>
-        public static ModelNode CreateHoverCoils()
-        {
-            var root = new ModelNode(HoverCoilsName, Vector3.zero,
-                new ModelMesh(HoverCoilsName + "_Mount", HoverCoilMeshes.Mount()));
-            var coil = new ModelMesh(HoverCoilsName + "_Coil", HoverCoilMeshes.Coil());
-            var glow = new ModelMesh(HoverCoilsName + "_Glow", HoverCoilMeshes.GlowRing());
-            string[] corners = { "FL", "FR", "RL", "RR" };
-            for (int i = 0; i < HoverCoilMeshes.CoilCount; i++)
-            {
-                ModelNode spring = root.Add(new ModelNode("Coil_" + corners[i], HoverCoilMeshes.CoilTop(i), coil));
-                spring.Add(new ModelNode("Glow_" + corners[i], HoverCoilMeshes.GlowCentre, Quaternion.identity, glow,
-                    ModelMaterial.PaletteGlowOff));
-            }
-
-            return root;
-        }
-
         private static void AddCargoHatch(ModelNode body)
         {
             ModelNode hatch = body.Add(new ModelNode(CargoHatchName, CargoHatchHinge,
@@ -422,23 +401,6 @@ namespace MoonProject.Art.Editor
                 new ModelMesh(prefix + LockRingName, ChargeRunMeshes.LockTrack())));
             ring.Add(new ModelNode(LockGlowName, Vector3.zero, Quaternion.identity,
                 new ModelMesh(prefix + LockGlowName, ChargeRunMeshes.LockRing()), ModelMaterial.PaletteGlowOff));
-        }
-
-        /// <summary>The scan's fan of light (see <see cref="ScanFanName"/>): one glow-off renderer.</summary>
-        public static ModelNode CreateScanFan()
-        {
-            return new ModelNode(ScanFanName, Vector3.zero, Quaternion.identity, new ModelMesh(ScanFanName,
-                ChargeRunMeshes.ScanFan(ScanFanHalfAngle, ScanFanReach)), ModelMaterial.PaletteGlowOff);
-        }
-
-        /// <summary>The Focus Lens (see <see cref="ChargeRunPrefix"/>), clipped into 07's eye.</summary>
-        public static ModelNode CreateFocusLens()
-        {
-            var root = new ModelNode(FocusLensName, Vector3.zero,
-                new ModelMesh(FocusLensName + "_Frame", ChargeRunMeshes.LensFrame()));
-            root.Add(new ModelNode(FocusLensGlassName, ChargeRunMeshes.LensSeat, Quaternion.identity,
-                new ModelMesh(FocusLensName + "_Glass", ChargeRunMeshes.LensGlass()), ModelMaterial.PaletteGlowOff));
-            return root;
         }
 
         // Each marker sits on the part it stands for, under the node that moves it (head, wing, wheel), so it follows

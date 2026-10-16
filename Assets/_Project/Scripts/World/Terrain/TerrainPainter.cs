@@ -104,6 +104,49 @@ namespace MoonProject.World
             return Color.Lerp(rock > 0f ? _rockLight : _rockDark, _charcoal, _settings.RimFaceShade * face);
         }
 
+        /// <summary>
+        /// Smooth per-vertex colour blending regolith dust on gentle ground with exposed basalt rock on steep slopes
+        /// and the outer crater rim wall.
+        /// </summary>
+        public Color32 PaintVertex(Vector3 position, Vector3 normal, SurfaceSample region)
+        {
+            Color32 ground32 = Ground(position, region);
+            float slope = Mathf.Acos(Mathf.Clamp(normal.y, -1f, 1f)) * Mathf.Rad2Deg;
+            float rimWeight = SmoothMath.Smootherstep(0f, _settings.RimZoneStart, region.RimZone);
+            float rockSlopeThreshold = Mathf.Lerp(_settings.RockSlope, _settings.RimRockSlope, rimWeight);
+            float rockWeight = SmoothMath.Smootherstep(rockSlopeThreshold - 9f, rockSlopeThreshold + 9f, slope);
+            if (rockWeight <= 1e-4f && rimWeight <= 1e-4f)
+            {
+                return ground32;
+            }
+
+            float faceFacing = normal.x * _lightX + normal.z * _lightZ;
+            float r = Mathf.Max(1f, Radius(position));
+            float angle = Mathf.Atan2(position.x, position.z);
+            float patch = Patch(position);
+            float striation = _detailPatchNoise.Fractal(angle * 24f + patch * 1.6f, position.y * 0.018f + r * 0.012f, 2, 2f, 0.5f);
+            float slumpPocket = SmoothMath.Smootherstep(-0.02f, 0.22f,
+                _patchNoise.Fractal(angle * 5.5f + position.y * 0.010f, r * 0.014f, 2, 2f, 0.5f));
+            float terracePhase = position.y / 22f + 1.45f * patch + 0.52f * striation;
+            float terraceFrac = terracePhase - Mathf.Floor(terracePhase);
+            float terraceRiser = slumpPocket * SmoothMath.Smootherstep(0.50f, 0.74f, terraceFrac)
+                * (1f - SmoothMath.Smootherstep(0.80f, 0.95f, terraceFrac));
+            float rockTone = (_settings.RockLightSlope - slope) / (_settings.RockSlopeBlend * 1.35f)
+                + (position.y - _settings.RockLightHeight) / _settings.RockHeightBlend
+                + patch * _settings.RockMottle + striation * 0.58f
+                - terraceRiser * 0.45f + faceFacing * (_settings.RockFacing * 0.45f);
+            float lightMix = SmoothMath.Smootherstep(-1.05f, 1.05f, rockTone);
+            Color rockColor = Color.Lerp(_rockDark, _rockLight, lightMix);
+            float face = rimWeight
+                * (1f - SmoothMath.Smootherstep(_settings.CrestZone - _settings.CrestBlend * 1.6f,
+                    _settings.CrestZone + _settings.CrestBlend * 1.6f, region.RimZone));
+            float charcoalShade = Mathf.Clamp01(_settings.RimFaceShade * face * (0.45f + 0.55f * rockWeight)
+                + rimWeight * (0.14f * terraceRiser + 0.16f * Mathf.Clamp01(-striation)));
+            rockColor = Color.Lerp(rockColor, _charcoal, charcoalShade);
+            float totalRock = Mathf.Clamp01(Mathf.Max(rockWeight, rimWeight * (0.34f + 0.28f * terraceRiser + 0.18f * Mathf.Clamp01(-striation))));
+            return Color.Lerp((Color)ground32, rockColor, totalRock);
+        }
+
         /// <summary>The dust colour at a vertex.</summary>
         /// <param name="position">World-space vertex position.</param>
         /// <param name="region">Region weights there (height unused).</param>
@@ -124,8 +167,12 @@ namespace MoonProject.World
                 * (1f - SmoothMath.Smootherstep(_settings.CraterFloor - CraterBand, _settings.CraterFloor + CraterBand,
                     region.CraterBowl));
             dust = Color.Lerp(dust, _shadowDust, wall * _settings.CraterWallShade);
-            dust = Color.Lerp(dust, _lightDust, SmoothMath.Smootherstep(0f, 1f, region.CraterRim)
-                * _settings.CraterRimLight);
+            float rimLift = SmoothMath.Smootherstep(0f, 1f, region.CraterRim) * _settings.CraterRimLight;
+            if (rimLift > 0f)
+            {
+                float ejectaRay = Mathf.Clamp01(0.75f + 0.38f * detail + 0.25f * Patch(position));
+                dust = Color.Lerp(dust, _lightDust, Mathf.Clamp01(rimLift * ejectaRay));
+            }
             float highland = SmoothMath.Smootherstep(_settings.HighlandZone - HighlandBand,
                 _settings.HighlandZone + HighlandBand, region.RimZone);
             dust = Color.Lerp(dust, _shadowDust, highland * _settings.HighlandShade);

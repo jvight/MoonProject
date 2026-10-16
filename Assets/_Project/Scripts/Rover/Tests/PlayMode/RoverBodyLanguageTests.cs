@@ -38,7 +38,7 @@ namespace MoonProject.Rover.PlayModeTests
             base.TearDown();
         }
 
-        private float EyelidAngle => Mathf.DeltaAngle(0f, _rover.Eyelid.localEulerAngles.x);
+        private float NeckLiftAngle => Mathf.DeltaAngle(0f, _rover.NeckLift.localEulerAngles.x);
 
         private void Spawn(bool asleep)
         {
@@ -54,7 +54,8 @@ namespace MoonProject.Rover.PlayModeTests
             {
                 yield return Wait(0.5f);
                 Assert.AreEqual(0f, _rover.EyeLight.intensity, 1e-3f, "Asleep: the eye is dark.");
-                float shutLid = EyelidAngle;
+                float tuckedNeck = NeckLiftAngle;
+                float shutLid = _rover.BodyLanguage.Mood.LidClosure;
                 Assert.Greater(HeadDip, 5f, "Asleep: the head is bowed.");
                 Assert.IsEmpty(awoke);
 
@@ -71,7 +72,8 @@ namespace MoonProject.Rover.PlayModeTests
                 }
 
                 Assert.Less(highestLook, -10f, "Waking, 07 looks up toward Earth.");
-                Assert.Less(EyelidAngle, shutLid - 10f, "The lid opens to its resting half-lid.");
+                Assert.Less(_rover.BodyLanguage.Mood.LidClosure, shutLid - 0.5f, "The lid opens to its resting half-lid.");
+                Assert.Less(NeckLiftAngle, tuckedNeck - 10f, "The neck lifts out of its sleeping tuck.");
                 Assert.Greater(_rover.EyeLight.intensity, 0.3f, "The eye glows.");
                 Assert.AreEqual(1, awoke.Count);
             }

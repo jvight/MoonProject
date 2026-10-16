@@ -21,23 +21,35 @@ namespace MoonProject.Rover
     /// </summary>
     public sealed class CargoHatch : IDisposable
     {
-        private readonly Transform _hatch;
+        private const float LowerChuteRatio = 22f / 55f;
+
+        private readonly Transform _upperCanopy;
+        private readonly Transform _lowerChute;
         private readonly GameObject[] _crates;
         private readonly CargoHatchSettings _settings;
         private readonly RumbleMixer _rumble;
         private readonly CargoHatchMotion _motion;
-        private readonly Quaternion _rest;
+        private readonly Quaternion _upperRest;
+        private readonly Quaternion _lowerRest;
         private readonly IDisposable[] _subscriptions;
 
         public CargoHatch(EventBus events, CargoHatchSettings settings, Transform hatch, GameObject[] crates,
             RumbleMixer rumble)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
-            _hatch = hatch != null ? hatch : throw new ArgumentNullException(nameof(hatch));
+            if (hatch == null)
+            {
+                throw new ArgumentNullException(nameof(hatch));
+            }
+
+            Transform upper = hatch.Find(RoverModelNodes.UpperCanopy);
+            _upperCanopy = upper != null ? upper : hatch;
+            _lowerChute = hatch.Find(RoverModelNodes.LowerChute);
             _crates = crates ?? throw new ArgumentNullException(nameof(crates));
             _rumble = rumble ?? throw new ArgumentNullException(nameof(rumble));
             _motion = new CargoHatchMotion(settings);
-            _rest = hatch.localRotation;
+            _upperRest = _upperCanopy.localRotation;
+            _lowerRest = _lowerChute != null ? _lowerChute.localRotation : Quaternion.identity;
             ShowCrates(0);
             _subscriptions = new[]
             {
@@ -56,7 +68,12 @@ namespace MoonProject.Rover
                 _rumble.Play(_settings.ThunkRumble);
             }
 
-            _hatch.localRotation = _rest * Quaternion.AngleAxis(_motion.Angle, Vector3.right);
+            float angle = _motion.Angle;
+            _upperCanopy.localRotation = _upperRest * Quaternion.AngleAxis(angle, Vector3.right);
+            if (_lowerChute != null)
+            {
+                _lowerChute.localRotation = _lowerRest * Quaternion.AngleAxis(-angle * LowerChuteRatio, Vector3.right);
+            }
         }
 
         /// <summary>07 was placed: the hatch is shut at once.</summary>

@@ -7,7 +7,7 @@ using MoonProject.Gameplay;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// 07's battery as the big glass dial at the bottom left (Moonlight Glass, Subnautica's oxygen dial): one ring
+    /// 07's battery as the big CRT dial at the bottom left (Variant C amber CRT dial): one ring
     /// segment per cell, the cell in use filled by its share and breathing, the charge as a percentage in the middle
     /// over the word "power". On the sealed reserve (Low) the last lit cell breathes slowly in amber. Never red. When it
     /// shows follows <see cref="CellRowRules"/> (first-hour-v2 6.4). A frame writes styles and repaints only when they

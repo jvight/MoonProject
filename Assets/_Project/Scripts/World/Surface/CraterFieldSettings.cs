@@ -35,20 +35,20 @@ namespace MoonProject.World
 
         [Tooltip("Bowl depth as a fraction of the radius. Shallow: 07 rolls through them.")]
         [Range(0f, 0.3f)]
-        [SerializeField] private float _depth = 0.045f;
+        [SerializeField] private float _depth = 0.05f;
 
         [Tooltip("Raised rim height as a fraction of the radius: one crisp lit facet.")]
         [Range(0f, 0.1f)]
-        [SerializeField] private float _rimHeight = 0.015f;
+        [SerializeField] private float _rimHeight = 0.02f;
 
         [Tooltip("Width of the raised rim outside the bowl, as a fraction of the radius.")]
         [Range(0.2f, 1.5f)]
-        [SerializeField] private float _rimWidth = 0.7f;
+        [SerializeField] private float _rimWidth = 0.68f;
 
         [Tooltip("Bowl paint weight at a crater's centre (0..1). Under the terrain painter's crater floor, so the whole " +
             "small bowl takes the shaded wall tone: a dark floor under a light rim.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _bowlShade = 0.65f;
+        [SerializeField] private float _bowlShade = 0.72f;
 
         [Tooltip("Clear ground (metres) kept beyond the base pad and around every world anchor's radius.")]
         [Range(0f, 40f)]

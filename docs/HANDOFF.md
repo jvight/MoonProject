@@ -4,7 +4,29 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 000000000000000000000000000000. LATEST (2026-10-16 ~00:40): R1 foundation, structures, tools and sky cycle landed
+## 0000000000000000000000000000000. LATEST (2026-10-16 ~11:30): look-first phase; Showcase build; UI C; story v4
+- **origin/main 85ac4115 (verified).** Landed overnight and this morning:
+  - the lander (c7366ec7);
+  - 07 v3 model r4 + `R1_Brass` (f5a0ecb6);
+  - the CRT face shader and `Rover/Face` (1ab85f14);
+  - R1 terrain + rocks + `R1_Basalt` (51ef3562);
+  - the Showcase look-dev build (85ac4115; `python tools/build_player.py --showcase`, zip in Builds/).
+- **Owner rules today:**
+  - work part by part: test the look (atmosphere, models, animation, effects) before more gameplay lands;
+  - ALL implementation goes to agy (Argon); the Director only manages;
+  - UI becomes 07's amber CRT, variant C "Terminal hai màu", with IBM Plex Mono + Chakra Petch (consented);
+  - story becomes retro-future "The Departure" (humans left Earth on arks in the 1980s).
+- **Held / in progress:**
+  - **Build mode** (box/agy-buildmode): gate PASS, held until the look is approved.
+  - **rig07** (box/agy-rig07): playable 07 v3. Landed, then ROLLED BACK for 8 hidden tuning-override getters; round 3
+    fixes it.
+  - **agy-uicrt2:** UI C implementation.
+  - **agy-story:** `docs/design/story-v4.md` + `-vi.md`. Round 2 fixes invented facts; the owner has 5 open questions.
+- **Review rule:** before every land, grep the diff for runtime fallbacks and default overrides
+  (`Mathf.Approximately(_`, `FindOrAdd`, asset creation in contributors), and check that tuning-field changes come with
+  `.asset` value changes.
+
+## 000000000000000000000000000000. (prev) (2026-10-16 ~00:40): R1 foundation, structures, tools and sky cycle landed
 - **origin/main 4ca15557 (verified, pushed).** Landed since 4cfbe18e:
   - **R1 material system** (5d471e2c + 40ac6b1f):
     - `MoonProject/R1/Lit`;

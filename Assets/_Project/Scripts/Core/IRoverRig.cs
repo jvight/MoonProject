@@ -9,8 +9,20 @@ namespace MoonProject.Core
     /// </summary>
     public interface IRoverRig
     {
-        /// <summary>Lens centre of 07's eye; +Z is the gaze. Sonar and tether beams leave from here.</summary>
+        /// <summary>Lens centre of 07's cheek camera pod (`EyeOrigin`); +Z is the gaze. Legacy alias for <see cref="ScanOrigin"/>.</summary>
         Transform TetherOrigin { get; }
+
+        /// <summary>Chest cutter turret nozzle (`CutterOrigin`). Salvage cutter, repair, stitch, and workshop feed beams leave from here.</summary>
+        Transform CutterOrigin { get; }
+
+        /// <summary>Cheek camera pod lens (`EyeOrigin`). Scan beam and scan ribbon leave from here.</summary>
+        Transform ScanOrigin { get; }
+
+        /// <summary>Rear winch tow hook (`WinchOrigin`). Tether rope and tow anchor attach here.</summary>
+        Transform WinchOrigin { get; }
+
+        /// <summary>Front dig scoop bucket (`ScoopOrigin`). Excavation beam leaves from here.</summary>
+        Transform ScoopOrigin { get; }
 
         /// <summary>Where the cargo bed upgrade attaches.</summary>
         Transform CargoSocket { get; }

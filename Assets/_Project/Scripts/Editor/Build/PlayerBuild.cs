@@ -14,16 +14,23 @@ using MoonProject.Editor.SceneBuild;
 namespace MoonProject.Editor.Build
 {
     /// <summary>
-    /// Windows playtest build of <c>Assets/_Project/Scenes/Main.unity</c>: StandaloneWindows64, Mono, release (no
-    /// development build, no test assemblies), product/company from ProjectSettings. Every builder (Main Scene last)
-    /// runs first so the build always reflects source. Writes <c>build_info.txt</c> next to the exe.
-    /// Normally run through <c>python tools/build_player.py</c>; directly:
+    /// Windows playtest build of <c>Assets/_Project/Scenes/Main.unity</c> or
+    /// <c>Assets/_Project/Scenes/Showcase.unity</c>: StandaloneWindows64, Mono, release (no development build, no test
+    /// assemblies), product/company from ProjectSettings. Every builder runs first so the build always reflects source.
+    /// Writes <c>build_info.txt</c> next to the exe. Normally run through <c>python tools/build_player.py</c>;
+    /// directly:
     /// <code>python tools/unity_batch.py exec --method MoonProject.Editor.Build.PlayerBuild.BuildWindows
     ///     [--arg out=Builds/Lunarion-Windows] [--arg builders=false]</code>
+    /// <code>python tools/unity_batch.py exec --method MoonProject.Editor.Build.PlayerBuild.BuildShowcase
+    ///     [--arg out=Builds/Lunarion-Showcase] [--arg builders=false]</code>
     /// </summary>
     public static class PlayerBuild
     {
         public const string DefaultOutput = "Builds/Lunarion-Windows";
+        public const string DefaultShowcaseOutput = "Builds/Lunarion-Showcase";
+        public const string ShowcaseScenePath = "Assets/_Project/Scenes/Showcase.unity";
+        public const string MainBuildersPattern = "^(?!Showcase/|Showcase Scene$).*";
+        public const string ShowcaseBuildersPattern = "^(?!Main Scene$).*";
         public const string InfoFileName = "build_info.txt";
 
         /// <summary>Suffix of folders Unity writes next to the player that must never ship (debug symbols).</summary>
@@ -35,8 +42,25 @@ namespace MoonProject.Editor.Build
                 BatchArgs.ProjectPath(args.GetString("out", DefaultOutput)), args.GetBool("builders", true)));
         }
 
-        /// <summary>Builds into <paramref name="outputDirectory"/> (emptied first). Returns true on success.</summary>
+        public static void BuildShowcase()
+        {
+            BatchRunner.Run(nameof(BuildShowcase), args => BuildShowcasePlayer(
+                BatchArgs.ProjectPath(args.GetString("out", DefaultShowcaseOutput)), args.GetBool("builders", true)));
+        }
+
+        /// <summary>Builds Main.unity into <paramref name="outputDirectory"/> (emptied first). Returns true on success.</summary>
         public static bool Build(string outputDirectory, bool runBuilders)
+        {
+            return BuildScene(MainSceneBuilder.ScenePath, MainBuildersPattern, outputDirectory, runBuilders);
+        }
+
+        /// <summary>Builds Showcase.unity into <paramref name="outputDirectory"/> (emptied first). Returns true on success.</summary>
+        public static bool BuildShowcasePlayer(string outputDirectory, bool runBuilders)
+        {
+            return BuildScene(ShowcaseScenePath, ShowcaseBuildersPattern, outputDirectory, runBuilders);
+        }
+
+        private static bool BuildScene(string scenePath, string builderPattern, string outputDirectory, bool runBuilders)
         {
             if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows64))
             {
@@ -55,15 +79,15 @@ namespace MoonProject.Editor.Build
             BuildVersion version = BuildVersion.FromGit(projectRoot);
             BatchRunner.Log($"player build {version.Stamp} -> {outputDirectory}");
 
-            if (runBuilders && !BuilderRegistry.DiscoverAndRun(string.Empty))
+            if (runBuilders && !BuilderRegistry.DiscoverAndRun(builderPattern))
             {
                 Debug.LogError("Builders failed; the player was not built.");
                 return false;
             }
 
-            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(MainSceneBuilder.ScenePath) == null)
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(scenePath) == null)
             {
-                Debug.LogError($"{MainSceneBuilder.ScenePath} does not exist; run the Main Scene builder.");
+                Debug.LogError($"{scenePath} does not exist; run its scene builder.");
                 return false;
             }
 
@@ -76,7 +100,7 @@ namespace MoonProject.Editor.Build
             string exePath = Path.Combine(outputDirectory, ExeName() + ".exe");
             var options = new BuildPlayerOptions
             {
-                scenes = new[] { MainSceneBuilder.ScenePath },
+                scenes = new[] { scenePath },
                 locationPathName = exePath,
                 target = BuildTarget.StandaloneWindows64,
                 targetGroup = BuildTargetGroup.Standalone,

@@ -1,0 +1,15 @@
+{
+  "model": "kit_lamp_bar",
+  "pivot_tolerance": 0.015,
+  "nodes": {
+    "Kit_LampBar": {"pivot": [0.0, 0.0, 0.0]},
+    "Lamp_0": {"pivot": [-0.26, 0.189, -0.055]},
+    "Lamp_1": {"pivot": [0.0, 0.202, -0.132]},
+    "Lamp_2": {"pivot": [0.26, 0.189, -0.055]}
+  },
+  "require_vertex_colors": true,
+  "allow_boundary_edges": false,
+  "max_triangles": 3000,
+  "max_meshes": 4,
+  "max_draw_calls": 12
+}

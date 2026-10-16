@@ -86,6 +86,18 @@ namespace MoonProject.Rover
         [Tooltip("RoverModel 'TetherOrigin' (lens centre of 07's eye, +Z = gaze).")]
         [SerializeField] private Transform _tetherOrigin;
 
+        [Tooltip("RoverModel 'CutterOrigin' (chest cutter turret nozzle, +Z = beam).")]
+        [SerializeField] private Transform _cutterOrigin;
+
+        [Tooltip("RoverModel 'EyeOrigin' (cheek scan/camera lens centre, +Z = gaze).")]
+        [SerializeField] private Transform _scanOrigin;
+
+        [Tooltip("RoverModel 'WinchOrigin' (chest winch tow-hook origin, +Z = forward).")]
+        [SerializeField] private Transform _winchOrigin;
+
+        [Tooltip("RoverModel 'ScoopOrigin' (front belly dig scoop tip, +Z = forward).")]
+        [SerializeField] private Transform _scoopOrigin;
+
         [Tooltip("RoverModel 'CargoSocket'.")]
         [SerializeField] private Transform _cargoSocket;
 
@@ -208,6 +220,14 @@ namespace MoonProject.Rover
 
         // IRoverRig
         public Transform TetherOrigin => _tetherOrigin;
+
+        public Transform CutterOrigin => _cutterOrigin;
+
+        public Transform ScanOrigin => _scanOrigin;
+
+        public Transform WinchOrigin => _winchOrigin;
+
+        public Transform ScoopOrigin => _scoopOrigin;
 
         public Transform CargoSocket => _cargoSocket;
 
@@ -390,7 +410,7 @@ namespace MoonProject.Rover
                 _visualRig.SetChargeBrace(_feel.Brace);
                 _hatch = new CargoHatch(_events, feel.CargoHatch, _cargoHatch, _hatchCrates, _feel.Rumble);
                 _chargeCells = new ChargeCellHardware(_events, feel.ChargeCells, _conduitGlows, _stageSleeves, _lockGlow,
-                    Cutter, _tetherOrigin, _focusLens, _focusLensGlass);
+                    Cutter, CutterOrigin, _focusLens, _focusLensGlass);
             }
 
             bool kitReady = _kit.Initialize(context, this, _visualRig);
@@ -442,7 +462,9 @@ namespace MoonProject.Rover
                 && Array.TrueForAll(_stageSleeves, r => r != null) && _lockGlow != null,
                 "The charge-up's ConduitGlow, StageGlow sleeves or LockGlow are not assigned (0.5.5 Cells contract).");
 
-            ok &= Require(_tetherOrigin != null && _cargoSocket != null, "TetherOrigin/CargoSocket are not assigned.");
+            ok &= Require(_tetherOrigin != null && _cutterOrigin != null && _scanOrigin != null
+                && _winchOrigin != null && _scoopOrigin != null && _cargoSocket != null,
+                "TetherOrigin/CutterOrigin/ScanOrigin/WinchOrigin/ScoopOrigin/CargoSocket are not assigned.");
             if (_body != null)
             {
                 ok &= Require(_body.gameObject.layer == Layers.Rover, "Physics sphere must be on the Rover layer.");

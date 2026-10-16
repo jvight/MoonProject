@@ -1,0 +1,1485 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c0e7413bd8acec428d00ec9b429f3e8, type: 3}
+  m_Name: ShowcaseTuning
+  m_EditorClassIdentifier: 
+  _freeFlySpeed: 8.5
+  _freeFlyFastMultiplier: 3.2
+  _freeFlyVerticalSpeed: 6
+  _lookSensitivity: 0.16
+  _gamepadLookRate: 120
+  _orbitZoomStep: 0.45
+  _orbitTransitionSeconds: 0.75
+  _minPitchDegrees: -75
+  _maxPitchDegrees: 80
+  _scrubSecondsPerSecond: 600
+  _fastTimeScale: 60
+  _skyPresets:
+  - _presetId: 0
+    _labelVi: "Nh\u1EADt th\u1EF1c to\xE0n ph\u1EA7n (Gi\u1EEF)"
+    _timeSeconds: 0
+    _holdEclipse: 1
+  - _presetId: 1
+    _labelVi: "Tho\xE1t nh\u1EADt th\u1EF1c / H\u1EA1t quang"
+    _timeSeconds: 10
+    _holdEclipse: 0
+  - _presetId: 2
+    _labelVi: "B\xECnh minh M\u1EB7t Tr\u0103ng"
+    _timeSeconds: 40
+    _holdEclipse: 0
+  - _presetId: 3
+    _labelVi: "Ban ng\xE0y n\u1EAFng g\u1EAFt"
+    _timeSeconds: 900
+    _holdEclipse: 0
+  - _presetId: 4
+    _labelVi: "Ho\xE0ng h\xF4n M\u1EB7t Tr\u0103ng"
+    _timeSeconds: 2650
+    _holdEclipse: 0
+  - _presetId: 5
+    _labelVi: "\u0110\xEAm \xE1nh \u0110\u1ECBa C\u1EA7u"
+    _timeSeconds: 4800
+    _holdEclipse: 0
+  _lampOffEmission: 0
+  _lampOnEmission: 2.2
+  _lampPulseMinEmission: 0.25
+  _lampPulseMaxEmission: 2.5
+  _lampPulseSpeed: 0.85
+  _lampEaseSeconds: 0.55
+  _stageRiseDepthMeters: 0.42
+  _stageSettleOvershootMeters: 0.035
+  _stageRiseDurationSeconds: 0.65
+  _stageStepIntervalSeconds: 0.55
+  _stageAutoLoopHoldSeconds: 2.4
+  _feelingDemoIntervalSeconds: 2.2
+  _tourExhibitHoldSeconds: 4.2
+  _tourTransitionSeconds: 1.6
+  _tourOrbitSweepDegrees: 22
+  _ruinPieces:
+  - _pieceId: 0
+    _localOffset: {x: -4.8, y: 0, z: 1.5}
+    _localYawDegrees: -10
+  - _pieceId: 1
+    _localOffset: {x: 1.8, y: 0, z: 9.2}
+    _localYawDegrees: -8
+  - _pieceId: 2
+    _localOffset: {x: 6.35, y: 0, z: 1.2}
+    _localYawDegrees: -16
+  - _pieceId: 3
+    _localOffset: {x: 2.15, y: 0, z: -6.2}
+    _localYawDegrees: -20
+  - _pieceId: 4
+    _localOffset: {x: -6.8, y: 0, z: 6.8}
+    _localYawDegrees: 18
+  _exhibits:
+  - _exhibitId: 0
+    _numberKey: 1
+    _titleVi: "07 \u2014 Xe t\u1EF1 h\xE0nh M\u1EB7t Tr\u0103ng (v3)"
+    _subtitleVi: "M\u1EABu nh\xE2n v\u1EADt ch\xEDnh R1 v\u1EDBi m\xE0n h\xECnh CRT,
+      g\u1EA7u x\xFAc, n\u1EAFp khoang v\xE0 th\xE1p c\u1EAFt."
+    _positionOffset: {x: -12, y: 0, z: 6}
+    _yawDegrees: 350
+    _orbitPivotOffset: {x: 0, y: 0.88, z: 0.04}
+    _defaultOrbitYaw: 158
+    _defaultOrbitPitch: 10
+    _defaultOrbitDistance: 2.95
+    _minOrbitDistance: 1.35
+    _maxOrbitDistance: 8
+    _nodes:
+    - _ruleId: rover.neck.yaw
+      _labelVi: "Quay c\u1ED5 theo camera / g\xF3c qu\xE9t"
+      _nodePath: Neck
+      _motionKind: 0
+      _axis: {x: 0, y: 1, z: 0}
+      _restValue: 0
+      _activeValue: 42
+      _minLimit: -120
+      _maxLimit: 120
+      _easeDuration: 0.75
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: rover.head.pitch
+      _labelVi: "Ng\u1EA9ng / c\xFAi \u0111\u1EA7u CRT"
+      _nodePath: Neck/NeckLift/Head
+      _motionKind: 0
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: -14
+      _minLimit: -20
+      _maxLimit: 20
+      _easeDuration: 0.75
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: rover.scoop.arm
+      _labelVi: "H\u1EA1 / n\xE2ng c\u1EA7n x\xFAc \u0111\u1EA5t"
+      _nodePath: DigScoop
+      _motionKind: 0
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 18
+      _minLimit: -12
+      _maxLimit: 22
+      _easeDuration: 0.85
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: rover.scoop.bucket
+      _labelVi: "X\xFAc / \u0111\u1ED5 g\u1EA7u \u0111\xE0o \u0111\u1EA5t"
+      _nodePath: DigScoop/ScoopArms/ScoopBucket
+      _motionKind: 0
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 25
+      _minLimit: -15
+      _maxLimit: 30
+      _easeDuration: 0.85
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: rover.hatch.canopy
+      _labelVi: "M\u1EDF / \u0111\xF3ng n\u1EAFp khoang ch\u1EE9a sau"
+      _nodePath: Body/CargoHatch/UpperCanopy
+      _motionKind: 0
+      _axis: {x: -1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 52
+      _minLimit: 0
+      _maxLimit: 60
+      _easeDuration: 0.9
+      _triggerKey: 3
+      _defaultActive: 0
+    - _ruleId: rover.wheel.fl
+      _labelVi: "Quay b\xE1nh tr\u01B0\u1EDBc tr\xE1i"
+      _nodePath: Wheel_FL
+      _motionKind: 2
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 200
+      _minLimit: 0
+      _maxLimit: 360
+      _easeDuration: 0.7
+      _triggerKey: 4
+      _defaultActive: 0
+    - _ruleId: rover.wheel.fr
+      _labelVi: "Quay b\xE1nh tr\u01B0\u1EDBc ph\u1EA3i"
+      _nodePath: Wheel_FR
+      _motionKind: 2
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 200
+      _minLimit: 0
+      _maxLimit: 360
+      _easeDuration: 0.7
+      _triggerKey: 4
+      _defaultActive: 0
+    - _ruleId: rover.wheel.rl
+      _labelVi: "Quay b\xE1nh sau tr\xE1i"
+      _nodePath: Wheel_RL
+      _motionKind: 2
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 200
+      _minLimit: 0
+      _maxLimit: 360
+      _easeDuration: 0.7
+      _triggerKey: 4
+      _defaultActive: 0
+    - _ruleId: rover.wheel.rr
+      _labelVi: "Quay b\xE1nh sau ph\u1EA3i"
+      _nodePath: Wheel_RR
+      _motionKind: 2
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 200
+      _minLimit: 0
+      _maxLimit: 360
+      _easeDuration: 0.7
+      _triggerKey: 4
+      _defaultActive: 0
+    - _ruleId: rover.cutter.turret
+      _labelVi: "Xoay th\xE1p c\u1EAFt laser"
+      _nodePath: CutterTurret
+      _motionKind: 0
+      _axis: {x: 0, y: 1, z: 0}
+      _restValue: 0
+      _activeValue: 32
+      _minLimit: -35
+      _maxLimit: 35
+      _easeDuration: 0.8
+      _triggerKey: 5
+      _defaultActive: 0
+    - _ruleId: rover.cutter.head
+      _labelVi: "Ng\u1EAFm \u0111\u1EA7u c\u1EAFt laser"
+      _nodePath: CutterTurret/CutterHead
+      _motionKind: 0
+      _axis: {x: -1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 16
+      _minLimit: -15
+      _maxLimit: 20
+      _easeDuration: 0.8
+      _triggerKey: 5
+      _defaultActive: 0
+    _keyHints:
+    - _keyLabel: F
+      _descriptionVi: "\u0110\u1ED5i bi\u1EC3u c\u1EA3m m\xE0n h\xECnh CRT (9 tr\u1EA1ng
+        th\xE1i c\u1EA3m x\xFAc)"
+    - _keyLabel: B
+      _descriptionVi: "Ch\u1EDBp m\u1EAFt tr\xEAn m\xE0n h\xECnh CRT"
+    - _keyLabel: U
+      _descriptionVi: "Ch\u1EA1y chu\u1ED7i kh\u1EDFi \u0111\u1ED9ng m\xE0n h\xECnh
+        (Boot)"
+    - _keyLabel: Z
+      _descriptionVi: "\u0110\u1EA7u & c\u1ED5: T\u1EF1 nh\xECn theo camera / G\xF3c
+        nghi\xEAng ki\u1EC3m tra"
+    - _keyLabel: X
+      _descriptionVi: "H\u1EA1 c\u1EA7n x\xFAc & \u0111\xE0o \u0111\u1EA5t (DigScoop
+        + ScoopBucket)"
+    - _keyLabel: C
+      _descriptionVi: "M\u1EDF / \u0110\xF3ng n\u1EAFp khoang ch\u1EE9a sau (UpperCanopy)"
+    - _keyLabel: V
+      _descriptionVi: "B\u1EADt / T\u1EAFt quay 4 b\xE1nh xe (Wheel_FL..RR)"
+    - _keyLabel: G
+      _descriptionVi: "Xoay & ng\u1EAFm th\xE1p c\u1EAFt laser (CutterTurret)"
+    - _keyLabel: R
+      _descriptionVi: "B\u1EADt / T\u1EAFt \u0111\xE8n pha \u1EA5m & thanh tr\u1EA1ng
+        th\xE1i"
+  - _exhibitId: 1
+    _numberKey: 2
+    _titleVi: "T\xE0u \u0111\u1ED5 b\u1ED9 ch\u1EDF h\xE0ng (Cargo Lander)"
+    _subtitleVi: "C\u0103n c\u1EE9 \u0111\u1ED5 b\u1ED9 R1 v\u1EDBi c\u1EA7u d\u1EABn,
+      hai c\xE1nh pin \u0111\xF3n n\u1EAFng, th\xF9ng h\xE0ng v\xE0 khoang s\u1EA1c."
+    _positionOffset: {x: 0, y: 0, z: 6}
+    _yawDegrees: 350
+    _orbitPivotOffset: {x: 0, y: 2.25, z: 0.1}
+    _defaultOrbitYaw: 156
+    _defaultOrbitPitch: 13
+    _defaultOrbitDistance: 9.2
+    _minOrbitDistance: 3
+    _maxOrbitDistance: 16
+    _nodes:
+    - _ruleId: lander.ramp
+      _labelVi: "H\u1EA1 / n\xE2ng c\u1EA7u d\u1EABn khoang t\xE0u"
+      _nodePath: RampDoor
+      _motionKind: 0
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 108
+      _minLimit: 0
+      _maxLimit: 110
+      _easeDuration: 1.25
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: lander.wing.l.fold
+      _labelVi: "G\u1EADp / m\u1EDF c\xE1nh pin tr\xE1i"
+      _nodePath: Wing_L
+      _motionKind: 0
+      _axis: {x: 0, y: -1, z: 0}
+      _restValue: 0
+      _activeValue: 82
+      _minLimit: 0
+      _maxLimit: 88
+      _easeDuration: 1.15
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: lander.wing.r.fold
+      _labelVi: "G\u1EADp / m\u1EDF c\xE1nh pin ph\u1EA3i"
+      _nodePath: Wing_R
+      _motionKind: 0
+      _axis: {x: 0, y: 1, z: 0}
+      _restValue: 0
+      _activeValue: 82
+      _minLimit: 0
+      _maxLimit: 88
+      _easeDuration: 1.15
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: lander.wing.l.pitch
+      _labelVi: "C\xE1nh tr\xE1i xoay \u0111\xF3n n\u1EAFng"
+      _nodePath: Wing_L
+      _motionKind: 0
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 0
+      _minLimit: -35
+      _maxLimit: 35
+      _easeDuration: 0.95
+      _triggerKey: 0
+      _defaultActive: 0
+    - _ruleId: lander.wing.r.pitch
+      _labelVi: "C\xE1nh ph\u1EA3i xoay \u0111\xF3n n\u1EAFng"
+      _nodePath: Wing_R
+      _motionKind: 0
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 0
+      _minLimit: -35
+      _maxLimit: 35
+      _easeDuration: 0.95
+      _triggerKey: 0
+      _defaultActive: 0
+    - _ruleId: lander.cargo.hatch
+      _labelVi: "M\u1EDF / \u0111\xF3ng n\u1EAFp khoang h\xE0ng tr\xEAn"
+      _nodePath: CargoHatch
+      _motionKind: 0
+      _axis: {x: -1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 68
+      _minLimit: 0
+      _maxLimit: 75
+      _easeDuration: 1
+      _triggerKey: 3
+      _defaultActive: 0
+    - _ruleId: lander.crate.lid
+      _labelVi: "M\u1EDF / \u0111\xF3ng n\u1EAFp th\xF9ng h\xE0ng"
+      _nodePath: Crate/CrateLid
+      _motionKind: 0
+      _axis: {x: -1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 72
+      _minLimit: 0
+      _maxLimit: 80
+      _easeDuration: 0.95
+      _triggerKey: 3
+      _defaultActive: 0
+    - _ruleId: lander.bay.contacts
+      _labelVi: "Ng\xE0m s\u1EA1c & c\xE1p khoang t\xE0u (H\u1ECFng / \u0110\xE3
+        s\u1EEDa)"
+      _nodePath: ChargeContacts
+      _motionKind: 1
+      _axis: {x: 0, y: 0, z: -1}
+      _restValue: 0
+      _activeValue: 0.08
+      _minLimit: 0
+      _maxLimit: 0.1
+      _easeDuration: 0.8
+      _triggerKey: 4
+      _defaultActive: 1
+    _keyHints:
+    - _keyLabel: Z
+      _descriptionVi: "H\u1EA1 / N\xE2ng c\u1EA7u d\u1EABn khoang t\xE0u (RampDoor)"
+    - _keyLabel: X
+      _descriptionVi: "G\u1EADp / M\u1EDF hai c\xE1nh pin M\u1EB7t Tr\u1EDDi (Wing_L,
+        Wing_R)"
+    - _keyLabel: C
+      _descriptionVi: "M\u1EDF / \u0110\xF3ng n\u1EAFp khoang h\xE0ng & th\xF9ng
+        h\xE0ng (CargoHatch, CrateLid)"
+    - _keyLabel: V
+      _descriptionVi: "Chuy\u1EC3n tr\u1EA1ng th\xE1i c\xE1p khoang: \u0110\xE3 s\u1EEDa
+        / \u0110\u1EE9t h\u1ECFng + Ng\xE0m s\u1EA1c"
+    - _keyLabel: G
+      _descriptionVi: "B\u1EADt / T\u1EAFt \u0111\xE8n khoang \u1EA5m (BayLight_1..4)"
+  - _exhibitId: 2
+    _numberKey: 3
+    _titleVi: "B\u1EC7 s\u1EA1c n\u0103ng l\u01B0\u1EE3ng (Charging Pad)"
+    _subtitleVi: "B\u1EC7 s\u1EA1c R1 ho\xE0n ch\u1EC9nh v\u1EDBi ng\xE0m ti\u1EBFp
+      \u0111i\u1EC7n, c\u1EEDa ch\u1EDBp t\u1EA3n nhi\u1EC7t v\xE0 c\u1ED9t \u0111\xE8n
+      b\xE1o m\u1EE9c s\u1EA1c."
+    _positionOffset: {x: 12, y: 0, z: 6}
+    _yawDegrees: 350
+    _orbitPivotOffset: {x: 0, y: 0.78, z: 0}
+    _defaultOrbitYaw: 155
+    _defaultOrbitPitch: 15
+    _defaultOrbitDistance: 4.1
+    _minOrbitDistance: 2
+    _maxOrbitDistance: 10
+    _nodes:
+    - _ruleId: pad.contacts
+      _labelVi: "N\xE2ng / h\u1EA1 ng\xE0m ti\u1EBFp \u0111i\u1EC7n"
+      _nodePath: Stage_4/ContactShoes
+      _motionKind: 1
+      _axis: {x: 0, y: 0, z: -1}
+      _restValue: 0
+      _activeValue: 0.08
+      _minLimit: 0
+      _maxLimit: 0.1
+      _easeDuration: 0.75
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: pad.louver
+      _labelVi: "M\u1EDF / \u0111\xF3ng c\u1EEDa ch\u1EDBp t\u1EA3n nhi\u1EC7t"
+      _nodePath: Stage_4/CoolingLouver
+      _motionKind: 0
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 20
+      _minLimit: 0
+      _maxLimit: 25
+      _easeDuration: 0.7
+      _triggerKey: 2
+      _defaultActive: 0
+    _keyHints:
+    - _keyLabel: J
+      _descriptionVi: "Ch\u1EA1y chu\u1ED7i d\u1EF1ng 4 giai \u0111o\u1EA1n (Stage_1..4
+        m\u1ECDc l\xEAn \xEAm)"
+    - _keyLabel: Z
+      _descriptionVi: "N\xE2ng / H\u1EA1 ng\xE0m ti\u1EBFp \u0111i\u1EC7n (ContactShoes)"
+    - _keyLabel: X
+      _descriptionVi: "M\u1EDF / \u0110\xF3ng c\u1EEDa ch\u1EDBp t\u1EA3n nhi\u1EC7t
+        (CoolingLouver)"
+    - _keyLabel: C
+      _descriptionVi: "B\u1EADt / T\u1EAFt nh\u1ECBp s\xE1ng c\u1ED9t \u0111\xE8n
+        & d\u1EA3i d\u1EABn h\u01B0\u1EDBng (TotemBar_1..4)"
+  - _exhibitId: 3
+    _numberKey: 4
+    _titleVi: "D\xE0n pin M\u1EB7t Tr\u1EDDi (Solar Array)"
+    _subtitleVi: "Th\xE1p pin R1 t\u1EF1 \u0111\u1ED9ng xoay theo h\u01B0\u1EDBng
+      M\u1EB7t Tr\u1EDDi v\xE0 g\u1EADp c\xE1nh khi \u0111\xEAm xu\u1ED1ng ho\u1EB7c
+      nh\u1EADt th\u1EF1c."
+    _positionOffset: {x: -12, y: 0, z: -6}
+    _yawDegrees: 350
+    _orbitPivotOffset: {x: 0, y: 1.35, z: 0}
+    _defaultOrbitYaw: 152
+    _defaultOrbitPitch: 14
+    _defaultOrbitDistance: 4.5
+    _minOrbitDistance: 2.2
+    _maxOrbitDistance: 11
+    _nodes:
+    - _ruleId: solar.azimuth
+      _labelVi: "M\xE2m xoay h\u01B0\u1EDBng M\u1EB7t Tr\u1EDDi (Azimuth)"
+      _nodePath: Stage_4/Azimuth
+      _motionKind: 0
+      _axis: {x: 0, y: 0, z: 1}
+      _restValue: 0
+      _activeValue: 0
+      _minLimit: -180
+      _maxLimit: 180
+      _easeDuration: 1.1
+      _triggerKey: 0
+      _defaultActive: 0
+    - _ruleId: solar.elevation
+      _labelVi: "Kh\u1EDBp ng\u1EA9ng theo \u0111\u1ED9 cao M\u1EB7t Tr\u1EDDi (Elevation)"
+      _nodePath: Stage_4/Azimuth/Elevation
+      _motionKind: 0
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 0
+      _minLimit: -25
+      _maxLimit: 40
+      _easeDuration: 1.1
+      _triggerKey: 0
+      _defaultActive: 0
+    - _ruleId: solar.wing.l
+      _labelVi: "C\xE1nh pin tr\xE1i (T\u1EF1 g\u1EADp ban \u0111\xEAm / nh\u1EADt
+        th\u1EF1c)"
+      _nodePath: Stage_4/Azimuth/Elevation/Wing_L
+      _motionKind: 0
+      _axis: {x: 0, y: 1, z: 0}
+      _restValue: 0
+      _activeValue: 55
+      _minLimit: 0
+      _maxLimit: 65
+      _easeDuration: 1.05
+      _triggerKey: 0
+      _defaultActive: 0
+    - _ruleId: solar.wing.r
+      _labelVi: "C\xE1nh pin ph\u1EA3i (T\u1EF1 g\u1EADp ban \u0111\xEAm / nh\u1EADt
+        th\u1EF1c)"
+      _nodePath: Stage_4/Azimuth/Elevation/Wing_R
+      _motionKind: 0
+      _axis: {x: 0, y: 1, z: 0}
+      _restValue: 0
+      _activeValue: -55
+      _minLimit: -65
+      _maxLimit: 0
+      _easeDuration: 1.05
+      _triggerKey: 0
+      _defaultActive: 0
+    _keyHints:
+    - _keyLabel: "T\u1EF1 \u0111\u1ED9ng"
+      _descriptionVi: "Xoay h\u01B0\u1EDBng theo M\u1EB7t Tr\u1EDDi th\u1EF1c t\u1EBF;
+        t\u1EF1 g\u1EADp c\xE1nh v\xE0o ban \u0111\xEAm & nh\u1EADt th\u1EF1c"
+    - _keyLabel: J
+      _descriptionVi: "Ch\u1EA1y chu\u1ED7i d\u1EF1ng 4 giai \u0111o\u1EA1n (Stage_1..4
+        m\u1ECDc l\xEAn \xEAm)"
+    - _keyLabel: Z
+      _descriptionVi: "G\u1EADp / M\u1EDF hai c\xE1nh pin th\u1EE7 c\xF4ng (Wing_L,
+        Wing_R)"
+    - _keyLabel: X
+      _descriptionVi: "Chuy\u1EC3n gi\u1EEFa ch\u1EBF \u0111\u1ED9 b\xE1m M\u1EB7t
+        Tr\u1EDDi t\u1EF1 \u0111\u1ED9ng v\xE0 g\xF3c nghi\xEAng ki\u1EC3m tra"
+    - _keyLabel: C
+      _descriptionVi: "B\u1EADt / T\u1EAFt \u0111\xE8n b\xE1o tr\u1EA1ng th\xE1i
+        (StatusLamp)"
+  - _exhibitId: 4
+    _numberKey: 5
+    _titleVi: "Tr\u1EE5 truy\u1EC1n t\u1EA3i \u0111i\u1EC7n (Power Pylon)"
+    _subtitleVi: "Tr\u1EE5 n\u1ED1i m\u1EA1ng \u0111i\u1EC7n R1 v\u1EDBi 3 tang tr\u1ED1ng
+      c\xE1p, c\u1EA7u dao c\u01A1 kh\xED v\xE0 \u0111\xE8n d\u1EABn \u0111\u01B0\u1EDDng
+      m\xE0u h\u1ED5 ph\xE1ch."
+    _positionOffset: {x: 0, y: 0, z: -6}
+    _yawDegrees: 350
+    _orbitPivotOffset: {x: 0, y: 1.15, z: 0}
+    _defaultOrbitYaw: 148
+    _defaultOrbitPitch: 13
+    _defaultOrbitDistance: 3.4
+    _minOrbitDistance: 1.8
+    _maxOrbitDistance: 9
+    _nodes:
+    - _ruleId: pylon.drum.1
+      _labelVi: "Quay tang tr\u1ED1ng c\xE1p 1"
+      _nodePath: Stage_4/CableDrum_1
+      _motionKind: 2
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 110
+      _minLimit: 0
+      _maxLimit: 360
+      _easeDuration: 0.85
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: pylon.drum.2
+      _labelVi: "Quay tang tr\u1ED1ng c\xE1p 2"
+      _nodePath: Stage_4/CableDrum_2
+      _motionKind: 2
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: -110
+      _minLimit: 0
+      _maxLimit: 360
+      _easeDuration: 0.85
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: pylon.drum.3
+      _labelVi: "Quay tang tr\u1ED1ng c\xE1p 3"
+      _nodePath: Stage_4/CableDrum_3
+      _motionKind: 2
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 110
+      _minLimit: 0
+      _maxLimit: 360
+      _easeDuration: 0.85
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: pylon.knife
+      _labelVi: "\u0110\xF3ng / ng\u1EAFt c\u1EA7u dao \u0111i\u1EC7n"
+      _nodePath: Stage_4/KnifeSwitch
+      _motionKind: 0
+      _axis: {x: 0, y: 1, z: 0}
+      _restValue: 0
+      _activeValue: 56
+      _minLimit: 0
+      _maxLimit: 60
+      _easeDuration: 0.65
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: pylon.yoke
+      _labelVi: "Xoay c\u1ED5 d\u1EABn h\u01B0\u1EDBng c\xE1p"
+      _nodePath: Stage_4/Yoke
+      _motionKind: 0
+      _axis: {x: 0, y: 0, z: 1}
+      _restValue: 0
+      _activeValue: 45
+      _minLimit: 0
+      _maxLimit: 60
+      _easeDuration: 0.8
+      _triggerKey: 2
+      _defaultActive: 0
+    _keyHints:
+    - _keyLabel: J
+      _descriptionVi: "Ch\u1EA1y chu\u1ED7i d\u1EF1ng 4 giai \u0111o\u1EA1n (Stage_1..4
+        m\u1ECDc l\xEAn \xEAm)"
+    - _keyLabel: Z
+      _descriptionVi: "B\u1EADt / T\u1EAFt quay 3 tang tr\u1ED1ng c\xE1p (CableDrum_1..3)"
+    - _keyLabel: X
+      _descriptionVi: "\u0110\xF3ng / Ng\u1EAFt c\u1EA7u dao & xoay c\u1ED5 d\u1EABn
+        c\xE1p (KnifeSwitch, Yoke)"
+    - _keyLabel: C
+      _descriptionVi: "B\u1EADt / T\u1EAFt \u0111\xE8n d\u1EABn \u0111\u01B0\u1EDDng
+        \u1EA5m (PathLamp)"
+  - _exhibitId: 5
+    _numberKey: 6
+    _titleVi: "C\u1EE5m \u0111\xE1 bazan M\u1EB7t Tr\u0103ng (Rock Cluster)"
+    _subtitleVi: "T\u1EADp h\u1EE3p 10 m\u1EABu \u0111\xE1 bazan R1 (Rock_00..09)
+      ki\u1EC3m tra s\u1EAFc \u0111\u1ED9 b\u1EC1 m\u1EB7t v\xE0 b\xF3ng \u0111\u1ED5."
+    _positionOffset: {x: 12, y: 0, z: -6}
+    _yawDegrees: 350
+    _orbitPivotOffset: {x: 0, y: 0.55, z: 0}
+    _defaultOrbitYaw: 155
+    _defaultOrbitPitch: 16
+    _defaultOrbitDistance: 4.8
+    _minOrbitDistance: 2.2
+    _maxOrbitDistance: 12
+    _nodes: []
+    _keyHints:
+    - _keyLabel: T
+      _descriptionVi: "\u0110\u1ED5i pha b\u1EA7u tr\u1EDDi \u0111\u1EC3 ki\u1EC3m
+        tra b\xF3ng \u0111\u1ED5 \u0111\xE1 bazan d\u01B0\u1EDBi n\u1EAFng th\u1EA5p
+        & \u0111\xEAm \u0110\u1ECBa C\u1EA7u"
+    - _keyLabel: '[ / ]'
+      _descriptionVi: "Tua \u0111\u1ED3ng h\u1ED3 M\u1EB7t Tr\u0103ng \u0111\u1EC3
+        quan s\xE1t b\xF3ng d\xE0i qu\xE9t qua c\u1EE5m \u0111\xE1"
+  - _exhibitId: 6
+    _numberKey: 7
+    _titleVi: "07 \u2014 Xe t\u1EF1 h\xE0nh n\xE2ng c\u1EA5p to\xE0n di\u1EC7n (Full
+      Kit)"
+    _subtitleVi: "Xe t\u1EF1 h\xE0nh 07 g\u1EAFn \u0111\u1EE7 m\u1ECDi b\u1ED9 kit
+      n\xE2ng c\u1EA5p tr\xEAn \u0111\xFAng kh\u1EDBp socket g\u1ED1c, c\xF9ng qu\xE0
+      k\u1EF7 ni\u1EC7m v\xE0 m\xE0n h\xECnh CRT."
+    _positionOffset: {x: -24, y: 0, z: 6}
+    _yawDegrees: 350
+    _orbitPivotOffset: {x: 0, y: 0.92, z: 0.04}
+    _defaultOrbitYaw: 158
+    _defaultOrbitPitch: 11
+    _defaultOrbitDistance: 3.15
+    _minOrbitDistance: 1.35
+    _maxOrbitDistance: 8.5
+    _nodes:
+    - _ruleId: rover.neck.yaw
+      _labelVi: "Quay c\u1ED5 theo camera / g\xF3c qu\xE9t"
+      _nodePath: Neck
+      _motionKind: 0
+      _axis: {x: 0, y: 1, z: 0}
+      _restValue: 0
+      _activeValue: 42
+      _minLimit: -120
+      _maxLimit: 120
+      _easeDuration: 0.75
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: rover.head.pitch
+      _labelVi: "Ng\u1EA9ng / c\xFAi \u0111\u1EA7u CRT"
+      _nodePath: Neck/NeckLift/Head
+      _motionKind: 0
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: -14
+      _minLimit: -20
+      _maxLimit: 20
+      _easeDuration: 0.75
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: rover_up.scoop.arm
+      _labelVi: "H\u1EA1 / n\xE2ng c\u1EA7n x\xFAc \u0111\u1EA5t"
+      _nodePath: DigScoop
+      _motionKind: 0
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 18
+      _minLimit: -12
+      _maxLimit: 22
+      _easeDuration: 0.85
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: rover_up.scoop.bucket
+      _labelVi: "X\xFAc / \u0111\u1ED5 g\u1EA7u \u0111\xE0o \u0111\u1EA5t"
+      _nodePath: DigScoop/ScoopArms/ScoopBucket
+      _motionKind: 0
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 25
+      _minLimit: -15
+      _maxLimit: 30
+      _easeDuration: 0.85
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: rover_up.hatch.canopy
+      _labelVi: "M\u1EDF / \u0111\xF3ng n\u1EAFp khoang ch\u1EE9a sau"
+      _nodePath: Body/CargoHatch/UpperCanopy
+      _motionKind: 0
+      _axis: {x: -1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 52
+      _minLimit: 0
+      _maxLimit: 60
+      _easeDuration: 0.9
+      _triggerKey: 3
+      _defaultActive: 0
+    - _ruleId: rover_up.wheel.fl
+      _labelVi: "Quay b\xE1nh tr\u01B0\u1EDBc tr\xE1i"
+      _nodePath: Wheel_FL
+      _motionKind: 2
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 200
+      _minLimit: 0
+      _maxLimit: 360
+      _easeDuration: 0.7
+      _triggerKey: 4
+      _defaultActive: 0
+    - _ruleId: rover_up.wheel.fr
+      _labelVi: "Quay b\xE1nh tr\u01B0\u1EDBc ph\u1EA3i"
+      _nodePath: Wheel_FR
+      _motionKind: 2
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 200
+      _minLimit: 0
+      _maxLimit: 360
+      _easeDuration: 0.7
+      _triggerKey: 4
+      _defaultActive: 0
+    - _ruleId: rover_up.wheel.rl
+      _labelVi: "Quay b\xE1nh sau tr\xE1i"
+      _nodePath: Wheel_RL
+      _motionKind: 2
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 200
+      _minLimit: 0
+      _maxLimit: 360
+      _easeDuration: 0.7
+      _triggerKey: 4
+      _defaultActive: 0
+    - _ruleId: rover_up.wheel.rr
+      _labelVi: "Quay b\xE1nh sau ph\u1EA3i"
+      _nodePath: Wheel_RR
+      _motionKind: 2
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 200
+      _minLimit: 0
+      _maxLimit: 360
+      _easeDuration: 0.7
+      _triggerKey: 4
+      _defaultActive: 0
+    - _ruleId: rover_up.cutter.turret
+      _labelVi: "Xoay th\xE1p c\u1EAFt laser"
+      _nodePath: CutterTurret
+      _motionKind: 0
+      _axis: {x: 0, y: 1, z: 0}
+      _restValue: 0
+      _activeValue: 32
+      _minLimit: -35
+      _maxLimit: 35
+      _easeDuration: 0.8
+      _triggerKey: 5
+      _defaultActive: 0
+    - _ruleId: rover_up.cutter.head
+      _labelVi: "Ng\u1EAFm \u0111\u1EA7u c\u1EAFt laser"
+      _nodePath: CutterTurret/CutterHead
+      _motionKind: 0
+      _axis: {x: -1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 16
+      _minLimit: -15
+      _maxLimit: 20
+      _easeDuration: 0.8
+      _triggerKey: 5
+      _defaultActive: 0
+    - _ruleId: rover_up.scan_fan
+      _labelVi: "Quay qu\u1EA1t qu\xE9t c\u1EA3m bi\u1EBFn (ScanFan)"
+      _nodePath: ScanFanSocket
+      _motionKind: 0
+      _axis: {x: 0, y: 1, z: 0}
+      _restValue: 0
+      _activeValue: 28
+      _minLimit: -35
+      _maxLimit: 35
+      _easeDuration: 0.75
+      _triggerKey: 5
+      _defaultActive: 0
+    _keyHints:
+    - _keyLabel: F / B / U
+      _descriptionVi: "\u0110\u1ED5i bi\u1EC3u c\u1EA3m CRT / Ch\u1EDBp m\u1EAFt
+        / Kh\u1EDFi \u0111\u1ED9ng m\xE0n h\xECnh (Boot)"
+    - _keyLabel: K
+      _descriptionVi: "Ch\u1EBF \u0111\u1ED9 Demo: C\u1EA3 hai xe 07 t\u1EF1 \u0111\u1ED9ng
+        \u0111\u1ED5i bi\u1EC3u c\u1EA3m tr\xEAn m\xE0n h\xECnh CRT"
+    - _keyLabel: Z
+      _descriptionVi: "\u0110\u1EA7u & c\u1ED5: T\u1EF1 nh\xECn theo camera / G\xF3c
+        nghi\xEAng ki\u1EC3m tra"
+    - _keyLabel: X
+      _descriptionVi: "H\u1EA1 c\u1EA7n x\xFAc & \u0111\xE0o \u0111\u1EA5t (DigScoop
+        + ScoopBucket)"
+    - _keyLabel: C
+      _descriptionVi: "M\u1EDF / \u0110\xF3ng n\u1EAFp khoang ch\u1EE9a sau (UpperCanopy)"
+    - _keyLabel: V
+      _descriptionVi: "B\u1EADt / T\u1EAFt quay 4 b\xE1nh xe (Wheel_FL..RR)"
+    - _keyLabel: G
+      _descriptionVi: "Xoay th\xE1p c\u1EAFt laser & quay qu\u1EA1t qu\xE9t (CutterTurret
+        + ScanFan)"
+    - _keyLabel: R
+      _descriptionVi: "B\u1EADt / T\u1EAFt \u0111\xE8n pha \u1EA5m, d\xE0n \u0111\xE8n
+        n\xF3c & thanh tr\u1EA1ng th\xE1i"
+  - _exhibitId: 7
+    _numberKey: 8
+    _titleVi: "Tr\u1EA1m \u1EAFc-quy d\u1EF1 tr\u1EEF (Battery Bank)"
+    _subtitleVi: "Kh\u1ED1i \u1EAFc-quy R1 4 giai \u0111o\u1EA1n v\u1EDBi thanh kh\xF3a
+      an to\xE0n, 4 ch\u1ED1t p\xEDt-t\xF4ng, n\xFAm xoay c\u01A1 kh\xED v\xE0 \u0111\xE8n
+      b\xE1o m\u1EE9c \u0111i\u1EC7n."
+    _positionOffset: {x: 24, y: 0, z: 6}
+    _yawDegrees: 350
+    _orbitPivotOffset: {x: 0, y: 1.05, z: 0}
+    _defaultOrbitYaw: 154
+    _defaultOrbitPitch: 14
+    _defaultOrbitDistance: 4.2
+    _minOrbitDistance: 2
+    _maxOrbitDistance: 10
+    _nodes:
+    - _ruleId: battery.safety_bar
+      _labelVi: "N\xE2ng / h\u1EA1 thanh kh\xF3a an to\xE0n (SafetyBar)"
+      _nodePath: Stage_4/SafetyBar
+      _motionKind: 0
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 82
+      _minLimit: 0
+      _maxLimit: 90
+      _easeDuration: 0.8
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: battery.plunger.1
+      _labelVi: "Nh\xF4 / thu ch\u1ED1t p\xEDt-t\xF4ng 1 (Plunger_1)"
+      _nodePath: Stage_4/Plunger_1
+      _motionKind: 1
+      _axis: {x: 0, y: 0, z: -1}
+      _restValue: 0
+      _activeValue: 0.06
+      _minLimit: 0
+      _maxLimit: 0.08
+      _easeDuration: 0.65
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: battery.plunger.2
+      _labelVi: "Nh\xF4 / thu ch\u1ED1t p\xEDt-t\xF4ng 2 (Plunger_2)"
+      _nodePath: Stage_4/Plunger_2
+      _motionKind: 1
+      _axis: {x: 0, y: 0, z: -1}
+      _restValue: 0
+      _activeValue: 0.06
+      _minLimit: 0
+      _maxLimit: 0.08
+      _easeDuration: 0.65
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: battery.plunger.3
+      _labelVi: "Nh\xF4 / thu ch\u1ED1t p\xEDt-t\xF4ng 3 (Plunger_3)"
+      _nodePath: Stage_4/Plunger_3
+      _motionKind: 1
+      _axis: {x: 0, y: 0, z: -1}
+      _restValue: 0
+      _activeValue: 0.06
+      _minLimit: 0
+      _maxLimit: 0.08
+      _easeDuration: 0.65
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: battery.plunger.4
+      _labelVi: "Nh\xF4 / thu ch\u1ED1t p\xEDt-t\xF4ng 4 (Plunger_4)"
+      _nodePath: Stage_4/Plunger_4
+      _motionKind: 1
+      _axis: {x: 0, y: 0, z: -1}
+      _restValue: 0
+      _activeValue: 0.06
+      _minLimit: 0
+      _maxLimit: 0.08
+      _easeDuration: 0.65
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: battery.dial
+      _labelVi: "Xoay n\xFAm ch\u1EC9nh \u0111i\u1EC7n \xE1p (RotaryDial)"
+      _nodePath: Stage_4/RotaryDial
+      _motionKind: 0
+      _axis: {x: -1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 90
+      _minLimit: 0
+      _maxLimit: 120
+      _easeDuration: 0.75
+      _triggerKey: 3
+      _defaultActive: 0
+    _keyHints:
+    - _keyLabel: J
+      _descriptionVi: "Ch\u1EA1y chu\u1ED7i d\u1EF1ng 4 giai \u0111o\u1EA1n (Stage_1..4
+        m\u1ECDc l\xEAn \xEAm)"
+    - _keyLabel: Z
+      _descriptionVi: "N\xE2ng / H\u1EA1 thanh kh\xF3a an to\xE0n (SafetyBar)"
+    - _keyLabel: X
+      _descriptionVi: "Nh\xF4 / Thu 4 ch\u1ED1t p\xEDt-t\xF4ng (Plunger_1..4)"
+    - _keyLabel: C
+      _descriptionVi: "Xoay n\xFAm ch\u1EC9nh \u0111i\u1EC7n \xE1p (RotaryDial)"
+    - _keyLabel: V
+      _descriptionVi: "B\u1EADt / T\u1EAFt \u0111\xE8n \u1ED1ng th\u1EE7y & \u0111\xE8n
+        n\xF3c (SightGlass_1..4, RoofBeacon)"
+  - _exhibitId: 8
+    _numberKey: 9
+    _titleVi: "L\xF2 luy\u1EC7n qu\u1EB7ng (Smelter)"
+    _subtitleVi: "L\xF2 luy\u1EC7n bazan & ilmenit 4 giai \u0111o\u1EA1n v\u1EDBi
+      ph\u1EC5u n\u1EA1p nghi\xEAng, c\u1EEDa ph\u1EC5u, 4 c\xE1nh van kh\xF3i v\xE0
+      \xE1nh l\u1EEDa n\u1ED3i n\u1EA5u."
+    _positionOffset: {x: 24, y: 0, z: -6}
+    _yawDegrees: 350
+    _orbitPivotOffset: {x: 0, y: 1.35, z: 0}
+    _defaultOrbitYaw: 152
+    _defaultOrbitPitch: 14
+    _defaultOrbitDistance: 4.8
+    _minOrbitDistance: 2.2
+    _maxOrbitDistance: 11
+    _nodes:
+    - _ruleId: smelter.hopper
+      _labelVi: "Nghi\xEAng ph\u1EC5u n\u1EA1p qu\u1EB7ng (Hopper)"
+      _nodePath: Stage_4/Hopper
+      _motionKind: 0
+      _axis: {x: 0, y: 1, z: 0}
+      _restValue: 0
+      _activeValue: 30
+      _minLimit: 0
+      _maxLimit: 36
+      _easeDuration: 0.85
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: smelter.hopper_door
+      _labelVi: "M\u1EDF / \u0111\xF3ng c\u1EEDa ph\u1EC5u n\u1EA1p (HopperDoor)"
+      _nodePath: Stage_4/HopperDoor
+      _motionKind: 0
+      _axis: {x: 0, y: -1, z: 0}
+      _restValue: 0
+      _activeValue: 52
+      _minLimit: 0
+      _maxLimit: 60
+      _easeDuration: 0.8
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: smelter.flap.1
+      _labelVi: "M\u1EDF c\xE1nh van \u1ED1ng kh\xF3i 1 (DamperFlap_1)"
+      _nodePath: Stage_4/DamperFlap_1
+      _motionKind: 0
+      _axis: {x: 0.5878, y: -0.809, z: 0}
+      _restValue: 0
+      _activeValue: 42
+      _minLimit: 0
+      _maxLimit: 48
+      _easeDuration: 0.7
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: smelter.flap.2
+      _labelVi: "M\u1EDF c\xE1nh van \u1ED1ng kh\xF3i 2 (DamperFlap_2)"
+      _nodePath: Stage_4/DamperFlap_2
+      _motionKind: 0
+      _axis: {x: -0.4384, y: -0.8988, z: 0}
+      _restValue: 0
+      _activeValue: 42
+      _minLimit: 0
+      _maxLimit: 48
+      _easeDuration: 0.7
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: smelter.flap.3
+      _labelVi: "M\u1EDF c\xE1nh van \u1ED1ng kh\xF3i 3 (DamperFlap_3)"
+      _nodePath: Stage_4/DamperFlap_3
+      _motionKind: 0
+      _axis: {x: -0.4384, y: 0.8988, z: 0}
+      _restValue: 0
+      _activeValue: 42
+      _minLimit: 0
+      _maxLimit: 48
+      _easeDuration: 0.7
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: smelter.flap.4
+      _labelVi: "M\u1EDF c\xE1nh van \u1ED1ng kh\xF3i 4 (DamperFlap_4)"
+      _nodePath: Stage_4/DamperFlap_4
+      _motionKind: 0
+      _axis: {x: 0.5878, y: 0.809, z: 0}
+      _restValue: 0
+      _activeValue: 42
+      _minLimit: 0
+      _maxLimit: 48
+      _easeDuration: 0.7
+      _triggerKey: 2
+      _defaultActive: 0
+    _keyHints:
+    - _keyLabel: J
+      _descriptionVi: "Ch\u1EA1y chu\u1ED7i d\u1EF1ng 4 giai \u0111o\u1EA1n (Stage_1..4
+        m\u1ECDc l\xEAn \xEAm)"
+    - _keyLabel: Z
+      _descriptionVi: "Nghi\xEAng ph\u1EC5u & m\u1EDF c\u1EEDa n\u1EA1p qu\u1EB7ng
+        (Hopper + HopperDoor)"
+    - _keyLabel: X
+      _descriptionVi: "M\u1EDF / \u0110\xF3ng 4 c\xE1nh van tho\xE1t nhi\u1EC7t (DamperFlap_1..4)"
+    - _keyLabel: C
+      _descriptionVi: "B\u1EADt / T\u1EAFt \xE1nh l\u1EEDa n\u1ED3i n\u1EA5u & \u0111\xE8n
+        n\xF3c (CrucibleGlow, HoodBeacon)"
+  - _exhibitId: 9
+    _numberKey: 10
+    _titleVi: "X\u01B0\u1EDFng ch\u1EBF t\u1EA1o t\u1EF1 \u0111\u1ED9ng (Fabricator)"
+    _subtitleVi: "X\u01B0\u1EDFng l\u1EAFp r\xE1p R1 4 giai \u0111o\u1EA1n v\u1EDBi
+      c\u1EA7u tr\u1EE5c tr\u01B0\u1EE3t, \u0111\xF4i tay m\xE1y, b\xE0n xoay ch\u1EBF
+      t\u1EA1o v\xE0 m\xE1ng tr\u01B0\u1EE3t xu\u1EA5t x\u01B0\u1EDFng."
+    _positionOffset: {x: -18, y: 0, z: 18}
+    _yawDegrees: 350
+    _orbitPivotOffset: {x: 0, y: 1.15, z: 0}
+    _defaultOrbitYaw: 154
+    _defaultOrbitPitch: 15
+    _defaultOrbitDistance: 4.6
+    _minOrbitDistance: 2.2
+    _maxOrbitDistance: 11
+    _nodes:
+    - _ruleId: fabricator.gantry
+      _labelVi: "Tr\u01B0\u1EE3t c\u1EA7u tr\u1EE5c ch\u1EBF t\u1EA1o (GantryBridge)"
+      _nodePath: Stage_4/GantryBridge
+      _motionKind: 1
+      _axis: {x: 0, y: 1, z: 0}
+      _restValue: 0
+      _activeValue: 0.24
+      _minLimit: -0.1
+      _maxLimit: 0.28
+      _easeDuration: 0.85
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: fabricator.arm.l
+      _labelVi: "Kh\xE9p / m\u1EDF tay m\xE1y tr\xE1i (ToolArm_L)"
+      _nodePath: Stage_4/GantryBridge/ToolArm_L
+      _motionKind: 0
+      _axis: {x: 0, y: 1, z: 0}
+      _restValue: 0
+      _activeValue: 34
+      _minLimit: -40
+      _maxLimit: 40
+      _easeDuration: 0.75
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: fabricator.arm.r
+      _labelVi: "Kh\xE9p / m\u1EDF tay m\xE1y ph\u1EA3i (ToolArm_R)"
+      _nodePath: Stage_4/GantryBridge/ToolArm_R
+      _motionKind: 0
+      _axis: {x: 0, y: -1, z: 0}
+      _restValue: 0
+      _activeValue: 34
+      _minLimit: -40
+      _maxLimit: 40
+      _easeDuration: 0.75
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: fabricator.platen
+      _labelVi: "Quay m\xE2m ch\u1EBF t\u1EA1o (BuildPlaten)"
+      _nodePath: Stage_3/BuildPlaten
+      _motionKind: 2
+      _axis: {x: 0, y: 0, z: 1}
+      _restValue: 0
+      _activeValue: 90
+      _minLimit: 0
+      _maxLimit: 360
+      _easeDuration: 0.8
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: fabricator.slide
+      _labelVi: "Tr\u01B0\u1EE3t m\xE1ng xu\u1EA5t x\u01B0\u1EDFng (OutputSlide)"
+      _nodePath: Stage_3/OutputSlide
+      _motionKind: 1
+      _axis: {x: 0.5, y: 0.866, z: 0}
+      _restValue: 0
+      _activeValue: 0.26
+      _minLimit: 0
+      _maxLimit: 0.3
+      _easeDuration: 0.8
+      _triggerKey: 3
+      _defaultActive: 0
+    _keyHints:
+    - _keyLabel: J
+      _descriptionVi: "Ch\u1EA1y chu\u1ED7i d\u1EF1ng 4 giai \u0111o\u1EA1n (Stage_1..4
+        m\u1ECDc l\xEAn \xEAm)"
+    - _keyLabel: Z
+      _descriptionVi: "Tr\u01B0\u1EE3t c\u1EA7u tr\u1EE5c & kh\xE9p \u0111\xF4i tay
+        m\xE1y (GantryBridge + ToolArm_L/R)"
+    - _keyLabel: X
+      _descriptionVi: "B\u1EADt / T\u1EAFt quay m\xE2m ch\u1EBF t\u1EA1o (BuildPlaten)"
+    - _keyLabel: C
+      _descriptionVi: "\u0110\u1EA9y / Thu m\xE1ng tr\u01B0\u1EE3t xu\u1EA5t x\u01B0\u1EDFng
+        (OutputSlide)"
+    - _keyLabel: V
+      _descriptionVi: "B\u1EADt / T\u1EAFt v\xF2ng \u0111\xE8n ti\u1EBFn \u0111\u1ED9
+        (ProgressRing)"
+  - _exhibitId: 10
+    _numberKey: 11
+    _titleVi: "Gi\xE1 kho l\u01B0u tr\u1EEF (Storage Rack)"
+    _subtitleVi: "Gi\xE1 ch\u1EE9a m\u1EABu v\u1EADt R1 4 giai \u0111o\u1EA1n v\u1EDBi
+      6 khay \u0111\u1EE1 nghi\xEAng hai t\u1EA7ng v\xE0 d\xE3y \u0111\xE8n b\xE1o
+      v\u1ECB tr\xED."
+    _positionOffset: {x: -24, y: 0, z: -6}
+    _yawDegrees: 350
+    _orbitPivotOffset: {x: 0, y: 1.05, z: 0}
+    _defaultOrbitYaw: 154
+    _defaultOrbitPitch: 14
+    _defaultOrbitDistance: 4.2
+    _minOrbitDistance: 2
+    _maxOrbitDistance: 10
+    _nodes:
+    - _ruleId: storage.cradle.1
+      _labelVi: "Nghi\xEAng khay \u0111\u1EE1 d\u01B0\u1EDBi 1 (Cradle_1)"
+      _nodePath: Stage_4/Cradle_1
+      _motionKind: 0
+      _axis: {x: -1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 38
+      _minLimit: 0
+      _maxLimit: 45
+      _easeDuration: 0.75
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: storage.cradle.2
+      _labelVi: "Nghi\xEAng khay \u0111\u1EE1 d\u01B0\u1EDBi 2 (Cradle_2)"
+      _nodePath: Stage_4/Cradle_2
+      _motionKind: 0
+      _axis: {x: -1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 38
+      _minLimit: 0
+      _maxLimit: 45
+      _easeDuration: 0.75
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: storage.cradle.3
+      _labelVi: "Nghi\xEAng khay \u0111\u1EE1 d\u01B0\u1EDBi 3 (Cradle_3)"
+      _nodePath: Stage_4/Cradle_3
+      _motionKind: 0
+      _axis: {x: -1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 38
+      _minLimit: 0
+      _maxLimit: 45
+      _easeDuration: 0.75
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: storage.cradle.4
+      _labelVi: "Nghi\xEAng khay \u0111\u1EE1 tr\xEAn 4 (Cradle_4)"
+      _nodePath: Stage_4/Cradle_4
+      _motionKind: 0
+      _axis: {x: -1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 36
+      _minLimit: 0
+      _maxLimit: 45
+      _easeDuration: 0.75
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: storage.cradle.5
+      _labelVi: "Nghi\xEAng khay \u0111\u1EE1 tr\xEAn 5 (Cradle_5)"
+      _nodePath: Stage_4/Cradle_5
+      _motionKind: 0
+      _axis: {x: -1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 36
+      _minLimit: 0
+      _maxLimit: 45
+      _easeDuration: 0.75
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: storage.cradle.6
+      _labelVi: "Nghi\xEAng khay \u0111\u1EE1 tr\xEAn 6 (Cradle_6)"
+      _nodePath: Stage_4/Cradle_6
+      _motionKind: 0
+      _axis: {x: -1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 36
+      _minLimit: 0
+      _maxLimit: 45
+      _easeDuration: 0.75
+      _triggerKey: 2
+      _defaultActive: 0
+    _keyHints:
+    - _keyLabel: J
+      _descriptionVi: "Ch\u1EA1y chu\u1ED7i d\u1EF1ng 4 giai \u0111o\u1EA1n (Stage_1..4
+        m\u1ECDc l\xEAn \xEAm)"
+    - _keyLabel: Z
+      _descriptionVi: "Nghi\xEAng / \u0110\xF3ng 3 khay \u0111\u1EE1 t\u1EA7ng d\u01B0\u1EDBi
+        (Cradle_1..3)"
+    - _keyLabel: X
+      _descriptionVi: "Nghi\xEAng / \u0110\xF3ng 3 khay \u0111\u1EE1 t\u1EA7ng tr\xEAn
+        (Cradle_4..6)"
+    - _keyLabel: C
+      _descriptionVi: "B\u1EADt / T\u1EAFt 6 \u0111\xE8n b\xE1o khay ch\u1EE9a (PipLamp_1..6)"
+  - _exhibitId: 11
+    _numberKey: 12
+    _titleVi: "Khoang n\xE2ng c\u1EA5p c\u01A1 gi\u1EDBi (Upgrade Bay)"
+    _subtitleVi: "Khoang b\u1EA3o d\u01B0\u1EE1ng & l\u1EAFp kit R1 4 giai \u0111o\u1EA1n
+      v\u1EDBi thanh d\u1EABn h\u01B0\u1EDBng, t\u1EDDi n\xE2ng h\u1EA1, ngo\u1EA1m
+      k\u1EB9p v\xE0 \u0111\xF4i tay c\u1EDD-l\xEA."
+    _positionOffset: {x: -6, y: 0, z: 18}
+    _yawDegrees: 350
+    _orbitPivotOffset: {x: 0, y: 1.35, z: 0}
+    _defaultOrbitYaw: 154
+    _defaultOrbitPitch: 14
+    _defaultOrbitDistance: 5
+    _minOrbitDistance: 2.4
+    _maxOrbitDistance: 12
+    _nodes:
+    - _ruleId: upgrade.rail.l
+      _labelVi: "Kh\xE9p / m\u1EDF thanh d\u1EABn h\u01B0\u1EDBng tr\xE1i (GuideRail_L)"
+      _nodePath: Stage_4/GuideRail_L
+      _motionKind: 1
+      _axis: {x: -1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 0.12
+      _minLimit: 0
+      _maxLimit: 0.15
+      _easeDuration: 0.75
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: upgrade.rail.r
+      _labelVi: "Kh\xE9p / m\u1EDF thanh d\u1EABn h\u01B0\u1EDBng ph\u1EA3i (GuideRail_R)"
+      _nodePath: Stage_4/GuideRail_R
+      _motionKind: 1
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 0.12
+      _minLimit: 0
+      _maxLimit: 0.15
+      _easeDuration: 0.75
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: upgrade.hoist
+      _labelVi: "H\u1EA1 / n\xE2ng c\u1EE5m t\u1EDDi c\u1ED5ng tr\u1EE5c (Hoist)"
+      _nodePath: Stage_4/Hoist
+      _motionKind: 1
+      _axis: {x: 0, y: 0, z: 1}
+      _restValue: 0
+      _activeValue: 0.34
+      _minLimit: 0
+      _maxLimit: 0.4
+      _easeDuration: 0.85
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: upgrade.claw.l
+      _labelVi: "M\u1EDF / k\u1EB9p ngo\u1EA1m t\u1EDDi tr\xE1i (HoistClaw_L)"
+      _nodePath: Stage_4/Hoist/HoistClaw_L
+      _motionKind: 0
+      _axis: {x: 0, y: -1, z: 0}
+      _restValue: 0
+      _activeValue: 32
+      _minLimit: 0
+      _maxLimit: 38
+      _easeDuration: 0.75
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: upgrade.claw.r
+      _labelVi: "M\u1EDF / k\u1EB9p ngo\u1EA1m t\u1EDDi ph\u1EA3i (HoistClaw_R)"
+      _nodePath: Stage_4/Hoist/HoistClaw_R
+      _motionKind: 0
+      _axis: {x: 0, y: 1, z: 0}
+      _restValue: 0
+      _activeValue: 32
+      _minLimit: 0
+      _maxLimit: 38
+      _easeDuration: 0.75
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: upgrade.wrench.l
+      _labelVi: "V\u01B0\u01A1n / thu tay c\u1EDD-l\xEA tr\xE1i (WrenchArm_L)"
+      _nodePath: Stage_4/WrenchArm_L
+      _motionKind: 0
+      _axis: {x: 0, y: 0.7071, z: -0.7071}
+      _restValue: 0
+      _activeValue: 36
+      _minLimit: 0
+      _maxLimit: 42
+      _easeDuration: 0.8
+      _triggerKey: 3
+      _defaultActive: 0
+    - _ruleId: upgrade.wrench.r
+      _labelVi: "V\u01B0\u01A1n / thu tay c\u1EDD-l\xEA ph\u1EA3i (WrenchArm_R)"
+      _nodePath: Stage_4/WrenchArm_R
+      _motionKind: 0
+      _axis: {x: 0, y: -0.7071, z: 0.7071}
+      _restValue: 0
+      _activeValue: 36
+      _minLimit: 0
+      _maxLimit: 42
+      _easeDuration: 0.8
+      _triggerKey: 3
+      _defaultActive: 0
+    _keyHints:
+    - _keyLabel: J
+      _descriptionVi: "Ch\u1EA1y chu\u1ED7i d\u1EF1ng 4 giai \u0111o\u1EA1n (Stage_1..4
+        m\u1ECDc l\xEAn \xEAm)"
+    - _keyLabel: Z
+      _descriptionVi: "Kh\xE9p / M\u1EDF \u0111\xF4i thanh d\u1EABn h\u01B0\u1EDBng
+        (GuideRail_L, GuideRail_R)"
+    - _keyLabel: X
+      _descriptionVi: "H\u1EA1 / N\xE2ng t\u1EDDi & ngo\u1EA1m k\u1EB9p (Hoist +
+        HoistClaw_L/R)"
+    - _keyLabel: C
+      _descriptionVi: "V\u01B0\u01A1n / Thu \u0111\xF4i tay c\u1EDD-l\xEA (WrenchArm_L,
+        WrenchArm_R)"
+    - _keyLabel: V
+      _descriptionVi: "B\u1EADt / T\u1EAFt \u0111\xE8n pha c\u1ED5ng tr\u1EE5c &
+        \u0111\xE8n b\xE1o (FloodLamp_L/R, StatusLamp_1..3)"
+  - _exhibitId: 12
+    _numberKey: 13
+    _titleVi: "Th\xE1p \u0103ng-ten li\xEAn l\u1EA1c (Antenna Mast)"
+    _subtitleVi: "Th\xE1p vi\u1EC5n th\xF4ng R1 4 giai \u0111o\u1EA1n v\u1EDBi ch\u1EA3o
+      thu ph\xE1t xoay 2 tr\u1EE5c, v\xF2ng c\u1EA3m bi\u1EBFn quay v\xE0 \u0111\xF4i
+      cu\u1ED9n b\u0103ng t\u1EEB."
+    _positionOffset: {x: 6, y: 0, z: 18}
+    _yawDegrees: 350
+    _orbitPivotOffset: {x: 0, y: 1.75, z: 0}
+    _defaultOrbitYaw: 196
+    _defaultOrbitPitch: 13
+    _defaultOrbitDistance: 5.4
+    _minOrbitDistance: 2.4
+    _maxOrbitDistance: 13
+    _nodes:
+    - _ruleId: antenna.azimuth
+      _labelVi: "Xoay ph\u01B0\u01A1ng v\u1ECB ch\u1EA3o thu ph\xE1t (DishAzimuth)"
+      _nodePath: Stage_4/Mast/DishAzimuth
+      _motionKind: 0
+      _axis: {x: 0, y: 0, z: 1}
+      _restValue: 0
+      _activeValue: 48
+      _minLimit: -180
+      _maxLimit: 180
+      _easeDuration: 0.9
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: antenna.dish
+      _labelVi: "Ng\u1EA9ng / h\u1EA1 l\xF2ng ch\u1EA3o \u0103ng-ten (Dish)"
+      _nodePath: Stage_4/Mast/DishAzimuth/Dish
+      _motionKind: 0
+      _axis: {x: -1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 36
+      _minLimit: 0
+      _maxLimit: 45
+      _easeDuration: 0.85
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: antenna.sonar
+      _labelVi: "Quay v\xF2ng c\u1EA3m bi\u1EBFn \u0111\u1ECBnh v\u1ECB (SonarLoop)"
+      _nodePath: Stage_4/Mast/SonarLoop
+      _motionKind: 2
+      _axis: {x: 0, y: 0, z: 1}
+      _restValue: 0
+      _activeValue: 95
+      _minLimit: 0
+      _maxLimit: 360
+      _easeDuration: 0.8
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: antenna.reel.l
+      _labelVi: "Quay cu\u1ED9n b\u0103ng t\u1EEB tr\xE1i (TapeReel_L)"
+      _nodePath: Stage_4/TapeReel_L
+      _motionKind: 2
+      _axis: {x: 0, y: 1, z: 0}
+      _restValue: 0
+      _activeValue: 120
+      _minLimit: 0
+      _maxLimit: 360
+      _easeDuration: 0.75
+      _triggerKey: 3
+      _defaultActive: 0
+    - _ruleId: antenna.reel.r
+      _labelVi: "Quay cu\u1ED9n b\u0103ng t\u1EEB ph\u1EA3i (TapeReel_R)"
+      _nodePath: Stage_4/TapeReel_R
+      _motionKind: 2
+      _axis: {x: 0, y: 1, z: 0}
+      _restValue: 0
+      _activeValue: -120
+      _minLimit: 0
+      _maxLimit: 360
+      _easeDuration: 0.75
+      _triggerKey: 3
+      _defaultActive: 0
+    _keyHints:
+    - _keyLabel: J
+      _descriptionVi: "Ch\u1EA1y chu\u1ED7i d\u1EF1ng 4 giai \u0111o\u1EA1n (Stage_1..4
+        m\u1ECDc l\xEAn \xEAm)"
+    - _keyLabel: Z
+      _descriptionVi: "Xoay ph\u01B0\u01A1ng v\u1ECB & ng\u1EA9ng ch\u1EA3o thu ph\xE1t
+        (DishAzimuth + Dish)"
+    - _keyLabel: X
+      _descriptionVi: "B\u1EADt / T\u1EAFt quay v\xF2ng c\u1EA3m bi\u1EBFn (SonarLoop)"
+    - _keyLabel: C
+      _descriptionVi: "B\u1EADt / T\u1EAFt quay \u0111\xF4i cu\u1ED9n b\u0103ng t\u1EEB
+        (TapeReel_L, TapeReel_R)"
+    - _keyLabel: V
+      _descriptionVi: "B\u1EADt / T\u1EAFt \u0111\xE8n \u0111\u1EC9nh th\xE1p & m\u1EB7t
+        \u0111\u1ED3ng h\u1ED3 (BeaconLamp, DialLamp)"
+  - _exhibitId: 13
+    _numberKey: 14
+    _titleVi: "B\xE3i \u0111\xE1p & c\u1EA7n c\u1EA9u c\u01A1 gi\u1EDBi (Vehicle
+      Pad)"
+    _subtitleVi: "B\u1EC7 \u0111\u1ED7 xe R1 4 giai \u0111o\u1EA1n v\u1EDBi c\u1EA7n
+      c\u1EA9u xoay, m\xF3c t\u1EDDi n\xE2ng h\u1EA1, m\xE9p c\u1EA7u d\u1EABn v\xE0
+      4 c\u1ECDc \u0111\xE8n b\xE1o."
+    _positionOffset: {x: 18, y: 0, z: 18}
+    _yawDegrees: 350
+    _orbitPivotOffset: {x: 0, y: 1.25, z: 0}
+    _defaultOrbitYaw: 152
+    _defaultOrbitPitch: 15
+    _defaultOrbitDistance: 5.4
+    _minOrbitDistance: 2.5
+    _maxOrbitDistance: 13
+    _nodes:
+    - _ruleId: vpad.boom
+      _labelVi: "Xoay c\u1EA7n c\u1EA9u b\u1ED1c d\u1EE1 (CraneBoom)"
+      _nodePath: Stage_4/CraneBoom
+      _motionKind: 0
+      _axis: {x: 0, y: 0, z: 1}
+      _restValue: 0
+      _activeValue: 36
+      _minLimit: -60
+      _maxLimit: 60
+      _easeDuration: 0.95
+      _triggerKey: 1
+      _defaultActive: 0
+    - _ruleId: vpad.hook
+      _labelVi: "H\u1EA1 / n\xE2ng m\xF3c t\u1EDDi c\u1EA7n c\u1EA9u (HoistHook)"
+      _nodePath: Stage_4/CraneBoom/HoistHook
+      _motionKind: 1
+      _axis: {x: 0, y: 0, z: 1}
+      _restValue: 0
+      _activeValue: 0.34
+      _minLimit: 0
+      _maxLimit: 0.4
+      _easeDuration: 0.85
+      _triggerKey: 2
+      _defaultActive: 0
+    - _ruleId: vpad.ramp
+      _labelVi: "H\u1EA1 / n\xE2ng m\xE9p c\u1EA7u d\u1EABn (RampLip)"
+      _nodePath: Stage_4/RampLip
+      _motionKind: 0
+      _axis: {x: 1, y: 0, z: 0}
+      _restValue: 0
+      _activeValue: 22
+      _minLimit: 0
+      _maxLimit: 28
+      _easeDuration: 0.8
+      _triggerKey: 3
+      _defaultActive: 0
+    _keyHints:
+    - _keyLabel: J
+      _descriptionVi: "Ch\u1EA1y chu\u1ED7i d\u1EF1ng 4 giai \u0111o\u1EA1n (Stage_1..4
+        m\u1ECDc l\xEAn \xEAm)"
+    - _keyLabel: Z
+      _descriptionVi: "Xoay c\u1EA7n c\u1EA9u b\u1ED1c d\u1EE1 (CraneBoom)"
+    - _keyLabel: X
+      _descriptionVi: "H\u1EA1 / N\xE2ng m\xF3c t\u1EDDi c\u1EA7n c\u1EA9u (HoistHook)"
+    - _keyLabel: C
+      _descriptionVi: "H\u1EA1 / N\xE2ng m\xE9p c\u1EA7u d\u1EABn xe (RampLip)"
+    - _keyLabel: V
+      _descriptionVi: "B\u1EADt / T\u1EAFt 4 c\u1ECDc \u0111\xE8n b\xE3i \u0111\xE1p
+        & \u0111\xE8n c\u1EA7n c\u1EA9u (BollardLamp_1..4, BoomLamp)"
+  - _exhibitId: 14
+    _numberKey: 15
+    _titleVi: "G\xF3c ph\u1EBF t\xEDch c\u0103n c\u1EE9 c\u0169 (Ruins Corner)"
+    _subtitleVi: "C\u1EE5m 5 di t\xEDch ti\u1EC1n tr\u1EA1m: M\xF4-\u0111un c\u01B0
+      tr\xFA (b\u1EA3ng kh\xF3a kh\xED CRT), Th\xE1p v\xF4 tuy\u1EBFn, X\u01B0\u1EDFng
+      Kenji, D\xE0n pin g\xE3y v\xE0 M\u1EA3nh v\u1EE1."
+    _positionOffset: {x: 0, y: 0, z: -24}
+    _yawDegrees: 170
+    _orbitPivotOffset: {x: 0, y: 2.3, z: -0.5}
+    _defaultOrbitYaw: 162
+    _defaultOrbitPitch: 14
+    _defaultOrbitDistance: 17.5
+    _minOrbitDistance: 6
+    _maxOrbitDistance: 32
+    _nodes: []
+    _keyHints:
+    - _keyLabel: Z
+      _descriptionVi: "B\u1EADt / T\u1EAFt \u0111\xE8n b\xE0n x\u01B0\u1EDFng Kenji
+        & \u0111\xE8n h\u1ED9p c\xE1p th\xE1p v\xF4 tuy\u1EBFn"
+    - _keyLabel: T
+      _descriptionVi: "\u0110\u1ED5i pha b\u1EA7u tr\u1EDDi \u0111\u1EC3 quan s\xE1t
+        c\u1EE5m ph\u1EBF t\xEDch d\u01B0\u1EDBi \xE1nh \u0111\xEAm \u0110\u1ECBa
+        C\u1EA7u & b\xECnh minh"
+    - _keyLabel: "Chu\u1ED9t ph\u1EA3i"
+      _descriptionVi: "Xoay quanh c\u1EE5m 5 di t\xEDch: C\u01B0 tr\xFA, Th\xE1p
+        v\xF4 tuy\u1EBFn, X\u01B0\u1EDFng Kenji, Pin g\xE3y, M\u1EA3nh v\u1EE1"

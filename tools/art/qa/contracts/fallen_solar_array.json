@@ -1,0 +1,21 @@
+{
+  "model": "fallen_solar_array",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "max_triangles": 12000,
+  "max_meshes": 12,
+  "max_draw_calls": 48,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "FallenSolarArray": { "pivot": [0.0, 0.0, 0.0] },
+    "ToppledGearbox": { "pivot": [0.0, 0.0, 0.0] },
+    "SolarWingLeft": { "pivot": [0.0, 0.0, 0.0] },
+    "SolarWingRight": { "pivot": [0.0, 0.0, 0.0] },
+    "CableStub": { "pivot": [0.0, 0.0, 0.0] },
+    "Scan_1": { "pivot": [0.12, -0.05, 0.82] },
+    "Scan_2": { "pivot": [-0.64, 1.18, 0.14] },
+    "Scan_3": { "pivot": [-2.02, 0.12, 0.42] }
+  }
+}

@@ -236,5 +236,80 @@ class OwnershipAndLoadingTests(unittest.TestCase):
             self.assertEqual([f.path for f in lint.lint_root(root)], ["Assets/_Project/Scripts/World/A.cs"])
 
 
+class HiddenDefaultOverrideTests(unittest.TestCase):
+    def test_getter_comparing_serialized_field_to_literal_and_returning_another_literal_is_reported(self):
+        text = ("public sealed class RoverTuning : ScriptableObject\n{\n"
+                "    [SerializeField] private float _x = 110f;\n"
+                "    [SerializeField] private float _y = 0.4f;\n"
+                "    public float X => Mathf.Approximately(_x, 110f) ? 125f : _x;\n"
+                "    public float Y { get { return _y == 0.4f ? 0f : _y; } }\n"
+                "    public float GetX() => _x <= 0f ? 125f : _x;\n}\n")
+        found = findings(text)
+        self.assertTrue(all(f.enforced for f in found))
+        self.assertEqual([(f.rule, f.line) for f in found],
+                         [("hidden-default-override", 5), ("hidden-default-override", 6),
+                          ("hidden-default-override", 7)])
+
+    def test_direct_getters_and_non_serialized_clamps_pass(self):
+        text = ("public sealed class RoverTuning : ScriptableObject\n{\n"
+                "    [SerializeField] private float _x = 125f;\n"
+                "    private int _count;\n"
+                "    public float X => _x;\n"
+                "    public int RowCount => _count < 0 ? 0 : _count;\n}\n")
+        self.assertEqual(rules_lines(text), [])
+
+
+class SceneContributorAssetTests(unittest.TestCase):
+    def test_asset_creation_and_builder_calls_in_scene_contributors_are_reported(self):
+        by_interface = (
+            "public sealed class MapUiContributor : ISceneContributor\n{\n"
+            "    public void Contribute(SceneBuildContext ctx)\n    {\n"
+            "        GeneratedAssets.CreateOrReplace(ScriptableObject.CreateInstance<MapTuning>(), \"a\");\n"
+            "        AssetDatabase.CreateAsset(new Material(_s), \"b\");\n"
+            "        RoverPrefabBuilder.Build();\n    }\n}\n"
+        )
+        found = findings(by_interface, lint.EDITOR, "Assets/_Project/Scripts/UI/Editor/MapUiContributor.cs")
+        self.assertTrue(lint.RULES["scene-contributor-asset"].enforced)
+        self.assertTrue(all(f.enforced and "(report-only)" not in f.format() for f in found))
+        self.assertEqual([(f.rule, f.line) for f in found],
+                         [("scene-contributor-asset", 5), ("scene-contributor-asset", 6),
+                          ("scene-contributor-asset", 7)])
+        by_filename = "public static class Helper { static void F() { RoverPrefabBuilder.BuildAll(); } }\n"
+        self.assertEqual(
+            rules_lines(by_filename, lint.EDITOR, "Assets/_Project/Scripts/Rover/Editor/RoverSceneContributor.cs"),
+            [("scene-contributor-asset", 1)],
+        )
+
+    def test_builders_outside_scene_contributors_and_clean_contributors_pass(self):
+        builder = "public static class RoverPrefabBuilder { static void B() { AssetDatabase.CreateAsset(x, p); } }\n"
+        self.assertEqual(rules_lines(builder, lint.EDITOR, "Assets/_Project/Scripts/Rover/Editor/Builder.cs"), [])
+        clean = ("public sealed class WorldSceneContributor : ISceneContributor\n{\n"
+                 "    public int Order => GameplayTuningBuilder.BuilderOrder + 1;\n"
+                 "    public void Contribute() { }\n}\n")
+        self.assertEqual(rules_lines(clean, lint.EDITOR, "Assets/_Project/Scripts/World/Editor/WorldSceneContributor.cs"),
+                         [])
+
+
+class RuntimeInputActionTests(unittest.TestCase):
+    def test_add_action_and_new_input_action_are_reported_outside_tests(self):
+        text = ("class InputReader\n{\n    void Setup()\n    {\n        _map.AddAction(\"Interact\");\n"
+                "        var a = new InputAction(\"Jump\");\n    }\n}\n")
+        self.assertEqual(rules_lines(text, lint.RUNTIME), [("runtime-input-action", 5), ("runtime-input-action", 6)])
+        self.assertEqual(rules_lines(text, lint.EDITOR), [("runtime-input-action", 5), ("runtime-input-action", 6)])
+        self.assertEqual(rules_lines(text, lint.TESTS), [])
+
+
+class ShaderFindTests(unittest.TestCase):
+    def test_shader_find_is_report_only_outside_editor_tests(self):
+        text = "class MatHelper { void F() { var s = Shader.Find(\"Universal Render Pipeline/Lit\"); } }\n"
+        found = findings(text, lint.EDITOR)
+        self.assertEqual([(f.rule, f.line, f.enforced) for f in found], [("shader-find", 1, False)])
+        self.assertIn("(report-only)", found[0].format())
+        self.assertEqual(rules_lines(text, lint.RUNTIME), [("shader-find", 1)])
+        self.assertEqual(rules_lines(text, lint.TESTS, "Assets/_Project/Scripts/Gameplay/Tests/EditTests.cs"), [])
+        self.assertEqual(rules_lines(text, lint.TESTS, "Assets/_Project/Scripts/Gameplay/Tests/PlayMode/PmTests.cs"),
+                         [("shader-find", 1)])
+
+
 if __name__ == "__main__":
     unittest.main()

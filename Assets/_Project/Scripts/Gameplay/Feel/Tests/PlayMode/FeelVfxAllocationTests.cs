@@ -53,7 +53,8 @@ namespace MoonProject.Gameplay.Feel.Tests
             GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
             ground.transform.localScale = Vector3.one * 4f;
             _created.Add(ground);
-            var vfx = new FeelVfx(Make("Host", Vector3.zero), tuning, Visuals(tuning), events, anchors);
+            var vfx = new FeelVfx(Make("Host", Vector3.zero), tuning,
+                Visuals(tuning, ground.GetComponent<Renderer>().sharedMaterial), events, anchors);
 
             Publish(events, FeelPhase.Anticipate, 0f, 0.65f);
             Publish(events, FeelPhase.Act, 0f, 0f);
@@ -148,9 +149,11 @@ namespace MoonProject.Gameplay.Feel.Tests
             return tuning;
         }
 
-        private GameplayVisuals Visuals(FeelVfxTuning tuning)
+        // The pipeline's default material (the one a primitive gets) stands in for the feel kit's materials: the test
+        // measures allocations, not looks.
+        private GameplayVisuals Visuals(FeelVfxTuning tuning, Material pipelineDefault)
         {
-            var material = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+            var material = new Material(pipelineDefault);
             _created.Add(material);
             var visuals = ScriptableObject.CreateInstance<GameplayVisuals>();
             _created.Add(visuals);
@@ -185,6 +188,8 @@ namespace MoonProject.Gameplay.Feel.Tests
             }
 
             public Vector3 Emitter => _emitter.position;
+
+            public Vector3 ScanEmitter => _emitter.position;
 
             public Vector3 CutPoint => CutPiece.position;
 

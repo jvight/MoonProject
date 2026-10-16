@@ -90,7 +90,8 @@ namespace MoonProject.World.Tests
             var serialized = new SerializedObject(world);
             serialized.FindProperty("_settings").objectReferenceValue = LoadSettings();
             serialized.FindProperty("_groundMaterial").objectReferenceValue = Load<Material>(WorldPaths.GroundMaterial);
-            serialized.FindProperty("_paletteMaterial").objectReferenceValue = Load<Material>(ArtPaths.LowPolyMaterial);
+            serialized.FindProperty("_paletteMaterial").objectReferenceValue =
+                Load<Material>(WorldPaths.R1BasaltMaterial);
             serialized.FindProperty("_earthMaterial").objectReferenceValue = Load<Material>(WorldPaths.EarthMaterial);
             serialized.FindProperty("_groundMarkMaterial").objectReferenceValue =
                 Load<Material>(WorldPaths.GroundMarkMaterial);
@@ -127,7 +128,7 @@ namespace MoonProject.World.Tests
             for (int i = 0; i < names.Length; i++)
             {
                 property.GetArrayElementAtIndex(i).objectReferenceValue =
-                    Load<Mesh>($"{ArtPaths.RockFolder}/{names[i]}.asset");
+                    Load<Mesh>($"{WorldPaths.R1RocksFolder}/{names[i]}.fbx");
             }
         }
 

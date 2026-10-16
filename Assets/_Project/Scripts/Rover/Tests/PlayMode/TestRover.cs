@@ -21,8 +21,10 @@ namespace MoonProject.Rover.PlayModeTests
     public sealed class TestRover : IDisposable
     {
         private const float WheelRadius = 0.35f;
-        private const float HalfTrack = 0.7f;
-        private const float AxleSpacing = 0.8f;
+        private const float HalfTrack = 0.61f;
+        private const float SuspZ = 0.31f;
+        private const float WheelOffsetZ = 0.22f;
+        private const float AxleSpacing = SuspZ + WheelOffsetZ;
 
         /// <summary>HoverCoils contract dimensions (art's CoilSocket height, spring spacing and length).</summary>
         private const float CoilSocketHeight = 0.28f;
@@ -96,11 +98,11 @@ namespace MoonProject.Rover.PlayModeTests
 
         public Transform Neck { get; private set; }
 
+        public Transform NeckLift { get; private set; }
+
         public Transform Head { get; private set; }
 
         public Transform SolarWing { get; private set; }
-
-        public Transform Eyelid { get; private set; }
 
         public Light EyeLight { get; private set; }
 
@@ -183,6 +185,14 @@ namespace MoonProject.Rover.PlayModeTests
 
         public RoverCharacterTuning CharacterTuning => (RoverCharacterTuning)_tunings[4];
 
+        public FaceTuning FaceTuning => (FaceTuning)_tunings[5];
+
+        public FaceDirectorTuning FaceDirectorTuning => (FaceDirectorTuning)_tunings[6];
+
+        public FaceDisplay FaceDisplay { get; private set; }
+
+        public RoverFaceDirector FaceDirector { get; private set; }
+
         /// <summary>
         /// Builds, wires and initialises a rover at <paramref name="position"/>, yaw in degrees. It starts awake
         /// unless <paramref name="asleep"/> asks for the game's first-boot wake-up. <paramref name="wideShotDelay"/>
@@ -197,7 +207,12 @@ namespace MoonProject.Rover.PlayModeTests
             var fxTuning = ScriptableObject.CreateInstance<RoverFxTuning>();
             var cameraTuning = ScriptableObject.CreateInstance<RoverCameraTuning>();
             var characterTuning = ScriptableObject.CreateInstance<RoverCharacterTuning>();
-            var tunings = new ScriptableObject[] { tuning, rigTuning, fxTuning, cameraTuning, characterTuning };
+            var faceTuning = ScriptableObject.CreateInstance<FaceTuning>();
+            var faceDirectorTuning = ScriptableObject.CreateInstance<FaceDirectorTuning>();
+            var tunings = new ScriptableObject[]
+            {
+                tuning, rigTuning, fxTuning, cameraTuning, characterTuning, faceTuning, faceDirectorTuning
+            };
             var character = new SerializedObject(characterTuning);
             character.FindProperty("_sleepOnBoot").boolValue = asleep;
             character.ApplyModifiedPropertiesWithoutUndo();
@@ -236,26 +251,52 @@ namespace MoonProject.Rover.PlayModeTests
             Transform bodyNode = Node(RoverModelNodes.Body, model, Vector3.zero);
             Shape(PrimitiveType.Cube, bodyNode, new Vector3(0f, 0.8f, 0f), new Vector3(1.3f, 0.55f, 1.9f), material);
             var wheels = new Object[RoverModelNodes.WheelCount];
+            var arms = new Object[RoverModelNodes.WheelCount];
+            var shocks = new Object[RoverModelNodes.WheelCount];
             for (int i = 0; i < wheels.Length; i++)
             {
-                float x = i % 2 == 0 ? -HalfTrack : HalfTrack;
-                float z = AxleSpacing * (1 - RoverModelNodes.WheelRow(i));
-                Transform wheel = Node(RoverModelNodes.Wheel(i), model, new Vector3(x, WheelRadius, z));
+                bool left = i % 2 == 0;
+                bool front = RoverModelNodes.WheelRow(i) == 0;
+                float suspX = left ? -0.42f : 0.42f;
+                float z = front ? SuspZ : -SuspZ;
+                Transform susp = Node(RoverModelNodes.Susp(i), model, new Vector3(suspX, 0.26f, z));
+                Transform arm = Node(RoverModelNodes.Arm(i), susp, Vector3.zero);
+                Transform shock = Node(RoverModelNodes.Shock(i), susp, new Vector3(left ? -0.06f : 0.06f, 0.14f, 0f));
+                Transform wheel = Node(RoverModelNodes.Wheel(i), susp,
+                    new Vector3((left ? -HalfTrack : HalfTrack) - suspX, WheelRadius - 0.26f,
+                        front ? WheelOffsetZ : -WheelOffsetZ));
                 Transform tyre = Shape(PrimitiveType.Cylinder, wheel, Vector3.zero,
                     new Vector3(2f * WheelRadius, 0.1f, 2f * WheelRadius), material);
                 tyre.localRotation = Quaternion.Euler(0f, 0f, 90f);
                 wheels[i] = wheel;
+                arms[i] = arm;
+                shocks[i] = shock;
             }
 
-            Transform bogieLeft = Node(RoverModelNodes.BogieLeft, model, new Vector3(-0.82f, 0.45f, 0.2f));
-            Transform bogieRight = Node(RoverModelNodes.BogieRight, model, new Vector3(0.82f, 0.45f, 0.2f));
-            Transform neck = Node(RoverModelNodes.Neck, model, new Vector3(0f, 1.05f, 0.55f));
-            Transform head = Node(RoverModelNodes.Head, neck, new Vector3(0f, 0.4f, 0f));
-            Transform eye = Shape(PrimitiveType.Sphere, head, new Vector3(0f, 0f, 0.18f), Vector3.one * 0.22f,
+            Transform neck = Node(RoverModelNodes.Neck, model, new Vector3(0f, 0.63f, 0.22f));
+            Transform neckLift = Node(RoverModelNodes.NeckLift, neck, new Vector3(0f, 0.22f, 0.06f));
+            Transform head = Node(RoverModelNodes.Head, neckLift, new Vector3(0f, 0.22f, 0.04f));
+            Transform screen = Shape(PrimitiveType.Quad, head, new Vector3(0f, 0f, 0.20f),
+                new Vector3(0.32f, 0.20f, 1f), material);
+            screen.name = RoverModelNodes.Screen;
+            Transform rearVentStrip = Shape(PrimitiveType.Cube, head, new Vector3(0f, 0f, -0.18f),
+                new Vector3(0.24f, 0.04f, 0.02f), material);
+            rearVentStrip.name = RoverModelNodes.RearVentStrip;
+            Transform eye = Shape(PrimitiveType.Sphere, head, new Vector3(0.20f, 0.02f, 0.16f), Vector3.one * 0.22f,
                 material);
             eye.name = RoverModelNodes.Eye;
-            Transform tetherOrigin = Node(RoverModelNodes.TetherOrigin, eye, Vector3.zero);
-            Transform eyelid = Node(RoverModelNodes.Eyelid, head, new Vector3(0f, 0f, 0.15f));
+            Transform eyeOrigin = Node(RoverModelNodes.EyeOrigin, eye, new Vector3(0f, 0f, 0.08f));
+            Transform cutterTurret = Node(RoverModelNodes.CutterTurret, bodyNode, new Vector3(0.18f, 0.42f, 0.54f));
+            Transform cutterHead = Node(RoverModelNodes.CutterHead, cutterTurret, new Vector3(0f, 0f, 0.07f));
+            Transform cutterOrigin = Node(RoverModelNodes.CutterOrigin, cutterHead, new Vector3(0f, 0f, 0.11f));
+            Transform digScoop = Node(RoverModelNodes.DigScoop, bodyNode, new Vector3(0f, 0.24f, 0.52f));
+            Transform scoopArms = Node(RoverModelNodes.ScoopArms, digScoop, new Vector3(0f, 0f, 0.04f));
+            Transform scoopBucket = Node(RoverModelNodes.ScoopBucket, scoopArms, new Vector3(0f, -0.02f, 0.14f));
+            Transform scoopOrigin = Node(RoverModelNodes.ScoopOrigin, scoopBucket, new Vector3(0f, -0.02f, 0.10f));
+            Transform winchSocket = Node(RoverModelNodes.WinchSocket, bodyNode, new Vector3(-0.18f, 0.34f, 0.55f));
+            Transform winchSpool = Node(RoverModelNodes.WinchSpool, winchSocket, new Vector3(0f, 0f, 0.03f));
+            Transform towHook = Node(RoverModelNodes.TowHook, winchSocket, new Vector3(0f, -0.01f, 0.08f));
+            Transform winchOrigin = Node(RoverModelNodes.WinchOrigin, towHook, new Vector3(0f, 0f, 0.05f));
             Transform wing = Node(RoverModelNodes.SolarWing, model, new Vector3(0f, 1.08f, -0.5f));
             Transform antenna = Node(RoverModelNodes.Antenna, model, new Vector3(0.45f, 1.05f, -0.75f));
             Transform tip = Shape(PrimitiveType.Sphere, antenna, new Vector3(0f, 0.9f, 0f), Vector3.one * 0.06f,
@@ -360,8 +401,7 @@ namespace MoonProject.Rover.PlayModeTests
             Transform fxHost = Node("WheelFx", root.transform, Vector3.zero);
             var fx = fxHost.gameObject.AddComponent<RoverWheelFx>();
 
-            Assign(rig, ("_tuning", rigTuning), ("_chassis", chassis), ("_bogieLeft", bogieLeft),
-                ("_bogieRight", bogieRight), ("_antenna", antenna));
+            Assign(rig, ("_tuning", rigTuning), ("_chassis", chassis), ("_antenna", antenna));
             Assign(kit, ("_tuning", rigTuning), ("_headlamp", headlamp), ("_lampBar", lampBar), ("_cargoRack", rack),
                 ("_spine", spine), ("_tapeDeck", deck), ("_tetherRing", tetherRing),
                 ("_ringGlow", ringGlow.GetComponent<MeshRenderer>()),
@@ -370,6 +410,8 @@ namespace MoonProject.Rover.PlayModeTests
             AssignArray(kit, "_drums", drums);
             AssignArray(kit, "_drumGlows", drumGlows);
             AssignArray(rig, "_wheels", wheels);
+            AssignArray(rig, "_arms", arms);
+            AssignArray(rig, "_shocks", shocks);
             Assign(hoverCoils, ("_tuning", rigTuning), ("_mount", coilMount), ("_light", coilLight));
             AssignArray(hoverCoils, "_coils", coils);
             AssignArray(hoverCoils, "_glows", coilGlows);
@@ -394,7 +436,8 @@ namespace MoonProject.Rover.PlayModeTests
             Assign(controller, ("_tuning", tuning), ("_body", rigidbody), ("_sphere", collider), ("_visualRig", rig),
                 ("_wheelFx", fx), ("_hoverCoils", hoverCoils), ("_lampMotes", lampMotes), ("_kit", kit),
                 ("_flankLamps", flank),
-                ("_tetherOrigin", tetherOrigin), ("_cargoSocket", cargo));
+                ("_tetherOrigin", eyeOrigin), ("_cutterOrigin", cutterOrigin), ("_scanOrigin", eyeOrigin),
+                ("_winchOrigin", winchOrigin), ("_scoopOrigin", scoopOrigin), ("_cargoSocket", cargo));
             var sideBins = new Object[2];
             for (int i = 0; i < sideBins.Length; i++)
             {
@@ -406,6 +449,8 @@ namespace MoonProject.Rover.PlayModeTests
 
             AssignArray(controller, "_sideBins", sideBins);
             Transform hatch = Node(RoverModelNodes.CargoHatch, model, new Vector3(0f, HatchY, HatchZ));
+            Node(RoverModelNodes.UpperCanopy, hatch, Vector3.zero);
+            Node(RoverModelNodes.LowerChute, hatch, new Vector3(0f, -0.3f, 0f));
             var crates = new Object[HatchCrateCount];
             for (int i = 0; i < crates.Length; i++)
             {
@@ -425,10 +470,11 @@ namespace MoonProject.Rover.PlayModeTests
             for (int i = 0; i < sleeves.Length; i++)
             {
                 int stage = i / 2 + 1;
-                Transform stageCell = Node(RoverModelNodes.StageCell(stage, i % 2 == 0), model,
-                    new Vector3(i % 2 == 0 ? -CellX : CellX, CellY, (stage - 2) * CellSpacing));
+                bool left = i % 2 == 0;
+                Transform stageCell = Node(RoverModelNodes.StageCell(stage, left), model,
+                    new Vector3(left ? -CellX : CellX, CellY, (stage - 2) * CellSpacing));
                 Transform sleeve = Shape(PrimitiveType.Cylinder, stageCell, Vector3.zero, Vector3.one * 0.06f, material);
-                sleeve.name = RoverModelNodes.StageGlow(stage);
+                sleeve.name = RoverModelNodes.StageGlow(stage, left);
                 sleeves[i] = sleeve.GetComponent<MeshRenderer>();
             }
 
@@ -442,13 +488,26 @@ namespace MoonProject.Rover.PlayModeTests
             AssignArray(controller, "_stageSleeves", sleeves);
             Assign(controller, ("_lockGlow", lockGlow.GetComponent<MeshRenderer>()), ("_focusLens", lens.gameObject),
                 ("_focusLensGlass", lensGlass.GetComponent<MeshRenderer>()));
+            var faceDisplay = screen.gameObject.AddComponent<FaceDisplay>();
+            Assign(faceDisplay, ("_tuning", faceTuning), ("_screenRenderer", screen.GetComponent<MeshRenderer>()));
+            var faceDirector = screen.gameObject.AddComponent<RoverFaceDirector>();
+            Assign(faceDirector,
+                ("_tuning", faceDirectorTuning),
+                ("_display", faceDisplay),
+                ("_head", head),
+                ("_rearVentStrip", rearVentStrip),
+                ("_rearVentRenderer", rearVentStrip.GetComponent<MeshRenderer>()));
+
             Assign(body, ("_tuning", characterTuning), ("_rover", controller), ("_rig", rig), ("_neck", neck),
-                ("_head", head), ("_eyelid", eyelid), ("_solarWing", wing),
+                ("_neckLift", neckLift), ("_head", head), ("_solarWing", wing),
+                ("_cutterTurret", cutterTurret), ("_cutterHead", cutterHead),
+                ("_scoopArms", scoopArms), ("_scoopBucket", scoopBucket), ("_winchSpool", winchSpool),
                 ("_eyeRenderer", eye.GetComponent<MeshRenderer>()),
                 ("_antennaTipRenderer", tip.GetComponent<MeshRenderer>()),
                 ("_eyeLight", eyeLight),
                 ("_scanFan", Shape(PrimitiveType.Cube, eye, Vector3.forward, new Vector3(0.01f, 0.01f, 1f), material)
-                    .GetComponent<MeshRenderer>()));
+                    .GetComponent<MeshRenderer>()),
+                ("_faceDirector", faceDirector));
 
             GameObject cameraRoot = BuildCamera(cameraTuning, out RoverCameraRig cameraRig, out Camera camera);
 
@@ -460,13 +519,15 @@ namespace MoonProject.Rover.PlayModeTests
                 Controller = controller,
                 Rig = rig,
                 BodyLanguage = body,
+                FaceDisplay = faceDisplay,
+                FaceDirector = faceDirector,
                 CameraRig = cameraRig,
                 Camera = camera,
                 Chassis = chassis,
                 Neck = neck,
+                NeckLift = neckLift,
                 Head = head,
                 SolarWing = wing,
-                Eyelid = eyelid,
                 EyeLight = eyeLight,
                 HoverCoils = hoverCoils,
                 LampMotes = lampMotes,
