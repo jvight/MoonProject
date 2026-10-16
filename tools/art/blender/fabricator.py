@@ -150,8 +150,140 @@ def _build_stage_1(root: bpy.types.Object) -> bpy.types.Object:
     return stage_1_obj
 
 
+def _build_continuous_arch_hood(mb: r1kit.MeshBuilder) -> None:
+    """Build ONE continuous rounded cream-enamel arch from left pillar (+X) over to right pillar (-X) with integrated orange bands."""
+    hz = 0.50
+    b_z = 0.026
+    b_s = 0.090
+
+    # 8-point bevelled cross-section loop in (s, z_offset) around [0, 1] x [-hz, +hz]
+    cs_template: list[tuple[float, float]] = [
+        (0.0, -hz + b_z),      # 0: inner wall back
+        (0.0, hz - b_z),       # 1: inner wall front
+        (b_s, hz),             # 2: front-inner bevel end
+        (1.0 - b_s, hz),       # 3: front-outer bevel start
+        (1.0, hz - b_z),       # 4: outer wall front
+        (1.0, -hz + b_z),      # 5: outer wall back
+        (1.0 - b_s, -hz),      # 6: back-outer bevel start
+        (b_s, -hz),            # 7: back-inner bevel end
+    ]
+    # Faces 2..6 wrap across front face -> front-outer bevel -> outer wall -> back-outer bevel -> back face
+    stripe_face_indices = {2, 3, 4, 5, 6}
+
+    # Build station list (x_in, y_in, x_out, y_out, groove_inset, is_stripe_after) from right (-X) to left (+X)
+    # Base at Y = 1.22, short vertical skirt to Y = 1.30, sweeping 0.54m outer radius corner (center_x = ±0.53, center_y = 1.30,
+    # R_out = 0.54 -> top Y = 1.84; R_in_x = 0.24, R_in_y = 0.32 -> inner ceiling Y = 1.62)
+    corner_angles_deg = [
+        0.0,
+        8.0,
+        15.0,   # Orange stripe start
+        24.0,
+        33.0,   # Orange stripe end
+        46.0,
+        60.0,
+        75.0,
+        90.0,
+    ]
+
+    stations: list[tuple[float, float, float, float, float, bool]] = []
+
+    # 1. Right (-X) vertical base skirt above pillar seam (Y = 1.22 -> 1.30)
+    stations.append((-0.77, 1.22, -1.07, 1.22, 0.0, False))
+
+    # 2. Right (-X) rounded arch shoulder (theta = 0 -> 90 deg)
+    for idx, deg in enumerate(corner_angles_deg):
+        rad = math.radians(deg)
+        c_t = math.cos(rad)
+        s_t = math.sin(rad)
+        xi = -0.53 - 0.24 * c_t
+        yi = 1.30 + 0.32 * s_t
+        xo = -0.53 - 0.54 * c_t
+        yo = 1.30 + 0.54 * s_t
+        is_stripe = 15.0 <= deg < 33.0 and idx < len(corner_angles_deg) - 1
+        stations.append((xi, yi, xo, yo, 0.0, is_stripe))
+
+    # 3. Central horizontal span across the top (X = -0.53 .. +0.53, with subtle panel seams at X = ±0.44)
+    top_x_stops = [
+        (-0.445, 0.0),
+        (-0.440, 0.0035),  # Subtle left-of-center panel seam groove
+        (-0.435, 0.0),
+        (0.0, 0.0),
+        (0.435, 0.0),
+        (0.440, 0.0035),   # Subtle right-of-center panel seam groove
+        (0.445, 0.0),
+    ]
+    for tx, g_in in top_x_stops:
+        stations.append((tx, 1.62, tx, 1.84, g_in, False))
+
+    # 4. Left (+X) rounded arch shoulder (theta = 90 -> 0 deg)
+    rev_angles = list(reversed(corner_angles_deg))
+    for idx, deg in enumerate(rev_angles):
+        rad = math.radians(deg)
+        c_t = math.cos(rad)
+        s_t = math.sin(rad)
+        xi = 0.53 + 0.24 * c_t
+        yi = 1.30 + 0.32 * s_t
+        xo = 0.53 + 0.54 * c_t
+        yo = 1.30 + 0.54 * s_t
+        next_deg = rev_angles[idx + 1] if idx + 1 < len(rev_angles) else -1.0
+        is_stripe = 15.0 <= next_deg < 33.0 and 15.0 < deg <= 33.0
+        stations.append((xi, yi, xo, yo, 0.0, is_stripe))
+
+    # 5. Left (+X) vertical base skirt down to pillar seam (Y = 1.30 -> 1.22)
+    stations.append((0.77, 1.22, 1.07, 1.22, 0.0, False))
+
+    rings: list[list] = []
+    for xi, yi, xo, yo, g_in, _ in stations:
+        dx = xo - xi
+        dy = yo - yi
+        ring_verts = []
+        for s_val, z_val in cs_template:
+            # Apply subtle panel seam inset on outer/front/back surfaces when g_in > 0
+            s_eff = s_val - g_in * s_val * 2.5
+            z_eff = z_val * (1.0 - g_in * 1.4)
+            px = xi + dx * s_eff
+            py = yi + dy * s_eff
+            ring_verts.append(mb.bm.verts.new(mb._to_local_b((px, py, z_eff))))
+        rings.append(ring_verts)
+
+    m_cs = len(cs_template)
+    cream_faces = []
+    orange_faces = []
+    for k in range(len(rings) - 1):
+        r0 = rings[k]
+        r1 = rings[k + 1]
+        is_stripe_seg = stations[k][5]
+        for m in range(m_cs):
+            mn = (m + 1) % m_cs
+            f = mb.bm.faces.new([r0[m], r0[mn], r1[mn], r1[m]])
+            if is_stripe_seg and m in stripe_face_indices:
+                orange_faces.append(f)
+            else:
+                cream_faces.append(f)
+
+    # Cap both bottom ends (k = 0 and k = -1) with all-quad fan strips (8-gon -> 3 quads)
+    r_start = rings[0]
+    for q in range(3):
+        v0 = r_start[q]
+        v1 = r_start[q + 1]
+        v2 = r_start[m_cs - 2 - q]
+        v3 = r_start[m_cs - 1 - q]
+        cream_faces.append(mb.bm.faces.new([v0, v3, v2, v1]))
+
+    r_end = rings[-1]
+    for q in range(3):
+        v0 = r_end[q]
+        v1 = r_end[q + 1]
+        v2 = r_end[m_cs - 2 - q]
+        v3 = r_end[m_cs - 1 - q]
+        cream_faces.append(mb.bm.faces.new([v0, v1, v2, v3]))
+
+    mb._assign_faces(cream_faces, "R1_CreamEnamel")
+    mb._assign_faces(orange_faces, "R1_OrangeStripe")
+
+
 def _build_stage_2(root: bpy.types.Object) -> bpy.types.Object:
-    """Stage 2: Wide open-arch gantry frame: sage-green side pillars, chamfered cream-enamel top hood with orange shoulder stripes, interior feedstock bin."""
+    """Stage 2: Wide open-arch gantry frame: sage-green side pillars, ONE continuous rounded cream-enamel arch with orange bands, interior feedstock bin."""
     mb = r1kit.MeshBuilder("Stage_2", pivot_u=(0.0, 0.0, 0.0))
 
     # --- 1. Left (+X) and Right (-X) muted sage-green lower side pillars (`X = ±0.92, Y = 0.05 .. 1.22, Z = -0.50 .. +0.50`) ---
@@ -161,7 +293,7 @@ def _build_stage_2(root: bpy.types.Object) -> bpy.types.Object:
             center_u=(px, 0.635, 0.0),
             size_u=(0.30, 1.17, 1.00),
             mat="R1_SagePatch",
-            bevel=0.028,
+            bevel=0.026,
             segments=1,
         )
         # Outer side recessed riveted access panel + 2 heavy barrel hinges along the Y=1.22 hood seam
@@ -190,7 +322,7 @@ def _build_stage_2(root: bpy.types.Object) -> bpy.types.Object:
             bevel_segments=0,
         )
         # 2 heavy vertical barrel hinges across the Y=1.22 parting seam on the outer wall
-        for hz in (-0.24, 0.24):
+        for hz in (-0.26, 0.26):
             mb.add_bevel_box(
                 center_u=(panel_x + sx * 0.012, 1.22, hz),
                 size_u=(0.032, 0.15, 0.075),
@@ -219,72 +351,30 @@ def _build_stage_2(root: bpy.types.Object) -> bpy.types.Object:
             segments=0,
         )
 
-    # --- 2. Upper chamfered warm cream-enamel gantry hood (`Y = 1.22 .. 1.84m`) ---
-    # Left and right vertical hood haunches (`Y = 1.22 .. 1.50m`)
-    for sx in (-1.0, 1.0):
-        mb.add_bevel_box(
-            center_u=(sx * 0.92, 1.36, 0.0),
-            size_u=(0.30, 0.28, 1.00),
-            mat="R1_CreamEnamel",
-            bevel=0.024,
-            segments=1,
-        )
-        # Horizontal orange shoulder stripe wrapping flush around the cream hood haunch (`Y = 1.40 .. 1.48m`)
-        mb.add_bevel_box(
-            center_u=(sx * 0.92, 1.44, 0.0),
-            size_u=(0.306, 0.082, 1.006),
-            mat="R1_OrangeStripe",
-            bevel=0.0,
-            segments=0,
-        )
+    # --- 2. ONE continuous rounded warm cream-enamel gantry arch (`Y = 1.22 .. 1.84m`) with integrated orange bands ---
+    _build_continuous_arch_hood(mb)
 
-    # Chamfered top cream-enamel arch bridge spanning `X = -1.06 .. +1.06, Y = 1.50 .. 1.84`
-    mb.add_bevel_box(
-        center_u=(0.0, 1.67, 0.0),
-        size_u=(2.12, 0.34, 1.00),
-        mat="R1_CreamEnamel",
-        bevel=0.045,
-        segments=1,
-        top_scale_xz=(0.82, 0.98),
-    )
-    # Recessed dark inner ceiling soffit inside the arch (`X = -0.76 .. +0.76, Y = 1.54`)
-    mb.add_bevel_box(
-        center_u=(0.0, 1.52, 0.0),
-        size_u=(1.54, 0.05, 0.88),
-        mat="R1_GreyMetal",
-        bevel=0.0,
-        segments=0,
-    )
-    # Central panel seam groove on top of the cream arch at X = 0.0
-    mb.add_bevel_box(
-        center_u=(0.0, 1.68, 0.0),
-        size_u=(0.016, 0.35, 1.008),
-        mat="R1_GreyMetal",
-        bevel=0.0,
-        segments=0,
-    )
     # Front and rear bolt fasteners on the cream hood corners & sage pillar tops
-    for sz in (-0.505, 0.505):
+    for sz in (-0.504, 0.504):
         mb.add_bolts(
             [
                 (-0.98, 1.15, sz),
                 (-0.84, 1.15, sz),
-                (-0.98, 1.30, sz),
-                (-0.84, 1.30, sz),
+                (-0.98, 1.29, sz),
+                (-0.84, 1.29, sz),
                 (0.84, 1.15, sz),
                 (0.98, 1.15, sz),
-                (0.84, 1.30, sz),
-                (0.98, 1.30, sz),
+                (0.84, 1.29, sz),
+                (0.98, 1.29, sz),
             ],
-            radius=0.010,
-            height=0.008,
+            radius=0.011,
+            height=0.009,
             axis_u="Z",
             mat="R1_BareSteel",
             bevel_segments=0,
         )
 
     # --- 3. Interior left-wall (+X) sage-green feedstock bin with ingots & glass beakers (`X = +0.58, Y = 0.62, Z = -0.04`) ---
-    # Sloped open-top bin box mounted against the inner face of the left (+X) pillar
     mb.add_bevel_box(
         center_u=(0.58, 0.60, -0.04),
         size_u=(0.36, 0.36, 0.64),
@@ -299,7 +389,7 @@ def _build_stage_2(root: bpy.types.Object) -> bpy.types.Object:
         bevel=0.0,
         segments=0,
     )
-    # 3 trapezoidal brushed-steel ingots + 2 dark glass cylinder beakers protruding from the feedstock bin
+    # Brushed-steel ingots + dark glass cylinder beakers protruding from the feedstock bin
     mb.add_ingot(
         center_u=(0.56, 0.85, 0.14),
         size_u=(0.11, 0.14, 0.08),
@@ -354,16 +444,16 @@ def _build_stage_3(root: bpy.types.Object) -> bpy.types.Object:
     """Stage 3: Overhead brass gantry rail, amber ceiling strip lights, central rotary build platen, front-left slide-out delivery tray."""
     mb = r1kit.MeshBuilder("Stage_3", pivot_u=(0.0, 0.0, 0.0))
 
-    # --- Fixed horizontal overhead brass gantry rail spanning the inner bay (`X = -0.78 .. +0.78, Y = 1.40, Z = 0.02`) ---
+    # --- Fixed horizontal overhead brass gantry rail spanning the inner bay (`X = -0.78 .. +0.78, Y = 1.38, Z = 0.02`) ---
     mb.add_bevel_box(
-        center_u=(0.0, 1.40, 0.02),
+        center_u=(0.0, 1.38, 0.02),
         size_u=(1.56, 0.075, 0.09),
         mat="R1_Brass",
         bevel=0.008,
         segments=1,
     )
     mb.add_bevel_box(
-        center_u=(0.0, 1.40, 0.068),
+        center_u=(0.0, 1.38, 0.068),
         size_u=(1.54, 0.028, 0.018),
         mat="R1_BareSteel",
         bevel=0.0,
@@ -379,14 +469,41 @@ def _build_stage_3(root: bpy.types.Object) -> bpy.types.Object:
             segments=0,
         )
 
-    # --- Warm amber overhead work-bay strip lights under the arch ceiling (`Y = 1.50, Z = +0.18`) ---
-    for lx in (-0.28, 0.28):
+    # --- Warm amber overhead work-bay strip lights under the arch ceiling (`Y = 1.56 .. 1.615, Z = +0.26`) ---
+    # Ceiling mounting spine and brass end/center clasps under the arch soffit
+    mb.add_bevel_box(
+        center_u=(0.0, 1.608, 0.26),
+        size_u=(0.98, 0.020, 0.072),
+        mat="R1_GreyMetal",
+        bevel=0.004,
+        segments=1,
+    )
+    for bx in (-0.47, 0.0, 0.47):
         mb.add_bevel_box(
-            center_u=(lx, 1.50, 0.18),
-            size_u=(0.46, 0.036, 0.055),
-            mat="R1_LampAmber",
-            bevel=0.006,
+            center_u=(bx, 1.592, 0.26),
+            size_u=(0.036, 0.042, 0.082),
+            mat="R1_Brass",
+            bevel=0.005,
             segments=1,
+        )
+    # Twin prominent glowing warm-amber tubular strip lamps (`R1_LampAmber`) lighting the work table
+    for lx in (-0.235, 0.235):
+        mb.add_bevel_box(
+            center_u=(lx, 1.584, 0.26),
+            size_u=(0.43, 0.034, 0.064),
+            mat="R1_LampAmber",
+            bevel=0.008,
+            segments=1,
+        )
+        mb.add_cylinder(
+            center_u=(lx, 1.568, 0.265),
+            radius=0.022,
+            length=0.42,
+            mat="R1_LampAmber",
+            axis_u="X",
+            segments=8,
+            bevel=0.0,
+            bevel_segments=0,
         )
 
     stage_3_obj = mb.build_object(parent=root)
@@ -400,7 +517,7 @@ def _build_stage_3(root: bpy.types.Object) -> bpy.types.Object:
         length=0.16,
         mat="R1_SagePatch",
         axis_u="Y",
-        segments=28,
+        segments=24,
         bevel=0.010,
         bevel_segments=1,
     )
@@ -411,7 +528,7 @@ def _build_stage_3(root: bpy.types.Object) -> bpy.types.Object:
         length=0.07,
         mat="R1_Brass",
         axis_u="Y",
-        segments=28,
+        segments=24,
         bevel=0.012,
         bevel_segments=1,
     )
@@ -593,7 +710,7 @@ def _build_stage_4(root: bpy.types.Object) -> bpy.types.Object:
         cx = sx * 0.32
         # Heavy rectangular brass carriage block with 4 corner bolts (matching s_fabricator.png)
         gb_mb.add_bevel_box(
-            center_u=(cx, 1.40, 0.04),
+            center_u=(cx, 1.38, 0.04),
             size_u=(0.16, 0.15, 0.12),
             mat="R1_Brass",
             bevel=0.010,
@@ -601,10 +718,10 @@ def _build_stage_4(root: bpy.types.Object) -> bpy.types.Object:
         )
         gb_mb.add_bolts(
             [
-                (cx - 0.05, 1.44, 0.105),
-                (cx + 0.05, 1.44, 0.105),
-                (cx - 0.05, 1.36, 0.105),
-                (cx + 0.05, 1.36, 0.105),
+                (cx - 0.05, 1.42, 0.105),
+                (cx + 0.05, 1.42, 0.105),
+                (cx - 0.05, 1.34, 0.105),
+                (cx + 0.05, 1.34, 0.105),
             ],
             radius=0.009,
             height=0.007,
@@ -636,17 +753,17 @@ def _build_stage_4(root: bpy.types.Object) -> bpy.types.Object:
     pr_piv = (-0.92, 0.80, 0.525)
     pr_mb = r1kit.MeshBuilder("ProgressRing", pivot_u=pr_piv)
     for seg_i in range(6):
-        ang_deg = seg_i * 60.0 + 30.0
-        rad = math.radians(ang_deg)
-        sx = -0.92 + math.sin(rad) * 0.072
-        sy = 0.80 + math.cos(rad) * 0.072
-        pr_mb.add_bevel_box(
-            center_u=(sx, sy, 0.528),
-            size_u=(0.052, 0.024, 0.016),
+        start_deg = seg_i * 60.0 + 7.0
+        pr_mb.add_torus(
+            center_u=(-0.92, 0.80, 0.528),
+            major_radius=0.072,
+            minor_radius=0.014,
             mat="R1_LampAmber",
-            bevel=0.003,
-            segments=1,
-            rot_deg_u=(0.0, 0.0, -ang_deg),
+            axis_u="Z",
+            major_segments=4,
+            minor_segments=6,
+            arc_deg=46.0,
+            start_deg=start_deg,
         )
     pr_mb.build_object(parent=stage_4)
 
@@ -681,6 +798,139 @@ def pose_fabricator_active(root: bpy.types.Object) -> None:
         objs["BuildPlaten"].rotation_euler = (0.0, 0.0, math.radians(25.0))
     if "OutputSlide" in objs:
         objs["OutputSlide"].location = r1kit.u_pos(0.44, 0.38, 0.56)
+
+
+def _render_fabricator_concept_compare(
+    root: bpy.types.Object,
+    out_dir: Path,
+    concept_path: Path,
+) -> None:
+    """Render Fabricator from the concept camera angle at night with a warm key light and warm strip-lamp work lighting."""
+    out_dir = Path(out_dir).resolve()
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    pose_fabricator_active(root)
+    bpy.context.view_layer.update()
+
+    temp_objs: list[bpy.types.Object] = []
+    temp_mats: list[bpy.types.Material] = []
+
+    # 1. Night sky world background (deep lunar night sky, warm-neutral bounce so cream never looks blue-grey)
+    scene = bpy.context.scene
+    if scene.world is None:
+        scene.world = bpy.data.worlds.new("R1_ConceptNightWorld")
+    scene.world.use_nodes = True
+    w_nt = scene.world.node_tree
+    w_nt.nodes.clear()
+    w_out = w_nt.nodes.new("ShaderNodeOutputWorld")
+    w_bg_cam = w_nt.nodes.new("ShaderNodeBackground")
+    w_bg_cam.inputs["Color"].default_value = r1kit._srgb_to_linear("#070A14")
+    w_bg_cam.inputs["Strength"].default_value = 1.0
+    w_bg_amb = w_nt.nodes.new("ShaderNodeBackground")
+    w_bg_amb.inputs["Color"].default_value = r1kit._srgb_to_linear("#E8D8BE")
+    w_bg_amb.inputs["Strength"].default_value = 0.28
+    w_lp = w_nt.nodes.new("ShaderNodeLightPath")
+    w_mix = w_nt.nodes.new("ShaderNodeMixShader")
+    w_nt.links.new(w_lp.outputs["Is Camera Ray"], w_mix.inputs["Fac"])
+    w_nt.links.new(w_bg_amb.outputs["Background"], w_mix.inputs[1])
+    w_nt.links.new(w_bg_cam.outputs["Background"], w_mix.inputs[2])
+    w_nt.links.new(w_mix.outputs["Shader"], w_out.inputs["Surface"])
+
+    # 2. Wide lunar regolith ground surface extending to the horizon
+    ground_mb = r1kit.MeshBuilder("_ConceptLunarGround", pivot_u=(0.0, -0.08, 0.0))
+    ground_mb.add_cylinder(
+        center_u=(0.0, -0.08, -1.0),
+        radius=12.0,
+        length=0.16,
+        mat="R1_GreyMetal",
+        axis_u="Y",
+        segments=64,
+        bevel=0.02,
+        bevel_segments=1,
+    )
+    ground_obj = ground_mb.build_object()
+    ground_mat = bpy.data.materials.new("_ConceptGroundMat")
+    ground_mat.use_nodes = True
+    g_bsdf = ground_mat.node_tree.nodes["Principled BSDF"]
+    g_bsdf.inputs["Base Color"].default_value = r1kit._srgb_to_linear("#6E6D6A")
+    g_bsdf.inputs["Roughness"].default_value = 0.92
+    g_bsdf.inputs["Metallic"].default_value = 0.02
+    ground_obj.data.materials.clear()
+    ground_obj.data.materials.append(ground_mat)
+    temp_objs.append(ground_obj)
+    temp_mats.append(ground_mat)
+
+    # IMPORTANT: Call ensure_materials(use_vertex_color_shading=True) AFTER ground_mb.build_object()
+    r1kit.ensure_materials(use_vertex_color_shading=True)
+
+    def _add_sun(name: str, from_u: tuple[float, float, float], tgt_u: tuple[float, float, float], hex_col: str, energy: float, angle_deg: float) -> None:
+        l_data = bpy.data.lights.new(name=name, type="SUN")
+        l_data.energy = energy
+        l_data.color = r1kit._srgb_to_linear(hex_col)[:3]
+        l_data.angle = math.radians(angle_deg)
+        l_obj = bpy.data.objects.new(name, l_data)
+        bpy.context.collection.objects.link(l_obj)
+        direction = (r1kit.u_pos(*tgt_u) - r1kit.u_pos(*from_u)).normalized()
+        l_obj.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler("XYZ")
+        temp_objs.append(l_obj)
+
+    def _add_point(name: str, pos_u: tuple[float, float, float], hex_col: str, energy: float, radius: float) -> None:
+        l_data = bpy.data.lights.new(name=name, type="POINT")
+        l_data.energy = energy
+        l_data.color = r1kit._srgb_to_linear(hex_col)[:3]
+        l_data.shadow_soft_size = radius
+        l_obj = bpy.data.objects.new(name, l_data)
+        bpy.context.collection.objects.link(l_obj)
+        l_obj.location = r1kit.u_pos(*pos_u)
+        temp_objs.append(l_obj)
+
+    # 3. Warm night key light from front-left-top + warm-cream fill on right pillar (never cold blue!)
+    _add_sun("_ConceptWarmKey", (3.6, 3.8, 4.4), (0.0, 0.8, 0.0), "#FFEAD0", 3.6, 5.0)
+    _add_sun("_ConceptWarmFill", (-4.2, 2.4, 3.6), (0.0, 0.8, 0.0), "#F6E4C8", 1.35, 22.0)
+    _add_sun("_ConceptWarmRim", (-1.8, 4.0, -3.8), (0.0, 1.0, 0.0), "#FFE2B8", 1.0, 10.0)
+
+    # 4. Warm amber practical strip lights under the arch illuminating the work table and inner arch walls
+    for lx in (-0.24, 0.24):
+        _add_point(f"_StripGlow_{lx:+.2f}", (lx, 1.48, 0.24), "#FFA830", 42.0, 0.16)
+        _add_point(f"_TablePool_{lx:+.2f}", (lx * 0.7, 0.86, 0.14), "#FFB240", 24.0, 0.22)
+    _add_point("_RingGlow", (-0.92, 0.80, 0.62), "#FFB038", 8.0, 0.10)
+
+    # 5. Camera matched to s_fabricator.png angle & full-structure framing
+    cam_data = bpy.data.cameras.new("_ConceptCam")
+    cam_obj = bpy.data.objects.new("_ConceptCam", cam_data)
+    bpy.context.collection.objects.link(cam_obj)
+    scene.camera = cam_obj
+    temp_objs.append(cam_obj)
+
+    r1kit._aim_camera_at(
+        cam_obj,
+        cam_pos_u=(-2.72, 1.52, 4.40),
+        target_u=(0.08, 0.86, 0.08),
+        lens_mm=38.0,
+    )
+
+    concept_render_path = out_dir / "_fabricator_concept_view.png"
+    r1kit._render_to_file(concept_render_path, res_x=1376, res_y=768, freestyle=True)
+
+    if Path(concept_path).exists():
+        r1kit.compose_side_by_side(
+            left_path=Path(concept_path),
+            right_path=concept_render_path,
+            out_path=out_dir / "compare_fabricator.png",
+            target_height=768,
+        )
+    concept_render_path.unlink(missing_ok=True)
+
+    for tob in temp_objs:
+        if tob.name in bpy.data.objects:
+            bpy.data.objects.remove(tob, do_unlink=True)
+    for tmat in temp_mats:
+        if tmat.name in bpy.data.materials:
+            bpy.data.materials.remove(tmat)
+
+    pose_fabricator_rest(root)
+    bpy.context.view_layer.update()
+    r1kit.ensure_materials(use_vertex_color_shading=False)
 
 
 def build_fabricator() -> bpy.types.Object:
@@ -719,6 +969,11 @@ def main(argv: list[str] | None = None) -> None:
 
     if not args.skip_renders:
         concept_img = Path("D:/Project/MoonProject-wt/agy-concept/Logs/base/s_fabricator.png")
+        _render_fabricator_concept_compare(
+            root=root,
+            out_dir=args.renders_dir,
+            concept_path=concept_img,
+        )
         r1kit.render_structure_suite(
             root=root,
             slug="fabricator",
@@ -730,7 +985,7 @@ def main(argv: list[str] | None = None) -> None:
             pose_rest_name="pose_rest",
             pose_active_name="pose_active",
             cam_side_x=-1.0,
-            concept_path=concept_img,
+            concept_path=None,
             use_active_for_compare=True,
         )
 
