@@ -1,76 +1,98 @@
-# Text: Ines's names and notes on the crew's map (M3-07)
+# Text: Ines's Names and Notes on the Crew's Map & Basin Crates (M3-07 · Story v4)
 
-> Author: the story & flow session, for ui to port into the localization tables. English is the source; Vietnamese is
-> natural, not word for word. Spec: `docs/features/M3-07-crew-map.md`.
+> **Status:** Locked for Story v4 (`1969` landing, `1971` Kestrel-3 probe, `1979` Atlas rig, `1985–1988` Lumen crew, `1987` uncrewed resupply drop).
+> **Target files for UI port:** `Assets/_Project/Data/Localization/en.json` and `Assets/_Project/Data/Localization/vi.json`.
+> **Writing rules (`docs/design/writing-style.md`):**
 > - Names (`map.<placeId>.name`) are written in Ines's hand when the chart pen inks a place.
 > - Notes (`map.<placeId>.note`) are her pencil margin notes: one short line each, dry and precise, secretly fond.
-> - Ines writes "tôi". She calls Tilly "con bé", and Ro "cô ấy".
-> - **One name per place.** Where the tables already name a place (`site.<id>.name`, `hop.node.relay.<n>`), the map
->   uses that exact name in both languages, so the player recognises it everywhere. Ines's personal touch lives
->   in the notes.
+> - Ines writes `"tôi"`. She calls Tilly `"con bé"`, and Ro `"cô ấy"`.
+> - **One name per place.** Where the tables already name a place (`site.<id>.name`, `hop.node.relay.<n>`), the map uses that exact name in both languages.
 
-## The sheet itself
-| Key | English | Tiếng Việt |
-|---|---|---|
-| `map.sheet.title` | Lumen basin, surveyed on foot. — I. Kalani | Lòng chảo Lumen, khảo sát bằng đôi chân. — I. Kalani |
-| `map.tally.label` | Checked: | Đã kiểm tra: |
-| `map.complete.note` | Checked: the Moon is still there. ✓ — I. | Đã kiểm tra: Mặt Trăng vẫn còn đó. ✓ — I. |
+---
 
-The tally counts found places in pencil strokes after the label, with no total (M3-07 amendment 6).
-If Be Vietnam Pro has no ✓ (U+2713), the art pencils the tick instead of the font.
+## 1. Key Summary (`Assets/_Project/Data/Localization/en.json`)
 
-## Places in the basin (0.5)
-| Place id | Name (EN) | Note (EN) | Name (VI) | Note (VI) |
-|---|---|---|---|---|
-| `place.lander` | The Lander | Home. Population: four, one rover, one very proud basil. | Tàu đổ bộ | Nhà. Dân số: bốn người, một rover, một chậu húng quế rất tự hào. |
-| `site.depot` | Supply Depot | Spare everything. Mostly bolts. | Kho tiếp tế | Đồ dự phòng đủ cả. Chủ yếu là bu-lông. |
-| `site.kestrel` | Kestrel-3 | Poor thing. It came down still pointing at Earth. | Kestrel-3 | Tội nghiệp. Lúc rơi xuống nó vẫn chĩa về Trái Đất. |
-| `trail.kestrel` | Kestrel's skid | I paced it. Twice. | Vệt trượt của Kestrel | Tôi đã đi bộ đo nó. Hai lần. |
-| `site.drill` | Drill Rig | My drill. Core 41 came from here, the blue one. | Giàn khoan | Máy khoan của tôi. Mẫu lõi 41 lấy ở đây, viên màu xanh. |
-| `site.garage` | Kenji's Garage | No entry without Kenji. Kenji: no entry without a helmet. | Gara của Kenji | Không vào nếu không có Kenji. Kenji: không vào nếu không đội mũ. |
-| `site.lander` | Canyon Supply Lander | Brought Theo's seed trays. Landed… firmly. | Tàu tiếp tế trong hẻm | Chở khay hạt giống của Theo. Hạ cánh hơi… mạnh tay. |
-| `friend.tilly` | Tilly's crater | Where she sulks when I walk too fast. | Hố của Tilly | Chỗ con bé dỗi mỗi khi tôi đi nhanh quá. |
-| `relay.0` | Mound relay | Ro calls it the little one. | Trạm trên gò | Ro gọi nó là "bé út". |
-| `relay.1` | Rim shoulder relay | Longest shadows in the basin. | Trạm vai vành hố | Bóng đổ dài nhất lòng chảo. |
-| `relay.2` | Canyon mouth relay | Everything echoes here. Even the static. | Trạm miệng hẻm | Ở đây cái gì cũng vang. Cả tiếng rè. |
-| `relay.3` | Terminus relay | Right above Ro's chamber. Of course. | Trạm cuối hẻm | Ngay trên căn phòng của Ro. Đương nhiên rồi. |
-| `canyon.mouth` | Whispering Canyon | Say something. It says it back, quieter. | Hẻm Thì Thầm | Nói gì đó đi. Nó sẽ nói lại, nhỏ hơn. |
-| `canyon.lip` | The chasm | Too wide to cross. Kenji says "for now". | Vực sâu | Quá rộng để qua. Kenji bảo "tạm thời thôi". |
-| `canyon.landing` | The far side | Someone always leaves a light on over here. | Bờ bên kia | Bên này lúc nào cũng có người để đèn. |
-| `canyon.ledge` | Ro's ledge | She comes here to hear herself sing back. | Gờ đá của Ro | Cô ấy ra đây để nghe tiếng mình hát vọng lại. |
-| `canyon.terminus` | Ro's chamber | Best acoustics on the Moon. Her words, not mine. | Căn phòng của Ro | Âm thanh hay nhất Mặt Trăng. Lời cô ấy, không phải của tôi. |
-| `canyon.exit` | The way out | One way only. Don't try it upwards. | Lối ra | Chỉ đi một chiều. Đừng thử leo ngược lên. |
+Out of **43 `map.*` keys** (`en.json:1274–1468`) and **5 `crate.*.note` keys** (`en.json:1774–1792`):
+- **39 `map.*` keys are `KEEP`** (no changes needed).
+- **4 `map.*.note` keys are `REPLACE`** to lock the 1969–1988 historical timeline (`Kestrel-3` as the 1971 probe, `Site_SupplyLander` as the 1987 resupply drop, `Rim Terraces` as the 1979 Atlas rig, and `The Peak` as the final stop before transmitting the basin survey).
+- **1 `crate.*.note` key is `KEEP`** (`crate.garage.note`) and **4 `crate.*.note` keys are `REPLACE`**.
 
-- Bell was found at `canyon.terminus`. If the sheet keeps `friend.bell` as its own place, give it the terminus lines.
-- Home's other places (`place.dock`, `place.tower`, …) sit inside the "Home" mark at the basin's scale. If ui shows
-  them, the existing `place.<id>.name` keys serve.
+---
 
-## Beyond the rim: pencil only (M3-07 step 3)
-Region ids are proposed. They need anchors in `WorldAnchorIds` (Director) before ui can place them.
+## 2. Map Notes Replaced in Story v4 (`4` Keys)
 
-| Place id | Ships | Name (EN) | Note (EN) | Name (VI) | Note (VI) |
+| Key & `en.json` Line | Status | Current `en.json` String | v4 English | v4 Tiếng Việt | Why Changed |
 |---|---|---|---|---|---|
-| `region.peak` | 0.5 | The Peak | The dish. Kenji's job, after the storm. | Đỉnh núi | Chảo ăng-ten. Việc của Kenji, sau cơn bão. |
-| `region.terraces` | 0.5 | The terraces | Too steep for wheels. Atlas parked up here? | Bậc thềm vành hố | Quá dốc cho bánh xe. Atlas đỗ ở trên này à? |
-| `region.crater` | 0.6+ | Theo's crater | Theo wants a garden down there. It's dark. Bring a lamp. | Hố của Theo | Theo muốn làm vườn dưới đó. Tối lắm. Mang đèn theo. |
-| `region.hollow` | 0.6 (backlog) | Kestrel's hollow | Something glints at the back. Too dark to tell. | Hốc tối cạnh Kestrel | Có gì đó lấp lánh tít trong. Tối quá, không nhìn rõ. |
+| `map.site.kestrel.note` (`en.json:1322`) | **REPLACE** | `Poor thing. It came down still pointing at Earth.` | `1971 survey probe. It came down in the dust still pointing at Earth.` | `Tàu thăm dò năm 1971. Lúc rơi xuống lớp bụi nó vẫn chĩa về Trái Đất.` | Grounds `Kestrel-3` (`Site_KestrelCrash`) in the 1971 unmanned survey era. |
+| `map.site.lander.note` (`en.json:1354`) | **REPLACE** | `Brought Theo's seed trays. Landed… firmly.` | `The '87 resupply drop with Theo's seed trays. Landed… firmly.` | `Chuyến tiếp tế năm 87 chở khay hạt giống của Theo. Hạ cánh hơi… mạnh tay.` | Grounds `Site_SupplyLander` as the 1987 uncrewed resupply drop before the Long Dim grounded further launches. |
+| `map.region.peak.note` (`en.json:1450`) | **REPLACE** | `The dish. Kenji's job, after the storm.` | `The high-gain dish. Last stop before we send the survey up.` | `Chảo ăng-ten cao tần. Điểm cuối trước khi gửi bản khảo sát lên.` | Replaces v3 post-storm routine maintenance note with the November 1988 push to align the dish and send the basin survey to Meridian. |
+| `map.region.terraces.note` (`en.json:1458`) | **REPLACE** | `Too steep for wheels. Atlas parked up here?` | `Too steep for four wheels. The '79 Atlas rig is still parked up here.` | `Quá dốc cho xe bốn bánh. Cỗ xe Atlas năm 79 vẫn đỗ trên này.` | Grounds the heavy Atlas rig in the 1979 basin construction era and hints at the six-wheel upgrade (`log.kenji_2`). |
 
-Only the 0.5 rows show in 0.5. The crater appears once it can be seen from the terraces, and the hollow when it ships
-(M3-07 amendment 1).
+---
 
-## If the level review's L2, L4 and L7 land
-| Place id (proposed) | Name (EN) | Note (EN) | Name (VI) | Note (VI) |
+## 3. Supply Crate Notes in the Basin (`5` Keys, `en.json:1774–1790`)
+
+*(Cross-referenced with `docs/design/text/crew-logs.md` §6.)*
+
+| Key & `en.json` Line | Status | Current `en.json` String | v4 English | v4 Tiếng Việt |
 |---|---|---|---|---|
-| `route.crew_road` (L2) | The road to the canyon | Follow the posts. Kenji planted them, crooked. | Đường ra hẻm | Cứ theo mấy cây cọc. Kenji cắm đấy, xiêu xiêu vẹo vẹo. |
-| `canyon.bridge` (L4) | Kenji's bridge | It holds. Mostly. | Cầu của Kenji | Vẫn trụ được. Phần lớn là vậy. |
-| `site.antennas` (L7) | Ro's antennas | They hum in a solar storm. Ro calls it the choir. | Rừng ăng-ten của Ro | Gặp bão mặt trời là chúng ngân lên. Ro gọi đó là dàn đồng ca. |
+| `crate.depot.note` (`en.json:1774`) | **REPLACE** | `Spares for the next rotation. Don't let Ines take the good wire. — Kenji` | `Spares for the ridge line. Don't let Ines take the good copper wire for her core tags. — Kenji` | `Đồ dự phòng cho đường dây sống núi. Đừng để Ines lấy cuộn dây đồng xịn đi buộc nhãn mẫu đá. — Kenji` |
+| `crate.kestrel.note` (`en.json:1778`) | **REPLACE** | `Lenses off the old relay. Handle them like records. — Ro` | `Camera lenses salvaged off the '71 Kestrel probe. Handle them like vinyl records. — Ro` | `Thấu kính máy ảnh tháo từ tàu thăm dò Kestrel năm 71. Cầm nhẹ tay như cầm đĩa than nhé. — Ro` |
+| `crate.drill.note` (`en.json:1782`) | **REPLACE** | `Wire for the drill's next season. Labelled, counted, twice. — I. Kalani` | `Spare cable for the deep-core ice survey. Labelled, coiled, counted twice. — I. Kalani` | `Cáp dự phòng cho đợt khoan thăm dò băng tầng sâu. Đã dán nhãn, cuộn gọn, đếm hai lần. — I. Kalani` |
+| `crate.garage.note` (`en.json:1786`) | **KEEP** | `For 07, next time it breaks. It will. — Kenji` | *(Keep current)* `For 07, next time it breaks. It will. — Kenji` | *(Keep current)* `Cho 07, lần tới nó hỏng. Thế nào cũng hỏng. — Kenji` |
+| `crate.lander.note` (`en.json:1790`) | **REPLACE** | `Seed trays went up top. This is everything else. — Theo` | `Seed trays from the '87 supply drop went up to the dome. Left the spare fittings boxed here. — Theo` | `Khay hạt giống từ chuyến hàng thả xuống năm 87 đã mang lên mái vòm. Phụ tùng dư đóng thùng để lại đây. — Theo` |
 
-## The card's state line
-M3-07's card adds "what is still there". These neutral lines are the station's, not Ines's.
+---
 
-| Key | English | Tiếng Việt |
-|---|---|---|
-| `map.state.heart_waiting` | Something still waits in its heart. | Trong lòng nó vẫn còn thứ gì đang chờ. |
-| `map.state.picked_clean` | Picked clean. | Đã dọn sạch. |
-| `map.state.mast_dark` | Dark. Waiting to be lit. | Còn tối. Đang chờ được thắp. |
-| `map.state.mast_lit` | Lit. Home reaches this far. | Đã sáng. Nhà vươn tới tận đây. |
+## 4. Complete Table of `map.*` Keys (`en.json:1274–1468`)
+
+### The Sheet & Card State (`en.json:1274–1298`) — All `KEEP`
+
+| Key | `en.json` Line | Status | English | Tiếng Việt |
+|---|---|---|---|---|
+| `map.sheet.title` | `en.json:1274` | **KEEP** | `Lumen basin, surveyed on foot. — I. Kalani` | `Lòng chảo Lumen, khảo sát bằng đôi chân. — I. Kalani` |
+| `map.tally.label` | `en.json:1278` | **KEEP** | `Checked:` | `Đã kiểm tra:` |
+| `map.complete.note` | `en.json:1282` | **KEEP** | `Checked: the Moon is still there. — I.` | `Đã kiểm tra: Mặt Trăng vẫn còn đó. — I.` |
+| `map.state.heart_waiting` | `en.json:1286` | **KEEP** | `Something is still inside.` | `Bên trong vẫn còn đồ.` |
+| `map.state.picked_clean` | `en.json:1290` | **KEEP** | `Picked clean.` | `Đã dọn sạch.` |
+| `map.state.mast_dark` | `en.json:1294` | **KEEP** | `Offline. Needs repair.` | `Đang tắt. Cần sửa.` |
+| `map.state.mast_lit` | `en.json:1298` | **KEEP** | `Online. Inside the station's reach.` | `Đang hoạt động. Trong tầm phủ sóng.` |
+
+### Basin & Outer Region Places (`en.json:1302–1468`) — `32 KEEP`, `4 REPLACE`
+
+| Place ID | Name Key (`en.json` Line) | Note Key (`en.json` Line) | Status | Name (EN / VI) | v4 Note (EN) | v4 Note (VI) |
+|---|---|---|---|---|---|---|
+| `place.lander` | `map.place.lander.name` (`:1302`) | `map.place.lander.note` (`:1306`) | **KEEP** | `The Lander` / `Tàu đổ bộ` | `Home. Population: four, one rover, one very proud basil.` | `Nhà. Dân số: bốn người, một rover, một chậu húng quế rất tự hào.` |
+| `site.depot` | `map.site.depot.name` (`:1310`) | `map.site.depot.note` (`:1314`) | **KEEP** | `Supply Depot` / `Kho tiếp tế` | `Spare everything. Mostly bolts.` | `Đồ dự phòng đủ cả. Chủ yếu là bu-lông.` |
+| `site.kestrel` | `map.site.kestrel.name` (`:1318`) | `map.site.kestrel.note` (`:1322`) | Name **KEEP** / Note **REPLACE** | `Kestrel-3` / `Kestrel-3` | `1971 survey probe. It came down in the dust still pointing at Earth.` | `Tàu thăm dò năm 1971. Lúc rơi xuống lớp bụi nó vẫn chĩa về Trái Đất.` |
+| `trail.kestrel` | `map.trail.kestrel.name` (`:1326`) | `map.trail.kestrel.note` (`:1330`) | **KEEP** | `Kestrel's skid` / `Vệt trượt của Kestrel` | `I paced it. Twice.` | `Tôi đã đi bộ đo nó. Hai lần.` |
+| `site.drill` | `map.site.drill.name` (`:1334`) | `map.site.drill.note` (`:1338`) | **KEEP** | `Drill Rig` / `Giàn khoan` | `My drill. Core 41 came from here, the blue one.` | `Máy khoan của tôi. Mẫu lõi 41 lấy ở đây, viên màu xanh.` |
+| `site.garage` | `map.site.garage.name` (`:1342`) | `map.site.garage.note` (`:1346`) | **KEEP** | `Kenji's Garage` / `Gara của Kenji` | `No entry without Kenji. Kenji: no entry without a helmet.` | `Không vào nếu không có Kenji. Kenji: không vào nếu không đội mũ.` |
+| `site.lander` | `map.site.lander.name` (`:1350`) | `map.site.lander.note` (`:1354`) | Name **KEEP** / Note **REPLACE** | `Canyon Supply Lander` / `Tàu tiếp tế trong hẻm` | `The '87 resupply drop with Theo's seed trays. Landed… firmly.` | `Chuyến tiếp tế năm 87 chở khay hạt giống của Theo. Hạ cánh hơi… mạnh tay.` |
+| `friend.tilly` | `map.friend.tilly.name` (`:1358`) | `map.friend.tilly.note` (`:1362`) | **KEEP** | `Tilly's crater` / `Hố của Tilly` | `Where she sulks when I walk too fast.` | `Chỗ con bé dỗi mỗi khi tôi đi nhanh quá.` |
+| `relay.0` | `map.relay.0.name` (`:1366`) | `map.relay.0.note` (`:1370`) | **KEEP** | `Mound Relay` / `Trạm trên gò` | `Ro calls it the little one.` | `Ro gọi nó là "bé út".` |
+| `relay.1` | `map.relay.1.name` (`:1374`) | `map.relay.1.note` (`:1378`) | **KEEP** | `Shoulder Relay` / `Trạm vai vành hố` | `Longest shadows in the basin.` | `Bóng đổ dài nhất lòng chảo.` |
+| `relay.2` | `map.relay.2.name` (`:1382`) | `map.relay.2.note` (`:1386`) | **KEEP** | `Canyon Mouth Relay` / `Trạm miệng hẻm` | `Everything echoes here. Even the static.` | `Ở đây cái gì cũng vang. Cả tiếng rè.` |
+| `relay.3` | `map.relay.3.name` (`:1390`) | `map.relay.3.note` (`:1394`) | **KEEP** | `Terminus Relay` / `Trạm cuối hẻm` | `Right above Ro's chamber. Of course.` | `Ngay trên căn phòng của Ro. Đương nhiên rồi.` |
+| `canyon.mouth` | `map.canyon.mouth.name` (`:1398`) | `map.canyon.mouth.note` (`:1402`) | **KEEP** | `Whispering Canyon` / `Hẻm Thì Thầm` | `Say something. It says it back, quieter.` | `Nói gì đó đi. Nó sẽ nói lại, nhỏ hơn.` |
+| `canyon.lip` | `map.canyon.lip.name` (`:1406`) | `map.canyon.lip.note` (`:1410`) | **KEEP** | `The chasm` / `Vực sâu` | `Too wide to cross. Kenji says "for now".` | `Quá rộng để qua. Kenji bảo "tạm thời thôi".` |
+| `canyon.landing` | `map.canyon.landing.name` (`:1414`) | `map.canyon.landing.note` (`:1418`) | **KEEP** | `The far side` / `Bờ bên kia` | `Someone always leaves a light on over here.` | `Bên này lúc nào cũng có người để đèn.` |
+| `canyon.ledge` | `map.canyon.ledge.name` (`:1422`) | `map.canyon.ledge.note` (`:1426`) | **KEEP** | `Ro's ledge` / `Gờ đá của Ro` | `She comes here to hear herself sing back.` | `Cô ấy ra đây để nghe tiếng mình hát vọng lại.` |
+| `canyon.terminus` | `map.canyon.terminus.name` (`:1430`) | `map.canyon.terminus.note` (`:1434`) | **KEEP** | `Ro's chamber` / `Căn phòng của Ro` | `Best acoustics on the Moon. Her words, not mine.` | `Âm thanh hay nhất Mặt Trăng. Lời cô ấy, không phải của tôi.` |
+| `canyon.exit` | `map.canyon.exit.name` (`:1438`) | `map.canyon.exit.note` (`:1442`) | **KEEP** | `The way out` / `Lối ra` | `One way only. Don't try it upwards.` | `Chỉ đi một chiều. Đừng thử leo ngược lên.` |
+| `region.peak` | `map.region.peak.name` (`:1446`) | `map.region.peak.note` (`:1450`) | Name **KEEP** / Note **REPLACE** | `The Peak` / `Đỉnh núi` | `The high-gain dish. Last stop before we send the survey up.` | `Chảo ăng-ten cao tần. Điểm cuối trước khi gửi bản khảo sát lên.` |
+| `region.terraces` | `map.region.terraces.name` (`:1454`) | `map.region.terraces.note` (`:1458`) | Name **KEEP** / Note **REPLACE** | `Rim Terraces` / `Bậc thềm vành hố` | `Too steep for four wheels. The '79 Atlas rig is still parked up here.` | `Quá dốc cho xe bốn bánh. Cỗ xe Atlas năm 79 vẫn đỗ trên này.` |
+| `place.antenna_farm` | `map.place.antenna_farm.name` (`:1462`) | `map.place.antenna_farm.note` (`:1466`) | **KEEP** | `Ro's antennas` / `Rừng ăng-ten của Ro` | `They hum in a solar storm. Ro calls it the choir.` | `Gặp bão mặt trời là chúng ngân lên. Ro gọi đó là dàn đồng ca.` |
+
+---
+
+## 5. Proposed Future Map Entries (`[PROPOSAL]` — Not Yet in `en.json`)
+
+These keys are proposed for `0.6+` regions when their `WorldAnchorIds` ship:
+
+| Proposed Key | Proposed Name (EN / VI) | Proposed v4 Note (EN) | Proposed v4 Note (VI) |
+|---|---|---|---|
+| `map.region.crater.name` / `.note` (`[PROPOSAL]`) | `Theo's crater` / `Hố của Theo` | `Cold trap at the crater floor. Theo stored the backup seed tins down here.` | `Bẫy lạnh dưới đáy hố. Theo cất mấy hộp hạt giống dự phòng ở dưới này.` |
+| `map.region.hollow.name` / `.note` (`[PROPOSAL]`) | `Kestrel's hollow` / `Hốc tối cạnh Kestrel` | `Something glints at the back. Too dark to tell.` | `Có gì đó lấp lánh tít trong. Tối quá, không nhìn rõ.` |
+| `map.route.crew_road.name` / `.note` (`[PROPOSAL]`) | `The road to the canyon` / `Đường ra hẻm` | `Follow the posts. Kenji planted them, crooked.` | `Cứ theo mấy cây cọc. Kenji cắm đấy, xiêu xiêu vẹo vẹo.` |
+| `map.canyon.bridge.name` / `.note` (`[PROPOSAL]`) | `Kenji's bridge` / `Cầu của Kenji` | `It holds. Mostly.` | `Vẫn trụ được. Phần lớn là vậy.` |
