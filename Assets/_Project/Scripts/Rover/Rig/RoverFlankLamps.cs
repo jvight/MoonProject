@@ -16,7 +16,7 @@ namespace MoonProject.Rover
     [DisallowMultipleComponent]
     public sealed class RoverFlankLamps : MonoBehaviour
     {
-        private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
+        private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
 
         [Tooltip("Rig tuning (its Flank Lamps settings).")]
         [SerializeField] private RoverRigTuning _tuning;
@@ -166,11 +166,8 @@ namespace MoonProject.Rover
             }
         }
 
-        private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
-
         private void Apply(int socket, float level)
         {
-            _block.SetVector(EmissionColorId, new Vector4(level, level, level, 1f));
             _block.SetFloat(EmissionStrengthId, Mathf.Clamp01(level));
             _glasses[socket].SetPropertyBlock(_block);
         }

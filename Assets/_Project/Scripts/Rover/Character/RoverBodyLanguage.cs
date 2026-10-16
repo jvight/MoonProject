@@ -906,11 +906,14 @@ namespace MoonProject.Rover
 
         private void SetGlow(Renderer target, float intensity)
         {
-            SetGlow(target, new Color(intensity, intensity, intensity, 1f));
+            _glowBlock.Clear();
+            _glowBlock.SetFloat(EmissionStrengthId, Mathf.Clamp01(intensity));
+            target.SetPropertyBlock(_glowBlock);
         }
 
         private void SetGlow(Renderer target, Color emission)
         {
+            _glowBlock.Clear();
             float peak = Mathf.Max(emission.r, Mathf.Max(emission.g, emission.b));
             _glowBlock.SetFloat(EmissionStrengthId, Mathf.Clamp01(peak));
             _glowBlock.SetVector(EmissionColorId, emission);
