@@ -119,12 +119,13 @@ namespace MoonProject.UI.PlayModeTests
             CargoScreen cargo = _rig.Ui.Cargo;
             Assert.IsTrue(cargo.IsOpen);
             Assert.AreEqual(1f, Time.timeScale, "the game does not pause");
-            Assert.AreEqual(8, cargo.HoldCellCount, "a cell for every slot of 07's hold");
+            Assert.AreEqual(8, cargo.HoldCellCount, "a cell for every unlocked slot of 07's hold");
+            Assert.AreEqual(16, cargo.View.LockedCellCount, "16 locked cells complete the 4x6 grid");
             Assert.AreEqual(Text(UiKeys.PickupName("Part_TowerCoil")), cargo.HoldPartText(3),
                 "the carried story part shows in its hold slot with its localized name");
             Assert.IsFalse(cargo.HoldCell(3).ClassListContains(CargoScreen.EmptyClass));
+            Assert.IsTrue(cargo.HoldCell(8).ClassListContains(CargoScreen.LockedClass));
             StringAssert.Contains("3", cargo.WaitingText);
-            Assert.AreEqual(string.Format(Text(UiKeys.CargoSummary), 4, 8), cargo.SummaryText);
 
             yield return Tap(keyboard.tabKey);
             yield return Seconds(0.6f);
@@ -203,7 +204,9 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(0.5f);
             CargoScreen cargo = _rig.Ui.Cargo;
             Assert.IsFalse(cargo.IsTransferView, "away from home Tab is the hold beside 07's sockets");
-            Assert.IsFalse(cargo.HoldCell(0).focusable, "no slot is a button away from the dock");
+            Submit(cargo.HoldCell(0));
+            yield return Seconds(0.1f);
+            Assert.AreEqual(0, _rig.Fakes.Transfer.Moves, "no stack transfers away from the dock");
             Vector2 fieldPanelSize = cargo.PanelRect.size;
             Assert.Greater(fieldPanelSize.x, 0f);
             Assert.Greater(fieldPanelSize.y, 0f);
@@ -259,37 +262,35 @@ namespace MoonProject.UI.PlayModeTests
             yield return Tap(keyboard.tabKey);
             yield return Seconds(0.6f);
             CargoScreen cargo = _rig.Ui.Cargo;
-            EquipmentPage seven = cargo.Seven;
+            FaceInventoryView view = cargo.View;
             Assert.AreEqual(8, cargo.HoldCellCount, "Tab opens one panel with both the hold grid and 07's sockets");
-            Assert.AreEqual(DisplayStyle.Flex, seven.SocketElement(RoverSocket.Tether).resolvedStyle.display,
-                "07's sockets are shown in the same panel");
+            Assert.AreEqual(DisplayStyle.Flex, view.SocketElement(RoverSocket.Tether).resolvedStyle.display,
+                "07's orbital sockets are shown in the same panel");
+            Assert.IsTrue(view.SocketElement(RoverSocket.Tether).ClassListContains(CargoScreen.FittedClass));
+            Assert.IsFalse(view.SocketElement(RoverSocket.Belly).ClassListContains(CargoScreen.FittedClass));
             Vector2 fieldPanelSize = cargo.PanelRect.size;
-            Assert.AreEqual(Text("ui.can.tether.verb"), seven.SocketName(RoverSocket.Tether), "a fitted part carries its name");
-            Assert.AreEqual(Text("ui.can.hover_jump.verb"), seven.SocketName(RoverSocket.Belly),
-                "a crafted part's socket is named, with the bay icon");
-            Assert.IsTrue(seven.SocketShowsBay(RoverSocket.Belly));
-            Assert.IsFalse(seven.SocketShowsBay(RoverSocket.Tether), "a fitted socket needs no bay icon");
-            Assert.AreEqual(string.Empty, seven.SocketName(RoverSocket.Flanks), "unknown sockets are dim and unnamed");
-            Assert.AreEqual(1, seven.CardCount, "the crafted part waits in the row");
-            Assert.AreEqual(Text("ui.can.hover_jump.verb"), seven.CardName(0));
-            Assert.IsTrue(seven.CardElement(0).ClassListContains(EquipmentPage.AwayClass),
-                "away from the bay it shows the bay icon");
+            Assert.AreEqual(1.5f, fieldPanelSize.x / fieldPanelSize.y, 0.02f, "1.5:1 aspect ratio");
 
-            Submit(seven.CardElement(0));
+            int kitCell = view.WaitingKitCellIndex(0);
+            Assert.GreaterOrEqual(kitCell, 0, "the crafted kit waits in an unlocked hold cell");
+            Assert.AreEqual(Text("ui.can.hover_jump.verb"), view.HoldItemName(kitCell));
+
+            Submit(view.WaitingKitCellElement(0));
             yield return Seconds(0.3f);
-            Assert.AreEqual(0, _rig.Fakes.Equipment.Fits, "away from the bay nothing happens");
-            Assert.IsTrue(_rig.Ui.Cargo.IsOpen, "and nothing pops up or closes");
+            Assert.AreEqual(0, _rig.Fakes.Equipment.Fits, "away from the bay nothing fits");
+            Assert.IsTrue(_rig.Ui.Cargo.IsOpen, "and the screen stays open with a bottom toast");
+            Assert.AreEqual(Text(UiKeys.CargoFitAtBay), view.ToastText);
 
-            seven.CardElement(0).Focus();
+            view.FocusHoldCell(kitCell);
             yield return null;
-            StringAssert.StartsWith(Text("ui.can.hover_jump.verb"), seven.TooltipText,
-                "a tooltip is the part's name and its key");
+            Assert.AreEqual(Text("ui.can.hover_jump.verb"), view.TooltipNameText);
+            Assert.LessOrEqual(view.TooltipDescText.Length, FaceInventoryView.MaxTooltipDescriptionChars);
 
             _rig.Fakes.Equipment.AtStation = true;
             yield return Seconds(0.3f);
             Assert.AreEqual(fieldPanelSize.x, cargo.PanelRect.width, 0.5f);
             Assert.AreEqual(fieldPanelSize.y, cargo.PanelRect.height, 0.5f);
-            Submit(seven.CardElement(0));
+            Submit(view.WaitingKitCellElement(0));
             yield return Seconds(0.8f);
             Assert.AreEqual(1, _rig.Fakes.Equipment.Fits, "at the bay one press fits the part");
             Assert.IsFalse(_rig.Ui.Cargo.IsOpen, "the screen eases away for the install");
@@ -312,13 +313,20 @@ namespace MoonProject.UI.PlayModeTests
 
             yield return Tap(keyboard.tabKey);
             yield return Seconds(0.6f);
-            EquipmentPage seven = _rig.Ui.Cargo.Seven;
-            Submit(seven.SocketElement(RoverSocket.Tether));
+            FaceInventoryView view = _rig.Ui.Cargo.View;
+            Submit(view.SocketElement(RoverSocket.Tether));
             yield return Seconds(0.3f);
             Assert.AreEqual(1, _rig.Fakes.Equipment.Removals, "Submit on a fitted part takes it off at the bay");
             CollectionAssert.Contains(cues, UiCueKind.PartDrop, "and it ticks");
 
-            Submit(seven.CardElement(0));
+            int kitCell = view.WaitingKitCellIndex(0);
+            Vector2 bellyCenter = FaceInventoryView.GetOrbitalSocketReferenceCenter(
+                FaceInventoryView.OrbitalIndexOf(RoverSocket.Belly));
+            view.BeginKitDrag(kitCell, bellyCenter, RoverSocket.Belly);
+            Assert.IsTrue(view.IsDraggingKit);
+            Assert.IsTrue(view.IsSocketLeaderCyan(RoverSocket.Belly), "only the active target socket leader is cyan");
+            Assert.IsFalse(view.IsSocketLeaderCyan(RoverSocket.Lamp), "other leaders stay faint");
+            view.CompleteKitDrag(RoverSocket.Belly);
             yield return Seconds(0.8f);
             Assert.AreEqual(1, _rig.Fakes.Equipment.Fits);
             Assert.IsFalse(_rig.Ui.Cargo.IsOpen, "the screen eases away for the install");
@@ -329,14 +337,12 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator SevenTab_InEnglishAndVietnamese_At1080pAnd720p_DrawingIsCenteredAndNoLabelOverlapsOrLeavesFrame()
+        public IEnumerator SevenTab_InEnglishAndVietnamese_At1080pAnd720p_TiersBadgesAndOrbitalSocketsFitWithoutOverlap()
         {
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             _rig = UiTestRig.Boot(_controls, _slot, 1920, 1080);
             _rig.Ui.Ledger.RecordHoldBooted();
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            _rig.Fakes.Hold.Set(3, new MaterialSlot(SalvageMaterial.Metal, 4, 4),
-                new MaterialSlot(SalvageMaterial.Wiring, 3, 4));
             foreach (RoverKitPiece fitted in new[]
                      {
                          RoverKitPiece.TetherRing, RoverKitPiece.SolarCell, RoverKitPiece.LampBar,
@@ -347,14 +353,30 @@ namespace MoonProject.UI.PlayModeTests
                 _rig.Fakes.Equipment.Fit(fitted);
             }
 
-            _rig.Fakes.Equipment.Craft(RoverKitPiece.HoverCoils);
-            _rig.Fakes.Equipment.Craft(RoverKitPiece.FocusLens);
             _rig.Fakes.Equipment.AtStation = false;
             yield return Seconds(0.2f);
             yield return Tap(keyboard.tabKey);
             yield return Seconds(0.5f);
 
-            EquipmentPage seven = _rig.Ui.Cargo.Seven;
+            FaceInventoryView view = _rig.Ui.Cargo.View;
+            int[] tiers = { 8, 16, 24 };
+            foreach (int tier in tiers)
+            {
+                _rig.Fakes.Hold.Set(tier - 3,
+                    new MaterialSlot(SalvageMaterial.Metal, 4, 4),
+                    new MaterialSlot(SalvageMaterial.Wiring, 1, 4),
+                    new MaterialSlot(SalvageMaterial.Ilmenite, 12, 12));
+                _rig.Ui.Cargo.MarkDirty();
+                yield return null;
+
+                Assert.AreEqual(tier, view.UnlockedCellCount);
+                Assert.AreEqual(24 - tier, view.LockedCellCount);
+                Assert.AreEqual(DisplayStyle.Flex, view.HoldBadge(0).resolvedStyle.display, "stack >= 2 shows badge");
+                Assert.AreEqual("4", view.HoldBadge(0).text);
+                Assert.AreEqual(DisplayStyle.None, view.HoldBadge(1).resolvedStyle.display, "stack == 1 hides badge");
+                Assert.AreEqual("12", view.HoldBadge(2).text);
+            }
+
             (int w, int h)[] sizes = { (1920, 1080), (1280, 720) };
             string[] languages = { "en", "vi" };
             foreach (string lang in languages)
@@ -366,47 +388,23 @@ namespace MoonProject.UI.PlayModeTests
                     yield return null;
                     yield return null;
 
-                    Rect frame = seven.PortraitElement.worldBound;
-                    Rect localDrawing = seven.DrawingBounds;
-                    var worldDrawing = new Rect(frame.x + localDrawing.x, frame.y + localDrawing.y,
-                        localDrawing.width, localDrawing.height);
-                    float widthShare = worldDrawing.width / frame.width;
-                    Assert.That(widthShare, Is.InRange(0.54f, 0.60f),
-                        $"{lang} {w}x{h}: drawing width share {widthShare:P1} outside 55-60%");
-                    Assert.GreaterOrEqual(worldDrawing.xMin, frame.xMin - 1f, $"{lang} {w}x{h}: drawing left out");
-                    Assert.LessOrEqual(worldDrawing.xMax, frame.xMax + 1f, $"{lang} {w}x{h}: drawing right out");
-
-                    for (int i = 0; i < RoverDiagramData.SocketCount; i++)
+                    Rect panel = _rig.Ui.Cargo.PanelRect;
+                    Assert.AreEqual(1.5f, panel.width / panel.height, 0.02f, $"{lang} {w}x{h}: 1.5:1 panel");
+                    for (int i = 0; i < FaceInventoryView.OrbitalSocketCount; i++)
                     {
-                        var socket = (RoverSocket)i;
-                        Label label = seven.SocketLabelElement(socket);
-                        if (!ScreenFit.IsShown(label) || string.IsNullOrEmpty(label.text))
+                        RoverSocket socket = FaceInventoryView.OrbitalSockets[i];
+                        VisualElement bubble = view.SocketElement(socket);
+                        Rect box = bubble.worldBound;
+                        Assert.GreaterOrEqual(box.xMin, panel.xMin + panel.width * 0.4f,
+                            $"{lang} {w}x{h}: {socket} stays in right pane");
+                        Assert.LessOrEqual(box.xMax, panel.xMax + 1f);
+                        Assert.GreaterOrEqual(box.yMin, panel.yMin - 1f);
+                        Assert.LessOrEqual(box.yMax, panel.yMax + 1f);
+                        for (int j = i + 1; j < FaceInventoryView.OrbitalSocketCount; j++)
                         {
-                            continue;
-                        }
-
-                        Rect box = label.worldBound;
-                        Assert.GreaterOrEqual(box.xMin, frame.xMin - 1f,
-                            $"{lang} {w}x{h}: {socket} '{label.text}' leaves left of frame");
-                        Assert.GreaterOrEqual(box.yMin, frame.yMin - 1f,
-                            $"{lang} {w}x{h}: {socket} '{label.text}' leaves top of frame");
-                        Assert.LessOrEqual(box.xMax, frame.xMax + 1f,
-                            $"{lang} {w}x{h}: {socket} '{label.text}' leaves right of frame");
-                        Assert.LessOrEqual(box.yMax, frame.yMax + 1f,
-                            $"{lang} {w}x{h}: {socket} '{label.text}' leaves bottom of frame");
-                        Assert.IsFalse(box.Overlaps(worldDrawing),
-                            $"{lang} {w}x{h}: {socket} '{label.text}' {box} overlaps drawing {worldDrawing}");
-
-                        for (int j = i + 1; j < RoverDiagramData.SocketCount; j++)
-                        {
-                            Label other = seven.SocketLabelElement((RoverSocket)j);
-                            if (!ScreenFit.IsShown(other) || string.IsNullOrEmpty(other.text))
-                            {
-                                continue;
-                            }
-
+                            VisualElement other = view.SocketElement(FaceInventoryView.OrbitalSockets[j]);
                             Assert.IsFalse(box.Overlaps(other.worldBound),
-                                $"{lang} {w}x{h}: {socket} '{label.text}' overlaps {(RoverSocket)j} '{other.text}'");
+                                $"{lang} {w}x{h}: {socket} bubble overlaps {FaceInventoryView.OrbitalSockets[j]}");
                         }
                     }
                 }

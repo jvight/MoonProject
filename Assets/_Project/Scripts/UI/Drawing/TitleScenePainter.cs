@@ -25,11 +25,7 @@ namespace MoonProject.UI
         private float _offsetX;
         private float _width;
         private float _height;
-        private float _originX;
-        private float _originY;
         private float _roverPxScale;
-        private float _bodyPitchCos = 1f;
-        private float _bodyPitchSin;
         private float _trailMultiplier = 1f;
 
         public TitleScenePainter(VisualElement element, TitleSettings settings) : base(element)
@@ -522,20 +518,6 @@ namespace MoonProject.UI
             StrokeArc(LmPt(o, r, u, sc, 0f, 24f), 2.0f * sc, 0f, Mathf.PI * 2f, main, 1.3f, a, 10, glow);
         }
 
-        // Converts 07 body-frame canvas coordinates (px, py where py is negative upward, at 82px/m scale) to screen space.
-        private Vector2 BP(float px, float py)
-        {
-            float rx = px * _bodyPitchCos - py * _bodyPitchSin;
-            float ry = px * _bodyPitchSin + py * _bodyPitchCos;
-            return new Vector2(_originX + rx * _roverPxScale, _originY + ry * _roverPxScale);
-        }
-
-        // Converts 07 body-frame meter coordinates (mx, my where my is negative upward) to screen space.
-        private Vector2 BM(float mx, float my)
-        {
-            return BP(mx * RefRoverScale, my * RefRoverScale);
-        }
-
         private void PaintRover07()
         {
             Vector2 moonCenter = Map(_state.MoonCenter.x, _state.MoonCenter.y);
@@ -544,325 +526,36 @@ namespace MoonProject.UI
             _roverPxScale = roverScaleMetersToPx / RefRoverScale;
 
             float wheelR = _settings.WheelRadius * roverScaleMetersToPx;
-            float rimR = _settings.WheelRimRadius * roverScaleMetersToPx;
             float halfWheelbase = _settings.WheelbaseHalf * roverScaleMetersToPx;
             float moonDropAtAxle = moonR * (1f - Mathf.Cos(halfWheelbase / moonR));
 
             float bumpRearPx = _state.BumpRear * roverScaleMetersToPx;
-            float bumpFrontPx = _state.BumpFront * roverScaleMetersToPx;
             float crownX = moonCenter.x;
             float crownY = moonCenter.y - moonR;
             float wyRear = (crownY + moonDropAtAxle) - wheelR + bumpRearPx;
-            float wyFront = (crownY + moonDropAtAxle) - wheelR + bumpFrontPx;
-            float bodyBobPx = _state.BodyBob * roverScaleMetersToPx;
 
-            _originX = crownX;
-            _originY = crownY + bodyBobPx;
-            _bodyPitchCos = Mathf.Cos(_state.BodyPitch);
-            _bodyPitchSin = Mathf.Sin(_state.BodyPitch);
-            float wheelAngle = _state.WheelAngleRadians;
-
-            // 1. Far-side wheels (Wheel_FL and Wheel_RL, recessed in 3/4 schematic depth).
-            PaintWheel(new Vector2(_originX - halfWheelbase + 6f * _roverPxScale, wyRear - 4f * _roverPxScale),
-                wheelR * _settings.FarWheelScale, rimR * _settings.FarWheelScale, wheelAngle + 0.3f, true);
-            PaintWheel(new Vector2(_originX + halfWheelbase + 6f * _roverPxScale, wyFront - 4f * _roverPxScale),
-                wheelR * _settings.FarWheelScale, rimR * _settings.FarWheelScale, wheelAngle + 0.3f, true);
-
-            // 2. Suspension struts connecting chassis to front and rear axles.
-            float rearAxleLocalY = -_settings.WheelRadius * RefRoverScale + (_state.BumpRear - _state.BodyBob) * RefRoverScale;
-            float frontAxleLocalY = -_settings.WheelRadius * RefRoverScale + (_state.BumpFront - _state.BodyBob) * RefRoverScale;
-            float wbRef = _settings.WheelbaseHalf * RefRoverScale;
-            StrokeSegment(BP(-26f, -0.46f * RefRoverScale), BP(-wbRef, rearAxleLocalY), _settings.Amber, 2.0f, 0.90f, true);
-            StrokeSegment(BP(-12f, -0.40f * RefRoverScale), BP(-wbRef, rearAxleLocalY), _settings.Amber, 2.0f, 0.90f, false);
-            StrokeSegment(BP(26f, -0.46f * RefRoverScale), BP(wbRef, frontAxleLocalY), _settings.Amber, 2.0f, 0.90f, true);
-            StrokeSegment(BP(12f, -0.40f * RefRoverScale), BP(wbRef, frontAxleLocalY), _settings.Amber, 2.0f, 0.90f, false);
-
-            // 3. Front lower dig scoop & rear tow hook.
-            PaintScoopAndTowHook();
-
-            // 4. Rounded Beetle-Carapace Body Tub, arched fenders, beltline seams, hatch & rear battery bar.
-            PaintCarapaceAndBattery(wbRef);
-
-            // 5. Chest utility cutter turret, headlamps + beam cone, and roof solar wing.
-            PaintFrontRigAndSolar();
-
-            // 6. Rear whip antenna, diamond sonar loop & Morse beacon, neck bellows & CRT monitor head.
-            PaintAntennaAndHead();
-
-            // 7. Near-side wheels (Wheel_RL and Wheel_FR) in foreground & regolith dust ticks.
-            PaintWheel(new Vector2(_originX - halfWheelbase, wyRear), wheelR, rimR, wheelAngle, false);
-            PaintWheel(new Vector2(_originX + halfWheelbase, wyFront), wheelR, rimR, wheelAngle + 0.5f, false);
-            PaintRegolithDust(_originX - halfWheelbase, wyRear + wheelR);
-        }
-
-        private void PaintScoopAndTowHook()
-        {
-            float nodCos = Mathf.Cos(_state.ScoopNod);
-            float nodSin = Mathf.Sin(_state.ScoopNod);
-            Vector2 SP(float dx, float dy)
+            var pose = new RoverPose
             {
-                float rx = 0.50f * RefRoverScale + dx * nodCos - dy * nodSin;
-                float ry = -0.34f * RefRoverScale + dx * nodSin + dy * nodCos;
-                return BP(rx, ry);
-            }
+                WheelAngle = _state.WheelAngleRadians,
+                Bob = _state.BodyBob,
+                Pitch = _state.BodyPitch,
+                BumpRear = _state.BumpRear,
+                BumpFront = _state.BumpFront,
+                MoonDropAtAxle = moonDropAtAxle,
+                ScoopNod = _state.ScoopNod,
+                SolarTilt = _state.SolarTilt,
+                AntennaSway = _state.AntennaSway,
+                HeadNod = _state.HeadNod,
+                MorseOn = _state.MorseLit,
+                EyeBlink = _state.EyeBlinking,
+                DrawGroundArc = false,
+                AlwaysDrawHeadlampBeam = true,
+                InstalledSocketsMask = 0u,
+            };
 
-            StrokeSegment(SP(0f, 0f), SP(16f, 12f), _settings.Amber, 1.9f, 0.92f, true);
-            StrokeSegment(SP(2f, -5f), SP(18f, 6f), _settings.Amber, 1.9f, 0.92f, false);
-            FillAndStrokeQuad(SP(15f, 3f), SP(29f, 6f), SP(34f, 15f), SP(16f, 15f),
-                WithAlpha(_settings.BgCorner, 0.72f), _settings.Amber, 1.9f, 0.95f, true);
-            StrokeSegment(SP(34f, 15f), SP(38f, 14f), _settings.AmberHi, 1.9f, 0.96f, true);
-
-            // Rear tow hook.
-            StrokeSegment(BM(-0.71f, -0.44f), BM(-0.80f, -0.42f), _settings.Amber, 1.8f, 0.88f, true);
-            StrokeArc(BM(-0.82f, -0.39f), 4f * _roverPxScale, -Mathf.PI * 0.5f, Mathf.PI * 0.8f, _settings.Amber, 1.8f,
-                0.88f, 10, true);
-        }
-
-        private void PaintCarapaceAndBattery(float wbRef)
-        {
-            // Rounded Beetle-Carapace Body Tub (with quadratic curves matching anim.html lines 915-928).
-            _painter.fillColor = WithAlpha(_settings.BgCorner, 0.72f);
-            _painter.BeginPath();
-            _painter.MoveTo(BM(-0.68f, -0.42f));
-            _painter.LineTo(BM(-0.74f, -0.56f));
-            AppendQuadraticTo(BM(-0.74f, -0.56f), BM(-0.72f, -0.86f), BM(-0.46f, -0.94f), 10);
-            _painter.LineTo(BM(0.32f, -0.96f));
-            AppendQuadraticTo(BM(0.32f, -0.96f), BM(0.64f, -0.92f), BM(0.72f, -0.64f), 10);
-            _painter.LineTo(BM(0.66f, -0.42f));
-            _painter.LineTo(BM(0.22f, -0.42f));
-            _painter.LineTo(BM(-0.22f, -0.42f));
-            _painter.ClosePath();
-            _painter.Fill();
-            _painter.strokeColor = WithAlpha(_settings.AmberHi, 0.22f);
-            _painter.lineWidth = 6.8f * _scale;
-            _painter.Stroke();
-            _painter.strokeColor = WithAlpha(_settings.AmberHi, 0.96f);
-            _painter.lineWidth = 2.3f * _scale;
-            _painter.Stroke();
-
-            // Arched wheel fenders (front & rear flares).
-            float wheelRefR = _settings.WheelRadius * RefRoverScale;
-            PaintFenderArc(-wbRef, -wheelRefR, wheelRefR + 7f);
-            PaintFenderArc(wbRef, -wheelRefR, wheelRefR + 7f);
-
-            // Horizontal beltline seams.
-            StrokeSegment(BM(-0.72f, -0.61f), BM(0.70f, -0.61f), _settings.Amber, 1.5f, 0.88f, true);
-            StrokeSegment(BM(-0.69f, -0.55f), BM(0.67f, -0.55f), _settings.Amber, 1.5f, 0.88f, false);
-
-            // Side inspection hatch & louver vents on carapace.
-            StrokeQuad(BM(-0.22f, -0.84f), BM(0.20f, -0.84f), BM(0.20f, -0.65f), BM(-0.22f, -0.65f),
-                _settings.AmberDim, 1.2f, 0.85f, false);
-            for (int i = 0; i < 4; i++)
-            {
-                float lv = -0.48f + i * 0.05f;
-                StrokeSegment(BM(lv, -0.82f), BM(lv, -0.68f), _settings.AmberDim, 1.2f, 0.82f, false);
-            }
-
-            // Rear 6-segment battery bar indicator.
-            for (int seg = 0; seg < 6; seg++)
-            {
-                float sy = -0.66f - seg * 0.036f;
-                StrokeSegment(BM(-0.62f, sy), BM(-0.54f, sy), _settings.AmberHi, 1.4f, 0.92f, true);
-            }
-        }
-
-        private void PaintFenderArc(float cx, float cy, float r)
-        {
-            const int steps = 16;
-            _painter.strokeColor = WithAlpha(_settings.Amber, 0.90f);
-            _painter.lineWidth = 2.0f * _scale;
-            _painter.BeginPath();
-            for (int i = 0; i <= steps; i++)
-            {
-                float a = Mathf.PI * 1.12f + (Mathf.PI * 0.76f * i) / steps;
-                Vector2 pt = BP(cx + Mathf.Cos(a) * r, cy + Mathf.Sin(a) * r);
-                if (i == 0)
-                {
-                    _painter.MoveTo(pt);
-                }
-                else
-                {
-                    _painter.LineTo(pt);
-                }
-            }
-
-            _painter.Stroke();
-        }
-
-        private void PaintFrontRigAndSolar()
-        {
-            // Chest utility cutter turret & twin front headlamps at (0.70*S, -0.62*S).
-            Vector2 lampCenter = BM(0.70f, -0.62f);
-            Shapes.Disc(_painter, lampCenter, 4.5f * _roverPxScale, _settings.Cream);
-            StrokeArc(lampCenter, 4.5f * _roverPxScale, -Mathf.PI * 0.5f, Mathf.PI * 0.5f, _settings.AmberHi, 1.6f,
-                0.96f, 12, true);
-
-            // Soft headlamp beam cone ahead of 07 (3 layered alpha slices matching beamGrad).
-            Vector2 b0 = BM(0.73f, -0.64f);
-            Vector2 b1 = BM(0.73f, -0.59f);
-            for (int slice = 1; slice <= 3; slice++)
-            {
-                float frac = slice / 3f;
-                Vector2 topFar = BM(Mathf.Lerp(0.73f, 1.58f, frac), Mathf.Lerp(-0.64f, -0.52f, frac));
-                Vector2 botFar = BM(Mathf.Lerp(0.73f, 1.48f, frac), Mathf.Lerp(-0.59f, -0.22f, frac));
-                _painter.fillColor = WithAlpha(_settings.AmberHi, (4 - slice) * 0.045f);
-                _painter.BeginPath();
-                _painter.MoveTo(b0);
-                _painter.LineTo(topFar);
-                _painter.LineTo(botFar);
-                _painter.LineTo(b1);
-                _painter.ClosePath();
-                _painter.Fill();
-            }
-
-            // Roof Solar Panel Wing (piv_solar_wing at (-0.08*S, -0.96*S), tilted -0.11 rad).
-            float wingAngle = -0.11f + _state.SolarTilt;
-            float wCos = Mathf.Cos(wingAngle);
-            float wSin = Mathf.Sin(wingAngle);
-            Vector2 WP(float dx, float dy)
-            {
-                float rx = -0.08f * RefRoverScale + dx * wCos - dy * wSin;
-                float ry = -0.96f * RefRoverScale + dx * wSin + dy * wCos;
-                return BP(rx, ry);
-            }
-
-            StrokeSegment(WP(0f, 0f), WP(0f, -6f), _settings.Amber, 1.8f, 0.92f, false);
-            StrokeQuad(WP(-0.32f * RefRoverScale, -6f), WP(0.24f * RefRoverScale, -6f),
-                WP(0.20f * RefRoverScale, -11f), WP(-0.36f * RefRoverScale, -11f), _settings.Amber, 1.8f, 0.92f, true);
-        }
-
-        private void PaintAntennaAndHead()
-        {
-            // Rear Whip Antenna with Diamond Sonar Loop at (-0.46*S, -0.92*S).
-            float aCos = Mathf.Cos(_state.AntennaSway);
-            float aSin = Mathf.Sin(_state.AntennaSway);
-            Vector2 AP(float dx, float dy)
-            {
-                float rx = -0.46f * RefRoverScale + dx * aCos - dy * aSin;
-                float ry = -0.92f * RefRoverScale + dx * aSin + dy * aCos;
-                return BP(rx, ry);
-            }
-
-            StrokeSegment(AP(0f, 0f), AP(0f, -8f), _settings.Amber, 1.8f, 0.92f, false);
-            StrokeQuadratic(AP(0f, -8f), AP(-4f, -32f), AP(-8f, -56f), _settings.Amber, 1.5f, 0.92f, true);
-            StrokeQuad(AP(-4f, -30f), AP(3f, -37f), AP(-5f, -44f), AP(-12f, -37f), _settings.AmberHi, 1.4f, 0.92f,
-                true);
-
-            // Glowing beacon tip blinking 07 Morse call-sign (· · · —).
-            Vector2 antTip = AP(-8f, -58f);
-            bool lit = _state.MorseLit;
-            Color tipCol = lit ? _settings.Cyan : _settings.AmberHi;
-            Shapes.Disc(_painter, antTip, (lit ? 3.2f : 2.2f) * _roverPxScale, tipCol);
-            if (lit)
-            {
-                Shapes.Disc(_painter, antTip, 6.2f * _roverPxScale, WithAlpha(_settings.Cyan, 0.24f));
-                StrokeArc(antTip, 7.0f * _roverPxScale, 0f, Mathf.PI * 2f, _settings.Cyan, 1.2f, 0.55f, 16, false);
-            }
-
-            // Ribbed Rubber Neck Bellows (3 horizontal rounded plates).
-            for (int r = 0; r < 3; r++)
-            {
-                float ry = (-0.96f - r * 0.04f) * RefRoverScale;
-                StrokeQuad(BP(0.04f * RefRoverScale, ry - 3f), BP(0.22f * RefRoverScale, ry - 3f),
-                    BP(0.22f * RefRoverScale, ry + 0.2f), BP(0.04f * RefRoverScale, ry + 0.2f),
-                    _settings.Amber, 1.5f, 0.88f, false);
-            }
-
-            // CRT Monitor Head at (0.15*S, -1.06*S) rotated by HeadNod.
-            float hCos = Mathf.Cos(_state.HeadNod);
-            float hSin = Mathf.Sin(_state.HeadNod);
-            Vector2 HP(float mx, float my)
-            {
-                float dx = mx * RefRoverScale;
-                float dy = my * RefRoverScale;
-                float rx = 0.15f * RefRoverScale + dx * hCos - dy * hSin;
-                float ry = -1.06f * RefRoverScale + dx * hSin + dy * hCos;
-                return BP(rx, ry);
-            }
-
-            _painter.fillColor = WithAlpha(_settings.BgCorner, 0.72f);
-            _painter.BeginPath();
-            _painter.MoveTo(HP(-0.24f, -0.04f));
-            _painter.LineTo(HP(-0.28f, -0.34f));
-            AppendQuadraticTo(HP(-0.28f, -0.34f), HP(-0.26f, -0.45f), HP(-0.10f, -0.47f), 8);
-            _painter.LineTo(HP(0.24f, -0.47f));
-            _painter.LineTo(HP(0.31f, -0.43f));
-            _painter.LineTo(HP(0.28f, -0.02f));
-            _painter.LineTo(HP(-0.18f, -0.02f));
-            _painter.ClosePath();
-            _painter.Fill();
-            _painter.strokeColor = WithAlpha(_settings.AmberHi, 0.22f);
-            _painter.lineWidth = 6.4f * _scale;
-            _painter.Stroke();
-            _painter.strokeColor = WithAlpha(_settings.AmberHi, 0.96f);
-            _painter.lineWidth = 2.2f * _scale;
-            _painter.Stroke();
-
-            // Inner recessed screen bezel line.
-            StrokeQuadratic(HP(0.24f, -0.41f), HP(0.28f, -0.22f), HP(0.24f, -0.06f), _settings.Amber, 1.5f, 0.90f,
-                true);
-
-            // Glowing phosphor eye on the slightly turned screen face (blinks once every 6.5s).
-            if (_state.EyeBlinking)
-            {
-                StrokeSegment(HP(0.17f, -0.24f), HP(0.24f, -0.24f), _settings.Cream, 1.8f, 0.95f, false);
-            }
-            else
-            {
-                Vector2 eyeCenter = HP(0.21f, -0.25f);
-                FillEllipse(eyeCenter, 3.0f * _roverPxScale, 5.2f * _roverPxScale, _settings.Cream, 0.98f);
-                StrokeEllipse(eyeCenter, 3.0f * _roverPxScale, 5.2f * _roverPxScale, 0f, 0f, Mathf.PI * 2f,
-                    _settings.AmberHi, 1.4f, 0.90f, 14, true);
-            }
-
-            // Cheek Brass Lens Pod (circular r = 0.115*S and inner r = 0.065*S + cyan glint).
-            Vector2 podCenter = HP(-0.02f, -0.24f);
-            Shapes.Disc(_painter, podCenter, 0.115f * RefRoverScale * _roverPxScale, WithAlpha(_settings.BgCorner, 0.85f));
-            StrokeArc(podCenter, 0.115f * RefRoverScale * _roverPxScale, 0f, Mathf.PI * 2f, _settings.Amber, 1.7f,
-                0.92f, 20, true);
-            StrokeArc(podCenter, 0.065f * RefRoverScale * _roverPxScale, 0f, Mathf.PI * 2f, _settings.AmberHi, 1.2f,
-                0.90f, 16, false);
-            Shapes.Disc(_painter, HP(-0.01f, -0.25f), 1.8f * _roverPxScale, _settings.Cyan);
-        }
-
-        private void PaintWheel(Vector2 center, float radius, float rimRadius, float wheelAngle, bool isFarSide)
-        {
-            float alpha = isFarSide ? _settings.FarWheelAlpha : 1.0f;
-            bool glow = !isFarSide;
-
-            if (!isFarSide)
-            {
-                Shapes.Disc(_painter, center, radius, WithAlpha(_settings.BgCorner, 0.82f));
-            }
-
-            StrokeArc(center, radius, 0f, Mathf.PI * 2f, isFarSide ? _settings.AmberDim : _settings.AmberHi,
-                isFarSide ? 1.6f : 2.3f, 0.95f * alpha, 32, glow);
-            StrokeArc(center, radius * 0.80f, 0f, Mathf.PI * 2f, _settings.Amber, 1.2f, 0.80f * alpha, 24, false);
-            StrokeArc(center, rimRadius, 0f, Mathf.PI * 2f, _settings.Amber, 1.6f, 0.90f * alpha, 20, glow);
-
-            int lugs = _settings.WheelLugCount;
-            Color lugCol = isFarSide ? _settings.AmberDim : _settings.Amber;
-            for (int i = 0; i < lugs; i++)
-            {
-                float a = wheelAngle + (i * Mathf.PI * 2f) / lugs;
-                Vector2 p0 = center + new Vector2(Mathf.Cos(a) * (radius - 1.5f * _roverPxScale),
-                    Mathf.Sin(a) * (radius - 1.5f * _roverPxScale));
-                Vector2 p1 = center + new Vector2(Mathf.Cos(a) * (radius + 2.8f * _roverPxScale),
-                    Mathf.Sin(a) * (radius + 2.8f * _roverPxScale));
-                StrokeSegment(p0, p1, lugCol, 1.6f, 0.90f * alpha, false);
-            }
-
-            int spokes = _settings.WheelSpokeCount;
-            for (int i = 0; i < spokes; i++)
-            {
-                float a = wheelAngle + (i * Mathf.PI * 2f) / spokes;
-                Vector2 s0 = center + new Vector2(Mathf.Cos(a) * (5.0f * _roverPxScale),
-                    Mathf.Sin(a) * (5.0f * _roverPxScale));
-                Vector2 s1 = center + new Vector2(Mathf.Cos(a) * rimRadius, Mathf.Sin(a) * rimRadius);
-                StrokeSegment(s0, s1, _settings.Amber, 1.4f, 0.85f * alpha, false);
-            }
-
-            Shapes.Disc(_painter, center, 4.2f * _roverPxScale, WithAlpha(_settings.AmberHi, 0.95f * alpha));
+            RoverLineArtPainter.DrawRover07(_painter, new Vector2(crownX, crownY), roverScaleMetersToPx, in pose,
+                _settings);
+            PaintRegolithDust(crownX - halfWheelbase, wyRear + wheelR);
         }
 
         private void PaintRegolithDust(float rearWheelX, float groundY)

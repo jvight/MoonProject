@@ -1,0 +1,1725 @@
+using System;
+using UnityEngine;
+using UnityEngine.UIElements;
+using MoonProject.Core;
+using MoonProject.Core.Events;
+using MoonProject.Core.Input;
+
+namespace MoonProject.UI
+{
+    /// <summary>What occupies one cell in the 4x6 hold grid on <see cref="FaceInventoryView"/>.</summary>
+    public enum HoldCellKind
+    {
+        Empty = 0,
+        Locked = 1,
+        Material = 2,
+        StoryPart = 3,
+        WaitingKit = 4,
+    }
+
+    /// <summary>
+    /// The icon-first inventory and equipment screen (<c>FACE-INV view</c>, Variant A of <c>docs/design/screen-ui.md</c>
+    /// Round 2): a flat <c>1152x768</c> (1.5:1) two-pane CRT layout with the 4x6 hold grid (24 cells at max size, locked
+    /// cells as dotted outlines with padlocks) on the left and Rover 07 in side-3/4 line-art surrounded by 10 orbital
+    /// socket bubbles (<c>r = 31 px</c>) on the right (or home's shelves when docked).
+    /// </summary>
+    public sealed class FaceInventoryView
+    {
+        public const float ReferenceWidth = 1152f;
+        public const float ReferenceHeight = 768f;
+        public const float ReferenceAspect = ReferenceWidth / ReferenceHeight;
+
+        public const int GridColumns = 4;
+        public const int GridRows = 6;
+        public const int MaxHoldCells = GridColumns * GridRows;
+        public const int OrbitalSocketCount = 10;
+        public const int MaxShelfCells = 24;
+
+        public const float HoldGridX = 48f;
+        public const float HoldGridY = 58f;
+        public const float ShelfGridX = 504f;
+        public const float ShelfGridY = 58f;
+        public const float CellSize = 86f;
+        public const float CellGapX = 10f;
+        public const float CellGapY = 7f;
+        public const float DividerX = 474f;
+        public const float BubbleRadius = 31f;
+        public const float RoverOriginX = 804f;
+        public const float RoverOriginY = 456f;
+        public const float RoverScale = 154f;
+
+        public const int MaxTooltipDescriptionChars = 52;
+        private float ToastDurationSeconds => _settings.ToastDurationSeconds;
+
+        /// <summary>The 10 orbital sockets around 07 in clockwise elliptical order starting from Wing.</summary>
+        public static readonly RoverSocket[] OrbitalSockets =
+        {
+            RoverSocket.Wing,
+            RoverSocket.Cutter,
+            RoverSocket.Tether,
+            RoverSocket.Lamp,
+            RoverSocket.Flanks,
+            RoverSocket.Belly,
+            RoverSocket.Panniers,
+            RoverSocket.Hold,
+            RoverSocket.Deck,
+            RoverSocket.Back,
+        };
+
+        private static readonly Vector2[] OrbitalCenters =
+        {
+            new Vector2(756f, 132f), // Wing
+            new Vector2(944f, 152f), // Cutter
+            new Vector2(1044f, 246f), // Tether
+            new Vector2(1054f, 372f), // Lamp
+            new Vector2(1026f, 502f), // Flanks
+            new Vector2(894f, 594f), // Belly
+            new Vector2(732f, 594f), // Panniers
+            new Vector2(564f, 492f), // Hold
+            new Vector2(554f, 348f), // Deck
+            new Vector2(618f, 198f), // Back
+        };
+
+        // Two-colour amber CRT palette + cyan focus/drag accent read from CargoScreenSettings.
+        private Color32 BgCell => _settings.CellBackground;
+        private Color32 BgCellFocus => _settings.CellFocusBackground;
+        private Color32 BgPlate => _settings.PlateBackground;
+        private Color32 AmberBright => _settings.AmberBright;
+        private Color32 AmberText => _settings.AmberText;
+        private Color32 AmberDim => _settings.AmberDim;
+        private Color32 AmberFaint => _settings.AmberFaint;
+        private Color32 AmberMuted => _settings.AmberMuted;
+        private Color32 AmberLocked => _settings.AmberLocked;
+        private Color32 Cyan => _settings.CyanAccent;
+        private Color32 CyanDim => _settings.CyanDim;
+
+        private readonly VisualElement _panel;
+        private readonly VisualElement _canvas;
+        private readonly Label _holdTitle;
+        private readonly Label _rightTitle;
+        private readonly Label _bootLabel;
+        private readonly VisualElement _holdGrid;
+        private readonly VisualElement _socketsRoot;
+        private readonly VisualElement _homeGrid;
+        private readonly VisualElement _tooltip;
+        private readonly Label _tooltipName;
+        private readonly Label _tooltipDesc;
+        private readonly VisualElement _toast;
+        private readonly Label _toastText;
+
+        private readonly CargoScreenSettings _settings;
+        private readonly ILocalization _localization;
+        private readonly ICargoHold _hold;
+        private readonly IHomeStorage _home;
+        private readonly IStackTransfer _transfer;
+        private readonly IDockState _dock;
+        private readonly IRoverEquipment _equipment;
+        private readonly RoverDiagramData _diagram;
+        private readonly IntText _numbers;
+        private readonly EventBus _events;
+
+        private readonly VisualElement[] _holdCells = new VisualElement[MaxHoldCells];
+        private readonly Label[] _holdBadges = new Label[MaxHoldCells];
+        private readonly HoldCellState[] _holdStates = new HoldCellState[MaxHoldCells];
+
+        private readonly VisualElement[] _socketBubbles = new VisualElement[OrbitalSocketCount];
+        private readonly VisualElement[] _homeCells = new VisualElement[MaxShelfCells];
+        private readonly Label[] _homeBadges = new Label[MaxShelfCells];
+
+        private int _unlockedHoldCount;
+        private int _homeSlotCount;
+        private int _focusedHoldCell = -1;
+        private int _focusedSocketIndex = -1;
+        private int _focusedHomeCell = -1;
+
+        private int _dragHoldCell = -1;
+        private int _dragRowIndex = -1;
+        private RoverKitPiece _dragKitPiece;
+        private Vector2 _dragStartRefPos;
+        private Vector2 _dragCurrentRefPos;
+        private bool _isDraggingKit;
+        private int _dragTargetSocketIndex = -1;
+
+        private string _transientToastKey;
+        private float _transientToastTimer;
+        private bool _bootRunning;
+        private int _bootVisibleSlots;
+        private int _bootFilledSlots;
+        private HoldBoot _activeBoot;
+        private float _scale = 1f;
+
+        internal FaceInventoryView(VisualElement panel, CargoScreenSettings settings, ILocalization localization,
+            ICargoHold hold, IHomeStorage home, IStackTransfer transfer, IDockState dock, IRoverEquipment equipment,
+            RoverDiagramData diagram, IntText numbers, EventBus events)
+        {
+            _panel = panel ?? throw new ArgumentNullException(nameof(panel));
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            _localization = localization ?? throw new ArgumentNullException(nameof(localization));
+            _hold = hold ?? throw new ArgumentNullException(nameof(hold));
+            _home = home ?? throw new ArgumentNullException(nameof(home));
+            _transfer = transfer ?? throw new ArgumentNullException(nameof(transfer));
+            _dock = dock ?? throw new ArgumentNullException(nameof(dock));
+            _equipment = equipment ?? throw new ArgumentNullException(nameof(equipment));
+            _diagram = diagram ?? throw new ArgumentNullException(nameof(diagram));
+            _numbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
+            _events = events ?? throw new ArgumentNullException(nameof(events));
+
+            _canvas = Require<VisualElement>(_panel, "cargo-canvas");
+            _holdTitle = Require<Label>(_panel, "cargo-hold-title");
+            _rightTitle = Require<Label>(_panel, "cargo-right-title");
+            _bootLabel = Require<Label>(_panel, "cargo-boot");
+            _holdGrid = Require<VisualElement>(_panel, "cargo-hold-grid");
+            _socketsRoot = Require<VisualElement>(_panel, "cargo-sockets");
+            _homeGrid = Require<VisualElement>(_panel, "cargo-home-grid");
+            _tooltip = Require<VisualElement>(_panel, "cargo-tooltip");
+            _tooltipName = Require<Label>(_panel, "cargo-tooltip-name");
+            _tooltipDesc = Require<Label>(_panel, "cargo-tooltip-desc");
+            _toast = Require<VisualElement>(_panel, "cargo-toast");
+            _toastText = Require<Label>(_panel, "cargo-toast-text");
+
+            _canvas.generateVisualContent += OnGenerateCanvas;
+            BuildHoldCells();
+            BuildSocketBubbles();
+            BuildHomeCells();
+
+            _panel.RegisterCallback<PointerMoveEvent>(OnPanelPointerMove);
+            _panel.RegisterCallback<PointerUpEvent>(OnPanelPointerUp);
+        }
+
+        /// <summary>True when fitting a part succeeded and the screen should close for the world install beat.</summary>
+        public bool WantsClose { get; set; }
+
+        /// <summary>Unlocked hold cell count (typically 8, 16, or 24).</summary>
+        public int UnlockedCellCount => _unlockedHoldCount;
+
+        /// <summary>Locked hold cell count (<c>24 - UnlockedCellCount</c>).</summary>
+        public int LockedCellCount => MaxHoldCells - _unlockedHoldCount;
+
+        /// <summary>Active home shelf slot count when docked.</summary>
+        public int HomeCellCount => _homeSlotCount;
+
+        /// <summary>True while a waiting kit is being dragged across the panel.</summary>
+        public bool IsDraggingKit => _isDraggingKit;
+
+        /// <summary>The currently focused or hovered hold cell index (0..23), or -1.</summary>
+        public int FocusedHoldCell => _focusedHoldCell;
+
+        /// <summary>The currently focused or hovered orbital socket index (0..9), or -1.</summary>
+        public int FocusedSocketIndex => _focusedSocketIndex;
+
+        public string LeftHeaderText => _holdTitle.text;
+
+        public string RightHeaderText => _rightTitle.text;
+
+        public bool IsTooltipVisible => _tooltip.style.display == DisplayStyle.Flex;
+
+        public string TooltipNameText => IsTooltipVisible ? _tooltipName.text : string.Empty;
+
+        public string TooltipDescText => IsTooltipVisible ? _tooltipDesc.text : string.Empty;
+
+        public string TooltipText => IsTooltipVisible
+            ? (string.IsNullOrEmpty(_tooltipDesc.text) ? _tooltipName.text : _tooltipName.text + " — " + _tooltipDesc.text)
+            : string.Empty;
+
+        public bool IsToastVisible => _toast.style.display == DisplayStyle.Flex;
+
+        public string ToastText => IsToastVisible ? _toastText.text : string.Empty;
+
+        public VisualElement HoldCell(int index) => _holdCells[index];
+
+        public Label HoldBadge(int index) => _holdBadges[index];
+
+        public HoldCellKind HoldKind(int index) => _holdStates[index].Kind;
+
+        public VisualElement HomeCell(int index) => _homeCells[index];
+
+        public VisualElement SocketElement(RoverSocket socket)
+        {
+            int idx = OrbitalIndexOf(socket);
+            return idx >= 0 ? _socketBubbles[idx] : null;
+        }
+
+        /// <summary>Returns the reference <c>1152x768</c> rectangle of hold cell <paramref name="index"/> (0..23).</summary>
+        public static Rect GetHoldCellReferenceRect(int index)
+        {
+            int col = index % GridColumns;
+            int row = index / GridColumns;
+            return new Rect(
+                HoldGridX + col * (CellSize + CellGapX),
+                HoldGridY + row * (CellSize + CellGapY),
+                CellSize,
+                CellSize);
+        }
+
+        /// <summary>Returns the reference <c>1152x768</c> centre of orbital socket <paramref name="orbitalIndex"/> (0..9).</summary>
+        public static Vector2 GetOrbitalSocketReferenceCenter(int orbitalIndex)
+        {
+            return OrbitalCenters[orbitalIndex];
+        }
+
+        /// <summary>Returns the orbital index (0..9) of <paramref name="socket"/>, or -1 if not an orbital socket.</summary>
+        public static int OrbitalIndexOf(RoverSocket socket)
+        {
+            for (int i = 0; i < OrbitalSockets.Length; i++)
+            {
+                if (OrbitalSockets[i] == socket)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// True only when <paramref name="socket"/>'s leader line to 07 is bright cyan (focused, hovered, or active drag
+        /// target). By Director's tweak, default leader lines are faint (~27% alpha) and installed leader lines are subtle
+        /// amber (~38% alpha).
+        /// </summary>
+        public bool IsSocketLeaderCyan(RoverSocket socket)
+        {
+            int idx = OrbitalIndexOf(socket);
+            if (idx < 0)
+            {
+                return false;
+            }
+
+            int activeSocket = _isDraggingKit ? _dragTargetSocketIndex : _focusedSocketIndex;
+            return idx == activeSocket;
+        }
+
+        /// <summary>Returns the current leader-line stroke color for <paramref name="socket"/> from <see cref="CargoScreenSettings"/>.</summary>
+        public Color32 GetSocketLeaderColor(RoverSocket socket)
+        {
+            if (IsSocketLeaderCyan(socket))
+            {
+                return _settings.LeaderFocusColor;
+            }
+
+            return _equipment.TryGetFitted(socket, out _)
+                ? _settings.LeaderInstalledColor
+                : _settings.LeaderEmptyColor;
+        }
+
+        /// <summary>Returns the current leader-line stroke width (px at 1152x768) for <paramref name="socket"/>.</summary>
+        public float GetSocketLeaderWidth(RoverSocket socket)
+        {
+            if (IsSocketLeaderCyan(socket))
+            {
+                return _settings.LeaderFocusWidth;
+            }
+
+            return _equipment.TryGetFitted(socket, out _)
+                ? _settings.LeaderInstalledWidth
+                : _settings.LeaderEmptyWidth;
+        }
+
+        /// <summary>Localized item or part name for hold cell <paramref name="index"/>, or empty.</summary>
+        public string HoldItemName(int index)
+        {
+            if (index < 0 || index >= MaxHoldCells)
+            {
+                return string.Empty;
+            }
+
+            HoldCellState state = _holdStates[index];
+            switch (state.Kind)
+            {
+                case HoldCellKind.Material:
+                    return PartInfo.MaterialName(state.Material, _localization);
+                case HoldCellKind.StoryPart:
+                    return PartInfo.StoryPartName(state.StoryPartId, _localization);
+                case HoldCellKind.WaitingKit:
+                    return PartInfo.PartName(state.KitPiece, _localization);
+                default:
+                    return string.Empty;
+            }
+        }
+
+        /// <summary>Index of the hold cell holding waiting kit <paramref name="rowIndex"/>, or -1.</summary>
+        public int WaitingKitCellIndex(int rowIndex)
+        {
+            for (int i = 0; i < _unlockedHoldCount; i++)
+            {
+                if (_holdStates[i].Kind == HoldCellKind.WaitingKit && _holdStates[i].RowIndex == rowIndex)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        public VisualElement WaitingKitCellElement(int rowIndex)
+        {
+            int idx = WaitingKitCellIndex(rowIndex);
+            return idx >= 0 ? _holdCells[idx] : null;
+        }
+
+        public void ResetInteractionState()
+        {
+            WantsClose = false;
+            _isDraggingKit = false;
+            _dragHoldCell = -1;
+            _dragRowIndex = -1;
+            _dragTargetSocketIndex = -1;
+            _transientToastKey = null;
+            _transientToastTimer = 0f;
+            _focusedHoldCell = -1;
+            _focusedSocketIndex = -1;
+            _focusedHomeCell = -1;
+        }
+
+        public void Tick(float deltaTime)
+        {
+            if (_transientToastTimer > 0f)
+            {
+                _transientToastTimer -= deltaTime;
+                if (_transientToastTimer <= 0f)
+                {
+                    _transientToastTimer = 0f;
+                    _transientToastKey = null;
+                    UpdateToast();
+                    _canvas.MarkDirtyRepaint();
+                }
+            }
+        }
+
+        internal void SetBootState(bool running, HoldBoot boot, int visibleSlots, int filledSlots, string bootTitle,
+            int typedLength)
+        {
+            _bootRunning = running;
+            _activeBoot = boot;
+            _bootVisibleSlots = visibleSlots;
+            _bootFilledSlots = filledSlots;
+            if (running)
+            {
+                int clamped = Mathf.Clamp(typedLength, 0, bootTitle.Length);
+                _bootLabel.text = clamped >= bootTitle.Length ? bootTitle : bootTitle.Substring(0, clamped);
+                _bootLabel.style.display = DisplayStyle.Flex;
+                _holdTitle.style.display = DisplayStyle.None;
+                _rightTitle.style.display = DisplayStyle.None;
+                _socketsRoot.style.display = DisplayStyle.None;
+                _homeGrid.style.display = DisplayStyle.None;
+                _tooltip.style.display = DisplayStyle.None;
+                for (int i = 0; i < MaxHoldCells; i++)
+                {
+                    bool showBadge = i < visibleSlots && i < filledSlots && _holdStates[i].Kind == HoldCellKind.Material &&
+                                     _holdStates[i].Units > 1 && boot != null && boot.ItemProgress(i) > 0.01f;
+                    _holdBadges[i].style.display = showBadge ? DisplayStyle.Flex : DisplayStyle.None;
+                    if (showBadge)
+                    {
+                        _holdBadges[i].style.opacity = boot.ItemProgress(i);
+                    }
+                }
+            }
+            else
+            {
+                _bootLabel.style.display = DisplayStyle.None;
+                _holdTitle.style.display = DisplayStyle.Flex;
+                _rightTitle.style.display = DisplayStyle.Flex;
+                for (int i = 0; i < MaxHoldCells; i++)
+                {
+                    _holdBadges[i].style.opacity = 1f;
+                }
+            }
+
+            _canvas.MarkDirtyRepaint();
+        }
+
+        public void ApplyScale(float panelWidth, float panelHeight)
+        {
+            float s = Mathf.Max(0.25f, Mathf.Min(panelWidth / ReferenceWidth, panelHeight / ReferenceHeight));
+            _scale = s;
+
+            PositionElement(_holdTitle, HoldGridX * s, 22f * s);
+            PositionElement(_rightTitle, ShelfGridX * s, 22f * s);
+            PositionElement(_bootLabel, HoldGridX * s, 22f * s);
+
+            for (int i = 0; i < MaxHoldCells; i++)
+            {
+                Rect r = GetHoldCellReferenceRect(i);
+                PositionBox(_holdCells[i], r.x * s, r.y * s, r.width * s, r.height * s);
+            }
+
+            float bubbleDiam = BubbleRadius * 2f;
+            for (int i = 0; i < OrbitalSocketCount; i++)
+            {
+                Vector2 c = OrbitalCenters[i];
+                PositionBox(_socketBubbles[i], (c.x - BubbleRadius) * s, (c.y - BubbleRadius) * s,
+                    bubbleDiam * s, bubbleDiam * s);
+            }
+
+            for (int i = 0; i < MaxShelfCells; i++)
+            {
+                int col = i % GridColumns;
+                int row = i / GridColumns;
+                float x = ShelfGridX + col * (CellSize + CellGapX);
+                float y = ShelfGridY + row * (CellSize + CellGapY);
+                PositionBox(_homeCells[i], x * s, y * s, CellSize * s, CellSize * s);
+            }
+
+            PositionBox(_toast, 64f * s, 714f * s, 1032f * s, 38f * s);
+            UpdateTooltip();
+            _canvas.MarkDirtyRepaint();
+        }
+
+        public void Refresh()
+        {
+            bool docked = _dock.IsDocked;
+            _holdTitle.text = _localization.Get(UiKeys.CargoHold);
+            _rightTitle.text = _localization.Get(docked ? UiKeys.HintShelves : UiKeys.CargoTabSeven);
+
+            int baseHoldSlots = Mathf.Clamp(_hold.SlotCount, 0, MaxHoldCells);
+            int waitingKits = docked ? 0 : _equipment.RowCount;
+            int filledCount = 0;
+
+            for (int i = 0; i < MaxHoldCells; i++)
+            {
+                _holdStates[i] = default;
+            }
+
+            for (int i = 0; i < baseHoldSlots; i++)
+            {
+                MaterialSlot slot = _hold.GetSlot(i);
+                string partId = _hold.GetPart(i);
+                if (!slot.IsEmpty)
+                {
+                    _demoValidateMaterialIcon(slot.Material);
+                    _holdStates[i] = HoldCellState.ForMaterial(slot.Material, slot.Units);
+                    filledCount++;
+                }
+                else if (!string.IsNullOrEmpty(partId))
+                {
+                    _diagram.GetPartIcon(partId);
+                    _holdStates[i] = HoldCellState.ForStoryPart(partId);
+                    filledCount++;
+                }
+                else
+                {
+                    _holdStates[i] = HoldCellState.ForEmpty();
+                }
+            }
+
+            int unlocked = baseHoldSlots;
+            for (int r = 0; r < waitingKits; r++)
+            {
+                RoverKitPiece kit = _equipment.RowPart(r);
+                _diagram.GetIcon(kit);
+                int targetCell = -1;
+                for (int i = 0; i < unlocked; i++)
+                {
+                    if (_holdStates[i].Kind == HoldCellKind.Empty)
+                    {
+                        targetCell = i;
+                        break;
+                    }
+                }
+
+                if (targetCell < 0 && unlocked < MaxHoldCells)
+                {
+                    targetCell = unlocked;
+                    unlocked++;
+                }
+
+                if (targetCell >= 0)
+                {
+                    _holdStates[targetCell] = HoldCellState.ForWaitingKit(kit, r);
+                    filledCount++;
+                }
+            }
+
+            _unlockedHoldCount = unlocked;
+            for (int i = _unlockedHoldCount; i < MaxHoldCells; i++)
+            {
+                _holdStates[i] = HoldCellState.ForLocked();
+            }
+
+            for (int i = 0; i < MaxHoldCells; i++)
+            {
+                HoldCellState state = _holdStates[i];
+                bool isUnlocked = i < _unlockedHoldCount;
+                bool canFocusCell = isUnlocked && (docked ? state.Kind == HoldCellKind.Material : state.Kind != HoldCellKind.Empty);
+                _holdCells[i].focusable = canFocusCell;
+                _holdCells[i].pickingMode = isUnlocked ? PickingMode.Position : PickingMode.Ignore;
+                _holdCells[i].EnableInClassList(CargoScreen.EmptyClass, state.Kind == HoldCellKind.Empty || state.Kind == HoldCellKind.Locked);
+                _holdCells[i].EnableInClassList(CargoScreen.LockedClass, state.Kind == HoldCellKind.Locked);
+
+                bool showBadge = !_bootRunning && state.Kind == HoldCellKind.Material && state.Units > 1;
+                _holdBadges[i].style.display = showBadge ? DisplayStyle.Flex : DisplayStyle.None;
+                if (showBadge)
+                {
+                    _holdBadges[i].text = _numbers.Get(Mathf.Min(99, state.Units));
+                }
+            }
+
+            _socketsRoot.style.display = !docked && !_bootRunning ? DisplayStyle.Flex : DisplayStyle.None;
+            for (int i = 0; i < OrbitalSocketCount; i++)
+            {
+                RoverSocket socket = OrbitalSockets[i];
+                _diagram.GetIcon(socket);
+                bool fitted = _equipment.TryGetFitted(socket, out _);
+                _socketBubbles[i].style.display = !docked && !_bootRunning ? DisplayStyle.Flex : DisplayStyle.None;
+                _socketBubbles[i].focusable = !docked;
+                _socketBubbles[i].EnableInClassList(CargoScreen.FittedClass, fitted);
+            }
+
+            _homeSlotCount = docked ? Mathf.Clamp(_home.SlotCount, 0, MaxShelfCells) : 0;
+            _homeGrid.style.display = docked && !_bootRunning ? DisplayStyle.Flex : DisplayStyle.None;
+            for (int i = 0; i < MaxShelfCells; i++)
+            {
+                bool active = docked && i < _homeSlotCount;
+                _homeCells[i].style.display = active ? DisplayStyle.Flex : DisplayStyle.None;
+                if (!active)
+                {
+                    _homeBadges[i].style.display = DisplayStyle.None;
+                    continue;
+                }
+
+                MaterialSlot slot = _home.GetSlot(i);
+                if (!slot.IsEmpty)
+                {
+                    _demoValidateMaterialIcon(slot.Material);
+                }
+
+                _homeCells[i].focusable = !slot.IsEmpty;
+                _homeCells[i].EnableInClassList(CargoScreen.EmptyClass, slot.IsEmpty);
+                bool showBadge = !slot.IsEmpty && slot.Units > 1;
+                _homeBadges[i].style.display = showBadge ? DisplayStyle.Flex : DisplayStyle.None;
+                if (showBadge)
+                {
+                    _homeBadges[i].text = _numbers.Get(Mathf.Min(99, slot.Units));
+                }
+            }
+
+            UpdateTooltip();
+            UpdateToast();
+            _canvas.MarkDirtyRepaint();
+        }
+
+        public void FocusFirst()
+        {
+            for (int i = 0; i < _unlockedHoldCount; i++)
+            {
+                if (_holdCells[i].focusable)
+                {
+                    _holdCells[i].Focus();
+                    _focusedHoldCell = i;
+                    _focusedSocketIndex = -1;
+                    _focusedHomeCell = -1;
+                    UpdateTooltip();
+                    _canvas.MarkDirtyRepaint();
+                    return;
+                }
+            }
+
+            if (_dock.IsDocked)
+            {
+                for (int i = 0; i < _homeSlotCount; i++)
+                {
+                    if (_homeCells[i].focusable)
+                    {
+                        _homeCells[i].Focus();
+                        _focusedHomeCell = i;
+                        UpdateTooltip();
+                        _canvas.MarkDirtyRepaint();
+                        return;
+                    }
+                }
+            }
+            else if (OrbitalSocketCount > 0)
+            {
+                _socketBubbles[0].Focus();
+                _focusedSocketIndex = 0;
+                UpdateTooltip();
+                _canvas.MarkDirtyRepaint();
+            }
+        }
+
+        /// <summary>Focuses hold cell <paramref name="index"/> (for tests and captures).</summary>
+        public void FocusHoldCell(int index)
+        {
+            _focusedHoldCell = index;
+            _focusedSocketIndex = -1;
+            _focusedHomeCell = -1;
+            if (index >= 0 && index < MaxHoldCells)
+            {
+                _holdCells[index].Focus();
+            }
+
+            UpdateTooltip();
+            _canvas.MarkDirtyRepaint();
+        }
+
+        /// <summary>Focuses orbital socket <paramref name="socket"/> (for tests and captures).</summary>
+        public void FocusSocket(RoverSocket socket)
+        {
+            int idx = OrbitalIndexOf(socket);
+            _focusedSocketIndex = idx;
+            _focusedHoldCell = -1;
+            _focusedHomeCell = -1;
+            if (idx >= 0)
+            {
+                _socketBubbles[idx].Focus();
+            }
+
+            UpdateTooltip();
+            _canvas.MarkDirtyRepaint();
+        }
+
+        /// <summary>Clears any active cell or socket focus and hides the tooltip (for resting-state captures).</summary>
+        public void ClearFocus()
+        {
+            _focusedHoldCell = -1;
+            _focusedSocketIndex = -1;
+            _focusedHomeCell = -1;
+            _panel.Blur();
+            UpdateTooltip();
+            _canvas.MarkDirtyRepaint();
+        }
+
+        /// <summary>
+        /// Begins a kit drag from hold cell <paramref name="holdCellIndex"/> to reference position
+        /// <paramref name="referencePosition"/> (in <c>1152x768</c> coordinates), optionally locking onto
+        /// <paramref name="targetSocket"/>.
+        /// </summary>
+        public void BeginKitDrag(int holdCellIndex, Vector2 referencePosition, RoverSocket? targetSocket = null)
+        {
+            if (holdCellIndex < 0 || holdCellIndex >= _unlockedHoldCount ||
+                _holdStates[holdCellIndex].Kind != HoldCellKind.WaitingKit)
+            {
+                throw new InvalidOperationException($"Hold cell {holdCellIndex} does not contain a waiting kit.");
+            }
+
+            _dragHoldCell = holdCellIndex;
+            _dragRowIndex = _holdStates[holdCellIndex].RowIndex;
+            _dragKitPiece = _holdStates[holdCellIndex].KitPiece;
+            Rect cellRect = GetHoldCellReferenceRect(holdCellIndex);
+            _dragStartRefPos = cellRect.center;
+            _dragCurrentRefPos = referencePosition;
+            _isDraggingKit = true;
+            _focusedHoldCell = -1;
+            _focusedSocketIndex = -1;
+            _dragTargetSocketIndex = targetSocket.HasValue
+                ? OrbitalIndexOf(targetSocket.Value)
+                : FindSocketAtReferencePos(referencePosition);
+            UpdateTooltip();
+            _canvas.MarkDirtyRepaint();
+        }
+
+        /// <summary>
+        /// Completes an active kit drag by dropping onto <paramref name="dropSocket"/> (or <c>null</c> for open space).
+        /// Matching socket fits the kit (if at station); non-matching socket snaps back cleanly without fitting.
+        /// </summary>
+        public bool CompleteKitDrag(RoverSocket? dropSocket)
+        {
+            if (!_isDraggingKit || _dragRowIndex < 0)
+            {
+                return false;
+            }
+
+            int rowIndex = _dragRowIndex;
+            RoverKitPiece piece = _dragKitPiece;
+            _isDraggingKit = false;
+            _dragHoldCell = -1;
+            _dragRowIndex = -1;
+            _dragTargetSocketIndex = -1;
+
+            RoverSocket matchingSocket = _equipment.SocketOf(piece);
+            if (!dropSocket.HasValue || dropSocket.Value != matchingSocket)
+            {
+                Refresh();
+                return false;
+            }
+
+            return TryFitKitAtRow(rowIndex);
+        }
+
+        private void _demoValidateMaterialIcon(SalvageMaterial material)
+        {
+            _diagram.GetIcon(material);
+        }
+
+        private void BuildHoldCells()
+        {
+            for (int i = 0; i < MaxHoldCells; i++)
+            {
+                int index = i;
+                var cell = new VisualElement { name = "cargo-hold-" + i };
+                cell.AddToClassList(CargoScreen.CellClass);
+
+                var badge = new Label { name = "cargo-hold-badge-" + i, pickingMode = PickingMode.Ignore };
+                badge.AddToClassList("cargo__badge");
+                cell.Add(badge);
+
+                cell.RegisterCallback<FocusInEvent>(_ => OnHoldCellFocus(index));
+                cell.RegisterCallback<PointerEnterEvent>(_ => OnHoldCellHover(index));
+                cell.RegisterCallback<PointerDownEvent>(evt => OnHoldCellPointerDown(index, evt));
+                cell.RegisterCallback<NavigationSubmitEvent>(_ => OnHoldCellSubmit(index));
+                cell.RegisterCallback<NavigationMoveEvent>(evt => OnHoldNavigationMove(index, evt));
+
+                _holdCells[i] = cell;
+                _holdBadges[i] = badge;
+                _holdGrid.Add(cell);
+            }
+        }
+
+        private void BuildSocketBubbles()
+        {
+            for (int i = 0; i < OrbitalSocketCount; i++)
+            {
+                int orbitalIdx = i;
+                RoverSocket socket = OrbitalSockets[i];
+                var bubble = new VisualElement { name = "seven-socket-" + socket.ToString().ToLowerInvariant() };
+                bubble.AddToClassList("cargo__socket-bubble");
+
+                bubble.RegisterCallback<FocusInEvent>(_ => OnSocketFocus(orbitalIdx));
+                bubble.RegisterCallback<PointerEnterEvent>(_ => OnSocketHover(orbitalIdx));
+                bubble.RegisterCallback<PointerDownEvent>(evt =>
+                {
+                    if (evt.button == 0)
+                    {
+                        OnSocketSubmit(orbitalIdx);
+                    }
+                });
+                bubble.RegisterCallback<NavigationSubmitEvent>(_ => OnSocketSubmit(orbitalIdx));
+                bubble.RegisterCallback<NavigationMoveEvent>(evt => OnSocketNavigationMove(orbitalIdx, evt));
+
+                _socketBubbles[i] = bubble;
+                _socketsRoot.Add(bubble);
+            }
+        }
+
+        private void BuildHomeCells()
+        {
+            for (int i = 0; i < MaxShelfCells; i++)
+            {
+                int index = i;
+                var cell = new VisualElement { name = "cargo-home-" + i };
+                cell.AddToClassList(CargoScreen.CellClass);
+
+                var badge = new Label { name = "cargo-home-badge-" + i, pickingMode = PickingMode.Ignore };
+                badge.AddToClassList("cargo__badge");
+                cell.Add(badge);
+
+                cell.RegisterCallback<FocusInEvent>(_ => OnHomeCellFocus(index));
+                cell.RegisterCallback<PointerEnterEvent>(_ => OnHomeCellFocus(index));
+                cell.RegisterCallback<PointerDownEvent>(evt =>
+                {
+                    if (evt.button == 0)
+                    {
+                        OnHomeCellSubmit(index);
+                    }
+                });
+                cell.RegisterCallback<NavigationSubmitEvent>(_ => OnHomeCellSubmit(index));
+
+                _homeCells[i] = cell;
+                _homeBadges[i] = badge;
+                _homeGrid.Add(cell);
+            }
+        }
+
+        private void OnHoldCellFocus(int index)
+        {
+            if (index >= _unlockedHoldCount)
+            {
+                return;
+            }
+
+            _focusedHoldCell = index;
+            _focusedSocketIndex = -1;
+            _focusedHomeCell = -1;
+            UpdateTooltip();
+            _canvas.MarkDirtyRepaint();
+        }
+
+        private void OnHoldCellHover(int index)
+        {
+            if (_isDraggingKit || index >= _unlockedHoldCount)
+            {
+                return;
+            }
+
+            _focusedHoldCell = index;
+            _focusedSocketIndex = -1;
+            _focusedHomeCell = -1;
+            UpdateTooltip();
+            _canvas.MarkDirtyRepaint();
+        }
+
+        private void OnSocketFocus(int orbitalIdx)
+        {
+            _focusedSocketIndex = orbitalIdx;
+            _focusedHoldCell = -1;
+            _focusedHomeCell = -1;
+            UpdateTooltip();
+            _canvas.MarkDirtyRepaint();
+        }
+
+        private void OnSocketHover(int orbitalIdx)
+        {
+            if (_isDraggingKit)
+            {
+                _dragTargetSocketIndex = orbitalIdx;
+            }
+            else
+            {
+                _focusedSocketIndex = orbitalIdx;
+                _focusedHoldCell = -1;
+                _focusedHomeCell = -1;
+            }
+
+            UpdateTooltip();
+            _canvas.MarkDirtyRepaint();
+        }
+
+        private void OnHomeCellFocus(int index)
+        {
+            if (index >= _homeSlotCount)
+            {
+                return;
+            }
+
+            _focusedHomeCell = index;
+            _focusedHoldCell = -1;
+            _focusedSocketIndex = -1;
+            UpdateTooltip();
+            _canvas.MarkDirtyRepaint();
+        }
+
+        private void OnHoldCellPointerDown(int index, PointerDownEvent evt)
+        {
+            if (evt.button != 0 || index >= _unlockedHoldCount)
+            {
+                return;
+            }
+
+            OnHoldCellFocus(index);
+            HoldCellState state = _holdStates[index];
+            if (!_dock.IsDocked && state.Kind == HoldCellKind.WaitingKit)
+            {
+                _dragHoldCell = index;
+                _dragRowIndex = state.RowIndex;
+                _dragKitPiece = state.KitPiece;
+                _dragStartRefPos = PanelToReference((Vector2)evt.position - _panel.worldBound.position);
+                _dragCurrentRefPos = _dragStartRefPos;
+                _isDraggingKit = false;
+                _dragTargetSocketIndex = -1;
+                return;
+            }
+
+            OnHoldCellSubmit(index);
+        }
+
+        private void OnPanelPointerMove(PointerMoveEvent evt)
+        {
+            if (_dragHoldCell < 0 || _dragRowIndex < 0)
+            {
+                return;
+            }
+
+            Vector2 refPos = PanelToReference(evt.localPosition);
+            _dragCurrentRefPos = refPos;
+            if (!_isDraggingKit && Vector2.Distance(refPos, _dragStartRefPos) >= _settings.DragThreshold)
+            {
+                _isDraggingKit = true;
+            }
+
+            if (_isDraggingKit)
+            {
+                _dragTargetSocketIndex = FindSocketAtReferencePos(refPos);
+                UpdateTooltip();
+                _canvas.MarkDirtyRepaint();
+            }
+        }
+
+        private void OnPanelPointerUp(PointerUpEvent evt)
+        {
+            if (_dragHoldCell < 0)
+            {
+                return;
+            }
+
+            if (_isDraggingKit)
+            {
+                Vector2 refPos = PanelToReference(evt.localPosition);
+                int hitSocket = FindSocketAtReferencePos(refPos);
+                RoverSocket? dropSocket = hitSocket >= 0 ? OrbitalSockets[hitSocket] : (RoverSocket?)null;
+                CompleteKitDrag(dropSocket);
+                return;
+            }
+
+            int clickedCell = _dragHoldCell;
+            _dragHoldCell = -1;
+            _dragRowIndex = -1;
+            OnHoldCellSubmit(clickedCell);
+        }
+
+        private int FindSocketAtReferencePos(Vector2 refPos)
+        {
+            float hitRadius = BubbleRadius * 1.45f;
+            float bestDistSq = hitRadius * hitRadius;
+            int best = -1;
+            for (int i = 0; i < OrbitalSocketCount; i++)
+            {
+                float dSq = (OrbitalCenters[i] - refPos).sqrMagnitude;
+                if (dSq <= bestDistSq)
+                {
+                    bestDistSq = dSq;
+                    best = i;
+                }
+            }
+
+            return best;
+        }
+
+        private void OnHoldCellSubmit(int index)
+        {
+            if (index < 0 || index >= _unlockedHoldCount)
+            {
+                return;
+            }
+
+            HoldCellState state = _holdStates[index];
+            if (_dock.IsDocked)
+            {
+                if (state.Kind == HoldCellKind.Material &&
+                    _transfer.TryMove(state.Material, true, out int moved) && moved > 0)
+                {
+                    _events.Publish(new StackTransferred(state.Material, moved, true));
+                    _events.Publish(new UiCue(UiCueKind.Confirm));
+                    Refresh();
+                }
+
+                return;
+            }
+
+            if (state.Kind == HoldCellKind.WaitingKit)
+            {
+                TryFitKitAtRow(state.RowIndex);
+            }
+        }
+
+        private void OnHomeCellSubmit(int index)
+        {
+            if (!_dock.IsDocked || index < 0 || index >= _homeSlotCount)
+            {
+                return;
+            }
+
+            MaterialSlot slot = _home.GetSlot(index);
+            if (!slot.IsEmpty && _transfer.TryMove(slot.Material, false, out int moved) && moved > 0)
+            {
+                _events.Publish(new StackTransferred(slot.Material, moved, false));
+                _events.Publish(new UiCue(UiCueKind.Confirm));
+                Refresh();
+            }
+        }
+
+        private void OnSocketSubmit(int orbitalIdx)
+        {
+            if (_dock.IsDocked || orbitalIdx < 0 || orbitalIdx >= OrbitalSocketCount)
+            {
+                return;
+            }
+
+            RoverSocket socket = OrbitalSockets[orbitalIdx];
+            if (!_equipment.TryGetFitted(socket, out RoverKitPiece fitted))
+            {
+                // If a waiting kit for this socket sits in the hold, allow fitting it directly when submitting its socket.
+                for (int r = 0; r < _equipment.RowCount; r++)
+                {
+                    if (_equipment.SocketOf(_equipment.RowPart(r)) == socket)
+                    {
+                        TryFitKitAtRow(r);
+                        return;
+                    }
+                }
+
+                return;
+            }
+
+            if (!_equipment.CanFit(fitted))
+            {
+                ShowTransientToast(UiKeys.CargoFitAtBay);
+                return;
+            }
+
+            if (_equipment.RowCount >= _equipment.RowCapacity)
+            {
+                ShowTransientToast(UiKeys.RowFull);
+                return;
+            }
+
+            if (_equipment.TryUnequip(socket))
+            {
+                _events.Publish(new UiCue(UiCueKind.PartDrop));
+                Refresh();
+            }
+        }
+
+        private bool TryFitKitAtRow(int rowIndex)
+        {
+            if (rowIndex < 0 || rowIndex >= _equipment.RowCount)
+            {
+                return false;
+            }
+
+            RoverKitPiece part = _equipment.RowPart(rowIndex);
+            if (!_equipment.CanFit(part) || !_equipment.TryFit(rowIndex))
+            {
+                ShowTransientToast(UiKeys.CargoFitAtBay);
+                return false;
+            }
+
+            _events.Publish(new UiCue(UiCueKind.Confirm));
+            WantsClose = true;
+            Refresh();
+            return true;
+        }
+
+        private void ShowTransientToast(string key)
+        {
+            _transientToastKey = key;
+            _transientToastTimer = ToastDurationSeconds;
+            UpdateToast();
+            _canvas.MarkDirtyRepaint();
+        }
+
+        private void OnHoldNavigationMove(int index, NavigationMoveEvent evt)
+        {
+            int col = index % GridColumns;
+            int row = index / GridColumns;
+            switch (evt.direction)
+            {
+                case NavigationMoveEvent.Direction.Right:
+                    if (col + 1 < GridColumns && index + 1 < _unlockedHoldCount)
+                    {
+                        FocusHoldCell(index + 1);
+                    }
+                    else if (!_dock.IsDocked)
+                    {
+                        FocusSocket(RoverSocket.Deck);
+                    }
+                    else if (_homeSlotCount > 0)
+                    {
+                        OnHomeCellFocus(0);
+                        _homeCells[0].Focus();
+                    }
+
+                    evt.StopPropagation();
+                    break;
+                case NavigationMoveEvent.Direction.Left:
+                    if (col > 0)
+                    {
+                        FocusHoldCell(index - 1);
+                    }
+
+                    evt.StopPropagation();
+                    break;
+                case NavigationMoveEvent.Direction.Down:
+                    if ((row + 1) * GridColumns + col < _unlockedHoldCount)
+                    {
+                        FocusHoldCell((row + 1) * GridColumns + col);
+                    }
+
+                    evt.StopPropagation();
+                    break;
+                case NavigationMoveEvent.Direction.Up:
+                    if (row > 0)
+                    {
+                        FocusHoldCell((row - 1) * GridColumns + col);
+                    }
+
+                    evt.StopPropagation();
+                    break;
+            }
+        }
+
+        private void OnSocketNavigationMove(int orbitalIdx, NavigationMoveEvent evt)
+        {
+            switch (evt.direction)
+            {
+                case NavigationMoveEvent.Direction.Right:
+                case NavigationMoveEvent.Direction.Down:
+                    FocusSocket(OrbitalSockets[(orbitalIdx + 1) % OrbitalSocketCount]);
+                    evt.StopPropagation();
+                    break;
+                case NavigationMoveEvent.Direction.Left:
+                    if (OrbitalSockets[orbitalIdx] == RoverSocket.Deck ||
+                        OrbitalSockets[orbitalIdx] == RoverSocket.Hold ||
+                        OrbitalSockets[orbitalIdx] == RoverSocket.Back)
+                    {
+                        FocusHoldCell(Mathf.Min(_unlockedHoldCount - 1, 3));
+                    }
+                    else
+                    {
+                        FocusSocket(OrbitalSockets[(orbitalIdx + OrbitalSocketCount - 1) % OrbitalSocketCount]);
+                    }
+
+                    evt.StopPropagation();
+                    break;
+                case NavigationMoveEvent.Direction.Up:
+                    FocusSocket(OrbitalSockets[(orbitalIdx + OrbitalSocketCount - 1) % OrbitalSocketCount]);
+                    evt.StopPropagation();
+                    break;
+            }
+        }
+
+        private void UpdateTooltip()
+        {
+            if (_bootRunning)
+            {
+                _tooltip.style.display = DisplayStyle.None;
+                return;
+            }
+
+            float s = _scale;
+            if (_isDraggingKit)
+            {
+                string name = PartInfo.PartName(_dragKitPiece, _localization);
+                string desc = PartInfo.PartDescription(_dragKitPiece, _localization);
+                ShowTooltipBox(name, desc, 636f * s, 636f * s, 430f * s, 66f * s);
+                return;
+            }
+
+            if (_focusedHoldCell >= 0 && _focusedHoldCell < _unlockedHoldCount)
+            {
+                HoldCellState state = _holdStates[_focusedHoldCell];
+                if (state.Kind != HoldCellKind.Empty && state.Kind != HoldCellKind.Locked)
+                {
+                    string name = HoldItemName(_focusedHoldCell);
+                    string desc = HoldItemDescription(_focusedHoldCell);
+                    ShowTooltipBox(name, desc, 48f * s, 622f * s, 404f * s, 66f * s);
+                    return;
+                }
+            }
+
+            if (!_dock.IsDocked && _focusedSocketIndex >= 0 && _focusedSocketIndex < OrbitalSocketCount)
+            {
+                RoverSocket socket = OrbitalSockets[_focusedSocketIndex];
+                string name = _equipment.TryGetFitted(socket, out RoverKitPiece fitted)
+                    ? PartInfo.PartName(fitted, _localization)
+                    : PartInfo.SocketName(socket, _localization);
+                string desc = _equipment.TryGetFitted(socket, out RoverKitPiece fittedDesc)
+                    ? PartInfo.PartDescription(fittedDesc, _localization)
+                    : PartInfo.SocketDescription(socket, _localization);
+                ShowTooltipBox(name, desc, 612f * s, 636f * s, 468f * s, 66f * s);
+                return;
+            }
+
+            if (_dock.IsDocked && _focusedHomeCell >= 0 && _focusedHomeCell < _homeSlotCount)
+            {
+                MaterialSlot slot = _home.GetSlot(_focusedHomeCell);
+                if (!slot.IsEmpty)
+                {
+                    string name = PartInfo.MaterialName(slot.Material, _localization);
+                    string desc = _localization.Get(UiKeys.TransferToTrip);
+                    ShowTooltipBox(name, desc, 504f * s, 622f * s, 560f * s, 66f * s);
+                    return;
+                }
+            }
+
+            _tooltip.style.display = DisplayStyle.None;
+        }
+
+        private string HoldItemDescription(int index)
+        {
+            HoldCellState state = _holdStates[index];
+            if (_dock.IsDocked && state.Kind == HoldCellKind.Material)
+            {
+                return _localization.Get(UiKeys.TransferToHome);
+            }
+
+            switch (state.Kind)
+            {
+                case HoldCellKind.Material:
+                    return PartInfo.MaterialDescription(state.Material, _localization);
+                case HoldCellKind.StoryPart:
+                    return PartInfo.StoryPartDescription(state.StoryPartId, _localization);
+                case HoldCellKind.WaitingKit:
+                    return PartInfo.PartDescription(state.KitPiece, _localization);
+                default:
+                    return string.Empty;
+            }
+        }
+
+        private void ShowTooltipBox(string name, string desc, float x, float y, float minW, float h)
+        {
+            _tooltipName.text = name;
+            _tooltipDesc.text = TruncateDescription(desc);
+            _tooltip.style.left = x;
+            _tooltip.style.top = y;
+            _tooltip.style.minWidth = minW;
+            _tooltip.style.width = StyleKeyword.Auto;
+            _tooltip.style.height = h;
+            _tooltip.style.display = DisplayStyle.Flex;
+        }
+
+        private static string TruncateDescription(string text)
+        {
+            if (string.IsNullOrEmpty(text) || text.Length <= MaxTooltipDescriptionChars)
+            {
+                return text ?? string.Empty;
+            }
+
+            return text.Substring(0, MaxTooltipDescriptionChars - 1) + "…";
+        }
+
+        private void UpdateToast()
+        {
+            if (!string.IsNullOrEmpty(_transientToastKey))
+            {
+                _toastText.text = _localization.Get(_transientToastKey);
+                _toast.style.display = DisplayStyle.Flex;
+                return;
+            }
+
+            int waiting = _hold.WaitingBundles;
+            if (waiting > 0)
+            {
+                _toastText.text = string.Format(_localization.Get(UiKeys.CargoWaiting), _numbers.Get(waiting));
+                _toast.style.display = DisplayStyle.Flex;
+                return;
+            }
+
+            _toastText.text = string.Empty;
+            _toast.style.display = DisplayStyle.None;
+        }
+
+        private void OnGenerateCanvas(MeshGenerationContext context)
+        {
+            Rect rect = _canvas.contentRect;
+            if (rect.width < 4f || rect.height < 4f)
+            {
+                return;
+            }
+
+            Painter2D painter = context.painter2D;
+            float s = rect.width / ReferenceWidth;
+
+            // Outer CRT frame & inner bevel
+            RoverLineArtPainter.StrokeRect(painter, 1f, 1f, rect.width - 2f, rect.height - 2f, AmberText, 2.2f);
+            RoverLineArtPainter.StrokeRect(painter, 5f * s, 5f * s, rect.width - 10f * s, rect.height - 10f * s,
+                RoverLineArtPainter.WithAlpha(AmberMuted, 75), 1.0f);
+            RoverLineArtPainter.DrawCornerTicks(painter, 2f * s, 2f * s, rect.width - 4f * s, rect.height - 4f * s,
+                14f * s, AmberBright, 2.6f);
+
+            if (!_bootRunning)
+            {
+                // Vertical divider & header rules
+                RoverLineArtPainter.DrawLine(painter, new Vector2(DividerX * s, 26f * s),
+                    new Vector2(DividerX * s, 610f * s), AmberMuted, 1.2f);
+                RoverLineArtPainter.DrawLine(painter, new Vector2(48f * s, 52f * s),
+                    new Vector2(430f * s, 52f * s), AmberMuted, 1.2f);
+                RoverLineArtPainter.DrawLine(painter, new Vector2(504f * s, 52f * s),
+                    new Vector2(1096f * s, 52f * s), AmberMuted, 1.2f);
+            }
+
+            DrawHoldGrid(painter, s);
+
+            if (!_bootRunning)
+            {
+                if (_dock.IsDocked)
+                {
+                    DrawHomeGrid(painter, s);
+                }
+                else
+                {
+                    DrawRoverAndSockets(painter, s);
+                }
+
+                DrawTooltipOverlay(painter, s);
+                DrawDragOverlay(painter, s);
+                DrawToastDot(painter, s);
+            }
+        }
+
+        private void DrawHoldGrid(Painter2D painter, float s)
+        {
+            int limit = _bootRunning ? Mathf.Min(_bootVisibleSlots, _unlockedHoldCount) : MaxHoldCells;
+            for (int i = 0; i < limit; i++)
+            {
+                Rect r = GetHoldCellReferenceRect(i);
+                float cx = r.x * s;
+                float cy = r.y * s;
+                float cw = r.width * s;
+                float ch = r.height * s;
+                HoldCellState state = _holdStates[i];
+
+                if (state.Kind == HoldCellKind.Locked)
+                {
+                    RoverLineArtPainter.StrokeDashedRect(painter, cx, cy, cw, ch, AmberLocked, 1.2f, 5f * s, 4f * s);
+                    RoverLineArtPainter.DrawPadlock(painter, new Vector2(cx + cw * 0.5f, cy + ch * 0.5f), AmberLocked);
+                    continue;
+                }
+
+                bool focused = !_bootRunning && i == _focusedHoldCell;
+                bool draggedSource = _isDraggingKit && i == _dragHoldCell;
+                bool hasItem = state.Kind != HoldCellKind.Empty;
+
+                RoverLineArtPainter.FillRect(painter, cx, cy, cw, ch, focused ? BgCellFocus : BgCell);
+                if (focused)
+                {
+                    RoverLineArtPainter.StrokeRect(painter, cx - 2f * s, cy - 2f * s, cw + 4f * s, ch + 4f * s,
+                        RoverLineArtPainter.WithAlpha(Cyan, 70), 2.0f);
+                    RoverLineArtPainter.StrokeRect(painter, cx, cy, cw, ch, Cyan, 2.4f);
+                    RoverLineArtPainter.DrawCornerTicks(painter, cx, cy, cw, ch, 9f * s, Cyan, 2.4f);
+                }
+                else if (draggedSource)
+                {
+                    RoverLineArtPainter.StrokeDashedRect(painter, cx, cy, cw, ch, CyanDim, 1.5f, 5f * s, 4f * s);
+                }
+                else
+                {
+                    RoverLineArtPainter.StrokeRect(painter, cx, cy, cw, ch,
+                        hasItem ? AmberFaint : AmberMuted, hasItem ? 1.6f : 1.2f);
+                }
+
+                if (!hasItem)
+                {
+                    continue;
+                }
+
+                float bootProgress = 1f;
+                float slideX = 0f;
+                if (_bootRunning)
+                {
+                    if (i >= _bootFilledSlots || _activeBoot == null)
+                    {
+                        continue;
+                    }
+
+                    bootProgress = _activeBoot.ItemProgress(i);
+                    if (bootProgress <= 0.01f)
+                    {
+                        continue;
+                    }
+
+                    slideX = -(1f - bootProgress) * _settings.BootSlideDistance * s;
+                }
+
+                UiIconShape icon = GetHoldCellIcon(state);
+                Color32 tint = draggedSource
+                    ? UiIconPainter.FaintAmber
+                    : RoverLineArtPainter.WithAlpha(UiIconPainter.LitAmber, (byte)Mathf.RoundToInt(248f * bootProgress));
+                Vector2 iconCenter = new Vector2(cx + cw * 0.5f + slideX, cy + ch * 0.5f - 2f * s);
+                UiIconPainter.Draw(painter, in icon, iconCenter, 56f * s, tint);
+
+                if (!_bootRunning && state.Kind == HoldCellKind.Material && state.Units > 1)
+                {
+                    RoverLineArtPainter.FillRect(painter, cx + cw - 34f * s, cy + ch - 28f * s, 32f * s, 26f * s,
+                        focused ? BgCellFocus : BgCell);
+                }
+            }
+        }
+
+        private UiIconShape GetHoldCellIcon(HoldCellState state)
+        {
+            switch (state.Kind)
+            {
+                case HoldCellKind.Material:
+                    return _diagram.GetIcon(state.Material);
+                case HoldCellKind.StoryPart:
+                    return _diagram.GetPartIcon(state.StoryPartId);
+                case HoldCellKind.WaitingKit:
+                    return _diagram.GetIcon(state.KitPiece);
+                default:
+                    throw new InvalidOperationException($"Cell kind {state.Kind} has no icon.");
+            }
+        }
+
+        private void DrawHomeGrid(Painter2D painter, float s)
+        {
+            for (int i = 0; i < _homeSlotCount; i++)
+            {
+                int col = i % GridColumns;
+                int row = i / GridColumns;
+                float cx = (ShelfGridX + col * (CellSize + CellGapX)) * s;
+                float cy = (ShelfGridY + row * (CellSize + CellGapY)) * s;
+                float cw = CellSize * s;
+                float ch = CellSize * s;
+
+                MaterialSlot slot = _home.GetSlot(i);
+                bool focused = i == _focusedHomeCell;
+                RoverLineArtPainter.FillRect(painter, cx, cy, cw, ch, focused ? BgCellFocus : BgCell);
+                RoverLineArtPainter.StrokeRect(painter, cx, cy, cw, ch,
+                    focused ? Cyan : (!slot.IsEmpty ? AmberFaint : AmberMuted), focused ? 2.4f : 1.5f);
+
+                if (!slot.IsEmpty)
+                {
+                    UiIconShape icon = _diagram.GetIcon(slot.Material);
+                    UiIconPainter.Draw(painter, in icon, new Vector2(cx + cw * 0.5f, cy + ch * 0.5f - 2f * s),
+                        56f * s, UiIconPainter.LitAmber);
+                    if (slot.Units > 1)
+                    {
+                        RoverLineArtPainter.FillRect(painter, cx + cw - 34f * s, cy + ch - 28f * s, 32f * s, 26f * s,
+                            focused ? BgCellFocus : BgCell);
+                    }
+                }
+            }
+        }
+
+        private void DrawRoverAndSockets(Painter2D painter, float s)
+        {
+            uint mask = 0u;
+            for (int i = 0; i < OrbitalSocketCount; i++)
+            {
+                RoverSocket socket = OrbitalSockets[i];
+                if (_equipment.TryGetFitted(socket, out _))
+                {
+                    mask |= 1u << (int)socket;
+                }
+            }
+
+            Vector2 roverOrigin = new Vector2(_settings.RoverOriginX * s, _settings.RoverOriginY * s);
+            float roverScale = _settings.RoverScale * s;
+            var pose = new RoverPose
+            {
+                WheelAngle = _settings.RoverWheelAngle,
+                Bob = 0f,
+                Pitch = 0f,
+                BumpRear = 0f,
+                BumpFront = 0f,
+                MoonDropAtAxle = 0f,
+                ScoopNod = 0f,
+                SolarTilt = 0f,
+                AntennaSway = _settings.RoverAntennaSway,
+                HeadNod = _settings.RoverHeadNod,
+                MorseOn = true,
+                EyeBlink = false,
+                DrawGroundArc = true,
+                AlwaysDrawHeadlampBeam = false,
+                InstalledSocketsMask = mask,
+            };
+
+            RoverLineArtPainter.DrawRover07(painter, roverOrigin, roverScale, in pose, null, _settings);
+
+            int activeSocket = _isDraggingKit ? _dragTargetSocketIndex : _focusedSocketIndex;
+            float r = _settings.BubbleRadius * s;
+
+            // 1. Leader lines from orbital bubbles to 07 mount anchors:
+            //    default (empty) = faint (~27% alpha, 1.0px), installed = subtle amber (~38% alpha, 1.25px),
+            //    focused or active drag-target = bright cyan (~92% alpha, 1.9px).
+            for (int pass = 0; pass < 2; pass++)
+            {
+                bool drawCyanPass = pass == 1;
+                for (int i = 0; i < OrbitalSocketCount; i++)
+                {
+                    bool isCyanLeader = i == activeSocket;
+                    if (isCyanLeader != drawCyanPass)
+                    {
+                        continue;
+                    }
+
+                    RoverSocket socket = OrbitalSockets[i];
+                    bool installed = (mask & (1u << (int)socket)) != 0u;
+                    Vector2 b = OrbitalCenters[i] * s;
+                    Vector2 m = RoverLineArtPainter.GetSocketMountPoint(socket, roverOrigin, roverScale,
+                        pose.Pitch, pose.HeadNod, _settings.RoverBodyPivotHeight, _settings.RoverWingTilt);
+                    Vector2 dir = m - b;
+                    float dist = dir.magnitude;
+                    if (dist <= r + 2f)
+                    {
+                        continue;
+                    }
+
+                    Vector2 p0 = b + (dir / dist) * r;
+                    if (isCyanLeader)
+                    {
+                        Color32 focusCol = _settings.LeaderFocusColor;
+                        RoverLineArtPainter.DrawLine(painter, p0, m,
+                            RoverLineArtPainter.WithAlpha(focusCol, 48), 4.5f * s);
+                        RoverLineArtPainter.DrawLine(painter, p0, m, focusCol, _settings.LeaderFocusWidth * s);
+                        RoverLineArtPainter.FillCircle(painter, m, _settings.LeaderFocusDotRadius * s, focusCol);
+                    }
+                    else if (installed)
+                    {
+                        Color32 instCol = _settings.LeaderInstalledColor;
+                        RoverLineArtPainter.DrawLine(painter, p0, m, instCol, _settings.LeaderInstalledWidth * s);
+                        RoverLineArtPainter.FillCircle(painter, m, _settings.LeaderInstalledDotRadius * s, instCol);
+                    }
+                    else
+                    {
+                        Color32 emptyCol = _settings.LeaderEmptyColor;
+                        RoverLineArtPainter.DrawLine(painter, p0, m, emptyCol, _settings.LeaderEmptyWidth * s);
+                        RoverLineArtPainter.FillCircle(painter, m, _settings.LeaderEmptyDotRadius * s, emptyCol);
+                    }
+                }
+            }
+
+            // 2. 10 orbital socket bubbles
+            for (int i = 0; i < OrbitalSocketCount; i++)
+            {
+                RoverSocket socket = OrbitalSockets[i];
+                Vector2 b = OrbitalCenters[i] * s;
+                bool installed = (mask & (1u << (int)socket)) != 0u;
+                bool focused = i == activeSocket;
+
+                RoverLineArtPainter.FillCircle(painter, b, r, BgCell);
+                if (focused)
+                {
+                    RoverLineArtPainter.StrokeCircle(painter, b, r + 4f * s,
+                        RoverLineArtPainter.WithAlpha(Cyan, 85), 2.2f);
+                    RoverLineArtPainter.StrokeCircle(painter, b, r, Cyan, 2.5f);
+                }
+                else if (installed)
+                {
+                    RoverLineArtPainter.StrokeCircle(painter, b, r, AmberBright, 2.0f);
+                    RoverLineArtPainter.StrokeCircle(painter, b, r - 3.5f * s,
+                        RoverLineArtPainter.WithAlpha(AmberText, 120), 1.0f);
+                }
+                else
+                {
+                    RoverLineArtPainter.StrokeCircle(painter, b, r, AmberMuted, 1.3f);
+                }
+
+                UiIconShape icon = _diagram.GetIcon(socket);
+                UiIconState iconState = (_isDraggingKit && focused)
+                    ? UiIconState.Cyan
+                    : (installed || focused ? UiIconState.Lit : UiIconState.Faint);
+                UiIconPainter.Draw(painter, in icon, b, 40f * s, iconState);
+            }
+        }
+
+        private void DrawTooltipOverlay(Painter2D painter, float s)
+        {
+            if (_tooltip.style.display != DisplayStyle.Flex)
+            {
+                return;
+            }
+
+            float tx = _tooltip.style.left.value.value;
+            float ty = _tooltip.style.top.value.value;
+            float tw = _tooltip.resolvedStyle.width > 4f ? _tooltip.resolvedStyle.width : _tooltip.style.minWidth.value.value;
+
+            if (_isDraggingKit && _dragTargetSocketIndex >= 0 && _dragTargetSocketIndex < OrbitalSocketCount)
+            {
+                Vector2 b = OrbitalCenters[_dragTargetSocketIndex] * s;
+                Vector2 from = new Vector2(b.x, b.y + _settings.BubbleRadius * s);
+                Vector2 to = new Vector2(Mathf.Clamp(b.x, tx + 24f * s, tx + tw - 24f * s), ty);
+                RoverLineArtPainter.DrawLine(painter, from, to, RoverLineArtPainter.WithAlpha(Cyan, 195), 1.5f);
+            }
+            else if (_focusedHoldCell >= 0 && _focusedHoldCell < _unlockedHoldCount)
+            {
+                Rect cell = GetHoldCellReferenceRect(_focusedHoldCell);
+                float tickX = Mathf.Clamp(cell.center.x * s, tx + 16f * s, tx + tw - 16f * s);
+                RoverLineArtPainter.DrawLine(painter, new Vector2(tickX, ty - 12f * s), new Vector2(tickX, ty),
+                    RoverLineArtPainter.WithAlpha(Cyan, 195), 1.5f);
+            }
+            else if (!_dock.IsDocked && _focusedSocketIndex >= 0 && _focusedSocketIndex < OrbitalSocketCount)
+            {
+                Vector2 b = OrbitalCenters[_focusedSocketIndex];
+                if (b.y > 460f)
+                {
+                    Vector2 bs = b * s;
+                    Vector2 from = new Vector2(bs.x, bs.y + _settings.BubbleRadius * s);
+                    Vector2 to = new Vector2(Mathf.Clamp(bs.x, tx + 24f * s, tx + tw - 24f * s), ty);
+                    RoverLineArtPainter.DrawLine(painter, from, to, RoverLineArtPainter.WithAlpha(Cyan, 175), 1.3f);
+                }
+            }
+        }
+
+        private void DrawDragOverlay(Painter2D painter, float s)
+        {
+            if (!_isDraggingKit || _dragHoldCell < 0)
+            {
+                return;
+            }
+
+            Vector2 start = _dragStartRefPos * s;
+            Vector2 cur = _dragCurrentRefPos * s;
+            Vector2 ctrl = new Vector2((start.x + cur.x) * 0.5f, Mathf.Max(start.y, cur.y) + 42f * s);
+            RoverLineArtPainter.StrokeDashedQuadratic(painter, start, ctrl, cur,
+                RoverLineArtPainter.WithAlpha(Cyan, 195), 1.8f * s, 6f * s, 4f * s);
+            RoverLineArtPainter.FillCircle(painter, start, 4.0f * s, RoverLineArtPainter.WithAlpha(Cyan, 185));
+
+            float half = 34f * s;
+            RoverLineArtPainter.StrokeRect(painter, cur.x - half - 3f * s, cur.y - half - 3f * s,
+                (half + 3f * s) * 2f, (half + 3f * s) * 2f,
+                RoverLineArtPainter.WithAlpha(Cyan, 70), 2.0f);
+            RoverLineArtPainter.FillRect(painter, cur.x - half, cur.y - half, half * 2f, half * 2f, BgPlate);
+            RoverLineArtPainter.StrokeRect(painter, cur.x - half, cur.y - half, half * 2f, half * 2f, Cyan, 2.2f);
+            RoverLineArtPainter.DrawCornerTicks(painter, cur.x - half, cur.y - half, half * 2f, half * 2f,
+                7f * s, Cyan, 2.0f);
+
+            UiIconShape icon = _diagram.GetIcon(_dragKitPiece);
+            UiIconPainter.Draw(painter, in icon, cur, 48f * s, UiIconState.Cyan);
+        }
+
+        private void DrawToastDot(Painter2D painter, float s)
+        {
+            if (_toast.style.display != DisplayStyle.Flex)
+            {
+                return;
+            }
+
+            RoverLineArtPainter.FillCircle(painter, new Vector2(54f * s, 733f * s), 3.5f * s, AmberBright);
+        }
+
+        private Vector2 PanelToReference(Vector2 localPos)
+        {
+            float inv = 1f / Mathf.Max(0.01f, _scale);
+            return localPos * inv;
+        }
+
+        private static void PositionElement(VisualElement element, float x, float y)
+        {
+            element.style.left = x;
+            element.style.top = y;
+        }
+
+        private static void PositionBox(VisualElement element, float x, float y, float w, float h)
+        {
+            element.style.left = x;
+            element.style.top = y;
+            element.style.width = w;
+            element.style.height = h;
+        }
+
+        private static T Require<T>(VisualElement root, string name) where T : VisualElement
+        {
+            T found = root.Q<T>(name);
+            if (found == null)
+            {
+                throw new InvalidOperationException($"GameUI.uxml has no {typeof(T).Name} named '{name}'.");
+            }
+
+            return found;
+        }
+
+        private readonly struct HoldCellState
+        {
+            public readonly HoldCellKind Kind;
+            public readonly SalvageMaterial Material;
+            public readonly int Units;
+            public readonly string StoryPartId;
+            public readonly RoverKitPiece KitPiece;
+            public readonly int RowIndex;
+
+            private HoldCellState(HoldCellKind kind, SalvageMaterial material, int units, string storyPartId,
+                RoverKitPiece kitPiece, int rowIndex)
+            {
+                Kind = kind;
+                Material = material;
+                Units = units;
+                StoryPartId = storyPartId;
+                KitPiece = kitPiece;
+                RowIndex = rowIndex;
+            }
+
+            public static HoldCellState ForEmpty() => new HoldCellState(HoldCellKind.Empty, default, 0, null, default, -1);
+
+            public static HoldCellState ForLocked() => new HoldCellState(HoldCellKind.Locked, default, 0, null, default, -1);
+
+            public static HoldCellState ForMaterial(SalvageMaterial material, int units) =>
+                new HoldCellState(HoldCellKind.Material, material, units, null, default, -1);
+
+            public static HoldCellState ForStoryPart(string partId) =>
+                new HoldCellState(HoldCellKind.StoryPart, default, 1, partId, default, -1);
+
+            public static HoldCellState ForWaitingKit(RoverKitPiece piece, int rowIndex) =>
+                new HoldCellState(HoldCellKind.WaitingKit, default, 1, null, piece, rowIndex);
+        }
+    }
+}

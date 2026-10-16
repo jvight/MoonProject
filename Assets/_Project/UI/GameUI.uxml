@@ -255,36 +255,20 @@
         </ui:VisualElement>
         <ui:VisualElement name="cargo" class="cargo" picking-mode="Ignore">
             <ui:VisualElement name="cargo-panel" class="cargo__panel" picking-mode="Ignore">
-                <ui:VisualElement name="cargo-page-cargo" class="cargo__columns" picking-mode="Ignore">
-                    <ui:VisualElement name="cargo-hold-column" class="cargo__column cargo__column--hold" picking-mode="Ignore">
-                        <ui:Label class="cargo__heading loc" text="ui.cargo.hold" picking-mode="Ignore" />
-                        <ui:Label name="cargo-boot" class="cargo__boot" picking-mode="Ignore" />
-                        <ui:Label name="cargo-waiting" class="cargo__note" picking-mode="Ignore" />
-                        <ui:VisualElement name="cargo-hold-grid" class="cargo__grid" picking-mode="Ignore" />
-                        <ui:Label name="cargo-summary" class="cargo__summary" picking-mode="Ignore" />
-                    </ui:VisualElement>
-                    <ui:VisualElement name="cargo-right-column" class="cargo__column cargo__column--right" picking-mode="Ignore">
-                        <ui:VisualElement name="cargo-page-seven" class="seven" picking-mode="Ignore">
-                            <ui:Label class="cargo__heading loc" text="ui.cargo.tab_seven" picking-mode="Ignore" />
-                            <ui:VisualElement name="seven-portrait" class="seven__portrait" picking-mode="Ignore">
-                                <ui:VisualElement name="seven-leaders" class="seven__leaders" picking-mode="Ignore" />
-                            </ui:VisualElement>
-                            <ui:VisualElement name="seven-row" class="seven__row" picking-mode="Ignore" />
-                        </ui:VisualElement>
-                        <ui:VisualElement name="cargo-home-column" class="cargo__column--home" picking-mode="Ignore">
-                            <ui:Label class="cargo__heading loc" text="hint.shelves" picking-mode="Ignore" />
-                            <ui:VisualElement name="cargo-home-grid" class="cargo__grid" picking-mode="Ignore" />
-                            <ui:Label name="cargo-transfer-hint" class="cargo__transfer-hint" picking-mode="Ignore" />
-                        </ui:VisualElement>
-                    </ui:VisualElement>
+                <ui:VisualElement name="cargo-canvas" class="cargo__canvas" picking-mode="Ignore" />
+                <ui:Label name="cargo-hold-title" class="cargo__heading loc" text="ui.cargo.hold" picking-mode="Ignore" />
+                <ui:Label name="cargo-right-title" class="cargo__heading loc" text="ui.cargo.tab_seven" picking-mode="Ignore" />
+                <ui:Label name="cargo-boot" class="cargo__boot" picking-mode="Ignore" />
+                <ui:VisualElement name="cargo-hold-grid" class="cargo__grid" picking-mode="Ignore" />
+                <ui:VisualElement name="cargo-sockets" class="cargo__sockets" picking-mode="Ignore" />
+                <ui:VisualElement name="cargo-home-grid" class="cargo__grid cargo__grid--home" picking-mode="Ignore" />
+                <ui:VisualElement name="cargo-tooltip" class="cargo__tooltip" picking-mode="Ignore">
+                    <ui:Label name="cargo-tooltip-name" class="cargo__tooltip-name" picking-mode="Ignore" />
+                    <ui:Label name="cargo-tooltip-desc" class="cargo__tooltip-desc" picking-mode="Ignore" />
                 </ui:VisualElement>
-                <ui:VisualElement name="seven-tooltip" class="seven__tooltip" picking-mode="Ignore">
-                    <ui:Label name="seven-tooltip-name" class="seven__tooltip-name" picking-mode="Ignore" />
-                    <ui:VisualElement name="seven-tooltip-glyph" class="glyph glyph--small" picking-mode="Ignore">
-                        <ui:Label name="seven-tooltip-glyph-label" class="glyph__label" picking-mode="Ignore" />
-                    </ui:VisualElement>
+                <ui:VisualElement name="cargo-toast" class="cargo__toast" picking-mode="Ignore">
+                    <ui:Label name="cargo-toast-text" class="cargo__toast-text" picking-mode="Ignore" />
                 </ui:VisualElement>
-                <ui:Label name="seven-ghost" class="seven__ghost" picking-mode="Ignore" />
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="hop-veil" class="hop-veil" picking-mode="Ignore">

@@ -121,6 +121,11 @@ namespace MoonProject.UI.PlayModeTests
         {
             _parts.Remove(partId);
         }
+
+        public void ClearParts()
+        {
+            _parts.Clear();
+        }
     }
 
     /// <summary>Home's shelves, set by hand.</summary>
@@ -235,6 +240,13 @@ namespace MoonProject.UI.PlayModeTests
         public void Fit(RoverKitPiece part)
         {
             _fitted[SocketOf(part)] = part;
+        }
+
+        public void Clear()
+        {
+            _fitted.Clear();
+            _known.Clear();
+            _row.Clear();
         }
     }
 

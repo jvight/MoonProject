@@ -34,10 +34,16 @@ namespace MoonProject.UI.Editor
         /// <summary>The wordmark's path commands, parsed from <see cref="WordmarkSource"/> by UI/Wordmark.</summary>
         public const string Wordmark = GeneratedFolder + "/Wordmark.asset";
 
+        /// <summary>The 30 production vector icons (item_*.svg and kit_*.svg), parsed by UI/Icons.</summary>
+        public const string IconsFolder = SourceFolder + "/Icons";
+
+        /// <summary>The parsed 64x64 UI vector icons asset, built by UI/Icons.</summary>
+        public const string Icons = GeneratedFolder + "/UiIcons.asset";
+
         /// <summary>The generated 07 v3 rover model prefab whose socket transforms feed <see cref="RoverDiagram"/>.</summary>
         public const string RoverModelPrefab = GeneratedAssets.Root + "/Art/R1/Models/Rover/RoverModel.prefab";
 
-        /// <summary>07 v3's socket positions for the Tab schematic diagram, built by UI/Rover Diagram.</summary>
+        /// <summary>07 v3's socket positions and icons for the Tab screen, built by UI/Rover Diagram.</summary>
         public const string RoverDiagram = GeneratedFolder + "/RoverDiagram.asset";
         public const string Theme = GeneratedFolder + "/LofiLunarTheme.tss";
         public const string Palette = GeneratedFolder + "/Palette.uss";
