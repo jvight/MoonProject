@@ -3094,8 +3094,8 @@ def build_suspension_and_sockets(rover_root, cfg, mats):
         ("BinSocket_L", (-0.46, 0.60, 0.02)),
         ("BinSocket_R", (0.46, 0.60, 0.02)),
         ("PanniersSocket", (0.46, 0.60, 0.02)),
-        ("SpineSocket", (0.0, 0.96, -0.08)),
-        ("BackSocket", (0.0, 0.96, -0.08)),
+        ("SpineSocket", (0.385, 0.90, -0.20)),
+        ("BackSocket", (0.385, 0.90, -0.20)),
         ("DustSocket_L", (-0.61, 0.0, -0.53)),
         ("DustSocket_R", (0.61, 0.0, -0.53)),
     )
