@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace MoonProject.Showcase
 {
-    /// <summary>Identifier for each of the 6 look-dev exhibits in the Showcase scene.</summary>
+    /// <summary>Identifier for each of the 15 look-dev exhibits in the Showcase scene.</summary>
     public enum ShowcaseExhibitId
     {
         Rover07 = 0,
@@ -12,6 +12,55 @@ namespace MoonProject.Showcase
         SolarArray = 3,
         PowerPylon = 4,
         RockCluster = 5,
+        Rover07Upgraded = 6,
+        BatteryBank = 7,
+        Smelter = 8,
+        Fabricator = 9,
+        StorageRack = 10,
+        UpgradeBay = 11,
+        AntennaMast = 12,
+        VehiclePad = 13,
+        RuinsCorner = 14,
+    }
+
+    /// <summary>Identifier for each of the 5 ruin prefabs arranged in the Ruins Corner exhibit.</summary>
+    public enum ShowcaseRuinPieceId
+    {
+        HabitatModules = 0,
+        RadioTower = 1,
+        KenjiWorkshop = 2,
+        FallenSolarArray = 3,
+        ScatterSet = 4,
+    }
+
+    /// <summary>Local offset and yaw within the Ruins Corner exhibit for one ruin prefab.</summary>
+    [Serializable]
+    public sealed class ShowcaseRuinPiecePlacement
+    {
+        [Tooltip("Identifier of the ruin prefab piece.")]
+        [SerializeField] private ShowcaseRuinPieceId _pieceId;
+
+        [Tooltip("Local horizontal offset (X, 0, Z) relative to the Ruins Corner exhibit root.")]
+        [SerializeField] private Vector3 _localOffset;
+
+        [Tooltip("Local yaw rotation in degrees relative to the Ruins Corner exhibit root.")]
+        [Range(-180f, 180f)]
+        [SerializeField] private float _localYawDegrees;
+
+        public ShowcaseRuinPiecePlacement()
+        {
+        }
+
+        public ShowcaseRuinPiecePlacement(ShowcaseRuinPieceId pieceId, Vector3 localOffset, float localYawDegrees)
+        {
+            _pieceId = pieceId;
+            _localOffset = localOffset;
+            _localYawDegrees = localYawDegrees;
+        }
+
+        public ShowcaseRuinPieceId PieceId => _pieceId;
+        public Vector3 LocalOffset => _localOffset;
+        public float LocalYawDegrees => _localYawDegrees;
     }
 
     /// <summary>How a node animation rule drives its target Transform relative to its authored rest pose.</summary>
@@ -202,8 +251,8 @@ namespace MoonProject.Showcase
         [Tooltip("Identifier of the exhibit.")]
         [SerializeField] private ShowcaseExhibitId _exhibitId;
 
-        [Tooltip("1-based number key (1..6) that selects this exhibit.")]
-        [Range(1, 6)]
+        [Tooltip("1-based index (1..15) of this exhibit; keys 1..6 jump directly to the first 6 exhibits and Tab cycles all 15.")]
+        [Range(1, 15)]
         [SerializeField] private int _numberKey = 1;
 
         [Tooltip("Vietnamese title shown in the help overlay when focused.")]
@@ -296,7 +345,8 @@ namespace MoonProject.Showcase
 
     /// <summary>
     /// Tuning ScriptableObject (`Assets/_Project/Data/Tuning/ShowcaseTuning.asset`) for the R1 Look-Dev Showcase.
-    /// Lists camera feel, time-of-day phase presets, lamp emission strengths, and every exhibit's animated node rules.
+    /// Lists camera feel, time-of-day phase presets, lamp emission strengths, build-stage animation, camera tour,
+    /// ruin cluster layout, and every exhibit's animated node rules.
     /// </summary>
     [CreateAssetMenu(menuName = "MoonProject/Showcase Tuning", fileName = "ShowcaseTuning")]
     public sealed class ShowcaseTuning : ScriptableObject
@@ -375,8 +425,50 @@ namespace MoonProject.Showcase
         [Range(0.05f, 2f)]
         [SerializeField] private float _lampEaseSeconds = 0.55f;
 
+        [Header("Build-Stage Sequence & Auto-Demo")]
+        [Tooltip("Vertical distance in metres below rest from which each build stage (Stage_1..4) rises during the stage sequence.")]
+        [Range(0.05f, 2f)]
+        [SerializeField] private float _stageRiseDepthMeters = 0.42f;
+
+        [Tooltip("Upward overshoot in metres at the peak of the soft rise-and-settle curve for each build stage.")]
+        [Range(0f, 0.25f)]
+        [SerializeField] private float _stageSettleOvershootMeters = 0.035f;
+
+        [Tooltip("Duration in seconds for one build stage to rise and settle into its rest pose.")]
+        [Range(0.1f, 3f)]
+        [SerializeField] private float _stageRiseDurationSeconds = 0.65f;
+
+        [Tooltip("Delay in seconds between consecutive build stages starting their rise.")]
+        [Range(0.1f, 3f)]
+        [SerializeField] private float _stageStepIntervalSeconds = 0.55f;
+
+        [Tooltip("Hold duration in seconds at Stage 4 (with active moving parts) before the auto-demo loop restarts the stage sequence.")]
+        [Range(0.5f, 10f)]
+        [SerializeField] private float _stageAutoLoopHoldSeconds = 2.4f;
+
+        [Tooltip("Interval in seconds between rover face feeling transitions when Demo Mode is active.")]
+        [Range(0.5f, 10f)]
+        [SerializeField] private float _feelingDemoIntervalSeconds = 2.2f;
+
+        [Header("Slow Camera Tour (O Key)")]
+        [Tooltip("Duration in seconds spent visiting each exhibit during the O-key slow camera tour.")]
+        [Range(1.5f, 15f)]
+        [SerializeField] private float _tourExhibitHoldSeconds = 4.2f;
+
+        [Tooltip("Eased camera transition duration in seconds when moving between exhibits during the O-key tour.")]
+        [Range(0.3f, 5f)]
+        [SerializeField] private float _tourTransitionSeconds = 1.6f;
+
+        [Tooltip("Gentle horizontal orbit sweep angle in degrees across each exhibit visit during the O-key tour.")]
+        [Range(0f, 90f)]
+        [SerializeField] private float _tourOrbitSweepDegrees = 22f;
+
+        [Header("Ruins Corner Cluster Layout")]
+        [Tooltip("Local offset and yaw of each of the 5 ruin prefabs arranged inside the Ruins Corner exhibit.")]
+        [SerializeField] private ShowcaseRuinPiecePlacement[] _ruinPieces = Array.Empty<ShowcaseRuinPiecePlacement>();
+
         [Header("Exhibits")]
-        [Tooltip("The 6 look-dev exhibits placed in the Showcase scene.")]
+        [Tooltip("The 15 look-dev exhibits placed in the Showcase scene.")]
         [SerializeField] private ShowcaseExhibitDefinition[] _exhibits = Array.Empty<ShowcaseExhibitDefinition>();
 
         public float FreeFlySpeed => _freeFlySpeed;
@@ -397,11 +489,22 @@ namespace MoonProject.Showcase
         public float LampPulseMaxEmission => _lampPulseMaxEmission;
         public float LampPulseSpeed => _lampPulseSpeed;
         public float LampEaseSeconds => _lampEaseSeconds;
+        public float StageRiseDepthMeters => _stageRiseDepthMeters;
+        public float StageSettleOvershootMeters => _stageSettleOvershootMeters;
+        public float StageRiseDurationSeconds => _stageRiseDurationSeconds;
+        public float StageStepIntervalSeconds => _stageStepIntervalSeconds;
+        public float StageAutoLoopHoldSeconds => _stageAutoLoopHoldSeconds;
+        public float FeelingDemoIntervalSeconds => _feelingDemoIntervalSeconds;
+        public float TourExhibitHoldSeconds => _tourExhibitHoldSeconds;
+        public float TourTransitionSeconds => _tourTransitionSeconds;
+        public float TourOrbitSweepDegrees => _tourOrbitSweepDegrees;
+        public ShowcaseRuinPiecePlacement[] RuinPieces => _ruinPieces;
         public ShowcaseExhibitDefinition[] Exhibits => _exhibits;
 
         public void Configure(
             ShowcaseSkyPreset[] skyPresets,
             ShowcaseExhibitDefinition[] exhibits,
+            ShowcaseRuinPiecePlacement[] ruinPieces = null,
             float freeFlySpeed = 8.5f,
             float freeFlyFastMultiplier = 3.2f,
             float freeFlyVerticalSpeed = 6.0f,
@@ -416,10 +519,20 @@ namespace MoonProject.Showcase
             float lampPulseMinEmission = 0.25f,
             float lampPulseMaxEmission = 2.5f,
             float lampPulseSpeed = 0.85f,
-            float lampEaseSeconds = 0.55f)
+            float lampEaseSeconds = 0.55f,
+            float stageRiseDepthMeters = 0.42f,
+            float stageSettleOvershootMeters = 0.035f,
+            float stageRiseDurationSeconds = 0.65f,
+            float stageStepIntervalSeconds = 0.55f,
+            float stageAutoLoopHoldSeconds = 2.4f,
+            float feelingDemoIntervalSeconds = 2.2f,
+            float tourExhibitHoldSeconds = 4.2f,
+            float tourTransitionSeconds = 1.6f,
+            float tourOrbitSweepDegrees = 22f)
         {
             _skyPresets = skyPresets ?? Array.Empty<ShowcaseSkyPreset>();
             _exhibits = exhibits ?? Array.Empty<ShowcaseExhibitDefinition>();
+            _ruinPieces = ruinPieces ?? Array.Empty<ShowcaseRuinPiecePlacement>();
             _freeFlySpeed = freeFlySpeed;
             _freeFlyFastMultiplier = freeFlyFastMultiplier;
             _freeFlyVerticalSpeed = freeFlyVerticalSpeed;
@@ -435,6 +548,15 @@ namespace MoonProject.Showcase
             _lampPulseMaxEmission = lampPulseMaxEmission;
             _lampPulseSpeed = lampPulseSpeed;
             _lampEaseSeconds = lampEaseSeconds;
+            _stageRiseDepthMeters = stageRiseDepthMeters;
+            _stageSettleOvershootMeters = stageSettleOvershootMeters;
+            _stageRiseDurationSeconds = stageRiseDurationSeconds;
+            _stageStepIntervalSeconds = stageStepIntervalSeconds;
+            _stageAutoLoopHoldSeconds = stageAutoLoopHoldSeconds;
+            _feelingDemoIntervalSeconds = feelingDemoIntervalSeconds;
+            _tourExhibitHoldSeconds = tourExhibitHoldSeconds;
+            _tourTransitionSeconds = tourTransitionSeconds;
+            _tourOrbitSweepDegrees = tourOrbitSweepDegrees;
         }
 
         public ShowcaseExhibitDefinition FindExhibit(ShowcaseExhibitId id)
@@ -462,9 +584,14 @@ namespace MoonProject.Showcase
                 return "ShowcaseTuning must define all 6 sky phase presets.";
             }
 
-            if (_exhibits == null || _exhibits.Length != 6)
+            if (_exhibits == null || _exhibits.Length != 15)
             {
-                return "ShowcaseTuning must define all 6 exhibits.";
+                return "ShowcaseTuning must define all 15 exhibits.";
+            }
+
+            if (_ruinPieces == null || _ruinPieces.Length != 5)
+            {
+                return "ShowcaseTuning must define all 5 ruin piece placements.";
             }
 
             for (int i = 0; i < _exhibits.Length; i++)
