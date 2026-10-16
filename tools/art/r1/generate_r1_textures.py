@@ -656,8 +656,15 @@ def main() -> None:
     _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_Regolith_Normal.png", regolith["normal"])
     _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_Regolith_Mask.png", regolith["mask"])
 
+    from generate_signage_atlas import generate_signage_maps
+    signage = generate_signage_maps(512)
+    _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_Signage_Albedo.png", signage["albedo"])
+    _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_Signage_Normal.png", signage["normal"])
+    _save_rgba_or_rgb(OUTPUT_DIR / "T_R1_Signage_Mask.png", signage["mask"])
+
     print(f"Generated {len(list(OUTPUT_DIR.glob('*.png')))} PNG textures in {OUTPUT_DIR}")
 
 
 if __name__ == "__main__":
     main()
+

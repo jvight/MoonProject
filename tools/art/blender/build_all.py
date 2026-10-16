@@ -219,7 +219,39 @@ def main(argv: list[str] | None = None) -> None:
             out_path=renders_dir / "family.png",
         )
 
+        before_dir = Path(r"D:\Project\MoonProject-wt\agy-structs\Logs\renders")
+        slugs = ("charging_pad", "solar_array", "power_pylon")
+        before_paths = [before_dir / f"{s}_three_quarter.png" for s in slugs]
+        after_paths = [renders_dir / f"{s}_three_quarter.png" for s in slugs]
+        if all(p.exists() for p in before_paths) and all(p.exists() for p in after_paths):
+            r1kit.compose_before_after_grid(
+                before_paths=before_paths,
+                after_paths=after_paths,
+                out_path=renders_dir / "structures_before_after.png",
+            )
+
+    # 14. Build & export Lumen Station Ruins (HabitatModules, RadioTower, KenjiWorkshop, FallenSolarArray, ScatterSet)
+    from ruins import (
+        fallen_solar_array,
+        habitat_modules,
+        kenji_workshop,
+        radio_tower,
+        render_cluster_and_scale,
+        scatter_set,
+    )
+
+    habitat_modules.build(skip_renders=args.skip_renders)
+    radio_tower.build(skip_renders=args.skip_renders)
+    kenji_workshop.build(skip_renders=args.skip_renders)
+    fallen_solar_array.build(skip_renders=args.skip_renders)
+    scatter_set.build(skip_renders=args.skip_renders)
+
+    if not args.skip_renders:
+        render_cluster_and_scale.build()
+
 
 if __name__ == "__main__":
     cli_args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
     main(cli_args)
+
+

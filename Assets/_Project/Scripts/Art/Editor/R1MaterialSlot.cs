@@ -19,6 +19,7 @@ namespace MoonProject.Art.Editor
         SolarCell = 10,
         Screen = 11,
         Brass = 12,
-        Basalt = 13
+        Basalt = 13,
+        Signage = 14
     }
 }

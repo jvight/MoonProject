@@ -1,0 +1,22 @@
+{
+  "model": "scatter_set",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "max_triangles": 12000,
+  "max_meshes": 12,
+  "max_draw_calls": 48,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "ScatterSet": { "pivot": [0.0, 0.0, 0.0] },
+    "SealedCrates": { "pivot": [0.0, 0.0, 0.0] },
+    "CableReels": { "pivot": [0.0, 0.0, 0.0] },
+    "ToppledAntenna": { "pivot": [0.0, 0.0, 0.0] },
+    "InstrumentCase": { "pivot": [0.0, 0.0, 0.0] },
+    "OxygenBottleRack": { "pivot": [0.0, 0.0, 0.0] },
+    "Scan_1": { "pivot": [0.22, 0.22, 0.45] },
+    "Scan_2": { "pivot": [1.48, -0.68, 0.85] },
+    "Scan_3": { "pivot": [-1.65, 0.20, 0.65] }
+  }
+}

@@ -45,9 +45,9 @@ R1 hard-surface forms rely on **chamfered silhouettes** that catch both cold dir
 
 ## 4. Fixed Blender Material Slot Names & Generated Assets
 
-Every mesh primitive exported under `Assets/_Project/Art/R1/Models/` must assign **only** material slots from the 14 fixed names below (`R1MaterialRecipes` in `Assets/_Project/Scripts/Art/Editor/R1MaterialRecipes.cs`):
+Every mesh primitive exported under `Assets/_Project/Art/R1/Models/` must assign **only** material slots from the 15 fixed names below (`R1MaterialRecipes` in `Assets/_Project/Scripts/Art/Editor/R1MaterialRecipes.cs`):
 
-- **Generated Materials (`[MoonBuilder("Art/R1Materials", 105)]`):** `R1MaterialLibrary.BuildMaterials` generates all 14 `.mat` assets into `Assets/_Project/Generated/Art/R1/Materials/` using `GeneratedAssets.CreateOrReplace`. Nothing under `Generated/` is committed to git.
+- **Generated Materials (`[MoonBuilder("Art/R1Materials", 105)]`):** `R1MaterialLibrary.BuildMaterials` generates all 15 `.mat` assets into `Assets/_Project/Generated/Art/R1/Materials/` using `GeneratedAssets.CreateOrReplace`. Nothing under `Generated/` is committed to git.
 - **Import Validation (`R1ModelPostprocessor`):** Sets `ImportViaMaterialDescription` + `InPrefab`, validates each source material name in `OnPreprocessMaterialDescription` (logging `Debug.LogError` with the model path and slot name on unknown names), and validates vertex colours in `OnPostprocessModel`.
 - **Generated Prefabs (`[MoonBuilder("Art/R1Models", 106)]`):** `R1ModelBuilder.Build` wraps each FBX under `Assets/_Project/Art/R1/Models/` into `Assets/_Project/Generated/Art/R1/Models/<same relative path>.prefab` using `GeneratedAssets.SavePrefab`, replacing every renderer's material with the generated library material matching its source slot name.
 
@@ -64,9 +64,10 @@ Every mesh primitive exported under `Assets/_Project/Art/R1/Models/` must assign
 | `R1_SagePatch` | `R1_SagePatch.mat` | Muted sage-green field-repair patches, stowage covers, and secondary maintenance access panels. |
 | `R1_LampAmber` | `R1_LampAmber.mat` | Smooth glowing warm amber indicator lamps, porch floodlight lenses, and beacon emitters with a small hot core. |
 | `R1_SolarCell` | `R1_SolarCell.mat` | Deep blue-violet photovoltaic glass cells with fine silver busbars and collector grid for solar arrays and Tilly's solar wing. |
-| `R1_Screen` | `R1_ScreenPlaceholder.mat` | Plain dark-glass placeholder assigned to the `R1_Screen` slot and reserved for the CRT face shader slice. |
+| `R1_Screen` | `R1_CrtFace.mat` | Expressive warm-amber CRT face and status screen material driven by `MoonProject/R1/CrtFace`. |
 | `R1_Brass` | `R1_Brass.mat` | Warm golden machined brass for lamp bezels, chest lens ring, cheek lens, and fittings. |
 | `R1_Basalt` | `R1_Basalt.mat` | Fractured lunar basalt stone for boulders, rock slabs, pebbles, and canyon gate monoliths. |
+| `R1_Signage` | `R1_Signage.mat` | 1980s stencil signage atlas (`LUMEN`, `SEC-04`, `HABITAT & LAB`, `WORKSHOP`, `EVAC 1988`, programme logo mark, hazard stripes, and 4 pictograms). |
 
 ---
 
@@ -74,20 +75,25 @@ Every mesh primitive exported under `Assets/_Project/Art/R1/Models/` must assign
 
 - **Target Texel Density:** `256 px/m` (`2.56 px/cm`) for hero rover/companion/habitat surfaces using `256x256` per-slot detail maps or the `512x512` shared trim sheet (`T_R1_TrimSheet_*`).
 - **Seamless Per-Material Textures (`T_R1_<Surface>_*`):**
-  - Library materials are **seamless, tileable surface detail only** (grain, fine scratches, slight mottling, fine foil crinkles, or tileable solar cell grid for `R1_SolarCell`).
+  - Library materials are **seamless, tileable surface detail only** (grain, fine scratches, slight mottling, fine foil crinkles, or tileable solar cell grid for `R1_SolarCell`), except `R1_Signage` which is a 4-row UV signage atlas (`512x512`).
   - Never bake rectangular panel frames, seam bands, corner bolts, ribs, or bullseye lens rings into per-material textures; panel seams, bolts, and vents belong on the trim sheet (`T_R1_TrimSheet_*`) or in geometry.
+- **Signage Atlas Cells (`R1_Signage` / `T_R1_Signage_*`, `512x512`, `V = 0` at bottom):**
+  - `Row 3 (V = 0.75..1.00)`: `LOGO` (`U = 0.00..0.25`, circular Lumen crescent mark), `LUMEN` (`U = 0.25..0.75`, stencil `LUMEN`), `EVAC_1988` (`U = 0.75..1.00`, stencil `EVAC 1988`).
+  - `Row 2 (V = 0.50..0.75)`: `SEC04_HABITAT` (`U = 0.00..0.50`, stacked `SEC-04 / HABITAT & LAB`), `SEC_04` (`U = 0.50..0.75`, `SEC-04`), `HABITAT_LAB` (`U = 0.75..1.00`, `HABITAT & LAB`).
+  - `Row 1 (V = 0.25..0.50)`: `WORKSHOP` (`U = 0.00..0.50`, stencil `WORKSHOP`), `HAZARD` (`U = 0.50..1.00`, 45° diagonal amber/charcoal hazard stripes).
+  - `Row 0 (V = 0.00..0.25)`: 4 cassette-futurism pictogram tiles on warm orange band: `PICT_ROVER` (`U = 0.00..0.25`), `PICT_RADIO` (`U = 0.25..0.50`), `PICT_BOTANY` (`U = 0.50..0.75`), `PICT_AIRLOCK` (`U = 0.75..1.00`).
 - **UV Channel Contract:**
-  - `UV0` (`TEXCOORD0`): Primary material UVs. Each slot owns a seamless `[0, 1]` tileable texture set (`T_R1_<Surface>_Albedo/Normal/Mask`). Keep UV islands aligned horizontally (`U` along panel length, `V` along panel height) so brushed metal grain and solar cell busbars orient consistently.
+  - `UV0` (`TEXCOORD0`): Primary material UVs. Each slot owns a seamless `[0, 1]` tileable texture set (`T_R1_<Surface>_Albedo/Normal/Mask`), or maps signage quads directly into `T_R1_Signage_*` cells. Keep UV islands aligned horizontally (`U` along panel length, `V` along panel height) so brushed metal grain and solar cell busbars orient consistently.
   - `UV1` (`TEXCOORD1`): Optional static lightmap UV (`Pack Islands` with `Margin >= 0.02`).
 - **Regenerating Library Textures:**
-  - Run `python tools/art/r1/generate_r1_textures.py` to deterministically regenerate all 47 PNG maps in `Assets/_Project/Art/R1/Textures/`.
+  - Run `python tools/art/r1/generate_r1_textures.py` to deterministically regenerate all 50 PNG maps in `Assets/_Project/Art/R1/Textures/`.
 
 ---
 
 ## 6. Per-Model Vertex Colours (`COLOR`) & `_MaskMap` Packing
 
 ### Per-Model Vertex Colour Attribute (`COLOR`)
-Because 20+ models share the 14 library materials, **ambient occlusion, convex edge wear, and crease/cavity dust come from each mesh's baked vertex colours**, not from shared 2D textures:
+Because 20+ models share the 15 library materials, **ambient occlusion, convex edge wear, and crease/cavity dust come from each mesh's baked vertex colours**, not from shared 2D textures:
 
 | Vertex Colour Channel | Content | Neutral / Default | Shader Usage (`R1LitCore.hlsl`) |
 | :--- | :--- | :--- | :--- |
