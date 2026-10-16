@@ -27,8 +27,8 @@ class BuilderFilterTests(unittest.TestCase):
 class TestCommandTests(unittest.TestCase):
     ROOT = Path("D:/wt/world")
 
-    def args(self, box, **kw):
-        values = dict(box=box, filter=None, assembly=None, platform="editmode", fast=False)
+    def args(self, *boxes, **kw):
+        values = dict(boxes=list(boxes), filter=None, assembly=None, platform="editmode", fast=False)
         values.update(kw)
         return argparse.Namespace(**values)
 
@@ -39,6 +39,20 @@ class TestCommandTests(unittest.TestCase):
         self.assertEqual(planned[0][1][-3:], ["editmode", "--assembly", "MoonProject.World.Tests"])
         self.assertEqual(planned[1][1][-5:], ["playmode", "--assembly", "MoonProject.World.PlayModeTests",
                                               "--category", "!Playthrough"])
+
+    def test_several_boxes_share_one_step_per_platform_with_each_assembly_once(self):
+        planned = box_check.test_commands(self.ROOT, self.args("gameplay", "world", "art"))
+        self.assertEqual([label for label, _ in planned], [
+            "editmode MoonProject.Gameplay.Tests;MoonProject.World.Tests;MoonProject.Art.Tests;"
+            "MoonProject.Gameplay.Feel.Tests;MoonProject.Rover.Tests",
+            "playmode MoonProject.Gameplay.PlayModeTests;MoonProject.World.PlayModeTests;"
+            "MoonProject.Gameplay.Feel.PlayModeTests;MoonProject.Rover.PlayModeTests",
+        ])
+        self.assertEqual(planned[1][1][-2:], ["--category", "!Playthrough"])
+        self.assertEqual(planned[1][1][planned[1][1].index("--timeout") + 1], "7200")
+        self.assertNotIn("--timeout", planned[0][1])
+        self.assertNotIn("--timeout", box_check.test_commands(self.ROOT, self.args("art"))[1][1])
+        self.assertEqual(box_check.box_assemblies(box_check.DEFAULT_TESTS, ["music", "lyrics"]), None)
 
     def test_fast_skips_playmode(self):
         self.assertEqual([l for l, _ in box_check.test_commands(self.ROOT, self.args("world", fast=True))],
