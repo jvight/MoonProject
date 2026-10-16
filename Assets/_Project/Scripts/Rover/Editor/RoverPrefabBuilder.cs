@@ -104,6 +104,9 @@ namespace MoonProject.Rover.Editor
             var fxTuning = BuildWiring.Require<RoverFxTuning>(RoverAssetPaths.FxTuning, "Rover/Tuning");
             var characterTuning =
                 BuildWiring.Require<RoverCharacterTuning>(RoverAssetPaths.CharacterTuning, "Rover/Tuning");
+            var faceTuning = BuildWiring.Require<FaceTuning>(RoverAssetPaths.FaceTuning, "Rover/Tuning");
+            var faceDirectorTuning =
+                BuildWiring.Require<FaceDirectorTuning>(RoverAssetPaths.FaceDirectorTuning, "Rover/Tuning");
             var sphereMaterial =
                 BuildWiring.Require<PhysicsMaterial>(RoverAssetPaths.SpherePhysicsMaterial, "Rover/Materials");
             var trackMaterial = BuildWiring.Require<Material>(RoverAssetPaths.TrackMaterial, "Rover/Materials");
@@ -203,13 +206,42 @@ namespace MoonProject.Rover.Editor
             SetLayer(instance.transform, Layers.Rover);
             SetLayer(lampMotes.transform, DefaultLayer);
 
+            Transform head = BuildWiring.Node(m, RoverModelNodes.Head);
+            Transform screen = BuildWiring.Node(head, RoverModelNodes.Screen);
+            Renderer screenRenderer = BuildWiring.NodeComponent<MeshRenderer>(head, RoverModelNodes.Screen);
+            Transform rearVentStrip = BuildWiring.Node(head, RoverModelNodes.RearVentStrip);
+            Renderer rearVentRenderer = rearVentStrip.GetComponent<Renderer>();
+            if (rearVentRenderer == null)
+            {
+                rearVentRenderer = head.GetComponent<MeshRenderer>();
+            }
+
+            if (rearVentRenderer == null)
+            {
+                throw new System.InvalidOperationException(
+                    "RoverModel Head/RearVentStrip has no renderer for the rear vent mood echo.");
+            }
+
+            var faceDisplay = screen.gameObject.AddComponent<FaceDisplay>();
+            BuildWiring.Assign(faceDisplay,
+                ("_tuning", faceTuning),
+                ("_screenRenderer", screenRenderer));
+
+            var faceDirector = screen.gameObject.AddComponent<RoverFaceDirector>();
+            BuildWiring.Assign(faceDirector,
+                ("_tuning", faceDirectorTuning),
+                ("_display", faceDisplay),
+                ("_head", head),
+                ("_rearVentStrip", rearVentStrip),
+                ("_rearVentRenderer", rearVentRenderer));
+
             BuildWiring.Assign(bodyLanguage,
                 ("_tuning", characterTuning),
                 ("_rover", controller),
                 ("_rig", rig),
                 ("_neck", BuildWiring.Node(m, RoverModelNodes.Neck)),
                 ("_neckLift", BuildWiring.Node(m, RoverModelNodes.NeckLift)),
-                ("_head", BuildWiring.Node(m, RoverModelNodes.Head)),
+                ("_head", head),
                 ("_solarWing", BuildWiring.Node(m, RoverModelNodes.SolarWing)),
                 ("_cutterTurret", BuildWiring.Node(m, RoverModelNodes.CutterTurret)),
                 ("_cutterHead", BuildWiring.Node(m, RoverModelNodes.CutterHead)),
@@ -219,7 +251,8 @@ namespace MoonProject.Rover.Editor
                 ("_eyeRenderer", BuildWiring.NodeComponent<MeshRenderer>(m, RoverModelNodes.Eye)),
                 ("_antennaTipRenderer", BuildWiring.NodeComponent<MeshRenderer>(m, RoverModelNodes.AntennaTip)),
                 ("_eyeLight", eyeLight),
-                ("_scanFan", fan.GetComponentInChildren<Renderer>(true)));
+                ("_scanFan", fan.GetComponentInChildren<Renderer>(true)),
+                ("_faceDirector", faceDirector));
 
             return root;
         }

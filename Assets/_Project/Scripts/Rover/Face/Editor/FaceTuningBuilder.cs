@@ -15,14 +15,20 @@ namespace MoonProject.Rover.Face.Editor
         [MoonBuilder("Rover/FaceTuning", 301)]
         public static void Build()
         {
-            if (AssetDatabase.LoadAssetAtPath<FaceTuning>(FaceTuning.AssetPath) != null)
+            Ensure<FaceTuning>(FaceTuning.AssetPath);
+            Ensure<FaceDirectorTuning>(FaceDirectorTuning.AssetPath);
+            AssetDatabase.SaveAssets();
+        }
+
+        private static void Ensure<T>(string path) where T : ScriptableObject
+        {
+            if (AssetDatabase.LoadAssetAtPath<T>(path) != null)
             {
                 return;
             }
 
             GeneratedAssets.EnsureFolder(TuningFolder);
-            AssetDatabase.CreateAsset(ScriptableObject.CreateInstance<FaceTuning>(), FaceTuning.AssetPath);
-            AssetDatabase.SaveAssets();
+            AssetDatabase.CreateAsset(ScriptableObject.CreateInstance<T>(), path);
         }
     }
 }

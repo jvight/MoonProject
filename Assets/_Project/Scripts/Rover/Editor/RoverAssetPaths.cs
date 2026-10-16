@@ -44,6 +44,8 @@ namespace MoonProject.Rover.Editor
         public const string FxTuning = TuningFolder + "/RoverFxTuning.asset";
         public const string CameraTuning = TuningFolder + "/RoverCameraTuning.asset";
         public const string CharacterTuning = TuningFolder + "/RoverCharacterTuning.asset";
+        public const string FaceTuning = TuningFolder + "/FaceTuning.asset";
+        public const string FaceDirectorTuning = TuningFolder + "/FaceDirectorTuning.asset";
 
         public const string TrackShader = "Assets/_Project/Shaders/Rover/RoverTrack.shader";
         public const string ParticlesSimpleLitShader =
