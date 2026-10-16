@@ -78,6 +78,289 @@ MonoBehaviour:
       _springDamping: 1
     _backdropWeight: 0.55
     _idleSeconds: 20
+    _moonTurnPeriodSeconds: 48
+    _morsePeriodSeconds: 4.2
+    _eyeBlinkPeriodSeconds: 6.5
+    _eyeBlinkCloseThreshold: 6.32
+    _cursorBlinkPeriodSeconds: 0.9
+    _cursorVisibleDuty: 0.72
+    _trailLagSeconds: 0.14
+    _menuReferenceSize: {x: 1920, y: 1080}
+    _menuMoonCenter: {x: 1310, y: 980}
+    _menuMoonRadius: 450
+    _menuRoverScale: 82
+    _menuEarthCenter: {x: 955, y: 192}
+    _menuEarthRadius: 38
+    _menuArkOffset: {x: 66, y: -18}
+    _standaloneReferenceSize: {x: 1280, y: 720}
+    _standaloneMoonCenter: {x: 640, y: 678}
+    _standaloneMoonRadius: 320
+    _standaloneRoverScale: 82
+    _standaloneEarthCenter: {x: 278, y: 132}
+    _standaloneEarthRadius: 30
+    _standaloneArkOffset: {x: 54, y: -14}
+    _wheelRadius: 0.35
+    _wheelRimRadius: 0.185
+    _wheelbaseHalf: 0.53
+    _wheelLugCount: 12
+    _wheelSpokeCount: 6
+    _farWheelScale: 0.94
+    _farWheelAlpha: 0.42
+    _bodyPivotHeight: 0.58
+    _bodyPitchFactor: 0.38
+    _scoopNodAmplitude: 0.025
+    _solarTiltAmplitude: 0.014
+    _antennaSwayAmplitude: 0.045
+    _headNodBase: -0.06
+    _headNodAmplitude: 0.018
+    _gridOuterRadiusShare: 0.86
+    _gridInnerRadiusShare: 0.58
+    _landmarkMaxAngle: 1.38
+    _landmarkRoverClearAngle: 0
+    _landmarkEdgeFadeSpan: 0.35
+    _landmarkRoverFadeSpan: 0.05
+    _crtBarrelStrength: 0.055
+    _crtBezelThreshold: 0.985
+    _crtScanlineCount: 180
+    _crtScanlineAlpha: 0.24
+    _crtVignetteAlpha: 0.58
+    _crtRollSpeed: 36
+    _crtRollBandHeight: 90
+    _bgDeep: {r: 0.05490196, g: 0.03529412, b: 0.019607844, a: 1}
+    _bgWarm: {r: 0.1254902, g: 0.078431375, b: 0.039215688, a: 1}
+    _bgCorner: {r: 0.07058824, g: 0.043137256, b: 0.019607844, a: 1}
+    _bgMoon: {r: 0.1882353, g: 0.11764706, b: 0.05490196, a: 1}
+    _amber: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
+    _amberHi: {r: 1, g: 0.8392157, b: 0.5019608, a: 1}
+    _cream: {r: 1, g: 0.9529412, b: 0.8, a: 1}
+    _amberDim: {r: 0.8509804, g: 0.6039216, b: 0.27058825, a: 1}
+    _amberFaint: {r: 0.5411765, g: 0.3764706, b: 0.1882353, a: 1}
+    _amberEdge: {r: 0.78431374, g: 0.41568628, b: 0.078431375, a: 1}
+    _cyan: {r: 0.37254903, g: 0.9529412, b: 1, a: 1}
+    _cyanDim: {r: 0.21960784, g: 0.69803923, b: 0.7764706, a: 1}
+    _stars:
+    - _u: 0.115625
+      _v: 0.119444445
+      _size: 1.6
+      _phase: 0.2
+      _frequency: 0.19
+      _flare: 1
+    - _u: 0.23046875
+      _v: 0.08611111
+      _size: 1.2
+      _phase: 1.7
+      _frequency: 0.14
+      _flare: 0
+    - _u: 0.3453125
+      _v: 0.17777778
+      _size: 1.4
+      _phase: 2.9
+      _frequency: 0.23
+      _flare: 0
+    - _u: 0.4375
+      _v: 0.10277778
+      _size: 1.1
+      _phase: 4.1
+      _frequency: 0.16
+      _flare: 0
+    - _u: 0.584375
+      _v: 0.08055555
+      _size: 1.8
+      _phase: 0.9
+      _frequency: 0.21
+      _flare: 1
+    - _u: 0.696875
+      _v: 0.15555556
+      _size: 1.3
+      _phase: 3.3
+      _frequency: 0.15
+      _flare: 0
+    - _u: 0.81640625
+      _v: 0.108333334
+      _size: 1.7
+      _phase: 5
+      _frequency: 0.18
+      _flare: 1
+    - _u: 0.896875
+      _v: 0.20277777
+      _size: 1.2
+      _phase: 2.2
+      _frequency: 0.13
+      _flare: 0
+    - _u: 0.1640625
+      _v: 0.2888889
+      _size: 1.1
+      _phase: 1.1
+      _frequency: 0.25
+      _flare: 0
+    - _u: 0.2953125
+      _v: 0.3388889
+      _size: 1.3
+      _phase: 3.8
+      _frequency: 0.17
+      _flare: 0
+    - _u: 0.76953125
+      _v: 0.30277777
+      _size: 1.2
+      _phase: 0.4
+      _frequency: 0.2
+      _flare: 0
+    - _u: 0.8765625
+      _v: 0.3861111
+      _size: 1.4
+      _phase: 4.7
+      _frequency: 0.16
+      _flare: 0
+    _craters:
+    - _angle: 0.12
+      _radialShare: 0.78
+      _radiusX: 30
+      _radiusY: 13
+      _tilt: 0
+      _sunlitRim: 1
+    - _angle: 0.58
+      _radialShare: 0.62
+      _radiusX: 42
+      _radiusY: 20
+      _tilt: 0
+      _sunlitRim: 1
+    - _angle: 1.05
+      _radialShare: 0.82
+      _radiusX: 25
+      _radiusY: 11
+      _tilt: 0
+      _sunlitRim: 0
+    - _angle: 1.48
+      _radialShare: 0.5
+      _radiusX: 36
+      _radiusY: 18
+      _tilt: 0
+      _sunlitRim: 1
+    - _angle: 1.95
+      _radialShare: 0.75
+      _radiusX: 28
+      _radiusY: 12
+      _tilt: 0
+      _sunlitRim: 0
+    - _angle: 2.38
+      _radialShare: 0.66
+      _radiusX: 46
+      _radiusY: 22
+      _tilt: 0
+      _sunlitRim: 1
+    - _angle: 2.88
+      _radialShare: 0.8
+      _radiusX: 24
+      _radiusY: 10
+      _tilt: 0
+      _sunlitRim: 0
+    - _angle: 3.42
+      _radialShare: 0.58
+      _radiusX: 38
+      _radiusY: 19
+      _tilt: 0
+      _sunlitRim: 1
+    - _angle: 3.96
+      _radialShare: 0.77
+      _radiusX: 31
+      _radiusY: 14
+      _tilt: 0
+      _sunlitRim: 1
+    - _angle: 4.45
+      _radialShare: 0.64
+      _radiusX: 29
+      _radiusY: 14
+      _tilt: 0
+      _sunlitRim: 0
+    - _angle: 4.98
+      _radialShare: 0.83
+      _radiusX: 34
+      _radiusY: 14
+      _tilt: 0
+      _sunlitRim: 1
+    - _angle: 5.52
+      _radialShare: 0.54
+      _radiusX: 40
+      _radiusY: 20
+      _tilt: 0
+      _sunlitRim: 1
+    - _angle: 5.95
+      _radialShare: 0.72
+      _radiusX: 22
+      _radiusY: 10
+      _tilt: 0
+      _sunlitRim: 0
+    - _angle: 0.85
+      _radialShare: 0.3
+      _radiusX: 26
+      _radiusY: 15
+      _tilt: 0
+      _sunlitRim: 0
+    - _angle: 2.65
+      _radialShare: 0.34
+      _radiusX: 32
+      _radiusY: 18
+      _tilt: 0
+      _sunlitRim: 1
+    - _angle: 4.72
+      _radialShare: 0.28
+      _radiusX: 24
+      _radiusY: 14
+      _tilt: 0
+      _sunlitRim: 0
+    _ridges:
+    - _angle: 0.3
+      _radialShare: 0.89
+      _span: 0.42
+    - _angle: 1.18
+      _radialShare: 0.91
+      _span: 0.38
+    - _angle: 2.1
+      _radialShare: 0.88
+      _span: 0.46
+    - _angle: 3.05
+      _radialShare: 0.9
+      _span: 0.4
+    - _angle: 4.1
+      _radialShare: 0.89
+      _span: 0.45
+    - _angle: 5.15
+      _radialShare: 0.91
+      _span: 0.38
+    - _angle: 0.7
+      _radialShare: 0.7
+      _span: 0.35
+    - _angle: 2.5
+      _radialShare: 0.72
+      _span: 0.44
+    - _angle: 4.6
+      _radialShare: 0.68
+      _span: 0.4
+    _landmarks:
+    - _passTimeSeconds: 0.6
+      _kind: 0
+      _scale: 1.75
+    - _passTimeSeconds: 4.6
+      _kind: 1
+      _scale: 1.8
+    - _passTimeSeconds: 8.4
+      _kind: 2
+      _scale: 2.05
+    - _passTimeSeconds: 13
+      _kind: 3
+      _scale: 1.35
+    - _passTimeSeconds: 21
+      _kind: 0
+      _scale: 1.75
+    - _passTimeSeconds: 29
+      _kind: 1
+      _scale: 1.8
+    - _passTimeSeconds: 37
+      _kind: 2
+      _scale: 2.05
+    - _passTimeSeconds: 43.5
+      _kind: 3
+      _scale: 1.35
   _prompts:
     _reveal:
       _fadeIn: 0.35
