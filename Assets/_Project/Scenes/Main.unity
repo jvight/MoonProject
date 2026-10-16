@@ -2236,15 +2236,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _settings: {fileID: 11400000, guid: 3c7a28d294b9986468e4aeb35b23d7c1, type: 2}
   _groundMaterial: {fileID: 2100000, guid: 75cb3da4b11c8804ab6ee46be3eabed4, type: 2}
-  _paletteMaterial: {fileID: 2100000, guid: c8e5e8b4a749cfc4ba334cc3e2101057, type: 2}
+  _paletteMaterial: {fileID: 2100000, guid: e50429d4044b3574ca27e73e3b6d6156, type: 2}
   _pebbleRocks:
-  - {fileID: 4300000, guid: f63dedcc84641bf41a6a5c791ced931e, type: 2}
-  - {fileID: 4300000, guid: d879aeebc62c8084cab6772ad746cbe6, type: 2}
-  - {fileID: 4300000, guid: acd54035f4a11ec4b91d315ef476def7, type: 2}
+  - {fileID: -3612313327907179298, guid: c1e9d0f01f8ef2345a45186c1832509a, type: 3}
+  - {fileID: 544721496581875404, guid: c5ee8d037b789b34ebf53196ad429b9c, type: 3}
+  - {fileID: -7487517835020932457, guid: 2a579c06119b12e44a577b1d332b5bc6, type: 3}
+  - {fileID: -5402537198215104751, guid: a493ec94287a3b540a713c91bc4bec7c, type: 3}
+  - {fileID: 6513441189457872472, guid: 7a3609f57fbc93c4f8024e744b204d74, type: 3}
   _boulderRocks:
-  - {fileID: 4300000, guid: a8dc442427d4d14429991034d94681b5, type: 2}
-  - {fileID: 4300000, guid: f2177cacc654cf94289eab73cd65ccce, type: 2}
-  - {fileID: 4300000, guid: 6264186ccf67ab24dbdb460f221962fc, type: 2}
+  - {fileID: -9097707048515180682, guid: 5107ec53d828d934e8662d52715f89ff, type: 3}
+  - {fileID: 961481066400423085, guid: af531658914d2ca4681aa49fe18c784c, type: 3}
+  - {fileID: 5119610544402026758, guid: 22a3d934b4530364daa191ef562d82d7, type: 3}
+  - {fileID: 7481546404456592384, guid: 2bf9a61c6a6b6194ca8217bf56cacfac, type: 3}
+  - {fileID: 7262000839014035994, guid: ceef8bce65876c141980a13fbc85c981, type: 3}
   _earthMaterial: {fileID: 2100000, guid: e693f9521e4513348aba7c17b670757b, type: 2}
   _groundMarkMaterial: {fileID: 2100000, guid: 4ebca80a2545b674f93814a3006a47d2, type: 2}
   _landmarkPrefabs:
