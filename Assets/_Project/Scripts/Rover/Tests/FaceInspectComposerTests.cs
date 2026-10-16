@@ -90,16 +90,16 @@ namespace MoonProject.Rover.Tests
                 Assert.AreEqual(0f, state.ScreenContentMix, 1e-5f);
                 Assert.AreEqual(0f, state.ScreenVerticalPinch, 1e-5f);
 
-                // Open screen mode: phase 1 collapses eyes into a bright horizontal phosphor line
+                // Open screen mode: lead-in holds calm eyes while head lifts, then collapses into horizontal phosphor line
                 state.SetScreenMode(true);
                 Assert.IsTrue(state.IsScreenModeOpen);
-                state.Step(tuning.ScreenCollapseSeconds * 0.5f);
+                state.Step(tuning.ScreenLeadInSeconds + tuning.ScreenCollapseSeconds * 0.5f);
                 Assert.AreEqual(0f, state.ScreenContentMix, 1e-5f, "During eye collapse, content mix remains 0.");
                 Assert.Greater(state.ScreenVerticalPinch, 0.2f);
                 Assert.Greater(state.ScreenLineGlow, 0.2f);
 
-                // Crossing collapse boundary switches mix to 1 at peak pinch, then expands content
-                state.Step(tuning.ScreenCollapseSeconds * 0.6f);
+                // Crossing collapse + line-hold boundary switches mix to 1 at peak pinch, then expands content
+                state.Step(tuning.ScreenCollapseSeconds * 0.6f + tuning.ScreenLineHoldSeconds);
                 Assert.AreEqual(1f, state.ScreenContentMix, 1e-5f, "In expand phase, content mix is 1.");
                 Assert.Greater(state.ScreenVerticalPinch, 0.5f);
 
