@@ -1320,7 +1320,7 @@
         },
         {
             "key": "map.site.kestrel.note",
-            "text": "Poor thing. It came down still pointing at Earth."
+            "text": "Meridian's relay bird. It came down still pointing at the Arks."
         },
         {
             "key": "map.trail.kestrel.name",
@@ -1352,7 +1352,7 @@
         },
         {
             "key": "map.site.lander.note",
-            "text": "Brought Theo's seed trays. Landed… firmly."
+            "text": "The '87 resupply drop with Theo's seed trays. Landed… firmly."
         },
         {
             "key": "map.friend.tilly.name",
@@ -1448,7 +1448,7 @@
         },
         {
             "key": "map.region.peak.note",
-            "text": "The dish. Kenji's job, after the storm."
+            "text": "The great dish. Last stop before we send the survey up."
         },
         {
             "key": "map.region.terraces.name",
@@ -1456,7 +1456,7 @@
         },
         {
             "key": "map.region.terraces.note",
-            "text": "Too steep for wheels. Atlas parked up here?"
+            "text": "Too steep for four wheels. Kenji's Atlas is parked up here."
         },
         {
             "key": "map.place.antenna_farm.name",
@@ -1772,15 +1772,15 @@
         },
         {
             "key": "crate.depot.note",
-            "text": "Spares for the next rotation. Don't let Ines take the good wire. — Kenji"
+            "text": "Spares for the ridge line. Don't let Ines take the good copper wire for her core tags. — Kenji"
         },
         {
             "key": "crate.kestrel.note",
-            "text": "Lenses off the old relay. Handle them like records. — Ro"
+            "text": "Lenses salvaged off Kestrel-3. Handle them like vinyl records. — Ro"
         },
         {
             "key": "crate.drill.note",
-            "text": "Wire for the drill's next season. Labelled, counted, twice. — I. Kalani"
+            "text": "Spare cable for the deep-core ice survey. Labelled, coiled, counted twice. — I. Kalani"
         },
         {
             "key": "crate.garage.note",
@@ -1788,7 +1788,7 @@
         },
         {
             "key": "crate.lander.note",
-            "text": "Seed trays went up top. This is everything else. — Theo"
+            "text": "Seed trays from the '87 supply drop went up to the dome. Left the spare fittings boxed here. — Theo"
         },
         {
             "key": "kit.focus_lens.name",

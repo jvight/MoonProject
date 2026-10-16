@@ -1320,7 +1320,7 @@
         },
         {
             "key": "map.site.kestrel.note",
-            "text": "Tội nghiệp. Lúc rơi xuống nó vẫn chĩa về Trái Đất."
+            "text": "Vệ tinh tiếp sóng của Meridian. Lúc rơi xuống nó vẫn chĩa về phía các tàu Ark."
         },
         {
             "key": "map.trail.kestrel.name",
@@ -1352,7 +1352,7 @@
         },
         {
             "key": "map.site.lander.note",
-            "text": "Chở khay hạt giống của Theo. Hạ cánh hơi… mạnh tay."
+            "text": "Chuyến tiếp tế năm 87 chở khay hạt giống của Theo. Hạ cánh hơi… mạnh tay."
         },
         {
             "key": "map.friend.tilly.name",
@@ -1448,7 +1448,7 @@
         },
         {
             "key": "map.region.peak.note",
-            "text": "Chảo ăng-ten. Việc của Kenji, sau cơn bão."
+            "text": "Chảo ăng-ten lớn. Chặng cuối trước khi gửi bản khảo sát lên."
         },
         {
             "key": "map.region.terraces.name",
@@ -1456,7 +1456,7 @@
         },
         {
             "key": "map.region.terraces.note",
-            "text": "Quá dốc cho bánh xe. Atlas đỗ ở trên này à?"
+            "text": "Quá dốc cho xe bốn bánh. Atlas của Kenji đỗ ở trên này."
         },
         {
             "key": "map.place.antenna_farm.name",
@@ -1772,15 +1772,15 @@
         },
         {
             "key": "crate.depot.note",
-            "text": "Đồ dự phòng cho đợt sau. Đừng để Ines lấy mất cuộn dây xịn. — Kenji"
+            "text": "Đồ dự phòng cho đường dây trên sống núi. Đừng để Ines lấy cuộn dây đồng xịn đi buộc nhãn mẫu lõi. — Kenji"
         },
         {
             "key": "crate.kestrel.note",
-            "text": "Thấu kính tháo từ vệ tinh cũ. Cầm nhẹ tay như cầm đĩa nhạc nhé. — Ro"
+            "text": "Thấu kính tháo từ Kestrel-3. Cầm nhẹ tay như cầm đĩa than nhé. — Ro"
         },
         {
             "key": "crate.drill.note",
-            "text": "Dây cho mùa khoan tới. Đã dán nhãn, đã đếm, hai lần. — I. Kalani"
+            "text": "Cáp dự phòng cho đợt khoan băng tầng sâu. Đã dán nhãn, cuộn gọn, đếm hai lần. — I. Kalani"
         },
         {
             "key": "crate.garage.note",
@@ -1788,7 +1788,7 @@
         },
         {
             "key": "crate.lander.note",
-            "text": "Khay hạt giống đã mang lên trên. Đây là mọi thứ còn lại. — Theo"
+            "text": "Khay hạt giống từ chuyến tiếp tế năm 87 đã mang lên mái vòm. Phụ tùng thừa đóng thùng để lại đây. — Theo"
         },
         {
             "key": "kit.focus_lens.name",
