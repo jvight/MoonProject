@@ -102,7 +102,7 @@ class TestIconIdMapping(unittest.TestCase):
     def test_expected_svg_files_exist_on_disk(self):
         icon_dir = build_icons.DEFAULT_ICON_DIR
         self.assertTrue(icon_dir.is_dir(), f"Missing icon directory: {icon_dir}")
-        actual_files = sorted(p.name for p in icon_dir.glob("*.svg"))
+        actual_files = sorted(p.relative_to(icon_dir).as_posix() for p in icon_dir.rglob("*.svg"))
         expected_files = sorted(spec.filename for spec in build_icons.ALL_SPECS)
         self.assertEqual(actual_files, expected_files)
 

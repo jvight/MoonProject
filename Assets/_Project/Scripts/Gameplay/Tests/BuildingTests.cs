@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Core.Save;
+using MoonProject.Editor.Builders;
 using MoonProject.Gameplay.Editor;
 using Object = UnityEngine.Object;
 
@@ -791,46 +793,59 @@ namespace MoonProject.Gameplay.Tests
             var root = new GameObject("TestStagedStructure");
             try
             {
+                var stages = new Transform[4];
+                var stageRenderers = new MeshRenderer[4];
                 for (int i = 1; i <= 4; i++)
                 {
                     var stage = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     stage.name = "Stage_" + i;
                     stage.transform.SetParent(root.transform, false);
-                    stage.GetComponent<MeshRenderer>().sharedMaterial = solidMat;
+                    var mr = stage.GetComponent<MeshRenderer>();
+                    mr.sharedMaterial = solidMat;
+                    stages[i - 1] = stage.transform;
+                    stageRenderers[i - 1] = mr;
                 }
 
                 StructureView view = root.AddComponent<StructureView>();
-                view.Initialize(validHolo, invalidHolo);
+                LogAssert.Expect(LogType.Error, new Regex("StructureView.*_stageRoots"));
+                Assert.IsFalse(view.Initialize(validHolo, invalidHolo));
+
+                view.Populate(
+                    StructureIds.ChargingPad,
+                    stages,
+                    new Renderer[] { stageRenderers[3] },
+                    Array.Empty<Collider>());
+                Assert.IsTrue(view.Initialize(validHolo, invalidHolo));
                 Assert.AreEqual(4, view.StageCount);
 
                 // At 0% progress: stage 1 is hologram, stages 2..4 hidden, SolidStageCount == 0.
                 view.SetBuildProgress(0f, false);
                 Assert.AreEqual(0, view.SolidStageCount);
                 Assert.IsFalse(view.LampsLit);
-                Assert.IsTrue(root.transform.Find("Stage_1").gameObject.activeSelf);
-                Assert.IsFalse(root.transform.Find("Stage_2").gameObject.activeSelf);
+                Assert.IsTrue(stages[0].gameObject.activeSelf);
+                Assert.IsFalse(stages[1].gameObject.activeSelf);
 
                 // At 25% progress (1/4): stage 1 is solid, stage 2 is hologram, stages 3..4 hidden.
                 view.SetBuildProgress(0.25f, false);
                 Assert.AreEqual(1, view.SolidStageCount);
-                Assert.AreSame(solidMat, root.transform.Find("Stage_1").GetComponent<MeshRenderer>().sharedMaterial);
-                Assert.IsTrue(root.transform.Find("Stage_2").gameObject.activeSelf);
-                Assert.AreSame(validHolo, root.transform.Find("Stage_2").GetComponent<MeshRenderer>().sharedMaterial);
-                Assert.IsFalse(root.transform.Find("Stage_3").gameObject.activeSelf);
+                Assert.AreSame(solidMat, stageRenderers[0].sharedMaterial);
+                Assert.IsTrue(stages[1].gameObject.activeSelf);
+                Assert.AreSame(validHolo, stageRenderers[1].sharedMaterial);
+                Assert.IsFalse(stages[2].gameObject.activeSelf);
 
                 // At 50% progress (2/4): stages 1..2 solid, stage 3 hologram, stage 4 hidden.
                 view.SetBuildProgress(0.50f, false);
                 Assert.AreEqual(2, view.SolidStageCount);
-                Assert.AreSame(solidMat, root.transform.Find("Stage_2").GetComponent<MeshRenderer>().sharedMaterial);
-                Assert.IsTrue(root.transform.Find("Stage_3").gameObject.activeSelf);
-                Assert.AreSame(validHolo, root.transform.Find("Stage_3").GetComponent<MeshRenderer>().sharedMaterial);
-                Assert.IsFalse(root.transform.Find("Stage_4").gameObject.activeSelf);
+                Assert.AreSame(solidMat, stageRenderers[1].sharedMaterial);
+                Assert.IsTrue(stages[2].gameObject.activeSelf);
+                Assert.AreSame(validHolo, stageRenderers[2].sharedMaterial);
+                Assert.IsFalse(stages[3].gameObject.activeSelf);
 
                 // At 100% progress (isBuilt = true): all 4 stages solid and standby lamps lit.
                 view.SetBuildProgress(1f, true);
                 Assert.AreEqual(4, view.SolidStageCount);
                 Assert.IsTrue(view.LampsLit);
-                Assert.AreSame(solidMat, root.transform.Find("Stage_4").GetComponent<MeshRenderer>().sharedMaterial);
+                Assert.AreSame(solidMat, stageRenderers[3].sharedMaterial);
             }
             finally
             {
@@ -842,7 +857,7 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void BaseStructureRecipes_ExtractsFootprintAndSocketPortsFromPrefabHierarchy()
+        public void BaseStructureRecipes_ExtractsFootprintAndSocketPorts_AndWiresStageRootsOnStructureView()
         {
             var testRoot = new GameObject("TestArtPrefab");
             try
@@ -876,6 +891,41 @@ namespace MoonProject.Gameplay.Tests
                 Assert.AreEqual(Vector3.back, ports[0].LocalDirection);
                 Assert.AreEqual(new Vector3(1.6f, 0.2f, 0f), ports[1].LocalPosition);
                 Assert.AreEqual(Vector3.right, ports[1].LocalDirection);
+
+                Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+                Assert.IsNotNull(shader);
+                var validHolo = new Material(shader);
+                var invalidHolo = new Material(shader);
+                try
+                {
+                    using (var scratch = new BuilderScratchScene())
+                    {
+                        string artPath = GameplayAssetPaths.R1StructurePrefab("ChargingPad");
+                        var artPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(artPath);
+                        Assert.IsNotNull(artPrefab, "Missing R1 structure art prefab at " + artPath);
+
+                        GameObject assembled = BaseStructureRecipes.AssembleRuntimeHierarchy(
+                            scratch,
+                            StructureIds.ChargingPad,
+                            "ChargingPad",
+                            artPrefab);
+                        Assert.IsTrue(assembled.TryGetComponent(out StructureView view));
+                        Assert.AreEqual(StructureIds.ChargingPad, view.StructureId);
+                        Assert.AreEqual(4, view.StageCount);
+                        for (int i = 0; i < view.StageCount; i++)
+                        {
+                            Assert.IsNotNull(view.StageRoots[i]);
+                            Assert.AreEqual("Stage_" + (i + 1), view.StageRoots[i].name);
+                        }
+
+                        Assert.IsTrue(view.Initialize(validHolo, invalidHolo));
+                    }
+                }
+                finally
+                {
+                    Object.DestroyImmediate(validHolo);
+                    Object.DestroyImmediate(invalidHolo);
+                }
             }
             finally
             {

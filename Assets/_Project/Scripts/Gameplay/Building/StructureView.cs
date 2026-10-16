@@ -51,6 +51,8 @@ namespace MoonProject.Gameplay
 
         public int StageCount => _stageRoots != null ? _stageRoots.Length : 0;
 
+        public IReadOnlyList<Transform> StageRoots => _stageRoots;
+
         public int SolidStageCount { get; private set; }
 
         public bool IsGhost { get; private set; }
@@ -93,39 +95,47 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// Pre-allocates material swap arrays for every renderer in <c>Stage_1..N</c> and <see cref="EmissionGlow"/>
-        /// wrappers for standby lamps so runtime updates never allocate.
+        /// wrappers for standby lamps so runtime updates never allocate. Requires <c>_stageRoots</c> to be wired at
+        /// build time; logs an error and returns <c>false</c> when missing or empty.
         /// </summary>
-        public void Initialize(Material hologramValid, Material hologramInvalid)
+        public bool Initialize(Material hologramValid, Material hologramInvalid)
         {
             if (hologramValid == null)
             {
-                throw new ArgumentNullException(nameof(hologramValid));
+                Debug.LogError($"{nameof(StructureView)} ({name}): hologramValid material is not assigned.", this);
+                enabled = false;
+                return false;
             }
 
             if (hologramInvalid == null)
             {
-                throw new ArgumentNullException(nameof(hologramInvalid));
+                Debug.LogError($"{nameof(StructureView)} ({name}): hologramInvalid material is not assigned.", this);
+                enabled = false;
+                return false;
             }
 
             if (_stageRoots == null || _stageRoots.Length == 0)
             {
-                var discovered = new List<Transform>(4);
-                Transform searchRoot = transform.Find("Model") ?? transform;
-                for (int i = 1; i <= 8; i++)
-                {
-                    Transform child = searchRoot.Find("Stage_" + i);
-                    if (child == null)
-                    {
-                        break;
-                    }
-
-                    discovered.Add(child);
-                }
-
-                _stageRoots = discovered.Count > 0 ? discovered.ToArray() : new[] { transform };
+                Debug.LogError(
+                    $"{nameof(StructureView)} ({name}): _stageRoots is missing or empty (run Gameplay/Content).",
+                    this);
+                enabled = false;
+                return false;
             }
 
             int stageCount = _stageRoots.Length;
+            for (int s = 0; s < stageCount; s++)
+            {
+                if (_stageRoots[s] == null)
+                {
+                    Debug.LogError(
+                        $"{nameof(StructureView)} ({name}): _stageRoots[{s}] is null (run Gameplay/Content).",
+                        this);
+                    enabled = false;
+                    return false;
+                }
+            }
+
             _stageRenderers = new StageRendererCache[stageCount][];
             _stageIsSolid = new bool[stageCount];
             _stageScale = new float[stageCount];
@@ -133,7 +143,7 @@ namespace MoonProject.Gameplay
 
             for (int s = 0; s < stageCount; s++)
             {
-                Transform stageRoot = _stageRoots[s] != null ? _stageRoots[s] : transform;
+                Transform stageRoot = _stageRoots[s];
                 _stageScale[s] = 1f;
                 _stageBaseScale[s] = stageRoot.localScale;
 
@@ -180,6 +190,7 @@ namespace MoonProject.Gameplay
 
             _initialized = true;
             SolidStageCount = stageCount;
+            return true;
         }
 
         /// <summary>

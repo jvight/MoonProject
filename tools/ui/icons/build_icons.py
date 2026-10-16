@@ -1364,7 +1364,7 @@ def _build_struct_specs() -> List[IconSpec]:
     # 1. struct_charging_pad.svg -> structure.charging_pad.name (StructureIds.ChargingPad)
     # Chamfered octagonal deck pad with dual induction rings, corner guide lugs, and central charge bolt.
     specs.append(IconSpec(
-        filename="struct_charging_pad.svg",
+        filename="Structures/struct_charging_pad.svg",
         icon_id="charging_pad",
         kind="struct",
         localization_key="structure.charging_pad.name",
@@ -1394,7 +1394,7 @@ def _build_struct_specs() -> List[IconSpec]:
     # 2. struct_solar_array.svg -> structure.solar_array.name (StructureIds.SolarArray)
     # Tilted twin-wing photovoltaic panel array on an articulated central mast and tripod plinth.
     specs.append(IconSpec(
-        filename="struct_solar_array.svg",
+        filename="Structures/struct_solar_array.svg",
         icon_id="solar_array",
         kind="struct",
         localization_key="structure.solar_array.name",
@@ -1418,7 +1418,7 @@ def _build_struct_specs() -> List[IconSpec]:
     # 3. struct_battery_bank.svg -> structure.battery_bank.name (StructureIds.BatteryBank)
     # Armored three-cell accumulator cabinet with top busbar manifold and charge status bars.
     specs.append(IconSpec(
-        filename="struct_battery_bank.svg",
+        filename="Structures/struct_battery_bank.svg",
         icon_id="battery_bank",
         kind="struct",
         localization_key="structure.battery_bank.name",
@@ -1452,7 +1452,7 @@ def _build_struct_specs() -> List[IconSpec]:
     # 4. struct_power_pylon.svg -> structure.power_pylon.name (StructureIds.PowerPylon)
     # Tapered lattice power relay tower with triple ceramic insulator cross-arms and top emitter sphere.
     specs.append(IconSpec(
-        filename="struct_power_pylon.svg",
+        filename="Structures/struct_power_pylon.svg",
         icon_id="power_pylon",
         kind="struct",
         localization_key="structure.power_pylon.name",
@@ -1481,7 +1481,7 @@ def _build_struct_specs() -> List[IconSpec]:
     # 5. struct_smelter.svg -> structure.smelter.name (StructureIds.Smelter)
     # Induction arc smelter with top ore hopper, cylindrical furnace body, side flue stack, and crucible glow.
     specs.append(IconSpec(
-        filename="struct_smelter.svg",
+        filename="Structures/struct_smelter.svg",
         icon_id="smelter",
         kind="struct",
         localization_key="structure.smelter.name",
@@ -1507,7 +1507,7 @@ def _build_struct_specs() -> List[IconSpec]:
     # 6. struct_fabricator.svg -> structure.fabricator.name (StructureIds.Fabricator)
     # Precision gantry fabricator frame with overhead tool carriage, laser nozzle, and build platen.
     specs.append(IconSpec(
-        filename="struct_fabricator.svg",
+        filename="Structures/struct_fabricator.svg",
         icon_id="fabricator",
         kind="struct",
         localization_key="structure.fabricator.name",
@@ -1534,7 +1534,7 @@ def _build_struct_specs() -> List[IconSpec]:
     # 7. struct_storage_rack.svg -> structure.storage_rack.name (StructureIds.StorageRack)
     # Heavy 3-tier modular bay rack with upright stanchions, cross-bracing, and stowed cargo containers.
     specs.append(IconSpec(
-        filename="struct_storage_rack.svg",
+        filename="Structures/struct_storage_rack.svg",
         icon_id="storage_rack",
         kind="struct",
         localization_key="structure.storage_rack.name",
@@ -1564,7 +1564,7 @@ def _build_struct_specs() -> List[IconSpec]:
     # 8. struct_upgrade_bay.svg -> structure.upgrade_bay.name (StructureIds.UpgradeBay)
     # Arched rover service gantry with overhead crane hoist, side diagnostic pillars, and bay floor rails.
     specs.append(IconSpec(
-        filename="struct_upgrade_bay.svg",
+        filename="Structures/struct_upgrade_bay.svg",
         icon_id="upgrade_bay",
         kind="struct",
         localization_key="structure.upgrade_bay.name",
@@ -1596,7 +1596,7 @@ def _build_struct_specs() -> List[IconSpec]:
     # 9. struct_antenna_mast.svg -> structure.antenna_mast.name (StructureIds.AntennaMast)
     # Tall guyed communications mast with tilted parabolic dish, feed horn, and signal wave arcs.
     specs.append(IconSpec(
-        filename="struct_antenna_mast.svg",
+        filename="Structures/struct_antenna_mast.svg",
         icon_id="antenna_mast",
         kind="struct",
         localization_key="structure.antenna_mast.name",
@@ -1624,7 +1624,7 @@ def _build_struct_specs() -> List[IconSpec]:
     # 10. struct_vehicle_pad.svg -> structure.vehicle_pad.name (StructureIds.VehiclePad)
     # Wide bevelled rover berthing deck with approach ramp, corner beacon stanchions, and wheel bay tracks.
     specs.append(IconSpec(
-        filename="struct_vehicle_pad.svg",
+        filename="Structures/struct_vehicle_pad.svg",
         icon_id="vehicle_pad",
         kind="struct",
         localization_key="structure.vehicle_pad.name",
@@ -1747,13 +1747,14 @@ def validate_svg_text(svg_text: str, filename: str = "<svg>") -> None:
 
 
 def build_all_icons(output_dir: Path = DEFAULT_ICON_DIR) -> List[Path]:
-    """Deterministically writes all 30 icon SVGs to `output_dir` and validates each one."""
+    """Deterministically writes all icon SVGs to `output_dir` and validates each one."""
     output_dir.mkdir(parents=True, exist_ok=True)
     written: List[Path] = []
     for spec in ALL_SPECS:
         svg_text = render_icon_svg(spec)
         validate_svg_text(svg_text, spec.filename)
         out_path = output_dir / spec.filename
+        out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_bytes(svg_text.encode("utf-8"))
         written.append(out_path)
     return written

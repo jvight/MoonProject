@@ -104,6 +104,9 @@ namespace MoonProject.Gameplay
         /// <summary>Current weld beam level (for tests and inspection).</summary>
         public float WeldBeamLevel => _beam != null ? _beam.Level : 0f;
 
+        /// <summary>World-space origin point of the weld beam (for tests and inspection).</summary>
+        public Vector3 WeldBeamStart => _beam != null ? _beam.Start : Vector3.zero;
+
         /// <summary>Live weld spark particle count (for tests and inspection).</summary>
         public int SparkCount => _sparks != null ? _sparks.ParticleCount : 0;
 
@@ -131,6 +134,7 @@ namespace MoonProject.Gameplay
 
             string problem = _tuning == null ? "BuildingTuning is not assigned (run Gameplay/Tuning)."
                 : _catalog == null ? "StructureCatalog is not assigned (run Gameplay/Content)."
+                : services.Rig == null || services.Rig.CutterOrigin == null ? "IRoverRig.CutterOrigin is not assigned."
                 : _catalog.Validate();
             if (problem != null)
             {
@@ -324,11 +328,7 @@ namespace MoonProject.Gameplay
 
             bool weldingNow = _controller.State == BuildModeState.Welding && _controller.ActiveWeldInstanceId > 0;
             Vector3 weldPoint = weldingNow ? WeldPointOf(_controller.ActiveWeldInstanceId) : Vector3.zero;
-            Vector3 beamOrigin = _rig != null && _rig.TetherOrigin != null
-                ? _rig.TetherOrigin.position
-                : _rover.Position + Vector3.up * 0.6f;
-
-            _beam.Step(weldingNow, weldingNow, beamOrigin, weldPoint, now, deltaTime);
+            _beam.Step(weldingNow, weldingNow, _rig.CutterOrigin.position, weldPoint, now, deltaTime);
             StepWeldLoopAudio(weldingNow, weldPoint);
             SetHold(weldingNow);
             StepGaze(weldingNow, weldPoint);
@@ -801,10 +801,19 @@ namespace MoonProject.Gameplay
                 instance.name = "Ghost_" + def.Id;
                 if (!instance.TryGetComponent(out StructureView view))
                 {
-                    view = instance.AddComponent<StructureView>();
+                    Debug.LogError(
+                        $"{nameof(BuildField)}: structure prefab for '{def.Id}' has no {nameof(StructureView)} (run Gameplay/Content).",
+                        this);
+                    Destroy(instance);
+                    continue;
                 }
 
-                view.Initialize(validMat, invalidMat);
+                if (!view.Initialize(validMat, invalidMat))
+                {
+                    Destroy(instance);
+                    continue;
+                }
+
                 view.SetGhostMode(true);
                 RegisterManagedColliders(view, true);
                 instance.SetActive(false);
@@ -914,10 +923,18 @@ namespace MoonProject.Gameplay
             instance.name = $"{def.Id}_{e.InstanceId}";
             if (!instance.TryGetComponent(out StructureView view))
             {
-                view = instance.AddComponent<StructureView>();
+                Debug.LogError(
+                    $"{nameof(BuildField)}: structure prefab for '{def.Id}' has no {nameof(StructureView)} (run Gameplay/Content).",
+                    this);
+                Destroy(instance);
+                return;
             }
 
-            view.Initialize(_visuals.HologramValid, _visuals.HologramInvalid);
+            if (!view.Initialize(_visuals.HologramValid, _visuals.HologramInvalid))
+            {
+                Destroy(instance);
+                return;
+            }
             float initialProgress = _placedBase.TryGetStructure(e.InstanceId, out PlacedStructure placed)
                 ? placed.BuildProgress01
                 : 0f;

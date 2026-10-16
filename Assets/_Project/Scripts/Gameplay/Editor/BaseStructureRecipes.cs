@@ -174,12 +174,15 @@ namespace MoonProject.Gameplay.Editor
         /// </summary>
         public static void BuildRuntimePrefabs()
         {
-            for (int i = 0; i < All.Length; i++)
+            using (var scratch = new BuilderScratchScene())
             {
-                Entry entry = All[i];
-                if (!entry.ArtPending && !string.IsNullOrEmpty(entry.R1ModelName))
+                for (int i = 0; i < All.Length; i++)
                 {
-                    BuildRuntimePrefab(entry);
+                    Entry entry = All[i];
+                    if (!entry.ArtPending && !string.IsNullOrEmpty(entry.R1ModelName))
+                    {
+                        BuildRuntimePrefab(scratch, entry);
+                    }
                 }
             }
         }
@@ -218,6 +221,12 @@ namespace MoonProject.Gameplay.Editor
                                 $"BaseStructureRecipes: missing R1 structure prefab at '{r1Path}'.");
                         }
                     }
+                    else if (requireRuntimePrefabs &&
+                             (!prefab.TryGetComponent(out StructureView view) || view.StageCount == 0))
+                    {
+                        throw new InvalidOperationException(
+                            $"BaseStructureRecipes: runtime structure prefab at '{runtimePath}' is missing a wired {nameof(StructureView)} (run {GameplayContentBuilder.BuilderPath}).");
+                    }
 
                     ExtractBoundsAndPorts(prefab.transform, entry.Clearance, ref footprint, out ports);
                 }
@@ -253,7 +262,7 @@ namespace MoonProject.Gameplay.Editor
             return catalog;
         }
 
-        private static GameObject BuildRuntimePrefab(Entry entry)
+        private static GameObject BuildRuntimePrefab(BuilderScratchScene scratch, Entry entry)
         {
             string sourcePath = GameplayAssetPaths.R1StructurePrefab(entry.R1ModelName);
             var sourcePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);
@@ -263,8 +272,24 @@ namespace MoonProject.Gameplay.Editor
                     $"BaseStructureRecipes: missing R1 structure prefab at '{sourcePath}'.");
             }
 
-            var root = new GameObject(entry.Id);
-            GameObject model = Object.Instantiate(sourcePrefab, root.transform, false);
+            GameObject root = AssembleRuntimeHierarchy(scratch, entry.Id, entry.R1ModelName, sourcePrefab);
+            string runtimePath = GameplayAssetPaths.RuntimeStructurePrefab(entry.Id);
+            return GeneratedAssets.SavePrefab(root, runtimePath);
+        }
+
+        /// <summary>
+        /// Assembles the runtime structure GameObject hierarchy in <paramref name="scratch"/> and wires
+        /// <see cref="StructureView"/>'s <c>_stageRoots</c>, <c>_lampRenderers</c>, <c>_colliders</c>, and
+        /// <c>_statusLight</c> from <paramref name="sourcePrefab"/>'s <c>Stage_1..N</c> children.
+        /// </summary>
+        internal static GameObject AssembleRuntimeHierarchy(
+            BuilderScratchScene scratch,
+            string structureId,
+            string r1ModelName,
+            GameObject sourcePrefab)
+        {
+            GameObject root = scratch.Create(structureId);
+            GameObject model = scratch.Instantiate(sourcePrefab, root.transform);
             model.name = "Model";
             model.transform.localPosition = Vector3.zero;
             model.transform.localRotation = sourcePrefab.transform.localRotation;
@@ -275,7 +300,7 @@ namespace MoonProject.Gameplay.Editor
             {
                 Object.DestroyImmediate(root);
                 throw new InvalidOperationException(
-                    $"BaseStructureRecipes: R1 structure '{entry.R1ModelName}' has no meshes.");
+                    $"BaseStructureRecipes: R1 structure '{r1ModelName}' has no meshes.");
             }
 
             var collider = root.AddComponent<BoxCollider>();
@@ -298,7 +323,7 @@ namespace MoonProject.Gameplay.Editor
             {
                 Object.DestroyImmediate(root);
                 throw new InvalidOperationException(
-                    $"BaseStructureRecipes: R1 structure '{entry.R1ModelName}' has no Stage_1..N children.");
+                    $"BaseStructureRecipes: R1 structure '{r1ModelName}' has no Stage_1..N children.");
             }
 
             var lampRenderers = new List<Renderer>();
@@ -317,8 +342,7 @@ namespace MoonProject.Gameplay.Editor
                 }
             }
 
-            var lightGo = new GameObject("StatusGlow");
-            lightGo.transform.SetParent(root.transform, false);
+            GameObject lightGo = scratch.Create("StatusGlow", root.transform);
             lightGo.transform.localPosition = new Vector3(
                 bounds.center.x,
                 Mathf.Max(0.85f, bounds.max.y * 0.78f),
@@ -333,15 +357,13 @@ namespace MoonProject.Gameplay.Editor
 
             var view = root.AddComponent<StructureView>();
             view.Populate(
-                entry.Id,
+                structureId,
                 stages.ToArray(),
                 lampRenderers.ToArray(),
                 new Collider[] { collider },
                 statusLight,
                 StatusLightIntensity);
-
-            string runtimePath = GameplayAssetPaths.RuntimeStructurePrefab(entry.Id);
-            return GeneratedAssets.SavePrefab(root, runtimePath);
+            return root;
         }
 
         private static void SetLayerRecursively(Transform root, int layer)

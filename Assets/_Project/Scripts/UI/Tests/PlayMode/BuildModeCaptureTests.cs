@@ -291,7 +291,22 @@ namespace MoonProject.UI.PlayModeTests
 
             Assert.IsTrue(build.TryGetView(midWeldId, out StructureView midView));
             Assert.AreEqual(2, midView.SolidStageCount, "Mid-weld shot must show stage 2 of 4 solid.");
+            IRoverRig rig = _context.Get<IRoverRig>();
+            Assert.IsNotNull(rig, "Main scene must provide IRoverRig.");
+            Assert.IsNotNull(rig.CutterOrigin, "IRoverRig.CutterOrigin must be wired.");
+            Assert.Less(
+                Vector3.Distance(build.WeldBeamStart, rig.CutterOrigin.position),
+                0.01f,
+                "Weld beam must originate at IRoverRig.CutterOrigin (chest cutter turret).");
             yield return CaptureComposite(viewCamera, "05-mid-weld-stage-2-of-4-night");
+            string r4Folder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "r4"));
+            Directory.CreateDirectory(r4Folder);
+            string r4WeldCapturePath = Path.Combine(r4Folder, "weld_from_cutter.png");
+            File.Copy(
+                Path.Combine(CaptureFolder, "05-mid-weld-stage-2-of-4-night.png"),
+                r4WeldCapturePath,
+                overwrite: true);
+            Debug.Log($"[build-capture] {r4WeldCapturePath}");
 
             // Finish welding the Solar Array to 100%.
             while (Time.time < weldDeadline + 3f)

@@ -25,7 +25,7 @@ namespace MoonProject.UI.Editor
         private const int IconSize = 256;
         private const float ViewBoxSize = 64f;
         private const string SvgNamespace = "http://www.w3.org/2000/svg";
-        private const string SvgIconFolder = "Assets/_Project/UI/Icons";
+        private const string SvgIconFolder = "Assets/_Project/UI/Icons/Structures";
 
         [MoonBuilder(BuilderPath, BuilderOrder)]
         internal static void Build()

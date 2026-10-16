@@ -60,6 +60,9 @@ namespace MoonProject.Gameplay
         /// <summary>Current brightness (0 dark .. 1 full).</summary>
         public float Level => _level;
 
+        /// <summary>World-space start point of the most recently stepped beam.</summary>
+        public Vector3 Start => _points[0];
+
         /// <summary>
         /// Eases toward on while <paramref name="beaming"/>, and while there is a target draws the beam from
         /// <paramref name="start"/> to a stitching point around <paramref name="target"/>.

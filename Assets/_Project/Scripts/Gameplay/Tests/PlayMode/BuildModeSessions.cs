@@ -122,7 +122,23 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(_gameplay.PlacedBase.TryGetStructure(placedId, out PlacedStructure placedFrame));
             Assert.IsFalse(placedFrame.IsBuilt);
             Assert.IsTrue(build.TryGetView(placedId, out StructureView placedView));
+            Assert.AreEqual(4, placedView.StageCount, "Charging pad runtime prefab must have 4 wired stage roots.");
             Assert.AreEqual(0, placedView.SolidStageCount, "At 0% progress, 0 stages are solid and Stage_1 is hologram.");
+
+            IRoverRig rig = _context.Get<IRoverRig>();
+            Assert.IsNotNull(rig, "Main scene must provide IRoverRig.");
+            Assert.IsNotNull(rig.CutterOrigin, "IRoverRig.CutterOrigin must be wired.");
+            Assert.Less(
+                Vector3.Distance(build.WeldBeamStart, rig.CutterOrigin.position),
+                0.01f,
+                "Weld beam must originate at IRoverRig.CutterOrigin (chest cutter turret).");
+            if (rig.TetherOrigin != null)
+            {
+                Assert.Greater(
+                    Vector3.Distance(build.WeldBeamStart, rig.TetherOrigin.position),
+                    0.05f,
+                    "Weld beam start must not originate at IRoverRig.TetherOrigin (head).");
+            }
 
             // 3. Keep holding E to weld the charging pad to completion.
             Vector3 placedPosition = placedFrame.Pose.Position;
