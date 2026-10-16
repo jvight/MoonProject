@@ -61,6 +61,21 @@ namespace MoonProject.UI
         public const string BellValveJob = "pickup.bell.valve.job";
         public const string CrateCaption = "ui.crate.caption";
         public const string StationOffline = "ui.station.offline";
+        public const string BuildStripTitle = "build.strip.title";
+        public const string BuildCostAffordable = "build.cost.affordable";
+        public const string BuildCostShort = "build.cost.short";
+        public const string BuildReasonSteep = "build.reason.steep";
+        public const string BuildReasonOverlaps = "build.reason.overlaps";
+        public const string BuildReasonClose = "build.reason.close";
+        public const string BuildReasonFar = "build.reason.far";
+        public const string BuildReasonOutside = "build.reason.outside";
+        public const string BuildReasonBlocked = "build.reason.blocked";
+        public const string BuildHintRotate = "build.hint.rotate";
+        public const string BuildHintSnap = "build.hint.snap";
+        public const string BuildHintPlace = "build.hint.place";
+        public const string BuildHintWeld = "build.hint.weld";
+        public const string BuildHintDeconstruct = "build.hint.deconstruct";
+        public const string BuildLocked = "build.locked";
 
         /// <summary>"ui.kit.wing.desc": the short (&lt;= 52 char) tooltip line for <paramref name="socket"/>.</summary>
         public static string KitDescription(RoverSocket socket)
@@ -334,6 +349,37 @@ namespace MoonProject.UI
                 case RecoveryTarget.Link: return "ticker.recovery.link";
                 case RecoveryTarget.Dish: return "ticker.recovery.dish";
                 default: return "ticker.recovery.answer";
+            }
+        }
+
+        public static string StructureName(string structureId)
+        {
+            return StructureIds.NameKey(structureId);
+        }
+
+        public static string StructureDescription(string structureId)
+        {
+            return StructureIds.DescriptionKey(structureId);
+        }
+
+        public static string PlacementReasonKey(PlacementReason reason)
+        {
+            switch (reason)
+            {
+                case PlacementReason.TooSteep:
+                    return BuildReasonSteep;
+                case PlacementReason.Overlaps:
+                    return BuildReasonOverlaps;
+                case PlacementReason.TooCloseTo07:
+                    return BuildReasonClose;
+                case PlacementReason.TooFarFrom07:
+                    return BuildReasonFar;
+                case PlacementReason.OutsidePlayArea:
+                    return BuildReasonOutside;
+                case PlacementReason.Blocked:
+                    return BuildReasonBlocked;
+                default:
+                    return null;
             }
         }
     }

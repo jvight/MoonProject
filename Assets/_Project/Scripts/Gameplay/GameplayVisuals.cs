@@ -90,6 +90,12 @@ namespace MoonProject.Gameplay
                  "spare crate until the port fits it (0.5.5 §2).")]
         [SerializeField] private GameObject _tapeDeck;
 
+        [Tooltip("Valid placement / un-welded stage hologram material (Generated/Art/Palette/M_Hologram.mat).")]
+        [SerializeField] private Material _hologramValid;
+
+        [Tooltip("Invalid placement hologram material (Generated/Art/Palette/M_HologramInvalid.mat).")]
+        [SerializeField] private Material _hologramInvalid;
+
         public Material TractorBeam => _tractorBeam;
         public Material TetherBeam => _tetherBeam;
         public Material Flash => _flash;
@@ -109,6 +115,8 @@ namespace MoonProject.Gameplay
         public FeelVfxTuning FeelTuning => _feelTuning;
         public GameObject GaragePort => _garagePort;
         public GameObject TapeDeck => _tapeDeck;
+        public Material HologramValid => _hologramValid;
+        public Material HologramInvalid => _hologramInvalid;
 
         /// <summary>Art's station pad (StationPad_&lt;cm&gt;) whose radius is nearest <paramref name="radius"/>.</summary>
         public GameObject PadFor(float radius)
@@ -199,6 +207,8 @@ namespace MoonProject.Gameplay
                 : _feelTuning == null ? "the feel VFX tuning is missing (run Gameplay/FeelVfx)"
                 : _garagePort == null ? "Art's garage port is missing (run Gameplay/Materials)"
                 : _tapeDeck == null ? "Art's tape deck is missing (run Gameplay/Materials)"
+                : _hologramValid == null ? "hologram valid material is missing (run Gameplay/Materials)"
+                : _hologramInvalid == null ? "hologram invalid material is missing (run Gameplay/Materials)"
                 : null;
         }
 
@@ -241,6 +251,12 @@ namespace MoonProject.Gameplay
         {
             _garagePort = port;
             _tapeDeck = tapeDeck;
+        }
+
+        internal void PopulateHologram(Material valid, Material invalid)
+        {
+            _hologramValid = valid;
+            _hologramInvalid = invalid;
         }
 
         internal void Populate(Material tractorBeam,

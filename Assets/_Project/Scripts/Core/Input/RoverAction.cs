@@ -11,5 +11,7 @@ namespace MoonProject.Core.Input
         Winch = 3,
         Jump = 4,
         Recenter = 5,
+        Build = 6,
+        Deconstruct = 7,
     }
 }

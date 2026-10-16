@@ -87,6 +87,8 @@ namespace MoonProject.Gameplay.Editor
             var cargoTuning = context.LoadAsset<CargoTuning>(GameplayAssetPaths.CargoTuning);
             var cutterTuning = context.LoadAsset<CutterTuning>(GameplayAssetPaths.CutterTuning);
             var scanTuning = context.LoadAsset<ScanTuning>(GameplayAssetPaths.ScanTuning);
+            var buildingTuning = context.LoadAsset<BuildingTuning>(GameplayAssetPaths.BuildingTuning);
+            var structureCatalog = context.LoadAsset<StructureCatalog>(GameplayAssetPaths.StructureCatalog);
             var materialCatalog = context.LoadAsset<MaterialCatalog>(GameplayAssetPaths.MaterialCatalog);
             var salvageCatalog = context.LoadAsset<SalvageCatalog>(GameplayAssetPaths.SalvageCatalog);
             var relayMast = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayMast);
@@ -97,6 +99,7 @@ namespace MoonProject.Gameplay.Editor
             Require(visuals.Validate(), nameof(GameplayVisuals));
             Require(salvageCatalog.Validate(), nameof(SalvageCatalog));
             Require(materialCatalog.Validate(), nameof(MaterialCatalog));
+            Require(structureCatalog.Validate(), nameof(StructureCatalog));
             Require(relicCatalog.Validate(), nameof(RelicCatalog));
             Require(radioTower.Validate(), nameof(UpgradeDefinition));
             foreach (UpgradeDefinition kit in benchKit)
@@ -128,6 +131,7 @@ namespace MoonProject.Gameplay.Editor
             var progression = Part<BaseProgression>(context, host, "Progression");
             var plotter = Part<BlueprintPlotter>(context, host, "Plotter");
             var battery = Part<BatteryField>(context, host, "Battery");
+            var building = Part<BuildField>(context, host, "Building");
 
             GameObject baseRoot = context.CreateChild("Base", host.transform);
             Vector3 offset = baseTuning.LanderOffset;
@@ -244,6 +248,8 @@ namespace MoonProject.Gameplay.Editor
                 progression, plotter, liftStation);
             battery.Wire(batteryTuning);
             gameplay.WireBattery(battery);
+            building.Wire(structureCatalog, buildingTuning);
+            gameplay.WireBuilding(building);
             gameplay.WireCargo(materialCatalog, cargoTuning);
             gameplay.WireCutter(cutterTuning);
             gameplay.WireScans(scanTuning);

@@ -111,6 +111,17 @@ class TestCommandTests(unittest.TestCase):
                          ["editmode MoonProject.World.Tests"])
         self.assertEqual(len(box_check.test_commands(self.ROOT, self.args("art", fast=True))), 1)
 
+    def test_multiple_boxes_merge_and_deduplicate_assemblies(self):
+        planned = box_check.test_commands(self.ROOT, self.args(["gameplay", "ui", "art"]))
+        self.assertEqual(
+            [label for label, _ in planned],
+            [
+                "editmode MoonProject.Gameplay.Tests;MoonProject.UI.Tests;MoonProject.Art.Tests;"
+                "MoonProject.Gameplay.Feel.Tests;MoonProject.Rover.Tests",
+                "playmode MoonProject.Gameplay.PlayModeTests;MoonProject.UI.PlayModeTests;"
+                "MoonProject.Gameplay.Feel.PlayModeTests;MoonProject.Rover.PlayModeTests",
+            ])
+
     def test_filter_or_assembly_is_one_custom_step_and_unknown_boxes_have_none(self):
         planned = box_check.test_commands(self.ROOT, self.args("world", filter="LiftTests"))
         self.assertEqual(len(planned), 1)

@@ -32,9 +32,14 @@ namespace MoonProject.UI
         private bool _stale = true;
 
         /// <param name="items">The container the material slots (and the component's row) are built in.</param>
-        public RecipeView(VisualElement items, ILocalization localization, IntText numbers)
+        public RecipeView(
+            VisualElement items,
+            ILocalization localization,
+            IntText numbers,
+            bool haveNeed = true,
+            bool names = true)
         {
-            _slots = new MaterialSlots(items, numbers, localization, true);
+            _slots = new MaterialSlots(items, numbers, localization, haveNeed, names);
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _part = new VisualElement { pickingMode = PickingMode.Ignore };
             _part.AddToClassList(PartRowClass);

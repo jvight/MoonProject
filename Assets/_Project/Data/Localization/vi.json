@@ -1935,6 +1935,150 @@
             "text": "View"
         },
         {
+            "key": "hint.deconstruct",
+            "text": "Tháo"
+        },
+        {
+            "key": "build.strip.title",
+            "text": "XÂY DỰNG"
+        },
+        {
+            "key": "build.cost.affordable",
+            "text": "Sẵn sàng đặt"
+        },
+        {
+            "key": "build.cost.short",
+            "text": "Chưa đủ phế liệu"
+        },
+        {
+            "key": "build.reason.steep",
+            "text": "Quá dốc"
+        },
+        {
+            "key": "build.reason.overlaps",
+            "text": "Vướng công trình khác"
+        },
+        {
+            "key": "build.reason.close",
+            "text": "Quá gần"
+        },
+        {
+            "key": "build.reason.far",
+            "text": "Quá xa"
+        },
+        {
+            "key": "build.reason.outside",
+            "text": "Ngoài tầm căn cứ"
+        },
+        {
+            "key": "build.reason.blocked",
+            "text": "Cần dọn chỗ trước"
+        },
+        {
+            "key": "build.hint.rotate",
+            "text": "Xoay"
+        },
+        {
+            "key": "build.hint.snap",
+            "text": "Khớp"
+        },
+        {
+            "key": "build.hint.place",
+            "text": "Đặt"
+        },
+        {
+            "key": "build.hint.weld",
+            "text": "Giữ để hàn"
+        },
+        {
+            "key": "build.hint.deconstruct",
+            "text": "Giữ để tháo"
+        },
+        {
+            "key": "structure.charging_pad.name",
+            "text": "Đế sạc"
+        },
+        {
+            "key": "structure.charging_pad.desc",
+            "text": "Bệ sạc ấm áp giúp nạp lại pin cho 07 khi có điện."
+        },
+        {
+            "key": "structure.solar_array.name",
+            "text": "Giàn pin mặt trời"
+        },
+        {
+            "key": "structure.solar_array.desc",
+            "text": "Giàn tấm pin hướng nắng thấp, cấp điện cho các công trình quanh đó."
+        },
+        {
+            "key": "structure.battery_bank.name",
+            "text": "Cụm pin tích điện"
+        },
+        {
+            "key": "structure.battery_bank.desc",
+            "text": "Tích trữ điện dự phòng để căn cứ luôn sáng đèn qua bóng tối."
+        },
+        {
+            "key": "structure.power_pylon.name",
+            "text": "Trụ dẫn điện"
+        },
+        {
+            "key": "structure.power_pylon.desc",
+            "text": "Cột nối mở rộng tầm điện của căn cứ và soi sáng mặt đất."
+        },
+        {
+            "key": "structure.smelter.name",
+            "text": "Lò luyện"
+        },
+        {
+            "key": "structure.smelter.desc",
+            "text": "Nấu quặng Mặt Trăng và hạt cam thành hợp kim cùng thủy tinh."
+        },
+        {
+            "key": "structure.fabricator.name",
+            "text": "Máy chế tạo"
+        },
+        {
+            "key": "structure.fabricator.desc",
+            "text": "Gia công linh kiện dự phòng và chi tiết chính xác dưới ánh đèn ấm."
+        },
+        {
+            "key": "structure.storage_rack.name",
+            "text": "Kệ chứa hàng"
+        },
+        {
+            "key": "structure.storage_rack.desc",
+            "text": "Chứa thêm thùng kim loại, dây dẫn và quang học thu gom về nhà."
+        },
+        {
+            "key": "structure.upgrade_bay.name",
+            "text": "Khung nâng cấp"
+        },
+        {
+            "key": "structure.upgrade_bay.desc",
+            "text": "Khung giàn để lắp thêm thiết bị và dụng cụ mới lên thân 07."
+        },
+        {
+            "key": "structure.antenna_mast.name",
+            "text": "Cột ăng-ten"
+        },
+        {
+            "key": "structure.antenna_mast.desc",
+            "text": "Truyền tín hiệu của trạm đi xa hơn qua vành miệng hố."
+        },
+        {
+            "key": "structure.vehicle_pad.name",
+            "text": "Bãi đỗ xe"
+        },
+        {
+            "key": "structure.vehicle_pad.desc",
+            "text": "Bệ phẳng rộng rãi để đỗ và bảo dưỡng rover cùng xe trượt."
+        },
+        {
+            "key": "build.locked",
+            "text": "Chưa tìm thấy bản vẽ"
+        },
+        {
             "key": "micro.06.name",
             "text": "06"
         },

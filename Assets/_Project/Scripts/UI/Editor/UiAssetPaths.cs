@@ -24,6 +24,7 @@ namespace MoonProject.UI.Editor
         public const string PrimaryLanguage = "en";
 
         public const string RelicCatalog = "Assets/_Project/Data/Content/RelicCatalog.asset";
+        public const string StructureCatalog = "Assets/_Project/Data/Content/StructureCatalog.asset";
 
         public const string GeneratedFolder = GeneratedAssets.Root + "/UI";
         public const string PanelSettings = GeneratedFolder + "/LofiLunarPanel.asset";
@@ -55,6 +56,14 @@ namespace MoonProject.UI.Editor
         public const string GlassPill = GlassFolder + "/GlassPill.png";
         public const string GlassBubble = GlassFolder + "/GlassBubble.png";
         public const string GlassDial = GlassFolder + "/GlassDial.png";
+
+        /// <summary>256x256 three-quarter structure icons rendered by UI/StructureIcons.</summary>
+        public const string StructureIconFolder = GeneratedFolder + "/StructureIcons";
+
+        public static string StructureIcon(string id)
+        {
+            return StructureIconFolder + "/" + id + ".png";
+        }
 
         /// <summary>Text: body, buttons, toasts, terminal readouts (file names IBMPlexMono-&lt;style&gt;.ttf).</summary>
         public const string TextFamily = "IBMPlexMono";

@@ -70,5 +70,10 @@ namespace MoonProject.Gameplay
         /// (0.5.5 §1.2): hold Excavate to scan it.
         /// </summary>
         Scan = 15,
+
+        /// <summary>
+        /// Looking at a placed structure within reach: hold Deconstruct to fold it down and refund its materials.
+        /// </summary>
+        Deconstruct = 16,
     }
 }
