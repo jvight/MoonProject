@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M20.1 22A1.9 1.9 0 1 1 23.9 22A1.9 1.9 0 1 1 20.1 22Z"/>
+    <path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M16 22C16 22 22 16 22 16C22 16 48 16 48 16C48 16 48 48 48 48C48 48 16 48 16 48C16 48 16 22 16 22ZM23 9C23 9 23 16 23 16M29 9C29 9 29 16 29 16M35 9C35 9 35 16 35 16M41 9C41 9 41 16 41 16M23 48C23 48 23 55 23 55M29 48C29 48 29 55 29 55M35 48C35 48 35 55 35 55M41 48C41 48 41 55 41 55M9 23C9 23 16 23 16 23M9 29C9 29 16 29 16 29M9 35C9 35 16 35 16 35M9 41C9 41 16 41 16 41M48 23C48 23 55 23 55 23M48 29C48 29 55 29 55 29M48 35C48 35 55 35 55 35M48 41C48 41 55 41 55 41"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M25.8 24C25.8 24 38.2 24 38.2 24A1.8 1.8 0 0 1 40 25.8C40 25.8 40 38.2 40 38.2A1.8 1.8 0 0 1 38.2 40C38.2 40 25.8 40 25.8 40A1.8 1.8 0 0 1 24 38.2C24 38.2 24 25.8 24 25.8A1.8 1.8 0 0 1 25.8 24ZM29 20C29 20 29 24 29 24M35 20C35 20 35 24 35 24M29 40C29 40 29 44 29 44M35 40C35 40 35 44 35 44M20 29C20 29 24 29 24 29M20 35C20 35 24 35 24 35M40 29C40 29 44 29 44 29M40 35C40 35 44 35 44 35M28 32C28 32 36 32 36 32M32 28C32 28 32 36 32 36"/>
+  </g>
+</svg>
