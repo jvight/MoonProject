@@ -325,6 +325,11 @@ MonoBehaviour:
     _earthLimb: 0.5
     _earthLimbWidth: 0.06
     _earthSpinPeriod: 900
+    _earthAuroraColor: {r: 0.36, g: 0.86, b: 0.72, a: 1}
+    _earthAuroraIntensity: 0.085
+    _earthAuroraLatitude: 0.84
+    _earthAuroraWidth: 0.045
+    _earthAuroraDriftSpeed: 0.06
     _shootingStarPeriod: 38
     _shootingStarDuration: 2.4
     _shootingStarBrightness: 3

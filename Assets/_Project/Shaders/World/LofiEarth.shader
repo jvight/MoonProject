@@ -1,8 +1,8 @@
 // Stylized-real Lunar Earth: rendered on a camera-facing quad by intersecting the view ray with a unit sphere in
 // Earth's tilted frame. Gives a perfectly round anti-aliased silhouette at any size, exact per-pixel sphere normals,
 // deep ocean with soft sun glint, domain-warped continents (greens to warm tans) with polar ice caps, a separate
-// drifting swirling cloud layer casting subtle shadow, soft clustered city lights on the night hemisphere, a thin blue
-// atmospheric rim on the lit limb, and a smooth red-orange refracted ring during eclipse.
+// drifting swirling cloud layer casting subtle shadow, a dark unpeopled night hemisphere with a faint slow polar
+// aurora, a thin blue atmospheric rim on the lit limb, and a smooth red-orange refracted ring during eclipse.
 Shader "MoonProject/World/LofiEarth"
 {
     SubShader
@@ -39,12 +39,13 @@ Shader "MoonProject/World/LofiEarth"
             float4 _MoonEarthAxisY;      // xyz Earth frame Y (spin axis)
             float4 _MoonEarthAxisZ;      // xyz Earth frame Z (-toEarth, toward viewer)
             float4 _MoonEarthSun;        // xyz world direction toward the sun lighting Earth, w night brightness
-            float4 _MoonEarthGlow;       // x lit-side emissive boost, y spin speed (radians per second)
+            float4 _MoonEarthGlow;       // x lit-side emissive boost, y spin speed (rad/s), z spin angle, w eclipse rim blend
             float4 _MoonEarthAtmosphere; // rgb rim colour (linear), a fresnel exponent
             float4 _MoonEarthOcean;      // rgb palette ocean colour (linear)
             float4 _MoonEarthLand;       // rgb palette land colour (linear)
             float4 _MoonEarthCloud;      // rgb palette cloud/ice colour (linear)
-            float4 _MoonEarthEclipse;    // rgb night-side city light colour (linear), a eclipse rim blend (0..1)
+            float4 _MoonEarthAurora;     // rgb night-side polar aurora colour * intensity (linear), a drift speed (rad/s)
+            float4 _MoonEarthAuroraBand; // x aurora latitude (abs y), y band half-width, z drift angle
             float4 _MoonEclipseRing;     // rgb refracted eclipse ring colour (linear), a ring width
 
             struct Attributes
@@ -63,13 +64,6 @@ Shader "MoonProject/World/LofiEarth"
                 p = frac(p * 0.1031);
                 p += dot(p, p.zyx + 31.32);
                 return frac((p.x + p.y) * p.z);
-            }
-
-            float3 Hash33(float3 p)
-            {
-                p = frac(p * float3(0.1031, 0.1030, 0.0973));
-                p += dot(p, p.yxz + 33.33);
-                return frac((p.xxy + p.yxx) * p.zyx);
             }
 
             float ValueNoise3D(float3 p)
@@ -115,18 +109,6 @@ Shader "MoonProject/World/LofiEarth"
             float3 ToWorld(float3 v)
             {
                 return v.x * _MoonEarthAxisX.xyz + v.y * _MoonEarthAxisY.xyz + v.z * _MoonEarthAxisZ.xyz;
-            }
-
-            float CityPointLayer(float3 p, float scale, float seed)
-            {
-                float3 grid = p * scale;
-                float3 cell = floor(grid);
-                float3 local = grid - cell;
-                float3 h = Hash33(cell + seed);
-                float3 center = 0.22 + 0.56 * h;
-                float dist = length(local - center);
-                float node = exp(-dist * dist * 34.0) * smoothstep(0.52, 0.92, h.x);
-                return node * (0.5 + 0.5 * h.y);
             }
 
             Varyings Vert(Attributes input)
@@ -250,16 +232,29 @@ Shader "MoonProject/World/LofiEarth"
                 float3 color = albedo * lerp(_MoonEarthSun.w, 1.0, lit) * _MoonEarthGlow.x;
                 color += glintColor * (oceanGlint * _MoonEarthGlow.x);
 
-                // Faint warm city lights in soft coastal/urban clusters on Earth's dark continents.
-                float nightMask = smoothstep(0.02, -0.04, ndotl);
-                float coastalBelt = 0.38 + 0.62 * (1.0 - smoothstep(0.0, 0.08, landHeight));
-                float urbanRegion = smoothstep(0.38, 0.64, Fbm3(wp * 4.2 + float3(23.1, 8.7, 15.4))) * coastalBelt;
-                float cityNodes = CityPointLayer(p, 26.0, 3.7)
-                    + CityPointLayer(p, 48.0, 19.3) * 0.75
-                    + CityPointLayer(p, 74.0, 41.9) * 0.45;
-                float cityGlow = urbanRegion * (0.07 + 1.75 * cityNodes)
-                    * isLand * (1.0 - polar) * (1.0 - cloudMask * 0.78) * nightMask;
-                color += _MoonEarthEclipse.rgb * cityGlow;
+                // Faint, slow natural polar aurora curtains near the poles on Earth's dark night hemisphere.
+                float nightMask = smoothstep(0.02, -0.06, ndotl);
+                float auroraPhase = abs(_MoonEarthAuroraBand.z) > 1e-5
+                    ? _MoonEarthAuroraBand.z
+                    : _Time.y * _MoonEarthAurora.a;
+                float as, ac;
+                sincos(spinAngle * 0.35 + auroraPhase, as, ac);
+                float3 ap = Spin(normalLocal, as, ac);
+                float ribbonWave = (Fbm3(ap * 2.4 + float3(2.1, 7.4, 5.3)) - 0.5) * 0.045;
+                float auroraLat = lat + viewFacing * 0.06 + ribbonWave;
+                float bandDelta = (auroraLat - _MoonEarthAuroraBand.x) / max(_MoonEarthAuroraBand.y, 1e-3);
+                float lowerEdge = smoothstep(-1.1, -0.1, bandDelta);
+                float upperFade = exp(-max(bandDelta, 0.0) * max(bandDelta, 0.0) * 1.6);
+                float auroraOval = lowerEdge * upperFade * smoothstep(0.68, 0.78, lat);
+                float3 curtainCoord = float3(ap.x * 13.0, normalLocal.y * 1.4, ap.z * 13.0);
+                float curtainRays = Fbm3(curtainCoord + float3(auroraPhase * 0.8, 0.0, -auroraPhase * 0.6));
+                float longitudinalArc = smoothstep(0.32, 0.68, Fbm3(ap * 2.2 + float3(5.1, auroraPhase * 0.25, 8.7)));
+                float curtains = (0.20 + 0.80 * smoothstep(0.38, 0.74, curtainRays)) * longitudinalArc;
+                float limbFade = smoothstep(0.05, 0.26, viewFacing);
+                float auroraMask = auroraOval * curtains * nightMask * limbFade;
+                float3 auroraTint = lerp(_MoonEarthAurora.rgb, _MoonEarthAurora.rgb * float3(0.76, 1.0, 1.16),
+                    saturate(bandDelta * 0.5 + 0.5));
+                color += auroraTint * auroraMask;
 
                 // Smooth circular atmosphere rim on the lit limb and refracted red-orange ring in eclipse.
                 float rim = pow(max(1.0 - viewFacing, 1e-4), _MoonEarthAtmosphere.a);
@@ -267,7 +262,7 @@ Shader "MoonProject/World/LofiEarth"
                 float2 sun2D = normalize(sunLocal.xy + 1e-6);
                 float sunward = dot(normalize(disc + 1e-6), sun2D);
                 float3 eclipseRim = _MoonEclipseRing.rgb * (0.45 + 0.45 * saturate(0.5 + 0.5 * sunward));
-                color += lerp(normalRim, eclipseRim, _MoonEarthEclipse.a) * rim;
+                color += lerp(normalRim, eclipseRim, _MoonEarthGlow.w) * rim;
 
                 return half4(color, alpha);
             }
