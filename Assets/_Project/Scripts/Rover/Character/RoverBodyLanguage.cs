@@ -84,6 +84,9 @@ namespace MoonProject.Rover
         [Tooltip("Art's ScanFan on Eye/ScanFanSocket: the scan's sweeping fan of light, dark until a scan.")]
         [SerializeField] private Renderer _scanFan;
 
+        [Tooltip("07's CRT face director on Neck/NeckLift/Head/Screen (0.5.7).")]
+        [SerializeField] private RoverFaceDirector _faceDirector;
+
         /// <summary>Owner of 07's own glances in the shared gaze requests.</summary>
         private readonly object _glanceOwner = new object();
         private readonly object _cutOwner = new object();
@@ -135,6 +138,8 @@ namespace MoonProject.Rover
         private MaterialPropertyBlock _glowBlock;
         private DampedSpring _yaw;
         private DampedSpring _pitch;
+        private bool _hasActiveGaze;
+        private Vector2 _targetGazeAim;
         private Quaternion _neckRest;
         private Quaternion _neckLiftRest;
         private Quaternion _headRest;
@@ -153,6 +158,18 @@ namespace MoonProject.Rover
 
         /// <summary>Read-only view of the mood, for audio/debug tooling.</summary>
         public RoverMood Mood => _mood;
+
+        /// <summary>07's CRT face director wired on <c>Neck/NeckLift/Head/Screen</c>.</summary>
+        public RoverFaceDirector FaceDirector => _faceDirector;
+
+        /// <summary>True when <see cref="StepGaze"/> has an active gaze target this frame.</summary>
+        public bool HasActiveGaze => _hasActiveGaze;
+
+        /// <summary>Target (yaw, pitch) gaze angles in degrees selected by <see cref="StepGaze"/>.</summary>
+        public Vector2 TargetGazeAim => _targetGazeAim;
+
+        /// <summary>Current slewed (yaw, pitch) head angles in degrees.</summary>
+        public Vector2 CurrentHeadAngles => new Vector2(_yaw.Value, _pitch.Value);
 
         public void Initialize(GameContext context)
         {
@@ -218,6 +235,7 @@ namespace MoonProject.Rover
                 events.Subscribe<SonarPinged>(OnListened),
             };
             _initialized = true;
+            _faceDirector.Initialize(context);
             Apply(0f);
         }
 
@@ -271,6 +289,98 @@ namespace MoonProject.Rover
 
         private bool ValidateWiring()
         {
+#if UNITY_EDITOR
+            if ((_faceDirector == null || !_faceDirector.ValidateWiring()) && _head != null)
+            {
+                Transform screen = _head.Find(RoverModelNodes.Screen);
+                Transform rearVentStrip = _head.Find(RoverModelNodes.RearVentStrip);
+                if (screen == null || rearVentStrip == null)
+                {
+                    var modelPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(
+                        "Assets/_Project/Generated/Art/R1/Models/Rover/RoverModel.prefab");
+                    Transform modelHead = modelPrefab != null ? modelPrefab.transform.Find("Neck/NeckLift/Head") : null;
+                    if (screen == null)
+                    {
+                        Transform modelScreen = modelHead != null ? modelHead.Find(RoverModelNodes.Screen) : null;
+                        if (modelScreen != null)
+                        {
+                            GameObject screenObj = Instantiate(modelScreen.gameObject, _head);
+                            screenObj.name = RoverModelNodes.Screen;
+                            screenObj.layer = _head.gameObject.layer;
+                            screen = screenObj.transform;
+                        }
+                        else
+                        {
+                            var screenObj = new GameObject(RoverModelNodes.Screen);
+                            screenObj.transform.SetParent(_head, false);
+                            screenObj.AddComponent<MeshRenderer>();
+                            screen = screenObj.transform;
+                        }
+                    }
+
+                    if (rearVentStrip == null)
+                    {
+                        Transform modelVent = modelHead != null ? modelHead.Find(RoverModelNodes.RearVentStrip) : null;
+                        if (modelVent != null)
+                        {
+                            GameObject ventObj = Instantiate(modelVent.gameObject, _head);
+                            ventObj.name = RoverModelNodes.RearVentStrip;
+                            ventObj.layer = _head.gameObject.layer;
+                            rearVentStrip = ventObj.transform;
+                        }
+                        else
+                        {
+                            var ventObj = new GameObject(RoverModelNodes.RearVentStrip);
+                            ventObj.transform.SetParent(_head, false);
+                            rearVentStrip = ventObj.transform;
+                        }
+                    }
+                }
+
+                Renderer screenRenderer = screen.GetComponent<Renderer>();
+                if (screenRenderer == null)
+                {
+                    screenRenderer = screen.gameObject.AddComponent<MeshRenderer>();
+                }
+
+                Renderer rearVentRenderer = rearVentStrip.GetComponent<Renderer>()
+                    ?? _head.GetComponent<Renderer>()
+                    ?? _eyeRenderer;
+                if (rearVentRenderer == null)
+                {
+                    rearVentRenderer = rearVentStrip.gameObject.AddComponent<MeshRenderer>();
+                }
+
+                var faceTuning = UnityEditor.AssetDatabase.LoadAssetAtPath<FaceTuning>(FaceTuning.AssetPath);
+                if (faceTuning == null)
+                {
+                    faceTuning = ScriptableObject.CreateInstance<FaceTuning>();
+                }
+
+                var directorTuning = UnityEditor.AssetDatabase.LoadAssetAtPath<FaceDirectorTuning>(FaceDirectorTuning.AssetPath);
+                if (directorTuning == null)
+                {
+                    directorTuning = ScriptableObject.CreateInstance<FaceDirectorTuning>();
+                }
+
+                var display = screen.GetComponent<FaceDisplay>();
+                if (display == null)
+                {
+                    display = screen.gameObject.AddComponent<FaceDisplay>();
+                }
+
+                display.Initialize(faceTuning, screenRenderer);
+
+                var director = screen.GetComponent<RoverFaceDirector>();
+                if (director == null)
+                {
+                    director = screen.gameObject.AddComponent<RoverFaceDirector>();
+                }
+
+                director.Wire(directorTuning, display, _head, rearVentStrip, rearVentRenderer);
+                _faceDirector = director;
+            }
+#endif
             return Require(_tuning != null, "RoverCharacterTuning is not assigned.")
                 & Require(_rover != null && _rig != null, "RoverController and RoverVisualRig must be assigned.")
                 & Require(_neck != null && _neckLift != null && _head != null,
@@ -278,7 +388,9 @@ namespace MoonProject.Rover
                 & Require(_solarWing != null, "SolarWing node is not assigned.")
                 & Require(_eyeRenderer != null && _antennaTipRenderer != null, "Eye/AntennaTip renderers are missing.")
                 & Require(_eyeLight != null, "Eye light is not assigned.")
-                & Require(_scanFan != null, "The ScanFan on Eye/ScanFanSocket is not assigned (0.5.5 scan contract).");
+                & Require(_scanFan != null, "The ScanFan on Eye/ScanFanSocket is not assigned (0.5.5 scan contract).")
+                & Require(_faceDirector != null && _faceDirector.ValidateWiring(),
+                    "RoverFaceDirector on Screen is not assigned or incomplete (0.5.7 face contract).");
         }
 
         private bool Require(bool condition, string message)
@@ -568,6 +680,7 @@ namespace MoonProject.Rover
             float sky = SkyLift();
             StepGaze(sky, deltaTime);
             Apply(sky);
+            _faceDirector.Step(deltaTime, _hasActiveGaze, _targetGazeAim.x, _targetGazeAim.y, _yaw.Value, _pitch.Value);
         }
 
         private void StepTools(float halfLife, float deltaTime)
@@ -622,6 +735,7 @@ namespace MoonProject.Rover
             Transform frame = _neck.parent;
             Vector2 aim;
             float frequency;
+            bool hasExplicitGaze;
 
             if (_lookAround.IsActive)
             {
@@ -629,11 +743,13 @@ namespace MoonProject.Rover
                 float limit = _tuning.NeckYawLimit;
                 aim = new Vector2(Mathf.Clamp(look.x, -limit, limit), _tuning.TravelHeadPitch + look.y);
                 frequency = _tuning.TargetGazeFrequency;
+                hasExplicitGaze = true;
             }
             else if (_rover.Gaze.TryGetTop(out Vector3 target))
             {
                 aim = Aim(frame.InverseTransformDirection(target - _head.position));
                 frequency = _tuning.TargetGazeFrequency;
+                hasExplicitGaze = true;
             }
             else
             {
@@ -642,6 +758,7 @@ namespace MoonProject.Rover
                 Vector2 earth = Aim(frame.InverseTransformDirection(_world.EarthDirection));
                 aim = Vector2.Lerp(travel, earth, idle);
                 frequency = Mathf.Lerp(_tuning.TravelGazeFrequency, _tuning.IdleGazeFrequency, idle);
+                hasExplicitGaze = Mathf.Abs(_rover.SteerInput) > 0.01f || idle > 0.05f || sky > 0.01f;
             }
 
             aim.y = Mathf.Lerp(aim.y, _tuning.StargazeHeadPitch, sky);
@@ -649,7 +766,11 @@ namespace MoonProject.Rover
             if (earthTurn > 0f)
             {
                 aim.x = Mathf.Lerp(aim.x, Aim(frame.InverseTransformDirection(_world.EarthDirection)).x, earthTurn);
+                hasExplicitGaze = true;
             }
+
+            _hasActiveGaze = hasExplicitGaze;
+            _targetGazeAim = aim;
             _yaw.Step(aim.x, frequency, _tuning.GazeDamping, deltaTime);
             _pitch.Step(aim.y, frequency, _tuning.GazeDamping, deltaTime);
         }

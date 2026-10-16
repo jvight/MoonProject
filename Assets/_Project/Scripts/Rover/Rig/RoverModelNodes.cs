@@ -39,6 +39,7 @@ namespace MoonProject.Rover
         public const string NeckLift = "NeckLift";
         public const string Head = "Head";
         public const string Screen = "Screen";
+        public const string RearVentStrip = "RearVentStrip";
         public const string Visor = "Visor";
         public const string DeckCover = "DeckCover";
         public const string Eye = "Eye";

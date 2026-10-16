@@ -185,6 +185,14 @@ namespace MoonProject.Rover.PlayModeTests
 
         public RoverCharacterTuning CharacterTuning => (RoverCharacterTuning)_tunings[4];
 
+        public FaceTuning FaceTuning => (FaceTuning)_tunings[5];
+
+        public FaceDirectorTuning FaceDirectorTuning => (FaceDirectorTuning)_tunings[6];
+
+        public FaceDisplay FaceDisplay { get; private set; }
+
+        public RoverFaceDirector FaceDirector { get; private set; }
+
         /// <summary>
         /// Builds, wires and initialises a rover at <paramref name="position"/>, yaw in degrees. It starts awake
         /// unless <paramref name="asleep"/> asks for the game's first-boot wake-up. <paramref name="wideShotDelay"/>
@@ -199,7 +207,12 @@ namespace MoonProject.Rover.PlayModeTests
             var fxTuning = ScriptableObject.CreateInstance<RoverFxTuning>();
             var cameraTuning = ScriptableObject.CreateInstance<RoverCameraTuning>();
             var characterTuning = ScriptableObject.CreateInstance<RoverCharacterTuning>();
-            var tunings = new ScriptableObject[] { tuning, rigTuning, fxTuning, cameraTuning, characterTuning };
+            var faceTuning = ScriptableObject.CreateInstance<FaceTuning>();
+            var faceDirectorTuning = ScriptableObject.CreateInstance<FaceDirectorTuning>();
+            var tunings = new ScriptableObject[]
+            {
+                tuning, rigTuning, fxTuning, cameraTuning, characterTuning, faceTuning, faceDirectorTuning
+            };
             var character = new SerializedObject(characterTuning);
             character.FindProperty("_sleepOnBoot").boolValue = asleep;
             character.ApplyModifiedPropertiesWithoutUndo();
@@ -263,6 +276,12 @@ namespace MoonProject.Rover.PlayModeTests
             Transform neck = Node(RoverModelNodes.Neck, model, new Vector3(0f, 0.63f, 0.22f));
             Transform neckLift = Node(RoverModelNodes.NeckLift, neck, new Vector3(0f, 0.22f, 0.06f));
             Transform head = Node(RoverModelNodes.Head, neckLift, new Vector3(0f, 0.22f, 0.04f));
+            Transform screen = Shape(PrimitiveType.Quad, head, new Vector3(0f, 0f, 0.20f),
+                new Vector3(0.32f, 0.20f, 1f), material);
+            screen.name = RoverModelNodes.Screen;
+            Transform rearVentStrip = Shape(PrimitiveType.Cube, head, new Vector3(0f, 0f, -0.18f),
+                new Vector3(0.24f, 0.04f, 0.02f), material);
+            rearVentStrip.name = RoverModelNodes.RearVentStrip;
             Transform eye = Shape(PrimitiveType.Sphere, head, new Vector3(0.20f, 0.02f, 0.16f), Vector3.one * 0.22f,
                 material);
             eye.name = RoverModelNodes.Eye;
@@ -469,6 +488,16 @@ namespace MoonProject.Rover.PlayModeTests
             AssignArray(controller, "_stageSleeves", sleeves);
             Assign(controller, ("_lockGlow", lockGlow.GetComponent<MeshRenderer>()), ("_focusLens", lens.gameObject),
                 ("_focusLensGlass", lensGlass.GetComponent<MeshRenderer>()));
+            var faceDisplay = screen.gameObject.AddComponent<FaceDisplay>();
+            Assign(faceDisplay, ("_tuning", faceTuning), ("_screenRenderer", screen.GetComponent<MeshRenderer>()));
+            var faceDirector = screen.gameObject.AddComponent<RoverFaceDirector>();
+            Assign(faceDirector,
+                ("_tuning", faceDirectorTuning),
+                ("_display", faceDisplay),
+                ("_head", head),
+                ("_rearVentStrip", rearVentStrip),
+                ("_rearVentRenderer", rearVentStrip.GetComponent<MeshRenderer>()));
+
             Assign(body, ("_tuning", characterTuning), ("_rover", controller), ("_rig", rig), ("_neck", neck),
                 ("_neckLift", neckLift), ("_head", head), ("_solarWing", wing),
                 ("_cutterTurret", cutterTurret), ("_cutterHead", cutterHead),
@@ -477,7 +506,8 @@ namespace MoonProject.Rover.PlayModeTests
                 ("_antennaTipRenderer", tip.GetComponent<MeshRenderer>()),
                 ("_eyeLight", eyeLight),
                 ("_scanFan", Shape(PrimitiveType.Cube, eye, Vector3.forward, new Vector3(0.01f, 0.01f, 1f), material)
-                    .GetComponent<MeshRenderer>()));
+                    .GetComponent<MeshRenderer>()),
+                ("_faceDirector", faceDirector));
 
             GameObject cameraRoot = BuildCamera(cameraTuning, out RoverCameraRig cameraRig, out Camera camera);
 
@@ -489,6 +519,8 @@ namespace MoonProject.Rover.PlayModeTests
                 Controller = controller,
                 Rig = rig,
                 BodyLanguage = body,
+                FaceDisplay = faceDisplay,
+                FaceDirector = faceDirector,
                 CameraRig = cameraRig,
                 Camera = camera,
                 Chassis = chassis,
