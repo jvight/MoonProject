@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1fbbda03fd574f4f8b2018a5e07ca28, type: 3}
+  m_Name: Structure_battery_bank
+  m_EditorClassIdentifier: 
+  _id: battery_bank
+  _nameKey: structure.battery_bank.name
+  _width: 1.461834
+  _depth: 0.987
+  _height: 1.5975001
+  _maxGroundSlope: 15
+  _clearance: 0.25
+  _produceWatts: 0
+  _consumeWatts: 0
+  _storeWattHours: 360
+  _connectionRadius: 0
+  _buildCost:
+    _metal: 3
+    _wiring: 3
+    _optics: 0
+  _buildSeconds: 2.5
+  _ports:
+  - _localPosition: {x: -0.74, y: 1.01, z: -0.26999986}
+    _localDirection: {x: -0.9394223, y: 0, z: -0.342762}
+  - _localPosition: {x: -0.74, y: 0.9, z: -0.26999986}
+    _localDirection: {x: -0.9394223, y: 0, z: -0.342762}
+  _prefab: {fileID: 7158769091624814512, guid: 64629742aeff91b47abdae76492e3711, type: 3}
+  _artPending: 0

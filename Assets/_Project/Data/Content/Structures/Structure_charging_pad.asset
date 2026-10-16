@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1fbbda03fd574f4f8b2018a5e07ca28, type: 3}
+  m_Name: Structure_charging_pad
+  m_EditorClassIdentifier: 
+  _id: charging_pad
+  _nameKey: structure.charging_pad.name
+  _width: 2.615032
+  _depth: 2.6612906
+  _height: 1.5500002
+  _maxGroundSlope: 12
+  _clearance: 0.25
+  _produceWatts: 0
+  _consumeWatts: 120
+  _storeWattHours: 0
+  _connectionRadius: 0
+  _buildCost:
+    _metal: 4
+    _wiring: 2
+    _optics: 0
+  _buildSeconds: 3
+  _ports:
+  - _localPosition: {x: 0, y: 0.20000005, z: -1.2899998}
+    _localDirection: {x: 0, y: 0, z: -1}
+  _prefab: {fileID: 1710740886569441584, guid: 6cb1fb40ba8db6e43904440999cd1374, type: 3}
+  _artPending: 0

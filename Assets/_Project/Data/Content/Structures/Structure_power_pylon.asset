@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1fbbda03fd574f4f8b2018a5e07ca28, type: 3}
+  m_Name: Structure_power_pylon
+  m_EditorClassIdentifier: 
+  _id: power_pylon
+  _nameKey: structure.power_pylon.name
+  _width: 0.7800594
+  _depth: 0.8030361
+  _height: 1.9457378
+  _maxGroundSlope: 22
+  _clearance: 0.2
+  _produceWatts: 0
+  _consumeWatts: 15
+  _storeWattHours: 0
+  _connectionRadius: 16
+  _buildCost:
+    _metal: 2
+    _wiring: 1
+    _optics: 0
+  _buildSeconds: 1.5
+  _ports:
+  - _localPosition: {x: -0.09747574, y: 0.29999995, z: 0.26781243}
+    _localDirection: {x: -0.3420201, y: 0, z: 0.9396927}
+  - _localPosition: {x: 0.2806702, y: 0.29999998, z: -0.049489707}
+    _localDirection: {x: 0.9848078, y: 0, z: -0.1736481}
+  - _localPosition: {x: -0.18319447, y: 0.30000004, z: -0.21832262}
+    _localDirection: {x: -0.6427877, y: 0, z: -0.7660444}
+  _prefab: {fileID: 7938136876731929400, guid: 283ebf5906dfe25418a787f1f4c049dc, type: 3}
+  _artPending: 0
