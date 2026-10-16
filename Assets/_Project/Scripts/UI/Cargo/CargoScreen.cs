@@ -373,6 +373,9 @@ namespace MoonProject.UI
             cell.Part.style.translate = slide;
         }
 
+        /// <summary>True when hosted on 07's 3:2 face screen so the panel fills the CRT height without letterboxing.</summary>
+        internal bool FillPanelHeight { get; set; }
+
         /// <summary>
         /// Sets the single fixed panel size for the screen shape (never varying between field, bay, or transfer view).
         /// </summary>
@@ -382,8 +385,17 @@ namespace MoonProject.UI
             float height = _settings.PanelHeight;
             if (panelSize.x > 0f && panelSize.y > 0f)
             {
-                width = Mathf.Min(width, Mathf.Floor(panelSize.x * _settings.WidthShare));
-                height = Mathf.Min(height, Mathf.Floor(panelSize.y * _settings.HeightShare));
+                if (FillPanelHeight)
+                {
+                    const float faceGlassShare = 0.87f;
+                    width = Mathf.Min(width, Mathf.Floor(panelSize.x * faceGlassShare));
+                    height = Mathf.Floor(panelSize.y * faceGlassShare);
+                }
+                else
+                {
+                    width = Mathf.Min(width, Mathf.Floor(panelSize.x * _settings.WidthShare));
+                    height = Mathf.Min(height, Mathf.Floor(panelSize.y * _settings.HeightShare));
+                }
             }
 
             _panel.style.width = width;
@@ -574,6 +586,7 @@ namespace MoonProject.UI
             {
                 int index = Cells.Count;
                 var root = new Button { pickingMode = PickingMode.Ignore, focusable = false };
+                root.RemoveFromClassList(Button.ussClassName);
                 root.AddToClassList(CellClass);
                 root.AddToClassList(ButtonClass);
                 var icon = new VisualElement { pickingMode = PickingMode.Ignore };

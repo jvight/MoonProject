@@ -19,6 +19,7 @@ namespace MoonProject.UI.Editor
         {
             var tuning = context.LoadAsset<UiTuning>(UiAssetPaths.Tuning);
             var panel = context.LoadAsset<PanelSettings>(UiAssetPaths.PanelSettings);
+            var facePanel = context.LoadAsset<PanelSettings>(UiAssetPaths.FacePanelSettings);
             var layout = context.LoadAsset<VisualTreeAsset>(UiAssetPaths.Uxml);
             var catalog = context.LoadAsset<RelicCatalog>(UiAssetPaths.RelicCatalog);
             TextAsset[] tables = StringTableAssets.Load();
@@ -32,10 +33,15 @@ namespace MoonProject.UI.Editor
             var document = host.AddComponent<UIDocument>();
             document.panelSettings = panel;
             document.visualTreeAsset = layout;
+
+            GameObject faceHost = context.CreateChild("FaceUI", context.UIRoot.transform);
+            var faceDocument = faceHost.AddComponent<UIDocument>();
+            faceDocument.panelSettings = facePanel;
+
             var system = host.AddComponent<UISystem>();
             system.Wire(document, tuning, catalog, tables, context.LoadAsset<WordmarkShape>(UiAssetPaths.Wordmark),
                 context.LoadAsset<RoverDiagramData>(UiAssetPaths.RoverDiagram),
-                context.LoadAsset<TextAsset>(UiAssetPaths.Credits));
+                context.LoadAsset<TextAsset>(UiAssetPaths.Credits), faceDocument);
             context.AddSystem(system);
         }
     }

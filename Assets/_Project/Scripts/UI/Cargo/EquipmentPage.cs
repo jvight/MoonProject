@@ -331,6 +331,10 @@ namespace MoonProject.UI
             }
 
             _leaders.Apply();
+            if (_tooltipAnchor != null && _tooltip.ClassListContains(TooltipShownClass))
+            {
+                PlaceTooltip();
+            }
         }
 
         private static bool IsTwoLineLabel(string text, float columnWidth)
@@ -510,9 +514,12 @@ namespace MoonProject.UI
             }
         }
 
+        private VisualElement _tooltipAnchor;
+
         /// <summary>The part's name and, when it has one, its key; nothing else.</summary>
         private void ShowPartTooltip(RoverKitPiece part, VisualElement anchor)
         {
+            _tooltipAnchor = anchor;
             _tooltipName.text = _localization.Get(PartInfo.NameKey(part));
             bool hasKey = PartInfo.TryAction(part, out RoverAction action);
             _tooltipGlyphHolder.style.display = hasKey ? DisplayStyle.Flex : DisplayStyle.None;
@@ -521,7 +528,18 @@ namespace MoonProject.UI
                 _tooltipGlyph.Set(_glyphs.For(action, _device), _device);
             }
 
-            Rect target = _panel.WorldToLocal(anchor.worldBound);
+            PlaceTooltip();
+            _tooltip.AddToClassList(TooltipShownClass);
+        }
+
+        private void PlaceTooltip()
+        {
+            if (_tooltipAnchor == null)
+            {
+                return;
+            }
+
+            Rect target = _panel.WorldToLocal(_tooltipAnchor.worldBound);
             float panelHeight = _panel.resolvedStyle.height;
             float top = target.yMax + _settings.TooltipGap;
             if (!float.IsNaN(panelHeight) && panelHeight > 0f && top + 40f > panelHeight)
@@ -531,11 +549,11 @@ namespace MoonProject.UI
 
             _tooltip.style.left = target.xMin;
             _tooltip.style.top = top;
-            _tooltip.AddToClassList(TooltipShownClass);
         }
 
         private void HideTooltip()
         {
+            _tooltipAnchor = null;
             _tooltip.RemoveFromClassList(TooltipShownClass);
         }
 
