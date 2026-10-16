@@ -1,0 +1,42 @@
+{
+  "model": "smelter",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Brass",
+    "R1_Copper",
+    "R1_CreamEnamel",
+    "R1_DarkGlass",
+    "R1_GoldFoil",
+    "R1_GreyMetal",
+    "R1_LampAmber",
+    "R1_OrangeStripe",
+    "R1_Rubber",
+    "R1_SagePatch",
+    "R1_Screen",
+    "R1_SolarCell"
+  ],
+  "max_triangles": 6000,
+  "max_meshes": 20,
+  "max_draw_calls": 48,
+  "allow_rotation": ["Socket_Power_*"],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "Smelter": { "pivot": [0.0, 0.0, 0.0] },
+    "Stage_1": { "pivot": [0.0, 0.0, 0.0] },
+    "Stage_2": { "pivot": [0.0, 0.0, 0.0] },
+    "Stage_3": { "pivot": [0.0, 0.0, 0.0] },
+    "Stage_4": { "pivot": [0.0, 0.0, 0.0] },
+    "CrucibleGlow": { "pivot": [0.0, 0.855, 0.78] },
+    "HopperDoor": { "pivot": [0.94, 0.16, 0.62] },
+    "DamperFlap_1": { "pivot": [0.0, 0.36, 1.74] },
+    "DamperFlap_2": { "pivot": [0.36, 0.0, 1.74] },
+    "DamperFlap_3": { "pivot": [0.0, -0.36, 1.74] },
+    "DamperFlap_4": { "pivot": [-0.36, 0.0, 1.74] },
+    "HoodBeacon": { "pivot": [-0.9, 0.14, 1.06] },
+    "Socket_Power_1": { "pivot": [-0.13, -0.95, 0.42] },
+    "Socket_Power_2": { "pivot": [0.13, -0.95, 0.42] }
+  }
+}
