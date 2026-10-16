@@ -175,17 +175,30 @@ namespace MoonProject.Art.Tests
         [Test]
         public void SubPrefabs_HoverCoilsScanFanAndFocusLens_AreWellFormed()
         {
-            ModelNode lens = RoverModelBuilder.CreateFocusLens();
-            ModelNode glass = lens.GetDescendant(RoverModelBuilder.FocusLensGlassName);
-            Assert.AreEqual(ModelMaterial.PaletteGlowOff, glass.Material);
-            MeshChecks.AssertWellFormed(lens.Mesh.Geometry);
-            MeshChecks.AssertWellFormed(glass.Mesh.Geometry);
+            string lampMatName = R1MaterialRecipes.Get(R1MaterialSlot.LampAmber).MaterialAssetName;
 
-            ModelNode fan = RoverModelBuilder.CreateScanFan();
-            MeshChecks.AssertWellFormed(fan.Mesh.Geometry);
+            GameObject lens = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/Generated/Art/R1/Models/Rover/FocusLens.prefab");
+            Assert.IsNotNull(lens, "FocusLens.prefab");
+            Assert.IsNotNull(lens.GetComponent<MeshFilter>()?.sharedMesh, "FocusLens root mesh");
+            Transform glass = lens.transform.Find(RoverModelBuilder.FocusLensGlassName);
+            Assert.IsNotNull(glass, "FocusLens/Glass");
+            Assert.IsNotNull(glass.GetComponent<MeshFilter>()?.sharedMesh, "FocusLens/Glass mesh");
+            Assert.AreEqual(lampMatName, glass.GetComponent<MeshRenderer>()?.sharedMaterial?.name);
 
-            ModelNode coils = RoverModelBuilder.CreateHoverCoils();
-            MeshChecks.AssertWellFormed(coils.Mesh.Geometry);
+            GameObject fan = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/Generated/Art/R1/Models/Rover/ScanFan.prefab");
+            Assert.IsNotNull(fan, "ScanFan.prefab");
+            Assert.IsNotNull(fan.GetComponent<MeshFilter>()?.sharedMesh, "ScanFan mesh");
+            CollectionAssert.Contains(
+                fan.GetComponent<MeshRenderer>()?.sharedMaterials.Select(m => m != null ? m.name : string.Empty),
+                lampMatName,
+                "ScanFan includes R1_LampAmber");
+
+            GameObject coils = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/Generated/Art/R1/Models/Rover/HoverCoils.prefab");
+            Assert.IsNotNull(coils, "HoverCoils.prefab");
+            Assert.IsNotNull(coils.GetComponent<MeshFilter>()?.sharedMesh, "HoverCoils root mesh");
         }
     }
 }

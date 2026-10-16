@@ -151,10 +151,31 @@ namespace MoonProject.Art.Tests
                 "the hazard rim is painted on the disc, so it turns with it");
 
             float hole = Hole(turntable.Mesh.Geometry);
-            float coils = Reach(MeshChecks.Points(RoverModelBuilder.CreateHoverCoils(), Matrix4x4.identity, false));
+            float coils = Reach(HoverCoilsPoints());
             float floorArm = Reach(MeshChecks.Points(_bay.GetDescendant("FloorLift"), Matrix4x4.identity));
             Assert.Greater(hole, coils + HoleRoom, "the Hover-Jump coils ride up through the hole");
             Assert.Greater(hole, floorArm + HoleRoom, "the floor arm rises through the hole without touching it");
+        }
+
+        private static IEnumerable<Vector3> HoverCoilsPoints()
+        {
+            const string path = "Assets/_Project/Generated/Art/R1/Models/Rover/HoverCoils.prefab";
+            UnityEngine.GameObject prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(path);
+            if (prefab == null)
+            {
+                R1ModelBuilder.Build();
+                prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(path);
+            }
+
+            Assert.IsNotNull(prefab, path);
+            foreach (MeshFilter filter in prefab.GetComponentsInChildren<MeshFilter>(true))
+            {
+                Matrix4x4 toRoot = prefab.transform.worldToLocalMatrix * filter.transform.localToWorldMatrix;
+                foreach (Vector3 v in filter.sharedMesh.vertices)
+                {
+                    yield return toRoot.MultiplyPoint3x4(v);
+                }
+            }
         }
 
         [Test]

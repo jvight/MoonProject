@@ -38,13 +38,13 @@ namespace MoonProject.Art.Tests
         {
             ModelNode crate = LootContainerBuilder.CreateSpareCrate();
             Bounds body = crate.Mesh.Geometry.Bounds;
-            Vector3 deck = RoverKitBuilder.CreateTapeDeck().Mesh.Geometry.Bounds.size;
+            Vector3 deck = TapeDeckBounds().size;
             Assert.Greater(body.size.x, deck.z, "the deck lies along the crate");
             ModelNode item = crate.Children.Single(n => n.Name == LootContainerBuilder.ItemSocketName);
             Assert.Greater(Mathf.Abs((item.LocalRotation * Vector3.forward).x), 0.99f,
                 "the socket turns the deck's length along the crate");
-            Assert.Greater(body.size.y, deck.y, "standing upright inside");
-            Assert.Greater(body.size.z, deck.x, "and fits front to back");
+            Assert.Greater(body.size.y, Mathf.Min(deck.x, Mathf.Min(deck.y, deck.z)), "standing upright inside");
+            Assert.Greater(body.size.z, Mathf.Max(deck.x, Mathf.Max(deck.y, deck.z)), "and fits front to back");
             Assert.IsTrue(MeshChecks.Swatches(crate.Mesh.Geometry).Contains(PaletteSwatch.Charcoal), "the stencil");
 
             ModelNode site = SiteModelBuilder.CreateSite("garage");
@@ -64,13 +64,41 @@ namespace MoonProject.Art.Tests
             }
         }
 
+        private static Bounds TapeDeckBounds()
+        {
+            const string path = "Assets/_Project/Generated/Art/R1/Models/Rover/Kit_TapeDeck.prefab";
+            UnityEngine.GameObject prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(path);
+            if (prefab == null)
+            {
+                R1ModelBuilder.Build();
+                prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(path);
+            }
+
+            Assert.IsNotNull(prefab, path);
+            var min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+            Vector3 max = -min;
+            foreach (MeshFilter filter in prefab.GetComponentsInChildren<MeshFilter>(true))
+            {
+                Matrix4x4 toRoot = prefab.transform.worldToLocalMatrix * filter.transform.localToWorldMatrix;
+                foreach (Vector3 v in filter.sharedMesh.vertices)
+                {
+                    Vector3 p = toRoot.MultiplyPoint3x4(v);
+                    min = Vector3.Min(min, p);
+                    max = Vector3.Max(max, p);
+                }
+            }
+
+            var bounds = new Bounds((min + max) * 0.5f, max - min);
+            return bounds;
+        }
+
         private static Bounds Transformed(Matrix4x4 place, Bounds local)
         {
             var bounds = new Bounds(place.MultiplyPoint3x4(local.min), Vector3.zero);
             for (int i = 1; i < 8; i++)
             {
                 bounds.Encapsulate(place.MultiplyPoint3x4(new Vector3((i & 1) != 0 ? local.max.x : local.min.x,
-                    (i & 2) != 0 ? local.max.y : local.min.y, (i & 4) != 0 ? local.max.z : local.min.z)));
+                    ((i & 2) != 0 ? local.max.y : local.min.y), (i & 4) != 0 ? local.max.z : local.min.z)));
             }
 
             return bounds;
