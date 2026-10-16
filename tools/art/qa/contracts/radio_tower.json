@@ -1,0 +1,19 @@
+{
+  "model": "radio_tower",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "max_triangles": 12000,
+  "max_meshes": 12,
+  "max_draw_calls": 48,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "RadioTower": { "pivot": [0.0, 0.0, 0.0] },
+    "TowerBase": { "pivot": [0.0, 0.0, 0.0] },
+    "MastLeaning": { "pivot": [0.0, 0.0, 0.0] },
+    "Dish": { "pivot": [0.0, 0.0, 0.0] },
+    "Scan_1": { "pivot": [1.58, -0.24, 2.06] },
+    "Scan_2": { "pivot": [-0.82, -0.22, 1.32] }
+  }
+}

@@ -1,8 +1,8 @@
 /*
- * Lunarion UI. Colours come from the palette tokens (--moon-*) that the UI/Theme builder generates from
- * MoonProject.Art.Palette into the theme stylesheet. Indigo glass, cream text, warm amber for what can be done.
- * Type is Be Vietnam Pro (font assets built by the UI/Fonts builder): Regular for text, Medium for things you press,
- * SemiBold for names and headings. Motion is code-driven (Reveal), so nothing here transitions.
+ * Lunarion UI — Variant C ("Terminal hai màu", 0.5.7): 07's warm amber CRT screen (--moon-*, --glass-*) paired with a
+ * calm cyan telemetry/scan accent (--crt-cyan-*), warm coral shortages (--moon-warm-accent), and warm off-white paper
+ * with dark ink (--paper-*) for crew documents. Type is IBM Plex Mono for terminal body/readouts, Chakra Petch for
+ * display headings and hero numbers, and Be Vietnam Pro for crew documents.
  */
 
 .moon-root,
@@ -30,7 +30,7 @@
 }
 
 .moon-root {
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/NunitoSans-Regular.asset");
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
 .pause__heading,
@@ -45,7 +45,7 @@
 .glyph__label,
 .hold__glyph,
 .material-slot__count {
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
     font-size: 22px;
 }
 
@@ -56,7 +56,6 @@
 .next-line__text,
 .ticker__text,
 .place-card__job,
-.memory-card__text,
 .tower-panel__text,
 .material-slot__word,
 .hint-row__word,
@@ -64,7 +63,11 @@
 .recovery-board__node,
 .recovery-board__target,
 .pause .menu-button {
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/NunitoSans-SemiBold.asset");
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
+.memory-card__text {
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/BeVietnamPro-Regular.asset");
 }
 
 Label {
@@ -93,9 +96,9 @@ Label {
     display: none;
 }
 
-/* Glass panels and chips */
+/* CRT panels and chips */
 
-/* Moonlight Glass: the blue glass gradient, rim and glows are one 9-sliced texture drawn at 2x */
+/* Variant C CRT: the dark phosphor screen, amber bezel, corner ticks and scanlines are one 9-sliced texture at 2x */
 .panel {
     background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPanel.png");
     -unity-slice-left: 56;
@@ -110,9 +113,9 @@ Label {
     flex-direction: row;
     align-items: center;
     padding: 7px 18px 7px 8px;
-    border-radius: 24px;
+    border-radius: 10px;
     background-color: var(--moon-glass);
-    border-width: 1px;
+    border-width: 1.5px;
     border-color: var(--moon-glass-edge);
 }
 
@@ -121,7 +124,7 @@ Label {
     color: var(--moon-text);
 }
 
-/* The prompt (Moonlight Glass): the key's round bubble, then the action on its own glass pill */
+/* The prompt: the key's badge, then the action on its own CRT pill */
 .prompt .chip {
     padding: 0;
     border-width: 0;
@@ -130,12 +133,12 @@ Label {
 
 .prompt .chip__word {
     padding: 4px 20px 6px 20px;
-    border-radius: 22px;
-    border-width: 1px;
+    border-radius: 10px;
+    border-width: 1.5px;
     border-color: var(--glass-rim);
     background-color: var(--moon-glass);
     color: var(--glass-hi);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/NunitoSans-Bold.asset");
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
 }
 
 .chip__number {
@@ -152,12 +155,12 @@ Label {
 
 .caption--quiet {
     color: var(--moon-text-faint);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/NunitoSans-Regular.asset");
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
 /* Glyphs: a key cap for keys and mouse buttons, a round button for gamepads */
 
-/* A key or button: a round glass bubble with a bright rim and the key in white Exo 2 (Moonlight Glass) */
+/* A key or button: a round CRT keycap bubble with a bright amber rim and the key in Chakra Petch (Variant C) */
 .glyph {
     min-width: 44px;
     height: 44px;
@@ -283,7 +286,7 @@ Label {
 }
 
 .material-slot__count {
-    font-size: 18px;
+    font-size: 20px;
     margin-left: 6px;
     min-width: 14px;
     color: var(--moon-text);
@@ -319,7 +322,7 @@ Label {
     white-space: nowrap;
 }
 
-/* A covered material wears a painted check (the fonts have none); a short one reads dim, with no check */
+/* A covered material wears a painted check (the fonts have none); a short one reads warm coral, with no check */
 .material-slot__check {
     width: 18px;
     height: 18px;
@@ -332,12 +335,12 @@ Label {
 }
 
 .material-slot--short .material-icon {
-    opacity: 0.7;
+    opacity: 0.85;
 }
 
 .material-slot--short .material-slot__count,
 .material-slot--short .material-slot__word {
-    color: var(--moon-text-dim);
+    color: var(--moon-warm-accent);
 }
 
 /* A bay row's cost stays on its line: icon and have / need, no names */
@@ -348,11 +351,12 @@ Label {
 }
 
 .bay-row__recipe .material-slot {
-    margin: 0 6px;
+    margin: 0 4px;
 }
 
 .bay-row__recipe .material-slot__count {
     min-width: 0;
+    font-size: 20px;
 }
 
 .recipe__part {
@@ -380,7 +384,7 @@ Label {
 /* Where to find it, small under its row */
 .recipe__part-source {
     margin-top: 1px;
-    font-size: 16px;
+    font-size: 18px;
     color: var(--moon-text-dim);
     white-space: normal;
 }
@@ -518,7 +522,7 @@ Label {
     letter-spacing: 4px;
     color: var(--glass-hi);
     -unity-text-align: middle-center;
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 .credits__scroll {
@@ -533,7 +537,7 @@ Label {
     letter-spacing: 3px;
     color: var(--glass-sel);
     -unity-text-align: middle-center;
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-Bold.asset");
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-Bold.asset");
 }
 
 .credits__version {
@@ -594,7 +598,7 @@ Label {
 .name-tag__name {
     font-size: 34px;
     letter-spacing: 2px;
-    color: var(--moon-cream);
+    color: var(--glass-hi);
     -unity-text-align: middle-center;
     text-shadow: 0 2px 14px var(--moon-shadow);
 }
@@ -609,7 +613,7 @@ Label {
     align-items: center;
 }
 
-/* The distance home at the top centre, over the next line (Moonlight Glass, Subnautica's depth gauge) */
+/* The distance home at the top centre, in Variant C's calm cyan telemetry accent */
 .home-meter {
     position: absolute;
     left: 0;
@@ -622,8 +626,8 @@ Label {
     width: 250px;
     height: 60px;
     --track-color: var(--moon-track);
-    --fill-color: var(--glass-sel);
-    --tick-color: var(--glass-rim);
+    --fill-color: var(--moon-tech-glow);
+    --tick-color: var(--crt-cyan-edge);
     --ring-width: 3;
 }
 
@@ -635,23 +639,23 @@ Label {
 
 .home-meter__value {
     font-size: 46px;
-    color: var(--glass-hi);
-    text-shadow: 0 0 14px var(--glass-rim-glow);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
+    color: var(--moon-tech-glow);
+    text-shadow: 0 0 14px var(--crt-cyan-glow);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 .home-meter__unit {
     margin-left: 3px;
     margin-bottom: 8px;
     font-size: 22px;
-    color: var(--glass-hi);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
+    color: var(--crt-cyan-dim);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 .home-meter__key {
     font-size: 18px;
     letter-spacing: 2px;
-    color: var(--moon-text-dim);
+    color: var(--crt-cyan-dim);
 }
 
 .next-line__text {
@@ -664,7 +668,7 @@ Label {
 
 /* 07's cells (docs/design/first-hour-v2 6.4): a small row of pills on a glass plate, top left, one pill per cell */
 
-/* The battery dial at the bottom left (Moonlight Glass, like Subnautica's vitals) */
+/* The battery dial at the bottom left */
 .battery-dial {
     position: absolute;
     left: 100px;
@@ -688,7 +692,7 @@ Label {
     bottom: 13px;
     --track-color: var(--moon-track);
     --fill-color: var(--glass-ring);
-    --low-color: var(--glass-sel);
+    --low-color: var(--moon-warm-accent);
     --ring-width: 9;
 }
 
@@ -698,9 +702,8 @@ Label {
     -unity-text-align: middle-center;
 }
 
-/* Every line sits on a glass plate (docs/design/first-hour-v2 6.2): the next line, the ticker, a place's card */
+/* Every line sits on a CRT plate (docs/design/first-hour-v2 6.2): the next line, the ticker, a place's card */
 
-/* Moonlight Glass: each plate is the glass pill (UI/Glass, 2x) */
 .next-line .name-tag,
 .place-card .name-tag {
     padding: 12px 30px 14px 30px;
@@ -722,12 +725,11 @@ Label {
     align-items: center;
 }
 
-/* A place's name is white Exo 2 over a short amber underline, as in the mockup */
 .place-card .name-tag__name {
     color: var(--glass-hi);
 }
 
-/* A short amber underline beneath a place's name, as in the mockup */
+/* A short amber underline beneath a place's name */
 .place-card__rule {
     width: 96px;
     height: 4px;
@@ -754,7 +756,7 @@ Label {
     align-items: center;
 }
 
-/* The tower's reward card (feel-pass 8.2): glass in the upper third, a title and a few short lines of what it gave */
+/* The tower's reward card (feel-pass 8.2): CRT panel in the upper third, a title and a few short lines of what it gave */
 
 .reward-anchor {
     position: absolute;
@@ -782,7 +784,7 @@ Label {
     letter-spacing: 3px;
     color: var(--glass-hi);
     -unity-text-align: middle-center;
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 .reward-card__lines {
@@ -842,16 +844,16 @@ Label {
     font-size: 28px;
     letter-spacing: 2px;
     color: var(--glass-hi);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
-/* A crew crate's packing note: a calm glass card low and centred, under 07, never in the way of driving */
+/* A crew crate's packing note (warm paper) or scan readout (cyan CRT): low and centred, under 07 */
 
 .crate-anchor {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 5%;
+    bottom: 9%;
     align-items: center;
 }
 
@@ -869,7 +871,7 @@ Label {
 
 .crate-note__caption {
     margin-bottom: 6px;
-    font-size: 17px;
+    font-size: 18px;
     letter-spacing: 3px;
     color: var(--glass-sel);
 }
@@ -878,6 +880,32 @@ Label {
     font-size: 24px;
     white-space: normal;
     color: var(--glass-hi);
+}
+
+.crate-note--scan .crate-note__caption {
+    color: var(--moon-tech-glow);
+}
+
+.crate-note--scan .crate-note__text {
+    color: var(--crt-cyan-dim);
+}
+
+.crate-note--paper {
+    border-width: 2px;
+    border-radius: 8px;
+    border-color: var(--paper-border);
+    background-color: var(--paper-fill);
+    -unity-background-image-tint-color: var(--paper-tint);
+}
+
+.crate-note--paper .crate-note__caption {
+    color: var(--paper-stamp);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
+}
+
+.crate-note--paper .crate-note__text {
+    color: var(--paper-ink);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/BeVietnamPro-Regular.asset");
 }
 
 .kit-title__rule {
@@ -990,7 +1018,7 @@ Label {
 .pickup-row__gain {
     font-size: 24px;
     color: var(--glass-sel);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-Bold.asset");
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-Bold.asset");
 }
 
 .pickup-row__gain {
@@ -1003,7 +1031,7 @@ Label {
     font-size: 22px;
     color: var(--moon-text-dim);
     -unity-text-align: middle-right;
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 /* Salvage: the hold ring centred on a piece's cut point, and a site's name over it */
@@ -1048,7 +1076,7 @@ Label {
     align-items: center;
 }
 
-/* Radio ticker: a glass toast on the right with a round icon bubble, like Subnautica's hints (Moonlight Glass) */
+/* Radio ticker: a CRT toast on the right with an icon badge */
 
 .ticker {
     position: absolute;
@@ -1110,8 +1138,8 @@ Label {
     min-width: 230px;
     align-items: center;
     padding: 12px 28px 13px 28px;
-    border-radius: 20px;
-    border-width: 1px;
+    border-radius: 10px;
+    border-width: 1.5px;
     border-color: var(--moon-glass-edge);
     background-color: var(--moon-glass);
 }
@@ -1162,8 +1190,8 @@ Label {
 .hop-list__rows {
     min-width: 250px;
     padding: 12px 24px 12px 16px;
-    border-radius: 20px;
-    border-width: 1px;
+    border-radius: 10px;
+    border-width: 1.5px;
     border-color: var(--moon-glass-edge);
     background-color: var(--moon-glass);
 }
@@ -1249,7 +1277,7 @@ Label {
     -unity-background-image-tint-color: var(--moon-cream);
 }
 
-/* Memory card */
+/* Memory card (crew documents & liner notes on warm off-white paper with dark ink) */
 
 .memory-card {
     position: absolute;
@@ -1260,6 +1288,11 @@ Label {
 
 .memory-card__body {
     padding: 24px 30px 20px 30px;
+    border-width: 2px;
+    border-radius: 8px;
+    border-color: var(--paper-border);
+    background-color: var(--paper-fill);
+    -unity-background-image-tint-color: var(--paper-tint);
 }
 
 .memory-card__heading {
@@ -1270,6 +1303,8 @@ Label {
 .memory-card__caption {
     flex-grow: 1;
     flex-shrink: 1;
+    color: var(--paper-stamp);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
 }
 
 .memory-card__icon,
@@ -1287,29 +1322,32 @@ Label {
     margin-top: 14px;
 }
 
-/* Liner notes: a smaller card, warm in its amber frame, honey title and cassette icon, with the tape count */
+/* Liner notes: a smaller card on warm paper, dark ink title and cassette icon, with the tape count */
 
 .memory-card--liner {
     width: 440px;
 }
 
 .memory-card--liner .memory-card__body {
-    border-color: var(--moon-amber-edge);
+    border-color: var(--paper-border);
 }
 
 .memory-card--liner .memory-card__icon {
     display: flex;
     margin-right: 10px;
+    --icon-color: var(--paper-stamp);
+    --icon-hole-color: var(--paper-fill);
 }
 
 .memory-card--liner .memory-card__count {
     display: flex;
     margin-left: 12px;
+    color: var(--paper-ink-dim);
 }
 
 .memory-card--liner .memory-card__name {
     font-size: 28px;
-    color: var(--moon-honey);
+    color: var(--paper-ink);
 }
 
 .memory-card--liner .memory-card__text {
@@ -1320,13 +1358,19 @@ Label {
     font-size: 28px;
     margin-top: 10px;
     margin-bottom: 10px;
+    color: var(--paper-ink);
     white-space: normal;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
 }
 
 .memory-card__text {
     font-size: 22px;
-    color: var(--moon-text-dim);
+    color: var(--paper-ink);
     white-space: normal;
+}
+
+.memory-card .hint-row__word {
+    color: var(--paper-ink-dim);
 }
 
 .hint-row {
@@ -1346,7 +1390,7 @@ Label {
     position: absolute;
     right: 0;
     bottom: 24px;
-    width: 520px;
+    width: 544px;
 }
 
 .tower-panel__heading {
@@ -1553,7 +1597,7 @@ Label {
     padding: 28px 28px 22px 28px;
 }
 
-/* The menu's title bar: a band of brighter glass across the panel's top, the heading in Exo 2 capitals */
+/* The menu's title bar: a band of brighter amber CRT across the panel's top, the heading in Chakra Petch capitals */
 .pause__header {
     flex-direction: row;
     justify-content: space-between;
@@ -1680,14 +1724,14 @@ Label {
     transition-duration: 0.06s, 0.06s;
 }
 
-/* The settings' tabs: skewed glass (Subnautica's tab buttons), the selected one edged in amber */
+/* The settings' tabs: chamfered CRT terminal tabs (Variant C), the selected one edged in amber */
 .settings-tabs {
     flex-direction: row;
     align-items: stretch;
     margin: 0 8px 14px 8px;
 }
 
-/* Each tab's skewed glass is painted on its wrapper, beneath the button, so the label is always drawn on top */
+/* Each tab's chamfered CRT frame is painted on its wrapper, beneath the button, so the label is always drawn on top */
 .settings-tab-wrap {
     flex-grow: 1;
     flex-basis: 0;
@@ -1882,8 +1926,8 @@ Label {
 
 /*
  * The tech board's labels while 07 looks at it (M3-21): the recovery panel's protocol and its four targets, each
- * with its row of lamps (dark glass, warm amber when lit), then the pins Kenji's board knows. Left of the board,
- * no plate: cream type on its own soft shadow, a decoded sheet quieter than a built one.
+ * with its row of lamps (dark CRT track, warm amber when lit), then the pins Kenji's board knows. Framed on a
+ * Variant C CRT panel on the left, a decoded sheet in calm cyan quieter than a built one.
  */
 
 .recovery-board {
@@ -1891,14 +1935,22 @@ Label {
     left: 0;
     top: 24%;
     width: 30%;
+    padding: 16px 20px 14px 20px;
+    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPanel.png");
+    -unity-slice-left: 56;
+    -unity-slice-right: 56;
+    -unity-slice-top: 56;
+    -unity-slice-bottom: 56;
+    -unity-slice-scale: 0.5;
 }
 
 .recovery-board__title {
     margin-bottom: 12px;
     font-size: 18px;
     letter-spacing: 4px;
-    color: var(--moon-text);
+    color: var(--glass-hi);
     text-shadow: 0 2px 12px var(--moon-shadow);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 .recovery-board__row {
@@ -1954,8 +2006,8 @@ Label {
 }
 
 .recovery-board__node--decoded {
-    color: var(--moon-text);
-    opacity: 0.75;
+    color: var(--crt-cyan-dim);
+    opacity: 0.9;
 }
 
 .recovery-board__node--torn {
@@ -1966,9 +2018,9 @@ Label {
 }
 
 /*
- * The recipe card (M3-24 B): looking at the tower's hopper or a board sheet, a quiet card right of centre, no
- * plate: the next level's name and title, needs and have in material icons, the component still missing, and where
- * it is built, all on the floating names' soft shadow.
+ * The recipe card (M3-24 B): looking at the tower's hopper or a board sheet, a CRT panel right of centre:
+ * the next level's name and title, needs and have in material icons, the component still missing, and where
+ * it is built.
  */
 
 .recipe-card {
@@ -1986,7 +2038,7 @@ Label {
     -unity-slice-scale: 0.5;
 }
 
-/* Moonlight Glass: the card is glass, so the floating names' shadow under it stays empty */
+/* Variant C CRT: the card is a 9-sliced CRT panel, so the floating names' shadow under it stays empty */
 .recipe-card .soft-shadow {
     display: none;
 }
@@ -1996,11 +2048,12 @@ Label {
     letter-spacing: 3px;
     color: var(--glass-hi);
     text-shadow: 0 2px 12px var(--moon-shadow);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 .recipe-card__level {
     margin-bottom: 8px;
-    font-size: 17px;
+    font-size: 18px;
     color: var(--moon-text);
     text-shadow: 0 2px 12px var(--moon-shadow);
 }
@@ -2011,7 +2064,7 @@ Label {
 
 .recipe-card__word {
     margin-bottom: 4px;
-    font-size: 15px;
+    font-size: 18px;
     letter-spacing: 2px;
     color: var(--moon-text);
     text-shadow: 0 2px 12px var(--moon-shadow);
@@ -2019,7 +2072,7 @@ Label {
 
 .recipe-card__where {
     margin-top: 8px;
-    font-size: 16px;
+    font-size: 18px;
     color: var(--glass-sel);
     white-space: normal;
     text-shadow: 0 2px 12px var(--moon-shadow);
@@ -2061,8 +2114,8 @@ Label {
 }
 
 /*
- * The cargo screen (Tab / View): one fixed-size Subnautica-style panel — 07's hold grid on the left, 07's live portrait
- * and sockets (or home storage when docked) on the right; Moonlight Glass over the blur.
+ * The cargo screen (Tab / View): one fixed-size CRT terminal panel — 07's hold grid on the left, 07 v3's 2D vector
+ * schematic and sockets (or home storage when docked) on the right.
  */
 
 .cargo {
@@ -2076,7 +2129,7 @@ Label {
 }
 
 .cargo__panel {
-    width: 1120px;
+    width: 1220px;
     height: 560px;
     padding: 22px 30px 20px 30px;
     background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPanel.png");
@@ -2094,6 +2147,7 @@ Label {
 }
 
 .cargo__column--hold {
+    width: 310px;
     flex-shrink: 0;
 }
 
@@ -2107,7 +2161,7 @@ Label {
     border-left-color: var(--moon-track);
 }
 
-/* 07's right pane: 07's portrait with a socket at each place on the body, the parts row under it */
+/* 07's right pane: 07 v3's 2D schematic diagram with a socket at each place on the body, the parts row under it */
 .seven {
     flex-grow: 1;
     align-items: stretch;
@@ -2121,9 +2175,15 @@ Label {
     flex-grow: 1;
     width: 100%;
     min-height: 220px;
-    border-radius: 14px;
-    background-color: rgba(8, 12, 40, 0.5);
-    -unity-background-scale-mode: scale-to-fit;
+    border-radius: 10px;
+    border-width: 1px;
+    border-color: var(--moon-track);
+    background-color: var(--glass-deep);
+    --diagram-line: var(--moon-warm-lamp);
+    --diagram-bright: var(--glass-hi);
+    --diagram-dim: var(--moon-amber-edge);
+    --diagram-fill: var(--glass-deep);
+    --diagram-grid: var(--crt-cyan-glow);
 }
 
 .seven__leaders {
@@ -2132,7 +2192,7 @@ Label {
     top: 0;
     right: 0;
     bottom: 0;
-    --leader-color: rgba(190, 215, 255, 0.45);
+    --leader-color: var(--crt-cyan-edge);
 }
 
 .seven__socket {
@@ -2176,7 +2236,8 @@ Label {
 
 .seven__socket-label {
     position: absolute;
-    font-size: 15px;
+    font-size: 18px;
+    white-space: normal;
     -unity-text-align: middle-right;
     color: var(--glass-hi);
 }
@@ -2202,7 +2263,7 @@ Label {
     height: 58px;
     margin-top: 10px;
     padding: 4px 10px;
-    border-radius: 12px;
+    border-radius: 10px;
     border-width: 1.5px;
     border-color: var(--moon-track);
 }
@@ -2217,12 +2278,24 @@ Label {
     margin: 0 6px;
     padding: 8px 14px;
     border-width: 1.5px;
-    border-radius: 10px;
+    border-radius: 8px;
     border-color: var(--glass-rim);
     background-color: var(--glass-btn);
 }
 
-.seven__card:focus,
+.seven__card:focus {
+    background-color: var(--glass-sel);
+    border-color: var(--glass-sel);
+}
+
+.seven__card:focus .seven__card-name {
+    color: var(--glass-sel-text);
+}
+
+.seven__card:focus .seven__bay {
+    --bay-icon-color: var(--glass-sel-text);
+}
+
 .seven__card:hover {
     border-color: var(--glass-sel);
 }
@@ -2250,7 +2323,9 @@ Label {
     align-items: center;
     padding: 6px 12px;
     border-radius: 8px;
-    background-color: rgba(8, 12, 40, 0.92);
+    border-width: 1px;
+    border-color: var(--glass-rim);
+    background-color: var(--glass-deep);
 }
 
 .seven__tooltip--shown {
@@ -2275,16 +2350,17 @@ Label {
 
 .cargo__heading {
     margin-bottom: 8px;
-    font-size: 22px;
+    font-size: 24px;
     letter-spacing: 2px;
     color: var(--glass-hi);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 .cargo__note {
     margin-bottom: 6px;
     font-size: 18px;
     color: var(--glass-sel);
+    white-space: normal;
 }
 
 /* 07's system line on the first Tab press, typed in over the dark screen */
@@ -2353,7 +2429,7 @@ Label {
     justify-content: center;
     align-items: center;
     border-width: 1.5px;
-    border-radius: 10px;
+    border-radius: 8px;
     border-color: var(--glass-rim);
     background-color: var(--glass-btn);
 }
@@ -2370,26 +2446,27 @@ Label {
 }
 
 .cargo__cell .material-icon {
-    width: 55%;
-    height: 55%;
+    width: 44%;
+    height: 44%;
+    margin-bottom: 14px;
 }
 
 .cargo__units {
     position: absolute;
-    right: 5px;
-    bottom: 2px;
-    font-size: 13px;
+    right: 4px;
+    bottom: 1px;
+    font-size: 20px;
     color: var(--glass-hi);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 .cargo__part {
     padding: 4px;
-    font-size: 11px;
+    font-size: 18px;
     white-space: normal;
     -unity-text-align: middle-center;
     color: var(--glass-hi);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 .cargo__summary {

@@ -42,6 +42,7 @@ namespace MoonProject.Rover
 
         private FaceState _state;
         private MaterialPropertyBlock _propertyBlock;
+        private bool _externallyDriven;
 
         /// <summary>The underlying pure C# face state machine.</summary>
         public FaceState State => _state;
@@ -51,6 +52,13 @@ namespace MoonProject.Rover
 
         /// <summary>The target <see cref="Renderer"/> receiving the CRT property block.</summary>
         public Renderer ScreenRenderer => _screenRenderer;
+
+        /// <summary>When true, <see cref="RoverFaceDirector"/> steps this display and <see cref="Update"/> is a no-op.</summary>
+        public bool ExternallyDriven
+        {
+            get => _externallyDriven;
+            set => _externallyDriven = value;
+        }
 
         /// <summary>Initializes the display with explicit tuning, renderer, and deterministic seed.</summary>
         public void Initialize(FaceTuning tuning, Renderer screenRenderer, int seed = DefaultSeed)
@@ -62,14 +70,41 @@ namespace MoonProject.Rover
             ApplyToRenderer();
         }
 
-        private void Awake()
+        /// <summary>Validates serialized wiring and ensures <see cref="State"/> is constructed.</summary>
+        public bool EnsureInitialized()
         {
-            if (_screenRenderer == null)
+            if (!ValidateWiring())
             {
-                _screenRenderer = GetComponent<Renderer>();
+                enabled = false;
+                return false;
             }
 
-            if (_state == null && _tuning != null)
+            if (_state == null)
+            {
+                _state = new FaceState(_tuning, _seed);
+                ApplyToRenderer();
+            }
+
+            return true;
+        }
+
+        /// <summary>Checks that both <see cref="Tuning"/> and <see cref="ScreenRenderer"/> are wired, logging an error if not.</summary>
+        public bool ValidateWiring()
+        {
+            if (_tuning != null && _screenRenderer != null)
+            {
+                return true;
+            }
+
+            Debug.LogError(
+                $"{nameof(FaceDisplay)}: missing required wiring (_tuning={_tuning != null}, _screenRenderer={_screenRenderer != null}). Rebuild Rover.prefab.",
+                this);
+            return false;
+        }
+
+        private void Awake()
+        {
+            if (_state == null && _tuning != null && _screenRenderer != null)
             {
                 _state = new FaceState(_tuning, _seed);
                 ApplyToRenderer();
@@ -78,7 +113,7 @@ namespace MoonProject.Rover
 
         private void Update()
         {
-            if (_state == null)
+            if (_externallyDriven || _state == null)
             {
                 return;
             }

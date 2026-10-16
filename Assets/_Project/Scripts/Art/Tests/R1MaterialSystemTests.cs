@@ -133,7 +133,7 @@ namespace MoonProject.Art.Tests
         public void MaterialLibrary_AllTwelveMaterialsExist_AndHaveTexturesAssigned()
         {
             IReadOnlyList<R1MaterialSpec> specs = R1MaterialRecipes.All;
-            Assert.AreEqual(14, specs.Count, "R1MaterialRecipes must define all 14 fixed Blender material slots.");
+            Assert.AreEqual(15, specs.Count, "R1MaterialRecipes must define all 15 fixed Blender material slots.");
 
             for (int i = 0; i < specs.Count; i++)
             {
@@ -179,6 +179,12 @@ namespace MoonProject.Art.Tests
                         "Hot core HDR peak must exceed Palette.BloomThreshold.");
                 }
             }
+
+            R1MaterialSpec signageSpec = R1MaterialRecipes.Get(R1MaterialSlot.Signage);
+            Assert.AreEqual(R1MaterialRecipes.SignageSlot, signageSpec.SlotName);
+            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialRecipes.GetAlbedoTexturePath(signageSpec)));
+            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialRecipes.GetNormalTexturePath(signageSpec)));
+            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialRecipes.GetMaskTexturePath(signageSpec)));
 
             Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialRecipes.TrimSheetAlbedoPath));
             Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(R1MaterialRecipes.TrimSheetNormalPath));

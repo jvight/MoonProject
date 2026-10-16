@@ -6,10 +6,11 @@ using MoonProject.Editor.Builders;
 namespace MoonProject.UI.Editor
 {
     /// <summary>
-    /// Renders the "Moonlight Glass" surfaces (the owner's pick, Subnautica's grammar in moonlight) as textures, since
-    /// UI Toolkit has no gradients or box shadows: a rounded blue glass gradient with a thin bright rim, a faint inner
-    /// glow and a soft outer glow. Drawn at twice the size the USS shows them (<c>-unity-slice-scale: 0.5</c>), so the
-    /// corners stay crisp at 4K and at 150% text. The panel and pill are 9-sliced; the bubble and dial are round.
+    /// Renders 07's Variant C ("Terminal hai màu") CRT surfaces as textures, since UI Toolkit has no gradients,
+    /// scanline shaders, or box shadows: a dark warm phosphor surface with a crisp amber bezel, subtle corner bracket
+    /// accents, faint inner phosphor bloom, and subtle low-opacity horizontal scanlines in the unstretched zones.
+    /// Drawn at twice the size the USS shows them (<c>-unity-slice-scale: 0.5</c>), so the corners stay crisp at 4K
+    /// and at 150% text.
     /// </summary>
     internal static class UiGlassBuilder
     {
@@ -17,39 +18,49 @@ namespace MoonProject.UI.Editor
         public const int BuilderOrder = 604;
 
         // Everything in pixels of the 2x texture.
-        private const int Glow = 12;
+        private const int Glow = 6;
         private const float Rim = 3f;
-        private const float InnerGlow = 26f;
+        private const float InnerGlow = 20f;
+        private const float SliceBand = 48f;
 
-        // Moonlight Glass tokens (Logs/ui-ref/moonlight-glass-mockup.html, .v1).
-        // Body alpha ~0.8 with a darker lower stop: still glass (rim and top highlight stay translucent), and text keeps
-        // WCAG AA 4.5:1 over the brightest dune (the legibility capture).
-        private static readonly Color GlassTop = Rgba(26, 46, 118, 0.80f);
-        private static readonly Color GlassBottom = Rgba(8, 14, 44, 0.86f);
-        private static readonly Color RimColor = Rgba(150, 196, 255, 0.85f);
-        private static readonly Color RimGlow = Rgba(110, 170, 255, 0.45f);
-        private static readonly Color Inner = Rgba(140, 190, 255, 0.18f);
-        private static readonly Color BubbleLight = Rgba(58, 92, 180, 0.82f);
-        private static readonly Color BubbleDark = Rgba(16, 28, 78, 0.86f);
-        private static readonly Color DialLight = Rgba(44, 72, 156, 0.82f);
-        private static readonly Color DialDark = Rgba(10, 18, 52, 0.86f);
+        // Variant C ("Terminal hai màu") dark warm CRT surfaces + amber bezel tokens.
+        // High opacity (~0.96) keeps phosphor text comfortably above WCAG AA 4.5:1 even over the brightest daytime dune.
+        private static readonly Color GlassTop = Rgba(28, 19, 10, 0.96f);
+        private static readonly Color GlassBottom = Rgba(14, 9, 5, 0.97f);
+        private static readonly Color RimColor = Rgba(255, 181, 71, 0.86f);
+        private static readonly Color CornerAccent = Rgba(255, 214, 128, 0.96f);
+        private static readonly Color RimGlow = Rgba(255, 181, 71, 0.32f);
+        private static readonly Color Inner = Rgba(255, 181, 71, 0.12f);
+        private static readonly Color ScanlineLight = Rgba(255, 194, 92, 0.045f);
+        private static readonly Color ScanlineDark = Rgba(6, 4, 2, 0.14f);
+        private static readonly Color BubbleLight = Rgba(36, 24, 12, 0.96f);
+        private static readonly Color BubbleDark = Rgba(16, 10, 5, 0.97f);
+        private static readonly Color DialLight = Rgba(32, 22, 11, 0.96f);
+        private static readonly Color DialDark = Rgba(14, 9, 5, 0.97f);
 
         [MoonBuilder(BuilderPath, BuilderOrder)]
         private static void Build()
         {
             GeneratedAssets.EnsureFolder(UiAssetPaths.GlassFolder);
-            Write(UiAssetPaths.GlassPanel, Rounded(160, 160, 44f, false, GlassTop, GlassBottom));
-            Write(UiAssetPaths.GlassPill, Rounded(200, 160, 60f, false, GlassTop, GlassBottom));
-            Write(UiAssetPaths.GlassBubble, Rounded(176, 176, 68f, true, BubbleLight, BubbleDark));
-            Write(UiAssetPaths.GlassDial, Rounded(256, 256, 108f, true, DialLight, DialDark));
-            Debug.Log($"{BuilderPath}: wrote the glass panel, pill, bubble and dial under {UiAssetPaths.GlassFolder}");
+            Write(UiAssetPaths.GlassPanel, Rounded(160, 160, 18f, false, GlassTop, GlassBottom, true));
+            Write(UiAssetPaths.GlassPill, Rounded(200, 160, 22f, false, GlassTop, GlassBottom, true));
+            Write(UiAssetPaths.GlassBubble, Rounded(176, 176, 24f, true, BubbleLight, BubbleDark, false));
+            Write(UiAssetPaths.GlassDial, Rounded(256, 256, 36f, true, DialLight, DialDark, false));
+            Debug.Log($"{BuilderPath}: wrote the CRT panel, pill, bubble and dial under {UiAssetPaths.GlassFolder}");
         }
 
         /// <summary>
-        /// A rounded box (a circle when the radius is half the inner size) inset by the glow margin. Linear fills run
-        /// from top-left light to bottom-right dark (the mockup's 160 degrees); radial fills light from 35% / 30%.
+        /// A rounded CRT bezel box inset by the glow margin, with subtle horizontal scanlines in the unstretched zones
+        /// and brighter corner bracket ticks along the bezel.
         /// </summary>
-        private static Texture2D Rounded(int width, int height, float radius, bool radial, Color light, Color dark)
+        private static Texture2D Rounded(
+            int width,
+            int height,
+            float radius,
+            bool radial,
+            Color light,
+            Color dark,
+            bool slicedVertically)
         {
             var texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
             var pixels = new Color[width * height];
@@ -59,6 +70,8 @@ namespace MoonProject.UI.Editor
             float reach = Mathf.Max(half.x, half.y) * 2f;
             for (int y = 0; y < height; y++)
             {
+                float scanWeight = ScanlineWeight(y, height, slicedVertically);
+                bool evenPair = ((y / 2) & 1) == 0;
                 for (int x = 0; x < width; x++)
                 {
                     var p = new Vector2(x + 0.5f, y + 0.5f);
@@ -78,12 +91,25 @@ namespace MoonProject.UI.Editor
                             : Mathf.Clamp01(Linear(p, width, height));
                         Color fill = Color.Lerp(light, dark, blend);
                         c = Over(c, WithAlpha(fill, fill.a * coverage));
+
+                        if (scanWeight > 0f && d < -Rim)
+                        {
+                            Color scan = evenPair ? ScanlineLight : ScanlineDark;
+                            c = Over(c, WithAlpha(scan, scan.a * scanWeight * coverage));
+                        }
+
                         float inner = Mathf.Exp(Mathf.Min(0f, d) / InnerGlow);
                         c = Over(c, WithAlpha(Inner, Inner.a * inner * coverage));
                     }
 
                     float rim = Mathf.Clamp01(0.5f - (Mathf.Abs(d + Rim * 0.5f) - Rim * 0.5f));
-                    c = Over(c, WithAlpha(RimColor, RimColor.a * rim));
+                    if (rim > 0f)
+                    {
+                        bool inCornerBracket = (x < 34 || x >= width - 34) && (y < 34 || y >= height - 34);
+                        Color rimCol = inCornerBracket ? CornerAccent : RimColor;
+                        c = Over(c, WithAlpha(rimCol, rimCol.a * rim));
+                    }
+
                     pixels[y * width + x] = c;
                 }
             }
@@ -91,6 +117,17 @@ namespace MoonProject.UI.Editor
             texture.SetPixels(pixels);
             texture.Apply();
             return texture;
+        }
+
+        private static float ScanlineWeight(int y, int height, bool slicedVertically)
+        {
+            if (!slicedVertically)
+            {
+                return 1f;
+            }
+
+            float edgeDist = Mathf.Min(y, height - 1 - y);
+            return Mathf.Clamp01((SliceBand - edgeDist) / 10f);
         }
 
         /// <summary>0 at the top-left, 1 at the bottom-right, along the mockup's 160-degree gradient.</summary>

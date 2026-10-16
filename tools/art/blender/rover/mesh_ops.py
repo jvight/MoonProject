@@ -1204,6 +1204,15 @@ def bake_model_vertex_colors(mesh_objects, cfg, include_ground_occluder=True):
 
 def export_fbx(filepath, objects_to_export):
     """Export selected objects to FBX with Unity coordinate axes (+Z forward, +Y up) and linear vertex colors."""
+    import sys
+    from pathlib import Path
+
+    blender_dir = Path(__file__).resolve().parent.parent
+    if str(blender_dir) not in sys.path:
+        sys.path.insert(0, str(blender_dir))
+    import r1kit
+
+    r1kit._install_deterministic_fbx_hooks()
     bpy.ops.object.select_all(action="DESELECT")
     for obj in objects_to_export:
         obj.select_set(True)

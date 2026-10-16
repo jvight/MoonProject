@@ -4,8 +4,10 @@ The one command a box runs before it reports. In the box's own worktree, on a tr
 committing and aborted at the end, so the tests see what landing would produce; skipped when the tip already
 contains main), it runs, stopping at the first failure:
   1. compile_check (with lint);
-  2. the box's builders and the Main Scene build in one headless Unity (unity_batch exec), which catches what only
-     Unity refuses (a Unity object made while a component is constructed, a builder throwing, a broken scene wiring);
+  2. the box's builders, the builders of every domain the branch changes (git diff --name-only main...HEAD, each path
+     mapped to its box the way lint.py maps owners; the filter used is printed) and the Main Scene build in one
+     headless Unity (unity_batch exec), which catches what only Unity refuses (a Unity object made while a component
+     is constructed, a builder throwing, a broken scene wiring) and keeps the tests off stale generated assets;
   3. the box's EditMode test assembly, then its PlayMode assembly (the defaults below; --fast skips PlayMode;
      --filter / --assembly / --platform run one custom tests step instead). PlayMode steps never run the golden-path
      Playthrough (category Playthrough), which is the Director's.
@@ -34,6 +36,8 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+
+import lint
 
 TOOLS = Path(__file__).resolve().parent
 GENERATED = "Assets/_Project/Generated"
@@ -129,9 +133,34 @@ def board_dir(root):
 
 def builder_filter(boxes):
     """Builder regex for the boxes' own domains plus the Main Scene build, which always runs last (order 1000)."""
-    domains = [BUILDER_DOMAINS[b] for b in boxes if b in BUILDER_DOMAINS]
+    domains = []
+    for box in boxes:
+        for domain in BUILDER_DOMAINS.get(box, "").split("|"):
+            if domain and domain not in domains:
+                domains.append(domain)
     parts = ([f"({'|'.join(domains)})/"] if domains else []) + [f"{MAIN_SCENE_BUILDER}$"]
     return "^(" + "|".join(parts) + ")"
+
+
+def changed_boxes(paths):
+    """Boxes owning <paths>, in first-seen order, by the folder -> box map lint reports its findings with."""
+    boxes = []
+    for path in paths:
+        box = lint.owner_of(path)
+        if box not in boxes:
+            boxes.append(box)
+    return boxes
+
+
+def branch_changed_boxes(root):
+    """Boxes whose folders the branch changes since it left main (git diff --name-only main...HEAD)."""
+    return changed_boxes(git(root, "diff", "--name-only", "main...HEAD").splitlines())
+
+
+def builder_boxes(boxes, changed):
+    """The named boxes, then every box the branch changes: a branch that edits the Rover builder must not run another
+    box's tests against a stale Generated/Rover."""
+    return list(boxes) + [b for b in changed if b not in boxes]
 
 
 def run_logged(name, cmd, cwd, log_path):
@@ -428,6 +457,10 @@ def main():
         tested = f"{branch} @ {sha} + main @ {main_sha}, trial merge"
     else:
         tested = f"{branch} @ {sha}, " + ("without main @ " + main_sha if needs_merge(root) else "contains main")
+    changed = branch_changed_boxes(root)
+    build_boxes = builder_boxes(args.boxes, changed)
+    say(f"builder filter {builder_filter(build_boxes)}: box {box} + boxes the branch changes "
+        f"(git diff --name-only main...HEAD): {', '.join(changed) or 'none'}")
 
     def step(name, log_name, run):
         log = logs / log_name
@@ -445,8 +478,8 @@ def main():
                 notes.append(f"main does not merge cleanly ({problem}); merge main into your branch and resolve it")
         ok = not steps and step("compile_check", "compile.log", lambda log: compile_step(root, log))
         if ok:
-            ok = step(f"builders + Main Scene {builder_filter(args.boxes)}", "builders.log",
-                      lambda log: builders_step(root, args.boxes, log))
+            ok = step(f"builders + Main Scene {builder_filter(build_boxes)}", "builders.log",
+                      lambda log: builders_step(root, build_boxes, log))
         if ok and not args.no_tests:
             planned = test_commands(root, args)
             if not planned:

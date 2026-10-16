@@ -23,6 +23,58 @@ class BuilderFilterTests(unittest.TestCase):
     def test_a_box_without_builders_still_builds_the_scene(self):
         self.assertEqual(box_check.builder_filter(["foundation"]), "^(Main Scene$)")
 
+    def test_overlapping_boxes_list_each_domain_once(self):
+        self.assertEqual(box_check.builder_filter(["art", "rover", "director"]),
+                         "^((Art|Gameplay|Rover)/|Main Scene$)")
+
+
+class ChangedDomainTests(unittest.TestCase):
+    def run_git(self, root, *args):
+        subprocess.run(["git", "-c", "safe.directory=*", "-c", "user.name=t", "-c", "user.email=t@t", *args],
+                       cwd=root, check=True, capture_output=True)
+
+    def commit(self, root, rel, text):
+        path = root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        self.run_git(root, "add", rel)
+        self.run_git(root, "commit", "-q", "-m", rel)
+
+    def test_paths_map_to_boxes_the_way_lint_owns_them(self):
+        paths = ["Assets/_Project/Scripts/Rover/Editor/RoverPrefabBuilder.cs",
+                 "Assets/_Project/Scripts/Gameplay/Tests/PlayMode/PlaythroughScene.cs",
+                 "Assets/_Project/Scripts/Rover/Face/FaceDisplay.cs",
+                 "Assets/_Project/Data/Tuning/FaceDirectorTuning.asset", "tools/box_check.py"]
+        self.assertEqual(box_check.changed_boxes(paths), ["rover", "gameplay", "director"])
+
+    def test_gameplay_on_a_rover_builder_branch_also_runs_the_rover_builders(self):
+        # 2026-10-16: box_check gameplay on box/agy-facewire ran ^((Gameplay)/|Main Scene$) against a stale
+        # Generated/Rover/Rover.prefab, and two PlayMode fixtures rebuilt it themselves.
+        boxes = box_check.builder_boxes(["gameplay"], ["rover", "director", "gameplay"])
+        self.assertEqual(boxes, ["gameplay", "rover", "director"])
+        pattern = re.compile(box_check.builder_filter(boxes))
+        for path in ("Gameplay/Playthrough", "Rover/Prefab", "Main Scene"):
+            self.assertTrue(pattern.search(path), path)
+        self.assertFalse(pattern.search("World/Terrain"))
+        self.assertEqual(box_check.builder_filter(box_check.builder_boxes(["gameplay"], [])),
+                         "^((Gameplay)/|Main Scene$)")
+
+    def test_several_named_boxes_keep_their_order_before_the_changed_ones(self):
+        boxes = box_check.builder_boxes(["ui", "world"], ["rover", "world"])
+        self.assertEqual(boxes, ["ui", "world", "rover"])
+
+    def test_only_the_branch_side_of_main_counts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.run_git(root, "init", "-q", "-b", "main")
+            self.commit(root, "a.txt", "a")
+            self.run_git(root, "checkout", "-q", "-b", "box")
+            self.commit(root, "Assets/_Project/Scripts/Rover/Editor/RoverPrefabBuilder.cs", "rover")
+            self.run_git(root, "checkout", "-q", "main")
+            self.commit(root, "Assets/_Project/Scripts/World/Terrain.cs", "world")
+            self.run_git(root, "checkout", "-q", "box")
+            self.assertEqual(box_check.branch_changed_boxes(root), ["rover"])
+
 
 class TestCommandTests(unittest.TestCase):
     ROOT = Path("D:/wt/world")

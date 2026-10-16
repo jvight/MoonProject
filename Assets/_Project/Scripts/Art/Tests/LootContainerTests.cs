@@ -38,7 +38,8 @@ namespace MoonProject.Art.Tests
         {
             ModelNode crate = LootContainerBuilder.CreateSpareCrate();
             Bounds body = crate.Mesh.Geometry.Bounds;
-            Vector3 deck = RoverKitBuilder.CreateTapeDeck().Mesh.Geometry.Bounds.size;
+            Vector3 deck = MeshChecks.PrefabBounds(
+                "Assets/_Project/Generated/Art/R1/Models/Rover/Kit_TapeDeck.prefab").size;
             Assert.Greater(body.size.x, deck.z, "the deck lies along the crate");
             ModelNode item = crate.Children.Single(n => n.Name == LootContainerBuilder.ItemSocketName);
             Assert.Greater(Mathf.Abs((item.LocalRotation * Vector3.forward).x), 0.99f,

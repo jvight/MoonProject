@@ -12,6 +12,9 @@ namespace MoonProject.Art.Tests
     /// </summary>
     public sealed class WorkshopModelTests
     {
+        private const string RoverPrefabPath = "Assets/_Project/Generated/Art/R1/Models/Rover/RoverModel.prefab";
+        private const string HoverCoilsPrefabPath = "Assets/_Project/Generated/Art/R1/Models/Rover/HoverCoils.prefab";
+
         [Test]
         public void Lander_HasTheWorkshopAnchor_WhereGameplayExpectsIt()
         {
@@ -37,48 +40,47 @@ namespace MoonProject.Art.Tests
         [Test]
         public void HoverCoils_HaveSquashableSprings_AndGlowOffRings()
         {
-            ModelNode coils = RoverModelBuilder.CreateHoverCoils();
+            GameObject coils = MeshChecks.LoadGeneratedPrefab(HoverCoilsPrefabPath);
             string[] corners = { "FL", "FR", "RL", "RR" };
+            string lampMatName = R1MaterialRecipes.Get(R1MaterialSlot.LampAmber).MaterialAssetName;
 
-            Assert.AreEqual("HoverCoils", coils.Name);
-            CollectionAssert.AreEqual(corners.Select(c => "Coil_" + c).ToArray(),
-                coils.Children.Select(c => c.Name).ToArray());
+            Assert.AreEqual("HoverCoils", coils.name);
+            var childNames = new List<string>();
+            for (int i = 0; i < coils.transform.childCount; i++)
+            {
+                childNames.Add(coils.transform.GetChild(i).name);
+            }
+
+            CollectionAssert.AreEquivalent(corners.Select(c => "Coil_" + c).ToArray(), childNames);
             foreach (string corner in corners)
             {
-                ModelNode spring = coils.GetDescendant("Coil_" + corner);
-                Assert.Less(spring.Mesh.Geometry.Bounds.max.y, 1e-3f, "springs hang below their pivot");
-                ModelNode glow = spring.GetDescendant("Glow_" + corner);
-                Assert.AreEqual(ModelMaterial.PaletteGlowOff, glow.Material);
-                LowPolyMeshBuilder ring = glow.Mesh.Geometry;
-                for (int t = 0; t < ring.TriangleCount; t++)
-                {
-                    Assert.AreEqual(PaletteSwatch.EyeGlass, MeshChecks.SwatchOf(ring, t));
-                }
+                Transform spring = coils.transform.Find("Coil_" + corner);
+                Assert.IsNotNull(spring, "Coil_" + corner);
+                Mesh springMesh = spring.GetComponent<MeshFilter>()?.sharedMesh;
+                Assert.IsNotNull(springMesh, $"Coil_{corner} mesh");
+                Assert.LessOrEqual(springMesh.bounds.max.y, 1e-3f, "springs hang below their pivot");
+                Transform glow = spring.Find("Glow_" + corner);
+                Assert.IsNotNull(glow, "Glow_" + corner);
+                Assert.AreEqual(lampMatName, glow.GetComponent<MeshRenderer>()?.sharedMaterial?.name);
             }
         }
 
         [Test]
         public void HoverCoils_OnTheCoilSocket_FitUnderTheBelly_AboveTheGround()
         {
-            ModelNode rover = RoverModelBuilder.CreateModel();
-            ModelNode socket = rover.GetDescendant("CoilSocket");
-            Assert.IsNull(socket.Mesh);
-            Assert.AreEqual(Quaternion.identity, socket.LocalRotation);
-            var names = new List<string>();
-            foreach (ModelNode child in rover.Children)
-            {
-                names.Add(child.Name);
-            }
+            GameObject rover = MeshChecks.LoadGeneratedPrefab(RoverPrefabPath);
+            Transform socket = rover.transform.Find("CoilSocket");
+            Assert.IsNotNull(socket, "CoilSocket");
+            Assert.IsNull(socket.GetComponent<Renderer>());
+            Assert.AreEqual(Quaternion.identity, socket.localRotation);
 
-            Assert.Greater(names.IndexOf("CoilSocket"), names.IndexOf("DustSocket_R"), "appended after the M1 rig");
-
-            foreach (Vector3 local in MeshChecks.Points(RoverModelBuilder.CreateHoverCoils(), Matrix4x4.identity))
-            {
-                Vector3 p = socket.LocalPosition + local;
-                Assert.Less(Mathf.Abs(p.x), 0.4f, "between the bogies");
-                Assert.Greater(p.y, 0.1f, "clear of the ground");
-                Assert.LessOrEqual(p.y, socket.LocalPosition.y + 1e-3f, "under the belly");
-            }
+            Bounds bounds = MeshChecks.PrefabBounds(HoverCoilsPrefabPath);
+            Vector3 min = socket.localPosition + bounds.min;
+            Vector3 max = socket.localPosition + bounds.max;
+            Assert.Greater(min.x, -0.4f, "between the bogies");
+            Assert.Less(max.x, 0.4f, "between the bogies");
+            Assert.Greater(min.y, 0.1f, "clear of the ground");
+            Assert.LessOrEqual(max.y, socket.localPosition.y + 1e-3f, "under the belly");
         }
     }
 }

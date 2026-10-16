@@ -7,27 +7,27 @@ namespace MoonProject.Rover.Editor
         public const string RoverModel = "Assets/_Project/Generated/Art/R1/Models/Rover/RoverModel.prefab";
 
         /// <summary>The art box's Hover-Jump coils, mounted on RoverModel 'CoilSocket'. Required.</summary>
-        public const string HoverCoils = "Assets/_Project/Generated/Art/Rover/HoverCoils.prefab";
+        public const string HoverCoils = "Assets/_Project/Generated/Art/R1/Models/Rover/HoverCoils.prefab";
 
         /// <summary>The art box's visible kit (M3-11), each parented to its RoverModel socket. Required.</summary>
-        public const string KitLampBar = "Assets/_Project/Generated/Art/Rover/Kit_LampBar.prefab";
+        public const string KitLampBar = "Assets/_Project/Generated/Art/R1/Models/Rover/Kit_LampBar.prefab";
 
         /// <summary>The art box's lens glass ring (cutscenes O10), mounted on RoverModel 'Eye'. Required.</summary>
-        public const string LensGlass = "Assets/_Project/Generated/Art/Rover/LensGlass.prefab";
-        public const string KitCapacitorDrum = "Assets/_Project/Generated/Art/Rover/Kit_CapacitorDrum.prefab";
-        public const string KitBatterySpine = "Assets/_Project/Generated/Art/Rover/Kit_BatterySpine.prefab";
+        public const string LensGlass = "Assets/_Project/Generated/Art/R1/Models/Rover/LensGlass.prefab";
+        public const string KitCapacitorDrum = "Assets/_Project/Generated/Art/R1/Models/Rover/Kit_CapacitorDrum.prefab";
+        public const string KitBatterySpine = "Assets/_Project/Generated/Art/R1/Models/Rover/Kit_BatterySpine.prefab";
         public const string KitTapeDeck = "Assets/_Project/Generated/Art/R1/Models/Rover/Kit_TapeDeck.prefab";
-        public const string KitTetherRing = "Assets/_Project/Generated/Art/Rover/Kit_TetherRing.prefab";
-        public const string KitCargoRack = "Assets/_Project/Generated/Art/Rover/Kit_CargoRack.prefab";
+        public const string KitTetherRing = "Assets/_Project/Generated/Art/R1/Models/Rover/Kit_TetherRing.prefab";
+        public const string KitCargoRack = "Assets/_Project/Generated/Art/R1/Models/Rover/Kit_CargoRack.prefab";
 
         /// <summary>The art box's Focus Lens kit (cutter tier 1), mounted on LensSocket. Required.</summary>
-        public const string FocusLens = "Assets/_Project/Generated/Art/Rover/FocusLens.prefab";
+        public const string FocusLens = "Assets/_Project/Generated/Art/R1/Models/Rover/FocusLens.prefab";
 
         /// <summary>The art box's scan fan (0.5.5 §1.2), mounted on the eye's ScanFanSocket. Required.</summary>
-        public const string ScanFan = "Assets/_Project/Generated/Art/Rover/ScanFan.prefab";
+        public const string ScanFan = "Assets/_Project/Generated/Art/R1/Models/Rover/ScanFan.prefab";
 
         /// <summary>The art box's side bin (RoverAbility.SideBins), mounted twice. Required.</summary>
-        public const string SideBin = "Assets/_Project/Generated/Art/Rover/Kit_SideBin.prefab";
+        public const string SideBin = "Assets/_Project/Generated/Art/R1/Models/Rover/Kit_SideBin.prefab";
 
         public const string GeneratedRoot = "Assets/_Project/Generated/Rover";
         public const string RoverPrefab = GeneratedRoot + "/Rover.prefab";
@@ -44,6 +44,8 @@ namespace MoonProject.Rover.Editor
         public const string FxTuning = TuningFolder + "/RoverFxTuning.asset";
         public const string CameraTuning = TuningFolder + "/RoverCameraTuning.asset";
         public const string CharacterTuning = TuningFolder + "/RoverCharacterTuning.asset";
+        public const string FaceTuning = TuningFolder + "/FaceTuning.asset";
+        public const string FaceDirectorTuning = TuningFolder + "/FaceDirectorTuning.asset";
 
         public const string TrackShader = "Assets/_Project/Shaders/Rover/RoverTrack.shader";
         public const string ParticlesSimpleLitShader =

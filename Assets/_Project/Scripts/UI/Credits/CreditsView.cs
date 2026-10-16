@@ -6,7 +6,7 @@ using MoonProject.Core;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The credits screen (docs: the licence compliance task): a Moonlight Glass panel opened from the title's
+    /// The credits screen (docs: the licence compliance task): a Variant C CRT panel opened from the title's
     /// Credits entry, filled once from <see cref="CreditsData"/> and the localization tables, drifting up slowly by
     /// itself. The player can scroll it with the mouse wheel, the stick or the up and down keys, which holds the drift
     /// for a few seconds; Back (or Esc, B) closes it. A language change rewrites the text in place.

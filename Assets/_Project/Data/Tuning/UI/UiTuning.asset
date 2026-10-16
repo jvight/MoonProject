@@ -240,7 +240,7 @@ MonoBehaviour:
       _scaleFrom: 0.98
       _springFrequency: 1.8
       _springDamping: 0.7
-    _panelWidth: 1120
+    _panelWidth: 1220
     _panelHeight: 560
     _maxCell: 60
     _minCell: 34
@@ -253,11 +253,18 @@ MonoBehaviour:
     _bootSlideDistance: 64
     _bootHatchLingerSeconds: 0.2
     _dragThreshold: 6
-    _labelWidth: 150
+    _labelWidth: 158
+    _leftLabelWidth: 158
     _labelHeight: 24
-    _labelGap: 4
+    _labelGap: 6
     _labelMargin: 8
+    _portraitReferenceWidth: 798
     _tooltipGap: 10
+    _diagramYaw: 55
+    _diagramElevation: 14
+    _diagramDistance: 3.9
+    _diagramLookHeight: 0.56
+    _diagramFieldOfView: 30
   _unlockCard:
     _reveal:
       _fadeIn: 0.7

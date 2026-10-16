@@ -4,12 +4,12 @@ using UnityEngine.UIElements;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// A settings tab's skewed glass (Moonlight Glass, Subnautica's tab buttons): a parallelogram leaning forward, its
-    /// fill and edge from USS (--tab-color, --tab-edge, --tab-edge-width), so the selected tab changes by class alone.
+    /// A settings tab's CRT terminal frame (Variant C): a beveled rectangle with chamfered corners, its fill and edge
+    /// from USS (--tab-color, --tab-edge, --tab-edge-width), so the selected tab changes by class alone.
     /// </summary>
     internal sealed class TabPainter : StylePainter
     {
-        private const float SkewDegrees = 18f;
+        private const float Chamfer = 6f;
 
         private static readonly CustomStyleProperty<Color> TabColorProperty =
             new CustomStyleProperty<Color>("--tab-color");
@@ -43,14 +43,18 @@ namespace MoonProject.UI
                 return;
             }
 
-            float lean = rect.height * Mathf.Tan(SkewDegrees * Mathf.Deg2Rad);
+            float cut = Mathf.Min(Chamfer, Mathf.Min(rect.width, rect.height) * 0.25f);
             Painter2D painter = context.painter2D;
             painter.lineJoin = LineJoin.Round;
             painter.BeginPath();
-            painter.MoveTo(new Vector2(rect.xMin + lean, rect.yMin));
-            painter.LineTo(new Vector2(rect.xMax, rect.yMin));
-            painter.LineTo(new Vector2(rect.xMax - lean, rect.yMax));
-            painter.LineTo(new Vector2(rect.xMin, rect.yMax));
+            painter.MoveTo(new Vector2(rect.xMin + cut, rect.yMin));
+            painter.LineTo(new Vector2(rect.xMax - cut, rect.yMin));
+            painter.LineTo(new Vector2(rect.xMax, rect.yMin + cut));
+            painter.LineTo(new Vector2(rect.xMax, rect.yMax - cut));
+            painter.LineTo(new Vector2(rect.xMax - cut, rect.yMax));
+            painter.LineTo(new Vector2(rect.xMin + cut, rect.yMax));
+            painter.LineTo(new Vector2(rect.xMin, rect.yMax - cut));
+            painter.LineTo(new Vector2(rect.xMin, rect.yMin + cut));
             painter.ClosePath();
             painter.fillColor = _tabColor;
             painter.Fill();

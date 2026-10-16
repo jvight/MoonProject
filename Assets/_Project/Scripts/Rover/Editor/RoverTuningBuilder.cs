@@ -18,6 +18,8 @@ namespace MoonProject.Rover.Editor
             Ensure<RoverFxTuning>(RoverAssetPaths.FxTuning);
             Ensure<RoverCameraTuning>(RoverAssetPaths.CameraTuning);
             Ensure<RoverCharacterTuning>(RoverAssetPaths.CharacterTuning);
+            Ensure<FaceTuning>(RoverAssetPaths.FaceTuning);
+            Ensure<FaceDirectorTuning>(RoverAssetPaths.FaceDirectorTuning);
             AssetDatabase.SaveAssets();
         }
 

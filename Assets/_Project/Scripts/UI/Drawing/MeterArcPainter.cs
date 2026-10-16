@@ -4,7 +4,7 @@ using UnityEngine.UIElements;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The home meter's arc (Moonlight Glass, Subnautica's depth gauge): a shallow arc over the distance with a faint
+    /// The home meter's arc (Variant C cyan telemetry gauge): a shallow arc over the distance with a faint
     /// track, a few ticks and a lit share. Repaints only when the share moves. USS: --track-color, --fill-color,
     /// --tick-color, --ring-width.
     /// </summary>

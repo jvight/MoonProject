@@ -1,0 +1,22 @@
+{
+  "model": "habitat_modules",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "max_triangles": 12000,
+  "max_meshes": 12,
+  "max_draw_calls": 48,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "HabitatModules": { "pivot": [0.0, 0.0, 0.0] },
+    "ModuleA_Main": { "pivot": [0.0, 0.0, 0.0] },
+    "AirlockPanel": { "pivot": [0.0, 0.0, 0.0] },
+    "BellowsJoints": { "pivot": [0.0, 0.0, 0.0] },
+    "ModuleB_Lab": { "pivot": [0.0, 0.0, 0.0] },
+    "ModuleC_Crushed": { "pivot": [0.0, 0.0, 0.0] },
+    "Scan_1": { "pivot": [-3.45, -1.44, 1.78] },
+    "Scan_2": { "pivot": [3.88, -0.45, 2.68] },
+    "Scan_3": { "pivot": [-0.16, -1.46, 2.04] }
+  }
+}
