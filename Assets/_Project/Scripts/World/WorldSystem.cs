@@ -25,17 +25,17 @@ namespace MoonProject.World
         [Tooltip("World tuning (Assets/_Project/Data/Tuning/WorldSettings.asset).")]
         [SerializeField] private WorldSettings _settings;
 
-        [Tooltip("Material drawing the terrain (Generated/World/M_Ground.mat, shader MoonProject/World/LofiTerrain).")]
+        [Tooltip("Material drawing the terrain (Generated/World/M_Ground.mat, shader MoonProject/World/R1Terrain).")]
         [SerializeField] private Material _groundMaterial;
 
-        [Tooltip("Shared low-poly palette material for the scatter rocks and gate slabs " +
-            "(Generated/Art/Palette/M_LowPoly.mat).")]
+        [Tooltip("Shared R1 basalt material for the scatter rocks and gate slabs " +
+            "(Generated/Art/R1/Materials/R1_Basalt.mat).")]
         [SerializeField] private Material _paletteMaterial;
 
-        [Tooltip("Art rock meshes the pebbles are made of (Generated/Art/Rocks, CPU-readable).")]
+        [Tooltip("R1 rock meshes the pebbles are made of (Art/R1/Models/Rocks, CPU-readable).")]
         [SerializeField] private Mesh[] _pebbleRocks = new Mesh[0];
 
-        [Tooltip("Art rock meshes the boulders are made of; also their convex colliders.")]
+        [Tooltip("R1 rock meshes the boulders are made of; also their convex colliders.")]
         [SerializeField] private Mesh[] _boulderRocks = new Mesh[0];
 
         [Tooltip("Material drawing Earth (Generated/World/M_Earth.mat, shader MoonProject/World/LofiEarth).")]
@@ -168,7 +168,9 @@ namespace MoonProject.World
                 _landmarkPrefabs.HullFragments, hideFlags);
             _cuttables = ScrapFieldPlanner.PlanCuttables(surface, _settings.ScrapField,
                 _landmarkPrefabs.HullFragments.Length, _settings.Seed);
-            LastScatter = _scatterBuilder.Build(_generatedRoot.transform, scatterPlan.GetAwaiter().GetResult(),
+            List<ScatterInstance> scatterInstances = scatterPlan.GetAwaiter().GetResult();
+            AddHomeApronStones(scatterInstances, surface);
+            LastScatter = _scatterBuilder.Build(_generatedRoot.transform, scatterInstances,
                 scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _paletteMaterial, hideFlags);
             BuildEarth(hideFlags);
             BuildWornTracks(hideFlags);
@@ -177,6 +179,119 @@ namespace MoonProject.World
                 _landmarkPrefabs, hideFlags);
             _peakBeacon.transform.position = Layout.PeakPosition;
             _peakBeacon.Configure(_settings.Beacon);
+        }
+
+        public static void AddHomeApronStones(List<ScatterInstance> instances, MoonSurface surface)
+        {
+            // 1. Deterministic companion cobbles and spall pebbles around large boulders on the basin floor
+            // so every major boulder sits in a fragmented lunar boulder family with smaller spall stones at its base.
+            int baseCount = instances.Count;
+            for (int i = 0; i < baseCount; i++)
+            {
+                ScatterInstance b = instances[i];
+                if (b.Kind != ScatterKind.Boulder || b.Size < 1.22f)
+                {
+                    continue;
+                }
+
+                Vector2 center2D = new Vector2(b.Position.x, b.Position.z);
+                float distHome = center2D.magnitude;
+                if (distHome < 36f || distHome > 275f)
+                {
+                    continue;
+                }
+
+                uint h0 = Hashing.Hash(Mathf.RoundToInt(center2D.x * 100f), Mathf.RoundToInt(center2D.y * 100f), 0x85EBCA6Bu);
+                for (int k = 0; k < 7; k++)
+                {
+                    uint hk = Hashing.Mix(h0 ^ (uint)(k * 0x9E3779B9u));
+                    bool subBoulder = k < 3;
+                    float baseAngle = (h0 & 0xFFFFu) * (Mathf.PI * 2f / 65536f);
+                    float angle = baseAngle + k * 0.8976f + (Hashing.ToUnit(hk) - 0.5f) * 0.42f;
+                    float radius = subBoulder
+                        ? b.Size * Mathf.Lerp(0.88f, 1.55f, Hashing.ToUnit(Hashing.Mix(hk ^ 0x13579BDFu)))
+                        : b.Size * Mathf.Lerp(0.62f, 1.85f, Hashing.ToUnit(Hashing.Mix(hk ^ 0x2468ACE0u)));
+                    float sx = center2D.x + Mathf.Cos(angle) * radius;
+                    float sz = center2D.y + Mathf.Sin(angle) * radius;
+                    Vector3 sNorm = surface.SampleNormal(sx, sz);
+                    if (sNorm.y < 0.78f)
+                    {
+                        continue;
+                    }
+
+                    float sSize = subBoulder
+                        ? Mathf.Lerp(0.38f, 0.72f, Hashing.ToUnit(Hashing.Mix(hk ^ 0x5bd1e995u)))
+                        : Mathf.Lerp(0.14f, 0.28f, Hashing.ToUnit(Hashing.Mix(hk ^ 0x5bd1e995u)));
+                    float sYaw = Hashing.ToUnit(Hashing.Mix(hk ^ 0x27d4eb2du)) * 360f;
+                    float ax = Mathf.Lerp(0.82f, 1.24f, Hashing.ToUnit(Hashing.Mix(hk ^ 0x165667b1u)));
+                    float ay = Mathf.Lerp(0.68f, 0.92f, Hashing.ToUnit(Hashing.Mix(hk ^ 0xd3a2646cu)));
+                    float az = Mathf.Lerp(0.82f, 1.20f, Hashing.ToUnit(Hashing.Mix(hk ^ 0xfd7046c5u)));
+                    float sBurial = sSize * ay * Mathf.Lerp(0.06f, 0.16f, Hashing.ToUnit(Hashing.Mix(hk ^ 0x3c6ef372u)));
+
+                    instances.Add(new ScatterInstance(
+                        ScatterKind.Pebble,
+                        new Vector3(sx, surface.SampleHeight(sx, sz), sz),
+                        sNorm,
+                        sYaw,
+                        sSize,
+                        (int)((hk >> 3) & 0x7FFFFFFFu),
+                        new Vector3(ax, ay, az),
+                        sBurial));
+                }
+            }
+
+            // 2. Visual-only stones (ScatterKind.Pebble: no physics collider) around the home pad margin and foreground
+            // (relative to 07's dock at (1.8, -4.5) and camera at (+1.8, -10.4)) so the ground around 07
+            // and the lander has weathered breccia lumps and small cobbles matching the concept.
+            (float x, float z, float size, int variant, float yaw, Vector3 aspect, float burial)[] apronStones =
+            {
+                // Lower-left foreground boulder lump and companion cobbles in the opening/home camera view:
+                (-0.78f, -7.25f, 0.78f, 2, 34f, new Vector3(1.26f, 0.72f, 1.06f), 0.08f),
+                (-0.32f, -7.58f, 0.24f, 4, 118f, new Vector3(1.18f, 0.74f, 0.94f), 0.03f),
+                (-1.28f, -6.75f, 0.28f, 1, 214f, new Vector3(1.15f, 0.70f, 1.08f), 0.035f),
+                // Sunlit foreground stones in front of and beside 07's charging pad:
+                (0.42f, -6.95f, 0.44f, 3, 48f, new Vector3(1.22f, 0.72f, 1.04f), 0.045f),
+                (0.78f, -7.22f, 0.18f, 1, 134f, new Vector3(1.16f, 0.74f, 0.96f), 0.02f),
+                (0.55f, -7.85f, 0.15f, 0, 62f, new Vector3(1.14f, 0.75f, 0.96f), 0.02f),
+                (1.42f, -7.10f, 0.19f, 3, 184f, new Vector3(1.20f, 0.70f, 1.04f), 0.025f),
+                (2.15f, -6.35f, 0.22f, 1, 275f, new Vector3(1.16f, 0.74f, 0.95f), 0.03f),
+                (2.68f, -6.85f, 0.36f, 4, 212f, new Vector3(1.24f, 0.70f, 1.02f), 0.04f),
+                (0.18f, -6.40f, 0.13f, 2, 95f, new Vector3(1.12f, 0.76f, 0.98f), 0.02f),
+                (1.85f, -5.45f, 0.16f, 4, 142f, new Vector3(1.22f, 0.72f, 1.02f), 0.02f),
+                (-1.65f, -5.40f, 0.21f, 0, 312f, new Vector3(1.18f, 0.74f, 1.05f), 0.025f),
+                // Mid-ground stones beside 07 and near the lander legs:
+                (-3.45f, -1.25f, 0.82f, 2, 32f, new Vector3(1.24f, 0.72f, 1.06f), 0.09f),
+                (-3.05f, -1.75f, 0.22f, 4, 118f, new Vector3(1.18f, 0.74f, 0.94f), 0.03f),
+                (-4.15f, -0.45f, 0.28f, 1, 214f, new Vector3(1.15f, 0.70f, 1.08f), 0.04f),
+                (-5.80f, 2.90f, 0.64f, 4, 146f, new Vector3(1.20f, 0.75f, 1.04f), 0.07f),
+                (-2.15f, -2.65f, 0.16f, 0, 64f, new Vector3(1.12f, 0.76f, 0.96f), 0.02f),
+                (-1.35f, -2.95f, 0.13f, 3, 192f, new Vector3(1.22f, 0.68f, 1.02f), 0.02f),
+                (0.75f, -2.65f, 0.15f, 1, 285f, new Vector3(1.16f, 0.72f, 0.95f), 0.02f),
+                (1.65f, -2.10f, 0.19f, 2, 42f, new Vector3(1.20f, 0.74f, 1.05f), 0.03f),
+                (2.35f, -0.85f, 0.15f, 0, 155f, new Vector3(1.10f, 0.78f, 0.92f), 0.02f),
+                (-2.55f, 1.45f, 0.18f, 3, 88f, new Vector3(1.18f, 0.72f, 1.04f), 0.025f),
+                (-4.65f, 1.85f, 0.25f, 0, 310f, new Vector3(1.24f, 0.70f, 0.98f), 0.035f),
+                (1.45f, 2.15f, 0.15f, 4, 174f, new Vector3(1.14f, 0.75f, 0.96f), 0.02f),
+                (2.85f, 3.10f, 0.24f, 1, 23f, new Vector3(1.20f, 0.70f, 1.06f), 0.03f),
+                (-6.90f, -2.20f, 0.34f, 3, 128f, new Vector3(1.22f, 0.72f, 1.02f), 0.045f),
+                (3.90f, 0.65f, 0.28f, 4, 77f, new Vector3(1.16f, 0.74f, 1.08f), 0.035f),
+            };
+
+            for (int i = 0; i < apronStones.Length; i++)
+            {
+                var s = apronStones[i];
+                float y = surface.SampleHeight(s.x, s.z);
+                Vector3 normal = surface.SampleNormal(s.x, s.z);
+                instances.Add(new ScatterInstance(
+                    ScatterKind.Pebble,
+                    new Vector3(s.x, y, s.z),
+                    normal,
+                    s.yaw,
+                    s.size,
+                    s.variant,
+                    s.aspect,
+                    s.burial));
+            }
         }
 
         private CraterField CreateCraterField(MoonSurface surface)

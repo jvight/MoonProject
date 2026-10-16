@@ -16,36 +16,36 @@ namespace MoonProject.World
         [Header("Rock")]
         [Tooltip("Any face steeper than this (degrees) is rock.")]
         [Range(10f, 80f)]
-        [SerializeField] private float _rockSlope = 32f;
+        [SerializeField] private float _rockSlope = 28f;
 
         [Tooltip("On the rim (see rim zone), faces steeper than this (degrees) are rock.")]
         [Range(5f, 80f)]
-        [SerializeField] private float _rimRockSlope = 22f;
+        [SerializeField] private float _rimRockSlope = 16f;
 
         [Tooltip("Rim zone (0 = floor, 1 = crest) from which the lower rim rock slope applies.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _rimZoneStart = 0.3f;
+        [SerializeField] private float _rimZoneStart = 0.14f;
 
         [Tooltip("Rock faces gentler than this (degrees) lean to the light rock swatch, steeper ones to the dark " +
             "one, like the two-tone rocks of the art kit.")]
         [Range(10f, 80f)]
-        [SerializeField] private float _rockLightSlope = 42f;
+        [SerializeField] private float _rockLightSlope = 34f;
 
         [Tooltip("Slope range (degrees) over which rock fades from light to dark.")]
         [Range(1f, 60f)]
-        [SerializeField] private float _rockSlopeBlend = 14f;
+        [SerializeField] private float _rockSlopeBlend = 12f;
 
         [Tooltip("Rock above this height (metres) leans to the light rock swatch, below it to the dark one.")]
         [Range(0f, 200f)]
-        [SerializeField] private float _rockLightHeight = 70f;
+        [SerializeField] private float _rockLightHeight = 78f;
 
         [Tooltip("Height range (metres) over which rock fades from dark to light.")]
         [Range(1f, 200f)]
-        [SerializeField] private float _rockHeightBlend = 80f;
+        [SerializeField] private float _rockHeightBlend = 65f;
 
         [Tooltip("How much the large patches mottle the rock between light and dark.")]
         [Range(0f, 2f)]
-        [SerializeField] private float _rockMottle = 0.6f;
+        [SerializeField] private float _rockMottle = 0.85f;
 
         [Tooltip("How much facing the earthlight lightens rock faces.")]
         [Range(0f, 10f)]
@@ -62,7 +62,7 @@ namespace MoonProject.World
 
         [Tooltip("Strength of the broad patches in the dust tone.")]
         [Range(0f, 2f)]
-        [SerializeField] private float _patchStrength = 1.1f;
+        [SerializeField] private float _patchStrength = 1.25f;
 
         [Tooltip("Size of the small dust patches, metres: several metres across, never a single facet.")]
         [Range(4f, 100f)]
@@ -86,7 +86,7 @@ namespace MoonProject.World
 
         [Tooltip("How far the lightest open dust goes from the mid dust toward the light dust (0..1).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _lightShare = 0.55f;
+        [SerializeField] private float _lightShare = 0.68f;
 
         [Header("Whispering Canyon")]
         [Tooltip("How far the canyon floor's dust may go from the shadow dust toward the mid dust (0..1): the " +
@@ -109,19 +109,19 @@ namespace MoonProject.World
 
         [Tooltip("How far crater walls turn toward the shadow dust (0..1).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _craterWallShade = 0.6f;
+        [SerializeField] private float _craterWallShade = 0.68f;
 
         [Tooltip("How far the crest of a crater rim turns toward the light dust (0..1); it fades out down the rim.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _craterRimLight = 0.5f;
+        [SerializeField] private float _craterRimLight = 0.76f;
 
         [Tooltip("Rim zone around which gentle faces turn toward the shadow dust (dust settled between the rocks).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _highlandZone = 0.65f;
+        [SerializeField] private float _highlandZone = 0.32f;
 
         [Tooltip("How far the highland dust turns toward the shadow dust (0..1).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _highlandShade = 0.8f;
+        [SerializeField] private float _highlandShade = 0.85f;
 
         [Header("Kestrel-3's scorch")]
         [Tooltip("How far the scorched dust turns toward the scorch tone (0..1).")]
@@ -170,10 +170,10 @@ namespace MoonProject.World
         [SerializeField] private float _dustDarken = 0.2f;
 
         [Header("Rim value")]
-        [Tooltip("How far the rim's rock face leans from its swatch toward charcoal (0..1): ~0.45 is about a quarter " +
-            "darker, so the rim steps back behind the near ground instead of standing as the brightest wall in frame.")]
+        [Tooltip("How far the rim's rock face leans from its swatch toward charcoal (0..1): ~0.48 is darker so the " +
+            "rim steps back with strong lunar outcrop contrast instead of standing as a bright white wall.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _rimFaceShade = 0.45f;
+        [SerializeField] private float _rimFaceShade = 0.48f;
 
         [Tooltip("Rim zone (0 = floor, 1 = crest) where the crest's lit edge begins: rock above it keeps its full " +
             "value.")]

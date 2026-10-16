@@ -15,12 +15,13 @@ import cargo_lander  # noqa: E402
 import charging_pad  # noqa: E402
 import power_pylon  # noqa: E402
 import r1kit  # noqa: E402
+import rocks  # noqa: E402
 import solar_array  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
-        description="Build ChargingPad, SolarArray, PowerPylon, and CargoLander FBX models and preview renders."
+        description="Build ChargingPad, SolarArray, PowerPylon, CargoLander, and Rock_00..05 FBX models and preview renders."
     )
     parser.add_argument(
         "--models-dir",
@@ -31,6 +32,11 @@ def main(argv: list[str] | None = None) -> None:
         "--lander-out",
         type=Path,
         default=Path("Assets/_Project/Art/R1/Models/Lander/CargoLander.fbx"),
+    )
+    parser.add_argument(
+        "--rocks-dir",
+        type=Path,
+        default=Path("Assets/_Project/Art/R1/Models/Rocks"),
     )
     parser.add_argument(
         "--renders-dir",
@@ -85,6 +91,14 @@ def main(argv: list[str] | None = None) -> None:
             "--renders-dir",
             str(renders_dir),
             *skip_flag,
+        ]
+    )
+
+    # 5. Build & export Rock_00..Rock_09
+    rocks.main(
+        [
+            "--out-dir",
+            str(args.rocks_dir),
         ]
     )
 

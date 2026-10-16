@@ -6,19 +6,19 @@ using MoonProject.Core;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Decides where every rock lies. Poisson-disk sites per class are thinned by a density field: seeded clusters
-    /// for pebbles; for boulders a sparse scatter on the open floor, ejecta on raised crater rims and a talus band
-    /// at the foot of the rim. The base pad, the ramps and bowls, crater interiors, steep faces, Whispering Canyon's
-    /// floors and the driving lanes (base to The Peak, each play feature, the canyon's mouth and exit, the relays and
-    /// salvage sites on the floor, and a few extra bearings) are kept clear of boulders; inside the canyon pebbles
-    /// keep off the chasm and the centre line, and no rock at all lies on Kestrel-3's scorched crater and furrow.
-    /// Pure and deterministic for (surface, settings, seed).
+    /// Decides where every rock lies. Poisson-disk sites per class are thinned by a density field: seeded clusters,
+    /// crater-rim aprons, and radial boulder trails; for boulders a very sparse scatter on the open floor, concentrated
+    /// ejecta clusters and boulder trails around crater rims, and talus falls at the foot of the basin rim. The base
+    /// pad, the ramps and bowls, crater interiors, steep faces, Whispering Canyon's floors and the driving lanes are
+    /// kept clear of boulders; inside the canyon pebbles keep off the chasm and the centre line, and no rock at all
+    /// lies on Kestrel-3's scorched crater and furrow. Pure and deterministic for (surface, settings, seed).
     /// </summary>
     public sealed class ScatterPlanner
     {
         private const uint PebbleSalt = 0x68BC21EBu;
         private const uint BoulderSalt = 0x02E5BE93u;
         private const uint ClusterSalt = 0x967A889Bu;
+        private const uint TrailSalt = 0x4F1B9D27u;
         private const uint AcceptSalt = 0xB0E5A9F1u;
         private const uint ShapeSalt = 0x7DFC2C4Du;
 
@@ -29,6 +29,7 @@ namespace MoonProject.World
         private readonly ScatterSettings _settings;
         private readonly uint _seed;
         private readonly GradientNoise _clusterNoise;
+        private readonly GradientNoise _trailNoise;
         private readonly Vector2[] _laneEnds;
 
         // Anchor spaces kept clear of rocks: x, z of the centre and its radius.
@@ -69,6 +70,7 @@ namespace MoonProject.World
 
             _seed = (uint)surface.Seed;
             _clusterNoise = new GradientNoise(Hashing.Mix(_seed ^ ClusterSalt));
+            _trailNoise = new GradientNoise(Hashing.Mix(_seed ^ TrailSalt));
             _pebbleMaxSlopeCos = Mathf.Cos(settings.PebbleMaxSlope * Mathf.Deg2Rad);
             _boulderMaxSlopeCos = Mathf.Cos(settings.BoulderMaxSlope * Mathf.Deg2Rad);
 
@@ -114,7 +116,8 @@ namespace MoonProject.World
         /// <summary>Chance (0..1) that a pebble site at (x, z) holds a pebble.</summary>
         public float PebbleChance(float x, float z)
         {
-            if (Mathf.Sqrt(x * x + z * z) < _surface.PadRadius + _settings.PadClearance || Scorched(x, z))
+            float distFromOrigin = Mathf.Sqrt(x * x + z * z);
+            if (distFromOrigin < _surface.PadRadius + _settings.PadClearance || Scorched(x, z))
             {
                 return 0f;
             }
@@ -126,7 +129,16 @@ namespace MoonProject.World
                 return 0f;
             }
 
-            float chance = _settings.PebbleDensity * 2f * Cluster(x, z);
+            SurfaceSample sample = _surface.Sample(x, z);
+            float cluster = Cluster(x, z);
+            float trail = BoulderTrail(x, z, sample);
+            float homeEdgeApron = SmoothMath.Bump((distFromOrigin - (_surface.PadRadius + _settings.PadClearance + 9f)) / 10f);
+
+            float chance = _settings.PebbleDensity * (0.28f + 1.15f * cluster)
+                + 0.34f * sample.CraterRim
+                + 0.30f * trail
+                + 0.20f * homeEdgeApron * (0.4f + 0.6f * cluster);
+
             if (DistanceToLanes(new Vector2(x, z)) < _settings.LaneHalfWidth)
             {
                 chance *= _settings.LaneKeptPebbles;
@@ -139,7 +151,8 @@ namespace MoonProject.World
         public float BoulderChance(float x, float z)
         {
             var point = new Vector2(x, z);
-            if (point.magnitude < _surface.PadRadius + _settings.PadClearance * 2f
+            float minBoulderRadius = _surface.PadRadius + _settings.PadClearance + 2.5f;
+            if (point.magnitude < minBoulderRadius
                 || DistanceToLanes(point) < _settings.LaneHalfWidth || NearPlayFeature(point) || Scorched(x, z))
             {
                 return 0f;
@@ -154,9 +167,67 @@ namespace MoonProject.World
             float talus = SmoothMath.Bump((-_surface.FloorEdgeDistance(x, z) - _settings.TalusOffset)
                 / _settings.TalusHalfWidth);
             float cluster = Cluster(x, z);
-            float chance = _settings.BoulderDensity * 2f * cluster + _settings.CraterRimBoulders * sample.CraterRim
-                + _settings.TalusBoulders * talus * (0.25f + cluster);
+            float trail = BoulderTrail(x, z, sample);
+
+            // Sparse on open ground (only inside tight cluster peaks); dense on crater rims, boulder trails, and talus pockets
+            float openSparse = _settings.BoulderDensity * SmoothMath.Smootherstep(0.83f, 0.96f, cluster);
+            float rimCluster = _settings.CraterRimBoulders * sample.CraterRim
+                * SmoothMath.Smootherstep(0.46f, 0.78f, cluster);
+            float trailCluster = 0.52f * trail * SmoothMath.Smootherstep(0.42f, 0.76f, cluster);
+            float talusCluster = _settings.TalusBoulders * talus * SmoothMath.Smootherstep(0.62f, 0.88f, cluster);
+
+            float chance = openSparse + rimCluster + trailCluster + talusCluster;
             return Mathf.Clamp01(chance);
+        }
+
+        /// <summary>
+        /// Evaluates radial ejecta boulder trails extending outward from larger craters plus a weathered boulder trail
+        /// pocket near the edge of the home pad.
+        /// </summary>
+        private float BoulderTrail(float x, float z, SurfaceSample sample)
+        {
+            float trail = 0f;
+
+            // Elongated anisotropic boulder-trail ribbons tied to crater rims and nearby ejecta aprons
+            float ribbonNoise = _trailNoise.Fractal(x / 34f, z / 14f, 2, 2.1f, 0.5f);
+            float ribbon = SmoothMath.Smootherstep(0.24f, 0.52f, ribbonNoise);
+
+            if (sample.CraterRim > 0.02f)
+            {
+                trail = Mathf.Max(trail, sample.CraterRim * (0.45f + 0.55f * ribbon));
+            }
+
+            // Radial boulder trails thrown from medium/large impact craters
+            IReadOnlyList<Crater> craters = _surface.Craters;
+            var pt = new Vector2(x, z);
+            for (int i = 0; i < craters.Count; i++)
+            {
+                Crater c = craters[i];
+                if (c.IsPlayBowl || c.Radius < 11f)
+                {
+                    continue;
+                }
+
+                Vector2 delta = pt - c.Center;
+                float maxReach = c.Radius * 2.35f;
+                float dSq = delta.sqrMagnitude;
+                if (dSq > maxReach * maxReach || dSq < c.Radius * c.Radius * 0.85f)
+                {
+                    continue;
+                }
+
+                float dist = Mathf.Sqrt(dSq);
+                float radialT = (dist - c.Radius * 0.92f) / (c.Radius * 1.43f);
+                float radialFalloff = 1f - SmoothMath.Smootherstep(0f, 1f, radialT);
+                float angle = Mathf.Atan2(delta.y, delta.x);
+                float phase = (i * 2.39996f) + (c.Radius * 0.37f);
+                float ray1 = Mathf.Cos(angle * 2f + phase);
+                float ray2 = Mathf.Cos(angle * 3f - phase * 1.3f);
+                float rayMask = SmoothMath.Smootherstep(0.58f, 0.88f, 0.55f * ray1 + 0.45f * ray2);
+                trail = Mathf.Max(trail, radialFalloff * rayMask * (0.5f + 0.5f * ribbon));
+            }
+
+            return Mathf.Clamp01(trail);
         }
 
         private bool Scorched(float x, float z)
@@ -223,7 +294,28 @@ namespace MoonProject.World
 
                 float yaw = Hashing.ToUnit(Hashing.Mix(shape ^ 0x5bd1e995u)) * 360f;
                 var position = new Vector3(site.x, _surface.SampleHeight(site.x, site.y), site.y);
-                instances.Add(new ScatterInstance(kind, position, normal, yaw, size, (int)(shape >> 1)));
+
+                // Per-instance anisotropic 3D scale variation (normalized so max horizontal axis == 1)
+                float sx = Mathf.Lerp(0.78f, 1.22f, Hashing.ToUnit(Hashing.Mix(shape ^ 0x27d4eb2du)));
+                float sy = Mathf.Lerp(0.72f, 1.24f, Hashing.ToUnit(Hashing.Mix(shape ^ 0x165667b1u)));
+                float sz = Mathf.Lerp(0.78f, 1.22f, Hashing.ToUnit(Hashing.Mix(shape ^ 0xd3a2646cu)));
+                float maxHoriz = Mathf.Max(sx, sz);
+                var scaleAspect = new Vector3(sx / maxHoriz, sy, sz / maxHoriz);
+
+                // Per-instance burial depth: some sit proud with full regolith skirt, others are deeply half-buried
+                float burialT = Hashing.ToUnit(Hashing.Mix(shape ^ 0xfd7046c5u));
+                float maxBurialFrac = boulder ? 0.16f : 0.12f;
+                float burialDepth = size * scaleAspect.y * (burialT * burialT) * maxBurialFrac;
+
+                instances.Add(new ScatterInstance(
+                    kind,
+                    position,
+                    normal,
+                    yaw,
+                    size,
+                    (int)(shape >> 1),
+                    scaleAspect,
+                    burialDepth));
             }
         }
 

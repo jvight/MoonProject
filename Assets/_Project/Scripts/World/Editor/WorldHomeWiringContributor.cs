@@ -201,13 +201,14 @@ namespace MoonProject.World.Editor
             var marks = new GroundMarkMesh();
             uint seed = (uint)world.Seed;
             Func<float, float, float> flat = (x, z) => 0f;
+            Vector2 dockBack = dock - Vector2.up * 3.5f;
             for (int i = 0; i < HomeDestinations.Length; i++)
             {
-                GroundMarks.AddTrack(marks, dock, Local(lander, Find(lander, HomeDestinations[i])), settings,
+                GroundMarks.AddTrack(marks, dockBack, Local(lander, Find(lander, HomeDestinations[i])), settings,
                     seed + (uint)i, flat);
             }
 
-            GroundMarks.AddTrack(marks, dock, dock + Vector2.up * PadCentreReach, settings, seed + 7u, flat);
+            GroundMarks.AddTrack(marks, dockBack, dock + Vector2.up * PadCentreReach, settings, seed + 7u, flat);
             GroundMarks.AddScar(marks, Vector3.zero, settings, seed);
             Vector3 heading = Quaternion.Euler(0f, settings.BootprintHeading, 0f) * Vector3.forward;
             GroundMarks.AddBootprints(marks, settings.BootprintStart, heading, settings);

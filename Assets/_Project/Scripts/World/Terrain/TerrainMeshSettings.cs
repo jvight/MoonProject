@@ -42,12 +42,12 @@ namespace MoonProject.World
 
         [Tooltip("Chunks whose nearest point lies within this radius (and beyond the fine radius) use mid cells.")]
         [Range(50f, 2000f)]
-        [SerializeField] private float _midRadius = 420f;
+        [SerializeField] private float _midRadius = 430f;
 
         [Tooltip("Chunks whose nearest point lies within this radius (and beyond the mid radius) use coarse cells; " +
             "farther ones use far cells.")]
         [Range(50f, 2000f)]
-        [SerializeField] private float _coarseRadius = 470f;
+        [SerializeField] private float _coarseRadius = 486f;
 
         [Tooltip("Seeded sideways wobble of every vertex, as a fraction of its cell. Gives the handmade look.")]
         [Range(0f, 0.4f)]
@@ -64,11 +64,11 @@ namespace MoonProject.World
 
         [Tooltip("Number of rings between the inner and outer radius (spaced wider with distance).")]
         [Range(4, 64)]
-        [SerializeField] private int _backdropRings = 26;
+        [SerializeField] private int _backdropRings = 36;
 
         [Tooltip("Number of segments around the ring.")]
         [Range(16, 512)]
-        [SerializeField] private int _backdropSegments = 192;
+        [SerializeField] private int _backdropSegments = 256;
 
         [Tooltip("How far the backdrop is sunk below the surface where it overlaps the chunks, metres.")]
         [Range(0f, 20f)]

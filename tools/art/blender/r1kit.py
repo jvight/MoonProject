@@ -25,6 +25,7 @@ ALLOWED_MATERIALS: tuple[str, ...] = (
     "R1_SagePatch",
     "R1_LampAmber",
     "R1_SolarCell",
+    "R1_Basalt",
 )
 
 
@@ -135,6 +136,15 @@ MATERIAL_SPECS: dict[str, dict[str, object]] = {
         "dust_color": _srgb_to_linear("#747284"),
         "metallic": 0.30,
         "roughness": 0.18,
+        "emission": (0.0, 0.0, 0.0, 1.0),
+        "emission_strength": 0.0,
+    },
+    "R1_Basalt": {
+        "base_color": _srgb_to_linear("#6B6E75"),
+        "wear_color": _srgb_to_linear("#A3A8B2"),
+        "dust_color": _srgb_to_linear("#757A89"),
+        "metallic": 0.03,
+        "roughness": 0.80,
         "emission": (0.0, 0.0, 0.0, 1.0),
         "emission_strength": 0.0,
     },
@@ -1299,6 +1309,325 @@ class MeshBuilder:
             )
         return faces
 
+    def add_fractured_rock(
+        self,
+        center_u: tuple[float, float, float],
+        size_u: tuple[float, float, float],
+        cuts_u: Sequence[tuple[tuple[float, float, float], float]],
+        mat: str = "R1_Basalt",
+        bevel: float = 0.032,
+        bevel_segments: int = 1,
+        rot_deg_u: tuple[float, float, float] = (0.0, 0.0, 0.0),
+    ) -> list[bmesh.types.BMFace]:
+        """Add a closed, bevelled fractured basalt block/slab sliced by half-space planes in normalized [-1, 1]^3 space."""
+        wx, hy, dz = size_u
+        res = bmesh.ops.create_cube(self.bm, size=2.0)
+        shell_verts = list(res["verts"])
+        for v in shell_verts:
+            if v.co.z > 0.0:
+                v.co.x = v.co.x * 0.62 + 0.10
+                v.co.y = v.co.y * 0.64 - 0.08
+                v.co.z += 0.18 * v.co.x - 0.14 * v.co.y
+            else:
+                v.co.x = v.co.x * 0.96 - 0.04
+                v.co.y = v.co.y * 0.95 + 0.04
+        shell_faces = _unique(f for v in shell_verts for f in v.link_faces if f.is_valid)
+        shell_edges = _unique(e for f in shell_faces for e in f.edges if e.is_valid)
+
+        for norm_u, dist_frac in cuts_u:
+            n_b = u_vec(*norm_u)
+            if n_b.length < 1e-6:
+                continue
+            n_b.normalize()
+            p_co = n_b * float(dist_frac)
+            geom = [v for v in shell_verts if v.is_valid] + [e for e in shell_edges if e.is_valid] + [
+                f for f in shell_faces if f.is_valid
+            ]
+            if not geom:
+                break
+            b_res = bmesh.ops.bisect_plane(
+                self.bm,
+                geom=geom,
+                dist=1e-5,
+                plane_co=p_co,
+                plane_no=n_b,
+                clear_outer=True,
+                clear_inner=False,
+            )
+            cut_edges = [
+                g for g in b_res.get("geom_cut", []) if isinstance(g, bmesh.types.BMEdge) and g.is_valid
+            ]
+            if len(cut_edges) >= 3:
+                fill_res = bmesh.ops.edgeloop_fill(self.bm, edges=cut_edges)
+                new_faces = [f for f in fill_res.get("faces", []) if isinstance(f, bmesh.types.BMFace) and f.is_valid]
+            else:
+                new_faces = []
+
+            surviving_verts = [
+                g for g in b_res.get("geom", []) if isinstance(g, bmesh.types.BMVert) and g.is_valid
+            ]
+            shell_faces = _unique(
+                [f for v in surviving_verts for f in v.link_faces if f.is_valid] + new_faces
+            )
+            shell_verts = _unique(v for f in shell_faces for v in f.verts if v.is_valid)
+            shell_edges = _unique(e for f in shell_faces for e in f.edges if e.is_valid)
+
+        if shell_verts:
+            bmesh.ops.remove_doubles(self.bm, verts=shell_verts, dist=0.18)
+            shell_faces = _unique(f for f in shell_faces if f.is_valid and len(f.verts) >= 3)
+            shell_verts = _unique(v for f in shell_faces for v in f.verts if v.is_valid)
+            shell_edges = _unique(e for f in shell_faces for e in f.edges if e.is_valid)
+
+        # Normalize bounding box to [-0.5, 0.5]^3 and scale to (wx, dz, hy)
+        if shell_verts:
+            xs = [v.co.x for v in shell_verts]
+            ys = [v.co.y for v in shell_verts]
+            zs = [v.co.z for v in shell_verts]
+            min_x, max_x = min(xs), max(xs)
+            min_y, max_y = min(ys), max(ys)
+            min_z, max_z = min(zs), max(zs)
+            span_x = max(1e-4, max_x - min_x)
+            span_y = max(1e-4, max_y - min_y)
+            span_z = max(1e-4, max_z - min_z)
+            cx0 = 0.5 * (min_x + max_x)
+            cy0 = 0.5 * (min_y + max_y)
+            cz0 = 0.5 * (min_z + max_z)
+            for v in shell_verts:
+                v.co.x = ((v.co.x - cx0) / span_x) * wx
+                v.co.y = ((v.co.y - cy0) / span_y) * dz
+                v.co.z = ((v.co.z - cz0) / span_z) * hy
+
+        bmesh.ops.recalc_face_normals(self.bm, faces=shell_faces)
+        self._assign_faces(shell_faces, mat)
+        all_faces, all_verts = self._bevel_edges(shell_faces, shell_edges, bevel, bevel_segments, mat)
+
+        rot_b = Euler(
+            (
+                math.radians(rot_deg_u[0]),
+                math.radians(rot_deg_u[2]),
+                math.radians(-rot_deg_u[1]),
+            ),
+            "XYZ",
+        ).to_matrix()
+        bmesh.ops.rotate(self.bm, verts=all_verts, cent=(0.0, 0.0, 0.0), matrix=rot_b)
+        bmesh.ops.translate(self.bm, verts=all_verts, vec=self._to_local_b(center_u))
+        return all_faces
+
+    def add_weathered_rock(
+        self,
+        center_u: tuple[float, float, float],
+        size_u: tuple[float, float, float],
+        seed: int,
+        lon_segs: int = 16,
+        lat_rings: int = 8,
+        fractures_u: Sequence[tuple[tuple[float, float, float], float, float]] = (),
+        pits_u: Sequence[tuple[tuple[float, float, float], float, float]] = (),
+        crevices_u: Sequence[tuple[tuple[float, float, float], float, float, float]] = (),
+        skirt_flare: float = 0.16,
+        burial_frac: float = 0.16,
+        rot_deg_u: tuple[float, float, float] = (0.0, 0.0, 0.0),
+        mat: str = "R1_Basalt",
+    ) -> list[bmesh.types.BMFace]:
+        """Add a closed, manifold weathered lunar basalt/breccia lump with soft fracture faces, vesicle pits, crevices, buried base, and regolith skirt."""
+        wx, hy, dz = size_u
+        rng = np.random.default_rng(seed)
+
+        # Deterministic 3D harmonic wave vectors for organic breccia lump deformation
+        n_waves = 9
+        wave_dirs = rng.normal(0.0, 1.0, size=(n_waves, 3)).astype(np.float64)
+        wave_dirs /= np.linalg.norm(wave_dirs, axis=1, keepdims=True) + 1e-8
+        wave_freqs = np.array([1.25, 1.45, 1.75, 2.15, 2.55, 3.05, 3.60, 4.20, 4.85], dtype=np.float64)
+        wave_amps = np.array([0.16, 0.13, 0.11, 0.085, 0.065, 0.050, 0.038, 0.028, 0.022], dtype=np.float64)
+        wave_phases = rng.uniform(0.0, 2.0 * math.pi, size=n_waves)
+
+        def _sculpt_dir(dx: float, dy: float, dz_u: float) -> tuple[float, float, float]:
+            # 1. Broad asymmetric breccia lobes & weathered humps
+            disp = 1.0
+            for w_idx in range(n_waves):
+                kx, ky, kz = wave_dirs[w_idx]
+                dot_k = dx * kx + dy * ky + dz_u * kz
+                disp += float(wave_amps[w_idx]) * math.sin(
+                    dot_k * float(wave_freqs[w_idx]) * math.pi + float(wave_phases[w_idx])
+                )
+
+            # Broaden lower mass and gently dome the crown so rock sits with heavy gravity
+            lower_broaden = 1.0 + 0.16 * max(0.0, 0.30 - dy)
+            px = dx * disp * lower_broaden
+            py = dy * disp
+            pz = dz_u * disp * lower_broaden
+
+            # Flatten underside smoothly for buried footing stability
+            if py < -0.58:
+                py = -0.58 + (py + 0.58) * 0.32
+
+            # 2. Softened conchoidal fracture planes with rounded/chipped rims (never sharp polyhedra)
+            for f_idx, (norm_u, plane_dist, strength) in enumerate(fractures_u):
+                nx, ny, nz = norm_u
+                n_len = math.sqrt(nx * nx + ny * ny + nz * nz)
+                if n_len < 1e-6:
+                    continue
+                nx, ny, nz = nx / n_len, ny / n_len, nz / n_len
+                proj = px * nx + py * ny + pz * nz
+                # Tangential coordinates for subtle fracture-face undulation & chipped rim
+                tx = px - proj * nx
+                ty = py - proj * ny
+                tz = pz - proj * nz
+                t_len = math.sqrt(tx * tx + ty * ty + tz * tz)
+                chip_wave = 0.035 * math.sin(t_len * 6.5 + f_idx * 2.1 + seed * 0.3)
+                eff_dist = plane_dist + chip_wave
+                if proj > eff_dist - 0.08:
+                    # Smooth soft-knee compression above the fracture plane
+                    delta = proj - eff_dist
+                    soft_excess = 0.5 * (delta + math.sqrt(delta * delta + 0.09 * 0.09))
+                    # Subtle conchoidal ripple across the cleaved face
+                    conchoid = 0.024 * math.cos(t_len * 5.2 + f_idx * 1.7)
+                    # Slight weathered rim shoulder right at the fracture margin
+                    rim_shoulder = 0.020 * math.exp(-((delta / 0.14) ** 2))
+                    push = -soft_excess * strength + conchoid * min(1.0, soft_excess * 4.0) + rim_shoulder
+                    px += nx * push
+                    py += ny * push
+                    pz += nz * push
+
+            # 3. Macro spall / vesicle pits (concave indentations with subtle raised rims)
+            r_cur = math.sqrt(px * px + py * py + pz * pz)
+            if r_cur > 1e-6:
+                ux, uy, uz = px / r_cur, py / r_cur, pz / r_cur
+                pit_scale = 1.0
+                for p_dir_u, ang_rad, p_depth in pits_u:
+                    pdx, pdy, pdz = p_dir_u
+                    p_len = math.sqrt(pdx * pdx + pdy * pdy + pdz * pdz)
+                    if p_len < 1e-6 or ang_rad <= 1e-4:
+                        continue
+                    pdx, pdy, pdz = pdx / p_len, pdy / p_len, pdz / p_len
+                    cos_a = max(-1.0, min(1.0, ux * pdx + uy * pdy + uz * pdz))
+                    ang = math.acos(cos_a)
+                    u_ang = ang / ang_rad
+                    if u_ang < 1.35:
+                        bowl = (max(0.0, 1.0 - u_ang * u_ang) ** 1.55) * p_depth
+                        rim = math.exp(-(((u_ang - 1.03) / 0.20) ** 2)) * p_depth * 0.24
+                        pit_scale = min(pit_scale, 1.0 - bowl + rim)
+
+                # 4. Weathered fracture crevices / split seams
+                crev_scale = 1.0
+                for c_norm_u, c_off, c_width, c_depth in crevices_u:
+                    cnx, cny, cnz = c_norm_u
+                    c_len = math.sqrt(cnx * cnx + cny * cny + cnz * cnz)
+                    if c_len < 1e-6 or c_width <= 1e-4:
+                        continue
+                    cnx, cny, cnz = cnx / c_len, cny / c_len, cnz / c_len
+                    dist_c = abs((ux * cnx + uy * cny + uz * cnz) - c_off)
+                    if dist_c < c_width and uy > -0.40:
+                        tc = 1.0 - (dist_c / c_width)
+                        up_fade = max(0.0, min(1.0, (uy + 0.40) / 0.45))
+                        groove = (tc * tc) * (3.0 - 2.0 * tc) * c_depth * up_fade
+                        crev_scale = min(crev_scale, 1.0 - groove)
+
+                total_scale = max(0.42, pit_scale * crev_scale)
+                px *= total_scale
+                py *= total_scale
+                pz *= total_scale
+
+            return (px, py, pz)
+
+        # Build raw Unity coordinates on the closed sphere topology
+        raw_pts: list[list[float]] = []
+        raw_pts.append(list(_sculpt_dir(0.0, 1.0, 0.0)))  # index 0: top pole
+        ring_indices: list[list[int]] = []
+        for r in range(1, lat_rings):
+            v_frac = r / lat_rings
+            # Slightly denser latitude spacing near the lower ground-skirt transition
+            theta = math.pi * (0.88 * v_frac + 0.12 * (v_frac * v_frac))
+            sin_t = math.sin(theta)
+            cos_t = math.cos(theta)
+            twist = (math.pi / lon_segs) * 0.32 * (r % 2)
+            ring: list[int] = []
+            for s in range(lon_segs):
+                phi = (2.0 * math.pi * s) / lon_segs + twist
+                dx = sin_t * math.cos(phi)
+                dy = cos_t
+                dz_u = sin_t * math.sin(phi)
+                ring.append(len(raw_pts))
+                raw_pts.append(list(_sculpt_dir(dx, dy, dz_u)))
+            ring_indices.append(ring)
+        bot_idx = len(raw_pts)
+        raw_pts.append(list(_sculpt_dir(0.0, -1.0, 0.0)))  # bottom pole
+
+        # Normalize to target (wx, hy, dz) with buried base and flared regolith skirt
+        xs = [p[0] for p in raw_pts]
+        ys = [p[1] for p in raw_pts]
+        zs = [p[2] for p in raw_pts]
+        min_x, max_x = min(xs), max(xs)
+        min_y, max_y = min(ys), max(ys)
+        min_z, max_z = min(zs), max(zs)
+        span_x = max(1e-4, max_x - min_x)
+        span_y = max(1e-4, max_y - min_y)
+        span_z = max(1e-4, max_z - min_z)
+        cx0 = 0.5 * (min_x + max_x)
+        cz0 = 0.5 * (min_z + max_z)
+
+        burial_y = hy * burial_frac
+        for p in raw_pts:
+            nx_u = ((p[0] - cx0) / span_x) * wx
+            ny_01 = (p[1] - min_y) / span_y
+            nz_u = ((p[2] - cz0) / span_z) * dz
+
+            # Flared regolith skirt around ground contact (ny_01 in [0.05, 0.40])
+            if 0.04 < ny_01 < 0.42 and skirt_flare > 0.0:
+                t_sk = (ny_01 - 0.04) / 0.38
+                skirt_bell = math.sin(math.pi * t_sk) ** 1.35
+                az = math.atan2(nz_u, nx_u)
+                az_mod = 0.84 + 0.32 * (0.5 + 0.5 * math.sin(3.0 * az + seed * 0.7))
+                flare = 1.0 + skirt_flare * skirt_bell * az_mod
+                nx_u *= flare
+                nz_u *= flare
+                # Slightly settle the outer skirt rim toward the ground plane
+                ny_01 -= 0.025 * skirt_bell * skirt_flare
+
+            p[0] = nx_u
+            p[1] = ny_01 * hy - burial_y
+            p[2] = nz_u
+
+        # Create BMVerts in local Blender coordinates
+        bm_verts = [self.bm.verts.new(u_pos(p[0], p[1], p[2])) for p in raw_pts]
+        faces: list[bmesh.types.BMFace] = []
+
+        # Top cap
+        first_ring = ring_indices[0]
+        for s in range(lon_segs):
+            sn = (s + 1) % lon_segs
+            faces.append(self.bm.faces.new([bm_verts[0], bm_verts[first_ring[s]], bm_verts[first_ring[sn]]]))
+
+        # Middle quad bands
+        for r_idx in range(len(ring_indices) - 1):
+            r0 = ring_indices[r_idx]
+            r1 = ring_indices[r_idx + 1]
+            for s in range(lon_segs):
+                sn = (s + 1) % lon_segs
+                faces.append(
+                    self.bm.faces.new([bm_verts[r0[s]], bm_verts[r1[s]], bm_verts[r1[sn]], bm_verts[r0[sn]]])
+                )
+
+        # Bottom cap
+        last_ring = ring_indices[-1]
+        for s in range(lon_segs):
+            sn = (s + 1) % lon_segs
+            faces.append(self.bm.faces.new([bm_verts[bot_idx], bm_verts[last_ring[sn]], bm_verts[last_ring[s]]]))
+
+        bmesh.ops.recalc_face_normals(self.bm, faces=faces)
+        self._assign_faces(faces, mat)
+
+        rot_b = Euler(
+            (
+                math.radians(rot_deg_u[0]),
+                math.radians(rot_deg_u[2]),
+                math.radians(-rot_deg_u[1]),
+            ),
+            "XYZ",
+        ).to_matrix()
+        bmesh.ops.rotate(self.bm, verts=bm_verts, cent=(0.0, 0.0, 0.0), matrix=rot_b)
+        bmesh.ops.translate(self.bm, verts=bm_verts, vec=self._to_local_b(center_u))
+        return faces
+
     def build_object(
         self,
         parent: bpy.types.Object | None = None,
@@ -1427,6 +1756,39 @@ class MeshBuilder:
         return obj
 
 
+def apply_triplanar_uvs(obj: bpy.types.Object, texel_scale: float = 0.85) -> None:
+    """Assign deterministic dominant-axis box-projected UVs (`UVMap`) to all mesh objects under `obj`."""
+    for mesh_obj in collect_hierarchy(obj):
+        if mesh_obj.type != "MESH" or mesh_obj.data is None:
+            continue
+        me = mesh_obj.data
+        uv_layer = me.uv_layers.get("UVMap")
+        if uv_layer is None:
+            uv_layer = me.uv_layers.new(name="UVMap")
+        me.uv_layers.active = uv_layer
+        me.uv_layers.active_index = 0
+
+        verts = me.vertices
+        loops = me.loops
+        uv_data = uv_layer.data
+        for poly in me.polygons:
+            n = poly.normal
+            ax, ay, az = abs(n.x), abs(n.y), abs(n.z)
+            for loop_idx in poly.loop_indices:
+                v_co = verts[loops[loop_idx].vertex_index].co
+                if az >= ax and az >= ay:
+                    u = v_co.x * texel_scale + 0.5
+                    v = v_co.y * texel_scale + 0.5
+                elif ax >= ay:
+                    u = v_co.y * texel_scale + 0.5
+                    v = v_co.z * texel_scale + 0.5
+                else:
+                    u = v_co.x * texel_scale + 0.5
+                    v = v_co.z * texel_scale + 0.5
+                uv_data[loop_idx].uv = (round(u, 5), round(v, 5))
+        me.update()
+
+
 def collect_hierarchy(root: bpy.types.Object) -> list[bpy.types.Object]:
     """Collect root and all descendants in deterministic depth-first sorted order."""
     result = [root]
@@ -1445,7 +1807,11 @@ def count_triangles(root: bpy.types.Object) -> int:
     return total
 
 
-def bake_vertex_colors(root: bpy.types.Object, footprint_radius: float = 2.0) -> None:
+def bake_vertex_colors(
+    root: bpy.types.Object,
+    footprint_radius: float = 2.0,
+    bevel_wear_width: float = 0.022,
+) -> None:
     """Bake Cycles AO into R, convex edge wear into G, crease/cavity dust into B, and 1.0 into A."""
     mesh_objs = [o for o in collect_hierarchy(root) if o.type == "MESH" and len(o.data.polygons) > 0]
     if not mesh_objs:
@@ -1503,6 +1869,10 @@ def bake_vertex_colors(root: bpy.types.Object, footprint_radius: float = 2.0) ->
     bpy.data.objects.remove(ground_obj, do_unlink=True)
     bpy.data.meshes.remove(ground_mesh)
 
+    border_thresh = 0.036 if bevel_wear_width <= 0.022 else bevel_wear_width * 1.6
+    wear_full = bevel_wear_width
+    wear_fade = 0.030 if bevel_wear_width <= 0.022 else bevel_wear_width * 1.36
+
     # Compute curvature (G = convex wear, B = crease/cavity where dust settles) per mesh loop
     for obj in mesh_objs:
         me = obj.data
@@ -1542,11 +1912,11 @@ def bake_vertex_colors(root: bpy.types.Object, footprint_radius: float = 2.0) ->
 
             # Distinguish true bevel strips and sharp corners from smooth cylindrical/tubular segmentation
             is_sharp_corner = abs(signed_ang) >= 0.95
-            is_bevel_border = min_fw < 0.036 and (max_fw > 1.30 * min_fw or min_fw < 0.014)
+            is_bevel_border = min_fw < border_thresh and (max_fw > 1.30 * min_fw or min_fw < 0.014)
             if not (is_sharp_corner or is_bevel_border):
                 continue
 
-            bevel_boost = 1.85 if min_fw < 0.036 else 1.0
+            bevel_boost = 1.85 if min_fw < border_thresh else 1.0
 
             if signed_ang > 0.04:
                 val = min(1.0, (signed_ang / 0.85) * bevel_boost)
@@ -1565,9 +1935,10 @@ def bake_vertex_colors(root: bpy.types.Object, footprint_radius: float = 2.0) ->
 
         v_convex_smooth = v_convex.copy()
         v_concave_smooth = v_concave.copy()
+        nbr_dist = 0.04 if bevel_wear_width <= 0.022 else max(0.04, bevel_wear_width * 1.8)
         for v in bm.verts:
             vi = v.index
-            nbrs = [e.other_vert(v).index for e in v.link_edges if e.calc_length() < 0.04]
+            nbrs = [e.other_vert(v).index for e in v.link_edges if e.calc_length() < nbr_dist]
             if nbrs:
                 v_convex_smooth[vi] = max(
                     v_convex[vi],
@@ -1587,10 +1958,10 @@ def bake_vertex_colors(root: bpy.types.Object, footprint_radius: float = 2.0) ->
             up_weight = float(np.clip(f_norm_w.z * 0.45 + 0.65, 0.25, 1.0))
             min_edge_len = float(face_widths[f.index])
             # Confine G (convex edge wear) to bevel strips, ridges, bolts, and narrow chamfers
-            if min_edge_len <= 0.022:
+            if min_edge_len <= wear_full:
                 face_wear_mask = 1.0
-            elif min_edge_len < 0.030:
-                face_wear_mask = (0.030 - min_edge_len) / (0.030 - 0.022)
+            elif min_edge_len < wear_fade:
+                face_wear_mask = (wear_fade - min_edge_len) / (wear_fade - wear_full)
             else:
                 face_wear_mask = 0.0
 
@@ -1599,10 +1970,10 @@ def bake_vertex_colors(root: bpy.types.Object, footprint_radius: float = 2.0) ->
             ]
             face_ao_floor = (
                 float(np.percentile(face_ao_vals, 72)) * 0.94
-                if min_edge_len >= 0.030 and max(face_ao_vals) > 0.72
+                if min_edge_len >= wear_fade and max(face_ao_vals) > 0.72
                 else 0.0
             )
-            cavity_face_scale = 0.22 if min_edge_len >= 0.030 else 0.95
+            cavity_face_scale = 0.22 if min_edge_len >= wear_fade else 0.95
 
             for l in f.loops:
                 vi = l.vert.index
@@ -1626,6 +1997,212 @@ def bake_vertex_colors(root: bpy.types.Object, footprint_radius: float = 2.0) ->
                 ao_cavity = max(0.0, (0.72 - r_chan) / 0.72) * cavity_face_scale
                 raw_cavity = max(float(v_concave_smooth[vi]), ao_cavity) * up_weight + ground_factor * (1.0 - 0.6 * r_chan)
                 b_chan = float(np.clip(raw_cavity * (1.0 - 0.80 * g_chan), 0.0, 1.0))
+                if b_chan < 0.03:
+                    b_chan = 0.0
+                if g_chan < 0.03:
+                    g_chan = 0.0
+
+                rgba[loop_idx, 0] = r_chan
+                rgba[loop_idx, 1] = g_chan
+                rgba[loop_idx, 2] = b_chan
+                rgba[loop_idx, 3] = 1.0
+                loop_idx += 1
+
+        bm.free()
+        ca.data.foreach_set("color", rgba.reshape(-1))
+        me.update()
+
+
+def bake_rock_vertex_colors(
+    root: bpy.types.Object,
+    footprint_radius: float = 1.0,
+    skirt_height_frac: float = 0.24,
+) -> None:
+    """Bake rock-specific vertex colours: R = strong crevice/pit/overhang AO, G = subtle chipped fracture-rim wear, B = top dust blanket + basal regolith skirt."""
+    mesh_objs = [o for o in collect_hierarchy(root) if o.type == "MESH" and len(o.data.polygons) > 0]
+    if not mesh_objs:
+        return
+
+    # Temporary ground disc at z = -0.015 (just below ground contact line z = 0) so lower flanks receive realistic ground AO
+    bpy.ops.mesh.primitive_circle_add(
+        vertices=32,
+        radius=footprint_radius * 1.75,
+        fill_type="NGON",
+        location=(0.0, 0.0, -0.015),
+    )
+    ground_obj = bpy.context.active_object
+    ground_obj.name = "_TempRockGroundAO"
+
+    for obj in mesh_objs + [ground_obj]:
+        me = obj.data
+        while len(me.color_attributes) > 0:
+            me.color_attributes.remove(me.color_attributes[0])
+        ca = me.color_attributes.new(
+            name=VCOL_ATTRIBUTE_NAME,
+            type="FLOAT_COLOR",
+            domain="CORNER",
+        )
+        me.color_attributes.active_color = ca
+        me.color_attributes.render_color_index = 0
+
+    scene = bpy.context.scene
+    scene.render.engine = "CYCLES"
+    scene.cycles.device = "CPU"
+    scene.cycles.samples = 48
+    scene.cycles.seed = 0
+    scene.cycles.use_animated_seed = False
+
+    if scene.world is None:
+        scene.world = bpy.data.worlds.new("R1_BakeWorld")
+    scene.world.light_settings.distance = 0.55
+
+    scene.render.bake.target = "VERTEX_COLORS"
+    bpy.ops.object.select_all(action="DESELECT")
+    for obj in mesh_objs:
+        obj.select_set(True)
+    bpy.context.view_layer.objects.active = mesh_objs[0]
+    bpy.ops.object.bake(type="AO")
+
+    ground_mesh = ground_obj.data
+    bpy.data.objects.remove(ground_obj, do_unlink=True)
+    bpy.data.meshes.remove(ground_mesh)
+
+    for obj in mesh_objs:
+        me = obj.data
+        num_loops = len(me.loops)
+        rgba = np.ones(num_loops * 4, dtype=np.float32)
+        ca = me.color_attributes[VCOL_ATTRIBUTE_NAME]
+        ca.data.foreach_get("color", rgba)
+        rgba = rgba.reshape(-1, 4)
+        ao_loop = np.clip(rgba[:, 0].copy(), 0.0, 1.0)
+
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bm.verts.ensure_lookup_table()
+        bm.edges.ensure_lookup_table()
+        bm.faces.ensure_lookup_table()
+        bm.normal_update()
+
+        world_mat = obj.matrix_world
+        rot_mat = world_mat.to_3x3()
+
+        w_coords = [world_mat @ v.co for v in bm.verts]
+        zs = [p.z for p in w_coords]
+        min_z = min(zs) if zs else -0.1
+        max_z = max(zs) if zs else 0.5
+        above_span = max(0.05, max_z)
+        skirt_top_z = above_span * skirt_height_frac
+
+        # Centroid for measuring local inward pit/crevice indentation relative to 1-ring neighbors
+        cx = float(np.mean([p.x for p in w_coords]))
+        cy = float(np.mean([p.y for p in w_coords]))
+        cz = float(np.mean([p.z for p in w_coords]))
+        center_w = Vector((cx, cy, cz))
+        vert_radii = np.array([(p - center_w).length for p in w_coords], dtype=np.float32)
+        avg_radius = max(0.05, float(np.mean(vert_radii)))
+
+        n_verts = len(bm.verts)
+        v_convex = np.zeros(n_verts, dtype=np.float32)
+        v_concave = np.zeros(n_verts, dtype=np.float32)
+        v_inward = np.zeros(n_verts, dtype=np.float32)
+
+        for e in bm.edges:
+            if not e.is_manifold:
+                continue
+            signed_ang = e.calc_face_angle_signed()
+            v0, v1 = e.verts[0].index, e.verts[1].index
+            if signed_ang > 0.14:
+                val = min(1.0, (signed_ang - 0.14) / 0.72)
+                if val > v_convex[v0]:
+                    v_convex[v0] = val
+                if val > v_convex[v1]:
+                    v_convex[v1] = val
+            elif signed_ang < -0.025:
+                val = min(1.0, (-signed_ang - 0.025) / 0.38)
+                if val > v_concave[v0]:
+                    v_concave[v0] = val
+                if val > v_concave[v1]:
+                    v_concave[v1] = val
+
+        for v in bm.verts:
+            vi = v.index
+            nbrs = [e.other_vert(v).index for e in v.link_edges]
+            if nbrs:
+                mean_nbr_r = float(np.mean(vert_radii[nbrs]))
+                inward_diff = (mean_nbr_r - float(vert_radii[vi])) / avg_radius
+                if inward_diff > 0.004:
+                    v_inward[vi] = min(1.0, inward_diff * 11.5)
+
+        v_convex_smooth = v_convex.copy()
+        v_concave_smooth = np.maximum(v_concave, v_inward)
+        for v in bm.verts:
+            vi = v.index
+            nbrs = [e.other_vert(v).index for e in v.link_edges]
+            if nbrs:
+                v_convex_smooth[vi] = max(v_convex[vi], 0.65 * float(np.mean(v_convex[nbrs])))
+                v_concave_smooth[vi] = max(
+                    v_concave_smooth[vi],
+                    0.72 * float(np.mean(v_concave_smooth[nbrs])),
+                )
+
+        loop_idx = 0
+        for f in bm.faces:
+            f_norm_w = (rot_mat @ f.normal).normalized()
+            for l in f.loops:
+                vi = l.vert.index
+                w_pos = w_coords[vi]
+                v_norm_w = (rot_mat @ l.vert.normal).normalized()
+                # Blend face and vertex normal so smooth lobes and crisp fracture steps both respond
+                n_w = (f_norm_w * 0.45 + v_norm_w * 0.55).normalized()
+
+                ao_val = float(ao_loop[loop_idx])
+                h_above = float(w_pos.z)
+                h_01 = float(np.clip((h_above - min_z) / max(0.05, max_z - min_z), 0.0, 1.0))
+
+                # 1. Basal regolith skirt factor around ground contact (z in [-0.04, skirt_top_z])
+                if h_above <= skirt_top_z and n_w.z > -0.25:
+                    skirt_t = float(np.clip(1.0 - (max(0.0, h_above) / max(0.02, skirt_top_z)), 0.0, 1.0))
+                    skirt_factor = skirt_t * skirt_t * (3.0 - 2.0 * skirt_t)
+                else:
+                    skirt_factor = 0.0
+
+                # 2. Crevice & vesicle pit occlusion
+                crevice_occ = float(np.clip(v_concave_smooth[vi] * 0.88, 0.0, 0.86))
+                overhang_occ = float(np.clip((-n_w.z - 0.08) * 0.68, 0.0, 0.56))
+
+                raw_ao = (0.14 + 0.86 * (ao_val ** 1.15)) * (1.0 - crevice_occ) * (1.0 - overhang_occ)
+                # Keep the basal regolith skirt bright enough to blend seamlessly into the ground regolith
+                r_chan = float(np.clip(max(raw_ao, skirt_factor * 0.78 * (1.0 - 0.5 * crevice_occ)), 0.08, 1.0))
+
+                # 3. Intermittent chipped fracture-rim wear (G) only on upper/side fracture ridges, never on skirt or pits
+                chip_hash = 0.5 + 0.5 * math.sin(w_pos.x * 11.3 + w_pos.y * 9.7 + w_pos.z * 13.1)
+                if h_01 > 0.34 and skirt_factor < 0.25 and crevice_occ < 0.22:
+                    g_chan = float(
+                        np.clip(
+                            v_convex_smooth[vi] * (0.35 + 0.55 * chip_hash) * r_chan * 0.68,
+                            0.0,
+                            0.58,
+                        )
+                    )
+                else:
+                    g_chan = 0.0
+
+                # 4. Dust blanket on top crown + basal regolith skirt + upward-facing shallow pockets (B)
+                top_up = float(np.clip((n_w.z - 0.18) / 0.62, 0.0, 1.0))
+                top_height = float(np.clip((h_01 - 0.38) / 0.38, 0.0, 1.0))
+                dust_mod = 0.82 + 0.18 * math.cos(w_pos.x * 6.4 - w_pos.y * 5.8 + w_pos.z * 4.2)
+                top_dust = (top_up ** 1.15) * top_height * dust_mod * (1.0 - 0.72 * crevice_occ)
+                pocket_dust = (
+                    float(np.clip(v_concave_smooth[vi] * 0.62, 0.0, 0.58))
+                    * float(np.clip((n_w.z - 0.38) / 0.45, 0.0, 1.0))
+                )
+                skirt_dust = skirt_factor * (0.86 + 0.14 * dust_mod) * (1.0 - 0.45 * crevice_occ)
+
+                b_chan = float(np.clip(max(top_dust, skirt_dust, pocket_dust) * (1.0 - 0.65 * g_chan), 0.0, 1.0))
+                # Ensure deep side/overhanging crevices have zero dust so they stay dark in sunlight
+                if n_w.z < 0.12 and skirt_factor < 0.15:
+                    b_chan *= max(0.0, (n_w.z + 0.05) / 0.17) * (1.0 - crevice_occ)
+
                 if b_chan < 0.03:
                     b_chan = 0.0
                 if g_chan < 0.03:

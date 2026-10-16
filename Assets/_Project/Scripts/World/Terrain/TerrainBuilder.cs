@@ -63,13 +63,6 @@ namespace MoonProject.World
             });
             double meshingMs = total.Elapsed.TotalMilliseconds;
 
-            int largest = 0;
-            for (int i = 0; i < pieces.Length; i++)
-            {
-                largest = Mathf.Max(largest, pieces[i].Vertices.Length);
-            }
-
-            ushort[] sequence = Sequence(largest);
             var colliderMeshes = new Mesh[plans.Length];
             var colliderComponents = new MeshCollider[plans.Length];
             int triangles = 0;
@@ -92,7 +85,7 @@ namespace MoonProject.World
                     colliderComponents[colliders] = gameObject.AddComponent<MeshCollider>();
                 }
 
-                gameObject.AddComponent<MeshFilter>().sharedMesh = CreateRenderMesh(piece, sequence, hideFlags);
+                gameObject.AddComponent<MeshFilter>().sharedMesh = CreateRenderMesh(piece, hideFlags);
                 var meshRenderer = gameObject.AddComponent<MeshRenderer>();
                 meshRenderer.sharedMaterial = material;
                 meshRenderer.lightProbeUsage = LightProbeUsage.Off;
@@ -147,16 +140,31 @@ namespace MoonProject.World
             _meshes.Clear();
         }
 
-        private Mesh CreateRenderMesh(TerrainMeshData piece, ushort[] sequence, HideFlags hideFlags)
+        private Mesh CreateRenderMesh(TerrainMeshData piece, HideFlags hideFlags)
         {
-            int count = piece.Vertices.Length;
+            int vertexCount = piece.Vertices.Length;
+            if (vertexCount > ushort.MaxValue + 1)
+            {
+                throw new InvalidOperationException(
+                    $"A terrain piece has {vertexCount} vertices; 16-bit indices hold 65536.");
+            }
+
+            int[] srcIndices = piece.Indices;
+            int indexCount = srcIndices.Length;
+            var indices16 = new ushort[indexCount];
+            for (int i = 0; i < indexCount; i++)
+            {
+                indices16[i] = (ushort)srcIndices[i];
+            }
+
             var mesh = new Mesh { name = piece.Name, hideFlags = hideFlags };
-            mesh.SetVertexBufferParams(count, _layout);
-            mesh.SetVertexBufferData(piece.Vertices, 0, 0, count, 0, UploadFlags);
-            mesh.SetIndexBufferParams(count, IndexFormat.UInt16);
-            mesh.SetIndexBufferData(sequence, 0, 0, count, UploadFlags);
+            mesh.SetVertexBufferParams(vertexCount, _layout);
+            mesh.SetVertexBufferData(piece.Vertices, 0, 0, vertexCount, 0, UploadFlags);
+            mesh.SetIndexBufferParams(indexCount, IndexFormat.UInt16);
+            mesh.SetIndexBufferData(indices16, 0, 0, indexCount, UploadFlags);
             mesh.subMeshCount = 1;
-            mesh.SetSubMesh(0, new SubMeshDescriptor(0, count) { bounds = piece.LocalBounds, vertexCount = count },
+            mesh.SetSubMesh(0,
+                new SubMeshDescriptor(0, indexCount) { bounds = piece.LocalBounds, vertexCount = vertexCount },
                 UploadFlags);
             mesh.bounds = piece.LocalBounds;
             mesh.UploadMeshData(true);
@@ -172,23 +180,6 @@ namespace MoonProject.World
             mesh.bounds = piece.LocalBounds;
             _meshes.Add(mesh);
             return mesh;
-        }
-
-        private static ushort[] Sequence(int count)
-        {
-            if (count > ushort.MaxValue + 1)
-            {
-                throw new InvalidOperationException(
-                    $"A terrain piece has {count} vertices; 16-bit indices hold 65536.");
-            }
-
-            var sequence = new ushort[count];
-            for (int i = 0; i < count; i++)
-            {
-                sequence[i] = (ushort)i;
-            }
-
-            return sequence;
         }
     }
 }

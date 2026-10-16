@@ -42,6 +42,7 @@ namespace MoonProject.Art.Editor
         public const string ScreenSlot = "R1_Screen";
         public const string BrassSlot = "R1_Brass";
         public const string CrtFaceMaterialName = "R1_CrtFace";
+        public const string BasaltSlot = "R1_Basalt";
 
         public const float DefaultBloomSafeMax = 1.06f;
         public const float DefaultHotCoreThreshold = 0.85f;
@@ -298,10 +299,29 @@ namespace MoonProject.Art.Editor
                 0.14f,
                 false,
                 Color.black,
+                0f),
+            new R1MaterialSpec(
+                R1MaterialSlot.Basalt,
+                BasaltSlot,
+                BasaltSlot,
+                "T_R1_Basalt",
+                "Weathered lunar basalt and breccia stone for boulders, rock lumps, pebbles, and canyon gate monoliths.",
+                new Color(0.36f, 0.37f, 0.40f, 1f),
+                1.35f,
+                0.04f,
+                0.04f,
+                0.18f,
+                new Color(0.47f, 0.48f, 0.51f, 1f),
+                0.22f,
+                0.02f,
+                0.14f,
+                0.82f,
+                false,
+                Color.black,
                 0f)
         };
 
-        /// <summary>All 13 fixed R1 material slot specifications in slot enum order.</summary>
+        /// <summary>All 14 fixed R1 material slot specifications in slot enum order.</summary>
         public static IReadOnlyList<R1MaterialSpec> All => Specs;
 
         /// <summary>Returns the specification for a given <see cref="R1MaterialSlot"/>.</summary>

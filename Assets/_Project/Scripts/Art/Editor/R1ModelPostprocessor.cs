@@ -14,8 +14,9 @@ namespace MoonProject.Art.Editor
     /// </summary>
     public sealed class R1ModelPostprocessor : AssetPostprocessor
     {
-        public const uint PostprocessorVersion = 2;
+        public const uint PostprocessorVersion = 3;
         public const string ModelsPrefix = "Assets/_Project/Art/R1/Models/";
+        public const string RocksPrefix = "Assets/_Project/Art/R1/Models/Rocks/";
         public const string TexturesPrefix = "Assets/_Project/Art/R1/Textures/";
 
         public override uint GetVersion()
@@ -145,7 +146,7 @@ namespace MoonProject.Art.Editor
             importer.globalScale = 1f;
             importer.useFileUnits = true;
             importer.bakeAxisConversion = true;
-            importer.isReadable = false;
+            importer.isReadable = NormalizePath(assetPath).StartsWith(RocksPrefix, StringComparison.Ordinal);
             importer.importNormals = ModelImporterNormals.Import;
             importer.importTangents = ModelImporterTangents.CalculateMikk;
             importer.materialImportMode = ModelImporterMaterialImportMode.ImportViaMaterialDescription;

@@ -56,12 +56,19 @@ namespace MoonProject.World.Editor
             }
         }
 
-        /// <summary>The terrain's material: LofiTerrain draws its painted vertex colours, matte, flat-shaded.</summary>
+        /// <summary>The terrain's material: R1Terrain draws painted vertex colours with multi-scale regolith and triplanar rock detail.</summary>
         [MoonBuilder("World/Ground Material", 205)]
         public static void BuildGroundMaterial()
         {
-            GeneratedAssets.CreateOrReplace(new Material(FindShader(WorldPaths.GroundShader)),
-                WorldPaths.GroundMaterial);
+            MoonProject.Art.Editor.R1MaterialLibrary.BuildMaterials();
+            var material = new Material(FindShader(WorldPaths.GroundShader));
+            material.SetTexture("_BaseMap", LoadTexture(WorldPaths.RegolithAlbedoTexture));
+            material.SetTexture("_BumpMap", LoadTexture(WorldPaths.RegolithNormalTexture));
+            material.SetTexture("_MaskMap", LoadTexture(WorldPaths.RegolithMaskTexture));
+            material.SetTexture("_RockMap", LoadTexture(WorldPaths.BasaltAlbedoTexture));
+            material.SetTexture("_RockBumpMap", LoadTexture(WorldPaths.BasaltNormalTexture));
+            material.SetTexture("_RockMaskMap", LoadTexture(WorldPaths.BasaltMaskTexture));
+            GeneratedAssets.CreateOrReplace(material, WorldPaths.GroundMaterial);
             AssetDatabase.SaveAssets();
         }
 
@@ -297,6 +304,17 @@ namespace MoonProject.World.Editor
             }
 
             return shader;
+        }
+
+        private static Texture2D LoadTexture(string path)
+        {
+            var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            if (texture == null)
+            {
+                throw new InvalidOperationException($"Texture at '{path}' not found.");
+            }
+
+            return texture;
         }
     }
 }

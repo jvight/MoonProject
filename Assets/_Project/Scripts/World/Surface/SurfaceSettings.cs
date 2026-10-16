@@ -92,7 +92,7 @@ namespace MoonProject.World
 
         [Tooltip("Depth of the gullies and buttresses ribbing the inner rim wall, metres.")]
         [Range(0f, 30f)]
-        [SerializeField] private float _wallGullyHeight = 4f;
+        [SerializeField] private float _wallGullyHeight = 6.5f;
 
         [Tooltip("Approximate number of gullies around the whole rim.")]
         [Range(8f, 200f)]
@@ -105,11 +105,11 @@ namespace MoonProject.World
 
         [Tooltip("How far the wall is pulled onto its strata (0 = smooth wall, 1 = hard terraces).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _strataStrength = 0.4f;
+        [SerializeField] private float _strataStrength = 0.24f;
 
         [Tooltip("Share of each layer's height that is the steep riser (the rest is the bench).")]
         [Range(0.05f, 1f)]
-        [SerializeField] private float _strataRiser = 0.4f;
+        [SerializeField] private float _strataRiser = 0.40f;
 
         [Header("The Peak")]
         [Tooltip("Bearing of The Peak from the base, degrees clockwise from +Z. The rover starts facing +Z.")]

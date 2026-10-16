@@ -4,7 +4,7 @@ using UnityEngine;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Builds the low-resolution, collider-free ring of terrain around the chunk grid that carries the distant
+    /// Builds the smooth-shaded, indexed, collider-free ring of terrain around the chunk grid that carries the distant
     /// silhouettes out to the fog. It samples the same analytic surface, with rings spaced wider with distance,
     /// and is sunk below the surface wherever the detailed chunks cover it so it never pokes through them.
     /// </summary>
@@ -12,7 +12,6 @@ namespace MoonProject.World
     {
         private const uint JitterSalt = 0xBB67AE85u;
         private const uint DiagonalSalt = 0x5BE0CD19u;
-        private const uint PaintSalt = 0xCBBB9D5Du;
         private const float AngularJitter = 0.3f;
         private const float SinkFadeInside = 16f;
         private const float SinkFadeOutside = 48f;
@@ -28,10 +27,14 @@ namespace MoonProject.World
             int rings = settings.BackdropRings;
             int segments = settings.BackdropSegments;
             uint seed = (uint)surface.Seed;
+            var pocketNoise = new GradientNoise(Hashing.Mix(seed ^ 0x4B1D7E31u));
             float growth = Mathf.Pow(settings.BackdropOuterRadius / settings.BackdropInnerRadius, 1f / rings);
             float segmentAngle = Mathf.PI * 2f / segments;
-            var positions = new Vector3[(rings + 1) * segments];
-            var regions = new SurfaceSample[positions.Length];
+            int vertexCount = (rings + 1) * segments;
+            var vertices = new TerrainVertex[vertexCount];
+            Vector3 min = Vector3.positiveInfinity;
+            Vector3 max = Vector3.negativeInfinity;
+
             for (int k = 0; k <= rings; k++)
             {
                 float radius = settings.BackdropInnerRadius * Mathf.Pow(growth, k);
@@ -42,21 +45,41 @@ namespace MoonProject.World
                     float x = Mathf.Sin(angle) * radius;
                     float z = Mathf.Cos(angle) * radius;
                     SurfaceSample sample = surface.Sample(x, z);
+                    float r = Mathf.Sqrt(x * x + z * z);
+                    Vector3 normal;
+                    if (r > 1f && sample.RimZone > 1e-4f)
+                    {
+                        float tRim = SmoothMath.Smootherstep(0f, 0.2f, sample.RimZone);
+                        float pocket = pocketNoise.Fractal(x / 68f, z / 68f, 2, 2f, 0.5f);
+                        float slumpPocket = SmoothMath.Smootherstep(-0.05f, 0.35f, pocket);
+                        float stepR = Mathf.Lerp(0.25f, Mathf.Lerp(4.8f, 1.35f, slumpPocket), tRim);
+                        float stepT = Mathf.Lerp(0.25f, 1.1f, tRim);
+                        float urx = x / r;
+                        float urz = z / r;
+                        float utx = -urz;
+                        float utz = urx;
+                        float gr = (surface.SampleHeight(x + stepR * urx, z + stepR * urz)
+                            - surface.SampleHeight(x - stepR * urx, z - stepR * urz)) / (2f * stepR);
+                        float gt = (surface.SampleHeight(x + stepT * utx, z + stepT * utz)
+                            - surface.SampleHeight(x - stepT * utx, z - stepT * utz)) / (2f * stepT);
+                        normal = new Vector3(-(gr * urx + gt * utx), 1f, -(gr * urz + gt * utz)).normalized;
+                    }
+                    else
+                    {
+                        normal = surface.SampleNormal(x, z);
+                    }
                     float square = Mathf.Max(Mathf.Abs(x), Mathf.Abs(z));
                     float sink = settings.BackdropSink * (1f - SmoothMath.Smootherstep(
                         settings.GridHalfExtent - SinkFadeInside, settings.GridHalfExtent + SinkFadeOutside, square));
-                    positions[k * segments + s] = new Vector3(x, sample.Height - sink, z);
-                    regions[k * segments + s] = sample;
+                    var position = new Vector3(x, sample.Height - sink, z);
+                    Color32 color = painter.PaintVertex(position, normal, sample);
+                    vertices[k * segments + s] = new TerrainVertex(position, normal, color);
+                    min = Vector3.Min(min, position);
+                    max = Vector3.Max(max, position);
                 }
             }
 
-            var groundColors = new Color32[positions.Length];
-            for (int i = 0; i < positions.Length; i++)
-            {
-                groundColors[i] = painter.Ground(positions[i], regions[i]);
-            }
-
-            var vertices = new TerrainVertex[rings * segments * 6];
+            var indices = new int[rings * segments * 6];
             int written = 0;
             for (int k = 0; k < rings; k++)
             {
@@ -67,49 +90,30 @@ namespace MoonProject.World
                     int b = k * segments + next;
                     int c = (k + 1) * segments + s;
                     int d = (k + 1) * segments + next;
-                    uint paintHash = Hashing.Hash(k, s, seed ^ PaintSalt);
                     if ((Hashing.Hash(k, s, seed ^ DiagonalSalt) & 1u) == 0u)
                     {
-                        Emit(positions, regions, groundColors, a, c, b, painter, paintHash, vertices, ref written);
-                        Emit(positions, regions, groundColors, b, c, d, painter, Hashing.Mix(paintHash), vertices,
-                            ref written);
+                        indices[written++] = a;
+                        indices[written++] = c;
+                        indices[written++] = b;
+                        indices[written++] = b;
+                        indices[written++] = c;
+                        indices[written++] = d;
                     }
                     else
                     {
-                        Emit(positions, regions, groundColors, a, c, d, painter, paintHash, vertices, ref written);
-                        Emit(positions, regions, groundColors, a, d, b, painter, Hashing.Mix(paintHash), vertices,
-                            ref written);
+                        indices[written++] = a;
+                        indices[written++] = c;
+                        indices[written++] = d;
+                        indices[written++] = a;
+                        indices[written++] = d;
+                        indices[written++] = b;
                     }
                 }
             }
 
-            Vector3 min = positions[0];
-            Vector3 max = min;
-            for (int i = 0; i < positions.Length; i++)
-            {
-                min = Vector3.Min(min, positions[i]);
-                max = Vector3.Max(max, positions[i]);
-            }
-
             var bounds = new Bounds();
             bounds.SetMinMax(min, max);
-            return new TerrainMeshData("TerrainBackdrop", Vector3.zero, vertices, null, null, bounds);
-        }
-
-        private static void Emit(Vector3[] positions, SurfaceSample[] regions, Color32[] groundColors, int i0,
-            int i1, int i2, TerrainPainter painter, uint hash, TerrainVertex[] vertices, ref int written)
-        {
-            Vector3 p0 = positions[i0];
-            Vector3 p1 = positions[i1];
-            Vector3 p2 = positions[i2];
-            Vector3 normal = Vector3.Cross(p1 - p0, p2 - p0).normalized;
-            var region = new SurfaceSample(0f, 0f, 0f,
-                (regions[i0].RimZone + regions[i1].RimZone + regions[i2].RimZone) / 3f);
-            bool rock = painter.IsRock(normal, region);
-            Color32 face = rock ? painter.Rock(normal, (p0 + p1 + p2) / 3f, region, hash) : default;
-            vertices[written++] = new TerrainVertex(p0, normal, rock ? face : groundColors[i0]);
-            vertices[written++] = new TerrainVertex(p1, normal, rock ? face : groundColors[i1]);
-            vertices[written++] = new TerrainVertex(p2, normal, rock ? face : groundColors[i2]);
+            return new TerrainMeshData("TerrainBackdrop", Vector3.zero, vertices, null, null, bounds, indices);
         }
     }
 }
