@@ -12,7 +12,7 @@ namespace MoonProject.UI
 
         [Tooltip("Fixed width of the unified cargo panel (px at 1080p); clamped to WidthShare on narrow screens.")]
         [Range(720f, 1600f)]
-        [SerializeField] private float _panelWidth = 1120f;
+        [SerializeField] private float _panelWidth = 1220f;
 
         [Tooltip("Fixed height of the unified cargo panel (px at 1080p); clamped to HeightShare on short screens.")]
         [Range(400f, 900f)]
@@ -64,9 +64,13 @@ namespace MoonProject.UI
         [Range(2f, 20f)]
         [SerializeField] private float _dragThreshold = 6f;
 
-        [Tooltip("Width (px) of the column down each side of the portrait where socket names sit.")]
-        [Range(80f, 240f)]
-        [SerializeField] private float _labelWidth = 150f;
+        [Tooltip("Width (px) of the right-hand column down the side of the portrait where socket names sit.")]
+        [Range(80f, 280f)]
+        [SerializeField] private float _labelWidth = 158f;
+
+        [Tooltip("Width (px) of the left-hand column down the side of the portrait where socket names sit.")]
+        [Range(80f, 320f)]
+        [SerializeField] private float _leftLabelWidth = 158f;
 
         [Tooltip("Height (px) of one socket name.")]
         [Range(14f, 40f)]
@@ -74,15 +78,40 @@ namespace MoonProject.UI
 
         [Tooltip("Gap (px) kept between two socket names in a column.")]
         [Range(0f, 16f)]
-        [SerializeField] private float _labelGap = 4f;
+        [SerializeField] private float _labelGap = 6f;
 
         [Tooltip("Gap (px) between the portrait's edge and a column of names.")]
         [Range(0f, 40f)]
         [SerializeField] private float _labelMargin = 8f;
 
+        [Tooltip("Portrait width (px at 1080p) at which socket label columns use their full width before scaling down.")]
+        [Range(400f, 1200f)]
+        [SerializeField] private float _portraitReferenceWidth = 798f;
+
         [Tooltip("Gap (px) between a socket or part and the tooltip that names it.")]
         [Range(0f, 40f)]
         [SerializeField] private float _tooltipGap = 10f;
+
+        [Header("07's 3/4 schematic diagram framing")]
+        [Tooltip("Camera bearing round 07 (deg from its nose, + toward its right flank) in the 3/4 schematic diagram.")]
+        [Range(-180f, 180f)]
+        [SerializeField] private float _diagramYaw = 55f;
+
+        [Tooltip("Camera elevation (deg above 07's deck) in the 3/4 schematic diagram.")]
+        [Range(-10f, 60f)]
+        [SerializeField] private float _diagramElevation = 14f;
+
+        [Tooltip("Camera distance (m) from the look point in the 3/4 schematic diagram.")]
+        [Range(2f, 12f)]
+        [SerializeField] private float _diagramDistance = 3.9f;
+
+        [Tooltip("Height (m above 07's root) of the point the 3/4 schematic diagram camera looks at.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _diagramLookHeight = 0.56f;
+
+        [Tooltip("Vertical field of view (deg) of the 3/4 schematic diagram camera.")]
+        [Range(10f, 60f)]
+        [SerializeField] private float _diagramFieldOfView = 30f;
 
         public RevealSettings Reveal => _reveal;
 
@@ -104,11 +133,25 @@ namespace MoonProject.UI
 
         public float LabelWidth => _labelWidth;
 
+        public float LeftLabelWidth => _leftLabelWidth;
+
         public float LabelHeight => _labelHeight;
 
         public float LabelGap => _labelGap;
 
         public float LabelMargin => _labelMargin;
+
+        public float PortraitReferenceWidth => _portraitReferenceWidth;
+
+        public float DiagramYaw => _diagramYaw;
+
+        public float DiagramElevation => _diagramElevation;
+
+        public float DiagramDistance => _diagramDistance;
+
+        public float DiagramLookHeight => _diagramLookHeight;
+
+        public float DiagramFieldOfView => _diagramFieldOfView;
 
         public float BootTypeSeconds => _bootTypeSeconds;
 
@@ -121,5 +164,22 @@ namespace MoonProject.UI
         public float BootSlideDistance => _bootSlideDistance;
 
         public float BootHatchLingerSeconds => _bootHatchLingerSeconds;
+
+        public string Validate()
+        {
+            if (_reveal == null)
+            {
+                return "cargo reveal is missing";
+            }
+
+            if (_panelWidth <= 0f || _panelHeight <= 0f || _labelWidth <= 0f || _leftLabelWidth <= 0f ||
+                _labelHeight <= 0f || _portraitReferenceWidth <= 0f || _diagramDistance <= 0f ||
+                _diagramFieldOfView <= 0f)
+            {
+                return "cargo layout or diagram framing is non-positive";
+            }
+
+            return null;
+        }
     }
 }

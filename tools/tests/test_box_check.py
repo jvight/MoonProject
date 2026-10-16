@@ -110,17 +110,81 @@ class TrialMergeAbortTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             self.assertEqual(box_check.abort_trial_merge(self.repo(tmp)), "")
 
+    def test_cleanup_restores_staged_merge_residue_main_unity_generated_data_init_scene_and_index_lock(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.repo(tmp)
+            scene = root / "Assets/_Project/Scenes/Main.unity"
+            scene.parent.mkdir(parents=True, exist_ok=True)
+            scene.write_text("clean scene", encoding="utf-8")
+            self.run_git(root, "add", "Assets/_Project/Scenes/Main.unity")
+            self.run_git(root, "commit", "-q", "-m", "add scene")
+
+            # Pre-existing dirty and untracked files before box_check starts: must be preserved.
+            (root / "a.txt").write_text("user edit before box_check", encoding="utf-8")
+            pre_untracked = root / "Assets/_Project/Data/Tuning/PreExisting.asset"
+            pre_untracked.parent.mkdir(parents=True, exist_ok=True)
+            pre_untracked.write_text("keep me", encoding="utf-8")
+            before = box_check.snapshot_status(root)
+
+            # Simulate trial-merge staged residue (even if MERGE_HEAD was lost), modified Main.unity,
+            # new untracked files in Generated/, Data/Content, Data/Tuning, Assets/InitTestScene*, and stale index.lock.
+            (root / "b.txt").write_text("staged from main", encoding="utf-8")
+            self.run_git(root, "add", "b.txt")
+            scene.write_text("dirty scene from builder", encoding="utf-8")
+            for rel in (
+                "Assets/_Project/Generated/Mesh.asset",
+                "Assets/_Project/Data/Content/NewCatalog.asset",
+                "Assets/_Project/Data/Tuning/NewTuning.asset",
+                "Data/Content/AltContent.asset",
+                "Data/Tuning/AltTuning.asset",
+                "Assets/InitTestScene639001.unity",
+                "Assets/InitTestScene639001.unity.meta",
+                "Assets/_Project/Scripts/NewScript.cs.meta",
+            ):
+                p = root / rel
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_text("residue", encoding="utf-8")
+            lock = box_check.git_dir(root) / "index.lock"
+            lock.write_text("stale", encoding="utf-8")
+
+            restored, new_outputs, metas, problem = box_check.cleanup_worktree(root, before)
+            self.assertEqual(problem, "")
+            self.assertFalse(lock.exists(), "stale index.lock must be removed")
+            self.assertFalse((root / "b.txt").exists(), "staged file from main merge must be removed")
+            self.assertEqual(scene.read_text(encoding="utf-8"), "clean scene")
+            self.assertGreaterEqual(restored, 2)
+            self.assertGreaterEqual(new_outputs, 6)
+            self.assertEqual(metas, 1)
+            for rel in (
+                "Assets/_Project/Generated/Mesh.asset",
+                "Assets/_Project/Data/Content/NewCatalog.asset",
+                "Assets/_Project/Data/Tuning/NewTuning.asset",
+                "Data/Content/AltContent.asset",
+                "Data/Tuning/AltTuning.asset",
+                "Assets/InitTestScene639001.unity",
+                "Assets/InitTestScene639001.unity.meta",
+                "Assets/_Project/Scripts/NewScript.cs.meta",
+            ):
+                self.assertFalse((root / rel).exists(), f"{rel} should be cleaned up")
+
+            # Pre-existing files are untouched.
+            self.assertEqual((root / "a.txt").read_text(encoding="utf-8"), "user edit before box_check")
+            self.assertTrue(pre_untracked.exists())
+            after = box_check.snapshot_status(root)
+            self.assertEqual(after, before)
+
 
 class BoardTests(unittest.TestCase):
     def test_block_verdict_and_last_block(self):
         first = box_check.format_block("20261011-100000", "world", "box/world @ abc1234 + main @ 1111111, trial merge",
-                                       [("compile_check", True, "Logs/c.log", 41.2)], ["restored 3"])
+                                       [("compile_check", True, "Logs/c.log", 41.2)], ["restored 3", "worktree clean"])
         second = box_check.format_block("20261011-110000", "world", "box/world @ def5678, contains main",
                                         [("compile_check", True, "", 40.0), ("builders", False, "Logs/b.log", 95.6)],
-                                        [])
+                                        ["worktree clean"])
         self.assertTrue(first.startswith("## 20261011-100000 box_check world: PASS (box/world @ abc1234 + main @ "
                                          "1111111, trial merge)"))
         self.assertIn("- PASS compile_check 41 s (log Logs/c.log)", first)
+        self.assertIn("- worktree clean", first)
         self.assertIn("- FAIL builders 96 s (log Logs/b.log)", second)
         self.assertEqual(box_check.last_block("\n" + first + "\n" + second), second.strip())
         self.assertEqual(box_check.last_block(first), first.strip())

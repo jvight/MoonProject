@@ -5,7 +5,7 @@ using MoonProject.Core;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The distance home at the top centre (Moonlight Glass, Subnautica's depth gauge): metres to the base over the
+    /// The distance home at the top centre (Variant C cyan telemetry gauge): metres to the base over the
     /// compass point it lies in ("home · NE"), under a shallow arc that fills as 07 roams farther. The number eases and
     /// steps in whole <see cref="HomeMeterSettings.StepMetres"/>; it fades away near home. Every string is made once
     /// (the bearings again on a language change), so a frame never allocates.

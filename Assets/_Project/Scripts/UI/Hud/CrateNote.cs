@@ -14,8 +14,12 @@ namespace MoonProject.UI
     /// </summary>
     internal sealed class CrateNote
     {
+        public const string ScanClass = "crate-note--scan";
+        public const string PaperClass = "crate-note--paper";
+
         private readonly CrateNoteSettings _settings;
         private readonly ILocalization _localization;
+        private readonly VisualElement _root;
         private readonly Reveal _reveal;
         private readonly Label _caption;
         private readonly Label _text;
@@ -35,11 +39,12 @@ namespace MoonProject.UI
 
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
-            _reveal = new Reveal(layout.CrateNote, settings.Reveal);
+            _root = layout.CrateNote;
+            _reveal = new Reveal(_root, settings.Reveal);
             _reveal.Snap(false);
-            _caption = layout.CrateNote.Q<Label>("crate-note-caption")
+            _caption = _root.Q<Label>("crate-note-caption")
                        ?? throw new InvalidOperationException("GameUI.uxml has no crate-note-caption.");
-            _text = layout.CrateNote.Q<Label>("crate-note-text")
+            _text = _root.Q<Label>("crate-note-text")
                     ?? throw new InvalidOperationException("GameUI.uxml has no crate-note-text.");
         }
 
@@ -107,6 +112,9 @@ namespace MoonProject.UI
 
         private void Write()
         {
+            bool isScan = _note.CaptionKey == UiKeys.HintScan;
+            _root.EnableInClassList(ScanClass, isScan);
+            _root.EnableInClassList(PaperClass, !isScan);
             _caption.text = _localization.Get(_note.CaptionKey);
             _text.text = _note.Text ?? _localization.Get(_note.Key);
         }

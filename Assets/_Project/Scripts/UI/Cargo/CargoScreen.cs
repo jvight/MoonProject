@@ -10,7 +10,7 @@ namespace MoonProject.UI
 {
     /// <summary>
     /// The cargo screen (docs/features/M3-25 §2.4; the PDA of docs/design/first-hour-qa.md R1): Tab or View opens a
-    /// single fixed-size Moonlight Glass panel over the blur, and the game goes on. On the left is 07's hold (a grid of
+    /// single fixed-size Variant C CRT panel over the blur, and the game goes on. On the left is 07's hold (a grid of
     /// slots, each with its material's icon and units out of its capacity, empty slots as faint outlines, the stacks
     /// held back where they were cut) with one plain line under it. On the right is 07's live portrait with its fixed
     /// equipment sockets and parts row (<see cref="EquipmentPage"/>). Opened while 07 rests on the dock, the same frame
@@ -68,7 +68,8 @@ namespace MoonProject.UI
 
         public CargoScreen(UiLayout layout, CargoScreenSettings settings, ILocalization localization,
             ICargoHold hold, IHomeStorage home, IStackTransfer transfer, IDockState dock, IRoverEquipment equipment,
-            IRoverPortrait portrait, GlyphLabels glyphs, IntText numbers, EventBus events, PromptLedger ledger)
+            IRoverPortrait portrait, RoverDiagramData diagram, GlyphLabels glyphs, IntText numbers, EventBus events,
+            PromptLedger ledger)
         {
             if (layout == null)
             {
@@ -90,7 +91,7 @@ namespace MoonProject.UI
             _reveal = new Reveal(root, settings.Reveal);
             _reveal.Snap(false);
             _panel = Require<VisualElement>(root, "cargo-panel");
-            _seven = new EquipmentPage(layout, settings, localization, equipment, portrait, glyphs, events);
+            _seven = new EquipmentPage(layout, settings, localization, equipment, portrait, diagram, glyphs, events);
             _waiting = Require<Label>(root, "cargo-waiting");
             _bootLine = Require<Label>(root, "cargo-boot");
             _transferHint = Require<Label>(root, "cargo-transfer-hint");
