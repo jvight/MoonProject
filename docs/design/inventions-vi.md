@@ -1,7 +1,7 @@
 # Thiết Kế Phát Minh & Cây Công Nghệ Lumen — *Thập Niên 1980: "Biên Giới Cao Đã Thành Hiện Thực"*
 
-> **Trạng thái:** Đặc tả thiết kế đề xuất cho `0.6–1.0` (`[PROPOSAL]` — tích hợp các ý tưởng nền tảng của Chủ dự án với các phát minh cơ khí nguyên bản, sơ đồ cây công nghệ hợp nhất và bốn địa danh khám phá mới).
-> **Bản tiếng Anh tương ứng:** [`docs/design/inventions.md`](inventions.md)
+> **Trạng thái:** Đặc tả thiết kế đề xuất cho `0.6–1.0` (`[PROPOSAL]` — tích hợp các ý tưởng nền tảng của Chủ dự án với các phát minh cơ khí nguyên bản, sơ đồ cây công nghệ hợp nhất, bốn địa danh khám phá mới và chuẩn hình khối chân không `VACUUM-SHAPES`).
+> **Bản tiếng Anh tương ứng:** [`docs/design/inventions.md`](inventions.md) · **Quy tắc Hình Khối Chân Không:** [`docs/design/vacuum-shapes.md`](vacuum-shapes.md) · **Trang đối chiếu Before/After:** `Logs/vacuum/index.html`
 > **Tài liệu chuẩn đối chiếu:** [`docs/design/story-v4.md`](story-v4.md) · [`docs/design/0.6-living-moon.md`](0.6-living-moon.md) · [`docs/design/0.6-world-regions.md`](0.6-world-regions.md) · [`docs/design/0.6-rovers-and-salvage.md`](0.6-rovers-and-salvage.md) · [`docs/design/0.6-kits-and-upgrades.md`](0.6-kits-and-upgrades.md) · [`docs/design/0.6-structures-and-power.md`](0.6-structures-and-power.md) · [`docs/design/0.7-wrecks-and-cutting.md`](0.7-wrecks-and-cutting.md) · [`docs/design/0.8-deep-regions.md`](0.8-deep-regions.md) · [`docs/art/r1-pipeline.md`](../art/r1-pipeline.md) · [`docs/art/07-design.md`](../art/07-design.md) · [`Assets/_Project/Scripts/Core/SalvageMaterial.cs`](../../Assets/_Project/Scripts/Core/SalvageMaterial.cs)
 
 ---
@@ -9,7 +9,8 @@
 ## 1. Triết Lý Thiết Kế: *"Thập Niên 1980 Của Gerard O'Neill"* & Bài Toán Hóa Học Giữa Oxy Và Băng Nước
 
 Trong vũ trụ của *Lunarion*, Trạm Khai Khoáng Mặt Trăng **Meridian** không phải là trạm tiền đồn của tương lai xa với màn hình hologram hay công nghệ nano. Đó là năm **1984–1988** trong một dòng thời gian nơi tầm nhìn công nghiệp hóa Mặt Trăng năm 1976 của nhà vật lý **Gerard K. O'Neill** (*The High Frontier*) đã thực sự được xây dựng bằng phần cứng công nghiệp thập niên 1980:
-- **Vật liệu chế tạo tại chỗ (ISRU):** Lớp vỏ tráng men kem vát cạnh (`R1_CreamEnamel` `#F4E6C8`) với một dải sơn cam đất bạc màu (`R1_OrangeStripe` `#FF8A5B`), cuộn cảm đồng quấn tay (`R1_Copper` `#DA8E48`), ống thủy tinh borosilicate thổi trong chân không (`R1_DarkGlass`), bễ cao su xếp nếp (`R1_Rubber`), đồng hồ áp suất Bourdon bằng đồng thau (`R1_Brass`), và màn hình CRT phốt-pho vàng hổ phách P3 (`R1_LampAmber` `#FFB547`).
+- **Vật liệu chế tạo tại chỗ (ISRU):** Lớp vỏ tráng men kem vát cạnh (`R1_CreamEnamel` `#F4E6C8`) với một dải sơn cam đất bạc màu (`R1_OrangeStripe` `#FF8A5B`), cuộn cảm đồng quấn tay (`R1_Copper` `#DA8E48`), ống thủy tinh borosilicate thổi trong chân không (`R1_DarkGlass`), pít-tông bù áp cao su kín khí (`R1_Rubber`), đồng hồ áp suất Bourdon bằng đồng thau (`R1_Brass`), và màn hình CRT phốt-pho vàng hổ phách P3 (`R1_LampAmber` `#FFB547`).
+- **Kỷ luật Hình khối Chân không Tuyệt đối ([`docs/design/vacuum-shapes.md`](vacuum-shapes.md)):** Mặt Trăng là môi trường chân không ($10^{-12}\text{ torr}$). **Tuyệt đối không một thiết bị nào** mang hình dáng khí quyển Trái Đất (không khinh khí cầu, không dù lượn, không diều vải, không cánh buồm gió, không cánh quạt cối xay gió). Mọi máy móc đều vận hành bằng vật lý chân không trung thực: giàn lá đồng ngưng tụ sương giá (**Đàn Hạc Sương Giá**), tháp lá chớp tĩnh điện cố định (**Tháp Lược Tĩnh Điện**), đường ống áp suất tuần hoàn kín, và vòi phun phản lực khí lạnh De Laval.
 - **Mục đích tồn tại của Meridian:** Giữa thời kỳ **Màn Đêm Dài** (*The Long Dim* — mùa đông sol khí tầng bình lưu thập niên 1980 trên Trái Đất), các **Tàu Phương Chu (Orbital Arks)** tại điểm Lagrange **L4/L5** được xây dựng từ chính quặng Mặt Trăng bắn lên từ Meridian.
 
 ### Tại sao "Oxy từ quặng Ilmenit" KHÔNG phá vỡ cốt truyện "Tìm Băng Nước cho các Tàu Phương Chu"?
@@ -18,8 +19,8 @@ Một câu hỏi hóa học cốt lõi của thế giới này cần được l�
 
 | Chất hóa học | Cách tạo ra tại Meridian | Vai trò trong lối chơi của Rover `07` | Vì sao các Tàu Phương Chu L4/L5 vẫn cần Băng Nước (`WaterIce`) để hạ cánh? |
 |---|---|---|---|
-| **Khí Oxy công nghiệp ($\text{O}_2$)** *(Từ Lò Thở Ilmenit)* | Nung chảy quặng đen **Ilmenit** ($\text{FeTiO}_3$, [`SalvageMaterial.Ilmenite = 5`](../../Assets/_Project/Scripts/Core/SalvageMaterial.cs)) ở $900\,^\circ\text{C}$ trong **buồng khử tuần hoàn kín** dùng một lượng nhỏ khí xúc tác được tái sử dụng liên tục: $\text{FeTiO}_3 \rightarrow \text{Fe} + \text{TiO}_2 + \tfrac{1}{2}\text{O}_2\uparrow$. Đá Mặt Trăng chứa tới $40\%$ oxy theo khối lượng nhưng gần như **không có nguyên tử Hydro ($\text{H}$)**. | Cung cấp **khí nén cơ học và chất oxy hóa nhiệt**: dùng cho **Ống Bưu Chính Khí Nén**, **Bộ Đẩy Phản Lực Khí Lạnh**, **Mũi Cắt Nhiệt Khí Oxy**, **Đạn Cầu Lửa**, **Thổi Thủy Tinh Chân Không**, và **Chuông Địa Chấn Khí Oxy**. | Bạn không thể làm ra nước ($\text{H}_2\text{O}$), trồng lương thực, hay pha chế nhiên liệu tên lửa hạ cánh ($\text{LH}_2/\text{LOX}$) chỉ bằng nguyên tử Oxy. Nếu không có **Hydro**, hàng triệu tấn oxy từ đá bazan cũng chỉ là khí khô. |
-| **Băng Nước cổ đại ($\text{H}_2\text{O}$)** *(Tại Hố Sao Chổi & Hố Tối Vĩnh Cửu)* | Nằm sâu dưới các lớp băng vĩnh cửu hai tỷ năm tuổi ở đáy **Hố Tối Vĩnh Cửu** (`0.8`) và lõi **Hố Sao Chổi** (`0.9` — [`SalvageMaterial.WaterIce = 6`](../../Assets/_Project/Scripts/Core/SalvageMaterial.cs)). | Được phát hiện bằng **Đạn Cầu Lửa & Diều Hứng Hơi Băng**, khai thác bởi các robot 4 chân **Thợ Khai Băng (`Ice Tappers`)** khi được sưởi ấm bằng **Lõi Muối Nóng Chảy**, và được truyền bằng chứng lên quỹ đạo L4/L5 ở bản `1.0`. | **Băng Nước = Hydro ($\text{H}_2$) + Nước sinh học ($\text{H}_2\text{O}$).** Đây là mắt xích duy nhất còn thiếu để các Tàu Phương Chu nạp nhiên liệu cho tàu đổ bộ và nuôi sống hàng ngàn con người khi quay về. |
+| **Khí Oxy công nghiệp ($\text{O}_2$)** *(Từ Lò Thở Ilmenit)* | Nung chảy quặng đen **Ilmenit** ($\text{FeTiO}_3$, [`SalvageMaterial.Ilmenite = 5`](../../Assets/_Project/Scripts/Core/SalvageMaterial.cs)) ở $900\,^\circ\text{C}$ trong **buồng khử tuần hoàn kín** dùng một lượng nhỏ khí xúc tác được tái sử dụng liên tục: $\text{FeTiO}_3 \rightarrow \text{Fe} + \text{TiO}_2 + \tfrac{1}{2}\text{O}_2\uparrow$. Đá Mặt Trăng chứa tới $40\%$ oxy theo khối lượng nhưng gần như **không có nguyên tử Hydro ($\text{H}$)**. | Cung cấp **khí nén cơ học và chất oxy hóa nhiệt**: dùng cho **Ống Bưu Chính Khí Nén**, **Bộ Đẩy Phản Lực Khí Lạnh**, **Mũi Cắt Nhiệt Khí Oxy**, **Đạn Cầu Lửa & Đàn Hạc Sương Giá**, **Thổi Thủy Tinh Chân Không**, và **Chuông Địa Chấn Khí Oxy**. | Bạn không thể làm ra nước ($\text{H}_2\text{O}$), trồng lương thực, hay pha chế nhiên liệu tên lửa hạ cánh ($\text{LH}_2/\text{LOX}$) chỉ bằng nguyên tử Oxy. Nếu không có **Hydro**, hàng triệu tấn oxy từ đá bazan cũng chỉ là khí khô. |
+| **Băng Nước cổ đại ($\text{H}_2\text{O}$)** *(Tại Hố Sao Chổi & Hố Tối Vĩnh Cửu)* | Nằm sâu dưới các lớp băng vĩnh cửu hai tỷ năm tuổi ở đáy **Hố Tối Vĩnh Cửu** (`0.8`) và lõi **Hố Sao Chổi** (`0.9` — [`SalvageMaterial.WaterIce = 6`](../../Assets/_Project/Scripts/Core/SalvageMaterial.cs)). | Được phát hiện và ngưng tụ bằng **Đạn Cầu Lửa & Đàn Hạc Sương Giá**, khai thác bởi các robot 4 chân **Thợ Khai Băng (`Ice Tappers`)** khi được sưởi ấm bằng **Lõi Muối Nóng Chảy**, và được truyền bằng chứng lên quỹ đạo L4/L5 ở bản `1.0`. | **Băng Nước = Hydro ($\text{H}_2$) + Nước sinh học ($\text{H}_2\text{O}$).** Đây là mắt xích duy nhất còn thiếu để các Tàu Phương Chu nạp nhiên liệu cho tàu đổ bộ và nuôi sống hàng ngàn con người khi quay về. |
 
 > [!IMPORTANT]
 > **Quy tắc bất biến về câu chuyện:** Lò Thở Ilmenit mang lại cho `07` một nền kinh tế **Khí Oxy công nghiệp ($\text{O}_2$)** phong phú ngay từ bản `0.6–0.7` mà hoàn toàn không làm giảm giá trị tối thượng của **Băng Nước (`WaterIce`)** ở bản `0.8–1.0`. Khí $\text{O}_2$ giúp `07` vận hành máy móc trên Mặt Trăng; Băng Nước $\text{H}_2\text{O}$ đưa loài người trở về.
@@ -28,7 +29,7 @@ Một câu hỏi hóa học cốt lõi của thế giới này cần được l�
 
 ## 2. Danh Mục 11 Phát Minh Của Lumen (7 Ý Tưởng Gốc Phát Triển + 4 Phát Minh Nguyên Bản `[PROPOSAL]`)
 
-Dưới đây là 11 phát minh định hình bản sắc công nghệ thập niên 1980 của *Lunarion*. Mỗi mục đều tuân thủ chặt chẽ bảng vật liệu 15 ô R1 ([`docs/art/r1-pipeline.md`](../art/r1-pipeline.md)) và 10 quyết định cốt truyện cố định ([`docs/design/story-v4.md`](story-v4.md)).
+Dưới đây là 11 phát minh định hình bản sắc công nghệ thập niên 1980 của *Lunarion*. Mỗi mục đều tuân thủ chặt chẽ bảng vật liệu 15 ô R1 ([`docs/art/r1-pipeline.md`](../art/r1-pipeline.md)), quy tắc hình khối chân không ([`docs/design/vacuum-shapes.md`](vacuum-shapes.md)) và 10 quyết định cốt truyện cố định ([`docs/design/story-v4.md`](story-v4.md)).
 
 ---
 
@@ -37,44 +38,46 @@ Dưới đây là 11 phát minh định hình bản sắc công nghệ thập ni
 
 ![Lò Thở Ilmenit](../../Logs/concepts/breather.png)
 
-> **Pitch một dòng:** *Cỗ lò gốm tráng men thập niên 1980 "hít" quặng đá đen Ilmenit và "thở" ra từng nhịp khí oxy ấm áp vào những bình đồng thau sủi bọt vàng hổ phách.*
+> **Pitch một dòng:** *Cỗ lò gốm tráng men thập niên 1980 "ăn" quặng đá đen Ilmenit và đẩy từng nhịp pít-tông bù áp tuần hoàn kín để nén khí oxy ấm áp vào những bình đồng thau sủi bọt vàng hổ phách.*
 
 1. **Tên gọi:** **Lò Thở Ilmenit** (*The Ilmenite Breather* · Mã định danh: `StructureType.IlmeniteBreather` `[PROPOSAL]`).
-2. **Logic thời đại thập niên 1980:** Dựa trên thiết kế lò phản ứng khử Ilmenit tuần hoàn kín của NASA Johnson Space Center và Học viện Không gian California năm 1979. Quặng đen Ilmenit ($\text{FeTiO}_3$) được xúc từ các thềm đá bazan vùng Biển Dài (*The Long Mare*), nghiền nhỏ và nung ở $900\,^\circ\text{C}$ bằng cuộn cảm đồng. Bễ cao su xếp nếp trên đỉnh lò phập phồng theo chu kỳ 6 giây để tách hơi nước trung gian và đẩy khí $\text{O}_2$ tinh khiết ($150\text{ bar}$) vào giá xoay gồm 3 **Bình Oxy Đồng Thau** (*Brass Oxygen Flasks*).
+2. **Logic thời đại thập niên 1980 & Kỷ luật Chân không:** Dựa trên thiết kế lò phản ứng khử Ilmenit tuần hoàn kín của NASA Johnson Space Center và Học viện Không gian California năm 1979. Quặng đen Ilmenit ($\text{FeTiO}_3$) được xúc từ các thềm đá bazan vùng Biển Dài (*The Long Mare*), nghiền nhỏ và nung ở $900\,^\circ\text{C}$ bằng cuộn cảm đồng. Bầu cao su xếp nếp trên đỉnh lò là **pít-tông tích áp tuần hoàn kín 100% (*Closed-Loop Gas Accumulator Piston*)** — tuyệt đối không "hít" không khí bên ngoài hay xả hơi nước ra chân không, mà chỉ phập phồng theo chu kỳ 6 giây khi áp suất khí $\text{H}_2/\text{H}_2\text{O}$ nội bộ luân chuyển giữa trống nung và buồng điện phân, đẩy khí $\text{O}_2$ tinh khiết ($150\text{ bar}$) vào giá xoay gồm 3 **Bình Oxy Đồng Thau** (*Brass Oxygen Flasks*).
 3. **Hình dáng trong bảng màu R1 (`1.35 m × 1.35 m × 1.80 m`):**
    - **Thân lò chính:** Trụ men kem vát cạnh (`R1_CreamEnamel` `#F4E6C8`) với đúng một dải sơn cam đất bạc màu (`R1_OrangeStripe` `#FF8A5B`) và ô cửa sổ thạch anh tròn ở giữa để lộ lõi quặng nóng đỏ vàng hổ phách (`R1_LampAmber` `#FFB547`).
-   - **Lá phổi cơ khí trên đỉnh:** Một bễ cao su đen xếp nếp lớn (`R1_Rubber` `#3E4048`) đội nắp đồng thau (`R1_Brass` `#DA8E48`) nâng lên hạ xuống nhịp nhàng như lồng ngực đang thở, đi kèm đồng hồ áp suất Bourdon mặt tròn lớn.
+   - **Pít-tông tích áp tuần hoàn kín trên đỉnh:** Một bầu pít-tông cao su đen chịu áp (`R1_Rubber` `#3E4048`) đội nắp đối trọng đồng thau (`R1_Brass` `#DA8E48`) nâng lên hạ xuống nhịp nhàng theo áp suất nội bộ, đi kèm đồng hồ áp suất Bourdon mặt tròn lớn.
    - **Bình xúc tác bên hông:** Bình thép sơn xanh xô thơm (`R1_SagePatch` `#78A582`) tán đinh ri-vê nối với cuộn ống đồng tản nhiệt (`R1_Copper`).
    - **Giá xoay 3 Bình Oxy (cao `0.65 m` vừa tầm gầu xúc của `07`):** Ba bình đồng thau hình trụ có khe kính dọc phát sáng vàng mật ong (`#FFB547`) với các bọt khí li ti nổi lên từ đáy bình khi đầy.
-4. **Cách người chơi nhận diện công dụng ngay lập tức (không cần chữ):** Phễu răng cưa bên trái chứa đá đen lấp lánh $\rightarrow$ bụng lò rực sáng cam ấm $\rightarrow$ lá phổi cao su trên đỉnh phập phồng $\rightarrow$ 3 bình đồng thau bên phải sủi bọt sáng vàng. Chuỗi nhân quả "Đá đen vào $\rightarrow$ Hơi thở sống động ra" đọc được chỉ trong 2 giây.
+4. **Cách người chơi nhận diện công dụng ngay lập tức (không cần chữ):** Phễu răng cưa bên trái chứa đá đen lấp lánh $\rightarrow$ bụng lò rực sáng cam ấm $\rightarrow$ pít-tông tích áp trên đỉnh phập phồng $\rightarrow$ 3 bình đồng thau bên phải sủi bọt sáng vàng. Chuỗi nhân quả "Đá đen vào $\rightarrow$ Khí oxy nén ra" đọc được chỉ trong 2 giây.
 5. **Vai trò trong lối chơi:** **Công trình (Structure)** đặt tại căn cứ hoặc Tiền đồn Đồi Đá Ilmenit (`0.6`). Chuyển hóa `2 × Ilmenite` + điện năng thành `1 × Bình Oxy (Oxygen Flask)` (`[PROPOSAL] SalvageMaterial.Oxygen = 13`) mỗi $45\text{ giây}$, đồng thời thải ra `1 × Metal` (xỉ sắt tinh luyện) làm phụ phẩm hữu ích.
 6. **Nguyên liệu cần & Thứ mở khóa:**
    - *Chi phí chế tạo (`0.6`):* `4 × Metal`, `2 × Ilmenite`, `2 × Wiring`, `1 × Glass`.
-   - *Mở khóa:* Toàn bộ nhánh công nghệ dùng khí $\text{O}_2$: **Ống Bưu Chính Khí Nén**, **Bộ Đẩy Phản Lực Khí Lạnh**, **Mũi Cắt Nhiệt Khí Oxy**, **Đạn Cầu Lửa**, **Lò Thổi Thủy Tinh Chân Không**, **Chuông Địa Chấn Khí Oxy**, và **Đèn Tảo Sống**.
+   - *Mở khóa:* Toàn bộ nhánh công nghệ dùng khí $\text{O}_2$: **Ống Bưu Chính Khí Nén**, **Bộ Đẩy Phản Lực Khí Lạnh**, **Mũi Cắt Nhiệt Khí Oxy**, **Đạn Cầu Lửa & Đàn Hạc Sương Giá**, **Lò Thổi Thủy Tinh Chân Không**, **Chuông Địa Chấn Khí Oxy**, và **Đèn Tảo Sống**.
 7. **Điểm chạm cốt truyện cố định (`story-v4.md`):** Giải thích vì sao một trạm khai khoáng 100% tự động không người lái (Quyết định 5) lại sản xuất hàng tấn $\text{O}_2$ công nghiệp (dùng làm chất oxy hóa cắt kim loại, đẩy ống khí nén, và đóng vào các kiện hàng bắn lên L4/L5), trong khi vẫn hoàn toàn thiếu Hydro/Băng Nước (Quyết định 2 & 8).
 
 ---
 
-### Phát Minh 02 — Đạn Cầu Lửa & Diều Hứng Hơi Băng (*The Ember Shell & Vapor Kite*)
-*(Phát triển từ Ý tưởng gốc #2 · Bộ công cụ khảo sát & thu hoạch băng vùng tối `0.8`)*
+### Phát Minh 02 — Đạn Cầu Lửa & Đàn Hạc Sương Giá (*The Ember Shell & Frost Harp*)
+*(Thiết kế lại theo chuẩn chân không từ Ý tưởng gốc #2 · Bộ công cụ khảo sát & ngưng tụ băng vùng tối `0.8`)*
 
-![Đạn Cầu Lửa & Diều Hứng Hơi Băng](../../Logs/concepts/ember_shell.png)
+![Đạn Cầu Lửa & Đàn Hạc Sương Giá](../../Logs/concepts/ember_shell_frost_harp.png)
 
-> **Pitch một dòng:** *Quả cầu thủy tinh chứa oxy và bột nhôm nổ bung như một mặt trời nhỏ giữa đáy hố tối vĩnh cửu, làm bốc hơi lớp băng cổ đại thành cột hơi nước lấp lánh bay thẳng vào cánh diều vàng Kapton căng phồng phía trên `07`.*
+> **Pitch một dòng:** *Quả cầu thủy tinh chứa oxy và bột nhôm nổ bung như một mặt trời nhỏ giữa đáy hố tối vĩnh cửu, làm thăng hoa lớp băng cổ đại thành đài phun phân tử siêu thanh kết tinh thành sương giá trắng xóa nở rộ trên những thanh đồng lạnh của Đàn Hạc Sương Giá phía trên `07`, rồi ấm lên chảy thành nước lỏng vào bình chứa.*
 
-1. **Tên gọi:** **Đạn Cầu Lửa & Diều Hứng Hơi Băng** (*The Ember Shell & Vapor Kite* · Mã định danh: `KitId.EmberMortarAndKite` `[PROPOSAL]`).
-2. **Logic thời đại thập niên 1980:** Trong chân không Mặt Trăng, pháo sáng thông thường không thể cháy nếu thiếu chất oxy hóa riêng, còn việc khoan mù giữa lòng Hố Tối Vĩnh Cửu ở $-230\,^\circ\text{C}$ sẽ làm gãy mũi khoan. Các kỹ sư thập niên 1980 đã thổi những quả cầu thủy tinh borosilicate rỗng từ hạt thủy tinh cam núi lửa (`OrangeBeads`), bơm đầy khí $\text{O}_2$ nén từ Lò Thở cùng bột nhôm – magie nhiệt nhôm (thermite). Khi `07` bắn một quả Đạn Cầu Lửa xuống nền băng tối, quả cầu vỡ ra và tự cháy trong chân không suốt $25\text{ giây}$ như một đốm lửa trại rực rỡ. Nhiệt lượng bức xạ làm thăng hoa lớp băng ngầm thành một cột hơi nước và tinh thể băng bay vọt lên cao; ngay lúc đó, `07` bung **Diều Hứng Hơi Băng** (một túi dù hình thoi bằng vải sợi bazan tráng vàng Kapton gắn trên cột đồng thu gọn $2.5\text{ m}$) để hứng luồng hơi nước đang bốc lên và ngưng tụ trực tiếp thành lõi `WaterIce` tinh khiết.
-3. **Hình dáng trong bảng màu R1:**
-   - **Ống Cối Khí Nén & Giá Đạn Cầu Lửa (trên lưng `07`):** Một ống cối đồng thau ngắn (`R1_Brass`) nghiêng $45^\circ$ cùng giá kẹp 3 quả cầu thủy tinh trong suốt (`R1_DarkGlass`) ánh sắc cam hổ phách (`R1_OrangeStripe` / `R1_LampAmber`).
-   - **Diều Hứng Hơi Băng:** Khi xếp gọn là một cuộn lá vàng Kapton (`R1_GoldFoil`) gọn gàng; khi bung ra trên cột đồng cao $2.5\text{ m}$ là một chiếc diều hình thoi có sườn men kem (`R1_CreamEnamel`) và mặt trong bằng lá vàng Kapton lấp lánh đón cột hơi nước xanh băng (`#5FF3FF`) pha vàng nắng (`#FFD27A`).
-4. **Cách người chơi nhận diện công dụng ngay lập tức:** Quả cầu thủy tinh phát sáng bay theo đường parabol vào bóng tối $\rightarrow$ bùng nổ thành vầng hào quang cam ấm áp xua tan bóng đêm $\rightarrow$ cột hơi nước xanh-vàng bốc lên từ mặt băng $\rightarrow$ chiếc diều vàng trên lưng `07` căng phồng đón lấy luồng hơi và làm đầy bình ngưng tụ băng phía dưới.
+1. **Tên gọi:** **Đạn Cầu Lửa & Đàn Hạc Sương Giá** (*The Ember Shell & Frost Harp* · Mã định danh: `KitId.EmberMortarAndFrostHarp` `[PROPOSAL]`).
+2. **Logic thời đại thập niên 1980 & Vật lý Bẫy Lạnh Chân Không (`vacuum-shapes.md` §2):** Trong chân không Mặt Trăng ($10^{-12}\text{ torr}$), pháo sáng thông thường không thể cháy nếu thiếu chất oxy hóa riêng, và hơi nước thăng hoa không tạo ra "gió" để thổi phồng một chiếc dù hay cánh diều vải (*Vapor Kite*) — các phân tử $\text{H}_2\text{O}$ bay theo quỹ đạo đạn đạo siêu thanh ($v_{\text{th}} \approx 600\text{–}900\text{ m/s}$) và sẽ nảy bật khỏi vải ấm. Các kỹ sư thập niên 1980 tại Lumen đã giải quyết cả hai bài toán bằng vật lý chân không trung thực:
+   - **Đạn Cầu Lửa (*Ember Shell*):** Quả cầu thủy tinh borosilicate rỗng thổi từ hạt thủy tinh cam (`OrangeBeads`), nạp đầy khí $\text{O}_2$ nén từ Lò Thở cùng bột nhôm nhiệt nhôm. Khi `07` bắn quả cầu xuống nền băng tối, vỏ kính vỡ ra và tự cháy ở $2500\,^\circ\text{C}$ như một mặt trời nhỏ suốt 6 giây, làm thăng hoa lớp băng vĩnh cửu thành một đài phun hơi nước đạn đạo cao vút.
+   - **Đàn Hạc Sương Giá (*The Frost Harp*):** Thay vì bất kỳ tấm vải, dù hay diều nào, trên cần đồng nâng cao của `07` là **một khung vòm bán nguyệt cứng cáp gồm 12 ống ngưng tụ bằng đồng đỏ uốn cong song song và các lá tản nhiệt đồng thau** (`R1_Copper` + `R1_Brass`), nối nhiệt với tấm bức xạ đen hướng vào vũ trụ $3\text{ K}$ để giữ nhiệt độ thanh đồng ở $T_{\text{fin}} \approx 110\text{ K}$. Khi luồng phân tử hơi nước chạm vào giàn ống đồng siêu lạnh, chúng **đóng băng ngay lập tức thành những nhánh hoa sương giá trắng xóa nở rộ trên dây đàn đồng chỉ trong 3 giây** (`hệ số bám dính ≈ 0.92`) kèm tiếng ngân hợp âm Rê trưởng trong trẻo! Ngay khi pháo sáng tắt, một xung điện trở $40\text{ W}$ làm ấm giàn ống đồng lên $+5\,^\circ\text{C}$ trong máng thu kín, làm lớp sương giá tan chảy theo ống đồng xoắn ốc chảy thẳng vào **bình thủy tinh phát sáng xanh băng (`#5FF3FF`)** sau lưng `07`!
+3. **Hình dáng trong bảng màu R1 (Phương án Hạng 1 trong `vacuum-shapes.md` §2.2):**
+   - **Ống Cối Khí Nén & Giá Đạn Cầu Lửa (trên lưng `07`):** Một ống cối đồng thau ngắn (`R1_Brass`) nghiêng $45^\circ$ cùng quả cầu thủy tinh dày (`R1_DarkGlass`) ánh sắc cam hổ phách (`R1_LampAmber`).
+   - **Đàn Hạc Sương Giá (*Frost Harp*):** Khung đàn hạc bán nguyệt cứng cáp rộng `1.15 m` gồm **12 ống đồng đỏ uốn cong đồng tâm (`R1_Copper`)** gắn trên thanh góp đồng thau (`R1_Brass`) — **hoàn toàn không có vải, không có tán dù, không có cánh diều**. Khi đón luồng hơi băng, nửa khung đàn hướng về phía cột khói phủ đầy tinh thể tuyết trắng lấp lánh (`#5FF3FF`), nối xuống bình thủy tinh hình trụ sáng xanh băng ở đuôi xe qua ống đồng ruột gà.
+4. **Cách người chơi nhận diện công dụng ngay lập tức:** Quả cầu thủy tinh phát sáng bay theo đường parabol vào bóng tối $\rightarrow$ bùng nổ thành vầng mặt trời cam ấm áp $\rightarrow$ đài phun hơi nước xanh-vàng phóng lên $\rightarrow$ hoa sương giá trắng xóa **nở rộ trực tiếp trên các thanh đồng của Đàn Hạc Sương Giá** trên lưng `07`, rồi ấm lên chảy thành dòng nước xanh mát làm đầy bình chứa phía dưới.
 5. **Vai trò trong lối chơi:** **Trang bị (Kit)** gắn ở **Khớp Đuôi (Tail Socket)** kết hợp tiêu hao đạn **Cầu Lửa** (`1 × Glass` + `1 × Oxygen` + `1 × OrangeBeads` tạo được 3 quả):
-   - **Soi sáng & Định vị băng:** Thắp sáng một vùng bán kính $35\text{ m}$ giữa Hố Tối Vĩnh Cửu trong $25\text{ giây}$ và làm bốc hơi các mạch băng ngầm để người chơi nhìn thấy bằng mắt thường.
-   - **Thu hoạch hơi băng bằng Diều:** Lái `07` (với cánh diều đang mở) lướt qua cột hơi băng đang bốc lên sẽ ngưng tụ ngay `1–2 × WaterIce` mà không cần chờ thiết bị khoan hạng nặng.
+   - **Soi sáng & Định vị băng:** Thắp sáng một vùng bán kính $35\text{ m}$ giữa Hố Tối Vĩnh Cửu và làm thăng hoa các mạch băng ngầm để người chơi nhìn thấy bằng mắt thường.
+   - **Ngưng tụ hơi băng bằng Đàn Hạc Sương Giá:** Giàn ống đồng lạnh trên lưng `07` tự động bắt giữ luồng hơi băng đạn đạo, kết tinh và nấu chảy thành `3 × WaterIce` tinh khiết chảy vào bình chứa.
 6. **Nguyên liệu cần & Thứ mở khóa:**
    - *Chi phí chế tạo (`0.8`):* `2 × Alloy`, `2 × Glass`, `2 × OrangeBeads`, `1 × Oxygen`.
    - *Mở khóa:* Khảo sát an toàn **Hố Tối Vĩnh Cửu** (`0.8`), thu thập mẫu `WaterIce` đầu tiên để chế tạo nâng cấp cấp 3 và kích hoạt các **Thợ Khai Băng (`Ice Tappers`)**.
-7. **Điểm chạm cốt truyện cố định (`story-v4.md`):** Biến mục tiêu trọng tâm của cốt truyện (Quyết định 2, 8 & 10: chứng minh sự tồn tại của trữ lượng băng nước ngầm khổng lồ để các Tàu Phương Chu L4/L5 trở về) thành một khoảnh khắc thị giác đầy chất thơ — ánh lửa cam ấm áp nở hoa giữa bóng tối hai tỷ năm tuổi.
+7. **Điểm chạm cốt truyện cố định (`story-v4.md` & `vacuum-shapes.md`):** Hiện thực hóa yêu cầu của Chủ dự án (`Logs/TASK.md:10-20`: thay thế "diều hứng hơi" bằng bộ ngưng tụ bản lạnh đồng nơi sương giá nở rộ rồi tan chảy vào bình) và kết nối trực tiếp với bằng chứng Băng Nước (`WaterIce`) tại Hố Tối Vĩnh Cửu.
 
 ---
 
@@ -103,24 +106,24 @@ Dưới đây là 11 phát minh định hình bản sắc công nghệ thập ni
 ---
 
 ### Phát Minh 04 — Hệ Thống Ống Bưu Chính Khí Nén (*The Pneumatic Post*)
-*(Phát triển từ Ý tưởng gốc #4 · Mạng lưới vận chuyển vật phẩm tự động trong căn cứ)*
+*(Phát triển từ Ý tưởng gốc #4 · Mạng lưới vận chuyển vật phẩm tự động tuần hoàn kín trong căn cứ)*
 
 ![Hệ Thống Ống Bưu Chính Khí Nén](../../Logs/concepts/pneumatic_post.png)
 
-> **Pitch một dòng:** *Những đường ống đồng thau và thủy tinh trong suốt uốn vòm trên cao, dùng một cú phụt khí oxy nén để bắn các viên nang hàng hóa phát sáng chạy vút từ Lò Nung sang Giá Lưu Trữ kèm tiếng chuông đồng ngân vang.*
+> **Pitch một dòng:** *Những đường ống đồng thau và thủy tinh trong suốt hàn kín 100% uốn vòm trên cao, dùng chênh lệch áp suất khí oxy tuần hoàn kín để bắn các viên nang hàng hóa phát sáng chạy vút từ Lò Nung sang Giá Lưu Trữ kèm tiếng chuông đồng dẫn truyền qua nền đá.*
 
 1. **Tên gọi:** **Hệ Thống Ống Bưu Chính Khí Nén** (*The Pneumatic Post* · Mã định danh: `StructureType.PneumaticPost` `[PROPOSAL]`).
-2. **Logic thời đại thập niên 1980:** Thay vì dùng băng chuyền lộ thiên dễ bị kẹt bởi bụi Mặt Trăng sắc nhọn hay cánh tay robot phức tạp, các ngân hàng, bệnh viện và nhà máy thập niên 1970–1980 sử dụng hệ thống **ống bưu chính khí nén** (*Lamson Pneumatic Tube*). Tại căn cứ của `07`, chỉ cần trích một luồng khí $\text{O}_2$ áp suất thấp từ Lò Thở Ilmenit vào đường ống thủy tinh – đồng thau kín là có thể bắn các viên nang hình trụ chứa thỏi kim loại (`Metal`), chip mạch (`CircuitChips`) hay bình oxy đi khắp căn cứ với tốc độ $15\text{ m/s}$ mà không sợ bụi regolith làm hỏng cơ cấu.
+2. **Logic thời đại thập niên 1980 & Kỷ luật Chân không:** Thay vì dùng băng chuyền lộ thiên dễ bị kẹt bởi bụi Mặt Trăng sắc nhọn hay cánh tay robot phức tạp, các ngân hàng, bệnh viện và nhà máy thập niên 1970–1980 sử dụng hệ thống **ống bưu chính khí nén** (*Lamson Pneumatic Tube*). Tại căn cứ của `07`, hệ thống đường ống thủy tinh – đồng thau được **hàn kín khí 100% (*Hermetically Sealed Closed-Loop*)** có ống hồi khí nội bộ (không bao giờ xả khí $\text{O}_2$ ra môi trường chân không). Khi viên nang đi qua cụm khóa khí xoay hai van, quạt thổi tuần hoàn kín đẩy viên nang chứa thỏi kim loại (`Metal`), chip mạch (`CircuitChips`) hay bình oxy đi khắp căn cứ với tốc độ $15\text{ m/s}$ mà không thất thoát một phân tử khí nào.
 3. **Hình dáng trong bảng màu R1 (`Vòm ống cao 2.15 m` để `07` cao `1.46 m` chạy qua bên dưới thoải mái):**
-   - **Đường ống & Chân đế:** Khung trụ đỡ bằng thép xám than (`R1_BareSteel`) và hộp van men kem (`R1_CreamEnamel`) có một sọc cam (`R1_OrangeStripe`) cùng nắp bảo trì xanh xô thơm (`R1_SagePatch`). Hai đầu ống là cổ góp đồng thau tiện ren (`R1_Brass`), nối với đoạn ống cong dài ở giữa bằng **thủy tinh borosilicate trong suốt** (`R1_DarkGlass`).
+   - **Đường ống & Chân đế:** Khung trụ đỡ bằng thép xám than (`R1_BareSteel`) và hộp van khóa khí men kem (`R1_CreamEnamel`) có một sọc cam (`R1_OrangeStripe`) cùng nắp bảo trì xanh xô thơm (`R1_SagePatch`). Hai đầu ống là cổ góp đồng thau tiện ren (`R1_Brass`), nối với đoạn ống cong dài ở giữa bằng **thủy tinh borosilicate trong suốt** (`R1_DarkGlass`).
    - **Viên nang vận chuyển (Capsule):** Hình trụ đồng thau đánh bóng có hai vòng đệm cao su đen (`R1_Rubber`) ở hai đầu và một dải đèn định vị vàng hổ phách (`R1_LampAmber` `#FFB547`) ở giữa thân.
-   - **Cờ báo & Chuông cơ khí:** Ở giỏ nhận hàng bên hông Giá Lưu Trữ có một lá cờ kim loại sơn cam (`R1_OrangeStripe`) tự động bật dựng đứng kèm tiếng *"phụt — keng!"* ấm áp mỗi khi viên nang vừa đáp xuống.
-4. **Cách người chơi nhận diện công dụng ngay lập tức:** Người chơi nhìn thấy rõ viên nang đồng thau phát sáng lao vút qua đoạn ống thủy tinh trong suốt nối từ đầu ra của **Lò Nung (`Smelter`)** hoặc **Lò Thở (`Ilmenite Breather`)** sang thẳng **Giá Lưu Trữ (`Storage Rack`)**, theo sau là một làn khói oxy trắng nhỏ xì ra từ van giảm áp và lá cờ cam bật lên báo hiệu hàng đã tới.
+   - **Cờ báo & Chuông cơ khí:** Ở giỏ nhận hàng bên hông Giá Lưu Trữ có một lá cờ kim loại sơn cam (`R1_OrangeStripe`) tự động bật dựng đứng kèm tiếng *"phụt — keng!"* ấm áp dẫn truyền qua chân đế mỗi khi viên nang vừa đáp xuống.
+4. **Cách người chơi nhận diện công dụng ngay lập tức:** Người chơi nhìn thấy rõ viên nang đồng thau phát sáng lao vút qua đoạn ống thủy tinh kín trong suốt nối từ đầu ra của **Lò Nung (`Smelter`)** hoặc **Lò Thở (`Ilmenite Breather`)** sang thẳng **Giá Lưu Trữ (`Storage Rack`)**, giảm chấn bằng đệm khí nội bộ và bật lá cờ cam báo hiệu hàng đã tới.
 5. **Vai trò trong lối chơi:** **Công trình kết nối hậu cần căn cứ (`0.6–0.7`):**
    - Tự động chuyển thành phẩm từ các máy sản xuất (`Smelter`, `Ilmenite Breather`, `Vacuum Glass-Blower`) vào thẳng các ô trống của `Storage Rack` (hoặc ngược lại sang bàn chế tạo `Fabricator`) mà không cần `07` phải xúc từng món đi lại.
-   - Cho phép kết nối chuỗi tối đa 4 công trình trong bán kính $20\text{ m}$ quanh căn cứ chỉ với một bình áp suất $\text{O}_2$ nạp ban đầu (tuần hoàn kín không tốn thêm oxy).
+   - Cho phép kết nối chuỗi tối đa 4 công trình trong bán kính $20\text{ m}$ quanh căn cứ chỉ với một bình áp suất $\text{O}_2$ nạp ban đầu (tuần hoàn kín 100%, không tốn thêm oxy).
 6. **Nguyên liệu cần & Thứ mở khóa:**
-   - *Chi phí chế tạo (`0.6`):* `2 × Metal`, `2 × Glass`, `1 × Wiring`, `1 × Oxygen` (để nạp áp suất đường ống).
+   - *Chi phí chế tạo (`0.6`):* `2 × Metal`, `2 × Glass`, `1 × Wiring`, `1 × Oxygen` (để nạp áp suất đường ống kín).
    - *Mở khóa:* Tự động hóa hoàn toàn dây chuyền sản xuất tại căn cứ, giải phóng `07` để đi thám hiểm các vùng xa (`0.7–0.9`).
 7. **Điểm chạm cốt truyện cố định (`story-v4.md`):** Phản ánh đúng tinh thần tự động hóa cơ-điện-khí thập niên 1980 của Trạm Meridian (Quyết định 5) và tuân thủ nghiêm ngặt quy tắc của Giám đốc Sáng tạo ([`0.5.5-owner-feedback.md` §2](0.5.5-owner-feedback.md)): **không bao giờ vứt vật phẩm trôi nổi trên mặt đất** — mọi tài nguyên đều nằm gọn trong viên nang đồng thau và trượt vào thẳng khay chứa của Giá Lưu Trữ.
 
@@ -233,43 +236,45 @@ Dưới đây là 11 phát minh định hình bản sắc công nghệ thập ni
 1. **Tên gọi:** **Lò Thổi Cầu Thủy Tinh & Quay Tơ Đá Bazan** (*The Vacuum Glass-Blower & Basalt Spinner* · Mã định danh: `StructureType.GlassAndBasaltWorks` `[PROPOSAL]`).
 2. **Logic thời đại thập niên 1980:** Năm 1972, nhà địa chất Harrison Schmitt trên tàu **Apollo 17** đã phát hiện ra **Đất Cam (*Orange Soil*)** tại thung lũng Taurus-Littrow — những hạt thủy tinh núi lửa màu cam rực rỡ hình thành từ các đài phun lửa cổ đại 3.6 tỷ năm trước (đã được mã hóa sẵn trong game là [`SalvageMaterial.OrangeBeads = 4`](../../Assets/_Project/Scripts/Core/SalvageMaterial.cs)). Trong môi trường chân không hoàn hảo và trọng lực thấp $1/6\text{ g}$ của Mặt Trăng, các nghiên cứu sản xuất vũ trụ thập niên 1980 của NASA phát hiện ra hai điều kỳ diệu:
    - Thứ nhất, thủy tinh nấu chảy trong chân không không hề có bọt khí tạp chất và bền gấp nhiều lần thủy tinh Trái Đất; chỉ cần dùng một ống đồng thổi nhẹ một nhịp khí $\text{O}_2$ từ Lò Thở vào giọt thủy tinh cam nóng chảy là sức căng bề mặt trong trọng lực thấp sẽ tự động tạo ra một **quả cầu thủy tinh rỗng tròn trịa hoàn hảo** (dùng làm vỏ Đạn Cầu Lửa, ống Bưu Chính Khí Nén, bình Đèn Tảo và thấu kính gương).
-   - Thứ hai, đá bazan Mặt Trăng khi nung chảy và quay ly tâm sẽ kéo ra được **tơ đá bazan (*Basalt Fiber*)** có ánh đồng vàng — dùng để dệt vải bạt cho Diều Hứng Hơi Băng và bện cáp chịu lực mà không cần một sợi bông hay nhựa dầu mỏ nào từ Trái Đất!
+   - Thứ hai, đá bazan Mặt Trăng khi nung chảy và quay ly tâm sẽ kéo ra được **tơ đá bazan (*Basalt Fiber*)** có ánh đồng vàng — dùng để bện bọc cách nhiệt cho cần đồng của **Đàn Hạc Sương Giá** và bện cáp chịu lực (`Anchor Line`) mà không cần một sợi bông hay nhựa dầu mỏ nào từ Trái Đất!
 3. **Hình dáng trong bảng màu R1 (`1.60 m × 1.15 m × 1.75 m`):**
    - **Khoang Trái (Lò Thổi Cầu Thủy Tinh Chân Không):** Một ống thổi bằng đồng thau xoay tròn nối với Bình Oxy bên hông hạ xuống một lồng bảo vệ bằng đồng thau. Bên trong lồng, một quả cầu thủy tinh nóng chảy màu cam vàng rực rỡ (`#FFB547` chuyển sang `#FF8A5B`) đang phồng tròn lên, bên dưới là máng con lăn nơi 2 quả cầu thủy tinh trong vắt đã nguội đang chờ `07` xúc lấy.
    - **Phễu Giữa:** Đựng đầy những **Hạt Thủy Tinh Cam (`OrangeBeads`)** lấp lánh như trứng cá hồi phát sáng cam ấm.
    - **Khoang Phải (Dàn Quay Tơ Đá Bazan):** Ba con suốt đồng thau kiểu máy dệt thập niên 1980 (`R1_Brass`) đang quay tít, kéo những sợi tơ đá bazan ánh đồng vàng từ nồi nấu đá xuống một cuộn cáp lớn vừa tầm xúc của `07`.
 4. **Cách người chơi nhận diện công dụng ngay lập tức:** Phễu hạt màu cam ở giữa $\rightarrow$ bên trái là bong bóng thủy tinh nóng đỏ đang được thổi phồng thành quả cầu pha lê lăn ra khay $\rightarrow$ bên phải là 3 con suốt đang cuộn những sợi tơ vàng óng.
 5. **Vai trò trong lối chơi:** **Công trình chế biến tinh (`0.6–0.7` Workshop Structure):**
-   - Biến nguyên liệu thô [`SalvageMaterial.OrangeBeads = 4`](../../Assets/_Project/Scripts/Core/SalvageMaterial.cs) + đá bazan + một nhịp khí `Oxygen` thành [`SalvageMaterial.Glass = 8`](../../Assets/_Project/Scripts/Core/SalvageMaterial.cs), [`SalvageMaterial.Optics = 2`](../../Assets/_Project/Scripts/Core/SalvageMaterial.cs), và cuộn cáp/vải sợi bazan (`Wiring`).
+   - Biến nguyên liệu thô [`SalvageMaterial.OrangeBeads = 4`](../../Assets/_Project/Scripts/Core/SalvageMaterial.cs) + đá bazan + một nhịp khí `Oxygen` thành [`SalvageMaterial.Glass = 8`](../../Assets/_Project/Scripts/Core/SalvageMaterial.cs), [`SalvageMaterial.Optics = 2`](../../Assets/_Project/Scripts/Core/SalvageMaterial.cs), và cuộn cáp/vỏ bọc sợi bazan (`Wiring`).
    - Giúp người chơi **tự chủ hoàn toàn nguồn Kính (`Glass`) và Quang học (`Optics`)** từ đất Mặt Trăng mà không bị phụ thuộc hoàn toàn vào việc đập phá cửa sổ xác tàu cũ.
 6. **Nguyên liệu cần & Thứ mở khóa:**
    - *Chi phí chế tạo (`0.6`):* `3 × Metal`, `2 × OrangeBeads`, `1 × Wiring`, `1 × Oxygen`.
-   - *Mở khóa:* Sản xuất hàng loạt vỏ **Đạn Cầu Lửa**, ống kính cho **Tháp Gương Đẩy Nắng**, ống thủy tinh cho **Bưu Chính Khí Nén**, và vải bạt cho **Diều Hứng Hơi Băng**.
+   - *Mở khóa:* Sản xuất hàng loạt vỏ **Đạn Cầu Lửa**, ống kính cho **Tháp Gương Đẩy Nắng**, ống thủy tinh cho **Bưu Chính Khí Nén**, và bọc cách nhiệt cho **Đàn Hạc Sương Giá**.
 7. **Điểm chạm cốt truyện cố định (`story-v4.md`):** Tôn vinh tài nguyên đặc trưng [`OrangeBeads`](../../Assets/_Project/Scripts/Core/SalvageMaterial.cs) đã có trong mã nguồn và giải thích vì sao kiến trúc trên Mặt Trăng của thập niên 1980 lại tràn ngập những mái vòm kính, bình cầu thủy tinh và cáp bện ánh đồng.
 
 ---
 
-### Phát Minh 10 — Cối Xay Bụi Tĩnh Điện Đường Ranh Sáng (*The Terminator Electrostatic Dust-Sail*)
-*(Phát minh nguyên bản #3 `[PROPOSAL]` · "Chiếc cối xay gió trên Mặt Trăng không có gió" tại vùng Biển Dài `0.6`)*
+### Phát Minh 10 — Tháp Lược Tĩnh Điện Đường Ranh Sáng (*The Terminator Electrostatic Louver-Comb*)
+*(Phát minh nguyên bản #3 `[PROPOSAL]` · Thiết kế lại theo chuẩn chân không `vacuum-shapes.md` §4.1 thay thế cho hình dáng cối xay gió tại vùng Biển Dài `0.6`)*
 
-![Cối Xay Bụi Tĩnh Điện Đường Ranh Sáng](../../Logs/concepts/dust_sail.png)
+![Tháp Lược Tĩnh Điện Đường Ranh Sáng](../../Logs/concepts/dust_harvester_v2.png)
 
-> **Pitch một dòng:** *Một "cối xay gió" bằng lưới đồng bốn cánh quay chầm chậm giữa làn sương bụi tích điện phát sáng dọc đường ranh giới ngày–đêm của Mặt Trăng, chải lấy từng hạt quặng Ilmenit và thủy tinh cam đang lơ lửng trong chân không.*
+> **Pitch một dòng:** *Một tháp thu bụi tĩnh điện cố định gồm ba khung lục giác gắn các lá chớp đồng cao áp (`±1.5 kV`) đứng sừng sững giữa làn sương bụi tích điện phát sáng dọc đường ranh giới ngày–đêm của Mặt Trăng, chải lấy từng hạt quặng Ilmenit và thủy tinh cam đang lơ lửng trong chân không.*
 
-1. **Tên gọi:** **Cối Xay Bụi Tĩnh Điện Đường Ranh Sáng** (*The Terminator Electrostatic Dust-Sail* · Mã định danh: `StructureType.ElectrostaticDustSail` `[PROPOSAL]`).
-2. **Logic thời đại thập niên 1980:** Dựa trên một hiện tượng vật lý có thật trên Mặt Trăng từng được tàu đổ bộ **Surveyor 7 (1968)** chụp ảnh và các phi hành gia **Apollo 17 (1972)** ghi chép lại dưới tên gọi ** Ánh Sáng Chân Trời (*Horizon Glow* / *Electrostatic Dust Levitation*)**: dọc theo đường ranh giới bình minh và hoàng hôn (*Terminator*), sự chênh lệch điện thế quang điện giữa vùng đất có nắng (tích điện dương do tia cực tím) và vùng đất trong bóng tối (tích điện âm do gió mặt trời) tạo ra một điện trường cực mạnh nhấc bổng hàng triệu hạt bụi mịn Mặt Trăng bay lơ lửng thành một làn sương phát sáng cao từ $1\text{ m}$ đến $3\text{ m}$ trên mặt đất! Các kỹ sư thập niên 1980 tại Lumen đã dựng những chiếc **"Cối Xay Bụi Tĩnh Điện"** dọc vùng Biển Dài (*The Long Mare*): bốn cánh buồm lưới đồng phân cực điện áp cao quay chầm chậm nhờ lực đẩy tĩnh điện của dòng bụi đang trôi, vừa tạo ra một dòng điện tĩnh nhỏ vừa dùng thanh nam châm ở viền cánh để "chải" và hứng lấy những hạt quặng sắt-titan **Ilmenit** và **Hạt Thủy Tinh Cam** tinh khiết nhất đang lơ lửng trong sương bụi!
-3. **Hình dáng trong bảng màu R1 (`Cao 2.35 m`, đặt trên 4 chân kiềng thép):**
+1. **Tên gọi:** **Tháp Lược Tĩnh Điện Đường Ranh Sáng** (*The Terminator Electrostatic Louver-Comb* · Mã định danh: `StructureType.ElectrostaticLouverComb` `[PROPOSAL]`).
+2. **Logic thời đại thập niên 1980 & Vật lý Tĩnh điện Chân không:** Dựa trên hiện tượng vật lý có thật trên Mặt Trăng từng được tàu đổ bộ **Surveyor 7 (1968)** chụp ảnh và các phi hành gia **Apollo 17 (1972)** ghi chép lại dưới tên gọi **Ánh Sáng Chân Trời (*Horizon Glow* / *Electrostatic Dust Levitation*)**: dọc theo đường ranh giới bình minh và hoàng hôn (*Terminator*), sự chênh lệch điện thế quang điện giữa vùng đất có nắng (tích điện dương do tia cực tím) và vùng đất trong bóng tối (tích điện âm do gió mặt trời) tạo ra một điện trường $1000\text{ V/m}$ nhấc bổng hàng triệu hạt bụi mịn Mặt Trăng bay lơ lửng thành một làn sương phát sáng cao từ $1\text{ m}$ đến $3\text{ m}$ trên mặt đất!
+   - **Vì sao không dùng cánh quạt quay kiểu cối xay gió (`vacuum-shapes.md` §4.1):** Trong chân không không có gió khí quyển, còn mật độ hạt bụi lơ lửng quá loãng để tạo mô-men xoắn quay trục cánh quạt (hơn nữa ổ trục quay lộ thiên sẽ bị kẹt cứng bởi bụi regolith sắc nhọn).
+   - **Giải pháp Lược Tĩnh Điện Cố Định:** Các kỹ sư thập niên 1980 tại Lumen đã dựng những chiếc **Tháp Lược Tĩnh Điện** hoàn toàn đứng yên (không có bộ phận quay lộ thiên): ba khung đồng thau lục giác dựng đứng gắn hàng chục lá chớp đồng đỏ song song phân cực xen kẽ $+1.5\text{ kV}$ và $-1.5\text{ kV}$ cùng các thanh nam châm vĩnh cửu. Lực hút Coulomb ($\mathbf{F}_E = q\mathbf{E}$) hút thẳng các hạt bụi khoáng chất đang lơ lửng bám vào các lá chớp đồng; cứ mỗi $30\text{ giây}$, rơ-le đảo cực trong $0.2\text{ giây}$ kết hợp với một nhịp búa gõ áp điện nhẹ (`nốt F#4`) làm toàn bộ hạt quặng sắt-titan **Ilmenit** và **Hạt Thủy Tinh Cam** trút xuống máng đồng chảy vào bình thủy tinh phát sáng!
+3. **Hình dáng trong bảng màu R1 (`Cao 2.35 m`, đặt trên 4 chân kiềng thép — Không có cánh quạt cối xay gió):**
    - **Thân trụ & Sứ cách điện:** Thân trụ hình trụ tráng men kem vát cạnh (`R1_CreamEnamel` `#F4E6C8`) với một sọc cam (`R1_OrangeStripe`), trên đỉnh có 4 cột sứ cách điện cao áp có gân trắng và cửa sổ đồng hồ tĩnh điện phát sáng vàng hổ phách (`R1_LampAmber` `#FFB547`).
-   - **Bốn cánh buồm lưới đồng:** Bốn cánh quạt hình thang rộng đan bằng lưới đồng đỏ mảnh (`R1_Copper` `#DA8E48`) viền khung đồng thau từ tính (`R1_Brass`), quay chậm rãi với tốc độ $4\text{ vòng/phút}$ giữa làn sương bụi lấp lánh ánh tím-vàng-xanh dọc chân trời.
-   - **Ống máng & Bình hứng hạt:** Một ống đồng dẫn từ trục cánh quạt xuống chiếc bình thủy tinh phát sáng vàng ấm ở độ cao $0.60\text{ m}$, nơi những hạt quặng đen và hạt thủy tinh cam rơi xuống lấp lánh như cát trong đồng hồ cát.
-4. **Cách người chơi nhận diện công dụng ngay lập tức:** Xung quanh tháp là những cột sương bụi phát sáng lơ lửng từ mặt đất $\rightarrow$ bốn cánh lưới đồng quay chậm rãi giữa làn sương $\rightarrow$ những tia lửa tĩnh điện nhỏ xíu lách tách trên lưới đồng và hạt quặng chảy xuống bình thủy tinh sáng đèn bên dưới. Một hình ảnh nghịch lý đầy thi vị: **"Một chiếc cối xay gió quay giữa thế giới không có không khí."**
+   - **Vương miện 3 khung lá chớp đồng cố định:** Ba khung lục giác dựng đứng bằng đồng thau (`R1_Brass`) xếp các lá chớp đồng đỏ nghiêng song song (`R1_Copper` `#DA8E48`), lấp lánh những tia hồ quang tĩnh điện xanh-vàng giữa làn sương bụi bình minh.
+   - **Ống máng & Bình hứng hạt:** Một ống máng đồng dẫn từ đáy giàn lá chớp xuống chiếc bình thủy tinh phát sáng vàng ấm ở độ cao $0.60\text{ m}$, nơi những hạt quặng đen và hạt thủy tinh cam rơi xuống lấp lánh như cát trong đồng hồ cát.
+4. **Cách người chơi nhận diện công dụng ngay lập tức:** Xung quanh tháp là những cột sương bụi phát sáng lơ lửng từ mặt đất $\rightarrow$ giàn lá chớp đồng trên đỉnh tháp nổ lách tách những tia hồ quang tĩnh điện xanh-vàng $\rightarrow$ dòng hạt quặng lấp lánh bị hút vào lá đồng rồi chảy rào rào xuống bình thủy tinh sáng đèn bên dưới ở tầm ngực của `07`.
 5. **Vai trò trong lối chơi:** **Công trình thu hoạch thụ động & Trạm Sạc Dọc Đường (`0.6–0.7`):**
-   - Khi đặt dọc theo các sườn dốc hoặc ranh giới bóng râm của vùng **Biển Dài (`The Long Mare`)**, mỗi Cối Xay Bụi tự động gom được `1 × Ilmenite` + `1 × OrangeBeads` sau mỗi $3\text{ phút}$ mà không làm cạn kiệt các mỏ đá xung quanh.
+   - Khi đặt dọc theo các sườn dốc hoặc ranh giới bóng râm của vùng **Biển Dài (`The Long Mare`)**, mỗi Tháp Lược Tĩnh Điện tự động gom được `1 × Ilmenite` + `1 × OrangeBeads` sau mỗi $3\text{ phút}$ mà không làm cạn kiệt các mỏ đá xung quanh.
    - Đồng thời cung cấp một ổ cắm sạc tĩnh điện công suất nhỏ (`+25%` tốc độ sạc dự phòng ban đêm) cho các tuyến đường tuần tra của `07` và các robot đồng nghiệp như **Lưới Bụi (`12` — "Dust-Comb")**.
 6. **Nguyên liệu cần & Thứ mở khóa:**
    - *Chi phí chế tạo (`0.6`):* `2 × Metal`, `3 × Wiring`, `1 × Glass`, `1 × Ilmenite`.
    - *Mở khóa:* Nguồn cung cấp `Ilmenite` và `OrangeBeads` tự động bền vững để nuôi **Lò Thở Ilmenit** và **Lò Thổi Cầu Thủy Tinh**.
-7. **Điểm chạm cốt truyện cố định (`story-v4.md` & `0.6-rovers-and-salvage.md`):** Gắn kết hoàn hảo với bối cảnh địa lý vùng Biển Dài (`0.6-world-regions.md`) và công việc của chú rover tự hành **unit `12` ("Lưới Bụi" / *Dust-Comb*)**, biến một hiện tượng khoa học thực tế của chương trình Apollo thành một biểu tượng thị giác khó quên trên đường chân trời.
+7. **Điểm chạm cốt truyện cố định (`story-v4.md` & `vacuum-shapes.md`):** Gắn kết hoàn hảo với bối cảnh địa lý vùng Biển Dài (`0.6-world-regions.md`) và công việc của chú rover tự hành **unit `12` ("Lưới Bụi" / *Dust-Comb*)**, biến hiện tượng khoa học thực tế của chương trình Apollo thành một biểu tượng kiến trúc chân không trung thực 100%.
 
 ---
 
@@ -302,12 +307,12 @@ Dưới đây là 11 phát minh định hình bản sắc công nghệ thập ni
 
 Bản giao nhiệm vụ yêu cầu chúng ta đánh giá thẳng thắn 8 ý tưởng gợi ý ban đầu (*"Một số ý tưởng có thể yếu — hãy thẳng thắn cắt bỏ chúng và giải thích lý do"*). Dưới đây là quyết định biên tập chi tiết của chúng tôi:
 
-| # | Ý tưởng gốc trong đề bài | Quyết định thiết kế | Lý do kỹ thuật, lối chơi & cốt truyện (`story-v4.md`) |
+| # | Ý tưởng gốc trong đề bài | Quyết định thiết kế | Lý do kỹ thuật, lối chơi & cốt truyện (`story-v4.md` & `vacuum-shapes.md`) |
 |---|---|---|---|
-| **1** | **Lò Thở Ilmenit** (*The Breather*) | **GIỮ & ĐẶT LÀM TRỤ CỘT** | Ý tưởng xuất sắc nhất: kết nối trực tiếp tài nguyên [`SalvageMaterial.Ilmenite = 5`](../../Assets/_Project/Scripts/Core/SalvageMaterial.cs) đã có trong code với hình ảnh một cỗ máy "biết thở" ấm áp và mở khóa toàn bộ nhánh công nghệ dùng khí $\text{O}_2$ mà không vi phạm cốt truyện Băng Nước. |
-| **2** | **Đạn Cầu Lửa & Diều Hứng Hơi Băng** (*Ember Shells & Vapor Kite*) | **GIỮ & PHÁT TRIỂN SÂU** | Hình ảnh pháo sáng nhiệt nhôm nổ như mặt trời nhỏ giữa đáy hố tối và chiếc diều vàng Kapton hứng hơi băng là một khoảnh khắc thị giác – lối chơi độc nhất vô nhị cho bản `0.8`. |
+| **1** | **Lò Thở Ilmenit** (*The Breather*) | **GIỮ & ĐẶT LÀM TRỤ CỘT** | Ý tưởng xuất sắc nhất: kết nối trực tiếp tài nguyên [`SalvageMaterial.Ilmenite = 5`](../../Assets/_Project/Scripts/Core/SalvageMaterial.cs) đã có trong code với pít-tông tích áp tuần hoàn kín và mở khóa toàn bộ nhánh công nghệ dùng khí $\text{O}_2$ mà không vi phạm cốt truyện Băng Nước. |
+| **2** | **Đạn Cầu Lửa & Đàn Hạc Sương Giá** *(Thay thế Diều Hứng Hơi Băng)* | **GIỮ & THIẾT KẾ LẠI THEO VẬT LÝ CHÂN KHÔNG** | Trong chân không không có áp suất khí quyển để căng phồng diều vải (*Vapor Kite*). Thay bằng **Đàn Hạc Sương Giá (*Frost Harp*)** — giàn ống đồng lạnh $110\text{ K}$ nơi hoa sương giá trắng xóa nở rộ khi đón đài phun hơi nước rồi ấm lên chảy thành nước lỏng vào bình — vừa trung thực vật lý 100% vừa đẹp mắt hơn. |
 | **3** | **Nhà Kính Thử Nghiệm** (*Trial Glasshouses*) | **GIỮ NHƯNG TINH CHỈNH CỐT TRUYỆN** | Nếu để khoai tây hay cây xanh còn sống trên mặt đất ở `0.7`, nó sẽ **phá hỏng quy tắc cốt lõi của [`0.6-living-moon.md` §3](0.6-living-moon.md)** (rêu của Theo trong Hang Dung Nham `0.8` phải là thực vật xanh trên cạn duy nhất còn sống). Do đó, chúng tôi thiết kế các luống khoai tây năm 1988 đã **đóng băng và chết khô**, chỉ còn lại **Đèn Tảo Sống (*Algae Lantern*)** chứa vi tảo lỏng phát sáng vàng-ngọc còn sủi bọt. |
-| **4** | **Ống Bưu Chính Khí Nén** (*Pneumatic Post*) | **GIỮ & LÀM RÕ HÌNH DÁNG** | Thay thế hoàn hảo cho các băng chuyền công nghiệp nhàm chán bằng những vòm ống thủy tinh – đồng thau thập niên 1980 nơi người chơi nhìn thấy viên nang phát sáng lao vút qua đầu `07`. |
+| **4** | **Ống Bưu Chính Khí Nén** (*Pneumatic Post*) | **GIỮ & LÀM RÕ TUẦN HOÀN KÍN** | Thay thế hoàn hảo cho các băng chuyền công nghiệp nhàm chán bằng những vòm ống thủy tinh – đồng thau hàn kín 100% nơi người chơi nhìn thấy viên nang phát sáng lao vút qua đầu `07`. |
 | **5** | **Bộ Đẩy Khí Lạnh O2** (*Cold-Gas Puff Thrusters*) | **GIỮ** | Giải pháp di chuyển vượt khe vực rất đúng chất NASA năm 1984 (MMU) và tiêu thụ trực tiếp bình $\text{O}_2$ từ Lò Thở. |
 | **6** | **Mũi Cắt Nhiệt Khí Oxy** (*Oxy-Lance*) | **HỢP NHẤT VÀO MỎ CẮT CẤP 3 (`0.7`)** | Trong [`0.7-wrecks-and-cutting.md`](0.7-wrecks-and-cutting.md) đã có sẵn 3 cấp mỏ cắt (`Standard` $\rightarrow$ `Focused` $\rightarrow$ `Thermal`). Việc thêm một mỏ cắt thứ 4 sẽ làm trùng lặp công năng. Thay vào đó, biến **Mũi Cắt Nhiệt Khí Oxy** thành chính hình hài và cơ chế nạp $\text{O}_2$ tăng áp của **Mỏ Cắt Nhiệt Cấp 3 (`Thermal Cutter`)** giúp hệ thống nâng cấp sắc gọn và có chiều sâu hơn hẳn. |
 | **7** | **Đường Ray Phóng Quặng** (*Mass Driver*) | **GIỮ LÀM ĐẠI CÔNG TRÌNH BIỂU TƯỢNG** | Là cầu nối vật lý giữa mặt đất Mặt Trăng và các Tàu Phương Chu L4/L5 trên bầu trời (Quyết định 1 & 2 của `story-v4.md`). |
@@ -333,7 +338,7 @@ flowchart LR
     end
 
     subgraph STR["2. CÔNG TRÌNH THẬP NIÊN 1980 (Structures)"]
-        S_DUST["10. Cối Xay Bụi Tĩnh Điện<br/>(Terminator Dust-Sail)"]
+        S_DUST["10. Tháp Lược Tĩnh Điện<br/>(Terminator Louver-Comb)"]
         S_BRE["01. Lò Thở Ilmenit<br/>(The Ilmenite Breather)"]
         S_GBL["09. Lò Thổi Cầu Thủy Tinh<br/>& Quay Tơ Đá Bazan"]
         S_PNE["04. Ống Bưu Chính Khí Nén<br/>(Pneumatic Post)"]
@@ -346,7 +351,7 @@ flowchart LR
         K_PUF["05. Bộ Đẩy Khí Lạnh O2<br/>(Cold-Gas Puff Thrusters)"]
         K_BEL["11. Chuông Địa Chấn O2<br/>(The Moon-Gong)"]
         K_LAN["06. Mũi Cắt Nhiệt Khí Oxy<br/>(Tier 3 Thermal Cutter)"]
-        K_EMB["02. Đạn Cầu Lửa &<br/>Diều Hứng Hơi Băng"]
+        K_EMB["02. Đạn Cầu Lửa &<br/>Đàn Hạc Sương Giá"]
         K_SLT["08b. Lõi Muối Nóng Chảy<br/>(Cell Heater - Core Socket)"]
     end
 
@@ -359,8 +364,8 @@ flowchart LR
     end
 
     R_MET --> S_DUST
-    S_DUST -->|"Chải bụi tĩnh điện"| R_ILM
-    S_DUST -->|"Chải bụi tĩnh điện"| R_ORB
+    S_DUST -->|"Lá chớp đồng hút bụi"| R_ILM
+    S_DUST -->|"Lá chớp đồng hút bụi"| R_ORB
     R_ILM --> S_BRE
     S_BRE -->|"Khử kín 900°C"| R_OXY
     S_BRE -->|"Phụ phẩm xỉ sắt"| R_MET
@@ -384,7 +389,7 @@ flowchart LR
     R_GLS & R_OXY & R_ORB --> K_EMB
     R_GLS & R_MET --> S_HEL
     S_HEL -->|"Chùm nắng phản chiếu"| K_SLT
-    K_EMB & K_SLT -->|"Soi sáng + Sưởi ấm + Thức tỉnh Ice Tappers"| G_08
+    K_EMB & K_SLT -->|"Soi sáng + Ngưng tụ sương giá + Thức tỉnh Ice Tappers"| G_08
     G_08 -->|"Khai thác băng ngầm"| R_ICE
 
     R_ICE & R_SUP --> S_MAS
@@ -397,9 +402,9 @@ flowchart LR
 
 | Phiên bản | Phát minh mở khóa | Vòng lặp lối chơi cốt lõi mới |
 |---|---|---|
-| **`0.6` — Mặt Trăng Sống Động** | **01. Lò Thở Ilmenit**<br>**04. Ống Bưu Chính Khí Nén**<br>**09. Lò Thổi Cầu Thủy Tinh & Quay Tơ Bazan**<br>**10. Cối Xay Bụi Tĩnh Điện** | Khai thác quặng đen `Ilmenite` và hạt cam `OrangeBeads` tại Biển Dài $\rightarrow$ tinh luyện khí `Oxygen` và thổi cầu `Glass` $\rightarrow$ tự động hóa vận chuyển giữa các máy trong căn cứ bằng ống khí nén. |
+| **`0.6` — Mặt Trăng Sống Động** | **01. Lò Thở Ilmenit**<br>**04. Ống Bưu Chính Khí Nén**<br>**09. Lò Thổi Cầu Thủy Tinh & Quay Tơ Bazan**<br>**10. Tháp Lược Tĩnh Điện Đường Ranh Sáng** | Khai thác quặng đen `Ilmenite` và hạt cam `OrangeBeads` tại Biển Dài $\rightarrow$ tinh luyện khí `Oxygen` và thổi cầu `Glass` $\rightarrow$ tự động hóa vận chuyển giữa các máy trong căn cứ bằng ống khí nén tuần hoàn kín. |
 | **`0.7` — Những Thứ Bị Bỏ Lại** | **03. Nhà Kính Thử Nghiệm & Đèn Tảo Sống**<br>**05. Bộ Đẩy Phản Lực Khí Lạnh O2**<br>**06. Mũi Cắt Nhiệt Khí Oxy (Cấp 3)**<br>**11. Chuông Địa Chấn Khí Oxy** | Dùng Chuông Địa Chấn rũ bụi làm lộ các xác tàu bị chôn vùi $\rightarrow$ dùng Mũi Cắt Nhiệt Khí Oxy xẻ vách ngăn titan dày $40\text{ mm}$ $\rightarrow$ dùng Bộ Đẩy Khí Lạnh bay qua các khe vực và khôi phục Đèn Tảo Sống. |
-| **`0.8` — Đi Sâu Vào Lòng Đất** | **02. Đạn Cầu Lửa & Diều Hứng Hơi Băng**<br>**08. Tháp Gương Đẩy Nắng & Lõi Muối Nóng Chảy** | Xoay Tháp Gương trên vành hố để chiếu nắng xuống đáy Hố Tối Vĩnh Cửu $\rightarrow$ nạp Lõi Muối Nóng Chảy vào bụng `07` và đánh thức các robot `Ice Tappers` $\rightarrow$ bắn Đạn Cầu Lửa làm thăng hoa băng ngầm và bung Diều Hứng Hơi Băng thu hoạch `WaterIce`. |
+| **`0.8` — Đi Sâu Vào Lòng Đất** | **02. Đạn Cầu Lửa & Đàn Hạc Sương Giá**<br>**08. Tháp Gương Đẩy Nắng & Lõi Muối Nóng Chảy** | Xoay Tháp Gương trên vành hố để chiếu nắng xuống đáy Hố Tối Vĩnh Cửu $\rightarrow$ nạp Lõi Muối Nóng Chảy vào bụng `07` và đánh thức các robot `Ice Tappers` $\rightarrow$ bắn Đạn Cầu Lửa làm thăng hoa băng ngầm và dùng Đàn Hạc Sương Giá kết tinh rồi nấu chảy hơi băng thành `WaterIce`. |
 | **`0.9–1.0` — Bầu Trời & Lời Hồi Đáp** | **07. Đường Ray Phóng Quặng Điện Từ L5** *(khôi phục buồng nạp & chuẩn trực)* | Bay dọc theo sống núi Đường Ray Phóng Quặng dài $1.2\text{ km}$, thu hồi linh kiện siêu dẫn (`Superconductor`), kích hoạt xung chuẩn trực hướng thẳng về phía các Tàu Phương Chu L4/L5 và truyền bằng chứng trữ lượng `WaterIce` lên cho Lena Moreau. |
 
 ---
@@ -409,19 +414,19 @@ flowchart LR
 Mỗi phát minh lớn cần một không gian địa lý tương xứng để người chơi nhìn thấy từ xa, tự đặt câu hỏi và tìm đường khám phá:
 
 ### Địa Danh 1 — Đồi Đá Quặng & Xưởng Lò Thở (*The Ilmenite Quarry & Breather Works* · Vùng `0.6` Biển Dài)
-- **Bối cảnh & Hình ảnh:** Một thềm đá bazan bậc thang màu đen tuyền nằm ở rìa phía Đông vùng Biển Dài (*The Long Mare*), nơi một Lò Thở Ilmenit nguyên mẫu từ năm 1986 vẫn đang đứng bên cạnh ba Cối Xay Bụi Tĩnh Điện. Chiếc bễ cao su trên đỉnh lò bị kẹt nửa chừng vì một tảng xỉ sắt, nhưng ô cửa sổ thạch anh ở bụng lò vẫn âm ỉ ánh lửa vàng hổ phách yếu ớt giữa đêm Mặt Trăng.
-- **Câu hỏi gợi tò mò (Hook Question):** *"Thứ máy gì đang phập phồng thở ra ánh sáng vàng ấm áp giữa mỏ đá đen đằng kia — và những bình đồng thau sủi bọt bên hông nó dùng để làm gì?"*
+- **Bối cảnh & Hình ảnh:** Một thềm đá bazan bậc thang màu đen tuyền nằm ở rìa phía Đông vùng Biển Dài (*The Long Mare*), nơi một Lò Thở Ilmenit nguyên mẫu từ năm 1986 vẫn đang đứng bên cạnh ba **Tháp Lược Tĩnh Điện Đường Ranh Sáng**. Pít-tông tích áp trên đỉnh lò bị kẹt nửa chừng vì một tảng xỉ sắt, nhưng ô cửa sổ thạch anh ở bụng lò vẫn âm ỉ ánh lửa vàng hổ phách yếu ớt giữa đêm Mặt Trăng.
+- **Câu hỏi gợi tò mò (Hook Question):** *"Thứ máy gì đang phập phồng nén khí giữa mỏ đá đen đằng kia — và những bình đồng thau sủi bọt bên hông nó dùng để làm gì?"*
 - **Phần thưởng khám phá:** Gỡ tảng xỉ sắt kẹt ở van xả giúp Lò Thở hoạt động trở lại, tặng ngay cho `07` 3 **Bình Oxy Đồng Thau** đầu tiên cùng bản vẽ chế tạo **Lò Thở Ilmenit** và **Ống Bưu Chính Khí Nén**.
 
 ### Địa Danh 2 — Thềm Nhà Kính Cổ (*The Glasshouse Terrace* · Vùng `0.7` Di Tích Tiền-Meridian)
-- **Bối cảnh & Hình ảnh:** Ba mái vòm kính bát giác nằm nép mình trên một bậc thềm khuất gió nhìn xuống Cánh Đồng Xác Tàu, nối với lều trại của đoàn khảo sát 4 người năm 1978 bằng một đường ống đồng đã phủ bụi. Hai vòm kính bên ngoài đã nứt vỡ và trắng xóa sương giá, nhưng vòm kính ở giữa vẫn tỏa ra một quầng sáng vàng mật ong pha xanh ngọc bích dịu mắt xuyên qua lớp kính mờ.
+- **Bối cảnh & Hình ảnh:** Ba mái vòm kính bát giác nằm nép mình trên một bậc thềm khuất bóng nhìn xuống Cánh Đồng Xác Tàu, nối với lều trại của đoàn khảo sát 4 người năm 1978 bằng một đường ống đồng đã phủ bụi. Hai vòm kính bên ngoài đã nứt vỡ và trắng xóa sương giá, nhưng vòm kính ở giữa vẫn tỏa ra một quầng sáng vàng mật ong pha xanh ngọc bích dịu mắt xuyên qua lớp kính mờ.
 - **Câu hỏi gợi tò mò (Hook Question):** *"Tất cả các vòm kính quanh đây đều đã đóng băng từ năm 1988 — tại sao bên trong vòm kính ở giữa vẫn có một chiếc lồng đèn sủi bọt ấm áp suốt 36 năm qua?"*
 - **Phần thưởng khám phá:** Mở khóa bản vẽ **Đèn Tảo Sống** cho căn cứ, thu thập thấu kính (`Optics`), và tìm thấy bản ghi âm của Theo nhắc đến việc anh đã mang mẻ rêu thật cuối cùng xuống chiếc ống dung nham ấm áp hơn ở phía Nam (dẫn đường tới `0.8`).
 
 ### Địa Danh 3 — Vành Đai Cầu Lửa & Lòng Chảo Khói Băng (*The Ember Rim & Cryo-Plume Bowl* · Vùng `0.8` Hố Tối Vĩnh Cửu)
-- **Bối cảnh & Hình ảnh:** Một vách đá cao ngập nắng vàng vĩnh cửu nhô ra ngay phía trên vực sâu đen kịt của Hố Tối Vĩnh Cửu. Trên mép vực đặt một **Tháp Gương Đẩy Nắng** bằng đồng thau đang bị lệch góc chiếu ra ngoài không trung, cùng một xe trượt khảo sát bị bỏ lại có gắn ống phóng cối và những quả cầu thủy tinh màu cam nằm trong sọt. Dưới đáy vực sâu thăm thẳm bên dưới là hình bóng mờ ảo của một Lò Muối Nóng Chảy và hai chú robot 4 chân `Ice Tappers` đang đông cứng trong băng trắng.
+- **Bối cảnh & Hình ảnh:** Một vách đá cao ngập nắng vàng vĩnh cửu nhô ra ngay phía trên vực sâu đen kịt của Hố Tối Vĩnh Cửu. Trên mép vực đặt một **Tháp Gương Đẩy Nắng** bằng đồng thau đang bị lệch góc chiếu ra ngoài không trung, cùng một xe trượt khảo sát bị bỏ lại có gắn ống phóng cối, khung **Đàn Hạc Sương Giá** bằng ống đồng uốn cong, và những quả cầu thủy tinh màu cam nằm trong sọt. Dưới đáy vực sâu thăm thẳm bên dưới là hình bóng mờ ảo của một Lò Muối Nóng Chảy và hai chú robot 4 chân `Ice Tappers` đang đông cứng trong băng trắng.
 - **Câu hỏi gợi tò mò (Hook Question):** *"Chuyện gì sẽ xảy ra nếu mình xoay chiếc gương khổng lồ trên đỉnh vách đá này chiếu thẳng xuống đáy vực đen kịt kia — và bắn một quả cầu thủy tinh phát sáng xuống mặt băng bên dưới?"*
-- **Phần thưởng khám phá:** Xoay Tháp Gương chiếu tia nắng vàng xuống đáy hố làm đỏ rực Lò Muối Nóng Chảy, đánh thức các robot `Ice Tappers` và mở khóa bộ đôi **Đạn Cầu Lửa & Diều Hứng Hơi Băng** cùng **Lõi Muối Nóng Chảy (`Cell Heater`)**.
+- **Phần thưởng khám phá:** Xoay Tháp Gương chiếu tia nắng vàng xuống đáy hố làm đỏ rực Lò Muối Nóng Chảy, đánh thức các robot `Ice Tappers` và mở khóa bộ đôi **Đạn Cầu Lửa & Đàn Hạc Sương Giá** cùng **Lõi Muối Nóng Chảy (`Cell Heater`)**.
 
 ### Địa Danh 4 — Sống Núi Đường Ray Phóng Quặng (*The Mass Driver Spine* · Vùng `0.7–0.9` Rìa Cao Nguyên)
 - **Bối cảnh & Hình ảnh:** Một sống núi đá dài $1.2\text{ km}$ vươn lên góc $14^\circ$ từ rìa Cánh Đồng Xác Tàu lên tới tận Cao Nguyên Phát Tín Hiệu. Dọc theo sống núi là hàng chục vòng cuộn cảm bằng đồng khổng lồ của **Đường Ray Phóng Quặng L5** xếp nối tiếp nhau như những cánh cổng đền thờ công nghiệp hướng thẳng về phía Trái Đất tối đen và đốm sáng nhỏ của các Tàu Phương Chu trên bầu trời. Ở nhịp giữa, đường ray bị đứt gãy bởi một hố va chạm từ năm 1988.
@@ -430,7 +435,7 @@ Mỗi phát minh lớn cần một không gian địa lý tương xứng để n
 
 ---
 
-## 6. Bảng Kiểm Chứng Tính Nhất Quán Với Cốt Truyện (`story-v4.md`) & Kỹ Thuật
+## 6. Bảng Kiểm Chứng Tính Nhất Quán Với Cốt Truyện (`story-v4.md`), Hình Khối Chân Không (`vacuum-shapes.md`) & Kỹ Thuật
 
 | Hạng mục kiểm tra | Trạng thái | Ghi chú đối chiếu |
 |---|---|---|
@@ -439,4 +444,6 @@ Mỗi phát minh lớn cần một không gian địa lý tương xứng để n
 | **3. Trạm Meridian 100% tự động không người lái (Quyết định 5)** | **ĐẠT** | Đã cắt bỏ hoàn toàn Ý tưởng #8 (*Quả Cầu Tin Nhắn*) vì mâu thuẫn với một trạm tự động không người ở; toàn bộ các phát minh được giữ lại đều phục vụ quy trình tự động hóa của robot. |
 | **4. Không có thi thể người & `SUIT 01–04 · OFFLINE` (Quyết định 6)** | **ĐẠT** | Khu Nhà Kính Thử Nghiệm (`0.7`) chỉ lưu giữ Đèn Tảo Sống và băng ghi âm của Theo từ năm 1978, hoàn toàn không có thi thể hay sự kiện bạo lực. |
 | **5. Bảo toàn mảng rêu xanh duy nhất của Theo ở Hang Dung Nham `0.8`** | **ĐẠT** | Các luống cây trồng trong Nhà Kính trên bề mặt (`0.7`) đều đã đóng băng khô từ năm 1988; chỉ còn vi tảo lỏng màu vàng-ngọc trong Đèn Tảo Sống. |
-| **6. Tuân thủ nghiêm ngặt bảng 15 vật liệu R1 & Thiết kế Rover `07` v3** | **ĐẠT** | Tất cả 11 bản vẽ concept (`1920×1080`) trong `Logs/concepts/` đều thể hiện đúng Rover `07` v3 (4 bánh cao su, thân men kem + 1 sọc cam, màn hình CRT 4:3 với 2 mắt bầu dục vàng hổ phách, không có miệng, không có tấm pin mặt trời trên lưng). |
+| **6. Tuân thủ nghiêm ngặt bảng 15 vật liệu R1 & Thiết kế Rover `07` v3** | **ĐẠT** | Tất cả bản vẽ concept (`1920×1080`) trong `Logs/concepts/` đều thể hiện đúng Rover `07` v3 (4 bánh cao su, thân men kem + 1 sọc cam, màn hình CRT 4:3 với 2 mắt bầu dục vàng hổ phách, không có miệng, không có tấm pin mặt trời trên lưng). |
+| **7. Tuân thủ 100% Quy tắc Hình Khối Chân Không (`vacuum-shapes.md`)** | **ĐẠT** | Thay thế "Diều Hứng Hơi Băng" bằng **Đàn Hạc Sương Giá** (`ember_shell_frost_harp.png`), thay thế "Cối Xay Bụi" bằng **Tháp Lược Tĩnh Điện** cố định (`dust_harvester_v2.png`), và làm rõ cơ chế tuần hoàn kín 100% của Lò Thở Ilmenit & Ống Bưu Chính Khí Nén. |
+
