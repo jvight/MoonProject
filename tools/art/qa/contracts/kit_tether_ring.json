@@ -1,0 +1,13 @@
+{
+  "model": "kit_tether_ring",
+  "pivot_tolerance": 0.015,
+  "nodes": {
+    "Kit_TetherRing": {"pivot": [0.0, 0.0, 0.0]},
+    "Glow": {"pivot": [0.0, 0.244, 0.03]}
+  },
+  "require_vertex_colors": true,
+  "allow_boundary_edges": false,
+  "max_triangles": 3000,
+  "max_meshes": 2,
+  "max_draw_calls": 8
+}
