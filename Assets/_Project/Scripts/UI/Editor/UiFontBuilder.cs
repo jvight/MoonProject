@@ -9,8 +9,9 @@ using TextAsset = UnityEngine.TextAsset;
 namespace MoonProject.UI.Editor
 {
     /// <summary>
-    /// Builds the UI Toolkit font assets of every UI font (<see cref="UiAssetPaths.Fonts"/>: Nunito Sans for text,
-    /// Exo 2 for numbers and titles) from the TTFs in Assets/_Project/UI/Fonts: signed-distance-field atlases with dynamic population (so any Vietnamese diacritic
+    /// Builds the UI Toolkit font assets of every UI font (<see cref="UiAssetPaths.Fonts"/>: IBM Plex Mono for CRT
+    /// body text, Chakra Petch for numbers and titles, Be Vietnam Pro for crew documents) from the TTFs in
+    /// Assets/_Project/UI/Fonts: signed-distance-field atlases with dynamic population (so any Vietnamese diacritic
     /// renders), pre-filled with every character of the string tables (<see cref="FontCharacters"/>) so play never
     /// has to add glyphs. An existing font asset keeps its GUID and only gains missing characters.
     /// </summary>

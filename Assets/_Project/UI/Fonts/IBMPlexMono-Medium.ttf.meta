@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 6226f6cd5e96db24c9300a3d63d8b189
+guid: 1b9542038c09600ff205ff6b13316909
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - Exo 2
+  - IBM Plex Mono
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0

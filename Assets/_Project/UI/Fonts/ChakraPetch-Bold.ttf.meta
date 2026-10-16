@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 1e7b45bee9850504abd5693389d19ebd
+guid: 52579ebfc967127d29fe4fc32a65d6a2
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - Exo 2
+  - Chakra Petch
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0

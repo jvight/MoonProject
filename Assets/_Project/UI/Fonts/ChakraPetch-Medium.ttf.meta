@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 12ac8a8e6ccb856468a31646fb601049
+guid: a3934204201f10f999130159ac66f2b9
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - Nunito Sans
+  - Chakra Petch
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0
