@@ -61,7 +61,7 @@ namespace MoonProject.World.Editor
         public static void BuildGroundMaterial()
         {
             MoonProject.Art.Editor.R1MaterialLibrary.BuildMaterials();
-            var material = new Material(FindShader(WorldPaths.GroundShader));
+            var material = new Material(LoadShader(WorldPaths.GroundShader));
             material.SetTexture("_BaseMap", LoadTexture(WorldPaths.RegolithAlbedoTexture));
             material.SetTexture("_BumpMap", LoadTexture(WorldPaths.RegolithNormalTexture));
             material.SetTexture("_MaskMap", LoadTexture(WorldPaths.RegolithMaskTexture));
@@ -77,7 +77,7 @@ namespace MoonProject.World.Editor
         public static void BuildGroundMarkMaterial()
         {
             GroundMarkSettings marks = LoadSettings().GroundMarks;
-            var material = new Material(FindShader(WorldPaths.GroundMarkShader));
+            var material = new Material(LoadShader(WorldPaths.GroundMarkShader));
             material.SetColor("_Color", marks.Tint);
             material.SetFloat("_FadeNear", marks.FadeNear);
             material.SetFloat("_FadeFar", marks.FadeFar);
@@ -90,7 +90,7 @@ namespace MoonProject.World.Editor
         public static void BuildVentBeadMaterial()
         {
             LandmarkSettings landmarks = LoadSettings().Landmarks;
-            var material = new Material(FindShader(WorldPaths.GroundMarkShader));
+            var material = new Material(LoadShader(WorldPaths.GroundMarkShader));
             material.SetColor("_Color", landmarks.VentTint);
             material.SetFloat("_EdgeSoftness", landmarks.VentEdgeSoftness);
             material.SetFloat("_FadeNear", landmarks.VentFade.x);
@@ -102,8 +102,8 @@ namespace MoonProject.World.Editor
         [MoonBuilder("World/Sky Materials", 210)]
         public static void BuildSkyMaterials()
         {
-            GeneratedAssets.CreateOrReplace(new Material(FindShader(WorldPaths.SkyShader)), WorldPaths.SkyMaterial);
-            GeneratedAssets.CreateOrReplace(new Material(FindShader(WorldPaths.EarthShader)), WorldPaths.EarthMaterial);
+            GeneratedAssets.CreateOrReplace(new Material(LoadShader(WorldPaths.SkyShader)), WorldPaths.SkyMaterial);
+            GeneratedAssets.CreateOrReplace(new Material(LoadShader(WorldPaths.EarthShader)), WorldPaths.EarthMaterial);
             AssetDatabase.SaveAssets();
         }
 
@@ -112,7 +112,7 @@ namespace MoonProject.World.Editor
         public static void BuildCanyonGlow()
         {
             CanyonSettings canyon = LoadSettings().Surface.Canyon;
-            var material = new Material(FindShader(WorldPaths.BeaconHaloShader));
+            var material = new Material(LoadShader(WorldPaths.BeaconHaloShader));
             material.SetColor("_Color", Palette.Get(PaletteSwatch.WarmLamp));
             material.SetFloat("_Intensity", canyon.GlowIntensity);
             material.SetFloat("_Radius", canyon.GlowRadius);
@@ -128,7 +128,7 @@ namespace MoonProject.World.Editor
             // The material's own values are home's lit top light, so a view without the running HomeLightingSystem
             // (an edit-time capture) keeps the halo rule too: a tight glow on the lamp up close (M3-19 §8).
             HomeLightingSettings home = LoadSettings().HomeLighting;
-            var material = new Material(FindShader(WorldPaths.BeaconHaloShader));
+            var material = new Material(LoadShader(WorldPaths.BeaconHaloShader));
             material.SetColor("_Color", Palette.Get(PaletteSwatch.WarmLamp));
             material.SetFloat("_Intensity", home.PilotIntensity * home.TopLightLevel);
             material.SetFloat("_Radius", home.PilotRadius);
@@ -295,12 +295,12 @@ namespace MoonProject.World.Editor
             return settings;
         }
 
-        private static Shader FindShader(string name)
+        private static Shader LoadShader(string path)
         {
-            Shader shader = Shader.Find(name);
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
             if (shader == null)
             {
-                throw new InvalidOperationException($"Shader '{name}' not found (Assets/_Project/Shaders/World).");
+                throw new InvalidOperationException($"No shader at '{path}'.");
             }
 
             return shader;

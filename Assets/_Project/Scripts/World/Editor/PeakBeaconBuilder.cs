@@ -45,10 +45,10 @@ namespace MoonProject.World.Editor
 
             ModelPrefabWriter.Write(CreateModel(settings.Sky.EarthDirection), WorldPaths.BeaconFolder, material);
             GeneratedAssets.CreateOrReplace(CreateHaloQuad(), WorldPaths.BeaconHaloMesh);
-            Shader shader = Shader.Find(WorldPaths.BeaconHaloShader);
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>(WorldPaths.BeaconHaloShader);
             if (shader == null)
             {
-                throw new InvalidOperationException($"Shader '{WorldPaths.BeaconHaloShader}' not found.");
+                throw new InvalidOperationException($"No shader at '{WorldPaths.BeaconHaloShader}'.");
             }
 
             GeneratedAssets.CreateOrReplace(new Material(shader), WorldPaths.BeaconHaloMaterial);

@@ -10,7 +10,7 @@ namespace MoonProject.World.Editor
         public const string GroundMaterial = GeneratedRoot + "/M_Ground.mat";
         /// <summary>Marks pressed into the dust: the rover's track shader, World's tint and fade.</summary>
         public const string GroundMarkMaterial = GeneratedRoot + "/M_GroundMarks.mat";
-        public const string GroundMarkShader = "MoonProject/Rover/Track";
+        public const string GroundMarkShader = "Assets/_Project/Shaders/Rover/RoverTrack.shader";
         /// <summary>The orange vent's bead field (M3-27): the rover's track shader tinted volcanic orange.</summary>
         public const string VentBeadMaterial = GeneratedRoot + "/M_VentBeads.mat";
         /// <summary>Home's marks in the lander's frame: worn tracks between its places, the blast scar, bootprints.</summary>
@@ -26,12 +26,12 @@ namespace MoonProject.World.Editor
         public const string BeaconModelPrefab = BeaconFolder + "/PeakBeaconModel.prefab";
         public const string BeaconHaloMesh = BeaconFolder + "/BeaconHaloQuad.asset";
         public const string BeaconHaloMaterial = BeaconFolder + "/M_BeaconHalo.mat";
-        public const string BeaconHaloShader = "MoonProject/World/LofiBeaconHalo";
+        public const string BeaconHaloShader = "Assets/_Project/Shaders/World/LofiBeaconHalo.shader";
         public const string CanyonGlowMaterial = GeneratedRoot + "/Canyon/M_CanyonGlow.mat";
         public const string TowerPilotMaterial = GeneratedRoot + "/Beacon/M_TowerPilot.mat";
-        public const string SkyShader = "MoonProject/World/LofiSky";
-        public const string EarthShader = "MoonProject/World/LofiEarth";
-        public const string GroundShader = "MoonProject/World/R1Terrain";
+        public const string SkyShader = "Assets/_Project/Shaders/World/LofiSky.shader";
+        public const string EarthShader = "Assets/_Project/Shaders/World/LofiEarth.shader";
+        public const string GroundShader = "Assets/_Project/Shaders/World/R1Terrain.shader";
         public const string RegolithAlbedoTexture = "Assets/_Project/Art/R1/Textures/T_R1_Regolith_Albedo.png";
         public const string RegolithNormalTexture = "Assets/_Project/Art/R1/Textures/T_R1_Regolith_Normal.png";
         public const string RegolithMaskTexture = "Assets/_Project/Art/R1/Textures/T_R1_Regolith_Mask.png";
