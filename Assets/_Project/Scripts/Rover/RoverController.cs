@@ -221,13 +221,13 @@ namespace MoonProject.Rover
         // IRoverRig
         public Transform TetherOrigin => _tetherOrigin;
 
-        public Transform CutterOrigin => _cutterOrigin != null ? _cutterOrigin : _tetherOrigin;
+        public Transform CutterOrigin => _cutterOrigin;
 
-        public Transform ScanOrigin => _scanOrigin != null ? _scanOrigin : _tetherOrigin;
+        public Transform ScanOrigin => _scanOrigin;
 
-        public Transform WinchOrigin => _winchOrigin != null ? _winchOrigin : _tetherOrigin;
+        public Transform WinchOrigin => _winchOrigin;
 
-        public Transform ScoopOrigin => _scoopOrigin != null ? _scoopOrigin : _tetherOrigin;
+        public Transform ScoopOrigin => _scoopOrigin;
 
         public Transform CargoSocket => _cargoSocket;
 

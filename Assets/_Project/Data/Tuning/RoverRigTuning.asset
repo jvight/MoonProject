@@ -26,8 +26,8 @@ MonoBehaviour:
   _suspensionCastHeight: 0.6
   _suspensionFrequency: 5.5
   _suspensionDamping: 0.5
-  _frontSteerAngle: 24
-  _rearSteerFactor: 0.4
+  _frontSteerAngle: 28
+  _rearSteerFactor: 0
   _leanFrequency: 1.5
   _leanDamping: 0.42
   _pitchPerAcceleration: 1.1
@@ -297,7 +297,7 @@ MonoBehaviour:
     _testCutDelay: 1.2
     _testCutBurn: 0.25
   _cargoHatch:
-    _openAngle: 70
+    _openAngle: 55
     _openLead: 0.12
     _swingFrequency: 3.5
     _swingDamping: 0.9

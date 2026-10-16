@@ -477,7 +477,7 @@ namespace MoonProject.Rover
         [Tooltip("The antenna once 07 can listen: the cyan tip from tower level 1, the lift and blink of a listen.")]
         [SerializeField] private AntennaListenSettings _listening = new AntennaListenSettings();
 
-        public float NeckYawLimit => Mathf.Approximately(_neckYawLimit, 110f) ? 125f : _neckYawLimit;
+        public float NeckYawLimit => _neckYawLimit;
 
         public float HeadPitchUpLimit => _headPitchUpLimit;
 

@@ -213,7 +213,7 @@ namespace MoonProject.Rover
 
         public float MaxTilt => _maxTilt;
 
-        public float WheelRadius => Mathf.Approximately(_wheelRadius, 0.24f) ? 0.35f : _wheelRadius;
+        public float WheelRadius => _wheelRadius;
 
         public float SuspensionCompression => _suspensionCompression;
 
@@ -225,9 +225,9 @@ namespace MoonProject.Rover
 
         public float SuspensionDamping => _suspensionDamping;
 
-        public float FrontSteerAngle => Mathf.Approximately(_frontSteerAngle, 24f) ? 28f : _frontSteerAngle;
+        public float FrontSteerAngle => _frontSteerAngle;
 
-        public float RearSteerFactor => Mathf.Approximately(_rearSteerFactor, 0.4f) ? 0f : _rearSteerFactor;
+        public float RearSteerFactor => _rearSteerFactor;
 
         public float LeanFrequency => _leanFrequency;
 
