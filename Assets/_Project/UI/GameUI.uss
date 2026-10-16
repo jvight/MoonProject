@@ -495,15 +495,20 @@ Label {
     padding-bottom: 0;
 }
 
-/* The settings panel is tall: while it is open the title's menu steps down to a small margin so it fits at any text size */
+/* The settings panel is tall and wide: while it is open the title's menu steps down and narrows so both fit at 150% text */
 .pause--title.pause--settings-open .pause__frame {
     justify-content: flex-end;
+    padding-left: 7%;
     padding-top: 0;
     padding-bottom: 8px;
 }
 
 .pause--title .pause__stack {
     width: 516px;
+}
+
+.pause--title.pause--settings-open .pause__stack {
+    width: 340px;
 }
 
 .pause--title .pause__main .pause__panel {
@@ -572,6 +577,10 @@ Label {
 
 .pause--title .pause__main .menu-button .menu-button__note {
     display: flex;
+}
+
+.pause--title.pause--settings-open .pause__main .menu-button .menu-button__note {
+    display: none;
 }
 
 .pause--title .pause__main .menu-button:focus .menu-button__note {
