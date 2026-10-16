@@ -31,7 +31,15 @@ namespace MoonProject.Audio
         private AudioSource _steeringServo;
         private AudioSource _neckServo;
         private CueHandle _tick;
+        private CueHandle _faceBoot;
+        private CueHandle _faceBlink;
+        private CueHandle _faceHappy;
+        private CueHandle _faceWorried;
+        private CueHandle _faceAsleep;
+        private CueHandle _faceStartled;
+        private CueHandle _faceProud;
         private IDisposable _awokeSubscription;
+        private IDisposable _faceSubscription;
         private Vector3 _lastGaze = Vector3.forward;
         private float _lastSteer;
         private float _lampCueVolume;
@@ -67,7 +75,16 @@ namespace MoonProject.Audio
             CueHandle lamp = director.Resolve(AudioCueIds.RoverLampHum);
             CueHandle servo = director.Resolve(AudioCueIds.RoverServo);
             _tick = director.Resolve(AudioCueIds.RoverMetalTick);
-            if (!lamp.IsValid || !servo.IsValid || !_tick.IsValid)
+            _faceBoot = director.Resolve(AudioCueIds.FaceBoot);
+            _faceBlink = director.Resolve(AudioCueIds.FaceBlink);
+            _faceHappy = director.Resolve(AudioCueIds.FaceHappy);
+            _faceWorried = director.Resolve(AudioCueIds.FaceWorried);
+            _faceAsleep = director.Resolve(AudioCueIds.FaceAsleep);
+            _faceStartled = director.Resolve(AudioCueIds.FaceStartled);
+            _faceProud = director.Resolve(AudioCueIds.FaceProud);
+            if (!lamp.IsValid || !servo.IsValid || !_tick.IsValid ||
+                !_faceBoot.IsValid || !_faceBlink.IsValid || !_faceHappy.IsValid || !_faceWorried.IsValid ||
+                !_faceAsleep.IsValid || !_faceStartled.IsValid || !_faceProud.IsValid)
             {
                 enabled = false;
                 return;
@@ -83,6 +100,7 @@ namespace MoonProject.Audio
             _steeringServo = director.CreateLoopSource(transform, "SteeringServo", servo, 1f);
             _neckServo = director.CreateLoopSource(transform, "NeckServo", servo, 1f);
             _awokeSubscription = context.Events.Subscribe<RoverAwoke>(OnRoverAwoke);
+            _faceSubscription = context.Events.Subscribe<RoverFaceCued>(OnRoverFaceCued);
         }
 
         internal void Wire(SoundscapeTuning tuning)
@@ -156,10 +174,41 @@ namespace MoonProject.Audio
             _lamp.FadeIn();
         }
 
+        private void OnRoverFaceCued(RoverFaceCued cued)
+        {
+            Vector3 pos = _eye != null ? _eye.position : _rover.Position;
+            switch (cued.Kind)
+            {
+                case RoverFaceCueKind.Boot:
+                    _director.PlayAt(_faceBoot, pos);
+                    break;
+                case RoverFaceCueKind.Blink:
+                    _director.PlayAt(_faceBlink, pos);
+                    break;
+                case RoverFaceCueKind.Happy:
+                    _director.PlayAt(_faceHappy, pos);
+                    break;
+                case RoverFaceCueKind.Worried:
+                    _director.PlayAt(_faceWorried, pos);
+                    break;
+                case RoverFaceCueKind.Asleep:
+                    _director.PlayAt(_faceAsleep, pos);
+                    break;
+                case RoverFaceCueKind.Startled:
+                    _director.PlayAt(_faceStartled, pos);
+                    break;
+                case RoverFaceCueKind.Proud:
+                    _director.PlayAt(_faceProud, pos);
+                    break;
+            }
+        }
+
         private void OnDestroy()
         {
             _awokeSubscription?.Dispose();
             _awokeSubscription = null;
+            _faceSubscription?.Dispose();
+            _faceSubscription = null;
         }
     }
 }
