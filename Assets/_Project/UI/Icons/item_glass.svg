@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M21.3 19A1.7 1.7 0 1 1 24.7 19A1.7 1.7 0 1 1 21.3 19Z"/>
+    <path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M19 9C19 9 45 9 45 9C45 9 54 18 54 18C54 18 54 46 54 46C54 46 45 55 45 55C45 55 19 55 19 55C19 55 10 46 10 46C10 46 10 18 10 18C10 18 19 9 19 9Z"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M22 14C22 14 42 14 42 14C42 14 49 21 49 21C49 21 49 43 49 43C49 43 42 50 42 50C42 50 22 50 22 50C22 50 15 43 15 43C15 43 15 21 15 21C15 21 22 14 22 14ZM21 41C21 41 41 21 41 21M29 43C29 43 43 29 43 29M21 30C21 30 30 21 30 21M10 18C10 18 15 21 15 21M54 18C54 18 49 21 49 21M54 46C54 46 49 43 49 43M10 46C10 46 15 43 15 43"/>
+  </g>
+</svg>
