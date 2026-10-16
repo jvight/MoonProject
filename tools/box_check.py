@@ -34,8 +34,12 @@ from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parent
 GENERATED = "Assets/_Project/Generated"
+DATA_CONTENT = "Assets/_Project/Data/Content"
+DATA_TUNING = "Assets/_Project/Data/Tuning"
 MAIN_SCENE = "Assets/_Project/Scenes/Main.unity"
-BUILDER_OUTPUTS = (GENERATED, MAIN_SCENE)
+BUILDER_OUTPUTS = (GENERATED, DATA_CONTENT, DATA_TUNING, MAIN_SCENE)
+UNTRACKED_OUTPUT_PREFIXES = (GENERATED + "/", DATA_CONTENT + "/", DATA_TUNING + "/", "Data/Content/", "Data/Tuning/")
+INIT_TEST_SCENE_PREFIX = "Assets/InitTestScene"
 MAIN_SCENE_BUILDER = "Main Scene"
 RUN_BUILDERS = "MoonProject.Editor.Automation.BuildAutomation.RunBuilders"
 # Feature slices span several domains (an alternation inside the builder regex).
@@ -149,17 +153,69 @@ def builders_step(root, boxes, log_path):
                                                 f"filter={builder_filter(boxes)}"], root, log_path)
 
 
+def git_dir(root):
+    return Path(git(root, "rev-parse", "--absolute-git-dir"))
+
+
+def clear_index_lock(root):
+    """Removes a stale index.lock in the worktree's git dir; returns True when one was removed."""
+    lock = git_dir(root) / "index.lock"
+    if lock.exists():
+        lock.unlink()
+        return True
+    return False
+
+
+def parse_porcelain(text):
+    """Maps each repo-relative path in `git status --porcelain -uall` output to its two-char XY status."""
+    entries = {}
+    for line in text.splitlines():
+        if len(line) < 4:
+            continue
+        xy, path = line[:2], line[3:]
+        if " -> " in path:
+            path = path.split(" -> ", 1)[1]
+        entries[path.strip('"')] = xy
+    return entries
+
+
+def snapshot_status(root):
+    """Snapshot of `git status --porcelain -uall` before box_check runs."""
+    return parse_porcelain(git(root, "status", "--porcelain", "-uall"))
+
+
+def in_ref(root, ref, path):
+    return subprocess.run(["git", "-c", "safe.directory=*", "cat-file", "-e", f"{ref}:{path}"],
+                          cwd=root, capture_output=True).returncode == 0
+
+
+def remove_path(target):
+    if target.is_dir():
+        shutil.rmtree(target, ignore_errors=True)
+    elif target.exists() or target.is_symlink():
+        target.unlink()
+
+
+def prune_empty_dirs(root, paths):
+    for rel in paths:
+        parent = (root / rel).parent
+        while parent != root and parent.exists():
+            try:
+                parent.rmdir()
+            except OSError:
+                break
+            parent = parent.parent
+
+
 def dirty_outputs(root):
-    return [line[3:] for line in git(root, "status", "--porcelain", "-uall", "--", *BUILDER_OUTPUTS).splitlines()]
+    return [line[3:] for line in git(root, "status", "--porcelain", "-uall", "--", GENERATED, MAIN_SCENE).splitlines()]
 
 
-def restore_outputs(root, aside):
-    """Puts Generated/ and Main.unity back to HEAD; new untracked builder files go to <aside>, never deleted."""
-    changed = dirty_outputs(root)
-    git(root, "checkout", "HEAD", "--", *BUILDER_OUTPUTS)
-    moved = move_untracked(root, git(root, "ls-files", "--others", "--exclude-standard", "--",
-                                     *BUILDER_OUTPUTS).splitlines(), aside)
-    return len(changed), moved
+def restore_outputs(root, aside=None, before=None):
+    """Puts builder outputs back to HEAD; new untracked builder files go to <aside> (or are removed when None)."""
+    before = {} if before is None else before
+    restored, moved, _, _ = cleanup_worktree(root, before, aside.parent if aside is not None else None)
+    return restored, moved
 
 
 def move_untracked(root, paths, aside):
@@ -170,11 +226,65 @@ def move_untracked(root, paths, aside):
     return len(paths)
 
 
-def move_untracked_metas(root, aside):
+def move_untracked_metas(root, aside, before=None):
     """Batch Unity writes a .meta for every script or folder it has not seen; boxes never commit them."""
+    before = {} if before is None else before
     metas = [p for p in git(root, "ls-files", "--others", "--exclude-standard", "--", "Assets").splitlines()
-             if p.endswith(".meta")]
-    return move_untracked(root, metas, aside)
+             if p.endswith(".meta") and p not in before]
+    res = move_untracked(root, metas, aside)
+    prune_empty_dirs(root, metas)
+    return res
+
+
+def cleanup_worktree(root, before=None, logs=None):
+    """Restores every trial-merge and builder residue introduced since the `before` status snapshot:
+    staged files from the main merge, modified Main.unity / builder outputs, new untracked files under
+    Assets/_Project/Generated/, Data/Content, Data/Tuning, Assets/InitTestScene*, untracked .metas, and stale
+    index.lock in the worktree's git dir. Files present in `before` are never touched."""
+    before = {} if before is None else before
+    clear_index_lock(root)
+    abort_problem = abort_trial_merge(root, before)
+    after = snapshot_status(root)
+    restored, new_outputs, metas = 0, 0, 0
+    touched_untracked = []
+    for path, xy in after.items():
+        if path in before:
+            continue
+        if xy != "??":
+            if in_ref(root, "HEAD", path):
+                if xy[0] != " ":
+                    git(root, "reset", "-q", "HEAD", "--", path, check=False)
+                git(root, "checkout", "-q", "HEAD", "--", path, check=False)
+            else:
+                git(root, "rm", "-f", "-q", "--", path, check=False)
+                remove_path(root / path)
+                touched_untracked.append(path)
+            restored += 1
+        elif path.startswith(INIT_TEST_SCENE_PREFIX):
+            remove_path(root / path)
+            touched_untracked.append(path)
+            new_outputs += 1
+        elif path.startswith(UNTRACKED_OUTPUT_PREFIXES):
+            if logs is not None:
+                move_untracked(root, [path], logs / "outputs")
+            else:
+                remove_path(root / path)
+            touched_untracked.append(path)
+            new_outputs += 1
+        elif path.startswith("Assets/") and path.endswith(".meta"):
+            if logs is not None:
+                move_untracked(root, [path], logs / "metas")
+            else:
+                remove_path(root / path)
+            touched_untracked.append(path)
+            metas += 1
+        elif in_ref(root, "main", path) and not in_ref(root, "HEAD", path):
+            remove_path(root / path)
+            touched_untracked.append(path)
+            restored += 1
+    prune_empty_dirs(root, touched_untracked)
+    clear_index_lock(root)
+    return restored, new_outputs, metas, abort_problem
 
 
 def format_block(stamp, box, tested, steps, notes):
@@ -229,6 +339,7 @@ def needs_merge(root):
 
 def trial_merge(root):
     """Merges main without committing; returns '' or why it could not."""
+    clear_index_lock(root)
     res = subprocess.run(["git", "-c", "safe.directory=*", "-c", "core.safecrlf=false", "merge", "--no-commit",
                           "--no-ff", "main"], cwd=root, capture_output=True, text=True, encoding="utf-8",
                          errors="replace")
@@ -239,21 +350,26 @@ def trial_merge(root):
 
 
 def merge_in_progress(root):
-    return (Path(git(root, "rev-parse", "--absolute-git-dir")) / "MERGE_HEAD").exists()
+    return (git_dir(root) / "MERGE_HEAD").exists()
 
 
-def abort_trial_merge(root):
+def abort_trial_merge(root, before=None):
     """Ends a merge left in progress, whatever stopped the run; returns '' or why it is still there. Decided by
     MERGE_HEAD, not by a flag: a half-aborted trial once left a box worktree with main's 93 files staged."""
+    clear_index_lock(root)
     if not merge_in_progress(root):
         return ""
     git(root, "merge", "--abort", check=False)
     if merge_in_progress(root):
         git(root, "reset", "--merge", check=False)
     if merge_in_progress(root):
-        # The builders rewrite tracked assets the merge also touched, so both aborts refuse ("not uptodate"); the run
-        # started from a clean tracked tree, so HEAD is all there is to go back to.
-        git(root, "reset", "--hard", "HEAD", check=False)
+        if not before:
+            # The builders rewrite tracked assets the merge also touched, so both aborts refuse ("not uptodate"); the
+            # run started from a clean tracked tree, so HEAD is all there is to go back to.
+            git(root, "reset", "--hard", "HEAD", check=False)
+        else:
+            for flag in ("MERGE_HEAD", "MERGE_MODE", "MERGE_MSG", "AUTO_MERGE"):
+                (git_dir(root) / flag).unlink(missing_ok=True)
     return "the trial merge of main is still in progress; run git merge --abort" if merge_in_progress(root) else ""
 
 
@@ -272,7 +388,8 @@ def main():
     root = Path(git(Path.cwd(), "rev-parse", "--show-toplevel")).resolve()
     if root == main_checkout(root):
         raise SystemExit("run box_check in your box worktree, not in the main checkout")
-    if (Path(git(root, "rev-parse", "--absolute-git-dir")) / "MERGE_HEAD").exists():
+    clear_index_lock(root)
+    if merge_in_progress(root):
         raise SystemExit("a merge is in progress in this worktree; finish it or run git merge --abort first")
     if dirty_outputs(root):
         raise SystemExit(f"{GENERATED} or {MAIN_SCENE} has changes; box_check restores them afterwards, so start "
@@ -280,6 +397,7 @@ def main():
     merge = not args.no_merge and needs_merge(root)
     if merge and git(root, "status", "--porcelain", "--untracked-files=no"):
         raise SystemExit("commit your changes first: box_check tests your tip merged with main (or pass --no-merge)")
+    before = snapshot_status(root)
     branch = git(root, "rev-parse", "--abbrev-ref", "HEAD")
     sha = git(root, "rev-parse", "--short", "HEAD")
     main_sha = git(root, "rev-parse", "--short", "main")
@@ -298,14 +416,13 @@ def main():
         steps.append((name, ok, log.relative_to(root).as_posix(), time.monotonic() - started))
         return ok
 
-    if merge:
-        say(f"trial merge of main ({main_sha}) into {branch} ({sha}), aborted at the end")
-        problem = trial_merge(root)
-        if problem:
-            steps.append((f"merge main ({main_sha})", False, "", 0.0))
-            notes.append(f"main does not merge cleanly ({problem}); merge main into your branch and resolve it")
-            merge = False
     try:
+        if merge:
+            say(f"trial merge of main ({main_sha}) into {branch} ({sha}), aborted at the end")
+            problem = trial_merge(root)
+            if problem:
+                steps.append((f"merge main ({main_sha})", False, "", 0.0))
+                notes.append(f"main does not merge cleanly ({problem}); merge main into your branch and resolve it")
         ok = not steps and step("compile_check", "compile.log", lambda log: compile_step(root, log))
         if ok:
             ok = step(f"builders + Main Scene {builder_filter([args.box])}", "builders.log",
@@ -319,23 +436,25 @@ def main():
                     break
                 ok = step(f"tests {label}", f"tests-{label.split()[0]}.log",
                           lambda log, c=cmd: run_logged("tests", c, root, log))
-        restored, new_outputs = restore_outputs(root, logs / "outputs")
-        metas = move_untracked_metas(root, logs / "metas")
     finally:
-        abort_problem = abort_trial_merge(root)
+        restored, new_outputs, metas, abort_problem = cleanup_worktree(root, before, logs)
     if abort_problem:
         steps.append(("abort trial merge", False, "", 0.0))
         notes.append(abort_problem)
     notes.append(f"restored {restored} builder output(s), moved {new_outputs} new output(s) and {metas} untracked "
                  f".meta(s) to {logs.relative_to(root).as_posix()}")
-    leftover = [line[3:] for line in git(root, "status", "--porcelain").splitlines()]
+    leftover = [p for p in snapshot_status(root) if p not in before]
     if leftover:
         notes.append(f"left in the worktree: {len(leftover)} change(s): " + ", ".join(leftover[:5]))
+    else:
+        notes.append("worktree clean")
     block = format_block(stamp, args.box, tested, steps, notes)
     board = board_dir(root) / f"{args.box}.md"
     append_block(board, block)
     print(block, end="")
     say(f"board: {board}")
+    if not leftover:
+        say("worktree clean")
     sys.exit(0 if steps and all(s[1] for s in steps) else 1)
 
 

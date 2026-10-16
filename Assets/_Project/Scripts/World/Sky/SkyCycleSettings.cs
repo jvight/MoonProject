@@ -180,14 +180,6 @@ namespace MoonProject.World
         [Range(0.02f, 0.25f)]
         [SerializeField] private float _eclipseRingWidth = 0.085f;
 
-        [Tooltip("Warm amber colour of the faint city lights on Earth's dark continents when Earth's night side " +
-            "faces the Moon.")]
-        [SerializeField] private Color _eclipseCityLightColor = new Color(1.0f, 0.74f, 0.38f);
-
-        [Tooltip("Brightness of the faint city lights on Earth's night side during the eclipse.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _eclipseCityLightStrength = 0.45f;
-
         [Tooltip("Star brightness multiplier during the eclipse (stars at their brightest).")]
         [Range(1f, 2.5f)]
         [SerializeField] private float _eclipseStarScale = 1.45f;
@@ -248,8 +240,6 @@ namespace MoonProject.World
         public Color EclipseRingColor => _eclipseRingColor;
         public float EclipseRingStrength => _eclipseRingStrength;
         public float EclipseRingWidth => _eclipseRingWidth;
-        public Color EclipseCityLightColor => _eclipseCityLightColor;
-        public float EclipseCityLightStrength => _eclipseCityLightStrength;
         public float EclipseStarScale => _eclipseStarScale;
         public float MinEarthPhaseLight => _minEarthPhaseLight;
         public float EclipseKeyIntensity => _eclipseKeyIntensity;

@@ -1,4 +1,4 @@
-"""Master build entry script (`tools/art/blender/build_all.py`) for the first three R1 structures."""
+"""Master build entry script (`tools/art/blender/build_all.py`) for all ten R1 structures, CargoLander, and Rock_00..09."""
 
 from __future__ import annotations
 
@@ -12,19 +12,23 @@ if str(THIS_DIR) not in sys.path:
 sys.dont_write_bytecode = True
 
 import antenna_mast  # noqa: E402
+import battery_bank  # noqa: E402
 import cargo_lander  # noqa: E402
 import charging_pad  # noqa: E402
+import fabricator  # noqa: E402
 import power_pylon  # noqa: E402
 import r1kit  # noqa: E402
 import rocks  # noqa: E402
+import smelter  # noqa: E402
 import solar_array  # noqa: E402
+import storage_rack  # noqa: E402
 import upgrade_bay  # noqa: E402
 import vehicle_pad  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
-        description="Build ChargingPad, SolarArray, PowerPylon, UpgradeBay, AntennaMast, VehiclePad, CargoLander, and Rock_00..09 FBX models and preview renders."
+        description="Build all ten R1 structures, CargoLander, and Rock_00..09 FBX models and preview renders."
     )
     parser.add_argument(
         "--models-dir",
@@ -53,7 +57,7 @@ def main(argv: list[str] | None = None) -> None:
     renders_dir = args.renders_dir
     skip_flag = ["--skip-renders"] if args.skip_renders else []
 
-    # 1. Build & export ChargingPad (+ 12 diagnostic renders)
+    # 1. Build & export ChargingPad (+ diagnostic renders)
     charging_pad.main(
         [
             "--fbx-out",
@@ -64,7 +68,7 @@ def main(argv: list[str] | None = None) -> None:
         ]
     )
 
-    # 2. Build & export SolarArray (+ 12 diagnostic renders)
+    # 2. Build & export SolarArray (+ diagnostic renders)
     solar_array.main(
         [
             "--fbx-out",
@@ -75,7 +79,7 @@ def main(argv: list[str] | None = None) -> None:
         ]
     )
 
-    # 3. Build & export PowerPylon (+ 12 diagnostic renders)
+    # 3. Build & export PowerPylon (+ diagnostic renders)
     power_pylon.main(
         [
             "--fbx-out",
@@ -86,7 +90,51 @@ def main(argv: list[str] | None = None) -> None:
         ]
     )
 
-    # 4. Build & export UpgradeBay (+ diagnostic, scale_07, and compare renders)
+    # 4. Build & export BatteryBank (+ diagnostic renders)
+    battery_bank.main(
+        [
+            "--fbx-out",
+            str(models_dir / "BatteryBank.fbx"),
+            "--renders-dir",
+            str(renders_dir),
+            *skip_flag,
+        ]
+    )
+
+    # 5. Build & export Smelter (+ diagnostic renders)
+    smelter.main(
+        [
+            "--fbx-out",
+            str(models_dir / "Smelter.fbx"),
+            "--renders-dir",
+            str(renders_dir),
+            *skip_flag,
+        ]
+    )
+
+    # 6. Build & export Fabricator (+ diagnostic renders)
+    fabricator.main(
+        [
+            "--fbx-out",
+            str(models_dir / "Fabricator.fbx"),
+            "--renders-dir",
+            str(renders_dir),
+            *skip_flag,
+        ]
+    )
+
+    # 7. Build & export StorageRack (+ diagnostic renders)
+    storage_rack.main(
+        [
+            "--fbx-out",
+            str(models_dir / "StorageRack.fbx"),
+            "--renders-dir",
+            str(renders_dir),
+            *skip_flag,
+        ]
+    )
+
+    # 8. Build & export UpgradeBay (+ diagnostic, scale_07, and compare renders)
     upgrade_bay.main(
         [
             "--fbx-out",
@@ -97,7 +145,7 @@ def main(argv: list[str] | None = None) -> None:
         ]
     )
 
-    # 5. Build & export AntennaMast (+ diagnostic and compare renders)
+    # 9. Build & export AntennaMast (+ diagnostic and compare renders)
     antenna_mast.main(
         [
             "--fbx-out",
@@ -108,7 +156,7 @@ def main(argv: list[str] | None = None) -> None:
         ]
     )
 
-    # 6. Build & export VehiclePad (+ diagnostic and compare renders)
+    # 10. Build & export VehiclePad (+ diagnostic and compare renders)
     vehicle_pad.main(
         [
             "--fbx-out",
@@ -119,7 +167,7 @@ def main(argv: list[str] | None = None) -> None:
         ]
     )
 
-    # 7. Build & export CargoLander (+ diagnostic and showcase renders)
+    # 11. Build & export CargoLander (+ diagnostic and showcase renders)
     cargo_lander.main(
         [
             "--fbx-out",
@@ -130,7 +178,7 @@ def main(argv: list[str] | None = None) -> None:
         ]
     )
 
-    # 8. Build & export Rock_00..Rock_09
+    # 12. Build & export Rock_00..Rock_09
     rocks.main(
         [
             "--out-dir",
@@ -138,34 +186,38 @@ def main(argv: list[str] | None = None) -> None:
         ]
     )
 
-    # 5. Build all three structures together in a fresh scene and render Logs/renders/family.png alongside 07's 1.46 m stand-in box
+    # 13. Build all ten structures together in a fresh scene and render Logs/renders/family.png alongside 07's 1.46 m stand-in
     if not args.skip_renders:
         r1kit.reset_scene()
         cp_root = charging_pad.build_charging_pad()
         sa_root = solar_array.build_solar_array()
         pp_root = power_pylon.build_power_pylon()
+        bb_root = battery_bank.build_battery_bank()
+        sm_root = smelter.build_smelter()
+        fb_root = fabricator.build_fabricator()
+        sr_root = storage_rack.build_storage_rack()
+        ub_root = upgrade_bay.build_upgrade_bay()
+        am_root = antenna_mast.build_antenna_mast()
+        vp_root = vehicle_pad.build_vehicle_pad()
 
-        # In Blender (+X is viewer-left, -X is viewer-right):
-        # +3.55 m = 07 (1.46 m), +0.85 m = ChargingPad (1.55 m), -1.95 m = SolarArray (1.85 m), -3.95 m = PowerPylon (1.95 m)
+        top_y = 3.20
         r1kit.render_family_lineup(
             roots_and_offsets=[
-                (cp_root, 0.85),
-                (sa_root, -1.95),
-                (pp_root, -3.95),
+                # Top tier: Power, Comms & Infrastructure
+                (cp_root, 4.40, top_y, 0.0),
+                (sa_root, 1.50, top_y, 0.0),
+                (bb_root, -1.30, top_y, 0.0),
+                (pp_root, -3.70, top_y, 0.0),
+                (am_root, -6.40, top_y, 0.0),
+                # Bottom tier: Production, Logistics & Bay/Pad
+                (sm_root, 4.40, 0.0, 0.0),
+                (fb_root, 1.40, 0.0, 0.0),
+                (sr_root, -1.30, 0.0, 0.0),
+                (ub_root, -4.40, 0.0, 0.0),
+                (vp_root, -8.00, 0.0, 0.0),
             ],
             out_path=renders_dir / "family.png",
         )
-
-        before_dir = Path(r"D:\Project\MoonProject-wt\agy-structs\Logs\renders")
-        slugs = ("charging_pad", "solar_array", "power_pylon")
-        before_paths = [before_dir / f"{s}_three_quarter.png" for s in slugs]
-        after_paths = [renders_dir / f"{s}_three_quarter.png" for s in slugs]
-        if all(p.exists() for p in before_paths) and all(p.exists() for p in after_paths):
-            r1kit.compose_before_after_grid(
-                before_paths=before_paths,
-                after_paths=after_paths,
-                out_path=renders_dir / "structures_before_after.png",
-            )
 
 
 if __name__ == "__main__":

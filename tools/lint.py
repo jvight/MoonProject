@@ -53,6 +53,13 @@ RULES = {r.id: r for r in (
     Rule("unity-api-in-initializer", "Unity object or API in a MonoBehaviour/ScriptableObject field initializer "
                                      "(Unity refuses it inside the constructor)", True),
     Rule("duplicate-type", "public type name declared in two MoonProject namespaces", True),
+    Rule("hidden-default-override", "property or getter compares a serialized field to a literal and returns another "
+                                    "literal", True),
+    Rule("scene-contributor-asset", "scene contributor (*SceneContributor*.cs / ISceneContributor) creates assets or "
+                                    "calls *Builder.Build*", False),
+    Rule("runtime-input-action", "runtime InputAction creation (AddAction(, new InputAction() outside tests", True,
+         (RUNTIME, EDITOR)),
+    Rule("shader-find", "Shader.Find( outside editor tests", False, (RUNTIME, EDITOR)),
 )}
 
 # Box that owns each folder under Assets/_Project (docs/ROADMAP.md "Các box (agent) và vùng sở hữu").
@@ -98,6 +105,33 @@ DECLARED_UNITY_RE = re.compile(r"(?:UnityEngine\s*\.\s*)?\b(" + "|".join(UNITY_O
 STATIC_CALL_RE = re.compile(r"(?<![\w.])(?:UnityEngine\s*\.\s*)?(?:" + "|".join(UNITY_STATIC_CALLS) + r")")
 AUTO_SETTER_RE = re.compile(r"\b(?:set|init)\s*;")
 LAMBDA_RE = re.compile(r"\s*(?:static\s+)?(?:async\s+)?(?:\([^()]*\)|\w+)\s*=>|\s*delegate\b")
+NUM_LIT = r"[-+]?(?:\d+\.?\d*|\.\d+)[fFdDmMlLuU]*"
+HIDDEN_DEFAULT_PATTERNS = (
+    re.compile(rf"(?:Mathf\s*\.\s*)?Approximately\s*\(\s*(?:this\s*\.\s*)?(?P<f1>\w+)\s*,\s*(?P<l1>{NUM_LIT})\s*\)"
+               rf"\s*\?\s*(?P<l2>{NUM_LIT})\s*:\s*(?:this\s*\.\s*)?(?P<f2>\w+)\b"),
+    re.compile(rf"(?:Mathf\s*\.\s*)?Approximately\s*\(\s*(?P<l1>{NUM_LIT})\s*,\s*(?:this\s*\.\s*)?(?P<f1>\w+)\s*\)"
+               rf"\s*\?\s*(?P<l2>{NUM_LIT})\s*:\s*(?:this\s*\.\s*)?(?P<f2>\w+)\b"),
+    re.compile(rf"!\s*(?:Mathf\s*\.\s*)?Approximately\s*\(\s*(?:this\s*\.\s*)?(?P<f1>\w+)\s*,\s*(?P<l1>{NUM_LIT})\s*\)"
+               rf"\s*\?\s*(?:this\s*\.\s*)?(?P<f2>\w+)\s*:\s*(?P<l2>{NUM_LIT})"),
+    re.compile(rf"\b(?P<f1>\w+)\s*(?:==|<=|>=|<|>)\s*(?P<l1>{NUM_LIT})\s*\?\s*(?P<l2>{NUM_LIT})\s*:\s*"
+               rf"(?:this\s*\.\s*)?(?P<f2>\w+)\b"),
+    re.compile(rf"(?P<l1>{NUM_LIT})\s*(?:==|<=|>=|<|>)\s*(?:this\s*\.\s*)?(?P<f1>\w+)\s*\?\s*(?P<l2>{NUM_LIT})\s*:\s*"
+               rf"(?:this\s*\.\s*)?(?P<f2>\w+)\b"),
+    re.compile(rf"\b(?P<f1>\w+)\s*!=\s*(?P<l1>{NUM_LIT})\s*\?\s*(?:this\s*\.\s*)?(?P<f2>\w+)\s*:\s*(?P<l2>{NUM_LIT})"),
+    re.compile(rf"if\s*\(\s*(?:(?:Mathf\s*\.\s*)?Approximately\s*\(\s*(?:this\s*\.\s*)?(?P<f1>\w+)\s*,\s*(?P<l1>{NUM_LIT})\s*\)"
+               rf"|(?P<f1b>\w+)\s*(?:==|<=|>=|<|>)\s*(?P<l1b>{NUM_LIT}))\s*\)\s*\{{?\s*return\s+(?P<l2>{NUM_LIT})\s*;"
+               rf"\s*\}}?\s*(?:else\s*\{{?\s*)?return\s+(?:this\s*\.\s*)?(?P<f2>\w+)\s*;"),
+)
+SCENE_CONTRIBUTOR_ASSET_RE = re.compile(
+    r"\b(?:GeneratedAssets\s*\.\s*CreateOrReplace"
+    r"|AssetDatabase\s*\.\s*CreateAsset"
+    r"|ScriptableObject\s*\.\s*CreateInstance"
+    r"|\w+Builder\s*\.\s*Build\w*)\s*(?=[<(])"
+)
+RUNTIME_INPUT_ACTION_RE = re.compile(
+    r"\b(?:AddAction|new\s+(?:UnityEngine\s*\.\s*InputSystem\s*\.\s*)?InputAction)\s*\("
+)
+SHADER_FIND_RE = re.compile(r"\bShader\s*\.\s*Find\s*\(")
 
 
 @dataclass(frozen=True)
@@ -239,6 +273,7 @@ class Member:
     text: str
     head: str
     has_body: bool
+    attrs: str = ""
 
 
 @dataclass
@@ -272,7 +307,7 @@ def parse_structure(src):
         offset = start + len(text) - len(stripped)
         offset += len(stripped) - len(stripped.lstrip())
         structure.members.append(Member(current_type(), offset, end, stripped.strip(),
-                                        ATTRIBUTES_RE.sub("", head).strip(), has_body))
+                                        ATTRIBUTES_RE.sub("", head).strip(), has_body, code[start:offset].strip()))
 
     for i, c in enumerate(code):
         if c.isspace():
@@ -544,6 +579,105 @@ def check_duplicate_types(structures):
                           f"public {decl.kind} '{name}' in {decl.namespace} is also declared in {others}")
 
 
+def _num_value(lit):
+    try:
+        return float(re.sub(r"[fFdDmMlLuU]+$", "", lit.strip()))
+    except ValueError:
+        return lit.strip()
+
+
+def serialized_fields_by_type(structure):
+    """Maps id(TypeDecl) -> (set of serialized field names, set of all field names)."""
+    result = {id(t): (set(), set()) for t in structure.types}
+    for member in structure.members:
+        if member.owner.kind == "enum":
+            continue
+        sig, accessors, _ = signature(member)
+        if accessors or "(" in sig or "=>" in sig:
+            continue
+        words = set(re.findall(r"\b\w+\b", sig))
+        if words & {"const", "static", "event", "delegate", "operator", "using"}:
+            continue
+        names = re.findall(r"\b(\w+)\s*$", sig.strip())
+        if not names:
+            continue
+        ser, all_fields = result.setdefault(id(member.owner), (set(), set()))
+        all_fields.update(names)
+        attr_words = set(re.findall(r"\b\w+\b", member.attrs))
+        if "SerializeField" in attr_words or ("public" in words and "readonly" not in words
+                                              and "NonSerialized" not in attr_words):
+            ser.update(names)
+    return result
+
+
+def check_hidden_default_override(src, structure):
+    fields_map = serialized_fields_by_type(structure)
+    for member in structure.members:
+        if member.owner.kind in ("enum", "interface", "delegate"):
+            continue
+        sig, accessors, _ = signature(member)
+        decl = sig.split("=>", 1)[0]
+        is_prop = "(" not in decl and (bool(accessors) or "=>" in sig)
+        is_getter = bool(re.search(r"\b\w+\s*\(\s*\)\s*$", decl.strip())) and not re.search(r"\bvoid\b", decl)
+        if not (is_prop or is_getter):
+            continue
+        ser_fields, all_fields = fields_map.get(id(member.owner), (set(), set()))
+        for pat in HIDDEN_DEFAULT_PATTERNS:
+            m = pat.search(member.text)
+            if not m:
+                continue
+            gd = m.groupdict()
+            f1 = gd.get("f1") or gd.get("f1b")
+            f2 = gd.get("f2")
+            l1 = gd.get("l1") or gd.get("l1b")
+            l2 = gd.get("l2")
+            if not f1 or f1 != f2 or _num_value(l1) == _num_value(l2):
+                continue
+            if f1 in ser_fields or (not all_fields and f1.startswith("_")):
+                yield Finding(src.path, src.line_of(member.start + m.start()), "hidden-default-override",
+                              f"hidden default override on '{f1}' ({l1.strip()} -> {l2.strip()}): save the default on "
+                              "the field and tuning asset instead")
+                break
+
+
+def is_scene_contributor(src, structure):
+    if "SceneContributor" in Path(src.path).stem:
+        return True
+    return any("ISceneContributor" in t.bases for t in structure.types)
+
+
+def check_scene_contributor_assets(src, structure):
+    if not is_scene_contributor(src, structure):
+        return
+    seen_lines = set()
+    for m in SCENE_CONTRIBUTOR_ASSET_RE.finditer(src.code):
+        line = src.line_of(m.start())
+        if line in seen_lines:
+            continue
+        seen_lines.add(line)
+        call = re.sub(r"\s+", "", m.group(0))
+        yield Finding(src.path, line, "scene-contributor-asset",
+                      f"'{call}' in scene contributor: create assets in a [MoonBuilder] and load them via "
+                      "SceneBuildContext.LoadAsset")
+
+
+def check_runtime_input_action(src):
+    for m in RUNTIME_INPUT_ACTION_RE.finditer(src.code):
+        call = re.sub(r"\s+", " ", m.group(0)).strip()
+        yield Finding(src.path, src.line_of(m.start()), "runtime-input-action",
+                      f"'{call}' outside tests: define actions in the .inputactions asset instead")
+
+
+def check_shader_find(src, skip_lines=()):
+    if src.kind == TESTS and "PlayMode" not in Path(src.path).parts:
+        return
+    for m in SHADER_FIND_RE.finditer(src.code):
+        line = src.line_of(m.start())
+        if line not in skip_lines:
+            yield Finding(src.path, line, "shader-find",
+                          "'Shader.Find(' outside editor tests: reference the shader or material on an asset instead")
+
+
 def lint_sources(sources):
     """Every finding over in-memory sources, sorted by path and line."""
     findings = []
@@ -561,11 +695,19 @@ def lint_sources(sources):
         if src.kind in RULES["linq-runtime"].kinds:
             findings += check_linq(src)
         findings += check_static_mutable(src, structure)
+        if src.kind in RULES["hidden-default-override"].kinds:
+            findings += check_hidden_default_override(src, structure)
+        if src.kind in RULES["scene-contributor-asset"].kinds:
+            findings += check_scene_contributor_assets(src, structure)
+        if src.kind in RULES["runtime-input-action"].kinds:
+            findings += check_runtime_input_action(src)
     structures = [s for _, s in parsed]
     unity_types = unity_object_types(structures)
     constructing = constructing_types(structures)
     for src, structure in parsed:
-        findings += check_initializers(src, structure, unity_types, constructing)
+        init_findings = list(check_initializers(src, structure, unity_types, constructing))
+        findings += init_findings
+        findings += check_shader_find(src, {f.line for f in init_findings})
     findings += check_duplicate_types(structures)
     return sorted(set(findings), key=lambda f: (f.path, f.line, f.rule, f.message))
 

@@ -26,6 +26,7 @@ ALLOWED_MATERIALS: tuple[str, ...] = (
     "R1_LampAmber",
     "R1_SolarCell",
     "R1_Basalt",
+    "R1_Brass",
 )
 
 
@@ -145,6 +146,15 @@ MATERIAL_SPECS: dict[str, dict[str, object]] = {
         "dust_color": _srgb_to_linear("#757A89"),
         "metallic": 0.03,
         "roughness": 0.80,
+        "emission": (0.0, 0.0, 0.0, 1.0),
+        "emission_strength": 0.0,
+    },
+    "R1_Brass": {
+        "base_color": _srgb_to_linear("#DBB052"),
+        "wear_color": _srgb_to_linear("#F6D686"),
+        "dust_color": _srgb_to_linear("#8A806C"),
+        "metallic": 0.90,
+        "roughness": 0.25,
         "emission": (0.0, 0.0, 0.0, 1.0),
         "emission_strength": 0.0,
     },
@@ -1628,6 +1638,222 @@ class MeshBuilder:
         bmesh.ops.translate(self.bm, verts=bm_verts, vec=self._to_local_b(center_u))
         return faces
 
+    def add_torus(
+        self,
+        center_u: tuple[float, float, float],
+        major_radius: float,
+        minor_radius: float,
+        mat: str,
+        axis_u: str = "Y",
+        major_segments: int = 24,
+        minor_segments: int = 10,
+        arc_deg: float = 360.0,
+        start_deg: float = 0.0,
+        rot_deg_u: tuple[float, float, float] = (0.0, 0.0, 0.0),
+    ) -> list[bmesh.types.BMFace]:
+        """Add a closed manifold torus ring or capped partial torus arc in Unity coordinates."""
+        is_full = abs(arc_deg) >= 359.99
+        n_rings = major_segments if is_full else (major_segments + 1)
+        start_rad = math.radians(start_deg)
+        span_rad = math.radians(arc_deg)
+
+        rings: list[list[bmesh.types.BMVert]] = []
+        all_verts: list[bmesh.types.BMVert] = []
+        for r_idx in range(n_rings):
+            t = r_idx / major_segments
+            theta = start_rad + span_rad * t
+            cos_t = math.cos(theta)
+            sin_t = math.sin(theta)
+            ring: list[bmesh.types.BMVert] = []
+            for s_idx in range(minor_segments):
+                phi = (2.0 * math.pi * s_idx) / minor_segments
+                r_cur = major_radius + minor_radius * math.cos(phi)
+                z_cur = minor_radius * math.sin(phi)
+                v = self.bm.verts.new((r_cur * cos_t, r_cur * sin_t, z_cur))
+                ring.append(v)
+                all_verts.append(v)
+            rings.append(ring)
+
+        faces: list[bmesh.types.BMFace] = []
+        ring_pairs = major_segments
+        for r_idx in range(ring_pairs):
+            r0 = rings[r_idx]
+            r1 = rings[(r_idx + 1) % len(rings)]
+            for s_idx in range(minor_segments):
+                sn = (s_idx + 1) % minor_segments
+                faces.append(self.bm.faces.new([r0[s_idx], r1[s_idx], r1[sn], r0[sn]]))
+
+        if not is_full:
+            faces.append(self.bm.faces.new(list(reversed(rings[0]))))
+            faces.append(self.bm.faces.new(rings[-1]))
+
+        bmesh.ops.recalc_face_normals(self.bm, faces=faces)
+        self._assign_faces(faces, mat)
+
+        if axis_u == "X":
+            align_mat = Matrix.Rotation(math.pi / 2.0, 3, "Y")
+        elif axis_u == "Z":
+            align_mat = Matrix.Rotation(-math.pi / 2.0, 3, "X")
+        else:
+            align_mat = Matrix.Identity(3)
+
+        rot_b = Euler(
+            (
+                math.radians(rot_deg_u[0]),
+                math.radians(rot_deg_u[2]),
+                math.radians(-rot_deg_u[1]),
+            ),
+            "XYZ",
+        ).to_matrix()
+        bmesh.ops.rotate(self.bm, verts=all_verts, cent=(0.0, 0.0, 0.0), matrix=rot_b @ align_mat)
+        bmesh.ops.translate(self.bm, verts=all_verts, vec=self._to_local_b(center_u))
+        return faces
+
+    def add_ingot(
+        self,
+        center_u: tuple[float, float, float],
+        size_u: tuple[float, float, float] = (0.14, 0.072, 0.28),
+        mat: str = "R1_BareSteel",
+        bevel: float = 0.008,
+        rot_deg_u: tuple[float, float, float] = (0.0, 0.0, 0.0),
+    ) -> list[bmesh.types.BMFace]:
+        """Add a bevelled trapezoidal ingot bar or lunar glass block."""
+        return self.add_bevel_box(
+            center_u=center_u,
+            size_u=size_u,
+            mat=mat,
+            bevel=bevel,
+            segments=1,
+            rot_deg_u=rot_deg_u,
+            top_scale_xz=(0.76, 0.86),
+        )
+
+    def add_supply_crate(
+        self,
+        center_u: tuple[float, float, float],
+        size_u: tuple[float, float, float] = (0.38, 0.28, 0.34),
+        rot_deg_u: tuple[float, float, float] = (0.0, 0.0, 0.0),
+        body_mat: str = "R1_CreamEnamel",
+        stripe_mat: str = "R1_OrangeStripe",
+        hardware_mat: str = "R1_GreyMetal",
+    ) -> None:
+        """Add a salvaged crew supply crate with lower tub, upper lid overhang, orange strap bands, and front latch."""
+        cx, cy, cz = center_u
+        wx, hy, dz = size_u
+        yaw_rad = math.radians(rot_deg_u[1])
+        pitch_rad = math.radians(rot_deg_u[0])
+
+        def _local_to_world(lx: float, ly: float, lz: float) -> tuple[float, float, float]:
+            # Apply pitch (X) then yaw (Y)
+            py = ly * math.cos(pitch_rad) - lz * math.sin(pitch_rad)
+            pz = ly * math.sin(pitch_rad) + lz * math.cos(pitch_rad)
+            rx = lx * math.cos(yaw_rad) + pz * math.sin(yaw_rad)
+            rz = -lx * math.sin(yaw_rad) + pz * math.cos(yaw_rad)
+            return (cx + rx, cy + py, cz + rz)
+
+        # Lower crate tub
+        tub_h = hy * 0.66
+        self.add_bevel_box(
+            center_u=_local_to_world(0.0, -hy * 0.5 + tub_h * 0.5, 0.0),
+            size_u=(wx * 0.96, tub_h, dz * 0.96),
+            mat=body_mat,
+            bevel=0.016,
+            segments=1,
+            rot_deg_u=rot_deg_u,
+        )
+        # Upper crate lid
+        lid_h = hy * 0.34
+        self.add_bevel_box(
+            center_u=_local_to_world(0.0, hy * 0.5 - lid_h * 0.5 + 0.004, 0.0),
+            size_u=(wx, lid_h, dz),
+            mat=body_mat,
+            bevel=0.018,
+            segments=1,
+            rot_deg_u=rot_deg_u,
+        )
+        # Central warm-orange strap band wrapping over front/top/back
+        self.add_bevel_box(
+            center_u=_local_to_world(0.0, 0.0, 0.0),
+            size_u=(wx * 0.30, hy + 0.010, dz + 0.010),
+            mat=stripe_mat,
+            bevel=0.006,
+            segments=1,
+            rot_deg_u=rot_deg_u,
+        )
+        # Front metallic latch clasp
+        self.add_bevel_box(
+            center_u=_local_to_world(0.0, hy * 0.12, dz * 0.5 + 0.008),
+            size_u=(wx * 0.22, hy * 0.26, 0.022),
+            mat=hardware_mat,
+            bevel=0.004,
+            segments=1,
+            rot_deg_u=rot_deg_u,
+        )
+
+    def add_wire_spool(
+        self,
+        center_u: tuple[float, float, float],
+        flange_radius: float = 0.115,
+        width: float = 0.125,
+        axis_u: str = "X",
+        rot_deg_u: tuple[float, float, float] = (0.0, 0.0, 0.0),
+        coil_mat: str = "R1_Copper",
+        flange_mat: str = "R1_GreyMetal",
+        hub_mat: str = "R1_BareSteel",
+    ) -> None:
+        """Add an industrial cable/wire spool with flanged rims, wound copper core, and steel hub."""
+        cx, cy, cz = center_u
+        # Wound copper wire drum core
+        self.add_cylinder(
+            center_u=center_u,
+            radius=flange_radius * 0.78,
+            length=width * 0.80,
+            mat=coil_mat,
+            axis_u=axis_u,
+            segments=12,
+            bevel=0.005,
+            bevel_segments=1,
+            rot_deg_u=rot_deg_u,
+        )
+        # End flanges
+        flange_t = max(0.012, width * 0.11)
+        half_off = (width - flange_t) * 0.5
+        yaw_rad = math.radians(rot_deg_u[1])
+        for sign in (-1.0, 1.0):
+            if axis_u == "X":
+                fx = cx + sign * half_off * math.cos(yaw_rad)
+                fy = cy
+                fz = cz - sign * half_off * math.sin(yaw_rad)
+            elif axis_u == "Y":
+                fx, fy, fz = cx, cy + sign * half_off, cz
+            else:
+                fx = cx + sign * half_off * math.sin(yaw_rad)
+                fy = cy
+                fz = cz + sign * half_off * math.cos(yaw_rad)
+            self.add_cylinder(
+                center_u=(fx, fy, fz),
+                radius=flange_radius,
+                length=flange_t,
+                mat=flange_mat,
+                axis_u=axis_u,
+                segments=12,
+                bevel=0.004,
+                bevel_segments=1,
+                rot_deg_u=rot_deg_u,
+            )
+        # Central steel spindle hub
+        self.add_cylinder(
+            center_u=center_u,
+            radius=flange_radius * 0.26,
+            length=width + 0.016,
+            mat=hub_mat,
+            axis_u=axis_u,
+            segments=8,
+            bevel=0.003,
+            bevel_segments=1,
+            rot_deg_u=rot_deg_u,
+        )
+
     def build_object(
         self,
         parent: bpy.types.Object | None = None,
@@ -2524,8 +2750,11 @@ def render_structure_suite(
     pose_active_fn: Callable[[bpy.types.Object], None],
     pose_rest_name: str = "pose_rest",
     pose_active_name: str = "pose_active",
+    cam_side_x: float = 1.0,
+    concept_path: Path | None = None,
+    use_active_for_compare: bool = True,
 ) -> list[Path]:
-    """Render all required views, poses, build stages, wireframe, and R/G/B vertex-colour sheet."""
+    """Render all required views, poses, build stages, wireframe, R/G/B vertex-colour sheet, and optional concept comparison."""
     out_dir = Path(out_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
     rendered_paths: list[Path] = []
@@ -2541,6 +2770,7 @@ def render_structure_suite(
 
     mid_y = target_height * 0.48
     dist = max(target_height * 2.28, footprint_radius * 2.95)
+    sx = -1.0 if cam_side_x < 0.0 else 1.0
 
     # Ensure all stages visible and in rest/default display pose
     stages = sorted(
@@ -2557,8 +2787,8 @@ def render_structure_suite(
     # 1. Front, Side, Three-Quarter, Top views
     views = {
         "front": ((0.0, mid_y + 0.25, dist * 1.05), (0.0, mid_y, 0.0), 48.0, None),
-        "side": ((dist * 1.05, mid_y + 0.25, 0.0), (0.0, mid_y, 0.0), 48.0, None),
-        "three_quarter": ((dist * 0.76, mid_y + dist * 0.34, dist * 0.78), (0.0, mid_y, 0.0), 48.0, None),
+        "side": ((sx * dist * 1.05, mid_y + 0.25, 0.0), (0.0, mid_y, 0.0), 48.0, None),
+        "three_quarter": ((sx * dist * 0.76, mid_y + dist * 0.34, dist * 0.78), (0.0, mid_y, 0.0), 48.0, None),
         "top": ((0.0, dist * 1.45, 0.08), (0.0, 0.0, 0.0), 50.0, max(footprint_radius * 2.55, target_height * 1.5)),
     }
     for v_name, (c_pos, c_tgt, lens, ortho) in views.items():
@@ -2570,7 +2800,7 @@ def render_structure_suite(
     # 2. Moving parts in both end positions (from a clear hero 3/4 angle)
     _aim_camera_at(
         cam_obj,
-        (dist * 0.74, mid_y + dist * 0.30, dist * 0.76),
+        (sx * dist * 0.74, mid_y + dist * 0.30, dist * 0.76),
         (0.0, mid_y, 0.0),
         lens_mm=48.0,
     )
@@ -2647,6 +2877,17 @@ def render_structure_suite(
     # 5. Vertex-colour view showing R (AO), G (Edge Wear), B (Cavity/Dust), and RGB
     p_vcol = render_vertex_color_grid(root, out_dir / f"{slug}_vertex_color.png")
     rendered_paths.append(p_vcol)
+
+    # 6. Optional side-by-side comparison with concept (`Logs/renders/compare_<slug>.png`)
+    if concept_path is not None and Path(concept_path).exists():
+        rhs_path = p_act if use_active_for_compare else (out_dir / f"{slug}_three_quarter.png")
+        p_comp = compose_side_by_side(
+            left_path=Path(concept_path),
+            right_path=rhs_path,
+            out_path=out_dir / f"compare_{slug}.png",
+            target_height=768,
+        )
+        rendered_paths.append(p_comp)
 
     # Cleanup temporary objects
     for tob in temp_objs:
@@ -2867,35 +3108,83 @@ def compose_before_after_grid(
     return out_path
 
 
-
 def render_family_lineup(
-    roots_and_offsets: Sequence[tuple[bpy.types.Object, float]],
+    roots_and_offsets: Sequence[tuple[bpy.types.Object, float] | tuple[bpy.types.Object, float, float, float]],
     out_path: Path,
     rover_height: float = 1.46,
     rover_width: float = 1.52,
     rover_length: float = 2.04,
 ) -> Path:
-    """Render all three structures side-by-side with a 1.46 m stand-in box for 07."""
+    """Render all structures side-by-side (or on a two-tier family shelf) with a 1.46 m stand-in for 07."""
     ensure_materials(use_vertex_color_shading=True)
-    for r_obj, x_off in roots_and_offsets:
-        r_obj.location = u_pos(x_off, 0.0, 0.0)
+    multi_tier = any(len(item) > 2 for item in roots_and_offsets)
 
-    rover_box = build_rover_07_standin(
-        pos_u=(3.55, 0.0, 0.0),
-        rover_width=rover_width,
-        rover_height=rover_height,
-        rover_length=rover_length,
-    )
+    for item in roots_and_offsets:
+        if len(item) == 2:
+            r_obj, x_off = item
+            r_obj.location = u_pos(x_off, 0.0, 0.0)
+        else:
+            r_obj, x_off, y_off, z_off = item  # type: ignore[misc]
+            r_obj.location = u_pos(x_off, y_off, z_off)
 
-    # Wide lunar regolith shelf plinth under the whole family
     plinth_mb = MeshBuilder("_FamilyShelf", pivot_u=(0.0, -0.08, 0.0))
-    plinth_mb.add_bevel_box(
-        center_u=(-0.15, -0.08, 0.0),
-        size_u=(11.2, 0.16, 4.4),
-        mat="R1_GreyMetal",
-        bevel=0.03,
-        segments=1,
-    )
+    rover_objs: list[bpy.types.Object] = []
+
+    if multi_tier:
+        top_y = max(float(item[2]) for item in roots_and_offsets if len(item) > 2)  # type: ignore[index]
+        rover_top = build_rover_07_standin(
+            pos_u=(5.40, top_y, 0.0),
+            rover_width=rover_width,
+            rover_height=rover_height,
+            rover_length=rover_length,
+            yaw_deg_u=-24.0,
+        )
+        rover_bot = build_rover_07_standin(
+            pos_u=(4.60, 0.0, 0.0),
+            rover_width=rover_width,
+            rover_height=rover_height,
+            rover_length=rover_length,
+            yaw_deg_u=-24.0,
+        )
+        rover_objs.extend([rover_top, rover_bot])
+        plinth_mb.add_bevel_box(
+            center_u=(-0.10, top_y - 0.08, 0.0),
+            size_u=(13.6, 0.16, 3.6),
+            mat="R1_GreyMetal",
+            bevel=0.03,
+            segments=1,
+        )
+        plinth_mb.add_bevel_box(
+            center_u=(0.30, -0.08, 0.0),
+            size_u=(12.2, 0.16, 3.6),
+            mat="R1_GreyMetal",
+            bevel=0.03,
+            segments=1,
+        )
+        cam_pos = (-0.85, top_y * 0.5 + 2.35, 13.8)
+        cam_tgt = (-0.10, top_y * 0.5 + 0.72, 0.0)
+        lens_mm = 36.0
+        res_x, res_y = 1920, 1080
+    else:
+        rover_box = build_rover_07_standin(
+            pos_u=(3.55, 0.0, 0.0),
+            rover_width=rover_width,
+            rover_height=rover_height,
+            rover_length=rover_length,
+        )
+        rover_objs.append(rover_box)
+        plinth_mb.add_bevel_box(
+            center_u=(-0.15, -0.08, 0.0),
+            size_u=(11.2, 0.16, 4.4),
+            mat="R1_GreyMetal",
+            bevel=0.03,
+            segments=1,
+        )
+        cam_pos = (-0.10, 2.85, 11.8)
+        cam_tgt = (-0.15, 0.88, 0.0)
+        lens_mm = 35.0
+        res_x, res_y = 1600, 900
+
     shelf_obj = plinth_mb.build_object()
     _init_solid_vcol(shelf_obj, (0.85, 0.0, 0.15, 1.0))
 
@@ -2907,15 +3196,15 @@ def render_family_lineup(
     cam_obj = bpy.data.objects.new("_FamilyCam", cam_data)
     bpy.context.collection.objects.link(cam_obj)
     bpy.context.scene.camera = cam_obj
-    temp_objs.extend([rover_box, shelf_obj, cam_obj])
+    temp_objs.extend([*rover_objs, shelf_obj, cam_obj])
 
     _aim_camera_at(
         cam_obj,
-        cam_pos_u=(-0.10, 2.85, 11.8),
-        target_u=(-0.15, 0.88, 0.0),
-        lens_mm=35.0,
+        cam_pos_u=cam_pos,
+        target_u=cam_tgt,
+        lens_mm=lens_mm,
     )
-    _render_to_file(out_path, res_x=1600, res_y=900, freestyle=True)
+    _render_to_file(out_path, res_x=res_x, res_y=res_y, freestyle=True)
 
     for tob in temp_objs:
         if tob.name in bpy.data.objects:
