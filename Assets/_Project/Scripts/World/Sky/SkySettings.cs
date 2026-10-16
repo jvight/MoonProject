@@ -127,7 +127,7 @@ namespace MoonProject.World
         [SerializeField] private float _earthPaleness = 0.3f;
 
         [Tooltip("Brightness of Earth's unlit night side (0 = black). Kept very low so the night hemisphere reads " +
-            "as a dark disc with faint city lights while the sunlit crescent stands out.")]
+            "as a dark, unpeopled disc while the sunlit crescent and faint polar aurora stand out.")]
         [Range(0f, 1f)]
         [SerializeField] private float _earthNightBrightness = 0.02f;
 
@@ -163,6 +163,26 @@ namespace MoonProject.World
         [Tooltip("Seconds per Earth rotation. Slow enough to notice only after a while.")]
         [Range(10f, 3600f)]
         [SerializeField] private float _earthSpinPeriod = 900f;
+
+        [Tooltip("Soft green-teal colour of the faint natural polar aurora curtains on Earth's night side.")]
+        [SerializeField] private Color _earthAuroraColor = new Color(0.36f, 0.86f, 0.72f);
+
+        [Tooltip("Linear strength of the polar aurora on Earth's night side; kept very low and well below the bloom " +
+            "threshold so the dark hemisphere reads with only natural light.")]
+        [Range(0f, 0.5f)]
+        [SerializeField] private float _earthAuroraIntensity = 0.085f;
+
+        [Tooltip("Centre latitude of the polar aurora ovals as abs(y) on Earth's unit sphere (0 = equator, 1 = pole).")]
+        [Range(0.5f, 0.95f)]
+        [SerializeField] private float _earthAuroraLatitude = 0.84f;
+
+        [Tooltip("Half-width of the polar aurora latitude band on Earth's unit sphere.")]
+        [Range(0.02f, 0.3f)]
+        [SerializeField] private float _earthAuroraWidth = 0.045f;
+
+        [Tooltip("Slow drift speed of the polar aurora curtains, radians per second.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _earthAuroraDriftSpeed = 0.06f;
 
         [Header("Shooting stars")]
         [Tooltip("Average seconds between shooting stars.")]
@@ -214,6 +234,11 @@ namespace MoonProject.World
         public float EarthLimb => _earthLimb;
         public float EarthLimbWidth => _earthLimbWidth;
         public float EarthSpinPeriod => _earthSpinPeriod;
+        public Color EarthAuroraColor => _earthAuroraColor;
+        public float EarthAuroraIntensity => _earthAuroraIntensity;
+        public float EarthAuroraLatitude => _earthAuroraLatitude;
+        public float EarthAuroraWidth => _earthAuroraWidth;
+        public float EarthAuroraDriftSpeed => _earthAuroraDriftSpeed;
         public float ShootingStarPeriod => _shootingStarPeriod;
         public float ShootingStarDuration => _shootingStarDuration;
         public float ShootingStarBrightness => _shootingStarBrightness;

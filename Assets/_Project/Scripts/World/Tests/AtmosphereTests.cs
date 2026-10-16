@@ -207,6 +207,22 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
+        public void Earth_NightAurora_IsFaintGreenTealNearThePoles_WellUnderTheBloomThreshold()
+        {
+            var post = new PostProcessSettings();
+            Color aurora = _sky.EarthAuroraColor.linear * _sky.EarthAuroraIntensity;
+            Assert.Greater(aurora.g, aurora.b, "polar aurora is green-teal");
+            Assert.Greater(aurora.b, aurora.r, "polar aurora is green-teal, never warm amber");
+            Assert.Greater(aurora.maxColorComponent, 0f, "polar aurora is present on Earth's night side");
+            Assert.Less(aurora.maxColorComponent, post.BloomThreshold * 0.25f,
+                "polar aurora stays very low intensity, well under the bloom threshold");
+            Assert.That(_sky.EarthAuroraLatitude, Is.InRange(0.65f, 0.90f), "polar aurora sits near the poles");
+            Assert.That(_sky.EarthAuroraWidth, Is.InRange(0.04f, 0.22f), "polar aurora forms a narrow polar band");
+            Assert.That(_sky.EarthAuroraDriftSpeed, Is.GreaterThan(0f).And.LessThanOrEqualTo(0.2f),
+                "polar aurora drifts slowly");
+        }
+
+        [Test]
         public void LitDust_StaysUnderTheBloomThreshold()
         {
             Vector3 toLight = WorldAtmosphere.LightSourceDirection(_atmosphere, _sky);

@@ -39,7 +39,8 @@ namespace MoonProject.World
         private static readonly int SunDirection = Shader.PropertyToID("_MoonSunDirection");
         private static readonly int SunColor = Shader.PropertyToID("_MoonSunColor");
         private static readonly int EclipseRing = Shader.PropertyToID("_MoonEclipseRing");
-        private static readonly int EarthEclipse = Shader.PropertyToID("_MoonEarthEclipse");
+        private static readonly int EarthAurora = Shader.PropertyToID("_MoonEarthAurora");
+        private static readonly int EarthAuroraBand = Shader.PropertyToID("_MoonEarthAuroraBand");
         private static readonly int SunlitGround = Shader.PropertyToID("_MoonSunlitGround");
 
         public static void Apply(SkySettings sky)
@@ -90,12 +91,15 @@ namespace MoonProject.World
             Shader.SetGlobalVector(EarthOcean, WithAlpha(EarthMeshBuilder.FaceColor(PaletteSwatch.EarthOcean, sky), 1f));
             Shader.SetGlobalVector(EarthLand, WithAlpha(EarthMeshBuilder.FaceColor(PaletteSwatch.EarthLand, sky), 1f));
             Shader.SetGlobalVector(EarthCloud, WithAlpha(EarthMeshBuilder.FaceColor(PaletteSwatch.Cream, sky), 1f));
+            Color auroraColor = sky.EarthAuroraColor.linear * sky.EarthAuroraIntensity;
+            Shader.SetGlobalVector(EarthAurora, WithAlpha(auroraColor, sky.EarthAuroraDriftSpeed));
+            Shader.SetGlobalVector(EarthAuroraBand,
+                new Vector4(sky.EarthAuroraLatitude, sky.EarthAuroraWidth, 0f, 0f));
             Shader.SetGlobalVector(ShootingStars,
                 new Vector4(sky.ShootingStarPeriod, sky.ShootingStarDuration, sky.ShootingStarBrightness, 0f));
             Shader.SetGlobalVector(SunDirection, Vector4.zero);
             Shader.SetGlobalVector(SunColor, Vector4.zero);
             Shader.SetGlobalVector(EclipseRing, Vector4.zero);
-            Shader.SetGlobalVector(EarthEclipse, Vector4.zero);
             Shader.SetGlobalVector(SunlitGround, Vector4.zero);
         }
 
@@ -206,11 +210,14 @@ namespace MoonProject.World
             Shader.SetGlobalVector(EarthSun, WithAlpha(earthSun, nightBrightness));
 
             float spinSpeed = Mathf.PI * 2f / sky.EarthSpinPeriod;
-            Shader.SetGlobalVector(EarthGlow, new Vector4(sky.EarthGlow, spinSpeed, clock.TimeSeconds * spinSpeed, 0f));
+            Shader.SetGlobalVector(EarthGlow,
+                new Vector4(sky.EarthGlow, spinSpeed, clock.TimeSeconds * spinSpeed, ringWeight));
 
-            float nightSideFacing = (1f - SmoothStep01(0.35f, 0.92f, clock.EarthPhase)) * Mathf.Lerp(0.85f, 1.25f, eclipse);
-            Color cityColor = cycle.EclipseCityLightColor.linear * (cycle.EclipseCityLightStrength * nightSideFacing);
-            Shader.SetGlobalVector(EarthEclipse, WithAlpha(cityColor, ringWeight));
+            Color auroraColor = sky.EarthAuroraColor.linear * sky.EarthAuroraIntensity;
+            Shader.SetGlobalVector(EarthAurora, WithAlpha(auroraColor, sky.EarthAuroraDriftSpeed));
+            Shader.SetGlobalVector(EarthAuroraBand,
+                new Vector4(sky.EarthAuroraLatitude, sky.EarthAuroraWidth,
+                    clock.TimeSeconds * sky.EarthAuroraDriftSpeed, 0f));
 
             Color ringColor = cycle.EclipseRingColor.linear * (cycle.EclipseRingStrength * ringWeight);
             Shader.SetGlobalVector(EclipseRing, WithAlpha(ringColor, ringWeight > 1e-4f ? cycle.EclipseRingWidth : 0f));
