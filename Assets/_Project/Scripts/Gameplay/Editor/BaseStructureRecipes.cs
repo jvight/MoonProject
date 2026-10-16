@@ -11,16 +11,18 @@ namespace MoonProject.Gameplay.Editor
 {
     /// <summary>
     /// The ten robot-scale base structures of 0.5.7 in deterministic catalog order: charging pad, solar array, battery
-    /// bank, power pylon, smelter, fabricator, storage rack, upgrade bay, antenna mast, and vehicle pad. The three
-    /// slice-6 structures (<c>charging_pad</c>, <c>solar_array</c>, <c>power_pylon</c>) wrap Art's R1 prefabs with
-    /// their real mesh bounds, <c>Socket_Power_&lt;n&gt;</c> ports, <see cref="Layers.Prop"/> collider, and
-    /// <see cref="StructureView"/> (<c>ArtPending = false</c>); the remaining seven stay <c>ArtPending = true</c>.
+    /// bank, power pylon, smelter, fabricator, storage rack, upgrade bay, antenna mast, and vehicle pad. All ten wrap
+    /// Art's R1 prefabs with their upright mesh bounds, <c>Socket_Power_&lt;n&gt;</c> ports, <see cref="Layers.Prop"/>
+    /// collider, and <see cref="StructureView"/> (<c>ArtPending = false</c>).
     /// </summary>
     internal static class BaseStructureRecipes
     {
         private const string StagePrefix = "Stage_";
         private const string SocketPowerPrefix = "Socket_Power_";
         private const string LampAmberMaterialName = "R1_LampAmber";
+        private const float StatusLightIntensity = 1.6f;
+        private const float StatusLightRange = 5.0f;
+        private static readonly Color StatusLightColor = new Color(1.0f, 0.74f, 0.36f);
 
         public static readonly Entry[] All =
         {
@@ -54,7 +56,7 @@ namespace MoonProject.Gameplay.Editor
                 r1ModelName: "SolarArray"),
             new Entry(
                 StructureIds.BatteryBank,
-                new Vector3(1.4f, 1.2f, 1.4f),
+                Vector3.zero,
                 maxGroundSlope: 15f,
                 clearance: 0.25f,
                 produceWatts: 0f,
@@ -63,8 +65,9 @@ namespace MoonProject.Gameplay.Editor
                 connectionRadius: 0f,
                 buildCost: new Recipe(3, 3, 0),
                 buildSeconds: 2.5f,
-                ports: CardinalPorts(new Vector3(1.4f, 1.2f, 1.4f), 0.25f),
-                artPending: true),
+                ports: Array.Empty<StructurePort>(),
+                artPending: false,
+                r1ModelName: "BatteryBank"),
             new Entry(
                 StructureIds.PowerPylon,
                 Vector3.zero,
@@ -81,7 +84,7 @@ namespace MoonProject.Gameplay.Editor
                 r1ModelName: "PowerPylon"),
             new Entry(
                 StructureIds.Smelter,
-                new Vector3(2.0f, 1.8f, 2.0f),
+                Vector3.zero,
                 maxGroundSlope: 12f,
                 clearance: 0.3f,
                 produceWatts: 0f,
@@ -90,11 +93,12 @@ namespace MoonProject.Gameplay.Editor
                 connectionRadius: 0f,
                 buildCost: new Recipe(6, 2, 0),
                 buildSeconds: 4f,
-                ports: CardinalPorts(new Vector3(2.0f, 1.8f, 2.0f), 0.3f),
-                artPending: true),
+                ports: Array.Empty<StructurePort>(),
+                artPending: false,
+                r1ModelName: "Smelter"),
             new Entry(
                 StructureIds.Fabricator,
-                new Vector3(2.2f, 1.6f, 1.8f),
+                Vector3.zero,
                 maxGroundSlope: 12f,
                 clearance: 0.3f,
                 produceWatts: 0f,
@@ -103,11 +107,12 @@ namespace MoonProject.Gameplay.Editor
                 connectionRadius: 0f,
                 buildCost: new Recipe(5, 3, 1),
                 buildSeconds: 4f,
-                ports: CardinalPorts(new Vector3(2.2f, 1.6f, 1.8f), 0.3f),
-                artPending: true),
+                ports: Array.Empty<StructurePort>(),
+                artPending: false,
+                r1ModelName: "Fabricator"),
             new Entry(
                 StructureIds.StorageRack,
-                new Vector3(1.8f, 1.5f, 1.0f),
+                Vector3.zero,
                 maxGroundSlope: 16f,
                 clearance: 0.2f,
                 produceWatts: 0f,
@@ -116,11 +121,12 @@ namespace MoonProject.Gameplay.Editor
                 connectionRadius: 0f,
                 buildCost: new Recipe(4, 0, 0),
                 buildSeconds: 2f,
-                ports: CardinalPorts(new Vector3(1.8f, 1.5f, 1.0f), 0.2f),
-                artPending: true),
+                ports: Array.Empty<StructurePort>(),
+                artPending: false,
+                r1ModelName: "StorageRack"),
             new Entry(
                 StructureIds.UpgradeBay,
-                new Vector3(2.6f, 2.0f, 2.6f),
+                Vector3.zero,
                 maxGroundSlope: 10f,
                 clearance: 0.35f,
                 produceWatts: 0f,
@@ -129,11 +135,12 @@ namespace MoonProject.Gameplay.Editor
                 connectionRadius: 0f,
                 buildCost: new Recipe(6, 4, 2),
                 buildSeconds: 5f,
-                ports: CardinalPorts(new Vector3(2.6f, 2.0f, 2.6f), 0.35f),
-                artPending: true),
+                ports: Array.Empty<StructurePort>(),
+                artPending: false,
+                r1ModelName: "UpgradeBay"),
             new Entry(
                 StructureIds.AntennaMast,
-                new Vector3(1.6f, 3.5f, 1.6f),
+                Vector3.zero,
                 maxGroundSlope: 15f,
                 clearance: 0.3f,
                 produceWatts: 0f,
@@ -142,11 +149,12 @@ namespace MoonProject.Gameplay.Editor
                 connectionRadius: 0f,
                 buildCost: new Recipe(4, 3, 2),
                 buildSeconds: 4.5f,
-                ports: CardinalPorts(new Vector3(1.6f, 3.5f, 1.6f), 0.3f),
-                artPending: true),
+                ports: Array.Empty<StructurePort>(),
+                artPending: false,
+                r1ModelName: "AntennaMast"),
             new Entry(
                 StructureIds.VehiclePad,
-                new Vector3(3.2f, 0.5f, 3.2f),
+                Vector3.zero,
                 maxGroundSlope: 10f,
                 clearance: 0.4f,
                 produceWatts: 0f,
@@ -155,8 +163,9 @@ namespace MoonProject.Gameplay.Editor
                 connectionRadius: 0f,
                 buildCost: new Recipe(8, 3, 1),
                 buildSeconds: 5f,
-                ports: CardinalPorts(new Vector3(3.2f, 0.5f, 3.2f), 0.4f),
-                artPending: true),
+                ports: Array.Empty<StructurePort>(),
+                artPending: false,
+                r1ModelName: "VehiclePad"),
         };
 
         /// <summary>
@@ -254,26 +263,29 @@ namespace MoonProject.Gameplay.Editor
                     $"BaseStructureRecipes: missing R1 structure prefab at '{sourcePath}'.");
             }
 
-            GameObject instance = Object.Instantiate(sourcePrefab);
-            instance.name = entry.Id;
-            NormalizeBlenderEmptyTransforms(instance.transform);
-            SetLayerRecursively(instance.transform, Layers.Prop);
+            var root = new GameObject(entry.Id);
+            GameObject model = Object.Instantiate(sourcePrefab, root.transform, false);
+            model.name = "Model";
+            model.transform.localPosition = Vector3.zero;
+            model.transform.localRotation = sourcePrefab.transform.localRotation;
+            model.transform.localScale = sourcePrefab.transform.localScale;
+            SetLayerRecursively(root.transform, Layers.Prop);
 
-            if (!MeshBounds.TryLocal(instance.transform, instance.transform, out Bounds bounds))
+            if (!MeshBounds.TryLocal(root.transform, root.transform, out Bounds bounds))
             {
-                Object.DestroyImmediate(instance);
+                Object.DestroyImmediate(root);
                 throw new InvalidOperationException(
                     $"BaseStructureRecipes: R1 structure '{entry.R1ModelName}' has no meshes.");
             }
 
-            var collider = instance.AddComponent<BoxCollider>();
+            var collider = root.AddComponent<BoxCollider>();
             collider.center = bounds.center;
             collider.size = bounds.size;
 
             var stages = new List<Transform>(4);
             for (int stageIndex = 1; stageIndex <= 8; stageIndex++)
             {
-                Transform stage = instance.transform.Find(StagePrefix + stageIndex);
+                Transform stage = model.transform.Find(StagePrefix + stageIndex);
                 if (stage == null)
                 {
                     break;
@@ -284,13 +296,13 @@ namespace MoonProject.Gameplay.Editor
 
             if (stages.Count == 0)
             {
-                Object.DestroyImmediate(instance);
+                Object.DestroyImmediate(root);
                 throw new InvalidOperationException(
                     $"BaseStructureRecipes: R1 structure '{entry.R1ModelName}' has no Stage_1..N children.");
             }
 
             var lampRenderers = new List<Renderer>();
-            Renderer[] allRenderers = instance.GetComponentsInChildren<Renderer>(true);
+            Renderer[] allRenderers = model.GetComponentsInChildren<Renderer>(true);
             for (int r = 0; r < allRenderers.Length; r++)
             {
                 Renderer renderer = allRenderers[r];
@@ -305,77 +317,31 @@ namespace MoonProject.Gameplay.Editor
                 }
             }
 
-            var view = instance.AddComponent<StructureView>();
-            view.Populate(stages.ToArray(), lampRenderers.ToArray(), new Collider[] { collider });
+            var lightGo = new GameObject("StatusGlow");
+            lightGo.transform.SetParent(root.transform, false);
+            lightGo.transform.localPosition = new Vector3(
+                bounds.center.x,
+                Mathf.Max(0.85f, bounds.max.y * 0.78f),
+                bounds.center.z);
+            var statusLight = lightGo.AddComponent<Light>();
+            statusLight.type = LightType.Point;
+            statusLight.color = StatusLightColor;
+            statusLight.intensity = StatusLightIntensity;
+            statusLight.range = StatusLightRange;
+            statusLight.shadows = LightShadows.None;
+            statusLight.enabled = false;
+
+            var view = root.AddComponent<StructureView>();
+            view.Populate(
+                entry.Id,
+                stages.ToArray(),
+                lampRenderers.ToArray(),
+                new Collider[] { collider },
+                statusLight,
+                StatusLightIntensity);
 
             string runtimePath = GameplayAssetPaths.RuntimeStructurePrefab(entry.Id);
-            return GeneratedAssets.SavePrefab(instance, runtimePath);
-        }
-
-        private static void NormalizeBlenderEmptyTransforms(Transform root)
-        {
-            var qFix = new Quaternion(0f, 0.70710678f, 0.70710678f, 0f);
-            Transform[] descendants = root.GetComponentsInChildren<Transform>(true);
-            for (int i = 0; i < descendants.Length; i++)
-            {
-                Transform child = descendants[i];
-                if (child == root)
-                {
-                    continue;
-                }
-
-                if (child.name.StartsWith(SocketPowerPrefix, StringComparison.Ordinal) &&
-                    Mathf.Abs(child.localRotation.w) < 0.99f)
-                {
-                    Vector3 p = child.localPosition;
-                    child.localPosition = new Vector3(-p.x, p.z, p.y);
-                    child.localRotation = Quaternion.identity;
-                }
-            }
-
-            for (int i = 0; i < root.childCount; i++)
-            {
-                Transform child = root.GetChild(i);
-                if (child.name == "Stage_4" &&
-                    !child.TryGetComponent<MeshFilter>(out _) &&
-                    child.childCount > 0 &&
-                    Mathf.Abs(child.GetChild(0).localRotation.w) < 0.99f)
-                {
-                    Vector3 sp = child.localPosition;
-                    child.localPosition = new Vector3(-sp.x, sp.z, sp.y);
-                    child.localRotation = Quaternion.identity;
-                    for (int j = 0; j < child.childCount; j++)
-                    {
-                        Transform c = child.GetChild(j);
-                        Vector3 cp = c.localPosition;
-                        c.localPosition = new Vector3(-cp.x, cp.z, cp.y);
-                        c.localRotation = qFix * c.localRotation;
-
-                        if (c.name == "Azimuth")
-                        {
-                            Transform elev = c.Find("Elevation");
-                            if (elev != null)
-                            {
-                                elev.localPosition = new Vector3(0f, 0.31f, 0f);
-                                elev.localRotation = Quaternion.Euler(-35f, 0f, 0f);
-                                Transform wingL = elev.Find("Wing_L");
-                                if (wingL != null)
-                                {
-                                    wingL.localPosition = new Vector3(-0.075f, 0f, -0.18f);
-                                    wingL.localRotation = Quaternion.Euler(0f, 0f, 5f);
-                                }
-
-                                Transform wingR = elev.Find("Wing_R");
-                                if (wingR != null)
-                                {
-                                    wingR.localPosition = new Vector3(0.075f, 0f, -0.18f);
-                                    wingR.localRotation = Quaternion.Euler(0f, 0f, -5f);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            return GeneratedAssets.SavePrefab(root, runtimePath);
         }
 
         private static void SetLayerRecursively(Transform root, int layer)
@@ -393,7 +359,10 @@ namespace MoonProject.Gameplay.Editor
             out Vector3 localCenter,
             out StructurePort[] ports)
         {
-            if (MeshBounds.TryLocal(root.transform, root.transform, out Bounds bounds))
+            Transform rootTransform = root.transform;
+            Quaternion rootRot = rootTransform.localRotation;
+
+            if (TryUprightBounds(rootTransform, rootRot, out Bounds bounds))
             {
                 dimensions = new Vector3(
                     Mathf.Max(0.1f, bounds.size.x),
@@ -412,18 +381,63 @@ namespace MoonProject.Gameplay.Editor
             for (int i = 0; i < descendants.Length; i++)
             {
                 Transform child = descendants[i];
-                if (child == root.transform || !child.name.StartsWith(SocketPowerPrefix, StringComparison.Ordinal))
+                if (child == rootTransform || !child.name.StartsWith(SocketPowerPrefix, StringComparison.Ordinal))
                 {
                     continue;
                 }
 
-                Vector3 offset = root.transform.InverseTransformPoint(child.position);
+                Vector3 offset = rootRot * rootTransform.InverseTransformPoint(child.position);
                 var horizontal = new Vector3(offset.x, 0f, offset.z);
-                Vector3 direction = horizontal.sqrMagnitude > 1e-6f ? horizontal.normalized : Vector3.forward;
+                Vector3 direction;
+                if (horizontal.sqrMagnitude > 1e-6f)
+                {
+                    direction = horizontal.normalized;
+                }
+                else
+                {
+                    Vector3 fwd = rootRot * rootTransform.InverseTransformDirection(child.forward);
+                    fwd.y = 0f;
+                    direction = fwd.sqrMagnitude > 1e-6f ? fwd.normalized : Vector3.forward;
+                }
+
                 portList.Add(new StructurePort(offset, direction));
             }
 
             ports = portList.ToArray();
+        }
+
+        private static bool TryUprightBounds(Transform rootTransform, Quaternion rootRot, out Bounds bounds)
+        {
+            bool found = false;
+            bounds = new Bounds();
+            foreach (MeshFilter filter in rootTransform.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (filter.sharedMesh == null)
+                {
+                    continue;
+                }
+
+                Bounds mesh = filter.sharedMesh.bounds;
+                for (int corner = 0; corner < 8; corner++)
+                {
+                    var local = new Vector3(
+                        (corner & 1) == 0 ? mesh.min.x : mesh.max.x,
+                        (corner & 2) == 0 ? mesh.min.y : mesh.max.y,
+                        (corner & 4) == 0 ? mesh.min.z : mesh.max.z);
+                    Vector3 point = rootRot * rootTransform.InverseTransformPoint(filter.transform.TransformPoint(local));
+                    if (found)
+                    {
+                        bounds.Encapsulate(point);
+                    }
+                    else
+                    {
+                        bounds = new Bounds(point, Vector3.zero);
+                        found = true;
+                    }
+                }
+            }
+
+            return found;
         }
 
         private static void ExtractBoundsAndPorts(
@@ -433,7 +447,7 @@ namespace MoonProject.Gameplay.Editor
             out StructurePort[] ports)
         {
             ExtractDimensionsAndPorts(root.gameObject, out Vector3 dimensions, out _, out StructurePort[] socketPorts);
-            if (MeshBounds.TryLocal(root, root, out _))
+            if (TryUprightBounds(root, root.localRotation, out _))
             {
                 footprint = dimensions;
             }

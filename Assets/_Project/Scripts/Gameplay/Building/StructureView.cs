@@ -30,6 +30,12 @@ namespace MoonProject.Gameplay
         [Tooltip("Solid colliders on Layers.Prop (disabled while this instance is a placement ghost).")]
         [SerializeField] private Collider[] _colliders = Array.Empty<Collider>();
 
+        [Tooltip("Optional warm amber point light enabled when the structure is completely built.")]
+        [SerializeField] private Light _statusLight;
+
+        [Tooltip("Peak intensity for the optional warm amber point light.")]
+        [SerializeField] private float _statusLightIntensity = 1.6f;
+
         private StageRendererCache[][] _stageRenderers;
         private bool[] _stageIsSolid;
         private float[] _stageScale;
@@ -61,9 +67,11 @@ namespace MoonProject.Gameplay
         public void Populate(
             Transform[] stageRoots,
             Renderer[] lampRenderers,
-            Collider[] colliders)
+            Collider[] colliders,
+            Light statusLight = null,
+            float statusLightIntensity = 1.6f)
         {
-            Populate(string.Empty, stageRoots, lampRenderers, colliders);
+            Populate(string.Empty, stageRoots, lampRenderers, colliders, statusLight, statusLightIntensity);
         }
 
         /// <summary>Populates serialized references at build time (<c>GameplayContentBuilder</c>).</summary>
@@ -71,12 +79,16 @@ namespace MoonProject.Gameplay
             string structureId,
             Transform[] stageRoots,
             Renderer[] lampRenderers,
-            Collider[] colliders)
+            Collider[] colliders,
+            Light statusLight = null,
+            float statusLightIntensity = 1.6f)
         {
             _structureId = structureId ?? string.Empty;
             _stageRoots = stageRoots ?? Array.Empty<Transform>();
             _lampRenderers = lampRenderers ?? Array.Empty<Renderer>();
             _colliders = colliders ?? Array.Empty<Collider>();
+            _statusLight = statusLight;
+            _statusLightIntensity = statusLightIntensity;
         }
 
         /// <summary>
@@ -98,9 +110,10 @@ namespace MoonProject.Gameplay
             if (_stageRoots == null || _stageRoots.Length == 0)
             {
                 var discovered = new List<Transform>(4);
+                Transform searchRoot = transform.Find("Model") ?? transform;
                 for (int i = 1; i <= 8; i++)
                 {
-                    Transform child = transform.Find("Stage_" + i);
+                    Transform child = searchRoot.Find("Stage_" + i);
                     if (child == null)
                     {
                         break;
@@ -191,6 +204,10 @@ namespace MoonProject.Gameplay
             SolidStageCount = 0;
             _targetLampIntensity = 0f;
             LampIntensity = 0f;
+            if (_statusLight != null)
+            {
+                _statusLight.enabled = false;
+            }
 
             int stageCount = _stageRenderers.Length;
             for (int s = 0; s < stageCount; s++)
@@ -303,6 +320,10 @@ namespace MoonProject.Gameplay
             {
                 _targetLampIntensity = 0f;
                 LampIntensity = 0f;
+                if (_statusLight != null)
+                {
+                    _statusLight.enabled = false;
+                }
             }
 
             return newlySolidCount;
@@ -375,7 +396,7 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            if (SolidStageCount == _stageRoots.Length && _lampGlows.Length > 0)
+            if (SolidStageCount == _stageRoots.Length && (_lampGlows.Length > 0 || _statusLight != null))
             {
                 LampIntensity = Damp.Toward(LampIntensity, _targetLampIntensity, LampWarmHalfLife, deltaTime);
                 ApplyLampGlow(LampIntensity);
@@ -456,6 +477,20 @@ namespace MoonProject.Gameplay
                 if (glow != null)
                 {
                     glow.Apply(_lampBaseColors[i], intensity);
+                }
+            }
+
+            if (_statusLight != null)
+            {
+                bool lit = !IsGhost && intensity > 0.01f;
+                if (_statusLight.enabled != lit)
+                {
+                    _statusLight.enabled = lit;
+                }
+
+                if (lit)
+                {
+                    _statusLight.intensity = _statusLightIntensity * intensity;
                 }
             }
         }

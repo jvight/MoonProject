@@ -89,7 +89,8 @@ class TestIconIdMapping(unittest.TestCase):
 
     def test_every_icon_localization_key_exists_in_en_json(self):
         self.assertEqual(len(build_icons.ITEM_SPECS), 18)
-        self.assertEqual(len(build_icons.ALL_SPECS), 30)
+        self.assertEqual(len(build_icons.STRUCT_SPECS), 10)
+        self.assertEqual(len(build_icons.ALL_SPECS), 40)
         for spec in build_icons.ALL_SPECS:
             with self.subTest(icon=spec.filename):
                 self.assertIn(

@@ -18,6 +18,20 @@ namespace MoonProject.Gameplay
 
         public const int Count = 10;
 
+        public static readonly string[] All =
+        {
+            ChargingPad,
+            SolarArray,
+            BatteryBank,
+            PowerPylon,
+            Smelter,
+            Fabricator,
+            StorageRack,
+            UpgradeBay,
+            AntennaMast,
+            VehiclePad,
+        };
+
         private const string NamePrefix = "structure.";
         private const string NameSuffix = ".name";
         private const string DescriptionSuffix = ".desc";

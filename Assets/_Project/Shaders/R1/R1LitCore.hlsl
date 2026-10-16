@@ -148,11 +148,27 @@ half4 R1LitFrag(R1LitVaryings input) : SV_Target
     half4 packedNormal = SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uv);
     half3 normalTS = UnpackNormalScale(packedNormal, _BumpScale);
 
-    float3 normalWS = normalize(input.normalWS);
-    float3 tangentWS = normalize(input.tangentWS.xyz);
-    float3 bitangentWS = normalize(cross(normalWS, tangentWS) * input.tangentWS.w);
-    float3x3 tangentToWorld = float3x3(tangentWS, bitangentWS, normalWS);
-    float3 finalNormalWS = normalize(mul(normalTS, tangentToWorld));
+    float normLenSq = dot(input.normalWS, input.normalWS);
+    float3 normalWS = normLenSq > 1e-6 ? input.normalWS * rsqrt(normLenSq) : float3(0.0, 1.0, 0.0);
+    float tanLenSq = dot(input.tangentWS.xyz, input.tangentWS.xyz);
+    float3 finalNormalWS = normalWS;
+    if (tanLenSq > 1e-6)
+    {
+        float3 tangentWS = input.tangentWS.xyz * rsqrt(tanLenSq);
+        float3 bitanRaw = cross(normalWS, tangentWS) * input.tangentWS.w;
+        float bitanLenSq = dot(bitanRaw, bitanRaw);
+        if (bitanLenSq > 1e-6)
+        {
+            float3 bitangentWS = bitanRaw * rsqrt(bitanLenSq);
+            float3x3 tangentToWorld = float3x3(tangentWS, bitangentWS, normalWS);
+            float3 mapped = mul(normalTS, tangentToWorld);
+            float mappedLenSq = dot(mapped, mapped);
+            if (mappedLenSq > 1e-6)
+            {
+                finalNormalWS = mapped * rsqrt(mappedLenSq);
+            }
+        }
+    }
 
     // 1. Subtle large-scale world-space colour variation + subtle cavity/AO grounding
     float worldNoise = R1Fbm3D(input.positionWS * _ColorVarScale);
@@ -218,6 +234,11 @@ half4 R1LitFrag(R1LitVaryings input) : SV_Target
 
     half4 color = UniversalFragmentPBR(inputData, surfaceData);
     color.rgb = MoonAtmosphere(color.rgb, input.positionWS, input.fogFactor);
+    if (any(isnan(color.rgb)) || any(isinf(color.rgb)))
+    {
+        color.rgb = half3(0.0h, 0.0h, 0.0h);
+    }
+
     return color;
 }
 

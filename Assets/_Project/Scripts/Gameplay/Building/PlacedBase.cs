@@ -37,6 +37,33 @@ namespace MoonProject.Gameplay
             _tuning = tuning ?? throw new ArgumentNullException(nameof(tuning));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _known = known ?? new KnownStructures(_catalog, _events);
+            ApplyPlaytestUnlocks(restored: false);
+        }
+
+        /// <summary>
+        /// Applies any structure IDs listed in <see cref="BuildingTuning.PlaytestUnlockedIds"/> to
+        /// <see cref="KnownStructures"/> (empty by default in a standard game) and returns the number of newly learned
+        /// structures.
+        /// </summary>
+        public int ApplyPlaytestUnlocks(bool restored = false)
+        {
+            IReadOnlyList<string> unlocked = _tuning.PlaytestUnlockedIds;
+            if (unlocked == null)
+            {
+                return 0;
+            }
+
+            int added = 0;
+            for (int i = 0; i < unlocked.Count; i++)
+            {
+                string id = unlocked[i];
+                if (!string.IsNullOrEmpty(id) && _catalog.TryGet(id, out _) && _known.Learn(id, restored))
+                {
+                    added++;
+                }
+            }
+
+            return added;
         }
 
         public KnownStructures Known => _known;
@@ -355,6 +382,7 @@ namespace MoonProject.Gameplay
             _powerGrid.Clear();
             _nextInstanceId = 1;
             _known.Restore(data != null ? data.known : null);
+            ApplyPlaytestUnlocks(restored: true);
 
             if (data == null || data.structures == null)
             {

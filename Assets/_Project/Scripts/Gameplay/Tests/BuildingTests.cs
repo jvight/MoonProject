@@ -69,31 +69,31 @@ namespace MoonProject.Gameplay.Tests
         {
             Assert.AreEqual(StructureIds.Count, _catalog.Count);
             Assert.IsNull(_catalog.Validate(out int artPendingCount));
-            Assert.AreEqual(7, artPendingCount, "Three R1 structures have art prefabs; the other seven remain ArtPending.");
+            Assert.AreEqual(0, artPendingCount, "All ten R1 structures have art prefabs and ArtPending == false.");
 
-            StructureDefinition chargingPad = _catalog.Find(StructureIds.ChargingPad);
-            StructureDefinition solarArray = _catalog.Find(StructureIds.SolarArray);
-            StructureDefinition powerPylon = _catalog.Find(StructureIds.PowerPylon);
-            Assert.IsNotNull(chargingPad);
-            Assert.IsNotNull(solarArray);
-            Assert.IsNotNull(powerPylon);
-            Assert.IsFalse(chargingPad.ArtPending);
-            Assert.IsFalse(solarArray.ArtPending);
-            Assert.IsFalse(powerPylon.ArtPending);
-            Assert.IsNotNull(chargingPad.Prefab);
-            Assert.IsNotNull(solarArray.Prefab);
-            Assert.IsNotNull(powerPylon.Prefab);
-            Assert.AreEqual(1, chargingPad.Ports.Count);
-            Assert.AreEqual(1, solarArray.Ports.Count);
-            Assert.AreEqual(3, powerPylon.Ports.Count);
+            for (int i = 0; i < StructureIds.All.Length; i++)
+            {
+                string id = StructureIds.All[i];
+                StructureDefinition def = _catalog.Find(id);
+                Assert.IsNotNull(def, "Missing StructureDefinition for " + id);
+                Assert.IsFalse(def.ArtPending, "Expected ArtPending == false for " + id);
+                Assert.IsNotNull(def.Prefab, "Expected runtime/art prefab for " + id);
+                Assert.GreaterOrEqual(def.Ports.Count, 1, "Expected at least one Socket_Power port for " + id);
+                Assert.Greater(def.Width, 0.2f, id);
+                Assert.Greater(def.Height, 0.2f, id);
+                Assert.Greater(def.Depth, 0.2f, id);
+            }
 
-            Assert.IsNotNull(_catalog.Find(StructureIds.BatteryBank));
-            Assert.IsNotNull(_catalog.Find(StructureIds.Smelter));
-            Assert.IsNotNull(_catalog.Find(StructureIds.Fabricator));
-            Assert.IsNotNull(_catalog.Find(StructureIds.StorageRack));
-            Assert.IsNotNull(_catalog.Find(StructureIds.UpgradeBay));
-            Assert.IsNotNull(_catalog.Find(StructureIds.AntennaMast));
-            Assert.IsNotNull(_catalog.Find(StructureIds.VehiclePad));
+            Assert.AreEqual(1, _catalog.Find(StructureIds.ChargingPad).Ports.Count);
+            Assert.AreEqual(1, _catalog.Find(StructureIds.SolarArray).Ports.Count);
+            Assert.AreEqual(2, _catalog.Find(StructureIds.BatteryBank).Ports.Count);
+            Assert.AreEqual(3, _catalog.Find(StructureIds.PowerPylon).Ports.Count);
+            Assert.AreEqual(2, _catalog.Find(StructureIds.Smelter).Ports.Count);
+            Assert.AreEqual(2, _catalog.Find(StructureIds.Fabricator).Ports.Count);
+            Assert.AreEqual(1, _catalog.Find(StructureIds.StorageRack).Ports.Count);
+            Assert.AreEqual(1, _catalog.Find(StructureIds.UpgradeBay).Ports.Count);
+            Assert.AreEqual(1, _catalog.Find(StructureIds.AntennaMast).Ports.Count);
+            Assert.AreEqual(1, _catalog.Find(StructureIds.VehiclePad).Ports.Count);
 
             var invalidNoPrefab = ScriptableObject.CreateInstance<StructureDefinition>();
             var dummyPrefab = new GameObject("DummyStructurePrefab");
@@ -220,60 +220,80 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void SnapSolver_SnapsToPortOrEdgeWhenEnabled_AndKeepsFreePoseWhenDisabledOrOutOfRange()
         {
-            StructureDefinition battery = _catalog.Find(StructureIds.BatteryBank);
-            TestWorld flat = TestWorld.Flat();
-            var anchorPose = new StructurePose(new Vector3(0f, 0f, 5f), 0f);
-            var neighbours = new List<PlacedStructure>
-            {
-                new PlacedStructure(1, battery, anchorPose),
-            };
-
-            float expectedPortCenterZ = 5f + (battery.Depth * 0.5f + battery.Clearance) * 2f;
-            var nearFrontPort = new StructurePose(new Vector3(0.2f, 0f, expectedPortCenterZ + 0.25f), 8f);
-
-            StructurePose snappedPortPose = SnapSolver.Solve(
-                battery,
-                nearFrontPort,
-                neighbours,
-                _tuning.SnapDistance,
-                _tuning.SnapAngleDegrees,
-                true,
-                out bool portSnapped);
-
-            Assert.IsTrue(portSnapped);
-            Assert.AreEqual(0f, snappedPortPose.Position.x, 1e-4f);
-            Assert.AreEqual(expectedPortCenterZ, snappedPortPose.Position.z, 1e-4f);
-            Assert.AreEqual(0f, snappedPortPose.Yaw, 1e-4f);
-            Assert.AreEqual(
-                PlacementReason.Valid,
-                PlacementRules.Evaluate(battery, snappedPortPose, flat, neighbours, new Vector3(0f, 0f, 2f), _tuning));
-
-            StructurePose unsnappedPose = SnapSolver.Solve(
-                battery,
-                nearFrontPort,
-                neighbours,
-                _tuning.SnapDistance,
-                _tuning.SnapAngleDegrees,
-                false,
-                out bool snappedWhenOff);
-            Assert.IsFalse(snappedWhenOff);
-            Assert.AreEqual(nearFrontPort, unsnappedPose);
-
-            var farPose = new StructurePose(new Vector3(4f, 0f, 9f), 0f);
-            StructurePose outOfRangePose = SnapSolver.Solve(
-                battery,
-                farPose,
-                neighbours,
-                _tuning.SnapDistance,
-                _tuning.SnapAngleDegrees,
-                true,
-                out bool snappedWhenFar);
-            Assert.IsFalse(snappedWhenFar);
-            Assert.AreEqual(farPose, outOfRangePose);
-
+            var cardinalDef = ScriptableObject.CreateInstance<StructureDefinition>();
             var portlessDef = ScriptableObject.CreateInstance<StructureDefinition>();
             try
             {
+                cardinalDef.Populate(
+                    "cardinal_box",
+                    "structure.cardinal_box.name",
+                    new Vector3(1.6f, 1.4f, 1.2f),
+                    15f,
+                    0.25f,
+                    0f,
+                    10f,
+                    0f,
+                    0f,
+                    new Recipe(2, 1, 0),
+                    2f,
+                    new[]
+                    {
+                        new StructurePort(new Vector3(0f, 0f, 0.85f), Vector3.forward),
+                        new StructurePort(new Vector3(0f, 0f, -0.85f), Vector3.back),
+                    },
+                    null,
+                    true);
+
+                TestWorld flat = TestWorld.Flat();
+                var anchorPose = new StructurePose(new Vector3(0f, 0f, 5f), 0f);
+                var neighbours = new List<PlacedStructure>
+                {
+                    new PlacedStructure(1, cardinalDef, anchorPose),
+                };
+
+                float expectedPortCenterZ = 5f + (cardinalDef.Depth * 0.5f + cardinalDef.Clearance) * 2f;
+                var nearFrontPort = new StructurePose(new Vector3(0.2f, 0f, expectedPortCenterZ + 0.25f), 8f);
+
+                StructurePose snappedPortPose = SnapSolver.Solve(
+                    cardinalDef,
+                    nearFrontPort,
+                    neighbours,
+                    _tuning.SnapDistance,
+                    _tuning.SnapAngleDegrees,
+                    true,
+                    out bool portSnapped);
+
+                Assert.IsTrue(portSnapped);
+                Assert.AreEqual(0f, snappedPortPose.Position.x, 1e-4f);
+                Assert.AreEqual(expectedPortCenterZ, snappedPortPose.Position.z, 1e-4f);
+                Assert.AreEqual(0f, snappedPortPose.Yaw, 1e-4f);
+                Assert.AreEqual(
+                    PlacementReason.Valid,
+                    PlacementRules.Evaluate(cardinalDef, snappedPortPose, flat, neighbours, new Vector3(0f, 0f, 2f), _tuning));
+
+                StructurePose unsnappedPose = SnapSolver.Solve(
+                    cardinalDef,
+                    nearFrontPort,
+                    neighbours,
+                    _tuning.SnapDistance,
+                    _tuning.SnapAngleDegrees,
+                    false,
+                    out bool snappedWhenOff);
+                Assert.IsFalse(snappedWhenOff);
+                Assert.AreEqual(nearFrontPort, unsnappedPose);
+
+                var farPose = new StructurePose(new Vector3(4f, 0f, 9f), 0f);
+                StructurePose outOfRangePose = SnapSolver.Solve(
+                    cardinalDef,
+                    farPose,
+                    neighbours,
+                    _tuning.SnapDistance,
+                    _tuning.SnapAngleDegrees,
+                    true,
+                    out bool snappedWhenFar);
+                Assert.IsFalse(snappedWhenFar);
+                Assert.AreEqual(farPose, outOfRangePose);
+
                 portlessDef.Populate(
                     "portless_box",
                     "structure.portless_box.name",
@@ -290,7 +310,7 @@ namespace MoonProject.Gameplay.Tests
                     null,
                     true);
 
-                float expectedEdgeX = (battery.Width * 0.5f + battery.Clearance) +
+                float expectedEdgeX = (cardinalDef.Width * 0.5f + cardinalDef.Clearance) +
                                       (portlessDef.Width * 0.5f + portlessDef.Clearance);
                 var nearRightEdge = new StructurePose(new Vector3(expectedEdgeX + 0.2f, 0f, 5.15f), 95f);
                 StructurePose edgeSnapped = SnapSolver.Solve(
@@ -312,6 +332,7 @@ namespace MoonProject.Gameplay.Tests
             }
             finally
             {
+                Object.DestroyImmediate(cardinalDef);
                 Object.DestroyImmediate(portlessDef);
             }
         }
@@ -673,17 +694,15 @@ namespace MoonProject.Gameplay.Tests
                 TestWorld flat = TestWorld.Flat();
                 Vector3 roverPos = Vector3.zero;
 
+                Assert.AreEqual(0, _tuning.PlaytestUnlockedIds.Count, "Default BuildingTuning has no playtest unlocks.");
                 Assert.AreEqual(BuildModeState.Closed, controller.State);
                 Assert.IsFalse(controller.TryOpenMenu(), "Cannot open build menu when 07 knows no structures.");
                 Assert.AreEqual(BuildModeState.Closed, controller.State);
 
-                // Learn an ArtPending structure: still should not appear in AvailableStructures.
-                known.Learn(StructureIds.Smelter);
-                Assert.AreEqual(0, controller.RefreshAvailable(), "ArtPending structures are excluded from the build strip.");
-
-                // Learn ChargingPad and PowerPylon (both !ArtPending).
-                known.Learn(StructureIds.ChargingPad);
-                known.Learn(StructureIds.PowerPylon);
+                // Configure PlaytestUnlockedIds on BuildingTuning and apply via PlacedBase.
+                _tuning.SetPlaytestUnlockedIds(StructureIds.ChargingPad, StructureIds.PowerPylon);
+                Assert.AreEqual(2, placedBase.ApplyPlaytestUnlocks(restored: true));
+                Assert.AreEqual(0, placedBase.ApplyPlaytestUnlocks(restored: true), "Playtest unlock is idempotent.");
                 Assert.IsTrue(controller.TryOpenMenu());
                 Assert.AreEqual(BuildModeState.Menu, controller.State);
                 Assert.AreEqual(2, controller.AvailableStructures.Count);

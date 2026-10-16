@@ -36,12 +36,13 @@ namespace MoonProject.UI.Editor
             system.Wire(document, tuning, catalog, tables, context.LoadAsset<WordmarkShape>(UiAssetPaths.Wordmark),
                 context.LoadAsset<RoverDiagramData>(UiAssetPaths.RoverDiagram),
                 context.LoadAsset<TextAsset>(UiAssetPaths.Credits));
-            system.WireStructureIcons(new[]
+            var structureIcons = new Texture2D[StructureIds.All.Length];
+            for (int i = 0; i < StructureIds.All.Length; i++)
             {
-                context.LoadAsset<Texture2D>(UiAssetPaths.StructureIcon(StructureIds.ChargingPad)),
-                context.LoadAsset<Texture2D>(UiAssetPaths.StructureIcon(StructureIds.SolarArray)),
-                context.LoadAsset<Texture2D>(UiAssetPaths.StructureIcon(StructureIds.PowerPylon)),
-            });
+                structureIcons[i] = context.LoadAsset<Texture2D>(UiAssetPaths.StructureIcon(StructureIds.All[i]));
+            }
+
+            system.WireStructureIcons(structureIcons);
             context.AddSystem(system);
         }
     }

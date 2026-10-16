@@ -21,7 +21,9 @@ namespace MoonProject.Audio
     [DisallowMultipleComponent]
     public sealed class GameplayAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 14;
+        private const int SubscriptionCount = 19;
+        private const float WeldLoopFadeIn = 0.08f;
+        private const float WeldLoopFadeOut = 0.12f;
         private const string SiteRelicSuffix = "_relic";
         private const string MicroLabelPrefix = "micro_";
 
@@ -37,6 +39,7 @@ namespace MoonProject.Audio
         private readonly IDisposable[] _subscriptions = new IDisposable[SubscriptionCount];
         private readonly LoopFader _tetherFader = new LoopFader();
         private readonly LoopFader _rumbleFader = new LoopFader();
+        private readonly LoopFader _weldFader = new LoopFader();
         private readonly Dictionary<string, int> _relicVoices = new Dictionary<string, int>(StringComparer.Ordinal);
 
         // Site answers by site id ("site.depot", "micro.mule"): the plain voice and the warmer one while a relic waits
@@ -61,12 +64,21 @@ namespace MoonProject.Audio
         private CueHandle _crewLogFound;
         private CueHandle _signalPick;
         private CueHandle _signalFound;
+        private CueHandle _buildGhost;
+        private CueHandle _buildSnap;
+        private CueHandle _buildInvalid;
+        private CueHandle _buildPlace;
+        private CueHandle _buildStageComplete;
+        private CueHandle _buildStructureComplete;
+        private CueHandle _buildDeconstruct;
         private IRoverState _rover;
         private AudioSource _tetherHum;
         private AudioSource _signal;
         private AudioSource _rumble;
+        private AudioSource _weldLoop;
         private float _tetherHumCueVolume;
         private float _rumbleCueVolume;
+        private float _weldLoopCueVolume;
 
         /// <summary>True while the tether hum can be heard (including its fade-out).</summary>
         public bool TetherHumAudible => _tetherFader.IsAudible;
@@ -74,11 +86,16 @@ namespace MoonProject.Audio
         /// <summary>True while the excavation rumble can be heard (including its fade-out).</summary>
         public bool RumbleAudible => _rumbleFader.IsAudible;
 
+        /// <summary>True while the build weld loop can be heard (including its fade-out).</summary>
+        public bool BuildWeldAudible => _weldFader.IsAudible;
+
         internal AudioSource TetherHumSource => _tetherHum;
 
         internal AudioSource RumbleSource => _rumble;
 
         internal AudioSource SignalSource => _signal;
+
+        internal AudioSource BuildWeldSource => _weldLoop;
 
         internal void Initialize(GameContext context, AudioDirector director)
         {
@@ -114,14 +131,24 @@ namespace MoonProject.Audio
             _crewLogFound = director.Resolve(AudioCueIds.CrewLogFound);
             _signalPick = director.Resolve(AudioCueIds.BellSignalPick);
             _signalFound = director.Resolve(AudioCueIds.BellSignalFound);
+            _buildGhost = director.Resolve(AudioCueIds.BuildGhost);
+            _buildSnap = director.Resolve(AudioCueIds.BuildSnap);
+            _buildInvalid = director.Resolve(AudioCueIds.BuildInvalid);
+            _buildPlace = director.Resolve(AudioCueIds.BuildPlace);
+            _buildStageComplete = director.Resolve(AudioCueIds.BuildStageComplete);
+            _buildStructureComplete = director.Resolve(AudioCueIds.BuildStructureComplete);
+            _buildDeconstruct = director.Resolve(AudioCueIds.BuildDeconstruct);
             _rover = context.Get<IRoverState>();
             CueHandle hum = director.Resolve(AudioCueIds.TetherHum);
             CueHandle rumble = director.Resolve(AudioCueIds.ExcavationRumble);
+            CueHandle weldLoop = director.Resolve(AudioCueIds.BuildWeldLoop);
             if (!(_sonarPing.IsValid && _relicAnswer.IsValid && _siteAnswer.IsValid && _tetherAttach.IsValid &&
                   _tetherRelease.IsValid && _tetherSnap.IsValid && _surfacingSparkle.IsValid && _relicPlaced.IsValid &&
                   _upgradeArpeggio.IsValid && _workbenchUpgrade.IsValid && _coilPop.IsValid && hum.IsValid &&
                   rumble.IsValid && _cassettePickup.IsValid && _crewLogFound.IsValid && _signalPick.IsValid &&
-                  _signalFound.IsValid))
+                  _signalFound.IsValid && _buildGhost.IsValid && _buildSnap.IsValid && _buildInvalid.IsValid &&
+                  _buildPlace.IsValid && weldLoop.IsValid && _buildStageComplete.IsValid &&
+                  _buildStructureComplete.IsValid && _buildDeconstruct.IsValid))
             {
                 enabled = false;
                 return;
@@ -155,8 +182,10 @@ namespace MoonProject.Audio
 
             _tetherHumCueVolume = director.Library.GetCue(hum).VolumeMax;
             _rumbleCueVolume = director.Library.GetCue(rumble).VolumeMax;
+            _weldLoopCueVolume = director.Library.GetCue(weldLoop).VolumeMax;
             _tetherHum = director.CreateLoopSource(transform, "TetherHum", hum, _tuning.TetherHumSpatialBlend);
             _rumble = director.CreateLoopSource(transform, "ExcavationRumble", rumble, 1f);
+            _weldLoop = director.CreateLoopSource(transform, "BuildWeldLoop", weldLoop, 1f);
             _signal = director.CreateLoopSource(transform, "BellSignal", default, _tuning.SignalSpatialBlend);
             _signal.loop = false;
 
@@ -175,6 +204,11 @@ namespace MoonProject.Audio
             _subscriptions[11] = events.Subscribe<CrewLogFound>(OnCrewLogFound);
             _subscriptions[12] = events.Subscribe<BellSignalPicked>(OnBellSignalPicked);
             _subscriptions[13] = events.Subscribe<BellSignalFound>(OnBellSignalFound);
+            _subscriptions[14] = events.Subscribe<StructurePlaced>(OnStructurePlaced);
+            _subscriptions[15] = events.Subscribe<StructureBuilt>(OnStructureBuilt);
+            _subscriptions[16] = events.Subscribe<StructureRemoved>(OnStructureRemoved);
+            _subscriptions[17] = events.Subscribe<BuildCue>(OnBuildCue);
+            _subscriptions[18] = events.Subscribe<BuildWeldStateChanged>(OnBuildWeldStateChanged);
         }
 
         internal void Wire(GameplayAudioTuning tuning)
@@ -200,6 +234,8 @@ namespace MoonProject.Audio
                 _tetherHumCueVolume * _tuning.TetherHumVolume * sfx);
             StepLoop(_rumble, _rumbleFader, dt, _tuning.RumbleFadeIn, _tuning.RumbleFadeOut,
                 _rumbleCueVolume * _tuning.RumbleVolume * sfx);
+            StepLoop(_weldLoop, _weldFader, dt, WeldLoopFadeIn, WeldLoopFadeOut,
+                _weldLoopCueVolume * sfx);
         }
 
         private static void StepLoop(AudioSource source, LoopFader fader, float dt, float fadeIn, float fadeOut,
@@ -323,6 +359,61 @@ namespace MoonProject.Audio
         private void OnBellSignalFound(BellSignalFound found)
         {
             _director.PlayAt(_signalFound, found.Position);
+        }
+
+        private void OnStructurePlaced(StructurePlaced placed)
+        {
+            if (!placed.Restored)
+            {
+                _director.PlayAt(_buildPlace, placed.Position);
+            }
+        }
+
+        private void OnStructureBuilt(StructureBuilt built)
+        {
+            if (!built.Restored)
+            {
+                _director.PlayAt(_buildStructureComplete, built.Position);
+            }
+
+            _weldFader.FadeOut();
+        }
+
+        private void OnStructureRemoved(StructureRemoved removed)
+        {
+            _director.PlayAt(_buildDeconstruct, removed.Position);
+        }
+
+        private void OnBuildCue(BuildCue cue)
+        {
+            switch (cue.Kind)
+            {
+                case BuildCueKind.Ghost:
+                    _director.PlayAt(_buildGhost, cue.Position);
+                    break;
+                case BuildCueKind.Snap:
+                    _director.PlayAt(_buildSnap, cue.Position);
+                    break;
+                case BuildCueKind.Invalid:
+                    _director.PlayAt(_buildInvalid, cue.Position);
+                    break;
+                case BuildCueKind.StageComplete:
+                    _director.PlayAt(_buildStageComplete, cue.Position);
+                    break;
+            }
+        }
+
+        private void OnBuildWeldStateChanged(BuildWeldStateChanged weld)
+        {
+            if (weld.Welding)
+            {
+                _weldLoop.transform.position = weld.Position;
+                _weldFader.FadeIn();
+            }
+            else
+            {
+                _weldFader.FadeOut();
+            }
         }
 
         private void OnDestroy()

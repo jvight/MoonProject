@@ -115,4 +115,52 @@ namespace MoonProject.Core.Events
 
         public bool Restored { get; }
     }
+
+    /// <summary>The transient build-mode sound beats that do not correspond to structure lifecycle mutations.</summary>
+    public enum BuildCueKind : byte
+    {
+        Ghost = 0,
+        Snap = 1,
+        Invalid = 2,
+        StageComplete = 3,
+    }
+
+    /// <summary>
+    /// Published by <c>BuildField</c> when the placement ghost appears (<see cref="BuildCueKind.Ghost"/>), snaps to a
+    /// neighbour port or edge (<see cref="BuildCueKind.Snap"/>), becomes or is refused as invalid
+    /// (<see cref="BuildCueKind.Invalid"/>), or finishes an intermediate weld stage
+    /// (<see cref="BuildCueKind.StageComplete"/>).
+    /// </summary>
+    public readonly struct BuildCue
+    {
+        public BuildCue(BuildCueKind kind, Vector3 position)
+        {
+            Kind = kind;
+            Position = position;
+        }
+
+        public BuildCueKind Kind { get; }
+
+        public Vector3 Position { get; }
+    }
+
+    /// <summary>
+    /// Published by <c>BuildField</c> when 07's welding beam starts, moves, or stops welding a placed structure so the
+    /// spatial weld loop (<c>build_weld_loop</c>) fades in at <see cref="Position"/> and fades out when done.
+    /// </summary>
+    public readonly struct BuildWeldStateChanged
+    {
+        public BuildWeldStateChanged(bool welding, Vector3 position, float progress01 = 0f)
+        {
+            Welding = welding;
+            Position = position;
+            Progress01 = Mathf.Clamp01(progress01);
+        }
+
+        public bool Welding { get; }
+
+        public Vector3 Position { get; }
+
+        public float Progress01 { get; }
+    }
 }

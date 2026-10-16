@@ -27,11 +27,13 @@ namespace MoonProject.UI
         public const string ShortCardClass = "build-card--short";
         public const string CardIconClass = "build-card__icon";
         public const string CardNameClass = "build-card__name";
+        public const string CardCostClass = "build-card__cost";
 
         private const float ReasonAnchorHeightOffset = 0.35f;
 
         private readonly UiLayout _layout;
         private readonly ILocalization _localization;
+        private readonly IntText _numbers;
         private readonly IMaterialStock _stock;
         private readonly BuildField _buildField;
         private readonly GlyphLabels _glyphs;
@@ -43,7 +45,7 @@ namespace MoonProject.UI
         private readonly RecipeView _recipe;
         private readonly Dictionary<string, Texture2D> _icons =
             new Dictionary<string, Texture2D>(StructureIds.Count, StringComparer.Ordinal);
-        private readonly List<CardSlot> _cards = new List<CardSlot>(4);
+        private readonly List<CardSlot> _cards = new List<CardSlot>(StructureIds.Count);
 
         private int _shownAvailableCount = -1;
         private int _shownSelectedIndex = -1;
@@ -81,6 +83,7 @@ namespace MoonProject.UI
             }
 
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
+            _numbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
             _stock = stock ?? throw new ArgumentNullException(nameof(stock));
             _buildField = buildField;
             _glyphs = glyphs;
@@ -100,7 +103,7 @@ namespace MoonProject.UI
                 promptSettings.FollowHalfLife,
                 true);
 
-            _recipe = new RecipeView(layout.BuildStripRecipe, localization, numbers);
+            _recipe = new RecipeView(layout.BuildStripRecipe, localization, numbers, haveNeed: false, names: false);
             new ShadowPainter(layout.BuildStripShadow);
             new ShadowPainter(layout.BuildReasonShadow);
 
@@ -225,8 +228,10 @@ namespace MoonProject.UI
                         : new StyleBackground(StyleKeyword.None);
                 }
 
+                var cardStatus = new RecipeStatus(def.BuildCost, metal, wiring, optics);
+                slot.CostSlots.ShowRecipe(def.BuildCost, cardStatus);
                 slot.Root.EnableInClassList(SelectedCardClass, i == selectedIndex);
-                slot.Root.EnableInClassList(ShortCardClass, !_stock.Has(def.BuildCost));
+                slot.Root.EnableInClassList(ShortCardClass, !cardStatus.IsAffordable);
             }
 
             if (_stale)
@@ -308,10 +313,14 @@ namespace MoonProject.UI
                 icon.AddToClassList(CardIconClass);
                 var name = new Label { pickingMode = PickingMode.Ignore };
                 name.AddToClassList(CardNameClass);
+                var costRow = new VisualElement { pickingMode = PickingMode.Ignore };
+                costRow.AddToClassList(CardCostClass);
+                var costSlots = new MaterialSlots(costRow, _numbers, haveNeed: false, names: false);
                 root.Add(icon);
                 root.Add(name);
+                root.Add(costRow);
                 _layout.BuildStripCards.Add(root);
-                _cards.Add(new CardSlot(root, icon, name));
+                _cards.Add(new CardSlot(root, icon, name, costSlots));
             }
         }
 
@@ -341,11 +350,12 @@ namespace MoonProject.UI
 
         private sealed class CardSlot
         {
-            public CardSlot(VisualElement root, VisualElement icon, Label name)
+            public CardSlot(VisualElement root, VisualElement icon, Label name, MaterialSlots costSlots)
             {
                 Root = root;
                 Icon = icon;
                 Name = name;
+                CostSlots = costSlots;
             }
 
             public VisualElement Root { get; }
@@ -353,6 +363,8 @@ namespace MoonProject.UI
             public VisualElement Icon { get; }
 
             public Label Name { get; }
+
+            public MaterialSlots CostSlots { get; }
 
             public string StructureId { get; set; }
         }

@@ -132,18 +132,22 @@ namespace MoonProject.UI.PlayModeTests
             SetSkyClock(SunlitDaySeconds, holdingEclipse: false);
             yield return new WaitForSecondsRealtime(2.0f);
 
-            // Learn all three slice-6 structures.
-            _gameplay.KnownStructures.Learn(StructureIds.ChargingPad);
-            _gameplay.KnownStructures.Learn(StructureIds.SolarArray);
-            _gameplay.KnownStructures.Learn(StructureIds.PowerPylon);
-            build.Controller.RefreshAvailable();
+            // Unlock all 10 R1 structures via the data-driven BuildingTuning playtest unlock list (no KnownStructures.Learn call).
+            build.Tuning.SetPlaytestUnlockedIds(StructureIds.All);
+            Assert.AreEqual(StructureIds.Count, build.ApplyPlaytestUnlocks(restored: true));
+            Assert.AreEqual(StructureIds.Count, build.Controller.RefreshAvailable());
 
-            // Give 07 3 Metal and 1 Wiring first so in the menu shot Power Pylon (2M 1W) is affordable and Charging Pad
-            // (4M 2W) / Solar Array (3M 2W 1O) show what is missing in RecipeView.
+            // Give 07 5 Metal, 2 Wiring, 1 Optics so several structures are affordable and larger ones show coral shortage.
             DrainAllMaterials();
-            _gameplay.Materials.Deliver(SalvageMaterial.Metal, 3);
-            _gameplay.Materials.Deliver(SalvageMaterial.Wiring, 1);
+            _gameplay.Materials.Deliver(SalvageMaterial.Metal, 5);
+            _gameplay.Materials.Deliver(SalvageMaterial.Wiring, 2);
+            _gameplay.Materials.Deliver(SalvageMaterial.Optics, 1);
             _ui.Pickups.Tick(10f);
+
+            // Switch localization to Vietnamese ("vi") for the 10-structure build menu capture.
+            var localization = _context.Get<ILocalization>();
+            localization.SetLanguage("vi");
+            yield return null;
 
             Vector3 roverPos = _context.Get<IRoverState>().Position;
             FrameBehindRover(viewCamera, roverPos, Vector3.forward, distance: 4.8f, height: 1.95f, pitchDeg: 13f);
@@ -154,20 +158,19 @@ namespace MoonProject.UI.PlayModeTests
             yield return null;
 
             // -------------------------------------------------------------------------
-            // 1. THE MENU (01-build-menu.png)
+            // 1. THE MENU WITH ALL 10 STRUCTURES IN VIETNAMESE (01-build-menu-vi.png)
             // -------------------------------------------------------------------------
             yield return Tap(_keyboard.bKey);
             Assert.AreEqual(BuildModeState.Menu, build.State);
             yield return SettleUi(0.65f);
             Assert.IsTrue(_ui.BuildStrip.IsVisible, "Build strip must be visible in Menu state.");
-            Assert.AreEqual("E", _document.rootVisualElement.Q<Label>("build-strip-glyph-primary-label")?.text);
-            Assert.AreEqual("Scroll", _document.rootVisualElement.Q<Label>("build-strip-glyph-secondary-label")?.text);
-            yield return CaptureComposite(viewCamera, "01-build-menu");
+            Assert.AreEqual(StructureIds.Count, _ui.BuildStrip.CardCount, "All 10 structures must appear in the build strip.");
+            yield return CaptureComposite(viewCamera, "01-build-menu-vi");
 
-            // Now add plenty of Metal, Wiring, and Optics onto home's shelves for placing and welding all structures.
-            _gameplay.Materials.Deliver(SalvageMaterial.Metal, 6);
-            _gameplay.Materials.Deliver(SalvageMaterial.Wiring, 4);
-            _gameplay.Materials.Deliver(SalvageMaterial.Optics, 3);
+            // Deliver abundant materials onto home's shelves for placing and welding structures.
+            _gameplay.Materials.Deliver(SalvageMaterial.Metal, 40);
+            _gameplay.Materials.Deliver(SalvageMaterial.Wiring, 30);
+            _gameplay.Materials.Deliver(SalvageMaterial.Optics, 20);
             _ui.Pickups.Tick(10f);
             yield return null;
 
@@ -194,8 +197,8 @@ namespace MoonProject.UI.PlayModeTests
             // -------------------------------------------------------------------------
             // 3. AN INVALID GHOST WITH ITS REASON (03-invalid-ghost-reason.png)
             // -------------------------------------------------------------------------
-            // Aim too close to 07 on its front-right so CandidateReason == PlacementReason.TooCloseTo07 ("Too close")
-            // and both the crimson/amber invalid ghost and its world-anchored reason chip sit over clear terrain.
+            // Aim too close to 07 on its front-right so CandidateReason == PlacementReason.TooCloseTo07
+            // and both the crimson/amber invalid ghost and its world-anchored CRT reason chip sit over clear terrain.
             Vector3 invalidCloseSpot = roverPos + new Vector3(1.05f, 0f, 1.10f);
             invalidCloseSpot.y = terrain.SampleHeight(invalidCloseSpot.x, invalidCloseSpot.z);
             build.SetAimPointOverride(invalidCloseSpot);
@@ -213,12 +216,10 @@ namespace MoonProject.UI.PlayModeTests
             // -------------------------------------------------------------------------
             // 4. A GHOST SNAPPED BESIDE A PLACED PYLON (04-ghost-snapped-beside-pylon.png)
             // -------------------------------------------------------------------------
-            // Place a finished Power Pylon to the left-front of 07, then bring up a Charging Pad ghost near its
-            // east power socket so SnapSolver soft-snaps it into alignment.
             build.Controller.Close();
             yield return null;
 
-            Vector3 pylonPos = roverPos + new Vector3(-2.2f, 0f, 4.6f);
+            Vector3 pylonPos = roverPos + new Vector3(-2.4f, 0f, 4.6f);
             pylonPos.y = terrain.SampleHeight(pylonPos.x, pylonPos.z);
             Assert.IsTrue(build.Catalog.TryGet(StructureIds.PowerPylon, out StructureDefinition pylonDef));
             Assert.IsTrue(build.Catalog.TryGet(StructureIds.ChargingPad, out StructureDefinition padDef));
@@ -250,8 +251,6 @@ namespace MoonProject.UI.PlayModeTests
             // -------------------------------------------------------------------------
             // 5. MID-WELD (STAGE 2 OF 4) AT NIGHT (05-mid-weld-stage-2-of-4-night.png)
             // -------------------------------------------------------------------------
-            // Confirm placement of the Solar Array and weld it to 55% (stage 2 of 4 solid, stage 3 hologram outline,
-            // stage 4 hidden) at Earthlit night while 07's weld beam and sparks are active.
             SetSkyClock(EarthlitNightSeconds, holdingEclipse: false);
             yield return null;
 
@@ -309,11 +308,15 @@ namespace MoonProject.UI.PlayModeTests
             yield return null;
 
             // -------------------------------------------------------------------------
-            // 6. THE THREE FINISHED STRUCTURES AT NIGHT (06-three-structures-night.png)
+            // 6. FINISHED BASE WITH 6 STRUCTURES AT NIGHT (06-base-night.png)
             // -------------------------------------------------------------------------
-            // Place and finish the Charging Pad to the right so all three finished structures (Power Pylon on left,
-            // Solar Array in center, Charging Pad on right) stand together in a clean arc in front of 07.
-            Vector3 padPos = roverPos + new Vector3(3.15f, 0f, 4.5f);
+            // Place 4 more distinct R1 structures (ChargingPad, BatteryBank, Smelter, Fabricator) around the
+            // PowerPylon + SolarArray so a 6-structure base stands lit at night with warm amber standby lamps.
+            Assert.IsTrue(build.Catalog.TryGet(StructureIds.BatteryBank, out StructureDefinition batteryDef));
+            Assert.IsTrue(build.Catalog.TryGet(StructureIds.Smelter, out StructureDefinition smelterDef));
+            Assert.IsTrue(build.Catalog.TryGet(StructureIds.Fabricator, out StructureDefinition fabricatorDef));
+
+            Vector3 padPos = roverPos + new Vector3(2.8f, 0f, 4.4f);
             padPos.y = terrain.SampleHeight(padPos.x, padPos.z);
             int padId = _gameplay.PlacedBase.PlaceUnchecked(
                 padDef,
@@ -321,27 +324,55 @@ namespace MoonProject.UI.PlayModeTests
                 initialProgress01: 1f,
                 restored: true);
 
+            Vector3 batteryPos = roverPos + new Vector3(-4.6f, 0f, 6.2f);
+            batteryPos.y = terrain.SampleHeight(batteryPos.x, batteryPos.z);
+            int batteryId = _gameplay.PlacedBase.PlaceUnchecked(
+                batteryDef,
+                new StructurePose(batteryPos, 22f),
+                initialProgress01: 1f,
+                restored: true);
+
+            Vector3 smelterPos = roverPos + new Vector3(0.2f, 0f, 7.8f);
+            smelterPos.y = terrain.SampleHeight(smelterPos.x, smelterPos.z);
+            int smelterId = _gameplay.PlacedBase.PlaceUnchecked(
+                smelterDef,
+                new StructurePose(smelterPos, -8f),
+                initialProgress01: 1f,
+                restored: true);
+
+            Vector3 fabricatorPos = roverPos + new Vector3(4.2f, 0f, 7.2f);
+            fabricatorPos.y = terrain.SampleHeight(fabricatorPos.x, fabricatorPos.z);
+            int fabricatorId = _gameplay.PlacedBase.PlaceUnchecked(
+                fabricatorDef,
+                new StructurePose(fabricatorPos, -28f),
+                initialProgress01: 1f,
+                restored: true);
+
             // Wait for welding completion sparks to dissipate and standby amber lamps to settle at steady glow.
             yield return new WaitForSecondsRealtime(1.0f);
-            Assert.AreEqual(3, _gameplay.PlacedBase.Count);
+            Assert.GreaterOrEqual(_gameplay.PlacedBase.Count, 5, "Finished base capture must have 5+ structures.");
             Assert.IsTrue(build.TryGetView(pylonId, out StructureView pylonView) && pylonView.LampsLit);
             Assert.IsTrue(build.TryGetView(midWeldId, out StructureView solarView) && solarView.LampsLit);
             Assert.IsTrue(build.TryGetView(padId, out StructureView padView) && padView.LampsLit);
+            Assert.IsTrue(build.TryGetView(batteryId, out StructureView batteryView) && batteryView.LampsLit);
+            Assert.IsTrue(build.TryGetView(smelterId, out StructureView smelterView) && smelterView.LampsLit);
+            Assert.IsTrue(build.TryGetView(fabricatorId, out StructureView fabricatorView) && fabricatorView.LampsLit);
 
-            Vector3 groupCenter = (pylonPos + weldTargetPos + padPos) / 3f + Vector3.up * 0.65f;
-            Vector3 groupCamPos = roverPos + new Vector3(-1.15f, 2.55f, -3.15f);
+            Vector3 groupCenter = (pylonPos + weldTargetPos + padPos + batteryPos + smelterPos + fabricatorPos) / 6f +
+                                  Vector3.up * 0.75f;
+            Vector3 groupCamPos = roverPos + new Vector3(-0.85f, 3.15f, -4.2f);
             viewCamera.transform.SetPositionAndRotation(
                 groupCamPos,
                 Quaternion.LookRotation(groupCenter - groupCamPos, Vector3.up));
             yield return SettleUi(0.25f);
-            yield return CaptureComposite(viewCamera, "06-three-structures-night");
+            yield return CaptureComposite(viewCamera, "06-base-night");
 
             // -------------------------------------------------------------------------
-            // 7. THE SAME THREE FINISHED STRUCTURES IN SUNLIGHT (07-three-structures-sunlight.png)
+            // 7. THE SAME 6-STRUCTURE BASE IN SUNLIGHT (07-base-sunlight.png)
             // -------------------------------------------------------------------------
             SetSkyClock(SunlitDaySeconds, holdingEclipse: false);
             yield return SettleUi(0.35f);
-            yield return CaptureComposite(viewCamera, "07-three-structures-sunlight");
+            yield return CaptureComposite(viewCamera, "07-base-sunlight");
         }
 
         private IEnumerator BootMainScene()

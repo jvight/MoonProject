@@ -71,6 +71,8 @@ namespace MoonProject.Gameplay
         private float _nextWinchTime;
         private bool _waitExcavateRelease;
         private int _weldingInstanceId;
+        private bool _weldLoopActive;
+        private Vector3 _lastWeldLoopPoint;
         private bool _holding;
         private bool _gazing;
         private bool _initialized;
@@ -151,6 +153,7 @@ namespace MoonProject.Gameplay
             _known = new KnownStructures(_catalog, _events);
             _placedBase = new PlacedBase(_catalog, _tuning, _events, _known);
             _controller = new BuildModeController(_catalog, _known, _placedBase, _stock, _tuning);
+            _controller.RefreshAvailable();
 
             _structuresRoot = new GameObject("PlacedStructures").transform;
             _structuresRoot.SetParent(transform, false);
@@ -264,25 +267,21 @@ namespace MoonProject.Gameplay
             return false;
         }
 
-        /// <summary>Learns all structures in the catalog that have ready prefabs (<c>!ArtPending</c>).</summary>
-        public void LearnReadyStructures(bool restored = false)
+        /// <summary>
+        /// Applies any structure IDs configured in <see cref="BuildingTuning.PlaytestUnlockedIds"/> to
+        /// <see cref="KnownStructures"/>, refreshes <see cref="BuildModeController.AvailableStructures"/>, and returns
+        /// the number of newly learned structures.
+        /// </summary>
+        public int ApplyPlaytestUnlocks(bool restored = false)
         {
             if (!_initialized)
             {
-                return;
+                return 0;
             }
 
-            int count = _catalog.Count;
-            for (int i = 0; i < count; i++)
-            {
-                StructureDefinition def = _catalog.StructureAt(i);
-                if (def != null && !def.ArtPending)
-                {
-                    _known.Learn(def.Id, restored);
-                }
-            }
-
+            int added = _placedBase.ApplyPlaytestUnlocks(restored);
             _controller.RefreshAvailable();
+            return added;
         }
 
         internal BuildingSaveData Capture()
@@ -330,6 +329,7 @@ namespace MoonProject.Gameplay
                 : _rover.Position + Vector3.up * 0.6f;
 
             _beam.Step(weldingNow, weldingNow, beamOrigin, weldPoint, now, deltaTime);
+            StepWeldLoopAudio(weldingNow, weldPoint);
             SetHold(weldingNow);
             StepGaze(weldingNow, weldPoint);
 
@@ -485,6 +485,7 @@ namespace MoonProject.Gameplay
             if (snappedNow && !_wasSnapped)
             {
                 _events.Publish(new UiCue(UiCueKind.PartDrop));
+                _events.Publish(new BuildCue(BuildCueKind.Snap, _controller.CandidatePose.Position));
             }
 
             _wasSnapped = snappedNow;
@@ -493,6 +494,7 @@ namespace MoonProject.Gameplay
             if (!validNow && _wasValid)
             {
                 _events.Publish(new UiCue(UiCueKind.PartRefuse));
+                _events.Publish(new BuildCue(BuildCueKind.Invalid, _controller.CandidatePose.Position));
             }
 
             _wasValid = validNow;
@@ -510,6 +512,7 @@ namespace MoonProject.Gameplay
                 else
                 {
                     _events.Publish(new UiCue(UiCueKind.PartRefuse));
+                    _events.Publish(new BuildCue(BuildCueKind.Invalid, _controller.CandidatePose.Position));
                 }
             }
         }
@@ -828,6 +831,7 @@ namespace MoonProject.Gameplay
                 _activeGhostId = selected.Id;
                 _activeGhost.gameObject.SetActive(true);
                 _ghostPoseSeeded = false;
+                _events.Publish(new BuildCue(BuildCueKind.Ghost, targetPose.Position));
             }
 
             if (!_ghostPoseSeeded || deltaTime <= 0f)
@@ -877,6 +881,7 @@ namespace MoonProject.Gameplay
                 {
                     Vector3 weldPoint = view.GetActiveWeldPoint();
                     BurstSparksAt(weldPoint);
+                    _events.Publish(new BuildCue(BuildCueKind.StageComplete, weldPoint));
                     _events.Publish(new FeelBeat(
                         FeelKind.Build,
                         FeelPhase.Act,
@@ -1029,6 +1034,25 @@ namespace MoonProject.Gameplay
             _viewsById.Clear();
         }
 
+        private void StepWeldLoopAudio(bool welding, Vector3 weldPoint)
+        {
+            if (welding)
+            {
+                if (!_weldLoopActive || (weldPoint - _lastWeldLoopPoint).sqrMagnitude > 1e-4f)
+                {
+                    _weldLoopActive = true;
+                    _lastWeldLoopPoint = weldPoint;
+                    _events.Publish(new BuildWeldStateChanged(true, weldPoint, _controller.ActiveWeldProgress01));
+                }
+            }
+            else if (_weldLoopActive)
+            {
+                _weldLoopActive = false;
+                _lastWeldLoopPoint = Vector3.zero;
+                _events.Publish(new BuildWeldStateChanged(false, Vector3.zero, 0f));
+            }
+        }
+
         private void SetHold(bool hold)
         {
             if (_holding == hold || _rig == null)
@@ -1071,6 +1095,7 @@ namespace MoonProject.Gameplay
                 return;
             }
 
+            StepWeldLoopAudio(false, Vector3.zero);
             SetHold(false);
             if (_gazing && _rig != null)
             {

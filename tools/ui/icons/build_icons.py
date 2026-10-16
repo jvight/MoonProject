@@ -1358,9 +1358,303 @@ def _build_kit_specs() -> List[IconSpec]:
     return specs
 
 
+def _build_struct_specs() -> List[IconSpec]:
+    specs: List[IconSpec] = []
+
+    # 1. struct_charging_pad.svg -> structure.charging_pad.name (StructureIds.ChargingPad)
+    # Chamfered octagonal deck pad with dual induction rings, corner guide lugs, and central charge bolt.
+    specs.append(IconSpec(
+        filename="struct_charging_pad.svg",
+        icon_id="charging_pad",
+        kind="struct",
+        localization_key="structure.charging_pad.name",
+        code_symbol="StructureIds.ChargingPad",
+        label="CHARGING PAD",
+        primary=(
+            polyline([
+                (18, 10), (46, 10), (54, 18), (54, 46),
+                (46, 54), (18, 54), (10, 46), (10, 18),
+            ], closed=True),
+            circle(32, 32, 15.0),
+        ),
+        detail=(
+            circle(32, 32, 9.5),
+            line(14, 22, 18, 18),
+            line(46, 18, 50, 22),
+            line(50, 42, 46, 46),
+            line(18, 46, 14, 42),
+            line(32, 10, 32, 17),
+            line(32, 47, 32, 54),
+            line(10, 32, 17, 32),
+            line(47, 32, 54, 32),
+        ),
+        fill=polyline([(34, 24), (27, 33), (32, 33), (30, 40), (37, 31), (32, 31)], closed=True),
+    ))
+
+    # 2. struct_solar_array.svg -> structure.solar_array.name (StructureIds.SolarArray)
+    # Tilted twin-wing photovoltaic panel array on an articulated central mast and tripod plinth.
+    specs.append(IconSpec(
+        filename="struct_solar_array.svg",
+        icon_id="solar_array",
+        kind="struct",
+        localization_key="structure.solar_array.name",
+        code_symbol="StructureIds.SolarArray",
+        label="SOLAR ARRAY",
+        primary=(
+            polyline([(8, 16), (52, 12), (56, 34), (12, 38)], closed=True),
+            line(32, 36, 32, 50),
+            polyline([(18, 54), (24, 50), (40, 50), (46, 54)], closed=True),
+        ),
+        detail=(
+            line(10, 27, 54, 23),
+            line(22.7, 14.7, 26.7, 36.7),
+            line(37.3, 13.3, 41.3, 35.3),
+            line(26, 44, 32, 39),
+            line(38, 44, 32, 39),
+        ),
+        fill=circle(32, 39, 2.2),
+    ))
+
+    # 3. struct_battery_bank.svg -> structure.battery_bank.name (StructureIds.BatteryBank)
+    # Armored three-cell accumulator cabinet with top busbar manifold and charge status bars.
+    specs.append(IconSpec(
+        filename="struct_battery_bank.svg",
+        icon_id="battery_bank",
+        kind="struct",
+        localization_key="structure.battery_bank.name",
+        code_symbol="StructureIds.BatteryBank",
+        label="BATTERY BANK",
+        primary=(
+            round_rect(8, 16, 48, 36, 3.0),
+            line(12, 11, 52, 11),
+            line(16, 11, 16, 16),
+            line(32, 11, 32, 16),
+            line(48, 11, 48, 16),
+            round_rect(12, 21, 10, 26, 2.0),
+            round_rect(27, 21, 10, 26, 2.0),
+            round_rect(42, 21, 10, 26, 2.0),
+        ),
+        detail=(
+            line(14, 28, 20, 28),
+            line(14, 34, 20, 34),
+            line(14, 40, 20, 40),
+            line(29, 28, 35, 28),
+            line(29, 34, 35, 34),
+            line(29, 40, 35, 40),
+            line(44, 28, 50, 28),
+            line(44, 34, 50, 34),
+            line(44, 40, 50, 40),
+            line(10, 55, 54, 55),
+        ),
+        fill=circle(32, 11, 2.2),
+    ))
+
+    # 4. struct_power_pylon.svg -> structure.power_pylon.name (StructureIds.PowerPylon)
+    # Tapered lattice power relay tower with triple ceramic insulator cross-arms and top emitter sphere.
+    specs.append(IconSpec(
+        filename="struct_power_pylon.svg",
+        icon_id="power_pylon",
+        kind="struct",
+        localization_key="structure.power_pylon.name",
+        code_symbol="StructureIds.PowerPylon",
+        label="POWER PYLON",
+        primary=(
+            polyline([(20, 52), (28, 16), (36, 16), (44, 52)], closed=True),
+            round_rect(14, 52, 36, 4, 1.5),
+            line(14, 23, 50, 23),
+            line(17, 32, 47, 32),
+            circle(32, 11, 3.5),
+        ),
+        detail=(
+            line(26, 25, 38, 36),
+            line(38, 25, 26, 36),
+            line(24, 36, 40, 49),
+            line(40, 36, 24, 49),
+            line(14, 21, 14, 26),
+            line(50, 21, 50, 26),
+            line(17, 30, 17, 35),
+            line(47, 30, 47, 35),
+        ),
+        fill=circle(32, 11, 2.2),
+    ))
+
+    # 5. struct_smelter.svg -> structure.smelter.name (StructureIds.Smelter)
+    # Induction arc smelter with top ore hopper, cylindrical furnace body, side flue stack, and crucible glow.
+    specs.append(IconSpec(
+        filename="struct_smelter.svg",
+        icon_id="smelter",
+        kind="struct",
+        localization_key="structure.smelter.name",
+        code_symbol="StructureIds.Smelter",
+        label="SMELTER",
+        primary=(
+            polyline([(16, 12), (38, 12), (33, 22), (21, 22)], closed=True),
+            round_rect(14, 22, 26, 28, 3.0),
+            polyline([(40, 28), (49, 28), (49, 10), (54, 10), (54, 50), (40, 50)], closed=False),
+            line(10, 54, 56, 54),
+        ),
+        detail=(
+            circle(27, 36, 7.0),
+            line(14, 28, 40, 28),
+            line(14, 44, 40, 44),
+            line(18, 50, 18, 54),
+            line(36, 50, 36, 54),
+            line(48, 50, 48, 54),
+        ),
+        fill=circle(27, 36, 2.8),
+    ))
+
+    # 6. struct_fabricator.svg -> structure.fabricator.name (StructureIds.Fabricator)
+    # Precision gantry fabricator frame with overhead tool carriage, laser nozzle, and build platen.
+    specs.append(IconSpec(
+        filename="struct_fabricator.svg",
+        icon_id="fabricator",
+        kind="struct",
+        localization_key="structure.fabricator.name",
+        code_symbol="StructureIds.Fabricator",
+        label="FABRICATOR",
+        primary=(
+            round_rect(10, 12, 44, 42, 3.0),
+            line(10, 21, 54, 21),
+            round_rect(26, 18, 12, 9, 1.5),
+            polyline([(29, 27), (32, 33), (35, 27)], closed=False),
+            line(16, 45, 48, 45),
+        ),
+        detail=(
+            polyline([(23, 45), (23, 38), (41, 38), (41, 45)], closed=False),
+            line(32, 33, 32, 38),
+            line(16, 21, 16, 45),
+            line(48, 21, 48, 45),
+            line(16, 50, 24, 50),
+            line(40, 50, 48, 50),
+        ),
+        fill=circle(32, 35, 2.0),
+    ))
+
+    # 7. struct_storage_rack.svg -> structure.storage_rack.name (StructureIds.StorageRack)
+    # Heavy 3-tier modular bay rack with upright stanchions, cross-bracing, and stowed cargo containers.
+    specs.append(IconSpec(
+        filename="struct_storage_rack.svg",
+        icon_id="storage_rack",
+        kind="struct",
+        localization_key="structure.storage_rack.name",
+        code_symbol="StructureIds.StorageRack",
+        label="STORAGE RACK",
+        primary=(
+            line(12, 10, 12, 54),
+            line(52, 10, 52, 54),
+            line(10, 14, 54, 14),
+            line(10, 32, 54, 32),
+            line(10, 50, 54, 50),
+            round_rect(16, 20, 14, 12, 1.5),
+            round_rect(34, 20, 14, 12, 1.5),
+            round_rect(16, 38, 14, 12, 1.5),
+            round_rect(34, 38, 14, 12, 1.5),
+        ),
+        detail=(
+            line(19, 26, 27, 26),
+            line(37, 26, 45, 26),
+            line(19, 44, 27, 44),
+            line(37, 44, 45, 44),
+            line(32, 14, 32, 50),
+        ),
+        fill=polyline([(20, 24), (26, 24), (26, 28), (20, 28)], closed=True),
+    ))
+
+    # 8. struct_upgrade_bay.svg -> structure.upgrade_bay.name (StructureIds.UpgradeBay)
+    # Arched rover service gantry with overhead crane hoist, side diagnostic pillars, and bay floor rails.
+    specs.append(IconSpec(
+        filename="struct_upgrade_bay.svg",
+        icon_id="upgrade_bay",
+        kind="struct",
+        localization_key="structure.upgrade_bay.name",
+        code_symbol="StructureIds.UpgradeBay",
+        label="UPGRADE BAY",
+        primary=(
+            polyline([
+                (10, 52), (10, 18), (18, 11), (46, 11), (54, 18), (54, 52),
+            ], closed=False),
+            polyline([
+                (16, 52), (16, 22), (22, 17), (42, 17), (48, 22), (48, 52),
+            ], closed=False),
+            line(8, 52, 56, 52),
+            line(32, 17, 32, 27),
+            arc(32, 31, 4.0, -90, 180),
+        ),
+        detail=(
+            line(10, 30, 16, 30),
+            line(10, 40, 16, 40),
+            line(48, 30, 54, 30),
+            line(48, 40, 54, 40),
+            polyline([(22, 46), (26, 41), (38, 41), (42, 46)], closed=True),
+            line(20, 52, 24, 48),
+            line(44, 52, 40, 48),
+        ),
+        fill=circle(32, 26, 2.0),
+    ))
+
+    # 9. struct_antenna_mast.svg -> structure.antenna_mast.name (StructureIds.AntennaMast)
+    # Tall guyed communications mast with tilted parabolic dish, feed horn, and signal wave arcs.
+    specs.append(IconSpec(
+        filename="struct_antenna_mast.svg",
+        icon_id="antenna_mast",
+        kind="struct",
+        localization_key="structure.antenna_mast.name",
+        code_symbol="StructureIds.AntennaMast",
+        label="ANTENNA MAST",
+        primary=(
+            polyline([(24, 54), (30, 22), (34, 22), (40, 54)], closed=True),
+            line(12, 54, 52, 54),
+            arc(28, 18, 10.5, 115, 295),
+            line(28, 18, 38, 12),
+        ),
+        detail=(
+            line(28, 32, 36, 40),
+            line(36, 32, 28, 40),
+            line(26, 42, 38, 51),
+            line(38, 42, 26, 51),
+            line(29, 27, 15, 54),
+            line(35, 27, 49, 54),
+            arc(38, 12, 7.0, -55, 25),
+            arc(38, 12, 12.5, -55, 25),
+        ),
+        fill=circle(38, 12, 2.1),
+    ))
+
+    # 10. struct_vehicle_pad.svg -> structure.vehicle_pad.name (StructureIds.VehiclePad)
+    # Wide bevelled rover berthing deck with approach ramp, corner beacon stanchions, and wheel bay tracks.
+    specs.append(IconSpec(
+        filename="struct_vehicle_pad.svg",
+        icon_id="vehicle_pad",
+        kind="struct",
+        localization_key="structure.vehicle_pad.name",
+        code_symbol="StructureIds.VehiclePad",
+        label="VEHICLE PAD",
+        primary=(
+            polyline([
+                (14, 18), (50, 18), (56, 42), (8, 42),
+            ], closed=True),
+            polyline([(16, 42), (12, 52), (52, 52), (48, 42)], closed=True),
+            round_rect(10, 12, 5, 6, 1.2),
+            round_rect(49, 12, 5, 6, 1.2),
+        ),
+        detail=(
+            line(22, 22, 20, 38),
+            line(42, 22, 44, 38),
+            polyline([(28, 33), (32, 27), (36, 33)], closed=False),
+            line(22, 47, 42, 47),
+            line(10, 38, 54, 38),
+        ),
+        fill=polyline([(29, 22), (35, 22), (35, 25), (29, 25)], closed=True),
+    ))
+
+    return specs
+
+
 ITEM_SPECS: Tuple[IconSpec, ...] = tuple(_build_item_specs())
 KIT_SPECS: Tuple[IconSpec, ...] = tuple(_build_kit_specs())
-ALL_SPECS: Tuple[IconSpec, ...] = ITEM_SPECS + KIT_SPECS
+STRUCT_SPECS: Tuple[IconSpec, ...] = tuple(_build_struct_specs())
+ALL_SPECS: Tuple[IconSpec, ...] = ITEM_SPECS + KIT_SPECS + STRUCT_SPECS
 SPECS_BY_FILENAME: Dict[str, IconSpec] = {spec.filename: spec for spec in ALL_SPECS}
 
 

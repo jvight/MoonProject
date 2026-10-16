@@ -247,5 +247,48 @@ namespace MoonProject.Audio.PlayModeTests
             _rig.Events.Publish(new BellSignalFound(BellSignalTarget.CrewLog, found));
             AssertLastPlayed("bell_signal_found", found);
         }
+
+        [UnityTest]
+        public IEnumerator BuildModeCues_PlayAllEightCues_AndFadeWeldLoop()
+        {
+            var spot = new Vector3(4f, 0f, 6f);
+
+            _rig.Events.Publish(new BuildCue(BuildCueKind.Ghost, spot));
+            AssertLastPlayed("build_ghost", spot);
+
+            _rig.Events.Publish(new BuildCue(BuildCueKind.Snap, spot));
+            AssertLastPlayed("build_snap", spot);
+
+            _rig.Events.Publish(new BuildCue(BuildCueKind.Invalid, spot));
+            AssertLastPlayed("build_invalid", spot);
+
+            _rig.Events.Publish(new StructurePlaced(1, "solar_array", spot, 0f));
+            AssertLastPlayed("build_place", spot);
+
+            var weldSpot = new Vector3(4f, 0.8f, 6f);
+            _rig.Events.Publish(new BuildWeldStateChanged(true, weldSpot, 0.25f));
+            yield return new WaitForSecondsRealtime(0.4f);
+
+            AudioSource weldLoop = _rig.Gameplay.BuildWeldSource;
+            Assert.IsNotNull(weldLoop);
+            Assert.AreEqual("build_weld_loop", weldLoop.clip.name);
+            Assert.IsTrue(weldLoop.isPlaying, "weld loop plays while welding");
+            Assert.IsTrue(weldLoop.loop);
+            Assert.Greater(weldLoop.volume, 0f);
+            Assert.Less(Vector3.Distance(weldSpot, weldLoop.transform.position), 1e-4f);
+
+            _rig.Events.Publish(new BuildCue(BuildCueKind.StageComplete, spot));
+            AssertLastPlayed("build_stage_complete", spot);
+
+            _rig.Events.Publish(new StructureBuilt(1, "solar_array", spot, 0f));
+            _rig.Events.Publish(new BuildWeldStateChanged(false, Vector3.zero, 0f));
+            AssertLastPlayed("build_structure_complete", spot);
+
+            yield return new WaitForSecondsRealtime(0.4f);
+            Assert.IsFalse(weldLoop.isPlaying, "weld loop fades out after structure completes");
+
+            _rig.Events.Publish(new StructureRemoved(1, "solar_array", spot));
+            AssertLastPlayed("build_deconstruct", spot);
+        }
     }
 }
