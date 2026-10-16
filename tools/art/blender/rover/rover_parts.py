@@ -1390,8 +1390,9 @@ def build_head_assembly(rover_root, cfg, mats):
         cfg=cfg,
     )
 
-    # 8. DeckSocket & flush painted cream DeckCover on the right cheek of Head (with 4 brass corner screws)
+    # 8. DeckSocket, RingSocket & flush painted cream DeckCover on the right cheek of Head (with 4 brass corner screws)
     create_empty_node("DeckSocket", cfg["piv_deck_socket_local"], parent=head_obj)
+    create_empty_node("RingSocket", (0.0, 0.05, -0.09), parent=head_obj)
     bm_dcov = bmesh.new()
     append_beveled_box(
         bm_dcov,
@@ -2863,6 +2864,90 @@ def build_rear_and_shoulder_nodes(rover_root, body_obj, cfg, mats):
         cfg=cfg,
     )
 
+    # Ro's gift Pennant clipped to the antenna whip below AntennaTip
+    bm_pen = bmesh.new()
+    append_cylinder(
+        bm_pen,
+        radius1=0.014,
+        radius2=0.014,
+        length=0.032,
+        axis="Y",
+        center_xyz=(0.0, 0.0, 0.0),
+        segments=12,
+        bevel_width=0.002,
+        bevel_segments=1,
+        mat_idx=0,
+    )
+    pen_poly = [
+        (-0.008, 0.014),
+        (-0.008, -0.014),
+        (-0.145, -0.002),
+    ]
+    append_prism_extrusion(
+        bm_pen,
+        pen_poly,
+        depth=0.006,
+        axis="X",
+        center_xyz=(0.0, 0.0, 0.0),
+        bevel_width=0.001,
+        bevel_segments=1,
+        mat_idx=1,
+    )
+    create_mesh_node(
+        "Pennant",
+        bm_pen,
+        (0.0, 0.56, 0.0),
+        parent=ant_obj,
+        mat_list=[mats["R1_Brass"], mats["R1_OrangeStripe"]],
+        cfg=cfg,
+    )
+
+    # Bell's gift Decal07Fresh: crisp repainted "07" serial plaques on both flanks and rear valence
+    bm_decal = bmesh.new()
+    for sx in (-1.0, 1.0):
+        append_beveled_box(
+            bm_decal,
+            size_xyz=(0.008, 0.076, 0.148),
+            center_xyz=(sx * 0.445, 0.0, 0.08),
+            bevel_width=0.002,
+            bevel_segments=1,
+            mat_idx=0,
+        )
+        for dz in (-0.032, 0.032):
+            append_beveled_box(
+                bm_decal,
+                size_xyz=(0.010, 0.052, 0.044),
+                center_xyz=(sx * 0.446, 0.0, 0.08 + dz),
+                bevel_width=0.0015,
+                bevel_segments=1,
+                mat_idx=1,
+            )
+    append_beveled_box(
+        bm_decal,
+        size_xyz=(0.136, 0.068, 0.008),
+        center_xyz=(0.20, 0.0, -0.742),
+        bevel_width=0.002,
+        bevel_segments=1,
+        mat_idx=0,
+    )
+    for dx in (-0.030, 0.030):
+        append_beveled_box(
+            bm_decal,
+            size_xyz=(0.040, 0.048, 0.010),
+            center_xyz=(0.20 + dx, 0.0, -0.743),
+            bevel_width=0.0015,
+            bevel_segments=1,
+            mat_idx=1,
+        )
+    create_mesh_node(
+        "Decal07Fresh",
+        bm_decal,
+        (0.0, 0.605, 0.0),
+        parent=body_obj,
+        mat_list=[mats["R1_OrangeStripe"], mats["R1_CreamEnamel"]],
+        cfg=cfg,
+    )
+
 
 def build_suspension_and_sockets(rover_root, cfg, mats):
     """
@@ -2986,8 +3071,14 @@ def build_suspension_and_sockets(rover_root, cfg, mats):
             if tag == "RR":
                 create_empty_node("WheelsSocket", (0.12, 0.0, 0.0), parent=w_obj)
 
-    sw_emp = create_empty_node("SolarWing", cfg["piv_solar_wing"], parent=rover_root)
-    create_empty_node("WingSocket", (0.0, 0.0, -0.24), parent=sw_emp)
+    build_solar_wing_model(
+        cfg,
+        mats,
+        parent=rover_root,
+        unity_loc=cfg["piv_solar_wing"],
+        wing_socket_loc=(0.0, 0.0, -0.24),
+        split_gift_cell=True,
+    )
 
     socket_table = (
         ("CradleSocket", (0.0, 0.96, -0.38)),
@@ -3003,8 +3094,8 @@ def build_suspension_and_sockets(rover_root, cfg, mats):
         ("BinSocket_L", (-0.46, 0.60, 0.02)),
         ("BinSocket_R", (0.46, 0.60, 0.02)),
         ("PanniersSocket", (0.46, 0.60, 0.02)),
-        ("SpineSocket", (0.0, 0.96, -0.08)),
-        ("BackSocket", (0.0, 0.96, -0.08)),
+        ("SpineSocket", (0.385, 0.90, -0.20)),
+        ("BackSocket", (0.385, 0.90, -0.20)),
         ("DustSocket_L", (-0.61, 0.0, -0.53)),
         ("DustSocket_R", (0.61, 0.0, -0.53)),
     )
@@ -3014,9 +3105,9 @@ def build_suspension_and_sockets(rover_root, cfg, mats):
 
 def build_rover_model_hierarchy(cfg, mats):
     """
-    Build the complete 122-node RoverModel hierarchy in the active Blender scene, then merge
-    static child meshes into their moving host meshes (preserving all 122 node transforms as
-    EMPTY/MESH nodes) so the exported FBX has <= 30 meshes and < 100 draw calls.
+    Build the complete RoverModel hierarchy in the active Blender scene, then merge
+    purely static child meshes into their moving host meshes while keeping all runtime-driven,
+    toggled, and independently animated child nodes as separate MESH objects.
     """
     rover_root = create_empty_node("RoverModel", (0.0, 0.0, 0.0))
     body_obj = build_contoured_body_mesh(cfg, mats)
@@ -3027,15 +3118,12 @@ def build_rover_model_hierarchy(cfg, mats):
     build_suspension_and_sockets(rover_root, cfg, mats)
     bpy.context.view_layer.update()
 
-    # Merge static child meshes into the host mesh they move with (converting child nodes to EMPTYs)
+    # Merge purely static child meshes into the host mesh they move with (converting static child nodes to EMPTYs)
     body_static_children = (
         ["Headlamp_L", "Headlamp_R", "Glass_L", "Glass_R", "FrontIntake", "FrontIntakeRoller"]
-        + ["ChargeConduits", "ConduitGlow", "CargoHold", "HatchWindow"]
+        + ["ChargeConduits", "CargoHold", "HatchWindow"]
         + [f"Stage_{idx}_{side}" for idx in (1, 2, 3) for side in ("L", "R")]
-        + [f"StageGlow_{idx}_{side}" for idx in (1, 2, 3) for side in ("L", "R")]
         + [f"BatteryLamp_{i}" for i in range(8)]
-        + [f"BatteryGlass_{i}" for i in range(8)]
-        + [f"HatchCrate_{i}" for i in range(8)]
     )
     merge_child_meshes_into_host(body_obj, body_static_children, cfg)
     merge_child_meshes_into_host(neck_obj, ["NeckLift"], cfg)
@@ -3043,23 +3131,19 @@ def build_rover_model_hierarchy(cfg, mats):
 
     eye_obj = bpy.data.objects.get("Eye")
     if eye_obj is not None:
-        merge_child_meshes_into_host(eye_obj, ["LockRing", "LockGlow"], cfg)
+        merge_child_meshes_into_host(eye_obj, ["LockRing"], cfg)
 
     upper_canopy_obj = bpy.data.objects.get("UpperCanopy")
     if upper_canopy_obj is not None:
-        merge_child_meshes_into_host(upper_canopy_obj, ["LowerChute", "IntakeRoller"], cfg)
-
-    ds_obj = bpy.data.objects.get("DigScoop")
-    if ds_obj is not None:
-        merge_child_meshes_into_host(ds_obj, ["ScoopArms"], cfg)
+        merge_child_meshes_into_host(upper_canopy_obj, ["IntakeRoller"], cfg)
 
     ws_obj = bpy.data.objects.get("WinchSocket")
     if ws_obj is not None:
-        merge_child_meshes_into_host(ws_obj, ["WinchSpool", "TowHook"], cfg)
+        merge_child_meshes_into_host(ws_obj, ["TowHook"], cfg)
 
     ant_obj = bpy.data.objects.get("Antenna")
     if ant_obj is not None:
-        merge_child_meshes_into_host(ant_obj, ["SonarLoop", "AntennaTip"], cfg)
+        merge_child_meshes_into_host(ant_obj, ["SonarLoop"], cfg)
 
     mesh_objs = [o for o in bpy.data.objects if o.type == "MESH"]
     prune_unused_materials(mesh_objs)
@@ -3067,10 +3151,18 @@ def build_rover_model_hierarchy(cfg, mats):
     return rover_root
 
 
-def build_solar_wing_model(cfg, mats, parent=None, unity_loc=(0.0, 0.0, 0.0)):
+def build_solar_wing_model(
+    cfg,
+    mats,
+    parent=None,
+    unity_loc=(0.0, 0.0, 0.0),
+    wing_socket_loc=(0.0, 0.02, -0.24),
+    split_gift_cell=False,
+):
     """
-    Build Tilly's 2x3 photovoltaic SolarWing model (2 nodes: SolarWing mesh + WingSocket empty).
+    Build Tilly's 2x3 photovoltaic SolarWing model.
     Uses R1_SolarCell for the PV cells per Logs/TASK.md.
+    When split_gift_cell=True, the (c=1, r=1) cell is emitted as a child MESH node 'CellFilled'.
     """
     bm = bmesh.new()
     sw_w = cfg["solar_wing_width"]
@@ -3100,12 +3192,36 @@ def build_solar_wing_model(cfg, mats, parent=None, unity_loc=(0.0, 0.0, 0.0)):
     cell_w = (sw_w * 0.84) / cols
     cell_l = (sw_l * 0.84) / rows
     frame_cz = -sw_l * FLAT_UV_SCALE
+    gift_cell_bm = None
+    gift_cell_loc = (0.0, 0.0, 0.0)
     for c in range(cols):
         cx = (-0.5 + c) * (cell_w + 0.018)
         for r in range(rows):
             dz_rel = (1 - r) * (cell_l + 0.016)
             cz_local = frame_cz + dz_rel * math.cos(slope_rad)
             cy_local = dz_rel * math.sin(slope_rad) + 0.012
+            if split_gift_cell and c == 1 and r == 1:
+                gift_cell_bm = bmesh.new()
+                gift_cell_loc = (round(cx, 4), round(cy_local, 4), round(cz_local, 4))
+                append_beveled_box(
+                    gift_cell_bm,
+                    size_xyz=(cell_w, 0.010, cell_l),
+                    center_xyz=(0.0, 0.0, 0.0),
+                    bevel_width=0.004,
+                    bevel_segments=2,
+                    mat_idx=0,
+                    rot_euler=(slope_rad, 0.0, 0.0),
+                )
+                append_beveled_box(
+                    gift_cell_bm,
+                    size_xyz=(0.006, 0.012, cell_l * 0.92),
+                    center_xyz=(0.0, 0.002, 0.0),
+                    bevel_width=0.001,
+                    bevel_segments=1,
+                    mat_idx=1,
+                    rot_euler=(slope_rad, 0.0, 0.0),
+                )
+                continue
             append_beveled_box(
                 bm,
                 size_xyz=(cell_w, 0.010, cell_l),
@@ -3155,7 +3271,16 @@ def build_solar_wing_model(cfg, mats, parent=None, unity_loc=(0.0, 0.0, 0.0)):
         mats["R1_Copper"],
     ]
     sw_obj = create_mesh_node("SolarWing", bm, unity_loc, parent=parent, mat_list=mat_list, cfg=cfg)
-    create_empty_node("WingSocket", (0.0, 0.02, -0.24), parent=sw_obj)
+    create_empty_node("WingSocket", wing_socket_loc, parent=sw_obj)
+    if gift_cell_bm is not None:
+        create_mesh_node(
+            "CellFilled",
+            gift_cell_bm,
+            gift_cell_loc,
+            parent=sw_obj,
+            mat_list=[mats["R1_SolarCell"], mats["R1_BareSteel"]],
+            cfg=cfg,
+        )
     bpy.context.view_layer.update()
     return sw_obj
 

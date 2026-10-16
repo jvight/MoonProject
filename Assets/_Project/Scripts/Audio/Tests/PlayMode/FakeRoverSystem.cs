@@ -67,6 +67,14 @@ namespace MoonProject.Audio.PlayModeTests
 
         public Transform TetherOrigin => _tetherOrigin;
 
+        public Transform CutterOrigin => _tetherOrigin;
+
+        public Transform ScanOrigin => _tetherOrigin;
+
+        public Transform WinchOrigin => _tetherOrigin;
+
+        public Transform ScoopOrigin => _tetherOrigin;
+
         public Transform CargoSocket => transform;
 
         public Rigidbody PhysicsBody => null;

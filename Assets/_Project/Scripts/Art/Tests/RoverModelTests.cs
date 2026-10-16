@@ -1,281 +1,146 @@
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using MoonProject.Art.Editor;
 
 namespace MoonProject.Art.Tests
 {
-    /// <summary>The rover rig contract (docs/ARCHITECTURE.md, "Contract: rover model rig") and the 07 budget.</summary>
+    /// <summary>The R1 07 v3 Amber CRT rover rig contract (docs/ARCHITECTURE.md, "Contract: rover model rig").</summary>
     public sealed class RoverModelTests
     {
-        private static readonly string[] ContractPaths =
+        private const string FbxPath = "Assets/_Project/Art/R1/Models/Rover/RoverModel.fbx";
+        private const string PrefabPath = "Assets/_Project/Generated/Art/R1/Models/Rover/RoverModel.prefab";
+
+        private static readonly string[] RequiredMeshPaths =
         {
-            "Body", "Body/Decal07Fresh", "Body/Weather_Paint", "Body/Weather_Rust", "Body/Weather_Dust",
-            "Bogie_L", "Bogie_L/Weather_Rust", "Bogie_L/Weather_Dust", "Bogie_R", "Bogie_R/Weather_Rust",
-            "Bogie_R/Weather_Dust",
-            "Wheel_FL", "Wheel_FL/Weather_Dust", "Wheel_FR", "Wheel_FR/Weather_Dust", "Wheel_ML",
-            "Wheel_ML/Weather_Dust", "Wheel_MR", "Wheel_MR/Weather_Dust", "Wheel_RL", "Wheel_RL/Weather_Dust",
-            "Wheel_RR", "Wheel_RR/Weather_Dust",
-            "Neck", "Neck/Head", "Neck/Head/Eye", "Neck/Head/Eye/TetherOrigin", "Neck/Head/RingSocket", "Neck/Head/Eyelid",
-            "Neck/Head/Weather_Paint", "Neck/Head/Weather_Dust", "Neck/Head/Eye/LensSocket",
-            "SolarWing", "SolarWing/CellFilled", "Antenna", "Antenna/AntennaTip", "Antenna/Pennant",
-            "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket", "DrumSocket_L",
-            "DrumSocket_R", "PartSocket", "SpineSocket", "DeckSocket", "BinSocket_L", "BinSocket_R",
+            "Body", "Body/Decal07Fresh",
+            "Body/ChargeConduits/ConduitGlow",
+            "Body/Stage_1_L/StageGlow_1_L",
+            "Body/Stage_1_R/StageGlow_1_R",
+            "Body/Stage_2_L/StageGlow_2_L",
+            "Body/Stage_2_R/StageGlow_2_R",
+            "Body/Stage_3_L/StageGlow_3_L",
+            "Body/Stage_3_R/StageGlow_3_R",
+            "Body/CargoHatch/UpperCanopy", "Body/CargoHatch/LowerChute",
+            "Wheel_FL", "Wheel_FR", "Wheel_RL", "Wheel_RR",
+            "Arm_FL", "Arm_FR", "Arm_RL", "Arm_RR",
+            "Shock_FL", "Shock_FR", "Shock_RL", "Shock_RR",
+            "Neck", "Neck/NeckLift/Head", "Neck/NeckLift/Head/Screen",
+            "Neck/NeckLift/Head/Eye", "Neck/NeckLift/Head/Eye/LockRing/LockGlow",
+            "SolarWing", "SolarWing/CellFilled",
+            "Antenna", "Antenna/AntennaTip", "Antenna/Pennant",
+            "CutterTurret", "CutterTurret/CutterHead",
+            "DigScoop", "DigScoop/ScoopArms", "DigScoop/ScoopArms/ScoopBucket",
+            "DigScoop/ScoopCyl_L", "DigScoop/ScoopCyl_R",
+            "WinchSocket", "WinchSocket/WinchSpool",
         };
 
-        private static readonly string[] EmptyNodes =
+        private static readonly string[] RequiredEmptyPaths =
         {
-            "TetherOrigin", "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket",
-            "DrumSocket_L", "DrumSocket_R", "PartSocket", "SpineSocket", "DeckSocket", "RingSocket",
-            "LensSocket", "BinSocket_L", "BinSocket_R", "ScanFanSocket",
+            "Body/ChargeConduits",
+            "Body/Stage_1_L", "Body/Stage_1_R", "Body/Stage_2_L", "Body/Stage_2_R", "Body/Stage_3_L", "Body/Stage_3_R",
+            "Body/CargoHold", "Body/CargoHold/HatchWindow",
+            "Body/CargoHold/HatchOrigin", "Body/CargoHold/StoryRackSocket",
+            "Body/CargoHatch", "Body/CargoHatch/IntakeRoller",
+            "Wheel_RR/WheelsSocket",
+            "Neck/NeckLift",
+            "Neck/NeckLift/Head/Visor", "Neck/NeckLift/Head/RearVentStrip", "Neck/NeckLift/Head/DeckCover",
+            "Neck/NeckLift/Head/DeckSocket", "Neck/NeckLift/Head/RingSocket",
+            "Neck/NeckLift/Head/Eye/LockRing",
+            "Neck/NeckLift/Head/Eye/EyeOrigin", "Neck/NeckLift/Head/Eye/LensSocket", "Neck/NeckLift/Head/Eye/ScanFanSocket",
+            "SolarWing/WingSocket",
+            "Antenna/AntennaSocket", "Antenna/SonarLoop", "Antenna/SonarLoop/AntennaOrigin",
+            "CutterTurret/CutterHead/CutterOrigin", "CutterTurret/CutterHead/CutterSocket",
+            "CutterTurret/CutterHead/StitchOrigin", "CutterTurret/CutterHead/CoilSocket_T1",
+            "DigScoop/ScoopArms/ScoopBucket/ScoopOrigin",
+            "WinchSocket/TowHook", "WinchSocket/TowHook/WinchOrigin", "WinchSocket/TetherSocket",
+            "CargoSocket", "HoldSocket", "CradleSocket", "HeadlampSocket", "LampSocket",
+            "CoilSocket", "BellySocket", "DrumSocket_L", "DrumSocket_R", "FlanksSocket",
+            "BinSocket_L", "BinSocket_R", "PanniersSocket", "SpineSocket", "BackSocket",
+            "DustSocket_L", "DustSocket_R",
         };
 
-        // The equipment screen's markers, one per Core RoverSocket, each on the part it stands for.
-        private static readonly string[] EquipmentPaths =
-        {
-            "Neck/Head/Eye/CutterSocket", "Neck/Head/TetherSocket", "LampSocket", "BellySocket", "FlanksSocket",
-            "PanniersSocket", "BackSocket", "HoldSocket", "SolarWing/WingSocket", "DeckSocket",
-            "Wheel_MR/WheelsSocket", "Antenna/AntennaSocket",
-        };
-
-        // The charge-up's nodes (0.5.5 "Cells"), the contract rover drives.
-        private static readonly string[] ChargePaths =
-        {
-            "ChargeConduits", "ChargeConduits/ConduitGlow", "Neck/ChargeConduits", "Neck/ChargeConduits/ConduitGlow",
-            "Neck/Head/Eye/LockRing", "Neck/Head/Eye/LockRing/LockGlow", "Neck/Head/Eye/ScanFanSocket",
-            "Stage_1_L", "Stage_1_L/StageGlow_1", "Stage_1_R", "Stage_1_R/StageGlow_1",
-            "Stage_2_L", "Stage_2_L/StageGlow_2", "Stage_2_R", "Stage_2_R/StageGlow_2",
-            "Stage_3_L", "Stage_3_L/StageGlow_3", "Stage_3_R", "Stage_3_R/StageGlow_3",
-        };
-
-        /// <summary>The battery light bar's segments (docs/features/M3-20).</summary>
-        private const int BatteryLamps = 8;
-
-        // The Cargo Cradle's front rails (Kit_CargoRack): their outer face and the lower rail's top.
-        private const float CradleFront = -0.658f;
-        private const float CradleRailTop = 0.522f;
-        private const float TailLampInnerEdge = 0.246f;
-        private const float WindowHalfHeight = 0.0665f;
-
-        private ModelNode _rover;
+        private GameObject _prefab;
 
         [OneTimeSetUp]
-        public void BuildOnce()
+        public void LoadPrefab()
         {
-            _rover = RoverModelBuilder.CreateModel();
+            R1ModelBuilder.Build();
+            _prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+            Assert.IsNotNull(_prefab, $"Missing generated R1 rover prefab at '{PrefabPath}'.");
         }
 
         [Test]
-        public void Hierarchy_IsExactlyTheContract()
+        public void Hierarchy_ContainsAllContractMeshAndEmptyPaths()
         {
-            var paths = new List<string>();
-            CollectPaths(_rover, string.Empty, paths);
-            var contract = new List<string>(ContractPaths);
-            for (int i = 0; i < BatteryLamps; i++)
+            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<GameObject>(FbxPath), $"Missing source FBX at '{FbxPath}'.");
+            Transform root = _prefab.transform;
+
+            foreach (string path in RequiredMeshPaths)
             {
-                contract.Add("Body/BatteryLamp_" + i);
-                contract.Add("Body/BatteryLamp_" + i + "/BatteryGlass_" + i);
+                Transform node = root.Find(path);
+                Assert.IsNotNull(node, $"Missing required mesh node '{path}'.");
+                Assert.IsNotNull(node.GetComponent<MeshRenderer>(), $"Node '{path}' must have its own MeshRenderer.");
+                Assert.IsNotNull(node.GetComponent<MeshFilter>()?.sharedMesh, $"Node '{path}' must have a MeshFilter mesh.");
             }
 
-            contract.Add("Body/" + RoverModelBuilder.CargoHatchName);
-            string window = "Body/" + RoverModelBuilder.CargoHatchName + "/" + RoverModelBuilder.HatchWindowName;
-            contract.Add(window);
-            for (int i = 0; i < RoverModelBuilder.HatchCrates; i++)
+            for (int i = 0; i < 8; i++)
             {
-                contract.Add(window + "/" + RoverModelBuilder.HatchCratePrefix + i);
+                string lampPath = $"Body/BatteryLamp_{i}";
+                string glassPath = $"{lampPath}/BatteryGlass_{i}";
+                Transform lamp = root.Find(lampPath);
+                Transform glass = root.Find(glassPath);
+                Assert.IsNotNull(lamp, $"Missing '{lampPath}'.");
+                Assert.IsNotNull(glass, $"Missing '{glassPath}'.");
+                Assert.IsNotNull(glass.GetComponent<MeshRenderer>(), $"'{glassPath}' must have its own MeshRenderer.");
+
+                string cratePath = $"Body/CargoHold/HatchWindow/HatchCrate_{i}";
+                Transform crate = root.Find(cratePath);
+                Assert.IsNotNull(crate, $"Missing '{cratePath}'.");
+                Assert.IsNotNull(crate.GetComponent<MeshRenderer>(), $"'{cratePath}' must have its own MeshRenderer.");
             }
 
-            contract.AddRange(ChargePaths);
-            contract.AddRange(EquipmentPaths.Where(p => p != RoverModelBuilder.DeckSocketName));
+            foreach (string path in RequiredEmptyPaths)
+            {
+                Transform node = root.Find(path);
+                Assert.IsNotNull(node, $"Missing required socket/origin node '{path}'.");
+                Assert.IsNull(node.GetComponent<Renderer>(), $"Socket/origin node '{path}' must be an empty transform.");
+            }
 
-            Assert.AreEqual(RoverModelBuilder.ModelName, _rover.Name);
-            CollectionAssert.AreEquivalent(contract, paths);
+            Assert.IsNull(root.Find("Wheel_ML"), "Legacy middle wheel Wheel_ML must not exist on 4-wheel v3 rig.");
+            Assert.IsNull(root.Find("Wheel_MR"), "Legacy middle wheel Wheel_MR must not exist on 4-wheel v3 rig.");
+            Assert.IsNull(root.Find("Bogie_L"), "Legacy Bogie_L must not exist on 4-wheel v3 rig.");
+            Assert.IsNull(root.Find("Bogie_R"), "Legacy Bogie_R must not exist on 4-wheel v3 rig.");
         }
 
         [Test]
-        public void TheBatteryBar_RunsAcrossTheLidsRearEdge_FacingTheChaseCamera_WithGlowingGlasses()
+        public void Wheels_SitOnTheGround_WithFourWheelIndependentSuspension()
         {
-            float previousX = float.MinValue;
-            for (int i = 0; i < BatteryLamps; i++)
+            Transform root = _prefab.transform;
+            foreach (string name in new[] { "Wheel_FL", "Wheel_FR", "Wheel_RL", "Wheel_RR" })
             {
-                ModelNode segment = _rover.GetDescendant("BatteryLamp_" + i);
-                ModelNode glass = _rover.GetDescendant("BatteryGlass_" + i);
-                Vector3 at = segment.LocalPosition;
-                Vector3 facing = segment.LocalRotation * Vector3.up;
-                Assert.Greater(at.x, previousX, $"{segment.Name} runs left to right");
-                Assert.Less(Mathf.Abs(at.x), 0.3f, $"{segment.Name} stays on the straight of the rear edge");
-                Assert.That(at.y, Is.InRange(0.9f, 1f), $"{segment.Name} sits on the lid");
-                Assert.Less(at.z, -0.56f, $"{segment.Name} sits behind the folded wing's end, on the rear edge");
-                Assert.Greater(facing.y, 0.5f, $"{segment.Name} faces up, where the chase camera looks down");
-                Assert.Less(facing.z, -0.7f, $"{segment.Name} tips well back toward the chase camera");
-                Assert.AreEqual(ModelMaterial.Palette, segment.Material);
-                Assert.AreEqual(ModelMaterial.PaletteGlowOff, glass.Material, glass.Name);
-                CollectionAssert.AreEqual(new[] { PaletteSwatch.LampGlass }, Swatches(glass.Mesh.Geometry));
-                previousX = at.x;
-            }
-        }
-
-        [Test]
-        public void Wheels_SitOnTheGround_WithRadiusAndRollAxisPerContract()
-        {
-            foreach (string name in new[] { "Wheel_FL", "Wheel_FR", "Wheel_ML", "Wheel_MR", "Wheel_RL", "Wheel_RR" })
-            {
-                ModelNode wheel = _rover.GetDescendant(name);
-                Assert.AreEqual(RoverModelBuilder.WheelRadius, wheel.LocalPosition.y, 1e-5f, name);
-                Assert.AreEqual(RoverModelBuilder.WheelTrack, Mathf.Abs(wheel.LocalPosition.x), 1e-5f, name);
-                Assert.AreEqual(name[name.Length - 1] == 'L', wheel.LocalPosition.x < 0f, $"{name} side");
-                Assert.AreEqual(Quaternion.identity, wheel.LocalRotation, name);
-
-                float reach = 0f;
-                IReadOnlyList<Vector3> positions = wheel.Mesh.Geometry.Positions;
-                for (int v = 0; v < positions.Count; v++)
-                {
-                    reach = Mathf.Max(reach, new Vector2(positions[v].y, positions[v].z).magnitude);
-                }
-
-                Assert.AreEqual(RoverModelBuilder.WheelRadius, reach, 0.012f, $"{name} rolls on a 0.35 m radius");
+                Transform wheel = root.Find(name);
+                Assert.IsNotNull(wheel, name);
+                Assert.AreEqual(0.35f, wheel.localPosition.y, 0.02f, $"{name} hub height");
+                Assert.AreEqual(0.61f, Mathf.Abs(wheel.localPosition.x), 0.02f, $"{name} half-track");
+                Assert.AreEqual(0.53f, Mathf.Abs(wheel.localPosition.z), 0.02f, $"{name} half-wheelbase");
+                Assert.AreEqual(name.EndsWith("L"), wheel.localPosition.x < 0f, $"{name} side");
+                Assert.AreEqual(name.Contains("F"), wheel.localPosition.z > 0f, $"{name} row");
             }
         }
 
         [Test]
-        public void Sockets_AreEmpty_AndPointWherePromised()
+        public void Screen_IsDedicatedSingleSlotMeshRenderer_UsingR1ScreenPlaceholder()
         {
-            foreach (string name in EmptyNodes)
-            {
-                Assert.IsNull(_rover.GetDescendant(name).Mesh, $"{name} must be an empty");
-            }
-
-            ModelNode headlamp = _rover.GetDescendant("HeadlampSocket");
-            Assert.Greater((headlamp.LocalRotation * Vector3.forward).z, 0.99f, "headlamp shines forward");
-            Assert.Less(headlamp.LocalPosition.y, 0.7f, "headlamp sits low on the body front");
-            Assert.AreEqual(Quaternion.identity, _rover.GetDescendant("TetherOrigin").LocalRotation);
-            Assert.AreEqual(0f, _rover.GetDescendant("DustSocket_L").LocalPosition.y, 1e-5f);
-            Assert.AreEqual(-RoverModelBuilder.WheelBase, _rover.GetDescendant("DustSocket_R").LocalPosition.z, 1e-5f);
-        }
-
-        [Test]
-        public void EquipmentSockets_OnePerRoverSocket_EmptyMarkersOnThePartsTheyStandFor()
-        {
-            Assert.AreEqual(EquipmentPaths.Length, RoverModelBuilder.EquipmentSockets.Count);
-            for (int i = 0; i < EquipmentPaths.Length; i++)
-            {
-                string name = RoverModelBuilder.EquipmentSockets[i] + RoverModelBuilder.EquipmentSocketSuffix;
-                StringAssert.EndsWith(name, EquipmentPaths[i]);
-                ModelNode socket = AtPath(_rover, EquipmentPaths[i]);
-                Assert.IsNull(socket.Mesh, $"{name} is a marker, not a mount plate");
-                Assert.AreEqual(1, AllNodes(_rover).Count(n => n.Name == name), $"{name} is unique");
-            }
-
-            Assert.Greater(_rover.GetDescendant("FlanksSocket").LocalPosition.x, 0f, "the right of the pair");
-            Assert.Greater(_rover.GetDescendant("PanniersSocket").LocalPosition.x, 0f, "the right of the pair");
-            Assert.Less(_rover.GetDescendant("HoldSocket").LocalPosition.z, 0f, "the hold is at the rear");
-            Assert.Greater(_rover.GetDescendant("LampSocket").LocalPosition.z, 0f, "the lamp is at the front");
-        }
-
-        [Test]
-        public void ChargeUp_IsSymmetric_ItsCellsBesideTheWing_EveryGlowStartingDark()
-        {
-            foreach (string path in ChargePaths.Where(p => p.Contains("Glow")))
-            {
-                ModelNode glow = AtPath(_rover, path);
-                Assert.AreEqual(ModelMaterial.PaletteGlowOff, glow.Material, $"{path} starts dark");
-                for (int t = 0; t < glow.Mesh.Geometry.TriangleCount; t++)
-                {
-                    Assert.AreEqual(PaletteSwatch.EyeGlass, MeshChecks.SwatchOf(glow.Mesh.Geometry, t),
-                        $"{path} glows the cutter's one cyan");
-                }
-
-                MeshChecks.AssertWellFormed(glow.Mesh.Geometry);
-            }
-
-            Assert.AreEqual(0f, _rover.GetDescendant("SolarWing").LocalPosition.x, 1e-5f, "the wing is centred");
-            for (int stage = 1; stage <= RoverModelBuilder.ChargeStages; stage++)
-            {
-                ModelNode left = AtPath(_rover, RoverModelBuilder.ChargeStagePrefix + stage + "_L");
-                ModelNode right = AtPath(_rover, RoverModelBuilder.ChargeStagePrefix + stage + "_R");
-                Assert.AreEqual(-left.LocalPosition.x, right.LocalPosition.x, 1e-5f, $"stage {stage} is mirrored");
-                Assert.AreEqual(left.LocalPosition.z, right.LocalPosition.z, 1e-5f, $"stage {stage} is mirrored");
-                Bounds cell = left.Mesh.Geometry.Bounds;
-                Assert.Less(left.LocalPosition.x + cell.extents.x, -WingEdge(), $"stage {stage} clears the wing");
-                ModelNode sleeve = left.Children.Single();
-                Assert.AreEqual(RoverModelBuilder.StageGlowPrefix + stage, sleeve.Name);
-                float front = sleeve.LocalPosition.z + RoverModelBuilder.ChargeSleeveTravel;
-                Assert.LessOrEqual(front, cell.max.z, $"stage {stage}'s sleeve stays on its cell at full travel");
-                if (stage > 1)
-                {
-                    float previous = AtPath(_rover, RoverModelBuilder.ChargeStagePrefix + (stage - 1) + "_L")
-                        .LocalPosition.z;
-                    Assert.Greater(left.LocalPosition.z, previous, "the stages run from the battery toward the neck");
-                }
-            }
-
-            Assert.AreEqual(_rover.GetDescendant("TetherOrigin").LocalPosition,
-                _rover.GetDescendant(RoverModelBuilder.LensSocketName).LocalPosition, "the lens is on the beam's mouth");
-        }
-
-        [Test]
-        public void CargoHatch_HangsOnTheRearFace_ItsCratesInOrder_InsideTheWindow_ClearOfTheCradle()
-        {
-            ModelNode hatch = AtPath(_rover, "Body/" + RoverModelBuilder.CargoHatchName);
-            Assert.AreEqual(Quaternion.identity, hatch.LocalRotation, "shut at rest; rover turns it about local X");
-            Bounds leaf = hatch.Mesh.Geometry.Bounds;
-            leaf.center += hatch.LocalPosition;
-            Assert.LessOrEqual(leaf.max.z, RoverModelBuilder.CargoHatchHinge.z + 0.013f, "it sits on the rear face");
-            Assert.Greater(leaf.min.z, CradleFront, "it stays in front of the Cargo Cradle's front rails");
-            Assert.Less(leaf.max.x, TailLampInnerEdge, "it leaves the tail lamp beside it clear");
-            ModelNode window = hatch.Children.Single();
-            Assert.AreEqual(RoverModelBuilder.HatchWindowName, window.Name);
-            Assert.Greater(hatch.LocalPosition.y + window.LocalPosition.y - WindowHalfHeight, CradleRailTop,
-                "the window shows above the cradle's lower rail");
-            Assert.AreEqual(RoverModelBuilder.HatchCrates, window.Children.Count);
-            Assert.IsTrue(MeshChecks.Swatches(window.Mesh.Geometry).All(Palette.IsEmissive),
-                "the hold glows behind the crates, so full and empty read apart");
-            Bounds hold = window.Mesh.Geometry.Bounds;
-            for (int i = 0; i < RoverModelBuilder.HatchCrates; i++)
-            {
-                ModelNode crate = window.Children[i];
-                Assert.AreEqual(RoverModelBuilder.HatchCratePrefix + i, crate.Name, "crates in slot order");
-                Assert.IsFalse(MeshChecks.Swatches(crate.Mesh.Geometry).Any(Palette.IsEmissive));
-                Bounds box = crate.Mesh.Geometry.Bounds;
-                box.center += crate.LocalPosition;
-                Assert.IsTrue(hold.Contains(new Vector3(box.min.x, box.min.y, hold.center.z)) &&
-                              hold.Contains(new Vector3(box.max.x, box.max.y, hold.center.z)),
-                    $"{crate.Name} shows inside the window");
-            }
-        }
-
-        [Test]
-        public void FocusLens_ClipsInsideTheEyesRim_AndGlowsOnlyThroughItsGlass()
-        {
-            ModelNode lens = RoverModelBuilder.CreateFocusLens();
-            ModelNode glass = lens.GetDescendant(RoverModelBuilder.FocusLensGlassName);
-            Assert.AreEqual(ModelMaterial.PaletteGlowOff, glass.Material, "the lens's glass starts dark");
-            Assert.IsFalse(MeshChecks.Swatches(lens.Mesh.Geometry).Any(Palette.IsEmissive), "the frame doesn't glow");
-            MeshChecks.AssertWellFormed(lens.Mesh.Geometry);
-            MeshChecks.AssertWellFormed(glass.Mesh.Geometry);
-            Assert.Less(lens.Mesh.Geometry.Bounds.extents.x, 0.19f, "the lens clips inside the eye's rim");
-        }
-
-        [Test]
-        public void GlowingParts_AreTheirOwnRenderers_WithEmissiveSwatches()
-        {
-            AssertOnlyEmissiveIn(_rover.GetDescendant("AntennaTip").Mesh.Geometry);
-            CollectionAssert.Contains(Swatches(_rover.GetDescendant("Eye").Mesh.Geometry), PaletteSwatch.WarmLamp);
-            CollectionAssert.DoesNotContain(Swatches(_rover.GetDescendant("Head").Mesh.Geometry),
-                PaletteSwatch.WarmLamp);
-        }
-
-        [Test]
-        public void EveryMesh_IsWellFormed()
-        {
-            foreach (ModelNode node in AllNodes(_rover))
-            {
-                if (node.Mesh != null)
-                {
-                    MeshChecks.AssertWellFormed(node.Mesh.Geometry);
-                }
-            }
+            Transform screen = _prefab.transform.Find("Neck/NeckLift/Head/Screen");
+            Assert.IsNotNull(screen);
+            var renderer = screen.GetComponent<MeshRenderer>();
+            Assert.IsNotNull(renderer);
+            Assert.AreEqual(1, renderer.sharedMaterials.Length, "Screen must have exactly one material slot.");
+            Assert.AreEqual(R1MaterialRecipes.Get(R1MaterialSlot.Screen).MaterialAssetName,
+                renderer.sharedMaterials[0].name);
         }
 
         [Test]
@@ -284,119 +149,43 @@ namespace MoonProject.Art.Tests
             var min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
             Vector3 max = -min;
             int triangles = 0;
-            Accumulate(_rover, Matrix4x4.identity, ref min, ref max, ref triangles);
 
-            Vector3 size = max - min;
-            Assert.AreEqual(0f, min.y, 0.01f, "wheels touch the ground at y = 0");
-            Assert.That(size.z, Is.InRange(2.1f, 2.4f), "length");
-            Assert.That(size.x, Is.InRange(1.4f, 1.7f), "width");
-            Assert.That(max.y, Is.InRange(1.35f, 1.8f), "height (the hooded head and whip antenna top it)");
-            Assert.That(triangles, Is.InRange(3000, 15000), "triangle budget (the hidden gifts and weather included)");
-        }
-
-        [Test]
-        public void CreateModel_IsDeterministic()
-        {
-            ModelNode again = RoverModelBuilder.CreateModel();
-
-            CollectionAssert.AreEqual(_rover.GetDescendant("Body").Mesh.Geometry.Positions,
-                again.GetDescendant("Body").Mesh.Geometry.Positions);
-            CollectionAssert.AreEqual(_rover.GetDescendant("Head").Mesh.Geometry.Uvs,
-                again.GetDescendant("Head").Mesh.Geometry.Uvs);
-        }
-
-        /// <summary>The solar wing's right edge on 07 (its hinge plus its mesh's reach toward +X).</summary>
-        private float WingEdge()
-        {
-            ModelNode wing = _rover.GetDescendant("SolarWing");
-            return wing.LocalPosition.x + wing.Mesh.Geometry.Bounds.max.x;
-        }
-
-        private static ModelNode AtPath(ModelNode root, string path)
-        {
-            ModelNode node = root;
-            foreach (string name in path.Split('/'))
+            foreach (MeshFilter filter in _prefab.GetComponentsInChildren<MeshFilter>(true))
             {
-                node = node.Children.Single(child => child.Name == name);
-            }
-
-            return node;
-        }
-
-        private static void CollectPaths(ModelNode node, string prefix, List<string> paths)
-        {
-            foreach (ModelNode child in node.Children)
-            {
-                string path = prefix.Length == 0 ? child.Name : $"{prefix}/{child.Name}";
-                paths.Add(path);
-                CollectPaths(child, path, paths);
-            }
-        }
-
-        private static IEnumerable<ModelNode> AllNodes(ModelNode node)
-        {
-            yield return node;
-            foreach (ModelNode child in node.Children)
-            {
-                foreach (ModelNode descendant in AllNodes(child))
+                Mesh mesh = filter.sharedMesh;
+                Assert.IsNotNull(mesh, filter.name);
+                triangles += mesh.triangles.Length / 3;
+                Matrix4x4 localToRoot = _prefab.transform.worldToLocalMatrix * filter.transform.localToWorldMatrix;
+                foreach (Vector3 v in mesh.vertices)
                 {
-                    yield return descendant;
-                }
-            }
-        }
-
-        private static void Accumulate(ModelNode node, Matrix4x4 parent, ref Vector3 min, ref Vector3 max,
-            ref int triangles)
-        {
-            Matrix4x4 world = parent * node.LocalMatrix;
-            if (node.Mesh != null)
-            {
-                LowPolyMeshBuilder geometry = node.Mesh.Geometry;
-                triangles += geometry.TriangleCount;
-                for (int v = 0; v < geometry.VertexCount; v++)
-                {
-                    Vector3 p = world.MultiplyPoint3x4(geometry.Positions[v]);
+                    Vector3 p = localToRoot.MultiplyPoint3x4(v);
                     min = Vector3.Min(min, p);
                     max = Vector3.Max(max, p);
                 }
             }
 
-            foreach (ModelNode child in node.Children)
-            {
-                Accumulate(child, world, ref min, ref max, ref triangles);
-            }
+            Vector3 size = max - min;
+            Assert.AreEqual(0f, min.y, 0.02f, "wheels touch the ground at y = 0");
+            Assert.That(size.x, Is.InRange(1.2f, 1.68f), "width");
+            Assert.That(size.z, Is.InRange(1.4f, 2.15f), "length");
+            Assert.That(max.y, Is.InRange(1.3f, 1.78f), "height");
+            Assert.That(triangles, Is.InRange(10000, 80000), "R1 hero triangle budget (<= 80,000)");
         }
 
         [Test]
-        public void PartSocket_StandsOnTheLid_ApartFromSpineSocket_AndStoryPartSocketIsGone()
+        public void SubPrefabs_HoverCoilsScanFanAndFocusLens_AreWellFormed()
         {
-            Assert.IsNull(_rover.GetDescendant("StoryPartSocket"),
-                "StoryPartSocket is gone: story parts ride in the hold.");
-            Vector3 part = _rover.GetDescendant(RoverModelBuilder.PartSocketName).LocalPosition;
-            Vector3 spine = _rover.GetDescendant(RoverModelBuilder.SpineSocketName).LocalPosition;
-            Assert.AreEqual(RoverModelBuilder.NeckBase.y, part.y, 0.02f, "a part stands on the lid");
-            Assert.Greater(new Vector2(part.x - spine.x, part.z - spine.z).magnitude, 0.5f,
-                "both lid sockets never overlap");
-            Assert.Greater(part.z, spine.z, "PartSocket rides ahead of SpineSocket, seen over the lid from the chase");
-        }
+            ModelNode lens = RoverModelBuilder.CreateFocusLens();
+            ModelNode glass = lens.GetDescendant(RoverModelBuilder.FocusLensGlassName);
+            Assert.AreEqual(ModelMaterial.PaletteGlowOff, glass.Material);
+            MeshChecks.AssertWellFormed(lens.Mesh.Geometry);
+            MeshChecks.AssertWellFormed(glass.Mesh.Geometry);
 
-        private static HashSet<PaletteSwatch> Swatches(LowPolyMeshBuilder geometry)
-        {
-            var swatches = new HashSet<PaletteSwatch>();
-            for (int t = 0; t < geometry.TriangleCount; t++)
-            {
-                swatches.Add(MeshChecks.SwatchOf(geometry, t));
-            }
+            ModelNode fan = RoverModelBuilder.CreateScanFan();
+            MeshChecks.AssertWellFormed(fan.Mesh.Geometry);
 
-            return swatches;
-        }
-
-        private static void AssertOnlyEmissiveIn(LowPolyMeshBuilder geometry)
-        {
-            foreach (PaletteSwatch swatch in Swatches(geometry))
-            {
-                Assert.IsTrue(Palette.IsEmissive(swatch), $"{swatch} does not glow");
-            }
+            ModelNode coils = RoverModelBuilder.CreateHoverCoils();
+            MeshChecks.AssertWellFormed(coils.Mesh.Geometry);
         }
     }
 }

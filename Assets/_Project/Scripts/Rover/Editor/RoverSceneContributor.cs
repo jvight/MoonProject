@@ -19,6 +19,13 @@ namespace MoonProject.Rover.Editor
 
         public void Contribute(SceneBuildContext context)
         {
+            var existing = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(RoverAssetPaths.RoverPrefab);
+            if (existing == null || !existing.TryGetComponent(out RoverController existingController) ||
+                existingController.CutterOrigin == null || existingController.TetherOrigin == existingController.CutterOrigin)
+            {
+                RoverPrefabBuilder.Build();
+            }
+
             Transform parent = context.RoverRoot.transform;
             var tuning = context.LoadAsset<RoverTuning>(RoverAssetPaths.RoverTuning);
             GameObject rover = context.InstantiatePrefab(RoverAssetPaths.RoverPrefab, parent);

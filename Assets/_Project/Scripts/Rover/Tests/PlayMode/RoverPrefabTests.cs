@@ -96,6 +96,7 @@ namespace MoonProject.Rover.PlayModeTests
             equipment.Fitted(RoverKitPiece.CapacitorDrums);
             equipment.Fitted(RoverKitPiece.CargoRack);
             context.Register<IRoverEquipment>(equipment);
+            context.Register<ICutter>(equipment);
             context.Register<IWorldAnchors>(new TestAnchors());
             context.Register<ISaveService>(new TestSave());
             var controller = _rover.GetComponent<RoverController>();
@@ -107,8 +108,13 @@ namespace MoonProject.Rover.PlayModeTests
 
             Assert.IsTrue(controller.enabled && cameraRig.enabled, "Wiring validation failed (see the log).");
             Assert.AreSame(controller, context.Get<IRoverState>());
-            Assert.AreSame(controller, context.Get<IRoverRig>());
-            Assert.IsNotNull(context.Get<IRoverRig>().TetherOrigin);
+            IRoverRig rig = context.Get<IRoverRig>();
+            Assert.AreSame(controller, rig);
+            Assert.IsNotNull(rig.TetherOrigin);
+            Assert.IsNotNull(rig.CutterOrigin);
+            Assert.IsNotNull(rig.ScanOrigin);
+            Assert.IsNotNull(rig.WinchOrigin);
+            Assert.IsNotNull(rig.ScoopOrigin);
             Assert.AreSame(controller.Kit, context.Get<IRoverCargoSeat>(), "The kit's rack is the cargo seat.");
             Assert.AreSame(cameraRig.Camera, context.Get<IViewCamera>().Camera);
             Assert.AreSame(cameraRig, context.Get<ILookSettings>());

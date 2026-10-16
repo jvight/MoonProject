@@ -282,12 +282,12 @@ namespace MoonProject.Gameplay
             _beamGlow.Apply(_beamLevel);
             if (_beamGlow.Renderer.enabled)
             {
-                Vector3 eye = _rig.TetherOrigin.position;
-                Vector3 toTarget = _beamTarget - eye;
+                Vector3 scoop = _rig.ScoopOrigin.position;
+                Vector3 toTarget = _beamTarget - scoop;
                 float length = toTarget.magnitude;
                 if (length > 1e-3f)
                 {
-                    _beam.SetPositionAndRotation(eye, Quaternion.LookRotation(toTarget / length));
+                    _beam.SetPositionAndRotation(scoop, Quaternion.LookRotation(toTarget / length));
                     _beam.localScale = new Vector3(_tuning.BeamRadius, _tuning.BeamRadius, length);
                 }
             }

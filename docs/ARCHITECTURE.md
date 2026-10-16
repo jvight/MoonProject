@@ -124,29 +124,66 @@ Assembly references use **names**, not GUIDs (tools/compile_check.py relies on i
 - **Import settings** are enforced by an `AssetPostprocessor` per folder convention, not by hand-edited `.meta`.
 
 ## Contract: rover model rig (Art -> Rover)
-Art's builder produces `Assets/_Project/Generated/Art/Rover/RoverModel.prefab` (meshes only, no colliders, no
-scripts). Rover's builder wraps it into the playable `Rover.prefab`. Units in metres, +Z forward, +Y up,
-origin at the centre of the ground contact patch. Overall ~2.2 m long, ~1.6 m wide, ~1.4 m tall, wheel radius 0.35 m.
-The character brief is "07" in docs/VISION.md.
+`tools/art/blender/rover/build_rover.py` builds `Assets/_Project/Art/R1/Models/Rover/RoverModel.fbx` (verified against `tools/art/qa/contracts/rover.json`), and `R1ModelBuilder` wraps it into `Assets/_Project/Generated/Art/R1/Models/Rover/RoverModel.prefab` (meshes only, no colliders, no scripts). Rover's builder (`RoverPrefabBuilder`) wraps it into the playable `Rover.prefab`. Units in metres, +Z forward, +Y up, origin at the centre of the ground contact patch. Overall ~1.76 m long, ~1.56 m wide, ~1.59 m tall, 4 wheels of radius 0.35 m. The character brief is "07 v3 Amber CRT" (`docs/design/rover-redesign-brief.md`).
 ```
 RoverModel
-  Body                 chassis + cabin (pivot at origin)
-  Bogie_L, Bogie_R     rocker-bogie arms (pivot at the body-side hinge, pitch = local X); visual only
-  Wheel_FL, Wheel_FR   front wheels   (pivot at wheel centre, roll axis = local X)
-  Wheel_ML, Wheel_MR   middle wheels  (direct children of RoverModel, NOT of the bogies)
-  Wheel_RL, Wheel_RR   rear wheels
-  Neck                 pivot at neck base on the body (yaw = local Y)
-    Head               pivot at head hinge (pitch = local X); hooded sensor head
-      Eye              the round lens (emissive WarmLamp); +Z = gaze direction
-        TetherOrigin   empty at the lens centre, +Z = gaze (sonar/tether beams leave from here)
-      Eyelid           brow/shutter, pivot on the eye's horizontal axis; local X rotation 0 = open, + = closing
-  SolarWing            folded panel on the back, pivot at its hinge (local X rotation 0 = folded, + = opening)
-  Antenna              pivot at antenna base (spring wobble)
-    AntennaTip         small emissive tip (blinks)
-  HeadlampSocket       empty, low on the body front, +Z = road light direction
-  CargoSocket          empty, where the cargo bed upgrade attaches
-  DustSocket_L/_R      empties at the rear wheel contact points
-  CoilSocket           empty under the chassis at the bottom of the belly plate, +Y up; HoverCoils mounts here
+  Body                             cream shell + charcoal chassis + orange stripe + sage patch + rear deck
+  Stage_1..3_L/_R                  flank charge cells (left/right pairs)
+    Glow_1..3_L/_R                 own glow renderers on R1_Amber_Led (lit per charge stage)
+  ChargeConduits                   twin dorsal charge conduits (R1_Amber_Led)
+  BatteryLamp_0..7                 rear-roof battery light bar (8 segments, left to right)
+    Glass_0..7                     each segment's glass on R1_Amber_Led (lit per filled cell)
+  Headlamp_L, Headlamp_R           front headlamps at (±0.28, 0.56, 0.52)
+    Glass_L, Glass_R               headlamp lenses on R1_Amber_Led
+    HeadlampSocket                 empty at (0, 0.56, 0.56), +Z forward (for Kit_LampBar)
+  CutterTurret                     chest cutter yaw gimbal at (0, 0.62, 0.50)
+    CutterHead                     cutter pitch barrel + brass bezel + glass dome
+      CutterOrigin                 empty at nozzle tip (0, 0.62, 0.72), +Z forward (IRoverRig.CutterOrigin)
+      CoilSocket_T1                empty at cutter collar
+  DigScoop                         front-belly excavator mount at (0, 0.35, 0.54)
+    ScoopArms                      contoured loader arms, pitch around local X
+      ScoopBucket                  6-tooth C-profile bucket at (0, 0.21, 0.70), curl around local X
+        ScoopOrigin                empty at bucket lip (0, 0.14, 0.88), +Z forward (IRoverRig.ScoopOrigin)
+    ScoopCyl_L, ScoopCyl_R         hydraulic cylinders
+  WinchSocket                      rear bumper winch housing at (0, 0.28, -0.72)
+    TetherSocket                   empty at winch housing
+    WinchSpool                     wound steel cable drum, spins around local X while reeling
+    WinchOrigin                    empty at forged tow hook (0, 0.25, -0.90), -Z aft (IRoverRig.WinchOrigin)
+  CargoHold                        aft cargo bay frame at (0, 0.58, -0.60)
+  CargoHatch                       clamshell hinge root at (0, 0.58, -0.78)
+    UpperCanopy                    upper canopy doors, swing up (-55 deg local X)
+    LowerChute                     lower tailgate chute, swings down (+35 deg local X)
+  HatchWindow                      viewport window frame at (0, 0.78, -0.76)
+    HatchCrate_0..7                8 salvage crate indicators inside the hold (hidden when empty)
+  Decal07Worn, Decal07Fresh        stencilled "07" on flank (Decal07Fresh hidden until Bell's gift)
+  Arm_FL, Arm_FR, Arm_RL, Arm_RR   4 trailing-arm suspension pivots at (±0.42, 0.38, ±0.22), pitch = local X
+    Shock_FL/FR/RL/RR              coil-over shock struts at (±0.46, 0.55, ±0.44), compress = local Y scale
+    Wheel_FL/FR/RL/RR              4 wheels at (±0.62, 0.35, ±0.46), radius 0.35 m (spin = local X, steer = local Y)
+  Neck                             yaw turret at (0, 0.92, -0.05), yaw = local Y (±125 deg)
+    NeckLift                       articulated neck arm at (0, 1.00, -0.05), pitch = local X
+      Head                         CRT monitor housing at (0, 1.24, 0.00), pitch = local X, roll = local Z
+        Screen                     curved 4:3 CRT glass mesh on R1_Screen
+        Visor                      stamped sheet-metal sun hood over CRT bezel
+        ScanLens                   right-cheek brass & glass optical scanner assembly at (0.30, 1.24, 0.02)
+          Eye                      scanner inner lens (R1_Amber_Led) + LockGlow ring
+            ScanOrigin             empty at cheek lens face (0.34, 1.24, 0.08), +Z = gaze (IRoverRig.ScanOrigin & TetherOrigin)
+            LensSocket             empty at (0.34, 1.24, 0.06) for Kit_FocusLens
+            ScanFanSocket          empty at (0.34, 1.24, 0.08) for ScanFan cone
+            RingSocket             empty at (0.32, 1.24, 0.02) for Kit_TetherRing
+  SolarWing                        folded dorsal solar wing at (-0.12, 0.91, -0.28), local X rotation 0 = folded, + = opening
+    CellFilled                     replacement solar cell, hidden until Tilly's gift
+  Antenna                          whip antenna at (-0.38, 0.90, -0.47), spring wobble
+    AntennaTip                     emissive beacon tip at (-0.38, 1.58, -0.47) (R1_Amber_Led)
+    Pennant                        small radio pennant at (-0.38, 1.38, -0.47), hidden until Bell's gift
+  CargoSocket                      empty on rear deck (0, 0.90, -0.48) for Kit_CargoRack
+  DustSocket_L, DustSocket_R       empties at rear wheel contact points (±0.62, 0.05, -0.46)
+  CoilSocket                       empty under belly plate (0, 0.25, 0.00), +Y up; HoverCoils mounts here
+  DrumSocket_L, DrumSocket_R       empties on flanks (±0.48, 0.58, 0.00), ±X outward for Kit_CapacitorDrum
+  BinSocket_L, BinSocket_R         empties on rear flanks (±0.48, 0.62, -0.35), ±X outward for Kit_SideBins
+  DeckSocket                       empty on rear deck (-0.22, 0.90, -0.35), +Y up for Kit_TapeDeck (R1 model)
+  PartSocket                       empty on rear deck (0.20, 0.90, -0.35), +Y up
+  StoryPartSocket                  empty on rear deck (0, 0.95, -0.45), +X fore/aft
+  SpineSocket (BackSocket)         empty on right rear deck edge (0.385, 0.90, -0.20), +Y up for Kit_BatterySpine
 ```
 
 Hover-Jump coils:
@@ -157,7 +194,7 @@ Generated/Art/Rover/HoverCoils.prefab  (meshes only; parent it to RoverModel's C
       Glow_<corner>    ring around the foot pad, own glow renderer on M_LowPolyGlowOff (dark glass, glows cyan):
                        light it with MaterialPropertyBlock _EmissionColor = white x charge
 ```
-Visible kit (M3-11, VISION ruling 11). Meshes only, `M_LowPoly`; each prefab parents to its socket with identity.
+Visible kit (M3-11, VISION ruling 11). Each prefab parents to its socket with identity (`Kit_TapeDeck` and `SolarWing` use R1 FBX models; remaining `Kit_*` prefabs are code-built `M_LowPoly` meshes pending R1 art pass).
 Every piece must read in silhouette from the default chase camera and at 30 m, sturdy and well-loved, never spiky.
 ```
 Generated/Art/Rover/Kit_LampBar.prefab       caged lamp bar across the front, root at HeadlampSocket
@@ -166,30 +203,11 @@ Generated/Art/Rover/Kit_CapacitorDrum.prefab twin-ready capacitor drum, root at 
   Glow                                       own glow renderer on M_LowPolyGlowOff (cyan, like the coils), lit while boosting
 Generated/Art/Rover/Kit_CargoRack.prefab     strapped rear rack basket, root at CargoSocket
   RelicSeat                                  empty where a carried relic rests (+Y up)
-RoverModel additions:
-  DrumSocket_L, DrumSocket_R                 empties on the flanks, +X outward
-  StoryPartSocket                            empty on the lid right of the wing, +X fore and aft: the tower's story
-                                             parts ride here (Part_<id> children; rover's StoryPartCarry shows one)
-  PartSocket                                 empty on the lid right of the neck, ahead of StoryPartSocket, +Y up
-  SpineSocket                                empty on the lid's right edge, outboard of StoryPartSocket, +Y up: Cell Pack II's
-                                             Kit_BatterySpine (two cream cells on a rail, brass bands; M3-20)
-  SolarWing/CellFilled                       the replacement cell, hidden until Tilly's gift
-  Body/Decal07Fresh                          a freshly stencilled "07", hidden until Bell's gift (the faded one hides then)
-  Antenna/Pennant                            small radio pennant, hidden until Bell's gift
-  Body/BatteryLamp_0..7                      the battery's light bar (M3-20): one segment per cell, left to right
-                                             along the lid's rear-top edge, facing up and tipped back
-    BatteryGlass_<i>                         each segment's glass: own glow renderer on M_LowPolyGlowOff (LampGlass),
-                                             lit by Rover per cell; segments past the battery's capacity stay hidden
 ```
 
 Renaming or re-pivoting any node is a contract change: coordinate through the Director.
 
-Glow modulation: `Eye` and `AntennaTip` are their own MeshRenderers on the shared palette material. Their glow
-comes from the palette emission map, which carries the warm swatches' HDR strength; the material's `_EmissionColor`
-is authored as white (1,1,1). At runtime every domain scales glow per renderer with a `MaterialPropertyBlock`:
-`SetVector(_EmissionColor, new Vector4(i, i, i, 1))`, a **linear** multiplier (1 = authored, 0 = dark, 2 = twice
-the light). Never `SetColor`: Unity treats a colour as gamma-encoded and raises the intensity to ~2.2, so 2 would
-mean ~4.6×. Any custom palette shader must keep the URP `_EmissionColor` name.
+Glow modulation: On R1 materials (`R1_Amber_Led`, `R1_Cool_Led`) and palette materials (`M_LowPoly`, `M_LowPolyGlowOff`), runtime code scales glow per renderer with a `MaterialPropertyBlock`: `SetVector(_EmissionColor, new Vector4(r, g, b, 1))` and `SetFloat(_EmissionStrength, Mathf.Clamp01(peak))` (a **linear** multiplier; never `SetColor`).
 
 ## Contract: M2 content (Art -> Gameplay)
 Meshes-only prefabs on `M_LowPoly` (no colliders, no scripts; gameplay adds physics), +Y up, +Z front. Pivots: pickups and

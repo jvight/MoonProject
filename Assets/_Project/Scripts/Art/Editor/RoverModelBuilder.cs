@@ -206,13 +206,11 @@ namespace MoonProject.Art.Editor
         public const string BatteryLampPrefix = "BatteryLamp_";
         public const string BatteryGlassPrefix = "BatteryGlass_";
 
-        /// <summary>Writes the rover meshes and prefab (the palette material must exist).</summary>
+        /// <summary>Writes the rover sub-prefabs (HoverCoils, ScanFan, FocusLens); RoverModel.prefab is built by R1ModelBuilder.</summary>
         [MoonBuilder("Art/Rover", 120)]
         public static void Build()
         {
             Material material = PaletteAssetBuilder.LoadMaterial();
-            ModelPrefabWriter.Write(CreateModel(), ArtPaths.RoverFolder, material,
-                PaletteAssetBuilder.LoadGlowOffMaterial(), PaletteAssetBuilder.LoadWeatherMaterial());
             ModelPrefabWriter.Write(CreateHoverCoils(), ArtPaths.RoverFolder, material,
                 PaletteAssetBuilder.LoadGlowOffMaterial());
             ModelPrefabWriter.Write(CreateScanFan(), ArtPaths.RoverFolder, material,

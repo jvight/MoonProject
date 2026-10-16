@@ -371,7 +371,7 @@ namespace MoonProject.Gameplay.Lift
             }
 
             float now = Time.time;
-            Vector3 eye = _rig.TetherOrigin.position;
+            Vector3 eye = _rig.CutterOrigin.position;
             LabCommand command = _cycle.Phase == LiftPhase.Inside
                 ? _commands.Step(_input.Drive, _tuning.CommandPress, _tuning.CommandRelease)
                 : LabCommand.None;

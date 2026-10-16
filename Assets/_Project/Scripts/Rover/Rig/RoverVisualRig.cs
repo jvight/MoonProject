@@ -6,27 +6,30 @@ namespace MoonProject.Rover
     /// <summary>
     /// Moves the art box's RoverModel on top of the physics sphere. Hierarchy (built by the Rover builder):
     /// <c>Visual (this: follows the sphere, heading + ground alignment) / Chassis (jelly lean + bob) / RoverModel</c>.
-    /// Wheels ray-cast the ground every frame from the leaned chassis, so they stay planted while the body squashes,
-    /// leans and bobs above them, and the rocker-bogie arms follow the wheels. Neck, Head, Eyelid and SolarWing
+    /// The 4 wheels ray-cast the ground every frame from the leaned chassis, so they stay planted while the body squashes,
+    /// leans and bobs above them; the 4 trailing suspension arms pitch around local X and the 4 shock struts compress
+    /// along local Y to follow each wheel. Neck, NeckLift, Head, Eye, CutterTurret, DigScoop, WinchSpool and SolarWing
     /// belong to <see cref="RoverBodyLanguage"/>. Ticked by <see cref="RoverController"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RoverVisualRig : MonoBehaviour
     {
+        private const float ShockRestLength = 0.30f;
+
         [Tooltip("Rig tuning (Assets/_Project/Data/Tuning/RoverRigTuning.asset).")]
         [SerializeField] private RoverRigTuning _tuning;
 
         [Tooltip("Child between this transform and RoverModel; carries the jelly lean and bob.")]
         [SerializeField] private Transform _chassis;
 
-        [Tooltip("RoverModel wheels in rig order: Wheel_FL, Wheel_FR, Wheel_ML, Wheel_MR, Wheel_RL, Wheel_RR.")]
+        [Tooltip("RoverModel wheels in rig order: Wheel_FL, Wheel_FR, Wheel_RL, Wheel_RR.")]
         [SerializeField] private Transform[] _wheels = new Transform[RoverModelNodes.WheelCount];
 
-        [Tooltip("RoverModel 'Bogie_L' rocker arm (pitch = local X).")]
-        [SerializeField] private Transform _bogieLeft;
+        [Tooltip("RoverModel trailing suspension arms in rig order: Arm_FL, Arm_FR, Arm_RL, Arm_RR (pitch = local X).")]
+        [SerializeField] private Transform[] _arms = new Transform[RoverModelNodes.WheelCount];
 
-        [Tooltip("RoverModel 'Bogie_R' rocker arm (pitch = local X).")]
-        [SerializeField] private Transform _bogieRight;
+        [Tooltip("RoverModel shock struts in rig order: Shock_FL, Shock_FR, Shock_RL, Shock_RR (compress = local Y).")]
+        [SerializeField] private Transform[] _shocks = new Transform[RoverModelNodes.WheelCount];
 
         [Tooltip("RoverModel 'Antenna' node (pivot at its base).")]
         [SerializeField] private Transform _antenna;
@@ -36,25 +39,26 @@ namespace MoonProject.Rover
         private ChassisJelly _jelly;
         private Vector3[] _wheelRestPositions;
         private Quaternion[] _wheelRestRotations;
+        private float[] _wheelRadii;
         private float[] _wheelSteerFactors;
         private float[] _wheelTargets;
         private float[] _wheelSpin;
         private DampedSpring[] _wheelSuspension;
+        private Vector3[] _armRestPositions;
+        private Quaternion[] _armRestRotations;
+        private float[] _heldArmPitch;
+        private Vector3[] _shockRestScales;
         private Vector3[] _contacts;
         private Vector3 _chassisRestPosition;
         private Quaternion _chassisRestRotation;
         private Quaternion _antennaRestRotation;
         private ImpactNudge _nudge;
         private ChargeBrace _brace;
-        private float _heldBogieLeft;
-        private float _heldBogieRight;
         private float _sag;
         private float _sagTarget;
         private float _sagHalfLife = 1f;
         private Vector3 _antennaRestPosition;
         private float _antennaLift;
-        private Quaternion _bogieLeftRestRotation;
-        private Quaternion _bogieRightRestRotation;
         private Vector3 _lastPosition;
 
         public Vector3 RootPosition => transform.position;
@@ -83,14 +87,33 @@ namespace MoonProject.Rover
             bool ok = Require(_tuning != null, "RoverRigTuning is not assigned.")
                 & Require(_chassis != null, "Chassis transform is not assigned.")
                 & Require(_antenna != null, "Antenna node is not assigned.")
-                & Require(_bogieLeft != null && _bogieRight != null, "Bogie_L/Bogie_R nodes are not assigned.")
                 & Require(_wheels != null && _wheels.Length == RoverModelNodes.WheelCount,
-                    $"Exactly {RoverModelNodes.WheelCount} wheels are required.");
+                    $"Exactly {RoverModelNodes.WheelCount} wheels are required.")
+                & Require(_arms != null && _arms.Length == RoverModelNodes.WheelCount,
+                    $"Exactly {RoverModelNodes.WheelCount} suspension arms are required.")
+                & Require(_shocks != null && _shocks.Length == RoverModelNodes.WheelCount,
+                    $"Exactly {RoverModelNodes.WheelCount} shock struts are required.");
             if (_wheels != null)
             {
                 for (int i = 0; i < _wheels.Length; i++)
                 {
                     ok &= Require(_wheels[i] != null, $"Wheel {i} ({SafeWheelName(i)}) is not assigned.");
+                }
+            }
+
+            if (_arms != null)
+            {
+                for (int i = 0; i < _arms.Length; i++)
+                {
+                    ok &= Require(_arms[i] != null, $"Arm {i} ({SafeArmName(i)}) is not assigned.");
+                }
+            }
+
+            if (_shocks != null)
+            {
+                for (int i = 0; i < _shocks.Length; i++)
+                {
+                    ok &= Require(_shocks[i] != null, $"Shock {i} ({SafeShockName(i)}) is not assigned.");
                 }
             }
 
@@ -100,6 +123,16 @@ namespace MoonProject.Rover
         private static string SafeWheelName(int index)
         {
             return index < RoverModelNodes.WheelCount ? RoverModelNodes.Wheel(index) : "extra";
+        }
+
+        private static string SafeArmName(int index)
+        {
+            return index < RoverModelNodes.WheelCount ? RoverModelNodes.Arm(index) : "extra";
+        }
+
+        private static string SafeShockName(int index)
+        {
+            return index < RoverModelNodes.WheelCount ? RoverModelNodes.Shock(index) : "extra";
         }
 
         private bool Require(bool condition, string message)
@@ -117,25 +150,32 @@ namespace MoonProject.Rover
             int count = RoverModelNodes.WheelCount;
             _wheelRestPositions = new Vector3[count];
             _wheelRestRotations = new Quaternion[count];
+            _wheelRadii = new float[count];
             _wheelSteerFactors = new float[count];
             _wheelTargets = new float[count];
             _wheelSpin = new float[count];
             _wheelSuspension = new DampedSpring[count];
+            _armRestPositions = new Vector3[count];
+            _armRestRotations = new Quaternion[count];
+            _heldArmPitch = new float[count];
+            _shockRestScales = new Vector3[count];
             _contacts = new Vector3[count];
             for (int i = 0; i < count; i++)
             {
                 _wheelRestPositions[i] = _wheels[i].localPosition;
                 _wheelRestRotations[i] = _wheels[i].localRotation;
+                _wheelRadii[i] = _tuning.WheelRadius;
                 int row = RoverModelNodes.WheelRow(i);
-                _wheelSteerFactors[i] = row == 0 ? 1f : row == 2 ? -_tuning.RearSteerFactor : 0f;
+                _wheelSteerFactors[i] = row == 0 ? 1f : -_tuning.RearSteerFactor;
+                _armRestPositions[i] = _arms[i].localPosition;
+                _armRestRotations[i] = _arms[i].localRotation;
+                _shockRestScales[i] = _shocks[i].localScale;
             }
 
             _chassisRestPosition = _chassis.localPosition;
             _chassisRestRotation = _chassis.localRotation;
             _antennaRestRotation = _antenna.localRotation;
             _antennaRestPosition = _antenna.localPosition;
-            _bogieLeftRestRotation = _bogieLeft.localRotation;
-            _bogieRightRestRotation = _bogieRight.localRotation;
         }
 
         /// <summary>
@@ -159,7 +199,7 @@ namespace MoonProject.Rover
 
             ApplyChassis();
             ApplyWheels(0f, 0f);
-            ApplyBogies();
+            ApplySuspensionLinks();
         }
 
         /// <summary>A quick antenna wiggle (deg/s), e.g. when 07 perks up.</summary>
@@ -219,7 +259,7 @@ namespace MoonProject.Rover
             ApplyChassis();
             StepSuspension(deltaTime);
             ApplyWheels(travelled, deltaTime);
-            ApplyBogies();
+            ApplySuspensionLinks();
             _antenna.localRotation =
                 GroundPlaneFit.Tilt(_jelly.AntennaPitch, _jelly.AntennaRoll) * _antennaRestRotation;
             _antenna.localPosition = _antennaRestPosition + _antennaRestRotation * Vector3.up * _antennaLift;
@@ -228,15 +268,15 @@ namespace MoonProject.Rover
         private int CastWheels(Quaternion heading)
         {
             float castHeight = _tuning.SuspensionCastHeight;
-            float wheelRadius = _tuning.WheelRadius;
             float droop = _tuning.SuspensionDroop;
-            float length = castHeight + wheelRadius + droop;
             Quaternion toHeading = Quaternion.Inverse(heading);
             Vector3 root = transform.position;
             int count = 0;
 
             for (int i = 0; i < _wheels.Length; i++)
             {
+                float wheelRadius = _wheelRadii[i];
+                float length = castHeight + wheelRadius + droop;
                 Transform parent = _wheels[i].parent;
                 Vector3 origin = parent.TransformPoint(_wheelRestPositions[i] + Vector3.up * castHeight);
                 if (Physics.Raycast(origin, -parent.up, out RaycastHit hit, length, Layers.DriveableMask,
@@ -279,7 +319,7 @@ namespace MoonProject.Rover
 
         /// <summary>
         /// The cut's charge-up brace (<see cref="ChargeBrace"/>): the chassis squats and settles, the wheels stop
-        /// turning and the rockers hold where they were; null leaves the body free.
+        /// turning and the suspension links hold where they were; null leaves the body free.
         /// </summary>
         public void SetChargeBrace(ChargeBrace brace)
         {
@@ -305,46 +345,47 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// Each rocker arm pitches to the line between its front and rear wheel (visual only); braced for a charge,
-        /// it stiffens toward the pitch it had when the brace began.
+        /// Each trailing arm pitches around local X to follow its wheel's vertical travel and each shock strut
+        /// compresses/extends along local Y; braced for a charge, they stiffen toward the pose they had when braced.
         /// </summary>
-        private void ApplyBogies()
+        private void ApplySuspensionLinks()
         {
-            float left = BogiePitch(RoverModelNodes.FrontLeftIndex, RoverModelNodes.RearLeftIndex);
-            float right = BogiePitch(RoverModelNodes.FrontRightIndex, RoverModelNodes.RearRightIndex);
             float stiffness = _brace != null ? _brace.Stiffness : 0f;
-            if (stiffness <= 0f)
+            for (int i = 0; i < _wheels.Length; i++)
             {
-                _heldBogieLeft = left;
-                _heldBogieRight = right;
+                float travel = _wheelSuspension[i].Value;
+                float dz = _wheelRestPositions[i].z - _armRestPositions[i].z;
+                float span = Mathf.Max(Mathf.Abs(dz), 0.1f);
+                float sign = dz >= 0f ? -1f : 1f;
+                float pitch = sign * Mathf.Atan2(travel, span) * Mathf.Rad2Deg;
+                if (stiffness <= 0f)
+                {
+                    _heldArmPitch[i] = pitch;
+                }
+
+                float appliedPitch = Mathf.Lerp(pitch, _heldArmPitch[i], stiffness);
+                _arms[i].localRotation = _armRestRotations[i] * Quaternion.AngleAxis(appliedPitch, Vector3.right);
+
+                float shockScaleY = Mathf.Clamp(1f - travel / ShockRestLength, 0.4f, 1.4f);
+                Vector3 restScale = _shockRestScales[i];
+                _shocks[i].localScale = new Vector3(restScale.x, restScale.y * shockScaleY, restScale.z);
             }
-
-            _bogieLeft.localRotation = _bogieLeftRestRotation
-                * Quaternion.AngleAxis(-Mathf.Lerp(left, _heldBogieLeft, stiffness), Vector3.right);
-            _bogieRight.localRotation = _bogieRightRestRotation
-                * Quaternion.AngleAxis(-Mathf.Lerp(right, _heldBogieRight, stiffness), Vector3.right);
-        }
-
-        /// <summary>Nose-up pitch (deg) of the line from the rear to the front wheel of one side.</summary>
-        private float BogiePitch(int front, int rear)
-        {
-            float rise = _wheelSuspension[front].Value - _wheelSuspension[rear].Value;
-            float run = _wheelRestPositions[front].z - _wheelRestPositions[rear].z;
-            return Mathf.Atan2(rise, Mathf.Max(run, 0.01f)) * Mathf.Rad2Deg;
         }
 
         private void ApplyWheels(float travelled, float deltaTime)
         {
             float yawRadians = _rover.YawRate * Mathf.Deg2Rad * deltaTime;
             float steer = _rover.SteerInput * _tuning.FrontSteerAngle;
-            float degreesPerMetre = _brace != null && _brace.IsBraced ? 0f : Mathf.Rad2Deg / _tuning.WheelRadius;
+            bool braced = _brace != null && _brace.IsBraced;
 
             for (int i = 0; i < _wheels.Length; i++)
             {
                 Vector3 rest = _wheelRestPositions[i];
+                float degreesPerMetre = braced ? 0f : Mathf.Rad2Deg / _wheelRadii[i];
 
                 // Turning right moves the left wheels forward and the right wheels back (skid-steer pivot).
-                float distance = travelled - yawRadians * rest.x;
+                float sideX = i % 2 == 0 ? -0.61f : 0.61f;
+                float distance = travelled - yawRadians * sideX;
                 _wheelSpin[i] = Mathf.Repeat(_wheelSpin[i] + distance * degreesPerMetre, 360f);
 
                 Transform wheel = _wheels[i];

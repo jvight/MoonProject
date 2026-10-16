@@ -186,6 +186,8 @@ namespace MoonProject.Gameplay.Feel.Tests
 
             public Vector3 Emitter => _emitter.position;
 
+            public Vector3 ScanEmitter => _emitter.position;
+
             public Vector3 CutPoint => CutPiece.position;
 
             public Vector3 CutNormal => Vector3.back;

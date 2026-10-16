@@ -252,7 +252,7 @@ namespace MoonProject.Gameplay
             }
 
             Rigidbody body = _towed.Body;
-            Vector3 anchor = _rig.TetherOrigin.position;
+            Vector3 anchor = _rig.WinchOrigin.position;
             Vector3 position = body.position;
             float ground = _terrain.SampleHeight(position.x, position.z);
             float ceiling = _rover.Position.y + _tuning.MaxLiftHeight;
@@ -297,9 +297,10 @@ namespace MoonProject.Gameplay
             Vector3 eye = view.position;
             Vector3 forward = view.forward;
 
-            // Aimed from the view, but the beam leaves 07's eye: what 07 can see is in reach (a relic surfacing under
-            // a wreck's roof is hidden from the camera above, never from 07 beside it).
-            Vector3 beamOrigin = _rig.TetherOrigin.position;
+            // Aimed from the view, while the tether is anchored at 07's winch (and what 07 can see from its eye or
+            // winch is in reach).
+            Vector3 beamOrigin = _rig.WinchOrigin.position;
+            Vector3 sightOrigin = _rig.TetherOrigin != null ? _rig.TetherOrigin.position : beamOrigin;
             ITowable best = null;
             float bestScore = float.MaxValue;
             for (int i = 0; i < _towables.Length; i++)
@@ -313,7 +314,8 @@ namespace MoonProject.Gameplay
                 float cone = towable == _hovered ? _tuning.StickyCone : _tuning.AimCone;
                 Vector3 position = towable.Position;
                 if (TetherAim.TryScore(eye, forward, position, cone, _tuning.AimRange, _tuning.DistanceWeight,
-                        out float score) && score < bestScore && InSight(beamOrigin, position, towable.Radius))
+                        out float score) && score < bestScore
+                    && (InSight(beamOrigin, position, towable.Radius) || InSight(sightOrigin, position, towable.Radius)))
                 {
                     best = towable;
                     bestScore = score;
@@ -415,7 +417,7 @@ namespace MoonProject.Gameplay
             body.linearDamping = _tuning.TowLinearDamping;
             body.angularDamping = _tuning.TowAngularDamping;
             body.WakeUp();
-            _winch.Reset(Vector3.Distance(body.position, _rig.TetherOrigin.position));
+            _winch.Reset(Vector3.Distance(body.position, _rig.WinchOrigin.position));
             _snap.Reset();
             _reach = 0f;
             _retracting = false;
@@ -474,7 +476,7 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            Vector3 start = _rig.TetherOrigin.position;
+            Vector3 start = _rig.WinchOrigin.position;
             Vector3 end = Vector3.LerpUnclamped(start, _beamEnd, Ease.OutCubic(_reach));
             float wobble = _tuning.Wobble + Strain * _tuning.StrainWobble;
             Vector3 control = TetherBeamShape.Control(start, end, _tuning.BeamArc, wobble, _tuning.WobbleFrequency,

@@ -376,15 +376,16 @@ def main():
     rv_stats = count_model_stats(rv_objs)
 
     # 4. Configure render-only procedural Screen shader + vertex-color shading and render all acceptance images
-    from rover_parts import configure_procedural_crt_screen_shader
+    if "--no-render" not in sys.argv and concept_turnaround.exists():
+        from rover_parts import configure_procedural_crt_screen_shader
 
-    configure_procedural_crt_screen_shader(mats_rv["R1_Screen"], MATERIALS["R1_Screen"])
-    enhance_materials_with_vertex_color_for_render(mats_rv)
-    cam_obj, _ = setup_studio_lighting_and_camera(DIMENSIONS)
+        configure_procedural_crt_screen_shader(mats_rv["R1_Screen"], MATERIALS["R1_Screen"])
+        enhance_materials_with_vertex_color_for_render(mats_rv)
+        cam_obj, _ = setup_studio_lighting_and_camera(DIMENSIONS)
 
-    render_orthographic_views_and_turnaround(cam_obj, renders_dir, concept_turnaround, DIMENSIONS)
-    render_perspective_acceptance_views(cam_obj, rover_root, renders_dir, DIMENSIONS, mats_rv)
-    render_wireframe_and_vertex_colors(cam_obj, rv_meshes, renders_dir, DIMENSIONS)
+        render_orthographic_views_and_turnaround(cam_obj, renders_dir, concept_turnaround, DIMENSIONS)
+        render_perspective_acceptance_views(cam_obj, rover_root, renders_dir, DIMENSIONS, mats_rv)
+        render_wireframe_and_vertex_colors(cam_obj, rv_meshes, renders_dir, DIMENSIONS)
 
     print("=== BUILD SUMMARY ===")
     print(f"RoverModel.fbx   : nodes={rv_stats[0]} (mesh={rv_stats[1]}, empty={rv_stats[2]}), verts={rv_stats[3]}, tris={rv_stats[4]}")
