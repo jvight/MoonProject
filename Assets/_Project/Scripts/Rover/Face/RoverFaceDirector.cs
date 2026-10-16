@@ -92,7 +92,7 @@ namespace MoonProject.Rover
 
             _context = context;
             _display.ExternallyDriven = true;
-            _director = new FaceDirector(_display.State, _tuning);
+            _director = new FaceDirector(_display.State, _tuning, context.Events);
             _rearVentBlock = new MaterialPropertyBlock();
             _servicesResolved = false;
 

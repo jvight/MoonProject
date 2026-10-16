@@ -165,6 +165,15 @@ namespace MoonProject.Rover
         /// <summary>Number of closing happy blinks (<c>^ ^</c>) triggered when returning from screen content mode to eyes.</summary>
         public int ClosingHappyBlinkCount { get; private set; }
 
+        /// <summary>Total number of blinks started (periodic, wake, and channel-switch blinks).</summary>
+        public int BlinkCount { get; private set; }
+
+        /// <summary>Number of CRT channel-switch open transitions started.</summary>
+        public int ScreenOpenCount { get; private set; }
+
+        /// <summary>Number of CRT channel-switch close transitions started.</summary>
+        public int ScreenCloseCount { get; private set; }
+
         /// <summary>
         /// Enters or exits screen content mode with the CRT channel-switch choreography (eyes blink, collapse to a
         /// horizontal phosphor line, and expand into content; closing reverses it and ends with a small happy blink).
@@ -181,6 +190,7 @@ namespace MoonProject.Rover
 
             if (open)
             {
+                ScreenOpenCount++;
                 _closingHappyTimer = 0.0f;
                 if (_tuning.ScreenLeadInSeconds > 1e-4f)
                 {
@@ -198,6 +208,7 @@ namespace MoonProject.Rover
             }
             else
             {
+                ScreenCloseCount++;
                 _screenPhase = ScreenPhase.ClosingCollapse;
                 ScreenContentMix = 1.0f;
                 ScreenVerticalPinch = 0.0f;
@@ -280,6 +291,7 @@ namespace MoonProject.Rover
 
             _blinkElapsed = 0.0f;
             _nextBlinkCountdown = NextRange(_tuning.BlinkMinInterval, _tuning.BlinkMaxInterval);
+            BlinkCount++;
         }
 
         /// <summary>
@@ -598,6 +610,7 @@ namespace MoonProject.Rover
             {
                 _blinkElapsed = 0.0f;
                 _nextBlinkCountdown = NextRange(_tuning.BlinkMinInterval, _tuning.BlinkMaxInterval);
+                BlinkCount++;
             }
 
             float duration = Math.Max(_tuning.BlinkDuration, 1e-4f);

@@ -423,5 +423,79 @@ namespace MoonProject.Rover.Tests
                 Assert.IsNull(bodyLanguage.FaceDirector, "ValidateWiring must not self-heal _faceDirector at runtime.");
             }
         }
+
+        [Test]
+        public void RoverFaceCued_PublishesBootBlinkFeelingsAndScreenOpenCloseOnEventBus()
+        {
+            var events = new EventBus();
+            var cues = new System.Collections.Generic.List<RoverFaceCueKind>();
+            using (events.Subscribe<RoverFaceCued>(c => cues.Add(c.Kind)))
+            {
+                var director = new FaceDirector(_faceTuning, _directorTuning, seed: 7, events: events);
+
+                // 1. Boot on wake
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Crackle, false));
+                CollectionAssert.AreEqual(new[] { RoverFaceCueKind.Boot }, cues,
+                    "Starting wake boot must publish RoverFaceCued(Boot).");
+
+                // Finish boot and step through wake blink
+                cues.Clear();
+                director.Step(1.5f);
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Blinked, false));
+                CollectionAssert.Contains(cues, RoverFaceCueKind.Blink,
+                    "WakeBeat.Blinked must publish RoverFaceCued(Blink).");
+
+                // 2. Feeling changes: Happy, Worried, Asleep, Blink (unplug), Proud, Startled
+                cues.Clear();
+                director.OnFragmentScanned();
+                CollectionAssert.AreEqual(new[] { RoverFaceCueKind.Happy }, cues);
+
+                cues.Clear();
+                director.OnBatteryWarned(BatteryWarning.Low);
+                CollectionAssert.AreEqual(new[] { RoverFaceCueKind.Worried }, cues);
+
+                cues.Clear();
+                director.OnChargingChanged(true);
+                CollectionAssert.AreEqual(new[] { RoverFaceCueKind.Asleep }, cues);
+
+                cues.Clear();
+                director.OnChargingChanged(false);
+                CollectionAssert.Contains(cues, RoverFaceCueKind.Blink,
+                    "Unplugging from charger triggers a wake blink cue.");
+
+                cues.Clear();
+                director.OnUpgradePurchased();
+                CollectionAssert.AreEqual(new[] { RoverFaceCueKind.Proud }, cues);
+
+                director.Step(_directorTuning.ProudHoldSeconds + 0.1f);
+                cues.Clear();
+                director.OnLanded(_directorTuning.HardLandingImpactThreshold + 0.2f);
+                CollectionAssert.AreEqual(new[] { RoverFaceCueKind.Startled }, cues);
+
+                // 3. Periodic blink during calm stepping
+                director.Step(_directorTuning.StartledHoldSeconds + 0.1f);
+                cues.Clear();
+                director.Step(10.0f);
+                CollectionAssert.Contains(cues, RoverFaceCueKind.Blink,
+                    "Periodic blink must publish RoverFaceCued(Blink).");
+
+                // 4. CRT channel-switch open and close
+                cues.Clear();
+                director.SetScreenMode(true);
+                Assert.AreEqual(RoverFaceCueKind.ScreenOpen, cues[0],
+                    "Opening the CRT face screen must publish RoverFaceCueKind.ScreenOpen.");
+                director.Step(0.5f);
+                CollectionAssert.Contains(cues, RoverFaceCueKind.Blink,
+                    "Opening lead-in blink must publish RoverFaceCueKind.Blink.");
+
+                cues.Clear();
+                director.SetScreenMode(false);
+                Assert.AreEqual(RoverFaceCueKind.ScreenClose, cues[0],
+                    "Closing the CRT face screen must publish RoverFaceCueKind.ScreenClose.");
+                director.Step(0.5f);
+                CollectionAssert.Contains(cues, RoverFaceCueKind.Blink,
+                    "Closing happy blink must publish RoverFaceCueKind.Blink.");
+            }
+        }
     }
 }
