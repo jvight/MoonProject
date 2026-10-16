@@ -1,0 +1,282 @@
+# Lunarion — Living Moon v2: Flying Swarms, Leviathan Surprises & Lunar Wonders (`0.6–1.0`)
+
+> **Status:** Design Specification (`box/agy-swarms`). Revises and expands `docs/design/0.6-living-moon.md` and `docs/design/0.6-world-regions.md` in alignment with `docs/design/north-star.md`, `docs/VISION.md`, locked Story v4 (`docs/design/story-v4.md`), and Lumen's retro-future tech (`docs/design/inventions.md`). Vietnamese edition: [`docs/design/living-moon-v2-vi.md`](living-moon-v2-vi.md). Concept art: `Logs/concepts/*.png`. Review page: `Logs/swarms/index.html`.
+>
+> **Labeling Convention (`RULES.md` §"Facts and creativity"):**
+> - **Existing codebase & design facts** cite exact file paths and lines (`Assets/_Project/...`, `docs/...`).
+> - **Locked Story v4 & Owner decisions** are marked **`[DECIDED]`** (`story-v4.md:40-57`; `0.6-living-moon.md:100-113`).
+> - **All new swarm species, leviathan mechanics, place wonders, and surprise-calendar beats** are marked **`[PROPOSAL]`**.
+
+---
+
+## 0. Player Experience (`north-star.md` §2 & §5 Checklist)
+
+| Question | Living Moon v2 Answer (`[PROPOSAL]`) |
+|---|---|
+| **Hook** | At lunar dawn, the horizon dust begins to glow—and **60 tiny golden-winged gliders (`Dust Larks`)** rise out of the terminator mist in a silent figure-eight murmuration across the dark, city-less Earth (`story-v4.md:50-54`, `[DECIDED]`). The Moon is not just rocks and parked rovers; it has a sky ecology. |
+| **Pull** | Every swarm is **collecting something for a reason** and flying **toward a home structure**: *Where do the Dust Larks unload their helium-3 fines? Whose cassette or core sample is that Puff Swift carrying? What is that 40-metre six-legged silhouette standing beside the Mass Driver on the horizon?* |
+| **Hold** | **Your restorations adopt the swarms.** Repair a **Roost Tower** at home and a Dust Lark flock adopts your base at dawn, leaving a trickle of rare `Helium-3 / RareEarths` (`SalvageMaterial.cs:32`). Light your headlamps or restore a **Glasshouse** (`inventions.md` §2.3) and **Lantern Moths** gather like warm fireflies. Fire an **Ember Shell** (`inventions.md` §2.2) into the Shadowed Crater and **Plume Drifters** blossom inside the rising steam geyser. |
+| **Finish** | Late in the arc (`0.9–1.0`), 07 bridges power and telemetry to the dormant **40 m Regolith Strider**—waking the gentle giant built to feed the L4/L5 **Mass Driver** (`inventions.md` §2.7) so it walks slowly across the Mare carrying the heavy superconductor/ice payload toward the Peak foot. |
+| **Feeling** | **Lonely wonder punctuated by living spectacle.** Solitude stays the baseline (`docs/VISION.md:61-65` Pillar 6), which makes turning a corner into a glowing lunar swirl, an orange-glass crater hive, or a dawn murmuration feel like a genuine discovery. |
+
+- **Learn from Subnautica, then improve (`north-star.md` §1, §3):** Subnautica's schools of boomerang fish, jellyrays, and Reefback Leviathans make water feel inhabited at every scale—small swarms near you, medium working creatures in biomes, and gentle giants on the horizon. We bring that **three-scale ecosystem (micro-swarms · specialist flocks · horizon leviathan)** to an airless Moon using **100% logical 1980s vacuum physics** and **zero hostility**.
+- **Playtest Signals (`north-star.md` §4):**
+  1. During the first dawn murmuration, the player stops driving for `≥ 5 s` and tilts the camera up to watch the **Dust Larks** cross Earth.
+  2. At night, the player parks and toggles 07's headlamps (`[L]`) to watch **Lantern Moths** orbit and perch on 07's brow.
+  3. On spotting the **Dormant Strider** on the Mare horizon, the player drives toward it unprompted within `10 min`.
+
+---
+
+## 1. Revised Rules for Swarms & Vacuum Flight (`[PROPOSAL]`)
+
+### 1.1 Revising the Old "Sparse, Met Not Swarming" Rule (`0.6-living-moon.md:13, 39`)
+In `docs/design/0.6-living-moon.md:13, 39`, early design held that *"Life is met, not swarming."* Owner feedback (`2026-10-16`, `Logs/TASK.md:18-25`) revised this: **ordinary ground robots alone feel monotonous; flying/hopping collector swarms and big horizon surprises are wanted.** To add swarms without turning the Moon into noisy wallpaper, we replace the old rule with **The Event-Swarm Rule**:
+
+1. **Swarms Are Regional or Phase Events, Never Constant Noise:**
+   - **Hard Simultaneous Cap:** At most **1 active swarm (`12–80` units)** and **1 ground machine group** may be active within 07's visual bubble (`250 m`) at any moment.
+   - **Time & Trigger Gating:** Each swarm is tied to a **physical lunar phase, place anomaly, or player invention**:
+     - **Dust Larks** ride the **dawn/dusk terminator band** (`~10 min` per 2-hour lunar day, `0.6-living-moon.md:104` L1) plus a `60 s` roosting beat at restored Roost Towers.
+     - **Lantern Moths** emerge **only in the earthlit night phase** or cave dark, drawn strictly to warm light sources (`#FFB547`).
+     - **Plume Drifters** stay folded like metallic lilies on the dark crater floor until an **Ember Shell** (`inventions.md` §2.2) or **Heliostat beam** (`inventions.md` §2.8) creates a rising thermal vapour plume.
+     - **Glassweaver Bees** and **Swirl Rays** are strictly anchored to their geological wonder sites (the **Orange-Glass Crater** and the **Lunar Swirl Field**).
+2. **Readable Vacuum Flight Physics (No Air on the Moon):**
+   Because the Moon is a hard vacuum (`10⁻¹² torr`), no machine may use helicopter rotors, propellers, or bird-like air-flapping. Every airborne species uses one of **four visually readable 1980s lunar flight mechanisms**:
+   - **M1 — Electrostatic Dust-Layer Surfing (`Dust Larks`):** Positively/negatively biased gold-mesh wings (`±1.5 kV`) ride the real **$1000\text{ V/m}$ electrostatic terminator dust fountain** (observed by *Surveyor 7* and *Apollo 17*, `0.6-living-moon.md:300`; `inventions.md` §2.10) via Coulomb repulsion in $1/6\,g$.
+   - **M2 — Cold-Gas $\text{O}_2$ Micro-Puffs (`Lantern Moths`, `Puff Swifts`):** Pressurized **Breather $\text{O}_2$** (`inventions.md` §2.1, §2.5) vented through miniature brass De Laval nozzles in crisp white Joule-Thomson condensation puffs.
+   - **M3 — Ballistic $1/6\,g$ Hops & Sublimation Plume Sailing (`Glassweaver Bees`, `Plume Drifters`):** Spring/cold-gas parabolic hops in $1/6\,g$, or wide Kapton-foil parasols riding the upward dynamic pressure of a sublimating $\text{H}_2\text{O}$ geyser (`inventions.md` §2.2).
+   - **M4 — Crustal Magnetic Lorentz Skimming (`Swirl Rays`):** Superconducting diamagnetic belly pads surfing the intense $300\text{ nT}$ horizontal magnetic anomaly of a **Lunar Swirl** (`Reiner Gamma`).
+3. **Preserved Core Invariants (`0.6-living-moon.md` §0 & §1a; `story-v4.md` §0–§1):**
+   - **Never hostile, never an obstacle (`VISION.md` Ruling 7):** Swarms part smoothly around 07 (`3 m` boid repulsion sphere). Nothing harms, steals, startles, or blocks.
+   - **Scanning (`[E]`) never removes life (`0.6-living-moon.md:46-48`):** Scanning any member of a swarm captures a custom line-drawing and a 1–2 sentence databank note in **Kenji's** or **Ro's** voice (`0.6-living-moon.md:324-341`).
+   - **Two Machine Families (`0.6-living-moon.md` §1a.6; `story-v4.md:24-25, 93-94`):** Every new species belongs visibly to either **Lumen (`ILC`, cream `#F4E6C8` + coral-orange `#FF8A5B`, round amber induction pads, Kenji's `"continue"` mode)** or **Automated Meridian (`Tycho Consortium`, clean white + muted teal `#3CA6A2`, hexagonal contact docks, `"safe mode"` until comms/power restored)**.
+4. **Global Swarm Performance Budget (`CLAUDE.md:34` Zero GC):**
+   - **Zero `GameObject` / `Transform` per boid:** Each swarm is a single `MonoBehaviour` controller owning a pre-allocated native/struct array (`SwarmAgentState[maxCount]`, updated in a tight `for` loop with zero allocations).
+   - **1 Draw Call per Swarm:** Rendered via `Graphics.DrawMeshInstancedProcedural` using an R1 material (`docs/art/r1-pipeline.md`) with per-instance `Matrix4x4` + `_EmissionStrength` / wing-angle packed in a `ComputeBuffer` / `MaterialPropertyBlock` (`RULES.md:43`).
+   - **3-Tier LOD:** **LOD0 (`0–40 m`):** `180–380` tris, vertex-shader wing/leg articulation; **LOD1 (`40–120 m`):** `48–80` tris; **LOD2 (`120–300 m`):** `2-tri` emissive sprite/octahedron; **`>300 m`:** simulation sleeps on a 1 Hz coarse timer.
+
+---
+
+## 2. Master Overview of New Species (`[PROPOSAL]`)
+
+| # | Species (EN / VI) | Family & Origin | Flight / Motion | Swarm Size & Schedule | Reaction to 07 | Collects → Unloads At | Gameplay Role | Concept Art |
+|---|---|---|---|---|---|---|---|---|
+| **S1** | **Dust Larks** / *Sơn ca bụi* | **Lumen (`ILC`)** · Seed #1 | Electrostatic gold-mesh wings surfing terminator dust glow | `30–80` boids · Dawn/dusk terminator sweep (`1/lunar day`) + restored Roosts | **Curiously playful:** ribbon-streams overhead; dips to skim 07's wake | $\text{He-3}$ & Ti-rich fines → **Roost Towers** | `Awe Beat` + `Rare Resource Trickle` (`RareEarths` / `Ilmenite`) | `Logs/concepts/dust_larks_dawn.png` |
+| **S2** | **Lantern Moths** / *Bướm đèn* | **Lumen (`ILC`)** · Seed #2 | Pleated radiator wings + silent $\text{O}_2$ micro-puffs | `12–24` boids · Night phase & caves around warm lamps | **Phototactic-gentle:** orbits 07's headlamps; 1–2 perch on 07's brow | Solar heat & stray dust → **Lamp Posts & Glasshouses** | `Night Awe Beat` + `Shadow Floodlight Helper` + `Wing Clean` | `Logs/concepts/lantern_moths_night.png` |
+| **S3** | **Puff Swifts** / *Én phụt* | **Lumen (`ILC`)** · Seed #3 *(Reframed, §3.1)* | Ballistic $1/6\,g$ rocket-hoppers with white $\text{O}_2$ puffs | `3` in V-formation · Every `~15 min` between mast catcher-nets | **Indifferent-scheduled:** arcs overhead, puffs 3 notes when scanned | Core-sample & backup-tape spheres → **Mast Catcher-Nets** | `Sky Guide` (follow trajectory to hidden field caches & logs) | `Logs/concepts/puff_swifts_flight.png` |
+| **S4** | **The Regolith Strider** / *Kẻ Bộ Hành (Thiết giáp Khai mỏ)* | **Lumen (`ILC`)** · Seed #4 (Leviathan) | `40 m` six-legged walking strip-miner & Mass Driver loader | `1` colossal unit · Horizon landmark (`0.6+`), woken in `0.9–1.0` | **Gentle giant:** steps high over 07; lowers belly ramp as a mobile dock | Bulk regolith, `Alloy` & Mass Driver canisters → **Mass Driver Breech** | `Horizon Leviathan Surprise` + `Moving Base / Roost` + `1.0 Bridge` | `Logs/concepts/dormant_strider_horizon.png` |
+| **S5** | **Plume Drifters** / *Sứa khói băng* | **Meridian (`Tycho`)** · **Own Species #1** | Kapton-and-teal parafoil bells riding $\text{H}_2\text{O}$ vapour geysers | `15–25` boids · Triggered for `90 s` by **Ember Shell** / Heliostat | **Shy-graceful:** spirals up the steam column; rains ice crystals near 07 | Sublimated $\text{H}_2\text{O}$ vapour → **Cryo-Condenser Ring** | `Invention Synergy` (`Ember Shell`) + `Water Ice Multiplier` + `Awe Beat` | `Logs/concepts/plume_drifters_crater.png` |
+| **S6** | **Glassweaver Bees** / *Ong thợ thủy tinh* | **Meridian (`Tycho`)** · **Own Species #2** | Ballistic $1/6\,g$ hops + $\text{O}_2$ micro-jets & induction kiln bellies | `18–30` boids · Active in sunlit **Orange-Glass Crater** | **Industrious-courteous:** hops over 07; drops a warm glass orb in 07's scoop | Raw `OrangeBeads` → **Hexagonal Hive Kiln** (rolls out `Glass` spheres) | `Resource Refiner` (stocks hollow spheres for `Ember Shells`) | `Logs/concepts/glassweaver_bees_swarm.png` |
+| **S7** | **Swirl Rays (Lorentz Skimmers)** / *Cá đuối từ trường* | **Meridian (`Tycho`)** · **Own Species #3** | Diamagnetic belly pads gliding `0.4 m` above Lunar Swirl ribbons | `8–14` boids · Always gliding along the **Reiner Gamma Swirl** | **Magnetic-curious:** flanks 07 along the white swirl; stabilizes 07's CRT | Solar-wind protons & `Optics` charge → **Meridian Gauss Tower** | `Place Signature` (`Lunar Swirl`) + `Speed-Lane Escort` | `Logs/concepts/lunar_swirl_field.png` |
+
+---
+
+## 3. Detailed Species Specifications (`S1–S7`, `[PROPOSAL]`)
+
+### 3.1 Species S1: Dust Larks (*Sơn Ca Bụi*) — Seed #1 Developed `[PROPOSAL]`
+![Dust Lark Murmuration at Dawn](../../Logs/concepts/dust_larks_dawn.png)
+
+- **Job & Builder:** Built in **1983** by **Kenji Morrow** and the **ILC (`Lumen family`)** (`story-v4.md:20, 70, 93`). During the construction of the L4/L5 Arks (`1978–1988`), the fleet's compact D–³He fusion torch tugs and cryo-labs needed **Helium-3 ($\text{^3He}$)** and fine titanium-rich ilmenite dust implanted in the top micron of lunar regolith by solar wind (a real 1980s fusion concept). Strip-mining square kilometres of mare surface was destructive and slow; instead, Kenji built flocks of ultralight electrostatic skimmers set to **`CONTINUE`** (`0.6-living-moon.md:168, 237`).
+- **How It Moves (Readable Vacuum Physics):** Each `0.65 m`-wingspan glider has a teardrop `R1_CreamEnamel` body with an `R1_OrangeStripe` spine, a warm `R1_LampAmber` tail bead, and twin lattice wings of woven **`R1_GoldFoil` and `R1_Copper` wire mesh**. They do not flap air: they charge their mesh wings to `+1.8 kV` and **surf the electrostatically levitated dust fountain along the day/night terminator** (`0.6-living-moon.md:300`), banking by shifting wing voltage across the local electric field gradient.
+- **Swarm Behaviour (Boids Rules, Size & Schedule):**
+  - **Count:** `30–80` gliders per flock.
+  - **Boids Weights:** Separation `1.4` (`1.8 m` radius), Alignment `1.8`, Cohesion `1.2`, plus a **Ribbon Spline Attractor (`2.0`)** that pulls the flock in a sweeping figure-eight wave `4–18 m` above the moving dawn/dusk terminator line.
+  - **Schedule:** Migrates continuously with the low polar Sun's terminator (`1 lunar day = 2 h`, `0.6-living-moon.md:104`). Once every lunar dawn, the murmuration sweeps directly over the Home Basin and Long Mare, silhouetted against the dark, city-less Earth and the faint L4/L5 Ark point (`story-v4.md:50-54`, `[DECIDED]`).
+- **Reaction to 07 (Never Hostile):** **Curiously playful.** If 07 drives beneath the murmuration, the lowest 8–10 Larks dip down to surf the electrostatically kicked-up dust plume behind 07's wheels for `15 s`, making 07 look back and chirp **Happy** (`0.6-living-moon.md:69-70`).
+- **What It Collects & Where It Unloads:** Their charged mesh wings attract $\text{^3He}$-saturated nanofines and rare-earth dust out of the horizon glow. When full, the flock spirals down onto a **Roost Tower (*Tháp Chuồng Sơn Ca*)**—a `4.5 m` cream-and-brass mast with three concentric brass induction perch rings and a central funnel hopper (seen in `dust_larks_dawn.png`). Sitting on the rings pulses their wing voltage to zero, dropping a glittering golden cascade of fines down the funnel while their capacitors recharge.
+- **How 07 Interacts & Gameplay Role:**
+  - **Follow:** Following a descending flock at dawn leads 07 to an unmapped **Roost Tower** on the Mare.
+  - **Restore a Roost (Base Adoption):** If 07 repairs or builds a **Roost Tower** at Home Base (`2 Alloy + 1 Wiring + 1 Optics`), a flock of 40 Larks **adopts the base**. Every dawn they spiral onto the home roost, perching with warm amber tail lamps and depositing **`1 Rare Earths` + `2 Ilmenite`** (`SalvageMaterial.cs:26, 32`) into the roost hopper for advanced kits.
+  - **Scan (`[E]`):** Kenji's databank note: *"Skimmers for the dawn line. They ride the static charge where sunlight hits cold dust, combing out helium-3 fines for the Ark tugs."*
+- **Sound in D Major Pentatonic:** A shimmering, wind-chime arpeggio (`D5 · F#5 · A5 · B5 · D6`) generated by electrostatic dust ticks across their copper wing mesh, swelling gently as the wave passes overhead.
+- **Performance Budget:** `1` instanced draw call (`DrawMeshInstancedProcedural`, `MaxCount = 80`), wing dihedral driven in the vertex shader by `instanceID` phase offset; `LOD0 = 210 tris`, `LOD1 = 56 tris`, `LOD2 = 4 tris`; `0 B/frame` GC.
+
+---
+
+### 3.2 Species S2: Lantern Moths (*Bướm Đèn*) — Seed #2 Developed `[PROPOSAL]`
+![Lantern Moths Around 07 at Night](../../Logs/concepts/lantern_moths_night.png)
+
+- **Job & Builder:** Built in **1985** by **Kenji Morrow** (`Lumen family`, `R1_CreamEnamel` + `R1_Brass`) as autonomous **portable work-site floodlights** for crew members repairing cables or tending the **Trial Glasshouses** (`inventions.md` §2.3) during the 55-minute earthlit lunar night (`north-star.md:164`). Their optical sensors were programmed with a simple rule: *seek any warm tungsten/amber work lamp (`2700–3200 K`), hover in a 4 m halo around it, and add your own diffuser glow so the human mechanic has shadowless light.* With the crew gone since October 1988 (`story-v4.md:48`, `[DECIDED]`), they gather around the only warm lamps left on the Moon: **07's headlamps, lit relay masts, and restored bases.**
+- **How It Moves (Readable Vacuum Physics):** Each `0.35 m` moth has a rounded cream head with twin brass phototube "antennae", four pleated **`R1_GoldFoil` thermal-radiator stabilizing vanes** (which angle to radiate heat and balance rotational inertia, never flapping air), a warm glowing borosilicate **amber lantern abdomen (`R1_LampAmber`)**, and a bottom brass micro-nozzle that fires tiny, silent **cold-gas $\text{O}_2$ puffs** (`inventions.md` §2.5) every `1.2 s` to hover in $1/6\,g$ (visible as little white mist puffs beneath each moth in `lantern_moths_night.png`).
+- **Swarm Behaviour (Boids Rules, Size & Schedule):**
+  - **Count:** `12–24` moths per cluster.
+  - **Boids Weights:** Soft orbital curl around the brightest warm light source within `60 m` (Tangential Orbit `1.6`, Separation `1.5` at `0.9 m`, Vertical Bob `0.4 Hz` matched to cold-gas puff intervals).
+  - **Schedule:** Dormant by day (folded under solar array eaves and Glasshouse mullions to trickle-charge and top up $\text{O}_2$ from Breather lines); wakes at **First Nightfall** (`north-star.md` Beat 1) and inside the dark **Lava Tube** (`0.8`).
+- **Reaction to 07 (Never Hostile):** **Phototactic-affectionate (purely by program).** When 07 turns on its headlamps at night, nearby Lantern Moths drift over to form a warm, bobbing halo around 07. If 07 stops still for `4 s`, **one or two moths settle gently onto 07's CRT brow visor** (`lantern_moths_night.png`), making 07's CRT eyes curve into happy crescents (`^ ^`)!
+- **What It Collects & Where It Unloads:** By day they absorb solar charge on array rims and Electrostatic-comb fine dust off lamp lenses; at dawn they return to **Mast Pad Rings** or **Restored Glasshouse Domes** (`inventions.md` §2.3) to sleep.
+- **How 07 Interacts & Gameplay Role:**
+  - **Living Night Light (`Shadowed Crater & Night Helper`):** Escorting a cluster of Lantern Moths into a dark wreck or crater rim **doubles 07's effective warm illumination radius** for `3 min` before their micro-cells need a mast pad.
+  - **Lure to Glasshouses:** In the earthlit night, a distant golden cloud of Lantern Moths hovering over a frosted dome on the terrace edge guides 07 to **Trial Glasshouse Dome 3** (`inventions.md` §2.3).
+  - **Scan (`[E]`):** Ro's databank note: *"Kenji built them so we wouldn't work in our own shadows at night. Turn on a warm lamp, and they still come to help."*
+- **Sound in D Major Pentatonic:** Soft, breathy cold-gas *pff-tink* notes (`F#4 · A4 · D5`) like tiny glass bells muted in felt.
+- **Performance Budget:** `1` instanced draw call (`MaxCount = 24`) + **1 shared pooled shadowless point light** centered on the swarm's centroid (never 24 separate Unity lights!); `LOD0 = 240 tris`, `LOD1 = 64 tris`, `LOD2 = 4 tris`.
+
+---
+
+### 3.3 Species S3: Puff Swifts (*Én Phụt*) — Seed #3 Audited & Reframed `[PROPOSAL]`
+![Puff Swifts in Flight](../../Logs/concepts/puff_swifts_flight.png)
+
+> **Critical Design Note (Consistency with `story-v4.md` & `inventions.md` §3.1):** In `inventions.md` §3.1, *unassisted catapults firing hollow glass cassette balls across bare rock to uncrewed Meridian* were **CUT** because (1) Meridian is 100% uncrewed (`story-v4.md:55`, `[DECIDED]`), (2) unbraked glass shatters at $40\text{ m/s}$ in vacuum, and (3) loose pickables cannot sit on bare regolith (`0.5.5-owner-feedback.md` §2). **Puff Swifts solve the physics problem** because they are **self-guided cold-gas hoppers with active retro-braking** that fly exclusively between **Ines's Field Survey Camps and Lumen's Relay Mast Catcher-Nets**, carrying cushioned **amber sample/telemetry spheres**! (See §4 for our full Cut vs. Reframe ranking.)
+
+- **Job & Builder:** Built in **1986** by **Kenji Morrow** and **Ines Kalani** (`Lumen family`, `R1_CreamEnamel` + `R1_OrangeStripe`) to ferry physical **core-sample ampoules and backup magnetic tape reels** from remote drill camps across the Whispering Canyon and Long Mare back to Lumen's lab without driving a rover back and forth.
+- **How It Moves (Readable Vacuum Physics):** Sleek `0.85 m` torpedo-shaped ballistic hoppers with four cruciform tail fins (for center-of-mass inertial balance, not air lift), a warm `R1_LampAmber` nose eye, belly claws clutching an **amber borosilicate sphere (`R1_DarkGlass` + `R1_LampAmber`)**, and a rear brass **De Laval $\text{O}_2$ thruster** (`inventions.md` §2.5). Launched upward from a mast ring, they travel on a textbook **$1/6\,g$ parabolic ballistic arc**, firing **three rhythmic white cold-gas puffs** at launch, mid-course correction, and retro-braking into the destination mast's brass catcher hoop (`puff_swifts_flight.png`).
+- **Swarm Behaviour (Boids Rules, Size & Schedule):**
+  - **Count:** Always travel in **tight trios (`3` units in echelon/V-formation)** spaced `2.5 m` apart along a shared parabolic trajectory (`Height = 25–45 m`, `Span = 250–400 m`).
+  - **Schedule:** One trio launches every `~12–15 min` between an active/semi-active field mast and a receiving catcher mast.
+- **Reaction to 07 (Never Hostile):** **Indifferent-scheduled** in flight; when perched on a catcher ring, they tilt their nose lenses down at 07 and chirp a 3-note postal confirmation (`D4 → A4 → D5`).
+- **What It Collects & Where It Unloads:** Picks up sealed amber **Telemetry / Core-Sample Spheres** from field drill rigs and unloads them into **Mast Catcher-Nets**. Where a receiver mast fell offline in the October 1988 storm, the final trio's sphere rests inside a **collapsed catcher-net cradle** (obeying `0.5.5-owner-feedback.md` §2's container rule!).
+- **How 07 Interacts & Gameplay Role:**
+  - **Look Up & Follow the Arc (`Wordless Sky Guide`):** Seeing three white condensation puffs arc across the starry sky tells the player the exact azimuth to a hidden **field drill cache, broken catcher mast, or uncollected 1988 crew log/fragment container**.
+  - **Scan (`[E]`):** Kenji's databank note: *"Three-hopper post run. One puff to clear the ridge, one to line up the net, one to brake. Cheaper than driving ten kilometres for one tape reel."*
+- **Sound in D Major Pentatonic:** A rhythmic three-beat pneumatic *CHUFF–chuff–chuff* (`A3 · E4 · A4`) followed by a Doppler-shifted pentatonic whistle conducted through the nearest mast.
+- **Performance Budget:** `1` instanced draw call (`MaxCount = 3`) + 1 shared GPU particle system for the dotted ballistic condensation trail (`LOD0 = 310 tris`, `LOD1 = 90 tris`).
+
+---
+
+### 3.4 Species S4: The Dormant Regolith Strider (*Kẻ Bộ Hành / Thiết Giáp Khai Mỏ 40 Mét*) — Seed #4 Leviathan `[PROPOSAL]`
+![The Dormant Strider on the Horizon](../../Logs/concepts/dormant_strider_horizon.png)
+
+- **Job & Builder:** Built in **1981** by the **International Lunar Commission (`ILC`, joint Lumen–Tycho heavy works)** (`story-v4.md:70-72`). To build twelve rotating Orbital Arks at L4/L5 inside ten years, the Moon needed heavy mobile strip-miners that could walk across boulder fields, excavate thousands of tonnes of mare basalt and ilmenite per day, and load canisters directly onto the **Mass Driver Rail** (`inventions.md` §2.7). Designation: **`STRIDER-02 "GOLIATH-B"`**. During the **28 October 1988 solar storm** (`story-v4.md:76`, `[DECIDED]`), its automated crew tripped its seismic safety lock mid-stride beside the Mass Driver truss so the storm surge wouldn't weld its main bus. It has stood silhouetted against Earth for 36 years.
+- **How It Moves (Readable Vacuum Physics):** A colossal **`40 m`-tall, `55 m`-wide six-legged walking industrial excavator** (`dormant_strider_horizon.png`): beveled `R1_CreamEnamel` hull with dual `R1_OrangeStripe` and `R1_SagePatch` / teal-slate programme bands, six articulated hydraulic-screw legs wrapped in crinkled **`R1_GoldFoil` thermal blankets** on wide circular footpads, an under-belly **rotary bucket-wheel cutter (`R1_BareSteel`)**, a lowers-to-ground rear **rover service ramp**, and an upper crane-mast with a slow-pulsing `R1_LampAmber` aircraft warning beacon and a high **Roost Deck** where wild **Dust Larks** nest!
+- **Swarm / Unit Behaviour & Schedule:**
+  - **Early–Mid Game (`0.6–0.8`, Dormant Horizon Leviathan):** Seen from the Basin's west rim and across the Long Mare (`1.5 km` away) standing motionless against the huge dark Earth and L4/L5 Ark point. Gives the exact *Subnautica* first-leviathan goosebumps (**massive scale on an empty plain**), followed immediately by **warm relief**: its beacon blinks a calm amber standby pulse (`0.25 Hz`), and Dust Larks circle its shoulders like seabirds on a lighthouse.
+  - **Late Game (`0.9–1.0`, Waking the Giant):** Once 07 has the **Thermic Oxy-Lance** (`inventions.md` §2.6), **Power Bridge** (`0.6-living-moon.md:245`), and `2 Superconductor`, 07 drives up the Strider's belly ramp, clears its jammed breaker, and links its comms node. With a deep, ground-shaking **`D1 + A1` bass chord**, the 40 m giant lifts one foot, shakes off a 36-year waterfall of lunar dust, and begins walking at a majestic, unhurried **`0.8 m/s`** along the **Mass Driver spine** toward the Peak foot!
+- **Reaction to 07 (Never Hostile):** **Protective, gentle colossus.** Its proximity radar tracks 07 continuously: it never steps within `12 m` of 07, pauses a leg mid-air if 07 drives underneath, and lowers its belly ramp whenever 07 honks/pings (`[Q]`) so 07 can ride inside its belly dock as a **moving charger and vantage deck**!
+- **What It Collects & Where It Unloads:** Its belly bucket-wheel sifts bulk regolith into `Alloy`-grade ilmenite concentrate and carries the heavy **Mass Driver Canister / Peak Dish Superconductor Cradle** across the Mare Rift to the foot of the Peak Road (`1.0`).
+- **Sound in D Major Pentatonic:** A profound, cathedral-warm sub-bass pedal (`D1 → A1 → D2`) felt through the ground every `8 s` footfall, topped by a high brass steam-reliever chime (`F#4`).
+- **Performance Budget:** `1` hierarchical mechanical rig (`6` IK legs, zero skinning deformation, `~18,000 tris` across 12 sub-meshes using R1 material instancing; static batching while dormant in `0.6–0.8`).
+
+---
+
+### 3.5 Species S5: Plume Drifters (*Sứa Khói Băng*) — Own Species #1 `[PROPOSAL]`
+![Plume Drifters Riding an Ember Shell Vapour Plume](../../Logs/concepts/plume_drifters_crater.png)
+
+- **Job & Builder:** Built in **1987** by **Automated Meridian (`Tycho Consortium`, white composite + teal `#3CA6A2` + `R1_GoldFoil`)** (`story-v4.md:25, 94`, `[DECIDED]` Decision 5) to harvest ultra-pure volatile gases ($\text{H}_2\text{O}, \text{CO}, \text{NH}_3$) in the **Shadowed Crater (`0.8`)** without landing heavy wheeled rigs on brittle cryogenic frost sheets.
+- **How It Moves (Readable Vacuum Physics):** Jellyfish-like `0.9 m` cryo-drones (`plume_drifters_crater.png`) with a domed white-ceramic head, a warm amber core condenser (`R1_LampAmber`), six unfolding **translucent cyan-teal and `R1_GoldFoil` thermal-sail petals**, and three bottom **cold-gas micro-thrusters**. In vacuum, they rest dormant on the crater rim until a thermal event sublimates the floor ice; when 07 fires an **Ember Shell** (`inventions.md` §2.2) or aligns the **Rim Heliostat Mirror** (`inventions.md` §2.8), the sudden upward geyser of expanding water vapour ($v \approx 400\text{ m/s}$ molecular plume) catches their open parasols, **lifting 15–25 Plume Drifters in a glowing, slow-motion spiral column `30 m` into the eternal dark!**
+- **Swarm Behaviour (Boids Rules, Size & Schedule):**
+  - **Count:** `15–25` drifters per crater pocket.
+  - **Boids Weights:** Updraft Column Vortex (`2.2` helical climb inside the plume cylinder), Separation `1.6` (`2.0 m`), Slow Parachute Descent (`0.6 m/s` in $1/6\,g$ once `25 m` high, pulsing their teal umbrella ribs like jellyfish in deep water).
+  - **Schedule:** Triggered for **`90 s`** whenever an **Ember Shell** flares or the **Heliostat beam** sweeps a frost sheet (`0.6-living-moon.md:303` *"Frost sublimation"*).
+- **Reaction to 07 (Never Hostile):** **Shy-graceful.** As they drift back down around 07, they tilt their glowing bells toward 07's **Vapor Kite Bag** (`inventions.md` §2.2) and shed a gentle snowfall of condensed ice crystals that funnel into 07's collector.
+- **What It Collects & Where It Unloads:** Their supercooled `-180°C` inner bell plates freeze rising $\text{H}_2\text{O}$ vapour into pure **Water Ice (`SalvageMaterial.WaterIce = 6`)** and **`Crystal` (`SalvageMaterial.Crystal = 11`)**, unloading at Meridian's hexagonal **Cryo-Condenser Ring** on the crater floor (which 07 can share after building a **Power Bridge**, `0.6-living-moon.md:245`).
+- **How 07 Interacts & Gameplay Role:**
+  - **Direct Invention Synergy (`Ember Shell` + `Heliostat`):** Firing an Ember Shell in a pocket where dormant Plume Drifters sit wakes the swarm, **increasing the flare's yield from `3 Water Ice` to `5 Water Ice + 1 Crystal`** while turning the dark crater into a glowing bioluminescent deep-sea abyss (`plume_drifters_crater.png`).
+  - **Scan (`[E]`):** Ro's databank note: *"Meridian's vapour catchers. When the ice flashes to steam, they open like umbrellas and ride the warm breath up."*
+- **Sound in D Major Pentatonic:** Ethereal glass-harmonica swells (`D4 · E4 · F#4 · A4`) paired with crystalline frost ticks as ice condenses inside their bells.
+- **Performance Budget:** `1` instanced draw call (`MaxCount = 25`), umbrella rib flex driven by a sine wave in the vertex shader (`LOD0 = 280 tris`, `LOD1 = 72 tris`, `LOD2 = 6 tris`).
+
+---
+
+### 3.6 Species S6: Glassweaver Bees (*Ong Thợ Thủy Tinh*) — Own Species #2 `[PROPOSAL]`
+![Glassweaver Bees Swarm & Hive Kiln](../../Logs/concepts/glassweaver_bees_swarm.png)
+
+- **Job & Builder:** Built in **1986** by **Automated Meridian (`Tycho Consortium`, white + teal `#3CA6A2` + `R1_Brass`)** inside the **Orange-Glass Crater** (`orange_glass_crater.png` & `glassweaver_bees_swarm.png`). Both Meridian and Lumen needed thousands of uniform, bubble-free borosilicate **Amber Glass Spheres** for **Ember Shells** (`inventions.md` §2.2), **Algae Lanterns** (`inventions.md` §2.3), and vacuum insulator bells. Instead of hauling raw volcanic soil across rough terrain, Meridian deployed a swarm of micro-kiln hoppers around a solar-induction **Hive Kiln (*Lò Tổ Ong*)**.
+- **How It Moves (Readable Vacuum Physics):** Plump `0.45 m` insectoid robots (`glassweaver_bees_swarm.png`) with a white-and-teal carapace, a brass-tipped suction proboscis for vacuum-slurping loose glass beads, six spring-loaded brass legs, folded **`R1_GoldFoil` heat-radiator wings**, a glowing translucent **amber rotary kiln abdomen (`R1_LampAmber`)**, and twin rear **$\text{O}_2$ cold-gas micro-nozzles**. They move across the orange crater floor by **bounding in `6–12 m` low-gravity ($1/6\,g$) parabolic hops**, firing a tiny white cold-gas puff at the apex of each hop (`orange_glass_crater.png`).
+- **Swarm Behaviour (Boids Rules, Size & Schedule):**
+  - **Count:** `18–30` bees per Hive Kiln.
+  - **Boids Weights:** Radial Foraging Loop—bees hop outward (`15–35 m`) from the central **Hive Kiln** to rich orange-bead patches, vacuum up raw beads (`3 s` ground pause while their abdomen glows brighter orange as internal induction coils melt the beads at `1100°C`), then hop back in high golden arcs (`orange_glass_crater.png`) to dock in the Hive's hexagonal honeycomb cells!
+  - **Schedule:** Active whenever the **Orange-Glass Crater** is in sunlight; in safe/dormant mode until 07 restores the crater's Meridian comms node or feeds the Hive Kiln `1 Oxygen Flask`.
+- **Reaction to 07 (Never Hostile):** **Industrious-courteous.** If 07 parks near the Hive Kiln with its front scoop lowered (`glassweaver_bees_swarm.png`), two bees hop right onto 07's hood to inspect its warm CRT face (`^ ^`), while the Hive Kiln's honeycomb matrix extrudes a finished, glowing **Amber Glass Sphere (`SalvageMaterial.Glass = 8`)** down its roller chute straight into 07's scoop!
+- **What It Collects & Where It Unloads:** Collects raw **`OrangeBeads` (`SalvageMaterial.OrangeBeads = 4`)** from the pyroclastic crater slope and unloads molten glass into the **Hexagonal Hive Kiln**, which centrifugal-blows hollow **Glass Spheres**.
+- **How 07 Interacts & Gameplay Role:**
+  - **Wake the Hive (`0.6–0.7`):** Restoring the Hive Kiln's comms link and feeding its $\text{O}_2$ blower bottle wakes all 24 Glassweaver Bees. Thereafter, visiting the Orange-Glass Crater yields **`3 Glass` + `2 Ready Ember Shell Spheres` per session** waiting in the Hive's output chute!
+  - **Scan (`[E]`):** Kenji's databank note: *"They scoop up orange volcanic beads, melt them in their bellies mid-hop, and spit finished glass globes into the hive. Wish I'd designed that."*
+- **Sound in D Major Pentatonic:** A cheerful, marimba-like plucked pentatonic ostinato (`D4 · F#4 · A4 · B4`) as bees hop and clink glass spheres into the brass honeycomb.
+- **Performance Budget:** `1` instanced draw call (`MaxCount = 30`), analytical parabolic arc positions computed in C# (`p(t) = p0 + v0*t + 0.5*g*t²`, zero physics collider cost; `LOD0 = 260 tris`, `LOD1 = 68 tris`).
+
+---
+
+### 3.7 Species S7: Swirl Rays / Lorentz Skimmers (*Cá Đuối Từ Trường*) — Own Species #3 `[PROPOSAL]`
+![Lunar Swirl Field & Lorentz Skimmers](../../Logs/concepts/lunar_swirl_field.png)
+
+- **Job & Builder:** Built in **1987** by **Automated Meridian (`Tycho Consortium`, angular white + teal `#3CA6A2`)** (`story-v4.md:25, 94`) to harvest solar-wind protons and map the intense crustal magnetic field of the **Long Mare's Lunar Swirl** (`0.6-world-regions.md:63-64, 145`).
+- **How It Moves (Readable Vacuum Physics):** Flat, manta-ray-shaped `1.1 m` delta skimmers (`lunar_swirl_field.png`) with a forward brass magnetometer stinger, white-and-teal composite wings, and four glowing **cyan superconducting diamagnetic pads (`#5FF3FF`)** underneath. Inside a real lunar swirl (like *Reiner Gamma*), a crustal magnetic anomaly creates a horizontal magnetic field bubble hundreds of nanoteslas strong. By running a superconducting current loop in their belly pads, **Swirl Rays levitate `0.4 m` off the ground via Lorentz/diamagnetic repulsion**, gliding silently along the bright white regolith ribbons without wheels or gas puffs!
+- **Swarm Behaviour (Boids Rules, Size & Schedule):**
+  - **Count:** `8–14` rays in two V-echelons (`lunar_swirl_field.png`).
+  - **Boids Weights:** Strict **Magnetic Flux-Line Follower (`2.5`)** that keeps the squadron surfing along the sinuous bright white swirl bands around Meridian's central **Gauss Tower**, banking in unison at every curve.
+  - **Schedule:** Continuous (`24/7`—their superconducting loops draw almost zero power in lunar cold and induction-top at the Gauss Tower).
+- **Reaction to 07 (Never Hostile):** **Magnetic-curious.** When 07 drives onto the bright white swirl ribbon (`lunar_swirl_field.png`), the squadron matches 07's speed and glides alongside 07's left and right flanks like dolphins pacing a boat! While they flank 07, their field dampeners **calm the magnetic CRT flicker** on 07's screen and give 07 a **`+15%` electrostatic slipstream speed boost** along the swirl ribbon.
+- **What It Collects & Where It Unloads:** Sweeps deflected solar-wind ions and charges the **Meridian Gauss Tower** at the eye of the swirl (`lunar_swirl_field.png`), where 07 can harvest `Optics` / `Superconductor` calibration data (`Survey Piece 2/6`, `story-v4.md:140`).
+- **Sound in D Major Pentatonic:** A warm, analogue-synth chord pad (`D3 + A3 + F#4`, Boards-of-Canada / 1980s tape-choir timbre) that hums softly through 07's radio induction coil whenever 07 drives on the white swirl.
+- **Performance Budget:** `1` instanced draw call (`MaxCount = 14`), `LOD0 = 190 tris`, `LOD1 = 52 tris`, `LOD2 = 4 tris`.
+
+---
+
+## 4. Critical Review of Seeds: What We Cut or Merged, and Why (`[PROPOSAL]`)
+
+Per `Logs/TASK.md:37, 72` (*"cut weak seeds and say why; add at least two species of your own"*), we audited every seed against `story-v4.md` (`[DECIDED]`), `0.6-living-moon.md` (§1a logic), and `inventions.md` (§3.1):
+
+1. **Seed #3 (`Puff Swifts` as Inter-Station Cassette Mail) — CUT in Original Form; Ranked Variants:**
+   - **Why the Raw Seed Fails:** In `story-v4.md:25, 55-56` (`[DECIDED]` Decision 5), **Meridian Station is 100% automated and uncrewed**. Lumen's human crew would never mail magnetic voice cassettes to an uncrewed robot outpost. Furthermore, `inventions.md` §3.1 cut unassisted glass-ball catapults because unbraked glass shatters at $40\text{ m/s}$ in vacuum and loose spheres on bare ground violate `0.5.5-owner-feedback.md` §2 (*"nothing pickable rests on open regolith"*).
+   - **Variant Ranking (`RULES.md` §"Facts and creativity"):**
+     - **Rank 1 (Recommended in §3.3 — Reframed as Intra-Basin "Core & Tape Couriers"):** Keep the charming 3-hopper cold-gas arc (`puff_swifts_flight.png`), but make them **Lumen field-camp couriers** that use active $\text{O}_2$ retro-puffs to land softly inside **Mast Catcher-Nets**, carrying Ines's drill cores and backup reels back toward Lumen's lab. Missed spheres sit inside broken **catcher-net cradles**, never loose on bare dust.
+     - **Rank 2 (Hard Cut):** Cut Puff Swifts entirely so **Pneumatic Post** (`inventions.md` §2.4) owns capsule transport and **Survey Flock** (`0.6-living-moon.md:57`) owns sky leading. *(We keep Rank 1 because three white cold-gas arcs across the starry sky are a top-tier visual lure from `300 m` away.)*
+2. **Seed #5e (`Peak of Eternal Light`) & #5f (`Dust Fountains`) — MERGED into Existing Regions:**
+   - **Why:** By Owner Decision L1 (`0.6-living-moon.md:80-104`), Lumen is already near-polar: **The Peak (`1.0`)** and the **Shadowed Crater's Sunlit Heliostat Rim (`0.8`, `inventions.md` §2.8)** *are* Peaks of Eternal Light. Creating a separate second "Peak of Eternal Light" region would duplicate `1.0`'s silhouette. Similarly, **Dust Fountains** are merged into the **Long Mare's sweeping Terminator Corridor** (`§5.3`) where **Dust Larks** and **Terminator Dust-Sails** (`inventions.md` §2.10) operate.
+
+---
+
+## 5. Real Lunar Wonders as Places (`[PROPOSAL]`)
+
+Each wonder place differs from its neighbours on **≥ 3 of the 5 variety axes** (`Albedo · Landform · Light · Human/Meridian Traces · Machine Life`, `north-star.md` §4b) and poses an immediate **Hook Question**:
+
+| # | Place Name (EN / VI) | Region & Ver | Hook Question | Look: Palette, Light & Ground (`VISION.md` Swatches) | Resident Machines & Inventions | Player Interaction & Reward |
+|---|---|---|---|---|---|---|
+| **P1** | **The Reiner Gamma Lunar Swirl Field** / *Cánh Đồng Xoáy Từ* (`lunar_swirl_field.png`) | Long Mare (`0.6`) | *"What painted giant white ribbons across the black basalt—and why is my compass spinning?"* | **Albedo contrast:** Brilliant cream-white unweathered regolith ribbons (`#F4E6C8`) twisting across near-black mare basalt (`#262A44`). Faint cyan-violet magnetic shimmer (`#5FF3FF`) at ankle height. | **Swirl Rays (`S7`)**, **Survey Flock**, and Meridian's hexagonal **Gauss Tower** (`lunar_swirl_field.png`). | **Magnetic UI quirk:** On the dark lanes between ribbons, 07's compass needle spins gently and its CRT shows a harmless 1980s degauss shimmer + green antenna spark; driving *on* the white ribbon with the **Swirl Rays** stabilizes the screen and grants `+15%` cruise speed toward the **Gauss Tower** (`Survey Piece 2/6`). |
+| **P2** | **The Orange-Glass Crater** / *Hố Thủy Tinh Cam* (`orange_glass_crater.png`) | Mare / Terrace Seam (`0.6–0.7`) | *"Why is this black crater bowl glittering like a jewel box of molten amber?"* | **Real Apollo 17 Shorty Crater geology:** A dark pyroclastic mantle ring (`#1F2447`) surrounding a terraced crater whose slopes glitter with millions of volcanic **orange glass spherules (`#FF8A5B` / `#FFB547`)** under grazing sunlight. | **Glassweaver Bees (`S6`)**, the central hexagonal **Hive Kiln**, and **Vacuum Glass-Blower** fragments (`inventions.md` §2.9). | **Wake the Hive:** 07 scans the crater, restores the Hive Kiln with `1 Oxygen Flask`, and watches 24 **Glassweaver Bees** hop in golden arcs to roll finished **Glass Spheres** (for `Ember Shells` & `Algae Lanterns`) right into 07's front scoop. |
+| **P3** | **The Terminator Dust-Fountain Corridor & Roost Spine** / *Đường Ranh Bụi Phát Sáng & Dãy Tháp Sơn Ca* (`dust_larks_dawn.png`) | Long Mare (`0.6`) | *"Why is the horizon glowing gold-violet, and what are those sixty gliders surfing on?"* | **Dynamic light boundary:** Where `≤ 8°` warm polar sunlight (`#FFB547`) meets cool lavender earthshine (`#6E738B`), electrostatically levitated dust rises `30 m` in shimmering golden-violet curtains (`0.6-living-moon.md:300`). | **Dust Larks (`S1`)**, **Roost Towers**, and **Terminator Electrostatic Dust-Sails** (`inventions.md` §2.10). | **Dawn Event & Salvage Window:** While the fountain glows, charged dust outlines half-buried wrecks (`0.6-living-moon.md:300`), **Dust-Sails** turn at `4 RPM`, and restoring a **Roost Tower** adopts a Dust Lark flock (`+RareEarths / Ilmenite` trickle). |
+| **P4** | **The Sinuous Rille Canyon & Strider Trench** / *Hẻm Rãnh Uốn Lượn & Công Trường Kẻ Bộ Hành* (`dormant_strider_horizon.png`) | West Rim → North Mare (`0.6–1.0`) | *"Did molten lava carve this winding canyon—and what is that 40-metre six-legged giant at the end of it?"* | **Landform drama:** A `30–60 m` wide meandering collapsed lava channel with stratified basalt walls (`#3D4159`), pale ejecta boulders (`#D8CFC2`), and the copper hoops of the **Mass Driver Rail** (`inventions.md` §2.7) crowning the north ridge. | **The 40 m Dormant Strider (`S4`)**, **Lumen Trencher**, **Puff Swifts (`S3`)** overhead, and **Dust Larks** nesting on the Strider's crane deck. | **The Leviathan Reveal:** Driving out of the rille frames the **Dormant Strider** against Earth (`north-star.md` Beat 6). In `0.9–1.0`, 07 wakes the Strider to carry the Peak Dish superconductor cradle across the Mare rift. |
+| **P5** | **The Lava-Tube Skylight & Echo Cavern** / *Giếng Trời Ống Dung Nham & Hang Vọng Âm* | Under the Mare (`0.8`) | *"What lies at the bottom of that glowing shaft in the plain—and why does the rock sing back?"* | **Subterranean cathedral:** A `25 m` vertical basalt pit (`#05060F`) pierced by a **drifting diagonal shaft of golden polar sunlight** (`north-star.md` Beat 8) that illuminates crystalline olivine walls (`#3CFFC2`) and **Theo's living green moss** (`#7BD389`) in the sealed storm shelter. | **Echo Beacons** (`0.6-living-moon.md:61`), **Lantern Moths (`S2`)**, and 07's **Oxy-Acoustic Seismic Bell** (`inventions.md` §2.11). | **The Only Reverb on the Moon:** Lowered by **Anchor Line** (`inventions.md` §2.9), 07 pings (`[Q]`) or rings the **Seismic Bell (`D2`)**; **Echo Beacons** blink back in a rising D-pentatonic ripple that guides 07 to the dogged storm shelter (`Survey Piece 6/6`, `story-v4.md:142`). |
+| **P6** | **The Eternal-Light Heliostat Ridge & Sublimation Bowl** / *Đỉnh Nắng Vĩnh Cửu & Đáy Hố Khói Băng* (`plume_drifters_crater.png`) | Shadowed Crater (`0.8`) | *"How do you bring fire and sunlight into a crater that hasn't seen the Sun in two billion years?"* | **Extreme contrast:** A knife-edge rim bathed in `95%` eternal golden grazing sunlight (`#F4E6C8` / `#FFB547`) dropping `60 m` into a pitch-black `-220°C` bowl (`#05060F`) where frost sheets sparkle cyan-white (`#5FF3FF` / `#3CFFC2`). | **Plume Drifters (`S5`)**, **Ice Tappers**, **Moss** (friend), **Heliostat Sun-Mirror** (`inventions.md` §2.8), and **Ember Shell Mortar** (`inventions.md` §2.2). | **Fire in the Dark:** Aligning the **Rim Heliostat** slices a permanent golden sunbeam into the dark to heat 07's **Molten-Salt Core (`Cell Heater`)**; firing an **Ember Shell** blooms orange across the ice and launches 20 **Plume Drifters** up the cyan steam geyser (`Survey Piece 5/6`). |
+
+---
+
+## 6. The 120-Minute "Surprise Calendar" (`0:00 – 2:00`, Every 3–5 Minutes) `[PROPOSAL]`
+
+To guarantee the world never feels monotonous (`north-star.md` §4b), the first two hours (`1 full lunar day = 120 min`, `0.6-living-moon.md:104` L1) pace a **new visual, ecological, or mechanical surprise every 3–5 minutes**:
+
+| Time (Min) | Lunar Light Phase (`L1`) | Region / Sub-Zone | What the Player Meets (The Surprise) | Layer (`Eco / Place / Tech / Story`) |
+|---|---|---|---|---|
+| **00–04** | Eclipse → Low Late Sun | Cargo Lander Lee (`Basin`) | **07 wakes:** shutter eye opens on a **100% dark, city-less Earth** with copper ring and the faint **L4/L5 Ark point** (`story-v4.md:121-130`, `[DECIDED]`). | `Story / Sky Awe` |
+| **04–08** | Low Late Sun (`Gold`) | Home Yard & Airlock | **Panel Mites** scatter courteously off a sunlit panel when 07 nears (`0.6-living-moon.md:55`); airlock readout reveals `SUIT 01-04 · OFFLINE · 29 OCT 1988` (`[DECIDED]`). | `Ecology + Story` |
+| **08–12** | Low Late Sun | Relay.2 Service Hut | **Elder `06` at rest** holding `Cell Pack II` fragments (`story-v4.md:139`); first **Network Pulse** runs mast-to-mast (`north-star.md` Beat 7). | `Derelict + Awe` |
+| **12–16** | Low Late Sun | West Works Solar Field | **Mite Wing-Cleaning:** 07 parks still for `5 s` in sunlight; Panel Mites climb onto 07's solar wing to wipe dust (`+15%` trickle, `0.6-living-moon.md:220`). | `Ecology Interaction` |
+| **16–20** | Low Late Sun | Basin Floor (Kestrel Ray) | **Tilly** (hover-drone friend) repaired; bright white ejecta rays lead to crashed **Kestrel-3** pointing at the L5 Arks (`story-v4.md:74`). | `Friend + Place` |
+| **20–25** | Sunset Approaching | Garage → Depot Arch | Scannable broken brass arch of **The Pneumatic Post** (`inventions.md` §2.4); **Mule** tipped beside its last planted lamp post (`0.6-living-moon.md:275`). | `Invention + Derelict` |
+| **25–30** | Dusk Transition | Drill Rig (`Core 41`) | **Puff Swifts (`S3`) Overhead!** Three white cold-gas puffs arc across the darkening sky from Ines's drill camp into a mast catcher-net (`puff_swifts_flight.png`). | **`Swarm Event #1`** |
+| **30–35** | **First Nightfall (Beat 1)** | Home Basin Overlook | **Staged Awe Beat:** Shadows race across the basin; solar panels go dark; station windows and masts light up in sequence like a village (`north-star.md:146`). | `Awe Beat` |
+| **35–40** | Earthlit Night (`Lavender`) | Home Yard & Lamp Posts | **Lantern Moths (`S2`) Arrive!** Drawn to 07's headlamps, 16 glowing amber moths orbit 07 and two perch on 07's CRT visor (`lantern_moths_night.png`). | **`Swarm Event #2`** |
+| **40–45** | Earthlit Night | Whispering Canyon Lip | **Machine Fireflies** dot the dark canyon walls; scanning Kenji's jumper unlocks **Hover-Jump / Puff Thrusters Tier 1** (`inventions.md` §2.5) to leap the chasm. | `Kit + Awe Beat` |
+| **45–50** | Earthlit Night | Canyon Terminus | **Bell** (Ro's 4-legged radio cabinet) found and brought home; Ro's 1988 `"Lumen After Dark"` mixtape warms the night drive. | `Friend + Audio` |
+| **50–55** | Deep Earthlit Night | Basin West Rim (`Rille`) | **Micrometeorite Flash (`0.6-living-moon.md:301`):** Silent white flash on the ridge + high sunlit ejecta arc, leaving glowing hot **impact glass** to scoop. | `Phenomenon` |
+| **55–60** | Pre-Dawn Glow | Rille Pass Mouth (`0.6` Seam) | **Vista Reveal (Beat 6):** Exiting the sinuous rille reveals **The Long Mare**, the pale **Lunar Swirl**, and on the far horizon the **40 m Dormant Strider (`S4`)**! | **`Leviathan Vista`** |
+| **60–65** | **First Lunar Dawn (Beat 3)** | Mare Terminator Corridor | **Dust Larks Murmuration (`S1`)!** 60 golden-mesh gliders surf the glowing terminator dust curtain in a figure-8 across Earth (`dust_larks_dawn.png`). | **`Swarm Event #3`** |
+| **65–70** | Morning Sunlit Phase | Mare Solar Array & Road | **The Sweeper** woken on its clean crew road; **Lumen Trencher** resumes cutting its straight fast-lane trench (`0.6-living-moon.md:56, 58`). | `Ground Ecology` |
+| **70–75** | Sunlit Phase | Mare Quarry & Weather Post | Scanning unlocks **The Ilmenite Breather** (`inventions.md` §2.1) & **Terminator Dust-Sail** (`inventions.md` §2.10); home starts exhaling **Brass $\text{O}_2$ Flasks**! | `Invention Unlock` |
+| **75–80** | Sunlit Phase | **Reiner Gamma Swirl (`P1`)** | **Swirl Rays (`S7`)!** 07's compass spins and CRT shimmers on the magnetic anomaly until 12 white-and-teal rays flank 07 along the white ribbon (`lunar_swirl_field.png`). | **`Swarm Event #4 + Place`** |
+| **80–85** | Sunlit Phase | Mare Roost & Home Base | 07 restores a **Roost Tower**; a **Dust Lark** flock spirals down onto the brass rings, adopting the base and dropping `RareEarths` + `Ilmenite`. | `Swarm Adoption` |
+| **85–90** | Mid-Day Grazing Sun | **Orange-Glass Crater (`P2`)** | **Glassweaver Bees (`S6`)!** A glittering orange crater where 24 hopping kiln-bees sinter beads and roll glowing **Glass Spheres** into 07's scoop (`glassweaver_bees_swarm.png`). | **`Swarm Event #5 + Place`** |
+| **90–95** | Mid-Day Grazing Sun | Mare Comms Dish & Convoy | Fitting a spare cell wakes the **3-bot Convoy** (`0.6-living-moon.md:172`); lighting the Mare Dish plays **Dr. Lena Moreau's 1988 Sunday schedule pledge** (`story-v4.md:75`). | `Ecology + Story` |
+| **95–100** | Late Afternoon Sun | Glasshouse Terrace (`0.6–0.7`) | **Lantern Moths** lead 07 to **Trial Glasshouse Dome 3** (`inventions.md` §2.3): frosted 1988 potato furrows, but one glowing **Algae Lantern** still sighs $\text{O}_2$ bubbles! | `Place + Invention` |
+| **100–105** | Late Afternoon Sun | Strider Foot (`P4`) | **Up-Close with the Dormant Strider (`S4`):** 07 drives beneath the `40 m` six-legged giant (`dormant_strider_horizon.png`), scanning its Mass Driver loader breech. | **`Leviathan Close-Up`** |
+| **105–110** | Second Dusk | Mare Seismic Line | 07 deploys **The Oxy-Acoustic Seismic Bell (`D2`, `inventions.md` §2.11)**: a ground-coupled dust wave uncovers a buried relic pocket and maps the **Lava Tube** below! | `Invention + Phenomenon` |
+| **110–115** | Second Nightfall | Shadowed Crater Rim (`P6`) | Aligning the **Rim Heliostat Mirror** (`inventions.md` §2.8) slices a golden sunbeam into eternal night; **07 fires an Ember Shell (`inventions.md` §2.2)**! | `Invention Awe Beat` |
+| **115–120** | Eternal Dark / Flare | Shadowed Crater Bowl (`P6`) | **Plume Drifters (`S5`) Blossom!** 20 turquoise-and-gold parafoil drones open in the orange flare's cyan steam geyser, raining pure `Water Ice` into 07's Vapor Kite (`plume_drifters_crater.png`)! | **`Swarm Event #6 Finale`** |
+
+---
+
+## 7. Design Variants & Technical Contracts (`[PROPOSAL]`)
+
+### 7.1 Three Ecosystem Variants & Our Ranking (`RULES.md` §"Facts and creativity")
+1. **Variant A — Hybrid Physics-Driven Event Swarms + Restorable Roosts/Hives (RECOMMENDED, Ranked #1):**
+   - *Design:* 6 instanced swarms (`S1–S3, S5–S7`) + 1 horizon leviathan (`S4`), strictly gated by L1 light phases, geological anomalies, and player inventions (`Ember Shell`, `Roost Tower`, `Hive Kiln`).
+   - *Why #1:* Keeps solitude as the baseline (`VISION.md` Pillar 6), makes every swarm scientifically logical in vacuum, and ties swarms directly into the resource/crafting loop (`inventions.md`).
+2. **Variant B — Free-Roaming Boid Flocks Everywhere (Ranked #2):**
+   - *Design:* Flying drones spawn randomly across all regions on a 3-minute timer.
+   - *Why Lower:* Turns swarms into background wallpaper, breaks the lonely Mare mood (`0.6-world-regions.md:25`), and disconnects species from habitats.
+3. **Variant C — Scripted Set-Piece Cutscene Swarms Only (Ranked #3):**
+   - *Design:* Swarms appear only once during fixed camera triggers.
+   - *Why Lowest:* Violates `0.6-living-moon.md:45` Rule 5 (*"Systemic inputs only... No scripted cutscenes for the ecology"*) and removes systemic replayability (restoring roosts/hives).
+
+### 7.2 Core C# Contracts (For Future Implementation Slice)
+- `MoonProject.Core`: extend `SpeciesId` enum (`DustLark`, `LanternMoth`, `PuffSwift`, `RegolithStrider`, `PlumeDrifter`, `GlassweaverBee`, `SwirlRay`) and add `SwarmRoostRestored(SpeciesId species, Vector3 position)`.
+- `MoonProject.Gameplay.Ecology`: `SwarmBoidSimulator` (pure C#, EditMode-testable, operates on `Span<SwarmAgentState>`, zero GC) + `InstancedSwarmRenderer` (`Graphics.DrawMeshInstancedProcedural`, 1 draw call per active swarm).
