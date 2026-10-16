@@ -268,7 +268,7 @@
         },
         {
             "key": "recovery.answer.name",
-            "text": "Trả lời Trái Đất"
+            "text": "Trả lời tín hiệu"
         },
         {
             "key": "protocol.power.need",
@@ -324,7 +324,7 @@
         },
         {
             "key": "ticker.recovery.answer",
-            "text": "Trái Đất đã nghe thấy."
+            "text": "Các tàu Ark đã nghe thấy."
         },
         {
             "key": "notyet.bay",
@@ -1624,7 +1624,7 @@
         },
         {
             "key": "lens.boot.signal",
-            "text": "TÍN HIỆU TRÁI ĐẤT · ĐÃ NHẬN"
+            "text": "TÍN HIỆU QUỸ ĐẠO · ĐÃ NHẬN"
         },
         {
             "key": "lens.boot.uplink",

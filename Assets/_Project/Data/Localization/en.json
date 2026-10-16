@@ -268,7 +268,7 @@
         },
         {
             "key": "recovery.answer.name",
-            "text": "Answer Earth"
+            "text": "Answer the signal"
         },
         {
             "key": "protocol.power.need",
@@ -324,7 +324,7 @@
         },
         {
             "key": "ticker.recovery.answer",
-            "text": "Earth has heard us."
+            "text": "The Arks have heard us."
         },
         {
             "key": "notyet.bay",
@@ -1624,7 +1624,7 @@
         },
         {
             "key": "lens.boot.signal",
-            "text": "EARTH SIGNAL · DETECTED"
+            "text": "ORBITAL SIGNAL · DETECTED"
         },
         {
             "key": "lens.boot.uplink",
