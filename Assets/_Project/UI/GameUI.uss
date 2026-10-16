@@ -160,7 +160,7 @@ Label {
 
 /* Glyphs: a key cap for keys and mouse buttons, a round button for gamepads */
 
-/* A key or button: a round glass bubble with a bright rim and the key in white Exo 2 (Moonlight Glass) */
+/* A key or button: a round CRT keycap bubble with a bright amber rim and the key in Chakra Petch (Variant C) */
 .glyph {
     min-width: 44px;
     height: 44px;
@@ -598,7 +598,7 @@ Label {
 .name-tag__name {
     font-size: 34px;
     letter-spacing: 2px;
-    color: var(--moon-cream);
+    color: var(--glass-hi);
     -unity-text-align: middle-center;
     text-shadow: 0 2px 14px var(--moon-shadow);
 }
@@ -1597,7 +1597,7 @@ Label {
     padding: 28px 28px 22px 28px;
 }
 
-/* The menu's title bar: a band of brighter glass across the panel's top, the heading in Exo 2 capitals */
+/* The menu's title bar: a band of brighter amber CRT across the panel's top, the heading in Chakra Petch capitals */
 .pause__header {
     flex-direction: row;
     justify-content: space-between;
@@ -1724,14 +1724,14 @@ Label {
     transition-duration: 0.06s, 0.06s;
 }
 
-/* The settings' tabs: skewed glass (Subnautica's tab buttons), the selected one edged in amber */
+/* The settings' tabs: chamfered CRT terminal tabs (Variant C), the selected one edged in amber */
 .settings-tabs {
     flex-direction: row;
     align-items: stretch;
     margin: 0 8px 14px 8px;
 }
 
-/* Each tab's skewed glass is painted on its wrapper, beneath the button, so the label is always drawn on top */
+/* Each tab's chamfered CRT frame is painted on its wrapper, beneath the button, so the label is always drawn on top */
 .settings-tab-wrap {
     flex-grow: 1;
     flex-basis: 0;
@@ -1926,8 +1926,8 @@ Label {
 
 /*
  * The tech board's labels while 07 looks at it (M3-21): the recovery panel's protocol and its four targets, each
- * with its row of lamps (dark glass, warm amber when lit), then the pins Kenji's board knows. Left of the board,
- * no plate: cream type on its own soft shadow, a decoded sheet quieter than a built one.
+ * with its row of lamps (dark CRT track, warm amber when lit), then the pins Kenji's board knows. Framed on a
+ * Variant C CRT panel on the left, a decoded sheet in calm cyan quieter than a built one.
  */
 
 .recovery-board {
@@ -1935,14 +1935,22 @@ Label {
     left: 0;
     top: 24%;
     width: 30%;
+    padding: 16px 20px 14px 20px;
+    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPanel.png");
+    -unity-slice-left: 56;
+    -unity-slice-right: 56;
+    -unity-slice-top: 56;
+    -unity-slice-bottom: 56;
+    -unity-slice-scale: 0.5;
 }
 
 .recovery-board__title {
     margin-bottom: 12px;
     font-size: 18px;
     letter-spacing: 4px;
-    color: var(--moon-text);
+    color: var(--glass-hi);
     text-shadow: 0 2px 12px var(--moon-shadow);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 .recovery-board__row {
@@ -2010,9 +2018,9 @@ Label {
 }
 
 /*
- * The recipe card (M3-24 B): looking at the tower's hopper or a board sheet, a quiet card right of centre, no
- * plate: the next level's name and title, needs and have in material icons, the component still missing, and where
- * it is built, all on the floating names' soft shadow.
+ * The recipe card (M3-24 B): looking at the tower's hopper or a board sheet, a CRT panel right of centre:
+ * the next level's name and title, needs and have in material icons, the component still missing, and where
+ * it is built.
  */
 
 .recipe-card {
@@ -2040,6 +2048,7 @@ Label {
     letter-spacing: 3px;
     color: var(--glass-hi);
     text-shadow: 0 2px 12px var(--moon-shadow);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
 }
 
 .recipe-card__level {
@@ -2120,7 +2129,7 @@ Label {
 }
 
 .cargo__panel {
-    width: 1120px;
+    width: 1220px;
     height: 560px;
     padding: 22px 30px 20px 30px;
     background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPanel.png");
@@ -2138,6 +2147,7 @@ Label {
 }
 
 .cargo__column--hold {
+    width: 310px;
     flex-shrink: 0;
 }
 
@@ -2349,6 +2359,7 @@ Label {
     margin-bottom: 6px;
     font-size: 18px;
     color: var(--glass-sel);
+    white-space: normal;
 }
 
 /* 07's system line on the first Tab press, typed in over the dark screen */

@@ -10,7 +10,7 @@ namespace MoonProject.UI
 {
     /// <summary>
     /// The cargo screen (docs/features/M3-25 §2.4; the PDA of docs/design/first-hour-qa.md R1): Tab or View opens a
-    /// single fixed-size Moonlight Glass panel over the blur, and the game goes on. On the left is 07's hold (a grid of
+    /// single fixed-size Variant C CRT panel over the blur, and the game goes on. On the left is 07's hold (a grid of
     /// slots, each with its material's icon and units out of its capacity, empty slots as faint outlines, the stacks
     /// held back where they were cut) with one plain line under it. On the right is 07's live portrait with its fixed
     /// equipment sockets and parts row (<see cref="EquipmentPage"/>). Opened while 07 rests on the dock, the same frame

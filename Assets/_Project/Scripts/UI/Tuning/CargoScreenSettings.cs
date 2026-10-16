@@ -12,7 +12,7 @@ namespace MoonProject.UI
 
         [Tooltip("Fixed width of the unified cargo panel (px at 1080p); clamped to WidthShare on narrow screens.")]
         [Range(720f, 1600f)]
-        [SerializeField] private float _panelWidth = 1120f;
+        [SerializeField] private float _panelWidth = 1220f;
 
         [Tooltip("Fixed height of the unified cargo panel (px at 1080p); clamped to HeightShare on short screens.")]
         [Range(400f, 900f)]

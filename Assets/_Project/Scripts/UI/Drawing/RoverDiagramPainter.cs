@@ -18,7 +18,7 @@ namespace MoonProject.UI
 
         private const float YawRad = 55f * Mathf.Deg2Rad;
         private const float ElevRad = 14f * Mathf.Deg2Rad;
-        private const float CameraDistance = 5.6f;
+        private const float CameraDistance = 6.6f;
         private const float LookHeight = 0.6f;
         private const float TanHalfFov = 0.26794919f; // tan(15 deg)
 

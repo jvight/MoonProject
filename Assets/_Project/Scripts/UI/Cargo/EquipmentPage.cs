@@ -265,10 +265,10 @@ namespace MoonProject.UI
                 Mathf.Max(_settings.LabelHeight, 24f), Mathf.Max(_settings.LabelGap, 6f),
                 _labelY, _rightColumn);
             _leaders.Clear();
-            float scale = area.width > 0f ? Mathf.Min(1f, area.width / 720f) : 1f;
-            float labelWidth = Mathf.Floor(Mathf.Max(_settings.LabelWidth, 176f) * scale);
-            float labelMargin = Mathf.Floor(Mathf.Max(_settings.LabelMargin, 10f) * scale);
-            float inner = labelMargin + labelWidth;
+            float scale = area.width > 0f ? Mathf.Min(1f, area.width / 740f) : 1f;
+            float leftWidth = Mathf.Floor(Mathf.Max(_settings.LabelWidth, 244f) * scale);
+            float rightWidth = Mathf.Floor(Mathf.Max(_settings.LabelWidth, 184f) * scale);
+            float labelMargin = Mathf.Floor(8f * scale);
             for (int i = 0; i < SocketCount; i++)
             {
                 SocketView view = _sockets[i];
@@ -285,6 +285,8 @@ namespace MoonProject.UI
                 }
 
                 bool right = _rightColumn[i];
+                float labelWidth = right ? rightWidth : leftWidth;
+                float inner = labelMargin + labelWidth;
                 if (right != view.LabelRight || !Mathf.Approximately(_labelY[i], view.LabelY) ||
                     !Mathf.Approximately(area.width, view.AreaWidth))
                 {

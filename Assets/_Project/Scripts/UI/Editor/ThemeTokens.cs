@@ -120,7 +120,7 @@ namespace MoonProject.UI.Editor
                 Alpha = alpha;
             }
 
-            /// <summary>A Moonlight Glass colour, not a palette swatch.</summary>
+            /// <summary>A Variant C CRT / paper token colour, not a palette swatch.</summary>
             public Token(string name, Color32 raw, float alpha)
             {
                 Name = name;
