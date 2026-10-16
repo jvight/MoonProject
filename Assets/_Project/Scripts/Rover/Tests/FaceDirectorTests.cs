@@ -1,6 +1,9 @@
+using System.Reflection;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Editor.Builders;
@@ -385,6 +388,39 @@ namespace MoonProject.Rover.Tests
                     faceDirector.Tuning);
                 Assert.AreEqual("RearVentStrip", faceDirector.RearVentStrip.name);
                 Assert.IsNotNull(faceDirector.RearVentRenderer);
+            }
+        }
+
+        [Test]
+        public void ValidateWiring_FailsLoudlyWithError_WhenReferencesAreMissing()
+        {
+            using (var scratch = new BuilderScratchScene())
+            {
+                GameObject empty = scratch.Create("UnwiredFace");
+                var display = empty.AddComponent<FaceDisplay>();
+                LogAssert.Expect(LogType.Error, new Regex(@"^FaceDisplay: missing required wiring"));
+                Assert.IsFalse(display.ValidateWiring(), "Unwired FaceDisplay must fail ValidateWiring.");
+
+                var director = empty.AddComponent<RoverFaceDirector>();
+                LogAssert.Expect(LogType.Error, new Regex(@"^RoverFaceDirector: missing required wiring"));
+                Assert.IsFalse(director.ValidateWiring(), "Unwired RoverFaceDirector must fail ValidateWiring.");
+
+                GameObject rover = RoverPrefabBuilder.Assemble(scratch);
+                var bodyLanguage = rover.GetComponent<RoverBodyLanguage>();
+                var so = new SerializedObject(bodyLanguage);
+                so.FindProperty("_faceDirector").objectReferenceValue = null;
+                so.ApplyModifiedPropertiesWithoutUndo();
+
+                MethodInfo validate = typeof(RoverBodyLanguage).GetMethod(
+                    "ValidateWiring",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.IsNotNull(validate);
+                LogAssert.Expect(
+                    LogType.Error,
+                    "RoverBodyLanguage: RoverFaceDirector on Screen is not assigned or incomplete (0.5.7 face contract).");
+                bool valid = (bool)validate.Invoke(bodyLanguage, null);
+                Assert.IsFalse(valid, "RoverBodyLanguage must fail fast without runtime fallback when _faceDirector is missing.");
+                Assert.IsNull(bodyLanguage.FaceDirector, "ValidateWiring must not self-heal _faceDirector at runtime.");
             }
         }
     }

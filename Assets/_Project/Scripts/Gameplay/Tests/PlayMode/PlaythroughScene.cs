@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using UnityEngine.TestTools;
+using MoonProject.Rover;
 using MoonProject.Testing;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -25,6 +26,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const string Folder = "Assets/_Project/Generated/Gameplay/Playthrough";
         private const string SceneSlotLine = "_saveSlot: main";
         private const string RockfallPocketPrefab = "Assets/_Project/Generated/Art/Props/RockfallPocket.prefab";
+        private const string RoverPrefab = "Assets/_Project/Generated/Rover/Rover.prefab";
+        private const string OriginalRoverPrefabKey = "MoonProject.PlaythroughScene.OriginalRoverPrefab";
+        private const string RoverSetupDepthKey = "MoonProject.PlaythroughScene.RoverSetupDepth";
         private bool _builtRockfallPocket;
 
         public void Setup()
@@ -38,6 +42,24 @@ namespace MoonProject.Gameplay.PlayModeTests
                 builder?.GetMethod("Build")?.Invoke(null, null);
                 _builtRockfallPocket = true;
             }
+
+            int depth = SessionState.GetInt(RoverSetupDepthKey, 0);
+            if (depth == 0)
+            {
+                var rover = AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(RoverPrefab);
+                if (rover == null || !rover.TryGetComponent(out RoverBodyLanguage body) || body.FaceDirector == null)
+                {
+                    if (File.Exists(RoverPrefab))
+                    {
+                        SessionState.SetString(OriginalRoverPrefabKey, File.ReadAllText(RoverPrefab));
+                    }
+
+                    Type roverBuilder = Type.GetType("MoonProject.Rover.Editor.RoverPrefabBuilder, MoonProject.Rover.Editor");
+                    roverBuilder?.GetMethod("Build")?.Invoke(null, null);
+                }
+            }
+
+            SessionState.SetInt(RoverSetupDepthKey, depth + 1);
 
             if (!AssetDatabase.IsValidFolder(Folder))
             {
@@ -65,6 +87,23 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 AssetDatabase.DeleteAsset(RockfallPocketPrefab);
                 _builtRockfallPocket = false;
+            }
+
+            int depth = SessionState.GetInt(RoverSetupDepthKey, 0);
+            if (depth > 0)
+            {
+                depth--;
+                SessionState.SetInt(RoverSetupDepthKey, depth);
+                if (depth == 0)
+                {
+                    string originalRover = SessionState.GetString(OriginalRoverPrefabKey, string.Empty);
+                    if (!string.IsNullOrEmpty(originalRover))
+                    {
+                        File.WriteAllText(RoverPrefab, originalRover);
+                        SessionState.EraseString(OriginalRoverPrefabKey);
+                        AssetDatabase.ImportAsset(RoverPrefab, ImportAssetOptions.ForceSynchronousImport);
+                    }
+                }
             }
 
             BootstrapHarness.DeleteSaveFiles(SaveSlot);

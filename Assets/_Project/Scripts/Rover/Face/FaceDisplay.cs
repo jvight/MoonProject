@@ -104,11 +104,6 @@ namespace MoonProject.Rover
 
         private void Awake()
         {
-            if (_screenRenderer == null)
-            {
-                _screenRenderer = GetComponent<Renderer>();
-            }
-
             if (_state == null && _tuning != null && _screenRenderer != null)
             {
                 _state = new FaceState(_tuning, _seed);

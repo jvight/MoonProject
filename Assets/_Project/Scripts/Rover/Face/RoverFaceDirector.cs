@@ -122,8 +122,9 @@ namespace MoonProject.Rover
         /// <summary>Validates that all serialized references are assigned, failing loudly with <see cref="Debug.LogError"/> if any are missing.</summary>
         public bool ValidateWiring()
         {
+            bool displayOk = _display != null && _display.ValidateWiring();
             bool ok = _tuning != null &&
-                _display != null &&
+                displayOk &&
                 _head != null &&
                 _rearVentStrip != null &&
                 _rearVentRenderer != null;
@@ -131,7 +132,7 @@ namespace MoonProject.Rover
             if (!ok)
             {
                 Debug.LogError(
-                    $"{nameof(RoverFaceDirector)}: missing required wiring (_tuning={_tuning != null}, _display={_display != null}, " +
+                    $"{nameof(RoverFaceDirector)}: missing required wiring (_tuning={_tuning != null}, _display={displayOk}, " +
                     $"_head={_head != null}, _rearVentStrip={_rearVentStrip != null}, _rearVentRenderer={_rearVentRenderer != null}). Rebuild Rover.prefab.",
                     this);
             }

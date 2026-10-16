@@ -104,12 +104,6 @@ namespace MoonProject.Rover.Editor
             var fxTuning = BuildWiring.Require<RoverFxTuning>(RoverAssetPaths.FxTuning, "Rover/Tuning");
             var characterTuning =
                 BuildWiring.Require<RoverCharacterTuning>(RoverAssetPaths.CharacterTuning, "Rover/Tuning");
-            if (AssetDatabase.LoadAssetAtPath<FaceTuning>(RoverAssetPaths.FaceTuning) == null ||
-                AssetDatabase.LoadAssetAtPath<FaceDirectorTuning>(RoverAssetPaths.FaceDirectorTuning) == null)
-            {
-                RoverTuningBuilder.Build();
-            }
-
             var faceTuning = BuildWiring.Require<FaceTuning>(RoverAssetPaths.FaceTuning, "Rover/Tuning");
             var faceDirectorTuning =
                 BuildWiring.Require<FaceDirectorTuning>(RoverAssetPaths.FaceDirectorTuning, "Rover/Tuning");
