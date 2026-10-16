@@ -16,12 +16,14 @@ import bpy
 import numpy as np
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
+BLENDER_DIR = SCRIPT_DIR.parent
+for _p in (BLENDER_DIR, SCRIPT_DIR):
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
 sys.dont_write_bytecode = True
 
 from build_rover import DIMENSIONS, MATERIALS  # noqa: E402
-from mesh_ops import bake_model_vertex_colors, clear_scene  # noqa: E402
+from r1kit import bake_vertex_colors, reset_scene  # noqa: E402
 from render_suite import (  # noqa: E402
     aim_camera_at,
     enhance_materials_with_vertex_color_for_render,
@@ -61,7 +63,7 @@ def _rename_hierarchy(root_obj, prefix: str):
 
 def build_fully_upgraded_rover_scene():
     """Build 07 v3 with SolarWing, Kit_TapeDeck, and all 10 R1 upgrade kits mounted at their exact v3 sockets."""
-    clear_scene()
+    reset_scene()
     mats = create_material_library(MATERIALS, for_render=False)
     rover_root = build_rover_model_hierarchy(DIMENSIONS, mats)
 
@@ -147,7 +149,7 @@ def build_fully_upgraded_rover_scene():
 
     bpy.context.view_layer.update()
     all_meshes = [o for o in bpy.data.objects if o.type == "MESH" and not o.hide_render]
-    bake_model_vertex_colors(all_meshes, DIMENSIONS, include_ground_occluder=True)
+    bake_vertex_colors(all_meshes, rover_cfg=DIMENSIONS, include_ground_occluder=True)
 
     configure_procedural_crt_screen_shader(mats["R1_Screen"], MATERIALS["R1_Screen"])
     enhance_materials_with_vertex_color_for_render(mats)

@@ -9,11 +9,13 @@ import sys
 import bpy
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
+BLENDER_DIR = SCRIPT_DIR.parent
+for _p in (BLENDER_DIR, SCRIPT_DIR):
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
 sys.dont_write_bytecode = True
 
-from mesh_ops import bake_model_vertex_colors, clear_scene, export_fbx
+from r1kit import bake_vertex_colors, count_model_stats, export_fbx, reset_scene
 from render_suite import (
     enhance_materials_with_vertex_color_for_render,
     render_orthographic_views_and_turnaround,
@@ -88,7 +90,7 @@ DIMENSIONS = {
     "sage_patch_height": 0.22,
     "sage_patch_length": 0.24,
     "rivet_radius": 0.0075,
-    "solar_deck_slope_deg": 6.0,
+    "solar_deck_slope_deg": 0.0,
     "solar_rail_width": 0.040,
     "solar_rail_height": 0.024,
     "solar_rail_length": 0.42,
@@ -181,11 +183,11 @@ DIMENSIONS = {
     "piv_shock_x": 0.42,
     "piv_shock_y": 0.66,
     "piv_shock_z": 0.43,
-    "piv_solar_wing": (0.0, 0.96, -0.06),
+    "piv_solar_wing": (0.0, 0.948, -0.394),
 
     # 6. Kit Dimensions (SolarWing.fbx & Kit_TapeDeck.fbx)
-    "solar_wing_width": 0.56,
-    "solar_wing_length": 0.48,
+    "solar_wing_width": 0.40,
+    "solar_wing_length": 0.220,
     "tape_deck_width": 0.09,
     "tape_deck_height": 0.21,
     "tape_deck_depth": 0.21,
@@ -327,16 +329,8 @@ MATERIALS = {
 }
 
 
-def count_model_stats(objects):
-    """Return (total_nodes, mesh_nodes, empty_nodes, total_verts, total_tris) for objects."""
-    mesh_objs = [o for o in objects if o.type == "MESH"]
-    empty_objs = [o for o in objects if o.type == "EMPTY"]
-    verts = sum(len(o.data.vertices) for o in mesh_objs)
-    tris = sum(sum(max(0, len(p.vertices) - 2) for p in o.data.polygons) for o in mesh_objs)
-    return len(objects), len(mesh_objs), len(empty_objs), verts, tris
-
-
-def main():
+def main(argv=None):
+    args = sys.argv if argv is None else list(argv)
     repo_root = SCRIPT_DIR.parents[3]
     fbx_out_dir = repo_root / "Assets" / "_Project" / "Art" / "R1" / "Models" / "Rover"
     renders_dir = repo_root / "Logs" / "renders"
@@ -346,37 +340,37 @@ def main():
     renders_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. Build, bake vertex colors, and export SolarWing.fbx
-    clear_scene()
+    reset_scene()
     mats_sw = create_material_library(MATERIALS, for_render=False)
     build_solar_wing_model(DIMENSIONS, mats_sw)
     sw_objs = list(bpy.data.objects)
     sw_meshes = [o for o in sw_objs if o.type == "MESH"]
-    bake_model_vertex_colors(sw_meshes, DIMENSIONS, include_ground_occluder=False)
-    export_fbx(fbx_out_dir / "SolarWing.fbx", sw_objs)
+    bake_vertex_colors(sw_meshes, rover_cfg=DIMENSIONS, include_ground_occluder=False)
+    export_fbx(sw_objs, fbx_out_dir / "SolarWing.fbx", bake_space_transform=True)
     sw_stats = count_model_stats(sw_objs)
 
     # 2. Build, bake vertex colors, and export Kit_TapeDeck.fbx
-    clear_scene()
+    reset_scene()
     mats_td = create_material_library(MATERIALS, for_render=False)
     build_tape_deck_model(DIMENSIONS, mats_td)
     td_objs = list(bpy.data.objects)
     td_meshes = [o for o in td_objs if o.type == "MESH"]
-    bake_model_vertex_colors(td_meshes, DIMENSIONS, include_ground_occluder=False)
-    export_fbx(fbx_out_dir / "Kit_TapeDeck.fbx", td_objs)
+    bake_vertex_colors(td_meshes, rover_cfg=DIMENSIONS, include_ground_occluder=False)
+    export_fbx(td_objs, fbx_out_dir / "Kit_TapeDeck.fbx", bake_space_transform=True)
     td_stats = count_model_stats(td_objs)
 
     # 3. Build, bake vertex colors, and export RoverModel.fbx
-    clear_scene()
+    reset_scene()
     mats_rv = create_material_library(MATERIALS, for_render=False)
     rover_root = build_rover_model_hierarchy(DIMENSIONS, mats_rv)
     rv_objs = list(bpy.data.objects)
     rv_meshes = [o for o in rv_objs if o.type == "MESH"]
-    bake_model_vertex_colors(rv_meshes, DIMENSIONS, include_ground_occluder=True)
-    export_fbx(fbx_out_dir / "RoverModel.fbx", rv_objs)
+    bake_vertex_colors(rv_meshes, rover_cfg=DIMENSIONS, include_ground_occluder=True)
+    export_fbx(rv_objs, fbx_out_dir / "RoverModel.fbx", bake_space_transform=True)
     rv_stats = count_model_stats(rv_objs)
 
     # 4. Configure render-only procedural Screen shader + vertex-color shading and render all acceptance images
-    if "--no-render" not in sys.argv and concept_turnaround.exists():
+    if "--no-render" not in args and concept_turnaround.exists():
         from rover_parts import configure_procedural_crt_screen_shader
 
         configure_procedural_crt_screen_shader(mats_rv["R1_Screen"], MATERIALS["R1_Screen"])

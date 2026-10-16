@@ -1,8 +1,10 @@
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using MoonProject.Art;
 using MoonProject.Core.Events;
 using MoonProject.Core.Save;
+using MoonProject.Rover;
 using MoonProject.Showcase.Editor;
 using MoonProject.World;
 
@@ -28,6 +30,11 @@ namespace MoonProject.Showcase.Tests
             float angle = ShowcaseEasing.SmoothAngle(170f, -170f, easeSeconds: 0.5f, deltaTime: 0.05f);
             float delta = Mathf.DeltaAngle(170f, angle);
             Assert.That(delta, Is.GreaterThan(0f).And.LessThan(20f), "Shortest-path wrap across 180 seam.");
+
+            // Rise-and-settle curve: starts at -depth, crests at +overshoot, and settles at 0
+            Assert.AreEqual(-0.42f, ShowcaseEasing.EvaluateRiseAndSettleVerticalOffset(0f, 0.42f, 0.035f), 1e-5f);
+            Assert.AreEqual(0.035f, ShowcaseEasing.EvaluateRiseAndSettleVerticalOffset(0.72f, 0.42f, 0.035f), 1e-5f);
+            Assert.AreEqual(0f, ShowcaseEasing.EvaluateRiseAndSettleVerticalOffset(1f, 0.42f, 0.035f), 1e-5f);
         }
 
         [Test]
@@ -274,9 +281,10 @@ namespace MoonProject.Showcase.Tests
             {
                 ShowcaseTuningBuilder.PopulateDefaultTuning(tuning);
                 Assert.IsNull(tuning.Validate(), "Default ShowcaseTuning must pass validation.");
-                Assert.AreEqual(6, tuning.Exhibits.Length);
+                Assert.AreEqual(15, tuning.Exhibits.Length);
+                Assert.AreEqual(5, tuning.RuinPieces.Length);
 
-                // Check minimum 12m spacing between all exhibit pairs
+                // Check minimum 12m spacing between all 15 exhibit pairs
                 for (int i = 0; i < tuning.Exhibits.Length; i++)
                 {
                     for (int j = i + 1; j < tuning.Exhibits.Length; j++)
@@ -289,11 +297,82 @@ namespace MoonProject.Showcase.Tests
                     }
                 }
 
+                // Original 6 + Rover07Upgraded + 7 new R1 structures
                 VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.Rover07, ShowcasePaths.RoverPrefab);
+                VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.Rover07Upgraded, ShowcasePaths.RoverPrefab);
                 VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.CargoLander, ShowcasePaths.CargoLanderPrefab);
-                VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.ChargingPad, ShowcasePaths.ChargingPadPrefab);
-                VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.SolarArray, ShowcasePaths.SolarArrayPrefab);
-                VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.PowerPylon, ShowcasePaths.PowerPylonPrefab);
+                VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.ChargingPad, ShowcasePaths.ChargingPadPrefab, expectFourStages: true);
+                VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.SolarArray, ShowcasePaths.SolarArrayPrefab, expectFourStages: true);
+                VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.PowerPylon, ShowcasePaths.PowerPylonPrefab, expectFourStages: true);
+                VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.BatteryBank, ShowcasePaths.BatteryBankPrefab, expectFourStages: true);
+                VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.Smelter, ShowcasePaths.SmelterPrefab, expectFourStages: true);
+                VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.Fabricator, ShowcasePaths.FabricatorPrefab, expectFourStages: true);
+                VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.StorageRack, ShowcasePaths.StorageRackPrefab, expectFourStages: true);
+                VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.UpgradeBay, ShowcasePaths.UpgradeBayPrefab, expectFourStages: true);
+                VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.AntennaMast, ShowcasePaths.AntennaMastPrefab, expectFourStages: true);
+                VerifyExhibitNodePaths(tuning, ShowcaseExhibitId.VehiclePad, ShowcasePaths.VehiclePadPrefab, expectFourStages: true);
+
+                // Ruins Corner prefabs and AirlockPanel
+                string[] ruinPrefabs =
+                {
+                    ShowcasePaths.HabitatModulesPrefab,
+                    ShowcasePaths.RadioTowerPrefab,
+                    ShowcasePaths.KenjiWorkshopPrefab,
+                    ShowcasePaths.FallenSolarArrayPrefab,
+                    ShowcasePaths.ScatterSetPrefab,
+                };
+                foreach (string ruinPath in ruinPrefabs)
+                {
+                    var ruinPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(ruinPath);
+                    Assert.IsNotNull(ruinPrefab, $"Missing ruin prefab at '{ruinPath}'.");
+                }
+
+                var habitatPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(ShowcasePaths.HabitatModulesPrefab);
+                Assert.IsNotNull(habitatPrefab.transform.Find("AirlockPanel"), "HabitatModules must contain AirlockPanel.");
+
+                // Rover07Upgraded socket paths and kit prefabs
+                var roverPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(ShowcasePaths.RoverPrefab);
+                string[] socketPaths =
+                {
+                    RoverModelNodes.HeadlampSocket,
+                    RoverModelNodes.DrumSocketLeft,
+                    RoverModelNodes.DrumSocketRight,
+                    RoverModelNodes.BinSocketLeft,
+                    RoverModelNodes.BinSocketRight,
+                    RoverModelNodes.CargoSocket,
+                    RoverModelNodes.SpineSocket,
+                    RoverModelNodes.CoilSocket,
+                    RoverModelNodes.DeckSocket,
+                    RoverModelNodes.RingSocket,
+                    RoverModelNodes.LensSocket,
+                    RoverModelNodes.Eye,
+                    RoverModelNodes.ScanFanSocket,
+                };
+                foreach (string socketPath in socketPaths)
+                {
+                    Assert.IsNotNull(
+                        FindNodeByPathOrName(roverPrefab.transform, socketPath),
+                        $"RoverModel missing socket '{socketPath}'.");
+                }
+
+                string[] kitPrefabs =
+                {
+                    ShowcasePaths.KitLampBarPrefab,
+                    ShowcasePaths.KitCapacitorDrumPrefab,
+                    ShowcasePaths.KitSideBinPrefab,
+                    ShowcasePaths.KitCargoRackPrefab,
+                    ShowcasePaths.KitBatterySpinePrefab,
+                    ShowcasePaths.HoverCoilsPrefab,
+                    ShowcasePaths.KitTapeDeckPrefab,
+                    ShowcasePaths.KitTetherRingPrefab,
+                    ShowcasePaths.FocusLensPrefab,
+                    ShowcasePaths.LensGlassPrefab,
+                    ShowcasePaths.ScanFanPrefab,
+                };
+                foreach (string kitPath in kitPrefabs)
+                {
+                    Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<GameObject>(kitPath), $"Missing kit prefab at '{kitPath}'.");
+                }
             }
             finally
             {
@@ -301,10 +380,83 @@ namespace MoonProject.Showcase.Tests
             }
         }
 
+        [Test]
+        public void ExhibitRig_BuildStageSequence_RisesAndSettlesOneByOne()
+        {
+            var tuning = ScriptableObject.CreateInstance<ShowcaseTuning>();
+            var rootGo = new GameObject("TestBatteryBank");
+            try
+            {
+                ShowcaseTuningBuilder.PopulateDefaultTuning(tuning);
+                var rig = rootGo.AddComponent<ShowcaseExhibitRig>();
+
+                var stageRoots = new Transform[4];
+                var restPositions = new Vector3[4];
+                for (int i = 0; i < 4; i++)
+                {
+                    var stageGo = new GameObject($"Stage_{i + 1}");
+                    stageGo.transform.SetParent(rootGo.transform, false);
+                    stageRoots[i] = stageGo.transform;
+                    restPositions[i] = Vector3.zero;
+                }
+
+                var so = new SerializedObject(rig);
+                so.FindProperty("_exhibitId").enumValueIndex = (int)ShowcaseExhibitId.BatteryBank;
+                so.FindProperty("_tuning").objectReferenceValue = tuning;
+                SerializedProperty stagesProp = so.FindProperty("_stageRoots");
+                stagesProp.arraySize = 4;
+                SerializedProperty restProp = so.FindProperty("_stageRestLocalPositions");
+                restProp.arraySize = 4;
+                for (int i = 0; i < 4; i++)
+                {
+                    stagesProp.GetArrayElementAtIndex(i).objectReferenceValue = stageRoots[i];
+                    restProp.GetArrayElementAtIndex(i).vector3Value = restPositions[i];
+                }
+                so.ApplyModifiedPropertiesWithoutUndo();
+
+                rig.Initialize(tuning);
+                Assert.AreEqual(4, rig.VisibleStageCount);
+
+                // Trigger 1-by-1 build stage sequence
+                rig.TriggerStageSequence();
+                Assert.IsTrue(rig.IsStageSequenceRunning);
+                Assert.AreEqual(1, rig.VisibleStageCount);
+                Assert.IsTrue(stageRoots[0].gameObject.activeSelf);
+                Assert.IsFalse(stageRoots[1].gameObject.activeSelf);
+                Assert.Less(stageRoots[0].localPosition.y, -0.30f, "Stage 1 starts below ground.");
+
+                // Step past Stage 2 start (0.60s)
+                rig.StepFrame(0.60f, Vector3.zero, Vector3.up, SkyPhase.Sunlit, false, 0f, 1f);
+                Assert.AreEqual(2, rig.VisibleStageCount);
+                Assert.IsTrue(stageRoots[1].gameObject.activeSelf);
+                Assert.IsFalse(stageRoots[2].gameObject.activeSelf);
+
+                // Step past all 4 stages completing (3.0s)
+                for (int i = 0; i < 30; i++)
+                {
+                    rig.StepFrame(0.10f, Vector3.zero, Vector3.up, SkyPhase.Sunlit, false, 0f, 1f);
+                }
+
+                Assert.IsFalse(rig.IsStageSequenceRunning);
+                Assert.AreEqual(4, rig.VisibleStageCount);
+                for (int i = 0; i < 4; i++)
+                {
+                    Assert.IsTrue(stageRoots[i].gameObject.activeSelf);
+                    Assert.AreEqual(0f, stageRoots[i].localPosition.y, 1e-4f, $"Stage_{i + 1} settles back to 0.");
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(rootGo);
+                Object.DestroyImmediate(tuning);
+            }
+        }
+
         private static void VerifyExhibitNodePaths(
             ShowcaseTuning tuning,
             ShowcaseExhibitId exhibitId,
-            string prefabPath)
+            string prefabPath,
+            bool expectFourStages = false)
         {
             ShowcaseExhibitDefinition def = tuning.FindExhibit(exhibitId);
             Assert.IsNotNull(def, $"Missing exhibit definition for {exhibitId}.");
@@ -312,13 +464,43 @@ namespace MoonProject.Showcase.Tests
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
             Assert.IsNotNull(prefab, $"Missing prefab at '{prefabPath}'.");
 
+            if (expectFourStages)
+            {
+                for (int s = 1; s <= 4; s++)
+                {
+                    Assert.IsNotNull(
+                        prefab.transform.Find($"Stage_{s}"),
+                        $"Exhibit {exhibitId} prefab '{prefabPath}' missing Stage_{s}.");
+                }
+            }
+
             foreach (ShowcaseNodeRule rule in def.Nodes)
             {
-                Transform target = prefab.transform.Find(rule.NodePath);
+                Transform target = FindNodeByPathOrName(prefab.transform, rule.NodePath);
                 Assert.IsNotNull(
                     target,
                     $"Exhibit {exhibitId} rule '{rule.RuleId}' path '{rule.NodePath}' not found in '{prefabPath}'.");
             }
+        }
+
+        private static Transform FindNodeByPathOrName(Transform root, string pathOrName)
+        {
+            Transform found = root.Find(pathOrName);
+            if (found != null)
+            {
+                return found;
+            }
+
+            Transform[] descendants = root.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < descendants.Length; i++)
+            {
+                if (descendants[i].name == pathOrName)
+                {
+                    return descendants[i];
+                }
+            }
+
+            return null;
         }
     }
 }

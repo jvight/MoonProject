@@ -30,10 +30,17 @@ namespace MoonProject.Showcase
         private float _targetPitch;
         private float _currentDistance;
         private float _targetDistance;
+        private bool _useTourTransition;
 
         public Camera Camera => _camera;
         public int FocusedExhibitIndex => _focusedIndex;
         public bool IsFreeFly => _isFreeFly;
+        public Vector3 CurrentOrbitPivot => _currentOrbitPivot;
+        public Vector3 TargetOrbitPivot => _targetOrbitPivot;
+        public float CurrentYaw => _currentYaw;
+        public float TargetYaw => _targetYaw;
+        public float CurrentPitch => _currentPitch;
+        public float CurrentDistance => _currentDistance;
         public ShowcaseExhibitRig FocusedExhibit =>
             (_exhibits != null && _focusedIndex >= 0 && _focusedIndex < _exhibits.Length)
                 ? _exhibits[_focusedIndex]
@@ -49,13 +56,14 @@ namespace MoonProject.Showcase
             _exhibits = exhibits;
             _terrain = terrain;
             _isFreeFly = false;
+            _useTourTransition = false;
             SelectExhibitImmediate(0);
         }
 
         /// <summary>
         /// Smoothly transitions the camera into orbit around the exhibit at <paramref name="index"/> without snapping.
         /// </summary>
-        public void FocusExhibit(int index)
+        public void FocusExhibit(int index, bool useTourTransition = false, float yawOffsetDegrees = 0f)
         {
             if (_exhibits == null || _exhibits.Length == 0)
             {
@@ -75,12 +83,26 @@ namespace MoonProject.Showcase
                 _isFreeFly = false;
             }
 
+            _useTourTransition = useTourTransition;
             _focusedIndex = wrapped;
             ShowcaseExhibitDefinition def = targetRig.Definition;
             _targetOrbitPivot = targetRig.OrbitPivotWorld;
-            _targetYaw = def != null ? def.DefaultOrbitYaw : 155f;
+            _targetYaw = (def != null ? def.DefaultOrbitYaw : 155f) + yawOffsetDegrees;
             _targetPitch = def != null ? def.DefaultOrbitPitch : 12f;
             _targetDistance = def != null ? def.DefaultOrbitDistance : 4.2f;
+        }
+
+        public void SetTourOrbitYawOffset(float yawOffsetDegrees)
+        {
+            ShowcaseExhibitRig rig = FocusedExhibit;
+            if (rig == null || _isFreeFly)
+            {
+                return;
+            }
+
+            ShowcaseExhibitDefinition def = rig.Definition;
+            float baseYaw = def != null ? def.DefaultOrbitYaw : 155f;
+            _targetYaw = baseYaw + yawOffsetDegrees;
         }
 
         public void FocusNextExhibit()
@@ -106,6 +128,7 @@ namespace MoonProject.Showcase
 
             _focusedIndex = ((index % _exhibits.Length) + _exhibits.Length) % _exhibits.Length;
             _isFreeFly = false;
+            _useTourTransition = false;
             ShowcaseExhibitRig rig = _exhibits[_focusedIndex];
             if (rig == null)
             {
@@ -132,6 +155,20 @@ namespace MoonProject.Showcase
             ApplyOrbitTransform();
         }
 
+        public void SetWorldPoseImmediate(Vector3 worldPosition, Quaternion worldRotation)
+        {
+            _isFreeFly = true;
+            _useTourTransition = false;
+            Vector3 euler = worldRotation.eulerAngles;
+            _currentYaw = euler.y;
+            _targetYaw = euler.y;
+            _currentPitch = ShowcaseEasing.NormalizeSignedAngle(euler.x);
+            _targetPitch = _currentPitch;
+            Vector3 clampedPos = worldPosition;
+            clampedPos.y = ClampAboveGround(clampedPos.x, clampedPos.y, clampedPos.z);
+            transform.SetPositionAndRotation(clampedPos, Quaternion.Euler(_currentPitch, _currentYaw, 0f));
+        }
+
         public void StepCamera(
             float deltaTime,
             Vector2 moveInput,
@@ -155,6 +192,7 @@ namespace MoonProject.Showcase
             if (hasFlyMove && !_isFreeFly)
             {
                 _isFreeFly = true;
+                _useTourTransition = false;
                 _targetYaw = _currentYaw;
                 _targetPitch = _currentPitch;
             }
@@ -184,13 +222,17 @@ namespace MoonProject.Showcase
                 _targetDistance = Mathf.Clamp(_targetDistance - scrollNotches * _tuning.OrbitZoomStep, minDist, maxDist);
             }
 
-            float easeTime = _tuning.OrbitTransitionSeconds;
+            float easeTime = _useTourTransition
+                ? Mathf.Max(0.25f, _tuning.TourTransitionSeconds)
+                : _tuning.OrbitTransitionSeconds;
             _currentOrbitPivot = new Vector3(
                 ShowcaseEasing.SmoothScalar(_currentOrbitPivot.x, _targetOrbitPivot.x, easeTime, deltaTime),
                 ShowcaseEasing.SmoothScalar(_currentOrbitPivot.y, _targetOrbitPivot.y, easeTime, deltaTime),
                 ShowcaseEasing.SmoothScalar(_currentOrbitPivot.z, _targetOrbitPivot.z, easeTime, deltaTime));
 
-            float angleEase = Mathf.Min(0.32f, easeTime * 0.5f);
+            float angleEase = _useTourTransition
+                ? Mathf.Max(0.25f, easeTime * 0.55f)
+                : Mathf.Min(0.32f, easeTime * 0.5f);
             _currentYaw = ShowcaseEasing.SmoothAngle(_currentYaw, _targetYaw, angleEase, deltaTime);
             _currentPitch = ShowcaseEasing.SmoothScalar(_currentPitch, _targetPitch, angleEase, deltaTime);
             _currentDistance = ShowcaseEasing.SmoothScalar(_currentDistance, _targetDistance, easeTime * 0.65f, deltaTime);

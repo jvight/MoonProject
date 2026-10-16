@@ -69,8 +69,11 @@ def main(argv: list[str] | None = None) -> None:
     import build_kit_side_bin
     import build_kit_tether_ring
     import build_lens_glass
+    import build_rover
     import build_scan_fan
     import render_kits
+
+    build_rover.main(["--no-render"] if args.skip_renders else [])
 
     for kit_mod, fbx_name in (
         (build_kit_lamp_bar, "Kit_LampBar.fbx"),

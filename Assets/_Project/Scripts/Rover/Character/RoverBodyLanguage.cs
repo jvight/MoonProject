@@ -838,8 +838,9 @@ namespace MoonProject.Rover
             _neck.localRotation = _neckRest * Quaternion.AngleAxis(yaw, Vector3.up);
             if (_neckLift != null)
             {
-                float neckDroop = (35f * _mood.Wake.Sleep + 15f * _tired + 15f * _crawl + 8f * _cargoSag
-                    - 10f * Mathf.Clamp01(_mood.Perk)) * idleScale;
+                float neckDroop = (_tuning.NeckSleepDroop * _mood.Wake.Sleep + _tuning.NeckTiredDroop * _tired
+                    + _tuning.NeckCrawlExtend * _crawl + _tuning.NeckCargoExtend * _cargoSag
+                    - _tuning.NeckAlertLift * Mathf.Clamp01(_mood.Perk)) * idleScale;
                 _neckLift.localRotation = _neckLiftRest * Quaternion.AngleAxis(neckDroop, Vector3.right);
             }
 
@@ -875,9 +876,9 @@ namespace MoonProject.Rover
 
             float wingOpen = Mathf.Max(_mood.WingOpen * Mathf.Lerp(1f, battery.LowWingOpen, _tired),
                 sky * _tuning.StargazeWingOpen);
-            _solarWing.localRotation = _wingRest
-                * Quaternion.AngleAxis(wingOpen * _tuning.WingOpenAngle + _sigh * _tuning.Chirp.SighWing,
-                    Vector3.right);
+            float wingAngle = Mathf.Lerp(_tuning.WingClosedAngle, _tuning.WingOpenAngle, wingOpen)
+                + _sigh * _tuning.Chirp.SighWing;
+            _solarWing.localRotation = _wingRest * Quaternion.AngleAxis(wingAngle, _tuning.WingHingeAxis);
 
             float eyeGlow = _mood.EyeGlow * Mathf.Lerp(1f, _tuning.StargazeEyeGlow, sky)
                 * Mathf.Lerp(1f, battery.LowEyeGlow, _tired) * Mathf.Lerp(1f, battery.CrawlEyeGlow, _crawl)

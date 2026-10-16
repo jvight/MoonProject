@@ -1057,18 +1057,6 @@ MonoBehaviour:
     _volumeMax: 1
     _pitchMin: 1
     _pitchMax: 1
-  - _id: ambience_bed
-    _clips:
-    - {fileID: 8300000, guid: d77d8a1570c2f4a43a3cfb960fc5aaf9, type: 3}
-    _variantLabels:
-    - ambience_bed
-    _bus: 3
-    _spatial: 0
-    _loop: 1
-    _volumeMin: 0.8
-    _volumeMax: 0.8
-    _pitchMin: 1
-    _pitchMax: 1
   - _id: sonar_ping
     _clips:
     - {fileID: 8300000, guid: 29bc568b9d2fbcd4baf0d38400a7af07, type: 3}
@@ -1235,72 +1223,6 @@ MonoBehaviour:
     _volumeMax: 0.8
     _pitchMin: 1
     _pitchMax: 1
-  - _id: ui_menu_open
-    _clips:
-    - {fileID: 8300000, guid: 1890742ae58d7a94b865065cb3d8e78c, type: 3}
-    _variantLabels:
-    - ui_menu_open
-    _bus: 2
-    _spatial: 0
-    _loop: 0
-    _volumeMin: 0.6
-    _volumeMax: 0.6
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: ui_menu_close
-    _clips:
-    - {fileID: 8300000, guid: 1d404c18c850ad34aa3c10542b0f922d, type: 3}
-    _variantLabels:
-    - ui_menu_close
-    _bus: 2
-    _spatial: 0
-    _loop: 0
-    _volumeMin: 0.5
-    _volumeMax: 0.5
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: ui_focus
-    _clips:
-    - {fileID: 8300000, guid: 5700c7846b5fce6448e236d3c6eb7555, type: 3}
-    - {fileID: 8300000, guid: 9bcb881525e713147b195e14f01938ff, type: 3}
-    - {fileID: 8300000, guid: 12a40ff9495cf6e41935d0cd8e48799d, type: 3}
-    _variantLabels:
-    - A4
-    - B4
-    - D5
-    _bus: 2
-    _spatial: 0
-    _loop: 0
-    _volumeMin: 0.26
-    _volumeMax: 0.3
-    _pitchMin: 0.985
-    _pitchMax: 1.015
-  - _id: ui_slider
-    _clips:
-    - {fileID: 8300000, guid: eb8fb2aab49bfc942aa9154adf59e68f, type: 3}
-    - {fileID: 8300000, guid: 34df7299665efcf4483df18f1e88f0f2, type: 3}
-    _variantLabels:
-    - D5
-    - E5
-    _bus: 2
-    _spatial: 0
-    _loop: 0
-    _volumeMin: 0.22
-    _volumeMax: 0.26
-    _pitchMin: 0.985
-    _pitchMax: 1.015
-  - _id: ui_prompt
-    _clips:
-    - {fileID: 8300000, guid: 5d730efb8e4978f439db5d88713497a5, type: 3}
-    _variantLabels:
-    - ui_prompt
-    _bus: 2
-    _spatial: 0
-    _loop: 0
-    _volumeMin: 0.4
-    _volumeMax: 0.4
-    _pitchMin: 1
-    _pitchMax: 1
   - _id: ui_hold_fill
     _clips:
     - {fileID: 8300000, guid: 7a2fbfea14ab40442ad52715f325203c, type: 3}
@@ -1323,42 +1245,6 @@ MonoBehaviour:
     _loop: 0
     _volumeMin: 0.55
     _volumeMax: 0.55
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: ui_card
-    _clips:
-    - {fileID: 8300000, guid: fa81f0d2e4b95d342a507a66a8f3f010, type: 3}
-    _variantLabels:
-    - ui_card
-    _bus: 2
-    _spatial: 0
-    _loop: 0
-    _volumeMin: 0.5
-    _volumeMax: 0.5
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: ui_confirm
-    _clips:
-    - {fileID: 8300000, guid: a4d1a786fecf4744a80ca00929cecf18, type: 3}
-    _variantLabels:
-    - ui_confirm
-    _bus: 2
-    _spatial: 0
-    _loop: 0
-    _volumeMin: 0.7
-    _volumeMax: 0.7
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: ui_back
-    _clips:
-    - {fileID: 8300000, guid: cbfd4532561266c4eaf26a52e196b08a, type: 3}
-    _variantLabels:
-    - ui_back
-    _bus: 2
-    _spatial: 0
-    _loop: 0
-    _volumeMin: 0.65
-    _volumeMax: 0.65
     _pitchMin: 1
     _pitchMax: 1
   - _id: tilly_broken
@@ -2587,6 +2473,474 @@ MonoBehaviour:
     _loop: 0
     _volumeMin: 0.8
     _volumeMax: 0.8
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: face_boot
+    _clips:
+    - {fileID: 8300000, guid: 1662bf96e10aa2d6d63c6ffec71833bf, type: 3}
+    _variantLabels:
+    - face_boot
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.72
+    _volumeMax: 0.72
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: face_blink
+    _clips:
+    - {fileID: 8300000, guid: 7f7fe6a7a807d79881b7ab2103bca602, type: 3}
+    _variantLabels:
+    - face_blink
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.62
+    _volumeMax: 0.62
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: face_happy
+    _clips:
+    - {fileID: 8300000, guid: ad5a26ffe2e97234014f62c0275d4bbe, type: 3}
+    _variantLabels:
+    - face_happy
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.7
+    _volumeMax: 0.7
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: face_worried
+    _clips:
+    - {fileID: 8300000, guid: 88b58bd52a0fa0fd5f5844df21413dc6, type: 3}
+    _variantLabels:
+    - face_worried
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.68
+    _volumeMax: 0.68
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: face_asleep
+    _clips:
+    - {fileID: 8300000, guid: 3b24a111f23b36f561d5b5d22647cadb, type: 3}
+    _variantLabels:
+    - face_asleep
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.65
+    _volumeMax: 0.65
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: face_startled
+    _clips:
+    - {fileID: 8300000, guid: b33c5305f41c67cdd31d28b16541e155, type: 3}
+    _variantLabels:
+    - face_startled
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.72
+    _volumeMax: 0.72
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: face_proud
+    _clips:
+    - {fileID: 8300000, guid: ccef347e04a06bc516512797660fb200, type: 3}
+    _variantLabels:
+    - face_proud
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.74
+    _volumeMax: 0.74
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: sky_diamond_ring
+    _clips:
+    - {fileID: 8300000, guid: 926a66eba147464aba6ac53862bff818, type: 3}
+    _variantLabels:
+    - sky_diamond_ring
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.74
+    _volumeMax: 0.74
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: sky_dawn_sweep
+    _clips:
+    - {fileID: 8300000, guid: db02e476259d2300e17e3478ca0a8024, type: 3}
+    _variantLabels:
+    - sky_dawn_sweep
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.75
+    _volumeMax: 0.75
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: sky_nightfall_settle
+    _clips:
+    - {fileID: 8300000, guid: 47ad660fdbb33df23adfe2016aff43cd, type: 3}
+    _variantLabels:
+    - sky_nightfall_settle
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.72
+    _volumeMax: 0.72
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: build_ghost
+    _clips:
+    - {fileID: 8300000, guid: dc247433c4439bdba633df2ba3924c85, type: 3}
+    _variantLabels:
+    - build_ghost
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.64
+    _volumeMax: 0.64
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: build_snap
+    _clips:
+    - {fileID: 8300000, guid: 8a8315141d5d6be686192350c3c56d4d, type: 3}
+    _variantLabels:
+    - build_snap
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.68
+    _volumeMax: 0.68
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: build_invalid
+    _clips:
+    - {fileID: 8300000, guid: eca4fbd7b50ad3c2e9b4ff5a7e0f257f, type: 3}
+    _variantLabels:
+    - build_invalid
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.68
+    _volumeMax: 0.68
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: build_place
+    _clips:
+    - {fileID: 8300000, guid: a2e43712a4fb82306f37e73734714f4e, type: 3}
+    _variantLabels:
+    - build_place
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.76
+    _volumeMax: 0.76
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: build_weld_loop
+    _clips:
+    - {fileID: 8300000, guid: 20cbf0502b4d58e47dc9866c3bc0720c, type: 3}
+    _variantLabels:
+    - build_weld_loop
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.68
+    _volumeMax: 0.68
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: build_stage_complete
+    _clips:
+    - {fileID: 8300000, guid: 581c977972cd12cf6596a40bce67bc66, type: 3}
+    _variantLabels:
+    - build_stage_complete
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.74
+    _volumeMax: 0.74
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: build_structure_complete
+    _clips:
+    - {fileID: 8300000, guid: 1286b18cf709594df20bbca617e3a515, type: 3}
+    _variantLabels:
+    - build_structure_complete
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.76
+    _volumeMax: 0.76
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: build_deconstruct
+    _clips:
+    - {fileID: 8300000, guid: c361b5cb81f8f796bd23f67d4b2003a3, type: 3}
+    _variantLabels:
+    - build_deconstruct
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.72
+    _volumeMax: 0.72
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: machine_solar_track
+    _clips:
+    - {fileID: 8300000, guid: ac54d8e6f428e0f7d69d5f9f9b7c686e, type: 3}
+    _variantLabels:
+    - machine_solar_track
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.68
+    _volumeMax: 0.68
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: machine_wings_unfold
+    _clips:
+    - {fileID: 8300000, guid: 35bc9e396798646bc3c8d29423b03379, type: 3}
+    _variantLabels:
+    - machine_wings_unfold
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.74
+    _volumeMax: 0.74
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: machine_wings_fold
+    _clips:
+    - {fileID: 8300000, guid: 8fbefac8d5a4e461f6bec7dd49289929, type: 3}
+    _variantLabels:
+    - machine_wings_fold
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.72
+    _volumeMax: 0.72
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: machine_pad_contacts
+    _clips:
+    - {fileID: 8300000, guid: f75d8f011e5c8fe658da57e1b1f071a2, type: 3}
+    _variantLabels:
+    - machine_pad_contacts
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.74
+    _volumeMax: 0.74
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: machine_transformer_loop
+    _clips:
+    - {fileID: 8300000, guid: f2f8148f9c68b1e2b7d7cdea2e756d8e, type: 3}
+    _variantLabels:
+    - machine_transformer_loop
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.66
+    _volumeMax: 0.66
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: machine_pylon_switch
+    _clips:
+    - {fileID: 8300000, guid: d5525d0b1457b6043996691fd0aa4efb, type: 3}
+    _variantLabels:
+    - machine_pylon_switch
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.74
+    _volumeMax: 0.74
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: machine_cable_drums
+    _clips:
+    - {fileID: 8300000, guid: a153e13e57aa403834557ae08f018dde, type: 3}
+    _variantLabels:
+    - machine_cable_drums
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.7
+    _volumeMax: 0.7
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: machine_lander_ramp
+    _clips:
+    - {fileID: 8300000, guid: 977aa553d43306bc36142cb4481bac85, type: 3}
+    _variantLabels:
+    - machine_lander_ramp
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.78
+    _volumeMax: 0.78
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: machine_cargo_hatch
+    _clips:
+    - {fileID: 8300000, guid: fddfd3b58042a6220b7d87c0629f7c6f, type: 3}
+    _variantLabels:
+    - machine_cargo_hatch
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.74
+    _volumeMax: 0.74
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: machine_crate_lid
+    _clips:
+    - {fileID: 8300000, guid: 4100dacafe88b2c1c94c3f5454683f02, type: 3}
+    _variantLabels:
+    - machine_crate_lid
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.7
+    _volumeMax: 0.7
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ui_panel_open
+    _clips:
+    - {fileID: 8300000, guid: 29bae5019f1c7dcadc189513a7650bac, type: 3}
+    _variantLabels:
+    - ui_panel_open
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.48
+    _volumeMax: 0.48
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ui_panel_close
+    _clips:
+    - {fileID: 8300000, guid: e15ba541c760a9c657e7464a9d8a4be3, type: 3}
+    _variantLabels:
+    - ui_panel_close
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.48
+    _volumeMax: 0.48
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ui_cursor_move
+    _clips:
+    - {fileID: 8300000, guid: 8a2a39775882c2e43fbc47af00ffdd3a, type: 3}
+    _variantLabels:
+    - ui_cursor_move
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.42
+    _volumeMax: 0.42
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ui_confirm
+    _clips:
+    - {fileID: 8300000, guid: 6033c832354ee79e0fe1170feeba2409, type: 3}
+    _variantLabels:
+    - ui_confirm
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.48
+    _volumeMax: 0.48
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ui_cancel
+    _clips:
+    - {fileID: 8300000, guid: 3304d1f52440809a4a49bc7c94ab9f19, type: 3}
+    _variantLabels:
+    - ui_cancel
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.46
+    _volumeMax: 0.46
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ui_toast
+    _clips:
+    - {fileID: 8300000, guid: b7be9d759fa8c85536a97e5635620ee7, type: 3}
+    _variantLabels:
+    - ui_toast
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.48
+    _volumeMax: 0.48
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ui_type_card
+    _clips:
+    - {fileID: 8300000, guid: 2fed83adfe5a100d85c9f653c87a0d44, type: 3}
+    _variantLabels:
+    - ui_type_card
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.44
+    _volumeMax: 0.44
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ui_type_terminal
+    _clips:
+    - {fileID: 8300000, guid: 5b5ccab259919fa47d37d1eb2985112c, type: 3}
+    _variantLabels:
+    - ui_type_terminal
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.44
+    _volumeMax: 0.44
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ambience_earthlit_night
+    _clips:
+    - {fileID: 8300000, guid: df7d0e3d99bf74eedc6f8afb149dd0cd, type: 3}
+    _variantLabels:
+    - ambience_earthlit_night
+    _bus: 3
+    _spatial: 0
+    _loop: 1
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ambience_sunlit_day
+    _clips:
+    - {fileID: 8300000, guid: 8f183fb3a518a7d7a40adf913318c207, type: 3}
+    _variantLabels:
+    - ambience_sunlit_day
+    _bus: 3
+    _spatial: 0
+    _loop: 1
+    _volumeMin: 0.62
+    _volumeMax: 0.62
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ambience_eclipse
+    _clips:
+    - {fileID: 8300000, guid: f1f0328a562b5f437e5b9bd863bc71c7, type: 3}
+    _variantLabels:
+    - ambience_eclipse
+    _bus: 3
+    _spatial: 0
+    _loop: 1
+    _volumeMin: 0.58
+    _volumeMax: 0.58
     _pitchMin: 1
     _pitchMax: 1
   - _id: bell_jingle_short

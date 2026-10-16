@@ -80,6 +80,9 @@ namespace MoonProject.Audio
         [Tooltip("Seconds the ambience bed takes to fade in at start.")]
         [Min(0f)] [SerializeField] private float _ambienceFadeIn = 4f;
 
+        [Tooltip("Seconds for the three sky-phase ambience beds (earthlit night, sunlit day, eclipse) to crossfade.")]
+        [Range(4f, 8f)] [SerializeField] private float _ambienceCrossfade = 6f;
+
         public float MasterVolume => _masterVolume;
         public float MusicVolume => _musicVolume;
         public float SfxVolume => _sfxVolume;
@@ -98,6 +101,7 @@ namespace MoonProject.Audio
         public float ThumpSoftPitch => _thumpSoftPitch;
         public float ThumpHardPitch => _thumpHardPitch;
         public float AmbienceFadeIn => _ambienceFadeIn;
+        public float AmbienceCrossfade => _ambienceCrossfade;
         public float PauseDuckTime => _pauseDuckTime;
         public float ResumeTime => _resumeTime;
         public float PausedWorldGain => _pausedWorldGain;
