@@ -13,7 +13,7 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
-  m_LightmapFlags: 4
+  m_LightmapFlags: 1
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
@@ -32,7 +32,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: c48192a7b3d640e8951f23c8a47b60d1, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskMap:
@@ -55,7 +55,7 @@ Material:
     - _EdgeWearSharpness: 4
     - _EdgeWearSmoothness: 0.52
     - _EdgeWearThreshold: 0.52
-    - _EmissionStrength: 0
+    - _EmissionStrength: 1
     - _HotCorePeak: 1.65
     - _HotCoreThreshold: 0.85
     - _MetallicScale: 1
@@ -67,6 +67,6 @@ Material:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _DustColor: {r: 0.46, g: 0.48, b: 0.54, a: 1}
     - _EdgeWearColor: {r: 0.7, g: 0.72, b: 0.76, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _EmissionColor: {r: 1, g: 0.74, b: 0.3, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
