@@ -4,7 +4,7 @@ using UnityEngine;
 namespace MoonProject.UI.Tests
 {
     /// <summary>
-    /// The Moonlight Glass HUD's rules: the home meter's compass point.
+    /// The Variant C CRT HUD's rules: the home meter's compass point.
     /// </summary>
     public sealed class GlassHudTests
     {

@@ -268,6 +268,24 @@ namespace MoonProject.UI.PlayModeTests
                 yield return new WaitForSecondsRealtime(1f);
                 yield return LegibleShot(camera, capturesFolder, "hud_night", report, layout.BatteryDial,
                     layout.PickupFeed, layout.Prompt);
+
+                // Vietnamese (vi) HUD capture: confirms diacritics in Chakra Petch and IBM Plex Mono on HUD.
+                ui.Localization.SetLanguage("vi");
+                fakes.SetMaterials(7, 10, 5);
+                if (sun != null)
+                {
+                    sun.intensity = DaySunIntensity;
+                }
+
+                Shader.SetGlobalVector("_MoonSunColor", savedSunColor);
+                Shader.SetGlobalVector("_MoonSunlitGround", new Vector4(1f, 0f, 0f, 0f));
+                RenderSettings.ambientSkyColor = new Color(0.28f, 0.28f, 0.34f);
+                RenderSettings.ambientEquatorColor = new Color(0.20f, 0.20f, 0.25f);
+                RenderSettings.ambientGroundColor = new Color(0.14f, 0.14f, 0.18f);
+                DynamicGI.UpdateEnvironment();
+                yield return new WaitForSecondsRealtime(1f);
+                yield return LegibleShot(camera, capturesFolder, "hud_vi", report, layout.BatteryDial,
+                    layout.PickupFeed, layout.Prompt);
             }
             finally
             {
@@ -288,6 +306,20 @@ namespace MoonProject.UI.PlayModeTests
                     skyBehaviour.enabled = true;
                 }
             }
+
+            // Vietnamese (vi) Tab and crew log captures: confirms diacritics across Chakra Petch, IBM Plex Mono, and Be Vietnam Pro.
+            ui.Cargo.Open();
+            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeIn + 0.6f);
+            yield return LegibleShot(camera, capturesFolder, "tab_vi", report, layout.Cargo);
+            ui.Cargo.Close();
+            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeOut + 0.5f);
+
+            context.Events.Publish(new CrewLogFound(UiTestRig.FirstLog, Vector3.zero));
+            yield return new WaitForSecondsRealtime(CardEntrance());
+            yield return LegibleShot(camera, capturesFolder, "crew_log_vi", report, layout.MemoryCard);
+            ui.Card.Dismiss();
+            yield return new WaitForSecondsRealtime(_tuning.MemoryCard.Reveal.FadeOut + 0.5f);
+            ui.Localization.SetLanguage("en");
 
             Assert.IsEmpty(report, "legibility:\n" + string.Join("\n", report));
 #else
