@@ -1,0 +1,30 @@
+{
+    "name": "MoonProject.Showcase.Tests",
+    "rootNamespace": "MoonProject.Showcase.Tests",
+    "references": [
+        "MoonProject.Core",
+        "MoonProject.Art",
+        "MoonProject.World",
+        "MoonProject.Rover",
+        "MoonProject.Showcase",
+        "MoonProject.Showcase.Editor",
+        "Unity.InputSystem",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

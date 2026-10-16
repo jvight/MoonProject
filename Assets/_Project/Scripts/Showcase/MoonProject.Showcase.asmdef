@@ -1,0 +1,22 @@
+{
+    "name": "MoonProject.Showcase",
+    "rootNamespace": "MoonProject.Showcase",
+    "references": [
+        "MoonProject.Core",
+        "MoonProject.Art",
+        "MoonProject.World",
+        "MoonProject.Rover",
+        "Unity.InputSystem",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

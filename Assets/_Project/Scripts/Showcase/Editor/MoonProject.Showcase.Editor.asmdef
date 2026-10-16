@@ -1,0 +1,31 @@
+{
+    "name": "MoonProject.Showcase.Editor",
+    "rootNamespace": "MoonProject.Showcase.Editor",
+    "references": [
+        "MoonProject.Core",
+        "MoonProject.Art",
+        "MoonProject.Art.Editor",
+        "MoonProject.World",
+        "MoonProject.World.Editor",
+        "MoonProject.Rover",
+        "MoonProject.UI",
+        "MoonProject.UI.Editor",
+        "MoonProject.Editor",
+        "MoonProject.Testing",
+        "MoonProject.Showcase",
+        "Unity.InputSystem",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
