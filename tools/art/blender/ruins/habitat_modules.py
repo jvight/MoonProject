@@ -301,23 +301,25 @@ def _build_main_module(root) -> None:
 
 
 def _build_airlock_panel(root) -> None:
-    """Build the separate `AirlockPanel` child mesh node (`SEALED · 1988 · STANDBY` above the round airlock door)."""
+    """Build the separate `AirlockPanel` child mesh node (`SEALED · 1988 · STANDBY` / `SUIT 01-04 · OFFLINE` above the round airlock door)."""
     mb = r1kit.MeshBuilder()
     px, py, pz = -3.45, 1.78, -1.36
 
     # Outer dark-grey bezel housing
     mb.add_bevel_box((px, py, pz), (1.20, 0.35, 0.12), bevel=0.022, mat="R1_GreyMetal", segs=1)
-    # Recessed dark rubber gasket trim
-    mb.add_bevel_box((px, py, pz - 0.045), (1.10, 0.26, 0.05), bevel=0.010, mat="R1_Rubber", segs=1)
-    # Screen mesh using R1_Screen (registered for clean [0..1] UVs and SEALED · 1988 · STANDBY display)
-    screen_center = (px, py, pz - 0.064)
-    mb.add_bevel_box(screen_center, (1.04, 0.22, 0.024), bevel=0.004, mat="R1_Screen", rot_deg_u=(0.0, 180.0, 0.0), segs=1)
-    ruins_common.register_screen_uv_plate(
+    # Recessed bezel gasket trim (uses R1_GreyMetal so AirlockPanel has 2 material slots: R1_GreyMetal + R1_Signage)
+    mb.add_bevel_box((px, py, pz - 0.045), (1.10, 0.26, 0.05), bevel=0.010, mat="R1_GreyMetal", segs=1)
+    # Status display plate using R1_Signage AIRLOCK_STATUS cell ("SEALED · 1988 · STANDBY" / "SUIT 01-04 · OFFLINE")
+    ruins_common.add_signage_plate(
         mb,
-        center_u=(px, py, pz - 0.076),
+        center_u=(px, py, pz - 0.064),
         width=1.04,
         height=0.22,
+        cell_name="AIRLOCK_STATUS",
         rot_deg_u=(0.0, 180.0, 0.0),
+        thickness=0.024,
+        frame_mat=None,
+        rivets=False,
     )
 
     ruins_common.to_ruin_object(mb, "AirlockPanel", parent=root)
