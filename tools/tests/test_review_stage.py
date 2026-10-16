@@ -2,6 +2,7 @@
 tools/art/review: the R1 palette read from the game's recipes, the GLB material rewrite, and round merging in the
 review manifest. Run: python -m unittest discover -s tools/tests -t tools
 """
+import re
 import struct
 import sys
 import tempfile
@@ -14,6 +15,12 @@ import r1_palette  # noqa: E402
 import stage_round  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[2]
+SLOTS_CS = REPO / "Assets/_Project/Scripts/Art/Editor/R1MaterialSlot.cs"
+
+
+def r1_slots_from_enum():
+    body = re.search(r"enum\s+R1MaterialSlot\s*\{([^}]+)\}", SLOTS_CS.read_text(encoding="utf-8-sig"), re.DOTALL)
+    return {f"R1_{m.group(1)}" for m in re.finditer(r"^\s*([A-Z]\w*)\b", body.group(1), re.MULTILINE)}
 
 
 def tiny_glb(path, names):
@@ -24,7 +31,9 @@ def tiny_glb(path, names):
 class PaletteTests(unittest.TestCase):
     def test_every_r1_slot_is_read_from_the_recipes(self):
         palette = r1_palette.load_palette(REPO)
-        self.assertEqual(len(palette), 14)
+        expected_slots = r1_slots_from_enum()
+        self.assertGreater(len(expected_slots), 0)
+        self.assertEqual(set(palette), expected_slots)
         self.assertEqual(palette["R1_BareSteel"].metallic, 1.0)
         self.assertEqual(palette["R1_CreamEnamel"].metallic, 0.0)
         self.assertTrue(any(palette["R1_LampAmber"].emissive))
