@@ -744,7 +744,7 @@
         },
         {
             "key": "log.ro_1",
-            "text": "Night one of Lumen After Dark. Three listeners and a rover who rolls closer when I play the slow ones. Best audience I've ever had. — Ro"
+            "text": "Night one of Lumen After Dark on the local loop. Audience: three tired scientists in the galley, plus 07 parked by the repeater mast because the transformer hums warm. — Ro"
         },
         {
             "key": "cassette.after_dark_1.title",
@@ -788,7 +788,7 @@
         },
         {
             "key": "ticker.bell.found_2",
-            "text": "Bell says: Ro would have liked that."
+            "text": "Bell chimes: one of Ro's old favourites."
         },
         {
             "key": "hint.tune",
@@ -1140,7 +1140,7 @@
         },
         {
             "key": "log.kenji_1",
-            "text": "Fixed the old survey rover today, the seventh thing on this week's list, so it's 07 now. I taught its antenna our call sign, three short, one long, and it blinks it at me whenever I walk past. — Kenji"
+            "text": "Rebuilt the drive train on the spare survey chassis—seventh job on the board this week, so it's 07 now. Wired the beacon to key our call sign, three short and one long, whenever the receiver locks. — Kenji"
         },
         {
             "key": "log.ines_1",
@@ -1152,11 +1152,11 @@
         },
         {
             "key": "log.ro_2",
-            "text": "Read the storm warning on air tonight, tucked between two slow songs so it wouldn't sound so scary. 07 rolled right up to the speaker and stayed there. — Ro"
+            "text": "Read the storm warning on air tonight, tucked between two slow songs so the galley wouldn't go quiet. 07 rolled up to the yard speaker and parked in the spill light. — Ro"
         },
         {
             "key": "log.ines_2",
-            "text": "My call as mission lead: all four of us leave on the morning shuttle. It's the right call, and I've never hated being right so much. — Ines"
+            "text": "Transfer-19 wants us aboard now, drives left behind. I asked who would rather stay in suits and get the survey out. Four hands went up before I finished the sentence. — Ines"
         },
         {
             "key": "log.kenji_2",
@@ -1164,23 +1164,23 @@
         },
         {
             "key": "log.theo_2",
-            "text": "Ten minutes to pack. I left Moss the watering schedule, and Moss hummed at me as if I'd insulted the tomatoes. — Theo"
+            "text": "Sealed the backup seed tins in the crater cache and handed the greenhouse loop over to Moss. Moss hummed at me for twenty seconds, as if I'd personally insulted the tomatoes. — Theo"
         },
         {
             "key": "log.ro_3",
-            "text": "Last show before the shuttle. I left the radio on for you, 07. Keep it playing, and we'll find you by the music. — Ro"
+            "text": "Last night of the live show; patched the deck into the mast loop so the music keeps running while we finish the ridge work. If Lena's listening on the Sunday window, she'll know the porch light is still on. — Ro"
         },
         {
             "key": "log.ines_3",
-            "text": "We were coming back, 07. I need you to know we tried. — Ines"
+            "text": "Basin survey compiled and loaded into the main core; queued the dish alignment and Ark IV uplink on 07's recovery stack in case the ridge team runs short of hours. Everything they need to come home is in the file. — Ines"
         },
         {
             "key": "log.theo_3",
-            "text": "Left the last tray by the window. If anything grows, tell me. — Theo"
+            "text": "Set the hydroponic vents to closed-cycle and left the last basil tray by the window where the earthlight hits. When the Arks bring their seed stock down, they'll want to see the soil already works. — Theo"
         },
         {
             "key": "log.kenji_3",
-            "text": "They asked me what to do with the rover, and I said leave it switched on. Don't let anyone retire you, 07. — Kenji"
+            "text": "Wired 07's cradle to the deep-charge bus and set the wake trigger to the Sunday frequency. The storm took the ridge lines, so if the dish stays dark after today, the little guy can finish the walk when the batteries top up. — Kenji"
         },
         {
             "key": "ticker.radio.weather",

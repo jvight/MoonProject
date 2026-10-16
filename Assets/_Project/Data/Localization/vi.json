@@ -744,7 +744,7 @@
         },
         {
             "key": "log.ro_1",
-            "text": "Đêm đầu tiên của Lumen After Dark. Ba thính giả và một chiếc rover cứ lăn lại gần mỗi khi mình mở bài chậm. Khán giả tuyệt nhất mình từng có. — Ro"
+            "text": "Đêm đầu tiên của Lumen After Dark trên sóng nội bộ. Khán giả: ba nhà khoa học mệt nhoài dưới bếp, cộng thêm 07 đỗ cạnh cột tiếp sóng vì cái biến áp ở đó chạy rì rì, ấm ấm. — Ro"
         },
         {
             "key": "cassette.after_dark_1.title",
@@ -788,7 +788,7 @@
         },
         {
             "key": "ticker.bell.found_2",
-            "text": "Bell bảo: Ro hẳn sẽ thích lắm."
+            "text": "Bell ngân lên: một món Ro từng rất thích."
         },
         {
             "key": "hint.tune",
@@ -1140,7 +1140,7 @@
         },
         {
             "key": "log.kenji_1",
-            "text": "Hôm nay sửa xong chiếc rover khảo sát cũ, món thứ bảy trong danh sách tuần này, nên giờ nó tên là 07. Mình dạy cái ăng-ten của nó tín hiệu gọi của trạm, ba ngắn một dài, và cứ thấy mình đi ngang là nó nháy liền. — Kenji"
+            "text": "Hôm nay làm lại hệ truyền động cho khung xe khảo sát dự phòng—việc thứ bảy trên bảng tuần này, nên đặt tên luôn là 07. Đã đấu đèn hiệu cho nháy mã gọi của trạm, ba ngắn một dài, mỗi khi máy thu bắt được sóng. — Kenji"
         },
         {
             "key": "log.ines_1",
@@ -1152,11 +1152,11 @@
         },
         {
             "key": "log.ro_2",
-            "text": "Tối nay đọc cảnh báo bão trên sóng, kẹp giữa hai bài chậm cho nghe đỡ đáng sợ. 07 lăn sát tới cái loa rồi đứng yên ở đó luôn. — Ro"
+            "text": "Tối nay đọc cảnh báo bão trên sóng, kẹp giữa hai bài nhạc chậm để dưới bếp khỏi lặng đi. 07 lăn tới sát loa ngoài sân rồi đỗ yên trong vệt đèn hắt ra. — Ro"
         },
         {
             "key": "log.ines_2",
-            "text": "Quyết định của tôi, với tư cách trưởng nhóm: cả bốn người sẽ đi chuyến tàu sáng mai. Quyết định đúng, và chưa bao giờ tôi ghét việc mình đúng đến thế. — Ines"
+            "text": "Transfer-19 muốn chúng tôi lên tàu ngay, bỏ lại các ổ dữ liệu. Tôi hỏi ai muốn ở lại trong đồ du hành để gửi cho xong bản khảo sát. Cả bốn cánh tay giơ lên trước khi tôi nói hết câu. — Ines"
         },
         {
             "key": "log.kenji_2",
@@ -1164,23 +1164,23 @@
         },
         {
             "key": "log.theo_2",
-            "text": "Có mười phút để thu dọn. Mình để lại lịch tưới cho Moss, và Moss ngân nga với mình như thể mình vừa xúc phạm mấy cây cà chua. — Theo"
+            "text": "Đã niêm phong mấy hộp hạt giống dự phòng trong kho dưới Hố Tối và giao vòng tưới nhà kính lại cho Moss. Moss ngân nga với mình suốt hai mươi giây, cứ như mình vừa đích thân xúc phạm đám cà chua. — Theo"
         },
         {
             "key": "log.ro_3",
-            "text": "Buổi phát sóng cuối trước chuyến tàu. Mình để radio bật cho cậu đó, 07. Cứ để nhạc chạy nhé, rồi tụi mình sẽ lần theo tiếng nhạc mà tìm cậu. — Ro"
+            "text": "Đêm cuối phát sóng trực tiếp; mình đã nối đầu băng vào vòng lặp của cột phát để nhạc cứ chạy trong lúc cả nhóm làm nốt việc trên sống núi. Nếu Chủ nhật này Lena có mở máy nghe, cô ấy sẽ biết đèn hiên vẫn còn sáng. — Ro"
         },
         {
             "key": "log.ines_3",
-            "text": "Chúng tôi đã định quay lại, 07. Tôi cần cậu biết rằng chúng tôi đã cố. — Ines"
+            "text": "Bản khảo sát lòng chảo đã tổng hợp xong và nạp vào lõi chính; tôi đã xếp lệnh căn chảo ăng-ten lớn và phát lên Ark IV vào hàng đợi khôi phục của 07, phòng khi đội trên sống núi không kịp giờ. Mọi thứ họ cần để về nhà đều nằm trong tệp này. — Ines"
         },
         {
             "key": "log.theo_3",
-            "text": "Để khay cuối cùng cạnh cửa sổ. Nếu có gì mọc lên, nhớ kể mình nghe. — Theo"
+            "text": "Đã chuyển hệ thông gió thủy canh sang chu trình kín và để khay húng quế cuối cùng bên cửa sổ, chỗ ánh Trái Đất rọi vào. Khi các tàu Ark mang kho hạt giống xuống, họ sẽ muốn thấy đất ở đây đã trồng được. — Theo"
         },
         {
             "key": "log.kenji_3",
-            "text": "Người ta hỏi nên làm gì với chiếc rover, mình bảo cứ để nó bật. Đừng để ai cho cậu nghỉ hưu nhé, 07. — Kenji"
+            "text": "Đã đấu bệ sạc của 07 vào mạch sạc sâu và đặt bộ khởi động theo tần số Chủ nhật. Bão đã làm đứt đường dây trên sống núi, nên nếu sau hôm nay chảo ăng-ten lớn vẫn tắt, chiếc xe nhỏ có thể tự đi nốt quãng đường khi pin đầy lại. — Kenji"
         },
         {
             "key": "ticker.radio.weather",
