@@ -35,6 +35,10 @@ CBUFFER_START(UnityPerMaterial)
     float4 _FaceSymbol;
     float4 _FaceCrtState;
     float4 _FacePhases;
+    float4 _FaceContentState;
 CBUFFER_END
+
+TEXTURE2D(_ContentTex);
+SAMPLER(sampler_ContentTex);
 
 #endif

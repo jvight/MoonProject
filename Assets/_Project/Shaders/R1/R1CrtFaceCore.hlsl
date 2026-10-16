@@ -262,6 +262,10 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
     float rollingBandPhase = _FacePhases.y;
     float bootLineEnd = max(_FacePhases.z, 0.01);
 
+    float contentMix = saturate(_FaceContentState.x);
+    float verticalPinch = saturate(_FaceContentState.y);
+    float lineGlow = saturate(_FaceContentState.z);
+
     // On RoverModel's Screen mesh, UV.x=0 is on the viewer's right (+X in Unity head space) and UV.x=1 is on the viewer's left;
     // mirror X into viewer left-to-right [0..1] space so eye asymmetry and glyphs (?, zzz, battery) read upright and un-mirrored.
     float2 rawUv = float2(1.0 - input.uv.x, input.uv.y);
@@ -270,8 +274,15 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
     float rSq = dot(cc, cc);
     float2 warpedUv = jitteredUv + cc * (rSq * _Curvature);
 
-    float2 canvasPos = float2(warpedUv.x * CRT_ASPECT, 1.0 - warpedUv.y);
-    float aaWidth = max(length(fwidth(canvasPos)), 0.0025);
+    float openSpan = max(1.0 - verticalPinch, 0.012);
+    float deflectedY = 0.5 + (warpedUv.y - 0.5) / openSpan;
+    float2 deflectedWarpedUv = float2(warpedUv.x, deflectedY);
+    float deflectionBandMask = (verticalPinch > 0.001)
+        ? smoothstep(0.48 * openSpan + 0.012, 0.46 * openSpan, abs(warpedUv.y - 0.5))
+        : 1.0;
+
+    float2 canvasPos = float2(deflectedWarpedUv.x * CRT_ASPECT, 1.0 - deflectedWarpedUv.y);
+    float aaWidth = max(length(fwidth(float2(warpedUv.x * CRT_ASPECT, 1.0 - warpedUv.y))), 0.0025);
 
     float primaryCov = 0.0;
     float ghostCov = 0.0;
@@ -335,6 +346,9 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
             primaryCov = max(primaryCov, symCov);
             minPrimarySdf = min(minPrimarySdf, symSdf);
         }
+
+        primaryCov *= deflectionBandMask;
+        ghostCov *= deflectionBandMask;
     }
 
     // Dual-radius phosphor halo matching face_prototype.html's blur(10px) #c86a14 + blur(3px) #ffae38 passes
@@ -343,8 +357,8 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
     float wideHalo = exp(-distOutside / (glowRadius * 2.1)) * saturate(1.0 - distOutside / (glowRadius * 5.0));
     float tightHalo = exp(-distOutside / (glowRadius * 0.48)) * saturate(1.0 - distOutside / (glowRadius * 1.8));
     float poweredOn = (bootProgress < 0.01) ? 0.0 : 1.0;
-    wideHalo *= poweredOn;
-    tightHalo *= poweredOn;
+    wideHalo *= poweredOn * deflectionBandMask;
+    tightHalo *= poweredOn * deflectionBandMask;
 
     // Hot phosphor inner core factor (only deep inside the stroke/pill reaches _HotCorePeak > BloomThreshold)
     float innerCore = smoothstep(0.0, HOT_CORE_INNER_DIST, minPrimarySdf) * primaryCov;
@@ -372,6 +386,54 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
     // 2. Small hot core inside eyes/symbols rises to _HotCorePeak (> Palette.BloomThreshold = 1.25)
     half3 hotCoreTarget = _HotCoreColor.rgb * _HotCorePeak;
     half3 phosphorHdr = lerp(bodyEmission, hotCoreTarget, (half)(innerCore * 0.65));
+
+    // 3. Screen content mode (_ContentTex): UI rendered into the same curved, scanlined, phosphor-glowing CRT glass
+    if (contentMix > 0.001)
+    {
+        float inDeflectedBounds = step(0.0, deflectedWarpedUv.x) * step(deflectedWarpedUv.x, 1.0)
+            * step(0.0, deflectedWarpedUv.y) * step(deflectedWarpedUv.y, 1.0) * deflectionBandMask;
+        float2 contentUv = saturate(deflectedWarpedUv);
+        half4 contentSample = SAMPLE_TEXTURE2D(_ContentTex, sampler_ContentTex, contentUv) * (half)inDeflectedBounds;
+
+        float2 haloStep = float2(glowRadius * 0.32 / CRT_ASPECT, glowRadius * 0.32);
+        half3 contentNeighbors = (
+            SAMPLE_TEXTURE2D(_ContentTex, sampler_ContentTex, saturate(contentUv + float2(haloStep.x, 0.0))).rgb +
+            SAMPLE_TEXTURE2D(_ContentTex, sampler_ContentTex, saturate(contentUv - float2(haloStep.x, 0.0))).rgb +
+            SAMPLE_TEXTURE2D(_ContentTex, sampler_ContentTex, saturate(contentUv + float2(0.0, haloStep.y))).rgb +
+            SAMPLE_TEXTURE2D(_ContentTex, sampler_ContentTex, saturate(contentUv - float2(0.0, haloStep.y))).rgb
+        ) * 0.25h * (half)inDeflectedBounds;
+
+        half3 contentBody = bgPhosphor * (1.0h - contentSample.a)
+            + contentSample.rgb * 1.08h
+            + contentNeighbors * _PhosphorColor.rgb * 0.22h;
+        half contentBodyMax = max(contentBody.r, max(contentBody.g, contentBody.b));
+        if (contentBodyMax > _BloomSafeMax)
+        {
+            contentBody *= (_BloomSafeMax / max(contentBodyMax, (half)1e-4));
+        }
+
+        half contentLum = max(contentSample.r, max(contentSample.g, contentSample.b));
+        half contentHot = smoothstep(0.75h, 0.98h, contentLum);
+        half3 contentHdr = lerp(contentBody, hotCoreTarget, contentHot * 0.22h);
+        phosphorHdr = lerp(phosphorHdr, contentHdr, (half)contentMix);
+    }
+
+    // 4. Channel-switch horizontal phosphor line (collapse / expand pinch between eyes and content)
+    if (lineGlow > 0.001)
+    {
+        float2 rawCanvas = float2(warpedUv.x * CRT_ASPECT, 1.0 - warpedUv.y);
+        float lineHalfW = lerp(0.46, 0.43, verticalPinch) * CRT_ASPECT;
+        float sdfSwitchLine = SdfRoundedBox(
+            rawCanvas - float2(0.5 * CRT_ASPECT, 0.5),
+            float2(lineHalfW, BOOT_LINE_HALF_HEIGHT * 1.15),
+            BOOT_LINE_HALF_HEIGHT);
+        float switchLineCov = smoothstep(aaWidth * 1.5, -aaWidth, sdfSwitchLine);
+        float switchLineHalo = exp(-max(sdfSwitchLine, 0.0) / max(glowRadius * 1.1, 0.005));
+        half3 switchLineCol = _PhosphorGlowColor.rgb * (half)(switchLineHalo * 0.65)
+            + _PhosphorColor.rgb * (half)(switchLineCov * 0.85)
+            + hotCoreTarget * (half)(switchLineCov * 0.55);
+        phosphorHdr = lerp(phosphorHdr, max(phosphorHdr, switchLineCol), (half)lineGlow);
+    }
 
     // CRT horizontal scanlines (coarsening slightly in low power) + slow rolling refresh band
     float scanCount = lerp((float)_ScanlineCount, LOW_POWER_SCANLINE_MIN, lowPower);
