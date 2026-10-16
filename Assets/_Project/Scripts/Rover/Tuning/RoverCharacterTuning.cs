@@ -19,6 +19,26 @@ namespace MoonProject.Rover
         [Range(0f, 170f)]
         [SerializeField] private float _neckYawLimit = 125f;
 
+        [Tooltip("How far (deg, - local X on NeckLift) the neck lifts at full alert perk-up.")]
+        [Range(0f, 30f)]
+        [SerializeField] private float _neckAlertLift = 6f;
+
+        [Tooltip("How far (deg, + local X on NeckLift) the neck droops forward while asleep.")]
+        [Range(0f, 45f)]
+        [SerializeField] private float _neckSleepDroop = 11f;
+
+        [Tooltip("Extra neck droop (deg, + local X on NeckLift) at low battery charge.")]
+        [Range(0f, 30f)]
+        [SerializeField] private float _neckTiredDroop = 4f;
+
+        [Tooltip("Extra neck droop (deg, + local X on NeckLift) while crawling on reserve power.")]
+        [Range(0f, 30f)]
+        [SerializeField] private float _neckCrawlExtend = 4f;
+
+        [Tooltip("Extra neck droop (deg, + local X on NeckLift) under a full cargo load.")]
+        [Range(0f, 20f)]
+        [SerializeField] private float _neckCargoExtend = 3f;
+
         [Tooltip("How far (deg) the head can tilt up (Earth is high in the sky).")]
         [Range(0f, 89f)]
         [SerializeField] private float _headPitchUpLimit = 55f;
@@ -195,9 +215,16 @@ namespace MoonProject.Rover
         [SerializeField] private float _eyeLightRange = 1.6f;
 
         [Header("Solar wing")]
-        [Tooltip("Wing rotation (deg, + local X) when fully open.")]
-        [Range(10f, 180f)]
-        [SerializeField] private float _wingOpenAngle = 110f;
+        [Tooltip("Local hinge axis on SolarWing around which the trunk-lid panel rotates open (+X lifts the rear edge up and away from the head).")]
+        [SerializeField] private Vector3 _wingHingeAxis = Vector3.right;
+
+        [Tooltip("Wing hinge angle (deg around WingHingeAxis) when folded flat inside the rear roof recess.")]
+        [Range(0f, 30f)]
+        [SerializeField] private float _wingClosedAngle = 0f;
+
+        [Tooltip("Wing hinge angle (deg around WingHingeAxis) when fully open, lifting the rear edge up and away from the head.")]
+        [Range(10f, 90f)]
+        [SerializeField] private float _wingOpenAngle = 60f;
 
         [Tooltip("How far (0..1) the wing settles open while daydreaming.")]
         [Range(0f, 1f)]
@@ -479,6 +506,16 @@ namespace MoonProject.Rover
 
         public float NeckYawLimit => _neckYawLimit;
 
+        public float NeckAlertLift => _neckAlertLift;
+
+        public float NeckSleepDroop => _neckSleepDroop;
+
+        public float NeckTiredDroop => _neckTiredDroop;
+
+        public float NeckCrawlExtend => _neckCrawlExtend;
+
+        public float NeckCargoExtend => _neckCargoExtend;
+
         public float HeadPitchUpLimit => _headPitchUpLimit;
 
         public float StargazeHeadPitch => Mathf.Min(_stargazeHeadPitch, _headPitchUpLimit);
@@ -564,6 +601,10 @@ namespace MoonProject.Rover
         public float EyeLightIntensity => _eyeLightIntensity;
 
         public float EyeLightRange => _eyeLightRange;
+
+        public Vector3 WingHingeAxis => _wingHingeAxis.sqrMagnitude > 1e-6f ? _wingHingeAxis.normalized : Vector3.right;
+
+        public float WingClosedAngle => _wingClosedAngle;
 
         public float WingOpenAngle => _wingOpenAngle;
 

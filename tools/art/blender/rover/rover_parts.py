@@ -306,10 +306,12 @@ def _append_pillowed_body_tub(bm, cfg):
         (0.835, 0.014, 0.036, 0.295, 1.35, "upper_cream"),  # 15: upper beetle bonnet curve & shoulder roll 1
         (0.875, 0.026, 0.056, 0.365, 1.42, "upper_cream"),  # 16: rounded beetle shoulder roll 2
         (0.912, 0.042, 0.078, 0.405, 1.48, "upper_cream"),  # 17: rounded beetle shoulder roll 3
-        (0.942, 0.062, 0.105, 0.435, 1.52, "upper_cream"),  # 18: upper cowling shoulder roll 4
-        (0.958, 0.086, 0.145, 0.458, 1.55, "upper_cream"),  # 19: domed upper carapace crown edge
-        (0.964, 0.125, 0.195, 0.480, 1.55, "upper_cream"),  # 20: top deck guard ring
-        (0.965, 0.230, 0.280, 0.530, 1.50, "upper_cream"),  # 21: top deck inner ring
+        (0.942, 0.062, 0.095, 0.435, 1.52, "upper_cream"),  # 18: upper cowling shoulder roll 4
+        (0.956, 0.090, 0.102, 0.458, 1.52, "upper_cream"),  # 19: domed upper carapace crown edge
+        (0.958, 0.140, 0.104, 0.520, 1.45, "upper_cream"),  # 20: top deck guard ring
+        # Rear roof recess rim & stepped dark metal solar bay well (uz = [-0.653, -0.360], |ux| <= 0.248)
+        (0.948, 0.192, 0.092, 1.105, 0.35, "recess_rim"),   # 21: rear roof recess rim
+        (0.902, 0.198, 0.098, 1.111, 0.32, "recess_floor"), # 22: rear roof recess floor
     )
 
     ring_verts = []
@@ -327,10 +329,11 @@ def _append_pillowed_body_tub(bm, cfg):
             if 4 <= r_idx <= 16 and abs(ux) > hx * 0.65:
                 barrel_x = 0.008 * max(0.0, 1.0 - z_norm * z_norm)
                 adj_x += math.copysign(barrel_x, ux)
-            # Gentle lateral crown across the front bonnet and upper carapace
-            if r_idx >= 13 and abs(ux) < hx * 0.85:
+            # Gentle lateral crown across the front bonnet and upper carapace, tapered over the rear deck
+            if 13 <= r_idx <= 20 and abs(ux) < hx * 0.85:
                 x_norm = ux / max(hx, 0.08)
-                adj_y += 0.008 * max(0.0, 1.0 - x_norm * x_norm)
+                rear_taper = 0.25 if uz < -0.32 else 1.0
+                adj_y += 0.008 * rear_taper * max(0.0, 1.0 - x_norm * x_norm)
             # Deep semicircular wheel-arch cutout into the lower flanks over all 4 wheels
             if r_idx <= 8 and abs(ux) > half_w * 0.70:
                 y_arch = _wheel_arch_cutout_y(uz, wheel_base=w_base)
@@ -354,8 +357,8 @@ def _append_pillowed_body_tub(bm, cfg):
         r1 = ring_verts[r_idx + 1]
         role0 = ring_specs[r_idx][5]
         role1 = ring_specs[r_idx + 1][5]
-        if role0 == "seam" or role1 == "seam":
-            mat_idx = 2  # R1_GreyMetal dark recessed seam channel
+        if role0 == "seam" or role1 == "seam" or role1 == "recess_floor":
+            mat_idx = 2  # R1_GreyMetal dark recessed seam channel & solar bay well
         elif role0 == "belt" and role1 == "belt":
             mat_idx = 1  # R1_OrangeStripe
         elif role0 == "bottom":
@@ -369,14 +372,14 @@ def _append_pillowed_body_tub(bm, cfg):
             f.smooth = True
 
     bot_center = temp.verts.new(unity_to_blender_pos(0.0, 0.415, z_center))
-    top_center = temp.verts.new(unity_to_blender_pos(0.0, 0.966, z_center - 0.12))
+    top_center = temp.verts.new(unity_to_blender_pos(0.0, 0.902, -0.506))
     for i in range(n_perim):
         ni = (i + 1) % n_perim
         fb = temp.faces.new((ring_verts[0][ni], ring_verts[0][i], bot_center))
         fb.material_index = 2
         fb.smooth = True
         ft = temp.faces.new((ring_verts[-1][i], ring_verts[-1][ni], top_center))
-        ft.material_index = 0
+        ft.material_index = 2
         ft.smooth = True
 
     # Sculpted curved lower beetle bonnet hood shell over the front nose (uz = +0.26..+0.72 m, uy = 0.68..0.84 m)
@@ -447,6 +450,27 @@ def _append_pillowed_body_tub(bm, cfg):
         nf.material_index = f.material_index
         nf.smooth = True
     temp.free()
+
+    # Low-profile recessed bay rib rails & hinge mounting brackets inside the dark roof well (uy <= 0.916 m)
+    for sx in (-1.0, 1.0):
+        append_beveled_box(
+            bm,
+            size_xyz=(0.032, 0.008, 0.210),
+            center_xyz=(sx * 0.145, 0.908, -0.502),
+            bevel_width=0.002,
+            bevel_segments=1,
+            mat_idx=2,
+            guard_inset=False,
+        )
+        append_beveled_box(
+            bm,
+            size_xyz=(0.044, 0.010, 0.028),
+            center_xyz=(sx * 0.145, 0.911, -0.395),
+            bevel_width=0.002,
+            bevel_segments=1,
+            mat_idx=5,  # R1_BareSteel hinge bracket pad
+            guard_inset=False,
+        )
 
 
 def _append_polyline_seam_tube(bm, pts_3d, radius=0.004, mat_idx=2, ref_axis=(1.0, 0.0, 0.0)):
@@ -987,44 +1011,6 @@ def build_contoured_body_mesh(cfg, mats):
 
     # 6. Riveted SagePatch_RL, bumper bolts/clevises, tail lamps, cable run, side vents & grab handles
     _append_body_small_hardware(bm, cfg)
-
-    # 7. Clean painted cream rear top DeckCover panel behind the head with recessed dark seam & 4 brass corner rivets
-    deck_panel_w = 0.52
-    deck_panel_l = 0.38
-    deck_panel_y = 0.960
-    deck_panel_z = -0.32
-    append_beveled_box(
-        bm,
-        size_xyz=(deck_panel_w + 0.016, 0.012, deck_panel_l + 0.016),
-        center_xyz=(0.0, deck_panel_y - 0.002, deck_panel_z),
-        bevel_width=0.004,
-        bevel_segments=1,
-        mat_idx=2,
-        guard_inset=False,
-    )
-    append_beveled_box(
-        bm,
-        size_xyz=(deck_panel_w, 0.014, deck_panel_l),
-        center_xyz=(0.0, deck_panel_y + 0.002, deck_panel_z),
-        bevel_width=0.008,
-        bevel_segments=2,
-        mat_idx=0,
-    )
-    for sx in (-1.0, 1.0):
-        for sz in (-1.0, 1.0):
-            append_dome_rivet(
-                bm,
-                radius=0.006,
-                height=0.005,
-                axis="Y",
-                center_xyz=(
-                    sx * (deck_panel_w * 0.43),
-                    deck_panel_y + 0.009,
-                    deck_panel_z + sz * (deck_panel_l * 0.42),
-                ),
-                segments=8,
-                mat_idx=10,  # R1_Brass corner rivets
-            )
 
     return create_mesh_node("Body", bm, (0.0, 0.0, 0.0), mat_list=mat_list, cfg=cfg)
 
@@ -3076,7 +3062,7 @@ def build_suspension_and_sockets(rover_root, cfg, mats):
         mats,
         parent=rover_root,
         unity_loc=cfg["piv_solar_wing"],
-        wing_socket_loc=(0.0, 0.0, -0.24),
+        wing_socket_loc=(0.0, 0.0, -0.11),
         split_gift_cell=True,
     )
 
@@ -3156,11 +3142,11 @@ def build_solar_wing_model(
     mats,
     parent=None,
     unity_loc=(0.0, 0.0, 0.0),
-    wing_socket_loc=(0.0, 0.02, -0.24),
+    wing_socket_loc=(0.0, 0.014, -0.11),
     split_gift_cell=False,
 ):
     """
-    Build Tilly's 2x3 photovoltaic SolarWing model.
+    Build Tilly's 2x3 photovoltaic SolarWing model (Mechanism A "trunk lid" hinged along its head-side edge).
     Uses R1_SolarCell for the PV cells per Logs/TASK.md.
     When split_gift_cell=True, the (c=1, r=1) cell is emitted as a child MESH node 'CellFilled'.
     """
@@ -3168,54 +3154,55 @@ def build_solar_wing_model(
     sw_w = cfg["solar_wing_width"]
     sw_l = cfg["solar_wing_length"]
     slope_rad = math.radians(cfg["solar_deck_slope_deg"])
+    frame_cz = -sw_l * FLAT_UV_SCALE
 
     append_beveled_box(
         bm,
-        size_xyz=(sw_w, 0.026, sw_l),
-        center_xyz=(0.0, 0.0, -sw_l * FLAT_UV_SCALE),
-        bevel_width=0.010,
+        size_xyz=(sw_w, 0.016, sw_l),
+        center_xyz=(0.0, 0.0, frame_cz),
+        bevel_width=0.006,
         bevel_segments=3,
         mat_idx=0,
         rot_euler=(slope_rad, 0.0, 0.0),
     )
-    append_beveled_box(
-        bm,
-        size_xyz=(sw_w * 0.90, 0.008, sw_l * 0.90),
-        center_xyz=(0.0, -0.010, -sw_l * FLAT_UV_SCALE),
-        bevel_width=0.003,
-        bevel_segments=2,
-        mat_idx=3,
-        rot_euler=(slope_rad, 0.0, 0.0),
-    )
+    for sx in (-1.0, 1.0):
+        append_beveled_box(
+            bm,
+            size_xyz=(sw_w * 0.32, 0.005, sw_l * 0.72),
+            center_xyz=(sx * (sw_w * 0.22), -0.007, frame_cz),
+            bevel_width=0.002,
+            bevel_segments=1,
+            mat_idx=3,
+            rot_euler=(slope_rad, 0.0, 0.0),
+        )
 
     cols, rows = 2, 3
     cell_w = (sw_w * 0.84) / cols
-    cell_l = (sw_l * 0.84) / rows
-    frame_cz = -sw_l * FLAT_UV_SCALE
+    cell_l = (sw_l * 0.80) / rows
     gift_cell_bm = None
     gift_cell_loc = (0.0, 0.0, 0.0)
     for c in range(cols):
-        cx = (-0.5 + c) * (cell_w + 0.018)
+        cx = (-0.5 + c) * (cell_w + 0.014)
         for r in range(rows):
-            dz_rel = (1 - r) * (cell_l + 0.016)
+            dz_rel = (1 - r) * (cell_l + 0.009)
             cz_local = frame_cz + dz_rel * math.cos(slope_rad)
-            cy_local = dz_rel * math.sin(slope_rad) + 0.012
+            cy_local = dz_rel * math.sin(slope_rad) + 0.008
             if split_gift_cell and c == 1 and r == 1:
                 gift_cell_bm = bmesh.new()
                 gift_cell_loc = (round(cx, 4), round(cy_local, 4), round(cz_local, 4))
                 append_beveled_box(
                     gift_cell_bm,
-                    size_xyz=(cell_w, 0.010, cell_l),
+                    size_xyz=(cell_w, 0.008, cell_l),
                     center_xyz=(0.0, 0.0, 0.0),
-                    bevel_width=0.004,
+                    bevel_width=0.003,
                     bevel_segments=2,
                     mat_idx=0,
                     rot_euler=(slope_rad, 0.0, 0.0),
                 )
                 append_beveled_box(
                     gift_cell_bm,
-                    size_xyz=(0.006, 0.012, cell_l * 0.92),
-                    center_xyz=(0.0, 0.002, 0.0),
+                    size_xyz=(0.005, 0.009, cell_l * 0.92),
+                    center_xyz=(0.0, 0.0015, 0.0),
                     bevel_width=0.001,
                     bevel_segments=1,
                     mat_idx=1,
@@ -3224,17 +3211,17 @@ def build_solar_wing_model(
                 continue
             append_beveled_box(
                 bm,
-                size_xyz=(cell_w, 0.010, cell_l),
+                size_xyz=(cell_w, 0.008, cell_l),
                 center_xyz=(cx, cy_local, cz_local),
-                bevel_width=0.004,
+                bevel_width=0.003,
                 bevel_segments=2,
                 mat_idx=2,
                 rot_euler=(slope_rad, 0.0, 0.0),
             )
             append_beveled_box(
                 bm,
-                size_xyz=(0.006, 0.012, cell_l * 0.92),
-                center_xyz=(cx, cy_local + 0.002, cz_local),
+                size_xyz=(0.005, 0.009, cell_l * 0.92),
+                center_xyz=(cx, cy_local + 0.0015, cz_local),
                 bevel_width=0.001,
                 bevel_segments=1,
                 mat_idx=1,
@@ -3244,22 +3231,22 @@ def build_solar_wing_model(
     for sx in (-1.0, 1.0):
         append_cylinder(
             bm,
-            radius1=0.016,
-            radius2=0.016,
-            length=0.06,
+            radius1=0.010,
+            radius2=0.010,
+            length=0.048,
             axis="X",
-            center_xyz=(sx * (sw_w * 0.36), 0.0, 0.0),
+            center_xyz=(sx * 0.145, 0.0, 0.0),
             segments=18,
-            bevel_width=0.003,
+            bevel_width=0.002,
             bevel_segments=2,
             mat_idx=1,
         )
     append_beveled_box(
         bm,
-        size_xyz=(0.06, 0.022, 0.04),
-        center_xyz=(0.0, 0.008, -0.02),
-        bevel_width=0.004,
-        bevel_segments=2,
+        size_xyz=(0.052, 0.014, 0.028),
+        center_xyz=(0.0, 0.004, -0.016),
+        bevel_width=0.003,
+        bevel_segments=1,
         mat_idx=4,
     )
 

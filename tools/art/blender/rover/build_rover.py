@@ -88,7 +88,7 @@ DIMENSIONS = {
     "sage_patch_height": 0.22,
     "sage_patch_length": 0.24,
     "rivet_radius": 0.0075,
-    "solar_deck_slope_deg": 6.0,
+    "solar_deck_slope_deg": 0.0,
     "solar_rail_width": 0.040,
     "solar_rail_height": 0.024,
     "solar_rail_length": 0.42,
@@ -181,11 +181,11 @@ DIMENSIONS = {
     "piv_shock_x": 0.42,
     "piv_shock_y": 0.66,
     "piv_shock_z": 0.43,
-    "piv_solar_wing": (0.0, 0.96, -0.06),
+    "piv_solar_wing": (0.0, 0.948, -0.394),
 
     # 6. Kit Dimensions (SolarWing.fbx & Kit_TapeDeck.fbx)
-    "solar_wing_width": 0.56,
-    "solar_wing_length": 0.48,
+    "solar_wing_width": 0.40,
+    "solar_wing_length": 0.220,
     "tape_deck_width": 0.09,
     "tape_deck_height": 0.21,
     "tape_deck_depth": 0.21,
