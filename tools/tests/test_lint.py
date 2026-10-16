@@ -269,7 +269,7 @@ class SceneContributorAssetTests(unittest.TestCase):
             "        RoverPrefabBuilder.Build();\n    }\n}\n"
         )
         found = findings(by_interface, lint.EDITOR, "Assets/_Project/Scripts/UI/Editor/MapUiContributor.cs")
-        self.assertTrue(all(f.enforced for f in found))
+        self.assertTrue(all(not f.enforced and "(report-only)" in f.format() for f in found))
         self.assertEqual([(f.rule, f.line) for f in found],
                          [("scene-contributor-asset", 5), ("scene-contributor-asset", 6),
                           ("scene-contributor-asset", 7)])
