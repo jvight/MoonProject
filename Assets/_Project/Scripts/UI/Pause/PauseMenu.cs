@@ -58,7 +58,14 @@ namespace MoonProject.UI
         private readonly Reveal _newGamePage;
         private readonly Reveal _languagePage;
         private readonly Reveal _titleScreen;
+        private readonly Reveal _titleCrt;
+        private readonly Reveal _titleCrtOverlay;
+        private readonly Reveal _titleKeyHint;
         private readonly Reveal _curtain;
+        private readonly TitleScenePainter _titleScenePainter;
+        private readonly TitleCrtOverlayPainter _titleCrtOverlayPainter;
+        private readonly Label _continueNote;
+        private readonly Label[] _titleCursors;
         private readonly Button[] _languageButtons;
         private readonly CreditsView _credits;
         private readonly VisualElement[] _settingsPages;
@@ -76,6 +83,9 @@ namespace MoonProject.UI
         private Leaving _leaving;
         private float _untouched;
         private bool _resting;
+        private float _titleTime;
+        private bool _lockedTitleTime;
+        private bool _lastCursorVisible = true;
 
         public PauseMenu(UiLayout layout, PauseSettings settings, TitleSettings title, PlayerSettings player,
             ILocalization localization, InputReader input, EventBus events, SettingsStore settingsStore,
@@ -117,8 +127,16 @@ namespace MoonProject.UI
             _newGamePage = new Reveal(layout.PageNewGame, settings.Page);
             _languagePage = new Reveal(layout.PageLanguage, settings.Page);
             _titleScreen = new Reveal(layout.TitleScreen, title.Reveal);
+            _titleCrt = new Reveal(layout.TitleCrt, title.Reveal);
+            _titleCrtOverlay = new Reveal(layout.TitleCrtOverlay, title.Reveal);
+            _titleKeyHint = new Reveal(layout.TitleKeyHint, title.Reveal);
             _curtain = new Reveal(layout.Curtain, title.Curtain);
+            _titleScenePainter = new TitleScenePainter(layout.TitleCrt, title);
+            _titleCrtOverlayPainter = new TitleCrtOverlayPainter(layout.TitleCrtOverlay, title);
+            layout.TitleSubtitlePrefix.text = "// ";
             _languageButtons = LanguageButtons(layout.PageLanguage, localization);
+            _continueNote = CreateContinueNote(layout.ResumeButton);
+            _titleCursors = CreateTitleCursors(layout, _languageButtons);
             _veil.Snap(false);
             _main.Snap(false);
             _settingsPanel.Snap(false);
@@ -127,6 +145,9 @@ namespace MoonProject.UI
             _newGamePage.Snap(false);
             _languagePage.Snap(false);
             _titleScreen.Snap(false);
+            _titleCrt.Snap(false);
+            _titleCrtOverlay.Snap(false);
+            _titleKeyHint.Snap(false);
             _curtain.Snap(false);
             new ShadowPainter(layout.PauseMainShadow);
             new ShadowPainter(layout.PauseSettingsShadow);
@@ -197,6 +218,9 @@ namespace MoonProject.UI
             _cursor.Menu();
             WriteCassettes();
             WriteRelays();
+            _titleCrt.Snap(false);
+            _titleCrtOverlay.Snap(false);
+            _titleKeyHint.Snap(false);
             _veil.Show();
             _main.Show();
             _pendingFocus = _layout.ResumeButton;
@@ -278,6 +302,13 @@ namespace MoonProject.UI
             SnapPages();
             WriteMode();
             _cursor.Menu();
+            _lockedTitleTime = false;
+            _titleTime = 0f;
+            Display(_layout.MenuFrame, true);
+            StepTitleAnimation(_titleTime, false);
+            _titleCrt.Snap(true);
+            _titleCrtOverlay.Snap(true);
+            _titleKeyHint.Show();
             _main.Show();
             _titleScreen.Show();
             _curtain.Snap(true);
@@ -285,6 +316,24 @@ namespace MoonProject.UI
             _untouched = 0f;
             _resting = false;
             _pendingFocus = DefaultFocus();
+        }
+
+        /// <summary>Evaluates the title screen's 2D CRT animation at an exact timestamp (for deterministic captures).</summary>
+        public void SetTitleAnimationTime(float timeSeconds, bool standaloneFraming = false)
+        {
+            _lockedTitleTime = true;
+            _titleTime = timeSeconds;
+            _untouched = 0f;
+            if (_resting)
+            {
+                Rest(false);
+                _main.Snap(true);
+                _titleScreen.Snap(true);
+                _titleKeyHint.Snap(true);
+            }
+
+            Display(_layout.MenuFrame, !standaloneFraming);
+            StepTitleAnimation(timeSeconds, standaloneFraming);
         }
 
         /// <param name="unscaledDeltaTime">Real seconds since the last tick.</param>
@@ -306,8 +355,21 @@ namespace MoonProject.UI
             _newGamePage.Tick(unscaledDeltaTime);
             _languagePage.Tick(unscaledDeltaTime);
             _titleScreen.Tick(unscaledDeltaTime);
+            _titleCrt.Tick(unscaledDeltaTime);
+            _titleCrtOverlay.Tick(unscaledDeltaTime);
+            _titleKeyHint.Tick(unscaledDeltaTime);
             _curtain.Tick(unscaledDeltaTime);
             _credits.Tick(unscaledDeltaTime);
+            if (!_titleCrt.IsHidden)
+            {
+                if (!_lockedTitleTime)
+                {
+                    _titleTime += unscaledDeltaTime;
+                }
+
+                StepTitleAnimation(_titleTime, _titleScenePainter.StandaloneFraming);
+            }
+
             ShiftForSettings();
             _layout.Pause.EnableInClassList(SettingsOpenClass, _settingsPanel.Target);
             CenterSettings();
@@ -458,6 +520,7 @@ namespace MoonProject.UI
             if (_pages.IsTitle)
             {
                 _titleScreen.Hide();
+                _titleKeyHint.Hide();
             }
 
             _pendingFocus = _layout.MasterSlider;
@@ -534,6 +597,7 @@ namespace MoonProject.UI
             if (_pages.IsTitle && !_resting)
             {
                 _titleScreen.Show();
+                _titleKeyHint.Show();
             }
 
             _pendingFocus = _layout.SettingsButton;
@@ -806,6 +870,7 @@ namespace MoonProject.UI
             _credits.Open();
             _main.Hide();
             _titleScreen.Snap(false);
+            _titleKeyHint.Snap(false);
             _pendingFocus = _layout.CreditsBack;
             Cue(UiCueKind.Confirm);
         }
@@ -824,6 +889,7 @@ namespace MoonProject.UI
             Blur();
             _main.Show();
             _titleScreen.Show();
+            _titleKeyHint.Show();
             _pendingFocus = _layout.CreditsButton;
             Cue(UiCueKind.Back);
         }
@@ -935,6 +1001,7 @@ namespace MoonProject.UI
             _layout.ResumeButton.text = _localization.Get(title ? UiKeys.TitleContinue : UiKeys.PauseResume);
             _layout.SettingsButton.text = _localization.Get(title ? UiKeys.TitleSettings : UiKeys.PauseSettings);
             _layout.QuitButton.text = _localization.Get(title ? UiKeys.TitleQuit : UiKeys.PauseQuit);
+            _continueNote.text = title && _pages.HasSave ? _localization.Get(UiKeys.TitleContinueNote) : string.Empty;
             Display(_layout.ResumeButton, !title || _pages.HasSave);
             Display(_layout.NewGameButton, title);
             Display(_layout.QuitToTitleButton, !title && _flow.ShowsTitle);
@@ -956,8 +1023,77 @@ namespace MoonProject.UI
             SaveIfChanged();
             _main.Hide();
             _titleScreen.Hide();
+            _titleCrt.Hide();
+            _titleCrtOverlay.Hide();
+            _titleKeyHint.Hide();
             _settingsPanel.Hide();
             _cursor.Drive();
+        }
+
+        private void StepTitleAnimation(float timeSeconds, bool standaloneFraming)
+        {
+            _titleScenePainter.SetTime(timeSeconds, standaloneFraming);
+            _titleCrtOverlayPainter.SetTime(timeSeconds, standaloneFraming);
+            bool cursorVisible = _titleScenePainter.State.CursorVisible;
+            if (cursorVisible != _lastCursorVisible)
+            {
+                _lastCursorVisible = cursorVisible;
+                Visibility visibility = cursorVisible ? Visibility.Visible : Visibility.Hidden;
+                for (int i = 0; i < _titleCursors.Length; i++)
+                {
+                    _titleCursors[i].style.visibility = visibility;
+                }
+            }
+        }
+
+        private static Label CreateContinueNote(Button resumeButton)
+        {
+            var note = new Label
+            {
+                pickingMode = PickingMode.Ignore,
+            };
+            note.AddToClassList("menu-button__note");
+            resumeButton.Add(note);
+            return note;
+        }
+
+        private static Label[] CreateTitleCursors(UiLayout layout, Button[] languageButtons)
+        {
+            Button[] mainButtons =
+            {
+                layout.ResumeButton,
+                layout.NewGameButton,
+                layout.SettingsButton,
+                layout.CreditsButton,
+                layout.QuitButton,
+                layout.NewGameKeepButton,
+                layout.NewGameConfirmButton,
+            };
+
+            var cursors = new Label[mainButtons.Length + languageButtons.Length];
+            int idx = 0;
+            for (int i = 0; i < mainButtons.Length; i++)
+            {
+                cursors[idx++] = AttachCursor(mainButtons[i]);
+            }
+
+            for (int i = 0; i < languageButtons.Length; i++)
+            {
+                cursors[idx++] = AttachCursor(languageButtons[i]);
+            }
+
+            return cursors;
+        }
+
+        private static Label AttachCursor(Button button)
+        {
+            var cursor = new Label(">")
+            {
+                pickingMode = PickingMode.Ignore,
+            };
+            cursor.AddToClassList("menu-button__cursor");
+            button.Add(cursor);
+            return cursor;
         }
 
         /// <summary>
@@ -966,7 +1102,7 @@ namespace MoonProject.UI
         /// </summary>
         private void TickTitle(float unscaledDeltaTime)
         {
-            if (!IsTitle || _leaving != Leaving.None)
+            if (!IsTitle || _leaving != Leaving.None || _lockedTitleTime)
             {
                 return;
             }
@@ -1005,11 +1141,13 @@ namespace MoonProject.UI
                 Blur();
                 _main.Hide();
                 _titleScreen.Hide();
+                _titleKeyHint.Hide();
                 return;
             }
 
             _main.Show();
             _titleScreen.Show();
+            _titleKeyHint.Show();
             _pendingFocus = DefaultFocus();
         }
 

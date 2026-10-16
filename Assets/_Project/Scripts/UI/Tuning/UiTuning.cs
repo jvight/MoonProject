@@ -104,7 +104,7 @@ namespace MoonProject.UI
                 return "a settings section is missing";
             }
 
-            return _prompts.Validate() ?? _safe.Validate() ?? _pause.Validate() ?? _cargo.Validate();
+            return _title.Validate() ?? _prompts.Validate() ?? _safe.Validate() ?? _pause.Validate() ?? _cargo.Validate();
         }
     }
 }

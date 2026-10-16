@@ -293,10 +293,15 @@
         </ui:VisualElement>
         <ui:VisualElement name="pause" class="pause" picking-mode="Ignore">
             <ui:VisualElement name="pause-veil" class="pause__veil" />
+            <ui:VisualElement name="title-crt" class="title-crt" picking-mode="Ignore" />
             <ui:VisualElement name="menu-frame" class="safe-frame" picking-mode="Ignore">
                 <ui:VisualElement name="title-screen" class="title-screen" picking-mode="Ignore">
                     <ui:VisualElement name="title-wordmark" class="title-screen__wordmark" picking-mode="Ignore" />
-                    <ui:Label name="title-subtitle" class="title-screen__subtitle loc" text="ui.title.subtitle" />
+                    <ui:VisualElement class="title-screen__subtitle-row" picking-mode="Ignore">
+                        <ui:Label name="title-subtitle-prefix" class="title-screen__subtitle-prefix" picking-mode="Ignore" />
+                        <ui:Label name="title-subtitle" class="title-screen__subtitle loc" text="ui.title.subtitle" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="title-rule" class="title-screen__rule" picking-mode="Ignore" />
                 </ui:VisualElement>
                 <ui:VisualElement name="pause-frame" class="pause__frame" picking-mode="Ignore">
                     <ui:VisualElement name="pause-stack" class="pause__stack" picking-mode="Ignore">
@@ -448,6 +453,7 @@
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
+                <ui:Label name="title-key-hint" class="title-key-hint loc" text="ui.title.key_hint" picking-mode="Ignore" />
             </ui:VisualElement>
             <ui:VisualElement name="credits" class="credits" picking-mode="Ignore">
                 <ui:VisualElement name="credits-panel" class="panel credits__panel" picking-mode="Ignore">
@@ -458,6 +464,7 @@
                                text="ui.settings.back" />
                 </ui:VisualElement>
             </ui:VisualElement>
+            <ui:VisualElement name="title-crt-overlay" class="title-crt-overlay" picking-mode="Ignore" />
         </ui:VisualElement>
         <ui:VisualElement name="save-tick" class="save-tick" picking-mode="Ignore">
             <ui:Label class="save-tick__word loc" text="ui.save_tick.word" picking-mode="Ignore" />

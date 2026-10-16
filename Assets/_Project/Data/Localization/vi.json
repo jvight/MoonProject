@@ -1961,6 +1961,14 @@
         {
             "key": "ui.bay.row_full",
             "text": "Hàng linh kiện đã đầy. Hãy lắp một món lên 07 trước."
+        },
+        {
+            "key": "ui.title.continue_note",
+            "text": "BẢN LƯU · 02:14"
+        },
+        {
+            "key": "ui.title.key_hint",
+            "text": "[W/S · D-PAD] DI CHUYỂN  [ENTER / A] XÁC NHẬN"
         }
     ]
 }

@@ -12,6 +12,8 @@
 .hop-veil__dark,
 .pause,
 .pause__veil,
+.title-crt,
+.title-crt-overlay,
 .pause__frame {
     position: absolute;
     left: 0;
@@ -418,29 +420,66 @@ Label {
 
 /* The title over the live world (M3-09): the wordmark in the sky, a quiet subtitle, the menu low and left */
 
-/* The open sky right of Earth and The Peak's beacon in the title frame, never over 07 */
+/* TITLE-SCREEN v1: Full-monitor CRT with wordmark, "// " subtitle and amber divider on the left, 2D animation on the right */
+
 .title-screen {
     position: absolute;
-    left: 66%;
-    right: 4%;
-    top: 3%;
-    align-items: center;
+    left: 150px;
+    width: 510px;
+    top: 175px;
+    align-items: flex-start;
 }
 
 /* Drawn by WordmarkPainter from the approved SVG; its height follows its width */
 .title-screen__wordmark {
-    width: 100%;
+    width: 460px;
+    margin-left: -30px;
     --ink-color: var(--moon-cream);
     --glow-color: var(--moon-amber-soft);
     --glow-width: 18px;
 }
 
-.title-screen__subtitle {
-    margin-top: 10px;
-    font-size: 19px;
-    letter-spacing: 4px;
+.title-screen__subtitle-row {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 2px;
+    margin-left: 4px;
+}
+
+.title-screen__subtitle-prefix {
+    font-size: 20px;
+    letter-spacing: 0.5px;
     color: var(--moon-text-dim);
-    -unity-text-align: middle-center;
+    margin-right: 4px;
+    -unity-text-align: middle-left;
+}
+
+.title-screen__subtitle {
+    margin-top: 0;
+    font-size: 20px;
+    letter-spacing: 0.5px;
+    color: var(--moon-text-dim);
+    -unity-text-align: middle-left;
+}
+
+.title-screen__rule {
+    width: 510px;
+    height: 2px;
+    margin-top: 16px;
+    background-color: var(--moon-track);
+    border-left-width: 48px;
+    border-left-color: var(--moon-warm-lamp);
+}
+
+.title-key-hint {
+    position: absolute;
+    left: 150px;
+    bottom: 132px;
+    font-size: 18px;
+    letter-spacing: 1px;
+    color: var(--moon-text-dim);
+    -unity-text-align: middle-left;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
 }
 
 .pause--title .pause__veil,
@@ -449,22 +488,97 @@ Label {
 }
 
 .pause--title .pause__frame {
-    justify-content: flex-end;
+    justify-content: flex-start;
     align-items: flex-start;
-    padding-left: 7%;
-    padding-bottom: 48px;
+    padding-left: 144px;
+    padding-top: 336px;
+    padding-bottom: 0;
 }
 
 /* The settings panel is tall: while it is open the title's menu steps down to a small margin so it fits at any text size */
 .pause--title.pause--settings-open .pause__frame {
+    justify-content: flex-end;
+    padding-top: 0;
     padding-bottom: 8px;
 }
 
 .pause--title .pause__stack {
-    width: 340px;
+    width: 516px;
 }
 
-/* The title's menu sits low, so its settings open beside it and grow upward from its foot, never off the bottom */
+.pause--title .pause__main .pause__panel {
+    background-image: none;
+    padding: 0;
+}
+
+.pause--title .pause__main .menu-button {
+    height: 52px;
+    margin: 6px 0;
+    padding: 0 18px 0 42px;
+    border-radius: 5px;
+    border-top-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+    border-left-width: 6px;
+    border-color: rgba(0, 0, 0, 0);
+    background-color: rgba(0, 0, 0, 0);
+    color: var(--glass-hi);
+    font-size: 28px;
+    -unity-text-align: middle-left;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
+}
+
+.pause--title .pause__main .menu-button:hover {
+    background-color: var(--crt-cyan-fill);
+    border-color: var(--crt-cyan-edge);
+}
+
+.pause--title .pause__main .menu-button:focus,
+.pause--title .pause__main .menu-button:active {
+    background-color: var(--crt-cyan-fill);
+    border-color: var(--moon-tech-glow);
+    color: var(--moon-tech-glow);
+    scale: 1 1;
+}
+
+.menu-button__cursor {
+    position: absolute;
+    left: 14px;
+    top: 0;
+    bottom: 0;
+    display: none;
+    font-size: 28px;
+    color: var(--moon-tech-glow);
+    -unity-text-align: middle-left;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
+}
+
+.pause--title .pause__main .menu-button:focus .menu-button__cursor {
+    display: flex;
+}
+
+.menu-button__note {
+    position: absolute;
+    right: 16px;
+    top: 0;
+    bottom: 0;
+    display: none;
+    font-size: 18px;
+    letter-spacing: 1px;
+    color: var(--moon-text-faint);
+    -unity-text-align: middle-right;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Regular.asset");
+}
+
+.pause--title .pause__main .menu-button .menu-button__note {
+    display: flex;
+}
+
+.pause--title .pause__main .menu-button:focus .menu-button__note {
+    color: var(--crt-cyan-dim);
+}
+
+/* The title's menu sits low when settings open, so its settings open beside it and grow upward from its foot, never off the bottom */
 .pause--title .pause__settings {
     top: auto;
     bottom: 0;
