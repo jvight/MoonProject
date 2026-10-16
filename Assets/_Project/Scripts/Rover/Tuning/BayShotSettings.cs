@@ -162,11 +162,11 @@ namespace MoonProject.Rover
 
         public float ShortfallPenalty => _shortfallPenalty;
 
-        public float BodyHalfLength => Mathf.Approximately(_bodyHalfLength, 0.6f) ? 0.58f : _bodyHalfLength;
+        public float BodyHalfLength => _bodyHalfLength;
 
-        public float BodyHalfWidth => Mathf.Approximately(_bodyHalfWidth, 0.5f) ? 0.45f : _bodyHalfWidth;
+        public float BodyHalfWidth => _bodyHalfWidth;
 
-        public float BodyHeight => Mathf.Approximately(_bodyHeight, 0.85f) ? 0.76f : _bodyHeight;
+        public float BodyHeight => _bodyHeight;
 
         public float SocketMargin => _socketMargin;
     }
