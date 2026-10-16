@@ -24,8 +24,9 @@ namespace MoonProject.Showcase.Editor
     /// <summary>
     /// Builds <c>Assets/_Project/Scenes/Showcase.unity</c> from an empty scene: sets up the real World
     /// (<see cref="WorldSystem"/>, <see cref="SkyCycleSystem"/>, <see cref="PeakBeacon"/>, post-processing
-    /// <see cref="Volume"/>), places the 6 look-dev exhibits on the flat basin floor with 12 m spacing, wires all
-    /// animated node paths, lamps, camera rig, and Vietnamese UI Toolkit help overlay, and normalizes scene file IDs.
+    /// <see cref="Volume"/>), places all 15 look-dev exhibits on the central basin floor with &gt;= 12 m spacing,
+    /// wires all animated node paths, <c>Stage_1..4</c> roots, lamps, socket-mounted rover kits, ruin cluster pieces,
+    /// camera rig, and Vietnamese UI Toolkit help overlay, and normalizes scene file IDs.
     /// </summary>
     public static class ShowcaseSceneBuilder
     {
@@ -33,6 +34,14 @@ namespace MoonProject.Showcase.Editor
         public const string BuilderPath = "Showcase Scene";
         public const string BuilderPattern = "^" + BuilderPath + "$";
         public const int BuilderOrder = 950;
+
+        private static readonly string[] StageNodeNames =
+        {
+            "Stage_1",
+            "Stage_2",
+            "Stage_3",
+            "Stage_4",
+        };
 
         public static void BuildShowcaseScene()
         {
@@ -52,10 +61,7 @@ namespace MoonProject.Showcase.Editor
         [MoonBuilder(BuilderPath, BuilderOrder, ReplacesOpenScene = true)]
         public static void Build()
         {
-            if (AssetDatabase.LoadAssetAtPath<ShowcaseTuning>(ShowcasePaths.Tuning) == null)
-            {
-                ShowcaseTuningBuilder.Build();
-            }
+            ShowcaseTuningBuilder.Build();
 
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var tuning = RequireAsset<ShowcaseTuning>(ShowcasePaths.Tuning);
@@ -183,7 +189,7 @@ namespace MoonProject.Showcase.Editor
             MoonSurface surface)
         {
             Transform exhibitsRoot = context.Root("Exhibits").transform;
-            var rigs = new ShowcaseExhibitRig[6];
+            var rigs = new ShowcaseExhibitRig[15];
 
             rigs[0] = BuildRoverExhibit(context, exhibitsRoot, tuning, surface);
             rigs[1] = BuildCargoLanderExhibit(context, exhibitsRoot, tuning, surface);
@@ -191,6 +197,15 @@ namespace MoonProject.Showcase.Editor
             rigs[3] = BuildSolarArrayExhibit(context, exhibitsRoot, tuning, surface);
             rigs[4] = BuildPowerPylonExhibit(context, exhibitsRoot, tuning, surface);
             rigs[5] = BuildRockClusterExhibit(context, exhibitsRoot, tuning, surface);
+            rigs[6] = BuildRoverUpgradedExhibit(context, exhibitsRoot, tuning, surface);
+            rigs[7] = BuildBatteryBankExhibit(context, exhibitsRoot, tuning, surface);
+            rigs[8] = BuildSmelterExhibit(context, exhibitsRoot, tuning, surface);
+            rigs[9] = BuildFabricatorExhibit(context, exhibitsRoot, tuning, surface);
+            rigs[10] = BuildStorageRackExhibit(context, exhibitsRoot, tuning, surface);
+            rigs[11] = BuildUpgradeBayExhibit(context, exhibitsRoot, tuning, surface);
+            rigs[12] = BuildAntennaMastExhibit(context, exhibitsRoot, tuning, surface);
+            rigs[13] = BuildVehiclePadExhibit(context, exhibitsRoot, tuning, surface);
+            rigs[14] = BuildRuinsCornerExhibit(context, exhibitsRoot, tuning, surface);
 
             return rigs;
         }
@@ -207,6 +222,11 @@ namespace MoonProject.Showcase.Editor
 
             GameObject prefab = RequireAsset<GameObject>(ShowcasePaths.RoverPrefab);
             GameObject model = context.InstantiatePrefab(prefab, root.transform, Vector3.zero, prefab.transform.localRotation);
+
+            RequireNode(model.transform, RoverModelNodes.CellFilled).gameObject.SetActive(false);
+            RequireNode(model.transform, RoverModelNodes.Decal07Fresh).gameObject.SetActive(false);
+            RequireNode(model.transform, RoverModelNodes.Pennant).gameObject.SetActive(false);
+            MountKitAtSocket(context, model.transform, RoverModelNodes.Eye, ShowcasePaths.LensGlassPrefab);
 
             var faceTuning = RequireAsset<FaceTuning>(ShowcasePaths.FaceTuning);
             MeshRenderer screenRenderer = RequireRenderer(model.transform, "Neck/NeckLift/Head/Screen");
@@ -258,6 +278,130 @@ namespace MoonProject.Showcase.Editor
                 roverHeadTransform: headTransform);
 
             return rig;
+        }
+
+        private static ShowcaseExhibitRig BuildRoverUpgradedExhibit(
+            SceneBuildContext context,
+            Transform parent,
+            ShowcaseTuning tuning,
+            MoonSurface surface)
+        {
+            ShowcaseExhibitDefinition def = tuning.FindExhibit(ShowcaseExhibitId.Rover07Upgraded);
+            GameObject root = CreateExhibitRoot(context, parent, "Exhibit_7_Rover07Upgraded", def, surface);
+            var rig = root.AddComponent<ShowcaseExhibitRig>();
+
+            GameObject prefab = RequireAsset<GameObject>(ShowcasePaths.RoverPrefab);
+            GameObject model = context.InstantiatePrefab(prefab, root.transform, Vector3.zero, prefab.transform.localRotation);
+
+            // Mirror left-side sockets and rear ring socket identically to RoverPrefabBuilder
+            Transform drumLeft = RequireNode(model.transform, RoverModelNodes.DrumSocketLeft);
+            drumLeft.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            Transform binLeft = RequireNode(model.transform, RoverModelNodes.BinSocketLeft);
+            binLeft.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            Transform ringSocket = RequireNode(model.transform, RoverModelNodes.RingSocket);
+            ringSocket.localRotation = Quaternion.Euler(0f, 180f, 0f);
+
+            // Mount every R1 kit prefab at its socket from RoverModelNodes
+            MountKitAtSocket(context, model.transform, RoverModelNodes.HeadlampSocket, ShowcasePaths.KitLampBarPrefab);
+            MountKitAtSocket(context, model.transform, RoverModelNodes.DrumSocketLeft, ShowcasePaths.KitCapacitorDrumPrefab);
+            MountKitAtSocket(context, model.transform, RoverModelNodes.DrumSocketRight, ShowcasePaths.KitCapacitorDrumPrefab);
+            MountKitAtSocket(context, model.transform, RoverModelNodes.BinSocketLeft, ShowcasePaths.KitSideBinPrefab);
+            MountKitAtSocket(context, model.transform, RoverModelNodes.BinSocketRight, ShowcasePaths.KitSideBinPrefab);
+            MountKitAtSocket(context, model.transform, RoverModelNodes.CargoSocket, ShowcasePaths.KitCargoRackPrefab);
+            MountKitAtSocket(context, model.transform, RoverModelNodes.SpineSocket, ShowcasePaths.KitBatterySpinePrefab);
+            MountKitAtSocket(context, model.transform, RoverModelNodes.CoilSocket, ShowcasePaths.HoverCoilsPrefab);
+            MountKitAtSocket(context, model.transform, RoverModelNodes.DeckSocket, ShowcasePaths.KitTapeDeckPrefab);
+            MountKitAtSocket(context, model.transform, RoverModelNodes.RingSocket, ShowcasePaths.KitTetherRingPrefab);
+            MountKitAtSocket(context, model.transform, RoverModelNodes.LensSocket, ShowcasePaths.FocusLensPrefab);
+            MountKitAtSocket(context, model.transform, RoverModelNodes.Eye, ShowcasePaths.LensGlassPrefab);
+            GameObject scanFan = MountKitAtSocket(context, model.transform, RoverModelNodes.ScanFanSocket, ShowcasePaths.ScanFanPrefab);
+            foreach (Renderer fanRenderer in scanFan.GetComponentsInChildren<Renderer>(true))
+            {
+                fanRenderer.enabled = false;
+            }
+
+            // Activate all gift visuals on the fully upgraded 07
+            RequireNode(model.transform, RoverModelNodes.CellFilled).gameObject.SetActive(true);
+            RequireNode(model.transform, RoverModelNodes.Decal07Fresh).gameObject.SetActive(true);
+            RequireNode(model.transform, RoverModelNodes.Pennant).gameObject.SetActive(true);
+
+            var faceTuning = RequireAsset<FaceTuning>(ShowcasePaths.FaceTuning);
+            MeshRenderer screenRenderer = RequireRenderer(model.transform, "Neck/NeckLift/Head/Screen");
+            var faceDisplay = model.AddComponent<FaceDisplay>();
+            var faceSo = new SerializedObject(faceDisplay);
+            AssignObject(faceSo, "_screenRenderer", screenRenderer);
+            AssignObject(faceSo, "_tuning", faceTuning);
+            faceSo.ApplyModifiedPropertiesWithoutUndo();
+
+            Transform headTransform = RequireNode(model.transform, "Neck/NeckLift/Head");
+            var lampAmberMat = RequireAsset<Material>(ShowcasePaths.LampAmberMaterial);
+            MeshRenderer[] lampRenderers = FindRenderersUsingMaterial(model.transform, lampAmberMat);
+
+            Light leftSpot = CreateAccentLight(
+                context,
+                RequireNode(model.transform, "Body/Headlamp_L"),
+                "HeadlampSpot_L",
+                LightType.Spot,
+                new Vector3(0f, 0f, 0.06f),
+                Quaternion.Euler(8f, 0f, 0f),
+                new Color(1.0f, 0.78f, 0.42f),
+                intensity: 2.4f,
+                range: 10.5f,
+                spotAngle: 66f);
+            Light rightSpot = CreateAccentLight(
+                context,
+                RequireNode(model.transform, "Body/Headlamp_R"),
+                "HeadlampSpot_R",
+                LightType.Spot,
+                new Vector3(0f, 0f, 0.06f),
+                Quaternion.Euler(8f, 0f, 0f),
+                new Color(1.0f, 0.78f, 0.42f),
+                intensity: 2.4f,
+                range: 10.5f,
+                spotAngle: 66f);
+            Light roofBarGlow = CreateAccentLight(
+                context,
+                RequireNode(model.transform, RoverModelNodes.HeadlampSocket),
+                "LampBarGlow",
+                LightType.Point,
+                new Vector3(0f, 0.08f, 0.12f),
+                Quaternion.identity,
+                new Color(1.0f, 0.76f, 0.38f),
+                intensity: 1.6f,
+                range: 4.5f);
+
+            WireExhibitRig(
+                rig,
+                ShowcaseExhibitId.Rover07Upgraded,
+                tuning,
+                BindNodes(model.transform, def.Nodes),
+                lampRenderers,
+                Array.Empty<MeshRenderer>(),
+                new[] { leftSpot, rightSpot, roofBarGlow },
+                new[] { 2.4f, 2.4f, 1.6f },
+                ShowcaseTriggerKey.Action6_R,
+                lampsDefaultLit: true,
+                faceDisplay: faceDisplay,
+                roverHeadTransform: headTransform);
+
+            return rig;
+        }
+
+        private static GameObject MountKitAtSocket(
+            SceneBuildContext context,
+            Transform roverModelRoot,
+            string socketRelativePath,
+            string kitPrefabPath)
+        {
+            Transform socket = RequireNode(roverModelRoot, socketRelativePath);
+            var kitPrefab = RequireAsset<GameObject>(kitPrefabPath);
+            GameObject instance = context.InstantiatePrefab(
+                kitPrefab,
+                socket,
+                Vector3.zero,
+                Quaternion.identity);
+            instance.SetActive(true);
+            return instance;
         }
 
         private static ShowcaseExhibitRig BuildCargoLanderExhibit(
@@ -371,6 +515,8 @@ namespace MoonProject.Showcase.Editor
                 intensity: 1.6f,
                 range: 4.5f);
 
+            BindStages(model.transform, out Transform[] stageRoots, out Vector3[] stageRestPositions);
+
             WireExhibitRig(
                 rig,
                 ShowcaseExhibitId.ChargingPad,
@@ -381,7 +527,9 @@ namespace MoonProject.Showcase.Editor
                 new[] { padGlow },
                 new[] { 1.6f },
                 ShowcaseTriggerKey.Action3_C,
-                lampsDefaultLit: true);
+                lampsDefaultLit: true,
+                stageRoots: stageRoots,
+                stageRestPositions: stageRestPositions);
 
             return rig;
         }
@@ -416,6 +564,8 @@ namespace MoonProject.Showcase.Editor
                 intensity: 1.1f,
                 range: 3.2f);
 
+            BindStages(model.transform, out Transform[] stageRoots, out Vector3[] stageRestPositions);
+
             WireExhibitRig(
                 rig,
                 ShowcaseExhibitId.SolarArray,
@@ -427,7 +577,9 @@ namespace MoonProject.Showcase.Editor
                 new[] { 1.1f },
                 ShowcaseTriggerKey.Action3_C,
                 lampsDefaultLit: true,
-                solarStage4Transform: stage4);
+                solarStage4Transform: stage4,
+                stageRoots: stageRoots,
+                stageRestPositions: stageRestPositions);
 
             return rig;
         }
@@ -461,6 +613,8 @@ namespace MoonProject.Showcase.Editor
                 intensity: 2.2f,
                 range: 5.8f);
 
+            BindStages(model.transform, out Transform[] stageRoots, out Vector3[] stageRestPositions);
+
             WireExhibitRig(
                 rig,
                 ShowcaseExhibitId.PowerPylon,
@@ -471,7 +625,9 @@ namespace MoonProject.Showcase.Editor
                 new[] { pylonLight },
                 new[] { 2.2f },
                 ShowcaseTriggerKey.Action3_C,
-                lampsDefaultLit: true);
+                lampsDefaultLit: true,
+                stageRoots: stageRoots,
+                stageRestPositions: stageRestPositions);
 
             return rig;
         }
@@ -522,6 +678,322 @@ namespace MoonProject.Showcase.Editor
                 lampsDefaultLit: false);
 
             return rig;
+        }
+
+        private static ShowcaseExhibitRig BuildBatteryBankExhibit(
+            SceneBuildContext context,
+            Transform parent,
+            ShowcaseTuning tuning,
+            MoonSurface surface)
+        {
+            return BuildStageStructureExhibit(
+                context,
+                parent,
+                tuning,
+                surface,
+                ShowcaseExhibitId.BatteryBank,
+                "Exhibit_8_BatteryBank",
+                ShowcasePaths.BatteryBankPrefab,
+                ShowcaseTriggerKey.Action4_V,
+                new Vector3(0f, 1.65f, 0.45f),
+                lightIntensity: 1.8f,
+                lightRange: 4.8f);
+        }
+
+        private static ShowcaseExhibitRig BuildSmelterExhibit(
+            SceneBuildContext context,
+            Transform parent,
+            ShowcaseTuning tuning,
+            MoonSurface surface)
+        {
+            return BuildStageStructureExhibit(
+                context,
+                parent,
+                tuning,
+                surface,
+                ShowcaseExhibitId.Smelter,
+                "Exhibit_9_Smelter",
+                ShowcasePaths.SmelterPrefab,
+                ShowcaseTriggerKey.Action3_C,
+                new Vector3(0.35f, 1.35f, -0.75f),
+                lightIntensity: 2.5f,
+                lightRange: 6.0f);
+        }
+
+        private static ShowcaseExhibitRig BuildFabricatorExhibit(
+            SceneBuildContext context,
+            Transform parent,
+            ShowcaseTuning tuning,
+            MoonSurface surface)
+        {
+            return BuildStageStructureExhibit(
+                context,
+                parent,
+                tuning,
+                surface,
+                ShowcaseExhibitId.Fabricator,
+                "Exhibit_10_Fabricator",
+                ShowcasePaths.FabricatorPrefab,
+                ShowcaseTriggerKey.Action4_V,
+                new Vector3(0f, 1.45f, 0.35f),
+                lightIntensity: 2.0f,
+                lightRange: 5.2f);
+        }
+
+        private static ShowcaseExhibitRig BuildStorageRackExhibit(
+            SceneBuildContext context,
+            Transform parent,
+            ShowcaseTuning tuning,
+            MoonSurface surface)
+        {
+            return BuildStageStructureExhibit(
+                context,
+                parent,
+                tuning,
+                surface,
+                ShowcaseExhibitId.StorageRack,
+                "Exhibit_11_StorageRack",
+                ShowcasePaths.StorageRackPrefab,
+                ShowcaseTriggerKey.Action3_C,
+                new Vector3(0f, 1.35f, 0.55f),
+                lightIntensity: 1.7f,
+                lightRange: 4.6f);
+        }
+
+        private static ShowcaseExhibitRig BuildUpgradeBayExhibit(
+            SceneBuildContext context,
+            Transform parent,
+            ShowcaseTuning tuning,
+            MoonSurface surface)
+        {
+            return BuildStageStructureExhibit(
+                context,
+                parent,
+                tuning,
+                surface,
+                ShowcaseExhibitId.UpgradeBay,
+                "Exhibit_12_UpgradeBay",
+                ShowcasePaths.UpgradeBayPrefab,
+                ShowcaseTriggerKey.Action4_V,
+                new Vector3(0f, 2.35f, 0.25f),
+                lightIntensity: 2.4f,
+                lightRange: 6.0f);
+        }
+
+        private static ShowcaseExhibitRig BuildAntennaMastExhibit(
+            SceneBuildContext context,
+            Transform parent,
+            ShowcaseTuning tuning,
+            MoonSurface surface)
+        {
+            return BuildStageStructureExhibit(
+                context,
+                parent,
+                tuning,
+                surface,
+                ShowcaseExhibitId.AntennaMast,
+                "Exhibit_13_AntennaMast",
+                ShowcasePaths.AntennaMastPrefab,
+                ShowcaseTriggerKey.Action4_V,
+                new Vector3(0f, 3.15f, 0.35f),
+                lightIntensity: 2.0f,
+                lightRange: 5.8f);
+        }
+
+        private static ShowcaseExhibitRig BuildVehiclePadExhibit(
+            SceneBuildContext context,
+            Transform parent,
+            ShowcaseTuning tuning,
+            MoonSurface surface)
+        {
+            return BuildStageStructureExhibit(
+                context,
+                parent,
+                tuning,
+                surface,
+                ShowcaseExhibitId.VehiclePad,
+                "Exhibit_14_VehiclePad",
+                ShowcasePaths.VehiclePadPrefab,
+                ShowcaseTriggerKey.Action4_V,
+                new Vector3(0.85f, 2.15f, 0.45f),
+                lightIntensity: 2.2f,
+                lightRange: 6.2f);
+        }
+
+        private static ShowcaseExhibitRig BuildStageStructureExhibit(
+            SceneBuildContext context,
+            Transform parent,
+            ShowcaseTuning tuning,
+            MoonSurface surface,
+            ShowcaseExhibitId exhibitId,
+            string rootName,
+            string prefabPath,
+            ShowcaseTriggerKey lampTriggerKey,
+            Vector3 accentLightLocalPos,
+            float lightIntensity,
+            float lightRange)
+        {
+            ShowcaseExhibitDefinition def = tuning.FindExhibit(exhibitId);
+            GameObject root = CreateExhibitRoot(context, parent, rootName, def, surface);
+            var rig = root.AddComponent<ShowcaseExhibitRig>();
+
+            GameObject prefab = RequireAsset<GameObject>(prefabPath);
+            GameObject model = context.InstantiatePrefab(prefab, root.transform, Vector3.zero, prefab.transform.localRotation);
+
+            var lampAmberMat = RequireAsset<Material>(ShowcasePaths.LampAmberMaterial);
+            MeshRenderer[] lampRenderers = FindRenderersUsingMaterial(model.transform, lampAmberMat);
+
+            Light glowLight = CreateAccentLight(
+                context,
+                root.transform,
+                $"{exhibitId}Glow",
+                LightType.Point,
+                accentLightLocalPos,
+                Quaternion.identity,
+                new Color(1.0f, 0.74f, 0.36f),
+                intensity: lightIntensity,
+                range: lightRange);
+
+            BindStages(model.transform, out Transform[] stageRoots, out Vector3[] stageRestPositions);
+
+            WireExhibitRig(
+                rig,
+                exhibitId,
+                tuning,
+                BindNodes(model.transform, def.Nodes),
+                lampRenderers,
+                Array.Empty<MeshRenderer>(),
+                new[] { glowLight },
+                new[] { lightIntensity },
+                lampTriggerKey,
+                lampsDefaultLit: true,
+                stageRoots: stageRoots,
+                stageRestPositions: stageRestPositions);
+
+            return rig;
+        }
+
+        private static ShowcaseExhibitRig BuildRuinsCornerExhibit(
+            SceneBuildContext context,
+            Transform parent,
+            ShowcaseTuning tuning,
+            MoonSurface surface)
+        {
+            ShowcaseExhibitDefinition def = tuning.FindExhibit(ShowcaseExhibitId.RuinsCorner);
+            GameObject root = CreateExhibitRoot(context, parent, "Exhibit_15_RuinsCorner", def, surface);
+            var rig = root.AddComponent<ShowcaseExhibitRig>();
+
+            ShowcaseRuinPiecePlacement[] pieces = tuning.RuinPieces;
+            if (pieces != null)
+            {
+                for (int i = 0; i < pieces.Length; i++)
+                {
+                    ShowcaseRuinPiecePlacement piece = pieces[i];
+                    if (piece == null)
+                    {
+                        continue;
+                    }
+
+                    string prefabPath = ResolveRuinPrefabPath(piece.PieceId);
+                    GameObject prefab = RequireAsset<GameObject>(prefabPath);
+
+                    Vector3 localPos = piece.LocalOffset;
+                    Vector3 worldXZ = root.transform.TransformPoint(new Vector3(localPos.x, 0f, localPos.z));
+                    localPos.y = surface.SampleHeight(worldXZ.x, worldXZ.z) - root.transform.position.y;
+
+                    Quaternion localRot = Quaternion.Euler(0f, piece.LocalYawDegrees, 0f) * prefab.transform.localRotation;
+                    GameObject instance = context.InstantiatePrefab(prefab, root.transform, localPos, localRot);
+
+                    if (piece.PieceId == ShowcaseRuinPieceId.HabitatModules)
+                    {
+                        EnsureAirlockCrtStatusLook(instance.transform);
+                    }
+                }
+            }
+
+            var lampAmberMat = RequireAsset<Material>(ShowcasePaths.LampAmberMaterial);
+            MeshRenderer[] lampRenderers = FindRenderersUsingMaterial(root.transform, lampAmberMat);
+
+            Light workshopLight = CreateAccentLight(
+                context,
+                root.transform,
+                "RuinsWorkshopGlow",
+                LightType.Point,
+                new Vector3(5.6f, 1.65f, 0.25f),
+                Quaternion.identity,
+                new Color(1.0f, 0.74f, 0.36f),
+                intensity: 2.1f,
+                range: 7.5f);
+            Light habitatAirlockLight = CreateAccentLight(
+                context,
+                root.transform,
+                "RuinsAirlockGlow",
+                LightType.Point,
+                new Vector3(-3.8f, 1.35f, -0.60f),
+                Quaternion.identity,
+                new Color(1.0f, 0.76f, 0.40f),
+                intensity: 1.8f,
+                range: 6.5f);
+            Light towerJunctionLight = CreateAccentLight(
+                context,
+                root.transform,
+                "RuinsTowerGlow",
+                LightType.Point,
+                new Vector3(1.6f, 1.85f, 8.20f),
+                Quaternion.identity,
+                new Color(1.0f, 0.72f, 0.34f),
+                intensity: 1.6f,
+                range: 6.0f);
+
+            WireExhibitRig(
+                rig,
+                ShowcaseExhibitId.RuinsCorner,
+                tuning,
+                Array.Empty<ShowcaseBoundNode>(),
+                lampRenderers,
+                Array.Empty<MeshRenderer>(),
+                new[] { workshopLight, habitatAirlockLight, towerJunctionLight },
+                new[] { 2.1f, 1.8f, 1.6f },
+                ShowcaseTriggerKey.Action1_Z,
+                lampsDefaultLit: true);
+
+            return rig;
+        }
+
+        private static string ResolveRuinPrefabPath(ShowcaseRuinPieceId pieceId)
+        {
+            switch (pieceId)
+            {
+                case ShowcaseRuinPieceId.HabitatModules:
+                    return ShowcasePaths.HabitatModulesPrefab;
+                case ShowcaseRuinPieceId.RadioTower:
+                    return ShowcasePaths.RadioTowerPrefab;
+                case ShowcaseRuinPieceId.KenjiWorkshop:
+                    return ShowcasePaths.KenjiWorkshopPrefab;
+                case ShowcaseRuinPieceId.FallenSolarArray:
+                    return ShowcasePaths.FallenSolarArrayPrefab;
+                case ShowcaseRuinPieceId.ScatterSet:
+                    return ShowcasePaths.ScatterSetPrefab;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(pieceId), pieceId, null);
+            }
+        }
+
+        private static void EnsureAirlockCrtStatusLook(Transform habitatRoot)
+        {
+            MeshRenderer panelRenderer = RequireRenderer(habitatRoot, "AirlockPanel");
+            var crtMat = AssetDatabase.LoadAssetAtPath<Material>(ShowcasePaths.CrtFaceMaterial);
+            if (crtMat == null)
+            {
+                crtMat = RequireAsset<Material>(ShowcasePaths.LampAmberMaterial);
+            }
+
+            Material[] shared = panelRenderer.sharedMaterials;
+            if (shared != null && shared.Length > 2 && shared[2] != crtMat)
+            {
+                shared[2] = crtMat;
+                panelRenderer.sharedMaterials = shared;
+            }
         }
 
         private static ShowcaseCameraRig SetupCamera(
@@ -647,6 +1119,21 @@ namespace MoonProject.Showcase.Editor
             return bound;
         }
 
+        private static void BindStages(
+            Transform modelRoot,
+            out Transform[] stageRoots,
+            out Vector3[] stageRestPositions)
+        {
+            stageRoots = new Transform[StageNodeNames.Length];
+            stageRestPositions = new Vector3[StageNodeNames.Length];
+            for (int i = 0; i < StageNodeNames.Length; i++)
+            {
+                Transform stage = RequireNode(modelRoot, StageNodeNames[i]);
+                stageRoots[i] = stage;
+                stageRestPositions[i] = stage.localPosition;
+            }
+        }
+
         private static Light CreateAccentLight(
             SceneBuildContext context,
             Transform parent,
@@ -686,7 +1173,9 @@ namespace MoonProject.Showcase.Editor
             Transform roverHeadTransform = null,
             GameObject[] brokenBayObjects = null,
             GameObject[] repairedBayObjects = null,
-            Transform solarStage4Transform = null)
+            Transform solarStage4Transform = null,
+            Transform[] stageRoots = null,
+            Vector3[] stageRestPositions = null)
         {
             var so = new SerializedObject(rig);
             so.FindProperty("_exhibitId").enumValueIndex = (int)exhibitId;
@@ -708,6 +1197,15 @@ namespace MoonProject.Showcase.Editor
                 elem.FindPropertyRelative("_restLocalRotation").quaternionValue = boundNodes[i].RestLocalRotation;
             }
 
+            AssignObjectArray(so, "_stageRoots", stageRoots ?? Array.Empty<Transform>());
+            SerializedProperty stageRestProp = so.FindProperty("_stageRestLocalPositions");
+            Vector3[] restPositions = stageRestPositions ?? Array.Empty<Vector3>();
+            stageRestProp.arraySize = restPositions.Length;
+            for (int i = 0; i < restPositions.Length; i++)
+            {
+                stageRestProp.GetArrayElementAtIndex(i).vector3Value = restPositions[i];
+            }
+
             AssignObjectArray(so, "_lampRenderers", lampRenderers);
             AssignObjectArray(so, "_secondaryLampRenderers", secondaryLampRenderers);
             AssignObjectArray(so, "_accentLights", accentLights);
@@ -727,13 +1225,22 @@ namespace MoonProject.Showcase.Editor
         private static Transform RequireNode(Transform root, string relativePath)
         {
             Transform found = root.Find(relativePath);
-            if (found == null)
+            if (found != null)
             {
-                throw new InvalidOperationException(
-                    $"Node '{relativePath}' not found under '{root.name}' while building Showcase.unity.");
+                return found;
             }
 
-            return found;
+            Transform[] descendants = root.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < descendants.Length; i++)
+            {
+                if (descendants[i].name == relativePath)
+                {
+                    return descendants[i];
+                }
+            }
+
+            throw new InvalidOperationException(
+                $"Node '{relativePath}' not found under '{root.name}' while building Showcase.unity.");
         }
 
         private static MeshRenderer RequireRenderer(Transform root, string relativePath)

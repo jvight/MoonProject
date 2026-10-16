@@ -9,15 +9,14 @@ using MoonProject.Testing;
 namespace MoonProject.Showcase.Editor
 {
     /// <summary>
-    /// Batch capture session for <c>Showcase.unity</c>. Builds the Showcase scene, initializes
+    /// Batch capture session for <c>Showcase.unity</c> (Showcase 2). Builds the Showcase scene, initializes
     /// <see cref="ShowcaseController"/>, and captures all required look-dev verification PNGs into
     /// <c>Logs/captures/</c>:
     /// <list type="bullet">
-    /// <item><description>Each of the 6 exhibits at night (EarthlitNight) and in sunlight (FullSunlit)</description></item>
-    /// <item><description>Eclipse hold and Dawn bead</description></item>
-    /// <item><description>07 in three different feelings (Happy, Curious, Proud) with animated parts</description></item>
-    /// <item><description>Cargo Lander with ramp down and bay lit</description></item>
-    /// <item><description>Solar Array tracking the sun</description></item>
+    /// <item><description>Each of the 7 new R1 structures at 3 build stages (<c>Stage_1</c>, <c>Stage_3</c>, <c>Stage_4</c>) and with moving parts in their active pose</description></item>
+    /// <item><description>The Ruins Corner at night (Earthlight + workshop/airlock/tower glow) and at dawn</description></item>
+    /// <item><description>07 fully upgraded (front 3/4 and back 3/4) showing every socket-mounted kit and gift visual</description></item>
+    /// <item><description>A wide shot of the whole 15-exhibit Showcase at night</description></item>
     /// </list>
     /// </summary>
     public static class ShowcaseCaptureSession
@@ -25,12 +24,27 @@ namespace MoonProject.Showcase.Editor
         private const int CaptureWidth = 1600;
         private const int CaptureHeight = 900;
 
+        private static readonly (ShowcaseExhibitId id, string slug)[] NewStructureExhibits =
+        {
+            (ShowcaseExhibitId.BatteryBank, "battery_bank"),
+            (ShowcaseExhibitId.Smelter, "smelter"),
+            (ShowcaseExhibitId.Fabricator, "fabricator"),
+            (ShowcaseExhibitId.StorageRack, "storage_rack"),
+            (ShowcaseExhibitId.UpgradeBay, "upgrade_bay"),
+            (ShowcaseExhibitId.AntennaMast, "antenna_mast"),
+            (ShowcaseExhibitId.VehiclePad, "vehicle_pad"),
+        };
+
         public static void CaptureAll()
         {
             BatchRunner.Run(nameof(CaptureAll), args =>
             {
                 string outDir = BatchArgs.ProjectPath(args.GetString("out", "Logs/captures"));
                 Directory.CreateDirectory(outDir);
+                foreach (string existingPng in Directory.GetFiles(outDir, "*.png"))
+                {
+                    File.Delete(existingPng);
+                }
 
                 ShowcaseTuningBuilder.Build();
                 ShowcaseSceneBuilder.Build();
@@ -51,144 +65,109 @@ namespace MoonProject.Showcase.Editor
                 {
                     Object.DestroyImmediate(FrameCapture.Render(cam, 64, 64));
 
-                    // 1-12: Each of the 6 exhibits at Earthlit Night and in Full Sunlit
-                    string[] slugs =
+                    int shotNumber = 1;
+
+                    // 1..28: Each of the 7 new structures at Stage_1, Stage_3, Stage_4, and Active Pose
+                    for (int i = 0; i < NewStructureExhibits.Length; i++)
                     {
-                        "rover07",
-                        "cargo_lander",
-                        "charging_pad",
-                        "solar_array",
-                        "power_pylon",
-                        "rock_cluster",
-                    };
-
-                    ShowcaseExhibitRig roverRig = controller.Exhibits[0];
-
-                    for (int i = 0; i < 6; i++)
-                    {
-                        controller.SelectExhibit(i, immediate: true);
-                        controller.SelectSkyPreset(ShowcaseSkyPresetId.EarthlitNight, snapLighting: true);
-                        controller.StepSimulation(2.2f);
-                        if (i == 0)
-                        {
-                            roverRig.SnapFaceFeeling(FaceFeeling.Calm);
-                        }
-
-                        SaveShot(cam, outDir, $"{(i * 2 + 1):D2}_{slugs[i]}_night.png");
-
-                        controller.SelectExhibit(i, immediate: true);
+                        (ShowcaseExhibitId exhibitId, string slug) = NewStructureExhibits[i];
+                        ShowcaseExhibitRig rig = controller.FindExhibitRig(exhibitId);
+                        controller.SelectExhibitById(exhibitId, immediate: true);
                         controller.SelectSkyPreset(ShowcaseSkyPresetId.FullSunlit, snapLighting: true);
-                        controller.StepSimulation(2.2f);
-                        if (i == 0)
-                        {
-                            roverRig.SnapFaceFeeling(FaceFeeling.Calm);
-                        }
 
-                        SaveShot(cam, outDir, $"{(i * 2 + 2):D2}_{slugs[i]}_sunlit.png");
+                        // Stage 1 (foundation)
+                        rig.SetAllTriggerableRulesActive(false);
+                        rig.SetLampsLit(false);
+                        controller.StepSimulation(1.5f);
+                        rig.SetStageCountImmediate(1, 1f);
+                        SaveShot(cam, outDir, $"{shotNumber++:D2}_{slug}_stage1.png");
+
+                        // Stage 3 (structural shell complete)
+                        rig.SetStageCountImmediate(3, 1f);
+                        SaveShot(cam, outDir, $"{shotNumber++:D2}_{slug}_stage3.png");
+
+                        // Stage 4 (rest pose)
+                        rig.SetStageCountImmediate(4, 1f);
+                        rig.SetLampsLit(true);
+                        controller.StepSimulation(0.8f);
+                        SaveShot(cam, outDir, $"{shotNumber++:D2}_{slug}_stage4.png");
+
+                        // Stage 4 (active pose: moving parts engaged + lamps lit)
+                        rig.SetStageCountImmediate(4, 1f);
+                        rig.SetAllTriggerableRulesActive(true);
+                        rig.SetLampsLit(true);
+                        controller.StepSimulation(1.85f);
+                        SaveShot(cam, outDir, $"{shotNumber++:D2}_{slug}_active.png");
+
+                        // Reset back to settled Stage 4 with lamps lit
+                        rig.SetAllTriggerableRulesActive(false);
+                        rig.SetStageCountImmediate(4, 1f);
+                        rig.SetLampsLit(true);
                     }
 
-                    // 13: Eclipse hold (looking North-Northwest toward Earth at bearing 338, elevation 16, with 07 on the left and Earth unobstructed)
-                    controller.SelectSkyPreset(ShowcaseSkyPresetId.EclipseHold, snapLighting: true);
-                    controller.SelectExhibit(
-                        0,
-                        immediate: true,
-                        overrideYaw: 342f,
-                        overridePitch: -8f,
-                        overrideDistance: 3.8f,
-                        overridePivotOffset: new Vector3(0.95f, 0.78f, 0f));
-                    controller.StepSimulation(2.0f);
-                    SaveShot(cam, outDir, "13_eclipse_hold.png");
-
-                    // 14: Dawn bead (Sun limb breaking out on Earth's right edge at t = 10.5s, unobstructed to the right of 07)
-                    controller.SetClockTime(10.5f, holdEclipse: false, snapLighting: true);
-                    controller.SelectExhibit(
-                        0,
-                        immediate: true,
-                        overrideYaw: 342f,
-                        overridePitch: -8f,
-                        overrideDistance: 3.8f,
-                        overridePivotOffset: new Vector3(0.95f, 0.78f, 0f));
-                    controller.StepSimulation(2.0f);
-                    SaveShot(cam, outDir, "14_dawn_bead.png");
-
-                    // 15-17: 07 in three different feelings (Happy, Curious, Proud) with animated parts
-                    controller.SelectSkyPreset(ShowcaseSkyPresetId.FullSunlit, snapLighting: true);
-
-                    // Feeling 1: Happy + scoop lowered
-                    controller.SelectExhibit(
-                        0,
-                        immediate: true,
-                        overrideYaw: 164f,
-                        overridePitch: 8f,
-                        overrideDistance: 2.35f,
-                        overridePivotOffset: new Vector3(0f, 0.90f, 0.10f));
-                    roverRig.SetFaceFeeling(FaceFeeling.Happy);
-                    roverRig.TriggerKey(ShowcaseTriggerKey.Action2_X);
-                    controller.StepSimulation(1.6f);
-                    roverRig.SnapFaceFeeling(FaceFeeling.Happy);
-                    SaveShot(cam, outDir, "15_rover07_feeling_happy.png");
-                    roverRig.TriggerKey(ShowcaseTriggerKey.Action2_X);
-
-                    // Feeling 2: Curious + cutter turret aimed
-                    controller.SelectExhibit(
-                        0,
-                        immediate: true,
-                        overrideYaw: 152f,
-                        overridePitch: 9f,
-                        overrideDistance: 2.35f,
-                        overridePivotOffset: new Vector3(0f, 0.92f, 0.08f));
-                    roverRig.SetFaceFeeling(FaceFeeling.Curious);
-                    roverRig.TriggerKey(ShowcaseTriggerKey.Action5_G);
-                    controller.StepSimulation(1.6f);
-                    roverRig.SnapFaceFeeling(FaceFeeling.Curious);
-                    SaveShot(cam, outDir, "16_rover07_feeling_curious.png");
-                    roverRig.TriggerKey(ShowcaseTriggerKey.Action5_G);
-
-                    // Feeling 3: Proud + rear canopy hatch open
-                    controller.SelectExhibit(
-                        0,
-                        immediate: true,
-                        overrideYaw: 132f,
-                        overridePitch: 16f,
-                        overrideDistance: 2.45f,
-                        overridePivotOffset: new Vector3(0f, 0.90f, -0.05f));
-                    roverRig.SetFaceFeeling(FaceFeeling.Proud);
-                    roverRig.TriggerKey(ShowcaseTriggerKey.Action3_C);
-                    controller.StepSimulation(1.6f);
-                    roverRig.SnapFaceFeeling(FaceFeeling.Proud);
-                    SaveShot(cam, outDir, "17_rover07_feeling_proud.png");
-
-                    // Reset 07 toggles back to rest
-                    roverRig.TriggerKey(ShowcaseTriggerKey.Action3_C);
-                    roverRig.SnapFaceFeeling(FaceFeeling.Calm);
-
-                    // 18: Cargo Lander with ramp down and bay lit (at dusk/night so warm amber bay lights + lowered ramp shine)
-                    ShowcaseExhibitRig landerRig = controller.Exhibits[1];
+                    // 29: Ruins Corner at Earthlit Night
+                    ShowcaseExhibitRig ruinsRig = controller.FindExhibitRig(ShowcaseExhibitId.RuinsCorner);
+                    ruinsRig.SetLampsLit(true);
                     controller.SelectSkyPreset(ShowcaseSkyPresetId.EarthlitNight, snapLighting: true);
-                    controller.SelectExhibit(
-                        1,
-                        immediate: true,
-                        overrideYaw: 158f,
-                        overridePitch: 12f,
-                        overrideDistance: 6.8f,
-                        overridePivotOffset: new Vector3(0f, 1.65f, 0.45f));
-                    landerRig.SetLampsLit(true);
-                    landerRig.TriggerKey(ShowcaseTriggerKey.Action1_Z); // Lower RampDoor
-                    landerRig.TriggerKey(ShowcaseTriggerKey.Action3_C); // Open CargoHatch & CrateLid
+                    controller.SelectExhibitById(ShowcaseExhibitId.RuinsCorner, immediate: true);
                     controller.StepSimulation(2.2f);
-                    SaveShot(cam, outDir, "18_lander_ramp_down_bay_lit.png");
+                    SaveShot(cam, outDir, $"{shotNumber++:D2}_ruins_corner_night.png");
 
-                    // 19: Solar Array tracking the Sun (at Sunrise / low golden sun, showing unfolded panels tilted toward the Sun)
-                    controller.SetClockTime(1400f, holdEclipse: false, snapLighting: true);
-                    controller.SelectExhibit(
-                        3,
+                    // 30: Ruins Corner at Dawn (Sunrise)
+                    controller.SelectSkyPreset(ShowcaseSkyPresetId.Sunrise, snapLighting: true);
+                    controller.SelectExhibitById(ShowcaseExhibitId.RuinsCorner, immediate: true);
+                    controller.StepSimulation(2.2f);
+                    SaveShot(cam, outDir, $"{shotNumber++:D2}_ruins_corner_dawn.png");
+
+                    // 31: 07 Fully Upgraded — Front 3/4 view
+                    ShowcaseExhibitRig upgradedRoverRig = controller.FindExhibitRig(ShowcaseExhibitId.Rover07Upgraded);
+                    upgradedRoverRig.SetLampsLit(true);
+                    controller.SelectSkyPreset(ShowcaseSkyPresetId.FullSunlit, snapLighting: true);
+                    controller.SelectExhibitById(
+                        ShowcaseExhibitId.Rover07Upgraded,
                         immediate: true,
-                        overrideYaw: 132f,
+                        overrideYaw: 142f,
                         overridePitch: 13f,
-                        overrideDistance: 4.1f,
-                        overridePivotOffset: new Vector3(0f, 1.35f, 0f));
-                    controller.StepSimulation(2.5f);
-                    SaveShot(cam, outDir, "19_solar_array_tracking_sun.png");
+                        overrideDistance: 3.15f,
+                        overridePivotOffset: new Vector3(0f, 0.72f, 0.05f));
+                    upgradedRoverRig.SetFaceFeeling(FaceFeeling.Happy);
+                    upgradedRoverRig.TriggerKey(ShowcaseTriggerKey.Action2_X);
+                    controller.StepSimulation(1.6f);
+                    upgradedRoverRig.SnapFaceFeeling(FaceFeeling.Happy);
+                    SaveShot(cam, outDir, $"{shotNumber++:D2}_rover07_upgraded_front34.png");
+                    upgradedRoverRig.TriggerKey(ShowcaseTriggerKey.Action2_X);
+
+                    // 32: 07 Fully Upgraded — Back 3/4 view (showing cargo rack, battery spine, tether ring, side bins, capacitor drums, pennant, solar cells)
+                    controller.SelectExhibitById(
+                        ShowcaseExhibitId.Rover07Upgraded,
+                        immediate: true,
+                        overrideYaw: 322f,
+                        overridePitch: 16f,
+                        overrideDistance: 3.10f,
+                        overridePivotOffset: new Vector3(0f, 0.76f, -0.05f));
+                    controller.StepSimulation(1.6f);
+                    SaveShot(cam, outDir, $"{shotNumber++:D2}_rover07_upgraded_back34.png");
+
+                    // 33: Wide shot of the whole 15-exhibit Showcase at night
+                    controller.SelectSkyPreset(ShowcaseSkyPresetId.EarthlitNight, snapLighting: true);
+                    for (int i = 0; i < controller.Exhibits.Length; i++)
+                    {
+                        ShowcaseExhibitRig ex = controller.Exhibits[i];
+                        if (ex != null)
+                        {
+                            if (ex.HasBuildStages)
+                            {
+                                ex.SetStageCountImmediate(4, 1f);
+                            }
+                            ex.SetLampsLit(true);
+                        }
+                    }
+
+                    controller.CameraRig.SetWorldPoseImmediate(
+                        new Vector3(-13.5f, 27.0f, 52.0f),
+                        Quaternion.Euler(24.0f, 166.0f, 0f));
+                    controller.StepSimulation(2.2f);
+                    SaveShot(cam, outDir, $"{shotNumber++:D2}_showcase_wide_night.png");
                 }
                 finally
                 {

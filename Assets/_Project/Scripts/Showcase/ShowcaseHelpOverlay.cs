@@ -61,7 +61,9 @@ namespace MoonProject.Showcase
             bool isFreeFly,
             string clockReadout,
             string livePhaseVi,
-            bool isFastTime)
+            bool isFastTime,
+            bool isTourActive = false,
+            bool isDemoActive = false)
         {
             if (_panelRoot == null)
             {
@@ -74,7 +76,7 @@ namespace MoonProject.Showcase
 
             if (focusedExhibit != null)
             {
-                _exhibitTitleLabel.text = $"[{focusedExhibit.NumberKey}] {focusedExhibit.TitleVi}";
+                _exhibitTitleLabel.text = $"[{focusedExhibit.NumberKey}/15] {focusedExhibit.TitleVi}";
                 _exhibitSubtitleLabel.text = focusedExhibit.SubtitleVi;
 
                 if (_lastRenderedExhibitId != focusedExhibit.ExhibitId)
@@ -84,7 +86,15 @@ namespace MoonProject.Showcase
                 }
             }
 
-            _cameraModeLabel.text = isFreeFly ? "Chế độ: Bay tự do (WASD)" : "Chế độ: Quay quanh mẫu vật";
+            string modeText = isTourActive
+                ? "Chế độ: Tham quan camera chậm (O)"
+                : (isFreeFly ? "Chế độ: Bay tự do (WASD)" : "Chế độ: Quay quanh mẫu vật");
+            if (isDemoActive)
+            {
+                modeText += " • [Demo: BẬT]";
+            }
+
+            _cameraModeLabel.text = modeText;
             string speedTag = isFastTime ? " [Tua nhanh 60x]" : " [1x]";
             _clockLabel.text = $"Đồng hồ: {clockReadout}{speedTag}";
             _phaseLabel.text = $"Pha bầu trời: {livePhaseVi}";
@@ -108,7 +118,7 @@ namespace MoonProject.Showcase
             _panelRoot.style.position = Position.Absolute;
             _panelRoot.style.left = 20;
             _panelRoot.style.top = 20;
-            _panelRoot.style.width = 430;
+            _panelRoot.style.width = 445;
             _panelRoot.style.paddingLeft = 16;
             _panelRoot.style.paddingRight = 16;
             _panelRoot.style.paddingTop = 14;
@@ -128,7 +138,7 @@ namespace MoonProject.Showcase
             _panelRoot.style.borderLeftColor = borderColor;
             _panelRoot.style.borderRightColor = borderColor;
 
-            Label header = CreateLabel("LUNARION 0.5.7 — XEM THỬ DIỆN MẠO R1", 13, new Color(0.96f, 0.75f, 0.36f, 1f), true);
+            Label header = CreateLabel("LUNARION 0.5.7 — XEM THỬ DIỆN MẠO R1 (SHOWCASE 2)", 13, new Color(0.96f, 0.75f, 0.36f, 1f), true);
             header.style.marginBottom = 8;
             _panelRoot.Add(header);
 
@@ -145,7 +155,7 @@ namespace MoonProject.Showcase
             statusBox.style.borderBottomLeftRadius = 4;
             statusBox.style.borderBottomRightRadius = 4;
 
-            _exhibitTitleLabel = CreateLabel("[1] 07 (Rover v3)", 14, new Color(0.96f, 0.95f, 0.92f, 1f), true);
+            _exhibitTitleLabel = CreateLabel("[1/15] 07 (Rover v3)", 14, new Color(0.96f, 0.95f, 0.92f, 1f), true);
             _exhibitSubtitleLabel = CreateLabel(string.Empty, 11, new Color(0.76f, 0.80f, 0.88f, 1f), false);
             _exhibitSubtitleLabel.style.marginBottom = 4;
             _cameraModeLabel = CreateLabel("Chế độ: Quay quanh mẫu vật", 11, new Color(0.82f, 0.86f, 0.94f, 1f), false);
@@ -159,17 +169,16 @@ namespace MoonProject.Showcase
             statusBox.Add(_phaseLabel);
             _panelRoot.Add(statusBox);
 
-            Label generalHeader = CreateLabel("ĐIỀU KHIỂN CAMERA & THỜI GIAN", 11, new Color(0.96f, 0.75f, 0.36f, 1f), true);
+            Label generalHeader = CreateLabel("ĐIỀU KHIỂN CAMERA, THAM QUAN & THỜI GIAN", 11, new Color(0.96f, 0.75f, 0.36f, 1f), true);
             generalHeader.style.marginBottom = 4;
             _panelRoot.Add(generalHeader);
 
-            _panelRoot.Add(CreateKeyRow("Tab / 1-6", "Chuyển sang mẫu vật tiếp theo / Chọn mẫu 1–6"));
+            _panelRoot.Add(CreateKeyRow("Tab / 1-6", "Chuyển qua 15 mẫu vật (Tab) / Chọn nhanh mẫu 1–6"));
+            _panelRoot.Add(CreateKeyRow("O", "Bật / Tắt tham quan camera chậm (Hoàng hôn → Đêm → Nhật thực)"));
+            _panelRoot.Add(CreateKeyRow("J / K", "Dựng 4 giai đoạn Stage_1..4 (J) / Tự động trình diễn Demo (K)"));
             _panelRoot.Add(CreateKeyRow("Chuột / Lăn", "Xoay quanh mẫu vật / Thu phóng khoảng cách"));
-            _panelRoot.Add(CreateKeyRow("WASD / Q E", "Bay tự do / Hạ xuống (Q) - Nâng lên (E)"));
-            _panelRoot.Add(CreateKeyRow("Shift", "Tăng tốc độ bay tự do"));
-            _panelRoot.Add(CreateKeyRow("T", "Chuyển pha bầu trời (Nhật thực → Bình minh → Ngày → Đêm)"));
-            _panelRoot.Add(CreateKeyRow("[ / ]", "Tua lùi / Tua tới đồng hồ Mặt Trăng"));
-            _panelRoot.Add(CreateKeyRow("P", "Bật / Tắt tốc độ thời gian 60x"));
+            _panelRoot.Add(CreateKeyRow("WASD / Q E", "Bay tự do / Hạ xuống (Q) - Nâng lên (E) (Shift: tăng tốc)"));
+            _panelRoot.Add(CreateKeyRow("T / [ ] / P", "Đổi pha bầu trời (T) / Tua đồng hồ ([ ]) / Tốc độ 60x (P)"));
             _panelRoot.Add(CreateKeyRow("H", "Ẩn / Hiện bảng hướng dẫn này"));
 
             Label animHeader = CreateLabel("PHÍM HOẠT HỌA CỦA MẪU ĐANG CHỌN", 11, new Color(0.96f, 0.75f, 0.36f, 1f), true);

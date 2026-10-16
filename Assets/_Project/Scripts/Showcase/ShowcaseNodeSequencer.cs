@@ -220,6 +220,17 @@ namespace MoonProject.Showcase
             channel?.ClearExternalTarget();
         }
 
+        public void SetAllTriggerableActive(bool active)
+        {
+            for (int i = 0; i < _channels.Length; i++)
+            {
+                if (_channels[i].Rule.TriggerKey != ShowcaseTriggerKey.None)
+                {
+                    _channels[i].SetActive(active);
+                }
+            }
+        }
+
         public void Step(float deltaTime)
         {
             for (int i = 0; i < _channels.Length; i++)

@@ -12,12 +12,20 @@ namespace MoonProject.Showcase
     /// <summary>
     /// Top-level runtime bootstrap and input router for <c>Showcase.unity</c>. Wires <see cref="GameContext"/> with
     /// <see cref="ShowcaseInMemorySaveService"/> and <see cref="ShowcaseFocusState"/>, initializes
-    /// <see cref="WorldSystem"/> and <see cref="SkyCycleSystem"/>, and drives the 6 look-dev exhibits, camera rig,
-    /// time-of-day controls, and Vietnamese help panel.
+    /// <see cref="WorldSystem"/> and <see cref="SkyCycleSystem"/>, and drives the 15 look-dev exhibits, camera rig,
+    /// slow camera tour (O key), build-stage sequences (J key), auto-demo loop (K key), time-of-day controls, and
+    /// Vietnamese help panel.
     /// </summary>
     public sealed class ShowcaseController : MonoBehaviour
     {
         private const string ActionMapName = "Showcase";
+
+        private static readonly ShowcaseSkyPresetId[] TourSkyPresets =
+        {
+            ShowcaseSkyPresetId.Sunset,
+            ShowcaseSkyPresetId.EarthlitNight,
+            ShowcaseSkyPresetId.EclipseHold,
+        };
 
         [Tooltip("Showcase tuning asset (Assets/_Project/Data/Tuning/ShowcaseTuning.asset).")]
         [SerializeField] private ShowcaseTuning _tuning;
@@ -40,7 +48,7 @@ namespace MoonProject.Showcase
         [Tooltip("Vietnamese UI Toolkit help overlay.")]
         [SerializeField] private ShowcaseHelpOverlay _helpOverlay;
 
-        [Tooltip("The 6 exhibit rigs in order (1..6).")]
+        [Tooltip("The 15 exhibit rigs in order (1..15).")]
         [SerializeField] private ShowcaseExhibitRig[] _exhibits = Array.Empty<ShowcaseExhibitRig>();
 
         private InputReader _inputReader;
@@ -65,6 +73,9 @@ namespace MoonProject.Showcase
         private InputAction _faceFeelingAction;
         private InputAction _faceBlinkAction;
         private InputAction _faceBootAction;
+        private InputAction _cameraTourAction;
+        private InputAction _stageSequenceAction;
+        private InputAction _demoModeAction;
         private InputAction _action1;
         private InputAction _action2;
         private InputAction _action3;
@@ -72,6 +83,10 @@ namespace MoonProject.Showcase
         private InputAction _action5;
         private InputAction _action6;
 
+        private bool _isTourActive;
+        private float _tourVisitTimer;
+        private int _tourStepCount;
+        private bool _isDemoMode;
         private bool _initialized;
 
         public GameContext Context => _context;
@@ -82,6 +97,8 @@ namespace MoonProject.Showcase
         public ShowcaseHelpOverlay HelpOverlay => _helpOverlay;
         public ShowcaseExhibitRig[] Exhibits => _exhibits;
         public ShowcasePhaseStepper PhaseStepper => _phaseStepper;
+        public bool IsTourActive => _isTourActive;
+        public bool IsDemoMode => _isDemoMode;
 
         public void Initialize()
         {
@@ -172,11 +189,53 @@ namespace MoonProject.Showcase
 
             float dt = Time.deltaTime;
             HandleDiscreteInputs();
+            if (_isTourActive)
+            {
+                StepCameraTour(dt);
+            }
             HandleTimeControls(dt);
             HandleCameraInput(dt);
             UpdateFocusStateFromCamera();
             StepExhibits(dt);
             RefreshUi();
+        }
+
+        public ShowcaseExhibitRig FindExhibitRig(ShowcaseExhibitId id)
+        {
+            Initialize();
+            if (_exhibits == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < _exhibits.Length; i++)
+            {
+                if (_exhibits[i] != null && _exhibits[i].ExhibitId == id)
+                {
+                    return _exhibits[i];
+                }
+            }
+
+            return null;
+        }
+
+        public int FindExhibitIndex(ShowcaseExhibitId id)
+        {
+            Initialize();
+            if (_exhibits == null)
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < _exhibits.Length; i++)
+            {
+                if (_exhibits[i] != null && _exhibits[i].ExhibitId == id)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         public void SelectExhibit(
@@ -188,6 +247,7 @@ namespace MoonProject.Showcase
             Vector3? overridePivotOffset = null)
         {
             Initialize();
+            _isTourActive = false;
             if (immediate)
             {
                 _cameraRig.SelectExhibitImmediate(index, overrideYaw, overridePitch, overrideDistance, overridePivotOffset);
@@ -198,6 +258,86 @@ namespace MoonProject.Showcase
             }
 
             UpdateFocusStateFromCamera();
+            RefreshUi();
+        }
+
+        public void SelectExhibitById(
+            ShowcaseExhibitId id,
+            bool immediate = false,
+            float? overrideYaw = null,
+            float? overridePitch = null,
+            float? overrideDistance = null,
+            Vector3? overridePivotOffset = null)
+        {
+            int idx = FindExhibitIndex(id);
+            if (idx >= 0)
+            {
+                SelectExhibit(idx, immediate, overrideYaw, overridePitch, overrideDistance, overridePivotOffset);
+            }
+        }
+
+        public bool ToggleCameraTour()
+        {
+            if (_isTourActive)
+            {
+                StopCameraTour();
+            }
+            else
+            {
+                StartCameraTour();
+            }
+
+            return _isTourActive;
+        }
+
+        public void StartCameraTour()
+        {
+            Initialize();
+            _isTourActive = true;
+            _tourVisitTimer = 0f;
+            _tourStepCount = 0;
+
+            SetDemoMode(true);
+            SelectSkyPreset(TourSkyPresets[0], snapLighting: true);
+
+            float halfSweep = 0.5f * _tuning.TourOrbitSweepDegrees;
+            _cameraRig.FocusExhibit(_cameraRig.FocusedExhibitIndex, useTourTransition: true, yawOffsetDegrees: -halfSweep);
+            UpdateFocusStateFromCamera();
+            RefreshUi();
+        }
+
+        public void StopCameraTour()
+        {
+            if (!_isTourActive)
+            {
+                return;
+            }
+
+            _isTourActive = false;
+            RefreshUi();
+        }
+
+        public bool ToggleDemoMode()
+        {
+            SetDemoMode(!_isDemoMode);
+            return _isDemoMode;
+        }
+
+        public void SetDemoMode(bool active)
+        {
+            Initialize();
+            _isDemoMode = active;
+            if (_exhibits != null)
+            {
+                for (int i = 0; i < _exhibits.Length; i++)
+                {
+                    if (_exhibits[i] != null)
+                    {
+                        _exhibits[i].SetDemoMode(active);
+                    }
+                }
+            }
+
             RefreshUi();
         }
 
@@ -224,12 +364,47 @@ namespace MoonProject.Showcase
             while (remaining > 1e-4f)
             {
                 float dt = Mathf.Min(step, remaining);
+                if (_isTourActive)
+                {
+                    StepCameraTour(dt);
+                }
                 StepExhibits(dt);
                 _cameraRig.StepCamera(dt, Vector2.zero, 0f, false, Vector2.zero, Vector2.zero, 0f);
+                UpdateFocusStateFromCamera();
                 remaining -= dt;
             }
 
             RefreshUi();
+        }
+
+        private void StepCameraTour(float dt)
+        {
+            if (!_isTourActive || _exhibits == null || _exhibits.Length == 0 || dt <= 0f)
+            {
+                return;
+            }
+
+            float holdSeconds = Mathf.Max(1.0f, _tuning.TourExhibitHoldSeconds);
+            float halfSweep = 0.5f * _tuning.TourOrbitSweepDegrees;
+
+            _tourVisitTimer += dt;
+            if (_tourVisitTimer >= holdSeconds)
+            {
+                _tourVisitTimer -= holdSeconds;
+                _tourStepCount++;
+
+                ShowcaseSkyPresetId nextPreset = TourSkyPresets[_tourStepCount % TourSkyPresets.Length];
+                SelectSkyPreset(nextPreset, snapLighting: true);
+
+                int nextIndex = (_cameraRig.FocusedExhibitIndex + 1) % _exhibits.Length;
+                _cameraRig.FocusExhibit(nextIndex, useTourTransition: true, yawOffsetDegrees: -halfSweep);
+            }
+            else
+            {
+                float progress01 = ShowcaseEasing.SmoothStep01(_tourVisitTimer / holdSeconds);
+                float yawOffset = Mathf.Lerp(-halfSweep, halfSweep, progress01);
+                _cameraRig.SetTourOrbitYawOffset(yawOffset);
+            }
         }
 
         private void SnapExhibitsToGround()
@@ -293,6 +468,9 @@ namespace MoonProject.Showcase
             _faceFeelingAction = _actionMap.FindAction("FaceFeeling", false);
             _faceBlinkAction = _actionMap.FindAction("FaceBlink", false);
             _faceBootAction = _actionMap.FindAction("FaceBoot", false);
+            _cameraTourAction = _actionMap.FindAction("CameraTour", false);
+            _stageSequenceAction = _actionMap.FindAction("StageSequence", false);
+            _demoModeAction = _actionMap.FindAction("DemoMode", false);
             _action1 = _actionMap.FindAction("Action1", false);
             _action2 = _actionMap.FindAction("Action2", false);
             _action3 = _actionMap.FindAction("Action3", false);
@@ -310,8 +488,19 @@ namespace MoonProject.Showcase
                 return;
             }
 
+            if (WasPressed(_cameraTourAction))
+            {
+                ToggleCameraTour();
+            }
+
+            if (WasPressed(_demoModeAction))
+            {
+                ToggleDemoMode();
+            }
+
             if (WasPressed(_nextExhibitAction))
             {
+                _isTourActive = false;
                 _cameraRig.FocusNextExhibit();
             }
 
@@ -321,6 +510,7 @@ namespace MoonProject.Showcase
                 {
                     if (WasPressed(_exhibitNumberActions[i]))
                     {
+                        _isTourActive = false;
                         _cameraRig.FocusExhibit(i);
                     }
                 }
@@ -350,6 +540,11 @@ namespace MoonProject.Showcase
             if (focused == null)
             {
                 return;
+            }
+
+            if (WasPressed(_stageSequenceAction))
+            {
+                focused.TriggerStageSequence();
             }
 
             if (WasPressed(_faceFeelingAction))
@@ -433,6 +628,11 @@ namespace MoonProject.Showcase
             Vector2 scrollVec = _zoomAction != null ? _zoomAction.ReadValue<Vector2>() : Vector2.zero;
             float scrollNotches = Mathf.Abs(scrollVec.y) > 1f ? scrollVec.y / 120f : scrollVec.y;
 
+            if (move.sqrMagnitude > 1e-4f || Mathf.Abs(vertical) > 1e-4f)
+            {
+                _isTourActive = false;
+            }
+
             _cameraRig.StepCamera(dt, move, vertical, fast, lookDelta, lookRate, scrollNotches);
         }
 
@@ -484,7 +684,14 @@ namespace MoonProject.Showcase
                 _skyCycleSystem.IsHoldingEclipse,
                 _skyCycleSystem.EclipseFactor);
 
-            _helpOverlay.RefreshStatus(def, _cameraRig.IsFreeFly, clockText, phaseText, _phaseStepper.IsFastTime);
+            _helpOverlay.RefreshStatus(
+                def,
+                _cameraRig.IsFreeFly,
+                clockText,
+                phaseText,
+                _phaseStepper.IsFastTime,
+                _isTourActive,
+                _isDemoMode);
         }
 
         private static bool WasPressed(InputAction action)

@@ -44,10 +44,10 @@ namespace MoonProject.Showcase
     }
 
     /// <summary>
-    /// Runtime controller attached to each of the 6 look-dev exhibits in the Showcase scene. Drives the exhibit's
-    /// <see cref="ShowcaseNodeSequencer"/>, <see cref="ShowcaseLampDriver"/>, 07's <see cref="FaceDisplay"/> and
-    /// camera look-at, the Cargo Lander's broken/repaired bay swap and solar wings, and the Solar Array's live Sun
-    /// tracking and night/eclipse folding.
+    /// Runtime controller attached to each of the 15 look-dev exhibits in the Showcase scene. Drives the exhibit's
+    /// <see cref="ShowcaseNodeSequencer"/>, <see cref="ShowcaseLampDriver"/>, build-stage (<c>Stage_1..4</c>) soft
+    /// rise-and-settle sequence, auto-demo loop, 07's <see cref="FaceDisplay"/> and camera look-at, the Cargo Lander's
+    /// broken/repaired bay swap and solar wings, and the Solar Array's live Sun tracking and night/eclipse folding.
     /// </summary>
     public sealed class ShowcaseExhibitRig : MonoBehaviour
     {
@@ -84,6 +84,12 @@ namespace MoonProject.Showcase
         [Tooltip("Pre-bound Transform nodes matching this exhibit's rules in ShowcaseTuning.")]
         [SerializeField] private ShowcaseBoundNode[] _boundNodes = Array.Empty<ShowcaseBoundNode>();
 
+        [Tooltip("Ordered Stage_1..N transforms for multi-stage R1 structures.")]
+        [SerializeField] private Transform[] _stageRoots = Array.Empty<Transform>();
+
+        [Tooltip("Authored rest localPosition for each transform in _stageRoots.")]
+        [SerializeField] private Vector3[] _stageRestLocalPositions = Array.Empty<Vector3>();
+
         [Tooltip("Primary R1_LampAmber MeshRenderers driven via MaterialPropertyBlock (_EmissionStrength).")]
         [SerializeField] private MeshRenderer[] _lampRenderers = Array.Empty<MeshRenderer>();
 
@@ -103,10 +109,10 @@ namespace MoonProject.Showcase
         [SerializeField] private bool _lampsDefaultLit = true;
 
         [Header("Rover 07 Specific")]
-        [Tooltip("07's CRT FaceDisplay component (only assigned on Rover07).")]
+        [Tooltip("07's CRT FaceDisplay component (assigned on Rover07 and Rover07Upgraded).")]
         [SerializeField] private FaceDisplay _faceDisplay;
 
-        [Tooltip("07's Head transform used to compute local camera gaze direction (only assigned on Rover07).")]
+        [Tooltip("07's Head transform used to compute local camera gaze direction (assigned on Rover07 and Rover07Upgraded).")]
         [SerializeField] private Transform _roverHeadTransform;
 
         [Header("Cargo Lander Specific")]
@@ -124,10 +130,17 @@ namespace MoonProject.Showcase
         private ShowcaseNodeSequencer _sequencer;
         private ShowcaseLampDriver _lampDriver;
         private bool _lampsLit;
+        private bool _wasNightPhase;
         private int _feelingIndex;
         private bool _roverCameraTracking = true;
         private bool _solarManualFold;
         private bool _solarInspectPose;
+        private bool _stageSequenceRunning;
+        private float _stageSequenceElapsed;
+        private int _visibleStageCount;
+        private bool _demoModeActive;
+        private bool _demoRulesActivated;
+        private float _feelingDemoTimer;
         private float _elapsedTime;
         private bool _initialized;
 
@@ -135,6 +148,11 @@ namespace MoonProject.Showcase
         public ShowcaseExhibitDefinition Definition => _definition;
         public ShowcaseNodeSequencer Sequencer => _sequencer;
         public bool AreLampsLit => _lampsLit;
+        public bool HasBuildStages => _stageRoots != null && _stageRoots.Length > 0;
+        public int StageCount => _stageRoots != null ? _stageRoots.Length : 0;
+        public int VisibleStageCount => _visibleStageCount;
+        public bool IsStageSequenceRunning => _stageSequenceRunning;
+        public bool IsDemoModeActive => _demoModeActive;
         public FaceFeeling CurrentFeeling => AllFeelings[_feelingIndex];
         public Vector3 OrbitPivotWorld =>
             transform.position + (_definition != null ? _definition.OrbitPivotOffset : new Vector3(0f, 1.0f, 0f));
@@ -150,17 +168,29 @@ namespace MoonProject.Showcase
             ShowcaseNodeRule[] rules = _definition != null ? _definition.Nodes : Array.Empty<ShowcaseNodeRule>();
             _sequencer = new ShowcaseNodeSequencer(rules);
             _lampsLit = _lampsDefaultLit;
+            _wasNightPhase = false;
             _lampDriver = new ShowcaseLampDriver(_lampsLit);
-            _feelingIndex = 0;
+            _feelingIndex = _exhibitId == ShowcaseExhibitId.Rover07Upgraded ? 3 : 0;
             _roverCameraTracking = true;
             _solarManualFold = false;
             _solarInspectPose = false;
+            _stageSequenceRunning = false;
+            _stageSequenceElapsed = 0f;
+            _demoModeActive = false;
+            _demoRulesActivated = false;
+            _feelingDemoTimer = 0f;
+            _visibleStageCount = _stageRoots != null ? _stageRoots.Length : 0;
             _initialized = true;
 
             if (_faceDisplay != null)
             {
                 _faceDisplay.SetFeeling(AllFeelings[_feelingIndex]);
                 _faceDisplay.Step(0.02f);
+            }
+
+            if (HasBuildStages)
+            {
+                SetStageCountImmediate(_stageRoots.Length, 1f);
             }
 
             UpdateLanderBayObjects();
@@ -176,6 +206,9 @@ namespace MoonProject.Showcase
             }
         }
 
+        private bool IsRoverExhibit =>
+            _exhibitId == ShowcaseExhibitId.Rover07 || _exhibitId == ShowcaseExhibitId.Rover07Upgraded;
+
         public void TriggerKey(ShowcaseTriggerKey key)
         {
             if (!_initialized || key == ShowcaseTriggerKey.None)
@@ -183,7 +216,7 @@ namespace MoonProject.Showcase
                 return;
             }
 
-            if (_exhibitId == ShowcaseExhibitId.Rover07 && key == ShowcaseTriggerKey.Action1_Z)
+            if (IsRoverExhibit && key == ShowcaseTriggerKey.Action1_Z)
             {
                 _roverCameraTracking = !_roverCameraTracking;
                 if (!_roverCameraTracking)
@@ -217,6 +250,136 @@ namespace MoonProject.Showcase
             }
 
             _sequencer.ToggleKey(key);
+        }
+
+        public void TriggerStageSequence()
+        {
+            if (!_initialized || !HasBuildStages)
+            {
+                return;
+            }
+
+            _stageSequenceRunning = true;
+            _stageSequenceElapsed = 0f;
+            _demoRulesActivated = false;
+            SetAllTriggerableRulesActive(false);
+            StepStageSequence(0f);
+        }
+
+        public void SetStageCountImmediate(int visibleCount, float topStageProgress01 = 1f)
+        {
+            if (!HasBuildStages)
+            {
+                return;
+            }
+
+            _stageSequenceRunning = false;
+            int total = _stageRoots.Length;
+            int clampedCount = Mathf.Clamp(visibleCount, 0, total);
+            _visibleStageCount = clampedCount;
+
+            float riseDepth = _tuning != null ? _tuning.StageRiseDepthMeters : 0.42f;
+            float overshoot = _tuning != null ? _tuning.StageSettleOvershootMeters : 0.035f;
+
+            for (int i = 0; i < total; i++)
+            {
+                Transform stage = _stageRoots[i];
+                if (stage == null)
+                {
+                    continue;
+                }
+
+                bool visible = i < clampedCount;
+                if (stage.gameObject.activeSelf != visible)
+                {
+                    stage.gameObject.SetActive(visible);
+                }
+
+                Vector3 restPos = (_stageRestLocalPositions != null && i < _stageRestLocalPositions.Length)
+                    ? _stageRestLocalPositions[i]
+                    : Vector3.zero;
+
+                if (!visible)
+                {
+                    stage.localPosition = restPos;
+                    continue;
+                }
+
+                float progress = (i == clampedCount - 1) ? Mathf.Clamp01(topStageProgress01) : 1f;
+                float verticalOffset = ShowcaseEasing.EvaluateRiseAndSettleVerticalOffset(progress, riseDepth, overshoot);
+                Vector3 localUp = stage.parent != null
+                    ? stage.parent.InverseTransformDirection(transform.up)
+                    : Vector3.up;
+                stage.localPosition = restPos + localUp * verticalOffset;
+            }
+
+            if (_accentLights != null)
+            {
+                bool allStagesVisible = clampedCount >= total && _lampsLit;
+                for (int i = 0; i < _accentLights.Length; i++)
+                {
+                    if (_accentLights[i] != null)
+                    {
+                        _accentLights[i].enabled = allStagesVisible;
+                    }
+                }
+            }
+        }
+
+        public void SetAllTriggerableRulesActive(bool active)
+        {
+            if (!_initialized || _sequencer == null)
+            {
+                return;
+            }
+
+            if (IsRoverExhibit)
+            {
+                _roverCameraTracking = !active;
+                if (active)
+                {
+                    _sequencer.ClearExternalTarget(RoverHeadLookRuleId);
+                    _sequencer.ClearExternalTarget(RoverHeadPitchRuleId);
+                }
+            }
+            else if (_exhibitId == ShowcaseExhibitId.SolarArray)
+            {
+                _solarInspectPose = active;
+                _solarManualFold = false;
+            }
+
+            _sequencer.SetAllTriggerableActive(active);
+        }
+
+        public void SetDemoMode(bool active)
+        {
+            if (_demoModeActive == active)
+            {
+                return;
+            }
+
+            _demoModeActive = active;
+            _feelingDemoTimer = 0f;
+
+            if (active)
+            {
+                if (HasBuildStages)
+                {
+                    TriggerStageSequence();
+                }
+                else
+                {
+                    SetAllTriggerableRulesActive(true);
+                }
+            }
+            else
+            {
+                SetAllTriggerableRulesActive(false);
+                if (HasBuildStages)
+                {
+                    SetStageCountImmediate(_stageRoots.Length, 1f);
+                }
+            }
         }
 
         public void SetLampsLit(bool lit)
@@ -295,12 +458,37 @@ namespace MoonProject.Showcase
                 return;
             }
 
-            _elapsedTime += Mathf.Max(0f, deltaTime);
+            float dt = Mathf.Max(0f, deltaTime);
+            _elapsedTime += dt;
+
+            bool isNightPhase = skyPhase == SkyPhase.Earthlit || skyPhase == SkyPhase.Eclipse;
+            if (isNightPhase && !_wasNightPhase)
+            {
+                _lampsLit = true;
+            }
+            _wasNightPhase = isNightPhase;
+
+            if (_demoModeActive && _faceDisplay != null)
+            {
+                float interval = _tuning != null ? Mathf.Max(0.4f, _tuning.FeelingDemoIntervalSeconds) : 2.2f;
+                _feelingDemoTimer += dt;
+                if (_feelingDemoTimer >= interval)
+                {
+                    _feelingDemoTimer -= interval;
+                    CycleFaceFeeling();
+                }
+            }
+
+            if (_stageSequenceRunning && HasBuildStages)
+            {
+                StepStageSequence(dt);
+            }
 
             switch (_exhibitId)
             {
                 case ShowcaseExhibitId.Rover07:
-                    UpdateRoverTracking(deltaTime, cameraWorldPosition);
+                case ShowcaseExhibitId.Rover07Upgraded:
+                    UpdateRoverTracking(dt, cameraWorldPosition);
                     break;
                 case ShowcaseExhibitId.CargoLander:
                     UpdateLanderSolarAndBay(sunDirection, skyPhase, isHoldingEclipse, eclipseFactor, sunlightFactor);
@@ -310,9 +498,97 @@ namespace MoonProject.Showcase
                     break;
             }
 
-            _sequencer.Step(deltaTime);
+            _sequencer.Step(dt);
             ApplyBoundNodes();
-            ApplyLamps(deltaTime);
+            ApplyLamps(dt);
+        }
+
+        private void StepStageSequence(float deltaTime)
+        {
+            _stageSequenceElapsed += deltaTime;
+
+            int count = _stageRoots.Length;
+            float riseDepth = _tuning != null ? _tuning.StageRiseDepthMeters : 0.42f;
+            float overshoot = _tuning != null ? _tuning.StageSettleOvershootMeters : 0.035f;
+            float riseDuration = _tuning != null ? Mathf.Max(0.1f, _tuning.StageRiseDurationSeconds) : 0.65f;
+            float stepInterval = _tuning != null ? Mathf.Max(0.05f, _tuning.StageStepIntervalSeconds) : 0.55f;
+            float holdSeconds = _tuning != null ? Mathf.Max(0.2f, _tuning.StageAutoLoopHoldSeconds) : 2.4f;
+
+            int visibleCount = 0;
+            bool allSettled = true;
+
+            for (int i = 0; i < count; i++)
+            {
+                Transform stage = _stageRoots[i];
+                if (stage == null)
+                {
+                    continue;
+                }
+
+                Vector3 restPos = (_stageRestLocalPositions != null && i < _stageRestLocalPositions.Length)
+                    ? _stageRestLocalPositions[i]
+                    : Vector3.zero;
+
+                float startTime = i * stepInterval;
+                if (_stageSequenceElapsed < startTime)
+                {
+                    if (stage.gameObject.activeSelf)
+                    {
+                        stage.gameObject.SetActive(false);
+                    }
+                    stage.localPosition = restPos;
+                    allSettled = false;
+                    continue;
+                }
+
+                visibleCount++;
+                if (!stage.gameObject.activeSelf)
+                {
+                    stage.gameObject.SetActive(true);
+                }
+
+                float progress01 = Mathf.Clamp01((_stageSequenceElapsed - startTime) / riseDuration);
+                if (progress01 < 1f)
+                {
+                    allSettled = false;
+                }
+
+                float verticalOffset = ShowcaseEasing.EvaluateRiseAndSettleVerticalOffset(
+                    progress01,
+                    riseDepth,
+                    overshoot);
+                Vector3 localUp = stage.parent != null
+                    ? stage.parent.InverseTransformDirection(transform.up)
+                    : Vector3.up;
+                stage.localPosition = restPos + localUp * verticalOffset;
+            }
+
+            _visibleStageCount = visibleCount;
+
+            if (!allSettled)
+            {
+                return;
+            }
+
+            float totalRiseTime = (count - 1) * stepInterval + riseDuration;
+            if (!_demoModeActive)
+            {
+                _stageSequenceRunning = false;
+                return;
+            }
+
+            if (!_demoRulesActivated)
+            {
+                _demoRulesActivated = true;
+                SetAllTriggerableRulesActive(true);
+            }
+
+            if (_stageSequenceElapsed >= totalRiseTime + holdSeconds)
+            {
+                _stageSequenceElapsed = 0f;
+                _demoRulesActivated = false;
+                SetAllTriggerableRulesActive(false);
+            }
         }
 
         private void UpdateRoverTracking(float deltaTime, Vector3 cameraWorldPosition)
@@ -531,6 +807,17 @@ namespace MoonProject.Showcase
                     _secondaryLampRenderers,
                     _tuning.LampOffEmission,
                     _tuning.LampOnEmission * 0.85f);
+            }
+
+            if (HasBuildStages && _visibleStageCount < _stageRoots.Length && _accentLights != null)
+            {
+                for (int i = 0; i < _accentLights.Length; i++)
+                {
+                    if (_accentLights[i] != null)
+                    {
+                        _accentLights[i].enabled = false;
+                    }
+                }
             }
         }
     }
