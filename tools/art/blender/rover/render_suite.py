@@ -5,7 +5,7 @@ import bpy
 import numpy as np
 from mathutils import Matrix
 
-from mesh_ops import COLOR_ATTR_NAME, FLAT_UV_SCALE, unity_to_blender_vec
+from r1kit import COLOR_ATTR_NAME, FLAT_UV_SCALE, u_vec
 
 
 def load_image_rgba(filepath):
@@ -214,11 +214,11 @@ def setup_studio_lighting_and_camera(cfg):
 
 def aim_camera_at(cam_obj, cam_unity_pos, target_unity_pos, up_unity=(0.0, 1.0, 0.0)):
     """Position and aim cam_obj from cam_unity_pos toward target_unity_pos using Unity coordinates."""
-    c_pos = unity_to_blender_vec(cam_unity_pos)
-    t_pos = unity_to_blender_vec(target_unity_pos)
-    u_vec = unity_to_blender_vec(up_unity).normalized()
+    c_pos = u_vec(cam_unity_pos)
+    t_pos = u_vec(target_unity_pos)
+    up_vec = u_vec(up_unity).normalized()
     forward = (t_pos - c_pos).normalized()
-    right = forward.cross(u_vec).normalized()
+    right = forward.cross(up_vec).normalized()
     true_up = right.cross(forward).normalized()
 
     rot_mat = Matrix((
