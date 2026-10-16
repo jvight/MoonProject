@@ -1,97 +1,139 @@
-# Rover 07 — Excavation & Core-Sampling Device Design (`DIG-DEVICE` Round 2)
+# Digging & Ice-Coring Device Study (`DIG-DEVICE` — Round 3)
 
-**Status:** Approved Design Specification (Round 2: Honest Chase-Camera Verification & Variant A2 Forward-Tilted Outrigger Mast)  
-**Target Asset:** `Assets/Art/Models/Rover/Rover.fbx` (`tools/art/blender/rover/rover_parts.py`)  
-**Runtime Consumers:** `RoverModelNodes.cs`, `ExcavationSystem.cs`, `RoverBodyLanguage.cs`, `RoverFeel.cs`, `RoverAnimator.cs`
-
----
-
-## 1. Executive Summary & Round-2 Verdict
-
-Rover 07 is a compact lunar survey, salvage, and prospecting unit (`1.12 m` body width × `1.49 m` roof/CRT height × `1.56 m` chassis length) whose defining narrative beat in Act I is **discovering subsurface water-ice and salvageable mineral veins** beneath the dark regolith of Aristarchus Plateau.
-
-Following Creative Director review of Round 1, we conducted a **Round 2 visual and mechanical study** in headless Blender 5.1 using the canonical Rover 07 v3 model (`R1_CreamEnamel` warm cream body with vertex-color AO/wear enhancement, `R1_Brass` lathe-turned bezels, `R1_OrangePaint` accents, procedural warm amber CRT eyes, and active twin `3400 K` halogen headlamp spot cones) to resolve four specific questions:
-1. **Honest In-Game Chase Camera Framing:** In Round 1, the chase camera renders showed 07 as a tiny distant speck (`~40–60 m` away). In Round 2, `Cam_Chase` was rebuilt to match `Assets/Settings/RoverCameraTuning.asset` (`_distance = 7.5 m`, `_defaultPitch = 16°`, `_targetHeight = 1.1 m`, `_screenPosition.y = +0.10` lower-middle third of the frame) and `Assets/Prefabs/Rover.prefab` (`Rover/Camera` FOV), placing 07 in the **lower-middle third of the 16:9 viewport** (`y = 0.034..0.556` of screen height, `52.1%` tall × `26.3%` wide).
-2. **Solving Variant A1's CRT Face Occlusion (`Variant A2` vs `Variant A1`):** In Round 1 (`Variant A1`), the vertical drill mast deployed right in front of 07's CRT face (`z = +1.08 m`), hiding 07's expression from front and front-three-quarter angles. We designed **`Variant A2` (Forward-Tilted Outrigger Drill Mast)**, which hinges from a lower hood outrigger mount (`(0.0, 0.80, +0.44)`), plants its wide stabilizer yoke low ahead of the front bumper (`(0.0, 0.64, +1.14)`), and tilts the twin-rail mast **`+22°` forward away from 07's face**.
-3. **Material & Lighting Fidelity:** Restored 07's canonical warm cream enamel body (`R1_CreamEnamel`), dark basaltic micro-roughness lunar regolith, warm golden headlamp pools on the excavation mound, and a pure icy white-blue core sample (`#9BE0FF` / `#D1F0FF`) with **zero green color cast** on 07's body during the `done` pose.
-4. **Making Variant B (Nose Hatch Drill) as Strong as Possible:** Upgraded Variant B with a recessed dark-steel armoured nose casemate, a proud **lathe-turned `R1_Brass` drill-guide collar ring** with 6 chrome studs (matching the v3 `CutterHead` bezel language), and split hazard-striped shutters so its purpose as a nose drill is unmistakable even when stowed.
-
-### Round-2 Variant Comparison Summary
-
-| Variant | Mechanical Concept | Honest Chase-Cam Visible Fraction (`Deploy` / `Mid-Dig` / `Done`) | 07's CRT Face Visibility (`Front-3/4` & `Side-3/4`) | Steered Wheel (`±28°`) & Headlamp Clearance | Stowed Nose Readability | Verdict |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Variant A2 — Forward-Tilted Outrigger Drill Mast** | Low-mounted twin-spar outrigger boom (`(0, 0.80, +0.44)`) that pitches down `+16°` ahead of the bumper while an open twin-rail mast tilts **`+22°` forward** (`y_max = 1.65 m` at `z = +1.53 m`), with wide outrigger stabilizer pads (`x = ±0.38 m`), brass spiral auger, and icy-blue `CoreSample`. | **PASS**<br>Deploy: **`12.7%`** (`y_max = 0.692`)<br>Mid-Dig: **`9.5%`** (`y_max = 0.621`)<br>Done: **`10.7%`** (`y_max = 0.635`) | **PASS (`100%` of CRT screen & eyes unobstructed while drilling and inspecting core)** | Wheel (`±28°`): **`3.0 cm`** (`PASS`, outriggers flare ahead of front tires)<br>Headlamps: **`PASS`**<br>CutterHead: **`PASS`** (spars straddle turret) | **Strong** — Twin orange/brass hood spars & folded mast frame the hood cleanly | **WINNER (Recommended Canonical Device)** |
-| **Variant A1 — Round-1 Vertical Hood Mast** | Upper hood boom (`(0, 0.84, +0.34)`) with a vertical twin-column mast (`0°` world vertical at `z = +1.08 m`), telescoping stabilizer foot, brass auger, and core sample. | **PASS**<br>Deploy: **`16.9%`** (`y_max = 0.646`)<br>Mid-Dig: **`8.7%`** (`y_max = 0.662`)<br>Done: **`12.1%`** (`y_max = 0.694`) | **FAIL** — Vertical mast stands at `z = +1.08 m` (`y = 0.64..1.81 m`) directly across the center of 07's CRT face | Wheel (`±28°`): **`21.7 cm`** (`PASS`)<br>Headlamps: **`PASS`**<br>CutterHead: **`PASS`** | **Good** — Folded mast rests along upper hood | **SUPERSEDED BY A2** (Good chase silhouette, but blocks 07's CRT face from front/3/4 views) |
-| **Variant B — Nose Hatch Drill (w/ Brass Collar)** | Armoured front nose casemate (`(0, 0.48, +0.74)`) with a proud lathe-turned `R1_Brass` collar ring, split upper/lower hazard shutters (`±78°`), and a `28°` downward-pitched telescoping arm + brass auger. | **FAIL**<br>Deploy: **`0.0%`** (`y_max = 0.332`)<br>Mid-Dig: **`0.0%`** (`y_max = 0.332`)<br>Done: **`0.0%`** (`y_max = 0.336`) | **PASS (`100%` of CRT screen & eyes unobstructed)** | Wheel (`±28°`): **`25.0 cm`** (`PASS`)<br>Headlamps: **`PASS`**<br>CutterHead: **`PASS`** (mounted on lower nose below cutter) | **Strong (Upgraded)** — Lathe-turned `R1_Brass` collar & split hazard shutters read clearly when stowed | **RUNNER-UP FOR FRONT/SIDE CUTSCENES, REJECTED FOR CHASE CAM** (`100%` occluded by 07's hull in gameplay chase view) |
-| **Variant C — Bucket Loader** | Twin cheek-mounted loader arms (`(0, 0.48, +0.76)`) and a `0.68 m` wide 6-tooth excavator bucket that scoops regolith at the bumper and lifts to dump (`y_max = 1.00 m`). | **FAIL**<br>Deploy: **`0.0%`** (`y_max = 0.315`)<br>Mid-Dig: **`0.0%`** (`y_max = 0.315`)<br>Done: **`0.0%`** (`y_max = 0.452`, below `0.577` head) | **WARN** — Clear during low scoop, but wide bucket & ore load block 07's CRT face during high dump (`f = 88..112`) | Wheel (`±28°`): **`1.7 cm`** (`FAIL`, `< 2.0 cm` safety floor)<br>Headlamps: **`FAIL`** (`0.766 m` bucket sweeps across both beams) | **Fair** — Low chin bucket makes nose look front-heavy | **REJECTED** (Zero chase-cam visibility, blocks headlamps, tight tire clearance) |
+**Target Model:** Rover `07` v3 (`Assets/_Project/Art/Models/Rover/Rover.glb` / `tools/art/blender/rover/build_rover.py`)  
+**Study Scripts & Renders:** `Logs/dig/build_dig_study.py`, `Logs/dig/encode_media.py`, `Logs/dig/index.html`, `Logs/dig/metrics.json` (git-ignored)  
+**Round 1–2 Backup:** `Logs/r2/dig/` (git-ignored)  
+**Author:** `agy-scoop`  
+**Status:** Round 3 Complete — Recommending **Variant 3 (`combo` — The Combination: Dust Fountain + Singing Core Bell)**; Round 1–2 Variants (`A2`, `A1`, `B`, `C`) **REJECTED BY OWNER**.
 
 ---
 
-## 2. Detailed Round-2 Findings
+## 1. Owner Verdict on Round 1–2 (`A2`, `A1`, `B`, `C` — REJECTED)
 
-### 2.1 Honest Chase Camera Framing & What Actually Reads From Behind
+> **Owner Verdict (Round 2 Review):**  
+> *"The drill looks too crude and doesn't fit the game's vibe. Is there something more creative and sensible? 07 can't always have a pointed spike sticking out in front."*
 
-When `Cam_Chase` is positioned at the true gameplay distance (`~7.2 m` behind 07 along a `16°` pitch ray, looking at `(0.0, 1.10 m, +0.25 m)` with horizontal FOV `46°` and vertical framing shift so 07 sits in the lower-middle third of the screen):
-* **07's Screen Footprint:** Rover 07 spans `y = 0.034..0.556` from the bottom of the frame (`52.1%` of frame height) and `26.3%` of frame width.
-* **The Occlusion Horizon:** Because the camera looks downward at `16°` over the top of 07's `1.49 m` CRT head (`y_screen_max = 0.535..0.556`) and `1.12 m` wide wheel stance, **any mechanism operating forward of the nose (`z = +0.80..+1.55 m`) that stays below `y = 1.15 m` and narrower than `|x| = 0.35 m` projects entirely inside 07's chassis silhouette (`y_screen < 0.46`)** and is `100%` hidden by the rover's body and head.
-* **Why `A2` and `A1` Read Clearly While `B` and `C` Disappear:**
-  * In **`Variant B`** (`y_max = 0.57 m`, `|x| ≤ 0.15 m`) and **`Variant C`** (`y_max = 0.52 m` during dig, `1.00 m` during dump), every vertex projects between `y_screen = 0.315` and `0.452`—well below 07's roofline (`0.535..0.577`). From behind, the player sees only 07's chassis brace reaction and the dust clods billowing out to the sides.
-  * In **`Variant A2`**, although the mast base is planted low ahead of the bumper (`y = 0.64 m, z = +1.14 m`) and the mast leans `+22°` forward away from 07's face, the `0.92 m` twin-rail mast reaches **`y = 1.58..1.65 m` in world height** with a `0.45 m` wide orange/brass crown (`x = ±0.225 m`) and `0.77 m` wide front outrigger knuckles/pads (`x = ±0.387 m`). Consequently, `A2`'s upper rotary drive crown, twin brass beacon pods, central brass bell housing, and ascending icy-blue `CoreSample` project to **`y_screen = 0.621..0.692`**—rising cleanly above 07's CRT head (`y_screen = 0.535..0.552`) with **`9.5%–12.7%` direct unoccluded surface visibility** throughout deployment, drilling, and core presentation.
+### Summary of Rejected Round 1–2 Variants
 
-### 2.2 Variant A2 vs Variant A1 — Solving the CRT Face Occlusion
-
-The Creative Director noted that while `Variant A1` read well from behind, its vertical mast stood directly in front of 07's face (`z = +1.08 m, y = 0.64..1.81 m`), blocking 07's CRT eyes from front and front-three-quarter views.
-
-**How `Variant A2` solves this without sacrificing chase-camera readability:**
-1. **Lower, Wider Outrigger Boom (`DrillBoom` at `(0.0, 0.80, +0.44)`):**
-   * Instead of hinging high near the neck and holding the mast knuckle at `y = 0.90 m` in front of the CRT bezel, `A2`'s twin hood spars run low along the hood (`x = ±0.195 m`, straddling `CutterHead` cleanly) and pitch **downward `+16°`** during deployment.
-   * This places the front outrigger cross-yoke low ahead of the front bumper at **`(0.0, 0.64 m, +1.14 m)`**—more than **`42 cm` below** the bottom of 07's CRT screen (`y = 1.06..1.45 m`).
-2. **Forward-Tilted Open Twin-Rail Mast (`+22°` World Forward Lean):**
-   * Rather than standing vertically (`0°`) in front of 07's face, `A2`'s `DrillMast` unfolds to `+6°` relative to the `+16°` downward-pitched boom, giving a **net `+22°` forward tilt away from 07's CRT screen**.
-   * Because the mast base sits below the screen (`y = 0.64 m`) and tilts forward (`+Z`) as it rises, the entire mast corridor stays ahead of the front-three-quarter sightline to 07's face.
-   * **Result:** In `Cam_Front34` and `Cam_Side34`, **100% of 07's warm amber CRT screen and both eyes remain completely visible and unobstructed** while 07 pitches its head down (`+16°`) and yaws (`-16°`) to watch the spinning brass auger and rising ice core!
-3. **Wider Upper Crown & Outrigger Pads for Chase-Camera Readability:**
-   * To compensate for the `+22°` forward lean when viewed from `Cam_Chase`, `A2` widens the open mast rails to `x = ±0.145 m` (enhancing the see-through window around the glowing `CoreSample`), caps the mast with a `0.42 m` safety-orange crown flanked by **twin `R1_Brass` telemetry/beacon pods (`x = ±0.225 m`)** and a central brass rotary bell, and flares the lower stabilizer foot outriggers to `x = ±0.355 m` ahead of the front tires.
-
-### 2.3 Variant B Upgraded — Visible Armoured Nose Hatch & Lathe-Turned `R1_Brass` Collar
-
-To ensure the owner's nose-drill concept (`Variant B`) was evaluated at its strongest possible visual execution:
-* **Stowed Visual Readability (`NoseBayFrame` + `NoseHatch_Upper/Lower`):**
-  * Mounted on the lower nose (`(0.0, 0.48 m, +0.74 m)`) below `CutterHead` (`y = 0.635 m`) and between `Headlamp_L/R` (`x = ±0.26 m`).
-  * Framed by a dark-steel armoured casemate with top/bottom safety-orange bumper guards, four corner brass hex bolts, and a **proud lathe-turned `R1_Brass` drill-guide collar ring (`r = 0.076 m`) studded with 6 chrome rivets** that echoes the v3 `CutterHead` brass bezel directly above it.
-  * Closed when stowed by split upper and lower `R1_CreamEnamel` & `R1_OrangePaint` hazard-striped shutters with central semicircular brass lips that form a sealed circular drill port around the chrome pilot tip.
-* **Deployed Action:**
-  * Upper and lower shutters swing open `±78°`, the internal brass trunnion (`DrillMount`) pitches down `28°`, and `DrillArm` + `DrillAuger` telescope forward and downward into the regolith mound right in front of the nose while both headlamps illuminate the auger flutes.
-* **Assessment:** Variant B looks cohesive, purposeful, and industrial from front and side-three-quarter angles—even when stowed—and keeps 07's CRT face 100% clear. However, because the entire mechanism operates between `y = 0.00 m` and `0.57 m` directly in front of the nose, it remains **`0.0%` visible from the honest gameplay chase camera**.
+| Variant | Concept | Status | Why Rejected |
+| --- | --- | --- | --- |
+| **`A2`** | Forward-Tilted Survey Corer Mast (`-112°` stowed tilt) | **REJECTED BY OWNER** | Left a permanent pointed auger spike (`z = +1.05 m`, `27.5 cm` nose protrusion) sticking out in front of 07's face at all times; industrial drill look felt too crude for the game's warm, quiet 1980s tone. |
+| **`A1`** | Vertical Survey Corer Mast (`0°` stowed tilt) | **REJECTED (Round 2)** | Permanent vertical drill tower (`+46 cm` above head roof) competed with 07's CRT head silhouette. |
+| **`B`** | Nose Hatch Auger Drill | **REJECTED BY OWNER** | Replaced 07's lower front bumper with a mechanical drill press; occluded from the chase camera (`0.0%` mesh visibility) and violated 07's friendly character vibe. |
+| **`C`** | Articulated Front Bucket Loader | **REJECTED BY OWNER** | Wrapped `1.12 m`-wide bulldozer loader arms around 07's front face and headlamps (`27.7 cm` nose protrusion), turning a gentle scientific instrument into a construction tractor. |
 
 ---
 
-## 3. Canonical Rig & Node Hierarchy Specification (`Variant A2 — Forward-Tilted Outrigger Drill Mast`)
+## 2. Round 3 Design Principles & Honest Chase-Camera Setup
 
-### 3.1 Node Table & Pivot Coordinates (Unity Space: `+X` Right, `+Y` Up, `+Z` Forward)
-
-All 5 animated parts are parented under `RoverModel` (or grouped under `Body/DigDrill`) using the existing rover material palette (`R1_DarkSteel`, `R1_OrangePaint`, `R1_Brass`, `R1_Chrome`, `R1_RubberDark`, plus `Study_IceCore` for the extracted sample):
-
-| Node Name | Parent | Rest Local Position `(x, y, z)` (m) | World Rest Pos `(x, y, z)` (m) | Primary Animated Channels | Material(s) | Mechanical Role |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `DrillBoom` | `RoverModel` / `Body` | `(0.000, 0.800, 0.440)` | `(0.000, 0.800, 0.440)` | `localEulerAngles.x`: `0°` (stowed) → `-18°` (unfold lift) → `+16°` (drilling) → `+12°` (core inspect) | `R1_DarkSteel`, `R1_OrangePaint`, `R1_Brass`, `R1_Chrome` | Twin hood spars (`x = ±0.195 m`) straddling `CutterHead` with brass hydraulic cylinders, angled forward outrigger struts flaring ahead of the bumper (`z_local = +0.50..+0.72 m`) to `x = ±0.355 m` brass knuckle pods, and a `0.72 m` front cross-yoke. |
-| `DrillMast` | `DrillBoom` | `(0.000, 0.040, 0.720)` | `(0.000, 0.840, 1.160)` *(unfolded)* | `localEulerAngles.x`: `-90°` (folded back on hood) → `-8°` (deploy) → `+6°` (`+22°` net world forward tilt during drill) → `+8°` (`+20°` net world forward tilt during core inspect) | `R1_OrangePaint`, `R1_DarkSteel`, `R1_Chrome`, `R1_Brass` | `0.92 m` open twin-rail mast (`x = ±0.145 m` orange columns + `x = ±0.108 m` chrome guide rods) topped by a `0.42 m` orange rotary crown cap, twin `R1_Brass` side beacon pods (`x = ±0.225 m`), and a central brass rotary bell housing. |
-| `DrillFoot` | `DrillMast` | `(0.000, -0.480, 0.000)` | `(0.000, 0.360, 1.160)` *(unfolded)* | `localPosition.y`: `-0.480 m` (retracted) → `-0.700 m` (`dp_y = -0.22 m` planted on regolith) | `R1_Chrome`, `R1_OrangePaint`, `R1_RubberDark`, `R1_Brass` | Twin chrome jack rods (`x = ±0.145 m`) + splayed orange outrigger legs (`x = ±0.29 m`) + `0.64 m` rubber-soled stabilizer pad and central `R1_Brass` auger guide bushing. |
-| `DrillAuger` | `DrillMast` | `(0.000, 0.220, 0.000)` | `(0.000, 1.060, 1.160)` *(unfolded)* | `localPosition.y`: `+0.220 m` → `-0.340 m` (`dp_y = -0.56 m` drilling) → `-0.120 m` (`dp_y = -0.34 m` during core display); `localEulerAngles.y`: continuous spin | `R1_Brass`, `R1_DarkSteel`, `R1_Chrome` | `0.68 m` steel drive shaft with brass chuck, 20 helical `R1_Brass` auger flights (`r = 0.046 m`), and conical `R1_Chrome` pilot bit. Stays in the lower mast bore during `done` so the upper mast window belongs cleanly to `CoreSample`. |
-| `CoreSample` | `DrillMast` | `(0.000, -0.140, 0.000)` | `(0.000, 0.700, 1.160)` *(unfolded)* | `localPosition.y`: `-0.220 m` → `+0.480 m` (`dp_y = +0.62 m` raised into upper mast window); `localScale`: `0.001` (hidden) → `1.000` (`f = 84..118`) | `IceCore_Mat` (`#9BE0FF` icy white-blue emission), `R1_Brass` | `0.34 m` illuminated subsurface water-ice core cylinder (`r = 0.036 m`) with `R1_Brass` end-caps, hoisted into the open upper window of `DrillMast` at `f = 84..118` so it reads above 07's head from the chase camera and in front of 07's gaze from side/front views. |
-
-### 3.2 Coherent Chassis Reaction Rule (`Body` + `CutterTurret` + `Neck`)
-
-In Rover 07 v3, `CutterTurret` (`(0.0, 0.635, +0.648)`) and `Neck` (`(0.0, 0.875, +0.160)`) are siblings of `Body` under `RoverModel`. Whenever procedural or keyframed chassis pitch/heave (`body_pitch`, `body_dy`, `body_dz`) is applied during drilling brace (`+1.8°` nose pitch, `-12 mm` heave, `±4 mm` rotary shudder), **the exact same chassis transform delta must be applied coherently to `Body`, `CutterTurret`, and `Neck`** so the chest `CutterHead` never sinks into or separates from the front hood slope.
+From the Owner's verdict and `RULES.md`:
+1. **100% Hidden or Flush When Stowed (`0.0 mm` Nose Protrusion):** When 07 is driving across the Mare, nothing sticks out in front of the bumper (`z = +0.775 m`) or above the head roof. 07 keeps its clean, friendly CRT face, warm headlamps, central camera lens, and compact silhouette (`stowed_front` and `stowed_back` renders verify zero visual intrusion).
+2. **Vacuum-Logical (`RULES.md` — "Vacuum logic"):** The Moon has no air (`1/6 g`, hard vacuum). Regolith does not billow into atmospheric smoke clouds; instead, every dislodged grain follows a crisp **ballistic parabola ("rooster-tail" spray)** and lands cleanly. Valid lunar physics include **cold-gas ($O_2$) thrusters/nozzles**, **ultrasonic/piezo standing-wave resonance**, **electrostatic travelling waves on charged dust**, and **cryogenic cold-finger traps**.
+3. **Musical Mechanics in D Major Pentatonic (`RULES.md` — "Musical mechanics"):** Every dig/core cycle has a clear **Start beat**, **Working rhythm**, and **Done beat** pitched to D major pentatonic (`D4 = 293.7 Hz`, `E4 = 329.6 Hz`, `F#4 = 370.0 Hz`, `A4 = 440.0 Hz`, `B4 = 493.9 Hz`, `D5 = 587.3 Hz`, `F#5 = 740.0 Hz`, `A5 = 880.0 Hz`).
+4. **Two Distinct Excavation Jobs in the Story (`docs/design/story-v4.md`):**
+   - **Job 1 — Uncovering Buried Relics & Anchors:** Gently brushing regolith off buried survey canisters, cable junctions, and keepsakes in front of 07 so 07's CRT eye and headlamps can inspect them.
+   - **Job 2 — Pulling a Subsurface Ice Core Sample:** Extracting a cylindrical core of ancient buried water ice (the story's climax proof) and holding it up with a bright frost glint.
+5. **Honest Gameplay Chase Camera (`Assets/_Project/Data/Tuning/RoverCameraTuning.asset`):**
+   - `_distance = 7.5 m`, `_defaultPitch = 16°`, `_targetHeight = 1.1 m`, `_screenPosition = (0.0, 0.1)`, `FOV = 55°` vertical (`16:9` aspect).
+   - Exact Unity camera position relative to Rover root: `(0.0, +2.780 m, -6.834 m)` looking down at `20.04°` pitch (`16° + 4.04°` screen-Y composition offset). Rover 07 occupies `20.5%` screen width and `40.8%` screen height.
 
 ---
 
-## 4. Full 6.0-Second Animation Choreography (`Variant A2`, 24 fps = 144 Frames)
+## 3. Recommended Winner: Variant 3 (`combo`) — Dust Fountain + Singing Core Bell
 
-| Phase | Frames (`24 fps`) | Time (`s`) | Mechanism Motion (`A2` Hierarchy) | Rover Body & Head Reaction | Visual & Lighting Readability |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **1. Stowed (`stowed`)** | `f = 0 .. 12`<br>*(Key pose: `f = 0`)* | `0.00 – 0.50 s` | `DrillBoom` flat on lower hood (`0°`). `DrillMast` folded back `-90°` along hood (`y = 0.75..0.94 m`). `CoreSample` hidden (`scale = 0.001`). | Chassis level (`0°`). `Head` neutral (`0°, 0°`) with warm amber CRT eyes. | Twin `3400 K` headlamps cast warm golden pools across the dark basaltic regolith mound ahead of the nose. |
-| **2. Unfold & Plant Ahead of Bumper (`deploy`)** | `f = 12 .. 36`<br>*(Key pose: `f = 26`)* | `0.50 – 1.50 s` | `DrillBoom` lifts to `-18°` (`f = 24`) so the mast clears the bumper, then pitches down to **`+16°`** (`f = 36`) while `DrillMast` unfolds to **`+6°` local (`+22°` world forward tilt)**. `DrillFoot` extends `dp_y = -0.22 m` (`f = 28..38`) to plant its wide outrigger pads ahead of the bumper. | As the foot plants (`f = 32..38`), chassis braces to **`+1.8°` pitch** and `-12 mm` heave. `Head` pitches **`+16°` down** and yaws **`-16°` right** to watch the auger touch down. | In `Cam_Chase`, the orange/brass mast crown rises to `y_screen = 0.692` (`12.7%` visible). In `Cam_Front34`, the `+22°` forward tilt leaves 07's CRT face 100% clear. |
-| **3. Active Drilling (`mid_dig`)** | `f = 36 .. 95`<br>*(Key pose: `f = 60`)* | `1.50 – 3.96 s` | `DrillAuger` spins continuously (`52°/frame` = `1248°/s`) and feeds down `dp_y = -0.56 m` through the brass foot bushing into the regolith mound (`y_min = -0.275 m`) with `±0.45°` high-frequency mast vibration. | Chassis sustains `+1.8°` brace pitch with `±4 mm` rotary shudder. `Head` stays pitched `+16°` down / `-16°` yawed with focused CRT eyes; `100%` of the CRT face stays unobstructed. | Billowing regolith dust collar and 8 ballistic dust clods erupt inside the warm `3400 K` headlamp beams, visible around both front tires in `Cam_Chase` (`9.5%` mast visibility). |
-| **4. Core Extraction & Presentation (`done`)** | `f = 84 .. 118`<br>*(Key pose: `f = 104`)* | `3.50 – 4.92 s` | `DrillFoot` retracts (`f = 90..99`). `DrillBoom` lifts slightly to `+12°` and `DrillMast` tilts to `+8°` (`+20°` net forward lean) while `DrillAuger` stays low (`dp_y = -0.34 m`) and the glowing icy-blue **`CoreSample`** rises to `dp_y = +0.62 m` in the upper mast window. | Shudder stops. `Head` lifts to `+6°` pitch and `-20°` yaw to admire the extracted ice core in the forward-tilted mast window. | `CoreSample` glows crisp icy white-blue (`3.6` emission, zero green cast on 07's cream hull) and rises above 07's head in `Cam_Chase` (`10.7%` visible, `y_screen_max = 0.635`). |
-| **5. Fold & Stow** | `f = 112 .. 143` | `4.67 – 6.00 s` | `CoreSample` transfers/retracts (`f = 112..118`), `DrillAuger` retracts to rest (`f = 110..122`), `DrillBoom` swings through `-14°` (`f = 124`) back to `0°`, and `DrillMast` folds back to `-90°` (`f = 134`). | Chassis and `Head` settle smoothly back to `(0°, 0°, 0°)` rest pose for a seamless loop at `f = 143`. | Dust plume settles back into the lunar surface. |
+We recommend **Variant 3 (`combo` — The Combination: Dust Fountain + Singing Core Bell)** as the production design for Rover 07.
+
+### 3.1 Why Combining Both Flush Systems Beats Any Single Device
+
+| Criterion | `bell` Alone (Singing Core Bell) | `fountain` Alone (Dust Fountain) | `combo` (Dust Fountain + Singing Core Bell) |
+| --- | --- | --- | --- |
+| **Job 1: Uncovering Buried Relics** | **5 / 10** — Because the bell is under 07's belly (`z = +0.08 m`), 07 would have to drive blind *on top* of a buried relic mound to uncover it, risking high-centering and leaving the uncovered relic hidden under the floor pan away from 07's eye and front tether. | **10 / 10** — Twin bumper de Laval nozzles puff rhythmic cold-gas $O_2$ jets right in front of 07 (`z = +0.80..1.35 m`), brushing regolith away in headlamp-lit parabolic rooster-tail arcs while 07 watches with curious head tilts. | **10 / 10** — Uses the front bumper **Dust Fountain** for all surface uncovering in front of 07's gaze. |
+| **Job 2: Pulling a Deep Ice Core** | **10 / 10** — Authentic JPL/Honeybee ultrasonic resonance corer; lowers from a flush belly hatch, fluidizes consolidated regolith into concentric Chladni wave rings with almost zero push-force, and lifts a glowing glass ice core into a flush rear-deck sight-glass (`z = -0.44 m`). | **4 / 10** — Cold-gas puffs disperse loose surface dust effortlessly, but gas jets alone cannot cut or lift an intact cylindrical core of hard, cryogenic subsurface ice. | **10 / 10** — Uses the under-belly **Singing Core Bell** + rear-deck **Dorsal Sight-Glass** to extract and display the glowing cylindrical ice core. |
+| **Stowed Appearance (`0.0 mm` Spike)** | **10 / 10** — 100% hidden behind flush belly clamshell doors (`y = 0.335 m`) and flush rear-deck sight-glass cap (`y = 0.953 m`). | **10 / 10** — 100% hidden behind flush dark-steel/brass shutter flaps inside the front bumper channel (`z = +0.7735 m`, `0.0 mm` nose protrusion). | **10 / 10** — Because *both* subsystems stow 100% flush inside existing hull surfaces, combining them adds **zero external clutter** when driving. |
+| **Chase-Camera Readability** | **9 / 10** — Expanding golden wave rings (`1.26 m` diameter) + twin lateral rooster-tail sprays (`45.1%` total action vis) + rear-deck core reveal (`14.7%` device vis at `done`). | **9 / 10** — Wide parabolic rooster-tail dust sheets (`50.9%` total action vis) arcing out on both sides of 07's front fenders. | **10 / 10** — Delivers a two-stage visual story: forward rooster-tail uncovering (`f12–56`) followed by under-belly golden wave rings + lateral rooster-tails + rear-deck glowing ice core reveal (`f44–124`). |
+
+---
+
+## 4. Detailed Evaluation of All Four Round 3 Variants
+
+### 4.1 Variant 1 (`bell`): Director's Idea 1 — The Singing Core Bell (Chuông lõi hát)
+- **Inspiration:** Real JPL / Honeybee Robotics ultrasonic planetary corers + 1980s brass acoustic laboratory instruments.
+- **Sub-mesh Hierarchy (9 parts):**
+  - `BellyBayRing` (`R1_Brass`, lathe-turned bezel flush at `y = 0.340 m, z = +0.08 m`)
+  - `BellyHatch_L` & `BellyHatch_R` (`R1_DarkSteel` + `R1_Brass` split semicircular clamshell doors, flush at `y = 0.335 m` when closed; roll open `±68°`)
+  - `BellStem` (`R1_Chrome` telescopic actuator shaft with 3 `R1_Copper` magnetostrictive transducer coil rings; lowers `-0.320 m`)
+  - `SingingBell` (`R1_Brass` lathe-turned resonator bell with `R1_LampAmber` acoustic rim, `R = 0.154 m`; presses onto the regolith at `y = -0.014 m` and hums/rotates)
+  - `CoreTube` (`Study_IceCore` borosilicate glass tube + `Study_FrostGlint` inside the bell throat)
+  - `DorsalSightRing`, `DorsalSightCap`, `DorsalCoreColumn` (flush brass sight-glass receiver at `(0.0, 0.945, -0.44)` on 07's rear deck behind the solar panel; when the core rises at `done`, the cap flips open `-72°` and the glowing ice core column + 6-ray diamond frost glint rises `+0.19 m` directly in front of the Chase Camera).
+- **Vacuum Physics Visuals:** Ultrasonic vibration fluidizes the surrounding Mare regolith into **3 concentric golden standing-wave rings** (`SonicWaveRing_0..2`, expanding from `R = 0.20 m` to `0.63 m` past all four wheels) while kicking loose grains outward in **6 parabolic 1/6 g rooster-tail ribbons** (`RoosterArc_L/R_0..2`) and 20 ballistic grain clusters (`SprayGrain_0..19`).
+
+### 4.2 Variant 2 (`fountain`): Director's Idea 2 — The Dust Fountain (Vòi phun bụi)
+- **Inspiration:** Lunar cold-gas ($O_2$) attitude thrusters / surveyor gas-jet erosion experiments + 1980s brass pneumatic nozzles.
+- **Sub-mesh Hierarchy (6 parts):**
+  - `BumperBay_L` & `BumperBay_R` (`R1_DarkSteel` & `R1_Brass` recessed housings tucked inside the front bumper channel at `x = ±0.195 m, y = 0.425 m, z = +0.752 m`)
+  - `BumperFlap_L` & `BumperFlap_R` (`R1_DarkSteel` shutter flaps with `R1_Brass` trim strip; sit 100% flush at `z = +0.7735 m` when closed (`0.0000 m` protrusion beyond `FRONT_BUMPER_FACE_Z = 0.775 m`); flip down `-74°` on deploy)
+  - `FountainNozzle_L` & `FountainNozzle_R` (lathe-turned `R1_Brass`, `R1_Copper`, and `R1_OrangePaint` convergent-divergent de Laval nozzles; slide forward `+0.052 m` to `z = +0.826 m`, pitch down `19°..23°`, and sweep `±14°..21°` in yaw).
+- **Vacuum Physics Visuals:** Three rhythmic cold-gas $O_2$ puffs (`ColdGasJet_L/R` 3-needle supersonic Mach plumes) sweep the regolith mound away in high, laminar 1/6 g parabolic rooster-tail arcs (`y_max = 1.05 m`, `x = ±1.18 m`), gently uncovering the buried brass/amber `UncoveredRelic` in front of 07's headlamps like brushing snow off a keepsake.
+
+### 4.3 Variant 3 (`combo`): The Combination — Dust Fountain + Singing Core Bell (Recommended Winner)
+- **Sub-mesh Hierarchy (15 parts):** Combines the 6-part `fountain` front-bumper assembly (`Combo_BumperBay_L/R`, `Combo_BumperFlap_L/R`, `Combo_FountainNozzle_L/R`) with the 9-part `bell` belly-corer and rear-deck sight-glass assembly (`Combo_BellyBayRing`, `Combo_BellyHatch_L/R`, `Combo_BellStem`, `Combo_SingingBell`, `Combo_CoreTube`, `Combo_DorsalSightRing`, `Combo_DorsalSightCap`, `Combo_DorsalCoreColumn`).
+- **Two-Stage Choreography (`144` frames / `6.0 s`):**
+  1. **Frames `12–56` (`0.50–2.33 s` — Uncover):** Front bumper flaps snap open (`-74°`), brass de Laval nozzles extend `+5.2 cm`, and three rhythmic cold-$O_2$ puffs (`D5–E5–F#5`) sweep the surface mound away in high parabolic rooster-tail arcs, uncovering the gleaming relic/ice lens in front of 07.
+  2. **Frames `42–122` (`1.75–5.08 s` — Sing & Core):** Belly clamshell doors roll open (`±68°`), the brass Singing Core Bell lowers onto the soil (`D4 + A4 + F#5` chord), golden standing-wave rings + lateral rooster-tail sprays ripple outward on both sides of 07, and at `f = 84..122` the glowing glass ice core + 6-ray diamond frost glint rises into the rear-deck dorsal sight-glass (`D4→F#4→A4→D5→F#5` arpeggio) while 07 turns its CRT head (`-22°` yaw, `+6°` pitch) to admire the core.
+
+### 4.4 Variant 4 (`ring`): `[PROPOSAL]` Author's Idea — Electrostatic Chladni Ring & Cryo-Trap Lantern (Vòng Âm Thoa Tĩnh Điện)
+- **Inspiration:** 1980s geophysical loop detectors + lunar electrostatic dust levitation + cryogenic cold-finger core traps.
+- **Sub-mesh Hierarchy (4 parts):**
+  - `ChinMount` (`R1_DarkSteel` & `R1_Brass` flush pivot block under the front chin at `(0.0, 0.362, +0.50)`)
+  - `HaloArm` (twin slender `R1_Brass` & `R1_Chrome` parallel pantograph links, `|x| <= 0.131 m`, `0.54 m` long; folds `180°` flat against the belly pan at `y = 0.334..0.382 m` when stowed)
+  - `ChladniRing` (horizontal concentric `R1_Brass` & `R1_Copper` tuning-fork ring, `R = 0.204 m`, with `R1_LampAmber` rim; swings out `150°` to hover horizontally at `(0.0, 0.07, +1.02)` over the mound)
+  - `CryoLantern` (`Study_IceCore` borosilicate glass cylinder with 4 `R1_Copper` cryo-fins and top `Study_FrostGlint` diamond star; condenses and lifts the ice core, swinging up and out to `x = +0.35 m, y = 0.80..1.20 m` beside 07's right cheek at `done`).
+
+---
+
+## 5. Exact Clearance & Chase-Camera Visibility Metrics
+
+All values below are computed directly from the evaluated 3D meshes in Blender (`Logs/dig/metrics.json`), including the `±28°` front-wheel steering excursion (`0.045 m` inward tyre edge swing):
+
+| Metric | Requirement | `combo` (Winner) | `bell` (Director 1) | `fountain` (Director 2) | `ring` (Author Proposal) |
+| --- | --- | --- | --- | --- | --- |
+| **Part Count** | Modular rigid children | `15` | `9` | `6` | `4` |
+| **Min Steered Wheel Clearance (`±28°`)** | `>= 0.050 m` | **`0.1951 m`** (PASS) | **`0.2890 m`** (PASS) | **`0.1951 m`** (PASS) | **`0.1268 m`** (PASS) |
+| **Min Suspension Wishbone/Shock Clearance** | `>= 0.050 m` | **`0.2384 m`** (PASS) | **`0.2955 m`** (PASS) | **`0.2384 m`** (PASS) | **`0.2567 m`** (PASS) |
+| **Min Head / Neck Gimbal Clearance** | `>= 0.050 m` | **`0.1757 m`** (PASS) | **`0.1759 m`** (PASS) | **`0.5534 m`** (PASS) | **`0.2395 m`** (PASS) |
+| **Stowed Belly Ground Clearance** | `>= 0.250 m` | **`0.3310 m`** (PASS) | **`0.3310 m`** (PASS) | **`0.3940 m`** (PASS) | **`0.3340 m`** (PASS) |
+| **Stowed Nose Protrusion Beyond Bumper (`z=+0.775m`)** | `0.000 m` (Flush) | **`0.0000 m`** (FLUSH) | **`0.0000 m`** (FLUSH) | **`0.0000 m`** (FLUSH) | **`0.0000 m`** (FLUSH) |
+| **Chase-Cam Total Action Vis (`deploy` / `mid_dig`)** | Readable in gameplay | **`40.2%` / `37.2%`** (`42.9%` screen X-span) | **`32.6%` / `45.1%`** (`37.7%` screen X-span) | **`32.5%` / `50.9%`** (`34.2%` screen X-span) | **`21.2%` / `34.6%`** (`38.4%` screen X-span) |
+| **Chase-Cam Device Vis at `done` (Core Display)** | Core & frost glint visible | **`10.4%`** (dorsal core column + frost glint) | **`14.7%`** (dorsal core column + frost glint) | `0.0%` (front relic glint visible on ground) | **`4.3%`** (CryoLantern beside right cheek) |
+
+---
+
+## 6. Musical Beats — Timing, Easing & D-Major Pentatonic Sound Design
+
+Every variant is choreographed to **D major pentatonic** (`D4 = 293.7 Hz`, `E4 = 329.6 Hz`, `F#4 = 370.0 Hz`, `A4 = 440.0 Hz`, `B4 = 493.9 Hz`, `D5 = 587.3 Hz`, `F#5 = 740.0 Hz`, `A5 = 880.0 Hz`):
+
+| Variant | Beat 1: Start / Deploy | Beat 2: Working Rhythm (Fluidize / Puff) | Beat 3: Done / Core & Relic Reveal | Beat 4: Stow |
+| --- | --- | --- | --- | --- |
+| **`combo` (Recommended Winner)** | **0.50–0.85 s (`f12–20`):** `smoothstep` bumper flap snap (`-74°`) + nozzle slide (`+5.2 cm`). Sound: crisp brass shutter click + rising fifth chime `D4 → A4`. | **Stage 2A (`0.85–2.33 s`, `f20–56`):** 3 rhythmic cold-$O_2$ puffs in 3/4 meter (`D5 – E5 – F#5` breathy valve transients) brushing the mound clear.<br>**Stage 2B (`2.08–3.92 s`, `f50–94`):** Belly hatch opens (`F#4`); brass bell kisses soil with a warm Tibetan singing-bowl chord (`D4 + A4 + F#5`) pulsing at `4 Hz` as golden wave rings expand. | **3.75–5.08 s (`f90–122`):** `easeOutBack` dorsal sight-glass cap flip (`-72°`) + glowing ice core column rise (`+19 cm`). Sound: vacuum seal pop + crystalline glass-harp arpeggio `D4 → F#4 → A4 → D5 → F#5` (frost glint shimmer on `A5`). | **5.10–5.85 s (`f122–140`):** `easeInOutCubic` retract. Sound: descending warm triad `A4 → F#4 → D4` + soft pneumatic latch click. |
+| **`bell` (Director 1 — Singing Core Bell)** | **0.50–1.08 s (`f12–26`):** `smoothstep` belly clamshell roll (`±68°`) + stem drop (`-32 cm`). Sound: warm brass iris latch + `D4 → A4` bell strike as rim touches regolith. | **1.08–3.75 s (`f26–90`):** Continuous `4.5°/f` rotation + `±3 mm` magnetostrictive vertical hum. Sound: sustained D-major-pentatonic singing-bowl chord (`D4` fundamental + `A4` fifth + `E5/F#5` overtone shimmer) synchronized with 3 expanding Chladni wave rings. | **3.50–5.00 s (`f84–120`):** `smoothstep` lift of `CoreTube` & `DorsalCoreColumn`. Sound: crystalline celesta/glass-tube glissando `F#4 → A4 → B4 → D5 → F#5` as the frost glint flashes behind 07's head. | **5.00–5.67 s (`f120–136`):** `smoothstep` retract. Sound: soft damped bell mute (`F#4 → D4`) + flush belly hatch click. |
+| **`fountain` (Director 2 — The Dust Fountain)** | **0.50–0.92 s (`f12–22`):** Quick `smoothstep` flap drop (`-74°`) & nozzle slide (`+5.2 cm`). Sound: twin brass camera-shutter snicks (`A4 → D5`). | **0.92–3.83 s (`f22–92`):** Sinusoidal yaw sweep (`±14°..21°`) + 3 harmonic pressure waves. Sound: rhythmic cold-gas $O_2$ pan-pipe puffs pitched to `D5 – F#5 – A5 – F#5` with silky ballistic dust-grain patter in `1/6 g`. | **3.67–5.00 s (`f88–120`):** Gentle settle as last rooster-tail arc lands. Sound: warm 1980s synth discovery chime (`D4 – F#4 – B4 – D5`) as the uncovered brass/amber relic gleams in the headlamp beam. | **5.00–5.50 s (`f120–132`):** `smoothstep` nozzle retract. Sound: short valve sigh (`E4 → D4`) + flush bumper flap snap. |
+| **`ring` (Author Proposal — Chladni Ring)** | **0.50–1.25 s (`f12–30`):** `smoothstep` `150°` swing-out on twin brass pantograph links. Sound: tape-transport servo whir + tuning-fork ping (`A4`). | **1.25–3.67 s (`f30–88`):** Counter-rotating ring harmonic (`±0.5°` flutter). Sound: warm analog Rhodes/tuning-fork arpeggio (`D4 – E4 – F#4 – A4`) driving travelling-wave electrostatic dust fountains. | **3.67–4.83 s (`f88–116`):** `smoothstep` upward arc (`-48°` pitch, `+34°` yaw) to present `CryoLantern` beside 07's right cheek. Sound: cryo-latch chime (`B4 → D5 → F#5`). | **4.83–5.58 s (`f116–134`):** `smoothstep` fold under chin. Sound: warm descending interval (`A4 → D4`) + magnetic chin-latch lock. |
+
+---
+
+## 7. Deliverable Media Index (`Logs/dig/`)
+
+- **Comparison Gallery (Chase GIFs First):** `Logs/dig/index.html`
+- **Quantitative Metrics JSON:** `Logs/dig/metrics.json`
+- **Variant 3 (`combo` — Recommended Winner):**
+  - Chase & Side Animations: `Logs/dig/variant_combo/combo_chase.gif`, `combo_chase.mp4`, `combo_side.gif`, `combo_side.mp4`
+  - Stowed Proof & Key Poses: `Logs/dig/variant_combo/poses/combo_stowed_front.png`, `combo_stowed_back.png`, `combo_chase_{stowed,deploy,mid,done}.png`, `combo_side_{stowed,deploy,mid,done}.png`, `combo_front_{stowed,deploy,mid,done}.png`
+- **Variant 1 (`bell` — Director's Idea 1: Singing Core Bell):**
+  - Chase & Side Animations: `Logs/dig/variant_bell/bell_chase.gif`, `bell_chase.mp4`, `bell_side.gif`, `bell_side.mp4`
+  - Stowed Proof & Key Poses: `Logs/dig/variant_bell/poses/bell_stowed_front.png`, `bell_stowed_back.png`, `bell_chase_{stowed,deploy,mid,done}.png`, `bell_side_{stowed,deploy,mid,done}.png`, `bell_front_{stowed,deploy,mid,done}.png`
+- **Variant 2 (`fountain` — Director's Idea 2: Dust Fountain):**
+  - Chase & Side Animations: `Logs/dig/variant_fountain/fountain_chase.gif`, `fountain_chase.mp4`, `fountain_side.gif`, `fountain_side.mp4`
+  - Stowed Proof & Key Poses: `Logs/dig/variant_fountain/poses/fountain_stowed_front.png`, `fountain_stowed_back.png`, `fountain_chase_{stowed,deploy,mid,done}.png`, `fountain_side_{stowed,deploy,mid,done}.png`, `fountain_front_{stowed,deploy,mid,done}.png`
+- **Variant 4 (`ring` — Author Proposal: Chladni Ring & Cryo-Trap Lantern):**
+  - Chase & Side Animations: `Logs/dig/variant_ring/ring_chase.gif`, `ring_chase.mp4`, `ring_side.gif`, `ring_side.mp4`
+  - Stowed Proof & Key Poses: `Logs/dig/variant_ring/poses/ring_stowed_front.png`, `ring_stowed_back.png`, `ring_chase_{stowed,deploy,mid,done}.png`, `ring_side_{stowed,deploy,mid,done}.png`, `ring_front_{stowed,deploy,mid,done}.png`
