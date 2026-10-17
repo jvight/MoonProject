@@ -17,8 +17,8 @@
 ## 0. Player experience (skill `player-experience`)
 | Question | Opening v2's answer |
 |---|---|
-| **Hook** (first 5 min) | 07's lid opens **in the dark of an eclipse**. Earth hangs black with a thin copper ring and **no city lights at all**. A faint point near it (the Arks). The Peak's red blink. 07's own CRT face prints `ORBITAL SIGNAL · DETECTED / UPLINK · OFFLINE / BEGIN RECOVERY`. Then one warm light: a landed lander's emergency beacon, 160 m away, with an old cable running from 07's dead charging post toward it. *What happened here? Who is signalling? Why is Earth dark?* |
-| **Pull** (to 45 min) | The world teaches by need. 07's battery is half empty, so it needs a charger. The charger needs a blueprint, the blueprint is in the lander's cargo, and the materials are in its crates. Then **the Sun comes back from behind Earth** (the eclipse ends), which makes solar possible. Then the ruins of a whole station sit 55 m away, holding the next blueprints and the first story fact (`SUIT 01-04 · OFFLINE`). Then **night is coming**. Then a signal from beyond the west rim. Each answer opens the next question. |
+| **Hook** (first 5 min) | 07's lid opens **in the dark of an eclipse**. Earth hangs black with a thin copper ring and **no city lights at all**. A faint point near it (the Arks). The Peak's red blink. 07's own CRT face prints `ORBITAL SIGNAL · DETECTED / UPLINK · OFFLINE / BEGIN RECOVERY`. Then one warm light: a landed lander's emergency beacon, 165 m away, standing in front of the Peak, with an old cable running from 07's dead charging post toward it. *What happened here? Who is signalling? Why is Earth dark?* |
+| **Pull** (to 45 min) | The world teaches by need. 07's battery is half empty, so it needs a charger. The charger needs a blueprint, the blueprint is in the lander's cargo, and the materials are in its crates. Then **the Sun comes back from behind Earth** (the eclipse ends), which makes solar possible. Then the ruins of a whole station sit 65 m beyond it, holding the next blueprints and the first story fact (`SUIT 01-04 · OFFLINE`). Then **night is coming**. Then a signal from beyond the west rim. Each answer opens the next question. |
 | **Hold** | **07 builds its own home, piece by piece, visibly:** a pad, a solar array, a battery bank, an antenna mast, all standing where the player put them, glowing at night. The recovery protocol's first lamp (Power) lights on 07's face. |
 | **Finish** (of the opening) | Power on before nightfall. The first nightfall turns the player's own base into a lit place in a dark basin. The antenna mast catches a signal, and a pillar rises over the west rim: *Link* is the next step. That is the opening's promise kept, and the next one made. |
 | **Feeling** | **Lonely wonder turning into quiet pride.** Lonely wonder: the eclipse dark, a small rover, a dead station, silence except 07's servos and the hiss of a faint signal. Quiet pride: "I built that", lamps the player placed coming on at dusk, the radio clearing to music once power is on. |
@@ -57,12 +57,12 @@ rover):
 |---|---|---|---|---|---|---|
 | **B0** | 0:00–1:30 | **Eclipse wake** (exists) | nothing, then look | lens shutter, face boot | Black sky, Earth eclipsed with a copper ring, no city lights, the faint Ark point, the Peak's red blink. The amber boot lines. Silence, then 07's servos and a faint signal hiss on the radio. | the pull-out to the chase frame completes |
 | **B1** | 1:30–3:00 | **First look at the hold** (exists: the face boot shows the hold) | look; drive or press Tab | the CRT face (hold left, sockets right) | The hold boots: Metal 2, Wiring 1 slide in. The battery reads **50%**. The face shows a dim protocol line: `POWER · OFFLINE`. | the player drives > 5 m |
-| **B2** | 3:00–4:30 | **The first drive** | drive 160 m toward the lander's amber beacon, along 07's old charging cable | driving | The dead charging post at the wake point, its cable on the ground leading away. The crew's faded ruts. The lander grows from a silhouette into a 13 m machine with one amber beacon. Earth eclipsed above. 07's motor, regolith crunch. | 07 within 25 m of the lander |
+| **B2** | 3:00–4:30 | **The first drive** | drive 165 m toward the lander's amber beacon, along 07's old charging cable, past the Kestrel furrow's debris | driving | The dead charging post at the wake point, its cable on the ground leading away. The crew's faded ruts. The lander grows from a silhouette into a 13 m machine with one amber beacon. Earth eclipsed above. 07's motor, regolith crunch. | 07 within 25 m of the lander |
 | **B3** | 4:30–8:00 | **Scan the lander** | scan 2 fragments of the charging-pad blueprint resting in the lander's open cargo bay | **scan beam** (hold E) | Corner brackets on the fragments (a pad coil plate, a guide rail). The beam draws white lines; each fragment dissolves into its lines, which stream into the lens (0.5.5 D2). The second fragment completes the blueprint: a Proud chirp, the CRT shows the pad's line drawing. | the charging-pad blueprint is learned |
 | **B4** | 8:00–10:00 | **Cut the crates** | cut 1–2 sealed cargo crates and a loose hull panel for Metal and Wiring | **cutter turret** (hold E on a seam; the weighted charge-up, 0.5.5 §5) | The seal glows, the charge builds, the cut; bundles spiral into the rear hatch; the hold fills on the CRT. **The battery passes 30%:** the Low warning (one line, one chirp). | the hold has ≥ Metal 4, Wiring 2 |
 | **B5** | 10:00–12:00 | **Build the pad** | open build mode, place the pad on the lit apron beside the lander's service port, weld it | **build mode** (menu → place → weld) | The apron's old floor markings glow where a pad fits. The ghost pad snaps to the port. The weld beam, sparks, the frame rising. The pad's rover outline lights. | the charging pad is built and connected to the lander's port |
 | **B6** | 12:00–14:00 | **Charge, and the Sun returns** | park on the pad | **charging** (the dock-lock walls, cells filling with notes) | The pad locks 07 in and the cells fill. **The eclipse ends:** the Sun's edge breaks out behind Earth (a diamond-ring flash), and low golden light floods the basin. Then the CRT reads `LANDER RESERVE · 0%`: the lander's old cells are spent. | the battery is full and the lander's reserve is empty |
-| **B7** | 14:00–22:00 | **The Lumen ruins** | drive 55 m to the ruins; scan the fallen solar array's 3 fragments; scan the habitat's airlock panel (story); cut the workshop's lockers for Optics | scan beam, cutter | A station of human scale in the low Sun: habitat modules, Kenji's workshop, a fallen solar array, a radio tower ruin. **The airlock panel** reads `HABITAT SEAL · LOCKED · 28 OCT 1988 / SUIT 01-04 · OFFLINE · 29 OCT 1988 · 04:12`. No bodies, ever. | the solar-array blueprint is learned |
+| **B7** | 14:00–22:00 | **The Lumen ruins** | drive ~85 m to the ruins; scan the fallen solar array's 3 fragments; scan the habitat's airlock panel (story); cut the workshop's lockers for Optics | scan beam, cutter | A station of human scale in the low Sun: habitat modules, Kenji's workshop, a fallen solar array, a radio tower ruin. **The airlock panel** reads `HABITAT SEAL · LOCKED · 28 OCT 1988 / SUIT 01-04 · OFFLINE · 29 OCT 1988 · 04:12`. No bodies, ever. | the solar-array blueprint is learned |
 | **B8** | 22:00–28:00 | **Build solar, power on** | build the solar array within 14 m of the pad (its connection radius) | build mode | The array unfolds and turns to the Sun. A cable lights between it and the pad. **Power on:** the pad's lamps steady, the CRT's protocol line reads `POWER · ON`, the first lamp of Power → Link → Dish → Answer lights on 07's face, and the radio's hiss clears into the first music (low, warm). | the solar array is built and powering the pad |
 | **B9** | 28:00–36:00 | **Night is coming** | the Sun nears the west rim; scan the habitat's power-module fragments (2); cut for Wiring; build a battery bank next to the array | scan beam, cutter, build mode | Shadows lengthen visibly. The CRT shows the Sun's remaining time as an arc (the only clock, and it is the world's). The battery bank's charge lamps fill as the array feeds it. | the battery bank is built and holds charge |
 | **B10** | 36:00–40:00 | **The first nightfall** (awe beat, north-star §4a) | watch; or keep working | — | The Sun drops behind the rim. Shadows race; the array stows; **the player's own base lights come on in sequence**; the stars and the Milky Way bloom; Earth's night side stays dark (story v4), its rim glowing. The radio shifts to the night set. No text. | the Sun has set |
@@ -111,44 +111,51 @@ Rules:
 Weld, Tab (the hold, offered once in B1).
 
 ## 4. Basin layout v2
-Origin = the lander. Bearings are clockwise from north. Drive seconds assume ~5 m/s average (07's top speed is 8 m/s).
+Coordinates follow World's inventory (`handoff/opening-v2/world-inventory.md` §5): **origin = today's flat pad**
+(r 25 m), which becomes the wake point, so no terrain moves. Bearings are clockwise from north (+Z). Drive seconds
+assume ~5 m/s average (07's top speed is 8 m/s; boost cruise ≈ 6.8 m/s).
 
-| Place | Model (R1) | Position | Distance / drive | Holds | Why it's there |
+| Place | Model (R1) | Position (x, z) | Distance / drive | Holds | Why it's there |
 |---|---|---|---|---|---|
-| **Wake point** | a dead 07 charging post (needs Argon) and a supply pallet with one sealed crate | 195°, **160 m**, on a 2 m rise | 160 m · 32 s to the lander | 1 crate (Metal 3, Wiring 1); 07's old cable to the lander | 07's last parking spot: its charger was fed from the lander and died |
-| **The lander** | `CargoLander` (13.1 × 5.2 × 5.75 m), long axis E–W, an amber emergency beacon on top | origin | — | open cargo bay: **2 charging-pad fragments**; 2 sealed crates (Metal 3, Wiring 2 each); 3 loose hull panels (Metal 2 each); its **service port** on the south face | the crew's cargo lander; its port fed 07's charger |
-| **Build apron** | flat ground with faded floor markings (a ground decal) | south of the lander, 8–20 m, cleared of scatter, 20 × 20 m | 3 s | the pad (B5), solar (B8), battery bank (B9), mast (B11) | the crew's old unloading apron, flat and next to the port |
-| **Lumen ruins** | `HabitatModules`, `KenjiWorkshop`, `FallenSolarArray`, `RadioTower`, `ScatterSet` (existing cluster) | 15°, **55 m** (centre), radius 14 m | 11 s from the lander | `FallenSolarArray`: **3 solar fragments**. `HabitatModules`: the airlock panel (story scan) and **2 battery-bank fragments** (its power module). `KenjiWorkshop`: 2 lockers (Optics 2, Wiring 2 each). `RadioTower`: **3 antenna fragments** and 2 dish-frame panels (Metal 2, Optics 1 each). `ScatterSet`: 3 panels (Metal 2 each). | the station the crew left; the scannable past |
-| **Kestrel-3** (optional) | the existing impact site | 356°, 185 m | 37 s | 4 hull panels (Metal and Optics); a scan note: its foreign livery (`KESTREL-3 · TYCHO CONSORTIUM · MERIDIAN RELAY`) | a story question off the critical path |
-| **The west lure** | a dead relay mast (`AntennaMast` R1, unlit) on the rim shoulder | 250°, 218 m (existing relay.1 anchor) | 44 s | nothing in the opening | where the west signal's pillar rises in B11; the Link step's first target |
-| **The Peak** | the existing peak with its beacon | 12°, 440 m, 150 m high | — | — | the endgame, always in view |
+| **Wake point** | 07 on the flat pad; **a dead 07 charging post** with its cable running toward the lander (needs Argon) | (0, −4.5), yaw 355 | — | 1 sealed crate on a supply pallet (Metal 3, Wiring 1) | 07's last parking spot; its charger was fed from the lander and died |
+| **The lander** | `CargoLander` (13.1 × 5.2 × 5.75 m), landed slightly tilted, **an amber emergency beacon** on top, a **service port** on the side facing 07 | ~(35, 160): 165 m at 12°, **in front of the Peak** from the wake | 165 m · 33 s | open cargo bay: **2 charging-pad fragments**; 2 sealed crates (Metal 3, Wiring 2 each); 3 loose hull panels (Metal 2 each) | the crew's cargo lander; its port fed 07's old charger |
+| **Build site** (the old unloading apron) | flat plateau r ~14, faded floor markings (a ground decal), no scatter | ~(15, 140): 25 m short of the lander, toward the wake | 5 s from the lander | the pad (B5), solar (B8), battery bank (B9), mast (B11) | flat, by the lander's port, visible from the wake |
+| **Lumen ruins** | `HabitatModules`, `KenjiWorkshop`, `FallenSolarArray`, `RadioTower`, `ScatterSet` as one cluster, **moved from (14, 53)** | ~(95, 185): ~65 m east of the lander, ~85 m from the build site | 17 s from the build site | `FallenSolarArray`: **3 solar fragments**. `HabitatModules`: the airlock panel (story scan), **2 battery-bank fragments**, a cable reel crate (Wiring 4). `KenjiWorkshop`: 2 lockers (Optics 2, Wiring 2 each). `RadioTower`: **3 antenna fragments**, 2 dish-frame panels (Metal 2, Optics 1 each). `ScatterSet`: 3 panels (Metal 2 each). | the station the crew left, seen from the build site |
+| **Midway point of interest** | 2–3 R1 debris fragments and 1 crate, off the lane by 20–40 m (needs Argon: R1 debris) | the Kestrel furrow ~(−40, 90): 100 m at 335° | 12–15 s into the first drive | 1 crate (Metal 2, Wiring 1) | something to see on the first drive (one point every 150–200 m, north-star §4b) |
+| **Kestrel-3** (optional) | the existing impact crater | (−13, 185) | 37 s from the wake | hull panels (Metal and Optics); a scan note: its foreign livery `KESTREL-3 · TYCHO CONSORTIUM · MERIDIAN RELAY` | story v4's question, off the critical path |
+| **The west lure** | a dead relay mast on the west rim shoulder (an unlit `AntennaMast` variant) | relay.1 (−205, −75) | 218 m from the wake | nothing in the opening | B11's signal pillar rises behind it: Link's first target (0.6's Long Mare lies west, `0.6-world-regions.md`) |
+| **The Peak** | the existing peak and its beacon (the beacon's model is legacy: **needs Argon**) | bearing 12°, 440 m, 150 m high | — | — | the endgame, always in view |
 
-**Sightlines from the wake point** (facing ~15°):
-- the lander at 160 m with its amber beacon;
-- the ruins just beyond it (215 m);
-- the Peak's red blink at ~600 m above them;
-- the eclipsed Earth above the Peak (VISION ruling 8: the first look shows Earth and the Peak together).
+**Sightline from the wake** (yaw 355 → turning to ~12°):
+- the lander's silhouette and amber beacon at 165 m;
+- the Peak's red blink above and behind it;
+- the eclipsed Earth;
+- the Kestrel crater rim to the left.
 
-**No dune may rise above the eye line on that bearing.**
+**From the build site:** the ruins to the right (east) and the west rim's dead mast far to the left.
 
 **Supply vs. needs** (ruling 5, about 2×):
 - **Needs:** pad 4/2/0 + solar 3/2/1 + battery bank 3/3/0 + mast 4/3/2 = **Metal 14, Wiring 10, Optics 3**.
 - **Supply:**
   - start: Metal 2, Wiring 1;
   - wake crate: Metal 3, Wiring 1;
+  - midway crate: Metal 2, Wiring 1;
   - lander: Metal 12, Wiring 4;
+  - habitat cable reel: Wiring 4;
   - workshop: Optics 4, Wiring 4;
   - radio tower: Metal 4, Optics 2;
   - scatter: Metal 6;
   - Kestrel (optional): Metal 6, Optics 2;
   - known-blueprint fragment scans: +3 Metal each.
-  - Without Kestrel: **Metal 27, Wiring 10, Optics 6.** **Wiring is tight at exactly 1×.**
-  - **Fix:** the habitat's power module also holds a cable reel (Wiring 4), so Wiring = 14 (1.4×). Wiring is meant to
-    be the scarce one: it makes the player look in every ruin.
+- **Totals without Kestrel: Metal 29 (2.1×), Wiring 15 (1.5×), Optics 6 (2×).** Wiring is the scarce one on purpose:
+  it makes the player look in every ruin.
 
-**Removed from the basin** (CUT, §5): the old home base (dock, bay, tower, lab, lift), the depot, the garage, the
-drill, the canyon and its sites, Tilly's crater, relays 0, 2 and 3, the derelicts (06, Mule, the haul sled, the
-drone), all relic, cassette and log placements, and every legacy low-poly model.
+**Removed from the basin** (CUT, §5): the legacy home lander (dock, lift, lab, shelves), the radio tower L1–L3, Kenji's
+Rover Bay, the supply pod, the depot, garage, drill and canyon sites, the derelicts (06, Mule, the haul bot, the
+drone) and the relay hut, the relay masts, cabinets and hop pads, the garage port and spare crate, the jumper wreck,
+Tilly and her sled, Bell, cassettes, log tins, relics, the route posts, cable bridge and dish frames, the legacy hull
+fragments, and the orange-vent beads. The Canyon's **terrain carve and R1 basalt slabs stay as scenery**, with no
+content.
 
 ## 5. KEEP / CUT
 - **KEEP** = the opening uses it.
@@ -171,11 +178,16 @@ drone), all relic, cassette and log placements, and every legacy low-poly model.
 | Base/DockLock (the walls locking on charge) | KEEP, rebound to the built charging pad | the owner's favourite charge moment |
 | Base: ChargingDock, DockRest, HomeBase, HomeHalo, ShelfSlots | CUT | the prebuilt home is gone |
 | Progression: Blueprints, RecoveryProgress (Power→Link→Dish→Answer) | KEEP | learning and the protocol lamps |
-| Progression: StepFlow, ProgressionKeys, PlaceApproaches, DormantAnswers, TowerParts and TowerPart*, BasePower, BaseProgression, BlueprintPlotter, GaragePort, DockEvening, RadioLetters, RecoveryLamps, TechTree and TechKit, IComponentGate | CUT | replaced by the objective flow v2; the tower, garage and lab are gone |
-| **New: ObjectiveFlow v2** | NEW | §3's steps, read from state |
+| Progression: StepFlow (the state-read step machinery) | REWORK | keep the machinery; replace its 14 old steps and `ProgressionKeys` with §3's steps (this *is* ObjectiveFlow v2) |
+| Progression: PlaceApproaches, DormantAnswers, TowerParts and TowerPart*, BasePower, BaseProgression's old steps, BlueprintPlotter, GaragePort, DockEvening, RadioLetters, RecoveryLamps, TechTree and TechKit, IComponentGate | CUT | the tower, garage, lab and place cards are gone |
+| RecoveryProgress | REWORK | the Power lamp comes from built structures (pad + solar + battery bank), not tower levels |
+| Economy: HomeShelves, HomeStorage, DockUnload, TillyFetch | CUT | inventory is 07's hold only; no home storage in the opening |
+| Salvage: Cutter, CutState, pieces, bundles | KEEP | the cutter; depot, garage, derelict and crew-crate catalogue entries are CUT |
+| Containers (sealed crates and lockers) | KEEP | crates at the wake, the lander and the ruins (the CoilCrate and TapeCase content is CUT) |
 | Equipment (sockets) | KEEP display only | the CRT shows 07's fixed devices (lens, cutter); fitting needs the bay, and fitting code is CUT |
 | Upgrades (Workshop, UpgradeService, kits) | CUT | no bay, no kits in the opening |
-| Friends (Tilly), Bell, Cassettes, Radio hop, Relays, Signals, Sonar/listening, Tether, Cradle, Relics, Excavation (dig), Logs, Map, Lift, Scrap (trail bits), Hints (old teaching steps) | CUT | none is in the opening |
+| Friends (Tilly), Bell, Cassettes, Radio (program), Relays (restore, hop, StationReach, mast rings), Signals, Sonar/listening, Tether, Cradle, Relics, Excavation (dig), Logs, Map, Lift, Upgrades, the stale Scrap folder `.meta` | CUT | none is in the opening. The gameplay inventory suggests keeping several as future bases (Relays for Link, Map, Sonar, Logs, Upgrades as crafting), but the frame rules **unused = cut**. Link will be designed as *building* masts, not restoring old relays. |
+| Hints (prompt kinds) | KEEP | add a Build kind; drop the kinds of cut verbs (Ping, Tune, Hop, Restore, Deposit, Stow, Tether, Reel, Excavate) |
 | Feel (FeelBeat, the kit) | KEEP | every beat |
 | Save | KEEP | **the content floor is raised:** pre-v2 saves are put away (archived, never deleted) |
 | Common | KEEP | shared utilities (trim anything only cut systems used) |
@@ -186,10 +198,15 @@ drone), all relic, cassette and log placements, and every legacy low-poly model.
 | Terrain, Surface, Scatter, Sky (L1 Sun, eclipse ring, dark Earth), Lens (wake) | KEEP | the basin, the light, the wake |
 | Beacon (the Peak) | KEEP | always-visible endgame |
 | Layout: WorldAnchors (trimmed to: wake, lander, apron, ruins, kestrel, relay.1, peak), LandmarkPlacer, RuinPlacement | KEEP | §4 |
-| Layout: RelaySettings and RelaySiteFinder (except the relay.1 position) | CUT | relays are built by the player from now on |
+| Layout: RelaySettings and RelaySiteFinder | CUT | relays are built by the player from now on (relay.1 keeps only its anchor, for the dead mast prop) |
+| Layout: LandmarkPlacer's route posts, cable bridge, dish frames and orange beads | CUT | legacy kit |
+| Terrain/GroundMarks | REWORK | re-route the crew tracks to wake → lander → ruins |
+| Lighting: NetworkPulse, ReachRing, LampBank | KEEP if B8–B11 use them (power-on, the mast's handshake), else CUT | ChargerPools CUT |
+| Editor: WorldHomeWiringContributor, HomeGroundMarksBuilder, ChargerPoolSceneContributor, PeakBeaconBuilder's model | CUT | legacy |
 | Sites: Kestrel impact | KEEP (optional site) | the story question, extra salvage |
 | Sites: ScrapField (trail bits) | CUT | no loose loot |
-| Canyon (geometry, chasm, terminus, crashed lander) | CUT | not in the opening; the rim closes there |
+| Canyon: the terrain carve and R1 gate slabs | KEEP as scenery | removing terrain costs time for no gain; it gets no content |
+| Canyon: PodBeacon, LocatorBlink, and the legacy supply pod | CUT | no canyon content |
 | Lighting: home lighting stages (lander windows, tower) | CUT | there's no prebuilt home. The player's structures light themselves. |
 | Map | CUT | no survey chart in the opening |
 | New: the build apron's floor markings, the wake point's post and cable | NEW | §4 |
@@ -202,7 +219,15 @@ drone), all relic, cassette and log placements, and every legacy low-poly model.
 | Prompts (chips), the guidance slot | KEEP | teaching |
 | Objective line v2 | NEW (ui-fit) | §3 |
 | Pause, Settings, title, Motion, Localization | KEEP | always (prune keys of cut systems) |
-| Friends, Map, Radio (hop list), Materials (old dials), Credits, place cards, recipe or tower cards, lab HUD, bay list, memory cards, ticker (story cards) | CUT | none is in the opening (the airlock panel's text shows on the CRT, not as a card) |
+| GuidanceSlot | REWORK | shrink to Objective, Prompt and Battery; every card goes behind it (ui inventory) |
+| RecipeCard/RecipeView (need/have rows) | KEEP | build costs |
+| UnlockCard | REWORK | "Blueprint learned: <name>" (the reward beat in B3, B7, B9, B11) |
+| PickupFeed, ScanLines | KEEP | materials and "Fragment 2 of 3" |
+| StargazeVeil | KEEP | it fades the HUD during the nightfall beat (B10) |
+| CargoScreen, FaceInventoryView, HoldBoot | KEEP | the hold on 07's face (the hover-steals-focus bug is noted for later) |
+| AbilityTable, PartInfo verbs ("07 can") | CUT | the owner banned "07 can" text |
+| BatteryDial | KEEP (one charge read) | the battery |
+| Friends, Map, Radio (hop list, dial, relay tag), Materials (old dials), Credits, PlaceCard, TowerPanel, Bay*, StationWork, RewardCard, KitTitle, LabHud, RecoveryBoard, MemoryCard, LetterCard, CrateNote, SiteNameTag, FriendNameTag, TetherReticle, HomeMeter, CompassPoint, NotYetLines, JourneyNotice, FitHint, LookUpHint, the ticker | CUT | none is in the opening (the airlock panel's text shows on the CRT, not as a card; there are no voices in the opening) |
 
 ### Rover
 | Subsystem | Verdict | Reason |
@@ -234,11 +259,11 @@ drone), all relic, cassette and log placements, and every legacy low-poly model.
 ## 6. Task split and acceptance
 | Session | Tasks | Acceptance |
 |---|---|---|
-| **world** | §4's layout: the wake rise and its sightline; the lander at origin with its port and beacon; the build apron (flat, markings, no scatter); the ruins cluster as is; Kestrel kept; the relay.1 dead mast; remove everything in §4's "removed" list and §5's World CUT rows (code, builders, generated assets, anchors). The eclipse timing (it ends at ~12 min of a new game) and the first day's Sun (sets at ~36 min). | Capture from the wake point shows the lander, ruins, Peak and eclipsed Earth in one frame. A new game's eclipse ends between 11 and 14 min, and the first sunset falls between 34 and 38 min. No legacy model in the scene (art QA lists only R1). compile_check and box_check PASS. |
+| **world** | §4's layout in World's coordinates: the wake on today's pad with the dead post and its cable; the R1 lander at ~(35, 160) with its port and beacon; the build site plateau at ~(15, 140) (flat, markings, no scatter); the ruins cluster moved to ~(95, 185); the midway debris point; Kestrel kept; the crew tracks re-routed (wake → lander → ruins); the relay.1 dead mast; remove everything in §4's "removed" list and §5's World CUT rows (code, builders, generated assets, anchors). The eclipse timing (it ends at ~12 min of a new game) and the first day's Sun (sets at ~36 min). | A capture from the wake point shows the lander in front of the Peak with the eclipsed Earth in one frame; a capture from the build site shows the ruins and the west dead mast. A new game's eclipse ends between 11 and 14 min, and the first sunset falls between 34 and 38 min. No legacy model in the scene (art QA lists only R1). compile_check and box_check PASS. |
 | **gameplay** | ObjectiveFlow v2 (§3) read from game state (never stored); fragment sets (pad 2 at the lander, solar 3, battery bank 2, antenna 3 in the ruins); crate and panel yields (§4 supply); the lander port and its one-charge reserve; the pad's DockLock; the battery start at 50%; recovery Power on at B8; the west signal after B11; delete §5's Gameplay CUT rows fully, with a save content floor. **The GoldenPath Playthrough rewritten for B0–B11 (Playthrough required), runtime ≤ 10 min.** | The Playthrough passes B0–B11 in ≤ 10 min. Every objective line shows and clears per §3, and never two guidance elements at once. Zero per-frame GC. compile_check, box_check and the Playthrough PASS. |
 | **ui-fit** | the objective line (show, dim, re-brighten rules, one-element arbitration with chips, the build menu and CRT readouts); the CRT protocol line (`POWER · OFFLINE/ON`, `LINK · 0/1 · SIGNAL WEST`) and the `LANDER RESERVE` and sun-arc readouts; remove §5's UI CUT rows. | Captures at B1, B5, B8 and B11 show exactly one guidance element. vi lines fit at 1080p. Box_check PASS. |
 | **audio** | build sounds (snap, weld, power-on), the eclipse's diamond-ring swell, the nightfall light sequence, the radio hiss clearing to music at Power on; remove §5's Audio CUT rows (AirWind first). | Every build state change has a sound in D pentatonic at ≤ mezzo-piano. No wind in a vacuum. Box_check PASS. |
-| **Argon (visuals)** | needs: the dead 07 charging post and its cable; the lander's service port and amber emergency beacon; the build apron's floor-marking decal; the `ChargingPad` scale fix (scale.md §3.2); a cable-lighting look between structures; the airlock panel's readout surface; the west relay mast's dead silhouette (unlit `AntennaMast` variant). | Each asset passes art QA (R1 contract, scale.md). The pad lets 07 roll on from the front with ≥ 0.1 m per side. |
+| **Argon (visuals)** | needs: the dead 07 charging post and its cable; the lander's service port and amber emergency beacon; the build apron's floor-marking decal; the `ChargingPad` scale fix (scale.md §3.2); a cable-lighting look between structures; the airlock panel's readout surface; the west relay mast's dead silhouette (unlit `AntennaMast` variant); R1 debris fragments (to replace the legacy hull fragments); R1 crates S/M (scale.md sizes); an R1 Peak beacon. | Each asset passes art QA (R1 contract, scale.md). The pad lets 07 roll on from the front with ≥ 0.1 m per side. |
 
 ## 7. Playtest signals (the opening works when…)
 - At B0 the player looks around before driving (camera moves ≥ 3 s).
@@ -255,20 +280,22 @@ drone), all relic, cassette and log placements, and every legacy low-poly model.
    lee.)
 2. **The pad's first charge comes from the lander's old cells,** spent after one charge. This makes solar a real need
    (logic), not a checklist step.
-3. **The eclipse ends at ~12 min,** while the player is building the pad, so sunlight arrives exactly when solar
+3. **The layout uses World's coordinates** (the wake on today's flat pad, the lander 165 m at 12° in front of the Peak, the ruins moved ~65 m east of the lander), so no terrain moves. **World proposed the canyon as the onward lure; I chose the dead relay mast and signal in the west,** which is the approved 0.6 Long Mare. The canyon stays as scenery without content.
+4. **The eclipse ends at ~12 min,** while the player is building the pad, so sunlight arrives exactly when solar
    becomes needed. The first sunset is at ~36 min, so the first nightfall lands after Power on.
-4. **A battery bank before nightfall (B9)** is the logical answer to "solar stops at night". It adds one build, so
+5. **A battery bank before nightfall (B9)** is the logical answer to "solar stops at night". It adds one build, so
    the opening has four.
-5. **The opening ends with the antenna mast and a signal from the west,** not with a trip there. The Link step's
+6. **The opening ends with the antenna mast and a signal from the west,** not with a trip there. The Link step's
    first relay on the west rim starts the next phase.
-6. **Kestrel-3 stays** as an optional site (its foreign livery is story v4's question). Everything else outside the
+7. **Kestrel-3 stays** as an optional site (its foreign livery is story v4's question). Everything else outside the
    lander and ruins is CUT.
-7. **Wiring is the scarce material** (1.4×); Metal is plentiful (~2×).
-8. **The power pylon stays in the catalogue** as Link's next build. Everything else beyond the four builds is CUT.
+8. **Wiring is the scarce material** (1.5×); Metal is plentiful (~2×).
+9. **The power pylon stays in the catalogue** as Link's next build. Everything else beyond the four builds is CUT.
+10. **Unused means cut** (the frame): Relays, Map, Sonar, Logs and Upgrades are CUT even though gameplay suggested keeping them as future bases. StepFlow and RecoveryProgress are reworked, not cut.
 
 ## Tóm tắt (Tiếng Việt)
 - **Móc câu:** 07 mở mắt giữa nhật thực. Trái Đất đen, chỉ còn viền đồng mảnh, không một ánh đèn thành phố. Gần đó có
-  một chấm sáng mờ (các con tàu Ark), và đèn đỏ trên Đỉnh. Mặt CRT in dòng `ORBITAL SIGNAL · DETECTED`. Cách 160 m có
+  một chấm sáng mờ (các con tàu Ark), và đèn đỏ trên Đỉnh. Mặt CRT in dòng `ORBITAL SIGNAL · DETECTED`. Cách 165 m có
   một tàu đổ bộ với một đèn hổ phách, và sợi cáp từ trụ sạc chết của 07 dẫn tới đó.
 - **Mạch 45 phút:** lái tới tàu đổ bộ → quét 2 mảnh để học bệ sạc → cắt thùng lấy kim loại và dây → dựng bệ sạc cạnh
   cổng điện của tàu → sạc. Đúng lúc đó nhật thực kết thúc và nắng trở lại. Pin cũ của tàu cạn sau một lần sạc →
@@ -278,7 +305,7 @@ drone), all relic, cassette and log placements, and every legacy low-poly model.
   ăng-ten → một tín hiệu từ bên kia vành tây, cột sáng mọc lên. Phần mở đầu kết thúc; bước Link bắt đầu.
 - **Chữ hướng dẫn:** mỗi lúc một dòng, viết thẳng việc cần làm (ví dụ "Dựng một bệ sạc cạnh tàu đổ bộ."), hiện khi
   cần và tắt khi xong. Không có nhật ký nhiệm vụ.
-- **Bản đồ:** tàu đổ bộ ở giữa, sân dựng căn cứ phía nam tàu, tàn tích Lumen cách 55 m, Kestrel-3 tuỳ chọn ở 185 m,
+- **Bản đồ:** tàu đổ bộ ở giữa, sân dựng căn cứ phía nam tàu, tàn tích Lumen cách tàu khoảng 65 m về phía đông, Kestrel-3 tuỳ chọn ở 185 m,
   cột relay chết trên vai núi phía tây làm mồi nhử. Mọi thứ khác bị bỏ: nhà dựng sẵn, tháp, xưởng, lab, hẻm núi, bạn
   bè, kỷ vật, băng nhạc, các mô hình low-poly cũ.
 - **Giữ / bỏ:** giữ quét, cắt, xây, lưới điện, pin, khoang hàng trên mặt CRT, bảng giao thức, radio. Bỏ hẳn (git còn
