@@ -54,6 +54,8 @@ namespace MoonProject.UI
         private readonly Reveal _titleScreen;
         private readonly Reveal _titleCrt;
         private readonly Reveal _titleCrtOverlay;
+        private readonly CrtSwitchOff _switchOff;
+        private bool _switchingOff;
         private readonly Reveal _titleKeyHint;
         private readonly Reveal _curtain;
         private readonly TitleScenePainter _titleScenePainter;
@@ -109,6 +111,7 @@ namespace MoonProject.UI
             _newGamePage = new Reveal(layout.PageNewGame, settings.Page);
             _languagePage = new Reveal(layout.PageLanguage, settings.Page);
             _titleScreen = new Reveal(layout.TitleScreen, title.Reveal);
+            _switchOff = new CrtSwitchOff(title.SwitchOffSeconds, title.SwitchOffLineShare, title.SwitchOffLineThickness);
             _titleCrt = new Reveal(layout.TitleCrt, title.Reveal);
             _titleCrtOverlay = new Reveal(layout.TitleCrtOverlay, title.Reveal);
             _titleKeyHint = new Reveal(layout.TitleKeyHint, title.Reveal);
@@ -361,6 +364,7 @@ namespace MoonProject.UI
             _titleKeyHint.Tick(unscaledDeltaTime);
             _curtain.Tick(unscaledDeltaTime);
             _credits.Tick(unscaledDeltaTime);
+            StepSwitchOff(unscaledDeltaTime);
             if (!_titleCrt.IsHidden)
             {
                 if (!_lockedTitleTime)
@@ -996,13 +1000,53 @@ namespace MoonProject.UI
             IsOpen = false;
             _navigator.ClearFocus();
             SaveIfChanged();
+            _settingsPanel.Hide();
+            _cursor.Drive();
+            if (_titleCrt.IsHidden)
+            {
+                HideTitle();
+                return;
+            }
+
+            _switchingOff = true;
+            _switchOff.Start();
+            ApplySwitchOff();
+        }
+
+        private void HideTitle()
+        {
             _main.Hide();
             _titleScreen.Hide();
             _titleCrt.Hide();
             _titleCrtOverlay.Hide();
             _titleKeyHint.Hide();
-            _settingsPanel.Hide();
-            _cursor.Drive();
+        }
+
+        /// <summary>The title is on screen as the game starts: it switches off like an old tube, then goes.</summary>
+        private void StepSwitchOff(float unscaledDeltaTime)
+        {
+            if (!_switchingOff)
+            {
+                return;
+            }
+
+            bool finished = _switchOff.Tick(unscaledDeltaTime);
+            ApplySwitchOff();
+            if (finished)
+            {
+                _switchingOff = false;
+                _main.Snap(false);
+                _titleScreen.Snap(false);
+                _titleCrt.Snap(false);
+                _titleCrtOverlay.Snap(false);
+                _titleKeyHint.Snap(false);
+                _layout.Pause.style.scale = new StyleScale(StyleKeyword.Null);
+            }
+        }
+
+        private void ApplySwitchOff()
+        {
+            _layout.Pause.style.scale = new StyleScale(new Scale(new Vector2(_switchOff.ScaleX, _switchOff.ScaleY)));
         }
 
         private void StepTitleAnimation(float timeSeconds, bool standaloneFraming)
