@@ -342,7 +342,7 @@ namespace MoonProject.Gameplay
 
             StepInput(now, deltaTime, out bool excavateHeld);
 
-            bool ownsInput = wasOpen || _controller.IsOpen || _waitExcavateRelease;
+            bool ownsInput = _controller.IsOpen || _waitExcavateRelease;
             _input.SetModeOwner(this, ownsInput);
 
             bool weldingNow = _controller.State == BuildModeState.Welding && _controller.ActiveWeldInstanceId > 0;
@@ -459,6 +459,7 @@ namespace MoonProject.Gameplay
                 }
 
                 _controller.Close();
+                _waitExcavateRelease = excavateHeld;
             }
 
             switch (_controller.State)
