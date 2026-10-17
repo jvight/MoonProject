@@ -125,14 +125,7 @@ namespace MoonProject.World.Editor
                 Quaternion rotation = Quaternion.Euler(0f, piece.Yaw, 0f) * prefab.transform.localRotation;
                 GameObject instance = context.InstantiatePrefab(prefab, ruinsRoot, position, rotation);
                 instance.name = piece.Id;
-                foreach (MeshFilter filter in instance.GetComponentsInChildren<MeshFilter>(true))
-                {
-                    if (filter.sharedMesh != null && filter.GetComponent<Collider>() == null)
-                    {
-                        filter.gameObject.layer = Core.Layers.Prop;
-                        filter.gameObject.AddComponent<MeshCollider>().sharedMesh = filter.sharedMesh;
-                    }
-                }
+                RuinColliderBuilder.Fit(instance);
             }
         }
 
