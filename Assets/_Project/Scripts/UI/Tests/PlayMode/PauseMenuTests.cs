@@ -508,6 +508,238 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(1, quits);
         }
 
+        [UnityTest]
+        public IEnumerator Title_HoverAndFocus_UnifyAsOneSystem_AndMouseLeaveKeepsFocus()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot(BootstrapHarness.NewTestSlot());
+            yield return null;
+            _rig.Bootstrap.Context.Events.Publish(new TitleShown(true));
+            yield return new WaitForSecondsRealtime(Settle);
+            UiLayout layout = _rig.Ui.Layout;
+
+            Button[] menuButtons =
+            {
+                layout.ResumeButton,
+                layout.NewGameButton,
+                layout.SettingsButton,
+                layout.CreditsButton,
+                layout.QuitButton,
+            };
+
+            Assert.AreSame(layout.ResumeButton, Focused(), "Continue starts focused");
+            AssertSingleFocusedCursor(menuButtons, layout.ResumeButton);
+
+            PointerEnter(layout.SettingsButton);
+            yield return null;
+            Assert.AreSame(layout.SettingsButton, Focused(), "hovering an item focuses it");
+            AssertSingleFocusedCursor(menuButtons, layout.SettingsButton);
+
+            PointerLeave(layout.SettingsButton);
+            yield return null;
+            Assert.AreSame(layout.SettingsButton, Focused(), "moving the mouse off the menu keeps the last focus");
+            AssertSingleFocusedCursor(menuButtons, layout.SettingsButton);
+
+            Focused()?.Blur();
+            yield return null;
+            Assert.AreSame(layout.SettingsButton, Focused(), "clicking empty space never leaves zero items focused");
+            AssertSingleFocusedCursor(menuButtons, layout.SettingsButton);
+
+            yield return Tap(keyboard.sKey);
+            Assert.AreSame(layout.CreditsButton, Focused(), "S key steps focus down");
+            AssertSingleFocusedCursor(menuButtons, layout.CreditsButton);
+
+            yield return Tap(keyboard.wKey);
+            Assert.AreSame(layout.SettingsButton, Focused(), "W key steps focus up");
+            AssertSingleFocusedCursor(menuButtons, layout.SettingsButton);
+        }
+
+        [UnityTest]
+        public IEnumerator Settings_AllControls_ReachableAndChangeable_WithKeyboardAndGamepad_AndBackRestoresFocus()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Gamepad gamepad = InputSystem.AddDevice<Gamepad>();
+            Boot(BootstrapHarness.NewTestSlot());
+            yield return null;
+            _rig.Bootstrap.Context.Events.Publish(new TitleShown(true));
+            yield return new WaitForSecondsRealtime(Settle);
+            UiLayout layout = _rig.Ui.Layout;
+
+            Submit(layout.SettingsButton);
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.IsTrue(_rig.Ui.Pause.IsSettingsOpen);
+            Assert.AreSame(layout.MasterSlider, Focused(), "Sound tab's first control is focused");
+
+            int masterBefore = layout.MasterSlider.value;
+            yield return Navigate(NavigationMoveEvent.Direction.Left);
+            Assert.AreEqual(masterBefore - 1, layout.MasterSlider.value, "MasterSlider stepped with Left");
+
+            yield return Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.AreSame(layout.MusicSlider, Focused());
+            int musicBefore = layout.MusicSlider.value;
+            yield return Navigate(NavigationMoveEvent.Direction.Left);
+            Assert.AreEqual(musicBefore - 1, layout.MusicSlider.value, "MusicSlider stepped with Left");
+
+            yield return Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.AreSame(layout.SfxSlider, Focused());
+            int sfxBefore = layout.SfxSlider.value;
+            yield return Navigate(NavigationMoveEvent.Direction.Left);
+            Assert.AreEqual(sfxBefore - 1, layout.SfxSlider.value, "SfxSlider stepped with Left");
+
+            yield return Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.AreSame(layout.AmbienceSlider, Focused());
+            int ambienceBefore = layout.AmbienceSlider.value;
+            yield return Navigate(NavigationMoveEvent.Direction.Left);
+            Assert.AreEqual(ambienceBefore - 1, layout.AmbienceSlider.value, "AmbienceSlider stepped with Left");
+
+            yield return Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.AreSame(layout.SettingsBackButton, Focused(), "Down from last row reaches Back");
+
+            for (int i = 0; i < 5; i++)
+            {
+                yield return Navigate(NavigationMoveEvent.Direction.Up);
+            }
+
+            Assert.AreSame(layout.TabSound, Focused(), "Up from first row reaches the active tab");
+
+            yield return Navigate(NavigationMoveEvent.Direction.Right);
+            Assert.AreEqual(1, _rig.Ui.Pause.SettingsTab, "Right on tab switches to Camera tab");
+            Assert.AreSame(layout.TabCamera, Focused());
+
+            yield return Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.AreSame(layout.LookSlider, Focused());
+            int lookBefore = layout.LookSlider.value;
+            yield return Navigate(NavigationMoveEvent.Direction.Right);
+            Assert.AreEqual(lookBefore + 1, layout.LookSlider.value, "LookSlider stepped with Right");
+
+            yield return Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.AreSame(layout.InvertToggle, Focused());
+            bool invertBefore = layout.InvertToggle.value;
+            yield return Navigate(NavigationMoveEvent.Direction.Right);
+            Assert.AreNotEqual(invertBefore, layout.InvertToggle.value, "InvertToggle toggled with Right");
+
+            yield return Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.AreSame(layout.GentleCameraToggle, Focused());
+            bool gentleBefore = layout.GentleCameraToggle.value;
+            yield return Navigate(NavigationMoveEvent.Direction.Right);
+            Assert.AreNotEqual(gentleBefore, layout.GentleCameraToggle.value, "GentleCameraToggle toggled with Right");
+
+            yield return Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.AreSame(layout.RumbleToggle, Focused());
+            bool rumbleBefore = layout.RumbleToggle.value;
+            yield return Navigate(NavigationMoveEvent.Direction.Right);
+            Assert.AreNotEqual(rumbleBefore, layout.RumbleToggle.value, "RumbleToggle toggled with Right");
+
+            yield return Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.AreSame(layout.RumbleSlider, Focused());
+            int rumbleStepBefore = layout.RumbleSlider.value;
+            yield return Navigate(NavigationMoveEvent.Direction.Left);
+            Assert.AreEqual(rumbleStepBefore - 1, layout.RumbleSlider.value, "RumbleSlider stepped with Left");
+
+            yield return Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.AreSame(layout.GuidanceToggle, Focused());
+            bool guidanceBefore = layout.GuidanceToggle.value;
+            yield return Navigate(NavigationMoveEvent.Direction.Right);
+            Assert.AreNotEqual(guidanceBefore, layout.GuidanceToggle.value, "GuidanceToggle toggled with Right");
+
+            for (int i = 0; i < 6; i++)
+            {
+                yield return Navigate(NavigationMoveEvent.Direction.Up);
+            }
+
+            Assert.AreSame(layout.TabCamera, Focused());
+            yield return Navigate(NavigationMoveEvent.Direction.Right);
+            Assert.AreEqual(2, _rig.Ui.Pause.SettingsTab, "Right on tab switches to Display tab");
+            Assert.AreSame(layout.TabDisplay, Focused());
+
+            yield return Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.AreSame(layout.ResolutionPrev, Focused());
+            string resBefore = layout.ResolutionValue.text;
+            yield return Navigate(NavigationMoveEvent.Direction.Right);
+            Assert.AreNotEqual(resBefore, layout.ResolutionValue.text, "Resolution stepped with Right");
+
+            yield return Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.AreSame(layout.ModePrev, Focused());
+            string modeBefore = layout.ModeValue.text;
+            yield return Navigate(NavigationMoveEvent.Direction.Right);
+            Assert.AreNotEqual(modeBefore, layout.ModeValue.text, "Window Mode stepped with Right");
+
+            yield return Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.AreSame(layout.VSyncToggle, Focused());
+            yield return Navigate(NavigationMoveEvent.Direction.Right);
+            Assert.IsFalse(layout.VSyncToggle.value, "VSync toggled off with Right");
+
+            yield return Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.AreSame(layout.FpsPrev, Focused());
+            string fpsBefore = layout.FpsValue.text;
+            yield return Navigate(NavigationMoveEvent.Direction.Right);
+            Assert.AreNotEqual(fpsBefore, layout.FpsValue.text, "FPS cap stepped with Right");
+
+            yield return Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.AreSame(layout.TextSizeButton, Focused());
+            string sizeBefore = layout.TextSizeButton.text;
+            yield return Navigate(NavigationMoveEvent.Direction.Right);
+            Assert.AreNotEqual(sizeBefore, layout.TextSizeButton.text, "Text size stepped with Right");
+
+            yield return Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.AreSame(layout.LanguageButton, Focused());
+            string langBefore = layout.LanguageButton.text;
+            yield return Navigate(NavigationMoveEvent.Direction.Right);
+            Assert.AreNotEqual(langBefore, layout.LanguageButton.text, "Language stepped with Right");
+
+            yield return Tap(gamepad.buttonEast);
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.IsFalse(_rig.Ui.Pause.IsSettingsOpen, "Gamepad B backs out of Settings");
+            Assert.AreSame(layout.SettingsButton, Focused(), "focus returns to SettingsButton");
+
+            yield return Tap(keyboard.sKey);
+            Assert.AreSame(layout.CreditsButton, Focused());
+            Submit(layout.CreditsButton);
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.IsTrue(_rig.Ui.Pause.IsShowingCredits);
+            Assert.AreSame(layout.CreditsBack, Focused());
+
+            yield return Tap(gamepad.buttonEast);
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.IsFalse(_rig.Ui.Pause.IsShowingCredits, "Gamepad B backs out of Credits");
+            Assert.AreSame(layout.CreditsButton, Focused(), "focus returns to CreditsButton");
+        }
+
+        private static void AssertSingleFocusedCursor(Button[] buttons, Button expected)
+        {
+            int shownCursors = 0;
+            foreach (Button button in buttons)
+            {
+                Label cursor = button.Q<Label>(className: "menu-button__cursor");
+                Assert.IsNotNull(cursor);
+                if (cursor.resolvedStyle.display == DisplayStyle.Flex)
+                {
+                    shownCursors++;
+                    Assert.AreSame(expected, button, "only the focused button shows the '>' cursor");
+                }
+            }
+
+            Assert.AreEqual(1, shownCursors, "exactly one button shows the '>' cursor");
+        }
+
+        private static void PointerEnter(VisualElement target)
+        {
+            using (PointerEnterEvent evt = PointerEnterEvent.GetPooled())
+            {
+                evt.target = target;
+                target.SendEvent(evt);
+            }
+        }
+
+        private static void PointerLeave(VisualElement target)
+        {
+            using (PointerLeaveEvent evt = PointerLeaveEvent.GetPooled())
+            {
+                evt.target = target;
+                target.SendEvent(evt);
+            }
+        }
+
         private void Boot(string slot)
         {
             _slots.Add(slot);

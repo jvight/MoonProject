@@ -31,13 +31,28 @@ namespace MoonProject.UI.PlayModeTests
     {
         public static readonly ScreenShape[] All =
         {
-            new ScreenShape("16x9_720p", 1280, 720),
-            new ScreenShape("16x9_4k", 3840, 2160),
+            new ScreenShape("16x9_1080p", 1920, 1080),
             new ScreenShape("16x10", 1920, 1200),
             new ScreenShape("21x9", 2560, 1080),
-            new ScreenShape("21x9_owner", 2000, 837),
             new ScreenShape("32x9", 3840, 1080),
             new ScreenShape("4x3", 1600, 1200),
+            new ScreenShape("5x4", 1280, 1024),
+            new ScreenShape("16x9_720p", 1280, 720),
+            new ScreenShape("1_2x1", 1578, 1299),
+            new ScreenShape("16x9_4k", 3840, 2160),
+            new ScreenShape("21x9_owner", 2000, 837),
+        };
+
+        public static readonly ScreenShape[] TitleSheet =
+        {
+            new ScreenShape("16x9_1080p", 1920, 1080),
+            new ScreenShape("16x10", 1920, 1200),
+            new ScreenShape("21x9", 2560, 1080),
+            new ScreenShape("32x9", 3840, 1080),
+            new ScreenShape("4x3", 1600, 1200),
+            new ScreenShape("5x4", 1280, 1024),
+            new ScreenShape("16x9_720p", 1280, 720),
+            new ScreenShape("1_2x1", 1578, 1299),
         };
     }
 
@@ -91,7 +106,33 @@ namespace MoonProject.UI.PlayModeTests
         public static void CheckOnScreen(VisualElement root, string shot, List<string> problems)
         {
             Rect screen = root.worldBound;
-            Visit(root, screen, shot, problems);
+            Visit(root, screen, shot, "the screen", problems);
+        }
+
+        /// <summary>
+        /// Adds a problem for every shown title element whose box leaves the CRT bezel's inner screen area.
+        /// </summary>
+        public static void CheckInsideCrtFrame(UiLayout layout, TitleSettings title, string shot, List<string> problems)
+        {
+            Rect screen = layout.Root.worldBound;
+            if (screen.width <= 0f || screen.height <= 0f)
+            {
+                return;
+            }
+
+            float scale = Mathf.Min(screen.width / 1280f, screen.height / 720f);
+            float insetX = 36f * scale;
+            float insetY = 26f * scale;
+            Rect crtFrame = new Rect(
+                screen.xMin + insetX,
+                screen.yMin + insetY,
+                screen.width - insetX * 2f,
+                screen.height - insetY * 2f);
+
+            Visit(layout.TitleScreen, crtFrame, shot, "the CRT frame", problems);
+            Visit(layout.PauseMain, crtFrame, shot, "the CRT frame", problems);
+            Visit(layout.PauseSettings, crtFrame, shot, "the CRT frame", problems);
+            Visit(layout.TitleKeyHint, crtFrame, shot, "the CRT frame", problems);
         }
 
         /// <summary>Adds a problem when both elements are shown and their boxes overlap.</summary>
@@ -110,31 +151,59 @@ namespace MoonProject.UI.PlayModeTests
             }
         }
 
-        private static void Visit(VisualElement element, Rect screen, string shot, List<string> problems)
+        /// <summary>Checks that shown direct children of <paramref name="container"/> do not overlap one another.</summary>
+        public static void CheckChildrenApart(VisualElement container, string shot, List<string> problems)
         {
-            if (!IsShown(element))
+            if (container == null || !IsShown(container))
+            {
+                return;
+            }
+
+            var shown = new List<VisualElement>();
+            foreach (VisualElement child in container.Children())
+            {
+                if (IsShown(child) && !child.ClassListContains(ShadowClass) &&
+                    child.worldBound.width > 0f && child.worldBound.height > 0f)
+                {
+                    shown.Add(child);
+                }
+            }
+
+            for (int i = 0; i < shown.Count; i++)
+            {
+                for (int j = i + 1; j < shown.Count; j++)
+                {
+                    CheckApart(shown[i], shown[j], shot, problems);
+                }
+            }
+        }
+
+        private static void Visit(VisualElement element, Rect bounds, string shot, string boundsName,
+            List<string> problems)
+        {
+            if (element == null || !IsShown(element))
             {
                 return;
             }
 
             Rect box = element.worldBound;
             bool measured = box.width > 0f && box.height > 0f && !element.ClassListContains(ShadowClass);
-            if (measured && !Contains(screen, box))
+            if (measured && !Contains(bounds, box))
             {
                 string label = string.IsNullOrEmpty(element.name) ? element.GetType().Name : element.name;
-                problems.Add($"{shot}: '{label}' {Describe(box)} leaves the screen {Describe(screen)}");
+                problems.Add($"{shot}: '{label}' {Describe(box)} leaves {boundsName} {Describe(bounds)}");
             }
 
             foreach (VisualElement child in element.Children())
             {
-                Visit(child, screen, shot, problems);
+                Visit(child, bounds, shot, boundsName, problems);
             }
         }
 
-        private static bool Contains(Rect screen, Rect box)
+        private static bool Contains(Rect bounds, Rect box)
         {
-            return box.xMin >= screen.xMin - Epsilon && box.yMin >= screen.yMin - Epsilon &&
-                   box.xMax <= screen.xMax + Epsilon && box.yMax <= screen.yMax + Epsilon;
+            return box.xMin >= bounds.xMin - Epsilon && box.yMin >= bounds.yMin - Epsilon &&
+                   box.xMax <= bounds.xMax + Epsilon && box.yMax <= bounds.yMax + Epsilon;
         }
 
         private static string Describe(Rect rect)
