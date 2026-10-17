@@ -30,6 +30,9 @@ namespace MoonProject.Rover
         private static readonly int FaceSymbolId = Shader.PropertyToID("_FaceSymbol");
         private static readonly int FaceCrtStateId = Shader.PropertyToID("_FaceCrtState");
         private static readonly int FacePhasesId = Shader.PropertyToID("_FacePhases");
+        private static readonly int ContentTexId = Shader.PropertyToID("_ContentTex");
+        private static readonly int FaceContentStateId = Shader.PropertyToID("_FaceContentState");
+        private static readonly int CurvatureId = Shader.PropertyToID("_Curvature");
 
         [Tooltip("Face tuning asset (Assets/_Project/Data/Tuning/FaceTuning.asset).")]
         [SerializeField] private FaceTuning _tuning;
@@ -42,6 +45,7 @@ namespace MoonProject.Rover
 
         private FaceState _state;
         private MaterialPropertyBlock _propertyBlock;
+        private Texture _contentTexture;
         private bool _externallyDriven;
 
         /// <summary>The underlying pure C# face state machine.</summary>
@@ -52,6 +56,24 @@ namespace MoonProject.Rover
 
         /// <summary>The target <see cref="Renderer"/> receiving the CRT property block.</summary>
         public Renderer ScreenRenderer => _screenRenderer;
+
+        /// <summary>Currently bound screen UI content texture (<c>_ContentTex</c>).</summary>
+        public Texture ContentTexture => _contentTexture;
+
+        /// <summary>CRT barrel curvature parameter read from the screen's shared material (defaults to 0.10).</summary>
+        public float Curvature
+        {
+            get
+            {
+                if (_screenRenderer != null && _screenRenderer.sharedMaterial != null &&
+                    _screenRenderer.sharedMaterial.HasProperty(CurvatureId))
+                {
+                    return _screenRenderer.sharedMaterial.GetFloat(CurvatureId);
+                }
+
+                return 0.10f;
+            }
+        }
 
         /// <summary>When true, <see cref="RoverFaceDirector"/> steps this display and <see cref="Update"/> is a no-op.</summary>
         public bool ExternallyDriven
@@ -173,6 +195,35 @@ namespace MoonProject.Rover
             ApplyToRenderer();
         }
 
+        /// <summary>
+        /// Enters or exits CRT screen content mode with the channel-switch choreography and binds <paramref name="contentTexture"/>
+        /// to <c>_ContentTex</c> when provided.
+        /// </summary>
+        public void SetScreenMode(bool open, Texture contentTexture = null)
+        {
+            EnsureState();
+            if (contentTexture != null)
+            {
+                _contentTexture = contentTexture;
+            }
+
+            _state.SetScreenMode(open);
+            ApplyToRenderer();
+        }
+
+        /// <summary>Immediately snaps the CRT screen content mode without playing the transition choreography.</summary>
+        public void SnapToScreenMode(bool open, Texture contentTexture = null)
+        {
+            EnsureState();
+            if (contentTexture != null)
+            {
+                _contentTexture = contentTexture;
+            }
+
+            _state.SnapToScreenMode(open);
+            ApplyToRenderer();
+        }
+
         /// <summary>Pushes the current <see cref="FaceState"/> parameters to <see cref="ScreenRenderer"/>.</summary>
         public void ApplyToRenderer()
         {
@@ -220,6 +271,14 @@ namespace MoonProject.Rover
             _propertyBlock.SetVector(
                 FacePhasesId,
                 new Vector4(_state.ScanlinePhase, _state.RollingBandPhase, _tuning.BootLineEnd, _tuning.BootOpenSpan));
+            _propertyBlock.SetVector(
+                FaceContentStateId,
+                new Vector4(_state.ScreenContentMix, _state.ScreenVerticalPinch, _state.ScreenLineGlow, 0f));
+
+            if (_contentTexture != null)
+            {
+                _propertyBlock.SetTexture(ContentTexId, _contentTexture);
+            }
 
             _screenRenderer.SetPropertyBlock(_propertyBlock);
         }

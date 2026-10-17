@@ -80,7 +80,9 @@ namespace MoonProject.Art.Tests
             "_GhostRightMode",
             "_FaceSymbol",
             "_FaceCrtState",
-            "_FacePhases"
+            "_FacePhases",
+            "_ContentTex",
+            "_FaceContentState"
         };
 
         [Test]

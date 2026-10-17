@@ -28,6 +28,8 @@ namespace MoonProject.UI.Editor
 
         public const string GeneratedFolder = GeneratedAssets.Root + "/UI";
         public const string PanelSettings = GeneratedFolder + "/LofiLunarPanel.asset";
+        public const string FacePanelSettings = GeneratedFolder + "/LofiLunarFacePanel.asset";
+        public const string FaceRenderTexture = GeneratedFolder + "/LofiLunarFaceTarget.asset";
 
         /// <summary>The approved Lunarion wordmark (v2, cream-on-night variant), the source of the title's mark.</summary>
         public const string WordmarkSource = SourceFolder + "/Wordmark/LunarionWordmark.svg";

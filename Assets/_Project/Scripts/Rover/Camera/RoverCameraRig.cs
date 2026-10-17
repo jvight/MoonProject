@@ -115,6 +115,14 @@ namespace MoonProject.Rover
         private bool _hasShot;
         private float _shotEase;
         private float _shotWeight;
+        private readonly FaceInspectSightLine _faceSight = new FaceInspectSightLine();
+        private RoverBodyLanguage _faceInspectBody;
+        private FaceInspectShot _faceInspectShot;
+        private bool _faceInspectOpen;
+        private bool _faceInspectHasShot;
+        private float _faceInspectEase;
+        private float _faceInspectWeight;
+        private float _appliedDampingShare = -1f;
         private float _appliedCameraRadius = -1f;
         private ITerrainQuery _terrain;
         private EventBus _events;
@@ -155,11 +163,24 @@ namespace MoonProject.Rover
         /// <summary>How far the close shot of a bay fitting has eased in, 0..1 (for tests and tooling).</summary>
         public float FittingShotWeight => _shotWeight;
 
+        /// <summary>How far the CRT face-inspect shot has eased in, 0..1 (for tests and tooling).</summary>
+        public float FaceInspectWeight => _faceInspectWeight;
+
+        /// <summary>True while the CRT face-inspect camera mode is open.</summary>
+        public bool IsFaceInspectOpen => _faceInspectOpen;
+
         /// <summary>The close shot composed for the bay fitting under way, if any (for tests and tooling).</summary>
         public bool TryGetFittingShot(out BayShot shot)
         {
             shot = _shot;
             return _shotSolved && _hasShot;
+        }
+
+        /// <summary>The close shot composed for 07's CRT face screen, if any (for tests and tooling).</summary>
+        public bool TryGetFaceInspectShot(out FaceInspectShot shot)
+        {
+            shot = _faceInspectShot;
+            return _faceInspectHasShot;
         }
 
         public Camera Camera => _viewCamera;
@@ -353,9 +374,9 @@ namespace MoonProject.Rover
                 StartGiftView(_giftViewPiece);
             }
 
-            // On the belly lift the lab camera has the view: looking round must not stir this hidden orbit.
-            Vector2 look = _onLift ? Vector2.zero : ReadLook(deltaTime);
-            bool recenter = !_onLift && _input.RecenterPressed;
+            // On the belly lift or in face-inspect mode, looking round must not stir this orbit.
+            Vector2 look = _onLift || _faceInspectOpen ? Vector2.zero : ReadLook(deltaTime);
+            bool recenter = !_onLift && !_faceInspectOpen && _input.RecenterPressed;
             bool viewInput = recenter || look.sqrMagnitude > LookEpsilon * LookEpsilon;
             if (viewInput)
             {
@@ -383,6 +404,7 @@ namespace MoonProject.Rover
             ReleaseLeapOnTouchdown();
             StepBay();
             StepShot(deltaTime);
+            StepFaceInspect(deltaTime);
             _moment.Step(deltaTime);
             StepWideShot(deltaTime);
             StepHeldShot(viewInput, deltaTime);
@@ -401,19 +423,21 @@ namespace MoonProject.Rover
         /// <summary>
         /// A view of the player's own keeps up with 07 (light position and aim damping), so 07 stays put on screen
         /// and the rendered heading holds while 07 drives and turns under it; the floaty lag comes back as the camera
-        /// follows 07 again. Eased both ways, so the switch never jolts.
+        /// follows 07 again. Eased both ways, so the switch never jolts. Scales down to zero during face-inspect mode
+        /// so the camera reaches 07's CRT screen within the eased open duration with zero residual lag.
         /// </summary>
         private void StepFreeLookDamping(float deltaTime)
         {
             float target = _orbitState.IsFollowing ? 0f : 1f;
-            float previous = _freeLook;
             _freeLook = Smoothing.Damp(_freeLook, target, _tuning.FreeLookDampingHalfLife, deltaTime);
-            if (Mathf.Approximately(previous, _freeLook))
+            float inspectFade = _faceInspectOpen ? 0f : 1f - _faceInspectWeight;
+            float share = Mathf.Lerp(1f, _tuning.FreeLookDampingShare, _freeLook) * inspectFade;
+            if (Mathf.Approximately(share, _appliedDampingShare))
             {
                 return;
             }
 
-            float share = Mathf.Lerp(1f, _tuning.FreeLookDampingShare, _freeLook);
+            _appliedDampingShare = share;
             TrackerSettings tracker = _orbit.TrackerSettings;
             tracker.PositionDamping = _tuning.PositionDamping * share;
             _orbit.TrackerSettings = tracker;
@@ -433,7 +457,7 @@ namespace MoonProject.Rover
             Vector3 heading = Quaternion.Euler(0f, roverYaw, 0f) * Vector3.forward;
             float forwardSpeed = velocity.x * heading.x + velocity.z * heading.z;
             bool mayRecenter = !_moment.IsActive && _wide.Weight <= 0f && _held.Weight <= 0f && _shotWeight <= 0f
-                && !_opening.IsActive && !_onLift && !_crawling;
+                && !_faceInspectOpen && _faceInspectWeight <= 0f && !_opening.IsActive && !_onLift && !_crawling;
             return new CameraOrbitInput(look, _input.LookRate.sqrMagnitude > 0f, recenter, roverYaw, forwardSpeed,
                 _rover.DriveInput.y, _rover.NormalizedSpeed, descent, _rover.IsGrounded, mayRecenter);
         }
@@ -627,6 +651,131 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
+        /// Opens or closes the close-up face-inspect camera mode on 07's CRT <c>Screen</c> (FACE-INV). Solves terrain
+        /// and rock occlusion in order (<c>Default -&gt; Left -&gt; Right -&gt; Closer</c>) and directs
+        /// <paramref name="bodyLanguage"/> to lift 07's head (<c>+10 deg</c>) and turn its neck (<c>+-35 deg</c> max)
+        /// toward the solved camera bearing while suppressing idle head noise.
+        /// </summary>
+        public void SetFaceInspect(bool open, RoverBodyLanguage bodyLanguage)
+        {
+            _faceInspectOpen = open;
+            if (bodyLanguage != null)
+            {
+                _faceInspectBody = bodyLanguage;
+            }
+
+            if (open)
+            {
+                if (_wide != null && _wide.IsOpen)
+                {
+                    HandBackWideShot();
+                }
+
+                _moment.Clear();
+                _giftViewPending = false;
+                SolveFaceInspectShot();
+                if (_faceInspectBody != null && _faceInspectHasShot)
+                {
+                    _faceInspectBody.SetScreenInspect(true, _faceInspectShot.NeckYawOffset, _tuning.FaceInspectHeadPitch);
+                }
+            }
+            else if (_faceInspectBody != null)
+            {
+                _faceInspectBody.SetScreenInspect(false, 0f, 0f);
+            }
+        }
+
+        private void SolveFaceInspectShot()
+        {
+            if (_faceInspectBody == null || _rover == null)
+            {
+                return;
+            }
+
+            _faceInspectBody.EvaluateScreenPose(0f, _tuning.FaceInspectHeadPitch,
+                out Vector3 baseScreenPos, out Quaternion baseScreenRot);
+            Vector3 neckPivot = _faceInspectBody.NeckTransform != null
+                ? _faceInspectBody.NeckTransform.position
+                : baseScreenPos;
+            _faceInspectShot = FaceInspectComposer.Solve(
+                neckPivot,
+                _rover.Rotation,
+                baseScreenPos,
+                baseScreenRot,
+                _tuning.FaceInspectScreenHeight,
+                _tuning.FaceInspectHeightFill,
+                _tuning.FaceInspectDistance,
+                _tuning.FaceInspectMinDistance,
+                _tuning.FaceInspectLookOffsetY,
+                _tuning.FaceInspectSideYaw,
+                _tuning.FaceInspectProbeRadius,
+                _faceSight);
+            _faceInspectHasShot = true;
+        }
+
+        private void StepFaceInspect(float deltaTime)
+        {
+            if (_faceInspectOpen && _faceInspectBody != null && _rover != null)
+            {
+                if (_rover.Speed > 0.05f || !_faceInspectHasShot)
+                {
+                    SolveFaceInspectShot();
+                    _faceInspectBody.SetScreenInspect(true, _faceInspectShot.NeckYawOffset, _tuning.FaceInspectHeadPitch);
+                }
+                else if (_faceInspectEase < 1f)
+                {
+                    _faceInspectBody.EvaluateScreenPose(_faceInspectShot.NeckYawOffset, _tuning.FaceInspectHeadPitch,
+                        out Vector3 screenPos, out Quaternion screenRot);
+                    FaceInspectComposer.ComposePose(screenPos, screenRot, _tuning.FaceInspectLookOffsetY,
+                        _faceInspectShot.Distance, out Vector3 focus, out Vector3 eye);
+                    _faceInspectShot = new FaceInspectShot(focus, eye, _faceInspectShot.Distance,
+                        _faceInspectShot.VerticalFov, _faceInspectShot.NeckYawOffset, _faceInspectShot.Choice);
+                }
+            }
+
+            float duration = _faceInspectOpen ? _tuning.FaceInspectOpenSeconds : _tuning.FaceInspectCloseSeconds;
+            float seconds = _look != null && _look.GentleCamera
+                ? Mathf.Max(duration * 1.35f, 0.75f)
+                : Mathf.Max(0.05f, duration);
+            _faceInspectEase = Mathf.MoveTowards(_faceInspectEase, _faceInspectOpen ? 1f : 0f, deltaTime / seconds);
+            _faceInspectWeight = Smoothing.SmoothStep(0f, 1f, _faceInspectEase);
+
+            bool cineAvoidance = _faceInspectWeight < 0.01f;
+            if (_decollider.TerrainResolution.Enabled != cineAvoidance)
+            {
+                _decollider.TerrainResolution.Enabled = cineAvoidance;
+                _decollider.Decollision.Enabled = cineAvoidance;
+                _deoccluder.AvoidObstacles.Enabled = cineAvoidance;
+            }
+        }
+
+        private void BlendFaceInspect(ref float orbitYaw, ref float elevation, ref float radius, ref float fov,
+            ref Vector2 screen)
+        {
+            Vector3 target = _target.position;
+            Vector3 focus = Vector3.Lerp(target, _faceInspectShot.Focus, _faceInspectWeight);
+            Vector3 shotLine = _faceInspectShot.Focus - _faceInspectShot.Eye;
+            float shotRadius = Mathf.Max(0.05f, shotLine.magnitude);
+            float shotElevation = Mathf.Asin(Mathf.Clamp(-shotLine.y / shotRadius, -1f, 1f)) * Mathf.Rad2Deg;
+            float shotYaw = Mathf.Atan2(shotLine.x, shotLine.z) * Mathf.Rad2Deg;
+
+            float currentYaw = _targetYaw + orbitYaw;
+            float deltaYaw = Mathf.DeltaAngle(currentYaw, shotYaw);
+            if (Mathf.Abs(deltaYaw) > 179.9f)
+            {
+                deltaYaw = 180f;
+            }
+
+            _targetYaw = currentYaw + deltaYaw * _faceInspectWeight;
+            orbitYaw = 0f;
+            elevation = Mathf.Lerp(elevation, shotElevation, _faceInspectWeight);
+            radius = Mathf.Lerp(radius, shotRadius, _faceInspectWeight);
+            fov = Mathf.Lerp(fov, _faceInspectShot.VerticalFov, _faceInspectWeight);
+            screen = Vector2.Lerp(screen, Vector2.zero, _faceInspectWeight);
+            _target.SetPositionAndRotation(focus, Quaternion.Euler(0f, _targetYaw, 0f));
+        }
+
+        /// <summary>
         /// Blends the orbit's pose toward the fitting shot by its weight along straight lines (where the camera stands
         /// and where it looks), so it comes in through the bay's open front rather than swinging round through a wall,
         /// and hands the result back to the orbit as a target, a yaw, an elevation and a distance.
@@ -739,19 +888,26 @@ namespace MoonProject.Rover
                 BlendShot(ref yaw, ref elevation, ref radius);
             }
 
+            if (_faceInspectWeight > 0f && _faceInspectHasShot)
+            {
+                BlendFaceInspect(ref yaw, ref elevation, ref radius, ref fov, ref screen);
+            }
+
+            float orbitShare = 1f - _faceInspectWeight;
             _orbit.HorizontalAxis.Value = yaw;
             elevation = Mathf.Clamp(elevation, _tuning.MinPitch, _tuning.MaxPitch);
-            float floor = LowOrbit.Floor(radius, _tuning.TargetHeight, _tuning.LowestCameraHeight);
-            float held = Mathf.Max(elevation, floor);
+            float floor = LowOrbit.Floor(radius, _tuning.TargetHeight, _tuning.LowestCameraHeight) * orbitShare;
+            float held = Mathf.Lerp(Mathf.Max(elevation, floor), elevation, _faceInspectWeight);
             _orbit.VerticalAxis.Value = held;
-            float tilt = Mathf.Min(held - elevation, _tuning.MaxLookUpTilt);
-            _composer.TargetOffset = Vector3.up * LowOrbit.AimLift(floor, tilt, radius);
+            float tilt = Mathf.Min(held - elevation, _tuning.MaxLookUpTilt) * orbitShare;
+            _composer.TargetOffset = Vector3.up * (LowOrbit.AimLift(floor, tilt, radius) * orbitShare);
             _orbit.Radius = radius;
             _camera.Lens.FieldOfView = fov;
+            _camera.Lens.NearClipPlane = Mathf.Lerp(_tuning.NearClip, _tuning.FaceInspectNearClip, _faceInspectWeight);
             ScreenComposerSettings composition = _composer.Composition;
             composition.ScreenPosition = screen;
             _composer.Composition = composition;
-            _bump.Offset = Vector3.up * _bumpSpring.Value;
+            _bump.Offset = Vector3.up * (_bumpSpring.Value * orbitShare);
         }
 
         /// <summary>
@@ -761,7 +917,7 @@ namespace MoonProject.Rover
         private void StepWideShot(float deltaTime)
         {
             bool busy = _moment.IsActive || _leapHeld || _tethered || _hopListOpen || _inBay || _stargaze.LookUp > 0f
-                || _opening.IsActive || _held.IsOpen || _onLift;
+                || _opening.IsActive || _held.IsOpen || _onLift || _faceInspectOpen || _faceInspectWeight > 0f;
             _chargingSeconds = _charging ? _chargingSeconds + deltaTime : 0f;
             bool asked = _chargeAsks && _chargingSeconds >= _tuning.WideShot.ChargingDelay;
             switch (_wide.Step(_stillness.StillSeconds, busy, _paused, asked, deltaTime))
@@ -860,7 +1016,7 @@ namespace MoonProject.Rover
             bool moving = _rover.DriveInput.sqrMagnitude > DriveEpsilon * DriveEpsilon
                 || _rover.Speed > _tuning.StargazeMaxSpeed;
             bool free = !_moment.IsActive && _wide.Weight <= 0f && _shotWeight <= 0f && !_inBay && !_tethered
-                && !_leapHeld && !_opening.IsActive && _held.Weight <= 0f;
+                && !_leapHeld && !_opening.IsActive && _held.Weight <= 0f && !_faceInspectOpen && _faceInspectWeight <= 0f;
             if (_stargaze.Step(_orbitState.Elevation, _stillness.StillSeconds, moving, free, deltaTime))
             {
                 _events.Publish(new StargazingChanged(_stargaze.IsActive));
@@ -1105,11 +1261,21 @@ namespace MoonProject.Rover
             _evening = false;
             _wideSteersYaw = false;
             _moment.Clear();
+            _giftViewPending = false;
             _inBay = false;
             _bayDismissed = false;
             _shotSolved = false;
             _shotEase = 0f;
             _shotWeight = 0f;
+            _faceInspectOpen = false;
+            _faceInspectHasShot = false;
+            _faceInspectEase = 0f;
+            _faceInspectWeight = 0f;
+            if (_faceInspectBody != null)
+            {
+                _faceInspectBody.SetScreenInspect(false, 0f, 0f);
+            }
+
             _leapHeld = false;
             _leapAirborne = false;
             _momentYaw = 0f;

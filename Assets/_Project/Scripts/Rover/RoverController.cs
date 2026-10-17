@@ -24,10 +24,11 @@ namespace MoonProject.Rover
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RoverController : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IRoverAbilities,
-        IRoverPlacement
+        IRoverPlacement, IRoverFaceScreen
     {
         /// <summary>The probe starts this fraction of the radius above the centre, so slight sinking hits.</summary>
         private const float ProbeLiftFraction = 0.5f;
+        private const float ScreenRaycastMaxDistance = 12f;
 
         [Tooltip("Drive, steering, ground and landing tuning (Assets/_Project/Data/Tuning/RoverTuning.asset).")]
         [SerializeField] private RoverTuning _tuning;
@@ -58,6 +59,12 @@ namespace MoonProject.Rover
 
         [Tooltip("The Tab \"07\" page's live portrait of 07 on the Visual root (0.5.5 §3.5).")]
         [SerializeField] private RoverPortrait _portrait;
+
+        [Tooltip("07's expressive body language and CRT face director driver on the Rover root.")]
+        [SerializeField] private RoverBodyLanguage _bodyLanguage;
+
+        [Tooltip("MeshCollider on RoverModel/Neck/NeckLift/Head/Screen for diegetic UI pointer raycasting.")]
+        [SerializeField] private MeshCollider _screenCollider;
 
         [Tooltip("The charge-up's ConduitGlow renderers: the deck pair and the neck's (0.5.5 §5.4).")]
         [SerializeField] private Renderer[] _conduitGlows = new Renderer[0];
@@ -104,6 +111,9 @@ namespace MoonProject.Rover
         private InputReader _input;
         private IRoverDriveSource _driveSource;
         private readonly HoldRequests _holds = new HoldRequests();
+        private readonly object _faceScreenHoldOwner = new object();
+        private RoverCameraRig _cameraRig;
+        private bool _faceScreenOpen;
         private EventBus _events;
         private LandingDetector _landing;
         private StuckDetector _stuck;
@@ -251,6 +261,48 @@ namespace MoonProject.Rover
         /// <summary>True while any owner asks 07 to stay parked.</summary>
         public bool IsHeldStill => _holds.IsHeld;
 
+        // IRoverFaceScreen
+        public float Curvature => _bodyLanguage != null ? _bodyLanguage.Curvature : 0.10f;
+
+        public bool IsOpen => _faceScreenOpen;
+
+        public void SetScreenOpen(bool open, Texture contentTexture)
+        {
+            if (this == null)
+            {
+                return;
+            }
+
+            _faceScreenOpen = open;
+            SetHoldStill(_faceScreenHoldOwner, open);
+            if (_bodyLanguage != null)
+            {
+                _bodyLanguage.SetScreenInspect(open, 0f, 10f, contentTexture);
+            }
+
+            if (_cameraRig == null && _context != null && _context.TryGet(out IViewCamera viewCamera))
+            {
+                _cameraRig = viewCamera as RoverCameraRig;
+            }
+
+            if (_cameraRig != null)
+            {
+                _cameraRig.SetFaceInspect(open, _bodyLanguage);
+            }
+        }
+
+        public bool TryRaycastScreenUv(Ray ray, out Vector2 meshUv)
+        {
+            if (_screenCollider != null && _screenCollider.Raycast(ray, out RaycastHit hit, ScreenRaycastMaxDistance))
+            {
+                meshUv = hit.textureCoord;
+                return true;
+            }
+
+            meshUv = default;
+            return false;
+        }
+
         /// <summary>07's visible kit and friends' gifts.</summary>
         public RoverKit Kit => _kit;
 
@@ -378,6 +430,21 @@ namespace MoonProject.Rover
             _context = context;
             _input = context.Input;
             _events = context.Events;
+            if (_bodyLanguage == null)
+            {
+                _bodyLanguage = GetComponent<RoverBodyLanguage>();
+            }
+
+            if (_screenCollider == null && _bodyLanguage != null && _bodyLanguage.ScreenTransform != null)
+            {
+                _screenCollider = _bodyLanguage.ScreenTransform.GetComponent<MeshCollider>();
+            }
+
+            if (_sphere != null && _screenCollider != null)
+            {
+                Physics.IgnoreCollision(_sphere, _screenCollider, true);
+            }
+
             _landing = new LandingDetector(_tuning.Landing);
             _stuck = new StuckDetector(_tuning.Recovery);
             _jump = new HoverJump(_tuning.HoverJump);
@@ -396,6 +463,7 @@ namespace MoonProject.Rover
             context.Register<IRoverStillness>(_stillness);
             context.Register<IRoverPlacement>(this);
             context.Register<IRoverCargoSeat>(_kit);
+            context.Register<IRoverFaceScreen>(this);
             var feelPreferences = new FeelPreferences();
             context.Register<IFeelSettings>(feelPreferences);
             _dockChanges = _events.Subscribe<RoverDockChanged>(OnDockChanged);

@@ -36,6 +36,9 @@ namespace MoonProject.UI
         [Tooltip("The UIDocument showing GameUI.uxml with the Lunarion PanelSettings.")]
         [SerializeField] private UIDocument _document;
 
+        [Tooltip("The UIDocument rendering 07's face UI into LofiLunarFaceTarget.asset via LofiLunarFacePanel.asset.")]
+        [SerializeField] private UIDocument _faceDocument;
+
         [Tooltip("UI timings and motion (Assets/_Project/Data/Tuning/UI/UiTuning.asset).")]
         [SerializeField] private UiTuning _tuning;
 
@@ -72,6 +75,7 @@ namespace MoonProject.UI
         private IntText _numbers;
         private UiLayout _layout;
         private StaticTextLocalizer _staticText;
+        private bool _facePanelVisible;
         private Reveal _hud;
         private LabHud _labHud;
         private RecoveryBoard _board;
@@ -220,6 +224,10 @@ namespace MoonProject.UI
 
         internal CursorPolicy Cursor => _cursor;
 
+        internal UIDocument FaceDocument => _faceDocument;
+
+        internal bool IsFacePanelVisible => _facePanelVisible;
+
         internal bool IsBound => _bound;
 
         /// <summary>What confirming Quit does; tests replace it so the editor keeps running.</summary>
@@ -229,10 +237,11 @@ namespace MoonProject.UI
         internal IDisplayControl DisplayControl { get; set; } = new UnityDisplayControl();
 
         internal void Wire(UIDocument document, UiTuning tuning, RelicCatalog relics, TextAsset[] stringTables,
-            WordmarkShape wordmark, RoverDiagramData roverDiagram, TextAsset credits)
+            WordmarkShape wordmark, RoverDiagramData roverDiagram, TextAsset credits, UIDocument faceDocument = null)
         {
             _credits = credits;
             _document = document;
+            _faceDocument = faceDocument;
             _wordmark = wordmark;
             _roverDiagram = roverDiagram;
             _tuning = tuning;
@@ -316,6 +325,7 @@ namespace MoonProject.UI
             string problem = _document == null ? "the UIDocument is not assigned."
                 : _document.visualTreeAsset == null ? "the UIDocument has no GameUI.uxml."
                 : _document.panelSettings == null ? "the UIDocument has no PanelSettings."
+                : _faceDocument != null && _faceDocument.panelSettings == null ? "the FaceUI UIDocument has no PanelSettings."
                 : _tuning == null ? "UiTuning is not assigned (run UI/Tuning)."
                 : _relics == null ? "the RelicCatalog is not assigned."
                 : _stringTables == null || _stringTables.Length == 0 ? "no string tables are assigned."
@@ -431,7 +441,8 @@ namespace MoonProject.UI
 
         private void TryBind()
         {
-            if (!_composed || _bound || _document.rootVisualElement == null)
+            if (!_composed || _bound || _document.rootVisualElement == null ||
+                (_faceDocument != null && _faceDocument.rootVisualElement == null))
             {
                 return;
             }
@@ -508,6 +519,7 @@ namespace MoonProject.UI
             _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold,
                 services.Home, services.Transfer, services.Dock, services.Equipment, services.Portrait, _roverDiagram,
                 _glyphs, _numbers, services.Events, _ledger);
+            BindFacePanel(root);
             _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization, _glyphs);
             _crateNote = new CrateNote(_layout, _tuning.CrateNote, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
@@ -534,7 +546,7 @@ namespace MoonProject.UI
         {
             if (_bound)
             {
-                Tick(Time.unscaledDeltaTime);
+                Tick(Time.captureDeltaTime > 0f ? Time.captureDeltaTime : Time.unscaledDeltaTime);
             }
         }
 
@@ -583,15 +595,22 @@ namespace MoonProject.UI
             _pause.Tick(deltaTime);
             bool paused = _pause.IsOpen;
             _map?.Tick(deltaTime, paused);
-            _cargo.Tick(deltaTime, ScreenSize(), input.ActiveDevice);
+            SetFacePanelVisible(_cargo.IsOpen || _cargo.Openness > 0f);
+            _cargo.Tick(deltaTime, CargoScreenSize(), input.ActiveDevice);
+            if (_cargo.IsOpen && !_cargo.IsBooting)
+            {
+                StepCargoInput(menu);
+            }
+
             if (_cargo.IsOpen && ((_cargo.IsTransferView && !_services.Dock.IsDocked) || _cargo.WantsClose))
             {
                 _reopenCargo = _cargo.WantsClose;
                 CloseCargo();
             }
 
+            SetFacePanelVisible(_cargo.IsOpen || _cargo.Openness > 0f);
             bool onMap = (_map != null && _map.IsOpen) || _cargo.IsOpen;
-            _backdrop.Set(Mathf.Max(Mathf.Max(_pause.Openness, _map != null ? _map.Openness : 0f), _cargo.Openness));
+            _backdrop.Set(Mathf.Max(_pause.Openness, _map != null ? _map.Openness : 0f), _cargo.Openness);
             float hudTime = paused ? 0f : deltaTime;
             _hud.Set(!paused && !onMap && !_labHud.Inside);
             _hud.Tick(deltaTime);
@@ -792,10 +811,180 @@ namespace MoonProject.UI
             _slot.Step(_guidanceWants, _guidanceShown);
         }
 
+        private Vector2 _lastFaceMouseScreenPos = new Vector2(float.NaN, float.NaN);
+
+        private void BindFacePanel(VisualElement root)
+        {
+            if (_faceDocument == null)
+            {
+                return;
+            }
+
+            VisualElement faceRoot = _faceDocument.rootVisualElement;
+            faceRoot.pickingMode = PickingMode.Ignore;
+            var moonRoot = new VisualElement { name = "moon-root", pickingMode = PickingMode.Ignore };
+            moonRoot.AddToClassList("moon-root");
+            for (VisualElement ancestor = _layout.Cargo.parent; ancestor != null; ancestor = ancestor.parent)
+            {
+                CopyStyleSheets(ancestor, moonRoot);
+                CopyStyleSheets(ancestor, _layout.Cargo);
+            }
+
+            CopyStyleSheets(root, moonRoot);
+            CopyStyleSheets(root, _layout.Cargo);
+            moonRoot.Add(_layout.Cargo);
+            faceRoot.Add(moonRoot);
+            _cargo.FillPanelHeight = true;
+            if (_faceDocument.panelSettings != null)
+            {
+                _faceDocument.panelSettings.sortingOrder = 1f;
+                _faceDocument.panelSettings.SetScreenToPanelSpaceFunction(ScreenToFacePanel);
+            }
+
+            _facePanelVisible = true;
+            SetFacePanelVisible(false);
+        }
+
+        private static void CopyStyleSheets(VisualElement source, VisualElement destination)
+        {
+            if (source == null || destination == null)
+            {
+                return;
+            }
+
+            int count = source.styleSheets.count;
+            for (int i = 0; i < count; i++)
+            {
+                StyleSheet sheet = source.styleSheets[i];
+                if (sheet != null && !destination.styleSheets.Contains(sheet))
+                {
+                    destination.styleSheets.Add(sheet);
+                }
+            }
+        }
+
+        private void SetFacePanelVisible(bool visible)
+        {
+            if (_faceDocument == null || _faceDocument.rootVisualElement == null || _facePanelVisible == visible)
+            {
+                return;
+            }
+
+            _facePanelVisible = visible;
+            _faceDocument.rootVisualElement.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
         private Vector2 ScreenSize()
         {
             Rect panel = _layout.Root.layout;
             return float.IsNaN(panel.width) ? Vector2.zero : panel.size;
+        }
+
+        private Vector2 CargoScreenSize()
+        {
+            if (_faceDocument == null || _faceDocument.panelSettings == null)
+            {
+                return ScreenSize();
+            }
+
+            if (_faceDocument.rootVisualElement != null)
+            {
+                Rect rect = _faceDocument.rootVisualElement.layout;
+                if (!float.IsNaN(rect.width) && rect.width > 0f && rect.height > 0f)
+                {
+                    return rect.size;
+                }
+            }
+
+            Vector2Int reference = _faceDocument.panelSettings.referenceResolution;
+            return reference.x > 0 && reference.y > 0
+                ? new Vector2(reference.x, reference.y)
+                : FaceScreenMapper.DefaultPanelSize;
+        }
+
+        private Vector2 ScreenToFacePanel(Vector2 screenPosition)
+        {
+            return FaceScreenMapper.ScreenToPanel(screenPosition, _services?.View?.Camera, _services?.FaceScreen,
+                CargoScreenSize());
+        }
+
+        private void StepCargoInput(MenuInput menu)
+        {
+            FaceInventoryView view = _cargo.View;
+            if (menu.NavigatePressed && view.LastNavigationFrame != Time.frameCount)
+            {
+                Vector2 nav = menu.NavigateVector;
+                NavigationMoveEvent.Direction dir = Mathf.Abs(nav.x) >= Mathf.Abs(nav.y)
+                    ? (nav.x > 0.2f ? NavigationMoveEvent.Direction.Right
+                        : nav.x < -0.2f ? NavigationMoveEvent.Direction.Left
+                        : NavigationMoveEvent.Direction.None)
+                    : (nav.y > 0.2f ? NavigationMoveEvent.Direction.Up
+                        : nav.y < -0.2f ? NavigationMoveEvent.Direction.Down
+                        : NavigationMoveEvent.Direction.None);
+                if (dir != NavigationMoveEvent.Direction.None)
+                {
+                    view.Navigate(dir);
+                }
+                else if (view.FocusedHoldCell < 0 && view.FocusedSocketIndex < 0 && view.FocusedHomeCell < 0)
+                {
+                    _cargo.FocusFirst();
+                }
+            }
+
+            if (_faceDocument == null || _services.FaceScreen == null || !_services.FaceScreen.IsOpen)
+            {
+                return;
+            }
+
+            Vector2 rawMouse = menu.PointerPosition;
+            if (float.IsNaN(rawMouse.x) || float.IsNaN(rawMouse.y))
+            {
+                return;
+            }
+
+            bool moved = float.IsNaN(_lastFaceMouseScreenPos.x)
+                ? rawMouse.sqrMagnitude > 0.01f
+                : (rawMouse - _lastFaceMouseScreenPos).sqrMagnitude > 0.01f;
+            bool down = menu.ClickPressed;
+            bool up = menu.ClickReleased;
+            if (!moved && !down && !up)
+            {
+                return;
+            }
+
+            _lastFaceMouseScreenPos = rawMouse;
+            Camera cam = _services.View?.Camera;
+            float height = cam != null && cam.pixelHeight > 0 ? cam.pixelHeight : Screen.height;
+            var uiScreenPos = new Vector2(rawMouse.x, height - rawMouse.y);
+            Vector2 panelPos = FaceScreenMapper.ScreenToPanel(uiScreenPos, cam, _services.FaceScreen, CargoScreenSize(),
+                height);
+            if (!float.IsNaN(panelPos.x) && !float.IsNaN(panelPos.y))
+            {
+                if (down)
+                {
+                    view.PointerDownAtPanel(panelPos);
+                }
+                else if (moved)
+                {
+                    view.PointerMoveAtPanel(panelPos);
+                }
+
+                if (up)
+                {
+                    view.PointerUpAtPanel(panelPos);
+                }
+            }
+            else if (up && view.IsDraggingKit)
+            {
+                view.CompleteKitDrag(null);
+            }
+        }
+
+        private Texture FaceTargetTexture()
+        {
+            return _faceDocument != null && _faceDocument.panelSettings != null
+                ? _faceDocument.panelSettings.targetTexture
+                : null;
         }
 
         /// <summary>The cargo screen opens once 07 is awake, over a quiet screen (not paused, not on the title).</summary>
@@ -807,7 +996,10 @@ namespace MoonProject.UI
         private void OpenCargo()
         {
             _reopenCargo = false;
+            _lastFaceMouseScreenPos = _services.Input.Menu.PointerPosition;
+            SetFacePanelVisible(true);
             _cargo.Open();
+            _services.FaceScreen?.SetScreenOpen(true, FaceTargetTexture());
             _services.Input.Disable();
             _cursor.Menu();
             _cargo.FocusFirst();
@@ -817,6 +1009,7 @@ namespace MoonProject.UI
         private void CloseCargo()
         {
             _cargo.Close();
+            _services.FaceScreen?.SetScreenOpen(false, FaceTargetTexture());
             _services.Input.Enable();
             _cursor.Drive();
             _events.Publish(new UiCue(UiCueKind.Back));
@@ -1285,11 +1478,17 @@ namespace MoonProject.UI
 
             if (_bound)
             {
-                if (_pause.IsOpen)
+                if (_pause.IsOpen || _cargo.IsOpen)
                 {
                     _services.Input.Enable();
                 }
 
+                if (_faceDocument != null && _faceDocument.panelSettings != null)
+                {
+                    _faceDocument.panelSettings.SetScreenToPanelSpaceFunction(null);
+                }
+
+                _services.FaceScreen?.SetScreenOpen(false, null);
                 _pause.RestoreTime();
                 _textScale.Restore();
                 _hopFade.Dispose();

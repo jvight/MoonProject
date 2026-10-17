@@ -53,19 +53,29 @@ namespace MoonProject.Rover
         private float _lowPowerAmount;
         private float _rearVentEmissionStrength;
 
+        private readonly EventBus _events;
+
         private bool _hasBootedOnWake;
         private int _bootCount;
         private int _wakeBlinkCount;
+        private int _lastPublishedBlinkCount;
+        private int _lastPublishedScreenOpenCount;
+        private int _lastPublishedScreenCloseCount;
 
         private bool _batteryPolled;
         private float _lastPolledCharge01 = 1f;
         private bool _lastPolledLowPower;
         private bool _lastPolledCharging;
 
-        public FaceDirector(FaceState state, FaceDirectorTuning tuning)
+        public FaceDirector(FaceState state, FaceDirectorTuning tuning, EventBus events = null)
         {
             _state = state ?? throw new ArgumentNullException(nameof(state));
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
+            _events = events;
+
+            _lastPublishedBlinkCount = _state.BlinkCount;
+            _lastPublishedScreenOpenCount = _state.ScreenOpenCount;
+            _lastPublishedScreenCloseCount = _state.ScreenCloseCount;
 
             _currentFeeling = FaceFeeling.Calm;
             _currentPriority = _tuning.CalmPriority;
@@ -73,8 +83,8 @@ namespace MoonProject.Rover
             _rearVentEmissionStrength = ComputeRearVentEmission();
         }
 
-        public FaceDirector(FaceTuning faceTuning, FaceDirectorTuning directorTuning, int seed = 7)
-            : this(new FaceState(faceTuning, seed), directorTuning)
+        public FaceDirector(FaceTuning faceTuning, FaceDirectorTuning directorTuning, int seed = 7, EventBus events = null)
+            : this(new FaceState(faceTuning, seed), directorTuning, events)
         {
         }
 
@@ -113,6 +123,19 @@ namespace MoonProject.Rover
 
         /// <summary>Current head-space look vector computed from <see cref="RoverBodyLanguage"/> gaze.</summary>
         public Vector3 CurrentLookDirection => _explicitGazeHeadSpace;
+
+        /// <summary>True when the CRT face is in (or transitioning into) screen content mode.</summary>
+        public bool IsScreenModeOpen => _state.IsScreenModeOpen;
+
+        /// <summary>
+        /// Enters or exits screen content mode alongside 07's feelings, playing the channel-switch transition on
+        /// <see cref="FaceState"/>.
+        /// </summary>
+        public void SetScreenMode(bool open)
+        {
+            _state.SetScreenMode(open);
+            FlushStateCues();
+        }
 
         /// <summary>
         /// Scene start notification. Starts the CRT boot sequence only when <paramref name="isNewGame"/> is true,
@@ -159,6 +182,7 @@ namespace MoonProject.Rover
             {
                 _state.Blink();
                 _wakeBlinkCount++;
+                FlushStateCues();
             }
         }
 
@@ -203,6 +227,7 @@ namespace MoonProject.Rover
                 _state.Blink();
                 _wakeBlinkCount++;
                 _rearVentEmissionStrength = ComputeRearVentEmission();
+                FlushStateCues();
                 return;
             }
 
@@ -656,6 +681,7 @@ namespace MoonProject.Rover
 
             _state.Step(deltaTime);
             _rearVentEmissionStrength = ComputeRearVentEmission();
+            FlushStateCues();
         }
 
         private void StartWakeBoot()
@@ -679,6 +705,11 @@ namespace MoonProject.Rover
             _state.SetFeeling(FaceFeeling.Calm);
             _state.Boot();
             _rearVentEmissionStrength = ComputeRearVentEmission();
+
+            if (!alreadyBootingAtStart)
+            {
+                PublishCue(RoverFaceCueKind.Boot);
+            }
         }
 
         private void TriggerBeat(BeatKind kind, float holdSeconds)
@@ -746,6 +777,7 @@ namespace MoonProject.Rover
                     _feelingHoldTimer = _tuning.MinFeelingHoldSeconds;
                     _preemptHold = false;
                     _state.SetFeeling(_currentFeeling);
+                    PublishFeelingCue(_currentFeeling);
                 }
             }
             else
@@ -756,6 +788,60 @@ namespace MoonProject.Rover
             }
 
             _rearVentEmissionStrength = ComputeRearVentEmission();
+        }
+
+        private void FlushStateCues()
+        {
+            while (_lastPublishedScreenOpenCount < _state.ScreenOpenCount)
+            {
+                _lastPublishedScreenOpenCount++;
+                PublishCue(RoverFaceCueKind.ScreenOpen);
+            }
+
+            while (_lastPublishedScreenCloseCount < _state.ScreenCloseCount)
+            {
+                _lastPublishedScreenCloseCount++;
+                PublishCue(RoverFaceCueKind.ScreenClose);
+            }
+
+            while (_lastPublishedBlinkCount < _state.BlinkCount)
+            {
+                _lastPublishedBlinkCount++;
+                PublishCue(RoverFaceCueKind.Blink);
+            }
+        }
+
+        private void PublishFeelingCue(FaceFeeling feeling)
+        {
+            switch (feeling)
+            {
+                case FaceFeeling.Happy:
+                    PublishCue(RoverFaceCueKind.Happy);
+                    break;
+                case FaceFeeling.Worried:
+                    PublishCue(RoverFaceCueKind.Worried);
+                    break;
+                case FaceFeeling.Asleep:
+                    PublishCue(RoverFaceCueKind.Asleep);
+                    break;
+                case FaceFeeling.Startled:
+                    PublishCue(RoverFaceCueKind.Startled);
+                    break;
+                case FaceFeeling.Proud:
+                    PublishCue(RoverFaceCueKind.Proud);
+                    break;
+            }
+        }
+
+        private void PublishCue(RoverFaceCueKind kind)
+        {
+            if (_events == null)
+            {
+                return;
+            }
+
+            var cue = new RoverFaceCued(kind);
+            _events.Publish(in cue);
         }
 
         private void GetOngoingFeeling(out FaceFeeling feeling, out int priority)

@@ -154,7 +154,14 @@ namespace MoonProject.Rover
         private BatteryLink _battery;
         private float _tired;
         private float _crawl;
+        private bool _screenInspectOpen;
+        private float _screenInspectBlend;
+        private float _screenInspectYawDeg;
+        private float _screenInspectPitchDeg = 10f;
         private bool _initialized;
+
+        private const float ScreenInspectBlendSeconds = 0.30f;
+        private const float ScreenInspectYawLimit = 35f;
 
         /// <summary>Read-only view of the mood, for audio/debug tooling.</summary>
         public RoverMood Mood => _mood;
@@ -170,6 +177,119 @@ namespace MoonProject.Rover
 
         /// <summary>Current slewed (yaw, pitch) head angles in degrees.</summary>
         public Vector2 CurrentHeadAngles => new Vector2(_yaw.Value, _pitch.Value);
+
+        /// <summary>True while 07's head is lifted and steadied for CRT screen inspection.</summary>
+        public bool IsScreenInspectOpen => _screenInspectOpen;
+
+        /// <summary>Smoothed blend factor in [0..1] for screen-inspect head steadying.</summary>
+        public float ScreenInspectBlend => _screenInspectBlend * _screenInspectBlend * (3f - 2f * _screenInspectBlend);
+
+        /// <summary>Transform of 07's <c>Neck</c> yaw joint.</summary>
+        public Transform NeckTransform => _neck;
+
+        /// <summary>CRT barrel curvature parameter read from the screen's shared material.</summary>
+        public float Curvature => _faceDirector != null ? _faceDirector.Curvature : 0.10f;
+
+        /// <summary>Transform of 07's CRT <c>Screen</c> mesh.</summary>
+        public Transform ScreenTransform =>
+            _faceDirector != null && _faceDirector.Display != null && _faceDirector.Display.ScreenRenderer != null
+                ? _faceDirector.Display.ScreenRenderer.transform
+                : _head;
+
+        /// <summary>
+        /// Enters or exits screen-inspect mode: lifts 07's head by <paramref name="targetPitchDeg"/> (+10 deg), turns
+        /// the neck toward <paramref name="targetYawDeg"/> (clamped to +/-35 deg), suppresses idle head noise so the
+        /// CRT screen is rock-steady for clicking, and switches <see cref="FaceDirector"/> into screen content mode.
+        /// </summary>
+        public void SetScreenInspect(
+            bool open,
+            float targetYawDeg = 0f,
+            float targetPitchDeg = 10f,
+            Texture contentTexture = null)
+        {
+            _screenInspectOpen = open;
+            if (open)
+            {
+                _screenInspectYawDeg = Mathf.Clamp(targetYawDeg, -ScreenInspectYawLimit, ScreenInspectYawLimit);
+                _screenInspectPitchDeg = targetPitchDeg;
+            }
+
+            if (_faceDirector != null)
+            {
+                _faceDirector.SetScreenMode(open, contentTexture);
+            }
+        }
+
+        /// <summary>
+        /// Evaluates the exact world-space position and rotation of 07's CRT <c>Screen</c> when the neck is turned by
+        /// <paramref name="neckYawDeg"/> and the head is pitched up by <paramref name="headPitchDeg"/> with all idle
+        /// head noise suppressed.
+        /// </summary>
+        public void EvaluateScreenPose(
+            float neckYawDeg,
+            float headPitchDeg,
+            out Vector3 screenPosition,
+            out Quaternion screenRotation)
+        {
+            EvaluateScreenPose(neckYawDeg, headPitchDeg, out _, out _, out screenPosition, out screenRotation);
+        }
+
+        /// <summary>
+        /// Evaluates the exact world-space position and rotation of 07's CRT <c>Screen</c> when the neck is turned by
+        /// <paramref name="neckYawDeg"/> and the head is pitched up by <paramref name="headPitchDeg"/> with all idle
+        /// head noise suppressed.
+        /// </summary>
+        public void EvaluateScreenPose(
+            float neckYawDeg,
+            float headPitchDeg,
+            out Vector3 neckPivotWorld,
+            out Quaternion roverRotation,
+            out Vector3 screenPosition,
+            out Quaternion screenRotation)
+        {
+            Transform modelRoot = _neck != null && _neck.parent != null ? _neck.parent : transform;
+            roverRotation = modelRoot.rotation;
+            neckPivotWorld = _neck != null ? modelRoot.TransformPoint(_neck.localPosition) : modelRoot.position;
+
+            Quaternion neckRest = _initialized ? _neckRest : (_neck != null ? _neck.localRotation : Quaternion.identity);
+            Quaternion neckLiftRest = _initialized ? _neckLiftRest : (_neckLift != null ? _neckLift.localRotation : Quaternion.identity);
+            Quaternion headRest = _initialized ? _headRest : (_head != null ? _head.localRotation : Quaternion.identity);
+
+            float clampedYaw = Mathf.Clamp(neckYawDeg, -ScreenInspectYawLimit, ScreenInspectYawLimit);
+            Quaternion neckWorldRot = roverRotation * (neckRest * Quaternion.AngleAxis(clampedYaw, Vector3.up));
+
+            Vector3 headParentPos = neckPivotWorld;
+            Quaternion headParentRot = neckWorldRot;
+            if (_neckLift != null)
+            {
+                headParentPos = neckPivotWorld + neckWorldRot * _neckLift.localPosition;
+                headParentRot = neckWorldRot * neckLiftRest;
+            }
+
+            Vector3 headLocalPos = _head != null ? _head.localPosition : Vector3.zero;
+            Vector3 headWorldPos = headParentPos + headParentRot * headLocalPos;
+            Quaternion headWorldRot = headParentRot * (headRest * Quaternion.AngleAxis(-headPitchDeg, Vector3.right));
+
+            Transform screen = ScreenTransform;
+            if (screen != null && screen != _head)
+            {
+                Vector3 localOffset = screen.localPosition;
+                if (_faceDirector != null && _faceDirector.Display != null && _faceDirector.Display.ScreenRenderer != null)
+                {
+                    localOffset += screen.localRotation * Vector3.Scale(
+                        _faceDirector.Display.ScreenRenderer.localBounds.center,
+                        screen.localScale);
+                }
+
+                screenPosition = headWorldPos + headWorldRot * localOffset;
+                screenRotation = headWorldRot * screen.localRotation;
+            }
+            else
+            {
+                screenPosition = headWorldPos;
+                screenRotation = headWorldRot;
+            }
+        }
 
         public void Initialize(GameContext context)
         {
@@ -532,6 +652,11 @@ namespace MoonProject.Rover
                 return;
             }
 
+            _screenInspectBlend = Mathf.MoveTowards(
+                _screenInspectBlend,
+                _screenInspectOpen ? 1f : 0f,
+                deltaTime / ScreenInspectBlendSeconds);
+
             StepElder();
 
             _mood.SetEffort(_rover.JumpCharge);
@@ -677,6 +802,14 @@ namespace MoonProject.Rover
                 hasExplicitGaze = true;
             }
 
+            float inspect = ScreenInspectBlend;
+            if (inspect > 0f)
+            {
+                aim = Vector2.Lerp(aim, new Vector2(_screenInspectYawDeg, _screenInspectPitchDeg), inspect);
+                frequency = Mathf.Lerp(frequency, Mathf.Max(_tuning.TargetGazeFrequency, 10f), inspect);
+                hasExplicitGaze = true;
+            }
+
             _hasActiveGaze = hasExplicitGaze;
             _targetGazeAim = aim;
             _yaw.Step(aim.x, frequency, _tuning.GazeDamping, deltaTime);
@@ -691,23 +824,29 @@ namespace MoonProject.Rover
 
         private void Apply(float sky)
         {
+            float inspect = ScreenInspectBlend;
+            float idleScale = 1f - inspect;
+
             float breathing = _tuning.IdleHeadBreath * _mood.Idle * (2f * _mood.Breath - 1f);
             BatteryMoodSettings battery = _tuning.Battery;
             float bow = _tired * battery.LowHeadBow + _crawl * battery.CrawlHeadBow;
-            float pitch = _pitch.Value + _mood.HeadPitchOffset + breathing - bow - _headNudge.Pitch
-                - _chirpPose.HeadDip;
+            float rawPitch = _pitch.Value + (_mood.HeadPitchOffset + breathing - bow - _headNudge.Pitch
+                - _chirpPose.HeadDip) * idleScale;
+            float pitch = Mathf.Lerp(rawPitch, _screenInspectPitchDeg, inspect);
+            float yaw = Mathf.Lerp(_yaw.Value, _screenInspectYawDeg, inspect);
 
-            _neck.localRotation = _neckRest * Quaternion.AngleAxis(_yaw.Value, Vector3.up);
+            _neck.localRotation = _neckRest * Quaternion.AngleAxis(yaw, Vector3.up);
             if (_neckLift != null)
             {
-                float neckDroop = _tuning.NeckSleepDroop * _mood.Wake.Sleep + _tuning.NeckTiredDroop * _tired
+                float neckDroop = (_tuning.NeckSleepDroop * _mood.Wake.Sleep + _tuning.NeckTiredDroop * _tired
                     + _tuning.NeckCrawlExtend * _crawl + _tuning.NeckCargoExtend * _cargoSag
-                    - _tuning.NeckAlertLift * Mathf.Clamp01(_mood.Perk);
+                    - _tuning.NeckAlertLift * Mathf.Clamp01(_mood.Perk)) * idleScale;
                 _neckLift.localRotation = _neckLiftRest * Quaternion.AngleAxis(neckDroop, Vector3.right);
             }
 
+            float roll = (_wakeTilt + _chirpPose.HeadRoll) * idleScale;
             _head.localRotation = _headRest * Quaternion.AngleAxis(-pitch, Vector3.right)
-                * Quaternion.AngleAxis(_wakeTilt + _chirpPose.HeadRoll, Vector3.forward);
+                * Quaternion.AngleAxis(roll, Vector3.forward);
             if (_cutterTurret != null)
             {
                 _cutterTurret.localRotation = _cutterTurretRest * Quaternion.AngleAxis(_cutterYaw, Vector3.up);

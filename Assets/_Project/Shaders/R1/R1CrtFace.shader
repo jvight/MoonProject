@@ -33,6 +33,8 @@ Shader "MoonProject/R1/CrtFace"
         _FaceSymbol ("Face Symbol (id, alpha, time, 0)", Vector) = (0, 0, 0, 0)
         _FaceCrtState ("CRT State (boot, brightness, lowPower, jitter)", Vector) = (1, 1, 0, 0)
         _FacePhases ("CRT Phases (scanline, band, bootLineEnd, bootOpenSpan)", Vector) = (0, 0, 0.45, 0.30)
+        _ContentTex ("Screen Content Texture", 2D) = "black" {}
+        _FaceContentState ("Screen Content State (mix, pinch, lineGlow, 0)", Vector) = (0, 0, 0, 0)
     }
 
     SubShader

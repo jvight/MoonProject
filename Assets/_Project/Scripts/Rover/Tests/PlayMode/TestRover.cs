@@ -488,6 +488,8 @@ namespace MoonProject.Rover.PlayModeTests
             AssignArray(controller, "_stageSleeves", sleeves);
             Assign(controller, ("_lockGlow", lockGlow.GetComponent<MeshRenderer>()), ("_focusLens", lens.gameObject),
                 ("_focusLensGlass", lensGlass.GetComponent<MeshRenderer>()));
+            var screenCollider = screen.gameObject.AddComponent<MeshCollider>();
+            screenCollider.sharedMesh = screen.GetComponent<MeshFilter>().sharedMesh;
             var faceDisplay = screen.gameObject.AddComponent<FaceDisplay>();
             Assign(faceDisplay, ("_tuning", faceTuning), ("_screenRenderer", screen.GetComponent<MeshRenderer>()));
             var faceDirector = screen.gameObject.AddComponent<RoverFaceDirector>();
@@ -508,6 +510,7 @@ namespace MoonProject.Rover.PlayModeTests
                 ("_scanFan", Shape(PrimitiveType.Cube, eye, Vector3.forward, new Vector3(0.01f, 0.01f, 1f), material)
                     .GetComponent<MeshRenderer>()),
                 ("_faceDirector", faceDirector));
+            Assign(controller, ("_bodyLanguage", body), ("_screenCollider", screenCollider));
 
             GameObject cameraRoot = BuildCamera(cameraTuning, out RoverCameraRig cameraRig, out Camera camera);
 

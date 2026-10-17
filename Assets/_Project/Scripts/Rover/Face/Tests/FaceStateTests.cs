@@ -254,5 +254,49 @@ namespace MoonProject.Rover.Face.Tests
                 UnityEngine.Object.DestroyImmediate(go);
             }
         }
+
+        [Test]
+        public void ScreenContentMode_CollapsesToLine_ExpandsToContent_AndClosesWithHappyBlink()
+        {
+            var state = new FaceState(_tuning, seed: 7);
+            state.SnapToFeeling(FaceFeeling.Calm);
+
+            state.SetScreenMode(true);
+            Assert.IsTrue(state.IsScreenModeOpen);
+
+            // Lead-in (0.00 - 0.18 s): calm eyes remain visible while 07 lifts head
+            state.Step(0.10f);
+            Assert.AreEqual(0f, state.ScreenContentMix, 1e-4f);
+            Assert.AreEqual(0f, state.ScreenVerticalPinch, 1e-4f);
+
+            // Collapse + Line Hold (0.18 - 0.50 s): pinched into bright horizontal line
+            state.Step(0.30f);
+            Assert.AreEqual(0f, state.ScreenContentMix, 1e-4f);
+            Assert.Greater(state.ScreenVerticalPinch, 0.95f);
+            Assert.Greater(state.ScreenLineGlow, 0.95f);
+
+            // Expand into content (0.50 - 0.72 s): content mix = 1, pinch expanding toward 0
+            state.Step(0.20f);
+            Assert.AreEqual(1f, state.ScreenContentMix, 1e-4f);
+            Assert.Less(state.ScreenVerticalPinch, 0.5f);
+
+            // Settled content (> 0.72 s)
+            state.Step(0.25f);
+            Assert.AreEqual(1f, state.ScreenContentMix, 1e-4f);
+            Assert.AreEqual(0f, state.ScreenVerticalPinch, 1e-4f);
+            Assert.AreEqual(0f, state.ScreenLineGlow, 1e-4f);
+
+            // Close: collapses to line (0.14 s), then expands back to happy arc eyes (^ ^)
+            state.SetScreenMode(false);
+            Assert.IsFalse(state.IsScreenModeOpen);
+            state.Step(0.14f);
+            Assert.Greater(state.ScreenVerticalPinch, 0.95f);
+
+            state.Step(0.20f);
+            Assert.AreEqual(0f, state.ScreenContentMix, 1e-4f);
+            Assert.AreEqual(0f, state.ScreenVerticalPinch, 1e-4f);
+            Assert.AreEqual(1, state.ClosingHappyBlinkCount);
+            Assert.Greater(state.LeftEye.Arc, 0.5f, "Closing must end with a happy curved-eye blink (^ ^).");
+        }
     }
 }

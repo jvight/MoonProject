@@ -26,6 +26,19 @@ namespace MoonProject.UI
         [Range(-100f, 0f)]
         [SerializeField] private float _saturation = -30f;
 
+        [Header("Face-Inspect Backdrop (behind 07's head)")]
+        [Tooltip("Metres from the camera where the blur begins during face inspect so 07's head stays razor-sharp.")]
+        [Min(0.5f)]
+        [SerializeField] private float _faceBlurStartMetres = 1.35f;
+
+        [Tooltip("Metres from the camera where the blur reaches full softness behind 07 during face inspect.")]
+        [Range(1f, 50f)]
+        [SerializeField] private float _faceBlurEndMetres = 6.5f;
+
+        [Tooltip("Saturation offset during face inspect (0 keeps 07's amber and cyan phosphors at full colour).")]
+        [Range(-100f, 0f)]
+        [SerializeField] private float _faceSaturation;
+
         public float BlurStartMetres => _blurStartMetres;
 
         public float BlurEndMetres => Mathf.Max(_blurEndMetres, _blurStartMetres + 0.1f);
@@ -33,5 +46,11 @@ namespace MoonProject.UI
         public float BlurRadius => _blurRadius;
 
         public float Saturation => _saturation;
+
+        public float FaceBlurStartMetres => _faceBlurStartMetres;
+
+        public float FaceBlurEndMetres => Mathf.Max(_faceBlurEndMetres, _faceBlurStartMetres + 0.5f);
+
+        public float FaceSaturation => _faceSaturation;
     }
 }

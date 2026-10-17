@@ -51,6 +51,23 @@ namespace MoonProject.Rover
 
         private float _elapsedTime;
 
+        private enum ScreenPhase
+        {
+            Eyes = 0,
+            OpeningLeadIn = 1,
+            OpeningCollapse = 2,
+            OpeningLineHold = 3,
+            OpeningExpand = 4,
+            ScreenContent = 5,
+            ClosingCollapse = 6,
+            ClosingExpand = 7,
+        }
+
+        private bool _isScreenModeOpen;
+        private ScreenPhase _screenPhase;
+        private float _screenPhaseElapsed;
+        private float _closingHappyTimer;
+
         public FaceState(FaceTuning tuning, int seed = 7)
         {
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
@@ -133,6 +150,84 @@ namespace MoonProject.Rover
         /// <summary>Accumulated animation time in seconds (drives symbol pulse/drift).</summary>
         public float ElapsedTime => _elapsedTime;
 
+        /// <summary>True when the CRT face is in (or transitioning into) screen content mode.</summary>
+        public bool IsScreenModeOpen => _isScreenModeOpen;
+
+        /// <summary>Blend between 07's procedural eyes (<c>0</c>) and <c>_ContentTex</c> (<c>1</c>).</summary>
+        public float ScreenContentMix { get; private set; }
+
+        /// <summary>Vertical CRT deflection pinch in [0..1] (<c>0</c> = full height, <c>1</c> = pinched into a horizontal line).</summary>
+        public float ScreenVerticalPinch { get; private set; }
+
+        /// <summary>Horizontal phosphor line intensity in [0..1] during channel-switch transitions.</summary>
+        public float ScreenLineGlow { get; private set; }
+
+        /// <summary>Number of closing happy blinks (<c>^ ^</c>) triggered when returning from screen content mode to eyes.</summary>
+        public int ClosingHappyBlinkCount { get; private set; }
+
+        /// <summary>Total number of blinks started (periodic, wake, and channel-switch blinks).</summary>
+        public int BlinkCount { get; private set; }
+
+        /// <summary>Number of CRT channel-switch open transitions started.</summary>
+        public int ScreenOpenCount { get; private set; }
+
+        /// <summary>Number of CRT channel-switch close transitions started.</summary>
+        public int ScreenCloseCount { get; private set; }
+
+        /// <summary>
+        /// Enters or exits screen content mode with the CRT channel-switch choreography (eyes blink, collapse to a
+        /// horizontal phosphor line, and expand into content; closing reverses it and ends with a small happy blink).
+        /// </summary>
+        public void SetScreenMode(bool open)
+        {
+            if (_isScreenModeOpen == open)
+            {
+                return;
+            }
+
+            _isScreenModeOpen = open;
+            _screenPhaseElapsed = 0.0f;
+
+            if (open)
+            {
+                ScreenOpenCount++;
+                _closingHappyTimer = 0.0f;
+                if (_tuning.ScreenLeadInSeconds > 1e-4f)
+                {
+                    _screenPhase = ScreenPhase.OpeningLeadIn;
+                }
+                else
+                {
+                    Blink();
+                    _screenPhase = ScreenPhase.OpeningCollapse;
+                }
+
+                ScreenContentMix = 0.0f;
+                ScreenVerticalPinch = 0.0f;
+                ScreenLineGlow = 0.0f;
+            }
+            else
+            {
+                ScreenCloseCount++;
+                _screenPhase = ScreenPhase.ClosingCollapse;
+                ScreenContentMix = 1.0f;
+                ScreenVerticalPinch = 0.0f;
+                ScreenLineGlow = 0.0f;
+            }
+        }
+
+        /// <summary>Immediately snaps the CRT screen content mode without playing the transition choreography.</summary>
+        public void SnapToScreenMode(bool open)
+        {
+            _isScreenModeOpen = open;
+            _screenPhaseElapsed = 0.0f;
+            _closingHappyTimer = 0.0f;
+            _screenPhase = open ? ScreenPhase.ScreenContent : ScreenPhase.Eyes;
+            ScreenContentMix = open ? 1.0f : 0.0f;
+            ScreenVerticalPinch = 0.0f;
+            ScreenLineGlow = 0.0f;
+        }
+
         /// <summary>Sets the target feeling that eye parameters and symbols ease toward.</summary>
         public void SetFeeling(FaceFeeling feeling)
         {
@@ -196,6 +291,7 @@ namespace MoonProject.Rover
 
             _blinkElapsed = 0.0f;
             _nextBlinkCountdown = NextRange(_tuning.BlinkMinInterval, _tuning.BlinkMaxInterval);
+            BlinkCount++;
         }
 
         /// <summary>
@@ -278,8 +374,11 @@ namespace MoonProject.Rover
             _elapsedTime += deltaTime;
             BootProgress = Clamp01(BootProgress + deltaTime * _tuning.BootRate);
 
+            StepScreenMode(deltaTime);
+
             FaceFeelingSpec target = _tuning.GetFeelingSpec(Feeling);
             float k = 1.0f - (float)Math.Exp(-deltaTime * _tuning.EaseRate);
+            float targetArc = _closingHappyTimer > 0.0f ? 1.0f : target.Arc;
 
             _width += (target.Width - _width) * k;
             _height += (target.Height - _height) * k;
@@ -287,7 +386,7 @@ namespace MoonProject.Rover
             _tilt += (target.Tilt - _tilt) * k;
             _cut += (target.Cut - _cut) * k;
             _squint += (target.Squint - _squint) * k;
-            _arc += (target.Arc - _arc) * k;
+            _arc += (targetArc - _arc) * k;
             _ring += (target.Ring - _ring) * k;
             _closed += (target.Closed - _closed) * k;
             _lookX += (target.LookX - _lookX) * k;
@@ -332,6 +431,171 @@ namespace MoonProject.Rover
             GhostRightEye = FaceEyeParams.Lerp(GhostRightEye, prevRight, kTrail);
         }
 
+        private void StepScreenMode(float deltaTime)
+        {
+            if (_closingHappyTimer > 0.0f)
+            {
+                _closingHappyTimer = Math.Max(0.0f, _closingHappyTimer - deltaTime);
+            }
+
+            switch (_screenPhase)
+            {
+                case ScreenPhase.Eyes:
+                    ScreenContentMix = 0.0f;
+                    ScreenVerticalPinch = 0.0f;
+                    ScreenLineGlow = 0.0f;
+                    break;
+
+                case ScreenPhase.OpeningLeadIn:
+                {
+                    _screenPhaseElapsed += deltaTime;
+                    float leadInDur = _tuning.ScreenLeadInSeconds;
+                    if (_screenPhaseElapsed < leadInDur)
+                    {
+                        ScreenContentMix = 0.0f;
+                        ScreenVerticalPinch = 0.0f;
+                        ScreenLineGlow = 0.0f;
+                    }
+                    else
+                    {
+                        float leftover = _screenPhaseElapsed - leadInDur;
+                        Blink();
+                        _screenPhase = ScreenPhase.OpeningCollapse;
+                        _screenPhaseElapsed = 0.0f;
+                        StepScreenMode(leftover);
+                    }
+
+                    break;
+                }
+
+                case ScreenPhase.OpeningCollapse:
+                {
+                    _screenPhaseElapsed += deltaTime;
+                    float collapseDur = Math.Max(_tuning.ScreenCollapseSeconds, 1e-4f);
+                    if (_screenPhaseElapsed < collapseDur)
+                    {
+                        float s = SmoothStep01(_screenPhaseElapsed / collapseDur);
+                        ScreenContentMix = 0.0f;
+                        ScreenVerticalPinch = s;
+                        ScreenLineGlow = s;
+                    }
+                    else
+                    {
+                        float leftover = _screenPhaseElapsed - collapseDur;
+                        _screenPhase = _tuning.ScreenLineHoldSeconds > 1e-4f
+                            ? ScreenPhase.OpeningLineHold
+                            : ScreenPhase.OpeningExpand;
+                        _screenPhaseElapsed = 0.0f;
+                        StepScreenMode(leftover);
+                    }
+
+                    break;
+                }
+
+                case ScreenPhase.OpeningLineHold:
+                {
+                    _screenPhaseElapsed += deltaTime;
+                    float holdDur = _tuning.ScreenLineHoldSeconds;
+                    if (_screenPhaseElapsed < holdDur)
+                    {
+                        ScreenContentMix = 0.0f;
+                        ScreenVerticalPinch = 1.0f;
+                        ScreenLineGlow = 1.0f;
+                    }
+                    else
+                    {
+                        float leftover = _screenPhaseElapsed - holdDur;
+                        _screenPhase = ScreenPhase.OpeningExpand;
+                        _screenPhaseElapsed = 0.0f;
+                        StepScreenMode(leftover);
+                    }
+
+                    break;
+                }
+
+                case ScreenPhase.OpeningExpand:
+                {
+                    _screenPhaseElapsed += deltaTime;
+                    float expandDur = Math.Max(_tuning.ScreenExpandSeconds, 1e-4f);
+                    if (_screenPhaseElapsed < expandDur)
+                    {
+                        float u = Clamp01(_screenPhaseElapsed / expandDur);
+                        float inv = 1.0f - u;
+                        float easeOut = 1.0f - inv * inv * inv;
+                        ScreenContentMix = 1.0f;
+                        ScreenVerticalPinch = 1.0f - easeOut;
+                        ScreenLineGlow = 1.0f - easeOut;
+                    }
+                    else
+                    {
+                        _screenPhase = ScreenPhase.ScreenContent;
+                        _screenPhaseElapsed = 0.0f;
+                        ScreenContentMix = 1.0f;
+                        ScreenVerticalPinch = 0.0f;
+                        ScreenLineGlow = 0.0f;
+                    }
+
+                    break;
+                }
+
+                case ScreenPhase.ScreenContent:
+                    ScreenContentMix = 1.0f;
+                    ScreenVerticalPinch = 0.0f;
+                    ScreenLineGlow = 0.0f;
+                    break;
+
+                case ScreenPhase.ClosingCollapse:
+                {
+                    _screenPhaseElapsed += deltaTime;
+                    float collapseDur = Math.Max(_tuning.ScreenCloseCollapseSeconds, 1e-4f);
+                    if (_screenPhaseElapsed < collapseDur)
+                    {
+                        float s = SmoothStep01(_screenPhaseElapsed / collapseDur);
+                        ScreenContentMix = 1.0f;
+                        ScreenVerticalPinch = s;
+                        ScreenLineGlow = s;
+                    }
+                    else
+                    {
+                        float leftover = _screenPhaseElapsed - collapseDur;
+                        _screenPhase = ScreenPhase.ClosingExpand;
+                        _screenPhaseElapsed = 0.0f;
+                        _closingHappyTimer = _tuning.ScreenCloseHappyHoldSeconds;
+                        _arc = 1.0f;
+                        Blink();
+                        ClosingHappyBlinkCount++;
+                        StepScreenMode(leftover);
+                    }
+
+                    break;
+                }
+
+                case ScreenPhase.ClosingExpand:
+                {
+                    _screenPhaseElapsed += deltaTime;
+                    float expandDur = Math.Max(_tuning.ScreenCloseExpandSeconds, 1e-4f);
+                    if (_screenPhaseElapsed < expandDur)
+                    {
+                        float u = Clamp01(_screenPhaseElapsed / expandDur);
+                        float easeOut = 1.0f - (1.0f - u) * (1.0f - u);
+                        ScreenContentMix = 0.0f;
+                        ScreenVerticalPinch = 1.0f - easeOut;
+                        ScreenLineGlow = 1.0f - easeOut;
+                    }
+                    else
+                    {
+                        _screenPhase = ScreenPhase.Eyes;
+                        _screenPhaseElapsed = 0.0f;
+                        ScreenContentMix = 0.0f;
+                        ScreenVerticalPinch = 0.0f;
+                        ScreenLineGlow = 0.0f;
+                    }
+
+                    break;
+                }
+            }
+        }
+
         private void StepBlink(float deltaTime)
         {
             if (Feeling == FaceFeeling.Asleep)
@@ -346,6 +610,7 @@ namespace MoonProject.Rover
             {
                 _blinkElapsed = 0.0f;
                 _nextBlinkCountdown = NextRange(_tuning.BlinkMinInterval, _tuning.BlinkMaxInterval);
+                BlinkCount++;
             }
 
             float duration = Math.Max(_tuning.BlinkDuration, 1e-4f);
@@ -447,6 +712,12 @@ namespace MoonProject.Rover
         {
             float hi = Math.Max(min, max);
             return min + (float)_random.NextDouble() * (hi - min);
+        }
+
+        private static float SmoothStep01(float value)
+        {
+            float t = Clamp01(value);
+            return t * t * (3.0f - 2.0f * t);
         }
 
         private static float Lerp(float a, float b, float t)

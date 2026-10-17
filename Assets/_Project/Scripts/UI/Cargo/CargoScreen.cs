@@ -290,10 +290,13 @@ namespace MoonProject.UI
             return _hold.GetSlot(index).IsEmpty && string.IsNullOrEmpty(_hold.GetPart(index));
         }
 
+        /// <summary>True when hosted on 07's 3:2 face screen so the 1152x768 view maps 1:1 to the CRT render texture.</summary>
+        internal bool FillPanelHeight { get; set; }
+
         private void FitPanel(Vector2 panelSize)
         {
-            float maxW = Mathf.Min(_settings.PanelWidth, panelSize.x * _settings.WidthShare);
-            float maxH = Mathf.Min(_settings.PanelHeight, panelSize.y * _settings.HeightShare);
+            float maxW = FillPanelHeight ? panelSize.x : Mathf.Min(_settings.PanelWidth, panelSize.x * _settings.WidthShare);
+            float maxH = FillPanelHeight ? panelSize.y : Mathf.Min(_settings.PanelHeight, panelSize.y * _settings.HeightShare);
             float scale = Mathf.Min(1f, Mathf.Min(maxW / FaceInventoryView.ReferenceWidth,
                 maxH / FaceInventoryView.ReferenceHeight));
             float width = Mathf.Floor(FaceInventoryView.ReferenceWidth * scale);

@@ -211,6 +211,9 @@ namespace MoonProject.Rover.Editor
             Transform head = BuildWiring.Node(m, RoverModelNodes.Head);
             Transform screen = BuildWiring.Node(head, RoverModelNodes.Screen);
             Renderer screenRenderer = BuildWiring.NodeComponent<MeshRenderer>(head, RoverModelNodes.Screen);
+            MeshFilter screenFilter = BuildWiring.NodeComponent<MeshFilter>(head, RoverModelNodes.Screen);
+            var screenCollider = screen.gameObject.AddComponent<MeshCollider>();
+            screenCollider.sharedMesh = screenFilter.sharedMesh;
             Transform rearVentStrip = BuildWiring.Node(head, RoverModelNodes.RearVentStrip);
             Renderer rearVentRenderer = rearVentStrip.GetComponent<Renderer>();
             if (rearVentRenderer == null)
@@ -255,6 +258,10 @@ namespace MoonProject.Rover.Editor
                 ("_eyeLight", eyeLight),
                 ("_scanFan", fan.GetComponentInChildren<Renderer>(true)),
                 ("_faceDirector", faceDirector));
+
+            BuildWiring.Assign(controller,
+                ("_bodyLanguage", bodyLanguage),
+                ("_screenCollider", screenCollider));
 
             return root;
         }

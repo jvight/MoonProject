@@ -336,6 +336,7 @@ namespace MoonProject.Art.Editor
             material.SetVector("_FaceSymbol", Vector4.zero);
             material.SetVector("_FaceCrtState", new Vector4(1f, 1f, 0f, 0f));
             material.SetVector("_FacePhases", new Vector4(0f, 0f, 0.45f, 0.30f));
+            material.SetVector("_FaceContentState", Vector4.zero);
 
             material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
             material.enableInstancing = true;

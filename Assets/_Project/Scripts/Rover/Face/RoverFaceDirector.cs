@@ -57,6 +57,9 @@ namespace MoonProject.Rover
         /// <summary>The wired renderer receiving <c>_EmissionStrength</c> for <c>RearVentStrip</c>.</summary>
         public Renderer RearVentRenderer => _rearVentRenderer;
 
+        /// <summary>The barrel curvature parameter on the CRT face material.</summary>
+        public float Curvature => _display != null ? _display.Curvature : 0.12f;
+
         /// <summary>Explicitly wires all serialized references on this component.</summary>
         public void Wire(
             FaceDirectorTuning tuning,
@@ -89,7 +92,7 @@ namespace MoonProject.Rover
 
             _context = context;
             _display.ExternallyDriven = true;
-            _director = new FaceDirector(_display.State, _tuning);
+            _director = new FaceDirector(_display.State, _tuning, context.Events);
             _rearVentBlock = new MaterialPropertyBlock();
             _servicesResolved = false;
 
@@ -182,6 +185,25 @@ namespace MoonProject.Rover
             _director.UpdateGaze(hasExplicitGaze, targetYawDeg, targetPitchDeg, currentYawDeg, currentPitchDeg);
             _director.Step(deltaTime);
             _display.ApplyToRenderer();
+            ApplyRearVent();
+        }
+
+        /// <summary>
+        /// Enters or exits CRT screen content mode on <see cref="Display"/> and <see cref="Director"/>, binding
+        /// <paramref name="contentTexture"/> to <c>_ContentTex</c>.
+        /// </summary>
+        public void SetScreenMode(bool open, Texture contentTexture = null)
+        {
+            if (_display != null)
+            {
+                _display.SetScreenMode(open, contentTexture);
+            }
+
+            if (_director != null)
+            {
+                _director.SetScreenMode(open);
+            }
+
             ApplyRearVent();
         }
 

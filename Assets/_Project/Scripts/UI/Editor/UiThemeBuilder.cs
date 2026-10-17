@@ -16,8 +16,10 @@ namespace MoonProject.UI.Editor
         public const string BuilderPath = "UI/Theme";
         public const int BuilderOrder = 610;
 
+        public static readonly Vector2Int FaceReferenceResolution = new Vector2Int(1152, 768);
         private const string StyleSheet = UiAssetPaths.SourceFolder + "/GameUI.uss";
         private static readonly Vector2Int ReferenceResolution = new Vector2Int(1920, 1080);
+        private static readonly Color FaceClearColor = new Color(0.031f, 0.039f, 0.055f, 1f);
 
         /// <summary>
         /// 1 scales by the screen's height. The UI is composed against the picture, whose height is what stays the
@@ -53,8 +55,31 @@ namespace MoonProject.UI.Editor
             panel.match = HeightMatch;
             panel.clearColor = false;
             GeneratedAssets.CreateOrReplace(panel, UiAssetPaths.PanelSettings);
-            Debug.Log($"{BuilderPath}: wrote {UiAssetPaths.Palette}, {UiAssetPaths.Theme} and " +
-                      UiAssetPaths.PanelSettings);
+
+            var faceTarget = new RenderTexture(FaceReferenceResolution.x, FaceReferenceResolution.y, 0,
+                RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
+            {
+                name = "LofiLunarFaceTarget",
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp,
+            };
+            GeneratedAssets.CreateOrReplace(faceTarget, UiAssetPaths.FaceRenderTexture);
+            var loadedFaceTarget = AssetDatabase.LoadAssetAtPath<RenderTexture>(UiAssetPaths.FaceRenderTexture);
+
+            var facePanel = ScriptableObject.CreateInstance<PanelSettings>();
+            facePanel.themeStyleSheet = theme;
+            facePanel.scaleMode = PanelScaleMode.ScaleWithScreenSize;
+            facePanel.referenceResolution = FaceReferenceResolution;
+            facePanel.screenMatchMode = PanelScreenMatchMode.MatchWidthOrHeight;
+            facePanel.match = HeightMatch;
+            facePanel.clearColor = true;
+            facePanel.colorClearValue = FaceClearColor;
+            facePanel.sortingOrder = 1f;
+            facePanel.targetTexture = loadedFaceTarget;
+            GeneratedAssets.CreateOrReplace(facePanel, UiAssetPaths.FacePanelSettings);
+
+            Debug.Log($"{BuilderPath}: wrote {UiAssetPaths.Palette}, {UiAssetPaths.Theme}, " +
+                      $"{UiAssetPaths.PanelSettings}, {UiAssetPaths.FaceRenderTexture} and {UiAssetPaths.FacePanelSettings}");
         }
     }
 }

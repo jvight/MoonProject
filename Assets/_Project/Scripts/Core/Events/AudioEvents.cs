@@ -20,7 +20,7 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// 07's CRT eye-face feelings and gestures voiced on the radio bench (R1 AUDIO-INT).
+    /// 07's CRT eye-face feelings, gestures, and screen channel-switch transitions voiced on the radio bench (R1 AUDIO-INT).
     /// </summary>
     public enum RoverFaceCueKind
     {
@@ -31,11 +31,13 @@ namespace MoonProject.Core.Events
         Asleep,
         Startled,
         Proud,
+        ScreenOpen,
+        ScreenClose,
     }
 
     /// <summary>
-    /// Published when 07's CRT face starts its wake boot, blinks, or changes feeling so Audio can voice the
-    /// matching R1 face cue at 07's position.
+    /// Published when 07's CRT face starts its wake boot, blinks, changes feeling, or opens/closes its CRT screen
+    /// channel so Audio can voice the matching R1 face cue at 07's position.
     /// </summary>
     public readonly struct RoverFaceCued
     {
