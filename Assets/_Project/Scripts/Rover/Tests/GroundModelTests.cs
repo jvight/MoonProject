@@ -81,5 +81,41 @@ namespace MoonProject.Rover.Tests
             Assert.AreEqual(_ground.AirRiseGravity - 1.62f, GroundModel.ExtraAirGravity(_ground, 1f, -1.62f), 1e-5f);
             Assert.AreEqual(_ground.AirFallGravity - 1.62f, GroundModel.ExtraAirGravity(_ground, -1f, -1.62f), 1e-5f);
         }
+
+        [Test]
+        public void SlopeAcceleration_OnCrossSlopeWhileRolling_PullsGentlyDownhill()
+        {
+            Vector3 normal = SlopeNormal(30f);
+            Vector3 crossForward = Vector3.right;
+            Vector3 downhill = Vector3.ProjectOnPlane(Vector3.back, normal).normalized;
+            Vector3 total = LunarGravity + GroundModel.SlopeAcceleration(_ground, LunarGravity, normal, crossForward, 5f);
+            float downhillPull = Vector3.Dot(total, downhill);
+            Assert.Greater(downhillPull, 0.35f,
+                "Traversing across a 30 deg slope at speed must feel a gentle downhill pull.");
+        }
+
+        [Test]
+        public void ObstacleCollision_HeadOnReboundsAndClampsClimb_GlancingSlidesAndDeflects()
+        {
+            Vector3 wallNormal = Vector3.back;
+            Vector3 headOnVel = new Vector3(0f, 1.5f, 6f);
+            Vector3 bounced = GroundModel.ResolveObstacleVelocity(_ground, headOnVel, wallNormal, true,
+                out float headOnImpact, out bool bouncedHeadOn);
+            Assert.IsTrue(bouncedHeadOn, "Head-on impact must rebound.");
+            Assert.AreEqual(6f, headOnImpact, 1e-4f);
+            Assert.AreEqual(0f, bounced.y, 1e-4f, "Grounded collision must clamp upward wedging velocity.");
+            Assert.Less(bounced.z, -1f, "Head-on impact must rebound away from the obstacle.");
+
+            Vector3 glancingVel = Quaternion.Euler(0f, -65f, 0f) * Vector3.forward * 7f;
+            Vector3 slid = GroundModel.ResolveObstacleVelocity(_ground, glancingVel, wallNormal, true,
+                out _, out bool glancingBounced);
+            Assert.IsFalse(glancingBounced, "Glancing wall contact must slide rather than rebound.");
+            Assert.AreEqual(0f, slid.z, 1e-4f, "Inward velocity component is removed.");
+            Assert.Less(slid.x, -4.5f, "Tangential speed is preserved along the wall.");
+
+            float deflected = GroundModel.DeflectHeadingOnWall(_ground, 315f, wallNormal, 1f, 0.1f);
+            Assert.Less(Mathf.Abs(Mathf.DeltaAngle(deflected, 270f)), Mathf.Abs(Mathf.DeltaAngle(315f, 270f)),
+                "Glancing wall contact gently deflects heading toward the wall tangent.");
+        }
     }
 }

@@ -72,5 +72,22 @@ namespace MoonProject.Rover.Tests
             Assert.Greater(SteeringModel.YawRate(_steering, 1f, 1f, 4f, TopSpeed, true), 0f);
             Assert.Less(SteeringModel.YawRate(_steering, 1f, -1f, -2f, TopSpeed, true), 0f);
         }
+
+        [Test]
+        public void SteerRelease_EasesOutYawCarry_AtTopSpeed()
+        {
+            const float dt = 1f / 60f;
+            float steer = 1f;
+            float continuedYaw = 0f;
+            for (float t = 0f; t < 0.8f; t += dt)
+            {
+                steer = Smoothing.Damp(steer, 0f, _steering.SteerReturnHalfLife, dt);
+                float yawRate = SteeringModel.YawRate(_steering, steer, 1f, TopSpeed, TopSpeed, true);
+                continuedYaw += yawRate * dt;
+            }
+
+            Assert.That(continuedYaw, Is.InRange(11f, 22f),
+                "Releasing steering mid-turn at top speed should ease out with a gentle lunar carry, not stop dead.");
+        }
     }
 }
