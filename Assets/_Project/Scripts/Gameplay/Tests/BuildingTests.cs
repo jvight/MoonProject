@@ -17,6 +17,15 @@ namespace MoonProject.Gameplay.Tests
 {
     public sealed class BuildingTests
     {
+        /// <summary>Metres above the pad's origin a ray starts down onto its deck.</summary>
+        private const float PadProbeHeight = 3f;
+
+        /// <summary>Metres a pad's deck may rise at most: 07's wheels climb it.</summary>
+        private const float PadDeckMostHeight = 0.5f;
+
+        /// <summary>Metres the pad's totem stands at least.</summary>
+        private const float PadTotemLeastHeight = 1f;
+
         private StructureCatalog _catalog;
         private BuildingTuning _tuning;
         private EventBus _events;
@@ -849,6 +858,41 @@ namespace MoonProject.Gameplay.Tests
                 Object.DestroyImmediate(solidMat);
                 Object.DestroyImmediate(validHolo);
                 Object.DestroyImmediate(invalidHolo);
+            }
+        }
+
+        [Test]
+        public void TheBuiltChargingPad_Is07sToDriveOnto_ItsDeckLowAndItsTotemSolid()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                GameplayAssetPaths.RuntimeStructurePrefab(StructureIds.ChargingPad));
+            Assert.IsNotNull(prefab, "run Gameplay/Content");
+            GameObject pad = Object.Instantiate(prefab);
+            try
+            {
+                foreach (Transform part in pad.GetComponentsInChildren<Transform>(true))
+                {
+                    part.gameObject.SetActive(true);
+                }
+
+                Physics.SyncTransforms();
+                float tallest = 0f;
+                var parts = new List<string>();
+                foreach (Collider collider in pad.GetComponentsInChildren<Collider>())
+                {
+                    tallest = Mathf.Max(tallest, collider.bounds.max.y);
+                    parts.Add($"{collider.name} {collider.bounds.min.y:F2}..{collider.bounds.max.y:F2}");
+                }
+
+                Assert.IsTrue(Physics.Raycast(Vector3.up * PadProbeHeight, Vector3.down, out RaycastHit deck,
+                    PadProbeHeight * 2f), "the deck is solid under 07's parking spot");
+                Assert.Less(deck.point.y, PadDeckMostHeight,
+                    $"07 parks on a low deck, not on {deck.collider.name} ({string.Join(", ", parts)})");
+                Assert.Greater(tallest, PadTotemLeastHeight, "the totem still stands solid");
+            }
+            finally
+            {
+                Object.DestroyImmediate(pad);
             }
         }
 
