@@ -113,9 +113,27 @@ Shader "MoonProject/Art/LofiScanSolid"
                 clip(MoonScanDither(input.positionCS.xy) - MoonScanSolidFade(_Dissolve, _Fade));
 
                 float height = MoonScanHeight(input.positionWS);
-                half drawn = step(height, _ScanProgress) * step(0.001, _ScanProgress);
+                half activeScan = step(0.001, _ScanProgress);
+                half drawn = step(height, _ScanProgress) * activeScan;
                 half sweep = (1.0 - smoothstep(0.0, _SweepWidth, abs(height - _ScanProgress)))
-                    * step(0.001, _ScanProgress) * step(_ScanProgress, 0.999);
+                    * activeScan * step(_ScanProgress, 0.999);
+
+                // Fine horizontal 1980s instrument phosphor raster lines (cyan + warm amber) building up with progress
+                float rasterCoord = height * 32.0;
+                half rasterMask = smoothstep(0.15, 0.65, 0.5 + 0.5 * sin(rasterCoord * 6.2831853));
+                half amberBand = smoothstep(0.2, 0.8, 0.5 + 0.5 * sin(height * 10.0 * 6.2831853));
+                half3 amberPhosphor = half3(0.68, 0.44, 0.10);
+                half3 rasterColor = lerp(_SweepColor.rgb, amberPhosphor, amberBand * 0.48);
+                half rasterBuild = drawn * rasterMask * lerp(0.32, 0.72, saturate(_ScanProgress));
+
+                // Faint edge outline that builds with progress and completes at 100%, plus completion ping
+                half3 viewDirWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
+                half ndotv = saturate(dot(normalize(input.normalWS), viewDirWS));
+                half rimEdge = pow(1.0 - ndotv, 2.6);
+                half outlineWeight = rimEdge * activeScan * lerp(0.22 * drawn, 0.65, saturate(_ScanProgress * _ScanProgress));
+                half ping = smoothstep(0.0, 0.04, _Dissolve) * (1.0 - smoothstep(0.06, 0.26, _Dissolve));
+                half3 outlineEmission = lerp(_SweepColor.rgb, half3(0.82, 0.68, 0.32), ping * 0.5)
+                    * (outlineWeight + rimEdge * ping * 0.85);
 
                 LofiSurface surface;
                 surface.positionWS = input.positionWS;
@@ -123,9 +141,11 @@ Shader "MoonProject/Art/LofiScanSolid"
                 surface.positionCS = input.positionCS;
                 surface.albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).rgb * _BaseColor.rgb;
                 surface.albedo = lerp(surface.albedo, _MoonAoTint.rgb, input.occlusion);
-                surface.albedo = lerp(surface.albedo, _DrawnColor.rgb, drawn * 0.65) * (1.0 - 0.35 * sweep);
+                surface.albedo = lerp(surface.albedo, _DrawnColor.rgb, drawn * (0.42 + 0.25 * rasterMask)) * (1.0 - 0.35 * sweep);
+                half3 scanEmission = _SweepColor.rgb * sweep + rasterColor * rasterBuild + outlineEmission;
+                scanEmission = min(scanEmission, half3(0.88, 0.88, 0.88));
                 surface.emission = SAMPLE_TEXTURE2D(_EmissionMap, sampler_EmissionMap, input.uv).rgb
-                    * _EmissionColor.rgb + _SweepColor.rgb * sweep;
+                    * _EmissionColor.rgb + scanEmission;
                 surface.vertexLight = input.fogFactorAndVertexLight.yzw;
                 surface.fogFactor = input.fogFactorAndVertexLight.x;
                 return half4(LofiLit(surface), 1.0);

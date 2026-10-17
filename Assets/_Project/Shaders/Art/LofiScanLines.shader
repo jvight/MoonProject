@@ -77,10 +77,17 @@ Shader "MoonProject/Art/LofiScanLines"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                clip(_ScanProgress - MoonScanHeight(input.positionWS));
+                float h = MoonScanHeight(input.positionWS);
+                half activeScan = step(0.001, _ScanProgress);
+                half belowSweep = step(h, _ScanProgress);
+                half faintPreview = step(MoonScanDither(input.positionCS.xy), saturate(_ScanProgress * 0.55));
+                clip(activeScan * max(belowSweep, faintPreview) - 0.5);
                 clip(1.0 - MoonScanUnthread(_Dissolve) - MoonScanReach(input.positionWS)
                     - step(MOON_SCAN_LINES_END, _Dissolve));
-                half3 color = MixFog(_LineColor.rgb, input.fogFactor);
+                half ping = smoothstep(0.0, 0.04, _Dissolve) * (1.0 - smoothstep(0.06, 0.26, _Dissolve));
+                half3 baseLine = lerp(_LineColor.rgb * 0.45, _LineColor.rgb, belowSweep);
+                half3 pingColor = half3(0.96, 0.88, 0.68);
+                half3 color = MixFog(lerp(baseLine, pingColor, ping * 0.75), input.fogFactor);
                 return half4(color, 1.0);
             }
             ENDHLSL

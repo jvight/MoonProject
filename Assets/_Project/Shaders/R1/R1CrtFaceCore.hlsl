@@ -248,6 +248,33 @@ float EvaluateZzzSymbol(float2 canvasPos, float aaWidth, float animTime, out flo
     return totalCov;
 }
 
+float EvaluateScanProgressRing(float2 canvasPos, float aaWidth, float progress01, out float sdfOut)
+{
+    float2 center = float2(0.80 * CRT_ASPECT, 0.24);
+    float2 p = canvasPos - center;
+    float r = length(p);
+    float ringRadius = 0.078;
+    float ringHalfWidth = 0.0048;
+
+    // Clockwise angle from top (12 o'clock = 0..1)
+    float angle = atan2(p.x, -p.y);
+    float cw01 = frac((angle + 2.0 * CRT_PI) / (2.0 * CRT_PI));
+
+    float sdfRing = abs(r - ringRadius) - ringHalfWidth;
+    float arcGate = smoothstep(progress01 + 0.02, progress01 - 0.01, cw01);
+
+    // Four cardinal quarter-ticks (25%, 50%, 75%, 100%) outside the ring
+    float2 q = abs(p);
+    float tickX = SdfSegment(q, float2(0.082, 0.0), float2(0.096, 0.0)) - 0.0035;
+    float tickY = SdfSegment(q, float2(0.0, 0.082), float2(0.0, 0.096)) - 0.0035;
+    float sdfTicks = min(tickX, tickY);
+
+    sdfOut = min(sdfRing + (1.0 - arcGate) * 0.04, sdfTicks);
+    float ringCov = smoothstep(aaWidth, -aaWidth, sdfRing) * arcGate;
+    float tickCov = smoothstep(aaWidth, -aaWidth, sdfTicks) * (0.45 + 0.55 * arcGate);
+    return max(ringCov, tickCov);
+}
+
 half4 CrtFacePassFragment(Varyings input) : SV_Target
 {
     UNITY_SETUP_INSTANCE_ID(input);
@@ -325,6 +352,7 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
         int symbolId = (int)round(_FaceSymbol.x);
         float symbolAlpha = saturate(_FaceSymbol.y);
         float animTime = _FaceSymbol.z;
+        float scanRing = saturate(_FaceSymbol.w);
         if (symbolId > 0 && symbolAlpha > 0.005)
         {
             float symSdf = 1.0;
@@ -345,6 +373,14 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
             symCov *= symbolAlpha;
             primaryCov = max(primaryCov, symCov);
             minPrimarySdf = min(minPrimarySdf, symSdf);
+        }
+
+        if (scanRing > 0.005)
+        {
+            float ringSdf = 1.0;
+            float ringCov = EvaluateScanProgressRing(canvasPos, aaWidth, scanRing, ringSdf);
+            primaryCov = max(primaryCov, ringCov);
+            minPrimarySdf = min(minPrimarySdf, ringSdf);
         }
 
         primaryCov *= deflectionBandMask;
