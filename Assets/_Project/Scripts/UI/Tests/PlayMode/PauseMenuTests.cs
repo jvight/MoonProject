@@ -339,10 +339,10 @@ namespace MoonProject.UI.PlayModeTests
             Submit(layout.NewGameButton);
             yield return new WaitForSecondsRealtime(Settle);
             Submit(layout.NewGameConfirmButton);
+            Submit(layout.NewGameConfirmButton);
             yield return null;
-            Assert.AreEqual(0, asked, "the dark comes first");
-            yield return new WaitForSecondsRealtime(_rig.Tuning.Title.Curtain.FadeIn + 0.5f);
-            Assert.AreEqual(1, asked);
+            Assert.IsFalse(_rig.Ui.Pause.IsOpen, "the title eases away so the camera can push into 07's closed lens");
+            Assert.AreEqual(1, asked, "once only: App reloads inside O1's black (WakeBeat.PushedIn)");
         }
 
         [UnityTest]

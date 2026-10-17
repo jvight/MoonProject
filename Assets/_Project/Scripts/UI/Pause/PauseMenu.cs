@@ -942,15 +942,26 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// Start over: once the dark is drawn, the App is asked for a new game (it puts the save away and reloads).
-        /// Once only, however often the button is pressed before the scene goes.
+        /// Start over: on the title over a save, the title eases away and the App is asked for a new game (the camera
+        /// pushes into 07's closed lens, and App puts the save away and reloads inside O1's black); otherwise once the
+        /// dark is drawn, the App is asked for a new game. Once only, however often the button is pressed.
         /// </summary>
         private void OnNewGameConfirmed()
         {
             if (IsOpen && _leaving == Leaving.None && _pages.ConfirmNewGame())
             {
                 Cue(UiCueKind.Confirm);
-                Draw(Leaving.NewGame);
+                if (_pages.IsTitle)
+                {
+                    _leaving = Leaving.Gone;
+                    CloseTitle();
+                    RestoreTime();
+                    _events.Publish(new NewGameRequested());
+                }
+                else
+                {
+                    Draw(Leaving.NewGame);
+                }
             }
         }
 
@@ -1186,6 +1197,7 @@ namespace MoonProject.UI
             }
 
             _player.ChooseLanguage(_localization.Languages[index]);
+            SaveIfChanged();
             _navigator.RequestFocus(_pages.DefaultFocus);
             Cue(UiCueKind.Confirm);
         }

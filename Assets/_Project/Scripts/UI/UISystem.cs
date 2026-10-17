@@ -133,6 +133,7 @@ namespace MoonProject.UI
         private bool _composed;
         private bool _bound;
         private bool _awake;
+        private bool _inOpening;
         private bool _titleWaiting;
         private bool _titleHasSave;
         private bool _digging;
@@ -719,7 +720,7 @@ namespace MoonProject.UI
             _placeCard.Tick(hudTime, PlaceCardsOpen() && _slot.Allows(GuidanceKind.Place));
             _nextLine.Tick(deltaTime, _nextStep, NextLineOpen(paused) && _slot.Allows(GuidanceKind.Next), _lowBattery,
                 NextLineOpen(paused) && _slot.Allows(GuidanceKind.Battery));
-            bool hudOpen = !paused && _awake && !_stargaze.IsVeiled && !onMap;
+            bool hudOpen = !paused && _awake && !_inOpening && !_stargaze.IsVeiled && !onMap;
             _batteryDial.Tick(deltaTime, _cellRowRevealed, hudOpen);
             _homeMeter.Tick(deltaTime, hudOpen && !_card.IsVisible && !_letterCard.IsVisible);
         }
@@ -745,7 +746,7 @@ namespace MoonProject.UI
         /// <summary>Everything but the slot that lets the teaching prompt show.</summary>
         private bool PromptsOpen(bool paused, bool hopping)
         {
-            return !paused && _awake && _sinceAwake >= _tuning.Prompts.StartDelay && !_card.IsBusy &&
+            return !paused && _awake && !_inOpening && _sinceAwake >= _tuning.Prompts.StartDelay && !_card.IsBusy &&
                    !_letterCard.IsBusy && !_dial.IsBusy && !_hopList.IsBusy && !hopping && !_siteName.IsVisible &&
                    !_siteName.IsWaiting && !_kitTitle.IsVisible && !_lookUpChip.IsVisible && !GarageBeatActive() &&
                    (_buildStrip == null || !_buildStrip.IsOpen);
@@ -759,14 +760,14 @@ namespace MoonProject.UI
 
         private bool PlaceCardsOpen()
         {
-            return _awake && !_protocol.IsVisible && !_kitTitle.IsVisible && !_card.IsVisible &&
+            return _awake && !_inOpening && !_protocol.IsVisible && !_kitTitle.IsVisible && !_card.IsVisible &&
                    !_letterCard.IsVisible && !_rewardCard.IsVisible && !_siteName.IsVisible && !GarageBeatActive() &&
                    (_buildStrip == null || !_buildStrip.IsOpen);
         }
 
         private bool TickerOpen(bool hopping)
         {
-            return _awake && !_card.IsBusy && !_letterCard.IsBusy && !_digging && !_services.Salvage.IsCutting &&
+            return _awake && !_inOpening && !_card.IsBusy && !_letterCard.IsBusy && !_digging && !_services.Salvage.IsCutting &&
                    !_reticle.IsVisible && !_dial.IsBusy && !_hopList.IsBusy && !hopping &&
                    !_siteName.IsVisible && !_kitTitle.IsVisible && !_rewardCard.IsVisible && !_rewardCard.IsWaiting &&
                    !GarageBeatActive() && (_buildStrip == null || !_buildStrip.IsOpen);
@@ -774,7 +775,7 @@ namespace MoonProject.UI
 
         private bool NextLineOpen(bool paused)
         {
-            return !paused && _awake && !_stargaze.IsVeiled && !_protocol.IsVisible && !_rewardCard.IsVisible &&
+            return !paused && _awake && !_inOpening && !_stargaze.IsVeiled && !_protocol.IsVisible && !_rewardCard.IsVisible &&
                    !_kitTitle.IsVisible && !_unlockCard.IsVisible && (_buildStrip == null || !_buildStrip.IsOpen);
         }
 
@@ -1094,7 +1095,7 @@ namespace MoonProject.UI
 
         private void OnGameSaved(GameSaved saved)
         {
-            if (_bound)
+            if (_bound && _awake && !_inOpening && !_pause.IsTitle)
             {
                 _saveTick.Saved();
             }
@@ -1238,6 +1239,7 @@ namespace MoonProject.UI
 
             if (reached.Beat == WakeBeat.Crackle)
             {
+                _inOpening = true;
                 _firstPrompt.OpeningBegan();
                 _protocol.OpeningBegan();
             }
@@ -1247,6 +1249,7 @@ namespace MoonProject.UI
             }
             else if (reached.Beat == WakeBeat.ChaseFrame)
             {
+                _inOpening = false;
                 _protocol.Cue();
                 _firstPrompt.ChaseFrameReached();
             }

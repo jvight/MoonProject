@@ -179,8 +179,8 @@ namespace MoonProject.UI
     [Serializable]
     public sealed class TitleSettings
     {
-        [Tooltip("The wordmark and subtitle easing in and out (slow and soft).")]
-        [SerializeField] private RevealSettings _reveal = new RevealSettings(2.2f, 2.8f, 14f, 0.985f, 0.6f, 0.8f);
+        [Tooltip("The wordmark and subtitle easing in and out (slow in, 0.5 s out into the lens push-in).")]
+        [SerializeField] private RevealSettings _reveal = new RevealSettings(2.2f, 0.5f, 14f, 0.985f, 0.6f, 0.8f);
 
         [Tooltip("The dark drawn over everything before New Game, Quit to title or Quit, and lifted after a boot.")]
         [SerializeField] private RevealSettings _curtain = new RevealSettings(0.9f, 1.4f, 0f, 1f, 1f, 1f);

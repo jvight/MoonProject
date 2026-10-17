@@ -34,7 +34,7 @@ namespace MoonProject.Gameplay.PlayModeTests
     public sealed class FeelCaptureGameplayTests : InputTestFixture
     {
         private const float FrameTime = 1f / 30f;
-        private const float WakeTimeout = 25f;
+        private const float WakeTimeout = 35f;
         private const float WakeEaseTimeout = 8f;
         private const string FallenArrayFirstFragmentId = "ruin.FallenSolarArray.0";
         private const string DuckRelicId = "rubber_duck";
@@ -494,24 +494,39 @@ namespace MoonProject.Gameplay.PlayModeTests
                 _context.Events.Publish(new NewGameRequested());
             }
 
-            yield return StepFrames(recorder, 18);
+            bool reachedBlinked = false;
+            bool reachedChaseFrame = false;
+            using IDisposable wakeBeatSub = _context.Events.Subscribe<RoverWakeBeatReached>(beat =>
+            {
+                if (beat.Beat == WakeBeat.Blinked)
+                {
+                    reachedBlinked = true;
+                }
+                else if (beat.Beat == WakeBeat.ChaseFrame)
+                {
+                    reachedChaseFrame = true;
+                }
+            });
+
+            yield return StepFrames(recorder, 24);
             recorder.CaptureFrame("title_new_game_push_in");
 
-            // Wait for 07 to wake on the charging dock
+            // Wait for the full opening wake sequence (O1-O13) to reach the dock chase frame
             float wakeDeadline = Time.time + WakeTimeout;
             bool capturedOpening = false;
-            while (!_awake && Time.time < wakeDeadline)
+            while (!reachedChaseFrame && Time.time < wakeDeadline)
             {
                 yield return null;
                 recorder.StepFrame();
-                if (!capturedOpening && Time.time - newGameStartTime >= 2.0f)
+                if (!capturedOpening && reachedBlinked)
                 {
+                    yield return StepFrames(recorder, 8);
                     recorder.CaptureFrame("opening_wake_sequence");
                     capturedOpening = true;
                 }
             }
 
-            Assert.IsTrue(_awake, "07 wakes up on the charging dock.");
+            Assert.IsTrue(_awake && reachedChaseFrame, "07 wakes up on the charging dock and reaches the chase frame.");
             float wakeDuration = Time.time - newGameStartTime;
             recorder.SetMetric("titleToWakeSeconds", wakeDuration);
             recorder.CaptureFrame("rover_awoke_on_dock");
