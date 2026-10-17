@@ -52,6 +52,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         private Camera _view;
         private Keyboard _keyboard;
         private Gamepad _gamepad;
+        // Largest change of any channel's share of the body's total colour between scan frames: plain shading moves it
+        // by about 0.01, a cyan tint by about 0.1.
+        private const float BodyChromaticityLimit = 0.04f;
+
         private IDisposable _awoke;
         private bool _awake;
         private Transform _headTransform;
@@ -375,7 +379,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                         panels[1] = CapturePanel("ruin_behind_2_head_aim.png");
                         stripFrame2BodyColor = SampleRoverBodyAverageColorFromPng(
                             Path.Combine(ScanFolder, "ruin_behind_2_head_aim.png"), _view);
-                        AssertRoverBodyColorUnchanged(stripFrame1BodyColor, stripFrame2BodyColor, "scan_strip frame 2 vs frame 1", 0.055f);
+                        AssertRoverBodyChromaticityUnchanged(stripFrame1BodyColor, stripFrame2BodyColor, "scan_strip frame 2 vs frame 1");
                     }
 
                     if (panels[2] == null && ruinTarget.Progress >= 0.52f)
@@ -384,8 +388,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                         panels[2] = CapturePanel("ruin_behind_3_line_sweeping.png");
                         AssertNoBrightRegionOutsideLensAndTarget(sweepPath, ruinTarget, 0.90f, "ruin_behind_3_line_sweeping.png");
                         stripFrame3BodyColor = SampleRoverBodyAverageColorFromPng(sweepPath, _view);
-                        AssertRoverBodyColorUnchanged(stripFrame1BodyColor, stripFrame3BodyColor, "scan_strip frame 3 vs frame 1", 0.055f);
-                        AssertRoverBodyColorUnchanged(stripFrame2BodyColor, stripFrame3BodyColor, "scan_strip frame 3 vs frame 2", 0.03f);
+                        AssertRoverBodyChromaticityUnchanged(stripFrame1BodyColor, stripFrame3BodyColor, "scan_strip frame 3 vs frame 1");
+                        AssertRoverBodyChromaticityUnchanged(stripFrame2BodyColor, stripFrame3BodyColor, "scan_strip frame 3 vs frame 2");
                         File.Copy(
                             sweepPath,
                             Path.Combine(ScanFolder, "ruin_behind_3_raster_sweep.png"),
@@ -401,7 +405,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             panels[3] = CapturePanel("ruin_behind_4_completion_ping.png");
             string frame4Path = Path.Combine(ScanFolder, "ruin_behind_4_completion_ping.png");
             Color stripFrame4BodyColor = SampleRoverBodyAverageColorFromPng(frame4Path, _view);
-            AssertRoverBodyColorUnchanged(stripFrame1BodyColor, stripFrame4BodyColor, "scan_strip frame 4 vs frame 1", 0.055f);
+            AssertRoverBodyChromaticityUnchanged(stripFrame1BodyColor, stripFrame4BodyColor, "scan_strip frame 4 vs frame 1");
             File.Copy(
                 frame4Path,
                 Path.Combine(ScanFolder, "ruin_behind_4_completion.png"),
@@ -582,6 +586,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
                 Rect lensRect = ProjectSphereToScreenRect(_view, _rover.ScanOrigin.position, 0.42f, w, h, 22f);
                 Rect targetRect = ProjectTargetToScreenRect(_view, target, w, h, 26f);
+                Rect roverRect = ProjectRoverToScreenRect(_view, w, h);
 
                 const int blockSize = 8;
                 float maxBrightness = 0f;
@@ -627,7 +632,10 @@ namespace MoonProject.Gameplay.PlayModeTests
                         float avgB = sumB * invScale;
 
                         float brightness = Mathf.Max(avgR, Mathf.Max(avgG, avgB));
-                        if (brightness > maxBrightness)
+
+                        // 07's own paint in direct sun is legitimately near white: only the cyan and blue checks
+                        // below cover it, and the body colour check compares it with the pre-scan frame.
+                        if (brightness > maxBrightness && !blockRect.Overlaps(roverRect))
                         {
                             maxBrightness = brightness;
                             maxBrightPos = new Vector2Int(bx, by);
@@ -654,7 +662,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Debug.Log($"[scan-check] {label}: maxBrightnessOutside={maxBrightness:F3} (limit {maxAllowedBrightness:F2}) at {maxBrightPos} rgb=({maxBrightColor.r:F2},{maxBrightColor.g:F2},{maxBrightColor.b:F2}), " +
                           $"maxCyanBrightnessOutside={maxCyanBrightness:F3} at {maxCyanPos} rgb=({maxCyanColor.r:F2},{maxCyanColor.g:F2},{maxCyanColor.b:F2}), " +
                           $"maxBlueCyanExcessOutside={maxBlueExcess:F3} at {maxBluePos} rgb=({maxBlueColor.r:F2},{maxBlueColor.g:F2},{maxBlueColor.b:F2}), " +
-                          $"lensRect={lensRect}, targetRect={targetRect}");
+                          $"lensRect={lensRect}, targetRect={targetRect}, roverRect={roverRect}");
 
                 Assert.LessOrEqual(maxBrightness, maxAllowedBrightness,
                     $"{label}: screen region at {maxBrightPos} outside 07's lens and target surface exceeded brightness threshold " +
@@ -774,6 +782,22 @@ namespace MoonProject.Gameplay.PlayModeTests
             return Rect.MinMaxRect(minX - padPx, minY - padPx, maxX + padPx, maxY + padPx);
         }
 
+        private Rect ProjectRoverToScreenRect(Camera cam, int screenW, int screenH)
+        {
+            Rect union = Rect.zero;
+            bool any = false;
+            foreach (MeshRenderer meshRenderer in _rover.GetComponentsInChildren<MeshRenderer>())
+            {
+                Bounds bounds = meshRenderer.bounds;
+                Rect rect = ProjectSphereToScreenRect(cam, bounds.center, bounds.extents.magnitude, screenW, screenH, 0f);
+                union = any ? Rect.MinMaxRect(Mathf.Min(union.xMin, rect.xMin), Mathf.Min(union.yMin, rect.yMin),
+                    Mathf.Max(union.xMax, rect.xMax), Mathf.Max(union.yMax, rect.yMax)) : rect;
+                any = true;
+            }
+
+            return union;
+        }
+
         private Color SampleRoverBodyAverageColorFromCamera(Camera cam, int width, int height)
         {
             Texture2D tex = FrameCapture.Render(cam, width, height);
@@ -847,6 +871,28 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.Greater(count, 64, "Projected 07 body sample region must contain enough pixels.");
             double inv = 1.0 / (count * 255.0);
             return new Color((float)(sumR * inv), (float)(sumG * inv), (float)(sumB * inv), 1f);
+        }
+
+        /// <summary>
+        /// The strip frames catch 07 mid-turn, so the sun lights its body differently in each and its brightness
+        /// legitimately changes. A scan tint changes the colour balance instead, so the frames are compared by each
+        /// channel's share of the total.
+        /// </summary>
+        private static void AssertRoverBodyChromaticityUnchanged(Color before, Color during, string label)
+        {
+            float beforeSum = before.r + before.g + before.b;
+            float duringSum = during.r + during.g + during.b;
+            float maxShareDelta = Mathf.Max(
+                Mathf.Abs(during.r / duringSum - before.r / beforeSum),
+                Mathf.Max(Mathf.Abs(during.g / duringSum - before.g / beforeSum),
+                    Mathf.Abs(during.b / duringSum - before.b / beforeSum)));
+
+            Debug.Log($"[scan-body-color] {label}: before=({before.r:F3},{before.g:F3},{before.b:F3}), " +
+                      $"during=({during.r:F3},{during.g:F3},{during.b:F3}), maxChannelShareDelta={maxShareDelta:F4} " +
+                      $"(limit {BodyChromaticityLimit:F2})");
+            Assert.LessOrEqual(maxShareDelta, BodyChromaticityLimit,
+                $"{label}: 07's body colour balance shifted by {maxShareDelta:F4} > {BodyChromaticityLimit:F2}; " +
+                "the scan tinted it.");
         }
 
         private static void AssertRoverBodyColorUnchanged(Color beforeScan, Color duringScan, string label, float maxChannelDelta)
