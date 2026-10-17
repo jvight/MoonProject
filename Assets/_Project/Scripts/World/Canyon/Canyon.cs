@@ -117,7 +117,6 @@ namespace MoonProject.World
             _exitFoot = settings.ExitFootLength;
 
             _ledgeSide = settings.BendAngle >= 0f ? -1f : 1f;
-            LanderSide = -_ledgeSide;
             _ledgeArc = SightArc(outward);
             _ledgeCenter = _main.PointAt(_ledgeArc)
                 + _main.RightAt(_ledgeArc) * (_ledgeSide * (settings.CanyonHalfWidth + BayWidth * 0.5f));
@@ -190,19 +189,10 @@ namespace MoonProject.World
         /// </summary>
         public float LedgeArc => _ledgeArc;
 
-        /// <summary>
-        /// Side of the corridor (-1 left, +1 right, looking in) the crashed lander's bay opens on: opposite the ledge
-        /// and the exit's branch.
-        /// </summary>
-        public float LanderSide { get; }
-
         /// <summary>Which wall the ledge's bay is cut into: -1 left, +1 right (the bend's outer side).</summary>
         public float LedgeSide => _ledgeSide;
 
         public Vector2 LedgeCenter => _ledgeCenter;
-
-        /// <summary>Centre (XZ) of the relay mast's ledge at the mouth of the terminus chamber (M3-06).</summary>
-        public Vector2 RelayLedgeCenter => _relayLedgeCenter;
 
         public IReadOnlyList<float> AlcoveArcs => _alcoveArcs;
 

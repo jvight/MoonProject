@@ -3,22 +3,19 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Rendering;
 using MoonProject.Core;
-using MoonProject.World.Map;
 
 namespace MoonProject.World
 {
     /// <summary>
     /// Owns the moon: builds the analytic surface, the terrain (with Whispering Canyon's gate slabs), the rock scatter
     /// and Earth, applies the atmosphere and sky, and registers <see cref="ITerrainQuery"/>,
-    /// <see cref="IWorldLayout"/>, <see cref="IWorldAnchors"/>, the <see cref="ISightline"/> and itself as the
-    /// <see cref="IScrapField"/> (the cuttable slots down Kestrel-3's lane, 0.5.5 C5) in the context. In edit mode it
-    /// also builds a preview (HideFlags.DontSave: never saved into the scene, destroyed in OnDisable) so the scene view
-    /// and scene captures show the world, and other domains' edit-mode previews read its anchors through
-    /// <see cref="IWorldPreview"/> and the scrap field's slots through <see cref="IScrapField"/>;
+    /// <see cref="IWorldLayout"/> and <see cref="IWorldAnchors"/> in the context. In edit mode it also builds a preview
+    /// (HideFlags.DontSave: never saved into the scene, destroyed in OnDisable) so the scene view and scene captures
+    /// show the world, and other domains' edit-mode previews read its anchors through <see cref="IWorldPreview"/>;
     /// <see cref="Initialize"/> is the only play-mode path.
     /// </summary>
     [ExecuteAlways]
-    public sealed class WorldSystem : MonoBehaviour, IGameSystem, IWorldPreview, IScrapField
+    public sealed class WorldSystem : MonoBehaviour, IGameSystem, IWorldPreview
     {
         private const string GeneratedRootName = "Generated";
 
@@ -45,9 +42,6 @@ namespace MoonProject.World
             "shader).")]
         [SerializeField] private Material _groundMarkMaterial;
 
-        [Tooltip("Art's prefabs World plans for: Kestrel-3's hull fragment variants (the cuttable slots' range).")]
-        [SerializeField] private LandmarkPrefabs _landmarkPrefabs = new LandmarkPrefabs();
-
         [Tooltip("The beacon on The Peak; placed on the summit and breathed by the beacon settings.")]
         [SerializeField] private PeakBeacon _peakBeacon;
 
@@ -67,7 +61,6 @@ namespace MoonProject.World
         private GameObject _generatedRoot;
         private Mesh _earthMesh;
         private Mesh _tracksMesh;
-        private List<ScrapPlate> _cuttables = new List<ScrapPlate>();
 
         public MoonSurface Surface { get; private set; }
 
@@ -80,18 +73,6 @@ namespace MoonProject.World
         public TerrainBuildReport LastBuild { get; private set; }
 
         public ScatterBuildReport LastScatter { get; private set; }
-
-        /// <summary>Cuttable slots down Kestrel-3's lane; none until the world is generated.</summary>
-        public int Count => _cuttables.Count;
-
-        /// <summary>The scrap field's dust tint, linear (Gameplay tints its cuttable fragments with it too).</summary>
-        public Color Dust => _settings.ScrapField.Dust.linear;
-
-        public ScrapPlateInfo Slot(int index)
-        {
-            ScrapPlate slot = _cuttables[index];
-            return new ScrapPlateInfo(slot.Position, slot.Rotation, slot.Variant, slot.Scale);
-        }
 
         /// <summary>True while generated world objects exist (play mode or the edit-mode preview).</summary>
         public bool HasGeneratedWorld => _generatedRoot != null;
@@ -108,8 +89,6 @@ namespace MoonProject.World
             context.Register<ITerrainQuery>(Surface);
             context.Register<IWorldLayout>(Layout);
             context.Register<IWorldAnchors>(Anchors);
-            context.Register<ISightline>(new Sightline(Surface));
-            context.Register<IScrapField>(this);
             Debug.Log($"{nameof(WorldSystem)}: terrain {LastBuild}; scatter {LastScatter}", this);
         }
 
@@ -159,8 +138,6 @@ namespace MoonProject.World
             LastBuild = _terrainBuilder.Build(_generatedRoot.transform, Surface, _settings.Mesh, _settings.Paint,
                 toLight, _groundMaterial, hideFlags);
             _gateBuilder.Build(_generatedRoot.transform, surface.Canyon.Slabs, _paletteMaterial, hideFlags);
-            _cuttables = ScrapFieldPlanner.PlanCuttables(surface, _settings.ScrapField,
-                _landmarkPrefabs.HullFragments.Length, _settings.Seed);
             List<ScatterInstance> scatterInstances = scatterPlan.GetAwaiter().GetResult();
             AddHomeApronStones(scatterInstances, surface);
             LastScatter = _scatterBuilder.Build(_generatedRoot.transform, scatterInstances,
@@ -392,13 +369,9 @@ namespace MoonProject.World
                 Release(_tracksMesh);
             }
 
-
-
             _tracksMesh = null;
-
             _generatedRoot = null;
             _earthMesh = null;
-            _cuttables.Clear();
             _terrainBuilder.DestroyMeshes();
             _scatterBuilder.DestroyMeshes();
             _gateBuilder.DestroyMeshes();
@@ -464,8 +437,7 @@ namespace MoonProject.World
                 return "Ground, Palette, Earth and Ground Mark materials must be assigned.";
             }
 
-            string rocks = RockProblem(_pebbleRocks, "Pebble Rocks") ?? RockProblem(_boulderRocks, "Boulder Rocks")
-                ?? _landmarkPrefabs.Problem();
+            string rocks = RockProblem(_pebbleRocks, "Pebble Rocks") ?? RockProblem(_boulderRocks, "Boulder Rocks");
             if (rocks != null)
             {
                 return rocks;

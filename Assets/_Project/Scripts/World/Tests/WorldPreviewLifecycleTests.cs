@@ -36,9 +36,6 @@ namespace MoonProject.World.Tests
             IWorldPreview preview = world;
             Assert.IsTrue(preview.HasGeneratedWorld, "other domains' edit-mode previews see no world");
             Assert.AreSame(world.Anchors, preview.Anchors, "other domains' edit-mode previews read other anchors");
-            IScrapField scrapField = world;
-            Assert.AreEqual(new ScrapFieldSettings().Cuttables, scrapField.Count,
-                "Gameplay's edit-mode preview sees the lane's cuttable slots");
 
             yield return new EnterPlayMode();
             Assert.AreEqual(0, CountChunkObjects(), "play mode kept or rebuilt the edit-mode preview");
@@ -95,7 +92,6 @@ namespace MoonProject.World.Tests
             serialized.FindProperty("_earthMaterial").objectReferenceValue = Load<Material>(WorldPaths.EarthMaterial);
             serialized.FindProperty("_groundMarkMaterial").objectReferenceValue =
                 Load<Material>(WorldPaths.GroundMarkMaterial);
-            WorldPaths.AssignLandmarks(serialized);
             serialized.FindProperty("_earthlight").objectReferenceValue = light;
             serialized.FindProperty("_fillLight").objectReferenceValue = fill;
             serialized.FindProperty("_peakBeacon").objectReferenceValue = CreateBeaconHost(BeaconName);
