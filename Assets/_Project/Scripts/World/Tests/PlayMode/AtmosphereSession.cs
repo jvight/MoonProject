@@ -26,10 +26,10 @@ using UnityEditor.SceneManagement;
 namespace MoonProject.World.PlayModeTests
 {
     /// <summary>
-    /// The look of the real game against pillar 6 (M3-10): boots the built Main scene on its own save slot, seeded so
-    /// that Bell is repaired and home at her corner (her dial is one of the warm points), lets 07 wake and the base
-    /// warm up, then, for the game camera's own view at spawn, each pose of Editor/Captures/atmosphere_views.json, the
-    /// lander up close (the owner's view) and two poses at Bell's corner, renders the game's own camera (same lens, post-processing and anti-aliasing) to Logs/world-captures/atmosphere-*.png
+    /// The look of the real game against pillar 6 (M3-10): boots the built Main scene on a new game, lets 07 wake,
+    /// then, for the game camera's own view at spawn, each pose of Editor/Captures/atmosphere_views.json and the canyon
+    /// from the pad, renders the game's own camera (same lens, post-processing and anti-aliasing) to
+    /// Logs/world-captures/atmosphere-*.png
     /// and times <see cref="TimedFrames"/> 1920x1080 frames there, each waited for on the GPU, so the median is the
     /// full render cost of a frame (CPU submit and GPU, serialised). Writes atmosphere.md. Slow and needs a GPU: run
     /// on demand with --category AtmosphereSession.
@@ -48,70 +48,9 @@ namespace MoonProject.World.PlayModeTests
         private const float WakeTimeout = 20f;
         private const float SettleSeconds = 4f;
 
-        // The save seeded before boot: Bell (FriendState.Awake = 3, every part and item held) home at her corner,
-        // in the envelope and section format of Core's SaveService and Gameplay's friends section (version 2).
-        private const string BellHomeSave =
-            "{\"formatVersion\":1,\"contentVersion\":\"0.5.0\",\"savedAtUtc\":\"2026-10-08T00:00:00Z\"," +
-            "\"sections\":[{\"key\":\"gameplay.friends\"," +
-            "\"version\":2,\"json\":\"{\\\"friends\\\":[{\\\"id\\\":\\\"bell\\\",\\\"state\\\":3," +
-            "\\\"parts\\\":15,\\\"items\\\":15,\\\"discovered\\\":true,\\\"welcomed\\\":true}]}\"}]}";
-
-        // Bell's corner on the radio tower, seen up close and as a warm point from 40 m.
-        private const string BellCornerName = "BellCorner";
-        private const float BellNearDistance = 4.5f;
-        private const float BellNearSide = 1.8f;
-        private const float BellNearHeight = 1.8f;
-        private const float BellFarDistance = 40f;
-        private const float BellFarHeight = 9f;
-        private const float BellLookHeight = 0.8f;
-
-        // The lander up close, the way the owner looks at the base (Art's lander_close, in the lander's frame).
-        private const string LanderName = "Lander";
-        private static readonly Vector3 LanderCloseEye = new Vector3(0.6f, 2.3f, 8.4f);
-        private static readonly Vector3 LanderCloseLook = new Vector3(0f, 2.6f, 0f);
-        private const float LanderCloseFov = 55f;
-
         // The Playthrough's step-16 review frame: from 3 m above the pad toward the canyon lip (2 m up), game lens.
         private const float CanyonViewEyeHeight = 3f;
         private const float CanyonViewLookHeight = 2f;
-
-        // The orange vent's bead field (M3-27) from home, and from a chase-like distance on the way to it.
-        private const float VentCloseDistance = 22f;
-        private const float VentCloseHeight = 5f;
-
-        // The vent's stain seen from 07's chase eye up close and from 30 m.
-        private const float VentNearDistance = 8f;
-        private const float VentNearHeight = 2.5f;
-        private const float VentChaseDistance = 30f;
-        private const float VentChaseHeight = 3.5f;
-
-        // Kestrel-3's scrap field (0.5.5): looking down the furrow from its far end toward the crater.
-        private const float ScrapFieldLookAhead = 25f;
-
-        // After power reaches Home (seconds since the previous frame): the cable halfway, the windows half-lit with
-        // the porch lamps starting, and home settled.
-        private static readonly (float Wait, string Name)[] WakeFrames =
-        {
-            (0.8f, "wake-1-cable"),
-            (2.4f, "wake-2-windows"),
-            (8f, "wake-3-home"),
-        };
-
-        // The whole base awake (the owner's frame is the woken base at night): power stepped to the Lift, settled.
-        private const float LiftSettleSeconds = 8f;
-
-        // The tower's build beat as Gameplay publishes it (feel-pass §8.2), and the flare seen just after Impact.
-        private const string TowerPilotName = "TowerPilot";
-
-        // The cable frame: home's power cable seen from the chase camera's distance and height.
-        private const string CableFrame = "wake-1-cable";
-        private const string HomeCableName = "PowerCable_Home";
-        private const float CableChaseDistance = 10f;
-        private const float CableChaseHeight = 3.5f;
-        private const float TowerAnticipateSeconds = 1.2f;
-        private const int TowerActSteps = 4;
-        private const float TowerActSeconds = 0.25f;
-        private const float TowerFlareCaptureSeconds = 0.25f;
 
         // Opening v2 (§4, §6 acceptance): from 07's wake (chase height, a few metres ahead of the post so 07's own lamps
         // stay behind the camera) toward the lander in front of The Peak, and from the build apron toward the ruins and
@@ -159,10 +98,7 @@ namespace MoonProject.World.PlayModeTests
         [PostBuildCleanup(typeof(CanyonSessionScene))]
         public IEnumerator Poses_AreCapturedAndTimed_InTheRealGame()
         {
-            Directory.CreateDirectory(SaveService.DefaultDirectory);
-            string save = Path.Combine(SaveService.DefaultDirectory,
-                CanyonSessionScene.SaveSlot + SaveService.Extension);
-            File.WriteAllText(save, BellHomeSave);
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
 #if UNITY_EDITOR
             AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
                 new LoadSceneParameters(LoadSceneMode.Single));
@@ -174,16 +110,9 @@ namespace MoonProject.World.PlayModeTests
             throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
 #endif
             GameBootstrap bootstrap = null;
-            Transform bellCorner = null;
-            Transform lander = null;
             foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
             {
                 bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
-                foreach (Transform node in root.GetComponentsInChildren<Transform>(true))
-                {
-                    bellCorner = bellCorner != null || node.name != BellCornerName ? bellCorner : node;
-                    lander = lander != null || node.name != LanderName ? lander : node;
-                }
             }
 
             Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
@@ -198,41 +127,15 @@ namespace MoonProject.World.PlayModeTests
 
             yield return new WaitForSeconds(SettleSeconds);
 
-            Assert.IsNotNull(bellCorner, "the radio tower carries Bell's corner");
-            Assert.IsNotNull(lander, "the base has its lander");
             Camera view = context.Get<IViewCamera>().Camera;
             PoseFile file = JsonUtility.FromJson<PoseFile>(File.ReadAllText(PosesPath));
             var poses = new List<Pose> { ViewPose(view.transform, view.fieldOfView) };
             poses.AddRange(file.poses);
-            poses.Add(LookPose("lander_close", lander.TransformPoint(LanderCloseEye),
-                lander.TransformPoint(LanderCloseLook), LanderCloseFov));
-            poses.Add(BellPose(bellCorner, "bell_corner_near"));
-            poses.Add(BellPose(bellCorner, null));
             Assert.IsTrue(context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.CanyonLip, out WorldAnchor lip),
                 "the World has the canyon lip");
             poses.Add(LookPose("toward_the_canyon",
                 context.Get<IWorldLayout>().BasePosition + Vector3.up * CanyonViewEyeHeight,
                 lip.Position + Vector3.up * CanyonViewLookHeight, view.fieldOfView));
-            Assert.IsTrue(context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.PlaceOrangeVent, out WorldAnchor vent),
-                "the World has the orange vent");
-            Vector3 home = context.Get<IWorldLayout>().BasePosition;
-            Vector3 toVent = Vector3.ProjectOnPlane(vent.Position - home, Vector3.up).normalized;
-            poses.Add(LookPose("orange_vent_from_base", home + Vector3.up * CanyonViewEyeHeight, vent.Position,
-                view.fieldOfView));
-            Assert.IsTrue(context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.KestrelTrail, out WorldAnchor trail),
-                "the World has Kestrel-3's trail");
-            poses.Add(LookPose("kestrel_scrap_field",
-                trail.Position - trail.Forward * VentCloseDistance * 0.5f + Vector3.up * VentCloseHeight,
-                trail.Position + trail.Forward * ScrapFieldLookAhead, view.fieldOfView));
-            poses.Add(LookPose("orange_vent_close",
-                vent.Position - toVent * VentCloseDistance + Vector3.up * VentCloseHeight, vent.Position,
-                view.fieldOfView));
-            poses.Add(LookPose("orange_vent_near",
-                vent.Position - toVent * VentNearDistance + Vector3.up * VentNearHeight, vent.Position,
-                view.fieldOfView));
-            poses.Add(LookPose("orange_vent_30m",
-                vent.Position - toVent * VentChaseDistance + Vector3.up * VentChaseHeight, vent.Position,
-                view.fieldOfView));
             var report = new StringBuilder();
             report.AppendLine("# Atmosphere session (real Main scene)");
             report.AppendLine();
@@ -375,11 +278,6 @@ namespace MoonProject.World.PlayModeTests
             return anchor;
         }
 
-        private static void Publish(GameContext context, FeelPhase phase, Vector3 tower, float strength, float seconds)
-        {
-            context.Events.Publish(new FeelBeat(FeelKind.Build, phase, tower, Vector3.up, strength, seconds));
-        }
-
         private static Transform FindNamed(string name)
         {
             foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
@@ -396,63 +294,6 @@ namespace MoonProject.World.PlayModeTests
             throw new InvalidOperationException($"The scene has no '{name}'.");
         }
 
-        /// <summary>
-        /// The power pulse on home's cable, from the chase distance: behind the cable along the game camera's heading,
-        /// at the chase camera's height, looking at the middle of its glass beads.
-        /// </summary>
-        private static void CaptureCable(Camera view, string name)
-        {
-            var beads = new Bounds();
-            bool any = false;
-            foreach (Renderer bead in FindNamed(HomeCableName).GetComponentsInChildren<Renderer>())
-            {
-                if (any)
-                {
-                    beads.Encapsulate(bead.bounds);
-                }
-                else
-                {
-                    beads = bead.bounds;
-                    any = true;
-                }
-            }
-
-            Vector3 heading = Vector3.ProjectOnPlane(view.transform.forward, Vector3.up).normalized;
-            Vector3 eye = beads.center - heading * CableChaseDistance + Vector3.up * CableChaseHeight;
-            var host = new GameObject("CableReviewCamera");
-            try
-            {
-                var camera = host.AddComponent<Camera>();
-                camera.CopyFrom(view);
-                camera.enabled = false;
-                CopyPipelineSettings(view, camera);
-                camera.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(beads.center - eye));
-                FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight, Path.Combine(CaptureFolder, name + ".png"));
-            }
-            finally
-            {
-                Object.Destroy(host);
-            }
-        }
-
-        private static void Capture(Camera view, string name)
-        {
-            var host = new GameObject("WakeReviewCamera");
-            try
-            {
-                var camera = host.AddComponent<Camera>();
-                camera.CopyFrom(view);
-                camera.enabled = false;
-                CopyPipelineSettings(view, camera);
-                FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
-                    Path.Combine(CaptureFolder, name + ".png"));
-            }
-            finally
-            {
-                Object.Destroy(host);
-            }
-        }
-
         /// <summary>The game camera's URP settings (post-processing, anti-aliasing); CopyFrom skips them.</summary>
         private static void CopyPipelineSettings(Camera from, Camera to)
         {
@@ -463,17 +304,6 @@ namespace MoonProject.World.PlayModeTests
             target.antialiasingQuality = source.antialiasingQuality;
             target.renderShadows = source.renderShadows;
             target.dithering = source.dithering;
-        }
-
-        /// <summary>A pose at Bell's corner: up close beside it, or (unnamed) as a warm point from 40 m.</summary>
-        private static Pose BellPose(Transform corner, string nearName)
-        {
-            Vector3 look = corner.position + Vector3.up * BellLookHeight;
-            Vector3 eye = nearName != null
-                ? corner.position + corner.forward * BellNearDistance + corner.right * BellNearSide
-                    + Vector3.up * BellNearHeight
-                : corner.position + corner.forward * BellFarDistance + Vector3.up * BellFarHeight;
-            return LookPose(nearName ?? "bell_corner_from_40m", eye, look, 50f);
         }
 
         /// <summary>What the game camera itself shows once 07 is awake: the player's real first frame.</summary>

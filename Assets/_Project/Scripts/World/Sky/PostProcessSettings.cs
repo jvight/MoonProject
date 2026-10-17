@@ -83,12 +83,6 @@ namespace MoonProject.World
         [Range(0f, 1f)]
         [SerializeField] private float _occlusionDirectLighting = 0.55f;
 
-        [Header("Home's grade")]
-        [Tooltip("Split toning balance the grade reaches once the whole base is awake (the Lift). Each power stage " +
-            "moves it a step from the balance above, so more of the frame takes the warm highlight hue as home wakes.")]
-        [Range(-100f, 100f)]
-        [SerializeField] private float _wokenSplitBalance = 8f;
-
         [Header("Lens")]
         [Tooltip("Vignette strength.")]
         [Range(0f, 1f)]
@@ -123,7 +117,6 @@ namespace MoonProject.World
         public Color SplitShadows => _splitShadows;
         public Color SplitHighlights => _splitHighlights;
         public float SplitBalance => _splitBalance;
-        public float WokenSplitBalance => _wokenSplitBalance;
         public float OcclusionIntensity => _occlusionIntensity;
         public float OcclusionRadius => _occlusionRadius;
         public float OcclusionDirectLighting => _occlusionDirectLighting;
