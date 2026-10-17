@@ -488,8 +488,8 @@ namespace MoonProject.Rover.PlayModeTests
                 _gamepad = InputSystem.AddDevice<Gamepad>();
             }
 
-            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(RoverSessionScene.ScenePath,
-                new LoadSceneParameters(LoadSceneMode.Single));
+            AsyncOperation loading = SceneManager.LoadSceneAsync(RoverSessionScene.ScenePath, LoadSceneMode.Single);
+            Assert.IsNotNull(loading, "the copy is listed in the build settings for the run");
             float started = Time.realtimeSinceStartup;
             while (!loading.isDone)
             {
