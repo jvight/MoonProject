@@ -23,6 +23,9 @@ namespace MoonProject.UI
             BatteryDialValue = Require<Label>("battery-dial-value");
             NextLineShadow = Require<VisualElement>("next-line-shadow");
             NextLineText = Require<Label>("next-line-text");
+            SunArc = Require<VisualElement>("sun-arc");
+            SunArcFace = Require<VisualElement>("sun-arc-face");
+            SunArcLabel = Require<Label>("sun-arc-label");
             Cargo = Require<VisualElement>("cargo");
             UnlockCard = Require<VisualElement>("unlock-card");
 
@@ -38,7 +41,6 @@ namespace MoonProject.UI
             SalvageRingAnchor = Require<VisualElement>("salvage-ring-anchor");
             SalvageRing = Require<VisualElement>("salvage-ring");
 
-            RecipeCardRoot = Require<VisualElement>("recipe-card");
 
             LookHint = Require<VisualElement>("look-hint");
             LookHintShadow = Require<VisualElement>("look-hint-shadow");
@@ -161,6 +163,13 @@ namespace MoonProject.UI
 
         public Label NextLineText { get; }
 
+        /// <summary>The Sun's arc above the battery dial.</summary>
+        public VisualElement SunArc { get; }
+
+        public VisualElement SunArcFace { get; }
+
+        public Label SunArcLabel { get; }
+
         /// <summary>The cargo screen's root (Tab / View): its parts are found beneath it by name.</summary>
         public VisualElement Cargo { get; }
 
@@ -185,9 +194,6 @@ namespace MoonProject.UI
         public VisualElement SalvageRingAnchor { get; }
 
         public VisualElement SalvageRing { get; }
-
-        /// <summary>The recipe card's box (the prompt keeps clear of it).</summary>
-        public VisualElement RecipeCardRoot { get; }
 
         public VisualElement LookHint { get; }
 

@@ -1,5 +1,4 @@
 using System;
-using System.Text;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Gameplay;
@@ -27,24 +26,14 @@ namespace MoonProject.UI
         public const string LookUp = "ui.hint.look_up";
         public const string Drive = "ui.hint.drive";
         public const string HintHold = "hint.hold";
-        public const string RowFull = "ui.bay.row_full";
         public const string HoldBoot = "ui.hold.boot";
         public const string ScanFragment = "scan.fragment";
         public const string ScanKnown = "scan.known";
-        public const string HintShelves = "hint.shelves";
-        public const string TransferToTrip = "ui.transfer.to_trip";
-        public const string TransferToHome = "ui.transfer.to_home";
-
-        /// <summary>Art's prefix on a component's model name (Part_TowerCoil), left out of its keys.</summary>
-        private const string ComponentModelPrefix = "Part_";
         public const string RecipeRow = "ui.recipe.row";
         public const string CargoHold = "ui.cargo.hold";
         public const string CargoTabSeven = "ui.cargo.tab_seven";
         public const string CargoWaiting = "ui.cargo.waiting";
         public const string CargoSummary = "ui.cargo.summary";
-        public const string CargoFitAtBay = "ui.cargo.fit_at_bay";
-        public const string TillyCellJob = "pickup.tilly.cell.job";
-        public const string BellValveJob = "pickup.bell.valve.job";
         public const string BuildStripTitle = "build.strip.title";
         public const string BuildCostAffordable = "build.cost.affordable";
         public const string BuildCostShort = "build.cost.short";
@@ -60,28 +49,7 @@ namespace MoonProject.UI
         public const string BuildHintWeld = "build.hint.weld";
         public const string BuildHintDeconstruct = "build.hint.deconstruct";
         public const string BuildLocked = "build.locked";
-
-        /// <summary>"ui.kit.wing.desc": the short (&lt;= 52 char) tooltip line for <paramref name="socket"/>.</summary>
-        public static string KitDescription(RoverSocket socket)
-        {
-            switch (socket)
-            {
-                case RoverSocket.Cutter: return "ui.kit.cutter.desc";
-                case RoverSocket.Tether: return "ui.kit.tether.desc";
-                case RoverSocket.Lamp: return "ui.kit.lamp.desc";
-                case RoverSocket.Belly: return "ui.kit.belly.desc";
-                case RoverSocket.Flanks: return "ui.kit.flanks.desc";
-                case RoverSocket.Panniers: return "ui.kit.panniers.desc";
-                case RoverSocket.Back: return "ui.kit.back.desc";
-                case RoverSocket.Hold: return "ui.kit.hold.desc";
-                case RoverSocket.Wing: return "ui.kit.wing.desc";
-                case RoverSocket.Deck: return "ui.kit.deck.desc";
-                case RoverSocket.Wheels: return "ui.kit.wheels.desc";
-                case RoverSocket.Antenna: return "ui.kit.antenna.desc";
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(socket), socket, "This socket has no description key.");
-            }
-        }
+        public const string BuildEnergyCard = "build.energy.card";
 
         /// <summary>"hint.excavate": the one word of the prompt teaching <paramref name="kind"/>.</summary>
         public static string Hint(InteractionKind kind)
@@ -125,32 +93,6 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>
-        /// "kit.solar_cell.name": the title of a friend's gift fitted on 07. False for a piece no friend gives (crafted
-        /// kit is titled by its upgrade's <see cref="UpgradeName"/>).
-        /// </summary>
-        public static bool TryGetGiftName(RoverKitPiece piece, out string key)
-        {
-            switch (piece)
-            {
-                case RoverKitPiece.SolarCell:
-                    key = "kit.solar_cell.name";
-                    return true;
-                case RoverKitPiece.FreshPaint:
-                    key = "kit.fresh_paint.name";
-                    return true;
-                case RoverKitPiece.TapeDeck:
-                    key = "kit.tape_deck.name";
-                    return true;
-                case RoverKitPiece.TetherRing:
-                    key = "kit.tether_ring.name";
-                    return true;
-                default:
-                    key = null;
-                    return false;
-            }
-        }
-
         /// <summary>"ui.display.mode.borderless": how the window sits on the screen, in words.</summary>
         public static string DisplayModeName(DisplayMode mode)
         {
@@ -165,47 +107,10 @@ namespace MoonProject.UI
             }
         }
 
-        public static string UpgradeName(string upgradeId)
-        {
-            return "upgrade." + upgradeId + ".name";
-        }
-
-        /// <summary>
-        /// "upgrade.radio_tower.2.title": the name of level <paramref name="level"/> (1 = the first bought).
-        /// </summary>
-        public static string UpgradeTitle(string upgradeId, int level)
-        {
-            return "upgrade." + upgradeId + "." + level + ".title";
-        }
-
-        /// <summary>"pickup.part_towercoil": the name of pickup or story part <paramref name="partId"/>.</summary>
+        /// <summary>"pickup.part.igniter": the name of story part <paramref name="partId"/>.</summary>
         public static string PickupName(string partId)
         {
             return "pickup." + partId.ToLowerInvariant();
-        }
-
-        /// <summary>
-        /// "component.tower_coil.needed": the quiet line when the tower's next level still waits for component
-        /// <paramref name="componentId"/>, Art's model name (Part_TowerCoil, Part_Transformer, Part_RelaySpare) in
-        /// snake case without its prefix (docs/features/M3-21 §6). Built once per refused purchase, never per frame.
-        /// </summary>
-        public static string ComponentNeeded(string componentId)
-        {
-            string name = componentId.StartsWith(ComponentModelPrefix, StringComparison.Ordinal)
-                ? componentId.Substring(ComponentModelPrefix.Length)
-                : componentId;
-            var key = new StringBuilder("component.", name.Length * 2 + 18);
-            for (int i = 0; i < name.Length; i++)
-            {
-                if (char.IsUpper(name[i]) && i > 0)
-                {
-                    key.Append('_');
-                }
-
-                key.Append(char.ToLowerInvariant(name[i]));
-            }
-
-            return key.Append(".needed").ToString();
         }
 
         public static string StructureName(string structureId)

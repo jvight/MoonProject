@@ -52,7 +52,6 @@ namespace MoonProject.UI.PlayModeTests
             GameContext context = FindBootstrap().Context;
             Camera camera = context.Get<IViewCamera>().Camera;
             UISystem ui = BuildUi(context, out FakeGameServices fakes, out _);
-            TuneQuickPatience();
             var serializedTuning = new UnityEditor.SerializedObject(_tuning);
             serializedTuning.FindProperty("_guidance._teachingPatienceSeconds").floatValue = 0.5f;
             serializedTuning.ApplyModifiedPropertiesWithoutUndo();
@@ -92,9 +91,8 @@ namespace MoonProject.UI.PlayModeTests
             fakes.IsLowPower = false;
             fakes.Charge = 4f;
 
-            ui.Ledger.RecordUsed(InteractionKind.Excavate);
             ui.Ledger.RecordUsed(InteractionKind.Salvage);
-            ui.Ledger.RecordUsed(InteractionKind.Stow);
+            ui.Ledger.RecordUsed(InteractionKind.Build);
             yield return Tap(keyboard.escapeKey);
             yield return new WaitForSecondsRealtime(1f);
             Submit(layout.SettingsButton);
@@ -137,19 +135,8 @@ namespace MoonProject.UI.PlayModeTests
                 new MaterialSlot(SalvageMaterial.Wiring, 3, 4), new MaterialSlot(SalvageMaterial.Optics, 1, 4),
                 new MaterialSlot(SalvageMaterial.Ilmenite, 5, 6));
             fakes.Hold.WaitingBundles = 3;
-            foreach (RoverKitPiece fitted in new[]
-                     {
-                         RoverKitPiece.TetherRing, RoverKitPiece.SolarCell, RoverKitPiece.LampBar,
-                         RoverKitPiece.CapacitorDrums, RoverKitPiece.BatterySpine, RoverKitPiece.TapeDeck,
-                         RoverKitPiece.CargoRack, RoverKitPiece.SideBins,
-                     })
-            {
-                fakes.Equipment.Fit(fitted);
-            }
-
-            fakes.Equipment.Craft(RoverKitPiece.HoverCoils);
-            fakes.Equipment.Craft(RoverKitPiece.FocusLens);
-            fakes.Equipment.AtStation = false;
+            fakes.Hold.AddPart("part.igniter");
+            fakes.Systems.CanFitIgniter = true;
             ui.Cargo.Open();
             yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeIn + 0.6f);
             yield return LegibleShot(camera, capturesFolder, "tab", report, layout.Cargo);
@@ -297,19 +284,8 @@ namespace MoonProject.UI.PlayModeTests
                 new MaterialSlot(SalvageMaterial.Wiring, 3, 4), new MaterialSlot(SalvageMaterial.Optics, 1, 4),
                 new MaterialSlot(SalvageMaterial.Ilmenite, 5, 6));
             fakes.Hold.WaitingBundles = 3;
-            foreach (RoverKitPiece fitted in new[]
-                     {
-                         RoverKitPiece.TetherRing, RoverKitPiece.SolarCell, RoverKitPiece.LampBar,
-                         RoverKitPiece.CapacitorDrums, RoverKitPiece.BatterySpine, RoverKitPiece.TapeDeck,
-                         RoverKitPiece.CargoRack, RoverKitPiece.SideBins,
-                     })
-            {
-                fakes.Equipment.Fit(fitted);
-            }
-
-            fakes.Equipment.Craft(RoverKitPiece.HoverCoils);
-            fakes.Equipment.Craft(RoverKitPiece.FocusLens);
-            fakes.Equipment.AtStation = false;
+            fakes.Hold.AddPart("part.igniter");
+            fakes.Systems.CanFitIgniter = true;
 
             Reframe(1920, 1080);
             ui.Localization.SetLanguage("en");
@@ -338,11 +314,11 @@ namespace MoonProject.UI.PlayModeTests
 
         /// <summary>
         /// Captures the <see cref="FaceInventoryView"/> ("FACE-INV view", Variant A Round 2) at 1920x1080 in English and
-        /// Vietnamese across all three hold capacity tiers (8, 16, 24), plus a hovered item with its 1-line tooltip and a
-        /// kit being dragged onto a target socket, into <c>Logs/captures/</c>.
+        /// Vietnamese across all three hold capacity tiers (8, 16, 24), plus a hovered item with its 1-line tooltip and
+        /// the cutter offering the spare igniter, into <c>Logs/captures/</c>.
         /// </summary>
         [UnityTest]
-        public IEnumerator CaptureFaceInventoryView_AllTiersHoverAndDrag()
+        public IEnumerator CaptureFaceInventoryView_AllTiersHoverAndTheIgniterOffer()
         {
 #if UNITY_EDITOR
             InputSystem.AddDevice<Keyboard>();
@@ -367,20 +343,15 @@ namespace MoonProject.UI.PlayModeTests
             Reframe(1920, 1080);
             yield return new WaitForSecondsRealtime(1.5f);
 
-            // 1. Tier 8 (8 unlocked / 16 locked): early game, Wing + Flanks installed, HoverCoils waiting kit.
+            // 1. Tier 8 (8 unlocked / 16 locked): the start kit, the cutter faulted.
             fakes.Hold.ClearParts();
-            fakes.Equipment.Clear();
             fakes.Hold.Set(4,
                 new MaterialSlot(SalvageMaterial.Metal, 4, 4),
                 new MaterialSlot(SalvageMaterial.Wiring, 2, 4),
                 new MaterialSlot(SalvageMaterial.Ilmenite, 3, 6),
                 new MaterialSlot(SalvageMaterial.Glass, 1, 6));
-            fakes.Hold.AddPart("tilly.cell");
+            fakes.Hold.AddPart("part.igniter");
             fakes.Hold.WaitingBundles = 1;
-            fakes.Equipment.Fit(RoverKitPiece.SolarCell);
-            fakes.Equipment.Fit(RoverKitPiece.CapacitorDrums);
-            fakes.Equipment.Craft(RoverKitPiece.HoverCoils);
-            fakes.Equipment.AtStation = false;
 
             ui.Localization.SetLanguage("vi");
             ui.Cargo.Open();
@@ -389,11 +360,6 @@ namespace MoonProject.UI.PlayModeTests
             yield return null;
             Assert.AreEqual(8, ui.Cargo.View.UnlockedCellCount, "Tier 8 has 8 unlocked cells");
             Assert.AreEqual(16, ui.Cargo.View.LockedCellCount, "Tier 8 has 16 locked cells");
-            Assert.LessOrEqual(ui.Cargo.View.GetSocketLeaderColor(RoverSocket.Lamp).a, 78,
-                "Empty Lamp socket leader line is faint");
-            Assert.Greater(ui.Cargo.View.GetSocketLeaderColor(RoverSocket.Wing).a,
-                ui.Cargo.View.GetSocketLeaderColor(RoverSocket.Lamp).a,
-                "Installed Wing socket leader is slightly brighter than empty Lamp leader");
             yield return LegibleShot(camera, capturesFolder, "face_inv_8_vi", report, layout.Cargo);
             File.Copy(Path.Combine(capturesFolder, "face_inv_8_vi.png"), Path.Combine(r2Folder, "face_inv_8_vi.png"), true);
 
@@ -411,9 +377,8 @@ namespace MoonProject.UI.PlayModeTests
             yield return LegibleShot(camera, capturesFolder, "face_inv_8_en", report, layout.Cargo);
             File.Copy(Path.Combine(capturesFolder, "face_inv_8_en.png"), Path.Combine(r2Folder, "face_inv_8_en.png"), true);
 
-            // 2. Tier 16 (16 unlocked / 8 locked): mid-game with CargoRack fitted, 5 sockets installed + drag state.
+            // 2. Tier 16 (16 unlocked / 8 locked): the cutter offers the spare igniter on the pad.
             fakes.Hold.ClearParts();
-            fakes.Equipment.Clear();
             fakes.Hold.WaitingBundles = 0;
             fakes.Hold.Set(7,
                 new MaterialSlot(SalvageMaterial.Metal, 4, 4),
@@ -425,47 +390,29 @@ namespace MoonProject.UI.PlayModeTests
                 new MaterialSlot(SalvageMaterial.Glass, 2, 6),
                 new MaterialSlot(SalvageMaterial.Alloy, 2, 6),
                 new MaterialSlot(SalvageMaterial.CircuitChips, 4, 6));
-            fakes.Hold.AddPart("tilly.cell");
-            fakes.Equipment.Fit(RoverKitPiece.SolarCell);
-            fakes.Equipment.Fit(RoverKitPiece.CapacitorDrums);
-            fakes.Equipment.Fit(RoverKitPiece.CargoRack);
-            fakes.Equipment.Fit(RoverKitPiece.TapeDeck);
-            fakes.Equipment.Fit(RoverKitPiece.BatterySpine);
-            fakes.Equipment.Craft(RoverKitPiece.HoverCoils);
-            fakes.Equipment.Craft(RoverKitPiece.FocusLens);
+            fakes.Hold.AddPart("part.igniter");
+            fakes.Systems.CanFitIgniter = true;
             ui.Cargo.MarkDirty();
 
             ui.Localization.SetLanguage("vi");
-            ui.Cargo.View.ClearFocus();
+            ui.Cargo.View.FocusDevice(FaceDevices.Cutter);
             yield return new WaitForSecondsRealtime(0.25f);
             Assert.AreEqual(16, ui.Cargo.View.UnlockedCellCount, "Tier 16 has 16 unlocked cells");
             Assert.AreEqual(8, ui.Cargo.View.LockedCellCount, "Tier 16 has 8 locked cells");
+            Assert.IsTrue(ui.Cargo.View.IsIgniterOffered, "the cutter offers the spare igniter");
             yield return LegibleShot(camera, capturesFolder, "face_inv_16_vi", report, layout.Cargo);
             File.Copy(Path.Combine(capturesFolder, "face_inv_16_vi.png"), Path.Combine(r2Folder, "face_inv_16_vi.png"), true);
 
-            int hoverCoilsCell = ui.Cargo.View.WaitingKitCellIndex(0);
-            Assert.GreaterOrEqual(hoverCoilsCell, 0, "HoverCoils waiting kit sits in the hold grid");
-            ui.Cargo.View.BeginKitDrag(hoverCoilsCell, new Vector2(820f, 548f), RoverSocket.Belly);
-            yield return new WaitForSecondsRealtime(0.15f);
-            Assert.IsTrue(ui.Cargo.View.IsDraggingKit, "Kit drag is active");
-            Assert.IsTrue(ui.Cargo.View.IsSocketLeaderCyan(RoverSocket.Belly), "Target socket leader is cyan during drag");
-            Assert.GreaterOrEqual(ui.Cargo.View.GetSocketLeaderColor(RoverSocket.Belly).a, 220,
-                "Target socket leader has bright cyan alpha during drag");
-            yield return LegibleShot(camera, capturesFolder, "face_inv_drag_vi", report, layout.Cargo);
-            File.Copy(Path.Combine(capturesFolder, "face_inv_drag_vi.png"), Path.Combine(r2Folder, "face_inv_drag_vi.png"), true);
-            ui.Cargo.View.CompleteKitDrag(null);
-            ui.Cargo.View.ClearFocus();
-            yield return null;
-
             ui.Localization.SetLanguage("en");
-            ui.Cargo.View.ClearFocus();
             yield return new WaitForSecondsRealtime(0.2f);
             yield return LegibleShot(camera, capturesFolder, "face_inv_16_en", report, layout.Cargo);
             File.Copy(Path.Combine(capturesFolder, "face_inv_16_en.png"), Path.Combine(r2Folder, "face_inv_16_en.png"), true);
+            ui.Cargo.View.SubmitFocused();
+            ui.Cargo.View.ClearFocus();
+            yield return null;
 
-            // 3. Tier 24 (24 unlocked / 0 locked): full capacity with CargoRack + SideBins fitted, 9 sockets installed.
+            // 3. Tier 24 (24 unlocked / 0 locked): full capacity, the cutter mended.
             fakes.Hold.ClearParts();
-            fakes.Equipment.Clear();
             fakes.Hold.WaitingBundles = 0;
             fakes.Hold.Set(10,
                 new MaterialSlot(SalvageMaterial.Metal, 4, 4),
@@ -482,19 +429,7 @@ namespace MoonProject.UI.PlayModeTests
                 new MaterialSlot(SalvageMaterial.CircuitChips, 4, 6),
                 new MaterialSlot(SalvageMaterial.Crystal, 2, 6),
                 new MaterialSlot(SalvageMaterial.Superconductor, 3, 6));
-            fakes.Hold.AddPart("tilly.cell");
-            fakes.Hold.AddPart("bell.valve");
-            fakes.Hold.AddPart("Part_TowerCoil");
-            fakes.Equipment.Fit(RoverKitPiece.SolarCell);
-            fakes.Equipment.Fit(RoverKitPiece.TetherRing);
-            fakes.Equipment.Fit(RoverKitPiece.LampBar);
-            fakes.Equipment.Fit(RoverKitPiece.CapacitorDrums);
-            fakes.Equipment.Fit(RoverKitPiece.HoverCoils);
-            fakes.Equipment.Fit(RoverKitPiece.SideBins);
-            fakes.Equipment.Fit(RoverKitPiece.CargoRack);
-            fakes.Equipment.Fit(RoverKitPiece.TapeDeck);
-            fakes.Equipment.Fit(RoverKitPiece.BatterySpine);
-            fakes.Equipment.Craft(RoverKitPiece.FocusLens);
+            fakes.Hold.AddPart("part.igniter");
             ui.Cargo.MarkDirty();
 
             ui.Localization.SetLanguage("vi");

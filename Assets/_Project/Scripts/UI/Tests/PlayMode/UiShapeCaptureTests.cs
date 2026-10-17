@@ -40,7 +40,6 @@ namespace MoonProject.UI.PlayModeTests
             GameContext context = FindBootstrap().Context;
             Camera camera = context.Get<IViewCamera>().Camera;
             UISystem ui = BuildUi(context, out FakeGameServices fakes, out _);
-            TuneQuickPatience();
             yield return null;
             string folder = Path.GetFullPath(ShapeFolder);
             Directory.CreateDirectory(folder);
@@ -80,7 +79,7 @@ namespace MoonProject.UI.PlayModeTests
             Transform view = camera.transform;
             Vector3 site = view.position + Vector3.ProjectOnPlane(view.forward, Vector3.up).normalized * 9f +
                            Vector3.down * 1.5f;
-            fakes.PrimaryHint = new InteractionHint(InteractionKind.Excavate, site, true);
+            fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, site, true);
             fakes.Position = context.Get<IWorldLayout>().BasePosition + new Vector3(120f, 0f, 90f);
             yield return new WaitForSecondsRealtime(1.5f);
             int gain = 0;

@@ -171,6 +171,12 @@ namespace MoonProject.UI.PlayModeTests
             yield return SettleUi(0.65f);
             Assert.IsTrue(_ui.BuildStrip.IsVisible, "Build strip must be visible in Menu state.");
             Assert.AreEqual(StructureIds.Count, _ui.BuildStrip.CardCount, "All 10 structures must appear in the build strip.");
+            for (int card = 0; card < _ui.BuildStrip.CardCount; card++)
+            {
+                StringAssert.Contains("%", _ui.BuildStrip.EnergyText(card),
+                    "every card says what its weld takes from 07's battery");
+            }
+
             yield return CaptureComposite(viewCamera, "01-build-menu-vi");
 
             // Deliver abundant materials onto home's shelves for placing and welding structures.

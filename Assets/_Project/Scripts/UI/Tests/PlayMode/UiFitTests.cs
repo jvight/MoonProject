@@ -29,9 +29,6 @@ namespace MoonProject.UI.PlayModeTests
         private const float Settle = 0.4f;
         private const float PlaceTolerance = 0.01f;
         private const int BigTextPresses = 2;
-        private const float RecipeCardViewportX = 0.8f;
-        private const float RecipeCardViewportY = 0.55f;
-        private const float CardDepth = 10f;
         private const int CellWidth = 480;
         private const int CellHeight = 270;
         private const int CellPad = 6;
@@ -223,7 +220,7 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Fakes.Charge = 2f;
             events.Publish(new BatteryArcRevealed(false));
             events.Publish(new NextStepChanged("next.v2.build_pad"));
-            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Excavate, new Vector3(0f, 0f, 12f), true);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, new Vector3(0f, 0f, 12f), true);
             int gain = 0;
             foreach (ScreenShape shape in ScreenShapes.All)
             {
@@ -238,22 +235,32 @@ namespace MoonProject.UI.PlayModeTests
                 });
             }
 
+            // 07's readout (the boot diagnostics, longest in Vietnamese) beside the Sun's arc and the battery dial.
             _rig.Fakes.PrimaryHint = InteractionHint.None;
-            _rig.Fakes.Upgrade = _rig.TestTower();
-            _rig.Fakes.Looked = _rig.Fakes.Upgrade.Id;
-            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.PickUp,
-                _rig.Camera.ViewportToWorldPoint(new Vector3(RecipeCardViewportX, RecipeCardViewportY, CardDepth)),
-                true);
+            _rig.Tune("_guidance._bootHoldSeconds", 60f);
+            events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, true));
+            string language = _rig.Ui.Localization.Language;
+            _rig.Ui.Localization.SetLanguage("vi");
+            events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle, false));
+            events.Publish(new RoverWakeBeatReached(WakeBeat.GazeEarth, false));
+            events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame, false));
             yield return Seconds(3f);
+            Assert.IsTrue(_rig.Ui.Readout.IsVisible, "the boot diagnostics are up for the fit check");
+            Assert.IsTrue(_rig.Ui.SunArc.IsVisible, "and so is the Sun's arc");
             foreach (ScreenShape shape in ScreenShapes.All)
             {
                 yield return Reframe(shape);
-                yield return Check(shape, "recipe card and prompt", (label, found) =>
-                    ScreenFit.CheckApart(layout.RecipeCardRoot, layout.Prompt, label, found));
+                yield return Seconds(Settle);
+                yield return Check(shape, "readout and sun arc", (label, found) =>
+                {
+                    ScreenFit.CheckApart(_rig.Ui.Readout.Panel, layout.SunArc, label, found);
+                    ScreenFit.CheckApart(_rig.Ui.Readout.Panel, layout.BatteryDial, label, found);
+                    ScreenFit.CheckApart(_rig.Ui.Readout.Panel, layout.PickupFeed, label, found);
+                    ScreenFit.CheckApart(layout.SunArc, layout.BatteryDial, label, found);
+                });
             }
 
-            _rig.Fakes.Looked = null;
-            _rig.Fakes.PrimaryHint = InteractionHint.None;
+            _rig.Ui.Localization.SetLanguage(language);
             _rig.Fakes.Hold.Set(14, new MaterialSlot(SalvageMaterial.Metal, 4, 4),
                 new MaterialSlot(SalvageMaterial.Ilmenite, 3, 6));
             _rig.Fakes.Hold.WaitingBundles = 2;

@@ -1,0 +1,176 @@
+using System;
+using System.Collections.Generic;
+using MoonProject.Core;
+
+namespace MoonProject.UI
+{
+    /// <summary>What a readout card tells about.</summary>
+    internal enum ReadoutKind
+    {
+        None = 0,
+
+        /// <summary>The boot diagnostics of 07's systems (opening-v2 §10).</summary>
+        Boot = 1,
+
+        /// <summary>One system's line (the cutter turning OK, or refusing a cut).</summary>
+        System = 2,
+
+        /// <summary>The protocol line (<c>POWER · ON</c>, <c>LINK · 0/1 · SIGNAL WEST</c>).</summary>
+        Protocol = 3,
+
+        /// <summary><c>LANDER RESERVE · 0%</c>.</summary>
+        Reserve = 4,
+
+        /// <summary>The text of a scanned story panel.</summary>
+        Story = 5,
+    }
+
+    /// <summary>One card the readout is asked to show.</summary>
+    internal readonly struct ReadoutRequest
+    {
+        public ReadoutRequest(ReadoutKind kind, RoverSystem system = RoverSystem.Wheels, string textKey = null)
+        {
+            Kind = kind;
+            System = system;
+            TextKey = textKey ?? string.Empty;
+        }
+
+        public ReadoutKind Kind { get; }
+
+        /// <summary>The system a <see cref="ReadoutKind.System"/> card tells about.</summary>
+        public RoverSystem System { get; }
+
+        /// <summary>The story text of a <see cref="ReadoutKind.Story"/> card.</summary>
+        public string TextKey { get; }
+
+        public bool Matches(ReadoutRequest other)
+        {
+            return Kind == other.Kind && System == other.System &&
+                   string.Equals(TextKey, other.TextKey, StringComparison.Ordinal);
+        }
+    }
+
+    /// <summary>
+    /// The order and timing of the readout's cards (pure, EditMode-tested). One card shows at a time; a card waits for
+    /// the guidance slot, rests for its hold, fades, and then the next one comes. The boot diagnostics go before every
+    /// other card. A card asked for again while it shows keeps the screen for a fresh hold instead of queueing twice.
+    /// </summary>
+    internal sealed class ReadoutQueue
+    {
+        private enum Phase
+        {
+            Idle,
+            Showing,
+            Fading,
+        }
+
+        private readonly GuidanceSettings _settings;
+        private readonly List<ReadoutRequest> _pending = new List<ReadoutRequest>(4);
+        private Phase _phase;
+        private float _hold;
+
+        public ReadoutQueue(GuidanceSettings settings)
+        {
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+        }
+
+        /// <summary>The card on the screen (showing or fading); <see cref="ReadoutKind.None"/> when idle.</summary>
+        public ReadoutRequest Current { get; private set; }
+
+        /// <summary>True from the moment a card is asked for until its fade is over: it wants the guidance slot.</summary>
+        public bool Wants => _phase != Phase.Idle || _pending.Count > 0;
+
+        /// <summary>True while the card rests on the screen (not yet fading).</summary>
+        public bool IsShowing => _phase == Phase.Showing;
+
+        /// <summary>
+        /// Asks for a card. Returns true when it is the card already showing (its hold starts afresh), so the caller
+        /// can flash it.
+        /// </summary>
+        public bool Offer(ReadoutRequest request)
+        {
+            if (_phase == Phase.Showing && Current.Matches(request))
+            {
+                _hold = HoldOf(request.Kind);
+                return true;
+            }
+
+            for (int i = 0; i < _pending.Count; i++)
+            {
+                if (_pending[i].Matches(request))
+                {
+                    return false;
+                }
+            }
+
+            if (request.Kind == ReadoutKind.Boot)
+            {
+                _pending.Insert(0, request);
+            }
+            else
+            {
+                _pending.Add(request);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Steps the timeline; true when a card started on this step (the caller writes its lines).
+        /// </summary>
+        /// <param name="deltaTime">Unscaled seconds; 0 while paused.</param>
+        /// <param name="granted">The guidance slot lets the readout show now.</param>
+        /// <param name="hidden">The panel has finished fading out.</param>
+        public bool Tick(float deltaTime, bool granted, bool hidden)
+        {
+            switch (_phase)
+            {
+                case Phase.Idle:
+                    if (granted && _pending.Count > 0)
+                    {
+                        Current = _pending[0];
+                        _pending.RemoveAt(0);
+                        _hold = HoldOf(Current.Kind);
+                        _phase = Phase.Showing;
+                        return true;
+                    }
+
+                    break;
+                case Phase.Showing:
+                    if (granted)
+                    {
+                        _hold -= deltaTime;
+                        if (_hold <= 0f)
+                        {
+                            _phase = Phase.Fading;
+                        }
+                    }
+
+                    break;
+                default:
+                    if (hidden)
+                    {
+                        Current = default;
+                        _phase = Phase.Idle;
+                    }
+
+                    break;
+            }
+
+            return false;
+        }
+
+        private float HoldOf(ReadoutKind kind)
+        {
+            switch (kind)
+            {
+                case ReadoutKind.Boot:
+                    return _settings.BootHoldSeconds;
+                case ReadoutKind.Story:
+                    return _settings.StoryHoldSeconds;
+                default:
+                    return _settings.StatusHoldSeconds;
+            }
+        }
+    }
+}

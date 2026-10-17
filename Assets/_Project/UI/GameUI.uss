@@ -46,7 +46,6 @@
 .section-label,
 .next-line__text,
 .material-slot__word,
-.recovery-board__target,
 .pause .menu-button {
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
@@ -322,38 +321,6 @@ Label {
 .material-slot--short .material-slot__count,
 .material-slot--short .material-slot__word {
     color: var(--moon-warm-accent);
-}
-
-/* A bay row's cost stays on its line: icon and have / need, no names */
-
-.recipe__part {
-    margin: 3px 0;
-}
-
-.recipe__part-row {
-    flex-direction: row;
-    align-items: center;
-}
-
-.recipe__part-name {
-    min-width: 120px;
-    font-size: 22px;
-    color: var(--glass-hi);
-}
-
-.recipe__part-count {
-    margin-left: 6px;
-    font-size: 22px;
-    color: var(--moon-text-dim);
-    white-space: nowrap;
-}
-
-/* Where to find it, small under its row */
-.recipe__part-source {
-    margin-top: 1px;
-    font-size: 18px;
-    color: var(--moon-text-dim);
-    white-space: normal;
 }
 
 /* The title over the live world (M3-09): anchored left-column composition inside the CRT bezel */
@@ -1322,17 +1289,16 @@ Label {
 }
 
 /*
- * The tech board's labels while 07 looks at it (M3-21): the recovery panel's protocol and its four targets, each
- * with its row of lamps (dark CRT track, warm amber when lit), then the pins Kenji's board knows. Framed on a
- * Variant C CRT panel on the left, a decoded sheet in calm cyan quieter than a built one.
+ * 07's readout (docs/design/opening-v2.md section 10): the boot diagnostics, the protocol line, the lander's reserve,
+ * one system's line and a scanned panel's text, one card at a time on a CRT plate high on the left over the dark sky.
+ * Mono type, so the dotted leaders line up; a broken part reads warm, one that waits reads dim.
  */
 
-.recovery-board {
+.readout {
     position: absolute;
     left: 0;
-    top: 24%;
-    width: 30%;
-    padding: 16px 20px 14px 20px;
+    top: 16%;
+    padding: 18px 26px 16px 26px;
     background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPanel.png");
     -unity-slice-left: 56;
     -unity-slice-right: 56;
@@ -1341,104 +1307,53 @@ Label {
     -unity-slice-scale: 0.5;
 }
 
-.recovery-board__title {
-    margin-bottom: 12px;
-    font-size: 18px;
-    letter-spacing: 4px;
-    color: var(--glass-hi);
-    text-shadow: 0 2px 12px var(--moon-shadow);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
-}
-
-.recovery-board__row {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    margin: 4px 0;
-}
-
-.recovery-board__target {
-    font-size: 22px;
+.readout__line {
+    font-size: 20px;
+    white-space: nowrap;
     color: var(--moon-cream);
     text-shadow: 0 2px 12px var(--moon-shadow);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
-.recovery-board__lamps {
-    flex-direction: row;
-    margin-left: 16px;
+.readout__line--fault {
+    color: var(--moon-warm-accent);
 }
 
-.recovery-board__lamp {
-    width: 10px;
-    height: 10px;
-    margin-left: 6px;
-    border-radius: 5px;
-    background-color: var(--moon-track);
+.readout__line--dim {
+    color: var(--moon-text-dim);
 }
 
-.recovery-board__lamp--lit {
-    background-color: var(--moon-warm-lamp);
-}
-
-/*
- * The recipe card (M3-24 B): looking at the tower's hopper or a board sheet, a CRT panel right of centre:
- * the next level's name and title, needs and have in material icons, the component still missing, and where
- * it is built.
- */
-
-.recipe-card {
-    position: absolute;
-    right: 7%;
-    top: 34%;
-    width: 26%;
-    min-width: 360px;
-    padding: 18px 22px 16px 22px;
-    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPanel.png");
-    -unity-slice-left: 56;
-    -unity-slice-right: 56;
-    -unity-slice-top: 56;
-    -unity-slice-bottom: 56;
-    -unity-slice-scale: 0.5;
-}
-
-/* Variant C CRT: the card is a 9-sliced CRT panel, so the floating names' shadow under it stays empty */
-.recipe-card .soft-shadow {
-    display: none;
-}
-
-.recipe-card__title {
-    font-size: 24px;
-    letter-spacing: 3px;
+/* A line that just changed, or refused, lights up and dies down again */
+.readout__line--flash {
     color: var(--glass-hi);
-    text-shadow: 0 2px 12px var(--moon-shadow);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
+    background-color: var(--moon-cream-glow);
 }
 
-.recipe-card__level {
-    margin-bottom: 8px;
-    font-size: 18px;
-    color: var(--moon-text);
-    text-shadow: 0 2px 12px var(--moon-shadow);
+/* The Sun's arc above the battery dial: what is left of the Sun over the rim, the world's only clock */
+
+.sun-arc {
+    position: absolute;
+    left: 100px;
+    bottom: 227px;
+    width: 142px;
+    align-items: flex-start;
 }
 
-.recipe-card__row {
-    margin: 3px 0;
+.sun-arc__face {
+    width: 96px;
+    height: 96px;
+    --track-color: var(--moon-track);
+    --fill-color: var(--moon-warm-lamp);
+    --ring-width: 6;
 }
 
-.recipe-card__word {
-    margin-bottom: 4px;
-    font-size: 18px;
+.sun-arc__label {
+    margin-top: 4px;
+    font-size: 16px;
     letter-spacing: 2px;
-    color: var(--moon-text);
+    color: var(--moon-text-dim);
     text-shadow: 0 2px 12px var(--moon-shadow);
-}
-
-.recipe-card__where {
-    margin-top: 8px;
-    font-size: 18px;
-    color: var(--glass-sel);
-    white-space: normal;
-    text-shadow: 0 2px 12px var(--moon-shadow);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
 /*
@@ -1590,6 +1505,15 @@ Label {
     color: var(--moon-warm-accent);
 }
 
+/* The share of 07's battery the weld takes, under the materials: the calm cyan telemetry accent */
+.build-card__energy {
+    margin-top: 3px;
+    font-size: 13px;
+    color: var(--crt-cyan-dim);
+    -unity-text-align: middle-center;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
 .build-strip__detail {
     display: none;
 }
@@ -1655,43 +1579,8 @@ Label {
 }
 
 /*
- * The protocol readout (M3-24 B): the same panel in 07's lens at the end of the opening, high on the left over the
- * dark sky. Power, the first target, reads brightest with its first need under it; the others wait, quieter.
- */
-
-.protocol-readout {
-    top: 16%;
-    padding: 18px 24px 16px 24px;
-    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPanel.png");
-    -unity-slice-left: 56;
-    -unity-slice-right: 56;
-    -unity-slice-top: 56;
-    -unity-slice-bottom: 56;
-    -unity-slice-scale: 0.5;
-}
-
-.protocol-readout__title {
-    color: var(--glass-hi);
-}
-
-.protocol-readout__row {
-    opacity: 0.6;
-}
-
-.protocol-readout__row--first {
-    opacity: 1;
-}
-
-.protocol-readout__need {
-    margin: 0 0 6px 18px;
-    font-size: 18px;
-    color: var(--glass-sel);
-    text-shadow: 0 2px 12px var(--moon-shadow);
-}
-
-/*
  * The cargo screen (Tab / View): FaceInventoryView (1152x768, 1.5:1) — 07's 4x6 hold grid on the left, 07's 2D
- * line-art and 10 orbital socket bubbles (or home storage when docked) on the right.
+ * line-art and its four device bubbles (scan lens, cutter, two sockets) on the right.
  */
 
 .cargo {
@@ -1754,6 +1643,18 @@ Label {
 
 .cargo__socket-bubble {
     position: absolute;
+}
+
+.cargo__device-state {
+    position: absolute;
+    left: -60px;
+    right: -60px;
+    top: 100%;
+    margin-top: 4px;
+    font-size: 17px;
+    -unity-text-align: upper-center;
+    color: rgb(242, 192, 104);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
 .cargo__tooltip {

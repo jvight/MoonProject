@@ -15,20 +15,11 @@ using MoonProject.Testing;
 namespace MoonProject.UI.PlayModeTests
 {
     /// <summary>
-    /// The driving HUD end to end: prompts appear only near usable things and only a few times, the reticle only while
-    /// aiming, the materials chip only on change, the memory card after a deposit, and the tower panel buys only on a
-    /// deliberate hold.
+    /// The driving HUD end to end: prompts appear only near usable things and only a few times, the pickup feed only
+    /// on change, the hold and the device sockets on 07's face, and the low-battery line on the shared line.
     /// </summary>
     public sealed class HudTests : InputTestFixture
     {
-        /// <summary>About when the tower's new section starts rising after a purchase (the port moment).</summary>
-        private const float StitchDelay = 1.3f;
-
-        private const float ShortCueWait = 1.5f;
-
-        /// <summary>The upper third of the screen: the zone of place cards and kit titles (first-hour-v2 6.3).</summary>
-        private const float UpperThird = 1f / 3f;
-
         private string _slot;
         private InputActionAsset _controls;
         private UiTestRig _rig;
@@ -55,7 +46,7 @@ namespace MoonProject.UI.PlayModeTests
             InputSystem.AddDevice<Keyboard>();
             Gamepad gamepad = InputSystem.AddDevice<Gamepad>();
             Boot();
-            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.PickUp, new Vector3(0f, 0f, 12f), true);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Build, new Vector3(0f, 0f, 12f), true);
             yield return null;
             yield return Seconds(2f);
             Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "no prompts before 07 wakes");
@@ -63,7 +54,7 @@ namespace MoonProject.UI.PlayModeTests
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             yield return Seconds(1.5f);
             Assert.IsTrue(_rig.Ui.Prompt.IsVisible);
-            Assert.AreEqual(Text(UiKeys.Hint(InteractionKind.PickUp)), _rig.Ui.Layout.PromptWord.text);
+            Assert.AreEqual(Text(UiKeys.Hint(InteractionKind.Build)), _rig.Ui.Layout.PromptWord.text);
             Assert.AreEqual("E", _rig.Ui.Layout.PromptGlyphLabel.text, "keyboard glyph from the real binding");
 
             yield return Tap(gamepad.buttonSouth);
@@ -72,11 +63,11 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual("X", _rig.Ui.Layout.PromptGlyphLabel.text, "the glyph follows the device");
             Assert.IsTrue(_rig.Ui.Layout.PromptGlyph.ClassListContains(GlyphView.PadClass));
 
-            Events.Publish(new CargoChanged(1, 4));
+            Events.Publish(new StructurePlaced(1, StructureIds.ChargingPad, Vector3.zero, 0f));
             yield return Seconds(1f);
             Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "doing it ends the prompt");
-            Assert.AreEqual(1, _rig.Ui.Ledger.Used(InteractionKind.PickUp));
-            Assert.AreEqual(1, _rig.Ui.Ledger.Shown(InteractionKind.PickUp));
+            Assert.AreEqual(1, _rig.Ui.Ledger.Used(InteractionKind.Build));
+            Assert.AreEqual(1, _rig.Ui.Ledger.Shown(InteractionKind.Build));
         }
 
         [UnityTest]
@@ -85,15 +76,15 @@ namespace MoonProject.UI.PlayModeTests
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             Boot();
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.PickUp, new Vector3(2f, 0f, 10f), true);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Build, new Vector3(2f, 0f, 10f), true);
             yield return Seconds(1.5f);
             Assert.IsTrue(_rig.Ui.Prompt.IsVisible);
 
-            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.PickUp, new Vector3(2f, 0f, -10f), true);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Build, new Vector3(2f, 0f, -10f), true);
             yield return Seconds(1f);
             Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "never pinned to the screen edge for something behind you");
 
-            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.PickUp, new Vector3(2f, 0f, 10f), true);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Build, new Vector3(2f, 0f, 10f), true);
             yield return Seconds(1f);
             Press(keyboard.escapeKey, queueEventOnly: true);
             yield return null;
@@ -103,14 +94,14 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator CargoScreen_OpensOnTab_ShowsTheHoldAndHome_AndClosesOnTab_WithoutPausing()
+        public IEnumerator CargoScreen_OpensOnTab_ShowsTheHoldAndTheDevices_AndClosesOnTab_WithoutPausing()
         {
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             Boot();
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             _rig.Fakes.Hold.Set(5, new MaterialSlot(SalvageMaterial.Metal, 4, 4),
                 new MaterialSlot(SalvageMaterial.Wiring, 2, 4), new MaterialSlot(SalvageMaterial.Ilmenite, 3, 6));
-            _rig.Fakes.Hold.AddPart("Part_TowerCoil");
+            _rig.Fakes.Hold.AddPart("part.igniter");
             _rig.Fakes.Hold.WaitingBundles = 3;
             yield return Seconds(0.3f);
 
@@ -121,7 +112,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(1f, Time.timeScale, "the game does not pause");
             Assert.AreEqual(8, cargo.HoldCellCount, "a cell for every unlocked slot of 07's hold");
             Assert.AreEqual(16, cargo.View.LockedCellCount, "16 locked cells complete the 4x6 grid");
-            Assert.AreEqual(Text(UiKeys.PickupName("Part_TowerCoil")), cargo.HoldPartText(3),
+            Assert.AreEqual(Text(UiKeys.PickupName("part.igniter")), cargo.HoldPartText(3),
                 "the carried story part shows in its hold slot with its localized name");
             Assert.IsFalse(cargo.HoldCell(3).ClassListContains(CargoScreen.EmptyClass));
             Assert.IsTrue(cargo.HoldCell(8).ClassListContains(CargoScreen.LockedClass));
@@ -181,179 +172,61 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator CargoScreen_Docked_IsTheTransferView_OnePressMovesAStack_AndLeavingTheDockClosesIt()
-        {
-            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
-            Boot();
-            _rig.Ui.Ledger.RecordHoldBooted();
-            Events.Publish(new RoverAwoke(Vector3.zero, false));
-            _rig.Fakes.Hold.Set(6, new MaterialSlot(SalvageMaterial.Metal, 3, 4),
-                new MaterialSlot(SalvageMaterial.Wiring, 2, 4));
-            _rig.Fakes.Home.Set(6, new MaterialSlot(SalvageMaterial.Optics, 4, 4));
-            int moved = 0;
-            bool toHome = false;
-            Events.Subscribe<StackTransferred>(transfer =>
-            {
-                moved = transfer.Units;
-                toHome = transfer.ToHome;
-            });
-            _rig.Fakes.Dock.IsDocked = false;
-            yield return Seconds(0.3f);
-
-            yield return Tap(keyboard.tabKey);
-            yield return Seconds(0.5f);
-            CargoScreen cargo = _rig.Ui.Cargo;
-            Assert.IsFalse(cargo.IsTransferView, "away from home Tab is the hold beside 07's sockets");
-            Submit(cargo.HoldCell(0));
-            yield return Seconds(0.1f);
-            Assert.AreEqual(0, _rig.Fakes.Transfer.Moves, "no stack transfers away from the dock");
-            Vector2 fieldPanelSize = cargo.PanelRect.size;
-            Assert.Greater(fieldPanelSize.x, 0f);
-            Assert.Greater(fieldPanelSize.y, 0f);
-            yield return Tap(keyboard.tabKey);
-            yield return Seconds(0.5f);
-
-            _rig.Fakes.Dock.IsDocked = true;
-            yield return Tap(keyboard.tabKey);
-            yield return Seconds(0.5f);
-            Assert.IsTrue(cargo.IsOpen && cargo.IsTransferView, "docked, Tab opens the transfer view");
-            Assert.AreEqual(fieldPanelSize.x, cargo.PanelRect.width, 1f,
-                "the docked transfer view reuses the same fixed panel width");
-            Assert.AreEqual(fieldPanelSize.y, cargo.PanelRect.height, 1f,
-                "the docked transfer view reuses the same fixed panel height");
-            Assert.AreEqual(8, cargo.HoldCellCount);
-            Assert.AreEqual(7, cargo.HomeCellCount, "home's shelves sit beside the hold");
-            Assert.AreEqual(Text(UiKeys.TransferToHome), cargo.TransferHintText, "the focus starts on 07's first slot");
-
-            Submit(cargo.HoldCell(0));
-            yield return Seconds(0.2f);
-            Assert.AreEqual(1, _rig.Fakes.Transfer.Moves, "one press, one stack");
-            Assert.AreEqual(3, moved);
-            Assert.IsTrue(toHome, "07's slot stores at home");
-            Assert.AreEqual(1, _rig.Fakes.Hold.UsedSlots, "the hold lost the metal stack");
-            Assert.AreEqual(2, _rig.Fakes.Home.UsedSlots, "and home gained it");
-
-            cargo.HomeCell(0).Focus();
-            yield return null;
-            Assert.AreEqual(Text(UiKeys.TransferToTrip), cargo.TransferHintText, "a shelf slot takes its stack along");
-            Submit(cargo.HomeCell(0));
-            yield return Seconds(0.2f);
-            Assert.IsFalse(toHome, "the shelf slot's stack comes aboard for the trip");
-            Assert.AreEqual(2, _rig.Fakes.Transfer.Moves);
-
-            _rig.Fakes.Dock.IsDocked = false;
-            yield return Seconds(0.8f);
-            Assert.IsFalse(cargo.IsOpen, "leaving the dock closes the view");
-        }
-
-        [UnityTest]
-        public IEnumerator SevenTab_ShowsSocketsAndThePartsRow_AndFitsOnlyAtTheStation()
+        public IEnumerator SevenTab_ShowsTheFourDevices_AndTheCutterTakesTheSpareIgniterOnlyOnThePad()
         {
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             Boot();
             _rig.Ui.Ledger.RecordHoldBooted();
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             _rig.Fakes.Hold.Set(8);
-            _rig.Fakes.Equipment.Fit(RoverKitPiece.TetherRing);
-            _rig.Fakes.Equipment.Craft(RoverKitPiece.HoverCoils);
-            _rig.Fakes.Equipment.AtStation = false;
+            _rig.Fakes.Hold.AddPart("part.igniter");
             yield return Seconds(0.3f);
 
             yield return Tap(keyboard.tabKey);
             yield return Seconds(0.6f);
             CargoScreen cargo = _rig.Ui.Cargo;
             FaceInventoryView view = cargo.View;
-            Assert.AreEqual(8, cargo.HoldCellCount, "Tab opens one panel with both the hold grid and 07's sockets");
-            Assert.AreEqual(DisplayStyle.Flex, view.SocketElement(RoverSocket.Tether).resolvedStyle.display,
-                "07's orbital sockets are shown in the same panel");
-            Assert.IsTrue(view.SocketElement(RoverSocket.Tether).ClassListContains(CargoScreen.FittedClass));
-            Assert.IsFalse(view.SocketElement(RoverSocket.Belly).ClassListContains(CargoScreen.FittedClass));
+            Assert.AreEqual(8, cargo.HoldCellCount, "Tab opens one panel with both the hold grid and 07's devices");
             Vector2 fieldPanelSize = cargo.PanelRect.size;
             Assert.AreEqual(1.5f, fieldPanelSize.x / fieldPanelSize.y, 0.02f, "1.5:1 aspect ratio");
+            for (int device = 0; device < FaceDevices.Count; device++)
+            {
+                Assert.AreEqual(DisplayStyle.Flex, view.DeviceElement(device).resolvedStyle.display,
+                    $"device {device} is shown in the same panel");
+            }
 
-            int kitCell = view.WaitingKitCellIndex(0);
-            Assert.GreaterOrEqual(kitCell, 0, "the crafted kit waits in an unlocked hold cell");
-            Assert.AreEqual(Text("ui.can.hover_jump.verb"), view.HoldItemName(kitCell));
+            Assert.IsTrue(view.DeviceElement(FaceDevices.Scan).ClassListContains(CargoScreen.FittedClass));
+            Assert.IsFalse(view.DeviceElement(FaceDevices.Cutter).ClassListContains(CargoScreen.FittedClass));
+            Assert.AreEqual(Text("ui.system.state.fault_igniter"), view.DeviceStateText(FaceDevices.Cutter));
+            Assert.AreEqual(Text("ui.system.state.empty"), view.DeviceStateText(FaceDevices.SocketOne));
 
-            Submit(view.WaitingKitCellElement(0));
+            Submit(view.DeviceElement(FaceDevices.Cutter));
+            yield return Seconds(0.2f);
+            Assert.AreEqual(0, _rig.Fakes.Systems.Fits, "off the pad the cutter takes nothing");
+            Assert.IsFalse(view.IsIgniterOffered);
+
+            _rig.Fakes.Systems.CanFitIgniter = true;
             yield return Seconds(0.3f);
-            Assert.AreEqual(0, _rig.Fakes.Equipment.Fits, "away from the bay nothing fits");
-            Assert.IsTrue(_rig.Ui.Cargo.IsOpen, "and the screen stays open with a bottom toast");
-            Assert.AreEqual(Text(UiKeys.CargoFitAtBay), view.ToastText);
-
-            view.FocusHoldCell(kitCell);
+            Assert.IsTrue(view.IsIgniterOffered, "on the pad with the igniter in the hold the cutter offers it");
+            view.FocusDevice(FaceDevices.Cutter);
             yield return null;
-            Assert.AreEqual(Text("ui.can.hover_jump.verb"), view.TooltipNameText);
-            Assert.LessOrEqual(view.TooltipDescText.Length, FaceInventoryView.MaxTooltipDescriptionChars);
+            Assert.AreEqual(Text("ui.device.cutter.fit"), view.TooltipDescText);
 
-            _rig.Fakes.Equipment.AtStation = true;
+            Submit(view.DeviceElement(FaceDevices.Cutter));
             yield return Seconds(0.3f);
-            Assert.AreEqual(fieldPanelSize.x, cargo.PanelRect.width, 0.5f);
-            Assert.AreEqual(fieldPanelSize.y, cargo.PanelRect.height, 0.5f);
-            Submit(view.WaitingKitCellElement(0));
-            yield return Seconds(0.8f);
-            Assert.AreEqual(1, _rig.Fakes.Equipment.Fits, "at the bay one press fits the part");
-            Assert.IsFalse(_rig.Ui.Cargo.IsOpen, "the screen eases away for the install");
+            Assert.AreEqual(1, _rig.Fakes.Systems.Fits, "one confirm fits the igniter");
+            Assert.AreEqual(Text("ui.system.state.ok"), view.DeviceStateText(FaceDevices.Cutter));
+            Assert.IsFalse(view.IsIgniterOffered);
+            Assert.IsTrue(cargo.IsOpen, "and the screen stays open");
         }
 
         [UnityTest]
-        public IEnumerator SevenTab_SubmitTakesAFittedPartOff_EveryDropTicks_AndTheInstallBeatBringsTheTabBack()
-        {
-            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
-            Boot();
-            _rig.Ui.Ledger.RecordHoldBooted();
-            Events.Publish(new RoverAwoke(Vector3.zero, false));
-            _rig.Fakes.Hold.Set(8);
-            _rig.Fakes.Equipment.Fit(RoverKitPiece.TetherRing);
-            _rig.Fakes.Equipment.Craft(RoverKitPiece.HoverCoils);
-            _rig.Fakes.Equipment.AtStation = true;
-            var cues = new System.Collections.Generic.List<UiCueKind>();
-            Events.Subscribe<UiCue>(cue => cues.Add(cue.Kind));
-            yield return Seconds(0.3f);
-
-            yield return Tap(keyboard.tabKey);
-            yield return Seconds(0.6f);
-            FaceInventoryView view = _rig.Ui.Cargo.View;
-            Submit(view.SocketElement(RoverSocket.Tether));
-            yield return Seconds(0.3f);
-            Assert.AreEqual(1, _rig.Fakes.Equipment.Removals, "Submit on a fitted part takes it off at the bay");
-            CollectionAssert.Contains(cues, UiCueKind.PartDrop, "and it ticks");
-
-            int kitCell = view.WaitingKitCellIndex(0);
-            Vector2 bellyCenter = FaceInventoryView.GetOrbitalSocketReferenceCenter(
-                FaceInventoryView.OrbitalIndexOf(RoverSocket.Belly));
-            view.BeginKitDrag(kitCell, bellyCenter, RoverSocket.Belly);
-            Assert.IsTrue(view.IsDraggingKit);
-            Assert.IsTrue(view.IsSocketLeaderCyan(RoverSocket.Belly), "only the active target socket leader is cyan");
-            Assert.IsFalse(view.IsSocketLeaderCyan(RoverSocket.Lamp), "other leaders stay faint");
-            view.CompleteKitDrag(RoverSocket.Belly);
-            yield return Seconds(0.8f);
-            Assert.AreEqual(1, _rig.Fakes.Equipment.Fits);
-            Assert.IsFalse(_rig.Ui.Cargo.IsOpen, "the screen eases away for the install");
-
-            Events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Reward, Vector3.zero, Vector3.up, 1f, 0f));
-            yield return Seconds(1f);
-            Assert.IsTrue(_rig.Ui.Cargo.IsOpen, "the install's Proud chirp brings the cargo screen back");
-        }
-
-        [UnityTest]
-        public IEnumerator SevenTab_InEnglishAndVietnamese_At1080pAnd720p_TiersBadgesAndOrbitalSocketsFitWithoutOverlap()
+        public IEnumerator SevenTab_InEnglishAndVietnamese_At1080pAnd720p_TiersBadgesAndDevicesFitWithoutOverlap()
         {
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             _rig = UiTestRig.Boot(_controls, _slot, 1920, 1080);
             _rig.Ui.Ledger.RecordHoldBooted();
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            foreach (RoverKitPiece fitted in new[]
-                     {
-                         RoverKitPiece.TetherRing, RoverKitPiece.SolarCell, RoverKitPiece.LampBar,
-                         RoverKitPiece.CapacitorDrums, RoverKitPiece.BatterySpine, RoverKitPiece.TapeDeck,
-                         RoverKitPiece.CargoRack, RoverKitPiece.SideBins,
-                     })
-            {
-                _rig.Fakes.Equipment.Fit(fitted);
-            }
-
-            _rig.Fakes.Equipment.AtStation = false;
             yield return Seconds(0.2f);
             yield return Tap(keyboard.tabKey);
             yield return Seconds(0.5f);
@@ -390,22 +263,24 @@ namespace MoonProject.UI.PlayModeTests
 
                     Rect panel = _rig.Ui.Cargo.PanelRect;
                     Assert.AreEqual(1.5f, panel.width / panel.height, 0.02f, $"{lang} {w}x{h}: 1.5:1 panel");
-                    for (int i = 0; i < FaceInventoryView.OrbitalSocketCount; i++)
+                    for (int i = 0; i < FaceDevices.Count; i++)
                     {
-                        RoverSocket socket = FaceInventoryView.OrbitalSockets[i];
-                        VisualElement bubble = view.SocketElement(socket);
+                        VisualElement bubble = view.DeviceElement(i);
                         Rect box = bubble.worldBound;
                         Assert.GreaterOrEqual(box.xMin, panel.xMin + panel.width * 0.4f,
-                            $"{lang} {w}x{h}: {socket} stays in right pane");
+                            $"{lang} {w}x{h}: device {i} stays in right pane");
                         Assert.LessOrEqual(box.xMax, panel.xMax + 1f);
                         Assert.GreaterOrEqual(box.yMin, panel.yMin - 1f);
                         Assert.LessOrEqual(box.yMax, panel.yMax + 1f);
-                        for (int j = i + 1; j < FaceInventoryView.OrbitalSocketCount; j++)
+                        for (int j = i + 1; j < FaceDevices.Count; j++)
                         {
-                            VisualElement other = view.SocketElement(FaceInventoryView.OrbitalSockets[j]);
-                            Assert.IsFalse(box.Overlaps(other.worldBound),
-                                $"{lang} {w}x{h}: {socket} bubble overlaps {FaceInventoryView.OrbitalSockets[j]}");
+                            Assert.IsFalse(box.Overlaps(view.DeviceElement(j).worldBound),
+                                $"{lang} {w}x{h}: device {i} bubble overlaps device {j}");
                         }
+
+                        Rect state = view.DeviceStateLabel(i).worldBound;
+                        Assert.GreaterOrEqual(state.xMin, panel.xMin, $"{lang} {w}x{h}: device {i} state fits the panel");
+                        Assert.LessOrEqual(state.xMax, panel.xMax + 1f, $"{lang} {w}x{h}: device {i} state fits the panel");
                     }
                 }
             }
@@ -457,20 +332,6 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(1.5f);
             Assert.IsTrue(_rig.Ui.Prompt.IsVisible);
             Assert.AreEqual(Text("hint.build"), _rig.Ui.Layout.PromptWord.text);
-            Assert.AreEqual("E", _rig.Ui.Layout.PromptGlyphLabel.text);
-        }
-
-        [UnityTest]
-        public IEnumerator PickUpPrompt_NamesThePart_AfterTheVerb()
-        {
-            InputSystem.AddDevice<Keyboard>();
-            Boot();
-            Events.Publish(new RoverAwoke(Vector3.zero, false));
-            const string noun = "pickup.part_towercoil";
-            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.PickUp, new Vector3(0f, 0f, 3f), true, noun);
-            yield return Seconds(1.5f);
-            Assert.IsTrue(_rig.Ui.Prompt.IsVisible);
-            Assert.AreEqual(Text("hint.pickup") + " " + Text(noun), _rig.Ui.Layout.PromptWord.text);
             Assert.AreEqual("E", _rig.Ui.Layout.PromptGlyphLabel.text);
         }
 
@@ -571,24 +432,119 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator Readout_BootDiagnosticsFirst_TheCutterFlashes_AndOnlyAMilestoneReachedNowShowsTheProtocolLine()
+        {
+            Boot();
+            _rig.Tune("_guidance._bootHoldSeconds", 1.5f);
+            _rig.Tune("_guidance._statusHoldSeconds", 1.5f);
+            int cutterLine = 1 + (int)RoverSystem.Cutter;
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new NextStepChanged("next.v2.drive_lander"));
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle, false));
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.GazeEarth, false));
+            yield return Seconds(_rig.Tuning.Guidance.Readout.FadeIn + 0.4f);
+            ReadoutView readout = _rig.Ui.Readout;
+            Assert.IsTrue(readout.IsVisible);
+            Assert.AreEqual(ReadoutKind.Boot, readout.Showing, "07's diagnostics show when its lens opens");
+            Assert.AreEqual(11, readout.LineCount, "the unit, eight systems, the battery and the protocol line");
+            Assert.AreEqual(Text(ReadoutText.UnitKey), readout.LineText(0));
+            StringAssert.StartsWith(Text("ui.system.cutter"), readout.LineText(cutterLine));
+            StringAssert.EndsWith(Text("ui.system.state.fault_igniter"), readout.LineText(cutterLine));
+            Assert.AreEqual(Text("ui.readout.power_off"), readout.LineText(10));
+            Assert.IsFalse(_rig.Ui.Objective.IsVisible, "the objective line waits for the diagnostics");
+
+            Events.Publish(new CutterRefused(Vector3.zero));
+            yield return null;
+            Assert.IsTrue(readout.IsFlashing(cutterLine), "a refused cut flashes the cutter's line");
+
+            _rig.Fakes.Systems.Set(RoverSystem.Cutter, RoverSystemState.Ok);
+            Events.Publish(new RoverSystemChanged(RoverSystem.Cutter, RoverSystemState.Ok, false));
+            yield return null;
+            StringAssert.EndsWith(Text("ui.system.state.ok"), readout.LineText(cutterLine), "the line turns OK");
+
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame, false));
+            float limit = Time.realtimeSinceStartup + 12f;
+            while (!_rig.Ui.Objective.ShowsObjective && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rig.Ui.Objective.ShowsObjective, "the first objective line follows the diagnostics");
+            Assert.IsFalse(readout.IsVisible);
+            Assert.AreEqual(Text("next.v2.drive_lander"), _rig.Ui.Layout.NextLineText.text);
+
+            Events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, false));
+            yield return Seconds(_rig.Tuning.Guidance.Readout.FadeIn + 0.6f);
+            Assert.AreEqual(ReadoutKind.Protocol, readout.Showing, "a milestone reached now shows its line");
+            Assert.AreEqual(Text("ui.readout.power_on"), readout.LineText(0));
+            Assert.IsFalse(_rig.Ui.Objective.IsVisible, "over the objective line");
+
+            yield return Seconds(_rig.Tuning.Guidance.StatusHoldSeconds + _rig.Tuning.Guidance.Readout.FadeOut + 0.6f);
+            Assert.IsFalse(readout.IsVisible);
+            Events.Publish(new OpeningMilestoneReached(OpeningMilestone.SignalWest, true));
+            yield return Seconds(1f);
+            Assert.IsFalse(readout.IsVisible, "a replayed milestone sets the line without showing it");
+            Assert.AreEqual(ProtocolLine.LinkSignalWest, _rig.Ui.OpeningProtocol.Line);
+        }
+
+        [UnityTest]
+        public IEnumerator Readout_TheLandersReserveAndAScannedPanel_ShowOnceInTheirOwnWords_AndALoadedGameSaysNothing()
+        {
+            Boot();
+            _rig.Tune("_guidance._statusHoldSeconds", 1.5f);
+            _rig.Tune("_guidance._storyHoldSeconds", 1.5f);
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new LanderReserveChanged(0.5f, true));
+            Events.Publish(new LanderReserveChanged(0f, true));
+            yield return Seconds(1f);
+            Assert.IsFalse(_rig.Ui.Readout.IsVisible, "a loaded game's reserve is stated without a card");
+
+            Events.Publish(new LanderReserveChanged(0.4f, false));
+            yield return Seconds(0.5f);
+            Assert.IsFalse(_rig.Ui.Readout.IsVisible, "the reserve is read only once it has given out");
+            Events.Publish(new LanderReserveChanged(0f, false));
+            yield return Seconds(_rig.Tuning.Guidance.Readout.FadeIn + 0.6f);
+            Assert.AreEqual(ReadoutKind.Reserve, _rig.Ui.Readout.Showing);
+            Assert.AreEqual(string.Format(Text("ui.readout.reserve"), 0), _rig.Ui.Readout.LineText(0));
+
+            Events.Publish(new StoryScanned("airlock_panel", "story.airlock_panel", Vector3.zero));
+            yield return Seconds(_rig.Tuning.Guidance.StatusHoldSeconds + _rig.Tuning.Guidance.Readout.FadeOut +
+                                 _rig.Tuning.Guidance.Readout.FadeIn + 1f);
+            Assert.AreEqual(ReadoutKind.Story, _rig.Ui.Readout.Showing, "the scanned panel's text follows");
+            Assert.AreEqual(2, _rig.Ui.Readout.LineCount);
+            Assert.AreEqual(Text("story.airlock_panel").Split('\n')[1], _rig.Ui.Readout.LineText(1));
+        }
+
+        [UnityTest]
         public IEnumerator NoFrame_ShowsTwoGuidanceElements()
         {
             Boot();
+            _rig.Tune("_guidance._bootHoldSeconds", 2f);
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new NextStepChanged("next.v2.drive_lander"));
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle, false));
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.GazeEarth, false));
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame, false));
             Events.Publish(new TickerLine("battery.low.lander"));
-            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.PickUp, new Vector3(0f, 0f, 10f), true);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Build, new Vector3(0f, 0f, 10f), true);
             int shownFrames = 0;
-            float until = Time.realtimeSinceStartup + 8f;
+            bool readoutSeen = false;
+            float until = Time.realtimeSinceStartup + 12f;
             while (Time.realtimeSinceStartup < until)
             {
+                readoutSeen |= _rig.Ui.Readout.IsVisible;
                 int up = (_rig.Ui.Prompt.IsVisible ? 1 : 0) + (_rig.Ui.LookUp.IsVisible ? 1 : 0) +
-                         (_rig.Ui.RecipeCard.IsVisible ? 1 : 0) + (_rig.Ui.Objective.IsVisible ? 1 : 0);
+                         (_rig.Ui.Readout.IsVisible ? 1 : 0) + (_rig.Ui.UnlockCard.IsVisible ? 1 : 0) +
+                         (_rig.Ui.Objective.IsVisible ? 1 : 0);
                 shownFrames += up > 0 ? 1 : 0;
                 Assert.LessOrEqual(up, 1, "one guidance element at a time");
                 yield return null;
             }
 
+            Assert.IsTrue(readoutSeen, "the boot diagnostics came first, or the test proves nothing");
             Assert.Greater(shownFrames, 0, "the scene did guide, or the test proves nothing");
         }
 
