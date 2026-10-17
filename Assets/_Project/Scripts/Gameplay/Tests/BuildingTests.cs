@@ -919,6 +919,18 @@ namespace MoonProject.Gameplay.Tests
                         }
 
                         Assert.IsTrue(view.Initialize(validHolo, invalidHolo));
+                        Assert.AreEqual(4, view.StageSeams.Count);
+                        var seamPoints = new Vector3[3];
+                        for (int i = 0; i < view.StageCount; i++)
+                        {
+                            view.GetStageWeldSeam(i, seamPoints, out Vector3 normal);
+                            Assert.AreEqual(1f, normal.sqrMagnitude, 1e-3f);
+                            Assert.Greater(Vector3.Distance(seamPoints[0], seamPoints[2]), 0.1f);
+                        }
+
+                        view.SetBuildProgress(0f, false);
+                        view.GetStageWeldSeam(0, seamPoints, out _);
+                        Assert.AreEqual(view.transform.TransformPoint(seamPoints[0]), view.GetActiveWeldPoint());
                     }
                 }
                 finally

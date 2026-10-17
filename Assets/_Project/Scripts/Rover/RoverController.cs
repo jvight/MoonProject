@@ -23,8 +23,8 @@ namespace MoonProject.Rover
     /// <see cref="GroundModel"/>, <see cref="LandingDetector"/>); this component only wires them to physics.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class RoverController : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IRoverAbilities,
-        IRoverPlacement, IRoverFaceScreen
+    public sealed class RoverController : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, ICutterRig,
+        IRoverAbilities, IRoverPlacement, IRoverFaceScreen
     {
         /// <summary>The probe starts this fraction of the radius above the centre, so slight sinking hits.</summary>
         private const float ProbeLiftFraction = 0.5f;
@@ -125,7 +125,10 @@ namespace MoonProject.Rover
         private IDisposable _dockChanges;
         private RoverFeel _feel;
         private ChargeCellHardware _chargeCells;
+        private CutterNozzleDevice _nozzleDevice;
         private CargoHatch _hatch;
+        private Collider[] _selfColliders;
+        private MeshFilter[] _selfMeshes;
         private GameContext _context;
         private bool _docked;
         private bool _cradled;
@@ -263,6 +266,22 @@ namespace MoonProject.Rover
         {
             _holds.Set(owner, hold);
         }
+
+        public bool HasCutterLineOfSight(Vector3 worldPosition)
+        {
+            return ScanAim.HasCutterLineOfSight(
+                _cutterOrigin,
+                worldPosition,
+                ScanAim.DefaultCutterFiringConeDeg,
+                _selfColliders,
+                _selfMeshes);
+        }
+
+        /// <summary>The mechanical iris, hot lens core, and warm chest/bumper spill light on <see cref="CutterOrigin"/>.</summary>
+        public CutterNozzleDevice NozzleDevice => _nozzleDevice;
+
+        /// <summary>07's chassis feel and charge brace.</summary>
+        public RoverFeel Feel => _feel;
 
         /// <summary>True while any owner asks 07 to stay parked.</summary>
         public bool IsHeldStill => _holds.IsHeld;
@@ -466,6 +485,10 @@ namespace MoonProject.Rover
             context.Register<IFeelSettings>(feelPreferences);
             _dockChanges = _events.Subscribe<RoverDockChanged>(OnDockChanged);
 
+            _selfColliders = GetComponentsInChildren<Collider>(true);
+            _selfMeshes = GetComponentsInChildren<MeshFilter>(true);
+            CutterNozzleDevice.SnapOriginToNozzleLensSurface(_cutterOrigin);
+
             bool visualsReady = _visualRig.Initialize(this);
             if (visualsReady)
             {
@@ -477,6 +500,8 @@ namespace MoonProject.Rover
                 _hatch = new CargoHatch(_events, feel.CargoHatch, _cargoHatch, _hatchCrates, _feel.Rumble);
                 _chargeCells = new ChargeCellHardware(_events, feel.ChargeCells, _conduitGlows, _stageSleeves, _lockGlow,
                     Cutter, CutterOrigin, _focusLens, _focusLensGlass);
+                _nozzleDevice = new CutterNozzleDevice(_events, _cutterOrigin,
+                    _lockGlow != null ? _lockGlow.sharedMaterial : null);
             }
 
             bool kitReady = _kit.Initialize(context, this, _visualRig);
@@ -747,6 +772,7 @@ namespace MoonProject.Rover
             _feel?.Brace.Reset();
             _hatch?.Reset();
             _chargeCells?.Reset();
+            _nozzleDevice?.Reset();
             _visualRig.Snap(normal);
             _wheelFx.Break();
             _lampMotes.Carry(lens, facing);
@@ -1057,6 +1083,7 @@ namespace MoonProject.Rover
             _stillness.Step(SampleStillness(), deltaTime);
             _feel.Tick(deltaTime, Time.time, Speed, _visualRig.RootPosition);
             _chargeCells?.Tick(deltaTime);
+            _nozzleDevice?.Tick(deltaTime, Time.time);
             _hatch.Tick(deltaTime);
             _visualRig.Tick(deltaTime);
             _kit.Tick(deltaTime);
@@ -1096,6 +1123,7 @@ namespace MoonProject.Rover
             _dockChanges?.Dispose();
             _feel?.Dispose();
             _chargeCells?.Dispose();
+            _nozzleDevice?.Dispose();
             _hatch?.Dispose();
         }
     }

@@ -16,7 +16,7 @@ namespace MoonProject.Gameplay
     /// beats, and handles hold-to-deconstruct. Allocation-free per frame.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class BuildField : MonoBehaviour
+    public sealed class BuildField : MonoBehaviour, ICutterAimOwner
     {
         private const float GhostGlideHalfLife = 0.045f;
         private const float GhostYawHalfLife = 0.04f;
@@ -346,12 +346,13 @@ namespace MoonProject.Gameplay
             _input.SetModeOwner(this, ownsInput);
 
             bool weldingNow = _controller.State == BuildModeState.Welding && _controller.ActiveWeldInstanceId > 0;
-            bool activelyWelding = weldingNow && excavateHeld && _beamWork.MayStart;
             Vector3 weldPoint = weldingNow ? WeldPointOf(_controller.ActiveWeldInstanceId) : Vector3.zero;
-            StepWeldVfx(weldingNow, activelyWelding, weldPoint, deltaTime);
-            StepWeldLoopAudio(activelyWelding, weldPoint);
             SetHold(_controller.IsOpen || weldingNow);
             StepGaze(weldingNow, weldPoint);
+            bool activelyWelding = weldingNow && excavateHeld && _beamWork.MayStart &&
+                                   (_rig == null || _rig.HasCutterLineOfSight(weldPoint));
+            StepWeldVfx(weldingNow, activelyWelding, weldPoint, deltaTime);
+            StepWeldLoopAudio(activelyWelding, weldPoint);
 
             _placedBase.StepPower(deltaTime, 1f);
             StepPlacedViews(deltaTime);
@@ -594,6 +595,7 @@ namespace MoonProject.Gameplay
                 if (_controller.TryConfirmPlacement(_terrain, roverPosition, out int placedId, out _))
                 {
                     HideAllGhosts();
+                    StepGaze(true, WeldPointOf(placedId));
                     BeginWeldPresentation(placedId);
                     _waitExcavateRelease = !excavateHeld;
                 }
@@ -620,8 +622,16 @@ namespace MoonProject.Gameplay
                 BeginWeldPresentation(activeId);
             }
 
+            Vector3 weldPoint = WeldPointOf(activeId);
+            StepGaze(true, weldPoint);
             bool canWeld = excavateHeld && _beamWork.MayStart;
-            _controller.StepWelding(deltaTime, _rover.Position, canWeld, out bool completedNow, out bool cancelledNow);
+            bool hasLineOfSight = canWeld && (_rig == null || _rig.HasCutterLineOfSight(weldPoint));
+            _controller.StepWelding(
+                hasLineOfSight ? deltaTime : 0f,
+                _rover.Position,
+                canWeld,
+                out bool completedNow,
+                out bool cancelledNow);
 
             if (cancelledNow)
             {
@@ -633,7 +643,7 @@ namespace MoonProject.Gameplay
                 _weldingInstanceId = 0;
                 _waitExcavateRelease = excavateHeld;
             }
-            else if (canWeld)
+            else if (hasLineOfSight)
             {
                 _beamWork.Work(deltaTime);
             }

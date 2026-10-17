@@ -61,6 +61,7 @@ namespace MoonProject.Rover
                 events.Subscribe<LowPowerChanged>(OnLowPowerChanged),
                 events.Subscribe<RoverBoostChanged>(OnBoostChanged),
                 events.Subscribe<CutChargeStaged>(OnChargeStaged),
+                events.Subscribe<BuildWeldStateChanged>(OnWeldStateChanged),
                 events.Subscribe<CargoChanged>(cargo => _body?.SetLoadSag(
                     CargoLoad.Sag(cargo.UsedSlots, cargo.SlotCount, _motion.SagPerQuarter), _motion.SagHalfLife)),
                 events.Subscribe<StockCountTicked>(tick =>
@@ -217,6 +218,11 @@ namespace MoonProject.Rover
         /// it.</summary>
         private void Act(float progress)
         {
+            if (!_brace.IsBraced)
+            {
+                _brace.Begin(false);
+            }
+
             if (!_sustaining)
             {
                 _sustaining = true;
@@ -310,6 +316,24 @@ namespace MoonProject.Rover
             else
             {
                 _brace.Stage(staged.Stage, staged.StagesNeeded);
+            }
+        }
+
+        private void OnWeldStateChanged(BuildWeldStateChanged weld)
+        {
+            if (weld.Welding)
+            {
+                if (!_brace.IsBraced)
+                {
+                    _brace.Begin(false);
+                    _nudge.Hold(_cut.Lean);
+                    _nudge.KickSurge(_cut.Recoil);
+                }
+            }
+            else
+            {
+                _brace.Release();
+                _nudge.Release();
             }
         }
 

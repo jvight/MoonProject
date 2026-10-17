@@ -15,7 +15,7 @@ namespace MoonProject.Gameplay
     /// (what does not fit waits beside 07) and <see cref="CrewCrateOpened"/> brings the packing note. The frame stays,
     /// empty. Allocation-free.
     /// </summary>
-    public sealed class CrewCrates
+    public sealed class CrewCrates : ICutterAimOwner
     {
         private readonly SalvageField _salvage;
         private readonly CargoBundles _held;
@@ -143,10 +143,14 @@ namespace MoonProject.Gameplay
 
             bool wants = _input.ExcavateHeld && Candidate != null && (_cutting != null || _beam.MayStart);
             SetHold(wants);
+            UpdateGaze(wants);
             float engageSpeed = _cutting != null
                 ? _salvage.Tuning.EngageSpeed * _salvage.Tuning.EngageHysteresis
                 : _salvage.Tuning.EngageSpeed;
-            bool engaged = wants && (_rover == null || _rover.Speed <= engageSpeed);
+            CrewCrate targetCrate = _cutting ?? Candidate;
+            bool hasLineOfSight = targetCrate != null &&
+                                  (_rig == null || _rig.HasCutterLineOfSight(targetCrate.CutPoint.position));
+            bool engaged = wants && (_rover == null || _rover.Speed <= engageSpeed) && hasLineOfSight;
             if (_cutting != null && (!engaged || Candidate != _cutting))
             {
                 _cut.Release(_cutting.Progress, _cutting.CutPoint.position, _cutting.CutPoint.forward);

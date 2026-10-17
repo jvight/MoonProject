@@ -25,7 +25,7 @@ namespace MoonProject.Gameplay
     /// initialisation; the frame loop allocates nothing.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class SalvageField : MonoBehaviour, ISalvageStatus, IFeelAnchors
+    public sealed class SalvageField : MonoBehaviour, ISalvageStatus, IFeelAnchors, ICutterAimOwner
     {
         /// <summary>Half-angle (degrees) inside which a relic's heart competes with the pieces for the hold.</summary>
         private const float HeartCone = 90f;
@@ -630,8 +630,12 @@ namespace MoonProject.Gameplay
             Candidate = _excavation.Lifting != null ? null : FindCandidate();
             bool wantsBeam = _input.ExcavateHeld && Candidate != null && (_cutting != null || _beamWork.MayStart);
             SetHold(wantsBeam);
+            UpdateGaze(wantsBeam);
             float engageSpeed = _cutting != null ? _tuning.EngageSpeed * _tuning.EngageHysteresis : _tuning.EngageSpeed;
-            bool engaged = wantsBeam && _rover.Speed <= engageSpeed;
+            SalvagePiece targetPiece = _cutting ?? Candidate;
+            bool hasLineOfSight = targetPiece != null &&
+                                  (_rig == null || _rig.HasCutterLineOfSight(targetPiece.HotPoint));
+            bool engaged = wantsBeam && _rover.Speed <= engageSpeed && hasLineOfSight;
             if (_cutting != null && (!engaged || Candidate != _cutting))
             {
                 StopCut(true);
@@ -653,17 +657,18 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            UpdateGaze(wantsBeam);
+            UpdateGaze(wantsBeam && (_cutting != null || Candidate != null));
         }
 
         private SalvagePiece FindCandidate()
         {
             Vector3 rover = _rover.Position;
             float reach = _tuning.ReachRadius;
-            if (_cutting != null && _cutting.IsCuttable &&
-                SurfaceRules.HorizontalDistance(rover, _cutting.CutPosition) <= reach * _tuning.ReachHysteresis)
+            SalvagePiece active = _cutting ?? (_holding && _input.ExcavateHeld ? Candidate : null);
+            if (active != null && active.IsCuttable &&
+                SurfaceRules.HorizontalDistance(rover, active.CutPosition) <= reach * _tuning.ReachHysteresis)
             {
-                return _cutting;
+                return active;
             }
 
             Transform view = _view.Camera.transform;
@@ -990,8 +995,9 @@ namespace MoonProject.Gameplay
             SalvagePiece look = _cutting ?? Candidate;
             if (look != null)
             {
-                _rig.SetGazeTarget(this, look.CutPosition,
-                    wantsBeam || _cutting != null ? GazePriorities.Focus : GazePriorities.Interest);
+                bool activeAim = wantsBeam || _cutting != null;
+                _rig.SetGazeTarget(this, activeAim ? look.HotPoint : look.CutPosition,
+                    activeAim ? GazePriorities.Focus : GazePriorities.Interest);
                 _gazing = true;
             }
             else if (_gazing)

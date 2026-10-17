@@ -17,7 +17,7 @@ namespace MoonProject.Gameplay
     /// swings open about its local X, and as it stands open <see cref="ContainerOpened"/> lets its owner slide the find
     /// out. A save keeps which stand open. Allocation-free after the containers are added.
     /// </summary>
-    public sealed class SealedContainers
+    public sealed class SealedContainers : ICutterAimOwner
     {
         private readonly List<SealedContainer> _containers = new List<SealedContainer>();
         private readonly SalvageField _salvage;
@@ -129,10 +129,14 @@ namespace MoonProject.Gameplay
 
             bool wants = _input.ExcavateHeld && Candidate != null && (_cutting != null || _beam.MayStart);
             SetHold(wants);
+            UpdateGaze(wants);
             float engageSpeed = _cutting != null
                 ? _salvage.Tuning.EngageSpeed * _salvage.Tuning.EngageHysteresis
                 : _salvage.Tuning.EngageSpeed;
-            bool engaged = wants && (_rover == null || _rover.Speed <= engageSpeed);
+            SealedContainer targetContainer = _cutting ?? Candidate;
+            bool hasLineOfSight = targetContainer != null &&
+                                  (_rig == null || _rig.HasCutterLineOfSight(targetContainer.CutPoint.position));
+            bool engaged = wants && (_rover == null || _rover.Speed <= engageSpeed) && hasLineOfSight;
             if (_cutting != null && (!engaged || Candidate != _cutting))
             {
                 _cut.Release(_cutting.Progress, _cutting.CutPoint.position, _cutting.CutPoint.forward);
