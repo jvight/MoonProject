@@ -2,12 +2,42 @@
   "model": "kit_cargo_rack",
   "pivot_tolerance": 0.015,
   "nodes": {
-    "Kit_CargoRack": {"pivot": [0.0, 0.0, 0.0]},
-    "RelicSeat": {"pivot": [0.0, -0.3, 0.08]}
+    "Kit_CargoRack": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "RelicSeat": {
+      "pivot": [
+        0.0,
+        -0.3,
+        0.08
+      ]
+    }
   },
   "require_vertex_colors": true,
   "allow_boundary_edges": false,
   "max_triangles": 3000,
   "max_meshes": 1,
-  "max_draw_calls": 8
+  "max_draw_calls": 8,
+  "bounds": {
+    "size": [
+      0.732,
+      0.321,
+      0.425
+    ],
+    "tolerance": 0.037,
+    "min_size": [
+      0.695,
+      0.284,
+      0.388
+    ],
+    "max_size": [
+      0.769,
+      0.358,
+      0.462
+    ]
+  }
 }

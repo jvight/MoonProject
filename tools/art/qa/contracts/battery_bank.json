@@ -20,27 +20,155 @@
   "max_triangles": 6000,
   "max_meshes": 20,
   "max_draw_calls": 48,
-  "allow_rotation": ["Socket_Power_*"],
+  "allow_rotation": [
+    "Socket_Power_*"
+  ],
   "scale_tolerance": 0.001,
   "allow_boundary_edges": false,
   "nodes": {
-    "BatteryBank": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_1": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_2": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_3": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_4": { "pivot": [0.0, 0.0, 0.0] },
-    "SafetyBar": { "pivot": [0.0, 0.43, 0.24] },
-    "Plunger_1": { "pivot": [0.39, 0.25, 1.15] },
-    "Plunger_2": { "pivot": [0.13, 0.25, 1.15] },
-    "Plunger_3": { "pivot": [-0.13, 0.25, 1.15] },
-    "Plunger_4": { "pivot": [-0.39, 0.25, 1.15] },
-    "RotaryDial": { "pivot": [-0.68, -0.02, 0.96] },
-    "SightGlass_1": { "pivot": [0.39, 0.372, 0.64] },
-    "SightGlass_2": { "pivot": [0.13, 0.372, 0.64] },
-    "SightGlass_3": { "pivot": [-0.13, 0.372, 0.64] },
-    "SightGlass_4": { "pivot": [-0.39, 0.372, 0.64] },
-    "RoofBeacon": { "pivot": [0.0, 0.02, 1.46] },
-    "Socket_Power_1": { "pivot": [-0.74, -0.27, 1.01] },
-    "Socket_Power_2": { "pivot": [-0.74, -0.27, 0.9] }
+    "BatteryBank": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_2": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_3": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_4": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "SafetyBar": {
+      "pivot": [
+        0.0,
+        0.43,
+        0.24
+      ]
+    },
+    "Plunger_1": {
+      "pivot": [
+        0.39,
+        0.25,
+        1.15
+      ]
+    },
+    "Plunger_2": {
+      "pivot": [
+        0.13,
+        0.25,
+        1.15
+      ]
+    },
+    "Plunger_3": {
+      "pivot": [
+        -0.13,
+        0.25,
+        1.15
+      ]
+    },
+    "Plunger_4": {
+      "pivot": [
+        -0.39,
+        0.25,
+        1.15
+      ]
+    },
+    "RotaryDial": {
+      "pivot": [
+        -0.68,
+        -0.02,
+        0.96
+      ]
+    },
+    "SightGlass_1": {
+      "pivot": [
+        0.39,
+        0.372,
+        0.64
+      ]
+    },
+    "SightGlass_2": {
+      "pivot": [
+        0.13,
+        0.372,
+        0.64
+      ]
+    },
+    "SightGlass_3": {
+      "pivot": [
+        -0.13,
+        0.372,
+        0.64
+      ]
+    },
+    "SightGlass_4": {
+      "pivot": [
+        -0.39,
+        0.372,
+        0.64
+      ]
+    },
+    "RoofBeacon": {
+      "pivot": [
+        0.0,
+        0.02,
+        1.46
+      ]
+    },
+    "Socket_Power_1": {
+      "pivot": [
+        -0.74,
+        -0.27,
+        1.01
+      ]
+    },
+    "Socket_Power_2": {
+      "pivot": [
+        -0.74,
+        -0.27,
+        0.9
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      1.4618,
+      0.987,
+      1.5975
+    ],
+    "tolerance": 0.08,
+    "min_size": [
+      1.3818,
+      0.907,
+      1.5175
+    ],
+    "max_size": [
+      1.5418,
+      1.067,
+      1.6775
+    ]
   }
 }
