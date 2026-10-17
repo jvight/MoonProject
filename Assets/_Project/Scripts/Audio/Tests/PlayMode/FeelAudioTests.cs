@@ -128,12 +128,10 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [Test]
-        public void AFullHold_Toks_AndACrewCrate_Latches()
+        public void AFullHold_Toks()
         {
             _rig.Events.Publish(new CargoOverflowed(SalvageMaterial.Metal, 2, Point));
             Assert.AreEqual("cargo_tok", LastClip);
-            _rig.Events.Publish(new CrewCrateOpened("site", "ro", SalvageMaterial.Metal, 3, Point));
-            Assert.AreEqual("crate_latch", LastClip);
         }
 
         [UnityTest]

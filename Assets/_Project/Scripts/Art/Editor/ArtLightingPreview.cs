@@ -21,7 +21,7 @@ namespace MoonProject.Art.Editor
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
     ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner|
     ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|kitmain|home|homeclean|
-    ///                  builtfor07|shelves|focuslens|orangebeads|containers|hullfragments|scan|fragments|scanplaces|derelicts|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|lab_dark|lab_lit]
+    ///                  builtfor07|shelves|focuslens|orangebeads|containers|scan|fragments|scanplaces|derelicts|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|lab_dark|lab_lit]
     /// </code>
     /// (default rover; a ';'-separated list captures several scenes in one run)
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the habitat lander and the
@@ -235,10 +235,6 @@ namespace MoonProject.Art.Editor
                     case "scan":
                         NightSetting(material, temporary, 90f, 12f);
                         poses = ScanScene(temporary);
-                        break;
-                    case "hullfragments":
-                        NightSetting(material, temporary, 90f, 12f);
-                        poses = HullFragmentsScene(temporary);
                         break;
                     case "containers":
                         NightSetting(material, temporary, 90f, 12f);
@@ -703,24 +699,6 @@ namespace MoonProject.Art.Editor
                 Pose("spare_crate", new[] { 13.4f, 1.6f, 3.6f }, new[] { 12.3f, 1f, 5.5f }, 50f),
                 Pose("cabinet_sealed", new[] { -10.9f, 1.5f, -0.5f }, new[] { -12.25f, 0.6f, -2.8f }, 45f),
                 Pose("cabinet_open", new[] { -20.9f, 1.5f, -0.5f }, new[] { -22.25f, 0.6f, -2.8f }, 45f));
-        }
-
-        /// <summary>Kestrel-3's four hull fragments laid along a furrow the way World's scrap field places them, 07 among
-        /// them for scale, near and from 20 m.</summary>
-        private static CameraPoseSet HullFragmentsScene(TemporaryObjects temporary)
-        {
-            for (int i = 0; i < PropModelBuilder.HullFragmentVariants; i++)
-            {
-                Transform fragment = Instantiate(PropModelBuilder.HullFragmentPrefix + i, temporary, ArtPaths.PropFolder)
-                    .transform;
-                fragment.SetPositionAndRotation(new Vector3((i % 2 == 0 ? -1.6f : 1.8f), 0f, 3f + i * 3.2f),
-                    Quaternion.Euler(0f, i * 70f + 20f, 0f));
-            }
-
-            temporary.Add(Rover(temporary, new Vector3(0.2f, 0f, 1f), 10f).gameObject);
-            return Poses(
-                Pose("near", new[] { 3.5f, 2.2f, -1.5f }, new[] { 0f, 0.4f, 5f }, 50f),
-                Pose("far20m", new[] { 8f, 4f, -14f }, new[] { 0f, 0.4f, 7f }, 40f));
         }
 
         /// <summary>
