@@ -65,9 +65,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             BootstrapHarness.DeleteSaveFiles(PlaythroughScene.SaveSlot);
             yield return BootScene(waitWake: true);
 
-            BuildField build = _gameplay.Build;
+            BuildField build = _gameplay.Building;
             Assert.IsNotNull(build, "Main scene GameplaySystem must have BuildField wired.");
-            Assert.AreEqual(1, _gameplay.KnownStructures.Count, "A new game starts knowing only the charging pad.");
+            Assert.AreEqual(0, _gameplay.KnownStructures.Count, "A new game knows no structure (opening-v2 B3).");
+            Assert.IsTrue(_gameplay.KnownStructures.Learn(StructureIds.ChargingPad),
+                "the pad, as the lander's cargo scan teaches it");
             Assert.AreEqual(BuildModeState.Closed, build.State);
 
             // Place 07 on flat ground near home, clear of any lander props.
@@ -87,7 +89,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             aimSpot.y = terrain.SampleHeight(aimSpot.x, aimSpot.z);
             build.SetAimPointOverride(aimSpot);
 
-            // 1. Verify the charging pad is known at game start and stow materials to afford it.
+            // 1. Verify the charging pad is known and stow materials to afford it.
             Assert.IsTrue(_gameplay.KnownStructures.IsKnown(StructureIds.ChargingPad));
             Assert.IsTrue(build.Catalog.TryGet(StructureIds.ChargingPad, out StructureDefinition padDef));
 
@@ -168,7 +170,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return BootScene(waitWake: false);
             yield return null;
 
-            BuildField restoredBuild = _gameplay.Build;
+            BuildField restoredBuild = _gameplay.Building;
             Assert.IsNotNull(restoredBuild);
             Assert.IsTrue(
                 _gameplay.KnownStructures.IsKnown(StructureIds.ChargingPad),

@@ -5,55 +5,24 @@ namespace MoonProject.Gameplay.Editor
 {
     /// <summary>
     /// Where the Gameplay builders write and what they read: tuning (create-if-missing), content (rewritten by the
-    /// content builder), generated materials, and the Art prefabs of the content contracts (docs/ARCHITECTURE.md: M2
-    /// content, friends, Bell and cassettes).
+    /// content builder), generated materials, and the Art prefabs of the content contracts (docs/ARCHITECTURE.md).
     /// </summary>
     internal static class GameplayAssetPaths
     {
         public const string TuningFolder = "Assets/_Project/Data/Tuning/Gameplay";
-        public const string SonarTuning = TuningFolder + "/SonarTuning.asset";
-        public const string RelicTuning = TuningFolder + "/RelicTuning.asset";
-        public const string ExcavationTuning = TuningFolder + "/ExcavationTuning.asset";
-        public const string TetherTuning = TuningFolder + "/TetherTuning.asset";
         public const string BaseTuning = TuningFolder + "/BaseTuning.asset";
-        public const string RadioTowerTuning = TuningFolder + "/RadioTowerTuning.asset";
-        public const string WorkshopTuning = TuningFolder + "/WorkshopTuning.asset";
-        public const string FriendTuning = TuningFolder + "/FriendTuning.asset";
-        public const string CassetteTuning = TuningFolder + "/CassetteTuning.asset";
-        public const string LogCacheTuning = TuningFolder + "/LogCacheTuning.asset";
-        public const string BellTuning = TuningFolder + "/BellTuning.asset";
-        public const string RelayTuning = TuningFolder + "/RelayTuning.asset";
         public const string BatteryTuning = TuningFolder + "/BatteryTuning.asset";
         public const string GlintTuning = TuningFolder + "/GlintTuning.asset";
         public const string SalvageTuning = TuningFolder + "/SalvageTuning.asset";
-        public const string ProgressionTuning = TuningFolder + "/ProgressionTuning.asset";
-        public const string LiftTuning = TuningFolder + "/LiftTuning.asset";
         public const string CargoTuning = TuningFolder + "/CargoTuning.asset";
         public const string CutterTuning = TuningFolder + "/CutterTuning.asset";
         public const string ScanTuning = TuningFolder + "/ScanTuning.asset";
+        public const string OpeningTuning = TuningFolder + "/OpeningTuning.asset";
         public const string BuildingTuning = TuningFolder + "/BuildingTuning.asset";
-        public const string MapTuning = TuningFolder + "/MapTuning.asset";
 
         public const string ContentFolder = "Assets/_Project/Data/Content";
-        public const string RelicFolder = ContentFolder + "/Relics";
-        public const string RelicCatalog = ContentFolder + "/RelicCatalog.asset";
         public const string SalvageCatalog = ContentFolder + "/SalvageCatalog.asset";
         public const string MaterialCatalog = ContentFolder + "/MaterialCatalog.asset";
-        public const string UpgradeFolder = ContentFolder + "/Upgrades";
-        public const string RadioTowerUpgrade = UpgradeFolder + "/Upgrade_radio_tower.asset";
-        public const string HoverJumpUpgrade = UpgradeFolder + "/Upgrade_rover_hover_jump.asset";
-        public const string CargoCradleUpgrade = UpgradeFolder + "/Upgrade_rover_cargo_cradle.asset";
-        public const string WarmHeadlampUpgrade = UpgradeFolder + "/Upgrade_rover_warm_headlamp.asset";
-        public const string BoostCoilsUpgrade = UpgradeFolder + "/Upgrade_rover_boost_coils.asset";
-        public const string CellPackUpgrade = UpgradeFolder + "/Upgrade_rover_cell_pack.asset";
-        public const string FocusLensUpgrade = UpgradeFolder + "/Upgrade_rover_focus_lens.asset";
-        public const string SideBinsUpgrade = UpgradeFolder + "/Upgrade_rover_side_bins.asset";
-        public const string FriendFolder = ContentFolder + "/Friends";
-        public const string FriendCatalog = ContentFolder + "/FriendCatalog.asset";
-        public const string CassetteFolder = ContentFolder + "/Cassettes";
-        public const string CassetteCatalog = ContentFolder + "/CassetteCatalog.asset";
-        public const string LogCacheFolder = ContentFolder + "/LogCaches";
-        public const string LogCacheCatalog = ContentFolder + "/LogCacheCatalog.asset";
         public const string StructureFolder = ContentFolder + "/Structures";
         public const string StructureCatalog = ContentFolder + "/StructureCatalog.asset";
 
@@ -65,84 +34,24 @@ namespace MoonProject.Gameplay.Editor
         public const string GlintShader = "Assets/_Project/Shaders/Gameplay/Glint.shader";
         public const string PartGlintMaterial = MaterialFolder + "/M_PartGlint.mat";
 
-        public const string ArtRelicFolder = ArtPaths.Root + "/Relics";
-        public const string ArtBaseFolder = ArtPaths.Root + "/Base";
-        public const string Lander = ArtBaseFolder + "/Lander.prefab";
-        public const string RoverBay = ArtBaseFolder + "/RoverBay.prefab";
-        public const string CassetteShelf = ArtBaseFolder + "/CassetteShelf.prefab";
-        public const string ArtFriendFolder = ArtPaths.Root + "/Friends";
         public const string ArtPickupFolder = ArtPaths.Root + "/Pickups";
-        public const string LogCache = ArtPaths.Root + "/Props/LogCache.prefab";
-        public const string RelayMast = ArtPaths.RelayFolder + "/RelayMast.prefab";
-        public const string RelayMastBroken = ArtPaths.RelayFolder + "/RelayMast_Broken.prefab";
-        public const string RelayPart = ArtPaths.RelayFolder + "/Part_RelayModule.prefab";
-        public const string RelayHut = ArtPaths.RelayFolder + "/" + RelayModelBuilder.HutName + ".prefab";
-        public const string TapeDeck = ArtPaths.Root + "/Rover/Kit_TapeDeck.prefab";
 
-        /// <summary>Art's salvage site prefab (Site_depot, Site_kestrel...).</summary>
+        /// <summary>Art's salvage site prefab (Site_kestrel).</summary>
         public static string SitePrefab(string name)
         {
             return ArtPaths.SitesFolder + "/Site_" + name + ".prefab";
         }
 
-        /// <summary>Art's hull fragment <paramref name="variant"/> for Kestrel-3's scrap field.</summary>
-        public static string HullFragment(int variant)
+        /// <summary>Art's R1 crate prefab (Crate_S, Crate_M, Crate_L).</summary>
+        public static string CratePrefab(string name)
         {
-            return ArtPaths.PropFolder + "/" + PropModelBuilder.HullFragmentPrefix +
-                   variant.ToString(System.Globalization.CultureInfo.InvariantCulture) + ".prefab";
-        }
-
-        /// <summary>Art's derelict prefab (Derelict_06, Derelict_Mule...).</summary>
-        public static string DerelictPrefab(string name)
-        {
-            return ArtPaths.PropFolder + "/" + name + ".prefab";
+            return ArtPaths.R1ModelsFolder + "/Crates/" + name + ".prefab";
         }
 
         /// <summary>Art's bundle a cut piece of <paramref name="material"/> folds into.</summary>
         public static string BundlePrefab(Core.SalvageMaterial material)
         {
             return ArtPickupFolder + "/Material_" + material + ".prefab";
-        }
-
-        public static string CassetteDefinition(string id)
-        {
-            return CassetteFolder + "/Cassette_" + id + ".asset";
-        }
-
-        public static string CassettePrefab(string id)
-        {
-            return ArtPickupFolder + "/Cassette_" + id + ".prefab";
-        }
-
-        public static string LogCacheDefinition(string logId)
-        {
-            return LogCacheFolder + "/LogCache_" + logId + ".asset";
-        }
-
-        public static string FriendDefinition(string id)
-        {
-            return FriendFolder + "/Friend_" + id + ".asset";
-        }
-
-        /// <summary>A friend model or part pickup prefab (e.g. Tilly, Tilly_Broken, Part_TillyRotor).</summary>
-        public static string FriendPrefab(string name)
-        {
-            return ArtFriendFolder + "/" + name + ".prefab";
-        }
-
-        public static string RadioTowerStage(int level)
-        {
-            return ArtBaseFolder + "/RadioTower_L" + level + ".prefab";
-        }
-
-        public static string RelicDefinition(string id)
-        {
-            return RelicFolder + "/Relic_" + id + ".asset";
-        }
-
-        public static string RelicPrefab(string id)
-        {
-            return ArtRelicFolder + "/Relic_" + id + ".prefab";
         }
 
         public static string StructureDefinition(string id)

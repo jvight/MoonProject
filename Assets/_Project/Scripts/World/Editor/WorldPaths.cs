@@ -12,8 +12,6 @@ namespace MoonProject.World.Editor
         public const string GroundMarkMaterial = GeneratedRoot + "/M_GroundMarks.mat";
         public const string GroundMarkShader = "Assets/_Project/Shaders/Rover/RoverTrack.shader";
         public const string VolumeProfile = GeneratedRoot + "/WorldVolumeProfile.asset";
-        /// <summary>Home's warm grade, blended in a step per power stage over the main profile.</summary>
-        public const string HomeGradeProfile = GeneratedRoot + "/HomeGradeProfile.asset";
         /// <summary>The PC quality level's renderer: World's builder writes its SSAO from the post settings.</summary>
         public const string PcRenderer = "Assets/Settings/PC_Renderer.asset";
         /// <summary>The PC quality level's pipeline asset: World's builder sets its colour grading mode.</summary>
@@ -26,7 +24,6 @@ namespace MoonProject.World.Editor
         public const string BeaconHaloShader = "Assets/_Project/Shaders/World/LofiBeaconHalo.shader";
         /// <summary>The landed lander's amber emergency beacon's halo (opening v2 §4).</summary>
         public const string LanderBeaconMaterial = GeneratedRoot + "/M_LanderBeacon.mat";
-        public const string TowerPilotMaterial = GeneratedRoot + "/Beacon/M_TowerPilot.mat";
         public const string SkyShader = "Assets/_Project/Shaders/World/LofiSky.shader";
         public const string EarthShader = "Assets/_Project/Shaders/World/LofiEarth.shader";
         public const string GroundShader = "Assets/_Project/Shaders/World/R1Terrain.shader";

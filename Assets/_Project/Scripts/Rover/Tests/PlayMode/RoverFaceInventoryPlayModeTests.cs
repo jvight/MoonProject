@@ -316,38 +316,11 @@ namespace MoonProject.Rover.PlayModeTests
             Capture("inventory_variant_b_night");
             bezelRenderer.sharedMaterial = creamBezelMat;
 
-            // CURVED SCREEN INPUT 2: Drag waiting kit (HoverCoils in hold cell 5) across 07's curved CRT screen onto Belly socket bubble.
-            Vector2 kitCellPanel = FaceInventoryView.GetHoldCellReferenceRect(5).center;
-            Vector2 bellySocketPanel = FaceInventoryView.GetOrbitalSocketReferenceCenter(FaceInventoryView.OrbitalIndexOf(RoverSocket.Belly));
-            Assert.IsTrue(FaceScreenMapper.TryPanelToScreen(kitCellPanel, _view, faceScreen, FaceScreenMapper.DefaultPanelSize, out Vector2 kitScreen),
-                "Waiting kit hold cell 5 must project onto 07's curved 3D CRT screen.");
-            Assert.IsTrue(FaceScreenMapper.TryPanelToScreen(bellySocketPanel, _view, faceScreen, FaceScreenMapper.DefaultPanelSize, out Vector2 bellyScreen),
-                "Belly orbital socket bubble must project onto 07's curved 3D CRT screen.");
-
-            Set(_mouse.position, kitScreen);
-            yield return null;
-            Press(_mouse.leftButton);
-            yield return null;
-
-            Set(_mouse.position, bellyScreen);
-            yield return null;
-            yield return null;
-            Assert.IsTrue(view.IsDraggingKit,
-                "Pressing left mouse on a waiting kit cell and dragging across 07's curved face must begin a kit drag.");
-            Assert.IsTrue(view.IsSocketLeaderCyan(RoverSocket.Belly),
-                "Dragging HoverCoils over the Belly orbital socket bubble must light its leader line cyan.");
-            Capture("face-inv-drag-socket");
-            CaptureScreenshot("face_inv_drag");
-
-            // Release the drag back over cell 0 so HoverCoils remains in the hold and cell 0 regains focus.
+            // CURVED SCREEN INPUT 2: Verify 2D spatial keyboard/gamepad focus order across hold cells and 07's devices (no direct UI method calls).
             Set(_mouse.position, cell0Screen);
             yield return null;
-            Release(_mouse.leftButton);
             yield return null;
-            Assert.IsFalse(view.IsDraggingKit, "Releasing mouse over the hold grid must end the drag without fitting.");
-            Assert.AreEqual(0, view.FocusedHoldCell, "Releasing mouse over hold cell 0 must focus hold cell 0.");
-
-            // CURVED SCREEN INPUT 3: Verify 2D spatial keyboard/gamepad focus order across hold cells and orbital sockets (no direct UI method calls).
+            Assert.AreEqual(0, view.FocusedHoldCell, "Hovering hold cell 0 focuses hold cell 0.");
             yield return TapKey(_keyboard.rightArrowKey);
             Assert.AreEqual(1, view.FocusedHoldCell);
             yield return TapKey(_keyboard.rightArrowKey);
@@ -355,18 +328,15 @@ namespace MoonProject.Rover.PlayModeTests
             yield return TapKey(_keyboard.rightArrowKey);
             Assert.AreEqual(3, view.FocusedHoldCell);
             yield return TapKey(_keyboard.rightArrowKey);
-            Assert.AreEqual(FaceInventoryView.OrbitalIndexOf(RoverSocket.Deck), view.FocusedSocketIndex,
-                "Navigating Right from column 3 of row 0 must focus RoverSocket.Deck.");
+            Assert.AreEqual(FaceDevices.Scan, view.FocusedDeviceIndex,
+                "Navigating Right from column 3 of row 0 must focus the scan lens.");
             yield return TapKey(_keyboard.downArrowKey);
-            Assert.AreEqual(FaceInventoryView.OrbitalIndexOf(RoverSocket.Hold), view.FocusedSocketIndex,
-                "Navigating Down from Deck must move spatially down to RoverSocket.Hold.");
+            Assert.AreEqual(FaceDevices.Cutter, view.FocusedDeviceIndex,
+                "Navigating Down from the scan lens must move down to the cutter.");
             yield return TapKey(_keyboard.upArrowKey);
-            Assert.AreEqual(FaceInventoryView.OrbitalIndexOf(RoverSocket.Deck), view.FocusedSocketIndex);
-            yield return TapKey(_keyboard.upArrowKey);
-            Assert.AreEqual(FaceInventoryView.OrbitalIndexOf(RoverSocket.Back), view.FocusedSocketIndex,
-                "Navigating Up from Deck must move spatially up to RoverSocket.Back.");
+            Assert.AreEqual(FaceDevices.Scan, view.FocusedDeviceIndex);
             yield return TapKey(_keyboard.leftArrowKey);
-            Assert.AreEqual(3, view.FocusedHoldCell, "Navigating Left from Back must return focus to hold cell 3.");
+            Assert.AreEqual(3, view.FocusedHoldCell, "Navigating Left from the scan lens must return focus to hold cell 3.");
 
             // BEAT 6: Close Returns with Happy Blink (^ ^)
             int happyBlinksBefore = faceState.ClosingHappyBlinkCount;
@@ -551,47 +521,19 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.Less(Quaternion.Angle(heldCamRot, _view.transform.rotation), 0.5f,
                 "Camera look input must not rotate the face-inspect camera while inventory is open.");
 
-            // 5. Hover a cell, drag a kit to a socket with Mouse, move with Keyboard/Gamepad, press Enter/A, and close with Esc.
+            // 5. Hover a cell with the Mouse, move with Keyboard WASD and Gamepad D-pad, and close with Esc.
             Vector2 cell1Panel = FaceInventoryView.GetHoldCellReferenceRect(1).center;
             Assert.IsTrue(FaceScreenMapper.TryPanelToScreen(cell1Panel, _view, faceScreen, FaceScreenMapper.DefaultPanelSize, out Vector2 slopeCell1Screen));
             Set(_mouse.position, slopeCell1Screen);
             yield return null;
             yield return null;
             Assert.IsTrue(view.IsTooltipVisible, "Mouse hover on the 15-degree sloped screen must show the cell tooltip.");
+            Assert.AreEqual(1, view.FocusedHoldCell, "Hovering hold cell 1 focuses it.");
 
-            Assert.IsTrue(FaceScreenMapper.TryPanelToScreen(kitCellPanel, _view, faceScreen, FaceScreenMapper.DefaultPanelSize, out Vector2 slopeKitScreen));
-            Assert.IsTrue(FaceScreenMapper.TryPanelToScreen(bellySocketPanel, _view, faceScreen, FaceScreenMapper.DefaultPanelSize, out Vector2 slopeBellyScreen));
-            Assert.IsTrue(FaceScreenMapper.TryPanelToScreen(cell0Panel, _view, faceScreen, FaceScreenMapper.DefaultPanelSize, out Vector2 slopeCell0Screen));
-
-            Set(_mouse.position, slopeKitScreen);
-            yield return null;
-            Press(_mouse.leftButton);
-            yield return null;
-            Set(_mouse.position, slopeBellyScreen);
-            yield return null;
-            yield return null;
-            Assert.IsTrue(view.IsDraggingKit, "Mouse kit drag must work on the 15-degree sloped screen.");
-            Assert.IsTrue(view.IsSocketLeaderCyan(RoverSocket.Belly), "Dragging over Belly socket on slope must light its leader cyan.");
-
-            Set(_mouse.position, slopeCell0Screen);
-            yield return null;
-            Release(_mouse.leftButton);
-            yield return null;
-            Assert.IsFalse(view.IsDraggingKit);
-            Assert.AreEqual(0, view.FocusedHoldCell, "Releasing drag over hold cell 0 focuses cell 0.");
-
-            // Move with Keyboard WASD + arrows and Gamepad D-pad, then press Enter and Gamepad A (buttonSouth).
             yield return TapKey(_keyboard.sKey);
-            Assert.AreEqual(4, view.FocusedHoldCell, "WASD S must move focus down from cell 0 to cell 4.");
-            yield return TapKey(_keyboard.enterKey);
-            Assert.IsNotEmpty(view.ToastText,
-                "Pressing Enter on a waiting kit away from the Rover Bay must trigger the fit-at-bay toast.");
-
-            yield return TapButton(_gamepad.dpad.right);
-            Assert.AreEqual(5, view.FocusedHoldCell, "Gamepad D-pad Right must move focus from cell 4 to cell 5.");
-            yield return TapButton(_gamepad.buttonSouth);
-            Assert.IsNotEmpty(view.ToastText,
-                "Pressing Gamepad A (buttonSouth) on a waiting kit away from the Rover Bay must trigger the fit-at-bay toast.");
+            Assert.AreEqual(5, view.FocusedHoldCell, "WASD S must move focus down from cell 1 to cell 5.");
+            yield return TapButton(_gamepad.dpad.left);
+            Assert.AreEqual(4, view.FocusedHoldCell, "Gamepad D-pad Left must move focus from cell 5 to cell 4.");
 
             // Close with Esc and verify previous cursor state and gameplay input are restored.
             yield return TapKey(_keyboard.escapeKey);
@@ -892,7 +834,7 @@ namespace MoonProject.Rover.PlayModeTests
             var rects = new List<Rect>
             {
                 new Rect(72f, 42f, 376f, 22f),
-                new Rect(FaceInventoryView.ShelfGridX, 42f, 568f, 22f),
+                new Rect(FaceInventoryView.RightPaneX, 42f, 568f, 22f),
                 new Rect(72f, 664f, 376f, 62f),
                 new Rect(512f, 664f, 568f, 62f),
             };
@@ -902,14 +844,14 @@ namespace MoonProject.Rover.PlayModeTests
                 rects.Add(FaceInventoryView.GetHoldCellReferenceRect(i));
             }
 
-            for (int i = 0; i < FaceInventoryView.OrbitalSocketCount; i++)
+            for (int i = 0; i < FaceDevices.Count; i++)
             {
-                Vector2 c = FaceInventoryView.GetOrbitalSocketReferenceCenter(i);
+                Vector2 c = FaceDevices.CenterOf(i);
                 float r = FaceInventoryView.BubbleRadius;
                 Assert.GreaterOrEqual(
                     FaceScreenMapper.SignedDistanceInsideGlass(c, r, panelSize),
                     minMargin,
-                    $"[{lightingTag}] Orbital socket {i} must lie inside the glass safe area with margin >= {minMargin} px.");
+                    $"[{lightingTag}] Device {i} must lie inside the glass safe area with margin >= {minMargin} px.");
                 rects.Add(new Rect(c.x - r, c.y - r, 2f * r, 2f * r));
             }
 

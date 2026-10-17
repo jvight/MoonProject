@@ -9,8 +9,8 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
-    /// 07's hold and home's shelves (docs/features/M3-25): packing into stacks, a partial fit, the unload, spending
-    /// home first, building a shelf, and old saves (all home, overflow crates, new materials at 0). Nothing is lost.
+    /// 07's hold (docs/features/M3-25): packing into stacks, a new game's spares, a partial fit that hands back the
+    /// rest, and the material catalog.
     /// </summary>
     public sealed class CargoTests
     {
@@ -60,11 +60,9 @@ namespace MoonProject.Gameplay.Tests
             _stock.Stow(new Recipe(2, 1, 0));
             Assert.AreEqual(2, _stock.Hold.Units(SalvageMaterial.Metal));
             Assert.AreEqual(1, _stock.Hold.Units(SalvageMaterial.Wiring));
-            Assert.AreEqual(0, _stock.Home.Units(SalvageMaterial.Metal), "aboard, not on the shelves");
             Assert.AreEqual(2, totals[totals.Count - 1].Metal, "the totals count them");
 
-            _stock.Restore(new MaterialsSaveData { holdSlots = CargoFixtures.HoldSlots,
-                shelvesBuilt = CargoFixtures.BuiltInShelves });
+            _stock.Restore(new MaterialsSaveData { holdSlots = CargoFixtures.HoldSlots });
             Assert.AreEqual(0, _stock.Total, "a loaded save keeps its own hold: no spares added");
         }
 
@@ -78,128 +76,6 @@ namespace MoonProject.Gameplay.Tests
             Assert.IsTrue(_stock.Hold.IsFull);
             Assert.AreEqual(3, _stock.Collect(SalvageMaterial.Wiring, 3), "nothing fits");
             Assert.AreEqual(32, _stock.Total, "what waits is not counted until it is taken");
-        }
-
-        [Test]
-        public void TheDock_MovesTheHoldHome_UpToHomesRoom()
-        {
-            _stock.Collect(SalvageMaterial.Metal, 6);
-            _stock.Collect(SalvageMaterial.Optics, 2);
-            Assert.AreEqual(6, _stock.MoveHome(SalvageMaterial.Metal, 6));
-            Assert.AreEqual(2, _stock.MoveHome(SalvageMaterial.Optics, 99), "only what 07 has");
-            Assert.AreEqual(0, _stock.Hold.UsedSlots);
-            Assert.AreEqual(3, _stock.Home.UsedSlots);
-            Assert.AreEqual(8, _stock.Total, "moving changes no total");
-
-            _stock.Deliver(SalvageMaterial.Wiring, 2 * CargoFixtures.ShelfSlots * 4);
-            _stock.Collect(SalvageMaterial.Wiring, 4);
-            Assert.AreEqual(0, _stock.MoveHome(SalvageMaterial.Wiring, 4), "home is full: it stays in 07");
-            Assert.AreEqual(4, _stock.Hold.Units(SalvageMaterial.Wiring));
-        }
-
-        [Test]
-        public void Recipes_ReadHomeAnd07_AndSpendHomeFirst()
-        {
-            _stock.Deliver(SalvageMaterial.Metal, 6);
-            _stock.Collect(SalvageMaterial.Metal, 3);
-            Assert.IsTrue(_stock.Has(new Recipe(9, 0, 0)), "home 6 + 07 3");
-            Assert.IsTrue(_stock.TrySpend(new Recipe(7, 0, 0)));
-            Assert.AreEqual(0, _stock.Home.Units(SalvageMaterial.Metal), "home spent first");
-            Assert.AreEqual(2, _stock.Hold.Units(SalvageMaterial.Metal), "then 07");
-        }
-
-        [Test]
-        public void AShelf_OnAFreeSocket_AddsItsSlots()
-        {
-            var built = new List<ShelfBuilt>();
-            _events.Subscribe<ShelfBuilt>(built.Add);
-            HomeStorage home = _stock.Home;
-            Assert.AreEqual(2 * CargoFixtures.ShelfSlots, home.SlotCount);
-            Assert.AreEqual(CargoFixtures.BuiltInShelves, home.NextSocket);
-            home.Build(home.NextSocket);
-            Assert.AreEqual(3 * CargoFixtures.ShelfSlots, home.SlotCount);
-            Assert.AreEqual(3, home.NextSocket);
-            Assert.AreEqual(2, built[0].SocketIndex);
-            Assert.IsTrue(home.GetShelf(2).Built);
-            Assert.AreEqual(2 * CargoFixtures.ShelfSlots, home.GetShelf(2).FirstSlot);
-            Assert.Throws<InvalidOperationException>(() => home.Build(2));
-        }
-
-        [Test]
-        public void AVersion2Save_GoesAllHome_AndWhatTheShelvesCannotHoldWaitsInCrates()
-        {
-            string json = MaterialsSaveMigrations.Migrate(
-                JsonUtility.ToJson(new MaterialsSaveDataV2 { metal = 100, wiring = 9, optics = 2 }), 2);
-            _stock.Restore(JsonUtility.FromJson<MaterialsSaveData>(json));
-            Assert.AreEqual(0, _stock.Hold.UsedSlots, "07's hold starts empty");
-            Assert.AreEqual(111, _stock.Total, "nothing lost");
-            Assert.AreEqual(9, _stock.Home.Units(SalvageMaterial.Wiring), "on the shelves or in crates");
-            int crated = _stock.Home.OverflowUnits(SalvageMaterial.Metal) +
-                         _stock.Home.OverflowUnits(SalvageMaterial.Wiring) +
-                         _stock.Home.OverflowUnits(SalvageMaterial.Optics);
-            Assert.AreEqual(111 - 2 * CargoFixtures.ShelfSlots * 4, crated, "overflow crates beside the shelves");
-
-            int crates = _stock.Home.OverflowUnits(SalvageMaterial.Metal);
-            Assert.IsTrue(_stock.TrySpend(new Recipe(1, 0, 0)));
-            Assert.AreEqual(crates - 1, _stock.Home.OverflowUnits(SalvageMaterial.Metal), "crates are spent first");
-            Assert.AreEqual(SalvageMaterials.Count, _stock.Capture().home.Length, "new materials saved at 0");
-        }
-
-        [Test]
-        public void ASaveWithASmallerHold_SendsTheRestHome_NeverDropsIt()
-        {
-            var save = new MaterialsSaveData { hold = new[] { 40 }, holdSlots = 4 };
-            _stock.Restore(save);
-            Assert.AreEqual(32, _stock.Hold.Units(SalvageMaterial.Metal), "the hold keeps its 8 slots");
-            Assert.AreEqual(8, _stock.Home.Units(SalvageMaterial.Metal), "the rest goes home");
-        }
-
-        [Test]
-        public void ACratesNote_IsKeyedByItsSite()
-        {
-            Assert.AreEqual("crate.depot.note", CrewCrateKeys.Note("site.depot"));
-            Assert.AreEqual("crate.lander.note", CrewCrateKeys.Note("lander"));
-            Assert.Throws<ArgumentException>(() => CrewCrateKeys.Note(string.Empty));
-        }
-
-        [Test]
-        public void StoryParts_TakeAHoldSlot_StayPutWhenFull_LeaveOnDelivery_AndLoadFromA055SaveIntoTheHold()
-        {
-            var parts = new TowerParts(_events, "radio_tower", new[]
-            {
-                new TowerPart("Part_TowerCoil", 1, TowerPartSource.SiteHeart, "site.depot", Vector2.zero),
-                new TowerPart("Part_Transformer", 2, TowerPartSource.SiteHeart, "site.garage", Vector2.zero),
-            }, _stock);
-            _stock.Collect(SalvageMaterial.Metal, 4);
-            Assert.IsTrue(parts.PickUp(0, Vector3.zero), "picked up: the coil takes a free hold slot");
-            Assert.AreEqual(TowerPartState.Carried, parts.StateOf(0));
-            Assert.AreEqual(2, _stock.Hold.UsedSlots, "1 material slot + 1 story part slot");
-            Assert.AreEqual(1, _stock.Hold.MaterialSlots);
-            Assert.IsTrue(_stock.Hold.HasPart("Part_TowerCoil"));
-            Assert.AreEqual(string.Empty, _stock.Hold.GetPart(0), "slot 0 holds the Metal stack");
-            Assert.AreEqual("Part_TowerCoil", _stock.Hold.GetPart(1), "slot 1 holds the carried coil");
-
-            Assert.AreEqual(0, _stock.Collect(SalvageMaterial.Metal, 6 * 4), "6 more material slots fill the 8-slot hold");
-            Assert.AreEqual(8, _stock.Hold.UsedSlots);
-            Assert.IsFalse(_stock.Hold.HasFreeSlot, "no free slot left");
-            Assert.IsFalse(parts.PickUp(1, Vector3.zero), "a full hold keeps the transformer where it was");
-            Assert.AreEqual(TowerPartState.Waiting, parts.StateOf(1));
-            Assert.IsFalse(_stock.Hold.HasPart("Part_Transformer"));
-
-            parts.Deliver(0, Vector3.zero);
-            Assert.AreEqual(TowerPartState.Delivered, parts.StateOf(0));
-            Assert.IsFalse(_stock.Hold.HasPart("Part_TowerCoil"), "delivering the coil frees its slot");
-            Assert.AreEqual(7, _stock.Hold.UsedSlots);
-            Assert.IsTrue(_stock.Hold.HasFreeSlot);
-
-            Assert.AreEqual(0, _stock.Collect(SalvageMaterial.Wiring, 4), "the freed 8th slot takes Wiring");
-            Assert.AreEqual(8, _stock.Hold.UsedSlots);
-            parts.Restore(new TowerPartsSaveData { carried = new[] { "Part_Transformer" } });
-            Assert.AreEqual(TowerPartState.Carried, parts.StateOf(1));
-            Assert.IsTrue(_stock.Hold.HasPart("Part_Transformer"), "a 0.5.5 save with a part carried loads it into the hold");
-            Assert.AreEqual(8, _stock.Hold.UsedSlots);
-            Assert.AreEqual("Part_Transformer", _stock.Hold.GetPart(7));
-            Assert.AreEqual(4, _stock.Home.Units(SalvageMaterial.Wiring), "the displaced stack went to home's shelves: nothing lost");
         }
 
         [Test]

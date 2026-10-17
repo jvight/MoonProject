@@ -99,11 +99,6 @@ namespace MoonProject.UI
             return GetIcon(UiIconSet.IconIdOf(socket));
         }
 
-        public UiIconShape GetIcon(RoverKitPiece piece)
-        {
-            return GetIcon(UiIconSet.IconIdOf(piece));
-        }
-
         internal void SetSockets(Vector3[] sockets)
         {
             _sockets = sockets ?? throw new ArgumentNullException(nameof(sockets));

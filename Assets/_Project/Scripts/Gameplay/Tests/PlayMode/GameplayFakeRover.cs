@@ -5,27 +5,20 @@ using MoonProject.Core;
 namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
-    /// Stands in for the Rover domain: a kinematic body the test moves directly, with an eye (TetherOrigin), a cargo
-    /// socket, a cargo seat on its back (fitted with the Cargo Cradle ability) and a following camera. Registers
-    /// IRoverState, IRoverRig, IViewCamera, IRoverAbilities, IRoverPlacement, IRoverCargoSeat and IRoverStillness
-    /// (counting up while it stands still, as the Rover does; any move or placement resets it), and records every
-    /// gaze and hold-still request, every ability granted and every placement so tests can assert 07's attention,
-    /// upgrades and radio-hops.
+    /// Stands in for the Rover domain: a kinematic body the test moves directly, with an eye (the cutter's and the
+    /// scan's origin), a cargo socket and a following camera. Registers IRoverState, IRoverRig, IViewCamera,
+    /// IRoverAbilities and IRoverPlacement, and records every gaze and hold-still request so tests can assert 07's
+    /// attention.
     /// </summary>
     public sealed class GameplayFakeRover : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IViewCamera,
-        IRoverAbilities, IRoverPlacement, IRoverCargoSeat, IRoverStillness
+        IRoverAbilities, IRoverPlacement
     {
-        /// <summary>Below this speed (m/s) the fake stands still.</summary>
-        private const float StillSpeed = 0.05f;
-
         private readonly Dictionary<object, GazeRequest> _gaze = new Dictionary<object, GazeRequest>();
         private readonly HashSet<object> _holders = new HashSet<object>();
         private readonly HashSet<RoverAbility> _abilities = new HashSet<RoverAbility>();
         private Vector3 _lastPosition;
         private Transform _eye;
         private Transform _cargo;
-        private Transform _seat;
-        private bool _registersCargoSeat;
         private Rigidbody _body;
         private Camera _camera;
 
@@ -36,8 +29,6 @@ namespace MoonProject.Gameplay.PlayModeTests
         public Vector3 Velocity { get; private set; }
 
         public float Speed => new Vector3(Velocity.x, 0f, Velocity.z).magnitude;
-
-        public float StillSeconds { get; private set; }
 
         public float NormalizedSpeed => Mathf.Clamp01(Speed / 8f);
 
@@ -66,37 +57,14 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public Camera Camera => _camera;
 
-        /// <summary>The rack's RelicSeat stand-in, on top of the shell at the back.</summary>
-        public Transform CargoSeat => _seat;
-
-        /// <summary>Takes the Cargo Cradle off 07 even though the ability is owned (a test of "never lost").</summary>
-        public bool SeatRemoved { get; set; }
-
-        public bool IsFitted => Has(RoverAbility.CargoCradle) && !SeatRemoved;
-
-        Vector3 IRoverCargoSeat.Position => _seat.position;
-
-        Quaternion IRoverCargoSeat.Rotation => _seat.rotation;
-
         /// <summary>Owners currently asking 07 to hold still.</summary>
         public int HoldStillCount => _holders.Count;
 
-        /// <summary>Gaze requests ever made, in order (owner type name, priority).</summary>
-        public List<string> GazeLog { get; } = new List<string>();
-
-        /// <summary>Grant calls received (idempotent grants still count).</summary>
-        public int AbilityGrants { get; private set; }
-
-        /// <summary>PlaceAt calls received (one per radio-hop).</summary>
-        public int Placements { get; private set; }
-
-        /// <param name="cargoSeat">False for a rover that registers no cargo seat (a test of the boot check).</param>
-        public static GameplayFakeRover Create(Vector3 position, float yaw, bool cargoSeat)
+        public static GameplayFakeRover Create(Vector3 position, float yaw)
         {
             var host = new GameObject("FakeRover");
             host.transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yaw, 0f));
             var rover = host.AddComponent<GameplayFakeRover>();
-            rover._registersCargoSeat = cargoSeat;
             rover.Build();
             return rover;
         }
@@ -108,11 +76,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             context.Register<IViewCamera>(this);
             context.Register<IRoverAbilities>(this);
             context.Register<IRoverPlacement>(this);
-            context.Register<IRoverStillness>(this);
-            if (_registersCargoSeat)
-            {
-                context.Register<IRoverCargoSeat>(this);
-            }
         }
 
         public bool Has(RoverAbility ability)
@@ -122,7 +85,6 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public void Grant(RoverAbility ability)
         {
-            AbilityGrants++;
             _abilities.Add(ability);
         }
 
@@ -137,12 +99,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yaw, 0f));
             _lastPosition = position;
             Velocity = Vector3.zero;
-            StillSeconds = 0f;
         }
 
         public void PlaceAt(Vector3 position, Quaternion rotation)
         {
-            Placements++;
             Place(position, rotation.eulerAngles.y);
         }
 
@@ -191,11 +151,6 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public void SetGazeTarget(object owner, Vector3 worldPosition, int priority)
         {
-            if (!_gaze.ContainsKey(owner))
-            {
-                GazeLog.Add(owner.GetType().Name + ":" + priority);
-            }
-
             _gaze[owner] = new GazeRequest(worldPosition, priority);
             AimEyeAtWinningGaze();
         }
@@ -244,7 +199,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             _lastPosition = transform.position;
             _eye = Child("TetherOrigin", new Vector3(0f, 1.3f, 0.7f));
             _cargo = Child("CargoSocket", new Vector3(0f, 1.05f, -0.4f));
-            _seat = Child("RelicSeat", new Vector3(0f, 1.15f, -0.85f));
 
             var body = new GameObject("PhysicsSphere") { layer = Layers.Rover };
             body.transform.SetParent(transform, false);
@@ -290,7 +244,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             _lastPosition = transform.position;
-            StillSeconds = Speed < StillSpeed ? StillSeconds + deltaTime : 0f;
             AimEyeAtWinningGaze();
         }
 

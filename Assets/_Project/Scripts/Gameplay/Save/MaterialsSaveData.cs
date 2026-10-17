@@ -3,10 +3,8 @@ using System;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Save section "gameplay.wallet" from version 3 (JsonUtility DTO; field names are the JSON keys): where the
-    /// materials are (docs/features/M3-25 §6). Arrays are indexed by material; a save from an older build with fewer
-    /// materials pads the rest with 0. Version 2 held one shared total (<see cref="MaterialsSaveDataV2"/>), version 1 the
-    /// scrap balance (<see cref="WalletSaveData"/>), converted by <see cref="MaterialsSaveMigrations"/>.
+    /// Save section "gameplay.wallet" (JsonUtility DTO; field names are the JSON keys): 07's hold (opening-v2 §5).
+    /// Indexed by material; a save from a build with fewer materials pads the rest with 0.
     /// </summary>
     [Serializable]
     public sealed class MaterialsSaveData
@@ -14,22 +12,7 @@ namespace MoonProject.Gameplay
         /// <summary>Units in 07's hold, per material.</summary>
         public int[] hold = Array.Empty<int>();
 
-        /// <summary>The hold's slots when saved (so a load never squeezes it before the kits are restored).</summary>
+        /// <summary>The hold's slots when saved (so a load never squeezes it).</summary>
         public int holdSlots;
-
-        /// <summary>Units on home's shelves, per material.</summary>
-        public int[] home = Array.Empty<int>();
-
-        /// <summary>Units in overflow crates beside the shelves, per material (migration only; never deleted).</summary>
-        public int[] overflow = Array.Empty<int>();
-
-        /// <summary>Shelves standing, the built-in ones included.</summary>
-        public int shelvesBuilt;
-
-        /// <summary>
-        /// Bundles that waited on the ground in an older save (before 0.5.5 §2), read once into home's overflow crates;
-        /// never written any more.
-        /// </summary>
-        public WaitingBundleSaveData[] waiting = Array.Empty<WaitingBundleSaveData>();
     }
 }

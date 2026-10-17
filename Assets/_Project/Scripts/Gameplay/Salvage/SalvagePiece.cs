@@ -5,22 +5,21 @@ using MoonProject.Core;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// One piece of a salvage site (Art's "Salvage_&lt;n&gt;_&lt;Material&gt;[_Drag]" node): what it yields, how long
-    /// it takes to cut, how far the cut has come (kept when the beam lets go, VISION ruling 4) and where it is in its
-    /// life.
-    /// <see cref="SalvageField"/> drives it; the piece only holds its state and its scene objects.
+    /// One piece of a salvage site (Art's "Salvage_&lt;n&gt;_&lt;Material&gt;[_Drag]" node; with no tether in the
+    /// opening a drag piece cuts like any other): what it yields, how long it takes to cut, how far the cut has come
+    /// (kept when the beam lets go, VISION ruling 4) and where it is in its life. <see cref="SalvageField"/> drives it;
+    /// the piece only holds its state and its scene objects.
     /// </summary>
     public sealed class SalvagePiece
     {
-        internal SalvagePiece(SalvageSite site, int number, SalvageMaterial material, bool drag, PieceSize size,
-            int units, int segments, float cutSeconds, Transform body, Vector3 localCentre, Transform cutPoint, Vector3[] cutLine,
+        internal SalvagePiece(SalvageSite site, int number, SalvageMaterial material, PieceSize size, int units,
+            int segments, float cutSeconds, Transform body, Vector3 localCentre, Transform cutPoint, Vector3[] cutLine,
             Collider wreckCollider, GlowRenderer halo, Transform bundle)
         {
             CutLine = cutLine ?? throw new ArgumentNullException(nameof(cutLine));
             Site = site ?? throw new ArgumentNullException(nameof(site));
             Number = number;
             Material = material;
-            IsDrag = drag;
             Size = size;
             Units = units;
             Segments = Math.Max(1, segments);
@@ -41,9 +40,6 @@ namespace MoonProject.Gameplay
         public int Number { get; }
 
         public SalvageMaterial Material { get; }
-
-        /// <summary>Must be tethered clear of its wreck before it can be cut.</summary>
-        public bool IsDrag { get; }
 
         /// <summary>How big it is (docs/features/M3-26 §4): its segments, cut time and yield.</summary>
         public PieceSize Size { get; }
@@ -71,10 +67,7 @@ namespace MoonProject.Gameplay
         /// <summary>Its "CutPoint" node: on the cut face, +Z out of it.</summary>
         internal Transform CutPoint { get; }
 
-        /// <summary>A drag piece's tetherable body (null for the others).</summary>
-        public SalvageDrag Drag { get; internal set; }
-
-        /// <summary>Its solid collider while it is part of the wreck (null for a drag piece).</summary>
+        /// <summary>Its solid collider while it is part of the wreck.</summary>
         internal Collider WreckCollider { get; }
 
         internal GlowRenderer Halo { get; }
@@ -85,9 +78,6 @@ namespace MoonProject.Gameplay
         internal Vector3 BodyScale { get; }
 
         internal Vector3 BundleScale { get; }
-
-        /// <summary>How strongly the tether's aim highlights a drag piece.</summary>
-        internal float TetherHighlight { get; set; }
 
         /// <summary>Current halo brightness (eased).</summary>
         internal float HaloLevel { get; set; }
@@ -103,18 +93,14 @@ namespace MoonProject.Gameplay
 
         internal float MotionDuration { get; set; }
 
-        /// <summary>
-        /// The beam can cut it now: on its wreck (not a drag piece), or a drag piece pulled clear and off the tether.
-        /// </summary>
-        public bool IsCuttable => State == SalvagePieceState.Loose
-            ? !Drag.IsTethered
-            : State == SalvagePieceState.Attached && !IsDrag;
+        /// <summary>The beam can cut it now: it is on its wreck.</summary>
+        public bool IsCuttable => State == SalvagePieceState.Attached;
 
-        /// <summary>Where the beam meets it: the cut point on the wreck, the body's centre once loose.</summary>
-        public Vector3 CutPosition => State == SalvagePieceState.Loose ? Drag.Position : CutPoint.position;
+        /// <summary>Where the beam meets it: the cut point on the wreck.</summary>
+        public Vector3 CutPosition => CutPoint.position;
 
         /// <summary>The way sparks fly from the cut.</summary>
-        internal Vector3 CutNormal => State == SalvagePieceState.Loose ? Vector3.up : CutPoint.forward;
+        internal Vector3 CutNormal => CutPoint.forward;
 
         /// <summary>The seam's points in the CutPoint's local space (docs/design/feel-pass.md §3.2).</summary>
         internal Vector3[] CutLine { get; }

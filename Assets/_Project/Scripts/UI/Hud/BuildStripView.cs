@@ -15,7 +15,8 @@ namespace MoonProject.UI
     /// The build strip (0.5.7 slice 6, BUILD-MODE) and the world-anchored placement reason chip. While 07 is in
     /// <see cref="BuildModeState.Menu"/> or <see cref="BuildModeState.Placing"/>, a calm Moonlight Glass strip at the
     /// bottom of the HUD lists the structures 07 has learned with their 256 px icons, localized names, description,
-    /// material cost rows (<see cref="RecipeView"/>), and input hints. When the placement ghost sits on an invalid
+    /// material cost rows (<see cref="RecipeView"/>), the share of 07's battery the weld takes
+    /// (<see cref="IWeldEnergy"/>), and input hints. When the placement ghost sits on an invalid
     /// spot in <see cref="BuildModeState.Placing"/>, a one-line reason chip floats above the ghost via
     /// <see cref="WorldAnchor"/>. Zero per-frame GC allocations.
     /// </summary>
@@ -28,6 +29,7 @@ namespace MoonProject.UI
         public const string CardIconClass = "build-card__icon";
         public const string CardNameClass = "build-card__name";
         public const string CardCostClass = "build-card__cost";
+        public const string CardEnergyClass = "build-card__energy";
 
         private const float ReasonAnchorHeightOffset = 0.35f;
 
@@ -37,6 +39,8 @@ namespace MoonProject.UI
         private readonly IMaterialStock _stock;
         private readonly BuildField _buildField;
         private readonly GlyphLabels _glyphs;
+        private readonly IWeldEnergy _weldEnergy;
+        private readonly string[] _energyTexts = new string[WeldEnergyShare.MaxPercent + 1];
         private readonly GlyphView _primaryGlyph;
         private readonly GlyphView _secondaryGlyph;
         private readonly Reveal _stripReveal;
@@ -69,7 +73,8 @@ namespace MoonProject.UI
             IViewCamera view,
             BuildField buildField = null,
             Texture2D[] structureIcons = null,
-            GlyphLabels glyphs = null)
+            GlyphLabels glyphs = null,
+            IWeldEnergy weldEnergy = null)
         {
             _layout = layout ?? throw new ArgumentNullException(nameof(layout));
             if (stripReveal == null)
@@ -87,6 +92,7 @@ namespace MoonProject.UI
             _stock = stock ?? throw new ArgumentNullException(nameof(stock));
             _buildField = buildField;
             _glyphs = glyphs;
+            _weldEnergy = weldEnergy;
             _primaryGlyph = new GlyphView(layout.BuildStripGlyphPrimary, layout.BuildStripGlyphPrimaryLabel);
             _secondaryGlyph = new GlyphView(layout.BuildStripGlyphSecondary, layout.BuildStripGlyphSecondaryLabel);
 
@@ -134,6 +140,9 @@ namespace MoonProject.UI
         /// <summary>The recipe cost view on the strip (for tests and captures).</summary>
         public RecipeView Recipe => _recipe;
 
+        /// <summary>The energy words on card <paramref name="index"/> (tests and captures).</summary>
+        public string EnergyText(int index) => _cards[index].Energy.text;
+
         /// <summary>Number of structure cards currently displayed in the strip.</summary>
         public int CardCount => _shownAvailableCount > 0 ? _shownAvailableCount : 0;
 
@@ -178,6 +187,7 @@ namespace MoonProject.UI
         public void Relocalize()
         {
             _recipe.Relocalize();
+            Array.Clear(_energyTexts, 0, _energyTexts.Length);
             _stale = true;
             _shownReason = PlacementReason.Valid;
         }
@@ -199,8 +209,10 @@ namespace MoonProject.UI
                                     (selected != null && !ReferenceEquals(selected.Id, _shownSelectedId));
             bool modeChanged = state != _shownState || snapped != _shownSnapped;
             bool deviceChanged = device != _shownDevice;
+            bool energyChanged = !cardsChanged && EnergyChanged(available, count);
 
-            if (!cardsChanged && !stockChanged && !selectionChanged && !modeChanged && !deviceChanged)
+            if (!cardsChanged && !stockChanged && !selectionChanged && !modeChanged && !deviceChanged &&
+                !energyChanged)
             {
                 return;
             }
@@ -230,6 +242,7 @@ namespace MoonProject.UI
 
                 var cardStatus = new RecipeStatus(def.BuildCost, metal, wiring, optics);
                 slot.CostSlots.ShowRecipe(def.BuildCost, cardStatus);
+                WriteEnergy(slot, EnergyPercentOf(def), cardsChanged);
                 slot.Root.EnableInClassList(SelectedCardClass, i == selectedIndex);
                 slot.Root.EnableInClassList(ShortCardClass, !cardStatus.IsAffordable);
             }
@@ -291,6 +304,45 @@ namespace MoonProject.UI
             _stale = false;
         }
 
+        private int EnergyPercentOf(StructureDefinition definition)
+        {
+            return _weldEnergy != null ? WeldEnergyShare.Percent(_weldEnergy.WeldShare01(definition)) : -1;
+        }
+
+        private bool EnergyChanged(IReadOnlyList<StructureDefinition> available, int count)
+        {
+            if (_weldEnergy == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < count && i < _cards.Count; i++)
+            {
+                if (_cards[i].EnergyPercent != EnergyPercentOf(available[i]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void WriteEnergy(CardSlot slot, int percent, bool rewrite)
+        {
+            if (percent == slot.EnergyPercent && !rewrite)
+            {
+                return;
+            }
+
+            slot.EnergyPercent = percent;
+            slot.Energy.style.display = percent >= 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            if (percent >= 0)
+            {
+                slot.Energy.text = _energyTexts[percent] ?? (_energyTexts[percent] = string.Format(
+                    _localization.Get(UiKeys.BuildEnergyCard), _numbers.Get(percent) + "%"));
+            }
+        }
+
         private void RefreshReason(PlacementReason reason)
         {
             if (!_stale && reason == _shownReason)
@@ -316,11 +368,14 @@ namespace MoonProject.UI
                 var costRow = new VisualElement { pickingMode = PickingMode.Ignore };
                 costRow.AddToClassList(CardCostClass);
                 var costSlots = new MaterialSlots(costRow, _numbers, haveNeed: false, names: false);
+                var energy = new Label { pickingMode = PickingMode.Ignore };
+                energy.AddToClassList(CardEnergyClass);
                 root.Add(icon);
                 root.Add(name);
                 root.Add(costRow);
+                root.Add(energy);
                 _layout.BuildStripCards.Add(root);
-                _cards.Add(new CardSlot(root, icon, name, costSlots));
+                _cards.Add(new CardSlot(root, icon, name, costSlots, energy));
             }
         }
 
@@ -350,12 +405,13 @@ namespace MoonProject.UI
 
         private sealed class CardSlot
         {
-            public CardSlot(VisualElement root, VisualElement icon, Label name, MaterialSlots costSlots)
+            public CardSlot(VisualElement root, VisualElement icon, Label name, MaterialSlots costSlots, Label energy)
             {
                 Root = root;
                 Icon = icon;
                 Name = name;
                 CostSlots = costSlots;
+                Energy = energy;
             }
 
             public VisualElement Root { get; }
@@ -366,7 +422,13 @@ namespace MoonProject.UI
 
             public MaterialSlots CostSlots { get; }
 
+            /// <summary>The share of 07's battery the weld takes, in words.</summary>
+            public Label Energy { get; }
+
             public string StructureId { get; set; }
+
+            /// <summary>The whole percent last written on <see cref="Energy"/>; -1 when it shows none.</summary>
+            public int EnergyPercent { get; set; } = int.MinValue;
         }
     }
 }

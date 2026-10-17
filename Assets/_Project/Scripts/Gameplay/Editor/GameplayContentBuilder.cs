@@ -1,20 +1,16 @@
 using System;
-using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using MoonProject.Art.Editor;
 using MoonProject.Core;
 using MoonProject.Editor.Builders;
 
 namespace MoonProject.Gameplay.Editor
 {
     /// <summary>
-    /// Writes the gameplay content from code recipes: the salvage catalog over Art's site and bundle prefabs
-    /// (<see cref="SalvageEconomy"/>), one RelicDefinition per <see cref="RelicRecipes"/> entry and the relic catalog,
-    /// the radio tower and the Rover Bay's kit crafted from the <see cref="SalvageEconomy"/> recipes, the friends
-    /// (Tilly and Bell) and their catalog, Ro's cassettes and their catalog, and the crew log caches and their catalog.
-    /// Rewritten in place on every run (GUIDs kept). Every Art prefab it references (the content contracts) is
-    /// required: a missing one fails the build loudly.
+    /// Writes the gameplay content from code recipes: the material catalog, the salvage catalog over Art's Kestrel site
+    /// and bundle prefabs (<see cref="SalvageEconomy"/>), and the base structures and their catalog
+    /// (<see cref="BaseStructureRecipes"/>). Rewritten in place on every run (GUIDs kept). Every Art prefab it
+    /// references (the content contracts) is required: a missing one fails the build loudly.
     /// </summary>
     internal static class GameplayContentBuilder
     {
@@ -26,12 +22,6 @@ namespace MoonProject.Gameplay.Editor
         {
             BuildMaterials();
             BuildSalvage();
-            BuildRelics();
-            BuildRadioTower();
-            BuildWorkshopUpgrades();
-            BuildFriends();
-            BuildCassettes();
-            BuildLogCaches();
             BuildStructures();
             AssetDatabase.SaveAssets();
         }
@@ -52,7 +42,7 @@ namespace MoonProject.Gameplay.Editor
         }
 
         /// <summary>
-        /// The ten player-built base structures (<see cref="BaseStructureRecipes"/>) and their catalog
+        /// The player-built base structures (<see cref="BaseStructureRecipes"/>) and their catalog
         /// (<see cref="StructureCatalog"/>).
         /// </summary>
         internal static void BuildStructures()
@@ -80,192 +70,6 @@ namespace MoonProject.Gameplay.Editor
                       GameplayAssetPaths.StructureCatalog);
         }
 
-        /// <summary>
-        /// The radio tower: before any purchase the old mast is dark and the clear signal reaches 60 m; three levels
-        /// crafted from wiring and optics (<see cref="SalvageEconomy.RadioTower"/>) widen it to 110, 170 and 260 m and
-        /// warm the base up.
-        /// The sites yield at least twice every recipe (VISION ruling 5, an EditMode test keeps it). Its name and level
-        /// texts live in the localization tables (upgrade.radio_tower.*).
-        /// </summary>
-        private static void BuildRadioTower()
-        {
-            var upgrade = ScriptableObject.CreateInstance<UpgradeDefinition>();
-            upgrade.Populate("radio_tower", UpgradeStationKind.RadioTower, 60f, new[]
-            {
-                new UpgradeLevel(SalvageEconomy.RadioTower[0], 110f, 1.25f),
-                new UpgradeLevel(SalvageEconomy.RadioTower[1], 170f, 1.5f),
-                new UpgradeLevel(SalvageEconomy.RadioTower[2], 260f, 1.8f),
-            });
-            GeneratedAssets.CreateOrReplace(upgrade, GameplayAssetPaths.RadioTowerUpgrade);
-            Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.RadioTowerUpgrade}");
-        }
-
-        /// <summary>
-        /// Kenji's bench sells rover kit, offered in this order (docs/features/M3-03, M3-11, M3-20, M3-26, M3-25):
-        /// Hover-Jump, then the Cargo Cradle, the Warm Headlamp, the Boost Coils, Cell Pack II, the Focus Lens and the
-        /// Side Bins, one level each, crafted from the
-        /// <see cref="SalvageEconomy"/> recipes. Each grants its rover ability; the Rover domain shows its kit on 07.
-        /// Their texts live in the localization tables (upgrade.rover.&lt;ability&gt;.*).
-        /// </summary>
-        private static void BuildWorkshopUpgrades()
-        {
-            RoverKit("rover.hover_jump", SalvageEconomy.HoverJump, RoverAbility.HoverJump,
-                GameplayAssetPaths.HoverJumpUpgrade);
-            RoverKit("rover.cargo_cradle", SalvageEconomy.CargoCradle, RoverAbility.CargoCradle,
-                GameplayAssetPaths.CargoCradleUpgrade);
-            RoverKit("rover.warm_headlamp", SalvageEconomy.WarmHeadlamp, RoverAbility.WarmHeadlamp,
-                GameplayAssetPaths.WarmHeadlampUpgrade);
-            RoverKit("rover.boost_coils", SalvageEconomy.BoostCoils, RoverAbility.BoostCoils,
-                GameplayAssetPaths.BoostCoilsUpgrade);
-            RoverKit("rover.cell_pack", SalvageEconomy.CellPack, RoverAbility.CellPack,
-                GameplayAssetPaths.CellPackUpgrade);
-            RoverKit("rover.focus_lens", SalvageEconomy.FocusLens, RoverAbility.FocusLens,
-                GameplayAssetPaths.FocusLensUpgrade);
-            RoverKit("rover.side_bins", SalvageEconomy.SideBins, RoverAbility.SideBins,
-                GameplayAssetPaths.SideBinsUpgrade);
-        }
-
-        private static void RoverKit(string id, Recipe recipe, RoverAbility ability, string path)
-        {
-            var upgrade = ScriptableObject.CreateInstance<UpgradeDefinition>();
-            upgrade.Populate(id, UpgradeStationKind.Workshop, 0f, new[] { new UpgradeLevel(recipe, ability) });
-            GeneratedAssets.CreateOrReplace(upgrade, path);
-            Debug.Log($"{BuilderPath}: wrote {path}");
-        }
-
-        /// <summary>
-        /// Tilly, Ines's survey drone (docs/features/M3-02-friends-tilly.md): she lies in a shallow crater 80-110 m
-        /// east of home, in view from the base edge, her rotor, lens and cell in her crashed survey sled beside her;
-        /// repaired, she perches on the lander and spots for 07. Bell, Ro's radio cabinet on legs (docs/features/M3-05): she
-        /// leans against the back wall of the canyon terminus (4.85 m in from its anchor, where her back, 1.03 m
-        /// behind her root, meets the sheer wall), her knob, cone and valve in the three alcoves (or along the way in),
-        /// and Lumen After Dark, Vol. 1 is the fourth thing she needs; repaired she walks home to her corner by the
-        /// radio tower and brings the radio dial. Their texts
-        /// live in the localization tables (friend.&lt;id&gt;.*).
-        /// </summary>
-        private static void BuildFriends()
-        {
-            var tilly = ScriptableObject.CreateInstance<FriendDefinition>();
-            tilly.Populate("tilly", LoadArt(GameplayAssetPaths.FriendPrefab("Tilly_Broken")),
-                LoadArt(GameplayAssetPaths.FriendPrefab("Tilly")), FriendBodyKind.Drone, new[]
-                {
-                    new FriendPart("rotor", LoadArt(GameplayAssetPaths.FriendPrefab("Part_TillyRotor"))),
-                    new FriendPart("lens", LoadArt(GameplayAssetPaths.FriendPrefab("Part_TillyLens"))),
-                    new FriendPart("cell", LoadArt(GameplayAssetPaths.FriendPrefab("Part_TillyCell"))),
-                }, Array.Empty<string>(), FriendHome.Lander, "FriendSocket_tilly", false,
-                FriendDefinition.SpotterAbility, 3.5f, "tilly",
-                new FriendPlacement(41, new Vector2(80f, 110f), 77.5f, 17.5f, new Vector2(0.3f, 2.5f), 10f, true));
-            var bell = ScriptableObject.CreateInstance<FriendDefinition>();
-            bell.Populate("bell", LoadArt(GameplayAssetPaths.FriendPrefab("Bell_Broken")),
-                LoadArt(GameplayAssetPaths.FriendPrefab("Bell")), FriendBodyKind.RadioCabinet, new[]
-                {
-                    new FriendPart("knob", LoadArt(GameplayAssetPaths.FriendPrefab("Part_BellKnob"))),
-                    new FriendPart("cone", LoadArt(GameplayAssetPaths.FriendPrefab("Part_BellCone"))),
-                    new FriendPart("valve", LoadArt(GameplayAssetPaths.FriendPrefab("Part_BellValve"))),
-                }, new[] { "after_dark_1" }, FriendHome.RadioTower, "BellCorner", true,
-                FriendDefinition.RadioDialAbility, 4f, "bell",
-                new FriendAnchorPlacement(new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(0f, 4.85f)),
-                    WorldAnchorIds.CanyonAlcovePrefix, WorldAnchorIds.CanyonLanding, 40f, WorldAnchorIds.CanyonExit));
-            var friends = new[]
-            {
-                GeneratedAssets.CreateOrReplace(tilly, GameplayAssetPaths.FriendDefinition("tilly")),
-                GeneratedAssets.CreateOrReplace(bell, GameplayAssetPaths.FriendDefinition("bell")),
-            };
-
-            var catalog = ScriptableObject.CreateInstance<FriendCatalog>();
-            catalog.Populate(friends);
-            catalog = GeneratedAssets.CreateOrReplace(catalog, GameplayAssetPaths.FriendCatalog);
-            string problem = catalog.Validate();
-            if (problem != null)
-            {
-                throw new InvalidOperationException($"{BuilderPath}: friend catalog {problem}.");
-            }
-
-            Debug.Log($"{BuilderPath}: wrote {friends.Length} friend(s) and {GameplayAssetPaths.FriendCatalog}");
-        }
-
-        /// <summary>
-        /// Ro's first three tapes (docs/features/M3-05 "Cassettes"), each sealed in a container (0.5.5 §2): Lumen
-        /// After Dark, Vol. 1 in her TapeCase by her tin box beside Bell at the canyon terminus, Dust &amp; Honey in
-        /// her TapeCase on 06 at micro.06 (no gate), and Slow Orbit in the fallen SupplyPod on the glinting ledge, a
-        /// short Hover-Jump up. Anchor offsets are in the anchor's frame (x right, y forward); content faces back
-        /// toward 07 arriving. Their texts live in the localization tables (cassette.&lt;id&gt;.*).
-        /// </summary>
-        private static void BuildCassettes()
-        {
-            var hoverJump = new AbilityGate(true, RoverAbility.HoverJump);
-            CassetteDefinition[] cassettes =
-            {
-                Cassette("after_dark_1", CassetteSiteRule.Anchor,
-                    new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.2f, 1.9f)), hoverJump,
-                    ContainerKinds.TapeCase),
-                Cassette("dust_and_honey", CassetteSiteRule.Derelict,
-                    new AnchorSpot(WorldAnchorIds.Micro06, Vector2.zero), AbilityGate.Open, ContainerKinds.TapeCase),
-                Cassette("slow_orbit", CassetteSiteRule.Anchor, new AnchorSpot(WorldAnchorIds.CanyonLedge,
-                    Vector2.zero), hoverJump, ContainerKinds.SupplyPod),
-            };
-
-            var catalog = ScriptableObject.CreateInstance<CassetteCatalog>();
-            catalog.Populate(cassettes);
-            catalog = GeneratedAssets.CreateOrReplace(catalog, GameplayAssetPaths.CassetteCatalog);
-            string problem = catalog.Validate();
-            if (problem != null)
-            {
-                throw new InvalidOperationException($"{BuilderPath}: cassette catalog {problem}.");
-            }
-
-            Debug.Log($"{BuilderPath}: wrote {cassettes.Length} cassette(s) and {GameplayAssetPaths.CassetteCatalog}");
-        }
-
-        private static CassetteDefinition Cassette(string id, CassetteSiteRule site, AnchorSpot anchor,
-            AbilityGate gate, string container)
-        {
-            var cassette = ScriptableObject.CreateInstance<CassetteDefinition>();
-            cassette.Populate(id, LoadArt(GameplayAssetPaths.CassettePrefab(id)), site, anchor, gate, container);
-            return GeneratedAssets.CreateOrReplace(cassette, GameplayAssetPaths.CassetteDefinition(id));
-        }
-
-        /// <summary>
-        /// Ro's battered tin box at the canyon terminus beside Bell, holding her first log (log.ro_1) and the first
-        /// tape; past the chasm, so it needs Hover-Jump. The other three crew each left a tin beside a site's heart
-        /// (docs/design/text/crew-logs.md), where 07 stands to dig: Kenji's by his bench in the garage, Ines's at the
-        /// foot of her tipped drill by her boot, and Theo's in the canyon supply lander by his teapot (past the gate).
-        /// Offsets are in the site's frame, from the Art site models' Heart nodes.
-        /// </summary>
-        private static LogCacheDefinition CrewTin(string logId, string site, Vector2 offset, AbilityGate gate)
-        {
-            var tin = ScriptableObject.CreateInstance<LogCacheDefinition>();
-            tin.Populate(logId, LoadArt(GameplayAssetPaths.LogCache),
-                new AnchorSpot(SalvageEconomy.SiteId(site), offset), gate);
-            return GeneratedAssets.CreateOrReplace(tin, GameplayAssetPaths.LogCacheDefinition(logId));
-        }
-
-        private static void BuildLogCaches()
-        {
-            var ro = ScriptableObject.CreateInstance<LogCacheDefinition>();
-            ro.Populate("ro_1", LoadArt(GameplayAssetPaths.LogCache),
-                new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.7f, 3f)),
-                new AbilityGate(true, RoverAbility.HoverJump));
-            var caches = new[]
-            {
-                GeneratedAssets.CreateOrReplace(ro, GameplayAssetPaths.LogCacheDefinition("ro_1")),
-                CrewTin("kenji_1", "garage", new Vector2(-0.8f, 4.6f), AbilityGate.Open),
-                CrewTin("ines_1", "drill", new Vector2(3.7f, 1.9f), AbilityGate.Open),
-                CrewTin("theo_1", "lander", new Vector2(1.6f, 1.15f), new AbilityGate(true, RoverAbility.HoverJump)),
-            };
-
-            var catalog = ScriptableObject.CreateInstance<LogCacheCatalog>();
-            catalog.Populate(caches);
-            catalog = GeneratedAssets.CreateOrReplace(catalog, GameplayAssetPaths.LogCacheCatalog);
-            string problem = catalog.Validate();
-            if (problem != null)
-            {
-                throw new InvalidOperationException($"{BuilderPath}: log cache catalog {problem}.");
-            }
-
-            Debug.Log($"{BuilderPath}: wrote {caches.Length} log cache(s) and {GameplayAssetPaths.LogCacheCatalog}");
-        }
-
         private static GameObject LoadArt(string path)
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -280,69 +84,21 @@ namespace MoonProject.Gameplay.Editor
         }
 
         /// <summary>
-        /// The salvage catalog: Art's five wreck sites on their World anchors (the canyon lander past the Hover-Jump
-        /// gate), the derelicts on the micro-site anchors (0.5.5 §1.7) and the three material bundles cut pieces fold
-        /// into.
+        /// The salvage catalog: Art's Kestrel impact on its World anchor and the three material bundles cut pieces
+        /// fold into.
         /// </summary>
         private static void BuildSalvage()
         {
-            IReadOnlyList<string> names = SalvageEconomy.SiteNames;
-            if (LoadArt(GameplayAssetPaths.SitePrefab(names[0])).transform.Find(SiteModelBuilder.AnswerLampName) == null)
+            GameObject prefab = LoadArt(GameplayAssetPaths.SitePrefab(SalvageEconomy.Kestrel));
+            var sites = new[]
             {
-                SiteModelBuilder.Build();
-            }
-
-            var sites = new SalvageSiteEntry[names.Count];
-            for (int i = 0; i < sites.Length; i++)
-            {
-                AbilityGate gate = names[i] == SalvageEconomy.GatedSite
-                    ? new AbilityGate(true, RoverAbility.HoverJump)
-                    : AbilityGate.Open;
-                GameObject prefab = LoadArt(GameplayAssetPaths.SitePrefab(names[i]));
-                sites[i] = new SalvageSiteEntry(SalvageEconomy.SiteId(names[i]), prefab, gate,
-                    names[i] == SalvageEconomy.HeartUnderPiecesSite, SalvageEconomy.YieldScale(names[i]),
-                    SalvageCutLines.Across(prefab), SalvageSizes.Deal(prefab, SalvageEconomy.PieceClasses(names[i])),
-                    SalvageEconomy.Crate(names[i]));
-            }
-
-            IReadOnlyList<(string Id, string AnchorId, string HostSocket, string Prefab)> derelictNames =
-                SalvageEconomy.Derelicts;
-            if (LoadArt(GameplayAssetPaths.DerelictPrefab(derelictNames[0].Prefab)).transform
-                    .Find(SiteModelBuilder.AnswerLampName) == null)
-            {
-                DerelictBuilder.Build();
-            }
-
-            var derelicts = new SalvageSiteEntry[derelictNames.Count];
-            for (int i = 0; i < derelicts.Length; i++)
-            {
-                (string id, string anchorId, string hostSocket, string name) = derelictNames[i];
-                GameObject prefab = LoadArt(GameplayAssetPaths.DerelictPrefab(name));
-                SocketProp[] props = id == WorldAnchorIds.Micro06
-                    ? new[] { new SocketProp(DerelictBuilder.HutSocketName, LoadArt(GameplayAssetPaths.RelayHut)) }
-                    : Array.Empty<SocketProp>();
-                derelicts[i] = SalvageSiteEntry.Derelict(id, anchorId, hostSocket, prefab,
-                    SalvageCutLines.Across(prefab), SalvageSizes.Deal(prefab, SalvageEconomy.DerelictPieceClasses(id)),
-                    props);
-            }
-
-            var fragments = new GameObject[PropModelBuilder.HullFragmentVariants];
-            var seams = new PieceCutLine[fragments.Length];
-            for (int i = 0; i < fragments.Length; i++)
-            {
-                fragments[i] = LoadArt(GameplayAssetPaths.HullFragment(i));
-                if (!SalvageCutLines.TryThrough(fragments[i].transform, i, out seams[i]))
-                {
-                    throw new InvalidOperationException($"{BuilderPath}: Art's hull fragment {i} has no CutPoint or " +
-                                                        "mesh (Art/Props contract).");
-                }
-            }
-
+                new SalvageSiteEntry(SalvageEconomy.SiteId(SalvageEconomy.Kestrel), prefab, 1,
+                    SalvageCutLines.Across(prefab), SalvageSizes.Deal(prefab, SalvageEconomy.KestrelPieceClasses)),
+            };
             var catalog = ScriptableObject.CreateInstance<SalvageCatalog>();
-            catalog.Populate(sites, derelicts, LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Metal)),
+            catalog.Populate(sites, LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Metal)),
                 LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Wiring)),
-                LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Optics)), fragments, seams,
-                SalvageEconomy.TrailScrapSize);
+                LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Optics)));
             catalog = GeneratedAssets.CreateOrReplace(catalog, GameplayAssetPaths.SalvageCatalog);
             string problem = catalog.Validate();
             if (problem != null)
@@ -350,44 +106,7 @@ namespace MoonProject.Gameplay.Editor
                 throw new InvalidOperationException($"{BuilderPath}: salvage catalog {problem}.");
             }
 
-            Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.SalvageCatalog} ({sites.Length} sites, " +
-                      $"{derelicts.Length} derelicts)");
-        }
-
-        private static void BuildRelics()
-        {
-            RelicRecipe[] recipes = RelicRecipes.All;
-            var definitions = new RelicDefinition[recipes.Length];
-            for (int i = 0; i < recipes.Length; i++)
-            {
-                RelicRecipe recipe = recipes[i];
-                string prefabPath = GameplayAssetPaths.RelicPrefab(recipe.Id);
-                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
-                if (prefab == null)
-                {
-                    throw new InvalidOperationException(
-                        $"{BuilderPath}: Art prefab {prefabPath} is missing (M2 content contract). " +
-                        "Run the Art builders.");
-                }
-
-                var definition = ScriptableObject.CreateInstance<RelicDefinition>();
-                definition.Populate(recipe.Id, recipe.Mass, prefab, recipe.AnswerNote,
-                    SalvageEconomy.SiteId(recipe.Site), recipe.Crew);
-                definitions[i] = GeneratedAssets.CreateOrReplace(definition,
-                    GameplayAssetPaths.RelicDefinition(recipe.Id));
-            }
-
-            var catalog = ScriptableObject.CreateInstance<RelicCatalog>();
-            catalog.Populate(definitions);
-            catalog = GeneratedAssets.CreateOrReplace(catalog, GameplayAssetPaths.RelicCatalog);
-            string problem = catalog.Validate();
-            if (problem != null)
-            {
-                throw new InvalidOperationException($"{BuilderPath}: relic catalog {problem}.");
-            }
-
-            Debug.Log($"{BuilderPath}: wrote {definitions.Length} relic definitions and " +
-                      GameplayAssetPaths.RelicCatalog);
+            Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.SalvageCatalog} ({sites.Length} site)");
         }
     }
 }

@@ -108,7 +108,7 @@ namespace MoonProject.UI.PlayModeTests
             Boot();
             _rig.Ui.Ledger.RecordHoldBooted();
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.PickUp, new Vector3(0f, 0f, 12f), true);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Build, new Vector3(0f, 0f, 12f), true);
             yield return new WaitForSecondsRealtime(1.5f);
             CollectionAssert.AreEqual(new[] { UiCueKind.PromptShown }, _cues, "one cue per appearance");
         }
