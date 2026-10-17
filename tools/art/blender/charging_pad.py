@@ -19,30 +19,30 @@ import r1kit  # noqa: E402
 # Single table of dimensions taken from DESIGN.md (sections 1.2, 2, and 3.1)
 CHARGING_PAD_DIMS: dict[str, float] = {
     # Overall footprint and heights (DESIGN.md §2 & §3.1 + Scale Bible §1.1)
-    "footprint_width": 2.60,
-    "footprint_depth": 3.20,
-    "deck_height": 0.18,
+    "footprint_width": 3.04,
+    "footprint_depth": 3.40,
+    "deck_height": 0.16,
     "bollard_height": 1.55,
-    "ramp_angle_deg": 15.0,
+    "ramp_angle_deg": 11.0,
     # Moving-part ranges (TASK.md & DESIGN.md §3.1)
     "contact_shoes_rise": 0.08,
     "cooling_louver_open_deg": 20.0,
-    # Octagonal deck & 3-sided ramp geometry (matching s_charging_pad.png, rescaled for 07)
-    "deck_core_width": 1.92,
-    "deck_core_depth": 2.42,
+    # Octagonal deck & 3-sided ramp geometry (widened for >=0.10m side clearance + <=12 deg ramp for 07)
+    "deck_core_width": 2.12,
+    "deck_core_depth": 2.46,
     "deck_core_center_z": -0.10,
     "deck_chamfer": 0.16,
-    "ramp_length": 0.48,
-    "ramp_width_front": 1.60,
+    "ramp_length": 0.68,
+    "ramp_width_front": 1.88,
     "ramp_width_side": 0.90,
-    "ramp_thickness": 0.068,
-    "guide_rail_x": 0.86,
+    "ramp_thickness": 0.064,
+    "guide_rail_x": 0.92,
     "guide_rail_width": 0.095,
     "guide_rail_height": 0.070,
-    "guide_rail_length": 1.82,
-    "wheel_lane_x": 0.61,
-    "wheel_pad_width": 0.34,
-    "wheel_pad_length": 1.76,
+    "guide_rail_length": 1.86,
+    "wheel_lane_x": 0.58,
+    "wheel_pad_width": 0.36,
+    "wheel_pad_length": 1.84,
     "well_width": 0.58,
     "well_depth": 0.72,
     "well_center_z": 0.04,
@@ -79,12 +79,12 @@ CHARGING_PAD_DIMS: dict[str, float] = {
     "louver_height": 0.44,
     "louver_depth": 0.046,
     # Contact shoes in center of deck
-    "shoes_pivot_y": 0.12,
+    "shoes_pivot_y": 0.10,
     "shoes_pivot_z": 0.04,
     "shoe_plate_x": 0.17,
     "shoe_plate_width": 0.15,
     "shoe_plate_length": 0.52,
-    "shoe_plate_top_y": 0.23,
+    "shoe_plate_top_y": 0.21,
     # Rear power socket
     "socket_power_y": 0.20,
     "socket_power_z": -1.64,
@@ -201,9 +201,10 @@ def _build_stage_2(root: bpy.types.Object) -> bpy.types.Object:
     ramp_h = d["deck_height"]
     ramp_pitch = d["ramp_angle_deg"]
     ramp_thick = d["ramp_thickness"]
-    front_ramp_z = d["deck_core_center_z"] + d["deck_core_depth"] * 0.5 + 0.15
+    front_ramp_z = d["deck_core_center_z"] + d["deck_core_depth"] * 0.5 + 0.24
+    side_ramp_x = d["deck_core_width"] * 0.5 + 0.20
 
-    # Front (+Z) 15-deg entry ramp
+    # Front (+Z) 11-deg entry ramp
     _add_sloped_ramp(
         mb,
         center_u=(0.0, ramp_h * 0.52, front_ramp_z),
@@ -214,11 +215,11 @@ def _build_stage_2(root: bpy.types.Object) -> bpy.types.Object:
         yaw_deg=0.0,
     )
 
-    # Left (-X) and Right (+X) 15-deg side ramps reaching x = -1.30 m and x = +1.30 m
+    # Left (-X) and Right (+X) 11-deg side ramps
     for side in (-1.0, 1.0):
         _add_sloped_ramp(
             mb,
-            center_u=(side * 1.07, ramp_h * 0.52, d["deck_core_center_z"]),
+            center_u=(side * side_ramp_x, ramp_h * 0.52, d["deck_core_center_z"]),
             width=d["ramp_width_side"],
             length=ramp_len,
             thickness=ramp_thick,
@@ -508,7 +509,8 @@ def _build_stage_4(root: bpy.types.Object) -> bpy.types.Object:
     front_half_w = d["ramp_width_front"] * 0.5 - 0.045
     side_half_w = d["ramp_width_side"] * 0.5 - 0.045
     strip_y = d["deck_height"] * 0.52 + d["ramp_thickness"] * 0.5 + 0.004
-    front_ramp_z = d["deck_core_center_z"] + d["deck_core_depth"] * 0.5 + 0.15
+    front_ramp_z = d["deck_core_center_z"] + d["deck_core_depth"] * 0.5 + 0.24
+    side_ramp_x = d["deck_core_width"] * 0.5 + 0.20
 
     for side, name in ((-1.0, "GuideStrip_L"), (1.0, "GuideStrip_R")):
         g_mb = r1kit.MeshBuilder(name, pivot_u=(side * front_half_w, strip_y, front_ramp_z))
@@ -524,7 +526,7 @@ def _build_stage_4(root: bpy.types.Object) -> bpy.types.Object:
         # Two strips on the corresponding side (-X or +X) ramp cheeks
         for z_cheek in (-side_half_w, side_half_w):
             g_mb.add_bevel_box(
-                center_u=(side * 1.07, strip_y, d["deck_core_center_z"] + z_cheek),
+                center_u=(side * side_ramp_x, strip_y, d["deck_core_center_z"] + z_cheek),
                 size_u=(0.038, 0.022, ramp_len - 0.05),
                 mat="R1_LampAmber",
                 bevel=0.004,
@@ -590,6 +592,44 @@ def build_charging_pad() -> bpy.types.Object:
     return root
 
 
+def render_charging_pad_with_rover() -> None:
+    """Render ChargingPad with Rover 07 parked centred on the deck under Day C and Night A."""
+    from mathutils import Euler, Vector
+    from ruins import ruins_common as rc
+
+    rc.reset_ruins_scene()
+    scene_group = bpy.data.objects.new("_ChargingPadScaleScene", None)
+    bpy.context.scene.collection.objects.link(scene_group)
+
+    pad_root = build_charging_pad()
+    pad_root.parent = scene_group
+
+    rover_fbx = Path("Assets/_Project/Art/R1/Models/Rover/RoverModel.fbx")
+    if rover_fbx.exists():
+        before = set(bpy.data.objects)
+        bpy.ops.import_scene.fbx(filepath=str(rover_fbx.resolve()))
+        rover_objs = [o for o in bpy.data.objects if o not in before]
+        for o in rover_objs:
+            if o.type == "MESH" and o.data is not None:
+                for slot in o.material_slots:
+                    if slot.material is not None:
+                        base_m = bpy.data.materials.get(slot.material.name.split(".")[0])
+                        if base_m is not None:
+                            slot.material = base_m
+            if o.parent is None:
+                o.parent = scene_group
+                o.location = Vector((0.0, -0.04, CHARGING_PAD_DIMS["deck_height"]))
+                o.rotation_euler = Euler((0.0, 0.0, math.radians(180.0)), "XYZ")
+
+    rc.render_ruin_day_night(
+        scene_group,
+        slug="charging_pad_scale",
+        cam_angle_deg=146.0,
+        cam_elev_deg=24.0,
+        res=(1024, 768),
+    )
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Build ChargingPad FBX and preview renders.")
     parser.add_argument(
@@ -623,6 +663,7 @@ def main(argv: list[str] | None = None) -> None:
             pose_rest_name="pose_rest",
             pose_active_name="pose_active",
         )
+        render_charging_pad_with_rover()
 
 
 if __name__ == "__main__":

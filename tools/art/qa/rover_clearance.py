@@ -612,12 +612,96 @@ def print_clearance_table(report: dict, label: str = "Rover SolarWing Clearance"
     )
 
 
+def evaluate_charging_pad_clearance(repo_root: Path) -> dict:
+    """Verify Rover 07 centered parking clearance (>= 0.10 m per side) and entry ramp slope (<= 12 deg) on ChargingPad."""
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    rover_fbx = repo_root / "Assets" / "_Project" / "Art" / "R1" / "Models" / "Rover" / "RoverModel.fbx"
+    pad_fbx = repo_root / "Assets" / "_Project" / "Art" / "R1" / "Models" / "Structures" / "ChargingPad.fbx"
+
+    rover_root = _import_fbx_root(rover_fbx, prefix="Rover::")
+    pad_root = _import_fbx_root(pad_fbx, prefix="Pad::")
+    bpy.context.view_layer.update()
+
+    r_meshes = [o for o in [rover_root] + list(rover_root.children_recursive) if o.type == "MESH"]
+    r_xs = [ (o.matrix_world @ v.co).x for o in r_meshes for v in o.data.vertices ]
+    r_ys = [ (o.matrix_world @ v.co).y for o in r_meshes for v in o.data.vertices ]
+    rover_width_m = max(r_xs) - min(r_xs)
+    rover_length_m = max(r_ys) - min(r_ys)
+
+    stage_2 = bpy.data.objects.get("Pad::Stage_2")
+    guide_l = bpy.data.objects.get("Pad::GuideStrip_L")
+    guide_r = bpy.data.objects.get("Pad::GuideStrip_R")
+
+    # Measure inner X of raised guide rails / rub strips on deck (z > 0.175 m, |x| > 0.50 m, |y| < 0.90 m)
+    rail_inner_x = 999.0
+    ramp_slope_deg = 0.0
+    if stage_2 is not None and stage_2.data is not None:
+        mw = stage_2.matrix_world
+        rot_mw = mw.to_3x3()
+        for v in stage_2.data.vertices:
+            wv = mw @ v.co
+            if wv.z > 0.175 and abs(wv.x) > 0.50 and abs(wv.y) < 0.90:
+                rail_inner_x = min(rail_inner_x, abs(wv.x))
+        # Find front entry ramp top tread face normal (y > 1.0, area > 0.15, normal pointing +Z and +Y)
+        best_area = 0.0
+        for poly in stage_2.data.polygons:
+            wc = mw @ poly.center
+            wn = (rot_mw @ poly.normal).normalized()
+            if wc.y > 1.0 and abs(wc.x) < 0.25 and wn.z > 0.85 and wn.y > 0.05 and poly.area > best_area:
+                best_area = poly.area
+                ramp_slope_deg = math.degrees(math.acos(max(-1.0, min(1.0, wn.z))))
+
+    # Measure inner X of front ramp GuideStrip_L / GuideStrip_R (y > 1.0 m)
+    ramp_guide_inner_x = 999.0
+    for gobj in (guide_l, guide_r):
+        if gobj is not None and gobj.data is not None:
+            mw = gobj.matrix_world
+            for v in gobj.data.vertices:
+                wv = mw @ v.co
+                if wv.y > 1.0:
+                    ramp_guide_inner_x = min(ramp_guide_inner_x, abs(wv.x))
+
+    clear_half_width_m = min(rail_inner_x, ramp_guide_inner_x)
+    clear_lane_width_m = 2.0 * clear_half_width_m
+    side_clearance_m = clear_half_width_m - (rover_width_m * 0.5)
+
+    passed = (side_clearance_m >= 0.10) and (0.0 < ramp_slope_deg <= 12.0)
+    return {
+        "rover_width_m": round(rover_width_m, 4),
+        "rover_length_m": round(rover_length_m, 4),
+        "rail_inner_half_width_m": round(rail_inner_x, 4),
+        "ramp_guide_inner_half_width_m": round(ramp_guide_inner_x, 4),
+        "clear_lane_width_m": round(clear_lane_width_m, 4),
+        "side_clearance_m": round(side_clearance_m, 4),
+        "ramp_slope_deg": round(ramp_slope_deg, 2),
+        "pass": passed,
+    }
+
+
 def main():
     argv = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
-    parser = argparse.ArgumentParser(description="Check 07 SolarWing clearance across all tuned poses.")
+    parser = argparse.ArgumentParser(description="Check 07 SolarWing clearance and ChargingPad clearance.")
     parser.add_argument("--out", type=str, default="", help="Optional JSON output path")
     parser.add_argument("--min-clearance-mm", type=float, default=0.0, help="Required minimum clearance in mm")
+    parser.add_argument("--check-charging-pad", action="store_true", help="Verify 07 clearance and ramp slope on ChargingPad")
     args = parser.parse_args(argv)
+
+    if args.check_charging_pad:
+        pad_report = evaluate_charging_pad_clearance(REPO_ROOT)
+        print("=== ChargingPad Rover 07 Clearance & Ramp Check ===")
+        print(f"Rover 07 size:          {pad_report['rover_width_m']:.4f} m W x {pad_report['rover_length_m']:.4f} m L")
+        print(f"Clear lane width:       {pad_report['clear_lane_width_m']:.4f} m")
+        print(f"Side clearance (each):  {pad_report['side_clearance_m']:.4f} m (required >= 0.1000 m)")
+        print(f"Entry ramp slope:       {pad_report['ramp_slope_deg']:.2f} deg (required <= 12.00 deg)")
+        if args.out:
+            out_path = Path(args.out)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(json.dumps(pad_report, indent=2), encoding="utf-8")
+        if not pad_report["pass"]:
+            print("RESULT: FAIL")
+            raise SystemExit(1)
+        print("RESULT: PASS")
+        return
 
     tuning = parse_rover_tuning(REPO_ROOT)
     load_rover_and_kits_from_fbx(REPO_ROOT)
