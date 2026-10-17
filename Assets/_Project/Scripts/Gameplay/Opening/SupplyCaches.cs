@@ -9,28 +9,33 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The opening's sealed supply crates (docs/design/opening-v2.md §4; no floating loot): Art's containers stood by
+    /// The opening's supply crates (docs/design/opening-v2.md §4, §10; no floating loot): Art's containers stood by
     /// world anchors and Lumen ruin pieces, cut open with the cutter like any sealed container
-    /// (<see cref="SealedContainers"/>). As a crate stands open its yield goes into 07's hold, each material with the
-    /// salvage note; what the hold has no room for stays in the crate and comes out when 07 is back within the
-    /// beam's reach with room. Allocation-free per frame.
+    /// (<see cref="SealedContainers"/>), or standing open from the start (the lander's, B4: no cutting before the
+    /// igniter). As a crate stands open its yield goes into 07's hold, each material with the salvage note; an open
+    /// one gives it once 07 is within the beam's reach. What the hold has no room for stays in the crate and comes out
+    /// when 07 is back within reach with room; a story part (the spare igniter) comes out with
+    /// <see cref="StoryPartCollected"/>. Allocation-free per frame.
     /// </summary>
     public sealed class SupplyCaches : IDisposable
     {
         private readonly List<SupplyCache> _caches = new List<SupplyCache>();
         private readonly List<SealedContainer> _containers = new List<SealedContainer>();
         private readonly Recipe[] _left;
+        private readonly bool[] _partLeft;
         private readonly EventBus _events;
         private readonly MaterialStock _stock;
         private readonly IRoverState _rover;
         private readonly ISaveService _save;
         private readonly float _reach;
+        private readonly float _collectReach;
         private readonly IDisposable _opened;
 
         /// <param name="frames">A crate's frame by its anchor id: a world anchor or a ruin piece.</param>
-        /// <param name="reach">Metres within which an open crate still holding something gives the rest.</param>
+        /// <param name="reach">Metres within which a cut-open crate still holding something gives the rest.</param>
+        /// <param name="collectReach">Metres within which a crate open from the start gives what it holds.</param>
         public SupplyCaches(IReadOnlyList<SupplyCache> caches, Func<string, Transform> frames, Transform parent,
-            GameplayServices services, SealedContainers containers, float reach)
+            GameplayServices services, SealedContainers containers, float reach, float collectReach)
         {
             if (caches == null || frames == null || services == null || containers == null)
             {
@@ -42,6 +47,7 @@ namespace MoonProject.Gameplay
             _rover = services.Rover;
             _save = services.Save;
             _reach = reach;
+            _collectReach = collectReach;
             foreach (SupplyCache cache in caches)
             {
                 Transform frame = frames(cache.AnchorId) ?? throw new InvalidOperationException(
@@ -63,6 +69,17 @@ namespace MoonProject.Gameplay
             }
 
             _left = new Recipe[_caches.Count];
+            _partLeft = new bool[_caches.Count];
+            for (int i = 0; i < _caches.Count; i++)
+            {
+                if (_caches[i].StartsOpen)
+                {
+                    containers.StandOpen(_caches[i].Id);
+                    _left[i] = _caches[i].Yield;
+                    _partLeft[i] = _caches[i].Part.Length > 0;
+                }
+            }
+
             _opened = _events.Subscribe<ContainerOpened>(OnOpened);
         }
 
@@ -79,13 +96,20 @@ namespace MoonProject.Gameplay
             return _left[index];
         }
 
+        /// <summary>Crate <paramref name="index"/> still holds its story part.</summary>
+        public bool PartLeft(int index)
+        {
+            return _partLeft[index];
+        }
+
         public void Step()
         {
-            float reachSq = _reach * _reach;
             for (int i = 0; i < _caches.Count; i++)
             {
-                if (!IsEmpty(_left[i]) &&
-                    SurfaceRules.HorizontalDistanceSquared(_rover.Position, _containers[i].CutPoint.position) <= reachSq)
+                float reach = _caches[i].StartsOpen ? _collectReach : _reach;
+                if ((!IsEmpty(_left[i]) || _partLeft[i]) &&
+                    SurfaceRules.HorizontalDistanceSquared(_rover.Position, _containers[i].CutPoint.position) <=
+                    reach * reach)
                 {
                     Give(i);
                 }
@@ -95,9 +119,21 @@ namespace MoonProject.Gameplay
         public void Capture(OpeningSaveData data)
         {
             int count = 0;
+            int parts = 0;
             for (int i = 0; i < _left.Length; i++)
             {
                 count += IsEmpty(_left[i]) ? 0 : 1;
+                parts += _partLeft[i] ? 1 : 0;
+            }
+
+            data.partsLeft = new string[parts];
+            parts = 0;
+            for (int i = 0; i < _partLeft.Length; i++)
+            {
+                if (_partLeft[i])
+                {
+                    data.partsLeft[parts++] = _caches[i].Id;
+                }
             }
 
             data.leftIds = new string[count];
@@ -113,8 +149,26 @@ namespace MoonProject.Gameplay
             }
         }
 
+        /// <summary>
+        /// A loaded game's crates: an open-from-the-start crate holds only what the save says it still holds.
+        /// </summary>
         public void Restore(OpeningSaveData data)
         {
+            for (int i = 0; i < _caches.Count; i++)
+            {
+                _left[i] = default;
+                _partLeft[i] = false;
+            }
+
+            foreach (string id in data.partsLeft ?? Array.Empty<string>())
+            {
+                int index = IndexOf(id);
+                if (index >= 0)
+                {
+                    _partLeft[index] = _caches[index].Part.Length > 0;
+                }
+            }
+
             string[] ids = data.leftIds ?? Array.Empty<string>();
             Recipe[] left = data.left ?? Array.Empty<Recipe>();
             for (int i = 0; i < ids.Length && i < left.Length; i++)
@@ -177,6 +231,12 @@ namespace MoonProject.Gameplay
             int wiring = Take(SalvageMaterial.Wiring, left.Wiring, at, index);
             int optics = Take(SalvageMaterial.Optics, left.Optics, at, index);
             _left[index] = new Recipe(left.Metal - metal, left.Wiring - wiring, left.Optics - optics);
+            if (_partLeft[index] && _stock.Hold.TryAddPart(_caches[index].Part))
+            {
+                _partLeft[index] = false;
+                _events.Publish(new StoryPartCollected(_caches[index].Part, at));
+                _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Reward, at, Vector3.up, 1f, 0f));
+            }
         }
 
         private int Take(SalvageMaterial material, int units, Vector3 at, int index)

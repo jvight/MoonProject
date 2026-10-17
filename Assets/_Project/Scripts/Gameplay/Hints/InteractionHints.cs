@@ -28,6 +28,7 @@ namespace MoonProject.Gameplay
         private readonly FriendField _friends;
         private readonly RelayField _relays;
         private readonly BeamWork _beam;
+        private readonly Cutter _cutter;
         private readonly PickupReach _pickups;
         private readonly HomeShelves _shelves;
         private readonly CrewCrates _crates;
@@ -38,11 +39,12 @@ namespace MoonProject.Gameplay
         /// <param name="beam">
         /// 07's beam work: while new work sleeps (the crawl, docs/features/M3-20) a beam verb's hint shows as not ready.
         /// </param>
+        /// <param name="cutter">07's cutter: while it is faulted (opening-v2 §10) a cut's hint shows not ready.</param>
         public InteractionHints(ExcavationSystem excavation,
             SalvageField salvage, TetherSystem tether, CargoCradle cradle, HomeBase home, IUpgradeStation[] stations,
             UpgradeService upgrades, IComponentGate parts, FriendField friends, RelayField relays, BeamWork beam,
-            PickupReach pickups, HomeShelves shelves, CrewCrates crates, SealedContainers containers, ScanField scans,
-            BuildField building = null)
+            Cutter cutter, PickupReach pickups, HomeShelves shelves, CrewCrates crates, SealedContainers containers,
+            ScanField scans, BuildField building = null)
         {
             _scans = scans ?? throw new ArgumentNullException(nameof(scans));
             _crates = crates ?? throw new ArgumentNullException(nameof(crates));
@@ -60,6 +62,7 @@ namespace MoonProject.Gameplay
             _friends = friends != null ? friends : throw new ArgumentNullException(nameof(friends));
             _relays = relays != null ? relays : throw new ArgumentNullException(nameof(relays));
             _beam = beam ?? throw new ArgumentNullException(nameof(beam));
+            _cutter = cutter ?? throw new ArgumentNullException(nameof(cutter));
             _building = building;
         }
 
@@ -126,12 +129,13 @@ namespace MoonProject.Gameplay
                     SalvagePiece piece = _salvage.Cutting ?? _salvage.Candidate;
                     CrewCrate crate = _crates.Candidate;
                     SealedContainer sealedOne = _containers.Candidate;
+                    bool cuts = _cutter.Ready && _beam.MayStart;
                     hint = piece != null
-                        ? new InteractionHint(kind, piece.CutPosition, _salvage.Cutting != null || _beam.MayStart)
+                        ? new InteractionHint(kind, piece.CutPosition, _salvage.Cutting != null || cuts)
                         : crate != null
-                            ? new InteractionHint(kind, crate.CutPoint.position, _beam.MayStart)
+                            ? new InteractionHint(kind, crate.CutPoint.position, cuts)
                             : sealedOne != null
-                                ? new InteractionHint(kind, sealedOne.CutPoint.position, _beam.MayStart)
+                                ? new InteractionHint(kind, sealedOne.CutPoint.position, cuts)
                                 : InteractionHint.None;
                     return piece != null || crate != null || sealedOne != null;
                 case InteractionKind.Stow:

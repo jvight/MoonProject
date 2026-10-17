@@ -266,7 +266,9 @@ namespace MoonProject.Gameplay
             }
 
             float beam = step.BeamSeconds / _tuning.BeamSecondsPerCell;
-            Charge = Mathf.Max(0f, Charge - drive - beam);
+            float scan = step.ScanSeconds / _tuning.ScanSecondsPerCell;
+            float weld = _tuning.WeldCells(step.WeldSeconds);
+            Charge = Mathf.Max(0f, Charge - drive - beam - scan - weld);
         }
 
         /// <summary>
@@ -340,7 +342,7 @@ namespace MoonProject.Gameplay
 
         private void StepCrawl(in BatteryStep step, float deltaTime)
         {
-            bool working = step.BeamSeconds > 0f;
+            bool working = step.BeamSeconds > 0f || step.ScanSeconds > 0f || step.WeldSeconds > 0f;
             if (!IsLowPower && Charge <= CellEpsilon && !working && !IsCharging)
             {
                 IsLowPower = true;

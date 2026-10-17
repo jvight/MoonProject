@@ -70,7 +70,13 @@ namespace MoonProject.Gameplay
                 StepCrate(sites[i].Crate, now);
             }
 
-            bool wants = _input.ExcavateHeld && Candidate != null && (_cutting != null || _beam.MayStart);
+            if (_input.ExcavateHeld && Candidate != null && !_cutter.Ready)
+            {
+                _cutter.Refuse(Candidate.CutPoint.position);
+            }
+
+            bool wants = _input.ExcavateHeld && Candidate != null && _cutter.Ready &&
+                         (_cutting != null || _beam.MayStart);
             if (_cutting != null && (!wants || Candidate != _cutting))
             {
                 _cut.Release(_cutting.Progress, _cutting.CutPoint.position, _cutting.CutPoint.forward);

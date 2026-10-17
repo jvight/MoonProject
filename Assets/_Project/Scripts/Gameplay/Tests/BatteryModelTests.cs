@@ -9,14 +9,16 @@ namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
     /// 07's battery rules (docs/features/M3-20 §2-§3, VISION ruling 15) on <see cref="BatteryModel"/> with the default
-    /// <see cref="BatteryTuning"/>: every drain, the drums, the reserve and the crawl, the trickle, the chargers, the
-    /// warnings and the save.
+    /// <see cref="BatteryTuning"/> but M3-20's reference numbers (120 m a cell, a full battery at the start), so the
+    /// rules read in whole cells: every drain, the drums, the reserve and the crawl, the trickle, the chargers, the
+    /// warnings and the save. The opening's balance (opening-v2 §10) is checked on the shipping defaults.
     /// </summary>
     public sealed class BatteryModelTests
     {
         private const float Dt = 1f / 60f;
         private const float Cruise = 6f;
         private const float Tolerance = 2e-3f;
+        private const string ReferenceNumbers = "{\"_metresPerCell\":120,\"_startingCharge01\":1}";
 
         private readonly List<BatteryChanged> _cells = new List<BatteryChanged>();
         private readonly List<LowPowerChanged> _lowPower = new List<LowPowerChanged>();
@@ -36,6 +38,7 @@ namespace MoonProject.Gameplay.Tests
             _warnings.Clear();
             _arcs.Clear();
             _tuning = ScriptableObject.CreateInstance<BatteryTuning>();
+            JsonUtility.FromJsonOverwrite(ReferenceNumbers, _tuning);
             _events = new EventBus();
             _events.Subscribe<BatteryChanged>(_cells.Add);
             _events.Subscribe<LowPowerChanged>(_lowPower.Add);
@@ -244,6 +247,44 @@ namespace MoonProject.Gameplay.Tests
 
             Assert.IsFalse(_battery.FriendLeads);
             Assert.AreEqual(0.35f, _battery.DriveCap01, 0.01f);
+        }
+
+        [Test]
+        public void Scanning_CostsItsSeconds_AndAWeld_ItsBuildSecondsAtTheWeldRate()
+        {
+            float before = _battery.Charge;
+            Step(new BatteryStep { ScanSeconds = Dt }, 10f);
+            Assert.AreEqual(10f / _tuning.ScanSecondsPerCell, before - _battery.Charge, Tolerance,
+                "every second of an open lens costs (opening-v2 §10)");
+
+            before = _battery.Charge;
+            Step(new BatteryStep { WeldSeconds = Dt }, 3f);
+            Assert.AreEqual(_tuning.WeldCells(3f), before - _battery.Charge, Tolerance,
+                "the charging pad's 3 s weld costs its build seconds at the weld rate");
+            Assert.AreEqual(3f / _tuning.WeldSecondsPerCell, _tuning.WeldCells(3f), 1e-6f);
+        }
+
+        [Test]
+        public void TheOpening_FromTheHalfFullWake_LeavesAQuarterToAThird_AfterThePadWeld()
+        {
+            var shipping = ScriptableObject.CreateInstance<BatteryTuning>();
+            var fresh = new BatteryModel(shipping, _events);
+            Assert.AreEqual(0.5f, fresh.Charge01, 1e-5f, "07 wakes half full");
+            Drive(fresh, 200f);
+            Step(fresh, new BatteryStep { ScanSeconds = Dt }, 5f);
+            Step(fresh, new BatteryStep { WeldSeconds = Dt }, 3f);
+            Assert.That(fresh.Charge01, Is.InRange(0.25f, 0.3f),
+                "the drive to the lander, its two scans and the pad weld (opening-v2 §10 balance)");
+            Assert.Less(fresh.Charge01, shipping.LowThreshold, "the Low warning has landed by the pad");
+            UnityEngine.Object.DestroyImmediate(shipping);
+        }
+
+        [Test]
+        public void WithTheSolarWingJammed_AStill07NeverTrickles()
+        {
+            Empty();
+            Step(new BatteryStep { Still = true, SolarFitted = false }, 600f);
+            Assert.AreEqual(0f, _battery.Charge, 1e-5f, "only chargers refill 07 (opening-v2 §10)");
         }
 
         [Test]
@@ -666,6 +707,22 @@ namespace MoonProject.Gameplay.Tests
         private void Work(float seconds)
         {
             Step(new BatteryStep { BeamSeconds = Dt }, seconds);
+        }
+
+        private static void Drive(BatteryModel battery, float metres)
+        {
+            float perFrame = Cruise * Dt;
+            var step = new BatteryStep { GroundDistance = perFrame, Speed = Cruise };
+            Step(battery, step, metres / Cruise);
+        }
+
+        private static void Step(BatteryModel battery, BatteryStep step, float seconds)
+        {
+            int frames = Mathf.RoundToInt(seconds / Dt);
+            for (int i = 0; i < frames; i++)
+            {
+                battery.Step(step, Dt);
+            }
         }
 
         private void Step(BatteryStep step, float seconds)

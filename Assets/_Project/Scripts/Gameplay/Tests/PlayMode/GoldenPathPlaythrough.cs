@@ -25,13 +25,15 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// The opening v2 through the real game (docs/design/opening-v2.md §2, B0–B11), as a regression and a pacing
     /// measurement: the built Main scene (on its own save slot) boots, 07 wakes at half charge, and a calm autopilot
     /// holds the wheel while the real input actions scan and cut. 07 drives to the landed lander, scans its cargo bay's
-    /// two fragments (the charging pad), cuts the lander's crates, builds the pad on the apron (placed through the
-    /// base's placement rules and paid from the hold: the build menu is UI's and not what this run measures), charges
-    /// on it from the lander's reserve until the reserve gives out, drives to the Lumen ruins and scans the fallen
-    /// array (solar), cuts the workshop's lockers, builds the array (Power on), scans the habitat (battery bank) and
-    /// builds it (night-ready), waits out the first sunset, scans the radio tower (antenna) and cuts its panels, and
-    /// builds the mast: the west signal ends the opening. Every objective line is checked as it shows; the milestones
-    /// FirstCharge, PowerOn, NightReady and SignalWest each come once. Every step is timed
+    /// two fragments (the charging pad), collects the lander's open crate (the cutter is FAULT: no igniter), builds the
+    /// pad on the apron (placed through the base's placement rules and paid from the hold: the build menu is UI's and
+    /// not what this run measures), charges on it from the lander's reserve until the reserve gives out and fits the
+    /// spare igniter while docked, cuts the lander's sealed crates, drives to the Lumen ruins and scans the fallen
+    /// array (solar), reads the habitat's airlock panel, cuts the workshop's lockers, builds the array (Power on),
+    /// scans the habitat (battery bank) and builds it (night-ready), waits out the first sunset, scans the radio tower
+    /// (antenna) and cuts its panels, and builds the mast: the west signal ends the opening. Every objective line is
+    /// checked as it shows; the milestones FirstCharge, PowerOn, NightReady and SignalWest each come once. Every step
+    /// is timed
     /// (Logs/gameplay-captures/playthrough.md) and captured; any error or exception in the log fails it, and so does a
     /// crawl or a run over the budget. Slow: run on demand with --category Playthrough.
     /// </summary>
@@ -131,15 +133,18 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ExpectLine(OpeningKeys.ScanLander, "B3: at the lander");
             yield return ScanTheSet("ruin." + ScanTuning.LanderCargoId, "the lander's cargo bay");
             Assert.IsTrue(Known(StructureIds.ChargingPad), "the cargo bay's two fragments teach the pad");
-            yield return CutTheCrates("place.lander", "the lander's crates");
+            yield return ExpectLine(OpeningKeys.CollectParts, "B4: the cutter is FAULT, the open crate holds parts");
+            yield return CollectTheOpenCrate();
             yield return ExpectLine(OpeningKeys.BuildPad, "B5: the hold covers the pad");
             Vector3 pad = Anchor("place.apron").Position;
             yield return Build(StructureIds.ChargingPad, pad, "B5: the charging pad on the apron");
             yield return ExpectLine(OpeningKeys.Charge, "B6");
             yield return ChargeOnThePad(pad);
             yield return ExpectLine(OpeningKeys.FindSolar, "B7: LANDER RESERVE · 0%");
+            yield return CutTheCrates("place.lander", "the lander's sealed crates, the cutter whole");
             yield return DriveTo(Flat(Ruin("FallenSolarArray").position) + Vector3.back * 10f, 3f, "the Lumen ruins");
             yield return ScanTheSet("ruin.FallenSolarArray", "the fallen solar array");
+            yield return ReadTheAirlockPanel();
             yield return CutTheCrates("KenjiWorkshop", "Kenji's workshop lockers");
             yield return ExpectLine(OpeningKeys.BuildSolar, "B8: the array's cost is covered");
             yield return Build(StructureIds.SolarArray, pad + Vector3.right * BaseSpacing, "B8: the solar array");
@@ -246,23 +251,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             for (int i = 0; scans.Find(FragmentId(blueprintId, i)) != null; i++)
             {
                 ScanFragment fragment = scans.Find(FragmentId(blueprintId, i));
-                if (fragment.Scanned)
+                if (!fragment.Scanned)
                 {
-                    continue;
+                    yield return Scan(fragment, what);
+                    scanned++;
                 }
-
-                Vector3 away = Flat(_rover.Position - fragment.Point);
-                away = away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.back;
-                yield return DriveTo(Flat(fragment.Point + away * (ScanStandOff + 3f)), 2f, "a line-up for a scan");
-                yield return DriveTo(Flat(fragment.Point + away * ScanStandOff), 1f, $"the spot facing {what}");
-                yield return Until(() => scans.Candidate == fragment, ScanLookTimeout,
-                    $"07's view rests on {fragment.FragmentId}: its brackets and the Scan chip show");
-                Press(_keyboard.eKey);
-                yield return Until(() => fragment.Scanned, scans.Tuning.Seconds(fragment.Size) + ScanAllowance,
-                    $"held E scans {fragment.FragmentId}");
-                Release(_keyboard.eKey);
-                yield return null;
-                scanned++;
             }
 
             Assert.Greater(scanned, 0, $"{what} has fragments to scan");
@@ -270,7 +263,58 @@ namespace MoonProject.Gameplay.PlayModeTests
             End($"Scan {what}", $"{scanned} fragment(s)");
         }
 
-        /// <summary>Cuts every supply crate standing by <paramref name="frame"/> (an anchor or a ruin piece).</summary>
+        /// <summary>B7: the habitat's airlock panel, read as 07 passes it; its readout shows on the CRT.</summary>
+        private IEnumerator ReadTheAirlockPanel()
+        {
+            Begin();
+            var read = new List<StoryScanned>();
+            using (_context.Events.Subscribe<StoryScanned>(read.Add))
+            {
+                ScanFragment panel = _gameplay.Scans.Find(StoryScan.IdPrefix + "airlock");
+                Assert.IsNotNull(panel, "the habitat has its airlock panel to read");
+                yield return Scan(panel, "the airlock panel");
+                Assert.AreEqual(1, read.Count, "the panel's readout shows once");
+            }
+
+            Capture("07-the-airlock-panel");
+            End("B7: read the airlock panel", "HABITAT SEAL · LOCKED · 28 OCT 1988");
+        }
+
+        /// <summary>
+        /// To a spot facing <paramref name="fragment"/>: its brackets show and the Scan chip with them; hold E until
+        /// it is drawn whole, let go before the next.
+        /// </summary>
+        private IEnumerator Scan(ScanFragment fragment, string what)
+        {
+            ScanField scans = _gameplay.Scans;
+            Vector3 away = Flat(_rover.Position - fragment.Point);
+            away = away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.back;
+            yield return DriveTo(Flat(fragment.Point + away * (ScanStandOff + 3f)), 2f, "a line-up for a scan");
+            yield return DriveTo(Flat(fragment.Point + away * ScanStandOff), 1f, $"the spot facing {what}");
+            yield return Until(() => scans.Candidate == fragment, ScanLookTimeout,
+                $"07's view rests on {fragment.FragmentId}: its brackets and the Scan chip show");
+            Press(_keyboard.eKey);
+            yield return Until(() => fragment.Scanned, scans.Tuning.Seconds(fragment.Size) + ScanAllowance,
+                $"held E scans {fragment.FragmentId}");
+            Release(_keyboard.eKey);
+            yield return null;
+        }
+
+        /// <summary>B4: up to the lander's open crate, which gives Metal 2, Wiring 1 and the spare igniter.</summary>
+        private IEnumerator CollectTheOpenCrate()
+        {
+            Begin();
+            SealedContainer crate = _gameplay.Containers.Find("supply.lander.open");
+            Assert.IsTrue(crate.StandsOpen, "the lander's crate stands open from the start: no cutting before B6");
+            Vector3 front = Flat(crate.CutPoint.position + crate.Root.forward * SealStandOff);
+            yield return DriveTo(front + Flat(crate.Root.forward) * 3f, 2f, "a line-up for the open crate");
+            yield return DriveTo(front, 1f, "the open crate");
+            yield return Until(() => _gameplay.StartKit.CarriesIgniter, FollowTimeout, "07 takes the spare igniter");
+            Capture("04-the-open-crate");
+            End("B4: collect the lander's open crate", $"the igniter; hold {Hold()}");
+        }
+
+        /// <summary>Cuts every sealed crate standing by <paramref name="frame"/> (an anchor or a ruin piece).</summary>
         private IEnumerator CutTheCrates(string frame, string what)
         {
             Begin();
@@ -345,6 +389,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return UntilReached(OpeningMilestone.FirstCharge, "FirstCharge: the eclipse ends");
             yield return Until(() => _gameplay.PadLock.Raised, FollowTimeout, "the pad's dock lock rises round 07");
             Capture("06-the-pad-locks");
+            yield return ExpectLine(OpeningKeys.FitIgniter, "B6: charging, the igniter in the hold");
+            RoverStartKit kit = _gameplay.StartKit;
+            Assert.IsTrue(kit.CanFitIgniter, "docked on its pad, the cutter socket takes the igniter");
+            Assert.IsTrue(kit.TryFitIgniter(), "the socket screen fits it (UI's; this run fits it directly)");
+            Assert.AreEqual(RoverSystemState.Ok, kit.StateOf(RoverSystem.Cutter), "the cutter's pilot light is on");
             yield return Until(() => !battery.IsCharging, battery.Cells * 6f, "07 charges full");
             Assert.IsTrue(_gameplay.Opening.Port.Spent, "the lander's old cells gave out after one charge");
             End("B6: charge on the pad", $"{battery.Charge01:P0}, LANDER RESERVE · 0%");

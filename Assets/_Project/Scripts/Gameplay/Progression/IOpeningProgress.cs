@@ -19,6 +19,12 @@ namespace MoonProject.Gameplay
         /// <summary>At least one <paramref name="structureId"/> stands built.</summary>
         bool Built(string structureId);
 
+        /// <summary>The spare igniter is in 07's hold (B4, from the lander's open crate).</summary>
+        bool CarriesIgniter { get; }
+
+        /// <summary>The spare igniter is fitted to 07's cutter (B6): the cutter works.</summary>
+        bool IgniterFitted { get; }
+
         /// <summary>07 has charged on a pad it built (B6): the lander's reserve has been drawn on.</summary>
         bool FirstCharge { get; }
 

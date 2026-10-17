@@ -938,10 +938,9 @@ namespace MoonProject.Gameplay.Tests
         {
             var buildingTuningAsset = AssetDatabase.LoadAssetAtPath<BuildingTuning>(GameplayAssetPaths.BuildingTuning);
             Assert.IsNotNull(buildingTuningAsset);
-            CollectionAssert.AreEqual(
-                new[] { StructureIds.ChargingPad },
+            CollectionAssert.IsEmpty(
                 buildingTuningAsset.StartingKnownIds,
-                "A new game starts knowing only ChargingPad by design.");
+                "A new game starts with 0 blueprints (opening-v2 §10): the lander's cargo bay teaches the pad.");
             CollectionAssert.IsEmpty(
                 buildingTuningAsset.PlaytestUnlockedIds,
                 "PlaytestUnlockedIds is kept empty in the shipped asset.");
@@ -955,8 +954,7 @@ namespace MoonProject.Gameplay.Tests
 
             var known = new KnownStructures(_catalog, _events);
             var placedBase = new PlacedBase(_catalog, buildingTuningAsset, _events, known);
-            Assert.AreEqual(1, known.Count);
-            Assert.IsTrue(known.IsKnown(StructureIds.ChargingPad));
+            Assert.AreEqual(0, known.Count);
             Assert.IsFalse(known.IsKnown(StructureIds.SolarArray));
 
             var learnedEvents = new List<StructureLearned>();
@@ -989,12 +987,19 @@ namespace MoonProject.Gameplay.Tests
                     Assert.IsNull(scans.AddRuin(set, instance.transform));
                 }
 
-                // Scan FallenSolarArray target 0 -> learns SolarArray immediately.
-                ScanFragment fallen0 = scans.Find(ScanField.FragmentId("ruin.FallenSolarArray", 0));
-                Assert.IsNotNull(fallen0);
-                scans.CompleteTarget(fallen0, 1f);
+                // A set teaches only when whole (opening-v2 §1): the fallen array's 3 fragments teach SolarArray.
+                for (int i = 0; i < 2; i++)
+                {
+                    ScanFragment part = scans.Find(ScanField.FragmentId("ruin.FallenSolarArray", i));
+                    Assert.IsNotNull(part);
+                    scans.CompleteTarget(part, 1f + i);
+                    Assert.AreEqual(0, part.Owed, "new knowledge pays no Metal");
+                }
+
+                Assert.IsFalse(known.IsKnown(StructureIds.SolarArray), "two fragments of three teach nothing yet");
+                Assert.AreEqual(0, learnedEvents.Count);
+                scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.FallenSolarArray", 2)), 3f);
                 Assert.IsTrue(known.IsKnown(StructureIds.SolarArray));
-                Assert.AreEqual(0, fallen0.Owed);
                 Assert.AreEqual(1, learnedEvents.Count);
                 Assert.AreEqual(StructureIds.SolarArray, learnedEvents[0].StructureId);
                 Assert.AreEqual(1, toasts.Count);
@@ -1006,38 +1011,23 @@ namespace MoonProject.Gameplay.Tests
                 Assert.AreEqual(1, chirps.Count);
                 Assert.AreEqual(ChirpMood.Proud, chirps[0].Mood);
 
-                // Scanning remaining targets on FallenSolarArray whose blueprint is already known awards KnownMetal.
-                ScanFragment fallen1 = scans.Find(ScanField.FragmentId("ruin.FallenSolarArray", 1));
-                scans.CompleteTarget(fallen1, 2f);
-                Assert.AreEqual(scanTuningAsset.KnownMetal, fallen1.Owed);
-                Assert.AreEqual(1, learnedEvents.Count, "Already-known blueprint does not fire a duplicate unlock.");
-
-                // Scan KenjiWorkshop targets 0 and 1 -> learns Fabricator then StorageRack; target 2 awards KnownMetal.
-                scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.KenjiWorkshop", 0)), 10f);
-                Assert.IsTrue(known.IsKnown(StructureIds.Fabricator));
-                Assert.IsFalse(known.IsKnown(StructureIds.StorageRack));
-                scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.KenjiWorkshop", 1)), 11f);
-                Assert.IsTrue(known.IsKnown(StructureIds.StorageRack));
-                ScanFragment workshop2 = scans.Find(ScanField.FragmentId("ruin.KenjiWorkshop", 2));
-                scans.CompleteTarget(workshop2, 12f);
-                Assert.AreEqual(scanTuningAsset.KnownMetal, workshop2.Owed);
-
-                // Scan HabitatModules targets 0 and 1 -> learns BatteryBank then Smelter.
+                // The habitat's 2 fragments teach BatteryBank.
                 scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.HabitatModules", 0)), 20f);
-                Assert.IsTrue(known.IsKnown(StructureIds.BatteryBank));
+                Assert.IsFalse(known.IsKnown(StructureIds.BatteryBank));
                 scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.HabitatModules", 1)), 21f);
-                Assert.IsTrue(known.IsKnown(StructureIds.Smelter));
+                Assert.IsTrue(known.IsKnown(StructureIds.BatteryBank));
 
-                // Scan RadioTower targets 0 and 1 -> learns AntennaMast then PowerPylon.
-                scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.RadioTower", 0)), 30f);
-                Assert.IsTrue(known.IsKnown(StructureIds.AntennaMast));
-                scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.RadioTower", 1)), 31f);
-                Assert.IsTrue(known.IsKnown(StructureIds.PowerPylon));
-
-                // ScatterSet has no new structure blueprints -> scanning a target awards KnownMetal.
-                ScanFragment scatterFrag = scans.Find(ScanField.FragmentId("ruin.ScatterSet", 0));
-                scans.CompleteTarget(scatterFrag, 40f);
-                Assert.AreEqual(scanTuningAsset.KnownMetal, scatterFrag.Owed);
+                // A set whose structure is already known pays Metal instead and fires no duplicate unlock.
+                known.Learn(StructureIds.AntennaMast);
+                int learned = learnedEvents.Count;
+                ScanFragment tower0 = scans.Find(ScanField.FragmentId("ruin.RadioTower", 0));
+                ScanFragment tower1 = scans.Find(ScanField.FragmentId("ruin.RadioTower", 1));
+                scans.CompleteTarget(tower0, 30f);
+                scans.CompleteTarget(tower1, 31f);
+                Assert.AreEqual(scanTuningAsset.KnownMetal, tower0.Owed);
+                Assert.AreEqual(scanTuningAsset.KnownMetal, tower1.Owed);
+                Assert.AreEqual(learned, learnedEvents.Count,
+                    "Already-known blueprint does not fire a duplicate unlock.");
 
                 // Round-trip save/load of both ScansSaveData and BuildingSaveData.
                 ScansSaveData savedScans = scans.Capture();
@@ -1046,15 +1036,11 @@ namespace MoonProject.Gameplay.Tests
                 var loadedKnown = new KnownStructures(_catalog, _events);
                 var loadedBase = new PlacedBase(_catalog, buildingTuningAsset, _events, loadedKnown);
                 loadedBase.Restore(savedBuilding);
-                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.ChargingPad),
-                    "Starting knowledge is saved in BuildingSaveData.known and restored like learned blueprints.");
-                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.SolarArray));
-                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.Fabricator));
-                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.StorageRack));
+                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.SolarArray),
+                    "Learned blueprints are saved in BuildingSaveData.known and restored.");
                 Assert.IsTrue(loadedKnown.IsKnown(StructureIds.BatteryBank));
-                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.Smelter));
                 Assert.IsTrue(loadedKnown.IsKnown(StructureIds.AntennaMast));
-                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.PowerPylon));
+                Assert.IsFalse(loadedKnown.IsKnown(StructureIds.ChargingPad), "the lander's cargo bay was not scanned");
                 Assert.IsFalse(loadedKnown.IsKnown(StructureIds.UpgradeBay));
                 Assert.IsFalse(loadedKnown.IsKnown(StructureIds.VehiclePad));
 
@@ -1066,7 +1052,8 @@ namespace MoonProject.Gameplay.Tests
 
                 loadedScans.Restore(savedScans);
                 Assert.IsTrue(loadedScans.Find(ScanField.FragmentId("ruin.FallenSolarArray", 0)).Scanned);
-                Assert.AreEqual(scanTuningAsset.KnownMetal * 3, stock.Metal, "Owed metal from 3 known ruin scans arrives on restore.");
+                Assert.AreEqual(scanTuningAsset.KnownMetal * 2, stock.Metal,
+                    "Owed metal from the 2 known tower scans arrives on restore.");
             }
             finally
             {

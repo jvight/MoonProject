@@ -37,12 +37,17 @@ namespace MoonProject.Gameplay.Tests
             _game.ReachedLander = true;
             Expect(OpeningKeys.ScanLander);
             _game.Known.Add(StructureIds.ChargingPad);
-            Expect(OpeningKeys.CutCrates);
+            Expect(OpeningKeys.CollectParts);
             _game.Covered.Add(StructureIds.ChargingPad);
+            Expect(OpeningKeys.CollectParts, "the materials without the igniter: the open crate is not emptied yet");
+            _game.CarriesIgniter = true;
             Expect(OpeningKeys.BuildPad);
             _game.BuiltIds.Add(StructureIds.ChargingPad);
             Expect(OpeningKeys.Charge);
             _game.FirstCharge = true;
+            Expect(OpeningKeys.FitIgniter, "charging, the igniter in the hold");
+            _game.CarriesIgniter = false;
+            _game.IgniterFitted = true;
             Expect(string.Empty, "the reserve is not spent yet: the lander's 0% says it first");
             _game.ReserveSpent = true;
             Expect(OpeningKeys.FindSolar);
@@ -63,13 +68,14 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void TheCratesLine_IsPassedOver_WhenTheHoldAlreadyCoversThePad()
+        public void TheCollectLine_IsPassedOver_WhenTheHoldAlreadyHoldsTheParts()
         {
             _game.ReachedLander = true;
             _game.Known.Add(StructureIds.ChargingPad);
             _game.Covered.Add(StructureIds.ChargingPad);
+            _game.CarriesIgniter = true;
             Expect(OpeningKeys.BuildPad);
-            CollectionAssert.DoesNotContain(_lines, OpeningKeys.CutCrates);
+            CollectionAssert.DoesNotContain(_lines, OpeningKeys.CollectParts);
         }
 
         [Test]
@@ -80,6 +86,7 @@ namespace MoonProject.Gameplay.Tests
             _game.Known.Add(StructureIds.SolarArray);
             _game.BuiltIds.Add(StructureIds.ChargingPad);
             _game.FirstCharge = true;
+            _game.IgniterFitted = true;
             _game.ReserveSpent = true;
             _game.PowerOn = true;
             _flow.Announce();
@@ -128,6 +135,8 @@ namespace MoonProject.Gameplay.Tests
             public readonly HashSet<string> BuiltIds = new HashSet<string>();
 
             public bool ReachedLander { get; set; }
+            public bool CarriesIgniter { get; set; }
+            public bool IgniterFitted { get; set; }
             public bool FirstCharge { get; set; }
             public bool ReserveSpent { get; set; }
             public bool PowerOn { get; set; }

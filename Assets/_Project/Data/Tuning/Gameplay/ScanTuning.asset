@@ -86,6 +86,12 @@ MonoBehaviour:
     _structureIds:
     - charging_pad
     _sizes: 0100000001000000
+  _stories:
+  - _storyId: airlock
+    _ruinId: HabitatModules
+    _node: AirlockPanel
+    _textKey: story.airlock_panel
+    _size: 0
   _laterStructureIds:
   - upgrade_bay
   - vehicle_pad

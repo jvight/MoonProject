@@ -6,8 +6,8 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// The opening's content (docs/design/opening-v2.md §2, §4): the world anchors it stands on, the lander's reach and
     /// its one-charge reserve, where a built pad meets the lander's port cable, the lander cargo bay's scan points, and
-    /// every sealed crate of the opening's supply with its yield. Created by the Gameplay/Tuning builder; runtime code
-    /// only reads it.
+    /// every crate of the opening's supply with its yield, and the start kit's spare igniter. Created by the
+    /// Gameplay/Tuning builder; runtime code only reads it.
     /// </summary>
     public sealed class OpeningTuning : ScriptableObject
     {
@@ -40,16 +40,27 @@ namespace MoonProject.Gameplay
             new Vector3(1.2f, 1.2f, 2.4f),
         };
 
-        [Header("Supply (§4: Metal 29, Wiring 15, Optics 6 with the start)")]
-        [Tooltip("Every sealed crate of the opening. A crate stands by a world anchor or a Lumen ruin piece " +
-                 "([World]/Ruins/<id>), in its frame; the lander's stand on its far side, beyond the cutter's reach " +
-                 "of the cargo bay, so a sealed crate never takes the hold meant for the bay's scan (B3 before B4).")]
+        [Header("The start kit (§10)")]
+        [Tooltip("The spare igniter's story-part id in 07's hold: the lander's open crate holds it, the cutter " +
+                 "takes it at B6.")]
+        [SerializeField] private string _igniterPart = "part.igniter";
+
+        [Tooltip("Metres from an open crate's front within which 07 collects what it holds (B4: 07 drives up to it).")]
+        [Range(1f, 8f)] [SerializeField] private float _collectReach = 3f;
+
+        [Header("Supply (§4, §10: the lander's open crate and the sealed ones)")]
+        [Tooltip("Every crate of the opening. A crate stands by a world anchor or a Lumen ruin piece " +
+                 "([World]/Ruins/<id>), in its frame. The lander's open crate (B4: Metal 2, Wiring 1 and the spare " +
+                 "igniter) stands by its cargo bay; its sealed ones stand on its far side, cut once the cutter works " +
+                 "(after B6).")]
         [SerializeField] private SupplyCache[] _caches =
         {
             new SupplyCache("supply.wake", "place.wake", new Vector3(2.5f, 0f, -1.5f), 30f, "CoilCrate",
                 new Recipe(3, 1, 0)),
             new SupplyCache("supply.midway", "place.midway", new Vector3(1.5f, 0f, 0f), -20f, "CoilCrate",
                 new Recipe(2, 1, 0)),
+            new SupplyCache("supply.lander.open", "place.lander", new Vector3(6f, 0f, 9f), -30f, "CoilCrate",
+                new Recipe(2, 1, 0), true, "part.igniter"),
             new SupplyCache("supply.lander.a", "place.lander", new Vector3(-5f, 0f, -9f), 180f, "CoilCrate",
                 new Recipe(3, 2, 0)),
             new SupplyCache("supply.lander.b", "place.lander", new Vector3(5f, 0f, -9f), 160f, "CoilCrate",
@@ -78,5 +89,7 @@ namespace MoonProject.Gameplay
         public float PadChargeRadius => _padChargeRadius;
         public IReadOnlyList<Vector3> CargoScanPoints => _cargoScanPoints;
         public IReadOnlyList<SupplyCache> Caches => _caches;
+        public string IgniterPart => _igniterPart;
+        public float CollectReach => _collectReach;
     }
 }

@@ -114,7 +114,13 @@ namespace MoonProject.Gameplay
                 StepLid(_containers[i], now);
             }
 
-            bool wants = _input.ExcavateHeld && Candidate != null && (_cutting != null || _beam.MayStart);
+            if (_input.ExcavateHeld && Candidate != null && !_cutter.Ready)
+            {
+                _cutter.Refuse(Candidate.CutPoint.position);
+            }
+
+            bool wants = _input.ExcavateHeld && Candidate != null && _cutter.Ready &&
+                         (_cutting != null || _beam.MayStart);
             if (_cutting != null && (!wants || Candidate != _cutting))
             {
                 _cut.Release(_cutting.Progress, _cutting.CutPoint.position, _cutting.CutPoint.forward);
@@ -209,13 +215,15 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// The sealed container in reach that 07 faces most squarely: two seals side by side (Tilly's sled's clamp
-        /// and pod) are told apart by where 07 looks, not by a few centimetres.
+        /// and pod) are told apart by where 07 looks, not by a few centimetres. One outside the claim angle off 07's
+        /// heading is not offered.
         /// </summary>
         private SealedContainer Nearest()
         {
             SealedContainer best = null;
             float reachSq = _salvage.Tuning.ReachRadius * _salvage.Tuning.ReachRadius;
-            float bestFacing = float.NegativeInfinity;
+            float bestFacing = Mathf.Cos(_tuning.ContainerClaimAngle * Mathf.Deg2Rad);
+            bestFacing = bestFacing > -1f ? bestFacing : float.NegativeInfinity;
             Vector3 forward = _rover.Rotation * Vector3.forward;
             forward.y = 0f;
             for (int i = 0; i < _containers.Count; i++)

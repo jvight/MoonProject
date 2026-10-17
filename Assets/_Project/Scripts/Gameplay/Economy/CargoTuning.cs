@@ -116,6 +116,10 @@ namespace MoonProject.Gameplay
         [Tooltip("How big a container's one cut is (its seal).")]
         [SerializeField] private PieceSize _containerCut = PieceSize.Small;
 
+        [Tooltip("Degrees off 07's heading within which a sealed container in reach claims E: one beside or behind " +
+                 "07 leaves E to what 07 faces (a scan of a panel next to a crate).")]
+        [Range(20f, 180f)] [SerializeField] private float _containerClaimAngle = 60f;
+
         [Tooltip("Degrees a container's lid swings open about its hinge once the seal is cut.")]
         [Range(30f, 180f)] [SerializeField] private float _containerLidSwing = 105f;
 
@@ -135,6 +139,7 @@ namespace MoonProject.Gameplay
 
         public PieceSize CrateCut => _crateCut;
         public PieceSize ContainerCut => _containerCut;
+        public float ContainerClaimAngle => _containerClaimAngle;
         public float ContainerLidSwing => _containerLidSwing;
         public float ContainerLidSeconds => _containerLidSeconds;
         public float ContainerSealGlow => _containerSealGlow;

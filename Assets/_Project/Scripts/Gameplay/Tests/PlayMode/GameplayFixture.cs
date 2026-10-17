@@ -1169,6 +1169,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 Transform piece = Node(pieces[i].Id, parent, new Vector3(95f, 0f, 185f) + pieces[i].Offset);
                 Named(Block(piece, new Vector3(0f, 0.6f, 0f), new Vector3(2.4f, 1.2f, 2.4f)), "Body");
+                if (pieces[i].Id == "HabitatModules")
+                {
+                    Named(Block(piece, new Vector3(-1.6f, 1.1f, -1.25f), new Vector3(0.5f, 0.6f, 0.05f)),
+                        "AirlockPanel");
+                }
+
                 for (int t = 1; t <= pieces[i].Targets; t++)
                 {
                     Node("Scan_" + t, piece, new Vector3(-1.2f + t * 0.8f, 1.3f, -1.3f));

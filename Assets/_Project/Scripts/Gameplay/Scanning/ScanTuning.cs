@@ -153,6 +153,13 @@ namespace MoonProject.Gameplay
         [SerializeField] private RuinScanSet _landerCargo = new RuinScanSet(LanderCargoId,
             new[] { StructureIds.ChargingPad }, ScanSize.Medium, ScanSize.Medium);
 
+        [Tooltip("Story scans on the ruin pieces (opening-v2 B7): Art's mesh nodes whose readout the CRT shows once " +
+                 "scanned; they teach and pay nothing.")]
+        [SerializeField] private StoryScan[] _stories =
+        {
+            new StoryScan("airlock", "HabitatModules", "AirlockPanel", "story.airlock_panel", ScanSize.Small),
+        };
+
         [Tooltip("Structure blueprints whose scan targets belong to places later in the map (not at the home ruins).")]
         [SerializeField] private string[] _laterStructureIds =
         {
@@ -170,6 +177,8 @@ namespace MoonProject.Gameplay
 
         /// <summary>The lander cargo bay's scan set (the charging pad's fragments).</summary>
         public RuinScanSet LanderCargo => _landerCargo;
+
+        public IReadOnlyList<StoryScan> Stories => _stories;
         public IReadOnlyList<string> LaterStructureIds => _laterStructureIds;
         public float LensFactor => _lensFactor;
         public float BracketRange => _bracketRange;

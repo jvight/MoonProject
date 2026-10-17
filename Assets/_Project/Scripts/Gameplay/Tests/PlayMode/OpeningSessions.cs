@@ -26,11 +26,15 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private readonly List<OpeningMilestoneReached> _milestones = new List<OpeningMilestoneReached>();
         private readonly List<LanderReserveChanged> _reserve = new List<LanderReserveChanged>();
+        private readonly List<StoryPartCollected> _parts = new List<StoryPartCollected>();
+        private readonly List<RoverSystemChanged> _systems = new List<RoverSystemChanged>();
+        private readonly List<CutterRefused> _refused = new List<CutterRefused>();
         private InputActionAsset _controls;
         private GameplayFixture _fixture;
         private Keyboard _keyboard;
         private System.IDisposable _milestoneToken;
         private System.IDisposable _reserveToken;
+        private readonly List<System.IDisposable> _kitTokens = new List<System.IDisposable>();
 
         public override void Setup()
         {
@@ -43,6 +47,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             _milestoneToken?.Dispose();
             _reserveToken?.Dispose();
+            DisposeKitTokens();
             _fixture?.Dispose();
             Object.Destroy(_controls);
             base.TearDown();
@@ -52,7 +57,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         public IEnumerator TheOpening_FromTheWakeToTheWestSignal_OneLineAtATime_AndALoadKeepsIt()
         {
             string slot = BootstrapHarness.NewTestSlot();
-            Boot(slot);
+            Boot(slot, true);
             yield return null;
             yield return null;
             OpeningField opening = _fixture.Gameplay.Opening;
@@ -66,10 +71,16 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             yield return ScanSet("ruin." + ScanTuning.LanderCargoId, 2);
             Assert.IsTrue(known.IsKnown(StructureIds.ChargingPad), "the cargo bay's two fragments teach the pad");
-            Assert.AreEqual(OpeningKeys.CutCrates, opening.Flow.Current, "the hold does not cover the pad yet");
+            Assert.AreEqual(OpeningKeys.CollectParts, opening.Flow.Current, "the hold does not cover the pad yet");
 
-            Collect(4, 2, 0);
-            yield return null;
+            RoverStartKit kit = _fixture.Gameplay.StartKit;
+            Assert.AreEqual(RoverSystemState.Fault, kit.StateOf(RoverSystem.Cutter), "no igniter: the cutter is FAULT");
+            yield return PlaceAt(_fixture.Gameplay.Containers.Find("supply.lander.open").CutPoint.position);
+            Assert.IsTrue(kit.CarriesIgniter, "B4: the lander's open crate gives the spare igniter");
+            Assert.AreEqual(1, _parts.Count, "with its pickup note");
+            CargoHold hold = _fixture.Gameplay.Materials.Hold;
+            Assert.AreEqual(4, hold.Units(SalvageMaterial.Metal), "07's Metal 2 and the crate's 2");
+            Assert.AreEqual(2, hold.Units(SalvageMaterial.Wiring), "07's Wiring 1 and the crate's 1");
             Assert.AreEqual(OpeningKeys.BuildPad, opening.Flow.Current);
 
             Vector3 apron = _fixture.World.Anchor("place.apron").Position;
@@ -86,6 +97,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             Assert.IsTrue(Reached(OpeningMilestone.FirstCharge), "B6: the eclipse may end");
             Assert.IsFalse(opening.Port.Spent, "the reserve is being drawn");
+            Assert.AreEqual(OpeningKeys.FitIgniter, opening.Flow.Current, "charging, the igniter in the hold");
+            Assert.IsTrue(kit.CanFitIgniter, "docked on its pad, the cutter socket takes the igniter");
+            Assert.IsTrue(kit.TryFitIgniter());
+            Assert.AreEqual(RoverSystemState.Ok, kit.StateOf(RoverSystem.Cutter), "the cutter works");
+            Assert.IsFalse(kit.CarriesIgniter, "the igniter left the hold for the cutter");
+            Assert.IsTrue(_systems.Exists(changed => changed.System == RoverSystem.Cutter &&
+                                                     changed.State == RoverSystemState.Ok && !changed.Restored),
+                "the pilot light and the done tone");
             yield return Waits.Until(() => !battery.IsCharging, 60f);
             Assert.AreEqual(1f, battery.Charge01, 0.01f, $"full (reserve {opening.Port.ReserveCells:F2}, cells {battery.Cells}, " +
                 $"rover {_fixture.Rover.Position}, reserve events {_reserve.Count})");
@@ -136,6 +155,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(4, _milestones.Count, "a load replays every reached milestone");
             Assert.IsTrue(_milestones.TrueForAll(reached => reached.Restored), "as Restored");
             Assert.IsTrue(_fixture.Gameplay.Opening.Port.Spent, "the reserve stays spent");
+            Assert.IsTrue(_fixture.Gameplay.StartKit.IgniterFitted, "the cutter keeps its igniter");
+            Assert.IsTrue(_systems.Exists(changed => changed.System == RoverSystem.Cutter &&
+                                                     changed.State == RoverSystemState.Ok && changed.Restored),
+                "the readout starts from the save");
             Assert.AreEqual(string.Empty, _fixture.Gameplay.Opening.Flow.Current, "the opening stays over");
         }
 
@@ -154,8 +177,22 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(0, _fixture.Events.FragmentScanned[0].Value.Index);
             Assert.AreEqual(3, _fixture.Events.FragmentScanned[0].Value.Count);
 
+            var stories = new List<StoryScanned>();
+            using (_fixture.Bootstrap.Context.Events.Subscribe<StoryScanned>(stories.Add))
+            {
+                int fragments = _fixture.Events.FragmentScanned.Count;
+                int metal = _fixture.Gameplay.Materials.Hold.Units(SalvageMaterial.Metal);
+                yield return Scan(scans.Find(StoryScan.IdPrefix + "airlock"));
+                Assert.AreEqual(1, stories.Count, "B7: the habitat's airlock panel reads out on the CRT");
+                Assert.AreEqual("story.airlock_panel", stories[0].TextKey);
+                Assert.AreEqual(fragments, _fixture.Events.FragmentScanned.Count, "a story is no blueprint fragment");
+                yield return new WaitForSeconds(_fixture.ScanTuning.DissolveSeconds + 0.2f);
+                Assert.AreEqual(metal, _fixture.Gameplay.Materials.Hold.Units(SalvageMaterial.Metal),
+                    "and pays nothing");
+            }
+
             SupplyCaches caches = _fixture.Gameplay.Opening.Caches;
-            Assert.AreEqual(11, caches.Count, "the opening's crates (opening-v2 §4)");
+            Assert.AreEqual(12, caches.Count, "the opening's crates (opening-v2 §4, §10)");
             SealedContainer crate = _fixture.Gameplay.Containers.Find("supply.wake");
             Assert.IsNotNull(crate, "the wake crate is a sealed container the cutter opens");
             _fixture.Gameplay.Containers.StandOpen("supply.wake");
@@ -166,15 +203,61 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(1, hold.Units(SalvageMaterial.Wiring), "and its Wiring 1");
         }
 
-        private void Boot(string slot)
+        [UnityTest]
+        public IEnumerator TheCutter_RefusesWithItsFault_UntilTheIgniterIsFitted()
+        {
+            Boot(null);
+            yield return null;
+            SealedContainer crate = _fixture.Gameplay.Containers.Find("supply.wake");
+            Vector3 front = crate.CutPoint.position + crate.Root.forward * 1.6f;
+            float facing = Quaternion.LookRotation(-crate.Root.forward).eulerAngles.y;
+            _fixture.Rover.Place(new Vector3(front.x, 0f, front.z), facing);
+            yield return null;
+            yield return null;
+            Assert.AreEqual(crate, _fixture.Gameplay.Containers.Candidate, "07 faces the wake crate's seal");
+            for (int press = 0; press < 2; press++)
+            {
+                Press(_keyboard.eKey);
+                yield return new WaitForSeconds(0.5f);
+                Release(_keyboard.eKey);
+                yield return null;
+                yield return null;
+            }
+
+            Assert.AreEqual(2, _refused.Count, "each press is refused once, with the fault tone");
+            Assert.AreEqual(0f, crate.Progress, "and nothing is cut");
+            Assert.IsFalse(_fixture.Gameplay.Hints.TryGet(InteractionKind.Salvage, out InteractionHint hint) &&
+                           hint.Ready, "the cut hint shows as not ready");
+        }
+
+        /// <param name="spares">07 wakes with its spares in the hold (Metal 2, Wiring 1: the opening's start).</param>
+        private void Boot(string slot, bool spares = false)
         {
             _milestoneToken?.Dispose();
             _reserveToken?.Dispose();
+            DisposeKitTokens();
             _milestones.Clear();
             _reserve.Clear();
-            _fixture = GameplayFixture.Boot(_controls, slot);
-            _milestoneToken = _fixture.Bootstrap.Context.Events.Subscribe<OpeningMilestoneReached>(_milestones.Add);
-            _reserveToken = _fixture.Bootstrap.Context.Events.Subscribe<LanderReserveChanged>(_reserve.Add);
+            _parts.Clear();
+            _systems.Clear();
+            _refused.Clear();
+            _fixture = GameplayFixture.Boot(_controls, slot, spares: spares);
+            EventBus events = _fixture.Bootstrap.Context.Events;
+            _milestoneToken = events.Subscribe<OpeningMilestoneReached>(_milestones.Add);
+            _reserveToken = events.Subscribe<LanderReserveChanged>(_reserve.Add);
+            _kitTokens.Add(events.Subscribe<StoryPartCollected>(_parts.Add));
+            _kitTokens.Add(events.Subscribe<RoverSystemChanged>(_systems.Add));
+            _kitTokens.Add(events.Subscribe<CutterRefused>(_refused.Add));
+        }
+
+        private void DisposeKitTokens()
+        {
+            foreach (System.IDisposable token in _kitTokens)
+            {
+                token.Dispose();
+            }
+
+            _kitTokens.Clear();
         }
 
         private bool Reached(OpeningMilestone milestone)

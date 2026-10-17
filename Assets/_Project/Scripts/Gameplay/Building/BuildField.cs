@@ -547,7 +547,7 @@ namespace MoonProject.Gameplay
             }
             else if (canWeld)
             {
-                _beamWork.Work(deltaTime);
+                _beamWork.Weld(deltaTime);
             }
         }
 

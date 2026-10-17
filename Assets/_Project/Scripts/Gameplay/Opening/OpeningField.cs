@@ -24,15 +24,19 @@ namespace MoonProject.Gameplay
         private readonly KnownStructures _known;
         private readonly StructureCatalog _catalog;
         private readonly MaterialStock _stock;
+        private readonly RoverStartKit _kit;
         private readonly Vector3 _lander;
         private readonly Dictionary<string, Transform> _frames =
             new Dictionary<string, Transform>(StringComparer.Ordinal);
 
         /// <param name="ruins">The Lumen ruin pieces by name ([World]/Ruins/&lt;id&gt;): frames for their crates.</param>
         /// <param name="crateReach">Metres within which an open crate still holding something gives the rest.</param>
+        /// <param name="kit">07's start kit: the spare igniter carried and fitted (B4, B6).</param>
         public OpeningField(OpeningTuning tuning, GameplayServices services, BuildField building, ISunlight sunlight,
-            SealedContainers containers, IReadOnlyList<Transform> ruins, Transform parent, float crateReach)
+            SealedContainers containers, IReadOnlyList<Transform> ruins, Transform parent, float crateReach,
+            RoverStartKit kit)
         {
+            _kit = kit ?? throw new ArgumentNullException(nameof(kit));
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             if (services == null || building == null || containers == null || ruins == null || parent == null)
             {
@@ -63,7 +67,8 @@ namespace MoonProject.Gameplay
                 _frames[anchor.Id] = Frame(anchor, frames);
             }
 
-            Caches = new SupplyCaches(tuning.Caches, FrameOf, parent, services, containers, crateReach);
+            Caches = new SupplyCaches(tuning.Caches, FrameOf, parent, services, containers, crateReach,
+                tuning.CollectReach);
             Flow = new OpeningFlow(services.Events, this);
         }
 
@@ -81,6 +86,10 @@ namespace MoonProject.Gameplay
         public bool NightFallenSaved { get; private set; }
 
         public bool ReachedLander => Port.Reached;
+
+        public bool CarriesIgniter => _kit.CarriesIgniter;
+
+        public bool IgniterFitted => _kit.IgniterFitted;
 
         public bool FirstCharge => Port.Drawn;
 

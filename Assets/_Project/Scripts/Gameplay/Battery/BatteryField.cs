@@ -46,6 +46,7 @@ namespace MoonProject.Gameplay
         private StationReach _reach;
         private TetherSystem _tether;
         private OpeningField _pads;
+        private IRoverSystems _systems;
         private bool _padFromReserve;
         private bool _chargingOnReserve;
         private ChargingDock _dock;
@@ -68,6 +69,20 @@ namespace MoonProject.Gameplay
         public BatteryModel Model { get; private set; }
 
         public BatteryTuning Tuning => _tuning;
+
+        /// <summary>
+        /// The share of 07's battery (0..1 of its present cells) welding <paramref name="definition"/> costs: the build
+        /// menu shows it next to the materials (opening-v2 §10).
+        /// </summary>
+        public float WeldShare01(StructureDefinition definition)
+        {
+            if (definition == null)
+            {
+                throw new ArgumentNullException(nameof(definition));
+            }
+
+            return _tuning.WeldCells(definition.BuildSeconds) / Model.Cells;
+        }
 
         /// <summary>The dock counts from the start: home always charges 07 (docs/design/first-hour-qa.md #8).</summary>
         public bool HasCharger => _initialized;
@@ -171,6 +186,12 @@ namespace MoonProject.Gameplay
         internal void ConnectPads(OpeningField opening)
         {
             _pads = opening ?? throw new ArgumentNullException(nameof(opening));
+        }
+
+        /// <summary>07's systems: the solar wing's stand-still trickle only runs while the wing works.</summary>
+        internal void ConnectSystems(IRoverSystems systems)
+        {
+            _systems = systems ?? throw new ArgumentNullException(nameof(systems));
         }
 
         /// <summary>The save is loaded (Start runs after it): everyone starts from the real battery.</summary>
@@ -284,9 +305,11 @@ namespace MoonProject.Gameplay
                 SlopeDegrees = SlopeAlong(_rover.GroundNormal, travel),
                 Towing = _tether.State == TetherAimState.Towing,
                 Boosting = _boosting,
-                BeamSeconds = _beam.Take(),
+                BeamSeconds = _beam.Take(out float scanSeconds, out float weldSeconds),
+                ScanSeconds = scanSeconds,
+                WeldSeconds = weldSeconds,
                 Still = _rover.Speed <= _tuning.StillSpeed,
-                SolarFitted = friendHome,
+                SolarFitted = _systems.StateOf(RoverSystem.SolarWing) == RoverSystemState.Ok,
                 DrumsFitted = _abilities.Has(RoverAbility.BoostCoils),
                 FriendCanLead = friendHome,
                 OnCharger = charger != NoCharger,

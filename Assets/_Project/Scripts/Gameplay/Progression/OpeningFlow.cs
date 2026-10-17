@@ -8,7 +8,8 @@ namespace MoonProject.Gameplay
     /// The opening's objective flow (docs/design/opening-v2.md §3, ObjectiveFlow v2): one line at a time, the first
     /// step not yet done, every step read from the game (<see cref="IOpeningProgress"/>) and never stored, published
     /// through <see cref="NextStepChanged"/> by its <see cref="StepFlow"/>. A step whose line would say something the
-    /// world has not set up yet shows no line (B7's line waits for the spent lander reserve; B11's for nightfall).
+    /// world has not set up yet shows no line (B6's igniter line waits for the igniter in the hold; B7's for the spent
+    /// lander reserve; B11's for nightfall).
     /// It also publishes <see cref="OpeningMilestoneReached"/> as the opening reaches FirstCharge (B6), PowerOn (B8),
     /// NightReady (B9) and SignalWest (B11); <see cref="Announce"/> replays the ones a loaded game has reached, with
     /// Restored = true, before the first <see cref="Tick"/>. Allocation-free per tick.
@@ -30,10 +31,12 @@ namespace MoonProject.Gameplay
             _steps = new StepFlow(events);
             _steps.Add(OpeningKeys.DriveToLander, () => _game.ReachedLander || _game.Knows(StructureIds.ChargingPad));
             _steps.Add(OpeningKeys.ScanLander, () => _game.Knows(StructureIds.ChargingPad));
-            _steps.Add(OpeningKeys.CutCrates,
-                () => _game.Covers(StructureIds.ChargingPad) || _game.Built(StructureIds.ChargingPad));
+            _steps.Add(OpeningKeys.CollectParts,
+                () => (_game.Covers(StructureIds.ChargingPad) || _game.Built(StructureIds.ChargingPad)) &&
+                      (_game.CarriesIgniter || _game.IgniterFitted));
             _steps.Add(OpeningKeys.BuildPad, () => _game.Built(StructureIds.ChargingPad));
             _steps.Add(OpeningKeys.Charge, () => _game.FirstCharge);
+            _steps.Add(() => _game.CarriesIgniter ? OpeningKeys.FitIgniter : string.Empty, () => _game.IgniterFitted);
             _steps.Add(() => _game.ReserveSpent ? OpeningKeys.FindSolar : string.Empty,
                 () => _game.Knows(StructureIds.SolarArray));
             _steps.Add(() => _game.Covers(StructureIds.SolarArray) ? OpeningKeys.BuildSolar : OpeningKeys.CutOptics,

@@ -13,14 +13,17 @@ namespace MoonProject.Gameplay
         /// <summary>B3: "Scan the lander's cargo for a blueprint."</summary>
         public const string ScanLander = "next.v2.scan_lander";
 
-        /// <summary>B4: "Cut the crates for metal and wiring."</summary>
-        public const string CutCrates = "next.v2.cut_crates";
+        /// <summary>B4: "Collect the parts from the lander's open crate."</summary>
+        public const string CollectParts = "next.v2.collect_parts";
 
         /// <summary>B5: "Build a charging pad beside the lander."</summary>
         public const string BuildPad = "next.v2.build_pad";
 
         /// <summary>B6: "Park on the pad to charge."</summary>
         public const string Charge = "next.v2.charge";
+
+        /// <summary>B6, charging with the igniter in the hold: "Fit the igniter to the cutter."</summary>
+        public const string FitIgniter = "next.v2.fit_igniter";
 
         /// <summary>B7: "Find a solar blueprint in the Lumen ruins."</summary>
         public const string FindSolar = "next.v2.find_solar";

@@ -261,6 +261,9 @@ namespace MoonProject.Gameplay
             _openingTuning = opening;
         }
 
+        /// <summary>07's start kit (opening-v2 §10): what works, what is broken, the B6 igniter fit.</summary>
+        public RoverStartKit StartKit { get; private set; }
+
         /// <summary>The opening in the world: the lander, the built pads, the supply crates, the objective flow.</summary>
         public OpeningField Opening { get; private set; }
 
@@ -377,6 +380,12 @@ namespace MoonProject.Gameplay
                 return;
             }
 
+            StartKit = new RoverStartKit(context.Events, Materials.Hold, () => PadLock != null && PadLock.OnPad,
+                _openingTuning.IgniterPart);
+            Cutter.ConnectSystems(StartKit);
+            _battery.ConnectSystems(StartKit);
+            context.Register<IRoverSystems>(StartKit);
+
             var stations = new IUpgradeStation[] { _tower, _workshop };
             string unsold = UnsoldUpgrade(stations);
             if (unsold != null)
@@ -430,7 +439,8 @@ namespace MoonProject.Gameplay
                 services.Layout.BasePosition, _friends.Tuning);
             RecipeLook = new RecipeLook(services.View, Shop, _tower, _plotter, Blueprints.Kits, _progression.Tuning);
             Hints = new InteractionHints(_excavation, _salvage, _tether, _cradle, _home,
-                stations, Upgrades, TowerParts, _friends, _relays, services.Beam, services.Pickups, Shelves, Crates,
+                stations, Upgrades, TowerParts, _friends, _relays, services.Beam, Cutter, services.Pickups, Shelves,
+                Crates,
                 Containers, Scans, _building);
             context.Register<IMaterialStock>(Materials);
             context.Register<IMaterialCatalog>(_materialCatalog);
@@ -517,6 +527,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.ContainersVersion, Containers.Capture, Containers.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<OpeningSaveData>(GameplaySaveKeys.Opening,
                 GameplaySaveKeys.OpeningVersion, Opening.Capture, Opening.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<StartKitSaveData>(GameplaySaveKeys.StartKit,
+                GameplaySaveKeys.StartKitVersion, StartKit.Capture, StartKit.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<ScansSaveData>(GameplaySaveKeys.Scans,
                 GameplaySaveKeys.ScansVersion, Scans.Capture, Scans.Restore, ScansSaveMigrations.Migrate)));
             if (_building != null)
@@ -649,7 +661,7 @@ namespace MoonProject.Gameplay
             try
             {
                 var opening = new OpeningField(_openingTuning, services, _building, sunlight, Containers, _ruins,
-                    transform, _salvage.Tuning.ReachRadius);
+                    transform, _salvage.Tuning.ReachRadius, StartKit);
                 _battery.ConnectPads(opening);
                 PadLock = new PadLock(context.Events, _home.Tuning, _building, _battery.Model, services.Rover,
                     _openingTuning.PadChargeRadius);
@@ -680,6 +692,15 @@ namespace MoonProject.Gameplay
                 if (_scanTuning.TryGetRuinSet(ruin.name, out RuinScanSet set))
                 {
                     string problem = scans.AddRuin(set, ruin);
+                    if (problem != null)
+                    {
+                        return problem;
+                    }
+                }
+
+                foreach (StoryScan story in _scanTuning.Stories)
+                {
+                    string problem = story.RuinId == ruin.name ? scans.AddStory(story, ruin) : null;
                     if (problem != null)
                     {
                         return problem;
@@ -886,6 +907,7 @@ namespace MoonProject.Gameplay
             Upgrades.MarkPinnedPartsKnown(Blueprints);
             Tech.Announce();
             Recovery.Announce();
+            StartKit.Announce();
             Opening.Announce();
         }
 

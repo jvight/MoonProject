@@ -41,6 +41,9 @@ namespace MoonProject.Gameplay
             _lock = new DockLock(events, tuning);
         }
 
+        /// <summary>07 stands on a pad it built (powered or not).</summary>
+        public bool OnPad { get; private set; }
+
         /// <summary>The lock's walls are up (rising, locked or lowering) on the pad 07 is on.</summary>
         public bool Raised => _lock.Raised;
 
@@ -53,6 +56,7 @@ namespace MoonProject.Gameplay
         public void Step(float deltaTime)
         {
             int pad = PadUnder(out Vector3 centre);
+            OnPad = pad >= 0;
             if (pad != _pad && !_lock.Raised)
             {
                 Rest();
