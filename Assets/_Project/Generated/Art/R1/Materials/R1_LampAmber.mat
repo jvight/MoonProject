@@ -45,6 +45,7 @@ Material:
     - _BumpScale: 0.5
     - _ColorVarAmount: 0.025
     - _ColorVarScale: 1.8
+    - _Dissolve: 0
     - _DustAmount: 0.06
     - _DustOcclusionWeight: 0.42
     - _DustSharpness: 2
@@ -60,6 +61,7 @@ Material:
     - _HotCoreThreshold: 0.85
     - _MetallicScale: 1
     - _OcclusionStrength: 1
+    - _ScanProgress: 0
     - _SmoothnessMax: 0.9
     - _SmoothnessMin: 0.48
     - _SmoothnessScale: 1
