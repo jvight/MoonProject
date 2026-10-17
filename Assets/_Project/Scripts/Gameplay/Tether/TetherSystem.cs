@@ -93,6 +93,9 @@ namespace MoonProject.Gameplay
         /// <summary>Current beam brightness (tests and debugging views).</summary>
         public float BeamIntensity => _glow != null ? _glow.Intensity : 0f;
 
+        /// <summary>Current upward arc fraction of the tether beam (pulls taut toward 0 as strain builds).</summary>
+        public float CurrentArc { get; private set; }
+
         internal void Wire(TetherTuning tuning)
         {
             _tuning = tuning;
@@ -261,8 +264,9 @@ namespace MoonProject.Gameplay
             body.AddForce(TetherPhysics.Force(position, body.linearVelocity, target, _rover.Velocity, body.mass,
                 -Physics.gravity.y, _tuning));
             float distance = Vector3.Distance(position, anchor);
-            StepTension(distance, body.position);
-            if (_snap.Step(distance, _winch.Length, Time.fixedDeltaTime))
+            bool snapped = _snap.Step(distance, _winch.Length, Time.fixedDeltaTime);
+            StepTension(_snap.Strain, body.position);
+            if (snapped)
             {
                 Release(true, true, false);
             }
@@ -387,17 +391,17 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>An Act beat each time the tether's tension crosses one of its steps (the hum, the rumble).</summary>
-        private void StepTension(float distance, Vector3 at)
+        private void StepTension(float tension, Vector3 at)
         {
-            float tension = Mathf.Clamp01((distance - _winch.Length) / _tuning.SnapStretch);
-            int step = Mathf.FloorToInt(tension * _tuning.TensionSteps);
+            float clamped = Mathf.Clamp01(tension);
+            int step = Mathf.FloorToInt(clamped * _tuning.TensionSteps);
             if (step == _tensionStep)
             {
                 return;
             }
 
             _tensionStep = step;
-            Publish(FeelPhase.Act, at, tension, 0f);
+            Publish(FeelPhase.Act, at, clamped, 0f);
         }
 
         private void Publish(FeelPhase phase, Vector3 at, float strength, float seconds)
@@ -469,18 +473,23 @@ namespace MoonProject.Gameplay
                 _retracting = _reach > 0f;
             }
 
-            float intensity = _towed != null ? _tuning.BeamIntensity : _tuning.BeamIntensity * Ease.InOutSine(_reach);
+            float strain = Strain;
+            float baseIntensity = _towed != null ? _tuning.BeamIntensity : _tuning.BeamIntensity * Ease.InOutSine(_reach);
+            float intensity = baseIntensity + (_towed != null ? strain * _tuning.StrainIntensityBoost : 0f);
             _glow.Apply(_retracting || _towed != null ? intensity : 0f);
             if (!_line.enabled)
             {
+                CurrentArc = 0f;
                 return;
             }
 
             Vector3 start = _rig.WinchOrigin.position;
             Vector3 end = Vector3.LerpUnclamped(start, _beamEnd, Ease.OutCubic(_reach));
-            float wobble = _tuning.Wobble + Strain * _tuning.StrainWobble;
-            Vector3 control = TetherBeamShape.Control(start, end, _tuning.BeamArc, wobble, _tuning.WobbleFrequency,
-                Time.time);
+            float arc = _tuning.BeamArc * (1f - strain * _tuning.StrainTighten);
+            CurrentArc = arc;
+            float wobble = _tuning.Wobble + strain * _tuning.StrainWobble;
+            float frequency = _tuning.WobbleFrequency * (1f + strain * _tuning.StrainFrequencyBoost);
+            Vector3 control = TetherBeamShape.Control(start, end, arc, wobble, frequency, Time.time);
             int last = _points.Length - 1;
             for (int i = 0; i <= last; i++)
             {

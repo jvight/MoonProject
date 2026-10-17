@@ -28,6 +28,10 @@ MonoBehaviour:
   _suspensionDamping: 0.5
   _frontSteerAngle: 28
   _rearSteerFactor: 0
+  _dustFullMeters: 180
+  _dustCleanHalfLife: 0.8
+  _dustMinAmount: 0.04
+  _dustMaxAmount: 0.72
   _leanFrequency: 1.5
   _leanDamping: 0.42
   _pitchPerAcceleration: 1.1

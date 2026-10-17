@@ -11,6 +11,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.UIElements;
 using MoonProject.App;
 using MoonProject.Core;
 using MoonProject.Core.Events;
@@ -383,6 +384,118 @@ namespace MoonProject.Rover.PlayModeTests
                 Assert.LessOrEqual(quietest, noise + Tolerance,
                     $"{MeasuredCalls} extra opening updates allocated {quietest} bytes (plain frames: {noise}).");
             }
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator NewGameOverASave_FadesTitle_PushesIntoLens_AndReloadsInsideO1Black()
+        {
+            yield return Boot(false);
+            Assert.IsTrue(_context.Get<ISaveService>().SaveNow(), "a save is on disk");
+            Dispose();
+
+            yield return Boot(true);
+            IGameFlow flow = _context.Get<IGameFlow>();
+            Assert.AreEqual(GameFlowState.Title, flow.State);
+            Assert.IsTrue(flow.HasSave, "the title offers Continue over a save");
+            yield return Wait(1f);
+
+            GameBootstrap bootstrap = null;
+            UIDocument document = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(RoverSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+                document = document != null ? document : root.GetComponentInChildren<UIDocument>(true);
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its GameBootstrap");
+            Assert.IsNotNull(document, "the scene has its UIDocument");
+            Button newGameButton = document.rootVisualElement.Q<Button>("button-new-game");
+            Assert.IsNotNull(newGameButton);
+            using (NavigationSubmitEvent submit = NavigationSubmitEvent.GetPooled())
+            {
+                submit.target = newGameButton;
+                newGameButton.SendEvent(submit);
+            }
+
+            yield return Wait(0.4f);
+            Button confirmButton = document.rootVisualElement.Q<Button>("button-new-game-confirm");
+            Assert.IsNotNull(confirmButton);
+            using (NavigationSubmitEvent submit = NavigationSubmitEvent.GetPooled())
+            {
+                submit.target = confirmButton;
+                confirmButton.SendEvent(submit);
+            }
+
+            yield return null;
+            Assert.AreEqual(OpeningPhase.PushIn, _director.Script.Phase,
+                "confirming New Game over a save immediately begins the 3D camera push into 07's closed lens");
+            Assert.IsTrue(bootstrap.IsReloadPrewarmed,
+                "GameBootstrap pre-warms SceneManager/EditorSceneManager async reload during the 2 s push-in");
+
+            float maxPushInFrameMs = 0f;
+            float elapsed = 0f;
+            while (elapsed < 0.65f)
+            {
+                yield return null;
+                float dt = Time.unscaledDeltaTime;
+                elapsed += dt;
+                maxPushInFrameMs = Mathf.Max(maxPushInFrameMs, dt * 1000f);
+            }
+
+            VisualElement titleCrt = document.rootVisualElement.Q<VisualElement>("title-crt");
+            Assert.IsNotNull(titleCrt);
+            Assert.LessOrEqual(titleCrt.resolvedStyle.opacity, 0.05f,
+                "the title CRT fades out in 0.5 s so the 2 s push-in into 07's closed lens is visible");
+            Assert.AreEqual(OpeningPhase.PushIn, _director.Script.Phase,
+                "the camera is still pushing into the lens after the title has faded");
+
+            float reloadDeadline = Time.realtimeSinceStartup + BootTimeout;
+            while (_director != null && Time.realtimeSinceStartup < reloadDeadline)
+            {
+                yield return null;
+                if (_director != null && _director.Script.Phase == OpeningPhase.PushIn)
+                {
+                    maxPushInFrameMs = Mathf.Max(maxPushInFrameMs, Time.unscaledDeltaTime * 1000f);
+                }
+            }
+
+            float activationStart = Time.realtimeSinceStartup;
+            Assert.IsTrue(_director == null, "the scene reloads at WakeBeat.PushedIn inside O1's black");
+            Dispose();
+
+            while (Time.realtimeSinceStartup < reloadDeadline)
+            {
+                Scene reloaded = SceneManager.GetSceneByPath(RoverSessionScene.ScenePath);
+                if (reloaded.IsValid() && reloaded.isLoaded)
+                {
+                    foreach (GameObject root in reloaded.GetRootGameObjects())
+                    {
+                        _director = _director != null ? _director : root.GetComponentInChildren<OpeningDirector>(true);
+                    }
+
+                    if (_director != null && _director.Script != null && _director.Script.IsRunning)
+                    {
+                        break;
+                    }
+                }
+
+                yield return null;
+            }
+
+            float activationMs = (Time.realtimeSinceStartup - activationStart) * 1000f;
+            _report.AppendLine("# New Game over a save (pre-warmed async reload)").AppendLine()
+                .AppendLine(Line("max frame time during PushIn (ms)", maxPushInFrameMs))
+                .AppendLine(Line("pre-warmed reload activation inside O1 black (ms)", activationMs)).AppendLine();
+            File.WriteAllText(Path.Combine(CaptureFolder, "opening.md"), _report.ToString());
+
+            Assert.IsNotNull(_director, "reloaded scene has OpeningDirector");
+            Assert.IsTrue(_director.Script.IsRunning,
+                "reloaded scene starts the opening inside O1 without showing the title again");
+            Assert.AreNotEqual(OpeningPhase.PushIn, _director.Script.Phase,
+                "the push-in already happened before the reload");
         }
 
         private IEnumerator Boot(bool title)

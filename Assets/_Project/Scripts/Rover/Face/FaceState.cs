@@ -153,6 +153,9 @@ namespace MoonProject.Rover
         /// <summary>Clamped low-power amount in [0..1].</summary>
         public float LowPower { get; private set; }
 
+        /// <summary>Clamped tether strain amount in [0..1] (narrows/squints 07's eyes under heavy load).</summary>
+        public float Strain { get; private set; }
+
         /// <summary>Current overall CRT phosphor brightness multiplier.</summary>
         public float Brightness { get; private set; }
 
@@ -391,6 +394,14 @@ namespace MoonProject.Rover
             ComposeEyesAndBrightness();
         }
 
+        /// <summary>Sets the tether strain amount, clamped to [0..1], narrowing/squinting 07's eyes under load.</summary>
+        public void SetStrain(float amount)
+        {
+            Strain = Clamp01(amount);
+            ComposeEyesAndBrightness();
+            ApplyStrainToEyes();
+        }
+
         /// <summary>Sets the low-power state amount, clamped to [0..1].</summary>
         public void SetLowPower(float amount)
         {
@@ -491,6 +502,7 @@ namespace MoonProject.Rover
             RollingBandPhase = Repeat01(RollingBandPhase + deltaTime * _tuning.RollingBandSpeed);
 
             ComposeEyesAndBrightness();
+            ApplyStrainToEyes();
 
             float kTrail = 1.0f - (float)Math.Exp(-deltaTime * _tuning.TrailEaseRate);
             GhostLeftEye = FaceEyeParams.Lerp(GhostLeftEye, prevLeft, kTrail);
@@ -691,6 +703,55 @@ namespace MoonProject.Rover
             {
                 BlinkMultiplier = 1.0f;
             }
+        }
+
+        private void ApplyStrainToEyes()
+        {
+            if (Strain <= 0.0f)
+            {
+                return;
+            }
+
+            float maxOpenByStrain = Lerp(1.0f, 0.80f, Strain) * BlinkMultiplier * BootEyeOpen;
+            float leftOpen = _isDarkHold ? 0.0f : Math.Min(LeftEye.Open, maxOpenByStrain);
+            float rightOpen = _isDarkHold ? 0.0f : Math.Min(RightEye.Open, maxOpenByStrain);
+            float leftCut = Math.Max(LeftEye.Cut, Strain * 0.35f);
+            float effectiveSquint = Clamp01(LeftEye.Squint + Strain * 0.55f);
+            float effectiveTilt = _tilt - Strain * 0.38f;
+            float rightCut = Lerp(leftCut, _tuning.AsymmetricRightCut, _asymmetry);
+            float rightTilt = Lerp(effectiveTilt, _tuning.AsymmetricRightTilt, _asymmetry);
+
+            LeftEye = new FaceEyeParams(
+                LeftEye.CenterX,
+                LeftEye.CenterY,
+                LeftEye.Width,
+                LeftEye.Height,
+                leftOpen,
+                effectiveTilt,
+                leftCut,
+                effectiveSquint,
+                LeftEye.Arc,
+                LeftEye.Ring,
+                LeftEye.Closed,
+                LeftEye.LookX,
+                LeftEye.LookY,
+                LeftEye.Scale);
+
+            RightEye = new FaceEyeParams(
+                RightEye.CenterX,
+                RightEye.CenterY,
+                RightEye.Width,
+                RightEye.Height,
+                rightOpen,
+                rightTilt,
+                rightCut,
+                effectiveSquint,
+                RightEye.Arc,
+                RightEye.Ring,
+                RightEye.Closed,
+                RightEye.LookX,
+                RightEye.LookY,
+                RightEye.Scale);
         }
 
         private void StepSaccade(float deltaTime)

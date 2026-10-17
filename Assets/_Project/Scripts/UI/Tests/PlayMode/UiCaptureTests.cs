@@ -1092,6 +1092,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(_tuning.Guidance.ProtocolHoldSeconds +
                                                     _tuning.Guidance.Protocol.FadeOut + 0.5f);
             Assert.IsFalse(ui.Protocol.IsVisible, "and fades by itself");
+            context.Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame, false));
 
             fakes.Upgrade = _tower;
             fakes.AtStation = false;

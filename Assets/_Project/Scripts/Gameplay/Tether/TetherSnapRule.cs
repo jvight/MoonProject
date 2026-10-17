@@ -31,7 +31,11 @@ namespace MoonProject.Gameplay
         public bool Step(float distance, float length, float deltaTime)
         {
             float stretch = distance - length;
-            Strain = _stretchLimit <= 0f ? 0f : UnityEngine.Mathf.Clamp01(stretch / _stretchLimit);
+            float stretchStrain = _stretchLimit <= 0f ? 0f : UnityEngine.Mathf.Clamp01(stretch / _stretchLimit);
+            float distanceStrain = _stretchLimit <= 0f || _distanceLimit <= _stretchLimit
+                ? 0f
+                : UnityEngine.Mathf.Clamp01((distance - (_distanceLimit - _stretchLimit)) / _stretchLimit);
+            Strain = UnityEngine.Mathf.Max(stretchStrain, distanceStrain);
             if (distance > _distanceLimit)
             {
                 return true;

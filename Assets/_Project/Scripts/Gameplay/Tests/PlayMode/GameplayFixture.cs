@@ -1377,13 +1377,16 @@ namespace MoonProject.Gameplay.PlayModeTests
             return pocket;
         }
 
-        /// <summary>A stand-in for Art's GaragePort with its Tray node.</summary>
+        /// <summary>A stand-in for Art's GaragePort with its Tray and ArmTip nodes.</summary>
         private GameObject PortTemplate()
         {
             GameObject port = Template("GaragePort", new Vector3(2.6f, 1.6f, 0.12f));
             var tray = new GameObject(GameplayVisuals.PortTrayNode);
             tray.transform.SetParent(port.transform, false);
             tray.transform.localPosition = new Vector3(-0.85f, 0.65f, 0.45f);
+            var armTip = new GameObject(GameplayVisuals.PortArmTipNode);
+            armTip.transform.SetParent(port.transform, false);
+            armTip.transform.localPosition = new Vector3(0.9f, 1.35f, 1.32f);
             return port;
         }
 
