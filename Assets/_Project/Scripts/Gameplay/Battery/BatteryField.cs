@@ -19,7 +19,7 @@ namespace MoonProject.Gameplay
     [DisallowMultipleComponent]
     public sealed class BatteryField : MonoBehaviour, IBuildEnergy
     {
-        private const string LowLine = "battery.low";
+        private const string LowLanderLine = "battery.low.lander";
         private const string LowPadLine = "battery.low.pad";
 
         [Tooltip("What draws charge, the crawl, the chargers and the warnings " +
@@ -221,7 +221,7 @@ namespace MoonProject.Gameplay
         {
             if (warned.Warning == BatteryWarning.Low && Model.TakeLowLine())
             {
-                _events.Publish(new TickerLine(_hasCharger ? LowPadLine : LowLine));
+                _events.Publish(new TickerLine(_hasCharger ? LowPadLine : LowLanderLine));
             }
         }
 
