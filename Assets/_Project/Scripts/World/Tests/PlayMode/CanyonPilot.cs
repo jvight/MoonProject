@@ -6,11 +6,10 @@ namespace MoonProject.World.PlayModeTests
 {
     /// <summary>
     /// Holds 07's wheel for the canyon session: steers toward a target at a set throttle (easing off only for sharp
-    /// turns) and holds the Hover-Jump button when told to. Read by the real RoverController through
-    /// <see cref="IRoverDriveSource"/> and <see cref="IRoverJumpSource"/>, so easing, jumping and physics are the
+    /// turns). Read by the real RoverController through <see cref="IRoverDriveSource"/>, so easing and physics are the
     /// game's own.
     /// </summary>
-    public sealed class CanyonPilot : IRoverDriveSource, IRoverJumpSource
+    public sealed class CanyonPilot : IRoverDriveSource
     {
         /// <summary>Degrees of heading error that ask for full steering lock.</summary>
         private const float FullLockAngle = 35f;
@@ -37,9 +36,6 @@ namespace MoonProject.World.PlayModeTests
         public Vector3? Target { get; set; }
 
         public float Throttle { get; set; } = 1f;
-
-        /// <summary>Holding the Hover-Jump button.</summary>
-        public bool JumpHeld { get; set; }
 
         /// <summary>Horizontal distance to the target (0 without one).</summary>
         public float Distance
@@ -82,11 +78,10 @@ namespace MoonProject.World.PlayModeTests
             }
         }
 
-        /// <summary>Lets go of the wheel and the Jump button.</summary>
+        /// <summary>Lets go of the wheel.</summary>
         public void Release()
         {
             Target = null;
-            JumpHeld = false;
         }
     }
 }

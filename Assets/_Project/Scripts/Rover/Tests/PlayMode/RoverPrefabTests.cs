@@ -16,9 +16,7 @@ namespace MoonProject.Rover.PlayModeTests
     /// <summary>
     /// The real built Rover.prefab (wrapping the art box's RoverModel) and camera rig: they initialise without errors,
     /// register their Core contracts (incl. ILookSettings), no rover light casts shadows, and 07 drives (scripted
-    /// stick, no devices). Art's HoverCoils are mounted but hidden until the Hover-Jump is bought; then they appear and
-    /// a charge lights the ground under 07 (captured idle and charging, as the chase camera sees it).
-    /// Under a single directional
+    /// stick, no devices). Under a single directional
     /// light at the world's Earthlight angle it captures frames with and without the head, to tell a second light's
     /// shadow apart from the head's own shadow.
     /// </summary>
@@ -90,13 +88,7 @@ namespace MoonProject.Rover.PlayModeTests
             context.Register(_world.Terrain);
             context.Register<IWorldLayout>(new TestWorldLayout());
             context.Register<IFriendRoster>(new TestFriendRoster());
-            var equipment = new TestEquipment();
-            equipment.Fitted(RoverKitPiece.HoverCoils);
-            equipment.Fitted(RoverKitPiece.LampBar);
-            equipment.Fitted(RoverKitPiece.CapacitorDrums);
-            equipment.Fitted(RoverKitPiece.CargoRack);
-            context.Register<IRoverEquipment>(equipment);
-            context.Register<ICutter>(equipment);
+            context.Register<ICutter>(new TestCutter());
             context.Register<IWorldAnchors>(new TestAnchors());
             context.Register<ISaveService>(new TestSave());
             var controller = _rover.GetComponent<RoverController>();
@@ -115,7 +107,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsNotNull(rig.ScanOrigin);
             Assert.IsNotNull(rig.WinchOrigin);
             Assert.IsNotNull(rig.ScoopOrigin);
-            Assert.AreSame(controller.Kit, context.Get<IRoverCargoSeat>(), "The kit's rack is the cargo seat.");
+            Assert.AreSame(controller, context.Get<IRoverCargoSeat>(), "The hatch's socket is the cargo seat.");
             Assert.AreSame(cameraRig.Camera, context.Get<IViewCamera>().Camera);
             Assert.AreSame(cameraRig, context.Get<ILookSettings>());
 
@@ -158,38 +150,10 @@ namespace MoonProject.Rover.PlayModeTests
             _drive.Drive = Vector2.zero;
             yield return Settle(3f);
 
-            Transform socket = Find(_rover.transform, RoverModelNodes.CoilSocket);
-            Assert.IsNotNull(socket, "RoverModel has no CoilSocket.");
-            Transform coils = socket.Find("HoverCoils");
-            Transform glow = socket.Find("CoilGlow");
-            Assert.IsNotNull(coils, "Rover.prefab mounts art's HoverCoils on CoilSocket.");
-            Assert.IsNotNull(glow, "Rover.prefab has the charge light at CoilSocket.");
-            var coilLight = glow.GetComponent<Light>();
-            context.Get<IRoverAbilities>().Grant(RoverAbility.HoverJump);
-            yield return Settle(1.5f);
-            Assert.IsTrue(coils.gameObject.activeSelf, "Fitted on load: the coils are there.");
-            Assert.IsFalse(coilLight.enabled, "The charge light is off until 07 charges.");
-            FrameCapture.SavePng(camera, 960, 540, Path.Combine(OutputFolder, "14-prefab-coils-idle.png"));
-            _drive.JumpHeld = true;
-            yield return Settle(0.95f);
-            Assert.IsTrue(coilLight.enabled, "Charging lights the ground under 07.");
-            FrameCapture.SavePng(camera, 960, 540, Path.Combine(OutputFolder, "15-prefab-coils-charging.png"));
-            _drive.JumpHeld = false;
-
             IRoverAbilities abilities = context.Get<IRoverAbilities>();
-            abilities.Grant(RoverAbility.WarmHeadlamp);
-            abilities.Grant(RoverAbility.BoostCoils);
             abilities.Grant(RoverAbility.CargoCradle);
             yield return Settle(1.5f);
-            foreach (string kit in new[] { "Kit_LampBar", "Kit_CapacitorDrum", "Kit_CargoRack" })
-            {
-                Transform piece = Find(_rover.transform, kit);
-                Assert.IsNotNull(piece, $"Rover.prefab mounts art's {kit}.");
-                Assert.IsTrue(piece.gameObject.activeSelf, $"Fitted: {kit} is on 07.");
-            }
-
             Assert.IsTrue(context.Get<IRoverCargoSeat>().IsFitted, "The cradle is fitted.");
-            FrameCapture.SavePng(camera, 960, 540, Path.Combine(OutputFolder, "16-prefab-fully-kitted.png"));
         }
 
         [Test]
@@ -213,9 +177,7 @@ namespace MoonProject.Rover.PlayModeTests
             context.Register(_world.Terrain);
             context.Register<IWorldLayout>(new TestWorldLayout());
             context.Register<IFriendRoster>(new TestFriendRoster());
-            var equipment = new TestEquipment();
-            context.Register<IRoverEquipment>(equipment);
-            context.Register<ICutter>(equipment);
+            context.Register<ICutter>(new TestCutter());
             context.Register<IWorldAnchors>(new TestAnchors());
             context.Register<ISaveService>(new TestSave());
 

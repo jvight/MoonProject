@@ -31,31 +31,7 @@ namespace MoonProject.Rover
         [Tooltip("Stop: 0.06 for 120 ms.")]
         [SerializeField] private RumbleProfile _stopRumble = new RumbleProfile(0.06f, 0.06f, 0.04f, 0.04f, 0.12f, false);
 
-        [Header("Leap")]
-        [Tooltip("How far (m) 07 crouches at a full charge (2 cm per step of four).")]
-        [Range(0f, 0.15f)]
-        [SerializeField] private float _crouch = 0.08f;
-
-        [Tooltip("The crouch's spring.")]
-        [SerializeField] private NudgeSettings _crouchSpring = new NudgeSettings(0f, 0f, 3f, 1f);
-
-        [Tooltip("Charge rumble at the first step.")]
-        [Range(0f, 0.35f)]
-        [SerializeField] private float _chargeRumbleBase = 0.04f;
-
-        [Tooltip("Extra charge rumble at a full charge (0.03 per step of four).")]
-        [Range(0f, 0.35f)]
-        [SerializeField] private float _chargeRumbleFull = 0.12f;
-
-        [Tooltip("The charge rumble's shape (held until the launch), scaled by the levels above.")]
-        [SerializeField] private RumbleProfile _chargeRumble = new RumbleProfile(1f, 1f, 0.5f, 0.5f, 0f, true);
-
-        [Tooltip("Launch: 07 stretches up (m), springing back.")]
-        [SerializeField] private NudgeSettings _launchStretch = new NudgeSettings(0.02f, 0f, 4f, 0.7f);
-
-        [Tooltip("Launch: 0.25 for 90 ms.")]
-        [SerializeField] private RumbleProfile _launchRumble = new RumbleProfile(0.25f, 0.25f, 0.2f, 0.2f, 0.09f, false);
-
+        [Header("Landing")]
         [Tooltip("Landing squash: 07 compresses down on touchdown (m, negative = down), scaled by impact and springing back.")]
         [SerializeField] private NudgeSettings _landSquash = new NudgeSettings(-0.045f, 0f, 3.2f, 0.52f);
 
@@ -89,10 +65,6 @@ namespace MoonProject.Rover
         [Range(1f, 15f)]
         [SerializeField] private float _collisionHardSpeed = 6f;
 
-        [Header("Install")]
-        [Tooltip("The piece seats: 0.2 for 100 ms.")]
-        [SerializeField] private RumbleProfile _seatRumble = new RumbleProfile(0.2f, 0.2f, 0.15f, 0.15f, 0.1f, false);
-
         [Header("Low battery and boost")]
         [Tooltip("The battery empties: 0.06 decaying over 600 ms.")]
         [SerializeField] private RumbleProfile _powerDown = new RumbleProfile(0.06f, 0f, 0.03f, 0f, 0.6f, false);
@@ -124,22 +96,6 @@ namespace MoonProject.Rover
 
         public RumbleProfile StopRumble => _stopRumble;
 
-        public float Crouch => _crouch;
-
-        public NudgeSettings CrouchSpring => _crouchSpring;
-
-        public RumbleProfile ChargeRumble => _chargeRumble;
-
-        /// <summary>The held charge rumble's level at charge <paramref name="strength"/> (0..1).</summary>
-        public float ChargeLevel(float strength)
-        {
-            return _chargeRumbleBase + _chargeRumbleFull * Mathf.Clamp01(strength);
-        }
-
-        public NudgeSettings LaunchStretch => _launchStretch;
-
-        public RumbleProfile LaunchRumble => _launchRumble;
-
         public NudgeSettings LandSquash => _landSquash;
 
         /// <summary>The landing squash's scale for an impact of share <paramref name="impact"/> (0..1).</summary>
@@ -163,8 +119,6 @@ namespace MoonProject.Rover
         public RumbleProfile CollisionRumble => _collisionRumble;
 
         public float CollisionHardSpeed => _collisionHardSpeed;
-
-        public RumbleProfile SeatRumble => _seatRumble;
 
         public RumbleProfile PowerDown => _powerDown;
 

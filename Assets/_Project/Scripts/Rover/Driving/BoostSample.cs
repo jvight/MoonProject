@@ -10,7 +10,7 @@ namespace MoonProject.Rover
         /// <param name="topSpeed">The normal top speed (m/s).</param>
         /// <param name="slope">Angle (deg) of the ground under 07.</param>
         /// <param name="free">
-        /// On the ground with contact and nothing else in charge: not held still, not leaping, not being lifted.
+        /// On the ground with contact and nothing else in charge: not held still, not being lifted.
         /// </param>
         public BoostSample(bool owned, float throttle, float steer, float forwardSpeed, float topSpeed, float slope,
             bool free)

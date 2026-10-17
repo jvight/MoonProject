@@ -38,7 +38,7 @@ namespace MoonProject.Rover
         /// <paramref name="origin"/> for the current velocity, heading and throttle.
         /// </summary>
         public void ProbeObstacle(Vector3 origin, Vector3 velocity, float heading, float throttle, float dt,
-            bool grounded, bool leaping, out Vector3 wallNormal, out Vector3 contactPoint, out float surfaceGap)
+            bool grounded, out Vector3 wallNormal, out Vector3 contactPoint, out float surfaceGap)
         {
             wallNormal = Vector3.zero;
             contactPoint = origin;
@@ -55,40 +55,37 @@ namespace MoonProject.Rover
             float lookahead = Mathf.Max(_ground.ObstacleMinLookahead,
                 planarSpeed * dt * _ground.ObstacleLookaheadStepScale);
 
-            if (!leaping)
+            int count = _query.OverlapClosestPoints(origin, radius + lookahead, _closestPoints);
+            float minHeight = origin.y - _ground.SphereRadius * _ground.ObstacleMinHeightDropFactor;
+            for (int i = 0; i < count; i++)
             {
-                int count = _query.OverlapClosestPoints(origin, radius + lookahead, _closestPoints);
-                float minHeight = origin.y - _ground.SphereRadius * _ground.ObstacleMinHeightDropFactor;
-                for (int i = 0; i < count; i++)
+                Vector3 closest = _closestPoints[i];
+                if (closest.y < minHeight)
                 {
-                    Vector3 closest = _closestPoints[i];
-                    if (closest.y < minHeight)
-                    {
-                        continue;
-                    }
+                    continue;
+                }
 
-                    Vector3 planar = new Vector3(origin.x - closest.x, 0f, origin.z - closest.z);
-                    float horizDist = planar.magnitude;
-                    if (horizDist <= MinHorizontalDistance)
-                    {
-                        continue;
-                    }
+                Vector3 planar = new Vector3(origin.x - closest.x, 0f, origin.z - closest.z);
+                float horizDist = planar.magnitude;
+                if (horizDist <= MinHorizontalDistance)
+                {
+                    continue;
+                }
 
-                    float gap = horizDist - radius;
-                    if (gap <= lookahead)
-                    {
-                        RecordCandidate(planar / horizDist, closest, gap, ref wallNormal, ref contactPoint,
-                            ref surfaceGap, ref secondaryNormal, ref secondaryGap);
-                    }
+                float gap = horizDist - radius;
+                if (gap <= lookahead)
+                {
+                    RecordCandidate(planar / horizDist, closest, gap, ref wallNormal, ref contactPoint,
+                        ref surfaceGap, ref secondaryNormal, ref secondaryGap);
                 }
             }
 
-            ProbeObstacleFanInternal(origin, primaryDir, radius, lookahead, grounded, leaping, ref wallNormal,
+            ProbeObstacleFanInternal(origin, primaryDir, radius, lookahead, grounded, ref wallNormal,
                 ref contactPoint, ref surfaceGap, ref secondaryNormal, ref secondaryGap);
             if (Mathf.Abs(throttle) > ThrottleEpsilon
                 && Vector3.Angle(primaryDir, headingDir) > _ground.ObstacleHeadingFanAngle)
             {
-                ProbeObstacleFanInternal(origin, headingDir, radius, lookahead, grounded, leaping, ref wallNormal,
+                ProbeObstacleFanInternal(origin, headingDir, radius, lookahead, grounded, ref wallNormal,
                     ref contactPoint, ref surfaceGap, ref secondaryNormal, ref secondaryGap);
             }
 
@@ -104,16 +101,16 @@ namespace MoonProject.Rover
         /// grounded) lower and upper bumper heights, updating the nearest obstacle hit.
         /// </summary>
         public void ProbeObstacleFan(Vector3 origin, Vector3 centerDir, float radius, float lookahead,
-            bool grounded, bool leaping, ref Vector3 bestNormal, ref Vector3 bestPoint, ref float bestGap)
+            bool grounded, ref Vector3 bestNormal, ref Vector3 bestPoint, ref float bestGap)
         {
             Vector3 secondaryNormal = Vector3.zero;
             float secondaryGap = float.MaxValue;
-            ProbeObstacleFanInternal(origin, centerDir, radius, lookahead, grounded, leaping, ref bestNormal,
+            ProbeObstacleFanInternal(origin, centerDir, radius, lookahead, grounded, ref bestNormal,
                 ref bestPoint, ref bestGap, ref secondaryNormal, ref secondaryGap);
         }
 
         private void ProbeObstacleFanInternal(Vector3 origin, Vector3 centerDir, float radius, float lookahead,
-            bool grounded, bool leaping, ref Vector3 bestNormal, ref Vector3 bestPoint, ref float bestGap,
+            bool grounded, ref Vector3 bestNormal, ref Vector3 bestPoint, ref float bestGap,
             ref Vector3 secondaryNormal, ref float secondaryGap)
         {
             float maxDist = radius + lookahead;
@@ -125,7 +122,7 @@ namespace MoonProject.Rover
             {
                 Vector3 dir = Quaternion.Euler(0f, i * _ground.ObstacleFanStepDegrees, 0f) * centerDir;
                 if (_query.Raycast(originMid, dir, maxDist, out ObstacleRayHit hitMid)
-                    && IsObstacleHit(_ground, in hitMid, leaping, out Vector3 normalMid))
+                    && IsObstacleHit(_ground, in hitMid, out Vector3 normalMid))
                 {
                     RecordCandidate(normalMid, hitMid.Point, hitMid.Distance - radius, ref bestNormal, ref bestPoint,
                         ref bestGap, ref secondaryNormal, ref secondaryGap);
@@ -133,7 +130,7 @@ namespace MoonProject.Rover
 
                 if (grounded
                     && _query.Raycast(originLow, dir, maxDist, out ObstacleRayHit hitLow)
-                    && IsObstacleHit(_ground, in hitLow, leaping, out Vector3 normalLow))
+                    && IsObstacleHit(_ground, in hitLow, out Vector3 normalLow))
                 {
                     RecordCandidate(normalLow, hitLow.Point, hitLow.Distance - radius, ref bestNormal, ref bestPoint,
                         ref bestGap, ref secondaryNormal, ref secondaryGap);
@@ -141,7 +138,7 @@ namespace MoonProject.Rover
 
                 if (grounded
                     && _query.Raycast(originHigh, dir, maxDist, out ObstacleRayHit hitHigh)
-                    && IsObstacleHit(_ground, in hitHigh, leaping, out Vector3 normalHigh))
+                    && IsObstacleHit(_ground, in hitHigh, out Vector3 normalHigh))
                 {
                     RecordCandidate(normalHigh, hitHigh.Point, hitHigh.Distance - radius, ref bestNormal, ref bestPoint,
                         ref bestGap, ref secondaryNormal, ref secondaryGap);
@@ -177,11 +174,10 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// True when <paramref name="hit"/> is a bumper obstacle (a steep wall or a sloped Prop/Relic while not
-        /// leaping) rather than driveable ground or a downward-facing slab underside.
+        /// True when <paramref name="hit"/> is a bumper obstacle (a steep wall or a sloped Prop/Relic) rather than
+        /// driveable ground or a downward-facing slab underside.
         /// </summary>
-        public static bool IsObstacleHit(GroundSettings ground, in ObstacleRayHit hit, bool leaping,
-            out Vector3 planarNormal)
+        public static bool IsObstacleHit(GroundSettings ground, in ObstacleRayHit hit, out Vector3 planarNormal)
         {
             planarNormal = Vector3.zero;
             if (hit.Normal.y < ground.ObstacleMinNormalY)
@@ -192,7 +188,7 @@ namespace MoonProject.Rover
             float slope = Vector3.Angle(hit.Normal, Vector3.up);
             bool isPropOrRelic = hit.Layer == Layers.Prop || hit.Layer == Layers.Relic;
             bool isObstacle = isPropOrRelic
-                ? !leaping && slope > ground.PropObstacleMinSlope
+                ? slope > ground.PropObstacleMinSlope
                 : slope > ground.MaxGroundAngle;
             if (!isObstacle)
             {

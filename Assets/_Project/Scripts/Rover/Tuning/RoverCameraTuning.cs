@@ -331,22 +331,6 @@ namespace MoonProject.Rover
         [SerializeField] private CameraMomentSettings _relicMoment =
             new CameraMomentSettings(0.9f, 1f, 1.1f, 0.35f, 2.5f, 0.85f, 25f, 60f, 8f, 0.35f, 25f);
 
-        [Tooltip("A Hover-Jump leap: lift and pull back, looking ahead to where 07 will land; held until it lands.")]
-        [SerializeField] private CameraMomentSettings _leapMoment =
-            new CameraMomentSettings(0.8f, 0.3f, 1.4f, 0.35f, 6f, 0f, 0f, 0f, 10f, 0.35f, 60f);
-
-        [Tooltip("Leaps weaker than this (0..1) are hops: the camera just follows.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _leapMomentMinStrength = 0.3f;
-
-        [Tooltip("Seconds of travel ahead the leap camera looks, toward the landing.")]
-        [Range(0f, 6f)]
-        [SerializeField] private float _leapLookAhead = 2f;
-
-        [Tooltip("An upgrade bought at the base: lift and pull back to take in the base, its tower and warm ring.")]
-        [SerializeField] private CameraMomentSettings _upgradeMoment =
-            new CameraMomentSettings(1.3f, 1.8f, 1.5f, 0.5f, 6f, 0.6f, 0f, 45f, 14f, 0.5f, 40f);
-
         [Tooltip("The radio tower comes online (feel-pass §8.2): ease (~1.2 s) to frame the tower with 07 in the "
             + "foreground, held until it settles; any drive input skips it.")]
         [SerializeField] private CameraMomentSettings _towerMoment =
@@ -367,22 +351,6 @@ namespace MoonProject.Rover
         [SerializeField] private CameraMomentSettings _ladderMoment =
             new CameraMomentSettings(1.6f, 0.8f, 2f, 0.35f, 2.5f, 0.6f, 20f, 50f, -12f, 0.35f, 30f);
 
-        [Tooltip("07 in Kenji's Rover Bay: the camera eases to a fixed view in through the open front and holds it "
-            + "(whole yaw share, any swing) while 07 stays in, a little farther than the chase camera and at the bay "
-            + "framing's own elevation, so the arms show over 07. The install moment plays inside this view.")]
-        [SerializeField] private CameraMomentSettings _bayMoment =
-            new CameraMomentSettings(1.4f, 0f, 1.4f, 0f, 0f, 1f, 0f, 180f, 0f, 0.12f, 40f);
-
-        [Tooltip("Where the bay view looks from and how it keeps clear of the bay's roof.")]
-        [SerializeField] private BayFramingSettings _bayFraming = new BayFramingSettings();
-
-        [Tooltip("A friend's gift appearing as 07 comes home: a softer, shorter swing toward the gift, then back.")]
-        [SerializeField] private CameraMomentSettings _giftMoment =
-            new CameraMomentSettings(1.4f, 1.0f, 1.2f, 0f, 0f, 0.5f, 0f, 80f, -3f, -0.15f, 40f);
-
-        [Tooltip("Which way the gift moment looks for each friend's gift.")]
-        [SerializeField] private KitViewSettings _kitViews = new KitViewSettings();
-
         [Tooltip("Seconds a camera moment takes to ease away when the player looks around (always skippable).")]
         [Range(0.1f, 3f)]
         [SerializeField] private float _momentCancelEaseOut = 0.6f;
@@ -391,7 +359,7 @@ namespace MoonProject.Rover
         [Range(0.02f, 1f)]
         [SerializeField] private float _momentBlendHalfLife = 0.3f;
 
-        [Tooltip("Shortest blend (s) into or out of any framed shot: moments, the bay's close shot, the wide shot and "
+        [Tooltip("Shortest blend (s) into or out of any framed shot: moments, the wide shot and "
             + "the dock's evening.")]
         [Range(1.2f, 4f)]
         [SerializeField] private float _minShotBlend = 1.2f;
@@ -400,10 +368,6 @@ namespace MoonProject.Rover
         [Tooltip("Shortest blend (s) into or out of any framed shot while the Gentle camera is on.")]
         [Range(2f, 6f)]
         [SerializeField] private float _gentleMinShotBlend = 2f;
-
-        [Tooltip("Share of the leap moment's pull-back kept while the Gentle camera is on.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _gentleLeapPullBack = 0.5f;
 
         [Tooltip("Speed of the wide shot's slow breathing while the Gentle camera is on (1 = as tuned).")]
         [Range(0.1f, 1f)]
@@ -422,11 +386,6 @@ namespace MoonProject.Rover
         [Tooltip("Resting a while: the camera drifts out to a wide, lonely frame with 07 small against the land and "
             + "the sky (VISION pillar 6), and hands back on any drive or look input.")]
         [SerializeField] private WideShotSettings _wideShot = new WideShotSettings();
-
-        [Header("The crew's lab")]
-        [Tooltip("The belly lift's crane path up through the hatch and the lab's ring-rail camera (docs/features/M3-19 "
-            + "§6).")]
-        [SerializeField] private LabCameraSettings _lab = new LabCameraSettings();
 
         [Header("The dock's evening")]
         [Tooltip("07 parked at its dock after a trip: the camera eases out to a wide shot from the dock looking at "
@@ -796,29 +755,13 @@ namespace MoonProject.Rover
 
         public CameraMomentSettings RelicMoment => _relicMoment;
 
-        public CameraMomentSettings UpgradeMoment => _upgradeMoment;
-
         public CameraMomentSettings TowerMoment => _towerMoment;
 
         public CameraMomentSettings GentleTowerMoment => _gentleTowerMoment;
 
-        public CameraMomentSettings LeapMoment => _leapMoment;
-
         public CameraMomentSettings RelayMoment => _relayMoment;
 
         public CameraMomentSettings LadderMoment => _ladderMoment;
-
-        public CameraMomentSettings BayMoment => _bayMoment;
-
-        public BayFramingSettings BayFraming => _bayFraming;
-
-        public CameraMomentSettings GiftMoment => _giftMoment;
-
-        public KitViewSettings KitViews => _kitViews;
-
-        public float LeapMomentMinStrength => _leapMomentMinStrength;
-
-        public float LeapLookAhead => _leapLookAhead;
 
         public float MomentCancelEaseOut => _momentCancelEaseOut;
 
@@ -828,13 +771,9 @@ namespace MoonProject.Rover
 
         public float GentleMinShotBlend => Mathf.Max(_gentleMinShotBlend, _minShotBlend);
 
-        public float GentleLeapPullBack => _gentleLeapPullBack;
-
         public float GentleBreathRate => _gentleBreathRate;
 
         public WideShotSettings WideShot => _wideShot;
-
-        public LabCameraSettings Lab => _lab;
 
         public WideShotSettings EveningShot => _eveningShot;
 

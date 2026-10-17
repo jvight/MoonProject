@@ -147,7 +147,6 @@ namespace MoonProject.Rover
         private Quaternion _scoopArmsRest;
         private Quaternion _scoopBucketRest;
         private Quaternion _winchSpoolRest;
-        private bool _proudPending;
         private float _wakeTilt;
         private BatteryLink _battery;
         private float _tired;
@@ -428,14 +427,12 @@ namespace MoonProject.Rover
                 events.Subscribe<TetherAttached>(OnTetherAttached),
                 events.Subscribe<TetherReleased>(OnTetherReleased),
                 events.Subscribe<RoverRecovering>(OnRecovering),
-                events.Subscribe<RoverJumped>(OnJumped),
                 events.Subscribe<RoverWideShotChanged>(OnWideShotChanged),
                 events.Subscribe<RelayRestored>(OnRelayRestored),
                 events.Subscribe<BellSignalPicked>(OnBellSignalPicked),
                 events.Subscribe<RadioHopFinished>(OnRadioHopFinished),
                 events.Subscribe<ChargingChanged>(OnChargingChanged),
                 events.Subscribe<BatteryWarned>(OnBatteryWarned),
-                events.Subscribe<RoverLeapRefused>(OnLeapRefused),
                 events.Subscribe<FeelBeat>(OnFeelBeat),
                 events.Subscribe<RoverChirpSyllable>(OnChirpSyllable),
                 events.Subscribe<BasePowerChanged>(OnBasePowerChanged),
@@ -609,11 +606,6 @@ namespace MoonProject.Rover
             _mood.NodContentedly(_tuning.DepositNod);
         }
 
-        private void OnJumped(RoverJumped jumped)
-        {
-            PerkUp(Mathf.Lerp(_tuning.HopPerk, _tuning.LeapPerk, jumped.Strength));
-        }
-
         private void OnRecovering(RoverRecovering recovering)
         {
             PerkUp(_tuning.RecoveryPerk);
@@ -662,22 +654,6 @@ namespace MoonProject.Rover
                 _tuning.SignalGlanceSeconds);
         }
 
-        /// <summary>
-        /// A part seated on 07 (Install Impact): a gift's soft settle (Strength under 1) perks it up now; a fitted part
-        /// strikes the proud pose once the bay lets 07 go, turned to show the piece.
-        /// </summary>
-        private void OnSeated(FeelBeat beat)
-        {
-            if (beat.Strength < 1f)
-            {
-                PerkUp(_tuning.GiftPerk);
-            }
-            else
-            {
-                _proudPending = true;
-            }
-        }
-
         /// <summary>A charger started filling the cells: 07 perks up (head lift, brighter eye, antenna wiggle).</summary>
         private void OnChargingChanged(ChargingChanged charging)
         {
@@ -696,12 +672,6 @@ namespace MoonProject.Rover
                 Glance(warned.NearestLitCharger + Vector3.up * battery.ChargerGlanceLift,
                     _tuning.ReactionGazePriority, battery.ChargerGlanceSeconds);
             }
-        }
-
-        /// <summary>The coils fizzled at the lip: 07 glances at its flank lamps, "not enough".</summary>
-        private void OnLeapRefused(RoverLeapRefused refused)
-        {
-            Glance(_rover.FlankLamps.GlancePoint, _tuning.ReactionGazePriority, _tuning.Battery.LampGlanceSeconds);
         }
 
         /// <summary>Landed from a radio-hop: 07 rouses from any daydream and looks around, "where am I?".</summary>
@@ -792,8 +762,7 @@ namespace MoonProject.Rover
 
             StepElder();
 
-            _mood.SetEffort(_rover.JumpCharge);
-            _mood.SetWingMended(_rover.Kit.HasMendedWing);
+            _mood.SetEffort(0f);
             float activeInput = Mathf.Max(_rover.DriveInput.magnitude,
                 _mood.Wake.Phase == WakePhase.Awake ? _scanAimBlend : 0f);
             switch (_mood.Step(_rover.Speed, activeInput, deltaTime))
@@ -807,14 +776,6 @@ namespace MoonProject.Rover
                 case MoodTransition.WokeFromDaydream:
                     PerkUp(_tuning.WakePerk);
                     break;
-            }
-
-            if (_proudPending && !_rover.Kit.IsFitting)
-            {
-                _proudPending = false;
-                PerkUp(_tuning.KitProudPerk);
-                _events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Reward, _rover.Position, Vector3.up, 1f,
-                    0f));
             }
 
             if (_glanceEnds >= 0f && Time.time >= _glanceEnds)
@@ -873,7 +834,7 @@ namespace MoonProject.Rover
             _scoopKick = Smoothing.Damp(_scoopKick, 0f, halfLife, deltaTime);
             _winchReel = Smoothing.Damp(_winchReel, _tetherActive ? 1f : 0f, 0.15f, deltaTime);
             _winchAngle = Mathf.Repeat(_winchAngle + _winchReel * 360f * deltaTime, 360f);
-            _mood.SetEffort(Mathf.Max(_rover.JumpCharge, _tetherStrain));
+            _mood.SetEffort(_tetherStrain);
         }
 
         /// <summary>The tired look below the Low share and the quieter crawl, each eased in and out.</summary>
@@ -1104,12 +1065,6 @@ namespace MoonProject.Rover
             if (beat.Kind == FeelKind.Dock && beat.Phase == FeelPhase.Reward)
             {
                 _sigh = 1f;
-                return;
-            }
-
-            if (beat.Kind == FeelKind.Install && beat.Phase == FeelPhase.Impact)
-            {
-                OnSeated(beat);
                 return;
             }
 

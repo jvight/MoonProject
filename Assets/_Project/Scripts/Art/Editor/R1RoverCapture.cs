@@ -910,10 +910,10 @@ namespace MoonProject.Art.Editor
 
                 float openMax = tuning.WingOpenAngle;
                 float sighWing = tuning.Chirp.SighWing;
-                float idleOpen = tuning.WingIdleOpenMended * openMax;
+                float idleOpen = tuning.WingIdleOpen * openMax;
                 float sighOpen = Mathf.Min(
                     openMax + sighWing,
-                    (tuning.WingIdleOpenMended + tuning.WingSighAmount) * openMax + sighWing);
+                    (tuning.WingIdleOpen + tuning.WingSighAmount) * openMax + sighWing);
 
                 (string stateName, float wingDeg, float liftDeg, float pitchDeg)[] states =
                 {
@@ -1023,7 +1023,7 @@ namespace MoonProject.Art.Editor
                 Transform solarWing = roverInstance.transform.Find("SolarWing");
                 if (solarWing != null)
                 {
-                    float idleDeg = tuning.WingIdleOpenMended * tuning.WingOpenAngle;
+                    float idleDeg = tuning.WingIdleOpen * tuning.WingOpenAngle;
                     solarWing.localRotation = solarWing.localRotation * Quaternion.AngleAxis(idleDeg, Vector3.right);
                 }
 

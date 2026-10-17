@@ -525,7 +525,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return BuyTowerLevel(2);
             yield return ExpectStep(ProgressionKeys.NextBay, "the bay has power: the turntable is waiting");
             yield return ChargeAtTheDock("home with the transformer");
-            yield return BuyHoverJumpAtTheBench();
             yield return ExpectStep(ProgressionKeys.NextPowerPart, "a kit is fitted: only the targets speak now");
             yield return CraftTheCargoCradle();
             yield return CraftTheCellPack();
@@ -533,11 +532,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return StowInTheCradle(gnome);
             yield return CarryHomeInTheCradle(garage, gnome);
             yield return ChargeAtTheDock("before the leap");
-            yield return FirstLeap();
             yield return HopFrom(StationReach.HomeId, WorldAnchorIds.RelayPrefix + 2);
             yield return ChargeOnTheRing(2);
             yield return ToTheRunUp();
-            yield return LeapTheChasm();
             yield return FindBell();
             yield return RestoreTheTerminusRelay();
             yield return ChargeOnTheRing(3);
@@ -2052,74 +2049,6 @@ namespace MoonProject.Gameplay.PlayModeTests
                 $"{_events.FriendSpotted.Count} spot(s) on the way");
         }
 
-        private IEnumerator BuyHoverJumpAtTheBench()
-        {
-            Begin();
-            Workshop bench = _gameplay.Workshop;
-            var abilities = _context.Get<IRoverAbilities>();
-            Assert.IsFalse(abilities.Has(RoverAbility.HoverJump), "07 cannot leap before the bay");
-            yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 90f,
-                "the base pad, clear of the lander");
-            yield return DriveIntoTheBay(bench);
-            yield return Until(() => _gameplay.Blueprints.IsDrawn(HoverJump),
-                _gameplay.Progression.Tuning.PlotterDrawSeconds + 3f,
-                "the woken bay's plotter draws Hover-Jump's sheet first, which waited for it (M3-19)");
-            Assert.AreSame(bench.Definition, _gameplay.Shop.StationUpgrade, "the bay offers Hover-Jump");
-            Assert.AreEqual(UpgradeStationKind.Workshop, _gameplay.Shop.StationUpgrade.Station);
-
-            int charges = _events.RoverJumpCharged.Count;
-            _pilot.JumpHeld = true;
-            yield return new WaitForSeconds(_rover.Tuning.HoverJump.ChargeTime + ChargeMargin);
-            _pilot.JumpHeld = false;
-            yield return new WaitForSeconds(0.5f);
-            Assert.AreEqual(charges, _events.RoverJumpCharged.Count, "holding Jump does nothing before the bay");
-            Assert.AreEqual(0, _events.RoverJumped.Count);
-
-            Assert.IsTrue(_gameplay.Hints.TryGet(InteractionKind.Upgrade, out InteractionHint hint));
-            Assert.IsTrue(hint.Ready, "the depot's materials cover Hover-Jump");
-            int purchases = _events.UpgradePurchased.Count;
-            int cues = _events.StationCued.Count;
-            int crafted = _events.PartCrafted.Count;
-            Press(_keyboard.eKey);
-            yield return Until(() => _events.UpgradePurchased.Count > purchases, 15f, "holding confirm buys it");
-            Release(_keyboard.eKey);
-            UpgradePurchased purchase = _events.UpgradePurchased[_events.UpgradePurchased.Count - 1].Value;
-            Assert.AreEqual(HoverJump, purchase.UpgradeId);
-            Assert.AreEqual(1, purchase.Level);
-            Assert.IsFalse(abilities.Has(RoverAbility.HoverJump), "bought: the bay crafts the coils first");
-            Assert.AreEqual(CargoCradle, bench.Definition.Id, "the bay offers the Cargo Cradle next");
-            Assert.IsTrue(bench.Feeding, "07's beam feeds the bay's hopper");
-            yield return new WaitForSeconds(0.45f);
-            Assert.Greater(bench.BundlesInFlight, 0, "the recipe's bundles fly into the hopper");
-            ReviewBay(bench, "13a-bay-hopper-feed");
-            yield return Until(() => _events.PartCrafted.Count > crafted, 3f,
-                "the coils come out into the parts row");
-            AssertCues(cues, HoverJump, StationCue.FeedStarted, StationCue.BundleDropped, StationCue.BundleDropped,
-                StationCue.BundleDropped, StationCue.Fed);
-            Assert.AreEqual(RoverKitPiece.HoverCoils, _events.PartCrafted[_events.PartCrafted.Count - 1].Value.Part);
-            int seats = _seats;
-            yield return FitFromTheRow(bench, RoverKitPiece.HoverCoils, "the coils");
-            Assert.IsTrue(abilities.Has(RoverAbility.HoverJump), "fitted: 07 can leap now");
-            yield return null;
-            Assert.IsTrue(bench.Working, "the bay works: its lights are up");
-            Assert.AreEqual(0, bench.SparkCount, "no sparks while the arms are folded");
-            yield return Until(() => _seats > seats, BayFitTimeout, "the floor arm sets the coils on 07");
-            Assert.Greater(bench.PitLevel, 0.5f, "the pit and the floor arm's tip light the coils under 07's belly");
-            Vector3 bayFront = Flat(bench.BayForward).normalized;
-            Review(bench.PadCentre + bayFront * PitViewDistance + Vector3.up * PitViewHeight,
-                bench.PadCentre + Vector3.up * PitViewTarget, "13b0-bay-coils-pit-light");
-            yield return new WaitForSeconds(SparkDelay);
-            Assert.Greater(bench.FloorSparkCount, 0, "weld sparks fly from the floor arm's tip as the coils go on");
-            Assert.Greater(bench.LightLevel, bench.Tuning.LightIdle * 2f, "the work lights light the bay");
-            ReviewBay(bench, "13b-bay-sparks");
-            yield return new WaitForSeconds(1.5f);
-            Capture("13-bay-hover-jump");
-            IMaterialStock stock = _gameplay.Materials;
-            End("Park in Kenji's Rover Bay and craft Hover-Jump", $"recipe " +
-                $"{_gameplay.Upgrades.Find(HoverJump).Levels[0].Recipe}, stock metal {stock.Metal}, wiring " +
-                $"{stock.Wiring}, optics {stock.Optics}");
-        }
-
         /// <summary>
         /// Still in the bay: craft the Cargo Cradle from the depot's metal, see the rack on 07 and back out.
         /// </summary>
@@ -2263,95 +2192,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             return true;
-        }
-
-        private IEnumerator FirstLeap()
-        {
-            Begin();
-            ChargingDock dock = _gameplay.Home.Dock;
-            Vector3 lane = Flat(dock.Rotation * Vector3.forward).normalized;
-            yield return DriveTo(Flat(dock.Position) + lane * LeapSpotAhead, 1.5f, 0.6f, 60f,
-                "open ground on the base pad, ahead of the dock");
-            float ground = _rover.Position.y;
-            int charges = _events.RoverJumpCharged.Count;
-            _pilot.JumpHeld = true;
-            yield return new WaitForSeconds(_rover.Tuning.HoverJump.ChargeTime + ChargeMargin);
-            Assert.Greater(_events.RoverJumpCharged.Count, charges, "07 crouches and charges");
-            Assert.AreEqual(0, _events.RoverJumped.Count, "nothing leaps while Jump is held");
-            _pilot.JumpHeld = false;
-            yield return Until(() => _events.RoverJumped.Count > 0, 1f, "releasing Jump leaps");
-            float strength = _events.RoverJumped[0].Value.Strength;
-            float takeOff = Time.time;
-            yield return Until(() => !_rover.IsGrounded, 1f, "07 leaves the ground");
-            float apex = 0f;
-            bool captured = false;
-            while (!_rover.IsGrounded && Time.time < takeOff + 15f)
-            {
-                apex = Mathf.Max(apex, _rover.Position.y - ground);
-                if (!captured && _rover.Velocity.y < 0f)
-                {
-                    Capture("14-first-leap-apex");
-                    captured = true;
-                }
-
-                yield return null;
-            }
-
-            float hang = Time.time - takeOff;
-            Assert.IsTrue(_rover.IsGrounded, "07 lands softly");
-            Assert.Greater(strength, 0.95f, "a full charge");
-            Assert.Greater(apex, MinLeapApex, "a big, floaty leap");
-            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 settles after landing");
-            yield return new WaitForSeconds(1f);
-            Capture("15-after-the-leap");
-            End("First Hover-Jump on the base pad", $"strength {strength:F2}, apex {apex:F1} m, hang {hang:F1} s");
-        }
-
-        private IEnumerator LeapTheChasm()
-        {
-            Begin();
-            WorldAnchor lip = Anchor(WorldAnchorIds.CanyonLip);
-            int leaps = _events.RoverJumped.Count;
-            _pilot.GoTo(lip.Position + lip.Forward * (ChasmWidth * 2f), 1f, 1f);
-            float fixedStep = Time.fixedDeltaTime;
-            int holdSteps = Mathf.RoundToInt(ChasmCharge * _rover.Tuning.HoverJump.ChargeTime / fixedStep) + 1;
-            float deadline = Time.time + 30f;
-            while (Along(lip) < -(ReleaseLead + _rover.Speed * holdSteps * fixedStep) && Time.time < deadline)
-            {
-                yield return new WaitForFixedUpdate();
-            }
-
-            float speed = _rover.Speed;
-            _pilot.JumpHeld = true;
-            for (int i = 0; i < holdSteps; i++)
-            {
-                yield return new WaitForFixedUpdate();
-            }
-
-            _pilot.JumpHeld = false;
-            yield return Until(() => _events.RoverJumped.Count > leaps, 1f, "07 leaps off the lip");
-            yield return Until(() => !_rover.IsGrounded, 1f, "07 is in the air");
-            bool captured = false;
-            float takeOff = Time.time;
-            while (!_rover.IsGrounded && Time.time < takeOff + 15f)
-            {
-                if (!captured && _rover.Velocity.y < 0f)
-                {
-                    Capture("17-leaping-the-chasm");
-                    captured = true;
-                }
-
-                yield return null;
-            }
-
-            _pilot.Target = null;
-            float landed = Along(lip);
-            Assert.Greater(landed, ChasmWidth, "07 comes down past the chasm's far face");
-            Assert.Greater(_rover.Position.y, lip.Position.y + ApronRise, "up on the landing apron");
-            yield return Until(() => _rover.Speed < StopSpeed, 8f, "07 settles on the apron");
-            End("Leap the chasm", $"{speed:F1} m/s at the lip, strength " +
-                                  $"{_events.RoverJumped[_events.RoverJumped.Count - 1].Value.Strength:F2}, " +
-                                  $"touchdown {landed:F1} m out");
         }
 
         private IEnumerator FindBell()
