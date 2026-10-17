@@ -156,6 +156,26 @@ namespace MoonProject.Gameplay.PlayModeTests
             Press(_keyboard.eKey);
             float maxHeadYaw = 0f;
             float deadline = Time.time + ScanTimeout;
+            while (maxHeadYaw < 38f)
+            {
+                Assert.Less(Time.time, deadline, "Head must turn toward beside target.");
+                maxHeadYaw = Mathf.Max(maxHeadYaw, Mathf.Abs(_bodyLanguage.CurrentHeadAngles.x));
+                if (scans.Scanning == target)
+                {
+                    AssertBeamClearOfRover(target.Point, "beside-aim");
+                }
+
+                yield return null;
+            }
+
+            // Letting go of E returns the head to rest
+            Release(_keyboard.eKey);
+            yield return WaitSeconds(0.95f);
+            Assert.Less(Mathf.Abs(_bodyLanguage.CurrentHeadAngles.x), 10f, "Letting go of E returns 07's head to rest.");
+
+            // Hold E again to complete the beside scan
+            Press(_keyboard.eKey);
+            deadline = Time.time + ScanTimeout;
             while (!target.Scanned)
             {
                 Assert.Less(Time.time, deadline, "Beside target scan must complete.");
@@ -172,10 +192,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.Greater(maxHeadYaw, 35f, "07's head must turn toward the target beside it.");
             Assert.Less(Mathf.Abs(Mathf.DeltaAngle(startBodyYaw, _rover.Rotation.eulerAngles.y)), 15f,
                 "Target within head reach must not require a full body turn.");
-
-            // Letting go of E returns the head to rest
-            yield return WaitSeconds(0.9f);
-            Assert.Less(Mathf.Abs(_bodyLanguage.CurrentHeadAngles.x), 10f, "Letting go of E returns 07's head to rest.");
         }
 
         private IEnumerator VerifyBehindRuinAndCaptureStrip()

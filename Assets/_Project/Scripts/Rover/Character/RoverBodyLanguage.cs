@@ -688,7 +688,9 @@ namespace MoonProject.Rover
 
             _mood.SetEffort(_rover.JumpCharge);
             _mood.SetWingMended(_rover.Kit.HasMendedWing);
-            switch (_mood.Step(_rover.Speed, _rover.DriveInput.magnitude, deltaTime))
+            float activeInput = Mathf.Max(_rover.DriveInput.magnitude,
+                _mood.Wake.Phase == WakePhase.Awake ? _scanAimBlend : 0f);
+            switch (_mood.Step(_rover.Speed, activeInput, deltaTime))
             {
                 case MoodTransition.BeganWaking:
                     _events.Publish(new RoverAwoke(_rover.Position, _mood.Wake.WokenByPlayer));
@@ -1109,6 +1111,8 @@ namespace MoonProject.Rover
                     break;
                 case FeelPhase.Cancel:
                     _scanLook.LetGo();
+                    _scanGazing = false;
+                    _rover.Gaze.Clear(_scanOwner);
                     break;
                 case FeelPhase.Reward:
                     _scanLook.Learned();

@@ -155,12 +155,13 @@ namespace MoonProject.Gameplay
         {
             float eased = Ease.InOutSine(_level);
             float spanHeight = Mathf.Max(_span.magnitude, 0.36f);
-            Vector3 up = _span.sqrMagnitude > MinDistance ? _span.normalized : Vector3.up;
+            Vector3 up = Vector3.up;
             Vector3 lineCentre = _target + _span * (_progress - 0.5f);
             Vector3 toEmitter = emitter - lineCentre;
             float distance = toEmitter.magnitude;
             Vector3 towardLens = distance > MinDistance ? toEmitter / distance : Vector3.back;
-            Vector3 right = Vector3.Cross(up, towardLens);
+            Vector3 flatToLens = Vector3.ProjectOnPlane(towardLens, up);
+            Vector3 right = Vector3.Cross(up, flatToLens.sqrMagnitude > MinDistance ? flatToLens.normalized : Vector3.back);
             right = right.sqrMagnitude > MinDistance ? right.normalized : Vector3.right;
 
             float standOff = Mathf.Min(_tuning.ScanContactOffset, distance * MaxContactShare);
@@ -193,8 +194,8 @@ namespace MoonProject.Gameplay
             _core.SetPosition(1, contact);
             _sheath.SetPosition(0, emitter);
             _sheath.SetPosition(1, contact);
-            _core.widthMultiplier = _tuning.ScanCoreWidth * widthScale;
-            _sheath.widthMultiplier = _tuning.ScanSheathWidth * widthScale;
+            _core.widthMultiplier = _tuning.ScanCoreWidth * widthScale * 0.55f;
+            _sheath.widthMultiplier = _tuning.ScanSheathWidth * widthScale * 0.55f;
 
             Color coreStart = _tuning.ScanCoreColor;
             coreStart.a *= eased;
@@ -211,9 +212,9 @@ namespace MoonProject.Gameplay
             _sheath.endColor = sheathEnd;
 
             // Vertical laser fan sweeping laterally across the target
-            float halfWidth = Mathf.Clamp(spanHeight * 0.52f, 0.20f, 0.48f);
+            float halfWidth = Mathf.Clamp(spanHeight * 0.42f, 0.18f, 0.36f);
             float sweepHoriz = Mathf.Sin(_elapsed * 4.4f) * halfWidth * 0.85f;
-            float fanHalfHeight = Mathf.Clamp(spanHeight * 0.44f, 0.16f, 0.40f);
+            float fanHalfHeight = Mathf.Clamp(spanHeight * 0.38f, 0.15f, 0.32f);
             Vector3 sweepCenter = Vector3.Lerp(surfaceCenter, contact, 0.35f) + right * sweepHoriz;
             Vector3 fanTop = sweepCenter + up * fanHalfHeight;
             Vector3 fanBottom = sweepCenter - up * fanHalfHeight;
@@ -230,9 +231,9 @@ namespace MoonProject.Gameplay
             float eased)
         {
             Color edgeColor = _tuning.ScanBeamColor;
-            edgeColor.a = 0.22f * eased;
-            _fanUpper.widthMultiplier = _tuning.ScanCoreWidth * 0.65f * widthScale;
-            _fanLower.widthMultiplier = _tuning.ScanCoreWidth * 0.65f * widthScale;
+            edgeColor.a = 0.28f * eased;
+            _fanUpper.widthMultiplier = _tuning.ScanCoreWidth * 0.58f * widthScale;
+            _fanLower.widthMultiplier = _tuning.ScanCoreWidth * 0.58f * widthScale;
             _fanUpper.SetPosition(0, emitter);
             _fanUpper.SetPosition(1, fanTop);
             _fanLower.SetPosition(0, emitter);
@@ -243,8 +244,8 @@ namespace MoonProject.Gameplay
             _fanLower.endColor = edgeColor;
 
             Color laserColor = Color.Lerp(_tuning.ScanBeamColor, AmberRasterColor, 0.25f);
-            laserColor.a = 0.42f * eased;
-            _laserContact.widthMultiplier = _tuning.ScanCoreWidth * 1.1f * widthScale;
+            laserColor.a = 0.48f * eased;
+            _laserContact.widthMultiplier = _tuning.ScanCoreWidth * 0.95f * widthScale;
             _laserContact.SetPosition(0, fanBottom);
             _laserContact.SetPosition(1, fanTop);
             _laserContact.startColor = laserColor;
@@ -254,9 +255,9 @@ namespace MoonProject.Gameplay
             _fanVertices[1] = fanTop;
             _fanVertices[2] = fanBottom;
             Color sheetApex = _tuning.ScanBeamColor;
-            sheetApex.a = 0.10f * eased;
+            sheetApex.a = 0.12f * eased;
             Color sheetEdge = _tuning.ScanBeamColor;
-            sheetEdge.a = 0.05f * eased;
+            sheetEdge.a = 0.06f * eased;
             _fanColors[0] = sheetApex;
             _fanColors[1] = sheetEdge;
             _fanColors[2] = sheetEdge;
@@ -294,13 +295,13 @@ namespace MoonProject.Gameplay
                 float phase = _elapsed * 0.85f + i * 0.37f;
                 float life01 = phase - Mathf.Floor(phase);
                 float env = Mathf.Sin(life01 * Mathf.PI);
-                float hOffset = Mathf.Sin(i * 2.1f + _elapsed * 0.9f) * fanHalfHeight * 0.85f;
-                float vOffset = (life01 - 0.5f) * fanHalfHeight * 1.35f;
+                float hOffset = Mathf.Sin(i * 2.1f + _elapsed * 0.9f) * fanHalfHeight * 0.75f;
+                float vOffset = (life01 - 0.5f) * fanHalfHeight * 1.15f;
                 Vector3 motePos = Vector3.Lerp(sweepCenter, aperture, (i & 1) == 0 ? 0.12f : 0.28f)
                     + right * hOffset + up * vOffset;
                 Color moteColor = (i % 3 == 0) ? AmberRasterColor : CyanRasterColor;
                 moteColor.a = 0.14f * env * eased;
-                float moteSize = Mathf.Lerp(0.016f, 0.026f, (i & 1)) * widthScale;
+                float moteSize = Mathf.Lerp(0.015f, 0.024f, (i & 1)) * widthScale;
                 _points.Add(motePos, moteSize, moteColor, Vector3.zero);
             }
         }
@@ -312,8 +313,8 @@ namespace MoonProject.Gameplay
             float spanHeight,
             float eased)
         {
-            float halfW = Mathf.Clamp(spanHeight * 0.52f, 0.20f, 0.48f);
-            float halfH = Mathf.Clamp(spanHeight * 0.48f, 0.18f, 0.44f);
+            float halfW = Mathf.Clamp(spanHeight * 0.32f, 0.14f, 0.26f);
+            float halfH = Mathf.Clamp(spanHeight * 0.24f, 0.10f, 0.20f);
             for (int i = 0; i < RasterLineCount; i++)
             {
                 float row01 = (i + 0.5f) / RasterLineCount;
@@ -326,13 +327,14 @@ namespace MoonProject.Gameplay
                 }
 
                 raster.enabled = true;
+                raster.widthMultiplier = _tuning.ScanCoreWidth * 0.42f;
                 float y = Mathf.Lerp(-halfH, halfH, row01);
-                float rowWidth = halfW * (0.82f + 0.18f * Mathf.Sin(row01 * Mathf.PI));
+                float rowWidth = halfW * (0.84f + 0.16f * Mathf.Sin(row01 * Mathf.PI));
                 Vector3 rowCenter = surfaceCenter + up * y;
                 raster.SetPosition(0, rowCenter - right * rowWidth);
                 raster.SetPosition(1, rowCenter + right * rowWidth);
                 Color c = (i % 3 == 1) ? AmberRasterColor : CyanRasterColor;
-                c.a *= reveal * Mathf.Lerp(0.55f, 0.95f, _progress);
+                c.a *= reveal * Mathf.Lerp(0.45f, 0.82f, _progress);
                 raster.startColor = c;
                 raster.endColor = c;
             }
@@ -340,10 +342,10 @@ namespace MoonProject.Gameplay
             float ping01 = _pingRemaining > 0f
                 ? Mathf.Sin((1f - _pingRemaining / PingDuration) * Mathf.PI)
                 : 0f;
-            float outlineReveal = Mathf.Max(eased * Mathf.Lerp(0.25f, 1f, _progress * _progress), ping01);
+            float outlineReveal = Mathf.Max(eased * Mathf.Lerp(0.22f, 0.92f, _progress * _progress), ping01);
             Color outlineColor = Color.Lerp(OutlineBaseColor, OutlinePingColor, ping01);
             outlineColor.a *= outlineReveal;
-            _outlineLoop.widthMultiplier = _tuning.ScanCoreWidth * Mathf.Lerp(0.8f, 1.35f, ping01);
+            _outlineLoop.widthMultiplier = _tuning.ScanCoreWidth * Mathf.Lerp(0.55f, 1.15f, ping01);
             _outlineLoop.startColor = outlineColor;
             _outlineLoop.endColor = outlineColor;
             _outlineLoop.SetPosition(0, surfaceCenter - right * halfW - up * halfH);
