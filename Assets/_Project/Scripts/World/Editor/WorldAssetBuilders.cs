@@ -85,20 +85,6 @@ namespace MoonProject.World.Editor
             AssetDatabase.SaveAssets();
         }
 
-        /// <summary>The orange vent's bead field (M3-27): the track shader tinted orange, readable across the basin.</summary>
-        [MoonBuilder("World/Vent Bead Material", 207)]
-        public static void BuildVentBeadMaterial()
-        {
-            LandmarkSettings landmarks = LoadSettings().Landmarks;
-            var material = new Material(LoadShader(WorldPaths.GroundMarkShader));
-            material.SetColor("_Color", landmarks.VentTint);
-            material.SetFloat("_EdgeSoftness", landmarks.VentEdgeSoftness);
-            material.SetFloat("_FadeNear", landmarks.VentFade.x);
-            material.SetFloat("_FadeFar", landmarks.VentFade.y);
-            GeneratedAssets.CreateOrReplace(material, WorldPaths.VentBeadMaterial);
-            AssetDatabase.SaveAssets();
-        }
-
         [MoonBuilder("World/Sky Materials", 210)]
         public static void BuildSkyMaterials()
         {

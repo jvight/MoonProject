@@ -529,26 +529,6 @@ MonoBehaviour:
     _fadeNear: 45
     _fadeFar: 130
   _landmarks:
-    _routeBearing: 72
-    _routePostDistances:
-    - 70
-    - 115
-    - 160
-    - 205
-    - 250
-    - 275
-    _routePostSide: 2.6
-    _reflectorGlow: 0.3
-    _bridgeLampGlow: 1
-    _bridgeSide: 3.5
-    _dishSpread: 6.5
-    _ventPatches: 26
-    _ventPatchRadius: {x: 1.2, y: 3.6}
-    _ventSpread: 1.6
-    _ventTint: {r: 1.24, g: 1, b: 0.66, a: 1}
-    _ventStrength: 0.55
-    _ventEdgeSoftness: 0.9
-    _ventFade: {x: 160, y: 380}
     _ruins:
     - _id: HabitatModules
       _offset: {x: -5.5, y: 2}
@@ -578,17 +558,7 @@ MonoBehaviour:
       _bends: 3
       _portReach: 2.9
   _scrapField:
-    _pieces: 14
     _laneHalfWidth: 2.5
-    _spread: 6
-    _laneMargin: 1.2
-    _span: {x: 0.05, y: 0.95}
-    _anchors: 3
-    _anchorScale: {x: 2, y: 2.5}
-    _scale: {x: 1, y: 1.6}
-    _crowding: 1.8
-    _sink: 0.45
-    _tilt: {x: 12, y: 28}
     _cuttables: 4
     _cuttableSpan: {x: 0.15, y: 0.85}
     _cuttableOffset: 1

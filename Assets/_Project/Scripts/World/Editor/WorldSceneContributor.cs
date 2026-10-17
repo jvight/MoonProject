@@ -70,7 +70,6 @@ namespace MoonProject.World.Editor
             Assign(serialized, "_earthMaterial", earthMaterial);
             Assign(serialized, "_groundMarkMaterial", context.LoadAsset<Material>(WorldPaths.GroundMarkMaterial));
             WorldPaths.AssignLandmarks(serialized);
-            Assign(serialized, "_ventBeadMaterial", context.LoadAsset<Material>(WorldPaths.VentBeadMaterial));
             Assign(serialized, "_cableMaterial", context.LoadAsset<Material>(WorldPaths.CableMaterial));
             AssignRocks(context, serialized, "_pebbleRocks", WorldPaths.PebbleRocks);
             AssignRocks(context, serialized, "_boulderRocks", WorldPaths.BoulderRocks);
