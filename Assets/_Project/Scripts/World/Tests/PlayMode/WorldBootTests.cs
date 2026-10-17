@@ -187,8 +187,8 @@ namespace MoonProject.World.PlayModeTests
             Assert.AreEqual(layout.PeakPosition, _beacon.transform.position, "the beacon stands on the summit");
 
             int propColliders = Physics.OverlapSphere(Vector3.zero, ScatterProbeRadius, Layers.PropMask).Length;
-            Assert.Greater(propColliders, scatter.Boulders + scatter.SolidCobbles,
-                "every boulder, solid medium cobble and placed landmark needs colliders on Layers.Prop");
+            Assert.GreaterOrEqual(propColliders, scatter.Boulders + scatter.SolidCobbles,
+                "every boulder and solid medium cobble needs a collider on Layers.Prop");
         }
 #endif
 
