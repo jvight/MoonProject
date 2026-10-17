@@ -150,8 +150,9 @@ namespace MoonProject.Gameplay.PlayModeTests
                 piece.Progress = 0.97f;
                 yield return FaceCut(piece);
                 Press(_keyboard.eKey);
-                yield return Waits.Until(() => piece.State == SalvagePieceState.Taken, PieceTakenTimeout);
+                yield return Waits.Until(() => piece.State != SalvagePieceState.Attached, PieceTakenTimeout);
                 Release(_keyboard.eKey);
+                yield return Waits.Until(() => piece.State == SalvagePieceState.Taken, PieceTakenTimeout);
                 Assert.AreEqual(SalvagePieceState.Taken, piece.State,
                     $"the Kestrel's piece {piece.Number} is cut and folds into 07 within its charge, cut and flight");
                 yield return null;
@@ -159,7 +160,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             Assert.AreEqual(last, _fixture.Events.MaterialSalvaged.Count);
             Assert.IsTrue(kestrel.Root.Find("Skeleton").gameObject.activeSelf, "the skeleton stays");
-            Assert.IsFalse(kestrel.IsPickedClean, "one piece is still on the wreck");
+            Assert.IsFalse(kestrel.IsPickedClean, "one piece is still on the wreck: " + States(kestrel));
             kestrel.Pieces[last].Progress = 0.5f;
             int total = _fixture.Gameplay.Materials.Total;
             Assert.IsTrue(_fixture.Bootstrap.Context.Get<ISaveService>().SaveNow());
@@ -198,8 +199,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             metal.Progress = 0.95f;
             yield return FaceCut(metal);
             Press(_keyboard.eKey);
-            yield return Waits.Until(() => _fixture.Events.MaterialSalvaged.Count > 0, 6f);
+            yield return Waits.Until(() => metal.State != SalvagePieceState.Attached, 6f);
             Release(_keyboard.eKey);
+            yield return Waits.Until(() => _fixture.Events.MaterialSalvaged.Count > 0, 6f);
             FeelBeat open = beats.Find(beat => beat.Phase == FeelPhase.Anticipate);
             Assert.AreEqual(FeelKind.Collect, open.Kind, "M3-25 T1: the hatch opens for the flight");
             Assert.Greater(open.Seconds, 0f, "Seconds = the time to arrival");
@@ -217,6 +219,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Waits.Until(() => beats.Exists(beat => beat.Kind == FeelKind.Cargo), 6f);
             Release(_keyboard.eKey);
             Assert.IsFalse(beats.Exists(beat => beat.Phase == FeelPhase.Anticipate), "a full hold keeps it shut");
+            Assert.IsTrue(beats.Exists(beat => beat.Kind == FeelKind.Cargo),
+                $"a full hold bumps the hatch (the piece is {optics.State}, optics room {stock.Room(SalvageMaterial.Optics)})");
             Assert.AreEqual(FeelPhase.Impact, beats.Find(beat => beat.Kind == FeelKind.Cargo).Phase, "the bump");
         }
 
@@ -245,6 +249,17 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Waits.Until(() => staged.Count > 0, 2f);
             Release(_keyboard.eKey);
             Assert.IsTrue(staged[0].Warm, "0.5.5 §5.1: a re-press at the same site within 6 s skips the brace");
+        }
+
+        private static string States(SalvageSite site)
+        {
+            var states = new List<string>();
+            foreach (SalvagePiece piece in site.Pieces)
+            {
+                states.Add($"{piece.Number}:{piece.Material}:{piece.State}");
+            }
+
+            return string.Join(", ", states);
         }
 
         /// <summary>Parks 07 in front of the piece's cut, looking at it, and lets the aim settle.</summary>
