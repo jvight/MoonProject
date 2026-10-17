@@ -39,6 +39,7 @@ namespace MoonProject.Gameplay
         private readonly Transform _target;
         private readonly GameObject _brackets;
         private readonly bool _isRuin;
+        private readonly Vector3 _sweepSpan;
         private readonly MaterialPropertyBlock _block = new MaterialPropertyBlock();
 
         private ScanFragment(string fragmentId, string blueprintId, IReadOnlyList<string> structureIds, int index,
@@ -59,7 +60,7 @@ namespace MoonProject.Gameplay
             _target = target;
             _brackets = brackets;
             _isRuin = isRuin;
-            SweepSpan = ComputeSweepSpan(solid);
+            _sweepSpan = ComputeSweepSpan(solid);
         }
 
         /// <summary>"&lt;kit id&gt;.&lt;n&gt;", e.g. "rover.cargo_cradle.0". Saved: never rename.</summary>
@@ -89,7 +90,7 @@ namespace MoonProject.Gameplay
         public Vector3 Point => _target.position;
 
         /// <summary>World-space vector from the bottom of the solid to its top along the tilted fragment.</summary>
-        public Vector3 SweepSpan { get; }
+        public Vector3 SweepSpan => _isRuin && _solid != null ? new Vector3(0f, _solid.bounds.size.y, 0f) : _sweepSpan;
 
         public float Progress { get; internal set; }
 

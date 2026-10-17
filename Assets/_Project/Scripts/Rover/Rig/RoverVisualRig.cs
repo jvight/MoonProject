@@ -314,7 +314,7 @@ namespace MoonProject.Rover
             _lastPosition = position;
             transform.SetPositionAndRotation(position, rotation);
 
-            _jelly.Step(_rover.LocalAcceleration, _rover.JumpCharge, deltaTime);
+            _jelly.Step(_rover.LocalAcceleration, deltaTime);
             _sag = Smoothing.Damp(_sag, _sagTarget, _sagHalfLife, deltaTime);
             ApplyChassis();
             StepSuspension(deltaTime);

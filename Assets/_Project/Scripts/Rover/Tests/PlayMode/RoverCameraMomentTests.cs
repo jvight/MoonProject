@@ -82,34 +82,6 @@ namespace MoonProject.Rover.PlayModeTests
                 "Back to the normal chase framing.");
         }
 
-        [UnityTest]
-        public IEnumerator UpgradePurchase_LiftsAndPullsBack_ThenReturns()
-        {
-            yield return Wait(2f);
-            float restingHeight = _rover.Camera.transform.position.y;
-            float restingDistance = Vector3.Distance(_rover.Camera.transform.position, _rover.Controller.Position);
-
-            _rover.Context.Events.Publish(new UpgradePurchased("radio_tower", 2));
-            float highest = restingHeight;
-            float farthest = restingDistance;
-            float until = Time.time + 3.5f;
-            while (Time.time < until)
-            {
-                yield return null;
-                highest = Mathf.Max(highest, _rover.Camera.transform.position.y);
-                farthest = Mathf.Max(farthest,
-                    Vector3.Distance(_rover.Camera.transform.position, _rover.Controller.Position));
-            }
-
-            Debug.Log($"[rover-moment] upgrade lift {highest - restingHeight:0.00} m, "
-                + $"pull back {farthest - restingDistance:0.00} m");
-            Assert.Greater(highest - restingHeight, 1f, "A gentle lift.");
-            Assert.Greater(farthest - restingDistance, 1f, "A gentle pull-back.");
-
-            yield return Wait(4f);
-            Assert.AreEqual(restingHeight, _rover.Camera.transform.position.y, 0.3f, "Returns to the chase framing.");
-        }
-
         /// <summary>Angle (deg) between 07 and a point as the camera sees them: near 0 means 07 hides it.</summary>
         private float SeparationFrom07(Vector3 point)
         {

@@ -46,6 +46,16 @@ namespace MoonProject.Gameplay
             _light.transform.position = position;
         }
 
+        public void SetColor(Color color)
+        {
+            _light.color = color;
+        }
+
+        public void SetRange(float range)
+        {
+            _light.range = range;
+        }
+
         /// <summary>Eases to <paramref name="level"/> over <paramref name="seconds"/> (0 = at once).</summary>
         public void Ramp(float level, float seconds, bool easeIn)
         {

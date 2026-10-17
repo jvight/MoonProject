@@ -159,7 +159,7 @@ namespace MoonProject.Rover
         [Range(-0.8f, 0.2f)]
         [SerializeField] private float _obstacleMinNormalY = -0.15f;
 
-        [Tooltip("Minimum surface slope (deg) on Prop or Relic colliders to count as a bumper obstacle when not leaping.")]
+        [Tooltip("Minimum surface slope (deg) on Prop or Relic colliders to count as a bumper obstacle.")]
         [Range(5f, 60f)]
         [SerializeField] private float _propObstacleMinSlope = 55f;
 
