@@ -278,6 +278,7 @@ MonoBehaviour:
     _clusterContrast: 0.85
     _pebbleSpacing: 5
     _pebbleSize: {x: 0.18, y: 0.46}
+    _cobbleColliderMinSize: 0.48
     _pebbleDensity: 0.34
     _pebbleMaxSlope: 28
     _pebbleCullDistance: 150
@@ -670,3 +671,55 @@ MonoBehaviour:
     _flashLightRange: 14
     _beadLight: 2.5
     _beadLightRange: 8
+  _skyCycle:
+    _dayLengthSeconds: 7200
+    _maxHoldSeconds: 1500
+    _fallbackSunlitTimeSeconds: 900
+    _sunDiameter: 0.8
+    _startBearingOffset: 6.2
+    _maxElevation: 17.3
+    _minElevation: -4.5
+    _initialPeakLead: 18
+    _nodalDriftPerDay: 64
+    _twilightElevation: 12.5
+    _postEclipseSunriseSeconds: 60
+    _horizonDistance: 500
+    _horizonStep: 25
+    _receiverHeight: 1.5
+    _horizonSoftness: 1.6
+    _keySmoothingSeconds: 1.8
+    _dayBlendExponent: 0.65
+    _dawnKeyCrossover: 0.04
+    _localShadowAmbientFloor: 0.85
+    _sunEmergenceShare: 0.08
+    _sunKeyCurveExponent: 0.55
+    _dawnKeyFloor: 0.42
+    _dawnShadowFloor: 0.7
+    _dawnSweepSeconds: 18
+    _sunlitKeyColor: {r: 1, g: 0.96, b: 0.87, a: 1}
+    _dawnKeyColor: {r: 1, g: 0.84, b: 0.62, a: 1}
+    _sunlitKeyIntensity: 2.08
+    _sunlitShadowStrength: 0.86
+    _sunlitFillColor: {r: 0.6, g: 0.72, b: 0.96, a: 1}
+    _sunlitFillIntensity: 0.52
+    _sunlitAmbientSky: {r: 0.27, g: 0.31, b: 0.4, a: 1}
+    _sunlitAmbientEquator: {r: 0.19, g: 0.22, b: 0.29, a: 1}
+    _sunlitAmbientGround: {r: 0.11, g: 0.12, b: 0.16, a: 1}
+    _sunlitFogColor: {r: 0.048, g: 0.052, b: 0.068, a: 1}
+    _sunlitHazeColor: {r: 0.25, g: 0.23, b: 0.2, a: 1}
+    _sunlitSkyTop: {r: 0.01, g: 0.014, b: 0.028, a: 1}
+    _sunlitHorizonGlow: {r: 0.28, g: 0.2, b: 0.12, a: 1}
+    _sunlitHorizonBand: {r: 0.36, g: 0.27, b: 0.17, a: 1}
+    _sunDiscColor: {r: 1, g: 0.95, b: 0.84, a: 1}
+    _sunCoreIntensity: 2.2
+    _sunCoronaStrength: 0.42
+    _sunlitStarScale: 0.08
+    _sunlitMilkyWayScale: 0.03
+    _eclipseRingColor: {r: 0.96, g: 0.36, b: 0.12, a: 1}
+    _eclipseRingStrength: 1.15
+    _eclipseRingWidth: 0.085
+    _eclipseStarScale: 1.45
+    _minEarthPhaseLight: 0.4
+    _eclipseKeyIntensity: 0.44
+    _eclipseFillIntensity: 0.24
+    _eclipseAmbientScale: 0.68
