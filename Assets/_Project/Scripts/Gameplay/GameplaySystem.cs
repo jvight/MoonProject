@@ -264,6 +264,9 @@ namespace MoonProject.Gameplay
         /// <summary>The opening in the world: the lander, the built pads, the supply crates, the objective flow.</summary>
         public OpeningField Opening { get; private set; }
 
+        /// <summary>The dock lock on the built pad 07 charges on (opening-v2 §5).</summary>
+        public PadLock PadLock { get; private set; }
+
         internal void WireBuilding(BuildField building)
         {
             _building = building;
@@ -648,6 +651,8 @@ namespace MoonProject.Gameplay
                 var opening = new OpeningField(_openingTuning, services, _building, sunlight, Containers, _ruins,
                     transform, _salvage.Tuning.ReachRadius);
                 _battery.ConnectPads(opening);
+                PadLock = new PadLock(context.Events, _home.Tuning, _building, _battery.Model, services.Rover,
+                    _openingTuning.PadChargeRadius);
                 return opening;
             }
             catch (InvalidOperationException exception)
@@ -920,6 +925,7 @@ namespace MoonProject.Gameplay
             TowerPartField.Step(now);
             Scans.Step(now, Time.deltaTime);
             Opening.Step();
+            PadLock.Step(Time.deltaTime);
             Port.Step(Time.deltaTime);
             _wingCell.Step();
             RecipeLook.Step();

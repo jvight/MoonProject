@@ -1238,6 +1238,16 @@ namespace MoonProject.Gameplay.PlayModeTests
                 stages[i] = stage;
             }
 
+            if (id == StructureIds.ChargingPad)
+            {
+                // The R1 pad's dock-lock bars, one per corner (PadLock raises them as 07 charges).
+                for (int i = 0; i < 4; i++)
+                {
+                    Named(Block(root.transform, new Vector3(i % 2 == 0 ? -0.9f : 0.9f, 0.4f, i < 2 ? -0.9f : 0.9f),
+                        new Vector3(0.1f, 0.8f, 0.1f)), "TotemBar_" + (i + 1));
+                }
+            }
+
             var collider = root.AddComponent<BoxCollider>();
             collider.center = new Vector3(0f, footprint.y * 0.5f, 0f);
             collider.size = footprint;

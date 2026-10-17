@@ -81,6 +81,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             BatteryModel battery = _fixture.Gameplay.Battery.Model;
             yield return Waits.Until(() => battery.IsCharging, 5f);
             Assert.AreEqual(ChargerKind.Pad, battery.Charger, "the built pad charges, fed by the lander's port");
+            yield return Waits.Until(() => _fixture.Gameplay.PadLock.Raised, 2f);
+            Assert.IsTrue(_fixture.Gameplay.PadLock.Raised, "the pad's bars rise round 07 (its dock lock)");
             yield return null;
             Assert.IsTrue(Reached(OpeningMilestone.FirstCharge), "B6: the eclipse may end");
             Assert.IsFalse(opening.Port.Spent, "the reserve is being drawn");
