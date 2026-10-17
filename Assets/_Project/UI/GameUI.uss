@@ -431,7 +431,7 @@ Label {
     position: relative;
     left: 0;
     top: 0;
-    width: 510px;
+    width: 470px;
     flex-shrink: 0;
     align-items: flex-start;
 }
@@ -442,7 +442,7 @@ Label {
     margin-left: -26px;
     --ink-color: var(--moon-cream);
     --glow-color: var(--moon-amber-soft);
-    --glow-width: 18px;
+    --glow-width: 18;
 }
 
 .title-screen__subtitle-row {
@@ -469,7 +469,7 @@ Label {
 }
 
 .title-screen__rule {
-    width: 510px;
+    width: 470px;
     height: 2px;
     margin-top: 10px;
     background-color: var(--glass-rim-glow);
@@ -501,8 +501,8 @@ Label {
     top: auto;
     right: auto;
     bottom: auto;
-    width: 510px;
-    height: 364px;
+    width: 470px;
+    height: 368px;
     flex-grow: 0;
     flex-shrink: 0;
     justify-content: center;
@@ -512,7 +512,7 @@ Label {
 }
 
 .pause--title .pause__stack {
-    width: 510px;
+    width: 470px;
 }
 
 .pause--title .pause__pages {
@@ -605,12 +605,12 @@ Label {
     left: 0;
     top: 0;
     bottom: auto;
-    width: 510px;
+    width: 470px;
     margin-left: 0;
 }
 
 .pause--title .pause__panel--settings {
-    padding: 12px 22px 10px 22px;
+    padding: 12px 20px 10px 20px;
 }
 
 .pause--title .settings-tabs {
@@ -638,16 +638,17 @@ Label {
 }
 
 .pause--title .settings-page {
-    min-height: 216px;
+    min-height: 222px;
 }
 
 .pause--title .setting-row {
-    min-height: 34px;
+    min-height: 33px;
+    margin: 1px 0;
     padding-left: 24px;
 }
 
 .pause--title .setting-row__label {
-    width: 192px;
+    width: 168px;
     font-size: 17px;
 }
 

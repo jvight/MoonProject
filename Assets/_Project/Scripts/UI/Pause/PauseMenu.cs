@@ -70,6 +70,7 @@ namespace MoonProject.UI
         private readonly TitleCrtOverlayPainter _titleCrtOverlayPainter;
         private readonly Label _continueNote;
         private readonly Label[] _titleCursors;
+        private readonly VisualElement[] _cursorHosts;
         private readonly Button[] _languageButtons;
         private readonly Button[] _mainPageButtons;
         private readonly Button[] _newGamePageButtons;
@@ -86,6 +87,7 @@ namespace MoonProject.UI
         private readonly string[] _lookTexts;
         private Focusable _pendingFocus;
         private Focusable _lastValidFocus;
+        private VisualElement _lastSyncedFocus;
         private bool _focusingByCode;
         private bool _pointerPressed;
         private Vector2 _lastPointerPos = new Vector2(float.NaN, float.NaN);
@@ -223,7 +225,7 @@ namespace MoonProject.UI
             }
 
             _continueNote = CreateContinueNote(layout.ResumeButton);
-            _titleCursors = CreateTitleCursors(layout, _languageButtons, _settingRows);
+            _titleCursors = CreateTitleCursors(layout, _languageButtons, _settingRows, out _cursorHosts);
             _veil.Snap(false);
             _main.Snap(false);
             _settingsPanel.Snap(false);
@@ -562,6 +564,7 @@ namespace MoonProject.UI
             _layout.FpsNext.clicked += () => StepDisplay(Step.FpsCap, 1);
             _layout.VSyncToggle.RegisterValueChangedCallback(OnVSyncChanged);
             _layout.Pause.RegisterCallback<FocusInEvent>(OnFocusIn);
+            _layout.Pause.RegisterCallback<FocusOutEvent>(OnFocusOut);
             _layout.Pause.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
             _layout.Pause.RegisterCallback<NavigationMoveEvent>(OnNavigationMove, TrickleDown.TrickleDown);
 
@@ -659,6 +662,12 @@ namespace MoonProject.UI
 
         private void SyncSettingRowFocus(VisualElement focused)
         {
+            if (focused == _lastSyncedFocus)
+            {
+                return;
+            }
+
+            _lastSyncedFocus = focused;
             VisualElement focusedRow = focused != null ? FindSettingRow(focused) : null;
             for (int i = 0; i < _settingRows.Length; i++)
             {
@@ -673,6 +682,21 @@ namespace MoonProject.UI
             {
                 Button tab = _settingsTabs[i];
                 tab.parent.EnableInClassList(TabFocusClass, focused == tab);
+            }
+
+            VisualElement activeCursorHost = focusedRow ??
+                (focused != null && (focused == _layout.TabSound || focused == _layout.TabCamera || focused == _layout.TabDisplay)
+                    ? focused.parent
+                    : focused);
+            for (int i = 0; i < _titleCursors.Length; i++)
+            {
+                Label cursor = _titleCursors[i];
+                if (cursor != null)
+                {
+                    cursor.style.display = (_cursorHosts[i] != null && _cursorHosts[i] == activeCursorHost)
+                        ? DisplayStyle.Flex
+                        : DisplayStyle.None;
+                }
             }
         }
 
@@ -815,6 +839,7 @@ namespace MoonProject.UI
             }
 
             evt.StopPropagation();
+            _layout.Root.panel?.focusController?.IgnoreEvent(evt);
             if (evt.direction == NavigationMoveEvent.Direction.None || _lastNavigateFrame == Time.frameCount)
             {
                 return;
@@ -1465,6 +1490,14 @@ namespace MoonProject.UI
             }
         }
 
+        private void OnFocusOut(FocusOutEvent evt)
+        {
+            if (FocusedElement() == null)
+            {
+                SyncSettingRowFocus(null);
+            }
+        }
+
         private void OnPointerDown(PointerDownEvent evt)
         {
             _pointerPressed = true;
@@ -1674,10 +1707,10 @@ namespace MoonProject.UI
         {
             _layout.TitleScreen.style.left = StyleKeyword.Null;
             _layout.TitleScreen.style.top = StyleKeyword.Null;
-            _layout.TitleScreen.style.width = _title.RuleWidth;
+            _layout.TitleScreen.style.width = StyleKeyword.Null;
             _layout.TitleSubtitleRow.style.marginTop = _title.SubtitleTopMargin;
             _layout.TitleRule.style.marginTop = _title.RuleTopMargin;
-            _layout.TitleRule.style.width = _title.RuleWidth;
+            _layout.TitleRule.style.width = StyleKeyword.Null;
             _layout.TitleRule.style.height = _title.RuleHeight;
             _layout.TitleRule.style.borderLeftWidth = _title.RuleAccentWidth;
             _layout.PauseFrame.style.paddingLeft = StyleKeyword.Null;
@@ -1735,7 +1768,8 @@ namespace MoonProject.UI
             return note;
         }
 
-        private static Label[] CreateTitleCursors(UiLayout layout, Button[] languageButtons, VisualElement[] settingRows)
+        private static Label[] CreateTitleCursors(UiLayout layout, Button[] languageButtons, VisualElement[] settingRows,
+            out VisualElement[] hosts)
         {
             VisualElement[] targets =
             {
@@ -1757,19 +1791,23 @@ namespace MoonProject.UI
             };
 
             var cursors = new Label[targets.Length + languageButtons.Length + settingRows.Length];
+            hosts = new VisualElement[cursors.Length];
             int idx = 0;
             for (int i = 0; i < targets.Length; i++)
             {
+                hosts[idx] = targets[i];
                 cursors[idx++] = AttachCursor(targets[i]);
             }
 
             for (int i = 0; i < languageButtons.Length; i++)
             {
+                hosts[idx] = languageButtons[i];
                 cursors[idx++] = AttachCursor(languageButtons[i]);
             }
 
             for (int i = 0; i < settingRows.Length; i++)
             {
+                hosts[idx] = settingRows[i];
                 cursors[idx++] = AttachCursor(settingRows[i]);
             }
 
@@ -1782,6 +1820,7 @@ namespace MoonProject.UI
             {
                 pickingMode = PickingMode.Ignore,
             };
+            cursor.style.display = DisplayStyle.None;
             cursor.AddToClassList("menu-button__cursor");
             host?.Add(cursor);
             return cursor;
