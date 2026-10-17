@@ -51,7 +51,7 @@ namespace MoonProject.UI.Editor
             panel.themeStyleSheet = theme;
             panel.scaleMode = PanelScaleMode.ScaleWithScreenSize;
             panel.referenceResolution = ReferenceResolution;
-            panel.screenMatchMode = PanelScreenMatchMode.MatchWidthOrHeight;
+            panel.screenMatchMode = PanelScreenMatchMode.Expand;
             panel.match = HeightMatch;
             panel.clearColor = false;
             GeneratedAssets.CreateOrReplace(panel, UiAssetPaths.PanelSettings);

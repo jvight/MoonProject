@@ -64,6 +64,18 @@ namespace MoonProject.UI
                  "The whole UI scales with it; layouts wrap and never truncate.")]
         [SerializeField] private float[] _textScales = { 1f, 1.25f, 1.5f };
 
+        [Tooltip("Real seconds a held navigation direction waits before repeating across menu rows or sliders.")]
+        [Range(0.1f, 1f)]
+        [SerializeField] private float _repeatInitialDelay = 0.35f;
+
+        [Tooltip("Real seconds between repeated navigation steps while a direction remains held.")]
+        [Range(0.02f, 0.5f)]
+        [SerializeField] private float _repeatInterval = 0.1f;
+
+        [Tooltip("Minimum stick or D-pad deflection (0..1) required to register a menu navigation step.")]
+        [Range(0.1f, 0.9f)]
+        [SerializeField] private float _axisDeadzone = 0.5f;
+
         public RevealSettings Menu => _menu;
 
         public RevealSettings SettingsPanel => _settingsPanel;
@@ -94,6 +106,12 @@ namespace MoonProject.UI
 
         public float[] TextScales => _textScales;
 
+        public float RepeatInitialDelay => _repeatInitialDelay;
+
+        public float RepeatInterval => _repeatInterval;
+
+        public float AxisDeadzone => _axisDeadzone;
+
         /// <summary>Null when usable, else the first problem.</summary>
         public string Validate()
         {
@@ -108,6 +126,11 @@ namespace MoonProject.UI
                 {
                     return "a text size is below the normal size";
                 }
+            }
+
+            if (_repeatInitialDelay <= 0f || _repeatInterval <= 0f || _axisDeadzone <= 0f || _axisDeadzone >= 1f)
+            {
+                return "menu navigation repeat timings or deadzone are out of range";
             }
 
             return null;
