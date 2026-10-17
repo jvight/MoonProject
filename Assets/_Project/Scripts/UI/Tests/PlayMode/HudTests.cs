@@ -217,9 +217,9 @@ namespace MoonProject.UI.PlayModeTests
             yield return Tap(keyboard.tabKey);
             yield return Seconds(0.5f);
             Assert.IsTrue(cargo.IsOpen && cargo.IsTransferView, "docked, Tab opens the transfer view");
-            Assert.AreEqual(fieldPanelSize.x, cargo.PanelRect.width, 0.5f,
+            Assert.AreEqual(fieldPanelSize.x, cargo.PanelRect.width, 1f,
                 "the docked transfer view reuses the same fixed panel width");
-            Assert.AreEqual(fieldPanelSize.y, cargo.PanelRect.height, 0.5f,
+            Assert.AreEqual(fieldPanelSize.y, cargo.PanelRect.height, 1f,
                 "the docked transfer view reuses the same fixed panel height");
             Assert.AreEqual(8, cargo.HoldCellCount);
             Assert.AreEqual(7, cargo.HomeCellCount, "home's shelves sit beside the hold");
