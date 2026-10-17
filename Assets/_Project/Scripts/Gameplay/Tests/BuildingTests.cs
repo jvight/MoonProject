@@ -940,8 +940,11 @@ namespace MoonProject.Gameplay.Tests
             Assert.IsNotNull(buildingTuningAsset);
             CollectionAssert.AreEqual(
                 new[] { StructureIds.ChargingPad },
+                buildingTuningAsset.StartingKnownIds,
+                "A new game starts knowing only ChargingPad by design.");
+            CollectionAssert.IsEmpty(
                 buildingTuningAsset.PlaytestUnlockedIds,
-                "A new game starts knowing only ChargingPad.");
+                "PlaytestUnlockedIds is kept empty in the shipped asset.");
 
             var scanTuningAsset = AssetDatabase.LoadAssetAtPath<ScanTuning>(GameplayAssetPaths.ScanTuning);
             Assert.IsNotNull(scanTuningAsset);
@@ -952,7 +955,6 @@ namespace MoonProject.Gameplay.Tests
 
             var known = new KnownStructures(_catalog, _events);
             var placedBase = new PlacedBase(_catalog, buildingTuningAsset, _events, known);
-            placedBase.ApplyPlaytestUnlocks(restored: true);
             Assert.AreEqual(1, known.Count);
             Assert.IsTrue(known.IsKnown(StructureIds.ChargingPad));
             Assert.IsFalse(known.IsKnown(StructureIds.SolarArray));
@@ -1044,6 +1046,8 @@ namespace MoonProject.Gameplay.Tests
                 var loadedKnown = new KnownStructures(_catalog, _events);
                 var loadedBase = new PlacedBase(_catalog, buildingTuningAsset, _events, loadedKnown);
                 loadedBase.Restore(savedBuilding);
+                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.ChargingPad),
+                    "Starting knowledge is saved in BuildingSaveData.known and restored like learned blueprints.");
                 Assert.IsTrue(loadedKnown.IsKnown(StructureIds.SolarArray));
                 Assert.IsTrue(loadedKnown.IsKnown(StructureIds.Fabricator));
                 Assert.IsTrue(loadedKnown.IsKnown(StructureIds.StorageRack));

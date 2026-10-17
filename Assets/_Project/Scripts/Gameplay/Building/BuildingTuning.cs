@@ -30,7 +30,10 @@ namespace MoonProject.Gameplay
         [Tooltip("Share (0..1) of a structure's Recipe build cost returned when 07 deconstructs it.")]
         [Range(0f, 1f)] [SerializeField] private float _deconstructRefundShare = 0.75f;
 
-        [Tooltip("Structure IDs unlocked at game start for playtesting (empty by default so a new game knows no structures).")]
+        [Tooltip("Structure IDs that a new game knows by design (e.g. charging_pad), applied on a new game and saved like learned blueprints.")]
+        [SerializeField] private string[] _startingKnownIds = { StructureIds.ChargingPad };
+
+        [Tooltip("Structure IDs unlocked at game start for playtesting (kept empty in production).")]
         [SerializeField] private string[] _playtestUnlockedIds = Array.Empty<string>();
 
         public float MinPlacementDistance => _minPlacementDistance;
@@ -46,6 +49,12 @@ namespace MoonProject.Gameplay
         public float DeconstructRefundShare => _deconstructRefundShare;
 
         /// <summary>
+        /// Structure IDs that a new game knows by design (e.g. <see cref="StructureIds.ChargingPad"/>), applied on a
+        /// new game and saved like learned blueprints.
+        /// </summary>
+        public IReadOnlyList<string> StartingKnownIds => _startingKnownIds ?? Array.Empty<string>();
+
+        /// <summary>
         /// Structure IDs configured in data to start unlocked for playtests or capture sessions (empty by default in a
         /// normal game).
         /// </summary>
@@ -59,7 +68,8 @@ namespace MoonProject.Gameplay
             float snapAngleDegrees,
             float weldRange,
             float deconstructRefundShare,
-            string[] playtestUnlockedIds = null)
+            string[] playtestUnlockedIds = null,
+            string[] startingKnownIds = null)
         {
             _minPlacementDistance = minPlacementDistance;
             _maxPlacementDistance = maxPlacementDistance;
@@ -67,13 +77,20 @@ namespace MoonProject.Gameplay
             _snapAngleDegrees = snapAngleDegrees;
             _weldRange = weldRange;
             _deconstructRefundShare = Mathf.Clamp01(deconstructRefundShare);
-            _playtestUnlockedIds = playtestUnlockedIds ?? Array.Empty<string>();
+            _startingKnownIds = SanitizeStructureIdArray(startingKnownIds);
+            _playtestUnlockedIds = SanitizeStructureIdArray(playtestUnlockedIds);
+        }
+
+        /// <summary>Sets the structure IDs that a new game knows by design.</summary>
+        public void SetStartingKnownIds(params string[] structureIds)
+        {
+            _startingKnownIds = SanitizeStructureIdArray(structureIds);
         }
 
         /// <summary>Sets the data-driven playtest unlock structure IDs (empty by default).</summary>
         public void SetPlaytestUnlockedIds(params string[] structureIds)
         {
-            _playtestUnlockedIds = structureIds ?? Array.Empty<string>();
+            _playtestUnlockedIds = SanitizeStructureIdArray(structureIds);
         }
 
         private void OnValidate()
@@ -84,35 +101,47 @@ namespace MoonProject.Gameplay
             }
 
             _deconstructRefundShare = Mathf.Clamp01(_deconstructRefundShare);
-            if (_playtestUnlockedIds == null)
+            _startingKnownIds = SanitizeStructureIdArray(_startingKnownIds);
+            _playtestUnlockedIds = SanitizeStructureIdArray(_playtestUnlockedIds);
+        }
+
+        private static string[] SanitizeStructureIdArray(string[] ids)
+        {
+            if (ids == null || ids.Length == 0)
             {
-                _playtestUnlockedIds = Array.Empty<string>();
-                return;
+                return Array.Empty<string>();
             }
 
             int validCount = 0;
-            for (int i = 0; i < _playtestUnlockedIds.Length; i++)
+            for (int i = 0; i < ids.Length; i++)
             {
-                if (!string.IsNullOrWhiteSpace(_playtestUnlockedIds[i]))
+                if (!string.IsNullOrWhiteSpace(ids[i]))
                 {
                     validCount++;
                 }
             }
 
-            if (validCount != _playtestUnlockedIds.Length)
+            if (validCount == ids.Length)
             {
-                var cleaned = new string[validCount];
-                int dst = 0;
-                for (int i = 0; i < _playtestUnlockedIds.Length; i++)
-                {
-                    if (!string.IsNullOrWhiteSpace(_playtestUnlockedIds[i]))
-                    {
-                        cleaned[dst++] = _playtestUnlockedIds[i];
-                    }
-                }
-
-                _playtestUnlockedIds = cleaned;
+                return ids;
             }
+
+            if (validCount == 0)
+            {
+                return Array.Empty<string>();
+            }
+
+            var cleaned = new string[validCount];
+            int dst = 0;
+            for (int i = 0; i < ids.Length; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(ids[i]))
+                {
+                    cleaned[dst++] = ids[i];
+                }
+            }
+
+            return cleaned;
         }
     }
 }
