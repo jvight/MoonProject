@@ -31,6 +31,8 @@ namespace MoonProject.World
         private IRoverState _rover;
         private ISaveService _save;
         private IDisposable _saveToken;
+        private IDisposable _milestones;
+        private OpeningSkyPacing _pacing;
         private SunClock _clock;
         private bool _saveResolved;
         private bool _loggedMissingRover;
@@ -115,6 +117,8 @@ namespace MoonProject.World
             _layout = context.Get<IWorldLayout>();
             _save = context.Get<ISaveService>();
             _clock = new SunClock(_settings.SkyCycle, _settings.Sky);
+            _pacing = new OpeningSkyPacing(_settings.SkyCycle, _clock);
+            _milestones = context.Events.Subscribe<OpeningMilestoneReached>(OnMilestone);
             _saveResolved = false;
             _loggedMissingRover = false;
             _saveToken = _save.Register(_clock.CreateSaveSection());
@@ -155,7 +159,7 @@ namespace MoonProject.World
         public void StepFrame(float deltaTime)
         {
             EnsureSaveResolved();
-            _clock.Tick(deltaTime, _context.Events);
+            _clock.Tick(_pacing.ClockDelta(_clock.TimeSeconds, deltaTime), _context.Events);
 
             float targetGlobalSunlight = _clock.GlobalSunlight;
             float targetLocalSunlight = _clock.SunlightAt(_terrain, SampleFocusPosition());
@@ -199,6 +203,19 @@ namespace MoonProject.World
         private void OnDestroy()
         {
             _saveToken?.Dispose();
+            _milestones?.Dispose();
+        }
+
+        private void OnMilestone(OpeningMilestoneReached reached)
+        {
+            EnsureSaveResolved();
+            _pacing.Reach(reached.Milestone, reached.Restored, _clock);
+            if (reached.Restored)
+            {
+                _smoothedSunlight = _clock.GlobalSunlight;
+                _smoothedLocalSunlight = _clock.SunlightAt(_terrain, SampleFocusPosition());
+                ApplyVisuals(true);
+            }
         }
 
         private void EnsureSaveResolved()

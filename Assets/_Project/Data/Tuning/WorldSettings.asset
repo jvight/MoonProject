@@ -685,7 +685,12 @@ MonoBehaviour:
     _beadLightRange: 8
   _skyCycle:
     _dayLengthSeconds: 7200
-    _maxHoldSeconds: 1500
+    _eclipseBreakoutLead: 1
+    _goldenHourSeconds: 45
+    _lastLightElevation: 3
+    _lastLightSinkSeconds: 120
+    _nightfallElevation: -1.5
+    _firstSunsetSeconds: 150
     _fallbackSunlitTimeSeconds: 900
     _sunDiameter: 0.8
     _startBearingOffset: 6.2
