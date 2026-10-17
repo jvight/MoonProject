@@ -65,6 +65,26 @@ namespace MoonProject.Rover
         [Range(0, 10)]
         [SerializeField] private int _gazePriority = 8;
 
+        [Tooltip("Degrees off the nose within which 07's head alone reaches a scan target before turning its body.")]
+        [Range(45f, 125f)]
+        [SerializeField] private float _headYawReach = 105f;
+
+        [Tooltip("Once turning its body toward a scan target, 07 turns until the target lies within this yaw (deg).")]
+        [Range(5f, 45f)]
+        [SerializeField] private float _bodyStopYaw = 22f;
+
+        [Tooltip("Peak turn rate (deg/s) while 07 turns its body in place toward a scan target outside head reach.")]
+        [Range(20f, 180f)]
+        [SerializeField] private float _bodyTurnRate = 90f;
+
+        [Tooltip("Half-life (s) of the body turn-in-place easing in and out.")]
+        [Range(0.04f, 0.5f)]
+        [SerializeField] private float _bodyTurnHalfLife = 0.14f;
+
+        [Tooltip("Degrees within which the cheek scan lens must face the scan point for line of sight.")]
+        [Range(2f, 20f)]
+        [SerializeField] private float _aimToleranceDegrees = 8f;
+
         public float OpenHalfLife => _openHalfLife;
 
         public float FanHalfLife => _fanHalfLife;
@@ -92,5 +112,15 @@ namespace MoonProject.Rover
         public Color FanColour => _fanColour;
 
         public float FanGlow => _fanGlow;
+
+        public float HeadYawReach => _headYawReach;
+
+        public float BodyStopYaw => _bodyStopYaw;
+
+        public float BodyTurnRate => _bodyTurnRate;
+
+        public float BodyTurnHalfLife => _bodyTurnHalfLife;
+
+        public float AimToleranceDegrees => _aimToleranceDegrees;
     }
 }

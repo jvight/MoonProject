@@ -699,7 +699,12 @@ namespace MoonProject.Rover
                 SolveFaceInspectShot();
                 if (_faceInspectBody != null && _faceInspectHasShot)
                 {
-                    _faceInspectBody.SetScreenInspect(true, _faceInspectShot.NeckYawOffset, _tuning.FaceInspectHeadPitch);
+                    _faceInspectBody.SetScreenInspect(
+                        true,
+                        _faceInspectShot.NeckYawOffset,
+                        _tuning.FaceInspectHeadPitch,
+                        counterRollShare: _tuning.FaceInspectHeadCounterRollShare,
+                        counterRollMaxDeg: _tuning.FaceInspectHeadCounterRollMax);
                 }
             }
             else if (_faceInspectBody != null)
@@ -715,12 +720,15 @@ namespace MoonProject.Rover
                 return;
             }
 
+            _faceInspectBody.SetScreenInspectCounterRoll(
+                _tuning.FaceInspectHeadCounterRollShare,
+                _tuning.FaceInspectHeadCounterRollMax);
             _faceInspectBody.EvaluateScreenPose(0f, _tuning.FaceInspectHeadPitch,
                 out Vector3 baseScreenPos, out Quaternion baseScreenRot);
             Vector3 neckPivot = _faceInspectBody.NeckTransform != null
                 ? _faceInspectBody.NeckTransform.position
                 : baseScreenPos;
-            _faceInspectShot = FaceInspectComposer.Solve(
+            FaceInspectShot solved = FaceInspectComposer.Solve(
                 neckPivot,
                 _rover.Rotation,
                 baseScreenPos,
@@ -733,6 +741,18 @@ namespace MoonProject.Rover
                 _tuning.FaceInspectSideYaw,
                 _tuning.FaceInspectProbeRadius,
                 _faceSight);
+            _faceInspectBody.EvaluateScreenPose(solved.NeckYawOffset, _tuning.FaceInspectHeadPitch,
+                out Vector3 exactScreenPos, out Quaternion exactScreenRot);
+            FaceInspectComposer.ComposePose(exactScreenPos, exactScreenRot, _tuning.FaceInspectLookOffsetY,
+                solved.Distance, out Vector3 exactFocus, out Vector3 exactEye);
+            _faceInspectShot = new FaceInspectShot(
+                exactFocus,
+                exactEye,
+                solved.Distance,
+                solved.VerticalFov,
+                solved.NeckYawOffset,
+                solved.Choice,
+                exactScreenRot * Vector3.up);
             _faceInspectHasShot = true;
         }
 
@@ -743,16 +763,22 @@ namespace MoonProject.Rover
                 if (_rover.Speed > 0.05f || !_faceInspectHasShot)
                 {
                     SolveFaceInspectShot();
-                    _faceInspectBody.SetScreenInspect(true, _faceInspectShot.NeckYawOffset, _tuning.FaceInspectHeadPitch);
+                    _faceInspectBody.SetScreenInspect(
+                        true,
+                        _faceInspectShot.NeckYawOffset,
+                        _tuning.FaceInspectHeadPitch,
+                        counterRollShare: _tuning.FaceInspectHeadCounterRollShare,
+                        counterRollMaxDeg: _tuning.FaceInspectHeadCounterRollMax);
                 }
-                else if (_faceInspectEase < 1f)
+                else
                 {
                     _faceInspectBody.EvaluateScreenPose(_faceInspectShot.NeckYawOffset, _tuning.FaceInspectHeadPitch,
                         out Vector3 screenPos, out Quaternion screenRot);
                     FaceInspectComposer.ComposePose(screenPos, screenRot, _tuning.FaceInspectLookOffsetY,
                         _faceInspectShot.Distance, out Vector3 focus, out Vector3 eye);
                     _faceInspectShot = new FaceInspectShot(focus, eye, _faceInspectShot.Distance,
-                        _faceInspectShot.VerticalFov, _faceInspectShot.NeckYawOffset, _faceInspectShot.Choice);
+                        _faceInspectShot.VerticalFov, _faceInspectShot.NeckYawOffset, _faceInspectShot.Choice,
+                        screenRot * Vector3.up);
                 }
             }
 
@@ -970,7 +996,7 @@ namespace MoonProject.Rover
             float effectiveInspectWeight = Mathf.Max(_faceInspectWeight, wakeFaceWeight);
             float orbitShare = 1f - effectiveInspectWeight;
             _orbit.HorizontalAxis.Value = yaw;
-            elevation = Mathf.Clamp(elevation, _tuning.MinPitch, _tuning.MaxPitch);
+            elevation = Mathf.Lerp(Mathf.Clamp(elevation, _tuning.MinPitch, _tuning.MaxPitch), elevation, effectiveInspectWeight);
             float floor = LowOrbit.Floor(radius, _tuning.TargetHeight, _tuning.LowestCameraHeight) * orbitShare;
             float held = Mathf.Lerp(Mathf.Max(elevation, floor), elevation, effectiveInspectWeight);
             _orbit.VerticalAxis.Value = held;
@@ -983,6 +1009,10 @@ namespace MoonProject.Rover
             composition.ScreenPosition = screen;
             _composer.Composition = composition;
             _bump.Offset = Vector3.up * (_bumpSpring.Value * orbitShare);
+            _bump.FaceInspectWeight = _faceInspectHasShot ? _faceInspectWeight : 0f;
+            _bump.FaceInspectEye = _faceInspectShot.Eye;
+            _bump.FaceInspectRotation = _faceInspectShot.Rotation;
+            _bump.FaceInspectUp = _faceInspectShot.ScreenUp;
         }
 
         /// <summary>

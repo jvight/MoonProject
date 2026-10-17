@@ -19,6 +19,7 @@ namespace MoonProject.UI
         public TextScale(PanelSettings panel)
         {
             _panel = panel ?? throw new ArgumentNullException(nameof(panel));
+            _panel.screenMatchMode = PanelScreenMatchMode.Expand;
             _normal = panel.referenceResolution;
         }
 

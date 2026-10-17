@@ -1,7 +1,6 @@
-// A scannable fragment's line drawing (0.5.5 owner feedback §1, D2): Kenji's white blueprint lines along the object's
-// feature edges, unlit and a touch over white so they bloom softly. They appear below the sweep as _ScanProgress rises;
-// in the close (_Dissolve) they stand while the solid fades, then unthread from the outermost inward to the object's
-// centre, where the ribbon leaves for 07's lens, and are gone before the lens flares.
+// A scannable fragment's feature-edge trace (SCAN v2): hidden during the scan sweep so only the crisp cyan scan line
+// and low-contrast raster band show on the surface; at the completion ping (_Dissolve), a thin anti-aliased warm-amber
+// emissive edge traces the object's feature edges, then fades.
 Shader "MoonProject/Art/LofiScanLines"
 {
     Properties
@@ -15,8 +14,8 @@ Shader "MoonProject/Art/LofiScanLines"
     {
         Tags
         {
-            "RenderType" = "TransparentCutout"
-            "Queue" = "AlphaTest+10"
+            "RenderType" = "Transparent"
+            "Queue" = "Transparent"
             "RenderPipeline" = "UniversalPipeline"
             "IgnoreProjector" = "True"
         }
@@ -26,9 +25,10 @@ Shader "MoonProject/Art/LofiScanLines"
             Name "ScanLines"
             Tags { "LightMode" = "UniversalForward" }
 
-            Cull Off
-            ZWrite On
+            Cull Back
+            ZWrite Off
             ZTest LEqual
+            Blend One One
 
             HLSLPROGRAM
             #pragma target 2.0
@@ -48,6 +48,7 @@ Shader "MoonProject/Art/LofiScanLines"
             struct Attributes
             {
                 float4 positionOS : POSITION;
+                float3 normalOS : NORMAL;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -55,7 +56,8 @@ Shader "MoonProject/Art/LofiScanLines"
             {
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
-                half fogFactor : TEXCOORD1;
+                half3 normalWS : TEXCOORD1;
+                half fogFactor : TEXCOORD2;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -69,6 +71,7 @@ Shader "MoonProject/Art/LofiScanLines"
                 VertexPositionInputs positions = GetVertexPositionInputs(input.positionOS.xyz);
                 output.positionCS = positions.positionCS;
                 output.positionWS = positions.positionWS;
+                output.normalWS = NormalizeNormalPerVertex(TransformObjectToWorldNormal(input.normalOS));
                 output.fogFactor = ComputeFogFactor(positions.positionCS.z);
                 return output;
             }
@@ -77,11 +80,17 @@ Shader "MoonProject/Art/LofiScanLines"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                clip(_ScanProgress - MoonScanHeight(input.positionWS));
-                clip(1.0 - MoonScanUnthread(_Dissolve) - MoonScanReach(input.positionWS)
-                    - step(MOON_SCAN_LINES_END, _Dissolve));
-                half3 color = MixFog(_LineColor.rgb, input.fogFactor);
-                return half4(color, 1.0);
+
+                half pingEnv = MoonScanPingEnvelope(_Dissolve);
+                clip(pingEnv - 0.002h);
+                clip(1.0h - MoonScanUnthread(_Dissolve) - (half)MoonScanReach(input.positionWS) * 0.65h);
+
+                half3 viewDirWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
+                half centerProfile = smoothstep(0.35h, 0.85h, saturate(dot(normalize(input.normalWS), viewDirWS)));
+                half4 pingParams = (half4)MoonScanGetPingParams();
+                half3 pingColor = MoonScanGetPingColor();
+                half3 emission = pingColor * (pingEnv * centerProfile * pingParams.w * 0.65h);
+                return half4(MixFogColor(emission, half3(0.0h, 0.0h, 0.0h), input.fogFactor), 1.0h);
             }
             ENDHLSL
         }

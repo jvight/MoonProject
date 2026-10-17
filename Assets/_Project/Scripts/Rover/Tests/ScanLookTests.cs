@@ -101,5 +101,114 @@ namespace MoonProject.Rover.Tests
             Run(look, 1.5f);
             Assert.Less(look.Open, 0.01f, "Then the eye settles back.");
         }
+
+        [Test]
+        public void ScanAim_LensAngles_CompensatesCheekParallax_SoLensForwardHitsTarget()
+        {
+            var lensOffset = new Vector3(-0.34f, 0.04f, 0.25f);
+            Vector3[] targets =
+            {
+                new Vector3(0f, 0f, 3.2f),
+                new Vector3(1.8f, 0.6f, 2.5f),
+                new Vector3(-2.1f, -0.4f, 2.9f),
+                new Vector3(0.4f, 1.1f, 1.9f),
+            };
+
+            foreach (Vector3 target in targets)
+            {
+                Vector2 angles = ScanAim.UnclampedLensAngles(target, lensOffset);
+                Quaternion headRot = Quaternion.Euler(-angles.y, angles.x, 0f);
+                Vector3 lensPos = headRot * lensOffset;
+                Vector3 lensForward = headRot * Vector3.forward;
+                Vector3 toTarget = (target - lensPos).normalized;
+                Assert.Less(Vector3.Angle(lensForward, toTarget), 0.05f,
+                    $"Cheek lens forward must point directly at {target}");
+            }
+        }
+
+        [Test]
+        public void ScanAim_HeadReachVsBodyTurn_UsesHeadInsideReach_AndTurnsBodyOutsideReach()
+        {
+            const float headYawReach = 105f;
+            const float bodyStopYaw = 22f;
+            const float pitchUpLimit = 45f;
+            const float pitchDownLimit = 45f;
+            var lensOffset = new Vector3(-0.34f, 0.04f, 0.25f);
+
+            // Target in front (yaw ~13 deg, within 22 deg stop threshold): head alone reaches it, no body turn needed.
+            var frontTarget = new Vector3(0.4f, 0.1f, 3.2f);
+            bool frontTurn = ScanAim.NeedsBodyTurn(
+                frontTarget, lensOffset, headYawReach, bodyStopYaw, pitchUpLimit, pitchDownLimit, false, out float frontDelta);
+            Assert.IsFalse(frontTurn, "Target in front within neck limits must not trigger a body turn.");
+
+            // Target beside (yaw ~75 deg, within 105 deg head reach): head alone reaches it.
+            var sideTarget = new Vector3(3.0f, 0.0f, 0.9f);
+            bool sideTurn = ScanAim.NeedsBodyTurn(
+                sideTarget, lensOffset, headYawReach, bodyStopYaw, pitchUpLimit, pitchDownLimit, false, out _);
+            Assert.IsFalse(sideTurn, "Target beside within head reach must be handled by the head.");
+
+            // Target behind (yaw ~155 deg, outside 105 deg head reach): triggers whole-body turn in place.
+            var behindTarget = new Vector3(1.4f, 0.0f, -3.2f);
+            bool behindTurn = ScanAim.NeedsBodyTurn(
+                behindTarget, lensOffset, headYawReach, bodyStopYaw, pitchUpLimit, pitchDownLimit, false, out float behindDelta);
+            Assert.IsTrue(behindTurn, "Target behind 07 outside head reach must trigger a whole-body turn.");
+            Assert.Greater(behindDelta, 100f);
+
+            // Hysteresis: while turning, body continues until within BodyStopYaw (22 deg), then hands off to head.
+            var midTurnTarget = new Vector3(2.2f, 0.0f, 2.2f); // ~51 deg yaw
+            Assert.IsTrue(ScanAim.NeedsBodyTurn(
+                    midTurnTarget, lensOffset, headYawReach, bodyStopYaw, pitchUpLimit, pitchDownLimit, true, out _),
+                "Active body turn continues through mid-angles until within stop threshold.");
+            Assert.IsFalse(ScanAim.NeedsBodyTurn(
+                    frontTarget, lensOffset, headYawReach, bodyStopYaw, pitchUpLimit, pitchDownLimit, true, out _),
+                "Body turn stops once target enters the head handoff zone.");
+            Assert.Greater(Mathf.Abs(frontDelta), 0f);
+        }
+
+        [Test]
+        public void ScanAim_LineOfSight_RequiresAimAlignment_AndRejectsSelfOccludedRays()
+        {
+            var root = new GameObject("TestRoverRoot");
+            try
+            {
+                var head = new GameObject("Head").transform;
+                head.SetParent(root.transform, false);
+                head.localPosition = new Vector3(0f, 1.2f, 0.7f);
+
+                var lens = new GameObject("ScanOrigin").transform;
+                lens.SetParent(head, false);
+                lens.localPosition = new Vector3(-0.34f, 0.04f, 0.25f);
+
+                GameObject chassis = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                chassis.name = "Chassis";
+                chassis.transform.SetParent(root.transform, false);
+                chassis.transform.localPosition = new Vector3(0f, 0.6f, -0.3f);
+                chassis.transform.localScale = new Vector3(1.4f, 0.9f, 1.8f);
+
+                Collider[] colliders = root.GetComponentsInChildren<Collider>(true);
+                MeshFilter[] meshes = root.GetComponentsInChildren<MeshFilter>(true);
+
+                // 1. Unobstructed target in front, lens aimed at it -> true
+                Vector3 frontPoint = new Vector3(-0.34f, 1.24f, 4.0f);
+                lens.rotation = Quaternion.LookRotation((frontPoint - lens.position).normalized, Vector3.up);
+                Assert.IsTrue(ScanAim.HasLineOfSight(lens, frontPoint, 8f, head, colliders, meshes),
+                    "Unobstructed ray aligned with ScanOrigin.forward has line of sight.");
+
+                // 2. Unobstructed target in front, but lens aimed 25 deg away -> false
+                lens.rotation = Quaternion.Euler(0f, 25f, 0f);
+                Assert.IsFalse(ScanAim.HasLineOfSight(lens, frontPoint, 8f, head, colliders, meshes),
+                    "Misaligned lens must not report line of sight.");
+
+                // 3. Target behind chassis so ray from cheek lens passes through 07's head/chassis -> false
+                Vector3 occludedPoint = new Vector3(0.5f, 0.5f, -2.5f);
+                lens.rotation = Quaternion.LookRotation((occludedPoint - lens.position).normalized, Vector3.up);
+                Assert.IsFalse(ScanAim.HasLineOfSight(lens, occludedPoint, 8f, head, colliders, meshes),
+                    "Ray passing through 07's own head or chassis must be rejected.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
     }
 }

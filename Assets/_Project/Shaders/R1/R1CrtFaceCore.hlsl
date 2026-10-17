@@ -23,6 +23,13 @@ static const float ROLLING_BAND_WIDTH = 0.12;
 static const float ROLLING_BAND_STRENGTH = 0.08;
 static const float HOT_CORE_INNER_DIST = -0.012;
 static const float GLASS_SPECULAR_STRENGTH = 0.04;
+static const float2 CONTENT_FALLBACK_TEXEL_SIZE = float2(1.0 / 1152.0, 1.0 / 768.0);
+static const float CONTENT_TENT_RADIUS_SCALE = 26.0;
+static const float CONTENT_WIDE_MIP_OFFSET = 1.15;
+static const half CONTENT_TIGHT_GLOW_MIX = 0.72h;
+static const half CONTENT_WIDE_GLOW_MIX = 0.28h;
+static const half CONTENT_SHOULDER_ATTEN = 0.68h;
+static const half CONTENT_DIRECT_GAIN = 1.06h;
 
 struct Attributes
 {
@@ -248,6 +255,33 @@ float EvaluateZzzSymbol(float2 canvasPos, float aaWidth, float animTime, out flo
     return totalCov;
 }
 
+float EvaluateScanProgressRing(float2 canvasPos, float aaWidth, float progress01, out float sdfOut)
+{
+    float2 center = float2(0.80 * CRT_ASPECT, 0.24);
+    float2 p = canvasPos - center;
+    float r = length(p);
+    float ringRadius = 0.078;
+    float ringHalfWidth = 0.0048;
+
+    // Clockwise angle from top (12 o'clock = 0..1)
+    float angle = atan2(p.x, -p.y);
+    float cw01 = frac((angle + 2.0 * CRT_PI) / (2.0 * CRT_PI));
+
+    float sdfRing = abs(r - ringRadius) - ringHalfWidth;
+    float arcGate = smoothstep(progress01 + 0.02, progress01 - 0.01, cw01);
+
+    // Four cardinal quarter-ticks (25%, 50%, 75%, 100%) outside the ring
+    float2 q = abs(p);
+    float tickX = SdfSegment(q, float2(0.082, 0.0), float2(0.096, 0.0)) - 0.0035;
+    float tickY = SdfSegment(q, float2(0.0, 0.082), float2(0.0, 0.096)) - 0.0035;
+    float sdfTicks = min(tickX, tickY);
+
+    sdfOut = min(sdfRing + (1.0 - arcGate) * 0.04, sdfTicks);
+    float ringCov = smoothstep(aaWidth, -aaWidth, sdfRing) * arcGate;
+    float tickCov = smoothstep(aaWidth, -aaWidth, sdfTicks) * (0.45 + 0.55 * arcGate);
+    return max(ringCov, tickCov);
+}
+
 half4 CrtFacePassFragment(Varyings input) : SV_Target
 {
     UNITY_SETUP_INSTANCE_ID(input);
@@ -325,6 +359,7 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
         int symbolId = (int)round(_FaceSymbol.x);
         float symbolAlpha = saturate(_FaceSymbol.y);
         float animTime = _FaceSymbol.z;
+        float scanRing = saturate(_FaceSymbol.w);
         if (symbolId > 0 && symbolAlpha > 0.005)
         {
             float symSdf = 1.0;
@@ -345,6 +380,14 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
             symCov *= symbolAlpha;
             primaryCov = max(primaryCov, symCov);
             minPrimarySdf = min(minPrimarySdf, symSdf);
+        }
+
+        if (scanRing > 0.005)
+        {
+            float ringSdf = 1.0;
+            float ringCov = EvaluateScanProgressRing(canvasPos, aaWidth, scanRing, ringSdf);
+            primaryCov = max(primaryCov, ringCov);
+            minPrimarySdf = min(minPrimarySdf, ringSdf);
         }
 
         primaryCov *= deflectionBandMask;
@@ -393,26 +436,36 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
         float inDeflectedBounds = step(0.0, deflectedWarpedUv.x) * step(deflectedWarpedUv.x, 1.0)
             * step(0.0, deflectedWarpedUv.y) * step(deflectedWarpedUv.y, 1.0) * deflectionBandMask;
         float2 contentUv = saturate(deflectedWarpedUv);
-        half4 contentSample = SAMPLE_TEXTURE2D(_ContentTex, sampler_ContentTex, contentUv) * (half)inDeflectedBounds;
+        half4 contentSample = SAMPLE_TEXTURE2D_LOD(_ContentTex, sampler_ContentTex, contentUv, 0.0) * (half)inDeflectedBounds;
 
-        float2 haloStep = float2(glowRadius * 0.32 / CRT_ASPECT, glowRadius * 0.32);
-        half3 contentNeighbors = (
-            SAMPLE_TEXTURE2D(_ContentTex, sampler_ContentTex, saturate(contentUv + float2(haloStep.x, 0.0))).rgb +
-            SAMPLE_TEXTURE2D(_ContentTex, sampler_ContentTex, saturate(contentUv - float2(haloStep.x, 0.0))).rgb +
-            SAMPLE_TEXTURE2D(_ContentTex, sampler_ContentTex, saturate(contentUv + float2(0.0, haloStep.y))).rgb +
-            SAMPLE_TEXTURE2D(_ContentTex, sampler_ContentTex, saturate(contentUv - float2(0.0, haloStep.y))).rgb
-        ) * 0.25h * (half)inDeflectedBounds;
+        float2 texelSize = _ContentTex_TexelSize.x > 0.0 ? _ContentTex_TexelSize.xy : CONTENT_FALLBACK_TEXEL_SIZE;
+        float2 tentOffset = texelSize * (glowRadius * CONTENT_TENT_RADIUS_SCALE);
+        float tightMip = max((float)_ContentGlowMip, 0.5);
+        float wideMip = tightMip + CONTENT_WIDE_MIP_OFFSET;
+        half3 tightGlow = (
+            SAMPLE_TEXTURE2D_LOD(_ContentTex, sampler_ContentTex, saturate(contentUv + float2( tentOffset.x,  tentOffset.y)), tightMip).rgb +
+            SAMPLE_TEXTURE2D_LOD(_ContentTex, sampler_ContentTex, saturate(contentUv + float2(-tentOffset.x,  tentOffset.y)), tightMip).rgb +
+            SAMPLE_TEXTURE2D_LOD(_ContentTex, sampler_ContentTex, saturate(contentUv + float2( tentOffset.x, -tentOffset.y)), tightMip).rgb +
+            SAMPLE_TEXTURE2D_LOD(_ContentTex, sampler_ContentTex, saturate(contentUv + float2(-tentOffset.x, -tentOffset.y)), tightMip).rgb
+        ) * 0.25h;
+        half3 wideGlow = SAMPLE_TEXTURE2D_LOD(_ContentTex, sampler_ContentTex, contentUv, wideMip).rgb;
+
+        half contentLum = max(contentSample.r, max(contentSample.g, contentSample.b));
+        half shoulderWeight = saturate(1.0h - contentLum * CONTENT_SHOULDER_ATTEN);
+        half glowMask = (half)inDeflectedBounds * (_GlowRadius > 0.001h ? 1.0h : 0.0h);
+        half3 phosphorHalation = (tightGlow * _PhosphorColor.rgb * CONTENT_TIGHT_GLOW_MIX
+            + wideGlow * _PhosphorGlowColor.rgb * CONTENT_WIDE_GLOW_MIX)
+            * _ContentGlowIntensity * shoulderWeight * glowMask;
 
         half3 contentBody = bgPhosphor * (1.0h - contentSample.a)
-            + contentSample.rgb * 1.08h
-            + contentNeighbors * _PhosphorColor.rgb * 0.22h;
+            + contentSample.rgb * CONTENT_DIRECT_GAIN
+            + phosphorHalation;
         half contentBodyMax = max(contentBody.r, max(contentBody.g, contentBody.b));
         if (contentBodyMax > _BloomSafeMax)
         {
             contentBody *= (_BloomSafeMax / max(contentBodyMax, (half)1e-4));
         }
 
-        half contentLum = max(contentSample.r, max(contentSample.g, contentSample.b));
         half contentHot = smoothstep(0.75h, 0.98h, contentLum);
         half3 contentHdr = lerp(contentBody, hotCoreTarget, contentHot * 0.22h);
         phosphorHdr = lerp(phosphorHdr, contentHdr, (half)contentMix);
@@ -435,10 +488,11 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
         phosphorHdr = lerp(phosphorHdr, max(phosphorHdr, switchLineCol), (half)lineGlow);
     }
 
-    // CRT horizontal scanlines (coarsening slightly in low power) + slow rolling refresh band
+    // CRT horizontal scanlines (coarsening slightly in low power, attenuated in content mode so glyphs stay whole)
     float scanCount = lerp((float)_ScanlineCount, LOW_POWER_SCANLINE_MIN, lowPower);
     float scanWave = 0.5 + 0.5 * sin((warpedUv.y * scanCount + scanlinePhase) * CRT_PI * 2.0);
     float scanDepth = lerp((float)_ScanlineDepth, (float)_ScanlineDepth * 1.45, lowPower);
+    scanDepth *= lerp(1.0, 1.0 - saturate((float)_ContentScanlineAtten), contentMix);
     float scanMod = lerp(1.0 - scanDepth, 1.0 + scanDepth * 0.25, scanWave);
 
     float bandY = frac(rollingBandPhase);

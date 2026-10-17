@@ -83,10 +83,10 @@ MonoBehaviour:
     _giftHomeRadius: 22
     _giftMaxSpeed: 2.5
     _lampBarGlow: 0.7
-    _warmIntensity: 42
-    _warmRange: 24
-    _warmSpotAngle: 90
-    _warmInnerSpotAngle: 48
+    _warmIntensity: 200
+    _warmRange: 20
+    _warmSpotAngle: 72
+    _warmInnerSpotAngle: 28
     _warmColor: {r: 1, g: 0.62, b: 0.33, a: 1}
     _drumGlow: 1.4
     _drumIdleGlow: 0.05
@@ -348,7 +348,8 @@ MonoBehaviour:
   _antennaDamping: 0.15
   _antennaDegreesPerAcceleration: 2.2
   _antennaMaxAngle: 22
-  _headlampIntensity: 35
-  _headlampRange: 20
-  _headlampSpotAngle: 62
-  _headlampInnerSpotAngle: 30
+  _headlampDownTilt: 7.5
+  _headlampIntensity: 165
+  _headlampRange: 18
+  _headlampSpotAngle: 48
+  _headlampInnerSpotAngle: 20

@@ -16,6 +16,7 @@ namespace MoonProject.UI.Editor
         public const string BuilderPath = "UI/Theme";
         public const int BuilderOrder = 610;
 
+        public const int FaceAnisoLevel = 4;
         public static readonly Vector2Int FaceReferenceResolution = new Vector2Int(1152, 768);
         private const string StyleSheet = UiAssetPaths.SourceFolder + "/GameUI.uss";
         private static readonly Vector2Int ReferenceResolution = new Vector2Int(1920, 1080);
@@ -51,7 +52,7 @@ namespace MoonProject.UI.Editor
             panel.themeStyleSheet = theme;
             panel.scaleMode = PanelScaleMode.ScaleWithScreenSize;
             panel.referenceResolution = ReferenceResolution;
-            panel.screenMatchMode = PanelScreenMatchMode.MatchWidthOrHeight;
+            panel.screenMatchMode = PanelScreenMatchMode.Expand;
             panel.match = HeightMatch;
             panel.clearColor = false;
             GeneratedAssets.CreateOrReplace(panel, UiAssetPaths.PanelSettings);
@@ -60,7 +61,10 @@ namespace MoonProject.UI.Editor
                 RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
             {
                 name = "LofiLunarFaceTarget",
-                filterMode = FilterMode.Bilinear,
+                useMipMap = true,
+                autoGenerateMips = true,
+                filterMode = FilterMode.Trilinear,
+                anisoLevel = FaceAnisoLevel,
                 wrapMode = TextureWrapMode.Clamp,
             };
             GeneratedAssets.CreateOrReplace(faceTarget, UiAssetPaths.FaceRenderTexture);

@@ -53,7 +53,7 @@ Shader "MoonProject/World/R1Terrain"
             #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
             #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
-            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
+            #pragma multi_compile _ _FORWARD_PLUS
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
 
@@ -324,8 +324,8 @@ Shader "MoonProject/World/R1Terrain"
             half3 PunctualDiffuse(Light light, half3 normalWS, half microAo)
             {
                 half ndotl = saturate(dot(normalWS, light.direction));
-                half atten = light.distanceAttenuation * light.shadowAttenuation * lerp(1.0h, microAo, 0.35h);
-                return light.color * (ndotl * atten);
+                float atten = min(light.distanceAttenuation, 16.0) * light.shadowAttenuation * lerp(1.0, (float)microAo, 0.35);
+                return light.color * (half)(ndotl * atten);
             }
 
             // Subtle direct-light mineral micro-specular glint on lunar regolith.
@@ -335,9 +335,9 @@ Shader "MoonProject/World/R1Terrain"
                 half ndoth = saturate(dot(normalWS, halfDir));
                 half ndotl = saturate(dot(normalWS, light.direction));
                 half specPower = exp2(6.0h + smoothness * 18.0h);
-                half spec = pow(ndoth, specPower) * (smoothness * 0.16h) * ndotl;
-                half atten = light.distanceAttenuation * light.shadowAttenuation;
-                return light.color * (spec * atten);
+                half spec = PositivePow(max(ndoth, 0.0001h), specPower) * (smoothness * 0.16h) * ndotl;
+                float atten = min(light.distanceAttenuation, 16.0) * light.shadowAttenuation;
+                return light.color * (half)(spec * atten);
             }
 
             half4 Frag(Varyings input) : SV_Target
@@ -517,8 +517,11 @@ Shader "MoonProject/World/R1Terrain"
 
                 #if defined(_ADDITIONAL_LIGHTS)
                     uint pixelLightCount = GetAdditionalLightsCount();
+                    InputData inputData = (InputData)0;
+                    inputData.positionWS = input.positionWS;
+                    inputData.normalizedScreenSpaceUV = normalizedScreenSpaceUV;
 
-                    #if USE_CLUSTER_LIGHT_LOOP
+                    #if USE_FORWARD_PLUS
                     [loop] for (uint lightIndex = 0; lightIndex < min(URP_FP_DIRECTIONAL_LIGHTS_COUNT, MAX_VISIBLE_LIGHTS); lightIndex++)
                     {
                         // Secondary directional lights are intentionally skipped on terrain so
@@ -548,6 +551,7 @@ Shader "MoonProject/World/R1Terrain"
                     color = lerp(color, _MoonReachRingColor.rgb, mask);
                 }
 
+                color = clamp(color, 0.0h, 32.0h);
                 color = MoonAtmosphere(color, input.positionWS, input.fogFactor);
                 return half4(color, 1.0h);
             }

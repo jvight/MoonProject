@@ -50,9 +50,15 @@ namespace MoonProject.Gameplay
         private readonly KnownStructures _knownStructures;
         private readonly Func<bool> _othersClaim;
         private ScanFragment _scanning;
+        private ScanFragment _aiming;
         private int _quarter;
         private bool _holding;
+        private bool _gazing;
         private bool _waitRelease;
+        private Transform _cachedScanOrigin;
+        private Transform _headTransform;
+        private Collider[] _roverColliders;
+        private MeshFilter[] _roverMeshes;
 
         /// <param name="othersClaim">
         /// True while another E verb is on offer (a pickup, a cut, a dig, a restore...): scanning comes last.
@@ -78,6 +84,7 @@ namespace MoonProject.Gameplay
             _save = services.Save;
             _materials = services.Materials;
             _visuals = services.Visuals;
+            _tuning.ApplyShaderGlobals(_tuning.Seconds(ScanSize.Medium));
         }
 
         internal ScanField(ScanTuning tuning, EventBus events, ISaveService save, MaterialStock materials,
@@ -88,6 +95,7 @@ namespace MoonProject.Gameplay
             _save = save ?? throw new ArgumentNullException(nameof(save));
             _materials = materials ?? throw new ArgumentNullException(nameof(materials));
             _knownStructures = knownStructures ?? throw new ArgumentNullException(nameof(knownStructures));
+            _tuning.ApplyShaderGlobals(_tuning.Seconds(ScanSize.Medium));
         }
 
         public ScanTuning Tuning => _tuning;
@@ -316,13 +324,27 @@ namespace MoonProject.Gameplay
                 Stop();
             }
 
-            Hold(wants);
-            if (wants && _scanning == null && _rover.Speed <= _tuning.EngageSpeed)
+            if (wants)
+            {
+                _aiming = Candidate;
+                _rig?.SetGazeTarget(this, Candidate.Point, _tuning.GazePriority);
+                _gazing = true;
+            }
+            else
+            {
+                _aiming = null;
+                ClearGaze();
+            }
+
+            bool playerSteering = Mathf.Abs(_input.Drive.x) > 0.1f || Mathf.Abs(_rover.DriveInput.x) > 0.1f;
+            Hold(wants && !playerSteering);
+            bool hasLineOfSight = wants && HasLineOfSight(Candidate.Point);
+            if (wants && hasLineOfSight && _scanning == null && _rover.Speed <= _tuning.EngageSpeed)
             {
                 Begin(Candidate, lens);
             }
 
-            if (_scanning != null)
+            if (_scanning != null && hasLineOfSight)
             {
                 Advance(_scanning, now, deltaTime, lens);
             }
@@ -595,8 +617,8 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// The fragment in reach that 07's view rests on most squarely; the one being scanned stays the candidate
-        /// while it is in reach, so a small turn of the view does not drop it.
+        /// The fragment in reach that 07's view rests on most squarely (or the nearest in reach if none lies inside
+        /// the camera cone); the one being aimed at or scanned stays the candidate while it is in reach.
         /// </summary>
         private ScanFragment Pick()
         {
@@ -606,17 +628,26 @@ namespace MoonProject.Gameplay
             float reachSq = _tuning.Reach * _tuning.Reach;
             ScanFragment best = null;
             float bestScore = float.MaxValue;
+            ScanFragment nearest = null;
+            float nearestSq = float.MaxValue;
             for (int i = 0; i < _fragments.Count; i++)
             {
                 ScanFragment fragment = _fragments[i];
-                if (fragment.Scanned || (fragment.Point - _rover.Position).sqrMagnitude > reachSq)
+                float distSq = (fragment.Point - _rover.Position).sqrMagnitude;
+                if (fragment.Scanned || distSq > reachSq)
                 {
                     continue;
                 }
 
-                if (fragment == _scanning)
+                if (fragment == _scanning || (_input.ExcavateHeld && fragment == _aiming))
                 {
                     return fragment;
+                }
+
+                if (distSq < nearestSq)
+                {
+                    nearestSq = distSq;
+                    nearest = fragment;
                 }
 
                 if (TetherAim.TryScore(eye, forward, fragment.Point, _tuning.Cone, float.MaxValue,
@@ -627,7 +658,7 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            return best;
+            return best != null ? best : nearest;
         }
 
         private void Hold(bool hold)
@@ -639,6 +670,136 @@ namespace MoonProject.Gameplay
             }
         }
 
+        private void ClearGaze()
+        {
+            if (_gazing)
+            {
+                _gazing = false;
+                _rig?.ClearGazeTarget(this);
+            }
+        }
+
+        private bool HasLineOfSight(Vector3 targetPoint)
+        {
+            Transform scanOrigin = _rig?.ScanOrigin;
+            if (scanOrigin == null)
+            {
+                return true;
+            }
+
+            Vector3 origin = scanOrigin.position;
+            Vector3 toTarget = targetPoint - origin;
+            float distance = toTarget.magnitude;
+            if (distance <= 1e-4f)
+            {
+                return true;
+            }
+
+            Vector3 dir = toTarget / distance;
+            float tolerance = _scanning != null ? _tuning.AimToleranceDegrees * 1.5f : _tuning.AimToleranceDegrees;
+            if (Vector3.Angle(scanOrigin.forward, dir) > tolerance)
+            {
+                return false;
+            }
+
+            CacheRoverGeometry(scanOrigin);
+            return !IsSelfOccluded(origin, dir, distance);
+        }
+
+        private void CacheRoverGeometry(Transform scanOrigin)
+        {
+            if (_cachedScanOrigin == scanOrigin && _roverColliders != null)
+            {
+                return;
+            }
+
+            _cachedScanOrigin = scanOrigin;
+            _headTransform = null;
+            Transform root = scanOrigin;
+            while (root.parent != null)
+            {
+                if (_headTransform == null && string.Equals(root.name, "Head", StringComparison.Ordinal))
+                {
+                    _headTransform = root;
+                }
+
+                root = root.parent;
+            }
+
+            _roverColliders = root.GetComponentsInChildren<Collider>(true);
+            _roverMeshes = root.GetComponentsInChildren<MeshFilter>(true);
+        }
+
+        private bool IsSelfOccluded(Vector3 origin, Vector3 dir, float distance)
+        {
+            if (_headTransform != null)
+            {
+                Vector3 localOrigin = _headTransform.InverseTransformPoint(origin);
+                Vector3 localEnd = _headTransform.InverseTransformPoint(origin + dir * distance);
+                Vector3 localVec = localEnd - localOrigin;
+                float localDist = localVec.magnitude;
+                float halfWidth = Mathf.Max(0.08f, Mathf.Abs(localOrigin.x) - 0.03f);
+                var headCore = new Bounds(new Vector3(0f, 0.04f, -0.02f), new Vector3(halfWidth * 2f, 0.44f, 0.36f));
+                if (localDist > 1e-4f && !headCore.Contains(localOrigin))
+                {
+                    var localRay = new Ray(localOrigin, localVec / localDist);
+                    if (headCore.IntersectRay(localRay, out float hit) && hit >= 0f && hit <= localDist)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            var ray = new Ray(origin, dir);
+            for (int i = 0; _roverColliders != null && i < _roverColliders.Length; i++)
+            {
+                Collider col = _roverColliders[i];
+                if (col == null || !col.enabled || col.isTrigger ||
+                    (_headTransform != null && (col.transform == _headTransform || col.transform.IsChildOf(_headTransform))))
+                {
+                    continue;
+                }
+
+                if (!col.bounds.Contains(origin) && col.Raycast(ray, out RaycastHit hit, distance) &&
+                    hit.distance > 0.02f && hit.distance < distance - 0.02f)
+                {
+                    return true;
+                }
+            }
+
+            for (int i = 0; _roverMeshes != null && i < _roverMeshes.Length; i++)
+            {
+                MeshFilter mf = _roverMeshes[i];
+                if (mf == null || mf.sharedMesh == null || !mf.gameObject.activeInHierarchy ||
+                    !string.Equals(mf.name, "Chassis", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                Transform tr = mf.transform;
+                Bounds bounds = mf.sharedMesh.bounds;
+                Vector3 localOrigin = tr.InverseTransformPoint(origin);
+                if (bounds.Contains(localOrigin))
+                {
+                    continue;
+                }
+
+                Vector3 localEnd = tr.InverseTransformPoint(origin + dir * distance);
+                Vector3 localVec = localEnd - localOrigin;
+                float localDist = localVec.magnitude;
+                if (localDist > 1e-4f)
+                {
+                    var localRay = new Ray(localOrigin, localVec / localDist);
+                    if (bounds.IntersectRay(localRay, out float hitDist) && hitDist > 0.01f && hitDist < localDist - 0.01f)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         private float Seconds(ScanFragment fragment, bool lens)
         {
             return _tuning.Seconds(fragment.Size) / (lens ? _tuning.LensFactor : 1f);
@@ -646,16 +807,20 @@ namespace MoonProject.Gameplay
 
         private void Begin(ScanFragment fragment, bool lens)
         {
+            float duration = Seconds(fragment, lens);
+            _tuning.ApplyShaderGlobals(duration);
             _scanning = fragment;
             _quarter = Mathf.FloorToInt(fragment.Progress * Quarters);
             _events.Publish(new ScanStarted(fragment.FragmentId, fragment.Point));
             _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Anticipate, fragment.Point,
-                fragment.SweepSpan, fragment.Progress, (1f - fragment.Progress) * Seconds(fragment, lens)));
+                fragment.SweepSpan, fragment.Progress, (1f - fragment.Progress) * duration));
         }
 
         private void Advance(ScanFragment fragment, float now, float deltaTime, bool lens)
         {
-            fragment.Progress = Mathf.Min(1f, fragment.Progress + deltaTime / Seconds(fragment, lens));
+            float duration = Seconds(fragment, lens);
+            _tuning.ApplyShaderGlobals(duration);
+            fragment.Progress = Mathf.Min(1f, fragment.Progress + deltaTime / duration);
             fragment.Draw(fragment.Progress);
             int quarter = Mathf.FloorToInt(fragment.Progress * Quarters);
             while (_quarter < quarter)
@@ -693,8 +858,10 @@ namespace MoonProject.Gameplay
         private void Complete(ScanFragment fragment, float now)
         {
             _scanning = null;
+            _aiming = null;
             _waitRelease = true;
             Hold(false);
+            ClearGaze();
             if (fragment.StructureIds != null)
             {
                 CompleteRuin(fragment, now);

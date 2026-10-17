@@ -75,6 +75,8 @@ namespace MoonProject.Rover.Editor
             {
                 PrefabWriter.SaveIfChanged(Assemble(scratch), RoverAssetPaths.RoverPrefab);
             }
+
+            AssetDatabase.SaveAssets();
         }
 
         /// <summary>The Rover hierarchy described above, built in <paramref name="scratch"/> and not saved.</summary>
@@ -213,7 +215,7 @@ namespace MoonProject.Rover.Editor
             Renderer screenRenderer = BuildWiring.NodeComponent<MeshRenderer>(head, RoverModelNodes.Screen);
             MeshFilter screenFilter = BuildWiring.NodeComponent<MeshFilter>(head, RoverModelNodes.Screen);
             var screenCollider = screen.gameObject.AddComponent<MeshCollider>();
-            screenCollider.sharedMesh = screenFilter.sharedMesh;
+            screenCollider.sharedMesh = BuildScreenColliderMesh(screenFilter.sharedMesh);
             Transform rearVentStrip = BuildWiring.Node(head, RoverModelNodes.RearVentStrip);
             Renderer rearVentRenderer = rearVentStrip.GetComponent<Renderer>();
             if (rearVentRenderer == null)
@@ -267,6 +269,39 @@ namespace MoonProject.Rover.Editor
         }
 
         /// <summary>
+        /// Creates a readable copy of the Screen mesh at <see cref="RoverAssetPaths.ScreenColliderMesh"/> so
+        /// <see cref="RaycastHit.textureCoord"/> returns interpolated UVs in standalone player builds (where the
+        /// imported FBX mesh is non-readable).
+        /// </summary>
+        private static Mesh BuildScreenColliderMesh(Mesh source)
+        {
+            if (source == null)
+            {
+                throw new System.InvalidOperationException(
+                    "RoverModel Head/Screen has no sharedMesh for the diegetic screen collider.");
+            }
+
+            var copy = new Mesh
+            {
+                vertices = source.vertices,
+                normals = source.normals,
+                tangents = source.tangents,
+                uv = source.uv,
+                triangles = source.triangles,
+                bounds = source.bounds,
+            };
+            copy.UploadMeshData(false);
+            Mesh saved = GeneratedAssets.CreateOrReplace(copy, RoverAssetPaths.ScreenColliderMesh);
+            if (!saved.isReadable || saved.vertexCount == 0 || saved.uv.Length != saved.vertexCount)
+            {
+                throw new System.InvalidOperationException(
+                    $"{RoverAssetPaths.ScreenColliderMesh} must be readable with matching vertex and UV counts.");
+            }
+
+            return saved;
+        }
+
+        /// <summary>
         /// The Tab "07" page's portrait: a disabled camera under Visual and the sockets art has marked so far
         /// (<see cref="RoverModelNodes.EquipmentSocket"/>; empty where there is none, so the page shows no marker).
         /// </summary>
@@ -311,6 +346,7 @@ namespace MoonProject.Rover.Editor
         private static Light AddHeadlamp(BuilderScratchScene scratch, Transform socket, RoverRigTuning tuning)
         {
             var light = Child(scratch, "Headlamp", socket).AddComponent<Light>();
+            light.transform.localRotation = Quaternion.Euler(tuning.HeadlampDownTilt, 0f, 0f);
             light.type = LightType.Spot;
             light.color = Palette.Get(PaletteSwatch.WarmLamp);
             light.intensity = tuning.HeadlampIntensity;

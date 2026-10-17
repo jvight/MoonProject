@@ -106,8 +106,10 @@ namespace MoonProject.Rover
         public void Tick()
         {
             bool rolling = _rover.IsGrounded && _rover.HasGroundContact;
+            float scrubSpeed = Mathf.Abs(_rover.YawRate) * Mathf.Deg2Rad * 0.64f;
+            float effectiveSpeed = Mathf.Max(_rover.Speed, scrubSpeed);
             float rate = rolling
-                ? _tuning.DustMaxRate * Smoothing.SmoothStep(_tuning.DustMinSpeed, _tuning.DustFullSpeed, _rover.Speed)
+                ? _tuning.DustMaxRate * Smoothing.SmoothStep(_tuning.DustMinSpeed, _tuning.DustFullSpeed, effectiveSpeed)
                 : 0f;
             float time = Time.time;
             Quaternion rotation = _rover.Rotation;

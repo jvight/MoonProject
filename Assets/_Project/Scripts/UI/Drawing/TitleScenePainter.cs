@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -13,7 +14,6 @@ namespace MoonProject.UI
     /// </summary>
     internal sealed class TitleScenePainter : StylePainter
     {
-        private const float RefRoverScale = 82f;
         private const int LimbSteps = 96;
         private const int MaxArcSteps = 64;
 
@@ -23,21 +23,27 @@ namespace MoonProject.UI
         private readonly TitleSettings _settings;
         private readonly TitleAnimationState _state;
         private readonly TitleAnimationState _trailState;
+        private readonly VisualElement[] _leftColumnElements;
         private Painter2D _painter;
         private float _timeSeconds = 1.1f;
         private bool _standaloneFraming;
+        private float _manualLeftColumnRight;
+        private float _leftColumnRight;
         private float _scale = 1f;
         private float _offsetX;
+        private float _offsetY;
         private float _width;
         private float _height;
         private float _roverPxScale;
         private float _trailMultiplier = 1f;
 
-        public TitleScenePainter(VisualElement element, TitleSettings settings) : base(element)
+        public TitleScenePainter(VisualElement element, TitleSettings settings,
+            VisualElement[] leftColumnElements = null) : base(element)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _state = new TitleAnimationState(settings);
             _trailState = new TitleAnimationState(settings);
+            _leftColumnElements = leftColumnElements;
         }
 
         public float TimeSeconds => _timeSeconds;
@@ -48,9 +54,35 @@ namespace MoonProject.UI
 
         public float LastPaintMilliseconds { get; private set; }
 
+        public Rect MoonDiscBounds { get; private set; }
+
+        public Rect RoverBounds { get; private set; }
+
+        public void SetLeftColumnRight(float leftColumnRight)
+        {
+            if (Mathf.Approximately(_manualLeftColumnRight, leftColumnRight))
+            {
+                return;
+            }
+
+            _manualLeftColumnRight = leftColumnRight;
+            Element.MarkDirtyRepaint();
+        }
+
+        public void SyncLeftColumnLayout()
+        {
+            float measured = MeasureLeftColumnRight();
+            if (!Mathf.Approximately(measured, _leftColumnRight))
+            {
+                Element.MarkDirtyRepaint();
+            }
+        }
+
         public void SetTime(float timeSeconds, bool standaloneFraming = false)
         {
-            if (Mathf.Approximately(_timeSeconds, timeSeconds) && _standaloneFraming == standaloneFraming)
+            float measured = standaloneFraming ? 0f : MeasureLeftColumnRight();
+            if (Mathf.Approximately(_timeSeconds, timeSeconds) && _standaloneFraming == standaloneFraming &&
+                Mathf.Approximately(measured, _leftColumnRight))
             {
                 return;
             }
@@ -58,6 +90,42 @@ namespace MoonProject.UI
             _timeSeconds = timeSeconds;
             _standaloneFraming = standaloneFraming;
             Element.MarkDirtyRepaint();
+        }
+
+        public void GetDrawnArtBounds(out Rect moonDiscWorld, out Rect roverWorld, List<Rect> landmarkWorlds)
+        {
+            Rect rect = Element.contentRect;
+            if (rect.width > 4f && rect.height > 4f)
+            {
+                UpdateTransformAndBounds(rect);
+            }
+
+            moonDiscWorld = MoonDiscBounds;
+            roverWorld = RoverBounds;
+            landmarkWorlds?.Clear();
+            if (landmarkWorlds == null || rect.width <= 4f || rect.height <= 4f)
+            {
+                return;
+            }
+
+            TitleLandmarkPose[] poses = _state.Landmarks;
+            if (poses == null)
+            {
+                return;
+            }
+
+            float glowPad = 2f * _settings.GlowOuterWidthMultiplier * _scale;
+            for (int i = 0; i < poses.Length; i++)
+            {
+                TitleLandmarkPose lm = poses[i];
+                if (!lm.Visible || lm.Alpha <= 0.01f)
+                {
+                    continue;
+                }
+
+                Rect localBounds = ComputeLandmarkLocalBounds(in lm, _scale, glowPad);
+                landmarkWorlds.Add(ToWorldRect(localBounds));
+            }
         }
 
         protected override void ReadStyle(ICustomStyle style)
@@ -73,14 +141,7 @@ namespace MoonProject.UI
             }
 
             long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
-            _width = rect.width;
-            _height = rect.height;
-            _state.Evaluate(_timeSeconds, _standaloneFraming);
-            _trailState.Evaluate(Mathf.Max(0f, _timeSeconds - _settings.TrailLagSeconds), _standaloneFraming);
-
-            Vector2 refSize = _state.ReferenceSize;
-            _scale = _height / refSize.y;
-            _offsetX = (_width - refSize.x * _scale) * 0.5f;
+            UpdateTransformAndBounds(rect);
 
             _painter = context.painter2D;
             _painter.lineCap = LineCap.Round;
@@ -98,14 +159,214 @@ namespace MoonProject.UI
             LastPaintMilliseconds = (float)((t1 - t0) * 1000.0 / System.Diagnostics.Stopwatch.Frequency);
         }
 
-        private Vector2 Map(float refX, float refY)
+        private void UpdateTransformAndBounds(Rect rect)
         {
-            if (!_standaloneFraming && _width < _state.ReferenceSize.x * _scale)
+            _width = rect.width;
+            _height = rect.height;
+            _leftColumnRight = _standaloneFraming ? 0f : MeasureLeftColumnRight();
+            _state.Evaluate(_timeSeconds, _standaloneFraming);
+            _trailState.Evaluate(Mathf.Max(0f, _timeSeconds - _settings.TrailLagSeconds), _standaloneFraming);
+
+            Vector2 refSize = _state.ReferenceSize;
+            if (_standaloneFraming)
             {
-                return new Vector2((refX / _state.ReferenceSize.x) * _width, refY * _scale);
+                _scale = _height / refSize.y;
+                _offsetX = (_width - refSize.x * _scale) * 0.5f;
+                _offsetY = 0f;
+            }
+            else
+            {
+                float baseScale = Mathf.Min(_width / refSize.x, _height / refSize.y);
+                float defaultOffsetX = (_width - refSize.x * baseScale) * 0.5f;
+                float refArtLeft = ComputeReferenceArtLeft();
+                float minArtLeft = _leftColumnRight > 0f ? (_leftColumnRight + _settings.MenuSceneLeftGap) : 0f;
+                float defaultArtLeft = defaultOffsetX + refArtLeft * baseScale;
+                if (minArtLeft > defaultArtLeft)
+                {
+                    float refSceneWidth = Mathf.Max(1f, refSize.x - refArtLeft);
+                    float availWidth = Mathf.Max(1f, _width - minArtLeft);
+                    _scale = Mathf.Min(baseScale, availWidth / refSceneWidth);
+                    _offsetX = minArtLeft - refArtLeft * _scale;
+                }
+                else
+                {
+                    _scale = baseScale;
+                    _offsetX = defaultOffsetX;
+                }
+
+                _offsetY = _height - refSize.y * _scale;
             }
 
-            return new Vector2(_offsetX + refX * _scale, refY * _scale);
+            Vector2 moonCenter = Map(_state.MoonCenter.x, _state.MoonCenter.y);
+            float moonR = (_state.MoonRadius + 1.5f + 1.2f * _settings.GlowOuterWidthMultiplier) * _scale;
+            float moonXMin = Mathf.Max(0f, moonCenter.x - moonR);
+            float moonYMin = Mathf.Max(0f, moonCenter.y - moonR);
+            float moonXMax = Mathf.Min(_width, moonCenter.x + moonR);
+            float moonYMax = Mathf.Min(_height, moonCenter.y + moonR);
+            MoonDiscBounds = ToWorldRect(Rect.MinMaxRect(moonXMin, moonYMin, Mathf.Max(moonXMin, moonXMax),
+                Mathf.Max(moonYMin, moonYMax)));
+
+            float moonCrownR = _state.MoonRadius * _scale;
+            float roverScaleMetersToPx = _state.RoverScale * _scale;
+            float crownX = moonCenter.x;
+            float crownY = moonCenter.y - moonCrownR;
+            RoverBounds = ToWorldRect(Rect.MinMaxRect(
+                crownX - 1.05f * roverScaleMetersToPx,
+                crownY - 1.75f * roverScaleMetersToPx,
+                crownX + 1.95f * roverScaleMetersToPx,
+                crownY + 0.10f * roverScaleMetersToPx));
+        }
+
+        private float MeasureLeftColumnRight()
+        {
+            float maxRight = _manualLeftColumnRight;
+            if (_leftColumnElements == null)
+            {
+                return maxRight;
+            }
+
+            Rect crtWorld = Element.worldBound;
+            if (crtWorld.width <= 0f)
+            {
+                return maxRight;
+            }
+
+            for (int i = 0; i < _leftColumnElements.Length; i++)
+            {
+                VisualElement el = _leftColumnElements[i];
+                if (!IsElementShown(el))
+                {
+                    continue;
+                }
+
+                Rect box = el.worldBound;
+                if (box.width > 0f && box.height > 0f)
+                {
+                    float localRight = box.xMax - crtWorld.xMin;
+                    if (localRight > maxRight)
+                    {
+                        maxRight = localRight;
+                    }
+                }
+            }
+
+            return maxRight;
+        }
+
+        private static bool IsElementShown(VisualElement element)
+        {
+            if (element == null)
+            {
+                return false;
+            }
+
+            for (VisualElement e = element; e != null; e = e.parent)
+            {
+                IResolvedStyle style = e.resolvedStyle;
+                if (style.display == DisplayStyle.None || style.visibility == Visibility.Hidden ||
+                    style.opacity < 0.05f)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private float ComputeReferenceArtLeft()
+        {
+            float maxLandmarkReach = MaxLandmarkReachRef();
+            float moonAndLandmarksLeft = _state.MoonCenter.x - _state.MoonRadius - maxLandmarkReach;
+            float earthLeft = _state.EarthCenter.x - _state.EarthRadius - 4f;
+            float roverLeft = _state.MoonCenter.x - 1.15f * _state.RoverScale;
+            return Mathf.Min(moonAndLandmarksLeft, Mathf.Min(earthLeft, roverLeft));
+        }
+
+        private float MaxLandmarkReachRef()
+        {
+            TitleLandmarkEntry[] landmarks = _settings.Landmarks;
+            float maxReach = 0f;
+            if (landmarks != null)
+            {
+                for (int i = 0; i < landmarks.Length; i++)
+                {
+                    GetLandmarkLocalExtents(landmarks[i].Kind, out float minU, out float maxU, out float maxV);
+                    float reach = Mathf.Max(maxV, Mathf.Max(Mathf.Abs(minU), maxU)) * landmarks[i].Scale;
+                    if (reach > maxReach)
+                    {
+                        maxReach = reach;
+                    }
+                }
+            }
+
+            return maxReach + 2f * _settings.GlowOuterWidthMultiplier;
+        }
+
+        private Rect ComputeLandmarkLocalBounds(in TitleLandmarkPose lm, float featureScale, float glowPad)
+        {
+            Vector2 origin = Map(lm.Position.x, lm.Position.y);
+            float sc = lm.Scale * featureScale;
+            GetLandmarkLocalExtents(lm.Kind, out float minU, out float maxU, out float maxV);
+            Vector2 p0 = LmPt(origin, lm.Right, lm.Up, sc, minU, 0f);
+            Vector2 p1 = LmPt(origin, lm.Right, lm.Up, sc, maxU, 0f);
+            Vector2 p2 = LmPt(origin, lm.Right, lm.Up, sc, minU, maxV);
+            Vector2 p3 = LmPt(origin, lm.Right, lm.Up, sc, maxU, maxV);
+            float xMin = Mathf.Min(Mathf.Min(p0.x, p1.x), Mathf.Min(p2.x, p3.x)) - glowPad;
+            float yMin = Mathf.Min(Mathf.Min(p0.y, p1.y), Mathf.Min(p2.y, p3.y)) - glowPad;
+            float xMax = Mathf.Max(Mathf.Max(p0.x, p1.x), Mathf.Max(p2.x, p3.x)) + glowPad;
+            float yMax = Mathf.Max(Mathf.Max(p0.y, p1.y), Mathf.Max(p2.y, p3.y)) + glowPad;
+            return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
+        }
+
+        private static void GetLandmarkLocalExtents(TitleLandmarkKind kind, out float minU, out float maxU,
+            out float maxV)
+        {
+            switch (kind)
+            {
+                case TitleLandmarkKind.Lander:
+                    minU = -34f;
+                    maxU = 34f;
+                    maxV = 58f;
+                    break;
+                case TitleLandmarkKind.Tower:
+                    minU = -22f;
+                    maxU = 22f;
+                    maxV = 61.5f;
+                    break;
+                case TitleLandmarkKind.Solar:
+                    minU = -29f;
+                    maxU = 29f;
+                    maxV = 39f;
+                    break;
+                default:
+                    minU = -6f;
+                    maxU = 6f;
+                    maxV = 26f;
+                    break;
+            }
+        }
+
+        private Rect ToWorldRect(Rect localRect)
+        {
+            Rect world = Element.worldBound;
+            if (world.width <= 0f || world.height <= 0f)
+            {
+                return localRect;
+            }
+
+            return new Rect(world.xMin + localRect.xMin, world.yMin + localRect.yMin, localRect.width,
+                localRect.height);
+        }
+
+        private Vector2 Map(float refX, float refY)
+        {
+            return new Vector2(_offsetX + refX * _scale, _offsetY + refY * _scale);
+        }
+
+        private Vector2 MapSky(float refX, float refY)
+        {
+            return new Vector2(_offsetX + refX * _scale,
+                _offsetY * _settings.SkyVerticalOffsetShare + refY * _scale);
         }
 
         private void PaintBackground()
@@ -143,14 +404,18 @@ namespace MoonProject.UI
                 return;
             }
 
+            float minStarLeft = _standaloneFraming
+                ? 0f
+                : Mathf.Max(0.40f * _width, _leftColumnRight > 0f ? (_leftColumnRight + _settings.MenuSceneLeftGap) : 0f);
+            float maxStarRight = _standaloneFraming ? _width : (0.94f * _width);
             int count = Mathf.Min(stars.Length, twinkles.Length);
             for (int i = 0; i < count; i++)
             {
                 TitleStarEntry s = stars[i];
                 float tw = twinkles[i];
-                float u = _standaloneFraming ? s.U : (0.40f + s.U * 0.54f);
+                float x = _standaloneFraming ? (s.U * _width) : Mathf.Lerp(minStarLeft, maxStarRight, s.U);
                 float v = _standaloneFraming ? s.V : (s.V * 0.90f);
-                Vector2 pos = new Vector2(u * _width, v * _height);
+                Vector2 pos = new Vector2(x, v * _height);
                 float r = s.Size * _scale;
                 Color starCol = s.Flare ? _settings.Cream : _settings.AmberHi;
                 Shapes.Disc(_painter, pos, r * 2.2f, WithAlpha(starCol, tw * 0.22f));
@@ -168,7 +433,7 @@ namespace MoonProject.UI
 
         private void PaintEarth()
         {
-            Vector2 center = Map(_state.EarthCenter.x, _state.EarthCenter.y);
+            Vector2 center = MapSky(_state.EarthCenter.x, _state.EarthCenter.y);
             float r = _state.EarthRadius * _scale;
 
             Shapes.Disc(_painter, center, r, _settings.BgDeep);
@@ -181,7 +446,7 @@ namespace MoonProject.UI
             StrokeArc(center, r + 1.8f * _scale, 0.04f * Mathf.PI, 0.24f * Mathf.PI, _settings.Cyan, 1.1f, 0.50f,
                 12, true);
 
-            Vector2 ark = Map(_state.ArkPosition.x, _state.ArkPosition.y);
+            Vector2 ark = MapSky(_state.ArkPosition.x, _state.ArkPosition.y);
             float pulse = _state.ArkPulse;
             Shapes.Disc(_painter, ark, 7.2f * _scale, WithAlpha(_settings.CyanDim, 0.14f * pulse));
             Shapes.Disc(_painter, ark, 4.2f * _scale, WithAlpha(_settings.Cyan, 0.28f * pulse));
@@ -555,7 +820,7 @@ namespace MoonProject.UI
             Vector2 moonCenter = Map(_state.MoonCenter.x, _state.MoonCenter.y);
             float moonR = _state.MoonRadius * _scale;
             float roverScaleMetersToPx = _state.RoverScale * _scale;
-            _roverPxScale = roverScaleMetersToPx / RefRoverScale;
+            _roverPxScale = roverScaleMetersToPx / _settings.StandaloneRoverScale;
 
             float wheelR = _settings.WheelRadius * roverScaleMetersToPx;
             float halfWheelbase = _settings.WheelbaseHalf * roverScaleMetersToPx;

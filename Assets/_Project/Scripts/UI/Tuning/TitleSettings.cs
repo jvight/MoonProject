@@ -247,6 +247,14 @@ namespace MoonProject.UI
         [Tooltip("Offset (px in 1920x1080 reference) from Earth's centre to the cyan L4 Ark beacon.")]
         [SerializeField] private Vector2 _menuArkOffset = new Vector2(66f, -18f);
 
+        [Tooltip("Share of the bottom-anchored vertical offset applied to the sky (Earth and L4 Ark) on taller screens.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _skyVerticalOffsetShare = 0.35f;
+
+        [Tooltip("Minimum horizontal gap (px) between the laid-out right edge of the left menu column and the painted Moon scene.")]
+        [Range(8f, 120f)]
+        [SerializeField] private float _menuSceneLeftGap = 32f;
+
         [Header("Title left-column header and menu spacing (px inside #menu-frame)")]
         [Tooltip("Horizontal offset (px inside #menu-frame) of the wordmark, subtitle, and divider rule.")]
         [Range(0f, 400f)]
@@ -420,6 +428,12 @@ namespace MoonProject.UI
         [Range(20f, 240f)]
         [SerializeField] private float _crtRollBandHeight = 90f;
 
+        [Tooltip("Inner CRT bezel padding (px at 1280x720 reference) on the full-monitor title screen.")]
+        [SerializeField] private Vector2 _crtBezelInset = new Vector2(36f, 26f);
+
+        [Tooltip("Inner CRT bezel padding (px at 1280x720 reference) in standalone animation framing.")]
+        [SerializeField] private Vector2 _standaloneBezelInset = new Vector2(14f, 12f);
+
         [Header("Phosphor vector bloom and persistence trail")]
         [Tooltip("Line-width multiplier for the wide outer warm amber halo (#C86A14) behind glowing vector strokes.")]
         [Range(1f, 10f)]
@@ -527,6 +541,10 @@ namespace MoonProject.UI
 
         public Vector2 MenuArkOffset => _menuArkOffset;
 
+        public float SkyVerticalOffsetShare => _skyVerticalOffsetShare;
+
+        public float MenuSceneLeftGap => _menuSceneLeftGap;
+
         public float TitleScreenLeft => _titleScreenLeft;
 
         public float TitleScreenTop => _titleScreenTop;
@@ -613,6 +631,10 @@ namespace MoonProject.UI
 
         public float CrtRollBandHeight => _crtRollBandHeight;
 
+        public Vector2 CrtBezelInset => _crtBezelInset;
+
+        public Vector2 StandaloneBezelInset => _standaloneBezelInset;
+
         public float GlowOuterWidthMultiplier => _glowOuterWidthMultiplier;
 
         public float GlowOuterAlpha => _glowOuterAlpha;
@@ -666,7 +688,8 @@ namespace MoonProject.UI
                 _cursorBlinkPeriodSeconds <= 0f || _wheelRadius <= 0f || _menuMoonRadius <= 0f ||
                 _standaloneMoonRadius <= 0f || _menuRoverScale <= 0f || _standaloneRoverScale <= 0f ||
                 _ruleWidth <= 0f || _ruleHeight <= 0f || _glowOuterWidthMultiplier <= 0f ||
-                _glowInnerWidthMultiplier <= 0f)
+                _glowInnerWidthMultiplier <= 0f || _menuReferenceSize.x <= 0f || _menuReferenceSize.y <= 0f ||
+                _standaloneReferenceSize.x <= 0f || _standaloneReferenceSize.y <= 0f || _menuSceneLeftGap < 0f)
             {
                 return "title animation timing or scale is non-positive";
             }

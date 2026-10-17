@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -27,12 +28,18 @@ namespace MoonProject.UI.PlayModeTests
     {
         private const float Settle = 0.4f;
         private const float PlaceTolerance = 0.01f;
-        private const float WideAspect = 16f / 9f;
         private const float NeverIdleSeconds = 1e6f;
         private const int BigTextPresses = 2;
         private const float RecipeCardViewportX = 0.8f;
         private const float RecipeCardViewportY = 0.55f;
         private const float CardDepth = 10f;
+        private const int CellWidth = 480;
+        private const int CellHeight = 270;
+        private const int CellPad = 6;
+        private const string FitSheetPath = "Logs/fit_sheet.png";
+        private const string TitleFitDir = "Logs/title-fit";
+
+        private static readonly Dictionary<string, Color32[][]> s_SheetRows = new Dictionary<string, Color32[][]>();
 
         private readonly List<string> _problems = new List<string>();
         private string _slot;
@@ -80,6 +87,8 @@ namespace MoonProject.UI.PlayModeTests
 #endif
             UiLayout layout = _rig.Ui.Layout;
             EventBus events = _rig.Bootstrap.Context.Events;
+            Vector2 refSize = _rig.Tuning.Title.MenuReferenceSize;
+            float wideAspect = refSize.x / refSize.y;
             yield return null;
 
             events.Publish(new TitleShown(true));
@@ -98,13 +107,31 @@ namespace MoonProject.UI.PlayModeTests
                 yield return Seconds(0.8f);
             }
 
+            _rig.Ui.Pause.SetTitleAnimationTime(10f);
+            yield return null;
+
+            int closedCol = textSizePresses > 0 ? 2 : 0;
+            int openCol = textSizePresses > 0 ? 3 : 1;
             var wordmarkPlaces = new List<float>();
+            var closedWordmarkRects = new Dictionary<string, Rect>();
+            var closedHintRects = new Dictionary<string, Rect>();
             foreach (ScreenShape shape in ScreenShapes.All)
             {
                 yield return Reframe(shape);
-                yield return Check(shape, "title",
-                    (label, found) => ScreenFit.CheckApart(layout.TitleWordmark, layout.PauseMain, label, found));
-                if ((float)shape.Width / shape.Height >= WideAspect - PlaceTolerance)
+                yield return Check(shape, "title", (label, found) =>
+                {
+                    ScreenFit.CheckInsideCrtFrame(layout, _rig.Tuning.Title, label, found);
+                    ScreenFit.CheckTitleArtApart(layout, _rig.Ui.Pause, label, found);
+                    ScreenFit.CheckApart(layout.TitleScreen, layout.PauseMain, label, found);
+                    ScreenFit.CheckApart(layout.TitleWordmark, layout.PauseMain, label, found);
+                    ScreenFit.CheckApart(layout.PauseMain, layout.TitleKeyHint, label, found);
+                    ScreenFit.CheckApart(layout.TitleScreen, layout.TitleKeyHint, label, found);
+                    ScreenFit.CheckChildrenApart(layout.PageMain, label, found);
+                });
+                closedWordmarkRects[shape.Name] = layout.TitleScreen.worldBound;
+                closedHintRects[shape.Name] = layout.TitleKeyHint.worldBound;
+                CaptureTitleFitAndSheetCell(shape, closedCol);
+                if ((float)shape.Width / shape.Height >= wideAspect - PlaceTolerance)
                 {
                     wordmarkPlaces.Add(WordmarkPlace(layout));
                 }
@@ -123,10 +150,74 @@ namespace MoonProject.UI.PlayModeTests
                 yield return Reframe(shape);
                 yield return Check(shape, "title settings", (label, found) =>
                 {
+                    ScreenFit.CheckInsideCrtFrame(layout, _rig.Tuning.Title, label, found);
+                    ScreenFit.CheckTitleArtApart(layout, _rig.Ui.Pause, label, found);
+                    ScreenFit.CheckSettingsLegibility(layout, label, found);
                     ScreenFit.CheckApart(layout.PauseMain, layout.PauseSettings, label, found);
+                    ScreenFit.CheckApart(layout.TitleScreen, layout.PauseSettings, label, found);
                     ScreenFit.CheckApart(layout.TitleWordmark, layout.PauseSettings, label, found);
+                    ScreenFit.CheckApart(layout.PauseSettings, layout.TitleKeyHint, label, found);
+                    ScreenFit.CheckApart(layout.TitleScreen, layout.TitleKeyHint, label, found);
+                    ScreenFit.CheckChildrenApart(layout.PageSound, label, found);
                 });
+                Rect openWordmark = layout.TitleScreen.worldBound;
+                Rect openHint = layout.TitleKeyHint.worldBound;
+                Assert.AreEqual(closedWordmarkRects[shape.Name].yMin, openWordmark.yMin, 1f,
+                    $"{shape.Name}: opening Settings must not reflow #title-screen");
+                Assert.AreEqual(closedHintRects[shape.Name].yMin, openHint.yMin, 1f,
+                    $"{shape.Name}: opening Settings must not reflow #title-key-hint");
+                CaptureTitleFitAndSheetCell(shape, openCol);
             }
+
+            // Also verify Camera & feel and Display tabs and Vietnamese localization on title settings.
+            yield return Reframe(ScreenShapes.All[0]);
+            _rig.Ui.Pause.SelectTab(1);
+            yield return Seconds(Settle);
+            yield return Check(ScreenShapes.All[0], "title settings camera-en", (label, found) =>
+            {
+                ScreenFit.CheckInsideCrtFrame(layout, _rig.Tuning.Title, label, found);
+                ScreenFit.CheckTitleArtApart(layout, _rig.Ui.Pause, label, found);
+                ScreenFit.CheckSettingsLegibility(layout, label, found);
+                ScreenFit.CheckChildrenApart(layout.PageCamera, label, found);
+            });
+
+            _rig.Ui.Pause.SelectTab(2);
+            yield return Seconds(Settle);
+            yield return Check(ScreenShapes.All[0], "title settings display-en", (label, found) =>
+            {
+                ScreenFit.CheckInsideCrtFrame(layout, _rig.Tuning.Title, label, found);
+                ScreenFit.CheckTitleArtApart(layout, _rig.Ui.Pause, label, found);
+                ScreenFit.CheckSettingsLegibility(layout, label, found);
+                ScreenFit.CheckChildrenApart(layout.PageDisplay, label, found);
+            });
+
+            Submit(layout.LanguageButton);
+            yield return Seconds(Settle);
+            yield return Check(ScreenShapes.All[0], "title settings display-vi", (label, found) =>
+            {
+                ScreenFit.CheckInsideCrtFrame(layout, _rig.Tuning.Title, label, found);
+                ScreenFit.CheckTitleArtApart(layout, _rig.Ui.Pause, label, found);
+                ScreenFit.CheckSettingsLegibility(layout, label, found);
+                ScreenFit.CheckChildrenApart(layout.PageDisplay, label, found);
+            });
+
+            _rig.Ui.Pause.SelectTab(1);
+            yield return Seconds(Settle);
+            yield return Check(ScreenShapes.All[0], "title settings camera-vi", (label, found) =>
+            {
+                ScreenFit.CheckInsideCrtFrame(layout, _rig.Tuning.Title, label, found);
+                ScreenFit.CheckTitleArtApart(layout, _rig.Ui.Pause, label, found);
+                ScreenFit.CheckSettingsLegibility(layout, label, found);
+                ScreenFit.CheckChildrenApart(layout.PageCamera, label, found);
+            });
+
+            _rig.Ui.Pause.SelectTab(2);
+            yield return null;
+            Submit(layout.LanguageButton);
+            _rig.Ui.Pause.SelectTab(0);
+            yield return Seconds(Settle);
+
+            WriteFitSheet();
 
             Submit(layout.SettingsBackButton);
             yield return Seconds(1f);
@@ -247,8 +338,11 @@ namespace MoonProject.UI.PlayModeTests
             foreach (ScreenShape shape in ScreenShapes.All)
             {
                 yield return Reframe(shape);
-                yield return Check(shape, "pause settings",
-                    (label, found) => ScreenFit.CheckApart(layout.PauseMain, layout.PauseSettings, label, found));
+                yield return Check(shape, "pause settings", (label, found) =>
+                {
+                    ScreenFit.CheckApart(layout.PauseMain, layout.PauseSettings, label, found);
+                    ScreenFit.CheckSettingsLegibility(layout, label, found);
+                });
             }
 
             Submit(layout.SettingsBackButton);
@@ -267,6 +361,184 @@ namespace MoonProject.UI.PlayModeTests
 
             Assert.IsEmpty(_problems, "the UI fits every screen shape at " + (textSizePresses > 0 ? "150" : "100") +
                                       "% text:\n" + string.Join("\n", _problems));
+        }
+
+        private void CaptureTitleFitAndSheetCell(ScreenShape shape, int colIndex)
+        {
+            if (_rig.Frame == null)
+            {
+                return;
+            }
+
+            RenderTexture rt = _rig.Frame;
+            RenderTexture prev = RenderTexture.active;
+            RenderTexture.active = rt;
+            var src = new Texture2D(rt.width, rt.height, TextureFormat.RGBA32, false);
+            src.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+            src.Apply();
+            RenderTexture.active = prev;
+
+            Color32[] srcPixels = src.GetPixels32();
+            for (int i = 0; i < srcPixels.Length; i++)
+            {
+                Color32 p = srcPixels[i];
+                p.a = 255;
+                srcPixels[i] = p;
+            }
+
+            src.SetPixels32(srcPixels);
+            src.Apply();
+            byte[] nativePng = src.EncodeToPNG();
+
+            string scaleTag = colIndex >= 2 ? "150" : "100";
+            string stateTag = (colIndex & 1) == 1 ? "settings" : "title";
+            string fitDir = Path.GetFullPath(TitleFitDir);
+            Directory.CreateDirectory(fitDir);
+            string nativePath = Path.Combine(fitDir, $"{shape.Name}_{scaleTag}_{stateTag}.png");
+            File.WriteAllBytes(nativePath, nativePng);
+
+            int srcW = rt.width;
+            int srcH = rt.height;
+            Object.DestroyImmediate(src);
+
+            bool inSheet = false;
+            for (int i = 0; i < ScreenShapes.TitleSheet.Length; i++)
+            {
+                if (ScreenShapes.TitleSheet[i].Name == shape.Name)
+                {
+                    inSheet = true;
+                    break;
+                }
+            }
+
+            if (!inSheet)
+            {
+                return;
+            }
+
+            var cell = new Color32[CellWidth * CellHeight];
+            Color32 bg = new Color32(6, 8, 12, 255);
+            Color32 border = new Color32(36, 72, 92, 255);
+            for (int i = 0; i < cell.Length; i++)
+            {
+                cell[i] = bg;
+            }
+
+            int availW = CellWidth - CellPad * 2;
+            int availH = CellHeight - CellPad * 2;
+            float scale = Mathf.Min((float)availW / srcW, (float)availH / srcH);
+            int dstW = Mathf.Max(1, Mathf.RoundToInt(srcW * scale));
+            int dstH = Mathf.Max(1, Mathf.RoundToInt(srcH * scale));
+            int offX = (CellWidth - dstW) / 2;
+            int offY = (CellHeight - dstH) / 2;
+
+            for (int y = 0; y < dstH; y++)
+            {
+                int sy = Mathf.Clamp((int)((y + 0.5f) * srcH / dstH), 0, srcH - 1);
+                int dstRow = (offY + y) * CellWidth + offX;
+                int srcRow = sy * srcW;
+                for (int x = 0; x < dstW; x++)
+                {
+                    int sx = Mathf.Clamp((int)((x + 0.5f) * srcW / dstW), 0, srcW - 1);
+                    Color32 c = srcPixels[srcRow + sx];
+                    c.a = 255;
+                    cell[dstRow + x] = c;
+                }
+            }
+
+            for (int x = offX - 1; x <= offX + dstW; x++)
+            {
+                if (x >= 0 && x < CellWidth)
+                {
+                    if (offY - 1 >= 0)
+                    {
+                        cell[(offY - 1) * CellWidth + x] = border;
+                    }
+
+                    if (offY + dstH < CellHeight)
+                    {
+                        cell[(offY + dstH) * CellWidth + x] = border;
+                    }
+                }
+            }
+
+            for (int y = offY - 1; y <= offY + dstH; y++)
+            {
+                if (y >= 0 && y < CellHeight)
+                {
+                    if (offX - 1 >= 0)
+                    {
+                        cell[y * CellWidth + (offX - 1)] = border;
+                    }
+
+                    if (offX + dstW < CellWidth)
+                    {
+                        cell[y * CellWidth + (offX + dstW)] = border;
+                    }
+                }
+            }
+
+            if (!s_SheetRows.TryGetValue(shape.Name, out Color32[][] cols))
+            {
+                cols = new Color32[4][];
+                s_SheetRows[shape.Name] = cols;
+            }
+
+            cols[colIndex] = cell;
+        }
+
+        private static void WriteFitSheet()
+        {
+            int rows = ScreenShapes.TitleSheet.Length;
+            int cols = 4;
+            int sheetW = cols * CellWidth;
+            int sheetH = rows * CellHeight;
+            var sheetPixels = new Color32[sheetW * sheetH];
+            Color32 bg = new Color32(6, 8, 12, 255);
+            for (int i = 0; i < sheetPixels.Length; i++)
+            {
+                sheetPixels[i] = bg;
+            }
+
+            for (int r = 0; r < rows; r++)
+            {
+                string shapeName = ScreenShapes.TitleSheet[r].Name;
+                if (!s_SheetRows.TryGetValue(shapeName, out Color32[][] rowCells))
+                {
+                    continue;
+                }
+
+                int destRowY = (rows - 1 - r) * CellHeight;
+                for (int c = 0; c < cols; c++)
+                {
+                    Color32[] cell = rowCells[c];
+                    if (cell == null)
+                    {
+                        continue;
+                    }
+
+                    int destColX = c * CellWidth;
+                    for (int y = 0; y < CellHeight; y++)
+                    {
+                        Array.Copy(cell, y * CellWidth, sheetPixels, (destRowY + y) * sheetW + destColX, CellWidth);
+                    }
+                }
+            }
+
+            var sheetTex = new Texture2D(sheetW, sheetH, TextureFormat.RGBA32, false);
+            sheetTex.SetPixels32(sheetPixels);
+            sheetTex.Apply();
+            byte[] png = sheetTex.EncodeToPNG();
+            Object.DestroyImmediate(sheetTex);
+
+            string fullPath = Path.GetFullPath(FitSheetPath);
+            string dir = Path.GetDirectoryName(fullPath);
+            if (!string.IsNullOrEmpty(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+
+            File.WriteAllBytes(fullPath, png);
         }
 
         /// <summary>

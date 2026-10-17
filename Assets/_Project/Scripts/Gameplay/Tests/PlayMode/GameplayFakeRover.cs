@@ -197,11 +197,34 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             _gaze[owner] = new GazeRequest(worldPosition, priority);
+            AimEyeAtWinningGaze();
         }
 
         public void ClearGazeTarget(object owner)
         {
             _gaze.Remove(owner);
+            AimEyeAtWinningGaze();
+        }
+
+        private void AimEyeAtWinningGaze()
+        {
+            if (_eye == null)
+            {
+                return;
+            }
+
+            if (TryGetWinningGaze(out Vector3 target, out _))
+            {
+                Vector3 toTarget = target - _eye.position;
+                if (toTarget.sqrMagnitude > 1e-6f)
+                {
+                    _eye.rotation = Quaternion.LookRotation(toTarget.normalized, Vector3.up);
+                }
+            }
+            else
+            {
+                _eye.localRotation = Quaternion.identity;
+            }
         }
 
         public void SetHoldStill(object owner, bool hold)
@@ -268,6 +291,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             _lastPosition = transform.position;
             StillSeconds = Speed < StillSpeed ? StillSeconds + deltaTime : 0f;
+            AimEyeAtWinningGaze();
         }
 
         private readonly struct GazeRequest

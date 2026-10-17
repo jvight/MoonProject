@@ -87,6 +87,9 @@ namespace MoonProject.UI.Tests
             Assert.IsNotNull(facePanel, $"{UiAssetPaths.FacePanelSettings} is missing: run the UI/Theme builder");
             Assert.AreEqual(1152, faceTarget.width);
             Assert.AreEqual(768, faceTarget.height);
+            Assert.IsTrue(faceTarget.useMipMap, "Face target RenderTexture must enable mipmaps for smooth CRT phosphor glow.");
+            Assert.IsTrue(faceTarget.autoGenerateMips, "Face target RenderTexture must auto-generate mipmaps.");
+            Assert.AreEqual(FilterMode.Trilinear, faceTarget.filterMode, "Face target RenderTexture must use Trilinear filtering.");
             Assert.AreEqual(new Vector2Int(1152, 768), facePanel.referenceResolution);
             Assert.AreSame(faceTarget, facePanel.targetTexture);
             Assert.AreEqual(1f, facePanel.sortingOrder, 1e-4f, "Face panel must sort above the main HUD panel.");
@@ -114,6 +117,51 @@ namespace MoonProject.UI.Tests
                     $"TryUvToPanel must succeed for inverted UV {uv}");
                 Assert.AreEqual(target.x, roundTrip.x, 0.05f);
                 Assert.AreEqual(target.y, roundTrip.y, 0.05f);
+            }
+        }
+
+        [Test]
+        public void CursorPolicy_OpenInventory_ConfinesAndShowsCursor_AndCloseRestoresPreviousState()
+        {
+            CursorLockMode origLock = UnityEngine.Cursor.lockState;
+            bool origVisible = UnityEngine.Cursor.visible;
+            try
+            {
+                var policy = new CursorPolicy();
+                policy.Drive();
+                Assert.AreEqual(CursorLockMode.Locked, policy.LockState);
+                Assert.IsFalse(policy.IsVisible);
+                Assert.IsFalse(policy.InMenu);
+
+                policy.OpenInventory();
+                Assert.AreEqual(CursorLockMode.Confined, policy.LockState,
+                    "Inventory cursor must be Confined to the window.");
+                Assert.IsTrue(policy.IsVisible, "Inventory cursor must be visible.");
+                Assert.IsTrue(policy.InMenu);
+
+                policy.CloseInventory();
+                Assert.AreEqual(CursorLockMode.Locked, policy.LockState,
+                    "Closing inventory must restore the prior Locked drive state.");
+                Assert.IsFalse(policy.IsVisible);
+                Assert.IsFalse(policy.InMenu);
+
+                policy.Menu();
+                Assert.AreEqual(CursorLockMode.None, policy.LockState);
+                Assert.IsTrue(policy.IsVisible);
+                policy.OpenInventory();
+                Assert.AreEqual(CursorLockMode.Confined, policy.LockState);
+                Assert.IsTrue(policy.IsVisible);
+
+                policy.CloseInventory();
+                Assert.AreEqual(CursorLockMode.None, policy.LockState,
+                    "Closing inventory must restore whatever cursor lock state was active before opening.");
+                Assert.IsTrue(policy.IsVisible);
+                Assert.IsTrue(policy.InMenu);
+            }
+            finally
+            {
+                UnityEngine.Cursor.lockState = origLock;
+                UnityEngine.Cursor.visible = origVisible;
             }
         }
 

@@ -224,7 +224,8 @@ namespace MoonProject.Gameplay
         /// contract is missing.
         /// </summary>
         /// <param name="scrapField">The World's lane slots for Kestrel-3's cuttable hull fragments (0.5.5 §2).</param>
-        internal bool Initialize(GameplayServices services, Cutter cutter, IScrapField scrapField)
+        internal bool Initialize(GameplayServices services, Cutter cutter, IScrapField scrapField,
+            ScanTuning scanTuning = null)
         {
             string problem = _tuning == null ? "SalvageTuning is not assigned."
                 : _catalog == null ? "SalvageCatalog is not assigned."
@@ -264,7 +265,7 @@ namespace MoonProject.Gameplay
             _cadence = new PickupCadence(_tuning.MinArrivalInterval);
             _flashes = new GlowFlashPool(transform, services.Meshes.Sphere, services.Visuals.Flash,
                 _tuning.FlashPoolSize, _tuning.FlashDuration, _tuning.FlashRadius, _tuning.FlashIntensity);
-            _feel = new FeelVfx(transform, services.Visuals.FeelTuning, services.Visuals, _events, this);
+            _feel = new FeelVfx(transform, services.Visuals.FeelTuning, services.Visuals, _events, this, scanTuning);
             return true;
         }
 

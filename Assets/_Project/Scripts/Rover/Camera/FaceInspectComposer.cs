@@ -116,7 +116,8 @@ namespace MoonProject.Rover
             ComposePose(defScreenPos, defScreenRot, lookOffsetY, defaultDistance, out Vector3 defFocus, out Vector3 defEye);
             if (sight == null || IsCandidateClear(sight, defFocus, defEye, defaultDistance, probeRadius, out float defClear))
             {
-                return new FaceInspectShot(defFocus, defEye, defaultDistance, baseFov, 0f, FaceInspectProbeChoice.Default);
+                return new FaceInspectShot(defFocus, defEye, defaultDistance, baseFov, 0f,
+                    FaceInspectProbeChoice.Default, defScreenRot * Vector3.up);
             }
 
             // 2. Left (-sideYawDeg)
@@ -126,7 +127,8 @@ namespace MoonProject.Rover
             ComposePose(leftScreenPos, leftScreenRot, lookOffsetY, defaultDistance, out Vector3 leftFocus, out Vector3 leftEye);
             if (IsCandidateClear(sight, leftFocus, leftEye, defaultDistance, probeRadius, out float leftClear))
             {
-                return new FaceInspectShot(leftFocus, leftEye, defaultDistance, baseFov, leftYaw, FaceInspectProbeChoice.Left);
+                return new FaceInspectShot(leftFocus, leftEye, defaultDistance, baseFov, leftYaw,
+                    FaceInspectProbeChoice.Left, leftScreenRot * Vector3.up);
             }
 
             // 3. Right (+sideYawDeg)
@@ -136,7 +138,8 @@ namespace MoonProject.Rover
             ComposePose(rightScreenPos, rightScreenRot, lookOffsetY, defaultDistance, out Vector3 rightFocus, out Vector3 rightEye);
             if (IsCandidateClear(sight, rightFocus, rightEye, defaultDistance, probeRadius, out float rightClear))
             {
-                return new FaceInspectShot(rightFocus, rightEye, defaultDistance, baseFov, rightYaw, FaceInspectProbeChoice.Right);
+                return new FaceInspectShot(rightFocus, rightEye, defaultDistance, baseFov, rightYaw,
+                    FaceInspectProbeChoice.Right, rightScreenRot * Vector3.up);
             }
 
             // 4. Closer: choose the bearing with the greatest clear reach (preferring Default on ties) and pull in.
@@ -164,7 +167,8 @@ namespace MoonProject.Rover
             float safeDistance = Mathf.Clamp(bestReach - probeRadius, Mathf.Min(minDistance, defaultDistance), defaultDistance);
             ComposePose(bestScreenPos, bestScreenRot, lookOffsetY, safeDistance, out Vector3 closerFocus, out Vector3 closerEye);
             float closerFov = VerticalFovForFill(screenHeightM, targetHeightFill, safeDistance);
-            return new FaceInspectShot(closerFocus, closerEye, safeDistance, closerFov, bestYaw, FaceInspectProbeChoice.Closer);
+            return new FaceInspectShot(closerFocus, closerEye, safeDistance, closerFov, bestYaw,
+                FaceInspectProbeChoice.Closer, bestScreenRot * Vector3.up);
         }
 
         private static bool IsCandidateClear(

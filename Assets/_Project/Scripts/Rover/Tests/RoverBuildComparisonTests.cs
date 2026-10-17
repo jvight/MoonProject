@@ -58,5 +58,39 @@ namespace MoonProject.Rover.Tests
                 StringAssert.Contains("RoverKit._drums", HierarchyComparison.FirstDifference(first, second));
             }
         }
+
+        [Test]
+        public void Headlamp_HasTunedDownTilt_AndCentreRayHitsFlatGroundFourToSevenMetresAhead()
+        {
+            var tuning = AssetDatabase.LoadAssetAtPath<RoverRigTuning>(RoverAssetPaths.RigTuning);
+            Assert.IsNotNull(tuning, $"{RoverAssetPaths.RigTuning} missing.");
+            Assert.Greater(tuning.HeadlampDownTilt, 0f, "Headlamp must tilt down below horizontal.");
+
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(RoverAssetPaths.RoverPrefab);
+            Assert.IsNotNull(prefab, $"{RoverAssetPaths.RoverPrefab} missing: run the Rover builders.");
+
+            Transform socket = BuildWiring.Node(prefab.transform, RoverModelNodes.HeadlampSocket);
+            Transform headlamp = BuildWiring.Node(socket, "Headlamp");
+
+            Vector3 forward = headlamp.forward;
+            Assert.Less(forward.y, 0f, "Headlamp forward must pitch down toward the ground.");
+            Assert.Greater(forward.z, 0f, "Headlamp forward must point ahead (+Z).");
+
+            float pitchDownDeg = Mathf.Atan2(-forward.y, forward.z) * Mathf.Rad2Deg;
+            Assert.AreEqual(tuning.HeadlampDownTilt, pitchDownDeg, 0.01f,
+                "Built prefab's headlamp forward must have the tuned down-tilt.");
+
+            float socketHeight = headlamp.position.y;
+            Assert.Greater(socketHeight, 0f, "HeadlampSocket must sit above flat ground (y = 0).");
+
+            float distanceAheadFromSocket = socketHeight / Mathf.Tan(tuning.HeadlampDownTilt * Mathf.Deg2Rad);
+            float rayT = -headlamp.position.y / forward.y;
+            Vector3 hitPoint = headlamp.position + forward * rayT;
+
+            Assert.That(distanceAheadFromSocket, Is.InRange(4f, 7f),
+                "Centre ray horizontal reach from HeadlampSocket must land within 4-7 m on flat ground.");
+            Assert.That(hitPoint.z, Is.InRange(4f, 7f),
+                "Centre ray flat-ground hit Z ahead of 07 must land within 4-7 m.");
+        }
     }
 }
