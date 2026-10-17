@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using MoonProject.Core;
 using MoonProject.Art;
 using MoonProject.Art.Editor;
 using MoonProject.Editor.SceneBuild;
@@ -10,9 +11,8 @@ namespace MoonProject.World.Editor
     /// <summary>
     /// The World's part of Main.unity: the earthlight and its fill, the post-processing volume, the skybox, fog and
     /// ambient (saved into the scene), The Peak's beacon, and the <see cref="WorldSystem"/> that generates the
-    /// terrain, the rocks and Earth at boot, the <see cref="HomeLightingSystem"/> that wakes home's warm points and the
-    /// <see cref="LabLights"/> that light the belly lift and the crew's lab (wired to the base by
-    /// <see cref="WorldHomeWiringContributor"/>).
+    /// terrain, the rocks and Earth at boot, and the <see cref="HomeLightingSystem"/> that wakes home's warm points
+    /// (wired to the base by <see cref="WorldHomeWiringContributor"/>).
     /// Runs first (order 200) because rover, audio and gameplay read ITerrainQuery and IWorldLayout.
     /// </summary>
     public sealed class WorldSceneContributor : ISceneContributor
@@ -47,6 +47,7 @@ namespace MoonProject.World.Editor
 
             PeakBeacon beacon = CreateBeacon(context, settings, root);
             CreateRuins(context, settings, root);
+            OpeningLayoutPlacer.Place(context, settings, root);
 
             var world = context.CreateChild("World", root).AddComponent<WorldSystem>();
             var serialized = new SerializedObject(world);
@@ -56,7 +57,6 @@ namespace MoonProject.World.Editor
             Assign(serialized, "_earthMaterial", earthMaterial);
             Assign(serialized, "_groundMarkMaterial", context.LoadAsset<Material>(WorldPaths.GroundMarkMaterial));
             WorldPaths.AssignLandmarks(serialized);
-            Assign(serialized, "_ventBeadMaterial", context.LoadAsset<Material>(WorldPaths.VentBeadMaterial));
             AssignRocks(context, serialized, "_pebbleRocks", WorldPaths.PebbleRocks);
             AssignRocks(context, serialized, "_boulderRocks", WorldPaths.BoulderRocks);
             Assign(serialized, "_earthlight", earthlight);
@@ -80,25 +80,6 @@ namespace MoonProject.World.Editor
             lighting.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(homeLighting);
 
-            var reachRing = context.CreateChild("Reach Ring", root).AddComponent<ReachRingSystem>();
-            var ring = new SerializedObject(reachRing);
-            Assign(ring, "_settings", settings);
-            ring.ApplyModifiedPropertiesWithoutUndo();
-            context.AddSystem(reachRing);
-
-            var networkPulse = context.CreateChild("Network Pulse", root).AddComponent<NetworkPulseSystem>();
-            var handshake = new SerializedObject(networkPulse);
-            Assign(handshake, "_settings", settings);
-            Assign(handshake, "_haloMesh", context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh));
-            Assign(handshake, "_haloMaterial", context.LoadAsset<Material>(WorldPaths.BeaconHaloMaterial));
-            handshake.ApplyModifiedPropertiesWithoutUndo();
-            context.AddSystem(networkPulse);
-
-            var labLights = context.CreateChild("Lab Lights", root).AddComponent<LabLights>();
-            var lab = new SerializedObject(labLights);
-            Assign(lab, "_settings", settings);
-            lab.ApplyModifiedPropertiesWithoutUndo();
-            context.AddSystem(labLights);
         }
 
         /// <summary>
@@ -130,8 +111,8 @@ namespace MoonProject.World.Editor
         }
 
         /// <summary>
-        /// The beacon node on the summit: the art-kit model (art swaps in the broken dish in M4), a halo at the lamp
-        /// and the <see cref="PeakBeacon"/> that breathes them.
+        /// The beacon node on the summit: Art's R1 Peak beacon, a halo at its lamp and the <see cref="PeakBeacon"/>
+        /// that breathes them.
         /// </summary>
         private static PeakBeacon CreateBeacon(SceneBuildContext context, WorldSettings settings, Transform root)
         {

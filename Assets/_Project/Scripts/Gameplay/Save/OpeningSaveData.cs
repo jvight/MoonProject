@@ -13,12 +13,14 @@ namespace MoonProject.Gameplay
     {
         public bool reachedLander;
 
-        /// <summary>Cells left in the lander's one-charge reserve; below 0 means a new game (the full reserve).</summary>
+        /// <summary>Cells left in the lander's one-charge reserve; below 0 means a new game (the full
+        /// reserve).</summary>
         public float reserveCells = -1f;
 
         public bool nightFallen;
 
-        /// <summary>Opened supply crates that still hold what 07's hold had no room for, matched with <see cref="left"/>.
+        /// <summary>Opened supply crates that still hold what 07's hold had no room for, matched with
+        /// <see cref="left"/>.
         /// </summary>
         public string[] leftIds = Array.Empty<string>();
 

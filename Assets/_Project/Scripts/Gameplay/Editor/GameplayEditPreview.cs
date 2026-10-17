@@ -10,10 +10,9 @@ namespace MoonProject.Gameplay.Editor
 {
     /// <summary>
     /// Editor-only preview of what the game places at boot, so the Scene view shows the basin's layout outside Play:
-    /// Art's salvage wrecks on the World's site anchors, its derelicts on the micro-site anchors and the broken relay
-    /// masts on its relay anchors, read from the World's own edit-mode preview (the scene's
-    /// <see cref="IWorldPreview"/>, found by interface so this assembly never references the World's). The base
-    /// itself (lander, tower, bay, shelf, rack) is part of the built scene already. The preview is one hidden root
+    /// Art's salvage wrecks on the World's site anchors, read from the World's own edit-mode preview (the scene's
+    /// <see cref="IWorldPreview"/>, found by interface so this assembly never references the World's). The preview
+    /// is one hidden root
     /// per scene (HideAndDontSave: never saved, never in a build, not in the hierarchy) built when a scene holding
     /// the gameplay and a world preview is opened or saved (the scene build saves a fresh one), removed before Play
     /// and rebuilt after it. Building it twice leaves one; a scene without both systems is left alone.
@@ -22,9 +21,6 @@ namespace MoonProject.Gameplay.Editor
     public static class GameplayEditPreview
     {
         public const string RootName = "[GameplayPreview]";
-
-        /// <summary>The scrap field's hull fragments stand under this child of the preview.</summary>
-        public const string ScrapFieldName = "ScrapField";
 
         static GameplayEditPreview()
         {
@@ -47,9 +43,8 @@ namespace MoonProject.Gameplay.Editor
 
             Remove(scene);
             SalvageField salvage = FindInScene<SalvageField>(scene);
-            RelayField relays = FindInScene<RelayField>(scene);
             IWorldPreview world = FindInScene<IWorldPreview>(scene);
-            if (salvage == null || relays == null || world == null || !world.HasGeneratedWorld)
+            if (salvage == null || world == null || !world.HasGeneratedWorld)
             {
                 return;
             }
@@ -62,37 +57,6 @@ namespace MoonProject.Gameplay.Editor
                 if (anchors.TryGet(site.AnchorId, out WorldAnchor anchor))
                 {
                     Place(site.Prefab, anchor, root.transform);
-                }
-            }
-
-            foreach (SalvageSiteEntry derelict in salvage.Catalog.Derelicts)
-            {
-                if (anchors.TryGet(derelict.AnchorId, out WorldAnchor anchor) &&
-                    TrySeat(derelict, anchor, salvage.Catalog, root.transform, out WorldAnchor seat))
-                {
-                    Transform placed = Place(derelict.Prefab, seat, root.transform);
-                    foreach (SocketProp prop in derelict.Props)
-                    {
-                        Transform socket = placed.Find(prop.Socket);
-                        if (socket != null)
-                        {
-                            Hide(Object.Instantiate(prop.Prefab, socket.position, socket.rotation, placed).transform);
-                        }
-                    }
-                }
-            }
-
-            if (world is IScrapField field && field.Count > 0)
-            {
-                PlaceScrapField(field, salvage.Catalog, root.transform);
-            }
-
-            for (int i = 0; i < anchors.Count; i++)
-            {
-                WorldAnchor anchor = anchors.Get(i);
-                if (anchor.Id.StartsWith(WorldAnchorIds.RelayPrefix, StringComparison.Ordinal))
-                {
-                    Place(relays.BrokenPrefab, anchor, root.transform);
                 }
             }
         }
@@ -184,29 +148,7 @@ namespace MoonProject.Gameplay.Editor
 
         /// <summary>The prefab at the anchor, facing its (level) forward as the game places it, hidden like the root.
         /// </summary>
-        /// <summary>
-        /// Kestrel-3's cuttable hull fragments on the World's lane slots, under one hidden root standing on the first.
-        /// </summary>
-        private static void PlaceScrapField(IScrapField field, SalvageCatalog catalog, Transform root)
-        {
-            var scrap = new GameObject(ScrapFieldName).transform;
-            scrap.SetParent(root, false);
-            scrap.position = field.Slot(0).Position;
-            Hide(scrap);
-            for (int i = 0; i < field.Count; i++)
-            {
-                ScrapPlateInfo slot = field.Slot(i);
-                GameObject prefab = catalog.ScrapFragment(slot.Variant);
-                if (prefab != null)
-                {
-                    Transform piece = Object.Instantiate(prefab, slot.Position, slot.Rotation, scrap).transform;
-                    piece.localScale *= slot.Scale;
-                    Hide(piece);
-                }
-            }
-        }
-
-        private static Transform Place(GameObject prefab, WorldAnchor anchor, Transform root)
+        private static void Place(GameObject prefab, WorldAnchor anchor, Transform root)
         {
             Vector3 forward = anchor.Forward;
             forward.y = 0f;
@@ -214,34 +156,6 @@ namespace MoonProject.Gameplay.Editor
             GameObject instance = Object.Instantiate(prefab, anchor.Position, Quaternion.LookRotation(forward), root);
             instance.name = prefab.name;
             Hide(instance.transform);
-            return instance.transform;
-        }
-
-        /// <summary>
-        /// Where a derelict stands in the preview: on its anchor, or inside its wreck's placed preview on the wreck's
-        /// node (the haul bot in the drill site).
-        /// </summary>
-        private static bool TrySeat(SalvageSiteEntry derelict, WorldAnchor anchor, SalvageCatalog catalog,
-            Transform root, out WorldAnchor seat)
-        {
-            seat = anchor;
-            if (string.IsNullOrEmpty(derelict.HostSocket))
-            {
-                return true;
-            }
-
-            foreach (SalvageSiteEntry wreck in catalog.Sites)
-            {
-                Transform placed = wreck.Id == derelict.AnchorId ? root.Find(wreck.Prefab.name) : null;
-                Transform socket = placed != null ? placed.Find(derelict.HostSocket) : null;
-                if (socket != null)
-                {
-                    seat = new WorldAnchor(derelict.Id, socket.position, socket.forward, anchor.Radius);
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         private static void Hide(Transform node)

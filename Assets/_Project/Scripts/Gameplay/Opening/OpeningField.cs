@@ -29,9 +29,9 @@ namespace MoonProject.Gameplay
         private readonly Dictionary<string, Transform> _frames =
             new Dictionary<string, Transform>(StringComparer.Ordinal);
 
-        /// <param name="ruins">The Lumen ruin pieces by name ([World]/Ruins/&lt;id&gt;): frames for their crates.</param>
-        /// <param name="crateReach">Metres within which an open crate still holding something gives the rest.</param>
-        /// <param name="kit">07's start kit: the spare igniter carried and fitted (B4, B6).</param>
+        /// <param name="ruins">The Lumen ruin pieces by name ([World]/Ruins/&lt;id&gt;): frames for their
+        /// crates.</param> <param name="crateReach">Metres within which an open crate still holding something gives the
+        /// rest.</param> <param name="kit">07's start kit: the spare igniter carried and fitted (B4, B6).</param>
         public OpeningField(OpeningTuning tuning, GameplayServices services, BuildField building, ISunlight sunlight,
             SealedContainers containers, IReadOnlyList<Transform> ruins, Transform parent, float crateReach,
             RoverStartKit kit)
@@ -184,8 +184,8 @@ namespace MoonProject.Gameplay
         {
             if (!anchors.TryGet(id, out WorldAnchor anchor))
             {
-                throw new InvalidOperationException($"The opening stands on world anchor '{id}', which the World does " +
-                                                    "not publish (OpeningTuning).");
+                throw new InvalidOperationException(
+                    $"The opening stands on world anchor '{id}', which the World does not publish (OpeningTuning).");
             }
 
             return anchor;

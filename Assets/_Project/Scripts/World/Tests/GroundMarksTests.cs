@@ -37,16 +37,5 @@ namespace MoonProject.World.Tests
             Assert.AreEqual(0, colors[0].a, "a track fades in from nothing");
             Assert.AreEqual(0, colors[2 * steps].a, "and out again");
         }
-
-        [Test]
-        public void Scar_AndBootprints_HaveOneMarkEach()
-        {
-            var marks = new GroundMarkMesh();
-            GroundMarks.AddScar(marks, Vector3.zero, _settings, 1u);
-            Assert.AreEqual(_settings.ScarStreaks * 4, marks.VertexCount, "one two-point strip per streak");
-            GroundMarks.AddBootprints(marks, Vector3.zero, Vector3.forward, _settings);
-            Assert.AreEqual((_settings.ScarStreaks + _settings.BootprintCount) * 4, marks.VertexCount,
-                "one quad per bootprint");
-        }
     }
 }

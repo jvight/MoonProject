@@ -1,75 +1,18 @@
 using System;
 using UnityEngine;
+using MoonProject.Core;
 
 namespace MoonProject.World
 {
     /// <summary>
-    /// Where World places the crew's remnants from Art's landmark kit (M3-18): the route posts along the road to the
-    /// canyon (L2), the broken cable bridge over the chasm (L4) and the toppled dish frames of the antenna farm (L7).
+    /// Where World stands the opening's places (opening v2 §4): the Lumen station ruins cluster, the landed cargo
+    /// lander and its beacon, the old cables, Kestrel-3's debris, the big boulders and the west signal.
     /// </summary>
     [Serializable]
     public sealed class LandmarkSettings
     {
-        [Header("Route posts (L2)")]
-        [Tooltip("Bearing of the crew's road to the canyon mouth, degrees clockwise from +Z.")]
-        [Range(0f, 360f)]
-        [SerializeField] private float _routeBearing = 72f;
-
-        [Tooltip("Distances of the route posts from home, metres: about every 45 m from the pad's edge to the mouth.")]
-        [SerializeField] private float[] _routePostDistances = { 70f, 115f, 160f, 205f, 250f, 275f };
-
-        [Tooltip("How far the posts stand to the right of the road's centre line, metres, so 07's ruts run past them.")]
-        [Range(0f, 10f)]
-        [SerializeField] private float _routePostSide = 2.6f;
-
-        [Tooltip("Glow of a post's reflector (linear glow multiplier): a faint glint, never a lamp.")]
-        [Range(0f, 2f)]
-        [SerializeField] private float _reflectorGlow = 0.3f;
-
-        [Header("Chasm bridge (L4)")]
-        [Tooltip("Glow of the lamp on the bridge's far anchor (linear glow multiplier): a warm point across the gap.")]
-        [Range(0f, 3f)]
-        [SerializeField] private float _bridgeLampGlow = 1f;
-
-        [Tooltip("How far the bridge's anchors stand to the side of the leap line, metres, clear of 07's lane.")]
-        [Range(0f, 10f)]
-        [SerializeField] private float _bridgeSide = 3.5f;
-
-        [Header("Antenna farm (L7)")]
-        [Tooltip("How far the toppled dish frames lie from the farm's centre, metres.")]
-        [Range(0f, 20f)]
-        [SerializeField] private float _dishSpread = 6.5f;
-
-        [Header("Orange vent (M3-27)")]
-        [Tooltip("Soft orange patches in the old vent's bead field (Apollo 17's orange soil), gathered round the vent.")]
-        [Range(0, 80)]
-        [SerializeField] private int _ventPatches = 26;
-
-        [Tooltip("Radius range of one patch, metres (x = min, y = max).")]
-        [SerializeField] private Vector2 _ventPatchRadius = new Vector2(1.2f, 3.6f);
-
-        [Tooltip("How far the patches spread from the vent, as a share of its anchor radius: thick at the vent, " +
-            "thinning out.")]
-        [Range(0.5f, 3f)]
-        [SerializeField] private float _ventSpread = 1.6f;
-
-        [Tooltip("Tint the bead patches multiply the dust by at full strength: a rusty ochre (Apollo 17's orange " +
-            "glass). HDR: red above 1 and blue below keep the patch about as bright as the dust, so the grade's cool " +
-            "shadow toning never turns it red-violet.")]
-        [ColorUsage(false, true)]
-        [SerializeField] private Color _ventTint = new Color(1.24f, 1f, 0.66f, 1f);
-
-        [Tooltip("Strength of the patches at the vent (0..1); they fade toward the field's edge.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _ventStrength = 0.55f;
-
-        [Tooltip("How much of each patch's radius fades out toward its rim (0..1): high, so the patches blend into " +
-            "the dust like a stain, not a blotch.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _ventEdgeSoftness = 0.9f;
-
-        [Tooltip("Distance (metres) where the field starts to fade, and where it is gone: readable across the basin.")]
-        [SerializeField] private Vector2 _ventFade = new Vector2(160f, 380f);
+        private const string MidwayAnchor = WorldAnchorIds.PlaceMidway;
+        private const string KestrelAnchor = WorldAnchorIds.SitePrefix + "kestrel";
 
         [Header("Lumen station ruins cluster (RUINS-WORLD)")]
         [Tooltip("Pieces of the Lumen station ruins cluster arranged relative to SiteSettings.RuinsCenter: " +
@@ -84,20 +27,66 @@ namespace MoonProject.World
             new RuinPlacement("ScatterSet", new Vector2(-5.2f, -5.2f), -18f, 2.6f),
         };
 
-        public float RouteBearing => _routeBearing;
-        public float[] RoutePostDistances => _routePostDistances;
-        public float RoutePostSide => _routePostSide;
-        public float ReflectorGlow => _reflectorGlow;
-        public float BridgeLampGlow => _bridgeLampGlow;
-        public float BridgeSide => _bridgeSide;
-        public float DishSpread => _dishSpread;
-        public int VentPatches => _ventPatches;
-        public Vector2 VentPatchRadius => _ventPatchRadius;
-        public float VentSpread => _ventSpread;
-        public Color VentTint => _ventTint;
-        public float VentStrength => _ventStrength;
-        public float VentEdgeSoftness => _ventEdgeSoftness;
-        public Vector2 VentFade => _ventFade;
+        [Header("The landed cargo lander (opening v2 §4)")]
+        [Tooltip("How far the landed lander leans off level, degrees, about the axis from its port side to the far " +
+            "side: a hard landing on uneven ground, slightly tilted.")]
+        [Range(0f, 8f)]
+        [SerializeField] private float _landerTilt = 2.5f;
+
+        [Tooltip("The old power cables: 07's from its dead post to the lander's port, and the port's to the apron.")]
+        [SerializeField] private GroundCableSettings _wakeCable = new GroundCableSettings();
+
+        [Tooltip("The lander's amber emergency beacon on top of its hull.")]
+        [SerializeField] private LanderBeaconSettings _landerBeacon = new LanderBeaconSettings();
+
+        [Header("Kestrel-3's debris and the big boulders (opening v2 §4)")]
+        [Tooltip("Art's R1 Kestrel-3 debris (Generated/Art/R1/Models/Wreck): a few pieces at the first drive's midway " +
+            "point and more round the impact crater, settled in the dust.")]
+        [SerializeField] private PropPlacement[] _debris =
+        {
+            new PropPlacement(MidwayAnchor, "Kestrel_HullPanel", new Vector2(-1.6f, 1.4f), 30f, 0.25f),
+            new PropPlacement(MidwayAnchor, "Kestrel_StrutFrame", new Vector2(2.2f, -0.6f), 115f, 0.15f),
+            new PropPlacement(MidwayAnchor, "Kestrel_CableTray", new Vector2(0.3f, -2.8f), 205f, 0.1f),
+            new PropPlacement(KestrelAnchor, "Kestrel_Tank", new Vector2(3.2f, 1.8f), 15f, 0.3f),
+            new PropPlacement(KestrelAnchor, "Kestrel_EngineBell", new Vector2(-3.4f, 2.2f), 250f, 0.4f),
+            new PropPlacement(KestrelAnchor, "Kestrel_LandingFoot", new Vector2(0.6f, -4.2f), 80f, 0.2f),
+            new PropPlacement(KestrelAnchor, "Kestrel_HullPanel", new Vector2(-2.2f, -1.4f), 160f, 0.3f),
+        };
+
+        [Tooltip("Art's big R1 boulders (Rock_10..13, 3-8 m) hand-placed near the opening's routes as landmarks and " +
+            "cover, off the lanes and the footprints.")]
+        [SerializeField] private PropPlacement[] _boulders =
+        {
+            new PropPlacement(MidwayAnchor, "Rock_12", new Vector2(24f, 14f), 40f, 0.8f),
+            new PropPlacement(WorldAnchorIds.PlaceWake, "Rock_11", new Vector2(-30f, 46f), 120f, 0.6f),
+            new PropPlacement(WorldAnchorIds.PlaceApron, "Rock_10", new Vector2(-26f, 4f), 210f, 0.5f),
+            new PropPlacement(WorldAnchorIds.PlaceLander, "Rock_13", new Vector2(-30f, 26f), 300f, 1f),
+            new PropPlacement(WorldAnchorIds.PlaceRuins, "Rock_12", new Vector2(10f, 30f), 75f, 0.8f),
+        };
+
+        [Header("The west signal (opening v2 B11)")]
+        [Tooltip("How far behind the dead west mast (away from the basin) the signal pillar rises, metres; it stands " +
+            "hidden until Gameplay shows it when the antenna mast hears the west.")]
+        [Range(0f, 80f)]
+        [SerializeField] private float _signalPillarSetback = 18f;
+
+        [Tooltip("Emission strength of the signal pillar's beam once shown (R1Lit _EmissionStrength): its HDR core " +
+            "reads from the base across the night basin.")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _signalPillarGlow = 3.5f;
+
+        [Tooltip("How much wider than Art's beam the pillar stands (times), so it reads at the rim, 300 m out.")]
+        [Range(1f, 8f)]
+        [SerializeField] private float _signalPillarWidth = 3f;
+
         public RuinPlacement[] Ruins => _ruins;
+        public float LanderTilt => _landerTilt;
+        public GroundCableSettings WakeCable => _wakeCable;
+        public LanderBeaconSettings LanderBeacon => _landerBeacon;
+        public PropPlacement[] Debris => _debris;
+        public PropPlacement[] Boulders => _boulders;
+        public float SignalPillarSetback => _signalPillarSetback;
+        public float SignalPillarGlow => _signalPillarGlow;
+        public float SignalPillarWidth => _signalPillarWidth;
     }
 }

@@ -61,6 +61,9 @@ namespace MoonProject.World.PlayModeTests
         private const float RunTimeout = 30f;
         private const float InsideThrottle = 0.7f;
         private const float EyeHeight = 3f;
+
+        // Review cameras look this far above the ledge's floor: the height of something standing on it.
+        private const float LookHeight = 2f;
         private const float ExitViewDistance = 24f;
         private const float ExitViewHeight = 5f;
         private const float WideFov = 60f;
@@ -152,12 +155,11 @@ namespace MoonProject.World.PlayModeTests
         [Timeout(300000)]
         [PrebuildSetup(typeof(CanyonSessionScene))]
         [PostBuildCleanup(typeof(CanyonSessionScene))]
-        public IEnumerator RoutePostAndRuinWall_StopRover_InRealScene()
+        public IEnumerator RuinWall_StopsRover_InRealScene()
         {
             yield return Boot();
             Scene scene = SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath);
             SkyCycleSystem skyCycle = null;
-            Transform routePost = null;
             Transform habitat = null;
             foreach (GameObject root in scene.GetRootGameObjects())
             {
@@ -168,11 +170,7 @@ namespace MoonProject.World.PlayModeTests
 
                 foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
                 {
-                    if (routePost == null && t.name == "RoutePost" && t.GetComponent<Collider>() != null)
-                    {
-                        routePost = t;
-                    }
-                    else if (habitat == null && t.name == "HabitatModules")
+                    if (habitat == null && t.name == "HabitatModules")
                     {
                         habitat = t;
                     }
@@ -180,7 +178,6 @@ namespace MoonProject.World.PlayModeTests
             }
 
             Assert.IsNotNull(skyCycle, "Main scene must have SkyCycleSystem.");
-            Assert.IsNotNull(routePost, "Main scene must have a solid RoutePost on Layers.Prop.");
             Assert.IsNotNull(habitat, "Main scene must have HabitatModules.");
             skyCycle.SetClockTime(210f, false);
             yield return null;
@@ -189,35 +186,7 @@ namespace MoonProject.World.PlayModeTests
             Directory.CreateDirectory(afterDir);
             Camera view = _context.Get<IViewCamera>().Camera;
 
-            // 1. Drive straight into a RoutePost and verify 07 collides and stops instead of driving through it.
-            Vector3 postPos = routePost.position;
-            Vector3 toPost = new Vector3(postPos.x, 0f, postPos.z).normalized;
-            Vector3 startPost = postPos - toPost * 6.0f;
-            startPost.y = _terrain.SampleHeight(startPost.x, startPost.z);
-            float postYaw = Quaternion.LookRotation(toPost, Vector3.up).eulerAngles.y;
-            _pilot.Release();
-            _rover.PlaceAt(startPost, Quaternion.Euler(0f, postYaw, 0f));
-            Physics.SyncTransforms();
-            yield return Settle();
-            for (int i = 0; i < 15; i++)
-            {
-                yield return null;
-            }
-
-            _pilot.Throttle = 0.75f;
-            _pilot.Target = postPos + toPost * 6.0f;
-            yield return new WaitForSeconds(1.1f);
-            FrameCapture.SavePng(view, CaptureWidth, CaptureHeight, Path.Combine(afterDir, "route_post_approach.png"));
-            yield return new WaitForSeconds(1.6f);
-            FrameCapture.SavePng(view, CaptureWidth, CaptureHeight, Path.Combine(afterDir, "route_post_impact.png"));
-
-            float distToPost = Vector2.Distance(
-                new Vector2(_rover.Position.x, _rover.Position.z),
-                new Vector2(postPos.x, postPos.z));
-            Assert.Less(distToPost, 2.6f, "07 must be stopped at the RoutePost rather than driving past it.");
-            Assert.Less(_rover.Speed, 0.5f, "RoutePost collider must arrest 07's forward motion.");
-
-            // 2. Drive straight into the unobstructed north hull wall of HabitatModules and verify 07 stops against the compound BoxColliders.
+            // Drive straight into the unobstructed north hull wall of HabitatModules and verify 07 stops against the compound BoxColliders.
             _pilot.Release();
             Vector3 habPos = habitat.position;
             Vector3 toHab = Vector3.back;
@@ -429,8 +398,8 @@ namespace MoonProject.World.PlayModeTests
             CanyonPath main = _canyon.MainPath;
             Assert.IsTrue(_context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.CanyonLedge, out WorldAnchor ledge));
             yield return Follow(main, Arc(), _canyon.LedgeArc, "to the ledge");
-            Vector3 glow = Ground(_canyon.GlowPoint) + Vector3.up * _settings.PodBeacon.y;
-            Review(ledge.Position - ledge.Forward * 7f + Vector3.up * 2f, glow, WideFov, "06-ledge-glow");
+            Review(ledge.Position - ledge.Forward * 7f + Vector3.up * 2f, ledge.Position + Vector3.up * LookHeight,
+                WideFov, "06-ledge");
             yield return Follow(main, _canyon.LedgeArc, main.EndArc - _settings.TerminusRadius, "up the canyon");
             Capture("07-inside");
             Assert.IsTrue(_context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.CanyonTerminus,
@@ -541,10 +510,10 @@ namespace MoonProject.World.PlayModeTests
 
         private void CaptureFromTheBase()
         {
-            Vector3 glow = Ground(_canyon.GlowPoint) + Vector3.up * _settings.PodBeacon.y;
+            Vector3 ledge = Ground(_canyon.LedgeCenter) + Vector3.up * LookHeight;
             Vector3 eye = Ground(Vector2.zero) + Vector3.up * EyeHeight;
-            Review(eye, glow, WideFov, "01-canyon-from-the-base");
-            Review(eye, glow, ZoomFov, "01-ledge-glow-from-the-base");
+            Review(eye, ledge, WideFov, "01-canyon-from-the-base");
+            Review(eye, ledge, ZoomFov, "01-ledge-from-the-base");
         }
 
         /// <summary>A review camera beside the chasm, level with the lip, looking across the leap's path.</summary>

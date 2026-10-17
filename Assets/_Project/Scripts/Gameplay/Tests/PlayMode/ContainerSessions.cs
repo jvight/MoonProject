@@ -4,7 +4,6 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
-using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
@@ -12,8 +11,8 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
-    /// Sealed containers (docs/design/0.5.5-owner-feedback.md §2): a cut seal keeps its container open through a reboot
-    /// with no event, and an older save whose find was already taken loads its container open.
+    /// Sealed containers (docs/design/0.5.5-owner-feedback.md §2, opening-v2 §4): a cut seal keeps its crate open
+    /// through a reboot with no event, and the lander's open crate stands open from the start with nothing to cut.
     /// </summary>
     public sealed class ContainerSessions : InputTestFixture
     {
@@ -35,16 +34,16 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator ACutSeal_KeepsItsContainerOpenThroughAReboot_Silently()
+        public IEnumerator ACutSeal_KeepsItsCrateOpenThroughAReboot_Silently()
         {
             string slot = BootstrapHarness.NewTestSlot();
             _fixture = GameplayFixture.Boot(_controls, slot);
             yield return null;
             GameplaySystem gameplay = _fixture.Gameplay;
-            SealedContainer crate = Coil(gameplay);
-            gameplay.Crates.Restore(new CratesSaveData { opened = new[] { WorldAnchorIds.SitePrefix + "depot" } });
-            _fixture.Rover.Place(crate.CutPoint.position + crate.Root.forward * 1.5f, 0f);
-            yield return SealCut.Hold(this, gameplay, crate, "the coil crate");
+            SealedContainer crate = gameplay.Containers.Find("supply.wake");
+            _fixture.Rover.Place(crate.CutPoint.position + crate.Root.forward * 1.5f,
+                Quaternion.LookRotation(-crate.Root.forward).eulerAngles.y);
+            yield return SealCut.Hold(this, gameplay, crate, "the wake crate");
             Quaternion open = crate.Lid.localRotation;
 
             _fixture.Dispose(true);
@@ -54,33 +53,24 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture.Bootstrap.Context.Events.Subscribe<ContainerOpened>(opens.Add);
             yield return null;
             yield return null;
-            crate = Coil(_fixture.Gameplay);
+            crate = _fixture.Gameplay.Containers.Find("supply.wake");
             Assert.IsTrue(crate.StandsOpen, "the cut was a checkpoint: it stands open");
             Assert.Less(Quaternion.Angle(open, crate.Lid.localRotation), 1f, "its lid back where it swung to");
             Assert.IsEmpty(opens, "a load is not an opening");
-            Assert.IsNull(_fixture.Gameplay.Containers.Candidate, "nothing left to cut");
         }
 
         [UnityTest]
-        public IEnumerator AnOlderSaveWhoseCoilWasTaken_LoadsItsCrateOpen()
+        public IEnumerator TheLandersOpenCrate_StandsOpenFromTheStart_WithNothingToCut()
         {
-            _fixture = GameplayFixture.Boot(_controls);
+            _fixture = GameplayFixture.Boot(_controls, startKit: true);
             yield return null;
-            GameplaySystem gameplay = _fixture.Gameplay;
-            SealedContainer crate = Coil(gameplay);
-            Assert.IsFalse(crate.Opened, "a new game's crate is sealed");
-            gameplay.TowerParts.Restore(new TowerPartsSaveData { carried = new[] { "Part_TowerCoil" } });
-            gameplay.TowerPartField.Sync();
-            Assert.IsTrue(crate.StandsOpen, "the coil already rides in 07's hold: its crate stands open");
-            Assert.IsFalse(gameplay.TowerPartField.IsResting(0), "and holds nothing");
-            Assert.IsTrue(gameplay.Materials.Hold.HasPart("Part_TowerCoil"), "held in 07's hold");
-        }
-
-        private static SealedContainer Coil(GameplaySystem gameplay)
-        {
-            SealedContainer crate = gameplay.Containers.Find(TowerPartField.ContainerId(gameplay.TowerParts.PartAt(0)));
-            Assert.IsNotNull(crate);
-            return crate;
+            SealedContainer crate = _fixture.Gameplay.Containers.Find("supply.lander.open");
+            Assert.IsTrue(crate.StandsOpen, "opening-v2 §10: no cutting before B6");
+            _fixture.Rover.Place(crate.CutPoint.position + crate.Root.forward * 5f,
+                Quaternion.LookRotation(-crate.Root.forward).eulerAngles.y);
+            yield return null;
+            yield return null;
+            Assert.AreNotEqual(crate, _fixture.Gameplay.Containers.Candidate, "an open crate is never a cut");
         }
     }
 }

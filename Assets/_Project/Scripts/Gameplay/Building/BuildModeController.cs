@@ -448,8 +448,8 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// Steps hold-to-deconstruct progress when 07 holds <c>Deconstruct</c> while looking at a placed structure
-        /// within <see cref="BuildingTuning.WeldRange"/>. When the hold completes, removes the structure from
-        /// <see cref="PlacedBase"/> and refunds materials into <see cref="MaterialStock"/>.
+        /// within <see cref="BuildingTuning.WeldRange"/> and 07's hold has room for its whole cost. When the hold
+        /// completes, removes the structure from <see cref="PlacedBase"/> and refunds materials into 07's hold.
         /// </summary>
         public bool StepDeconstruct(
             float deltaTime,
@@ -471,7 +471,7 @@ namespace MoonProject.Gameplay
             }
 
             float distance = SurfaceRules.HorizontalDistance(target.Pose.Position, roverPosition);
-            if (distance > _tuning.WeldRange)
+            if (distance > _tuning.WeldRange || !HasRoomFor(target.Definition.BuildCost))
             {
                 DeconstructTargetId = 0;
                 DeconstructProgress01 = 0f;
@@ -523,17 +523,18 @@ namespace MoonProject.Gameplay
 
         private void RefundMaterial(SalvageMaterial material, int amount)
         {
-            if (amount <= 0)
+            if (amount > 0)
             {
-                return;
+                _stock.Collect(material, amount);
             }
+        }
 
-            int left = _stock.Collect(material, amount);
-            left = left > 0 ? _stock.Deliver(material, left) : 0;
-            if (left > 0)
-            {
-                _stock.Home.AddOverflow(material, left);
-            }
+        /// <summary>07's hold has room for all of <paramref name="cost"/>: a refund never finds it full.</summary>
+        private bool HasRoomFor(Recipe cost)
+        {
+            return _stock.Room(SalvageMaterial.Metal) >= cost.Metal &&
+                   _stock.Room(SalvageMaterial.Wiring) >= cost.Wiring &&
+                   _stock.Room(SalvageMaterial.Optics) >= cost.Optics;
         }
 
         private int IndexOfAvailable(string structureId)

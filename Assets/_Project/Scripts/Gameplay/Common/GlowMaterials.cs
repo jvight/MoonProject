@@ -15,17 +15,8 @@ namespace MoonProject.Gameplay
 
         private const int TransparentQueue = 3000;
 
-        /// <summary>Radial falloff of round sprites: (1 - r^2)^2, a soft ball (dust, sparks).</summary>
+        /// <summary>Radial falloff of round sprites: (1 - r^2)^2, a soft ball (sparks).</summary>
         private const float SoftRadialPower = 2f;
-
-        /// <summary>Radial falloff of the home halo: a bright core with a long faint tail and no visible rim.</summary>
-        private const float HaloRadialPower = 5f;
-
-        // The home halo is a faint glow laid over the lilac haze, never bright enough to drift towards lemon in the
-        // tonemapper, so unlike the lamps it keeps most of the lamp's green: with the lamps' redder amber the haze's
-        // blue turned it peach and pink from across the basin. Shares of the WarmLamp swatch's (linear) green and blue.
-        private const float HaloGreen = 0.8f;
-        private const float HaloBlue = 0.1f;
 
         private static readonly int ColorId = Shader.PropertyToID("_Color");
         private static readonly int IntensityId = Shader.PropertyToID("_Intensity");
@@ -67,17 +58,11 @@ namespace MoonProject.Gameplay
 
             Color tech = Palette.Get(PaletteSwatch.TechGlow);
             Color warm = Palette.Get(PaletteSwatch.WarmLamp);
-            Color dust = Palette.Get(PaletteSwatch.DustLight);
             Set(material, tech, edge: 0f, length: 0f, bands: 0f, speed: 0f, strength: 0f, fresnel: 0f,
                 fresnelPower: 2f, core: 0f, corePower: 1.5f, radial: 0f, additive: true, cull: CullMode.Off);
             switch (role)
             {
-                case GlowRole.TractorBeam:
-                    Set(material, tech, edge: 0f, length: 0.18f, bands: 5f, speed: 0.8f, strength: 0.45f,
-                        fresnel: 0f, fresnelPower: 2f, core: 0.8f, corePower: 1f, radial: 0f, additive: true,
-                        cull: CullMode.Off);
-                    break;
-                case GlowRole.TetherBeam:
+                case GlowRole.WeldBeam:
                     Set(material, tech, edge: 0.5f, length: 0.04f, bands: 6f, speed: 1.6f, strength: 0.4f,
                         fresnel: 0f, fresnelPower: 2f, core: 0f, corePower: 1.5f, radial: 0f, additive: true,
                         cull: CullMode.Off);
@@ -86,45 +71,15 @@ namespace MoonProject.Gameplay
                     material.SetFloat(FresnelMixId, 0.5f);
                     material.SetFloat(FresnelPowerId, 1.5f);
                     break;
-                case GlowRole.RelicHalo:
+                case GlowRole.PieceHalo:
                     Set(material, tech, edge: 0f, length: 0f, bands: 0f, speed: 0f, strength: 0f, fresnel: 1f,
                         fresnelPower: 1.5f, core: 0f, corePower: 1.5f, radial: 0f, additive: true,
                         cull: CullMode.Front);
-                    break;
-                case GlowRole.Dust:
-                    dust.a = 0.4f;
-                    Set(material, dust, edge: 0f, length: 0f, bands: 0f, speed: 0f, strength: 0f, fresnel: 0f,
-                        fresnelPower: 2f, core: 0f, corePower: 1.5f, radial: 1f, additive: false,
-                        cull: CullMode.Off);
-                    break;
-                case GlowRole.WarmRing:
-                    material.SetColor(ColorId, warm);
-                    material.SetFloat(AcrossInId, 0.5f);
-                    material.SetFloat(AcrossOutId, 0.5f);
                     break;
                 case GlowRole.Spark:
                     Set(material, warm, edge: 0f, length: 0f, bands: 0f, speed: 0f, strength: 0f, fresnel: 0f,
                         fresnelPower: 2f, core: 0f, corePower: 1.5f, radial: 1f, additive: true,
                         cull: CullMode.Off);
-                    break;
-                case GlowRole.HomeHalo:
-                    // A deep amber over the haze (see HaloGreen), passed as gamma so the shader receives it linear;
-                    // a bright core with a long faint tail, so from afar it reads as glow around the windows, not as
-                    // a disc.
-                    Set(material, HaloAmber().gamma, edge: 0f, length: 0f, bands: 0f, speed: 0f, strength: 0f,
-                        fresnel: 0f, fresnelPower: 2f, core: 0f, corePower: 1.5f, radial: 1f, additive: true,
-                        cull: CullMode.Off);
-                    material.SetFloat(RadialPowerId, HaloRadialPower);
-                    break;
-                case GlowRole.LinkPulse:
-                    // A thin running line: soft across, soft at both ends, so the pulse has no hard edge anywhere.
-                    Set(material, warm, edge: 0.5f, length: 0.45f, bands: 0f, speed: 0f, strength: 0f, fresnel: 0f,
-                        fresnelPower: 2f, core: 0f, corePower: 1.5f, radial: 0f, additive: true, cull: CullMode.Off);
-                    break;
-                case GlowRole.WarmGlow:
-                    material.SetColor(ColorId, warm);
-                    material.SetFloat(FresnelMixId, 0.4f);
-                    material.SetFloat(FresnelPowerId, 1.2f);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(role), role, "Unknown glow role.");
@@ -153,13 +108,6 @@ namespace MoonProject.Gameplay
             material.SetFloat(DstBlendId, (float)(additive ? BlendMode.One : BlendMode.OneMinusSrcAlpha));
             material.SetFloat(CullId, (float)cull);
             material.renderQueue = TransparentQueue;
-        }
-
-        /// <summary>The home halo's linear colour: the lamps' swatch as a deep amber over the haze.</summary>
-        private static Color HaloAmber()
-        {
-            Color lamp = Palette.Linear(Palette.Get(PaletteSwatch.WarmLamp));
-            return new Color(lamp.r, lamp.g * HaloGreen, lamp.b * HaloBlue);
         }
     }
 }

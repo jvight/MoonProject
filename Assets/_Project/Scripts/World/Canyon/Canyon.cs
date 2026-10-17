@@ -204,21 +204,6 @@ namespace MoonProject.World
         /// <summary>Centre (XZ) of the relay mast's ledge at the mouth of the terminus chamber (M3-06).</summary>
         public Vector2 RelayLedgeCenter => _relayLedgeCenter;
 
-        /// <summary>
-        /// Where the faint warm light is (XZ): the cracked beacon of the fallen supply pod that stands on the ledge,
-        /// facing canyon.ledge's Forward (0.5.5). Its height above the ledge is <see cref="CanyonSettings.PodBeacon"/>.y.
-        /// </summary>
-        public Vector2 GlowPoint
-        {
-            get
-            {
-                Vector2 forward = _main.RightAt(_ledgeArc) * _ledgeSide;
-                var right = new Vector2(forward.y, -forward.x);
-                Vector3 beacon = _settings.PodBeacon;
-                return _ledgeCenter + right * beacon.x + forward * beacon.z;
-            }
-        }
-
         public IReadOnlyList<float> AlcoveArcs => _alcoveArcs;
 
         public IReadOnlyList<float> AlcoveSides => _alcoveSides;

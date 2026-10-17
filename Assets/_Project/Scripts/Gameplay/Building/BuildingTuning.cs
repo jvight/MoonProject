@@ -6,8 +6,8 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// Designer-facing tuning for 07's freeform base building (0.5.7): placement distance bounds from 07, soft-snap
-    /// distance and angle tolerances, welding range, deconstruction material refund share, and the optional playtest
-    /// unlock list applied at initialization.
+    /// distance and angle tolerances, welding range and the weld's beam and sparks, deconstruction material refund
+    /// share, and the optional playtest unlock list applied at initialization.
     /// </summary>
     [CreateAssetMenu(menuName = "MoonProject/Gameplay/Building Tuning", fileName = "BuildingTuning")]
     public sealed class BuildingTuning : ScriptableObject
@@ -36,6 +36,43 @@ namespace MoonProject.Gameplay
         [Tooltip("Structure IDs unlocked at game start for playtesting (kept empty in production).")]
         [SerializeField] private string[] _playtestUnlockedIds = Array.Empty<string>();
 
+        [Header("The weld (07's beam on a structure)")]
+        [Tooltip("Stitches per second of 07's beam across the structure being welded.")]
+        [Range(0.2f, 10f)] [SerializeField] private float _weldStitchRate = 2.5f;
+
+        [Tooltip("Half-width (m) of the stitching across the structure.")]
+        [Range(0.02f, 2f)] [SerializeField] private float _weldStitchSpread = 0.25f;
+
+        [Tooltip("Bursts of sparks as a structure's weld completes.")]
+        [Range(1, 8)] [SerializeField] private int _sparkBursts = 3;
+
+        [Tooltip("Sparks per burst.")]
+        [Range(1, 100)] [SerializeField] private int _sparkCount = 18;
+
+        [Tooltip("Seconds between bursts.")]
+        [Range(0.02f, 1f)] [SerializeField] private float _sparkInterval = 0.16f;
+
+        [Tooltip("Launch speed range (m/s).")]
+        [SerializeField] private Vector2 _sparkSpeed = new Vector2(1.2f, 3.2f);
+
+        [Tooltip("Lifetime range (s).")]
+        [SerializeField] private Vector2 _sparkLifetime = new Vector2(0.5f, 1.1f);
+
+        [Tooltip("Size range (m).")]
+        [SerializeField] private Vector2 _sparkSize = new Vector2(0.03f, 0.07f);
+
+        [Tooltip("Half-angle (degrees) of the cone the sparks fly out in.")]
+        [Range(0f, 80f)] [SerializeField] private float _sparkSpread = 35f;
+
+        [Tooltip("Degrees the cone tips away from the way the spark socket points.")]
+        [Range(0f, 90f)] [SerializeField] private float _sparkTilt = 35f;
+
+        [Tooltip("Fraction of Earth gravity pulling the sparks down (the moon's is about 0.17: floaty arcs).")]
+        [Range(0f, 1f)] [SerializeField] private float _sparkGravity = 0.17f;
+
+        [Tooltip("Streak length per m/s of speed (stretched sprites).")]
+        [Range(0f, 0.3f)] [SerializeField] private float _sparkStreak = 0.05f;
+
         public float MinPlacementDistance => _minPlacementDistance;
 
         public float MaxPlacementDistance => _maxPlacementDistance;
@@ -47,6 +84,19 @@ namespace MoonProject.Gameplay
         public float WeldRange => _weldRange;
 
         public float DeconstructRefundShare => _deconstructRefundShare;
+
+        public float WeldStitchRate => _weldStitchRate;
+        public float WeldStitchSpread => _weldStitchSpread;
+        public int SparkBursts => _sparkBursts;
+        public int SparkCount => _sparkCount;
+        public float SparkInterval => _sparkInterval;
+        public float SparkSpread => _sparkSpread;
+        public float SparkTilt => _sparkTilt;
+        public float SparkGravity => _sparkGravity;
+        public float SparkStreak => _sparkStreak;
+        public Vector2 SparkSpeed => Ordered(_sparkSpeed);
+        public Vector2 SparkLifetime => Ordered(_sparkLifetime);
+        public Vector2 SparkSize => Ordered(_sparkSize);
 
         /// <summary>
         /// Structure IDs that a new game knows by design (e.g. <see cref="StructureIds.ChargingPad"/>), applied on a
@@ -136,6 +186,11 @@ namespace MoonProject.Gameplay
             }
 
             return cleaned;
+        }
+
+        private static Vector2 Ordered(Vector2 range)
+        {
+            return range.x <= range.y ? range : new Vector2(range.y, range.x);
         }
     }
 }

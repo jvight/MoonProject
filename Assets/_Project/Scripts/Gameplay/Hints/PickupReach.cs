@@ -1,35 +1,20 @@
 using UnityEngine;
 using MoonProject.Core;
-using MoonProject.Core.Events;
 
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The press that picks a waiting part up (tower parts, friends' parts, relay spares, Ro's tapes, Ro's tape deck). Each frame the fields offer their resting parts; the nearest one within reach is the candidate,
-    /// shown as a world prompt with the key and the verb (<see cref="InteractionKind.PickUp"/>, the part's name from
-    /// <see cref="TryGet"/>), and Excavate held takes it, like every other E verb (a tap, or a hold begun before 07
-    /// came up to it, or kept on after digging it free): only then does it lift onto 07's back. Reach is measured
-    /// across the ground, so a part a little above or below 07 still counts. Fields step in different components, so a
-    /// frame's offers are settled on the next frame's first offer. Allocates nothing.
+    /// The press that takes something waiting (a cut piece held on its wreck while the hold was full). Each frame the
+    /// fields offer what waits; the nearest one within reach is the candidate, shown as a world prompt with the key and
+    /// the verb (<see cref="InteractionKind.PickUp"/>, its name from <see cref="TryGet"/>), and Excavate held takes it,
+    /// like every other E verb. Reach is measured across the ground, so something a little above or below 07 still
+    /// counts. Fields step in different components, so a frame's offers are settled on the next frame's first offer.
+    /// Allocates nothing.
     /// </summary>
     public sealed class PickupReach
     {
-        /// <summary>Owner id of the tower's parts (<see cref="TowerPartField"/>).</summary>
-        public const int TowerParts = 0;
-
-        /// <summary>Owner id of the friends' parts (index = friend x <see cref="FriendProgress.MaxParts"/> + part).</summary>
-        public const int Friends = 2;
-
-        /// <summary>Owner id of the relay masts' spare parts (<see cref="RelayField"/>).</summary>
-        public const int Relays = 3;
-
-        /// <summary>Owner id of the material bundles waiting because the hold was full (<see cref="CargoBundles"/>).</summary>
+        /// <summary>Owner id of the pieces held because the hold was full (<see cref="CargoBundles"/>).</summary>
         public const int Bundles = 4;
-
-        /// <summary>Owner id of Ro's tape deck in Kenji's spare crate (<see cref="GaragePort"/>).</summary>
-        public const int Port = 5;
-
-        private const string NounPrefix = "pickup.";
 
         private int _frame = int.MinValue;
         private bool _held;
@@ -101,24 +86,6 @@ namespace MoonProject.Gameplay
             _held = held;
             _nextHas = false;
             _frame = frame;
-        }
-
-        /// <summary>The name key of a part for the prompt's noun, lower-case (built once, never per frame).</summary>
-        public static string NounKey(string partId)
-        {
-            return NounPrefix + partId.ToLowerInvariant();
-        }
-
-        /// <summary>The part leaves the ground for 07's back: the pickup's Act at the part, lasting its flight.</summary>
-        public static void Lifted(EventBus events, Vector3 at, float flightSeconds)
-        {
-            events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Act, at, Vector3.up, 1f, flightSeconds));
-        }
-
-        /// <summary>The part settles on 07's back with a clunk: the pickup's Impact at the cargo socket.</summary>
-        public static void Landed(EventBus events, Vector3 socket)
-        {
-            events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Impact, socket, Vector3.up, 1f, 0f));
         }
     }
 }

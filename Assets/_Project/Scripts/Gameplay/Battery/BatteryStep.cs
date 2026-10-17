@@ -17,9 +17,6 @@ namespace MoonProject.Gameplay
         /// <summary>Slope (degrees) of the ground along the travel: + uphill, - downhill.</summary>
         public float SlopeDegrees { get; set; }
 
-        /// <summary>A relic rides on the tether.</summary>
-        public bool Towing { get; set; }
-
         /// <summary>The Boost Coils are engaged.</summary>
         public bool Boosting { get; set; }
 
@@ -43,12 +40,9 @@ namespace MoonProject.Gameplay
         /// <summary>The Boost Coils' capacitor drums are on 07.</summary>
         public bool DrumsFitted { get; set; }
 
-        /// <summary>Tilly is home and awake, so she can fly out and lead a crawl.</summary>
-        public bool FriendCanLead { get; set; }
-
         /// <summary>
-        /// 07 is on a working charger (docked, or inside a lit mast's ring), at any speed: the model decides when
-        /// 07 has stopped long enough to charge.
+        /// 07 is on a working charger (a pad it built), at any speed: the model decides when 07 has stopped long
+        /// enough to charge.
         /// </summary>
         public bool OnCharger { get; set; }
 
@@ -60,7 +54,7 @@ namespace MoonProject.Gameplay
         /// <summary>07's position (the Low warning measures the way to <see cref="NearestLitCharger"/> from it).</summary>
         public Vector3 Position { get; set; }
 
-        /// <summary>The pad of the nearest charger that works now: the dock or a lit mast.</summary>
+        /// <summary>The nearest charger that works now: a powered pad 07 built.</summary>
         public Vector3 NearestLitCharger { get; set; }
     }
 }

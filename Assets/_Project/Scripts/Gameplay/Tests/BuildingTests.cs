@@ -90,12 +90,7 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(1, _catalog.Find(StructureIds.SolarArray).Ports.Count);
             Assert.AreEqual(2, _catalog.Find(StructureIds.BatteryBank).Ports.Count);
             Assert.AreEqual(3, _catalog.Find(StructureIds.PowerPylon).Ports.Count);
-            Assert.AreEqual(2, _catalog.Find(StructureIds.Smelter).Ports.Count);
-            Assert.AreEqual(2, _catalog.Find(StructureIds.Fabricator).Ports.Count);
-            Assert.AreEqual(1, _catalog.Find(StructureIds.StorageRack).Ports.Count);
-            Assert.AreEqual(1, _catalog.Find(StructureIds.UpgradeBay).Ports.Count);
             Assert.AreEqual(1, _catalog.Find(StructureIds.AntennaMast).Ports.Count);
-            Assert.AreEqual(1, _catalog.Find(StructureIds.VehiclePad).Ports.Count);
 
             var invalidNoPrefab = ScriptableObject.CreateInstance<StructureDefinition>();
             var dummyPrefab = new GameObject("DummyStructurePrefab");
@@ -169,7 +164,7 @@ namespace MoonProject.Gameplay.Tests
         public void PlacementRules_ReturnsValid_OrFirstInvalidReasonForEveryRule()
         {
             StructureDefinition solar = _catalog.Find(StructureIds.SolarArray);
-            StructureDefinition smelter = _catalog.Find(StructureIds.Smelter);
+            StructureDefinition mast = _catalog.Find(StructureIds.AntennaMast);
             TestWorld flat = TestWorld.Flat();
             Vector3 roverPos = Vector3.zero;
             var placed = new List<PlacedStructure>();
@@ -199,13 +194,14 @@ namespace MoonProject.Gameplay.Tests
             Vector3 roverNearSlope = slopeSpot + new Vector3(0f, 0f, -5f);
             Assert.AreEqual(
                 PlacementReason.TooSteep,
-                PlacementRules.Evaluate(smelter, new StructurePose(slopeSpot, 0f), basin, placed, roverNearSlope, _tuning));
+                PlacementRules.Evaluate(mast, new StructurePose(slopeSpot, 0f), basin, placed, roverNearSlope,
+                    _tuning));
 
             TestWorld stepWorld = TestWorld.WithStep();
             Assert.AreEqual(
                 PlacementReason.TooSteep,
                 PlacementRules.Evaluate(
-                    smelter,
+                    mast,
                     new StructurePose(new Vector3(10f, 0f, 0f), 0f),
                     stepWorld,
                     placed,
@@ -216,7 +212,7 @@ namespace MoonProject.Gameplay.Tests
             var overlappingPose = new StructurePose(new Vector3(0.5f, 0f, 5.5f), 35f);
             Assert.AreEqual(
                 PlacementReason.Overlaps,
-                PlacementRules.Evaluate(smelter, overlappingPose, flat, placed, roverPos, _tuning));
+                PlacementRules.Evaluate(mast, overlappingPose, flat, placed, roverPos, _tuning));
         }
 
         [Test]
@@ -404,7 +400,7 @@ namespace MoonProject.Gameplay.Tests
         public void PowerGrid_IsolatedBatteryBank_GetsNoSupplyConnectionWithoutSourceOrPylon()
         {
             StructureDefinition battery = _catalog.Find(StructureIds.BatteryBank);
-            StructureDefinition smelter = _catalog.Find(StructureIds.Smelter);
+            StructureDefinition mast = _catalog.Find(StructureIds.AntennaMast);
             StructureDefinition pylon = _catalog.Find(StructureIds.PowerPylon);
 
             var grid = new PowerGrid();
@@ -419,10 +415,10 @@ namespace MoonProject.Gameplay.Tests
             grid.AddNode(new PowerNode(
                 2,
                 new Vector3(3f, 0f, 0f),
-                smelter.ProduceWatts,
-                smelter.ConsumeWatts,
-                smelter.StoreWattHours,
-                smelter.ConnectionRadius));
+                mast.ProduceWatts,
+                mast.ConsumeWatts,
+                mast.StoreWattHours,
+                mast.ConnectionRadius));
 
             Assert.IsFalse(grid.AreConnected(1, 2), "Battery bank without a source or pylon does not form a grid.");
             grid.Step(PowerGrid.SecondsPerHour * 0.5f, sunlight01: 0f);
@@ -439,7 +435,7 @@ namespace MoonProject.Gameplay.Tests
 
             Assert.IsTrue(grid.AreConnected(1, 2), "Pylon in reach connects the battery bank and consumer.");
             grid.Step(PowerGrid.SecondsPerHour * 0.5f, sunlight01: 0f);
-            Assert.AreEqual(1f, grid.GetSupplyRatio(2), 1e-4f, "Connected battery supplies the smelter via pylon.");
+            Assert.AreEqual(1f, grid.GetSupplyRatio(2), 1e-4f, "Connected battery supplies the mast via pylon.");
         }
 
         [Test]
@@ -496,34 +492,34 @@ namespace MoonProject.Gameplay.Tests
             var placedBase = new PlacedBase(_catalog, _tuning, _events);
             TestWorld flat = TestWorld.Flat();
             Vector3 roverPos = Vector3.zero;
-            StructureDefinition fabricator = _catalog.Find(StructureIds.Fabricator);
+            StructureDefinition mast = _catalog.Find(StructureIds.AntennaMast);
 
             Assert.IsTrue(placedBase.TryPlace(
-                fabricator,
+                mast,
                 new StructurePose(new Vector3(0f, 0f, 5f), 0f),
                 flat,
                 roverPos,
                 out int unfinishedId,
                 out _));
-            placedBase.StepWeld(unfinishedId, fabricator.BuildSeconds * 0.4f, roverPos, isWelding: true);
+            placedBase.StepWeld(unfinishedId, mast.BuildSeconds * 0.4f, roverPos, isWelding: true);
 
             Assert.IsTrue(placedBase.TryDeconstruct(unfinishedId, out Recipe unfinishedRefund));
-            Assert.AreEqual(fabricator.BuildCost, unfinishedRefund, "Removing an unfinished frame refunds full cost.");
+            Assert.AreEqual(mast.BuildCost, unfinishedRefund, "Removing an unfinished frame refunds full cost.");
             Assert.AreEqual(0, placedBase.Count);
             Assert.AreEqual(1, removedEvents.Count);
 
             Assert.IsTrue(placedBase.TryPlace(
-                fabricator,
+                mast,
                 new StructurePose(new Vector3(0f, 0f, 5f), 0f),
                 flat,
                 roverPos,
                 out int finishedId,
                 out _));
-            Assert.IsTrue(placedBase.StepWeld(finishedId, fabricator.BuildSeconds, roverPos, isWelding: true));
+            Assert.IsTrue(placedBase.StepWeld(finishedId, mast.BuildSeconds, roverPos, isWelding: true));
 
             Assert.IsTrue(placedBase.TryDeconstruct(finishedId, out Recipe finishedRefund));
             Assert.AreEqual(
-                BuildJob.CalculateRefund(fabricator.BuildCost, _tuning.DeconstructRefundShare),
+                BuildJob.CalculateRefund(mast.BuildCost, _tuning.DeconstructRefundShare),
                 finishedRefund,
                 "Removing a finished structure refunds the tuned share.");
             Assert.AreEqual(0, placedBase.Count);
@@ -549,7 +545,7 @@ namespace MoonProject.Gameplay.Tests
 
             StructureDefinition solar = _catalog.Find(StructureIds.SolarArray);
             StructureDefinition battery = _catalog.Find(StructureIds.BatteryBank);
-            StructureDefinition smelter = _catalog.Find(StructureIds.Smelter);
+            StructureDefinition mast = _catalog.Find(StructureIds.AntennaMast);
 
             Assert.IsTrue(writerBase.TryPlace(
                 solar,
@@ -572,13 +568,13 @@ namespace MoonProject.Gameplay.Tests
                 initialStoredWh: 45f));
 
             Assert.IsTrue(writerBase.TryPlace(
-                smelter,
+                mast,
                 new StructurePose(new Vector3(-3f, 0f, 4f), 270f),
                 flat,
                 roverPos,
-                out int smelterId,
+                out int mastId,
                 out _));
-            writerBase.StepWeld(smelterId, smelter.BuildSeconds * 0.5f, roverPos, isWelding: true);
+            writerBase.StepWeld(mastId, mast.BuildSeconds * 0.5f, roverPos, isWelding: true);
 
             writerBase.StepPower(PowerGrid.SecondsPerHour * 0.5f, sunlight01: 1f);
             Assert.AreEqual(135f, writerBase.PowerGrid.GetStoredWattHours(batteryId), 1e-3f);
@@ -600,7 +596,7 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(3, readerBase.Count);
             PlacedStructure loadedSolar = readerBase.StructureAt(0);
             PlacedStructure loadedBattery = readerBase.StructureAt(1);
-            PlacedStructure loadedSmelter = readerBase.StructureAt(2);
+            PlacedStructure loadedMast = readerBase.StructureAt(2);
 
             Assert.AreEqual(StructureIds.SolarArray, loadedSolar.Definition.Id);
             Assert.AreEqual(90f, loadedSolar.Pose.Yaw, 1e-4f);
@@ -610,17 +606,17 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(180f, loadedBattery.Pose.Yaw, 1e-4f);
             Assert.AreEqual(135f, loadedBattery.StoredWattHours, 1e-3f);
 
-            Assert.AreEqual(StructureIds.Smelter, loadedSmelter.Definition.Id);
-            Assert.AreEqual(270f, loadedSmelter.Pose.Yaw, 1e-4f);
-            Assert.AreEqual(0.5f, loadedSmelter.BuildProgress01, 1e-4f);
+            Assert.AreEqual(StructureIds.AntennaMast, loadedMast.Definition.Id);
+            Assert.AreEqual(270f, loadedMast.Pose.Yaw, 1e-4f);
+            Assert.AreEqual(0.5f, loadedMast.BuildProgress01, 1e-4f);
 
-            readerBase.StepWeld(loadedSmelter.InstanceId, smelter.BuildSeconds * 0.5f, roverPos, isWelding: true);
+            readerBase.StepWeld(loadedMast.InstanceId, mast.BuildSeconds * 0.5f, roverPos, isWelding: true);
             readerBase.StepPower(1f, sunlight01: 1f);
             Assert.AreEqual(1, powerEvents.Count);
             Assert.AreEqual(1f, powerEvents[0].SupplyRatio, 1e-4f);
 
-            Assert.IsTrue(readerBase.TryDeconstruct(loadedSmelter.InstanceId, out Recipe refund));
-            Assert.AreEqual(BuildJob.CalculateRefund(smelter.BuildCost, _tuning.DeconstructRefundShare), refund);
+            Assert.IsTrue(readerBase.TryDeconstruct(loadedMast.InstanceId, out Recipe refund));
+            Assert.AreEqual(BuildJob.CalculateRefund(mast.BuildCost, _tuning.DeconstructRefundShare), refund);
             Assert.AreEqual(1, removedEvents.Count);
 
             LogAssert.Expect(LogType.Error, new Regex("unknown_lunar_widget"));
@@ -947,11 +943,6 @@ namespace MoonProject.Gameplay.Tests
 
             var scanTuningAsset = AssetDatabase.LoadAssetAtPath<ScanTuning>(GameplayAssetPaths.ScanTuning);
             Assert.IsNotNull(scanTuningAsset);
-            CollectionAssert.AreEquivalent(
-                new[] { StructureIds.UpgradeBay, StructureIds.VehiclePad },
-                scanTuningAsset.LaterStructureIds,
-                "UpgradeBay and VehiclePad are reserved in ScanTuning.LaterStructureIds for later places.");
-
             var known = new KnownStructures(_catalog, _events);
             var placedBase = new PlacedBase(_catalog, buildingTuningAsset, _events, known);
             Assert.AreEqual(0, known.Count);
@@ -1041,8 +1032,6 @@ namespace MoonProject.Gameplay.Tests
                 Assert.IsTrue(loadedKnown.IsKnown(StructureIds.BatteryBank));
                 Assert.IsTrue(loadedKnown.IsKnown(StructureIds.AntennaMast));
                 Assert.IsFalse(loadedKnown.IsKnown(StructureIds.ChargingPad), "the lander's cargo bay was not scanned");
-                Assert.IsFalse(loadedKnown.IsKnown(StructureIds.UpgradeBay));
-                Assert.IsFalse(loadedKnown.IsKnown(StructureIds.VehiclePad));
 
                 var loadedScans = new ScanField(scanTuningAsset, _events, save, stock, loadedKnown);
                 for (int i = 0; i < scanTuningAsset.Ruins.Count; i++)

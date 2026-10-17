@@ -103,6 +103,43 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void Scanning_OscillatesScannerHeadYawAndPitchInStepWithSweep_AndSettlesOnLetGo()
+        {
+            var look = new ScanLook(_settings);
+            look.Begin(0f, 2.0f);
+            Run(look, 0.6f);
+
+            float minYaw = float.PositiveInfinity;
+            float maxYaw = float.NegativeInfinity;
+            float minPitch = float.PositiveInfinity;
+            float maxPitch = float.NegativeInfinity;
+
+            for (float t = 0f; t < _settings.SweepSeconds; t += Frame)
+            {
+                if (Mathf.Abs(t - 0.5f) < Frame * 0.5f)
+                {
+                    look.Quarter(0.5f);
+                }
+
+                look.Step(Frame);
+                minYaw = Mathf.Min(minYaw, look.HeadSweepYaw);
+                maxYaw = Mathf.Max(maxYaw, look.HeadSweepYaw);
+                minPitch = Mathf.Min(minPitch, look.HeadSweepPitch);
+                maxPitch = Mathf.Max(maxPitch, look.HeadSweepPitch);
+            }
+
+            Assert.Greater(maxYaw - minYaw, 2.0f, "Scanner head yaw must mechanically oscillate in step with the sweep.");
+            Assert.Greater(maxPitch - minPitch, 1.2f, "Scanner head pitch must nod/tick in step with the sweep.");
+            Assert.Less(Mathf.Max(Mathf.Abs(minYaw), Mathf.Abs(maxYaw)), _settings.AimToleranceDegrees * 0.6f,
+                "Head oscillation must stay well inside line-of-sight aim tolerance.");
+
+            look.LetGo();
+            Run(look, 1.5f);
+            Assert.AreEqual(0f, look.HeadSweepYaw, 0.02f, "Head yaw oscillation settles to zero on let-go.");
+            Assert.AreEqual(0f, look.HeadSweepPitch, 0.02f, "Head pitch oscillation settles to zero on let-go.");
+        }
+
+        [Test]
         public void ScanAim_LensAngles_CompensatesCheekParallax_SoLensForwardHitsTarget()
         {
             var lensOffset = new Vector3(-0.34f, 0.04f, 0.25f);

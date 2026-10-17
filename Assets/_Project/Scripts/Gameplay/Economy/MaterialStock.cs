@@ -5,10 +5,9 @@ using MoonProject.Core.Events;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Every material the player has (<see cref="IMaterialStock"/>): 07's <see cref="Hold"/> and home's
-    /// <see cref="Home"/> together (docs/features/M3-25 §3.3). Salvage goes into the hold, the dock moves it home,
-    /// recipes read both and spend home first, then 07. Every change of the totals (a restore included) publishes
-    /// <see cref="MaterialsChanged"/>.
+    /// Every material the player has (<see cref="IMaterialStock"/>): 07's <see cref="Hold"/> (opening-v2 §5: inventory
+    /// is 07's hold only). Salvage goes into the hold and recipes spend from it. Every change of the totals (a restore
+    /// included) publishes <see cref="MaterialsChanged"/>.
     /// </summary>
     public sealed class MaterialStock : IMaterialStock
     {
@@ -19,17 +18,15 @@ namespace MoonProject.Gameplay
         };
 
         private readonly EventBus _events;
+        private readonly int[] _incoming = new int[SalvageMaterials.Count];
 
-        public MaterialStock(EventBus events, CargoHold hold, HomeStorage home)
+        public MaterialStock(EventBus events, CargoHold hold)
         {
             _events = events ?? throw new ArgumentNullException(nameof(events));
             Hold = hold ?? throw new ArgumentNullException(nameof(hold));
-            Home = home ?? throw new ArgumentNullException(nameof(home));
         }
 
         public CargoHold Hold { get; }
-
-        public HomeStorage Home { get; }
 
         public int Metal => Of(SalvageMaterial.Metal);
 
@@ -53,7 +50,31 @@ namespace MoonProject.Gameplay
 
         public int Of(SalvageMaterial material)
         {
-            return Hold.Units(material) + Home.Units(material);
+            return Hold.Units(material);
+        }
+
+        /// <summary>
+        /// Units of <paramref name=material/> the hold can still take, less what is already on its way in (a cut
+        /// piece flying to 07): every source checks this, so nothing that flies in ever finds the hold full.
+        /// </summary>
+        public int Room(SalvageMaterial material)
+        {
+            return Math.Max(0, Hold.FreeUnits(material) - _incoming[(int)material]);
+        }
+
+        /// <summary>
+        /// <paramref name="units"/> of <paramref name="material"/> set off for the hold (see <see cref="Room"/>).
+        /// </summary>
+        public void Expect(SalvageMaterial material, int units)
+        {
+            _incoming[(int)material] += units;
+        }
+
+        /// <summary>What was expected arrives: it is collected and no longer reserved.</summary>
+        public void Receive(SalvageMaterial material, int units)
+        {
+            _incoming[(int)material] = Math.Max(0, _incoming[(int)material] - units);
+            Collect(material, units);
         }
 
         public bool Has(Recipe recipe)
@@ -99,58 +120,7 @@ namespace MoonProject.Gameplay
             Announce();
         }
 
-        /// <summary>
-        /// Moves up to <paramref name="units"/> of <paramref name="material"/> from 07's hold onto home's shelves (the
-        /// dock's unload, M3-25 §3.2); returns how many moved. The totals do not change.
-        /// </summary>
-        public int MoveHome(SalvageMaterial material, int units)
-        {
-            int moving = Math.Min(Math.Min(units, Hold.Units(material)), Home.FreeUnits(material));
-            if (moving <= 0)
-            {
-                return 0;
-            }
-
-            Hold.Remove(material, moving);
-            Home.Add(material, moving);
-            return moving;
-        }
-
-        /// <summary>
-        /// Moves up to <paramref name="units"/> of <paramref name="material"/> from home's shelves into 07's hold (the
-        /// docked transfer view, 0.5.5 §3); returns how many moved. The totals do not change.
-        /// </summary>
-        public int MoveAboard(SalvageMaterial material, int units)
-        {
-            int moving = Math.Min(Math.Min(units, Home.Units(material)), Hold.FreeUnits(material));
-            if (moving <= 0)
-            {
-                return 0;
-            }
-
-            Home.Remove(material, moving);
-            Hold.Add(material, moving);
-            return moving;
-        }
-
-        /// <summary>
-        /// Puts <paramref name="units"/> straight onto home's shelves (Tilly's fetch, M3-25 T3); returns what did not
-        /// fit, which stays where it was.
-        /// </summary>
-        public int Deliver(SalvageMaterial material, int units)
-        {
-            int fitted = Home.Add(material, units);
-            if (fitted > 0)
-            {
-                Announce();
-            }
-
-            return units - fitted;
-        }
-
-        /// <summary>
-        /// Spends <paramref name="recipe"/> if home and 07 together cover it, home first; else nothing changes.
-        /// </summary>
+        /// <summary>Spends <paramref name="recipe"/> if 07's hold covers it; else nothing changes.</summary>
         public bool TrySpend(Recipe recipe)
         {
             if (recipe.IsFree)
@@ -166,9 +136,7 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < RecipeMaterials.Length; i++)
             {
                 SalvageMaterial material = RecipeMaterials[i];
-                int need = recipe.Of(material);
-                need -= Home.Remove(material, need);
-                Hold.Remove(material, need);
+                Hold.Remove(material, recipe.Of(material));
             }
 
             Announce();
@@ -177,20 +145,10 @@ namespace MoonProject.Gameplay
 
         public MaterialsSaveData Capture()
         {
-            return new MaterialsSaveData
-            {
-                hold = Hold.Capture(),
-                holdSlots = Hold.SlotCount,
-                home = Home.CaptureShelves(),
-                overflow = Home.CaptureOverflow(),
-                shelvesBuilt = Home.BuiltCount,
-            };
+            return new MaterialsSaveData { hold = Hold.Capture(), holdSlots = Hold.SlotCount };
         }
 
-        /// <summary>
-        /// Lays a save in. The hold keeps at least its saved slots (the kits restore after), and anything that no
-        /// longer fits it goes home; home's own overflow waits in crates. Nothing is dropped.
-        /// </summary>
+        /// <summary>Lays a save in: the hold keeps at least its saved slots.</summary>
         public void Restore(MaterialsSaveData data)
         {
             if (data == null)
@@ -199,9 +157,6 @@ namespace MoonProject.Gameplay
             }
 
             int[] hold = data.hold ?? Array.Empty<int>();
-            var home = new int[SalvageMaterials.Count];
-            Copy(data.home, home, "home");
-            Home.Restore(data.shelvesBuilt, home, data.overflow ?? Array.Empty<int>());
             Hold.Clear();
             Hold.SetSlotCount(Math.Max(Hold.SlotCount, data.holdSlots));
             for (int m = 0; m < hold.Length && m < SalvageMaterials.Count; m++)
@@ -211,52 +166,13 @@ namespace MoonProject.Gameplay
                     throw new FormatException($"07's saved {(SalvageMaterial)m} is negative ({hold[m]}).");
                 }
 
-                var material = (SalvageMaterial)m;
-                int left = hold[m] - (hold[m] > 0 ? Hold.Add(material, hold[m]) : 0);
-                int shelved = left > 0 ? Home.Add(material, left) : 0;
-                if (left > shelved)
+                if (hold[m] > 0)
                 {
-                    Home.AddOverflow(material, left - shelved);
+                    Hold.Add((SalvageMaterial)m, hold[m]);
                 }
             }
 
             Announce();
-        }
-
-        /// <summary>
-        /// Frees one hold slot for a restored story part from a 0.5.5 save whose hold was full of materials: the last
-        /// material stack moves to home's shelves (or home's overflow crates), so nothing is lost.
-        /// </summary>
-        internal void MakeRoomForPart()
-        {
-            while (!Hold.HasFreeSlot && Hold.MaterialSlots > 0)
-            {
-                MaterialSlot slot = Hold.GetSlot(Hold.MaterialSlots - 1);
-                int taken = Hold.Remove(slot.Material, slot.Units);
-                int shelved = taken > 0 ? Home.Add(slot.Material, taken) : 0;
-                if (taken > shelved)
-                {
-                    Home.AddOverflow(slot.Material, taken - shelved);
-                }
-            }
-        }
-
-        private static void Copy(int[] from, int[] to, string what)
-        {
-            if (from == null)
-            {
-                return;
-            }
-
-            for (int m = 0; m < from.Length && m < to.Length; m++)
-            {
-                if (from[m] < 0)
-                {
-                    throw new FormatException($"The saved {what} {(SalvageMaterial)m} is negative ({from[m]}).");
-                }
-
-                to[m] = from[m];
-            }
         }
 
         private void Announce()

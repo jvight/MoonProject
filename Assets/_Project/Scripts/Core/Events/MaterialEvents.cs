@@ -36,20 +36,6 @@ namespace MoonProject.Core.Events
         public Vector3 Position { get; }
     }
 
-    /// <summary>A waiting bundle was taken into 07's hold later, now that there was room.</summary>
-    public readonly struct CargoPickupTaken
-    {
-        public CargoPickupTaken(SalvageMaterial material, int units)
-        {
-            Material = material;
-            Units = units;
-        }
-
-        public SalvageMaterial Material { get; }
-
-        public int Units { get; }
-    }
-
     /// <summary>07 unloaded at the dock onto home's shelves (M3-25 §3.2), with no input.</summary>
     public readonly struct CargoUnloaded
     {
@@ -82,35 +68,6 @@ namespace MoonProject.Core.Events
         public int SlotCount { get; }
     }
 
-    /// <summary>A shelf was built on a free socket at home (M3-25 §3.1); its slots appear on the cargo screen.</summary>
-    public readonly struct ShelfBuilt
-    {
-        public ShelfBuilt(int socketIndex, int tier)
-        {
-            SocketIndex = socketIndex;
-            Tier = tier;
-        }
-
-        /// <summary>The shelf's index in <see cref="IHomeStorage"/>.</summary>
-        public int SocketIndex { get; }
-
-        public int Tier { get; }
-    }
-
-    /// <summary>Tilly set a waiting bundle on home's shelves (M3-25 T3).</summary>
-    public readonly struct BundleFetched
-    {
-        public BundleFetched(SalvageMaterial material, int units)
-        {
-            Material = material;
-            Units = units;
-        }
-
-        public SalvageMaterial Material { get; }
-
-        public int Units { get; }
-    }
-
     /// <summary>
     /// A crew supply crate was cut open (M3-25 T4): its stack goes to the hold like a bundle and the packing note
     /// shows in the crew member's hand.
@@ -130,7 +87,7 @@ namespace MoonProject.Core.Events
         public string SiteId { get; }
 
         /// <summary>
-        /// Whose hand packed it ("kenji", ...). Its packing note is keyed by site: <see cref="CrewCrateKeys.Note"/>.
+        /// Whose hand packed it ("kenji", ...). Its packing note is keyed by site.
         /// </summary>
         public string CrewId { get; }
 
@@ -139,24 +96,6 @@ namespace MoonProject.Core.Events
         public int Units { get; }
 
         public Vector3 Position { get; }
-    }
-
-    /// <summary>A home building refined a material, with no input (M3-27, 0.6).</summary>
-    public readonly struct MaterialRefined
-    {
-        public MaterialRefined(SalvageMaterial material, int units, string building)
-        {
-            Material = material;
-            Units = units;
-            Building = building;
-        }
-
-        public SalvageMaterial Material { get; }
-
-        public int Units { get; }
-
-        /// <summary>The building's id ("smelter", ...).</summary>
-        public string Building { get; }
     }
 
     /// <summary>07's cutter tier changed (M3-26): a kit was fitted, or a load restored it.</summary>

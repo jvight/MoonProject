@@ -6,27 +6,14 @@ using MoonProject.Core;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Scanning (docs/design/0.5.5-owner-feedback.md §1): the blueprints' fragment sets, how long a fragment takes to
-    /// scan by its size, how far its corner brackets show, and the closing dissolve. Created by the Gameplay/Tuning
+    /// Scanning (docs/design/0.5.5-owner-feedback.md §1, opening-v2 §1): the ruins' structure sets and story scans,
+    /// how long a target takes to scan by its size, and the closing dissolve. Created by the Gameplay/Tuning
     /// builder; runtime code only reads it.
     /// </summary>
     public sealed class ScanTuning : ScriptableObject
     {
         /// <summary>The lander cargo bay's scan host id (its fragments' saved ids start with it).</summary>
         public const string LanderCargoId = "LanderCargo";
-
-        [Header("The sets (§1.3)")]
-        [Tooltip("Every blueprint's fragments, in Art's set names; the 18 of 0.5.")]
-        [SerializeField] private ScanSet[] _sets =
-        {
-            new ScanSet("CargoCradle", "rover.cargo_cradle", ScanSize.Medium, ScanSize.Medium),
-            new ScanSet("WarmHeadlamp", "rover.warm_headlamp", ScanSize.Small, ScanSize.Medium),
-            new ScanSet("HoverJump", "rover.hover_jump", ScanSize.Small, ScanSize.Medium, ScanSize.Medium),
-            new ScanSet("BoostCoils", "rover.boost_coils", ScanSize.Medium, ScanSize.Medium, ScanSize.Large),
-            new ScanSet("CellPack", "rover.cell_pack", ScanSize.Small, ScanSize.Small, ScanSize.Medium),
-            new ScanSet("FocusLens", "rover.focus_lens", ScanSize.Small, ScanSize.Small, ScanSize.Small),
-            new ScanSet("SideBins", "rover.side_bins", ScanSize.Medium, ScanSize.Large),
-        };
 
         [Header("The verb (§1.2)")]
         [Tooltip("Seconds to scan a small fragment (a lamp, a lens).")]
@@ -37,15 +24,6 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Seconds to scan a large fragment (a capacitor bank, a pannier).")]
         [Range(0.3f, 10f)] [SerializeField] private float _largeSeconds = 4f;
-
-        [Tooltip("How much faster the Focus Lens makes every scan (§1.6).")]
-        [Range(1f, 3f)] [SerializeField] private float _lensFactor = 1.5f;
-
-        [Tooltip("Metres within which a fragment still to scan shows its corner brackets.")]
-        [Range(2f, 60f)] [SerializeField] private float _bracketRange = 15f;
-
-        [Tooltip("The same with the Focus Lens fitted (§1.6).")]
-        [Range(2f, 60f)] [SerializeField] private float _lensBracketRange = 25f;
 
         [Tooltip("Metres from a fragment's scan point within which a hold of E scans it.")]
         [Range(1f, 20f)] [SerializeField] private float _reach = 8f;
@@ -69,9 +47,6 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds of the dissolve: the solid fades, the lines stream into 07's lens, the lens flares.")]
         [Range(0.3f, 3f)] [SerializeField] private float _dissolveSeconds = 0.9f;
 
-        [Tooltip("Seconds the faint dust outline left on the spot takes to fade.")]
-        [Range(0.3f, 6f)] [SerializeField] private float _outlineSeconds = 2f;
-
         [Tooltip("Metal a fragment of an already known blueprint gives after its dissolve, so leftovers still pay.")]
         [Range(0, 12)] [SerializeField] private int _knownMetal = 3;
 
@@ -86,7 +61,7 @@ namespace MoonProject.Gameplay
         [Range(0.003f, 0.05f)] [SerializeField] private float _scanLineWidth = 0.014f;
 
         [Tooltip("Emissive intensity of the crisp surface scan line (calm, under bloom blowout).")]
-        [Range(0.1f, 2f)] [SerializeField] private float _scanLineIntensity = 1.35f;
+        [Range(0.1f, 2f)] [SerializeField] private float _scanLineIntensity = 1.15f;
 
         [Tooltip("World-space vertical spacing between anti-aliased horizontal surface raster lines (m), chosen so they never alias at chase distance.")]
         [Range(0.02f, 0.2f)] [SerializeField] private float _rasterSpacingMeters = 0.055f;
@@ -107,37 +82,81 @@ namespace MoonProject.Gameplay
         [Range(0.1f, 2f)] [SerializeField] private float _pingEdgeIntensity = 1.25f;
 
         [Tooltip("Diameter of the soft emitter glow core at 07's scan lens (m).")]
-        [Range(0.01f, 0.2f)] [SerializeField] private float _lensGlowSize = 0.06f;
+        [Range(0.01f, 0.35f)] [SerializeField] private float _lensGlowSize = 0.072f;
 
         [Tooltip("Alpha of the soft emitter glow core at 07's scan lens.")]
-        [Range(0.02f, 1f)] [SerializeField] private float _lensGlowAlpha = 0.32f;
+        [Range(0.02f, 1f)] [SerializeField] private float _lensGlowAlpha = 0.76f;
 
         [Tooltip("Diameter of the soft outer halo at 07's scan lens (m).")]
-        [Range(0.02f, 0.4f)] [SerializeField] private float _lensHaloSize = 0.13f;
+        [Range(0.02f, 0.6f)] [SerializeField] private float _lensHaloSize = 0.16f;
 
-        [Tooltip("Alpha of the soft outer halo at 07's scan lens.")]
-        [Range(0.01f, 0.5f)] [SerializeField] private float _lensHaloAlpha = 0.08f;
+        [Tooltip("Alpha of the soft outer halo at 07's scan lens (kept calm below bloom blowout).")]
+        [Range(0.01f, 0.8f)] [SerializeField] private float _lensHaloAlpha = 0.18f;
 
         [Tooltip("Maximum radius from 07's lens where tiny motes sparkle in vacuum (m).")]
-        [Range(0.01f, 0.12f)] [SerializeField] private float _lensMoteRadius = 0.042f;
+        [Range(0.01f, 0.16f)] [SerializeField] private float _lensMoteRadius = 0.052f;
 
         [Tooltip("Diameter of the tiny motes sparkling right at 07's lens (m).")]
-        [Range(0.004f, 0.04f)] [SerializeField] private float _lensMoteSize = 0.014f;
+        [Range(0.003f, 0.06f)] [SerializeField] private float _lensMoteSize = 0.008f;
 
         [Tooltip("Peak alpha of the tiny motes sparkling right at 07's lens.")]
-        [Range(0f, 0.5f)] [SerializeField] private float _lensMoteAlpha = 0.16f;
+        [Range(0f, 1f)] [SerializeField] private float _lensMoteAlpha = 0.38f;
 
-        [Header("The chasm's near lip (§1.3)")]
-        [Tooltip("Metres back from the canyon lip, toward the basin, where Kenji's crashed test jumper lies.")]
-        [Range(0f, 30f)] [SerializeField] private float _jumperSetback = 6f;
+        [Header("Stylised scan beam wedge & lens (SCAN v3)")]
+        [Tooltip("Width (m) of the narrow scan beam wedge at 07's cheek lens aperture.")]
+        [Range(0.01f, 0.12f)] [SerializeField] private float _beamLensWidth = 0.064f;
 
-        [Tooltip("Metres to the left of the leap's run-up line (looking at the chasm) the jumper lies: clear of the " +
-                 "lane 07 runs at the lip and of the bridge's stub on its right, inside the chasm's floor.")]
-        [Range(0f, 10f)] [SerializeField] private float _jumperSide = 6f;
+        [Tooltip("Share of the target's sweep span height spanned by the far edge of the scan beam wedge where it meets the surface scan line.")]
+        [Range(0.25f, 1.25f)] [SerializeField] private float _beamTargetWidthShare = 0.85f;
+
+        [Tooltip("Peak additive alpha of the scan beam wedge in the first couple of cm leaving 07's cheek lens.")]
+        [Range(0.05f, 0.85f)] [SerializeField] private float _beamLensPeakAlpha = 0.68f;
+
+        [Tooltip("Very low additive alpha in the middle of the scan beam wedge (almost invisible in the middle).")]
+        [Range(0.005f, 0.15f)] [SerializeField] private float _beamMidAlpha = 0.022f;
+
+        [Tooltip("Additive alpha where the far edge of the scan beam wedge meets the current surface scan line on the target.")]
+        [Range(0.04f, 0.65f)] [SerializeField] private float _beamContactAlpha = 0.38f;
+
+        [Tooltip("Fine scanline band density inside the scan beam wedge.")]
+        [Range(12f, 120f)] [SerializeField] private float _beamScanlineDensity = 42f;
+
+        [Tooltip("Contrast (0..1) of the fine scanline texture inside the scan beam wedge.")]
+        [Range(0.05f, 0.85f)] [SerializeField] private float _beamScanlineContrast = 0.48f;
+
+        [Tooltip("Diameter (m) of the opening cyan iris ring on 07's brass cheek lens while scanning.")]
+        [Range(0.04f, 0.4f)] [SerializeField] private float _lensIrisSize = 0.138f;
+
+        [Tooltip("Peak alpha of the opening cyan iris ring on 07's brass cheek lens.")]
+        [Range(0.05f, 1f)] [SerializeField] private float _lensIrisAlpha = 0.82f;
+
+        [Tooltip("Length (m) of the short optical cross-glint flare needles clamped within 07's cheek lens bezel.")]
+        [Range(0.02f, 0.4f)] [SerializeField] private float _lensGlintLength = 0.068f;
+
+        [Tooltip("Width (m) of the optical cross-glint flare needles on 07's cheek lens.")]
+        [Range(0.003f, 0.05f)] [SerializeField] private float _lensGlintWidth = 0.008f;
+
+        [Tooltip("Peak alpha of the optical cross-glint flare on 07's cheek lens.")]
+        [Range(0.05f, 1f)] [SerializeField] private float _lensGlintAlpha = 0.76f;
+
+        [Tooltip("Number of sparse dust grains catching the laser sparkle within a thin band of the beam wedge.")]
+        [Range(0, 16)] [SerializeField] private int _pathGlintCount = 5;
+
+        [Tooltip("Diameter (m) of each tiny dust grain sparkle along the beam wedge (1-3 px at chase distance).")]
+        [Range(0.004f, 0.08f)] [SerializeField] private float _pathGlintSize = 0.016f;
+
+        [Tooltip("Peak alpha of each brief dust grain sparkle along the beam wedge (capped strictly below bloom threshold).")]
+        [Range(0f, 1f)] [SerializeField] private float _pathGlintAlpha = 0.32f;
+
+        [Tooltip("Brief twinkle lifetime (s) of each ballistic dust grain sparkle (0.1-0.3 s).")]
+        [Range(0.1f, 0.3f)] [SerializeField] private float _pathGlintLifetime = 0.18f;
+
+        [Tooltip("Downward lunar gravity acceleration (m/s^2, 1/6 g = 1.62) for the ballistic dust grains along the scan path.")]
+        [Range(0.2f, 5f)] [SerializeField] private float _pathGlintGravity = 1.62f;
 
         [Header("Lumen station ruins (RUINS-WORLD, opening-v2 §4)")]
-        [Tooltip("Each R1 ruin piece's Scan_1..N targets and the structure blueprints it teaches once every one of them " +
-                 "is scanned (the workshop and the scatter teach nothing: they hold lockers and panels).")]
+        [Tooltip("Each R1 ruin piece's Scan_1..N targets and the structure blueprints it teaches once every one of " +
+                 "them is scanned (the workshop and the scatter teach nothing: they hold lockers and panels).")]
         [SerializeField] private RuinScanSet[] _ruins =
         {
             new RuinScanSet("FallenSolarArray", new[] { StructureIds.SolarArray },
@@ -160,29 +179,17 @@ namespace MoonProject.Gameplay
             new StoryScan("airlock", "HabitatModules", "AirlockPanel", "story.airlock_panel", ScanSize.Small),
         };
 
-        [Tooltip("Structure blueprints whose scan targets belong to places later in the map (not at the home ruins).")]
-        [SerializeField] private string[] _laterStructureIds =
-        {
-            StructureIds.UpgradeBay,
-            StructureIds.VehiclePad,
-        };
-
         private static readonly int ScanLineColorShaderId = Shader.PropertyToID("_MoonScanLineColor");
         private static readonly int ScanPingColorShaderId = Shader.PropertyToID("_MoonScanPingColor");
         private static readonly int ScanParamsShaderId = Shader.PropertyToID("_MoonScanParams");
         private static readonly int ScanPingParamsShaderId = Shader.PropertyToID("_MoonScanPingParams");
 
-        public IReadOnlyList<ScanSet> Sets => _sets;
         public IReadOnlyList<RuinScanSet> Ruins => _ruins;
 
         /// <summary>The lander cargo bay's scan set (the charging pad's fragments).</summary>
         public RuinScanSet LanderCargo => _landerCargo;
 
         public IReadOnlyList<StoryScan> Stories => _stories;
-        public IReadOnlyList<string> LaterStructureIds => _laterStructureIds;
-        public float LensFactor => _lensFactor;
-        public float BracketRange => _bracketRange;
-        public float LensBracketRange => _lensBracketRange;
         public float Reach => _reach;
         public float Cone => _cone;
         public float DistanceWeight => _distanceWeight;
@@ -190,7 +197,6 @@ namespace MoonProject.Gameplay
         public int GazePriority => _gazePriority;
         public float AimToleranceDegrees => _aimToleranceDegrees;
         public float DissolveSeconds => _dissolveSeconds;
-        public float OutlineSeconds => _outlineSeconds;
         public int KnownMetal => _knownMetal;
         public Color ScanLineColor => _scanLineColor;
         public Color CompletionPingColor => _completionPingColor;
@@ -209,8 +215,23 @@ namespace MoonProject.Gameplay
         public float LensMoteRadius => _lensMoteRadius;
         public float LensMoteSize => _lensMoteSize;
         public float LensMoteAlpha => _lensMoteAlpha;
-        public float JumperSetback => _jumperSetback;
-        public float JumperSide => _jumperSide;
+        public float BeamLensWidth => _beamLensWidth;
+        public float BeamTargetWidthShare => _beamTargetWidthShare;
+        public float BeamLensPeakAlpha => _beamLensPeakAlpha;
+        public float BeamMidAlpha => _beamMidAlpha;
+        public float BeamContactAlpha => _beamContactAlpha;
+        public float BeamScanlineDensity => _beamScanlineDensity;
+        public float BeamScanlineContrast => _beamScanlineContrast;
+        public float LensIrisSize => _lensIrisSize;
+        public float LensIrisAlpha => _lensIrisAlpha;
+        public float LensGlintLength => _lensGlintLength;
+        public float LensGlintWidth => _lensGlintWidth;
+        public float LensGlintAlpha => _lensGlintAlpha;
+        public int PathGlintCount => _pathGlintCount;
+        public float PathGlintSize => _pathGlintSize;
+        public float PathGlintAlpha => _pathGlintAlpha;
+        public float PathGlintLifetime => _pathGlintLifetime;
+        public float PathGlintGravity => _pathGlintGravity;
 
         /// <summary>Pushes the surface scan line, raster band, and completion ping tuning to shader globals (zero GC).</summary>
         public void ApplyShaderGlobals(float scanDurationSeconds)
@@ -242,22 +263,6 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>The set named <paramref name="blueprint"/> in Art's names, or false.</summary>
-        public bool TryGetSet(string blueprint, out ScanSet set)
-        {
-            for (int i = 0; i < _sets.Length; i++)
-            {
-                if (string.Equals(_sets[i].Blueprint, blueprint, StringComparison.Ordinal))
-                {
-                    set = _sets[i];
-                    return true;
-                }
-            }
-
-            set = default;
-            return false;
-        }
-
         /// <summary>The ruin scan set for <paramref name="ruinId"/>, or false.</summary>
         public bool TryGetRuinSet(string ruinId, out RuinScanSet set)
         {
@@ -272,39 +277,6 @@ namespace MoonProject.Gameplay
 
             set = default;
             return false;
-        }
-
-        private void OnValidate()
-        {
-            if (_laterStructureIds == null)
-            {
-                _laterStructureIds = Array.Empty<string>();
-                return;
-            }
-
-            int validCount = 0;
-            for (int i = 0; i < _laterStructureIds.Length; i++)
-            {
-                if (!string.IsNullOrWhiteSpace(_laterStructureIds[i]))
-                {
-                    validCount++;
-                }
-            }
-
-            if (validCount != _laterStructureIds.Length)
-            {
-                var cleaned = new string[validCount];
-                int dst = 0;
-                for (int i = 0; i < _laterStructureIds.Length; i++)
-                {
-                    if (!string.IsNullOrWhiteSpace(_laterStructureIds[i]))
-                    {
-                        cleaned[dst++] = _laterStructureIds[i];
-                    }
-                }
-
-                _laterStructureIds = cleaned;
-            }
         }
     }
 }

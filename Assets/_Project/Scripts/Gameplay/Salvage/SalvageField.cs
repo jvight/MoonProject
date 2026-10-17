@@ -10,31 +10,27 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Salvage (docs/features/M3-13). Art's five wrecks stand on the World's <c>site.*</c> anchors
-    /// (<see cref="SalvageSiteBuilder"/>), and a soft cone of aim (VISION ruling 2) picks the piece 07 looks at within
-    /// reach. Holding Excavate asks 07 to ease to a stop, then the beam charges up and cuts along the piece's cut line
-    /// for two to four seconds (<see cref="SalvageCutStarted"/>; the look is the feel kit's <see cref="FeelVfx"/>,
-    /// which reads where to draw from this field as its <see cref="IFeelAnchors"/>); letting go keeps the progress (ruling 4,
-    /// <see cref="SalvageCutStopped"/>). Cut free, the piece comes away from the wreck, folds into a bundle of its
-    /// material and spirals into 07: a flash, <see cref="MaterialSalvaged"/> with the site's climbing melody step, the
-    /// stock grows and the game saves. Drag pieces hang on until the tether pulls them a few metres clear; then they
-    /// lie loose and the beam can cut them. When every piece is gone the skeleton stays, picked clean for good.
-    /// Materials come only from the wreck sites: nothing lies loose on open ground (docs/features/M3-24). A relic in a site's heart is dug by the excavation: whichever 07 looks at more directly, the heart or a piece,
-    /// is what the hold works on. A drag piece lost off the drivable floor floats back beside its site (ruling 1).
-    /// It is the <see cref="ISalvageStatus"/> the UI's hold ring and the audio's beam read. Everything is built at
-    /// initialisation; the frame loop allocates nothing.
+    /// Salvage (docs/features/M3-13). Art's wrecks stand on the World's <c>site.*</c> anchors (opening-v2 §5: the
+    /// Kestrel impact) (<see cref="SalvageSiteBuilder"/>), and a soft cone of aim (VISION ruling 2) picks the piece 07
+    /// looks at within reach. Holding Excavate asks 07 to ease to a stop, then the beam charges up and cuts along the
+    /// piece's cut line for two to four seconds (<see cref="SalvageCutStarted"/>; the look is the feel kit's
+    /// <see cref="FeelVfx"/>, which reads where to draw from this field as its <see cref="IFeelAnchors"/>); letting go
+    /// keeps the progress (ruling 4, <see cref="SalvageCutStopped"/>). Cut free, the piece comes away from the wreck,
+    /// folds into a bundle of its material and spirals into 07: a flash, <see cref="MaterialSalvaged"/> with the site's
+    /// climbing melody step, the stock grows and the game saves. When every piece is gone the skeleton stays, picked
+    /// clean for good. Materials come only from wrecks and crates: nothing lies loose on open ground
+    /// (docs/features/M3-24). It is the <see cref="ISalvageStatus"/> the UI's hold ring and the audio's beam read.
+    /// Everything is built at initialisation; the frame loop allocates nothing.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class SalvageField : MonoBehaviour, ISalvageStatus, IFeelAnchors
     {
-        /// <summary>Half-angle (degrees) inside which a relic's heart competes with the pieces for the hold.</summary>
-        private const float HeartCone = 90f;
-
         /// <summary>The Moon's surface gravity (m/s²): a freed piece tumbles under it (feel-pass R11).</summary>
         private const float LunarGravity = 1.62f;
 
         /// <summary>The Cut Follow strength that marks the beam sliding to a piece's next segment (M3-26 §6).</summary>
         private const float SegmentSlide = 0.5f;
+
         [Tooltip("Salvage tuning (Assets/_Project/Data/Tuning/Gameplay/SalvageTuning.asset).")]
         [SerializeField] private SalvageTuning _tuning;
 
@@ -42,16 +38,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private SalvageCatalog _catalog;
 
         private readonly List<SalvageSite> _sites = new List<SalvageSite>();
-        private readonly List<SalvageSite> _derelicts = new List<SalvageSite>();
-        private readonly Dictionary<string, SalvageSite> _hosts =
-            new Dictionary<string, SalvageSite>(StringComparer.Ordinal);
-
-        /// <summary>Kestrel-3's scrap field (0.5.5 §2): its id everywhere (saves, events).</summary>
-        public const string ScrapFieldId = "scrap.kestrel_trail";
-
-        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private readonly List<SalvagePiece> _pieces = new List<SalvagePiece>();
-        private readonly List<SalvageDrag> _drags = new List<SalvageDrag>();
         private EventBus _events;
         private InputReader _input;
         private BeamWork _beamWork;
@@ -64,9 +51,7 @@ namespace MoonProject.Gameplay
         private IViewCamera _view;
         private ISaveService _save;
         private MaterialStock _stock;
-        private ExcavationSystem _excavation;
         private CargoBundles _held;
-        private PhysicsMaterial _dragMaterial;
         private FeelVfx _feel;
         private GlowFlashPool _flashes;
         private PickupCadence _cadence;
@@ -81,40 +66,11 @@ namespace MoonProject.Gameplay
 
         public SalvageCatalog Catalog => _catalog;
 
-        /// <summary>Every wreck site, in catalog order (the derelicts are not among them).</summary>
+        /// <summary>Every wreck site, in catalog order.</summary>
         public IReadOnlyList<SalvageSite> Sites => _sites;
 
-        /// <summary>
-        /// The derelicts on the routes (0.5.5 §1.7), in catalog order, then Kestrel-3's scrap field: their pieces are
-        /// cut like any site's, but they hold no relics or crew crate. Those standing alone answer the sonar
-        /// (<see cref="StandsAlone"/>); one inside a wreck counts as its wreck's.
-        /// </summary>
-        public IReadOnlyList<SalvageSite> Derelicts => _derelicts;
-
-        /// <summary>
-        /// The wreck <paramref name="derelict"/> stands inside (the haul bot in the drill site), or null for one on its
-        /// own anchor.
-        /// </summary>
-        public SalvageSite HostOf(SalvageSite derelict)
-        {
-            return derelict != null && _hosts.TryGetValue(derelict.Id, out SalvageSite wreck) ? wreck : null;
-        }
-
-        /// <summary>
-        /// A derelict on its own anchor, not inside a wreck and not Kestrel-3's scrap field: a place of its own that
-        /// listening answers and the crew's map draws (D2).
-        /// </summary>
-        public bool StandsAlone(SalvageSite derelict)
-        {
-            return derelict != null && HostOf(derelict) == null &&
-                   !string.Equals(derelict.Id, ScrapFieldId, StringComparison.Ordinal);
-        }
-
-        /// <summary>Every piece of every site and derelict.</summary>
+        /// <summary>Every piece of every site.</summary>
         public IReadOnlyList<SalvagePiece> Pieces => _pieces;
-
-        /// <summary>The pieces that must be tethered clear first (what the tether can latch onto).</summary>
-        internal IReadOnlyList<SalvageDrag> Drags => _drags;
 
         /// <summary>The piece a hold of Excavate would cut now (null when none): what the prompt points at.</summary>
         public SalvagePiece Candidate { get; private set; }
@@ -155,7 +111,6 @@ namespace MoonProject.Gameplay
         /// <summary>The piece under the beam, else the one a hold would cut, else null.</summary>
         private SalvagePiece Aimed => _cutting ?? Candidate;
 
-        /// <summary>Current cutting beam brightness (tests and debugging views).</summary>
         /// <summary>How far the cutting beam reaches toward the cut (0..1; tests and debugging views).</summary>
         public float BeamLevel => _feel != null ? _feel.Beam.Reach : 0f;
 
@@ -184,11 +139,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// Stands every site on its anchor. False (logged) when wiring, an anchor or a prefab node from the site
-        /// contract is missing.
+        /// contract is missing. Connect the held pieces (<see cref="ConnectHeld"/>) before the first frame.
         /// </summary>
-        /// <param name="scrapField">The World's lane slots for Kestrel-3's cuttable hull fragments (0.5.5 §2).</param>
-        internal bool Initialize(GameplayServices services, Cutter cutter, IScrapField scrapField,
-            ScanTuning scanTuning = null)
+        internal bool Initialize(GameplayServices services, Cutter cutter, ScanTuning scanTuning)
         {
             string problem = _tuning == null ? "SalvageTuning is not assigned."
                 : _catalog == null ? "SalvageCatalog is not assigned."
@@ -210,17 +163,7 @@ namespace MoonProject.Gameplay
             _cutter = cutter ?? throw new ArgumentNullException(nameof(cutter));
             _cut = new CutState(_events, FeelKind.Cut, cutter.ChargeSeconds, cutter.ResumeChargeSeconds,
                 _tuning.CutSteps);
-            _dragMaterial = new PhysicsMaterial("SalvageDrag")
-            {
-                bounciness = _tuning.DragBounciness,
-                dynamicFriction = _tuning.DragFriction,
-                staticFriction = _tuning.DragFriction,
-                bounceCombine = PhysicsMaterialCombine.Average,
-                frictionCombine = PhysicsMaterialCombine.Average,
-            };
-
-            if (!Stand(_catalog.Sites, false, _sites, services) ||
-                !Stand(_catalog.Derelicts, true, _derelicts, services) || !StandScrapField(services, scrapField))
+            if (!Stand(services))
             {
                 return false;
             }
@@ -229,12 +172,13 @@ namespace MoonProject.Gameplay
             _flashes = new GlowFlashPool(transform, services.Meshes.Sphere, services.Visuals.Flash,
                 _tuning.FlashPoolSize, _tuning.FlashDuration, _tuning.FlashRadius, _tuning.FlashIntensity);
             _feel = new FeelVfx(transform, services.Visuals.FeelTuning, services.Visuals, _events, this, scanTuning);
+            _initialized = true;
             return true;
         }
 
-        private bool Stand(IReadOnlyList<SalvageSiteEntry> entries, bool derelicts, List<SalvageSite> sites,
-            GameplayServices services)
+        private bool Stand(GameplayServices services)
         {
+            IReadOnlyList<SalvageSiteEntry> entries = _catalog.Sites;
             for (int i = 0; i < entries.Count; i++)
             {
                 if (!services.Anchors.TryGet(entries[i].AnchorId, out WorldAnchor anchor))
@@ -244,108 +188,17 @@ namespace MoonProject.Gameplay
                     return false;
                 }
 
-                SalvageSite wreck = null;
-                if (!string.IsNullOrEmpty(entries[i].HostSocket) && !TryHost(entries[i], anchor, out anchor, out wreck))
-                {
-                    return false;
-                }
-
-                string problem = SalvageSiteBuilder.Build(i, entries[i], derelicts, anchor, transform,
-                    services.Terrain, _tuning, _catalog, services.Visuals.RelicHalo, _dragMaterial, _pieces, _drags,
-                    out SalvageSite site);
+                string problem = SalvageSiteBuilder.Build(i, entries[i], anchor, transform, _tuning, _catalog,
+                    services.Visuals.PieceHalo, _pieces, out SalvageSite site);
                 if (problem != null)
                 {
                     Fail($"'{entries[i].Id}': {problem} (salvage site contract, docs/features/M3-13).");
                     return false;
                 }
 
-                sites.Add(site);
-                if (wreck != null)
-                {
-                    _hosts.Add(site.Id, wreck);
-                }
+                _sites.Add(site);
             }
 
-            return true;
-        }
-
-        /// <summary>
-        /// Kestrel-3's scrap field (0.5.5 §2): on each of the World's lane slots Art's hull fragment of its variant,
-        /// dusted with the field's tint, stands as a Metal piece to cut; the field is saved by its id like a site.
-        /// </summary>
-        private bool StandScrapField(GameplayServices services, IScrapField field)
-        {
-            if (field == null || !services.Anchors.TryGet(WorldAnchorIds.KestrelTrail, out WorldAnchor trail))
-            {
-                Fail(field == null
-                    ? "the World serves no IScrapField for Kestrel-3's scrap field (world scrap field contract)."
-                    : $"the World publishes no '{WorldAnchorIds.KestrelTrail}' anchor for the scrap field.");
-                return false;
-            }
-
-            var root = new GameObject("Scrap_kestrel_trail").transform;
-            root.SetParent(transform, false);
-            root.position = trail.Position;
-            var cutLines = new PieceCutLine[field.Count];
-            var sizes = new PieceSizeEntry[field.Count];
-            var dust = new MaterialPropertyBlock();
-            dust.SetVector(BaseColorId, field.Dust);
-            for (int i = 0; i < field.Count; i++)
-            {
-                ScrapPlateInfo slot = field.Slot(i);
-                GameObject prefab = _catalog.ScrapFragment(slot.Variant);
-                Vector3[] seam = _catalog.ScrapCutLine(slot.Variant);
-                if (prefab == null || seam == null)
-                {
-                    Fail($"the scrap field's slot {i} wants hull fragment {slot.Variant}, which the catalog lacks " +
-                         "(run Gameplay/Content).");
-                    return false;
-                }
-
-                Transform piece = Instantiate(prefab, slot.Position, slot.Rotation, root).transform;
-                piece.localScale *= slot.Scale;
-                piece.name = $"Salvage_{i}_{SalvageMaterial.Metal}";
-                foreach (Renderer renderer in piece.GetComponentsInChildren<Renderer>())
-                {
-                    renderer.SetPropertyBlock(dust);
-                }
-
-                cutLines[i] = new PieceCutLine(i, seam);
-                sizes[i] = new PieceSizeEntry(i, _catalog.ScrapSize);
-            }
-
-            string problem = SalvageSiteBuilder.BuildScrap(_derelicts.Count,
-                SalvageSiteEntry.Scrap(ScrapFieldId, WorldAnchorIds.KestrelTrail, cutLines, sizes), root, trail.Radius,
-                transform, services.Terrain, _tuning, _catalog, services.Visuals.RelicHalo, _dragMaterial, _pieces,
-                _drags, out SalvageSite site);
-            if (problem != null)
-            {
-                Fail($"'{ScrapFieldId}': {problem}.");
-                return false;
-            }
-
-            _derelicts.Add(site);
-            return true;
-        }
-
-        /// <summary>
-        /// Where a derelict inside a wreck stands: the wreck's node, with the wreck's footprint. False (logged) when
-        /// the wreck or its node is missing.
-        /// </summary>
-        private bool TryHost(SalvageSiteEntry entry, WorldAnchor wreckAnchor, out WorldAnchor seat,
-            out SalvageSite wreck)
-        {
-            wreck = Find(entry.AnchorId);
-            Transform socket = wreck != null ? wreck.Root.Find(entry.HostSocket) : null;
-            if (socket == null)
-            {
-                Fail($"'{entry.Id}' stands inside '{entry.AnchorId}' on its '{entry.HostSocket}' node, which " +
-                     $"{(wreck == null ? "is no salvage site" : "it does not have")} (Art's site contract).");
-                seat = default;
-                return false;
-            }
-
-            seat = new WorldAnchor(entry.Id, socket.position, socket.forward, wreckAnchor.Radius);
             return true;
         }
 
@@ -364,41 +217,6 @@ namespace MoonProject.Gameplay
             BeginBreak(piece);
         }
 
-        /// <summary>
-        /// Tilly unclips a held piece (<see cref="TillyFetch"/>): it folds into its bundle on the spot, which she
-        /// carries. It stays held (and saved so) until she sets it down at home.
-        /// </summary>
-        internal Transform Unclip(SalvagePiece piece)
-        {
-            if (piece.WreckCollider != null)
-            {
-                piece.WreckCollider.enabled = false;
-            }
-
-            piece.Halo.Apply(0f);
-            piece.Bundle.SetPositionAndRotation(piece.Body.TransformPoint(piece.LocalCentre), piece.Body.rotation);
-            piece.Bundle.localScale = piece.BundleScale;
-            piece.Bundle.gameObject.SetActive(true);
-            piece.Body.gameObject.SetActive(false);
-            return piece.Bundle;
-        }
-
-        /// <summary>Tilly set a held piece down at home: it is taken for good.</summary>
-        internal void Fetched(SalvagePiece piece)
-        {
-            MarkTaken(piece);
-        }
-
-        /// <summary>
-        /// The excavation shares the Excavate hold. Connected once every gameplay part is initialised; salvage runs
-        /// from then on.
-        /// </summary>
-        internal void Connect(ExcavationSystem excavation)
-        {
-            _excavation = excavation != null ? excavation : throw new ArgumentNullException(nameof(excavation));
-            _initialized = true;
-        }
-
         /// <summary>The site with anchor id <paramref name="id"/>, or null.</summary>
         public SalvageSite Find(string id)
         {
@@ -413,28 +231,14 @@ namespace MoonProject.Gameplay
             return null;
         }
 
-        /// <summary>The derelict on anchor <paramref name="id"/> ("micro.06"), or null.</summary>
-        public SalvageSite FindDerelict(string id)
-        {
-            for (int i = 0; i < _derelicts.Count; i++)
-            {
-                if (string.Equals(_derelicts[i].Id, id, StringComparison.Ordinal))
-                {
-                    return _derelicts[i];
-                }
-            }
-
-            return null;
-        }
-
         internal SalvageSaveData Capture()
         {
-            var data = new SalvageSaveData { sites = new SalvageSiteSaveData[_sites.Count + _derelicts.Count] };
+            var data = new SalvageSaveData { sites = new SalvageSiteSaveData[_sites.Count] };
             var taken = new List<int>();
             var pieces = new List<SalvagePieceSaveData>();
             for (int s = 0; s < data.sites.Length; s++)
             {
-                SalvageSite site = s < _sites.Count ? _sites[s] : _derelicts[s - _sites.Count];
+                SalvageSite site = _sites[s];
                 taken.Clear();
                 pieces.Clear();
                 for (int i = 0; i < site.Pieces.Count; i++)
@@ -447,30 +251,6 @@ namespace MoonProject.Gameplay
                     else if (piece.State == SalvagePieceState.Held)
                     {
                         pieces.Add(new SalvagePieceSaveData { number = piece.Number, progress = 1f, held = true });
-                    }
-                    else if (piece.State == SalvagePieceState.Loose)
-                    {
-                        Transform body = piece.Drag.transform;
-                        pieces.Add(new SalvagePieceSaveData
-                        {
-                            number = piece.Number,
-                            progress = piece.Progress,
-                            loose = true,
-                            position = body.position,
-                            rotation = body.rotation,
-                        });
-                    }
-                    else if (piece.State == SalvagePieceState.Returning)
-                    {
-                        // Floating back beside its site: it is saved where it will rest.
-                        pieces.Add(new SalvagePieceSaveData
-                        {
-                            number = piece.Number,
-                            progress = piece.Progress,
-                            loose = true,
-                            position = piece.Drag.ReturnEnd,
-                            rotation = piece.Drag.ReturnEndRotation,
-                        });
                     }
                     else if (piece.State != SalvagePieceState.Attached)
                     {
@@ -486,7 +266,6 @@ namespace MoonProject.Gameplay
                 data.sites[s] = new SalvageSiteSaveData
                 {
                     id = site.Id,
-                    discovered = site.Discovered,
                     taken = taken.ToArray(),
                     pieces = pieces.ToArray(),
                 };
@@ -507,13 +286,12 @@ namespace MoonProject.Gameplay
 
             foreach (SalvageSiteSaveData saved in data.sites)
             {
-                SalvageSite site = saved != null ? Find(saved.id) ?? FindDerelict(saved.id) : null;
+                SalvageSite site = saved != null ? Find(saved.id) : null;
                 if (site == null)
                 {
                     continue;
                 }
 
-                site.RestoreDiscovered(saved.discovered);
                 foreach (int number in saved.taken)
                 {
                     SalvagePiece piece = site.Find(number);
@@ -537,17 +315,7 @@ namespace MoonProject.Gameplay
                         piece.State = SalvagePieceState.Held;
                         _held.HoldPiece(piece, false);
                     }
-                    else if (pieceData.loose && piece.Drag != null)
-                    {
-                        piece.Drag.RestoreLoose(pieceData.position, pieceData.rotation);
-                        piece.State = piece.Drag.IsClear ? SalvagePieceState.Loose : SalvagePieceState.Attached;
-                    }
                 }
-            }
-
-            for (int i = 0; i < _sites.Count; i++)
-            {
-                _sites[i].SnapPilot();
             }
         }
 
@@ -562,29 +330,18 @@ namespace MoonProject.Gameplay
             float deltaTime = Time.deltaTime;
             UpdateCut(now, deltaTime);
             _feel.Step(deltaTime);
-            for (int i = 0; i < _drags.Count; i++)
-            {
-                _drags[i].StepReach(deltaTime);
-            }
-
             Vector3 socket = _rig.CargoSocket.position;
             StepPieces(socket, now, deltaTime);
             _flashes.Tick(deltaTime);
             for (int i = 0; i < _sites.Count; i++)
             {
-                _sites[i].StepPilot(deltaTime);
                 _sites[i].StepShudder(deltaTime, _tuning.ShudderAmplitude, _tuning.ShudderFrequency);
-            }
-
-            for (int i = 0; i < _derelicts.Count; i++)
-            {
-                _derelicts[i].StepShudder(deltaTime, _tuning.ShudderAmplitude, _tuning.ShudderFrequency);
             }
         }
 
         private void UpdateCut(float now, float deltaTime)
         {
-            Candidate = _excavation.Lifting != null ? null : FindCandidate();
+            Candidate = FindCandidate();
             if (_input.ExcavateHeld && Candidate != null && !_cutter.Ready)
             {
                 _cutter.Refuse(Candidate.CutPosition);
@@ -633,15 +390,7 @@ namespace MoonProject.Gameplay
             Vector3 eye = view.position;
             Vector3 forward = view.forward;
 
-            // The heart of a site competes for the hold: whichever 07 looks at more directly is worked on.
             float best = float.MaxValue;
-            Relic dig = _excavation.NearestLiftable();
-            if (dig != null && TetherAim.TryScore(eye, forward, dig.Site.Position, HeartCone, float.MaxValue,
-                    _tuning.DistanceWeight, out float digScore))
-            {
-                best = digScore;
-            }
-
             SalvagePiece picked = null;
             float reachSq = reach * reach;
             for (int i = 0; i < _pieces.Count; i++)
@@ -659,7 +408,7 @@ namespace MoonProject.Gameplay
                 }
 
                 float cone = piece == Candidate ? _tuning.StickyCone : _tuning.AimCone;
-                if (TetherAim.TryScore(eye, forward, cut, cone, float.MaxValue, _tuning.DistanceWeight,
+                if (AimScore.TryScore(eye, forward, cut, cone, float.MaxValue, _tuning.DistanceWeight,
                         out float score) && score < best)
                 {
                     best = score;
@@ -742,7 +491,7 @@ namespace MoonProject.Gameplay
             _cutting = null;
             _events.Publish(new SalvageCutStopped(true));
             SetHold(false);
-            if (_stock.Hold.FreeUnits(piece.Material) < piece.Units)
+            if (_stock.Room(piece.Material) < piece.Units)
             {
                 piece.State = SalvagePieceState.Held;
                 _held.HoldPiece(piece, true);
@@ -756,17 +505,13 @@ namespace MoonProject.Gameplay
         private void BeginBreak(SalvagePiece piece)
         {
             piece.BreakNormal = piece.CutNormal;
-            if (piece.Drag != null)
-            {
-                piece.Drag.Freeze();
-            }
-
             if (piece.WreckCollider != null)
             {
                 piece.WreckCollider.enabled = false;
             }
 
             piece.Site.Shudder(_tuning.ShudderSeconds);
+            _stock.Expect(piece.Material, piece.Units);
             piece.State = SalvagePieceState.Breaking;
             piece.MotionStart = piece.Body.position;
             piece.MotionStartRotation = piece.Body.rotation;
@@ -785,11 +530,10 @@ namespace MoonProject.Gameplay
                 switch (piece.State)
                 {
                     case SalvagePieceState.Attached:
-                    case SalvagePieceState.Loose:
                         float target = piece == _cutting ? _tuning.CutHalo
                             : piece == Candidate ? _tuning.HoverHalo
                             : 0f;
-                        EaseHalo(piece, Mathf.Max(target, piece.TetherHighlight), deltaTime);
+                        EaseHalo(piece, target, deltaTime);
                         break;
                     case SalvagePieceState.Breaking:
                         EaseHalo(piece, 0f, deltaTime);
@@ -908,30 +652,16 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Salvage folds into 07's hold: a flash, the event, the Collect reward beat and the stock for what fits. A
-        /// piece is cut only when the hold has room for all of it (else it is held on its wreck); should the hold fill
-        /// while it flies (a crate opened meanwhile), what does not fit bumps the closed hatch and goes to home's
-        /// overflow crates, never onto the ground. The game saves once nothing else flies.
+        /// Salvage folds into 07's hold: a flash, the event, the Collect reward beat and the stock. A piece is cut only
+        /// when the hold has room for all of it (else it is held on its wreck), and its room is reserved while it flies
+        /// (<see cref="MaterialStock.Room"/>), so it always fits. The game saves once nothing else flies.
         /// </summary>
         private void Arrive(SalvageMaterial material, int units, Vector3 socket, string siteId, int comboStep)
         {
-            int fitted = Math.Min(units, _stock.Hold.FreeUnits(material));
-            int left = units - fitted;
-            if (fitted > 0)
-            {
-                _flashes.Spawn(socket);
-                _events.Publish(new MaterialSalvaged(material, fitted, socket, siteId, comboStep));
-                _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Reward, socket, Vector3.up, 1f, 0f,
-                    material));
-                _stock.Collect(material, fitted);
-            }
-
-            if (left > 0)
-            {
-                _events.Publish(new FeelBeat(FeelKind.Cargo, FeelPhase.Impact, socket, Vector3.up, 1f, 0f, material));
-                _stock.Home.AddOverflow(material, left);
-            }
-
+            _flashes.Spawn(socket);
+            _events.Publish(new MaterialSalvaged(material, units, socket, siteId, comboStep));
+            _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Reward, socket, Vector3.up, 1f, 0f, material));
+            _stock.Receive(material, units);
             _inFlight--;
             if (_inFlight == 0)
             {
@@ -1003,10 +733,6 @@ namespace MoonProject.Gameplay
         private void OnDestroy()
         {
             _feel?.Dispose();
-            if (_dragMaterial != null)
-            {
-                Object.Destroy(_dragMaterial);
-            }
         }
     }
 }

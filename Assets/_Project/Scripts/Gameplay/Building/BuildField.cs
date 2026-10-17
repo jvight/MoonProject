@@ -57,7 +57,7 @@ namespace MoonProject.Gameplay
         private Transform _ghostsRoot;
         private Transform _sparkSocket;
         private RepairBeam _beam;
-        private BenchSparks _sparks;
+        private WeldSparks _sparks;
 
         private StructureView _activeGhost;
         private string _activeGhostId;
@@ -108,7 +108,7 @@ namespace MoonProject.Gameplay
         public Vector3 WeldBeamStart => _beam != null ? _beam.Start : Vector3.zero;
 
         /// <summary>Live weld spark particle count (for tests and inspection).</summary>
-        public int SparkCount => _sparks != null ? _sparks.ParticleCount : 0;
+        public int SparkCount => _sparks.ParticleCount;
 
         internal void Wire(BuildingTuning tuning, StructureCatalog catalog)
         {
@@ -122,10 +122,7 @@ namespace MoonProject.Gameplay
             _tuning = tuning;
         }
 
-        internal bool Initialize(
-            GameplayServices services,
-            WorkshopTuning workshopTuning,
-            FriendTuning friendTuning)
+        internal bool Initialize(GameplayServices services)
         {
             if (services == null)
             {
@@ -168,13 +165,9 @@ namespace MoonProject.Gameplay
             _sparkSocket = new GameObject("WeldSparkSocket").transform;
             _sparkSocket.SetParent(transform, false);
 
-            float stitchRate = friendTuning != null ? friendTuning.StitchRate : 8f;
-            float stitchSpread = friendTuning != null ? friendTuning.StitchSpread : 0.06f;
-            _beam = new RepairBeam("BuildWeldBeam", transform, _visuals.TetherBeam, stitchRate, stitchSpread);
-            if (workshopTuning != null && _visuals.Spark != null)
-            {
-                _sparks = new BenchSparks(_sparkSocket, workshopTuning, _visuals.Spark);
-            }
+            _beam = new RepairBeam("BuildWeldBeam", transform, _visuals.WeldBeam, _tuning.WeldStitchRate,
+                _tuning.WeldStitchSpread);
+            _sparks = new WeldSparks(_sparkSocket, _tuning, _visuals.Spark);
 
             PrewarmGhosts();
 
@@ -751,7 +744,7 @@ namespace MoonProject.Gameplay
                 }
 
                 Vector3 targetPoint = placed.Pose.Position + Vector3.up * (placed.Definition.Height * 0.45f);
-                if (TetherAim.TryScore(
+                if (AimScore.TryScore(
                         eye,
                         forward,
                         targetPoint,
@@ -1001,11 +994,6 @@ namespace MoonProject.Gameplay
 
         private void BurstSparksAt(Vector3 worldPoint)
         {
-            if (_sparks == null || _sparkSocket == null)
-            {
-                return;
-            }
-
             _sparkSocket.position = worldPoint;
             _sparks.Burst();
         }

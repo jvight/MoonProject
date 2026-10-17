@@ -42,7 +42,6 @@ namespace MoonProject.World
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _sky = sky ?? throw new ArgumentNullException(nameof(sky));
             TimeSeconds = 0f;
-            HoldElapsedSeconds = 0f;
             IsHoldingEclipse = true;
             Recompute();
             _lastPublishedPhase = Phase;
@@ -51,10 +50,10 @@ namespace MoonProject.World
         /// <summary>Seconds elapsed on the lunar day clock since the opening eclipse hold ended.</summary>
         public float TimeSeconds { get; private set; }
 
-        /// <summary>Seconds spent waiting in the opening eclipse hold before release.</summary>
-        public float HoldElapsedSeconds { get; private set; }
-
-        /// <summary>True while the opening eclipse hold is active on a fresh game.</summary>
+        /// <summary>
+        /// True while the opening eclipse hold is active on a fresh game: it holds until the opening releases it (the
+        /// first charge, <see cref="OpeningSkyPacing"/>), never by itself.
+        /// </summary>
         public bool IsHoldingEclipse { get; private set; }
 
         /// <summary>Current horizontal bearing of the Sun, 0..360 degrees clockwise from +Z.</summary>
@@ -109,24 +108,9 @@ namespace MoonProject.World
         /// </summary>
         public bool Tick(float deltaTime, out SkyPhaseChanged phaseChanged)
         {
-            if (deltaTime > 0f)
+            if (deltaTime > 0f && !IsHoldingEclipse)
             {
-                if (IsHoldingEclipse)
-                {
-                    HoldElapsedSeconds += deltaTime;
-                    if (HoldElapsedSeconds >= _settings.MaxHoldSeconds)
-                    {
-                        float overflow = HoldElapsedSeconds - _settings.MaxHoldSeconds;
-                        HoldElapsedSeconds = _settings.MaxHoldSeconds;
-                        IsHoldingEclipse = false;
-                        TimeSeconds += overflow;
-                    }
-                }
-                else
-                {
-                    TimeSeconds += deltaTime;
-                }
-
+                TimeSeconds += deltaTime;
                 Recompute();
             }
 
@@ -160,7 +144,6 @@ namespace MoonProject.World
         public void SetTime(float timeSeconds, bool holdingEclipse = false)
         {
             TimeSeconds = Mathf.Max(0f, timeSeconds);
-            HoldElapsedSeconds = 0f;
             IsHoldingEclipse = holdingEclipse;
             Recompute();
             _lastPublishedPhase = Phase;
@@ -267,23 +250,53 @@ namespace MoonProject.World
             return horizonFactor * (1f - EclipseFactor);
         }
 
-        private void Recompute()
+        /// <summary>The Sun's elevation, degrees, at clock time <paramref name="timeSeconds"/> (the clock is unchanged).</summary>
+        public float ElevationAt(float timeSeconds)
+        {
+            SunAt(timeSeconds, out _, out float elevation, out _);
+            return elevation;
+        }
+
+        /// <summary>
+        /// The share of the Sun's disc hidden behind Earth at clock time <paramref name="timeSeconds"/>, 0..1 (the clock
+        /// is unchanged; the opening hold is ignored).
+        /// </summary>
+        public float EclipseFactorAt(float timeSeconds)
+        {
+            SunAt(timeSeconds, out float bearing, out float elevation, out _);
+            return ComputeEclipseFactor(Direction(bearing, elevation), _sky.EarthDirection,
+                _settings.SunDiameter * 0.5f * Mathf.Deg2Rad, _sky.EarthDiameter * 0.5f * Mathf.Deg2Rad);
+        }
+
+        private static Vector3 Direction(float bearing, float elevation)
+        {
+            float elevationRadians = elevation * Mathf.Deg2Rad;
+            Vector2 horizontal = MoonSurface.BearingToDirection(bearing) * Mathf.Cos(elevationRadians);
+            return new Vector3(horizontal.x, Mathf.Sin(elevationRadians), horizontal.y).normalized;
+        }
+
+        private void SunAt(float timeSeconds, out float bearing, out float elevation, out float phaseRadians)
         {
             float dayLength = Mathf.Max(_settings.DayLengthSeconds, 1f);
-            float days = TimeSeconds / dayLength;
+            float days = timeSeconds / dayLength;
             float startBearing = NormalizeBearing(_sky.EarthBearing + _settings.StartBearingOffset);
-            Bearing = NormalizeBearing(startBearing + days * FullCircleDegrees);
+            bearing = NormalizeBearing(startBearing + days * FullCircleDegrees);
 
             float peakBearing = startBearing + _settings.InitialPeakLead + days * _settings.NodalDriftPerDay;
-            float phaseRadians = (Bearing - peakBearing) * Mathf.Deg2Rad;
+            phaseRadians = (bearing - peakBearing) * Mathf.Deg2Rad;
             float midElevation = (_settings.MaxElevation + _settings.MinElevation) * 0.5f;
             float ampElevation = (_settings.MaxElevation - _settings.MinElevation) * 0.5f;
-            Elevation = Mathf.Clamp(midElevation + ampElevation * Mathf.Cos(phaseRadians),
+            elevation = Mathf.Clamp(midElevation + ampElevation * Mathf.Cos(phaseRadians),
                 _settings.MinElevation, _settings.MaxElevation);
+        }
 
-            float elevationRadians = Elevation * Mathf.Deg2Rad;
-            Vector2 horizontal = MoonSurface.BearingToDirection(Bearing) * Mathf.Cos(elevationRadians);
-            SunDirection = new Vector3(horizontal.x, Mathf.Sin(elevationRadians), horizontal.y).normalized;
+        private void Recompute()
+        {
+            SunAt(TimeSeconds, out float bearing, out float elevation, out float phaseRadians);
+            Bearing = bearing;
+            Elevation = elevation;
+
+            SunDirection = Direction(Bearing, Elevation);
 
             float elongationRadians = (Bearing - _sky.EarthBearing) * Mathf.Deg2Rad;
             EarthPhase = Mathf.Clamp01(0.5f * (1f - Mathf.Cos(elongationRadians)));

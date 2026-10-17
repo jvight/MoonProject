@@ -1,9 +1,8 @@
 using System;
-using UnityEngine;
 
 namespace MoonProject.Gameplay
 {
-    /// <summary>A part-cut or loose piece in the "gameplay.salvage" section (JsonUtility DTO).</summary>
+    /// <summary>A part-cut or held piece in the "gameplay.salvage" section (JsonUtility DTO).</summary>
     [Serializable]
     public sealed class SalvagePieceSaveData
     {
@@ -13,14 +12,7 @@ namespace MoonProject.Gameplay
         /// <summary>How far the cut has come, 0..1.</summary>
         public float progress;
 
-        /// <summary>A drag piece pulled clear of its wreck, lying at <see cref="position"/>.</summary>
-        public bool loose;
-
         /// <summary>Cut through with no room in the hold: it waits on its wreck to be taken (0.5.5 §2).</summary>
         public bool held;
-
-        public Vector3 position;
-
-        public Quaternion rotation = Quaternion.identity;
     }
 }

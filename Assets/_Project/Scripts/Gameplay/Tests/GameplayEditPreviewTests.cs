@@ -13,23 +13,15 @@ namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
     /// The editor's preview of what the game places at boot (<see cref="GameplayEditPreview"/>). On a scratch scene
-    /// with a stand-in world (<see cref="StandInWorldPreview"/>): each wreck and broken mast stands level on its
-    /// anchor and nothing else is placed, nothing of it is ever saved, building it again leaves one, and a scene
-    /// without the gameplay or a generated world preview is left alone. On the built Main scene: the World's preview
-    /// is found, the wrecks and masts stand out in the basin, and the preview steps aside for Play and comes back.
+    /// with a stand-in world (<see cref="StandInWorldPreview"/>): each wreck stands level on its anchor and nothing
+    /// else is placed, nothing of it is ever saved, building it again leaves one, and a scene without the gameplay or
+    /// a generated world preview is left alone. On the built Main scene: the World's preview is found, every wreck
+    /// stands on it, and the preview steps aside for Play and comes back.
     /// </summary>
     public sealed class GameplayEditPreviewTests
     {
         private const string MainScene = "Assets/_Project/Scenes/Main.unity";
         private const string SitePrefix = "Site_";
-        private const string DerelictPrefix = "Derelict_";
-        private const string MastName = "RelayMast_Broken";
-
-        /// <summary>Metres from the lander the nearest site lies at least (the supply depot, ~55 m from home).</summary>
-        private const float SitesOutFromHome = 20f;
-
-        /// <summary>Relay anchors the stand-in world holds.</summary>
-        private const int StandInRelays = 3;
 
         /// <summary>Metres a placed piece may stand off its anchor: float noise only.</summary>
         private const float PositionTolerance = 1e-3f;
@@ -54,7 +46,7 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void Preview_StandsEachWreckAndMast_LevelOnItsAnchor_AndNothingElse()
+        public void Preview_StandsEachWreck_LevelOnItsAnchor_AndNothingElse()
         {
             StandInWorldPreview world = NewStandInScene(out SalvageField salvage);
             world.Generate(StandInAnchors(salvage.Catalog));
@@ -64,36 +56,10 @@ namespace MoonProject.Gameplay.Tests
             GameObject root = GameplayEditPreview.Root(_scratch.Scene);
             Assert.IsNotNull(root, "a generated world preview builds the preview");
             IReadOnlyList<SalvageSiteEntry> sites = salvage.Catalog.Sites;
-            var inWrecks = new List<SalvageSiteEntry>();
-            foreach (SalvageSiteEntry derelict in salvage.Catalog.Derelicts)
-            {
-                if (!string.IsNullOrEmpty(derelict.HostSocket))
-                {
-                    inWrecks.Add(derelict);
-                }
-            }
-
-            Assert.AreEqual(sites.Count + inWrecks.Count + StandInRelays, root.transform.childCount,
-                "a wreck on every site with the derelicts inside them, a broken mast on every relay, nothing on the " +
-                "other anchors");
+            Assert.AreEqual(sites.Count, root.transform.childCount, "a wreck on every site, nothing on other anchors");
             for (int i = 0; i < sites.Count; i++)
             {
                 AssertStandsOn(root.transform.GetChild(i), sites[i].Prefab.name, world, sites[i].AnchorId);
-            }
-
-            for (int i = 0; i < inWrecks.Count; i++)
-            {
-                Transform derelict = root.transform.GetChild(sites.Count + i);
-                Transform seat = root.transform.Find(Host(sites, inWrecks[i]).Prefab.name).Find(inWrecks[i].HostSocket);
-                Assert.AreEqual(inWrecks[i].Prefab.name, derelict.name);
-                Assert.Less(Vector3.Distance(seat.position, derelict.position), 1e-3f,
-                    $"{derelict.name} stands inside its wreck on {inWrecks[i].HostSocket}");
-            }
-
-            for (int i = 0; i < StandInRelays; i++)
-            {
-                AssertStandsOn(root.transform.GetChild(sites.Count + inWrecks.Count + i), MastName, world,
-                    WorldAnchorIds.RelayPrefix + i);
             }
 
             AssertNeverSaved(root.transform);
@@ -141,7 +107,7 @@ namespace MoonProject.Gameplay.Tests
         {
             _scratch = new BuilderScratchScene();
             var world = _scratch.Create("World").AddComponent<StandInWorldPreview>();
-            world.Generate(new[] { Anchor(WorldAnchorIds.RelayPrefix + 0, 0) });
+            world.Generate(new[] { Anchor(WorldAnchorIds.KestrelTrail, 0) });
 
             GameplayEditPreview.Rebuild(_scratch.Scene);
 
@@ -149,7 +115,7 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void Preview_OnTheBuiltMainScene_ShowsTheWrecksDerelictsAndMastsInTheBasin_AndStepsAsideForPlay()
+        public void Preview_OnTheBuiltMainScene_ShowsEveryWreck_AndStepsAsideForPlay()
         {
             _scene = EditorSceneManager.OpenScene(MainScene, OpenSceneMode.Additive);
             IWorldPreview world = Find<IWorldPreview>(_scene,
@@ -158,22 +124,12 @@ namespace MoonProject.Gameplay.Tests
             GameObject root = GameplayEditPreview.Root(_scene);
             Assert.IsNotNull(root, "opening the scene builds the preview");
             SalvageField salvage = Find<SalvageField>(_scene, "the gameplay's salvage");
-            HomeBase home = Find<HomeBase>(_scene, "the gameplay's base");
             int sites = Count(root.transform, SitePrefix);
-            int derelicts = Count(root.transform, DerelictPrefix);
-            int masts = Count(root.transform, MastName);
             Assert.AreEqual(salvage.Catalog.Sites.Count, sites, "every salvage site's wreck");
-            Assert.AreEqual(salvage.Catalog.Derelicts.Count, derelicts, "every derelict on its micro-site");
-            Assert.Greater(masts, 0, "the broken relay masts");
-            Transform scrap = root.transform.Find(GameplayEditPreview.ScrapFieldName);
-            Assert.IsNotNull(scrap, "Kestrel-3's scrap field on the World's lane slots");
-            Assert.AreEqual(((IScrapField)world).Count, scrap.childCount, "a hull fragment on every slot");
-            Assert.AreEqual(sites + derelicts + masts + 1, root.transform.childCount, "and nothing else");
-            for (int i = 0; i < root.transform.childCount; i++)
+            Assert.AreEqual(sites, root.transform.childCount, "and nothing else");
+            foreach (SalvageSiteEntry site in salvage.Catalog.Sites)
             {
-                Transform piece = root.transform.GetChild(i);
-                Assert.Greater(Vector3.Distance(piece.position, home.LanderPosition), SitesOutFromHome,
-                    $"{piece.name} stands out on its anchor in the basin");
+                AssertStandsOn(root.transform.Find(site.Prefab.name), site.Prefab.name, world, site.AnchorId);
             }
 
             AssertNeverSaved(root.transform);
@@ -185,19 +141,16 @@ namespace MoonProject.Gameplay.Tests
         }
 
         /// <summary>
-        /// A scratch scene holding the gameplay's salvage field, wired to the built catalog, and its relay field,
-        /// wired to Art's broken mast: what the preview reads of the gameplay. Returns the salvage field.
+        /// A scratch scene holding the gameplay's salvage field, wired to the built catalog: what the preview reads of
+        /// the gameplay. Returns the salvage field.
         /// </summary>
         private SalvageField NewGameplayScene()
         {
             var catalog = AssetDatabase.LoadAssetAtPath<SalvageCatalog>(GameplayAssetPaths.SalvageCatalog);
-            var broken = AssetDatabase.LoadAssetAtPath<GameObject>(GameplayAssetPaths.RelayMastBroken);
             Assert.IsNotNull(catalog, $"{GameplayAssetPaths.SalvageCatalog} is built");
-            Assert.IsNotNull(broken, $"{GameplayAssetPaths.RelayMastBroken} is built");
             _scratch = new BuilderScratchScene();
             var salvage = _scratch.Create("Salvage").AddComponent<SalvageField>();
             salvage.Wire(null, catalog);
-            _scratch.Create("Relays").AddComponent<RelayField>().Wire(null, null, broken, null);
             return salvage;
         }
 
@@ -209,8 +162,8 @@ namespace MoonProject.Gameplay.Tests
         }
 
         /// <summary>
-        /// An anchor for every site of <paramref name="catalog"/> and for <see cref="StandInRelays"/> relays, each
-        /// somewhere else on its own heading, plus a canyon and a trail anchor that are neither.
+        /// An anchor for every site of <paramref name="catalog"/>, each somewhere else on its own heading, plus a
+        /// canyon and a trail anchor that are no site.
         /// </summary>
         private static List<WorldAnchor> StandInAnchors(SalvageCatalog catalog)
         {
@@ -223,11 +176,6 @@ namespace MoonProject.Gameplay.Tests
             foreach (SalvageSiteEntry site in catalog.Sites)
             {
                 anchors.Add(Anchor(site.AnchorId, index++));
-            }
-
-            for (int i = 0; i < StandInRelays; i++)
-            {
-                anchors.Add(Anchor(WorldAnchorIds.RelayPrefix + i, index++));
             }
 
             return anchors;
@@ -274,20 +222,6 @@ namespace MoonProject.Gameplay.Tests
             }
 
             return count;
-        }
-
-        private static SalvageSiteEntry Host(IReadOnlyList<SalvageSiteEntry> sites, SalvageSiteEntry derelict)
-        {
-            foreach (SalvageSiteEntry site in sites)
-            {
-                if (site.Id == derelict.AnchorId)
-                {
-                    return site;
-                }
-            }
-
-            Assert.Fail($"{derelict.Id} stands inside '{derelict.AnchorId}', which is no site.");
-            return null;
         }
 
         private static int Count(Transform root, string prefix)
