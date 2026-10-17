@@ -68,7 +68,7 @@ VEHICLE_PAD_DIMS: dict[str, float] = {
     # Hinged front (+Z_u) tread-plate ramp (`RampLip`) sloping down to the ground
     "ramp_pivot_y": 0.20,
     "ramp_pivot_z": 1.34,
-    "ramp_width_x": 1.44,
+    "ramp_width_x": 1.795,
     "ramp_length_z": 0.56,
     "ramp_drop_deg": 4.0,
     # 4 corner bollard lamps mounted on top of the continuous cream octagonal curb
@@ -767,9 +767,9 @@ def _build_stage_4(root: bpy.types.Object) -> bpy.types.Object:
     # 2. HoistHook (child of CraneBoom): hoist cable + pulley block + 4-cable lifting spreader frame with 4 chassis clamps
     hy_piv = d["hook_pivot_y"]
     hook_mb = r1kit.MeshBuilder("HoistHook", pivot_u=(tx, hy_piv, tz))
-    # Twin vertical steel hoist cables descending from jib nose (y = 2.14 m) to pulley sheave block (y = 1.68 m)
+    # Twin vertical steel hoist cables descending from jib nose (y = 2.14 m) to pulley sheave block (y = 1.99 m)
     cable_top_y = 2.14
-    sheave_y = 1.68
+    sheave_y = 1.99
     cable_cy = 0.5 * (cable_top_y + sheave_y)
     cable_len = cable_top_y - sheave_y
     for cx_off in (-0.018, 0.018):
@@ -783,17 +783,17 @@ def _build_stage_4(root: bpy.types.Object) -> bpy.types.Object:
             bevel=0.0,
             bevel_segments=0,
         )
-    # Heavy pulley sheave block & brass wheel at y = 1.66 m
+    # Heavy pulley sheave block & brass wheel at y = 1.99 m
     hook_mb.add_bevel_box(
         center_u=(tx, sheave_y, tz),
-        size_u=(0.12, 0.14, 0.10),
+        size_u=(0.12, 0.10, 0.10),
         mat="R1_GreyMetal",
         bevel=0.010,
         segments=1,
     )
     hook_mb.add_cylinder(
         center_u=(tx, sheave_y, tz),
-        radius=0.054,
+        radius=0.042,
         length=0.112,
         mat="R1_Copper",
         axis_u="Z",
@@ -802,11 +802,11 @@ def _build_stage_4(root: bpy.types.Object) -> bpy.types.Object:
         bevel_segments=1,
     )
 
-    # 4 splayed steel sling cables from bottom of pulley block (y = 1.60 m) to the 4 corners of the rectangular lifting spreader frame (y = 1.34 m)
-    frame_y = 1.34
+    # 4 splayed steel sling cables from bottom of pulley block (y = 1.95 m) to the 4 corners of the rectangular lifting spreader frame (y = 1.86 m)
+    frame_y = 1.86
     frame_hx = 0.38
     frame_hz = 0.25
-    sling_top = (tx, sheave_y - 0.06, tz)
+    sling_top = (tx, sheave_y - 0.04, tz)
     for sx_f in (-1.0, 1.0):
         for sz_f in (-1.0, 1.0):
             c_pt = (tx + sx_f * frame_hx, frame_y + 0.02, tz + sz_f * frame_hz)
@@ -817,17 +817,17 @@ def _build_stage_4(root: bpy.types.Object) -> bpy.types.Object:
                 mat="R1_BareSteel",
                 segments=6,
             )
-            # Brass corner clevis block + downward chassis-lifting clamp jaw at each of the 4 spreader corners
+            # Brass corner clevis block + downward chassis-lifting clamp jaw at each of the 4 spreader corners (jaw bottom at y = 1.780 m)
             hook_mb.add_bevel_box(
                 center_u=(c_pt[0], frame_y, c_pt[2]),
-                size_u=(0.072, 0.064, 0.072),
+                size_u=(0.072, 0.056, 0.072),
                 mat="R1_Copper",
                 bevel=0.006,
                 segments=1,
             )
             hook_mb.add_bevel_box(
-                center_u=(c_pt[0], frame_y - 0.065, c_pt[2]),
-                size_u=(0.036, 0.085, 0.044),
+                center_u=(c_pt[0], frame_y - 0.0475, c_pt[2]),
+                size_u=(0.036, 0.065, 0.044),
                 mat="R1_BareSteel",
                 bevel=0.004,
                 segments=1,
@@ -878,7 +878,7 @@ def _build_stage_4(root: bpy.types.Object) -> bpy.types.Object:
     ramp_mb = r1kit.MeshBuilder("RampLip", pivot_u=(0.0, ry_p, rz_p))
 
     # Twin heavy hinge barrels at the top of the ramp (matching s_vehicle_pad.png)
-    for hx_k in (-0.48, 0.48):
+    for hx_k in (-0.58, 0.58):
         ramp_mb.add_cylinder(
             center_u=(hx_k, ry_p + 0.02, rz_p),
             radius=0.032,
