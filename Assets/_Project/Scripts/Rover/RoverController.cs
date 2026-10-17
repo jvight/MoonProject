@@ -1107,7 +1107,7 @@ namespace MoonProject.Rover
         private bool IsObstacleHit(GroundSettings ground, in RaycastHit hit, out Vector3 planarNormal)
         {
             planarNormal = Vector3.zero;
-            if (hit.collider == null)
+            if (hit.collider == null || hit.normal.y < -0.15f)
             {
                 return false;
             }
