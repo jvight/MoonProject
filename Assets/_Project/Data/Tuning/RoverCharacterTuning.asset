@@ -24,7 +24,7 @@ MonoBehaviour:
   _stargazeEyeGlow: 0.4
   _headPitchDownLimit: 25
   _lookIntoTurn: 22
-  _travelHeadPitch: -6
+  _travelHeadPitch: -1.5
   _travelGazeFrequency: 0.7
   _targetGazeFrequency: 1.1
   _idleGazeFrequency: 0.22

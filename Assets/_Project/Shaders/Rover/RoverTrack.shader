@@ -8,8 +8,8 @@ Shader "MoonProject/Rover/Track"
     {
         _Color ("Tint", Color) = (0.49, 0.5, 0.68, 0.95)
         _EdgeSoftness ("Edge Softness (fraction of half width)", Range(0, 1)) = 0.5
-        _FadeNear ("Distance Fade Start (m)", Float) = 20
-        _FadeFar ("Distance Fade End (m)", Float) = 55
+        _FadeNear ("Distance Fade Start (m)", Float) = 120
+        _FadeFar ("Distance Fade End (m)", Float) = 260
     }
 
     SubShader

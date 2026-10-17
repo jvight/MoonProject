@@ -155,6 +155,8 @@ namespace MoonProject.Rover
         private float _yawRate;
         private float _forwardSpeed;
         private bool _hasContact;
+        private int _lastContactColliderId;
+        private GroundSurface _contactSurface = GroundSurface.Regolith;
         private Vector3 _contactNormal = Vector3.up;
         private Vector3 _groundNormal = Vector3.up;
         private Vector3 _lastVelocity;
@@ -191,6 +193,12 @@ namespace MoonProject.Rover
 
         /// <summary>True when the probe touched driveable ground this physics step (no coyote time).</summary>
         public bool HasGroundContact => _hasContact;
+
+        /// <summary>Surface kind currently under the ground probe (Regolith, Rock, or Metal).</summary>
+        public GroundSurface ContactSurface => _contactSurface;
+
+        /// <summary>Audio/feel hook name for the surface currently under the ground probe.</summary>
+        public string ContactSurfaceSoundHook => GroundModel.SurfaceSoundHook(_contactSurface);
 
         // IRoverState
         public Vector3 Position => _visualRig.RootPosition;
@@ -934,6 +942,21 @@ namespace MoonProject.Rover
             _hasContact = Physics.SphereCast(origin, probeRadius, Vector3.down, out RaycastHit hit, distance,
                     Layers.DriveableMask, QueryTriggerInteraction.Ignore)
                 && Vector3.Angle(hit.normal, Vector3.up) <= ground.MaxGroundAngle;
+
+            if (_hasContact)
+            {
+                int colliderId = hit.colliderInstanceID;
+                if (colliderId != _lastContactColliderId)
+                {
+                    _lastContactColliderId = colliderId;
+                    _contactSurface = GroundModel.ClassifySurface(hit.collider);
+                }
+            }
+            else
+            {
+                _lastContactColliderId = 0;
+                _contactSurface = GroundSurface.Regolith;
+            }
 
             _contactNormal = _hasContact ? hit.normal : Vector3.up;
             speedIntoGround = -Vector3.Dot(velocity, _contactNormal);

@@ -92,5 +92,42 @@ namespace MoonProject.Rover.Tests
             Assert.That(hitPoint.z, Is.InRange(4f, 7f),
                 "Centre ray flat-ground hit Z ahead of 07 must land within 4-7 m.");
         }
+
+        [Test]
+        public void WheelFx_HasFourTracks_AndBallisticNonGrowingDustSystems()
+        {
+            using (var scratch = new BuilderScratchScene())
+            {
+                GameObject rover = RoverPrefabBuilder.Assemble(scratch);
+                Transform wheelFx = BuildWiring.Node(rover.transform, "WheelFx");
+                RoverTrackRenderer[] tracks = wheelFx.GetComponentsInChildren<RoverTrackRenderer>(true);
+                Assert.AreEqual(4, tracks.Length, "All 4 wheels must have track renderers.");
+
+                foreach (string name in new[] { "DustLeft", "DustRight", "LandingDust" })
+                {
+                    ParticleSystem ps = BuildWiring.Node(wheelFx, name).GetComponent<ParticleSystem>();
+                    Assert.IsFalse(ps.limitVelocityOverLifetime.enabled, $"{name} must not have atmospheric air drag.");
+                    if (ps.sizeOverLifetime.enabled)
+                    {
+                        AnimationCurve sizeCurve = ps.sizeOverLifetime.size.curve;
+                        Assert.LessOrEqual(sizeCurve.Evaluate(1f), sizeCurve.Evaluate(0.1f) + 1e-3f,
+                            $"{name} grains must not swell/grow in vacuum.");
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void GroundModel_ClassifiesRegolithRockAndMetal_AndSelectsSurfaceSoundHooks()
+        {
+            Assert.AreEqual(GroundSurface.Regolith, GroundModel.ClassifySurface("TerrainChunk_0_0", Core.Layers.Ground));
+            Assert.AreEqual(GroundSurface.Rock, GroundModel.ClassifySurface("Boulder", Core.Layers.Prop));
+            Assert.AreEqual(GroundSurface.Metal, GroundModel.ClassifySurface("Site_KestrelPad_Deck", Core.Layers.Prop));
+
+            Assert.AreEqual("regolith", GroundModel.SurfaceSoundHook(GroundSurface.Regolith));
+            Assert.AreEqual("rock", GroundModel.SurfaceSoundHook(GroundSurface.Rock));
+            Assert.AreEqual("metal", GroundModel.SurfaceSoundHook(GroundSurface.Metal));
+        }
     }
 }
+

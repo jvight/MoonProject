@@ -100,7 +100,7 @@ namespace MoonProject.Rover.PlayModeTests
             }
 
             Assert.IsTrue(_rover.CameraRig.WideShot.IsOpen, "Measure while the wide shot opens.");
-            Assert.Greater(_rover.LampMotes.System.particleCount, 0, "And motes hang in the lamp.");
+            Assert.AreEqual(0, _rover.LampMotes.System.particleCount, "No floating motes while parked in vacuum.");
             yield return MeasurePerFrameMethods(_rover);
         }
 

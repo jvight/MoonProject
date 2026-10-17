@@ -96,19 +96,21 @@ namespace MoonProject.Rover
             main.maxParticles = tuning.MoteCount;
             main.startLifetime = tuning.MoteLifetime;
             main.startSize = new ParticleSystem.MinMaxCurve(tuning.MoteMinSize, tuning.MoteMaxSize);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(0f, tuning.MoteDrift);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(tuning.MoteDrift * 0.5f, tuning.MoteDrift);
+            main.gravityModifier = 1f;
             Color tint = main.startColor.color;
             tint.a = 0f;
             main.startColor = tint;
 
             ParticleSystem.EmissionModule emission = _motes.emission;
-            emission.rateOverTime = tuning.MoteCount / tuning.MoteLifetime;
+            emission.rateOverTime = 0f;
 
             ParticleSystem.ShapeModule shape = _motes.shape;
             shape.angle = tuning.MoteSpread;
             shape.length = tuning.MoteReach;
 
             ParticleSystem.NoiseModule noise = _motes.noise;
+            noise.enabled = tuning.MoteWander > 0f;
             noise.strength = tuning.MoteWander;
             noise.frequency = tuning.MoteWanderFrequency;
 
@@ -119,33 +121,42 @@ namespace MoonProject.Rover
             _renderer.SetPropertyBlock(block);
 
             _particles = new ParticleSystem.Particle[tuning.MoteCount];
+            Visibility = 0f;
+            _motes.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             _motes.Play();
         }
 
         /// <summary>
-        /// The lamp jumped (a placement): carries every mote along so it hangs where it hung relative to the lamp,
-        /// which was at <paramref name="lens"/> facing <paramref name="facing"/> before the jump.
+        /// The lamp jumped (a placement): clears any in-flight motes so nothing hangs in front of the lens after a snap.
         /// </summary>
         public void Carry(Vector3 lens, Quaternion facing)
         {
-            int count = _motes.GetParticles(_particles);
-            Transform lamp = _headlamp.transform;
-            Quaternion turn = lamp.rotation * Quaternion.Inverse(facing);
-            Vector3 now = lamp.position;
-            for (int i = 0; i < count; i++)
-            {
-                ref ParticleSystem.Particle mote = ref _particles[i];
-                mote.position = now + turn * (mote.position - lens);
-                mote.velocity = turn * mote.velocity;
-            }
-
-            _motes.SetParticles(_particles, count);
+            Visibility = 0f;
+            ParticleSystem.EmissionModule emission = _motes.emission;
+            emission.rateOverTimeMultiplier = 0f;
+            _motes.Clear();
         }
 
         public void Tick(float deltaTime)
         {
-            float target = LampMoteLight.SpeedVisibility(_tuning, _rover.Speed);
+            bool kickingUpRegolith = _rover.IsGrounded && _rover.HasGroundContact
+                && _rover.ContactSurface == GroundSurface.Regolith;
+            float target = kickingUpRegolith ? LampMoteLight.SpeedVisibility(_tuning, _rover.Speed) : 0f;
             Visibility = Smoothing.Damp(Visibility, target, _tuning.MoteVisibilityHalfLife, deltaTime);
+
+            ParticleSystem.EmissionModule emission = _motes.emission;
+            float maxRate = _tuning.MoteCount / Mathf.Max(0.1f, _tuning.MoteLifetime);
+            emission.rateOverTimeMultiplier = target > 0f ? maxRate * target : 0f;
+
+            if (target <= 0f && Visibility < 0.02f)
+            {
+                if (_motes.particleCount > 0)
+                {
+                    _motes.Clear();
+                }
+
+                return;
+            }
 
             int count = _motes.GetParticles(_particles);
             if (count == 0)

@@ -165,6 +165,13 @@ namespace MoonProject.Rover.PlayModeTests
             SetDriveStick(Vector2.zero);
             yield return StepForSeconds(rec, 1.4f);
             rec.CaptureFrame("10_settled");
+
+            // Orbit camera to look back along the persistent 4-wheel track trail across the crater
+            Set(_gamepad.rightStick, new Vector2(1f, 0.15f));
+            yield return StepForSeconds(rec, 1.15f);
+            Set(_gamepad.rightStick, Vector2.zero);
+            yield return StepForSeconds(rec, 0.25f);
+            rec.CaptureFrame("11_track_trail_looking_back");
             rec.SaveReport();
         }
 
@@ -326,8 +333,10 @@ namespace MoonProject.Rover.PlayModeTests
                 elapsed += FrameTime;
             }
 
+            yield return StepForSeconds(rec, 0.06f);
             rec.CaptureFrame("06_regolith_touchdown_puff");
-            yield return StepForSeconds(rec, 0.8f);
+            rec.SetMetric("regolithLandingSurface", (float)_rover.ContactSurface);
+            yield return StepForSeconds(rec, 0.74f);
             rec.SetMetric("regolithLeapApexMeters", maxApexAboveGround);
             rec.SetMetric("regolithAirTimeSeconds", lastAirTime);
             rec.SetMetric("regolithLandingImpactSpeed", lastImpactSpeed);
@@ -336,31 +345,53 @@ namespace MoonProject.Rover.PlayModeTests
             SetDriveStick(Vector2.zero);
             if (TryFindBoulderTarget(out Bounds boulderBounds))
             {
-                Vector3 toBoulder = new Vector3(1f, 0f, 0f);
-                Vector3 launchPos = boulderBounds.center - toBoulder * (Mathf.Max(boulderBounds.extents.x, boulderBounds.extents.z) + 4.2f);
+                Vector3 toBoulder = Vector3.forward;
+                float boulderExtent = Mathf.Max(boulderBounds.extents.x, boulderBounds.extents.z);
+                Vector3 launchPos = boulderBounds.center - toBoulder * (boulderExtent + 3.6f);
                 launchPos.y = _terrain.SampleHeight(launchPos.x, launchPos.z);
-                PlaceRover(launchPos, 90f);
+                PlaceRover(launchPos, 0f);
                 yield return SettleFrames(10);
+                Set(_gamepad.rightStick, new Vector2(0f, -0.55f));
+                yield return SettleFrames(22);
+                Set(_gamepad.rightStick, Vector2.zero);
                 rec.ResetBaseline();
 
-                SetDriveStick(new Vector2(0f, 0.55f));
+                SetDriveStick(new Vector2(0f, 0.45f));
                 SetJumpHeld(true);
-                yield return StepForSeconds(rec, 0.68f);
+                yield return StepForSeconds(rec, 0.62f);
                 SetJumpHeld(false);
-                yield return StepForSeconds(rec, 1.25f);
-                rec.CaptureFrame("07_leap_toward_rock");
 
-                float rockWait = 0f;
-                while (rockWait < 3.2f && !_rover.IsGrounded)
+                float rockFlight = 0f;
+                bool capturedLeapTowardRock = false;
+                while (rockFlight < 4.5f)
                 {
+                    float remDist = Vector3.Dot(boulderBounds.center - _rover.Position, toBoulder);
+                    float desiredSpeed = Mathf.Clamp(remDist * 0.9f, -2.5f, 2.5f);
+                    float stickY = Mathf.Clamp((desiredSpeed - _rover.ForwardSpeed) * 0.7f, -1f, 0.55f);
+                    SetDriveStick(new Vector2(0f, stickY));
+
+                    if (!capturedLeapTowardRock && rockFlight >= 1.15f)
+                    {
+                        capturedLeapTowardRock = true;
+                        rec.CaptureFrame("07_leap_toward_rock");
+                    }
+
+                    if (rockFlight > 0.6f && _rover.IsGrounded)
+                    {
+                        break;
+                    }
+
                     yield return StepOneFrame(rec);
-                    rockWait += FrameTime;
+                    rockFlight += FrameTime;
                 }
 
+                SetDriveStick(Vector2.zero);
+                yield return StepForSeconds(rec, 0.06f);
                 float rockTilt = Vector3.Angle(_rover.Rotation * Vector3.up, Vector3.up);
                 rec.SetMetric("rockLandingTiltDeg", rockTilt);
+                rec.SetMetric("rockLandingSurface", (float)_rover.ContactSurface);
                 rec.CaptureFrame("08_landed_on_rock");
-                yield return StepForSeconds(rec, 0.8f);
+                yield return StepForSeconds(rec, 0.74f);
             }
 
             SetDriveStick(Vector2.zero);
@@ -898,14 +929,25 @@ namespace MoonProject.Rover.PlayModeTests
                         continue;
                     }
 
+                    if (GroundModel.ClassifySurface(col) != GroundSurface.Rock
+                        || col.gameObject.name.IndexOf("Boulder", StringComparison.OrdinalIgnoreCase) < 0)
+                    {
+                        continue;
+                    }
+
                     Bounds b = col.bounds;
                     float maxHoriz = Mathf.Max(b.size.x, b.size.z);
-                    if (maxHoriz < 1.2f || maxHoriz > 6.5f || b.size.y < 0.7f || b.size.y > 4.5f)
+                    if (maxHoriz < 1.8f || maxHoriz > 6.5f || b.size.y < 0.6f || b.size.y > 3.5f)
                     {
                         continue;
                     }
 
                     if (!_terrain.IsDrivable(b.center.x, b.center.z))
+                    {
+                        continue;
+                    }
+
+                    if (_sunlight != null && _sunlight.SunlightAt(b.center) < 0.5f)
                     {
                         continue;
                     }
@@ -916,20 +958,47 @@ namespace MoonProject.Rover.PlayModeTests
                         continue;
                     }
 
-                    Vector3 approach = b.center - Vector3.forward * 14f;
-                    approach.y = _terrain.SampleHeight(approach.x, approach.z) + 1.0f;
-                    if (Physics.CheckSphere(approach, 2.2f, Layers.PropMask, QueryTriggerInteraction.Ignore))
-                    {
-                        continue;
-                    }
-
                     float distFromOrigin = new Vector2(b.center.x, b.center.z).magnitude;
-                    if (distFromOrigin < 25f)
+                    if (distFromOrigin < 48f)
                     {
                         continue;
                     }
 
-                    float score = slope * 10f + distFromOrigin * 0.1f;
+                    Vector3 topProbe = new Vector3(b.center.x, b.max.y + 1.5f, b.center.z);
+                    if (!Physics.SphereCast(topProbe, 0.25f, Vector3.down, out RaycastHit topHit, b.size.y + 2.5f,
+                            Layers.PropMask, QueryTriggerInteraction.Ignore)
+                        || topHit.collider != col)
+                    {
+                        continue;
+                    }
+
+                    float topSlope = Vector3.Angle(topHit.normal, Vector3.up);
+                    if (topSlope > 28f)
+                    {
+                        continue;
+                    }
+
+                    Collider[] backHits = Physics.OverlapSphere(
+                        b.center - Vector3.forward * 5.2f,
+                        5.0f,
+                        Layers.PropMask,
+                        QueryTriggerInteraction.Ignore);
+                    bool backClear = true;
+                    for (int h = 0; h < backHits.Length; h++)
+                    {
+                        if (backHits[h] != null && backHits[h] != col)
+                        {
+                            backClear = false;
+                            break;
+                        }
+                    }
+
+                    if (!backClear)
+                    {
+                        continue;
+                    }
+
+                    float score = topSlope * 4f + slope * 6f - maxHoriz * 8f + distFromOrigin * 0.05f;
                     if (score < bestScore)
                     {
                         bestScore = score;
