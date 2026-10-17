@@ -821,6 +821,10 @@ namespace MoonProject.Rover
                     _scanBodyTurning = !playerSteers && ScanAim.NeedsBodyTurn(localFromHead, _lensOffsetInHead,
                         scan.HeadYawReach, scan.BodyStopYaw, _tuning.HeadPitchUpLimit, _tuning.HeadPitchDownLimit,
                         _scanBodyTurning, out _scanBodyYawDelta);
+                    if (_scanBodyTurning)
+                    {
+                        aim.x = Mathf.Clamp(aim.x, -scan.BodyStopYaw, scan.BodyStopYaw);
+                    }
                 }
                 else
                 {

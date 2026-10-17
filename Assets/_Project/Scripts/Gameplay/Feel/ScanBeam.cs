@@ -313,8 +313,8 @@ namespace MoonProject.Gameplay
             float spanHeight,
             float eased)
         {
-            float halfW = Mathf.Clamp(spanHeight * 0.32f, 0.14f, 0.26f);
-            float halfH = Mathf.Clamp(spanHeight * 0.24f, 0.10f, 0.20f);
+            float halfW = Mathf.Clamp(spanHeight * 0.20f, 0.08f, 0.15f);
+            float halfH = Mathf.Clamp(spanHeight * 0.16f, 0.06f, 0.12f);
             for (int i = 0; i < RasterLineCount; i++)
             {
                 float row01 = (i + 0.5f) / RasterLineCount;
@@ -327,14 +327,14 @@ namespace MoonProject.Gameplay
                 }
 
                 raster.enabled = true;
-                raster.widthMultiplier = _tuning.ScanCoreWidth * 0.42f;
+                raster.widthMultiplier = _tuning.ScanCoreWidth * 0.38f;
                 float y = Mathf.Lerp(-halfH, halfH, row01);
-                float rowWidth = halfW * (0.84f + 0.16f * Mathf.Sin(row01 * Mathf.PI));
+                float rowWidth = halfW * (0.78f + 0.22f * Mathf.Sin(row01 * Mathf.PI));
                 Vector3 rowCenter = surfaceCenter + up * y;
                 raster.SetPosition(0, rowCenter - right * rowWidth);
                 raster.SetPosition(1, rowCenter + right * rowWidth);
                 Color c = (i % 3 == 1) ? AmberRasterColor : CyanRasterColor;
-                c.a *= reveal * Mathf.Lerp(0.45f, 0.82f, _progress);
+                c.a *= reveal * Mathf.Lerp(0.42f, 0.78f, _progress);
                 raster.startColor = c;
                 raster.endColor = c;
             }
@@ -342,10 +342,10 @@ namespace MoonProject.Gameplay
             float ping01 = _pingRemaining > 0f
                 ? Mathf.Sin((1f - _pingRemaining / PingDuration) * Mathf.PI)
                 : 0f;
-            float outlineReveal = Mathf.Max(eased * Mathf.Lerp(0.22f, 0.92f, _progress * _progress), ping01);
+            float outlineReveal = Mathf.Max(eased * Mathf.Lerp(0.08f, 0.55f, _progress * _progress), ping01);
             Color outlineColor = Color.Lerp(OutlineBaseColor, OutlinePingColor, ping01);
             outlineColor.a *= outlineReveal;
-            _outlineLoop.widthMultiplier = _tuning.ScanCoreWidth * Mathf.Lerp(0.55f, 1.15f, ping01);
+            _outlineLoop.widthMultiplier = _tuning.ScanCoreWidth * Mathf.Lerp(0.45f, 1.05f, ping01);
             _outlineLoop.startColor = outlineColor;
             _outlineLoop.endColor = outlineColor;
             _outlineLoop.SetPosition(0, surfaceCenter - right * halfW - up * halfH);

@@ -323,9 +323,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 Vector3 toRover = (_rover.ScanOrigin.position - target.Point).normalized;
                 Vector3 side = Vector3.Cross(Vector3.up, toRover).normalized;
-                camTr.position = target.Point + toRover * 1.15f + side * 0.38f + Vector3.up * 0.18f;
+                camTr.position = target.Point + toRover * 0.85f + side * 0.95f + Vector3.up * 0.28f;
                 camTr.rotation = Quaternion.LookRotation((target.Point - camTr.position).normalized, Vector3.up);
-                _view.fieldOfView = 38f;
+                _view.fieldOfView = 32f;
                 FrameCapture.SavePng(_view, CloseupWidth, CloseupHeight, Path.Combine(ScanFolder, "raster_closeup.png"));
             }
             finally
@@ -339,10 +339,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         private void PositionStripCamera(Vector3 roverSpot, Vector3 targetPoint)
         {
             _cameraRig.enabled = false;
-            Vector3 mid = (roverSpot + targetPoint) * 0.5f + Vector3.up * 0.85f;
-            Vector3 camPos = mid + new Vector3(4.2f, 2.2f, -1.6f);
+            Vector3 mid = (roverSpot + targetPoint) * 0.5f + Vector3.up * 0.75f;
+            Vector3 camPos = mid + new Vector3(3.8f, 2.3f, 0.35f);
             _view.transform.SetPositionAndRotation(camPos, Quaternion.LookRotation((mid - camPos).normalized, Vector3.up));
-            _view.fieldOfView = 48f;
+            _view.fieldOfView = 46f;
         }
 
         private Texture2D CapturePanel(string fileName)
