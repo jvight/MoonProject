@@ -80,12 +80,12 @@ namespace MoonProject.Rover.PlayModeTests
 
             DockSettings dock = _rover.Tuning.Dock;
             Debug.Log($"[rover-dock] settled on the anchor after {settledAt:0.00} s ({trace}); lamp at "
-                + $"{_rover.Kit.LampLevel:0.00}");
+                + $"{_rover.RoadLight.LampLevel:0.00}");
             Assert.That(settledAt, Is.InRange(0.6f * dock.SettleSeconds, 1.3f * dock.SettleSeconds),
                 "About a second onto the anchor.");
             Assert.Less(trace.Fastest, MaxSettleSpeed, "Eased, never a snap.");
             Assert.Less(trace.FastestTurn, MaxSettleTurn);
-            Assert.AreEqual(dock.LampDim, _rover.Kit.LampLevel, 0.05f, "The road light dims.");
+            Assert.AreEqual(dock.LampDim, _rover.RoadLight.LampLevel, 0.05f, "The road light dims.");
             float dimmed = _rover.Headlamp.intensity;
 
             _rover.Drive.Drive = new Vector2(0f, 1f);

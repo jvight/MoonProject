@@ -238,8 +238,6 @@ namespace MoonProject.Rover.Tests
             try
             {
                 Assert.That(tuning.RelicMoment.Duration, Is.InRange(2f, 3.5f), "Relic moment lasts ~2-3 s.");
-                Assert.Greater(tuning.UpgradeMoment.Lift, 0f);
-                Assert.Greater(tuning.UpgradeMoment.PullBack, 0f);
                 Assert.Less(tuning.MomentCancelEaseOut, tuning.RelicMoment.EaseOut);
                 Assert.Greater(tuning.DigMoment.MinYawSwing, 0f, "Digging is framed from the side.");
                 Assert.Greater(tuning.DigMoment.Lift, 0f, "...and from above.");

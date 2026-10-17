@@ -85,9 +85,8 @@ namespace MoonProject.Rover.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator Placed_WhileDrivingAndCharging_CarriesNothingOver()
+        public IEnumerator Placed_WhileDriving_CarriesNothingOver()
         {
-            _rover.Context.Get<IRoverAbilities>().Grant(RoverAbility.HoverJump);
             var landings = new List<RoverLanded>();
             var lifts = new List<RoverRecovering>();
             using (_rover.Context.Events.Subscribe<RoverLanded>(landings.Add))
@@ -95,24 +94,19 @@ namespace MoonProject.Rover.PlayModeTests
             {
                 _rover.Drive.Drive = new Vector2(0.6f, 1f);
                 yield return Wait(3f);
-                _rover.Drive.JumpHeld = true;
                 yield return Wait(0.3f);
                 RoverController controller = _rover.Controller;
                 Assert.Greater(controller.Speed, 2f, "Driving fast.");
-                Assert.Greater(controller.JumpCharge, 0f, "Charging a Hover-Jump.");
 
                 _rover.Drive.Drive = Vector2.zero;
-                _rover.Drive.JumpHeld = false;
                 Placement.PlaceAt(TestWorld.Point(FarSpotX, FarSpotZ), Quaternion.Euler(0f, ArrivalYaw, 0f));
                 Assert.AreEqual(0f, controller.Speed, 1e-3f, "Velocity zeroed.");
                 Assert.AreEqual(Vector2.zero, controller.DriveInput, "Eased input zeroed.");
-                Assert.AreEqual(0f, controller.JumpCharge, "The charge is gone, no leap follows.");
                 Assert.AreEqual(0f, _rover.Context.Get<IRoverStillness>().StillSeconds, "Stillness starts over.");
 
                 yield return Wait(2f);
                 Assert.Less(controller.Speed, 0.2f, "Still at rest two seconds later.");
                 Assert.IsTrue(controller.IsGrounded);
-                Assert.IsFalse(controller.IsLeaping);
                 Assert.IsEmpty(landings, "No landing thump from the placement.");
                 Assert.IsEmpty(lifts, "No stuck lift either.");
                 Assert.Greater(_rover.Context.Get<IRoverStillness>().StillSeconds, 1f, "Resting again.");

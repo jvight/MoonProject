@@ -128,16 +128,8 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheLeap_CrouchesPerStep_KicksAtLaunch_AndLandsByImpact()
+        public void ALanding_RumblesAndSquashesByImpact()
         {
-            _events.Publish(new RoverJumpCharged(0.5f));
-            Run(0.5f);
-            Assert.AreEqual(0.04f + 0.12f * 0.5f, _motors.Low, Tolerance, "Charge rumble by step.");
-            Assert.Less(_feel.Nudge.Heave, -0.03f, "07 crouches about 4 cm at half charge.");
-            _events.Publish(new RoverJumped(1f));
-            Run(Frame);
-            Assert.AreEqual(0.25f, _motors.Low, Tolerance, "The launch kick.");
-            Run(0.3f);
             _events.Publish(new RoverLanded(Vector3.zero, 6f, 1f));
             Run(Frame);
             Assert.AreEqual(0.3f, _motors.Low, Tolerance, "A hard landing rumbles hardest.");

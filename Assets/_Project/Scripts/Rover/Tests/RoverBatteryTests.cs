@@ -3,39 +3,12 @@ using NUnit.Framework;
 namespace MoonProject.Rover.Tests
 {
     /// <summary>
-    /// The battery on 07's side (docs/features/M3-20): the leap refuses at the lip, the crawl caps the drive softly,
-    /// and the flank lamps show the cells.
+    /// The battery on 07's side (docs/features/M3-20): the crawl caps the drive softly and the flank lamps show the
+    /// cells.
     /// </summary>
     public sealed class RoverBatteryTests
     {
         private const float Step = 0.02f;
-
-        [Test]
-        public void An_UnaffordableLeap_IsRefusedOncePerPress_AndTheCoilsNeverCharge()
-        {
-            var jump = new HoverJump(new HoverJumpSettings());
-            jump.Step(true, false, true, false, Step);
-
-            Assert.AreEqual(HoverJumpEvent.Refused, jump.Step(true, true, true, false, Step));
-            Assert.IsFalse(jump.IsCharging);
-            for (int i = 0; i < 100; i++)
-            {
-                Assert.AreEqual(HoverJumpEvent.None, jump.Step(true, true, true, false, Step), "held: no re-refusal");
-            }
-
-            Assert.AreEqual(HoverJumpEvent.None, jump.Step(true, false, true, false, Step), "released: no leap");
-            Assert.AreEqual(0f, jump.Charge);
-        }
-
-        [Test]
-        public void An_AffordableLeap_ChargesAsAlways()
-        {
-            var jump = new HoverJump(new HoverJumpSettings());
-            jump.Step(true, false, true, true, Step);
-
-            Assert.AreEqual(HoverJumpEvent.ChargeProgress, jump.Step(true, true, true, true, Step));
-            Assert.IsTrue(jump.IsCharging);
-        }
 
         [Test]
         public void TheCrawlCap_LowersTheTopSpeed_AndAFaster07CoastsDownSoftly()

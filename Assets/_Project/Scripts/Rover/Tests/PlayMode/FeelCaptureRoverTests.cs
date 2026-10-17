@@ -24,7 +24,6 @@ namespace MoonProject.Rover.PlayModeTests
     /// <item><description><c>driving</c> — flat ground: stop -> cruise -> full stop; reverse; tight turn at low speed,
     /// turn at full speed; letting go of the stick mid-turn.</description></item>
     /// <item><description><c>slopes</c> — climb at 10 deg / 20 deg / max; descend, over a crest, across a side slope.</description></item>
-    /// <item><description><c>leap</c> — charge, jump, airtime and landing on regolith; landing on a rock.</description></item>
     /// <item><description><c>collisions</c> — driving into a boulder at cruise and full speed; scraping along a ruin wall.</description></item>
     /// <item><description><c>camera</c> — free orbit with mouse and pad; auto-recenter; camera against a wall and in a
     /// narrow gap; downhill framing; zoom (speed FOV).</description></item>
@@ -282,152 +281,6 @@ namespace MoonProject.Rover.PlayModeTests
             yield return StepForSeconds(rec, 1.0f);
             rec.CaptureFrame("07_side_slope_stopped");
             rec.SaveReport();
-        }
-
-        [UnityTest]
-        [Timeout(300000)]
-        [PrebuildSetup(typeof(RoverSessionScene))]
-        [PostBuildCleanup(typeof(RoverSessionScene))]
-        public IEnumerator Scenario03_Leap()
-        {
-            yield return EnsureBootedAndAwake();
-            SetSkyClock(SunlitDaySeconds, holdingEclipse: false);
-            _abilities.Grant(RoverAbility.HoverJump);
-
-            Vector3 flatSpot = FindFlatOpenSpot(new Vector3(-55f, 0f, -95f), 35f);
-            PlaceRover(flatSpot, 20f);
-            yield return SettleFrames(12);
-
-            using var rec = CreateRecorder("leap");
-            float lastImpactSpeed = 0f;
-            float lastAirTime = 0f;
-            using IDisposable landSub = _context.Events.Subscribe<RoverLanded>(e =>
-            {
-                lastImpactSpeed = e.ImpactSpeed;
-                lastAirTime = e.AirTime;
-            });
-
-            rec.CaptureFrame("00_pre_charge");
-
-            // 1. Hold Space + forward stick to charge jump on regolith
-            SetDriveStick(new Vector2(0f, 0.65f));
-            SetJumpHeld(true);
-            yield return StepForSeconds(rec, 0.30f);
-            rec.CaptureFrame("01_charge_half_crouch");
-            yield return StepForSeconds(rec, 0.42f);
-            rec.SetMetric("jumpChargeLevel", _rover.JumpCharge);
-            rec.CaptureFrame("02_charge_full_crouch");
-
-            // 2. Release Space -> leap, measure apex, airtime, and cushioned landing on regolith
-            SetJumpHeld(false);
-            yield return StepForSeconds(rec, 0.18f);
-            rec.CaptureFrame("03_liftoff_stretch");
-
-            float maxApexAboveGround = 0f;
-            float peakBallisticDescentSpeed = 0f;
-            float elapsed = 0f;
-            bool apexCaptured = false;
-            bool descentCaptured = false;
-            while (elapsed < 6.5f)
-            {
-                float heightAboveGround = _rover.Position.y - _terrain.SampleHeight(_rover.Position.x, _rover.Position.z);
-                if (heightAboveGround > maxApexAboveGround)
-                {
-                    maxApexAboveGround = heightAboveGround;
-                }
-
-                if (_rover.Velocity.y < peakBallisticDescentSpeed)
-                {
-                    peakBallisticDescentSpeed = _rover.Velocity.y;
-                }
-
-                if (!apexCaptured && elapsed >= 1.8f && _rover.Velocity.y <= 0.25f)
-                {
-                    apexCaptured = true;
-                    rec.CaptureFrame("04_airtime_apex");
-                }
-
-                if (!descentCaptured && apexCaptured
-                    && heightAboveGround <= _rover.Tuning.HoverJump.CushionProbe * 0.45f
-                    && _rover.Velocity.y < -0.5f)
-                {
-                    descentCaptured = true;
-                    rec.SetMetric("peakBallisticDescentVerticalSpeed", peakBallisticDescentSpeed);
-                    rec.SetMetric("descentVerticalSpeedInCushionZone", _rover.Velocity.y);
-                    rec.CaptureFrame("05_cushioned_descent");
-                }
-
-                if (elapsed > 0.6f && _rover.IsGrounded)
-                {
-                    break;
-                }
-
-                yield return StepOneFrame(rec);
-                elapsed += FrameTime;
-            }
-
-            yield return StepForSeconds(rec, 0.06f);
-            rec.CaptureFrame("06_regolith_touchdown_puff");
-            yield return StepForSeconds(rec, 0.74f);
-            rec.SetMetric("regolithLeapApexMeters", maxApexAboveGround);
-            rec.SetMetric("regolithAirTimeSeconds", lastAirTime);
-            rec.SetMetric("regolithLandingImpactSpeed", lastImpactSpeed);
-
-            // 3. Leap onto a boulder / rock collider on Layers.Prop
-            SetDriveStick(Vector2.zero);
-            if (TryFindBoulderTarget(out Bounds boulderBounds))
-            {
-                Vector3 toBoulder = Vector3.forward;
-                float boulderExtent = Mathf.Max(boulderBounds.extents.x, boulderBounds.extents.z);
-                Vector3 launchPos = boulderBounds.center - toBoulder * (boulderExtent + 3.6f);
-                launchPos.y = _terrain.SampleHeight(launchPos.x, launchPos.z);
-                PlaceRover(launchPos, 0f);
-                yield return SettleFrames(10);
-                Set(_gamepad.rightStick, new Vector2(0f, -0.55f));
-                yield return SettleFrames(22);
-                Set(_gamepad.rightStick, Vector2.zero);
-                rec.ResetBaseline();
-
-                SetDriveStick(new Vector2(0f, 0.45f));
-                SetJumpHeld(true);
-                yield return StepForSeconds(rec, 0.62f);
-                SetJumpHeld(false);
-
-                float rockFlight = 0f;
-                bool capturedLeapTowardRock = false;
-                while (rockFlight < 4.5f)
-                {
-                    float remDist = Vector3.Dot(boulderBounds.center - _rover.Position, toBoulder);
-                    float desiredSpeed = Mathf.Clamp(remDist * 0.9f, -2.5f, 2.5f);
-                    float stickY = Mathf.Clamp((desiredSpeed - _rover.ForwardSpeed) * 0.7f, -1f, 0.55f);
-                    SetDriveStick(new Vector2(0f, stickY));
-
-                    if (!capturedLeapTowardRock && rockFlight >= 1.15f)
-                    {
-                        capturedLeapTowardRock = true;
-                        rec.CaptureFrame("07_leap_toward_rock");
-                    }
-
-                    if (rockFlight > 0.6f && _rover.IsGrounded)
-                    {
-                        break;
-                    }
-
-                    yield return StepOneFrame(rec);
-                    rockFlight += FrameTime;
-                }
-
-                SetDriveStick(Vector2.zero);
-                yield return StepForSeconds(rec, 0.06f);
-                float rockTilt = Vector3.Angle(_rover.Rotation * Vector3.up, Vector3.up);
-                rec.SetMetric("rockLandingTiltDeg", rockTilt);
-                rec.CaptureFrame("08_landed_on_rock");
-                yield return StepForSeconds(rec, 0.74f);
-            }
-
-            SetDriveStick(Vector2.zero);
-            rec.SaveReport();
-            _abilities.Revoke(RoverAbility.HoverJump);
         }
 
         [UnityTest]
@@ -812,32 +665,11 @@ namespace MoonProject.Rover.PlayModeTests
             }
         }
 
-        private void SetJumpHeld(bool held)
-        {
-            if (_keyboard != null)
-            {
-                if (held)
-                {
-                    Press(_keyboard.spaceKey);
-                }
-                else
-                {
-                    Release(_keyboard.spaceKey);
-                }
-            }
-
-            if (_drive != null)
-            {
-                _drive.JumpHeld = held;
-            }
-        }
-
         private void ResetInputs()
         {
             if (_drive != null)
             {
                 _drive.Drive = Vector2.zero;
-                _drive.JumpHeld = false;
             }
 
             if (_gamepad != null)
