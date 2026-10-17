@@ -94,7 +94,7 @@ namespace MoonProject.UI
                 : (titleSettings != null ? titleSettings.BodyPivotHeight : 0.58f);
             float baseWingTilt = cargoSettings != null ? cargoSettings.RoverWingTilt : -0.11f;
 
-            Color32 bgWarm = titleSettings != null ? (Color32)titleSettings.BgWarm : DefaultBgWarm;
+            Color32 bgWarm = titleSettings != null ? WithAlpha((Color32)titleSettings.BgWarm, 178) : DefaultBgWarm;
             Color32 amber = cargoSettings != null
                 ? cargoSettings.AmberText
                 : (titleSettings != null ? (Color32)titleSettings.Amber : DefaultAmber);
@@ -108,12 +108,70 @@ namespace MoonProject.UI
             Color32 amberFaint = cargoSettings != null
                 ? cargoSettings.AmberFaint
                 : (titleSettings != null ? (Color32)titleSettings.AmberFaint : DefaultAmberFaint);
+            Color32 amberEdge = titleSettings != null ? (Color32)titleSettings.AmberEdge : new Color32(200, 106, 20, 255);
             Color32 cyan = cargoSettings != null
                 ? cargoSettings.CyanAccent
                 : (titleSettings != null ? (Color32)titleSettings.Cyan : DefaultCyan);
             Color32 cyanDim = cargoSettings != null
                 ? cargoSettings.CyanDim
                 : (titleSettings != null ? (Color32)titleSettings.CyanDim : DefaultCyanDim);
+
+            bool titleGlow = titleSettings != null;
+            float outerGlowMul = titleSettings != null ? titleSettings.GlowOuterWidthMultiplier : 4.6f;
+            float outerGlowAlpha = titleSettings != null ? titleSettings.GlowOuterAlpha : 0.22f;
+            float innerGlowMul = titleSettings != null ? titleSettings.GlowInnerWidthMultiplier : 2.4f;
+            float innerGlowAlpha = titleSettings != null ? titleSettings.GlowInnerAlpha : 0.42f;
+
+            Color32 CoreCol(Color32 col, bool isCyan = false)
+            {
+                return (titleGlow && !isCyan) ? Color32.Lerp(col, WithAlpha(cream, col.a), 0.35f) : col;
+            }
+
+            void DrawGlowLine(Vector2 a, Vector2 b, Color32 col, float w)
+            {
+                if (titleGlow)
+                {
+                    DrawLine(painter, a, b, ScaleAlpha(amberEdge, col.a, outerGlowAlpha), w * outerGlowMul);
+                    DrawLine(painter, a, b, ScaleAlpha(amber, col.a, innerGlowAlpha), w * innerGlowMul);
+                }
+
+                DrawLine(painter, a, b, CoreCol(col), w);
+            }
+
+            void StrokeGlowPolygon(Vector2[] pts, int count, Color32 col, float w, bool closed = true)
+            {
+                if (titleGlow)
+                {
+                    StrokePolygon(painter, pts, count, ScaleAlpha(amberEdge, col.a, outerGlowAlpha), w * outerGlowMul, closed);
+                    StrokePolygon(painter, pts, count, ScaleAlpha(amber, col.a, innerGlowAlpha), w * innerGlowMul, closed);
+                }
+
+                StrokePolygon(painter, pts, count, CoreCol(col), w, closed);
+            }
+
+            void StrokeGlowArcRad(Vector2 center, float radius, float a0, float a1, Color32 col, float w, int steps)
+            {
+                if (titleGlow)
+                {
+                    StrokeArcRad(painter, center, radius, a0, a1, ScaleAlpha(amberEdge, col.a, outerGlowAlpha), w * outerGlowMul, steps);
+                    StrokeArcRad(painter, center, radius, a0, a1, ScaleAlpha(amber, col.a, innerGlowAlpha), w * innerGlowMul, steps);
+                }
+
+                StrokeArcRad(painter, center, radius, a0, a1, CoreCol(col), w, steps);
+            }
+
+            void StrokeGlowCircle(Vector2 center, float radius, Color32 col, float w, bool isCyan = false)
+            {
+                if (titleGlow)
+                {
+                    Color32 outerCol = isCyan ? cyanDim : amberEdge;
+                    Color32 innerCol = isCyan ? cyan : amber;
+                    StrokeCircle(painter, center, radius, ScaleAlpha(outerCol, col.a, outerGlowAlpha), w * outerGlowMul);
+                    StrokeCircle(painter, center, radius, ScaleAlpha(innerCol, col.a, innerGlowAlpha), w * innerGlowMul);
+                }
+
+                StrokeCircle(painter, center, radius, CoreCol(col, isCyan), w);
+            }
 
             float crownX = origin.x;
             float crownY = origin.y;
@@ -138,9 +196,11 @@ namespace MoonProject.UI
             float farOffX = farOffsetRef.x * sc;
             float farOffY = farOffsetRef.y * sc;
             DrawWheel(painter, new Vector2(wxRear + farOffX, wyRear + farOffY), wheelR * farScale, rimR * farScale,
-                pose.WheelAngle, lugCount, spokeCount, farAlpha, true, sc, bgWarm, amber, amberHi, amberDim);
+                pose.WheelAngle, lugCount, spokeCount, farAlpha, true, sc, bgWarm, amber, amberHi, amberDim, amberEdge,
+                titleGlow, outerGlowMul, outerGlowAlpha, innerGlowMul, innerGlowAlpha);
             DrawWheel(painter, new Vector2(wxFront + farOffX, wyFront + farOffY), wheelR * farScale, rimR * farScale,
-                pose.WheelAngle + 0.7f, lugCount, spokeCount, farAlpha, true, sc, bgWarm, amber, amberHi, amberDim);
+                pose.WheelAngle + 0.7f, lugCount, spokeCount, farAlpha, true, sc, bgWarm, amber, amberHi, amberDim, amberEdge,
+                titleGlow, outerGlowMul, outerGlowAlpha, innerGlowMul, innerGlowAlpha);
 
             // Body transform: origin at (crownX, crownY + Bob * s), pivoted around -pivotHeight * s
             float bodyOriginX = crownX;
@@ -160,9 +220,9 @@ namespace MoonProject.UI
             }
 
             // 2. Underbody chassis rails & suspension struts to the 2 axles
-            DrawLine(painter, B(-0.58f * s, -0.40f * s), B(0.58f * s, -0.40f * s), WithAlpha(amberDim, 230), 2.0f * sc);
-            DrawLine(painter, B(-0.42f * s, -0.42f * s), new Vector2(wxRear, wyRear), WithAlpha(amber, 240), 2.2f * sc);
-            DrawLine(painter, B(0.42f * s, -0.42f * s), new Vector2(wxFront, wyFront), WithAlpha(amber, 240), 2.2f * sc);
+            DrawGlowLine(B(-0.58f * s, -0.40f * s), B(0.58f * s, -0.40f * s), WithAlpha(amberDim, 230), 2.0f * sc);
+            DrawGlowLine(B(-0.42f * s, -0.42f * s), new Vector2(wxRear, wyRear), WithAlpha(amber, 240), 2.2f * sc);
+            DrawGlowLine(B(0.42f * s, -0.42f * s), new Vector2(wxFront, wyFront), WithAlpha(amber, 240), 2.2f * sc);
 
             if (pose.IsInstalled(RoverSocket.Belly))
             {
@@ -180,8 +240,8 @@ namespace MoonProject.UI
             ScratchQuad[2] = B(-0.56f * s, -0.78f * s);
             ScratchQuad[3] = B(-0.56f * s, -0.50f * s);
             FillPolygon(painter, ScratchQuad, 4, bgWarm);
-            StrokePolygon(painter, ScratchQuad, 4, WithAlpha(amberDim, 230), 1.6f * sc);
-            DrawLine(painter, B(-0.74f * s, -0.64f * s), B(-0.56f * s, -0.64f * s), WithAlpha(amberDim, 215), 1.2f * sc);
+            StrokeGlowPolygon(ScratchQuad, 4, WithAlpha(amberDim, 230), 1.6f * sc);
+            DrawGlowLine(B(-0.74f * s, -0.64f * s), B(-0.56f * s, -0.64f * s), WithAlpha(amberDim, 215), 1.2f * sc);
 
             if (pose.IsInstalled(RoverSocket.Hold))
             {
@@ -205,11 +265,34 @@ namespace MoonProject.UI
             painter.ClosePath();
             painter.Fill();
 
-            for (int pass = 0; pass < 2; pass++)
+            int tubPasses = titleGlow ? 3 : 2;
+            for (int pass = 0; pass < tubPasses; pass++)
             {
-                bool isGlow = pass == 0;
-                painter.strokeColor = WithAlpha(amber, (byte)(isGlow ? 48 : 245));
-                painter.lineWidth = (isGlow ? 6.6f : 2.3f) * sc;
+                if (titleGlow)
+                {
+                    if (pass == 0)
+                    {
+                        painter.strokeColor = ScaleAlpha(amberEdge, 245, outerGlowAlpha);
+                        painter.lineWidth = 2.3f * outerGlowMul * sc;
+                    }
+                    else if (pass == 1)
+                    {
+                        painter.strokeColor = ScaleAlpha(amber, 245, innerGlowAlpha);
+                        painter.lineWidth = 2.3f * innerGlowMul * sc;
+                    }
+                    else
+                    {
+                        painter.strokeColor = CoreCol(WithAlpha(amber, 245));
+                        painter.lineWidth = 2.3f * sc;
+                    }
+                }
+                else
+                {
+                    bool isGlow = pass == 0;
+                    painter.strokeColor = WithAlpha(amber, (byte)(isGlow ? 48 : 245));
+                    painter.lineWidth = (isGlow ? 6.6f : 2.3f) * sc;
+                }
+
                 painter.lineCap = LineCap.Round;
                 painter.lineJoin = LineJoin.Round;
                 painter.BeginPath();
@@ -224,15 +307,15 @@ namespace MoonProject.UI
             }
 
             // 5. Wheel-arch fenders over the rear and front wheels
-            StrokeArcRad(painter, B(-halfWheelbase, -0.42f * s), wheelR * 1.10f,
+            StrokeGlowArcRad(B(-halfWheelbase, -0.42f * s), wheelR * 1.10f,
                 Mathf.PI * 1.06f + pose.Pitch, Mathf.PI * 1.94f + pose.Pitch,
                 WithAlpha(amberHi, 225), 1.8f * sc, 16);
-            StrokeArcRad(painter, B(halfWheelbase, -0.42f * s), wheelR * 1.10f,
+            StrokeGlowArcRad(B(halfWheelbase, -0.42f * s), wheelR * 1.10f,
                 Mathf.PI * 1.06f + pose.Pitch, Mathf.PI * 1.94f + pose.Pitch,
                 WithAlpha(amberHi, 225), 1.8f * sc, 16);
 
             // 6. Horizontal chassis beltline seams
-            DrawLine(painter, B(-0.60f * s, -0.60f * s), B(0.65f * s, -0.60f * s), WithAlpha(amberDim, 210), 1.2f * sc);
+            DrawGlowLine(B(-0.60f * s, -0.60f * s), B(0.65f * s, -0.60f * s), WithAlpha(amberDim, 210), 1.2f * sc);
             DrawLine(painter, B(-0.56f * s, -0.78f * s), B(0.56f * s, -0.78f * s), WithAlpha(amberFaint, 175), 1.0f * sc);
 
             // 7. Side inspection hatch + 4 vertical louver vents (highlighted when Panniers is installed)
@@ -241,7 +324,7 @@ namespace MoonProject.UI
             ScratchQuad[1] = B(0.06f * s, -0.75f * s);
             ScratchQuad[2] = B(0.06f * s, -0.48f * s);
             ScratchQuad[3] = B(-0.34f * s, -0.48f * s);
-            StrokePolygon(painter, ScratchQuad, 4,
+            StrokeGlowPolygon(ScratchQuad, 4,
                 WithAlpha(hasPanniers ? amberHi : amberDim, (byte)(hasPanniers ? 235 : 210)),
                 (hasPanniers ? 1.9f : 1.3f) * sc);
             for (int v = 0; v < 4; v++)
@@ -260,7 +343,7 @@ namespace MoonProject.UI
             ScratchQuad[1] = B(bx0 + bw, by0);
             ScratchQuad[2] = B(bx0 + bw, by0 + bh);
             ScratchQuad[3] = B(bx0, by0 + bh);
-            StrokePolygon(painter, ScratchQuad, 4,
+            StrokeGlowPolygon(ScratchQuad, 4,
                 WithAlpha(hasFlanks ? amberHi : amberDim, (byte)(hasFlanks ? 235 : 210)),
                 (hasFlanks ? 1.9f : 1.2f) * sc);
 
@@ -293,27 +376,32 @@ namespace MoonProject.UI
                     scoopPivot.y + sx * sinS + sy * cosS);
             }
 
-            DrawLine(painter, scoopPivot, S(12f * sc, 5f * sc), WithAlpha(amber, 235), 1.8f * sc);
-            DrawLine(painter, S(0f, 4f * sc), S(12f * sc, -3f * sc), WithAlpha(amber, 235), 1.8f * sc);
-            StrokeArcRad(painter, S(15f * sc, 1f * sc), 7f * sc,
+            DrawGlowLine(scoopPivot, S(12f * sc, 5f * sc), WithAlpha(amber, 235), 1.8f * sc);
+            DrawGlowLine(S(0f, 4f * sc), S(12f * sc, -3f * sc), WithAlpha(amber, 235), 1.8f * sc);
+            StrokeGlowArcRad(S(15f * sc, 1f * sc), 7f * sc,
                 -0.42f * Mathf.PI + scoopAng, 0.45f * Mathf.PI + scoopAng,
                 WithAlpha(amberHi, 240), 2.0f * sc, 10);
 
             // 10. Rear tow hook
-            StrokeArcRad(painter, B(-0.64f * s, -0.44f * s), 4.5f * sc,
+            StrokeGlowArcRad(B(-0.64f * s, -0.44f * s), 4.5f * sc,
                 0.5f * Mathf.PI + pose.Pitch, 1.6f * Mathf.PI + pose.Pitch,
                 WithAlpha(amberDim, 225), 1.6f * sc, 10);
 
-            // 11. Front headlamp dome + short 3-slice soft gradient cone (borderless)
+            // 11. Front headlamp dome + beam
             Vector2 lampCenter = B(0.67f * s, -0.62f * s);
             FillArcRad(painter, lampCenter, 6f * sc, -Mathf.PI * 0.5f + pose.Pitch, Mathf.PI * 0.5f + pose.Pitch,
                 bgWarm, 10);
-            StrokeArcRad(painter, lampCenter, 6f * sc, -Mathf.PI * 0.5f + pose.Pitch, Mathf.PI * 0.5f + pose.Pitch,
+            StrokeGlowArcRad(lampCenter, 6f * sc, -Mathf.PI * 0.5f + pose.Pitch, Mathf.PI * 0.5f + pose.Pitch,
                 WithAlpha(amberHi, 245), 2.0f * sc, 10);
             FillCircle(painter, B(0.71f * s, -0.62f * s), 1.8f * sc, cream);
 
-            bool drawBeam = pose.AlwaysDrawHeadlampBeam || pose.IsInstalled(RoverSocket.Lamp);
-            if (drawBeam)
+            if (titleGlow && pose.AlwaysDrawHeadlampBeam)
+            {
+                // Prototype 2-line headlamp ray shimmer from _render_anim.py.
+                DrawGlowLine(B(0.76f * s, -0.63f * s), B(1.28f * s, -0.55f * s), WithAlpha(amber, 72), 1.1f * sc);
+                DrawGlowLine(B(0.76f * s, -0.60f * s), B(1.22f * s, -0.36f * s), WithAlpha(amber, 72), 1.1f * sc);
+            }
+            else if (pose.AlwaysDrawHeadlampBeam || pose.IsInstalled(RoverSocket.Lamp))
             {
                 float maxReach = pose.AlwaysDrawHeadlampBeam
                     ? 1.58f
@@ -375,14 +463,14 @@ namespace MoonProject.UI
                     wingPivot.y + wx * sinW + wy * cosW);
             }
 
-            DrawLine(painter, W(-18f * sc, 0f), W(-18f * sc, -6f * sc), WithAlpha(amberDim, 230), 1.5f * sc);
-            DrawLine(painter, W(18f * sc, 0f), W(18f * sc, -6f * sc), WithAlpha(amberDim, 230), 1.5f * sc);
+            DrawGlowLine(W(-18f * sc, 0f), W(-18f * sc, -6f * sc), WithAlpha(amberDim, 230), 1.5f * sc);
+            DrawGlowLine(W(18f * sc, 0f), W(18f * sc, -6f * sc), WithAlpha(amberDim, 230), 1.5f * sc);
             ScratchQuad[0] = W(-32f * sc, -9f * sc);
             ScratchQuad[1] = W(26f * sc, -9f * sc);
             ScratchQuad[2] = W(26f * sc, -6f * sc);
             ScratchQuad[3] = W(-32f * sc, -6f * sc);
             FillPolygon(painter, ScratchQuad, 4, bgWarm);
-            StrokePolygon(painter, ScratchQuad, 4,
+            StrokeGlowPolygon(ScratchQuad, 4,
                 WithAlpha(hasWing ? amberHi : amber, 240), (hasWing ? 2.1f : 1.8f) * sc);
             for (int c = -20; c <= 16; c += 12)
             {
@@ -393,6 +481,12 @@ namespace MoonProject.UI
             Vector2 antBase = B(-0.48f * s, -0.95f * s);
             Vector2 antCtrl = B((-0.54f + pose.AntennaSway * 0.4f) * s, -1.24f * s);
             Vector2 antTip = B((-0.44f + pose.AntennaSway) * s, -1.50f * s);
+            if (titleGlow)
+            {
+                StrokeQuadratic(painter, antBase, antCtrl, antTip, ScaleAlpha(amberEdge, 235, outerGlowAlpha), 1.6f * outerGlowMul * sc);
+                StrokeQuadratic(painter, antBase, antCtrl, antTip, ScaleAlpha(amber, 235, innerGlowAlpha), 1.6f * innerGlowMul * sc);
+            }
+
             StrokeQuadratic(painter, antBase, antCtrl, antTip, WithAlpha(amber, 235), 1.6f * sc);
 
             Vector2 loopC = B((-0.50f + pose.AntennaSway * 0.3f) * s, -1.14f * s);
@@ -400,14 +494,17 @@ namespace MoonProject.UI
             ScratchQuad[1] = loopC + new Vector2(5f * sc, 0f);
             ScratchQuad[2] = loopC + new Vector2(0f, 6f * sc);
             ScratchQuad[3] = loopC + new Vector2(-5f * sc, 0f);
-            StrokePolygon(painter, ScratchQuad, 4, WithAlpha(amberDim, 225), 1.2f * sc);
+            StrokeGlowPolygon(ScratchQuad, 4, WithAlpha(amberDim, 225), 1.2f * sc);
 
-            StrokeCircle(painter, antTip, 2.6f * sc, WithAlpha(pose.MorseOn ? amberHi : amber, 240), 1.5f * sc);
+            Color32 morseCol = pose.MorseOn ? (titleGlow ? cyan : amberHi) : amber;
+            StrokeGlowCircle(antTip, 2.6f * sc, WithAlpha(morseCol, 240), 1.5f * sc, titleGlow && pose.MorseOn);
             if (pose.MorseOn)
             {
                 FillCircle(painter, antTip, 2.0f * sc, cream);
-                StrokeCircle(painter, antTip, 7f * sc, WithAlpha(amberHi, 115), 1.1f * sc);
-                StrokeCircle(painter, antTip, 13f * sc, WithAlpha(amber, 55), 0.9f * sc);
+                Color32 ringCol = titleGlow ? cyan : amberHi;
+                Color32 outerRingCol = titleGlow ? cyanDim : amber;
+                StrokeGlowCircle(antTip, 7f * sc, WithAlpha(ringCol, 140), 1.2f * sc, titleGlow);
+                StrokeCircle(painter, antTip, 13f * sc, WithAlpha(outerRingCol, 72), 1.0f * sc);
             }
 
             // 14. Ribbed rubber neck bellows (3 stacked collars)
@@ -417,6 +514,12 @@ namespace MoonProject.UI
                 float nrw = (10.5f - r * 0.8f) * sc;
                 Vector2 neckC = B(0.15f * s, ny);
                 FillEllipse(painter, neckC, nrw, 2.6f * sc, pose.Pitch, bgWarm, 16);
+                if (titleGlow)
+                {
+                    StrokeEllipse(painter, neckC, nrw, 2.6f * sc, pose.Pitch, ScaleAlpha(amberEdge, 230, outerGlowAlpha), 1.3f * outerGlowMul * sc, 16);
+                    StrokeEllipse(painter, neckC, nrw, 2.6f * sc, pose.Pitch, ScaleAlpha(amber, 230, innerGlowAlpha), 1.3f * innerGlowMul * sc, 16);
+                }
+
                 StrokeEllipse(painter, neckC, nrw, 2.6f * sc, pose.Pitch, WithAlpha(amberDim, 230), 1.3f * sc, 16);
             }
 
@@ -441,11 +544,34 @@ namespace MoonProject.UI
             painter.fillColor = bgWarm;
             painter.Fill();
 
-            for (int pass = 0; pass < 2; pass++)
+            int headPasses = titleGlow ? 3 : 2;
+            for (int pass = 0; pass < headPasses; pass++)
             {
-                bool isGlow = pass == 0;
-                painter.strokeColor = WithAlpha(amber, (byte)(isGlow ? 48 : 248));
-                painter.lineWidth = (isGlow ? 6.4f : 2.3f) * sc;
+                if (titleGlow)
+                {
+                    if (pass == 0)
+                    {
+                        painter.strokeColor = ScaleAlpha(amberEdge, 248, outerGlowAlpha);
+                        painter.lineWidth = 2.3f * outerGlowMul * sc;
+                    }
+                    else if (pass == 1)
+                    {
+                        painter.strokeColor = ScaleAlpha(amber, 248, innerGlowAlpha);
+                        painter.lineWidth = 2.3f * innerGlowMul * sc;
+                    }
+                    else
+                    {
+                        painter.strokeColor = CoreCol(WithAlpha(amber, 248));
+                        painter.lineWidth = 2.3f * sc;
+                    }
+                }
+                else
+                {
+                    bool isGlow = pass == 0;
+                    painter.strokeColor = WithAlpha(amber, (byte)(isGlow ? 48 : 248));
+                    painter.lineWidth = (isGlow ? 6.4f : 2.3f) * sc;
+                }
+
                 BeginRoundedHeadPath(painter, headPivot, cosH, sinH, -hw * 0.85f, -hh, hw * 1.85f, hh, hr);
                 painter.Stroke();
             }
@@ -456,16 +582,20 @@ namespace MoonProject.UI
             ScratchQuad[1] = H(hw - inset, -hh + inset);
             ScratchQuad[2] = H(hw - inset, -inset);
             ScratchQuad[3] = H(-hw * 0.50f, -inset);
-            StrokePolygon(painter, ScratchQuad, 4, WithAlpha(amberDim, 225), 1.3f * sc);
+            StrokeGlowPolygon(ScratchQuad, 4, WithAlpha(amberDim, 225), 1.3f * sc);
 
             // Side brass lens pod on cheek
             Vector2 cheekC = H(-hw * 0.38f, -hh * 0.48f);
             FillCircle(painter, cheekC, 4.2f * sc, bgWarm);
-            StrokeCircle(painter, cheekC, 4.2f * sc, WithAlpha(amber, 235), 1.5f * sc);
+            StrokeGlowCircle(cheekC, 4.2f * sc, WithAlpha(amber, 235), 1.5f * sc);
             StrokeCircle(painter, cheekC, 1.5f * sc, WithAlpha(amberHi, 235), 1.2f * sc);
+            if (titleGlow)
+            {
+                FillCircle(painter, cheekC, 0.9f * sc, cyan);
+            }
 
             // Forehead brow ridge / sun visor
-            DrawLine(painter, H(-hw + 3.5f * sc, -hh - 2.5f * sc), H(hw + 2f * sc, -hh - 2.5f * sc),
+            DrawGlowLine(H(-hw + 3.5f * sc, -hh - 2.5f * sc), H(hw + 2f * sc, -hh - 2.5f * sc),
                 WithAlpha(amberHi, 240), 1.8f * sc);
 
             // Glowing eye inside CRT face
@@ -473,12 +603,12 @@ namespace MoonProject.UI
             float eyeY = -hh * 0.50f;
             if (pose.EyeBlink)
             {
-                DrawLine(painter, H(eyeX - 5f * sc, eyeY), H(eyeX + 5f * sc, eyeY), WithAlpha(amberHi, 240), 2.0f * sc);
+                DrawGlowLine(H(eyeX - 5f * sc, eyeY), H(eyeX + 5f * sc, eyeY), WithAlpha(amberHi, 240), 2.0f * sc);
             }
             else
             {
                 Vector2 eyeCenter = H(eyeX, eyeY);
-                StrokeCircle(painter, eyeCenter, 6.2f * sc, WithAlpha(amberHi, 225), 1.4f * sc);
+                StrokeGlowCircle(eyeCenter, 6.2f * sc, WithAlpha(amberHi, 225), 1.4f * sc);
                 FillCircle(painter, eyeCenter, 3.6f * sc, amberHi);
                 FillCircle(painter, H(eyeX + 1.1f * sc, eyeY - 1.0f * sc), 1.3f * sc, cream);
             }
@@ -501,9 +631,17 @@ namespace MoonProject.UI
 
             // 16. Near-side wheels (2 wheels drawn in front of body with dark interior disc fill)
             DrawWheel(painter, new Vector2(wxRear, wyRear), wheelR, rimR,
-                pose.WheelAngle, lugCount, spokeCount, 1.0f, false, sc, bgWarm, amber, amberHi, amberDim);
+                pose.WheelAngle, lugCount, spokeCount, 1.0f, false, sc, bgWarm, amber, amberHi, amberDim, amberEdge,
+                titleGlow, outerGlowMul, outerGlowAlpha, innerGlowMul, innerGlowAlpha);
             DrawWheel(painter, new Vector2(wxFront, wyFront), wheelR, rimR,
-                pose.WheelAngle + 0.7f, lugCount, spokeCount, 1.0f, false, sc, bgWarm, amber, amberHi, amberDim);
+                pose.WheelAngle + 0.7f, lugCount, spokeCount, 1.0f, false, sc, bgWarm, amber, amberHi, amberDim, amberEdge,
+                titleGlow, outerGlowMul, outerGlowAlpha, innerGlowMul, innerGlowAlpha);
+        }
+
+        private static Color32 ScaleAlpha(Color32 color, byte baseAlpha, float factor)
+        {
+            byte a = (byte)Mathf.Clamp(Mathf.RoundToInt(baseAlpha * factor), 0, 255);
+            return new Color32(color.r, color.g, color.b, a);
         }
 
         private static Vector2 TransformHeadPoint(Vector2 headPivot, float cosH, float sinH, float hx, float hy)
@@ -607,7 +745,8 @@ namespace MoonProject.UI
 
         private static void DrawWheel(Painter2D painter, Vector2 center, float rOuter, float rRim, float angle,
             int lugCount, int spokeCount, float alphaScale, bool isFarSide, float sc, Color32 bgWarm, Color32 amber,
-            Color32 amberHi, Color32 amberDim)
+            Color32 amberHi, Color32 amberDim, Color32 amberEdge, bool titleGlow, float outerGlowMul,
+            float outerGlowAlpha, float innerGlowMul, float innerGlowAlpha)
         {
             byte aMain = (byte)Mathf.RoundToInt(242f * alphaScale);
             byte aDim = (byte)Mathf.RoundToInt(215f * alphaScale);
@@ -617,23 +756,51 @@ namespace MoonProject.UI
             {
                 // Dark interior disc so background lines do not show through near-side wheels.
                 FillCircle(painter, center, rOuter, bgWarm);
-                StrokeCircle(painter, center, rOuter, WithAlpha(amber, 48), 6.2f * sc);
+                if (!titleGlow)
+                {
+                    StrokeCircle(painter, center, rOuter, WithAlpha(amber, 48), 6.2f * sc);
+                }
+            }
+
+            float outerW = (isFarSide ? 1.5f : 2.2f) * sc;
+            if (titleGlow)
+            {
+                StrokeCircle(painter, center, rOuter, ScaleAlpha(amberEdge, aMain, outerGlowAlpha), outerW * outerGlowMul);
+                StrokeCircle(painter, center, rOuter, ScaleAlpha(amber, aMain, innerGlowAlpha), outerW * innerGlowMul);
             }
 
             // Outer tire ring & inner tread ring
-            StrokeCircle(painter, center, rOuter, WithAlpha(amber, aMain), (isFarSide ? 1.5f : 2.2f) * sc);
+            StrokeCircle(painter, center, rOuter, WithAlpha(amber, aMain), outerW);
+            if (titleGlow && !isFarSide)
+            {
+                StrokeCircle(painter, center, rOuter * 0.86f, ScaleAlpha(amber, aDim, innerGlowAlpha), 1.1f * innerGlowMul * sc);
+            }
+
             StrokeCircle(painter, center, rOuter * 0.86f, WithAlpha(amberDim, aDim), 1.1f * sc);
 
             // Radial tread lugs
+            float lugW = (isFarSide ? 1.1f : 1.5f) * sc;
             for (int i = 0; i < lugCount; i++)
             {
                 float a = angle + (i * Mathf.PI * 2f) / lugCount;
                 Vector2 dir = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
-                DrawLine(painter, center + dir * (rOuter * 0.86f), center + dir * (rOuter * 1.04f),
-                    WithAlpha(amber, aMain), (isFarSide ? 1.1f : 1.5f) * sc);
+                Vector2 p0 = center + dir * (rOuter * 0.86f);
+                Vector2 p1 = center + dir * (rOuter * 1.04f);
+                if (titleGlow && !isFarSide)
+                {
+                    DrawLine(painter, p0, p1, ScaleAlpha(amber, aMain, innerGlowAlpha), lugW * innerGlowMul);
+                }
+
+                DrawLine(painter, p0, p1, WithAlpha(amber, aMain), lugW);
             }
 
             // Hub rim circle
+            if (titleGlow)
+            {
+                StrokeCircle(painter, center, rRim, ScaleAlpha(amberEdge, aMain, outerGlowAlpha), 1.5f * outerGlowMul * sc);
+                StrokeCircle(painter, center, rRim, ScaleAlpha(amber, aMain, innerGlowAlpha), 1.5f * innerGlowMul * sc);
+            }
+
             StrokeCircle(painter, center, rRim, WithAlpha(amber, aMain), 1.5f * sc);
 
             // 6 spokes
@@ -642,13 +809,25 @@ namespace MoonProject.UI
             {
                 float a = angle + (i * Mathf.PI * 2f) / spokeCount;
                 Vector2 dir = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
-                DrawLine(painter, center + dir * capR, center + dir * rRim, WithAlpha(amberDim, aDim), 1.3f * sc);
+                Vector2 s0 = center + dir * capR;
+                Vector2 s1 = center + dir * rRim;
+                if (titleGlow && !isFarSide)
+                {
+                    DrawLine(painter, s0, s1, ScaleAlpha(amber, aDim, innerGlowAlpha), 1.3f * innerGlowMul * sc);
+                }
+
+                DrawLine(painter, s0, s1, WithAlpha(amberDim, aDim), 1.3f * sc);
             }
 
             // Center axle cap
             if (!isFarSide)
             {
                 FillCircle(painter, center, capR, bgWarm);
+            }
+
+            if (titleGlow)
+            {
+                StrokeCircle(painter, center, capR, ScaleAlpha(amber, aHi, innerGlowAlpha), 1.4f * innerGlowMul * sc);
             }
 
             StrokeCircle(painter, center, capR, WithAlpha(amberHi, aHi), 1.4f * sc);

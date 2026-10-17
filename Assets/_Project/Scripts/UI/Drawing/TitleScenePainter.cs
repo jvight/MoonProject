@@ -14,6 +14,11 @@ namespace MoonProject.UI
     internal sealed class TitleScenePainter : StylePainter
     {
         private const float RefRoverScale = 82f;
+        private const int LimbSteps = 96;
+        private const int MaxArcSteps = 64;
+
+        private static readonly Vector2[] ScratchLimb = new Vector2[LimbSteps + 1];
+        private static readonly Vector2[] ScratchArc = new Vector2[MaxArcSteps + 1];
 
         private readonly TitleSettings _settings;
         private readonly TitleAnimationState _state;
@@ -41,6 +46,8 @@ namespace MoonProject.UI
 
         public TitleAnimationState State => _state;
 
+        public float LastPaintMilliseconds { get; private set; }
+
         public void SetTime(float timeSeconds, bool standaloneFraming = false)
         {
             if (Mathf.Approximately(_timeSeconds, timeSeconds) && _standaloneFraming == standaloneFraming)
@@ -65,6 +72,7 @@ namespace MoonProject.UI
                 return;
             }
 
+            long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
             _width = rect.width;
             _height = rect.height;
             _state.Evaluate(_timeSeconds, _standaloneFraming);
@@ -86,6 +94,8 @@ namespace MoonProject.UI
             PaintRover07();
 
             _painter = null;
+            long t1 = System.Diagnostics.Stopwatch.GetTimestamp();
+            LastPaintMilliseconds = (float)((t1 - t0) * 1000.0 / System.Diagnostics.Stopwatch.Frequency);
         }
 
         private Vector2 Map(float refX, float refY)
@@ -162,18 +172,19 @@ namespace MoonProject.UI
             float r = _state.EarthRadius * _scale;
 
             Shapes.Disc(_painter, center, r, _settings.BgDeep);
-            StrokeArc(center, r, 0f, Mathf.PI * 2f, _settings.Amber, 1.1f, 0.18f, 48, false);
-            StrokeArc(center, r, -0.78f * Mathf.PI, 0.16f * Mathf.PI, _settings.AmberHi, 2.4f, 0.96f, 36, true);
+            StrokeArc(center, r, 0f, Mathf.PI * 2f, _settings.Amber, 1.1f, 0.22f, 36, true);
+            StrokeArc(center, r, -0.78f * Mathf.PI, 0.16f * Mathf.PI, _settings.AmberHi, 2.4f, 0.96f, 28, true);
             StrokeArc(center + new Vector2(-0.8f * _scale, 0.5f * _scale), r - 0.8f * _scale, -0.62f * Mathf.PI,
-                0.02f * Mathf.PI, _settings.Cream, 1.2f, 0.92f, 28, true);
-            StrokeArc(center, r + 1.8f * _scale, -0.84f * Mathf.PI, -0.60f * Mathf.PI, _settings.Cyan, 1.1f, 0.45f,
-                14, false);
-            StrokeArc(center, r + 1.8f * _scale, 0.04f * Mathf.PI, 0.24f * Mathf.PI, _settings.Cyan, 1.1f, 0.45f,
-                14, false);
+                0.02f * Mathf.PI, _settings.Cream, 1.2f, 0.92f, 24, true);
+            StrokeArc(center, r + 1.8f * _scale, -0.84f * Mathf.PI, -0.60f * Mathf.PI, _settings.Cyan, 1.1f, 0.50f,
+                12, true);
+            StrokeArc(center, r + 1.8f * _scale, 0.04f * Mathf.PI, 0.24f * Mathf.PI, _settings.Cyan, 1.1f, 0.50f,
+                12, true);
 
             Vector2 ark = Map(_state.ArkPosition.x, _state.ArkPosition.y);
             float pulse = _state.ArkPulse;
-            Shapes.Disc(_painter, ark, 4.2f * _scale, WithAlpha(_settings.Cyan, 0.24f * pulse));
+            Shapes.Disc(_painter, ark, 7.2f * _scale, WithAlpha(_settings.CyanDim, 0.14f * pulse));
+            Shapes.Disc(_painter, ark, 4.2f * _scale, WithAlpha(_settings.Cyan, 0.28f * pulse));
             Shapes.Disc(_painter, ark, 1.6f * _scale, WithAlpha(_settings.Cyan, 0.95f * pulse));
         }
 
@@ -181,12 +192,12 @@ namespace MoonProject.UI
         {
             Vector2 moonCenter = Map(_state.MoonCenter.x, _state.MoonCenter.y);
             float moonR = _state.MoonRadius * _scale;
-            float featureScale = (_state.MoonRadius / _settings.StandaloneMoonRadius) * _scale;
+            float featureScale = _scale;
 
             // 1. Rim landmarks drawn BEFORE Moon disc fill so their bases are cleanly occluded by the lunar horizon.
-            if (_settings.TrailLagSeconds > 0f)
+            if (_settings.TrailLagSeconds > 0f && _settings.TrailOpacity > 0f)
             {
-                _trailMultiplier = 0.28f;
+                _trailMultiplier = _settings.TrailOpacity;
                 PaintLandmarks(_trailState, featureScale, true);
                 _trailMultiplier = 1f;
             }
@@ -197,23 +208,16 @@ namespace MoonProject.UI
             Shapes.Disc(_painter, moonCenter, moonR, _settings.BgMoon);
 
             // 3. Subtle dashed schematic latitude rings (0.86R and 0.58R).
-            PaintDashedCircle(moonCenter, moonR * _settings.GridOuterRadiusShare, _settings.Amber, 1.0f, 0.14f);
-            PaintDashedCircle(moonCenter, moonR * _settings.GridInnerRadiusShare, _settings.Amber, 1.0f, 0.14f);
+            PaintDashedCircle(moonCenter, moonR * _settings.GridOuterRadiusShare, _settings.Amber, 1.0f, 0.16f);
+            PaintDashedCircle(moonCenter, moonR * _settings.GridInnerRadiusShare, _settings.Amber, 1.0f, 0.16f);
 
-            // 4. Warm phosphor persistence trail & crisp pass for rotating craters and ridges.
-            if (_settings.TrailLagSeconds > 0f)
-            {
-                _trailMultiplier = 0.28f;
-                PaintRotatingMoonFeatures(_trailState, moonCenter, moonR, featureScale, true);
-                _trailMultiplier = 1f;
-            }
-
+            // 4. Rotating craters and ridges with multi-pass phosphor glow.
             PaintRotatingMoonFeatures(_state, moonCenter, moonR, featureScale, false);
 
             // 5. Primary Moon limb stroke with rolling terrain micro-undulations + hot top-crown arc under 07.
             PaintLimbUndulations(moonCenter, moonR, featureScale);
             StrokeArc(moonCenter, moonR + 0.5f * featureScale, -Mathf.PI * 0.5f - 0.36f, -Mathf.PI * 0.5f + 0.36f,
-                _settings.AmberHi, 1.6f, 0.92f, 36, true);
+                _settings.AmberHi, 1.8f, 0.94f, 28, true);
         }
 
         private void PaintDashedCircle(Vector2 center, float radius, Color color, float width, float alpha)
@@ -263,7 +267,7 @@ namespace MoonProject.UI
                         continue;
                     }
 
-                    StrokeArc(moonCenter, moonR * rg.RadialShare, a0, a1, dimAmber, 1.35f, 0.82f * _trailMultiplier,
+                    StrokeArc(moonCenter, moonR * rg.RadialShare, a0, a1, dimAmber, 1.35f, 0.84f * _trailMultiplier,
                         18, !isTrail);
                 }
             }
@@ -288,13 +292,13 @@ namespace MoonProject.UI
                     float rot = ang + Mathf.PI * 0.5f + c.Tilt;
                     Color outerCol = c.SunlitRim ? baseAmber : dimAmber;
                     float outerW = c.SunlitRim ? 1.6f : 1.2f;
-                    StrokeEllipse(pos, rx, ry, rot, 0f, Mathf.PI * 2f, outerCol, outerW, 0.85f * _trailMultiplier,
+                    StrokeEllipse(pos, rx, ry, rot, 0f, Mathf.PI * 2f, outerCol, outerW, 0.86f * _trailMultiplier,
                         24, !isTrail);
                     if (c.SunlitRim && !isTrail)
                     {
                         Vector2 rimCenter = pos + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * (1.5f * featureScale);
                         StrokeEllipse(rimCenter, rx * 0.82f, ry * 0.72f, rot, 0.12f * Mathf.PI, 0.88f * Mathf.PI,
-                            hiAmber, 1.2f, 0.88f, 16, false);
+                            hiAmber, 1.25f, 0.90f, 16, true);
                     }
                 }
             }
@@ -302,30 +306,54 @@ namespace MoonProject.UI
 
         private void PaintLimbUndulations(Vector2 moonCenter, float moonR, float featureScale)
         {
-            const int steps = 180;
             float moonRot = _state.MoonRotationRadians;
+            const float coreWidth = 2.4f;
+            const float coreAlpha = 0.96f;
 
-            for (int pass = 0; pass < 2; pass++)
+            for (int i = 0; i <= LimbSteps; i++)
             {
-                bool glow = pass == 0;
-                _painter.strokeColor = WithAlpha(_settings.Amber, glow ? 0.22f : 0.94f);
-                _painter.lineWidth = (glow ? 6.8f : 2.4f) * _scale;
-                _painter.BeginPath();
-                for (int i = 0; i <= steps; i++)
+                float theta = (i / (float)LimbSteps) * Mathf.PI * 2f;
+                float worldAng = theta - moonRot;
+                float und = (Mathf.Sin(worldAng * 12f) * 0.9f + Mathf.Cos(worldAng * 23f) * 0.5f) * featureScale;
+                float rr = moonR + und;
+                ScratchLimb[i] = moonCenter + new Vector2(Mathf.Cos(theta) * rr, Mathf.Sin(theta) * rr);
+            }
+
+            for (int pass = 0; pass < 3; pass++)
+            {
+                Color passCol;
+                float passAlpha;
+                float passWidth;
+                int stride;
+                if (pass == 0)
                 {
-                    float theta = (i / (float)steps) * Mathf.PI * 2f;
-                    float worldAng = theta - moonRot;
-                    float und = (Mathf.Sin(worldAng * 12f) * 0.9f + Mathf.Cos(worldAng * 23f) * 0.5f) * featureScale;
-                    float rr = moonR + und;
-                    Vector2 pt = moonCenter + new Vector2(Mathf.Cos(theta) * rr, Mathf.Sin(theta) * rr);
-                    if (i == 0)
-                    {
-                        _painter.MoveTo(pt);
-                    }
-                    else
-                    {
-                        _painter.LineTo(pt);
-                    }
+                    passCol = _settings.AmberEdge;
+                    passAlpha = coreAlpha * _settings.GlowOuterAlpha;
+                    passWidth = coreWidth * _settings.GlowOuterWidthMultiplier;
+                    stride = 2;
+                }
+                else if (pass == 1)
+                {
+                    passCol = _settings.Amber;
+                    passAlpha = coreAlpha * _settings.GlowInnerAlpha;
+                    passWidth = coreWidth * _settings.GlowInnerWidthMultiplier;
+                    stride = 2;
+                }
+                else
+                {
+                    passCol = Color.Lerp(_settings.Amber, _settings.Cream, 0.38f);
+                    passAlpha = coreAlpha;
+                    passWidth = coreWidth;
+                    stride = 1;
+                }
+
+                _painter.strokeColor = WithAlpha(passCol, passAlpha);
+                _painter.lineWidth = passWidth * _scale;
+                _painter.BeginPath();
+                _painter.MoveTo(ScratchLimb[0]);
+                for (int i = stride; i <= LimbSteps; i += stride)
+                {
+                    _painter.LineTo(ScratchLimb[i]);
                 }
 
                 _painter.ClosePath();
@@ -393,8 +421,8 @@ namespace MoonProject.UI
                 LmPt(o, r, u, sc, 22f, 22f), LmPt(o, r, u, sc, -22f, 22f), _settings.BgCorner, main, 1.8f, a, glow);
 
             // Internal truss X on descent stage.
-            StrokeSegment(LmPt(o, r, u, sc, -16f, 10f), LmPt(o, r, u, sc, 16f, 22f), dim, 1.1f, a, false);
-            StrokeSegment(LmPt(o, r, u, sc, 16f, 10f), LmPt(o, r, u, sc, -16f, 22f), dim, 1.1f, a, false);
+            StrokeSegment(LmPt(o, r, u, sc, -16f, 10f), LmPt(o, r, u, sc, 16f, 22f), dim, 1.1f, a, glow);
+            StrokeSegment(LmPt(o, r, u, sc, 16f, 10f), LmPt(o, r, u, sc, -16f, 22f), dim, 1.1f, a, glow);
 
             // Upper octagonal cabin.
             _painter.fillColor = _settings.BgCorner;
@@ -415,31 +443,31 @@ namespace MoonProject.UI
 
             // Viewport window & hatch.
             StrokeQuad(LmPt(o, r, u, sc, -5f, 27f), LmPt(o, r, u, sc, 5f, 27f),
-                LmPt(o, r, u, sc, 5f, 36f), LmPt(o, r, u, sc, -5f, 36f), main, 1.3f, a, false);
-            StrokeSegment(LmPt(o, r, u, sc, -11f, 33f), LmPt(o, r, u, sc, -7f, 33f), main, 1.3f, a, false);
-            StrokeSegment(LmPt(o, r, u, sc, 7f, 33f), LmPt(o, r, u, sc, 11f, 33f), main, 1.3f, a, false);
+                LmPt(o, r, u, sc, 5f, 36f), LmPt(o, r, u, sc, -5f, 36f), main, 1.3f, a, glow);
+            StrokeSegment(LmPt(o, r, u, sc, -11f, 33f), LmPt(o, r, u, sc, -7f, 33f), main, 1.3f, a, glow);
+            StrokeSegment(LmPt(o, r, u, sc, 7f, 33f), LmPt(o, r, u, sc, 11f, 33f), main, 1.3f, a, glow);
 
             // Splayed landing legs, shock struts & footpads.
             StrokeSegment(LmPt(o, r, u, sc, -19f, 18f), LmPt(o, r, u, sc, -30f, 0f), main, 1.7f, a, glow);
-            StrokeSegment(LmPt(o, r, u, sc, -16f, 11f), LmPt(o, r, u, sc, -26f, 5f), main, 1.7f, a, false);
+            StrokeSegment(LmPt(o, r, u, sc, -16f, 11f), LmPt(o, r, u, sc, -26f, 5f), main, 1.7f, a, glow);
             StrokeSegment(LmPt(o, r, u, sc, -34f, 0f), LmPt(o, r, u, sc, -25f, 0f), main, 1.7f, a, glow);
 
             StrokeSegment(LmPt(o, r, u, sc, 19f, 18f), LmPt(o, r, u, sc, 30f, 0f), main, 1.7f, a, glow);
-            StrokeSegment(LmPt(o, r, u, sc, 16f, 11f), LmPt(o, r, u, sc, 26f, 5f), main, 1.7f, a, false);
+            StrokeSegment(LmPt(o, r, u, sc, 16f, 11f), LmPt(o, r, u, sc, 26f, 5f), main, 1.7f, a, glow);
             StrokeSegment(LmPt(o, r, u, sc, 25f, 0f), LmPt(o, r, u, sc, 34f, 0f), main, 1.7f, a, glow);
 
             // Center boarding ladder.
-            StrokeSegment(LmPt(o, r, u, sc, -3f, 10f), LmPt(o, r, u, sc, -5f, 0f), main, 1.5f, a, false);
-            StrokeSegment(LmPt(o, r, u, sc, 3f, 10f), LmPt(o, r, u, sc, 5f, 0f), main, 1.5f, a, false);
-            StrokeSegment(LmPt(o, r, u, sc, -4f, 7f), LmPt(o, r, u, sc, 4f, 7f), main, 1.4f, a, false);
-            StrokeSegment(LmPt(o, r, u, sc, -4.5f, 3.5f), LmPt(o, r, u, sc, 4.5f, 3.5f), main, 1.4f, a, false);
+            StrokeSegment(LmPt(o, r, u, sc, -3f, 10f), LmPt(o, r, u, sc, -5f, 0f), main, 1.5f, a, glow);
+            StrokeSegment(LmPt(o, r, u, sc, 3f, 10f), LmPt(o, r, u, sc, 5f, 0f), main, 1.5f, a, glow);
+            StrokeSegment(LmPt(o, r, u, sc, -4f, 7f), LmPt(o, r, u, sc, 4f, 7f), main, 1.4f, a, glow);
+            StrokeSegment(LmPt(o, r, u, sc, -4.5f, 3.5f), LmPt(o, r, u, sc, 4.5f, 3.5f), main, 1.4f, a, glow);
 
             // Roof comm dish & whip.
-            StrokeSegment(LmPt(o, r, u, sc, 0f, 42f), LmPt(o, r, u, sc, 0f, 50f), main, 1.3f, a, false);
+            StrokeSegment(LmPt(o, r, u, sc, 0f, 42f), LmPt(o, r, u, sc, 0f, 50f), main, 1.3f, a, glow);
             float baseAng = Mathf.Atan2(r.y, r.x);
             StrokeArc(LmPt(o, r, u, sc, 0f, 53f), 5f * sc, baseAng + 0.25f * Mathf.PI, baseAng + 0.85f * Mathf.PI,
-                main, 1.3f, a, 12, false);
-            StrokeSegment(LmPt(o, r, u, sc, -8f, 42f), LmPt(o, r, u, sc, -10f, 55f), main, 1.3f, a, false);
+                main, 1.3f, a, 12, glow);
+            StrokeSegment(LmPt(o, r, u, sc, -8f, 42f), LmPt(o, r, u, sc, -10f, 55f), main, 1.3f, a, glow);
         }
 
         private void PaintTower(Vector2 o, Vector2 r, Vector2 u, float sc, float a, float blink, Color main, Color hi,
@@ -451,10 +479,10 @@ namespace MoonProject.UI
             StrokeSegment(LmPt(o, r, u, sc, 9f, 0f), LmPt(o, r, u, sc, 5f, 32f), main, 1.7f, a, glow);
 
             // Lattice cross-bracing.
-            StrokeSegment(LmPt(o, r, u, sc, -8f, 4f), LmPt(o, r, u, sc, 6f, 14f), dim, 1.1f, a, false);
-            StrokeSegment(LmPt(o, r, u, sc, 8f, 4f), LmPt(o, r, u, sc, -6f, 14f), dim, 1.1f, a, false);
-            StrokeSegment(LmPt(o, r, u, sc, -6f, 16f), LmPt(o, r, u, sc, 5f, 28f), dim, 1.1f, a, false);
-            StrokeSegment(LmPt(o, r, u, sc, 6f, 16f), LmPt(o, r, u, sc, -5f, 28f), dim, 1.1f, a, false);
+            StrokeSegment(LmPt(o, r, u, sc, -8f, 4f), LmPt(o, r, u, sc, 6f, 14f), dim, 1.1f, a, glow);
+            StrokeSegment(LmPt(o, r, u, sc, 8f, 4f), LmPt(o, r, u, sc, -6f, 14f), dim, 1.1f, a, glow);
+            StrokeSegment(LmPt(o, r, u, sc, -6f, 16f), LmPt(o, r, u, sc, 5f, 28f), dim, 1.1f, a, glow);
+            StrokeSegment(LmPt(o, r, u, sc, 6f, 16f), LmPt(o, r, u, sc, -5f, 28f), dim, 1.1f, a, glow);
 
             // Broken / bent upper mast section leaning right + dipole cross-arms.
             StrokeSegment(LmPt(o, r, u, sc, -4f, 32f), LmPt(o, r, u, sc, 12f, 58f), hi, 1.7f, a, glow);
@@ -464,14 +492,18 @@ namespace MoonProject.UI
 
             // Snapped guy wire & slack cable.
             StrokeQuadratic(LmPt(o, r, u, sc, -5f, 30f), LmPt(o, r, u, sc, -16f, 18f), LmPt(o, r, u, sc, -22f, 0f),
-                dim, 1.1f, a, false);
+                dim, 1.1f, a, glow);
             StrokeQuadratic(LmPt(o, r, u, sc, 13f, 52f), LmPt(o, r, u, sc, 22f, 40f), LmPt(o, r, u, sc, 20f, 29f),
-                dim, 1.1f, a, false);
+                dim, 1.1f, a, glow);
 
             // Tiny intermittent spark / beacon at tip.
             Vector2 tip = LmPt(o, r, u, sc, 14f, 59f);
             Color tipCol = blink > 0.5f ? cyan : main;
-            StrokeArc(tip, 2.2f * sc, 0f, Mathf.PI * 2f, tipCol, 1.5f, a, 12, glow && blink > 0.5f);
+            StrokeArc(tip, 2.2f * sc, 0f, Mathf.PI * 2f, tipCol, 1.5f, a, 12, glow);
+            if (glow && blink > 0.5f)
+            {
+                Shapes.Disc(_painter, tip, 1.6f * sc, WithAlpha(_settings.Cream, a));
+            }
         }
 
         private void PaintSolarArray(Vector2 o, Vector2 r, Vector2 u, float sc, float a, Color main, Color hi,
@@ -485,7 +517,7 @@ namespace MoonProject.UI
 
             // Junction box on mast.
             FillAndStrokeQuad(LmPt(o, r, u, sc, -4f, 12f), LmPt(o, r, u, sc, 4f, 12f),
-                LmPt(o, r, u, sc, 4f, 19f), LmPt(o, r, u, sc, -4f, 19f), _settings.BgWarm, main, 1.3f, a, false);
+                LmPt(o, r, u, sc, 4f, 19f), LmPt(o, r, u, sc, -4f, 19f), _settings.BgWarm, main, 1.3f, a, glow);
 
             // Tilted solar wing frame around (0, 29) rotated by -0.22 rad in canvas coords.
             const float cosT = 0.9758974f; // cos(-0.22)
@@ -499,21 +531,21 @@ namespace MoonProject.UI
 
             StrokeQuad(WingPt(-28f, -9f), WingPt(-3f, -9f), WingPt(-3f, 4f), WingPt(-28f, 4f), hi, 1.8f, a, glow);
             StrokeQuad(WingPt(3f, -9f), WingPt(28f, -9f), WingPt(28f, 4f), WingPt(3f, 4f), hi, 1.8f, a, glow);
-            StrokeSegment(WingPt(-3f, -2f), WingPt(3f, -2f), hi, 1.8f, a, false);
+            StrokeSegment(WingPt(-3f, -2f), WingPt(3f, -2f), hi, 1.8f, a, glow);
 
             // Photovoltaic cell grid lines.
-            StrokeSegment(WingPt(-20f, -9f), WingPt(-20f, 4f), dim, 1.0f, a, false);
-            StrokeSegment(WingPt(-12f, -9f), WingPt(-12f, 4f), dim, 1.0f, a, false);
-            StrokeSegment(WingPt(11f, -9f), WingPt(11f, 4f), dim, 1.0f, a, false);
-            StrokeSegment(WingPt(19f, -9f), WingPt(19f, 4f), dim, 1.0f, a, false);
-            StrokeSegment(WingPt(-28f, -2.5f), WingPt(-3f, -2.5f), dim, 1.0f, a, false);
-            StrokeSegment(WingPt(3f, -2.5f), WingPt(28f, -2.5f), dim, 1.0f, a, false);
+            StrokeSegment(WingPt(-20f, -9f), WingPt(-20f, 4f), dim, 1.0f, a, glow);
+            StrokeSegment(WingPt(-12f, -9f), WingPt(-12f, 4f), dim, 1.0f, a, glow);
+            StrokeSegment(WingPt(11f, -9f), WingPt(11f, 4f), dim, 1.0f, a, glow);
+            StrokeSegment(WingPt(19f, -9f), WingPt(19f, 4f), dim, 1.0f, a, glow);
+            StrokeSegment(WingPt(-28f, -2.5f), WingPt(-3f, -2.5f), dim, 1.0f, a, glow);
+            StrokeSegment(WingPt(3f, -2.5f), WingPt(28f, -2.5f), dim, 1.0f, a, glow);
         }
 
         private void PaintMarker(Vector2 o, Vector2 r, Vector2 u, float sc, float a, Color main, Color dim, bool glow)
         {
-            StrokeSegment(LmPt(o, r, u, sc, -6f, 0f), LmPt(o, r, u, sc, 0f, 14f), dim, 1.3f, a, false);
-            StrokeSegment(LmPt(o, r, u, sc, 0f, 14f), LmPt(o, r, u, sc, 6f, 0f), dim, 1.3f, a, false);
+            StrokeSegment(LmPt(o, r, u, sc, -6f, 0f), LmPt(o, r, u, sc, 0f, 14f), dim, 1.3f, a, glow);
+            StrokeSegment(LmPt(o, r, u, sc, 0f, 14f), LmPt(o, r, u, sc, 6f, 0f), dim, 1.3f, a, glow);
             StrokeSegment(LmPt(o, r, u, sc, 0f, 14f), LmPt(o, r, u, sc, 0f, 22f), dim, 1.3f, a, glow);
             StrokeArc(LmPt(o, r, u, sc, 0f, 24f), 2.0f * sc, 0f, Mathf.PI * 2f, main, 1.3f, a, 10, glow);
         }
@@ -567,7 +599,7 @@ namespace MoonProject.UI
                 float dy = groundY - 2f * _roverPxScale - Mathf.Sin(phase * Mathf.PI) * (5f + d * 2f) * _roverPxScale;
                 float da = (1f - phase) * 0.65f;
                 StrokeArc(new Vector2(dx, dy), 1.3f * _roverPxScale, 0f, Mathf.PI * 2f, _settings.AmberDim, 1.3f, da,
-                    8, false);
+                    8, true);
             }
         }
 
@@ -590,15 +622,13 @@ namespace MoonProject.UI
                 return;
             }
 
-            int passes = glow ? 2 : 1;
+            int passes = glow ? 3 : 1;
             for (int p = 0; p < passes; p++)
             {
-                bool isGlow = glow && p == 0;
-                _painter.strokeColor = WithAlpha(color, isGlow ? alpha * 0.20f : alpha);
-                _painter.lineWidth = (isGlow ? width * 3.0f : width) * _scale;
+                ApplyStrokePass(color, width, alpha, glow, p);
                 _painter.BeginPath();
                 _painter.MoveTo(p0);
-                AppendQuadraticTo(p0, control, p1, 10);
+                AppendQuadraticTo(p0, control, p1, 8);
                 _painter.Stroke();
             }
         }
@@ -633,22 +663,15 @@ namespace MoonProject.UI
                 return;
             }
 
-            if (glow)
+            int passes = glow ? 3 : 1;
+            for (int p = 0; p < passes; p++)
             {
-                _painter.strokeColor = WithAlpha(color, alpha * 0.20f);
-                _painter.lineWidth = width * 3.0f * _scale;
+                ApplyStrokePass(color, width, alpha, glow, p);
                 _painter.BeginPath();
                 _painter.MoveTo(a);
                 _painter.LineTo(b);
                 _painter.Stroke();
             }
-
-            _painter.strokeColor = WithAlpha(color, alpha);
-            _painter.lineWidth = width * _scale;
-            _painter.BeginPath();
-            _painter.MoveTo(a);
-            _painter.LineTo(b);
-            _painter.Stroke();
         }
 
         private void StrokeQuad(Vector2 a, Vector2 b, Vector2 c, Vector2 d, Color color, float width, float alpha,
@@ -659,10 +682,10 @@ namespace MoonProject.UI
                 return;
             }
 
-            if (glow)
+            int passes = glow ? 3 : 1;
+            for (int p = 0; p < passes; p++)
             {
-                _painter.strokeColor = WithAlpha(color, alpha * 0.20f);
-                _painter.lineWidth = width * 3.0f * _scale;
+                ApplyStrokePass(color, width, alpha, glow, p);
                 _painter.BeginPath();
                 _painter.MoveTo(a);
                 _painter.LineTo(b);
@@ -671,16 +694,6 @@ namespace MoonProject.UI
                 _painter.ClosePath();
                 _painter.Stroke();
             }
-
-            _painter.strokeColor = WithAlpha(color, alpha);
-            _painter.lineWidth = width * _scale;
-            _painter.BeginPath();
-            _painter.MoveTo(a);
-            _painter.LineTo(b);
-            _painter.LineTo(c);
-            _painter.LineTo(d);
-            _painter.ClosePath();
-            _painter.Stroke();
         }
 
         private void FillAndStrokeQuad(Vector2 a, Vector2 b, Vector2 c, Vector2 d, Color fill, Color stroke,
@@ -700,7 +713,21 @@ namespace MoonProject.UI
         private void StrokeArc(Vector2 center, float radius, float a0, float a1, Color color, float width, float alpha,
             int steps, bool glow)
         {
-            StrokeEllipse(center, radius, radius, 0f, a0, a1, color, width, alpha, steps, glow);
+            if (alpha <= 0.005f || radius <= 0f)
+            {
+                return;
+            }
+
+            int passes = glow ? 3 : 1;
+            Angle start = Angle.Radians(a0);
+            Angle end = Angle.Radians(a1);
+            for (int p = 0; p < passes; p++)
+            {
+                ApplyStrokePass(color, width, alpha, glow, p);
+                _painter.BeginPath();
+                _painter.Arc(center, radius, start, end);
+                _painter.Stroke();
+            }
         }
 
         private void StrokeEllipse(Vector2 center, float rx, float ry, float rot, float a0, float a1, Color color,
@@ -711,32 +738,67 @@ namespace MoonProject.UI
                 return;
             }
 
+            if (steps > MaxArcSteps)
+            {
+                steps = MaxArcSteps;
+            }
+
             float cosR = Mathf.Cos(rot);
             float sinR = Mathf.Sin(rot);
-            int passes = glow ? 2 : 1;
+            for (int i = 0; i <= steps; i++)
+            {
+                float a = a0 + (a1 - a0) * i / steps;
+                float ex = Mathf.Cos(a) * rx;
+                float ey = Mathf.Sin(a) * ry;
+                ScratchArc[i] = new Vector2(center.x + ex * cosR - ey * sinR, center.y + ex * sinR + ey * cosR);
+            }
+
+            int passes = glow ? 3 : 1;
             for (int p = 0; p < passes; p++)
             {
-                bool isGlow = glow && p == 0;
-                _painter.strokeColor = WithAlpha(color, isGlow ? alpha * 0.20f : alpha);
-                _painter.lineWidth = (isGlow ? width * 3.0f : width) * _scale;
+                ApplyStrokePass(color, width, alpha, glow, p);
+                int stride = (glow && p < 2 && steps >= 16) ? 2 : 1;
                 _painter.BeginPath();
-                for (int i = 0; i <= steps; i++)
+                _painter.MoveTo(ScratchArc[0]);
+                for (int i = stride; i < steps; i += stride)
                 {
-                    float a = a0 + (a1 - a0) * i / steps;
-                    float ex = Mathf.Cos(a) * rx;
-                    float ey = Mathf.Sin(a) * ry;
-                    Vector2 pt = new Vector2(center.x + ex * cosR - ey * sinR, center.y + ex * sinR + ey * cosR);
-                    if (i == 0)
-                    {
-                        _painter.MoveTo(pt);
-                    }
-                    else
-                    {
-                        _painter.LineTo(pt);
-                    }
+                    _painter.LineTo(ScratchArc[i]);
                 }
 
+                _painter.LineTo(ScratchArc[steps]);
                 _painter.Stroke();
+            }
+        }
+
+        private void ApplyStrokePass(Color color, float width, float alpha, bool glow, int pass)
+        {
+            if (!glow)
+            {
+                _painter.strokeColor = WithAlpha(color, alpha);
+                _painter.lineWidth = width * _scale;
+                return;
+            }
+
+            bool isCyan = color.b > color.r;
+            if (pass == 2)
+            {
+                Color coreCol = isCyan ? color : Color.Lerp(color, _settings.Cream, 0.38f);
+                _painter.strokeColor = WithAlpha(coreCol, alpha);
+                _painter.lineWidth = width * _scale;
+                return;
+            }
+
+            if (pass == 0)
+            {
+                Color outerCol = isCyan ? _settings.CyanDim : _settings.AmberEdge;
+                _painter.strokeColor = WithAlpha(outerCol, alpha * _settings.GlowOuterAlpha);
+                _painter.lineWidth = width * _settings.GlowOuterWidthMultiplier * _scale;
+            }
+            else
+            {
+                Color innerCol = isCyan ? _settings.Cyan : _settings.Amber;
+                _painter.strokeColor = WithAlpha(innerCol, alpha * _settings.GlowInnerAlpha);
+                _painter.lineWidth = width * _settings.GlowInnerWidthMultiplier * _scale;
             }
         }
 

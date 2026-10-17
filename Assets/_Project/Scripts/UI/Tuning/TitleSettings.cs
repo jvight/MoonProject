@@ -247,6 +247,43 @@ namespace MoonProject.UI
         [Tooltip("Offset (px in 1920x1080 reference) from Earth's centre to the cyan L4 Ark beacon.")]
         [SerializeField] private Vector2 _menuArkOffset = new Vector2(66f, -18f);
 
+        [Header("Title left-column header and menu spacing (px inside #menu-frame)")]
+        [Tooltip("Horizontal offset (px inside #menu-frame) of the wordmark, subtitle, and divider rule.")]
+        [Range(0f, 400f)]
+        [SerializeField] private float _titleScreenLeft = 150f;
+
+        [Tooltip("Vertical offset (px inside #menu-frame) of the wordmark block.")]
+        [Range(0f, 400f)]
+        [SerializeField] private float _titleScreenTop = 126f;
+
+        [Tooltip("Vertical gap (px) between the wordmark and the '//' subtitle row.")]
+        [Range(-20f, 40f)]
+        [SerializeField] private float _subtitleTopMargin = 4f;
+
+        [Tooltip("Vertical gap (px) between the '//' subtitle row and #title-rule.")]
+        [Range(0f, 60f)]
+        [SerializeField] private float _ruleTopMargin = 16f;
+
+        [Tooltip("Total width (px) of the horizontal #title-rule under the subtitle.")]
+        [Range(200f, 800f)]
+        [SerializeField] private float _ruleWidth = 510f;
+
+        [Tooltip("Height (px) of #title-rule.")]
+        [Range(1f, 6f)]
+        [SerializeField] private float _ruleHeight = 2f;
+
+        [Tooltip("Width (px) of the bright warm-amber accent segment on the left of #title-rule.")]
+        [Range(0f, 200f)]
+        [SerializeField] private float _ruleAccentWidth = 48f;
+
+        [Tooltip("Left padding (px inside #menu-frame) of the title menu button stack.")]
+        [Range(0f, 400f)]
+        [SerializeField] private float _menuFrameLeftPadding = 144f;
+
+        [Tooltip("Top padding (px inside #menu-frame) of the title menu button stack so #title-rule sits cleanly above Continue.")]
+        [Range(100f, 600f)]
+        [SerializeField] private float _menuFrameTopPadding = 342f;
+
         [Header("Standalone animation framing (1280x720 reference matching anim.html)")]
         [Tooltip("Reference canvas size (px) for the standalone 1280x720 animation stills.")]
         [SerializeField] private Vector2 _standaloneReferenceSize = new Vector2(1280f, 720f);
@@ -383,6 +420,27 @@ namespace MoonProject.UI
         [Range(20f, 240f)]
         [SerializeField] private float _crtRollBandHeight = 90f;
 
+        [Header("Phosphor vector bloom and persistence trail")]
+        [Tooltip("Line-width multiplier for the wide outer warm amber halo (#C86A14) behind glowing vector strokes.")]
+        [Range(1f, 10f)]
+        [SerializeField] private float _glowOuterWidthMultiplier = 4.6f;
+
+        [Tooltip("Opacity multiplier for the wide outer warm amber halo (#C86A14) behind glowing vector strokes.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _glowOuterAlpha = 0.22f;
+
+        [Tooltip("Line-width multiplier for the tight inner amber halo (#FFB547) behind glowing vector strokes.")]
+        [Range(1f, 6f)]
+        [SerializeField] private float _glowInnerWidthMultiplier = 2.4f;
+
+        [Tooltip("Opacity multiplier for the tight inner amber halo (#FFB547) behind glowing vector strokes.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _glowInnerAlpha = 0.42f;
+
+        [Tooltip("Opacity multiplier for the warm phosphor persistence trail behind rotating Moon features.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _trailOpacity = 0.34f;
+
         [Header("R1CrtFace.shader & Variant C phosphor palette")]
         [Tooltip("Deepest CRT bezel and space background (#0E0905).")]
         [SerializeField] private Color _bgDeep = new Color(14f / 255f, 9f / 255f, 5f / 255f, 1f);
@@ -469,6 +527,24 @@ namespace MoonProject.UI
 
         public Vector2 MenuArkOffset => _menuArkOffset;
 
+        public float TitleScreenLeft => _titleScreenLeft;
+
+        public float TitleScreenTop => _titleScreenTop;
+
+        public float SubtitleTopMargin => _subtitleTopMargin;
+
+        public float RuleTopMargin => _ruleTopMargin;
+
+        public float RuleWidth => _ruleWidth;
+
+        public float RuleHeight => _ruleHeight;
+
+        public float RuleAccentWidth => _ruleAccentWidth;
+
+        public float MenuFrameLeftPadding => _menuFrameLeftPadding;
+
+        public float MenuFrameTopPadding => _menuFrameTopPadding;
+
         public Vector2 StandaloneReferenceSize => _standaloneReferenceSize;
 
         public Vector2 StandaloneMoonCenter => _standaloneMoonCenter;
@@ -537,6 +613,16 @@ namespace MoonProject.UI
 
         public float CrtRollBandHeight => _crtRollBandHeight;
 
+        public float GlowOuterWidthMultiplier => _glowOuterWidthMultiplier;
+
+        public float GlowOuterAlpha => _glowOuterAlpha;
+
+        public float GlowInnerWidthMultiplier => _glowInnerWidthMultiplier;
+
+        public float GlowInnerAlpha => _glowInnerAlpha;
+
+        public float TrailOpacity => _trailOpacity;
+
         public Color BgDeep => _bgDeep;
 
         public Color BgWarm => _bgWarm;
@@ -578,7 +664,9 @@ namespace MoonProject.UI
 
             if (_moonTurnPeriodSeconds <= 0f || _morsePeriodSeconds <= 0f || _eyeBlinkPeriodSeconds <= 0f ||
                 _cursorBlinkPeriodSeconds <= 0f || _wheelRadius <= 0f || _menuMoonRadius <= 0f ||
-                _standaloneMoonRadius <= 0f || _menuRoverScale <= 0f || _standaloneRoverScale <= 0f)
+                _standaloneMoonRadius <= 0f || _menuRoverScale <= 0f || _standaloneRoverScale <= 0f ||
+                _ruleWidth <= 0f || _ruleHeight <= 0f || _glowOuterWidthMultiplier <= 0f ||
+                _glowInnerWidthMultiplier <= 0f)
             {
                 return "title animation timing or scale is non-positive";
             }
