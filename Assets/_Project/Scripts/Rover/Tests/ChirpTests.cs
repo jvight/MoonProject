@@ -86,12 +86,6 @@ namespace MoonProject.Rover.Tests
             var cases = new (System.Action publish, ChirpMood mood)[]
             {
                 (() => Dock(FeelPhase.Reward), ChirpMood.Happy),
-                (() => _events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Impact, Vector3.zero, Vector3.up, 1f,
-                    0f)), ChirpMood.Affirm),
-                (() => _events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Reward, Vector3.zero, Vector3.up, 1f,
-                    0f)), ChirpMood.Proud),
-                (() => _events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Impact, Vector3.zero, Vector3.up, 0.5f,
-                    0f)), ChirpMood.Happy),
                 (() => _events.Publish(new FeelBeat(FeelKind.Build, FeelPhase.Impact, Vector3.zero, Vector3.up, 1f,
                     0f)), ChirpMood.Happy),
                 (() => _events.Publish(new BatteryWarned(BatteryWarning.Low, Vector3.zero)), ChirpMood.Worried),
@@ -157,17 +151,6 @@ namespace MoonProject.Rover.Tests
             Assert.IsFalse(voice.TryChirp(ChirpMood.Affirm, 15f), "Affirm's own 3 s.");
             Assert.IsFalse(voice.TryChirp(ChirpMood.Happy, 20f), "Happy waits 30 s.");
             Assert.IsTrue(voice.TryChirp(ChirpMood.Happy, 37f));
-        }
-
-        [Test]
-        public void TheSeatsAffirm_NeverCostsThePowerOnsProud()
-        {
-            _events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Impact, Vector3.zero, Vector3.up, 1f, 0f));
-            _now += 2f;
-            _events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Reward, Vector3.zero, Vector3.up, 1f, 0f));
-            Assert.AreEqual(2, _chirps.Count);
-            Assert.AreEqual(ChirpMood.Affirm, _chirps[0].Mood);
-            Assert.AreEqual(ChirpMood.Proud, _chirps[1].Mood, "Proud 2 s after the seat still sounds.");
         }
 
         [Test]

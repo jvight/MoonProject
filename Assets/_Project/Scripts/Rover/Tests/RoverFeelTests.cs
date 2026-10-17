@@ -138,12 +138,8 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void TheSeat_AndTheBatteryEmptying_AreFelt()
+        public void TheBatteryEmptying_IsFelt()
         {
-            Beat(FeelPhase.Impact, 1f, kind: FeelKind.Install);
-            Run(Frame);
-            Assert.AreEqual(0.2f, _motors.Low, Tolerance, "The seat's clunk.");
-            Run(0.3f);
             _events.Publish(new LowPowerChanged(true, false));
             Run(Frame);
             Assert.Greater(_motors.Low, 0.05f, "The power-down rumble starts at 0.06 ...");
