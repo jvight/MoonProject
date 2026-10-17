@@ -37,7 +37,26 @@ namespace MoonProject.Gameplay
             _tuning = tuning ?? throw new ArgumentNullException(nameof(tuning));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _known = known ?? new KnownStructures(_catalog, _events);
+            ApplyStartingKnowledge();
             ApplyPlaytestUnlocks(restored: false);
+        }
+
+        private void ApplyStartingKnowledge()
+        {
+            IReadOnlyList<string> starting = _tuning.StartingKnownIds;
+            if (starting == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < starting.Count; i++)
+            {
+                string id = starting[i];
+                if (!string.IsNullOrEmpty(id) && _catalog.TryGet(id, out _))
+                {
+                    _known.Learn(id, restored: false);
+                }
+            }
         }
 
         /// <summary>

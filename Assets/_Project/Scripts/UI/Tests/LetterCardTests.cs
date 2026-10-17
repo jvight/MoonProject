@@ -41,11 +41,15 @@ namespace MoonProject.UI.Tests
 
             _localization = TestTables.Localization(_events,
                 UiKeys.CardClose, "Close", "Đóng",
-                UiKeys.CrewLogCaption, "CREW LOG", "NHẬT KÝ ĐỘI",
-                "ui.station.radio_tower", "RADIO TOWER", "THÁP RADIO",
+                UiKeys.RadioLetterCaption, "Radio letter", "Thư radio",
+                UiKeys.ArkBulletinCaption, "Ark bulletin", "Bản tin tàu Ark",
+                UiKeys.EndingAnswerCaption, "Ark reply", "Tín hiệu hồi đáp",
                 "letter.mast_1",
                 "LOG 0311 · You asked where I put the solder. Third drawer down, under the spare fuses — don't mix the spools again. — K.",
                 "NHẬT KÝ 0311 · Anh hỏi em để cuộn thiếc hàn ở đâu. Ngăn kéo thứ ba từ trên xuống, dưới đám cầu chì dự phòng — đừng trộn lẫn các cuộn nữa nhé. — K.",
+                "letter.mast_5",
+                "25 OCT 1988 · Ro, half of Ark IV tunes in to Lumen After Dark on Sundays while we seal the hull rings. I've registered your Sunday frequency for Ines's water survey uplink. — Lena Moreau",
+                "25/10/1988 · Ro ơi, tối Chủ nhật nào nửa tàu Ark IV cũng mở Lumen After Dark trong lúc hàn kín các vòng thân tàu. Mình đã đăng ký tần số Chủ nhật của bạn làm kênh nhận dữ liệu khảo sát nước của Ines rồi nhé. — Lena Moreau",
                 "letter.after_1",
                 "L4 ARK · S. · 07, that first mast was right where Kenji said it'd be. The whole bay cheered when your ping came through.",
                 "TÀU ARK L4 · S. · 07, cột tiếp sóng đầu tiên nằm đúng chỗ Kenji nói. Cả khoang reo lên khi tín hiệu của em vọng về.",
@@ -62,18 +66,22 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void IsLetterKey_RoutesStoryV4LettersAndEndingAnswer_LeavesShortTickerLinesOnToast()
+        public void IsLetterKey_AndClassify_RouteLettersBulletinsAndEndingAnswer()
         {
             for (int i = 1; i <= 10; i++)
             {
                 Assert.IsTrue(LetterCard.IsLetterKey("letter.mast_" + i));
-                Assert.IsTrue(LetterCard.IsCrewLetterKey("letter.mast_" + i));
+                Assert.AreEqual(LetterCard.LetterKind.RadioLetter, LetterCard.Classify("letter.mast_" + i));
                 Assert.IsTrue(LetterCard.IsLetterKey("letter.after_" + i));
-                Assert.IsFalse(LetterCard.IsCrewLetterKey("letter.after_" + i));
+                Assert.AreEqual(LetterCard.LetterKind.ArkBulletin, LetterCard.Classify("letter.after_" + i));
             }
 
             Assert.IsTrue(LetterCard.IsLetterKey("ticker.ending.answer"));
-            Assert.IsFalse(LetterCard.IsCrewLetterKey("ticker.ending.answer"));
+            Assert.AreEqual(LetterCard.LetterKind.EndingAnswer, LetterCard.Classify("ticker.ending.answer"));
+
+            Assert.AreEqual(UiKeys.RadioLetterCaption, LetterCard.CaptionKey(LetterCard.LetterKind.RadioLetter));
+            Assert.AreEqual(UiKeys.ArkBulletinCaption, LetterCard.CaptionKey(LetterCard.LetterKind.ArkBulletin));
+            Assert.AreEqual(UiKeys.EndingAnswerCaption, LetterCard.CaptionKey(LetterCard.LetterKind.EndingAnswer));
 
             Assert.IsFalse(LetterCard.IsLetterKey("ticker.home"));
             Assert.IsFalse(LetterCard.IsLetterKey("ticker.static_1"));
@@ -118,7 +126,7 @@ namespace MoonProject.UI.Tests
             Assert.IsTrue(_card.CanDismiss);
             CollectionAssert.AreEqual(new[] { UiCueKind.CardShown }, _cues);
             CollectionAssert.AreEqual(new[] { "letter.mast_1" }, _shownKeys);
-            Assert.AreEqual("CREW LOG", _layout.LetterCardCaption.text);
+            Assert.AreEqual("Radio letter", _layout.LetterCardCaption.text);
             Assert.AreEqual("LOG 0311", _layout.LetterCardStamp.text);
             Assert.AreEqual("— K.", _layout.LetterCardSender.text);
 
@@ -144,7 +152,7 @@ namespace MoonProject.UI.Tests
             // Relocalize in place preserves full reveal.
             _localization.SetLanguage("vi");
             _card.Relocalize();
-            Assert.AreEqual("NHẬT KÝ ĐỘI", _layout.LetterCardCaption.text);
+            Assert.AreEqual("Thư radio", _layout.LetterCardCaption.text);
             Assert.AreEqual("NHẬT KÝ 0311", _layout.LetterCardStamp.text);
             Assert.IsTrue(_layout.LetterCardText.text.StartsWith("Anh hỏi em để cuộn thiếc hàn"));
 
@@ -154,6 +162,30 @@ namespace MoonProject.UI.Tests
             Step(_settings.Reveal.FadeOut + 0.2f);
             Assert.IsFalse(_card.IsVisible);
             Assert.IsFalse(_card.IsBusy);
+        }
+
+        [Test]
+        public void LetterCard_LabelsEachTextByItsRealKind_InEnglishAndVietnamese()
+        {
+            AssertCaptionForKey("letter.mast_5", "Radio letter", "Thư radio", expectArkLinkClass: false);
+            AssertCaptionForKey("letter.after_1", "Ark bulletin", "Bản tin tàu Ark", expectArkLinkClass: true);
+            AssertCaptionForKey("ticker.ending.answer", "Ark reply", "Tín hiệu hồi đáp", expectArkLinkClass: true);
+        }
+
+        private void AssertCaptionForKey(string key, string expectedEn, string expectedVi, bool expectArkLinkClass)
+        {
+            _localization.SetLanguage("en");
+            _card.Enqueue(new TickerLine(key));
+            Step(_settings.AppearDelay + Frame);
+            Assert.AreEqual(expectedEn, _layout.LetterCardCaption.text, key + " (en)");
+            Assert.AreEqual(expectArkLinkClass, _layout.LetterCard.ClassListContains(LetterCard.ArkLinkClass), key);
+
+            _localization.SetLanguage("vi");
+            _card.Relocalize();
+            Assert.AreEqual(expectedVi, _layout.LetterCardCaption.text, key + " (vi)");
+
+            _card.Dismiss();
+            Step(_settings.Reveal.FadeOut + 0.2f);
         }
 
         private void Step(float seconds)

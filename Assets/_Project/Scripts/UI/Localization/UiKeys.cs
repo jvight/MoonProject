@@ -16,6 +16,9 @@ namespace MoonProject.UI
         public const string CardClose = "ui.card.close";
         public const string BayFitted = "ui.bay.fitted";
         public const string CrewLogCaption = "ui.card.crew_log";
+        public const string RadioLetterCaption = "ui.card.radio_letter";
+        public const string ArkBulletinCaption = "ui.card.ark_bulletin";
+        public const string EndingAnswerCaption = "ui.card.ending_answer";
         public const string LinerCaption = "ui.card.liner_caption";
         public const string TapeCount = "ui.card.tape_count";
         public const string PauseCassettes = "ui.pause.cassettes";
