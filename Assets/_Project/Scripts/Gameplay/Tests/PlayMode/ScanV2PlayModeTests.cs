@@ -258,6 +258,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             panels[3] = CapturePanel("ruin_behind_4_completion.png");
             Release(_keyboard.eKey);
+            yield return null;
 
             Assert.Greater(maxTurnDelta, 90f, "07 must turn its whole body toward a target behind it.");
             Assert.Greater(maxWheelScrub, 0.25f, "Whole-body scan turn must apply wheel scrub.");
@@ -266,6 +267,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private IEnumerator VerifyUpSlopeTargetAndPlayerSteering()
         {
+            _cameraRig.enabled = true;
             ScanField scans = _gameplay.Scans;
             ScanFragment slopeTarget = scans.Find("ruin.FallenSolarArray.1");
             Assert.IsNotNull(slopeTarget);
@@ -278,12 +280,14 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             // Player-wins check: holding D while holding E lets player steer immediately
             Press(_keyboard.eKey);
+            yield return null;
             Press(_keyboard.dKey);
             float yawBeforeSteer = _rover.Rotation.eulerAngles.y;
             yield return WaitSeconds(0.25f);
             float steerDelta = Mathf.DeltaAngle(yawBeforeSteer, _rover.Rotation.eulerAngles.y);
             Assert.Greater(steerDelta, 2f, "While the player steers, the player wins.");
             Release(_keyboard.dKey);
+            yield return null;
 
             float maxHeadPitch = 0f;
             float deadline = Time.time + ScanTimeout;
@@ -323,9 +327,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 Vector3 toRover = (_rover.ScanOrigin.position - target.Point).normalized;
                 Vector3 side = Vector3.Cross(Vector3.up, toRover).normalized;
-                camTr.position = target.Point + toRover * 0.85f + side * 0.95f + Vector3.up * 0.28f;
-                camTr.rotation = Quaternion.LookRotation((target.Point - camTr.position).normalized, Vector3.up);
-                _view.fieldOfView = 32f;
+                Vector3 focus = target.Point - Vector3.up * 0.04f;
+                camTr.position = focus + toRover * 0.38f + side * 1.18f + Vector3.up * 0.34f;
+                camTr.rotation = Quaternion.LookRotation((focus - camTr.position).normalized, Vector3.up);
+                _view.fieldOfView = 28f;
                 FrameCapture.SavePng(_view, CloseupWidth, CloseupHeight, Path.Combine(ScanFolder, "raster_closeup.png"));
             }
             finally

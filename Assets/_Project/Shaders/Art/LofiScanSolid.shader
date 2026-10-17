@@ -119,13 +119,15 @@ Shader "MoonProject/Art/LofiScanSolid"
                     * activeScan * step(_ScanProgress, 0.999);
 
                 // Fine horizontal 1980s instrument phosphor raster lines (cyan + warm amber) building up with progress
-                float rasterCoord = input.positionWS.y * 44.0;
-                half rasterWave = 0.5 + 0.5 * sin(rasterCoord * 6.2831853);
-                half rasterMask = smoothstep(0.32, 0.78, rasterWave);
-                half amberBand = smoothstep(0.25, 0.75, 0.5 + 0.5 * sin(input.positionWS.y * 13.0 * 6.2831853));
-                half3 amberPhosphor = half3(0.76, 0.48, 0.12);
-                half3 rasterColor = lerp(_SweepColor.rgb, amberPhosphor, amberBand * 0.52);
-                half rasterBuild = drawn * rasterMask * lerp(0.42, 0.82, saturate(_ScanProgress));
+                float worldRow = input.positionWS.y * 95.0;
+                float screenRow = input.positionCS.y * 0.42;
+                half rasterWave = 0.5 + 0.5 * sin(worldRow * 6.2831853);
+                half screenWave = 0.5 + 0.5 * sin(screenRow * 6.2831853);
+                half rasterMask = smoothstep(0.26, 0.80, lerp(rasterWave, screenWave, 0.55));
+                half amberBand = smoothstep(0.25, 0.75, 0.5 + 0.5 * sin(input.positionWS.y * 24.0 * 6.2831853));
+                half3 amberPhosphor = half3(0.82, 0.52, 0.14);
+                half3 rasterColor = lerp(_SweepColor.rgb, amberPhosphor, amberBand * 0.55);
+                half rasterBuild = drawn * rasterMask * lerp(0.48, 0.88, saturate(_ScanProgress));
 
                 // Faint edge outline that builds with progress and completes at 100%, plus completion ping
                 half3 viewDirWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
