@@ -49,6 +49,11 @@ namespace MoonProject.World.Editor
         /// <summary>Art's warm light-decal disc (1 m radius, additive) for the disc light pools.</summary>
         public const string LightPoolPrefab = "Assets/_Project/Generated/Art/Props/LightPool.prefab";
 
+        /// <summary>Art's R1 ruins kit World places at the Lumen station site (RUINS-WORLD).</summary>
+        public const string RuinsPrefabFolder = "Assets/_Project/Generated/Art/R1/Models/Ruins/";
+
+        public static string RuinPrefab(string id) => RuinsPrefabFolder + id + ".prefab";
+
         /// <summary>Art's landmark kit World places (M3-18 L2, L4, L7).</summary>
         public const string LandmarkFolder = "Assets/_Project/Generated/Art/Landmarks/";
         /// <summary>Art's props folder, where Kestrel-3's HullFragment variants are (0.5.5).</summary>

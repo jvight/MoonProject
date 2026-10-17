@@ -71,6 +71,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private LiftStation _lift;
         [SerializeField] private BatteryField _battery;
         [SerializeField] private BuildField _building;
+        [SerializeField] private Transform[] _ruins = Array.Empty<Transform>();
 
         /// <summary>The E verbs a scan yields to (0.5.5 §1.2: scanning comes last).</summary>
         private static readonly InteractionKind[] VerbsBeforeScan =
@@ -256,6 +257,11 @@ namespace MoonProject.Gameplay
             _building = building;
         }
 
+        internal void WireRuins(Transform[] ruins)
+        {
+            _ruins = ruins ?? Array.Empty<Transform>();
+        }
+
         internal void WireCargo(MaterialCatalog catalog, CargoTuning cargo)
         {
             _materialCatalog = catalog;
@@ -379,6 +385,12 @@ namespace MoonProject.Gameplay
 
             TowerPartField = NewTowerPartField(services);
             Port = TowerPartField != null ? NewPort(services, abilities) : null;
+            if (_building != null && !_building.Initialize(services, _workshop.Tuning, _friends.Tuning))
+            {
+                enabled = false;
+                return;
+            }
+
             Scans = Port != null ? NewScans(services, abilities) : null;
             if (Scans == null || !NewGoals(context.Events))
             {
@@ -387,12 +399,6 @@ namespace MoonProject.Gameplay
             }
 
             _progression.ConnectFinds(Port, TowerPartField);
-
-            if (_building != null && !_building.Initialize(services, _workshop.Tuning, _friends.Tuning))
-            {
-                enabled = false;
-                return;
-            }
 
             Shop = new UpgradeShop(Upgrades, stations, save, Blueprints, TowerParts, RowFullFor);
             Friend wingGift = _friends.Find(_friends.Tuning.WingCellFriend);
@@ -581,7 +587,7 @@ namespace MoonProject.Gameplay
         /// </summary>
         private ScanField NewScans(GameplayServices services, IRoverAbilities abilities)
         {
-            var scans = new ScanField(_scanTuning, services, abilities, Blueprints, OtherVerbOnOffer);
+            var scans = new ScanField(_scanTuning, services, abilities, Blueprints, OtherVerbOnOffer, KnownStructures);
             string problem = null;
             foreach (SalvageSite site in _salvage.Sites)
             {
@@ -597,7 +603,7 @@ namespace MoonProject.Gameplay
                     () => place.Discovered);
             }
 
-            problem = problem ?? PlaceJumper(services, scans) ?? scans.Validate(Blueprints.Kits);
+            problem = problem ?? PlaceJumper(services, scans) ?? AddRuins(scans) ?? scans.Validate(Blueprints.Kits);
             if (problem != null)
             {
                 Debug.LogError($"{nameof(GameplaySystem)}: scanning: {problem} (0.5.5 §1).", this);
@@ -606,6 +612,34 @@ namespace MoonProject.Gameplay
 
             ConnectFinds(scans);
             return scans;
+        }
+
+        private string AddRuins(ScanField scans)
+        {
+            if (_ruins == null || _ruins.Length == 0)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < _ruins.Length; i++)
+            {
+                Transform ruin = _ruins[i];
+                if (ruin == null)
+                {
+                    return "a ruin transform in _ruins is null";
+                }
+
+                if (_scanTuning.TryGetRuinSet(ruin.name, out RuinScanSet set))
+                {
+                    string problem = scans.AddRuin(set, ruin);
+                    if (problem != null)
+                    {
+                        return problem;
+                    }
+                }
+            }
+
+            return null;
         }
 
         /// <summary>

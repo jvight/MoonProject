@@ -253,7 +253,20 @@ namespace MoonProject.Gameplay.Editor
             gameplay.WireCargo(materialCatalog, cargoTuning);
             gameplay.WireCutter(cutterTuning);
             gameplay.WireScans(scanTuning);
+            gameplay.WireRuins(Ruins(context.WorldRoot.transform, scanTuning));
             context.AddSystem(gameplay);
+        }
+
+        private static Transform[] Ruins(Transform worldRoot, ScanTuning scanTuning)
+        {
+            Transform ruinsRoot = Child(worldRoot, "Ruins");
+            var ruins = new Transform[scanTuning.Ruins.Count];
+            for (int i = 0; i < ruins.Length; i++)
+            {
+                ruins[i] = Child(ruinsRoot, scanTuning.Ruins[i].RuinId);
+            }
+
+            return ruins;
         }
 
         /// <summary>

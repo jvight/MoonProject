@@ -30,11 +30,12 @@ namespace MoonProject.World
             Depot = Flat(naturalHeight, settings.DepotCenter, settings.DepotRadius, blend);
             Drill = Flat(naturalHeight, settings.DrillCenter, settings.DrillRadius, blend);
             Garage = Flat(naturalHeight, settings.GarageCenter, settings.GarageRadius, blend);
+            Ruins = Flat(naturalHeight, settings.RuinsCenter, settings.RuinsRadius, blend);
             Vector2 mound = settings.MoundCenter;
             RelayMound = new GroundShape(mound, settings.MoundRadius, settings.MoundRun,
                 naturalHeight(mound.x, mound.y) + settings.MoundRise);
 
-            _shapes = new[] { Depot, Drill, Garage, RelayMound };
+            _shapes = new[] { Depot, Drill, Garage, Ruins, RelayMound };
             _reachSq = new float[_shapes.Length];
             for (int i = 0; i < _shapes.Length; i++)
             {
@@ -48,6 +49,9 @@ namespace MoonProject.World
         public GroundShape Drill { get; }
 
         public GroundShape Garage { get; }
+
+        /// <summary>The flat footprint under the Lumen station ruins cluster.</summary>
+        public GroundShape Ruins { get; }
 
         /// <summary>The low mound relay.0 stands on.</summary>
         public GroundShape RelayMound { get; }

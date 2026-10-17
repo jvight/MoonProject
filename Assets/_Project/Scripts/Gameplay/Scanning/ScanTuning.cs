@@ -74,7 +74,32 @@ namespace MoonProject.Gameplay
                  "lane 07 runs at the lip and of the bridge's stub on its right, inside the chasm's floor.")]
         [Range(0f, 10f)] [SerializeField] private float _jumperSide = 6f;
 
+        [Header("Lumen station ruins (RUINS-WORLD)")]
+        [Tooltip("Each R1 ruin piece's Scan_1..N targets and the structure blueprints it teaches when fully scanned.")]
+        [SerializeField] private RuinScanSet[] _ruins =
+        {
+            new RuinScanSet("FallenSolarArray", new[] { StructureIds.SolarArray },
+                ScanSize.Small, ScanSize.Small, ScanSize.Medium),
+            new RuinScanSet("KenjiWorkshop", new[] { StructureIds.Fabricator, StructureIds.StorageRack },
+                ScanSize.Small, ScanSize.Medium, ScanSize.Medium),
+            new RuinScanSet("HabitatModules", new[] { StructureIds.BatteryBank, StructureIds.Smelter },
+                ScanSize.Medium, ScanSize.Medium, ScanSize.Large),
+            new RuinScanSet("RadioTower", new[] { StructureIds.AntennaMast, StructureIds.PowerPylon },
+                ScanSize.Medium, ScanSize.Medium),
+            new RuinScanSet("ScatterSet", Array.Empty<string>(),
+                ScanSize.Small, ScanSize.Small, ScanSize.Small),
+        };
+
+        [Tooltip("Structure blueprints whose scan targets belong to places later in the map (not at the home ruins).")]
+        [SerializeField] private string[] _laterStructureIds =
+        {
+            StructureIds.UpgradeBay,
+            StructureIds.VehiclePad,
+        };
+
         public IReadOnlyList<ScanSet> Sets => _sets;
+        public IReadOnlyList<RuinScanSet> Ruins => _ruins;
+        public IReadOnlyList<string> LaterStructureIds => _laterStructureIds;
         public float LensFactor => _lensFactor;
         public float BracketRange => _bracketRange;
         public float LensBracketRange => _lensBracketRange;
@@ -118,6 +143,55 @@ namespace MoonProject.Gameplay
 
             set = default;
             return false;
+        }
+
+        /// <summary>The ruin scan set for <paramref name="ruinId"/>, or false.</summary>
+        public bool TryGetRuinSet(string ruinId, out RuinScanSet set)
+        {
+            for (int i = 0; i < _ruins.Length; i++)
+            {
+                if (string.Equals(_ruins[i].RuinId, ruinId, StringComparison.Ordinal))
+                {
+                    set = _ruins[i];
+                    return true;
+                }
+            }
+
+            set = default;
+            return false;
+        }
+
+        private void OnValidate()
+        {
+            if (_laterStructureIds == null)
+            {
+                _laterStructureIds = Array.Empty<string>();
+                return;
+            }
+
+            int validCount = 0;
+            for (int i = 0; i < _laterStructureIds.Length; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(_laterStructureIds[i]))
+                {
+                    validCount++;
+                }
+            }
+
+            if (validCount != _laterStructureIds.Length)
+            {
+                var cleaned = new string[validCount];
+                int dst = 0;
+                for (int i = 0; i < _laterStructureIds.Length; i++)
+                {
+                    if (!string.IsNullOrWhiteSpace(_laterStructureIds[i]))
+                    {
+                        cleaned[dst++] = _laterStructureIds[i];
+                    }
+                }
+
+                _laterStructureIds = cleaned;
+            }
         }
     }
 }

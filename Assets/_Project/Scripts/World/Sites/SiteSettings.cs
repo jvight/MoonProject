@@ -83,17 +83,32 @@ namespace MoonProject.World
         [Tooltip("Kestrel-3's impact crater and the furrow trailing back along its fall line.")]
         [SerializeField] private KestrelSettings _kestrel = new KestrelSettings();
 
+        [Header("Lumen station ruins cluster, near home in the spawn view")]
+        [Tooltip("Bearing of the Lumen station ruins cluster from the base, degrees clockwise from +Z.")]
+        [Range(0f, 360f)]
+        [SerializeField] private float _ruinsBearing = 15f;
+
+        [Tooltip("Distance of the Lumen station ruins cluster from the base, metres.")]
+        [Range(35f, 120f)]
+        [SerializeField] private float _ruinsDistance = 55f;
+
+        [Tooltip("Radius of the ruins cluster's flat footprint, metres.")]
+        [Range(8f, 24f)]
+        [SerializeField] private float _ruinsRadius = 14f;
+
         public float FootprintBlend => _footprintBlend;
         public Vector2 DepotCenter => MoonSurface.BearingToDirection(_depotBearing) * _depotDistance;
         public Vector2 DrillCenter => MoonSurface.BearingToDirection(_drillBearing) * _drillDistance;
         public Vector2 GarageCenter => MoonSurface.BearingToDirection(_garageBearing) * _garageDistance;
         public Vector2 MoundCenter => MoonSurface.BearingToDirection(_moundBearing) * _moundDistance;
+        public Vector2 RuinsCenter => MoonSurface.BearingToDirection(_ruinsBearing) * _ruinsDistance;
         public float DepotRadius => _depotRadius;
         public float DrillRadius => _drillRadius;
         public float GarageRadius => _garageRadius;
         public float MoundRadius => _moundRadius;
         public float MoundRise => _moundRise;
         public float MoundRun => _moundRun;
+        public float RuinsRadius => _ruinsRadius;
         public KestrelSettings Kestrel => _kestrel;
 
         /// <summary>Returns null when the settings are consistent, otherwise the problem.</summary>
@@ -102,6 +117,11 @@ namespace MoonProject.World
             if (_moundRadius + _moundRun > _moundDistance)
             {
                 return "Sites: relay.0's mound reaches back to the base.";
+            }
+
+            if (_ruinsRadius + _footprintBlend > _ruinsDistance)
+            {
+                return "Sites: the ruins cluster reaches back to the base.";
             }
 
             return _kestrel.Validate();

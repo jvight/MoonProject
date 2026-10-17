@@ -20,8 +20,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// End-to-end PlayMode session in the real Main scene for 07's freeform base building (0.5.7 slice 6, BUILD-MODE):
-    /// 1. Starts a fresh game (knows no structures).
-    /// 2. Learns the charging pad (<see cref="StructureIds.ChargingPad"/>).
+    /// 1. Starts a fresh game (knows only the charging pad).
+    /// 2. Verifies the charging pad (<see cref="StructureIds.ChargingPad"/>) is unlocked.
     /// 3. Places it on flat ground in front of 07.
     /// 4. Welds it to completion (all 4 stages solid, standby lamps lit).
     /// 5. Saves, reloads the Main scene, and verifies both <see cref="KnownStructures"/> and the finished charging pad
@@ -67,7 +67,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             BuildField build = _gameplay.Build;
             Assert.IsNotNull(build, "Main scene GameplaySystem must have BuildField wired.");
-            Assert.AreEqual(0, _gameplay.KnownStructures.Count, "A new game knows no structures.");
+            Assert.AreEqual(1, _gameplay.KnownStructures.Count, "A new game starts knowing only the charging pad.");
             Assert.AreEqual(BuildModeState.Closed, build.State);
 
             // Place 07 on flat ground near home, clear of any lander props.
@@ -87,8 +87,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             aimSpot.y = terrain.SampleHeight(aimSpot.x, aimSpot.z);
             build.SetAimPointOverride(aimSpot);
 
-            // 1. Learn the charging pad and stow materials to afford it.
-            Assert.IsTrue(_gameplay.KnownStructures.Learn(StructureIds.ChargingPad));
+            // 1. Verify the charging pad is known at game start and stow materials to afford it.
             Assert.IsTrue(_gameplay.KnownStructures.IsKnown(StructureIds.ChargingPad));
             Assert.IsTrue(build.Catalog.TryGet(StructureIds.ChargingPad, out StructureDefinition padDef));
 

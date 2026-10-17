@@ -185,6 +185,9 @@ MonoBehaviour:
         _gougeHalfWidth: 2
         _scorchReach: 8
         _clearMargin: 4
+      _ruinsBearing: 15
+      _ruinsDistance: 55
+      _ruinsRadius: 14
     _craterField:
       _cellSize: 18
       _density: 0.7
@@ -568,6 +571,27 @@ MonoBehaviour:
     _ventStrength: 0.55
     _ventEdgeSoftness: 0.9
     _ventFade: {x: 160, y: 380}
+    _ruins:
+    - _id: HabitatModules
+      _offset: {x: -5.5, y: 2}
+      _yaw: 10
+      _clearanceRadius: 5.8
+    - _id: RadioTower
+      _offset: {x: 1.5, y: 8.2}
+      _yaw: 8
+      _clearanceRadius: 3.8
+    - _id: KenjiWorkshop
+      _offset: {x: 6.8, y: 1.2}
+      _yaw: 16
+      _clearanceRadius: 3.6
+    - _id: FallenSolarArray
+      _offset: {x: 2.2, y: -5.8}
+      _yaw: 20
+      _clearanceRadius: 3.8
+    - _id: ScatterSet
+      _offset: {x: -5.2, y: -5.2}
+      _yaw: -18
+      _clearanceRadius: 2.6
   _reachRing:
     _duration: 2
     _fadeIn: 0.1

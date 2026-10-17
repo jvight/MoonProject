@@ -335,6 +335,45 @@ namespace MoonProject.World.Tests
                 "the lander crowds the touchdown zone");
         }
 
+        [Test]
+        public void RuinsCluster_IsFlatNearHomeInSpawnView_WithDrivableLanesFreeOfScatter()
+        {
+            GroundShape ruins = _surface.Shaping.Ruins;
+            Assert.That(ruins.Center.magnitude, Is.InRange(45f, 70f), "ruins distance from home");
+            float bearing = Mathf.Atan2(ruins.Center.x, ruins.Center.y) * Mathf.Rad2Deg;
+            Assert.LessOrEqual(Mathf.Abs(Mathf.DeltaAngle(SpawnYaw, bearing)), SpawnHalfView,
+                "ruins cluster should stand in the spawn view");
+            var target = new Vector3(ruins.Center.x, _surface.SampleHeight(ruins.Center.x, ruins.Center.y) + WreckHeight,
+                ruins.Center.y);
+            Assert.IsTrue(InSight(Eye(), target, SightTargetClearance), "the base cannot see the ruins cluster");
+
+            RuinPlacement[] pieces = new LandmarkSettings().Ruins;
+            Assert.AreEqual(5, pieces.Length);
+            for (int i = 0; i < pieces.Length; i++)
+            {
+                Vector2 spot = ruins.Center + pieces[i].Offset;
+                Assert.LessOrEqual(pieces[i].Offset.magnitude, ruins.Radius,
+                    $"{pieces[i].Id} sits outside the flattened ruins footprint");
+                Assert.AreEqual(ruins.Plateau, _surface.SampleHeight(spot.x, spot.y), 1e-3f,
+                    $"{pieces[i].Id} footing is not flat");
+                for (int j = i + 1; j < pieces.Length; j++)
+                {
+                    float gap = Vector2.Distance(pieces[i].Offset, pieces[j].Offset)
+                        - pieces[i].ClearanceRadius - pieces[j].ClearanceRadius;
+                    Assert.GreaterOrEqual(gap, -2.5f, $"{pieces[i].Id} and {pieces[j].Id} overlap");
+                }
+            }
+
+            List<ScatterInstance> plan = new ScatterPlanner(_surface, new ScatterSettings(), _anchors).Plan();
+            WorldSystem.AddHomeApronStones(plan, _surface);
+            foreach (ScatterInstance rock in plan)
+            {
+                var at = new Vector2(rock.Position.x, rock.Position.z);
+                Assert.GreaterOrEqual(Vector2.Distance(at, ruins.Center), ruins.Radius,
+                    $"{rock.Kind} at {at} encroaches on the ruins cluster lanes");
+            }
+        }
+
         private void AssertDistance(string name, float min, float max)
         {
             WorldAnchor site = Site(name);

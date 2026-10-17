@@ -71,6 +71,19 @@ namespace MoonProject.World
         [Tooltip("Distance (metres) where the field starts to fade, and where it is gone: readable across the basin.")]
         [SerializeField] private Vector2 _ventFade = new Vector2(160f, 380f);
 
+        [Header("Lumen station ruins cluster (RUINS-WORLD)")]
+        [Tooltip("Pieces of the Lumen station ruins cluster arranged relative to SiteSettings.RuinsCenter: " +
+            "habitat left, radio tower behind, workshop right, fallen solar array in front, plus scatter set, " +
+            "with drivable lanes between them.")]
+        [SerializeField] private RuinPlacement[] _ruins =
+        {
+            new RuinPlacement("HabitatModules", new Vector2(-5.5f, 2.0f), 10f, 5.8f),
+            new RuinPlacement("RadioTower", new Vector2(1.5f, 8.2f), 8f, 3.8f),
+            new RuinPlacement("KenjiWorkshop", new Vector2(6.8f, 1.2f), 16f, 3.6f),
+            new RuinPlacement("FallenSolarArray", new Vector2(2.2f, -5.8f), 20f, 3.8f),
+            new RuinPlacement("ScatterSet", new Vector2(-5.2f, -5.2f), -18f, 2.6f),
+        };
+
         public float RouteBearing => _routeBearing;
         public float[] RoutePostDistances => _routePostDistances;
         public float RoutePostSide => _routePostSide;
@@ -85,5 +98,6 @@ namespace MoonProject.World
         public float VentStrength => _ventStrength;
         public float VentEdgeSoftness => _ventEdgeSoftness;
         public Vector2 VentFade => _ventFade;
+        public RuinPlacement[] Ruins => _ruins;
     }
 }
