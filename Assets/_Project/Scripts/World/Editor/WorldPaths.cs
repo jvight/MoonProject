@@ -19,7 +19,8 @@ namespace MoonProject.World.Editor
         /// <summary>The PC quality level's pipeline asset: World's builder sets its colour grading mode.</summary>
         public const string PcPipeline = "Assets/Settings/PC_RPAsset.asset";
         public const string BeaconFolder = GeneratedRoot + "/Beacon";
-        public const string BeaconModelPrefab = BeaconFolder + "/PeakBeaconModel.prefab";
+        /// <summary>Art's R1 Peak beacon (its lamp node is <see cref="PeakBeaconBuilder.LampNodeName"/>).</summary>
+        public const string BeaconModelPrefab = R1PropsFolder + "PeakBeacon.prefab";
         public const string BeaconHaloMesh = BeaconFolder + "/BeaconHaloQuad.asset";
         public const string BeaconHaloMaterial = BeaconFolder + "/M_BeaconHalo.mat";
         public const string BeaconHaloShader = "Assets/_Project/Shaders/World/LofiBeaconHalo.shader";
@@ -51,15 +52,22 @@ namespace MoonProject.World.Editor
 
         public static string RuinPrefab(string id) => RuinsPrefabFolder + id + ".prefab";
 
-        /// <summary>
-        /// Art's R1 structures World stands as props until their own models land (opening v2 §4): the dead charging
-        /// post at the wake (a PowerPylon) and the dead west relay mast (an unlit AntennaMast).
-        /// </summary>
-        public const string WakePostPrefab = "Assets/_Project/Generated/Art/R1/Models/Structures/PowerPylon.prefab";
-        public const string WestMastPrefab = "Assets/_Project/Generated/Art/R1/Models/Structures/AntennaMast.prefab";
+        /// <summary>Art's R1 story props for the opening (Generated/Art/R1/Models/Props, opening v2 §4).</summary>
+        public const string R1PropsFolder = "Assets/_Project/Generated/Art/R1/Models/Props/";
+        public const string DeadChargingPostPrefab = R1PropsFolder + "DeadChargingPost.prefab";
+        public const string GroundCableSegmentPrefab = R1PropsFolder + "GroundCableSegment.prefab";
+        public const string GroundCableEndPrefab = R1PropsFolder + "GroundCableEnd.prefab";
+        public const string LanderServicePortPrefab = R1PropsFolder + "LanderServicePort.prefab";
+        public const string LanderBeaconPrefab = R1PropsFolder + "LanderBeacon.prefab";
+        public const string BuildApronMarkingsPrefab = R1PropsFolder + "BuildApronMarkings.prefab";
+        public const string DeadAntennaMastPrefab = R1PropsFolder + "DeadAntennaMast.prefab";
+        public const string SignalPillarPrefab = R1PropsFolder + "SignalPillar.prefab";
 
-        /// <summary>Art's R1 rubber, for 07's old charging cable on the dust.</summary>
-        public const string CableMaterial = "Assets/_Project/Generated/Art/R1/Materials/R1_Rubber.mat";
+        /// <summary>Art's R1 Kestrel-3 debris kit (Generated/Art/R1/Models/Wreck).</summary>
+        public static string KestrelDebrisPrefab(string id) => "Assets/_Project/Generated/Art/R1/Models/Wreck/" + id + ".prefab";
+
+        /// <summary>Art's R1 rock prefabs (Generated/Art/R1/Models/Rocks), the big boulders among them.</summary>
+        public static string R1RockPrefab(string id) => "Assets/_Project/Generated/Art/R1/Models/Rocks/" + id + ".prefab";
 
         /// <summary>Art's R1 cargo lander, landed at place.lander in the opening (opening v2 §4).</summary>
         public const string CargoLanderPrefab = "Assets/_Project/Generated/Art/R1/Models/Lander/CargoLander.prefab";

@@ -4,21 +4,14 @@ using UnityEngine;
 namespace MoonProject.World
 {
     /// <summary>
-    /// How 07's old charging cable lies on the dust between its dead post and the lander's port (opening v2 §4): thin,
-    /// dark rubber, settled in a few slow bends, a line the eye follows from the wake to the lander.
+    /// How the opening's old power cables lie on the dust (opening v2 §4): Art's tileable R1 cable segments laid joint
+    /// to joint from 07's dead post to the lander's port, and from the port to the build apron, settled in a few slow
+    /// bends, a line the eye follows.
     /// </summary>
     [Serializable]
     public sealed class GroundCableSettings
     {
-        [Tooltip("Radius of the cable, metres: a heavy power lead.")]
-        [Range(0.01f, 0.1f)]
-        [SerializeField] private float _radius = 0.035f;
-
-        [Tooltip("Spacing of the points along the cable, metres: about the terrain's fine facet, so it hugs the dust.")]
-        [Range(0.25f, 4f)]
-        [SerializeField] private float _step = 1f;
-
-        [Tooltip("How far the cable wanders side to side at most, metres: a dragged cable settling in slow bends.")]
+        [Tooltip("How far a cable wanders side to side at most, metres: a dragged cable settling in slow bends.")]
         [Range(0f, 6f)]
         [SerializeField] private float _wander = 1.6f;
 
@@ -26,15 +19,13 @@ namespace MoonProject.World
         [Range(1f, 12f)]
         [SerializeField] private float _bends = 3f;
 
-        [Tooltip("How far from the lander's centre the cable ends, along its port side's facing, metres: at the port " +
-            "on the hull's side (the R1 CargoLander is 5.2 m deep).")]
-        [Range(1f, 6f)]
-        [SerializeField] private float _portReach = 2.9f;
+        [Tooltip("How far inside the lander's footprint edge, along its port side's facing, the service port stands, " +
+            "metres: the port's back sits against the hull between the landing legs.")]
+        [Range(0f, 3f)]
+        [SerializeField] private float _portInset = 0.9f;
 
-        public float Radius => _radius;
-        public float Step => _step;
         public float Wander => _wander;
         public float Bends => _bends;
-        public float PortReach => _portReach;
+        public float PortInset => _portInset;
     }
 }
