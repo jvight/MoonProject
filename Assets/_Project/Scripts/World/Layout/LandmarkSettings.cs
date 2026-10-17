@@ -105,6 +105,10 @@ namespace MoonProject.World
         [SerializeField] private float _landerTilt = 2.5f;
 
         public RuinPlacement[] Ruins => _ruins;
+        [Tooltip("07's old charging cable from its dead post at the wake point to the lander's port.")]
+        [SerializeField] private GroundCableSettings _wakeCable = new GroundCableSettings();
+
         public float LanderTilt => _landerTilt;
+        public GroundCableSettings WakeCable => _wakeCable;
     }
 }

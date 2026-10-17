@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using MoonProject.Core;
 using MoonProject.Art;
 using MoonProject.Art.Editor;
 using MoonProject.Editor.SceneBuild;
@@ -22,6 +23,14 @@ namespace MoonProject.World.Editor
         /// <summary>[World]/Lander holds the landed R1 cargo lander, named <see cref="CargoLanderName"/>.</summary>
         public const string LanderRootName = "Lander";
         public const string CargoLanderName = "CargoLander";
+
+        /// <summary>[World]/OpeningProps holds the dead charging post and the dead west mast.</summary>
+        public const string OpeningPropsRootName = "OpeningProps";
+        public const string WakePostName = "WakePost";
+        public const string WestMastName = "WestMast";
+
+        // The dead west mast stands on relay.1, the west rim shoulder (opening v2 §4).
+        private const string WestMastAnchor = WorldAnchorIds.RelayPrefix + "1";
 
         public int Order => 200;
 
@@ -52,6 +61,7 @@ namespace MoonProject.World.Editor
             PeakBeacon beacon = CreateBeacon(context, settings, root);
             CreateRuins(context, settings, root);
             CreateLander(context, settings, root);
+            CreateOpeningProps(context, settings, root);
 
             var world = context.CreateChild("World", root).AddComponent<WorldSystem>();
             var serialized = new SerializedObject(world);
@@ -62,6 +72,7 @@ namespace MoonProject.World.Editor
             Assign(serialized, "_groundMarkMaterial", context.LoadAsset<Material>(WorldPaths.GroundMarkMaterial));
             WorldPaths.AssignLandmarks(serialized);
             Assign(serialized, "_ventBeadMaterial", context.LoadAsset<Material>(WorldPaths.VentBeadMaterial));
+            Assign(serialized, "_cableMaterial", context.LoadAsset<Material>(WorldPaths.CableMaterial));
             AssignRocks(context, serialized, "_pebbleRocks", WorldPaths.PebbleRocks);
             AssignRocks(context, serialized, "_boulderRocks", WorldPaths.BoulderRocks);
             Assign(serialized, "_earthlight", earthlight);
@@ -132,6 +143,41 @@ namespace MoonProject.World.Editor
                 instance.name = piece.Id;
                 RuinColliderBuilder.Fit(instance);
             }
+        }
+
+        /// <summary>
+        /// Opening v2's two dead machines (§4), stood at scene-build time from the closest R1 models until their own
+        /// land: 07's dead charging post at place.wake facing the lander, and the dead relay mast on the west rim
+        /// shoulder at relay.1 facing the basin. Both are unlit and solid on <see cref="Core.Layers.Prop"/>.
+        /// </summary>
+        private static void CreateOpeningProps(SceneBuildContext context, WorldSettings settings, Transform root)
+        {
+            MoonSurface surface = settings.CreateSurface();
+            var anchors = new WorldAnchors(surface, settings.Surface.Canyon, settings.Relays);
+            Transform props = context.CreateChild(OpeningPropsRootName, root).transform;
+            StandProp(context, props, WakePostName, WorldPaths.WakePostPrefab, Require(anchors, WorldAnchorIds.PlaceWake));
+            StandProp(context, props, WestMastName, WorldPaths.WestMastPrefab, Require(anchors, WestMastAnchor));
+        }
+
+        private static void StandProp(SceneBuildContext context, Transform parent, string name, string prefabPath,
+            WorldAnchor anchor)
+        {
+            var prefab = context.LoadAsset<GameObject>(prefabPath);
+            Quaternion facing = Quaternion.LookRotation(anchor.Forward, Vector3.up);
+            GameObject prop = context.InstantiatePrefab(prefab, parent, anchor.Position,
+                facing * prefab.transform.localRotation);
+            prop.name = name;
+            RuinColliderBuilder.Fit(prop);
+        }
+
+        private static WorldAnchor Require(WorldAnchors anchors, string id)
+        {
+            if (!anchors.TryGet(id, out WorldAnchor anchor))
+            {
+                throw new System.InvalidOperationException($"The world has no '{id}' anchor for an opening prop.");
+            }
+
+            return anchor;
         }
 
         /// <summary>

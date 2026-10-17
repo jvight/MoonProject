@@ -98,6 +98,7 @@ namespace MoonProject.World.Tests
             WorldPaths.AssignLandmarks(serialized);
             serialized.FindProperty("_ventBeadMaterial").objectReferenceValue =
                 Load<Material>(WorldPaths.VentBeadMaterial);
+            serialized.FindProperty("_cableMaterial").objectReferenceValue = Load<Material>(WorldPaths.CableMaterial);
             serialized.FindProperty("_earthlight").objectReferenceValue = light;
             serialized.FindProperty("_fillLight").objectReferenceValue = fill;
             serialized.FindProperty("_peakBeacon").objectReferenceValue = CreateBeaconHost(BeaconName);

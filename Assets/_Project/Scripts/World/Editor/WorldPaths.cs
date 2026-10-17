@@ -54,6 +54,16 @@ namespace MoonProject.World.Editor
 
         public static string RuinPrefab(string id) => RuinsPrefabFolder + id + ".prefab";
 
+        /// <summary>
+        /// Art's R1 structures World stands as props until their own models land (opening v2 §4): the dead charging
+        /// post at the wake (a PowerPylon) and the dead west relay mast (an unlit AntennaMast).
+        /// </summary>
+        public const string WakePostPrefab = "Assets/_Project/Generated/Art/R1/Models/Structures/PowerPylon.prefab";
+        public const string WestMastPrefab = "Assets/_Project/Generated/Art/R1/Models/Structures/AntennaMast.prefab";
+
+        /// <summary>Art's R1 rubber, for 07's old charging cable on the dust.</summary>
+        public const string CableMaterial = "Assets/_Project/Generated/Art/R1/Materials/R1_Rubber.mat";
+
         /// <summary>Art's R1 cargo lander, landed at place.lander in the opening (opening v2 §4).</summary>
         public const string CargoLanderPrefab = "Assets/_Project/Generated/Art/R1/Models/Lander/CargoLander.prefab";
 

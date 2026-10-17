@@ -13,10 +13,11 @@ namespace MoonProject.World
     public sealed class GroundMarkSettings
     {
         [Header("Worn tracks")]
-        [Tooltip("Anchors 07's worn tracks run out to from home (the depot, the canyon road, Kenji's garage).")]
-        [SerializeField] private string[] _destinations =
+        [Tooltip("The crew's faded tracks run anchor to anchor along this route (opening v2 §4: from 07's wake point " +
+            "to the landed lander and on to the Lumen ruins), one worn pair of ruts per leg.")]
+        [SerializeField] private string[] _route =
         {
-            WorldAnchorIds.SitePrefix + "depot", WorldAnchorIds.CanyonMouth, WorldAnchorIds.SitePrefix + "garage",
+            WorldAnchorIds.PlaceWake, WorldAnchorIds.PlaceLander, WorldAnchorIds.PlaceRuins,
         };
 
         [Tooltip("Distance between the centres of 07's two ruts, metres.")]
@@ -123,7 +124,7 @@ namespace MoonProject.World
         [Range(0f, 1f)]
         [SerializeField] private float _bootprintStrength = 0.5f;
 
-        public string[] Destinations => _destinations;
+        public string[] Route => _route;
         public float TrackGauge => _trackGauge;
         public float RutHalfWidth => _rutHalfWidth;
         public float Step => _step;

@@ -532,10 +532,10 @@ MonoBehaviour:
     _grainIntensity: 0.12
     _grainResponse: 0.8
   _groundMarks:
-    _destinations:
-    - site.depot
-    - canyon.mouth
-    - site.garage
+    _route:
+    - place.wake
+    - place.lander
+    - place.ruins
     _trackGauge: 1.4
     _rutHalfWidth: 0.22
     _step: 1.5
@@ -605,6 +605,12 @@ MonoBehaviour:
       _yaw: -18
       _clearanceRadius: 2.6
     _landerTilt: 2.5
+    _wakeCable:
+      _radius: 0.035
+      _step: 1
+      _wander: 1.6
+      _bends: 3
+      _portReach: 2.9
   _reachRing:
     _duration: 2
     _fadeIn: 0.1
