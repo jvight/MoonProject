@@ -402,12 +402,15 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsTrue(flow.HasSave, "the title offers Continue over a save");
             yield return Wait(1f);
 
+            GameBootstrap bootstrap = null;
             UIDocument document = null;
             foreach (GameObject root in SceneManager.GetSceneByPath(RoverSessionScene.ScenePath).GetRootGameObjects())
             {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
                 document = document != null ? document : root.GetComponentInChildren<UIDocument>(true);
             }
 
+            Assert.IsNotNull(bootstrap, "the scene has its GameBootstrap");
             Assert.IsNotNull(document, "the scene has its UIDocument");
             Button newGameButton = document.rootVisualElement.Q<Button>("button-new-game");
             Assert.IsNotNull(newGameButton);
@@ -429,8 +432,19 @@ namespace MoonProject.Rover.PlayModeTests
             yield return null;
             Assert.AreEqual(OpeningPhase.PushIn, _director.Script.Phase,
                 "confirming New Game over a save immediately begins the 3D camera push into 07's closed lens");
+            Assert.IsTrue(bootstrap.IsReloadPrewarmed,
+                "GameBootstrap pre-warms SceneManager/EditorSceneManager async reload during the 2 s push-in");
 
-            yield return Wait(0.65f);
+            float maxPushInFrameMs = 0f;
+            float elapsed = 0f;
+            while (elapsed < 0.65f)
+            {
+                yield return null;
+                float dt = Time.unscaledDeltaTime;
+                elapsed += dt;
+                maxPushInFrameMs = Mathf.Max(maxPushInFrameMs, dt * 1000f);
+            }
+
             VisualElement titleCrt = document.rootVisualElement.Q<VisualElement>("title-crt");
             Assert.IsNotNull(titleCrt);
             Assert.LessOrEqual(titleCrt.resolvedStyle.opacity, 0.05f,
@@ -442,8 +456,13 @@ namespace MoonProject.Rover.PlayModeTests
             while (_director != null && Time.realtimeSinceStartup < reloadDeadline)
             {
                 yield return null;
+                if (_director != null && _director.Script.Phase == OpeningPhase.PushIn)
+                {
+                    maxPushInFrameMs = Mathf.Max(maxPushInFrameMs, Time.unscaledDeltaTime * 1000f);
+                }
             }
 
+            float activationStart = Time.realtimeSinceStartup;
             Assert.IsTrue(_director == null, "the scene reloads at WakeBeat.PushedIn inside O1's black");
             Dispose();
 
@@ -465,6 +484,12 @@ namespace MoonProject.Rover.PlayModeTests
 
                 yield return null;
             }
+
+            float activationMs = (Time.realtimeSinceStartup - activationStart) * 1000f;
+            _report.AppendLine("# New Game over a save (pre-warmed async reload)").AppendLine()
+                .AppendLine(Line("max frame time during PushIn (ms)", maxPushInFrameMs))
+                .AppendLine(Line("pre-warmed reload activation inside O1 black (ms)", activationMs)).AppendLine();
+            File.WriteAllText(Path.Combine(CaptureFolder, "opening.md"), _report.ToString());
 
             Assert.IsNotNull(_director, "reloaded scene has OpeningDirector");
             Assert.IsTrue(_director.Script.IsRunning,
@@ -488,8 +513,8 @@ namespace MoonProject.Rover.PlayModeTests
                 _gamepad = InputSystem.AddDevice<Gamepad>();
             }
 
-            AsyncOperation loading = SceneManager.LoadSceneAsync(RoverSessionScene.ScenePath, LoadSceneMode.Single);
-            Assert.IsNotNull(loading, "the copy is listed in the build settings for the run");
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(RoverSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
             float started = Time.realtimeSinceStartup;
             while (!loading.isDone)
             {

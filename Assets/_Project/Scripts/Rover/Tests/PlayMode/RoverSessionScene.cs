@@ -45,43 +45,12 @@ namespace MoonProject.Rover.PlayModeTests
 
             File.WriteAllText(ScenePath, text.Replace(SceneSlotLine, "_saveSlot: " + SaveSlot));
             AssetDatabase.ImportAsset(ScenePath, ImportAssetOptions.ForceSynchronousImport);
-            EditorBuildSettingsScene[] scenes = EditorBuildSettings.scenes;
-            int kept = 0;
-            var listed = new EditorBuildSettingsScene[scenes.Length + 1];
-            foreach (EditorBuildSettingsScene scene in scenes)
-            {
-                if (!string.IsNullOrEmpty(scene.path) && scene.path != ScenePath)
-                {
-                    listed[kept++] = scene;
-                }
-            }
-
-            listed[kept++] = new EditorBuildSettingsScene(ScenePath, true);
-            Array.Resize(ref listed, kept);
-            EditorBuildSettings.scenes = listed;
 #endif
         }
 
         public void Cleanup()
         {
 #if UNITY_EDITOR
-            EditorBuildSettingsScene[] scenes = EditorBuildSettings.scenes;
-            int kept = 0;
-            var restored = new EditorBuildSettingsScene[scenes.Length];
-            foreach (EditorBuildSettingsScene scene in scenes)
-            {
-                if (!string.IsNullOrEmpty(scene.path) && scene.path != ScenePath)
-                {
-                    restored[kept++] = scene;
-                }
-            }
-
-            if (kept != scenes.Length)
-            {
-                Array.Resize(ref restored, kept);
-                EditorBuildSettings.scenes = restored;
-            }
-
             DeleteCopy();
             BootstrapHarness.DeleteSaveFiles(SaveSlot);
             DeletePutAway();
