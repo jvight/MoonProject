@@ -21,5 +21,8 @@ namespace MoonProject.UI
 
         /// <summary>The "Tab · Hold" chip has been shown (absent in older saves: false).</summary>
         public bool holdChipShown;
+
+        /// <summary>The objective steps whose line has been shown in this save (absent in older saves: none).</summary>
+        public string[] objectives = Array.Empty<string>();
     }
 }

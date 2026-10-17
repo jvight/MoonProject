@@ -3,7 +3,8 @@ using NUnit.Framework;
 namespace MoonProject.World.Tests
 {
     /// <summary>
-    /// The supply pod's locator beacon (0.5.5): a slow pulse that peaks once per period and never goes fully dark.
+    /// The landed lander's emergency beacon (opening v2 §4): a slow pulse that peaks once per period and never goes
+    /// fully dark.
     /// </summary>
     public sealed class LocatorBlinkTests
     {
@@ -12,15 +13,15 @@ namespace MoonProject.World.Tests
         [Test]
         public void Blink_PeaksOncePerPeriod_AndRestsAtItsFloor()
         {
-            var canyon = new CanyonSettings();
-            float period = canyon.BeaconPeriod;
-            float floor = canyon.BeaconFloor;
-            Assert.AreEqual(1f, LocatorBlink.Level(0f, period, canyon.BeaconSharpness, floor), Tolerance, "a peak");
-            Assert.AreEqual(1f, LocatorBlink.Level(period, period, canyon.BeaconSharpness, floor), Tolerance,
+            var beacon = new LanderBeaconSettings();
+            float period = beacon.Period;
+            float floor = beacon.Floor;
+            Assert.AreEqual(1f, LocatorBlink.Level(0f, period, beacon.Sharpness, floor), Tolerance, "a peak");
+            Assert.AreEqual(1f, LocatorBlink.Level(period, period, beacon.Sharpness, floor), Tolerance,
                 "once per period");
-            Assert.AreEqual(floor, LocatorBlink.Level(period * 0.5f, period, canyon.BeaconSharpness, floor), Tolerance,
+            Assert.AreEqual(floor, LocatorBlink.Level(period * 0.5f, period, beacon.Sharpness, floor), Tolerance,
                 "between flashes it rests at its floor");
-            Assert.Greater(floor, 0f, "never fully dark: the ledge still reads from home");
+            Assert.Greater(floor, 0f, "never fully dark: the lander still reads from the wake");
         }
     }
 }

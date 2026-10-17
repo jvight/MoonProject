@@ -166,10 +166,14 @@ namespace MoonProject.Rover
         private float _openingYawDeg;
         private float _openingPitchDeg;
         private float _openingRollDeg;
+        private Color _eyeLightRestColor = Color.white;
+        private Vector3 _eyeLightRestLocalPos;
         private bool _initialized;
 
         private const float ScreenInspectBlendSeconds = 0.30f;
         private const float ScreenInspectYawLimit = 35f;
+        private const float ScanEyeEmissionBoost = 1.25f;
+        private const float ScanEyeOpenThreshold = 1e-3f;
 
         /// <summary>Read-only view of the mood, for audio/debug tooling.</summary>
         public RoverMood Mood => _mood;
@@ -407,6 +411,8 @@ namespace MoonProject.Rover
             _eyeLight.type = LightType.Point;
             _eyeLight.range = _tuning.EyeLightRange;
             _eyeLight.shadows = LightShadows.None;
+            _eyeLightRestColor = _eyeLight.color;
+            _eyeLightRestLocalPos = _eyeLight.transform.localPosition;
 
             EventBus events = context.Events;
             _chirpPose = new ChirpPose(_tuning.Chirp);
@@ -994,8 +1000,9 @@ namespace MoonProject.Rover
                 - _chirpPose.HeadDip) * idleScale;
             float targetPitch = opening >= inspect ? _openingPitchDeg : _screenInspectPitchDeg;
             float targetYaw = opening >= inspect ? _openingYawDeg : _screenInspectYawDeg;
-            float pitch = Mathf.Lerp(rawPitch, targetPitch, steady);
-            float yaw = Mathf.Lerp(_yaw.Value, targetYaw, steady);
+            float scanSweepWeight = (1f - steady) * _scanAimBlend;
+            float pitch = Mathf.Lerp(rawPitch, targetPitch, steady) + _scanLook.HeadSweepPitch * scanSweepWeight;
+            float yaw = Mathf.Lerp(_yaw.Value, targetYaw, steady) + _scanLook.HeadSweepYaw * scanSweepWeight;
 
             _neck.localRotation = _neckRest * Quaternion.AngleAxis(yaw, Vector3.up);
             if (_neckLift != null)
@@ -1054,18 +1061,36 @@ namespace MoonProject.Rover
                 + _sigh * _tuning.Chirp.SighWing;
             _solarWing.localRotation = _wingRest * Quaternion.AngleAxis(wingAngle, _tuning.WingHingeAxis);
 
-            float eyeGlow = _mood.EyeGlow * Mathf.Lerp(1f, _tuning.StargazeEyeGlow, sky)
+            float baseEyeGlow = _mood.EyeGlow * Mathf.Lerp(1f, _tuning.StargazeEyeGlow, sky)
                 * Mathf.Lerp(1f, battery.LowEyeGlow, _tired) * Mathf.Lerp(1f, battery.CrawlEyeGlow, _crawl)
                 * Mathf.Lerp(1f, _tuning.CutFocus.EyeGlow, _cutFocus) * _chirpPose.EyeGlow
-                * (1f + _sigh * _tuning.Chirp.SighEye) * _scanLook.EyeGlow;
-            SetGlow(_eyeRenderer, eyeGlow);
+                * (1f + _sigh * _tuning.Chirp.SighEye);
+            float eyeGlow = baseEyeGlow * _scanLook.EyeGlow;
+            float scanOpen = _scanLook.Open;
+            float inspectLightDim = 1f - _screenInspectBlend * 0.92f;
+            if (scanOpen > ScanEyeOpenThreshold)
+            {
+                Color fanColor = _tuning.ScanLook.FanColour;
+                Color restEyeColor = _eyeLightRestColor * eyeGlow;
+                Color scanEyeColor = fanColor * (eyeGlow * ScanEyeEmissionBoost);
+                SetGlow(_eyeRenderer, Color.Lerp(restEyeColor, scanEyeColor, scanOpen));
+            }
+            else
+            {
+                SetGlow(_eyeRenderer, eyeGlow);
+            }
+
+            _eyeLight.color = _eyeLightRestColor;
+            _eyeLight.range = _tuning.EyeLightRange;
+            _eyeLight.intensity = _tuning.EyeLightIntensity * baseEyeGlow * inspectLightDim;
+            _eyeLight.transform.localPosition = _eyeLightRestLocalPos;
+
             _scanFan.transform.localRotation = _scanFanRest * Quaternion.AngleAxis(_scanLook.Sweep, Vector3.up);
             if (_scanFan.enabled)
             {
                 _scanFan.enabled = false;
             }
             SetGlow(_antennaTipRenderer, _listen.TipEmission(_mood.TipGlow));
-            _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow * (1f - _screenInspectBlend * 0.92f);
         }
 
         /// <summary>
@@ -1223,7 +1248,7 @@ namespace MoonProject.Rover
             switch (beat.Phase)
             {
                 case FeelPhase.Anticipate:
-                    _scanLook.Begin();
+                    _scanLook.Begin(beat.Strength, beat.Seconds);
                     _scanGazing = true;
                     _rover.Gaze.Set(_scanOwner, beat.Position, _tuning.ScanLook.GazePriority);
                     break;

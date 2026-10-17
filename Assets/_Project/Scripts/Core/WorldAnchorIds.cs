@@ -92,5 +92,32 @@ namespace MoonProject.Core
 
         /// <summary>The permanently shadowed crater whose floor holds 0.7's water ice (M3-27).</summary>
         public const string PlaceShadowedCrater = "place.shadowed_crater";
+
+        /// <summary>
+        /// Opening v2 (docs/design/opening-v2.md §4): 07's wake point on the old flat pad, where its dead charging post
+        /// stands; Forward points toward the landed lander.
+        /// </summary>
+        public const string PlaceWake = "place.wake";
+
+        /// <summary>
+        /// Opening v2: the landed cargo lander's centre. Forward points out of its service-port side, toward the build
+        /// apron and 07's approach.
+        /// </summary>
+        public const string PlaceLander = "place.lander";
+
+        /// <summary>
+        /// Opening v2: the build site, the lander's old unloading apron (flat, no rocks); its radius is the build area.
+        /// Forward points toward the lander.
+        /// </summary>
+        public const string PlaceApron = "place.apron";
+
+        /// <summary>Opening v2: the Lumen station ruins cluster's centre; Forward runs on from the apron.</summary>
+        public const string PlaceRuins = "place.ruins";
+
+        /// <summary>
+        /// Opening v2: the first drive's point of interest in the Kestrel furrow (debris and a crate); Forward runs out
+        /// from the wake.
+        /// </summary>
+        public const string PlaceMidway = "place.midway";
     }
 }

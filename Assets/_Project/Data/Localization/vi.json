@@ -1305,6 +1305,70 @@
         {
             "key": "ui.kit.antenna.desc",
             "text": "Mở rộng tầm phát sóng dò khắp lòng chảo."
+        },
+        {
+            "key": "next.v2.drive_lander",
+            "text": "Lái tới tàu đổ bộ."
+        },
+        {
+            "key": "next.v2.scan_lander",
+            "text": "Quét hàng trong tàu đổ bộ để tìm bản vẽ."
+        },
+        {
+            "key": "next.v2.collect_parts",
+            "text": "Lấy phụ tùng trong thùng hàng mở của tàu đổ bộ."
+        },
+        {
+            "key": "next.v2.cut_crates",
+            "text": "Cắt các thùng hàng để lấy kim loại và dây điện."
+        },
+        {
+            "key": "next.v2.build_pad",
+            "text": "Dựng một bệ sạc cạnh tàu đổ bộ."
+        },
+        {
+            "key": "next.v2.charge",
+            "text": "Đỗ lên bệ để sạc."
+        },
+        {
+            "key": "next.v2.fit_igniter",
+            "text": "Lắp bộ đánh lửa vào mỏ cắt."
+        },
+        {
+            "key": "next.v2.find_solar",
+            "text": "Tìm bản vẽ pin mặt trời trong tàn tích Lumen."
+        },
+        {
+            "key": "next.v2.cut_optics",
+            "text": "Cắt tàn tích để lấy thấu kính."
+        },
+        {
+            "key": "next.v2.build_solar",
+            "text": "Dựng một giàn pin mặt trời gần bệ sạc."
+        },
+        {
+            "key": "next.v2.build_battery_bank",
+            "text": "Đêm sắp xuống. Hãy dựng một khối pin dự trữ."
+        },
+        {
+            "key": "next.v2.scan_tower",
+            "text": "Quét tháp radio để tìm bản vẽ ăng-ten."
+        },
+        {
+            "key": "next.v2.build_mast",
+            "text": "Dựng một cột ăng-ten."
+        },
+        {
+            "key": "battery.low.lander",
+            "text": "Pin yếu. Cổng của tàu đổ bộ sạc được khi đã có bệ."
+        },
+        {
+            "key": "battery.low.pad",
+            "text": "Pin yếu. Hãy về bệ sạc."
+        },
+        {
+            "key": "ui.unlock.blueprint",
+            "text": "Đã học bản vẽ: {0}"
         }
     ]
 }

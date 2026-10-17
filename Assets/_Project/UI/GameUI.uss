@@ -768,9 +768,8 @@ Label {
 .next-line {
     position: absolute;
     left: 0;
-    right: 0;
-    top: 124px;
-    align-items: center;
+    top: 8px;
+    align-items: flex-start;
 }
 
 /* The distance home at the top centre, in Variant C's calm cyan telemetry accent */
@@ -781,6 +780,12 @@ Label {
     color: var(--moon-text);
     -unity-text-align: middle-center;
     text-shadow: 0 2px 12px var(--moon-shadow);
+}
+
+/* After its bright rest the objective line is a small dim line (docs/design/opening-v2.md §3) */
+.next-line--dim .next-line__text {
+    font-size: 18px;
+    opacity: 0.7;
 }
 
 /* 07's cells (docs/design/first-hour-v2 6.4): a small row of pills on a glass plate, top left, one pill per cell */

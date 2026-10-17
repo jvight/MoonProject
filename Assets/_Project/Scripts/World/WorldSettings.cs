@@ -43,9 +43,6 @@ namespace MoonProject.World
         [Tooltip("How home's warm points wake with the base's power stages (M3-16).")]
         [SerializeField] private HomeLightingSettings _homeLighting = new HomeLightingSettings();
 
-        [Tooltip("How the habitat lander's belly lift and the crew's lab glow (M3-19).")]
-        [SerializeField] private LabLightingSettings _labLighting = new LabLightingSettings();
-
         [Tooltip("Camera look, written into the URP Volume profile by the World builder.")]
         [SerializeField] private PostProcessSettings _postProcessing = new PostProcessSettings();
 
@@ -55,20 +52,11 @@ namespace MoonProject.World
         [Tooltip("Where the crew's remnants from Art's landmark kit stand (M3-18 L2, L4, L7).")]
         [SerializeField] private LandmarkSettings _landmarks = new LandmarkSettings();
 
-        [Tooltip("The warm ring that rolls out over the ground when a reach grows (polish wave 1).")]
-        [SerializeField] private ReachRingSettings _reachRing = new ReachRingSettings();
-
         [Tooltip("Kestrel-3's trail as a field of half-buried hull plates (0.5.5).")]
         [SerializeField] private ScrapFieldSettings _scrapField = new ScrapFieldSettings();
 
         [Tooltip("The picture through 07's own eye in the opening (docs/design/cutscenes.md §1).")]
         [SerializeField] private LensViewSettings _lensView = new LensViewSettings();
-
-        [Tooltip("The warm pools on lit relay masts' charge rings (docs/features/M3-20).")]
-        [SerializeField] private ChargerPoolSettings _chargerPools = new ChargerPoolSettings();
-
-        [Tooltip("The handshake that runs lamp to lamp when a mast lights (north-star beat 7).")]
-        [SerializeField] private NetworkPulseSettings _networkPulse = new NetworkPulseSettings();
 
         [Tooltip("The low circling Sun, the opening eclipse and the look C sunlit atmosphere (0.5.7 SKY-CYCLE).")]
         [SerializeField] private SkyCycleSettings _skyCycle = new SkyCycleSettings();
@@ -95,21 +83,13 @@ namespace MoonProject.World
 
         public HomeLightingSettings HomeLighting => _homeLighting;
 
-        public LabLightingSettings LabLighting => _labLighting;
-
         public GroundMarkSettings GroundMarks => _groundMarks;
 
         public LandmarkSettings Landmarks => _landmarks;
 
-        public ReachRingSettings ReachRing => _reachRing;
-
         public ScrapFieldSettings ScrapField => _scrapField;
 
         public LensViewSettings LensView => _lensView;
-
-        public ChargerPoolSettings ChargerPools => _chargerPools;
-
-        public NetworkPulseSettings NetworkPulse => _networkPulse;
 
         public SkyCycleSettings SkyCycle => _skyCycle;
 

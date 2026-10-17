@@ -61,7 +61,7 @@ namespace MoonProject.Gameplay
         [Range(0.003f, 0.05f)] [SerializeField] private float _scanLineWidth = 0.014f;
 
         [Tooltip("Emissive intensity of the crisp surface scan line (calm, under bloom blowout).")]
-        [Range(0.1f, 2f)] [SerializeField] private float _scanLineIntensity = 1.35f;
+        [Range(0.1f, 2f)] [SerializeField] private float _scanLineIntensity = 1.15f;
 
         [Tooltip("World-space vertical spacing between anti-aliased horizontal surface raster lines (m), chosen so they never alias at chase distance.")]
         [Range(0.02f, 0.2f)] [SerializeField] private float _rasterSpacingMeters = 0.055f;
@@ -82,25 +82,77 @@ namespace MoonProject.Gameplay
         [Range(0.1f, 2f)] [SerializeField] private float _pingEdgeIntensity = 1.25f;
 
         [Tooltip("Diameter of the soft emitter glow core at 07's scan lens (m).")]
-        [Range(0.01f, 0.2f)] [SerializeField] private float _lensGlowSize = 0.06f;
+        [Range(0.01f, 0.35f)] [SerializeField] private float _lensGlowSize = 0.072f;
 
         [Tooltip("Alpha of the soft emitter glow core at 07's scan lens.")]
-        [Range(0.02f, 1f)] [SerializeField] private float _lensGlowAlpha = 0.32f;
+        [Range(0.02f, 1f)] [SerializeField] private float _lensGlowAlpha = 0.76f;
 
         [Tooltip("Diameter of the soft outer halo at 07's scan lens (m).")]
-        [Range(0.02f, 0.4f)] [SerializeField] private float _lensHaloSize = 0.13f;
+        [Range(0.02f, 0.6f)] [SerializeField] private float _lensHaloSize = 0.16f;
 
-        [Tooltip("Alpha of the soft outer halo at 07's scan lens.")]
-        [Range(0.01f, 0.5f)] [SerializeField] private float _lensHaloAlpha = 0.08f;
+        [Tooltip("Alpha of the soft outer halo at 07's scan lens (kept calm below bloom blowout).")]
+        [Range(0.01f, 0.8f)] [SerializeField] private float _lensHaloAlpha = 0.18f;
 
         [Tooltip("Maximum radius from 07's lens where tiny motes sparkle in vacuum (m).")]
-        [Range(0.01f, 0.12f)] [SerializeField] private float _lensMoteRadius = 0.042f;
+        [Range(0.01f, 0.16f)] [SerializeField] private float _lensMoteRadius = 0.052f;
 
         [Tooltip("Diameter of the tiny motes sparkling right at 07's lens (m).")]
-        [Range(0.004f, 0.04f)] [SerializeField] private float _lensMoteSize = 0.014f;
+        [Range(0.003f, 0.06f)] [SerializeField] private float _lensMoteSize = 0.008f;
 
         [Tooltip("Peak alpha of the tiny motes sparkling right at 07's lens.")]
-        [Range(0f, 0.5f)] [SerializeField] private float _lensMoteAlpha = 0.16f;
+        [Range(0f, 1f)] [SerializeField] private float _lensMoteAlpha = 0.38f;
+
+        [Header("Stylised scan beam wedge & lens (SCAN v3)")]
+        [Tooltip("Width (m) of the narrow scan beam wedge at 07's cheek lens aperture.")]
+        [Range(0.01f, 0.12f)] [SerializeField] private float _beamLensWidth = 0.064f;
+
+        [Tooltip("Share of the target's sweep span height spanned by the far edge of the scan beam wedge where it meets the surface scan line.")]
+        [Range(0.25f, 1.25f)] [SerializeField] private float _beamTargetWidthShare = 0.85f;
+
+        [Tooltip("Peak additive alpha of the scan beam wedge in the first couple of cm leaving 07's cheek lens.")]
+        [Range(0.05f, 0.85f)] [SerializeField] private float _beamLensPeakAlpha = 0.68f;
+
+        [Tooltip("Very low additive alpha in the middle of the scan beam wedge (almost invisible in the middle).")]
+        [Range(0.005f, 0.15f)] [SerializeField] private float _beamMidAlpha = 0.022f;
+
+        [Tooltip("Additive alpha where the far edge of the scan beam wedge meets the current surface scan line on the target.")]
+        [Range(0.04f, 0.65f)] [SerializeField] private float _beamContactAlpha = 0.38f;
+
+        [Tooltip("Fine scanline band density inside the scan beam wedge.")]
+        [Range(12f, 120f)] [SerializeField] private float _beamScanlineDensity = 42f;
+
+        [Tooltip("Contrast (0..1) of the fine scanline texture inside the scan beam wedge.")]
+        [Range(0.05f, 0.85f)] [SerializeField] private float _beamScanlineContrast = 0.48f;
+
+        [Tooltip("Diameter (m) of the opening cyan iris ring on 07's brass cheek lens while scanning.")]
+        [Range(0.04f, 0.4f)] [SerializeField] private float _lensIrisSize = 0.138f;
+
+        [Tooltip("Peak alpha of the opening cyan iris ring on 07's brass cheek lens.")]
+        [Range(0.05f, 1f)] [SerializeField] private float _lensIrisAlpha = 0.82f;
+
+        [Tooltip("Length (m) of the short optical cross-glint flare needles clamped within 07's cheek lens bezel.")]
+        [Range(0.02f, 0.4f)] [SerializeField] private float _lensGlintLength = 0.068f;
+
+        [Tooltip("Width (m) of the optical cross-glint flare needles on 07's cheek lens.")]
+        [Range(0.003f, 0.05f)] [SerializeField] private float _lensGlintWidth = 0.008f;
+
+        [Tooltip("Peak alpha of the optical cross-glint flare on 07's cheek lens.")]
+        [Range(0.05f, 1f)] [SerializeField] private float _lensGlintAlpha = 0.76f;
+
+        [Tooltip("Number of sparse dust grains catching the laser sparkle within a thin band of the beam wedge.")]
+        [Range(0, 16)] [SerializeField] private int _pathGlintCount = 5;
+
+        [Tooltip("Diameter (m) of each tiny dust grain sparkle along the beam wedge (1-3 px at chase distance).")]
+        [Range(0.004f, 0.08f)] [SerializeField] private float _pathGlintSize = 0.016f;
+
+        [Tooltip("Peak alpha of each brief dust grain sparkle along the beam wedge (capped strictly below bloom threshold).")]
+        [Range(0f, 1f)] [SerializeField] private float _pathGlintAlpha = 0.32f;
+
+        [Tooltip("Brief twinkle lifetime (s) of each ballistic dust grain sparkle (0.1-0.3 s).")]
+        [Range(0.1f, 0.3f)] [SerializeField] private float _pathGlintLifetime = 0.18f;
+
+        [Tooltip("Downward lunar gravity acceleration (m/s^2, 1/6 g = 1.62) for the ballistic dust grains along the scan path.")]
+        [Range(0.2f, 5f)] [SerializeField] private float _pathGlintGravity = 1.62f;
 
         [Header("Lumen station ruins (RUINS-WORLD, opening-v2 §4)")]
         [Tooltip("Each R1 ruin piece's Scan_1..N targets and the structure blueprints it teaches once every one of " +
@@ -163,6 +215,23 @@ namespace MoonProject.Gameplay
         public float LensMoteRadius => _lensMoteRadius;
         public float LensMoteSize => _lensMoteSize;
         public float LensMoteAlpha => _lensMoteAlpha;
+        public float BeamLensWidth => _beamLensWidth;
+        public float BeamTargetWidthShare => _beamTargetWidthShare;
+        public float BeamLensPeakAlpha => _beamLensPeakAlpha;
+        public float BeamMidAlpha => _beamMidAlpha;
+        public float BeamContactAlpha => _beamContactAlpha;
+        public float BeamScanlineDensity => _beamScanlineDensity;
+        public float BeamScanlineContrast => _beamScanlineContrast;
+        public float LensIrisSize => _lensIrisSize;
+        public float LensIrisAlpha => _lensIrisAlpha;
+        public float LensGlintLength => _lensGlintLength;
+        public float LensGlintWidth => _lensGlintWidth;
+        public float LensGlintAlpha => _lensGlintAlpha;
+        public int PathGlintCount => _pathGlintCount;
+        public float PathGlintSize => _pathGlintSize;
+        public float PathGlintAlpha => _pathGlintAlpha;
+        public float PathGlintLifetime => _pathGlintLifetime;
+        public float PathGlintGravity => _pathGlintGravity;
 
         /// <summary>Pushes the surface scan line, raster band, and completion ping tuning to shader globals (zero GC).</summary>
         public void ApplyShaderGlobals(float scanDurationSeconds)

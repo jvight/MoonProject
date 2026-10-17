@@ -133,12 +133,6 @@ namespace MoonProject.UI.Tests
                 Assert.IsTrue(_english.TryGet(UiKeys.StructureDescription(id), out _), UiKeys.StructureDescription(id));
             }
 
-            foreach (RoverAbility ability in Enum.GetValues(typeof(RoverAbility)))
-            {
-                Assert.IsTrue(AbilityTable.TryFind(ability, out AbilityRow row), ability.ToString());
-                Assert.IsTrue(_english.TryGet(row.VerbKey, out _), row.VerbKey);
-            }
-
             for (int i = 0; i < Materials.Count; i++)
             {
                 string key = UiKeys.MaterialName(Materials.At(i));

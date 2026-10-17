@@ -24,17 +24,17 @@ namespace MoonProject.UI.Tests
             _battery.Charging = false;
             _battery.Fraction = 0.3f;
             _localization = TestTables.Localization(new EventBus(),
-                LowBatteryHint.DockKey, "Battery low. Charge at the dock at home.", "Pin yếu. Sạc ở đế tại nhà.",
-                LowBatteryHint.MastKey, "Battery low. You can charge at {0}.", "Pin yếu. Có thể sạc ở {0}.",
-                "hop.node.mast", "the Mast", "Cột");
+                LowBatteryHint.LanderKey, "Battery low. The lander's port can charge you once a pad stands there.",
+                "Pin yếu. Cổng của tàu đổ bộ sạc được khi đã có bệ.",
+                LowBatteryHint.PadKey, "Battery low. Return to your pad.", "Pin yếu. Hãy về bệ sạc.");
             _hint = new LowBatteryHint(_settings, _battery, _localization);
         }
 
         [Test]
         public void OnlyGameplaysTwoLowLines_AreTheHint()
         {
-            Assert.IsTrue(LowBatteryHint.IsLowLine(new TickerLine(LowBatteryHint.DockKey)));
-            Assert.IsTrue(LowBatteryHint.IsLowLine(new TickerLine(LowBatteryHint.MastKey, "hop.node.mast", true)));
+            Assert.IsTrue(LowBatteryHint.IsLowLine(new TickerLine(LowBatteryHint.LanderKey)));
+            Assert.IsTrue(LowBatteryHint.IsLowLine(new TickerLine(LowBatteryHint.PadKey)));
             Assert.IsFalse(LowBatteryHint.IsLowLine(new TickerLine("ticker.relay.online")));
         }
 
@@ -44,10 +44,10 @@ namespace MoonProject.UI.Tests
             _hint.Tick(Frame, false);
             Assert.IsFalse(_hint.WantsShown, "nothing offered, nothing wanted");
 
-            _hint.Offer(new TickerLine(LowBatteryHint.MastKey, "hop.node.mast", true));
+            _hint.Offer(new TickerLine(LowBatteryHint.PadKey));
             _hint.Tick(Frame, false);
             Assert.IsTrue(_hint.WantsShown);
-            Assert.AreEqual("Battery low. You can charge at the Mast.", _hint.Text);
+            Assert.AreEqual("Battery low. Return to your pad.", _hint.Text);
 
             _hint.Tick(_settings.LowBatteryHoldSeconds + 1f, true);
             Assert.IsFalse(_hint.WantsShown, "said once, for a short while");
@@ -58,7 +58,7 @@ namespace MoonProject.UI.Tests
         [Test]
         public void AWaitingHint_KeepsWaiting_UntilItIsShown()
         {
-            _hint.Offer(new TickerLine(LowBatteryHint.DockKey));
+            _hint.Offer(new TickerLine(LowBatteryHint.LanderKey));
             _hint.Tick(_settings.LowBatteryHoldSeconds * 3f, false);
             Assert.IsTrue(_hint.WantsShown, "the hold time counts only while it is on screen");
         }
@@ -66,14 +66,14 @@ namespace MoonProject.UI.Tests
         [Test]
         public void ACharger_EndsTheHint_AndAFullChargeNeverGetsOne()
         {
-            _hint.Offer(new TickerLine(LowBatteryHint.DockKey));
+            _hint.Offer(new TickerLine(LowBatteryHint.LanderKey));
             _battery.Charging = true;
             _hint.Tick(Frame, true);
             Assert.IsFalse(_hint.WantsShown, "charging ends it at once");
 
             _battery.Charging = false;
             _battery.Fraction = 1f;
-            _hint.Offer(new TickerLine(LowBatteryHint.DockKey));
+            _hint.Offer(new TickerLine(LowBatteryHint.LanderKey));
             _hint.Tick(Frame, false);
             Assert.IsFalse(_hint.WantsShown, "never at full");
         }
@@ -81,7 +81,7 @@ namespace MoonProject.UI.Tests
         [Test]
         public void ANewLanguage_RewritesTheWords()
         {
-            _hint.Offer(new TickerLine(LowBatteryHint.DockKey));
+            _hint.Offer(new TickerLine(LowBatteryHint.LanderKey));
             string before = _hint.Text;
             _hint.Relocalize();
             Assert.AreEqual(before, _hint.Text);

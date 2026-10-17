@@ -18,10 +18,33 @@ namespace MoonProject.World
         [Range(300f, 14400f)]
         [SerializeField] private float _dayLengthSeconds = 7200f;
 
-        [Tooltip("Maximum time the opening eclipse holds on a new game before releasing itself automatically, " +
-            "seconds (default 25 minutes), so a player can never be stuck in the dark.")]
-        [Range(30f, 3600f)]
-        [SerializeField] private float _maxHoldSeconds = 1500f;
+        [Header("The first day follows the opening (opening v2 §9.2)")]
+        [Tooltip("Real seconds from the first charge to the Sun's limb breaking out from behind Earth (the diamond " +
+            "ring): a breath, never a wait.")]
+        [Range(0.1f, 2f)]
+        [SerializeField] private float _eclipseBreakoutLead = 1f;
+
+        [Tooltip("Clock seconds after the eclipse releases (the first charge) where the Sun holds at golden hour, " +
+            "just clear of Earth, until the base is powered.")]
+        [Range(5f, 600f)]
+        [SerializeField] private float _goldenHourSeconds = 45f;
+
+        [Tooltip("Elevation where the first day's Sun holds at last light after power-on, degrees: low over the rim, " +
+            "long shadows, until a battery bank is ready for the night.")]
+        [Range(0.5f, 10f)]
+        [SerializeField] private float _lastLightElevation = 3f;
+
+        [Tooltip("Real seconds the Sun takes to sink from golden hour to last light after power-on.")]
+        [Range(10f, 600f)]
+        [SerializeField] private float _lastLightSinkSeconds = 120f;
+
+        [Tooltip("Elevation where the first sunset is over and the normal day pace takes over, degrees (below 0).")]
+        [Range(-4f, -0.1f)]
+        [SerializeField] private float _nightfallElevation = -1.5f;
+
+        [Tooltip("Real seconds the first sunset takes, from last light to nightfall, once the night is ready.")]
+        [Range(30f, 600f)]
+        [SerializeField] private float _firstSunsetSeconds = 150f;
 
         [Tooltip("Clock time (seconds into Day 1) used when loading an older save that has no world.sky section: " +
             "starts after the opening eclipse in full low sunlight.")]
@@ -235,7 +258,12 @@ namespace MoonProject.World
         [SerializeField] private float _eclipseAmbientScale = 0.68f;
 
         public float DayLengthSeconds => _dayLengthSeconds;
-        public float MaxHoldSeconds => _maxHoldSeconds;
+        public float EclipseBreakoutLead => _eclipseBreakoutLead;
+        public float GoldenHourSeconds => _goldenHourSeconds;
+        public float LastLightElevation => _lastLightElevation;
+        public float LastLightSinkSeconds => _lastLightSinkSeconds;
+        public float NightfallElevation => _nightfallElevation;
+        public float FirstSunsetSeconds => _firstSunsetSeconds;
         public float FallbackSunlitTimeSeconds => _fallbackSunlitTimeSeconds;
         public float SunDiameter => _sunDiameter;
         public float StartBearingOffset => _startBearingOffset;
@@ -293,9 +321,10 @@ namespace MoonProject.World
                 return "SkyCycle.DayLengthSeconds must be positive.";
             }
 
-            if (_maxHoldSeconds <= 0f)
+            if (_lastLightElevation >= _maxElevation || _nightfallElevation <= _minElevation)
             {
-                return "SkyCycle.MaxHoldSeconds must be positive.";
+                return "SkyCycle.LastLightElevation must be under MaxElevation and NightfallElevation above " +
+                       "MinElevation, so the first day reaches both.";
             }
 
             if (_maxElevation <= 0f || _minElevation >= 0f || _minElevation >= _maxElevation)
