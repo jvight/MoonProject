@@ -10,8 +10,9 @@ namespace MoonProject.UI
     /// ruling 6: only the first few times). The opening's first prompts ("Look up", "Drive") and the Tab chip, each
     /// shown once per save, are remembered here too. Saved.
     /// </summary>
-    internal sealed class PromptLedger
+    internal sealed class PromptLedger : IObjectiveMemory
     {
+        private readonly HashSet<string> _objectives = new HashSet<string>();
         private readonly PromptSettings _settings;
         private readonly int[] _shown;
         private readonly int[] _used;
@@ -27,6 +28,17 @@ namespace MoonProject.UI
 
             _shown = new int[count];
             _used = new int[count];
+        }
+
+        /// <summary>The objective step <paramref name="key"/> has had its line shown in this save.</summary>
+        public bool Has(string key)
+        {
+            return _objectives.Contains(key);
+        }
+
+        public void Add(string key)
+        {
+            _objectives.Add(key);
         }
 
         public int Shown(InteractionKind kind)
@@ -114,8 +126,16 @@ namespace MoonProject.UI
             return new PromptsSaveData
             {
                 kinds = kinds.ToArray(), lookTaught = LookTaught, driveTaught = DriveTaught,
-                holdBooted = HoldBooted, holdChipShown = HoldChipShown,
+                holdBooted = HoldBooted, holdChipShown = HoldChipShown, objectives = ToArray(_objectives),
             };
+        }
+
+        private static string[] ToArray(HashSet<string> keys)
+        {
+            var array = new string[keys.Count];
+            keys.CopyTo(array);
+            Array.Sort(array, StringComparer.Ordinal);
+            return array;
         }
 
         /// <summary>Applies saved counts; entries naming a kind this build does not know are skipped.</summary>
@@ -127,6 +147,12 @@ namespace MoonProject.UI
             DriveTaught = data != null && data.driveTaught;
             HoldBooted = data != null && data.holdBooted;
             HoldChipShown = data != null && data.holdChipShown;
+            _objectives.Clear();
+            if (data?.objectives != null)
+            {
+                _objectives.UnionWith(data.objectives);
+            }
+
             if (data?.kinds == null)
             {
                 return;

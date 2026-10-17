@@ -428,7 +428,7 @@ namespace MoonProject.UI.PlayModeTests
             ui.Cargo.Close();
             yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeOut + 0.6f);
 
-            ui.UnlockCard.Gained(RoverAbility.Tether);
+            ui.UnlockCard.Learned(StructureIds.ChargingPad);
             yield return new WaitForSecondsRealtime(_tuning.UnlockCard.Reveal.FadeIn + 0.8f);
             Assert.IsTrue(ui.UnlockCard.IsVisible);
             yield return Capture(camera, folder, "97_unlock_card");
@@ -546,7 +546,7 @@ namespace MoonProject.UI.PlayModeTests
             context.Events.Publish(new RoverAwoke(Vector3.zero, false));
             yield return new WaitForSecondsRealtime(0.5f);
 
-            context.Events.Publish(new NextStepChanged("next.tower.pad"));
+            context.Events.Publish(new NextStepChanged("next.v2.build_pad"));
             yield return new WaitForSecondsRealtime(_tuning.Guidance.Line.FadeIn + 0.5f);
             yield return Capture(camera, folder, "49_next_line");
 

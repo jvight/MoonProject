@@ -72,8 +72,8 @@ namespace MoonProject.UI.PlayModeTests
             context.Events.Publish(new RoverAwoke(Vector3.zero, false));
             yield return new WaitForSecondsRealtime(1f);
 
-            context.Events.Publish(new NextStepChanged("next.tower.pad"));
-            yield return new WaitForSecondsRealtime(1f + _tuning.Guidance.StillSeconds +
+            context.Events.Publish(new NextStepChanged("next.v2.build_pad"));
+            yield return new WaitForSecondsRealtime(1f + _tuning.Guidance.ObjectiveStillSeconds +
                                                     _tuning.Guidance.Line.FadeIn + 1f);
             yield return LegibleShot(camera, folder, "70_next_line_over_stars", report, layout.NextLineText);
             context.Events.Publish(new NextStepChanged(string.Empty));
