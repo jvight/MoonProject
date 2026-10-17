@@ -186,7 +186,6 @@ namespace MoonProject.Rover.Tests
                 Assert.LessOrEqual(rightAngle, 3f, $"Glass_R facing direction deviated {rightAngle:F2}° from Headlamp forward.");
 
             }
-            }
         }
 
         [Test]
