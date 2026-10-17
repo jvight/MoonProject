@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using UnityEngine;
+using UnityEditor;
 using MoonProject.Editor.Builders;
 using MoonProject.Rover.Editor;
 
@@ -142,8 +143,99 @@ namespace MoonProject.Rover.Tests
                 var filter = screen.GetComponent<MeshFilter>();
                 Assert.IsNotNull(collider, "Screen must have a MeshCollider for diegetic UI raycasting.");
                 Assert.IsNotNull(filter);
-                Assert.AreSame(filter.sharedMesh, collider.sharedMesh);
+                Assert.IsNotNull(collider.sharedMesh);
+                Assert.IsTrue(collider.sharedMesh.isReadable,
+                    "Assembled Rover Screen MeshCollider.sharedMesh must be readable.");
+                Assert.AreEqual(filter.sharedMesh.vertexCount, collider.sharedMesh.vertexCount);
+                Assert.AreEqual(collider.sharedMesh.vertexCount, collider.sharedMesh.uv.Length);
+                Assert.AreEqual(RoverAssetPaths.ScreenColliderMesh, AssetDatabase.GetAssetPath(collider.sharedMesh));
             }
+        }
+
+        [Test]
+        public void BuiltRoverPrefab_ScreenMeshCollider_HasReadableMeshWithMatchingVertexAndUvCounts()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(RoverAssetPaths.RoverPrefab);
+            Assert.IsNotNull(prefab, $"{RoverAssetPaths.RoverPrefab} missing: run the Rover builders.");
+
+            Transform screen = prefab.transform.Find("Visual/Chassis/RoverModel/Neck/NeckLift/Head/Screen");
+            Assert.IsNotNull(screen, "Built Rover.prefab must contain Head/Screen.");
+
+            var collider = screen.GetComponent<MeshCollider>();
+            Assert.IsNotNull(collider, "Built Rover.prefab Screen must have a MeshCollider.");
+            Mesh colliderMesh = collider.sharedMesh;
+            Assert.IsNotNull(colliderMesh, "Built Rover.prefab Screen MeshCollider must have a sharedMesh.");
+            Assert.IsTrue(colliderMesh.isReadable,
+                "Built Rover.prefab Screen MeshCollider.sharedMesh must be readable so RaycastHit.textureCoord works in player builds.");
+            Assert.Greater(colliderMesh.vertexCount, 0);
+            Assert.AreEqual(colliderMesh.vertexCount, colliderMesh.uv.Length,
+                "Built Rover.prefab Screen MeshCollider.sharedMesh UV count must match its vertex count.");
+            Assert.AreEqual(RoverAssetPaths.ScreenColliderMesh, AssetDatabase.GetAssetPath(colliderMesh));
+        }
+
+        [Test]
+        public void Solve_OnSlopedRover_AlignsCameraRollWithScreenUp_SoTopEdgeProjectsLevel()
+        {
+            var sight = new DirectionalSightLine();
+            Quaternion slopedRoverRot = Quaternion.Euler(6f, 35f, 15f);
+            Quaternion slopedScreenRot = slopedRoverRot * BaseScreenRot;
+            Vector3 slopedNeckPivot = new Vector3(10f, 4f, -8f);
+            Vector3 slopedScreenPos = slopedNeckPivot + slopedRoverRot * (BaseScreenPos - NeckPivot);
+
+            FaceInspectShot shot = FaceInspectComposer.Solve(
+                slopedNeckPivot,
+                slopedRoverRot,
+                slopedScreenPos,
+                slopedScreenRot,
+                ScreenHeight,
+                TargetFill,
+                DefaultDistance,
+                MinDistance,
+                LookOffsetY,
+                SideYaw,
+                ProbeRadius,
+                sight);
+
+            Vector3 expectedScreenUp = (slopedScreenRot * Vector3.up).normalized;
+            Assert.Less(Vector3.Angle(expectedScreenUp, shot.ScreenUp), 1e-3f,
+                "Shot ScreenUp must match the Screen quad's world up vector.");
+
+            Vector3 cameraRight = shot.Rotation * Vector3.right;
+            Assert.AreEqual(0f, Vector3.Dot(cameraRight, expectedScreenUp), 1e-4f,
+                "Camera horizontal axis must be perpendicular to ScreenUp (zero roll relative to the screen).");
+
+            Vector3 topLeftWorld = slopedScreenPos + slopedScreenRot * new Vector3(-0.18f, ScreenHeight * 0.5f, 0f);
+            Vector3 topRightWorld = slopedScreenPos + slopedScreenRot * new Vector3(0.18f, ScreenHeight * 0.5f, 0f);
+            Quaternion invCamRot = Quaternion.Inverse(shot.Rotation);
+            Vector3 topLeftCam = invCamRot * (topLeftWorld - shot.Eye);
+            Vector3 topRightCam = invCamRot * (topRightWorld - shot.Eye);
+            Assert.AreEqual(topLeftCam.y, topRightCam.y, 1e-5f,
+                "Top-left and top-right corners of the Screen must project to the exact same camera-space Y height on any slope.");
+            Assert.AreEqual(topLeftCam.z, topRightCam.z, 1e-5f,
+                "Top-left and top-right corners of the Screen must be at equal depth from the camera.");
+        }
+
+        [Test]
+        public void ComputeInspectHeadCounterRoll_EasesHeadTowardHorizon_AndClampsToMaxAngle()
+        {
+            Quaternion flatHead = Quaternion.Euler(-22f, 40f, 0f);
+            float flatCounter = RoverBodyLanguage.ComputeInspectHeadCounterRoll(flatHead, 0.5f, 8f);
+            Assert.AreEqual(0f, flatCounter, 1e-3f, "Flat head needs zero counter-roll.");
+
+            Quaternion tilted15 = Quaternion.AngleAxis(15f, Vector3.forward) * Quaternion.Euler(-22f, 0f, 0f);
+            float counter15 = RoverBodyLanguage.ComputeInspectHeadCounterRoll(tilted15, 0.5f, 8f);
+            Assert.Less(counter15, -6.5f, "15 deg positive roll must produce a negative counter-roll.");
+            Assert.GreaterOrEqual(counter15, -8f);
+
+            Quaternion afterCounter = tilted15 * Quaternion.Euler(0f, 0f, counter15);
+            Vector3 beforeRight = tilted15 * Vector3.right;
+            Vector3 afterRight = afterCounter * Vector3.right;
+            Assert.Less(Mathf.Abs(afterRight.y), Mathf.Abs(beforeRight.y),
+                "Applying counter-roll must bring the head's horizontal axis closer to the world horizon.");
+
+            Quaternion tilted25 = Quaternion.AngleAxis(-25f, Vector3.forward) * Quaternion.Euler(-22f, 0f, 0f);
+            float counter25 = RoverBodyLanguage.ComputeInspectHeadCounterRoll(tilted25, 0.5f, 8f);
+            Assert.AreEqual(8f, counter25, 1e-3f, "Counter-roll must clamp to the configured max angle.");
         }
 
         private static FaceInspectShot SolveWith(ISightLine sight)

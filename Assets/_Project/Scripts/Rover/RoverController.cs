@@ -114,6 +114,7 @@ namespace MoonProject.Rover
         private readonly object _faceScreenHoldOwner = new object();
         private RoverCameraRig _cameraRig;
         private bool _faceScreenOpen;
+        private bool _facePickingEnabled;
         private EventBus _events;
         private LandingDetector _landing;
         private StuckDetector _stuck;
@@ -293,7 +294,8 @@ namespace MoonProject.Rover
 
         public bool TryRaycastScreenUv(Ray ray, out Vector2 meshUv)
         {
-            if (_screenCollider != null && _screenCollider.Raycast(ray, out RaycastHit hit, ScreenRaycastMaxDistance))
+            if (_facePickingEnabled && _screenCollider != null
+                && _screenCollider.Raycast(ray, out RaycastHit hit, ScreenRaycastMaxDistance))
             {
                 meshUv = hit.textureCoord;
                 return true;
@@ -430,17 +432,8 @@ namespace MoonProject.Rover
             _context = context;
             _input = context.Input;
             _events = context.Events;
-            if (_bodyLanguage == null)
-            {
-                _bodyLanguage = GetComponent<RoverBodyLanguage>();
-            }
-
-            if (_screenCollider == null && _bodyLanguage != null && _bodyLanguage.ScreenTransform != null)
-            {
-                _screenCollider = _bodyLanguage.ScreenTransform.GetComponent<MeshCollider>();
-            }
-
-            if (_sphere != null && _screenCollider != null)
+            _facePickingEnabled = ValidateScreenCollider();
+            if (_facePickingEnabled)
             {
                 Physics.IgnoreCollision(_sphere, _screenCollider, true);
             }
@@ -504,6 +497,29 @@ namespace MoonProject.Rover
         public void SetDriveSource(IRoverDriveSource source)
         {
             _driveSource = source;
+        }
+
+        private bool ValidateScreenCollider()
+        {
+            if (_screenCollider == null)
+            {
+                Debug.LogError(
+                    $"{nameof(RoverController)}: Screen MeshCollider is not assigned on '{name}'; face picking is disabled.",
+                    this);
+                return false;
+            }
+
+            Mesh mesh = _screenCollider.sharedMesh;
+            if (mesh == null || !mesh.isReadable)
+            {
+                string meshState = mesh == null ? "null" : $"'{mesh.name}' (isReadable=false)";
+                Debug.LogError(
+                    $"{nameof(RoverController)}: Screen MeshCollider sharedMesh on '{name}' is {meshState}; face picking is disabled.",
+                    this);
+                return false;
+            }
+
+            return true;
         }
 
         private bool ValidateWiring()

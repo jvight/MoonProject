@@ -44,6 +44,8 @@ namespace MoonProject.Rover.PlayModeTests
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "captures"));
         private static readonly string R2CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "r2"));
+        private static readonly string ScreenshotsFolder =
+            Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "Screenshots"));
 
         private GameContext _context;
         private RoverController _rover;
@@ -56,10 +58,12 @@ namespace MoonProject.Rover.PlayModeTests
         private Camera _view;
         private Keyboard _keyboard;
         private Mouse _mouse;
+        private Gamepad _gamepad;
         private IDisposable _awokeSub;
         private readonly List<IDisposable> _eventSubs = new List<IDisposable>();
         private readonly List<RoverFaceCueKind> _faceCues = new List<RoverFaceCueKind>();
         private GameObject _rockObstacle;
+        private GameObject _slopeSurface;
         private bool _awake;
 
         public override void Setup()
@@ -89,6 +93,12 @@ namespace MoonProject.Rover.PlayModeTests
                 _rockObstacle = null;
             }
 
+            if (_slopeSurface != null)
+            {
+                Object.DestroyImmediate(_slopeSurface);
+                _slopeSurface = null;
+            }
+
             Scene scene = SceneManager.GetSceneByPath(RoverSessionScene.ScenePath);
             if (scene.IsValid() && scene.isLoaded)
             {
@@ -110,8 +120,10 @@ namespace MoonProject.Rover.PlayModeTests
         {
             Directory.CreateDirectory(CaptureFolder);
             Directory.CreateDirectory(R2CaptureFolder);
+            Directory.CreateDirectory(ScreenshotsFolder);
             _keyboard = InputSystem.AddDevice<Keyboard>();
             _mouse = InputSystem.AddDevice<Mouse>();
+            _gamepad = InputSystem.AddDevice<Gamepad>();
 
             yield return BootRealScene();
 
@@ -124,6 +136,13 @@ namespace MoonProject.Rover.PlayModeTests
             IRoverFaceScreen faceScreen = _context.Get<IRoverFaceScreen>();
             Assert.IsNotNull(faceScreen, "IRoverFaceScreen must be registered in GameContext by RoverController.");
             Assert.IsFalse(faceScreen.IsOpen, "Face screen must start closed.");
+
+            var screenCollider = _body.ScreenTransform.GetComponent<MeshCollider>();
+            Assert.IsNotNull(screenCollider, "Live Rover Screen must have a MeshCollider.");
+            Assert.IsNotNull(screenCollider.sharedMesh, "Live Rover Screen MeshCollider must have a sharedMesh.");
+            Assert.IsTrue(screenCollider.sharedMesh.isReadable,
+                "Live Rover Screen MeshCollider.sharedMesh must be readable so RaycastHit.textureCoord works in player builds.");
+            Assert.AreEqual(screenCollider.sharedMesh.vertexCount, screenCollider.sharedMesh.uv.Length);
 
             // Switch to Vietnamese (vi) so the face inventory captures show the full localized Vietnamese UI.
             _context.Get<ILocalization>().SetLanguage("vi");
@@ -185,6 +204,9 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsTrue(_cameraRig.IsFaceInspectOpen, "Pressing Tab must activate face-inspect mode on RoverCameraRig.");
             Assert.IsTrue(_rover.IsHeldStill, "07 must brake and hold still while the face inventory is open.");
             Assert.IsTrue(_body.IsScreenInspectOpen, "RoverBodyLanguage must enter screen-inspect head pose.");
+            Assert.AreEqual(CursorLockMode.Confined, _uiSystem.Cursor.LockState, "Inventory open must confine the mouse cursor to the window.");
+            Assert.IsTrue(_uiSystem.Cursor.IsVisible, "Inventory open must make the mouse cursor visible.");
+            Assert.AreEqual(0, view.FocusedHoldCell, "Opening inventory must place initial focus on hold cell 0.");
             Assert.IsNotNull(_faceDisplay.ContentTexture, "FaceDisplay must receive the 1152x768 UI RenderTexture.");
             Assert.AreEqual(1152, _faceDisplay.ContentTexture.width);
             Assert.AreEqual(768, _faceDisplay.ContentTexture.height);
@@ -264,6 +286,7 @@ namespace MoonProject.Rover.PlayModeTests
             StringAssert.AreEqualIgnoringCase("Kim loại", view.TooltipNameText,
                 "Tooltip on 07's face must display the Vietnamese material name.");
             Capture("face-inv-hover-tooltip");
+            CaptureScreenshot("face_inv_hover");
 
             // CURVED SCREEN INPUT 2: Drag waiting kit (HoverCoils in hold cell 5) across 07's curved CRT screen onto Belly socket bubble.
             Vector2 kitCellPanel = FaceInventoryView.GetHoldCellReferenceRect(5).center;
@@ -286,18 +309,17 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsTrue(view.IsSocketLeaderCyan(RoverSocket.Belly),
                 "Dragging HoverCoils over the Belly orbital socket bubble must light its leader line cyan.");
             Capture("face-inv-drag-socket");
+            CaptureScreenshot("face_inv_drag");
 
-            // Release the drag back over the hold grid so HoverCoils remains in the hold for subsequent captures.
+            // Release the drag back over cell 0 so HoverCoils remains in the hold and cell 0 regains focus.
             Set(_mouse.position, cell0Screen);
             yield return null;
             Release(_mouse.leftButton);
             yield return null;
             Assert.IsFalse(view.IsDraggingKit, "Releasing mouse over the hold grid must end the drag without fitting.");
+            Assert.AreEqual(0, view.FocusedHoldCell, "Releasing mouse over hold cell 0 must focus hold cell 0.");
 
-            // CURVED SCREEN INPUT 3: Verify keyboard/gamepad focus order across hold cells and into/out of 07's 10 orbital sockets.
-            view.FocusFirst();
-            yield return null;
-            Assert.AreEqual(0, view.FocusedHoldCell, "FocusFirst must focus hold cell 0.");
+            // CURVED SCREEN INPUT 3: Verify 2D spatial keyboard/gamepad focus order across hold cells and orbital sockets (no direct UI method calls).
             yield return TapKey(_keyboard.rightArrowKey);
             Assert.AreEqual(1, view.FocusedHoldCell);
             yield return TapKey(_keyboard.rightArrowKey);
@@ -308,8 +330,13 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(FaceInventoryView.OrbitalIndexOf(RoverSocket.Deck), view.FocusedSocketIndex,
                 "Navigating Right from column 3 of row 0 must focus RoverSocket.Deck.");
             yield return TapKey(_keyboard.downArrowKey);
+            Assert.AreEqual(FaceInventoryView.OrbitalIndexOf(RoverSocket.Hold), view.FocusedSocketIndex,
+                "Navigating Down from Deck must move spatially down to RoverSocket.Hold.");
+            yield return TapKey(_keyboard.upArrowKey);
+            Assert.AreEqual(FaceInventoryView.OrbitalIndexOf(RoverSocket.Deck), view.FocusedSocketIndex);
+            yield return TapKey(_keyboard.upArrowKey);
             Assert.AreEqual(FaceInventoryView.OrbitalIndexOf(RoverSocket.Back), view.FocusedSocketIndex,
-                "Navigating Down from Deck must move around the orbit to RoverSocket.Back.");
+                "Navigating Up from Deck must move spatially up to RoverSocket.Back.");
             yield return TapKey(_keyboard.leftArrowKey);
             Assert.AreEqual(3, view.FocusedHoldCell, "Navigating Left from Back must return focus to hold cell 3.");
 
@@ -320,6 +347,8 @@ namespace MoonProject.Rover.PlayModeTests
             Release(_keyboard.tabKey);
 
             Assert.IsFalse(faceScreen.IsOpen, "Pressing Tab again must close IRoverFaceScreen.");
+            Assert.AreEqual(CursorLockMode.Locked, _uiSystem.Cursor.LockState, "Closing inventory must restore the Locked drive cursor.");
+            Assert.IsFalse(_uiSystem.Cursor.IsVisible, "Closing inventory must hide the drive cursor.");
             CollectionAssert.Contains(uiCues, UiCueKind.Back, "Closing Tab must publish UiCue(UiCueKind.Back).");
 
             // Step through the 0.14s collapse + 0.16s expand until the happy arc eyes (^ ^) open after the blink.
@@ -389,6 +418,143 @@ namespace MoonProject.Rover.PlayModeTests
 
             yield return TapTab();
             yield return WaitSeconds(0.60f);
+
+            Object.DestroyImmediate(_rockObstacle);
+            _rockObstacle = null;
+            Physics.SyncTransforms();
+            yield return null;
+
+            // 15-DEGREE SLOPE + REAL PLAYER INPUT VERIFICATION (Keyboard, Mouse, Gamepad; zero direct UI method calls):
+            Quaternion slopeRot = Quaternion.Euler(0f, earthBearing, 15f);
+            Vector3 slopeOrigin = openSpot + new Vector3(0f, 0.45f, 0f);
+            _slopeSurface = CreateSlopeCollider(slopeOrigin, slopeRot);
+            Physics.SyncTransforms();
+            _context.Get<IRoverPlacement>().PlaceAt(slopeOrigin, slopeRot);
+            _cameraRig.Snap();
+            yield return WaitSeconds(0.60f);
+
+            float roverRollDeg = Mathf.DeltaAngle(0f, _rover.Rotation.eulerAngles.z);
+            Assert.Greater(Mathf.Abs(roverRollDeg), 11f, "07 must be parked on a ~15-degree roll slope.");
+            Quaternion closedSlopeScreenRot = _body.ScreenTransform.rotation;
+            Assert.AreEqual(CursorLockMode.Locked, _uiSystem.Cursor.LockState, "Before opening inventory, drive cursor is Locked.");
+            Assert.IsFalse(_uiSystem.Cursor.IsVisible, "Before opening inventory, drive cursor is hidden.");
+
+            // Open with Tab on the 15-degree slope.
+            yield return TapTab();
+            float slopeOpenDeadline = Time.time + 3.0f;
+            while (faceState.ScreenContentMix < 0.99f || faceState.ScreenVerticalPinch > 0.01f || _cameraRig.FaceInspectWeight < 0.99f)
+            {
+                Assert.Less(Time.time, slopeOpenDeadline, "Face inventory must open on the 15-degree slope.");
+                yield return null;
+            }
+
+            yield return null;
+            Assert.IsTrue(faceScreen.IsOpen);
+            Assert.AreEqual(CursorLockMode.Confined, _uiSystem.Cursor.LockState, "Cursor must be Confined while inventory is open.");
+            Assert.IsTrue(_uiSystem.Cursor.IsVisible, "Cursor must be visible while inventory is open.");
+            Assert.AreEqual(0, view.FocusedHoldCell, "Focus must start on hold cell 0 on open without direct method calls.");
+
+            Assert.IsTrue(_cameraRig.TryGetFaceInspectShot(out FaceInspectShot slopeShot));
+            _body.EvaluateScreenPose(slopeShot.NeckYawOffset, 10f, out Vector3 slopeScreenPos, out Quaternion slopeScreenRot);
+
+            // 1. Camera up and roll align with the Screen so the UI reads upright and square in the viewport.
+            Vector3 screenUpWorld = (slopeScreenRot * Vector3.up).normalized;
+            Assert.Less(Vector3.Angle(_view.transform.up, screenUpWorld), 0.5f,
+                "Face-inspect camera up-vector must align with the Screen's up-vector on a 15-degree slope.");
+            Assert.Less(Mathf.Abs(Vector3.Dot(_view.transform.right, screenUpWorld)), 0.01f,
+                "Face-inspect camera must have zero roll relative to the Screen on a 15-degree slope.");
+
+            // 2. 07 eases its head toward level (counter-roll) as it lifts its head.
+            float closedHorizontalTilt = Mathf.Abs((closedSlopeScreenRot * Vector3.right).y);
+            float openHorizontalTilt = Mathf.Abs((slopeScreenRot * Vector3.right).y);
+            Assert.Less(openHorizontalTilt, closedHorizontalTilt - 0.05f,
+                "07 must counter-roll its head toward the horizon when lifting its head for screen inspect.");
+
+            // 3. Top edge of the Screen projects horizontally in the viewport and fills ~75% of viewport height with no clipping.
+            Vector3 topLeftCorner = slopeScreenPos + slopeScreenRot * new Vector3(-0.18f, 0.16f, 0f);
+            Vector3 topRightCorner = slopeScreenPos + slopeScreenRot * new Vector3(0.18f, 0.16f, 0f);
+            Vector3 bottomLeftCorner = slopeScreenPos + slopeScreenRot * new Vector3(-0.18f, -0.16f, 0f);
+            Vector3 topLeftVp = _view.WorldToViewportPoint(topLeftCorner);
+            Vector3 topRightVp = _view.WorldToViewportPoint(topRightCorner);
+            Vector3 bottomLeftVp = _view.WorldToViewportPoint(bottomLeftCorner);
+            Assert.AreEqual(topLeftVp.y, topRightVp.y, 0.005f,
+                "Top edge of 07's Screen must be level in viewport coordinates even on a 15-degree slope.");
+            float viewportHeightFill = topLeftVp.y - bottomLeftVp.y;
+            Assert.AreEqual(0.75f, viewportHeightFill, 0.08f,
+                "07's Screen must still fill ~75% of viewport height on a 15-degree slope.");
+            Assert.Greater(bottomLeftVp.y, 0.05f, "Screen bottom must not clip outside the viewport.");
+            Assert.Less(topLeftVp.y, 0.95f, "Screen top must not clip outside the viewport.");
+
+            CaptureScreenshot("face_inv_slope_upright");
+
+            // 4. Gameplay input (driving W, camera look) is blocked while inventory is open.
+            Vector3 heldPos = _rover.Position;
+            Quaternion heldCamRot = _view.transform.rotation;
+            Press(_keyboard.wKey);
+            Set(_mouse.delta, new Vector2(45f, -30f));
+            yield return null;
+            yield return null;
+            Release(_keyboard.wKey);
+            Set(_mouse.delta, Vector2.zero);
+            Assert.IsTrue(_rover.IsHeldStill, "Driving must remain blocked while inventory is open.");
+            Assert.Less(Vector3.Distance(heldPos, _rover.Position), 0.02f, "07 must not drive while inventory is open.");
+            Assert.Less(Quaternion.Angle(heldCamRot, _view.transform.rotation), 0.5f,
+                "Camera look input must not rotate the face-inspect camera while inventory is open.");
+
+            // 5. Hover a cell, drag a kit to a socket with Mouse, move with Keyboard/Gamepad, press Enter/A, and close with Esc.
+            Vector2 cell1Panel = FaceInventoryView.GetHoldCellReferenceRect(1).center;
+            Assert.IsTrue(FaceScreenMapper.TryPanelToScreen(cell1Panel, _view, faceScreen, FaceScreenMapper.DefaultPanelSize, out Vector2 slopeCell1Screen));
+            Set(_mouse.position, slopeCell1Screen);
+            yield return null;
+            yield return null;
+            Assert.IsTrue(view.IsTooltipVisible, "Mouse hover on the 15-degree sloped screen must show the cell tooltip.");
+
+            Assert.IsTrue(FaceScreenMapper.TryPanelToScreen(kitCellPanel, _view, faceScreen, FaceScreenMapper.DefaultPanelSize, out Vector2 slopeKitScreen));
+            Assert.IsTrue(FaceScreenMapper.TryPanelToScreen(bellySocketPanel, _view, faceScreen, FaceScreenMapper.DefaultPanelSize, out Vector2 slopeBellyScreen));
+            Assert.IsTrue(FaceScreenMapper.TryPanelToScreen(cell0Panel, _view, faceScreen, FaceScreenMapper.DefaultPanelSize, out Vector2 slopeCell0Screen));
+
+            Set(_mouse.position, slopeKitScreen);
+            yield return null;
+            Press(_mouse.leftButton);
+            yield return null;
+            Set(_mouse.position, slopeBellyScreen);
+            yield return null;
+            yield return null;
+            Assert.IsTrue(view.IsDraggingKit, "Mouse kit drag must work on the 15-degree sloped screen.");
+            Assert.IsTrue(view.IsSocketLeaderCyan(RoverSocket.Belly), "Dragging over Belly socket on slope must light its leader cyan.");
+
+            Set(_mouse.position, slopeCell0Screen);
+            yield return null;
+            Release(_mouse.leftButton);
+            yield return null;
+            Assert.IsFalse(view.IsDraggingKit);
+            Assert.AreEqual(0, view.FocusedHoldCell, "Releasing drag over hold cell 0 focuses cell 0.");
+
+            // Move with Keyboard WASD + arrows and Gamepad D-pad, then press Enter and Gamepad A (buttonSouth).
+            yield return TapKey(_keyboard.sKey);
+            Assert.AreEqual(4, view.FocusedHoldCell, "WASD S must move focus down from cell 0 to cell 4.");
+            yield return TapKey(_keyboard.enterKey);
+            Assert.IsNotEmpty(view.ToastText,
+                "Pressing Enter on a waiting kit away from the Rover Bay must trigger the fit-at-bay toast.");
+
+            yield return TapButton(_gamepad.dpad.right);
+            Assert.AreEqual(5, view.FocusedHoldCell, "Gamepad D-pad Right must move focus from cell 4 to cell 5.");
+            yield return TapButton(_gamepad.buttonSouth);
+            Assert.IsNotEmpty(view.ToastText,
+                "Pressing Gamepad A (buttonSouth) on a waiting kit away from the Rover Bay must trigger the fit-at-bay toast.");
+
+            // Close with Esc and verify previous cursor state and gameplay input are restored.
+            yield return TapKey(_keyboard.escapeKey);
+            Assert.IsFalse(faceScreen.IsOpen, "Pressing Esc must close the face inventory.");
+            Assert.AreEqual(CursorLockMode.Locked, _uiSystem.Cursor.LockState, "Closing with Esc must restore the prior cursor lock state.");
+            Assert.IsFalse(_uiSystem.Cursor.IsVisible, "Closing with Esc must restore the prior cursor visibility.");
+
+            while (_cameraRig.FaceInspectWeight > 0.01f)
+            {
+                yield return null;
+            }
+
+            Assert.IsFalse(_rover.IsHeldStill, "Closing with Esc must restore gameplay driving input.");
         }
 
         private void PopulateHoldAndEquipment()
@@ -436,6 +602,17 @@ namespace MoonProject.Rover.PlayModeTests
             return rock;
         }
 
+        private static GameObject CreateSlopeCollider(Vector3 surfaceOrigin, Quaternion slopeRotation)
+        {
+            var slab = new GameObject("FaceInspectTestSlope15");
+            slab.layer = Layers.Ground;
+            slab.transform.rotation = slopeRotation;
+            slab.transform.position = surfaceOrigin - (slopeRotation * Vector3.up) * 0.10f;
+            var box = slab.AddComponent<BoxCollider>();
+            box.size = new Vector3(6f, 0.20f, 6f);
+            return slab;
+        }
+
         private IEnumerator TapTab()
         {
             Press(_keyboard.tabKey);
@@ -448,6 +625,14 @@ namespace MoonProject.Rover.PlayModeTests
             Press(key);
             yield return null;
             Release(key);
+            yield return null;
+        }
+
+        private IEnumerator TapButton(UnityEngine.InputSystem.Controls.ButtonControl button)
+        {
+            Press(button);
+            yield return null;
+            Release(button);
             yield return null;
         }
 
@@ -506,6 +691,13 @@ namespace MoonProject.Rover.PlayModeTests
             string r2Path = Path.Combine(R2CaptureFolder, name + ".png");
             File.Copy(path, r2Path, true);
             Assert.IsTrue(File.Exists(r2Path), $"Capture must be written to {r2Path}.");
+        }
+
+        private void CaptureScreenshot(string name)
+        {
+            string path = Path.Combine(ScreenshotsFolder, name + ".png");
+            FrameCapture.SavePng(_view, CaptureWidth, CaptureHeight, path);
+            Assert.IsTrue(File.Exists(path), $"Screenshot must be written to {path}.");
         }
 
         private static IEnumerator WaitSeconds(float seconds)
