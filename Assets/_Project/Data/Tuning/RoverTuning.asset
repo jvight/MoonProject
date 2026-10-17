@@ -27,6 +27,8 @@ MonoBehaviour:
     _throttleFallHalfLife: 0.1
     _inputDeadZone: 0.05
     _reverseEngageSpeed: 0.25
+    _bounceCancelAwayDot: 0.05
+    _bounceMovingSpeedSqr: 0.04
   _steering:
     _steerRiseHalfLife: 0.07
     _steerReturnHalfLife: 0.16
@@ -57,9 +59,22 @@ MonoBehaviour:
     _collisionRestitution: 0.25
     _collisionHeadOnCosine: 0.85
     _collisionBounceHoldTime: 0.45
+    _collisionCooldown: 0.35
     _wallScrapeFriction: 0.2
     _wallDeflectRate: 120
+    _wallDeflectMaxSteer: 0.25
+    _wallDeadOnCosine: 0.995
     _collisionMinImpactSpeed: 1.8
+    _obstacleBumperRadiusFactor: 1.65
+    _obstacleMinHeightDropFactor: 0.75
+    _obstacleLowRayDropFactor: 0.55
+    _obstacleFanStepDegrees: 22.5
+    _obstacleHeadingFanAngle: 5
+    _obstacleMinLookahead: 0.08
+    _obstacleLookaheadStepScale: 1.25
+    _obstacleSkin: 0.02
+    _obstacleMinNormalY: -0.15
+    _propObstacleMinSlope: 20
   _landing:
     _coyoteTime: 0.1
     _minAirTime: 0.25

@@ -71,6 +71,16 @@ namespace MoonProject.Rover
         [Range(0.05f, 1f)]
         [SerializeField] private float _reverseEngageSpeed = 0.25f;
 
+        [Tooltip("Projection of throttle-weighted heading along the obstacle outward normal above which a post-bounce "
+            + "throttle hold is cancelled early so the player can reverse away immediately.")]
+        [Range(0.01f, 0.5f)]
+        [SerializeField] private float _bounceCancelAwayDot = 0.05f;
+
+        [Tooltip("Minimum squared speed (m^2/s^2) while a bounce hold is active that counts as rebounding motion and "
+            + "resets the stuck detector.")]
+        [Range(0.005f, 0.5f)]
+        [SerializeField] private float _bounceMovingSpeedSqr = 0.04f;
+
         public float TopSpeed => _topSpeed;
 
         public float ReverseTopSpeed => _reverseTopSpeed;
@@ -98,6 +108,10 @@ namespace MoonProject.Rover
         public float InputDeadZone => _inputDeadZone;
 
         public float ReverseEngageSpeed => _reverseEngageSpeed;
+
+        public float BounceCancelAwayDot => _bounceCancelAwayDot;
+
+        public float BounceMovingSpeedSqr => _bounceMovingSpeedSqr;
 
         /// <summary>Peak forward acceleration (m/s^2) at standstill, from <see cref="AccelerationTime"/>.</summary>
         public float ForwardAcceleration => NinetyPercentTimeConstants * _topSpeed / _accelerationTime;

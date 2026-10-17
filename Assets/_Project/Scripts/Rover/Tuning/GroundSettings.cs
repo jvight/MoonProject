@@ -29,7 +29,7 @@ namespace MoonProject.Rover
 
         [Tooltip("Surfaces steeper than this (deg) are walls, not ground.")]
         [Range(20f, 89f)]
-        [SerializeField] private float _maxGroundAngle = 60f;
+        [SerializeField] private float _maxGroundAngle = 48f;
 
         [Tooltip("Extra acceleration (m/s^2) pressing the rover into the ground along its normal while grounded. "
             + "Keeps it hugging gentle dunes; sharp crests at speed still launch joyful hops.")]
@@ -92,6 +92,10 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _collisionBounceHoldTime = 0.45f;
 
+        [Tooltip("Seconds after publishing RoverCollided before another collision event or bounce hold can fire.")]
+        [Range(0.05f, 1.5f)]
+        [SerializeField] private float _collisionCooldown = 0.35f;
+
         [Tooltip("Fraction of speed bled off by friction per unit of grazing incidence when scraping a wall.")]
         [Range(0f, 1f)]
         [SerializeField] private float _wallScrapeFriction = 0.2f;
@@ -100,9 +104,59 @@ namespace MoonProject.Rover
         [Range(0f, 360f)]
         [SerializeField] private float _wallDeflectRate = 120f;
 
+        [Tooltip("Steer input magnitude above which automatic wall heading deflection yields to the player.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _wallDeflectMaxSteer = 0.25f;
+
+        [Tooltip("Into-wall cosine above which drive is treated as dead-on into the wall rather than gliding.")]
+        [Range(0.9f, 0.999f)]
+        [SerializeField] private float _wallDeadOnCosine = 0.995f;
+
         [Tooltip("Minimum normal impact speed (m/s) that publishes RoverCollided for a contact thud and body jolt.")]
         [Range(0.1f, 5f)]
         [SerializeField] private float _collisionMinImpactSpeed = 1.8f;
+
+        [Tooltip("Horizontal obstacle bumper radius as a multiple of SphereRadius (matches 07's 4-wheel footprint).")]
+        [Range(1f, 2.5f)]
+        [SerializeField] private float _obstacleBumperRadiusFactor = 1.65f;
+
+        [Tooltip("Maximum vertical drop below the sphere centre (as a fraction of SphereRadius) for overlap "
+            + "closest-point obstacle contacts, ignoring flat ground underfoot.")]
+        [Range(0.1f, 1f)]
+        [SerializeField] private float _obstacleMinHeightDropFactor = 0.75f;
+
+        [Tooltip("Vertical drop below the sphere centre (as a fraction of SphereRadius) for the low obstacle raycast "
+            + "fan that catches low boulders and crates.")]
+        [Range(0.1f, 0.95f)]
+        [SerializeField] private float _obstacleLowRayDropFactor = 0.55f;
+
+        [Tooltip("Angular step (deg) between rays in the horizontal obstacle probe fan.")]
+        [Range(5f, 45f)]
+        [SerializeField] private float _obstacleFanStepDegrees = 22.5f;
+
+        [Tooltip("Minimum angle (deg) between velocity and heading before casting a second obstacle fan along heading.")]
+        [Range(1f, 45f)]
+        [SerializeField] private float _obstacleHeadingFanAngle = 5f;
+
+        [Tooltip("Minimum lookahead distance (m) beyond the bumper radius when probing for obstacles.")]
+        [Range(0.01f, 0.5f)]
+        [SerializeField] private float _obstacleMinLookahead = 0.08f;
+
+        [Tooltip("Multiplier on one physics step's planar travel (speed * dt) for dynamic obstacle lookahead.")]
+        [Range(0.5f, 3f)]
+        [SerializeField] private float _obstacleLookaheadStepScale = 1.25f;
+
+        [Tooltip("Skin clearance (m) kept between the bumper radius and a grounded obstacle so the sphere cannot wedge.")]
+        [Range(0.005f, 0.1f)]
+        [SerializeField] private float _obstacleSkin = 0.02f;
+
+        [Tooltip("Minimum surface normal Y component for an obstacle raycast hit; rejects downward-facing slab undersides.")]
+        [Range(-0.8f, 0.2f)]
+        [SerializeField] private float _obstacleMinNormalY = -0.15f;
+
+        [Tooltip("Minimum surface slope (deg) on Prop or Relic colliders to count as a bumper obstacle when not leaping.")]
+        [Range(5f, 60f)]
+        [SerializeField] private float _propObstacleMinSlope = 20f;
 
         public float Mass => _mass;
 
@@ -142,10 +196,36 @@ namespace MoonProject.Rover
 
         public float CollisionBounceHoldTime => _collisionBounceHoldTime;
 
+        public float CollisionCooldown => _collisionCooldown;
+
         public float WallScrapeFriction => _wallScrapeFriction;
 
         public float WallDeflectRate => _wallDeflectRate;
 
+        public float WallDeflectMaxSteer => _wallDeflectMaxSteer;
+
+        public float WallDeadOnCosine => _wallDeadOnCosine;
+
         public float CollisionMinImpactSpeed => _collisionMinImpactSpeed;
+
+        public float ObstacleBumperRadiusFactor => _obstacleBumperRadiusFactor;
+
+        public float ObstacleMinHeightDropFactor => _obstacleMinHeightDropFactor;
+
+        public float ObstacleLowRayDropFactor => _obstacleLowRayDropFactor;
+
+        public float ObstacleFanStepDegrees => _obstacleFanStepDegrees;
+
+        public float ObstacleHeadingFanAngle => _obstacleHeadingFanAngle;
+
+        public float ObstacleMinLookahead => _obstacleMinLookahead;
+
+        public float ObstacleLookaheadStepScale => _obstacleLookaheadStepScale;
+
+        public float ObstacleSkin => _obstacleSkin;
+
+        public float ObstacleMinNormalY => _obstacleMinNormalY;
+
+        public float PropObstacleMinSlope => _propObstacleMinSlope;
     }
 }

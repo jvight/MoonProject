@@ -7,6 +7,12 @@ namespace MoonProject.Rover
     /// </summary>
     public static class GroundModel
     {
+        private const float HasNormalSqrMagnitude = 0.5f;
+        private const float PlanarEpsilonSqr = 1e-6f;
+        private const float GripSpeedEpsilon = 1e-4f;
+        private const float MinSpeedEpsilon = 1e-3f;
+        private const float FullCircleDegrees = 360f;
+
         /// <summary>1 on gentle slopes, easing to 0 between the full and zero assist angles.</summary>
         public static float SlopeAssist(GroundSettings settings, float slopeAngle)
         {
@@ -39,7 +45,7 @@ namespace MoonProject.Rover
             float rolling = Smoothing.SmoothStep(0f, settings.SlopeRollSpeed, Mathf.Abs(forwardSpeed));
             Vector3 felt = tangential * (settings.SlopeInfluence * rolling * assist);
             Vector3 right = Vector3.Cross(normal, forward);
-            if (right.sqrMagnitude <= 1e-6f)
+            if (right.sqrMagnitude <= PlanarEpsilonSqr)
             {
                 return 0f;
             }
@@ -58,7 +64,7 @@ namespace MoonProject.Rover
         {
             Vector3 planar = velocity - normal * Vector3.Dot(velocity, normal);
             float speed = planar.magnitude;
-            if (speed < 1e-4f)
+            if (speed < GripSpeedEpsilon)
             {
                 return Vector3.zero;
             }
@@ -89,7 +95,7 @@ namespace MoonProject.Rover
             }
 
             Vector3 planar = new Vector3(contactNormal.x, 0f, contactNormal.z);
-            return planar.sqrMagnitude > 1e-6f ? planar.normalized : Vector3.zero;
+            return planar.sqrMagnitude > PlanarEpsilonSqr ? planar.normalized : Vector3.zero;
         }
 
         /// <summary>
@@ -108,7 +114,7 @@ namespace MoonProject.Rover
         {
             impactSpeed = 0f;
             bouncedHeadOn = false;
-            if (wallNormal.sqrMagnitude < 0.5f)
+            if (wallNormal.sqrMagnitude < HasNormalSqrMagnitude)
             {
                 return velocity;
             }
@@ -141,7 +147,8 @@ namespace MoonProject.Rover
                 }
             }
 
-            float scrapeScale = Mathf.Clamp01(1f - settings.WallScrapeFriction * (into / Mathf.Max(planarSpeed, 1e-3f)));
+            float scrapeScale = Mathf.Clamp01(
+                1f - settings.WallScrapeFriction * (into / Mathf.Max(planarSpeed, MinSpeedEpsilon)));
             Vector3 slid = tangent * scrapeScale;
             return new Vector3(slid.x, result.y, slid.z);
         }
@@ -154,7 +161,7 @@ namespace MoonProject.Rover
         public static float DeflectHeadingOnWall(GroundSettings settings, float heading, Vector3 wallNormal,
             float throttle, float deltaTime)
         {
-            if (wallNormal.sqrMagnitude < 0.5f || Mathf.Abs(throttle) <= 1e-3f)
+            if (wallNormal.sqrMagnitude < HasNormalSqrMagnitude || Mathf.Abs(throttle) <= MinSpeedEpsilon)
             {
                 return heading;
             }
@@ -162,22 +169,23 @@ namespace MoonProject.Rover
             float sign = throttle >= 0f ? 1f : -1f;
             Vector3 moveDir = Quaternion.Euler(0f, heading, 0f) * Vector3.forward * sign;
             float into = -Vector3.Dot(moveDir, wallNormal);
-            if (into <= 0.02f || into >= 0.995f)
+            if (into <= settings.ObstacleSkin || into >= settings.WallDeadOnCosine)
             {
                 return heading;
             }
 
             Vector3 tangent = Vector3.ProjectOnPlane(moveDir, wallNormal);
-            if (tangent.sqrMagnitude < 1e-6f)
+            if (tangent.sqrMagnitude < PlanarEpsilonSqr)
             {
                 return heading;
             }
 
             tangent.Normalize();
             Vector3 desiredForward = tangent * sign;
-            float targetHeading = Mathf.Repeat(Mathf.Atan2(desiredForward.x, desiredForward.z) * Mathf.Rad2Deg, 360f);
+            float targetHeading = Mathf.Repeat(Mathf.Atan2(desiredForward.x, desiredForward.z) * Mathf.Rad2Deg,
+                FullCircleDegrees);
             float maxStep = settings.WallDeflectRate * into * deltaTime;
-            return Mathf.Repeat(Mathf.MoveTowardsAngle(heading, targetHeading, maxStep), 360f);
+            return Mathf.Repeat(Mathf.MoveTowardsAngle(heading, targetHeading, maxStep), FullCircleDegrees);
         }
     }
 }
