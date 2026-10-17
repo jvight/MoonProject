@@ -313,12 +313,13 @@ namespace MoonProject.Gameplay
             float spanHeight,
             float eased)
         {
+            bool isRuinTarget = Mathf.Abs(_span.x) + Mathf.Abs(_span.z) < 1e-3f;
             float halfW = Mathf.Clamp(spanHeight * 0.18f, 0.08f, 0.14f);
             float halfH = Mathf.Clamp(spanHeight * 0.14f, 0.06f, 0.11f);
             for (int i = 0; i < RasterLineCount; i++)
             {
                 float row01 = (i + 0.5f) / RasterLineCount;
-                float reveal = Mathf.Clamp01((_progress - row01 * 0.92f) * 6f) * eased;
+                float reveal = isRuinTarget ? Mathf.Clamp01((_progress - row01 * 0.92f) * 6f) * eased : 0f;
                 LineRenderer raster = _rasterLines[i];
                 if (reveal <= VisibleThreshold)
                 {
@@ -339,7 +340,6 @@ namespace MoonProject.Gameplay
                 raster.endColor = c;
             }
 
-            bool isRuinTarget = Mathf.Abs(_span.x) + Mathf.Abs(_span.z) < 1e-3f;
             float ping01 = _pingRemaining > 0f
                 ? Mathf.Sin((1f - _pingRemaining / PingDuration) * Mathf.PI)
                 : 0f;
