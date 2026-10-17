@@ -3,8 +3,8 @@ using UnityEngine;
 namespace MoonProject.World
 {
     /// <summary>
-    /// The fallen supply pod's locator beacon (0.5.5): a slow, warm pulse that never goes fully dark, so the ledge
-    /// still reads from home between flashes. Plain logic.
+    /// A locator beacon's pulse (the landed lander's emergency beacon): slow and warm, never fully dark, so it still
+    /// reads from far off between flashes. Plain logic.
     /// </summary>
     public static class LocatorBlink
     {

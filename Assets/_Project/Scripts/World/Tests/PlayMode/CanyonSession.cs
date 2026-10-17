@@ -61,6 +61,9 @@ namespace MoonProject.World.PlayModeTests
         private const float RunTimeout = 30f;
         private const float InsideThrottle = 0.7f;
         private const float EyeHeight = 3f;
+
+        // Review cameras look this far above the ledge's floor: the height of something standing on it.
+        private const float LookHeight = 2f;
         private const float ExitViewDistance = 24f;
         private const float ExitViewHeight = 5f;
         private const float WideFov = 60f;
@@ -395,8 +398,8 @@ namespace MoonProject.World.PlayModeTests
             CanyonPath main = _canyon.MainPath;
             Assert.IsTrue(_context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.CanyonLedge, out WorldAnchor ledge));
             yield return Follow(main, Arc(), _canyon.LedgeArc, "to the ledge");
-            Vector3 glow = Ground(_canyon.GlowPoint) + Vector3.up * _settings.PodBeacon.y;
-            Review(ledge.Position - ledge.Forward * 7f + Vector3.up * 2f, glow, WideFov, "06-ledge-glow");
+            Review(ledge.Position - ledge.Forward * 7f + Vector3.up * 2f, ledge.Position + Vector3.up * LookHeight,
+                WideFov, "06-ledge");
             yield return Follow(main, _canyon.LedgeArc, main.EndArc - _settings.TerminusRadius, "up the canyon");
             Capture("07-inside");
             Assert.IsTrue(_context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.CanyonTerminus,
@@ -507,10 +510,10 @@ namespace MoonProject.World.PlayModeTests
 
         private void CaptureFromTheBase()
         {
-            Vector3 glow = Ground(_canyon.GlowPoint) + Vector3.up * _settings.PodBeacon.y;
+            Vector3 ledge = Ground(_canyon.LedgeCenter) + Vector3.up * LookHeight;
             Vector3 eye = Ground(Vector2.zero) + Vector3.up * EyeHeight;
-            Review(eye, glow, WideFov, "01-canyon-from-the-base");
-            Review(eye, glow, ZoomFov, "01-ledge-glow-from-the-base");
+            Review(eye, ledge, WideFov, "01-canyon-from-the-base");
+            Review(eye, ledge, ZoomFov, "01-ledge-from-the-base");
         }
 
         /// <summary>A review camera beside the chasm, level with the lip, looking across the leap's path.</summary>

@@ -131,16 +131,6 @@ MonoBehaviour:
       _landerBayArc: 70
       _landerBayDepth: 10
       _landerBayHalfLength: 20
-      _podBeacon: {x: -0.12, y: 3.5, z: 0.32}
-      _glowIntensity: 0.9
-      _glowRadius: 0.2
-      _glowMinAngle: 0.3
-      _glowLightRange: 14
-      _glowLightIntensity: 1.6
-      _beaconPeriod: 3.2
-      _beaconSharpness: 3
-      _beaconFloor: 0.3
-      _beaconGlassGlow: 1.6
       _exitOffset: 40
       _exitTurnRadius: 28
       _exitBranch: 22
@@ -557,6 +547,17 @@ MonoBehaviour:
       _wander: 1.6
       _bends: 3
       _portReach: 2.9
+    _landerBeacon:
+      _height: 0.3
+      _color: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
+      _period: 3.2
+      _sharpness: 3
+      _floor: 0.3
+      _haloIntensity: 0.9
+      _haloRadius: 0.25
+      _haloMinAngle: 0.35
+      _lightIntensity: 1.6
+      _lightRange: 14
   _scrapField:
     _laneHalfWidth: 2.5
     _cuttables: 4

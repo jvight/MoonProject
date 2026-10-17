@@ -32,8 +32,12 @@ namespace MoonProject.World
         [Tooltip("07's old charging cable from its dead post at the wake point to the lander's port.")]
         [SerializeField] private GroundCableSettings _wakeCable = new GroundCableSettings();
 
+        [Tooltip("The lander's amber emergency beacon on top of its hull.")]
+        [SerializeField] private LanderBeaconSettings _landerBeacon = new LanderBeaconSettings();
+
         public RuinPlacement[] Ruins => _ruins;
         public float LanderTilt => _landerTilt;
         public GroundCableSettings WakeCable => _wakeCable;
+        public LanderBeaconSettings LanderBeacon => _landerBeacon;
     }
 }

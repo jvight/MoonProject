@@ -213,26 +213,6 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
-        public void Ledge_GlowsInPlainSightOfTheBasePad()
-        {
-            Vector2 glow = _canyon.GlowPoint;
-            Vector2 ledge = _canyon.LedgeCenter;
-            var target = new Vector3(glow.x, _surface.SampleHeight(ledge.x, ledge.y) + _settings.Canyon.PodBeacon.y,
-                glow.y);
-            var eye = new Vector3(0f, _surface.SampleHeight(0f, 0f) + EyeHeight, 0f);
-            float length = Vector3.Distance(eye, target);
-            for (float d = 0f; d < length - SightTargetClearance; d += 0.5f)
-            {
-                Vector3 p = Vector3.Lerp(eye, target, d / length);
-                Assert.Greater(p.y, _surface.SampleHeight(p.x, p.z) + SightMargin,
-                    $"the line of sight to the ledge's glow is blocked at ({p.x:F1}, {p.z:F1})");
-            }
-
-            Assert.That(_canyon.LedgeArc, Is.InRange(_settings.Canyon.BendStart,
-                _settings.Canyon.BendStart + _settings.Canyon.BendLength), "the ledge sits in the bend's outer wall");
-        }
-
-        [Test]
         public void Interior_IsConnected_FromTheLandingToTheTerminusAndTheExitTop()
         {
             CanyonPath main = _canyon.MainPath;

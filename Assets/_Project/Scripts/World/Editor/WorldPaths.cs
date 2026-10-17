@@ -23,7 +23,8 @@ namespace MoonProject.World.Editor
         public const string BeaconHaloMesh = BeaconFolder + "/BeaconHaloQuad.asset";
         public const string BeaconHaloMaterial = BeaconFolder + "/M_BeaconHalo.mat";
         public const string BeaconHaloShader = "Assets/_Project/Shaders/World/LofiBeaconHalo.shader";
-        public const string CanyonGlowMaterial = GeneratedRoot + "/Canyon/M_CanyonGlow.mat";
+        /// <summary>The landed lander's amber emergency beacon's halo (opening v2 §4).</summary>
+        public const string LanderBeaconMaterial = GeneratedRoot + "/M_LanderBeacon.mat";
         public const string TowerPilotMaterial = GeneratedRoot + "/Beacon/M_TowerPilot.mat";
         public const string SkyShader = "Assets/_Project/Shaders/World/LofiSky.shader";
         public const string EarthShader = "Assets/_Project/Shaders/World/LofiEarth.shader";

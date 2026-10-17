@@ -22,6 +22,7 @@ namespace MoonProject.World.Editor
         /// <summary>[World]/Lander holds the landed R1 cargo lander, named <see cref="CargoLanderName"/>.</summary>
         public const string LanderRootName = "Lander";
         public const string CargoLanderName = "CargoLander";
+        public const string LanderBeaconName = "Beacon";
 
         /// <summary>[World]/OpeningProps holds the dead charging post and the dead west mast.</summary>
         public const string OpeningPropsRootName = "OpeningProps";
@@ -180,6 +181,46 @@ namespace MoonProject.World.Editor
                 lean * facing * prefab.transform.localRotation);
             lander.name = CargoLanderName;
             RuinColliderBuilder.Fit(lander);
+            CreateLanderBeacon(context, settings, landerRoot, lander);
+        }
+
+        /// <summary>
+        /// The lander's amber emergency beacon (opening v2 §4): World's halo and warm light just above the top of the
+        /// hull, and the <see cref="LanderBeacon"/> that pulses them. No R1 lamp model exists yet, so the light is the
+        /// beacon.
+        /// </summary>
+        private static void CreateLanderBeacon(SceneBuildContext context, WorldSettings settings, Transform landerRoot,
+            GameObject lander)
+        {
+            LanderBeaconSettings tuning = settings.Landmarks.LanderBeacon;
+            var bounds = new Bounds(lander.transform.position, Vector3.zero);
+            foreach (Renderer part in lander.GetComponentsInChildren<Renderer>())
+            {
+                bounds.Encapsulate(part.bounds);
+            }
+
+            GameObject halo = context.CreateChild(LanderBeaconName, landerRoot);
+            halo.transform.position = new Vector3(bounds.center.x, bounds.max.y + tuning.Height, bounds.center.z);
+            halo.AddComponent<MeshFilter>().sharedMesh = context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh);
+            var haloRenderer = halo.AddComponent<MeshRenderer>();
+            haloRenderer.sharedMaterial = context.LoadAsset<Material>(WorldPaths.LanderBeaconMaterial);
+            haloRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            haloRenderer.receiveShadows = false;
+            haloRenderer.lightProbeUsage = LightProbeUsage.Off;
+            haloRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            var light = halo.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = tuning.Color;
+            light.range = tuning.LightRange;
+            light.shadows = LightShadows.None;
+
+            var beacon = landerRoot.gameObject.AddComponent<LanderBeacon>();
+            var serialized = new SerializedObject(beacon);
+            Assign(serialized, "_settings", settings);
+            Assign(serialized, "_halo", haloRenderer);
+            Assign(serialized, "_light", light);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            context.AddSystem(beacon);
         }
 
         /// <summary>
