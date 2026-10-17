@@ -44,6 +44,8 @@ MonoBehaviour:
   _cone: 25
   _distanceWeight: 0.2
   _engageSpeed: 0.4
+  _gazePriority: 25
+  _aimToleranceDegrees: 8
   _dissolveSeconds: 0.9
   _outlineSeconds: 2
   _knownMetal: 3

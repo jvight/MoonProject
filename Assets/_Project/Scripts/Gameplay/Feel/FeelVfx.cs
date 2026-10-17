@@ -138,7 +138,7 @@ namespace MoonProject.Gameplay
                     _scanBeam.End();
                     break;
                 case FeelPhase.Reward:
-                    _scanBeam.End();
+                    _scanBeam.Complete();
                     _scanRibbon.Begin(beat.Position);
                     break;
             }

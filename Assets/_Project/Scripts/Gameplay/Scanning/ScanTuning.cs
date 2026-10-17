@@ -56,6 +56,12 @@ namespace MoonProject.Gameplay
         [Tooltip("07 eases to a stop before its lens opens: the scan runs below this speed (m/s).")]
         [Range(0.05f, 2f)] [SerializeField] private float _engageSpeed = 0.4f;
 
+        [Tooltip("Gaze priority requested on IRoverRig while aiming at or scanning a fragment (above ambient curious glances).")]
+        [Range(5, 50)] [SerializeField] private int _gazePriority = 25;
+
+        [Tooltip("Maximum angle in degrees between IRoverRig.ScanOrigin.forward and the target point for line-of-sight scan progression.")]
+        [Range(1f, 20f)] [SerializeField] private float _aimToleranceDegrees = 8f;
+
         [Header("Done (§1.2, D2)")]
         [Tooltip("Seconds of the dissolve: the solid fades, the lines stream into 07's lens, the lens flares.")]
         [Range(0.3f, 3f)] [SerializeField] private float _dissolveSeconds = 0.9f;
@@ -107,6 +113,8 @@ namespace MoonProject.Gameplay
         public float Cone => _cone;
         public float DistanceWeight => _distanceWeight;
         public float EngageSpeed => _engageSpeed;
+        public int GazePriority => _gazePriority;
+        public float AimToleranceDegrees => _aimToleranceDegrees;
         public float DissolveSeconds => _dissolveSeconds;
         public float OutlineSeconds => _outlineSeconds;
         public int KnownMetal => _knownMetal;
