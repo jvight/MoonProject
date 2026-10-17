@@ -1095,9 +1095,10 @@ namespace MoonProject.Gameplay.Tests
                 TestWorld flat = TestWorld.Flat();
                 Vector3 roverPos = Vector3.zero;
 
+                known.Learn(StructureIds.ChargingPad);
+                Assert.IsTrue(controller.PickStructure(StructureIds.ChargingPad));
                 Recipe padCost = controller.SelectedStructure.BuildCost;
                 stock.Stow(padCost);
-                Assert.IsTrue(controller.PickStructure(StructureIds.ChargingPad));
                 controller.UpdateCandidate(new Vector3(0f, 0f, 5f), roverPos, flat, propBlocked: false);
                 Assert.IsTrue(controller.TryConfirmPlacement(flat, roverPos, out int firstId, out _));
                 Assert.AreEqual(BuildModeState.Welding, controller.State);
