@@ -50,7 +50,7 @@ MonoBehaviour:
   _moteDrift: 0.035
   _moteWander: 0.03
   _moteWanderFrequency: 0.35
-  _moteSpread: 22
+  _moteSpread: 20
   _moteReach: 2.6
   _moteNearFade: 0.3
   _moteFalloff: 0.75

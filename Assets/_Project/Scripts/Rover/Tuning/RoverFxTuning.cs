@@ -168,7 +168,7 @@ namespace MoonProject.Rover
 
         [Tooltip("Motes appear within this half-angle (deg) of the lamp's axis, inside its beam.")]
         [Range(1f, 60f)]
-        [SerializeField] private float _moteSpread = 22f;
+        [SerializeField] private float _moteSpread = 20f;
 
         [Tooltip("Distance (m) in front of the lamp over which motes appear (near the lens).")]
         [Range(0.2f, 10f)]

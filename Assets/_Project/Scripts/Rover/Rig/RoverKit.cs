@@ -270,6 +270,7 @@ namespace MoonProject.Rover
         private void ConfigureHeadlamp()
         {
             _headlamp.type = LightType.Spot;
+            _headlamp.transform.localRotation = Quaternion.Euler(_tuning.HeadlampDownTilt, 0f, 0f);
             _baseIntensity = _tuning.HeadlampIntensity;
             _baseRange = _tuning.HeadlampRange;
             _baseSpotAngle = _tuning.HeadlampSpotAngle;
