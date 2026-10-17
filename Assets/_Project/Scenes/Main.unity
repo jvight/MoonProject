@@ -2543,7 +2543,6 @@ MonoBehaviour:
   - {fileID: 1986007856392288789}
   - {fileID: 1984517004378207405}
   - {fileID: 504541102478185918}
-  - {fileID: 625344469948974717}
   _saveSlot: main
   _showTitle: 1
   _pushedInTimeout: 6
@@ -7267,30 +7266,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &625344469948974717
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4472932996213229706}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac9903a11e2a32f4bb344e178b103313, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _tuning: {fileID: 11400000, guid: 4405d0ed64e7a75489929f53b5720dba, type: 2}
-  _rig: {fileID: 1910205596473882429}
-  _rover: {fileID: 953178385232242997}
-  _camera: {fileID: 1022257458036489991}
-  _platform: {fileID: 740779990443597548}
-  _shaft: {fileID: 53392942034281199}
-  _ringRail: {fileID: 2094658545730340663}
-  _stations:
-  - {fileID: 4403201338895758485}
-  - {fileID: 130737917098159439}
-  - {fileID: 2088141367627349573}
-  _ringRadius: 2.3999999
 --- !u!1001 &625979629701368920
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8221,21 +8196,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.0115656, y: 0.49153185, z: 0.16}
   m_Center: {x: -0.5613945, y: 0.24576592, z: -0.8205}
---- !u!4 &704471066076412395
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4472932996213229706}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4551756872509375540}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &707385908193262219
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -11714,49 +11674,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 1328284535787691191, guid: 5022f0bbed17bb548bcd41566d8d0b30, type: 3}
   m_PrefabInstance: {fileID: 994306615185972696}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1022257458036489991
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2806524937467646248}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9dfa5b682dcd46bda6128250e975f58, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Priority:
-    Enabled: 0
-    m_Value: 0
-  OutputChannel: 1
-  StandbyUpdate: 2
-  m_StreamingVersion: 0
-  m_LegacyPriority: 0
-  Target:
-    TrackingTarget: {fileID: 0}
-    LookAtTarget: {fileID: 0}
-    CustomLookAtTarget: 0
-  Lens:
-    FieldOfView: 40
-    OrthographicSize: 10
-    NearClipPlane: 0.1
-    FarClipPlane: 5000
-    Dutch: 0
-    ModeOverride: 0
-    PhysicalProperties:
-      GateFit: 2
-      SensorSize: {x: 21.946, y: 16.002}
-      LensShift: {x: 0, y: 0}
-      FocusDistance: 10
-      Iso: 200
-      ShutterSpeed: 0.005
-      Aperture: 16
-      BladeCount: 5
-      Curvature: {x: 2, y: 11}
-      BarrelClipping: 0.25
-      Anamorphism: 0
-  BlendHint: 0
 --- !u!23 &1023983090957863661 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 2704544250591541951, guid: 740243cff9e380446a290714a98120b6, type: 3}
@@ -23970,11 +23887,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.214201, y: 0.4429524, z: 1.04001}
   m_Center: {x: -0.15266818, y: 3.9396214, z: 1.1400006}
---- !u!4 &2094658545730340663 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 3084893185875884893, guid: 5022f0bbed17bb548bcd41566d8d0b30, type: 3}
-  m_PrefabInstance: {fileID: 994306615185972696}
-  m_PrefabAsset: {fileID: 0}
 --- !u!65 &2096448827580593176
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -33237,23 +33149,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.39646375, y: 0.25194073, z: 0.16}
   m_Center: {x: 0.29502705, y: 1.9960296, z: 0.059702277}
---- !u!1 &2806524937467646248
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 3211546113752058747}
-  - component: {fileID: 1022257458036489991}
-  m_Layer: 0
-  m_Name: Lab Camera
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
 --- !u!4 &2809461059628218858 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1092098274570613667, guid: 5022f0bbed17bb548bcd41566d8d0b30, type: 3}
@@ -37621,21 +37516,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.2800026, y: 0.37999988, z: 0.16}
   m_Center: {x: -4.3499994, y: 1.2700006, z: -1.3599997}
---- !u!4 &3211546113752058747
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2806524937467646248}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4551756872509375540}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &3211628574273104407
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -50922,23 +50802,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.16, y: 0.5276005, z: 0.77846783}
   m_Center: {x: -1.3777003, y: 0.7914008, z: -0.073504955}
---- !u!1 &4472932996213229706
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 704471066076412395}
-  - component: {fileID: 625344469948974717}
-  m_Layer: 0
-  m_Name: Lab View
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
 --- !u!65 &4475417705039103539
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -52569,8 +52432,6 @@ Transform:
   - {fileID: 205985255565292935}
   - {fileID: 1195469515761733463}
   - {fileID: 1809482531615006209}
-  - {fileID: 3211546113752058747}
-  - {fileID: 704471066076412395}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &4553616199320079819
