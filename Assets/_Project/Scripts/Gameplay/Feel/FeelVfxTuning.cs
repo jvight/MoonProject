@@ -176,19 +176,19 @@ namespace MoonProject.Gameplay
         [Range(8, 128)] [SerializeField] private int _dustPool = 48;
 
         [Tooltip("Dust colour (lavender regolith; the sprite material supplies its glow, so keep it dim).")]
-        [SerializeField] private Color _dustColor = new Color(0.6f, 0.58f, 0.7f, 0.55f);
+        [SerializeField] private Color _dustColor = new Color(0.28f, 0.26f, 0.32f, 0.28f);
 
-        [Tooltip("Size of a dust puff (m).")]
-        [Range(0.01f, 0.3f)] [SerializeField] private float _dustSize = 0.12f;
+        [Tooltip("Size of a dust grain (m).")]
+        [Range(0.01f, 0.3f)] [SerializeField] private float _dustSize = 0.045f;
 
         [Tooltip("Radius the ring's puffs start at round the beat's centre: just outside 07's wheels (m).")]
         [Range(0f, 2f)] [SerializeField] private float _ringRadius = 1.1f;
 
         [Tooltip("A ring puff's outward speed at the weakest and the strongest beat (m/s).")]
-        [SerializeField] private Vector2 _dustSpeed = new Vector2(0.6f, 1.8f);
+        [SerializeField] private Vector2 _dustSpeed = new Vector2(1.4f, 2.8f);
 
         [Tooltip("How steeply a ring puff rises as it flies out (upward share of its speed).")]
-        [Range(0f, 1.5f)] [SerializeField] private float _dustRise = 0.45f;
+        [Range(0f, 1.5f)] [SerializeField] private float _dustRise = 0.28f;
 
         [Tooltip("How long a dust puff lives: it arcs, settles and fades within this (s).")]
         [Range(0.3f, 3f)] [SerializeField] private float _dustSettleSeconds = 1.2f;

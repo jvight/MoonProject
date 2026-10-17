@@ -418,7 +418,13 @@ namespace MoonProject.Rover.PlayModeTests
             Assign(hoverCoils, ("_tuning", rigTuning), ("_mount", coilMount), ("_light", coilLight));
             AssignArray(hoverCoils, "_coils", coils);
             AssignArray(hoverCoils, "_glows", coilGlows);
-            Assign(fx, ("_tuning", fxTuning), ("_dustSocketLeft", dustLeft), ("_dustSocketRight", dustRight),
+            Assign(fx, ("_tuning", fxTuning),
+                ("_frontSocketLeft", (Transform)wheels[0]),
+                ("_frontSocketRight", (Transform)wheels[1]),
+                ("_dustSocketLeft", dustLeft),
+                ("_dustSocketRight", dustRight),
+                ("_trackFrontLeft", Track("TrackFrontLeft", fxHost, material)),
+                ("_trackFrontRight", Track("TrackFrontRight", fxHost, material)),
                 ("_trackLeft", Track("TrackLeft", fxHost, material)),
                 ("_trackRight", Track("TrackRight", fxHost, material)),
                 ("_dustLeft", Particles("DustLeft", fxHost, material)),

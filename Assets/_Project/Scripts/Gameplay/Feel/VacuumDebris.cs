@@ -330,7 +330,7 @@ namespace MoonProject.Gameplay
                 float settled = _dustAge[i] / _tuning.DustSettleSeconds;
                 Color color = _tuning.DustColor;
                 color.a *= 1f - settled * settled;
-                _dustSprites.Add(_dustPosition[i], _tuning.DustSize * (1f + settled), color, Vector3.zero);
+                _dustSprites.Add(_dustPosition[i], _tuning.DustSize * (1f - 0.25f * settled), color, Vector3.zero);
             }
 
             _dustSprites.End();

@@ -64,11 +64,11 @@ MonoBehaviour:
   _tumbleBeads: {x: 2, y: 4}
   _pools: {x: 64, y: 24, z: 24}
   _dustPool: 48
-  _dustColor: {r: 0.6, g: 0.58, b: 0.7, a: 0.55}
-  _dustSize: 0.12
+  _dustColor: {r: 0.28, g: 0.26, b: 0.32, a: 0.28}
+  _dustSize: 0.045
   _ringRadius: 1.1
-  _dustSpeed: {x: 0.6, y: 1.8}
-  _dustRise: 0.45
+  _dustSpeed: {x: 1.4, y: 2.8}
+  _dustRise: 0.28
   _dustSettleSeconds: 1.2
   _ringDust: 28
   _leapRingShare: 0.6
