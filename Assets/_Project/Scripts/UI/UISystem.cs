@@ -23,9 +23,6 @@ namespace MoonProject.UI
     {
         private const int CachedNumbers = 1000;
 
-        // The hold's change lands a frame or two after the press; the chip stays "the cause" this long.
-        private const float PickUpGraceSeconds = 1.5f;
-
         [Tooltip("The UIDocument showing GameUI.uxml with the Lunarion PanelSettings.")]
         [SerializeField] private UIDocument _document;
 
@@ -72,7 +69,6 @@ namespace MoonProject.UI
         private bool _carrying;
         private SaveTick _saveTick;
         private ProtocolReadout _protocol;
-        private RecipeCard _recipeCard;
         private ContextPrompt _prompt;
         private PickupFeed _pickups;
         private SalvageRing _salvageRing;
@@ -93,8 +89,6 @@ namespace MoonProject.UI
         private bool _titleWaiting;
         private bool _titleHasSave;
         private float _sinceAwake;
-        private float _pickUpGrace;
-        private bool _reopenCargo;
 
         /// <summary>The localization service this system registered (tests and editor tools read it).</summary>
         internal LocalizationService Localization => _localization;
@@ -123,8 +117,6 @@ namespace MoonProject.UI
         internal UnlockCard UnlockCard => _unlockCard;
 
         internal ProtocolReadout Protocol => _protocol;
-
-        internal RecipeCard RecipeCard => _recipeCard;
 
         internal LookUpChip LookUp => _lookUpChip;
 
@@ -259,7 +251,6 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<ContinueRequested>(_ => OnTitleDismissed()));
             _tokens.Add(events.Subscribe<FeelBeat>(OnFeelBeat));
             _tokens.Add(events.Subscribe<CargoChanged>(OnCargoChanged));
-            _tokens.Add(events.Subscribe<HomeStorageChanged>(_ => _cargo?.MarkDirty()));
             _tokens.Add(events.Subscribe<GameSaved>(OnGameSaved));
             _tokens.Add(events.Subscribe<StargazingChanged>(OnStargazingChanged));
             _tokens.Add(events.Subscribe<NextStepChanged>(OnNextStepChanged));
@@ -268,7 +259,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RoverWakeBeatReached>(OnWakeBeat));
             _tokens.Add(events.Subscribe<LanguageChanged>(OnLanguageChanged));
             _tokens.Add(events.Subscribe<TickerLine>(OnTickerLine));
-            _tokens.Add(events.Subscribe<PartFitted>(_ => _cargo?.MarkDirty()));
+            _tokens.Add(events.Subscribe<RoverSystemChanged>(_ => _cargo?.MarkDirty()));
             _tokens.Add(events.Subscribe<StructureLearned>(OnStructureLearned));
             _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
             _tokens.Add(events.Subscribe<StructurePlaced>(_ => _director.NotifyUsed(InteractionKind.Build)));
@@ -324,18 +315,15 @@ namespace MoonProject.UI
             _batteryDial = new BatteryDial(_layout, _tuning.Battery, services.Battery, services.Beam);
             _saveTick = new SaveTick(_layout, _tuning.SaveTick);
             _protocol = new ProtocolReadout(_layout.Hud, _tuning.Guidance, _localization, services.Recovery);
-            _recipeCard = new RecipeCard(_layout.Hud, _tuning.Guidance.Recipe, _localization, _numbers, services.Shop,
-                services.Materials, services.RecipeLook);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
-                services.Events, new[] { _layout.RecipeCardRoot, _layout.BuildStrip });
+                services.Events, new[] { _layout.BuildStrip });
             _pickups = new PickupFeed(_layout, _tuning.PickupFeed, _numbers, _localization, services.Materials,
                 services.Catalog, services.Events);
             _salvageRing = new SalvageRing(_layout, _tuning.Salvage, _tuning.Prompts, services.Salvage, services.View);
             _buildStrip = new BuildStripView(_layout, _tuning.BuildStripReveal, _tuning.Prompts, _localization,
                 _numbers, services.Materials, services.View, services.BuildField, _structureIcons, _glyphs);
-            _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold,
-                services.Home, services.Transfer, services.Dock, services.Equipment, services.Portrait, _roverDiagram,
-                _glyphs, _numbers, services.Events, _ledger);
+            _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold, services.Systems,
+                _roverDiagram, _glyphs, _numbers, services.Events, _ledger);
             BindFacePanel(root);
             _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
@@ -403,12 +391,6 @@ namespace MoonProject.UI
                 StepCargoInput(menu, deltaTime);
             }
 
-            if (_cargo.IsOpen && ((_cargo.IsTransferView && !_services.Dock.IsDocked) || _cargo.WantsClose))
-            {
-                _reopenCargo = _cargo.WantsClose;
-                CloseCargo();
-            }
-
             SetFacePanelVisible(_cargo.IsOpen || _cargo.Openness > 0f);
             bool cargoOpen = _cargo.IsOpen;
             _backdrop.Set(_pause.Openness, _cargo.Openness);
@@ -438,15 +420,10 @@ namespace MoonProject.UI
             Rect panel = _layout.Root.layout;
             Vector2 panelSize = float.IsNaN(panel.width) ? Vector2.zero : panel.size;
             _buildStrip?.Tick(hudTime, !paused && _awake && !cargoOpen, panelSize, device);
-            _pickUpGrace = _services.Hints.Primary.Kind == InteractionKind.PickUp
-                ? PickUpGraceSeconds
-                : Mathf.Max(0f, _pickUpGrace - deltaTime);
             _prompt.Tick(deltaTime, PromptsOpen(paused) && holder == PromptHolder.Chip,
                 _services.Hints.Primary, device, panelSize);
             _salvageRing.Tick(deltaTime, !paused && _awake, panelSize);
             _protocol.Tick(hudTime);
-            // Its own zone (right of centre): it stands beside the protocol readout, never over it.
-            _recipeCard.Tick(hudTime, CardsOpen(paused) && _awake && holder == PromptHolder.Recipe);
             // The look-up chip is the gentlest of the prompts: a teaching prompt that wants the screen takes it first.
             bool hintOpen = LookHintsOpen() && holder == PromptHolder.Chip &&
                             !_director.Wants(_services.Hints.Primary);
@@ -476,11 +453,6 @@ namespace MoonProject.UI
                    !_lookUpChip.IsVisible && !BuildMenuOpen();
         }
 
-        private bool CardsOpen(bool paused)
-        {
-            return !paused && !_protocol.IsVisible && !_stargaze.IsVeiled;
-        }
-
         private bool ObjectiveOpen(bool paused)
         {
             return !paused && _awake && !_inOpening && !_stargaze.IsVeiled && !_protocol.IsVisible &&
@@ -502,34 +474,30 @@ namespace MoonProject.UI
         {
             None,
             Unlock,
-            Recipe,
             Chip,
         }
 
         /// <summary>
         /// One guidance element at a time (docs/design/opening-v2.md §5): a chip or card (the teaching prompt, the
-        /// look/drive/hold chips, the recipe card, the blueprint card), then the low-battery hint, then the objective
-        /// line. Each wants the slot when it could show; the slot goes to the highest and passes on once the screen
-        /// is clear. Inside the prompt kind the one already up keeps the screen, else the blueprint card, the recipe
-        /// card and the chips take turns in that order.
+        /// look/drive/hold chips, the blueprint card), then the low-battery hint, then the objective line. Each wants
+        /// the slot when it could show; the slot goes to the highest and passes on once the screen is clear. Inside
+        /// the prompt kind the one already up keeps the screen, else the blueprint card and the chips take turns in
+        /// that order.
         /// </summary>
         private PromptHolder DecideGuidance(bool paused)
         {
             bool looks = LookHintsOpen() && (_firstPrompt.Word != HintWord.None || _holdHint.Wants(_awake && _carrying));
             bool chipWants = (PromptsOpen(paused) && _director.Wants(_services.Hints.Primary)) || looks;
-            bool recipeWants = CardsOpen(paused) && _awake && _recipeCard.Wants;
             bool unlockWants = !_cargo.IsOpen && _unlockCard.IsWaiting;
             bool chipUp = _prompt.IsVisible || _lookUpChip.IsVisible;
             PromptHolder holder = _unlockCard.IsVisible ? PromptHolder.Unlock
-                : _recipeCard.IsVisible ? PromptHolder.Recipe
                 : chipUp ? PromptHolder.Chip
                 : unlockWants ? PromptHolder.Unlock
-                : recipeWants ? PromptHolder.Recipe
                 : chipWants ? PromptHolder.Chip : PromptHolder.None;
             _guidanceWants[(int)GuidanceKind.Prompt] = holder != PromptHolder.None;
             _guidanceWants[(int)GuidanceKind.Battery] = ObjectiveOpen(paused) && _lowBattery.WantsShown;
             _guidanceWants[(int)GuidanceKind.Objective] = ObjectiveOpen(paused) && _objective.WantsShown;
-            _guidanceShown[(int)GuidanceKind.Prompt] = chipUp || _recipeCard.IsVisible || _unlockCard.IsVisible;
+            _guidanceShown[(int)GuidanceKind.Prompt] = chipUp || _unlockCard.IsVisible;
             _guidanceShown[(int)GuidanceKind.Battery] = _objectiveView.ShowsBattery;
             _guidanceShown[(int)GuidanceKind.Objective] = _objectiveView.ShowsObjective;
             _slot.Step(_guidanceWants, _guidanceShown);
@@ -660,8 +628,7 @@ namespace MoonProject.UI
             {
                 _lastCargoNavDirection = NavigationMoveEvent.Direction.None;
                 _cargoNavRepeatTimer = 0f;
-                if (menu.NavigatePressed && view.FocusedHoldCell < 0 && view.FocusedSocketIndex < 0 &&
-                    view.FocusedHomeCell < 0)
+                if (menu.NavigatePressed && view.FocusedHoldCell < 0 && view.FocusedDeviceIndex < 0)
                 {
                     _cargo.FocusFirst();
                 }
@@ -708,8 +675,7 @@ namespace MoonProject.UI
                 ? rawMouse.sqrMagnitude > 0.01f
                 : (rawMouse - _lastFaceMouseScreenPos).sqrMagnitude > 0.01f;
             bool down = menu.ClickPressed;
-            bool up = menu.ClickReleased;
-            if (!moved && !down && !up)
+            if (!moved && !down)
             {
                 return;
             }
@@ -730,15 +696,6 @@ namespace MoonProject.UI
                 {
                     view.PointerMoveAtPanel(panelPos);
                 }
-
-                if (up)
-                {
-                    view.PointerUpAtPanel(panelPos);
-                }
-            }
-            else if (up && view.IsDraggingKit)
-            {
-                view.CompleteKitDrag(null);
             }
         }
 
@@ -757,7 +714,6 @@ namespace MoonProject.UI
 
         private void OpenCargo()
         {
-            _reopenCargo = false;
             _lastFaceMouseScreenPos = _services.Input.Menu.PointerPosition;
             _lastCargoNavDirection = NavigationMoveEvent.Direction.None;
             _cargoNavRepeatTimer = 0f;
@@ -791,10 +747,6 @@ namespace MoonProject.UI
         {
             _carrying = changed.UsedSlots > 0;
             _cargo?.MarkDirty();
-            if (_pickUpGrace > 0f)
-            {
-                _director.NotifyUsed(InteractionKind.PickUp);
-            }
         }
 
         private void OnRoverAwoke(RoverAwoke awoke)
@@ -842,15 +794,6 @@ namespace MoonProject.UI
                     _director.NotifyUsed(InteractionKind.Salvage);
                 }
 
-                // The install moment ends with its Proud chirp: the cargo screen the player fitted from comes back.
-                if (beat.Kind == FeelKind.Install && beat.Phase == FeelPhase.Reward && _reopenCargo)
-                {
-                    _reopenCargo = false;
-                    if (CanOpenCargo() && !_cargo.IsOpen)
-                    {
-                        OpenCargo();
-                    }
-                }
             }
         }
 
@@ -924,8 +867,6 @@ namespace MoonProject.UI
             _lowBattery.Relocalize();
             _objectiveView.Relocalize(_lowBattery);
             _protocol.Relocalize();
-            _recipeCard.Relocalize();
-            _recipeCard.Relocalize();
             _buildStrip?.Relocalize();
             _pickups.Relocalize();
             _cargo.Relocalize();

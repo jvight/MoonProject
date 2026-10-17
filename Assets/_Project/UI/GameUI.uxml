@@ -54,16 +54,6 @@
                     <ui:Label name="protocol-title" class="recovery-board__title protocol-readout__title" picking-mode="Ignore" />
                     <ui:VisualElement name="protocol-rows" class="recovery-board__rows" picking-mode="Ignore" />
                 </ui:VisualElement>
-                <ui:VisualElement name="recipe-card" class="recipe-card" picking-mode="Ignore">
-                    <ui:VisualElement name="recipe-card-shadow" class="soft-shadow soft-shadow--name" />
-                    <ui:Label name="recipe-card-title" class="recipe-card__title" picking-mode="Ignore" />
-                    <ui:Label name="recipe-card-level" class="recipe-card__level" picking-mode="Ignore" />
-                    <ui:VisualElement class="recipe-card__row" picking-mode="Ignore">
-                        <ui:Label name="recipe-card-needs-word" class="recipe-card__word" picking-mode="Ignore" />
-                        <ui:VisualElement name="recipe-card-needs" class="recipe" picking-mode="Ignore" />
-                    </ui:VisualElement>
-                    <ui:Label name="recipe-card-where" class="recipe-card__where" picking-mode="Ignore" />
-                </ui:VisualElement>
                 <ui:VisualElement name="pickup-feed" class="pickup-feed" picking-mode="Ignore" />
                 <ui:VisualElement name="look-hint" class="look-hint" picking-mode="Ignore">
                     <ui:VisualElement class="look-hint__body" picking-mode="Ignore">
@@ -117,7 +107,6 @@
                 <ui:Label name="cargo-boot" class="cargo__boot" picking-mode="Ignore" />
                 <ui:VisualElement name="cargo-hold-grid" class="cargo__grid" picking-mode="Ignore" />
                 <ui:VisualElement name="cargo-sockets" class="cargo__sockets" picking-mode="Ignore" />
-                <ui:VisualElement name="cargo-home-grid" class="cargo__grid cargo__grid--home" picking-mode="Ignore" />
                 <ui:VisualElement name="cargo-tooltip" class="cargo__tooltip" picking-mode="Ignore">
                     <ui:Label name="cargo-tooltip-name" class="cargo__tooltip-name" picking-mode="Ignore" />
                     <ui:Label name="cargo-tooltip-desc" class="cargo__tooltip-desc" picking-mode="Ignore" />

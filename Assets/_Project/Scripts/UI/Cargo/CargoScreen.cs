@@ -18,7 +18,6 @@ namespace MoonProject.UI
         public const string EmptyClass = "cargo__cell--empty";
         public const string LockedClass = "cargo__cell--locked";
         public const string FittedClass = "cargo__socket--fitted";
-        private const string TransferClass = "cargo--transfer";
 
         private readonly VisualElement _root;
         private readonly VisualElement _panel;
@@ -26,13 +25,11 @@ namespace MoonProject.UI
         private readonly CargoScreenSettings _settings;
         private readonly ILocalization _localization;
         private readonly ICargoHold _hold;
-        private readonly IDockState _dock;
         private readonly EventBus _events;
         private readonly PromptLedger _ledger;
         private readonly HoldBoot _boot;
         private readonly FaceInventoryView _view;
 
-        private bool _transferView;
         private bool _dirty = true;
         private string _bootText = string.Empty;
         private int _bootTyped = -1;
@@ -43,18 +40,12 @@ namespace MoonProject.UI
         private Vector2 _fittedFor;
 
         public CargoScreen(UiLayout layout, CargoScreenSettings settings, ILocalization localization,
-            ICargoHold hold, IHomeStorage home, IStackTransfer transfer, IDockState dock, IRoverEquipment equipment,
-            IRoverPortrait portrait, RoverDiagramData diagram, GlyphLabels glyphs, IntText numbers, EventBus events,
-            PromptLedger ledger)
+            ICargoHold hold, IRoverSystems systems, RoverDiagramData diagram, GlyphLabels glyphs, IntText numbers,
+            EventBus events, PromptLedger ledger)
         {
             if (layout == null)
             {
                 throw new ArgumentNullException(nameof(layout));
-            }
-
-            if (portrait == null)
-            {
-                throw new ArgumentNullException(nameof(portrait));
             }
 
             if (glyphs == null)
@@ -65,7 +56,6 @@ namespace MoonProject.UI
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _hold = hold ?? throw new ArgumentNullException(nameof(hold));
-            _dock = dock ?? throw new ArgumentNullException(nameof(dock));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _ledger = ledger ?? throw new ArgumentNullException(nameof(ledger));
             _boot = new HoldBoot(settings);
@@ -74,18 +64,11 @@ namespace MoonProject.UI
             _reveal = new Reveal(_root, settings.Reveal);
             _reveal.Snap(false);
             _panel = Require<VisualElement>(_root, "cargo-panel");
-            _view = new FaceInventoryView(_panel, settings, localization, hold, home, transfer, dock, equipment,
-                diagram, numbers, events);
+            _view = new FaceInventoryView(_panel, settings, localization, hold, systems, diagram, numbers, events);
         }
 
         /// <summary>True while the screen is up (or easing).</summary>
         public bool IsOpen => _reveal.Target;
-
-        /// <summary>True when this opening is the docked transfer view (hold beside shelves).</summary>
-        public bool IsTransferView => _transferView;
-
-        /// <summary>True once a part was fitted from the 07 pane: the screen eases away for the install moment.</summary>
-        public bool WantsClose => _view.WantsClose;
 
         /// <summary>True while the first-press boot plays (tests and captures).</summary>
         public bool IsBooting => _boot.IsRunning;
@@ -99,18 +82,13 @@ namespace MoonProject.UI
         /// <summary>Unlocked hold cell count (for tests).</summary>
         public int HoldCellCount => _view.UnlockedCellCount;
 
-        /// <summary>Active home shelf slot count when docked (for tests).</summary>
-        public int HomeCellCount => _view.HomeCellCount;
-
         public VisualElement HoldCell(int index) => _view.HoldCell(index);
-
-        public VisualElement HomeCell(int index) => _view.HomeCell(index);
 
         public string HoldPartText(int index) => _view.HoldItemName(index);
 
         public string WaitingText => _view.ToastText;
 
-        public string TransferHintText => _view.TooltipDescText;
+        public string TooltipDescText => _view.TooltipDescText;
 
         public Rect PanelRect => _panel.worldBound;
 
@@ -121,8 +99,6 @@ namespace MoonProject.UI
                 return;
             }
 
-            _transferView = _dock.IsDocked;
-            _root.EnableInClassList(TransferClass, _transferView);
             _view.ResetInteractionState();
             _dirty = true;
             _reveal.Show();
@@ -238,7 +214,7 @@ namespace MoonProject.UI
             if (completed)
             {
                 _events.Publish(new RoverChirpRequested(ChirpMood.Affirm, 1f));
-                if (_view.FocusedHoldCell < 0 && _view.FocusedSocketIndex < 0 && _view.FocusedHomeCell < 0)
+                if (_view.FocusedHoldCell < 0 && _view.FocusedDeviceIndex < 0)
                 {
                     _view.FocusFirst();
                 }

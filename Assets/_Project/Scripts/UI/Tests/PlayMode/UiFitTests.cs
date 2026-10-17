@@ -29,9 +29,6 @@ namespace MoonProject.UI.PlayModeTests
         private const float Settle = 0.4f;
         private const float PlaceTolerance = 0.01f;
         private const int BigTextPresses = 2;
-        private const float RecipeCardViewportX = 0.8f;
-        private const float RecipeCardViewportY = 0.55f;
-        private const float CardDepth = 10f;
         private const int CellWidth = 480;
         private const int CellHeight = 270;
         private const int CellPad = 6;
@@ -223,7 +220,7 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Fakes.Charge = 2f;
             events.Publish(new BatteryArcRevealed(false));
             events.Publish(new NextStepChanged("next.v2.build_pad"));
-            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Excavate, new Vector3(0f, 0f, 12f), true);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, new Vector3(0f, 0f, 12f), true);
             int gain = 0;
             foreach (ScreenShape shape in ScreenShapes.All)
             {
@@ -238,21 +235,6 @@ namespace MoonProject.UI.PlayModeTests
                 });
             }
 
-            _rig.Fakes.PrimaryHint = InteractionHint.None;
-            _rig.Fakes.Upgrade = _rig.TestTower();
-            _rig.Fakes.Looked = _rig.Fakes.Upgrade.Id;
-            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.PickUp,
-                _rig.Camera.ViewportToWorldPoint(new Vector3(RecipeCardViewportX, RecipeCardViewportY, CardDepth)),
-                true);
-            yield return Seconds(3f);
-            foreach (ScreenShape shape in ScreenShapes.All)
-            {
-                yield return Reframe(shape);
-                yield return Check(shape, "recipe card and prompt", (label, found) =>
-                    ScreenFit.CheckApart(layout.RecipeCardRoot, layout.Prompt, label, found));
-            }
-
-            _rig.Fakes.Looked = null;
             _rig.Fakes.PrimaryHint = InteractionHint.None;
             _rig.Fakes.Hold.Set(14, new MaterialSlot(SalvageMaterial.Metal, 4, 4),
                 new MaterialSlot(SalvageMaterial.Ilmenite, 3, 6));

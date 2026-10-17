@@ -103,7 +103,7 @@ namespace MoonProject.UI.Tests
                      {
                          UiKeys.TitleContinueNote, UiKeys.TitleKeyHint,
                          UiKeys.RecipeRow, UiKeys.CargoWaiting, UiKeys.CargoSummary,
-                          UiKeys.RowFull, UiKeys.HintHold,
+                          UiKeys.HintHold,
                           UiKeys.BuildStripTitle, UiKeys.BuildCostAffordable, UiKeys.BuildCostShort,
                           UiKeys.BuildHintRotate, UiKeys.BuildHintSnap, UiKeys.BuildHintPlace,
                           UiKeys.BuildHintWeld, UiKeys.BuildHintDeconstruct, UiKeys.BuildLocked,
@@ -139,34 +139,31 @@ namespace MoonProject.UI.Tests
                 Assert.IsTrue(_english.TryGet(key, out _), key);
             }
 
-            foreach (RoverKitPiece piece in Enum.GetValues(typeof(RoverKitPiece)))
+            foreach (RoverSystem system in Enum.GetValues(typeof(RoverSystem)))
             {
-                if (UiKeys.TryGetGiftName(piece, out string gift))
+                Assert.IsTrue(_english.TryGet(SystemText.NameKey(system), out _), SystemText.NameKey(system));
+                foreach (RoverSystemState state in Enum.GetValues(typeof(RoverSystemState)))
                 {
-                    Assert.IsTrue(_english.TryGet(gift, out _), gift);
+                    Assert.IsTrue(_english.TryGet(SystemText.StateKey(system, state), out _),
+                        SystemText.StateKey(system, state));
+                }
+            }
+
+            for (int device = 0; device < FaceDevices.Count; device++)
+            {
+                Assert.IsTrue(_english.TryGet(FaceDevices.NameKey(device), out _), FaceDevices.NameKey(device));
+                foreach (RoverSystemState state in Enum.GetValues(typeof(RoverSystemState)))
+                {
+                    string key = FaceDevices.DescriptionKey(device, state, true);
+                    Assert.IsTrue(_english.TryGet(key, out _), key);
+                    key = FaceDevices.DescriptionKey(device, state, false);
+                    Assert.IsTrue(_english.TryGet(key, out _), key);
                 }
             }
 
             foreach (PromptEntry entry in new PromptSettings().Entries)
             {
                 Assert.IsTrue(_english.TryGet(UiKeys.Hint(entry.Kind), out _), UiKeys.Hint(entry.Kind));
-            }
-        }
-
-        [Test]
-        public void EveryUpgradeLevel_HasATitleAndAnEffect()
-        {
-            string[] guids = AssetDatabase.FindAssets("t:UpgradeDefinition", new[] { "Assets/_Project/Data/Content" });
-            Assert.Greater(guids.Length, 0, "the radio tower upgrade exists");
-            foreach (string guid in guids)
-            {
-                var upgrade = AssetDatabase.LoadAssetAtPath<UpgradeDefinition>(AssetDatabase.GUIDToAssetPath(guid));
-                Assert.IsTrue(_english.TryGet(UiKeys.UpgradeName(upgrade.Id), out _), UiKeys.UpgradeName(upgrade.Id));
-                for (int level = 1; level <= upgrade.MaxLevel; level++)
-                {
-                    Assert.IsTrue(_english.TryGet(UiKeys.UpgradeTitle(upgrade.Id, level), out _),
-                        UiKeys.UpgradeTitle(upgrade.Id, level));
-                }
             }
         }
 

@@ -13,23 +13,17 @@ namespace MoonProject.UI.PlayModeTests
     /// cut, the battery and the beam at work.
     /// </summary>
     public sealed class FakeGameServices : MonoBehaviour, IGameSystem, IViewCamera, IAudioSettings, ILookSettings, IFeelSettings,
-        IMaterialStock, IInteractionHints, IUpgradeShop, IRoverState, ISalvageStatus, IRoverBattery, IBeamStatus,
-        IRecoveryProgress, IRecipeLook
+        IMaterialStock, IInteractionHints, IRoverState, ISalvageStatus, IRoverBattery, IBeamStatus,
+        IRecoveryProgress
     {
         private readonly int[] _litLamps = new int[Enum.GetValues(typeof(RecoveryTarget)).Length];
         private readonly int[] _lamps = { 3, 3, 4, 1 };
 
         private readonly float[] _volumes = { 1f, 1f, 1f, 1f };
-        private readonly Dictionary<string, int> _levels = new Dictionary<string, int>();
         private float _sensitivity = 1f;
         private EventBus _events;
 
         public Camera Camera { get; set; }
-
-        /// <summary>The recipe the view rests on (<see cref="IRecipeLook"/>), set by a test.</summary>
-        public string Looked { get; set; }
-
-        public bool IsSheet { get; set; }
 
         public Vector3 Position { get; set; }
 
@@ -49,27 +43,9 @@ namespace MoonProject.UI.PlayModeTests
 
         public Vector3 GroundNormal => Vector3.up;
 
-        /// <summary>The station's one upgrade (the radio tower), unless <see cref="Bay"/> is set.</summary>
-        public UpgradeDefinition Upgrade { get; set; }
-
-        /// <summary>When set, the station sells these instead, in this order (Kenji's Rover Bay).</summary>
-        public UpgradeDefinition[] Bay { get; set; }
-
-        public bool AtStation { get; set; }
-
-        /// <summary>
-        /// False in captures over the real scene: a staged purchase must not set the scene's real stations working.
-        /// </summary>
-        public bool AnnouncesPurchases { get; set; } = true;
-
         public bool RumbleEnabled { get; set; } = true;
 
         public float RumbleStrength { get; set; } = 1f;
-
-        /// <summary>True while the next level waits for a component the tower has not been fed (the coil).</summary>
-        public bool AwaitingPart { get; set; }
-
-        public int Purchases { get; private set; }
 
         public InteractionHint PrimaryHint { get; set; } = InteractionHint.None;
 
@@ -80,30 +56,8 @@ namespace MoonProject.UI.PlayModeTests
 
         public FakeCatalog Catalog { get; } = new FakeCatalog();
 
-        /// <summary>Home's shelves, set by a test.</summary>
-        public FakeHome Home { get; } = new FakeHome();
-
-        /// <summary>Whether 07 rests on the dock, set by a test.</summary>
-        public FakeDock Dock { get; } = new FakeDock();
-
-        /// <summary>07's equipment, set by a test.</summary>
-        public FakeEquipment Equipment { get; } = new FakeEquipment();
-
-        /// <summary>The bay refuses a kit: the parts row is full.</summary>
-        public bool PartsRowFull { get; set; }
-
-        /// <summary>07's portrait, set by a test.</summary>
-        public FakePortrait Portrait { get; } = new FakePortrait();
-
-        /// <summary>The docked transfer, moving whole slots between <see cref="Hold"/> and <see cref="Home"/>.</summary>
-        public FakeTransfer Transfer => _transfer ?? (_transfer = new FakeTransfer(Hold, Home, Dock));
-
-        private FakeTransfer _transfer;
-
-        private void OnDestroy()
-        {
-            Portrait.Dispose();
-        }
+        /// <summary>07's systems, set by a test.</summary>
+        public FakeSystems Systems { get; } = new FakeSystems();
 
         public int Metal => _units[(int)SalvageMaterial.Metal];
 
@@ -163,33 +117,7 @@ namespace MoonProject.UI.PlayModeTests
 
         public bool GentleCamera { get; set; }
 
-        public bool IsAtStation => StationUpgrade != null;
-
-        public UpgradeDefinition StationUpgrade
-        {
-            get
-            {
-                if (StationUpgradeCount == 0)
-                {
-                    return null;
-                }
-
-                for (int i = 0; i < StationUpgradeCount; i++)
-                {
-                    UpgradeDefinition upgrade = StationUpgradeAt(i);
-                    if (LevelOf(upgrade.Id) < upgrade.MaxLevel)
-                    {
-                        return upgrade;
-                    }
-                }
-
-                return StationUpgradeAt(StationUpgradeCount - 1);
-            }
-        }
-
-        public int StationUpgradeCount => !AtStation ? 0 : Bay?.Length ?? (Upgrade != null ? 1 : 0);
-
-        public InteractionHint Primary => IsUpgradeOffered(out InteractionHint upgrade) ? upgrade : PrimaryHint;
+        public InteractionHint Primary => PrimaryHint;
 
         public int Cells { get; set; } = 4;
 
@@ -221,8 +149,6 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IFeelSettings>(this);
             context.Register<IMaterialStock>(this);
             context.Register<IInteractionHints>(this);
-            context.Register<IUpgradeShop>(this);
-            context.Register<IRecipeLook>(this);
             context.Register<IRoverState>(this);
             context.Register<ISalvageStatus>(this);
             context.Register<IRoverBattery>(this);
@@ -230,11 +156,7 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IRecoveryProgress>(this);
             context.Register<ICargoHold>(Hold);
             context.Register<IMaterialCatalog>(Catalog);
-            context.Register<IHomeStorage>(Home);
-            context.Register<IDockState>(Dock);
-            context.Register<IRoverEquipment>(Equipment);
-            context.Register<IRoverPortrait>(Portrait);
-            context.Register<IStackTransfer>(Transfer);
+            context.Register<IRoverSystems>(Systems);
         }
 
         public int LitLamps(RecoveryTarget target)
@@ -299,120 +221,8 @@ namespace MoonProject.UI.PlayModeTests
 
         public bool TryGet(InteractionKind kind, out InteractionHint hint)
         {
-            if (kind == InteractionKind.Upgrade)
-            {
-                return IsUpgradeOffered(out hint);
-            }
-
             hint = PrimaryHint;
             return kind != InteractionKind.None && kind == PrimaryHint.Kind;
-        }
-
-        public UpgradeDefinition StationUpgradeAt(int index)
-        {
-            return Bay != null ? Bay[index] : Upgrade;
-        }
-
-        public int LevelOf(string upgradeId)
-        {
-            return _levels.TryGetValue(upgradeId, out int level) ? level : 0;
-        }
-
-        public bool TryGetOffer(string upgradeId, out UpgradeOffer offer)
-        {
-            UpgradeDefinition upgrade = Sold(upgradeId);
-            if (upgrade == null)
-            {
-                offer = default;
-                return false;
-            }
-
-            int level = LevelOf(upgradeId);
-            bool maxed = level >= upgrade.MaxLevel;
-            offer = new UpgradeOffer(upgrade, level, !maxed && Has(upgrade.Levels[level].Recipe));
-            return true;
-        }
-
-        public string ComponentNeeded(string upgradeId)
-        {
-            return AwaitingPart ? "Part_TowerCoil" : null;
-        }
-
-        public PurchaseResult Purchase(string upgradeId)
-        {
-            if (!TryGetOffer(upgradeId, out UpgradeOffer offer))
-            {
-                return PurchaseResult.Unknown;
-            }
-
-            if (!AtStation)
-            {
-                return PurchaseResult.NotAtStation;
-            }
-
-            if (offer.IsMaxed)
-            {
-                return PurchaseResult.Maxed;
-            }
-
-            if (!offer.CanAfford)
-            {
-                return PurchaseResult.CannotAfford;
-            }
-
-            if (AwaitingPart)
-            {
-                return PurchaseResult.NeedsPart;
-            }
-
-            if (PartsRowFull)
-            {
-                return PurchaseResult.RowFull;
-            }
-
-            Purchases++;
-            _levels[upgradeId] = offer.CurrentLevel + 1;
-            Recipe cost = offer.NextCost;
-            SetMaterials(Metal - cost.Metal, Wiring - cost.Wiring, Optics - cost.Optics);
-            if (AnnouncesPurchases)
-            {
-                _events.Publish(new UpgradePurchased(upgradeId, offer.CurrentLevel + 1));
-            }
-            return PurchaseResult.Purchased;
-        }
-
-        private bool IsUpgradeOffered(out InteractionHint hint)
-        {
-            UpgradeDefinition upgrade = StationUpgrade;
-            int level = upgrade != null ? LevelOf(upgrade.Id) : 0;
-            if (upgrade != null && level < upgrade.MaxLevel)
-            {
-                hint = new InteractionHint(InteractionKind.Upgrade, Vector3.zero, Has(upgrade.Levels[level].Recipe));
-                return true;
-            }
-
-            hint = InteractionHint.None;
-            return false;
-        }
-
-        /// <summary>The upgrade called <paramref name="upgradeId"/> if this station's catalogue has it.</summary>
-        private UpgradeDefinition Sold(string upgradeId)
-        {
-            UpgradeDefinition[] bay = Bay;
-            if (bay != null)
-            {
-                for (int i = 0; i < bay.Length; i++)
-                {
-                    if (bay[i].Id == upgradeId)
-                    {
-                        return bay[i];
-                    }
-                }
-
-                return null;
-            }
-
-            return Upgrade != null && Upgrade.Id == upgradeId ? Upgrade : null;
         }
     }
 }

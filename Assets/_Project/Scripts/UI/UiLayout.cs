@@ -38,7 +38,6 @@ namespace MoonProject.UI
             SalvageRingAnchor = Require<VisualElement>("salvage-ring-anchor");
             SalvageRing = Require<VisualElement>("salvage-ring");
 
-            RecipeCardRoot = Require<VisualElement>("recipe-card");
 
             LookHint = Require<VisualElement>("look-hint");
             LookHintShadow = Require<VisualElement>("look-hint-shadow");
@@ -185,9 +184,6 @@ namespace MoonProject.UI
         public VisualElement SalvageRingAnchor { get; }
 
         public VisualElement SalvageRing { get; }
-
-        /// <summary>The recipe card's box (the prompt keeps clear of it).</summary>
-        public VisualElement RecipeCardRoot { get; }
 
         public VisualElement LookHint { get; }
 

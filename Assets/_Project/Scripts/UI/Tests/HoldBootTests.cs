@@ -155,7 +155,6 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual(_settings.PanelWidth, asset.PanelWidth);
             Assert.AreEqual(_settings.PanelHeight, asset.PanelHeight);
             Assert.AreEqual(_settings.MaxCell, asset.MaxCell);
-            Assert.AreEqual(_settings.DragThreshold, asset.DragThreshold);
         }
 
         [Test]
@@ -222,20 +221,10 @@ namespace MoonProject.UI.Tests
                 var socket = (RoverSocket)i;
                 UiIconShape socketShape = diagram.GetIcon(socket);
                 Assert.IsNull(socketShape.Validate(), $"Invalid icon for socket {socket}: {socketShape.Validate()}");
-                RoverKitPiece piece = PartInfo.DefaultPartFor(socket);
-                UiIconShape kitShape = diagram.GetIcon(piece);
-                Assert.IsNull(kitShape.Validate(), $"Invalid icon for kit piece {piece}: {kitShape.Validate()}");
             }
 
-            foreach (string partId in new[]
-                     {
-                         "Part_TowerCoil", "Part_Transformer", "Part_RelaySpare",
-                         "Part_TillyCell", "tilly.cell", "Part_BellValve", "bell.valve",
-                     })
-            {
-                UiIconShape partShape = diagram.GetPartIcon(partId);
-                Assert.IsNull(partShape.Validate(), $"Invalid icon for story part {partId}: {partShape.Validate()}");
-            }
+            UiIconShape partShape = diagram.GetPartIcon("part.igniter");
+            Assert.IsNull(partShape.Validate(), $"Invalid icon for the spare igniter: {partShape.Validate()}");
 
             Assert.Throws<System.InvalidOperationException>(() => icons.GetIcon("item_does_not_exist"));
             Assert.Throws<System.InvalidOperationException>(() => diagram.GetIcon("kit_does_not_exist"));
@@ -243,7 +232,7 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void FaceInventoryLayout_CellsAndOrbitalSocketsNeverOverlap_AndTextBudgetHoldsInEnAndVi()
+        public void FaceInventoryLayout_CellsAndDevicesNeverOverlap_AndTextBudgetHoldsInEnAndVi()
         {
             for (int i = 0; i < FaceInventoryView.MaxHoldCells; i++)
             {
@@ -263,26 +252,24 @@ namespace MoonProject.UI.Tests
             }
 
             float minDistance = FaceInventoryView.BubbleRadius * 2f + 8f;
-            for (int i = 0; i < FaceInventoryView.OrbitalSocketCount; i++)
+            for (int i = 0; i < FaceDevices.Count; i++)
             {
-                Vector2 c = FaceInventoryView.GetOrbitalSocketReferenceCenter(i);
+                Vector2 c = FaceDevices.CenterOf(i);
                 Assert.GreaterOrEqual(c.x - FaceInventoryView.BubbleRadius, FaceInventoryView.DividerX + 16f);
                 Assert.LessOrEqual(c.x + FaceInventoryView.BubbleRadius, FaceInventoryView.ReferenceWidth - 16f);
                 Assert.GreaterOrEqual(c.y - FaceInventoryView.BubbleRadius, 60f);
                 Assert.LessOrEqual(c.y + FaceInventoryView.BubbleRadius, 670f);
 
-                RoverSocket socket = FaceInventoryView.OrbitalSockets[i];
-                Vector2 mount = RoverLineArtPainter.GetSocketMountPoint(socket,
+                Vector2 mount = RoverLineArtPainter.GetSocketMountPoint(FaceDevices.MountOf(i),
                     new Vector2(FaceInventoryView.RoverOriginX, FaceInventoryView.RoverOriginY),
                     FaceInventoryView.RoverScale);
                 Assert.Greater(Vector2.Distance(c, mount), FaceInventoryView.BubbleRadius + 6f,
-                    $"Orbital bubble {socket} is too close to its mount point on 07");
+                    $"Device bubble {i} is too close to its mount point on 07");
 
-                for (int j = i + 1; j < FaceInventoryView.OrbitalSocketCount; j++)
+                for (int j = i + 1; j < FaceDevices.Count; j++)
                 {
-                    Vector2 other = FaceInventoryView.GetOrbitalSocketReferenceCenter(j);
-                    Assert.GreaterOrEqual(Vector2.Distance(c, other), minDistance,
-                        $"Orbital bubble {i} overlaps orbital bubble {j}");
+                    Assert.GreaterOrEqual(Vector2.Distance(c, FaceDevices.CenterOf(j)), minDistance,
+                        $"Device bubble {i} overlaps device bubble {j}");
                 }
             }
 
@@ -297,11 +284,6 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual(title.FarWheelScale, cargo.RoverFarWheelScale, 1e-4f, "Far wheel scale matches title screen");
             Assert.AreEqual(title.FarWheelAlpha, cargo.RoverFarWheelAlpha, 1e-4f, "Far wheel alpha matches title screen");
             Assert.AreEqual(new Vector2(6f, -4f), cargo.RoverFarWheelOffset, "Far wheel offset is (+6, -4) at 82px/m");
-            float headlampTipX = cargo.RoverOriginX + cargo.HeadlampBeamLength * cargo.RoverScale;
-            float lampBubbleLeftEdge = FaceInventoryView.GetOrbitalSocketReferenceCenter(
-                FaceInventoryView.OrbitalIndexOf(RoverSocket.Lamp)).x - cargo.BubbleRadius;
-            Assert.Less(headlampTipX, lampBubbleLeftEdge - 20f,
-                "Headlamp 3-slice gradient cone stops well short of the Lamp socket bubble");
             Assert.LessOrEqual(cargo.LeaderEmptyColor.a, 78, "Empty socket leader line is faint (~25-30% alpha)");
             Assert.Greater(cargo.LeaderInstalledColor.a, cargo.LeaderEmptyColor.a,
                 "Installed socket leader is slightly brighter than empty leader");
@@ -332,19 +314,25 @@ namespace MoonProject.UI.Tests
                         $"{lang} {material} description exceeds 52 chars: '{desc}'");
                 }
 
-                for (int i = 0; i < RoverDiagramData.SocketCount; i++)
+                for (int device = 0; device < FaceDevices.Count; device++)
                 {
-                    var socket = (RoverSocket)i;
-                    string sDesc = PartInfo.SocketDescription(socket, localization);
-                    Assert.IsNotEmpty(sDesc);
-                    Assert.LessOrEqual(sDesc.Length, FaceInventoryView.MaxTooltipDescriptionChars,
-                        $"{lang} socket {socket} description exceeds 52 chars: '{sDesc}'");
-                    RoverKitPiece piece = PartInfo.DefaultPartFor(socket);
-                    string pDesc = PartInfo.PartDescription(piece, localization);
-                    Assert.IsNotEmpty(pDesc);
-                    Assert.LessOrEqual(pDesc.Length, FaceInventoryView.MaxTooltipDescriptionChars,
-                        $"{lang} kit {piece} description exceeds 52 chars: '{pDesc}'");
+                    foreach (RoverSystemState state in System.Enum.GetValues(typeof(RoverSystemState)))
+                    {
+                        foreach (bool canFit in new[] { false, true })
+                        {
+                            string dDesc = localization.Get(FaceDevices.DescriptionKey(device, state, canFit));
+                            Assert.IsNotEmpty(dDesc);
+                            Assert.LessOrEqual(dDesc.Length, FaceInventoryView.MaxTooltipDescriptionChars,
+                                $"{lang} device {device} ({state}, fit {canFit}) exceeds 52 chars: '{dDesc}'");
+                        }
+                    }
+
+                    Assert.IsNotEmpty(localization.Get(FaceDevices.NameKey(device)));
                 }
+
+                Assert.IsNotEmpty(PartInfo.StoryPartName("part.igniter", localization));
+                Assert.LessOrEqual(PartInfo.StoryPartDescription("part.igniter", localization).Length,
+                    FaceInventoryView.MaxTooltipDescriptionChars);
             }
         }
 

@@ -4,8 +4,8 @@ using UnityEngine;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The gentle guidance (docs/design/opening-v2.md §3): the objective line, the recipe card and the
-    /// protocol readout.
+    /// The gentle guidance (docs/design/opening-v2.md §3): the objective line and the protocol
+    /// readout.
     /// </summary>
     [Serializable]
     public sealed class GuidanceSettings
@@ -41,9 +41,6 @@ namespace MoonProject.UI
         [Range(10f, 600f)]
         [SerializeField] private float _objectiveIdleSeconds = 90f;
 
-        [Tooltip("The recipe card easing in while 07 looks at the tower's hopper or a board sheet, and out after.")]
-        [SerializeField] private RevealSettings _recipe = new RevealSettings(0.45f, 0.6f, 8f, 0.96f, 1.4f, 0.7f);
-
         [Tooltip("The recovery protocol's readout in 07's lens at the end of the full opening, easing in and out.")]
         [SerializeField] private RevealSettings _protocol = new RevealSettings(0.8f, 1.1f, 6f, 0.97f, 1f, 0.8f);
 
@@ -66,8 +63,6 @@ namespace MoonProject.UI
         public float ObjectiveRebrightStillSeconds => _objectiveRebrightStillSeconds;
 
         public float ObjectiveIdleSeconds => _objectiveIdleSeconds;
-
-        public RevealSettings Recipe => _recipe;
 
         public RevealSettings Protocol => _protocol;
 

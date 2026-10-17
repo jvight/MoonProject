@@ -79,50 +79,6 @@
             "text": "Bring the coil to the tower's pad."
         },
         {
-            "key": "hint.pickup",
-            "text": "Pick up"
-        },
-        {
-            "key": "pickup.part_towercoil",
-            "text": "Tower Coil"
-        },
-        {
-            "key": "pickup.part_transformer",
-            "text": "Transformer"
-        },
-        {
-            "key": "pickup.part_relayspare",
-            "text": "Relay spare part"
-        },
-        {
-            "key": "pickup.relay_part",
-            "text": "Relay part"
-        },
-        {
-            "key": "pickup.tilly.rotor",
-            "text": "Tilly's rotor"
-        },
-        {
-            "key": "pickup.tilly.lens",
-            "text": "Tilly's lens"
-        },
-        {
-            "key": "pickup.tilly.cell",
-            "text": "Tilly's power cell"
-        },
-        {
-            "key": "pickup.bell.knob",
-            "text": "Bell's tuning knob"
-        },
-        {
-            "key": "pickup.bell.cone",
-            "text": "Bell's speaker cone"
-        },
-        {
-            "key": "pickup.bell.valve",
-            "text": "Bell's radio valve"
-        },
-        {
             "key": "next.signal",
             "text": "A faint signal. Ping and follow it."
         },
@@ -327,74 +283,6 @@
             "text": "Back"
         },
         {
-            "key": "hint.excavate",
-            "text": "Dig"
-        },
-        {
-            "key": "hint.tether",
-            "text": "Tow"
-        },
-        {
-            "key": "hint.deposit",
-            "text": "Place"
-        },
-        {
-            "key": "hint.reel",
-            "text": "Reel in"
-        },
-        {
-            "key": "upgrade.radio_tower.name",
-            "text": "Radio Tower"
-        },
-        {
-            "key": "upgrade.radio_tower.1.title",
-            "text": "Build level 1"
-        },
-        {
-            "key": "upgrade.radio_tower.1.effect",
-            "text": "Brings power home: the lander's windows light and the radio picks up the station."
-        },
-        {
-            "key": "component.tower_coil.needed",
-            "text": "Coil crate · Supply Depot"
-        },
-        {
-            "key": "upgrade.radio_tower.2.title",
-            "text": "Build level 2"
-        },
-        {
-            "key": "upgrade.radio_tower.2.effect",
-            "text": "Powers Kenji's Rover Bay, and the radio stays clear farther out."
-        },
-        {
-            "key": "component.transformer.needed",
-            "text": "Junction box · Kenji's Garage"
-        },
-        {
-            "key": "upgrade.radio_tower.3.title",
-            "text": "Build level 3"
-        },
-        {
-            "key": "upgrade.radio_tower.3.effect",
-            "text": "Powers the chart in the lab, and the radio is clear across the basin."
-        },
-        {
-            "key": "component.relay_spare.needed",
-            "text": "Service cabinet · any relay"
-        },
-        {
-            "key": "upgrade.rover.hover_jump.name",
-            "text": "Hover-Jump"
-        },
-        {
-            "key": "upgrade.rover.hover_jump.1.title",
-            "text": "Kenji's spring coils"
-        },
-        {
-            "key": "upgrade.rover.hover_jump.1.effect",
-            "text": "Hold to charge, release to leap: 07 jumps over gaps."
-        },
-        {
             "key": "glyph.keyboard.escape",
             "text": "Esc"
         },
@@ -499,22 +387,6 @@
             "text": "LS"
         },
         {
-            "key": "hint.repair",
-            "text": "Repair"
-        },
-        {
-            "key": "hint.tune",
-            "text": "Tune"
-        },
-        {
-            "key": "hint.restore",
-            "text": "Repair"
-        },
-        {
-            "key": "hint.hop",
-            "text": "Hop"
-        },
-        {
             "key": "hint.salvage",
             "text": "Cut"
         },
@@ -587,116 +459,12 @@
             "text": "07: {0} of {1} slots"
         },
         {
-            "key": "ui.can.tether.verb",
-            "text": "Lift"
-        },
-        {
-            "key": "ui.can.hover_jump.verb",
-            "text": "Hover-Jump"
-        },
-        {
-            "key": "ui.can.cargo_cradle.verb",
-            "text": "Cargo Cradle"
-        },
-        {
-            "key": "ui.can.warm_headlamp.verb",
-            "text": "Warm Headlamp"
-        },
-        {
-            "key": "ui.can.boost_coils.verb",
-            "text": "Boost Coils"
-        },
-        {
-            "key": "ui.can.cell_pack.verb",
-            "text": "Cell Pack II"
-        },
-        {
-            "key": "ui.can.wide_sonar.verb",
-            "text": "Wide Sonar"
-        },
-        {
-            "key": "ui.can.magnetic_treads.verb",
-            "text": "Magnetic Treads"
-        },
-        {
-            "key": "ui.can.side_bins.verb",
-            "text": "Side Bins"
-        },
-        {
-            "key": "ui.can.focus_lens.verb",
-            "text": "Focus Lens"
-        },
-        {
             "key": "hint.build",
             "text": "Build"
         },
         {
             "key": "hint.scan",
             "text": "Scan"
-        },
-        {
-            "key": "ui.recipecard.needs",
-            "text": "NEEDS"
-        },
-        {
-            "key": "ui.recipecard.tower",
-            "text": "Park on the pad to build."
-        },
-        {
-            "key": "upgrade.rover.cargo_cradle.name",
-            "text": "Cargo Cradle"
-        },
-        {
-            "key": "upgrade.rover.cargo_cradle.1.title",
-            "text": "A strapped rack basket"
-        },
-        {
-            "key": "upgrade.rover.cargo_cradle.1.effect",
-            "text": "Carries one keepsake home in a rack on 07's back, so the tether stays free."
-        },
-        {
-            "key": "upgrade.rover.warm_headlamp.name",
-            "text": "Warm Headlamp"
-        },
-        {
-            "key": "upgrade.rover.warm_headlamp.1.title",
-            "text": "A caged lamp bar"
-        },
-        {
-            "key": "upgrade.rover.warm_headlamp.1.effect",
-            "text": "A wider, brighter light ahead, and sonar pillars stay up longer."
-        },
-        {
-            "key": "upgrade.rover.boost_coils.name",
-            "text": "Boost Coils"
-        },
-        {
-            "key": "upgrade.rover.boost_coils.1.title",
-            "text": "Twin capacitor drums"
-        },
-        {
-            "key": "upgrade.rover.boost_coils.1.effect",
-            "text": "Hold forward on open ground to drive a little faster."
-        },
-        {
-            "key": "hint.stow",
-            "text": "Stow"
-        },
-        {
-            "key": "kit.solar_cell.name",
-            "text": "Tilly's solar cell"
-        },
-        {
-            "key": "kit.fresh_paint.name",
-            "text": "A fresh coat from Bell"
-        },
-        {
-            "key": "kit.tape_deck.name",
-            "text": "Ro's old tape deck"
-        },
-        {
-            "key": "kit.tether_ring.name",
-            "text": "Kenji's spare tether ring"
         },
         {
             "key": "ui.title.subtitle",
@@ -843,18 +611,6 @@
             "text": "Battery low. You can charge at {0}."
         },
         {
-            "key": "upgrade.rover.cell_pack.name",
-            "text": "Cell Pack II"
-        },
-        {
-            "key": "upgrade.rover.cell_pack.1.title",
-            "text": "A battery spine"
-        },
-        {
-            "key": "upgrade.rover.cell_pack.1.effect",
-            "text": "Two more cells, six in total: enough to reach the far side of the basin."
-        },
-        {
             "key": "ui.settings.text_size",
             "text": "Text size"
         },
@@ -963,66 +719,6 @@
             "text": "Made at Smelter II from rare earths and circuit chips."
         },
         {
-            "key": "kit.focus_lens.name",
-            "text": "Focus Lens"
-        },
-        {
-            "key": "kit.side_bins.name",
-            "text": "Side Bins"
-        },
-        {
-            "key": "pickup.part_relaymodule",
-            "text": "Relay module"
-        },
-        {
-            "key": "pickup.part_tillyrotor",
-            "text": "Tilly's rotor"
-        },
-        {
-            "key": "pickup.part_tillylens",
-            "text": "Tilly's lens"
-        },
-        {
-            "key": "pickup.part_tillycell",
-            "text": "Tilly's cell"
-        },
-        {
-            "key": "pickup.part_bellcone",
-            "text": "Bell's speaker cone"
-        },
-        {
-            "key": "pickup.part_bellknob",
-            "text": "Bell's dial knob"
-        },
-        {
-            "key": "pickup.part_bellvalve",
-            "text": "Bell's valve"
-        },
-        {
-            "key": "upgrade.rover.focus_lens.name",
-            "text": "Focus Lens"
-        },
-        {
-            "key": "upgrade.rover.focus_lens.1.title",
-            "text": "A focusing lens on the beam"
-        },
-        {
-            "key": "upgrade.rover.focus_lens.1.effect",
-            "text": "The cutter charges faster and cuts 30% quicker, using 15% less battery."
-        },
-        {
-            "key": "upgrade.rover.side_bins.name",
-            "text": "Side Bins"
-        },
-        {
-            "key": "upgrade.rover.side_bins.1.title",
-            "text": "Two bins on 07's flanks"
-        },
-        {
-            "key": "upgrade.rover.side_bins.1.effect",
-            "text": "Four more slots in 07's hold, so it carries more home each trip."
-        },
-        {
             "key": "scan.fragment",
             "text": "Fragment {0} of {1} · {2}"
         },
@@ -1035,20 +731,8 @@
             "text": "Hold"
         },
         {
-            "key": "hint.shelves",
-            "text": "Shelves"
-        },
-        {
             "key": "ui.hold.boot",
             "text": "HOLD · {0} SLOTS · OK"
-        },
-        {
-            "key": "ui.transfer.to_trip",
-            "text": "Take for the trip"
-        },
-        {
-            "key": "ui.transfer.to_home",
-            "text": "Store at home"
         },
         {
             "key": "container.coil_crate",
@@ -1235,76 +919,12 @@
             "text": "EQUIPPED"
         },
         {
-            "key": "ui.bay.row_full",
-            "text": "The parts row is full. Fit a part on 07 first."
-        },
-        {
             "key": "ui.title.continue_note",
             "text": "SAVE · 02:14"
         },
         {
             "key": "ui.title.key_hint",
             "text": "[W/S · D-PAD] SELECT    [ENTER / A] CONFIRM"
-        },
-        {
-            "key": "ui.cargo.fit_at_bay",
-            "text": "Fit or remove kit at the Rover Bay"
-        },
-        {
-            "key": "pickup.tilly.cell.job",
-            "text": "Spare power cell for Tilly's frame"
-        },
-        {
-            "key": "pickup.bell.valve.job",
-            "text": "Vacuum radio tube for Bell's receiver"
-        },
-        {
-            "key": "ui.kit.cutter.desc",
-            "text": "Cuts salvage joints and vents for materials."
-        },
-        {
-            "key": "ui.kit.tether.desc",
-            "text": "Grapples heavy crates and pulls 07 up slopes."
-        },
-        {
-            "key": "ui.kit.lamp.desc",
-            "text": "Lights dark craters and shadowed ridges ahead."
-        },
-        {
-            "key": "ui.kit.belly.desc",
-            "text": "Pulses magnetic coils to hop over low rocks."
-        },
-        {
-            "key": "ui.kit.flanks.desc",
-            "text": "Builds cruise speed across open lunar flats."
-        },
-        {
-            "key": "ui.kit.panniers.desc",
-            "text": "Adds four side cargo slots between the wheels."
-        },
-        {
-            "key": "ui.kit.back.desc",
-            "text": "Adds two extra battery cells along the spine."
-        },
-        {
-            "key": "ui.kit.hold.desc",
-            "text": "Expands the rear hold rack by four more slots."
-        },
-        {
-            "key": "ui.kit.wing.desc",
-            "text": "Recharges 07 slowly while in sunlight."
-        },
-        {
-            "key": "ui.kit.deck.desc",
-            "text": "Plays recovered crew cassettes on the road."
-        },
-        {
-            "key": "ui.kit.wheels.desc",
-            "text": "Grips steep crater walls without slipping."
-        },
-        {
-            "key": "ui.kit.antenna.desc",
-            "text": "Extends sonar ping range across the basin."
         },
         {
             "key": "next.v2.drive_lander",
@@ -1369,6 +989,126 @@
         {
             "key": "ui.unlock.blueprint",
             "text": "Blueprint learned: {0}"
+        },
+        {
+            "key": "ui.system.unit",
+            "text": "UNIT 07 · SSR-5 · CONTINUE · 13 148 DAYS"
+        },
+        {
+            "key": "ui.system.wheels",
+            "text": "WHEELS"
+        },
+        {
+            "key": "ui.system.lamps",
+            "text": "LAMPS"
+        },
+        {
+            "key": "ui.system.scan",
+            "text": "LENS · SCAN"
+        },
+        {
+            "key": "ui.system.assembly",
+            "text": "ASSEMBLY"
+        },
+        {
+            "key": "ui.system.cutter",
+            "text": "CUTTER"
+        },
+        {
+            "key": "ui.system.solar_wing",
+            "text": "SOLAR WING"
+        },
+        {
+            "key": "ui.system.antenna",
+            "text": "ANTENNA"
+        },
+        {
+            "key": "ui.system.sockets",
+            "text": "SOCKETS 1-2"
+        },
+        {
+            "key": "ui.system.battery",
+            "text": "BATTERY"
+        },
+        {
+            "key": "ui.system.state.ok",
+            "text": "OK"
+        },
+        {
+            "key": "ui.system.state.fault",
+            "text": "FAULT"
+        },
+        {
+            "key": "ui.system.state.fault_igniter",
+            "text": "FAULT · NO IGNITER"
+        },
+        {
+            "key": "ui.system.state.jammed",
+            "text": "JAMMED"
+        },
+        {
+            "key": "ui.system.state.receive_only",
+            "text": "RECEIVE ONLY"
+        },
+        {
+            "key": "ui.system.state.empty",
+            "text": "EMPTY"
+        },
+        {
+            "key": "ui.system.note.wheels",
+            "text": "(1 MISMATCHED)"
+        },
+        {
+            "key": "ui.system.note.blueprints",
+            "text": "{0} BLUEPRINTS"
+        },
+        {
+            "key": "ui.system.note.blueprint_one",
+            "text": "1 BLUEPRINT"
+        },
+        {
+            "key": "ui.device.scan.name",
+            "text": "Lens · Scan"
+        },
+        {
+            "key": "ui.device.cutter.name",
+            "text": "Cutter"
+        },
+        {
+            "key": "ui.device.socket1.name",
+            "text": "Socket 1"
+        },
+        {
+            "key": "ui.device.socket2.name",
+            "text": "Socket 2"
+        },
+        {
+            "key": "ui.device.scan.ok",
+            "text": "Reads fragments and ruins."
+        },
+        {
+            "key": "ui.device.cutter.ok",
+            "text": "Cuts crates and hull seams."
+        },
+        {
+            "key": "ui.device.cutter.fault",
+            "text": "No igniter. Fit the spare on your pad."
+        },
+        {
+            "key": "ui.device.cutter.fit",
+            "text": "Fit the spare igniter."
+        },
+        {
+            "key": "ui.device.socket.empty",
+            "text": "Empty. Later kits fit here."
+        },
+        {
+            "key": "pickup.part.igniter",
+            "text": "Spare igniter"
+        },
+        {
+            "key": "pickup.part.igniter.job",
+            "text": "Fits the cutter on the pad."
         }
     ]
 }

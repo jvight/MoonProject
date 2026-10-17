@@ -96,7 +96,7 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void TryPanelToUv_InvertsTryUvToPanelAcrossHoldAndOrbitalSocketCoordinates()
+        public void TryPanelToUv_InvertsTryUvToPanelAcrossHoldAndDeviceCoordinates()
         {
             Vector2 size = FaceScreenMapper.DefaultPanelSize;
             const float curvature = 0.08f;
@@ -104,9 +104,9 @@ namespace MoonProject.UI.Tests
             {
                 FaceInventoryView.GetHoldCellReferenceRect(0).center,
                 FaceInventoryView.GetHoldCellReferenceRect(7).center,
-                FaceInventoryView.GetOrbitalSocketReferenceCenter(FaceInventoryView.OrbitalIndexOf(RoverSocket.Wing)),
-                FaceInventoryView.GetOrbitalSocketReferenceCenter(FaceInventoryView.OrbitalIndexOf(RoverSocket.Belly)),
-                FaceInventoryView.GetOrbitalSocketReferenceCenter(FaceInventoryView.OrbitalIndexOf(RoverSocket.Deck)),
+                FaceDevices.CenterOf(FaceDevices.Scan),
+                FaceDevices.CenterOf(FaceDevices.Cutter),
+                FaceDevices.CenterOf(FaceDevices.SocketTwo),
             };
 
             foreach (Vector2 target in targets)
@@ -187,21 +187,21 @@ namespace MoonProject.UI.Tests
                 contentMaxX = Mathf.Max(contentMaxX, cell.xMax);
             }
 
-            // 2. All 10 Orbital socket bubbles lie inside the rounded-rectangle glass mask with margin >= M.
-            for (int i = 0; i < FaceInventoryView.OrbitalSocketCount; i++)
+            // 2. All four device bubbles lie inside the rounded-rectangle glass mask with margin >= M.
+            for (int i = 0; i < FaceDevices.Count; i++)
             {
-                Vector2 center = FaceInventoryView.GetOrbitalSocketReferenceCenter(i);
+                Vector2 center = FaceDevices.CenterOf(i);
                 float r = FaceInventoryView.BubbleRadius;
                 float dist = FaceScreenMapper.SignedDistanceInsideGlass(center, r, panelSize);
                 Assert.GreaterOrEqual(dist, minMargin,
-                    $"Orbital socket {FaceInventoryView.OrbitalSockets[i]} at {center} must stay >= {minMargin}px inside the rounded CRT glass (actual {dist:F2}px).");
+                    $"Device {i} at {center} must stay >= {minMargin}px inside the rounded CRT glass (actual {dist:F2}px).");
                 contentMinX = Mathf.Min(contentMinX, center.x - r);
                 contentMaxX = Mathf.Max(contentMaxX, center.x + r);
             }
 
             // 3. Headers, header rules, divider, and both left/right tooltip boxes lie inside the glass safe area.
             var leftHeaderRule = new Rect(72f, 42f, 376f, 22f);
-            var rightHeaderRule = new Rect(FaceInventoryView.ShelfGridX, 42f, 568f, 22f);
+            var rightHeaderRule = new Rect(FaceInventoryView.RightPaneX, 42f, 568f, 22f);
             var leftTooltip = new Rect(72f, 664f, 376f, 62f);
             var rightTooltip = new Rect(512f, 664f, 568f, 62f);
 
