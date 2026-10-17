@@ -1,11 +1,11 @@
 """R1 Audio Audition Catalog — metadata, loudness targets, Vietnamese descriptions, and A/B picks.
 
-Defines all 39 cues across the 6 R1 groups:
+Defines all 37 cues across the 6 R1 groups:
 1. 07's CRT face (7 cues)
 2. The sky (3 cues)
 3. Building (8 cues)
 4. Machines (10 cues)
-5. The CRT UI (8 cues)
+5. The CRT UI (6 cues)
 6. Ambience beds (3 loopable 60 s cues)
 
 Loudness hierarchy (aligned with ``tools/audio/feel_loudness.md``):
@@ -55,7 +55,7 @@ GROUPS: list[tuple[str, str, str]] = [
     ("sky", "2. The Sky", "Bầu trời Mặt Trăng & Nhật thực — 3 cues"),
     ("building", "3. Building", "Xây dựng & Lắp ráp công trình — 8 cues"),
     ("machines", "4. Machines", "Máy móc & Cơ cấu cơ điện — 10 cues"),
-    ("ui", "5. The CRT UI", "Giao diện bàn đài & màn hình CRT (nhỏ nhất) — 8 cues"),
+    ("ui", "5. The CRT UI", "Giao diện bàn đài & màn hình CRT (nhỏ nhất) — 6 cues"),
     ("ambience", "6. Ambience Beds (60 s Loopable)", "Nền không gian 60 giây lặp mượt — 3 cues"),
 ]
 
@@ -556,34 +556,6 @@ def _build_catalog() -> list[CueSpec]:
             pick="B",
             pick_reason="Bản B gợi hình ảnh một phiếu tin nhắn vừa trượt ra kèm tiếng chuông đồng bọc nỉ rất đặc trưng và tinh tế.",
             fn=ui_cues.ui_toast,
-        ),
-        CueSpec(
-            cue_id="ui_type_card",
-            group_id="ui",
-            group_title="5. The CRT UI",
-            category="ui",
-            loop=False,
-            target_lufs=-30.0,
-            volume=0.44,
-            desc_a_vi="Cần chữ máy chữ gõ lên thẻ bìa cứng trên trục cao su kèm tiếng nhích thước con cóc siêu nhỏ.",
-            desc_b_vi="Đầu kim đồng dập nổi lên thẻ bìa dày trên mặt gỗ gụ kèm tiếng lò xo hồi vị.",
-            pick="A",
-            pick_reason="Bản A có chất giấy bìa trên trục lăn cao su (rubber platen) rất đầm và ấm, gõ cả đoạn văn dài trên thẻ vẫn rất êm.",
-            fn=ui_cues.ui_type_card,
-        ),
-        CueSpec(
-            cue_id="ui_type_terminal",
-            group_id="ui",
-            group_title="5. The CRT UI",
-            category="ui",
-            loop=False,
-            target_lufs=-30.0,
-            volume=0.44,
-            desc_a_vi="Rơ-le lá từ teletype gõ nhịp cực ngắn hòa cùng xung cuộn lái tia CRT ấm ở nốt A4.",
-            desc_b_vi="Kim điện từ điểm nhẹ kèm âm ngân mặt kính phốt-pho giảm chấn ở nốt E5.",
-            pick="A",
-            pick_reason="Bản A phân biệt rõ với tiếng gõ thẻ giấy nhờ tiếng rơ-le lá từ (reed relay) và xung cuộn lái tia trên màn hình của 07.",
-            fn=ui_cues.ui_type_terminal,
         ),
 
         # ===================================================================

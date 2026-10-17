@@ -332,20 +332,6 @@ def cargo_tok(_variant, gen):
     return filters.lowpass(0.45 * knock + 0.4 * thump, 3000.0)
 
 
-def crate_latch(_variant, gen):
-    """A crew supply crate opened: a latch click and spring, then a soft paper rustle as the note is found."""
-    n = samples(1.2)
-    mix = np.zeros(n)
-    place(mix, 0.4 * _tick(gen, note_freq("E4"), 0.15), 0)
-    place(mix, 0.3 * _tick(gen, note_freq("B4"), 0.12), samples(0.06))
-    rustle_n = samples(0.6)
-    rustle = filters.lowpass(filters.bandpass(noise.white(rustle_n, gen), 2400.0, 0.9), 4500.0)
-    rustle *= envelope.segments(rustle_n, [(0.0, 0.0), (0.1, 1.0), (0.35, 0.5), (0.6, 0.0)], shape="smooth")
-    rustle *= 0.6 + 0.4 * (gen.random(rustle_n) > 0.7)
-    place(mix, 0.05 * rustle, samples(0.45))
-    return filters.lowpass(filters.lowpass(mix, 5000.0), 5000.0)
-
-
 # ------------------------------------------------------------------------- 0.5.5 B: 07's hold boots
 
 HOLD_SLOT_NOTES = ("D5", "E5", "F#5", "A5", "B5", "D6", "E6", "F#6")

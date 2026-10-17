@@ -535,18 +535,6 @@ MonoBehaviour:
     _volumeMax: 0.7
     _pitchMin: 1
     _pitchMax: 1
-  - _id: crate_latch
-    _clips:
-    - {fileID: 8300000, guid: e6cc77ebbd8098e47948761e2b6fd317, type: 3}
-    _variantLabels:
-    - crate_latch
-    _bus: 2
-    _spatial: 1
-    _loop: 0
-    _volumeMin: 0.6
-    _volumeMax: 0.6
-    _pitchMin: 1
-    _pitchMax: 1
   - _id: pickup_lift
     _clips:
     - {fileID: 8300000, guid: c64dd6e694d465943878f59789546b74, type: 3}
@@ -963,60 +951,6 @@ MonoBehaviour:
     _volumeMax: 0.55
     _pitchMin: 1
     _pitchMax: 1
-  - _id: jump_charge
-    _clips:
-    - {fileID: 8300000, guid: 1a0bb3164128ed34ebb884bb94872fbf, type: 3}
-    _variantLabels:
-    - jump_charge
-    _bus: 2
-    _spatial: 1
-    _loop: 1
-    _volumeMin: 0.45
-    _volumeMax: 0.45
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: jump_leap
-    _clips:
-    - {fileID: 8300000, guid: 562713552065183488efa2c556dbbfe7, type: 3}
-    - {fileID: 8300000, guid: 9ad9d9d0c9e483548b0e1ad3f6dc2a2a, type: 3}
-    _variantLabels:
-    - hop
-    - leap
-    _bus: 2
-    _spatial: 1
-    _loop: 0
-    _volumeMin: 0.6
-    _volumeMax: 0.6
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: coil_twang
-    _clips:
-    - {fileID: 8300000, guid: ddbd907a20674e54c963e3eb96e997ca, type: 3}
-    - {fileID: 8300000, guid: 2c7a516c5db098345895c278a0d04da1, type: 3}
-    _variantLabels:
-    - A3
-    - D4
-    _bus: 2
-    _spatial: 1
-    _loop: 0
-    _volumeMin: 0.4
-    _volumeMax: 0.45
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: jump_land
-    _clips:
-    - {fileID: 8300000, guid: 5a66516439c153844b276fe552f67b0c, type: 3}
-    - {fileID: 8300000, guid: 91eb5268422555145a761c6bef6015c0, type: 3}
-    _variantLabels:
-    - 01
-    - 02
-    _bus: 2
-    _spatial: 1
-    _loop: 0
-    _volumeMin: 0.75
-    _volumeMax: 0.85
-    _pitchMin: 0.97
-    _pitchMax: 1.03
   - _id: room_tone
     _clips:
     - {fileID: 8300000, guid: 80e2fce3082688449843c39555cf0d48, type: 3}
@@ -1233,18 +1167,6 @@ MonoBehaviour:
     _loop: 0
     _volumeMin: 0.45
     _volumeMax: 0.45
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: leap_fizzle
-    _clips:
-    - {fileID: 8300000, guid: 399e74ea22f38ea46aeb7a6e6a923f61, type: 3}
-    _variantLabels:
-    - leap_fizzle
-    _bus: 2
-    _spatial: 1
-    _loop: 0
-    _volumeMin: 0.4
-    _volumeMax: 0.4
     _pitchMin: 1
     _pitchMax: 1
   - _id: face_boot
@@ -1653,30 +1575,6 @@ MonoBehaviour:
     _loop: 0
     _volumeMin: 0.48
     _volumeMax: 0.48
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: ui_type_card
-    _clips:
-    - {fileID: 8300000, guid: 2fed83adfe5a100d85c9f653c87a0d44, type: 3}
-    _variantLabels:
-    - ui_type_card
-    _bus: 2
-    _spatial: 0
-    _loop: 0
-    _volumeMin: 0.44
-    _volumeMax: 0.44
-    _pitchMin: 1
-    _pitchMax: 1
-  - _id: ui_type_terminal
-    _clips:
-    - {fileID: 8300000, guid: 5b5ccab259919fa47d37d1eb2985112c, type: 3}
-    _variantLabels:
-    - ui_type_terminal
-    _bus: 2
-    _spatial: 0
-    _loop: 0
-    _volumeMin: 0.44
-    _volumeMax: 0.44
     _pitchMin: 1
     _pitchMax: 1
   - _id: ambience_earthlit_night
