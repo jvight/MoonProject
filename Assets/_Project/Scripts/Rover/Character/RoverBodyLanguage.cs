@@ -868,7 +868,11 @@ namespace MoonProject.Rover
                 Vector3 localFromHead = frame.InverseTransformDirection(target - _head.position);
                 ScanLookSettings scan = _tuning.ScanLook;
                 scanGaze = priority >= scan.GazePriority;
-                cutterGaze = !scanGaze && owner is ICutterAimOwner && priority >= focusGazePriority;
+                // The cut beat's own focus gaze outranks the field's aim request the moment the charge starts; it must
+                // keep the body turning until the nozzle is centred, not hand the turn over at the firing cone's edge.
+                bool cutterAims = owner is ICutterAimOwner && priority >= focusGazePriority
+                    || ReferenceEquals(owner, _cutOwner) && _cutting && _isCutTool;
+                cutterGaze = !scanGaze && cutterAims;
                 if (scanGaze)
                 {
                     aim = ScanAim.LensAngles(localFromHead, _lensOffsetInHead, _tuning.NeckYawLimit,
