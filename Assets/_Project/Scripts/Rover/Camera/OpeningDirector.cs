@@ -54,10 +54,10 @@ namespace MoonProject.Rover
         [Tooltip("The lens camera: a Cinemachine camera with no body or aim, placed by this each frame it is live.")]
         [SerializeField] private CinemachineCamera _lensCamera;
 
-        [Tooltip("Home's lander (the first gaze target: its dark windows).")]
+        [Tooltip("The opening's lander (the first gaze target).")]
         [SerializeField] private Transform _lander;
 
-        [Tooltip("The radio tower's pilot light (the second gaze target).")]
+        [Tooltip("The beacon on the lander's hull (the second gaze target).")]
         [SerializeField] private Transform _pilot;
 
         private readonly object _owner = new object();

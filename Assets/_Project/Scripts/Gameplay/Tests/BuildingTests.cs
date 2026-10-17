@@ -579,7 +579,7 @@ namespace MoonProject.Gameplay.Tests
             writerBase.StepPower(PowerGrid.SecondsPerHour * 0.5f, sunlight01: 1f);
             Assert.AreEqual(135f, writerBase.PowerGrid.GetStoredWattHours(batteryId), 1e-3f);
 
-            var saveWriter = new SaveService(_tempSaveDir, "building_slot", "0.5.7");
+            var saveWriter = new SaveService(_tempSaveDir, "building_slot", SaveService.OldestCompatibleContent);
             using (writerBase.RegisterSave(saveWriter))
             {
                 Assert.AreEqual(SaveLoadResult.NoSave, saveWriter.Load());
@@ -587,7 +587,7 @@ namespace MoonProject.Gameplay.Tests
             }
 
             var readerBase = new PlacedBase(_catalog, _tuning, _events);
-            var saveReader = new SaveService(_tempSaveDir, "building_slot", "0.5.7");
+            var saveReader = new SaveService(_tempSaveDir, "building_slot", SaveService.OldestCompatibleContent);
             using (readerBase.RegisterSave(saveReader))
             {
                 Assert.AreEqual(SaveLoadResult.Loaded, saveReader.Load());
@@ -962,7 +962,7 @@ namespace MoonProject.Gameplay.Tests
             try
             {
                 MaterialStock stock = CargoFixtures.Stock(_events, matCatalog);
-                var save = new SaveService(_tempSaveDir, "ruin_scans_slot", "0.5.7");
+                var save = new SaveService(_tempSaveDir, "ruin_scans_slot", SaveService.OldestCompatibleContent);
                 save.Load();
                 var scans = new ScanField(scanTuningAsset, _events, save, stock, known);
 
