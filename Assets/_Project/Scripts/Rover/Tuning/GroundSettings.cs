@@ -39,7 +39,7 @@ namespace MoonProject.Rover
         [Tooltip("How quickly (1/s) the velocity swings back in line with the heading while grounded. Lower = more "
             + "lunar drift in turns; speed is preserved, never scrubbed.")]
         [Range(0.5f, 40f)]
-        [SerializeField] private float _gripRate = 9f;
+        [SerializeField] private float _gripRate = 5.5f;
 
         [Tooltip("Slopes up to this angle (deg) are fully assisted: gravity neither slows you uphill nor drags "
             + "you down.")]
@@ -50,22 +50,26 @@ namespace MoonProject.Rover
         [Range(0f, 80f)]
         [SerializeField] private float _slopeAssistZeroAngle = 45f;
 
-        [Tooltip("Fraction of along-slope gravity still felt while rolling, so hills have a little character.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _slopeInfluence = 0.3f;
+        [Tooltip("Fraction of tangential gravity still felt while rolling, so hills and side-slopes have character.")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _slopeInfluence = 2.6f;
 
         [Tooltip("Speed (m/s) above which Slope Influence fully applies; below it the rover parks firmly on slopes.")]
         [Range(0.05f, 4f)]
         [SerializeField] private float _slopeRollSpeed = 0.8f;
 
+        [Tooltip("Degrees per second of downhill heading pull per m/s^2 of cross-slope gravity while rolling.")]
+        [Range(0f, 20f)]
+        [SerializeField] private float _crossSlopeYawPull = 3.5f;
+
         [Tooltip("Total downward acceleration (m/s^2) while airborne and rising. Lunar is 1.62; a little more keeps "
             + "hops floaty but short enough to stay in control.")]
         [Range(0.5f, 9.81f)]
-        [SerializeField] private float _airRiseGravity = 2.6f;
+        [SerializeField] private float _airRiseGravity = 2.2f;
 
         [Tooltip("Total downward acceleration (m/s^2) while airborne and falling.")]
         [Range(0.5f, 9.81f)]
-        [SerializeField] private float _airFallGravity = 3.6f;
+        [SerializeField] private float _airFallGravity = 3.0f;
 
         [Tooltip("Fraction of drive acceleration available in the air (minimal air control).")]
         [Range(0f, 1f)]
@@ -74,6 +78,31 @@ namespace MoonProject.Rover
         [Tooltip("Half-life (s) smoothing the published ground normal across low-poly facet edges.")]
         [Range(0f, 0.5f)]
         [SerializeField] private float _groundNormalHalfLife = 0.06f;
+
+        [Header("Collisions")]
+        [Tooltip("Fraction of into-obstacle speed reflected as a soft bounce-back on head-on impacts.")]
+        [Range(0f, 0.6f)]
+        [SerializeField] private float _collisionRestitution = 0.25f;
+
+        [Tooltip("Incidence cosine above which an obstacle contact bounces back rather than scraping along the face.")]
+        [Range(0.5f, 0.98f)]
+        [SerializeField] private float _collisionHeadOnCosine = 0.85f;
+
+        [Tooltip("Seconds after a head-on bounce during which forward throttle into the obstacle is held off.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _collisionBounceHoldTime = 0.45f;
+
+        [Tooltip("Fraction of speed bled off by friction per unit of grazing incidence when scraping a wall.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _wallScrapeFriction = 0.2f;
+
+        [Tooltip("Degrees per second at which a glancing wall contact steers 07's heading toward the wall tangent.")]
+        [Range(0f, 360f)]
+        [SerializeField] private float _wallDeflectRate = 120f;
+
+        [Tooltip("Minimum normal impact speed (m/s) that publishes RoverCollided for a contact thud and body jolt.")]
+        [Range(0.1f, 5f)]
+        [SerializeField] private float _collisionMinImpactSpeed = 1.8f;
 
         public float Mass => _mass;
 
@@ -97,6 +126,8 @@ namespace MoonProject.Rover
 
         public float SlopeRollSpeed => _slopeRollSpeed;
 
+        public float CrossSlopeYawPull => _crossSlopeYawPull;
+
         public float AirRiseGravity => _airRiseGravity;
 
         public float AirFallGravity => _airFallGravity;
@@ -104,5 +135,17 @@ namespace MoonProject.Rover
         public float AirThrottleFactor => _airThrottleFactor;
 
         public float GroundNormalHalfLife => _groundNormalHalfLife;
+
+        public float CollisionRestitution => _collisionRestitution;
+
+        public float CollisionHeadOnCosine => _collisionHeadOnCosine;
+
+        public float CollisionBounceHoldTime => _collisionBounceHoldTime;
+
+        public float WallScrapeFriction => _wallScrapeFriction;
+
+        public float WallDeflectRate => _wallDeflectRate;
+
+        public float CollisionMinImpactSpeed => _collisionMinImpactSpeed;
     }
 }

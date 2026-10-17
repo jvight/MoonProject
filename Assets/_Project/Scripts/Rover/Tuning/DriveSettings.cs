@@ -41,11 +41,11 @@ namespace MoonProject.Rover
 
         [Tooltip("Seconds to stop from top speed while holding full opposite input.")]
         [Range(0.2f, 5f)]
-        [SerializeField] private float _brakeStopTime = 1.1f;
+        [SerializeField] private float _brakeStopTime = 1.28f;
 
         [Tooltip("Shape of the braking curve, same meaning as Coast Ease.")]
         [Range(0f, 0.9f)]
-        [SerializeField] private float _brakeEase = 0.35f;
+        [SerializeField] private float _brakeEase = 0.42f;
 
         [Tooltip("Seconds to ease to a stop from top speed when gameplay asks 07 to hold still (excavation beam).")]
         [Range(0.3f, 5f)]

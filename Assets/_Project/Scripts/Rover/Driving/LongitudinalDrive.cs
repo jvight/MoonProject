@@ -72,7 +72,7 @@ namespace MoonProject.Rover
             }
 
             float excess = along - target;
-            return -inputDirection * Decelerate(settings.CoastDeceleration, settings.CoastEase, excess, excess,
+            return -inputDirection * Decelerate(settings.CoastDeceleration, 1f, excess, excess,
                 settings.TopSpeed, deltaTime);
         }
 
