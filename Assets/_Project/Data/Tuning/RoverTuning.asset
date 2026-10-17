@@ -19,17 +19,19 @@ MonoBehaviour:
     _reverseAccelerationTime: 1.5
     _coastStopTime: 2
     _coastEase: 0.5
-    _brakeStopTime: 1.1
-    _brakeEase: 0.35
+    _brakeStopTime: 1.28
+    _brakeEase: 0.42
     _holdStopTime: 1.8
     _holdEase: 0.35
     _throttleRiseHalfLife: 0.08
     _throttleFallHalfLife: 0.1
     _inputDeadZone: 0.05
     _reverseEngageSpeed: 0.25
+    _bounceCancelAwayDot: 0.05
+    _bounceMovingSpeedSqr: 0.04
   _steering:
     _steerRiseHalfLife: 0.07
-    _steerReturnHalfLife: 0.06
+    _steerReturnHalfLife: 0.16
     _pivotTurnRate: 70
     _peakTurnRate: 105
     _peakTurnSpeed: 2.5
@@ -42,17 +44,39 @@ MonoBehaviour:
     _sphereRadius: 0.5
     _probeRadiusFactor: 0.9
     _groundSnapDistance: 0.12
-    _maxGroundAngle: 60
+    _maxGroundAngle: 48
     _downforce: 4
-    _gripRate: 9
+    _gripRate: 5.5
     _slopeAssistFullAngle: 32
     _slopeAssistZeroAngle: 45
-    _slopeInfluence: 0.3
+    _slopeInfluence: 2.6
     _slopeRollSpeed: 0.8
-    _airRiseGravity: 2.6
-    _airFallGravity: 3.6
+    _crossSlopeYawPull: 3.5
+    _airRiseGravity: 2.2
+    _airFallGravity: 3
     _airThrottleFactor: 0.1
     _groundNormalHalfLife: 0.06
+    _collisionRestitution: 0.25
+    _collisionHeadOnCosine: 0.85
+    _collisionBounceHoldTime: 0.45
+    _collisionCooldown: 0.35
+    _wallScrapeFriction: 0.2
+    _wallDeflectRate: 120
+    _wallDeflectMaxSteer: 0.25
+    _wallDeadOnCosine: 0.995
+    _collisionMinImpactSpeed: 1.8
+    _obstacleBumperRadiusFactor: 1.65
+    _obstacleMinHeightDropFactor: 0.75
+    _obstacleLowRayDropFactor: 0.15
+    _obstacleHighRayLiftFactor: 0.6
+    _obstacleFanStepDegrees: 22.5
+    _obstacleHeadingFanAngle: 5
+    _obstacleMinLookahead: 0.08
+    _obstacleLookaheadStepScale: 1.25
+    _obstacleSkin: 0.02
+    _obstacleMinNormalY: -0.15
+    _propObstacleMinSlope: 55
+    _cornerMaxNormalCosine: 0.5
   _landing:
     _coyoteTime: 0.1
     _minAirTime: 0.25
@@ -79,9 +103,9 @@ MonoBehaviour:
     _cooldown: 0.4
     _liftoffTime: 0.15
     _airSteer: 0.2
-    _cushionProbe: 8
-    _cushionDeceleration: 6
-    _cushionLandingSpeed: 1.6
+    _cushionProbe: 2.4
+    _cushionDeceleration: 6.5
+    _cushionLandingSpeed: 1.85
     _chargeSteps: 4
   _stillness:
     _maxSpeed: 0.2

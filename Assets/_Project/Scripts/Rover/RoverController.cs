@@ -20,7 +20,8 @@ namespace MoonProject.Rover
     /// Needs the World's <see cref="ITerrainQuery"/> (spawn height, stuck recovery), so it initialises after the World
     /// systems. If 07 is trying to drive but stuck for a few seconds, it is lifted gently to a nearby open spot.
     /// The maths lives in plain classes (<see cref="LongitudinalDrive"/>, <see cref="SteeringModel"/>,
-    /// <see cref="GroundModel"/>, <see cref="LandingDetector"/>); this component only wires them to physics.
+    /// <see cref="GroundModel"/>, <see cref="ObstacleProbe"/>, <see cref="ContactResponse"/>,
+    /// <see cref="LandingDetector"/>); this component only wires them to physics.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RoverController : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IRoverAbilities,
@@ -122,6 +123,8 @@ namespace MoonProject.Rover
         private RoverStillness _stillness;
         private BoostDrive _boost;
         private BatteryLink _battery;
+        private ObstacleProbe _obstacleProbe;
+        private ContactResponse _contacts;
         private IDisposable _dockChanges;
         private RoverFeel _feel;
         private ChargeCellHardware _chargeCells;
@@ -371,6 +374,7 @@ namespace MoonProject.Rover
             _forwardSpeed = 0f;
             _leaping = false;
             _liftoff = 0f;
+            _contacts.Reset();
             _jump.Reset();
         }
 
@@ -381,6 +385,7 @@ namespace MoonProject.Rover
             _body.linearVelocity = Vector3.zero;
             _lastVelocity = Vector3.zero;
             _forwardSpeed = 0f;
+            _contacts.Reset();
             _landing.Reset();
             _stuck.Reset();
         }
@@ -449,6 +454,8 @@ namespace MoonProject.Rover
             _stillness = new RoverStillness(_tuning.Stillness);
             _boost = new BoostDrive(_tuning.Boost);
             _battery = new BatteryLink(context);
+            _obstacleProbe = new ObstacleProbe(_tuning.Ground, new PhysicsObstacleQuery(_sphere, _screenCollider));
+            _contacts = new ContactResponse(_tuning.Ground, _tuning.Drive);
             _terrain = context.Get<ITerrainQuery>();
             PlaceOnTerrain(_terrain);
             ConfigureBody();
@@ -645,6 +652,27 @@ namespace MoonProject.Rover
             _localAcceleration = Quaternion.Inverse(yaw) * ((velocity - _lastVelocity) / dt);
 
             ReadInput(dt);
+            bool groundedBeforeProbe = (_hasContact || _landing.IsGrounded) && !_leaping && _liftoff <= 0f;
+            _obstacleProbe.ProbeObstacle(_body.position, velocity, _heading, _throttle, dt, groundedBeforeProbe,
+                _leaping, out Vector3 obstacleNormal, out Vector3 obstaclePoint, out float obstacleGap);
+            velocity = _contacts.StepContact(velocity, obstacleNormal, _obstacleProbe.SecondaryNormal, obstacleGap,
+                groundedBeforeProbe, dt, out Vector3 pushOut, out float impactSpeed, out bool publishCollision);
+            if (_contacts.HasObstacle)
+            {
+                if (publishCollision)
+                {
+                    _events.Publish(new RoverCollided(obstaclePoint, obstacleNormal, impactSpeed));
+                }
+
+                if (pushOut.sqrMagnitude > 0f)
+                {
+                    _body.position += pushOut;
+                    _body.transform.position = _body.position;
+                }
+
+                _body.linearVelocity = velocity;
+            }
+
             ProbeGround(out float speedIntoGround, velocity);
             if (_liftoff > 0f)
             {
@@ -675,7 +703,11 @@ namespace MoonProject.Rover
 
             Steer(dt);
             Drive(velocity, normal, forward, dt);
-            if (_stuck.Step(_throttle, _body.position, dt))
+            if (_contacts.IsRebounding(velocity))
+            {
+                _stuck.Reset();
+            }
+            else if (_stuck.Step(_throttle, _body.position, dt))
             {
                 TryStartRecovery();
             }
@@ -738,6 +770,7 @@ namespace MoonProject.Rover
             _groundNormal = normal;
             _leaping = false;
             _liftoff = 0f;
+            _contacts.Reset();
             _jump.Reset();
             _landing.Reset();
             _stuck.Reset();
@@ -954,10 +987,9 @@ namespace MoonProject.Rover
             Vector3 origin = _body.position + Vector3.up * lift;
             float distance = lift + (radius - probeRadius) + ground.GroundSnapDistance;
 
-            _hasContact = Physics.SphereCast(origin, probeRadius, Vector3.down, out RaycastHit hit, distance,
-                    Layers.DriveableMask, QueryTriggerInteraction.Ignore)
+            _hasContact = Physics.SphereCast(origin, probeRadius, Vector3.down, out RaycastHit hit, distance, Layers.DriveableMask,
+                    QueryTriggerInteraction.Ignore)
                 && Vector3.Angle(hit.normal, Vector3.up) <= ground.MaxGroundAngle;
-
             _contactNormal = _hasContact ? hit.normal : Vector3.up;
             speedIntoGround = -Vector3.Dot(velocity, _contactNormal);
         }
@@ -986,25 +1018,37 @@ namespace MoonProject.Rover
             }
 
             _yawRate = playerYawRate + _scanTurnRate * (_hasContact ? 1f : airSteer);
+            float crossSlopeYaw = 0f;
+            if (_hasContact && !_contacts.HasObstacle)
+            {
+                Vector3 headingForward = Quaternion.Euler(0f, _heading, 0f) * Vector3.forward;
+                crossSlopeYaw = GroundModel.CrossSlopeYawRate(_tuning.Ground, Physics.gravity, _contactNormal,
+                    headingForward, _forwardSpeed);
+            }
+
             _previousHeading = _heading;
-            _heading = Mathf.Repeat(_heading + _yawRate * dt, 360f);
+            _heading = Mathf.Repeat(_heading + (_yawRate + crossSlopeYaw) * dt, 360f);
+            _heading = _contacts.AdjustHeading(_heading, _throttle, _steer, _hasContact, dt);
         }
 
         private void Drive(Vector3 velocity, Vector3 normal, Vector3 forward, float dt)
         {
             GroundSettings ground = _tuning.Ground;
+            float effectiveThrottle = _contacts.FilterThrottle(_throttle, forward);
             float drive = _holds.IsHeld
                 ? LongitudinalDrive.HoldAcceleration(_tuning.Drive, _forwardSpeed, dt)
-                : LongitudinalDrive.Acceleration(_tuning.Drive, _forwardSpeed, _throttle, _boost.ExtraSpeed,
+                : LongitudinalDrive.Acceleration(_tuning.Drive, _forwardSpeed, effectiveThrottle, _boost.ExtraSpeed,
                     _battery.DriveCap01, dt);
 
             if (_hasContact)
             {
-                Vector3 acceleration = forward * drive
-                    + GroundModel.SlopeAcceleration(ground, Physics.gravity, normal, forward, _forwardSpeed)
+                Vector3 driveForward = _contacts.RedirectDrive(forward, normal, effectiveThrottle, ref drive);
+                Vector3 acceleration = driveForward * drive
+                    + GroundModel.SlopeAcceleration(ground, Physics.gravity, normal, driveForward, _forwardSpeed)
                     - normal * ground.Downforce;
+                acceleration = _contacts.ClampAcceleration(acceleration);
                 _body.AddForce(acceleration, ForceMode.Acceleration);
-                _body.AddForce(GroundModel.GripVelocityChange(velocity, normal, forward, ground.GripRate, dt),
+                _body.AddForce(GroundModel.GripVelocityChange(velocity, normal, driveForward, ground.GripRate, dt),
                     ForceMode.VelocityChange);
             }
             else
