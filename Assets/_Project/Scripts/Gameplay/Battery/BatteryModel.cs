@@ -53,7 +53,7 @@ namespace MoonProject.Gameplay
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             Cells = Mathf.Clamp(tuning.StartingCells, 1, MaxCells);
-            Charge = Cells;
+            Charge = Cells * tuning.StartingCharge01;
             DriveCap01 = 1f;
             _fullCells = FullCells;
             Rearm();
@@ -266,7 +266,9 @@ namespace MoonProject.Gameplay
             }
 
             float beam = step.BeamSeconds / _tuning.BeamSecondsPerCell;
-            Charge = Mathf.Max(0f, Charge - drive - beam);
+            float scan = step.ScanSeconds / _tuning.ScanSecondsPerCell;
+            float weld = _tuning.WeldCells(step.WeldSeconds);
+            Charge = Mathf.Max(0f, Charge - drive - beam - scan - weld);
         }
 
         /// <summary>
@@ -311,9 +313,9 @@ namespace MoonProject.Gameplay
 
             if (IsCharging && step.OnCharger)
             {
-                float secondsPerCell = Charger == ChargerKind.Dock
-                    ? _tuning.DockSecondsPerCell
-                    : _tuning.MastSecondsPerCell;
+                float secondsPerCell = Charger == ChargerKind.Mast
+                    ? _tuning.MastSecondsPerCell
+                    : _tuning.DockSecondsPerCell;
                 float fill = deltaTime / secondsPerCell;
                 Charge = Charge + fill >= Cells - CellEpsilon ? Cells : Charge + fill;
                 Drums = DrumsFitted ? Mathf.Min(_tuning.DrumCells, Drums + fill) : 0f;
@@ -340,7 +342,7 @@ namespace MoonProject.Gameplay
 
         private void StepCrawl(in BatteryStep step, float deltaTime)
         {
-            bool working = step.BeamSeconds > 0f;
+            bool working = step.BeamSeconds > 0f || step.ScanSeconds > 0f || step.WeldSeconds > 0f;
             if (!IsLowPower && Charge <= CellEpsilon && !working && !IsCharging)
             {
                 IsLowPower = true;

@@ -13,13 +13,16 @@ namespace MoonProject.Gameplay
         [Tooltip("Cells 07 starts with (four amber flank lamps). Cell Pack II raises it.")]
         [Range(1, BatteryModel.MaxCells)] [SerializeField] private int _startingCells = 4;
 
+        [Tooltip("How full 07's cells are when a new game starts (opening-v2 B1: half empty, so it needs a charger).")]
+        [Range(0.05f, 1f)] [SerializeField] private float _startingCharge01 = 0.5f;
+
         [Tooltip("Cells once Cell Pack II's battery spine is fitted (the two new cells arrive full).")]
         [Range(1, BatteryModel.MaxCells)] [SerializeField] private int _cellPackCells = 6;
 
         [Header("Driving")]
         [Tooltip("Metres driven on the ground at cruise, on the flat, that one cell pays for. Airborne metres are " +
                  "free.")]
-        [Range(30f, 400f)] [SerializeField] private float _metresPerCell = 120f;
+        [Range(30f, 600f)] [SerializeField] private float _metresPerCell = 350f;
 
         [Tooltip("Driving cost multiplier on an uphill at or steeper than the full slope.")]
         [Range(1f, 3f)] [SerializeField] private float _uphillMultiplier = 1.5f;
@@ -44,6 +47,15 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds of active beam work (cut, dig, stitch, feed) one cell pays for. A site's work stays " +
                  "about 0.4-0.6 cell.")]
         [Range(10f, 300f)] [SerializeField] private float _beamSecondsPerCell = 60f;
+
+        [Header("Scanning and welding (opening-v2 §10: every function costs battery; lamps are free)")]
+        [Tooltip("Seconds of active scan (07's lens open on a target) one cell pays for. The lander cargo bay's two " +
+                 "scans cost about a tenth of a cell.")]
+        [Range(10f, 600f)] [SerializeField] private float _scanSecondsPerCell = 50f;
+
+        [Tooltip("Seconds of welding one cell pays for: a structure's energy cost is its build seconds over this, so " +
+                 "the charging pad's 3 s weld costs about a fifth of a cell.")]
+        [Range(2f, 120f)] [SerializeField] private float _weldSecondsPerCell = 15f;
 
         [Header("Hover-Jump")]
         [Tooltip("Cells a full-charge leap costs (paid at the leap; the drums pay first). The leap refuses at the " +
@@ -144,6 +156,7 @@ namespace MoonProject.Gameplay
         [Range(0, 10)] [SerializeField] private int _lowLines = 3;
 
         public int StartingCells => _startingCells;
+        public float StartingCharge01 => _startingCharge01;
         public int CellPackCells => _cellPackCells;
         public float MetresPerCell => _metresPerCell;
         public float UphillMultiplier => _uphillMultiplier;
@@ -153,6 +166,14 @@ namespace MoonProject.Gameplay
         public float TowMultiplier => _towMultiplier;
         public float BoostMultiplier => _boostMultiplier;
         public float BeamSecondsPerCell => _beamSecondsPerCell;
+        public float ScanSecondsPerCell => _scanSecondsPerCell;
+        public float WeldSecondsPerCell => _weldSecondsPerCell;
+
+        /// <summary>Cells <paramref name="weldSeconds"/> of welding cost (a structure's: its build seconds).</summary>
+        public float WeldCells(float weldSeconds)
+        {
+            return weldSeconds / _weldSecondsPerCell;
+        }
         public float FullLeapCost => _fullLeapCost;
         public float TapLeapCost => _tapLeapCost;
         public float DrumCells => _drumCells;

@@ -70,6 +70,12 @@ namespace MoonProject.Core.Events
 
         /// <summary>A built battery bank holds charge (beat B9): the first sunset may begin.</summary>
         NightReady = 2,
+
+        /// <summary>
+        /// A built antenna mast caught the signal from beyond the west rim (beat B11, the opening's end): the pillar
+        /// rises over the dead relay mast at relay.1, and Link is the next step.
+        /// </summary>
+        SignalWest = 3,
     }
 
     /// <summary>

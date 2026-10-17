@@ -585,7 +585,13 @@ namespace MoonProject.Gameplay
         private void UpdateCut(float now, float deltaTime)
         {
             Candidate = _excavation.Lifting != null ? null : FindCandidate();
-            bool wantsBeam = _input.ExcavateHeld && Candidate != null && (_cutting != null || _beamWork.MayStart);
+            if (_input.ExcavateHeld && Candidate != null && !_cutter.Ready)
+            {
+                _cutter.Refuse(Candidate.CutPosition);
+            }
+
+            bool wantsBeam = _input.ExcavateHeld && Candidate != null && _cutter.Ready &&
+                             (_cutting != null || _beamWork.MayStart);
             SetHold(wantsBeam);
             float engageSpeed = _cutting != null ? _tuning.EngageSpeed * _tuning.EngageHysteresis : _tuning.EngageSpeed;
             bool engaged = wantsBeam && _rover.Speed <= engageSpeed;

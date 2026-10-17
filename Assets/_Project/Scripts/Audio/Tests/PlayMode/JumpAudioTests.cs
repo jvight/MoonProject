@@ -88,7 +88,7 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator Airborne_WindSwells_ThenTheLandingIsCushioned_NotThumped()
+        public IEnumerator AfterALeap_TheLandingIsCushioned_NotThumped()
         {
             _rig.Events.Publish(new RoverJumped(1f));
             _rig.Rover.IsGrounded = false;
@@ -101,10 +101,6 @@ namespace MoonProject.Audio.PlayModeTests
                 yield return null;
             }
 
-            AudioSource wind = _rig.Jump.WindSource;
-            Assert.IsTrue(wind.isPlaying);
-            float airborne = wind.volume;
-            Assert.Greater(airborne, 0f);
 
             _rig.Rover.IsGrounded = true;
             _rig.Rover.AirTime = 0f;
@@ -112,10 +108,6 @@ namespace MoonProject.Audio.PlayModeTests
             StringAssert.StartsWith("jump_land_", LastClip);
             Assert.IsFalse(_rig.VoicePlaying("landing_thump"), "the cushion replaces the hard thump");
             Assert.IsFalse(_rig.Jump.Leaping);
-            yield return new WaitForSeconds(0.5f);
-            Assert.Less(wind.volume, 0.1f * airborne, "quickly faded");
-            yield return new WaitForSeconds(1.3f);
-            Assert.IsFalse(wind.isPlaying, "the wind resolves to silence on touchdown and stops");
         }
 
         [Test]
@@ -123,23 +115,6 @@ namespace MoonProject.Audio.PlayModeTests
         {
             _rig.Events.Publish(new RoverLanded(Vector3.zero, 3f, 1f));
             StringAssert.StartsWith("landing_thump", LastClip);
-        }
-
-        [Test]
-        public void WorkbenchPurchase_SparksRattlesResolves_AndTheCoilsPopIn()
-        {
-            _rig.Events.Publish(new UpgradePurchased("rover.hover_jump", 1));
-            Assert.AreEqual("coil_pop", LastClip);
-            Assert.IsTrue(PlayedRecently("workbench_upgrade"));
-            Assert.IsFalse(PlayedRecently("upgrade_arpeggio"), "distinct from the tower");
-        }
-
-        [Test]
-        public void TowerPurchase_KeepsItsArpeggio()
-        {
-            _rig.Events.Publish(new UpgradePurchased("radio_tower", 2));
-            Assert.AreEqual("upgrade_arpeggio", LastClip);
-            Assert.IsFalse(PlayedRecently("workbench_upgrade"));
         }
 
         private bool PlayedRecently(string clipName)

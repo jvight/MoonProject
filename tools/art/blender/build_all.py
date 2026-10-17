@@ -287,6 +287,28 @@ def main(argv: list[str] | None = None) -> None:
     if not args.skip_renders:
         render_cluster_and_scale.build()
 
+    # 15. Build & export Crates S / M / L
+    import crates
+
+    crates.main(
+        [
+            "--renders-dir",
+            str(renders_dir),
+            *skip_flag,
+        ]
+    )
+
+    # 16. Build & export Kestrel-3 Wreck Debris Kit (6 pieces)
+    import kestrel_debris
+
+    kestrel_debris.main(
+        [
+            "--renders-dir",
+            str(renders_dir),
+            *skip_flag,
+        ]
+    )
+
 
 if __name__ == "__main__":
     cli_args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []

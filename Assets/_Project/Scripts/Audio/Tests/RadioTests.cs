@@ -74,24 +74,25 @@ namespace MoonProject.Audio.Tests
         }
 
         [Test]
-        public void Signal_RadiusBloomsInSlowly_AndClarityFollows()
+        public void Signal_ClarityEasesTowardsTheDistance_AndSnapsWhenSetDown()
         {
             var signal = new RadioSignal(_tuning);
-            float distance = _tuning.SignalRadius + _tuning.FalloffWidth;
-            signal.Snap(distance);
+            float lost = _tuning.SignalRadius + _tuning.FalloffWidth;
+            signal.Snap(lost);
             Assert.AreEqual(0f, signal.Clarity, 1e-5f);
 
-            signal.SetTargetRadius(distance + 10f);
-            signal.Step(distance, 0.1f);
-            Assert.Less(signal.Radius, distance);
+            signal.Step(0f, 0.1f);
+            Assert.Greater(signal.Clarity, 0f);
+            Assert.Less(signal.Clarity, 0.5f, "eased, never a switch");
 
             for (int i = 0; i < 2000; i++)
             {
-                signal.Step(distance, 0.02f);
+                signal.Step(0f, 0.02f);
             }
 
-            Assert.AreEqual(distance + 10f, signal.Radius, 0.01f);
             Assert.AreEqual(1f, signal.Clarity, 0.01f);
+            signal.Snap(lost);
+            Assert.AreEqual(0f, signal.Clarity, 1e-5f);
         }
 
         [Test]

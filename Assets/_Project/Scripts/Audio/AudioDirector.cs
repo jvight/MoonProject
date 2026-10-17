@@ -9,18 +9,16 @@ namespace MoonProject.Audio
     /// The Audio domain's game system. Owns the volume buses (registered as <see cref="IAudioSettings"/>), pooled
     /// 3D/2D one-shot voices and the cue library, plays the landing thump on <see cref="RoverLanded"/>, eases the
     /// pause mix on <see cref="PauseChanged"/> (world loops duck, the radio moves into the cabin), and initialises
-    /// the rover, Hover-Jump, gameplay, friend and UI sounds, radio, ambience bed, Whispering Canyon and the
-    /// soundscape of solitude (with 07's small sounds). A landing that ends a leap gets the jump's cushion instead of
-    /// the thump. Only 3D sources take the canyon's echo (2D ones
-    /// bypass reverb zones). Initialise it after the World, Rover and Gameplay systems (it reads
-    /// <see cref="IRoverState"/>, <see cref="IRoverRig"/>, <see cref="IWorldLayout"/>, <see cref="IWorldAnchors"/>,
-    /// <see cref="IFriendRoster"/> and <see cref="IRadioProgram"/>).
+    /// the rover, Hover-Jump, building, battery, feel and UI sounds, 07's chirps, the radio, the title music, the
+    /// ambience bed and the soundscape of solitude (with 07's small sounds). A landing that ends a leap gets the jump's
+    /// cushion instead of the thump. 2D sources bypass reverb zones. Initialise it after the World, Rover and
+    /// Gameplay systems (it reads <see cref="IRoverState"/>, <see cref="IRoverRig"/> and
+    /// <see cref="IWorldLayout"/>).
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class AudioDirector : MonoBehaviour, IGameSystem
     {
         private const float MinPitch = 0.05f;
-        private const float MinDistanceGap = 1f;
         private const int RecentClipCapacity = 16;
 
         [Tooltip("Assets/_Project/Data/Audio/AudioLibrary.asset (built from tools/audio/sfx_manifest.json).")]
@@ -32,26 +30,22 @@ namespace MoonProject.Audio
         [Tooltip("Rover hum, dust crunch and suspension creaks.")]
         [SerializeField] private RoverAudio _roverAudio;
 
-        [Tooltip("Sonar, relic and site answers, tether, excavation, shelf and upgrade sounds.")]
+        [Tooltip("Building: the placement ghost, snap, weld, structure complete and power-on.")]
         [SerializeField] private GameplayAudio _gameplay;
 
-        [Tooltip("Hover-Jump charge, leap, airborne wind and cushioned landing.")]
+        [Tooltip("Hover-Jump charge, leap and cushioned landing.")]
         [SerializeField] private JumpAudio _jump;
         [SerializeField] private BatteryAudio _battery;
 
-        [Tooltip("Friend machines' voices (chirps, rotors, repair).")]
-        [SerializeField] private FriendAudio _friends;
 
         [Tooltip("UI touches (menus, focus, sliders, cards, prompts, hold-to-buy).")]
         [SerializeField] private UiAudio _ui;
 
-        [Tooltip("The radio station (music, static, clarity).")]
+        [Tooltip("The radio: the signal hiss, then the playlist once the base powers on.")]
         [SerializeField] private RadioStation _radio;
 
-        [Tooltip("Voiced recordings on the radio (Ro's letters, the automated station).")]
-        [SerializeField] private RadioVoice _voice;
 
-        [Tooltip("The 0.5.2 feel beats: the cut, the dock's lock, the first hour's small moments.")]
+        [Tooltip("The feel beats: the cut, the charge on the pad, scans, containers and the hold's boot.")]
         [SerializeField] private FeelAudio _feel;
 
         [Tooltip("07's machine voice: the chirps and their syllables.")]
@@ -60,24 +54,17 @@ namespace MoonProject.Audio
         [Tooltip("The lunar ambience bed.")]
         [SerializeField] private AmbienceBed _ambience;
 
-        [Tooltip("Whispering Canyon's beds and echo.")]
-        [SerializeField] private CanyonAmbience _canyon;
 
-        [Tooltip("The mix of solitude: distance, stillness, Quiet Hours and the canyon; the room tone.")]
+        [Tooltip("The mix of solitude: distance from the base, stillness and the wide shot; the room tone.")]
         [SerializeField] private Soundscape _soundscape;
 
         [Tooltip("07's lamp hum, servos and cooling ticks.")]
         [SerializeField] private RoverSmallSounds _smallSounds;
 
-        [Tooltip("The relay masts: repair beat, link answer, lamp hum.")]
-        [SerializeField] private RelayAudio _relays;
 
         [Tooltip("Salvage: the cutting beam, the break-off and the salvage melody.")]
         [SerializeField] private SalvageAudio _salvage;
 
-        [Tooltip("The base's machines: hopper feed, Rover Bay arms and turntable, tower port, charging dock.")]
-        [SerializeField] private StationAudio _stations;
-        [SerializeField] private LabAudio _lab;
 
         [Tooltip("The title screen's dedicated procedural theme.")]
         [SerializeField] private TitleMusic _titleMusic;
@@ -98,9 +85,6 @@ namespace MoonProject.Audio
         public AudioBusMixer Buses => _buses;
 
         public AudioLibrary Library => _library;
-
-        /// <summary>The radio's voiced recordings (the music ducks under them).</summary>
-        internal RadioVoice Voice => _voice;
 
         /// <summary>The base radio (the chirps sit under its music).</summary>
         internal RadioStation Radio => _radio;
@@ -180,10 +164,7 @@ namespace MoonProject.Audio
             _roverAudio.Initialize(context, this);
             _jump.Initialize(context, this);
             _gameplay.Initialize(context, this);
-            _friends.Initialize(context, this);
             _ui.Initialize(context, this);
-            _canyon.Initialize(context, this);
-            _voice.Initialize(context, this);
             _radio.Initialize(context, this);
             if (_titleMusic == null && _mixTuning.TitleMusic != null)
             {
@@ -200,13 +181,10 @@ namespace MoonProject.Audio
 
             _feel.Initialize(context, this);
             _chirps.Initialize(context, this);
-            _soundscape.Initialize(context, this, _radio, _canyon, _mixTuning.AmbienceFadeIn);
+            _soundscape.Initialize(context, this, _radio, _mixTuning.AmbienceFadeIn);
             _ambience.Initialize(context, this, _soundscape, _mixTuning.AmbienceFadeIn, _mixTuning.AmbienceCrossfade);
             _smallSounds.Initialize(context, this, _soundscape);
-            _relays.Initialize(context, this);
             _salvage.Initialize(context, this);
-            _stations.Initialize(context, this);
-            _lab.Initialize(context, this);
             _battery.Initialize(context, this);
         }
 
@@ -227,28 +205,19 @@ namespace MoonProject.Audio
         /// <paramref name="position"/>.</summary>
         public void PlayAt(CueHandle cue, Vector3 position, float volumeScale = 1f, float pitchScale = 1f)
         {
-            Play(cue, _spatial, position, volumeScale, pitchScale, -1, 0f, 0f);
+            Play(cue, _spatial, position, volumeScale, pitchScale, -1);
         }
 
         /// <summary>Plays variant <paramref name="variant"/> (clamped to the cue's clips) of <paramref name="cue"/> in
         /// 3D, e.g. the chime note of a salvage combo step.</summary>
         public void PlayVariantAt(CueHandle cue, int variant, Vector3 position, float volumeScale = 1f)
         {
-            Play(cue, _spatial, position, volumeScale, 1f, Mathf.Max(0, variant), 0f, 0f);
-        }
-
-        /// <summary>Plays variant <paramref name="variant"/> of <paramref name="cue"/> in 3D through a low-pass at
-        /// <paramref name="lowpassHz"/>, at full volume up to <paramref name="minDistance"/> metres (distant, softened
-        /// sounds such as relic answers).</summary>
-        public void PlayFilteredAt(CueHandle cue, int variant, Vector3 position, float volumeScale, float lowpassHz,
-            float minDistance)
-        {
-            Play(cue, _spatial, position, volumeScale, 1f, Mathf.Max(0, variant), lowpassHz, minDistance);
+            Play(cue, _spatial, position, volumeScale, 1f, Mathf.Max(0, variant));
         }
 
         /// <summary>Plays <paramref name="cue"/> (variant <paramref name="variant"/>, or random without repeats when
-        /// negative) as a one-shot on <paramref name="source"/>, a voice that follows its owner (e.g. a friend in
-        /// flight). Overlapping one-shots are fine; the source's pitch takes the cue's pitch variance.</summary>
+        /// negative) as a one-shot on <paramref name="source"/>, a voice that follows its owner (e.g. 07's chirps
+        /// from its body). Overlapping one-shots are fine; the source's pitch takes the cue's pitch variance.</summary>
         internal void PlayOn(AudioSource source, CueHandle cue, float volumeScale, int variant = -1)
         {
             if (!IsInitialized || !cue.IsValid)
@@ -275,19 +244,13 @@ namespace MoonProject.Audio
         /// flat, e.g. the wake phrase of the place that woke.</summary>
         public void PlayVariant2D(CueHandle cue, int variant, float volumeScale = 1f)
         {
-            Play(cue, _flat, Vector3.zero, volumeScale, 1f, Mathf.Max(0, variant), 0f, 0f);
+            Play(cue, _flat, Vector3.zero, volumeScale, 1f, Mathf.Max(0, variant));
         }
 
         /// <summary>Plays a random variant of <paramref name="cue"/> flat (UI, stingers).</summary>
         public void Play2D(CueHandle cue, float volumeScale = 1f, float pitchScale = 1f)
         {
-            Play(cue, _flat, Vector3.zero, volumeScale, pitchScale, -1, 0f, 0f);
-        }
-
-        /// <summary>Bell's dial turned to another station: friends with a station-switch crackle voice it.</summary>
-        internal void NotifyStationSwitched()
-        {
-            _friends.OnStationSwitched();
+            Play(cue, _flat, Vector3.zero, volumeScale, pitchScale, -1);
         }
 
         public void SetBusVolume(AudioBus bus, float volume)
@@ -324,7 +287,7 @@ namespace MoonProject.Audio
             source.dopplerLevel = _mixTuning.DopplerLevel;
             source.spread = _mixTuning.Spread;
 
-            // The canyon's echo is for sounds in the world; the radio, UI and ambience beds stay dry.
+            // Reverb zones are for sounds in the world; the radio, UI and ambience beds stay dry.
             source.bypassReverbZones = spatialBlend <= 0f;
         }
 
@@ -332,12 +295,6 @@ namespace MoonProject.Audio
         internal void WireBattery(BatteryAudio battery)
         {
             _battery = battery;
-        }
-
-        /// <summary>The radio's voiced recordings (docs/features/M3-24 C).</summary>
-        internal void WireVoice(RadioVoice voice)
-        {
-            _voice = voice;
         }
 
         /// <summary>The 0.5.2 feel beats and 07's machine voice (docs/design/feel-pass.md).</summary>
@@ -353,12 +310,10 @@ namespace MoonProject.Audio
         }
 
         internal void Wire(AudioLibrary library, AudioMixTuning mixTuning, RoverAudio roverAudio,
-            JumpAudio jump, GameplayAudio gameplay, FriendAudio friends, UiAudio ui, RadioStation radio,
-            AmbienceBed ambience, CanyonAmbience canyon, Soundscape soundscape, RoverSmallSounds smallSounds,
-            RelayAudio relays, SalvageAudio salvage, StationAudio stations, LabAudio lab)
+            JumpAudio jump, GameplayAudio gameplay, UiAudio ui, RadioStation radio, AmbienceBed ambience,
+            Soundscape soundscape, RoverSmallSounds smallSounds, SalvageAudio salvage)
         {
             _jump = jump;
-            _friends = friends;
             _ui = ui;
             _library = library;
             _mixTuning = mixTuning;
@@ -366,13 +321,9 @@ namespace MoonProject.Audio
             _gameplay = gameplay;
             _radio = radio;
             _ambience = ambience;
-            _canyon = canyon;
             _soundscape = soundscape;
             _smallSounds = smallSounds;
-            _relays = relays;
             _salvage = salvage;
-            _stations = stations;
-            _lab = lab;
         }
 
         private void Update()
@@ -396,7 +347,7 @@ namespace MoonProject.Audio
         }
 
         private void Play(CueHandle cue, VoiceBank bank, Vector3 position, float volumeScale, float pitchScale,
-            int variant, float lowpassHz, float minDistance)
+            int variant)
         {
             if (!IsInitialized || !cue.IsValid)
             {
@@ -413,7 +364,6 @@ namespace MoonProject.Audio
             AudioClip clip = entry.GetClip(clipIndex);
             float pitch = Mathf.Max(MinPitch, _random.Range(entry.PitchMin, entry.PitchMax) * pitchScale);
             float baseVolume = _random.Range(entry.VolumeMin, entry.VolumeMax) * volumeScale;
-            float near = minDistance > 0f ? minDistance : _mixTuning.MinDistance;
 
             int index = bank.Pool.Acquire(Time.unscaledTime, clip.length / pitch);
             AudioSource voice = bank.Sources[index];
@@ -426,14 +376,6 @@ namespace MoonProject.Audio
             if (bank.Spatial)
             {
                 voice.transform.position = position;
-                voice.minDistance = near;
-                voice.maxDistance = Mathf.Max(_mixTuning.MaxDistance, near + MinDistanceGap);
-                AudioLowPassFilter filter = bank.Filters[index];
-                filter.enabled = lowpassHz > 0f;
-                if (filter.enabled)
-                {
-                    filter.cutoffFrequency = lowpassHz;
-                }
             }
 
             voice.Play();
@@ -482,10 +424,6 @@ namespace MoonProject.Audio
                 host.transform.SetParent(transform, false);
                 voices[i] = host.AddComponent<AudioSource>();
                 Configure(voices[i], spatial ? 1f : 0f);
-                if (spatial)
-                {
-                    host.AddComponent<AudioLowPassFilter>().enabled = false;
-                }
             }
 
             return voices;
@@ -499,20 +437,14 @@ namespace MoonProject.Audio
             ok &= Require(_roverAudio, nameof(_roverAudio));
             ok &= Require(_gameplay, nameof(_gameplay));
             ok &= Require(_ui, nameof(_ui));
-            ok &= Require(_friends, nameof(_friends));
             ok &= Require(_jump, nameof(_jump));
             ok &= Require(_radio, nameof(_radio));
-            ok &= Require(_voice, nameof(_voice));
             ok &= Require(_feel, nameof(_feel));
             ok &= Require(_chirps, nameof(_chirps));
             ok &= Require(_ambience, nameof(_ambience));
-            ok &= Require(_canyon, nameof(_canyon));
             ok &= Require(_soundscape, nameof(_soundscape));
             ok &= Require(_smallSounds, nameof(_smallSounds));
-            ok &= Require(_relays, nameof(_relays));
             ok &= Require(_salvage, nameof(_salvage));
-            ok &= Require(_stations, nameof(_stations));
-            ok &= Require(_lab, nameof(_lab));
             ok &= Require(_battery, nameof(_battery));
             if (_library != null)
             {
@@ -556,14 +488,6 @@ namespace MoonProject.Audio
                 Pool = new VoicePool(sources.Length);
                 BaseVolumes = new float[sources.Length];
                 Buses = new AudioBus[sources.Length];
-                Filters = new AudioLowPassFilter[sources.Length];
-                if (spatial)
-                {
-                    for (int i = 0; i < sources.Length; i++)
-                    {
-                        Filters[i] = sources[i].GetComponent<AudioLowPassFilter>();
-                    }
-                }
             }
 
             public AudioSource[] Sources { get; }
@@ -575,8 +499,6 @@ namespace MoonProject.Audio
             public float[] BaseVolumes { get; }
 
             public AudioBus[] Buses { get; }
-
-            public AudioLowPassFilter[] Filters { get; }
 
             public void Relevel(AudioBusMixer buses, float now)
             {

@@ -43,8 +43,9 @@ namespace MoonProject.Gameplay
 
         private ScanFragment(string fragmentId, string blueprintId, IReadOnlyList<string> structureIds, int index,
             int count, ScanSize size, string hostId, Transform root, Renderer solid, Renderer lines, Renderer outline,
-            Transform target, GameObject brackets, bool isRuin = false)
+            Transform target, GameObject brackets, bool isRuin = false, string storyKey = null)
         {
+            StoryKey = storyKey;
             FragmentId = fragmentId;
             BlueprintId = blueprintId;
             StructureIds = structureIds;
@@ -69,6 +70,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>Structure blueprint ids taught by this ruin's scan set, or null for rover upgrade fragments.</summary>
         public IReadOnlyList<string> StructureIds { get; }
+
+        /// <summary>A story scan's readout key (<see cref="StoryScan"/>), or null for a teaching fragment.</summary>
+        public string StoryKey { get; }
 
         /// <summary>Its number in its set (the &lt;n&gt; of its socket).</summary>
         public int Index { get; }
@@ -150,6 +154,19 @@ namespace MoonProject.Gameplay
             Renderer ruinSolid = FindClosestRuinRenderer(target);
             return new ScanFragment(fragmentId, blueprintId, structureIds, index, count, size, hostId, target, ruinSolid,
                 null, null, target, null, isRuin: true);
+        }
+
+        /// <summary>Wraps a story scan's point on Art's mesh node <paramref name="target"/>'s parent.</summary>
+        public static ScanFragment ForStoryTarget(StoryScan story, string hostId, Transform target)
+        {
+            if (target == null)
+            {
+                throw new ArgumentNullException(nameof(target));
+            }
+
+            return new ScanFragment(story.FragmentId, story.FragmentId, Array.Empty<string>(), 0, 1, story.Size, hostId,
+                target, FindClosestRuinRenderer(target), null, null, target, null, isRuin: true,
+                storyKey: story.TextKey);
         }
 
         /// <summary>The corner brackets: shown while it waits to be scanned and 07 is near enough.</summary>

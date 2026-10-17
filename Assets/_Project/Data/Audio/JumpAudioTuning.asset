@@ -20,14 +20,6 @@ MonoBehaviour:
   _hopThreshold: 0.35
   _leapMinVolume: 0.5
   _twangMinVolume: 0.35
-  _windMinAirTime: 0.25
-  _windSwellTime: 1.2
-  _windFullSpeed: 12
-  _windSlowGain: 0.35
-  _windSlowPitch: 0.9
-  _windFastPitch: 1.25
-  _windRiseTime: 0.35
-  _windFallTime: 0.2
   _cushionMinImpact: 0.3
   _cushionFullImpact: 4
   _cushionSoftVolume: 0.35

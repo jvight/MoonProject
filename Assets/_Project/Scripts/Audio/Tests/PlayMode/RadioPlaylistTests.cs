@@ -2,6 +2,7 @@ using System.Collections;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using MoonProject.Core.Events;
 
 namespace MoonProject.Audio.PlayModeTests
 {
@@ -16,13 +17,14 @@ namespace MoonProject.Audio.PlayModeTests
             _rig = new AudioTestRig(AudioTestRig.ShortTrackSeconds);
             yield return null;
             _rig.Wake(true);
+            _rig.Milestone(OpeningMilestone.PowerOn);
             float deadline = Time.realtimeSinceStartup + 3f;
             while (!_rig.Radio.MusicStarted && Time.realtimeSinceStartup < deadline)
             {
                 yield return null;
             }
 
-            Assert.IsTrue(_rig.Radio.MusicStarted, "the radio finds the music after 07 wakes");
+            Assert.IsTrue(_rig.Radio.MusicStarted, "the radio finds the music once the base has power");
         }
 
         [TearDown]

@@ -5,7 +5,7 @@ namespace MoonProject.Audio
     /// <summary>
     /// Envelope for the title screen theme: silent until <c>TitleShown</c>, fades in to full over
     /// <c>fadeInSeconds</c> (~2 s), stays playing through Settings and Credits on the title screen, and fades out to
-    /// silence over <c>fadeOutSeconds</c> (~2.5 s) when Continue (<c>SessionStarted</c>) or New Game
+    /// silence over <c>fadeOutSeconds</c> (0.8 s) when Continue (<c>SessionStarted</c>) or New Game
     /// (<c>NewGameRequested</c>) begins play.
     /// </summary>
     public sealed class TitleMusicFader

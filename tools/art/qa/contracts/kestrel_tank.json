@@ -1,0 +1,28 @@
+{
+  "model": "kestrel_tank",
+  "nodes": {
+    "Kestrel_Tank": { "pivot": [0.0, 0.0, 0.0], "tolerance": 0.01 },
+    "CutPoint": { "pivot": [0.18, 0.0, 0.88], "tolerance": 0.02 }
+  },
+  "slots": [
+    "R1_CreamEnamel",
+    "R1_GoldFoil",
+    "R1_Basalt",
+    "R1_GreyMetal",
+    "R1_OrangeStripe",
+    "R1_Brass",
+    "R1_Copper",
+    "R1_Signage"
+  ],
+  "require_vertex_colors": true,
+  "max_triangles": 1600,
+  "max_meshes": 1,
+  "max_draw_calls": 8,
+  "allow_boundary_edges": false,
+  "bounds": {
+    "size": [1.95, 1.35, 1.15],
+    "tolerance": 0.04,
+    "min_size": [0.80, 0.80, 0.80],
+    "max_size": [4.00, 4.00, 4.00]
+  }
+}

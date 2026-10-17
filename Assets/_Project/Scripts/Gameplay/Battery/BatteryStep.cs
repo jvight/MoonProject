@@ -28,10 +28,16 @@ namespace MoonProject.Gameplay
         /// </summary>
         public float BeamSeconds { get; set; }
 
+        /// <summary>Seconds 07's lens scanned this frame.</summary>
+        public float ScanSeconds { get; set; }
+
+        /// <summary>Seconds 07 welded a structure this frame.</summary>
+        public float WeldSeconds { get; set; }
+
         /// <summary>07 is still and nothing is happening (the solar trickle's condition).</summary>
         public bool Still { get; set; }
 
-        /// <summary>Tilly's gift is on 07: the repaired solar cell.</summary>
+        /// <summary>07's solar wing works (it is jammed through the opening, opening-v2 §10: no trickle).</summary>
         public bool SolarFitted { get; set; }
 
         /// <summary>The Boost Coils' capacitor drums are on 07.</summary>

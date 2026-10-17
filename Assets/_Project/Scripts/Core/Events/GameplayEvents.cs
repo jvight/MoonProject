@@ -993,6 +993,80 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// A line of 07's boot readout changed (docs/design/opening-v2.md §10): <see cref="System"/> is now
+    /// <see cref="State"/>. Restored at a session start, once per system, so the readout starts from the save; live
+    /// when a fault is fixed (the cutter turning OK at B6: Rover lights the cutter's pilot light, Audio plays the
+    /// "done" tone, UI turns the line OK).
+    /// </summary>
+    public readonly struct RoverSystemChanged
+    {
+        public RoverSystemChanged(RoverSystem system, RoverSystemState state, bool restored)
+        {
+            System = system;
+            State = state;
+            Restored = restored;
+        }
+
+        public RoverSystem System { get; }
+
+        public RoverSystemState State { get; }
+
+        public bool Restored { get; }
+    }
+
+    /// <summary>
+    /// 07 took story part <see cref="PartId"/> (the spare igniter, opening-v2 §10 B4) out of a crate at
+    /// <see cref="Point"/> into its hold: UI's pickup note.
+    /// </summary>
+    public readonly struct StoryPartCollected
+    {
+        public StoryPartCollected(string partId, Vector3 point)
+        {
+            PartId = partId ?? string.Empty;
+            Point = point;
+        }
+
+        public string PartId { get; }
+
+        public Vector3 Point { get; }
+    }
+
+    /// <summary>
+    /// E asked the faulted cutter to cut at <see cref="Point"/> and it refused (opening-v2 §10, before B6): Audio's
+    /// low fault tone, UI flashes the CUTTER · FAULT line. Once per press.
+    /// </summary>
+    public readonly struct CutterRefused
+    {
+        public CutterRefused(Vector3 point)
+        {
+            Point = point;
+        }
+
+        public Vector3 Point { get; }
+    }
+
+    /// <summary>
+    /// A story scan is fully scanned (docs/design/opening-v2.md B7, the habitat's airlock panel): 07's CRT shows the
+    /// readout <see cref="TextKey"/>, read off <see cref="Point"/>. It teaches and pays nothing; once per save, never
+    /// on a load.
+    /// </summary>
+    public readonly struct StoryScanned
+    {
+        public StoryScanned(string storyId, string textKey, Vector3 point)
+        {
+            StoryId = storyId ?? string.Empty;
+            TextKey = textKey ?? string.Empty;
+            Point = point;
+        }
+
+        public string StoryId { get; }
+
+        public string TextKey { get; }
+
+        public Vector3 Point { get; }
+    }
+
+    /// <summary>
     /// 07 came within the place <see cref="PlaceId"/> for the first time this save while fragments still lie there
     /// (docs/design/0.5.5-owner-feedback.md §1.4: every site with fragments says so once): UI's place card shows
     /// "<see cref="Left"/> fragments to scan" (scan.site_count). Never published on a load.

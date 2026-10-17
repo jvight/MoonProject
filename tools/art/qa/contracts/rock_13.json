@@ -1,0 +1,41 @@
+{
+  "model": "rock_13",
+  "pivot_tolerance": 0.01,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_Basalt"
+  ],
+  "max_triangles": 520,
+  "max_meshes": 1,
+  "max_draw_calls": 1,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "Rock_13": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      7.5578,
+      5.897,
+      4.85
+    ],
+    "tolerance": 0.302,
+    "min_size": [
+      7.2558,
+      5.595,
+      4.548
+    ],
+    "max_size": [
+      7.8598,
+      6.199,
+      5.152
+    ]
+  }
+}

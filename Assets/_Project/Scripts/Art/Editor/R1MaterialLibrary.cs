@@ -79,6 +79,7 @@ namespace MoonProject.Art.Editor
                 GeneratedAssets.CreateOrReplace(material, R1MaterialRecipes.GetMaterialPath(spec));
             }
 
+            R1StoryPropsBuilder.BuildStoryPropMaterials(litShader);
             AssetDatabase.SaveAssets();
         }
 

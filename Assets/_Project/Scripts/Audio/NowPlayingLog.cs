@@ -5,8 +5,7 @@ namespace MoonProject.Audio
 {
     /// <summary>
     /// "Now playing" for the radio ticker: each track is announced at most once per session. Title keys are built
-    /// once when tracks are registered (<c>track.&lt;id&gt;.title</c> for base tracks, the cassette's existing
-    /// <c>cassette.&lt;id&gt;.title</c> for tapes), so announcing never allocates.
+    /// once when tracks are registered (<c>track.&lt;id&gt;.title</c>), so announcing never allocates.
     /// </summary>
     public sealed class NowPlayingLog
     {
@@ -14,21 +13,14 @@ namespace MoonProject.Audio
         public const string TickerKey = "ticker.radio.now_playing";
 
         private const string TrackKeyPrefix = "track.";
-        private const string CassetteKeyPrefix = "cassette.";
         private const string TitleKeySuffix = ".title";
 
         private readonly Dictionary<string, Entry> _entries = new Dictionary<string, Entry>(StringComparer.Ordinal);
 
-        /// <summary>Title key of a base radio track.</summary>
+        /// <summary>Title key of a radio track.</summary>
         public static string TrackTitleKey(string trackId)
         {
             return TrackKeyPrefix + trackId + TitleKeySuffix;
-        }
-
-        /// <summary>Title key of a cassette (its tape track is announced under the cassette's own title).</summary>
-        public static string CassetteTitleKey(string cassetteId)
-        {
-            return CassetteKeyPrefix + cassetteId + TitleKeySuffix;
         }
 
         /// <summary>Makes <paramref name="trackId"/> announceable under <paramref name="titleKey"/> (call at

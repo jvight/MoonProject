@@ -1,0 +1,97 @@
+{
+  "model": "lander_service_port",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Brass",
+    "R1_Copper",
+    "R1_CreamEnamel",
+    "R1_DarkGlass",
+    "R1_GoldFoil",
+    "R1_GreyMetal",
+    "R1_LampAmber",
+    "R1_OrangeStripe",
+    "R1_Rubber",
+    "R1_SagePatch",
+    "R1_Signage"
+  ],
+  "max_triangles": 4500,
+  "max_meshes": 6,
+  "max_draw_calls": 20,
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "LanderServicePort": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "PortHousing": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "ReadoutScreen": {
+      "pivot": [
+        0.0,
+        -0.172,
+        0.83
+      ]
+    },
+    "CableSocket": {
+      "pivot": [
+        0.0,
+        -0.18,
+        0.35
+      ]
+    },
+    "ReservePilotLamp": {
+      "pivot": [
+        0.21,
+        -0.175,
+        0.34
+      ]
+    },
+    "HullMount_Anchor": {
+      "pivot": [
+        0.0,
+        0.13,
+        0.59
+      ]
+    },
+    "Socket_Cable": {
+      "pivot": [
+        -0.08,
+        -0.25,
+        0.35
+      ]
+    },
+    "Socket_Trickle": {
+      "pivot": [
+        -0.23,
+        -0.2,
+        0.5
+      ]
+    },
+    "Readout_Anchor": {
+      "pivot": [
+        0.0,
+        -0.18,
+        0.83
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      0.88,
+      0.394,
+      1.18
+    ],
+    "tolerance": 0.04
+  }
+}

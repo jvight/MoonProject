@@ -27,6 +27,9 @@ namespace MoonProject.Gameplay
         /// <summary>No charger found (the dock is always one, so only before the first frame).</summary>
         private const int NoCharger = -1;
 
+        /// <summary>A pad 07 built (opening-v2): found through the opening, not in the station's reach.</summary>
+        private const int PadCharger = -2;
+
         /// <summary>The dock in the charger index: masts use their reach node (1..).</summary>
         private const int Dock = StationReach.Home;
 
@@ -42,6 +45,10 @@ namespace MoonProject.Gameplay
         private BeamWork _beam;
         private StationReach _reach;
         private TetherSystem _tether;
+        private OpeningField _pads;
+        private IRoverSystems _systems;
+        private bool _padFromReserve;
+        private bool _chargingOnReserve;
         private ChargingDock _dock;
         private Friend _leader;
         private DroneBody _leaderBody;
@@ -62,6 +69,20 @@ namespace MoonProject.Gameplay
         public BatteryModel Model { get; private set; }
 
         public BatteryTuning Tuning => _tuning;
+
+        /// <summary>
+        /// The share of 07's battery (0..1 of its present cells) welding <paramref name="definition"/> costs: the build
+        /// menu shows it next to the materials (opening-v2 §10).
+        /// </summary>
+        public float WeldShare01(StructureDefinition definition)
+        {
+            if (definition == null)
+            {
+                throw new ArgumentNullException(nameof(definition));
+            }
+
+            return _tuning.WeldCells(definition.BuildSeconds) / Model.Cells;
+        }
 
         /// <summary>The dock counts from the start: home always charges 07 (docs/design/first-hour-qa.md #8).</summary>
         public bool HasCharger => _initialized;
@@ -158,6 +179,21 @@ namespace MoonProject.Gameplay
             Model.Restore(data);
         }
 
+        /// <summary>
+        /// The opening's built pads become chargers (opening-v2 B6): fed by the base, or by the lander's reserve,
+        /// which they draw as they fill 07.
+        /// </summary>
+        internal void ConnectPads(OpeningField opening)
+        {
+            _pads = opening ?? throw new ArgumentNullException(nameof(opening));
+        }
+
+        /// <summary>07's systems: the solar wing's stand-still trickle only runs while the wing works.</summary>
+        internal void ConnectSystems(IRoverSystems systems)
+        {
+            _systems = systems ?? throw new ArgumentNullException(nameof(systems));
+        }
+
         /// <summary>The save is loaded (Start runs after it): everyone starts from the real battery.</summary>
         private void Start()
         {
@@ -176,7 +212,20 @@ namespace MoonProject.Gameplay
             }
 
             float deltaTime = Time.deltaTime;
+            float before = Model.Charge;
             Model.Step(Sample(), deltaTime);
+            bool onReserve = _padFromReserve && Model.IsCharging && Model.Charger == ChargerKind.Pad;
+            if (onReserve && Model.Charge > before)
+            {
+                _pads.Port.Draw(Model.Charge - before);
+            }
+
+            if (_chargingOnReserve && !onReserve)
+            {
+                _pads.Port.GiveOut();
+            }
+
+            _chargingOnReserve = onReserve;
             StepFeel();
             _beam.SetAsleep(Model.IsLowPower);
             _leaderBody.Lead(Model.FriendLeads && !Model.IsCharging, _nearestLit);
@@ -242,7 +291,10 @@ namespace MoonProject.Gameplay
             _placed = false;
             _lastPosition = position;
 
-            int charger = ChargerUnder(position);
+            Vector3 padPosition = Vector3.zero;
+            _padFromReserve = false;
+            bool onPad = _pads != null && _pads.Pads.TryFindUnder(position, out padPosition, out _padFromReserve);
+            int charger = onPad ? PadCharger : ChargerUnder(position);
             _nearestLitNode = NearestCharger(position, true);
             _nearestLit = ChargerPosition(_nearestLitNode);
             bool friendHome = _leader.Progress.State == FriendState.Awake;
@@ -253,14 +305,17 @@ namespace MoonProject.Gameplay
                 SlopeDegrees = SlopeAlong(_rover.GroundNormal, travel),
                 Towing = _tether.State == TetherAimState.Towing,
                 Boosting = _boosting,
-                BeamSeconds = _beam.Take(),
+                BeamSeconds = _beam.Take(out float scanSeconds, out float weldSeconds),
+                ScanSeconds = scanSeconds,
+                WeldSeconds = weldSeconds,
                 Still = _rover.Speed <= _tuning.StillSpeed,
-                SolarFitted = friendHome,
+                SolarFitted = _systems.StateOf(RoverSystem.SolarWing) == RoverSystemState.Ok,
                 DrumsFitted = _abilities.Has(RoverAbility.BoostCoils),
                 FriendCanLead = friendHome,
                 OnCharger = charger != NoCharger,
-                Charger = charger == Dock ? ChargerKind.Dock : ChargerKind.Mast,
-                ChargerPosition = charger != NoCharger ? ChargerPosition(charger) : Vector3.zero,
+                Charger = onPad ? ChargerKind.Pad : charger == Dock ? ChargerKind.Dock : ChargerKind.Mast,
+                ChargerPosition = onPad ? padPosition
+                    : charger != NoCharger ? ChargerPosition(charger) : Vector3.zero,
                 Position = position,
                 NearestLitCharger = _nearestLit,
             };

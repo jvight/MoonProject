@@ -13,11 +13,13 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// the tower's first level widens home, relay.2 through relay.0, relay.3 through relay.2), the five salvage
     /// sites (the depot just ahead of home; each approached heading +Z, so a test parked south of a heart faces it
     /// over the wreck's pieces), Kestrel-3's furrow leading to its site, and the derelicts' micro-sites (06 beside
-    /// relay.2's pad, the Mule on the way to the canyon) and Kestrel-3's scrap field (four lane slots down the trail).
-    /// Registers ITerrainQuery, IWorldLayout, IWorldAnchors and IScrapField.
+    /// relay.2's pad, the Mule on the way to the canyon) and Kestrel-3's scrap field (four lane slots down the trail),
+    /// and the opening's places (opening-v2 §4: the wake, the lander 165 m out, the build apron short of it, the ruins
+    /// east of it, the midway crate). A steady sky stands in for World's: <see cref="Phase"/> is set by the tests.
+    /// Registers ITerrainQuery, IWorldLayout, IWorldAnchors, IScrapField and ISunlight.
     /// </summary>
     public sealed class FlatWorldSystem : MonoBehaviour, IGameSystem, ITerrainQuery, IWorldLayout, IWorldAnchors,
-        IScrapField
+        IScrapField, ISunlight
     {
         public const float DrivableRadius = 300f;
         private const float FloorThickness = 1f;
@@ -54,6 +56,11 @@ namespace MoonProject.Gameplay.PlayModeTests
                 new Vector3(25f, 0f, 100f).normalized, AnchorRadius),
             new WorldAnchor(WorldAnchorIds.Micro06, new Vector3(-222f, 0f, 72f), Vector3.right, AnchorRadius),
             new WorldAnchor(WorldAnchorIds.MicroMule, new Vector3(-150f, 0f, 30f), West, AnchorRadius),
+            new WorldAnchor("place.wake", new Vector3(0f, 0f, -4.5f), Vector3.forward, AnchorRadius),
+            new WorldAnchor("place.lander", new Vector3(35f, 0f, 160f), Vector3.back, AnchorRadius),
+            new WorldAnchor("place.apron", new Vector3(15f, 0f, 140f), Vector3.forward, 14f),
+            new WorldAnchor("place.ruins", new Vector3(95f, 0f, 185f), Vector3.back, AnchorRadius),
+            new WorldAnchor("place.midway", new Vector3(-40f, 0f, 90f), Vector3.forward, AnchorRadius),
         };
 
         public Rect PlayableArea
@@ -100,6 +107,29 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public Color Dust => new Color(0.6f, 0.6f, 0.6f, 1f);
 
+        /// <summary>The sky's phase the tests set (sunlit by default: solar arrays feed).</summary>
+        public SkyPhase Phase { get; set; } = SkyPhase.Sunlit;
+
+        public float TimeSeconds => 0f;
+
+        public bool IsHoldingEclipse => false;
+
+        public Vector3 SunDirection => Vector3.up;
+
+        public float EclipseFactor => 0f;
+
+        public float EarthPhase => 0f;
+
+        public float SunlightAt(Vector3 position)
+        {
+            return Phase == SkyPhase.Sunlit ? 1f : 0f;
+        }
+
+        public void ReleaseOpeningEclipse()
+        {
+            Phase = SkyPhase.Sunlit;
+        }
+
         public ScrapPlateInfo Slot(int index)
         {
             WorldAnchor trail = Anchor(WorldAnchorIds.KestrelTrail);
@@ -114,6 +144,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             context.Register<IWorldLayout>(this);
             context.Register<IWorldAnchors>(this);
             context.Register<IScrapField>(this);
+            context.Register<ISunlight>(this);
             _lights = new StageLights(context.Events);
             context.Register<IHomeLights>(_lights);
         }

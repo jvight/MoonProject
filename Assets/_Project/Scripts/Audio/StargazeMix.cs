@@ -5,7 +5,7 @@ namespace MoonProject.Audio
 {
     /// <summary>
     /// The music while 07 looks up at the stars (M3-15 §5, <see cref="Core.Events.StargazingChanged"/>): it thins to
-    /// a few soft notes over the wind (quieter and low-passed, eased out over the thin time and back over the return
+    /// a few soft notes over the basin's hush (quieter and low-passed, eased out over the thin time and back over the return
     /// time), and the beat's start asks for one soft airy swell, never again within the swell's rest, so a beat that
     /// ends and restarts soon after stays quiet. Real time; allocation-free.
     /// </summary>

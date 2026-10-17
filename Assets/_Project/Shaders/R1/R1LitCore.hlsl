@@ -201,8 +201,13 @@ half4 R1LitFrag(R1LitVaryings input) : SV_Target
     metallic = lerp(metallic, 0.0h, dustMask * 0.85h);
     smoothness = lerp(smoothness, _DustSmoothness, dustMask);
 
-    // 4. Bloom-safe emission with small hot core
+    // 4. Bloom-safe emission with small hot core + optional Build Mode Glow (_BuildModeGlow)
     half3 emission = R1EvaluateBloomSafeEmission(uv);
+    if (_BuildModeGlow > 1e-4h)
+    {
+        half3 buildGlow = _EmissionColor.rgb * (_BuildModeGlow * 0.55h);
+        emission = max(emission, min(buildGlow, half3(_BloomSafeMax, _BloomSafeMax, _BloomSafeMax)));
+    }
 
     InputData inputData = (InputData)0;
     inputData.positionWS = input.positionWS;

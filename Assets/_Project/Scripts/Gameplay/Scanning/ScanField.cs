@@ -15,13 +15,13 @@ namespace MoonProject.Gameplay
     /// shows its corner brackets within reach of 07's eye (farther with the Focus Lens). Looking at one in reach and
     /// holding E, with no other E verb before it, eases 07 to a stop and scans it (<see cref="ScanStarted"/>, the
     /// <see cref="FeelKind.Scan"/> beats: Anticipate, Act at each quarter, Cancel on letting go, which keeps the
-    /// progress). Fully scanned, it dissolves into its drawing (<see cref="FragmentScanned"/>, Reward at its scan
-    /// point), leaves a dust outline that fades, and the set's last fragment completes the blueprint
-    /// (<see cref="Blueprints.Learn"/>). A fragment of a blueprint already known pays Metal after its dissolve. A save
-    /// keeps what is scanned and how far. As <see cref="IScanSites"/> it tells the map, the chart and the place cards
-    /// which places hold fragments and how many are left (D2): the first time 07 comes within a place with fragments
-    /// left, <see cref="ScanSiteReached"/>, once per save; its last fragment scanned, <see cref="ScanSiteEmptied"/>.
-    /// Allocation-free per frame.
+    /// progress); every second of it costs battery (opening-v2 §10). Fully scanned, it dissolves into its drawing
+    /// (<see cref="FragmentScanned"/>, Reward at its scan point), leaves a dust outline that fades, and the set's last
+    /// fragment completes the blueprint (<see cref="Blueprints.Learn"/>). A fragment of a blueprint already known
+    /// pays Metal after its dissolve. A save keeps what is scanned and how far. As <see cref="IScanSites"/> it tells
+    /// the map, the chart and the place cards which places hold fragments and how many are left (D2): the first time 07
+    /// comes within a place with fragments left, <see cref="ScanSiteReached"/>, once per save; its last fragment
+    /// scanned, <see cref="ScanSiteEmptied"/>. Allocation-free per frame.
     /// </summary>
     public sealed class ScanField : IScanSites
     {
@@ -49,6 +49,7 @@ namespace MoonProject.Gameplay
         private readonly Blueprints _blueprints;
         private readonly KnownStructures _knownStructures;
         private readonly Func<bool> _othersClaim;
+        private readonly BeamWork _beam;
         private ScanFragment _scanning;
         private ScanFragment _aiming;
         private int _quarter;
@@ -84,6 +85,7 @@ namespace MoonProject.Gameplay
             _save = services.Save;
             _materials = services.Materials;
             _visuals = services.Visuals;
+            _beam = services.Beam;
             _tuning.ApplyShaderGlobals(_tuning.Seconds(ScanSize.Medium));
         }
 
@@ -171,6 +173,39 @@ namespace MoonProject.Gameplay
                 _fragments.Add(fragment);
             }
 
+            return null;
+        }
+
+        /// <summary>
+        /// Registers <paramref name="story"/> on Art's mesh node under <paramref name="ruinRoot"/>: its scan point
+        /// stands at the node's renderer centre. Null when the node and its renderer are there, else what breaks the
+        /// contract.
+        /// </summary>
+        public string AddStory(StoryScan story, Transform ruinRoot)
+        {
+            if (ruinRoot == null)
+            {
+                throw new ArgumentNullException(nameof(ruinRoot));
+            }
+
+            Transform node = FindChild(ruinRoot, story.Node);
+            Renderer panel = node != null ? node.GetComponentInChildren<Renderer>() : null;
+            if (panel == null)
+            {
+                return $"'{story.RuinId}' has no '{story.Node}' node with a renderer (story scan {story.FragmentId})";
+            }
+
+            if (Find(story.FragmentId) != null)
+            {
+                return $"the story scan '{story.FragmentId}' lies in the world twice";
+            }
+
+            Transform target = new GameObject(story.FragmentId).transform;
+            target.SetParent(node, false);
+            target.position = panel.bounds.center;
+            ScanFragment fragment = ScanFragment.ForStoryTarget(story, story.RuinId, target);
+            fragment.Place = -1;
+            _fragments.Add(fragment);
             return null;
         }
 
@@ -821,6 +856,7 @@ namespace MoonProject.Gameplay
             float duration = Seconds(fragment, lens);
             _tuning.ApplyShaderGlobals(duration);
             fragment.Progress = Mathf.Min(1f, fragment.Progress + deltaTime / duration);
+            _beam?.Scan(deltaTime);
             fragment.Draw(fragment.Progress);
             int quarter = Mathf.FloorToInt(fragment.Progress * Quarters);
             while (_quarter < quarter)
@@ -862,6 +898,12 @@ namespace MoonProject.Gameplay
             _waitRelease = true;
             Hold(false);
             ClearGaze();
+            if (fragment.StoryKey != null)
+            {
+                CompleteStory(fragment, now);
+                return;
+            }
+
             if (fragment.StructureIds != null)
             {
                 CompleteRuin(fragment, now);
@@ -891,31 +933,48 @@ namespace MoonProject.Gameplay
             _save.SaveNow();
         }
 
+        /// <summary>
+        /// A structure set's fragment is fully scanned (opening-v2 §1 rule: N fragments by complexity): its dissolve
+        /// begins and the note says "fragment k of N" of the structure it teaches; the set's last fragment teaches its
+        /// structures. A fragment of a set whose structures are all known pays Metal instead.
+        /// </summary>
         private void CompleteRuin(ScanFragment fragment, float now)
         {
-            string learnedStructureId = NextUnlearnedStructure(fragment.StructureIds);
-            bool known = string.IsNullOrEmpty(learnedStructureId);
+            string firstUnknown = NextUnlearnedStructure(fragment.StructureIds);
+            bool known = string.IsNullOrEmpty(firstUnknown);
             int before = ScannedOf(fragment.BlueprintId);
             fragment.Scanned = true;
             fragment.ScannedAt = now;
             fragment.Owed = known ? _tuning.KnownMetal : 0;
             fragment.ShowBrackets(false);
-            if (known)
-            {
-                _events.Publish(new FragmentScanned(fragment.FragmentId, fragment.BlueprintId, before, fragment.Count,
-                    true, fragment.Owed));
-            }
-
+            string teaches = fragment.StructureIds.Count > 0 ? fragment.StructureIds[0] : fragment.BlueprintId;
+            _events.Publish(new FragmentScanned(fragment.FragmentId, teaches, before, fragment.Count, known,
+                fragment.Owed));
             _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, fragment.Point, Vector3.up, 1f, 0f));
-            if (!known)
+            if (!known && before + 1 >= fragment.Count)
             {
-                _knownStructures?.Learn(learnedStructureId);
-                _events.Publish(new TickerLine(ScanCompleteKey, StructureIds.NameKey(learnedStructureId), true));
+                for (string id = firstUnknown; id != null; id = NextUnlearnedStructure(fragment.StructureIds))
+                {
+                    _knownStructures.Learn(id);
+                    _events.Publish(new TickerLine(ScanCompleteKey, StructureIds.NameKey(id), true));
+                }
+
                 _events.Publish(new BuildCue(BuildCueKind.StageComplete, fragment.Point));
                 _events.Publish(new RoverChirpRequested(ChirpMood.Proud, 1f));
                 _events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Reward, fragment.Point, Vector3.up, 1f, 0f));
             }
 
+            _save.SaveNow();
+        }
+
+        /// <summary>A story scan is read: its readout shows on the CRT; it teaches and pays nothing.</summary>
+        private void CompleteStory(ScanFragment fragment, float now)
+        {
+            fragment.Scanned = true;
+            fragment.ScannedAt = now;
+            fragment.ShowBrackets(false);
+            _events.Publish(new StoryScanned(fragment.FragmentId, fragment.StoryKey, fragment.Point));
+            _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, fragment.Point, Vector3.up, 1f, 0f));
             _save.SaveNow();
         }
 

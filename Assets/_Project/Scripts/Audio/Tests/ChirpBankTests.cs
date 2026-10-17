@@ -8,7 +8,7 @@ namespace MoonProject.Audio.Tests
 {
     /// <summary>
     /// 07's machine voice (feel-pass section 7.2): the bank's syllable data, the variant picking and the rules that
-    /// keep a chirp off a voice line.
+    /// keep chirps one at a time.
     /// </summary>
     public sealed class ChirpBankTests
     {
@@ -96,13 +96,13 @@ namespace MoonProject.Audio.Tests
         }
 
         [Test]
-        public void AChirp_WaitsForAVoiceLine_ThenSpeaks()
+        public void AChirp_WaitsForTheOneSpeaking_ThenSpeaks()
         {
             var scheduler = new ChirpScheduler(new AudioRandom(1u));
             scheduler.Request(ChirpMood.Curious);
             for (float t = 0f; t < Hold * 0.5f; t += Frame)
             {
-                Assert.IsFalse(scheduler.Step(Frame, true, Hold, out _), "never over a voice");
+                Assert.IsFalse(scheduler.Step(Frame, true, Hold, out _), "never over another chirp");
             }
 
             Assert.IsTrue(scheduler.Step(Frame, false, Hold, out ChirpMood mood));
@@ -110,7 +110,7 @@ namespace MoonProject.Audio.Tests
         }
 
         [Test]
-        public void AChirp_IsDropped_WhenTheVoiceOutlastsTheHold()
+        public void AChirp_IsDropped_WhenTheOneSpeakingOutlastsTheHold()
         {
             var scheduler = new ChirpScheduler(new AudioRandom(1u));
             scheduler.Request(ChirpMood.Worried);

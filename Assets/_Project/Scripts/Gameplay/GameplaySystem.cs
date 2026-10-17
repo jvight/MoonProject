@@ -73,6 +73,10 @@ namespace MoonProject.Gameplay
         [SerializeField] private BuildField _building;
         [SerializeField] private Transform[] _ruins = Array.Empty<Transform>();
 
+        [Tooltip("The opening's anchors, lander reserve, cargo scan points and supply crates " +
+                 "(Assets/_Project/Data/Tuning/Gameplay/OpeningTuning.asset).")]
+        [SerializeField] private OpeningTuning _openingTuning;
+
         /// <summary>The E verbs a scan yields to (0.5.5 §1.2: scanning comes last).</summary>
         private static readonly InteractionKind[] VerbsBeforeScan =
         {
@@ -252,6 +256,20 @@ namespace MoonProject.Gameplay
             _battery = battery;
         }
 
+        internal void WireOpening(OpeningTuning opening)
+        {
+            _openingTuning = opening;
+        }
+
+        /// <summary>07's start kit (opening-v2 §10): what works, what is broken, the B6 igniter fit.</summary>
+        public RoverStartKit StartKit { get; private set; }
+
+        /// <summary>The opening in the world: the lander, the built pads, the supply crates, the objective flow.</summary>
+        public OpeningField Opening { get; private set; }
+
+        /// <summary>The dock lock on the built pad 07 charges on (opening-v2 §5).</summary>
+        public PadLock PadLock { get; private set; }
+
         internal void WireBuilding(BuildField building)
         {
             _building = building;
@@ -362,6 +380,12 @@ namespace MoonProject.Gameplay
                 return;
             }
 
+            StartKit = new RoverStartKit(context.Events, Materials.Hold, () => PadLock != null && PadLock.OnPad,
+                _openingTuning.IgniterPart);
+            Cutter.ConnectSystems(StartKit);
+            _battery.ConnectSystems(StartKit);
+            context.Register<IRoverSystems>(StartKit);
+
             var stations = new IUpgradeStation[] { _tower, _workshop };
             string unsold = UnsoldUpgrade(stations);
             if (unsold != null)
@@ -391,7 +415,8 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            Scans = Port != null ? NewScans(services, abilities) : null;
+            Opening = NewOpening(context, services);
+            Scans = Port != null && Opening != null ? NewScans(services, abilities) : null;
             if (Scans == null || !NewGoals(context.Events))
             {
                 enabled = false;
@@ -414,7 +439,8 @@ namespace MoonProject.Gameplay
                 services.Layout.BasePosition, _friends.Tuning);
             RecipeLook = new RecipeLook(services.View, Shop, _tower, _plotter, Blueprints.Kits, _progression.Tuning);
             Hints = new InteractionHints(_excavation, _salvage, _tether, _cradle, _home,
-                stations, Upgrades, TowerParts, _friends, _relays, services.Beam, services.Pickups, Shelves, Crates,
+                stations, Upgrades, TowerParts, _friends, _relays, services.Beam, Cutter, services.Pickups, Shelves,
+                Crates,
                 Containers, Scans, _building);
             context.Register<IMaterialStock>(Materials);
             context.Register<IMaterialCatalog>(_materialCatalog);
@@ -499,6 +525,10 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.EquipmentVersion, Equipment.Capture, Equipment.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<ContainersSaveData>(GameplaySaveKeys.Containers,
                 GameplaySaveKeys.ContainersVersion, Containers.Capture, Containers.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<OpeningSaveData>(GameplaySaveKeys.Opening,
+                GameplaySaveKeys.OpeningVersion, Opening.Capture, Opening.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<StartKitSaveData>(GameplaySaveKeys.StartKit,
+                GameplaySaveKeys.StartKitVersion, StartKit.Capture, StartKit.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<ScansSaveData>(GameplaySaveKeys.Scans,
                 GameplaySaveKeys.ScansVersion, Scans.Capture, Scans.Restore, ScansSaveMigrations.Migrate)));
             if (_building != null)
@@ -603,7 +633,8 @@ namespace MoonProject.Gameplay
                     () => place.Discovered);
             }
 
-            problem = problem ?? PlaceJumper(services, scans) ?? AddRuins(scans) ?? scans.Validate(Blueprints.Kits);
+            problem = problem ?? PlaceJumper(services, scans) ?? AddRuins(scans) ??
+                      scans.AddRuin(_scanTuning.LanderCargo, Opening.LanderCargo) ?? scans.Validate(Blueprints.Kits);
             if (problem != null)
             {
                 Debug.LogError($"{nameof(GameplaySystem)}: scanning: {problem} (0.5.5 §1).", this);
@@ -612,6 +643,35 @@ namespace MoonProject.Gameplay
 
             ConnectFinds(scans);
             return scans;
+        }
+
+        /// <summary>
+        /// The opening (docs/design/opening-v2.md), or null (logged) when its anchors, Art's crates or the sky are
+        /// missing. Built pads charge 07 through it from now on.
+        /// </summary>
+        private OpeningField NewOpening(GameContext context, GameplayServices services)
+        {
+            if (_building == null || !context.TryGet(out ISunlight sunlight))
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: the opening needs the base building and the World's " +
+                               $"{nameof(ISunlight)}.", this);
+                return null;
+            }
+
+            try
+            {
+                var opening = new OpeningField(_openingTuning, services, _building, sunlight, Containers, _ruins,
+                    transform, _salvage.Tuning.ReachRadius, StartKit);
+                _battery.ConnectPads(opening);
+                PadLock = new PadLock(context.Events, _home.Tuning, _building, _battery.Model, services.Rover,
+                    _openingTuning.PadChargeRadius);
+                return opening;
+            }
+            catch (InvalidOperationException exception)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: {exception.Message}", this);
+                return null;
+            }
         }
 
         private string AddRuins(ScanField scans)
@@ -632,6 +692,15 @@ namespace MoonProject.Gameplay
                 if (_scanTuning.TryGetRuinSet(ruin.name, out RuinScanSet set))
                 {
                     string problem = scans.AddRuin(set, ruin);
+                    if (problem != null)
+                    {
+                        return problem;
+                    }
+                }
+
+                foreach (StoryScan story in _scanTuning.Stories)
+                {
+                    string problem = story.RuinId == ruin.name ? scans.AddStory(story, ruin) : null;
                     if (problem != null)
                     {
                         return problem;
@@ -770,7 +839,7 @@ namespace MoonProject.Gameplay
             {
                 Tech = new TechTree(events, () => _tower.ShownLevel, () => _relays.LitMasts, Blueprints.IsLearned,
                     Upgrades.LevelOf, _progression.Tuning.TechKits);
-                Recovery = new RecoveryProgress(events, () => _tower.ShownLevel, _tower.Definition.MaxLevel,
+                Recovery = new RecoveryProgress(events, PowerLamps, PowerSteps,
                     () => _relays.LitChainMasts, _relays.ChainMastCount, _progression.Tuning.RecoveryLamps);
                 return true;
             }
@@ -838,6 +907,18 @@ namespace MoonProject.Gameplay
             Upgrades.MarkPinnedPartsKnown(Blueprints);
             Tech.Announce();
             Recovery.Announce();
+            StartKit.Announce();
+            Opening.Announce();
+        }
+
+        /// <summary>The recovery protocol's Power steps: the pad, solar power on, a night-ready base (opening-v2).</summary>
+        private const int PowerSteps = 3;
+
+        /// <summary>The Power row's lit lamps: one per built step of the base's power.</summary>
+        private int PowerLamps()
+        {
+            return (Opening.Built(StructureIds.ChargingPad) ? 1 : 0) + (Opening.PowerOn ? 1 : 0) +
+                   (Opening.NightReady ? 1 : 0);
         }
 
         private void Update()
@@ -865,6 +946,8 @@ namespace MoonProject.Gameplay
             Containers.Step(now, Time.deltaTime);
             TowerPartField.Step(now);
             Scans.Step(now, Time.deltaTime);
+            Opening.Step();
+            PadLock.Step(Time.deltaTime);
             Port.Step(Time.deltaTime);
             _wingCell.Step();
             RecipeLook.Step();
@@ -1011,6 +1094,7 @@ namespace MoonProject.Gameplay
                 : _cargo == null ? "CargoTuning is not assigned."
                 : _cutterTuning == null ? "CutterTuning is not assigned."
                 : _scanTuning == null ? "ScanTuning is not assigned."
+                : _openingTuning == null ? "OpeningTuning is not assigned."
                 : _upgradeDefinitions == null || _upgradeDefinitions.Length == 0 ? "no upgrade definitions."
                 : _salvage == null ? "SalvageField is not assigned."
                 : _relics == null ? "RelicField is not assigned."
@@ -1055,6 +1139,7 @@ namespace MoonProject.Gameplay
             Bundles?.Dispose();
             Shelves?.Dispose();
             Port?.Dispose();
+            Opening?.Dispose();
             _meshes?.Dispose();
         }
     }
