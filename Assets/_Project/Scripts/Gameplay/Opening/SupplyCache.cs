@@ -17,13 +17,14 @@ namespace MoonProject.Gameplay
         [Tooltip("The world anchor the crate stands by (e.g. place.lander).")]
         [SerializeField] private string _anchorId;
 
-        [Tooltip("Metres from the anchor in its frame: x to its right, y up (unused: it rests on the ground), z ahead.")]
+        [Tooltip("Metres from the anchor in its frame: x to its right, y up (unused: it rests on the ground), " +
+                 "z ahead.")]
         [SerializeField] private Vector3 _offset;
 
         [Tooltip("Degrees the crate's front turns from the anchor's forward.")]
         [Range(-180f, 180f)] [SerializeField] private float _yaw;
 
-        [Tooltip("Art's container prefab name in GameplayVisuals (e.g. CoilCrate).")]
+        [Tooltip("Art's R1 crate prefab name in GameplayVisuals (Crate_S, Crate_M or Crate_L).")]
         [SerializeField] private string _container;
 
         [Tooltip("Metal, Wiring and Optics the opened crate gives 07's hold.")]

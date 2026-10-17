@@ -65,7 +65,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             BootstrapHarness.DeleteSaveFiles(PlaythroughScene.SaveSlot);
             yield return BootScene(waitWake: true);
 
-            BuildField build = _gameplay.Build;
+            BuildField build = _gameplay.Building;
             Assert.IsNotNull(build, "Main scene GameplaySystem must have BuildField wired.");
             Assert.AreEqual(1, _gameplay.KnownStructures.Count, "A new game starts knowing only the charging pad.");
             Assert.AreEqual(BuildModeState.Closed, build.State);
@@ -168,7 +168,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return BootScene(waitWake: false);
             yield return null;
 
-            BuildField restoredBuild = _gameplay.Build;
+            BuildField restoredBuild = _gameplay.Building;
             Assert.IsNotNull(restoredBuild);
             Assert.IsTrue(
                 _gameplay.KnownStructures.IsKnown(StructureIds.ChargingPad),

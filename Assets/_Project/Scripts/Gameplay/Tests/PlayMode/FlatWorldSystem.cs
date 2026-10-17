@@ -7,55 +7,22 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// Stands in for the World: a flat drivable disc at height 0 with a matching Ground collider, a visible floor for
-    /// captures, a soft key light, The Peak beyond the rim, and the canyon's anchors laid out flat to the west, its
-    /// lip beyond the playable area as in the real basin (no chasm: the tests drive straight to them), four relay
-    /// mast pads facing home, linked like the real chain (relay.0 within the dark tower's reach, relay.1 only once
-    /// the tower's first level widens home, relay.2 through relay.0, relay.3 through relay.2), the five salvage
-    /// sites (the depot just ahead of home; each approached heading +Z, so a test parked south of a heart faces it
-    /// over the wreck's pieces), Kestrel-3's furrow leading to its site, and the derelicts' micro-sites (06 beside
-    /// relay.2's pad, the Mule on the way to the canyon) and Kestrel-3's scrap field (four lane slots down the trail),
-    /// and the opening's places (opening-v2 §4: the wake, the lander 165 m out, the build apron short of it, the ruins
-    /// east of it, the midway crate). A steady sky stands in for World's: <see cref="Phase"/> is set by the tests.
-    /// Registers ITerrainQuery, IWorldLayout, IWorldAnchors, IScrapField and ISunlight.
+    /// captures, a soft key light, The Peak beyond the rim, the Kestrel's salvage site (approached heading +Z) and the
+    /// opening's places (opening-v2 §4: the wake, the lander 165 m out, the build apron short of it, the ruins east
+    /// of it, the midway crate). A steady sky stands in for World's: <see cref="Phase"/> is set by the tests.
+    /// Registers ITerrainQuery, IWorldLayout, IWorldAnchors and ISunlight.
     /// </summary>
     public sealed class FlatWorldSystem : MonoBehaviour, IGameSystem, ITerrainQuery, IWorldLayout, IWorldAnchors,
-        IScrapField, ISunlight
+        ISunlight
     {
         public const float DrivableRadius = 300f;
         private const float FloorThickness = 1f;
         private const float AnchorRadius = 8f;
-        private const float RelayPad = 3f;
         private const float SiteRadius = 9f;
-        private const int ScrapSlots = 4;
-        private const float ScrapSpacing = 6f;
-
-        private static readonly Vector3 West = new Vector3(-1f, 0f, 0f);
-        private static readonly Vector3 South = new Vector3(0f, 0f, -1f);
 
         private readonly WorldAnchor[] _anchors =
         {
-            new WorldAnchor(WorldAnchorIds.CanyonMouth, new Vector3(-250f, 0f, 40f), West, AnchorRadius),
-            new WorldAnchor(WorldAnchorIds.CanyonLip, new Vector3(-260f, 0f, 40f), West, AnchorRadius),
-            new WorldAnchor(WorldAnchorIds.CanyonLanding, new Vector3(-280f, 0f, 40f), West, AnchorRadius),
-            new WorldAnchor(WorldAnchorIds.CanyonLedge, new Vector3(-275f, 0f, 75f), West, AnchorRadius),
-            new WorldAnchor(WorldAnchorIds.CanyonAlcovePrefix + 0, new Vector3(-288f, 0f, 20f), West, AnchorRadius),
-            new WorldAnchor(WorldAnchorIds.CanyonAlcovePrefix + 1, new Vector3(-292f, 0f, 0f), West, AnchorRadius),
-            new WorldAnchor(WorldAnchorIds.CanyonAlcovePrefix + 2, new Vector3(-290f, 0f, -20f), West, AnchorRadius),
-            new WorldAnchor(WorldAnchorIds.CanyonTerminus, new Vector3(-285f, 0f, -45f), South, AnchorRadius),
-            new WorldAnchor(WorldAnchorIds.CanyonExit, new Vector3(-262f, 0f, 70f), Vector3.right, AnchorRadius),
-            Relay(0, -70f, 80f),
-            Relay(1, 150f, -150f),
-            Relay(2, -235f, 60f),
-            Relay(3, -262f, -10f),
-            Site("depot", 0f, 32f),
             Site("kestrel", -20f, 170f),
-            Site("drill", -90f, -20f),
-            Site("garage", -45f, -55f),
-            Site("lander", 200f, 120f),
-            new WorldAnchor(WorldAnchorIds.KestrelTrail, new Vector3(-45f, 0f, 70f),
-                new Vector3(25f, 0f, 100f).normalized, AnchorRadius),
-            new WorldAnchor(WorldAnchorIds.Micro06, new Vector3(-222f, 0f, 72f), Vector3.right, AnchorRadius),
-            new WorldAnchor(WorldAnchorIds.MicroMule, new Vector3(-150f, 0f, 30f), West, AnchorRadius),
             new WorldAnchor("place.wake", new Vector3(0f, 0f, -4.5f), Vector3.forward, AnchorRadius),
             new WorldAnchor("place.lander", new Vector3(35f, 0f, 160f), Vector3.back, AnchorRadius),
             new WorldAnchor("place.apron", new Vector3(15f, 0f, 140f), Vector3.forward, 14f),
@@ -100,13 +67,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             return world;
         }
 
-        private StageLights _lights;
-
-        /// <summary>Kestrel-3's scrap field: four cuttable slots, 6 m apart down the trail from its anchor.</summary>
-        int IScrapField.Count => ScrapSlots;
-
-        public Color Dust => new Color(0.6f, 0.6f, 0.6f, 1f);
-
         /// <summary>The sky's phase the tests set (sunlit by default: solar arrays feed).</summary>
         public SkyPhase Phase { get; set; } = SkyPhase.Sunlit;
 
@@ -130,28 +90,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             Phase = SkyPhase.Sunlit;
         }
 
-        public ScrapPlateInfo Slot(int index)
-        {
-            WorldAnchor trail = Anchor(WorldAnchorIds.KestrelTrail);
-            Vector3 along = trail.Forward;
-            return new ScrapPlateInfo(trail.Position + along * (ScrapSpacing * (index + 1)),
-                Quaternion.LookRotation(Vector3.Cross(Vector3.up, along)), 1 + index % 3, 1f);
-        }
-
         public void Initialize(GameContext context)
         {
             context.Register<ITerrainQuery>(this);
             context.Register<IWorldLayout>(this);
             context.Register<IWorldAnchors>(this);
-            context.Register<IScrapField>(this);
             context.Register<ISunlight>(this);
-            _lights = new StageLights(context.Events);
-            context.Register<IHomeLights>(_lights);
-        }
-
-        private void OnDestroy()
-        {
-            _lights?.Dispose();
         }
 
         public WorldAnchor Get(int index)
@@ -185,12 +129,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             return anchor;
         }
 
-        private static WorldAnchor Relay(int index, float x, float z)
-        {
-            var pad = new Vector3(x, 0f, z);
-            return new WorldAnchor(WorldAnchorIds.RelayPrefix + index, pad, -pad.normalized, RelayPad);
-        }
-
         /// <summary>A salvage site <paramref name="name"/> at (x, z), approached heading +Z.</summary>
         private static WorldAnchor Site(string name, float x, float z)
         {
@@ -211,35 +149,6 @@ namespace MoonProject.Gameplay.PlayModeTests
         public Vector3 SampleNormal(float x, float z)
         {
             return Vector3.up;
-        }
-    
-        /// <summary>
-        /// Home's warm points as World lights them (IHomeLights): each fully lit once power reaches its stage, the
-        /// dock always; no easing, the sessions read the levels directly.
-        /// </summary>
-        private sealed class StageLights : IHomeLights, IDisposable
-        {
-            private readonly IDisposable _changes;
-            private BasePowerStage _stage;
-
-            public StageLights(EventBus events)
-            {
-                _changes = events.Subscribe<BasePowerChanged>(change => _stage = change.Stage);
-            }
-
-            public float Level(HomeLight light)
-            {
-                BasePowerStage needs = light == HomeLight.Dock ? BasePowerStage.Asleep
-                    : light == HomeLight.BayLamps ? BasePowerStage.Bay
-                    : light == HomeLight.LiftLamps ? BasePowerStage.Chart
-                    : BasePowerStage.Home;
-                return _stage >= needs ? 1f : 0f;
-            }
-
-            public void Dispose()
-            {
-                _changes.Dispose();
-            }
         }
     }
 }

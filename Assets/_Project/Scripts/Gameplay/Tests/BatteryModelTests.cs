@@ -98,14 +98,6 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void Towing_CostsAQuarterMore_AndTheTetherDrawsNoBeam()
-        {
-            Drive(120f, 0f, towing: true);
-
-            Assert.AreEqual(4f - 1.25f, _battery.Charge, Tolerance);
-        }
-
-        [Test]
         public void SixtySecondsOfBeamWork_CostOneCell()
         {
             Work(60f);
@@ -134,7 +126,7 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void TheDrums_HoldAQuarterCell_AndPayBoostsAndLeapsFirst()
         {
-            Step(new BatteryStep { DrumsFitted = true, OnCharger = true, Charger = ChargerKind.Dock }, 10f);
+            Step(new BatteryStep { DrumsFitted = true, OnCharger = true, Charger = ChargerKind.Pad }, 10f);
             Assert.AreEqual(1f, _battery.Drums01, 1e-5f, "a charger fills the drums");
             Assert.AreEqual(_tuning.DrumCells, _battery.Drums, 1e-5f);
 
@@ -142,7 +134,7 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(4f, _battery.Charge, 1e-5f, "the full leap came out of the drums");
             Assert.AreEqual(0f, _battery.Drums01, 1e-5f);
 
-            Step(new BatteryStep { DrumsFitted = true, OnCharger = true, Charger = ChargerKind.Dock }, 10f);
+            Step(new BatteryStep { DrumsFitted = true, OnCharger = true, Charger = ChargerKind.Pad }, 10f);
             Drive(30f, 0f, boosting: true, drums: true);
             Assert.AreEqual(4f - 0.25f, _battery.Charge, Tolerance, "30 m of boost cost 0.5 cell, the drums paid 0.25");
         }
@@ -150,7 +142,7 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void RollingDownhillAtSpeed_RefillsTheDrums()
         {
-            Step(new BatteryStep { DrumsFitted = true, OnCharger = true, Charger = ChargerKind.Dock }, 10f);
+            Step(new BatteryStep { DrumsFitted = true, OnCharger = true, Charger = ChargerKind.Pad }, 10f);
             _battery.PayLeap(1f);
 
             Drive(25f, -10f, drums: true);
@@ -186,7 +178,7 @@ namespace MoonProject.Gameplay.Tests
         public void TheCrawl_NeverRunsOut()
         {
             Empty();
-            Drive(2000f, 0f, towing: true);
+            Drive(2000f, 0f);
 
             Assert.IsTrue(_battery.IsLowPower);
             Assert.AreEqual(0f, _battery.Charge);
@@ -225,28 +217,6 @@ namespace MoonProject.Gameplay.Tests
             Drive(100f, 0f);
             Assert.IsTrue(_battery.IsLowPower);
             Assert.IsFalse(_battery.CanLeap, "never during a crawl");
-        }
-
-        [Test]
-        public void Tilly_Leads_AfterFiveSecondsOfCrawl_AndTheCrawlRises()
-        {
-            Empty();
-            Step(new BatteryStep { FriendCanLead = true }, 4.9f);
-            Assert.IsFalse(_battery.FriendLeads);
-
-            Step(new BatteryStep { FriendCanLead = true }, 3f);
-            Assert.IsTrue(_battery.FriendLeads);
-            Assert.AreEqual(0.55f, _battery.DriveCap01, 0.01f);
-        }
-
-        [Test]
-        public void WithoutTillyHome_TheCrawlStaysAtItsOwnPace()
-        {
-            Empty();
-            Step(new BatteryStep(), 30f);
-
-            Assert.IsFalse(_battery.FriendLeads);
-            Assert.AreEqual(0.35f, _battery.DriveCap01, 0.01f);
         }
 
         [Test]
@@ -329,11 +299,11 @@ namespace MoonProject.Gameplay.Tests
             Assert.IsTrue(_battery.IsLowPower);
         }
 
-        [TestCase(ChargerKind.Dock, 4f)]
-        [TestCase(ChargerKind.Mast, 5f)]
-        public void A_Charger_FillsCellByCell_AtItsSecondsPerCell_OneRisingNoteEach(ChargerKind charger,
-            float secondsPerCell)
+        [Test]
+        public void APad_FillsCellByCell_AtItsSecondsPerCell_OneRisingNoteEach()
         {
+            const ChargerKind charger = ChargerKind.Pad;
+            float secondsPerCell = _tuning.DockSecondsPerCell;
             Empty();
             _cells.Clear();
             _lowPower.Clear();
@@ -372,40 +342,16 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void TheChargerDefaults_AreFourSecondsADockCell_FiveAMastCell_AndAHalfSecondStop()
-        {
-            Assert.AreEqual(4f, _tuning.DockSecondsPerCell);
-            Assert.AreEqual(5f, _tuning.MastSecondsPerCell);
-            Assert.AreEqual(0.3f, _tuning.ChargeStopSpeed);
-            Assert.AreEqual(0.5f, _tuning.ChargeStopHold);
-        }
-
-        [Test]
-        public void MoreCells_TakeLonger_SixEmptyCellsFillInTwentyFourSecondsAtTheDock()
-        {
-            _battery.GrowTo(6);
-            Empty();
-            var step = new BatteryStep { OnCharger = true, Charger = ChargerKind.Dock };
-
-            Step(step, _tuning.ChargeStopHold + 24f - 0.1f);
-            Assert.Less(_battery.Charge, 6f);
-            Assert.IsTrue(_battery.IsCharging);
-
-            Step(step, 0.2f);
-            Assert.AreEqual(6f, _battery.Charge, 1e-5f);
-        }
-
-        [Test]
         public void Charging_StartsOnlyOnceStopped_AtOrUnderPointThreeMetresPerSecond_ForHalfASecond()
         {
             Drive(240f, 0f);
-            Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Dock, Speed = 0.5f }, 5f);
+            Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Pad, Speed = 0.5f }, 5f);
             Assert.IsFalse(_battery.IsCharging, "rolling over the dock is no stop");
             Assert.AreEqual(0, _charging.Count);
 
-            var stopped = new BatteryStep { OnCharger = true, Charger = ChargerKind.Dock, Speed = 0.3f };
+            var stopped = new BatteryStep { OnCharger = true, Charger = ChargerKind.Pad, Speed = 0.3f };
             Step(stopped, 0.4f);
-            Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Dock, Speed = 0.31f }, Dt);
+            Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Pad, Speed = 0.31f }, Dt);
             Step(stopped, 0.4f);
             Assert.IsFalse(_battery.IsCharging, "a moment over the stop speed starts the wait again");
             Assert.AreEqual(2f, _battery.Charge, Tolerance);
@@ -420,20 +366,20 @@ namespace MoonProject.Gameplay.Tests
         public void DrivingOff_StopsTheCharge()
         {
             Drive(240f, 0f);
-            Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Mast }, 1f);
+            Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Pad }, 1f);
             Step(new BatteryStep(), Dt);
 
             Assert.IsFalse(_battery.IsCharging);
             Assert.AreEqual(2, _charging.Count);
             Assert.IsFalse(_charging[1].Charging);
-            Assert.AreEqual(ChargerKind.Mast, _charging[1].Charger);
+            Assert.AreEqual(ChargerKind.Pad, _charging[1].Charger);
         }
 
         [Test]
         public void Leaving_KeepsThePartOfACellAlreadyFilled_AndTheNextChargeGoesOnFromIt()
         {
             Drive(240f, 0f);
-            var dock = new BatteryStep { OnCharger = true, Charger = ChargerKind.Dock };
+            var dock = new BatteryStep { OnCharger = true, Charger = ChargerKind.Pad };
             Step(dock, _tuning.ChargeStopHold + 2f);
             float kept = _battery.Charge;
             Assert.AreEqual(2.5f, kept, 0.02f, "half a cell in 2 s");
@@ -493,7 +439,7 @@ namespace MoonProject.Gameplay.Tests
             Drive(420f, 0f, lit: lit);
             Assert.AreEqual(2, _warnings.Count);
 
-            Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Dock }, 20f);
+            Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Pad }, 20f);
             Drive(420f, 0f, lit: lit);
 
             Assert.AreEqual(4, _warnings.Count);
@@ -537,7 +483,7 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(0, _warnings.Count, "under 30%, but near the lit charger");
 
             var far = new Vector3(0f, 0f, 300f);
-            var charger = new BatteryStep { OnCharger = true, Charger = ChargerKind.Mast, NearestLitCharger = far };
+            var charger = new BatteryStep { OnCharger = true, Charger = ChargerKind.Pad, NearestLitCharger = far };
             Step(charger, _tuning.ChargeStopHold + 0.5f);
             Assert.IsTrue(_battery.IsCharging);
             Assert.AreEqual(0, _warnings.Count, "never on a charger or while charging");
@@ -554,7 +500,7 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(0, _arcs.Count);
 
             Drive(10f, 0f);
-            Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Dock }, 20f);
+            Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Pad }, 20f);
             Drive(200f, 0f);
 
             Assert.AreEqual(1, _arcs.Count);
@@ -573,42 +519,8 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void CellPackTwo_AddsTwoFullCells_WithARisingNote()
-        {
-            Drive(120f, 0f);
-            _cells.Clear();
-
-            _battery.GrowTo(6);
-
-            Assert.AreEqual(6, _battery.Cells);
-            Assert.AreEqual(5f, _battery.Charge, Tolerance);
-            Assert.AreEqual(1, _cells.Count);
-            Assert.AreEqual(6, _cells[0].Cells);
-            Assert.IsTrue(_cells[0].Rising);
-
-            _battery.GrowTo(4);
-            Assert.AreEqual(6, _battery.Cells, "a pack never shrinks the battery");
-        }
-
-        [Test]
-        public void TakingThePackOff_FallsBackTo07sOwnCells_KeepingWhatChargeFits()
-        {
-            _battery.GrowTo(6);
-            _cells.Clear();
-            _battery.ShrinkTo(_tuning.StartingCells);
-            Assert.AreEqual(_tuning.StartingCells, _battery.Cells);
-            Assert.AreEqual(_tuning.StartingCells, _battery.Charge, Tolerance, "full cells stay full, the rest go");
-            Assert.AreEqual(1, _cells.Count);
-            Assert.IsFalse(_cells[0].Rising);
-
-            _battery.ShrinkTo(6);
-            Assert.AreEqual(_tuning.StartingCells, _battery.Cells, "shrinking never grows the battery");
-        }
-
-        [Test]
         public void TheSave_RoundTrips_AndALoadedCrawlResumes()
         {
-            _battery.GrowTo(6);
             Empty();
             _battery.TakeLowLine();
             BatterySaveData data = _battery.Capture();
@@ -620,7 +532,7 @@ namespace MoonProject.Gameplay.Tests
             _arcs.Clear();
             loaded.Announce();
 
-            Assert.AreEqual(6, loaded.Cells);
+            Assert.AreEqual(_tuning.StartingCells, loaded.Cells);
             Assert.AreEqual(0f, loaded.Charge);
             Assert.IsTrue(loaded.IsLowPower);
             Assert.AreEqual(_tuning.CrawlCap, loaded.DriveCap01);
@@ -653,7 +565,7 @@ namespace MoonProject.Gameplay.Tests
         public void Stepping_AllocatesNothing()
         {
             var battery = new BatteryModel(_tuning, new EventBus());
-            var step = new BatteryStep { GroundDistance = 0.1f, Speed = Cruise, SlopeDegrees = 3f, Towing = true };
+            var step = new BatteryStep { GroundDistance = 0.1f, Speed = Cruise, SlopeDegrees = 3f, ScanSeconds = Dt };
             for (int i = 0; i < 100; i++)
             {
                 battery.Step(step, Dt);
@@ -663,7 +575,7 @@ namespace MoonProject.Gameplay.Tests
             for (int i = 0; i < 6000; i++)
             {
                 battery.Step(step, Dt);
-                battery.Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Mast }, Dt);
+                battery.Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Pad }, Dt);
                 battery.PayLeap(0.5f);
             }
 
@@ -671,7 +583,7 @@ namespace MoonProject.Gameplay.Tests
         }
 
         /// <summary>Drives <paramref name="metres"/> at cruise on a constant slope, one frame at a time.</summary>
-        private void Drive(float metres, float slope, bool towing = false, bool boosting = false, bool drums = false,
+        private void Drive(float metres, float slope, bool boosting = false, bool drums = false,
             Vector3 lit = default)
         {
             float perFrame = Cruise * Dt;
@@ -681,7 +593,6 @@ namespace MoonProject.Gameplay.Tests
                 GroundDistance = perFrame,
                 Speed = Cruise,
                 SlopeDegrees = slope,
-                Towing = towing,
                 Boosting = boosting,
                 DrumsFitted = drums,
                 NearestLitCharger = lit,

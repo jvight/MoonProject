@@ -102,6 +102,11 @@ namespace MoonProject.World.Tests
             expected.Add(WorldAnchorIds.PlaceOrangeVent);
             expected.Add(WorldAnchorIds.PlaceIlmeniteBand);
             expected.Add(WorldAnchorIds.PlaceShadowedCrater);
+            expected.Add(WorldAnchorIds.PlaceWake);
+            expected.Add(WorldAnchorIds.PlaceLander);
+            expected.Add(WorldAnchorIds.PlaceApron);
+            expected.Add(WorldAnchorIds.PlaceRuins);
+            expected.Add(WorldAnchorIds.PlaceMidway);
 
             Assert.AreEqual(expected.Count, _anchors.Count);
             var seen = new HashSet<string>();

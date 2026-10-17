@@ -11,10 +11,6 @@ namespace MoonProject.World.Editor
         /// <summary>Marks pressed into the dust: the rover's track shader, World's tint and fade.</summary>
         public const string GroundMarkMaterial = GeneratedRoot + "/M_GroundMarks.mat";
         public const string GroundMarkShader = "Assets/_Project/Shaders/Rover/RoverTrack.shader";
-        /// <summary>The orange vent's bead field (M3-27): the rover's track shader tinted volcanic orange.</summary>
-        public const string VentBeadMaterial = GeneratedRoot + "/M_VentBeads.mat";
-        /// <summary>Home's marks in the lander's frame: worn tracks between its places, the blast scar, bootprints.</summary>
-        public const string HomeGroundMarks = GeneratedRoot + "/HomeGroundMarks.asset";
         public const string VolumeProfile = GeneratedRoot + "/WorldVolumeProfile.asset";
         /// <summary>Home's warm grade, blended in a step per power stage over the main profile.</summary>
         public const string HomeGradeProfile = GeneratedRoot + "/HomeGradeProfile.asset";
@@ -23,11 +19,13 @@ namespace MoonProject.World.Editor
         /// <summary>The PC quality level's pipeline asset: World's builder sets its colour grading mode.</summary>
         public const string PcPipeline = "Assets/Settings/PC_RPAsset.asset";
         public const string BeaconFolder = GeneratedRoot + "/Beacon";
-        public const string BeaconModelPrefab = BeaconFolder + "/PeakBeaconModel.prefab";
+        /// <summary>Art's R1 Peak beacon (its lamp node is <see cref="PeakBeaconBuilder.LampNodeName"/>).</summary>
+        public const string BeaconModelPrefab = R1PropsFolder + "PeakBeacon.prefab";
         public const string BeaconHaloMesh = BeaconFolder + "/BeaconHaloQuad.asset";
         public const string BeaconHaloMaterial = BeaconFolder + "/M_BeaconHalo.mat";
         public const string BeaconHaloShader = "Assets/_Project/Shaders/World/LofiBeaconHalo.shader";
-        public const string CanyonGlowMaterial = GeneratedRoot + "/Canyon/M_CanyonGlow.mat";
+        /// <summary>The landed lander's amber emergency beacon's halo (opening v2 §4).</summary>
+        public const string LanderBeaconMaterial = GeneratedRoot + "/M_LanderBeacon.mat";
         public const string TowerPilotMaterial = GeneratedRoot + "/Beacon/M_TowerPilot.mat";
         public const string SkyShader = "Assets/_Project/Shaders/World/LofiSky.shader";
         public const string EarthShader = "Assets/_Project/Shaders/World/LofiEarth.shader";
@@ -54,34 +52,32 @@ namespace MoonProject.World.Editor
 
         public static string RuinPrefab(string id) => RuinsPrefabFolder + id + ".prefab";
 
-        /// <summary>Art's landmark kit World places (M3-18 L2, L4, L7).</summary>
-        public const string LandmarkFolder = "Assets/_Project/Generated/Art/Landmarks/";
+        /// <summary>Art's R1 story props for the opening (Generated/Art/R1/Models/Props, opening v2 §4).</summary>
+        public const string R1PropsFolder = "Assets/_Project/Generated/Art/R1/Models/Props/";
+        public const string DeadChargingPostPrefab = R1PropsFolder + "DeadChargingPost.prefab";
+        public const string GroundCableSegmentPrefab = R1PropsFolder + "GroundCableSegment.prefab";
+        public const string GroundCableEndPrefab = R1PropsFolder + "GroundCableEnd.prefab";
+        public const string LanderServicePortPrefab = R1PropsFolder + "LanderServicePort.prefab";
+        public const string LanderBeaconPrefab = R1PropsFolder + "LanderBeacon.prefab";
+        public const string BuildApronMarkingsPrefab = R1PropsFolder + "BuildApronMarkings.prefab";
+        public const string DeadAntennaMastPrefab = R1PropsFolder + "DeadAntennaMast.prefab";
+        public const string SignalPillarPrefab = R1PropsFolder + "SignalPillar.prefab";
+
+        /// <summary>Art's R1 Kestrel-3 debris kit (Generated/Art/R1/Models/Wreck).</summary>
+        public static string KestrelDebrisPrefab(string id) => "Assets/_Project/Generated/Art/R1/Models/Wreck/" + id + ".prefab";
+
+        /// <summary>Art's R1 rock prefabs (Generated/Art/R1/Models/Rocks), the big boulders among them.</summary>
+        public static string R1RockPrefab(string id) => "Assets/_Project/Generated/Art/R1/Models/Rocks/" + id + ".prefab";
+
+        /// <summary>Art's R1 cargo lander, landed at place.lander in the opening (opening v2 §4).</summary>
+        public const string CargoLanderPrefab = "Assets/_Project/Generated/Art/R1/Models/Lander/CargoLander.prefab";
+
         /// <summary>Art's props folder, where Kestrel-3's HullFragment variants are (0.5.5).</summary>
         public const string HullFragmentFolder = "Assets/_Project/Generated/Art/Props/";
-        public const string RoutePostPrefab = LandmarkFolder + "RoutePost.prefab";
-        public const string BridgeNearPrefab = LandmarkFolder + "ChasmBridge_Near.prefab";
-        public const string BridgeFarPrefab = LandmarkFolder + "ChasmBridge_Far.prefab";
-        public const string BridgeCablePrefab = LandmarkFolder + "ChasmBridge_Cable.prefab";
-        public static readonly string[] DishFramePrefabs =
-        {
-            LandmarkFolder + "DishFrame_0.prefab", LandmarkFolder + "DishFrame_1.prefab",
-            LandmarkFolder + "DishFrame_2.prefab",
-        };
 
         /// <summary>Wires <see cref="LandmarkPrefabs"/> on a WorldSystem (scene build and test rigs).</summary>
         public static void AssignLandmarks(UnityEditor.SerializedObject world)
         {
-            Landmark(world, "_routePost", RoutePostPrefab);
-            Landmark(world, "_bridgeNear", BridgeNearPrefab);
-            Landmark(world, "_bridgeFar", BridgeFarPrefab);
-            Landmark(world, "_bridgeCable", BridgeCablePrefab);
-            UnityEditor.SerializedProperty frames = world.FindProperty("_landmarkPrefabs._dishFrames");
-            frames.arraySize = DishFramePrefabs.Length;
-            for (int i = 0; i < DishFramePrefabs.Length; i++)
-            {
-                frames.GetArrayElementAtIndex(i).objectReferenceValue = Require(DishFramePrefabs[i]);
-            }
-
             UnityEditor.SerializedProperty fragments = world.FindProperty("_landmarkPrefabs._hullFragments");
             fragments.arraySize = MoonProject.Art.Editor.PropModelBuilder.HullFragmentVariants;
             for (int i = 0; i < fragments.arraySize; i++)
@@ -91,16 +87,11 @@ namespace MoonProject.World.Editor
             }
         }
 
-        private static void Landmark(UnityEditor.SerializedObject world, string field, string path)
-        {
-            world.FindProperty("_landmarkPrefabs." + field).objectReferenceValue = Require(path);
-        }
-
         private static UnityEngine.GameObject Require(string path)
         {
             var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(path);
             return prefab != null ? prefab
-                : throw new System.InvalidOperationException($"No landmark prefab at {path}; run Art/Landmarks.");
+                : throw new System.InvalidOperationException($"No prefab at {path}; run the Art builders.");
         }
 
         public const string CapturePoses = "Assets/_Project/Scripts/World/Editor/Captures/world_views.json";

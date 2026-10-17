@@ -1,124 +1,14 @@
 using UnityEngine;
-using UnityEngine.Serialization;
-using MoonProject.Art;
 
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Home: where the lander stands, how relics are placed on the lab's keepsake shelf, how the base lights the
-    /// ground as 07 approaches, how it carries across the basin while 07 is far away (windows that never dim, a soft
-    /// amber halo), and when 07 comes to rest on the charging dock. Created by the Gameplay/Tuning builder; runtime
-    /// code only reads it.
+    /// The dock lock on a charging pad 07 built (docs/design/feel-pass.md §7.1, opening-v2 §5): how its walls rise,
+    /// clamp and lower, and how its strips fill with 07's cells. Created by the Gameplay/Tuning builder; runtime code
+    /// only reads it.
     /// </summary>
     public sealed class BaseTuning : ScriptableObject
     {
-        [Header("Placement")]
-        [Tooltip("Lander position relative to the base pad centre (m). 07 spawns at the centre, so it stands aside, " +
-                 "facing the centre, well inside the ~25 m pad.")]
-        [SerializeField] private Vector3 _landerOffset = new Vector3(-10f, 0f, 8f);
-
-        [Header("Deposit (the lab's keepsake shelf)")]
-        [Tooltip("Seconds a relic takes to float from beside 07 into its outline on the shelf.")]
-        [Range(0.3f, 6f)] [SerializeField] private float _depositDuration = 1.9f;
-
-        [Tooltip("Height (m) of the arc it floats on.")]
-        [Range(0f, 4f)] [SerializeField] private float _depositLift = 0.9f;
-
-        [Tooltip("It glides to this many metres above the slot, then sinks onto it.")]
-        [Range(0f, 2f)] [SerializeField] private float _depositHover = 0.25f;
-
-        [Tooltip("Overshoot of the final settle (0 = none, ~1.7 = classic back-ease).")]
-        [Range(0f, 3f)] [SerializeField] private float _settleOvershoot = 1.4f;
-
-        [Tooltip("Radius (m) of the small warm glow that shows which cubby the relic 07 brought up will take.")]
-        [Range(0.1f, 2f)] [SerializeField] private float _slotHintRadius = 0.2f;
-
-        [Tooltip("Brightness of that glow.")]
-        [Range(0f, 4f)] [SerializeField] private float _slotHintIntensity = 0.55f;
-
-        [Tooltip("Seconds (time constant) for the slot hint to fade in or out.")]
-        [Range(0f, 2f)] [SerializeField] private float _slotHintEase = 0.25f;
-
-        [Header("Coming home")]
-        [Tooltip("Colour of the lander's lamps.")]
-        [SerializeField] private Color _lampColor = Palette.Get(PaletteSwatch.WarmLamp);
-
-        [Tooltip("Lamp brightness when 07 is home.")]
-        [Range(0f, 10f)] [SerializeField] private float _lampIntensity = 2f;
-
-        [Tooltip("Lamp range (m).")]
-        [Range(1f, 40f)] [SerializeField] private float _lampRange = 9f;
-
-        [Tooltip("Within this distance (m) of the lander 07 is home: the lamps light the ground fully...")]
-        [Range(5f, 100f)] [SerializeField] private float _warmNear = 25f;
-
-        [Tooltip("...and from this distance (m) on 07 is far away.")]
-        [Range(10f, 400f)] [SerializeField] private float _warmFar = 90f;
-
-        [Tooltip("Share of the lamps' light on the ground kept while 07 is far away: a light left on. The windows do " +
-                 "not dim.")]
-        [FormerlySerializedAs("_farWarmth")]
-        [Range(0f, 1f)] [SerializeField] private float _farLampWarmth = 0.35f;
-
-        [Tooltip("Seconds (time constant) for the base to follow 07 near or far.")]
-        [Range(0f, 10f)] [SerializeField] private float _warmEase = 1.5f;
-
-        [Tooltip("Window glow while 07 is home (linear emission multiplier, 1 = as authored).")]
-        [Range(0f, 4f)] [SerializeField] private float _windowGlow = 1f;
-
-        [Tooltip("The windows glow this many times brighter while 07 is far away: home calls it back.")]
-        [Range(1f, 2f)] [SerializeField] private float _farWindowBoost = 1.2f;
-
-        [Header("Home halo")]
-        [Tooltip("Centre of the soft amber glow over home, in lander space (m).")]
-        [SerializeField] private Vector3 _haloCentre = new Vector3(0f, 3f, 0f);
-
-        [Tooltip("Camera distance (m) where the halo starts to show (invisible closer in)...")]
-        [Range(10f, 300f)] [SerializeField] private float _haloAppear = 70f;
-
-        [Tooltip("...and where it reaches its full glow.")]
-        [Range(20f, 600f)] [SerializeField] private float _haloFull = 200f;
-
-        [Tooltip("Radius (m) of the halo where it starts to show.")]
-        [Range(0.5f, 30f)] [SerializeField] private float _haloRadius = 5f;
-
-        [Tooltip("Metres of radius the halo gains per metre of distance beyond that, so on screen it shrinks " +
-                 "slower than home does.")]
-        [Range(0f, 0.2f)] [SerializeField] private float _haloGrowth = 0.035f;
-
-        [Tooltip("Brightness at full glow: soft, under the bloom threshold (the windows are the bright points).")]
-        [Range(0f, 2f)] [SerializeField] private float _haloGlow = 0.45f;
-
-        [Header("Charging dock")]
-        [Tooltip("07 rests on the dock when its centre stops within this many metres (horizontal) of the dock's " +
-                 "anchor; it leaves the rest if it is moved further than this.")]
-        [Range(0.2f, 4f)] [SerializeField] private float _dockRadius = 1.3f;
-
-        [Tooltip("07 counts as stopped on the dock below this speed (m/s).")]
-        [Range(0f, 2f)] [SerializeField] private float _dockMaxSpeed = 0.3f;
-
-        [Tooltip("Seconds 07 stands still on the dock with no drive input before it settles in to rest. Never " +
-                 "forced: any drive input leaves at once.")]
-        [Range(0f, 10f)] [SerializeField] private float _dockDelay = 1.2f;
-
-        [Tooltip("Drive input (0..1, steer or throttle) below this counts as none.")]
-        [Range(0f, 0.5f)] [SerializeField] private float _dockInputDeadZone = 0.08f;
-
-        [Tooltip("The dock's glow while it waits (linear emission multiplier, 1 = as authored).")]
-        [Range(0f, 3f)] [SerializeField] private float _dockIdleGlow = 0.25f;
-
-        [Tooltip("The dock's glow while 07 rests and charges on it (linear emission multiplier); it breathes.")]
-        [Range(0f, 4f)] [SerializeField] private float _dockChargingGlow = 1.3f;
-
-        [Tooltip("Seconds per breath of the charging glow.")]
-        [Range(0.5f, 10f)] [SerializeField] private float _dockBreathPeriod = 3.6f;
-
-        [Tooltip("How deeply the charging glow breathes (0 = steady).")]
-        [Range(0f, 1f)] [SerializeField] private float _dockBreathDepth = 0.3f;
-
-        [Tooltip("Seconds (time constant) for the dock's glow to warm up or cool down.")]
-        [Range(0f, 4f)] [SerializeField] private float _dockGlowEase = 0.8f;
-
         [Header("Dock lock (feel-pass §7.1)")]
         [Tooltip("Seconds between one wall starting to rise (or lower) and the next.")]
         [Range(0f, 0.3f)] [SerializeField] private float _wallStagger = 0.06f;
@@ -150,59 +40,17 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds (time constant) for a strip's glow to follow its cells.")]
         [Range(0f, 1f)] [SerializeField] private float _stripEase = 0.15f;
 
-        [Tooltip("The strips' charging tint (a linear multiplier of the lamp glass's warm emission: blue needs a large gain).")]
+        [Tooltip("The strips' charging tint (a linear multiplier of the lamp glass's warm emission: blue needs a " +
+                 "large gain).")]
         [SerializeField] private Color _stripCharging = new Color(0.12f, 1.6f, 14f, 1f);
 
-        [Tooltip("The strips' full tint, warm gold (a linear multiplier of the lamp glass's warm emission: blue needs a large gain).")]
+        [Tooltip("The strips' full tint, warm gold (a linear multiplier of the lamp glass's warm emission: blue " +
+                 "needs a large gain).")]
         [SerializeField] private Color _stripFull = new Color(1f, 0.95f, 0.8f, 1f);
 
         [Tooltip("Seconds for the rim lamps' chase to run from the outer ring to the inner one as 07 rolls on.")]
         [Range(0.2f, 2f)] [SerializeField] private float _rimChaseSeconds = 0.6f;
 
-        [Tooltip("Glow of a rim lamp at the head of the chase.")]
-        [Range(0f, 4f)] [SerializeField] private float _rimGlow = 1.4f;
-
-        [Header("Save tick (polish-pass §1.2)")]
-        [Tooltip("Seconds of the dock lamp's double blink when the game saves.")]
-        [Range(0.2f, 2f)] [SerializeField] private float _saveBlinkSeconds = 0.6f;
-
-        [Tooltip("Extra glow at the top of each blink.")]
-        [Range(0f, 4f)] [SerializeField] private float _saveBlinkGlow = 1.2f;
-
-        [Tooltip("Saves within this many seconds of a blink read as the same tick (checkpoints come in bursts).")]
-        [Range(0f, 10f)] [SerializeField] private float _saveBurstSeconds = 2f;
-
-        public Vector3 LanderOffset => _landerOffset;
-        public float DepositDuration => _depositDuration;
-        public float DepositLift => _depositLift;
-        public float DepositHover => _depositHover;
-        public float SettleOvershoot => _settleOvershoot;
-        public float SlotHintRadius => _slotHintRadius;
-        public float SlotHintIntensity => _slotHintIntensity;
-        public float SlotHintEase => _slotHintEase;
-        public Color LampColor => _lampColor;
-        public float LampIntensity => _lampIntensity;
-        public float LampRange => _lampRange;
-        public float WarmNear => _warmNear;
-        public float WarmFar => Mathf.Max(_warmFar, _warmNear + 1f);
-        public float FarLampWarmth => _farLampWarmth;
-        public float WarmEase => _warmEase;
-        public float WindowGlow => _windowGlow;
-        public float FarWindowBoost => _farWindowBoost;
-        public Vector3 HaloCentre => _haloCentre;
-        public float HaloAppear => _haloAppear;
-        public float HaloFull => Mathf.Max(_haloFull, _haloAppear + 1f);
-        public float HaloRadius => _haloRadius;
-        public float HaloGlow => _haloGlow;
-        public float DockRadius => _dockRadius;
-        public float DockMaxSpeed => _dockMaxSpeed;
-        public float DockDelay => _dockDelay;
-        public float DockInputDeadZone => _dockInputDeadZone;
-        public float DockIdleGlow => _dockIdleGlow;
-        public float DockChargingGlow => _dockChargingGlow;
-        public float DockBreathPeriod => _dockBreathPeriod;
-        public float DockBreathDepth => _dockBreathDepth;
-        public float DockGlowEase => _dockGlowEase;
         public float WallStagger => _wallStagger;
         public float WallRiseSeconds => _wallRiseSeconds;
         public float WallOvershoot => _wallOvershoot;
@@ -216,40 +64,5 @@ namespace MoonProject.Gameplay
         public Color StripCharging => _stripCharging;
         public Color StripFull => _stripFull;
         public float RimChaseSeconds => _rimChaseSeconds;
-        public float RimGlow => _rimGlow;
-        public float SaveBlinkSeconds => _saveBlinkSeconds;
-        public float SaveBlinkGlow => _saveBlinkGlow;
-        public float SaveBurstSeconds => _saveBurstSeconds;
-
-        /// <summary>0 while 07 is home .. 1 once it is <see cref="WarmFar"/> or more from the lander.</summary>
-        public float FarnessAt(float distance)
-        {
-            return Ease.Step(_warmNear, WarmFar, distance);
-        }
-
-        /// <summary>0..1 share of the lamps' light (and of the shelf strip's glow) at <paramref name="farness"/>.
-        /// </summary>
-        public float LampWarmth(float farness)
-        {
-            return Mathf.Lerp(1f, _farLampWarmth, Mathf.Clamp01(farness));
-        }
-
-        /// <summary>Window glow at <paramref name="farness"/>: full at home, a little brighter far away.</summary>
-        public float WindowGlowAt(float farness)
-        {
-            return _windowGlow * Mathf.Lerp(1f, _farWindowBoost, Mathf.Clamp01(farness));
-        }
-
-        /// <summary>Radius (m) of the home halo seen from <paramref name="distance"/> metres away.</summary>
-        public float HaloRadiusAt(float distance)
-        {
-            return _haloRadius + _haloGrowth * Mathf.Max(0f, distance - _haloAppear);
-        }
-
-        /// <summary>Glow of the home halo seen from <paramref name="distance"/> metres away (0 up close).</summary>
-        public float HaloGlowAt(float distance)
-        {
-            return _haloGlow * Ease.Step(_haloAppear, HaloFull, distance);
-        }
     }
 }

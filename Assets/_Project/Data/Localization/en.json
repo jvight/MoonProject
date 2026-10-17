@@ -1117,6 +1117,10 @@
         {
             "key": "build.energy.card",
             "text": "Battery {0}"
+        },
+        {
+            "key": "hint.pickup",
+            "text": "Pick up"
         }
     ]
 }

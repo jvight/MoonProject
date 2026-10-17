@@ -179,50 +179,6 @@ namespace MoonProject.World
         [Range(8f, 30f)]
         [SerializeField] private float _landerBayHalfLength = 20f;
 
-        [Header("The faint warm light inside")]
-        [Tooltip("Where the fallen supply pod's cracked beacon is, in the pod's frame (Art's SupplyPod, its Glow node " +
-            "on the bent locator mast): the pod stands on the ledge facing canyon.ledge's Forward, and the warm light " +
-            "is its beacon, high enough to be seen from home (0.5.5, M3-04).")]
-        [SerializeField] private Vector3 _podBeacon = new Vector3(-0.12f, 3.5f, 0.32f);
-
-        [Tooltip("Brightness of the warm light's soft halo.")]
-        [Range(0f, 4f)]
-        [SerializeField] private float _glowIntensity = 0.9f;
-
-        [Tooltip("Radius of the beacon's glow up close, metres: tight on the cracked glass; the halo grows to its " +
-            "minimum apparent size only from far off.")]
-        [Range(0.05f, 6f)]
-        [SerializeField] private float _glowRadius = 0.2f;
-
-        [Tooltip("Smallest apparent radius of the halo, degrees, so it still reads from the base.")]
-        [Range(0f, 2f)]
-        [SerializeField] private float _glowMinAngle = 0.3f;
-
-        [Tooltip("Range of the warm light that pools on the ledge, metres.")]
-        [Range(2f, 40f)]
-        [SerializeField] private float _glowLightRange = 14f;
-
-        [Tooltip("Intensity of that warm light.")]
-        [Range(0f, 10f)]
-        [SerializeField] private float _glowLightIntensity = 1.6f;
-
-        [Tooltip("Seconds of one pulse of the pod's locator beacon: slow, a calm signal.")]
-        [Range(0.5f, 10f)]
-        [SerializeField] private float _beaconPeriod = 3.2f;
-
-        [Tooltip("How short the beacon's peak is within its period (a power of the wave): higher is a crisper flash.")]
-        [Range(1f, 12f)]
-        [SerializeField] private float _beaconSharpness = 3f;
-
-        [Tooltip("The beacon's level between flashes (0..1): it never goes fully dark, so the ledge still reads from " +
-            "home.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _beaconFloor = 0.3f;
-
-        [Tooltip("Glow of the cracked beacon glass at a flash's peak (linear glow multiplier).")]
-        [Range(0f, 4f)]
-        [SerializeField] private float _beaconGlassGlow = 1.6f;
-
         [Header("One-way exit (design ruling 10)")]
         [Tooltip("How far to the left of the canyon the exit runs back to the basin, metres: far enough that solid " +
             "rock always separates it from the chasm.")]
@@ -288,16 +244,6 @@ namespace MoonProject.World
         public float LanderBayArc => _landerBayArc;
         public float LanderBayDepth => _landerBayDepth;
         public float LanderBayHalfLength => _landerBayHalfLength;
-        public Vector3 PodBeacon => _podBeacon;
-        public float GlowIntensity => _glowIntensity;
-        public float GlowRadius => _glowRadius;
-        public float GlowMinAngle => _glowMinAngle;
-        public float GlowLightRange => _glowLightRange;
-        public float GlowLightIntensity => _glowLightIntensity;
-        public float BeaconPeriod => _beaconPeriod;
-        public float BeaconSharpness => _beaconSharpness;
-        public float BeaconFloor => _beaconFloor;
-        public float BeaconGlassGlow => _beaconGlassGlow;
         public float ExitOffset => _exitOffset;
         public float ExitTurnRadius => _exitTurnRadius;
         public float ExitBranch => _exitBranch;

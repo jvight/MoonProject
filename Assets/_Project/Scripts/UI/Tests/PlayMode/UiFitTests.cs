@@ -255,7 +255,6 @@ namespace MoonProject.UI.PlayModeTests
                 {
                     ScreenFit.CheckApart(_rig.Ui.Readout.Panel, layout.SunArc, label, found);
                     ScreenFit.CheckApart(_rig.Ui.Readout.Panel, layout.BatteryDial, label, found);
-                    ScreenFit.CheckApart(_rig.Ui.Readout.Panel, layout.PickupFeed, label, found);
                     ScreenFit.CheckApart(layout.SunArc, layout.BatteryDial, label, found);
                 });
             }

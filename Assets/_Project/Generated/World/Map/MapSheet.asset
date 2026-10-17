@@ -94,15 +94,17 @@ MonoBehaviour:
   - {x: 60, y: 63.416443}
   - {x: 52, y: 64.07257}
   - {x: 40, y: 71.11157}
-  - {x: 32, y: 69.578735}
-  - {x: 14.9696045, y: 76}
-  - {x: 8.481384, y: 80}
+  - {x: 36, y: 70.83429}
+  - {x: 32, y: 65.00537}
+  - {x: 28, y: 64.164185}
+  - {x: 16, y: 71.80139}
   - {x: -12, y: 100.16632}
   - {x: -14.634003, y: 96}
   - {x: -14.998596, y: 92}
-  - {x: -11.045074, y: 60}
-  - {x: -11.708405, y: 52}
-  - {x: -10.171448, y: 44}
+  - {x: -12.96048, y: 72}
+  - {x: -10.500427, y: 60}
+  - {x: -11.152313, y: 52}
+  - {x: -9.069214, y: 44}
   - {x: -12, y: 38.157166}
   - {x: -16, y: 38.29138}
   - {x: -22.8172, y: 48}
@@ -392,23 +394,17 @@ MonoBehaviour:
   - {x: 144, y: 151.78918}
   - {x: 140, y: 153.11469}
   - {x: 136, y: 158.41162}
-  - {x: 112, y: 201.69287}
-  - {x: 108, y: 203.19012}
-  - {x: 104.25751, y: 196}
-  - {x: 104.576355, y: 192}
-  - {x: 116, y: 185.10406}
-  - {x: 119.70923, y: 180}
-  - {x: 120.38934, y: 176}
-  - {x: 116, y: 170.17133}
-  - {x: 114.30408, y: 176}
-  - {x: 108, y: 179.89087}
-  - {x: 104, y: 179.89642}
-  - {x: 96, y: 177.60754}
-  - {x: 92, y: 179.45496}
-  - {x: 88, y: 178.93134}
-  - {x: 74.28839, y: 200}
-  - {x: 44, y: 237.66943}
-  - {x: 36.3161, y: 248}
+  - {x: 124, y: 179.992}
+  - {x: 120, y: 184.31476}
+  - {x: 108, y: 166.97437}
+  - {x: 100, y: 161.31287}
+  - {x: 96, y: 160.7052}
+  - {x: 85.263306, y: 168}
+  - {x: 80, y: 173.47052}
+  - {x: 76.632996, y: 180}
+  - {x: 74.29578, y: 196}
+  - {x: 70.74762, y: 204}
+  - {x: 39.220337, y: 244}
   - {x: 34.80365, y: 252}
   - {x: 32, y: 255.13617}
   - {x: 28.666626, y: 256}
@@ -9186,22 +9182,6 @@ MonoBehaviour:
   - {x: -54.330006, y: 263.49008}
   - {x: -48.53717, y: 261.0906}
   - {x: -42.74433, y: 263.49008}
-  - {x: 117.31411, y: 173.02876}
-  - {x: 116.8091, y: 176.21725}
-  - {x: 114.291985, y: 180.32481}
-  - {x: 111.68028, y: 182.22234}
-  - {x: 106.995926, y: 183.34694}
-  - {x: 103.807434, y: 182.84193}
-  - {x: 99.69987, y: 180.32481}
-  - {x: 97.80236, y: 177.71312}
-  - {x: 96.67774, y: 173.02876}
-  - {x: 97.182755, y: 169.84027}
-  - {x: 99.69987, y: 165.73271}
-  - {x: 102.31157, y: 163.83519}
-  - {x: 106.995926, y: 162.71059}
-  - {x: 110.18442, y: 163.21559}
-  - {x: 114.291985, y: 165.73271}
-  - {x: 116.18949, y: 168.3444}
   - {x: 153.41211, y: 212.73134}
   - {x: 150.67592, y: 219.33713}
   - {x: 144.07013, y: 222.07332}
@@ -9407,941 +9387,936 @@ MonoBehaviour:
     _height: -0
   - _kind: 0
     _start: 26
-    _count: 107
+    _count: 109
     _closed: 1
     _height: -0
   - _kind: 0
-    _start: 133
+    _start: 135
     _count: 13
     _closed: 1
     _height: -0
   - _kind: 0
-    _start: 146
+    _start: 148
     _count: 17
     _closed: 1
     _height: -0
   - _kind: 0
-    _start: 163
-    _count: 368
+    _start: 165
+    _count: 362
     _closed: 1
     _height: 5
   - _kind: 0
-    _start: 531
+    _start: 527
     _count: 23
     _closed: 1
     _height: 5
   - _kind: 0
-    _start: 554
+    _start: 550
     _count: 6
     _closed: 1
     _height: 5
   - _kind: 0
-    _start: 560
+    _start: 556
     _count: 19
     _closed: 1
     _height: 5
   - _kind: 0
-    _start: 579
+    _start: 575
     _count: 9
     _closed: 1
     _height: 5
   - _kind: 0
-    _start: 588
+    _start: 584
     _count: 10
     _closed: 1
     _height: 5
   - _kind: 0
-    _start: 598
+    _start: 594
     _count: 17
     _closed: 1
     _height: 5
   - _kind: 0
-    _start: 615
+    _start: 611
     _count: 14
     _closed: 1
     _height: 5
   - _kind: 0
-    _start: 629
+    _start: 625
     _count: 39
     _closed: 1
     _height: 5
   - _kind: 0
-    _start: 668
+    _start: 664
     _count: 13
     _closed: 1
     _height: 5
   - _kind: 0
-    _start: 681
+    _start: 677
     _count: 10
     _closed: 1
     _height: 5
   - _kind: 0
-    _start: 691
+    _start: 687
     _count: 18
     _closed: 1
     _height: 5
   - _kind: 0
-    _start: 709
+    _start: 705
     _count: 11
     _closed: 1
     _height: 5
   - _kind: 0
-    _start: 720
+    _start: 716
     _count: 21
     _closed: 1
     _height: 5
   - _kind: 0
-    _start: 741
+    _start: 737
     _count: 21
     _closed: 1
     _height: 5
   - _kind: 0
-    _start: 762
+    _start: 758
     _count: 10
     _closed: 1
     _height: 5
   - _kind: 0
-    _start: 772
+    _start: 768
     _count: 12
     _closed: 1
     _height: 5
   - _kind: 0
-    _start: 784
+    _start: 780
     _count: 149
     _closed: 1
     _height: 10
   - _kind: 0
-    _start: 933
+    _start: 929
     _count: 23
     _closed: 1
     _height: 10
   - _kind: 0
-    _start: 956
+    _start: 952
     _count: 232
     _closed: 1
     _height: 15
   - _kind: 0
-    _start: 1188
+    _start: 1184
     _count: 20
     _closed: 1
     _height: 15
   - _kind: 0
-    _start: 1208
+    _start: 1204
     _count: 290
     _closed: 1
     _height: 20
   - _kind: 0
-    _start: 1498
+    _start: 1494
     _count: 25
     _closed: 1
     _height: 20
   - _kind: 0
-    _start: 1523
+    _start: 1519
     _count: 306
     _closed: 1
     _height: 25
   - _kind: 0
-    _start: 1829
+    _start: 1825
     _count: 22
     _closed: 1
     _height: 25
   - _kind: 0
-    _start: 1851
+    _start: 1847
     _count: 13
     _closed: 0
     _height: 30
   - _kind: 0
-    _start: 1864
+    _start: 1860
     _count: 12
     _closed: 0
     _height: 30
   - _kind: 0
-    _start: 1876
+    _start: 1872
     _count: 15
     _closed: 0
     _height: 30
   - _kind: 0
-    _start: 1891
+    _start: 1887
     _count: 14
     _closed: 0
     _height: 30
   - _kind: 0
-    _start: 1905
+    _start: 1901
     _count: 274
     _closed: 1
     _height: 30
   - _kind: 0
-    _start: 2179
+    _start: 2175
     _count: 15
     _closed: 1
     _height: 30
   - _kind: 0
-    _start: 2194
+    _start: 2190
     _count: 6
     _closed: 1
     _height: 30
   - _kind: 0
-    _start: 2200
+    _start: 2196
     _count: 15
     _closed: 1
     _height: 30
   - _kind: 0
-    _start: 2215
+    _start: 2211
     _count: 17
     _closed: 0
     _height: 35
   - _kind: 0
-    _start: 2232
+    _start: 2228
     _count: 17
     _closed: 0
     _height: 35
   - _kind: 0
-    _start: 2249
+    _start: 2245
     _count: 19
     _closed: 0
     _height: 35
   - _kind: 0
-    _start: 2268
+    _start: 2264
     _count: 15
     _closed: 0
     _height: 35
   - _kind: 0
-    _start: 2283
+    _start: 2279
     _count: 292
     _closed: 1
     _height: 35
   - _kind: 0
-    _start: 2575
+    _start: 2571
     _count: 6
     _closed: 1
     _height: 35
   - _kind: 0
-    _start: 2581
+    _start: 2577
     _count: 20
     _closed: 0
     _height: 40
   - _kind: 0
-    _start: 2601
+    _start: 2597
     _count: 21
     _closed: 0
     _height: 40
   - _kind: 0
-    _start: 2622
+    _start: 2618
     _count: 24
     _closed: 0
     _height: 40
   - _kind: 0
-    _start: 2646
+    _start: 2642
     _count: 22
     _closed: 0
     _height: 40
   - _kind: 0
-    _start: 2668
+    _start: 2664
     _count: 271
     _closed: 1
     _height: 40
   - _kind: 0
-    _start: 2939
+    _start: 2935
     _count: 21
     _closed: 0
     _height: 45
   - _kind: 0
-    _start: 2960
+    _start: 2956
     _count: 26
     _closed: 0
     _height: 45
   - _kind: 0
-    _start: 2986
+    _start: 2982
     _count: 33
     _closed: 0
     _height: 45
   - _kind: 0
-    _start: 3019
+    _start: 3015
     _count: 32
     _closed: 0
     _height: 45
   - _kind: 0
-    _start: 3051
+    _start: 3047
     _count: 2
     _closed: 0
     _height: 45
   - _kind: 0
-    _start: 3053
+    _start: 3049
     _count: 237
     _closed: 1
     _height: 45
   - _kind: 0
-    _start: 3290
+    _start: 3286
     _count: 28
     _closed: 0
     _height: 50
   - _kind: 0
-    _start: 3318
+    _start: 3314
     _count: 28
     _closed: 0
     _height: 50
   - _kind: 0
-    _start: 3346
+    _start: 3342
     _count: 46
     _closed: 0
     _height: 50
   - _kind: 0
-    _start: 3392
+    _start: 3388
     _count: 35
     _closed: 0
     _height: 50
   - _kind: 0
-    _start: 3427
+    _start: 3423
     _count: 274
     _closed: 1
     _height: 50
   - _kind: 0
-    _start: 3701
+    _start: 3697
     _count: 36
     _closed: 0
     _height: 55
   - _kind: 0
-    _start: 3737
+    _start: 3733
     _count: 3
     _closed: 0
     _height: 55
   - _kind: 0
-    _start: 3740
+    _start: 3736
     _count: 34
     _closed: 0
     _height: 55
   - _kind: 0
-    _start: 3774
+    _start: 3770
     _count: 47
     _closed: 0
     _height: 55
   - _kind: 0
-    _start: 3821
+    _start: 3817
     _count: 10
     _closed: 0
     _height: 55
   - _kind: 0
-    _start: 3831
+    _start: 3827
     _count: 42
     _closed: 0
     _height: 55
   - _kind: 0
-    _start: 3873
+    _start: 3869
     _count: 262
     _closed: 1
     _height: 55
   - _kind: 0
-    _start: 4135
+    _start: 4131
     _count: 57
     _closed: 0
     _height: 60
   - _kind: 0
-    _start: 4192
+    _start: 4188
     _count: 6
     _closed: 0
     _height: 60
   - _kind: 0
-    _start: 4198
+    _start: 4194
     _count: 8
     _closed: 0
     _height: 60
   - _kind: 0
-    _start: 4206
+    _start: 4202
     _count: 4
     _closed: 0
     _height: 60
   - _kind: 0
-    _start: 4210
+    _start: 4206
     _count: 52
     _closed: 0
     _height: 60
   - _kind: 0
-    _start: 4262
+    _start: 4258
     _count: 57
     _closed: 0
     _height: 60
   - _kind: 0
-    _start: 4319
+    _start: 4315
     _count: 11
     _closed: 0
     _height: 60
   - _kind: 0
-    _start: 4330
+    _start: 4326
     _count: 7
     _closed: 0
     _height: 60
   - _kind: 0
-    _start: 4337
+    _start: 4333
     _count: 52
     _closed: 0
     _height: 60
   - _kind: 0
-    _start: 4389
+    _start: 4385
     _count: 5
     _closed: 0
     _height: 60
   - _kind: 0
-    _start: 4394
+    _start: 4390
     _count: 12
     _closed: 1
     _height: 60
   - _kind: 0
-    _start: 4406
+    _start: 4402
     _count: 273
     _closed: 1
     _height: 60
   - _kind: 0
-    _start: 4679
+    _start: 4675
     _count: 75
     _closed: 0
     _height: 65
   - _kind: 0
-    _start: 4754
+    _start: 4750
     _count: 561
     _closed: 0
     _height: 65
   - _kind: 0
-    _start: 5315
+    _start: 5311
     _count: 10
     _closed: 1
     _height: 65
   - _kind: 0
-    _start: 5325
+    _start: 5321
     _count: 529
     _closed: 0
     _height: 70
   - _kind: 0
-    _start: 5854
+    _start: 5850
     _count: 2
     _closed: 0
     _height: 70
   - _kind: 0
-    _start: 5856
+    _start: 5852
     _count: 10
     _closed: 0
     _height: 70
   - _kind: 0
-    _start: 5866
+    _start: 5862
     _count: 6
     _closed: 1
     _height: 70
   - _kind: 0
-    _start: 5872
+    _start: 5868
     _count: 16
     _closed: 1
     _height: 70
   - _kind: 0
-    _start: 5888
+    _start: 5884
     _count: 8
     _closed: 1
     _height: 70
   - _kind: 0
-    _start: 5896
+    _start: 5892
     _count: 125
     _closed: 1
     _height: 70
   - _kind: 0
-    _start: 6021
+    _start: 6017
     _count: 9
     _closed: 1
     _height: 70
   - _kind: 0
-    _start: 6030
+    _start: 6026
     _count: 159
     _closed: 1
     _height: 75
   - _kind: 0
-    _start: 6189
+    _start: 6185
     _count: 158
     _closed: 1
     _height: 75
   - _kind: 0
-    _start: 6347
+    _start: 6343
     _count: 324
     _closed: 1
     _height: 75
   - _kind: 0
-    _start: 6671
+    _start: 6667
     _count: 15
     _closed: 1
     _height: 75
   - _kind: 0
-    _start: 6686
+    _start: 6682
     _count: 74
     _closed: 1
     _height: 75
   - _kind: 0
-    _start: 6760
+    _start: 6756
     _count: 97
     _closed: 1
     _height: 80
   - _kind: 0
-    _start: 6857
+    _start: 6853
     _count: 8
     _closed: 1
     _height: 80
   - _kind: 0
-    _start: 6865
+    _start: 6861
     _count: 46
     _closed: 1
     _height: 80
   - _kind: 0
-    _start: 6911
+    _start: 6907
     _count: 104
     _closed: 1
     _height: 80
   - _kind: 0
-    _start: 7015
+    _start: 7011
     _count: 180
     _closed: 1
     _height: 80
   - _kind: 0
-    _start: 7195
+    _start: 7191
     _count: 26
     _closed: 1
     _height: 80
   - _kind: 0
-    _start: 7221
+    _start: 7217
     _count: 9
     _closed: 1
     _height: 80
   - _kind: 0
-    _start: 7230
+    _start: 7226
     _count: 13
     _closed: 1
     _height: 80
   - _kind: 0
-    _start: 7243
+    _start: 7239
     _count: 31
     _closed: 1
     _height: 80
   - _kind: 0
-    _start: 7274
+    _start: 7270
     _count: 12
     _closed: 1
     _height: 80
   - _kind: 0
-    _start: 7286
+    _start: 7282
     _count: 108
     _closed: 1
     _height: 80
   - _kind: 0
-    _start: 7394
+    _start: 7390
     _count: 7
     _closed: 1
     _height: 80
   - _kind: 0
-    _start: 7401
+    _start: 7397
     _count: 9
     _closed: 1
     _height: 80
   - _kind: 0
-    _start: 7410
+    _start: 7406
     _count: 101
     _closed: 1
     _height: 85
   - _kind: 0
-    _start: 7511
+    _start: 7507
     _count: 41
     _closed: 1
     _height: 85
   - _kind: 0
-    _start: 7552
+    _start: 7548
     _count: 81
     _closed: 1
     _height: 85
   - _kind: 0
-    _start: 7633
+    _start: 7629
     _count: 9
     _closed: 1
     _height: 85
   - _kind: 0
-    _start: 7642
+    _start: 7638
     _count: 153
     _closed: 1
     _height: 85
   - _kind: 0
-    _start: 7795
+    _start: 7791
     _count: 9
     _closed: 1
     _height: 85
   - _kind: 0
-    _start: 7804
+    _start: 7800
     _count: 11
     _closed: 1
     _height: 85
   - _kind: 0
-    _start: 7815
+    _start: 7811
     _count: 9
     _closed: 1
     _height: 85
   - _kind: 0
-    _start: 7824
+    _start: 7820
     _count: 25
     _closed: 1
     _height: 85
   - _kind: 0
-    _start: 7849
+    _start: 7845
     _count: 80
     _closed: 1
     _height: 85
   - _kind: 0
-    _start: 7929
+    _start: 7925
     _count: 25
     _closed: 1
     _height: 85
   - _kind: 0
-    _start: 7954
+    _start: 7950
     _count: 17
     _closed: 1
     _height: 85
   - _kind: 0
-    _start: 7971
+    _start: 7967
     _count: 18
     _closed: 1
     _height: 90
   - _kind: 0
-    _start: 7989
+    _start: 7985
     _count: 43
     _closed: 1
     _height: 90
   - _kind: 0
-    _start: 8032
+    _start: 8028
     _count: 15
     _closed: 1
     _height: 90
   - _kind: 0
-    _start: 8047
+    _start: 8043
     _count: 17
     _closed: 1
     _height: 90
   - _kind: 0
-    _start: 8064
+    _start: 8060
     _count: 17
     _closed: 1
     _height: 90
   - _kind: 0
-    _start: 8081
+    _start: 8077
     _count: 10
     _closed: 1
     _height: 90
   - _kind: 0
-    _start: 8091
+    _start: 8087
     _count: 13
     _closed: 1
     _height: 90
   - _kind: 0
-    _start: 8104
+    _start: 8100
     _count: 23
     _closed: 1
     _height: 90
   - _kind: 0
-    _start: 8127
+    _start: 8123
     _count: 14
     _closed: 1
     _height: 90
   - _kind: 0
-    _start: 8141
+    _start: 8137
     _count: 16
     _closed: 1
     _height: 90
   - _kind: 0
-    _start: 8157
+    _start: 8153
     _count: 57
     _closed: 1
     _height: 90
   - _kind: 0
-    _start: 8214
+    _start: 8210
     _count: 8
     _closed: 1
     _height: 90
   - _kind: 0
-    _start: 8222
+    _start: 8218
     _count: 31
     _closed: 1
     _height: 90
   - _kind: 0
-    _start: 8253
+    _start: 8249
     _count: 16
     _closed: 1
     _height: 90
   - _kind: 0
-    _start: 8269
+    _start: 8265
     _count: 19
     _closed: 1
     _height: 90
   - _kind: 0
-    _start: 8288
+    _start: 8284
     _count: 26
     _closed: 1
     _height: 90
   - _kind: 0
-    _start: 8314
+    _start: 8310
     _count: 55
     _closed: 1
     _height: 90
   - _kind: 0
-    _start: 8369
+    _start: 8365
     _count: 12
     _closed: 1
     _height: 95
   - _kind: 0
-    _start: 8381
+    _start: 8377
     _count: 10
     _closed: 1
     _height: 95
   - _kind: 0
-    _start: 8391
+    _start: 8387
     _count: 10
     _closed: 1
     _height: 95
   - _kind: 0
-    _start: 8401
+    _start: 8397
     _count: 10
     _closed: 1
     _height: 95
   - _kind: 0
-    _start: 8411
+    _start: 8407
     _count: 8
     _closed: 1
     _height: 95
   - _kind: 0
-    _start: 8419
+    _start: 8415
     _count: 19
     _closed: 1
     _height: 95
   - _kind: 0
-    _start: 8438
+    _start: 8434
     _count: 19
     _closed: 1
     _height: 95
   - _kind: 0
-    _start: 8457
+    _start: 8453
     _count: 23
     _closed: 1
     _height: 95
   - _kind: 0
-    _start: 8480
+    _start: 8476
     _count: 7
     _closed: 1
     _height: 95
   - _kind: 0
-    _start: 8487
+    _start: 8483
     _count: 9
     _closed: 1
     _height: 95
   - _kind: 0
-    _start: 8496
+    _start: 8492
     _count: 16
     _closed: 1
     _height: 95
   - _kind: 0
-    _start: 8512
+    _start: 8508
     _count: 8
     _closed: 1
     _height: 95
   - _kind: 0
-    _start: 8520
+    _start: 8516
     _count: 16
     _closed: 1
     _height: 95
   - _kind: 0
-    _start: 8536
+    _start: 8532
     _count: 35
     _closed: 1
     _height: 95
   - _kind: 0
-    _start: 8571
+    _start: 8567
     _count: 9
     _closed: 1
     _height: 100
   - _kind: 0
-    _start: 8580
+    _start: 8576
     _count: 20
     _closed: 1
     _height: 100
   - _kind: 0
-    _start: 8600
+    _start: 8596
     _count: 32
     _closed: 1
     _height: 100
   - _kind: 0
-    _start: 8632
+    _start: 8628
     _count: 35
     _closed: 1
     _height: 105
   - _kind: 0
-    _start: 8667
+    _start: 8663
     _count: 29
     _closed: 1
     _height: 110
   - _kind: 0
-    _start: 8696
+    _start: 8692
     _count: 30
     _closed: 1
     _height: 115
   - _kind: 0
-    _start: 8726
+    _start: 8722
     _count: 25
     _closed: 1
     _height: 120
   - _kind: 0
-    _start: 8751
+    _start: 8747
     _count: 23
     _closed: 1
     _height: 125
   - _kind: 0
-    _start: 8774
+    _start: 8770
     _count: 21
     _closed: 1
     _height: 130
   - _kind: 0
-    _start: 8795
+    _start: 8791
     _count: 18
     _closed: 1
     _height: 135
   - _kind: 0
-    _start: 8813
+    _start: 8809
     _count: 14
     _closed: 1
     _height: 140
   - _kind: 0
-    _start: 8827
+    _start: 8823
     _count: 14
     _closed: 1
     _height: 145
   - _kind: 0
-    _start: 8841
+    _start: 8837
     _count: 6
     _closed: 1
     _height: 150
   - _kind: 1
-    _start: 8847
+    _start: 8843
     _count: 153
     _closed: 1
     _height: 86.3351
   - _kind: 2
-    _start: 9000
+    _start: 8996
     _count: 36
     _closed: 0
     _height: 49.531578
   - _kind: 2
-    _start: 9036
+    _start: 9032
     _count: 11
     _closed: 0
     _height: 24.535458
   - _kind: 2
-    _start: 9047
+    _start: 9043
     _count: 35
     _closed: 0
     _height: 48.013176
   - _kind: 3
-    _start: 9082
+    _start: 9078
     _count: 7
     _closed: 1
     _height: 14.144666
   - _kind: 4
-    _start: 9089
+    _start: 9085
     _count: 16
     _closed: 1
     _height: 5.488235
   - _kind: 4
-    _start: 9105
+    _start: 9101
     _count: 8
     _closed: 1
     _height: 3.4660175
   - _kind: 4
-    _start: 9113
+    _start: 9109
     _count: 24
     _closed: 1
     _height: 4.356838
   - _kind: 4
-    _start: 9137
+    _start: 9133
     _count: 8
     _closed: 1
     _height: 5.5133505
   - _kind: 4
-    _start: 9145
+    _start: 9141
     _count: 16
     _closed: 1
     _height: 5.3928246
   - _kind: 4
-    _start: 9161
+    _start: 9157
     _count: 8
     _closed: 1
     _height: 5.6828938
   - _kind: 4
-    _start: 9169
-    _count: 16
-    _closed: 1
-    _height: 4.9785113
-  - _kind: 4
-    _start: 9185
+    _start: 9165
     _count: 8
     _closed: 1
     _height: 6.6352644
   - _kind: 4
-    _start: 9193
+    _start: 9173
     _count: 16
     _closed: 1
     _height: 6.390649
   - _kind: 4
-    _start: 9209
+    _start: 9189
     _count: 16
     _closed: 1
     _height: 1.1209737
   - _kind: 4
-    _start: 9225
+    _start: 9205
     _count: 8
     _closed: 1
     _height: 1.714358
   - _kind: 4
-    _start: 9233
+    _start: 9213
     _count: 8
     _closed: 1
     _height: 5.166382
   - _kind: 4
-    _start: 9241
+    _start: 9221
     _count: 16
     _closed: 1
     _height: 4.5818076
   - _kind: 4
-    _start: 9257
+    _start: 9237
     _count: 16
     _closed: 1
     _height: 8.065459
   - _kind: 4
-    _start: 9273
+    _start: 9253
     _count: 8
     _closed: 1
     _height: 2.1826777
   - _kind: 4
-    _start: 9281
+    _start: 9261
     _count: 16
     _closed: 1
     _height: 5.320697
   - _kind: 4
-    _start: 9297
+    _start: 9277
     _count: 8
     _closed: 1
     _height: 5.7739387
   - _kind: 4
-    _start: 9305
+    _start: 9285
     _count: 16
     _closed: 1
     _height: 5.6331816
   - _kind: 4
-    _start: 9321
+    _start: 9301
     _count: 8
     _closed: 1
     _height: 5.9788733
   - _kind: 4
-    _start: 9329
+    _start: 9309
     _count: 24
     _closed: 1
     _height: 0.99532765
   - _kind: 4
-    _start: 9353
+    _start: 9333
     _count: 24
     _closed: 1
     _height: 4.573728
@@ -10374,6 +10349,11 @@ MonoBehaviour:
   - micro.mule
   - micro.drone
   - place.shadowed_crater
+  - place.wake
+  - place.lander
+  - place.apron
+  - place.ruins
+  - place.midway
   _anchorPoints:
   - {x: 266.29584, y: 86.52475}
   - {x: 283.41486, y: 92.08706}
@@ -10403,3 +10383,8 @@ MonoBehaviour:
   - {x: 150.77847, y: 53.72247}
   - {x: 75.67194, y: 133.92146}
   - {x: 179.0304, y: 73.16954}
+  - {x: -2.4, y: -4}
+  - {x: 34.93698, y: 160.23547}
+  - {x: 14.9832325, y: 140.20164}
+  - {x: 95.07637, y: 184.99861}
+  - {x: -40.063545, y: 89.98424}

@@ -282,7 +282,8 @@ namespace MoonProject.World.Tests
                 for (int i = 0; i < _anchors.Count; i++)
                 {
                     WorldAnchor other = _anchors.Get(i);
-                    bool partOfKestrel = name == Kestrel && other.Id == WorldAnchorIds.KestrelTrail;
+                    bool partOfKestrel = name == Kestrel
+                        && (other.Id == WorldAnchorIds.KestrelTrail || other.Id == WorldAnchorIds.PlaceMidway);
                     if (other.Id == site.Id || partOfKestrel)
                     {
                         continue;
@@ -336,10 +337,11 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
-        public void RuinsCluster_IsFlatNearHomeInSpawnView_WithDrivableLanesFreeOfScatter()
+        public void RuinsCluster_IsFlatBeyondTheLanderInSpawnView_WithDrivableLanesFreeOfScatter()
         {
             GroundShape ruins = _surface.Shaping.Ruins;
-            Assert.That(ruins.Center.magnitude, Is.InRange(45f, 70f), "ruins distance from home");
+            Assert.That(Vector2.Distance(ruins.Center, _surface.Shaping.Lander.Center), Is.InRange(50f, 80f),
+                "the ruins stand about 65 m east of the lander (opening v2 §4)");
             float bearing = Mathf.Atan2(ruins.Center.x, ruins.Center.y) * Mathf.Rad2Deg;
             Assert.LessOrEqual(Mathf.Abs(Mathf.DeltaAngle(SpawnYaw, bearing)), SpawnHalfView,
                 "ruins cluster should stand in the spawn view");
@@ -366,11 +368,17 @@ namespace MoonProject.World.Tests
 
             List<ScatterInstance> plan = new ScatterPlanner(_surface, new ScatterSettings(), _anchors).Plan();
             WorldSystem.AddHomeApronStones(plan, _surface);
+            GroundShape lander = _surface.Shaping.Lander;
+            GroundShape apron = _surface.Shaping.Apron;
             foreach (ScatterInstance rock in plan)
             {
                 var at = new Vector2(rock.Position.x, rock.Position.z);
                 Assert.GreaterOrEqual(Vector2.Distance(at, ruins.Center), ruins.Radius,
                     $"{rock.Kind} at {at} encroaches on the ruins cluster lanes");
+                Assert.GreaterOrEqual(Vector2.Distance(at, lander.Center), lander.Radius,
+                    $"{rock.Kind} at {at} lies on the lander's footprint");
+                Assert.GreaterOrEqual(Vector2.Distance(at, apron.Center), apron.Radius,
+                    $"{rock.Kind} at {at} lies on the build apron");
             }
         }
 

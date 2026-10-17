@@ -203,7 +203,7 @@ namespace MoonProject.World.Tests
             Assert.AreEqual(0f, clock.TimeSeconds, ValueTolerance);
 
             clock.Tick(300f, out SkyPhaseChanged changed);
-            Assert.IsTrue(clock.IsHoldingEclipse, "still holding before ReleaseOpeningEclipse or MaxHoldSeconds");
+            Assert.IsTrue(clock.IsHoldingEclipse, "still holding before ReleaseOpeningEclipse");
             Assert.AreEqual(0f, clock.TimeSeconds, ValueTolerance);
             Assert.AreEqual(1f, clock.EclipseFactor, ValueTolerance);
             Assert.AreEqual(SkyPhase.Eclipse, changed.Phase);
@@ -214,16 +214,10 @@ namespace MoonProject.World.Tests
             Assert.AreEqual(25f, clock.TimeSeconds, ValueTolerance);
             Assert.AreEqual(0f, clock.EclipseFactor, ValueTolerance);
 
-            // Second clock: verify automatic release after MaxHoldSeconds (default 25 min = 1500 s).
-            var autoClock = new SunClock(_cycle, _sky);
-            autoClock.Tick(_cycle.MaxHoldSeconds - 10f, out _);
-            Assert.IsTrue(autoClock.IsHoldingEclipse, "holds just before MaxHoldSeconds");
-            Assert.AreEqual(0f, autoClock.TimeSeconds, ValueTolerance);
-
-            autoClock.Tick(25f, out _);
-            Assert.IsFalse(autoClock.IsHoldingEclipse, "releases itself at MaxHoldSeconds");
-            Assert.AreEqual(15f, autoClock.TimeSeconds, ValueTolerance,
-                "excess time past MaxHoldSeconds advances the clock");
+            var unreleased = new SunClock(_cycle, _sky);
+            unreleased.Tick(_cycle.DayLengthSeconds, out _);
+            Assert.IsTrue(unreleased.IsHoldingEclipse, "the eclipse never releases itself: progress releases it");
+            Assert.AreEqual(0f, unreleased.TimeSeconds, ValueTolerance);
         }
 
         [Test]

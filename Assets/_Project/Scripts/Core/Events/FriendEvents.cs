@@ -18,39 +18,6 @@ namespace MoonProject.Core.Events
         public Vector3 Position { get; }
     }
 
-    /// <summary>07 picked up one of a friend's missing parts.</summary>
-    public readonly struct FriendPartCollected
-    {
-        public FriendPartCollected(string friendId, int partIndex, int collected, int total)
-        {
-            FriendId = friendId;
-            PartIndex = partIndex;
-            Collected = collected;
-            Total = total;
-        }
-
-        public string FriendId { get; }
-
-        /// <summary>Which part (index into the friend's part list).</summary>
-        public int PartIndex { get; }
-
-        /// <summary>Parts gathered after this one.</summary>
-        public int Collected { get; }
-
-        public int Total { get; }
-    }
-
-    /// <summary>07's beam started stitching a friend back together.</summary>
-    public readonly struct FriendRepairStarted
-    {
-        public FriendRepairStarted(string friendId)
-        {
-            FriendId = friendId;
-        }
-
-        public string FriendId { get; }
-    }
-
     /// <summary>A friend is repaired and awake (published once it is up in the air, looking at 07).</summary>
     public readonly struct FriendRepaired
     {

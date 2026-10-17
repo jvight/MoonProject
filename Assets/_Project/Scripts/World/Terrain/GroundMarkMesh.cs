@@ -5,9 +5,9 @@ using UnityEngine;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Collects flat marks pressed into the dust (07's worn tracks, the lander's landing-blast scar, crew bootprints)
-    /// into one mesh for the rover's track shader: u runs across each strip or quad (0..1) for its feathered edge, v
-    /// along it, and the vertex alpha is the mark's strength.
+    /// Collects flat marks pressed into the dust (worn tracks, soft patches) into one mesh for the rover's track
+    /// shader: u runs across each strip (0..1) for its feathered edge, v along it, and the vertex alpha is the mark's
+    /// strength.
     /// </summary>
     public sealed class GroundMarkMesh
     {
@@ -17,13 +17,6 @@ namespace MoonProject.World
         private readonly List<int> _triangles = new List<int>();
 
         public int VertexCount => _positions.Count;
-
-        /// <summary>A strip <paramref name="halfWidth"/> either side of <paramref name="points"/>, flat across.</summary>
-        /// <param name="strength">Mark strength (0..1) at each point.</param>
-        public void AddStrip(IReadOnlyList<Vector3> points, IReadOnlyList<float> strength, float halfWidth)
-        {
-            AddStrip(points, strength, strength, halfWidth);
-        }
 
         /// <summary>
         /// A strip whose two edges wear on their own: <paramref name="leftStrength"/> and
@@ -59,21 +52,6 @@ namespace MoonProject.World
                     Quad(a, a + 1, a + 3, a + 2);
                 }
             }
-        }
-
-        /// <summary>A flat quad centred on <paramref name="centre"/>, its length along <paramref name="forward"/>.</summary>
-        public void AddQuad(Vector3 centre, Vector3 forward, float halfLength, float halfWidth, float strength)
-        {
-            forward.y = 0f;
-            Vector3 along = forward.normalized * halfLength;
-            Vector3 side = Vector3.Cross(Vector3.up, forward.normalized) * halfWidth;
-            Color32 color = Strength(strength);
-            int a = _positions.Count;
-            Add(centre - along - side, new Vector2(0f, 0f), color);
-            Add(centre - along + side, new Vector2(1f, 0f), color);
-            Add(centre + along - side, new Vector2(0f, 1f), color);
-            Add(centre + along + side, new Vector2(1f, 1f), color);
-            Quad(a, a + 1, a + 3, a + 2);
         }
 
         /// <summary>

@@ -45,12 +45,8 @@ namespace MoonProject.World
             "shader).")]
         [SerializeField] private Material _groundMarkMaterial;
 
-        [Tooltip("Art's landmark kit (Generated/Art/Landmarks): route posts, the chasm bridge, the dish frames.")]
+        [Tooltip("Art's prefabs World plans for: Kestrel-3's hull fragment variants (the cuttable slots' range).")]
         [SerializeField] private LandmarkPrefabs _landmarkPrefabs = new LandmarkPrefabs();
-
-        [Tooltip("Material of the orange vent's bead field (Generated/World/M_VentBeads, the rover's track shader " +
-            "tinted orange).")]
-        [SerializeField] private Material _ventBeadMaterial;
 
         [Tooltip("The beacon on The Peak; placed on the summit and breathed by the beacon settings.")]
         [SerializeField] private PeakBeacon _peakBeacon;
@@ -71,7 +67,6 @@ namespace MoonProject.World
         private GameObject _generatedRoot;
         private Mesh _earthMesh;
         private Mesh _tracksMesh;
-        private Mesh _ventMesh;
         private List<ScrapPlate> _cuttables = new List<ScrapPlate>();
 
         public MoonSurface Surface { get; private set; }
@@ -164,8 +159,6 @@ namespace MoonProject.World
             LastBuild = _terrainBuilder.Build(_generatedRoot.transform, Surface, _settings.Mesh, _settings.Paint,
                 toLight, _groundMaterial, hideFlags);
             _gateBuilder.Build(_generatedRoot.transform, surface.Canyon.Slabs, _paletteMaterial, hideFlags);
-            ScrapFieldBuilder.Build(_generatedRoot.transform, surface, _settings.ScrapField, _settings.Seed,
-                _landmarkPrefabs.HullFragments, hideFlags);
             _cuttables = ScrapFieldPlanner.PlanCuttables(surface, _settings.ScrapField,
                 _landmarkPrefabs.HullFragments.Length, _settings.Seed);
             List<ScatterInstance> scatterInstances = scatterPlan.GetAwaiter().GetResult();
@@ -174,9 +167,6 @@ namespace MoonProject.World
                 scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _paletteMaterial, hideFlags);
             BuildEarth(hideFlags);
             BuildWornTracks(hideFlags);
-            BuildVentField(hideFlags);
-            LandmarkPlacer.Build(_generatedRoot.transform, surface, Anchors, _settings.Landmarks, _settings.Seed,
-                _landmarkPrefabs, hideFlags);
             _peakBeacon.transform.position = Layout.PeakPosition;
             _peakBeacon.Configure(_settings.Beacon);
         }
@@ -186,6 +176,7 @@ namespace MoonProject.World
             // 1. Deterministic companion cobbles and spall pebbles around large boulders on the basin floor
             // so every major boulder sits in a fragmented lunar boulder family with smaller spall stones at its base.
             int baseCount = instances.Count;
+            GroundShape[] footprints = { surface.Shaping.Ruins, surface.Shaping.Lander, surface.Shaping.Apron };
             for (int i = 0; i < baseCount; i++)
             {
                 ScatterInstance b = instances[i];
@@ -213,8 +204,7 @@ namespace MoonProject.World
                         : b.Size * Mathf.Lerp(0.62f, 1.85f, Hashing.ToUnit(Hashing.Mix(hk ^ 0x2468ACE0u)));
                     float sx = center2D.x + Mathf.Cos(angle) * radius;
                     float sz = center2D.y + Mathf.Sin(angle) * radius;
-                    GroundShape ruins = surface.Shaping.Ruins;
-                    if (Vector2.Distance(new Vector2(sx, sz), ruins.Center) < ruins.Radius + 3.5f)
+                    if (OnOpeningFootprint(footprints, new Vector2(sx, sz)))
                     {
                         continue;
                     }
@@ -300,6 +290,23 @@ namespace MoonProject.World
             }
         }
 
+        // A boulder's companion stones keep this far outside the opening's flat footprints (the ruins, the lander and
+        // the build apron), so none lies where the player builds or drives in.
+        private const float CompanionClearance = 3.5f;
+
+        private static bool OnOpeningFootprint(GroundShape[] footprints, Vector2 at)
+        {
+            foreach (GroundShape shape in footprints)
+            {
+                if (Vector2.Distance(at, shape.Center) < shape.Radius + CompanionClearance)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private CraterField CreateCraterField(MoonSurface surface)
         {
             SurfaceSettings ground = _settings.Surface;
@@ -322,43 +329,26 @@ namespace MoonProject.World
             meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
         }
 
-        /// <summary>The old vent's orange bead field (M3-27), pressed into the ground.</summary>
-        private void BuildVentField(HideFlags hideFlags)
-        {
-            _ventMesh = LandmarkPlacer.BuildVentField(Surface, Anchors, _settings.Landmarks, _settings.Seed);
-            _ventMesh.hideFlags = hideFlags;
-            var field = new GameObject("VentBeads") { hideFlags = hideFlags };
-            field.transform.SetParent(_generatedRoot.transform, false);
-            field.AddComponent<MeshFilter>().sharedMesh = _ventMesh;
-            var meshRenderer = field.AddComponent<MeshRenderer>();
-            meshRenderer.sharedMaterial = _ventBeadMaterial;
-            meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            meshRenderer.receiveShadows = false;
-            meshRenderer.lightProbeUsage = LightProbeUsage.Off;
-            meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
-        }
-
-        /// <summary>07's worn tracks from home out to the places it goes (M3-18 V4), following the ground.</summary>
+        /// <summary>The crew's faded tracks along the opening's route (M3-18 V4), following the ground.</summary>
         private void BuildWornTracks(HideFlags hideFlags)
         {
             GroundMarkSettings settings = _settings.GroundMarks;
             var marks = new GroundMarkMesh();
-            Vector3 home = Layout.BasePosition;
             MoonSurface surface = Surface;
             System.Func<float, float, float> height = (x, z) => surface.Sample(x, z).Height;
-            for (int i = 0; i < settings.Destinations.Length; i++)
+            for (int i = 1; i < settings.Route.Length; i++)
             {
-                string id = settings.Destinations[i];
-                if (!Anchors.TryGet(id, out WorldAnchor anchor))
+                if (!RouteAnchor(settings.Route[i - 1], out WorldAnchor start) || !RouteAnchor(settings.Route[i],
+                        out WorldAnchor end))
                 {
-                    Debug.LogError($"{nameof(WorldSystem)}: worn track destination '{id}' is not a world anchor.", this);
                     continue;
                 }
 
-                var from = new Vector2(home.x, home.z);
-                var to = new Vector2(anchor.Position.x, anchor.Position.z);
-                to -= (to - from).normalized * anchor.Radius;
-                GroundMarks.AddTrack(marks, from, to, settings, Hashing.Mix((uint)(_settings.Seed + i)), height);
+                var from = new Vector2(start.Position.x, start.Position.z);
+                var to = new Vector2(end.Position.x, end.Position.z);
+                Vector2 heading = (to - from).normalized;
+                GroundMarks.AddTrack(marks, from + heading * start.Radius, to - heading * end.Radius, settings,
+                    Hashing.Mix((uint)(_settings.Seed + i)), height);
             }
 
             _tracksMesh = marks.ToMesh("WornTracks");
@@ -372,6 +362,17 @@ namespace MoonProject.World
             meshRenderer.receiveShadows = false;
             meshRenderer.lightProbeUsage = LightProbeUsage.Off;
             meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+        }
+
+        private bool RouteAnchor(string id, out WorldAnchor anchor)
+        {
+            if (Anchors.TryGet(id, out anchor))
+            {
+                return true;
+            }
+
+            Debug.LogError($"{nameof(WorldSystem)}: worn track route point '{id}' is not a world anchor.", this);
+            return false;
         }
 
         private void DestroyGenerated()
@@ -391,12 +392,7 @@ namespace MoonProject.World
                 Release(_tracksMesh);
             }
 
-            if (_ventMesh != null)
-            {
-                Release(_ventMesh);
-            }
 
-            _ventMesh = null;
 
             _tracksMesh = null;
 
@@ -463,9 +459,9 @@ namespace MoonProject.World
             }
 
             if (_groundMaterial == null || _paletteMaterial == null || _earthMaterial == null
-                || _groundMarkMaterial == null || _ventBeadMaterial == null)
+                || _groundMarkMaterial == null)
             {
-                return "Ground, Palette, Earth, Ground Mark and Vent Bead materials must be assigned.";
+                return "Ground, Palette, Earth and Ground Mark materials must be assigned.";
             }
 
             string rocks = RockProblem(_pebbleRocks, "Pebble Rocks") ?? RockProblem(_boulderRocks, "Boulder Rocks")

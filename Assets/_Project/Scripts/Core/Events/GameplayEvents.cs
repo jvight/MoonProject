@@ -157,24 +157,6 @@ namespace MoonProject.Core.Events
         public int SetSize { get; }
     }
 
-    /// <summary>
-    /// A relic settled into 07's Cargo Cradle (docs/features/M3-11): it rides home in the rear rack instead of on the
-    /// tether.
-    /// </summary>
-    public readonly struct RelicStowed
-    {
-        public RelicStowed(string relicId, Vector3 position)
-        {
-            RelicId = relicId;
-            Position = position;
-        }
-
-        public string RelicId { get; }
-
-        /// <summary>Where it rests in the rack (the cargo seat).</summary>
-        public Vector3 Position { get; }
-    }
-
     /// <summary>An upgrade (rover or base) was bought.</summary>
     public readonly struct UpgradePurchased
     {
@@ -187,60 +169,6 @@ namespace MoonProject.Core.Events
         public string UpgradeId { get; }
 
         public int Level { get; }
-    }
-
-    /// <summary>
-    /// A beat of a station's crafting that Audio voices (docs/features/M3-14, VISION ruling 14: 07 has no hands): see
-    /// <see cref="StationCued"/>.
-    /// </summary>
-    public enum StationCue
-    {
-        /// <summary>
-        /// 07's beam reaches the station's hopper and the recipe's bundles start flying in (a feed rattle).
-        /// </summary>
-        FeedStarted = 0,
-
-        /// <summary>
-        /// All the recipe's bundles are in the hopper (the feed's hum settles away): the station takes over from here.
-        /// </summary>
-        Fed = 1,
-
-        /// <summary>The radio tower's service hatch swings open (a hinge creak).</summary>
-        HatchOpened = 2,
-
-        /// <summary>07's beam starts stitching up the tower while its new section rises.</summary>
-        StitchStarted = 3,
-
-        /// <summary>The stitching beam lets go and the tower's hatch swings shut (a latch click).</summary>
-        HatchClosed = 4,
-
-        /// <summary>
-        /// One of the recipe's bundles reaches the hopper's mouth and drops in (a clunk and a short rattle): once per
-        /// bundle, between <see cref="FeedStarted"/> and <see cref="Fed"/>, the last one just before
-        /// <see cref="Fed"/>.
-        /// </summary>
-        BundleDropped = 5,
-    }
-
-    /// <summary>
-    /// A station (Kenji's Rover Bay, the radio tower's service port) did something worth a sound while crafting
-    /// <see cref="UpgradeId"/>, which was bought just before (<see cref="UpgradePurchased"/>).
-    /// </summary>
-    public readonly struct StationCued
-    {
-        public StationCued(StationCue cue, string upgradeId, Vector3 position)
-        {
-            Cue = cue;
-            UpgradeId = upgradeId;
-            Position = position;
-        }
-
-        public StationCue Cue { get; }
-
-        public string UpgradeId { get; }
-
-        /// <summary>The hopper's mouth (feed beats), the hatch (hatch beats) or the stitch's start.</summary>
-        public Vector3 Position { get; }
     }
 
     /// <summary>
@@ -399,21 +327,6 @@ namespace MoonProject.Core.Events
         public bool Open { get; }
     }
 
-    /// <summary>A radio-hop began: static rises and the view eases out before 07 is moved.</summary>
-    public readonly struct RadioHopStarted
-    {
-        public RadioHopStarted(string fromId, string toId)
-        {
-            FromId = fromId;
-            ToId = toId;
-        }
-
-        /// <summary>The node 07 hops from ("home" or a relay id).</summary>
-        public string FromId { get; }
-
-        public string ToId { get; }
-    }
-
     /// <summary>A radio-hop ended: 07 stands on the target pad and the view eases back in.</summary>
     public readonly struct RadioHopFinished
     {
@@ -425,69 +338,10 @@ namespace MoonProject.Core.Events
         public string ToId { get; }
     }
 
-    /// <summary>07 picked up a cassette tape (a new radio track and Ro's liner note).</summary>
-    public readonly struct CassetteCollected
-    {
-        public CassetteCollected(string cassetteId, Vector3 position, int collected, int total)
-        {
-            CassetteId = cassetteId;
-            Position = position;
-            Collected = collected;
-            Total = total;
-        }
-
-        public string CassetteId { get; }
-
-        public Vector3 Position { get; }
-
-        /// <summary>Tapes owned after this one.</summary>
-        public int Collected { get; }
-
-        /// <summary>Tapes in the whole game.</summary>
-        public int Total { get; }
-    }
-
-    /// <summary>
-    /// Something <see cref="IRadioProgram"/> reports changed (dial turned, tape chosen or collected, dial unlocked,
-    /// save loaded). Listeners re-read the program; the event carries no data so it can never disagree with it.
-    /// </summary>
-    public readonly struct RadioProgramChanged
-    {
-    }
-
-    /// <summary>07 opened a crew log (a cache or a friend's repair): the UI shows its card.</summary>
-    public readonly struct CrewLogFound
-    {
-        public CrewLogFound(string logId, Vector3 position)
-        {
-            LogId = logId;
-            Position = position;
-        }
-
-        /// <summary>Localization key suffix: the card reads <c>log.&lt;id&gt;</c>.</summary>
-        public string LogId { get; }
-
-        public Vector3 Position { get; }
-    }
-
     /// <summary>Bell started pointing at something undiscovered (a warm pillar stands at the target).</summary>
     public readonly struct BellSignalPicked
     {
         public BellSignalPicked(BellSignalTarget target, Vector3 position)
-        {
-            Target = target;
-            Position = position;
-        }
-
-        public BellSignalTarget Target { get; }
-
-        public Vector3 Position { get; }
-    }
-
-    /// <summary>The thing Bell pointed at was found; its pillar fades.</summary>
-    public readonly struct BellSignalFound
-    {
-        public BellSignalFound(BellSignalTarget target, Vector3 position)
         {
             Target = target;
             Position = position;
@@ -535,47 +389,6 @@ namespace MoonProject.Core.Events
         }
 
         public BellCue Cue { get; }
-
-        public Vector3 Position { get; }
-    }
-
-    /// <summary>
-    /// A moment of a relay mast's restoration that Audio voices (other domains may react too): see
-    /// <see cref="RelayCued"/>. The link tone needs no cue of its own: it plays on <see cref="RelayRestored"/>, when
-    /// the mast comes online and its pulse leaves for home.
-    /// </summary>
-    public enum RelayCue
-    {
-        /// <summary>07 picked up a mast's relay part (drawn in like a friend's part).</summary>
-        PartCollected = 0,
-
-        /// <summary>07's beam starts stitching the mast (the recipe is paid).</summary>
-        Stitched = 1,
-
-        /// <summary>The relay part clicks into the mast's junction box.</summary>
-        PartSlotted = 2,
-
-        /// <summary>The mast straightens up with a creak.</summary>
-        Straightened = 3,
-
-        /// <summary>The mast's lamp starts warming: to full when it links home, else to a low listening glow.</summary>
-        LampWarmed = 4,
-    }
-
-    /// <summary>A relay mast did something worth a sound (docs/features/M3-06).</summary>
-    public readonly struct RelayCued
-    {
-        public RelayCued(RelayCue cue, string relayId, Vector3 position)
-        {
-            Cue = cue;
-            RelayId = relayId;
-            Position = position;
-        }
-
-        public RelayCue Cue { get; }
-
-        /// <summary>The mast's anchor id ("relay.0", ...).</summary>
-        public string RelayId { get; }
 
         public Vector3 Position { get; }
     }
@@ -635,48 +448,6 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// A dormant station answered the sonar (docs/features/M3-16 rule 1): a soft low "not yet" tone for Audio and one
-    /// line for UI saying what wakes it (<see cref="ReasonKey"/>: "notyet.bay", "notyet.lift", "notyet.shelf").
-    /// Published when the ping's ring reaches it.
-    /// </summary>
-    public readonly struct StationNotYet
-    {
-        public StationNotYet(string reasonKey, Vector3 position, float distance)
-        {
-            ReasonKey = reasonKey;
-            Position = position;
-            Distance = distance;
-        }
-
-        public string ReasonKey { get; }
-
-        public Vector3 Position { get; }
-
-        public float Distance { get; }
-    }
-
-    /// <summary>
-    /// Kenji's pen plotter on the bay's back wall started drawing the sheet of decoded kit <see cref="KitId"/>
-    /// (docs/features/M3-19 §5): the hand-off pulse arrived, or the bay woke with sheets waiting. Audio plays the pen
-    /// scratch at <see cref="Position"/> while it draws for <see cref="Seconds"/>.
-    /// </summary>
-    public readonly struct BlueprintDrawing
-    {
-        public BlueprintDrawing(string kitId, Vector3 position, float seconds)
-        {
-            KitId = kitId;
-            Position = position;
-            Seconds = seconds;
-        }
-
-        public string KitId { get; }
-
-        public Vector3 Position { get; }
-
-        public float Seconds { get; }
-    }
-
-    /// <summary>
     /// 07 picked up one of the tower's components (docs/features/M3-16 P1, M3-21 §6): the component tower level
     /// <see cref="TowerLevel"/> needs besides materials. <see cref="PartId"/> is Art's model name (Part_TowerCoil,
     /// Part_Transformer, Part_RelaySpare). It rides on 07's back until <see cref="ComponentDelivered"/>. Restored is
@@ -703,27 +474,6 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// 07 handed component <see cref="PartId"/> to the tower's port hopper at <see cref="Position"/>
-    /// (docs/features/M3-16 P1): it leaves 07's back and glides in, and tower level <see cref="TowerLevel"/> can now be
-    /// built.
-    /// </summary>
-    public readonly struct ComponentDelivered
-    {
-        public ComponentDelivered(string partId, int towerLevel, Vector3 position)
-        {
-            PartId = partId;
-            TowerLevel = towerLevel;
-            Position = position;
-        }
-
-        public string PartId { get; }
-
-        public int TowerLevel { get; }
-
-        public Vector3 Position { get; }
-    }
-
-    /// <summary>
     /// 07 parked on its charging dock after a trip on which something new woke or was found (docs/features/M3-16 P6,
     /// "the dock's evening"). Rover eases out to a wide shot of home's newly lit lamps and Audio swells the evening
     /// tone; once the shot has settled, Gameplay's tower sweep raises the next signal pillar. Published by Gameplay at
@@ -744,41 +494,6 @@ namespace MoonProject.Core.Events
         /// recovery row completed (docs/features/M3-21 §2); the tower's sweep waits as long.
         /// </summary>
         public float TowerHold { get; }
-    }
-
-    /// <summary>A beat of the crew's belly lift that Audio voices (docs/features/M3-19 §4): see <see cref="LiftCued"/>.
-    /// The lift's feed and stitch use <see cref="StationCued"/>.</summary>
-    public enum LiftCue
-    {
-        /// <summary>07 comes near the jammed winch (once per approach, at the winch): an old creak.</summary>
-        WinchCreaked = 0,
-
-        /// <summary>The platform starts moving (at the platform): a ratchet and a soft motor hum while it rides.
-        /// </summary>
-        RideStarted = 1,
-
-        /// <summary>The platform reaches a stop (at the platform): a clunk, and the ride's sound lets go.</summary>
-        RideStopped = 2,
-
-        /// <summary>The belly hatch's leaves slide open above the rising platform (at the hatch): an A.</summary>
-        HatchOpened = 3,
-
-        /// <summary>The belly hatch's leaves close behind the lowered platform (at the hatch): a soft seat.</summary>
-        HatchClosed = 4,
-    }
-
-    /// <summary>The crew's lift did something worth a sound at <see cref="Position"/>.</summary>
-    public readonly struct LiftCued
-    {
-        public LiftCued(LiftCue cue, Vector3 position)
-        {
-            Cue = cue;
-            Position = position;
-        }
-
-        public LiftCue Cue { get; }
-
-        public Vector3 Position { get; }
     }
 
     /// <summary>
@@ -851,23 +566,6 @@ namespace MoonProject.Core.Events
 
         /// <summary>The needed stage locked: the beam fires after the held breath.</summary>
         public bool IsFullLock => Stage >= StagesNeeded;
-    }
-
-    /// <summary>
-    /// The Rover Bay finished crafting <see cref="Part"/>: it waits in the parts row at <see cref="RowIndex"/>
-    /// (docs/design/0.5.5-owner-feedback.md §3.5), never in a hold slot and never fitted by itself.
-    /// </summary>
-    public readonly struct PartCrafted
-    {
-        public PartCrafted(RoverKitPiece part, int rowIndex)
-        {
-            Part = part;
-            RowIndex = rowIndex;
-        }
-
-        public RoverKitPiece Part { get; }
-
-        public int RowIndex { get; }
     }
 
     /// <summary>
@@ -1064,50 +762,6 @@ namespace MoonProject.Core.Events
         public string TextKey { get; }
 
         public Vector3 Point { get; }
-    }
-
-    /// <summary>
-    /// 07 came within the place <see cref="PlaceId"/> for the first time this save while fragments still lie there
-    /// (docs/design/0.5.5-owner-feedback.md §1.4: every site with fragments says so once): UI's place card shows
-    /// "<see cref="Left"/> fragments to scan" (scan.site_count). Never published on a load.
-    /// </summary>
-    public readonly struct ScanSiteReached
-    {
-        public ScanSiteReached(string placeId, Vector3 position, int left, int count)
-        {
-            PlaceId = placeId ?? string.Empty;
-            Position = position;
-            Left = left;
-            Count = count;
-        }
-
-        /// <summary>The crew map place id (<see cref="IScanSites.PlaceId"/>).</summary>
-        public string PlaceId { get; }
-
-        public Vector3 Position { get; }
-
-        /// <summary>Fragments still to scan there.</summary>
-        public int Left { get; }
-
-        /// <summary>Fragments that lay there in all.</summary>
-        public int Count { get; }
-    }
-
-    /// <summary>
-    /// The last fragment at the place <see cref="PlaceId"/> is scanned (§1.4): the chart's pencil bracket there goes,
-    /// and listening no longer counts it. Never published on a load (read <see cref="IScanSites.Left"/>).
-    /// </summary>
-    public readonly struct ScanSiteEmptied
-    {
-        public ScanSiteEmptied(string placeId, Vector3 position)
-        {
-            PlaceId = placeId ?? string.Empty;
-            Position = position;
-        }
-
-        public string PlaceId { get; }
-
-        public Vector3 Position { get; }
     }
 
     /// <summary>

@@ -48,6 +48,10 @@ namespace MoonProject.Gameplay
         [Tooltip("Metres from an open crate's front within which 07 collects what it holds (B4: 07 drives up to it).")]
         [Range(1f, 8f)] [SerializeField] private float _collectReach = 3f;
 
+        [Header("The recovery protocol (§2)")]
+        [Tooltip("The rows after Power: their lamps, dark through the opening.")]
+        [SerializeField] private RecoveryLamps _recoveryLamps = new RecoveryLamps(4, 4, 1);
+
         [Header("Supply (§4, §10: the lander's open crate and the sealed ones)")]
         [Tooltip("Every crate of the opening. A crate stands by a world anchor or a Lumen ruin piece " +
                  "([World]/Ruins/<id>), in its frame. The lander's open crate (B4: Metal 2, Wiring 1 and the spare " +
@@ -55,29 +59,29 @@ namespace MoonProject.Gameplay
                  "(after B6).")]
         [SerializeField] private SupplyCache[] _caches =
         {
-            new SupplyCache("supply.wake", "place.wake", new Vector3(2.5f, 0f, -1.5f), 30f, "CoilCrate",
+            new SupplyCache("supply.wake", "place.wake", new Vector3(2.5f, 0f, -1.5f), 30f, "Crate_S",
                 new Recipe(3, 1, 0)),
-            new SupplyCache("supply.midway", "place.midway", new Vector3(1.5f, 0f, 0f), -20f, "CoilCrate",
+            new SupplyCache("supply.midway", "place.midway", new Vector3(1.5f, 0f, 0f), -20f, "Crate_S",
                 new Recipe(2, 1, 0)),
-            new SupplyCache("supply.lander.open", "place.lander", new Vector3(6f, 0f, 9f), -30f, "CoilCrate",
+            new SupplyCache("supply.lander.open", "place.lander", new Vector3(6f, 0f, 9f), -30f, "Crate_M",
                 new Recipe(2, 1, 0), true, "part.igniter"),
-            new SupplyCache("supply.lander.a", "place.lander", new Vector3(-5f, 0f, -9f), 180f, "CoilCrate",
+            new SupplyCache("supply.lander.a", "place.lander", new Vector3(-5f, 0f, -9f), 180f, "Crate_M",
                 new Recipe(3, 2, 0)),
-            new SupplyCache("supply.lander.b", "place.lander", new Vector3(5f, 0f, -9f), 160f, "CoilCrate",
+            new SupplyCache("supply.lander.b", "place.lander", new Vector3(5f, 0f, -9f), 160f, "Crate_M",
                 new Recipe(3, 2, 0)),
-            new SupplyCache("supply.lander.panels", "place.lander", new Vector3(0f, 0f, -12f), 0f, "JunctionBox",
+            new SupplyCache("supply.lander.panels", "place.lander", new Vector3(0f, 0f, -12f), 0f, "Crate_M",
                 new Recipe(6, 0, 0)),
-            new SupplyCache("supply.habitat.reel", "HabitatModules", new Vector3(3f, 0f, -3f), 0f, "CoilCrate",
+            new SupplyCache("supply.habitat.reel", "HabitatModules", new Vector3(3f, 0f, -3f), 0f, "Crate_M",
                 new Recipe(0, 4, 0)),
-            new SupplyCache("supply.workshop.a", "KenjiWorkshop", new Vector3(-2.5f, 0f, -3f), 0f, "Cabinet",
+            new SupplyCache("supply.workshop.a", "KenjiWorkshop", new Vector3(-2.5f, 0f, -3f), 0f, "Crate_S",
                 new Recipe(0, 2, 2)),
-            new SupplyCache("supply.workshop.b", "KenjiWorkshop", new Vector3(2.5f, 0f, -3f), 0f, "Cabinet",
+            new SupplyCache("supply.workshop.b", "KenjiWorkshop", new Vector3(2.5f, 0f, -3f), 0f, "Crate_S",
                 new Recipe(0, 2, 2)),
-            new SupplyCache("supply.tower.a", "RadioTower", new Vector3(-3f, 0f, -2.5f), 0f, "JunctionBox",
+            new SupplyCache("supply.tower.a", "RadioTower", new Vector3(-3f, 0f, -2.5f), 0f, "Crate_S",
                 new Recipe(2, 0, 1)),
-            new SupplyCache("supply.tower.b", "RadioTower", new Vector3(3f, 0f, -2.5f), 0f, "JunctionBox",
+            new SupplyCache("supply.tower.b", "RadioTower", new Vector3(3f, 0f, -2.5f), 0f, "Crate_S",
                 new Recipe(2, 0, 1)),
-            new SupplyCache("supply.scatter", "ScatterSet", new Vector3(0f, 0f, -3f), 0f, "JunctionBox",
+            new SupplyCache("supply.scatter", "ScatterSet", new Vector3(0f, 0f, -3f), 0f, "Crate_M",
                 new Recipe(6, 0, 0)),
         };
 
@@ -91,5 +95,6 @@ namespace MoonProject.Gameplay
         public IReadOnlyList<SupplyCache> Caches => _caches;
         public string IgniterPart => _igniterPart;
         public float CollectReach => _collectReach;
+        public RecoveryLamps RecoveryLamps => _recoveryLamps;
     }
 }

@@ -126,7 +126,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Directory.CreateDirectory(CaptureFolder);
             yield return Boot();
 
-            BuildField build = _gameplay.Build;
+            BuildField build = _gameplay.Building;
             ScanField scans = _gameplay.Scans;
             Assert.IsNotNull(build, "BuildField must be initialized.");
             Assert.IsNotNull(scans, "ScanField must be initialized.");
@@ -333,12 +333,6 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             _context = bootstrap.Context;
             _view = _context.Get<IViewCamera>().Camera;
-
-            BaseProgression progression = _gameplay.GetComponentInChildren<BaseProgression>(true);
-            if (progression != null)
-            {
-                progression.enabled = false;
-            }
 
             _originalPanelSettings = _document.panelSettings;
             _uiTarget = new RenderTexture(

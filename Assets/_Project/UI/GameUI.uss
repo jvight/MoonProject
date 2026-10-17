@@ -1308,7 +1308,7 @@ Label {
 }
 
 .readout__line {
-    font-size: 20px;
+    font-size: 18px;
     white-space: nowrap;
     color: var(--moon-cream);
     text-shadow: 0 2px 12px var(--moon-shadow);
@@ -1329,13 +1329,13 @@ Label {
     background-color: var(--moon-cream-glow);
 }
 
-/* The Sun's arc above the battery dial: what is left of the Sun over the rim, the world's only clock */
+/* The Sun's arc at the top right: what is left of the Sun over the rim, the world's only clock */
 
 .sun-arc {
     position: absolute;
-    left: 100px;
-    bottom: 227px;
-    width: 142px;
+    right: 100px;
+    top: 69px;
+    width: 96px;
     align-items: flex-start;
 }
 

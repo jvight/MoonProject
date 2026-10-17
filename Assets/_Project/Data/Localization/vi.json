@@ -1117,6 +1117,10 @@
         {
             "key": "build.energy.card",
             "text": "Pin {0}"
+        },
+        {
+            "key": "hint.pickup",
+            "text": "Nhặt"
         }
     ]
 }

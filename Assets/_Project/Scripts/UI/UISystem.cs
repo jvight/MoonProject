@@ -23,6 +23,9 @@ namespace MoonProject.UI
     {
         private const int CachedNumbers = 1000;
 
+        // The hold's change lands a frame or two after the press; the chip stays "the cause" this long.
+        private const float PickUpGraceSeconds = 1.5f;
+
         [Tooltip("The UIDocument showing GameUI.uxml with the Lunarion PanelSettings.")]
         [SerializeField] private UIDocument _document;
 
@@ -91,6 +94,7 @@ namespace MoonProject.UI
         private bool _titleWaiting;
         private bool _titleHasSave;
         private float _sinceAwake;
+        private float _pickUpGrace;
 
         /// <summary>The localization service this system registered (tests and editor tools read it).</summary>
         internal LocalizationService Localization => _localization;
@@ -334,7 +338,7 @@ namespace MoonProject.UI
             _salvageRing = new SalvageRing(_layout, _tuning.Salvage, _tuning.Prompts, services.Salvage, services.View);
             _buildStrip = new BuildStripView(_layout, _tuning.BuildStripReveal, _tuning.Prompts, _localization,
                 _numbers, services.Materials, services.View, services.BuildField, _structureIcons, _glyphs,
-                services.WeldEnergy);
+                services.BuildEnergy);
             _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold, services.Systems,
                 _roverDiagram, _glyphs, _numbers, services.Events, _ledger);
             BindFacePanel(root);
@@ -433,6 +437,9 @@ namespace MoonProject.UI
             Rect panel = _layout.Root.layout;
             Vector2 panelSize = float.IsNaN(panel.width) ? Vector2.zero : panel.size;
             _buildStrip?.Tick(hudTime, !paused && _awake && !cargoOpen, panelSize, device);
+            _pickUpGrace = _services.Hints.Primary.Kind == InteractionKind.PickUp
+                ? PickUpGraceSeconds
+                : Mathf.Max(0f, _pickUpGrace - deltaTime);
             _prompt.Tick(deltaTime, PromptsOpen(paused) && holder == PromptHolder.Chip,
                 _services.Hints.Primary, device, panelSize);
             _salvageRing.Tick(deltaTime, !paused && _awake, panelSize);
@@ -769,6 +776,11 @@ namespace MoonProject.UI
         {
             _carrying = changed.UsedSlots > 0;
             _cargo?.MarkDirty();
+            if (_pickUpGrace > 0f)
+            {
+                _director.NotifyUsed(InteractionKind.PickUp);
+            }
+
         }
 
         private void OnRoverAwoke(RoverAwoke awoke)

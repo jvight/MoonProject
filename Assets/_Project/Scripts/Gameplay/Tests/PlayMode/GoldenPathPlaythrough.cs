@@ -43,7 +43,8 @@ namespace MoonProject.Gameplay.PlayModeTests
     {
         private const int TestTimeoutMs = 900000;
 
-        /// <summary>Seconds the opening may take end to end (opening-v2 §6: the Playthrough runs in ≤ 10 min).</summary>
+        /// <summary>Seconds the opening may take end to end (opening-v2 §6: the Playthrough runs in ≤ 10
+        /// min).</summary>
         private const float TotalBudget = 600f;
 
         private const float StopSpeed = 0.3f;
@@ -63,13 +64,15 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Metres from the lander's centre, on its port side, where 07 pulls up (B2).</summary>
         private const float LanderStandOff = 12f;
 
-        /// <summary>Metres the solar array, the battery bank and the mast stand from the pad (inside 14 m reach).</summary>
+        /// <summary>Metres the solar array, the battery bank and the mast stand from the pad (inside 14 m
+        /// reach).</summary>
         private const float BaseSpacing = 7f;
 
         /// <summary>Seconds the first sunset may take once the base is night-ready (opening-v2 §9 ruling 2).</summary>
         private const float SunsetTimeout = 240f;
 
-        /// <summary>Seconds a line or a milestone takes to follow the game's state (the flow ticks every frame).</summary>
+        /// <summary>Seconds a line or a milestone takes to follow the game's state (the flow ticks every
+        /// frame).</summary>
         private const float FollowTimeout = 3f;
 
         private static readonly string ReportPath = Path.Combine(GameplayFixture.CaptureFolder, "playthrough.md");

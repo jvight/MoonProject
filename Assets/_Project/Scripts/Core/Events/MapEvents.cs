@@ -3,38 +3,6 @@ using UnityEngine;
 namespace MoonProject.Core.Events
 {
     /// <summary>
-    /// A place's light was seen for the first time this save (docs/features/M3-07): the lookout's sweep, a sonar answer
-    /// or the dock's evening pillar. Published by Gameplay once per save per place; the map draws a pencil ring.
-    /// </summary>
-    public readonly struct MapPlaceSeen
-    {
-        public MapPlaceSeen(string placeId, Vector3 position)
-        {
-            PlaceId = placeId;
-            Position = position;
-        }
-
-        /// <summary>The place's id (<see cref="Map.MapPlace.Id"/>).</summary>
-        public string PlaceId { get; }
-
-        public Vector3 Position { get; }
-    }
-
-    /// <summary>07 reached a place for the first time this save (docs/features/M3-07). Published by Gameplay once.</summary>
-    public readonly struct MapPlaceVisited
-    {
-        public MapPlaceVisited(string placeId, Vector3 position)
-        {
-            PlaceId = placeId;
-            Position = position;
-        }
-
-        public string PlaceId { get; }
-
-        public Vector3 Position { get; }
-    }
-
-    /// <summary>
     /// The view opened on the crew's map (docs/features/M3-07): UI shows the map, Rover holds 07 still and frames
     /// <see cref="Position"/>. Published by Gameplay's map system when its trigger opens the look (where the map hangs
     /// is decided by the lander's cabin spec); Audio warms the light table's hum.

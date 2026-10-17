@@ -1,7 +1,7 @@
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Stable ids and localization key helper for the 10 robot-scale base structures (0.5.7).
+    /// Stable ids and localization key helper for the robot-scale base structures of the opening (opening-v2 §5).
     /// </summary>
     public static class StructureIds
     {
@@ -9,14 +9,9 @@ namespace MoonProject.Gameplay
         public const string SolarArray = "solar_array";
         public const string BatteryBank = "battery_bank";
         public const string PowerPylon = "power_pylon";
-        public const string Smelter = "smelter";
-        public const string Fabricator = "fabricator";
-        public const string StorageRack = "storage_rack";
-        public const string UpgradeBay = "upgrade_bay";
         public const string AntennaMast = "antenna_mast";
-        public const string VehiclePad = "vehicle_pad";
 
-        public const int Count = 10;
+        public const int Count = 5;
 
         public static readonly string[] All =
         {
@@ -24,12 +19,7 @@ namespace MoonProject.Gameplay
             SolarArray,
             BatteryBank,
             PowerPylon,
-            Smelter,
-            Fabricator,
-            StorageRack,
-            UpgradeBay,
             AntennaMast,
-            VehiclePad,
         };
 
         private const string NamePrefix = "structure.";

@@ -14,7 +14,7 @@ namespace MoonProject.World
         /// <summary>Scene node name; art's M4 broken satellite dish replaces the model under this node.</summary>
         public const string NodeName = "PeakBeacon";
 
-        private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
+        private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
         private static readonly int IntensityId = Shader.PropertyToID("_Intensity");
         private static readonly int RadiusId = Shader.PropertyToID("_Radius");
@@ -59,7 +59,7 @@ namespace MoonProject.World
         private void Apply(float pulse)
         {
             float lamp = Mathf.Lerp(_settings.LampMinIntensity, _settings.LampMaxIntensity, pulse);
-            _lampBlock.SetVector(EmissionColorId, new Vector4(lamp, lamp, lamp, 1f));
+            _lampBlock.SetFloat(EmissionStrengthId, lamp);
             _lamp.SetPropertyBlock(_lampBlock);
 
             _haloBlock.SetColor(ColorId, _settings.HaloColor);
