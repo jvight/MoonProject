@@ -38,11 +38,12 @@ namespace MoonProject.Gameplay
         private readonly Renderer _outline;
         private readonly Transform _target;
         private readonly GameObject _brackets;
+        private readonly bool _isRuin;
         private readonly MaterialPropertyBlock _block = new MaterialPropertyBlock();
 
         private ScanFragment(string fragmentId, string blueprintId, IReadOnlyList<string> structureIds, int index,
             int count, ScanSize size, string hostId, Transform root, Renderer solid, Renderer lines, Renderer outline,
-            Transform target, GameObject brackets)
+            Transform target, GameObject brackets, bool isRuin = false)
         {
             FragmentId = fragmentId;
             BlueprintId = blueprintId;
@@ -57,6 +58,7 @@ namespace MoonProject.Gameplay
             _outline = outline;
             _target = target;
             _brackets = brackets;
+            _isRuin = isRuin;
             SweepSpan = ComputeSweepSpan(solid);
         }
 
@@ -145,8 +147,9 @@ namespace MoonProject.Gameplay
                 throw new ArgumentNullException(nameof(target));
             }
 
-            return new ScanFragment(fragmentId, blueprintId, structureIds, index, count, size, hostId, target, null,
-                null, null, target, null);
+            Renderer ruinSolid = FindClosestRuinRenderer(target);
+            return new ScanFragment(fragmentId, blueprintId, structureIds, index, count, size, hostId, target, ruinSolid,
+                null, null, target, null, isRuin: true);
         }
 
         /// <summary>The corner brackets: shown while it waits to be scanned and 07 is near enough.</summary>
@@ -164,7 +167,10 @@ namespace MoonProject.Gameplay
             if (_solid != null)
             {
                 Apply(_solid, ProgressId, progress);
-                Apply(_lines, ProgressId, progress);
+                if (_lines != null)
+                {
+                    Apply(_lines, ProgressId, progress);
+                }
             }
         }
 
@@ -174,7 +180,10 @@ namespace MoonProject.Gameplay
             if (_solid != null)
             {
                 Apply(_solid, DissolveId, t);
-                Apply(_lines, DissolveId, t);
+                if (_lines != null)
+                {
+                    Apply(_lines, DissolveId, t);
+                }
             }
         }
 
@@ -190,7 +199,11 @@ namespace MoonProject.Gameplay
             if (_solid.gameObject.activeSelf)
             {
                 _solid.gameObject.SetActive(false);
-                _lines.gameObject.SetActive(false);
+                if (_lines != null)
+                {
+                    _lines.gameObject.SetActive(false);
+                }
+
                 _outline.gameObject.SetActive(true);
             }
 
@@ -200,10 +213,50 @@ namespace MoonProject.Gameplay
         /// <summary>Nothing of it shows any more (scanned and faded, or a save loaded it scanned).</summary>
         internal void Hide()
         {
+            if (_isRuin)
+            {
+                if (_solid != null)
+                {
+                    Apply(_solid, ProgressId, 0f);
+                    Apply(_solid, DissolveId, 0f);
+                }
+
+                return;
+            }
+
             if (_solid != null)
             {
                 Root.gameObject.SetActive(false);
             }
+        }
+
+        private static Renderer FindClosestRuinRenderer(Transform target)
+        {
+            Transform root = target.parent != null ? target.parent : target;
+            Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+            Renderer best = null;
+            float bestScore = float.MaxValue;
+            Vector3 point = target.position;
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Renderer r = renderers[i];
+                if (r == null)
+                {
+                    continue;
+                }
+
+                Bounds b = r.bounds;
+                float boxDistSq = b.SqrDistance(point);
+                float centerDistSq = (b.center - point).sqrMagnitude;
+                float score = boxDistSq * 100f + centerDistSq;
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    best = r;
+                }
+            }
+
+            return best;
         }
 
         private void Apply(Renderer renderer, int property, float value)
@@ -229,7 +282,7 @@ namespace MoonProject.Gameplay
             Bounds bounds = solid.bounds;
             MeshFilter filter = solid.GetComponent<MeshFilter>();
             Mesh mesh = filter != null ? filter.sharedMesh : null;
-            if (mesh == null)
+            if (mesh == null || !mesh.isReadable)
             {
                 return new Vector3(0f, bounds.size.y, 0f);
             }

@@ -112,23 +112,19 @@ Shader "MoonProject/Art/LofiScanSolid"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 clip(MoonScanDither(input.positionCS.xy) - MoonScanSolidFade(_Dissolve, _Fade));
 
-                float height = MoonScanHeight(input.positionWS);
-                half drawn = step(height, _ScanProgress) * step(0.001, _ScanProgress);
-                half sweep = (1.0 - smoothstep(0.0, _SweepWidth, abs(height - _ScanProgress)))
-                    * step(0.001, _ScanProgress) * step(_ScanProgress, 0.999);
-
                 LofiSurface surface;
                 surface.positionWS = input.positionWS;
                 surface.normalWS = input.normalWS;
                 surface.positionCS = input.positionCS;
                 surface.albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).rgb * _BaseColor.rgb;
                 surface.albedo = lerp(surface.albedo, _MoonAoTint.rgb, input.occlusion);
-                surface.albedo = lerp(surface.albedo, _DrawnColor.rgb, drawn * 0.65) * (1.0 - 0.35 * sweep);
                 surface.emission = SAMPLE_TEXTURE2D(_EmissionMap, sampler_EmissionMap, input.uv).rgb
-                    * _EmissionColor.rgb + _SweepColor.rgb * sweep;
+                    * _EmissionColor.rgb;
                 surface.vertexLight = input.fogFactorAndVertexLight.yzw;
                 surface.fogFactor = input.fogFactorAndVertexLight.x;
-                return half4(LofiLit(surface), 1.0);
+                half3 lit = LofiLit(surface);
+                MoonApplySurfaceScan(lit, input.positionWS, input.normalWS, 0.0h, _ScanProgress, _Dissolve);
+                return half4(lit, 1.0);
             }
             ENDHLSL
         }

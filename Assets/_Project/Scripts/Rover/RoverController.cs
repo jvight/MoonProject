@@ -154,6 +154,8 @@ namespace MoonProject.Rover
         private float _previousHeading;
         private float _visualHeading;
         private float _yawRate;
+        private float _scanTurnRate;
+        private float _scanTurnScrub;
         private float _forwardSpeed;
         private bool _hasContact;
         private Vector3 _contactNormal = Vector3.up;
@@ -170,6 +172,9 @@ namespace MoonProject.Rover
 
         /// <summary>Gaze requests made via <see cref="IRoverRig"/>; <see cref="RoverBodyLanguage"/> follows.</summary>
         public GazeRequests Gaze { get; } = new GazeRequests();
+
+        /// <summary>Normalized [-1..1] wheel scrub while 07 turns its body in place toward a scan target.</summary>
+        public float ScanTurnScrub => _scanTurnScrub;
 
         /// <summary>Interpolated centre of the physics sphere (render-frame accurate).</summary>
         public Vector3 SpherePosition => _body.transform.position;
@@ -767,6 +772,8 @@ namespace MoonProject.Rover
             _previousHeading = yaw;
             _visualHeading = yaw;
             _yawRate = 0f;
+            _scanTurnRate = 0f;
+            _scanTurnScrub = 0f;
             _forwardSpeed = 0f;
             _throttle = 0f;
             _steer = 0f;
@@ -1157,9 +1164,23 @@ namespace MoonProject.Rover
                 _tuning.Drive.InputDeadZone);
             _steerDirection = Smoothing.Damp(_steerDirection, direction, steering.SteerDirectionHalfLife, dt);
             float airSteer = _leaping ? _tuning.HoverJump.AirSteer : steering.AirTurnFactor;
-            _yawRate = SteeringModel.YawRate(steering, _steer, _steerDirection, _forwardSpeed,
+            float playerYawRate = SteeringModel.YawRate(steering, _steer, _steerDirection, _forwardSpeed,
                 _tuning.Drive.TopSpeed, true) * (_hasContact ? 1f : airSteer);
 
+            if (Mathf.Abs(_steer) <= _tuning.Drive.InputDeadZone && _bodyLanguage != null
+                && _bodyLanguage.TryGetScanBodyTurn(out float bodyYawDelta, out float maxRate, out float halfLife))
+            {
+                float desiredRate = Mathf.Clamp(bodyYawDelta * 3.2f, -maxRate, maxRate);
+                _scanTurnRate = Smoothing.Damp(_scanTurnRate, desiredRate, halfLife, dt);
+                _scanTurnScrub = maxRate > 1e-4f ? Mathf.Clamp(_scanTurnRate / maxRate, -1f, 1f) : 0f;
+            }
+            else
+            {
+                _scanTurnRate = Smoothing.Damp(_scanTurnRate, 0f, 0.08f, dt);
+                _scanTurnScrub = Smoothing.Damp(_scanTurnScrub, 0f, 0.08f, dt);
+            }
+
+            _yawRate = playerYawRate + _scanTurnRate * (_hasContact ? 1f : airSteer);
             float crossSlopeYaw = 0f;
             if (_hasContact && _obstacleNormal.sqrMagnitude <= 0.5f)
             {

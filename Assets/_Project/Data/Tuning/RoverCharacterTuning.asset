@@ -141,6 +141,11 @@ MonoBehaviour:
     _fanColour: {r: 0.373, g: 0.953, b: 1, a: 1}
     _fanGlow: 0.55
     _gazePriority: 8
+    _headYawReach: 105
+    _bodyStopYaw: 22
+    _bodyTurnRate: 90
+    _bodyTurnHalfLife: 0.14
+    _aimToleranceDegrees: 8
   _elderGlance:
     _noticeRadius: 12
     _holdSeconds: 1.5
