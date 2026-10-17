@@ -29,7 +29,7 @@ namespace MoonProject.UI
         public const string CardNameClass = "build-card__name";
         public const string CardCostClass = "build-card__cost";
 
-        private const float ReasonAnchorHeightOffset = 0.35f;
+        private const float ReasonAnchorHeightOffset = 1.15f;
 
         private readonly UiLayout _layout;
         private readonly ILocalization _localization;
@@ -148,7 +148,7 @@ namespace MoonProject.UI
 
             bool wantsStrip = gateOpen &&
                               controller != null &&
-                              state == BuildModeState.Menu &&
+                              (state == BuildModeState.Menu || state == BuildModeState.Placing) &&
                               controller.AvailableStructures.Count > 0;
             if (wantsStrip)
             {
@@ -167,7 +167,7 @@ namespace MoonProject.UI
             if (wantsReason)
             {
                 RefreshReason(controller.CandidateReason);
-                Vector3 anchorWorld = controller.CandidatePose.Position - Vector3.up * ReasonAnchorHeightOffset;
+                Vector3 anchorWorld = controller.CandidatePose.Position + Vector3.up * ReasonAnchorHeightOffset;
                 onScreen = _reasonAnchor.Track(anchorWorld, panelSize, deltaTime, _reasonReveal.IsHidden);
             }
 
