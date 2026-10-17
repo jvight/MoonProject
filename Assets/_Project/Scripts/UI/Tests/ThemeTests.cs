@@ -50,39 +50,86 @@ namespace MoonProject.UI.Tests
         [Test]
         public void FontCharacters_CoverVietnamese_AndEveryTableCharacter()
         {
-            var texts = new List<string>();
-            foreach (TextAsset table in StringTableAssets.Load())
-            {
-                texts.Add(table.text);
-            }
-
-            string characters = FontCharacters.Collect(texts);
-            foreach (char c in "ẠạẶặỆệỘộỢợỰựĐđƠơƯư ×")
+            string characters = FontCharacters.Collect(UiFontBuilder.TableTexts());
+            foreach (char c in "0123456789ẠạẶặỆệỘộỢợỰựĐđƠơƯư ×•‹›°©±−")
             {
                 StringAssert.Contains(c.ToString(), characters);
             }
 
-            Assert.AreEqual(characters, FontCharacters.Collect(texts), "deterministic");
+            Assert.AreEqual(characters, FontCharacters.Collect(UiFontBuilder.TableTexts()), "deterministic");
         }
 
         [Test]
         public void TheGeneratedFonts_HoldEveryCharacterTheTablesUse()
         {
-            var texts = new List<string>();
-            foreach (TextAsset table in StringTableAssets.Load())
-            {
-                texts.Add(table.text);
-            }
-
-            string characters = FontCharacters.Collect(texts);
+            string characters = FontCharacters.Collect(UiFontBuilder.TableTexts());
+            EnsureStaticFontsBuilt(characters);
             foreach (string[] style in UiAssetPaths.Fonts)
             {
                 string path = UiAssetPaths.FontAsset(style[0], style[1]);
                 var font = AssetDatabase.LoadAssetAtPath<FontAsset>(path);
                 Assert.IsNotNull(font, $"{path} is missing: run the UI/Fonts builder");
-                Assert.AreEqual(AtlasPopulationMode.Dynamic, font.atlasPopulationMode, path);
+                Assert.AreEqual(AtlasPopulationMode.Static, font.atlasPopulationMode, path);
                 Assert.IsTrue(font.HasCharacters(characters, out List<char> missing),
                     $"{path} lacks \"{new string(missing?.ToArray() ?? new char[0])}\": run the UI/Fonts builder");
+            }
+        }
+
+        [Test]
+        public void EveryBakedFont_ContainsEveryCharacterInEnAndViJson()
+        {
+            var en = AssetDatabase.LoadAssetAtPath<TextAsset>(UiAssetPaths.StringTable("en"));
+            var vi = AssetDatabase.LoadAssetAtPath<TextAsset>(UiAssetPaths.StringTable("vi"));
+            Assert.IsNotNull(en, "en.json is missing");
+            Assert.IsNotNull(vi, "vi.json is missing");
+
+            StringTable enTable = StringTable.Parse(en.text, "en");
+            StringTable viTable = StringTable.Parse(vi.text, "vi");
+            var tableChars = new SortedSet<char>();
+            foreach (StringTable table in new[] { enTable, viTable })
+            {
+                foreach (string key in table.Keys)
+                {
+                    if (table.TryGet(key, out string value) && value != null)
+                    {
+                        foreach (char c in value)
+                        {
+                            if (!char.IsControl(c))
+                            {
+                                tableChars.Add(c);
+                            }
+                        }
+                    }
+                }
+            }
+
+            var required = new string(new List<char>(tableChars).ToArray());
+            Assert.Greater(required.Length, 100);
+            EnsureStaticFontsBuilt(required);
+
+            foreach (string[] style in UiAssetPaths.Fonts)
+            {
+                string path = UiAssetPaths.FontAsset(style[0], style[1]);
+                var font = AssetDatabase.LoadAssetAtPath<FontAsset>(path);
+                Assert.IsNotNull(font, $"{path} is missing");
+                Assert.AreEqual(AtlasPopulationMode.Static, font.atlasPopulationMode, path);
+                Assert.IsTrue(font.HasCharacters(required, out List<char> missing),
+                    $"{path} lacks \"{new string(missing?.ToArray() ?? new char[0])}\" from en.json + vi.json");
+            }
+        }
+
+        private static void EnsureStaticFontsBuilt(string characters)
+        {
+            foreach (string[] style in UiAssetPaths.Fonts)
+            {
+                string path = UiAssetPaths.FontAsset(style[0], style[1]);
+                var font = AssetDatabase.LoadAssetAtPath<FontAsset>(path);
+                if (font == null || font.atlasPopulationMode != AtlasPopulationMode.Static ||
+                    !font.HasCharacters(characters, out _))
+                {
+                    UiFontBuilder.Build();
+                    return;
+                }
             }
         }
     }
