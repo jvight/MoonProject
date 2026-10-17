@@ -17,6 +17,9 @@ CBUFFER_START(UnityPerMaterial)
     half _ScanlineDepth;
     half _GlowRadius;
     half _TrailAlpha;
+    half _ContentGlowIntensity;
+    half _ContentGlowMip;
+    half _ContentScanlineAtten;
 
     float4 _EyeLeftRect;
     float4 _EyeLeftShape;
@@ -36,6 +39,7 @@ CBUFFER_START(UnityPerMaterial)
     float4 _FaceCrtState;
     float4 _FacePhases;
     float4 _FaceContentState;
+    float4 _ContentTex_TexelSize;
 CBUFFER_END
 
 TEXTURE2D(_ContentTex);

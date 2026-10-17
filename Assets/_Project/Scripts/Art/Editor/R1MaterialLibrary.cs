@@ -295,6 +295,16 @@ namespace MoonProject.Art.Editor
             material.enableInstancing = true;
         }
 
+        public const float CrtSmoothness = 0.86f;
+        public const float CrtCurvature = 0.08f;
+        public const float CrtScanlineCount = 280.0f;
+        public const float CrtScanlineDepth = 0.12f;
+        public const float CrtGlowRadius = 0.028f;
+        public const float CrtTrailAlpha = 0.28f;
+        public const float CrtContentGlowIntensity = 0.12f;
+        public const float CrtContentGlowMip = 1.60f;
+        public const float CrtContentScanlineAtten = 0.55f;
+
         private static void ConfigureCrtFaceMaterial(Material material, Shader shader, R1MaterialSpec spec)
         {
             material.shader = shader;
@@ -307,12 +317,15 @@ namespace MoonProject.Art.Editor
             material.SetColor("_HotCoreColor", new Color(1.000f, 0.953f, 0.800f, 1f));
             material.SetFloat("_BloomSafeMax", R1MaterialRecipes.DefaultBloomSafeMax);
             material.SetFloat("_HotCorePeak", R1MaterialRecipes.DefaultHotCorePeak);
-            material.SetFloat("_Smoothness", 0.86f);
-            material.SetFloat("_Curvature", 0.08f);
-            material.SetFloat("_ScanlineCount", 180.0f);
-            material.SetFloat("_ScanlineDepth", 0.16f);
-            material.SetFloat("_GlowRadius", 0.028f);
-            material.SetFloat("_TrailAlpha", 0.28f);
+            material.SetFloat("_Smoothness", CrtSmoothness);
+            material.SetFloat("_Curvature", CrtCurvature);
+            material.SetFloat("_ScanlineCount", CrtScanlineCount);
+            material.SetFloat("_ScanlineDepth", CrtScanlineDepth);
+            material.SetFloat("_GlowRadius", CrtGlowRadius);
+            material.SetFloat("_TrailAlpha", CrtTrailAlpha);
+            material.SetFloat("_ContentGlowIntensity", CrtContentGlowIntensity);
+            material.SetFloat("_ContentGlowMip", CrtContentGlowMip);
+            material.SetFloat("_ContentScanlineAtten", CrtContentScanlineAtten);
 
             var defaultLeftRect = new Vector4(0.31f, 0.50f, 0.2006f, 0.4012f);
             var defaultRightRect = new Vector4(0.69f, 0.50f, 0.2006f, 0.4012f);

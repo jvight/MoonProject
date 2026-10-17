@@ -30,11 +30,14 @@ Material:
     m_Ints: []
     m_Floats:
     - _BloomSafeMax: 1.06
+    - _ContentGlowIntensity: 0.12
+    - _ContentGlowMip: 1.6
+    - _ContentScanlineAtten: 0.55
     - _Curvature: 0.08
     - _GlowRadius: 0.028
     - _HotCorePeak: 1.65
-    - _ScanlineCount: 180
-    - _ScanlineDepth: 0.16
+    - _ScanlineCount: 280
+    - _ScanlineDepth: 0.12
     - _Smoothness: 0.86
     - _TrailAlpha: 0.28
     m_Colors:
