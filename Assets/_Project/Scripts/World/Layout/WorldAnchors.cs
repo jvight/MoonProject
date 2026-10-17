@@ -103,6 +103,9 @@ namespace MoonProject.World
         private static readonly Vector2 MastFooting = new Vector2(0f, -2.2f);
         private const float DroneRadius = 2f;
 
+        // The dead charging post's own footprint on the wake pad, kept clear of rocks and props.
+        private const float WakeRadius = 1.5f;
+
         private readonly WorldAnchor[] _anchors;
         private readonly Dictionary<string, int> _byId = new Dictionary<string, int>(StringComparer.Ordinal);
 
@@ -192,6 +195,7 @@ namespace MoonProject.World
             AddMicroSites(surface, anchors);
             Vector2 shadowed = LargestCrater(surface);
             anchors.Add(Make(surface, WorldAnchorIds.PlaceShadowedCrater, shadowed, shadowed, ShadowedFloorRadius));
+            AddOpening(surface, anchors);
 
             _anchors = anchors.ToArray();
             for (int i = 0; i < _anchors.Length; i++)
@@ -357,6 +361,25 @@ namespace MoonProject.World
             }
 
             return centre;
+        }
+
+        /// <summary>
+        /// Opening v2's places (docs/design/opening-v2.md §4): the wake post on the old pad, the landed lander facing
+        /// its apron, the apron facing the lander, the ruins and the midway point facing on along the way out.
+        /// </summary>
+        private static void AddOpening(MoonSurface surface, List<WorldAnchor> anchors)
+        {
+            GroundShaping shaping = surface.Shaping;
+            Vector2 wake = shaping.WakePost;
+            Vector2 lander = shaping.Lander.Center;
+            Vector2 apron = shaping.Apron.Center;
+            anchors.Add(Make(surface, WorldAnchorIds.PlaceWake, wake, lander - wake, WakeRadius));
+            anchors.Add(Make(surface, WorldAnchorIds.PlaceLander, lander, apron - lander, shaping.Lander.Radius));
+            anchors.Add(Make(surface, WorldAnchorIds.PlaceApron, apron, lander - apron, shaping.Apron.Radius));
+            Vector2 ruins = shaping.Ruins.Center;
+            anchors.Add(Make(surface, WorldAnchorIds.PlaceRuins, ruins, ruins - apron, shaping.Ruins.Radius));
+            Vector2 midway = shaping.MidwayCenter;
+            anchors.Add(Make(surface, WorldAnchorIds.PlaceMidway, midway, midway - wake, shaping.MidwayRadius));
         }
 
         /// <summary>A shaped site footprint on the basin floor, facing on from home.</summary>

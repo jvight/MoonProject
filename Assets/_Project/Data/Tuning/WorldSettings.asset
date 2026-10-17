@@ -131,16 +131,6 @@ MonoBehaviour:
       _landerBayArc: 70
       _landerBayDepth: 10
       _landerBayHalfLength: 20
-      _podBeacon: {x: -0.12, y: 3.5, z: 0.32}
-      _glowIntensity: 0.9
-      _glowRadius: 0.2
-      _glowMinAngle: 0.3
-      _glowLightRange: 14
-      _glowLightIntensity: 1.6
-      _beaconPeriod: 3.2
-      _beaconSharpness: 3
-      _beaconFloor: 0.3
-      _beaconGlassGlow: 1.6
       _exitOffset: 40
       _exitTurnRadius: 28
       _exitBranch: 22
@@ -185,9 +175,20 @@ MonoBehaviour:
         _gougeHalfWidth: 2
         _scorchReach: 8
         _clearMargin: 4
-      _ruinsBearing: 15
-      _ruinsDistance: 55
+      _ruinsBearing: 27.2
+      _ruinsDistance: 208
       _ruinsRadius: 14
+      _ruinsBlend: 24
+      _wakePost: {x: -2.4, y: -4}
+      _landerBearing: 12.3
+      _landerDistance: 164
+      _landerRadius: 10
+      _apronBearing: 6.1
+      _apronDistance: 141
+      _apronRadius: 14
+      _midwayBearing: 336
+      _midwayDistance: 98.5
+      _midwayRadius: 6
     _craterField:
       _cellSize: 18
       _density: 0.7
@@ -403,10 +404,6 @@ MonoBehaviour:
     _pilotSharpness: 6
     _topLightLevel: 0.6
     _pilotMinAngle: 0.4
-    _echoTravel: 1.2
-    _echoRise: 0.15
-    _echoTail: 0.9
-    _echoPeak: 1.8
     _buildHoldTimeout: 8
     _towerBeatRadius: 20
     _beaconFlareGain: 3
@@ -477,25 +474,6 @@ MonoBehaviour:
       _intensity: 2.6
       _disc: 0
       _tint: {r: 1, g: 1, b: 1, a: 1}
-  _labLighting:
-    _bellyLampGlow: 3
-    _hatchRimGlow: 2.6
-    _cabinLampGlow: 2.4
-    _portholeGlow: 0.9
-    _tableThroughPorthole: 0.5
-    _portholeLampGlow: 3.2
-    _boardLampGlow: 2
-    _recoveryLampGlow: 2.2
-    _rowPulseSwell: 0.8
-    _rowPulseSeconds: 1.6
-    _readingLampBase: 0.6
-    _readingLampPerKeepsake: 0.7
-    _lampWarmUp: 1.8
-    _tableGlow: 1.4
-    _tableLookBoost: 0.8
-    _tableLookEase: 1.2
-    _chartRadius: 320
-    _penTravel: 0.45
   _postProcessing:
     _bloomThreshold: 1.25
     _bloomIntensity: 1.1
@@ -521,10 +499,10 @@ MonoBehaviour:
     _grainIntensity: 0.12
     _grainResponse: 0.8
   _groundMarks:
-    _destinations:
-    - site.depot
-    - canyon.mouth
-    - site.garage
+    _route:
+    - place.wake
+    - place.lander
+    - place.ruins
     _trackGauge: 1.4
     _rutHalfWidth: 0.22
     _step: 1.5
@@ -540,38 +518,7 @@ MonoBehaviour:
     _tint: {r: 0.58, g: 0.58, b: 0.72, a: 1}
     _fadeNear: 45
     _fadeFar: 130
-    _scarRadius: 13
-    _scarInner: 1.5
-    _scarStreaks: 32
-    _scarStreakHalfWidth: 0.6
-    _scarStrength: 0.75
-    _bootprintStart: {x: 1.6, y: 0, z: 3.2}
-    _bootprintHeading: 55
-    _bootprintCount: 9
-    _bootprintStride: 0.75
-    _bootprintSize: {x: 0.16, y: 0.07}
-    _bootprintStrength: 0.5
   _landmarks:
-    _routeBearing: 72
-    _routePostDistances:
-    - 70
-    - 115
-    - 160
-    - 205
-    - 250
-    - 275
-    _routePostSide: 2.6
-    _reflectorGlow: 0.3
-    _bridgeLampGlow: 1
-    _bridgeSide: 3.5
-    _dishSpread: 6.5
-    _ventPatches: 26
-    _ventPatchRadius: {x: 1.2, y: 3.6}
-    _ventSpread: 1.6
-    _ventTint: {r: 1.24, g: 1, b: 0.66, a: 1}
-    _ventStrength: 0.55
-    _ventEdgeSoftness: 0.9
-    _ventFade: {x: 160, y: 380}
     _ruins:
     - _id: HabitatModules
       _offset: {x: -5.5, y: 2}
@@ -593,27 +540,26 @@ MonoBehaviour:
       _offset: {x: -5.2, y: -5.2}
       _yaw: -18
       _clearanceRadius: 2.6
-  _reachRing:
-    _duration: 2
-    _fadeIn: 0.1
-    _fadeOut: 0.45
-    _halfWidth: 2.5
-    _color: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
-    _intensity: 0.55
-    _relayReach: 80
-    _packReach: 45
+    _landerTilt: 2.5
+    _wakeCable:
+      _radius: 0.035
+      _step: 1
+      _wander: 1.6
+      _bends: 3
+      _portReach: 2.9
+    _landerBeacon:
+      _height: 0.3
+      _color: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
+      _period: 3.2
+      _sharpness: 3
+      _floor: 0.3
+      _haloIntensity: 0.9
+      _haloRadius: 0.25
+      _haloMinAngle: 0.35
+      _lightIntensity: 1.6
+      _lightRange: 14
   _scrapField:
-    _pieces: 14
     _laneHalfWidth: 2.5
-    _spread: 6
-    _laneMargin: 1.2
-    _span: {x: 0.05, y: 0.95}
-    _anchors: 3
-    _anchorScale: {x: 2, y: 2.5}
-    _scale: {x: 1, y: 1.6}
-    _crowding: 1.8
-    _sink: 0.45
-    _tilt: {x: 12, y: 28}
     _cuttables: 4
     _cuttableSpan: {x: 0.15, y: 0.85}
     _cuttableOffset: 1
@@ -646,34 +592,14 @@ MonoBehaviour:
     _readoutCorner: {x: 0.07, y: 0.9}
     _readoutDistance: 0.5
     _volumePriority: 90
-  _chargerPools:
-    _radius: 2.8
-    _lift: 0.06
-    _litGlow: 0.9
-    _chargingGlow: 1.5
-    _ease: 0.9
-  _networkPulse:
-    _hopSeconds: 1.4
-    _flashRise: 0.2
-    _flashFall: 1.6
-    _originBoost: 1.4
-    _beadFade: 0.2
-    _arcPerMetre: 0.06
-    _color: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
-    _flashIntensity: 2.4
-    _flashRadius: 1
-    _beadIntensity: 1.8
-    _beadRadius: 0.6
-    _minAngle: 0.8
-    _minAngleFrom: 30
-    _minAngleFull: 60
-    _flashLight: 4
-    _flashLightRange: 14
-    _beadLight: 2.5
-    _beadLightRange: 8
   _skyCycle:
     _dayLengthSeconds: 7200
-    _maxHoldSeconds: 1500
+    _eclipseBreakoutLead: 1
+    _goldenHourSeconds: 45
+    _lastLightElevation: 3
+    _lastLightSinkSeconds: 120
+    _nightfallElevation: -1.5
+    _firstSunsetSeconds: 150
     _fallbackSunlitTimeSeconds: 900
     _sunDiameter: 0.8
     _startBearingOffset: 6.2
