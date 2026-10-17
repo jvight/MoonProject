@@ -54,4 +54,41 @@ namespace MoonProject.Core.Events
 
         public bool FreshGame { get; }
     }
+
+    /// <summary>
+    /// The opening's progress points the sky follows (docs/design/opening-v2.md §2, the Director's amendment): the
+    /// eclipse ends when 07 first charges on its own pad, the first day's Sun holds at golden hour until the base has
+    /// power and then low above the rim until the base can store it, so the first nightfall always falls on a lit base.
+    /// </summary>
+    public enum OpeningMilestone
+    {
+        /// <summary>07 started its first charge on a pad the player built (beat B6).</summary>
+        FirstCharge = 0,
+
+        /// <summary>A built solar array powers the pad: the recovery protocol's Power step is on (beat B8).</summary>
+        PowerOn = 1,
+
+        /// <summary>A built battery bank holds charge (beat B9): the first sunset may begin.</summary>
+        NightReady = 2,
+    }
+
+    /// <summary>
+    /// Published by Gameplay's objective flow when the opening reaches <see cref="Milestone"/>, and again on every
+    /// session start for each milestone already reached, with <see cref="Restored"/> true, so a listener such as
+    /// World's sky clock can snap to the saved state instead of playing the transition.
+    /// </summary>
+    public readonly struct OpeningMilestoneReached
+    {
+        public OpeningMilestoneReached(OpeningMilestone milestone, bool restored)
+        {
+            Milestone = milestone;
+            Restored = restored;
+        }
+
+        /// <summary>The milestone the opening reached.</summary>
+        public OpeningMilestone Milestone { get; }
+
+        /// <summary>True when replayed from a loaded save at session start rather than reached just now.</summary>
+        public bool Restored { get; }
+    }
 }
