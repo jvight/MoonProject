@@ -12,6 +12,9 @@ namespace MoonProject.Gameplay
         /// <summary>Art's GaragePort node where a set-down piece rests.</summary>
         public const string PortTrayNode = "Tray";
 
+        /// <summary>Art's GaragePort node where the folded service arm's tip fits a piece onto 07.</summary>
+        public const string PortArmTipNode = "ArmTip";
+
         [Tooltip("Tractor beam cone from 07's eye (TechGlow, additive, flowing bands).")]
         [SerializeField] private Material _tractorBeam;
 

@@ -31,6 +31,14 @@ namespace MoonProject.Gameplay
 
         private const float ApproachRadius = 22f;
         private const float LeaveRadius = 40f;
+        private const float PortInstallSeconds = 2.4f;
+        private const float ArmReachShare = 0.42f;
+        private const float ArmSeatShare = 0.65f;
+        private const float RingSocketHeight = 0.72f;
+        private const float DeckSocketHeight = 0.52f;
+        private const int SparkBursts = 3;
+        private const int SparkCountPerBurst = 14;
+        private const float SparkInterval = 0.14f;
 
         private enum DeckPhase
         {
@@ -39,6 +47,7 @@ namespace MoonProject.Gameplay
             InTheCrate,
             Gliding,
             OnTheTray,
+            Installing,
             Fitted,
         }
 
@@ -56,6 +65,9 @@ namespace MoonProject.Gameplay
         private readonly FriendTuning _friends;
         private readonly Transform _model;
         private readonly Transform _tray;
+        private readonly Transform _armTip;
+        private readonly Vector3 _armRest;
+        private readonly ParticleSystem _sparks;
         private readonly GameObject _pad;
         private readonly Vector3 _padCentre;
         private readonly SealedContainers _containers;
@@ -66,6 +78,11 @@ namespace MoonProject.Gameplay
         private float _since;
         private float _glide;
         private float _parked;
+        private float _ringInstallElapsed;
+        private float _deckInstallElapsed;
+        private bool _ringInstalling;
+        private bool _ringSparksFired;
+        private bool _deckSparksFired;
         private bool _atGarage;
         private bool _ringFitted;
         private bool _deckFitted;
@@ -105,6 +122,17 @@ namespace MoonProject.Gameplay
                 site.rotation * Quaternion.Euler(0f, tuning.PortYaw, 0f));
             _tray = _model.Find(GameplayVisuals.PortTrayNode) ?? throw new InvalidOperationException(
                 $"Art's GaragePort has no '{GameplayVisuals.PortTrayNode}' node.");
+            Transform armTip = _model.Find(GameplayVisuals.PortArmTipNode);
+            if (armTip == null)
+            {
+                armTip = new GameObject(GameplayVisuals.PortArmTipNode).transform;
+                armTip.SetParent(_model, false);
+                armTip.localPosition = new Vector3(0.9f, 1.35f, 1.32f);
+            }
+
+            _armTip = armTip;
+            _armRest = _armTip.localPosition;
+            _sparks = CreatePortSparks(_armTip, services.Visuals.Spark);
             _padCentre = site.TransformPoint(tuning.PortPadLocal);
             _pad = Object.Instantiate(services.Visuals.PadFor(tuning.PortPadRadius), parent);
             _pad.name = "GaragePortPad";
@@ -132,10 +160,13 @@ namespace MoonProject.Gameplay
         /// <summary>True once the port has fitted Ro's tape deck on 07.</summary>
         public bool DeckFitted => _deckPhase == DeckPhase.Fitted;
 
+        /// <summary>True while the port's service arm is reaching out and welding a piece onto 07.</summary>
+        public bool Installing => _ringInstalling || _deckPhase == DeckPhase.Installing;
+
         /// <summary>True while the deck waits on the port's tray for 07 to park.</summary>
         public bool DeckOnTheTray => _deckPhase == DeckPhase.OnTheTray;
 
-        /// <summary>True while the deck rests at the open crate's mouth, to be taken with E.</summary>
+        /// <summary>True while the deck rests at the open crate's mouth, to be taken with E or Tether.</summary>
         public bool DeckInTheCrate => _deckPhase == DeckPhase.InTheCrate;
 
         /// <summary>Kenji's "07 · SPARE" crate on his bench, the deck sealed inside.</summary>
@@ -143,6 +174,15 @@ namespace MoonProject.Gameplay
 
         /// <summary>Where the deck rests at the open crate's mouth.</summary>
         public Vector3 DeckPosition => _deck.position;
+
+        /// <summary>Where the port's service arm tip is in world space right now.</summary>
+        public Vector3 ArmTipPosition => _armTip.position;
+
+        /// <summary>Where the port's service arm tip rests when folded.</summary>
+        public Vector3 ArmRestPosition => _model.TransformPoint(_armRest);
+
+        /// <summary>Live weld sparks emitted by the port's service arm.</summary>
+        public int SparkCount => _sparks != null ? _sparks.particleCount : 0;
 
         /// <summary>
         /// True while 07 has stood parked on the pad: its port parts can be taken off or refitted here (0.5.5 §3.5).
@@ -192,7 +232,9 @@ namespace MoonProject.Gameplay
         {
             return new GaragePortSaveData
             {
-                ringFitted = _ringFitted, deckFitted = _deckFitted, placeSeen = _placeSeen,
+                ringFitted = _ringFitted || _ringInstalling,
+                deckFitted = _deckFitted || _deckPhase == DeckPhase.Installing,
+                placeSeen = _placeSeen,
                 tetherHinted = _tetherHinted,
             };
         }
@@ -203,6 +245,10 @@ namespace MoonProject.Gameplay
             _deckFitted |= data != null && data.deckFitted;
             _placeSeen = data != null && data.placeSeen;
             _tetherHinted = data != null && data.tetherHinted;
+            _ringInstalling = false;
+            _ringInstallElapsed = 0f;
+            _deckInstallElapsed = 0f;
+            _armTip.localPosition = _armRest;
         }
 
         /// <summary>
@@ -262,14 +308,20 @@ namespace MoonProject.Gameplay
 
             bool parked = open && toPad <= _tuning.PortPadRadius && _rover.Speed <= _tuning.PortParkSpeed;
             _parked = parked ? _parked + deltaTime : 0f;
-            if (open && !_ringFitted && Parked)
+            if (open && !_ringFitted && !_ringInstalling && Parked)
             {
-                FitTheRing();
+                BeginRingInstall();
+            }
+
+            if (_ringInstalling)
+            {
+                StepRingInstall(deltaTime);
             }
 
             StepDeck(now, deltaTime);
             HintTheTether();
-            _pad.SetActive(open && (!_ringFitted || _deckPhase == DeckPhase.OnTheTray));
+            _pad.SetActive(open &&
+                           (!_ringFitted || _deckPhase == DeckPhase.OnTheTray || _deckPhase == DeckPhase.Installing));
         }
 
         public void Dispose()
@@ -311,16 +363,52 @@ namespace MoonProject.Gameplay
             return crate;
         }
 
-        private void FitTheRing()
+        private void BeginRingInstall()
         {
-            _ringFitted = true;
+            _ringInstalling = true;
+            _ringInstallElapsed = 0f;
+            _ringSparksFired = false;
             _equipment.FitItself(RoverKitPiece.TetherRing);
-            _save.SaveNow();
+        }
+
+        private void StepRingInstall(float deltaTime)
+        {
+            _ringInstallElapsed += deltaTime;
+            float t = Mathf.Clamp01(_ringInstallElapsed / PortInstallSeconds);
+            Vector3 socket = _rover.Position + Vector3.up * RingSocketHeight;
+            Vector3 restWorld = _model.TransformPoint(_armRest);
+            if (t < ArmReachShare)
+            {
+                _armTip.position = Vector3.Lerp(restWorld, socket, Ease.InOutSine(t / ArmReachShare));
+            }
+            else if (t < ArmSeatShare)
+            {
+                _armTip.position = socket;
+            }
+            else
+            {
+                if (!_ringSparksFired)
+                {
+                    _ringSparksFired = true;
+                    BurstSparks();
+                }
+
+                float u = Ease.InOutSine((t - ArmSeatShare) / (1f - ArmSeatShare));
+                _armTip.position = Vector3.Lerp(socket, restWorld, u);
+            }
+
+            if (t >= 1f)
+            {
+                _ringInstalling = false;
+                _ringFitted = true;
+                _armTip.localPosition = _armRest;
+                _save.SaveNow();
+            }
         }
 
         /// <summary>
-        /// The crate cut open, the deck rises to its mouth; a press of E sends it gliding onto the tray, and 07 parked
-        /// on the pad has the arm fit it.
+        /// The crate cut open, the deck rises to its mouth; a press of E or Tether sends it gliding onto the tray, and
+        /// 07 parked on the pad has the arm carry and weld it onto 07's left flank.
         /// </summary>
         private void StepDeck(float now, float deltaTime)
         {
@@ -345,8 +433,8 @@ namespace MoonProject.Gameplay
 
                     break;
                 case DeckPhase.InTheCrate:
-                    if (_pickups.Offer(Time.frameCount, _input.ExcavateHeld, PickupReach.Port, 0, _deck.position,
-                            _rover.Position, _friends.PartReachRadius, DeckNoun))
+                    if (_pickups.Offer(Time.frameCount, _input.ExcavateHeld || _input.TetherHeld, PickupReach.Port, 0,
+                            _deck.position, _rover.Position, _friends.PartReachRadius, DeckNoun))
                     {
                         _deckPhase = DeckPhase.Gliding;
                         _glide = 0f;
@@ -369,11 +457,52 @@ namespace MoonProject.Gameplay
                 case DeckPhase.OnTheTray:
                     if (Parked)
                     {
+                        _deckPhase = DeckPhase.Installing;
+                        _deckInstallElapsed = 0f;
+                        _deckSparksFired = false;
+                        _equipment.FitItself(RoverKitPiece.TapeDeck);
+                    }
+
+                    break;
+                case DeckPhase.Installing:
+                    _deckInstallElapsed += deltaTime;
+                    float installT = Mathf.Clamp01(_deckInstallElapsed / PortInstallSeconds);
+                    Vector3 deckSocket = _rover.Position + Vector3.up * DeckSocketHeight;
+                    Vector3 restWorld = _model.TransformPoint(_armRest);
+                    if (installT < ArmReachShare)
+                    {
+                        float u = Ease.InOutSine(installT / ArmReachShare);
+                        _armTip.position = Vector3.Lerp(restWorld, _tray.position, u);
+                    }
+                    else if (installT < ArmSeatShare)
+                    {
+                        float u = Ease.InOutSine((installT - ArmReachShare) / (ArmSeatShare - ArmReachShare));
+                        Vector3 carry = Vector3.Lerp(_tray.position, deckSocket, u);
+                        _armTip.position = carry;
+                        _deck.position = carry;
+                        _deck.localScale = _deckScale * Mathf.Lerp(1f, 0.35f, u);
+                    }
+                    else
+                    {
+                        if (!_deckSparksFired)
+                        {
+                            _deckSparksFired = true;
+                            _deck.gameObject.SetActive(false);
+                            _deck.localScale = _deckScale;
+                            BurstSparks();
+                        }
+
+                        float u = Ease.InOutSine((installT - ArmSeatShare) / (1f - ArmSeatShare));
+                        _armTip.position = Vector3.Lerp(deckSocket, restWorld, u);
+                    }
+
+                    if (installT >= 1f)
+                    {
                         _deckPhase = DeckPhase.Fitted;
                         _deckFitted = true;
                         _deck.gameObject.SetActive(false);
                         _deck.localScale = _deckScale;
-                        _equipment.FitItself(RoverKitPiece.TapeDeck);
+                        _armTip.localPosition = _armRest;
                         _save.SaveNow();
                     }
 
@@ -385,6 +514,76 @@ namespace MoonProject.Gameplay
         {
             _deck.gameObject.SetActive(true);
             _deck.SetPositionAndRotation(_tray.position, _tray.rotation);
+        }
+
+        private void BurstSparks()
+        {
+            if (_sparks == null)
+            {
+                return;
+            }
+
+            _sparks.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+            _sparks.Play(true);
+        }
+
+        private static ParticleSystem CreatePortSparks(Transform socket, Material material)
+        {
+            var host = new GameObject("PortWeldSparks");
+            host.transform.SetParent(socket, false);
+            var particles = host.AddComponent<ParticleSystem>();
+            particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+            ParticleSystem.MainModule main = particles.main;
+            main.loop = false;
+            main.playOnAwake = false;
+            main.duration = SparkInterval * SparkBursts;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.28f, 0.55f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(1.8f, 3.8f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.03f, 0.06f);
+            main.startColor = Color.white;
+            main.gravityModifier = 0.25f;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.maxParticles = SparkCountPerBurst * SparkBursts;
+
+            ParticleSystem.EmissionModule emission = particles.emission;
+            emission.rateOverTime = 0f;
+            var bursts = new ParticleSystem.Burst[SparkBursts];
+            for (int i = 0; i < bursts.Length; i++)
+            {
+                bursts[i] = new ParticleSystem.Burst(SparkInterval * i, (short)SparkCountPerBurst);
+            }
+
+            emission.SetBursts(bursts);
+
+            ParticleSystem.ShapeModule shape = particles.shape;
+            shape.shapeType = ParticleSystemShapeType.Cone;
+            shape.angle = 36f;
+            shape.radius = 0.02f;
+            shape.rotation = new Vector3(-25f, 0f, 0f);
+
+            var fade = new Gradient();
+            fade.SetKeys(
+                new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0.7f, 0.5f), new GradientAlphaKey(0f, 1f) });
+            ParticleSystem.ColorOverLifetimeModule color = particles.colorOverLifetime;
+            color.enabled = true;
+            color.color = fade;
+
+            ParticleSystem.SizeOverLifetimeModule size = particles.sizeOverLifetime;
+            size.enabled = true;
+            size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 1f, 1f, 0.3f));
+
+            var particleRenderer = host.GetComponent<ParticleSystemRenderer>();
+            particleRenderer.sharedMaterial = material;
+            particleRenderer.renderMode = ParticleSystemRenderMode.Stretch;
+            particleRenderer.velocityScale = 0.06f;
+            particleRenderer.lengthScale = 1f;
+            particleRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            particleRenderer.receiveShadows = false;
+            particleRenderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+            particleRenderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+            return particles;
         }
 
         /// <summary>
