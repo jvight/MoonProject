@@ -22,7 +22,6 @@ namespace MoonProject.Rover
         private readonly MotionFeelSettings _motion;
         private readonly EventBus _events;
         private readonly IDisposable[] _verbs;
-        private int _chargeVoice = NoVoice;
         private int _boostVoice = NoVoice;
         private bool _moving;
         private readonly IFeelSettings _preferences;
@@ -54,9 +53,6 @@ namespace MoonProject.Rover
             _pauses = events.Subscribe<PauseChanged>(OnPauseChanged);
             _verbs = new[]
             {
-                events.Subscribe<RoverJumpCharged>(charged => Publish(FeelKind.Leap, FeelPhase.Anticipate,
-                    charged.Strength)),
-                events.Subscribe<RoverJumped>(jumped => Publish(FeelKind.Leap, FeelPhase.Act, jumped.Strength)),
                 events.Subscribe<RoverLanded>(OnLanded),
                 events.Subscribe<RoverCollided>(OnCollided),
                 events.Subscribe<LowPowerChanged>(OnLowPowerChanged),
@@ -132,7 +128,6 @@ namespace MoonProject.Rover
         {
             _rumble.StopAll();
             _held = NoVoice;
-            _chargeVoice = NoVoice;
             _boostVoice = NoVoice;
             _motors.Set(0f, 0f);
         }
@@ -237,7 +232,7 @@ namespace MoonProject.Rover
             _rumble.SetGain(_held, _cut.SustainAt(progress));
         }
 
-        /// <summary>07's own verbs (the beats it publishes): drive, leap, land, install, the battery emptying.</summary>
+        /// <summary>07's own verbs (the beats it publishes): drive, land, the battery emptying.</summary>
         private bool AnswerMotion(FeelBeat beat)
         {
             switch (beat.Kind)
@@ -250,32 +245,9 @@ namespace MoonProject.Rover
                     _nudge.KickPitch(_motion.StopDip);
                     _rumble.Play(_motion.StopRumble);
                     return true;
-                case FeelKind.Leap when beat.Phase == FeelPhase.Anticipate:
-                    _nudge.HoldHeave(_motion.CrouchSpring, _motion.Crouch * beat.Strength);
-                    float level = _motion.ChargeLevel(beat.Strength);
-                    if (_chargeVoice == NoVoice)
-                    {
-                        _chargeVoice = _rumble.Play(_motion.ChargeRumble, level);
-                    }
-                    else
-                    {
-                        _rumble.SetGain(_chargeVoice, level);
-                    }
-
-                    return true;
-                case FeelKind.Leap when beat.Phase == FeelPhase.Act:
-                    _nudge.Release();
-                    _nudge.KickHeave(_motion.LaunchStretch, 1f);
-                    _rumble.Stop(_chargeVoice);
-                    _chargeVoice = NoVoice;
-                    _rumble.Play(_motion.LaunchRumble);
-                    return true;
                 case FeelKind.Land when beat.Phase == FeelPhase.Impact:
                     _nudge.KickHeave(_motion.LandSquash, _motion.LandSquashScale(beat.Strength));
                     _rumble.Play(_motion.LandRumble, _motion.LandLevel(beat.Strength));
-                    return true;
-                case FeelKind.Install when beat.Phase == FeelPhase.Impact:
-                    _rumble.Play(_motion.SeatRumble);
                     return true;
                 case FeelKind.Build when beat.Phase == FeelPhase.Impact:
                     _rumble.Play(_motion.TowerOnline);

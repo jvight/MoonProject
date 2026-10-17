@@ -79,12 +79,12 @@ namespace MoonProject.Rover.Tests
         {
             Vector3 slabUndersideNormal = new Vector3(0f, -0.85f, -0.52f).normalized;
             var slabHit = new ObstacleRayHit(new Vector3(0f, 0.5f, 0.6f), slabUndersideNormal, 0.6f, Layers.Ground);
-            Assert.IsFalse(ObstacleProbe.IsObstacleHit(_ground, in slabHit, false, out _),
+            Assert.IsFalse(ObstacleProbe.IsObstacleHit(_ground, in slabHit, out _),
                 "Downward-facing slab undersides must be ignored by the obstacle probe.");
 
             var fakeQuery = new FakeObstacleQuery { RayHit = slabHit, HasRayHit = true };
             var probe = new ObstacleProbe(_ground, fakeQuery);
-            probe.ProbeObstacle(Vector3.zero, Vector3.forward * 4f, 0f, 1f, 0.02f, true, false,
+            probe.ProbeObstacle(Vector3.zero, Vector3.forward * 4f, 0f, 1f, 0.02f, true,
                 out Vector3 slabNormal, out _, out float slabGap);
             Assert.AreEqual(Vector3.zero, slabNormal);
             Assert.AreEqual(float.MaxValue, slabGap);
@@ -92,7 +92,7 @@ namespace MoonProject.Rover.Tests
             Vector3 boulderNormal = Quaternion.Euler(-65f, 0f, 0f) * Vector3.up;
             var boulderHit = new ObstacleRayHit(new Vector3(0f, 0.5f, 0.7f), boulderNormal, 0.7f, Layers.Prop);
             fakeQuery.RayHit = boulderHit;
-            probe.ProbeObstacle(Vector3.zero, Vector3.forward * 4f, 0f, 1f, 0.02f, true, false,
+            probe.ProbeObstacle(Vector3.zero, Vector3.forward * 4f, 0f, 1f, 0.02f, true,
                 out Vector3 detectedNormal, out Vector3 detectedPoint, out float detectedGap);
 
             Assert.AreEqual(Vector3.back, detectedNormal);

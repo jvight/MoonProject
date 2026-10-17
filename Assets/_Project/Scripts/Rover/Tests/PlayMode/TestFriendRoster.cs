@@ -10,11 +10,12 @@ namespace MoonProject.Rover.PlayModeTests
     public sealed class TestFriendRoster : IFriendRoster
     {
         private const string TillyId = "tilly";
+        private const string BellId = "bell";
 
         private readonly TestFriend[] _friends =
         {
             new TestFriend(TillyId),
-            new TestFriend(RoverKitPieces.BellId),
+            new TestFriend(BellId),
         };
 
         public int Count => _friends.Length;

@@ -117,41 +117,6 @@ namespace MoonProject.World.PlayModeTests
         }
 
         [UnityTest]
-        [Timeout(900000)]
-        [PrebuildSetup(typeof(CanyonSessionScene))]
-        [PostBuildCleanup(typeof(CanyonSessionScene))]
-        public IEnumerator Canyon_IsAGateForTheHoverJump_WithAOneWayExit()
-        {
-            yield return Boot();
-            CaptureFromTheBase();
-
-            yield return RunAtTheLip(CruiseThrottle, ThreeQuarterCharge, "without the Hover-Jump", false);
-            AssertInTheTrough("without the Hover-Jump");
-            Capture("02-trough-without-the-ability");
-            yield return PushAtGate(_canyon.MainPath, _canyon.FarFaceArc, _canyon.ApronHeight, "the chasm's far face");
-            yield return DriveTo(Ground(_canyon.MainPath.PointAt(0f)), 1f, "back out of the trough to the mouth");
-            Note("Trough", "drove back out to the mouth on its own (no help)");
-
-            _context.Get<IRoverAbilities>().Grant(RoverAbility.HoverJump);
-            yield return RunAtTheLip(1f, 0f, "a tap at top speed", true);
-            AssertInTheTrough("a tap at top speed");
-
-            yield return RunAtTheLip(CruiseThrottle, ThreeQuarterCharge, "a 3/4 charge at cruising speed", true);
-            AssertAcross("a 3/4 charge at cruising speed");
-            yield return RunAtTheLip(1f, FullChargeMargin, "a full charge at top speed", true);
-            AssertAcross("a full charge at top speed");
-            yield return Settle();
-            Capture("05-landed-on-the-apron");
-
-            yield return DriveInside();
-            yield return LeaveByTheExit();
-            yield return PushAtGate(_canyon.ExitPath, _canyon.ExitStepArc, ShelfHeight(), "the exit step");
-
-            WriteReport();
-            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
-        }
-
-        [UnityTest]
         [Timeout(300000)]
         [PrebuildSetup(typeof(CanyonSessionScene))]
         [PostBuildCleanup(typeof(CanyonSessionScene))]
@@ -258,79 +223,6 @@ namespace MoonProject.World.PlayModeTests
 
             yield return Until(() => _awake, 20f, "07 wakes up");
             yield return new WaitForSeconds(2f);
-        }
-
-        /// <summary>
-        /// One run at the chasm: from the basin in line with the canyon at <paramref name="throttle"/>, holding Jump
-        /// for <paramref name="charge"/> of a full charge so that it is let go just before the lip, then following
-        /// the flight to touchdown (or, without a leap, the roll down into the trough).
-        /// </summary>
-        private IEnumerator RunAtTheLip(float throttle, float charge, string label, bool expectLeap)
-        {
-            yield return Teleport(_canyon.MainPath.PointAt(-RunUp));
-            _pilot.Throttle = throttle;
-            _pilot.Target = Ground(_canyon.MainPath.PointAt(_canyon.ApronEndArc));
-            float fixedStep = Time.fixedDeltaTime;
-            int holdSteps = Mathf.RoundToInt(charge * _rover.Tuning.HoverJump.ChargeTime / fixedStep) + 1;
-            float started = Time.time;
-            while (Arc() < _canyon.LipArc - ReleaseLead - _rover.Speed * holdSteps * fixedStep)
-            {
-                Assert.Less(Time.time - started, RunTimeout, $"{label}: 07 never reached the lip");
-                yield return new WaitForFixedUpdate();
-            }
-
-            float speed = _rover.Speed;
-            if (expectLeap && charge > 0.5f && charge < 1f)
-            {
-                Capture("03-lip-charging");
-            }
-
-            int leapsBefore = _leaps.Count;
-            int landingsBefore = _landings.Count;
-            _pilot.JumpHeld = true;
-            for (int i = 0; i < holdSteps; i++)
-            {
-                yield return new WaitForFixedUpdate();
-            }
-
-            _pilot.JumpHeld = false;
-            Vector3 takeOff = _rover.Position;
-            float apex = takeOff.y;
-            bool captured = false;
-            started = Time.time;
-            while (Time.time - started < RunTimeout)
-            {
-                apex = Mathf.Max(apex, _rover.Position.y);
-                bool leapt = _leaps.Count > leapsBefore;
-                if (leapt && !captured && !_rover.IsGrounded && _rover.Velocity.y < 0f && charge > 0.5f)
-                {
-                    captured = true;
-                    Capture("04-mid-leap-" + (throttle < 1f ? "cruise" : "top-speed"));
-                    Review(SideView(), _rover.Position, WideFov, "04-mid-leap-side-" +
-                                                                   (throttle < 1f ? "cruise" : "top-speed"));
-                }
-
-                bool touchedDown = leapt && _landings.Count > landingsBefore && _rover.IsGrounded;
-                bool rolledIn = !expectLeap && Arc() > _canyon.LipArc + 6f && _rover.IsGrounded;
-                if (touchedDown || rolledIn)
-                {
-                    break;
-                }
-
-                yield return null;
-            }
-
-            Assert.AreEqual(expectLeap, _leaps.Count > leapsBefore, $"{label}: leap or not as expected");
-            _pilot.Release();
-            Vector3 landing = _landings.Count > landingsBefore ? _landings[_landings.Count - 1] : _rover.Position;
-            float run = Horizontal(landing - takeOff);
-            string strength = expectLeap ? _leaps[_leaps.Count - 1].ToString("F2", CultureInfo.InvariantCulture)
-                : "no leap";
-            Note(label, string.Format(CultureInfo.InvariantCulture,
-                "take-off {0:F1} m/s at {1:F1} m before the lip, strength {2}, apex {3:F1} m, touchdown {4:F1} m " +
-                "from take-off at arc {5:F1} (far face slab from {6:F1})", speed, _canyon.LipArc - ArcOf(takeOff),
-                strength, apex - takeOff.y, run, ArcOf(landing), _canyon.FarFaceArc - Canyon.SlabHalfDepth));
-            yield return Settle();
         }
 
         private void AssertInTheTrough(string label)

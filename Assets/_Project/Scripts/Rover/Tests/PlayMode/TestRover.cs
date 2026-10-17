@@ -26,23 +26,8 @@ namespace MoonProject.Rover.PlayModeTests
         private const float WheelOffsetZ = 0.22f;
         private const float AxleSpacing = SuspZ + WheelOffsetZ;
 
-        /// <summary>HoverCoils contract dimensions (art's CoilSocket height, spring spacing and length).</summary>
-        private const float CoilSocketHeight = 0.28f;
-        private const float CoilHalfTrack = 0.19f;
-        private const float CoilHalfBase = 0.3f;
-        private const float CoilLength = 0.1f;
-
-        /// <summary>Kit stand-in dimensions (art's lamp bar, capacitor drums and rack, and their sockets).</summary>
-        private const float LampSpacing = 0.27f;
+        /// <summary>The battery's flank lamps stand-in spacing along the stripe.</summary>
         private const float FlankLampSpacing = 0.06f;
-        private const float DrumSocketX = 0.47f;
-        private const float DrumSocketY = 0.87f;
-        private const float DrumSocketZ = -0.12f;
-
-        /// <summary>The side bins' stand-in sockets on the front flanks.</summary>
-        private const float SideBinX = 0.5f;
-        private const float SideBinY = 0.9f;
-        private const float SideBinZ = 0.35f;
 
         /// <summary>The charge-up's cell stand-ins on the deck: their offset, height and spacing.</summary>
         private const float CellX = 0.2f;
@@ -53,9 +38,6 @@ namespace MoonProject.Rover.PlayModeTests
         private const float HatchY = 0.65f;
         private const float HatchZ = -0.7f;
         private const int HatchCrateCount = 8;
-
-        private const float SeatHeight = 0.045f;
-        private const float SeatBack = -0.26f;
 
         /// <summary>Cinemachine channel for rover tests: their brains and cameras only see each other.</summary>
         private const OutputChannels TestChannel = OutputChannels.Channel15;
@@ -108,71 +90,24 @@ namespace MoonProject.Rover.PlayModeTests
 
         public Light EyeLight { get; private set; }
 
-        public RoverHoverCoils HoverCoils { get; private set; }
-
         public RoverLampMotes LampMotes { get; private set; }
 
         public Light Headlamp { get; private set; }
 
-        /// <summary>The stand-in HoverCoils mount under CoilSocket.</summary>
-        public Transform CoilMount { get; private set; }
-
-        public Transform[] Coils { get; private set; }
-
-        public Renderer[] CoilGlows { get; private set; }
-
-        public Light CoilLight { get; private set; }
-
-        public RoverKit Kit { get; private set; }
-
-        /// <summary>The stand-in Kit_LampBar, capacitor drums (L, R), Kit_CargoRack and its RelicSeat.</summary>
-        public Transform LampBar { get; private set; }
-
-        public Transform[] Drums { get; private set; }
-
-        public Renderer[] DrumGlows { get; private set; }
-
-        public Renderer[] Lamps { get; private set; }
-
-        public Transform CargoRack { get; private set; }
-
-        /// <summary>The stand-in Kit_TapeDeck on DeckSocket (the back's centreline, above the hatch).</summary>
-        public Transform TapeDeck { get; private set; }
-
-        /// <summary>The stand-in Kit_TetherRing on the Eye and its Glow band.</summary>
-        public Transform TetherRing { get; private set; }
-
-        public Transform RelicSeat { get; private set; }
-
-        /// <summary>The gift nodes: SolarWing/CellFilled, Body/Decal07Fresh, Antenna/Pennant.</summary>
-        public Transform CellFilled { get; private set; }
-
-        public Transform FreshSerial { get; private set; }
-
-        public Transform Pennant { get; private set; }
+        /// <summary>The road light's dimmer (docked, crawling).</summary>
+        public RoverHeadlamp RoadLight { get; private set; }
 
         /// <summary>Tilly and Bell, dormant until a test wakes them.</summary>
         public TestFriendRoster Friends { get; } = new TestFriendRoster();
 
-        /// <summary>What a loaded game has fitted (set before 07's first frame).</summary>
-        public TestEquipment Equipment { get; } = new TestEquipment();
+        /// <summary>The cutter's state for the charge-up's brace and warm window (an <see cref="ICutter"/> double).</summary>
+        public TestCutter Cutter { get; } = new TestCutter();
 
         /// <summary>The world's anchors: only micro.06, where 07's elder sits (far away unless a test places it).</summary>
         public TestAnchors Anchors { get; } = new TestAnchors();
 
         /// <summary>The in-memory save 07's own section registers with.</summary>
         public TestSave Save { get; } = new TestSave();
-
-        /// <summary>A loaded game with <paramref name="part"/> fitted and its ability (call before the first frame).
-        /// </summary>
-        public void Equip(RoverKitPiece part)
-        {
-            Equipment.Fitted(part);
-            if (RoverKitPieces.TryGetAbility(part, out RoverAbility ability))
-            {
-                Context.Get<IRoverAbilities>().Grant(ability);
-            }
-        }
 
         /// <summary>The world's landmarks (a test may move the base to bring 07 home).</summary>
         public TestWorldLayout Layout { get; } = new TestWorldLayout();
@@ -314,75 +249,6 @@ namespace MoonProject.Rover.PlayModeTests
             headlamp.transform.localRotation = Quaternion.Euler(rigTuning.HeadlampDownTilt, 0f, 0f);
             var eyeLight = Node("EyeGlow", eye, Vector3.zero).gameObject.AddComponent<Light>();
 
-            Transform coilSocket = Node(RoverModelNodes.CoilSocket, model, Vector3.up * CoilSocketHeight);
-            Transform coilMount = Node("HoverCoils", coilSocket, Vector3.zero);
-            var coils = new Transform[RoverModelNodes.CoilCount];
-            var coilGlows = new Renderer[RoverModelNodes.CoilCount];
-            for (int i = 0; i < coils.Length; i++)
-            {
-                var top = new Vector3(i % 2 == 0 ? -CoilHalfTrack : CoilHalfTrack, 0f,
-                    i < 2 ? CoilHalfBase : -CoilHalfBase);
-                coils[i] = Node(RoverModelNodes.Coil(i), coilMount, top);
-                Shape(PrimitiveType.Cylinder, coils[i], Vector3.down * (CoilLength * 0.5f),
-                    new Vector3(0.12f, CoilLength * 0.5f, 0.12f), material);
-                Transform ring = Shape(PrimitiveType.Sphere, coils[i], Vector3.down * CoilLength,
-                    new Vector3(0.15f, 0.02f, 0.15f), material);
-                ring.name = RoverModelNodes.CoilGlow(i);
-                coilGlows[i] = ring.GetComponent<MeshRenderer>();
-            }
-
-            var coilLight = Node("CoilGlow", coilSocket, Vector3.zero).gameObject.AddComponent<Light>();
-
-            Transform lampBar = Node("Kit_LampBar", lampSocket, Vector3.zero);
-            Shape(PrimitiveType.Cube, lampBar, new Vector3(0f, 0.06f, 0.03f), new Vector3(0.9f, 0.08f, 0.06f),
-                material);
-            var lamps = new Renderer[RoverModelNodes.KitLampCount];
-            for (int i = 0; i < lamps.Length; i++)
-            {
-                var at = new Vector3((i - 1) * LampSpacing, 0.06f, 0.07f);
-                Transform glass = Shape(PrimitiveType.Sphere, lampBar, at, Vector3.one * 0.1f, material);
-                glass.name = RoverModelNodes.KitLamp(i);
-                lamps[i] = glass.GetComponent<MeshRenderer>();
-            }
-
-            var drums = new Transform[2];
-            var drumGlows = new Renderer[2];
-            for (int i = 0; i < drums.Length; i++)
-            {
-                float side = i == 0 ? -1f : 1f;
-                Transform socket = Node(i == 0 ? RoverModelNodes.DrumSocketLeft : RoverModelNodes.DrumSocketRight,
-                    model, new Vector3(side * DrumSocketX, DrumSocketY, DrumSocketZ));
-                socket.localRotation = Quaternion.Euler(0f, i == 0 ? 180f : 0f, 0f);
-                drums[i] = Node("Kit_CapacitorDrum", socket, Vector3.zero);
-                Transform band = Shape(PrimitiveType.Cylinder, drums[i], new Vector3(0.08f, 0f, 0f),
-                    new Vector3(0.16f, 0.1f, 0.16f), material);
-                band.name = RoverModelNodes.DrumGlow;
-                drumGlows[i] = band.GetComponent<MeshRenderer>();
-            }
-
-            Transform rack = Node("Kit_CargoRack", cargo, Vector3.zero);
-            Shape(PrimitiveType.Cube, rack, new Vector3(0f, 0.02f, SeatBack), new Vector3(0.7f, 0.04f, 0.5f), material);
-            Transform seat = Node(RoverModelNodes.RelicSeat, rack, new Vector3(0f, SeatHeight, SeatBack));
-            Transform spineSocket = Node(RoverModelNodes.SpineSocket, model, new Vector3(0.55f, 1.05f, -0.2f));
-            Transform spine = Node("Kit_BatterySpine", spineSocket, Vector3.zero);
-            Shape(PrimitiveType.Cube, spine, new Vector3(0f, 0.06f, 0f), new Vector3(0.1f, 0.12f, 0.42f), material);
-            Transform deckSocket = Node(RoverModelNodes.DeckSocket, model, new Vector3(0f, 0.775f, -0.63f));
-            deckSocket.localRotation = Quaternion.Euler(0f, 90f, 0f);
-            Transform deck = Node("Kit_TapeDeck", deckSocket, Vector3.zero);
-            Shape(PrimitiveType.Cube, deck, new Vector3(0.05f, 0f, 0f), new Vector3(0.07f, 0.13f, 0.27f), material);
-            Transform tetherRing = Node("Kit_TetherRing", model, new Vector3(0f, 1.3f, 0.8f));
-            Transform ringGlow = Shape(PrimitiveType.Cylinder, tetherRing, Vector3.zero,
-                new Vector3(0.3f, 0.01f, 0.3f), material);
-            ringGlow.name = RoverModelNodes.RingGlow;
-            Transform cell = Shape(PrimitiveType.Cube, wing, new Vector3(0.1f, 0.02f, -0.1f),
-                new Vector3(0.15f, 0.01f, 0.15f), material);
-            cell.name = RoverModelNodes.CellFilled;
-            Transform serial = Shape(PrimitiveType.Cube, bodyNode, new Vector3(0.66f, 0.8f, 0.17f),
-                new Vector3(0.01f, 0.08f, 0.21f), material);
-            serial.name = RoverModelNodes.Decal07Fresh;
-            Transform pennant = Shape(PrimitiveType.Cube, antenna, new Vector3(0f, 0.6f, -0.05f),
-                new Vector3(0.01f, 0.06f, 0.1f), material);
-            pennant.name = RoverModelNodes.Pennant;
             var flankLamps = new Transform[RoverModelNodes.FlankLampCount];
             var flankGlasses = new Renderer[RoverModelNodes.FlankLampCount];
             for (int i = 0; i < flankLamps.Length; i++)
@@ -396,28 +262,18 @@ namespace MoonProject.Rover.PlayModeTests
             }
 
             var flank = visual.gameObject.AddComponent<RoverFlankLamps>();
-            var kit = visual.gameObject.AddComponent<RoverKit>();
+            var roadLight = visual.gameObject.AddComponent<RoverHeadlamp>();
             var moteSystem = Particles("LampMotes", headlamp.transform, material);
             var lampMotes = moteSystem.gameObject.AddComponent<RoverLampMotes>();
-            var hoverCoils = visual.gameObject.AddComponent<RoverHoverCoils>();
 
             Transform fxHost = Node("WheelFx", root.transform, Vector3.zero);
             var fx = fxHost.gameObject.AddComponent<RoverWheelFx>();
 
             Assign(rig, ("_tuning", rigTuning), ("_chassis", chassis), ("_antenna", antenna));
-            Assign(kit, ("_tuning", rigTuning), ("_headlamp", headlamp), ("_lampBar", lampBar), ("_cargoRack", rack),
-                ("_spine", spine), ("_tapeDeck", deck), ("_tetherRing", tetherRing),
-                ("_ringGlow", ringGlow.GetComponent<MeshRenderer>()),
-                ("_relicSeat", seat), ("_solarCell", cell), ("_freshSerial", serial), ("_pennant", pennant));
-            AssignArray(kit, "_lamps", lamps);
-            AssignArray(kit, "_drums", drums);
-            AssignArray(kit, "_drumGlows", drumGlows);
+            Assign(roadLight, ("_tuning", rigTuning), ("_headlamp", headlamp));
             AssignArray(rig, "_wheels", wheels);
             AssignArray(rig, "_arms", arms);
             AssignArray(rig, "_shocks", shocks);
-            Assign(hoverCoils, ("_tuning", rigTuning), ("_mount", coilMount), ("_light", coilLight));
-            AssignArray(hoverCoils, "_coils", coils);
-            AssignArray(hoverCoils, "_glows", coilGlows);
             Assign(fx, ("_tuning", fxTuning),
                 ("_frontSocketLeft", (Transform)wheels[0]),
                 ("_frontSocketRight", (Transform)wheels[1]),
@@ -443,20 +299,10 @@ namespace MoonProject.Rover.PlayModeTests
             AssignArray(flank, "_lamps", flankLamps);
             AssignArray(flank, "_glasses", flankGlasses);
             Assign(controller, ("_tuning", tuning), ("_body", rigidbody), ("_sphere", collider), ("_visualRig", rig),
-                ("_wheelFx", fx), ("_hoverCoils", hoverCoils), ("_lampMotes", lampMotes), ("_kit", kit),
+                ("_wheelFx", fx), ("_lampMotes", lampMotes), ("_headlamp", roadLight),
                 ("_flankLamps", flank),
                 ("_tetherOrigin", eyeOrigin), ("_cutterOrigin", cutterOrigin), ("_scanOrigin", eyeOrigin),
                 ("_winchOrigin", winchOrigin), ("_scoopOrigin", scoopOrigin), ("_cargoSocket", cargo));
-            var sideBins = new Object[2];
-            for (int i = 0; i < sideBins.Length; i++)
-            {
-                Transform bin = Node(i == 0 ? RoverModelNodes.BinSocketLeft : RoverModelNodes.BinSocketRight, model,
-                    new Vector3(i == 0 ? -SideBinX : SideBinX, SideBinY, SideBinZ));
-                bin.gameObject.SetActive(false);
-                sideBins[i] = bin.gameObject;
-            }
-
-            AssignArray(controller, "_sideBins", sideBins);
             Transform hatch = Node(RoverModelNodes.CargoHatch, model, new Vector3(0f, HatchY, HatchZ));
             Node(RoverModelNodes.UpperCanopy, hatch, Vector3.zero);
             Node(RoverModelNodes.LowerChute, hatch, new Vector3(0f, -0.3f, 0f));
@@ -563,33 +409,16 @@ namespace MoonProject.Rover.PlayModeTests
                 Head = head,
                 SolarWing = wing,
                 EyeLight = eyeLight,
-                HoverCoils = hoverCoils,
                 LampMotes = lampMotes,
                 Headlamp = headlamp,
-                CoilMount = coilMount,
-                Coils = coils,
-                CoilGlows = coilGlows,
-                CoilLight = coilLight,
-                Kit = kit,
-                LampBar = lampBar,
-                Lamps = lamps,
-                Drums = drums,
-                DrumGlows = drumGlows,
-                CargoRack = rack,
-                TapeDeck = deck,
-                TetherRing = tetherRing,
-                RelicSeat = seat,
-                CellFilled = cell,
-                FreshSerial = serial,
-                Pennant = pennant,
+                RoadLight = roadLight,
             };
 
             var context = new GameContext(new EventBus(), input);
             context.Register(world.Terrain);
             context.Register<IWorldLayout>(rover.Layout);
             context.Register<IFriendRoster>(rover.Friends);
-            context.Register<IRoverEquipment>(rover.Equipment);
-            context.Register<ICutter>(rover.Equipment);
+            context.Register<ICutter>(rover.Cutter);
             context.Register<IWorldAnchors>(rover.Anchors);
             context.Register<ISaveService>(rover.Save);
             rover.Context = context;
