@@ -91,7 +91,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             base.TearDown();
         }
 
-        private static readonly int GroundStartShaderId = Shader.PropertyToID("_MoonScanGroundStart");
+        private static readonly int RetiredGroundStartShaderId = Shader.PropertyToID("_MoonScanGroundStart");
 
         [UnityTest]
         [Timeout(300000)]
@@ -171,6 +171,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Press(_keyboard.eKey);
             bool capturedDaylight = false;
             bool capturedLensCloseup = false;
+            float earlyWedgeTargetY = float.NaN;
             deadline = Time.time + ScanTimeout;
             while (!distantTarget.Scanned)
             {
@@ -178,12 +179,25 @@ namespace MoonProject.Gameplay.PlayModeTests
                 if (scans.Scanning == distantTarget)
                 {
                     AssertBeamClearOfRover(distantTarget.Point, "front-daylight-6.5m");
+                    if (float.IsNaN(earlyWedgeTargetY) && distantTarget.Progress >= 0.18f)
+                    {
+                        earlyWedgeTargetY = AssertScanBeamWedgeActiveAndTapered();
+                    }
+
                     if (!capturedDaylight && distantTarget.Progress >= 0.48f)
                     {
-                        Vector4 groundStart = Shader.GetGlobalVector(GroundStartShaderId);
-                        Assert.Greater(groundStart.w, 0.5f, "Ground scan line shader global must be active mid-sweep.");
-                        FrameCapture.SavePng(_view, CaptureWidth, CaptureHeight,
-                            Path.Combine(ScanFolder, "scan_daylight.png"));
+                        Vector4 retiredGround = Shader.GetGlobalVector(RetiredGroundStartShaderId);
+                        Assert.AreEqual(0f, retiredGround.w, 1e-4f, "Retired ground scan line shader global must remain inactive.");
+                        float midWedgeTargetY = AssertScanBeamWedgeActiveAndTapered();
+                        if (!float.IsNaN(earlyWedgeTargetY))
+                        {
+                            Assert.Greater(midWedgeTargetY, earlyWedgeTargetY + 0.04f,
+                                "Scan beam wedge far edge must climb up the target with the surface scan sweep.");
+                        }
+
+                        string daylightPath = Path.Combine(ScanFolder, "scan_daylight.png");
+                        FrameCapture.SavePng(_view, CaptureWidth, CaptureHeight, daylightPath);
+                        AssertNoBrightRegionOutsideLensAndTarget(daylightPath, distantTarget, 0.90f, "scan_daylight.png");
                         capturedDaylight = true;
                     }
 
@@ -286,8 +300,10 @@ namespace MoonProject.Gameplay.PlayModeTests
                     AssertBeamClearOfRover(nightDistantTarget.Point, "night-6.5m");
                     if (!capturedNight && nightDistantTarget.Progress >= 0.50f)
                     {
-                        FrameCapture.SavePng(_view, CaptureWidth, CaptureHeight,
-                            Path.Combine(ScanFolder, "scan_night.png"));
+                        AssertScanBeamWedgeActiveAndTapered();
+                        string nightPath = Path.Combine(ScanFolder, "scan_night.png");
+                        FrameCapture.SavePng(_view, CaptureWidth, CaptureHeight, nightPath);
+                        AssertNoBrightRegionOutsideLensAndTarget(nightPath, nightDistantTarget, 0.58f, "scan_night.png");
                         capturedNight = true;
                     }
                 }
@@ -314,7 +330,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _cameraRig.enabled = true;
             _context.Get<IRoverPlacement>().PlaceAt(spot, Quaternion.Euler(0f, 15f, 0f));
             _cameraRig.Snap();
-            // Chase camera looking along -112 deg so 07 is in the lower-right foreground and the 6.5 m ground line +
+            // Chase camera looking along -112 deg so 07 is in the lower-right foreground and the 6.5 m lens beam wedge +
             // ballistic glints + ToppledGearbox ruin piece stretch diagonally across open ground to the upper-left.
             _cameraRig.Orbit.AdoptBearing(-112f);
             yield return WaitSeconds(0.65f);
@@ -351,9 +367,11 @@ namespace MoonProject.Gameplay.PlayModeTests
 
                     if (panels[2] == null && ruinTarget.Progress >= 0.52f)
                     {
+                        string sweepPath = Path.Combine(ScanFolder, "ruin_behind_3_line_sweeping.png");
                         panels[2] = CapturePanel("ruin_behind_3_line_sweeping.png");
+                        AssertNoBrightRegionOutsideLensAndTarget(sweepPath, ruinTarget, 0.90f, "ruin_behind_3_line_sweeping.png");
                         File.Copy(
-                            Path.Combine(ScanFolder, "ruin_behind_3_line_sweeping.png"),
+                            sweepPath,
                             Path.Combine(ScanFolder, "ruin_behind_3_raster_sweep.png"),
                             overwrite: true);
                     }
@@ -362,7 +380,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 yield return null;
             }
 
-            // Wait ~110 ms into the completion dissolve so the warm-amber completion ping edge is at peak while the ground line ramps off
+            // Wait ~110 ms into the completion dissolve so the warm-amber completion ping edge is at peak while the lens beam ramps off
             yield return WaitSeconds(0.11f);
             panels[3] = CapturePanel("ruin_behind_4_completion_ping.png");
             File.Copy(
@@ -481,6 +499,262 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(clear, $"Scan beam ({label}) must have line of sight and never cross 07.");
         }
 
+        private float AssertScanBeamWedgeActiveAndTapered()
+        {
+            Transform wedgeTr = null;
+            foreach (Transform child in _gameplay.GetComponentsInChildren<Transform>(true))
+            {
+                if (child.name == "ScanBeamWedge")
+                {
+                    wedgeTr = child;
+                    break;
+                }
+            }
+
+            Assert.IsNotNull(wedgeTr, "ScanBeamWedge GameObject must exist under GameplaySystem.");
+            var mr = wedgeTr.GetComponent<MeshRenderer>();
+            var mf = wedgeTr.GetComponent<MeshFilter>();
+            Assert.IsNotNull(mr, "ScanBeamWedge must have a MeshRenderer.");
+            Assert.IsNotNull(mf, "ScanBeamWedge must have a MeshFilter.");
+            Assert.IsTrue(mr.enabled, "ScanBeamWedge MeshRenderer must be enabled while scanning.");
+
+            Mesh mesh = mf.sharedMesh;
+            Assert.IsNotNull(mesh, "ScanBeamWedge must have a dynamic mesh.");
+            Vector3[] verts = mesh.vertices;
+            Color[] colors = mesh.colors;
+            const int rings = 16;
+            const int slices = 9;
+            int centerSlice = slices / 2;
+
+            Vector3 lensCenter = verts[centerSlice];
+            Vector3 targetCenter = verts[(rings - 1) * slices + centerSlice];
+            Assert.Less(Vector3.Distance(lensCenter, _rover.ScanOrigin.position), 0.12f,
+                "ScanBeamWedge must originate at 07's cheek lens (ScanOrigin).");
+
+            float lensWidth = Vector3.Distance(verts[0], verts[slices - 1]);
+            float targetWidth = Vector3.Distance(verts[(rings - 1) * slices], verts[(rings - 1) * slices + slices - 1]);
+            Assert.Greater(targetWidth, lensWidth * 3.5f,
+                "ScanBeamWedge must taper from a narrow lens aperture to a wider fan spanning the target scan line.");
+
+            float lensAlpha = colors[centerSlice].a;
+            float midAlpha = colors[(rings / 2) * slices + centerSlice].a;
+            float targetAlpha = colors[(rings - 1) * slices + centerSlice].a;
+            Assert.Greater(lensAlpha, midAlpha * 3f, "ScanBeamWedge must be brightest at the lens.");
+            Assert.Greater(targetAlpha, midAlpha * 2.5f, "ScanBeamWedge must brighten where it meets the target.");
+            Assert.LessOrEqual(midAlpha, 0.08f, "ScanBeamWedge must have very low alpha in the middle.");
+
+            return targetCenter.y;
+        }
+
+        private void AssertNoBrightRegionOutsideLensAndTarget(
+            string pngPath,
+            ScanFragment target,
+            float maxAllowedBrightness,
+            string label)
+        {
+            byte[] bytes = File.ReadAllBytes(pngPath);
+            var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            tex.LoadImage(bytes);
+            try
+            {
+                Color32[] pixels = tex.GetPixels32();
+                int w = tex.width;
+                int h = tex.height;
+
+                Rect lensRect = ProjectSphereToScreenRect(_view, _rover.ScanOrigin.position, 0.42f, w, h, 22f);
+                Rect targetRect = ProjectTargetToScreenRect(_view, target, w, h, 26f);
+
+                const int blockSize = 8;
+                float maxBrightness = 0f;
+                Vector2Int maxBrightPos = Vector2Int.zero;
+                Color maxBrightColor = Color.black;
+
+                float maxCyanBrightness = 0f;
+                Vector2Int maxCyanPos = Vector2Int.zero;
+                Color maxCyanColor = Color.black;
+
+                float maxBlueExcess = 0f;
+                Vector2Int maxBluePos = Vector2Int.zero;
+                Color maxBlueColor = Color.black;
+
+                for (int by = 0; by <= h - blockSize; by += blockSize)
+                {
+                    for (int bx = 0; bx <= w - blockSize; bx += blockSize)
+                    {
+                        var blockRect = new Rect(bx, by, blockSize, blockSize);
+                        if (blockRect.Overlaps(lensRect) || blockRect.Overlaps(targetRect))
+                        {
+                            continue;
+                        }
+
+                        float sumR = 0f;
+                        float sumG = 0f;
+                        float sumB = 0f;
+                        for (int py = 0; py < blockSize; py++)
+                        {
+                            int rowOffset = (by + py) * w + bx;
+                            for (int px = 0; px < blockSize; px++)
+                            {
+                                Color32 c = pixels[rowOffset + px];
+                                sumR += c.r;
+                                sumG += c.g;
+                                sumB += c.b;
+                            }
+                        }
+
+                        const float invScale = 1f / (blockSize * blockSize * 255f);
+                        float avgR = sumR * invScale;
+                        float avgG = sumG * invScale;
+                        float avgB = sumB * invScale;
+
+                        float brightness = Mathf.Max(avgR, Mathf.Max(avgG, avgB));
+                        if (brightness > maxBrightness)
+                        {
+                            maxBrightness = brightness;
+                            maxBrightPos = new Vector2Int(bx, by);
+                            maxBrightColor = new Color(avgR, avgG, avgB, 1f);
+                        }
+
+                        float blueExcess = avgB - avgR;
+                        if (blueExcess > 0.04f && brightness > maxCyanBrightness)
+                        {
+                            maxCyanBrightness = brightness;
+                            maxCyanPos = new Vector2Int(bx, by);
+                            maxCyanColor = new Color(avgR, avgG, avgB, 1f);
+                        }
+
+                        if (blueExcess > maxBlueExcess)
+                        {
+                            maxBlueExcess = blueExcess;
+                            maxBluePos = new Vector2Int(bx, by);
+                            maxBlueColor = new Color(avgR, avgG, avgB, 1f);
+                        }
+                    }
+                }
+
+                Debug.Log($"[scan-check] {label}: maxBrightnessOutside={maxBrightness:F3} (limit {maxAllowedBrightness:F2}) at {maxBrightPos} rgb=({maxBrightColor.r:F2},{maxBrightColor.g:F2},{maxBrightColor.b:F2}), " +
+                          $"maxCyanBrightnessOutside={maxCyanBrightness:F3} at {maxCyanPos} rgb=({maxCyanColor.r:F2},{maxCyanColor.g:F2},{maxCyanColor.b:F2}), " +
+                          $"maxBlueCyanExcessOutside={maxBlueExcess:F3} at {maxBluePos} rgb=({maxBlueColor.r:F2},{maxBlueColor.g:F2},{maxBlueColor.b:F2}), " +
+                          $"lensRect={lensRect}, targetRect={targetRect}");
+
+                Assert.LessOrEqual(maxBrightness, maxAllowedBrightness,
+                    $"{label}: screen region at {maxBrightPos} outside 07's lens and target surface exceeded brightness threshold " +
+                    $"({maxBrightness:F3} > {maxAllowedBrightness:F2}, rgb=({maxBrightColor.r:F2},{maxBrightColor.g:F2},{maxBrightColor.b:F2})).");
+                Assert.LessOrEqual(maxCyanBrightness, 0.65f,
+                    $"{label}: cyan/blue screen region at {maxCyanPos} outside 07's lens and target surface exceeded brightness threshold " +
+                    $"({maxCyanBrightness:F3} > 0.65, rgb=({maxCyanColor.r:F2},{maxCyanColor.g:F2},{maxCyanColor.b:F2})).");
+                Assert.LessOrEqual(maxBlueExcess, 0.25f,
+                    $"{label}: blue/cyan bloom blob detected at {maxBluePos} outside 07's lens and target surface " +
+                    $"(blueCyanExcess={maxBlueExcess:F3} > 0.25, rgb=({maxBlueColor.r:F2},{maxBlueColor.g:F2},{maxBlueColor.b:F2})).");
+            }
+            finally
+            {
+                Object.DestroyImmediate(tex);
+            }
+        }
+
+        private static Rect ProjectSphereToScreenRect(
+            Camera cam,
+            Vector3 center,
+            float radius,
+            int screenW,
+            int screenH,
+            float padPx)
+        {
+            float minX = screenW;
+            float minY = screenH;
+            float maxX = 0f;
+            float maxY = 0f;
+
+            for (int dx = -1; dx <= 1; dx += 2)
+            {
+                for (int dy = -1; dy <= 1; dy += 2)
+                {
+                    for (int dz = -1; dz <= 1; dz += 2)
+                    {
+                        Vector3 wp = center + new Vector3(dx * radius, dy * radius, dz * radius);
+                        Vector3 sp = cam.WorldToViewportPoint(wp);
+                        if (sp.z > 0f)
+                        {
+                            float px = sp.x * screenW;
+                            float py = sp.y * screenH;
+                            minX = Mathf.Min(minX, px);
+                            minY = Mathf.Min(minY, py);
+                            maxX = Mathf.Max(maxX, px);
+                            maxY = Mathf.Max(maxY, py);
+                        }
+                    }
+                }
+            }
+
+            return Rect.MinMaxRect(minX - padPx, minY - padPx, maxX + padPx, maxY + padPx);
+        }
+
+        private static Rect ProjectTargetToScreenRect(
+            Camera cam,
+            ScanFragment target,
+            int screenW,
+            int screenH,
+            float padPx)
+        {
+            Transform root = target.Root.parent != null ? target.Root.parent : target.Root;
+            bool hasBounds = false;
+            Bounds combined = default;
+            foreach (Renderer r in root.GetComponentsInChildren<Renderer>(false))
+            {
+                if (r != null && r.enabled && r.gameObject.activeInHierarchy)
+                {
+                    if (!hasBounds)
+                    {
+                        combined = r.bounds;
+                        hasBounds = true;
+                    }
+                    else
+                    {
+                        combined.Encapsulate(r.bounds);
+                    }
+                }
+            }
+
+            if (!hasBounds)
+            {
+                return ProjectSphereToScreenRect(cam, target.Point, 0.45f, screenW, screenH, padPx);
+            }
+
+            Vector3 min = combined.min;
+            Vector3 max = combined.max;
+            float minX = screenW;
+            float minY = screenH;
+            float maxX = 0f;
+            float maxY = 0f;
+
+            for (int ix = 0; ix <= 1; ix++)
+            {
+                for (int iy = 0; iy <= 1; iy++)
+                {
+                    for (int iz = 0; iz <= 1; iz++)
+                    {
+                        Vector3 corner = new Vector3(
+                            ix == 0 ? min.x : max.x,
+                            iy == 0 ? min.y : max.y,
+                            iz == 0 ? min.z : max.z);
+                        Vector3 sp = cam.WorldToViewportPoint(corner);
+                        if (sp.z > 0f)
+                        {
+                            float px = sp.x * screenW;
+                            float py = sp.y * screenH;
+                            minX = Mathf.Min(minX, px);
+                            minY = Mathf.Min(minY, py);
+                            maxX = Mathf.Max(maxX, px);
+                            maxY = Mathf.Max(maxY, py);
+                        }
+                    }
+                }
+            }
+
+            return Rect.MinMaxRect(minX - padPx, minY - padPx, maxX + padPx, maxY + padPx);
+        }
+
         private void CaptureLensCloseup(ScanFragment target)
         {
             Transform camTr = _view.transform;
@@ -568,7 +842,11 @@ namespace MoonProject.Gameplay.PlayModeTests
                     }
 
                     Transform tr = r.transform;
-                    if (tr.IsChildOf(_rover.transform) || (keepRoot != null && tr.IsChildOf(keepRoot)))
+                    if (tr.IsChildOf(_rover.transform) ||
+                        (keepRoot != null && tr.IsChildOf(keepRoot)) ||
+                        r is ParticleSystemRenderer ||
+                        r is LineRenderer ||
+                        string.Equals(tr.name, "ScanBeamWedge", StringComparison.Ordinal))
                     {
                         continue;
                     }

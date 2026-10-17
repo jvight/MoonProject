@@ -21,14 +21,6 @@ half4 _MoonScanPingColor;
 float4 _MoonScanParams;
 float4 _MoonScanPingParams;
 
-// Global ground scan line parameters populated per frame by ScanBeam (SCAN v3, zero-GC):
-// _MoonScanGroundStart:  xyz = world start point under 07's cheek lens (xz = lens ground projection, y = height ceiling near 07), w = active level (0..1)
-// _MoonScanGroundEnd:    xyz = world target base point, w = progress (0..1 during sweep, >1 during completion ping)
-// _MoonScanGroundParams: x = groundLineWidthMeters, y = groundLineIntensity, z = startOffsetMeters, w = reserved
-float4 _MoonScanGroundStart;
-float4 _MoonScanGroundEnd;
-float4 _MoonScanGroundParams;
-
 half3 MoonScanGetLineColor()
 {
     return (_MoonScanParams.y > 1e-4) ? _MoonScanLineColor.rgb : half3(0.033h, 0.715h, 0.913h);
@@ -123,101 +115,6 @@ half MoonScanUnthread(half dissolve)
     return saturate((dissolve - (half)(pingSpan * 0.35)) / max(0.15h, (half)pingSpan * 0.75h));
 }
 
-// Applies the physically grounded laser fan intersection line on the terrain and any props between 07's cheek lens
-// and the scanned target's base (SCAN v3), strictly along the vertical fan plane's straight ground trace (v = 0).
-void MoonApplyGroundScanLine(
-    inout half3 color,
-    float3 positionWS,
-    float3 normalWS,
-    bool isTerrain)
-{
-    float activeLevel = saturate(_MoonScanGroundStart.w);
-    if (activeLevel <= 0.001)
-    {
-        return;
-    }
-
-    float2 startXZ = _MoonScanGroundStart.xz;
-    float2 endXZ = _MoonScanGroundEnd.xz;
-    float2 seg = endXZ - startXZ;
-    float segLen = length(seg);
-    if (segLen <= 0.05)
-    {
-        return;
-    }
-
-    float2 forwardXZ = seg / segLen;
-    float2 rightXZ = float2(forwardXZ.y, -forwardXZ.x);
-    float2 relXZ = positionWS.xz - startXZ;
-    float u = dot(relXZ, forwardXZ);
-    float v = dot(relXZ, rightXZ);
-
-    // Protect 07's own body/head/wheels when evaluating on non-terrain meshes
-    if (!isTerrain)
-    {
-        if (u < 1.15 || positionWS.y > _MoonScanGroundStart.y)
-        {
-            return;
-        }
-    }
-
-    float startOffset = max(_MoonScanGroundParams.z, 0.35);
-    if (u < startOffset - 0.05 || u > segLen + 0.15)
-    {
-        return;
-    }
-
-    float startEdge = isTerrain
-        ? smoothstep(startOffset, startOffset + 0.22, u)
-        : smoothstep(1.15, 1.32, u);
-    float endEdge = isTerrain
-        ? (1.0 - smoothstep(segLen - 0.36, segLen - 0.14, u))
-        : (1.0 - smoothstep(segLen - 0.35, segLen - 0.08, u));
-    float alongMask = startEdge * endEdge;
-    if (alongMask <= 0.001)
-    {
-        return;
-    }
-
-    // Strict vertical plane intersection with the 3D terrain surface: v = 0 (zero sideways arc).
-    float distToLine = abs(v);
-    float fwV = max(fwidth(v), 1e-4);
-    float lineWidthMeters = clamp(_MoonScanGroundParams.x, 0.008, 0.028);
-    float halfWidth = max(lineWidthMeters * 0.5, fwV * 0.95);
-    if (distToLine > halfWidth * 2.6 + fwV * 1.5)
-    {
-        return;
-    }
-
-    half3 cyanColor = MoonScanGetLineColor();
-    half3 amberColor = MoonScanGetPingColor();
-    float rawProgress = _MoonScanGroundEnd.w;
-    float pingBlend = saturate(rawProgress - 1.0);
-    half3 lineColor = lerp(cyanColor, amberColor, (half)(pingBlend * 0.85));
-
-    float lineIntensity = max(_MoonScanGroundParams.y, 0.4);
-    float aaWidth = fwV * 0.95;
-    float lineCore = (1.0 - smoothstep(halfWidth - aaWidth * 0.5, halfWidth + aaWidth * 0.5, distToLine))
-        * alongMask * activeLevel;
-    float lineGlow = (1.0 - smoothstep(halfWidth * 0.45, halfWidth * 2.15 + aaWidth, distToLine))
-        * alongMask * activeLevel;
-
-    // Modulate by surface incidence and underlying regolith luminance so craters and slopes remain visible
-    // inside the laser trace and the line reads as projected light rather than an opaque cable.
-    float3 emitterWS = _MoonScanGroundStart.xyz;
-    float3 toEmitterDir = normalize(emitterWS - positionWS);
-    float incidence = saturate(dot(normalWS, toEmitterDir) * 0.65 + normalWS.y * 0.55);
-    float t = saturate((u - startOffset) / max(segLen - startOffset, 0.1));
-    float distanceAtten = lerp(1.0, 0.72, t);
-    float reliefMod = clamp(0.62 + 0.58 * incidence, 0.45, 1.22);
-
-    half surfLuma = clamp(dot(color, half3(0.299h, 0.587h, 0.114h)), 0.08h, 0.82h);
-    half3 laserTint = surfLuma * half3(0.16h, 0.80h, 0.92h)
-        + lineColor * (half)(lineIntensity * 0.40 * distanceAtten * reliefMod);
-    half blendWeight = (half)saturate((lineCore * 0.56 + lineGlow * 0.18) * reliefMod);
-    color = lerp(color, laserTint, blendWeight);
-}
-
 // Applies the surface scan look (SCAN v2) directly to the lit surface colour:
 // 1. Crisp bright cyan scan line where the laser sweep plane touches the object, conforming to its 3D surface.
 // 2. Anti-aliased world-space low-contrast cyan raster lines only in the swept band behind the line, fading over ~1 s.
@@ -230,9 +127,9 @@ void MoonApplySurfaceScan(
     half scanProgress,
     half dissolve)
 {
+    color = clamp(color - 1e-4h, 0.0h, 2.0h);
     if (scanProgress <= 0.0005h && dissolve <= 0.0005h)
     {
-        MoonApplyGroundScanLine(color, positionWS, normalWS, false);
         return;
     }
 
@@ -254,7 +151,7 @@ void MoonApplySurfaceScan(
     float2 toCamXZ;
     MoonScanSurfaceCoords(positionWS, scanY, minScanY, maxScanY, h, toCamXZ);
 
-    float3 n = normalize(normalWS);
+    float3 n = SafeNormalize(normalWS);
     float3 planeN = normalize(float3(-0.58 * toCamXZ.x, 1.0, -0.58 * toCamXZ.y));
     float cosPlane = dot(n, planeN);
     float sinSurface = max(sqrt(saturate(1.0 - cosPlane * cosPlane)), 0.42);
@@ -339,6 +236,8 @@ void MoonApplySurfaceScan(
         half3 edgeTarget = pingColor * (half)(pingEdgeIntensity * (0.75 + 0.45 * thinEdge));
         color = lerp(color, edgeTarget, edgeMask * 0.90h) + pingColor * (edgeMask * (half)(pingEdgeIntensity * 0.30));
     }
+
+    color = clamp(color - 1e-4h, 0.0h, 2.0h);
 }
 
 #endif

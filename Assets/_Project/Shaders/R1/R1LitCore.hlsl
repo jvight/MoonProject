@@ -199,7 +199,7 @@ half4 R1LitFrag(R1LitVaryings input) : SV_Target
 
     albedo = lerp(albedo, _DustColor.rgb, dustMask);
     metallic = lerp(metallic, 0.0h, dustMask * 0.85h);
-    smoothness = lerp(smoothness, _DustSmoothness, dustMask);
+    smoothness = min(lerp(smoothness, _DustSmoothness, dustMask), 0.56h);
 
     // 4. Bloom-safe emission with small hot core
     half3 emission = R1EvaluateBloomSafeEmission(uv);
@@ -207,7 +207,7 @@ half4 R1LitFrag(R1LitVaryings input) : SV_Target
     InputData inputData = (InputData)0;
     inputData.positionWS = input.positionWS;
     inputData.normalWS = finalNormalWS;
-    inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
+    inputData.viewDirectionWS = SafeNormalize(GetWorldSpaceNormalizeViewDir(input.positionWS));
 #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
     inputData.shadowCoord = input.shadowCoord;
 #elif defined(MAIN_LIGHT_CALCULATE_SHADOWS)
@@ -233,13 +233,104 @@ half4 R1LitFrag(R1LitVaryings input) : SV_Target
     surfaceData.clearCoatMask = 0.0h;
     surfaceData.clearCoatSmoothness = 0.0h;
 
-    half4 color = UniversalFragmentPBR(inputData, surfaceData);
-    MoonApplySurfaceScan(color.rgb, input.positionWS, finalNormalWS, vcol.g, _ScanProgress, _Dissolve);
-    color.rgb = MoonAtmosphere(color.rgb, input.positionWS, input.fogFactor);
-    if (any(isnan(color.rgb)) || any(isinf(color.rgb)))
+    BRDFData brdfData;
+    InitializeBRDFData(surfaceData, brdfData);
+    BRDFData brdfDataClearCoat = CreateClearCoatBRDFData(surfaceData, brdfData);
+    half4 shadowMask = CalculateShadowMask(inputData);
+    AmbientOcclusionFactor aoFactor = CreateAmbientOcclusionFactor(inputData, surfaceData);
+    uint meshRenderingLayers = GetMeshRenderingLayer();
+    Light mainLight = GetMainLight(inputData, shadowMask, aoFactor);
+    MixRealtimeAndBakedGI(mainLight, inputData.normalWS, inputData.bakedGI);
+
+    float3 giColor = float3(GlobalIllumination(brdfData, brdfDataClearCoat, surfaceData.clearCoatMask,
+        inputData.bakedGI, aoFactor.indirectAmbientOcclusion, inputData.positionWS,
+        inputData.normalWS, inputData.viewDirectionWS, inputData.normalizedScreenSpaceUV));
+    float3 totalLit = clamp(giColor - 1e-5, 0.0, 2.0) + clamp(float3(emission) - 1e-5, 0.0, 2.0);
+
+    float3 viewDirFloat = float3(inputData.viewDirectionWS);
+    float roughness2 = max((float)brdfData.roughness2, 0.04);
+    float normTerm = (float)brdfData.roughness * 4.0 + 2.0;
+
+    #ifdef _LIGHT_LAYERS
+    if (IsMatchingLightLayer(mainLight.layerMask, meshRenderingLayers))
+    #endif
     {
-        color.rgb = half3(0.0h, 0.0h, 0.0h);
+        float3 lDir = float3(mainLight.direction);
+        float ndotl = saturate(dot(finalNormalWS, lDir));
+        if (ndotl > 0.0)
+        {
+            float atten = min(mainLight.distanceAttenuation, 16.0) * float(mainLight.shadowAttenuation);
+            float3 radiance = clamp(float3(mainLight.color) * (atten * ndotl) - 1e-5, 0.0, 8.0);
+            float3 halfDir = SafeNormalize(lDir + viewDirFloat);
+            float NoH = saturate(dot(finalNormalWS, halfDir));
+            float LoH = saturate(dot(lDir, halfDir));
+            float d = NoH * NoH * (roughness2 - 1.0) + 1.0001;
+            float specTerm = clamp((roughness2 / max((d * d) * max(0.1, LoH * LoH) * normTerm, 1e-3)) - 1e-5, 0.0, 8.0);
+            float3 brdf = float3(brdfData.diffuse) + float3(brdfData.specular) * specTerm;
+            totalLit += clamp((brdf * radiance) - 1e-5, 0.0, 4.0);
+        }
     }
+
+    #if defined(_ADDITIONAL_LIGHTS)
+    uint pixelLightCount = GetAdditionalLightsCount();
+
+    #if USE_FORWARD_PLUS
+    [loop] for (uint lightIndex = 0; lightIndex < min(URP_FP_DIRECTIONAL_LIGHTS_COUNT, MAX_VISIBLE_LIGHTS); lightIndex++)
+    {
+        FORWARD_PLUS_SUBTRACTIVE_LIGHT_CHECK
+        Light light = GetAdditionalLight(lightIndex, inputData, shadowMask, aoFactor);
+        #ifdef _LIGHT_LAYERS
+        if (IsMatchingLightLayer(light.layerMask, meshRenderingLayers))
+        #endif
+        {
+            float3 lDir = float3(light.direction);
+            float ndotl = saturate(dot(finalNormalWS, lDir));
+            if (ndotl > 0.0)
+            {
+                float atten = min(light.distanceAttenuation, 16.0) * float(light.shadowAttenuation);
+                float3 radiance = clamp(float3(light.color) * (atten * ndotl) - 1e-5, 0.0, 8.0);
+                float3 halfDir = SafeNormalize(lDir + viewDirFloat);
+                float NoH = saturate(dot(finalNormalWS, halfDir));
+                float LoH = saturate(dot(lDir, halfDir));
+                float d = NoH * NoH * (roughness2 - 1.0) + 1.0001;
+                float specTerm = clamp((roughness2 / max((d * d) * max(0.1, LoH * LoH) * normTerm, 1e-3)) - 1e-5, 0.0, 8.0);
+                float3 brdf = float3(brdfData.diffuse) + float3(brdfData.specular) * specTerm;
+                totalLit += clamp((brdf * radiance) - 1e-5, 0.0, 4.0);
+            }
+        }
+    }
+    #endif
+
+    LIGHT_LOOP_BEGIN(pixelLightCount)
+        Light light = GetAdditionalLight(lightIndex, inputData, shadowMask, aoFactor);
+        #ifdef _LIGHT_LAYERS
+        if (IsMatchingLightLayer(light.layerMask, meshRenderingLayers))
+        #endif
+        {
+            float3 lDir = float3(light.direction);
+            float ndotl = saturate(dot(finalNormalWS, lDir));
+            if (ndotl > 0.0)
+            {
+                float atten = min(light.distanceAttenuation, 16.0) * float(light.shadowAttenuation);
+                float3 radiance = clamp(float3(light.color) * (atten * ndotl) - 1e-5, 0.0, 8.0);
+                float3 halfDir = SafeNormalize(lDir + viewDirFloat);
+                float NoH = saturate(dot(finalNormalWS, halfDir));
+                float LoH = saturate(dot(lDir, halfDir));
+                float d = NoH * NoH * (roughness2 - 1.0) + 1.0001;
+                float specTerm = clamp((roughness2 / max((d * d) * max(0.1, LoH * LoH) * normTerm, 1e-3)) - 1e-5, 0.0, 8.0);
+                float3 brdf = float3(brdfData.diffuse) + float3(brdfData.specular) * specTerm;
+                totalLit += clamp((brdf * radiance) - 1e-5, 0.0, 4.0);
+            }
+        }
+    LIGHT_LOOP_END
+    #endif
+
+    half pbrCeiling = max(1.15h, max(emission.r, max(emission.g, emission.b)));
+    half4 color = half4((half3)clamp(totalLit - 1e-5, 0.0, (float)pbrCeiling), alpha);
+    MoonApplySurfaceScan(color.rgb, input.positionWS, finalNormalWS, vcol.g, _ScanProgress, _Dissolve);
+    color.rgb = clamp(color.rgb - 1e-4h, 0.0h, 2.0h);
+    color.rgb = MoonAtmosphere(color.rgb, input.positionWS, input.fogFactor);
+    color.rgb = clamp(color.rgb - 1e-4h, 0.0h, 2.0h);
 
     return color;
 }
