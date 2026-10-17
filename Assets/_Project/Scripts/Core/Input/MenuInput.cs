@@ -16,6 +16,7 @@ namespace MoonProject.Core.Input
 
         private readonly InputActionMap _map;
         private readonly InputAction _navigate;
+        private readonly InputAction _submit;
         private readonly InputAction _cancel;
         private readonly InputAction _pause;
         private readonly InputAction _click;
@@ -25,6 +26,7 @@ namespace MoonProject.Core.Input
         {
             _map = map ?? throw new ArgumentNullException(nameof(map));
             _navigate = map.FindAction("Navigate", throwIfNotFound: true);
+            _submit = map.FindAction("Submit", throwIfNotFound: false);
             _cancel = map.FindAction("Cancel", throwIfNotFound: true);
             _pause = map.FindAction("Pause", throwIfNotFound: true);
             _click = map.FindAction("Click", throwIfNotFound: true);
@@ -39,6 +41,34 @@ namespace MoonProject.Core.Input
 
         /// <summary>Current 2D navigation vector read from the UI Navigate action.</summary>
         public Vector2 NavigateVector => _navigate.ReadValue<Vector2>();
+
+        /// <summary>Confirm/select the focused item (Enter, Space, gamepad South / A).</summary>
+        public bool SubmitPressed
+        {
+            get
+            {
+                if (!_map.enabled)
+                {
+                    return false;
+                }
+
+                if (_submit != null && _submit.WasPressedThisFrame())
+                {
+                    return true;
+                }
+
+                Keyboard kb = Keyboard.current;
+                if (kb != null && (kb.enterKey.wasPressedThisFrame
+                    || kb.numpadEnterKey.wasPressedThisFrame
+                    || kb.spaceKey.wasPressedThisFrame))
+                {
+                    return true;
+                }
+
+                Gamepad pad = Gamepad.current;
+                return pad != null && pad.buttonSouth.wasPressedThisFrame;
+            }
+        }
 
         /// <summary>Back out of the topmost thing (Esc, gamepad East).</summary>
         public bool CancelPressed => _cancel.WasPressedThisFrame();

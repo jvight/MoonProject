@@ -192,6 +192,45 @@ namespace MoonProject.Rover.PlayModeTests
             FrameCapture.SavePng(camera, 960, 540, Path.Combine(OutputFolder, "16-prefab-fully-kitted.png"));
         }
 
+        [Test]
+        public void Initialize_WhenScreenColliderMeshNotReadable_LogsErrorAndDisablesFacePicking()
+        {
+            _world = new TestWorld();
+            var roverAsset = AssetDatabase.LoadAssetAtPath<GameObject>(RoverPrefab);
+            Assert.IsNotNull(roverAsset, $"{RoverPrefab} missing: run the Rover builders.");
+
+            _rover = Object.Instantiate(roverAsset, TestWorld.Point(0f, -300f), Quaternion.identity);
+            Transform screen = Find(_rover.transform, RoverModelNodes.Screen);
+            var screenCollider = screen.GetComponent<MeshCollider>();
+            var screenFilter = screen.GetComponent<MeshFilter>();
+            Assert.IsTrue(screenCollider.sharedMesh.isReadable);
+            Assert.IsFalse(screenFilter.sharedMesh.isReadable, "Imported FBX Screen mesh is non-readable.");
+
+            screenCollider.sharedMesh = screenFilter.sharedMesh;
+
+            _input = new InputReader(_actions);
+            var context = new GameContext(new EventBus(), _input);
+            context.Register(_world.Terrain);
+            context.Register<IWorldLayout>(new TestWorldLayout());
+            context.Register<IFriendRoster>(new TestFriendRoster());
+            var equipment = new TestEquipment();
+            context.Register<IRoverEquipment>(equipment);
+            context.Register<ICutter>(equipment);
+            context.Register<IWorldAnchors>(new TestAnchors());
+            context.Register<ISaveService>(new TestSave());
+
+            var controller = _rover.GetComponent<RoverController>();
+            LogAssert.Expect(LogType.Error,
+                "RoverController: Screen MeshCollider sharedMesh on 'Rover(Clone)' is 'Screen' (isReadable=false); face picking is disabled.");
+            controller.Initialize(context);
+
+            Vector3 screenCenter = screen.TransformPoint(screenFilter.sharedMesh.bounds.center);
+            Vector3 rayOrigin = screenCenter + screen.forward * 0.65f;
+            var ray = new Ray(rayOrigin, (screenCenter - rayOrigin).normalized);
+            Assert.IsFalse(controller.TryRaycastScreenUv(ray, out _),
+                "Face picking must be disabled when Screen MeshCollider.sharedMesh is not readable.");
+        }
+
         private static Vector3 EarthlightSource()
         {
             float elevation = EarthlightElevation * Mathf.Deg2Rad;

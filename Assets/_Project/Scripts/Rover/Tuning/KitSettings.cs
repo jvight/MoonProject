@@ -51,19 +51,19 @@ namespace MoonProject.Rover
 
         [Tooltip("Road light intensity with the lamp bar.")]
         [Range(0f, 200f)]
-        [SerializeField] private float _warmIntensity = 42f;
+        [SerializeField] private float _warmIntensity = 200f;
 
         [Tooltip("Road light range (m) with the lamp bar.")]
         [Range(1f, 60f)]
-        [SerializeField] private float _warmRange = 24f;
+        [SerializeField] private float _warmRange = 20f;
 
         [Tooltip("Road light outer cone angle (deg) with the lamp bar: a wider pool.")]
         [Range(10f, 150f)]
-        [SerializeField] private float _warmSpotAngle = 90f;
+        [SerializeField] private float _warmSpotAngle = 72f;
 
         [Tooltip("Road light inner (full brightness) cone angle (deg) with the lamp bar.")]
         [Range(1f, 150f)]
-        [SerializeField] private float _warmInnerSpotAngle = 48f;
+        [SerializeField] private float _warmInnerSpotAngle = 28f;
 
         [Tooltip("Road light colour with the lamp bar: the lamp's amber nudged toward 07's warm orange.")]
         [SerializeField] private Color _warmColor = new Color(1f, 0.62f, 0.33f);

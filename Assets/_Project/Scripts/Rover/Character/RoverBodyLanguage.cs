@@ -159,6 +159,8 @@ namespace MoonProject.Rover
         private float _scanAimBlend;
         private bool _scanBodyTurning;
         private float _scanBodyYawDelta;
+        private float _screenInspectCounterRollShare = 0.5f;
+        private float _screenInspectCounterRollMaxDeg = 8f;
         private float _openingPoseBlend;
         private float _openingYawDeg;
         private float _openingPitchDeg;
@@ -222,21 +224,65 @@ namespace MoonProject.Rover
                 : _head;
 
         /// <summary>
+        /// Configures the share (0..1) and maximum angle (deg) of the head counter-roll 07 applies toward level when
+        /// lifting its head for CRT screen inspection on a slope.
+        /// </summary>
+        public void SetScreenInspectCounterRoll(float counterRollShare, float counterRollMaxDeg)
+        {
+            _screenInspectCounterRollShare = Mathf.Clamp01(counterRollShare);
+            _screenInspectCounterRollMaxDeg = Mathf.Max(0f, counterRollMaxDeg);
+        }
+
+        /// <summary>
+        /// Computes the signed head roll (deg around the head's local +Z forward axis) that eases a pitched head with
+        /// world rotation <paramref name="pitchedHeadWorldRotation"/> toward world level by
+        /// <paramref name="counterRollShare"/>, clamped to <c>+/-<paramref name="counterRollMaxDeg"/></c>.
+        /// </summary>
+        public static float ComputeInspectHeadCounterRoll(
+            Quaternion pitchedHeadWorldRotation,
+            float counterRollShare,
+            float counterRollMaxDeg)
+        {
+            if (counterRollShare <= 0f || counterRollMaxDeg <= 0f)
+            {
+                return 0f;
+            }
+
+            Vector3 headForward = pitchedHeadWorldRotation * Vector3.forward;
+            Vector3 headUp = pitchedHeadWorldRotation * Vector3.up;
+            Vector3 levelUp = Vector3.ProjectOnPlane(Vector3.up, headForward);
+            if (levelUp.sqrMagnitude <= 1e-6f)
+            {
+                return 0f;
+            }
+
+            levelUp.Normalize();
+            float levelRoll = Vector3.SignedAngle(headUp, levelUp, headForward);
+            float maxRoll = Mathf.Abs(counterRollMaxDeg);
+            return Mathf.Clamp(levelRoll * Mathf.Clamp01(counterRollShare), -maxRoll, maxRoll);
+        }
+
+        /// <summary>
         /// Enters or exits screen-inspect mode: lifts 07's head by <paramref name="targetPitchDeg"/> (+10 deg), turns
-        /// the neck toward <paramref name="targetYawDeg"/> (clamped to +/-35 deg), suppresses idle head noise so the
-        /// CRT screen is rock-steady for clicking, and switches <see cref="FaceDirector"/> into screen content mode.
+        /// the neck toward <paramref name="targetYawDeg"/> (clamped to +/-35 deg), eases the head roll toward level,
+        /// suppresses idle head noise so the CRT screen is rock-steady for clicking, and switches
+        /// <see cref="FaceDirector"/> into screen content mode.
         /// </summary>
         public void SetScreenInspect(
             bool open,
             float targetYawDeg = 0f,
             float targetPitchDeg = 10f,
-            Texture contentTexture = null)
+            Texture contentTexture = null,
+            float counterRollShare = 0.5f,
+            float counterRollMaxDeg = 8f)
         {
             _screenInspectOpen = open;
             if (open)
             {
                 _screenInspectYawDeg = Mathf.Clamp(targetYawDeg, -ScreenInspectYawLimit, ScreenInspectYawLimit);
                 _screenInspectPitchDeg = targetPitchDeg;
+                _screenInspectCounterRollShare = Mathf.Clamp01(counterRollShare);
+                _screenInspectCounterRollMaxDeg = Mathf.Max(0f, counterRollMaxDeg);
             }
 
             if (_faceDirector != null)
@@ -293,7 +339,12 @@ namespace MoonProject.Rover
 
             Vector3 headLocalPos = _head != null ? _head.localPosition : Vector3.zero;
             Vector3 headWorldPos = headParentPos + headParentRot * headLocalPos;
-            Quaternion headWorldRot = headParentRot * (headRest * Quaternion.AngleAxis(-headPitchDeg, Vector3.right));
+            Quaternion pitchedHeadWorldRot = headParentRot * (headRest * Quaternion.AngleAxis(-headPitchDeg, Vector3.right));
+            float counterRoll = ComputeInspectHeadCounterRoll(
+                pitchedHeadWorldRot,
+                _screenInspectCounterRollShare,
+                _screenInspectCounterRollMaxDeg);
+            Quaternion headWorldRot = pitchedHeadWorldRot * Quaternion.AngleAxis(counterRoll, Vector3.forward);
 
             Transform screen = ScreenTransform;
             if (screen != null && screen != _head)
@@ -948,10 +999,21 @@ namespace MoonProject.Rover
                 _neckLift.localRotation = _neckLiftRest * Quaternion.AngleAxis(neckDroop, Vector3.right);
             }
 
-            float baseRoll = (_wakeTilt + _chirpPose.HeadRoll) * (1f - inspect);
+            Quaternion pitchedHeadLocal = _headRest * Quaternion.AngleAxis(-pitch, Vector3.right);
+            float inspectRoll = 0f;
+            if (inspect > 0f && _head.parent != null)
+            {
+                Quaternion pitchedHeadWorld = _head.parent.rotation * pitchedHeadLocal;
+                inspectRoll = ComputeInspectHeadCounterRoll(
+                    pitchedHeadWorld,
+                    _screenInspectCounterRollShare,
+                    _screenInspectCounterRollMaxDeg);
+            }
+
+            float idleRoll = _wakeTilt + _chirpPose.HeadRoll;
+            float baseRoll = Mathf.Lerp(idleRoll, inspectRoll, inspect);
             float roll = opening > 0f ? Mathf.Lerp(baseRoll, _openingRollDeg, opening) : baseRoll;
-            _head.localRotation = _headRest * Quaternion.AngleAxis(-pitch, Vector3.right)
-                * Quaternion.AngleAxis(roll, Vector3.forward);
+            _head.localRotation = pitchedHeadLocal * Quaternion.AngleAxis(roll, Vector3.forward);
             if (_cutterTurret != null)
             {
                 _cutterTurret.localRotation = _cutterTurretRest * Quaternion.AngleAxis(_cutterYaw, Vector3.up);

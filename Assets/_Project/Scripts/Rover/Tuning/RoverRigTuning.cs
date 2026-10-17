@@ -180,22 +180,27 @@ namespace MoonProject.Rover
         [SerializeField] private float _antennaMaxAngle = 22f;
 
         [Header("Headlamp")]
-        [Tooltip("Headlamp intensity (warm spot light at HeadlampSocket). URP lights fall off with the square of the "
-            + "distance: ~35 warms rocks 5-10 m ahead without a hot halo around 07.")]
-        [Range(0f, 200f)]
-        [SerializeField] private float _headlampIntensity = 35f;
+        [Tooltip("Headlamp down-tilt angle (deg) below 07's forward horizontal so the warm pool lands 4-7 m ahead on "
+            + "flat ground.")]
+        [Range(0f, 30f)]
+        [SerializeField] private float _headlampDownTilt = 7.5f;
 
-        [Tooltip("Headlamp range (m).")]
+        [Tooltip("Headlamp intensity (warm spot light at HeadlampSocket). Pitched down onto the dust 4-7 m ahead so "
+            + "the warm pool reads clearly from the chase camera without blowing out near the wheels.")]
+        [Range(0f, 200f)]
+        [SerializeField] private float _headlampIntensity = 165f;
+
+        [Tooltip("Headlamp range (m); feathers the outer edge out to ~12-15 m ahead on flat ground.")]
         [Range(1f, 60f)]
-        [SerializeField] private float _headlampRange = 20f;
+        [SerializeField] private float _headlampRange = 18f;
 
         [Tooltip("Headlamp outer cone angle (deg).")]
         [Range(10f, 150f)]
-        [SerializeField] private float _headlampSpotAngle = 62f;
+        [SerializeField] private float _headlampSpotAngle = 48f;
 
         [Tooltip("Headlamp inner (full brightness) cone angle (deg); a wide soft edge reads as cosy.")]
         [Range(1f, 150f)]
-        [SerializeField] private float _headlampInnerSpotAngle = 30f;
+        [SerializeField] private float _headlampInnerSpotAngle = 20f;
 
         public float AlignFrequency => _alignFrequency;
 
@@ -280,6 +285,8 @@ namespace MoonProject.Rover
         public float AntennaDegreesPerAcceleration => _antennaDegreesPerAcceleration;
 
         public float AntennaMaxAngle => _antennaMaxAngle;
+
+        public float HeadlampDownTilt => _headlampDownTilt;
 
         public float HeadlampIntensity => _headlampIntensity;
 

@@ -1811,13 +1811,17 @@ def build_front_tools_and_lamps(rover_root, body_obj, cfg, mats):
     (#5 in callouts.png) in deep turned R1_Brass bezels with convex spherical glass domes, and
     DigScoop (#7 in callouts.png) with mounting bolts, rolled top lip, and 6 chisel teeth.
     """
+    lamp_tilt_deg = cfg.get("headlamp_down_tilt_deg", 7.5)
+    glass_dz = cfg["piv_headlamp_glass_local"][2] - 0.002
+    glass_tilt_dy = -glass_dz * math.sin(math.radians(lamp_tilt_deg))
     for side_label, sx in (("L", -1.0), ("R", 1.0)):
         piv = (sx * cfg["piv_headlamp_x"], cfg["piv_headlamp_y"], cfg["piv_headlamp_z"])
         bm_hl = bmesh.new()
         lamp_r = 0.088
         y_off = cfg["headlamp_visual_y_offset"]
 
-        # Deep turned R1_Brass bezel seated at z_local = +0.165 m so its reflector cup & Glass_L/R sit proud of Body!
+        # Deep turned R1_Brass bezel seated at z_local = +0.165 m so its reflector cup & Glass_L/R sit proud of Body,
+        # pitched down by headlamp_down_tilt_deg to match the Headlamp spot light!
         hl_profile = [
             (lamp_r * 0.90, -0.068),
             (lamp_r * 0.98, -0.012),
@@ -1837,6 +1841,7 @@ def build_front_tools_and_lamps(rover_root, body_obj, cfg, mats):
             center_xyz=(0.0, y_off, 0.165),
             segments=26,
             mat_idx=0,
+            rot_euler=(lamp_tilt_deg, 0.0, 0.0),
             ring_mat_indices=[1, 0, 0, 0, 0, 0, 2, 1, 1],
         )
         hl_obj = create_mesh_node(
@@ -1848,17 +1853,18 @@ def build_front_tools_and_lamps(rover_root, body_obj, cfg, mats):
             cfg=cfg,
         )
 
-        # Smooth convex spherical glass dome (Glass_L / Glass_R) seated proud inside the brass bezel rim
+        # Smooth convex spherical glass dome (Glass_L / Glass_R) seated proud inside the tilted brass bezel rim
         bm_gl = bmesh.new()
         append_spherical_dome(
             bm_gl,
             radius=lamp_r * 0.72,
             dome_height=0.032,
             axis="Z",
-            center_xyz=(0.0, y_off, 0.163),
+            center_xyz=(0.0, y_off + glass_tilt_dy, 0.163),
             segments=22,
             rings=4,
             mat_idx=0,
+            rot_euler=(lamp_tilt_deg, 0.0, 0.0),
         )
         create_mesh_node(
             f"Glass_{side_label}",

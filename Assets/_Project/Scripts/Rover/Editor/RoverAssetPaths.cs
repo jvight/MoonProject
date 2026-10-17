@@ -31,6 +31,7 @@ namespace MoonProject.Rover.Editor
 
         public const string GeneratedRoot = "Assets/_Project/Generated/Rover";
         public const string RoverPrefab = GeneratedRoot + "/Rover.prefab";
+        public const string ScreenColliderMesh = GeneratedRoot + "/RoverScreenCollider.asset";
         public const string CameraRigPrefab = GeneratedRoot + "/RoverCameraRig.prefab";
         public const string SpherePhysicsMaterial = GeneratedRoot + "/Physics/RoverSphere.asset";
         public const string TrackMaterial = GeneratedRoot + "/Materials/M_RoverTrack.mat";

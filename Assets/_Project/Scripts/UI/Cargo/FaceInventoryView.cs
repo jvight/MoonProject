@@ -142,10 +142,12 @@ namespace MoonProject.UI
         private int _lastPointerDownFrame = -1;
         private int _lastPointerUpFrame = -1;
         private int _lastNavigationFrame = -1;
+        private int _lastSubmitFrame = -1;
 
         private string _transientToastKey;
         private float _transientToastTimer;
         private bool _bootRunning;
+        private bool _userInteractedDuringBoot;
         private int _bootVisibleSlots;
         private int _bootFilledSlots;
         private HoldBoot _activeBoot;
@@ -365,6 +367,30 @@ namespace MoonProject.UI
             return idx >= 0 ? _holdCells[idx] : null;
         }
 
+        private bool HideForBoot => _bootRunning && !_userInteractedDuringBoot;
+
+        private void EnsureInteractiveDuringBoot()
+        {
+            if (_userInteractedDuringBoot)
+            {
+                return;
+            }
+
+            _userInteractedDuringBoot = true;
+            if (_bootRunning)
+            {
+                _bootLabel.style.display = DisplayStyle.None;
+                _holdTitle.style.display = DisplayStyle.Flex;
+                _rightTitle.style.display = DisplayStyle.Flex;
+                for (int i = 0; i < MaxHoldCells; i++)
+                {
+                    _holdBadges[i].style.opacity = 1f;
+                }
+
+                Refresh();
+            }
+        }
+
         public void ResetInteractionState()
         {
             WantsClose = false;
@@ -377,11 +403,12 @@ namespace MoonProject.UI
             _focusedHoldCell = -1;
             _focusedSocketIndex = -1;
             _focusedHomeCell = -1;
+            _userInteractedDuringBoot = false;
         }
 
         public void Tick(float deltaTime)
         {
-            if (!_bootRunning && !_isDraggingKit)
+            if (!HideForBoot && !_isDraggingKit)
             {
                 SyncPendingFocus();
             }
@@ -406,7 +433,7 @@ namespace MoonProject.UI
             _activeBoot = boot;
             _bootVisibleSlots = visibleSlots;
             _bootFilledSlots = filledSlots;
-            if (running)
+            if (running && !_userInteractedDuringBoot)
             {
                 int clamped = Mathf.Clamp(typedLength, 0, bootTitle.Length);
                 _bootLabel.text = clamped >= bootTitle.Length ? bootTitle : bootTitle.Substring(0, clamped);
@@ -481,6 +508,7 @@ namespace MoonProject.UI
         public void Refresh()
         {
             bool docked = _dock.IsDocked;
+            bool hideForBoot = HideForBoot;
             _holdTitle.text = _localization.Get(UiKeys.CargoHold);
             _rightTitle.text = _localization.Get(docked ? UiKeys.HintShelves : UiKeys.CargoTabSeven);
 
@@ -558,7 +586,7 @@ namespace MoonProject.UI
                 _holdCells[i].EnableInClassList(CargoScreen.EmptyClass, state.Kind == HoldCellKind.Empty || state.Kind == HoldCellKind.Locked);
                 _holdCells[i].EnableInClassList(CargoScreen.LockedClass, state.Kind == HoldCellKind.Locked);
 
-                bool showBadge = !_bootRunning && state.Kind == HoldCellKind.Material && state.Units > 1;
+                bool showBadge = !hideForBoot && state.Kind == HoldCellKind.Material && state.Units > 1;
                 _holdBadges[i].style.display = showBadge ? DisplayStyle.Flex : DisplayStyle.None;
                 if (showBadge)
                 {
@@ -566,19 +594,19 @@ namespace MoonProject.UI
                 }
             }
 
-            _socketsRoot.style.display = !docked && !_bootRunning ? DisplayStyle.Flex : DisplayStyle.None;
+            _socketsRoot.style.display = !docked && !hideForBoot ? DisplayStyle.Flex : DisplayStyle.None;
             for (int i = 0; i < OrbitalSocketCount; i++)
             {
                 RoverSocket socket = OrbitalSockets[i];
                 _diagram.GetIcon(socket);
                 bool fitted = _equipment.TryGetFitted(socket, out _);
-                _socketBubbles[i].style.display = !docked && !_bootRunning ? DisplayStyle.Flex : DisplayStyle.None;
+                _socketBubbles[i].style.display = !docked && !hideForBoot ? DisplayStyle.Flex : DisplayStyle.None;
                 _socketBubbles[i].focusable = !docked;
                 _socketBubbles[i].EnableInClassList(CargoScreen.FittedClass, fitted);
             }
 
             _homeSlotCount = docked ? Mathf.Clamp(_home.SlotCount, 0, MaxShelfCells) : 0;
-            _homeGrid.style.display = docked && !_bootRunning ? DisplayStyle.Flex : DisplayStyle.None;
+            _homeGrid.style.display = docked && !hideForBoot ? DisplayStyle.Flex : DisplayStyle.None;
             for (int i = 0; i < MaxShelfCells; i++)
             {
                 bool active = docked && i < _homeSlotCount;
@@ -771,7 +799,7 @@ namespace MoonProject.UI
         /// </summary>
         public void PointerDownAtPanel(Vector2 panelPos)
         {
-            if (_bootRunning || _lastPointerDownFrame == Time.frameCount)
+            if (_lastPointerDownFrame == Time.frameCount)
             {
                 return;
             }
@@ -786,11 +814,6 @@ namespace MoonProject.UI
         /// </summary>
         public void PointerMoveAtPanel(Vector2 panelPos)
         {
-            if (_bootRunning)
-            {
-                return;
-            }
-
             HandlePointerMoveAtReferencePos(PanelToReference(panelPos));
         }
 
@@ -800,7 +823,7 @@ namespace MoonProject.UI
         /// </summary>
         public void PointerUpAtPanel(Vector2 panelPos)
         {
-            if (_bootRunning || _lastPointerUpFrame == Time.frameCount)
+            if (_lastPointerUpFrame == Time.frameCount)
             {
                 return;
             }
@@ -815,11 +838,12 @@ namespace MoonProject.UI
         /// </summary>
         public bool Navigate(NavigationMoveEvent.Direction direction)
         {
-            if (_bootRunning || _isDraggingKit || direction == NavigationMoveEvent.Direction.None)
+            if (_isDraggingKit || !IsCardinalDirection(direction))
             {
                 return false;
             }
 
+            EnsureInteractiveDuringBoot();
             _lastNavigationFrame = Time.frameCount;
             if (_focusedHoldCell >= 0 && _focusedHoldCell < _unlockedHoldCount)
             {
@@ -841,6 +865,39 @@ namespace MoonProject.UI
 
             FocusFirst();
             return _focusedHoldCell >= 0 || _focusedSocketIndex >= 0 || _focusedHomeCell >= 0;
+        }
+
+        /// <summary>
+        /// Submits the currently focused hold cell, orbital socket, or home shelf cell (triggered by Enter, Space, or
+        /// Gamepad South / A).
+        /// </summary>
+        public bool SubmitFocused()
+        {
+            if (_isDraggingKit || _lastSubmitFrame == Time.frameCount)
+            {
+                return false;
+            }
+
+            EnsureInteractiveDuringBoot();
+            if (_focusedHoldCell >= 0 && _focusedHoldCell < _unlockedHoldCount)
+            {
+                OnHoldCellSubmit(_focusedHoldCell);
+                return true;
+            }
+
+            if (!_dock.IsDocked && _focusedSocketIndex >= 0 && _focusedSocketIndex < OrbitalSocketCount)
+            {
+                OnSocketSubmit(_focusedSocketIndex);
+                return true;
+            }
+
+            if (_dock.IsDocked && _focusedHomeCell >= 0 && _focusedHomeCell < _homeSlotCount)
+            {
+                OnHomeCellSubmit(_focusedHomeCell);
+                return true;
+            }
+
+            return false;
         }
 
         private void SyncPendingFocus()
@@ -892,7 +949,13 @@ namespace MoonProject.UI
                 cell.RegisterCallback<FocusInEvent>(_ => OnHoldCellFocus(index));
                 cell.RegisterCallback<PointerEnterEvent>(_ => OnHoldCellHover(index));
                 cell.RegisterCallback<PointerDownEvent>(evt => OnHoldCellPointerDown(index, evt));
-                cell.RegisterCallback<NavigationSubmitEvent>(_ => OnHoldCellSubmit(index));
+                cell.RegisterCallback<NavigationSubmitEvent>(_ =>
+                {
+                    if (_lastSubmitFrame != Time.frameCount)
+                    {
+                        OnHoldCellSubmit(index);
+                    }
+                });
                 cell.RegisterCallback<NavigationMoveEvent>(evt => OnHoldNavigationMove(index, evt));
 
                 _holdCells[i] = cell;
@@ -920,7 +983,13 @@ namespace MoonProject.UI
                         OnSocketSubmit(orbitalIdx);
                     }
                 });
-                bubble.RegisterCallback<NavigationSubmitEvent>(_ => OnSocketSubmit(orbitalIdx));
+                bubble.RegisterCallback<NavigationSubmitEvent>(_ =>
+                {
+                    if (_lastSubmitFrame != Time.frameCount)
+                    {
+                        OnSocketSubmit(orbitalIdx);
+                    }
+                });
                 bubble.RegisterCallback<NavigationMoveEvent>(evt => OnSocketNavigationMove(orbitalIdx, evt));
 
                 _socketBubbles[i] = bubble;
@@ -950,7 +1019,13 @@ namespace MoonProject.UI
                         OnHomeCellSubmit(index);
                     }
                 });
-                cell.RegisterCallback<NavigationSubmitEvent>(_ => OnHomeCellSubmit(index));
+                cell.RegisterCallback<NavigationSubmitEvent>(_ =>
+                {
+                    if (_lastSubmitFrame != Time.frameCount)
+                    {
+                        OnHomeCellSubmit(index);
+                    }
+                });
                 cell.RegisterCallback<NavigationMoveEvent>(evt => OnHomeNavigationMove(index, evt));
 
                 _homeCells[i] = cell;
@@ -980,6 +1055,7 @@ namespace MoonProject.UI
                 return;
             }
 
+            EnsureInteractiveDuringBoot();
             _focusedHoldCell = index;
             _focusedSocketIndex = -1;
             _focusedHomeCell = -1;
@@ -998,6 +1074,7 @@ namespace MoonProject.UI
 
         private void OnSocketHover(int orbitalIdx)
         {
+            EnsureInteractiveDuringBoot();
             if (_isDraggingKit)
             {
                 _dragTargetSocketIndex = orbitalIdx;
@@ -1066,6 +1143,7 @@ namespace MoonProject.UI
 
         private void BeginHoldCellPress(int index, Vector2 refPos)
         {
+            EnsureInteractiveDuringBoot();
             OnHoldCellFocus(index);
             HoldCellState state = _holdStates[index];
             if (!_dock.IsDocked && state.Kind == HoldCellKind.WaitingKit)
@@ -1085,6 +1163,11 @@ namespace MoonProject.UI
 
         private void HandlePointerDownAtReferencePos(Vector2 refPos)
         {
+            if (float.IsNaN(refPos.x) || float.IsNaN(refPos.y))
+            {
+                return;
+            }
+
             int holdIdx = FindHoldCellAtReferencePos(refPos);
             if (holdIdx >= 0)
             {
@@ -1097,6 +1180,7 @@ namespace MoonProject.UI
                 int socketIdx = FindSocketAtReferencePos(refPos);
                 if (socketIdx >= 0)
                 {
+                    EnsureInteractiveDuringBoot();
                     OnSocketFocus(socketIdx);
                     OnSocketSubmit(socketIdx);
                 }
@@ -1106,6 +1190,7 @@ namespace MoonProject.UI
                 int homeIdx = FindHomeCellAtReferencePos(refPos);
                 if (homeIdx >= 0)
                 {
+                    EnsureInteractiveDuringBoot();
                     OnHomeCellFocus(homeIdx);
                     OnHomeCellSubmit(homeIdx);
                 }
@@ -1114,8 +1199,14 @@ namespace MoonProject.UI
 
         private void HandlePointerMoveAtReferencePos(Vector2 refPos)
         {
+            if (float.IsNaN(refPos.x) || float.IsNaN(refPos.y))
+            {
+                return;
+            }
+
             if (_dragHoldCell >= 0 && _dragRowIndex >= 0)
             {
+                EnsureInteractiveDuringBoot();
                 _dragCurrentRefPos = refPos;
                 if (!_isDraggingKit && Vector2.Distance(refPos, _dragStartRefPos) >= _settings.DragThreshold)
                 {
@@ -1154,6 +1245,7 @@ namespace MoonProject.UI
                 int homeIdx = FindHomeCellAtReferencePos(refPos);
                 if (homeIdx >= 0)
                 {
+                    EnsureInteractiveDuringBoot();
                     OnHomeCellFocus(homeIdx);
                 }
             }
@@ -1166,11 +1258,49 @@ namespace MoonProject.UI
                 return;
             }
 
+            if (float.IsNaN(refPos.x) || float.IsNaN(refPos.y))
+            {
+                int fallbackCell = _dragHoldCell;
+                if (_isDraggingKit)
+                {
+                    CompleteKitDrag(null);
+                    if (fallbackCell >= 0 && fallbackCell < _unlockedHoldCount)
+                    {
+                        OnHoldCellFocus(fallbackCell);
+                    }
+                }
+                else
+                {
+                    _dragHoldCell = -1;
+                    _dragRowIndex = -1;
+                }
+
+                return;
+            }
+
             if (_isDraggingKit)
             {
-                int hitSocket = FindSocketAtReferencePos(refPos);
+                int sourceCell = _dragHoldCell;
+                int hitSocket = !_dock.IsDocked ? FindSocketAtReferencePos(refPos) : -1;
                 RoverSocket? dropSocket = hitSocket >= 0 ? OrbitalSockets[hitSocket] : (RoverSocket?)null;
-                CompleteKitDrag(dropSocket);
+                bool fitted = CompleteKitDrag(dropSocket);
+                if (!fitted)
+                {
+                    int holdIdx = FindHoldCellAtReferencePos(refPos);
+                    if (holdIdx >= 0)
+                    {
+                        OnHoldCellFocus(holdIdx);
+                    }
+                    else if (hitSocket >= 0)
+                    {
+                        OnSocketFocus(hitSocket);
+                    }
+                    else if (sourceCell >= 0 && sourceCell < _unlockedHoldCount)
+                    {
+                        OnHoldCellFocus(sourceCell);
+                    }
+                }
+
                 return;
             }
 
@@ -1238,6 +1368,8 @@ namespace MoonProject.UI
                 return;
             }
 
+            _lastSubmitFrame = Time.frameCount;
+            EnsureInteractiveDuringBoot();
             HoldCellState state = _holdStates[index];
             if (_dock.IsDocked)
             {
@@ -1265,6 +1397,8 @@ namespace MoonProject.UI
                 return;
             }
 
+            _lastSubmitFrame = Time.frameCount;
+            EnsureInteractiveDuringBoot();
             MaterialSlot slot = _home.GetSlot(index);
             if (!slot.IsEmpty && _transfer.TryMove(slot.Material, false, out int moved) && moved > 0)
             {
@@ -1281,6 +1415,8 @@ namespace MoonProject.UI
                 return;
             }
 
+            _lastSubmitFrame = Time.frameCount;
+            EnsureInteractiveDuringBoot();
             RoverSocket socket = OrbitalSockets[orbitalIdx];
             if (!_equipment.TryGetFitted(socket, out RoverKitPiece fitted))
             {
@@ -1344,37 +1480,54 @@ namespace MoonProject.UI
             _canvas.MarkDirtyRepaint();
         }
 
+        private static bool IsCardinalDirection(NavigationMoveEvent.Direction direction)
+        {
+            return direction == NavigationMoveEvent.Direction.Left
+                || direction == NavigationMoveEvent.Direction.Right
+                || direction == NavigationMoveEvent.Direction.Up
+                || direction == NavigationMoveEvent.Direction.Down;
+        }
+
         private void OnHoldNavigationMove(int index, NavigationMoveEvent evt)
         {
-            if (_lastNavigationFrame != Time.frameCount)
+            _panel.panel?.focusController?.IgnoreEvent(evt);
+            evt.StopPropagation();
+            if (!IsCardinalDirection(evt.direction) || _lastNavigationFrame == Time.frameCount)
             {
-                _lastNavigationFrame = Time.frameCount;
-                NavigateFromHoldCell(index, evt.direction);
+                return;
             }
 
-            evt.StopPropagation();
+            EnsureInteractiveDuringBoot();
+            _lastNavigationFrame = Time.frameCount;
+            NavigateFromHoldCell(index, evt.direction);
         }
 
         private void OnSocketNavigationMove(int orbitalIdx, NavigationMoveEvent evt)
         {
-            if (_lastNavigationFrame != Time.frameCount)
+            _panel.panel?.focusController?.IgnoreEvent(evt);
+            evt.StopPropagation();
+            if (!IsCardinalDirection(evt.direction) || _lastNavigationFrame == Time.frameCount)
             {
-                _lastNavigationFrame = Time.frameCount;
-                NavigateFromSocket(orbitalIdx, evt.direction);
+                return;
             }
 
-            evt.StopPropagation();
+            EnsureInteractiveDuringBoot();
+            _lastNavigationFrame = Time.frameCount;
+            NavigateFromSocket(orbitalIdx, evt.direction);
         }
 
         private void OnHomeNavigationMove(int index, NavigationMoveEvent evt)
         {
-            if (_lastNavigationFrame != Time.frameCount)
+            _panel.panel?.focusController?.IgnoreEvent(evt);
+            evt.StopPropagation();
+            if (!IsCardinalDirection(evt.direction) || _lastNavigationFrame == Time.frameCount)
             {
-                _lastNavigationFrame = Time.frameCount;
-                NavigateFromHomeCell(index, evt.direction);
+                return;
             }
 
-            evt.StopPropagation();
+            EnsureInteractiveDuringBoot();
+            _lastNavigationFrame = Time.frameCount;
+            NavigateFromHomeCell(index, evt.direction);
         }
 
         private void NavigateFromHoldCell(int index, NavigationMoveEvent.Direction direction)
@@ -1424,27 +1577,137 @@ namespace MoonProject.UI
 
         private void NavigateFromSocket(int orbitalIdx, NavigationMoveEvent.Direction direction)
         {
+            RoverSocket current = OrbitalSockets[orbitalIdx];
             switch (direction)
             {
-                case NavigationMoveEvent.Direction.Right:
-                case NavigationMoveEvent.Direction.Down:
-                    FocusSocket(OrbitalSockets[(orbitalIdx + 1) % OrbitalSocketCount]);
-                    break;
-                case NavigationMoveEvent.Direction.Left:
-                    if (OrbitalSockets[orbitalIdx] == RoverSocket.Deck ||
-                        OrbitalSockets[orbitalIdx] == RoverSocket.Hold ||
-                        OrbitalSockets[orbitalIdx] == RoverSocket.Back)
+                case NavigationMoveEvent.Direction.Up:
+                    switch (current)
                     {
-                        FocusHoldCell(Mathf.Min(_unlockedHoldCount - 1, 3));
-                    }
-                    else
-                    {
-                        FocusSocket(OrbitalSockets[(orbitalIdx + OrbitalSocketCount - 1) % OrbitalSocketCount]);
+                        case RoverSocket.Cutter:
+                        case RoverSocket.Back:
+                            FocusSocket(RoverSocket.Wing);
+                            break;
+                        case RoverSocket.Tether:
+                            FocusSocket(RoverSocket.Cutter);
+                            break;
+                        case RoverSocket.Lamp:
+                            FocusSocket(RoverSocket.Tether);
+                            break;
+                        case RoverSocket.Flanks:
+                            FocusSocket(RoverSocket.Lamp);
+                            break;
+                        case RoverSocket.Belly:
+                            FocusSocket(RoverSocket.Flanks);
+                            break;
+                        case RoverSocket.Panniers:
+                            FocusSocket(RoverSocket.Hold);
+                            break;
+                        case RoverSocket.Hold:
+                            FocusSocket(RoverSocket.Deck);
+                            break;
+                        case RoverSocket.Deck:
+                            FocusSocket(RoverSocket.Back);
+                            break;
                     }
 
                     break;
-                case NavigationMoveEvent.Direction.Up:
-                    FocusSocket(OrbitalSockets[(orbitalIdx + OrbitalSocketCount - 1) % OrbitalSocketCount]);
+
+                case NavigationMoveEvent.Direction.Down:
+                    switch (current)
+                    {
+                        case RoverSocket.Wing:
+                            FocusSocket(RoverSocket.Back);
+                            break;
+                        case RoverSocket.Back:
+                            FocusSocket(RoverSocket.Deck);
+                            break;
+                        case RoverSocket.Deck:
+                            FocusSocket(RoverSocket.Hold);
+                            break;
+                        case RoverSocket.Hold:
+                            FocusSocket(RoverSocket.Panniers);
+                            break;
+                        case RoverSocket.Panniers:
+                            FocusSocket(RoverSocket.Belly);
+                            break;
+                        case RoverSocket.Cutter:
+                            FocusSocket(RoverSocket.Tether);
+                            break;
+                        case RoverSocket.Tether:
+                            FocusSocket(RoverSocket.Lamp);
+                            break;
+                        case RoverSocket.Lamp:
+                            FocusSocket(RoverSocket.Flanks);
+                            break;
+                        case RoverSocket.Flanks:
+                            FocusSocket(RoverSocket.Belly);
+                            break;
+                        case RoverSocket.Belly:
+                            FocusSocket(RoverSocket.Panniers);
+                            break;
+                    }
+
+                    break;
+
+                case NavigationMoveEvent.Direction.Right:
+                    switch (current)
+                    {
+                        case RoverSocket.Back:
+                            FocusSocket(RoverSocket.Wing);
+                            break;
+                        case RoverSocket.Wing:
+                            FocusSocket(RoverSocket.Cutter);
+                            break;
+                        case RoverSocket.Cutter:
+                            FocusSocket(RoverSocket.Tether);
+                            break;
+                        case RoverSocket.Tether:
+                        case RoverSocket.Deck:
+                        case RoverSocket.Flanks:
+                            FocusSocket(RoverSocket.Lamp);
+                            break;
+                        case RoverSocket.Hold:
+                            FocusSocket(RoverSocket.Panniers);
+                            break;
+                        case RoverSocket.Panniers:
+                            FocusSocket(RoverSocket.Belly);
+                            break;
+                        case RoverSocket.Belly:
+                            FocusSocket(RoverSocket.Flanks);
+                            break;
+                    }
+
+                    break;
+
+                case NavigationMoveEvent.Direction.Left:
+                    switch (current)
+                    {
+                        case RoverSocket.Back:
+                        case RoverSocket.Deck:
+                        case RoverSocket.Hold:
+                            FocusHoldCell(Mathf.Min(_unlockedHoldCount - 1, 3));
+                            break;
+                        case RoverSocket.Wing:
+                            FocusSocket(RoverSocket.Back);
+                            break;
+                        case RoverSocket.Cutter:
+                        case RoverSocket.Tether:
+                            FocusSocket(RoverSocket.Wing);
+                            break;
+                        case RoverSocket.Lamp:
+                            FocusSocket(RoverSocket.Deck);
+                            break;
+                        case RoverSocket.Flanks:
+                            FocusSocket(RoverSocket.Belly);
+                            break;
+                        case RoverSocket.Belly:
+                            FocusSocket(RoverSocket.Panniers);
+                            break;
+                        case RoverSocket.Panniers:
+                            FocusSocket(RoverSocket.Hold);
+                            break;
+                    }
+
                     break;
             }
         }
@@ -1492,7 +1755,7 @@ namespace MoonProject.UI
 
         private void UpdateTooltip()
         {
-            if (_bootRunning)
+            if (HideForBoot)
             {
                 _tooltip.style.display = DisplayStyle.None;
                 return;
@@ -1619,6 +1882,7 @@ namespace MoonProject.UI
                 return;
             }
 
+            bool hideForBoot = HideForBoot;
             Painter2D painter = context.painter2D;
             float s = rect.width / ReferenceWidth;
 
@@ -1629,7 +1893,7 @@ namespace MoonProject.UI
             RoverLineArtPainter.DrawCornerTicks(painter, 2f * s, 2f * s, rect.width - 4f * s, rect.height - 4f * s,
                 14f * s, AmberBright, 2.6f);
 
-            if (!_bootRunning)
+            if (!hideForBoot)
             {
                 // Vertical divider & header rules
                 RoverLineArtPainter.DrawLine(painter, new Vector2(DividerX * s, 26f * s),
@@ -1642,7 +1906,7 @@ namespace MoonProject.UI
 
             DrawHoldGrid(painter, s);
 
-            if (!_bootRunning)
+            if (!hideForBoot)
             {
                 if (_dock.IsDocked)
                 {
@@ -1661,7 +1925,8 @@ namespace MoonProject.UI
 
         private void DrawHoldGrid(Painter2D painter, float s)
         {
-            int limit = _bootRunning ? Mathf.Min(_bootVisibleSlots, _unlockedHoldCount) : MaxHoldCells;
+            bool hideForBoot = HideForBoot;
+            int limit = hideForBoot ? Mathf.Min(_bootVisibleSlots, _unlockedHoldCount) : MaxHoldCells;
             for (int i = 0; i < limit; i++)
             {
                 Rect r = GetHoldCellReferenceRect(i);
@@ -1678,7 +1943,7 @@ namespace MoonProject.UI
                     continue;
                 }
 
-                bool focused = !_bootRunning && i == _focusedHoldCell;
+                bool focused = !hideForBoot && i == _focusedHoldCell;
                 bool draggedSource = _isDraggingKit && i == _dragHoldCell;
                 bool hasItem = state.Kind != HoldCellKind.Empty;
 
@@ -1707,7 +1972,7 @@ namespace MoonProject.UI
 
                 float bootProgress = 1f;
                 float slideX = 0f;
-                if (_bootRunning)
+                if (hideForBoot)
                 {
                     if (i >= _bootFilledSlots || _activeBoot == null)
                     {
@@ -1730,7 +1995,7 @@ namespace MoonProject.UI
                 Vector2 iconCenter = new Vector2(cx + cw * 0.5f + slideX, cy + ch * 0.5f - 2f * s);
                 UiIconPainter.Draw(painter, in icon, iconCenter, 56f * s, tint);
 
-                if (!_bootRunning && state.Kind == HoldCellKind.Material && state.Units > 1)
+                if (!hideForBoot && state.Kind == HoldCellKind.Material && state.Units > 1)
                 {
                     RoverLineArtPainter.FillRect(painter, cx + cw - 34f * s, cy + ch - 28f * s, 32f * s, 26f * s,
                         focused ? BgCellFocus : BgCell);

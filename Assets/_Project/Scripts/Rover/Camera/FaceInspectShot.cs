@@ -15,7 +15,8 @@ namespace MoonProject.Rover
             float distance,
             float verticalFov,
             float neckYawOffset,
-            FaceInspectProbeChoice choice)
+            FaceInspectProbeChoice choice,
+            Vector3 screenUp = default)
         {
             Focus = focus;
             Eye = eye;
@@ -23,6 +24,11 @@ namespace MoonProject.Rover
             VerticalFov = verticalFov;
             NeckYawOffset = neckYawOffset;
             Choice = choice;
+            ScreenUp = screenUp.sqrMagnitude > 1e-6f ? screenUp.normalized : Vector3.up;
+            Vector3 forward = focus - eye;
+            Rotation = forward.sqrMagnitude > 1e-8f
+                ? Quaternion.LookRotation(forward.normalized, ScreenUp)
+                : Quaternion.identity;
         }
 
         public Vector3 Focus { get; }
@@ -36,5 +42,9 @@ namespace MoonProject.Rover
         public float NeckYawOffset { get; }
 
         public FaceInspectProbeChoice Choice { get; }
+
+        public Vector3 ScreenUp { get; }
+
+        public Quaternion Rotation { get; }
     }
 }
