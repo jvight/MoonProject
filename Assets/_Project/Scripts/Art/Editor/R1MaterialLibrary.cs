@@ -298,12 +298,12 @@ namespace MoonProject.Art.Editor
         public const float CrtSmoothness = 0.86f;
         public const float CrtCurvature = 0.08f;
         public const float CrtScanlineCount = 280.0f;
-        public const float CrtScanlineDepth = 0.12f;
+        public const float CrtScanlineDepth = 0.15f;
         public const float CrtGlowRadius = 0.028f;
         public const float CrtTrailAlpha = 0.28f;
-        public const float CrtContentGlowIntensity = 0.12f;
+        public const float CrtContentGlowIntensity = 0.24f;
         public const float CrtContentGlowMip = 1.60f;
-        public const float CrtContentScanlineAtten = 0.55f;
+        public const float CrtContentScanlineAtten = 0.20f;
 
         private static void ConfigureCrtFaceMaterial(Material material, Shader shader, R1MaterialSpec spec)
         {

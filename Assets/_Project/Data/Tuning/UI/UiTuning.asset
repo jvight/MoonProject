@@ -550,7 +550,7 @@ MonoBehaviour:
       _springDamping: 0.7
     _panelWidth: 1152
     _panelHeight: 768
-    _maxCell: 86
+    _maxCell: 96
     _minCell: 34
     _widthShare: 0.94
     _heightShare: 0.92
@@ -562,16 +562,16 @@ MonoBehaviour:
     _bootHatchLingerSeconds: 0.2
     _dragThreshold: 6
     _tooltipGap: 10
-    _holdGridX: 48
-    _holdGridY: 58
+    _holdGridX: 34
+    _holdGridY: 54
     _shelfGridX: 504
     _cellGapX: 10
-    _cellGapY: 7
-    _dividerX: 474
-    _bubbleRadius: 31
+    _cellGapY: 8
+    _dividerX: 478
+    _bubbleRadius: 36
     _roverOriginX: 804
-    _roverOriginY: 456
-    _roverScale: 154
+    _roverOriginY: 468
+    _roverScale: 156
     _toastDurationSeconds: 3.5
     _roverWheelRadius: 0.35
     _roverWheelRimRadius: 0.185

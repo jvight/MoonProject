@@ -192,8 +192,27 @@ namespace MoonProject.Rover.PlayModeTests
             FaceState faceState = _faceDirector.Director.State;
             Assert.AreEqual(0f, faceState.ScreenContentMix, 1e-4f);
 
-            // BEAT 1: Chase Camera (Driving / Ready)
+            Transform bezelNode = _body.ScreenTransform.parent.Find("ScreenBezel");
+            Assert.IsNotNull(bezelNode, "Head must contain ScreenBezel.");
+            var bezelRenderer = bezelNode.GetComponent<MeshRenderer>();
+            Assert.IsNotNull(bezelRenderer, "ScreenBezel must have a MeshRenderer.");
+            Material creamBezelMat = bezelRenderer.sharedMaterial;
+            Assert.IsNotNull(creamBezelMat, "ScreenBezel default material must be assigned.");
+            StringAssert.Contains("R1_CreamEnamel", creamBezelMat.name, "Default ScreenBezel material must be Variant A (R1_CreamEnamel).");
+#if UNITY_EDITOR
+            var darkBezelMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Generated/Art/R1/Materials/R1_GreyMetal.mat");
+            Assert.IsNotNull(darkBezelMat, "Variant B material R1_GreyMetal must exist.");
+#else
+            Material darkBezelMat = creamBezelMat;
+#endif
+
+            // BEAT 1: Chase Camera (Driving / Ready) + Variant A / B night chase + Headlamp front/side captures
             Capture("face-inv-beat-1-chase");
+            Capture("chase_variant_a_night");
+            bezelRenderer.sharedMaterial = darkBezelMat;
+            Capture("chase_variant_b_night");
+            bezelRenderer.sharedMaterial = creamBezelMat;
+            CaptureHeadlampViews("lamps_front", "lamps_side", "lamps_front_lampbar", "lamps_side_lampbar");
 
             // Press Tab to open the inventory on 07's CRT face.
             Press(_keyboard.tabKey);
@@ -274,7 +293,6 @@ namespace MoonProject.Rover.PlayModeTests
             Capture("face-inv-beat-5-inventory-expand");
             Capture("face-inv-night-open");
             Capture("face-inv-night-open-vi");
-
             // CURVED SCREEN INPUT 1: Hover tooltip on 07's curved 3D CRT face.
             Vector2 cell0Panel = FaceInventoryView.GetHoldCellReferenceRect(0).center;
             Assert.IsTrue(FaceScreenMapper.TryPanelToScreen(cell0Panel, _view, faceScreen, FaceScreenMapper.DefaultPanelSize, out Vector2 cell0Screen),
@@ -287,6 +305,10 @@ namespace MoonProject.Rover.PlayModeTests
                 "Tooltip on 07's face must display the Vietnamese material name.");
             Capture("face-inv-hover-tooltip");
             CaptureScreenshot("face_inv_hover");
+            Capture("inventory_variant_a_night");
+            bezelRenderer.sharedMaterial = darkBezelMat;
+            Capture("inventory_variant_b_night");
+            bezelRenderer.sharedMaterial = creamBezelMat;
 
             // CURVED SCREEN INPUT 2: Drag waiting kit (HoverCoils in hold cell 5) across 07's curved CRT screen onto Belly socket bubble.
             Vector2 kitCellPanel = FaceInventoryView.GetHoldCellReferenceRect(5).center;
@@ -391,10 +413,28 @@ namespace MoonProject.Rover.PlayModeTests
             yield return null;
             Capture("face-inv-day-open");
             Capture("face-inv-day-open-vi");
+            view.FocusFirst();
+            yield return null;
+            Capture("inventory_variant_a");
+            Capture("inventory_variant_a_day");
+            bezelRenderer.sharedMaterial = darkBezelMat;
+            Capture("inventory_variant_b");
+            Capture("inventory_variant_b_day");
+            bezelRenderer.sharedMaterial = creamBezelMat;
+            view.ClearFocus();
 
             yield return TapTab();
-            yield return WaitSeconds(0.60f);
+            while (_cameraRig.FaceInspectWeight > 0.01f)
+            {
+                yield return null;
+            }
             Assert.IsFalse(faceScreen.IsOpen);
+            _cameraRig.Orbit.AdoptBearing(_rover.Heading + 162f);
+            yield return null;
+            Capture("chase_variant_a");
+            bezelRenderer.sharedMaterial = darkBezelMat;
+            Capture("chase_variant_b");
+            bezelRenderer.sharedMaterial = creamBezelMat;
 
             // ROCK OCCLUSION CAPTURE: Place a rock obstacle directly on the default 0-degree face-inspect camera spot.
             _body.EvaluateScreenPose(0f, 10f, out Vector3 screenPos, out Quaternion screenRot);
@@ -691,6 +731,74 @@ namespace MoonProject.Rover.PlayModeTests
             string r2Path = Path.Combine(R2CaptureFolder, name + ".png");
             File.Copy(path, r2Path, true);
             Assert.IsTrue(File.Exists(r2Path), $"Capture must be written to {r2Path}.");
+        }
+
+        private void CaptureHeadlampViews(string frontName, string sideName, string frontBarName, string sideBarName)
+        {
+            Vector3 savedPos = _view.transform.position;
+            Quaternion savedRot = _view.transform.rotation;
+            float savedFov = _view.fieldOfView;
+
+            var keyLightObj = new GameObject("TempLampInspectFill");
+            var keyLight = keyLightObj.AddComponent<Light>();
+            keyLight.type = LightType.Point;
+            keyLight.color = new Color(0.95f, 0.92f, 0.88f, 1f);
+            keyLight.intensity = 2.2f;
+            keyLight.range = 5.5f;
+            keyLight.shadows = LightShadows.None;
+            keyLightObj.transform.position = _rover.Position + _rover.Rotation * new Vector3(-1.1f, 1.35f, 1.45f);
+
+            Transform lampBarNode = null;
+            foreach (Transform t in _rover.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name == "Kit_LampBar")
+                {
+                    lampBarNode = t;
+                    break;
+                }
+            }
+
+            try
+            {
+                Vector3 frontEye = _rover.Position + _rover.Rotation * new Vector3(-1.12f, 1.02f, 1.72f);
+                Vector3 frontLook = _rover.Position + _rover.Rotation * new Vector3(0.0f, 0.44f, 0.72f);
+                Vector3 sideEye = _rover.Position + _rover.Rotation * new Vector3(-1.45f, 0.56f, 0.92f);
+                Vector3 sideLook = _rover.Position + _rover.Rotation * new Vector3(0.0f, 0.42f, 0.92f);
+
+                _view.fieldOfView = 36f;
+                _view.transform.SetPositionAndRotation(frontEye, Quaternion.LookRotation(frontLook - frontEye, Vector3.up));
+                Capture(frontName);
+
+                _view.transform.SetPositionAndRotation(sideEye, Quaternion.LookRotation(sideLook - sideEye, Vector3.up));
+                Capture(sideName);
+
+                if (lampBarNode != null)
+                {
+                    bool wasActive = lampBarNode.gameObject.activeSelf;
+                    Vector3 prevScale = lampBarNode.localScale;
+                    lampBarNode.gameObject.SetActive(true);
+                    lampBarNode.localScale = Vector3.one;
+                    try
+                    {
+                        _view.transform.SetPositionAndRotation(frontEye, Quaternion.LookRotation(frontLook - frontEye, Vector3.up));
+                        Capture(frontBarName);
+
+                        _view.transform.SetPositionAndRotation(sideEye, Quaternion.LookRotation(sideLook - sideEye, Vector3.up));
+                        Capture(sideBarName);
+                    }
+                    finally
+                    {
+                        lampBarNode.localScale = prevScale;
+                        lampBarNode.gameObject.SetActive(wasActive);
+                    }
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(keyLightObj);
+                _view.fieldOfView = savedFov;
+                _view.transform.SetPositionAndRotation(savedPos, savedRot);
+            }
         }
 
         private void CaptureScreenshot(string name)

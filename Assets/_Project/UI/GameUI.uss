@@ -2689,13 +2689,13 @@ Label {
     bottom: 0;
     justify-content: center;
     align-items: center;
-    background-color: var(--moon-veil);
+    background-color: rgba(0, 0, 0, 0);
 }
 
 .cargo__panel {
     width: 1152px;
     height: 768px;
-    background-color: var(--glass-deep);
+    background-color: rgba(0, 0, 0, 0);
 }
 
 .cargo__canvas,

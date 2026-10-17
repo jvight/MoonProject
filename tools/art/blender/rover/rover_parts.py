@@ -1142,15 +1142,8 @@ def build_head_assembly(rover_root, cfg, mats):
         bevel_segments=3,
         mat_idx=0,
     )
-    # Recessed dark charcoal screen gasket surround immediately behind Screen
-    append_beveled_box(
-        bm_head,
-        size_xyz=(sw + 0.024, sh + 0.024, 0.020),
-        center_xyz=(0.0, head_cy, screen_front_z - 0.008),
-        bevel_width=0.006,
-        bevel_segments=2,
-        mat_idx=1,
-    )
+    # Flush hull-cream front faceplate surround inside Visor so the bezel sits flush in R1_CreamEnamel
+    _append_head_front_cream_surround(bm_head, cfg)
 
     # 3b. Real 3D circumferential cut seam channel between front cream bezel & rear shell (z_local = +0.024..+0.040 m)
     append_beveled_box(
@@ -1188,7 +1181,13 @@ def build_head_assembly(rover_root, cfg, mats):
         bm_head,
         cfg["piv_head_local"],
         parent=neck_lift_obj,
-        mat_list=[mats["R1_CreamEnamel"], mats["R1_GreyMetal"], mats["R1_BareSteel"]],
+        mat_list=[
+            mats["R1_CreamEnamel"],
+            mats["R1_GreyMetal"],
+            mats["R1_BareSteel"],
+            mats["R1_Brass"],
+            mats["R1_Rubber"],
+        ],
         cfg=cfg,
     )
 
@@ -1204,6 +1203,17 @@ def build_head_assembly(rover_root, cfg, mats):
         cfg=cfg,
     )
 
+    # 4b. ScreenBezel (slim rounded bezel collar with single material slot: R1_CreamEnamel in A, R1_GreyMetal in B)
+    bm_bezel = build_screen_bezel_bmesh(cfg)
+    create_mesh_node(
+        "ScreenBezel",
+        bm_bezel,
+        cfg["piv_screen_local"],
+        parent=head_obj,
+        mat_list=[mats["R1_CreamEnamel"]],
+        cfg=cfg,
+    )
+
     # 5. Visor (boxy dark-charcoal CRT front shroud + overhanging top sun-visor brow lip, #2 in callouts.png)
     bm_visor = build_wrap_visor_bmesh(cfg)
     create_mesh_node(
@@ -1215,7 +1225,7 @@ def build_head_assembly(rover_root, cfg, mats):
         cfg=cfg,
     )
 
-    # 6. RearVentStrip (recessed dark frame + 6 angled louver slats + inner amber glow on back of Head, #11 in callouts.png)
+    # 6. RearVentStrip (recessed dark frame + 6 angled louver slats on back of Head, #11 in callouts.png)
     bm_vent = bmesh.new()
     vw = cfg["rear_vent_width"]
     vh = cfg["rear_vent_height"]
@@ -1247,7 +1257,7 @@ def build_head_assembly(rover_root, cfg, mats):
         center_xyz=(0.0, 0.0, -0.028),
         bevel_width=0.003,
         bevel_segments=1,
-        mat_idx=1,
+        mat_idx=0,
         guard_inset=False,
     )
     for sx in (-1.0, 1.0):
@@ -1258,14 +1268,14 @@ def build_head_assembly(rover_root, cfg, mats):
                 height=0.008,
                 axis="Z",
                 center_xyz=(sx * (vw * 0.44), sy * (vh * 0.41), -0.033),
-                mat_idx=2,
+                mat_idx=1,
             )
     create_mesh_node(
         "RearVentStrip",
         bm_vent,
         cfg["piv_rear_vent_local"],
         parent=head_obj,
-        mat_list=[mats["R1_GreyMetal"], mats["R1_LampAmber"], mats["R1_BareSteel"]],
+        mat_list=[mats["R1_GreyMetal"], mats["R1_BareSteel"]],
         cfg=cfg,
     )
 
@@ -1426,13 +1436,172 @@ def build_head_assembly(rover_root, cfg, mats):
     return neck_obj, head_obj
 
 
+def _sample_crt_bezel_ring(hw, y_min, y_max, corner_r, barrel_k=0.0):
+    """
+    Sample a counter-clockwise rounded-rectangle perimeter ring in (ux, uy) with optional
+    outward barrel curvature matching the CRT glass profile.
+    """
+    hh = 0.5 * (y_max - y_min)
+    yc = 0.5 * (y_max + y_min)
+    rc = min(corner_r, hw * 0.45, hh * 0.45)
+    x_in = hw - rc
+    y_top = y_max - rc
+    y_bot = y_min + rc
+
+    raw_pts = []
+
+    def add_line(p0, p1, segs=8):
+        for s in range(1, segs):
+            t = s / segs
+            raw_pts.append((p0[0] + t * (p1[0] - p0[0]), p0[1] + t * (p1[1] - p0[1])))
+
+    def add_arc(cx, cy, a0, a1, segs=8):
+        for s in range(segs + 1):
+            a = a0 + (a1 - a0) * (s / segs)
+            raw_pts.append((cx + rc * math.cos(a), cy + rc * math.sin(a)))
+
+    # 1. Top-Right corner (0 -> pi/2)
+    add_arc(x_in, y_top, 0.0, HALF_PI_RAD, segs=16)
+    # Top edge (+x_in -> -x_in)
+    add_line((x_in, y_max), (-x_in, y_max), segs=10)
+    # 2. Top-Left corner (pi/2 -> pi)
+    add_arc(-x_in, y_top, HALF_PI_RAD, math.pi, segs=16)
+    # Left edge (y_top -> y_bot)
+    add_line((-hw, y_top), (-hw, y_bot), segs=8)
+    # 3. Bottom-Left corner (pi -> 3*pi/2)
+    add_arc(-x_in, y_bot, math.pi, 1.5 * math.pi, segs=16)
+    # Bottom edge (-x_in -> +x_in)
+    add_line((-x_in, y_min), (x_in, y_min), segs=10)
+    # 4. Bottom-Right corner (3*pi/2 -> 2*pi)
+    add_arc(x_in, y_bot, 1.5 * math.pi, FULL_CIRCLE_RAD, segs=16)
+    # Right edge (y_bot -> y_top)
+    add_line((hw, y_bot), (hw, y_top), segs=8)
+
+    if abs(barrel_k) <= 1e-6:
+        return raw_pts
+
+    pts = []
+    inv_hw = 1.0 / max(hw, 1e-4)
+    inv_hh = 1.0 / max(hh, 1e-4)
+    for px, py in raw_pts:
+        nx = min(1.0, abs(px) * inv_hw)
+        ny = min(1.0, abs(py - yc) * inv_hh)
+        bx = px * (1.0 + barrel_k * (1.0 - ny * ny))
+        by = yc + (py - yc) * (1.0 + barrel_k * (1.0 - nx * nx))
+        pts.append((bx, by))
+    return pts
+
+
+def _append_head_front_cream_surround(bm_head, cfg):
+    """
+    Append a flush R1_CreamEnamel front faceplate inside Visor's opening (bridging z_local = 0.256..0.287 m)
+    plus the thin dark rubber gasket (R1_Rubber, mat_idx 4) at the glass and tiny warm brass detail lip
+    (R1_Brass, mat_idx 3) so both Variant A and Variant B share the gasket and brass lip at 130 draw calls.
+    """
+    head_cy = cfg["head_local_center_y"]
+    piv_scr_y = cfg["piv_screen_local"][1]
+    piv_scr_z = cfg["piv_screen_local"][2]
+    sw, sh = cfg["screen_width"], cfg["screen_height"]
+    bulge = cfg["screen_bulge_z"]
+    half_w = sw * FLAT_UV_SCALE
+    half_h = sh * FLAT_UV_SCALE
+
+    def glass_z(px, py):
+        rx = min(1.15, abs(px) / half_w)
+        ry = min(1.15, abs(py) / half_h)
+        return bulge * (1.0 - 0.65 * rx * rx) * (1.0 - 0.65 * ry * ry)
+
+    inner_ring = _sample_crt_bezel_ring(0.280, head_cy - 0.186, head_cy + 0.186, 0.044, barrel_k=0.015)
+    outer_ring = _sample_crt_bezel_ring(0.352, head_cy - 0.212, head_cy + 0.232, 0.058, barrel_k=0.0)
+
+    temp = bmesh.new()
+    z_front = piv_scr_z - 0.008
+    z_back = 0.256
+    f_in = [temp.verts.new(u_pos(ix, iy, z_front)) for ix, iy in inner_ring]
+    f_out = [temp.verts.new(u_pos(ox, oy, z_front)) for ox, oy in outer_ring]
+    b_in = [temp.verts.new(u_pos(ix, iy, z_back)) for ix, iy in inner_ring]
+    b_out = [temp.verts.new(u_pos(ox, oy, z_back)) for ox, oy in outer_ring]
+
+    n_pts = len(inner_ring)
+    for i in range(n_pts):
+        ni = (i + 1) % n_pts
+        for quad in (
+            (f_out[i], f_out[ni], f_in[ni], f_in[i]),
+            (b_out[i], b_out[ni], f_out[ni], f_out[i]),
+            (f_in[i], f_in[ni], b_in[ni], b_in[i]),
+            (b_in[i], b_in[ni], b_out[ni], b_out[i]),
+        ):
+            face = temp.faces.new(quad)
+            face.material_index = 0
+            face.smooth = True
+
+    ensure_outward_normals(temp)
+    vert_map = {v: bm_head.verts.new(v.co) for v in temp.verts}
+    for f in temp.faces:
+        nf = bm_head.faces.new([vert_map[v] for v in f.verts])
+        nf.material_index = 0
+        nf.smooth = True
+    temp.free()
+
+    # Thin dark rubber gasket (mat_idx = 4 -> R1_Rubber) + tiny warm brass detail (mat_idx = 3 -> R1_Brass)
+    gasket_brass_specs = [
+        (0.2765, 0.1830, 0.0420, 0.022, -0.0045),  # 0: Rubber inner back (tucked behind glass)
+        (0.2765, 0.1830, 0.0420, 0.022,  0.0018),  # 1: Rubber inner lip on glass
+        (0.2805, 0.1868, 0.0445, 0.021,  0.0032),  # 2: Rubber gasket crown
+        (0.2840, 0.1900, 0.0470, 0.020,  0.0024),  # 3: Rubber / Brass seam
+        (0.2852, 0.1912, 0.0480, 0.019,  0.0056),  # 4: Brass inner shoulder
+        (0.2876, 0.1936, 0.0498, 0.018,  0.0070),  # 5: Brass bead peak
+        (0.2902, 0.1962, 0.0515, 0.017,  0.0050),  # 6: Brass outer seat under ScreenBezel
+        (0.2902, 0.1962, 0.0515, 0.017, -0.0045),  # 7: Brass rear closure
+    ]
+    gb_mats = [4, 4, 4, 3, 3, 3, 3]
+    temp_gb = bmesh.new()
+    gb_rings = []
+    for hw_r, hh_r, rc_r, bk_r, dz_r in gasket_brass_specs:
+        pts = _sample_crt_bezel_ring(hw_r, -hh_r, hh_r, rc_r, barrel_k=bk_r)
+        v_ring = [
+            temp_gb.verts.new(u_pos(px, py + piv_scr_y, piv_scr_z + glass_z(px, py) + dz_r))
+            for px, py in pts
+        ]
+        gb_rings.append(v_ring)
+
+    for r_idx, m_idx in enumerate(gb_mats):
+        r0 = gb_rings[r_idx]
+        r1 = gb_rings[r_idx + 1]
+        for i in range(n_pts):
+            ni = (i + 1) % n_pts
+            face = temp_gb.faces.new((r0[i], r0[ni], r1[ni], r1[i]))
+            face.material_index = m_idx
+            face.smooth = True
+
+    r_back_out = gb_rings[-1]
+    r_back_in = gb_rings[0]
+    for i in range(n_pts):
+        ni = (i + 1) % n_pts
+        face = temp_gb.faces.new((r_back_out[i], r_back_out[ni], r_back_in[ni], r_back_in[i]))
+        face.material_index = 4
+        face.smooth = True
+
+    ensure_outward_normals(temp_gb)
+    vmap_gb = {v: bm_head.verts.new(v.co) for v in temp_gb.verts}
+    for f in temp_gb.faces:
+        nf = bm_head.faces.new([vmap_gb[v] for v in f.verts])
+        nf.material_index = f.material_index
+        nf.smooth = True
+    temp_gb.free()
+
+
 def build_crt_screen_bmesh(cfg):
     """Build the curved 4:3 Screen mesh with clean [0, 1]^2 UVs and gentle convex glass crown."""
     bm = bmesh.new()
-    nx, ny = cfg["screen_grid_x"], cfg["screen_grid_y"]
+    nx = max(cfg["screen_grid_x"], 16)
+    ny = max(cfg["screen_grid_y"], 12)
     sw, sh = cfg["screen_width"], cfg["screen_height"]
     bulge = cfg["screen_bulge_z"]
     corner_round = cfg["screen_corner_round"]
+    half_w = sw * FLAT_UV_SCALE
+    half_h = sh * FLAT_UV_SCALE
+    seat_r = 0.052
 
     verts_grid = []
     for j in range(ny + 1):
@@ -1443,9 +1612,17 @@ def build_crt_screen_bmesh(cfg):
             u_norm = i / nx
             xn = u_norm * 2.0 - 1.0
             scale_corner = 1.0 - corner_round * (xn * xn) * (yn * yn)
-            ux = (xn * scale_corner) * (sw * FLAT_UV_SCALE)
-            uy = (yn * scale_corner) * (sh * FLAT_UV_SCALE)
-            uz = bulge * (1.0 - 0.65 * xn * xn) * (1.0 - 0.65 * yn * yn)
+            ux = (xn * scale_corner) * half_w
+            uy = (yn * scale_corner) * half_h
+            cx = max(abs(ux) - (half_w - seat_r), 0.0)
+            cy = max(abs(uy) - (half_h - seat_r), 0.0)
+            cdist = math.hypot(cx, cy)
+            if cdist > seat_r:
+                ux = math.copysign((half_w - seat_r) + cx * (seat_r / cdist), ux)
+                uy = math.copysign((half_h - seat_r) + cy * (seat_r / cdist), uy)
+            rx = ux / half_w
+            ry = uy / half_h
+            uz = bulge * (1.0 - 0.65 * rx * rx) * (1.0 - 0.65 * ry * ry)
             vert = bm.verts.new(u_pos(ux, uy, uz))
             row.append((vert, u_norm, v_norm))
         verts_grid.append(row)
@@ -1464,6 +1641,62 @@ def build_crt_screen_bmesh(cfg):
             for loop, uv in zip(face.loops, uvs):
                 loop[uv_layer].uv = uv
     bm.normal_update()
+    return bm
+
+
+def build_screen_bezel_bmesh(cfg):
+    """
+    Build the slim, rounded CRT ScreenBezel collar following the curved glass contour from the tiny
+    R1_Brass lip + R1_Rubber gasket all the way to Visor's inner shroud wall, using a single material
+    slot (mat_idx = 0: R1_CreamEnamel by default for Variant A; R1_GreyMetal for Variant B).
+    """
+    bm = bmesh.new()
+    sw, sh = cfg["screen_width"], cfg["screen_height"]
+    bulge = cfg["screen_bulge_z"]
+    half_w = sw * FLAT_UV_SCALE
+    half_h = sh * FLAT_UV_SCALE
+
+    def glass_z(px, py):
+        rx = min(1.15, abs(px) / half_w)
+        ry = min(1.15, abs(py) / half_h)
+        return bulge * (1.0 - 0.65 * rx * rx) * (1.0 - 0.65 * ry * ry)
+
+    ring_specs = [
+        (0.2896, -0.1956, 0.1956, 0.0512, 0.017, -0.0120),  # 0: Inner rear wall behind brass lip
+        (0.2896, -0.1956, 0.1956, 0.0512, 0.017,  0.0048),  # 1: Inner seat against brass lip
+        (0.2928, -0.1972, 0.1982, 0.0522, 0.016,  0.0070),  # 2: Crisp 3.5 mm inner rounded lip
+        (0.3123, -0.2022, 0.2082, 0.0545, 0.011,  0.0084),  # 3: Smooth rounded bezel inner zone
+        (0.3323, -0.2075, 0.2202, 0.0565, 0.005,  0.0088),  # 4: Smooth rounded bezel crown
+        (0.3525, -0.2130, 0.2325, 0.0580, 0.000,  0.0082),  # 5: Smooth rounded bezel outer zone at Visor
+        (0.3525, -0.2130, 0.2325, 0.0580, 0.000, -0.0120),  # 6: Outer rear wall tucked into Head
+    ]
+
+    vert_rings = []
+    for hw_r, ymin_r, ymax_r, rc_r, bk_r, dz_r in ring_specs:
+        pts = _sample_crt_bezel_ring(hw_r, ymin_r, ymax_r, rc_r, barrel_k=bk_r)
+        v_ring = [bm.verts.new(u_pos(px, py, glass_z(px, py) + dz_r)) for px, py in pts]
+        vert_rings.append(v_ring)
+
+    n_pts = len(vert_rings[0])
+    for r_idx in range(len(vert_rings) - 1):
+        r0 = vert_rings[r_idx]
+        r1 = vert_rings[r_idx + 1]
+        for i in range(n_pts):
+            ni = (i + 1) % n_pts
+            face = bm.faces.new((r0[i], r0[ni], r1[ni], r1[i]))
+            face.material_index = 0
+            face.smooth = True
+
+    # Close the rear annular base between the outer rear ring and ring 0 so the mesh is watertight
+    r_back_out = vert_rings[-1]
+    r_back_in = vert_rings[0]
+    for i in range(n_pts):
+        ni = (i + 1) % n_pts
+        face = bm.faces.new((r_back_out[i], r_back_out[ni], r_back_in[ni], r_back_in[i]))
+        face.material_index = 0
+        face.smooth = True
+
+    ensure_outward_normals(bm)
     return bm
 
 
@@ -1812,6 +2045,7 @@ def build_front_tools_and_lamps(rover_root, body_obj, cfg, mats):
     DigScoop (#7 in callouts.png) with mounting bolts, rolled top lip, and 6 chisel teeth.
     """
     lamp_tilt_deg = cfg.get("headlamp_down_tilt_deg", 7.5)
+    lamp_tilt_rad = -math.radians(lamp_tilt_deg)
     glass_dz = cfg["piv_headlamp_glass_local"][2] - 0.002
     glass_tilt_dy = -glass_dz * math.sin(math.radians(lamp_tilt_deg))
     for side_label, sx in (("L", -1.0), ("R", 1.0)):
@@ -1841,7 +2075,7 @@ def build_front_tools_and_lamps(rover_root, body_obj, cfg, mats):
             center_xyz=(0.0, y_off, 0.165),
             segments=26,
             mat_idx=0,
-            rot_euler=(lamp_tilt_deg, 0.0, 0.0),
+            rot_euler=(lamp_tilt_rad, 0.0, 0.0),
             ring_mat_indices=[1, 0, 0, 0, 0, 0, 2, 1, 1],
         )
         hl_obj = create_mesh_node(
@@ -1864,7 +2098,7 @@ def build_front_tools_and_lamps(rover_root, body_obj, cfg, mats):
             segments=22,
             rings=4,
             mat_idx=0,
-            rot_euler=(lamp_tilt_deg, 0.0, 0.0),
+            rot_euler=(lamp_tilt_rad, 0.0, 0.0),
         )
         create_mesh_node(
             f"Glass_{side_label}",
