@@ -47,6 +47,7 @@ CBUFFER_START(UnityPerMaterial)
     half   _BloomSafeMax;
     half   _HotCoreThreshold;
     half   _HotCorePeak;
+    half   _BuildModeGlow;
     half   _ScanProgress;
     half   _Dissolve;
 CBUFFER_END
