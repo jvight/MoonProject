@@ -71,9 +71,9 @@ namespace MoonProject.UI.PlayModeTests
 
         public override void TearDown()
         {
-            if (_gameplay != null && _gameplay.Build != null && _gameplay.Build.Tuning != null)
+            if (_gameplay != null && _gameplay.Building != null && _gameplay.Building.Tuning != null)
             {
-                _gameplay.Build.Tuning.SetPlaytestUnlockedIds();
+                _gameplay.Building.Tuning.SetPlaytestUnlockedIds();
             }
 
             if (_document != null && _originalPanelSettings != null)
@@ -117,7 +117,7 @@ namespace MoonProject.UI.PlayModeTests
             Directory.CreateDirectory(CaptureFolder);
             yield return BootMainScene();
 
-            BuildField build = _gameplay.Build;
+            BuildField build = _gameplay.Building;
             Assert.IsNotNull(build, "BuildField must be wired in Main.unity.");
 
             var placement = _context.Get<IRoverPlacement>();
@@ -145,9 +145,9 @@ namespace MoonProject.UI.PlayModeTests
 
             // Give 07 5 Metal, 2 Wiring, 1 Optics so several structures are affordable and larger ones show coral shortage.
             DrainAllMaterials();
-            _gameplay.Materials.Deliver(SalvageMaterial.Metal, 5);
-            _gameplay.Materials.Deliver(SalvageMaterial.Wiring, 2);
-            _gameplay.Materials.Deliver(SalvageMaterial.Optics, 1);
+            _gameplay.Materials.Receive(SalvageMaterial.Metal, 5);
+            _gameplay.Materials.Receive(SalvageMaterial.Wiring, 2);
+            _gameplay.Materials.Receive(SalvageMaterial.Optics, 1);
             _ui.Pickups.Tick(10f);
 
             // Switch localization to Vietnamese ("vi") for the 10-structure build menu capture.
@@ -174,9 +174,9 @@ namespace MoonProject.UI.PlayModeTests
             yield return CaptureComposite(viewCamera, "01-build-menu-vi");
 
             // Deliver abundant materials onto home's shelves for placing and welding structures.
-            _gameplay.Materials.Deliver(SalvageMaterial.Metal, 40);
-            _gameplay.Materials.Deliver(SalvageMaterial.Wiring, 30);
-            _gameplay.Materials.Deliver(SalvageMaterial.Optics, 20);
+            _gameplay.Materials.Receive(SalvageMaterial.Metal, 40);
+            _gameplay.Materials.Receive(SalvageMaterial.Wiring, 30);
+            _gameplay.Materials.Receive(SalvageMaterial.Optics, 20);
             _ui.Pickups.Tick(10f);
             yield return null;
 
@@ -331,11 +331,11 @@ namespace MoonProject.UI.PlayModeTests
             // -------------------------------------------------------------------------
             // 6. FINISHED BASE WITH 6 STRUCTURES AT NIGHT (06-base-night.png)
             // -------------------------------------------------------------------------
-            // Place 4 more distinct R1 structures (ChargingPad, BatteryBank, Smelter, Fabricator) around the
+            // Place 4 more distinct R1 structures (ChargingPad, BatteryBank, AntennaMast, PowerPylon) around the
             // PowerPylon + SolarArray so a 6-structure base stands lit at night with warm amber standby lamps.
             Assert.IsTrue(build.Catalog.TryGet(StructureIds.BatteryBank, out StructureDefinition batteryDef));
-            Assert.IsTrue(build.Catalog.TryGet(StructureIds.Smelter, out StructureDefinition smelterDef));
-            Assert.IsTrue(build.Catalog.TryGet(StructureIds.Fabricator, out StructureDefinition fabricatorDef));
+            Assert.IsTrue(build.Catalog.TryGet(StructureIds.AntennaMast, out StructureDefinition smelterDef));
+            Assert.IsTrue(build.Catalog.TryGet(StructureIds.PowerPylon, out StructureDefinition fabricatorDef));
 
             Vector3 padPos = roverPos + new Vector3(2.8f, 0f, 4.4f);
             padPos.y = terrain.SampleHeight(padPos.x, padPos.z);
