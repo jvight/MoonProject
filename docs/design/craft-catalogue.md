@@ -39,8 +39,8 @@
   light the pulse; solar flowers charge on the route). Breadth comes from regions, not from duplicate lockers.
 
 ## 1. The catalogue
-**Counts by 1.0:** 32 structures · 4 repair targets · 12 kits · 22 device tiers · 6 vehicles and helper machines.
-That is **72 things to make**, plus 4 to restore. Of these, **6 are expressive builds** (★).
+**Counts by 1.0:** 34 structures · 4 repair targets · 12 kits · 23 device tiers · 9 vehicles and helper machines.
+That is **78 things to make**, plus 4 to restore. Of these, **6 are expressive builds** (★).
 
 ### 1.1 Structures (A unless marked) — 32
 | # | Structure | Source (teaches it) | Does for 07 | Visible change | Cost · ⚡ | Phase |
@@ -123,11 +123,11 @@ That is **72 things to make**, plus 4 to restore. Of these, **6 are expressive b
 | Solar wing | unjam (the opening's first upgrade · 0.5) → wing wiper (the sweeper · 0.6) → twin wing (Theo's sled · 0.8) |
 | Battery | Cell Pack II (elder 06 · 0.5) → Cell Pack III (the mare cart · 0.6) → Cell Heater (elder 03 · 0.8) → Power Core (the Peak · 1.0) |
 | Hold | Side bins (a Lumen crate · 0.5) → Cargo pod (the convoy · 0.6) |
-| Wheels | Magnetic Treads (the terrace bot · 0.7) → Efficient Hubs (the rail works · 0.7) |
+| Wheels | Magnetic Treads (the terrace bot · 0.7) → Efficient Hubs (the rail works · 0.7) → Cryo cleats (elder 03 · 0.8: the ice gate, `ice-and-vehicles.md`) |
 | Antenna | Transmit module (elder 05 · 0.6) → Star Tracker (elder 01 · 1.0) |
 | Charge port | Hex adapter (Meridian docks · 0.7: the key to standard C) |
 
-### 1.4 Vehicles and helper machines (A, built or repaired; operational task queues, no companions) — 6
+### 1.4 Vehicles and helper machines (A, built or repaired; operational task queues, no companions) — 9
 | # | Machine | Source | Job | Visible | Phase |
 |---|---|---|---|---|---|
 | 1 | Cargo sled | the depot | towed by the winch; carries a big load | a flat sled on skids | 0.5 |
@@ -136,6 +136,11 @@ That is **72 things to make**, plus 4 to restore. Of these, **6 are expressive b
 | 4 | Repair drone | the service gantry | field repair, and **tows a wrecked 07 home** (it takes over the rescue role from the cut friends, for wear-and-reclaimers' death flow) | a small tracked bot with a welding arm | 0.6 |
 | 5 | The sweeper (repaired) | the living moon | keeps the arrays and roads clean | arcs of clean regolith | 0.6 |
 | 6 | Hauler crane-truck (repaired) | Meridian's interconnect works (C) | lifts the dish's heavy parts at the Peak | a tall hauler with a boom | 1.0 |
+| 7 | **Service crawler** (07 drives in and docks) | the mare's far shore | a mobile base: charger, 3 pods, 12 m/s (`ice-and-vehicles.md`) | a tracked platform with a rover bay | 0.7 |
+| 8 | **Rail runner** (07 docks on it) | the mass driver spine | fast travel on the player's rail lines, 20 m/s | a cart carrying 07 along lit rails | 0.7 |
+| 9 | **Ballistic hopper** (07 docks in its cradle) | Lumen lander frame + Meridian guidance (C) | hops ~2 km to pads 07 built; propellant from the crater's ice | a squat cold-gas/rocket frame, no wings | 1.0 |
+
+**Structures added with the vehicles:** a hop pad (3M 2W 1O · 0.3 · 1.0) and a propellant plant (H₂/O₂ from ice, beside the ice still · 1.0).
 
 ## 2. Expressive builds (what WALL-E's cubes are to WALL-E)
 Each one has a real job, and each one makes the base visibly the *player's*:
