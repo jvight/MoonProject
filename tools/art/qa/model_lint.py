@@ -40,6 +40,7 @@ INSPECT = HERE / "blender_inspect.py"
 INSPECT_TIMEOUT = 600
 DEFAULT_PIVOT_TOLERANCE = 0.01
 DEFAULT_SCALE_TOLERANCE = 0.001
+DEFAULT_BOUNDS_TOLERANCE = 0.05
 ROTATION_TOLERANCE_DEG = 0.01
 LISTED = 20
 
@@ -47,6 +48,17 @@ LISTED = 20
 def check(name, failures, detail):
     return {"check": name, "pass": not failures, "detail": detail, "items": failures[:LISTED],
             "count": len(failures)}
+
+
+def model_bounds(facts, meshes):
+    if "bounds" in facts and facts["bounds"] is not None:
+        return facts["bounds"]
+    node_bounds = [m["bounds"] for m in meshes if "bounds" in m and m["bounds"] is not None]
+    if not node_bounds:
+        return None
+    bmin = [round(min(b["min"][i] for b in node_bounds), 4) for i in range(3)]
+    bmax = [round(max(b["max"][i] for b in node_bounds), 4) for i in range(3)]
+    return {"min": bmin, "max": bmax, "size": [round(bmax[i] - bmin[i], 4) for i in range(3)]}
 
 
 def evaluate(facts, contract, default_slots):
@@ -105,9 +117,36 @@ def evaluate(facts, contract, default_slots):
         topology += [f"{m['name']}: {m['boundary_edges']} open border edge(s)" for m in meshes if m["boundary_edges"]]
     checks.append(check("topology", topology, "manifold, consistently wound, no inside-out parts"))
 
+    bounds = model_bounds(facts, meshes)
+    if "bounds" in contract:
+        spec = contract["bounds"]
+        bounds_off = []
+        if bounds is None:
+            bounds_off.append("no mesh bounds in facts")
+        else:
+            size = bounds["size"]
+            tol = spec.get("tolerance", DEFAULT_BOUNDS_TOLERANCE)
+            tols = [tol, tol, tol] if isinstance(tol, (int, float)) else list(tol)
+            if "size" in spec:
+                for axis, got, exp, t in zip(("X", "Y", "Z"), size, spec["size"], tols):
+                    if abs(got - exp) > t + 1e-6:
+                        bounds_off.append(f"size {axis}: {got:.3f} m outside {exp:.3f} +/- {t:.3f} m")
+            if "min_size" in spec:
+                for axis, got, lo in zip(("X", "Y", "Z"), size, spec["min_size"]):
+                    if got < lo - 1e-6:
+                        bounds_off.append(f"size {axis}: {got:.3f} m < min {lo:.3f} m")
+            if "max_size" in spec:
+                for axis, got, hi in zip(("X", "Y", "Z"), size, spec["max_size"]):
+                    if got > hi + 1e-6:
+                        bounds_off.append(f"size {axis}: {got:.3f} m > max {hi:.3f} m")
+        detail = f"size {bounds['size']} m within bounds" if bounds else "missing bounds"
+        checks.append(check("bounds", bounds_off, detail))
+
     totals = {"nodes": len(facts["nodes"]), "meshes": len(meshes), "triangles": triangles, "draw_calls": draw_calls,
               "boundary_edges": sum(m["boundary_edges"] for m in meshes),
               "slots": sorted({s for m in meshes for s in m["slots"]})}
+    if bounds is not None:
+        totals["bounds"] = bounds
     return {"model": contract.get("model", ""), "fbx": facts.get("source", ""),
             "pass": all(c["pass"] for c in checks), "checks": checks, "totals": totals}
 

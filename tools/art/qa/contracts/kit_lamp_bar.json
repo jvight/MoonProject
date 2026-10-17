@@ -2,14 +2,56 @@
   "model": "kit_lamp_bar",
   "pivot_tolerance": 0.015,
   "nodes": {
-    "Kit_LampBar": {"pivot": [0.0, 0.0, 0.0]},
-    "Lamp_0": {"pivot": [-0.26, 0.189, -0.055]},
-    "Lamp_1": {"pivot": [0.0, 0.202, -0.132]},
-    "Lamp_2": {"pivot": [0.26, 0.189, -0.055]}
+    "Kit_LampBar": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Lamp_0": {
+      "pivot": [
+        -0.26,
+        0.189,
+        -0.055
+      ]
+    },
+    "Lamp_1": {
+      "pivot": [
+        0.0,
+        0.202,
+        -0.132
+      ]
+    },
+    "Lamp_2": {
+      "pivot": [
+        0.26,
+        0.189,
+        -0.055
+      ]
+    }
   },
   "require_vertex_colors": true,
   "allow_boundary_edges": false,
   "max_triangles": 3000,
   "max_meshes": 4,
-  "max_draw_calls": 12
+  "max_draw_calls": 12,
+  "bounds": {
+    "size": [
+      0.767,
+      0.2694,
+      0.1902
+    ],
+    "tolerance": 0.038,
+    "min_size": [
+      0.729,
+      0.2314,
+      0.1522
+    ],
+    "max_size": [
+      0.805,
+      0.3074,
+      0.2282
+    ]
+  }
 }
