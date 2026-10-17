@@ -13,7 +13,7 @@ namespace MoonProject.UI.Tests
         public void SetUp()
         {
             _localization = TestTables.Localization(new EventBus(),
-                UiKeys.UpgradeName("rover.cargo_cradle"), "Cargo Cradle", "Giá chở hàng",
+                UiKeys.StructureName("charging_pad"), "Charging Pad", "Bệ sạc",
                 UiKeys.ScanFragment, "Fragment {0} of {1} · {2}", "Mảnh {0}/{1} · {2}",
                 UiKeys.ScanKnown, "Known blueprint · +{0} Metal", "Bản vẽ đã biết · +{0} Kim loại");
         }
@@ -21,14 +21,14 @@ namespace MoonProject.UI.Tests
         [Test]
         public void ANewFragment_SaysItsPlaceInTheBlueprint()
         {
-            var scanned = new FragmentScanned("fragment.cradle.1", "rover.cargo_cradle", 1, 3, false, 0);
-            Assert.AreEqual("Fragment 2 of 3 · Cargo Cradle", ScanLines.Fragment(_localization, scanned));
+            var scanned = new FragmentScanned("fragment.pad.1", "charging_pad", 1, 3, false, 0);
+            Assert.AreEqual("Fragment 2 of 3 · Charging Pad", ScanLines.Fragment(_localization, scanned));
         }
 
         [Test]
         public void AFragmentOfAKnownBlueprint_SaysTheMetalItPaid()
         {
-            var scanned = new FragmentScanned("fragment.cradle.1", "rover.cargo_cradle", 0, 3, true, 3);
+            var scanned = new FragmentScanned("fragment.pad.1", "charging_pad", 0, 3, true, 3);
             Assert.AreEqual("Known blueprint · +3 Metal", ScanLines.Fragment(_localization, scanned));
         }
     }

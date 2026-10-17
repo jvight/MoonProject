@@ -4,49 +4,42 @@ using UnityEngine;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The gentle guidance (docs/features/M3-16, M3-24 B): the soft "next" line, the place cards and the opening's
+    /// The gentle guidance (docs/design/opening-v2.md §3): the objective line, the recipe card and the
     /// protocol readout.
     /// </summary>
     [Serializable]
     public sealed class GuidanceSettings
     {
-        [Tooltip("The next line easing in when 07 has been still a moment, and out when it drives.")]
+        [Tooltip("The objective line easing in and out.")]
         [SerializeField] private RevealSettings _line = new RevealSettings(0.9f, 0.5f, 6f, 1f, 1.4f, 0.6f);
-
-        [Tooltip("Seconds on the same recovery-target need without progress before the next line offers its nudge "
-            + "(P8: patience first; a player who is finding their own way never sees it). Teaching steps 0-5 show "
-            + "their line as soon as 07 is still (M3-24 B).")]
-        [Range(0f, 600f)]
-        [SerializeField] private float _stepPatienceSeconds = 120f;
 
         [Tooltip("Seconds the low-battery hint rests on screen before it goes (it also goes when a charger starts).")]
         [Range(2f, 20f)]
         [SerializeField] private float _lowBatteryHoldSeconds = 8f;
 
-        [Tooltip("Seconds on a teaching step without progress before its next line shows (the owner: guidance only " +
-                 "when it is needed).")]
-        [Range(0f, 120f)]
-        [SerializeField] private float _teachingPatienceSeconds = 20f;
-
         [Tooltip("Speed (m/s) under which 07 counts as still.")]
         [Range(0.05f, 2f)]
         [SerializeField] private float _stillSpeed = 0.4f;
 
-        [Tooltip("Seconds 07 must stay still before the next line shows.")]
-        [Range(0f, 5f)]
-        [SerializeField] private float _stillSeconds = 1.2f;
-
-        [Tooltip("A place card (the place's name and its one job) easing in and out.")]
-        [SerializeField] private RevealSettings _place = new RevealSettings(1f, 1.4f, 12f, 0.94f, 1f, 0.7f);
-
-        [Tooltip("Seconds a place card rests fully visible.")]
-        [Range(1f, 10f)]
-        [SerializeField] private float _placeHoldSeconds = 4f;
-
-        [Tooltip("Seconds the radio tower's card waits after 07 first comes near, while World's slow light runs down "
-            + "each dark cable to what the tower will power (M3-24 B); its line then names the job.")]
+        [Tooltip("Seconds after a step begins before its objective line may show (docs/design/opening-v2.md §3).")]
         [Range(0f, 10f)]
-        [SerializeField] private float _towerCardDelay = 4f;
+        [SerializeField] private float _objectiveDelaySeconds = 1.5f;
+
+        [Tooltip("Seconds 07 must have been still before the objective line shows.")]
+        [Range(0f, 5f)]
+        [SerializeField] private float _objectiveStillSeconds = 1f;
+
+        [Tooltip("Seconds the objective line rests bright before it dims to a small line.")]
+        [Range(1f, 30f)]
+        [SerializeField] private float _objectiveRestSeconds = 8f;
+
+        [Tooltip("Seconds 07 must be still before a dim objective line may brighten again.")]
+        [Range(1f, 30f)]
+        [SerializeField] private float _objectiveRebrightStillSeconds = 4f;
+
+        [Tooltip("Seconds without progress before a dim objective line may brighten again.")]
+        [Range(10f, 600f)]
+        [SerializeField] private float _objectiveIdleSeconds = 90f;
 
         [Tooltip("The recipe card easing in while 07 looks at the tower's hopper or a board sheet, and out after.")]
         [SerializeField] private RevealSettings _recipe = new RevealSettings(0.45f, 0.6f, 8f, 0.96f, 1.4f, 0.7f);
@@ -60,21 +53,19 @@ namespace MoonProject.UI
 
         public RevealSettings Line => _line;
 
-        public float StepPatienceSeconds => _stepPatienceSeconds;
-
         public float LowBatteryHoldSeconds => _lowBatteryHoldSeconds;
-
-        public float TeachingPatienceSeconds => _teachingPatienceSeconds;
 
         public float StillSpeed => _stillSpeed;
 
-        public float StillSeconds => _stillSeconds;
+        public float ObjectiveDelaySeconds => _objectiveDelaySeconds;
 
-        public RevealSettings Place => _place;
+        public float ObjectiveStillSeconds => _objectiveStillSeconds;
 
-        public float PlaceHoldSeconds => _placeHoldSeconds;
+        public float ObjectiveRestSeconds => _objectiveRestSeconds;
 
-        public float TowerCardDelay => _towerCardDelay;
+        public float ObjectiveRebrightStillSeconds => _objectiveRebrightStillSeconds;
+
+        public float ObjectiveIdleSeconds => _objectiveIdleSeconds;
 
         public RevealSettings Recipe => _recipe;
 

@@ -67,24 +67,16 @@ namespace MoonProject.UI.PlayModeTests
             UiLayout layout = ui.Layout;
             ui.Ledger.RecordLookTaught();
             ui.Ledger.RecordDriveTaught();
-            ui.Ledger.RecordLookUpHinted();
             ui.Ledger.RecordHoldChipShown();
-            ui.Ledger.RecordFitTaught();
             ui.Ledger.RecordHoldBooted();
             context.Events.Publish(new RoverAwoke(Vector3.zero, false));
-            fakes.Fade = 0f;
             yield return new WaitForSecondsRealtime(1f);
 
-            context.Events.Publish(new NextStepChanged("next.tower.pad"));
-            yield return new WaitForSecondsRealtime(1f + _tuning.Guidance.StillSeconds +
+            context.Events.Publish(new NextStepChanged("next.v2.build_pad"));
+            yield return new WaitForSecondsRealtime(1f + _tuning.Guidance.ObjectiveStillSeconds +
                                                     _tuning.Guidance.Line.FadeIn + 1f);
             yield return LegibleShot(camera, folder, "70_next_line_over_stars", report, layout.NextLineText);
             context.Events.Publish(new NextStepChanged(string.Empty));
-
-            context.Events.Publish(new TickerLine(UiTestRig.HomeLine));
-            yield return new WaitForSecondsRealtime(TickerEntrance() + 0.5f);
-            yield return LegibleShot(camera, folder, "71_ticker_over_dune", report, layout.TickerText);
-            yield return LegibleShot(camera, capturesFolder, "toast", report, layout.TickerText);
 
             fakes.Cells = 4;
             fakes.Charge = 2.5f;
@@ -99,26 +91,6 @@ namespace MoonProject.UI.PlayModeTests
             yield return LegibleShot(camera, folder, "73_cell_row_low", report, layout.BatteryDial);
             fakes.IsLowPower = false;
             fakes.Charge = 4f;
-
-            fakes.Upgrade = _tower;
-            fakes.AtStation = true;
-            fakes.SetMaterials(2, 6, 0);
-            yield return new WaitForSecondsRealtime(2f);
-            yield return LegibleShot(camera, folder, "74_tower_card", report, layout.TowerTitle,
-                layout.TowerDescription, layout.TowerRecipe);
-            fakes.AtStation = false;
-            yield return new WaitForSecondsRealtime(1f);
-
-            fakes.Bay = _bayKit;
-            fakes.SetMaterials(12, 7, 0);
-            fakes.AtStation = true;
-            yield return new WaitForSecondsRealtime(1.8f);
-            yield return Tap(keyboard.eKey);
-            yield return new WaitForSecondsRealtime(0.6f);
-            yield return LegibleShot(camera, folder, "75_bay_list", report, layout.TowerChoices);
-            fakes.AtStation = false;
-            fakes.Bay = null;
-            yield return new WaitForSecondsRealtime(1f);
 
             ui.Ledger.RecordUsed(InteractionKind.Excavate);
             ui.Ledger.RecordUsed(InteractionKind.Salvage);
@@ -142,24 +114,6 @@ namespace MoonProject.UI.PlayModeTests
             yield return Tap(keyboard.escapeKey);
             yield return new WaitForSecondsRealtime(1f);
 
-            fakes.Upgrade = _tower;
-            fakes.AtStation = true;
-            yield return new WaitForSecondsRealtime(2f);
-            yield return LegibleShot(camera, folder, "78_tower_card_at_150", report, layout.TowerTitle,
-                layout.TowerDescription, layout.TowerRecipe);
-            var problems = new List<string>();
-            yield return ScreenFit.Probe(found => ScreenFit.CheckOnScreen(layout.Root, "150% tower card", found),
-                problems);
-            Assert.IsEmpty(problems, "at 150% nothing leaves the screen:\n" + string.Join("\n", problems));
-            foreach (TextElement text in layout.TowerPanel.Query<TextElement>().ToList())
-            {
-                Assert.IsFalse(text.text.EndsWith("…") || text.text.EndsWith("..."),
-                    $"'{text.text}' is cut short at 150%");
-            }
-
-            fakes.AtStation = false;
-            yield return new WaitForSecondsRealtime(1f);
-
             // Reset text size to 100% and capture the Variant C 1080p reference screens in Logs/captures/.
             yield return Tap(keyboard.escapeKey);
             yield return new WaitForSecondsRealtime(1f);
@@ -177,19 +131,6 @@ namespace MoonProject.UI.PlayModeTests
             yield return LegibleShot(camera, capturesFolder, "pause_menu", report, layout.PauseMain);
             yield return Tap(keyboard.escapeKey);
             yield return new WaitForSecondsRealtime(1f);
-
-            // Scan result note (cyan header + amber body on dark CRT plate).
-            context.Events.Publish(new FragmentScanned("fragment.cradle.1", "rover.cargo_cradle", 1, 3, false, 0));
-            yield return new WaitForSecondsRealtime(_tuning.CrateNote.Reveal.FadeIn + 0.8f);
-            yield return LegibleShot(camera, capturesFolder, "scan_result", report, layout.CrateNote);
-            yield return new WaitForSecondsRealtime(_tuning.CrateNote.HoldSeconds(40) + _tuning.CrateNote.Reveal.FadeOut + 0.4f);
-
-            // Crew log card (dark ink on warm off-white paper).
-            context.Events.Publish(new CrewLogFound(UiTestRig.FirstLog, Vector3.zero));
-            yield return new WaitForSecondsRealtime(CardEntrance());
-            yield return LegibleShot(camera, capturesFolder, "crew_log", report, layout.MemoryCard);
-            ui.Card.Dismiss();
-            yield return new WaitForSecondsRealtime(_tuning.MemoryCard.Reveal.FadeOut + 0.5f);
 
             // Tab screen (07's hold on the left, 07 v3 socket diagram on the right).
             fakes.Hold.Set(3, new MaterialSlot(SalvageMaterial.Metal, 4, 4), new MaterialSlot(SalvageMaterial.Metal, 2, 4),
@@ -314,11 +255,6 @@ namespace MoonProject.UI.PlayModeTests
             ui.Cargo.Close();
             yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeOut + 0.5f);
 
-            context.Events.Publish(new CrewLogFound(UiTestRig.FirstLog, Vector3.zero));
-            yield return new WaitForSecondsRealtime(CardEntrance());
-            yield return LegibleShot(camera, capturesFolder, "crew_log_vi", report, layout.MemoryCard);
-            ui.Card.Dismiss();
-            yield return new WaitForSecondsRealtime(_tuning.MemoryCard.Reveal.FadeOut + 0.5f);
             ui.Localization.SetLanguage("en");
 
             Assert.IsEmpty(report, "legibility:\n" + string.Join("\n", report));
@@ -352,12 +288,9 @@ namespace MoonProject.UI.PlayModeTests
             UiLayout layout = ui.Layout;
             ui.Ledger.RecordLookTaught();
             ui.Ledger.RecordDriveTaught();
-            ui.Ledger.RecordLookUpHinted();
             ui.Ledger.RecordHoldChipShown();
-            ui.Ledger.RecordFitTaught();
             ui.Ledger.RecordHoldBooted();
             context.Events.Publish(new RoverAwoke(Vector3.zero, false));
-            fakes.Fade = 0f;
             yield return new WaitForSecondsRealtime(0.5f);
 
             fakes.Hold.Set(3, new MaterialSlot(SalvageMaterial.Metal, 4, 4), new MaterialSlot(SalvageMaterial.Metal, 2, 4),
@@ -428,12 +361,9 @@ namespace MoonProject.UI.PlayModeTests
             UiLayout layout = ui.Layout;
             ui.Ledger.RecordLookTaught();
             ui.Ledger.RecordDriveTaught();
-            ui.Ledger.RecordLookUpHinted();
             ui.Ledger.RecordHoldChipShown();
-            ui.Ledger.RecordFitTaught();
             ui.Ledger.RecordHoldBooted();
             context.Events.Publish(new RoverAwoke(Vector3.zero, false));
-            fakes.Fade = 0f;
             Reframe(1920, 1080);
             yield return new WaitForSecondsRealtime(1.5f);
 

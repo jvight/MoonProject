@@ -13,8 +13,8 @@ namespace MoonProject.UI
     /// </summary>
     internal sealed class LowBatteryHint
     {
-        public const string DockKey = "battery.low.dock";
-        public const string MastKey = "battery.low.mast";
+        public const string LanderKey = "battery.low.lander";
+        public const string PadKey = "battery.low.pad";
 
         private readonly GuidanceSettings _settings;
         private readonly IRoverBattery _battery;
@@ -39,7 +39,7 @@ namespace MoonProject.UI
         /// <summary>True for the ticker lines Gameplay publishes for the low warning.</summary>
         public static bool IsLowLine(TickerLine line)
         {
-            return line.Key == DockKey || line.Key == MastKey;
+            return line.Key == LanderKey || line.Key == PadKey;
         }
 
         /// <summary>Gameplay's low warning arrived: this line is now a hint waiting to show.</summary>

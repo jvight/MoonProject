@@ -54,7 +54,7 @@ namespace MoonProject.Audio.Editor
                 ? existing.SelectedId
                 : TitleMusicLibrary.DefaultTrackId;
             float fadeIn = existing != null ? existing.FadeInSeconds : 2f;
-            float fadeOut = existing != null ? existing.FadeOutSeconds : 2.5f;
+            float fadeOut = existing != null ? existing.FadeOutSeconds : 0.8f;
             float volume = existing != null ? existing.Volume : 1f;
 
             var library = ScriptableObject.CreateInstance<TitleMusicLibrary>();

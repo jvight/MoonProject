@@ -4,7 +4,7 @@ namespace MoonProject.UI
 {
     /// <summary>
     /// Keeps a prompt off the cards (pure, EditMode-tested): a prompt floats where its world point is, and that point
-    /// can sit under the recipe card or the tower's panel; the prompt then rests on top of the card, or under it when
+    /// can sit under the recipe card or the build menu; the prompt then rests on top of the card, or under it when
     /// there is no room above, never over its words.
     /// </summary>
     internal static class PromptClearance

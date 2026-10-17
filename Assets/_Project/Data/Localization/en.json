@@ -39,52 +39,8 @@
             "text": "Quit"
         },
         {
-            "key": "ui.journey.put_away",
-            "text": "An older save was kept separately."
-        },
-        {
             "key": "ui.save_tick.word",
             "text": "07"
-        },
-        {
-            "key": "ui.meter.home",
-            "text": "home · {0}"
-        },
-        {
-            "key": "ui.meter.unit",
-            "text": "m"
-        },
-        {
-            "key": "ui.compass.n",
-            "text": "N"
-        },
-        {
-            "key": "ui.compass.ne",
-            "text": "NE"
-        },
-        {
-            "key": "ui.compass.e",
-            "text": "E"
-        },
-        {
-            "key": "ui.compass.se",
-            "text": "SE"
-        },
-        {
-            "key": "ui.compass.s",
-            "text": "S"
-        },
-        {
-            "key": "ui.compass.sw",
-            "text": "SW"
-        },
-        {
-            "key": "ui.compass.w",
-            "text": "W"
-        },
-        {
-            "key": "ui.compass.nw",
-            "text": "NW"
         },
         {
             "key": "ui.hint.look_up",
@@ -275,114 +231,6 @@
             "text": "› the radio tower"
         },
         {
-            "key": "ui.board.known",
-            "text": "KENJI'S PLANS"
-        },
-        {
-            "key": "tech.tower_l1.name",
-            "text": "Radio Tower, level 1"
-        },
-        {
-            "key": "tech.tower_l2.name",
-            "text": "Radio Tower, level 2"
-        },
-        {
-            "key": "tech.tower_l3.name",
-            "text": "Radio Tower, level 3"
-        },
-        {
-            "key": "tech.relay_network.name",
-            "text": "Relay network"
-        },
-        {
-            "key": "tech.hover_jump.name",
-            "text": "Hover-Jump"
-        },
-        {
-            "key": "tech.cargo_cradle.name",
-            "text": "Cargo Cradle"
-        },
-        {
-            "key": "tech.warm_headlamp.name",
-            "text": "Warm Headlamp"
-        },
-        {
-            "key": "tech.capacitor_drums.name",
-            "text": "Boost Coils"
-        },
-        {
-            "key": "tech.cell_pack_2.name",
-            "text": "Cell Pack II"
-        },
-        {
-            "key": "ticker.recovery.link",
-            "text": "The Link reaches the Peak."
-        },
-        {
-            "key": "ticker.recovery.dish",
-            "text": "The great dish is repaired."
-        },
-        {
-            "key": "ticker.recovery.answer",
-            "text": "The Arks have heard us."
-        },
-        {
-            "key": "notyet.bay",
-            "text": "Needs tower level 2."
-        },
-        {
-            "key": "notyet.chart",
-            "text": "Needs tower level 3."
-        },
-        {
-            "key": "notyet.tether",
-            "text": "07 has no tether. Kenji kept a spare at the garage."
-        },
-        {
-            "key": "ticker.listen.first",
-            "text": "Stop and 07 listens: a wreck with something left lights up."
-        },
-        {
-            "key": "place.dock.name",
-            "text": "Charging Dock"
-        },
-        {
-            "key": "place.dock.job",
-            "text": "Park here to charge and save."
-        },
-        {
-            "key": "place.lander.name",
-            "text": "The Lander"
-        },
-        {
-            "key": "place.tower.name",
-            "text": "Radio Tower"
-        },
-        {
-            "key": "place.bay.name",
-            "text": "Kenji's Rover Bay"
-        },
-        {
-            "key": "place.ladder.name",
-            "text": "Crew's Ladder"
-        },
-        {
-            "key": "place.lift.name",
-            "text": "Crew's Lift"
-        },
-        {
-            "key": "place.lab.name",
-            "text": "Crew's Lab"
-        },
-        {
-            "key": "place.rack.name",
-            "text": "Tape Rack"
-        },
-        {
-            "key": "place.garage_port.name",
-            "text": "Kenji's Garage Port"
-        },
-        {
             "key": "ui.settings.sound",
             "text": "Sound"
         },
@@ -479,14 +327,6 @@
             "text": "Back"
         },
         {
-            "key": "ui.card.caption",
-            "text": "Keepsake {0} of {1}"
-        },
-        {
-            "key": "ui.card.close",
-            "text": "Close"
-        },
-        {
             "key": "hint.excavate",
             "text": "Dig"
         },
@@ -553,54 +393,6 @@
         {
             "key": "upgrade.rover.hover_jump.1.effect",
             "text": "Hold to charge, release to leap: 07 jumps over gaps."
-        },
-        {
-            "key": "relic.cassette_player.name",
-            "text": "Ro's Mixtape"
-        },
-        {
-            "key": "relic.cassette_player.memory",
-            "text": "A walkman with a tape still inside, labelled in Ro's handwriting: \"for the long drive\". Side B just says \"for when we come home\"."
-        },
-        {
-            "key": "relic.rubber_duck.name",
-            "text": "Senior Debugging Consultant"
-        },
-        {
-            "key": "relic.rubber_duck.memory",
-            "text": "Kenji explained every broken part to this duck before fixing it. The duck never said a word, and it was usually right."
-        },
-        {
-            "key": "relic.golden_record.name",
-            "text": "The Lumen Record"
-        },
-        {
-            "key": "relic.golden_record.memory",
-            "text": "Ro's homemade golden record: greetings from four people, one rover and a very proud basil plant, ready for anyone listening."
-        },
-        {
-            "key": "relic.astronaut_boot.name",
-            "text": "Ines's Field Boot"
-        },
-        {
-            "key": "relic.astronaut_boot.memory",
-            "text": "Ines walked the rim every morning \"to check the Moon was still there\". The tread is still packed with dust from her favourite ridge."
-        },
-        {
-            "key": "relic.teapot.name",
-            "text": "The First Real Tea"
-        },
-        {
-            "key": "relic.teapot.memory",
-            "text": "Theo brewed mint grown in lunar soil in this dented pot. \"The first tea on the Moon that tasted like anything,\" Ro wrote on the lid."
-        },
-        {
-            "key": "relic.garden_gnome.name",
-            "text": "Chief Security Officer"
-        },
-        {
-            "key": "relic.garden_gnome.memory",
-            "text": "Theo smuggled him aboard as a joke and put him in charge of the seedlings. Nothing was ever stolen on his watch."
         },
         {
             "key": "glyph.keyboard.escape",
@@ -707,168 +499,12 @@
             "text": "LS"
         },
         {
-            "key": "ui.lab.turn",
-            "text": "Turn"
-        },
-        {
-            "key": "ui.lab.look",
-            "text": "Look"
-        },
-        {
-            "key": "ui.lab.down",
-            "text": "Down"
-        },
-        {
             "key": "hint.repair",
             "text": "Repair"
         },
         {
-            "key": "ui.card.log_caption",
-            "text": "Repair log: {0}"
-        },
-        {
-            "key": "friend.tilly.name",
-            "text": "Tilly"
-        },
-        {
-            "key": "friend.tilly.repair_log",
-            "text": "Walked the rim at sunrise with Tilly chirping at my shoulder. The Moon is still here, Earth is still up, the coffee is still terrible: all is well. — Ines"
-        },
-        {
-            "key": "friend.bell.name",
-            "text": "Bell"
-        },
-        {
-            "key": "friend.bell.repair_log",
-            "text": "Built Bell out of a dead receiver and four camera legs so the station keeps playing while I sleep. She dances. I didn't build that part. — Ro"
-        },
-        {
-            "key": "log.ro_1",
-            "text": "Night one of Lumen After Dark on the local loop. Audience: three tired scientists in the galley, plus 07 parked by the repeater mast because the transformer hums warm. — Ro"
-        },
-        {
-            "key": "cassette.after_dark_1.title",
-            "text": "Lumen After Dark, Vol. 1"
-        },
-        {
-            "key": "cassette.after_dark_1.note",
-            "text": "First night show. Audience: three crew, one rover, one basil plant. The basil had requests."
-        },
-        {
-            "key": "cassette.dust_and_honey.title",
-            "text": "Dust & Honey"
-        },
-        {
-            "key": "cassette.dust_and_honey.note",
-            "text": "Recorded with the mic taped to the airlock. If you hear a thump, that's Kenji."
-        },
-        {
-            "key": "cassette.slow_orbit.title",
-            "text": "Slow Orbit"
-        },
-        {
-            "key": "cassette.slow_orbit.note",
-            "text": "For the nights Earth looks close enough to walk to. It isn't. I checked."
-        },
-        {
-            "key": "ticker.bell.home",
-            "text": "Bell got home before you. She says the porch light was on."
-        },
-        {
-            "key": "ticker.bell.signal",
-            "text": "Bell has picked up a signal. Follow her light."
-        },
-        {
-            "key": "ticker.bell.found_0",
-            "text": "Bell says: told you so."
-        },
-        {
-            "key": "ticker.bell.found_1",
-            "text": "Bell says: that one's been waiting for you."
-        },
-        {
-            "key": "ticker.bell.found_2",
-            "text": "Bell chimes: one of Ro's old favourites."
-        },
-        {
             "key": "hint.tune",
             "text": "Tune"
-        },
-        {
-            "key": "radio.channel.lumen_after_dark",
-            "text": "Lumen After Dark"
-        },
-        {
-            "key": "radio.channel.tape_deck",
-            "text": "Tape Deck"
-        },
-        {
-            "key": "radio.channel.quiet_hours",
-            "text": "Quiet Hours"
-        },
-        {
-            "key": "ui.pause.cassettes",
-            "text": "Cassettes {0}/{1}"
-        },
-        {
-            "key": "ui.card.crew_log",
-            "text": "Crew log"
-        },
-        {
-            "key": "ui.card.radio_letter",
-            "text": "Radio letter"
-        },
-        {
-            "key": "ui.card.ark_bulletin",
-            "text": "Ark bulletin"
-        },
-        {
-            "key": "ui.card.ending_answer",
-            "text": "Ark reply"
-        },
-        {
-            "key": "ui.card.liner_caption",
-            "text": "Ro's liner notes"
-        },
-        {
-            "key": "ui.card.tape_count",
-            "text": "{0}/{1}"
-        },
-        {
-            "key": "ui.station.radio_tower",
-            "text": "Radio Tower"
-        },
-        {
-            "key": "ui.station.workshop",
-            "text": "Kenji's Rover Bay"
-        },
-        {
-            "key": "ticker.radio.now_playing",
-            "text": "Now playing — {0}"
-        },
-        {
-            "key": "track.01_earthrise_static.title",
-            "text": "Earthrise Static"
-        },
-        {
-            "key": "track.02_sevens_lullaby.title",
-            "text": "Seven's Lullaby"
-        },
-        {
-            "key": "track.03_dust_on_the_dial.title",
-            "text": "Dust on the Dial"
-        },
-        {
-            "key": "track.04_long_way_home.title",
-            "text": "Long Way Home"
-        },
-        {
-            "key": "track.05_low_orbit_tea.title",
-            "text": "Low Orbit Tea"
-        },
-        {
-            "key": "track.06_signal_through_craters.title",
-            "text": "Signal Through Craters"
         },
         {
             "key": "hint.restore",
@@ -877,38 +513,6 @@
         {
             "key": "hint.hop",
             "text": "Hop"
-        },
-        {
-            "key": "ticker.relay.online",
-            "text": "{0} online."
-        },
-        {
-            "key": "ticker.relay.waiting",
-            "text": "Needs a lit relay nearby."
-        },
-        {
-            "key": "hop.node.home",
-            "text": "Home"
-        },
-        {
-            "key": "hop.node.relay.0",
-            "text": "Mound Relay"
-        },
-        {
-            "key": "hop.node.relay.1",
-            "text": "Shoulder Relay"
-        },
-        {
-            "key": "hop.node.relay.2",
-            "text": "Canyon Mouth Relay"
-        },
-        {
-            "key": "hop.node.relay.3",
-            "text": "Terminus Relay"
-        },
-        {
-            "key": "ui.pause.relays",
-            "text": "Relays {0}/{1}"
         },
         {
             "key": "hint.salvage",
@@ -965,26 +569,6 @@
         {
             "key": "material.superconductor",
             "text": "Superconductor"
-        },
-        {
-            "key": "site.depot.name",
-            "text": "Supply Depot"
-        },
-        {
-            "key": "site.kestrel.name",
-            "text": "Kestrel-3"
-        },
-        {
-            "key": "site.drill.name",
-            "text": "Drill Rig"
-        },
-        {
-            "key": "site.garage.name",
-            "text": "Kenji's Garage"
-        },
-        {
-            "key": "site.lander.name",
-            "text": "Canyon Supply Lander"
         },
         {
             "key": "ui.recipe.row",
@@ -1047,40 +631,8 @@
             "text": "Build"
         },
         {
-            "key": "tech.focus_lens.name",
-            "text": "Focus Lens"
-        },
-        {
-            "key": "tech.side_bins.name",
-            "text": "Side Bins"
-        },
-        {
-            "key": "ui.crate.caption",
-            "text": "From the crate"
-        },
-        {
-            "key": "ui.reward.title",
-            "text": "{0} · Level {1}"
-        },
-        {
-            "key": "ui.reward.light_on",
-            "text": "Home has power"
-        },
-        {
-            "key": "ui.reward.light_up",
-            "text": "Home glows brighter"
-        },
-        {
-            "key": "ui.reward.radio_on",
-            "text": "The radio picks up signals"
-        },
-        {
-            "key": "ui.reward.reach",
-            "text": "Go {0} m farther"
-        },
-        {
-            "key": "ui.station.offline",
-            "text": "offline"
+            "key": "hint.scan",
+            "text": "Scan"
         },
         {
             "key": "ui.recipecard.needs",
@@ -1145,338 +697,6 @@
         {
             "key": "kit.tether_ring.name",
             "text": "Kenji's spare tether ring"
-        },
-        {
-            "key": "ui.bay.fitted",
-            "text": "Fitted to 07"
-        },
-        {
-            "key": "log.kenji_1",
-            "text": "Rebuilt the drive train on the spare survey chassis—seventh job on the board this week, so it's 07 now. Wired the beacon to key our call sign, three short and one long, whenever the receiver locks. — Kenji"
-        },
-        {
-            "key": "log.ines_1",
-            "text": "Core sample 41: grey dust, grey dust, one blue pebble. Logged it as \"anomalous\". Kept it as \"mine\". — Ines"
-        },
-        {
-            "key": "log.theo_1",
-            "text": "Named every seedling in tray four; the mint is Gerald. Gerald is the best mint on the Moon, which is a low bar, but he's clearing it. — Theo"
-        },
-        {
-            "key": "log.ro_2",
-            "text": "Read the storm warning on air tonight, tucked between two slow songs so the galley wouldn't go quiet. 07 rolled up to the yard speaker and parked in the spill light. — Ro"
-        },
-        {
-            "key": "log.ines_2",
-            "text": "Transfer-19 wants us aboard now, drives left behind. I asked who would rather stay in suits and get the survey out. Four hands went up before I finished the sentence. — Ines"
-        },
-        {
-            "key": "log.kenji_2",
-            "text": "Hid a spare wheel for 07 under the tarp in the crawler. Next time I'll give it six matching ones, not just patch the odd one out. — Kenji"
-        },
-        {
-            "key": "log.theo_2",
-            "text": "Sealed the backup seed tins in the crater cache and handed the greenhouse loop over to Moss. Moss hummed at me for twenty seconds, as if I'd personally insulted the tomatoes. — Theo"
-        },
-        {
-            "key": "log.ro_3",
-            "text": "Last night of the live show; patched the deck into the mast loop so the music keeps running while we finish the ridge work. If Lena's listening on the Sunday window, she'll know the porch light is still on. — Ro"
-        },
-        {
-            "key": "log.ines_3",
-            "text": "Basin survey compiled and loaded into the main core; queued the dish alignment and Ark IV uplink on 07's recovery stack in case the ridge team runs short of hours. Everything they need to come home is in the file. — Ines"
-        },
-        {
-            "key": "log.theo_3",
-            "text": "Set the hydroponic vents to closed-cycle and left the last basil tray by the window where the earthlight hits. When the Arks bring their seed stock down, they'll want to see the soil already works. — Theo"
-        },
-        {
-            "key": "log.kenji_3",
-            "text": "Wired 07's cradle to the deep-charge bus and set the wake trigger to the Sunday frequency. The storm took the ridge lines, so if the dish stays dark after today, the little guy can finish the walk when the batteries top up. — Kenji"
-        },
-        {
-            "key": "ticker.radio.weather",
-            "text": "…weather tonight: clear skies over the Sea of Tranquility, as always…"
-        },
-        {
-            "key": "letter.mast_1",
-            "text": "02 OCT 1988 · Lumen Station, this is Geneva Departure Control. Tenth harvest winter confirmed across both hemispheres. Final surface lifts to the L4 and L5 Arks complete this month."
-        },
-        {
-            "key": "letter.mast_2",
-            "text": "14 OCT 1988 · Lumen Station, this is Ark IV relay at L5. Shallow polar cores read dry; lunar settlement is ruled out. Pack the station for pickup on the 29th."
-        },
-        {
-            "key": "letter.mast_3",
-            "text": "18 OCT 1988 · Lena, it's Ines at Lumen. The dry verdict is wrong—Core 41 came up wet from below the basalt cap. Can you point Meridian's automated radar under our basin?"
-        },
-        {
-            "key": "letter.mast_4",
-            "text": "22 OCT 1988 · Ines, Lena here aboard Ark IV. I've locked Meridian's automated sounders onto a deep loop through Lumen's link. The reflection under your basin is huge—it's a buried glacier."
-        },
-        {
-            "key": "letter.mast_5",
-            "text": "25 OCT 1988 · Ro, half of Ark IV tunes in to Lumen After Dark on Sundays while we seal the hull rings. I've registered your Sunday frequency for Ines's water survey uplink. — Lena Moreau"
-        },
-        {
-            "key": "letter.mast_6",
-            "text": "27 OCT 1988 · Ark IV Watch, this is Kalani at Lumen Station. We broke through the basalt at 140 metres—pure water ice, enough to bring the whole fleet down. Full survey transmits from the Peak dish tomorrow at 22:00."
-        },
-        {
-            "key": "letter.mast_7",
-            "text": "28 OCT 1988 · 19:30 · Lumen Station, this is pickup shuttle Transfer-19. Coronal storm front is two hours out. Leave the survey drives and board the ascent pod now, or we lose the orbital window."
-        },
-        {
-            "key": "letter.mast_8",
-            "text": "28 OCT 1988 · 21:20 · Transfer-19, this is Morrow at Lumen. The storm jammed the Peak dish at fourteen percent. All four of us are in suits securing the backup drives and setting the rovers to continue—hold orbit till dawn."
-        },
-        {
-            "key": "letter.mast_9",
-            "text": "29 OCT 1988 · 05:00 · Ark IV Control, this is Transfer-19. Lumen habitat seal failed in the storm; suit transponders 01 through 04 went offline at 04:12. Radiation is past our limit—we are returning to L5 without them."
-        },
-        {
-            "key": "letter.mast_10",
-            "text": "06 NOV 1988 · Lumen Station buffer, this is Dr. Lena Moreau on Ark IV. Without your full packet, the Council ruled the Moon dry and locked us into L5 halo orbit. I am keeping Ro's Sunday listening schedule open—three short, one long—for as long as I live."
-        },
-        {
-            "key": "ticker.ending.answer",
-            "text": "Lumen Station, this is Moreau on Ark IV. Thirty-six years of Sundays, and your survey finally came through. We're coming home. — L. Moreau"
-        },
-        {
-            "key": "letter.after_1",
-            "text": "OCT 2024 · ARK IV BULLETIN: Hydrological packet verified—all six survey sectors intact. After thirty-six years at L5, the Fleet Council has voted unanimously to bring the Arks down to the Moon. — L. Moreau"
-        },
-        {
-            "key": "letter.after_2",
-            "text": "OCT 2024 · ARK IV BULLETIN: The Council named the primary landing zone Kalani–Morrow Basin. I walked the observation ring at midnight just to look at the Moon and know we finally have ground beneath us. — L. Moreau"
-        },
-        {
-            "key": "letter.after_3",
-            "text": "NOV 2024 · ARK IV ENGINEERING: Station telemetry shows unit 07 completed the Peak climb on six matching magnetic treads. Our mechanics cheered—Morrow's 1988 maintenance queue actually finished the job. — L. Moreau"
-        },
-        {
-            "key": "letter.after_4",
-            "text": "NOV 2024 · ARK IV COMMS: We piped Ro Amadi's archived tape—the side labelled 'for when we come home'—across all twelve Arks tonight. Every corridor from Deck A to the engine ring was listening. — L. Moreau"
-        },
-        {
-            "key": "letter.after_5",
-            "text": "DEC 2024 · ARK IV BOTANY: Camera frames from the lava-tube shelter confirm Theo Lindqvist's moss strain is still green under its isotope lamp. The botany team is already clearing bay space for the cuttings. — L. Moreau"
-        },
-        {
-            "key": "letter.after_6",
-            "text": "DEC 2024 · ARK IV METEOROLOGY: Earth's aerosol veil will take another century to settle, but the skies over Lumen Station are clear, as always. Our advance ice-drilling crew launches next month. — L. Moreau"
-        },
-        {
-            "key": "letter.after_7",
-            "text": "JAN 2025 · ARK IV SURVEY DESK: My youngest student asked for the first geology berth on Lander One. She carries Ines's 1988 field notes in her pocket and checks the lunar horizon every morning. — L. Moreau"
-        },
-        {
-            "key": "letter.after_8",
-            "text": "JAN 2025 · TYCHO–ILC JOINT DESK: Meridian's automated sorters never missed a shift in thirty-six years. The advance team will link Lumen's grid to the Rim Terraces first so both stations power the new domes. — L. Moreau"
-        },
-        {
-            "key": "letter.after_9",
-            "text": "FEB 2025 · ARK IV FLIGHT DECK: The shipyard crew stencilled a yellow rubber duck onto the nose of Landing Tug One for good luck. Even the Flight Director didn't have the heart to paint over it. — L. Moreau"
-        },
-        {
-            "key": "letter.after_10",
-            "text": "MAR 2025 · ARK IV VANGUARD: Descent burn begins at dawn. Keep the station beacons lit and the receiver on the Sunday frequency—after thirty-six years, the first crew is coming down to Lumen. — L. Moreau"
-        },
-        {
-            "key": "map.sheet.title",
-            "text": "Lumen basin, surveyed on foot. — I. Kalani"
-        },
-        {
-            "key": "map.tally.label",
-            "text": "Checked:"
-        },
-        {
-            "key": "map.complete.note",
-            "text": "Checked: the Moon is still there. — I."
-        },
-        {
-            "key": "map.state.heart_waiting",
-            "text": "Something is still inside."
-        },
-        {
-            "key": "map.state.picked_clean",
-            "text": "Picked clean."
-        },
-        {
-            "key": "map.state.mast_dark",
-            "text": "Offline. Needs repair."
-        },
-        {
-            "key": "map.state.mast_lit",
-            "text": "Online. Inside the station's reach."
-        },
-        {
-            "key": "map.place.lander.name",
-            "text": "The Lander"
-        },
-        {
-            "key": "map.place.lander.note",
-            "text": "Home. Population: four, one rover, one very proud basil."
-        },
-        {
-            "key": "map.site.depot.name",
-            "text": "Supply Depot"
-        },
-        {
-            "key": "map.site.depot.note",
-            "text": "Spare everything. Mostly bolts."
-        },
-        {
-            "key": "map.site.kestrel.name",
-            "text": "Kestrel-3"
-        },
-        {
-            "key": "map.site.kestrel.note",
-            "text": "Meridian's relay bird. It came down still pointing at the Arks."
-        },
-        {
-            "key": "map.trail.kestrel.name",
-            "text": "Kestrel's skid"
-        },
-        {
-            "key": "map.trail.kestrel.note",
-            "text": "I paced it. Twice."
-        },
-        {
-            "key": "map.site.drill.name",
-            "text": "Drill Rig"
-        },
-        {
-            "key": "map.site.drill.note",
-            "text": "My drill. Core 41 came from here, the blue one."
-        },
-        {
-            "key": "map.site.garage.name",
-            "text": "Kenji's Garage"
-        },
-        {
-            "key": "map.site.garage.note",
-            "text": "No entry without Kenji. Kenji: no entry without a helmet."
-        },
-        {
-            "key": "map.site.lander.name",
-            "text": "Canyon Supply Lander"
-        },
-        {
-            "key": "map.site.lander.note",
-            "text": "The '87 resupply drop with Theo's seed trays. Landed… firmly."
-        },
-        {
-            "key": "map.friend.tilly.name",
-            "text": "Tilly's crater"
-        },
-        {
-            "key": "map.friend.tilly.note",
-            "text": "Where she sulks when I walk too fast."
-        },
-        {
-            "key": "map.relay.0.name",
-            "text": "Mound Relay"
-        },
-        {
-            "key": "map.relay.0.note",
-            "text": "Ro calls it the little one."
-        },
-        {
-            "key": "map.relay.1.name",
-            "text": "Shoulder Relay"
-        },
-        {
-            "key": "map.relay.1.note",
-            "text": "Longest shadows in the basin."
-        },
-        {
-            "key": "map.relay.2.name",
-            "text": "Canyon Mouth Relay"
-        },
-        {
-            "key": "map.relay.2.note",
-            "text": "Everything echoes here. Even the static."
-        },
-        {
-            "key": "map.relay.3.name",
-            "text": "Terminus Relay"
-        },
-        {
-            "key": "map.relay.3.note",
-            "text": "Right above Ro's chamber. Of course."
-        },
-        {
-            "key": "map.canyon.mouth.name",
-            "text": "Whispering Canyon"
-        },
-        {
-            "key": "map.canyon.mouth.note",
-            "text": "Say something. It says it back, quieter."
-        },
-        {
-            "key": "map.canyon.lip.name",
-            "text": "The chasm"
-        },
-        {
-            "key": "map.canyon.lip.note",
-            "text": "Too wide to cross. Kenji says \"for now\"."
-        },
-        {
-            "key": "map.canyon.landing.name",
-            "text": "The far side"
-        },
-        {
-            "key": "map.canyon.landing.note",
-            "text": "Someone always leaves a light on over here."
-        },
-        {
-            "key": "map.canyon.ledge.name",
-            "text": "Ro's ledge"
-        },
-        {
-            "key": "map.canyon.ledge.note",
-            "text": "She comes here to hear herself sing back."
-        },
-        {
-            "key": "map.canyon.terminus.name",
-            "text": "Ro's chamber"
-        },
-        {
-            "key": "map.canyon.terminus.note",
-            "text": "Best acoustics on the Moon. Her words, not mine."
-        },
-        {
-            "key": "map.canyon.exit.name",
-            "text": "The way out"
-        },
-        {
-            "key": "map.canyon.exit.note",
-            "text": "One way only. Don't try it upwards."
-        },
-        {
-            "key": "map.region.peak.name",
-            "text": "The Peak"
-        },
-        {
-            "key": "map.region.peak.note",
-            "text": "The great dish. Last stop before we send the survey up."
-        },
-        {
-            "key": "map.region.terraces.name",
-            "text": "Rim Terraces"
-        },
-        {
-            "key": "map.region.terraces.note",
-            "text": "Too steep for four wheels. Kenji's Atlas is parked up here."
-        },
-        {
-            "key": "map.place.antenna_farm.name",
-            "text": "Ro's antennas"
-        },
-        {
-            "key": "map.place.antenna_farm.note",
-            "text": "They hum in a solar storm. Ro calls it the choir."
         },
         {
             "key": "ui.title.subtitle",
@@ -1601,38 +821,6 @@
         {
             "key": "crew.kenji.plate",
             "text": "Kenji (ask the duck)"
-        },
-        {
-            "key": "ticker.set.ro.filling",
-            "text": "Ro's shelf is filling up. It already sounds like her."
-        },
-        {
-            "key": "ticker.set.theo.filling",
-            "text": "Theo's shelf is filling up. Something on it is almost growing."
-        },
-        {
-            "key": "ticker.set.ines.filling",
-            "text": "Ines's shelf is filling up, everything in neat rows."
-        },
-        {
-            "key": "ticker.set.kenji.filling",
-            "text": "Kenji's shelf is filling up. The duck approves."
-        },
-        {
-            "key": "ticker.set.ro.complete",
-            "text": "Ro's window is lit again."
-        },
-        {
-            "key": "ticker.set.theo.complete",
-            "text": "Theo's window is lit again."
-        },
-        {
-            "key": "ticker.set.ines.complete",
-            "text": "Ines's window is lit again."
-        },
-        {
-            "key": "ticker.set.kenji.complete",
-            "text": "Kenji's window is lit again."
         },
         {
             "key": "lens.boot.signal",
@@ -1775,34 +963,6 @@
             "text": "Made at Smelter II from rare earths and circuit chips."
         },
         {
-            "key": "ticker.cargo.full",
-            "text": "07's hold is full. The cut pieces stay on the wreck."
-        },
-        {
-            "key": "ticker.cargo.home_full",
-            "text": "Home storage is full. Build a shelf at a free socket."
-        },
-        {
-            "key": "crate.depot.note",
-            "text": "Spares for the ridge line. Don't let Ines take the good copper wire for her core tags. — Kenji"
-        },
-        {
-            "key": "crate.kestrel.note",
-            "text": "Lenses salvaged off Kestrel-3. Handle them like vinyl records. — Ro"
-        },
-        {
-            "key": "crate.drill.note",
-            "text": "Spare cable for the deep-core ice survey. Labelled, coiled, counted twice. — I. Kalani"
-        },
-        {
-            "key": "crate.garage.note",
-            "text": "For 07, next time it breaks. It will. — Kenji"
-        },
-        {
-            "key": "crate.lander.note",
-            "text": "Seed trays from the '87 supply drop went up to the dome. Left the spare fittings boxed here. — Theo"
-        },
-        {
             "key": "kit.focus_lens.name",
             "text": "Focus Lens"
         },
@@ -1863,24 +1023,12 @@
             "text": "Four more slots in 07's hold, so it carries more home each trip."
         },
         {
-            "key": "hint.scan",
-            "text": "Scan"
-        },
-        {
             "key": "scan.fragment",
             "text": "Fragment {0} of {1} · {2}"
         },
         {
             "key": "scan.known",
             "text": "Known blueprint · +{0} Metal"
-        },
-        {
-            "key": "scan.complete",
-            "text": "Blueprint learned: {0}."
-        },
-        {
-            "key": "scan.site_count",
-            "text": "{0} fragments to scan"
         },
         {
             "key": "hint.hold",
@@ -1929,14 +1077,6 @@
         {
             "key": "container.survey_sled",
             "text": "Tilly's sled"
-        },
-        {
-            "key": "site.hut.name",
-            "text": "Relay Service Hut"
-        },
-        {
-            "key": "site.chasm_lip.name",
-            "text": "Kenji's Test Jump"
         },
         {
             "key": "glyph.keyboard.tab",
@@ -2091,28 +1231,8 @@
             "text": "Blueprint not yet found"
         },
         {
-            "key": "micro.06.name",
-            "text": "06"
-        },
-        {
-            "key": "micro.mule.name",
-            "text": "Mule"
-        },
-        {
-            "key": "micro.haul_sled.name",
-            "text": "Haul Sled"
-        },
-        {
-            "key": "micro.drone.name",
-            "text": "Tilly's sister"
-        },
-        {
             "key": "ui.cargo.tab_seven",
             "text": "EQUIPPED"
-        },
-        {
-            "key": "hint.fit",
-            "text": "Fit"
         },
         {
             "key": "ui.bay.row_full",
@@ -2185,6 +1305,70 @@
         {
             "key": "ui.kit.antenna.desc",
             "text": "Extends sonar ping range across the basin."
+        },
+        {
+            "key": "next.v2.drive_lander",
+            "text": "Drive to the lander."
+        },
+        {
+            "key": "next.v2.scan_lander",
+            "text": "Scan the lander's cargo for a blueprint."
+        },
+        {
+            "key": "next.v2.collect_parts",
+            "text": "Collect the parts from the lander's open crate."
+        },
+        {
+            "key": "next.v2.cut_crates",
+            "text": "Cut the crates for metal and wiring."
+        },
+        {
+            "key": "next.v2.build_pad",
+            "text": "Build a charging pad beside the lander."
+        },
+        {
+            "key": "next.v2.charge",
+            "text": "Park on the pad to charge."
+        },
+        {
+            "key": "next.v2.fit_igniter",
+            "text": "Fit the igniter to the cutter."
+        },
+        {
+            "key": "next.v2.find_solar",
+            "text": "Find a solar blueprint in the Lumen ruins."
+        },
+        {
+            "key": "next.v2.cut_optics",
+            "text": "Cut the ruins for optics."
+        },
+        {
+            "key": "next.v2.build_solar",
+            "text": "Build a solar array near the pad."
+        },
+        {
+            "key": "next.v2.build_battery_bank",
+            "text": "Night is coming. Build a battery bank."
+        },
+        {
+            "key": "next.v2.scan_tower",
+            "text": "Scan the radio tower for an antenna."
+        },
+        {
+            "key": "next.v2.build_mast",
+            "text": "Build an antenna mast."
+        },
+        {
+            "key": "battery.low.lander",
+            "text": "Battery low. The lander's port can charge you once a pad stands there."
+        },
+        {
+            "key": "battery.low.pad",
+            "text": "Battery low. Return to your pad."
+        },
+        {
+            "key": "ui.unlock.blueprint",
+            "text": "Blueprint learned: {0}"
         }
     ]
 }

@@ -14,7 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _signalRadius: 60
   _falloffWidth: 140
-  _radiusEaseTime: 3
   _claritySmoothing: 0.8
   _crawlDistance: 60
   _minCutoff: 800
@@ -36,16 +35,6 @@ MonoBehaviour:
   _incomingStart: 0.45
   _tuneStaticBoost: 0.35
   _tuneSwishVolume: 0.8
-  _stationSwitchDuration: 1.2
-  _silentSwitchFade: 0.6
-  _quietStaticGain: 0
-  _quietStaticFade: 1.2
-  _hopOutTime: 0.8
-  _hopDarkTime: 0.4
-  _hopInTime: 0.8
-  _hopStaticBoost: 0.5
-  _hopMusicGain: 0.15
-  _hopCutoff: 700
   _cabinCutoff: 7000
   _cabinMusicGain: 0.7
   _cabinStaticGain: 0.7
@@ -55,3 +44,7 @@ MonoBehaviour:
   _playerWakeMusicFade: 1.8
   _wakePowerTime: 0.3
   _wakeStaticBoost: 0.55
+  _unpoweredStaticFloor: 0.3
+  _powerOnClearTime: 2.5
+  _powerOnMusicFade: 6
+  _silentSwitchFade: 0.6

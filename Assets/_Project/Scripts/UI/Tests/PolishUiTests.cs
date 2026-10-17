@@ -47,17 +47,6 @@ namespace MoonProject.UI.Tests
             Assert.IsTrue(tick.IsVisible, "a save after the burst shows the sign again");
         }
 
-        [Test]
-        public void ANotYetLine_IsSaidOncePerReason()
-        {
-            var lines = new NotYetLines();
-            Assert.IsTrue(lines.ShouldSay("notyet.tower"));
-            Assert.IsFalse(lines.ShouldSay("notyet.tower"), "a second ping of the same sleeper stays quiet");
-            Assert.IsTrue(lines.ShouldSay("notyet.bay"), "another sleeper has its own line");
-            Assert.IsFalse(lines.ShouldSay(string.Empty));
-            Assert.IsFalse(lines.ShouldSay(null));
-        }
-
         private static UiLayout Layout()
         {
             var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(UiAssetPaths.Uxml);

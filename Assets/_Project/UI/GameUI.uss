@@ -7,9 +7,6 @@
 
 .moon-root,
 .hud,
-.lab-hud,
-.hop-veil,
-.hop-veil__dark,
 .pause,
 .pause__veil,
 .title-crt,
@@ -36,40 +33,22 @@
 }
 
 .pause__heading,
-.memory-card__name,
-.tower-panel__title,
 .chip__number,
 .name-tag__name,
-.bay-row__name,
-.hop-list__glyph,
-.dial-readout__station,
-.dial-readout__tape,
 .glyph__label,
-.hold__glyph,
 .material-slot__count {
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
     font-size: 22px;
 }
 
 .chip__word,
-.hold__word,
 .caption,
 .section-label,
 .next-line__text,
-.ticker__text,
-.place-card__job,
-.tower-panel__text,
 .material-slot__word,
-.hint-row__word,
-.bay-row__effect,
-.recovery-board__node,
 .recovery-board__target,
 .pause .menu-button {
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
-}
-
-.memory-card__text {
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/BeVietnamPro-Regular.asset");
 }
 
 Label {
@@ -347,20 +326,6 @@ Label {
 
 /* A bay row's cost stays on its line: icon and have / need, no names */
 
-.bay-row__recipe {
-    flex-direction: row;
-    align-items: center;
-}
-
-.bay-row__recipe .material-slot {
-    margin: 0 4px;
-}
-
-.bay-row__recipe .material-slot__count {
-    min-width: 0;
-    font-size: 20px;
-}
-
 .recipe__part {
     margin: 3px 0;
 }
@@ -389,33 +354,6 @@ Label {
     font-size: 18px;
     color: var(--moon-text-dim);
     white-space: normal;
-}
-
-/* The cassette icon (painted, see CassetteIconPainter) */
-
-.cassette-icon {
-    width: 24px;
-    height: 16px;
-    --icon-color: var(--moon-warm-lamp);
-    --icon-hole-color: var(--moon-sky-top);
-}
-
-.relay-icon {
-    width: 20px;
-    height: 16px;
-    --icon-color: var(--moon-warm-lamp);
-    --mast-color: var(--moon-text-faint);
-}
-
-.relay-icon--tag {
-    width: 18px;
-    height: 16px;
-}
-
-.cassette-icon--quiet {
-    width: 20px;
-    height: 13px;
-    --icon-color: var(--moon-amber-edge);
 }
 
 /* The title over the live world (M3-09): anchored left-column composition inside the CRT bezel */
@@ -801,7 +739,7 @@ Label {
 }
 
 /*
- * Floating names (a fitted piece of kit, a friend waking, a site answering the sonar): cream type on a soft dusk of
+ * Floating names (the next line): cream type on a soft dusk of
  * shadow and no plate, so each reads even over the bright Earth or a lit sky. One look for every name.
  */
 
@@ -830,55 +768,11 @@ Label {
 .next-line {
     position: absolute;
     left: 0;
-    right: 0;
-    top: 124px;
-    align-items: center;
+    top: 8px;
+    align-items: flex-start;
 }
 
 /* The distance home at the top centre, in Variant C's calm cyan telemetry accent */
-.home-meter {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 4px;
-    align-items: center;
-}
-
-.home-meter__arc {
-    width: 250px;
-    height: 60px;
-    --track-color: var(--moon-track);
-    --fill-color: var(--moon-tech-glow);
-    --tick-color: var(--crt-cyan-edge);
-    --ring-width: 3;
-}
-
-.home-meter__row {
-    flex-direction: row;
-    align-items: flex-end;
-    margin-top: -30px;
-}
-
-.home-meter__value {
-    font-size: 46px;
-    color: var(--moon-tech-glow);
-    text-shadow: 0 0 14px var(--crt-cyan-glow);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
-}
-
-.home-meter__unit {
-    margin-left: 3px;
-    margin-bottom: 8px;
-    font-size: 22px;
-    color: var(--crt-cyan-dim);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
-}
-
-.home-meter__key {
-    font-size: 18px;
-    letter-spacing: 2px;
-    color: var(--crt-cyan-dim);
-}
 
 .next-line__text {
     font-size: 26px;
@@ -886,6 +780,12 @@ Label {
     color: var(--moon-text);
     -unity-text-align: middle-center;
     text-shadow: 0 2px 12px var(--moon-shadow);
+}
+
+/* After its bright rest the objective line is a small dim line (docs/design/opening-v2.md §3) */
+.next-line--dim .next-line__text {
+    font-size: 18px;
+    opacity: 0.7;
 }
 
 /* 07's cells (docs/design/first-hour-v2 6.4): a small row of pills on a glass plate, top left, one pill per cell */
@@ -924,10 +824,9 @@ Label {
     -unity-text-align: middle-center;
 }
 
-/* Every line sits on a CRT plate (docs/design/first-hour-v2 6.2): the next line, the ticker, a place's card */
+/* Every line sits on a CRT plate (docs/design/first-hour-v2 6.2): the next line */
 
-.next-line .name-tag,
-.place-card .name-tag {
+.next-line .name-tag {
     padding: 12px 30px 14px 30px;
     background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPill.png");
     -unity-slice-left: 72;
@@ -935,102 +834,6 @@ Label {
     -unity-slice-top: 72;
     -unity-slice-bottom: 72;
     -unity-slice-scale: 0.5;
-}
-
-/* A place's card, the first time 07 comes near: its name and its one job, below where kit titles rest */
-
-.place-card {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 22%;
-    align-items: center;
-}
-
-.place-card .name-tag__name {
-    color: var(--glass-hi);
-}
-
-/* A short amber underline beneath a place's name */
-.place-card__rule {
-    width: 96px;
-    height: 4px;
-    margin-top: 6px;
-    border-radius: 2px;
-    background-color: var(--glass-sel);
-}
-
-.place-card__job {
-    margin-top: 8px;
-    font-size: 26px;
-    color: var(--moon-text);
-    -unity-text-align: middle-center;
-    text-shadow: 0 2px 12px var(--moon-shadow);
-}
-
-/* A fitted piece of kit's name (crafted at Kenji's Rover Bay, or a friend's gift): high and quiet, clear of 07 */
-
-.kit-title {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 22%;
-    align-items: center;
-}
-
-/* The tower's reward card (feel-pass 8.2): CRT panel in the upper third, a title and a few short lines of what it gave */
-
-.reward-anchor {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 20%;
-    align-items: center;
-}
-
-.reward-card {
-    min-width: 440px;
-    max-width: 640px;
-    padding: 20px 34px 22px 34px;
-    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPanel.png");
-    -unity-slice-left: 56;
-    -unity-slice-right: 56;
-    -unity-slice-top: 56;
-    -unity-slice-bottom: 56;
-    -unity-slice-scale: 0.5;
-}
-
-.reward-card__title {
-    margin-bottom: 12px;
-    font-size: 28px;
-    letter-spacing: 3px;
-    color: var(--glass-hi);
-    -unity-text-align: middle-center;
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
-}
-
-.reward-card__lines {
-    align-items: flex-start;
-}
-
-.reward-card__row {
-    flex-direction: row;
-    align-items: center;
-    margin: 4px 0;
-}
-
-.reward-card__lamp {
-    width: 8px;
-    height: 8px;
-    margin-right: 14px;
-    border-radius: 4px;
-    background-color: var(--moon-warm-accent);
-}
-
-.reward-card__line {
-    font-size: 22px;
-    color: var(--glass-hi);
-    white-space: normal;
 }
 
 /* The unlock card: a kit has just been fitted; its key, its word and one line of what it lets 07 do */
@@ -1067,114 +870,6 @@ Label {
     letter-spacing: 2px;
     color: var(--glass-hi);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/ChakraPetch-SemiBold.asset");
-}
-
-/* A crew crate's packing note (warm paper) or scan readout (cyan CRT): low and centred, under 07 */
-
-.crate-anchor {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 9%;
-    align-items: center;
-}
-
-.crate-note {
-    min-width: 380px;
-    max-width: 680px;
-    padding: 16px 30px 18px 30px;
-    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPanel.png");
-    -unity-slice-left: 56;
-    -unity-slice-right: 56;
-    -unity-slice-top: 56;
-    -unity-slice-bottom: 56;
-    -unity-slice-scale: 0.5;
-}
-
-.crate-note__caption {
-    margin-bottom: 6px;
-    font-size: 18px;
-    letter-spacing: 3px;
-    color: var(--glass-sel);
-}
-
-.crate-note__text {
-    font-size: 24px;
-    white-space: normal;
-    color: var(--glass-hi);
-}
-
-.crate-note--scan .crate-note__caption {
-    color: var(--moon-tech-glow);
-}
-
-.crate-note--scan .crate-note__text {
-    color: var(--crt-cyan-dim);
-}
-
-.crate-note--paper {
-    border-width: 2px;
-    border-radius: 8px;
-    border-color: var(--paper-border);
-    background-color: var(--paper-fill);
-    -unity-background-image-tint-color: var(--paper-tint);
-}
-
-.crate-note--paper .crate-note__caption {
-    color: var(--paper-stamp);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
-}
-
-.crate-note--paper .crate-note__text {
-    color: var(--paper-ink);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/BeVietnamPro-Regular.asset");
-}
-
-.kit-title__rule {
-    width: 64px;
-    height: 2px;
-    margin-top: 12px;
-    border-radius: 1px;
-    background-color: var(--moon-warm-accent);
-}
-
-/* Tether reticle (painted, see ReticlePainter) */
-
-.reticle {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 44px;
-    height: 44px;
-    margin-left: -22px;
-    margin-top: -22px;
-}
-
-.reticle__ring {
-    position: absolute;
-    left: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-}
-
-.reticle__ring--rest {
-    --ring-color: var(--moon-text-faint);
-    --ring-width: 1.5;
-    --glow-color: var(--moon-cream-glow);
-    --glow-width: 7;
-    --dot-color: var(--moon-text-faint);
-    --dot-radius: 1.5;
-}
-
-.reticle__ring--hover {
-    opacity: 0;
-    --ring-color: var(--moon-tech-glow);
-    --ring-width: 2;
-    --glow-color: var(--moon-glow-soft);
-    --glow-width: 9;
-    --dot-color: var(--moon-tech-glow);
-    --dot-radius: 2;
 }
 
 /* Context prompt: anchored to a projected world point, centred above it */
@@ -1283,12 +978,7 @@ Label {
     height: 20px;
 }
 
-.site-name {
-    font-size: 26px;
-    letter-spacing: 2px;
-}
-
-/* The one-time Look up hint: the prompt chip's look, low and centred, above the ticker's band */
+/* The one-time Look up hint: the prompt chip's look, low and centred, above the next line */
 
 .look-hint {
     position: absolute;
@@ -1297,605 +987,6 @@ Label {
     bottom: 0;
     align-items: center;
 }
-
-/* Radio ticker: a CRT toast on the right with an icon badge */
-
-.ticker {
-    position: absolute;
-    right: 2.5%;
-    top: 38%;
-    align-items: flex-end;
-}
-
-.ticker__line {
-    flex-direction: row;
-    align-items: center;
-    max-width: 460px;
-    padding: 14px 26px 14px 16px;
-    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPill.png");
-    -unity-slice-left: 72;
-    -unity-slice-right: 72;
-    -unity-slice-top: 72;
-    -unity-slice-bottom: 72;
-    -unity-slice-scale: 0.5;
-}
-
-.ticker__lamp {
-    flex-shrink: 0;
-    width: 52px;
-    height: 52px;
-    margin-right: 14px;
-    justify-content: center;
-    align-items: center;
-    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassBubble.png");
-}
-
-.ticker__icon {
-    width: 24px;
-    height: 24px;
-    --icon-color: var(--glass-hi);
-    --mast-color: var(--glass-rim);
-}
-
-.ticker__text {
-    flex-shrink: 1;
-    font-size: 24px;
-    letter-spacing: 0.2px;
-    color: var(--moon-text);
-    white-space: normal;
-    -unity-text-align: middle-left;
-}
-
-/* Dial readout: the station Bell's dial was just turned to, just above the ticker's band */
-
-.dial-readout {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    align-items: center;
-}
-
-.dial-readout__body {
-    min-width: 230px;
-    align-items: center;
-    padding: 12px 28px 13px 28px;
-    border-radius: 10px;
-    border-width: 1.5px;
-    border-color: var(--moon-glass-edge);
-    background-color: var(--moon-glass);
-}
-
-.dial-readout__detents {
-    flex-direction: row;
-    margin-bottom: 9px;
-}
-
-.dial-readout__detent {
-    width: 9px;
-    height: 9px;
-    margin: 0 5px;
-    border-width: 1.5px;
-    border-radius: 5px;
-    border-color: var(--moon-text-faint);
-}
-
-.dial-readout__detent--lit {
-    border-color: var(--moon-warm-lamp);
-    background-color: var(--moon-warm-lamp);
-}
-
-.dial-readout__station {
-    font-size: 18px;
-    letter-spacing: 3px;
-    color: var(--moon-warm-lamp);
-    -unity-text-align: middle-center;
-}
-
-.dial-readout__tape {
-    margin-top: 5px;
-    font-size: 22px;
-    color: var(--moon-cream);
-    -unity-text-align: middle-center;
-}
-
-/* Radio-hop list: the other lit nodes, in the dial readout's place just above the ticker's band */
-
-.hop-list {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    align-items: center;
-}
-
-.hop-list__rows {
-    min-width: 250px;
-    padding: 12px 24px 12px 16px;
-    border-radius: 10px;
-    border-width: 1.5px;
-    border-color: var(--moon-glass-edge);
-    background-color: var(--moon-glass);
-}
-
-.hop-list__row {
-    flex-direction: row;
-    align-items: center;
-    height: 38px;
-}
-
-.hop-list__marker {
-    width: 30px;
-    height: 30px;
-    margin-right: 12px;
-    justify-content: center;
-    align-items: center;
-    --track-color: var(--moon-track);
-    --fill-color: var(--moon-warm-lamp);
-    --ring-width: 2;
-}
-
-.hop-list__glyph {
-    font-size: 18px;
-    color: var(--moon-warm-lamp);
-    -unity-text-align: middle-center;
-    display: none;
-}
-
-.hop-list__name {
-    font-size: 22px;
-    color: var(--moon-text-dim);
-}
-
-.hop-list__row--selected .hop-list__marker {
-    border-radius: 15px;
-    background-color: var(--moon-amber-soft);
-}
-
-.hop-list__row--selected .hop-list__glyph {
-    display: flex;
-}
-
-.hop-list__row--selected .hop-list__name {
-    color: var(--moon-cream);
-}
-
-/* Relay price tag: a little mast in the hold ring, the recipe beside it, the need line under them */
-
-.relay-tag__body {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 6px 16px 6px 7px;
-}
-
-.relay-tag__row {
-    flex-direction: row;
-    align-items: center;
-}
-
-.relay-tag__recipe {
-    margin-left: 10px;
-}
-
-.relay-tag__ring {
-    width: 32px;
-    height: 32px;
-    justify-content: center;
-    align-items: center;
-    --track-color: var(--moon-track);
-    --fill-color: var(--moon-warm-lamp);
-    --ring-width: 2.5;
-}
-
-
-/* Radio-hop fade: a soft indigo dark and a faint crawling grain, over the HUD and under the pause menu */
-
-.hop-veil__dark {
-    background-color: var(--moon-sky-top);
-}
-
-.hop-veil__grain {
-    position: absolute;
-    -unity-background-image-tint-color: var(--moon-cream);
-}
-
-/* Memory card (crew documents & liner notes on warm off-white paper with dark ink) */
-
-.memory-card {
-    position: absolute;
-    left: 0;
-    bottom: 24px;
-    width: 520px;
-}
-
-.memory-card__body {
-    padding: 24px 30px 20px 30px;
-    border-width: 2px;
-    border-radius: 8px;
-    border-color: var(--paper-border);
-    background-color: var(--paper-fill);
-    -unity-background-image-tint-color: var(--paper-tint);
-}
-
-.memory-card__heading {
-    flex-direction: row;
-    align-items: center;
-}
-
-.memory-card__caption {
-    flex-grow: 1;
-    flex-shrink: 1;
-    color: var(--paper-stamp);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
-}
-
-.memory-card__icon,
-.memory-card__count {
-    display: none;
-}
-
-/* A crew log: its caption says what it is, so it has no name line */
-
-.memory-card--untitled .memory-card__name {
-    display: none;
-}
-
-.memory-card--untitled .memory-card__text {
-    margin-top: 14px;
-}
-
-/* Liner notes: a smaller card on warm paper, dark ink title and cassette icon, with the tape count */
-
-.memory-card--liner {
-    width: 440px;
-}
-
-.memory-card--liner .memory-card__body {
-    border-color: var(--paper-border);
-}
-
-.memory-card--liner .memory-card__icon {
-    display: flex;
-    margin-right: 10px;
-    --icon-color: var(--paper-stamp);
-    --icon-hole-color: var(--paper-fill);
-}
-
-.memory-card--liner .memory-card__count {
-    display: flex;
-    margin-left: 12px;
-    color: var(--paper-ink-dim);
-}
-
-.memory-card--liner .memory-card__name {
-    font-size: 28px;
-    color: var(--paper-ink);
-}
-
-.memory-card--liner .memory-card__text {
-    font-size: 22px;
-}
-
-.memory-card__name {
-    font-size: 28px;
-    margin-top: 10px;
-    margin-bottom: 10px;
-    color: var(--paper-ink);
-    white-space: normal;
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
-}
-
-.memory-card__text {
-    font-size: 22px;
-    color: var(--paper-ink);
-    white-space: normal;
-}
-
-.memory-card .hint-row__word {
-    color: var(--paper-ink-dim);
-}
-
-/* Letter card (story-v4 letters: Variant C terminal metadata header + warm paper/telex sheet, readable 580 px width) */
-
-.letter-card {
-    position: absolute;
-    left: 50%;
-    margin-left: -290px;
-    bottom: 28px;
-    width: 580px;
-}
-
-.letter-card__body {
-    padding: 20px 28px 18px 28px;
-    border-width: 2px;
-    border-left-width: 6px;
-    border-radius: 8px;
-    border-color: var(--paper-border);
-    border-left-color: var(--paper-stamp);
-    background-color: var(--paper-fill);
-    -unity-background-image-tint-color: var(--paper-tint);
-}
-
-.letter-card--ark .letter-card__body {
-    border-left-color: var(--moon-warm-lamp);
-}
-
-.letter-card__heading {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.letter-card__title-group {
-    flex-direction: row;
-    align-items: center;
-    flex-shrink: 1;
-}
-
-.letter-card__lamp {
-    width: 8px;
-    height: 8px;
-    border-radius: 4px;
-    margin-right: 10px;
-    background-color: var(--paper-stamp);
-}
-
-.letter-card--ark .letter-card__lamp {
-    background-color: var(--moon-warm-lamp);
-}
-
-.letter-card__icon {
-    display: flex;
-    width: 20px;
-    height: 13px;
-    margin-right: 10px;
-    --icon-color: var(--paper-stamp);
-    --icon-hole-color: var(--paper-fill);
-}
-
-.letter-card__caption {
-    font-size: 17px;
-    letter-spacing: 2.5px;
-    color: var(--paper-stamp);
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
-}
-
-.letter-card__stamp {
-    margin-left: 14px;
-    font-size: 17px;
-    letter-spacing: 2px;
-    color: var(--paper-ink-dim);
-    -unity-text-align: middle-right;
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
-}
-
-.letter-card__rule {
-    height: 1.5px;
-    margin-top: 10px;
-    margin-bottom: 14px;
-    background-color: var(--paper-border);
-}
-
-.letter-card__text {
-    font-size: 21px;
-    color: var(--paper-ink);
-    white-space: normal;
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/BeVietnamPro-Regular.asset");
-}
-
-.letter-card__sender {
-    margin-top: 10px;
-    font-size: 18px;
-    letter-spacing: 1.5px;
-    color: var(--paper-stamp);
-    -unity-text-align: middle-right;
-    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
-}
-
-.letter-card__footer {
-    margin-top: 14px;
-}
-
-.letter-card .hint-row__word {
-    color: var(--paper-ink-dim);
-}
-
-.hint-row {
-    flex-direction: row;
-    align-items: center;
-    margin-top: 20px;
-}
-
-.hint-row__word {
-    font-size: 18px;
-    color: var(--moon-text-faint);
-}
-
-/* Tower upgrade panel */
-
-.tower-panel {
-    position: absolute;
-    right: 0;
-    bottom: 24px;
-    width: 544px;
-}
-
-.tower-panel__heading {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.tower-panel__station {
-    flex-direction: row;
-    align-items: center;
-}
-
-.tower-panel__state {
-    margin-left: 12px;
-    letter-spacing: 2px;
-    color: var(--moon-warm-lamp);
-}
-
-.tower-panel__lamp {
-    width: 8px;
-    height: 8px;
-    margin-right: 9px;
-    border-radius: 4px;
-}
-
-/* Each station's accent: the radio tower's amber lamp, Kenji's Rover Bay in the rover's warm orange paint */
-
-.tower-panel--radio-tower .tower-panel__lamp {
-    background-color: var(--moon-warm-lamp);
-}
-
-.tower-panel--workshop .tower-panel__lamp {
-    background-color: var(--moon-warm-accent);
-}
-
-.tower-panel--workshop .tower-panel__name,
-.tower-panel--workshop .hold__glyph {
-    color: var(--moon-warm-accent);
-}
-
-.tower-panel--workshop .hold__ring {
-    --fill-color: var(--moon-warm-accent);
-}
-
-.tower-panel__title {
-    font-size: 28px;
-    margin-top: 10px;
-    margin-bottom: 6px;
-    white-space: normal;
-}
-
-.tower-panel__text {
-    font-size: 22px;
-    color: var(--moon-text-dim);
-    white-space: normal;
-}
-
-.tower-panel__footer {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 20px;
-    min-height: 48px;
-}
-
-/* Kenji's Rover Bay: what is left to craft, one row each, the picked one lit and read in full */
-
-.tower-panel__choices {
-    margin: 12px -12px 0 -12px;
-}
-
-.bay-row {
-    padding: 9px 12px 10px 12px;
-    margin-bottom: 2px;
-    border-radius: 12px;
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0);
-}
-
-.bay-row--selected {
-    background-color: var(--glass-bar);
-    border-color: var(--glass-rim);
-}
-
-.bay-row__line {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.bay-row__lamp {
-    width: 6px;
-    height: 6px;
-    margin-right: 10px;
-    border-radius: 3px;
-    background-color: var(--moon-track);
-}
-
-.bay-row--selected .bay-row__lamp {
-    background-color: var(--moon-warm-accent);
-}
-
-.bay-row__name {
-    flex-grow: 1;
-    flex-shrink: 0;
-    min-width: 170px;
-    font-size: 22px;
-    color: var(--moon-text-dim);
-}
-
-.bay-row--selected .bay-row__name {
-    color: var(--moon-text);
-}
-
-.bay-row__recipe {
-    flex-shrink: 0;
-    margin-left: 12px;
-}
-
-.bay-row__effect {
-    margin: 3px 0 0 16px;
-    font-size: 18px;
-    color: var(--moon-text-faint);
-    display: none;
-}
-
-.bay-row--selected .bay-row__effect {
-    color: var(--moon-text-dim);
-    white-space: normal;
-    display: flex;
-}
-
-.tower-panel__pick {
-    margin-top: 0;
-    flex-shrink: 0;
-}
-
-.hold {
-    flex-direction: row;
-    align-items: center;
-}
-
-.hold__ring {
-    width: 48px;
-    height: 48px;
-    justify-content: center;
-    align-items: center;
-    --track-color: var(--moon-track);
-    --fill-color: var(--moon-warm-lamp);
-    --ring-width: 3;
-}
-
-.hold__glyph {
-    font-size: 18px;
-    color: var(--moon-warm-lamp);
-    -unity-text-align: middle-center;
-}
-
-.hold__word {
-    font-size: 22px;
-    margin-left: 12px;
-}
-
-.tower-panel--celebrate .hold__ring {
-    --fill-color: var(--moon-honey);
-}
-
-.tower-panel--celebrate .hold__word {
-    color: var(--moon-honey);
-}
-
-/* While the station works on a purchase nothing can be picked, so the pick hint steps back (its place is kept) */
-
-.tower-panel--celebrate .tower-panel__pick {
-    visibility: hidden;
-}
-
 
 /* Pause menu */
 
@@ -1946,22 +1037,6 @@ Label {
     font-size: 18px;
     color: var(--moon-text-faint);
     margin-top: 4px;
-}
-
-.pause__cassettes {
-    flex-direction: row;
-    align-items: center;
-    margin-top: 12px;
-}
-
-.pause__cassettes-count {
-    margin-left: 9px;
-    font-size: 18px;
-    color: var(--moon-text-dim);
-}
-
-.pause__relays {
-    margin-top: 6px;
 }
 
 .pause__pages {
@@ -2246,34 +1321,6 @@ Label {
     background-color: var(--glass-ring);
 }
 
-/* The crew's lab (M3-19): the HUD steps aside; the lab's place line and its few first-time prompts, low and centred */
-
-.lab-prompts {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    flex-direction: row;
-    justify-content: center;
-}
-
-.lab-arrows {
-    flex-direction: row;
-    align-items: center;
-    margin: 0 6px 0 2px;
-}
-
-.lab-arrow {
-    width: 14px;
-    height: 14px;
-    margin: 0 2px;
-    --arrow-color: var(--glass-hi);
-}
-
-.lab-prompts__chip {
-    margin: 0 10px;
-}
-
 /*
  * The tech board's labels while 07 looks at it (M3-21): the recovery panel's protocol and its four targets, each
  * with its row of lamps (dark CRT track, warm amber when lit), then the pins Kenji's board knows. Framed on a
@@ -2331,40 +1378,6 @@ Label {
 
 .recovery-board__lamp--lit {
     background-color: var(--moon-warm-lamp);
-}
-
-.recovery-board__known {
-    margin-top: 18px;
-    margin-bottom: 4px;
-    font-size: 18px;
-    letter-spacing: 4px;
-    color: var(--moon-text);
-    text-shadow: 0 2px 12px var(--moon-shadow);
-}
-
-.recovery-board__nodes {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.recovery-board__node {
-    margin-right: 14px;
-    font-size: 22px;
-    color: var(--moon-cream);
-    text-shadow: 0 2px 12px var(--moon-shadow);
-}
-
-.recovery-board__node--decoded {
-    color: var(--crt-cyan-dim);
-    opacity: 0.9;
-}
-
-.recovery-board__node--torn {
-    width: 34px;
-    height: 24px;
-    --sheet-color: var(--moon-cream);
-    --sheet-fill: var(--moon-cream-glow);
 }
 
 /*

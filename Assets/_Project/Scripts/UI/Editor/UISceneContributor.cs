@@ -8,8 +8,8 @@ namespace MoonProject.UI.Editor
 {
     /// <summary>
     /// The UI domain's part of Main.unity: under [UI], one GameUI object with the UIDocument (GameUI.uxml on the
-    /// Lunarion PanelSettings) and the <see cref="UISystem"/> (initialised last), wired to the UI tuning, the relic
-    /// catalog and the string tables. Fails loudly when an asset is missing.
+    /// Lunarion PanelSettings) and the <see cref="UISystem"/> (initialised last), wired to the UI tuning and the
+    /// string tables. Fails loudly when an asset is missing.
     /// </summary>
     public sealed class UISceneContributor : ISceneContributor
     {
@@ -21,7 +21,6 @@ namespace MoonProject.UI.Editor
             var panel = context.LoadAsset<PanelSettings>(UiAssetPaths.PanelSettings);
             var facePanel = context.LoadAsset<PanelSettings>(UiAssetPaths.FacePanelSettings);
             var layout = context.LoadAsset<VisualTreeAsset>(UiAssetPaths.Uxml);
-            var catalog = context.LoadAsset<RelicCatalog>(UiAssetPaths.RelicCatalog);
             TextAsset[] tables = StringTableAssets.Load();
             string problem = tuning.Validate();
             if (problem != null)
@@ -39,7 +38,7 @@ namespace MoonProject.UI.Editor
             faceDocument.panelSettings = facePanel;
 
             var system = host.AddComponent<UISystem>();
-            system.Wire(document, tuning, catalog, tables, context.LoadAsset<WordmarkShape>(UiAssetPaths.Wordmark),
+            system.Wire(document, tuning, tables, context.LoadAsset<WordmarkShape>(UiAssetPaths.Wordmark),
                 context.LoadAsset<RoverDiagramData>(UiAssetPaths.RoverDiagram),
                 context.LoadAsset<TextAsset>(UiAssetPaths.Credits), faceDocument);
             var structureIcons = new Texture2D[StructureIds.All.Length];

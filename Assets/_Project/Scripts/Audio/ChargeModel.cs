@@ -9,11 +9,11 @@ namespace MoonProject.Audio
     /// </summary>
     public sealed class ChargeModel
     {
-        private readonly StationAudioTuning _tuning;
+        private readonly FeelAudioTuning _tuning;
         private readonly LoopFader _hum = new LoopFader();
         private bool _fullDue;
 
-        public ChargeModel(StationAudioTuning tuning)
+        public ChargeModel(FeelAudioTuning tuning)
         {
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
         }

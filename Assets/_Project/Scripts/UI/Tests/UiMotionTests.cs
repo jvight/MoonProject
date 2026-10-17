@@ -163,15 +163,6 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual("1234", text.Get(1234), "beyond the cache it still works");
         }
 
-        [Test]
-        public void MemoryCard_ReadingTimeGrowsWithTheText_WithinBounds()
-        {
-            var settings = new MemoryCardSettings();
-            Assert.AreEqual(settings.MinReadSeconds, settings.ReadSeconds(0));
-            Assert.Greater(settings.ReadSeconds(160), settings.ReadSeconds(100));
-            Assert.AreEqual(settings.MaxReadSeconds, settings.ReadSeconds(10000));
-        }
-
         private static float SecondsToCount(PickupFeedSettings settings, int delta)
         {
             var count = new CountUp(settings);

@@ -5,8 +5,8 @@ using UnityEngine.UIElements;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// While 07 stargazes, the ambient HUD (prompts, pips, names, ticker, chips) slowly leaves the sky to the player
-    /// and comes back sooner when the beat ends. Menus that are open (the tower panel, a card, the hop list, the pause
+    /// While 07 stargazes, the ambient HUD (prompts, rings, chips) slowly leaves the sky to the player
+    /// and comes back sooner when the beat ends. Menus that are open (the build menu, a card, the pause
     /// menu) are not among its elements, so they stay. Its opacity multiplies with each element's own fade, and is
     /// written only when it moves.
     /// </summary>

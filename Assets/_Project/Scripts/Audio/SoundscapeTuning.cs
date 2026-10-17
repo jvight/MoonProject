@@ -14,13 +14,13 @@ namespace MoonProject.Audio
         // Keeps ranges non-degenerate if an asset is edited into min >= max.
         private const float MinSpan = 0.01f;
 
-        [Header("Distance: past the radio's signal (measured to the nearest lit relay node)")]
-        [Tooltip("Metres past the edge of the radio's signal (clear radius + falloff around every lit node, so tower " +
-                 "upgrades and masts both push it out) over which the radio, static and all, fades to near-silence.")]
+        [Header("Distance: past the radio's signal (measured from the base)")]
+        [Tooltip("Metres past the edge of the radio's signal (its clear radius + falloff around the base) over which " +
+                 "the radio, static and all, fades to near-silence.")]
         [Range(10f, 1000f)] [SerializeField] private float _silenceWidth = 150f;
 
-        [Tooltip("Seconds (time constant) for the mix to follow the distance when the network changes under 07 " +
-                 "(a mast lights up beside it): it warms in over a few seconds, never snaps.")]
+        [Tooltip("Seconds (time constant) for the mix to follow 07's distance: it warms in over a few seconds, " +
+                 "never snaps.")]
         [Range(0.1f, 10f)] [SerializeField] private float _farnessEase = 1.5f;
 
         [Tooltip("Radio level (music and static) once fully past the signal (dB): near-silence.")]
@@ -36,27 +36,9 @@ namespace MoonProject.Audio
         [Tooltip("Room tone when 07 is fully alone (dB).")]
         [Range(-30f, 0f)] [SerializeField] private float _roomToneFarDb = -2f;
 
-        [Tooltip("Room tone deep in Whispering Canyon (dB, added): the canyon's whisper is its own air there.")]
-        [Range(-30f, 0f)] [SerializeField] private float _roomToneInCanyonDb = -6f;
-
         [Header("07's small sounds (lamp, servos, cooling ticks)")]
         [Tooltip("Their level at home (dB): masked by the radio anyway, they come forward to 0 dB when alone.")]
         [Range(-40f, 0f)] [SerializeField] private float _smallSoundsNearDb = -10f;
-
-        [Header("What counts as alone")]
-        [Tooltip("How much Quiet Hours counts as being alone (0..1): with the radio off, the room tone and 07's own " +
-                 "sounds come forward even at home.")]
-        [Range(0f, 1f)] [SerializeField] private float _quietHoursSolitude = 0.5f;
-
-        [Tooltip("How much being inside Whispering Canyon counts as being alone (0..1).")]
-        [Range(0f, 1f)] [SerializeField] private float _canyonSolitude = 0.8f;
-
-        [Header("Quiet Hours")]
-        [Tooltip("The basin bed swells this much (dB) when the radio leaves the moon to itself.")]
-        [Range(0f, 6f)] [SerializeField] private float _quietHoursBasinDb = 2.6f;
-
-        [Tooltip("Seconds (time constant) for the mix to settle into or out of Quiet Hours.")]
-        [Range(0.1f, 10f)] [SerializeField] private float _quietHoursEase = 3f;
 
         [Header("Stillness (the Rover's IRoverStillness)")]
         [Tooltip("Seconds of stillness before the world starts to pull back (a short stop is not stillness).")]
@@ -68,7 +50,7 @@ namespace MoonProject.Audio
         [Tooltip("Seconds (time constant) for the world to come back once 07 moves again: quick, never a snap.")]
         [Range(0.01f, 3f)] [SerializeField] private float _stillReleaseTime = 0.3f;
 
-        [Tooltip("How far (dB) the world - radio, static, basin and canyon beds - pulls back when 07 is still. The " +
+        [Tooltip("How far (dB) the world - radio, static and the basin bed - pulls back when 07 is still. The " +
                  "room tone and 07's own sounds stay, so the space feels wider.")]
         [Range(-12f, 0f)] [SerializeField] private float _stillDuckDb = -4f;
 
@@ -85,14 +67,14 @@ namespace MoonProject.Audio
         [Tooltip("Seconds to breathe back in when the view is handed back.")]
         [Range(0.1f, 5f)] [SerializeField] private float _wideReleaseTime = 1f;
 
-        [Header("Stargazing: 07 looks up at the sky (the wind and the beds stay)")]
+        [Header("Stargazing: 07 looks up at the sky (the beds stay)")]
         [Tooltip("Seconds for the music to thin out once the stargazing beat begins.")]
         [Range(0.1f, 10f)] [SerializeField] private float _stargazeThinTime = 2.5f;
 
         [Tooltip("Seconds for the music to come back when 07 drives on.")]
         [Range(0.1f, 10f)] [SerializeField] private float _stargazeReturnTime = 1.5f;
 
-        [Tooltip("dB the music drops to while stargazing: a few notes over the wind.")]
+        [Tooltip("dB the music drops to while stargazing: a few notes over the basin's hush.")]
         [Range(-40f, 0f)] [SerializeField] private float _stargazeMusicDb = -12f;
 
         [Tooltip("The music's low-pass while stargazing (Hz): only its soft low notes carry.")]
@@ -176,12 +158,7 @@ namespace MoonProject.Audio
         public float FarBasinDb => _farBasinDb;
         public float RoomToneNearDb => _roomToneNearDb;
         public float RoomToneFarDb => _roomToneFarDb;
-        public float RoomToneInCanyonDb => _roomToneInCanyonDb;
         public float SmallSoundsNearDb => _smallSoundsNearDb;
-        public float QuietHoursSolitude => _quietHoursSolitude;
-        public float CanyonSolitude => _canyonSolitude;
-        public float QuietHoursBasinDb => _quietHoursBasinDb;
-        public float QuietHoursEase => _quietHoursEase;
         public float StillSpeed => _stillSpeed;
         public float StillDelay => _stillDelay;
         public float StillRiseTime => _stillRiseTime;

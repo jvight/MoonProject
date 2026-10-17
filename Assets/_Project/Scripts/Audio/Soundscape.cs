@@ -6,17 +6,12 @@ using MoonProject.Core.Events;
 namespace MoonProject.Audio
 {
     /// <summary>
-    /// The sound of solitude (feel pillar 6, M3-10): one <see cref="SoundscapeModel"/> fed every frame with 07's
-    /// place in the relay network (<see cref="RadioStation.ReachDistance"/>: home and every lit mast keep it close),
-    /// the radio's signal edge and station, Whispering Canyon, 07's stillness (the Rover's
-    /// <see cref="IRoverStillness"/> through <see cref="StillnessTracker"/>, counted once 07 is awake) and the
-    /// camera's wide shot (<see cref="RoverWideShotChanged"/>: the mix breathes out over the frame's opening and back
-    /// in with the hand-back). The radio, the basin bed, the canyon beds and 07's small sounds read their gains here,
-    /// so Quiet Hours, the canyon, distance, stillness and the wide shot make one coherent mix. While 07 stargazes
-    /// (<see cref="StargazingChanged"/>, <see cref="StargazeMix"/>) the music thins to a few notes over the wind and
-    /// the beat begins with a soft airy swell.
-    /// Plays the room tone bed that takes over as everything else recedes. Neutral (all gains 1) until initialised.
-    /// Initialised by <see cref="AudioDirector"/> after the radio and the canyon.
+    /// The soundscape of solitude (feel pillar 6): reads 07's distance from the base against the radio's signal
+    /// edge, 07's stillness (the Rover's <see cref="IRoverStillness"/>) and the camera's wide shot
+    /// (<see cref="RoverWideShotChanged"/>), and turns them into one coherent mix through
+    /// <see cref="SoundscapeModel"/>. The radio, the basin bed and 07's small sounds read their gains here; the room
+    /// tone, the space around 07, is played here. While 07 stargazes (<see cref="StargazingChanged"/>) the music thins
+    /// and a soft swell plays (<see cref="StargazeMix"/>). Initialised by <see cref="AudioDirector"/> after the radio.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class Soundscape : MonoBehaviour
@@ -33,7 +28,6 @@ namespace MoonProject.Audio
         private IRoverState _rover;
         private IRoverStillness _rest;
         private RadioStation _radio;
-        private CanyonAmbience _canyon;
         private StillnessTracker _stillness;
         private SoundscapeModel _model;
         private StargazeMix _stargaze;
@@ -56,8 +50,6 @@ namespace MoonProject.Audio
 
         public float Farness => _model != null ? _model.Farness : 0f;
 
-        public float QuietHours => _model != null ? _model.QuietHours : 0f;
-
         public float RadioGain => _model != null ? _model.RadioGain : 1f;
 
         /// <summary>The music's own gain on top of <see cref="RadioGain"/>: thinned while 07 stargazes.</summary>
@@ -68,26 +60,22 @@ namespace MoonProject.Audio
 
         public float BasinBedGain => _model != null ? _model.BasinBedGain : 1f;
 
-        public float CanyonBedGain => _model != null ? _model.CanyonBedGain : 1f;
-
         public float SmallSoundsGain => _model != null ? _model.SmallSoundsGain : 1f;
 
         internal AudioSource RoomToneSource => _roomTone;
 
-        /// <summary>The radio's low-pass from its open <paramref name="cutoffHz"/> (thinner in the canyon and while
-        /// 07 stargazes).</summary>
+        /// <summary>The radio's low-pass from its open <paramref name="cutoffHz"/> (thinner while 07 stargazes).
+        /// </summary>
         public float RadioCutoff(float cutoffHz)
         {
-            return _model != null ? _stargaze.MusicCutoff(_model.RadioCutoff(cutoffHz)) : cutoffHz;
+            return _stargaze != null ? _stargaze.MusicCutoff(cutoffHz) : cutoffHz;
         }
 
-        internal void Initialize(GameContext context, AudioDirector director, RadioStation radio,
-            CanyonAmbience canyon, float fadeInSeconds)
+        internal void Initialize(GameContext context, AudioDirector director, RadioStation radio, float fadeInSeconds)
         {
-            if (_tuning == null || canyon.Tuning == null)
+            if (_tuning == null)
             {
-                Debug.LogError($"{nameof(Soundscape)}: {nameof(_tuning)} or the canyon's tuning is not assigned.",
-                    this);
+                Debug.LogError($"{nameof(Soundscape)}: {nameof(_tuning)} is not assigned.", this);
                 enabled = false;
                 return;
             }
@@ -102,12 +90,11 @@ namespace MoonProject.Audio
 
             _director = director;
             _radio = radio;
-            _canyon = canyon;
             _fadeInTime = fadeInSeconds;
             _rover = context.Get<IRoverState>();
             _rest = context.Get<IRoverStillness>();
             _stillness = new StillnessTracker(_tuning);
-            _model = new SoundscapeModel(_tuning, canyon.Tuning);
+            _model = new SoundscapeModel(_tuning);
             _stargaze = new StargazeMix(_tuning);
             _roomToneCueVolume = director.Library.GetCue(roomTone).VolumeMax;
             _roomTone = director.CreateLoopSource(transform, "RoomTone", roomTone, 0f);
@@ -134,8 +121,7 @@ namespace MoonProject.Audio
             _wide.Step(dt, _tuning.WideOpenTime, _tuning.WideReleaseTime);
             _stargaze.Step(dt);
             float distance = _radio.ReachDistance(_rover.Position);
-            _model.Step(distance, _radio.SignalEdge, _stillness.Amount, _wide.Gain, _canyon.Inside,
-                _radio.Station == RadioChannel.QuietHours, dt);
+            _model.Step(distance, _radio.SignalEdge, _stillness.Amount, _wide.Gain, dt);
 
             float fade = _fadeIn.Step(1f, dt, _fadeInTime);
             float volume = Mathf.Clamp01(fade * _model.RoomToneGain * _roomToneCueVolume) *
@@ -154,7 +140,7 @@ namespace MoonProject.Audio
 
         private void OnRoverPlaced(RoverPlaced placed)
         {
-            // A radio-hop sets 07 down at full dark: the new place's distance holds at once, not eased in.
+            // A recovery sets 07 down unseen: the new place's distance holds at once, not eased in.
             _model.SettleAt(_radio.ReachDistance(placed.Position), _radio.SignalEdge);
         }
 

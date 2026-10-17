@@ -101,15 +101,9 @@ namespace MoonProject.UI.Tests
         {
             foreach (string key in new[]
                      {
-                         UiKeys.CardCaption, UiKeys.CardClose,
-                         UiKeys.CrewLogCaption, UiKeys.RadioLetterCaption,
-                         UiKeys.ArkBulletinCaption, UiKeys.EndingAnswerCaption,
-                         UiKeys.LinerCaption,
-                         UiKeys.TapeCount, UiKeys.PauseCassettes, UiKeys.PauseRelays,
                          UiKeys.TitleContinueNote, UiKeys.TitleKeyHint,
-                         UiKeys.RecipeRow, UiKeys.RewardTitle, UiKeys.StationOffline,
-                         UiKeys.CrateCaption, UiKeys.CargoWaiting, UiKeys.CargoSummary,
-                          UiKeys.BayFitted, UiKeys.RowFull, UiKeys.HintFit, UiKeys.HintHold,
+                         UiKeys.RecipeRow, UiKeys.CargoWaiting, UiKeys.CargoSummary,
+                          UiKeys.RowFull, UiKeys.HintHold,
                           UiKeys.BuildStripTitle, UiKeys.BuildCostAffordable, UiKeys.BuildCostShort,
                           UiKeys.BuildHintRotate, UiKeys.BuildHintSnap, UiKeys.BuildHintPlace,
                           UiKeys.BuildHintWeld, UiKeys.BuildHintDeconstruct, UiKeys.BuildLocked,
@@ -139,41 +133,10 @@ namespace MoonProject.UI.Tests
                 Assert.IsTrue(_english.TryGet(UiKeys.StructureDescription(id), out _), UiKeys.StructureDescription(id));
             }
 
-            foreach (RadioChannel channel in Enum.GetValues(typeof(RadioChannel)))
-            {
-                Assert.IsTrue(_english.TryGet(UiKeys.RadioChannelName(channel), out _),
-                    UiKeys.RadioChannelName(channel));
-            }
-
-            foreach (string site in new[] { "depot", "kestrel", "drill", "garage", "lander" })
-            {
-                Assert.IsTrue(_english.TryGet(CrewCrateKeys.Note(site), out _), CrewCrateKeys.Note(site));
-            }
-
-            for (int i = 0; i < AbilityTable.Count; i++)
-            {
-                AbilityRow row = AbilityTable.At(i);
-                Assert.IsTrue(_english.TryGet(row.VerbKey, out _), row.VerbKey);
-            }
-
-            foreach (RewardLineKind kind in Enum.GetValues(typeof(RewardLineKind)))
-            {
-                Assert.IsTrue(_english.TryGet(UiKeys.RewardLine(kind), out _), UiKeys.RewardLine(kind));
-            }
-
             for (int i = 0; i < Materials.Count; i++)
             {
                 string key = UiKeys.MaterialName(Materials.At(i));
                 Assert.IsTrue(_english.TryGet(key, out _), key);
-            }
-
-            foreach (UpgradeStationKind station in Enum.GetValues(typeof(UpgradeStationKind)))
-            {
-                Assert.IsTrue(_english.TryGet(UiKeys.StationName(station), out _), UiKeys.StationName(station));
-                if (UiKeys.TryStationLine(station, out string line))
-                {
-                    Assert.IsTrue(_english.TryGet(line, out _), line);
-                }
             }
 
             foreach (RoverKitPiece piece in Enum.GetValues(typeof(RoverKitPiece)))
@@ -191,19 +154,6 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void EveryRelic_HasANameAndAMemory()
-        {
-            var catalog = AssetDatabase.LoadAssetAtPath<RelicCatalog>(UiAssetPaths.RelicCatalog);
-            Assert.IsNotNull(catalog, UiAssetPaths.RelicCatalog);
-            Assert.Greater(catalog.Relics.Count, 0);
-            foreach (RelicDefinition relic in catalog.Relics)
-            {
-                Assert.IsTrue(_english.TryGet(UiKeys.RelicName(relic.Id), out _), UiKeys.RelicName(relic.Id));
-                Assert.IsTrue(_english.TryGet(UiKeys.RelicMemory(relic.Id), out _), UiKeys.RelicMemory(relic.Id));
-            }
-        }
-
-        [Test]
         public void EveryUpgradeLevel_HasATitleAndAnEffect()
         {
             string[] guids = AssetDatabase.FindAssets("t:UpgradeDefinition", new[] { "Assets/_Project/Data/Content" });
@@ -216,8 +166,6 @@ namespace MoonProject.UI.Tests
                 {
                     Assert.IsTrue(_english.TryGet(UiKeys.UpgradeTitle(upgrade.Id, level), out _),
                         UiKeys.UpgradeTitle(upgrade.Id, level));
-                    Assert.IsTrue(_english.TryGet(UiKeys.UpgradeEffect(upgrade.Id, level), out _),
-                        UiKeys.UpgradeEffect(upgrade.Id, level));
                 }
             }
         }

@@ -11,8 +11,6 @@ namespace MoonProject.Audio.PlayModeTests
     /// <summary>Director, rover audio, radio and ambience running for real behind a fake rover.</summary>
     public sealed class AudioRuntimeTests
     {
-        private static readonly int StationCues = StationSounds.TableSize();
-
         private AudioTestRig _rig;
 
         [UnitySetUp]
@@ -21,13 +19,14 @@ namespace MoonProject.Audio.PlayModeTests
             _rig = new AudioTestRig();
             yield return null;
             _rig.Wake(true);
+            _rig.Milestone(OpeningMilestone.PowerOn);
             float deadline = Time.realtimeSinceStartup + 3f;
             while (!_rig.Radio.MusicStarted && Time.realtimeSinceStartup < deadline)
             {
                 yield return null;
             }
 
-            Assert.IsTrue(_rig.Radio.MusicStarted, "the radio finds the music after 07 wakes");
+            Assert.IsTrue(_rig.Radio.MusicStarted, "the radio finds the music once the base has power");
         }
 
         [TearDown]
@@ -63,7 +62,7 @@ namespace MoonProject.Audio.PlayModeTests
         [UnityTest]
         public IEnumerator AudioSettings_ReLevelRingingOneShots_Immediately()
         {
-            _rig.Events.Publish(new RelicSurfaced(Vector3.zero, "relic_test"));
+            _rig.Events.Publish(new BuildCue(BuildCueKind.Snap, Vector3.zero));
             AudioSource voice = _rig.Director.LastVoice;
             float before = voice.volume;
 
@@ -121,20 +120,6 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator SignalRadiusChanged_BringsTheMusicBack()
-        {
-            _rig.Rover.Position = new Vector3(600f, 0f, 0f);
-            yield return new WaitForSecondsRealtime(3f);
-            Assert.Less(_rig.Radio.Clarity, 0.05f);
-
-            _rig.Events.Publish(new SignalRadiusChanged(1000f));
-            Assert.AreEqual(1000f, _rig.Radio.TargetSignalRadius);
-            yield return new WaitForSecondsRealtime(6f);
-
-            Assert.Greater(_rig.Radio.Clarity, 0.95f, "a wider signal radius blooms the music back in");
-        }
-
-        [UnityTest]
         public IEnumerator SteadyState_UpdatesAndEvents_AllocateNothing()
         {
             yield return new WaitForSecondsRealtime(0.2f);
@@ -142,16 +127,17 @@ namespace MoonProject.Audio.PlayModeTests
             {
                 AudioTestRig.UpdateOf(_rig.Director), AudioTestRig.UpdateOf(_rig.RoverAudio),
                 AudioTestRig.UpdateOf(_rig.Gameplay), AudioTestRig.UpdateOf(_rig.Ui), AudioTestRig.UpdateOf(_rig.Radio),
-                AudioTestRig.UpdateOf(_rig.TitleMusic), AudioTestRig.UpdateOf(_rig.Friends),
-                AudioTestRig.UpdateOf(_rig.Jump),
-                AudioTestRig.UpdateOf(_rig.Ambience), AudioTestRig.UpdateOf(_rig.Canyon),
-                AudioTestRig.UpdateOf(_rig.Soundscape), AudioTestRig.UpdateOf(_rig.SmallSounds),
-                AudioTestRig.UpdateOf(_rig.Relays), AudioTestRig.UpdateOf(_rig.Salvage),
-                AudioTestRig.UpdateOf(_rig.Stations),
+                AudioTestRig.UpdateOf(_rig.TitleMusic), AudioTestRig.UpdateOf(_rig.Jump),
+                AudioTestRig.UpdateOf(_rig.Ambience), AudioTestRig.UpdateOf(_rig.Soundscape),
+                AudioTestRig.UpdateOf(_rig.SmallSounds), AudioTestRig.UpdateOf(_rig.Salvage),
+                AudioTestRig.UpdateOf(_rig.Feel),
             };
 
-            _rig.Program.Own(AudioTestRig.TapeA);
-            _rig.Program.SelectedTape = AudioTestRig.TapeA;
+            for (int i = 0; i < 6; i++)
+            {
+                _rig.Events.Publish(new StructureBuilt(i, "solar_array", Vector3.right * (4f * i), 0f, true));
+            }
+
             RunFrames(updates, 60);
             long before = GC.GetAllocatedBytesForCurrentThread();
             RunFrames(updates, 300);
@@ -176,21 +162,11 @@ namespace MoonProject.Audio.PlayModeTests
                 _rig.Rover.StillSeconds = driving ? 0f : (frame % 60 - 40) * 0.5f;
                 _rig.Rover.DriveInput = driving ? new Vector2(Mathf.Sin(t * 4f), 1f) : Vector2.zero;
                 _rig.Rover.TetherOrigin.localRotation = Quaternion.Euler(0f, 60f * Mathf.Sin(t * 2f), 0f);
-                _rig.Bay.GetArmJoint(frame % FakeRoverBay.Arms, RoverBayJoint.Upper).localRotation =
-                    Quaternion.Euler(40f * Mathf.Sin(t * 3f), 0f, 0f);
-                _rig.Bay.Turntable.localRotation = Quaternion.Euler(0f, frame % 60 < 30 ? t * 20f : 0f, 0f);
                 _rig.Rover.IsGrounded = frame % 40 < 30;
                 _rig.Rover.AirTime = frame % 40 < 30 ? 0f : (frame % 40 - 30) * 0.1f;
                 _rig.Rover.Velocity = new Vector3(6f * Mathf.Sin(t), 2f, 0f);
                 _rig.Rover.GroundNormal = Quaternion.Euler(frame % 20 == 0 ? 12f : 0f, 0f, 0f) * Vector3.up;
-                _rig.Rover.Tilly.Position = new Vector3(3f * Mathf.Cos(t), 3f, 3f * Mathf.Sin(t));
-                _rig.Rover.Tilly.Activity = (FriendActivity)(frame / 50 % 6);
-                _rig.Rover.Tilly.RotorSpeed = frame / 50 % 6 >= 2 ? 0.5f + 0.5f * Mathf.Sin(t) : 0f;
-                _rig.Rover.Tilly.RepairProgress = Mathf.Repeat(t * 0.2f, 1f);
-                _rig.Rover.Bell.Position = new Vector3(-6f + 2f * Mathf.Sin(t), 0f, 4f);
-                _rig.Rover.Bell.Activity = (FriendActivity)(frame / 40 % 6);
-                _rig.Rover.Bell.RotorSpeed = frame / 40 % 6 >= 2 ? 0.4f : 0f;
-                PublishSome(events, settings, _rig.Program, frame);
+                PublishSome(events, settings, frame);
                 for (int i = 0; i < updates.Length; i++)
                 {
                     updates[i]();
@@ -198,7 +174,7 @@ namespace MoonProject.Audio.PlayModeTests
             }
         }
 
-        private static void PublishSome(EventBus events, IAudioSettings settings, FakeRadioProgram program, int frame)
+        private static void PublishSome(EventBus events, IAudioSettings settings, int frame)
         {
             switch (frame % 12)
             {
@@ -206,7 +182,6 @@ namespace MoonProject.Audio.PlayModeTests
                     var material = (SalvageMaterial)(frame / 12 % 3);
                     events.Publish(new SalvageCutStarted(Vector3.one, material));
                     events.Publish(new MaterialSalvaged(material, 2, Vector3.one, "site.depot", frame / 12 % 9));
-                    events.Publish(new SiteAnswered("site.drill", Vector3.forward * 60f, 60f, frame % 24 == 0));
                     break;
                 case 1:
                     events.Publish(new UiCue(frame % 24 == 1 ? UiCueKind.FocusMove : UiCueKind.SliderStep));
@@ -217,22 +192,12 @@ namespace MoonProject.Audio.PlayModeTests
 
                     break;
                 case 2:
-                    events.Publish(new SonarPinged(Vector3.zero, 80f));
-                    events.Publish(new FriendAnswered("tilly", Vector3.one));
-                    events.Publish(new FriendSpotted("tilly", Vector3.forward));
-                    events.Publish(new FriendPartCollected("tilly", 0, frame % 36 == 2 ? 3 : 1, 3));
-                    events.Publish(new FriendGreeted("tilly"));
-                    events.Publish(new BellCued((BellCue)(frame / 12 % 5), Vector3.one));
-                    if (frame % 48 == 2)
-                    {
-                        events.Publish(new FriendRepaired("bell"));
-                        events.Publish(new FriendGreeted("bell"));
-                    }
-
+                    events.Publish(new BuildCue((BuildCueKind)(frame / 12 % 4), Vector3.forward * 6f));
+                    events.Publish(new BuildWeldStateChanged(frame % 24 == 2, Vector3.forward * 6f, 0.5f));
                     break;
                 case 3:
-                    string relic = frame % 24 == 3 ? "teapot" : "rubber_duck";
-                    events.Publish(new RelicAnswered(Vector3.forward * 40f, 40f, relic));
+                    events.Publish(new StructurePowerChanged(frame / 12 % 6, "solar_array", Vector3.right * 4f,
+                        frame % 24 == 3 ? 1f : 0f, false));
                     break;
                 case 4:
                     if (frame % 48 == 4)
@@ -248,45 +213,26 @@ namespace MoonProject.Audio.PlayModeTests
 
                     break;
                 case 5:
-                    events.Publish(new TetherAttached(Vector3.right, 5f));
-                    if (frame % 36 == 5)
-                    {
-                        program.DialUnlocked = frame >= 36;
-                        program.Channel = (RadioChannel)(frame / 36 % 3);
-                        events.Publish(new RadioProgramChanged());
-                    }
-
+                    events.Publish(new SkyPhaseChanged((SkyPhase)(frame / 12 % 5), 0f));
                     break;
                 case 6:
                     events.Publish(new UiCue(frame % 24 == 6 ? UiCueKind.HoldFill : UiCueKind.HoldRelease));
-                    events.Publish(new RelayCued((RelayCue)(frame / 12 % 5), "relay.0", Vector3.right * 90f));
                     if (frame % 48 == 6)
                     {
-                        events.Publish(new RelayRestored("relay.0", Vector3.right * 90f, 1, 4, "home", 2f));
-                        events.Publish(new RadioHopStarted("home", "relay.0"));
                         events.Publish(new RoverPlaced(Vector3.right * 90f, Quaternion.identity));
-                        events.Publish(new RadioHopFinished("relay.0"));
                     }
 
                     break;
                 case 7:
-                    events.Publish(new ExcavationStarted(Vector3.left));
-                    events.Publish(new CassetteCollected("slow_orbit", Vector3.up, 1, 3));
-                    events.Publish(new CrewLogFound("ro_1", Vector3.right));
-                    events.Publish(new BellSignalPicked(BellSignalTarget.Relic, Vector3.forward * 200f));
-                    events.Publish(new BellSignalFound(BellSignalTarget.Cassette, Vector3.back));
+                    events.Publish(new ChargingChanged(frame % 24 == 7, ChargerKind.Dock, Vector3.back * 3f));
+                    events.Publish(new BatteryChanged(frame / 12 % 5, 4, true, false));
                     break;
                 case 8:
                     events.Publish(new UiCue(frame % 24 == 8 ? UiCueKind.CardShown : UiCueKind.PromptShown));
-                    events.Publish(new StationCued((StationCue)(frame / 12 % StationCues), "radio_tower",
-                        Vector3.right * 4f));
-                    events.Publish(new StationCued(StationCue.BundleDropped, "rover.hover_jump", Vector3.left * 4f));
                     if (frame % 48 == 8)
                     {
                         events.Publish(new PartFitted(RoverSocket.Belly, RoverKitPiece.HoverCoils, false, false,
                             default, 0));
-                        events.Publish(new RoverDockChanged(frame % 96 == 8, Vector3.back * 6f, Quaternion.identity));
-                        events.Publish(new BellCued(BellCue.DialTapped, Vector3.left));
                     }
 
                     break;
@@ -294,18 +240,13 @@ namespace MoonProject.Audio.PlayModeTests
                     events.Publish(new PauseChanged(frame % 24 == 10));
                     events.Publish(new RoverWideShotChanged(frame % 36 == 10));
                     events.Publish(new StargazingChanged(frame % 48 < 24));
-                    events.Publish(new StationNotYet("notyet.bay", Vector3.forward * 30f, 30f));
-                    events.Publish(new LiftCued((LiftCue)(frame / 12 % 3), Vector3.up * 5f));
-                    events.Publish(new BasePowerChanged((BasePowerStage)(frame / 12 % 4), frame % 24 == 10));
                     break;
                 case 9:
-                    events.Publish(new TetherReleased(Vector3.right, frame % 24 == 9));
-                    events.Publish(new ExcavationStopped(Vector3.left, true));
+                    events.Publish(new OpeningMilestoneReached((OpeningMilestone)(frame / 12 % 3), frame % 24 == 9));
                     break;
                 case 11:
                     events.Publish(new RoverJumped(frame % 24 == 11 ? 1f : 0.2f));
                     events.Publish(new RoverLanded(Vector3.zero, 2.5f, 1f));
-                    events.Publish(new UpgradePurchased(frame % 24 == 11 ? "rover.hover_jump" : "radio_tower", 1));
                     settings.SetVolume(AudioBus.Sfx, frame % 24 == 11 ? 0.9f : 1f);
                     break;
             }

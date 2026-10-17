@@ -12,17 +12,7 @@ namespace MoonProject.UI
     /// </summary>
     internal static class UiKeys
     {
-        public const string CardCaption = "ui.card.caption";
-        public const string CardClose = "ui.card.close";
-        public const string BayFitted = "ui.bay.fitted";
-        public const string CrewLogCaption = "ui.card.crew_log";
-        public const string RadioLetterCaption = "ui.card.radio_letter";
-        public const string ArkBulletinCaption = "ui.card.ark_bulletin";
-        public const string EndingAnswerCaption = "ui.card.ending_answer";
-        public const string LinerCaption = "ui.card.liner_caption";
-        public const string TapeCount = "ui.card.tape_count";
-        public const string PauseCassettes = "ui.pause.cassettes";
-        public const string PauseRelays = "ui.pause.relays";
+        public const string BlueprintLearned = "ui.unlock.blueprint";
         public const string PauseResume = "ui.pause.resume";
         public const string PauseSettings = "ui.pause.settings";
         public const string PauseQuit = "ui.pause.quit";
@@ -34,19 +24,13 @@ namespace MoonProject.UI
         public const string CreditsVersion = "ui.credits.version";
         public const string TitleSettings = "ui.title.settings";
         public const string TitleQuit = "ui.title.quit";
-        public const string JourneyPutAway = "ui.journey.put_away";
         public const string LookUp = "ui.hint.look_up";
         public const string Drive = "ui.hint.drive";
         public const string HintHold = "hint.hold";
-        public const string HintFit = "hint.fit";
         public const string RowFull = "ui.bay.row_full";
-        public const string NotYetTower = "notyet.tower";
         public const string HoldBoot = "ui.hold.boot";
-        public const string HintScan = "hint.scan";
         public const string ScanFragment = "scan.fragment";
         public const string ScanKnown = "scan.known";
-        public const string ScanComplete = "scan.complete";
-        public const string ScanSiteCount = "scan.site_count";
         public const string HintShelves = "hint.shelves";
         public const string TransferToTrip = "ui.transfer.to_trip";
         public const string TransferToHome = "ui.transfer.to_home";
@@ -54,7 +38,6 @@ namespace MoonProject.UI
         /// <summary>Art's prefix on a component's model name (Part_TowerCoil), left out of its keys.</summary>
         private const string ComponentModelPrefix = "Part_";
         public const string RecipeRow = "ui.recipe.row";
-        public const string RewardTitle = "ui.reward.title";
         public const string CargoHold = "ui.cargo.hold";
         public const string CargoTabSeven = "ui.cargo.tab_seven";
         public const string CargoWaiting = "ui.cargo.waiting";
@@ -62,8 +45,6 @@ namespace MoonProject.UI
         public const string CargoFitAtBay = "ui.cargo.fit_at_bay";
         public const string TillyCellJob = "pickup.tilly.cell.job";
         public const string BellValveJob = "pickup.bell.valve.job";
-        public const string CrateCaption = "ui.crate.caption";
-        public const string StationOffline = "ui.station.offline";
         public const string BuildStripTitle = "build.strip.title";
         public const string BuildCostAffordable = "build.cost.affordable";
         public const string BuildCostShort = "build.cost.short";
@@ -106,96 +87,6 @@ namespace MoonProject.UI
         public static string Hint(InteractionKind kind)
         {
             return "hint." + kind.ToString().ToLowerInvariant();
-        }
-
-        public static string RelicName(string relicId)
-        {
-            return "relic." + relicId + ".name";
-        }
-
-        public static string RelicMemory(string relicId)
-        {
-            return "relic." + relicId + ".memory";
-        }
-
-        public static string FriendName(string friendId)
-        {
-            return "friend." + friendId + ".name";
-        }
-
-        /// <summary>"log.ro_1": a crew log's text.</summary>
-        public static string CrewLog(string logId)
-        {
-            return "log." + logId;
-        }
-
-        public static string CassetteTitle(string cassetteId)
-        {
-            return "cassette." + cassetteId + ".title";
-        }
-
-        /// <summary>"cassette.after_dark_1.note": Ro's liner note for a tape.</summary>
-        public static string CassetteNote(string cassetteId)
-        {
-            return "cassette." + cassetteId + ".note";
-        }
-
-        /// <summary>"radio.channel.tape_deck": the name of a station on Bell's dial.</summary>
-        public static string RadioChannelName(RadioChannel channel)
-        {
-            switch (channel)
-            {
-                case RadioChannel.LumenAfterDark:
-                    return "radio.channel.lumen_after_dark";
-                case RadioChannel.TapeDeck:
-                    return "radio.channel.tape_deck";
-                case RadioChannel.QuietHours:
-                    return "radio.channel.quiet_hours";
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(channel), channel, "This station has no name key.");
-            }
-        }
-
-        /// <summary>"ui.station.workshop": the name of the place an upgrade is sold.</summary>
-        /// <summary>"ui.reward.light_on": the words of one line of the tower's reward card.</summary>
-        public static string RewardLine(RewardLineKind kind)
-        {
-            switch (kind)
-            {
-                case RewardLineKind.LightOn:
-                    return "ui.reward.light_on";
-                case RewardLineKind.LightUp:
-                    return "ui.reward.light_up";
-                case RewardLineKind.RadioOn:
-                    return "ui.reward.radio_on";
-                case RewardLineKind.Reach:
-                    return "ui.reward.reach";
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(kind), kind, "This reward line has no key.");
-            }
-        }
-
-        public static string StationName(UpgradeStationKind station)
-        {
-            switch (station)
-            {
-                case UpgradeStationKind.RadioTower:
-                    return "ui.station.radio_tower";
-                case UpgradeStationKind.Workshop:
-                    return "ui.station.workshop";
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(station), station, "This station has no name key.");
-            }
-        }
-
-        /// <summary>
-        /// The quiet line a station says once its work on a purchase shows: the Rover Bay's "ui.bay.fitted" as it sets
-        /// the piece on 07. The radio tower says nothing (the world shows the stitch, then the reward card).
-        /// </summary>
-        public static bool TryStationLine(UpgradeStationKind station, out string key)
-        {
-            key = station == UpgradeStationKind.Workshop ? BayFitted : null;
-            return key != null;
         }
 
         /// <summary>"material.wiring": a material's name (salvage, lunar or refined; docs/features/M3-27).</summary>
@@ -260,22 +151,6 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>"site.kestrel.name" for the site anchored as "site.kestrel".</summary>
-        public static string SiteName(string siteId)
-        {
-            return siteId + ".name";
-        }
-
-        /// <summary>
-        /// "map.site.depot.name" for a crew-map place ("site.*" and "canyon.lip"), "micro.06.name" for a micro-site.
-        /// </summary>
-        public static string ScanPlaceName(string placeId)
-        {
-            return placeId != null && placeId.StartsWith("micro.", StringComparison.Ordinal)
-                ? placeId + ".name"
-                : "map." + placeId + ".name";
-        }
-
         /// <summary>"ui.display.mode.borderless": how the window sits on the screen, in words.</summary>
         public static string DisplayModeName(DisplayMode mode)
         {
@@ -295,12 +170,6 @@ namespace MoonProject.UI
             return "upgrade." + upgradeId + ".name";
         }
 
-        /// <summary>"pickup.part_towercoil": the name of pickup or story part <paramref name="partId"/>.</summary>
-        public static string PickupName(string partId)
-        {
-            return "pickup." + partId.ToLowerInvariant();
-        }
-
         /// <summary>
         /// "upgrade.radio_tower.2.title": the name of level <paramref name="level"/> (1 = the first bought).
         /// </summary>
@@ -309,10 +178,10 @@ namespace MoonProject.UI
             return "upgrade." + upgradeId + "." + level + ".title";
         }
 
-        /// <summary>"upgrade.radio_tower.2.effect": what level <paramref name="level"/> does, in plain words.</summary>
-        public static string UpgradeEffect(string upgradeId, int level)
+        /// <summary>"pickup.part_towercoil": the name of pickup or story part <paramref name="partId"/>.</summary>
+        public static string PickupName(string partId)
         {
-            return "upgrade." + upgradeId + "." + level + ".effect";
+            return "pickup." + partId.ToLowerInvariant();
         }
 
         /// <summary>
@@ -337,22 +206,6 @@ namespace MoonProject.UI
             }
 
             return key.Append(".needed").ToString();
-        }
-
-        /// <summary>
-        /// The ticker's quiet line as a recovery target's row completes (M3-21 §2); Power has none, its reward card
-        /// says it.
-        /// </summary>
-        public static string RecoveryComplete(RecoveryTarget target)
-        {
-            switch (target)
-            {
-                case RecoveryTarget.Power:
-                    throw new ArgumentOutOfRangeException(nameof(target), target, "Power has no ticker line.");
-                case RecoveryTarget.Link: return "ticker.recovery.link";
-                case RecoveryTarget.Dish: return "ticker.recovery.dish";
-                default: return "ticker.recovery.answer";
-            }
         }
 
         public static string StructureName(string structureId)

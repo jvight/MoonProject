@@ -1,0 +1,28 @@
+{
+  "model": "kestrel_strut_frame",
+  "nodes": {
+    "Kestrel_StrutFrame": { "pivot": [0.0, 0.0, 0.0], "tolerance": 0.01 },
+    "CutPoint": { "pivot": [0.02, 0.0, 0.74], "tolerance": 0.02 }
+  },
+  "slots": [
+    "R1_Basalt",
+    "R1_GreyMetal",
+    "R1_BareSteel",
+    "R1_CreamEnamel",
+    "R1_OrangeStripe",
+    "R1_Copper",
+    "R1_Brass",
+    "R1_Rubber"
+  ],
+  "require_vertex_colors": true,
+  "max_triangles": 3200,
+  "max_meshes": 1,
+  "max_draw_calls": 8,
+  "allow_boundary_edges": false,
+  "bounds": {
+    "size": [2.45, 1.60, 1.25],
+    "tolerance": 0.04,
+    "min_size": [0.80, 0.80, 0.80],
+    "max_size": [4.00, 4.00, 4.00]
+  }
+}

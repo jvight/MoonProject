@@ -142,6 +142,7 @@ namespace MoonProject.UI
         private int _lastPointerDownFrame = -1;
         private int _lastPointerUpFrame = -1;
         private int _lastNavigationFrame = -1;
+        private readonly InputHandoff _handoff = new InputHandoff();
         private int _lastSubmitFrame = -1;
 
         private string _transientToastKey;
@@ -404,6 +405,7 @@ namespace MoonProject.UI
             _focusedSocketIndex = -1;
             _focusedHomeCell = -1;
             _userInteractedDuringBoot = false;
+            _handoff.Reset();
         }
 
         public void Tick(float deltaTime)
@@ -805,6 +807,7 @@ namespace MoonProject.UI
             }
 
             _lastPointerDownFrame = Time.frameCount;
+            _handoff.NoteMouse();
             HandlePointerDownAtReferencePos(PanelToReference(panelPos));
         }
 
@@ -814,6 +817,7 @@ namespace MoonProject.UI
         /// </summary>
         public void PointerMoveAtPanel(Vector2 panelPos)
         {
+            _handoff.NoteMouse();
             HandlePointerMoveAtReferencePos(PanelToReference(panelPos));
         }
 
@@ -845,6 +849,7 @@ namespace MoonProject.UI
 
             EnsureInteractiveDuringBoot();
             _lastNavigationFrame = Time.frameCount;
+            _handoff.NoteNavigation();
             if (_focusedHoldCell >= 0 && _focusedHoldCell < _unlockedHoldCount)
             {
                 NavigateFromHoldCell(_focusedHoldCell, direction);
@@ -1010,7 +1015,7 @@ namespace MoonProject.UI
                 cell.Add(badge);
 
                 cell.RegisterCallback<FocusInEvent>(_ => OnHomeCellFocus(index));
-                cell.RegisterCallback<PointerEnterEvent>(_ => OnHomeCellFocus(index));
+                cell.RegisterCallback<PointerEnterEvent>(_ => OnHomeCellHover(index));
                 cell.RegisterCallback<PointerDownEvent>(evt =>
                 {
                     if (evt.button == 0 && _lastPointerDownFrame != Time.frameCount)
@@ -1050,7 +1055,7 @@ namespace MoonProject.UI
 
         private void OnHoldCellHover(int index)
         {
-            if (_isDraggingKit || index >= _unlockedHoldCount)
+            if (_isDraggingKit || index >= _unlockedHoldCount || !_handoff.HoverMaySelect)
             {
                 return;
             }
@@ -1074,6 +1079,11 @@ namespace MoonProject.UI
 
         private void OnSocketHover(int orbitalIdx)
         {
+            if (!_isDraggingKit && !_handoff.HoverMaySelect)
+            {
+                return;
+            }
+
             EnsureInteractiveDuringBoot();
             if (_isDraggingKit)
             {
@@ -1088,6 +1098,14 @@ namespace MoonProject.UI
 
             UpdateTooltip();
             _canvas.MarkDirtyRepaint();
+        }
+
+        private void OnHomeCellHover(int index)
+        {
+            if (_handoff.HoverMaySelect)
+            {
+                OnHomeCellFocus(index);
+            }
         }
 
         private void OnHomeCellFocus(int index)
@@ -1191,7 +1209,7 @@ namespace MoonProject.UI
                 if (homeIdx >= 0)
                 {
                     EnsureInteractiveDuringBoot();
-                    OnHomeCellFocus(homeIdx);
+                    OnHomeCellHover(homeIdx);
                     OnHomeCellSubmit(homeIdx);
                 }
             }
@@ -1499,6 +1517,7 @@ namespace MoonProject.UI
 
             EnsureInteractiveDuringBoot();
             _lastNavigationFrame = Time.frameCount;
+            _handoff.NoteNavigation();
             NavigateFromHoldCell(index, evt.direction);
         }
 
@@ -1513,6 +1532,7 @@ namespace MoonProject.UI
 
             EnsureInteractiveDuringBoot();
             _lastNavigationFrame = Time.frameCount;
+            _handoff.NoteNavigation();
             NavigateFromSocket(orbitalIdx, evt.direction);
         }
 
@@ -1527,6 +1547,7 @@ namespace MoonProject.UI
 
             EnsureInteractiveDuringBoot();
             _lastNavigationFrame = Time.frameCount;
+            _handoff.NoteNavigation();
             NavigateFromHomeCell(index, evt.direction);
         }
 
