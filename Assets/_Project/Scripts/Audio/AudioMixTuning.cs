@@ -83,6 +83,10 @@ namespace MoonProject.Audio
         [Tooltip("Seconds for the three sky-phase ambience beds (earthlit night, sunlit day, eclipse) to crossfade.")]
         [Range(4f, 8f)] [SerializeField] private float _ambienceCrossfade = 6f;
 
+        [Header("Title music")]
+        [Tooltip("Assets/_Project/Data/Audio/TitleMusicLibrary.asset (variants, selected variant, fade-in/out).")]
+        [SerializeField] private TitleMusicLibrary _titleMusic;
+
         public float MasterVolume => _masterVolume;
         public float MusicVolume => _musicVolume;
         public float SfxVolume => _sfxVolume;
@@ -105,5 +109,6 @@ namespace MoonProject.Audio
         public float PauseDuckTime => _pauseDuckTime;
         public float ResumeTime => _resumeTime;
         public float PausedWorldGain => _pausedWorldGain;
+        public TitleMusicLibrary TitleMusic => _titleMusic;
     }
 }

@@ -81,6 +81,9 @@ namespace MoonProject.Audio.PlayModeTests
             Friends = Child(audioRoot, "FriendAudio").AddComponent<FriendAudio>();
             Jump = Child(audioRoot, "JumpAudio").AddComponent<JumpAudio>();
             Radio = Child(audioRoot, "RadioStation").AddComponent<RadioStation>();
+            TitleMusicLibrary = Track(Object.Instantiate(Load<TitleMusicLibrary>("TitleMusicLibrary.asset")));
+            TitleMusic = Child(audioRoot, "TitleMusic").AddComponent<TitleMusic>();
+            TitleMusic.Wire(TitleMusicLibrary);
             Voice = Child(audioRoot, "RadioVoice").AddComponent<RadioVoice>();
             var voices = Track(ScriptableObject.CreateInstance<VoiceLibrary>());
             voices.Populate(new[]
@@ -119,6 +122,7 @@ namespace MoonProject.Audio.PlayModeTests
             Director.Wire(Load<AudioLibrary>("AudioLibrary.asset"), Load<AudioMixTuning>("AudioMixTuning.asset"),
                 RoverAudio, Jump, Gameplay, Friends, Ui, Radio, Ambience, Canyon, Soundscape, SmallSounds, Relays,
                 Salvage, Stations, Lab);
+            Director.WireTitleMusic(TitleMusic);
             Director.WireBattery(Battery);
             Director.WireVoice(Voice);
             Director.WireFeel(Feel, Chirps);
@@ -144,6 +148,10 @@ namespace MoonProject.Audio.PlayModeTests
         public BatteryAudio Battery { get; }
 
         public RadioStation Radio { get; }
+
+        public TitleMusic TitleMusic { get; }
+
+        public TitleMusicLibrary TitleMusicLibrary { get; }
 
         public RadioVoice Voice { get; }
 
@@ -189,6 +197,15 @@ namespace MoonProject.Audio.PlayModeTests
         public void Wake(bool byPlayer)
         {
             Events.Publish(new RoverAwoke(Rover.Position, byPlayer));
+        }
+
+        /// <summary>Creates and initialises <see cref="WakeAudio"/> under the rig's audio root.</summary>
+        public WakeAudio CreateWakeAudio()
+        {
+            var wake = Child(Director.transform.parent.gameObject, "WakeAudio").AddComponent<WakeAudio>();
+            wake.Wire(Director, Load<RoverAudioTuning>("RoverAudioTuning.asset"));
+            wake.Initialize(Bootstrap.Context);
+            return wake;
         }
 
         /// <summary>True if a director voice whose clip name starts with <paramref name="clipPrefix"/> is

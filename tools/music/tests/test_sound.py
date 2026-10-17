@@ -39,12 +39,14 @@ class InstrumentTests(unittest.TestCase):
         for pitch in (52, 65, 76, 88):
             self._assert_clean_note(instruments.vibes_note(pitch, 0.8, 0.6, gen), f"vibes {pitch}")
             self._assert_clean_note(instruments.felt_note(pitch, 0.8, 0.9, gen), f"felt {pitch}")
+            self._assert_clean_note(instruments.celesta_note(pitch, 0.8, 0.9, gen), f"celesta {pitch}")
 
     def test_leads_have_no_harsh_top(self):
         gen = rng("test", "top")
         for note in (instruments.kalimba_note(86, 1.0, gen), instruments.musicbox_note(90, 1.0, gen),
                      instruments.flute_note(83, 1.0, 1.0, gen), instruments.rhodes_note(76, 1.0, 1.0, gen),
-                     instruments.vibes_note(88, 1.0, 1.0, gen), instruments.felt_note(88, 1.0, 1.0, gen)):
+                     instruments.vibes_note(88, 1.0, 1.0, gen), instruments.felt_note(88, 1.0, 1.0, gen),
+                     instruments.celesta_note(86, 1.0, 1.0, gen)):
             spectrum = np.abs(np.fft.rfft(note)) ** 2
             freqs = np.fft.rfftfreq(note.shape[0], 1.0 / SAMPLE_RATE)
             share = spectrum[freqs >= 8000.0].sum() / spectrum.sum()
@@ -125,7 +127,7 @@ class TextureAndMixTests(unittest.TestCase):
 
     def test_beds_loop_seamlessly(self):
         n = int(3.0 * SAMPLE_RATE)
-        for name in ("vinyl", "cassette", "airlock"):
+        for name in ("vinyl", "cassette", "airlock", "old_radio"):
             bed = texture.bed(name, n, rng("test", "bed", name), True)
             self.assertEqual(bed.shape, (n, 2))
             ratio, _ = seam_stats(bed)
@@ -138,6 +140,9 @@ class TextureAndMixTests(unittest.TestCase):
         room = texture.airlock_room(x)
         self.assertEqual(room.shape, x.shape)
         self.assertTrue(np.all(np.isfinite(room)))
+        bench = texture.old_radio_bench(x)
+        self.assertEqual(bench.shape, x.shape)
+        self.assertTrue(np.all(np.isfinite(bench)))
 
     def test_a_loop_renders_exactly_one_seamless_cycle(self):
         spec = TrackSpec(number=99, slug="test_loop", title="Test Loop", seed=99, bpm=84.0, swing=0.6,

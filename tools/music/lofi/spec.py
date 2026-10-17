@@ -10,10 +10,13 @@ DRUM_LEVELS = ("off", "sparse", "light", "full")
 KEYS_MODES = ("comp", "stabs", "arp", "rock", "off")
 BASS_MODES = ("off", "hold", "groove", "walk")
 ENDINGS = ("fade", "tapestop", "loop")
-KEYS_VOICES = ("rhodes", "felt")
-TEXTURES = ("vinyl", "cassette", "airlock")
+KEYS_VOICES = ("rhodes", "felt", "celesta")
+TEXTURES = ("vinyl", "cassette", "airlock", "old_radio")
 STATION_BPM = (68.0, 84.0)
 TAPE_BPM = (60.0, 90.0)
+TITLE_BPM = (60.0, 72.0)
+DEFAULT_TARGET_LUFS = -16.0
+TITLE_TARGET_LUFS = -20.0
 
 
 @dataclass(frozen=True)
@@ -97,6 +100,8 @@ class TrackSpec:
     mood: Mood = field(default_factory=Mood)
     ending: str = "fade"
     tape: bool = False
+    title_theme: bool = False
+    target_lufs: float = DEFAULT_TARGET_LUFS
     keys_voice: str = "rhodes"
     themes: tuple = ()
     events: tuple = ()
@@ -104,7 +109,7 @@ class TrackSpec:
 
     @property
     def id(self):
-        return self.slug if self.tape else f"{self.number:02d}_{self.slug}"
+        return self.slug if (self.tape or self.title_theme) else f"{self.number:02d}_{self.slug}"
 
     @property
     def bars(self):
@@ -115,7 +120,7 @@ class TrackSpec:
         return self.bars * BEATS_PER_BAR
 
     def validate(self):
-        low, high = TAPE_BPM if self.tape else STATION_BPM
+        low, high = TITLE_BPM if self.title_theme else (TAPE_BPM if self.tape else STATION_BPM)
         if not low <= self.bpm <= high:
             raise ValueError(f"{self.id}: {self.bpm} BPM is outside the {low:.0f}-{high:.0f} range")
         if not 0.5 <= self.swing <= 0.66:
@@ -130,6 +135,9 @@ class TrackSpec:
             raise ValueError(f"{self.id}: the pad orbit ({self.mood.orbit_bars} bars) must divide {self.bars} bars")
         if self.ending == "loop" and self.form[-1].opening[1] != self.form[0].opening[0]:
             raise ValueError(f"{self.id}: a loop must end as open as it starts (no jump in brightness at the seam)")
+        if self.title_theme:
+            if any(section.drums != "off" for section in self.form) or self.events:
+                raise ValueError(f"{self.id}: title themes must have no drums and no lofi beat")
         for beat, _, _ in self.events:
             if not 0.0 <= beat < self.music_beats:
                 raise ValueError(f"{self.id}: event at beat {beat} is outside the music")

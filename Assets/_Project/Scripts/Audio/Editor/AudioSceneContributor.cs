@@ -21,6 +21,7 @@ namespace MoonProject.Audio.Editor
             var library = context.LoadAsset<AudioLibrary>(AudioAssetPaths.Library);
             var playlist = context.LoadAsset<RadioPlaylist>(AudioAssetPaths.Playlist);
             var tapes = context.LoadAsset<RadioTapeLibrary>(AudioAssetPaths.Tapes);
+            var titleMusicLibrary = context.LoadAsset<TitleMusicLibrary>(AudioAssetPaths.TitleMusic);
             var mixTuning = context.LoadAsset<AudioMixTuning>(AudioAssetPaths.MixTuning);
             var roverTuning = context.LoadAsset<RoverAudioTuning>(AudioAssetPaths.RoverTuning);
             var radioTuning = context.LoadAsset<RadioTuning>(AudioAssetPaths.RadioTuning);
@@ -42,6 +43,7 @@ namespace MoonProject.Audio.Editor
             var friends = context.CreateChild("FriendAudio", root).AddComponent<FriendAudio>();
             var ui = context.CreateChild("UiAudio", root).AddComponent<UiAudio>();
             var radio = context.CreateChild("RadioStation", root).AddComponent<RadioStation>();
+            var titleMusic = context.CreateChild("TitleMusic", root).AddComponent<TitleMusic>();
             var voice = context.CreateChild("RadioVoice", root).AddComponent<RadioVoice>();
             var feel = context.CreateChild("FeelAudio", root).AddComponent<FeelAudio>();
             var chirps = context.CreateChild("RoverChirpAudio", root).AddComponent<RoverChirpAudio>();
@@ -62,6 +64,7 @@ namespace MoonProject.Audio.Editor
             friends.Wire(friendTuning);
             jump.Wire(jumpTuning);
             radio.Wire(radioTuning, playlist, tapes);
+            titleMusic.Wire(titleMusicLibrary);
             voice.Wire(radioTuning, context.LoadAsset<VoiceLibrary>(AudioAssetPaths.Voices));
             feel.Wire(feelTuning);
             chirps.Wire(feelTuning, context.LoadAsset<ChirpBank>(AudioAssetPaths.Chirps));
@@ -74,6 +77,7 @@ namespace MoonProject.Audio.Editor
             lab.Wire(stationTuning);
             director.Wire(library, mixTuning, rover, jump, gameplay, friends, ui, radio, ambience, canyon, soundscape,
                 smallSounds, relays, salvage, stations, lab);
+            director.WireTitleMusic(titleMusic);
             director.WireBattery(battery);
             director.WireVoice(voice);
             director.WireFeel(feel, chirps);

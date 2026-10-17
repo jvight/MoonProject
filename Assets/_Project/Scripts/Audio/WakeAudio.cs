@@ -50,6 +50,12 @@ namespace MoonProject.Audio
         /// <summary>The Asleep static's source (for tests and tooling).</summary>
         internal AudioSource StaticSource => _static;
 
+        internal void Wire(AudioDirector director, RoverAudioTuning tuning)
+        {
+            _director = director;
+            _tuning = tuning;
+        }
+
         public void Initialize(GameContext context)
         {
             if (_director == null || _tuning == null)
@@ -89,19 +95,10 @@ namespace MoonProject.Audio
             EventBus events = context.Events;
             _subscriptions = new[]
             {
-                events.Subscribe<TitleShown>(OnTitleShown),
                 events.Subscribe<SessionStarted>(OnSessionStarted),
                 events.Subscribe<RoverWakeBeatReached>(OnBeat),
                 events.Subscribe<PauseChanged>(OnPauseChanged),
             };
-        }
-
-        private void OnTitleShown(TitleShown shown)
-        {
-            if (!shown.HasSave)
-            {
-                FadeStatic(_settings.TitleStatic, _settings.TitleFadeSeconds);
-            }
         }
 
         /// <summary>A loaded game wakes the radio its own way; the Asleep static, if it was up, gives way.</summary>

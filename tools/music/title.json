@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "defaultTrackId": "title_a_turning_moon",
+  "tracks": [
+    {
+      "id": "title_a_turning_moon",
+      "file": "Assets/_Project/Audio/Music/Title/title_a_turning_moon.ogg",
+      "title": "Little Turning Moon",
+      "bpm": 66.0,
+      "key": "D major",
+      "duration": 145.4545,
+      "loudnessLufs": -19.9666,
+      "truePeakDbtp": -6.0284,
+      "pcmSha256": "5cd29a2e73a251b0c5eebfc61932c6d022b9eac0429e0faf6fcb1223f3e87328"
+    },
+    {
+      "id": "title_b_earthlight_cradle",
+      "file": "Assets/_Project/Audio/Music/Title/title_b_earthlight_cradle.ogg",
+      "title": "Earthlight Cradle",
+      "bpm": 70.0,
+      "key": "D major",
+      "duration": 137.1429,
+      "loudnessLufs": -19.9671,
+      "truePeakDbtp": -6.9105,
+      "pcmSha256": "1b927b1ac404df7b228186c4286792209ead86f11f465f9e9a8f629fc5b1a2a9"
+    },
+    {
+      "id": "title_c_quiet_horizon",
+      "file": "Assets/_Project/Audio/Music/Title/title_c_quiet_horizon.ogg",
+      "title": "Quiet Horizon",
+      "bpm": 60.0,
+      "key": "D major",
+      "duration": 144.0,
+      "loudnessLufs": -19.9692,
+      "truePeakDbtp": -7.5596,
+      "pcmSha256": "ba8da864225d648fcb0505bda2f2fe60df2f7cb3707443cc639d348d3cb4df74"
+    }
+  ]
+}

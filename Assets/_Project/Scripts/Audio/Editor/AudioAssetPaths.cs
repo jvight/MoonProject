@@ -10,6 +10,7 @@ namespace MoonProject.Audio.Editor
         public const string Library = DataFolder + "/AudioLibrary.asset";
         public const string Playlist = DataFolder + "/RadioPlaylist.asset";
         public const string Tapes = DataFolder + "/RadioTapes.asset";
+        public const string TitleMusic = DataFolder + "/TitleMusicLibrary.asset";
         public const string Voices = DataFolder + "/VoiceLibrary.asset";
         public const string FeelTuning = DataFolder + "/FeelAudioTuning.asset";
         public const string Chirps = DataFolder + "/ChirpBank.asset";
@@ -34,6 +35,9 @@ namespace MoonProject.Audio.Editor
 
         /// <summary>Cassette tracks, written by the music box (project-relative).</summary>
         public const string MusicTapes = "tools/music/tapes.json";
+
+        /// <summary>Title screen theme variants, written by tools/music (project-relative).</summary>
+        public const string MusicTitle = "tools/music/title.json";
 
         /// <summary>Friends' music-box jingles, written by the music box (project-relative).</summary>
         public const string MusicJingles = "tools/music/jingles.json";
