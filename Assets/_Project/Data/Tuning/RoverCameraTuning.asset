@@ -454,13 +454,13 @@ MonoBehaviour:
   _headFadeHysteresis: 0.15
   _faceInspectOpenSeconds: 0.55
   _faceInspectCloseSeconds: 0.5
-  _faceInspectScreenHeight: 0.32
+  _faceInspectScreenHeight: 0.3687
   _faceInspectHeightFill: 0.75
   _faceInspectDistance: 0.67
   _faceInspectMinDistance: 0.42
   _faceInspectMinRadius: 0.05
   _faceInspectHeadPitch: 10
-  _faceInspectLookOffsetY: -0.01
+  _faceInspectLookOffsetY: 0
   _faceInspectSideYaw: 28
   _faceInspectProbeRadius: 0.18
   _faceInspectNearClip: 0.05

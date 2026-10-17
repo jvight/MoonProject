@@ -119,12 +119,12 @@ DIMENSIONS = {
     "piv_screen_local": (0.0, 0.08, 0.295),     # World (0.00, 1.26, +0.425) framed by shroud
     "piv_visor_local": (0.0, 0.08, 0.305),      # World (0.00, 1.26, +0.435)
     "piv_rear_vent_local": (0.0, 0.08, -0.275), # World (0.00, 1.26, -0.145), extends back to -0.21 m world
-    "screen_width": 0.58,                # 0.58 m edge-to-edge warm amber screen
-    "screen_height": 0.39,               # 0.39 m tall (y = 1.065..1.455 m world)
-    "screen_bulge_z": 0.018,             # Gentle convex CRT glass crown
-    "screen_corner_round": 0.075,
-    "screen_grid_x": 16,
-    "screen_grid_y": 12,
+    "screen_width": 0.553,               # 0.553 m visible glass width (2 * 0.2765 m, 3:2 aspect matching 1152x768)
+    "screen_height": 0.368667,           # 0.3687 m visible glass height (2 * 0.184333 m)
+    "screen_bulge_z": 0.026,             # ~2.1-2.6 cm convex 80s CRT glass sagitta (slightly deeper at corners)
+    "screen_corner_round": 0.0420,       # 0.0420 m rounded-rectangle corner radius matching rubber gasket opening
+    "screen_grid_x": 24,
+    "screen_grid_y": 18,
     "rear_vent_width": 0.48,             # 0.48 m wide rear louver grille
     "rear_vent_height": 0.26,            # 0.26 m tall rear louver grille
     "rear_vent_bar_count": 6,            # 6 recessed angled louver slats

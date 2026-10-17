@@ -604,7 +604,7 @@ namespace MoonProject.Rover
 
         [Tooltip("World-space height (m) of 07's CRT Screen and inner bezel framed in face-inspect mode.")]
         [Range(0.10f, 0.60f)]
-        [SerializeField] private float _faceInspectScreenHeight = 0.32f;
+        [SerializeField] private float _faceInspectScreenHeight = 0.3687f;
 
         [Tooltip("Target share of the viewport height (0..1) filled by 07's CRT Screen in face-inspect mode.")]
         [Range(0.40f, 0.90f)]
@@ -626,9 +626,9 @@ namespace MoonProject.Rover
         [Range(0f, 25f)]
         [SerializeField] private float _faceInspectHeadPitch = 10f;
 
-        [Tooltip("Vertical look-target offset (m) along Screen.up so the head crown and antenna sit in frame.")]
+        [Tooltip("Vertical look-target offset (m) along Screen.up so the camera looks straight at the glass centre.")]
         [Range(-0.10f, 0.10f)]
-        [SerializeField] private float _faceInspectLookOffsetY = -0.01f;
+        [SerializeField] private float _faceInspectLookOffsetY = 0f;
 
         [Tooltip("Neck yaw offset (deg) tried to the left (-yaw) and right (+yaw) when the default front view is occluded.")]
         [Range(10f, 35f)]

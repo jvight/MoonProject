@@ -271,7 +271,7 @@ namespace MoonProject.Rover
         public bool IsHeldStill => _holds.IsHeld;
 
         // IRoverFaceScreen
-        public float Curvature => _bodyLanguage != null ? _bodyLanguage.Curvature : 0.10f;
+        public float Curvature => _bodyLanguage != null ? _bodyLanguage.Curvature : 0f;
 
         public bool IsOpen => _faceScreenOpen;
 

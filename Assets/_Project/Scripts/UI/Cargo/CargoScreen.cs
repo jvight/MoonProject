@@ -303,6 +303,9 @@ namespace MoonProject.UI
             float height = Mathf.Floor(FaceInventoryView.ReferenceHeight * scale);
             _panel.style.width = width;
             _panel.style.height = height;
+            _panel.style.backgroundColor = FillPanelHeight
+                ? new StyleColor(Color.clear)
+                : new StyleColor((Color)_settings.PlateBackground);
             _view.ApplyScale(width, height);
         }
 
