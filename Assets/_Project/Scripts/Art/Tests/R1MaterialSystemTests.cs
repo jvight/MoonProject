@@ -61,7 +61,6 @@ namespace MoonProject.Art.Tests
             "_BloomSafeMax",
             "_HotCorePeak",
             "_Smoothness",
-            "_Curvature",
             "_ScanlineCount",
             "_ScanlineDepth",
             "_GlowRadius",
@@ -127,6 +126,9 @@ namespace MoonProject.Art.Tests
                 {
                     Assert.IsTrue(mat.HasProperty(prop), $"R1CrtFace shader is missing expected property '{prop}'.");
                 }
+
+                Assert.IsFalse(mat.HasProperty("_Curvature"),
+                    "R1CrtFace shader must not expose dead fake barrel/curvature property '_Curvature'.");
             }
             finally
             {

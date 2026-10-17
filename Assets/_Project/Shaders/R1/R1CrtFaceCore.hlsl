@@ -24,12 +24,13 @@ static const float ROLLING_BAND_STRENGTH = 0.08;
 static const float HOT_CORE_INNER_DIST = -0.012;
 static const float GLASS_SPECULAR_STRENGTH = 0.04;
 static const float2 CONTENT_FALLBACK_TEXEL_SIZE = float2(1.0 / 1152.0, 1.0 / 768.0);
-static const float CONTENT_TENT_RADIUS_SCALE = 26.0;
-static const float CONTENT_WIDE_MIP_OFFSET = 1.15;
-static const half CONTENT_TIGHT_GLOW_MIX = 0.72h;
-static const half CONTENT_WIDE_GLOW_MIX = 0.28h;
-static const half CONTENT_SHOULDER_ATTEN = 0.68h;
-static const half CONTENT_DIRECT_GAIN = 1.06h;
+static const float CONTENT_TENT_RADIUS_SCALE = 18.0;
+static const half CONTENT_SHOULDER_ATTEN = 0.72h;
+static const half CONTENT_DIRECT_GAIN = 1.12h;
+static const half3 CONTENT_BG_LINEAR = half3(0.0206h, 0.0204h, 0.0022h);
+static const half3 CONTENT_EDGE_LINEAR = half3(0.0192h, 0.0190h, 0.0020h);
+static const float GLASS_ASPECT = 1.5;
+static const float GLASS_CORNER_RADIUS_H = 0.113924;
 
 struct Attributes
 {
@@ -306,17 +307,16 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
     float2 jitteredUv = float2(rawUv.x, rawUv.y + verticalJitter);
     float2 cc = jitteredUv - 0.5;
     float rSq = dot(cc, cc);
-    float2 warpedUv = jitteredUv + cc * (rSq * _Curvature);
 
     float openSpan = max(1.0 - verticalPinch, 0.012);
-    float deflectedY = 0.5 + (warpedUv.y - 0.5) / openSpan;
-    float2 deflectedWarpedUv = float2(warpedUv.x, deflectedY);
+    float deflectedY = 0.5 + (jitteredUv.y - 0.5) / openSpan;
+    float2 deflectedUv = float2(jitteredUv.x, deflectedY);
     float deflectionBandMask = (verticalPinch > 0.001)
-        ? smoothstep(0.48 * openSpan + 0.012, 0.46 * openSpan, abs(warpedUv.y - 0.5))
+        ? smoothstep(0.495 * openSpan + 0.010, 0.480 * openSpan, abs(jitteredUv.y - 0.5))
         : 1.0;
 
-    float2 canvasPos = float2(deflectedWarpedUv.x * CRT_ASPECT, 1.0 - deflectedWarpedUv.y);
-    float aaWidth = max(length(fwidth(float2(warpedUv.x * CRT_ASPECT, 1.0 - warpedUv.y))), 0.0025);
+    float2 canvasPos = float2(deflectedUv.x * CRT_ASPECT, 1.0 - deflectedUv.y);
+    float aaWidth = max(length(fwidth(float2(jitteredUv.x * CRT_ASPECT, 1.0 - jitteredUv.y))), 0.0025);
 
     float primaryCov = 0.0;
     float ghostCov = 0.0;
@@ -406,13 +406,14 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
     // Hot phosphor inner core factor (only deep inside the stroke/pill reaches _HotCorePeak > BloomThreshold)
     float innerCore = smoothstep(0.0, HOT_CORE_INNER_DIST, minPrimarySdf) * primaryCov;
 
-    // Rounded screen bezel SDF + curved rim vignette + soft phosphor glow at the glass edge
-    float bezelSdf = SdfRoundedBox(warpedUv - 0.5, float2(0.498, 0.498), 0.056);
-    float rimVig = smoothstep(0.008, -0.072, bezelSdf);
-    float edgePhosphorGlow = smoothstep(-0.088, -0.014, bezelSdf) * smoothstep(0.010, -0.006, bezelSdf) * poweredOn;
+    // Rounded screen bezel SDF in physical 3:2 glass aspect (corner radius 0.0420 m / 0.3687 m = 0.113924)
+    float2 glassPos = (jitteredUv - 0.5) * float2(GLASS_ASPECT, 1.0);
+    float bezelSdf = SdfRoundedBox(glassPos, float2(0.5 * GLASS_ASPECT, 0.5), GLASS_CORNER_RADIUS_H);
+    float rimVig = smoothstep(0.004, -0.022, bezelSdf);
+    float edgePhosphorGlow = smoothstep(-0.028, -0.006, bezelSdf) * smoothstep(0.005, -0.002, bezelSdf) * poweredOn;
 
-    // Warm dark CRT screen background with radial + curved-rim vignette and soft phosphor edge glow
-    float vig = smoothstep(0.48, 0.04, rSq) * rimVig;
+    // Warm dark CRT screen background for procedural eyes
+    float vig = smoothstep(0.52, 0.04, rSq) * rimVig;
     half3 bgPhosphor = lerp(_ScreenEdgeColor.rgb, _ScreenBaseColor.rgb, (half)vig)
         + _PhosphorGlowColor.rgb * (half)(0.05 * vig * poweredOn + 0.14 * edgePhosphorGlow);
 
@@ -435,51 +436,60 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
     half3 hotCoreTarget = _HotCoreColor.rgb * _HotCorePeak;
     half3 phosphorHdr = lerp(bodyEmission, hotCoreTarget, (half)(innerCore * 0.65));
 
-    // 3. Screen content mode (_ContentTex): UI rendered into the same curved, scanlined, phosphor-glowing CRT glass
+    // 3. Screen content mode (_ContentTex): UI rendered flat onto the convex CRT glass UVs with a near-neutral
+    //    warm-black background (sat <= 0.25, val ~0.075), stroke-localized phosphor glow, and thin edge vignette.
     if (contentMix > 0.001)
     {
-        float inDeflectedBounds = step(0.0, deflectedWarpedUv.x) * step(deflectedWarpedUv.x, 1.0)
-            * step(0.0, deflectedWarpedUv.y) * step(deflectedWarpedUv.y, 1.0) * deflectionBandMask;
-        float2 contentUv = saturate(deflectedWarpedUv);
+        float inDeflectedBounds = step(0.0, deflectedUv.x) * step(deflectedUv.x, 1.0)
+            * step(0.0, deflectedUv.y) * step(deflectedUv.y, 1.0) * deflectionBandMask;
+        float2 contentUv = saturate(deflectedUv);
         half4 contentSample = SAMPLE_TEXTURE2D_LOD(_ContentTex, sampler_ContentTex, contentUv, 0.0) * (half)inDeflectedBounds;
 
         float2 texelSize = _ContentTex_TexelSize.x > 0.0 ? _ContentTex_TexelSize.xy : CONTENT_FALLBACK_TEXEL_SIZE;
         float2 tentOffset = texelSize * (glowRadius * CONTENT_TENT_RADIUS_SCALE);
         float tightMip = max((float)_ContentGlowMip, 0.5);
-        float wideMip = tightMip + CONTENT_WIDE_MIP_OFFSET;
         half3 tightGlow = (
             SAMPLE_TEXTURE2D_LOD(_ContentTex, sampler_ContentTex, saturate(contentUv + float2( tentOffset.x,  tentOffset.y)), tightMip).rgb +
             SAMPLE_TEXTURE2D_LOD(_ContentTex, sampler_ContentTex, saturate(contentUv + float2(-tentOffset.x,  tentOffset.y)), tightMip).rgb +
             SAMPLE_TEXTURE2D_LOD(_ContentTex, sampler_ContentTex, saturate(contentUv + float2( tentOffset.x, -tentOffset.y)), tightMip).rgb +
             SAMPLE_TEXTURE2D_LOD(_ContentTex, sampler_ContentTex, saturate(contentUv + float2(-tentOffset.x, -tentOffset.y)), tightMip).rgb
         ) * 0.25h;
-        half3 wideGlow = SAMPLE_TEXTURE2D_LOD(_ContentTex, sampler_ContentTex, contentUv, wideMip).rgb;
 
         half contentLum = max(contentSample.r, max(contentSample.g, contentSample.b));
+        half glowLum = max(tightGlow.r, max(tightGlow.g, tightGlow.b));
+        // Localize phosphor glow strictly around strokes and text (zero wash over dark background)
+        half glowGate = smoothstep(0.035h, 0.140h, glowLum);
         half shoulderWeight = saturate(1.0h - contentLum * CONTENT_SHOULDER_ATTEN);
         half glowMask = (half)inDeflectedBounds * (_GlowRadius > 0.001h ? 1.0h : 0.0h);
-        half3 phosphorHalation = (tightGlow * _PhosphorColor.rgb * CONTENT_TIGHT_GLOW_MIX
-            + wideGlow * _PhosphorGlowColor.rgb * CONTENT_WIDE_GLOW_MIX)
-            * _ContentGlowIntensity * shoulderWeight * glowMask;
+        half3 phosphorHalation = (tightGlow * _PhosphorColor.rgb)
+            * (_ContentGlowIntensity * glowGate * shoulderWeight * glowMask);
 
-        half3 contentBody = bgPhosphor * (1.0h - contentSample.a)
-            + (contentSample.rgb * CONTENT_DIRECT_GAIN + phosphorHalation) * (half)lerp(0.65, 1.0, rimVig)
-            + _PhosphorGlowColor.rgb * (half)(0.11 * edgePhosphorGlow);
+        // Separate background pixels from stroke/text pixels so background stays a uniform near-neutral warm black
+        // while strokes and text receive full crisp contrast (>= 7:1 everywhere).
+        half strokeGate = smoothstep(0.014h, 0.045h, contentLum);
+        float contentRimVig = smoothstep(0.003, -0.016, bezelSdf);
+        half3 contentBg = lerp(CONTENT_EDGE_LINEAR, CONTENT_BG_LINEAR, (half)contentRimVig);
+        half3 warmGoldLift = half3(1.00h, 0.86h, 0.60h) * contentLum;
+        half3 baseStroke = lerp(contentSample.rgb, max(contentSample.rgb, warmGoldLift), 0.42h);
+        half strokeRec709 = max(dot(baseStroke, half3(0.2126h, 0.7152h, 0.0722h)), (half)1e-4);
+        half targetRec709 = lerp(0.84h, 0.96h, saturate((contentLum - 0.02h) / 0.85h));
+        half lumGain = max(CONTENT_DIRECT_GAIN, targetRec709 / strokeRec709);
+        half3 strokeRgb = baseStroke * lumGain;
+        half3 contentBody = lerp(contentBg, strokeRgb, strokeGate) + phosphorHalation * (half)contentRimVig;
+        half contentSafeMax = min(_BloomSafeMax, 1.02h);
         half contentBodyMax = max(contentBody.r, max(contentBody.g, contentBody.b));
-        if (contentBodyMax > _BloomSafeMax)
+        if (contentBodyMax > contentSafeMax)
         {
-            contentBody *= (_BloomSafeMax / max(contentBodyMax, (half)1e-4));
+            contentBody *= (contentSafeMax / max(contentBodyMax, (half)1e-4));
         }
 
-        half contentHot = smoothstep(0.75h, 0.98h, contentLum);
-        half3 contentHdr = lerp(contentBody, hotCoreTarget, contentHot * 0.22h);
-        phosphorHdr = lerp(phosphorHdr, contentHdr, (half)contentMix);
+        phosphorHdr = lerp(phosphorHdr, contentBody, (half)contentMix);
     }
 
     // 4. Channel-switch horizontal phosphor line (collapse / expand pinch between eyes and content)
     if (lineGlow > 0.001)
     {
-        float2 rawCanvas = float2(warpedUv.x * CRT_ASPECT, 1.0 - warpedUv.y);
+        float2 rawCanvas = float2(jitteredUv.x * CRT_ASPECT, 1.0 - jitteredUv.y);
         float lineHalfW = lerp(0.46, 0.43, verticalPinch) * CRT_ASPECT;
         float sdfSwitchLine = SdfRoundedBox(
             rawCanvas - float2(0.5 * CRT_ASPECT, 0.5),
@@ -493,33 +503,38 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
         phosphorHdr = lerp(phosphorHdr, max(phosphorHdr, switchLineCol), (half)lineGlow);
     }
 
-    // CRT horizontal scanlines (coarsening slightly in low power, attenuated in content mode so glyphs stay whole)
+    // CRT horizontal scanlines (coarsening slightly in low power, halved again in content mode so glyphs stay whole)
     float scanCount = lerp((float)_ScanlineCount, LOW_POWER_SCANLINE_MIN, lowPower);
-    float scanWave = 0.5 + 0.5 * sin((warpedUv.y * scanCount + scanlinePhase) * CRT_PI * 2.0);
+    float scanWave = 0.5 + 0.5 * sin((jitteredUv.y * scanCount + scanlinePhase) * CRT_PI * 2.0);
     float scanDepth = lerp((float)_ScanlineDepth, (float)_ScanlineDepth * 1.45, lowPower);
     scanDepth *= lerp(1.0, 1.0 - saturate((float)_ContentScanlineAtten), contentMix);
     float scanMod = lerp(1.0 - scanDepth, 1.0 + scanDepth * 0.25, scanWave);
 
     float bandY = frac(rollingBandPhase);
-    float bandDist = abs((1.0 - warpedUv.y) - bandY);
-    float bandBoost = 1.0 + ROLLING_BAND_STRENGTH * exp(-(bandDist * bandDist) / (ROLLING_BAND_WIDTH * ROLLING_BAND_WIDTH));
+    float bandDist = abs((1.0 - jitteredUv.y) - bandY);
+    float bandBoost = 1.0 + ROLLING_BAND_STRENGTH * (1.0 - contentMix) * exp(-(bandDist * bandDist) / (ROLLING_BAND_WIDTH * ROLLING_BAND_WIDTH));
 
-    // Rounded screen bezel edge vignette
-    float bezelMask = smoothstep(0.012, -0.016, bezelSdf);
+    // Thin rounded screen bezel edge vignette right at the rubber gasket
+    float bezelMask = smoothstep(0.004, -0.012, bezelSdf);
 
     half3 finalEmission = phosphorHdr * (half)(brightness * scanMod * bandBoost * bezelMask);
 
-    // Subtle dark-glass specular response from main directional light + view reflection
+    // Soft, small glass specular reflection near the top edge only, never over the content
     float3 normalWS = NormalizeNormalPerVertex(input.normalWS);
     float3 viewDirWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
     Light mainLight = GetMainLight();
     float3 halfDir = SafeNormalize(mainLight.direction + viewDirWS);
     float ndoth = saturate(dot(normalWS, halfDir));
     float specPow = exp2(10.0 * _Smoothness + 1.0);
-    half3 glassSpec = mainLight.color * (half)(pow(ndoth, specPow) * GLASS_SPECULAR_STRENGTH);
+    float topSpecY = smoothstep(0.955, 0.978, jitteredUv.y) * smoothstep(0.996, 0.982, jitteredUv.y);
+    float topSpecX = smoothstep(0.28, 0.06, abs(jitteredUv.x - 0.5));
+    float topEdgeSpec = topSpecY * topSpecX;
+    float specFactor = lerp(pow(ndoth, specPow) * (0.25 + 0.75 * topEdgeSpec), topEdgeSpec * (0.35 + 0.65 * ndoth), contentMix);
+    half3 glassSpec = mainLight.color * (half)(specFactor * GLASS_SPECULAR_STRENGTH * lerp(1.0, 0.25, contentMix));
 
-    half3 color = finalEmission + glassSpec + bgPhosphor * (half)(1.0 - bezelMask) * (half)0.35;
-    color = MixFog(color, input.fogFactor);
+    half3 rimBase = lerp(bgPhosphor * 0.35h, CONTENT_EDGE_LINEAR, (half)contentMix);
+    half3 color = finalEmission + glassSpec + rimBase * (half)(1.0 - bezelMask);
+    color = lerp(MixFog(color, input.fogFactor), color, (half)contentMix);
     return half4(color, 1.0h);
 }
 

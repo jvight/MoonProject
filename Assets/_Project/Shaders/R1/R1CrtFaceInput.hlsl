@@ -12,7 +12,6 @@ CBUFFER_START(UnityPerMaterial)
     half _BloomSafeMax;
     half _HotCorePeak;
     half _Smoothness;
-    half _Curvature;
     half _ScanlineCount;
     half _ScanlineDepth;
     half _GlowRadius;

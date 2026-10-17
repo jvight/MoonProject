@@ -19,9 +19,10 @@ namespace MoonProject.UI
     /// </summary>
     public static class UiIconPainter
     {
-        public static readonly Color32 LitAmber = new Color32(255, 194, 92, 248);
-        public static readonly Color32 FaintAmber = new Color32(204, 150, 68, 95);
-        public static readonly Color32 CyanTint = new Color32(95, 243, 255, 250);
+        public static readonly Color32 LitAmber = new Color32(255, 206, 116, 255);
+        public static readonly Color32 FaintAmber = new Color32(224, 176, 94, 225);
+        public static readonly Color32 CyanTint = new Color32(95, 243, 255, 255);
+        private static readonly Color32 IconInteriorFill = new Color32(19, 18, 16, 255);
 
         public static Color32 ColorFor(UiIconState state)
         {
@@ -45,12 +46,11 @@ namespace MoonProject.UI
         {
             float scale = size / UiIconShape.ViewBoxSize;
             Vector2 origin = new Vector2(center.x - size * 0.5f, center.y - size * 0.5f);
-            Color32 detailStroke = new Color32(tint.r, tint.g, tint.b, (byte)Mathf.RoundToInt(tint.a * 0.78f));
-            Color32 fillTint = new Color32(tint.r, tint.g, tint.b, (byte)Mathf.RoundToInt(tint.a * 0.28f));
+            Color32 detailStroke = new Color32(tint.r, tint.g, tint.b, (byte)Mathf.RoundToInt(tint.a * 0.92f));
 
             if (!icon.Fill.IsEmpty)
             {
-                icon.Fill.Draw(painter, origin, scale, detailStroke, fillTint);
+                icon.Fill.Draw(painter, origin, scale, detailStroke, IconInteriorFill);
             }
 
             if (!icon.Primary.IsEmpty)

@@ -218,8 +218,8 @@ namespace MoonProject.Rover
         /// <summary>Transform of 07's <c>Neck</c> yaw joint.</summary>
         public Transform NeckTransform => _neck;
 
-        /// <summary>CRT barrel curvature parameter read from the screen's shared material.</summary>
-        public float Curvature => _faceDirector != null ? _faceDirector.Curvature : 0.10f;
+        /// <summary>CRT curvature is physically modelled by the convex Screen mesh (0 UV warp).</summary>
+        public float Curvature => _faceDirector != null ? _faceDirector.Curvature : 0f;
 
         /// <summary>Transform of 07's CRT <c>Screen</c> mesh.</summary>
         public Transform ScreenTransform =>
@@ -1065,7 +1065,7 @@ namespace MoonProject.Rover
                 _scanFan.enabled = false;
             }
             SetGlow(_antennaTipRenderer, _listen.TipEmission(_mood.TipGlow));
-            _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow;
+            _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow * (1f - _screenInspectBlend * 0.92f);
         }
 
         /// <summary>

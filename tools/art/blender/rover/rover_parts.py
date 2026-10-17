@@ -1492,6 +1492,19 @@ def _sample_crt_bezel_ring(hw, y_min, y_max, corner_r, barrel_k=0.0):
     return pts
 
 
+def _crt_glass_z(px, py, half_w, half_h, bulge):
+    """
+    Convex 80s CRT glass surface profile: ~2.1-2.2 cm sagitta across horizontal/vertical mid-edges
+    and ~2.6 cm sagitta into the four corners.
+    """
+    rx = min(1.25, abs(px) / max(half_w, 1e-4))
+    ry = min(1.25, abs(py) / max(half_h, 1e-4))
+    rx2 = rx * rx
+    ry2 = ry * ry
+    drop = 0.84 * rx2 + 0.78 * ry2 - 0.52 * rx2 * ry2
+    return bulge * (1.0 - drop)
+
+
 def _append_head_front_cream_surround(bm_head, cfg):
     """
     Append a flush R1_CreamEnamel front faceplate inside Visor's opening (bridging z_local = 0.256..0.287 m)
@@ -1507,12 +1520,10 @@ def _append_head_front_cream_surround(bm_head, cfg):
     half_h = sh * FLAT_UV_SCALE
 
     def glass_z(px, py):
-        rx = min(1.15, abs(px) / half_w)
-        ry = min(1.15, abs(py) / half_h)
-        return bulge * (1.0 - 0.65 * rx * rx) * (1.0 - 0.65 * ry * ry)
+        return _crt_glass_z(px, py, half_w, half_h, bulge)
 
-    inner_ring = _sample_crt_bezel_ring(0.280, head_cy - 0.186, head_cy + 0.186, 0.044, barrel_k=0.015)
-    outer_ring = _sample_crt_bezel_ring(0.352, head_cy - 0.212, head_cy + 0.232, 0.058, barrel_k=0.0)
+    inner_ring = _sample_crt_bezel_ring(0.280, head_cy - 0.1868, head_cy + 0.1868, 0.0445, barrel_k=0.0)
+    outer_ring = _sample_crt_bezel_ring(0.352, head_cy - 0.222, head_cy + 0.222, 0.058, barrel_k=0.0)
 
     temp = bmesh.new()
     z_front = piv_scr_z - 0.008
@@ -1545,14 +1556,14 @@ def _append_head_front_cream_surround(bm_head, cfg):
 
     # Thin dark rubber gasket (mat_idx = 4 -> R1_Rubber) + tiny warm brass detail (mat_idx = 3 -> R1_Brass)
     gasket_brass_specs = [
-        (0.2765, 0.1830, 0.0420, 0.022, -0.0045),  # 0: Rubber inner back (tucked behind glass)
-        (0.2765, 0.1830, 0.0420, 0.022,  0.0018),  # 1: Rubber inner lip on glass
-        (0.2805, 0.1868, 0.0445, 0.021,  0.0032),  # 2: Rubber gasket crown
-        (0.2840, 0.1900, 0.0470, 0.020,  0.0024),  # 3: Rubber / Brass seam
-        (0.2852, 0.1912, 0.0480, 0.019,  0.0056),  # 4: Brass inner shoulder
-        (0.2876, 0.1936, 0.0498, 0.018,  0.0070),  # 5: Brass bead peak
-        (0.2902, 0.1962, 0.0515, 0.017,  0.0050),  # 6: Brass outer seat under ScreenBezel
-        (0.2902, 0.1962, 0.0515, 0.017, -0.0045),  # 7: Brass rear closure
+        (0.2760, 0.1838, 0.0415, 0.0, -0.0045),  # 0: Rubber inner back (tucked behind glass)
+        (0.2765, 0.1843, 0.0420, 0.0,  0.0016),  # 1: Rubber inner lip at exact visible glass boundary
+        (0.2805, 0.1883, 0.0445, 0.0,  0.0032),  # 2: Rubber gasket crown
+        (0.2840, 0.1918, 0.0470, 0.0,  0.0024),  # 3: Rubber / Brass seam
+        (0.2852, 0.1930, 0.0480, 0.0,  0.0056),  # 4: Brass inner shoulder
+        (0.2876, 0.1954, 0.0498, 0.0,  0.0070),  # 5: Brass bead peak
+        (0.2902, 0.1980, 0.0515, 0.0,  0.0050),  # 6: Brass outer seat under ScreenBezel
+        (0.2902, 0.1980, 0.0515, 0.0, -0.0045),  # 7: Brass rear closure
     ]
     gb_mats = [4, 4, 4, 3, 3, 3, 3]
     temp_gb = bmesh.new()
@@ -1592,39 +1603,60 @@ def _append_head_front_cream_surround(bm_head, cfg):
 
 
 def build_crt_screen_bmesh(cfg):
-    """Build the curved 4:3 Screen mesh with clean [0, 1]^2 UVs and gentle convex glass crown."""
+    """
+    Build the gently convex 80s CRT Screen mesh (~2-3 cm sagitta, slightly more at the corners)
+    whose rounded-rectangle outline matches the bezel/gasket opening and whose UVs map the visible
+    glass linearly onto [0, 1]^2 so the content safe area in UV space IS the glass shape.
+    """
     bm = bmesh.new()
-    nx = max(cfg["screen_grid_x"], 16)
-    ny = max(cfg["screen_grid_y"], 12)
     sw, sh = cfg["screen_width"], cfg["screen_height"]
     bulge = cfg["screen_bulge_z"]
-    corner_round = cfg["screen_corner_round"]
     half_w = sw * FLAT_UV_SCALE
     half_h = sh * FLAT_UV_SCALE
-    seat_r = 0.052
+    corner_r = min(cfg["screen_corner_round"], half_w * 0.45, half_h * 0.45)
+    x_inner = half_w - corner_r
+    y_inner = half_h - corner_r
+
+    n_corner = 4
+    n_mid_x = max(cfg["screen_grid_x"] - 2 * n_corner, 8)
+    n_mid_y = max(cfg["screen_grid_y"] - 2 * n_corner, 6)
+
+    x_samples = (
+        [-half_w + corner_r * (k / n_corner) for k in range(n_corner)]
+        + [-x_inner + (2.0 * x_inner) * (k / n_mid_x) for k in range(n_mid_x + 1)]
+        + [x_inner + corner_r * (k / n_corner) for k in range(1, n_corner + 1)]
+    )
+    y_samples = (
+        [-half_h + corner_r * (k / n_corner) for k in range(n_corner)]
+        + [-y_inner + (2.0 * y_inner) * (k / n_mid_y) for k in range(n_mid_y + 1)]
+        + [y_inner + corner_r * (k / n_corner) for k in range(1, n_corner + 1)]
+    )
+
+    nx = len(x_samples) - 1
+    ny = len(y_samples) - 1
 
     verts_grid = []
-    for j in range(ny + 1):
-        v_norm = j / ny
-        yn = v_norm * 2.0 - 1.0
+    for y0 in y_samples:
+        dy = max(abs(y0) - y_inner, 0.0) / corner_r
         row = []
-        for i in range(nx + 1):
-            u_norm = i / nx
-            xn = u_norm * 2.0 - 1.0
-            scale_corner = 1.0 - corner_round * (xn * xn) * (yn * yn)
-            ux = (xn * scale_corner) * half_w
-            uy = (yn * scale_corner) * half_h
-            cx = max(abs(ux) - (half_w - seat_r), 0.0)
-            cy = max(abs(uy) - (half_h - seat_r), 0.0)
-            cdist = math.hypot(cx, cy)
-            if cdist > seat_r:
-                ux = math.copysign((half_w - seat_r) + cx * (seat_r / cdist), ux)
-                uy = math.copysign((half_h - seat_r) + cy * (seat_r / cdist), uy)
-            rx = ux / half_w
-            ry = uy / half_h
-            uz = bulge * (1.0 - 0.65 * rx * rx) * (1.0 - 0.65 * ry * ry)
+        for x0 in x_samples:
+            dx = max(abs(x0) - x_inner, 0.0) / corner_r
+            if dx > 1e-6 and dy > 1e-6:
+                layer_r = max(dx, dy)
+                if dx >= dy:
+                    theta = (math.pi * 0.25) * (dy / layer_r)
+                else:
+                    theta = (math.pi * 0.5) - (math.pi * 0.25) * (dx / layer_r)
+                ux = math.copysign(x_inner + corner_r * layer_r * math.cos(theta), x0)
+                uy = math.copysign(y_inner + corner_r * layer_r * math.sin(theta), y0)
+            else:
+                ux = x0
+                uy = y0
+            uz = _crt_glass_z(ux, uy, half_w, half_h, bulge)
+            u_coord = 0.5 + 0.5 * (ux / half_w)
+            v_coord = 0.5 + 0.5 * (uy / half_h)
             vert = bm.verts.new(u_pos(ux, uy, uz))
-            row.append((vert, u_norm, v_norm))
+            row.append((vert, u_coord, v_coord))
         verts_grid.append(row)
 
     uv_layer = bm.loops.layers.uv.verify()
@@ -1657,18 +1689,16 @@ def build_screen_bezel_bmesh(cfg):
     half_h = sh * FLAT_UV_SCALE
 
     def glass_z(px, py):
-        rx = min(1.15, abs(px) / half_w)
-        ry = min(1.15, abs(py) / half_h)
-        return bulge * (1.0 - 0.65 * rx * rx) * (1.0 - 0.65 * ry * ry)
+        return _crt_glass_z(px, py, half_w, half_h, bulge)
 
     ring_specs = [
-        (0.2896, -0.1956, 0.1956, 0.0512, 0.017, -0.0120),  # 0: Inner rear wall behind brass lip
-        (0.2896, -0.1956, 0.1956, 0.0512, 0.017,  0.0048),  # 1: Inner seat against brass lip
-        (0.2928, -0.1972, 0.1982, 0.0522, 0.016,  0.0070),  # 2: Crisp 3.5 mm inner rounded lip
-        (0.3123, -0.2022, 0.2082, 0.0545, 0.011,  0.0084),  # 3: Smooth rounded bezel inner zone
-        (0.3323, -0.2075, 0.2202, 0.0565, 0.005,  0.0088),  # 4: Smooth rounded bezel crown
-        (0.3525, -0.2130, 0.2325, 0.0580, 0.000,  0.0082),  # 5: Smooth rounded bezel outer zone at Visor
-        (0.3525, -0.2130, 0.2325, 0.0580, 0.000, -0.0120),  # 6: Outer rear wall tucked into Head
+        (0.2896, -0.1974, 0.1974, 0.0512, 0.0, -0.0120),  # 0: Inner rear wall behind brass lip
+        (0.2896, -0.1974, 0.1974, 0.0512, 0.0,  0.0048),  # 1: Inner seat against brass lip
+        (0.2928, -0.2000, 0.2000, 0.0522, 0.0,  0.0070),  # 2: Crisp 3.5 mm inner rounded lip
+        (0.3123, -0.2075, 0.2075, 0.0545, 0.0,  0.0084),  # 3: Smooth rounded bezel inner zone
+        (0.3323, -0.2150, 0.2150, 0.0565, 0.0,  0.0088),  # 4: Smooth rounded bezel crown
+        (0.3525, -0.2225, 0.2225, 0.0580, 0.0,  0.0082),  # 5: Smooth rounded bezel outer zone at Visor
+        (0.3525, -0.2225, 0.2225, 0.0580, 0.0, -0.0120),  # 6: Outer rear wall tucked into Head
     ]
 
     vert_rings = []
@@ -1725,10 +1755,10 @@ def build_wrap_visor_bmesh(cfg):
     back_outer = []
     back_inner = []
 
-    y_shift = 0.010  # Centers Visor across world uy = 1.020 .. 1.525 m
+    y_shift = 0.010  # Outer top shroud/brow lip spans world uy = 1.020 .. 1.525 m; inner cutout is centered on Screen
     for (ox, oy_raw), (ix, iy_raw) in zip(outer_ring, inner_ring):
         oy = oy_raw + y_shift
-        iy = iy_raw + y_shift
+        iy = iy_raw
         # Boxy CRT front shroud face at z_local = +0.015 m (world z = +0.455 m),
         # with overhanging top sun-visor brow lip projecting to z_local = +0.045 m (world z = +0.485 m)
         brow_fac = max(0.0, min(1.0, (oy - 0.14) / 0.10))
