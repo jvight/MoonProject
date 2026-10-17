@@ -11,9 +11,9 @@ namespace MoonProject.Rover
     /// the visual model following the interpolated sphere. Registers itself as <see cref="IRoverState"/> and
     /// <see cref="IRoverRig"/> (interaction points and gaze requests for gameplay), <see cref="IRoverStillness"/>
     /// (how long 07 has rested, stepped every rendered frame) and <see cref="IRoverPlacement"/> (set 07 down elsewhere
-    /// in one step, publishing <see cref="RoverPlaced"/>) and <see cref="IRoverCargoSeat"/> (its kit's rack, see
-    /// <see cref="RoverKit"/>), publishes <see cref="RoverLanded"/> and <see cref="RoverBoostChanged"/>, and ticks its
-    /// visual rig, kit, wheel effects and lamp motes in a fixed order every frame. The Boost Coils raise the top speed
+    /// in one step, publishing <see cref="RoverPlaced"/>) and <see cref="IRoverCargoSeat"/> (the cargo hatch's
+    /// socket), publishes <see cref="RoverLanded"/> and <see cref="RoverBoostChanged"/>, and ticks its visual rig,
+    /// road light, wheel effects and lamp motes in a fixed order every frame. The Boost Coils raise the top speed
     /// gently while held at cruise on open, flat-ish ground (<see cref="BoostDrive"/>). Docked at home
     /// (<see cref="RoverDockChanged"/>), 07 eases onto the dock's anchor and rests there, its lamp dimmed, while its
     /// drive input is still read so a touch shows at once and gameplay can undock it; undocked, it is free at once.
@@ -25,7 +25,7 @@ namespace MoonProject.Rover
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RoverController : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IRoverAbilities,
-        IRoverPlacement, IRoverFaceScreen
+        IRoverPlacement, IRoverFaceScreen, IRoverCargoSeat
     {
         /// <summary>The probe starts this fraction of the radius above the centre, so slight sinking hits.</summary>
         private const float ProbeLiftFraction = 0.5f;
@@ -49,11 +49,8 @@ namespace MoonProject.Rover
         [Tooltip("Dust motes hanging in the headlamp's beam.")]
         [SerializeField] private RoverLampMotes _lampMotes;
 
-        [Tooltip("07's visible kit and friends' gifts, its road light and the cargo seat.")]
-        [SerializeField] private RoverKit _kit;
-
-        [Tooltip("The Hover-Jump coils under the belly (shown only while 07 owns the ability).")]
-        [SerializeField] private RoverHoverCoils _hoverCoils;
+        [Tooltip("07's road light.")]
+        [SerializeField] private RoverHeadlamp _headlamp;
 
         [Tooltip("The amber flank lamps along the stripe: 07's battery (docs/features/M3-20).")]
         [SerializeField] private RoverFlankLamps _flankLamps;
@@ -88,9 +85,6 @@ namespace MoonProject.Rover
         [Tooltip("The hatch window's HatchCrate_0.. nodes, one per hold slot (top row L to R, then bottom).")]
         [SerializeField] private GameObject[] _hatchCrates = new GameObject[0];
 
-        [Tooltip("Art's two Kit_SideBin on BinSocket_L and BinSocket_R, shown once 07 has the Side Bins.")]
-        [SerializeField] private GameObject[] _sideBins = new GameObject[0];
-
         [Tooltip("RoverModel 'TetherOrigin' (lens centre of 07's eye, +Z = gaze).")]
         [SerializeField] private Transform _tetherOrigin;
 
@@ -119,7 +113,6 @@ namespace MoonProject.Rover
         private EventBus _events;
         private LandingDetector _landing;
         private StuckDetector _stuck;
-        private HoverJump _jump;
         private RoverStillness _stillness;
         private BoostDrive _boost;
         private BatteryLink _battery;
@@ -131,18 +124,12 @@ namespace MoonProject.Rover
         private CargoHatch _hatch;
         private GameContext _context;
         private bool _docked;
-        private bool _cradled;
-        private Vector3 _cradleBody;
-        private float _cradleHeading;
         private float _dockElapsed;
         private Vector3 _dockFrom;
         private Vector3 _dockTo;
         private float _dockFromHeading;
         private float _dockToHeading;
         private int _abilities;
-        private bool _jumpHeld;
-        private bool _leaping;
-        private float _liftoff;
         private ITerrainQuery _terrain;
         private bool _initialized;
         private bool _recovering;
@@ -313,12 +300,6 @@ namespace MoonProject.Rover
             return false;
         }
 
-        /// <summary>07's visible kit and friends' gifts.</summary>
-        public RoverKit Kit => _kit;
-
-        /// <summary>The Hover-Jump coils under 07's belly.</summary>
-        public RoverHoverCoils HoverCoils => _hoverCoils;
-
         /// <summary>The battery's flank lamps (where 07 glances when a leap is refused).</summary>
         public RoverFlankLamps FlankLamps => _flankLamps;
 
@@ -331,39 +312,7 @@ namespace MoonProject.Rover
         /// <summary>True while 07 rests on the charging dock (eased onto it, held there until it drives off).</summary>
         public bool IsDocked => _docked;
 
-        /// <summary>True while a machine holds 07 in a pose it sets (the Rover Bay's turntable and guides).</summary>
-        public bool IsCradled => _cradled;
-
-        /// <summary>
-        /// A machine holds 07 (the Rover Bay, M3-14): its physics sphere at <paramref name="bodyCentre"/>, facing
-        /// <paramref name="heading"/> (deg), set every frame by the holder, who eases it. The drive input is still
-        /// read; nothing drives 07 until <see cref="ReleasePose"/>.
-        /// </summary>
-        public void HoldPose(Vector3 bodyCentre, float heading)
-        {
-            if (!_cradled)
-            {
-                _cradled = true;
-                Freeze();
-            }
-
-            _cradleBody = bodyCentre;
-            _cradleHeading = heading;
-        }
-
-        /// <summary>The machine lets 07 go: free at once, at rest.</summary>
-        public void ReleasePose()
-        {
-            if (!_cradled)
-            {
-                return;
-            }
-
-            _cradled = false;
-            Free();
-        }
-
-        /// <summary>Held by a machine (the dock, the bay): kinematic, at rest, no jump or leap under way.</summary>
+        /// <summary>Held by the charging pad: kinematic, at rest.</summary>
         private void Freeze()
         {
             _body.linearVelocity = Vector3.zero;
@@ -372,10 +321,7 @@ namespace MoonProject.Rover
             _localAcceleration = Vector3.zero;
             _yawRate = 0f;
             _forwardSpeed = 0f;
-            _leaping = false;
-            _liftoff = 0f;
             _contacts.Reset();
-            _jump.Reset();
         }
 
         /// <summary>Let go by a machine: on its wheels again, at rest.</summary>
@@ -399,37 +345,24 @@ namespace MoonProject.Rover
         public void Grant(RoverAbility ability)
         {
             _abilities |= AbilityBit(ability);
-            if (ability == RoverAbility.SideBins)
-            {
-                foreach (GameObject bin in _sideBins)
-                {
-                    bin.SetActive(true);
-                }
-            }
         }
 
         public void Revoke(RoverAbility ability)
         {
             _abilities &= ~AbilityBit(ability);
-            if (ability == RoverAbility.SideBins)
-            {
-                foreach (GameObject bin in _sideBins)
-                {
-                    bin.SetActive(false);
-                }
-            }
         }
+
+        // IRoverCargoSeat: where a relic rides is the hatch's socket on 07's back.
+        bool IRoverCargoSeat.IsFitted => Has(RoverAbility.CargoCradle);
+
+        Vector3 IRoverCargoSeat.Position => _cargoSocket.position;
+
+        Quaternion IRoverCargoSeat.Rotation => _cargoSocket.rotation;
 
         private static int AbilityBit(RoverAbility ability)
         {
             return 1 << (int)ability;
         }
-
-        /// <summary>Hover-Jump charge, 0..1 (0 when not charging): drives the crouch and the effort squint.</summary>
-        public float JumpCharge => _jump.Charge;
-
-        /// <summary>True from a Hover-Jump take-off until touchdown.</summary>
-        public bool IsLeaping => _leaping;
 
         public void Initialize(GameContext context)
         {
@@ -450,7 +383,6 @@ namespace MoonProject.Rover
 
             _landing = new LandingDetector(_tuning.Landing);
             _stuck = new StuckDetector(_tuning.Recovery);
-            _jump = new HoverJump(_tuning.HoverJump);
             _stillness = new RoverStillness(_tuning.Stillness);
             _boost = new BoostDrive(_tuning.Boost);
             _battery = new BatteryLink(context);
@@ -467,7 +399,7 @@ namespace MoonProject.Rover
             context.Register<IRoverAbilities>(this);
             context.Register<IRoverStillness>(_stillness);
             context.Register<IRoverPlacement>(this);
-            context.Register<IRoverCargoSeat>(_kit);
+            context.Register<IRoverCargoSeat>(this);
             context.Register<IRoverFaceScreen>(this);
             var feelPreferences = new FeelPreferences();
             context.Register<IFeelSettings>(feelPreferences);
@@ -486,9 +418,8 @@ namespace MoonProject.Rover
                     Cutter, CutterOrigin, _focusLens, _focusLensGlass);
             }
 
-            bool kitReady = _kit.Initialize(context, this, _visualRig);
+            bool headlampReady = _headlamp.Initialize(context, this);
             bool effectsReady = _wheelFx.Initialize(context, this);
-            bool coilsReady = _hoverCoils.Initialize(context, this);
             bool motesReady = _lampMotes.Initialize(this);
             bool lampsReady = _flankLamps.Initialize(context);
             bool portraitReady = _portrait.Initialize();
@@ -497,7 +428,7 @@ namespace MoonProject.Rover
                 context.Register<IRoverPortrait>(_portrait);
             }
 
-            _initialized = visualsReady && kitReady && effectsReady && coilsReady && motesReady && lampsReady
+            _initialized = visualsReady && headlampReady && effectsReady && motesReady && lampsReady
                 && portraitReady;
             enabled = _initialized;
         }
@@ -542,15 +473,12 @@ namespace MoonProject.Rover
             ok &= Require(_sphere != null, "Physics sphere SphereCollider is not assigned.");
             ok &= Require(_visualRig != null, "RoverVisualRig is not assigned.");
             ok &= Require(_wheelFx != null, "RoverWheelFx is not assigned.");
-            ok &= Require(_kit != null, "RoverKit is not assigned.");
-            ok &= Require(_hoverCoils != null, "RoverHoverCoils is not assigned.");
+            ok &= Require(_headlamp != null, "RoverHeadlamp is not assigned.");
             ok &= Require(_lampMotes != null, "RoverLampMotes is not assigned.");
             ok &= Require(_flankLamps != null, "RoverFlankLamps is not assigned.");
             ok &= Require(_portrait != null, "RoverPortrait is not assigned.");
             ok &= Require(_cargoHatch != null && _hatchCrates.Length > 0 && Array.TrueForAll(_hatchCrates, c => c != null),
                 "The CargoHatch or a HatchCrate is not assigned (M3-25 hatch contract).");
-            ok &= Require(_sideBins.Length == 2 && _sideBins[0] != null && _sideBins[1] != null,
-                "The two side bins (BinSocket_L, BinSocket_R) are not assigned.");
             ok &= Require(_focusLens != null && _focusLensGlass != null,
                 "The Focus Lens or its Glass is not assigned (art's cutter kit).");
             ok &= Require(_conduitGlows.Length > 0 && Array.TrueForAll(_conduitGlows, r => r != null)
@@ -631,15 +559,6 @@ namespace MoonProject.Rover
                 return;
             }
 
-            if (_cradled)
-            {
-                ReadInput(dt);
-                _body.MovePosition(_cradleBody);
-                _previousHeading = _heading;
-                _heading = Mathf.Repeat(_cradleHeading, 360f);
-                return;
-            }
-
             if (_recovering)
             {
                 ReadInput(dt);
@@ -652,9 +571,9 @@ namespace MoonProject.Rover
             _localAcceleration = Quaternion.Inverse(yaw) * ((velocity - _lastVelocity) / dt);
 
             ReadInput(dt);
-            bool groundedBeforeProbe = (_hasContact || _landing.IsGrounded) && !_leaping && _liftoff <= 0f;
+            bool groundedBeforeProbe = _hasContact || _landing.IsGrounded;
             _obstacleProbe.ProbeObstacle(_body.position, velocity, _heading, _throttle, dt, groundedBeforeProbe,
-                _leaping, out Vector3 obstacleNormal, out Vector3 obstaclePoint, out float obstacleGap);
+                out Vector3 obstacleNormal, out Vector3 obstaclePoint, out float obstacleGap);
             velocity = _contacts.StepContact(velocity, obstacleNormal, _obstacleProbe.SecondaryNormal, obstacleGap,
                 groundedBeforeProbe, dt, out Vector3 pushOut, out float impactSpeed, out bool publishCollision);
             if (_contacts.HasObstacle)
@@ -674,27 +593,12 @@ namespace MoonProject.Rover
             }
 
             ProbeGround(out float speedIntoGround, velocity);
-            if (_liftoff > 0f)
-            {
-                // Leaving the ground after a Hover-Jump: no downforce or grip pulling 07 back for a moment.
-                _liftoff -= dt;
-                _hasContact = false;
-            }
-
-            bool wasGrounded = _landing.IsGrounded;
             if (_landing.Step(_hasContact, speedIntoGround, dt))
             {
                 Vector3 contact = _body.position - _contactNormal * _tuning.Ground.SphereRadius;
                 _events.Publish(new RoverLanded(contact, _landing.LastImpactSpeed, _landing.LastAirTime));
             }
 
-            if (!wasGrounded && _landing.IsGrounded)
-            {
-                _leaping = false;
-                _jump.NotifyLanded();
-            }
-
-            StepHoverJump(velocity, dt);
             StepBoost(dt);
 
             Vector3 normal = _hasContact ? _contactNormal : Vector3.up;
@@ -746,7 +650,7 @@ namespace MoonProject.Rover
             _recovering = false;
             _recoveryElapsed = 0f;
             _docked = false;
-            _kit.SetDocked(false);
+            _headlamp.SetDocked(false);
             _body.isKinematic = false;
             _body.transform.SetPositionAndRotation(centre, Quaternion.identity);
             _body.position = centre;
@@ -768,10 +672,7 @@ namespace MoonProject.Rover
             _steerDirection = 1f;
             _contactNormal = normal;
             _groundNormal = normal;
-            _leaping = false;
-            _liftoff = 0f;
             _contacts.Reset();
-            _jump.Reset();
             _landing.Reset();
             _stuck.Reset();
             _stillness.Reset();
@@ -834,7 +735,7 @@ namespace MoonProject.Rover
                 return;
             }
 
-            _kit.SetDocked(dock.Docked);
+            _headlamp.SetDocked(dock.Docked);
             if (!dock.Docked)
             {
                 if (_docked)
@@ -875,9 +776,6 @@ namespace MoonProject.Rover
             _body.isKinematic = true;
             _localAcceleration = Vector3.zero;
             _yawRate = 0f;
-            _leaping = false;
-            _liftoff = 0f;
-            _jump.Reset();
             _events.Publish(new RoverRecovering(from, to, _tuning.Recovery.LiftDuration));
         }
 
@@ -915,43 +813,6 @@ namespace MoonProject.Rover
             DriveSettings drive = _tuning.Drive;
             _throttle = Ease(_throttle, raw.y, drive.ThrottleRiseHalfLife, drive.ThrottleFallHalfLife, dt);
             _steer = Ease(_steer, raw.x, _tuning.Steering.SteerRiseHalfLife, _tuning.Steering.SteerReturnHalfLife, dt);
-            _jumpHeld = _driveSource != null
-                ? _driveSource is IRoverJumpSource jumpSource && jumpSource.JumpHeld
-                : _input.JumpHeld;
-        }
-
-        /// <summary>
-        /// Hover-Jump (M3-03): ignored unless 07 owns it, only on the ground and never while gameplay holds it still.
-        /// A leap sets the take-off speed for the charged height, keeps the forward speed and leaves the ground
-        /// cleanly. When the battery can't pay for a full leap the press is refused at the lip: the coils never
-        /// charge and <see cref="RoverLeapRefused"/> lets the coils fizzle (docs/features/M3-20).
-        /// </summary>
-        private void StepHoverJump(Vector3 velocity, float dt)
-        {
-            bool enabled = Has(RoverAbility.HoverJump) && !_holds.IsHeld;
-            bool grounded = _landing.IsGrounded && !_leaping && _liftoff <= 0f;
-            switch (_jump.Step(enabled, _jumpHeld, grounded, _battery.CanLeap, dt))
-            {
-                case HoverJumpEvent.Refused:
-                    _events.Publish(new RoverLeapRefused(_visualRig.RootPosition));
-                    break;
-                case HoverJumpEvent.ChargeProgress:
-                    _events.Publish(new RoverJumpCharged(_jump.LastStrength));
-                    break;
-                case HoverJumpEvent.Leap:
-                    float strength = _jump.LastStrength;
-                    float takeOff = _jump.TakeOffSpeed(strength, _tuning.Ground.AirRiseGravity);
-                    float rise = Mathf.Max(velocity.y, 0f) + takeOff;
-                    _body.AddForce(Vector3.up * (rise - velocity.y), ForceMode.VelocityChange);
-                    _leaping = true;
-                    _liftoff = _tuning.HoverJump.LiftoffTime;
-                    _hasContact = false;
-                    _events.Publish(new RoverJumped(strength));
-                    break;
-                case HoverJumpEvent.Cancelled:
-                    _events.Publish(new RoverJumpCancelled());
-                    break;
-            }
         }
 
         /// <summary>
@@ -961,7 +822,7 @@ namespace MoonProject.Rover
         /// </summary>
         private void StepBoost(float dt)
         {
-            bool free = _hasContact && _landing.IsGrounded && !_holds.IsHeld && !_leaping && _liftoff <= 0f;
+            bool free = _hasContact && _landing.IsGrounded && !_holds.IsHeld;
             float slope = Vector3.Angle(_contactNormal, Vector3.up);
             var sample = new BoostSample(Has(RoverAbility.BoostCoils) && !_battery.IsLowPower, _throttle, _steer,
                 _forwardSpeed, _tuning.Drive.TopSpeed, slope, free);
@@ -1000,7 +861,7 @@ namespace MoonProject.Rover
             float direction = SteeringModel.SteerDirection(steering, _forwardSpeed, _throttle,
                 _tuning.Drive.InputDeadZone);
             _steerDirection = Smoothing.Damp(_steerDirection, direction, steering.SteerDirectionHalfLife, dt);
-            float airSteer = _leaping ? _tuning.HoverJump.AirSteer : steering.AirTurnFactor;
+            float airSteer = steering.AirTurnFactor;
             float playerYawRate = SteeringModel.YawRate(steering, _steer, _steerDirection, _forwardSpeed,
                 _tuning.Drive.TopSpeed, true) * (_hasContact ? 1f : airSteer);
 
@@ -1056,34 +917,7 @@ namespace MoonProject.Rover
                 float extraGravity = GroundModel.ExtraAirGravity(ground, velocity.y, Physics.gravity.y);
                 Vector3 acceleration = forward * (drive * ground.AirThrottleFactor) + Vector3.down * extraGravity;
                 _body.AddForce(acceleration, ForceMode.Acceleration);
-                if (_leaping)
-                {
-                    SteerAndCushionLeap(velocity, forward, dt);
-                }
             }
-        }
-
-        /// <summary>
-        /// During a leap the gentle air-steer also bends the flight path (a share of the ground grip), and near the
-        /// ground the cushion slows the descent so every landing is soft.
-        /// </summary>
-        private void SteerAndCushionLeap(Vector3 velocity, Vector3 forward, float dt)
-        {
-            GroundSettings ground = _tuning.Ground;
-            HoverJumpSettings jump = _tuning.HoverJump;
-            Vector3 bend = GroundModel.GripVelocityChange(velocity, Vector3.up, forward,
-                ground.GripRate * jump.AirSteer, dt);
-            float radius = ground.SphereRadius;
-            float cushion = 0f;
-            if (Physics.Raycast(_body.position, Vector3.down, out RaycastHit hit, jump.CushionProbe + radius,
-                    Layers.DriveableMask, QueryTriggerInteraction.Ignore))
-            {
-                // Aim for the landing speed where the ground probe reports touchdown, a little above the surface.
-                float touchdownGap = ground.GroundSnapDistance + radius * (1f - ground.ProbeRadiusFactor);
-                cushion = _jump.CushionVelocityChange(velocity.y, hit.distance - radius - touchdownGap);
-            }
-
-            _body.AddForce(bend + Vector3.up * cushion, ForceMode.VelocityChange);
         }
 
         private void Update()
@@ -1103,9 +937,8 @@ namespace MoonProject.Rover
             _chargeCells?.Tick(deltaTime);
             _hatch.Tick(deltaTime);
             _visualRig.Tick(deltaTime);
-            _kit.Tick(deltaTime);
+            _headlamp.Tick(deltaTime);
             _wheelFx.Tick();
-            _hoverCoils.Tick(deltaTime);
             _lampMotes.Tick(deltaTime);
             _flankLamps.Tick(deltaTime);
         }
@@ -1114,7 +947,7 @@ namespace MoonProject.Rover
         private StillnessSample SampleStillness()
         {
             Vector2 drive = _driveSource != null ? _driveSource.Drive : _input.Drive;
-            bool engaged = _recovering || _cradled || _holds.IsHeld || _jump.Charge > 0f;
+            bool engaged = _recovering || _holds.IsHeld;
             return new StillnessSample(_landing.IsGrounded, Speed, drive, _input.LookDelta, _input.LookRate, engaged);
         }
 

@@ -12,7 +12,7 @@ namespace MoonProject.Rover.PlayModeTests
     /// <summary>
     /// The lonely wide shot and IRoverStillness (real wiring): 07 resting drifts the camera out slowly to a wide frame
     /// with 07 small in the lower third; drive or look input hands the view back quickly but smoothly; the tether and
-    /// camera moments keep it closed; a Hover-Jump charge or a hold is never stillness; 07 sighs as the frame opens.
+    /// camera moments keep it closed; a hold is never stillness; 07 sighs as the frame opens.
     /// </summary>
     public sealed class RoverWideShotTests : InputTestFixture
     {
@@ -169,30 +169,22 @@ namespace MoonProject.Rover.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator AJumpChargeOrAHold_IsNeverStillness()
+        public IEnumerator AHold_IsNeverStillness()
         {
             IRoverStillness stillness = _rover.Context.Get<IRoverStillness>();
-            _rover.Context.Get<IRoverAbilities>().Grant(RoverAbility.HoverJump);
             yield return Wait(1f);
             Assert.Greater(stillness.StillSeconds, 0.5f, "Parked and left alone: resting.");
 
             RoverController controller = _rover.Controller;
-            _rover.Drive.JumpHeld = true;
-            yield return Wait(0.2f);
-            Assert.Greater(controller.JumpCharge, 0f, "07 is charging a Hover-Jump.");
-            yield return AssertNotStill(stillness, 0.4f, "Charging a Hover-Jump is not resting.");
-
             var owner = new object();
             IRoverRig rig = _rover.Context.Get<IRoverRig>();
             rig.SetHoldStill(owner, true);
             yield return Wait(0.2f);
-            Assert.AreEqual(0f, controller.JumpCharge, "A hold cancels the charge quietly.");
-            _rover.Drive.JumpHeld = false;
             yield return AssertNotStill(stillness, 0.5f, "Held parked by an interaction is not resting.");
 
             rig.SetHoldStill(owner, false);
             yield return Wait(1f);
-            Assert.IsTrue(controller.IsGrounded, "No leap came of the cancelled charge.");
+            Assert.IsTrue(controller.IsGrounded, "07 is still on the ground.");
             Assert.Greater(stillness.StillSeconds, 0.5f, "Released and left alone: resting again.");
         }
 

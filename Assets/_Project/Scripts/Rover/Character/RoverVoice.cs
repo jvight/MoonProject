@@ -12,7 +12,7 @@ namespace MoonProject.Rover
     /// <list type="bullet">
     /// <item>the dock locks: Affirm, or Relieved when 07 arrived at or under the tuned share; the dock full:
     /// Happy;</item>
-    /// <item>an install seating: Affirm, powering on: Proud; a friend's gift: Happy; a find decoded: Affirm; a
+    /// <item>a friend's gift: Happy; a find decoded: Affirm; a
     /// friend repaired: Happy; a friend greeting 07: Greeting; a mast filling a nearly empty battery: Relieved;</item>
     /// <item>the battery's Low warning, or 07 being recovered: Worried; the battery empty: Tired;</item>
     /// <item>the first answer of each friend, site or relic while listening, and a new place: Curious;</item>
@@ -102,12 +102,6 @@ namespace MoonProject.Rover
 
         private void OnFeelBeat(FeelBeat beat)
         {
-            if (beat.Kind == FeelKind.Install)
-            {
-                OnInstallBeat(beat);
-                return;
-            }
-
             if (beat.Kind == FeelKind.Build && beat.Phase == FeelPhase.Impact)
             {
                 Say(ChirpMood.Happy, 1f);
@@ -141,18 +135,6 @@ namespace MoonProject.Rover
             else if (beat.Phase == FeelPhase.Reward)
             {
                 Say(ChirpMood.Happy, 1f);
-            }
-        }
-
-        private void OnInstallBeat(FeelBeat beat)
-        {
-            if (beat.Phase == FeelPhase.Impact)
-            {
-                Say(beat.Strength < 1f ? ChirpMood.Happy : ChirpMood.Affirm, Gentle);
-            }
-            else if (beat.Phase == FeelPhase.Reward)
-            {
-                Say(ChirpMood.Proud, 1f);
             }
         }
 

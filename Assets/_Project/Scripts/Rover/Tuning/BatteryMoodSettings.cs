@@ -6,7 +6,7 @@ namespace MoonProject.Rover
     /// <summary>
     /// How 07 carries its battery (docs/features/M3-20 "How 07 shows it"): below the Low share the eye dims a little,
     /// the head bows and the wing stays flatter; crawling on the reserve it is quieter still; a charger perks it up; a
-    /// refused leap gets a glance at its own lamps and the VeryLow warning a look toward the nearest lit charger. Tired,
+    /// VeryLow warning a look toward the nearest lit charger. Tired,
     /// never sad.
     /// </summary>
     [Serializable]
@@ -44,10 +44,6 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _chargePerk = 0.7f;
 
-        [Tooltip("Seconds 07 glances at its flank lamps when a leap is refused.")]
-        [Range(0.2f, 5f)]
-        [SerializeField] private float _lampGlanceSeconds = 1.2f;
-
         [Tooltip("Seconds 07 looks toward the nearest lit charger at the VeryLow warning.")]
         [Range(0.5f, 8f)]
         [SerializeField] private float _chargerGlanceSeconds = 2.5f;
@@ -64,7 +60,6 @@ namespace MoonProject.Rover
         public float LowWingOpen => _lowWingOpen;
         public float HalfLife => _halfLife;
         public float ChargePerk => _chargePerk;
-        public float LampGlanceSeconds => _lampGlanceSeconds;
         public float ChargerGlanceSeconds => _chargerGlanceSeconds;
         public float ChargerGlanceLift => _chargerGlanceLift;
     }
