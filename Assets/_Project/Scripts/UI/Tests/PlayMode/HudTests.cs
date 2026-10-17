@@ -560,10 +560,10 @@ namespace MoonProject.UI.PlayModeTests
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             _rig.Fakes.Charge = 1.2f;
             yield return Seconds(1f);
-            Events.Publish(new TickerLine("battery.low.dock"));
+            Events.Publish(new TickerLine("battery.low.lander"));
             yield return Seconds(2f);
             Assert.IsTrue(_rig.Ui.Objective.ShowsBattery, "it shows on the one soft line");
-            Assert.AreEqual(Text("battery.low.dock"), _rig.Ui.Layout.NextLineText.text);
+            Assert.AreEqual(Text("battery.low.lander"), _rig.Ui.Layout.NextLineText.text);
 
             _rig.Fakes.IsCharging = true;
             yield return Seconds(2.5f);
@@ -576,7 +576,7 @@ namespace MoonProject.UI.PlayModeTests
             Boot();
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            Events.Publish(new TickerLine("battery.low.dock"));
+            Events.Publish(new TickerLine("battery.low.lander"));
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.PickUp, new Vector3(0f, 0f, 10f), true);
             int shownFrames = 0;
             float until = Time.realtimeSinceStartup + 8f;
