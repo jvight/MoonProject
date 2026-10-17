@@ -71,6 +71,11 @@ namespace MoonProject.UI.PlayModeTests
 
         public override void TearDown()
         {
+            if (_gameplay != null && _gameplay.Build != null && _gameplay.Build.Tuning != null)
+            {
+                _gameplay.Build.Tuning.SetPlaytestUnlockedIds();
+            }
+
             if (_document != null && _originalPanelSettings != null)
             {
                 _document.panelSettings = _originalPanelSettings;
@@ -134,7 +139,8 @@ namespace MoonProject.UI.PlayModeTests
 
             // Unlock all 10 R1 structures via the data-driven BuildingTuning playtest unlock list (no KnownStructures.Learn call).
             build.Tuning.SetPlaytestUnlockedIds(StructureIds.All);
-            Assert.AreEqual(StructureIds.Count, build.ApplyPlaytestUnlocks(restored: true));
+            build.ApplyPlaytestUnlocks(restored: true);
+            Assert.AreEqual(StructureIds.Count, build.Known.Count);
             Assert.AreEqual(StructureIds.Count, build.Controller.RefreshAvailable());
 
             // Give 07 5 Metal, 2 Wiring, 1 Optics so several structures are affordable and larger ones show coral shortage.
