@@ -99,8 +99,28 @@ namespace MoonProject.Core.Save
             _contentVersion = contentVersion;
         }
 
-        /// <summary>&lt;persistentDataPath&gt;/Saves.</summary>
-        public static string DefaultDirectory => Path.Combine(Application.persistentDataPath, FolderName);
+        /// <summary>
+        /// Editor SessionState key holding a scratch save folder while the editor runs tests (set and cleaned up by
+        /// the test-run hook in MoonProject.Editor.Automation): every save, settings file and slot a test makes lands
+        /// there instead of in the player's real folder. Never set in a player.
+        /// </summary>
+        public const string TestRunDirectoryKey = "MoonProject.TestRunSaveDirectory";
+
+        /// <summary>&lt;persistentDataPath&gt;/Saves, or the run's scratch folder while the editor runs tests.</summary>
+        public static string DefaultDirectory => TestRunDirectory() ?? RealDirectory;
+
+        /// <summary>&lt;persistentDataPath&gt;/Saves: the player's real folder, test runs included.</summary>
+        public static string RealDirectory => Path.Combine(Application.persistentDataPath, FolderName);
+
+        private static string TestRunDirectory()
+        {
+#if UNITY_EDITOR
+            string directory = UnityEditor.SessionState.GetString(TestRunDirectoryKey, string.Empty);
+            return directory.Length > 0 ? directory : null;
+#else
+            return null;
+#endif
+        }
 
         public string FilePath { get; }
 
