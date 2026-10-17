@@ -98,6 +98,7 @@ namespace MoonProject.Rover
         private Vector3 _momentShift;
         private IRoverState _rover;
         private IWorldLayout _world;
+        private IWorldAnchors _anchors;
         private IRoverStillness _stillness;
         private GameContext _context;
         private readonly PropSightLine _sight = new PropSightLine();
@@ -227,6 +228,7 @@ namespace MoonProject.Rover
             _context = context;
             _rover = context.Get<IRoverState>();
             _world = context.Get<IWorldLayout>();
+            context.TryGet(out _anchors);
             _stillness = context.Get<IRoverStillness>();
             _terrain = context.Get<ITerrainQuery>();
             _events = context.Events;
@@ -1073,14 +1075,19 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The title over a save (M3-09 Part A): the high, wide shot of home from behind 07 on its dock, the dock's
-        /// evening framing, held until <see cref="ReleaseTitleFrame"/>.
+        /// The title over a save (M3-09 Part A): the high, wide shot of 07 where it was left, from behind and looking
+        /// toward the lander (<see cref="TitleFrame"/>), in the dock's evening framing, held until
+        /// <see cref="ReleaseTitleFrame"/>.
         /// </summary>
         public void HoldTitleFrame()
         {
             Vector3 follow = _rover.Position + Vector3.up * _tuning.TargetHeight;
-            float home = WideShotComposer.Bearing(_world.BasePosition - _rover.Position);
-            OpenHeldShot(_tuning.EveningShot, follow, home, 0f);
+            Vector3? lander = _anchors != null && _anchors.TryGet(WorldAnchorIds.PlaceLander, out WorldAnchor anchor)
+                ? anchor.Position
+                : (Vector3?)null;
+            float bearing = TitleFrame.Bearing(_rover.Position, lander, RoverYaw(),
+                _tuning.Opening.TitleFrameMinLanderDistance);
+            OpenHeldShot(_tuning.EveningShot, follow, bearing, 0f);
         }
 
         /// <summary>Continue: the title's wide frame eases back into the chase frame.</summary>
