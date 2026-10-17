@@ -311,6 +311,7 @@ namespace MoonProject.Rover.Editor
         private static Light AddHeadlamp(BuilderScratchScene scratch, Transform socket, RoverRigTuning tuning)
         {
             var light = Child(scratch, "Headlamp", socket).AddComponent<Light>();
+            light.transform.localRotation = Quaternion.Euler(tuning.HeadlampDownTilt, 0f, 0f);
             light.type = LightType.Spot;
             light.color = Palette.Get(PaletteSwatch.WarmLamp);
             light.intensity = tuning.HeadlampIntensity;

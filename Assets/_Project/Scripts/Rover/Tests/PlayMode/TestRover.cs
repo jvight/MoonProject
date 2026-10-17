@@ -309,6 +309,7 @@ namespace MoonProject.Rover.PlayModeTests
                 Node(RoverModelNodes.DustSocketRight, model, new Vector3(HalfTrack, 0f, -AxleSpacing));
 
             var headlamp = Node("Headlamp", lampSocket, Vector3.zero).gameObject.AddComponent<Light>();
+            headlamp.transform.localRotation = Quaternion.Euler(rigTuning.HeadlampDownTilt, 0f, 0f);
             var eyeLight = Node("EyeGlow", eye, Vector3.zero).gameObject.AddComponent<Light>();
 
             Transform coilSocket = Node(RoverModelNodes.CoilSocket, model, Vector3.up * CoilSocketHeight);
