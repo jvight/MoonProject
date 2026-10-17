@@ -150,8 +150,13 @@ namespace MoonProject.Rover
                 for (int i = 0; i < selfColliders.Length; i++)
                 {
                     Collider col = selfColliders[i];
-                    if (col != null && col.enabled && !col.isTrigger
-                        && col.Raycast(ray, out RaycastHit hit, distance)
+                    if (col == null || !col.enabled || col.isTrigger ||
+                        (head != null && (col.transform == head || col.transform.IsChildOf(head))))
+                    {
+                        continue;
+                    }
+
+                    if (col.Raycast(ray, out RaycastHit hit, distance)
                         && hit.distance > 0.02f && hit.distance < distance - 0.02f)
                     {
                         return true;
@@ -213,12 +218,7 @@ namespace MoonProject.Rover
             }
 
             Transform tr = filter.transform;
-            if (head != null && (tr == head || tr.IsChildOf(head)))
-            {
-                return false;
-            }
-
-            if (string.Equals(tr.name, "Shell", StringComparison.Ordinal))
+            if (!string.Equals(tr.name, "Chassis", StringComparison.Ordinal))
             {
                 return false;
             }

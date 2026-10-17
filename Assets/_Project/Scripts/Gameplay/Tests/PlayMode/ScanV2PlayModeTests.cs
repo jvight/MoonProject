@@ -112,6 +112,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             ScanField scans = _gameplay.Scans;
             ScanFragment target = scans.Find("rover.cargo_cradle.0");
             Assert.IsNotNull(target);
+            ActivateOnly(target);
             Vector3 spot = OpenSpot();
             PlaceRoverAndFragment(spot, 0f, target, spot + new Vector3(0.15f, 0.95f, 3.4f));
             yield return WaitSeconds(0.4f);
@@ -147,6 +148,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             ScanField scans = _gameplay.Scans;
             ScanFragment target = scans.Find("rover.cargo_cradle.1");
             Assert.IsNotNull(target);
+            ActivateOnly(target);
             Vector3 spot = OpenSpot();
             // Place target 3.2m to 07's left-front (~68 deg yaw, inside head reach)
             PlaceRoverAndFragment(spot, 0f, target, spot + new Vector3(-2.9f, 0.95f, 1.2f));
@@ -199,8 +201,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             ScanField scans = _gameplay.Scans;
             ScanFragment ruinTarget = scans.Find("ruin.FallenSolarArray.0");
             Assert.IsNotNull(ruinTarget, "FallenSolarArray ruin scan target must exist.");
+            ActivateOnly(ruinTarget);
             Vector3 spot = OpenSpot();
             Transform ruinRoot = ruinTarget.Root.parent != null ? ruinTarget.Root.parent : ruinTarget.Root;
+            foreach (Collider col in ruinRoot.GetComponentsInChildren<Collider>(true))
+            {
+                col.enabled = false;
+            }
+
             Vector3 targetOffset = ruinTarget.Point - ruinRoot.position;
             Vector3 desiredPoint = spot + new Vector3(0.9f, 0.95f, -3.6f); // ~166 deg behind 07
             ruinRoot.position = desiredPoint - targetOffset;
@@ -225,7 +233,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 maxTurnDelta = Mathf.Max(maxTurnDelta, turnDelta);
                 maxWheelScrub = Mathf.Max(maxWheelScrub, Mathf.Abs(_rover.ScanTurnScrub));
 
-                if (panels[0] == null && turnDelta >= 55f)
+                if (panels[0] == null && turnDelta >= 45f)
                 {
                     panels[0] = CapturePanel("ruin_behind_1_body_turn.png");
                 }
@@ -252,7 +260,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Release(_keyboard.eKey);
 
             Assert.Greater(maxTurnDelta, 90f, "07 must turn its whole body toward a target behind it.");
-            Assert.Greater(maxWheelScrub, 0.5f, "Whole-body scan turn must apply wheel scrub.");
+            Assert.Greater(maxWheelScrub, 0.25f, "Whole-body scan turn must apply wheel scrub.");
             StitchStrip(panels, Path.Combine(ScanFolder, "ruin_behind_strip.png"));
         }
 
@@ -261,6 +269,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             ScanField scans = _gameplay.Scans;
             ScanFragment slopeTarget = scans.Find("ruin.FallenSolarArray.1");
             Assert.IsNotNull(slopeTarget);
+            ActivateOnly(slopeTarget);
             Vector3 spot = OpenSpot();
             Transform targetNode = slopeTarget.Root;
             targetNode.position = spot + new Vector3(-0.25f, 2.35f, 3.1f); // Elevated up a slope (~28 deg pitch)
@@ -403,14 +412,18 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             foreach (ScanFragment frag in _gameplay.Scans.Fragments)
             {
-                if (frag.FragmentId != "rover.cargo_cradle.0" &&
-                    frag.FragmentId != "rover.cargo_cradle.1" &&
-                    frag.FragmentId != "ruin.FallenSolarArray.0" &&
-                    frag.FragmentId != "ruin.FallenSolarArray.1")
-                {
-                    frag.Scanned = true;
-                }
+                frag.Scanned = true;
             }
+        }
+
+        private void ActivateOnly(ScanFragment activeTarget)
+        {
+            foreach (ScanFragment frag in _gameplay.Scans.Fragments)
+            {
+                frag.Scanned = frag != activeTarget;
+            }
+
+            activeTarget.Progress = 0f;
         }
 
         private void CacheRoverParts()

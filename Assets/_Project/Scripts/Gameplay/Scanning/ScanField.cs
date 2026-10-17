@@ -730,23 +730,36 @@ namespace MoonProject.Gameplay
 
         private bool IsSelfOccluded(Vector3 origin, Vector3 dir, float distance)
         {
-            var ray = new Ray(origin, dir);
             if (_headTransform != null)
             {
                 Vector3 localOrigin = _headTransform.InverseTransformPoint(origin);
-                Vector3 localDir = _headTransform.InverseTransformDirection(dir);
-                if (IntersectsBox(localOrigin, localDir, new Vector3(-0.30f, -0.20f, -0.22f),
-                        new Vector3(0.30f, 0.20f, 0.22f), distance))
+                Vector3 localEnd = _headTransform.InverseTransformPoint(origin + dir * distance);
+                Vector3 localVec = localEnd - localOrigin;
+                float localDist = localVec.magnitude;
+                float halfWidth = Mathf.Max(0.08f, Mathf.Abs(localOrigin.x) - 0.03f);
+                var headCore = new Bounds(new Vector3(0f, 0.04f, -0.02f), new Vector3(halfWidth * 2f, 0.44f, 0.36f));
+                if (localDist > 1e-4f && !headCore.Contains(localOrigin))
                 {
-                    return true;
+                    var localRay = new Ray(localOrigin, localVec / localDist);
+                    if (headCore.IntersectRay(localRay, out float hit) && hit >= 0f && hit <= localDist)
+                    {
+                        return true;
+                    }
                 }
             }
 
+            var ray = new Ray(origin, dir);
             for (int i = 0; _roverColliders != null && i < _roverColliders.Length; i++)
             {
                 Collider col = _roverColliders[i];
-                if (col != null && col.enabled && !col.isTrigger && !col.bounds.Contains(origin) &&
-                    col.Raycast(ray, out RaycastHit hit, distance) && hit.distance > 0.02f)
+                if (col == null || !col.enabled || col.isTrigger ||
+                    (_headTransform != null && (col.transform == _headTransform || col.transform.IsChildOf(_headTransform))))
+                {
+                    continue;
+                }
+
+                if (!col.bounds.Contains(origin) && col.Raycast(ray, out RaycastHit hit, distance) &&
+                    hit.distance > 0.02f && hit.distance < distance - 0.02f)
                 {
                     return true;
                 }
@@ -755,67 +768,34 @@ namespace MoonProject.Gameplay
             for (int i = 0; _roverMeshes != null && i < _roverMeshes.Length; i++)
             {
                 MeshFilter mf = _roverMeshes[i];
-                if (mf == null || !IsStructuralBodyMesh(mf.name))
+                if (mf == null || mf.sharedMesh == null || !mf.gameObject.activeInHierarchy ||
+                    !string.Equals(mf.name, "Chassis", StringComparison.Ordinal))
                 {
                     continue;
                 }
 
-                Renderer r = mf.GetComponent<Renderer>();
-                if (r != null && r.enabled && !r.bounds.Contains(origin) &&
-                    r.bounds.IntersectRay(ray, out float hitDist) && hitDist > 0.02f && hitDist < distance)
+                Transform tr = mf.transform;
+                Bounds bounds = mf.sharedMesh.bounds;
+                Vector3 localOrigin = tr.InverseTransformPoint(origin);
+                if (bounds.Contains(localOrigin))
                 {
-                    return true;
+                    continue;
+                }
+
+                Vector3 localEnd = tr.InverseTransformPoint(origin + dir * distance);
+                Vector3 localVec = localEnd - localOrigin;
+                float localDist = localVec.magnitude;
+                if (localDist > 1e-4f)
+                {
+                    var localRay = new Ray(localOrigin, localVec / localDist);
+                    if (bounds.IntersectRay(localRay, out float hitDist) && hitDist > 0.01f && hitDist < localDist - 0.01f)
+                    {
+                        return true;
+                    }
                 }
             }
 
             return false;
-        }
-
-        private static bool IsStructuralBodyMesh(string name)
-        {
-            return string.Equals(name, "Chassis", StringComparison.Ordinal) ||
-                   string.Equals(name, "RoverModel", StringComparison.Ordinal) ||
-                   string.Equals(name, "Neck", StringComparison.Ordinal) ||
-                   string.Equals(name, "NeckLift", StringComparison.Ordinal) ||
-                   string.Equals(name, "SolarPanel", StringComparison.Ordinal);
-        }
-
-        private static bool IntersectsBox(Vector3 origin, Vector3 dir, Vector3 min, Vector3 max, float maxDist)
-        {
-            float tMin = 0.01f;
-            float tMax = maxDist;
-            for (int a = 0; a < 3; a++)
-            {
-                float o = origin[a];
-                float d = dir[a];
-                if (Mathf.Abs(d) < 1e-6f)
-                {
-                    if (o < min[a] || o > max[a])
-                    {
-                        return false;
-                    }
-                }
-                else
-                {
-                    float t1 = (min[a] - o) / d;
-                    float t2 = (max[a] - o) / d;
-                    if (t1 > t2)
-                    {
-                        float tmp = t1;
-                        t1 = t2;
-                        t2 = tmp;
-                    }
-
-                    tMin = Mathf.Max(tMin, t1);
-                    tMax = Mathf.Min(tMax, t2);
-                    if (tMin > tMax)
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            return tMax >= tMin && tMin < maxDist;
         }
 
         private float Seconds(ScanFragment fragment, bool lens)
