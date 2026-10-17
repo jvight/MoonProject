@@ -65,6 +65,8 @@ namespace MoonProject.Gameplay
         private ISaveService _save;
         private MaterialStock _stock;
         private ExcavationSystem _excavation;
+        private SealedContainers _containers;
+        private CrewCrates _crates;
         private CargoBundles _held;
         private PhysicsMaterial _dragMaterial;
         private FeelVfx _feel;
@@ -125,21 +127,43 @@ namespace MoonProject.Gameplay
         /// <summary>True while salvage owns the Excavate hold (a piece is picked or being cut).</summary>
         public bool ClaimsHold => Candidate != null || _cutting != null;
 
-        public bool HasTarget => Aimed != null;
+        public bool HasTarget => Aimed != null || AimedCrate != null || AimedContainer != null;
 
-        public Vector3 CutPoint => Aimed != null ? Aimed.CutPosition : Vector3.zero;
+        public Vector3 CutPoint =>
+            Aimed != null ? Aimed.CutPosition
+            : AimedCrate != null ? AimedCrate.CutPoint.position
+            : AimedContainer != null ? AimedContainer.CutPoint.position
+            : Vector3.zero;
 
-        public bool IsCutting => _cutting != null && _cut.Phase == CutPhase.Cutting;
+        public bool IsCutting =>
+            (_cutting != null && _cut.Phase == CutPhase.Cutting) ||
+            (_crates != null && _crates.IsCutting) ||
+            (_containers != null && _containers.IsCutting);
 
         /// <summary>The emitter is charging up on the piece before ignition (feel-pass §3.1).</summary>
-        public bool IsBeamCharging => _cutting != null && _cut.Phase == CutPhase.Charging;
+        public bool IsBeamCharging =>
+            (_cutting != null && _cut.Phase == CutPhase.Charging) ||
+            (_crates != null && _crates.IsBeamCharging) ||
+            (_containers != null && _containers.IsBeamCharging);
 
         /// <summary>How far the charge-up has come, 0..1 (0 when not charging).</summary>
-        public float BeamChargeProgress => IsBeamCharging ? _cut.ChargeProgress : 0f;
+        public float BeamChargeProgress =>
+            _cutting != null && _cut.Phase == CutPhase.Charging ? _cut.ChargeProgress
+            : _crates != null && _crates.IsBeamCharging ? _crates.BeamChargeProgress
+            : _containers != null && _containers.IsBeamCharging ? _containers.BeamChargeProgress
+            : 0f;
 
-        public Vector3 HotPoint => Aimed != null ? Aimed.HotPoint : Vector3.zero;
+        public Vector3 HotPoint =>
+            Aimed != null ? Aimed.HotPoint
+            : AimedCrate != null ? AimedCrate.CutPoint.position
+            : AimedContainer != null ? AimedContainer.CutPoint.position
+            : Vector3.zero;
 
-        public Vector3 CutNormal => Aimed != null ? Aimed.CutNormal : Vector3.up;
+        public Vector3 CutNormal =>
+            Aimed != null ? Aimed.CutNormal
+            : AimedCrate != null ? AimedCrate.CutPoint.forward
+            : AimedContainer != null ? AimedContainer.CutPoint.forward
+            : Vector3.up;
 
         public int CutLineCount => Aimed != null ? Aimed.CutLine.Length : 0;
 
@@ -148,12 +172,25 @@ namespace MoonProject.Gameplay
             return Aimed.CutLinePoint(index);
         }
 
-        public float Progress => Aimed != null ? Aimed.Progress : 0f;
+        public float Progress =>
+            Aimed != null ? Aimed.Progress
+            : AimedCrate != null ? AimedCrate.Progress
+            : AimedContainer != null ? AimedContainer.Progress
+            : 0f;
 
-        public SalvageMaterial Material => Aimed != null ? Aimed.Material : default;
+        public SalvageMaterial Material =>
+            Aimed != null ? Aimed.Material
+            : AimedCrate != null ? AimedCrate.Contents.Material
+            : AimedContainer != null ? SalvageMaterial.Metal
+            : default;
 
         /// <summary>The piece under the beam, else the one a hold would cut, else null.</summary>
         private SalvagePiece Aimed => _cutting ?? Candidate;
+
+        private CrewCrate AimedCrate => _crates != null ? (_crates.Cutting ?? _crates.Candidate) : null;
+
+        private SealedContainer AimedContainer =>
+            _containers != null ? (_containers.Cutting ?? _containers.Candidate) : null;
 
         /// <summary>Current cutting beam brightness (tests and debugging views).</summary>
         /// <summary>How far the cutting beam reaches toward the cut (0..1; tests and debugging views).</summary>
@@ -396,6 +433,12 @@ namespace MoonProject.Gameplay
         {
             _excavation = excavation != null ? excavation : throw new ArgumentNullException(nameof(excavation));
             _initialized = true;
+        }
+
+        internal void Connect(SealedContainers containers, CrewCrates crates)
+        {
+            _containers = containers ?? throw new ArgumentNullException(nameof(containers));
+            _crates = crates ?? throw new ArgumentNullException(nameof(crates));
         }
 
         /// <summary>The site with anchor id <paramref name="id"/>, or null.</summary>
@@ -737,6 +780,7 @@ namespace MoonProject.Gameplay
             SetHold(false);
             if (_stock.Hold.FreeUnits(piece.Material) < piece.Units)
             {
+                Follow(piece, 1f);
                 piece.State = SalvagePieceState.Held;
                 _held.HoldPiece(piece, true);
                 _save.SaveNow();

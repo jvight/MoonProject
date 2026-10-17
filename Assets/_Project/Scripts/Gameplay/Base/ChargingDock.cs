@@ -108,10 +108,11 @@ namespace MoonProject.Gameplay
         /// <summary>Which way 07 faces at rest: towards the lander.</summary>
         public Quaternion Rotation => _anchor.rotation;
 
-        public void Step(IRoverState rover, float now, float deltaTime)
+        public void Step(IRoverState rover, float now, float deltaTime, bool busy = false)
         {
             float distance = SurfaceRules.HorizontalDistance(rover.Position, _anchor.position);
-            if (_rest.Step(distance, rover.Speed, rover.DriveInput.magnitude, deltaTime))
+            float driveMagnitude = busy && !_rest.Docked ? 1f : rover.DriveInput.magnitude;
+            if (_rest.Step(distance, rover.Speed, driveMagnitude, deltaTime))
             {
                 _events.Publish(new RoverDockChanged(_rest.Docked, _anchor.position, _anchor.rotation));
             }

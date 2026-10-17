@@ -12,6 +12,7 @@ using UnityEngine.UIElements;
 using MoonProject.App;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Input;
 using MoonProject.Rover;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
@@ -224,11 +225,12 @@ namespace MoonProject.Gameplay.PlayModeTests
                     recorder.StepFrame();
                 }
 
-                Vector3 sealFront = Flat(coilContainer.CutPoint.position + coilContainer.Root.forward * 1.65f);
+                Vector3 sealFront = Flat(
+                    coilContainer.CutPoint.position - coilContainer.Root.right * 4.6f + coilContainer.Root.forward * 0.4f);
                 sealFront.y = terrain.SampleHeight(sealFront.x, sealFront.z);
                 Quaternion sealLook = Quaternion.LookRotation(
                     Flat(coilContainer.CutPoint.position - sealFront).normalized,
-                    Vector3.up);
+                    Vector3.up) * Quaternion.Euler(0f, -18f, 0f);
                 placement.PlaceAt(sealFront, sealLook);
                 yield return StepFrames(recorder, 15);
 
@@ -347,9 +349,10 @@ namespace MoonProject.Gameplay.PlayModeTests
                 && buildStrip.style.display != DisplayStyle.None
                 && buildStrip.style.opacity.value > 0.05f;
             recorder.SetMetric("buildStripVisibleInMenu", stripVisibleInMenu ? 1f : 0f);
+            recorder.SetMetric("buildModeConsumesInput", _context.Input.HasModeOwner && _rover.IsHeldStill ? 1f : 0f);
             recorder.CaptureFrame("build_strip_menu");
 
-            // 4b. Tap E to enter Placing state (demonstrating build strip disappearing in Placing state)
+            // 4b. Tap E to enter Placing state (demonstrating build strip staying visible in Placing state)
             yield return TapKey(recorder, _keyboard.eKey);
             yield return StepFrames(recorder, 20);
             bool stripVisibleInPlacing = buildStrip != null
@@ -358,7 +361,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             recorder.SetMetric("buildStripVisibleInPlacing", stripVisibleInPlacing ? 1f : 0f);
             recorder.CaptureFrame("build_placing_ghost");
 
-            // 4c. Demonstrate Finding #21 (Blocker): Tapping E to place immediately cancels welding on the next frame!
+            // 4c. Verify Finding #21 (Blocker): Tapping E to place stays in Welding awaiting Hold E, leaving 0 orphan frames.
             Press(_keyboard.eKey);
             yield return null;
             recorder.StepFrame();
@@ -367,10 +370,21 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             recorder.StepFrame();
             bool canceledImmediatelyOnRelease = enteredWeldingOnPress && build.State == BuildModeState.Closed;
-            recorder.SetMetric("tapPlaceImmediateCancelBug", canceledImmediatelyOnRelease ? 1f : 0f);
-            recorder.SetMetric("unfinishedFramesLeftOnTapPlace", _gameplay.PlacedBase.Count);
+            int orphanedFrames = 0;
+            for (int i = 0; i < _gameplay.PlacedBase.Count; i++)
+            {
+                PlacedStructure ps = _gameplay.PlacedBase.StructureAt(i);
+                if (!ps.IsBuilt &&
+                    (build.State != BuildModeState.Welding || ps.InstanceId != build.Controller.ActiveWeldInstanceId))
+                {
+                    orphanedFrames++;
+                }
+            }
 
-            // 4d. Re-open build mode at an adjacent clear spot and hold E continuously to weld ChargingPad to completion
+            recorder.SetMetric("tapPlaceImmediateCancelBug", canceledImmediatelyOnRelease ? 1f : 0f);
+            recorder.SetMetric("unfinishedFramesLeftOnTapPlace", orphanedFrames);
+
+            // 4d. Hold E continuously to weld the placed ChargingPad to completion
             Vector3 validAim2 = buildSpot + new Vector3(4.5f, 0f, 3.8f);
             validAim2.y = terrain.SampleHeight(validAim2.x, validAim2.z);
             build.SetAimPointOverride(validAim2);
@@ -396,6 +410,9 @@ namespace MoonProject.Gameplay.PlayModeTests
                 {
                     if (!capturedWeld && current.BuildProgress01 >= 0.45f)
                     {
+                        recorder.SetMetric("buildWeldBeamLayerCount", build.WeldBeamLayerCount);
+                        recorder.SetMetric("buildWeldLightIntensity", build.WeldLightIntensity);
+                        recorder.SetMetric("buildWeldSeamHeat", build.WeldSeamHeat);
                         recorder.CaptureFrame("build_welding_pad");
                         capturedWeld = true;
                     }

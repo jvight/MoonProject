@@ -843,6 +843,7 @@ namespace MoonProject.Gameplay
         private void Update()
         {
             float now = Time.time;
+            _home.SuppressDocking = _building != null && _building.State != BuildModeState.Closed;
             Power.Show(_tower.PoweredLevel);
             Materials.Home.SetPowered(_tower.PoweredLevel > 0);
             int holdSlots = HoldSlots();
@@ -916,6 +917,7 @@ namespace MoonProject.Gameplay
             Fetch = new TillyFetch(Bundles, _relays.Reach, fetcher, _cargo, () => lift.RideSpot);
             Crates = new CrewCrates(_salvage, _cargo, Cutter, services, Bundles);
             Containers.Connect(Crates);
+            _salvage.Connect(Containers, Crates);
             Transform[] racks = _home.ShelfRacks;
             int seats = _cargo.ShelfSlots * HomeShelves.Seats;
             var rackSeats = new Transform[racks.Length][];

@@ -295,16 +295,42 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             yield return null;
             Assert.AreSame(crate, gameplay.Crates.Candidate);
+            Assert.IsTrue(gameplay.Salvage.HasTarget, "Salvage query reports the crew crate as a cut target.");
+            Assert.Less(
+                Vector3.Distance(gameplay.Salvage.CutPoint, crate.CutPoint.position),
+                1e-3f,
+                "Salvage.CutPoint must match the crew crate's CutPoint, not world origin (0,0,0).");
             Assert.IsTrue(gameplay.Hints.TryGet(InteractionKind.Salvage, out InteractionHint hint), "a cut prompt");
             Assert.Greater(crate.Seal.Intensity, 0f, "the seal glows like a seam");
 
+            var collectBeats = new List<FeelBeat>();
+            using IDisposable sub = events.Subscribe<FeelBeat>(b =>
+            {
+                if (b.Kind == FeelKind.Collect)
+                {
+                    collectBeats.Add(b);
+                }
+            });
+
             Press(Keyboard.current.eKey);
+            yield return Waits.Until(() => gameplay.Crates.IsCutting && gameplay.Salvage.BeamLevel > 0.1f, 3f);
+            Assert.Greater(_fixture.Rover.HoldStillCount, 0, "07 holds still while cutting a CrewCrate.");
+            Assert.Less(
+                Vector3.Distance(gameplay.Salvage.CutPoint, crate.CutPoint.position),
+                1e-3f,
+                "Active cutter beam target remains on the crate CutPoint.");
             yield return Waits.Until(() => opened.Count > 0, 4f);
             Release(Keyboard.current.eKey);
             Assert.AreEqual(1, opened.Count, "one cut opens it");
+            Assert.Greater(gameplay.Crates.InFlightCount, 0, "Opening a CrewCrate launches a PickupFlight bundle.");
             Assert.AreEqual("site.kestrel", opened[0].SiteId);
             Assert.AreEqual("kenji", opened[0].CrewId, "his packing note");
             Assert.AreEqual(GameplayFixture.CrateUnits, gameplay.Materials.Hold.Units(SalvageMaterial.Metal));
+            yield return Waits.Until(() => gameplay.Crates.InFlightCount == 0, 3f);
+            CollectionAssert.AreEqual(
+                new[] { FeelPhase.Anticipate, FeelPhase.Reward },
+                collectBeats.ConvertAll(b => b.Phase),
+                "CrewCrate bundle flights publish Collect Anticipate at launch and Reward on arrival.");
             yield return new WaitForSeconds(_fixture.CargoTuning.LidSeconds + 0.1f);
             Assert.Greater(crate.Lid.localPosition.y, 0.5f, "the lid lifted");
             Assert.AreEqual(0f, crate.Seal.Intensity, 1e-4f, "the seal is dark");

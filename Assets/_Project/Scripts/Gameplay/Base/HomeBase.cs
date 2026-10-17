@@ -355,6 +355,9 @@ namespace MoonProject.Gameplay
             return lamp;
         }
 
+        /// <summary>When true, prevents ChargingDock from initiating a new dock rest timer while a modal mode is active.</summary>
+        public bool SuppressDocking { get; set; }
+
         private void Update()
         {
             if (!_initialized)
@@ -365,7 +368,7 @@ namespace MoonProject.Gameplay
             float deltaTime = Time.deltaTime;
             float now = Time.time;
             UpdateWarmth(deltaTime);
-            _dock.Step(_rover, now, deltaTime);
+            _dock.Step(_rover, now, deltaTime, SuppressDocking);
             for (int i = 0; i < _relics.Relics.Count; i++)
             {
                 Relic relic = _relics.Relics[i];

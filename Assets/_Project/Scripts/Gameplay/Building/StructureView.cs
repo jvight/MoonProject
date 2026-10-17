@@ -425,7 +425,93 @@ namespace MoonProject.Gameplay
             return _stageIsSolid[stageIndex];
         }
 
-        /// <summary>World-space focus point for 07's weld beam on the active stage.</summary>
+        /// <summary>Progress (0..1) within the currently active weld stage.</summary>
+        public float GetActiveStageProgress01(float buildProgress01)
+        {
+            int count = StageCount;
+            if (count <= 0)
+            {
+                return Mathf.Clamp01(buildProgress01);
+            }
+
+            int solid = ComputeSolidStages(buildProgress01, count);
+            if (solid >= count)
+            {
+                return 1f;
+            }
+
+            return Mathf.Clamp01(buildProgress01 * count - solid);
+        }
+
+        /// <summary>
+        /// Populates <paramref name="localPoints"/> (length 3) with a local-space weld seam across the active stage
+        /// so <see cref="HeatSeam"/> and the weld beam sweep progressively across the stage as it welds.
+        /// </summary>
+        public void GetStageWeldSeam(int stageIndex, Vector3[] localPoints, out Vector3 localNormal)
+        {
+            if (localPoints == null || localPoints.Length < 3)
+            {
+                throw new ArgumentException("Seam point buffer must have at least 3 elements.", nameof(localPoints));
+            }
+
+            localNormal = Vector3.up;
+            Vector3 center = new Vector3(0f, 0.45f, 0f);
+            Vector3 half = new Vector3(0.65f, 0.25f, 0.45f);
+
+            if (_stageRoots != null && _stageRoots.Length > 0)
+            {
+                int idx = Mathf.Clamp(stageIndex, 0, _stageRoots.Length - 1);
+                bool hasBounds = false;
+                Bounds worldBounds = default;
+                if (_stageRenderers != null && idx < _stageRenderers.Length)
+                {
+                    StageRendererCache[] caches = _stageRenderers[idx];
+                    if (caches != null)
+                    {
+                        for (int i = 0; i < caches.Length; i++)
+                        {
+                            Renderer r = caches[i].Renderer;
+                            if (r == null)
+                            {
+                                continue;
+                            }
+
+                            if (!hasBounds)
+                            {
+                                worldBounds = r.bounds;
+                                hasBounds = true;
+                            }
+                            else
+                            {
+                                worldBounds.Encapsulate(r.bounds);
+                            }
+                        }
+                    }
+                }
+
+                if (hasBounds)
+                {
+                    center = transform.InverseTransformPoint(worldBounds.center);
+                    Vector3 ext = transform.InverseTransformVector(worldBounds.extents);
+                    half = new Vector3(
+                        Mathf.Max(0.35f, Mathf.Abs(ext.x) * 0.75f),
+                        Mathf.Max(0.10f, Mathf.Abs(ext.y) * 0.45f),
+                        Mathf.Max(0.20f, Mathf.Abs(ext.z) * 0.35f));
+                }
+                else if (_stageRoots[idx] != null)
+                {
+                    center = transform.InverseTransformPoint(_stageRoots[idx].position) +
+                             new Vector3(0f, 0.3f + idx * 0.25f, 0f);
+                }
+            }
+
+            float y = center.y + half.y * 0.35f;
+            localPoints[0] = new Vector3(center.x - half.x, y, center.z - half.z * 0.25f);
+            localPoints[1] = new Vector3(center.x, y + 0.06f, center.z + half.z * 0.25f);
+            localPoints[2] = new Vector3(center.x + half.x, y, center.z - half.z * 0.25f);
+        }
+
+        /// <summary>World-space focus point for 07's weld beam on the active stage, progressing along its seam.</summary>
         public Vector3 GetActiveWeldPoint()
         {
             if (_stageRoots == null || _stageRoots.Length == 0)
@@ -434,22 +520,63 @@ namespace MoonProject.Gameplay
             }
 
             int activeIndex = Mathf.Clamp(SolidStageCount, 0, _stageRoots.Length - 1);
+            Vector3 p0;
+            Vector3 p1;
+            Vector3 p2;
+            bool hasBounds = false;
+            Bounds worldBounds = default;
             if (_stageRenderers != null && activeIndex < _stageRenderers.Length)
             {
                 StageRendererCache[] caches = _stageRenderers[activeIndex];
-                if (caches != null && caches.Length > 0 && caches[0].Renderer != null)
+                if (caches != null)
                 {
-                    return caches[0].Renderer.bounds.center;
+                    for (int i = 0; i < caches.Length; i++)
+                    {
+                        Renderer r = caches[i].Renderer;
+                        if (r == null)
+                        {
+                            continue;
+                        }
+
+                        if (!hasBounds)
+                        {
+                            worldBounds = r.bounds;
+                            hasBounds = true;
+                        }
+                        else
+                        {
+                            worldBounds.Encapsulate(r.bounds);
+                        }
+                    }
                 }
             }
 
-            Transform stage = _stageRoots[activeIndex];
-            if (stage != null)
+            if (hasBounds)
             {
-                return stage.position + Vector3.up * (0.3f + activeIndex * 0.25f);
+                Vector3 center = transform.InverseTransformPoint(worldBounds.center);
+                Vector3 ext = transform.InverseTransformVector(worldBounds.extents);
+                float hx = Mathf.Max(0.35f, Mathf.Abs(ext.x) * 0.75f);
+                float hy = Mathf.Max(0.10f, Mathf.Abs(ext.y) * 0.45f);
+                float hz = Mathf.Max(0.20f, Mathf.Abs(ext.z) * 0.35f);
+                float y = center.y + hy * 0.35f;
+                p0 = new Vector3(center.x - hx, y, center.z - hz * 0.25f);
+                p1 = new Vector3(center.x, y + 0.06f, center.z + hz * 0.25f);
+                p2 = new Vector3(center.x + hx, y, center.z - hz * 0.25f);
+            }
+            else if (_stageRoots[activeIndex] != null)
+            {
+                return _stageRoots[activeIndex].position + Vector3.up * (0.3f + activeIndex * 0.25f);
+            }
+            else
+            {
+                return transform.position + Vector3.up * 0.6f;
             }
 
-            return transform.position + Vector3.up * 0.6f;
+            float stageT = GetActiveStageProgress01(_buildProgress01);
+            Vector3 local = stageT <= 0.5f
+                ? Vector3.Lerp(p0, p1, stageT * 2f)
+                : Vector3.Lerp(p1, p2, (stageT - 0.5f) * 2f);
+            return transform.TransformPoint(local);
         }
 
         public static int ComputeSolidStages(float progress01, int stageCount)

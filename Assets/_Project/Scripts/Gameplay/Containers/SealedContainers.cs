@@ -26,12 +26,15 @@ namespace MoonProject.Gameplay
         private readonly EventBus _events;
         private readonly InputReader _input;
         private readonly IRoverState _rover;
+        private readonly IRoverRig _rig;
         private readonly BeamWork _beam;
         private readonly ISaveService _save;
         private readonly PickupReach _pickups;
         private readonly CutState _cut;
         private CrewCrates _crates;
         private SealedContainer _cutting;
+        private bool _holding;
+        private bool _gazing;
 
         /// <summary>
         /// Made before the finds' owners initialise, so each can add its containers; connect the crates later.
@@ -49,6 +52,7 @@ namespace MoonProject.Gameplay
             _events = services.Events;
             _input = services.Input;
             _rover = services.Rover;
+            _rig = services.Rig;
             _beam = services.Beam;
             _save = services.Save;
             _pickups = services.Pickups;
@@ -64,6 +68,15 @@ namespace MoonProject.Gameplay
 
         /// <summary>The sealed container a hold of E would cut now, or null.</summary>
         public SealedContainer Candidate { get; private set; }
+
+        /// <summary>The sealed container currently under the cutter beam, or null.</summary>
+        public SealedContainer Cutting => _cutting;
+
+        public bool IsCutting => _cutting != null && _cut.Phase == CutPhase.Cutting;
+
+        public bool IsBeamCharging => _cutting != null && _cut.Phase == CutPhase.Charging;
+
+        public float BeamChargeProgress => IsBeamCharging ? _cut.ChargeProgress : 0f;
 
         public int Count => _containers.Count;
 
@@ -107,7 +120,7 @@ namespace MoonProject.Gameplay
         public void Step(float now, float deltaTime)
         {
             bool busy = _salvage.Candidate != null || _salvage.Cutting != null || _crates.Candidate != null ||
-                        _pickups.TryGet(Time.frameCount, out _, out _);
+                        _crates.Cutting != null || _pickups.TryGet(Time.frameCount, out _, out _);
             Candidate = busy ? null : Nearest();
             for (int i = 0; i < _containers.Count; i++)
             {
@@ -115,13 +128,18 @@ namespace MoonProject.Gameplay
             }
 
             bool wants = _input.ExcavateHeld && Candidate != null && (_cutting != null || _beam.MayStart);
-            if (_cutting != null && (!wants || Candidate != _cutting))
+            SetHold(wants);
+            float engageSpeed = _cutting != null
+                ? _salvage.Tuning.EngageSpeed * _salvage.Tuning.EngageHysteresis
+                : _salvage.Tuning.EngageSpeed;
+            bool engaged = wants && (_rover == null || _rover.Speed <= engageSpeed);
+            if (_cutting != null && (!engaged || Candidate != _cutting))
             {
                 _cut.Release(_cutting.Progress, _cutting.CutPoint.position, _cutting.CutPoint.forward);
                 _cutting = null;
             }
 
-            if (wants && _cutting == null)
+            if (engaged && _cutting == null)
             {
                 _cutting = Candidate;
                 _cut.Engage(_cutting.Progress, SalvageMaterial.Metal, _cutting.CutPoint.position,
@@ -129,6 +147,7 @@ namespace MoonProject.Gameplay
                     _cutter.Plan(_salvage.Tuning.Size(_tuning.ContainerCut).Stages, false));
             }
 
+            UpdateGaze(wants);
             if (_cutting == null)
             {
                 return;
@@ -147,6 +166,34 @@ namespace MoonProject.Gameplay
             {
                 Open(_cutting, now);
                 _cutting = null;
+                SetHold(false);
+                UpdateGaze(false);
+            }
+        }
+
+        private void SetHold(bool hold)
+        {
+            if (hold == _holding)
+            {
+                return;
+            }
+
+            _holding = hold;
+            _rig?.SetHoldStill(this, hold);
+        }
+
+        private void UpdateGaze(bool wantsBeam)
+        {
+            SealedContainer look = _cutting ?? (wantsBeam ? Candidate : null);
+            if (look != null)
+            {
+                _rig?.SetGazeTarget(this, look.CutPoint.position, GazePriorities.Focus);
+                _gazing = true;
+            }
+            else if (_gazing)
+            {
+                _rig?.ClearGazeTarget(this);
+                _gazing = false;
             }
         }
 

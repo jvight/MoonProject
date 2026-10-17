@@ -1081,5 +1081,47 @@ namespace MoonProject.Gameplay.Tests
                 Object.DestroyImmediate(matCatalog);
             }
         }
+
+        [Test]
+        public void BuildModeController_TapPlaceStaysInWeldingAtZeroProgress_AndClosingAtZeroRefundsWithoutOrphanFrame()
+        {
+            var known = new KnownStructures(_catalog, _events);
+            var placedBase = new PlacedBase(_catalog, _tuning, _events, known);
+            MaterialCatalog matCatalog = CargoFixtures.Catalog();
+            try
+            {
+                MaterialStock stock = CargoFixtures.Stock(_events, matCatalog);
+                var controller = new BuildModeController(_catalog, known, placedBase, stock, _tuning);
+                TestWorld flat = TestWorld.Flat();
+                Vector3 roverPos = Vector3.zero;
+
+                Recipe padCost = controller.SelectedStructure.BuildCost;
+                stock.Stow(padCost);
+                Assert.IsTrue(controller.PickStructure(StructureIds.ChargingPad));
+                controller.UpdateCandidate(new Vector3(0f, 0f, 5f), roverPos, flat, propBlocked: false);
+                Assert.IsTrue(controller.TryConfirmPlacement(flat, roverPos, out int firstId, out _));
+                Assert.AreEqual(BuildModeState.Welding, controller.State);
+                Assert.AreEqual(0, stock.Metal);
+
+                // Releasing E on the next frame after tapping E to place (weldHeld = false at 0% progress)
+                // keeps BuildModeController in Welding state waiting for Hold E, instead of canceling.
+                Assert.IsTrue(controller.StepWelding(0.05f, roverPos, weldHeld: false, out bool completed, out bool cancelled));
+                Assert.IsFalse(completed);
+                Assert.IsFalse(cancelled, "Releasing E at 0% after tap-place must not cancel welding.");
+                Assert.AreEqual(BuildModeState.Welding, controller.State);
+                Assert.AreEqual(firstId, controller.ActiveWeldInstanceId);
+
+                // Backing out (Close) before any weld progress removes the 0% frame and refunds 100% of cost.
+                controller.Close();
+                Assert.AreEqual(BuildModeState.Closed, controller.State);
+                Assert.AreEqual(0, placedBase.Count, "Closing before welding must not leave an orphan 0% frame.");
+                Assert.AreEqual(padCost.Metal, stock.Metal, "Closing at 0% refunds full Metal cost.");
+                Assert.AreEqual(padCost.Wiring, stock.Wiring, "Closing at 0% refunds full Wiring cost.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(matCatalog);
+            }
+        }
     }
 }
