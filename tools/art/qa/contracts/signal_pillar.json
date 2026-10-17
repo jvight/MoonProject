@@ -1,0 +1,51 @@
+{
+  "model": "signal_pillar",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_LampAmber"
+  ],
+  "max_triangles": 2000,
+  "max_meshes": 2,
+  "max_draw_calls": 2,
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "SignalPillar": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "PillarBeam": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Base_Anchor": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Top_Anchor": {
+      "pivot": [
+        0.0,
+        0.0,
+        60.0
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      0.88,
+      0.88,
+      60.0
+    ],
+    "tolerance": 0.05
+  }
+}
