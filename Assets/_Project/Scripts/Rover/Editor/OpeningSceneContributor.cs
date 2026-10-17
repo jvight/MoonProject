@@ -9,14 +9,14 @@ namespace MoonProject.Rover.Editor
     /// <summary>
     /// Puts 07's opening into Main.unity (docs/design/cutscenes.md §1): the lens camera (a Cinemachine camera with no
     /// body or aim, placed each frame by the opening) and the <see cref="OpeningDirector"/>, wired to the rig, 07's
-    /// body language and the two gaze targets of the built home: the lander and the tower's pilot (The Peak and
-    /// Earth come from IWorldLayout). Runs after the World's home wiring (order 650), which makes the pilot, and after Rover's own systems,
-    /// so the director initialises last of the three.
+    /// body language and the two gaze targets the World stands at the opening: its lander and the beacon on the
+    /// lander's hull (The Peak and Earth come from IWorldLayout). Runs after the World and Rover's own systems, so the
+    /// director initialises last.
     /// </summary>
     public sealed class OpeningSceneContributor : ISceneContributor
     {
         private const string LanderName = "Lander";
-        private const string PilotName = "TowerPilot";
+        private const string BeaconName = "Beacon";
 
         public int Order => 700;
 
@@ -49,8 +49,10 @@ namespace MoonProject.Rover.Editor
             Assign(serialized, "_controller", controller);
             Assign(serialized, "_body", body);
             Assign(serialized, "_lensCamera", lensCamera);
-            Assign(serialized, "_lander", Find(context.GameplayRoot.transform, LanderName));
-            Assign(serialized, "_pilot", Find(context.GameplayRoot.transform, PilotName));
+            Transform lander = context.WorldRoot.transform.Find(LanderName) ?? throw new InvalidOperationException(
+                $"No '{LanderName}' under {context.WorldRoot.name}: the opening's gaze needs it; rebuild the World.");
+            Assign(serialized, "_lander", lander);
+            Assign(serialized, "_pilot", Find(lander, BeaconName));
             serialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(director);
         }
@@ -66,7 +68,7 @@ namespace MoonProject.Rover.Editor
             }
 
             throw new InvalidOperationException(
-                $"No '{name}' under {root.name}: the opening's gaze needs it; rebuild Gameplay's base and the World.");
+                $"No '{name}' under {root.name}: the opening's gaze needs it; rebuild the World.");
         }
 
         private static void Assign(SerializedObject serialized, string field, UnityEngine.Object value)
