@@ -14,13 +14,8 @@ namespace MoonProject.Showcase
         RockCluster = 5,
         Rover07Upgraded = 6,
         BatteryBank = 7,
-        Smelter = 8,
-        Fabricator = 9,
-        StorageRack = 10,
-        UpgradeBay = 11,
-        AntennaMast = 12,
-        VehiclePad = 13,
-        RuinsCorner = 14,
+        AntennaMast = 8,
+        RuinsCorner = 9,
     }
 
     /// <summary>Identifier for each of the 5 ruin prefabs arranged in the Ruins Corner exhibit.</summary>

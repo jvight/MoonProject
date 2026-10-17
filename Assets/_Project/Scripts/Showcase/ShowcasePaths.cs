@@ -29,12 +29,7 @@ namespace MoonProject.Showcase
         public const string SolarArrayPrefab = "Assets/_Project/Generated/Art/R1/Models/Structures/SolarArray.prefab";
         public const string PowerPylonPrefab = "Assets/_Project/Generated/Art/R1/Models/Structures/PowerPylon.prefab";
         public const string BatteryBankPrefab = "Assets/_Project/Generated/Art/R1/Models/Structures/BatteryBank.prefab";
-        public const string SmelterPrefab = "Assets/_Project/Generated/Art/R1/Models/Structures/Smelter.prefab";
-        public const string FabricatorPrefab = "Assets/_Project/Generated/Art/R1/Models/Structures/Fabricator.prefab";
-        public const string StorageRackPrefab = "Assets/_Project/Generated/Art/R1/Models/Structures/StorageRack.prefab";
-        public const string UpgradeBayPrefab = "Assets/_Project/Generated/Art/R1/Models/Structures/UpgradeBay.prefab";
         public const string AntennaMastPrefab = "Assets/_Project/Generated/Art/R1/Models/Structures/AntennaMast.prefab";
-        public const string VehiclePadPrefab = "Assets/_Project/Generated/Art/R1/Models/Structures/VehiclePad.prefab";
 
         public const string HabitatModulesPrefab = "Assets/_Project/Generated/Art/R1/Models/Ruins/HabitatModules.prefab";
         public const string RadioTowerPrefab = "Assets/_Project/Generated/Art/R1/Models/Ruins/RadioTower.prefab";

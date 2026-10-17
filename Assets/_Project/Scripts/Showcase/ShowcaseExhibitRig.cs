@@ -44,7 +44,7 @@ namespace MoonProject.Showcase
     }
 
     /// <summary>
-    /// Runtime controller attached to each of the 15 look-dev exhibits in the Showcase scene. Drives the exhibit's
+    /// Runtime controller attached to each of the 10 look-dev exhibits in the Showcase scene. Drives the exhibit's
     /// <see cref="ShowcaseNodeSequencer"/>, <see cref="ShowcaseLampDriver"/>, build-stage (<c>Stage_1..4</c>) soft
     /// rise-and-settle sequence, auto-demo loop, 07's <see cref="FaceDisplay"/> and camera look-at, the Cargo Lander's
     /// broken/repaired bay swap and solar wings, and the Solar Array's live Sun tracking and night/eclipse folding.
