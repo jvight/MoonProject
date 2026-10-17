@@ -173,10 +173,7 @@ namespace MoonProject.Rover
         private const float ScreenInspectBlendSeconds = 0.30f;
         private const float ScreenInspectYawLimit = 35f;
         private const float ScanEyeEmissionBoost = 1.25f;
-        private const float ScanEyeLightIntensityBoost = -0.35f;
-        private const float ScanEyeLightRangeBoost = -0.15f;
         private const float ScanEyeOpenThreshold = 1e-3f;
-        private static readonly Vector3 ScanEyeLightLocalOffset = new Vector3(-0.11f, 0f, -0.01f);
 
         /// <summary>Read-only view of the mood, for audio/debug tooling.</summary>
         public RoverMood Mood => _mood;
@@ -1064,10 +1061,11 @@ namespace MoonProject.Rover
                 + _sigh * _tuning.Chirp.SighWing;
             _solarWing.localRotation = _wingRest * Quaternion.AngleAxis(wingAngle, _tuning.WingHingeAxis);
 
-            float eyeGlow = _mood.EyeGlow * Mathf.Lerp(1f, _tuning.StargazeEyeGlow, sky)
+            float baseEyeGlow = _mood.EyeGlow * Mathf.Lerp(1f, _tuning.StargazeEyeGlow, sky)
                 * Mathf.Lerp(1f, battery.LowEyeGlow, _tired) * Mathf.Lerp(1f, battery.CrawlEyeGlow, _crawl)
                 * Mathf.Lerp(1f, _tuning.CutFocus.EyeGlow, _cutFocus) * _chirpPose.EyeGlow
-                * (1f + _sigh * _tuning.Chirp.SighEye) * _scanLook.EyeGlow;
+                * (1f + _sigh * _tuning.Chirp.SighEye);
+            float eyeGlow = baseEyeGlow * _scanLook.EyeGlow;
             float scanOpen = _scanLook.Open;
             float inspectLightDim = 1f - _screenInspectBlend * 0.92f;
             if (scanOpen > ScanEyeOpenThreshold)
@@ -1076,19 +1074,16 @@ namespace MoonProject.Rover
                 Color restEyeColor = _eyeLightRestColor * eyeGlow;
                 Color scanEyeColor = fanColor * (eyeGlow * ScanEyeEmissionBoost);
                 SetGlow(_eyeRenderer, Color.Lerp(restEyeColor, scanEyeColor, scanOpen));
-                _eyeLight.color = Color.Lerp(_eyeLightRestColor, fanColor, scanOpen);
-                _eyeLight.range = _tuning.EyeLightRange * (1f + ScanEyeLightRangeBoost * scanOpen);
-                _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow * (1f + ScanEyeLightIntensityBoost * scanOpen) * inspectLightDim;
-                _eyeLight.transform.localPosition = Vector3.Lerp(_eyeLightRestLocalPos, ScanEyeLightLocalOffset, scanOpen);
             }
             else
             {
                 SetGlow(_eyeRenderer, eyeGlow);
-                _eyeLight.color = _eyeLightRestColor;
-                _eyeLight.range = _tuning.EyeLightRange;
-                _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow * inspectLightDim;
-                _eyeLight.transform.localPosition = _eyeLightRestLocalPos;
             }
+
+            _eyeLight.color = _eyeLightRestColor;
+            _eyeLight.range = _tuning.EyeLightRange;
+            _eyeLight.intensity = _tuning.EyeLightIntensity * baseEyeGlow * inspectLightDim;
+            _eyeLight.transform.localPosition = _eyeLightRestLocalPos;
 
             _scanFan.transform.localRotation = _scanFanRest * Quaternion.AngleAxis(_scanLook.Sweep, Vector3.up);
             if (_scanFan.enabled)

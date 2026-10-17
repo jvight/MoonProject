@@ -161,12 +161,6 @@ namespace MoonProject.Gameplay
         [Tooltip("Peak alpha of the optical cross-glint flare on 07's cheek lens.")]
         [Range(0.05f, 1f)] [SerializeField] private float _lensGlintAlpha = 0.76f;
 
-        [Tooltip("Intensity of the soft cyan point light spilling onto 07's face, brass bezel, and the ground right in front of the lens.")]
-        [Range(0f, 8f)] [SerializeField] private float _lensSpillIntensity = 1.15f;
-
-        [Tooltip("Range (m) of the soft cyan point light spilling onto 07's face, brass bezel, and the ground right in front of the lens.")]
-        [Range(0.5f, 8f)] [SerializeField] private float _lensSpillRange = 0.95f;
-
         [Tooltip("Number of sparse dust grains catching the laser sparkle within a thin band of the beam wedge.")]
         [Range(0, 16)] [SerializeField] private int _pathGlintCount = 5;
 
@@ -262,8 +256,6 @@ namespace MoonProject.Gameplay
         public float LensGlintLength => _lensGlintLength;
         public float LensGlintWidth => _lensGlintWidth;
         public float LensGlintAlpha => _lensGlintAlpha;
-        public float LensSpillIntensity => _lensSpillIntensity;
-        public float LensSpillRange => _lensSpillRange;
         public int PathGlintCount => _pathGlintCount;
         public float PathGlintSize => _pathGlintSize;
         public float PathGlintAlpha => _pathGlintAlpha;

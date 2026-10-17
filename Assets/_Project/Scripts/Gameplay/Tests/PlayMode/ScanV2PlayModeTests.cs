@@ -55,6 +55,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private IDisposable _awoke;
         private bool _awake;
         private Transform _headTransform;
+        private Transform _bodyTransform;
         private Collider[] _roverColliders;
         private MeshFilter[] _roverMeshes;
 
@@ -168,6 +169,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return WaitSeconds(0.55f);
 
             Assert.AreSame(distantTarget, scans.Candidate, "6.5 m daylight target must be selected.");
+            Color preScanDaylightBodyColor = SampleRoverBodyAverageColorFromCamera(_view, CaptureWidth, CaptureHeight);
+
             Press(_keyboard.eKey);
             bool capturedDaylight = false;
             bool capturedLensCloseup = false;
@@ -198,6 +201,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                         string daylightPath = Path.Combine(ScanFolder, "scan_daylight.png");
                         FrameCapture.SavePng(_view, CaptureWidth, CaptureHeight, daylightPath);
                         AssertNoBrightRegionOutsideLensAndTarget(daylightPath, distantTarget, 0.90f, "scan_daylight.png");
+                        Color duringScanDaylightBodyColor = SampleRoverBodyAverageColorFromPng(daylightPath, _view);
+                        AssertRoverBodyColorUnchanged(preScanDaylightBodyColor, duringScanDaylightBodyColor, "scan_daylight.png", 0.04f);
                         capturedDaylight = true;
                     }
 
@@ -344,6 +349,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             float maxTurnDelta = 0f;
             float maxWheelScrub = 0f;
+            Color stripFrame1BodyColor = Color.black;
+            Color stripFrame2BodyColor = Color.black;
+            Color stripFrame3BodyColor = Color.black;
             float deadline = Time.time + ScanTimeout;
             while (!ruinTarget.Scanned)
             {
@@ -355,6 +363,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                 if (panels[0] == null && turnDelta >= 55f)
                 {
                     panels[0] = CapturePanel("ruin_behind_1_body_turn.png");
+                    stripFrame1BodyColor = SampleRoverBodyAverageColorFromPng(
+                        Path.Combine(ScanFolder, "ruin_behind_1_body_turn.png"), _view);
                 }
 
                 if (scans.Scanning == ruinTarget)
@@ -363,6 +373,9 @@ namespace MoonProject.Gameplay.PlayModeTests
                     if (panels[1] == null && ruinTarget.Progress >= 0.10f)
                     {
                         panels[1] = CapturePanel("ruin_behind_2_head_aim.png");
+                        stripFrame2BodyColor = SampleRoverBodyAverageColorFromPng(
+                            Path.Combine(ScanFolder, "ruin_behind_2_head_aim.png"), _view);
+                        AssertRoverBodyColorUnchanged(stripFrame1BodyColor, stripFrame2BodyColor, "scan_strip frame 2 vs frame 1", 0.055f);
                     }
 
                     if (panels[2] == null && ruinTarget.Progress >= 0.52f)
@@ -370,6 +383,9 @@ namespace MoonProject.Gameplay.PlayModeTests
                         string sweepPath = Path.Combine(ScanFolder, "ruin_behind_3_line_sweeping.png");
                         panels[2] = CapturePanel("ruin_behind_3_line_sweeping.png");
                         AssertNoBrightRegionOutsideLensAndTarget(sweepPath, ruinTarget, 0.90f, "ruin_behind_3_line_sweeping.png");
+                        stripFrame3BodyColor = SampleRoverBodyAverageColorFromPng(sweepPath, _view);
+                        AssertRoverBodyColorUnchanged(stripFrame1BodyColor, stripFrame3BodyColor, "scan_strip frame 3 vs frame 1", 0.055f);
+                        AssertRoverBodyColorUnchanged(stripFrame2BodyColor, stripFrame3BodyColor, "scan_strip frame 3 vs frame 2", 0.03f);
                         File.Copy(
                             sweepPath,
                             Path.Combine(ScanFolder, "ruin_behind_3_raster_sweep.png"),
@@ -383,8 +399,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             // Wait ~110 ms into the completion dissolve so the warm-amber completion ping edge is at peak while the lens beam ramps off
             yield return WaitSeconds(0.11f);
             panels[3] = CapturePanel("ruin_behind_4_completion_ping.png");
+            string frame4Path = Path.Combine(ScanFolder, "ruin_behind_4_completion_ping.png");
+            Color stripFrame4BodyColor = SampleRoverBodyAverageColorFromPng(frame4Path, _view);
+            AssertRoverBodyColorUnchanged(stripFrame1BodyColor, stripFrame4BodyColor, "scan_strip frame 4 vs frame 1", 0.055f);
             File.Copy(
-                Path.Combine(ScanFolder, "ruin_behind_4_completion_ping.png"),
+                frame4Path,
                 Path.Combine(ScanFolder, "ruin_behind_4_completion.png"),
                 overwrite: true);
 
@@ -755,6 +774,102 @@ namespace MoonProject.Gameplay.PlayModeTests
             return Rect.MinMaxRect(minX - padPx, minY - padPx, maxX + padPx, maxY + padPx);
         }
 
+        private Color SampleRoverBodyAverageColorFromCamera(Camera cam, int width, int height)
+        {
+            Texture2D tex = FrameCapture.Render(cam, width, height);
+            try
+            {
+                return SampleRoverBodyAverageColor(tex, cam);
+            }
+            finally
+            {
+                Object.DestroyImmediate(tex);
+            }
+        }
+
+        private Color SampleRoverBodyAverageColorFromPng(string pngPath, Camera cam)
+        {
+            byte[] bytes = File.ReadAllBytes(pngPath);
+            var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            tex.LoadImage(bytes);
+            try
+            {
+                return SampleRoverBodyAverageColor(tex, cam);
+            }
+            finally
+            {
+                Object.DestroyImmediate(tex);
+            }
+        }
+
+        private Color SampleRoverBodyAverageColor(Texture2D tex, Camera cam)
+        {
+            int w = tex.width;
+            int h = tex.height;
+            Vector3 bodyCenter = _rover.Position + Vector3.up * 0.36f;
+            if (_bodyTransform != null && _bodyTransform.TryGetComponent(out Renderer bodyRenderer))
+            {
+                bodyCenter = bodyRenderer.bounds.center;
+            }
+
+            Rect bodyRect = ProjectSphereToScreenRect(cam, bodyCenter, 0.16f, w, h, 0f);
+            Rect lensRect = ProjectSphereToScreenRect(cam, _rover.ScanOrigin.position, 0.10f, w, h, 4f);
+
+            int minX = Mathf.Clamp(Mathf.RoundToInt(bodyRect.xMin), 0, w - 1);
+            int maxX = Mathf.Clamp(Mathf.RoundToInt(bodyRect.xMax), 0, w - 1);
+            int minY = Mathf.Clamp(Mathf.RoundToInt(bodyRect.yMin), 0, h - 1);
+            int maxY = Mathf.Clamp(Mathf.RoundToInt(bodyRect.yMax), 0, h - 1);
+
+            Color32[] pixels = tex.GetPixels32();
+            double sumR = 0.0;
+            double sumG = 0.0;
+            double sumB = 0.0;
+            int count = 0;
+
+            for (int y = minY; y <= maxY; y++)
+            {
+                int rowOffset = y * w;
+                for (int x = minX; x <= maxX; x++)
+                {
+                    if (lensRect.Contains(new Vector2(x, y)))
+                    {
+                        continue;
+                    }
+
+                    Color32 c = pixels[rowOffset + x];
+                    sumR += c.r;
+                    sumG += c.g;
+                    sumB += c.b;
+                    count++;
+                }
+            }
+
+            Assert.Greater(count, 64, "Projected 07 body sample region must contain enough pixels.");
+            double inv = 1.0 / (count * 255.0);
+            return new Color((float)(sumR * inv), (float)(sumG * inv), (float)(sumB * inv), 1f);
+        }
+
+        private static void AssertRoverBodyColorUnchanged(Color beforeScan, Color duringScan, string label, float maxChannelDelta)
+        {
+            float dr = Mathf.Abs(duringScan.r - beforeScan.r);
+            float dg = Mathf.Abs(duringScan.g - beforeScan.g);
+            float db = Mathf.Abs(duringScan.b - beforeScan.b);
+            float maxDelta = Mathf.Max(dr, Mathf.Max(dg, db));
+            float beforeCyanExcess = beforeScan.b - beforeScan.r;
+            float duringCyanExcess = duringScan.b - duringScan.r;
+            float cyanShift = duringCyanExcess - beforeCyanExcess;
+
+            Debug.Log($"[scan-body-color] {label}: before=({beforeScan.r:F3},{beforeScan.g:F3},{beforeScan.b:F3}), " +
+                      $"during=({duringScan.r:F3},{duringScan.g:F3},{duringScan.b:F3}), " +
+                      $"maxChannelDelta={maxDelta:F4} (limit {maxChannelDelta:F3}), cyanShift={cyanShift:F4}");
+
+            Assert.LessOrEqual(maxDelta, maxChannelDelta,
+                $"{label}: 07's body average colour during scan ({duringScan.r:F3},{duringScan.g:F3},{duringScan.b:F3}) " +
+                $"diverged from before scan ({beforeScan.r:F3},{beforeScan.g:F3},{beforeScan.b:F3}) by {maxDelta:F4} > {maxChannelDelta:F3}.");
+            Assert.LessOrEqual(cyanShift, 0.03f,
+                $"{label}: 07's body turned cyan during scan (cyanShift={cyanShift:F4} > 0.03).");
+        }
+
         private void CaptureLensCloseup(ScanFragment target)
         {
             Transform camTr = _view.transform;
@@ -770,7 +885,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Vector3 right = Vector3.Cross(Vector3.up, toTarget).normalized;
 
                 // Close-up of 07's brass cheek lens while scanning: shows the open cyan iris, emitter core,
-                // cross-flare glint, cyan light spilling on 07's CRT face, bezel, and the ground right in front of the lens.
+                // cross-flare glint, and narrow beam wedge leaving the lens while 07's body stays untinted.
                 Vector3 focus = lensPos + toTarget * 0.48f + right * 0.02f - Vector3.up * 0.14f;
                 camTr.position = lensPos + toTarget * 1.05f - right * 0.92f + Vector3.up * 0.22f;
                 camTr.rotation = Quaternion.LookRotation((focus - camTr.position).normalized, Vector3.up);
@@ -927,6 +1042,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private void CacheRoverParts()
         {
             _headTransform = _rover.transform.Find("Visual/Chassis/RoverModel/Neck/NeckLift/Head");
+            _bodyTransform = _rover.transform.Find("Visual/Chassis/RoverModel/Body");
             _roverColliders = _rover.GetComponentsInChildren<Collider>(true);
             _roverMeshes = _rover.GetComponentsInChildren<MeshFilter>(true);
         }

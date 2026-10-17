@@ -78,8 +78,6 @@ MonoBehaviour:
   _lensGlintLength: 0.068
   _lensGlintWidth: 0.008
   _lensGlintAlpha: 0.76
-  _lensSpillIntensity: 1.15
-  _lensSpillRange: 0.95
   _pathGlintCount: 5
   _pathGlintSize: 0.016
   _pathGlintAlpha: 0.32

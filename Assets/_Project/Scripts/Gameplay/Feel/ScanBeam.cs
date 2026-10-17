@@ -55,8 +55,6 @@ namespace MoonProject.Gameplay
         private const float DefaultLensGlintLength = 0.068f;
         private const float DefaultLensGlintWidth = 0.008f;
         private const float DefaultLensGlintAlpha = 0.76f;
-        private const float DefaultLensSpillIntensity = 1.15f;
-        private const float DefaultLensSpillRange = 0.95f;
         private const int DefaultPathGlintCount = 5;
         private const float DefaultPathGlintSize = 0.016f;
         private const float DefaultPathGlintAlpha = 0.32f;
@@ -81,11 +79,6 @@ namespace MoonProject.Gameplay
         private const float WedgeBandSpeed = 2.4f;
         private const float WedgeArchHeight = 0.012f;
 
-        private const float SpillForwardOffset = 0.04f;
-        private const float SpillInwardOffset = 0.18f;
-        private const float SpillDownwardOffset = 0.03f;
-        private const float SpillFlickerShare = 0.05f;
-        private const float SpillFlickerHz = 7.5f;
         private const float IrisClosedScale = 0.38f;
         private const float IrisCaliperRadiusFactor = 0.56f;
         private const float PathStartShare = 0.18f;
@@ -133,7 +126,6 @@ namespace MoonProject.Gameplay
         private readonly Color[] _wedgeColors = new Color[TotalWedgeVerts];
         private readonly FeelSprites _points;
         private readonly FeelSprites _streaks;
-        private readonly LightPulse _lensLight;
 
         private Vector3 _target;
         private Vector3 _span;
@@ -162,11 +154,6 @@ namespace MoonProject.Gameplay
             _wedgeMesh = CreateWedgeMesh(parent, _wedgeMaterial, out _wedgeRenderer);
             _points = new FeelSprites("ScanBeamPoints", parent, spriteMaterial, PointSlots, false, 0f);
             _streaks = new FeelSprites("ScanBeamStreaks", parent, spriteMaterial, StreakSlots, true, 1f);
-
-            Color initialLightColor = _scanTuning != null ? _scanTuning.ScanLineColor : DefaultCyanColor;
-            float initialLightRange = _scanTuning != null ? _scanTuning.LensSpillRange : DefaultLensSpillRange;
-            _lensLight = new LightPulse("ScanLensLight", parent, initialLightColor, initialLightRange);
-            _lensLight.Flicker(SpillFlickerShare, SpillFlickerHz);
         }
 
         /// <summary>True while the scan beam wedge, lens emitter glow, or completion ping is active or easing out.</summary>
@@ -195,9 +182,6 @@ namespace MoonProject.Gameplay
 
         /// <summary>Number of streak sprites emitted on the most recent frame (for tests and diagnostics).</summary>
         public int ActiveStreakCount => _streaks.Count;
-
-        /// <summary>Current intensity of 07's cheek lens spill light.</summary>
-        public float LensLightIntensity => _lensLight.Intensity;
 
         /// <summary>Computes the vertical ballistic displacement (meters) of a dust grain after <paramref name="ageSeconds"/> in 1/6 g.</summary>
         public float EvaluateBallisticVerticalOffset(float ageSeconds)
@@ -286,15 +270,9 @@ namespace MoonProject.Gameplay
             {
                 StepScanVisuals(deltaTime, emitter);
             }
-            else
+            else if (_wedgeRenderer.enabled)
             {
-                if (_wedgeRenderer.enabled)
-                {
-                    _wedgeRenderer.enabled = false;
-                }
-
-                _lensLight.Ramp(0f, 0f, false);
-                _lensLight.Step(deltaTime);
+                _wedgeRenderer.enabled = false;
             }
 
             _points.End();
@@ -351,19 +329,8 @@ namespace MoonProject.Gameplay
             // 1. Stylised narrow scan beam wedge from 07's cheek lens to the current surface scan line on the target
             StepWedgeMesh(wedgeOrigin, contactCenter, right, orthoUp, spanHeight, cyanColor, sweepLevel, widthScale);
 
-            // 2. Soft cyan spill light on 07's CRT face, brass bezel, and the ground right in front of the lens
+            // 2. No point light: a light at the lens would tint 07's cream body and head cyan during a scan
             Color activeTint = _pingRemaining > 0f ? amberColor : cyanColor;
-            float spillIntensity = (_scanTuning != null ? _scanTuning.LensSpillIntensity : DefaultLensSpillIntensity) * sweepLevel;
-            float spillRange = _scanTuning != null ? _scanTuning.LensSpillRange : DefaultLensSpillRange;
-            Vector3 spillPos = emitter
-                + forward * SpillForwardOffset
-                - right * SpillInwardOffset
-                - orthoUp * SpillDownwardOffset;
-            _lensLight.MoveTo(spillPos);
-            _lensLight.SetColor(Color.Lerp(activeTint, Color.white, 0.12f));
-            _lensLight.SetRange(spillRange);
-            _lensLight.Ramp(spillIntensity, 0f, false);
-            _lensLight.Step(deltaTime);
 
             // 3. 07's cheek lens emitter core, calm outer halo, opening iris ring, and short bezel-clamped flare needles
             Color halo = activeTint;

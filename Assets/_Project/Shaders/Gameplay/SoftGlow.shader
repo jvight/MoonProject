@@ -132,18 +132,17 @@ Shader "MoonProject/Gameplay/SoftGlow"
                 half wave = 0.5 + 0.5 * sin((input.uv.x * _BandCount - _Time.y * _BandSpeed) * TWO_PI);
                 half bands = 1.0 - _BandStrength * wave;
 
-                half facing = saturate(abs(dot(SafeNormalize(input.normalWS), SafeNormalize(input.viewDirWS))));
-                half rim = lerp(1.0h, PositivePow(max(1.0h - facing, 1e-4h), _FresnelPower), _FresnelMix);
-                half core = lerp(1.0h, PositivePow(max(facing, 1e-4h), _CorePower), _CoreMix);
+                half facing = saturate(abs(dot(normalize(input.normalWS), normalize(input.viewDirWS))));
+                half rim = lerp(1.0, pow(1.0 - facing, _FresnelPower), _FresnelMix);
+                half core = lerp(1.0, pow(facing, _CorePower), _CoreMix);
 
                 float2 centred = input.uv * 2.0 - 1.0;
-                half radial = saturate(1.0h - (half)dot(centred, centred));
-                half round = lerp(1.0h, PositivePow(max(radial, 1e-4h), _RadialPower), _RadialMask);
+                half radial = saturate(1.0 - dot(centred, centred));
+                half round = lerp(1.0, pow(radial, _RadialPower), _RadialMask);
 
                 half alpha = saturate(across * along * bands * rim * core * round * input.color.a * _Color.a);
-                half3 rgb = clamp(_Color.rgb * input.color.rgb * _Intensity * alpha - 1e-4h, 0.0h, 2.0h);
+                half3 rgb = _Color.rgb * input.color.rgb * _Intensity * alpha;
                 rgb = MixFogColor(rgb, half3(0.0, 0.0, 0.0), input.fogFactor);
-                rgb = clamp(rgb - 1e-4h, 0.0h, 2.0h);
                 return half4(rgb, alpha * saturate(_Intensity));
             }
             ENDHLSL

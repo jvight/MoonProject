@@ -127,7 +127,6 @@ void MoonApplySurfaceScan(
     half scanProgress,
     half dissolve)
 {
-    color = clamp(color - 1e-4h, 0.0h, 2.0h);
     if (scanProgress <= 0.0005h && dissolve <= 0.0005h)
     {
         return;
@@ -151,7 +150,7 @@ void MoonApplySurfaceScan(
     float2 toCamXZ;
     MoonScanSurfaceCoords(positionWS, scanY, minScanY, maxScanY, h, toCamXZ);
 
-    float3 n = SafeNormalize(normalWS);
+    float3 n = normalize(normalWS);
     float3 planeN = normalize(float3(-0.58 * toCamXZ.x, 1.0, -0.58 * toCamXZ.y));
     float cosPlane = dot(n, planeN);
     float sinSurface = max(sqrt(saturate(1.0 - cosPlane * cosPlane)), 0.42);
@@ -236,8 +235,6 @@ void MoonApplySurfaceScan(
         half3 edgeTarget = pingColor * (half)(pingEdgeIntensity * (0.75 + 0.45 * thinEdge));
         color = lerp(color, edgeTarget, edgeMask * 0.90h) + pingColor * (edgeMask * (half)(pingEdgeIntensity * 0.30));
     }
-
-    color = clamp(color - 1e-4h, 0.0h, 2.0h);
 }
 
 #endif
