@@ -3,9 +3,11 @@ namespace MoonProject.World
     /// <summary>What one scatter build produced and how long it took on the main thread (milliseconds).</summary>
     public readonly struct ScatterBuildReport
     {
-        public ScatterBuildReport(int pebbles, int boulders, int triangles, int drawGroups, double buildMs)
+        public ScatterBuildReport(int pebbles, int boulders, int triangles, int drawGroups, double buildMs,
+            int solidCobbles)
         {
             Pebbles = pebbles;
+            SolidCobbles = solidCobbles;
             Boulders = boulders;
             Triangles = triangles;
             DrawGroups = drawGroups;
@@ -13,6 +15,9 @@ namespace MoonProject.World
         }
 
         public int Pebbles { get; }
+
+        /// <summary>Medium cobbles (ScatterKind.Pebble at or above CobbleColliderMinSize) given a SphereCollider.</summary>
+        public int SolidCobbles { get; }
 
         public int Boulders { get; }
 
@@ -25,8 +30,8 @@ namespace MoonProject.World
 
         public override string ToString()
         {
-            return $"{Pebbles} pebbles, {Boulders} boulders, {Triangles} triangles in {DrawGroups} chunk meshes, " +
-                $"built in {BuildMs:0} ms";
+            return $"{Pebbles} pebbles ({SolidCobbles} solid cobbles), {Boulders} boulders, {Triangles} triangles " +
+                $"in {DrawGroups} chunk meshes, built in {BuildMs:0} ms";
         }
     }
 }
