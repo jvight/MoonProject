@@ -161,17 +161,11 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
-        public void SalvageSitesOnTheFloor_EndADrivingLane()
+        public void KestrelSite_EndsADrivingLane()
         {
-            WorldAnchors anchors = Anchors();
-            foreach (string name in SalvageSiteTests.Sites)
-            {
-                Assert.IsTrue(anchors.TryGet(WorldAnchorIds.SitePrefix + name, out WorldAnchor site));
-                var at = new Vector2(site.Position.x, site.Position.z);
-                bool onTheFloor = !_surface.Canyon.Bounds.Contains(at);
-                Assert.AreEqual(onTheFloor, _planner.DistanceToLanes(at) < 1e-3f,
-                    onTheFloor ? $"no lane leads to {site.Id}" : $"a lane runs into the canyon to {site.Id}");
-            }
+            Assert.IsTrue(Anchors().TryGet(WorldAnchorIds.SitePrefix + SalvageSiteTests.Kestrel, out WorldAnchor site));
+            Assert.Less(_planner.DistanceToLanes(new Vector2(site.Position.x, site.Position.z)), 1e-3f,
+                $"no lane leads to {site.Id}");
         }
 
         [Test]

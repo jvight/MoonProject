@@ -241,7 +241,6 @@ namespace MoonProject.World
             SummitRadius = _summitRadius;
             PadRadius = _padRadius;
             FloorRadius = _floorRadius;
-            CrestRadius = _crestRadius;
 
             _ramps = ResolveRamps(settings.Ramps);
             _rampCalmBoundSq = new float[_ramps.Length];
@@ -303,8 +302,6 @@ namespace MoonProject.World
 
         /// <summary>Nominal floor radius before the rim warp (the floor edge wanders by the warp amplitude).</summary>
         public float FloorRadius { get; }
-
-        public float CrestRadius { get; }
 
         /// <summary>Seeded impact craters followed by the hand-placed play bowls.</summary>
         public IReadOnlyList<Crater> Craters => _craters;
