@@ -76,6 +76,39 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(gameplay.Materials.Hold.HasPart("Part_TowerCoil"), "held in 07's hold");
         }
 
+        [UnityTest]
+        public IEnumerator CuttingASealedContainer_AimsBeamAtContainerCutPoint_AndHolds07Still()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            GameplaySystem gameplay = _fixture.Gameplay;
+            SealedContainer crate = Coil(gameplay);
+            gameplay.Crates.Restore(new CratesSaveData { opened = new[] { WorldAnchorIds.SitePrefix + "depot" } });
+            _fixture.Rover.Place(crate.CutPoint.position + crate.Root.forward * 1.5f, 0f);
+            yield return null;
+            yield return null;
+
+            Assert.AreSame(crate, gameplay.Containers.Candidate);
+            Assert.IsTrue(gameplay.Salvage.HasTarget, "Salvage query reports the sealed container as a cut target.");
+            Assert.Less(
+                Vector3.Distance(gameplay.Salvage.CutPoint, crate.CutPoint.position),
+                1e-3f,
+                "Salvage.CutPoint must match the sealed container's CutPoint, not world origin (0,0,0).");
+
+            Press(Keyboard.current.eKey);
+            yield return Waits.Until(() => gameplay.Containers.IsCutting && gameplay.Salvage.BeamLevel > 0.1f, 3f);
+            Assert.Greater(_fixture.Rover.HoldStillCount, 0, "07 must hold still while cutting a SealedContainer.");
+            Assert.Less(
+                Vector3.Distance(gameplay.Salvage.CutPoint, crate.CutPoint.position),
+                1e-3f,
+                "Active cutter beam target must remain on the container CutPoint during the cut.");
+
+            yield return Waits.Until(() => crate.Opened, 4f);
+            Release(Keyboard.current.eKey);
+            yield return null;
+            Assert.AreEqual(0, _fixture.Rover.HoldStillCount, "Hold-still releases once the container cut finishes.");
+        }
+
         private static SealedContainer Coil(GameplaySystem gameplay)
         {
             SealedContainer crate = gameplay.Containers.Find(TowerPartField.ContainerId(gameplay.TowerParts.PartAt(0)));

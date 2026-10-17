@@ -81,6 +81,13 @@ namespace MoonProject.Gameplay
 
         public bool TryGet(InteractionKind kind, out InteractionHint hint)
         {
+            if (_building != null && _building.State != BuildModeState.Closed &&
+                kind != InteractionKind.Build && kind != InteractionKind.Deconstruct)
+            {
+                hint = InteractionHint.None;
+                return false;
+            }
+
             ITowable towed = _tether.TowedBody;
             switch (kind)
             {

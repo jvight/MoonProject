@@ -204,6 +204,42 @@ namespace MoonProject.Rover.Tests
                     "ScreenBezel must default to Variant A (R1_CreamEnamel).");
             }
         }
+
+        [Test]
+        public void CutterNozzle_IsBuiltUnderCutterOriginWithR1Materials_AndFailsFastWhenUnwired()
+        {
+            using (var scratch = new BuilderScratchScene())
+            {
+                GameObject rover = RoverPrefabBuilder.Assemble(scratch);
+                Transform cutterOrigin = BuildWiring.Node(rover.transform, RoverModelNodes.CutterOrigin);
+                Assert.IsNotNull(cutterOrigin, "Rover must have CutterOrigin.");
+
+                for (int i = 0; i < RoverModelNodes.NozzleBladeCount; i++)
+                {
+                    Transform blade = cutterOrigin.Find(RoverModelNodes.NozzleBlade(i));
+                    Assert.IsNotNull(blade, $"Missing {RoverModelNodes.NozzleBlade(i)} under CutterOrigin.");
+                    var bladeRenderer = blade.GetComponent<MeshRenderer>();
+                    Assert.IsNotNull(bladeRenderer);
+                    Assert.IsNotNull(bladeRenderer.sharedMaterial);
+                    StringAssert.Contains("R1_BareSteel", bladeRenderer.sharedMaterial.name);
+                }
+
+                Transform core = cutterOrigin.Find(RoverModelNodes.NozzleHotCore);
+                Assert.IsNotNull(core, "Missing NozzleHotCore under CutterOrigin.");
+                var coreRenderer = core.GetComponent<MeshRenderer>();
+                Assert.IsNotNull(coreRenderer);
+                Assert.IsNotNull(coreRenderer.sharedMaterial);
+                StringAssert.Contains("R1_LampAmber", coreRenderer.sharedMaterial.name);
+
+                Transform spillNode = cutterOrigin.Find(RoverModelNodes.NozzleSpillLight);
+                Assert.IsNotNull(spillNode, "Missing NozzleSpillLight under CutterOrigin.");
+                var spillLight = spillNode.GetComponent<Light>();
+                Assert.IsNotNull(spillLight);
+                Assert.AreEqual(LightShadows.None, spillLight.shadows);
+
+                var controller = rover.GetComponent<RoverController>();
+                Assert.IsNotNull(controller.NozzleDevice, "RoverController.NozzleDevice must be wired at build time.");
+            }
+        }
     }
 }
-

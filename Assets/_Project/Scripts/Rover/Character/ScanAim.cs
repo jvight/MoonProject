@@ -241,5 +241,118 @@ namespace MoonProject.Rover
             var localRay = new Ray(localOrigin, localVec / localDist);
             return bounds.IntersectRay(localRay, out float hit) && hit >= 0.01f && hit <= localDist - 0.01f;
         }
+
+        public const float DefaultCutterStartTurnYawDeg = 6f;
+        public const float DefaultCutterStopTurnYawDeg = 2f;
+        public const float DefaultCutterFiringConeDeg = 35f;
+
+        /// <summary>
+        /// Signed horizontal yaw angle in degrees (-180..180, + = right around world up) from <paramref name="forward"/>
+        /// to <paramref name="toTarget"/>.
+        /// </summary>
+        public static float HorizontalYawDelta(Vector3 forward, Vector3 toTarget)
+        {
+            var flatFwd = new Vector3(forward.x, 0f, forward.z);
+            var flatTo = new Vector3(toTarget.x, 0f, toTarget.z);
+            if (flatFwd.sqrMagnitude <= MinDistance * MinDistance ||
+                flatTo.sqrMagnitude <= MinDistance * MinDistance)
+            {
+                return 0f;
+            }
+
+            return Vector3.SignedAngle(flatFwd.normalized, flatTo.normalized, Vector3.up);
+        }
+
+        /// <summary>
+        /// True when 07's chest-mounted <paramref name="cutterOrigin"/> must turn 07's body in place to face
+        /// <paramref name="targetPoint"/>. Because the cutter is fixed in 07's chest, any target outside the hysteresis
+        /// deadband requires turning the body.
+        /// </summary>
+        public static bool NeedsCutterBodyTurn(
+            Transform cutterOrigin,
+            Vector3 targetPoint,
+            float startTurnYawDeg,
+            float stopTurnYawDeg,
+            bool currentlyTurningBody,
+            out float bodyYawDeltaDeg)
+        {
+            if (cutterOrigin == null)
+            {
+                bodyYawDeltaDeg = 0f;
+                return false;
+            }
+
+            bodyYawDeltaDeg = HorizontalYawDelta(cutterOrigin.forward, targetPoint - cutterOrigin.position);
+            float absYaw = Mathf.Abs(bodyYawDeltaDeg);
+            float threshold = currentlyTurningBody ? stopTurnYawDeg : startTurnYawDeg;
+            return absYaw > threshold;
+        }
+
+        /// <summary>
+        /// True when <paramref name="cutterOrigin"/> faces <paramref name="targetPoint"/> within
+        /// <paramref name="maxYawAngleDeg"/> horizontally and the ray from the chest nozzle to the target does not
+        /// pass through 07's own colliders or chassis mesh.
+        /// </summary>
+        public static bool HasCutterLineOfSight(
+            Transform cutterOrigin,
+            Vector3 targetPoint,
+            float maxYawAngleDeg,
+            Collider[] selfColliders,
+            MeshFilter[] selfMeshes = null)
+        {
+            if (cutterOrigin == null)
+            {
+                return false;
+            }
+
+            Vector3 origin = cutterOrigin.position;
+            Vector3 toTarget = targetPoint - origin;
+            float distance = toTarget.magnitude;
+            if (distance <= MinDistance)
+            {
+                return true;
+            }
+
+            if (Mathf.Abs(HorizontalYawDelta(cutterOrigin.forward, toTarget)) > maxYawAngleDeg)
+            {
+                return false;
+            }
+
+            Vector3 dir = toTarget / distance;
+            if (Vector3.Dot(cutterOrigin.forward, dir) <= 0.1f)
+            {
+                return false;
+            }
+
+            if (IsRaySelfOccluded(origin, dir, distance, head: null, Vector3.zero, selfColliders, selfMeshes))
+            {
+                return false;
+            }
+
+            if (selfColliders != null)
+            {
+                for (int i = 0; i < selfColliders.Length; i++)
+                {
+                    Collider col = selfColliders[i];
+                    if (col == null || !col.enabled || col.isTrigger || !col.bounds.Contains(origin))
+                    {
+                        continue;
+                    }
+
+                    Vector3 toCenter = col.bounds.center - origin;
+                    float proj = Vector3.Dot(toCenter, dir);
+                    if (proj > 0.1f && proj < distance)
+                    {
+                        float coreRadius = col.bounds.extents.x * 0.65f;
+                        if ((toCenter - dir * proj).sqrMagnitude < coreRadius * coreRadius)
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
     }
 }

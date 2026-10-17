@@ -5,17 +5,19 @@ using UnityEngine.Rendering;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// 07's cutting beam (docs/design/feel-pass.md §3.1): a hot white core inside a cyan sheath that shimmers. At
-    /// ignition it reaches the cut point on a fast ease-out (never instantly); on a release it retracts into the
-    /// emitter. Two line renderers, built once.
+    /// 07's cutting and welding beam (docs/design/feel-pass.md §3.1): a hot white core inside a cyan sheath and outer
+    /// halo that shimmer. At ignition it reaches the target point on a fast ease-out (never instantly); on release it
+    /// retracts into the emitter. Three line renderers, built once.
     /// </summary>
     public sealed class CutBeam
     {
         private const float TwoPi = Mathf.PI * 2f;
+        private const float HaloWidthFactor = 2.2f;
 
         private readonly FeelVfxTuning _tuning;
         private readonly LineRenderer _core;
         private readonly LineRenderer _sheath;
+        private readonly LineRenderer _halo;
         private float _reach;
         private bool _out;
         private float _clock;
@@ -23,14 +25,24 @@ namespace MoonProject.Gameplay
         public CutBeam(Transform parent, FeelVfxTuning tuning, Material core, Material sheath)
         {
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
+            _halo = Line("BeamHalo", parent, sheath, tuning.SheathWidth * HaloWidthFactor);
             _sheath = Line("BeamSheath", parent, sheath, tuning.SheathWidth);
             _core = Line("BeamCore", parent, core, tuning.CoreWidth);
         }
 
-        /// <summary>How far the beam reaches from the emitter to the cut point (0..1).</summary>
+        /// <summary>How far the beam reaches from the emitter to the target point (0..1).</summary>
         public float Reach => _reach;
 
-        /// <summary>The beam fires: it extends to the cut point.</summary>
+        /// <summary>Number of rendered beam layers (core + sheath + halo).</summary>
+        public int LayerCount => 3;
+
+        /// <summary>World-space start position of the beam when active, or Vector3.zero when retracted.</summary>
+        public Vector3 Start { get; private set; }
+
+        /// <summary>World-space tip position of the beam when active, or Vector3.zero when retracted.</summary>
+        public Vector3 End { get; private set; }
+
+        /// <summary>The beam fires: it extends to the target point.</summary>
         public void Extend()
         {
             _out = true;
@@ -50,19 +62,27 @@ namespace MoonProject.Gameplay
             bool shown = _reach > 0f;
             _core.enabled = shown;
             _sheath.enabled = shown;
+            _halo.enabled = shown;
             if (!shown)
             {
+                Start = Vector3.zero;
+                End = Vector3.zero;
                 return;
             }
 
             float eased = _out ? FeelCurves.Extend(_reach) : _reach * _reach;
             Vector3 tip = Vector3.Lerp(emitter, target, eased);
+            Start = emitter;
+            End = tip;
             _core.SetPosition(0, emitter);
             _core.SetPosition(1, tip);
             _sheath.SetPosition(0, emitter);
             _sheath.SetPosition(1, tip);
+            _halo.SetPosition(0, emitter);
+            _halo.SetPosition(1, tip);
             float wobble = Mathf.Sin(TwoPi * _tuning.ShimmerRate * _clock);
             _sheath.widthMultiplier = _tuning.SheathWidth * (1f + _tuning.Shimmer * wobble);
+            _halo.widthMultiplier = _tuning.SheathWidth * HaloWidthFactor * (1f + _tuning.Shimmer * 0.5f * wobble);
         }
 
         private static LineRenderer Line(string name, Transform parent, Material material, float width)
