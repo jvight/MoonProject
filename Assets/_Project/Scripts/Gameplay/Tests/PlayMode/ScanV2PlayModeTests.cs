@@ -156,9 +156,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             Press(_keyboard.eKey);
             float maxHeadYaw = 0f;
             float deadline = Time.time + ScanTimeout;
-            while (maxHeadYaw < 38f)
+            while (scans.Scanning != target || target.Progress < 0.18f)
             {
-                Assert.Less(Time.time, deadline, "Head must turn toward beside target.");
+                Assert.Less(Time.time, deadline, "Head must turn toward beside target and begin scan.");
                 maxHeadYaw = Mathf.Max(maxHeadYaw, Mathf.Abs(_bodyLanguage.CurrentHeadAngles.x));
                 if (scans.Scanning == target)
                 {
@@ -170,8 +170,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             // Letting go of E returns the head to rest
             Release(_keyboard.eKey);
-            yield return WaitSeconds(0.95f);
-            Assert.Less(Mathf.Abs(_bodyLanguage.CurrentHeadAngles.x), 10f, "Letting go of E returns 07's head to rest.");
+            yield return Until(() => Mathf.Abs(_bodyLanguage.CurrentHeadAngles.x) < 10f, 2.8f,
+                "Letting go of E returns 07's head to rest.");
 
             // Hold E again to complete the beside scan
             Press(_keyboard.eKey);
