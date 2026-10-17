@@ -56,6 +56,27 @@ namespace MoonProject.Rover
             return Mathf.Tan((pitch + cameraElevation) * Mathf.Deg2Rad) / (2f * halfHeight);
         }
 
+        /// <summary>
+        /// C2-continuous step from 0 to 1 over [<paramref name="a"/>, <paramref name="b"/>] with zero velocity and
+        /// acceleration at both endpoints and a gentle peak slope (&lt; 1.60) that avoids circular-orbit jerk spikes.
+        /// </summary>
+        public static float SmoothStepC2(float a, float b, float t)
+        {
+            if (b <= a)
+            {
+                return t >= b ? 1f : 0f;
+            }
+
+            float u = Mathf.Clamp01((t - a) / (b - a));
+            float u2 = u * u;
+            float u3 = u2 * u;
+            float u4 = u2 * u2;
+            float om = 1f - u;
+            float om2 = om * om;
+            float om4 = om2 * om2;
+            return u3 * (10f + u * (-15f + 6f * u)) + 27f * u4 * om4 * (1f - 2f * u);
+        }
+
         /// <summary>Whether beat 1 is held (the title, or the opening still inside the lens).</summary>
         public bool IsHeld => IsActive && _hold;
 
@@ -126,13 +147,13 @@ namespace MoonProject.Rover
             {
                 _held += deltaTime;
                 float turnStart = _tuning.WakeLensSeconds;
-                Turn = Smoothing.SmoothStep(turnStart, turnStart + _tuning.WakeTurnSeconds, _held);
+                Turn = SmoothStepC2(turnStart, turnStart + _tuning.WakeTurnSeconds, _held);
                 IsEasing = playerInput || _held >= _tuning.WakeHoldSeconds;
                 return;
             }
 
             _eased = Math.Min(1f, _eased + deltaTime / _tuning.WakeEaseSeconds);
-            Weight = 1f - Smoothing.SmoothStep(0f, 1f, _eased);
+            Weight = 1f - SmoothStepC2(0f, 1f, _eased);
             if (_eased >= 1f)
             {
                 IsActive = false;
@@ -160,7 +181,7 @@ namespace MoonProject.Rover
             }
 
             float swing = Mathf.Sin(2f * Mathf.PI * _driftClock / settings.TitleDriftPeriod);
-            DriftYaw = settings.TitleDriftYaw * swing * Smoothing.SmoothStep(0f, 1f, _drift);
+            DriftYaw = settings.TitleDriftYaw * swing * SmoothStepC2(0f, 1f, _drift);
         }
     }
 }
