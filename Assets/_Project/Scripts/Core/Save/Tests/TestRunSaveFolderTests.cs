@@ -28,7 +28,8 @@ namespace MoonProject.Core.Save.Tests
             var save = new SaveService(SaveService.DefaultDirectory, slot);
             try
             {
-                save.SaveNow();
+                save.Load();
+                Assert.IsTrue(save.SaveNow(), "the save is written");
                 Assert.IsTrue(File.Exists(save.FilePath), "the save exists in the scratch folder");
                 Assert.IsFalse(File.Exists(Path.Combine(SaveService.RealDirectory, slot + SaveService.Extension)),
                     "and not in the real folder");
