@@ -25,14 +25,6 @@ namespace MoonProject.Art.Tests
 
         private static IEnumerable<ModelNode> Weathered()
         {
-            yield return BaseModelBuilder.CreateLander();
-            yield return BaseModelBuilder.CreateRoverBay();
-            yield return BaseModelBuilder.CreateCassetteShelf();
-            for (int level = 1; level <= 3; level++)
-            {
-                yield return BaseModelBuilder.CreateTower(level);
-            }
-
             yield return RoverModelBuilder.CreateModel().GetDescendant("Body");
         }
 
@@ -176,7 +168,6 @@ namespace MoonProject.Art.Tests
         [Test]
         public void Weathering_BuildsIdentically()
         {
-            MeshChecks.AssertSameModel(BaseModelBuilder.CreateCassetteShelf(), BaseModelBuilder.CreateCassetteShelf());
             ModelNode first = RoverModelBuilder.CreateModel().GetDescendant("Body");
             ModelNode second = RoverModelBuilder.CreateModel().GetDescendant("Body");
             foreach (string layer in Layers)
