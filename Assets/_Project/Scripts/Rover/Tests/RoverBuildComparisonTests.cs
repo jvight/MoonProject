@@ -116,18 +116,6 @@ namespace MoonProject.Rover.Tests
                 }
             }
         }
-
-        [Test]
-        public void GroundModel_ClassifiesRegolithRockAndMetal_AndSelectsSurfaceSoundHooks()
-        {
-            Assert.AreEqual(GroundSurface.Regolith, GroundModel.ClassifySurface("TerrainChunk_0_0", Core.Layers.Ground));
-            Assert.AreEqual(GroundSurface.Rock, GroundModel.ClassifySurface("Boulder", Core.Layers.Prop));
-            Assert.AreEqual(GroundSurface.Metal, GroundModel.ClassifySurface("Site_KestrelPad_Deck", Core.Layers.Prop));
-
-            Assert.AreEqual("regolith", GroundModel.SurfaceSoundHook(GroundSurface.Regolith));
-            Assert.AreEqual("rock", GroundModel.SurfaceSoundHook(GroundSurface.Rock));
-            Assert.AreEqual("metal", GroundModel.SurfaceSoundHook(GroundSurface.Metal));
-        }
     }
 }
 

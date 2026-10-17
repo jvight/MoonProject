@@ -139,8 +139,7 @@ namespace MoonProject.Rover
 
         public void Tick(float deltaTime)
         {
-            bool kickingUpRegolith = _rover.IsGrounded && _rover.HasGroundContact
-                && _rover.ContactSurface == GroundSurface.Regolith;
+            bool kickingUpRegolith = _rover.IsGrounded && _rover.HasGroundContact;
             float target = kickingUpRegolith ? LampMoteLight.SpeedVisibility(_tuning, _rover.Speed) : 0f;
             Visibility = Smoothing.Damp(Visibility, target, _tuning.MoteVisibilityHalfLife, deltaTime);
 

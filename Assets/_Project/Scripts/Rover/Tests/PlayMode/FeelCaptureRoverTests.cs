@@ -335,7 +335,6 @@ namespace MoonProject.Rover.PlayModeTests
 
             yield return StepForSeconds(rec, 0.06f);
             rec.CaptureFrame("06_regolith_touchdown_puff");
-            rec.SetMetric("regolithLandingSurface", (float)_rover.ContactSurface);
             yield return StepForSeconds(rec, 0.74f);
             rec.SetMetric("regolithLeapApexMeters", maxApexAboveGround);
             rec.SetMetric("regolithAirTimeSeconds", lastAirTime);
@@ -389,7 +388,6 @@ namespace MoonProject.Rover.PlayModeTests
                 yield return StepForSeconds(rec, 0.06f);
                 float rockTilt = Vector3.Angle(_rover.Rotation * Vector3.up, Vector3.up);
                 rec.SetMetric("rockLandingTiltDeg", rockTilt);
-                rec.SetMetric("rockLandingSurface", (float)_rover.ContactSurface);
                 rec.CaptureFrame("08_landed_on_rock");
                 yield return StepForSeconds(rec, 0.74f);
             }
@@ -925,12 +923,6 @@ namespace MoonProject.Rover.PlayModeTests
                 {
                     Collider col = colliders[i];
                     if (col == null || col.isTrigger || col.gameObject.layer != Layers.Prop)
-                    {
-                        continue;
-                    }
-
-                    if (GroundModel.ClassifySurface(col) != GroundSurface.Rock
-                        || col.gameObject.name.IndexOf("Boulder", StringComparison.OrdinalIgnoreCase) < 0)
                     {
                         continue;
                     }
