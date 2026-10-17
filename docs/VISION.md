@@ -7,7 +7,8 @@
 
 ## The one-sentence promise
 **A small, tired rover wakes on a dark moon, rebuilds itself and its station piece by piece, and pushes its battery's
-reach a little farther every night until it can call Earth, and you never once feel stressed.**
+reach a little farther every night until it can call Earth. The moon is calm to roam, but it is not safe: 07 can wear
+down and die (ruling 17).**
 
 > Since 2026-10-11 the game's design is `docs/design/gdd-v3.md` (approved by the owner). Two founding decisions:
 > **progression first** (07's growth: upgrade, unlock, craft new tech, go farther; the crew's memories are seasoning)
@@ -21,12 +22,13 @@ The player should exhale in the first 10 seconds and still be smiling after an h
    more range. You can see how far you've come: on 07, at home and on the chart (rulings 11 and 15).
 2. **Weightless calm.** Nothing snaps, pops or jerks. Everything eases in and out, floats a little too long,
    and settles with a soft overshoot. Low gravity is the core sensation — bounces are a reward, not a hazard.
-   The battery is range, never a threat: an empty battery means a slow, quiet crawl home with a friend's light
-   ahead, never loss and never failure.
+   The battery is range, not the danger: an empty battery means a slow, quiet crawl home with a friend's light
+   ahead (ruling 15). Danger comes from hard impacts, the world's hazards and the Reclaimers (ruling 17).
 3. **Free to roam, gently curious.** A few main recovery targets give the game its direction and show their progress
    at home; nothing else is listed. Everything else (sites, finds, friends, secrets) is found by roaming, in any order.
    The world invites, never demands: glints on the horizon, the sonar's rising pitch, a blinking light on the distant
-   peak. No timers, no quest log, no fail states, no punishment. The battery measures driving and work, never minutes.
+   peak. No timers and no quest log. Danger is real but always readable and avoidable (ruling 17). The battery
+   measures driving and work, never minutes.
 4. **Warmth in the cold.** The world is cool (indigo, lavender, slate). Everything that means *safety, home,
    friend* is warm (amber, peach, honey). Light is the language of comfort: the rover's lamp, the base glow,
    the radio tower's halo. Chargers, home and friends are the warm lights.
@@ -57,7 +59,8 @@ The player should exhale in the first 10 seconds and still be smiling after an h
      light vignette and very fine grain. Nothing sharp, nothing harsh, nothing busy.
 
 ## Anti-goals (never ship these)
-- Health, oxygen, damage, enemies, failure screens, timers. 07's battery is its range, never a threat (ruling 15).
+- Timers, oxygen or hunger meters, and combat (07 has no weapons). Deaths the player could not read coming or
+  could not avoid. 07's battery is its range (ruling 15); its wear and death follow ruling 17.
 - Pop-in, hard cuts, camera snaps, instant teleports (fade or ease instead).
 - Walls of UI. Prefer diegetic feedback (lights, sounds, the rover's own gauges) over HUD.
 - Realistic textures, PBR grime, noisy normal maps.
@@ -157,8 +160,8 @@ Each ruling removes friction the original pitch would have caused. Boxes impleme
     for a rover: Kenji's Rover Bay with gantry arms that fit kit, hoppers 07 feeds with its beam, service ports at
     rover height, a cable lift, a charging dock. No human action is ever implied: no pressing buttons, carrying,
     climbing or using a workbench. Every interaction must answer "how does 07 physically do this?" on screen.
-15. **The battery is range, never a threat** (owner, 2026-10-11; `docs/design/gdd-v3.md` §3, spec M3-20).
-    - No death, no loss, no failure screen. Whatever 07 carries stays with it.
+15. **The battery is range, not the danger** (owner, 2026-10-11; `docs/design/gdd-v3.md` §3, spec M3-20).
+    - An empty battery never kills 07 and never costs cargo. Death comes only through wear (ruling 17).
     - A verb in progress always completes: a cut, stitch, dig, feed or tow that starts on the last charge finishes on
       the reserve, and the crawl starts after. A leap that can't be paid for never charges: the coils fizzle softly at
       the lip. A leap never fails mid-air.
@@ -174,6 +177,25 @@ Each ruling removes friction the original pitch would have caused. Boxes impleme
 16. **A few main targets, everything else free** (owner, 2026-10-11; spec M3-21). The game's only directed part is
     four recovery targets on the lab's recovery panel: Power, Link, Dish, Answer. Sites, finds, kits, friends, tapes,
     logs and secrets are found by roaming in any order, and there is no list of them anywhere.
+17. **07 can wear down and die** (owner, 2026-10-17; it replaces the old "no death, no fail states" rule; design in
+    `docs/design/wear-and-reclaimers.md`).
+    - **Wear.** 07 has a wear meter beside its battery. Wear comes from:
+      - hard impacts above a speed threshold against rock or metal;
+      - the regions' hazards;
+      - the Reclaimers, Departure-era machines that recycle old robots.
+      Low-gravity hops, landings on regolith and gentle bumps never cost wear: bounces stay a reward.
+    - **Readable before it hurts.** A rising creak above cruise speed, then dents, a bent antenna, a flickering lamp, a
+      wobbly wheel and 07's wince with a short chirp. The wear gauge shows only when it isn't full. Low wear softens 07
+      (a lower top speed, slower scans, no leap) before it kills.
+    - **At zero, 07 dies.** The default consequence:
+      - 07 restarts at its last dock or Service Gantry with its kits and progress;
+      - the hold's cargo stays at the wreck site as a beacon to recover.
+      The exact rules are in the design doc.
+    - **Repair is physical** (ruling 14): a crafted Patch Kit 07 applies itself with its weld beam, and the Service
+      Gantry, whose arms rebuild 07 while it stands on the pad. Repairs visibly restore 07 (ruling 11).
+    - **Danger is regional.** The home basin has no Reclaimers. Every threat has a readable tell, a way to avoid it, and
+      a learn-then-overcome arc (scan, craft, reprogram).
+    - **New Game modes:** Survival (wear and death, the default) and Calm (no wear, no death).
 
 ## World concept
 The playable space is the floor of a **vast ancient crater basin** (~600 m across for the vertical slice).
