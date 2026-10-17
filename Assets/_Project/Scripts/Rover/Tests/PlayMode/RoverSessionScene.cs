@@ -32,6 +32,7 @@ namespace MoonProject.Rover.PlayModeTests
         {
 #if UNITY_EDITOR
             BootstrapHarness.DeleteSaveFiles(SaveSlot);
+            DeletePutAway();
             DeleteCopy();
             AssetDatabase.CreateFolder(Parent, FolderName);
             string text = File.ReadAllText(MainScene);
@@ -44,14 +45,50 @@ namespace MoonProject.Rover.PlayModeTests
 
             File.WriteAllText(ScenePath, text.Replace(SceneSlotLine, "_saveSlot: " + SaveSlot));
             AssetDatabase.ImportAsset(ScenePath, ImportAssetOptions.ForceSynchronousImport);
+            EditorBuildSettingsScene[] scenes = EditorBuildSettings.scenes;
+            bool listedAlready = false;
+            foreach (EditorBuildSettingsScene scene in scenes)
+            {
+                if (scene.path == ScenePath)
+                {
+                    listedAlready = true;
+                    break;
+                }
+            }
+
+            if (!listedAlready)
+            {
+                var listed = new EditorBuildSettingsScene[scenes.Length + 1];
+                scenes.CopyTo(listed, 0);
+                listed[scenes.Length] = new EditorBuildSettingsScene(ScenePath, true);
+                EditorBuildSettings.scenes = listed;
+            }
 #endif
         }
 
         public void Cleanup()
         {
 #if UNITY_EDITOR
+            EditorBuildSettingsScene[] scenes = EditorBuildSettings.scenes;
+            int kept = 0;
+            var restored = new EditorBuildSettingsScene[scenes.Length];
+            foreach (EditorBuildSettingsScene scene in scenes)
+            {
+                if (scene.path != ScenePath)
+                {
+                    restored[kept++] = scene;
+                }
+            }
+
+            if (kept != scenes.Length)
+            {
+                Array.Resize(ref restored, kept);
+                EditorBuildSettings.scenes = restored;
+            }
+
             DeleteCopy();
             BootstrapHarness.DeleteSaveFiles(SaveSlot);
+            DeletePutAway();
 #endif
         }
 
@@ -61,6 +98,20 @@ namespace MoonProject.Rover.PlayModeTests
             if (AssetDatabase.IsValidFolder(Folder))
             {
                 AssetDatabase.DeleteAsset(Folder);
+            }
+        }
+
+        private static void DeletePutAway()
+        {
+            string directory = MoonProject.Core.Save.SaveService.DefaultDirectory;
+            if (!Directory.Exists(directory))
+            {
+                return;
+            }
+
+            foreach (string file in Directory.GetFiles(directory, SaveSlot + MoonProject.Core.Save.SaveService.PutAwayMarker + "*"))
+            {
+                File.Delete(file);
             }
         }
 #endif
