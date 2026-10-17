@@ -141,6 +141,7 @@ DIMENSIONS = {
     "piv_headlamp_z": 0.56,              # Node pivot Z (tucked onto curved beetle nose)
     "headlamp_visual_y_offset": -0.025,  # Places brass lamp bezel center at y = 0.605 m on the beltline
     "headlamp_outer_radius": 0.098,      # 0.196 m deep brass bezels + convex glass domes
+    "headlamp_down_tilt_deg": 7.5,       # 7.5 deg pitch-down matching RoverRigTuning.HeadlampDownTilt
     "piv_headlamp_glass_local": (0.0, -0.002, 0.02),
     "piv_front_intake": (0.0, 0.50, 0.58),
     "piv_front_intake_roller_local": (0.0, -0.01, 0.012),

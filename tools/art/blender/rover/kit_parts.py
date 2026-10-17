@@ -168,6 +168,11 @@ def build_kit_lamp_bar_model(cfg=DIMENSIONS, mats=None, parent=None, unity_loc=(
         mat_idx=3,
     )
 
+    lamp_tilt_deg = cfg.get("headlamp_down_tilt_deg", 7.5)
+    tilt_rad = math.radians(lamp_tilt_deg)
+    sin_t = math.sin(tilt_rad)
+    cos_t = math.cos(tilt_rad)
+
     # 2. Left & right chassis mounting brackets, projector barrels, copper fins & guard hoops
     for sx in (-1.0, 1.0):
         lx = sx * lamp_x
@@ -199,7 +204,7 @@ def build_kit_lamp_bar_model(cfg=DIMENSIONS, mats=None, parent=None, unity_loc=(
             mat_idx=0,
         )
 
-        # Coaxial cast-brass projector shroud collar with radial copper cooling fins (closed lathe)
+        # Coaxial cast-brass projector shroud collar with radial copper cooling fins (closed lathe, pitched down)
         shroud_profile = [
             (0.0, -0.036),
             (0.088, -0.036),
@@ -219,6 +224,7 @@ def build_kit_lamp_bar_model(cfg=DIMENSIONS, mats=None, parent=None, unity_loc=(
             center_xyz=(lx, lamp_y, lamp_z),
             segments=16,
             mat_idx=1,
+            rot_euler=(lamp_tilt_deg, 0.0, 0.0),
             ring_mat_indices=[5, 0, 2, 1, 1, 1, 3, 0, 0],
             auto_chamfer=False,
         )
@@ -230,25 +236,29 @@ def build_kit_lamp_bar_model(cfg=DIMENSIONS, mats=None, parent=None, unity_loc=(
                 major_radius=0.108,
                 minor_radius=0.006,
                 axis="Z",
-                center_xyz=(lx, lamp_y, lamp_z + fz),
+                center_xyz=(lx, lamp_y - fz * sin_t, lamp_z + fz * cos_t),
                 major_seg=16,
                 minor_seg=6,
                 mat_idx=2,
+                rot_euler=(lamp_tilt_deg, 0.0, 0.0),
             )
 
         # Outer tubular dark-charcoal brush-guard ring framing each headlamp
+        hoop_dz = 0.032
         append_torus(
             bm,
             major_radius=0.114,
             minor_radius=0.0095,
             axis="Z",
-            center_xyz=(lx, lamp_y, lamp_z + 0.032),
+            center_xyz=(lx, lamp_y - hoop_dz * sin_t, lamp_z + hoop_dz * cos_t),
             major_seg=16,
             minor_seg=6,
             mat_idx=0,
+            rot_euler=(lamp_tilt_deg, 0.0, 0.0),
         )
 
         # Horizontal stone-guard grille bars across the front of the headlamp hoop
+        grille_dz = 0.038
         for gy in (-0.036, 0.036):
             append_cylinder(
                 bm,
@@ -256,7 +266,7 @@ def build_kit_lamp_bar_model(cfg=DIMENSIONS, mats=None, parent=None, unity_loc=(
                 radius2=0.0045,
                 length=0.195,
                 axis="X",
-                center_xyz=(lx, lamp_y + gy, lamp_z + 0.038),
+                center_xyz=(lx, lamp_y + gy * cos_t - grille_dz * sin_t, lamp_z + gy * sin_t + grille_dz * cos_t),
                 segments=8,
                 bevel_width=0.001,
                 bevel_segments=1,
@@ -291,6 +301,7 @@ def build_kit_lamp_bar_model(cfg=DIMENSIONS, mats=None, parent=None, unity_loc=(
         center_xyz=(0.0, bar_y, bar_z + 0.006),
         segments=14,
         mat_idx=1,
+        rot_euler=(lamp_tilt_deg, 0.0, 0.0),
         ring_mat_indices=[0, 0, 2, 1, 3, 0],
         auto_chamfer=False,
     )
@@ -302,6 +313,7 @@ def build_kit_lamp_bar_model(cfg=DIMENSIONS, mats=None, parent=None, unity_loc=(
         bevel_width=0.004,
         bevel_segments=1,
         mat_idx=0,
+        rot_euler=(lamp_tilt_deg, 0.0, 0.0),
     )
 
     root_obj = create_mesh_node(
@@ -315,11 +327,11 @@ def build_kit_lamp_bar_model(cfg=DIMENSIONS, mats=None, parent=None, unity_loc=(
 
     # 4. Required child lamp meshes: Lamp_0 (left), Lamp_1 (center), Lamp_2 (right)
     lamp_specs = (
-        ("Lamp_0", (-lamp_x, lamp_y, lamp_z + 0.024), 0.078, 0.022),
-        ("Lamp_1", (0.0, bar_y, bar_z + 0.024), 0.045, 0.016),
-        ("Lamp_2", (lamp_x, lamp_y, lamp_z + 0.024), 0.078, 0.022),
+        ("Lamp_0", (-lamp_x, lamp_y, lamp_z + 0.024), 0.078, 0.022, -0.024 * sin_t),
+        ("Lamp_1", (0.0, bar_y, bar_z + 0.024), 0.045, 0.016, -0.018 * sin_t),
+        ("Lamp_2", (lamp_x, lamp_y, lamp_z + 0.024), 0.078, 0.022, -0.024 * sin_t),
     )
-    for l_name, l_pos, l_rad, l_dome in lamp_specs:
+    for l_name, l_pos, l_rad, l_dome, l_dy in lamp_specs:
         bm_lamp = bmesh.new()
         append_closed_dome(
             bm_lamp,
@@ -327,10 +339,11 @@ def build_kit_lamp_bar_model(cfg=DIMENSIONS, mats=None, parent=None, unity_loc=(
             dome_height=l_dome,
             collar_depth=0.006,
             axis="Z",
-            center_xyz=(0.0, 0.0, 0.0),
+            center_xyz=(0.0, l_dy, 0.0),
             segments=14,
             rings=3,
             mat_idx=0,
+            rot_euler=(lamp_tilt_deg, 0.0, 0.0),
         )
         create_mesh_node(
             l_name,
