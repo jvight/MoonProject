@@ -293,6 +293,38 @@ content.
 9. **The power pylon stays in the catalogue** as Link's next build. Everything else beyond the four builds is CUT.
 10. **Unused means cut** (the frame): Relays, Map, Sonar, Logs and Upgrades are CUT even though gameplay suggested keeping them as future bases. StepFlow and RecoveryProgress are reworked, not cut.
 
+## 9. Director rulings (2026-10-18 02:00)
+1. **§8's decisions 1–10 are approved.** The canyon gets no content tonight.
+2. **The sky follows progress, never a clock** (VISION: no timers). Gameplay publishes
+   `Core.Events.OpeningMilestoneReached` (`FlowEvents.cs`, landed adb93815), replayed with `Restored = true` at session
+   start; World's sky clock reacts:
+   - `FirstCharge` (B6): the eclipse ends (the diamond-ring break-out). Expected near 12 min, but whenever it happens.
+   - Until `PowerOn` (B8) the first day's Sun **holds at golden hour**.
+   - After `PowerOn` the Sun sinks to "last light", low above the west rim, and **holds there** until `NightReady`.
+   - `NightReady` (B9, a built battery bank holds charge): the first sunset runs (about 2–3 min) into B10.
+   - After the first night the normal day cycle runs. (The real lunar Sun moves about 0.5° an hour, so a held Sun
+     reads as natural.)
+   - World's acceptance becomes: the eclipse ends within 2 s of `FirstCharge`; the Sun never sets before
+     `NightReady`; a loaded save restores the right sky with no transition.
+   - B9's line "Night is coming…" shows at `PowerOn`.
+3. **Event and contract ownership tonight.**
+   - Delete a Core type (event, interface) only when nothing on your branch uses it any more.
+   - Core leftovers whose only users were other domains' cut code are removed in one final cleanup pass after
+     every branch lands.
+   - UI references Gameplay directly, so a gameplay deletion that breaks a UI consumer is fixed in the same branch
+     (say so in the report).
+4. **Landing order:**
+   1. ui-fit's UI cuts (UI consumes Gameplay types);
+   2. gameplay (flow v2, its cuts, the Playthrough);
+   3. world's removals (after merging main, because Gameplay reads World anchors).
+   - Audio lands any time.
+   - Additive work first, deletions after the dependency has landed. Merge main whenever the Director says
+     something landed.
+5. **Argon** already started `box/agy-r1world` (crates S/M/L, R1 Kestrel debris kit, a big-boulder tier, the
+   ChargingPad scale fix). The rest of §6's Argon list follows in a second job: the dead charging post and cable, the
+   lander's port and beacon, the apron decal, the airlock readout surface, the unlit mast, the Peak beacon.
+   - Until those land, place the closest existing R1 asset and list the swap in your report.
+
 ## Tóm tắt (Tiếng Việt)
 - **Móc câu:** 07 mở mắt giữa nhật thực. Trái Đất đen, chỉ còn viền đồng mảnh, không một ánh đèn thành phố. Gần đó có
   một chấm sáng mờ (các con tàu Ark), và đèn đỏ trên Đỉnh. Mặt CRT in dòng `ORBITAL SIGNAL · DETECTED`. Cách 165 m có
