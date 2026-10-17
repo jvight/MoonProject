@@ -1025,11 +1025,13 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(_tuning.LetterCard.AppearDelay + _tuning.LetterCard.Reveal.FadeIn + 1.2f);
             ui.LetterCard.CompleteRevealImmediate();
             Assert.IsTrue(ui.LetterCard.IsVisible && ui.LetterCard.IsFullyRevealed, "letter card vi 1080p is visible and revealed");
+            Assert.AreEqual("Thư radio", ui.Layout.LetterCardCaption.text);
             yield return Capture(camera, logsFolder, "letter_vi_1920x1080");
 
             ui.Localization.SetLanguage("en");
             yield return new WaitForSecondsRealtime(0.15f);
             Assert.IsTrue(ui.LetterCard.IsVisible && ui.LetterCard.IsFullyRevealed, "letter card en 1080p is visible and revealed");
+            Assert.AreEqual("Radio letter", ui.Layout.LetterCardCaption.text);
             yield return Capture(camera, logsFolder, "letter_en_1920x1080");
 
             Reframe(1280, 720);
@@ -1042,6 +1044,16 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(0.15f);
             Assert.IsTrue(ui.LetterCard.IsVisible && ui.LetterCard.IsFullyRevealed, "letter card en 720p is visible and revealed");
             yield return Capture(camera, logsFolder, "letter_en_1280x720");
+
+            Reframe(1920, 1080);
+            ui.Localization.SetLanguage("vi");
+            ui.LetterCard.Dismiss();
+            yield return new WaitForSecondsRealtime(_tuning.LetterCard.Reveal.FadeOut + 0.35f);
+            context.Events.Publish(new TickerLine(UiKeys.ScanComplete, StructureIds.NameKey(StructureIds.SolarArray), true));
+            yield return new WaitForSecondsRealtime(TickerEntrance() + 0.6f);
+            Assert.IsTrue(ui.Ticker.IsVisible, "blueprint learned toast vi 1080p is visible");
+            Assert.AreEqual("Đã học bản vẽ: Giàn pin mặt trời.", ui.Layout.TickerText.text);
+            yield return Capture(camera, logsFolder, "learned_toast_vi_1920x1080");
 #else
             Assert.Ignore("Captures need the editor.");
             yield break;
