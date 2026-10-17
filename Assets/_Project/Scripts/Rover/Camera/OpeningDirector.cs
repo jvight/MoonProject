@@ -73,6 +73,10 @@ namespace MoonProject.Rover
         private Vector3 _pushFrom;
         private Quaternion _pushFromRotation;
         private float _pushFromFov;
+        private Vector3 _pullOutFromOrigin;
+        private Vector3 _pullOutFromEye;
+        private Quaternion _pullOutFromGaze;
+        private bool _hasPullOutFrom;
         private bool _titleHasSave;
         private bool _inTitle;
         private bool _paused;
@@ -305,7 +309,14 @@ namespace MoonProject.Rover
                 {
                     case WakeBeat.Crackle:
                         _blinkedInWake = false;
+                        _hasPullOutFrom = false;
                         _body.BeginWake();
+                        break;
+                    case WakeBeat.PullingOut:
+                        CapturePullOutStart();
+                        _body.PoseWake(_script.Sleep, _script.BodyLid, _script.BodyLidWeight, _script.HeadTilt);
+                        _rig.RefreshWakeFaceShot();
+                        _rig.SyncWakeFacePose();
                         break;
                     case WakeBeat.PulledOut:
                         _rig.RefreshWakeFaceShot();
@@ -324,6 +335,18 @@ namespace MoonProject.Rover
 
                 _events.Publish(new RoverWakeBeatReached(beat, _script.Hurried));
             }
+        }
+
+        private void CapturePullOutStart()
+        {
+            OpeningSettings settings = _tuning.Opening;
+            _pullOutFromOrigin = ScanLensOrigin.position;
+            _pullOutFromGaze = Heading() * Quaternion.Euler(-_script.Gaze.Pitch, _script.Gaze.Yaw, 0f);
+            Vector3 gazeForward = _pullOutFromGaze * Vector3.forward;
+            Vector3 desiredEye = _pullOutFromOrigin + gazeForward * settings.LensForward;
+            float clearEyeDist = _sight.Clear(_pullOutFromOrigin, desiredEye, _tuning.FaceInspectProbeRadius);
+            _pullOutFromEye = _pullOutFromOrigin + gazeForward * clearEyeDist;
+            _hasPullOutFrom = true;
         }
 
         private void HoldControl(bool hold)
@@ -349,7 +372,10 @@ namespace MoonProject.Rover
                 }
                 else if (phase == OpeningPhase.PullOut)
                 {
-                    float pullT = Smoothing.SmoothStep(0f, 1f, _script.PullOut01);
+                    float u = _script.PhaseLength > 1e-4f
+                        ? Mathf.Clamp01(_script.PhaseTime / _script.PhaseLength)
+                        : 1f;
+                    float pullT = WakeOpening.SmoothStepC2(0f, 1f, u);
                     if (_script.Hurried)
                     {
                         _body.PoseOpeningHead(_script.Gaze.Yaw, _script.Gaze.Pitch, 0f, 1f - pullT);
@@ -450,7 +476,10 @@ namespace MoonProject.Rover
             float nearClip = settings.LensNearClip;
             if (phase == OpeningPhase.PushIn)
             {
-                float t = _script.PushIn01;
+                float u = _script.PhaseLength > 1e-4f
+                    ? Mathf.Clamp01(_script.PhaseTime / _script.PhaseLength)
+                    : 1f;
+                float t = WakeOpening.SmoothStepC2(0f, 1f, u);
                 Vector3 desiredPos = Vector3.Lerp(_pushFrom, eye, t);
                 Vector3 stepDir = desiredPos - _pushFrom;
                 float stepDist = stepDir.magnitude;
@@ -472,18 +501,39 @@ namespace MoonProject.Rover
             }
             else if (phase == OpeningPhase.PullOut)
             {
-                float t = _script.PullOut01;
+                if (!_hasPullOutFrom)
+                {
+                    CapturePullOutStart();
+                }
+
+                float u = _script.PhaseLength > 1e-4f
+                    ? Mathf.Clamp01(_script.PhaseTime / _script.PhaseLength)
+                    : 1f;
+                float t = WakeOpening.SmoothStepC2(0f, 1f, u);
+                Vector3 startEye = _pullOutFromEye;
+                Vector3 startOrigin = _pullOutFromOrigin;
+                Quaternion startGaze = _pullOutFromGaze;
+                Vector3 startForward = startGaze * Vector3.forward;
+
                 CameraState chase = _rig.ChaseCamera.State;
-                Vector3 end = chase.GetFinalPosition();
+                FaceInspectShot wakeShot = default;
+                bool hasWakeShot = !_script.Hurried && _rig.TryGetWakeFaceShot(out wakeShot);
+                Vector3 end = hasWakeShot ? wakeShot.Eye : chase.GetFinalPosition();
+                Quaternion endRot = hasWakeShot
+                    ? Quaternion.LookRotation(wakeShot.Focus - wakeShot.Eye, Vector3.up)
+                    : chase.GetFinalOrientation();
+                float endFov = hasWakeShot ? wakeShot.VerticalFov : chase.Lens.FieldOfView;
+                float endNearClip = hasWakeShot ? _tuning.FaceInspectNearClip : chase.Lens.NearClipPlane;
+
                 Vector3 frontDir = _script.Hurried
-                    ? (gazeForward + Vector3.up * 0.6f).normalized
-                    : (gazeForward + (Heading() * Vector3.forward)).normalized;
-                Vector3 reachAnchor = _script.Hurried ? eye : Vector3.Lerp(eye, end, 0.5f);
+                    ? (startForward + Vector3.up * 0.6f).normalized
+                    : (startForward + (Heading() * Vector3.forward)).normalized;
+                Vector3 reachAnchor = _script.Hurried ? startEye : Vector3.Lerp(startEye, end, 0.5f);
                 Vector3 reach = reachAnchor + frontDir * settings.PullOutReach;
-                Vector3 desiredPos = Vector3.Lerp(Vector3.Lerp(eye, reach, t), Vector3.Lerp(reach, end, t), t);
-                Vector3 probeOrigin = _rig.TryGetWakeFaceShot(out FaceInspectShot wakeShot)
-                    ? Vector3.Lerp(lensOrigin, wakeShot.Focus, t)
-                    : lensOrigin;
+                Vector3 desiredPos = Vector3.Lerp(Vector3.Lerp(startEye, reach, t), Vector3.Lerp(reach, end, t), t);
+                Vector3 probeOrigin = hasWakeShot
+                    ? Vector3.Lerp(startOrigin, wakeShot.Focus, t)
+                    : startOrigin;
                 Vector3 probeVec = desiredPos - probeOrigin;
                 float probeDist = probeVec.magnitude;
                 if (probeDist > 1e-4f)
@@ -497,11 +547,12 @@ namespace MoonProject.Rover
                 }
 
                 Quaternion earth = Quaternion.LookRotation(_world.EarthDirection);
-                Quaternion held = Quaternion.Slerp(gaze, earth, Smoothing.SmoothStep(0f, settings.PullOutOntoEarth, t));
-                float turn = Smoothing.SmoothStep(settings.PullOutEarthHeld, 1f, t);
-                rotation = Quaternion.Slerp(held, chase.GetFinalOrientation(), turn);
-                fov = Mathf.Lerp(settings.LensFov, chase.Lens.FieldOfView, t);
-                nearClip = Mathf.Lerp(settings.LensNearClip, chase.Lens.NearClipPlane, t);
+                Quaternion held = Quaternion.Slerp(startGaze, earth, WakeOpening.SmoothStepC2(0f, settings.PullOutOntoEarth, u));
+                float turnStart = 0.5f * settings.PullOutOntoEarth;
+                float turn = WakeOpening.SmoothStepC2(turnStart, 1f, u);
+                rotation = Quaternion.Slerp(held, endRot, turn);
+                fov = Mathf.Lerp(settings.LensFov, endFov, t);
+                nearClip = Mathf.Lerp(settings.LensNearClip, endNearClip, t);
             }
 
             _lensCamera.transform.SetPositionAndRotation(position, rotation);

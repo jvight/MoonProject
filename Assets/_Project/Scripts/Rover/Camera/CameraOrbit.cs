@@ -161,7 +161,19 @@ namespace MoonProject.Rover
             if (input.Grounded)
             {
                 float downhill = Mathf.Clamp01(input.DescentAngle / _tuning.DownhillFullAngle);
-                Lift = Smoothing.Damp(Lift, downhill * _tuning.DownhillLift, _tuning.LiftHalfLife, deltaTime);
+                float targetLift = downhill * _tuning.DownhillLift;
+                if (input.Throttle <= ThrottleEpsilon && input.ForwardSpeed >= -0.5f
+                    && input.DescentAngle >= _tuning.DownhillSlopeMinAngle)
+                {
+                    targetLift = Mathf.Max(targetLift, Lift);
+                }
+
+                Lift = Smoothing.Damp(Lift, targetLift, _tuning.LiftHalfLife, deltaTime);
+            }
+            else
+            {
+                float airDownhill = Mathf.Clamp(input.DescentAngle / _tuning.DownhillFullAngle, -0.5f, 1f);
+                Lift = Smoothing.Damp(Lift, airDownhill * _tuning.DownhillLift, _tuning.AirborneLiftHalfLife, deltaTime);
             }
 
             float boost = Gentle ? 0f : _tuning.SpeedFovBoost;
@@ -206,7 +218,12 @@ namespace MoonProject.Rover
                 return;
             }
 
-            bool may = !Gentle && !_buttonEasing && input.MayRecenter && _idleTime >= _idleDelay
+            float speedSpan = Mathf.Max(0.1f, _tuning.RecenterFullSpeed - _tuning.RecenterMinSpeed);
+            float speed01 = Mathf.Clamp01((input.ForwardSpeed - _tuning.RecenterMinSpeed) / speedSpan);
+            float delayScale = Mathf.Lerp(_tuning.RecenterSlowDelayScale, 1f, speed01);
+            float rateShare = Mathf.Lerp(_tuning.RecenterSlowRateShare, 1f, speed01);
+
+            bool may = !Gentle && !_buttonEasing && input.MayRecenter && _idleTime >= _idleDelay * delayScale
                 && _driveTime >= _tuning.RecenterDriveSeconds;
             _recenterWeight = may
                 ? Mathf.Min(1f, _recenterWeight + deltaTime / _tuning.RecenterRampTime)
@@ -226,7 +243,7 @@ namespace MoonProject.Rover
             {
                 float offset = YawOffset;
                 float ease = Mathf.Sqrt(Mathf.Clamp01(Mathf.Abs(offset) / _tuning.RecenterEaseAngle));
-                float next = Mathf.MoveTowards(offset, 0f, _tuning.RecenterMaxRate * ease * pull * deltaTime);
+                float next = Mathf.MoveTowards(offset, 0f, _tuning.RecenterMaxRate * rateShare * ease * pull * deltaTime);
                 Bearing = Mathf.DeltaAngle(0f, _roverYaw + next);
                 if (Mathf.Abs(next) <= HomeAngle)
                 {
@@ -235,7 +252,7 @@ namespace MoonProject.Rover
                 }
             }
 
-            Pitch = Mathf.MoveTowards(Pitch, _tuning.DefaultPitch, _tuning.RecenterPitchRate * pull * deltaTime);
+            Pitch = Mathf.MoveTowards(Pitch, _tuning.DefaultPitch, _tuning.RecenterPitchRate * rateShare * pull * deltaTime);
         }
 
         /// <summary>Behind 07: its turns are followed with the tuned damping, never faster than the cap.</summary>

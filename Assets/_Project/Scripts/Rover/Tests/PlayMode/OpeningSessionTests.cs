@@ -89,6 +89,7 @@ namespace MoonProject.Rover.PlayModeTests
         [TearDown]
         public void CleanUp()
         {
+            Time.captureDeltaTime = 0f;
             // The booted Main stays loaded after the test; a leftover world doubles the next fixture's props.
             Scene scene = SceneManager.GetSceneByPath(RoverSessionScene.ScenePath);
             if (scene.IsValid() && scene.isLoaded)
@@ -383,6 +384,200 @@ namespace MoonProject.Rover.PlayModeTests
                 Assert.LessOrEqual(quietest, noise + Tolerance,
                     $"{MeasuredCalls} extra opening updates allocated {quietest} bytes (plain frames: {noise}).");
             }
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator OpeningHandOffs_StayC1Continuous_FromPullOutThroughControl()
+        {
+            const float dt = 1f / 60f;
+            const float maxAllowedLinearJerk = 180f;
+            const float maxAllowedAngularAccel = 650f;
+            const float maxAllowedAngularJerk = 9000f;
+            const float maxAllowedFovAccel = 120f;
+
+            Time.captureDeltaTime = dt;
+            yield return Boot(true);
+            _context.Events.Publish(new NewGameRequested());
+
+            float started = Time.time;
+            while (_director.Script.Phase != OpeningPhase.PullOut)
+            {
+                Assert.Less(Time.time - started, RunTimeout, "the opening reaches O10 PullOut");
+                yield return null;
+            }
+
+            var csv = new StringBuilder(32768);
+            csv.AppendLine(
+                "frame,timeFromPullOut,phase,phaseShare,wakeTurn,wakeWeight,posX,posY,posZ,rotX,rotY,rotZ,rotW,eulerX,eulerY,eulerZ,fov,linSpeed,linAccel,linJerk,angSpeedDeg,angAccelDeg,angJerkDeg,fovRate,fovAccel,fovJerk");
+
+            Vector3 prevPos = _view.transform.position;
+            Quaternion prevRot = _view.transform.rotation;
+            float prevFov = _view.fieldOfView;
+            Vector3 prevVel = Vector3.zero;
+            Vector3 prevLinAccel = Vector3.zero;
+            Vector3 prevAngVel = Vector3.zero;
+            Vector3 prevAngAccel = Vector3.zero;
+            float prevFovRate = 0f;
+            float prevFovAccel = 0f;
+
+            float maxLinearJerk = 0f;
+            int maxLinearJerkFrame = -1;
+            string maxLinearJerkPhase = string.Empty;
+            float maxLinearJerkTime = 0f;
+
+            float maxAngularAccel = 0f;
+            int maxAngularAccelFrame = -1;
+            string maxAngularAccelPhase = string.Empty;
+            float maxAngularAccelTime = 0f;
+
+            float maxAngularJerk = 0f;
+            int maxAngularJerkFrame = -1;
+            string maxAngularJerkPhase = string.Empty;
+            float maxAngularJerkTime = 0f;
+
+            float maxFovAccel = 0f;
+            int maxFovAccelFrame = -1;
+            string maxFovAccelPhase = string.Empty;
+
+            float pullOutStart = Time.time;
+            float chaseReachedAt = -1f;
+            int frame = 0;
+
+            while (chaseReachedAt < 0f || Time.time - chaseReachedAt < AfterChaseSeconds)
+            {
+                Assert.Less(Time.time - started, RunTimeout, "the opening completes O10-O14");
+                yield return null;
+                frame++;
+
+                if (chaseReachedAt < 0f && _beats.Contains(WakeBeat.ChaseFrame))
+                {
+                    chaseReachedAt = Time.time;
+                }
+
+                OpeningScript script = _director.Script;
+                string phaseName = chaseReachedAt >= 0f ? "O14_Control" : script.Phase.ToString();
+                float phaseShare = script.PhaseLength > 0f ? script.PhaseTime / script.PhaseLength : 1f;
+                float elapsed = Time.time - pullOutStart;
+
+                Vector3 pos = _view.transform.position;
+                Quaternion rot = _view.transform.rotation;
+                Vector3 euler = rot.eulerAngles;
+                float fov = _view.fieldOfView;
+
+                Vector3 vel = (pos - prevPos) / dt;
+                Vector3 linAccel = frame >= 2 ? (vel - prevVel) / dt : Vector3.zero;
+                Vector3 linJerkVec = frame >= 3 ? (linAccel - prevLinAccel) / dt : Vector3.zero;
+
+                Quaternion deltaRot = rot * Quaternion.Inverse(prevRot);
+                if (deltaRot.w < 0f)
+                {
+                    deltaRot = new Quaternion(-deltaRot.x, -deltaRot.y, -deltaRot.z, -deltaRot.w);
+                }
+
+                Vector3 axisVec = new Vector3(deltaRot.x, deltaRot.y, deltaRot.z);
+                float sinHalf = axisVec.magnitude;
+                float deltaAngleDeg = 2f * Mathf.Atan2(sinHalf, deltaRot.w) * Mathf.Rad2Deg;
+                Vector3 angVel = frame >= 1 && sinHalf > 1e-8f
+                    ? (axisVec / sinHalf) * (deltaAngleDeg / dt)
+                    : Vector3.zero;
+                float angSpeed = deltaAngleDeg / dt;
+                Vector3 angAccelVec = frame >= 2 ? (angVel - prevAngVel) / dt : Vector3.zero;
+                Vector3 angJerkVec = frame >= 3 ? (angAccelVec - prevAngAccel) / dt : Vector3.zero;
+
+                float fovRate = (fov - prevFov) / dt;
+                float fovAccel = frame >= 2 ? (fovRate - prevFovRate) / dt : 0f;
+                float fovJerk = frame >= 3 ? (fovAccel - prevFovAccel) / dt : 0f;
+
+                float linSpeed = vel.magnitude;
+                float linAccelMag = linAccel.magnitude;
+                float linJerkMag = linJerkVec.magnitude;
+                float angAccelMag = angAccelVec.magnitude;
+                float angJerkMag = angJerkVec.magnitude;
+
+                csv.AppendFormat(
+                    CultureInfo.InvariantCulture,
+                    "{0},{1:0.0000},{2},{3:0.000},{4:0.000},{5:0.000},{6:0.0000},{7:0.0000},{8:0.0000},{9:0.00000},{10:0.00000},{11:0.00000},{12:0.00000},{13:0.000},{14:0.000},{15:0.000},{16:0.000},{17:0.000},{18:0.000},{19:0.000},{20:0.000},{21:0.000},{22:0.000},{23:0.000},{24:0.000},{25:0.000}\n",
+                    frame, elapsed, phaseName, phaseShare, _rig.Opening.Turn, _rig.Opening.Weight,
+                    pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w, euler.x, euler.y, euler.z, fov,
+                    linSpeed, linAccelMag, linJerkMag, angSpeed, angAccelMag, angJerkMag,
+                    fovRate, Mathf.Abs(fovAccel), Mathf.Abs(fovJerk));
+
+                // Measure from the end of O10 PullOut (PullOut01 >= 0.5) through 3 s after control in O14.
+                bool inHandOffWindow = script.Phase != OpeningPhase.PullOut || script.PullOut01 >= 0.5f;
+                if (frame >= 4 && inHandOffWindow)
+                {
+                    if (linJerkMag > maxLinearJerk)
+                    {
+                        maxLinearJerk = linJerkMag;
+                        maxLinearJerkFrame = frame;
+                        maxLinearJerkPhase = phaseName;
+                        maxLinearJerkTime = elapsed;
+                    }
+
+                    if (angAccelMag > maxAngularAccel)
+                    {
+                        maxAngularAccel = angAccelMag;
+                        maxAngularAccelFrame = frame;
+                        maxAngularAccelPhase = phaseName;
+                        maxAngularAccelTime = elapsed;
+                    }
+
+                    if (angJerkMag > maxAngularJerk)
+                    {
+                        maxAngularJerk = angJerkMag;
+                        maxAngularJerkFrame = frame;
+                        maxAngularJerkPhase = phaseName;
+                        maxAngularJerkTime = elapsed;
+                    }
+
+                    if (Mathf.Abs(fovAccel) > maxFovAccel)
+                    {
+                        maxFovAccel = Mathf.Abs(fovAccel);
+                        maxFovAccelFrame = frame;
+                        maxFovAccelPhase = phaseName;
+                    }
+                }
+
+                prevPos = pos;
+                prevRot = rot;
+                prevFov = fov;
+                prevVel = vel;
+                prevLinAccel = linAccel;
+                prevAngVel = angVel;
+                prevAngAccel = angAccelVec;
+                prevFovRate = fovRate;
+                prevFovAccel = fovAccel;
+            }
+
+            Directory.CreateDirectory(CaptureFolder);
+            File.WriteAllText(Path.Combine(CaptureFolder, "opening_handoff_trace.csv"), csv.ToString());
+
+            _report.AppendLine("# Opening Hand-Off Continuity (O10 PullOut -> O14 Control)").AppendLine()
+                .AppendLine(string.Format(CultureInfo.InvariantCulture,
+                    "- maxLinearJerk: {0:0.00} m/s^3 at frame {1} (t={2:0.000}s, phase={3})",
+                    maxLinearJerk, maxLinearJerkFrame, maxLinearJerkTime, maxLinearJerkPhase))
+                .AppendLine(string.Format(CultureInfo.InvariantCulture,
+                    "- maxAngularAccel: {0:0.00} deg/s^2 at frame {1} (t={2:0.000}s, phase={3})",
+                    maxAngularAccel, maxAngularAccelFrame, maxAngularAccelTime, maxAngularAccelPhase))
+                .AppendLine(string.Format(CultureInfo.InvariantCulture,
+                    "- maxAngularJerk: {0:0.00} deg/s^3 at frame {1} (t={2:0.000}s, phase={3})",
+                    maxAngularJerk, maxAngularJerkFrame, maxAngularJerkTime, maxAngularJerkPhase))
+                .AppendLine(string.Format(CultureInfo.InvariantCulture,
+                    "- maxFovAccel: {0:0.00} deg/s^2 at frame {1} (phase={2})",
+                    maxFovAccel, maxFovAccelFrame, maxFovAccelPhase))
+                .AppendLine();
+
+            Assert.LessOrEqual(maxLinearJerk, maxAllowedLinearJerk,
+                $"Opening hand-off linear jerk spike {maxLinearJerk:0.0} m/s^3 at frame {maxLinearJerkFrame} (t={maxLinearJerkTime:0.000}s, phase={maxLinearJerkPhase}) exceeds C1 continuity bound {maxAllowedLinearJerk} m/s^3.");
+            Assert.LessOrEqual(maxAngularAccel, maxAllowedAngularAccel,
+                $"Opening hand-off angular accel spike {maxAngularAccel:0.0} deg/s^2 at frame {maxAngularAccelFrame} (t={maxAngularAccelTime:0.000}s, phase={maxAngularAccelPhase}) exceeds C1 continuity bound {maxAllowedAngularAccel} deg/s^2.");
+            Assert.LessOrEqual(maxAngularJerk, maxAllowedAngularJerk,
+                $"Opening hand-off angular jerk spike {maxAngularJerk:0.0} deg/s^3 at frame {maxAngularJerkFrame} (t={maxAngularJerkTime:0.000}s, phase={maxAngularJerkPhase}) exceeds C1 continuity bound {maxAllowedAngularJerk} deg/s^3.");
+            Assert.LessOrEqual(maxFovAccel, maxAllowedFovAccel,
+                $"Opening hand-off FOV accel spike {maxFovAccel:0.0} deg/s^2 at frame {maxFovAccelFrame} (phase={maxFovAccelPhase}) exceeds C1 continuity bound {maxAllowedFovAccel} deg/s^2.");
         }
 
         private IEnumerator Boot(bool title)
