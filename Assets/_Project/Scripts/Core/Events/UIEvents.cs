@@ -204,25 +204,4 @@ namespace MoonProject.Core.Events
 
         public int Slot { get; }
     }
-
-    /// <summary>
-    /// The docked transfer view moved one stack between 07's hold and home's shelves (one press, one stack).
-    /// Audio plays a soft tick; the 3D shelves already show the new count.
-    /// </summary>
-    public readonly struct StackTransferred
-    {
-        public StackTransferred(SalvageMaterial material, int units, bool toHome)
-        {
-            Material = material;
-            Units = units;
-            ToHome = toHome;
-        }
-
-        public SalvageMaterial Material { get; }
-
-        public int Units { get; }
-
-        /// <summary>True when the stack went from 07 to home, false when it went to 07 for the trip.</summary>
-        public bool ToHome { get; }
-    }
 }

@@ -36,38 +36,6 @@ namespace MoonProject.Core.Events
         public Vector3 Position { get; }
     }
 
-    /// <summary>07 unloaded at the dock onto home's shelves (M3-25 §3.2), with no input.</summary>
-    public readonly struct CargoUnloaded
-    {
-        public CargoUnloaded(int unitsMoved, int unitsKept, bool homeFull)
-        {
-            UnitsMoved = unitsMoved;
-            UnitsKept = unitsKept;
-            HomeFull = homeFull;
-        }
-
-        public int UnitsMoved { get; }
-
-        /// <summary>Units that stayed in 07 because home had no room.</summary>
-        public int UnitsKept { get; }
-
-        public bool HomeFull { get; }
-    }
-
-    /// <summary>Home's shelves changed (an unload, a fetch, a spend, a new shelf).</summary>
-    public readonly struct HomeStorageChanged
-    {
-        public HomeStorageChanged(int usedSlots, int slotCount)
-        {
-            UsedSlots = usedSlots;
-            SlotCount = slotCount;
-        }
-
-        public int UsedSlots { get; }
-
-        public int SlotCount { get; }
-    }
-
     /// <summary>
     /// A crew supply crate was cut open (M3-25 T4): its stack goes to the hold like a bundle and the packing note
     /// shows in the crew member's hand.
