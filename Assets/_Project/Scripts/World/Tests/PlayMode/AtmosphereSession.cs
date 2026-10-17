@@ -19,6 +19,7 @@ using MoonProject.Testing;
 using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 #if UNITY_EDITOR
+using UnityEditor;
 using UnityEditor.SceneManagement;
 #endif
 
@@ -119,6 +120,8 @@ namespace MoonProject.World.PlayModeTests
         private const float OpeningWakeLead = 6f;
         private const float OpeningLookHeight = 4f;
         private const float OpeningFov = 60f;
+        private const string OpeningSettingsPath = "Assets/_Project/Data/Tuning/WorldSettings.asset";
+        private const string OpeningSignalPillar = "SignalPillar";
 
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "world-captures"));
@@ -353,8 +356,10 @@ namespace MoonProject.World.PlayModeTests
 
         /// <summary>
         /// Opening v2's layout in the real game at the start of a new game (the eclipse holding): from 07's wake toward
-        /// the landed lander in front of The Peak under the eclipsed Earth, and from the build apron toward the Lumen
-        /// ruins and toward the dead west mast. Writes Logs/world-captures/opening-*.png.
+        /// the landed lander in front of The Peak under the eclipsed Earth (at a flash of its beacon), and from the build
+        /// apron toward the Lumen ruins and toward the dead west mast; then, after the first nightfall (the opening's
+        /// milestones replayed), the apron toward the west with the signal pillar shown, as at B11. Writes
+        /// Logs/world-captures/opening-*.png.
         /// </summary>
         [UnityTest]
         [Timeout(600000)]
@@ -401,6 +406,12 @@ namespace MoonProject.World.PlayModeTests
             Vector3 eye = wake + toLander * OpeningWakeLead + Vector3.up * OpeningEyeHeight;
             Vector3 apronEye = apron + Vector3.up * OpeningEyeHeight;
             Camera view = context.Get<IViewCamera>().Camera;
+            float period = AssetDatabase.LoadAssetAtPath<WorldSettings>(OpeningSettingsPath).Landmarks.LanderBeacon.Period;
+            while (Mathf.Repeat(Time.time, period) > Time.deltaTime * 2f)
+            {
+                yield return null;
+            }
+
             var host = new GameObject("OpeningReviewCamera");
             try
             {
@@ -419,6 +430,20 @@ namespace MoonProject.World.PlayModeTests
                     FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
                         Path.Combine(CaptureFolder, "opening-" + pose.name + ".png"));
                 }
+
+                foreach (OpeningMilestone milestone in new[]
+                         {
+                             OpeningMilestone.FirstCharge, OpeningMilestone.PowerOn, OpeningMilestone.NightReady,
+                         })
+                {
+                    context.Events.Publish(new OpeningMilestoneReached(milestone, true));
+                }
+
+                FindNamed(OpeningSignalPillar).gameObject.SetActive(true);
+                yield return new WaitForSeconds(SettleSeconds);
+                Place(camera, LookPose("b11_night_apron_toward_the_signal", apronEye, mast + lift, OpeningFov));
+                FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
+                    Path.Combine(CaptureFolder, "opening-b11_night_apron_toward_the_signal.png"));
             }
             finally
             {

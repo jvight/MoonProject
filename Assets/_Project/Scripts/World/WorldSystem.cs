@@ -48,9 +48,6 @@ namespace MoonProject.World
         [Tooltip("Art's prefabs World plans for: Kestrel-3's hull fragment variants (the cuttable slots' range).")]
         [SerializeField] private LandmarkPrefabs _landmarkPrefabs = new LandmarkPrefabs();
 
-        [Tooltip("Material of 07's old charging cable on the dust (Generated/Art/R1/Materials/R1_Rubber).")]
-        [SerializeField] private Material _cableMaterial;
-
         [Tooltip("The beacon on The Peak; placed on the summit and breathed by the beacon settings.")]
         [SerializeField] private PeakBeacon _peakBeacon;
 
@@ -70,7 +67,6 @@ namespace MoonProject.World
         private GameObject _generatedRoot;
         private Mesh _earthMesh;
         private Mesh _tracksMesh;
-        private Mesh _cableMesh;
         private List<ScrapPlate> _cuttables = new List<ScrapPlate>();
 
         public MoonSurface Surface { get; private set; }
@@ -171,7 +167,6 @@ namespace MoonProject.World
                 scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _paletteMaterial, hideFlags);
             BuildEarth(hideFlags);
             BuildWornTracks(hideFlags);
-            BuildWakeCable(hideFlags);
             _peakBeacon.transform.position = Layout.PeakPosition;
             _peakBeacon.Configure(_settings.Beacon);
         }
@@ -380,31 +375,6 @@ namespace MoonProject.World
             return false;
         }
 
-        /// <summary>
-        /// 07's old charging cable on the dust (opening v2 §4): from its dead post at place.wake to the lander's port,
-        /// on the hull's side facing the apron.
-        /// </summary>
-        private void BuildWakeCable(HideFlags hideFlags)
-        {
-            if (!Anchors.TryGet(WorldAnchorIds.PlaceWake, out WorldAnchor wake)
-                || !Anchors.TryGet(WorldAnchorIds.PlaceLander, out WorldAnchor lander))
-            {
-                Debug.LogError($"{nameof(WorldSystem)}: the wake cable needs place.wake and place.lander.", this);
-                return;
-            }
-
-            GroundCableSettings tuning = _settings.Landmarks.WakeCable;
-            Vector3 port = lander.Position + lander.Forward * tuning.PortReach;
-            MoonSurface surface = Surface;
-            _cableMesh = GroundCable.Build(new Vector2(wake.Position.x, wake.Position.z), new Vector2(port.x, port.z),
-                tuning, (x, z) => surface.Sample(x, z).Height);
-            _cableMesh.hideFlags = hideFlags;
-            var cable = new GameObject("WakeCable") { hideFlags = hideFlags };
-            cable.transform.SetParent(_generatedRoot.transform, false);
-            cable.AddComponent<MeshFilter>().sharedMesh = _cableMesh;
-            cable.AddComponent<MeshRenderer>().sharedMaterial = _cableMaterial;
-        }
-
         private void DestroyGenerated()
         {
             if (_generatedRoot != null)
@@ -422,12 +392,6 @@ namespace MoonProject.World
                 Release(_tracksMesh);
             }
 
-            if (_cableMesh != null)
-            {
-                Release(_cableMesh);
-            }
-
-            _cableMesh = null;
 
 
             _tracksMesh = null;
@@ -495,9 +459,9 @@ namespace MoonProject.World
             }
 
             if (_groundMaterial == null || _paletteMaterial == null || _earthMaterial == null
-                || _groundMarkMaterial == null || _cableMaterial == null)
+                || _groundMarkMaterial == null)
             {
-                return "Ground, Palette, Earth, Ground Mark and Cable materials must be assigned.";
+                return "Ground, Palette, Earth and Ground Mark materials must be assigned.";
             }
 
             string rocks = RockProblem(_pebbleRocks, "Pebble Rocks") ?? RockProblem(_boulderRocks, "Boulder Rocks")
