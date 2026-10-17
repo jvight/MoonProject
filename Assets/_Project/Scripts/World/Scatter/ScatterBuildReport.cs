@@ -4,7 +4,7 @@ namespace MoonProject.World
     public readonly struct ScatterBuildReport
     {
         public ScatterBuildReport(int pebbles, int boulders, int triangles, int drawGroups, double buildMs,
-            int solidCobbles = 0)
+            int solidCobbles)
         {
             Pebbles = pebbles;
             SolidCobbles = solidCobbles;

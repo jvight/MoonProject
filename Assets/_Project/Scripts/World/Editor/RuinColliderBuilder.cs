@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
 
-namespace MoonProject.World
+namespace MoonProject.World.Editor
 {
     /// <summary>
     /// Builds compound <see cref="BoxCollider"/>s on <see cref="Layers.Prop"/> from the meshes of a multi-part ruin
     /// prefab (ENV-03) so walls, hulls and equipment are solid while courtyards, gaps between disconnected pieces and
-    /// building portals (such as Kenji's Workshop doorway and interior) stay open.
+    /// building portals (such as Kenji's Workshop doorway and interior) stay open. Edit time: the scene build fits
+    /// them once and saves them with the scene.
     /// </summary>
     public static class RuinColliderBuilder
     {
@@ -34,27 +35,13 @@ namespace MoonProject.World
 
             foreach (Collider existing in ruinInstance.GetComponentsInChildren<Collider>(true))
             {
-                if (Application.isPlaying)
-                {
-                    UnityEngine.Object.Destroy(existing);
-                }
-                else
-                {
-                    UnityEngine.Object.DestroyImmediate(existing);
-                }
+                UnityEngine.Object.DestroyImmediate(existing);
             }
 
             Transform existingContainer = ruinInstance.transform.Find(CollidersChildName);
             if (existingContainer != null)
             {
-                if (Application.isPlaying)
-                {
-                    UnityEngine.Object.Destroy(existingContainer.gameObject);
-                }
-                else
-                {
-                    UnityEngine.Object.DestroyImmediate(existingContainer.gameObject);
-                }
+                UnityEngine.Object.DestroyImmediate(existingContainer.gameObject);
             }
 
             var container = new GameObject(CollidersChildName)

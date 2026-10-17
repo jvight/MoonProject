@@ -3,6 +3,7 @@ using System.Diagnostics;
 using NUnit.Framework;
 using UnityEngine;
 using MoonProject.Core;
+using MoonProject.World.Editor;
 
 namespace MoonProject.World.Tests
 {

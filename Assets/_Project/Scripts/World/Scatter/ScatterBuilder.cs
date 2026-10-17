@@ -24,6 +24,9 @@ namespace MoonProject.World
         private const float ReferenceFieldOfView = 60f;
         private const float PebbleCullScreenHeight = 0.05f;
 
+        // A cobble's sphere collider spans just under half its horizontal extent: the rock's body, not its flared foot.
+        private const float CobbleSphereShare = 0.46f;
+
         private const MeshUpdateFlags UploadFlags = MeshUpdateFlags.DontRecalculateBounds
             | MeshUpdateFlags.DontValidateIndices | MeshUpdateFlags.DontNotifyMeshUsers;
 
@@ -292,9 +295,8 @@ namespace MoonProject.World
                 }
                 else if (instance.Size >= cobbleCutoff)
                 {
-                    // Medium cobbles (>= 0.48 m, based on 07's 0.35 m wheel radius / 0.70 m wheel diameter and 0.335 m
-                    // belly-pan clearance) reach the wheel hub and get a cheap SphereCollider on Layers.Prop; smaller
-                    // pebbles (< 0.48 m) stay non-colliding.
+                    // A cobble at or above the cutoff reaches 07's wheel hub and belly pan, so it gets a cheap sphere;
+                    // smaller pebbles stay non-colliding.
                     int variant = instance.Variant % pebbleShapes.Length;
                     var collider = new GameObject("Cobble") { hideFlags = hideFlags, layer = Layers.Prop };
                     collider.transform.SetParent(colliders.transform, false);
@@ -304,7 +306,7 @@ namespace MoonProject.World
                     collider.transform.localScale = instance.ScaleAspect * baseScale;
                     var sphereCollider = collider.AddComponent<SphereCollider>();
                     sphereCollider.center = pebbleShapes[variant].BoundsCenter;
-                    sphereCollider.radius = pebbleShapes[variant].HorizontalExtent * 0.46f;
+                    sphereCollider.radius = pebbleShapes[variant].HorizontalExtent * CobbleSphereShare;
                     solidCobbles++;
                 }
             }

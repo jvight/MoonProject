@@ -162,7 +162,7 @@ namespace MoonProject.World
             }
 
             float sunlit = Mathf.Clamp01(sunlitBlend);
-            float skyDayBlend = SmoothStep01(0f, 1f, Mathf.Pow(sunlit, 0.65f));
+            float skyDayBlend = WorldAtmosphere.DayBlend(cycle, sunlit);
             float eclipse = Mathf.Clamp01(clock.EclipseFactor);
 
             Color skyTop = Color.Lerp(sky.SkyTop, cycle.SunlitSkyTop, skyDayBlend).linear;
