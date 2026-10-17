@@ -325,6 +325,24 @@ def _build_airlock_panel(root) -> None:
     ruins_common.to_ruin_object(mb, "AirlockPanel", parent=root)
 
 
+def _build_airlock_readout(root) -> None:
+    """Build the dedicated B7 `AirlockReadout` CRT/LED panel surface beside the round airlock door at Rover 07 eye level."""
+    mb = r1kit.MeshBuilder()
+    kx, ky, kz = -4.35, 1.37, -1.392
+    ruins_common.add_signage_plate(
+        mb,
+        center_u=(kx, ky, kz),
+        width=0.22,
+        height=0.11,
+        cell_name="AIRLOCK_STATUS",
+        rot_deg_u=(0.0, 180.0, 0.0),
+        thickness=0.016,
+        frame_mat="R1_Brass",
+        rivets=False,
+    )
+    ruins_common.to_ruin_object(mb, "AirlockReadout", parent=root)
+
+
 def _build_bellows_joints(root) -> None:
     """Build two solid, non-see-through dark rubber accordion bellows joints with smooth 32-seg collars."""
     mb = r1kit.MeshBuilder()
@@ -559,6 +577,7 @@ def build(skip_renders: bool = False) -> None:
 
     _build_main_module(root)
     _build_airlock_panel(root)
+    _build_airlock_readout(root)
     _build_bellows_joints(root)
     _build_lab_module(root)
     _build_crushed_module(root)
