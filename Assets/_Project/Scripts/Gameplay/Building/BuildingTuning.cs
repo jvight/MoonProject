@@ -81,12 +81,6 @@ namespace MoonProject.Gameplay
             _playtestUnlockedIds = SanitizeStructureIdArray(playtestUnlockedIds);
         }
 
-        /// <summary>Sets the structure IDs that a new game knows by design.</summary>
-        public void SetStartingKnownIds(params string[] structureIds)
-        {
-            _startingKnownIds = SanitizeStructureIdArray(structureIds);
-        }
-
         /// <summary>Sets the data-driven playtest unlock structure IDs (empty by default).</summary>
         public void SetPlaytestUnlockedIds(params string[] structureIds)
         {

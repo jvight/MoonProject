@@ -272,23 +272,6 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Applies any structure IDs configured in <see cref="BuildingTuning.StartingKnownIds"/> to
-        /// <see cref="KnownStructures"/>, refreshes <see cref="BuildModeController.AvailableStructures"/>, and returns
-        /// the number of newly learned structures.
-        /// </summary>
-        public int ApplyStartingKnowledge(bool restored = false)
-        {
-            if (!_initialized)
-            {
-                return 0;
-            }
-
-            int added = _placedBase.ApplyStartingKnowledge(restored);
-            _controller.RefreshAvailable();
-            return added;
-        }
-
-        /// <summary>
         /// Applies any structure IDs configured in <see cref="BuildingTuning.PlaytestUnlockedIds"/> to
         /// <see cref="KnownStructures"/>, refreshes <see cref="BuildModeController.AvailableStructures"/>, and returns
         /// the number of newly learned structures.

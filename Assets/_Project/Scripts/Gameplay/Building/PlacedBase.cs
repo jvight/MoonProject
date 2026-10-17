@@ -37,34 +37,26 @@ namespace MoonProject.Gameplay
             _tuning = tuning ?? throw new ArgumentNullException(nameof(tuning));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _known = known ?? new KnownStructures(_catalog, _events);
-            ApplyStartingKnowledge(restored: false);
+            ApplyStartingKnowledge();
             ApplyPlaytestUnlocks(restored: false);
         }
 
-        /// <summary>
-        /// Applies any structure IDs listed in <see cref="BuildingTuning.StartingKnownIds"/> to
-        /// <see cref="KnownStructures"/> (what a new game knows by design, e.g. <see cref="StructureIds.ChargingPad"/>)
-        /// and returns the number of newly learned structures.
-        /// </summary>
-        public int ApplyStartingKnowledge(bool restored = false)
+        private void ApplyStartingKnowledge()
         {
             IReadOnlyList<string> starting = _tuning.StartingKnownIds;
             if (starting == null)
             {
-                return 0;
+                return;
             }
 
-            int added = 0;
             for (int i = 0; i < starting.Count; i++)
             {
                 string id = starting[i];
-                if (!string.IsNullOrEmpty(id) && _catalog.TryGet(id, out _) && _known.Learn(id, restored))
+                if (!string.IsNullOrEmpty(id) && _catalog.TryGet(id, out _))
                 {
-                    added++;
+                    _known.Learn(id, restored: false);
                 }
             }
-
-            return added;
         }
 
         /// <summary>
