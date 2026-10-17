@@ -158,6 +158,10 @@ namespace MoonProject.Rover
         private float _screenInspectBlend;
         private float _screenInspectYawDeg;
         private float _screenInspectPitchDeg = 10f;
+        private Vector3 _lensOffsetInHead;
+        private float _scanAimBlend;
+        private bool _scanBodyTurning;
+        private float _scanBodyYawDelta;
         private bool _initialized;
 
         private const float ScreenInspectBlendSeconds = 0.30f;
@@ -180,6 +184,26 @@ namespace MoonProject.Rover
 
         /// <summary>True while 07's head is lifted and steadied for CRT screen inspection.</summary>
         public bool IsScreenInspectOpen => _screenInspectOpen;
+
+        /// <summary>
+        /// True when a scan target lies outside 07's head reach and 07 is turning its body in place toward it.
+        /// </summary>
+        public bool TryGetScanBodyTurn(out float bodyYawDeltaDeg, out float maxTurnRateDegPerSec, out float halfLife)
+        {
+            if (_initialized && _scanBodyTurning && !_screenInspectOpen)
+            {
+                ScanLookSettings scan = _tuning.ScanLook;
+                bodyYawDeltaDeg = _scanBodyYawDelta;
+                maxTurnRateDegPerSec = scan.BodyTurnRate;
+                halfLife = scan.BodyTurnHalfLife;
+                return true;
+            }
+
+            bodyYawDeltaDeg = 0f;
+            maxTurnRateDegPerSec = 0f;
+            halfLife = 0.1f;
+            return false;
+        }
 
         /// <summary>Smoothed blend factor in [0..1] for screen-inspect head steadying.</summary>
         public float ScreenInspectBlend => _screenInspectBlend * _screenInspectBlend * (3f - 2f * _screenInspectBlend);
@@ -316,6 +340,9 @@ namespace MoonProject.Rover
             _scoopBucketRest = _scoopBucket != null ? _scoopBucket.localRotation : Quaternion.identity;
             _winchSpoolRest = _winchSpool != null ? _winchSpool.localRotation : Quaternion.identity;
             _scanFanRest = _scanFan.transform.localRotation;
+            _lensOffsetInHead = _head != null && _rover.ScanOrigin != null
+                ? _head.InverseTransformPoint(_rover.ScanOrigin.position)
+                : Vector3.zero;
             _scanLook = new ScanLook(_tuning.ScanLook);
             InitializeElder(context);
             _scanFan.enabled = false;
@@ -769,6 +796,7 @@ namespace MoonProject.Rover
             Vector2 aim;
             float frequency;
             bool hasExplicitGaze;
+            bool scanGaze = false;
 
             if (_lookAround.IsActive)
             {
@@ -778,9 +806,25 @@ namespace MoonProject.Rover
                 frequency = _tuning.TargetGazeFrequency;
                 hasExplicitGaze = true;
             }
-            else if (_rover.Gaze.TryGetTop(out Vector3 target))
+            else if (_rover.Gaze.TryGetTop(out Vector3 target, out int priority))
             {
-                aim = Aim(frame.InverseTransformDirection(target - _head.position));
+                Vector3 localFromHead = frame.InverseTransformDirection(target - _head.position);
+                ScanLookSettings scan = _tuning.ScanLook;
+                scanGaze = priority >= scan.GazePriority;
+                if (scanGaze)
+                {
+                    aim = ScanAim.LensAngles(localFromHead, _lensOffsetInHead, _tuning.NeckYawLimit,
+                        _tuning.HeadPitchUpLimit, _tuning.HeadPitchDownLimit);
+                    bool playerSteers = Mathf.Abs(_rover.DriveInput.x) > 0.1f;
+                    _scanBodyTurning = !playerSteers && ScanAim.NeedsBodyTurn(localFromHead, _lensOffsetInHead,
+                        scan.HeadYawReach, scan.BodyStopYaw, _tuning.HeadPitchUpLimit, _tuning.HeadPitchDownLimit,
+                        _scanBodyTurning, out _scanBodyYawDelta);
+                }
+                else
+                {
+                    aim = Aim(localFromHead);
+                }
+
                 frequency = _tuning.TargetGazeFrequency;
                 hasExplicitGaze = true;
             }
@@ -794,8 +838,15 @@ namespace MoonProject.Rover
                 hasExplicitGaze = Mathf.Abs(_rover.SteerInput) > 0.01f || idle > 0.05f || sky > 0.01f;
             }
 
-            aim.y = Mathf.Lerp(aim.y, _tuning.StargazeHeadPitch, sky);
-            float earthTurn = _sky != null ? _sky.EarthTurn : 0f;
+            if (!scanGaze)
+            {
+                _scanBodyTurning = false;
+                _scanBodyYawDelta = 0f;
+            }
+
+            _scanAimBlend = Smoothing.Damp(_scanAimBlend, scanGaze ? 1f : 0f, _tuning.ScanLook.OpenHalfLife, deltaTime);
+            aim.y = Mathf.Lerp(aim.y, _tuning.StargazeHeadPitch, sky * (1f - _scanAimBlend));
+            float earthTurn = _sky != null ? _sky.EarthTurn * (1f - _scanAimBlend) : 0f;
             if (earthTurn > 0f)
             {
                 aim.x = Mathf.Lerp(aim.x, Aim(frame.InverseTransformDirection(_world.EarthDirection)).x, earthTurn);
@@ -825,7 +876,7 @@ namespace MoonProject.Rover
         private void Apply(float sky)
         {
             float inspect = ScreenInspectBlend;
-            float idleScale = 1f - inspect;
+            float idleScale = (1f - inspect) * (1f - _scanAimBlend);
 
             float breathing = _tuning.IdleHeadBreath * _mood.Idle * (2f * _mood.Breath - 1f);
             BatteryMoodSettings battery = _tuning.Battery;

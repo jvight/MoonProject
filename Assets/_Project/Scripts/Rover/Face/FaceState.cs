@@ -67,6 +67,9 @@ namespace MoonProject.Rover
         private ScreenPhase _screenPhase;
         private float _screenPhaseElapsed;
         private float _closingHappyTimer;
+        private bool _scanFocusActive;
+        private float _scanFocusBlend;
+        private float _scanProgress;
 
         public FaceState(FaceTuning tuning, int seed = 7)
         {
@@ -103,6 +106,15 @@ namespace MoonProject.Rover
 
         /// <summary>Current symbol opacity in [0..1].</summary>
         public float SymbolAlpha { get; private set; }
+
+        /// <summary>Normalized scan-focus eye narrowing blend in [0..1].</summary>
+        public float ScanFocusBlend => _scanFocusBlend;
+
+        /// <summary>Normalized scan progress in [0..1] displayed on the CRT progress ring/tick.</summary>
+        public float ScanProgress => _scanProgress;
+
+        /// <summary>Shader-ready scan ring progress value (<c>0</c> when inactive, <c>[0.04..1]</c> while scanning).</summary>
+        public float ScanRingValue => _scanFocusBlend > 0.01f ? Math.Max(0.04f, _scanProgress) * _scanFocusBlend : 0.0f;
 
         /// <summary>Normalized boot progress in [0..1].</summary>
         public float BootProgress { get; private set; }
@@ -360,6 +372,13 @@ namespace MoonProject.Rover
             ComposeEyesAndBrightness();
         }
 
+        /// <summary>Sets the active scan-focus state and normalized progress [0..1] for narrowed eyes and CRT progress ring.</summary>
+        public void SetScanFocus(bool active, float progress01)
+        {
+            _scanFocusActive = active;
+            _scanProgress = Clamp01(progress01);
+        }
+
         /// <summary>Advances the face state by <paramref name="deltaTime"/> seconds.</summary>
         public void Step(float deltaTime)
         {
@@ -379,6 +398,8 @@ namespace MoonProject.Rover
             FaceFeelingSpec target = _tuning.GetFeelingSpec(Feeling);
             float k = 1.0f - (float)Math.Exp(-deltaTime * _tuning.EaseRate);
             float targetArc = _closingHappyTimer > 0.0f ? 1.0f : target.Arc;
+            float targetScanFocus = _scanFocusActive && Feeling == FaceFeeling.Curious ? 1.0f : 0.0f;
+            _scanFocusBlend += (targetScanFocus - _scanFocusBlend) * k;
 
             _width += (target.Width - _width) * k;
             _height += (target.Height - _height) * k;
@@ -646,64 +667,35 @@ namespace MoonProject.Rover
 
         private void ComposeEyesAndBrightness()
         {
-            float saccadeX = Feeling == FaceFeeling.Asleep ? 0.0f : _saccadeX;
-            float saccadeY = Feeling == FaceFeeling.Asleep ? 0.0f : _saccadeY;
-
+            float saccadeX = Feeling == FaceFeeling.Asleep ? 0.0f : _saccadeX * (1.0f - 0.7f * _scanFocusBlend);
+            float saccadeY = Feeling == FaceFeeling.Asleep ? 0.0f : _saccadeY * (1.0f - 0.7f * _scanFocusBlend);
             float combinedLx = Clamp(_lookX + _externalLookX + saccadeX, -MaxCombinedLookX, MaxCombinedLookX);
             float combinedLy = Clamp(_lookY + _externalLookY + saccadeY, -MaxCombinedLookY, MaxCombinedLookY);
-
             float sep = _tuning.EyeSeparation;
-            float centerLeftX = 0.5f - sep + combinedLx;
-            float centerRightX = 0.5f + sep + combinedLx;
-            float centerY = 0.5f + combinedLy;
 
-            float maxOpenByPower = Lerp(1.0f, 0.58f, LowPower);
-            float effectiveOpen = Math.Min(_open, maxOpenByPower) * BlinkMultiplier * BootEyeOpen;
-            float powerCut = Math.Max(_cut, LowPower * 0.25f);
+            float maxOpen = Math.Min(Lerp(1.0f, 0.58f, LowPower), Lerp(1.0f, 0.82f, _scanFocusBlend));
+            float effectiveOpen = Math.Min(_open, maxOpen) * BlinkMultiplier * BootEyeOpen;
+            float focusCut = Math.Max(_cut, Math.Max(LowPower * 0.25f, 0.28f * _scanFocusBlend));
+            float focusSquint = Math.Max(_squint, 0.42f * _scanFocusBlend);
+            float asym = _asymmetry * (1.0f - 0.45f * _scanFocusBlend);
 
-            float leftScale = Lerp(1.0f, _tuning.AsymmetricLeftScale, _asymmetry);
-            float rightScale = Lerp(1.0f, _tuning.AsymmetricRightScale, _asymmetry);
-            float rightCut = Lerp(powerCut, _tuning.AsymmetricRightCut, _asymmetry);
-            float rightTilt = Lerp(_tilt, _tuning.AsymmetricRightTilt, _asymmetry);
+            float leftScale = Lerp(1.0f, _tuning.AsymmetricLeftScale, asym);
+            float rightScale = Lerp(1.0f, _tuning.AsymmetricRightScale, asym);
+            float rightCut = Lerp(focusCut, _tuning.AsymmetricRightCut, asym);
+            float rightTilt = Lerp(_tilt, _tuning.AsymmetricRightTilt, asym);
 
             LeftEye = new FaceEyeParams(
-                centerLeftX,
-                centerY,
-                _width,
-                _height,
-                effectiveOpen,
-                _tilt,
-                powerCut,
-                _squint,
-                _arc,
-                _ring,
-                _closed,
-                combinedLx,
-                combinedLy,
-                leftScale);
-
+                0.5f - sep + combinedLx, 0.5f + combinedLy, _width, _height, effectiveOpen,
+                _tilt, focusCut, focusSquint, _arc, _ring, _closed, combinedLx, combinedLy, leftScale);
             RightEye = new FaceEyeParams(
-                centerRightX,
-                centerY,
-                _width,
-                _height,
-                effectiveOpen,
-                rightTilt,
-                rightCut,
-                _squint,
-                _arc,
-                _ring,
-                _closed,
-                combinedLx,
-                combinedLy,
-                rightScale);
+                0.5f + sep + combinedLx, 0.5f + combinedLy, _width, _height, effectiveOpen,
+                rightTilt, rightCut, focusSquint, _arc, _ring, _closed, combinedLx, combinedLy, rightScale);
 
             float sleepDim = Feeling == FaceFeeling.Asleep ? _tuning.SleepBrightness : 1.0f;
             float lowPowerDim = Lerp(1.0f, _tuning.LowPowerMinBrightness, LowPower);
             float flicker = BaseFlickerFloor
                 + BaseFlickerAmplitude * (float)(Math.Sin(_elapsedTime * FlickerFreqA) * Math.Cos(_elapsedTime * FlickerFreqB));
             Brightness = sleepDim * lowPowerDim * flicker;
-
             VerticalJitter = LowPower * _tuning.LowPowerJitterAmplitude
                 * (float)Math.Sin(_elapsedTime * _tuning.LowPowerJitterFrequency * Math.PI * 2.0);
         }

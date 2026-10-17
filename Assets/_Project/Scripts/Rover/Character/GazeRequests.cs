@@ -55,6 +55,12 @@ namespace MoonProject.Rover
         /// <summary>The winning request's target, if any request is active.</summary>
         public bool TryGetTop(out Vector3 worldPoint)
         {
+            return TryGetTop(out worldPoint, out _);
+        }
+
+        /// <summary>The winning request's target and priority, if any request is active.</summary>
+        public bool TryGetTop(out Vector3 worldPoint, out int priority)
+        {
             int best = -1;
             for (int i = 0; i < _requests.Count; i++)
             {
@@ -64,8 +70,16 @@ namespace MoonProject.Rover
                 }
             }
 
-            worldPoint = best >= 0 ? _requests[best].Point : Vector3.zero;
-            return best >= 0;
+            if (best >= 0)
+            {
+                worldPoint = _requests[best].Point;
+                priority = _requests[best].Priority;
+                return true;
+            }
+
+            worldPoint = Vector3.zero;
+            priority = 0;
+            return false;
         }
 
         private static bool Outranks(Request candidate, Request current)
