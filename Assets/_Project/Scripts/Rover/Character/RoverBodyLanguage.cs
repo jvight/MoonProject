@@ -165,10 +165,15 @@ namespace MoonProject.Rover
         private float _openingYawDeg;
         private float _openingPitchDeg;
         private float _openingRollDeg;
+        private Color _eyeLightRestColor = Color.white;
         private bool _initialized;
 
         private const float ScreenInspectBlendSeconds = 0.30f;
         private const float ScreenInspectYawLimit = 35f;
+        private const float ScanEyeEmissionBoost = 1.25f;
+        private const float ScanEyeLightIntensityBoost = -0.45f;
+        private const float ScanEyeLightRangeBoost = -0.15f;
+        private const float ScanEyeOpenThreshold = 1e-3f;
 
         /// <summary>Read-only view of the mood, for audio/debug tooling.</summary>
         public RoverMood Mood => _mood;
@@ -403,6 +408,7 @@ namespace MoonProject.Rover
             _eyeLight.type = LightType.Point;
             _eyeLight.range = _tuning.EyeLightRange;
             _eyeLight.shadows = LightShadows.None;
+            _eyeLightRestColor = _eyeLight.color;
 
             EventBus events = context.Events;
             _chirpPose = new ChirpPose(_tuning.Chirp);
@@ -987,8 +993,9 @@ namespace MoonProject.Rover
                 - _chirpPose.HeadDip) * idleScale;
             float targetPitch = opening >= inspect ? _openingPitchDeg : _screenInspectPitchDeg;
             float targetYaw = opening >= inspect ? _openingYawDeg : _screenInspectYawDeg;
-            float pitch = Mathf.Lerp(rawPitch, targetPitch, steady);
-            float yaw = Mathf.Lerp(_yaw.Value, targetYaw, steady);
+            float scanSweepWeight = (1f - steady) * _scanAimBlend;
+            float pitch = Mathf.Lerp(rawPitch, targetPitch, steady) + _scanLook.HeadSweepPitch * scanSweepWeight;
+            float yaw = Mathf.Lerp(_yaw.Value, targetYaw, steady) + _scanLook.HeadSweepYaw * scanSweepWeight;
 
             _neck.localRotation = _neckRest * Quaternion.AngleAxis(yaw, Vector3.up);
             if (_neckLift != null)
@@ -1051,14 +1058,33 @@ namespace MoonProject.Rover
                 * Mathf.Lerp(1f, battery.LowEyeGlow, _tired) * Mathf.Lerp(1f, battery.CrawlEyeGlow, _crawl)
                 * Mathf.Lerp(1f, _tuning.CutFocus.EyeGlow, _cutFocus) * _chirpPose.EyeGlow
                 * (1f + _sigh * _tuning.Chirp.SighEye) * _scanLook.EyeGlow;
-            SetGlow(_eyeRenderer, eyeGlow);
+            float scanOpen = _scanLook.Open;
+            if (scanOpen > ScanEyeOpenThreshold)
+            {
+                Color fanColor = _tuning.ScanLook.FanColour;
+                Color eyeEmission = Color.Lerp(
+                    Color.white * eyeGlow,
+                    fanColor * (eyeGlow * ScanEyeEmissionBoost),
+                    scanOpen);
+                SetGlow(_eyeRenderer, eyeEmission);
+                _eyeLight.color = Color.Lerp(_eyeLightRestColor, fanColor, scanOpen);
+                _eyeLight.range = _tuning.EyeLightRange * (1f + ScanEyeLightRangeBoost * scanOpen);
+                _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow * (1f + ScanEyeLightIntensityBoost * scanOpen);
+            }
+            else
+            {
+                SetGlow(_eyeRenderer, eyeGlow);
+                _eyeLight.color = _eyeLightRestColor;
+                _eyeLight.range = _tuning.EyeLightRange;
+                _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow;
+            }
+
             _scanFan.transform.localRotation = _scanFanRest * Quaternion.AngleAxis(_scanLook.Sweep, Vector3.up);
             if (_scanFan.enabled)
             {
                 _scanFan.enabled = false;
             }
             SetGlow(_antennaTipRenderer, _listen.TipEmission(_mood.TipGlow));
-            _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow;
         }
 
         /// <summary>
@@ -1209,7 +1235,7 @@ namespace MoonProject.Rover
             switch (beat.Phase)
             {
                 case FeelPhase.Anticipate:
-                    _scanLook.Begin();
+                    _scanLook.Begin(beat.Strength, beat.Seconds);
                     _scanGazing = true;
                     _rover.Gaze.Set(_scanOwner, beat.Position, _tuning.ScanLook.GazePriority);
                     break;

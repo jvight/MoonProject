@@ -104,25 +104,80 @@ namespace MoonProject.Gameplay
         [Range(0.1f, 2f)] [SerializeField] private float _pingEdgeIntensity = 1.25f;
 
         [Tooltip("Diameter of the soft emitter glow core at 07's scan lens (m).")]
-        [Range(0.01f, 0.2f)] [SerializeField] private float _lensGlowSize = 0.06f;
+        [Range(0.01f, 0.35f)] [SerializeField] private float _lensGlowSize = 0.085f;
 
         [Tooltip("Alpha of the soft emitter glow core at 07's scan lens.")]
-        [Range(0.02f, 1f)] [SerializeField] private float _lensGlowAlpha = 0.32f;
+        [Range(0.02f, 1f)] [SerializeField] private float _lensGlowAlpha = 0.94f;
 
         [Tooltip("Diameter of the soft outer halo at 07's scan lens (m).")]
-        [Range(0.02f, 0.4f)] [SerializeField] private float _lensHaloSize = 0.13f;
+        [Range(0.02f, 0.6f)] [SerializeField] private float _lensHaloSize = 0.22f;
 
         [Tooltip("Alpha of the soft outer halo at 07's scan lens.")]
-        [Range(0.01f, 0.5f)] [SerializeField] private float _lensHaloAlpha = 0.08f;
+        [Range(0.01f, 0.8f)] [SerializeField] private float _lensHaloAlpha = 0.36f;
 
         [Tooltip("Maximum radius from 07's lens where tiny motes sparkle in vacuum (m).")]
-        [Range(0.01f, 0.12f)] [SerializeField] private float _lensMoteRadius = 0.042f;
+        [Range(0.01f, 0.16f)] [SerializeField] private float _lensMoteRadius = 0.065f;
 
         [Tooltip("Diameter of the tiny motes sparkling right at 07's lens (m).")]
-        [Range(0.004f, 0.04f)] [SerializeField] private float _lensMoteSize = 0.014f;
+        [Range(0.004f, 0.06f)] [SerializeField] private float _lensMoteSize = 0.020f;
 
         [Tooltip("Peak alpha of the tiny motes sparkling right at 07's lens.")]
-        [Range(0f, 0.5f)] [SerializeField] private float _lensMoteAlpha = 0.16f;
+        [Range(0f, 1f)] [SerializeField] private float _lensMoteAlpha = 0.65f;
+
+        [Header("07 scanner & ground link (SCAN v3)")]
+        [Tooltip("World-space width of the crisp bright laser intersection line on the ground from under 07's lens to the target's base (m).")]
+        [Range(0.005f, 0.10f)] [SerializeField] private float _groundLineWidth = 0.032f;
+
+        [Tooltip("Emissive intensity of the crisp ground laser line linking 07's lens to the target's base.")]
+        [Range(0.2f, 4f)] [SerializeField] private float _groundLineIntensity = 2.05f;
+
+        [Tooltip("Low-contrast intensity of the swept fan wake and range ticks on the regolith between 07 and the target.")]
+        [Range(0f, 1f)] [SerializeField] private float _groundWakeIntensity = 0.38f;
+
+        [Tooltip("Half-angle (deg) of the vertical laser fan's horizontal sweep across the ground and target.")]
+        [Range(0.5f, 15f)] [SerializeField] private float _groundSweepAngleDeg = 4.2f;
+
+        [Tooltip("Oscillation frequency (Hz) of the vertical laser fan sweep across the ground and target.")]
+        [Range(0.2f, 4f)] [SerializeField] private float _groundSweepHz = 1.15f;
+
+        [Tooltip("Forward stand-off (m) from under 07's cheek lens where the ground laser line begins on the regolith.")]
+        [Range(0.02f, 1.0f)] [SerializeField] private float _groundStartOffset = 0.08f;
+
+        [Tooltip("Diameter (m) of the opening cyan iris ring on 07's brass cheek lens while scanning.")]
+        [Range(0.04f, 0.4f)] [SerializeField] private float _lensIrisSize = 0.145f;
+
+        [Tooltip("Peak alpha of the opening cyan iris ring on 07's brass cheek lens.")]
+        [Range(0.05f, 1f)] [SerializeField] private float _lensIrisAlpha = 0.90f;
+
+        [Tooltip("Length (m) of the optical cross-glint flare streaks on 07's cheek lens.")]
+        [Range(0.05f, 0.8f)] [SerializeField] private float _lensGlintLength = 0.44f;
+
+        [Tooltip("Width (m) of the optical cross-glint flare streaks on 07's cheek lens.")]
+        [Range(0.005f, 0.15f)] [SerializeField] private float _lensGlintWidth = 0.015f;
+
+        [Tooltip("Peak alpha of the optical cross-glint flare on 07's cheek lens.")]
+        [Range(0.05f, 1f)] [SerializeField] private float _lensGlintAlpha = 0.92f;
+
+        [Tooltip("Intensity of the soft cyan point light spilling onto 07's face, brass bezel, and the ground right in front of the lens.")]
+        [Range(0f, 8f)] [SerializeField] private float _lensSpillIntensity = 0.65f;
+
+        [Tooltip("Range (m) of the soft cyan point light spilling onto 07's face, brass bezel, and the ground right in front of the lens.")]
+        [Range(0.5f, 8f)] [SerializeField] private float _lensSpillRange = 0.95f;
+
+        [Tooltip("Number of sparse dust grains catching the laser sparkle along the beam path from 07's lens to the target.")]
+        [Range(0, 16)] [SerializeField] private int _pathGlintCount = 10;
+
+        [Tooltip("Diameter (m) of each sparse dust grain sparkle along the beam path.")]
+        [Range(0.008f, 0.15f)] [SerializeField] private float _pathGlintSize = 0.082f;
+
+        [Tooltip("Peak alpha of each brief dust grain sparkle along the beam path.")]
+        [Range(0f, 1f)] [SerializeField] private float _pathGlintAlpha = 0.96f;
+
+        [Tooltip("Brief lifetime (s) of each ballistic dust grain sparkle before falling out of the laser plane.")]
+        [Range(0.12f, 1.2f)] [SerializeField] private float _pathGlintLifetime = 0.42f;
+
+        [Tooltip("Downward lunar gravity acceleration (m/s^2, 1/6 g = 1.62) for the ballistic dust grains along the scan path.")]
+        [Range(0.2f, 5f)] [SerializeField] private float _pathGlintGravity = 1.62f;
 
         [Header("The chasm's near lip (§1.3)")]
         [Tooltip("Metres back from the canyon lip, toward the basin, where Kenji's crashed test jumper lies.")]
@@ -159,6 +214,9 @@ namespace MoonProject.Gameplay
         private static readonly int ScanPingColorShaderId = Shader.PropertyToID("_MoonScanPingColor");
         private static readonly int ScanParamsShaderId = Shader.PropertyToID("_MoonScanParams");
         private static readonly int ScanPingParamsShaderId = Shader.PropertyToID("_MoonScanPingParams");
+        private static readonly int ScanGroundStartShaderId = Shader.PropertyToID("_MoonScanGroundStart");
+        private static readonly int ScanGroundEndShaderId = Shader.PropertyToID("_MoonScanGroundEnd");
+        private static readonly int ScanGroundParamsShaderId = Shader.PropertyToID("_MoonScanGroundParams");
 
         public IReadOnlyList<ScanSet> Sets => _sets;
         public IReadOnlyList<RuinScanSet> Ruins => _ruins;
@@ -192,6 +250,24 @@ namespace MoonProject.Gameplay
         public float LensMoteRadius => _lensMoteRadius;
         public float LensMoteSize => _lensMoteSize;
         public float LensMoteAlpha => _lensMoteAlpha;
+        public float GroundLineWidth => _groundLineWidth;
+        public float GroundLineIntensity => _groundLineIntensity;
+        public float GroundWakeIntensity => _groundWakeIntensity;
+        public float GroundSweepAngleDeg => _groundSweepAngleDeg;
+        public float GroundSweepHz => _groundSweepHz;
+        public float GroundStartOffset => _groundStartOffset;
+        public float LensIrisSize => _lensIrisSize;
+        public float LensIrisAlpha => _lensIrisAlpha;
+        public float LensGlintLength => _lensGlintLength;
+        public float LensGlintWidth => _lensGlintWidth;
+        public float LensGlintAlpha => _lensGlintAlpha;
+        public float LensSpillIntensity => _lensSpillIntensity;
+        public float LensSpillRange => _lensSpillRange;
+        public int PathGlintCount => _pathGlintCount;
+        public float PathGlintSize => _pathGlintSize;
+        public float PathGlintAlpha => _pathGlintAlpha;
+        public float PathGlintLifetime => _pathGlintLifetime;
+        public float PathGlintGravity => _pathGlintGravity;
         public float JumperSetback => _jumperSetback;
         public float JumperSide => _jumperSide;
 
@@ -207,6 +283,23 @@ namespace MoonProject.Gameplay
                 new Vector4(_scanLineWidth, _rasterSpacingMeters, _rasterContrast, fadeBandShare));
             Shader.SetGlobalVector(ScanPingParamsShaderId,
                 new Vector4(_scanLineIntensity, _pingDurationSeconds, _pingEdgeThickness, _pingEdgeIntensity));
+        }
+
+        /// <summary>Updates the projected ground laser fan intersection shader globals for the current frame (zero GC).</summary>
+        public static void SetGroundLineGlobals(Vector4 groundStartAndActive, Vector4 groundEndAndProgress,
+            Vector4 groundParams)
+        {
+            Shader.SetGlobalVector(ScanGroundStartShaderId, groundStartAndActive);
+            Shader.SetGlobalVector(ScanGroundEndShaderId, groundEndAndProgress);
+            Shader.SetGlobalVector(ScanGroundParamsShaderId, groundParams);
+        }
+
+        /// <summary>Clears the projected ground laser fan intersection shader globals when no scan is active (zero GC).</summary>
+        public static void ClearGroundLineGlobals()
+        {
+            Shader.SetGlobalVector(ScanGroundStartShaderId, Vector4.zero);
+            Shader.SetGlobalVector(ScanGroundEndShaderId, Vector4.zero);
+            Shader.SetGlobalVector(ScanGroundParamsShaderId, Vector4.zero);
         }
 
         /// <summary>Seconds a fragment of <paramref name="size"/> takes to scan with the plain eye.</summary>

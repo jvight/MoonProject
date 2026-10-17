@@ -7,6 +7,7 @@
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 #include "../World/LofiAtmosphere.hlsl"
+#include "LofiScanInput.hlsl"
 
 // World's sky (SkyShaderGlobals): rgb is the horizon glow (linear), a its height.
 float4 _MoonHorizonGlow;
@@ -60,6 +61,10 @@ half3 LofiLit(LofiSurface surface)
     half fresnel = PositivePow(1.0 - facing, _MoonRim.y);
     half side = 1.0 - saturate(inputData.normalWS.y / max(_MoonRim.z, HALF_MIN));
     color += LofiRimHue(GetMainLight().color) * (_MoonRim.x * fresnel * side);
+
+    #if !defined(MOON_LOFI_SCAN_SOLID_INPUT_INCLUDED)
+    MoonApplyGroundScanLine(color, surface.positionWS, inputData.normalWS, false);
+    #endif
 
     return MoonAtmosphere(color, surface.positionWS, surface.fogFactor);
 }

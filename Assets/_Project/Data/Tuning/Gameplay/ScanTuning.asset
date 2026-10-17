@@ -59,13 +59,31 @@ MonoBehaviour:
   _pingDurationSeconds: 0.38
   _pingEdgeThickness: 1.35
   _pingEdgeIntensity: 1.25
-  _lensGlowSize: 0.06
-  _lensGlowAlpha: 0.32
-  _lensHaloSize: 0.13
-  _lensHaloAlpha: 0.08
-  _lensMoteRadius: 0.042
-  _lensMoteSize: 0.014
-  _lensMoteAlpha: 0.16
+  _lensGlowSize: 0.085
+  _lensGlowAlpha: 0.94
+  _lensHaloSize: 0.22
+  _lensHaloAlpha: 0.36
+  _lensMoteRadius: 0.065
+  _lensMoteSize: 0.02
+  _lensMoteAlpha: 0.65
+  _groundLineWidth: 0.032
+  _groundLineIntensity: 2.05
+  _groundWakeIntensity: 0.38
+  _groundSweepAngleDeg: 4.2
+  _groundSweepHz: 1.15
+  _groundStartOffset: 0.08
+  _lensIrisSize: 0.145
+  _lensIrisAlpha: 0.9
+  _lensGlintLength: 0.44
+  _lensGlintWidth: 0.015
+  _lensGlintAlpha: 0.92
+  _lensSpillIntensity: 0.65
+  _lensSpillRange: 0.95
+  _pathGlintCount: 10
+  _pathGlintSize: 0.082
+  _pathGlintAlpha: 0.96
+  _pathGlintLifetime: 0.42
+  _pathGlintGravity: 1.62
   _jumperSetback: 6
   _jumperSide: 6
   _ruins:

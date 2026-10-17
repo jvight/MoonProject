@@ -61,6 +61,7 @@ Shader "MoonProject/World/R1Terrain"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
             #include "Assets/_Project/Shaders/World/LofiAtmosphere.hlsl"
+            #include "Assets/_Project/Shaders/Art/LofiScanInput.hlsl"
 
             TEXTURE2D(_BaseMap);
             SAMPLER(sampler_BaseMap);
@@ -550,6 +551,8 @@ Shader "MoonProject/World/R1Terrain"
                     half mask = saturate(ring * 0.85 + fill) * _MoonReachRingColor.a;
                     color = lerp(color, _MoonReachRingColor.rgb, mask);
                 }
+
+                MoonApplyGroundScanLine(color, input.positionWS, normalWS, true);
 
                 color = clamp(color, 0.0h, 32.0h);
                 color = MoonAtmosphere(color, input.positionWS, input.fogFactor);

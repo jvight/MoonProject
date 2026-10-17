@@ -61,6 +61,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         public override void Setup()
         {
             base.Setup();
+#if UNITY_EDITOR
+            UnityEditor.ShaderUtil.allowAsyncCompilation = false;
+#endif
             Time.captureDeltaTime = FrameTime;
             _keyboard = InputSystem.AddDevice<Keyboard>();
             _gamepad = InputSystem.AddDevice<Gamepad>();
@@ -70,6 +73,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         public override void TearDown()
         {
             Time.captureDeltaTime = 0f;
+#if UNITY_EDITOR
+            UnityEditor.ShaderUtil.allowAsyncCompilation = true;
+#endif
             Application.logMessageReceived -= OnLog;
             _awoke?.Dispose();
             Scene scene = SceneManager.GetSceneByPath(PlaythroughScene.ScenePath);
@@ -85,6 +91,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             base.TearDown();
         }
 
+        private static readonly int GroundStartShaderId = Shader.PropertyToID("_MoonScanGroundStart");
+
         [UnityTest]
         [Timeout(300000)]
         [PrebuildSetup(typeof(PlaythroughScene))]
@@ -96,13 +104,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             ClearBlockingVerbsAndOtherFragments();
             CacheRoverParts();
 
-            // 1. In front in daylight (chase camera 1920x1080) + close-up of the line on the surface (1920x1080)
+            // 1. Daylight scan of a target 6-8 m away (~6.5 m) on open ground + close-up of 07's lens while scanning
             yield return VerifyFrontDaylightAndCaptureCloseup();
 
-            // 2. Beside 07 at night (within head yaw reach, chase camera 1920x1080 night capture + let-go return check)
+            // 2. Beside 07 head-turn & let-go verification + night scan of the 6-8 m (~6.5 m) target
             yield return VerifyBesideNightAndCapture();
 
-            // 3. Behind 07 (ruin piece placed behind 07: body turn -> head aim -> line sweeping -> completion ping)
+            // 3. Behind 07 (ruin piece 6.5 m behind 07: body turn -> head aim -> line sweeping -> completion ping)
             yield return VerifyBehindRuinAndCaptureStrip();
 
             // 4. Up a slope + player-wins steering check
@@ -115,41 +123,74 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             SetSkyClock(SunlitTimeSeconds);
             ScanField scans = _gameplay.Scans;
-            ScanFragment target = scans.Find("rover.cargo_cradle.0");
-            Assert.IsNotNull(target);
-            ActivateOnly(target);
-            Vector3 spot = OpenSpot();
-            ClearNearbyProps(spot, 14f, target.Root);
 
-            Vector3 targetXZ = spot + new Vector3(-1.10f, 0f, -1.65f);
-            float fragGroundY = SampleGround(targetXZ.x, targetXZ.z);
-            PlaceRoverAndFragment(spot, -145f, target, new Vector3(targetXZ.x, fragGroundY + 0.22f, targetXZ.z));
+            // First verify standard kit fragment scan in front (rover.cargo_cradle.0)
+            ScanFragment frontKit = scans.Find("rover.cargo_cradle.0");
+            Assert.IsNotNull(frontKit);
+            ActivateOnly(frontKit);
+            Vector3 spot = OpenSpot();
+            ClearNearbyProps(spot, 16f, frontKit.Root);
+
+            Vector3 kitXZ = spot + new Vector3(-1.10f, 0f, -1.65f);
+            float kitGroundY = SampleGround(kitXZ.x, kitXZ.z);
+            PlaceRoverAndFragment(spot, -145f, frontKit, new Vector3(kitXZ.x, kitGroundY + 0.22f, kitXZ.z));
             _cameraRig.Snap();
             _cameraRig.Orbit.AdoptBearing(-10f);
+            yield return WaitSeconds(0.35f);
+
+            Assert.AreSame(frontKit, scans.Candidate, "Front kit target must be selected.");
+            Press(_keyboard.eKey);
+            float deadline = Time.time + ScanTimeout;
+            while (!frontKit.Scanned)
+            {
+                Assert.Less(Time.time, deadline, "Front kit target scan must complete.");
+                if (scans.Scanning == frontKit)
+                {
+                    AssertBeamClearOfRover(frontKit.Point, "front-kit");
+                }
+
+                yield return null;
+            }
+
+            Release(_keyboard.eKey);
+            yield return WaitSeconds(1.05f);
+            Assert.IsTrue(frontKit.Scanned, "Front kit target scanned.");
+
+            // Now scan a target 6.5 m away (6-8 m) on open ground in daylight for scan_daylight.png + lens_closeup.png
+            ScanFragment distantTarget = PrepareOpenGroundRuinTarget(spot, new Vector3(-2.95f, 0f, -5.79f), out float distanceMeters);
+            Assert.GreaterOrEqual(distanceMeters, 6.0f, "Target must be at least 6 m away.");
+            Assert.LessOrEqual(distanceMeters, 8.0f, "Target must be within 8 m scan reach.");
+
+            _cameraRig.enabled = true;
+            _context.Get<IRoverPlacement>().PlaceAt(spot, Quaternion.Euler(0f, -125f, 0f));
+            _cameraRig.Snap();
+            _cameraRig.Orbit.AdoptBearing(-112f);
             yield return WaitSeconds(0.55f);
 
-            Assert.AreSame(target, scans.Candidate, "Front target must be selected.");
+            Assert.AreSame(distantTarget, scans.Candidate, "6.5 m daylight target must be selected.");
             Press(_keyboard.eKey);
             bool capturedDaylight = false;
-            bool capturedCloseup = false;
-            float deadline = Time.time + ScanTimeout;
-            while (!target.Scanned)
+            bool capturedLensCloseup = false;
+            deadline = Time.time + ScanTimeout;
+            while (!distantTarget.Scanned)
             {
-                Assert.Less(Time.time, deadline, "Front target scan must complete.");
-                if (scans.Scanning == target)
+                Assert.Less(Time.time, deadline, "6.5 m daylight target scan must complete.");
+                if (scans.Scanning == distantTarget)
                 {
-                    AssertBeamClearOfRover(target.Point, "front-daylight");
-                    if (!capturedDaylight && target.Progress >= 0.48f)
+                    AssertBeamClearOfRover(distantTarget.Point, "front-daylight-6.5m");
+                    if (!capturedDaylight && distantTarget.Progress >= 0.48f)
                     {
+                        Vector4 groundStart = Shader.GetGlobalVector(GroundStartShaderId);
+                        Assert.Greater(groundStart.w, 0.5f, "Ground scan line shader global must be active mid-sweep.");
                         FrameCapture.SavePng(_view, CaptureWidth, CaptureHeight,
                             Path.Combine(ScanFolder, "scan_daylight.png"));
                         capturedDaylight = true;
                     }
 
-                    if (!capturedCloseup && target.Progress >= 0.58f)
+                    if (!capturedLensCloseup && distantTarget.Progress >= 0.56f)
                     {
-                        CaptureRasterCloseup(target);
-                        capturedCloseup = true;
+                        CaptureLensCloseup(distantTarget);
+                        capturedLensCloseup = true;
                     }
                 }
 
@@ -157,11 +198,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             Release(_keyboard.eKey);
-            // Wait for ScanLook's 0.9s post-scan dissolve gaze hold to release before the next placement
             yield return WaitSeconds(1.05f);
-            Assert.IsTrue(target.Scanned, "Front target scanned.");
-            Assert.IsTrue(capturedDaylight, "Daylight scan captured.");
-            Assert.IsTrue(capturedCloseup, "Raster close-up captured.");
+            Assert.IsTrue(distantTarget.Scanned, "6.5 m daylight target scanned.");
+            Assert.IsTrue(capturedDaylight, "Daylight 6.5 m scan captured.");
+            Assert.IsTrue(capturedLensCloseup, "Close-up of 07's lens while scanning captured.");
         }
 
         private IEnumerator VerifyBesideNightAndCapture()
@@ -172,7 +212,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsNotNull(target);
             ActivateOnly(target);
             Vector3 spot = OpenSpot();
-            ClearNearbyProps(spot, 14f, target.Root);
+            ClearNearbyProps(spot, 16f, target.Root);
 
             // Place target ~2.3m to 07's left-front (~64 deg yaw from -85 deg heading, inside head pitch & yaw reach)
             Vector3 targetXZ = spot + new Vector3(-1.15f, 0f, -1.95f);
@@ -203,9 +243,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Until(() => Mathf.Abs(_bodyLanguage.CurrentHeadAngles.x) < 10f, 2.8f,
                 "Letting go of E returns 07's head to rest.");
 
-            // Hold E again to complete the beside scan and capture night scan from chase camera
+            // Hold E again to complete the beside scan
             Press(_keyboard.eKey);
-            bool capturedNight = false;
             deadline = Time.time + ScanTimeout;
             while (!target.Scanned)
             {
@@ -214,7 +253,38 @@ namespace MoonProject.Gameplay.PlayModeTests
                 if (scans.Scanning == target)
                 {
                     AssertBeamClearOfRover(target.Point, "beside-night");
-                    if (!capturedNight && target.Progress >= 0.54f)
+                }
+
+                yield return null;
+            }
+
+            Release(_keyboard.eKey);
+            yield return WaitSeconds(1.05f);
+            Assert.Greater(maxHeadYaw, 32f, "07's head must turn toward the target beside it.");
+            Assert.Less(Mathf.Abs(Mathf.DeltaAngle(startBodyYaw, _rover.Rotation.eulerAngles.y)), 15f,
+                "Target within head reach must not require a full body turn.");
+
+            // Capture the 6.5 m (6-8 m) scan at night (scan_night.png) matching scan_daylight.png
+            ScanFragment nightDistantTarget = PrepareOpenGroundRuinTarget(spot, new Vector3(-2.95f, 0f, -5.79f), out float nightDist);
+            Assert.GreaterOrEqual(nightDist, 6.0f);
+            Assert.LessOrEqual(nightDist, 8.0f);
+
+            _cameraRig.enabled = true;
+            _context.Get<IRoverPlacement>().PlaceAt(spot, Quaternion.Euler(0f, -125f, 0f));
+            _cameraRig.Snap();
+            _cameraRig.Orbit.AdoptBearing(-112f);
+            yield return WaitSeconds(0.45f);
+
+            Press(_keyboard.eKey);
+            bool capturedNight = false;
+            deadline = Time.time + ScanTimeout;
+            while (!nightDistantTarget.Scanned)
+            {
+                Assert.Less(Time.time, deadline, "6.5 m night target scan must complete.");
+                if (scans.Scanning == nightDistantTarget)
+                {
+                    AssertBeamClearOfRover(nightDistantTarget.Point, "night-6.5m");
+                    if (!capturedNight && nightDistantTarget.Progress >= 0.50f)
                     {
                         FrameCapture.SavePng(_view, CaptureWidth, CaptureHeight,
                             Path.Combine(ScanFolder, "scan_night.png"));
@@ -227,68 +297,26 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             Release(_keyboard.eKey);
             yield return WaitSeconds(1.05f);
-            Assert.Greater(maxHeadYaw, 32f, "07's head must turn toward the target beside it.");
-            Assert.Less(Mathf.Abs(Mathf.DeltaAngle(startBodyYaw, _rover.Rotation.eulerAngles.y)), 15f,
-                "Target within head reach must not require a full body turn.");
-            Assert.IsTrue(capturedNight, "Night scan captured.");
+            Assert.IsTrue(capturedNight, "Night 6.5 m scan captured.");
         }
 
         private IEnumerator VerifyBehindRuinAndCaptureStrip()
         {
             SetSkyClock(SunlitTimeSeconds);
             ScanField scans = _gameplay.Scans;
-            ScanFragment ruinTarget = scans.Find("ruin.FallenSolarArray.0");
-            Assert.IsNotNull(ruinTarget, "FallenSolarArray ruin scan target must exist.");
-            ActivateOnly(ruinTarget);
             Vector3 spot = OpenSpot();
-            Transform ruinRoot = ruinTarget.Root.parent != null ? ruinTarget.Root.parent : ruinTarget.Root;
-            foreach (Collider col in ruinRoot.GetComponentsInChildren<Collider>(true))
-            {
-                col.enabled = false;
-            }
 
-            // Hide the solar wings and severed cable so only the compact ToppledGearbox ruin piece stands in open view
-            // with zero solar panels or props covering the frame.
-            Transform wingLeft = ruinRoot.Find("SolarWingLeft");
-            Transform wingRight = ruinRoot.Find("SolarWingRight");
-            Transform cableStub = ruinRoot.Find("CableStub");
-            if (wingLeft != null)
-            {
-                wingLeft.gameObject.SetActive(false);
-            }
-
-            if (wingRight != null)
-            {
-                wingRight.gameObject.SetActive(false);
-            }
-
-            if (cableStub != null)
-            {
-                cableStub.gameObject.SetActive(false);
-            }
-
-            ClearNearbyProps(spot, 16f, ruinRoot);
-
-            // Place the ruin piece BEHIND 07 (~161 deg behind 07's initial +12 deg heading), resting upright on the
-            // lunar surface in the foreground-left of the chase camera.
-            Vector3 ruinXZ = spot + new Vector3(-1.05f, 0f, -1.75f);
-            float ruinGroundY = SampleGround(ruinXZ.x, ruinXZ.z);
-            Quaternion uprightRuinRot = Quaternion.Euler(0f, -25f, 0f) * Quaternion.Euler(90f, 0f, 0f);
-            ruinRoot.SetPositionAndRotation(new Vector3(ruinXZ.x, ruinGroundY, ruinXZ.z), uprightRuinRot);
-            Transform gearbox = ruinRoot.Find("ToppledGearbox");
-            if (gearbox != null && gearbox.TryGetComponent(out Renderer gearboxRenderer))
-            {
-                Bounds gb = gearboxRenderer.bounds;
-                float liftY = ruinGroundY - gb.min.y;
-                ruinRoot.position += new Vector3(0f, liftY, 0f);
-                ruinTarget.Root.position = gearboxRenderer.bounds.center;
-            }
+            // Place the ruin piece 6.5 m BEHIND 07 (~168 deg behind 07's initial +15 deg heading) on open regolith
+            ScanFragment ruinTarget = PrepareOpenGroundRuinTarget(spot, new Vector3(-2.95f, 0f, -5.79f), out float ruinDist);
+            Assert.GreaterOrEqual(ruinDist, 6.0f);
+            Assert.LessOrEqual(ruinDist, 8.0f);
 
             _cameraRig.enabled = true;
-            _context.Get<IRoverPlacement>().PlaceAt(spot, Quaternion.Euler(0f, 12f, 0f));
+            _context.Get<IRoverPlacement>().PlaceAt(spot, Quaternion.Euler(0f, 15f, 0f));
             _cameraRig.Snap();
-            // Chase camera looking along -10 deg so ToppledGearbox is on the left and 07 turns toward the camera
-            _cameraRig.Orbit.AdoptBearing(-10f);
+            // Chase camera looking along -112 deg so 07 is in the lower-right foreground and the 6.5 m ground line +
+            // ballistic glints + ToppledGearbox ruin piece stretch diagonally across open ground to the upper-left.
+            _cameraRig.Orbit.AdoptBearing(-112f);
             yield return WaitSeconds(0.65f);
 
             float startYaw = _rover.Rotation.eulerAngles.y;
@@ -316,12 +344,12 @@ namespace MoonProject.Gameplay.PlayModeTests
                 if (scans.Scanning == ruinTarget)
                 {
                     AssertBeamClearOfRover(ruinTarget.Point, "behind-ruin");
-                    if (panels[1] == null && ruinTarget.Progress >= 0.08f)
+                    if (panels[1] == null && ruinTarget.Progress >= 0.10f)
                     {
                         panels[1] = CapturePanel("ruin_behind_2_head_aim.png");
                     }
 
-                    if (panels[2] == null && ruinTarget.Progress >= 0.54f)
+                    if (panels[2] == null && ruinTarget.Progress >= 0.52f)
                     {
                         panels[2] = CapturePanel("ruin_behind_3_line_sweeping.png");
                         File.Copy(
@@ -334,8 +362,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                 yield return null;
             }
 
-            // Wait ~65 ms into the completion dissolve so the thin warm-amber completion ping edge is at peak
-            yield return WaitSeconds(0.065f);
+            // Wait ~110 ms into the completion dissolve so the warm-amber completion ping edge is at peak while the ground line ramps off
+            yield return WaitSeconds(0.11f);
             panels[3] = CapturePanel("ruin_behind_4_completion_ping.png");
             File.Copy(
                 Path.Combine(ScanFolder, "ruin_behind_4_completion_ping.png"),
@@ -347,7 +375,59 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             Assert.Greater(maxTurnDelta, 90f, "07 must turn its whole body toward a target behind it.");
             Assert.Greater(maxWheelScrub, 0.25f, "Whole-body scan turn must apply wheel scrub.");
-            StitchStrip(panels, Path.Combine(ScanFolder, "ruin_behind_strip.png"));
+            string stripPath = Path.Combine(ScanFolder, "ruin_behind_strip.png");
+            StitchStrip(panels, stripPath);
+            File.Copy(stripPath, Path.Combine(ScanFolder, "scan_strip.png"), overwrite: true);
+        }
+
+        private ScanFragment PrepareOpenGroundRuinTarget(Vector3 spot, Vector3 offsetXZ, out float horizontalDistance)
+        {
+            ScanFragment ruinTarget = _gameplay.Scans.Find("ruin.FallenSolarArray.0");
+            Assert.IsNotNull(ruinTarget, "FallenSolarArray ruin scan target must exist.");
+            ActivateOnly(ruinTarget);
+            Transform ruinRoot = ruinTarget.Root.parent != null ? ruinTarget.Root.parent : ruinTarget.Root;
+            ruinRoot.gameObject.SetActive(true);
+            foreach (Collider col in ruinRoot.GetComponentsInChildren<Collider>(true))
+            {
+                col.enabled = false;
+            }
+
+            Transform wingLeft = ruinRoot.Find("SolarWingLeft");
+            Transform wingRight = ruinRoot.Find("SolarWingRight");
+            Transform cableStub = ruinRoot.Find("CableStub");
+            if (wingLeft != null)
+            {
+                wingLeft.gameObject.SetActive(false);
+            }
+
+            if (wingRight != null)
+            {
+                wingRight.gameObject.SetActive(false);
+            }
+
+            if (cableStub != null)
+            {
+                cableStub.gameObject.SetActive(false);
+            }
+
+            ClearNearbyProps(spot, 18f, ruinRoot);
+
+            Vector3 ruinXZ = spot + offsetXZ;
+            float ruinGroundY = SampleGround(ruinXZ.x, ruinXZ.z);
+            Quaternion uprightRuinRot = Quaternion.Euler(0f, 22f, 0f) * Quaternion.Euler(90f, 0f, 0f);
+            ruinRoot.SetPositionAndRotation(new Vector3(ruinXZ.x, ruinGroundY, ruinXZ.z), uprightRuinRot);
+            Transform gearbox = ruinRoot.Find("ToppledGearbox");
+            if (gearbox != null && gearbox.TryGetComponent(out Renderer gearboxRenderer))
+            {
+                gearboxRenderer.enabled = true;
+                Bounds gb = gearboxRenderer.bounds;
+                float liftY = ruinGroundY - gb.min.y;
+                ruinRoot.position += new Vector3(0f, liftY, 0f);
+                ruinTarget.Root.position = gearboxRenderer.bounds.center;
+            }
+
+            horizontalDistance = new Vector2(ruinTarget.Point.x - spot.x, ruinTarget.Point.z - spot.z).magnitude;
+            return ruinTarget;
         }
 
         private IEnumerator VerifyUpSlopeTargetAndPlayerSteering()
@@ -401,38 +481,33 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(clear, $"Scan beam ({label}) must have line of sight and never cross 07.");
         }
 
-        private void CaptureRasterCloseup(ScanFragment target)
+        private void CaptureLensCloseup(ScanFragment target)
         {
             Transform camTr = _view.transform;
             Vector3 savedPos = camTr.position;
             Quaternion savedRot = camTr.rotation;
             float savedFov = _view.fieldOfView;
             bool wasEnabled = _cameraRig.enabled;
-            Transform brackets = target.Root != null ? target.Root.Find("Brackets") : null;
-            bool bracketsWereActive = brackets != null && brackets.gameObject.activeSelf;
-            if (brackets != null)
-            {
-                brackets.gameObject.SetActive(false);
-            }
-
             _cameraRig.enabled = false;
             try
             {
-                Vector3 toRover = (_rover.ScanOrigin.position - target.Point).normalized;
-                Vector3 side = Vector3.Cross(Vector3.up, toRover).normalized;
-                Vector3 focus = target.Point - Vector3.up * 0.03f;
-                camTr.position = focus + toRover * 0.36f + side * 1.12f + Vector3.up * 0.32f;
+                Vector3 lensPos = _rover.ScanOrigin.position;
+                Vector3 toTarget = (target.Point - lensPos).normalized;
+                Vector3 right = Vector3.Cross(Vector3.up, toTarget).normalized;
+
+                // Close-up of 07's brass cheek lens while scanning: shows the open cyan iris, emitter core,
+                // cross-flare glint, cyan light spilling on 07's CRT face, bezel, and the ground right in front of the lens.
+                Vector3 focus = lensPos + toTarget * 0.48f + right * 0.02f - Vector3.up * 0.14f;
+                camTr.position = lensPos + toTarget * 1.05f - right * 0.92f + Vector3.up * 0.22f;
                 camTr.rotation = Quaternion.LookRotation((focus - camTr.position).normalized, Vector3.up);
-                _view.fieldOfView = 27f;
-                FrameCapture.SavePng(_view, CaptureWidth, CaptureHeight, Path.Combine(ScanFolder, "raster_closeup.png"));
+                _view.fieldOfView = 40f;
+
+                string lensPath = Path.Combine(ScanFolder, "lens_closeup.png");
+                FrameCapture.SavePng(_view, CaptureWidth, CaptureHeight, lensPath);
+                File.Copy(lensPath, Path.Combine(ScanFolder, "raster_closeup.png"), overwrite: true);
             }
             finally
             {
-                if (brackets != null)
-                {
-                    brackets.gameObject.SetActive(bracketsWereActive);
-                }
-
                 camTr.SetPositionAndRotation(savedPos, savedRot);
                 _view.fieldOfView = savedFov;
                 _cameraRig.enabled = wasEnabled;
