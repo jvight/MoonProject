@@ -120,6 +120,15 @@ namespace MoonProject.Gameplay
         [Tooltip("Extra wobble (m) at full strain.")]
         [Range(0f, 1f)] [SerializeField] private float _strainWobble = 0.25f;
 
+        [Tooltip("Share of the upward bow pulled taut at full strain (0 = keeps its arc, 1 = pulls dead straight).")]
+        [Range(0f, 1f)] [SerializeField] private float _strainTighten = 0.85f;
+
+        [Tooltip("Extra beam brightness added at full strain before the cable snaps.")]
+        [Range(0f, 3f)] [SerializeField] private float _strainIntensityBoost = 0.9f;
+
+        [Tooltip("Extra wobble frequency multiplier at full strain as the line hums taut.")]
+        [Range(0f, 5f)] [SerializeField] private float _strainFrequencyBoost = 2.5f;
+
         [Tooltip("Beam width (m) at 07's eye and at the relic.")]
         [SerializeField] private Vector2 _beamWidth = new Vector2(0.09f, 0.05f);
 
@@ -167,6 +176,9 @@ namespace MoonProject.Gameplay
         public float Wobble => _wobble;
         public float WobbleFrequency => _wobbleFrequency;
         public float StrainWobble => _strainWobble;
+        public float StrainTighten => _strainTighten;
+        public float StrainIntensityBoost => _strainIntensityBoost;
+        public float StrainFrequencyBoost => _strainFrequencyBoost;
         public Vector2 BeamWidth => _beamWidth;
         public float BeamExtend => _beamExtend;
         public float BeamRetract => _beamRetract;

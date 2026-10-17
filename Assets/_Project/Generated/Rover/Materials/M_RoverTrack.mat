@@ -26,8 +26,8 @@ Material:
     m_Ints: []
     m_Floats:
     - _EdgeSoftness: 0.5
-    - _FadeFar: 55
-    - _FadeNear: 20
+    - _FadeFar: 260
+    - _FadeNear: 120
     m_Colors:
     - _Color: {r: 0.47058824, g: 0.47843137, b: 0.5019608, a: 0.95}
   m_BuildTextureStacks: []

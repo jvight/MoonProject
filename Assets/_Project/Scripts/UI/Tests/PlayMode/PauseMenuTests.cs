@@ -339,10 +339,10 @@ namespace MoonProject.UI.PlayModeTests
             Submit(layout.NewGameButton);
             yield return new WaitForSecondsRealtime(Settle);
             Submit(layout.NewGameConfirmButton);
+            Submit(layout.NewGameConfirmButton);
             yield return null;
-            Assert.AreEqual(0, asked, "the dark comes first");
-            yield return new WaitForSecondsRealtime(_rig.Tuning.Title.Curtain.FadeIn + 0.5f);
-            Assert.AreEqual(1, asked);
+            Assert.IsFalse(_rig.Ui.Pause.IsOpen, "the title eases away so the camera can push into 07's closed lens");
+            Assert.AreEqual(1, asked, "once only: App reloads inside O1's black (WakeBeat.PushedIn)");
         }
 
         [UnityTest]
@@ -465,21 +465,33 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator Title_RestsWhenUntouched_AndAnyStepBringsItBack()
+        public IEnumerator Title_StaysVisibleAfterThirtySecondsUntouched()
         {
-            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            InputSystem.AddDevice<Keyboard>();
             Boot(BootstrapHarness.NewTestSlot());
-            var tuning = new UnityEditor.SerializedObject(_rig.Tuning);
-            tuning.FindProperty("_title._idleSeconds").floatValue = 0.5f;
-            tuning.ApplyModifiedPropertiesWithoutUndo();
             yield return null;
             _rig.Bootstrap.Context.Events.Publish(new TitleShown(true));
-            yield return new WaitForSecondsRealtime(Settle);
-            Assert.IsTrue(_rig.Ui.Pause.IsResting, "left alone, the menu leaves the world to itself");
-            yield return Tap(keyboard.downArrowKey);
-            yield return new WaitForSecondsRealtime(Settle * 0.5f);
-            Assert.IsFalse(_rig.Ui.Pause.IsResting);
-            Assert.IsTrue(_rig.Ui.Pause.IsTitle);
+            yield return new WaitForSecondsRealtime(30f);
+
+            UiLayout layout = _rig.Ui.Layout;
+            Assert.IsTrue(_rig.Ui.Pause.IsTitle, "the title menu stays open after 30 s untouched");
+            Assert.IsTrue(_rig.Ui.Pause.IsOpen);
+            Assert.AreEqual(DisplayStyle.Flex, layout.PauseMain.resolvedStyle.display, "menu column remains visible");
+            Assert.Greater(layout.PauseMain.resolvedStyle.opacity, 0.99f, "menu column stays at full opacity");
+            Assert.AreEqual(DisplayStyle.Flex, layout.ResumeButton.resolvedStyle.display);
+            Assert.AreEqual(DisplayStyle.Flex, layout.NewGameButton.resolvedStyle.display);
+            Assert.AreEqual(DisplayStyle.Flex, layout.SettingsButton.resolvedStyle.display);
+            Assert.AreEqual(DisplayStyle.Flex, layout.CreditsButton.resolvedStyle.display);
+            Assert.AreEqual(DisplayStyle.Flex, layout.QuitButton.resolvedStyle.display);
+            Assert.AreEqual(DisplayStyle.Flex, layout.TitleScreen.resolvedStyle.display, "#title-screen remains visible");
+            Assert.Greater(layout.TitleScreen.resolvedStyle.opacity, 0.99f, "#title-screen stays at full opacity");
+            Assert.AreEqual(DisplayStyle.Flex, layout.TitleKeyHint.resolvedStyle.display, "#title-key-hint remains visible");
+            Assert.Greater(layout.TitleKeyHint.resolvedStyle.opacity, 0.99f, "#title-key-hint stays at full opacity");
+            Assert.AreSame(layout.ResumeButton, Focused(), "Continue keeps focus while untouched");
+
+            _rig.Bootstrap.Context.Events.Publish(new NewGameRequested());
+            yield return null;
+            Assert.IsFalse(_rig.Ui.Pause.IsOpen, "programmatic NewGameRequested also dismisses the title");
         }
 
         [UnityTest]

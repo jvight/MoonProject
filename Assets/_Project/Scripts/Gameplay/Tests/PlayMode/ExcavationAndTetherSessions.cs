@@ -183,6 +183,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture = GameplayFixture.Boot(_controls);
             yield return null;
             Relic duck = LooseRelicAt(new Vector3(0f, 0.6f, 7f));
+            TetherSystem tether = _fixture.Gameplay.Tether;
             yield return new WaitForSeconds(1f);
             Vector3 camera = _fixture.Rover.Camera.transform.position;
             _fixture.Rover.Aim(camera, duck.transform.position);
@@ -190,6 +191,17 @@ namespace MoonProject.Gameplay.PlayModeTests
             Press(_mouse.rightButton, queueEventOnly: true);
             yield return Waits.Until(() => _fixture.Events.TetherAttached.Count > 0, LatchTimeout);
             Assert.AreEqual(1, _fixture.Events.TetherAttached.Count);
+            float relaxArc = tether.CurrentArc;
+            float peakStrain = 0f;
+            float minStrainedArc = relaxArc;
+            float peakActBeatStrength = 0f;
+            using var beatSub = _fixture.Bootstrap.Context.Events.Subscribe<FeelBeat>(beat =>
+            {
+                if (beat.Kind == FeelKind.Tether && beat.Phase == FeelPhase.Act)
+                {
+                    peakActBeatStrength = Mathf.Max(peakActBeatStrength, beat.Strength);
+                }
+            });
             Wall(new Vector3(0f, 1.5f, 4.5f), new Vector3(20f, 3f, 0.6f));
 
             Vector3 start = _fixture.Rover.Position;
@@ -197,9 +209,18 @@ namespace MoonProject.Gameplay.PlayModeTests
             while (_fixture.Events.TetherReleased.Count == 0 && Time.time - began < 10f)
             {
                 _fixture.Rover.MoveTo(start + Vector3.back * Mathf.Min(30f, 4f * (Time.time - began)), 180f);
+                peakStrain = Mathf.Max(peakStrain, tether.Strain);
+                if (tether.Strain > 0.5f)
+                {
+                    minStrainedArc = Mathf.Min(minStrainedArc, tether.CurrentArc);
+                }
+
                 yield return null;
             }
 
+            Assert.Greater(peakStrain, 0.8f, "strain builds up visibly before the tether snaps");
+            Assert.Greater(peakActBeatStrength, 0.8f, "FeelBeat Act reports rising tether strain");
+            Assert.Less(minStrainedArc, relaxArc * 0.6f, "the beam arc pulls taut under strain");
             Assert.AreEqual(1, _fixture.Events.TetherReleased.Count, "the tether lets go by itself");
             Assert.IsTrue(_fixture.Events.TetherReleased[0].Value.Snapped);
             yield return new WaitForSeconds(0.5f);

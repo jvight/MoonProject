@@ -148,7 +148,7 @@ namespace MoonProject.Rover
         [Header("Rear Vent Strip Echo")]
         [Tooltip("Baseline _EmissionStrength on RearVentStrip when the CRT screen is at full normal brightness (1.0).")]
         [Range(0.10f, 3.0f)]
-        [SerializeField] private float _rearVentBaseEmission = 0.85f;
+        [SerializeField] private float _rearVentBaseEmission = 1.45f;
 
         [Tooltip("Minimum _EmissionStrength on RearVentStrip when the CRT screen is dimmed or booting.")]
         [Range(0f, 1.0f)]

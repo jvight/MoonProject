@@ -28,7 +28,6 @@ namespace MoonProject.UI.PlayModeTests
     {
         private const float Settle = 0.4f;
         private const float PlaceTolerance = 0.01f;
-        private const float NeverIdleSeconds = 1e6f;
         private const int BigTextPresses = 2;
         private const float RecipeCardViewportX = 0.8f;
         private const float RecipeCardViewportY = 0.55f;
@@ -80,11 +79,6 @@ namespace MoonProject.UI.PlayModeTests
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             ScreenShape first = ScreenShapes.All[0];
             _rig = UiTestRig.Boot(_controls, _slot, first.Width, first.Height);
-#if UNITY_EDITOR
-            var serialized = new SerializedObject(_rig.Tuning);
-            serialized.FindProperty("_title._idleSeconds").floatValue = NeverIdleSeconds;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-#endif
             UiLayout layout = _rig.Ui.Layout;
             EventBus events = _rig.Bootstrap.Context.Events;
             Vector2 refSize = _rig.Tuning.Title.MenuReferenceSize;
