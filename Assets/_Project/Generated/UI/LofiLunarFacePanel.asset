@@ -31,7 +31,7 @@ MonoBehaviour:
   m_BindingLogLevel: 0
   m_ClearDepthStencil: 1
   m_ClearColor: 1
-  m_ColorClearValue: {r: 0.031, g: 0.039, b: 0.055, a: 1}
+  m_ColorClearValue: {r: 0, g: 0, b: 0, a: 0}
   m_VertexBudget: 0
   m_DynamicAtlasSettings:
     m_MinAtlasSize: 64
