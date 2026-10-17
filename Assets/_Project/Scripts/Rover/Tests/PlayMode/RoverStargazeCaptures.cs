@@ -525,6 +525,317 @@ namespace MoonProject.Rover.PlayModeTests
             File.WriteAllText(Path.Combine(CaptureFolder, "hatch.md"), _report.ToString());
         }
 
+        /// <summary>
+        /// 07's headlamp at 1920x1080 at night (no Earthlight on 07's side) from the chase camera: before and after on
+        /// flat ground, after on a downhill and an uphill slope, plus a side view showing the beam angle and ground pool.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator Headlamp_PoolsWarmlyAhead_BeforeAndAfterOnFlatAndSlopes()
+        {
+            const int width = 1920;
+            const int height = 1080;
+
+            yield return Boot();
+            _report.AppendLine("# Headlamp aim & ground pool (real Main scene, night)");
+            _report.AppendLine();
+            _report.AppendLine("| Capture | Ground slope (deg) | Headlamp world pitch (deg) | Camera above dust (m) |");
+            _report.AppendLine("|---|---:|---:|---:|");
+
+            Set(_gamepad.rightStick, new Vector2(LookStick, 0f));
+            yield return Wait(StickProbeSeconds);
+            Set(_gamepad.rightStick, Vector2.zero);
+            float opening = Time.time + WakeEaseTimeout;
+            while (_cameraRig.Opening.IsActive)
+            {
+                Assert.Less(Time.time, opening, "The wake hands over first.");
+                yield return null;
+            }
+
+            Transform earthlightNode = FindNode("Earthlight");
+            Light earthlight = earthlightNode != null ? earthlightNode.GetComponent<Light>() : null;
+            bool hadEarthlight = earthlight != null && earthlight.enabled;
+            if (earthlight != null)
+            {
+                earthlight.enabled = false;
+            }
+
+            IRoverRig rig = _context.Get<IRoverRig>();
+            IRoverPlacement placement = _context.Get<IRoverPlacement>();
+            rig.SetHoldStill(this, true);
+
+            try
+            {
+                IWorldLayout layout = _context.Get<IWorldLayout>();
+                float earthBearing = WideShotComposer.Bearing(layout.EarthDirection);
+                float awayFromEarth = Mathf.Repeat(earthBearing + 180f, 360f);
+                Vector3 basinSearch = layout.BasePosition - WideShotComposer.Direction(earthBearing) * BasinDistance;
+
+                Vector3 flatSpot = FindClearFlatSpot(basinSearch, awayFromEarth);
+                placement.PlaceAt(flatSpot, Quaternion.Euler(0f, awayFromEarth, 0f));
+                yield return null;
+                Press(_gamepad.rightStickButton);
+                yield return null;
+                Release(_gamepad.rightStickButton);
+                // Wait long enough for RoverKit._lampLevel to damp from dock dim (0.25) to 1.0 and chase pitch to settle.
+                yield return Wait(5f);
+
+                RoverLampMotes motes = _rover.GetComponentInChildren<RoverLampMotes>(true);
+                Assert.IsNotNull(motes, "07 has RoverLampMotes.");
+                Light headlamp = motes.transform.parent.GetComponent<Light>();
+                Assert.IsNotNull(headlamp, "LampMotes parent is the Headlamp Light.");
+
+                Quaternion tunedLocalRot = headlamp.transform.localRotation;
+                float tunedIntensity = headlamp.intensity;
+                float tunedRange = headlamp.range;
+                float tunedSpotAngle = headlamp.spotAngle;
+                float tunedInnerAngle = headlamp.innerSpotAngle;
+
+                // 1. Before on flat ground (level 0 deg tilt, previous cone & intensity), rendered immediately.
+                headlamp.transform.localRotation = Quaternion.identity;
+                headlamp.intensity = 35f;
+                headlamp.range = 20f;
+                headlamp.spotAngle = 62f;
+                headlamp.innerSpotAngle = 30f;
+                CaptureHeadlamp("headlamp-1-before-flat", width, height, headlamp.transform);
+
+                // 2. Restore tuned headlamp on flat ground (tuned down-tilt, cone & intensity).
+                headlamp.transform.localRotation = tunedLocalRot;
+                headlamp.intensity = tunedIntensity;
+                headlamp.range = tunedRange;
+                headlamp.spotAngle = tunedSpotAngle;
+                headlamp.innerSpotAngle = tunedInnerAngle;
+                yield return null;
+                CaptureHeadlamp("headlamp-2-after-flat", width, height, headlamp.transform);
+
+                // 3. Side view on flat ground showing the beam angle, motes, and pool on the ground ahead.
+                Vector3 forward = Quaternion.Euler(0f, awayFromEarth, 0f) * Vector3.forward;
+                Vector3 right = Vector3.Cross(Vector3.up, forward);
+                float sideSign = Vector3.Dot(right, _rover.Position - layout.BasePosition) >= 0f ? -1f : 1f;
+                Vector3 sideLook = _rover.Position + forward * 3.6f + Vector3.up * 0.35f;
+                Vector3 sideEye = _rover.Position + right * (sideSign * 5.2f) + forward * 2.8f + Vector3.up * 1.35f;
+                Vector3 savedPos = _view.transform.position;
+                Quaternion savedRot = _view.transform.rotation;
+                _view.transform.SetPositionAndRotation(sideEye, Quaternion.LookRotation(sideLook - sideEye));
+                FrameCapture.SavePng(_view, width, height, Path.Combine(CaptureFolder, "headlamp-5-after-side.png"));
+                _view.transform.SetPositionAndRotation(savedPos, savedRot);
+                float sidePitch = Mathf.Atan2(-headlamp.transform.forward.y,
+                    new Vector2(headlamp.transform.forward.x, headlamp.transform.forward.z).magnitude) * Mathf.Rad2Deg;
+                _report.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                    "| headlamp-5-after-side | {0:0.0} | {1:0.0} | {2:0.00} |",
+                    Vector3.Angle(Vector3.up, _terrain.SampleNormal(flatSpot.x, flatSpot.z)), sidePitch,
+                    sideEye.y - _terrain.SampleHeight(sideEye.x, sideEye.z)));
+
+                // 4 & 5. After on downhill and uphill slopes.
+                Vector3 slopeSpot = FindClearSlopeSpot(layout.BasePosition, out float downhillYaw);
+                float uphillYaw = Mathf.Repeat(downhillYaw + 180f, 360f);
+
+                placement.PlaceAt(slopeSpot, Quaternion.Euler(0f, downhillYaw, 0f));
+                yield return null;
+                Press(_gamepad.rightStickButton);
+                yield return null;
+                Release(_gamepad.rightStickButton);
+                yield return Wait(SettleSeconds);
+                CaptureHeadlamp("headlamp-3-after-downhill", width, height, headlamp.transform);
+
+                placement.PlaceAt(slopeSpot, Quaternion.Euler(0f, uphillYaw, 0f));
+                yield return null;
+                Press(_gamepad.rightStickButton);
+                yield return null;
+                Release(_gamepad.rightStickButton);
+                yield return Wait(SettleSeconds);
+                CaptureHeadlamp("headlamp-4-after-uphill", width, height, headlamp.transform);
+
+                Directory.CreateDirectory(CaptureFolder);
+                File.WriteAllText(Path.Combine(CaptureFolder, "headlamp.md"), _report.ToString());
+                Debug.Log("[rover-headlamp] " + _report);
+            }
+            finally
+            {
+                rig.SetHoldStill(this, false);
+                if (earthlight != null)
+                {
+                    earthlight.enabled = hadEarthlight;
+                }
+            }
+        }
+
+        private void CaptureHeadlamp(string name, int width, int height, Transform headlamp)
+        {
+            Directory.CreateDirectory(CaptureFolder);
+            FrameCapture.SavePng(_view, width, height, Path.Combine(CaptureFolder, name + ".png"));
+            Vector3 camera = _view.transform.position;
+            float clearance = camera.y - _terrain.SampleHeight(camera.x, camera.z);
+            Assert.Greater(clearance, MinCameraClearance, $"{name}: the camera stays out of the dust.");
+            Vector3 normal = _terrain.SampleNormal(_rover.Position.x, _rover.Position.z);
+            float slopeDeg = Vector3.Angle(Vector3.up, normal);
+            Vector3 fwd = headlamp.forward;
+            float pitchDeg = Mathf.Atan2(-fwd.y, new Vector2(fwd.x, fwd.z).magnitude) * Mathf.Rad2Deg;
+            _report.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                "| {0} | {1:0.0} | {2:0.0} | {3:0.00} |", name, slopeDeg, pitchDeg, clearance));
+        }
+
+        private Vector3 FindClearFlatSpot(Vector3 basePos, float yaw)
+        {
+            Vector3 dir = WideShotComposer.Direction(yaw);
+            Vector3 origin = basePos + dir * 150f;
+            Vector3 best = origin;
+            float bestMaxSlope = float.MaxValue;
+            for (float dx = -80f; dx <= 80f; dx += 8f)
+            {
+                for (float dz = -80f; dz <= 80f; dz += 8f)
+                {
+                    float x = origin.x + dx;
+                    float z = origin.z + dz;
+                    float distFromBase = Mathf.Sqrt((x - basePos.x) * (x - basePos.x) + (z - basePos.z) * (z - basePos.z));
+                    if (distFromBase < 110f || !_terrain.IsDrivable(x, z))
+                    {
+                        continue;
+                    }
+
+                    float maxSlope = 0f;
+                    bool clear = true;
+                    for (float d = -3f; d <= 16f; d += 2f)
+                    {
+                        float px = x + dir.x * d;
+                        float pz = z + dir.z * d;
+                        if (!_terrain.IsDrivable(px, pz))
+                        {
+                            clear = false;
+                            break;
+                        }
+
+                        float s = Vector3.Angle(Vector3.up, _terrain.SampleNormal(px, pz));
+                        if (s > maxSlope)
+                        {
+                            maxSlope = s;
+                        }
+
+                        if (d >= 1.5f)
+                        {
+                            float py = _terrain.SampleHeight(px, pz);
+                            if (Physics.CheckSphere(new Vector3(px, py + 0.6f, pz), 0.45f, ~0,
+                                    QueryTriggerInteraction.Ignore))
+                            {
+                                clear = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (clear && maxSlope < bestMaxSlope)
+                    {
+                        bestMaxSlope = maxSlope;
+                        best = new Vector3(x, _terrain.SampleHeight(x, z), z);
+                        if (bestMaxSlope < 1.2f)
+                        {
+                            return best;
+                        }
+                    }
+                }
+            }
+
+            return best;
+        }
+
+        private Vector3 FindClearSlopeSpot(Vector3 basePos, out float downhillYaw)
+        {
+            Vector3 best = basePos + new Vector3(160f, 0f, 160f);
+            downhillYaw = 0f;
+            float bestScore = float.MaxValue;
+            for (float x = -320f; x <= 320f; x += 8f)
+            {
+                for (float z = -320f; z <= 320f; z += 8f)
+                {
+                    float distFromBase = Mathf.Sqrt((x - basePos.x) * (x - basePos.x) + (z - basePos.z) * (z - basePos.z));
+                    if (distFromBase < 140f || !_terrain.IsDrivable(x, z))
+                    {
+                        continue;
+                    }
+
+                    Vector3 normal = _terrain.SampleNormal(x, z);
+                    float slope = Vector3.Angle(Vector3.up, normal);
+                    if (slope < 6.5f || slope > 11.5f)
+                    {
+                        continue;
+                    }
+
+                    Vector3 downDir = new Vector3(normal.x, 0f, normal.z);
+                    if (downDir.sqrMagnitude < 1e-4f)
+                    {
+                        continue;
+                    }
+
+                    downDir.Normalize();
+                    Vector2 toBase = new Vector2(basePos.x - x, basePos.z - z).normalized;
+                    if (Mathf.Abs(downDir.x * toBase.x + downDir.z * toBase.y) > 0.45f)
+                    {
+                        continue;
+                    }
+                    float hBack = _terrain.SampleHeight(x - downDir.x * 4f, z - downDir.z * 4f);
+                    float hMid = _terrain.SampleHeight(x, z);
+                    float hFront = _terrain.SampleHeight(x + downDir.x * 6f, z + downDir.z * 6f);
+                    if (hFront >= hMid - 0.5f || hMid >= hBack - 0.3f)
+                    {
+                        continue;
+                    }
+
+                    bool uniform = true;
+                    float maxDeviation = 0f;
+                    for (float d = -10f; d <= 10f; d += 2f)
+                    {
+                        float px = x + downDir.x * d;
+                        float pz = z + downDir.z * d;
+                        if (!_terrain.IsDrivable(px, pz))
+                        {
+                            uniform = false;
+                            break;
+                        }
+
+                        float dev = Vector3.Angle(normal, _terrain.SampleNormal(px, pz));
+                        if (dev > 6.5f)
+                        {
+                            uniform = false;
+                            break;
+                        }
+
+                        if (dev > maxDeviation)
+                        {
+                            maxDeviation = dev;
+                        }
+
+                        if (Mathf.Abs(d) >= 1.5f)
+                        {
+                            float py = _terrain.SampleHeight(px, pz);
+                            if (Physics.CheckSphere(new Vector3(px, py + 0.6f, pz), 0.45f, ~0,
+                                    QueryTriggerInteraction.Ignore))
+                            {
+                                uniform = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!uniform)
+                    {
+                        continue;
+                    }
+
+                    float score = Mathf.Abs(slope - 8.5f) + maxDeviation * 0.5f;
+                    if (score < bestScore)
+                    {
+                        bestScore = score;
+                        best = new Vector3(x, hMid, z);
+                        downhillYaw = WideShotComposer.Bearing(downDir);
+                    }
+                }
+            }
+
+            return best;
+        }
+
         private IEnumerator Stargaze(string name, Vector3 ground, float yaw)
         {
             _context.Get<IRoverPlacement>().PlaceAt(ground, Quaternion.Euler(0f, yaw, 0f));
