@@ -292,6 +292,20 @@ MonoBehaviour:
     _talusHalfWidth: 26
     _boulderMaxSlope: 24
     _featureClearance: 8
+    _bigBoulders:
+      _rocks:
+      - Rock_10
+      - Rock_11
+      - Rock_12
+      - Rock_13
+      _spacing: 85
+      _chance: 0.3
+      _extent: 290
+      _padClearance: 45
+      _anchorClearance: 18
+      _routeClearance: 20
+      _maxSlope: 12
+      _sink: 0.18
   _sky:
     _skyTop: {r: 0.0507, g: 0.0702, b: 0.1517, a: 1}
     _horizonGlow: {r: 0.1648, g: 0.1045, b: 0.2855, a: 1}
@@ -550,12 +564,12 @@ MonoBehaviour:
       _period: 3.2
       _sharpness: 3
       _floor: 0.35
+      _lensGlow: 3.2
       _haloIntensity: 2.2
       _haloRadius: 0.3
       _haloMinAngle: 0.7
       _lightIntensity: 2.2
       _lightRange: 16
-      _lensGlow: 3.2
       _markerGlow: 0.35
       _markerPulse: 1.2
       _markerRunSeconds: 4

@@ -13,8 +13,8 @@ namespace MoonProject.World.Editor
     /// the landed cargo lander with its service port and amber emergency beacon (and the <see cref="LanderBeacon"/>
     /// that pulses it and its cable's markers), 07's dead charging post at the wake with its old cable to the port,
     /// the port's cable to the build apron and the apron's markings, the dead west relay mast with its (hidden) signal
-    /// pillar, Kestrel-3's debris and the big boulders near the routes. Everything solid is fitted with colliders on
-    /// <see cref="Layers.Prop"/>.
+    /// pillar, Kestrel-3's debris, the big boulders near the routes and the rare big boulders on the floor
+    /// (<see cref="BigBoulderPlanner"/>). Everything solid is fitted with colliders on <see cref="Layers.Prop"/>.
     /// </summary>
     public static class OpeningLayoutPlacer
     {
@@ -87,10 +87,60 @@ namespace MoonProject.World.Editor
                 Node(port, PortApronSocket).position);
             StandBeacon(context, settings, landerRoot, lander, upright, markers);
 
-            StandAll(context, context.CreateChild("Debris", props).transform, anchors, surface, landmarks.Debris,
-                WorldPaths.KestrelDebrisPrefab);
-            StandAll(context, context.CreateChild("Boulders", props).transform, anchors, surface, landmarks.Boulders,
-                WorldPaths.R1RockPrefab);
+            StandAll(context, context.CreateChild("Debris", props).transform, anchors, surface, landmarks.Debris);
+            Transform boulders = context.CreateChild("Boulders", props).transform;
+            foreach (PropPlacement placement in landmarks.Boulders)
+            {
+                Vector3 near = Require(anchors, placement.Anchor).Position;
+                var at = new Vector3(near.x + placement.Offset.x, 0f, near.z + placement.Offset.y);
+                StandRock(context, boulders, placement.Id, Ground(surface, at) - Vector3.up * placement.Sink,
+                    placement.Yaw);
+            }
+
+            StandBigBoulders(context, settings, surface, anchors, boulders);
+        }
+
+        /// <summary>
+        /// The rare big boulders on the basin floor (<see cref="BigBoulderPlanner"/>), kept off the opening's routes:
+        /// the crew route, 07's cable to the lander and the lander's to the apron.
+        /// </summary>
+        private static void StandBigBoulders(SceneBuildContext context, WorldSettings settings, MoonSurface surface,
+            WorldAnchors anchors, Transform parent)
+        {
+            var routes = new List<Vector2>();
+            string[] route = settings.GroundMarks.Route;
+            for (int i = 1; i < route.Length; i++)
+            {
+                routes.Add(Flat2(Require(anchors, route[i - 1]).Position));
+                routes.Add(Flat2(Require(anchors, route[i]).Position));
+            }
+
+            routes.Add(Flat2(Require(anchors, WorldAnchorIds.PlaceApron).Position));
+            routes.Add(Flat2(Require(anchors, WorldAnchorIds.PlaceLander).Position));
+            BigBoulderSettings tuning = settings.Scatter.BigBoulders;
+            foreach (BigBoulderPlanner.Site site in BigBoulderPlanner.Plan(surface, anchors, tuning, routes))
+            {
+                string rock = tuning.Rocks[site.Rock];
+                float height = context.LoadAsset<GameObject>(WorldPaths.R1RockPrefab(rock))
+                    .GetComponentInChildren<Renderer>().bounds.size.y;
+                StandRock(context, parent, rock, site.Position - Vector3.up * height * tuning.Sink, site.Yaw);
+            }
+        }
+
+        /// <summary>An R1 rock settled in the dust, solid with convex colliders on its meshes.</summary>
+        private static void StandRock(SceneBuildContext context, Transform parent, string id, Vector3 position,
+            float yaw)
+        {
+            GameObject rock = Stand(context, parent, id, WorldPaths.R1RockPrefab(id), position,
+                Quaternion.Euler(0f, yaw, 0f) * Vector3.forward, false);
+            rock.layer = Layers.Prop;
+            foreach (MeshFilter filter in rock.GetComponentsInChildren<MeshFilter>())
+            {
+                filter.gameObject.layer = Layers.Prop;
+                var collider = filter.gameObject.AddComponent<MeshCollider>();
+                collider.sharedMesh = filter.sharedMesh;
+                collider.convex = true;
+            }
         }
 
         /// <summary>
@@ -213,7 +263,7 @@ namespace MoonProject.World.Editor
         }
 
         private static void StandAll(SceneBuildContext context, Transform parent, WorldAnchors anchors,
-            MoonSurface surface, PropPlacement[] placements, Func<string, string> prefabPath)
+            MoonSurface surface, PropPlacement[] placements)
         {
             foreach (PropPlacement placement in placements)
             {
@@ -221,7 +271,8 @@ namespace MoonProject.World.Editor
                 var at = new Vector3(near.x + placement.Offset.x, 0f, near.z + placement.Offset.y);
                 Vector3 ground = Ground(surface, at) - Vector3.up * placement.Sink;
                 Quaternion yaw = Quaternion.Euler(0f, placement.Yaw, 0f);
-                Stand(context, parent, placement.Id, prefabPath(placement.Id), ground, yaw * Vector3.forward, true);
+                Stand(context, parent, placement.Id, WorldPaths.KestrelDebrisPrefab(placement.Id), ground,
+                    yaw * Vector3.forward, true);
             }
         }
 
@@ -295,6 +346,11 @@ namespace MoonProject.World.Editor
         private static Vector3 Ground(MoonSurface surface, Vector3 at)
         {
             return new Vector3(at.x, surface.SampleHeight(at.x, at.z), at.z);
+        }
+
+        private static Vector2 Flat2(Vector3 point)
+        {
+            return new Vector2(point.x, point.z);
         }
 
         private static Vector3 Flat(Vector3 direction)
