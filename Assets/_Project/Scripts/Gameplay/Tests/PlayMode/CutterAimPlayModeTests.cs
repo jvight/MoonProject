@@ -46,7 +46,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float SunlitTimeSeconds = 210f;
 
         private static readonly string CaptureFolder =
-            Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "Captures", "cutter_aim"));
+            Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "cut"));
 
         private readonly List<string> _problems = new List<string>();
         private GameContext _context;

@@ -57,6 +57,9 @@ namespace MoonProject.Rover
         [Tooltip("The amber flank lamps along the stripe: 07's battery (docs/features/M3-20).")]
         [SerializeField] private RoverFlankLamps _flankLamps;
 
+        [Tooltip("The chest cutter nozzle's 6-blade mechanical iris, hot core and warm spill light on CutterOrigin.")]
+        [SerializeField] private CutterNozzleDevice _nozzleDevice;
+
         [Tooltip("The Tab \"07\" page's live portrait of 07 on the Visual root (0.5.5 §3.5).")]
         [SerializeField] private RoverPortrait _portrait;
 
@@ -125,7 +128,6 @@ namespace MoonProject.Rover
         private IDisposable _dockChanges;
         private RoverFeel _feel;
         private ChargeCellHardware _chargeCells;
-        private CutterNozzleDevice _nozzleDevice;
         private CargoHatch _hatch;
         private Collider[] _selfColliders;
         private MeshFilter[] _selfMeshes;
@@ -487,7 +489,6 @@ namespace MoonProject.Rover
 
             _selfColliders = GetComponentsInChildren<Collider>(true);
             _selfMeshes = GetComponentsInChildren<MeshFilter>(true);
-            CutterNozzleDevice.SnapOriginToNozzleLensSurface(_cutterOrigin);
 
             bool visualsReady = _visualRig.Initialize(this);
             if (visualsReady)
@@ -500,8 +501,6 @@ namespace MoonProject.Rover
                 _hatch = new CargoHatch(_events, feel.CargoHatch, _cargoHatch, _hatchCrates, _feel.Rumble);
                 _chargeCells = new ChargeCellHardware(_events, feel.ChargeCells, _conduitGlows, _stageSleeves, _lockGlow,
                     Cutter, CutterOrigin, _focusLens, _focusLensGlass);
-                _nozzleDevice = new CutterNozzleDevice(_events, _cutterOrigin,
-                    _lockGlow != null ? _lockGlow.sharedMaterial : null);
             }
 
             bool kitReady = _kit.Initialize(context, this, _visualRig);
@@ -509,6 +508,7 @@ namespace MoonProject.Rover
             bool coilsReady = _hoverCoils.Initialize(context, this);
             bool motesReady = _lampMotes.Initialize(this);
             bool lampsReady = _flankLamps.Initialize(context);
+            bool nozzleReady = _nozzleDevice.Initialize(context);
             bool portraitReady = _portrait.Initialize();
             if (portraitReady)
             {
@@ -516,7 +516,7 @@ namespace MoonProject.Rover
             }
 
             _initialized = visualsReady && kitReady && effectsReady && coilsReady && motesReady && lampsReady
-                && portraitReady;
+                && nozzleReady && portraitReady;
             enabled = _initialized;
         }
 
@@ -564,6 +564,7 @@ namespace MoonProject.Rover
             ok &= Require(_hoverCoils != null, "RoverHoverCoils is not assigned.");
             ok &= Require(_lampMotes != null, "RoverLampMotes is not assigned.");
             ok &= Require(_flankLamps != null, "RoverFlankLamps is not assigned.");
+            ok &= Require(_nozzleDevice != null, "CutterNozzleDevice is not assigned.");
             ok &= Require(_portrait != null, "RoverPortrait is not assigned.");
             ok &= Require(_cargoHatch != null && _hatchCrates.Length > 0 && Array.TrueForAll(_hatchCrates, c => c != null),
                 "The CargoHatch or a HatchCrate is not assigned (M3-25 hatch contract).");

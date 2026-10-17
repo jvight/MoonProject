@@ -235,7 +235,7 @@ namespace MoonProject.Rover.Tests
 
                 var cutterOrigin = new GameObject("CutterOrigin").transform;
                 cutterOrigin.SetParent(cutterHead.transform, false);
-                CutterNozzleDevice.SnapOriginToNozzleLensSurface(cutterOrigin);
+                cutterOrigin.localPosition = new Vector3(0f, 0f, 0.5f);
 
                 Collider[] colliders = root.GetComponentsInChildren<Collider>(true);
                 MeshFilter[] meshes = root.GetComponentsInChildren<MeshFilter>(true);

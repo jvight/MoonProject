@@ -61,3 +61,31 @@ MonoBehaviour:
   _moteVisibilityHalfLife: 0.6
   _moteGlintDepth: 0.45
   _moteGlintPeriod: 5
+  _cutterNozzle:
+    _bladeClosedRadius: 0.011
+    _bladeOpenRadius: 0.036
+    _bladeForwardOffset: 0.003
+    _bladeAngleOffset: 18
+    _bladeOpenTwist: -28
+    _coreRestDiameter: 0.012
+    _coreHotDiameter: 0.046
+    _coreForwardOffset: 0.001
+    _corePeakEmission: 2.5
+    _chargeInitialIrisOpen: 0.2
+    _chargeFullIrisOpen: 0.88
+    _chargeInitialCoreGlow: 0.35
+    _chargeFullCoreGlow: 0.85
+    _defaultChargeDuration: 0.3
+    _minChargeDuration: 0.05
+    _fireOpenHalfLife: 0.035
+    _releaseHalfLife: 0.14
+    _fireCorePulseAmplitude: 0.08
+    _fireCorePulseRate: 23
+    _chargeMinSpillIntensity: 0.35
+    _chargeMaxSpillIntensity: 1.6
+    _fireBaseSpillIntensity: 3.2
+    _fireFlickerAmplitude: 0.55
+    _fireFlickerRate: 19
+    _releaseSpillIntensity: 0.96
+    _spillRange: 0.55
+    _spillForwardOffset: 0.03

@@ -400,6 +400,21 @@ namespace MoonProject.Rover.PlayModeTests
             var moteSystem = Particles("LampMotes", headlamp.transform, material);
             var lampMotes = moteSystem.gameObject.AddComponent<RoverLampMotes>();
             var hoverCoils = visual.gameObject.AddComponent<RoverHoverCoils>();
+            var nozzleDevice = visual.gameObject.AddComponent<CutterNozzleDevice>();
+            var nozzleBlades = new Transform[RoverModelNodes.NozzleBladeCount];
+            for (int i = 0; i < nozzleBlades.Length; i++)
+            {
+                Transform blade = Shape(PrimitiveType.Cube, cutterOrigin, Vector3.zero,
+                    new Vector3(0.028f, 0.016f, 0.004f), material);
+                blade.name = RoverModelNodes.NozzleBlade(i);
+                nozzleBlades[i] = blade;
+            }
+
+            Transform nozzleCore = Shape(PrimitiveType.Quad, cutterOrigin, Vector3.zero, Vector3.one * 0.012f, material);
+            nozzleCore.name = RoverModelNodes.NozzleHotCore;
+            var nozzleSpillLight = Node(RoverModelNodes.NozzleSpillLight, cutterOrigin, Vector3.zero).gameObject
+                .AddComponent<Light>();
+            nozzleSpillLight.shadows = LightShadows.None;
 
             Transform fxHost = Node("WheelFx", root.transform, Vector3.zero);
             var fx = fxHost.gameObject.AddComponent<RoverWheelFx>();
@@ -418,6 +433,9 @@ namespace MoonProject.Rover.PlayModeTests
             Assign(hoverCoils, ("_tuning", rigTuning), ("_mount", coilMount), ("_light", coilLight));
             AssignArray(hoverCoils, "_coils", coils);
             AssignArray(hoverCoils, "_glows", coilGlows);
+            Assign(nozzleDevice, ("_tuning", fxTuning), ("_core", nozzleCore),
+                ("_coreRenderer", nozzleCore.GetComponent<MeshRenderer>()), ("_spillLight", nozzleSpillLight));
+            AssignArray(nozzleDevice, "_blades", nozzleBlades);
             Assign(fx, ("_tuning", fxTuning), ("_dustSocketLeft", dustLeft), ("_dustSocketRight", dustRight),
                 ("_trackLeft", Track("TrackLeft", fxHost, material)),
                 ("_trackRight", Track("TrackRight", fxHost, material)),
@@ -438,7 +456,7 @@ namespace MoonProject.Rover.PlayModeTests
             AssignArray(flank, "_glasses", flankGlasses);
             Assign(controller, ("_tuning", tuning), ("_body", rigidbody), ("_sphere", collider), ("_visualRig", rig),
                 ("_wheelFx", fx), ("_hoverCoils", hoverCoils), ("_lampMotes", lampMotes), ("_kit", kit),
-                ("_flankLamps", flank),
+                ("_flankLamps", flank), ("_nozzleDevice", nozzleDevice),
                 ("_tetherOrigin", eyeOrigin), ("_cutterOrigin", cutterOrigin), ("_scanOrigin", eyeOrigin),
                 ("_winchOrigin", winchOrigin), ("_scoopOrigin", scoopOrigin), ("_cargoSocket", cargo));
             var sideBins = new Object[2];

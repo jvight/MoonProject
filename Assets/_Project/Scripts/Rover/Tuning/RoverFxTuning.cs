@@ -211,6 +211,10 @@ namespace MoonProject.Rover
         [Range(0.5f, 20f)]
         [SerializeField] private float _moteGlintPeriod = 5f;
 
+        [Header("Cutter nozzle (chest turret aperture)")]
+        [Tooltip("The 6-blade mechanical iris, hot core and warm spill light on CutterOrigin.")]
+        [SerializeField] private CutterNozzleSettings _cutterNozzle = new CutterNozzleSettings();
+
         public float TrackWidth => _trackWidth;
 
         public float TrackSegmentLength => _trackSegmentLength;
@@ -308,5 +312,7 @@ namespace MoonProject.Rover
         public float MoteGlintDepth => _moteGlintDepth;
 
         public float MoteGlintPeriod => _moteGlintPeriod;
+
+        public CutterNozzleSettings CutterNozzle => _cutterNozzle;
     }
 }

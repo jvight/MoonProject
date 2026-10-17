@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEditor;
 using MoonProject.Art;
+using MoonProject.Art.Editor;
 using MoonProject.Core;
 using MoonProject.Editor.Builders;
 
@@ -173,6 +174,11 @@ namespace MoonProject.Rover.Editor
             RoverWheelFx wheelFx = BuildWheelFx(scratch, root.transform, m, fxTuning, trackMaterial, dustMaterial);
             RoverLampMotes lampMotes = BuildLampMotes(scratch, headlamp, fxTuning, moteMaterial);
 
+            Transform cutterHead = BuildWiring.Node(m, RoverModelNodes.CutterHead);
+            Transform cutterOrigin = BuildWiring.Node(m, RoverModelNodes.CutterOrigin);
+            SnapCutterOriginToLensApex(cutterHead, cutterOrigin);
+            CutterNozzleDevice nozzleDevice = BuildNozzleDevice(scratch, visual, cutterOrigin, fxTuning);
+
             Transform eyeOrigin = BuildWiring.Node(m, RoverModelNodes.EyeOrigin);
             BuildWiring.Assign(controller,
                 ("_tuning", tuning),
@@ -183,9 +189,10 @@ namespace MoonProject.Rover.Editor
                 ("_hoverCoils", hoverCoils),
                 ("_lampMotes", lampMotes),
                 ("_flankLamps", flankLamps),
+                ("_nozzleDevice", nozzleDevice),
                 ("_kit", kit),
                 ("_tetherOrigin", eyeOrigin),
-                ("_cutterOrigin", BuildWiring.Node(m, RoverModelNodes.CutterOrigin)),
+                ("_cutterOrigin", cutterOrigin),
                 ("_scanOrigin", eyeOrigin),
                 ("_winchOrigin", BuildWiring.Node(m, RoverModelNodes.WinchOrigin)),
                 ("_scoopOrigin", BuildWiring.Node(m, RoverModelNodes.ScoopOrigin)),
@@ -420,6 +427,91 @@ namespace MoonProject.Rover.Editor
             BuildWiring.AssignArray(flankLamps, "_lamps", lamps);
             BuildWiring.AssignArray(flankLamps, "_glasses", glasses);
             return flankLamps;
+        }
+
+        private static void SnapCutterOriginToLensApex(Transform cutterHead, Transform cutterOrigin)
+        {
+            MeshFilter filter = cutterHead.GetComponent<MeshFilter>();
+            if (filter != null && filter.sharedMesh != null)
+            {
+                Bounds bounds = filter.sharedMesh.bounds;
+                cutterOrigin.localPosition = new Vector3(bounds.center.x, bounds.center.y, bounds.max.z);
+            }
+        }
+
+        /// <summary>
+        /// Builds the 6 iris blades (R1_BareSteel), the hot core quad (R1_LampAmber), and the warm spill Light under
+        /// CutterOrigin, and wires <see cref="CutterNozzleDevice"/> on Visual.
+        /// </summary>
+        private static CutterNozzleDevice BuildNozzleDevice(BuilderScratchScene scratch, GameObject host,
+            Transform socket, RoverFxTuning tuning)
+        {
+            if (AssetDatabase.LoadAssetAtPath<Mesh>(RoverAssetPaths.NozzleBladeMesh) == null
+                || AssetDatabase.LoadAssetAtPath<Mesh>(RoverAssetPaths.NozzleCoreMesh) == null)
+            {
+                RoverFxAssetBuilder.BuildNozzleMeshes();
+            }
+
+            Material bladeMaterial = R1MaterialLibrary.LoadMaterial(R1MaterialSlot.BareSteel);
+            Material coreMaterial = R1MaterialLibrary.LoadMaterial(R1MaterialSlot.LampAmber);
+            if (bladeMaterial == null || coreMaterial == null)
+            {
+                R1MaterialLibrary.BuildMaterials();
+                bladeMaterial = R1MaterialLibrary.LoadMaterial(R1MaterialSlot.BareSteel);
+                coreMaterial = R1MaterialLibrary.LoadMaterial(R1MaterialSlot.LampAmber);
+            }
+
+            Mesh bladeMesh = BuildWiring.Require<Mesh>(RoverAssetPaths.NozzleBladeMesh, "Rover/Materials");
+            Mesh coreMesh = BuildWiring.Require<Mesh>(RoverAssetPaths.NozzleCoreMesh, "Rover/Materials");
+            CutterNozzleSettings settings = tuning.CutterNozzle;
+
+            var blades = new Object[RoverModelNodes.NozzleBladeCount];
+            for (int i = 0; i < blades.Length; i++)
+            {
+                GameObject blade = Child(scratch, RoverModelNodes.NozzleBlade(i), socket);
+                blade.AddComponent<MeshFilter>().sharedMesh = bladeMesh;
+                var bladeRenderer = blade.AddComponent<MeshRenderer>();
+                bladeRenderer.sharedMaterial = bladeMaterial;
+                bladeRenderer.shadowCastingMode = ShadowCastingMode.Off;
+                bladeRenderer.receiveShadows = false;
+
+                float baseAngle = i * (360f / RoverModelNodes.NozzleBladeCount);
+                float rad = baseAngle * Mathf.Deg2Rad;
+                Vector3 radial = new Vector3(Mathf.Cos(rad), Mathf.Sin(rad), 0f);
+                blade.transform.localPosition = radial * settings.BladeClosedRadius
+                    + new Vector3(0f, 0f, settings.BladeForwardOffset);
+                blade.transform.localRotation = Quaternion.Euler(0f, 0f, baseAngle + settings.BladeAngleOffset);
+                blade.transform.localScale = Vector3.one;
+                blades[i] = blade.transform;
+            }
+
+            GameObject core = Child(scratch, RoverModelNodes.NozzleHotCore, socket);
+            core.AddComponent<MeshFilter>().sharedMesh = coreMesh;
+            var coreRenderer = core.AddComponent<MeshRenderer>();
+            coreRenderer.sharedMaterial = coreMaterial;
+            coreRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            coreRenderer.receiveShadows = false;
+            core.transform.localPosition = new Vector3(0f, 0f, settings.CoreForwardOffset);
+            core.transform.localRotation = Quaternion.identity;
+            core.transform.localScale = new Vector3(settings.CoreRestDiameter, settings.CoreRestDiameter, 1f);
+
+            var spillLight = Child(scratch, RoverModelNodes.NozzleSpillLight, socket).AddComponent<Light>();
+            spillLight.transform.localPosition = new Vector3(0f, 0f, settings.SpillForwardOffset);
+            spillLight.transform.localRotation = Quaternion.identity;
+            spillLight.type = LightType.Point;
+            spillLight.color = Palette.Get(PaletteSwatch.WarmLamp);
+            spillLight.range = settings.SpillRange;
+            spillLight.intensity = 0f;
+            spillLight.shadows = LightShadows.None;
+
+            var nozzleDevice = host.AddComponent<CutterNozzleDevice>();
+            BuildWiring.Assign(nozzleDevice,
+                ("_tuning", tuning),
+                ("_core", core.transform),
+                ("_coreRenderer", coreRenderer),
+                ("_spillLight", spillLight));
+            BuildWiring.AssignArray(nozzleDevice, "_blades", blades);
+            return nozzleDevice;
         }
 
         private static RoverWheelFx BuildWheelFx(BuilderScratchScene scratch, Transform root, Transform model,

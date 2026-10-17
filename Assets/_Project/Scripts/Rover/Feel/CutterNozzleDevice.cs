@@ -1,350 +1,190 @@
 using System;
 using UnityEngine;
-using UnityEngine.Rendering;
 using MoonProject.Core;
 using MoonProject.Core.Events;
-using Object = UnityEngine.Object;
 
 namespace MoonProject.Rover
 {
     /// <summary>
-    /// Mechanical iris, hot lens core, and warm chest/bumper spill light mounted on 07's chest cutter nozzle
-    /// (<see cref="IRoverRig.CutterOrigin"/>). During charge-up the 6-blade iris opens and the hot core brightens on
-    /// the lens surface before the beam fires; while cutting or welding, warm light spills across 07's chest and front
-    /// bumper. Zero allocations per frame.
+    /// Animates the chest-mounted cutter nozzle aperture on <c>CutterOrigin</c>, built at edit time by
+    /// <c>RoverPrefabBuilder</c>:
+    /// <list type="bullet">
+    /// <item>Idle: 6 iris blades sit closed over the lens face, the <c>R1_LampAmber</c> core is at rest, and the spill
+    /// point light is off (0 intensity).</item>
+    /// <item>Charge (<see cref="CutChargeStaged"/> stage 0..N): the iris blades twist and retract outward, the core
+    /// expands and its <c>_EmissionStrength</c> rises, and the warm spill light ramps up across the nozzle rim.</item>
+    /// <item>Fire (<see cref="FeelKind.Cut"/> <see cref="FeelPhase.Act"/>): the iris snaps fully open, the core pulses
+    /// at peak emission, and the spill light flickers on the chest chassis.</item>
+    /// <item>Release / Cancel / Impact: the iris closes and the core and spill light cool smoothly back to rest.</item>
+    /// </list>
+    /// Zero allocations per frame.
     /// </summary>
-    public sealed class CutterNozzleDevice : IDisposable
+    [DisallowMultipleComponent]
+    public sealed class CutterNozzleDevice : MonoBehaviour, IDisposable
     {
-        private const int BladeCount = 6;
-        private const float ClosedBladeRadius = 0.015f;
-        private const float OpenBladeRadius = 0.044f;
-        private const float OpenBladeTwistDeg = 42f;
-        private const float CoreRestDiameter = 0.018f;
-        private const float CoreHotDiameter = 0.046f;
-        private const float CoreDepth = 0.006f;
-        private const float ChargeSpillIntensity = 0.95f;
-        private const float FireSpillIntensity = 1.55f;
-        private const float SpillFlickerAmplitude = 0.25f;
-        private const float SpillFlickerRate = 19f;
-        private const float SpillRange = 1.95f;
-        private const float ReleaseHalfLife = 0.06f;
+        private const float FullCircleDegrees = 360f;
+        private const float TwoPi = Mathf.PI * 2f;
 
-        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
-        private static readonly int ColorId = Shader.PropertyToID("_Color");
-        private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
         private static readonly int EmissionStrengthId = Shader.PropertyToID("_EmissionStrength");
 
-        private static readonly Color BladeColor = new Color(0.16f, 0.12f, 0.08f, 1f);
-        private static readonly Color WarmCoreColor = new Color(1.0f, 0.72f, 0.26f, 1f);
-        private static readonly Color HotCoreColor = new Color(1.0f, 0.94f, 0.78f, 1f);
-        private static readonly Color SpillColor = new Color(1.0f, 0.68f, 0.28f, 1f);
+        [Tooltip("Rover effect tuning (Assets/_Project/Data/Tuning/RoverFxTuning.asset), 'Cutter nozzle'.")]
+        [SerializeField] private RoverFxTuning _tuning;
 
-        private readonly Transform _origin;
-        private readonly Transform[] _blades = new Transform[BladeCount];
-        private readonly Renderer[] _bladeRenderers = new Renderer[BladeCount];
-        private readonly Transform _coreTransform;
-        private readonly Renderer _coreRenderer;
-        private readonly Light _spillLight;
-        private readonly Material _deviceMaterial;
-        private readonly bool _ownsMaterial;
-        private readonly MaterialPropertyBlock _block = new MaterialPropertyBlock();
-        private readonly IDisposable[] _subscriptions;
+        [Tooltip("The 6 mechanical iris blades parented under CutterOrigin.")]
+        [SerializeField] private Transform[] _blades = Array.Empty<Transform>();
+
+        [Tooltip("The hot core disc transform parented under CutterOrigin.")]
+        [SerializeField] private Transform _core;
+
+        [Tooltip("The hot core renderer on R1_LampAmber, driven through _EmissionStrength.")]
+        [SerializeField] private Renderer _coreRenderer;
+
+        [Tooltip("Warm spill point light parented under CutterOrigin (no shadows).")]
+        [SerializeField] private Light _spillLight;
+
+        private MaterialPropertyBlock _block;
+        private IDisposable[] _subscriptions;
 
         private bool _charging;
         private bool _firing;
         private float _chargeElapsed;
-        private float _chargeDuration = 0.25f;
+        private float _chargeDuration;
+        private float _irisOpen01;
+        private float _coreGlow01;
+        private float _phase;
 
-        public CutterNozzleDevice(EventBus events, Transform cutterOrigin, Material templateMaterial = null)
-        {
-            if (events == null)
-            {
-                throw new ArgumentNullException(nameof(events));
-            }
+        /// <summary>Normalized [0..1] iris opening (0 = closed, 1 = fully retracted).</summary>
+        public float IrisOpen01 => _irisOpen01;
 
-            _origin = cutterOrigin != null ? cutterOrigin : throw new ArgumentNullException(nameof(cutterOrigin));
-            SnapOriginToNozzleLensSurface(_origin);
+        /// <summary>Normalized [0..1] core glow level.</summary>
+        public float CoreGlow01 => _coreGlow01;
 
-            Shader shader = templateMaterial != null && templateMaterial.shader != null
-                ? templateMaterial.shader
-                : Shader.Find("Universal Render Pipeline/Lit");
-            if (shader != null)
-            {
-                _deviceMaterial = new Material(shader) { name = "CutterNozzleDevice_Runtime" };
-                _deviceMaterial.EnableKeyword("_EMISSION");
-                _ownsMaterial = true;
-            }
-            else
-            {
-                _deviceMaterial = templateMaterial;
-                _ownsMaterial = false;
-            }
+        /// <summary>Current spill point-light intensity at the nozzle.</summary>
+        public float SpillLightIntensity => _spillLight != null ? _spillLight.intensity : 0f;
 
-            int layer = _origin.gameObject.layer;
-            for (int i = 0; i < BladeCount; i++)
-            {
-                var bladeGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                bladeGo.name = "NozzleIrisBlade_" + i;
-                Collider col = bladeGo.GetComponent<Collider>();
-                if (col != null)
-                {
-                    Object.DestroyImmediate(col);
-                }
-
-                bladeGo.layer = layer;
-                Transform tr = bladeGo.transform;
-                tr.SetParent(_origin, false);
-                tr.localScale = new Vector3(0.028f, 0.013f, 0.007f);
-                var renderer = bladeGo.GetComponent<Renderer>();
-                ConfigureRenderer(renderer, _deviceMaterial);
-                _blades[i] = tr;
-                _bladeRenderers[i] = renderer;
-            }
-
-            var coreGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            coreGo.name = "NozzleHotCore";
-            Collider coreCol = coreGo.GetComponent<Collider>();
-            if (coreCol != null)
-            {
-                Object.DestroyImmediate(coreCol);
-            }
-
-            coreGo.layer = layer;
-            _coreTransform = coreGo.transform;
-            _coreTransform.SetParent(_origin, false);
-            _coreTransform.localPosition = new Vector3(0f, 0f, 0.001f);
-            _coreTransform.localRotation = Quaternion.identity;
-            _coreRenderer = coreGo.GetComponent<Renderer>();
-            ConfigureRenderer(_coreRenderer, _deviceMaterial);
-
-            var lightGo = new GameObject("NozzleSpillLight") { layer = layer };
-            lightGo.transform.SetParent(_origin, false);
-            lightGo.transform.localPosition = new Vector3(0f, -0.05f, 0.20f);
-            _spillLight = lightGo.AddComponent<Light>();
-            _spillLight.type = LightType.Point;
-            _spillLight.shadows = LightShadows.None;
-            _spillLight.color = SpillColor;
-            _spillLight.range = SpillRange;
-            _spillLight.intensity = 0f;
-            _spillLight.enabled = false;
-
-            ApplyVisuals(0f);
-
-            _subscriptions = new[]
-            {
-                events.Subscribe<CutChargeStaged>(OnChargeStaged),
-                events.Subscribe<FeelBeat>(OnFeelBeat),
-                events.Subscribe<BuildWeldStateChanged>(OnWeldStateChanged),
-            };
-        }
-
-        /// <summary>Normalized [0..1] opening of the 6-blade mechanical iris around the brass nozzle lens.</summary>
-        public float IrisOpen01 { get; private set; }
-
-        /// <summary>Normalized [0..1] glow of the hot core on the nozzle lens surface.</summary>
-        public float CoreGlow01 { get; private set; }
-
-        /// <summary>Current intensity of the warm chest/bumper spill light (0 when idle).</summary>
-        public float SpillLightIntensity => _spillLight != null && _spillLight.enabled ? _spillLight.intensity : 0f;
-
-        /// <summary>The warm point light spilling across 07's chest and front bumper while charging/firing.</summary>
+        /// <summary>The nozzle spill point light.</summary>
         public Light SpillLight => _spillLight;
 
+        /// <summary>True while the cutter is charging up.</summary>
         public bool IsCharging => _charging;
 
+        /// <summary>True while the cutter beam is actively firing.</summary>
         public bool IsFiring => _firing;
 
-        /// <summary>
-        /// Snaps <paramref name="cutterOrigin"/> onto the front apex of its parent <c>CutterHead</c> mesh bounds so
-        /// the charge core and beam originate directly on the visible brass lens surface rather than inside the chest.
-        /// </summary>
-        public static void SnapOriginToNozzleLensSurface(Transform cutterOrigin)
+        public bool Initialize(GameContext context)
         {
-            if (cutterOrigin == null || cutterOrigin.parent == null)
+            return Initialize(context != null ? context.Events : null);
+        }
+
+        public bool Initialize(EventBus events)
+        {
+            if (!ValidateWiring(events))
             {
-                return;
+                enabled = false;
+                return false;
             }
 
-            if (cutterOrigin.parent.TryGetComponent(out MeshFilter filter) && filter.sharedMesh != null)
+            DisposeSubscriptions();
+            _block = new MaterialPropertyBlock();
+            _subscriptions = new[]
             {
-                Bounds bounds = filter.sharedMesh.bounds;
-                if (bounds.size.sqrMagnitude > 1e-6f)
-                {
-                    cutterOrigin.localPosition = new Vector3(bounds.center.x, bounds.center.y, bounds.max.z);
-                    cutterOrigin.localRotation = Quaternion.identity;
-                }
+                events.Subscribe<CutChargeStaged>(OnChargeStarted),
+                events.Subscribe<FeelBeat>(OnFeelBeat),
+            };
+            _charging = false;
+            _firing = false;
+            _chargeElapsed = 0f;
+            _chargeDuration = _tuning.CutterNozzle.DefaultChargeDuration;
+            _irisOpen01 = 0f;
+            _coreGlow01 = 0f;
+            _phase = 0f;
+            ApplyVisuals();
+            return true;
+        }
+
+        private bool ValidateWiring(EventBus events)
+        {
+            bool ok = Require(events != null, "EventBus is not assigned.")
+                & Require(_tuning != null, "RoverFxTuning is not assigned.")
+                & Require(_core != null, "Nozzle hot core transform is not assigned.")
+                & Require(_coreRenderer != null, "Nozzle hot core renderer is not assigned.")
+                & Require(_spillLight != null, "Nozzle spill light is not assigned.")
+                & Require(_blades != null && _blades.Length == RoverModelNodes.NozzleBladeCount,
+                    $"Exactly {RoverModelNodes.NozzleBladeCount} iris blades are required.");
+            for (int i = 0; _blades != null && i < _blades.Length; i++)
+            {
+                ok &= Require(_blades[i] != null, $"Iris blade {i} is not assigned.");
             }
+
+            return ok;
+        }
+
+        private bool Require(bool condition, string message)
+        {
+            if (!condition)
+            {
+                Debug.LogError($"{nameof(CutterNozzleDevice)}: {message}", this);
+            }
+
+            return condition;
         }
 
         public void Tick(float deltaTime, float time)
         {
-            if (_charging)
-            {
-                _chargeElapsed += Mathf.Max(0f, deltaTime);
-                float t = Mathf.Clamp01(_chargeElapsed / Mathf.Max(0.05f, _chargeDuration));
-                float smooth = t * t * (3f - 2f * t);
-                IrisOpen01 = Mathf.Max(IrisOpen01, smooth);
-                CoreGlow01 = Mathf.Max(CoreGlow01, smooth * 0.85f);
-            }
-            else if (_firing)
-            {
-                IrisOpen01 = Smoothing.Damp(IrisOpen01, 1f, 0.025f, deltaTime);
-                CoreGlow01 = Smoothing.Damp(CoreGlow01, 1f, 0.025f, deltaTime);
-            }
-            else
-            {
-                IrisOpen01 = Smoothing.Damp(IrisOpen01, 0f, ReleaseHalfLife, deltaTime);
-                CoreGlow01 = Smoothing.Damp(CoreGlow01, 0f, ReleaseHalfLife, deltaTime);
-                if (IrisOpen01 < 1e-3f)
-                {
-                    IrisOpen01 = 0f;
-                }
-
-                if (CoreGlow01 < 1e-3f)
-                {
-                    CoreGlow01 = 0f;
-                }
-            }
-
-            ApplyVisuals(time);
-        }
-
-        public void Reset()
-        {
-            _charging = false;
-            _firing = false;
-            _chargeElapsed = 0f;
-            IrisOpen01 = 0f;
-            CoreGlow01 = 0f;
-            ApplyVisuals(0f);
-        }
-
-        public void Dispose()
-        {
-            for (int i = 0; i < _subscriptions.Length; i++)
-            {
-                _subscriptions[i].Dispose();
-            }
-
-            if (_ownsMaterial && _deviceMaterial != null)
-            {
-                Object.Destroy(_deviceMaterial);
-            }
-        }
-
-        private void ApplyVisuals(float time)
-        {
-            float open = Mathf.Clamp01(IrisOpen01);
-            float glow = Mathf.Clamp01(CoreGlow01);
-            float radius = Mathf.Lerp(ClosedBladeRadius, OpenBladeRadius, open);
-            float twist = open * OpenBladeTwistDeg;
-
-            Color bladeRimEmission = WarmCoreColor.linear * (glow * 0.08f);
-            for (int i = 0; i < BladeCount; i++)
-            {
-                float angleDeg = i * (360f / BladeCount) + twist;
-                float rad = angleDeg * Mathf.Deg2Rad;
-                Transform blade = _blades[i];
-                if (blade != null)
-                {
-                    blade.localPosition = new Vector3(Mathf.Cos(rad) * radius, Mathf.Sin(rad) * radius, 0.004f);
-                    blade.localRotation = Quaternion.Euler(0f, 0f, angleDeg + 35f);
-                }
-
-                Renderer br = _bladeRenderers[i];
-                if (br != null)
-                {
-                    _block.Clear();
-                    _block.SetColor(BaseColorId, BladeColor);
-                    _block.SetColor(ColorId, BladeColor);
-                    _block.SetVector(EmissionColorId, bladeRimEmission);
-                    _block.SetFloat(EmissionStrengthId, Mathf.Clamp01(glow * 0.12f));
-                    br.SetPropertyBlock(_block);
-                }
-            }
-
-            if (_coreTransform != null)
-            {
-                float diameter = Mathf.Lerp(CoreRestDiameter, CoreHotDiameter, glow);
-                _coreTransform.localScale = new Vector3(diameter, diameter, CoreDepth);
-            }
-
-            if (_coreRenderer != null)
-            {
-                Color coreTint = Color.Lerp(WarmCoreColor, HotCoreColor, glow);
-                float emissionGain = _firing ? 3.2f : 2.4f * glow;
-                Color linearEmission = coreTint.linear * emissionGain;
-                _block.Clear();
-                _block.SetColor(BaseColorId, glow > 0.01f ? coreTint : BladeColor);
-                _block.SetColor(ColorId, glow > 0.01f ? coreTint : BladeColor);
-                _block.SetVector(EmissionColorId, linearEmission);
-                _block.SetFloat(EmissionStrengthId, glow);
-                _coreRenderer.SetPropertyBlock(_block);
-            }
-
-            if (_spillLight != null)
-            {
-                bool lit = glow > 0.01f || _charging || _firing;
-                if (_spillLight.enabled != lit)
-                {
-                    _spillLight.enabled = lit;
-                }
-
-                if (lit)
-                {
-                    float baseIntensity = _firing
-                        ? FireSpillIntensity
-                        : ChargeSpillIntensity * Mathf.Max(0.2f, glow);
-                    float flicker = _firing
-                        ? 1f + (2f * Mathf.PerlinNoise(time * SpillFlickerRate, 0.37f) - 1f) * SpillFlickerAmplitude
-                        : 1f;
-                    _spillLight.intensity = baseIntensity * flicker;
-                }
-                else
-                {
-                    _spillLight.intensity = 0f;
-                }
-            }
-        }
-
-        private static void ConfigureRenderer(Renderer renderer, Material material)
-        {
-            if (renderer == null)
+            if (_block == null)
             {
                 return;
             }
 
-            if (material != null)
+            CutterNozzleSettings settings = _tuning.CutterNozzle;
+            _phase = time;
+
+            if (_firing)
             {
-                renderer.sharedMaterial = material;
+                _irisOpen01 = Smoothing.Damp(_irisOpen01, 1f, settings.FireOpenHalfLife, deltaTime);
+                _coreGlow01 = Smoothing.Damp(_coreGlow01, 1f, settings.FireOpenHalfLife, deltaTime);
+            }
+            else if (_charging)
+            {
+                _chargeElapsed += deltaTime;
+                float duration = Mathf.Max(settings.MinChargeDuration, _chargeDuration);
+                float t = Mathf.Clamp01(_chargeElapsed / duration);
+                float eased = 1f - (1f - t) * (1f - t);
+                float targetOpen = Mathf.Lerp(settings.ChargeInitialIrisOpen, settings.ChargeFullIrisOpen, eased);
+                float targetGlow = Mathf.Lerp(settings.ChargeInitialCoreGlow, settings.ChargeFullCoreGlow, t);
+                _irisOpen01 = Mathf.Max(_irisOpen01, targetOpen);
+                _coreGlow01 = Mathf.Max(_coreGlow01, targetGlow);
+            }
+            else
+            {
+                _irisOpen01 = Smoothing.Damp(_irisOpen01, 0f, settings.ReleaseHalfLife, deltaTime);
+                _coreGlow01 = Smoothing.Damp(_coreGlow01, 0f, settings.ReleaseHalfLife, deltaTime);
             }
 
-            renderer.shadowCastingMode = ShadowCastingMode.Off;
-            renderer.receiveShadows = false;
-            renderer.lightProbeUsage = LightProbeUsage.Off;
-            renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            ApplyVisuals();
         }
 
-        private void OnChargeStaged(CutChargeStaged staged)
+        private void OnChargeStarted(CutChargeStaged staged)
         {
+            CutterNozzleSettings settings = _tuning.CutterNozzle;
             if (staged.Stage == 0)
             {
                 _charging = true;
                 _firing = false;
                 _chargeElapsed = 0f;
-                _chargeDuration = Mathf.Max(0.12f, staged.StagesNeeded * staged.StageSeconds);
-                IrisOpen01 = Mathf.Max(IrisOpen01, 0.15f);
-                CoreGlow01 = Mathf.Max(CoreGlow01, 0.18f);
-                ApplyVisuals(Time.time);
+                int stages = Mathf.Max(1, staged.StagesNeeded);
+                _chargeDuration = staged.StageSeconds > 0f
+                    ? staged.StageSeconds * stages
+                    : settings.DefaultChargeDuration;
+                _irisOpen01 = Mathf.Max(_irisOpen01, settings.ChargeInitialIrisOpen);
+                _coreGlow01 = Mathf.Max(_coreGlow01, settings.ChargeInitialCoreGlow);
+                ApplyVisuals();
             }
-            else
+            else if (_charging)
             {
-                float progress = staged.StagesNeeded > 0
-                    ? Mathf.Clamp01((float)staged.Stage / staged.StagesNeeded)
-                    : 1f;
-                IrisOpen01 = Mathf.Max(IrisOpen01, progress);
-                CoreGlow01 = Mathf.Max(CoreGlow01, progress * 0.9f);
-                ApplyVisuals(Time.time);
+                _irisOpen01 = Mathf.Max(_irisOpen01, settings.ChargeFullIrisOpen);
+                _coreGlow01 = Mathf.Max(_coreGlow01, settings.ChargeFullCoreGlow);
+                ApplyVisuals();
             }
         }
 
@@ -357,21 +197,12 @@ namespace MoonProject.Rover
 
             switch (beat.Phase)
             {
-                case FeelPhase.Anticipate:
-                    _charging = true;
-                    _firing = false;
-                    _chargeElapsed = 0f;
-                    _chargeDuration = Mathf.Max(0.12f, beat.Seconds);
-                    IrisOpen01 = Mathf.Max(IrisOpen01, 0.15f);
-                    CoreGlow01 = Mathf.Max(CoreGlow01, 0.18f);
-                    ApplyVisuals(Time.time);
-                    break;
                 case FeelPhase.Act:
                     _charging = false;
                     _firing = true;
-                    IrisOpen01 = 1f;
-                    CoreGlow01 = 1f;
-                    ApplyVisuals(Time.time);
+                    _irisOpen01 = 1f;
+                    _coreGlow01 = 1f;
+                    ApplyVisuals();
                     break;
                 case FeelPhase.Cancel:
                 case FeelPhase.Impact:
@@ -381,21 +212,89 @@ namespace MoonProject.Rover
             }
         }
 
-        private void OnWeldStateChanged(BuildWeldStateChanged weld)
+        /// <summary>07 was placed: return the nozzle immediately to its closed, unlit rest state.</summary>
+        public void Reset()
         {
-            if (weld.Welding)
+            _charging = false;
+            _firing = false;
+            _chargeElapsed = 0f;
+            _irisOpen01 = 0f;
+            _coreGlow01 = 0f;
+            if (_block != null)
             {
-                _charging = false;
-                _firing = true;
-                IrisOpen01 = 1f;
-                CoreGlow01 = 1f;
-                ApplyVisuals(Time.time);
+                ApplyVisuals();
+            }
+        }
+
+        private void ApplyVisuals()
+        {
+            CutterNozzleSettings settings = _tuning.CutterNozzle;
+            float radius = Mathf.Lerp(settings.BladeClosedRadius, settings.BladeOpenRadius, _irisOpen01);
+            float twist = settings.BladeAngleOffset + settings.BladeOpenTwist * _irisOpen01;
+            int count = _blades.Length;
+            for (int i = 0; i < count; i++)
+            {
+                float baseAngle = i * (FullCircleDegrees / count);
+                float rad = baseAngle * Mathf.Deg2Rad;
+                Vector3 radial = new Vector3(Mathf.Cos(rad), Mathf.Sin(rad), 0f);
+                Transform blade = _blades[i];
+                blade.localPosition = radial * radius + new Vector3(0f, 0f, settings.BladeForwardOffset);
+                blade.localRotation = Quaternion.Euler(0f, 0f, baseAngle + twist);
+            }
+
+            float pulse = _firing
+                ? 1f + settings.FireCorePulseAmplitude * Mathf.Sin(_phase * settings.FireCorePulseRate * TwoPi)
+                : 1f;
+            float coreDiameter = Mathf.Lerp(settings.CoreRestDiameter, settings.CoreHotDiameter, _coreGlow01) * pulse;
+            _core.localPosition = new Vector3(0f, 0f, settings.CoreForwardOffset);
+            _core.localScale = new Vector3(coreDiameter, coreDiameter, 1f);
+
+            float emissionStrength = _coreGlow01 * settings.CorePeakEmission;
+            _block.SetFloat(EmissionStrengthId, emissionStrength);
+            _coreRenderer.SetPropertyBlock(_block);
+
+            float targetSpill;
+            if (_firing)
+            {
+                float wave = 0.5f + 0.5f * Mathf.Sin(_phase * settings.FireFlickerRate * TwoPi);
+                targetSpill = settings.FireBaseSpillIntensity + settings.FireFlickerAmplitude * wave;
+            }
+            else if (_charging)
+            {
+                targetSpill = Mathf.Lerp(settings.ChargeMinSpillIntensity, settings.ChargeMaxSpillIntensity, _coreGlow01);
             }
             else
             {
-                _charging = false;
-                _firing = false;
+                targetSpill = _coreGlow01 * settings.ReleaseSpillIntensity;
             }
+
+            _spillLight.range = settings.SpillRange;
+            _spillLight.intensity = targetSpill;
+        }
+
+        public void Dispose()
+        {
+            DisposeSubscriptions();
+        }
+
+        private void OnDestroy()
+        {
+            DisposeSubscriptions();
+        }
+
+        private void DisposeSubscriptions()
+        {
+            if (_subscriptions == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < _subscriptions.Length; i++)
+            {
+                _subscriptions[i]?.Dispose();
+            }
+
+            _subscriptions = null;
         }
     }
 }
