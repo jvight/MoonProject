@@ -34,87 +34,70 @@ namespace MoonProject.UI.Tests
         [Test]
         public void APrompt_WaitsForItsDwell_ThenShowsOnceCounted()
         {
-            float dwell = _settings.Find(InteractionKind.Excavate).DwellSeconds;
-            Run(dwell * 0.5f, Ready(InteractionKind.Excavate));
+            float dwell = _settings.Find(InteractionKind.Salvage).DwellSeconds;
+            Run(dwell * 0.5f, Ready(InteractionKind.Salvage));
             Assert.AreEqual(InteractionKind.None, _director.Displayed, "driving past does not flash a prompt");
 
-            Run(dwell, Ready(InteractionKind.Excavate));
-            Assert.AreEqual(InteractionKind.Excavate, _director.Displayed);
+            Run(dwell, Ready(InteractionKind.Salvage));
+            Assert.AreEqual(InteractionKind.Salvage, _director.Displayed);
             Assert.IsTrue(_director.WantsShown);
-            Assert.AreEqual(1, _ledger.Shown(InteractionKind.Excavate), "a showing counts once");
-            Run(1f, Ready(InteractionKind.Excavate));
-            Assert.AreEqual(1, _ledger.Shown(InteractionKind.Excavate));
+            Assert.AreEqual(1, _ledger.Shown(InteractionKind.Salvage), "a showing counts once");
+            Run(1f, Ready(InteractionKind.Salvage));
+            Assert.AreEqual(1, _ledger.Shown(InteractionKind.Salvage));
         }
 
         [Test]
         public void ThePrompt_FloatsAboveTheHint_ByItsLift()
         {
-            Run(2f, Ready(InteractionKind.Excavate));
-            Vector3 expected = Site + Vector3.up * _settings.Find(InteractionKind.Excavate).LiftMetres;
+            Run(2f, Ready(InteractionKind.Salvage));
+            Vector3 expected = Site + Vector3.up * _settings.Find(InteractionKind.Salvage).LiftMetres;
             Assert.AreEqual(expected, _director.WorldPoint);
         }
 
         [Test]
-        public void NothingShows_WhenNotReady_OrTheGateIsClosed_OrTheKindHasNoPrompt()
+        public void NothingShows_WhenNotReady_OrTheGateIsClosed()
         {
-            Run(20f, new InteractionHint(InteractionKind.Excavate, Site, false));
-            Run(20f, Ready(InteractionKind.Excavate), gateOpen: false);
-            Run(20f, Ready(InteractionKind.Upgrade));
+            Run(20f, new InteractionHint(InteractionKind.Salvage, Site, false));
+            Run(20f, Ready(InteractionKind.Salvage), gateOpen: false);
+            Run(20f, Ready(InteractionKind.Deconstruct), gateOpen: false);
             Run(20f, InteractionHint.None);
             Assert.AreEqual(InteractionKind.None, _director.Displayed);
-            Assert.AreEqual(0, _ledger.Shown(InteractionKind.Excavate));
+            Assert.AreEqual(0, _ledger.Shown(InteractionKind.Salvage));
         }
 
         [Test]
         public void DoingTheAction_EndsTheShowing_AndRetiresThePrompt()
         {
-            Run(1f, Ready(InteractionKind.Excavate));
-            _director.NotifyUsed(InteractionKind.Excavate);
+            Run(1f, Ready(InteractionKind.Salvage));
+            _director.NotifyUsed(InteractionKind.Salvage);
             Assert.IsFalse(_director.WantsShown, "the prompt bows out as soon as the player does it");
-            Assert.AreEqual(1, _ledger.Used(InteractionKind.Excavate));
+            Assert.AreEqual(1, _ledger.Used(InteractionKind.Salvage));
 
-            float dwell = _settings.Find(InteractionKind.Excavate).DwellSeconds;
-            Run(_settings.RepeatCooldown + dwell + 1f, Ready(InteractionKind.Excavate));
+            float dwell = _settings.Find(InteractionKind.Salvage).DwellSeconds;
+            Run(_settings.RepeatCooldown + dwell + 1f, Ready(InteractionKind.Salvage));
             Assert.AreEqual(InteractionKind.None, _director.Displayed, "done once, the verb is known and never returns");
-            Assert.AreEqual(1, _ledger.Shown(InteractionKind.Excavate));
+            Assert.AreEqual(1, _ledger.Shown(InteractionKind.Salvage));
         }
 
         [Test]
         public void AShowing_BowsOutOnItsOwn_AfterTheMaximumTime()
         {
-            Run(1f, Ready(InteractionKind.Excavate));
-            Run(_settings.MaxShowSeconds, Ready(InteractionKind.Excavate));
+            Run(1f, Ready(InteractionKind.Salvage));
+            Run(_settings.MaxShowSeconds, Ready(InteractionKind.Salvage));
             Assert.IsFalse(_director.WantsShown);
         }
 
         [Test]
         public void APrompt_IsRetired_OnceTheActionIsLearned()
         {
-            for (int i = 0; i < _settings.Find(InteractionKind.Excavate).UsesToRetire; i++)
+            for (int i = 0; i < _settings.Find(InteractionKind.Salvage).UsesToRetire; i++)
             {
-                _director.NotifyUsed(InteractionKind.Excavate);
+                _director.NotifyUsed(InteractionKind.Salvage);
             }
 
-            Run(60f, Ready(InteractionKind.Excavate));
-            Assert.AreEqual(0, _ledger.Shown(InteractionKind.Excavate),
+            Run(60f, Ready(InteractionKind.Salvage));
+            Assert.AreEqual(0, _ledger.Shown(InteractionKind.Salvage),
                 "someone who already digs is not taught to dig");
-        }
-
-        [Test]
-        public void TheTunePrompt_NamesInteract_AndRetiresAfterTheFirstTurnOfTheDial()
-        {
-            PromptEntry tune = _settings.Find(InteractionKind.Tune);
-            Assert.IsNotNull(tune, "Bell's dial is taught");
-            Assert.AreEqual(RoverAction.Excavate, tune.Action, "the dial turns with Interact, like the repair");
-            Assert.AreEqual(1, tune.UsesToRetire, "one turn and the player knows the dial");
-
-            Run(2f, Ready(InteractionKind.Tune));
-            Assert.AreEqual(InteractionKind.Tune, _director.Displayed);
-            _director.NotifyUsed(InteractionKind.Tune);
-            Assert.IsFalse(_director.WantsShown, "the turn ends the showing");
-            Assert.IsFalse(_ledger.ShouldTeach(InteractionKind.Tune), "and retires the prompt");
-            Run(_settings.RepeatCooldown + 60f, Ready(InteractionKind.Tune));
-            Assert.AreEqual(1, _ledger.Shown(InteractionKind.Tune), "never again");
         }
 
         [Test]
@@ -164,31 +147,11 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void TheRelayPrompts_TeachRestoreAndHop_WithInteract()
-        {
-            foreach (InteractionKind kind in new[] { InteractionKind.Restore, InteractionKind.Hop })
-            {
-                PromptEntry entry = _settings.Find(kind);
-                Assert.IsNotNull(entry, $"{kind} is taught");
-                Assert.AreEqual(RoverAction.Excavate, entry.Action, $"{kind}: Interact, like the repair");
-            }
-
-            Run(2f, new InteractionHint(InteractionKind.Restore, Site, false));
-            Assert.AreEqual(InteractionKind.None, _director.Displayed,
-                "short of materials: the price tag says it quietly, the prompt does not nag");
-            Run(2f, Ready(InteractionKind.Restore));
-            Assert.AreEqual(InteractionKind.Restore, _director.Displayed);
-        }
-
-        [Test]
-        public void EveryOtherPrompt_IsLearnedAfterTheDefaultNumberOfUses()
+        public void EveryPrompt_IsLearnedAfterTheDefaultNumberOfUses()
         {
             foreach (PromptEntry entry in _settings.Entries)
             {
-                if (entry.Kind != InteractionKind.Tune)
-                {
-                    Assert.AreEqual(PromptEntry.DefaultUsesToRetire, entry.UsesToRetire, entry.Kind.ToString());
-                }
+                Assert.AreEqual(PromptEntry.DefaultUsesToRetire, entry.UsesToRetire, entry.Kind.ToString());
             }
         }
 
@@ -208,35 +171,35 @@ namespace MoonProject.UI.Tests
         [Test]
         public void OnlyOnePrompt_AtATime_TheNextWaitsForTheFadeOut()
         {
-            Run(1f, Ready(InteractionKind.Excavate));
-            Assert.AreEqual(InteractionKind.Excavate, _director.Displayed);
+            Run(1f, Ready(InteractionKind.Salvage));
+            Assert.AreEqual(InteractionKind.Salvage, _director.Displayed);
 
-            InteractionHint tether = Ready(InteractionKind.Tether);
-            _director.Step(Frame, true, tether, _chip.IsHidden);
+            InteractionHint build = Ready(InteractionKind.Build);
+            _director.Step(Frame, true, build, _chip.IsHidden);
             _chip.Set(_director.WantsShown);
             _chip.Step(Frame);
-            Assert.AreEqual(InteractionKind.Excavate, _director.Displayed, "the old prompt fades before the new one");
+            Assert.AreEqual(InteractionKind.Salvage, _director.Displayed, "the old prompt fades before the new one");
             Assert.IsFalse(_director.WantsShown);
 
-            Run(_settings.Reveal.FadeOut + _settings.Find(InteractionKind.Tether).DwellSeconds + 0.1f, tether);
-            Assert.AreEqual(InteractionKind.Tether, _director.Displayed);
+            Run(_settings.Reveal.FadeOut + _settings.Find(InteractionKind.Build).DwellSeconds + 0.1f, build);
+            Assert.AreEqual(InteractionKind.Build, _director.Displayed);
             Assert.IsTrue(_director.WantsShown);
         }
 
         [Test]
         public void Ledger_RoundTripsThroughItsSaveData_ByKindName()
         {
-            _ledger.RecordShown(InteractionKind.Tether);
-            _ledger.RecordShown(InteractionKind.Tether);
-            _ledger.RecordUsed(InteractionKind.Deposit);
+            _ledger.RecordShown(InteractionKind.Build);
+            _ledger.RecordShown(InteractionKind.Build);
+            _ledger.RecordUsed(InteractionKind.Deconstruct);
             string json = JsonUtility.ToJson(_ledger.Capture());
-            StringAssert.Contains("\"Tether\"", json, "saved by name, not by enum number");
+            StringAssert.Contains("\"Build\"", json, "saved by name, not by enum number");
 
             var restored = new PromptLedger(_settings);
             restored.Restore(JsonUtility.FromJson<PromptsSaveData>(json));
-            Assert.AreEqual(2, restored.Shown(InteractionKind.Tether));
-            Assert.AreEqual(1, restored.Used(InteractionKind.Deposit));
-            Assert.AreEqual(0, restored.Shown(InteractionKind.Excavate));
+            Assert.AreEqual(2, restored.Shown(InteractionKind.Build));
+            Assert.AreEqual(1, restored.Used(InteractionKind.Deconstruct));
+            Assert.AreEqual(0, restored.Shown(InteractionKind.Salvage));
         }
 
         [Test]
@@ -247,24 +210,24 @@ namespace MoonProject.UI.Tests
                 kinds = new[]
                 {
                     new PromptCountData { kind = "Ping", shown = 3, used = 1 },
-                    new PromptCountData { kind = "Reel", shown = 1, used = 0 },
+                    new PromptCountData { kind = "Scan", shown = 1, used = 0 },
                 },
             };
 
             _ledger.Restore(data);
-            Assert.AreEqual(1, _ledger.Shown(InteractionKind.Reel));
+            Assert.AreEqual(1, _ledger.Shown(InteractionKind.Scan));
         }
 
         [Test]
-        public void Settings_DefaultTable_IsValid_AndTeachesEveryKindButTheUpgrade()
+        public void Settings_DefaultTable_IsValid_AndTeachesTheOpeningsVerbs()
         {
             Assert.IsNull(_settings.Validate());
-            Assert.IsNull(_settings.Find(InteractionKind.Upgrade), "the tower panel teaches the upgrade itself");
             InteractionKind[] taught =
             {
-                InteractionKind.Excavate, InteractionKind.Tether, InteractionKind.Deposit, InteractionKind.Reel,
-                InteractionKind.Scan,
+                InteractionKind.Salvage, InteractionKind.PickUp, InteractionKind.Build, InteractionKind.Scan,
+                InteractionKind.Deconstruct,
             };
+            Assert.AreEqual(taught.Length, _settings.Entries.Length, "no prompt teaches a verb the opening lacks");
             foreach (InteractionKind kind in taught)
             {
                 Assert.IsNotNull(_settings.Find(kind), kind.ToString());

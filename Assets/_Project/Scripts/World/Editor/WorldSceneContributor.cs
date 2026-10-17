@@ -10,9 +10,9 @@ namespace MoonProject.World.Editor
 {
     /// <summary>
     /// The World's part of Main.unity: the earthlight and its fill, the post-processing volume, the skybox, fog and
-    /// ambient (saved into the scene), The Peak's beacon, and the <see cref="WorldSystem"/> that generates the
-    /// terrain, the rocks and Earth at boot, and the <see cref="HomeLightingSystem"/> that wakes home's warm points
-    /// (wired to the base by <see cref="WorldHomeWiringContributor"/>).
+    /// ambient (saved into the scene), The Peak's beacon, the Lumen ruins, the opening's places
+    /// (<see cref="OpeningLayoutPlacer"/>) and the <see cref="WorldSystem"/> that generates the terrain, the rocks and
+    /// Earth at boot.
     /// Runs first (order 200) because rover, audio and gameplay read ITerrainQuery and IWorldLayout.
     /// </summary>
     public sealed class WorldSceneContributor : ISceneContributor
@@ -36,11 +36,6 @@ namespace MoonProject.World.Editor
             var volume = context.CreateChild("Post Processing", root).AddComponent<Volume>();
             volume.isGlobal = true;
             volume.sharedProfile = profile;
-            var homeGrade = context.CreateChild("Home Grade", root).AddComponent<Volume>();
-            homeGrade.isGlobal = true;
-            homeGrade.priority = volume.priority + 1f;
-            homeGrade.weight = 0f;
-            homeGrade.sharedProfile = context.LoadAsset<VolumeProfile>(WorldPaths.HomeGradeProfile);
 
             RenderSettings.skybox = skyMaterial;
             WorldAtmosphere.Apply(settings.Atmosphere, settings.Sky, earthlight, fill);
@@ -72,13 +67,6 @@ namespace MoonProject.World.Editor
             Assign(skySerialized, "_fillLight", fill);
             skySerialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(skyCycle);
-
-            var homeLighting = context.CreateChild("Home Lighting", root).AddComponent<HomeLightingSystem>();
-            var lighting = new SerializedObject(homeLighting);
-            Assign(lighting, "_settings", settings);
-            Assign(lighting, "_homeGrade", homeGrade);
-            lighting.ApplyModifiedPropertiesWithoutUndo();
-            context.AddSystem(homeLighting);
 
         }
 

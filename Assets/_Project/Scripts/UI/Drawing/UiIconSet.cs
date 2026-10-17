@@ -108,7 +108,10 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>The canonical SVG icon id (<c>item_*</c>) for story or friend part <paramref name="partId"/>.</summary>
+        /// <summary>
+        /// The canonical SVG icon id for story part <paramref name="partId"/>. The spare igniter borrows the cutter's
+        /// icon until Art draws its own.
+        /// </summary>
         public static string IconIdOfPart(string partId)
         {
             if (string.IsNullOrEmpty(partId))
@@ -118,31 +121,8 @@ namespace MoonProject.UI
 
             switch (partId)
             {
-                case "Part_TowerCoil":
-                case "tower_coil":
-                case "item_tower_coil":
-                    return "item_tower_coil";
-                case "Part_Transformer":
-                case "transformer":
-                case "item_transformer":
-                    return "item_transformer";
-                case "Part_RelaySpare":
-                case "Part_RelayModule":
-                case "relay_spare":
-                case "item_relay_spare":
-                    return "item_relay_spare";
-                case "Part_TillyCell":
-                case "tilly.cell":
-                case "tilly_cell":
-                case "cell":
-                case "item_tilly_cell":
-                    return "item_tilly_cell";
-                case "Part_BellValve":
-                case "bell.valve":
-                case "bell_valve":
-                case "valve":
-                case "item_bell_valve":
-                    return "item_bell_valve";
+                case "part.igniter":
+                    return "kit_cutter";
                 default:
                     throw new InvalidOperationException($"Story part '{partId}' has no icon id.");
             }
@@ -167,26 +147,6 @@ namespace MoonProject.UI
                 case RoverSocket.Antenna: return "kit_antenna";
                 default:
                     throw new InvalidOperationException($"RoverSocket '{socket}' has no icon id.");
-            }
-        }
-
-        /// <summary>The canonical SVG icon id (<c>kit_*</c>) for <paramref name="piece"/>.</summary>
-        public static string IconIdOf(RoverKitPiece piece)
-        {
-            switch (piece)
-            {
-                case RoverKitPiece.FocusLens: return "kit_cutter";
-                case RoverKitPiece.TetherRing: return "kit_tether";
-                case RoverKitPiece.LampBar: return "kit_lamp";
-                case RoverKitPiece.HoverCoils: return "kit_belly";
-                case RoverKitPiece.CapacitorDrums: return "kit_flanks";
-                case RoverKitPiece.SideBins: return "kit_panniers";
-                case RoverKitPiece.BatterySpine: return "kit_back";
-                case RoverKitPiece.CargoRack: return "kit_hold";
-                case RoverKitPiece.SolarCell: return "kit_wing";
-                case RoverKitPiece.TapeDeck: return "kit_deck";
-                default:
-                    throw new InvalidOperationException($"RoverKitPiece '{piece}' has no kit icon id.");
             }
         }
     }

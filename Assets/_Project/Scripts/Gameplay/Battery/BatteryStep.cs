@@ -17,9 +17,6 @@ namespace MoonProject.Gameplay
         /// <summary>Slope (degrees) of the ground along the travel: + uphill, - downhill.</summary>
         public float SlopeDegrees { get; set; }
 
-        /// <summary>A relic rides on the tether.</summary>
-        public bool Towing { get; set; }
-
         /// <summary>The Boost Coils are engaged.</summary>
         public bool Boosting { get; set; }
 
@@ -28,21 +25,24 @@ namespace MoonProject.Gameplay
         /// </summary>
         public float BeamSeconds { get; set; }
 
+        /// <summary>Seconds 07's lens scanned this frame.</summary>
+        public float ScanSeconds { get; set; }
+
+        /// <summary>Seconds 07 welded a structure this frame.</summary>
+        public float WeldSeconds { get; set; }
+
         /// <summary>07 is still and nothing is happening (the solar trickle's condition).</summary>
         public bool Still { get; set; }
 
-        /// <summary>Tilly's gift is on 07: the repaired solar cell.</summary>
+        /// <summary>07's solar wing works (it is jammed through the opening, opening-v2 §10: no trickle).</summary>
         public bool SolarFitted { get; set; }
 
         /// <summary>The Boost Coils' capacitor drums are on 07.</summary>
         public bool DrumsFitted { get; set; }
 
-        /// <summary>Tilly is home and awake, so she can fly out and lead a crawl.</summary>
-        public bool FriendCanLead { get; set; }
-
         /// <summary>
-        /// 07 is on a working charger (docked, or inside a lit mast's ring), at any speed: the model decides when
-        /// 07 has stopped long enough to charge.
+        /// 07 is on a working charger (a pad it built), at any speed: the model decides when 07 has stopped long
+        /// enough to charge.
         /// </summary>
         public bool OnCharger { get; set; }
 
@@ -54,7 +54,7 @@ namespace MoonProject.Gameplay
         /// <summary>07's position (the Low warning measures the way to <see cref="NearestLitCharger"/> from it).</summary>
         public Vector3 Position { get; set; }
 
-        /// <summary>The pad of the nearest charger that works now: the dock or a lit mast.</summary>
+        /// <summary>The nearest charger that works now: a powered pad 07 built.</summary>
         public Vector3 NearestLitCharger { get; set; }
     }
 }

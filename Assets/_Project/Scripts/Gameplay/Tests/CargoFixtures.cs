@@ -7,8 +7,6 @@ namespace MoonProject.Gameplay.Tests
     internal static class CargoFixtures
     {
         public const int HoldSlots = 8;
-        public const int ShelfSlots = 12;
-        public const int BuiltInShelves = 2;
 
         /// <summary>Metal, Wiring and Optics in stacks of 4; Orange Beads in stacks of 6, seen but not gathered.</summary>
         public static MaterialCatalog Catalog()
@@ -24,13 +22,10 @@ namespace MoonProject.Gameplay.Tests
             return catalog;
         }
 
-        /// <summary>An empty stock: an 8-slot hold, two built-in shelves of 12 and two free sockets.</summary>
+        /// <summary>An empty stock: an 8-slot hold.</summary>
         public static MaterialStock Stock(EventBus events, IMaterialCatalog catalog)
         {
-            var hold = new CargoHold(events, catalog, HoldSlots);
-            var home = new HomeStorage(events, catalog, new[] { ShelfSlots, ShelfSlots, ShelfSlots, ShelfSlots },
-                BuiltInShelves);
-            return new MaterialStock(events, hold, home);
+            return new MaterialStock(events, new CargoHold(events, catalog, HoldSlots));
         }
     }
 }

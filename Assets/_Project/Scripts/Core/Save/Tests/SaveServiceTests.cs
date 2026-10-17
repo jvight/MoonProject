@@ -353,11 +353,11 @@ namespace MoonProject.Core.Save.Tests
         public void Save_RecordsItsContentVersion_AndSameOrNewerContentLoads()
         {
             var writer = new ProgressHolder { Data = { scrap = 8 } };
-            SaveService first = NewService("0.5.2");
+            SaveService first = NewService("0.6.2");
             first.Register(writer.Section(1));
             first.Load();
             Assert.IsTrue(first.SaveNow());
-            StringAssert.Contains("\"contentVersion\": \"0.5.2\"", ReadMain());
+            StringAssert.Contains("\"contentVersion\": \"0.6.2\"", ReadMain());
 
             var reader = new ProgressHolder();
             SaveService second = NewService();

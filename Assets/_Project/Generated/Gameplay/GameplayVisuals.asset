@@ -12,64 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69749e603a28fda4dbbbf55ea7b63cbf, type: 3}
   m_Name: GameplayVisuals
   m_EditorClassIdentifier: 
-  _tractorBeam: {fileID: 2100000, guid: 8bec620e68df94d4986d37792d577f0a, type: 2}
-  _tetherBeam: {fileID: 2100000, guid: a7d2f94ed03fe5a4896d87b2b72bfa24, type: 2}
+  _weldBeam: {fileID: 2100000, guid: 45e7c88725551b942a60634866ae50d4, type: 2}
   _flash: {fileID: 2100000, guid: b55e930411d2ac844a0c0a36d52e9b70, type: 2}
-  _relicHalo: {fileID: 2100000, guid: fee181144544b59408f732d7fdccc14e, type: 2}
-  _dust: {fileID: 2100000, guid: bf0fcce95db7ca4409587657ae467f27, type: 2}
-  _warmRing: {fileID: 2100000, guid: 907d78bb092e4334f9c5b9e00c4bdaa6, type: 2}
-  _warmGlow: {fileID: 2100000, guid: 22d91cd391e82d84eb5fbc2b16e6a8e0, type: 2}
+  _pieceHalo: {fileID: 2100000, guid: de91ef756d2a35d45a2e92d081b849ee, type: 2}
   _partGlint: {fileID: 2100000, guid: 4a700287616a19e49a3c4e0f7633e8b7, type: 2}
   _spark: {fileID: 2100000, guid: 94b2acb381f20094e847454e82d34847, type: 2}
-  _homeHalo: {fileID: 2100000, guid: 4b4c8a73f5f09384b9c46bf0b8f06413, type: 2}
-  _linkPulse: {fileID: 2100000, guid: 4a167f2be8259a14bbe1c2ad51b5c191, type: 2}
   _feelSprite: {fileID: 2100000, guid: b4c44f742bcf6564ca4dd45507055cac, type: 2}
   _beamCore: {fileID: 2100000, guid: 720b32587f94a294da7f41ca4e161b7c, type: 2}
   _beamSheath: {fileID: 2100000, guid: 726f17e4a2c27ae48abe27ca48c6bc30, type: 2}
   _heatSeam: {fileID: 2100000, guid: 3663c4749be107848bfb7c3ebc2cc9e7, type: 2}
   _feelTuning: {fileID: 11400000, guid: e8e2f64fb25385c4f826b1e01fcee110, type: 2}
-  _pads:
-  - {fileID: 4787985358432548162, guid: 0390a58189554f54d99131facf350145, type: 3}
-  - {fileID: 1990579749909035574, guid: 5879b7d5f8068624e825ae290690d7da, type: 3}
-  - {fileID: 5758296614982328227, guid: 8e1c470c81889d34f848594c572db082, type: 3}
-  _padRadii:
-  - 1.6
-  - 2.4
-  - 3
-  _components:
-  - {fileID: 3359185789678253492, guid: 746e59bdc859c6341a23c70adaab062a, type: 3}
-  - {fileID: 1487543907107486613, guid: bcee7385b8b911344b262ebb5912cfe9, type: 3}
-  - {fileID: 9012445354524032910, guid: 933e6346ec9a2db43a474ca1764a4a44, type: 3}
   _containers:
-  - {fileID: 4615894099479177553, guid: 85327e0a15ed1c24ab00630e7ae959e5, type: 3}
-  - {fileID: 1952462384554151044, guid: a19943faf25aff148afaa6729925c598, type: 3}
-  - {fileID: 4090488288346813231, guid: 02776ff5ecbe1ae419c499e085ce021a, type: 3}
-  - {fileID: 5700859343141753201, guid: e748af4b4e77c8140a6d8d7eb1aa0913, type: 3}
-  - {fileID: 56243224897414047, guid: dabe2b7353936b5459a95661081b2ec8, type: 3}
-  - {fileID: 2950383942280905191, guid: 11418394e20d9e54989e2d5fc7191285, type: 3}
-  - {fileID: 7015121732507049066, guid: dc5ab79e320bea54ab2354d459a039da, type: 3}
-  - {fileID: 2044200688475486064, guid: 11f137f6a2c5aed4b99661ac6909e444, type: 3}
-  _fragments:
-  - {fileID: 2823358795817054538, guid: 6c83b102eea1c34489d112f26947d2ea, type: 3}
-  - {fileID: 492899943344983347, guid: 844a4fb99ffc49340bfcc7cc4a027150, type: 3}
-  - {fileID: 1592518710476763905, guid: 050e1d259cce1bc45a321f72577097da, type: 3}
-  - {fileID: 1741578071272124947, guid: b75e498eb328b9047a1e5becfdfb8446, type: 3}
-  - {fileID: 3680904158163887684, guid: 695cf77d3e7b7e14383b09cb5805724c, type: 3}
-  - {fileID: 2790129798958439534, guid: 5d2b9b5346e6cb94f9f884b18b41b762, type: 3}
-  - {fileID: 1616377062545890305, guid: a61287fab399ba240b715392f08c67dc, type: 3}
-  - {fileID: 7401591731427709641, guid: 9fde8a67a6b1f6a4dbce7a34afe5709a, type: 3}
-  - {fileID: 5938468723900235804, guid: 5c920e4c4c6f2a04caffea0506ec2793, type: 3}
-  - {fileID: 3085385033588931778, guid: 4ce45869ea7388a4ca258859173bcdf4, type: 3}
-  - {fileID: 3709147105532502667, guid: 1a7f76c65ac07fe4a987abeefdf880d0, type: 3}
-  - {fileID: 4613644350075170861, guid: c6580c7615b361d48b459cd392a3ea09, type: 3}
-  - {fileID: 7437322956368349241, guid: eca3120b8795f5d4cbbab37fb806b170, type: 3}
-  - {fileID: 6337883590388397503, guid: ec5973d94acc5ee44a618c11e313a1ae, type: 3}
-  - {fileID: 1266868035654273232, guid: 871ecaeabb29b144c9ec7f164aa8bf1d, type: 3}
-  - {fileID: 6483665308921284935, guid: fbad35132c14cae44acd1c9dcfb441e1, type: 3}
-  - {fileID: 2481418253220188660, guid: bf007d6387819d6459831cbf22c40a31, type: 3}
-  - {fileID: 8509129132670022519, guid: a19c9932349d7be48b55f4fbc038293a, type: 3}
-  _jumperWreck: {fileID: 1674659952243876744, guid: 98accec21c6d577448134f3f8f7b0fc2, type: 3}
-  _garagePort: {fileID: 7185882727046098272, guid: 1d34e56cd553dd5418963ef7e6f21fd2, type: 3}
-  _tapeDeck: {fileID: 8103010664265960948, guid: b1f7ee56b0cd5c7419ad482d825915c2, type: 3}
+  - {fileID: 8913901452062825307, guid: f825c6036b6f2d24d8f9e60c1ea9737a, type: 3}
+  - {fileID: 5871157106361356003, guid: 148105d6a357cda4bb6500a41a06789b, type: 3}
+  - {fileID: 1333976485439428776, guid: 664c9cbe130a4444b826058ca5cf03f4, type: 3}
   _hologramValid: {fileID: 2100000, guid: 3652bba78b6499f46b3aa88a5fb63f39, type: 2}
   _hologramInvalid: {fileID: 2100000, guid: 824a0ff8388a8ec4a8c0c7c48826c3a8, type: 2}

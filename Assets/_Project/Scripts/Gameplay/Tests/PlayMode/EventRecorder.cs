@@ -7,13 +7,8 @@ using MoonProject.Core.Events;
 namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
-    /// Records every gameplay event (and the rover's Hover-Jump events) with the time it was published, for order and
-    /// timing assertions. The radio and story events of M3-05 (cassettes, radio program, crew logs, Bell's signals
-    /// and cues, ticker lines), the relay network's of M3-06 (relay cues and restorations, the radio-hop) and the
-    /// stations' and charging dock's of M3-14 (station cues, the bay's fitting, a kit piece set on, the dock rest) are
-    /// recorded too but
-    /// kept out of <see cref="Order"/>: the radio announces itself at every boot, and the order assertions follow the
-    /// play loop.
+    /// Records the salvage and scan events with the time each was published, for order and timing assertions. A
+    /// fragment scan is recorded but kept out of <see cref="Order"/>: the order assertions follow the salvage loop.
     /// </summary>
     public sealed class EventRecorder : IDisposable
     {
@@ -25,50 +20,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Listen(events, SalvageCutStopped);
             Listen(events, MaterialSalvaged);
             Listen(events, MaterialsChanged);
-            Listen(events, SonarPinged);
-            Listen(events, SiteAnswered);
-            Listen(events, RelicAnswered);
-            Listen(events, ExcavationStarted);
-            Listen(events, ExcavationStopped);
-            Listen(events, RelicSurfaced);
-            Listen(events, TetherAttached);
-            Listen(events, TetherReleased);
-            Listen(events, RelicStowed);
-            Listen(events, RelicDeposited);
-            Listen(events, DockEveningOpened);
-            Listen(events, UpgradePurchased);
-            Listen(events, SignalRadiusChanged);
-            Listen(events, FriendAnswered);
-            Listen(events, FriendPartCollected);
-            Listen(events, FriendRepairStarted);
-            Listen(events, FriendRepaired);
-            Listen(events, FriendGreeted);
-            Listen(events, FriendSpotted);
-            Listen(events, RoverJumpCharged);
-            Listen(events, RoverJumped);
-            Listen(events, CassetteCollected, false);
-            Listen(events, RadioProgramChanged, false);
-            Listen(events, CrewLogFound, false);
-            Listen(events, BellSignalPicked, false);
-            Listen(events, BellSignalFound, false);
-            Listen(events, StationNotYet, false);
-            Listen(events, ScanStarted, false);
-            Listen(events, ScanStopped, false);
             Listen(events, FragmentScanned, false);
-            Listen(events, BlueprintCompleted, false);
-            Listen(events, ScanSiteReached, false);
-            Listen(events, ScanSiteEmptied, false);
-            Listen(events, TickerLine, false);
-            Listen(events, BellCued, false);
-            Listen(events, RelayCued, false);
-            Listen(events, RelayRestored, false);
-            Listen(events, RadioHopListChanged, false);
-            Listen(events, RadioHopStarted, false);
-            Listen(events, RadioHopFinished, false);
-            Listen(events, StationCued, false);
-            Listen(events, PartCrafted, false);
-            Listen(events, PartFitted, false);
-            Listen(events, RoverDockChanged, false);
         }
 
         /// <summary>Event type names in publish order.</summary>
@@ -79,78 +31,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         public List<Timed<SalvageCutStopped>> SalvageCutStopped { get; } = new List<Timed<SalvageCutStopped>>();
 
         public List<Timed<MaterialSalvaged>> MaterialSalvaged { get; } = new List<Timed<MaterialSalvaged>>();
+
         public List<Timed<MaterialsChanged>> MaterialsChanged { get; } = new List<Timed<MaterialsChanged>>();
-        public List<Timed<SonarPinged>> SonarPinged { get; } = new List<Timed<SonarPinged>>();
-        public List<Timed<SiteAnswered>> SiteAnswered { get; } = new List<Timed<SiteAnswered>>();
 
-        public List<Timed<RelicAnswered>> RelicAnswered { get; } = new List<Timed<RelicAnswered>>();
-        public List<Timed<ExcavationStarted>> ExcavationStarted { get; } = new List<Timed<ExcavationStarted>>();
-        public List<Timed<ExcavationStopped>> ExcavationStopped { get; } = new List<Timed<ExcavationStopped>>();
-        public List<Timed<RelicSurfaced>> RelicSurfaced { get; } = new List<Timed<RelicSurfaced>>();
-        public List<Timed<TetherAttached>> TetherAttached { get; } = new List<Timed<TetherAttached>>();
-        public List<Timed<TetherReleased>> TetherReleased { get; } = new List<Timed<TetherReleased>>();
-        public List<Timed<RelicStowed>> RelicStowed { get; } = new List<Timed<RelicStowed>>();
-
-        public List<Timed<RelicDeposited>> RelicDeposited { get; } = new List<Timed<RelicDeposited>>();
-
-        public List<Timed<DockEveningOpened>> DockEveningOpened { get; } = new List<Timed<DockEveningOpened>>();
-        public List<Timed<UpgradePurchased>> UpgradePurchased { get; } = new List<Timed<UpgradePurchased>>();
-
-        public List<Timed<SignalRadiusChanged>> SignalRadiusChanged { get; } =
-            new List<Timed<SignalRadiusChanged>>();
-
-        public List<Timed<FriendAnswered>> FriendAnswered { get; } = new List<Timed<FriendAnswered>>();
-
-        public List<Timed<FriendPartCollected>> FriendPartCollected { get; } =
-            new List<Timed<FriendPartCollected>>();
-
-        public List<Timed<FriendRepairStarted>> FriendRepairStarted { get; } =
-            new List<Timed<FriendRepairStarted>>();
-
-        public List<Timed<FriendRepaired>> FriendRepaired { get; } = new List<Timed<FriendRepaired>>();
-        public List<Timed<FriendGreeted>> FriendGreeted { get; } = new List<Timed<FriendGreeted>>();
-        public List<Timed<FriendSpotted>> FriendSpotted { get; } = new List<Timed<FriendSpotted>>();
-        public List<Timed<RoverJumpCharged>> RoverJumpCharged { get; } = new List<Timed<RoverJumpCharged>>();
-        public List<Timed<RoverJumped>> RoverJumped { get; } = new List<Timed<RoverJumped>>();
-        public List<Timed<CassetteCollected>> CassetteCollected { get; } = new List<Timed<CassetteCollected>>();
-
-        public List<Timed<RadioProgramChanged>> RadioProgramChanged { get; } =
-            new List<Timed<RadioProgramChanged>>();
-
-        public List<Timed<CrewLogFound>> CrewLogFound { get; } = new List<Timed<CrewLogFound>>();
-        public List<Timed<BellSignalPicked>> BellSignalPicked { get; } = new List<Timed<BellSignalPicked>>();
-        public List<Timed<BellSignalFound>> BellSignalFound { get; } = new List<Timed<BellSignalFound>>();
-        public List<Timed<StationNotYet>> StationNotYet { get; } = new List<Timed<StationNotYet>>();
-        public List<Timed<ScanStarted>> ScanStarted { get; } = new List<Timed<ScanStarted>>();
-        public List<Timed<ScanStopped>> ScanStopped { get; } = new List<Timed<ScanStopped>>();
         public List<Timed<FragmentScanned>> FragmentScanned { get; } = new List<Timed<FragmentScanned>>();
-
-        public List<Timed<BlueprintCompleted>> BlueprintCompleted { get; } =
-            new List<Timed<BlueprintCompleted>>();
-
-        public List<Timed<ScanSiteReached>> ScanSiteReached { get; } = new List<Timed<ScanSiteReached>>();
-        public List<Timed<ScanSiteEmptied>> ScanSiteEmptied { get; } = new List<Timed<ScanSiteEmptied>>();
-        public List<Timed<TickerLine>> TickerLine { get; } = new List<Timed<TickerLine>>();
-        public List<Timed<BellCued>> BellCued { get; } = new List<Timed<BellCued>>();
-
-        public List<Timed<RelayCued>> RelayCued { get; } = new List<Timed<RelayCued>>();
-
-        public List<Timed<RelayRestored>> RelayRestored { get; } = new List<Timed<RelayRestored>>();
-
-        public List<Timed<RadioHopListChanged>> RadioHopListChanged { get; } =
-            new List<Timed<RadioHopListChanged>>();
-
-        public List<Timed<RadioHopStarted>> RadioHopStarted { get; } = new List<Timed<RadioHopStarted>>();
-
-        public List<Timed<RadioHopFinished>> RadioHopFinished { get; } = new List<Timed<RadioHopFinished>>();
-
-        public List<Timed<StationCued>> StationCued { get; } = new List<Timed<StationCued>>();
-
-        public List<Timed<PartCrafted>> PartCrafted { get; } = new List<Timed<PartCrafted>>();
-
-        public List<Timed<PartFitted>> PartFitted { get; } = new List<Timed<PartFitted>>();
-
-        public List<Timed<RoverDockChanged>> RoverDockChanged { get; } = new List<Timed<RoverDockChanged>>();
 
         public void Dispose()
         {

@@ -104,7 +104,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _roverMeshes = _rover.GetComponentsInChildren<MeshFilter>(true);
 
             SalvageField salvage = _gameplay.Salvage;
-            SalvagePiece target = PickStandaloneScrapPiece(salvage);
+            SalvagePiece target = PickCuttablePiece(salvage);
             Assert.IsNotNull(target, "Expected a cuttable hull scrap piece in SalvageField.");
 
             Vector3 spot = OpenSpot();
@@ -353,31 +353,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             Object.DestroyImmediate(strip);
         }
 
-        private static SalvagePiece PickStandaloneScrapPiece(SalvageField salvage)
+        private static SalvagePiece PickCuttablePiece(SalvageField salvage)
         {
-            IReadOnlyList<SalvageSite> derelicts = salvage.Derelicts;
-            for (int d = 0; d < derelicts.Count; d++)
-            {
-                SalvageSite site = derelicts[d];
-                if (!string.Equals(site.Id, SalvageField.ScrapFieldId, StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                for (int p = 0; p < site.Pieces.Count; p++)
-                {
-                    SalvagePiece piece = site.Pieces[p];
-                    if (piece.IsCuttable && !piece.IsDrag)
-                    {
-                        return piece;
-                    }
-                }
-            }
-
             for (int i = 0; i < salvage.Pieces.Count; i++)
             {
                 SalvagePiece piece = salvage.Pieces[i];
-                if (piece.IsCuttable && !piece.IsDrag)
+                if (piece.IsCuttable)
                 {
                     return piece;
                 }

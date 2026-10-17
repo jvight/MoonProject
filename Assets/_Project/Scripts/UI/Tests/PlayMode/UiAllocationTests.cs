@@ -64,7 +64,7 @@ namespace MoonProject.UI.PlayModeTests
             InputSystem.AddDevice<Keyboard>();
             _rig = UiTestRig.Boot(_controls, _slot);
             _rig.Bootstrap.Context.Events.Publish(new RoverAwoke(Vector3.zero, false));
-            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.PickUp, new Vector3(0f, 0f, 10f), true);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Build, new Vector3(0f, 0f, 10f), true);
             _rig.Fakes.Position = new Vector3(0f, 0f, 2f);
             yield return new WaitForSecondsRealtime(2f);
             Assert.IsTrue(_rig.Ui.Prompt.IsVisible);
@@ -73,7 +73,7 @@ namespace MoonProject.UI.PlayModeTests
             Action frame = () =>
             {
                 _step++;
-                _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.PickUp,
+                _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Build,
                     new Vector3(Mathf.Sin(_step * 0.01f) * 3f, 0f, 10f), true);
                 update();
             };

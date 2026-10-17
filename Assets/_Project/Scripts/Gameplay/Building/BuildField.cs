@@ -135,10 +135,7 @@ namespace MoonProject.Gameplay
             _tuning = tuning;
         }
 
-        internal bool Initialize(
-            GameplayServices services,
-            WorkshopTuning workshopTuning,
-            FriendTuning friendTuning)
+        internal bool Initialize(GameplayServices services)
         {
             if (services == null)
             {
@@ -645,7 +642,7 @@ namespace MoonProject.Gameplay
             }
             else if (hasLineOfSight)
             {
-                _beamWork.Work(deltaTime);
+                _beamWork.Weld(deltaTime);
             }
         }
 
@@ -849,7 +846,7 @@ namespace MoonProject.Gameplay
                 }
 
                 Vector3 targetPoint = placed.Pose.Position + Vector3.up * (placed.Definition.Height * 0.45f);
-                if (TetherAim.TryScore(
+                if (AimScore.TryScore(
                         eye,
                         forward,
                         targetPoint,

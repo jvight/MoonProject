@@ -10,8 +10,8 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay.Editor
 {
     /// <summary>
-    /// The ten robot-scale base structures of 0.5.7 in deterministic catalog order: charging pad, solar array, battery
-    /// bank, power pylon, smelter, fabricator, storage rack, upgrade bay, antenna mast, and vehicle pad. All ten wrap
+    /// The robot-scale base structures of the opening (opening-v2 §5) in deterministic catalog order: charging pad,
+    /// solar array, battery bank, power pylon and antenna mast. All wrap
     /// Art's R1 prefabs with their upright mesh bounds, <c>Socket_Power_&lt;n&gt;</c> ports, <see cref="Layers.Prop"/>
     /// collider, and <see cref="StructureView"/> (<c>ArtPending = false</c>).
     /// </summary>
@@ -83,62 +83,6 @@ namespace MoonProject.Gameplay.Editor
                 artPending: false,
                 r1ModelName: "PowerPylon"),
             new Entry(
-                StructureIds.Smelter,
-                Vector3.zero,
-                maxGroundSlope: 12f,
-                clearance: 0.3f,
-                produceWatts: 0f,
-                consumeWatts: 150f,
-                storeWattHours: 0f,
-                connectionRadius: 0f,
-                buildCost: new Recipe(6, 2, 0),
-                buildSeconds: 4f,
-                ports: Array.Empty<StructurePort>(),
-                artPending: false,
-                r1ModelName: "Smelter"),
-            new Entry(
-                StructureIds.Fabricator,
-                Vector3.zero,
-                maxGroundSlope: 12f,
-                clearance: 0.3f,
-                produceWatts: 0f,
-                consumeWatts: 140f,
-                storeWattHours: 0f,
-                connectionRadius: 0f,
-                buildCost: new Recipe(5, 3, 1),
-                buildSeconds: 4f,
-                ports: Array.Empty<StructurePort>(),
-                artPending: false,
-                r1ModelName: "Fabricator"),
-            new Entry(
-                StructureIds.StorageRack,
-                Vector3.zero,
-                maxGroundSlope: 16f,
-                clearance: 0.2f,
-                produceWatts: 0f,
-                consumeWatts: 10f,
-                storeWattHours: 0f,
-                connectionRadius: 0f,
-                buildCost: new Recipe(4, 0, 0),
-                buildSeconds: 2f,
-                ports: Array.Empty<StructurePort>(),
-                artPending: false,
-                r1ModelName: "StorageRack"),
-            new Entry(
-                StructureIds.UpgradeBay,
-                Vector3.zero,
-                maxGroundSlope: 10f,
-                clearance: 0.35f,
-                produceWatts: 0f,
-                consumeWatts: 160f,
-                storeWattHours: 0f,
-                connectionRadius: 0f,
-                buildCost: new Recipe(6, 4, 2),
-                buildSeconds: 5f,
-                ports: Array.Empty<StructurePort>(),
-                artPending: false,
-                r1ModelName: "UpgradeBay"),
-            new Entry(
                 StructureIds.AntennaMast,
                 Vector3.zero,
                 maxGroundSlope: 15f,
@@ -152,20 +96,6 @@ namespace MoonProject.Gameplay.Editor
                 ports: Array.Empty<StructurePort>(),
                 artPending: false,
                 r1ModelName: "AntennaMast"),
-            new Entry(
-                StructureIds.VehiclePad,
-                Vector3.zero,
-                maxGroundSlope: 10f,
-                clearance: 0.4f,
-                produceWatts: 0f,
-                consumeWatts: 100f,
-                storeWattHours: 0f,
-                connectionRadius: 0f,
-                buildCost: new Recipe(8, 3, 1),
-                buildSeconds: 5f,
-                ports: Array.Empty<StructurePort>(),
-                artPending: false,
-                r1ModelName: "VehiclePad"),
         };
 
         /// <summary>

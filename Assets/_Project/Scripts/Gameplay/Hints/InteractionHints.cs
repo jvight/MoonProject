@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using MoonProject.Core;
 
 namespace MoonProject.Gameplay
 {
@@ -11,56 +10,32 @@ namespace MoonProject.Gameplay
     {
         private static readonly InteractionKind[] Priority =
         {
-            InteractionKind.PickUp, InteractionKind.Build, InteractionKind.Deposit, InteractionKind.Repair,
-            InteractionKind.Restore, InteractionKind.Tune, InteractionKind.Hop, InteractionKind.Upgrade,
-            InteractionKind.Salvage, InteractionKind.Excavate, InteractionKind.Stow, InteractionKind.Tether,
-            InteractionKind.Reel, InteractionKind.Scan, InteractionKind.Deconstruct,
+            InteractionKind.PickUp, InteractionKind.Build, InteractionKind.Salvage, InteractionKind.Scan,
+            InteractionKind.Deconstruct,
         };
 
-        private readonly ExcavationSystem _excavation;
         private readonly SalvageField _salvage;
-        private readonly TetherSystem _tether;
-        private readonly CargoCradle _cradle;
-        private readonly HomeBase _home;
-        private readonly IUpgradeStation[] _stations;
-        private readonly UpgradeService _upgrades;
-        private readonly IComponentGate _parts;
-        private readonly FriendField _friends;
-        private readonly RelayField _relays;
-        private readonly BeamWork _beam;
-        private readonly PickupReach _pickups;
-        private readonly HomeShelves _shelves;
-        private readonly CrewCrates _crates;
         private readonly SealedContainers _containers;
         private readonly ScanField _scans;
         private readonly BuildField _building;
+        private readonly BeamWork _beam;
+        private readonly Cutter _cutter;
+        private readonly PickupReach _pickups;
 
         /// <param name="beam">
         /// 07's beam work: while new work sleeps (the crawl, docs/features/M3-20) a beam verb's hint shows as not ready.
         /// </param>
-        public InteractionHints(ExcavationSystem excavation,
-            SalvageField salvage, TetherSystem tether, CargoCradle cradle, HomeBase home, IUpgradeStation[] stations,
-            UpgradeService upgrades, IComponentGate parts, FriendField friends, RelayField relays, BeamWork beam,
-            PickupReach pickups, HomeShelves shelves, CrewCrates crates, SealedContainers containers, ScanField scans,
-            BuildField building = null)
+        /// <param name="cutter">07's cutter: while it is faulted (opening-v2 §10) a cut's hint shows not ready.</param>
+        public InteractionHints(SalvageField salvage, SealedContainers containers, ScanField scans,
+            BuildField building, BeamWork beam, Cutter cutter, PickupReach pickups)
         {
-            _scans = scans ?? throw new ArgumentNullException(nameof(scans));
-            _crates = crates ?? throw new ArgumentNullException(nameof(crates));
-            _containers = containers ?? throw new ArgumentNullException(nameof(containers));
-            _shelves = shelves ?? throw new ArgumentNullException(nameof(shelves));
-            _pickups = pickups ?? throw new ArgumentNullException(nameof(pickups));
-            _excavation = excavation != null ? excavation : throw new ArgumentNullException(nameof(excavation));
             _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
-            _tether = tether != null ? tether : throw new ArgumentNullException(nameof(tether));
-            _cradle = cradle != null ? cradle : throw new ArgumentNullException(nameof(cradle));
-            _home = home != null ? home : throw new ArgumentNullException(nameof(home));
-            _stations = stations ?? throw new ArgumentNullException(nameof(stations));
-            _upgrades = upgrades ?? throw new ArgumentNullException(nameof(upgrades));
-            _parts = parts ?? throw new ArgumentNullException(nameof(parts));
-            _friends = friends != null ? friends : throw new ArgumentNullException(nameof(friends));
-            _relays = relays != null ? relays : throw new ArgumentNullException(nameof(relays));
+            _containers = containers ?? throw new ArgumentNullException(nameof(containers));
+            _scans = scans ?? throw new ArgumentNullException(nameof(scans));
+            _building = building != null ? building : throw new ArgumentNullException(nameof(building));
             _beam = beam ?? throw new ArgumentNullException(nameof(beam));
-            _building = building;
+            _cutter = cutter ?? throw new ArgumentNullException(nameof(cutter));
+            _pickups = pickups ?? throw new ArgumentNullException(nameof(pickups));
         }
 
         public InteractionHint Primary
@@ -81,130 +56,43 @@ namespace MoonProject.Gameplay
 
         public bool TryGet(InteractionKind kind, out InteractionHint hint)
         {
-            if (_building != null && _building.State != BuildModeState.Closed &&
+            if (_building.State != BuildModeState.Closed &&
                 kind != InteractionKind.Build && kind != InteractionKind.Deconstruct)
             {
                 hint = InteractionHint.None;
                 return false;
             }
 
-            ITowable towed = _tether.TowedBody;
             switch (kind)
             {
-                case InteractionKind.Excavate:
-                    Relic candidate = _excavation.Candidate;
-                    if (candidate == null && _friends.HasDigCandidate)
-                    {
-                        hint = new InteractionHint(kind, _friends.DigCandidate, _beam.MayStart);
-                        return true;
-                    }
-
-                    hint = candidate != null
-                        ? new InteractionHint(kind, candidate.Site.Position,
-                            _excavation.Lifting != null || _beam.MayStart)
-                        : InteractionHint.None;
-                    return candidate != null;
                 case InteractionKind.PickUp:
-                    bool waiting = _pickups.TryGet(Time.frameCount, out Vector3 part, out string noun);
-                    hint = waiting ? new InteractionHint(kind, part, true, noun) : InteractionHint.None;
+                    bool waiting = _pickups.TryGet(Time.frameCount, out Vector3 at, out string noun);
+                    hint = waiting ? new InteractionHint(kind, at, true, noun) : InteractionHint.None;
                     return waiting;
                 case InteractionKind.Build:
-                    if (_building != null && _building.TryGetWeldCandidate(out Vector3 weldPoint))
-                    {
-                        hint = new InteractionHint(kind, weldPoint, _building.IsWelding || _beam.MayStart);
-                        return true;
-                    }
-
-                    int shelf = _shelves.Needed ? _shelves.Candidate : -1;
-                    hint = shelf >= 0
-                        ? new InteractionHint(kind, _shelves.RackPosition(shelf), _shelves.Affordable)
+                    bool weld = _building.TryGetWeldCandidate(out Vector3 weldPoint);
+                    hint = weld
+                        ? new InteractionHint(kind, weldPoint, _building.IsWelding || _beam.MayStart)
                         : InteractionHint.None;
-                    return shelf >= 0;
+                    return weld;
                 case InteractionKind.Deconstruct:
-                    if (_building != null && _building.TryGetDeconstructCandidate(out Vector3 deconstructPoint))
-                    {
-                        hint = new InteractionHint(kind, deconstructPoint, true);
-                        return true;
-                    }
-
-                    hint = InteractionHint.None;
-                    return false;
+                    bool fold = _building.TryGetDeconstructCandidate(out Vector3 foldPoint);
+                    hint = fold ? new InteractionHint(kind, foldPoint, true) : InteractionHint.None;
+                    return fold;
                 case InteractionKind.Salvage:
                     SalvagePiece piece = _salvage.Cutting ?? _salvage.Candidate;
-                    CrewCrate crate = _crates.Candidate;
                     SealedContainer sealedOne = _containers.Candidate;
+                    bool cuts = _cutter.Ready && _beam.MayStart;
                     hint = piece != null
-                        ? new InteractionHint(kind, piece.CutPosition, _salvage.Cutting != null || _beam.MayStart)
-                        : crate != null
-                            ? new InteractionHint(kind, crate.CutPoint.position, _beam.MayStart)
-                            : sealedOne != null
-                                ? new InteractionHint(kind, sealedOne.CutPoint.position, _beam.MayStart)
-                                : InteractionHint.None;
-                    return piece != null || crate != null || sealedOne != null;
-                case InteractionKind.Stow:
-                    Relic stowable = _cradle.CanStow ? _tether.Hovered : null;
-                    hint = stowable != null
-                        ? new InteractionHint(kind, stowable.transform.position, true)
-                        : InteractionHint.None;
-                    return stowable != null;
-                case InteractionKind.Tether:
-                    ITowable hovered = _tether.HoveredBody;
-                    bool tow = hovered != null && !(_cradle.CanStow && hovered is Relic);
-                    hint = tow ? new InteractionHint(kind, hovered.Position, true) : InteractionHint.None;
-                    return tow;
-                case InteractionKind.Deposit:
-                    bool deposit = _home.CanPlace || _cradle.CanUnload;
-                    hint = deposit ? new InteractionHint(kind, _home.KeepsakesPosition, true) : InteractionHint.None;
-                    return deposit;
-                case InteractionKind.Repair:
-                    Friend broken = _friends.RepairCandidate;
-                    hint = broken != null
-                        ? new InteractionHint(kind, broken.Site.Position, _beam.MayStart)
-                        : InteractionHint.None;
-                    return broken != null;
-                case InteractionKind.Tune:
-                    bool tune = _friends.TryGetDial(out Vector3 dial);
-                    hint = tune ? new InteractionHint(kind, dial, true) : InteractionHint.None;
-                    return tune;
-                case InteractionKind.Restore:
-                    bool restore = _relays.TryGetRestore(out Vector3 socket, out bool affordable);
-                    hint = restore
-                        ? new InteractionHint(kind, socket, affordable && _beam.MayStart)
-                        : InteractionHint.None;
-                    return restore;
-                case InteractionKind.Hop:
-                    IRadioHop hop = _relays.Hop;
-                    bool open = hop.Phase == RadioHopPhase.Choosing;
-                    bool hopHere = open || hop.CanOpen;
-                    hint = hopHere
-                        ? new InteractionHint(kind, _relays.Reach.Position(hop.Here), true)
-                        : InteractionHint.None;
-                    return hopHere;
+                        ? new InteractionHint(kind, piece.CutPosition, _salvage.Cutting != null || cuts)
+                        : sealedOne != null
+                            ? new InteractionHint(kind, sealedOne.CutPoint.position, cuts)
+                            : InteractionHint.None;
+                    return piece != null || sealedOne != null;
                 case InteractionKind.Scan:
                     ScanFragment fragment = _scans.Candidate;
                     hint = fragment != null ? new InteractionHint(kind, fragment.Point, true) : InteractionHint.None;
                     return fragment != null;
-                case InteractionKind.Reel:
-                    hint = towed != null
-                        ? new InteractionHint(kind, towed.Position, true)
-                        : InteractionHint.None;
-                    return towed != null;
-                case InteractionKind.Upgrade:
-                    for (int i = 0; i < _stations.Length; i++)
-                    {
-                        IUpgradeStation station = _stations[i];
-                        if (station.Occupied && _upgrades.TryGetOffer(station.Definition.Id, out UpgradeOffer offer) &&
-                            !offer.IsMaxed)
-                        {
-                            bool ready = offer.CanAfford &&
-                                         !_parts.NeedsPart(offer.Definition.Id, offer.CurrentLevel + 1);
-                            hint = new InteractionHint(kind, station.PadCentre, ready);
-                            return true;
-                        }
-                    }
-
-                    hint = InteractionHint.None;
-                    return false;
                 default:
                     hint = InteractionHint.None;
                     return false;

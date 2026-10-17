@@ -6,8 +6,8 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// Designer-facing tuning for 07's freeform base building (0.5.7): placement distance bounds from 07, soft-snap
-    /// distance and angle tolerances, welding range, deconstruction material refund share, and the optional playtest
-    /// unlock list applied at initialization.
+    /// distance and angle tolerances, welding range and the weld's beam and sparks, deconstruction material refund
+    /// share, and the optional playtest unlock list applied at initialization.
     /// </summary>
     [CreateAssetMenu(menuName = "MoonProject/Gameplay/Building Tuning", fileName = "BuildingTuning")]
     public sealed class BuildingTuning : ScriptableObject
@@ -31,7 +31,7 @@ namespace MoonProject.Gameplay
         [Range(0f, 1f)] [SerializeField] private float _deconstructRefundShare = 0.75f;
 
         [Tooltip("Structure IDs that a new game knows by design (e.g. charging_pad), applied on a new game and saved like learned blueprints.")]
-        [SerializeField] private string[] _startingKnownIds = { StructureIds.ChargingPad };
+        [SerializeField] private string[] _startingKnownIds = Array.Empty<string>();
 
         [Tooltip("Structure IDs unlocked at game start for playtesting (kept empty in production).")]
         [SerializeField] private string[] _playtestUnlockedIds = Array.Empty<string>();
@@ -47,6 +47,7 @@ namespace MoonProject.Gameplay
         public float WeldRange => _weldRange;
 
         public float DeconstructRefundShare => _deconstructRefundShare;
+
 
         /// <summary>
         /// Structure IDs that a new game knows by design (e.g. <see cref="StructureIds.ChargingPad"/>), applied on a

@@ -90,12 +90,7 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(1, _catalog.Find(StructureIds.SolarArray).Ports.Count);
             Assert.AreEqual(2, _catalog.Find(StructureIds.BatteryBank).Ports.Count);
             Assert.AreEqual(3, _catalog.Find(StructureIds.PowerPylon).Ports.Count);
-            Assert.AreEqual(2, _catalog.Find(StructureIds.Smelter).Ports.Count);
-            Assert.AreEqual(2, _catalog.Find(StructureIds.Fabricator).Ports.Count);
-            Assert.AreEqual(1, _catalog.Find(StructureIds.StorageRack).Ports.Count);
-            Assert.AreEqual(1, _catalog.Find(StructureIds.UpgradeBay).Ports.Count);
             Assert.AreEqual(1, _catalog.Find(StructureIds.AntennaMast).Ports.Count);
-            Assert.AreEqual(1, _catalog.Find(StructureIds.VehiclePad).Ports.Count);
 
             var invalidNoPrefab = ScriptableObject.CreateInstance<StructureDefinition>();
             var dummyPrefab = new GameObject("DummyStructurePrefab");
@@ -169,7 +164,7 @@ namespace MoonProject.Gameplay.Tests
         public void PlacementRules_ReturnsValid_OrFirstInvalidReasonForEveryRule()
         {
             StructureDefinition solar = _catalog.Find(StructureIds.SolarArray);
-            StructureDefinition smelter = _catalog.Find(StructureIds.Smelter);
+            StructureDefinition mast = _catalog.Find(StructureIds.AntennaMast);
             TestWorld flat = TestWorld.Flat();
             Vector3 roverPos = Vector3.zero;
             var placed = new List<PlacedStructure>();
@@ -199,13 +194,14 @@ namespace MoonProject.Gameplay.Tests
             Vector3 roverNearSlope = slopeSpot + new Vector3(0f, 0f, -5f);
             Assert.AreEqual(
                 PlacementReason.TooSteep,
-                PlacementRules.Evaluate(smelter, new StructurePose(slopeSpot, 0f), basin, placed, roverNearSlope, _tuning));
+                PlacementRules.Evaluate(mast, new StructurePose(slopeSpot, 0f), basin, placed, roverNearSlope,
+                    _tuning));
 
             TestWorld stepWorld = TestWorld.WithStep();
             Assert.AreEqual(
                 PlacementReason.TooSteep,
                 PlacementRules.Evaluate(
-                    smelter,
+                    mast,
                     new StructurePose(new Vector3(10f, 0f, 0f), 0f),
                     stepWorld,
                     placed,
@@ -216,7 +212,7 @@ namespace MoonProject.Gameplay.Tests
             var overlappingPose = new StructurePose(new Vector3(0.5f, 0f, 5.5f), 35f);
             Assert.AreEqual(
                 PlacementReason.Overlaps,
-                PlacementRules.Evaluate(smelter, overlappingPose, flat, placed, roverPos, _tuning));
+                PlacementRules.Evaluate(mast, overlappingPose, flat, placed, roverPos, _tuning));
         }
 
         [Test]
@@ -404,7 +400,7 @@ namespace MoonProject.Gameplay.Tests
         public void PowerGrid_IsolatedBatteryBank_GetsNoSupplyConnectionWithoutSourceOrPylon()
         {
             StructureDefinition battery = _catalog.Find(StructureIds.BatteryBank);
-            StructureDefinition smelter = _catalog.Find(StructureIds.Smelter);
+            StructureDefinition mast = _catalog.Find(StructureIds.AntennaMast);
             StructureDefinition pylon = _catalog.Find(StructureIds.PowerPylon);
 
             var grid = new PowerGrid();
@@ -419,10 +415,10 @@ namespace MoonProject.Gameplay.Tests
             grid.AddNode(new PowerNode(
                 2,
                 new Vector3(3f, 0f, 0f),
-                smelter.ProduceWatts,
-                smelter.ConsumeWatts,
-                smelter.StoreWattHours,
-                smelter.ConnectionRadius));
+                mast.ProduceWatts,
+                mast.ConsumeWatts,
+                mast.StoreWattHours,
+                mast.ConnectionRadius));
 
             Assert.IsFalse(grid.AreConnected(1, 2), "Battery bank without a source or pylon does not form a grid.");
             grid.Step(PowerGrid.SecondsPerHour * 0.5f, sunlight01: 0f);
@@ -439,7 +435,7 @@ namespace MoonProject.Gameplay.Tests
 
             Assert.IsTrue(grid.AreConnected(1, 2), "Pylon in reach connects the battery bank and consumer.");
             grid.Step(PowerGrid.SecondsPerHour * 0.5f, sunlight01: 0f);
-            Assert.AreEqual(1f, grid.GetSupplyRatio(2), 1e-4f, "Connected battery supplies the smelter via pylon.");
+            Assert.AreEqual(1f, grid.GetSupplyRatio(2), 1e-4f, "Connected battery supplies the mast via pylon.");
         }
 
         [Test]
@@ -496,34 +492,34 @@ namespace MoonProject.Gameplay.Tests
             var placedBase = new PlacedBase(_catalog, _tuning, _events);
             TestWorld flat = TestWorld.Flat();
             Vector3 roverPos = Vector3.zero;
-            StructureDefinition fabricator = _catalog.Find(StructureIds.Fabricator);
+            StructureDefinition mast = _catalog.Find(StructureIds.AntennaMast);
 
             Assert.IsTrue(placedBase.TryPlace(
-                fabricator,
+                mast,
                 new StructurePose(new Vector3(0f, 0f, 5f), 0f),
                 flat,
                 roverPos,
                 out int unfinishedId,
                 out _));
-            placedBase.StepWeld(unfinishedId, fabricator.BuildSeconds * 0.4f, roverPos, isWelding: true);
+            placedBase.StepWeld(unfinishedId, mast.BuildSeconds * 0.4f, roverPos, isWelding: true);
 
             Assert.IsTrue(placedBase.TryDeconstruct(unfinishedId, out Recipe unfinishedRefund));
-            Assert.AreEqual(fabricator.BuildCost, unfinishedRefund, "Removing an unfinished frame refunds full cost.");
+            Assert.AreEqual(mast.BuildCost, unfinishedRefund, "Removing an unfinished frame refunds full cost.");
             Assert.AreEqual(0, placedBase.Count);
             Assert.AreEqual(1, removedEvents.Count);
 
             Assert.IsTrue(placedBase.TryPlace(
-                fabricator,
+                mast,
                 new StructurePose(new Vector3(0f, 0f, 5f), 0f),
                 flat,
                 roverPos,
                 out int finishedId,
                 out _));
-            Assert.IsTrue(placedBase.StepWeld(finishedId, fabricator.BuildSeconds, roverPos, isWelding: true));
+            Assert.IsTrue(placedBase.StepWeld(finishedId, mast.BuildSeconds, roverPos, isWelding: true));
 
             Assert.IsTrue(placedBase.TryDeconstruct(finishedId, out Recipe finishedRefund));
             Assert.AreEqual(
-                BuildJob.CalculateRefund(fabricator.BuildCost, _tuning.DeconstructRefundShare),
+                BuildJob.CalculateRefund(mast.BuildCost, _tuning.DeconstructRefundShare),
                 finishedRefund,
                 "Removing a finished structure refunds the tuned share.");
             Assert.AreEqual(0, placedBase.Count);
@@ -549,7 +545,7 @@ namespace MoonProject.Gameplay.Tests
 
             StructureDefinition solar = _catalog.Find(StructureIds.SolarArray);
             StructureDefinition battery = _catalog.Find(StructureIds.BatteryBank);
-            StructureDefinition smelter = _catalog.Find(StructureIds.Smelter);
+            StructureDefinition mast = _catalog.Find(StructureIds.AntennaMast);
 
             Assert.IsTrue(writerBase.TryPlace(
                 solar,
@@ -572,18 +568,18 @@ namespace MoonProject.Gameplay.Tests
                 initialStoredWh: 45f));
 
             Assert.IsTrue(writerBase.TryPlace(
-                smelter,
+                mast,
                 new StructurePose(new Vector3(-3f, 0f, 4f), 270f),
                 flat,
                 roverPos,
-                out int smelterId,
+                out int mastId,
                 out _));
-            writerBase.StepWeld(smelterId, smelter.BuildSeconds * 0.5f, roverPos, isWelding: true);
+            writerBase.StepWeld(mastId, mast.BuildSeconds * 0.5f, roverPos, isWelding: true);
 
             writerBase.StepPower(PowerGrid.SecondsPerHour * 0.5f, sunlight01: 1f);
             Assert.AreEqual(135f, writerBase.PowerGrid.GetStoredWattHours(batteryId), 1e-3f);
 
-            var saveWriter = new SaveService(_tempSaveDir, "building_slot", "0.5.7");
+            var saveWriter = new SaveService(_tempSaveDir, "building_slot", SaveService.OldestCompatibleContent);
             using (writerBase.RegisterSave(saveWriter))
             {
                 Assert.AreEqual(SaveLoadResult.NoSave, saveWriter.Load());
@@ -591,7 +587,7 @@ namespace MoonProject.Gameplay.Tests
             }
 
             var readerBase = new PlacedBase(_catalog, _tuning, _events);
-            var saveReader = new SaveService(_tempSaveDir, "building_slot", "0.5.7");
+            var saveReader = new SaveService(_tempSaveDir, "building_slot", SaveService.OldestCompatibleContent);
             using (readerBase.RegisterSave(saveReader))
             {
                 Assert.AreEqual(SaveLoadResult.Loaded, saveReader.Load());
@@ -600,7 +596,7 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(3, readerBase.Count);
             PlacedStructure loadedSolar = readerBase.StructureAt(0);
             PlacedStructure loadedBattery = readerBase.StructureAt(1);
-            PlacedStructure loadedSmelter = readerBase.StructureAt(2);
+            PlacedStructure loadedMast = readerBase.StructureAt(2);
 
             Assert.AreEqual(StructureIds.SolarArray, loadedSolar.Definition.Id);
             Assert.AreEqual(90f, loadedSolar.Pose.Yaw, 1e-4f);
@@ -610,17 +606,17 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(180f, loadedBattery.Pose.Yaw, 1e-4f);
             Assert.AreEqual(135f, loadedBattery.StoredWattHours, 1e-3f);
 
-            Assert.AreEqual(StructureIds.Smelter, loadedSmelter.Definition.Id);
-            Assert.AreEqual(270f, loadedSmelter.Pose.Yaw, 1e-4f);
-            Assert.AreEqual(0.5f, loadedSmelter.BuildProgress01, 1e-4f);
+            Assert.AreEqual(StructureIds.AntennaMast, loadedMast.Definition.Id);
+            Assert.AreEqual(270f, loadedMast.Pose.Yaw, 1e-4f);
+            Assert.AreEqual(0.5f, loadedMast.BuildProgress01, 1e-4f);
 
-            readerBase.StepWeld(loadedSmelter.InstanceId, smelter.BuildSeconds * 0.5f, roverPos, isWelding: true);
+            readerBase.StepWeld(loadedMast.InstanceId, mast.BuildSeconds * 0.5f, roverPos, isWelding: true);
             readerBase.StepPower(1f, sunlight01: 1f);
             Assert.AreEqual(1, powerEvents.Count);
             Assert.AreEqual(1f, powerEvents[0].SupplyRatio, 1e-4f);
 
-            Assert.IsTrue(readerBase.TryDeconstruct(loadedSmelter.InstanceId, out Recipe refund));
-            Assert.AreEqual(BuildJob.CalculateRefund(smelter.BuildCost, _tuning.DeconstructRefundShare), refund);
+            Assert.IsTrue(readerBase.TryDeconstruct(loadedMast.InstanceId, out Recipe refund));
+            Assert.AreEqual(BuildJob.CalculateRefund(mast.BuildCost, _tuning.DeconstructRefundShare), refund);
             Assert.AreEqual(1, removedEvents.Count);
 
             LogAssert.Expect(LogType.Error, new Regex("unknown_lunar_widget"));
@@ -950,25 +946,18 @@ namespace MoonProject.Gameplay.Tests
         {
             var buildingTuningAsset = AssetDatabase.LoadAssetAtPath<BuildingTuning>(GameplayAssetPaths.BuildingTuning);
             Assert.IsNotNull(buildingTuningAsset);
-            CollectionAssert.AreEqual(
-                new[] { StructureIds.ChargingPad },
+            CollectionAssert.IsEmpty(
                 buildingTuningAsset.StartingKnownIds,
-                "A new game starts knowing only ChargingPad by design.");
+                "A new game starts with 0 blueprints (opening-v2 §10): the lander's cargo bay teaches the pad.");
             CollectionAssert.IsEmpty(
                 buildingTuningAsset.PlaytestUnlockedIds,
                 "PlaytestUnlockedIds is kept empty in the shipped asset.");
 
             var scanTuningAsset = AssetDatabase.LoadAssetAtPath<ScanTuning>(GameplayAssetPaths.ScanTuning);
             Assert.IsNotNull(scanTuningAsset);
-            CollectionAssert.AreEquivalent(
-                new[] { StructureIds.UpgradeBay, StructureIds.VehiclePad },
-                scanTuningAsset.LaterStructureIds,
-                "UpgradeBay and VehiclePad are reserved in ScanTuning.LaterStructureIds for later places.");
-
             var known = new KnownStructures(_catalog, _events);
             var placedBase = new PlacedBase(_catalog, buildingTuningAsset, _events, known);
-            Assert.AreEqual(1, known.Count);
-            Assert.IsTrue(known.IsKnown(StructureIds.ChargingPad));
+            Assert.AreEqual(0, known.Count);
             Assert.IsFalse(known.IsKnown(StructureIds.SolarArray));
 
             var learnedEvents = new List<StructureLearned>();
@@ -985,7 +974,7 @@ namespace MoonProject.Gameplay.Tests
             try
             {
                 MaterialStock stock = CargoFixtures.Stock(_events, matCatalog);
-                var save = new SaveService(_tempSaveDir, "ruin_scans_slot", "0.5.7");
+                var save = new SaveService(_tempSaveDir, "ruin_scans_slot", SaveService.OldestCompatibleContent);
                 save.Load();
                 var scans = new ScanField(scanTuningAsset, _events, save, stock, known);
 
@@ -1001,12 +990,19 @@ namespace MoonProject.Gameplay.Tests
                     Assert.IsNull(scans.AddRuin(set, instance.transform));
                 }
 
-                // Scan FallenSolarArray target 0 -> learns SolarArray immediately.
-                ScanFragment fallen0 = scans.Find(ScanField.FragmentId("ruin.FallenSolarArray", 0));
-                Assert.IsNotNull(fallen0);
-                scans.CompleteTarget(fallen0, 1f);
+                // A set teaches only when whole (opening-v2 §1): the fallen array's 3 fragments teach SolarArray.
+                for (int i = 0; i < 2; i++)
+                {
+                    ScanFragment part = scans.Find(ScanField.FragmentId("ruin.FallenSolarArray", i));
+                    Assert.IsNotNull(part);
+                    scans.CompleteTarget(part, 1f + i);
+                    Assert.AreEqual(0, part.Owed, "new knowledge pays no Metal");
+                }
+
+                Assert.IsFalse(known.IsKnown(StructureIds.SolarArray), "two fragments of three teach nothing yet");
+                Assert.AreEqual(0, learnedEvents.Count);
+                scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.FallenSolarArray", 2)), 3f);
                 Assert.IsTrue(known.IsKnown(StructureIds.SolarArray));
-                Assert.AreEqual(0, fallen0.Owed);
                 Assert.AreEqual(1, learnedEvents.Count);
                 Assert.AreEqual(StructureIds.SolarArray, learnedEvents[0].StructureId);
                 Assert.AreEqual(1, toasts.Count);
@@ -1018,38 +1014,23 @@ namespace MoonProject.Gameplay.Tests
                 Assert.AreEqual(1, chirps.Count);
                 Assert.AreEqual(ChirpMood.Proud, chirps[0].Mood);
 
-                // Scanning remaining targets on FallenSolarArray whose blueprint is already known awards KnownMetal.
-                ScanFragment fallen1 = scans.Find(ScanField.FragmentId("ruin.FallenSolarArray", 1));
-                scans.CompleteTarget(fallen1, 2f);
-                Assert.AreEqual(scanTuningAsset.KnownMetal, fallen1.Owed);
-                Assert.AreEqual(1, learnedEvents.Count, "Already-known blueprint does not fire a duplicate unlock.");
-
-                // Scan KenjiWorkshop targets 0 and 1 -> learns Fabricator then StorageRack; target 2 awards KnownMetal.
-                scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.KenjiWorkshop", 0)), 10f);
-                Assert.IsTrue(known.IsKnown(StructureIds.Fabricator));
-                Assert.IsFalse(known.IsKnown(StructureIds.StorageRack));
-                scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.KenjiWorkshop", 1)), 11f);
-                Assert.IsTrue(known.IsKnown(StructureIds.StorageRack));
-                ScanFragment workshop2 = scans.Find(ScanField.FragmentId("ruin.KenjiWorkshop", 2));
-                scans.CompleteTarget(workshop2, 12f);
-                Assert.AreEqual(scanTuningAsset.KnownMetal, workshop2.Owed);
-
-                // Scan HabitatModules targets 0 and 1 -> learns BatteryBank then Smelter.
+                // The habitat's 2 fragments teach BatteryBank.
                 scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.HabitatModules", 0)), 20f);
-                Assert.IsTrue(known.IsKnown(StructureIds.BatteryBank));
+                Assert.IsFalse(known.IsKnown(StructureIds.BatteryBank));
                 scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.HabitatModules", 1)), 21f);
-                Assert.IsTrue(known.IsKnown(StructureIds.Smelter));
+                Assert.IsTrue(known.IsKnown(StructureIds.BatteryBank));
 
-                // Scan RadioTower targets 0 and 1 -> learns AntennaMast then PowerPylon.
-                scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.RadioTower", 0)), 30f);
-                Assert.IsTrue(known.IsKnown(StructureIds.AntennaMast));
-                scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.RadioTower", 1)), 31f);
-                Assert.IsTrue(known.IsKnown(StructureIds.PowerPylon));
-
-                // ScatterSet has no new structure blueprints -> scanning a target awards KnownMetal.
-                ScanFragment scatterFrag = scans.Find(ScanField.FragmentId("ruin.ScatterSet", 0));
-                scans.CompleteTarget(scatterFrag, 40f);
-                Assert.AreEqual(scanTuningAsset.KnownMetal, scatterFrag.Owed);
+                // A set whose structure is already known pays Metal instead and fires no duplicate unlock.
+                known.Learn(StructureIds.AntennaMast);
+                int learned = learnedEvents.Count;
+                ScanFragment tower0 = scans.Find(ScanField.FragmentId("ruin.RadioTower", 0));
+                ScanFragment tower1 = scans.Find(ScanField.FragmentId("ruin.RadioTower", 1));
+                scans.CompleteTarget(tower0, 30f);
+                scans.CompleteTarget(tower1, 31f);
+                Assert.AreEqual(scanTuningAsset.KnownMetal, tower0.Owed);
+                Assert.AreEqual(scanTuningAsset.KnownMetal, tower1.Owed);
+                Assert.AreEqual(learned, learnedEvents.Count,
+                    "Already-known blueprint does not fire a duplicate unlock.");
 
                 // Round-trip save/load of both ScansSaveData and BuildingSaveData.
                 ScansSaveData savedScans = scans.Capture();
@@ -1058,17 +1039,11 @@ namespace MoonProject.Gameplay.Tests
                 var loadedKnown = new KnownStructures(_catalog, _events);
                 var loadedBase = new PlacedBase(_catalog, buildingTuningAsset, _events, loadedKnown);
                 loadedBase.Restore(savedBuilding);
-                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.ChargingPad),
-                    "Starting knowledge is saved in BuildingSaveData.known and restored like learned blueprints.");
-                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.SolarArray));
-                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.Fabricator));
-                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.StorageRack));
+                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.SolarArray),
+                    "Learned blueprints are saved in BuildingSaveData.known and restored.");
                 Assert.IsTrue(loadedKnown.IsKnown(StructureIds.BatteryBank));
-                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.Smelter));
                 Assert.IsTrue(loadedKnown.IsKnown(StructureIds.AntennaMast));
-                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.PowerPylon));
-                Assert.IsFalse(loadedKnown.IsKnown(StructureIds.UpgradeBay));
-                Assert.IsFalse(loadedKnown.IsKnown(StructureIds.VehiclePad));
+                Assert.IsFalse(loadedKnown.IsKnown(StructureIds.ChargingPad), "the lander's cargo bay was not scanned");
 
                 var loadedScans = new ScanField(scanTuningAsset, _events, save, stock, loadedKnown);
                 for (int i = 0; i < scanTuningAsset.Ruins.Count; i++)
@@ -1078,7 +1053,8 @@ namespace MoonProject.Gameplay.Tests
 
                 loadedScans.Restore(savedScans);
                 Assert.IsTrue(loadedScans.Find(ScanField.FragmentId("ruin.FallenSolarArray", 0)).Scanned);
-                Assert.AreEqual(scanTuningAsset.KnownMetal * 3, stock.Metal, "Owed metal from 3 known ruin scans arrives on restore.");
+                Assert.AreEqual(scanTuningAsset.KnownMetal * 2, stock.Metal,
+                    "Owed metal from the 2 known tower scans arrives on restore.");
             }
             finally
             {

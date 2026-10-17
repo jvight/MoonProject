@@ -49,17 +49,9 @@ namespace MoonProject.UI.PlayModeTests
         private PanelSettings _panel;
         private RenderTexture _target;
         private UiTuning _tuning;
-        private UpgradeDefinition _tower;
-        private UpgradeDefinition[] _bayKit = Array.Empty<UpgradeDefinition>();
 
         public override void TearDown()
         {
-            Object.DestroyImmediate(_tower);
-            foreach (UpgradeDefinition kit in _bayKit)
-            {
-                Object.DestroyImmediate(kit);
-            }
-
             Object.DestroyImmediate(_uiHost);
             Object.DestroyImmediate(_fakesHost);
             Object.DestroyImmediate(_panel);
@@ -114,9 +106,9 @@ namespace MoonProject.UI.PlayModeTests
             Transform view = camera.transform;
             Vector3 site = view.position + Vector3.ProjectOnPlane(view.forward, Vector3.up).normalized * 9f +
                            view.right * 1.5f + Vector3.down * 1.5f;
-            fakes.PrimaryHint = new InteractionHint(InteractionKind.PickUp, site, true);
+            fakes.PrimaryHint = new InteractionHint(InteractionKind.Build, site, true);
             yield return new WaitForSecondsRealtime(1.5f);
-            yield return Capture(camera, folder, "02_prompt_pick_up");
+            yield return Capture(camera, folder, "02_prompt_build");
 
             fakes.PrimaryHint = InteractionHint.None;
             fakes.SetMaterials(4, 2, 1);
@@ -366,7 +358,7 @@ namespace MoonProject.UI.PlayModeTests
         /// --filter CaptureCargoScreen.
         /// </summary>
         [UnityTest]
-        public IEnumerator CaptureCargoScreen_HoldHomeSeven_UnlockCard_AndALunarPickup()
+        public IEnumerator CaptureCargoScreen_HoldDevices_UnlockCard_AndALunarPickup()
         {
 #if UNITY_EDITOR
             yield return LoadMain();
@@ -386,19 +378,7 @@ namespace MoonProject.UI.PlayModeTests
                 new MaterialSlot(SalvageMaterial.Wiring, 3, 4), new MaterialSlot(SalvageMaterial.Optics, 1, 4),
                 new MaterialSlot(SalvageMaterial.Ilmenite, 5, 6));
             fakes.Hold.WaitingBundles = 3;
-            foreach (RoverKitPiece fitted in new[]
-                     {
-                         RoverKitPiece.TetherRing, RoverKitPiece.SolarCell, RoverKitPiece.LampBar,
-                         RoverKitPiece.CapacitorDrums, RoverKitPiece.BatterySpine, RoverKitPiece.TapeDeck,
-                         RoverKitPiece.CargoRack, RoverKitPiece.SideBins,
-                     })
-            {
-                fakes.Equipment.Fit(fitted);
-            }
-
-            fakes.Equipment.Craft(RoverKitPiece.HoverCoils);
-            fakes.Equipment.Craft(RoverKitPiece.FocusLens);
-            fakes.Equipment.AtStation = false;
+            fakes.Hold.AddPart("part.igniter");
             ui.Cargo.Open();
             yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeIn + _tuning.Cargo.BootTypeSeconds +
                                                     _tuning.Cargo.BootLightStepSeconds * 3f);
@@ -407,24 +387,17 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(2f);
             Assert.IsTrue(ui.Cargo.IsOpen && !ui.Cargo.IsBooting);
             yield return Capture(camera, folder, "95_cargo_screen");
-            yield return Capture(camera, folder, "96_seven_tab_away");
+            yield return Capture(camera, folder, "96_seven_tab_cutter_fault");
             yield return Capture(camera, logsFolder, "tab_field_1920x1080");
-            fakes.Equipment.AtStation = true;
+            fakes.Systems.CanFitIgniter = true;
+            ui.Cargo.View.FocusDevice(FaceDevices.Cutter);
             yield return new WaitForSecondsRealtime(0.4f);
-            yield return Capture(camera, folder, "96b_seven_tab_at_the_bay");
-            yield return Capture(camera, logsFolder, "tab_bay_1920x1080");
-            ui.Cargo.Close();
-            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeOut + 0.4f);
-            fakes.Home.Set(3, new MaterialSlot(SalvageMaterial.Metal, 4, 4), new MaterialSlot(SalvageMaterial.Wiring, 4, 4),
-                new MaterialSlot(SalvageMaterial.Optics, 2, 4), new MaterialSlot(SalvageMaterial.Ilmenite, 6, 6));
-            fakes.Dock.IsDocked = true;
-            ui.Cargo.Open();
-            ui.Cargo.FocusFirst();
-            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeIn + 0.6f);
-            Assert.IsTrue(ui.Cargo.IsTransferView, "docked, the hold sits beside home's shelves");
-            yield return Capture(camera, folder, "95b_transfer_view");
-            yield return Capture(camera, logsFolder, "tab_transfer_1920x1080");
-            fakes.Dock.IsDocked = false;
+            Assert.IsTrue(ui.Cargo.View.IsIgniterOffered, "on the pad the cutter offers the spare igniter");
+            yield return Capture(camera, folder, "96b_seven_tab_igniter_offered");
+            yield return Capture(camera, logsFolder, "tab_pad_1920x1080");
+            ui.Cargo.View.SubmitFocused();
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Capture(camera, folder, "96c_seven_tab_cutter_ok");
             ui.Cargo.Close();
             yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeOut + 0.6f);
 
@@ -531,6 +504,12 @@ namespace MoonProject.UI.PlayModeTests
 #endif
         }
 
+        /// <summary>
+        /// 07's readout and the objective line (docs/design/opening-v2.md sections 2, 3, 10): the boot diagnostics are
+        /// the one guidance element while they show and the objective waits for them, the cutter refusing flashes its
+        /// line, then the protocol line, the lander's reserve, a scanned panel's text and the Sun's arc. Rerun with
+        /// --filter CaptureGuidance.
+        /// </summary>
         [UnityTest]
         public IEnumerator CaptureGuidance()
         {
@@ -539,60 +518,57 @@ namespace MoonProject.UI.PlayModeTests
             GameContext context = FindBootstrap().Context;
             Camera camera = context.Get<IViewCamera>().Camera;
             UISystem ui = BuildUi(context, out FakeGameServices fakes, out _);
-            TuneQuickPatience();
             yield return null;
             string folder = Path.GetFullPath(OutputFolder);
             Directory.CreateDirectory(folder);
             context.Events.Publish(new RoverAwoke(Vector3.zero, false));
-            yield return new WaitForSecondsRealtime(0.5f);
-
-            context.Events.Publish(new NextStepChanged("next.v2.build_pad"));
-            yield return new WaitForSecondsRealtime(_tuning.Guidance.Line.FadeIn + 0.5f);
-            yield return Capture(camera, folder, "49_next_line");
-
+            context.Events.Publish(new NextStepChanged("next.v2.drive_lander"));
             context.Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle, false));
             context.Events.Publish(new RoverWakeBeatReached(WakeBeat.GazeEarth, false));
-            yield return new WaitForSecondsRealtime(_tuning.Guidance.Protocol.FadeIn + 0.5f);
-            Assert.IsTrue(ui.Protocol.IsVisible, "the protocol readout shows at Earth's gaze (M3-24 B)");
-            yield return Capture(camera, folder, "49b_protocol_readout");
-            yield return new WaitForSecondsRealtime(_tuning.Guidance.ProtocolHoldSeconds +
-                                                    _tuning.Guidance.Protocol.FadeOut + 0.5f);
-            Assert.IsFalse(ui.Protocol.IsVisible, "and fades by itself");
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Readout.FadeIn + 0.5f);
+            Assert.IsTrue(ui.Readout.IsVisible && ui.Readout.Showing == ReadoutKind.Boot,
+                "the boot diagnostics show when 07's lens opens");
+            Assert.IsFalse(ui.Objective.IsVisible, "and the objective line waits for them");
+            yield return Capture(camera, folder, "49_boot_readout");
+
+            context.Events.Publish(new CutterRefused(Vector3.zero));
+            yield return null;
+            Assert.IsTrue(ui.Readout.IsFlashing(1 + (int)RoverSystem.Cutter), "a refused cut flashes the cutter's line");
+            yield return Capture(camera, folder, "49a_boot_cutter_refused");
+
             context.Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame, false));
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.BootHoldSeconds +
+                                                    _tuning.Guidance.Readout.FadeOut + _tuning.Guidance.Line.FadeIn +
+                                                    _tuning.Guidance.ObjectiveDelaySeconds + 2.5f);
+            Assert.IsFalse(ui.Readout.IsVisible, "the diagnostics fade by themselves");
+            Assert.IsTrue(ui.Objective.ShowsObjective, "and the first objective line follows");
+            yield return Capture(camera, folder, "49b_objective_line");
 
-            fakes.Upgrade = _tower;
-            fakes.AtStation = false;
-            fakes.AwaitingPart = true;
-            fakes.SetMaterials(1, 0, 0);
-            fakes.Looked = _tower.Id;
-            yield return new WaitForSecondsRealtime(_tuning.Guidance.Recipe.FadeIn + 0.5f);
-            Assert.AreEqual(_tower.Id, ui.RecipeCard.Shown, "looking at the tower's hopper shows its recipe card");
-            yield return Capture(camera, folder, "49c_recipe_card");
-            fakes.Looked = null;
-            yield return new WaitForSecondsRealtime(_tuning.Guidance.Recipe.FadeOut + 0.5f);
-            Assert.IsFalse(ui.RecipeCard.IsVisible, "looking away hides it");
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, false));
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Readout.FadeIn + 0.5f);
+            Assert.AreEqual(ReadoutKind.Protocol, ui.Readout.Showing);
+            yield return Capture(camera, folder, "49c_protocol_power_on");
+            fakes.Sun.ElevationDegrees = 9f;
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.StatusHoldSeconds +
+                                                    _tuning.Guidance.Readout.FadeOut + _tuning.Guidance.SunArc.FadeIn);
+            Assert.IsTrue(ui.SunArc.IsVisible, "the Sun's arc comes with the power");
+            yield return Capture(camera, folder, "49d_sun_arc");
 
-            fakes.Bay = _bayKit;
-            fakes.IsSheet = true;
-            fakes.Looked = _bayKit[0].Id;
-            yield return new WaitForSecondsRealtime(_tuning.Guidance.Recipe.FadeIn + 0.5f);
-            Assert.AreEqual(_bayKit[0].Id, ui.RecipeCard.Shown, "a sheet on Kenji's board shows its kit's card");
-            yield return Capture(camera, folder, "49d_recipe_card_board");
-            fakes.Looked = null;
-            fakes.IsSheet = false;
-            fakes.Bay = null;
+            context.Events.Publish(new LanderReserveChanged(0f, false));
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Readout.FadeIn + 0.5f);
+            Assert.AreEqual(ReadoutKind.Reserve, ui.Readout.Showing);
+            yield return Capture(camera, folder, "49e_lander_reserve");
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.StatusHoldSeconds +
+                                                    _tuning.Guidance.Readout.FadeOut + 0.5f);
 
-            // A prompt whose point sits under the recipe card rests on top of it, never over its words.
-            fakes.Looked = _tower.Id;
-            fakes.PrimaryHint = new InteractionHint(InteractionKind.PickUp,
-                camera.ViewportToWorldPoint(new Vector3(0.8f, 0.55f, 10f)), true);
-            yield return new WaitForSecondsRealtime(_tuning.Guidance.Recipe.FadeIn + 2.5f);
-            Assert.IsFalse(ui.Prompt.IsVisible && ui.RecipeCard.IsVisible, "one guidance element at a time");
-            yield return Capture(camera, folder, "49e_recipe_card_with_prompt");
-            fakes.PrimaryHint = InteractionHint.None;
-            fakes.Looked = null;
-            yield return new WaitForSecondsRealtime(_tuning.Guidance.Recipe.FadeOut + 0.5f);
-
+            context.Events.Publish(new StoryScanned("airlock_panel", "story.airlock_panel", Vector3.zero));
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Readout.FadeIn + 0.5f);
+            Assert.AreEqual(ReadoutKind.Story, ui.Readout.Showing);
+            yield return Capture(camera, folder, "49f_story_panel");
+            ui.Localization.SetLanguage("vi");
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return Capture(camera, folder, "49g_story_panel_vi");
+            ui.Localization.SetLanguage("en");
 #else
             Assert.Ignore("Captures need the editor.");
             yield break;
@@ -600,14 +576,6 @@ namespace MoonProject.UI.PlayModeTests
         }
 
 #if UNITY_EDITOR
-        /// <summary>The step patience shortened so a capture sees the next line without two minutes' wait.</summary>
-        private void TuneQuickPatience()
-        {
-            var serialized = new SerializedObject(_tuning);
-            serialized.FindProperty("_guidance._stepPatienceSeconds").floatValue = 1f;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-        }
-
         /// <summary>
         /// Holds the live world still: its own sonar, home and rover would answer over the scripted moments, and the
         /// UI runs on unscaled time. Restored in <see cref="TearDown"/>.
@@ -687,18 +655,8 @@ namespace MoonProject.UI.PlayModeTests
 
             _fakesHost = new GameObject("CaptureFakes");
             fakes = _fakesHost.AddComponent<FakeGameServices>();
-            _tower = UiTestRig.CopyCosting(UiTestRig.UpgradePath, new Recipe(2, 1, 0), new Recipe(4, 2, 1),
-                new Recipe(6, 4, 2));
-            _bayKit = new[]
-            {
-                UiTestRig.CopyCosting(UiTestRig.HoverJumpUpgradePath, new Recipe(6, 3, 0)),
-                UiTestRig.CopyCosting(UiTestRig.CradleUpgradePath, new Recipe(4, 3, 0)),
-                UiTestRig.CopyCosting(UiTestRig.HeadlampUpgradePath, new Recipe(3, 4, 2)),
-            };
-            fakes.Upgrade = _tower;
             fakes.Camera = context.Get<IViewCamera>().Camera;
             fakes.Position = context.Get<IRoverState>().Position;
-            fakes.AnnouncesPurchases = false;
             fakes.Initialize(new GameContext(context.Events, context.Input));
             fakes.SetMaterials(10, 6, 2);
 
@@ -730,10 +688,9 @@ namespace MoonProject.UI.PlayModeTests
             _slot = BootstrapHarness.NewTestSlot();
             save = new SaveService(SaveService.DefaultDirectory, _slot);
             ui.Initialize(new UiServices(context.Events, context.Input, fakes, fakes, context.Get<IAudioSettings>(),
-                context.Get<ILookSettings>(), context.Get<IFeelSettings>(), save, fakes, fakes, fakes, fakes,
-                context.Get<IGameFlow>(), new SettingsFile(SaveService.DefaultDirectory, _slot), fakes, fakes, fakes,
-                fakes, fakes.Hold, fakes.Catalog, fakes.Dock, fakes.Home, fakes.Transfer, fakes.Equipment,
-                context.Get<IRoverPortrait>()));
+                context.Get<ILookSettings>(), context.Get<IFeelSettings>(), save, fakes, fakes, fakes,
+                context.Get<IGameFlow>(), new SettingsFile(SaveService.DefaultDirectory, _slot), fakes, fakes,
+                fakes.Hold, fakes.Catalog, fakes.Systems, sun: fakes.Sun));
             save.Load();
             return ui;
         }

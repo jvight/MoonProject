@@ -107,24 +107,6 @@ namespace MoonProject.World.Editor
             AssetDatabase.SaveAssets();
         }
 
-        /// <summary>The radio tower's warm pilot blink while the base sleeps (M3-16): a WarmLamp halo.</summary>
-        [MoonBuilder("World/Tower Pilot", 245)]
-        public static void BuildTowerPilot()
-        {
-            // The material's own values are home's lit top light, so a view without the running HomeLightingSystem
-            // (an edit-time capture) keeps the halo rule too: a tight glow on the lamp up close (M3-19 §8).
-            HomeLightingSettings home = LoadSettings().HomeLighting;
-            var material = new Material(LoadShader(WorldPaths.BeaconHaloShader));
-            material.SetColor("_Color", Palette.Get(PaletteSwatch.WarmLamp));
-            material.SetFloat("_Intensity", home.PilotIntensity * home.TopLightLevel);
-            material.SetFloat("_Radius", home.PilotRadius);
-            material.SetFloat("_MinAngleTan", Mathf.Tan(home.PilotMinAngle * Mathf.Deg2Rad));
-            material.SetFloat("_MinAngleFrom", home.PilotHaloFrom);
-            material.SetFloat("_MinAngleFull", home.PilotHaloFull);
-            GeneratedAssets.CreateOrReplace(material, WorldPaths.TowerPilotMaterial);
-            AssetDatabase.SaveAssets();
-        }
-
         [MoonBuilder("World/Post Processing", 220)]
         public static void BuildVolumeProfile()
         {
@@ -166,20 +148,6 @@ namespace MoonProject.World.Editor
             grain.intensity.Override(post.GrainIntensity);
             grain.response.Override(post.GrainResponse);
 
-            EditorUtility.SetDirty(profile);
-            AssetDatabase.SaveAssets();
-        }
-
-        /// <summary>
-        /// Home's warm grade (M3-18 V9): only the split toning balance, which <see cref="HomeLightingSystem"/> blends in
-        /// over the main profile a step per power stage.
-        /// </summary>
-        [MoonBuilder("World/Home Grade", 221)]
-        public static void BuildHomeGradeProfile()
-        {
-            PostProcessSettings post = LoadSettings().PostProcessing;
-            VolumeProfile profile = LoadOrCreateProfile(WorldPaths.HomeGradeProfile);
-            Override<SplitToning>(profile).balance.Override(post.WokenSplitBalance);
             EditorUtility.SetDirty(profile);
             AssetDatabase.SaveAssets();
         }

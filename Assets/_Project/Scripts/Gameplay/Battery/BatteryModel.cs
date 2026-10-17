@@ -7,23 +7,19 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// 07's battery as pure rules (docs/features/M3-20 §2-§3, VISION ruling 15): the battery is range, never a threat.
-    /// <list type="bullet">
-    /// <item>Driving draws one cell per tuned metres on the ground, eased by the slope, more while towing or boosting;
-    /// beam work draws by the second; a leap is paid when it happens. The capacitor drums pay boosts and leaps first.
-    /// Standing still never drains.</item>
-    /// <item>A verb in progress always completes: at empty, beam work in progress runs on the reserve, and the crawl
-    /// starts once it is done. The crawl caps the drive, never runs out, and ends on a charger or once the charge
-    /// passes the exit margin. After a few seconds of crawl Tilly (once home) leads and the cap rises.</item>
-    /// <item>A charger starts only once 07 has stopped on it for a moment, then fills cell by cell at its tuned
-    /// seconds per cell (the drums at the same rate). Leaving is free at any moment and keeps the part of a cell
-    /// already filled. The repaired solar cell trickles a still 07 back up to one cell, never more.</item>
-    /// <item>The Low warning fires below its share, or once the range left is short of the way to the nearest lit
-    /// charger, whichever comes first, but never near a lit charger, on a charger or while charging. Low and VeryLow
-    /// fire once per discharge and re-arm while a charger fills past them.</item>
-    /// </list>
-    /// Publishes <see cref="BatteryChanged"/> on cell boundaries only, <see cref="LowPowerChanged"/>,
-    /// <see cref="ChargingChanged"/>, <see cref="BatteryWarned"/> and <see cref="BatteryArcRevealed"/>.
-    /// Allocation-free per step.
+    /// <list type="bullet"> <item>Driving draws one cell per tuned metres on the ground, eased by the slope, more while
+    /// boosting; beam work, scanning and welding draw by the second (opening-v2 §10); a leap is paid when it happens.
+    /// The capacitor drums pay boosts and leaps first. Standing still never drains.</item> <item>A verb in progress
+    /// always completes: at empty, beam work in progress runs on the reserve, and the crawl starts once it is done. The
+    /// crawl caps the drive, never runs out, and ends on a charger or once the charge passes the exit margin.</item>
+    /// <item>A charger starts only once 07 has stopped on it for a moment, then fills cell by cell at its tuned seconds
+    /// per cell (the drums at the same rate). Leaving is free at any moment and keeps the part of a cell already
+    /// filled. A working solar wing trickles a still 07 back up to one cell, never more.</item> <item>The Low warning
+    /// fires below its share, or once the range left is short of the way to the nearest lit charger, whichever comes
+    /// first, but never near a lit charger, on a charger or while charging. Low and VeryLow fire once per discharge and
+    /// re-arm while a charger fills past them.</item> </list> Publishes <see cref="BatteryChanged"/> on cell boundaries
+    /// only, <see cref="LowPowerChanged"/>, <see cref="ChargingChanged"/>, <see cref="BatteryWarned"/> and
+    /// <see cref="BatteryArcRevealed"/>. Allocation-free per step.
     /// </summary>
     public sealed class BatteryModel : IRoverBattery
     {
@@ -42,7 +38,6 @@ namespace MoonProject.Gameplay
         private float _slopeMultiplier = 1f;
         private float _stillTime;
         private float _chargerStopTime;
-        private float _crawlTime;
         private bool _lowArmed;
         private bool _veryLowArmed;
         private int _fullCells;
@@ -53,7 +48,7 @@ namespace MoonProject.Gameplay
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             Cells = Mathf.Clamp(tuning.StartingCells, 1, MaxCells);
-            Charge = Cells;
+            Charge = Cells * tuning.StartingCharge01;
             DriveCap01 = 1f;
             _fullCells = FullCells;
             Rearm();
@@ -85,12 +80,6 @@ namespace MoonProject.Gameplay
 
         public ChargerKind Charger { get; private set; }
 
-        /// <summary>True while Tilly leads the crawl home (the higher drive cap).</summary>
-        public bool FriendLeads { get; private set; }
-
-        /// <summary>Seconds of the current crawl (0 when not crawling).</summary>
-        public float CrawlTime => _crawlTime;
-
         /// <summary>
         /// The charge is spent but a verb is still finishing on the reserve; the crawl starts after it.
         /// </summary>
@@ -119,42 +108,6 @@ namespace MoonProject.Gameplay
         {
             float cost = Mathf.Lerp(_tuning.TapLeapCost, _tuning.FullLeapCost, Mathf.Clamp01(strength));
             Charge = Mathf.Max(0f, Charge - PayFromDrums(cost));
-        }
-
-        /// <summary>
-        /// A new cell pack raised the capacity to <paramref name="cells"/>: the new cells arrive full (the install
-        /// moment's rising notes). A smaller or equal capacity changes nothing.
-        /// </summary>
-        public void GrowTo(int cells)
-        {
-            cells = Mathf.Clamp(cells, 1, MaxCells);
-            if (cells <= Cells)
-            {
-                return;
-            }
-
-            Charge += cells - Cells;
-            Cells = cells;
-            _fullCells = FullCells;
-            _events.Publish(new BatteryChanged(_fullCells, Cells, true, false));
-        }
-
-        /// <summary>
-        /// The cell pack came off (taken off at the bay, 0.5.5 §3.5): the capacity falls back to
-        /// <paramref name="cells"/>, keeping what charge still fits. A larger or equal capacity changes nothing.
-        /// </summary>
-        public void ShrinkTo(int cells)
-        {
-            cells = Mathf.Clamp(cells, 1, MaxCells);
-            if (cells >= Cells)
-            {
-                return;
-            }
-
-            Cells = cells;
-            Charge = Mathf.Min(Charge, Cells);
-            _fullCells = FullCells;
-            _events.Publish(new BatteryChanged(_fullCells, Cells, false, false));
         }
 
         public void Step(in BatteryStep step, float deltaTime)
@@ -213,8 +166,6 @@ namespace MoonProject.Gameplay
             LowLinesShown = Mathf.Max(0, data.lowLinesShown);
             IsCharging = false;
             _chargerStopTime = 0f;
-            FriendLeads = false;
-            _crawlTime = 0f;
             DriveCap01 = IsLowPower ? _tuning.CrawlCap : 1f;
             _fullCells = FullCells;
             _lowArmed = false;
@@ -255,18 +206,15 @@ namespace MoonProject.Gameplay
         private void Drain(in BatteryStep step)
         {
             float drive = step.GroundDistance / _tuning.MetresPerCell * _slopeMultiplier;
-            if (step.Towing)
-            {
-                drive *= _tuning.TowMultiplier;
-            }
-
             if (step.Boosting)
             {
                 drive = PayFromDrums(drive * _tuning.BoostMultiplier);
             }
 
             float beam = step.BeamSeconds / _tuning.BeamSecondsPerCell;
-            Charge = Mathf.Max(0f, Charge - drive - beam);
+            float scan = step.ScanSeconds / _tuning.ScanSecondsPerCell;
+            float weld = _tuning.WeldCells(step.WeldSeconds);
+            Charge = Mathf.Max(0f, Charge - drive - beam - scan - weld);
         }
 
         /// <summary>
@@ -311,10 +259,7 @@ namespace MoonProject.Gameplay
 
             if (IsCharging && step.OnCharger)
             {
-                float secondsPerCell = Charger == ChargerKind.Dock
-                    ? _tuning.DockSecondsPerCell
-                    : _tuning.MastSecondsPerCell;
-                float fill = deltaTime / secondsPerCell;
+                float fill = deltaTime / _tuning.DockSecondsPerCell;
                 Charge = Charge + fill >= Cells - CellEpsilon ? Cells : Charge + fill;
                 Drums = DrumsFitted ? Mathf.Min(_tuning.DrumCells, Drums + fill) : 0f;
                 Rearm();
@@ -340,12 +285,11 @@ namespace MoonProject.Gameplay
 
         private void StepCrawl(in BatteryStep step, float deltaTime)
         {
-            bool working = step.BeamSeconds > 0f;
+            bool working = step.BeamSeconds > 0f || step.ScanSeconds > 0f || step.WeldSeconds > 0f;
             if (!IsLowPower && Charge <= CellEpsilon && !working && !IsCharging)
             {
                 IsLowPower = true;
-                _crawlTime = 0f;
-                _events.Publish(new LowPowerChanged(true, false));
+                    _events.Publish(new LowPowerChanged(true, false));
             }
             else if (IsLowPower && Charge >= _tuning.ExitMargin)
             {
@@ -353,9 +297,7 @@ namespace MoonProject.Gameplay
                 _events.Publish(new LowPowerChanged(false, false));
             }
 
-            _crawlTime = IsLowPower ? _crawlTime + deltaTime : 0f;
-            FriendLeads = IsLowPower && step.FriendCanLead && _crawlTime >= _tuning.LeadDelay;
-            float cap = !IsLowPower ? 1f : FriendLeads ? _tuning.LeadCap : _tuning.CrawlCap;
+            float cap = IsLowPower ? _tuning.CrawlCap : 1f;
             DriveCap01 = Damp.Toward(DriveCap01, cap, _tuning.CapEase, deltaTime);
         }
 

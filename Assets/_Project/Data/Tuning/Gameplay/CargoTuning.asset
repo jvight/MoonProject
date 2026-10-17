@@ -54,6 +54,7 @@ MonoBehaviour:
   _lidSeconds: 0.8
   _sealGlow: 1
   _containerCut: 0
+  _containerClaimAngle: 60
   _containerLidSwing: 105
   _containerLidSeconds: 0.9
   _containerSealGlow: 0.8

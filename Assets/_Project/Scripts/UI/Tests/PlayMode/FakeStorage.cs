@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 
@@ -128,220 +129,40 @@ namespace MoonProject.UI.PlayModeTests
         }
     }
 
-    /// <summary>Home's shelves, set by hand.</summary>
-    public sealed class FakeHome : FakeSlots, IHomeStorage
+    /// <summary>07's systems, set by hand: the boot readout's lines and the igniter fit on the socket screen.</summary>
+    public sealed class FakeSystems : IRoverSystems
     {
-        public int ShelfCount => 0;
-
-        public HomeShelf GetShelf(int index)
+        private readonly RoverSystemState[] _states =
         {
-            throw new System.ArgumentOutOfRangeException(nameof(index));
-        }
+            RoverSystemState.Ok, RoverSystemState.Ok, RoverSystemState.Ok, RoverSystemState.Ok,
+            RoverSystemState.Fault, RoverSystemState.Jammed, RoverSystemState.ReceiveOnly, RoverSystemState.Empty,
+        };
 
-        public int OverflowUnits(SalvageMaterial material)
-        {
-            return 0;
-        }
-    }
+        public bool CanFitIgniter { get; set; }
 
-    /// <summary>07's equipment, set by hand: what is fitted, known and waiting, and whether 07 is at the station.</summary>
-    public sealed class FakeEquipment : IRoverEquipment
-    {
-        private readonly Dictionary<RoverSocket, RoverKitPiece> _fitted = new Dictionary<RoverSocket, RoverKitPiece>();
-        private readonly HashSet<RoverSocket> _known = new HashSet<RoverSocket>();
-        private readonly List<RoverKitPiece> _row = new List<RoverKitPiece>();
-
-        /// <summary>True while 07 rests at the part's station (the bay or the port).</summary>
-        public bool AtStation { get; set; }
-
-        /// <summary>Parts fitted through <see cref="TryFit"/>.</summary>
+        /// <summary>How many times the player asked to fit the igniter.</summary>
         public int Fits { get; private set; }
 
-        /// <summary>Parts taken off through <see cref="TryUnequip"/>.</summary>
-        public int Removals { get; private set; }
-
-        public int RowCapacity => 4;
-
-        public int RowCount => _row.Count;
-
-        public RoverSocket SocketOf(RoverKitPiece part)
+        public RoverSystemState StateOf(RoverSystem system)
         {
-            switch (part)
-            {
-                case RoverKitPiece.HoverCoils: return RoverSocket.Belly;
-                case RoverKitPiece.LampBar: return RoverSocket.Lamp;
-                case RoverKitPiece.CapacitorDrums: return RoverSocket.Flanks;
-                case RoverKitPiece.CargoRack: return RoverSocket.Hold;
-                case RoverKitPiece.SolarCell: return RoverSocket.Wing;
-                case RoverKitPiece.BatterySpine: return RoverSocket.Back;
-                case RoverKitPiece.TapeDeck: return RoverSocket.Deck;
-                case RoverKitPiece.TetherRing: return RoverSocket.Tether;
-                case RoverKitPiece.FocusLens: return RoverSocket.Cutter;
-                case RoverKitPiece.SideBins: return RoverSocket.Panniers;
-                default: return RoverSocket.Wing;
-            }
+            return _states[(int)system];
         }
 
-        public bool TryGetFitted(RoverSocket socket, out RoverKitPiece part)
+        public void Set(RoverSystem system, RoverSystemState state)
         {
-            return _fitted.TryGetValue(socket, out part);
+            _states[(int)system] = state;
         }
 
-        public bool IsKnown(RoverSocket socket)
+        public bool TryFitIgniter()
         {
-            return _fitted.ContainsKey(socket) || _known.Contains(socket);
-        }
-
-        public RoverKitPiece RowPart(int index)
-        {
-            return _row[index];
-        }
-
-        public bool CanFit(RoverKitPiece part)
-        {
-            return AtStation;
-        }
-
-        public bool TryFit(int rowIndex)
-        {
-            if (!AtStation || rowIndex >= _row.Count)
+            if (!CanFitIgniter)
             {
                 return false;
             }
 
-            RoverKitPiece part = _row[rowIndex];
-            _row.RemoveAt(rowIndex);
-            _fitted[SocketOf(part)] = part;
             Fits++;
-            return true;
-        }
-
-        public bool TryUnequip(RoverSocket socket)
-        {
-            if (!AtStation || !_fitted.TryGetValue(socket, out RoverKitPiece part) || _row.Count >= RowCapacity)
-            {
-                return false;
-            }
-
-            _fitted.Remove(socket);
-            _row.Add(part);
-            Removals++;
-            return true;
-        }
-
-        /// <summary>A part was crafted: it waits in the row and its socket is known.</summary>
-        public void Craft(RoverKitPiece part)
-        {
-            _row.Add(part);
-            _known.Add(SocketOf(part));
-        }
-
-        /// <summary>A part is already on 07.</summary>
-        public void Fit(RoverKitPiece part)
-        {
-            _fitted[SocketOf(part)] = part;
-        }
-
-        public void Clear()
-        {
-            _fitted.Clear();
-            _known.Clear();
-            _row.Clear();
-        }
-    }
-
-    /// <summary>07's portrait: a small texture and a socket position for every socket a test places.</summary>
-    public sealed class FakePortrait : IRoverPortrait, System.IDisposable
-    {
-        private const int Width = 96;
-        private const int Height = 64;
-
-        private readonly Dictionary<RoverSocket, UnityEngine.Vector2> _at = new Dictionary<RoverSocket, UnityEngine.Vector2>();
-
-        public FakePortrait()
-        {
-            float x = 0.12f;
-            foreach (RoverSocket socket in System.Enum.GetValues(typeof(RoverSocket)))
-            {
-                _at[socket] = new UnityEngine.Vector2(x, 0.5f + 0.25f * (((int)socket % 2) - 0.5f));
-                x += 0.07f;
-            }
-        }
-
-        private UnityEngine.RenderTexture _texture;
-
-        public UnityEngine.RenderTexture Texture => _texture ?? (_texture = new UnityEngine.RenderTexture(Width, Height, 0));
-
-        /// <summary>Whether the page asked for the portrait to render.</summary>
-        public bool Active { get; private set; }
-
-        public void SetActive(bool active)
-        {
-            Active = active;
-        }
-
-        public bool TryGetSocketViewport(RoverSocket socket, out UnityEngine.Vector2 uv)
-        {
-            return _at.TryGetValue(socket, out uv);
-        }
-
-        /// <summary>Takes a socket out of the frame (art has no node for it).</summary>
-        public void Remove(RoverSocket socket)
-        {
-            _at.Remove(socket);
-        }
-
-        public void Dispose()
-        {
-            if (_texture != null)
-            {
-                _texture.Release();
-                UnityEngine.Object.DestroyImmediate(_texture);
-            }
-        }
-    }
-
-    /// <summary>Whether 07 rests on the dock, set by a test.</summary>
-    public sealed class FakeDock : IDockState
-    {
-        public bool IsDocked { get; set; }
-    }
-
-    /// <summary>Moves a whole slot between two fakes while docked, counting the moves.</summary>
-    public sealed class FakeTransfer : IStackTransfer
-    {
-        private readonly FakeSlots _hold;
-        private readonly FakeSlots _home;
-        private readonly FakeDock _dock;
-
-        public FakeTransfer(FakeSlots hold, FakeSlots home, FakeDock dock)
-        {
-            _hold = hold;
-            _home = home;
-            _dock = dock;
-        }
-
-        /// <summary>How many moves went through.</summary>
-        public int Moves { get; private set; }
-
-        public bool TryMove(SalvageMaterial material, bool toHome, out int moved)
-        {
-            moved = 0;
-            FakeSlots from = toHome ? _hold : _home;
-            FakeSlots to = toHome ? _home : _hold;
-            if (!_dock.IsDocked || !from.TryTake(material, out MaterialSlot taken))
-            {
-                return false;
-            }
-
-            if (!to.TryPut(taken))
-            {
-                from.TryPut(taken);
-                return false;
-            }
-
-            moved = taken.Units;
-            Moves++;
+            CanFitIgniter = false;
+            _states[(int)RoverSystem.Cutter] = RoverSystemState.Ok;
             return true;
         }
     }
@@ -384,51 +205,37 @@ namespace MoonProject.UI.PlayModeTests
         }
     }
 
-    /// <summary>Scan sites and blueprint fragment counts set by a test.</summary>
-    public sealed class FakeScanSites : IScanSites
+    /// <summary>The sky, set by hand: the Sun's elevation is all the Sun's arc reads.</summary>
+    public sealed class FakeSunlight : ISunlight
     {
-        public readonly List<(string id, UnityEngine.Vector3 pos, bool known, int left, int total)> Sites =
-            new List<(string id, UnityEngine.Vector3 pos, bool known, int left, int total)>();
+        public float ElevationDegrees { get; set; } = 10f;
 
-        public readonly Dictionary<string, int> Scanned =
-            new Dictionary<string, int>(System.StringComparer.Ordinal);
+        public float TimeSeconds => 0f;
 
-        public readonly Dictionary<string, int> SetSizes =
-            new Dictionary<string, int>(System.StringComparer.Ordinal);
+        public bool IsHoldingEclipse => false;
 
-        public int Count => Sites.Count;
-
-        public string PlaceId(int index) => Sites[index].id;
-
-        public UnityEngine.Vector3 Position(int index) => Sites[index].pos;
-
-        public bool IsKnown(int index) => Sites[index].known;
-
-        public int Left(int index) => Sites[index].left;
-
-        public int FragmentCount(int index) => Sites[index].total;
-
-        public int IndexOf(string placeId)
+        public Vector3 SunDirection
         {
-            for (int i = 0; i < Sites.Count; i++)
+            get
             {
-                if (Sites[i].id == placeId)
-                {
-                    return i;
-                }
+                float radians = ElevationDegrees * Mathf.Deg2Rad;
+                return new Vector3(Mathf.Cos(radians), Mathf.Sin(radians), 0f);
             }
-
-            return -1;
         }
 
-        public int ScannedOf(string blueprintId)
+        public float EclipseFactor => 0f;
+
+        public float EarthPhase => 0f;
+
+        public SkyPhase Phase => SkyPhase.Sunlit;
+
+        public float SunlightAt(Vector3 position)
         {
-            return blueprintId != null && Scanned.TryGetValue(blueprintId, out int s) ? s : 0;
+            return 1f;
         }
 
-        public int SetSize(string blueprintId)
+        public void ReleaseOpeningEclipse()
         {
-            return blueprintId != null && SetSizes.TryGetValue(blueprintId, out int z) ? z : 0;
         }
     }
 }

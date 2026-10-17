@@ -79,50 +79,6 @@
             "text": "Mang cuộn dây về bệ tháp."
         },
         {
-            "key": "hint.pickup",
-            "text": "Nhặt"
-        },
-        {
-            "key": "pickup.part_towercoil",
-            "text": "Cuộn dây tháp"
-        },
-        {
-            "key": "pickup.part_transformer",
-            "text": "Bộ biến áp"
-        },
-        {
-            "key": "pickup.part_relayspare",
-            "text": "Linh kiện trạm tiếp sóng"
-        },
-        {
-            "key": "pickup.relay_part",
-            "text": "Linh kiện trạm tiếp sóng"
-        },
-        {
-            "key": "pickup.tilly.rotor",
-            "text": "Cánh quạt của Tilly"
-        },
-        {
-            "key": "pickup.tilly.lens",
-            "text": "ống kính của Tilly"
-        },
-        {
-            "key": "pickup.tilly.cell",
-            "text": "pin của Tilly"
-        },
-        {
-            "key": "pickup.bell.knob",
-            "text": "núm dò đài của Bell"
-        },
-        {
-            "key": "pickup.bell.cone",
-            "text": "màng loa của Bell"
-        },
-        {
-            "key": "pickup.bell.valve",
-            "text": "đèn điện tử của Bell"
-        },
-        {
             "key": "next.signal",
             "text": "Có tín hiệu yếu. Dò sóng rồi lần theo."
         },
@@ -205,30 +161,6 @@
         {
             "key": "next.link",
             "text": "Sửa các trạm tiếp sóng đang tắt trên đường tới Đỉnh núi."
-        },
-        {
-            "key": "ui.recovery.title",
-            "text": "QUY TRÌNH KHÔI PHỤC LUMEN"
-        },
-        {
-            "key": "recovery.power.name",
-            "text": "Cấp điện cho trạm"
-        },
-        {
-            "key": "recovery.link.name",
-            "text": "Nối mạng lưới tới Đỉnh núi"
-        },
-        {
-            "key": "recovery.dish.name",
-            "text": "Sửa chảo ăng-ten lớn"
-        },
-        {
-            "key": "recovery.answer.name",
-            "text": "Trả lời tín hiệu"
-        },
-        {
-            "key": "protocol.power.need",
-            "text": "› tháp radio"
         },
         {
             "key": "ui.settings.sound",
@@ -325,74 +257,6 @@
         {
             "key": "ui.settings.back",
             "text": "Quay lại"
-        },
-        {
-            "key": "hint.excavate",
-            "text": "Đào"
-        },
-        {
-            "key": "hint.tether",
-            "text": "Kéo"
-        },
-        {
-            "key": "hint.deposit",
-            "text": "Đặt"
-        },
-        {
-            "key": "hint.reel",
-            "text": "Thu dây"
-        },
-        {
-            "key": "upgrade.radio_tower.name",
-            "text": "Tháp radio"
-        },
-        {
-            "key": "upgrade.radio_tower.1.title",
-            "text": "Xây cấp 1"
-        },
-        {
-            "key": "upgrade.radio_tower.1.effect",
-            "text": "Đưa điện về nhà: cửa sổ tàu đổ bộ sáng lên và radio bắt được đài."
-        },
-        {
-            "key": "component.tower_coil.needed",
-            "text": "Thùng cuộn dây · Kho tiếp tế"
-        },
-        {
-            "key": "upgrade.radio_tower.2.title",
-            "text": "Xây cấp 2"
-        },
-        {
-            "key": "upgrade.radio_tower.2.effect",
-            "text": "Cấp điện cho Xưởng xe của Kenji, và radio nghe rõ ở xa hơn."
-        },
-        {
-            "key": "component.transformer.needed",
-            "text": "Hộp đấu dây · Gara của Kenji"
-        },
-        {
-            "key": "upgrade.radio_tower.3.title",
-            "text": "Xây cấp 3"
-        },
-        {
-            "key": "upgrade.radio_tower.3.effect",
-            "text": "Cấp điện cho bản đồ trong phòng thí nghiệm, và radio rõ khắp lòng chảo."
-        },
-        {
-            "key": "component.relay_spare.needed",
-            "text": "Tủ bảo trì · trạm tiếp sóng"
-        },
-        {
-            "key": "upgrade.rover.hover_jump.name",
-            "text": "Bật nhảy"
-        },
-        {
-            "key": "upgrade.rover.hover_jump.1.title",
-            "text": "Bộ lò xo của Kenji"
-        },
-        {
-            "key": "upgrade.rover.hover_jump.1.effect",
-            "text": "Giữ để tích lực, thả ra để nhảy: 07 bật qua các khe vực."
         },
         {
             "key": "glyph.keyboard.escape",
@@ -499,22 +363,6 @@
             "text": "LS"
         },
         {
-            "key": "hint.repair",
-            "text": "Sửa"
-        },
-        {
-            "key": "hint.tune",
-            "text": "Dò đài"
-        },
-        {
-            "key": "hint.restore",
-            "text": "Sửa"
-        },
-        {
-            "key": "hint.hop",
-            "text": "Nhảy sóng"
-        },
-        {
             "key": "hint.salvage",
             "text": "Cắt"
         },
@@ -587,116 +435,12 @@
             "text": "07: {0}/{1} ô"
         },
         {
-            "key": "ui.can.tether.verb",
-            "text": "Nâng"
-        },
-        {
-            "key": "ui.can.hover_jump.verb",
-            "text": "Bật nhảy"
-        },
-        {
-            "key": "ui.can.cargo_cradle.verb",
-            "text": "Giỏ chở đồ"
-        },
-        {
-            "key": "ui.can.warm_headlamp.verb",
-            "text": "Đèn pha ấm"
-        },
-        {
-            "key": "ui.can.boost_coils.verb",
-            "text": "Bộ tăng tốc"
-        },
-        {
-            "key": "ui.can.cell_pack.verb",
-            "text": "Bộ pin II"
-        },
-        {
-            "key": "ui.can.wide_sonar.verb",
-            "text": "Sonar rộng"
-        },
-        {
-            "key": "ui.can.magnetic_treads.verb",
-            "text": "Bánh từ tính"
-        },
-        {
-            "key": "ui.can.side_bins.verb",
-            "text": "Thùng hông"
-        },
-        {
-            "key": "ui.can.focus_lens.verb",
-            "text": "Thấu kính hội tụ"
-        },
-        {
             "key": "hint.build",
             "text": "Chế tạo"
         },
         {
             "key": "hint.scan",
             "text": "Quét"
-        },
-        {
-            "key": "ui.recipecard.needs",
-            "text": "CẦN"
-        },
-        {
-            "key": "ui.recipecard.tower",
-            "text": "Đỗ lên bệ để xây."
-        },
-        {
-            "key": "upgrade.rover.cargo_cradle.name",
-            "text": "Giỏ chở đồ"
-        },
-        {
-            "key": "upgrade.rover.cargo_cradle.1.title",
-            "text": "Giỏ có dây buộc"
-        },
-        {
-            "key": "upgrade.rover.cargo_cradle.1.effect",
-            "text": "Chở một kỷ vật về nhà trong giỏ trên lưng 07, dây kéo vẫn rảnh."
-        },
-        {
-            "key": "upgrade.rover.warm_headlamp.name",
-            "text": "Đèn pha ấm"
-        },
-        {
-            "key": "upgrade.rover.warm_headlamp.1.title",
-            "text": "Giàn đèn có lồng"
-        },
-        {
-            "key": "upgrade.rover.warm_headlamp.1.effect",
-            "text": "Đèn chiếu rộng và sáng hơn, cột sáng sonar cũng lâu tắt hơn."
-        },
-        {
-            "key": "upgrade.rover.boost_coils.name",
-            "text": "Bộ tăng tốc"
-        },
-        {
-            "key": "upgrade.rover.boost_coils.1.title",
-            "text": "Hai trống tụ điện"
-        },
-        {
-            "key": "upgrade.rover.boost_coils.1.effect",
-            "text": "Giữ nút tiến trên đất bằng để chạy nhanh hơn một chút."
-        },
-        {
-            "key": "hint.stow",
-            "text": "Cất vào giỏ"
-        },
-        {
-            "key": "kit.solar_cell.name",
-            "text": "Ô pin mặt trời của Tilly"
-        },
-        {
-            "key": "kit.fresh_paint.name",
-            "text": "Lớp sơn mới từ Bell"
-        },
-        {
-            "key": "kit.tape_deck.name",
-            "text": "Đầu băng cũ của Ro"
-        },
-        {
-            "key": "kit.tether_ring.name",
-            "text": "Vòng dây kéo dự phòng của Kenji"
         },
         {
             "key": "ui.title.subtitle",
@@ -843,18 +587,6 @@
             "text": "Pin yếu. Có thể sạc ở {0}."
         },
         {
-            "key": "upgrade.rover.cell_pack.name",
-            "text": "Bộ pin II"
-        },
-        {
-            "key": "upgrade.rover.cell_pack.1.title",
-            "text": "Khối pin trên lưng"
-        },
-        {
-            "key": "upgrade.rover.cell_pack.1.effect",
-            "text": "Thêm hai ô pin, tổng cộng sáu ô: đủ để tới phía xa của lòng chảo."
-        },
-        {
             "key": "ui.settings.text_size",
             "text": "Cỡ chữ"
         },
@@ -963,66 +695,6 @@
             "text": "Luyện từ đất hiếm và chip mạch ở lò luyện II."
         },
         {
-            "key": "kit.focus_lens.name",
-            "text": "Thấu kính hội tụ"
-        },
-        {
-            "key": "kit.side_bins.name",
-            "text": "Thùng hông"
-        },
-        {
-            "key": "pickup.part_relaymodule",
-            "text": "Mô-đun trạm tiếp sóng"
-        },
-        {
-            "key": "pickup.part_tillyrotor",
-            "text": "Cánh quạt của Tilly"
-        },
-        {
-            "key": "pickup.part_tillylens",
-            "text": "Thấu kính của Tilly"
-        },
-        {
-            "key": "pickup.part_tillycell",
-            "text": "Ô pin của Tilly"
-        },
-        {
-            "key": "pickup.part_bellcone",
-            "text": "Màng loa của Bell"
-        },
-        {
-            "key": "pickup.part_bellknob",
-            "text": "Núm dò đài của Bell"
-        },
-        {
-            "key": "pickup.part_bellvalve",
-            "text": "Bóng đèn điện tử của Bell"
-        },
-        {
-            "key": "upgrade.rover.focus_lens.name",
-            "text": "Thấu kính hội tụ"
-        },
-        {
-            "key": "upgrade.rover.focus_lens.1.title",
-            "text": "Thấu kính hội tụ cho tia cắt"
-        },
-        {
-            "key": "upgrade.rover.focus_lens.1.effect",
-            "text": "Máy cắt tích điện nhanh hơn, cắt nhanh hơn 30% và tốn ít pin hơn 15%."
-        },
-        {
-            "key": "upgrade.rover.side_bins.name",
-            "text": "Thùng hông"
-        },
-        {
-            "key": "upgrade.rover.side_bins.1.title",
-            "text": "Hai thùng hai bên hông 07"
-        },
-        {
-            "key": "upgrade.rover.side_bins.1.effect",
-            "text": "Thêm bốn ô trong khoang hàng của 07, mỗi chuyến chở về được nhiều hơn."
-        },
-        {
             "key": "scan.fragment",
             "text": "Mảnh {0}/{1} · {2}"
         },
@@ -1035,20 +707,8 @@
             "text": "Khoang hàng"
         },
         {
-            "key": "hint.shelves",
-            "text": "Kệ"
-        },
-        {
             "key": "ui.hold.boot",
             "text": "KHOANG · {0} Ô · OK"
-        },
-        {
-            "key": "ui.transfer.to_trip",
-            "text": "Mang theo"
-        },
-        {
-            "key": "ui.transfer.to_home",
-            "text": "Cất ở nhà"
         },
         {
             "key": "container.coil_crate",
@@ -1235,76 +895,12 @@
             "text": "TRANG BỊ"
         },
         {
-            "key": "ui.bay.row_full",
-            "text": "Hàng linh kiện đã đầy. Hãy lắp một món lên 07 trước."
-        },
-        {
             "key": "ui.title.continue_note",
             "text": "BẢN LƯU · 02:14"
         },
         {
             "key": "ui.title.key_hint",
             "text": "[W/S · D-PAD] DI CHUYỂN  [ENTER / A] XÁC NHẬN"
-        },
-        {
-            "key": "ui.cargo.fit_at_bay",
-            "text": "Lắp hoặc tháo trang bị tại Bệ Xe Tự Hành"
-        },
-        {
-            "key": "pickup.tilly.cell.job",
-            "text": "Pin nguồn dự phòng để khôi phục Tilly"
-        },
-        {
-            "key": "pickup.bell.valve.job",
-            "text": "Bóng đèn chân không cho đài thu của Bell"
-        },
-        {
-            "key": "ui.kit.cutter.desc",
-            "text": "Cắt mối hàn phế liệu và mạch đá lấy vật tư."
-        },
-        {
-            "key": "ui.kit.tether.desc",
-            "text": "Móc kéo kiện hàng nặng và tời 07 lên dốc."
-        },
-        {
-            "key": "ui.kit.lamp.desc",
-            "text": "Chiếu sáng miệng hố tối và sườn núi phía trước."
-        },
-        {
-            "key": "ui.kit.belly.desc",
-            "text": "Phóng xung từ dưới gầm để nhảy qua tảng đá."
-        },
-        {
-            "key": "ui.kit.flanks.desc",
-            "text": "Tăng tốc hành trình khi chạy trên mặt phẳng."
-        },
-        {
-            "key": "ui.kit.panniers.desc",
-            "text": "Mở thêm bốn ô chứa hàng bên hông giữa các bánh."
-        },
-        {
-            "key": "ui.kit.back.desc",
-            "text": "Lắp thêm hai ngăn pin dự trữ dọc sống lưng."
-        },
-        {
-            "key": "ui.kit.hold.desc",
-            "text": "Mở rộng giá hàng phía sau thêm bốn ô chứa."
-        },
-        {
-            "key": "ui.kit.wing.desc",
-            "text": "Tự sạc pin chậm khi đứng dưới ánh nắng."
-        },
-        {
-            "key": "ui.kit.deck.desc",
-            "text": "Phát các cuộn băng thu âm của đội trên đường."
-        },
-        {
-            "key": "ui.kit.wheels.desc",
-            "text": "Bám chặt vách miệng hố dốc mà không trượt."
-        },
-        {
-            "key": "ui.kit.antenna.desc",
-            "text": "Mở rộng tầm phát sóng dò khắp lòng chảo."
         },
         {
             "key": "next.v2.drive_lander",
@@ -1369,6 +965,162 @@
         {
             "key": "ui.unlock.blueprint",
             "text": "Đã học bản vẽ: {0}"
+        },
+        {
+            "key": "ui.system.unit",
+            "text": "ĐƠN VỊ 07 · SSR-5 · TIẾP TỤC · 13 148 NGÀY"
+        },
+        {
+            "key": "ui.system.wheels",
+            "text": "BÁNH XE"
+        },
+        {
+            "key": "ui.system.lamps",
+            "text": "ĐÈN"
+        },
+        {
+            "key": "ui.system.scan",
+            "text": "ỐNG KÍNH · QUÉT"
+        },
+        {
+            "key": "ui.system.assembly",
+            "text": "LẮP DỰNG"
+        },
+        {
+            "key": "ui.system.cutter",
+            "text": "MỎ CẮT"
+        },
+        {
+            "key": "ui.system.solar_wing",
+            "text": "CÁNH PIN"
+        },
+        {
+            "key": "ui.system.antenna",
+            "text": "ĂNG-TEN"
+        },
+        {
+            "key": "ui.system.sockets",
+            "text": "Ổ LẮP 1–2"
+        },
+        {
+            "key": "ui.system.battery",
+            "text": "PIN"
+        },
+        {
+            "key": "ui.system.state.ok",
+            "text": "OK"
+        },
+        {
+            "key": "ui.system.state.fault",
+            "text": "LỖI"
+        },
+        {
+            "key": "ui.system.state.fault_igniter",
+            "text": "LỖI · MẤT BỘ ĐÁNH LỬA"
+        },
+        {
+            "key": "ui.system.state.jammed",
+            "text": "KẸT"
+        },
+        {
+            "key": "ui.system.state.receive_only",
+            "text": "CHỈ NHẬN"
+        },
+        {
+            "key": "ui.system.state.empty",
+            "text": "TRỐNG"
+        },
+        {
+            "key": "ui.system.note.wheels",
+            "text": "(1 BÁNH KHÁC BỘ)"
+        },
+        {
+            "key": "ui.system.note.blueprints",
+            "text": "{0} BẢN VẼ"
+        },
+        {
+            "key": "ui.system.note.blueprint_one",
+            "text": "1 BẢN VẼ"
+        },
+        {
+            "key": "ui.device.scan.name",
+            "text": "Ống kính · Quét"
+        },
+        {
+            "key": "ui.device.cutter.name",
+            "text": "Mỏ cắt"
+        },
+        {
+            "key": "ui.device.socket1.name",
+            "text": "Ổ lắp 1"
+        },
+        {
+            "key": "ui.device.socket2.name",
+            "text": "Ổ lắp 2"
+        },
+        {
+            "key": "ui.device.scan.ok",
+            "text": "Đọc mảnh vỡ và tàn tích."
+        },
+        {
+            "key": "ui.device.cutter.ok",
+            "text": "Cắt thùng hàng và mối hàn vỏ."
+        },
+        {
+            "key": "ui.device.cutter.fault",
+            "text": "Mất bộ đánh lửa. Lắp bộ dự phòng trên bệ."
+        },
+        {
+            "key": "ui.device.cutter.fit",
+            "text": "Lắp bộ đánh lửa dự phòng."
+        },
+        {
+            "key": "ui.device.socket.empty",
+            "text": "Trống. Bộ phụ kiện sau này lắp ở đây."
+        },
+        {
+            "key": "pickup.part.igniter",
+            "text": "Bộ đánh lửa dự phòng"
+        },
+        {
+            "key": "pickup.part.igniter.job",
+            "text": "Lắp vào mỏ cắt khi đỗ trên bệ."
+        },
+        {
+            "key": "ui.system.column",
+            "text": "17"
+        },
+        {
+            "key": "ui.readout.power_off",
+            "text": "NGUỒN · NGOẠI TUYẾN"
+        },
+        {
+            "key": "ui.readout.power_on",
+            "text": "NGUỒN · BẬT"
+        },
+        {
+            "key": "ui.readout.link_west",
+            "text": "LIÊN KẾT · 0/1 · TÍN HIỆU PHÍA TÂY"
+        },
+        {
+            "key": "ui.readout.reserve",
+            "text": "DỰ TRỮ TÀU ĐỔ BỘ · {0}%"
+        },
+        {
+            "key": "ui.readout.sun",
+            "text": "MẶT TRỜI"
+        },
+        {
+            "key": "story.airlock_panel",
+            "text": "NIÊM PHONG NHÀ Ở · KHOÁ · 28/10/1988\nÁO VŨ TRỤ 01-04 · NGOẠI TUYẾN · 29/10/1988 · 04:12"
+        },
+        {
+            "key": "build.energy.card",
+            "text": "Pin {0}"
+        },
+        {
+            "key": "hint.pickup",
+            "text": "Nhặt"
         }
     ]
 }

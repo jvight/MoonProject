@@ -10,12 +10,11 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// The world's sealed containers (docs/design/0.5.5-owner-feedback.md §2: no find rests on open regolith). Within
-    /// the beam's reach, with no salvage piece, pickup or crew crate before it, holding E cuts a container's glowing
-    /// seal
-    /// once (the cut's own beats, <see cref="CutState"/>, at the cutter's tier): <see cref="ContainerSealCut"/>, the
-    /// lid
-    /// swings open about its local X, and as it stands open <see cref="ContainerOpened"/> lets its owner slide the find
-    /// out. A save keeps which stand open. Allocation-free after the containers are added.
+    /// the beam's reach and ahead of 07, with no salvage piece or pickup before it, holding E cuts a container's
+    /// glowing seal once (the cut's own beats, <see cref="CutState"/>, at the cutter's tier):
+    /// <see cref="ContainerSealCut"/>, the lid swings open about its local X, and as it stands open
+    /// <see cref="ContainerOpened"/> lets its owner slide the find out. A save keeps which stand open. Allocation-free
+    /// after the containers are added.
     /// </summary>
     public sealed class SealedContainers : ICutterAimOwner
     {
@@ -31,14 +30,11 @@ namespace MoonProject.Gameplay
         private readonly ISaveService _save;
         private readonly PickupReach _pickups;
         private readonly CutState _cut;
-        private CrewCrates _crates;
         private SealedContainer _cutting;
         private bool _holding;
         private bool _gazing;
 
-        /// <summary>
-        /// Made before the finds' owners initialise, so each can add its containers; connect the crates later.
-        /// </summary>
+        /// <summary>Made before the finds' owners initialise, so each can add its containers.</summary>
         public SealedContainers(SalvageField salvage, CargoTuning tuning, Cutter cutter, GameplayServices services)
         {
             _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
@@ -58,12 +54,6 @@ namespace MoonProject.Gameplay
             _pickups = services.Pickups;
             _cut = new CutState(_events, FeelKind.Cut, cutter.ChargeSeconds, cutter.ResumeChargeSeconds,
                 salvage.Tuning.CutSteps);
-        }
-
-        /// <summary>The crew's crates: a crate in reach is cut before a container (one press, one verb).</summary>
-        public void Connect(CrewCrates crates)
-        {
-            _crates = crates ?? throw new ArgumentNullException(nameof(crates));
         }
 
         /// <summary>The sealed container a hold of E would cut now, or null.</summary>
@@ -119,15 +109,21 @@ namespace MoonProject.Gameplay
 
         public void Step(float now, float deltaTime)
         {
-            bool busy = _salvage.Candidate != null || _salvage.Cutting != null || _crates.Candidate != null ||
-                        _crates.Cutting != null || _pickups.TryGet(Time.frameCount, out _, out _);
+            bool busy = _salvage.Candidate != null || _salvage.Cutting != null ||
+                        _pickups.TryGet(Time.frameCount, out _, out _);
             Candidate = busy ? null : Nearest();
             for (int i = 0; i < _containers.Count; i++)
             {
                 StepLid(_containers[i], now);
             }
 
-            bool wants = _input.ExcavateHeld && Candidate != null && (_cutting != null || _beam.MayStart);
+            if (_input.ExcavateHeld && Candidate != null && !_cutter.Ready)
+            {
+                _cutter.Refuse(Candidate.CutPoint.position);
+            }
+
+            bool wants = _input.ExcavateHeld && Candidate != null && _cutter.Ready &&
+                         (_cutting != null || _beam.MayStart);
             SetHold(wants);
             UpdateGaze(wants);
             float engageSpeed = _cutting != null
@@ -260,13 +256,15 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// The sealed container in reach that 07 faces most squarely: two seals side by side (Tilly's sled's clamp
-        /// and pod) are told apart by where 07 looks, not by a few centimetres.
+        /// and pod) are told apart by where 07 looks, not by a few centimetres. One outside the claim angle off 07's
+        /// heading is not offered.
         /// </summary>
         private SealedContainer Nearest()
         {
             SealedContainer best = null;
             float reachSq = _salvage.Tuning.ReachRadius * _salvage.Tuning.ReachRadius;
-            float bestFacing = float.NegativeInfinity;
+            float bestFacing = Mathf.Cos(_tuning.ContainerClaimAngle * Mathf.Deg2Rad);
+            bestFacing = bestFacing > -1f ? bestFacing : float.NegativeInfinity;
             Vector3 forward = _rover.Rotation * Vector3.forward;
             forward.y = 0f;
             for (int i = 0; i < _containers.Count; i++)

@@ -113,15 +113,13 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void TheRecipeView_DimsTheShort_AndShowsAMissingComponentAsOneRow_InTheCurrentLanguage()
+        public void TheRecipeView_DimsTheShort_InTheCurrentLanguage()
         {
             LocalizationService localization = TestTables.Localization(new EventBus(),
                 UiKeys.RecipeRow, "{0} (have {1})", "{0} (có {1})",
                 UiKeys.MaterialName(SalvageMaterial.Metal), "metal", "kim loại",
                 UiKeys.MaterialName(SalvageMaterial.Wiring), "wiring", "dây điện",
-                UiKeys.MaterialName(SalvageMaterial.Optics), "optics", "quang học",
-                "pickup.part_towercoil", "Tower Coil", "cuộn dây tháp",
-                UiKeys.ComponentNeeded("Part_TowerCoil"), "Coil crate · Supply Depot", "Thùng cuộn dây · Kho tiếp tế");
+                UiKeys.MaterialName(SalvageMaterial.Optics), "optics", "quang học");
             var view = new RecipeView(new VisualElement(), localization, new IntText(100));
             var stock = new Stock { Metal = 2, Wiring = 9 };
 
@@ -135,25 +133,17 @@ namespace MoonProject.UI.Tests
             Assert.IsFalse(slots.Root(SalvageMaterial.Wiring).ClassListContains(MaterialSlots.ShortClass));
             Assert.AreEqual(DisplayStyle.None, slots.Root(SalvageMaterial.Optics).style.display.value);
             Assert.IsFalse(view.IsAffordable);
-            Assert.AreEqual(string.Empty, view.PartText, "no component is waited for");
-
-            view.Show(new Recipe(6, 4, 0), stock, "Part_TowerCoil");
-            Assert.AreEqual("Tower Coil | 1 (have 0) | Coil crate · Supply Depot", view.PartText,
-                "the missing component is one more row, with where to find it in small type");
 
             localization.SetLanguage(TestTables.Vietnamese);
             view.Relocalize();
-            view.Show(new Recipe(6, 4, 0), stock, "Part_TowerCoil");
-            Assert.AreEqual("cuộn dây tháp | 1 (có 0) | Thùng cuộn dây · Kho tiếp tế", view.PartText);
+            view.Show(new Recipe(6, 4, 0), stock);
+            Assert.AreEqual("6 (có 2)", slots.Text(SalvageMaterial.Metal));
+            Assert.AreEqual("kim loại", slots.Word(SalvageMaterial.Metal));
 
             stock.Metal = 6;
-            view.Show(new Recipe(6, 4, 0), stock, "Part_TowerCoil");
+            view.Show(new Recipe(6, 4, 0), stock);
             Assert.IsFalse(slots.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass));
             Assert.IsTrue(view.IsAffordable);
-            Assert.IsFalse(view.IsComplete, "the materials are in, the component is not");
-            view.Show(new Recipe(6, 4, 0), stock);
-            Assert.IsTrue(view.IsComplete);
-            Assert.AreEqual(string.Empty, view.PartText);
         }
 
         /// <summary>A material stock the test sets by hand.</summary>
