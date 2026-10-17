@@ -31,7 +31,7 @@ namespace MoonProject.Gameplay
         [Range(0f, 1f)] [SerializeField] private float _deconstructRefundShare = 0.75f;
 
         [Tooltip("Structure IDs that a new game knows by design (e.g. charging_pad), applied on a new game and saved like learned blueprints.")]
-        [SerializeField] private string[] _startingKnownIds = { StructureIds.ChargingPad };
+        [SerializeField] private string[] _startingKnownIds = Array.Empty<string>();
 
         [Tooltip("Structure IDs unlocked at game start for playtesting (kept empty in production).")]
         [SerializeField] private string[] _playtestUnlockedIds = Array.Empty<string>();

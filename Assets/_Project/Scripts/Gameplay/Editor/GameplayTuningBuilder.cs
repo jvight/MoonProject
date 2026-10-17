@@ -38,6 +38,7 @@ namespace MoonProject.Gameplay.Editor
             EnsureExists<CargoTuning>(GameplayAssetPaths.CargoTuning);
             EnsureExists<CutterTuning>(GameplayAssetPaths.CutterTuning);
             EnsureExists<ScanTuning>(GameplayAssetPaths.ScanTuning);
+            EnsureExists<OpeningTuning>(GameplayAssetPaths.OpeningTuning);
             EnsureExists<BuildingTuning>(GameplayAssetPaths.BuildingTuning);
             EnsureExists<MapTuning>(GameplayAssetPaths.MapTuning);
         }

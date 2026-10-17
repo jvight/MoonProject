@@ -18,6 +18,5 @@ MonoBehaviour:
   _snapAngleDegrees: 20
   _weldRange: 6
   _deconstructRefundShare: 0.75
-  _startingKnownIds:
-  - charging_pad
+  _startingKnownIds: []
   _playtestUnlockedIds: []

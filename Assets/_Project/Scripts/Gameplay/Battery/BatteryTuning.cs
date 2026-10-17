@@ -13,6 +13,9 @@ namespace MoonProject.Gameplay
         [Tooltip("Cells 07 starts with (four amber flank lamps). Cell Pack II raises it.")]
         [Range(1, BatteryModel.MaxCells)] [SerializeField] private int _startingCells = 4;
 
+        [Tooltip("How full 07's cells are when a new game starts (opening-v2 B1: half empty, so it needs a charger).")]
+        [Range(0.05f, 1f)] [SerializeField] private float _startingCharge01 = 0.5f;
+
         [Tooltip("Cells once Cell Pack II's battery spine is fitted (the two new cells arrive full).")]
         [Range(1, BatteryModel.MaxCells)] [SerializeField] private int _cellPackCells = 6;
 
@@ -144,6 +147,7 @@ namespace MoonProject.Gameplay
         [Range(0, 10)] [SerializeField] private int _lowLines = 3;
 
         public int StartingCells => _startingCells;
+        public float StartingCharge01 => _startingCharge01;
         public int CellPackCells => _cellPackCells;
         public float MetresPerCell => _metresPerCell;
         public float UphillMultiplier => _uphillMultiplier;

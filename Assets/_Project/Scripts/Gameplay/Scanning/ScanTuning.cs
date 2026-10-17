@@ -12,6 +12,9 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class ScanTuning : ScriptableObject
     {
+        /// <summary>The lander cargo bay's scan host id (its fragments' saved ids start with it).</summary>
+        public const string LanderCargoId = "LanderCargo";
+
         [Header("The sets (§1.3)")]
         [Tooltip("Every blueprint's fragments, in Art's set names; the 18 of 0.5.")]
         [SerializeField] private ScanSet[] _sets =
@@ -132,21 +135,23 @@ namespace MoonProject.Gameplay
                  "lane 07 runs at the lip and of the bridge's stub on its right, inside the chasm's floor.")]
         [Range(0f, 10f)] [SerializeField] private float _jumperSide = 6f;
 
-        [Header("Lumen station ruins (RUINS-WORLD)")]
-        [Tooltip("Each R1 ruin piece's Scan_1..N targets and the structure blueprints it teaches when fully scanned.")]
+        [Header("Lumen station ruins (RUINS-WORLD, opening-v2 §4)")]
+        [Tooltip("Each R1 ruin piece's Scan_1..N targets and the structure blueprints it teaches once every one of them " +
+                 "is scanned (the workshop and the scatter teach nothing: they hold lockers and panels).")]
         [SerializeField] private RuinScanSet[] _ruins =
         {
             new RuinScanSet("FallenSolarArray", new[] { StructureIds.SolarArray },
                 ScanSize.Small, ScanSize.Small, ScanSize.Medium),
-            new RuinScanSet("KenjiWorkshop", new[] { StructureIds.Fabricator, StructureIds.StorageRack },
-                ScanSize.Small, ScanSize.Medium, ScanSize.Medium),
-            new RuinScanSet("HabitatModules", new[] { StructureIds.BatteryBank, StructureIds.Smelter },
-                ScanSize.Medium, ScanSize.Medium, ScanSize.Large),
-            new RuinScanSet("RadioTower", new[] { StructureIds.AntennaMast, StructureIds.PowerPylon },
+            new RuinScanSet("HabitatModules", new[] { StructureIds.BatteryBank },
                 ScanSize.Medium, ScanSize.Medium),
-            new RuinScanSet("ScatterSet", Array.Empty<string>(),
-                ScanSize.Small, ScanSize.Small, ScanSize.Small),
+            new RuinScanSet("RadioTower", new[] { StructureIds.AntennaMast },
+                ScanSize.Medium, ScanSize.Medium),
         };
+
+        [Tooltip("The landed lander's cargo bay (opening-v2 B3): its Scan_1..N targets, which Gameplay stands at " +
+                 "OpeningTuning's cargo points, teach the charging pad.")]
+        [SerializeField] private RuinScanSet _landerCargo = new RuinScanSet(LanderCargoId,
+            new[] { StructureIds.ChargingPad }, ScanSize.Medium, ScanSize.Medium);
 
         [Tooltip("Structure blueprints whose scan targets belong to places later in the map (not at the home ruins).")]
         [SerializeField] private string[] _laterStructureIds =
@@ -162,6 +167,9 @@ namespace MoonProject.Gameplay
 
         public IReadOnlyList<ScanSet> Sets => _sets;
         public IReadOnlyList<RuinScanSet> Ruins => _ruins;
+
+        /// <summary>The lander cargo bay's scan set (the charging pad's fragments).</summary>
+        public RuinScanSet LanderCargo => _landerCargo;
         public IReadOnlyList<string> LaterStructureIds => _laterStructureIds;
         public float LensFactor => _lensFactor;
         public float BracketRange => _bracketRange;

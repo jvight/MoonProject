@@ -50,6 +50,24 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// The landed lander's old cells changed (opening-v2 B6): <see cref="Reserve01"/> of the one charge they held is
+    /// left, drawn through a built pad on the lander's port cable. The CRT reads <c>LANDER RESERVE · n%</c>; at 0 the
+    /// base needs its own power. <see cref="Restored"/> is true when a loaded game states it at session start.
+    /// </summary>
+    public readonly struct LanderReserveChanged
+    {
+        public LanderReserveChanged(float reserve01, bool restored)
+        {
+            Reserve01 = reserve01;
+            Restored = restored;
+        }
+
+        public float Reserve01 { get; }
+
+        public bool Restored { get; }
+    }
+
+    /// <summary>
     /// A charger started filling 07's cells (<see cref="Charging"/> true) or stopped (false: full, or 07 drove off).
     /// Rover perks 07 up when it starts (head lift, brighter eye, an antenna wiggle); World warms the charger's pool.
     /// </summary>

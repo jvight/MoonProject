@@ -53,7 +53,7 @@ namespace MoonProject.Gameplay
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             Cells = Mathf.Clamp(tuning.StartingCells, 1, MaxCells);
-            Charge = Cells;
+            Charge = Cells * tuning.StartingCharge01;
             DriveCap01 = 1f;
             _fullCells = FullCells;
             Rearm();
@@ -311,9 +311,9 @@ namespace MoonProject.Gameplay
 
             if (IsCharging && step.OnCharger)
             {
-                float secondsPerCell = Charger == ChargerKind.Dock
-                    ? _tuning.DockSecondsPerCell
-                    : _tuning.MastSecondsPerCell;
+                float secondsPerCell = Charger == ChargerKind.Mast
+                    ? _tuning.MastSecondsPerCell
+                    : _tuning.DockSecondsPerCell;
                 float fill = deltaTime / secondsPerCell;
                 Charge = Charge + fill >= Cells - CellEpsilon ? Cells : Charge + fill;
                 Drums = DrumsFitted ? Mathf.Min(_tuning.DrumCells, Drums + fill) : 0f;

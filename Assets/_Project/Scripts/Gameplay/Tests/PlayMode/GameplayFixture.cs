@@ -116,6 +116,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public ProgressionTuning ProgressionTuning { get; private set; }
 
+        /// <summary>The opening's anchors, reserve, cargo points and crates, as the tuning builder makes it.</summary>
+        public OpeningTuning OpeningTuning { get; private set; }
+
         /// <summary>The fragment sets and the scan verb (0.5.5 §1), as the tuning builder makes it.</summary>
         public ScanTuning ScanTuning { get; private set; }
 
@@ -484,6 +487,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             Gameplay.WireCutter(Asset<CutterTuning>());
             Gameplay.WireScans(ScanTuning);
             Gameplay.WireBuilding(build);
+            Gameplay.WireRuins(Ruins(root.transform));
+            OpeningTuning = Asset<OpeningTuning>();
+            Gameplay.WireOpening(OpeningTuning);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
@@ -1144,6 +1150,34 @@ namespace MoonProject.Gameplay.PlayModeTests
             var catalog = Asset<LogCacheCatalog>();
             catalog.Populate(new[] { ro });
             field.Wire(catalog, LogCacheTuning);
+        }
+
+        /// <summary>
+        /// Stand-ins for the Lumen ruin pieces World stands under [World]/Ruins, at the ruins anchor: each a block with
+        /// its Scan_1..N targets (as ScanTuning's ruin sets) above it, the workshop and the scatter with none.
+        /// </summary>
+        private Transform[] Ruins(Transform parent)
+        {
+            (string Id, Vector3 Offset, int Targets)[] pieces =
+            {
+                ("HabitatModules", new Vector3(-6f, 0f, 2f), 2), ("KenjiWorkshop", new Vector3(7f, 0f, 1f), 0),
+                ("FallenSolarArray", new Vector3(2f, 0f, -12f), 3), ("RadioTower", new Vector3(2f, 0f, 14f), 2),
+                ("ScatterSet", new Vector3(-6f, 0f, -12f), 0),
+            };
+            var ruins = new Transform[pieces.Length];
+            for (int i = 0; i < pieces.Length; i++)
+            {
+                Transform piece = Node(pieces[i].Id, parent, new Vector3(95f, 0f, 185f) + pieces[i].Offset);
+                Named(Block(piece, new Vector3(0f, 0.6f, 0f), new Vector3(2.4f, 1.2f, 2.4f)), "Body");
+                for (int t = 1; t <= pieces[i].Targets; t++)
+                {
+                    Node("Scan_" + t, piece, new Vector3(-1.2f + t * 0.8f, 1.3f, -1.3f));
+                }
+
+                ruins[i] = piece;
+            }
+
+            return ruins;
         }
 
         private void BuildStructures(BuildField field)

@@ -320,7 +320,6 @@ namespace MoonProject.Gameplay
                 _sonar.RevealNextUnheard(_dock, _tuning.EveningPillarBrightness);
             }
 
-            _steps.Tick();
         }
 
         /// <summary>

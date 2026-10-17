@@ -253,17 +253,21 @@ namespace MoonProject.Gameplay.Editor
             gameplay.WireCargo(materialCatalog, cargoTuning);
             gameplay.WireCutter(cutterTuning);
             gameplay.WireScans(scanTuning);
-            gameplay.WireRuins(Ruins(context.WorldRoot.transform, scanTuning));
+            gameplay.WireRuins(Ruins(context.WorldRoot.transform));
+            gameplay.WireOpening(context.LoadAsset<OpeningTuning>(GameplayAssetPaths.OpeningTuning));
             context.AddSystem(gameplay);
         }
 
-        private static Transform[] Ruins(Transform worldRoot, ScanTuning scanTuning)
+        /// <summary>
+        /// Every Lumen ruin piece World stood under [World]/Ruins: the scan sets' hosts and the supply crates' frames.
+        /// </summary>
+        private static Transform[] Ruins(Transform worldRoot)
         {
             Transform ruinsRoot = Child(worldRoot, "Ruins");
-            var ruins = new Transform[scanTuning.Ruins.Count];
+            var ruins = new Transform[ruinsRoot.childCount];
             for (int i = 0; i < ruins.Length; i++)
             {
-                ruins[i] = Child(ruinsRoot, scanTuning.Ruins[i].RuinId);
+                ruins[i] = ruinsRoot.GetChild(i);
             }
 
             return ruins;

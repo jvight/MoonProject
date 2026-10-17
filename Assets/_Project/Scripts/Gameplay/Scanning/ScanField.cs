@@ -891,26 +891,32 @@ namespace MoonProject.Gameplay
             _save.SaveNow();
         }
 
+        /// <summary>
+        /// A structure set's fragment is fully scanned (opening-v2 §1 rule: N fragments by complexity): its dissolve
+        /// begins and the note says "fragment k of N" of the structure it teaches; the set's last fragment teaches its
+        /// structures. A fragment of a set whose structures are all known pays Metal instead.
+        /// </summary>
         private void CompleteRuin(ScanFragment fragment, float now)
         {
-            string learnedStructureId = NextUnlearnedStructure(fragment.StructureIds);
-            bool known = string.IsNullOrEmpty(learnedStructureId);
+            string firstUnknown = NextUnlearnedStructure(fragment.StructureIds);
+            bool known = string.IsNullOrEmpty(firstUnknown);
             int before = ScannedOf(fragment.BlueprintId);
             fragment.Scanned = true;
             fragment.ScannedAt = now;
             fragment.Owed = known ? _tuning.KnownMetal : 0;
             fragment.ShowBrackets(false);
-            if (known)
-            {
-                _events.Publish(new FragmentScanned(fragment.FragmentId, fragment.BlueprintId, before, fragment.Count,
-                    true, fragment.Owed));
-            }
-
+            string teaches = fragment.StructureIds.Count > 0 ? fragment.StructureIds[0] : fragment.BlueprintId;
+            _events.Publish(new FragmentScanned(fragment.FragmentId, teaches, before, fragment.Count, known,
+                fragment.Owed));
             _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, fragment.Point, Vector3.up, 1f, 0f));
-            if (!known)
+            if (!known && before + 1 >= fragment.Count)
             {
-                _knownStructures?.Learn(learnedStructureId);
-                _events.Publish(new TickerLine(ScanCompleteKey, StructureIds.NameKey(learnedStructureId), true));
+                for (string id = firstUnknown; id != null; id = NextUnlearnedStructure(fragment.StructureIds))
+                {
+                    _knownStructures.Learn(id);
+                    _events.Publish(new TickerLine(ScanCompleteKey, StructureIds.NameKey(id), true));
+                }
+
                 _events.Publish(new BuildCue(BuildCueKind.StageComplete, fragment.Point));
                 _events.Publish(new RoverChirpRequested(ChirpMood.Proud, 1f));
                 _events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Reward, fragment.Point, Vector3.up, 1f, 0f));

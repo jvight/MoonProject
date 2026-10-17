@@ -73,24 +73,19 @@ MonoBehaviour:
     _structureIds:
     - solar_array
     _sizes: 000000000000000001000000
-  - _ruinId: KenjiWorkshop
-    _structureIds:
-    - fabricator
-    - storage_rack
-    _sizes: 000000000100000001000000
   - _ruinId: HabitatModules
     _structureIds:
     - battery_bank
-    - smelter
-    _sizes: 010000000100000002000000
+    _sizes: 0100000001000000
   - _ruinId: RadioTower
     _structureIds:
     - antenna_mast
-    - power_pylon
     _sizes: 0100000001000000
-  - _ruinId: ScatterSet
-    _structureIds: []
-    _sizes: 000000000000000000000000
+  _landerCargo:
+    _ruinId: LanderCargo
+    _structureIds:
+    - charging_pad
+    _sizes: 0100000001000000
   _laterStructureIds:
   - upgrade_bay
   - vehicle_pad
