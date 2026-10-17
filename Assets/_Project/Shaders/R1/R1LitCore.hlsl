@@ -4,6 +4,7 @@
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 #include "R1LitInput.hlsl"
 #include "../World/LofiAtmosphere.hlsl"
+#include "../Art/LofiScanInput.hlsl"
 
 struct R1LitAttributes
 {
@@ -233,6 +234,7 @@ half4 R1LitFrag(R1LitVaryings input) : SV_Target
     surfaceData.clearCoatSmoothness = 0.0h;
 
     half4 color = UniversalFragmentPBR(inputData, surfaceData);
+    MoonApplySurfaceScan(color.rgb, input.positionWS, finalNormalWS, vcol.g, _ScanProgress, _Dissolve);
     color.rgb = MoonAtmosphere(color.rgb, input.positionWS, input.fogFactor);
     if (any(isnan(color.rgb)) || any(isinf(color.rgb)))
     {

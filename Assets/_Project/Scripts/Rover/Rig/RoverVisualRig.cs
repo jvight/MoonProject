@@ -375,7 +375,8 @@ namespace MoonProject.Rover
         private void ApplyWheels(float travelled, float deltaTime)
         {
             float yawRadians = _rover.YawRate * Mathf.Deg2Rad * deltaTime;
-            float steer = _rover.SteerInput * _tuning.FrontSteerAngle;
+            float steer = Mathf.Clamp(_rover.SteerInput + _rover.ScanTurnScrub * 0.45f, -1f, 1f)
+                * _tuning.FrontSteerAngle;
             bool braced = _brace != null && _brace.IsBraced;
 
             for (int i = 0; i < _wheels.Length; i++)

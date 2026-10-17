@@ -47,6 +47,10 @@ Shader "MoonProject/R1/Lit"
         _BloomSafeMax("Bloom Safe Body Max", Range(0.5, 1.24)) = 1.06
         _HotCoreThreshold("Hot Core Threshold", Range(0.5, 0.99)) = 0.85
         _HotCorePeak("Hot Core HDR Peak", Range(1.0, 2.5)) = 1.65
+
+        [Header(Surface Scan)]
+        _ScanProgress("Scan Progress", Range(0.0, 1.0)) = 0.0
+        _Dissolve("Scan Dissolve", Range(0.0, 1.0)) = 0.0
     }
 
     SubShader

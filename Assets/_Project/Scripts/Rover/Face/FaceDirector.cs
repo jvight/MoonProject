@@ -34,6 +34,7 @@ namespace MoonProject.Rover
         private bool _isLowBattery;
         private bool _isScanning;
         private float _scanHoldTimer;
+        private float _scanProgress;
 
         private BeatKind _activeBeat;
         private float _beatTimer;
@@ -437,6 +438,7 @@ namespace MoonProject.Rover
         public void OnScanStarted()
         {
             _isScanning = true;
+            _scanProgress = Mathf.Max(_scanProgress, 0.08f);
             _scanHoldTimer = Mathf.Max(_scanHoldTimer, _tuning.ScanMinHoldSeconds);
             EvaluateImmediate();
         }
@@ -451,6 +453,7 @@ namespace MoonProject.Rover
         public void OnScanStopped()
         {
             _isScanning = false;
+            _scanProgress = 0f;
             EvaluateImmediate();
         }
 
@@ -465,6 +468,7 @@ namespace MoonProject.Rover
         {
             _isScanning = false;
             _scanHoldTimer = 0f;
+            _scanProgress = 1f;
             TriggerBeat(BeatKind.Happy, _tuning.FragmentHappyHoldSeconds);
         }
 
@@ -479,6 +483,7 @@ namespace MoonProject.Rover
         {
             _isScanning = false;
             _scanHoldTimer = 0f;
+            _scanProgress = 1f;
             TriggerBeat(BeatKind.Happy, _tuning.BlueprintHappyHoldSeconds);
         }
 
@@ -546,9 +551,27 @@ namespace MoonProject.Rover
             {
                 TriggerBeat(BeatKind.Proud, _tuning.ProudHoldSeconds);
             }
-            else if (beat.Kind == FeelKind.Scan && beat.Phase == FeelPhase.Anticipate)
+            else if (beat.Kind == FeelKind.Scan)
             {
-                OnScanStarted();
+                if (beat.Phase == FeelPhase.Anticipate)
+                {
+                    _scanProgress = 0.08f;
+                    OnScanStarted();
+                }
+                else if (beat.Phase == FeelPhase.Follow)
+                {
+                    _scanProgress = Mathf.Max(_scanProgress, Mathf.Clamp01(beat.Strength));
+                    EvaluateImmediate();
+                }
+                else if (beat.Phase == FeelPhase.Reward)
+                {
+                    _scanProgress = 1f;
+                    EvaluateImmediate();
+                }
+                else if (beat.Phase == FeelPhase.Cancel)
+                {
+                    OnScanStopped();
+                }
             }
         }
 
@@ -696,6 +719,11 @@ namespace MoonProject.Rover
                     _scanHoldTimer = Mathf.Max(0f, _scanHoldTimer - deltaTime);
                 }
 
+                if (_isScanning)
+                {
+                    _scanProgress = Mathf.Min(0.95f, _scanProgress + deltaTime * 0.35f);
+                }
+
                 if (_beatTimer > 0f)
                 {
                     _beatTimer = Mathf.Max(0f, _beatTimer - deltaTime);
@@ -746,9 +774,11 @@ namespace MoonProject.Rover
             _beatTimer = 0f;
             _isScanning = false;
             _scanHoldTimer = 0f;
+            _scanProgress = 0f;
             _currentFeeling = FaceFeeling.Calm;
             _currentPriority = _tuning.CalmPriority;
             _feelingHoldTimer = _tuning.MinFeelingHoldSeconds;
+            _state.SetScanFocus(false, 0f);
             _state.SetFeeling(FaceFeeling.Calm);
             _state.Boot();
             _rearVentEmissionStrength = ComputeRearVentEmission();
@@ -834,6 +864,7 @@ namespace MoonProject.Rover
                 _state.SetFeeling(_currentFeeling);
             }
 
+            _state.SetScanFocus(_isScanning || _scanHoldTimer > 0f, _scanProgress);
             _rearVentEmissionStrength = ComputeRearVentEmission();
         }
 

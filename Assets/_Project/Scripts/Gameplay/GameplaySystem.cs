@@ -333,7 +333,7 @@ namespace MoonProject.Gameplay
             Vector3 lander = HomeBase.LanderSpot(services.Terrain, services.Layout.BasePosition, _home.Tuning);
             Cutter = new Cutter(context.Events, abilities, _cutterTuning);
             Containers = new SealedContainers(_salvage, _cargo, Cutter, services);
-            if (!_salvage.Initialize(services, Cutter, ScrapField(context)) ||
+            if (!_salvage.Initialize(services, Cutter, ScrapField(context), _scanTuning) ||
                 !_relics.Initialize(services, _salvage) ||
                 !_excavation.Initialize(services, _relics, _salvage, Containers) ||
                 !_tether.Initialize(services, _relics, _salvage, abilities) ||

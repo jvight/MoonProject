@@ -264,7 +264,7 @@ namespace MoonProject.Rover
 
             _propertyBlock.SetVector(
                 FaceSymbolId,
-                new Vector4((float)_state.ActiveSymbol, _state.SymbolAlpha, _state.ElapsedTime, 0f));
+                new Vector4((float)_state.ActiveSymbol, _state.SymbolAlpha, _state.ElapsedTime, _state.ScanRingValue));
             _propertyBlock.SetVector(
                 FaceCrtStateId,
                 new Vector4(_state.BootProgress, _state.Brightness, _state.LowPower, _state.VerticalJitter));
