@@ -162,11 +162,12 @@ namespace MoonProject.World
             }
 
             float sunlit = Mathf.Clamp01(sunlitBlend);
+            float skyDayBlend = SmoothStep01(0f, 1f, Mathf.Pow(sunlit, 0.65f));
             float eclipse = Mathf.Clamp01(clock.EclipseFactor);
 
-            Color skyTop = Color.Lerp(sky.SkyTop, cycle.SunlitSkyTop, sunlit).linear;
-            Color horizonGlow = Color.Lerp(sky.HorizonGlow, cycle.SunlitHorizonGlow, sunlit).linear * (1f - eclipse * 0.55f);
-            Color horizonBand = Color.Lerp(sky.HorizonBand, cycle.SunlitHorizonBand, sunlit).linear * (1f - eclipse * 0.45f);
+            Color skyTop = Color.Lerp(sky.SkyTop, cycle.SunlitSkyTop, skyDayBlend).linear;
+            Color horizonGlow = Color.Lerp(sky.HorizonGlow, cycle.SunlitHorizonGlow, skyDayBlend).linear * (1f - eclipse * 0.55f);
+            Color horizonBand = Color.Lerp(sky.HorizonBand, cycle.SunlitHorizonBand, skyDayBlend).linear * (1f - eclipse * 0.45f);
             Shader.SetGlobalVector(SkyTop, WithAlpha(skyTop, sky.GradientExponent));
             Shader.SetGlobalVector(HorizonGlow, WithAlpha(horizonGlow, sky.HorizonGlowHeight));
             Shader.SetGlobalVector(HorizonBand, WithAlpha(horizonBand, sky.HorizonBandHeight));
@@ -174,7 +175,7 @@ namespace MoonProject.World
             // While sunlit ground fills the frame, the eye adapts so stars and the Milky Way dim strongly; as the Sun
             // drops through Sunset toward the rim, eye adaptation relaxes and the stars return.
             float elevationAdapt = SmoothStep01(2f, cycle.TwilightElevation, clock.Elevation);
-            float dayAdaptation = sunlit * Mathf.Lerp(0.45f, 1f, elevationAdapt);
+            float dayAdaptation = skyDayBlend * Mathf.Lerp(0.45f, 1f, elevationAdapt);
             float starScale = Mathf.Lerp(Mathf.Lerp(1f, cycle.SunlitStarScale, dayAdaptation), cycle.EclipseStarScale, eclipse);
             Shader.SetGlobalVector(StarParams,
                 new Vector4(sky.StarDensity, sky.StarBrightness * starScale, sky.StarPowerLaw, sky.StarSize));
@@ -225,7 +226,7 @@ namespace MoonProject.World
             Shader.SetGlobalVector(SunDirection, WithAlpha(toSun, sunRadiusRad));
             Shader.SetGlobalVector(SunColor,
                 WithAlpha(cycle.SunDiscColor.linear * cycle.SunCoreIntensity, cycle.SunCoronaStrength));
-            Shader.SetGlobalVector(SunlitGround, new Vector4(sunlit, 0f, 0f, 0f));
+            Shader.SetGlobalVector(SunlitGround, new Vector4(skyDayBlend, 0f, 0f, 0f));
         }
 
         private static float SmoothStep01(float edge0, float edge1, float x)

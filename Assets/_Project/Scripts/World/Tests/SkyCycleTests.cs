@@ -260,6 +260,63 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
+        public void GlobalSunlight_AndAtmosphereKeyLight_StaySunlitInRidgeShadow_AndLightLandscapeAtDawn()
+        {
+            var clock = new SunClock(_cycle, _sky);
+            var atmosphere = new AtmosphereSettings();
+            var keyGo = new GameObject("TestKeyLight");
+            var fillGo = new GameObject("TestFillLight");
+            try
+            {
+                var keyLight = keyGo.AddComponent<Light>();
+                var fillLight = fillGo.AddComponent<Light>();
+
+                // 1. In full sunlit day, GlobalSunlight is 1 even when local SunlightAt behind a ridge is 0.
+                clock.SetTime(_cycle.FallbackSunlitTimeSeconds, false);
+                Vector2 sunDir2D = MoonSurface.BearingToDirection(clock.Bearing);
+                var ridgeTerrain = new RidgeTerrain(sunDir2D, 100f, 60f);
+                Assert.AreEqual(0f, clock.SunlightAt(ridgeTerrain, Vector3.zero), ValueTolerance);
+                Assert.AreEqual(1f, clock.GlobalSunlight, ValueTolerance,
+                    "GlobalSunlight must depend only on sun elevation and eclipse, never local terrain shadow");
+
+                WorldAtmosphere.ApplyCycle(atmosphere, _sky, _cycle, clock, clock.GlobalSunlight, keyLight, fillLight,
+                    updateAmbientProbe: false, localSunlight: 1f);
+                float openKeyIntensity = keyLight.intensity;
+                Vector3 openKeyForward = keyLight.transform.forward;
+                Color openGroundAmbient = RenderSettings.ambientGroundColor;
+                Assert.AreEqual(_cycle.SunlitKeyIntensity, openKeyIntensity, ValueTolerance,
+                    "Full sunlit key light reaches full SunlitKeyIntensity");
+
+                WorldAtmosphere.ApplyCycle(atmosphere, _sky, _cycle, clock, clock.GlobalSunlight, keyLight, fillLight,
+                    updateAmbientProbe: false, localSunlight: 0f);
+                Assert.AreEqual(openKeyIntensity, keyLight.intensity, ValueTolerance,
+                    "Directional sun intensity must not drop when 07 enters a local ridge shadow");
+                Assert.Less(Vector3.Angle(openKeyForward, keyLight.transform.forward), AngleTolerance,
+                    "Directional sun direction must not flip to Earth when 07 enters a local ridge shadow");
+                Assert.Less(RenderSettings.ambientGroundColor.r, openGroundAmbient.r,
+                    "Local terrain shadow eases local ambient slightly");
+                Assert.Greater(RenderSettings.ambientGroundColor.r, openGroundAmbient.r * 0.80f,
+                    "Local terrain shadow ambient floor stays subtle (>= 85% of global sunlit ambient)");
+
+                // 2. Post-eclipse dawn (GlobalSunlight ~ 0.23, well below 0.5): key light already tracks the Sun and
+                // lights the landscape rather than waiting for sunlit > 0.5.
+                clock.SetTime(6.1f, false);
+                Assert.That(clock.GlobalSunlight, Is.GreaterThan(0.15f).And.LessThan(0.45f));
+                WorldAtmosphere.ApplyCycle(atmosphere, _sky, _cycle, clock, clock.GlobalSunlight, keyLight, fillLight,
+                    updateAmbientProbe: false, localSunlight: clock.GlobalSunlight);
+                Assert.Less(Vector3.Angle(-clock.SunDirection, keyLight.transform.forward), AngleTolerance,
+                    "Key light must follow the Sun direction as soon as the Sun breaks out at dawn");
+                Assert.Greater(keyLight.intensity, _cycle.SunlitKeyIntensity * 0.50f,
+                    "Dawn key light must illuminate the landscape before sunlit reaches 0.5");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(keyGo);
+                UnityEngine.Object.DestroyImmediate(fillGo);
+            }
+        }
+
+        [Test]
         public void Save_RoundTripsClockAndHold_AndStartsSunlitWhenSaveLacksSkySection()
         {
             // 1. Round-trip an active clock after eclipse release.

@@ -207,6 +207,175 @@ namespace MoonProject.World.Tests
             Assert.Greater(ejecta, 10, "raised crater rims should carry ejecta boulders");
         }
 
+        [Test]
+        public void CobbleColliderCutoff_GivesMediumCobblesSphereColliders_WhileTinyPebblesStayNonColliding()
+        {
+            Assert.AreEqual(0.48f, _settings.CobbleColliderMinSize, 1e-4f,
+                "cutoff is 0.48 m (~0.69x 07's 0.70 m wheel diameter; exposed height >= 0.30 m vs 0.35 m wheel radius)");
+            Assert.Greater(_settings.CobbleColliderMinSize, _settings.PebbleSize.y,
+                "open-floor Poisson pebbles stay below the cobble collider cutoff");
+            Assert.Less(_settings.CobbleColliderMinSize, _settings.BoulderSize.x,
+                "cobble collider cutoff sits below the boulder class minimum");
+
+            var parent = new GameObject("ScatterTestRoot");
+            Mesh cubeMesh = CreateUnitRockMesh();
+            var mat = new Material(Shader.Find("Sprites/Default"));
+            var builder = new ScatterBuilder();
+            try
+            {
+                var instances = new List<ScatterInstance>
+                {
+                    new ScatterInstance(ScatterKind.Pebble, new Vector3(0f, 0f, 0f), Vector3.up, 0f, 0.30f, 0),
+                    new ScatterInstance(ScatterKind.Pebble, new Vector3(4f, 0f, 0f), Vector3.up, 0f, 0.62f, 0),
+                    new ScatterInstance(ScatterKind.Boulder, new Vector3(8f, 0f, 0f), Vector3.up, 0f, 1.25f, 0),
+                };
+
+                ScatterBuildReport report = builder.Build(parent.transform, instances, _settings, 64f,
+                    new[] { cubeMesh }, new[] { cubeMesh }, mat, HideFlags.None);
+                Assert.AreEqual(2, report.Pebbles);
+                Assert.AreEqual(1, report.SolidCobbles, "medium cobble >= 0.48 m gets a SphereCollider");
+                Assert.AreEqual(1, report.Boulders);
+
+                SphereCollider[] spheres = parent.GetComponentsInChildren<SphereCollider>();
+                MeshCollider[] meshes = parent.GetComponentsInChildren<MeshCollider>();
+                Assert.AreEqual(1, spheres.Length, "exactly one SphereCollider for the medium cobble");
+                Assert.AreEqual(Layers.Prop, spheres[0].gameObject.layer);
+                Assert.AreEqual(1, meshes.Length, "exactly one convex MeshCollider for the boulder");
+                Assert.AreEqual(Layers.Prop, meshes[0].gameObject.layer);
+            }
+            finally
+            {
+                builder.DestroyMeshes();
+                UnityEngine.Object.DestroyImmediate(parent);
+                UnityEngine.Object.DestroyImmediate(cubeMesh);
+                UnityEngine.Object.DestroyImmediate(mat);
+            }
+        }
+
+        [Test]
+        public void RuinColliderBuilder_BuildsSolidWallBoxes_WhileKeepingPortalAndCourtyardOpen()
+        {
+            var ruin = new GameObject("KenjiWorkshop_Test");
+            Mesh shellMesh = CreateHollowWorkshopShellMesh();
+            try
+            {
+                var shellChild = new GameObject("QuonsetShell");
+                shellChild.transform.SetParent(ruin.transform, false);
+                shellChild.AddComponent<MeshFilter>().sharedMesh = shellMesh;
+
+                int count = RuinColliderBuilder.Fit(ruin);
+                Assert.Greater(count, 4, "hollow shell must build compound BoxColliders for walls, jambs and arch");
+
+                BoxCollider[] boxes = ruin.GetComponentsInChildren<BoxCollider>();
+                Assert.AreEqual(count, boxes.Length);
+                foreach (BoxCollider box in boxes)
+                {
+                    Assert.AreEqual(Layers.Prop, box.gameObject.layer);
+                }
+
+                // Doorway portal (x = 0, y = 0.8, z = -2.5) and central courtyard (x = 0, y = 0.8, z = 0) must not
+                // lie inside any BoxCollider, while left/right/back walls must be enclosed by BoxColliders.
+                Assert.IsFalse(ContainsPoint(boxes, new Vector3(0f, 0.8f, -2.5f)),
+                    "front portal opening must stay open for 07");
+                Assert.IsFalse(ContainsPoint(boxes, new Vector3(0f, 0.8f, 0f)),
+                    "interior workshop courtyard must stay open for 07");
+                Assert.IsTrue(ContainsPoint(boxes, new Vector3(-1.95f, 0.8f, 0f)),
+                    "left wall must be solid");
+                Assert.IsTrue(ContainsPoint(boxes, new Vector3(1.95f, 0.8f, 0f)),
+                    "right wall must be solid");
+                Assert.IsTrue(ContainsPoint(boxes, new Vector3(0f, 0.8f, 2.45f)),
+                    "back wall must be solid");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(ruin);
+                UnityEngine.Object.DestroyImmediate(shellMesh);
+            }
+        }
+
+        private static bool ContainsPoint(BoxCollider[] boxes, Vector3 worldPoint)
+        {
+            for (int i = 0; i < boxes.Length; i++)
+            {
+                Vector3 local = boxes[i].transform.InverseTransformPoint(worldPoint) - boxes[i].center;
+                Vector3 half = boxes[i].size * 0.5f;
+                if (Mathf.Abs(local.x) <= half.x && Mathf.Abs(local.y) <= half.y && Mathf.Abs(local.z) <= half.z)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static Mesh CreateUnitRockMesh()
+        {
+            var mesh = new Mesh();
+            mesh.vertices = new[]
+            {
+                new Vector3(-0.5f, 0f, -0.5f),
+                new Vector3(0.5f, 0f, -0.5f),
+                new Vector3(0.5f, 0f, 0.5f),
+                new Vector3(-0.5f, 0f, 0.5f),
+                new Vector3(-0.35f, 0.7f, -0.35f),
+                new Vector3(0.35f, 0.7f, -0.35f),
+                new Vector3(0.35f, 0.7f, 0.35f),
+                new Vector3(-0.35f, 0.7f, 0.35f),
+            };
+            mesh.triangles = new[]
+            {
+                0, 2, 1, 0, 3, 2,
+                4, 5, 6, 4, 6, 7,
+                0, 1, 5, 0, 5, 4,
+                1, 2, 6, 1, 6, 5,
+                2, 3, 7, 2, 7, 6,
+                3, 0, 4, 3, 4, 7,
+            };
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        private static Mesh CreateHollowWorkshopShellMesh()
+        {
+            var verts = new List<Vector3>();
+            var tris = new List<int>();
+
+            // Left wall (x in [-2.1, -1.8], y in [0.2, 1.9], z in [-2.6, 2.6])
+            AddBoxVerts(verts, tris, new Vector3(-2.1f, 0.2f, -2.6f), new Vector3(-1.8f, 1.9f, 2.6f));
+            // Right wall (x in [1.8, 2.1], y in [0.2, 1.9], z in [-2.6, 2.6])
+            AddBoxVerts(verts, tris, new Vector3(1.8f, 0.2f, -2.6f), new Vector3(2.1f, 1.9f, 2.6f));
+            // Back wall (x in [-2.1, 2.1], y in [0.2, 1.9], z in [2.3, 2.6])
+            AddBoxVerts(verts, tris, new Vector3(-2.1f, 0.2f, 2.3f), new Vector3(2.1f, 1.9f, 2.6f));
+            // Front left jamb & right jamb leaving central portal x in [-1.2, 1.2] open
+            AddBoxVerts(verts, tris, new Vector3(-2.1f, 0.2f, -2.6f), new Vector3(-1.3f, 1.9f, -2.3f));
+            AddBoxVerts(verts, tris, new Vector3(1.3f, 0.2f, -2.6f), new Vector3(2.1f, 1.9f, -2.3f));
+            // Overhead arch roof (y in [2.05, 2.75])
+            AddBoxVerts(verts, tris, new Vector3(-2.1f, 2.05f, -2.6f), new Vector3(2.1f, 2.75f, 2.6f));
+
+            var mesh = new Mesh();
+            mesh.SetVertices(verts);
+            mesh.SetTriangles(tris, 0);
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        private static void AddBoxVerts(List<Vector3> verts, List<int> tris, Vector3 min, Vector3 max)
+        {
+            int b = verts.Count;
+            verts.Add(new Vector3(min.x, min.y, min.z));
+            verts.Add(new Vector3(max.x, min.y, min.z));
+            verts.Add(new Vector3(max.x, max.y, min.z));
+            verts.Add(new Vector3(min.x, max.y, min.z));
+            verts.Add(new Vector3(min.x, min.y, max.z));
+            verts.Add(new Vector3(max.x, min.y, max.z));
+            verts.Add(new Vector3(max.x, max.y, max.z));
+            verts.Add(new Vector3(min.x, max.y, max.z));
+            verts.Add(new Vector3((min.x + max.x) * 0.5f, (min.y + max.y) * 0.5f, min.z));
+            verts.Add(new Vector3((min.x + max.x) * 0.5f, (min.y + max.y) * 0.5f, max.z));
+            tris.AddRange(new[] { b, b + 2, b + 1, b, b + 3, b + 2, b + 4, b + 5, b + 6, b + 4, b + 6, b + 7, b + 8, b + 9, b + 1 });
+        }
+
         private void AssertSpacing(ScatterKind kind, float spacing)
         {
             var points = new List<Vector2>();

@@ -35,7 +35,9 @@ namespace MoonProject.World
         private bool _saveResolved;
         private bool _loggedMissingRover;
         private float _smoothedSunlight;
+        private float _smoothedLocalSunlight;
         private float _lastProbeSunlight = -1f;
+        private float _lastProbeLocalSunlight = -1f;
         private float _lastProbeEclipse = -1f;
 
         public SunClock Clock => _clock;
@@ -96,6 +98,8 @@ namespace MoonProject.World
 
         public float SmoothedSunlight => _smoothedSunlight;
 
+        public float SmoothedLocalSunlight => _smoothedLocalSunlight;
+
         public void Initialize(GameContext context)
         {
             string problem = SetupProblem();
@@ -140,7 +144,8 @@ namespace MoonProject.World
             _clock.SetTime(timeSeconds, holdingEclipse);
             if (snapLighting)
             {
-                _smoothedSunlight = _clock.SunlightAt(_terrain, SampleFocusPosition());
+                _smoothedSunlight = _clock.GlobalSunlight;
+                _smoothedLocalSunlight = _clock.SunlightAt(_terrain, SampleFocusPosition());
             }
 
             ApplyVisuals(true);
@@ -152,15 +157,18 @@ namespace MoonProject.World
             EnsureSaveResolved();
             _clock.Tick(deltaTime, _context.Events);
 
-            float targetSunlight = _clock.SunlightAt(_terrain, SampleFocusPosition());
+            float targetGlobalSunlight = _clock.GlobalSunlight;
+            float targetLocalSunlight = _clock.SunlightAt(_terrain, SampleFocusPosition());
             float smoothing = Mathf.Max(_settings.SkyCycle.KeySmoothingSeconds, 0.05f);
             if (deltaTime > 0f)
             {
                 float step = deltaTime / smoothing;
-                _smoothedSunlight = Mathf.MoveTowards(_smoothedSunlight, targetSunlight, step);
+                _smoothedSunlight = Mathf.MoveTowards(_smoothedSunlight, targetGlobalSunlight, step);
+                _smoothedLocalSunlight = Mathf.MoveTowards(_smoothedLocalSunlight, targetLocalSunlight, step);
             }
 
             bool updateProbe = Mathf.Abs(_smoothedSunlight - _lastProbeSunlight) >= AmbientProbeStepThreshold
+                || Mathf.Abs(_smoothedLocalSunlight - _lastProbeLocalSunlight) >= AmbientProbeStepThreshold
                 || Mathf.Abs(_clock.EclipseFactor - _lastProbeEclipse) >= AmbientProbeStepThreshold;
             ApplyVisuals(updateProbe);
         }
@@ -173,7 +181,8 @@ namespace MoonProject.World
             }
 
             EnsureSaveResolved();
-            _smoothedSunlight = _clock.SunlightAt(_terrain, SampleFocusPosition());
+            _smoothedSunlight = _clock.GlobalSunlight;
+            _smoothedLocalSunlight = _clock.SunlightAt(_terrain, SampleFocusPosition());
             ApplyVisuals(true);
         }
 
@@ -201,7 +210,8 @@ namespace MoonProject.World
 
             _saveResolved = true;
             _clock.ResolveLoadedSave(_save);
-            _smoothedSunlight = _clock.SunlightAt(_terrain, SampleFocusPosition());
+            _smoothedSunlight = _clock.GlobalSunlight;
+            _smoothedLocalSunlight = _clock.SunlightAt(_terrain, SampleFocusPosition());
         }
 
         private void ApplyVisuals(bool updateProbe)
@@ -209,11 +219,12 @@ namespace MoonProject.World
             if (updateProbe)
             {
                 _lastProbeSunlight = _smoothedSunlight;
+                _lastProbeLocalSunlight = _smoothedLocalSunlight;
                 _lastProbeEclipse = _clock.EclipseFactor;
             }
 
             WorldAtmosphere.ApplyCycle(_settings.Atmosphere, _settings.Sky, _settings.SkyCycle, _clock,
-                _smoothedSunlight, _keyLight, _fillLight, updateProbe);
+                _smoothedSunlight, _keyLight, _fillLight, updateProbe, _smoothedLocalSunlight);
             SkyShaderGlobals.ApplyCycle(_settings.Sky, _settings.SkyCycle, _clock, _smoothedSunlight);
         }
 

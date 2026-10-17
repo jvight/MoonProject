@@ -196,10 +196,12 @@ namespace MoonProject.World.PlayModeTests
 
             ScatterBuildReport scatter = world.LastScatter;
             Assert.Greater(scatter.Pebbles, 0);
+            Assert.Greater(scatter.SolidCobbles, 0, "medium cobbles >= CobbleColliderMinSize need SphereColliders");
             Assert.AreEqual(layout.PeakPosition, _beacon.transform.position, "the beacon stands on the summit");
 
-            int boulderColliders = Physics.OverlapSphere(Vector3.zero, ScatterProbeRadius, Layers.PropMask).Length;
-            Assert.AreEqual(scatter.Boulders, boulderColliders, "every boulder needs one collider on Layers.Prop");
+            int propColliders = Physics.OverlapSphere(Vector3.zero, ScatterProbeRadius, Layers.PropMask).Length;
+            Assert.Greater(propColliders, scatter.Boulders + scatter.SolidCobbles,
+                "every boulder, solid medium cobble and placed landmark needs colliders on Layers.Prop");
         }
 #endif
 
