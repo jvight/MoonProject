@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
@@ -29,16 +30,11 @@ namespace MoonProject.UI
     internal sealed class PauseMenu
     {
         private const float MoveEpsilon = 0.1f;
-        private const float RepeatInitialDelay = 0.35f;
-        private const float RepeatInterval = 0.1f;
-        private const float AxisDeadzone = 0.5f;
         private const string TitleClass = "pause--title";
         private const string SettingsOpenClass = "pause--settings-open";
         private const string TabOnClass = "settings-tab--on";
         private const string TabSkinOnClass = "settings-tab-wrap--on";
-        private const string TabFocusClass = "settings-tab-wrap--focus";
         private const string IdleRowClass = "setting-row--idle";
-        private const string FocusedRowClass = "setting-row--focused";
 
         private readonly UiLayout _layout;
         private readonly PauseSettings _settings;
@@ -69,31 +65,14 @@ namespace MoonProject.UI
         private readonly TitleScenePainter _titleScenePainter;
         private readonly TitleCrtOverlayPainter _titleCrtOverlayPainter;
         private readonly Label _continueNote;
-        private readonly Label[] _titleCursors;
-        private readonly VisualElement[] _cursorHosts;
-        private readonly Button[] _languageButtons;
-        private readonly Button[] _mainPageButtons;
-        private readonly Button[] _newGamePageButtons;
-        private readonly Button[] _quitPageButtons;
-        private readonly VisualElement[][] _settingsTabControls;
-        private readonly VisualElement[] _settingRowControls;
-        private readonly VisualElement[] _settingRows;
         private readonly CreditsView _credits;
         private readonly VisualElement[] _settingsPages;
         private readonly Button[] _settingsTabs;
+        private readonly MenuNavigator _navigator;
         private int _settingsTab;
         private readonly IntText _fpsNumbers;
         private readonly PausePages _pages = new PausePages();
         private readonly string[] _lookTexts;
-        private Focusable _pendingFocus;
-        private Focusable _lastValidFocus;
-        private VisualElement _lastSyncedFocus;
-        private bool _focusingByCode;
-        private bool _pointerPressed;
-        private Vector2 _lastPointerPos = new Vector2(float.NaN, float.NaN);
-        private int _lastNavigateFrame = -1;
-        private Vector2Int _heldDir;
-        private float _repeatTimer;
         private float _resumeScale = 1f;
         private float _writtenShift = float.NaN;
         private float _writtenTop = float.NaN;
@@ -102,7 +81,6 @@ namespace MoonProject.UI
         private bool _resting;
         private float _titleTime;
         private bool _lockedTitleTime;
-        private bool _lastCursorVisible = true;
 
         public PauseMenu(UiLayout layout, PauseSettings settings, TitleSettings title, PlayerSettings player,
             ILocalization localization, InputReader input, EventBus events, SettingsStore settingsStore,
@@ -114,10 +92,7 @@ namespace MoonProject.UI
             _settingsTabs = new[] { layout.TabSound, layout.TabCamera, layout.TabDisplay };
             foreach (Button tab in _settingsTabs)
             {
-                VisualElement skin = tab.parent;
-                new TabPainter(skin);
-                tab.RegisterCallback<FocusInEvent>(_ => skin.AddToClassList(TabFocusClass));
-                tab.RegisterCallback<FocusOutEvent>(_ => skin.RemoveFromClassList(TabFocusClass));
+                new TabPainter(tab.parent);
             }
 
             _fpsNumbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
@@ -148,84 +123,27 @@ namespace MoonProject.UI
             _titleCrtOverlay = new Reveal(layout.TitleCrtOverlay, title.Reveal);
             _titleKeyHint = new Reveal(layout.TitleKeyHint, title.Reveal);
             _curtain = new Reveal(layout.Curtain, title.Curtain);
-            _titleScenePainter = new TitleScenePainter(layout.TitleCrt, title);
+            _titleScenePainter = new TitleScenePainter(layout.TitleCrt, title, new VisualElement[]
+            {
+                layout.TitleScreen,
+                layout.PauseMain,
+                layout.PauseSettings,
+                layout.TitleKeyHint,
+            });
             _titleCrtOverlayPainter = new TitleCrtOverlayPainter(layout.TitleCrtOverlay, title);
             layout.TitleSubtitlePrefix.text = "// ";
-            _languageButtons = LanguageButtons(layout.PageLanguage, localization);
-            _mainPageButtons = new[]
-            {
-                layout.ResumeButton,
-                layout.NewGameButton,
-                layout.SettingsButton,
-                layout.CreditsButton,
-                layout.QuitToTitleButton,
-                layout.QuitButton,
-            };
-            _newGamePageButtons = new[]
-            {
-                layout.NewGameKeepButton,
-                layout.NewGameConfirmButton,
-            };
-            _quitPageButtons = new[]
-            {
-                layout.QuitStayButton,
-                layout.QuitConfirmButton,
-            };
-            _settingsTabControls = new[]
-            {
-                new VisualElement[]
-                {
-                    layout.MasterSlider,
-                    layout.MusicSlider,
-                    layout.SfxSlider,
-                    layout.AmbienceSlider,
-                },
-                new VisualElement[]
-                {
-                    layout.LookSlider,
-                    layout.InvertToggle,
-                    layout.GentleCameraToggle,
-                    layout.RumbleToggle,
-                    layout.RumbleSlider,
-                    layout.GuidanceToggle,
-                },
-                new VisualElement[]
-                {
-                    layout.ResolutionPrev,
-                    layout.ModePrev,
-                    layout.VSyncToggle,
-                    layout.FpsPrev,
-                    layout.TextSizeButton,
-                    layout.LanguageButton,
-                },
-            };
-            _settingRowControls = new VisualElement[]
-            {
-                layout.MasterSlider,
-                layout.MusicSlider,
-                layout.SfxSlider,
-                layout.AmbienceSlider,
-                layout.LookSlider,
-                layout.InvertToggle,
-                layout.GentleCameraToggle,
-                layout.RumbleToggle,
-                layout.RumbleSlider,
-                layout.GuidanceToggle,
-                layout.ResolutionPrev,
-                layout.ModePrev,
-                layout.VSyncToggle,
-                layout.FpsPrev,
-                layout.TextSizeButton,
-                layout.LanguageButton,
-            };
-            _settingRows = new VisualElement[_settingRowControls.Length];
-            for (int i = 0; i < _settingRowControls.Length; i++)
-            {
-                _settingRows[i] = FindSettingRow(_settingRowControls[i]);
-            }
-
+            Button[] languageButtons = LanguageButtons(layout.PageLanguage, localization);
             _continueNote = CreateContinueNote(layout.ResumeButton);
-            _titleCursors = CreateTitleCursors(layout, _languageButtons, _settingRows, out _cursorHosts);
+            _navigator = new MenuNavigator(
+                layout,
+                settings,
+                languageButtons,
+                NavigationContext,
+                Cue,
+                SelectTab,
+                StepSettingsControl,
+                _credits.ScrollByStep);
+
             _veil.Snap(false);
             _main.Snap(false);
             _settingsPanel.Snap(false);
@@ -292,6 +210,18 @@ namespace MoonProject.UI
                 ? (_main.IsShown || (_pages.IsTitle && (_settingsPanel.IsShown || _credits.IsOpen)))
                 : _main.IsHidden);
 
+        /// <summary>The page now shown (tests and captures).</summary>
+        public int SettingsTab => _settingsTab;
+
+        /// <summary>
+        /// World-space bounding boxes of the painted title scene elements (Moon disc, rover, and visible rim landmarks).
+        /// </summary>
+        public void GetTitleArtBounds(out Rect moonDiscWorld, out Rect roverWorld, List<Rect> landmarkWorlds = null)
+        {
+            _titleScenePainter.SyncLeftColumnLayout();
+            _titleScenePainter.GetDrawnArtBounds(out moonDiscWorld, out roverWorld, landmarkWorlds);
+        }
+
         public void Open()
         {
             if (IsOpen)
@@ -318,11 +248,7 @@ namespace MoonProject.UI
             _titleKeyHint.Snap(false);
             _veil.Show();
             _main.Show();
-            _lastPointerPos = _input.Menu.PointerPosition;
-            _heldDir = Vector2Int.zero;
-            _repeatTimer = 0f;
-            _pendingFocus = _layout.ResumeButton;
-            _lastValidFocus = _layout.ResumeButton;
+            _navigator.ResetOnOpen(_input.Menu.PointerPosition, _layout.ResumeButton);
             _events.Publish(new PauseChanged(true));
             Cue(UiCueKind.MenuOpen);
         }
@@ -335,10 +261,7 @@ namespace MoonProject.UI
             }
 
             IsOpen = false;
-            _pendingFocus = null;
-            _lastValidFocus = null;
-            Blur();
-            SyncSettingRowFocus(null);
+            _navigator.ClearFocus();
             SaveIfChanged();
             _veil.Hide();
             _main.Hide();
@@ -372,8 +295,7 @@ namespace MoonProject.UI
             }
             else if (_pages.Back(out PauseFocus focus))
             {
-                _pendingFocus = Button(focus);
-                _lastValidFocus = _pendingFocus;
+                _navigator.RequestFocus(focus);
                 Cue(UiCueKind.Back);
             }
             else if (_settingsPanel.Target)
@@ -417,11 +339,7 @@ namespace MoonProject.UI
             _curtain.Hide();
             _untouched = 0f;
             _resting = false;
-            _lastPointerPos = _input.Menu.PointerPosition;
-            _heldDir = Vector2Int.zero;
-            _repeatTimer = 0f;
-            _pendingFocus = DefaultFocus();
-            _lastValidFocus = _pendingFocus;
+            _navigator.ResetOnOpen(_input.Menu.PointerPosition, _navigator.DefaultFocus(NavigationContext()));
         }
 
         /// <summary>Evaluates the title screen's 2D CRT animation at an exact timestamp (for deterministic captures).</summary>
@@ -487,37 +405,17 @@ namespace MoonProject.UI
             ShiftForSettings();
             _layout.Pause.EnableInClassList(SettingsOpenClass, _settingsPanel.Target);
             CenterSettings();
+            if (!_titleCrt.IsHidden)
+            {
+                _titleScenePainter.SyncLeftColumnLayout();
+            }
+
             if (_leaving != Leaving.None && _curtain.IsShown)
             {
                 Go();
             }
 
-            if (IsOpen && !_resting && _leaving == Leaving.None)
-            {
-                TickPointerHover();
-                TickNavigation(unscaledDeltaTime);
-
-                if (_pendingFocus == null)
-                {
-                    Focusable current = FocusedElement();
-                    if (!(current is VisualElement currentEl) || !IsValidFocusForCurrentState(currentEl))
-                    {
-                        _pendingFocus = (_lastValidFocus is VisualElement lastEl && IsValidFocusForCurrentState(lastEl))
-                            ? _lastValidFocus
-                            : DefaultFocus();
-                    }
-                }
-
-                if (_pendingFocus is VisualElement target && IsDisplayed(target) && target.canGrabFocus)
-                {
-                    FocusControl(target, byCode: true);
-                    _pendingFocus = null;
-                }
-
-                SyncSettingRowFocus(FocusedElement() as VisualElement);
-            }
-
-            _pointerPressed = false;
+            _navigator.Tick(unscaledDeltaTime, _input.Menu.PointerPosition, _input.Menu.NavigateVector);
         }
 
         /// <summary>Re-reads the words set from code (the language selector, the cassette and relay lines).</summary>
@@ -535,6 +433,17 @@ namespace MoonProject.UI
         public void RestoreTime()
         {
             Time.timeScale = _resumeScale;
+        }
+
+        private MenuNavigationContext NavigationContext()
+        {
+            return new MenuNavigationContext(
+                IsOpen && !_resting && _leaving == Leaving.None,
+                _pages.Current,
+                _pages.DefaultFocus,
+                _credits.IsOpen,
+                _settingsPanel.Target,
+                _settingsTab);
         }
 
         private void Bind()
@@ -563,39 +472,6 @@ namespace MoonProject.UI
             _layout.FpsPrev.clicked += () => StepDisplay(Step.FpsCap, -1);
             _layout.FpsNext.clicked += () => StepDisplay(Step.FpsCap, 1);
             _layout.VSyncToggle.RegisterValueChangedCallback(OnVSyncChanged);
-            _layout.Pause.RegisterCallback<FocusInEvent>(OnFocusIn);
-            _layout.Pause.RegisterCallback<FocusOutEvent>(OnFocusOut);
-            _layout.Pause.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
-            _layout.Pause.RegisterCallback<NavigationMoveEvent>(OnNavigationMove, TrickleDown.TrickleDown);
-
-            BindHoverFocus(_layout.ResumeButton);
-            BindHoverFocus(_layout.NewGameButton);
-            BindHoverFocus(_layout.SettingsButton);
-            BindHoverFocus(_layout.CreditsButton);
-            BindHoverFocus(_layout.QuitToTitleButton);
-            BindHoverFocus(_layout.QuitButton);
-            BindHoverFocus(_layout.NewGameKeepButton);
-            BindHoverFocus(_layout.NewGameConfirmButton);
-            BindHoverFocus(_layout.QuitStayButton);
-            BindHoverFocus(_layout.QuitConfirmButton);
-            BindHoverFocus(_layout.SettingsBackButton);
-            BindHoverFocus(_layout.CreditsBack);
-            for (int i = 0; i < _languageButtons.Length; i++)
-            {
-                BindHoverFocus(_languageButtons[i]);
-            }
-
-            for (int i = 0; i < _settingsTabs.Length; i++)
-            {
-                BindHoverFocus(_settingsTabs[i].parent, _settingsTabs[i]);
-            }
-
-            for (int i = 0; i < _settingRowControls.Length; i++)
-            {
-                VisualElement control = _settingRowControls[i];
-                VisualElement row = _settingRows[i] ?? control;
-                BindHoverFocus(row, control);
-            }
 
             BindVolume(_layout.MasterSlider, AudioBus.Master);
             BindVolume(_layout.MusicSlider, AudioBus.Music);
@@ -616,469 +492,6 @@ namespace MoonProject.UI
             rumble.fill = true;
             rumble.RegisterValueChangedCallback(OnRumbleStrengthChanged);
             _layout.GuidanceToggle.RegisterValueChangedCallback(OnGuidanceChanged);
-        }
-
-        private void BindHoverFocus(VisualElement hitArea, VisualElement focusTarget = null)
-        {
-            VisualElement target = focusTarget ?? hitArea;
-            hitArea.RegisterCallback<PointerEnterEvent>(_ =>
-            {
-                if (IsOpen && !_resting && _leaving == Leaving.None && _pendingFocus == null &&
-                    IsValidFocusForCurrentState(target))
-                {
-                    FocusControl(target, byCode: true);
-                }
-            });
-            hitArea.RegisterCallback<PointerMoveEvent>(evt =>
-            {
-                if (IsOpen && !_resting && _leaving == Leaving.None && _pendingFocus == null &&
-                    evt.deltaPosition.sqrMagnitude > 0f && IsValidFocusForCurrentState(target))
-                {
-                    FocusControl(target, byCode: true);
-                }
-            });
-        }
-
-        private void FocusControl(VisualElement target, bool byCode)
-        {
-            if (target == null || !IsDisplayed(target) || !target.canGrabFocus)
-            {
-                return;
-            }
-
-            _lastValidFocus = target;
-            if (FocusedElement() == target)
-            {
-                SyncSettingRowFocus(target);
-                return;
-            }
-
-            bool prev = _focusingByCode;
-            _focusingByCode = byCode;
-            target.Focus();
-            _focusingByCode = prev;
-            SyncSettingRowFocus(target);
-        }
-
-        private void SyncSettingRowFocus(VisualElement focused)
-        {
-            if (focused == _lastSyncedFocus)
-            {
-                return;
-            }
-
-            _lastSyncedFocus = focused;
-            VisualElement focusedRow = focused != null ? FindSettingRow(focused) : null;
-            for (int i = 0; i < _settingRows.Length; i++)
-            {
-                VisualElement row = _settingRows[i];
-                if (row != null)
-                {
-                    row.EnableInClassList(FocusedRowClass, row == focusedRow);
-                }
-            }
-
-            for (int i = 0; i < _settingsTabs.Length; i++)
-            {
-                Button tab = _settingsTabs[i];
-                tab.parent.EnableInClassList(TabFocusClass, focused == tab);
-            }
-
-            VisualElement activeCursorHost = focusedRow ??
-                (focused != null && (focused == _layout.TabSound || focused == _layout.TabCamera || focused == _layout.TabDisplay)
-                    ? focused.parent
-                    : focused);
-            for (int i = 0; i < _titleCursors.Length; i++)
-            {
-                Label cursor = _titleCursors[i];
-                if (cursor != null)
-                {
-                    cursor.style.display = (_cursorHosts[i] != null && _cursorHosts[i] == activeCursorHost)
-                        ? DisplayStyle.Flex
-                        : DisplayStyle.None;
-                }
-            }
-        }
-
-        private static VisualElement FindSettingRow(VisualElement control)
-        {
-            for (VisualElement current = control; current != null; current = current.parent)
-            {
-                if (current.ClassListContains("setting-row"))
-                {
-                    return current;
-                }
-            }
-
-            return null;
-        }
-
-        private bool IsValidFocusForCurrentState(VisualElement element)
-        {
-            if (element == null || !IsDisplayed(element) || !element.canGrabFocus)
-            {
-                return false;
-            }
-
-            if (_credits.IsOpen)
-            {
-                return element == _layout.CreditsBack;
-            }
-
-            if (_settingsPanel.Target)
-            {
-                return _layout.PauseSettings.Contains(element);
-            }
-
-            return _layout.PauseMain.Contains(element);
-        }
-
-        private void TickPointerHover()
-        {
-            Vector2 pointerPos = _input.Menu.PointerPosition;
-            if (float.IsNaN(_lastPointerPos.x))
-            {
-                _lastPointerPos = pointerPos;
-                return;
-            }
-
-            if ((pointerPos - _lastPointerPos).sqrMagnitude <= 0.25f)
-            {
-                return;
-            }
-
-            _lastPointerPos = pointerPos;
-            IPanel panel = _layout.Root.panel;
-            if (panel == null)
-            {
-                return;
-            }
-
-            Vector2 screenTopLeft = new Vector2(pointerPos.x, Screen.height - pointerPos.y);
-            Vector2 panelPos = RuntimePanelUtils.ScreenToPanel(panel, screenTopLeft);
-            VisualElement hovered = HitTestInteractive(panelPos);
-            if (hovered != null)
-            {
-                FocusControl(hovered, byCode: true);
-            }
-        }
-
-        private VisualElement HitTestInteractive(Vector2 panelPos)
-        {
-            if (_credits.IsOpen)
-            {
-                return ContainsPoint(_layout.CreditsBack, panelPos) ? _layout.CreditsBack : null;
-            }
-
-            if (_settingsPanel.Target)
-            {
-                for (int i = 0; i < _settingsTabs.Length; i++)
-                {
-                    if (ContainsPoint(_settingsTabs[i].parent, panelPos))
-                    {
-                        return _settingsTabs[i];
-                    }
-                }
-
-                VisualElement[] tabControls = _settingsTabControls[_settingsTab];
-                for (int i = 0; i < tabControls.Length; i++)
-                {
-                    VisualElement control = tabControls[i];
-                    VisualElement row = FindSettingRow(control) ?? control;
-                    if (ContainsPoint(row, panelPos))
-                    {
-                        return control;
-                    }
-                }
-
-                if (ContainsPoint(_layout.SettingsBackButton, panelPos))
-                {
-                    return _layout.SettingsBackButton;
-                }
-
-                return null;
-            }
-
-            Button[] buttons = CurrentPageButtons();
-            for (int i = 0; i < buttons.Length; i++)
-            {
-                if (ContainsPoint(buttons[i], panelPos))
-                {
-                    return buttons[i];
-                }
-            }
-
-            return null;
-        }
-
-        private static bool ContainsPoint(VisualElement element, Vector2 panelPos)
-        {
-            return element != null && IsDisplayed(element) && element.worldBound.Contains(panelPos);
-        }
-
-        private Button[] CurrentPageButtons()
-        {
-            switch (_pages.Current)
-            {
-                case PausePage.NewGame:
-                    return _newGamePageButtons;
-                case PausePage.Quit:
-                    return _quitPageButtons;
-                case PausePage.Language:
-                    return _languageButtons;
-                default:
-                    return _mainPageButtons;
-            }
-        }
-
-        private void OnNavigationMove(NavigationMoveEvent evt)
-        {
-            if (!IsOpen || _resting || _leaving != Leaving.None)
-            {
-                return;
-            }
-
-            evt.StopPropagation();
-            _layout.Root.panel?.focusController?.IgnoreEvent(evt);
-            if (evt.direction == NavigationMoveEvent.Direction.None || _lastNavigateFrame == Time.frameCount)
-            {
-                return;
-            }
-
-            _lastNavigateFrame = Time.frameCount;
-            HandleNavigation(evt.direction);
-        }
-
-        private void TickNavigation(float unscaledDeltaTime)
-        {
-            Vector2 nav = _input.Menu.NavigateVector;
-            Vector2Int dir = Vector2Int.zero;
-            if (Mathf.Abs(nav.x) >= AxisDeadzone || Mathf.Abs(nav.y) >= AxisDeadzone)
-            {
-                if (Mathf.Abs(nav.y) >= Mathf.Abs(nav.x))
-                {
-                    dir = new Vector2Int(0, nav.y > 0f ? 1 : -1);
-                }
-                else
-                {
-                    dir = new Vector2Int(nav.x > 0f ? 1 : -1, 0);
-                }
-            }
-
-            if (dir == Vector2Int.zero)
-            {
-                _heldDir = Vector2Int.zero;
-                _repeatTimer = 0f;
-                return;
-            }
-
-            bool trigger = false;
-            if (dir != _heldDir)
-            {
-                _heldDir = dir;
-                _repeatTimer = RepeatInitialDelay;
-                trigger = true;
-            }
-            else
-            {
-                _repeatTimer -= unscaledDeltaTime;
-                if (_repeatTimer <= 0f)
-                {
-                    _repeatTimer += RepeatInterval;
-                    trigger = true;
-                }
-            }
-
-            if (!trigger || _lastNavigateFrame == Time.frameCount)
-            {
-                return;
-            }
-
-            _lastNavigateFrame = Time.frameCount;
-            NavigationMoveEvent.Direction moveDir;
-            if (dir.y > 0)
-            {
-                moveDir = NavigationMoveEvent.Direction.Up;
-            }
-            else if (dir.y < 0)
-            {
-                moveDir = NavigationMoveEvent.Direction.Down;
-            }
-            else if (dir.x < 0)
-            {
-                moveDir = NavigationMoveEvent.Direction.Left;
-            }
-            else
-            {
-                moveDir = NavigationMoveEvent.Direction.Right;
-            }
-
-            HandleNavigation(moveDir);
-        }
-
-        private void HandleNavigation(NavigationMoveEvent.Direction direction)
-        {
-            VisualElement focused = FocusedElement() as VisualElement;
-            if (!IsValidFocusForCurrentState(focused))
-            {
-                VisualElement fallback = (_lastValidFocus is VisualElement lastEl && IsValidFocusForCurrentState(lastEl))
-                    ? lastEl
-                    : DefaultFocus() as VisualElement;
-                FocusControl(fallback, byCode: false);
-                return;
-            }
-
-            if (_credits.IsOpen)
-            {
-                if (direction == NavigationMoveEvent.Direction.Up)
-                {
-                    _credits.ScrollByStep(-1);
-                }
-                else if (direction == NavigationMoveEvent.Direction.Down)
-                {
-                    _credits.ScrollByStep(1);
-                }
-
-                return;
-            }
-
-            if (_settingsPanel.Target)
-            {
-                HandleSettingsNavigation(focused, direction);
-                return;
-            }
-
-            if (direction == NavigationMoveEvent.Direction.Up || direction == NavigationMoveEvent.Direction.Down)
-            {
-                StepButtonList(CurrentPageButtons(), focused, direction == NavigationMoveEvent.Direction.Down ? 1 : -1);
-            }
-        }
-
-        private void StepButtonList(Button[] buttons, VisualElement focused, int delta)
-        {
-            int currentIdx = -1;
-            for (int i = 0; i < buttons.Length; i++)
-            {
-                if (buttons[i] == focused)
-                {
-                    currentIdx = i;
-                    break;
-                }
-            }
-
-            if (currentIdx < 0)
-            {
-                for (int i = 0; i < buttons.Length; i++)
-                {
-                    if (IsDisplayed(buttons[i]) && buttons[i].canGrabFocus)
-                    {
-                        FocusControl(buttons[i], byCode: false);
-                        return;
-                    }
-                }
-
-                return;
-            }
-
-            for (int idx = currentIdx + delta; idx >= 0 && idx < buttons.Length; idx += delta)
-            {
-                Button candidate = buttons[idx];
-                if (IsDisplayed(candidate) && candidate.canGrabFocus)
-                {
-                    FocusControl(candidate, byCode: false);
-                    return;
-                }
-            }
-        }
-
-        private void HandleSettingsNavigation(VisualElement focused, NavigationMoveEvent.Direction direction)
-        {
-            int tabIdx = -1;
-            for (int i = 0; i < _settingsTabs.Length; i++)
-            {
-                if (_settingsTabs[i] == focused)
-                {
-                    tabIdx = i;
-                    break;
-                }
-            }
-
-            VisualElement[] rows = _settingsTabControls[_settingsTab];
-            int rowIdx = -1;
-            VisualElement focusedRow = FindSettingRow(focused);
-            for (int i = 0; i < rows.Length; i++)
-            {
-                if (rows[i] == focused || (focusedRow != null && FindSettingRow(rows[i]) == focusedRow))
-                {
-                    rowIdx = i;
-                    break;
-                }
-            }
-
-            bool isBack = focused == _layout.SettingsBackButton;
-
-            if (direction == NavigationMoveEvent.Direction.Up || direction == NavigationMoveEvent.Direction.Down)
-            {
-                int delta = direction == NavigationMoveEvent.Direction.Down ? 1 : -1;
-                if (tabIdx >= 0)
-                {
-                    if (delta > 0 && rows.Length > 0)
-                    {
-                        FocusControl(rows[0], byCode: false);
-                    }
-                }
-                else if (rowIdx >= 0)
-                {
-                    int nextRow = rowIdx + delta;
-                    if (nextRow < 0)
-                    {
-                        FocusControl(_settingsTabs[_settingsTab], byCode: false);
-                    }
-                    else if (nextRow < rows.Length)
-                    {
-                        FocusControl(rows[nextRow], byCode: false);
-                    }
-                    else
-                    {
-                        FocusControl(_layout.SettingsBackButton, byCode: false);
-                    }
-                }
-                else if (isBack)
-                {
-                    if (delta < 0 && rows.Length > 0)
-                    {
-                        FocusControl(rows[rows.Length - 1], byCode: false);
-                    }
-                }
-                else if (rows.Length > 0)
-                {
-                    FocusControl(rows[0], byCode: false);
-                }
-
-                return;
-            }
-
-            if (direction == NavigationMoveEvent.Direction.Left || direction == NavigationMoveEvent.Direction.Right)
-            {
-                int delta = direction == NavigationMoveEvent.Direction.Right ? 1 : -1;
-                if (tabIdx >= 0)
-                {
-                    int nextTab = Mathf.Clamp(tabIdx + delta, 0, _settingsTabs.Length - 1);
-                    if (nextTab != tabIdx)
-                    {
-                        SelectTab(nextTab);
-                        FocusControl(_settingsTabs[nextTab], byCode: false);
-                        Cue(UiCueKind.Confirm);
-                    }
-
-                    return;
-                }
-
-                if (rowIdx >= 0)
-                {
-                    StepSettingsControl(rows[rowIdx], delta);
-                }
-            }
         }
 
         private void StepSettingsControl(VisualElement control, int delta)
@@ -1130,7 +543,7 @@ namespace MoonProject.UI
             }
 
             SelectTab(tab);
-            FocusControl(_settingsTabs[tab], byCode: true);
+            _navigator.FocusControl(_settingsTabs[tab], byCode: true);
             Cue(UiCueKind.Confirm);
         }
 
@@ -1192,8 +605,7 @@ namespace MoonProject.UI
                 ApplyTitleLayout();
             }
 
-            _pendingFocus = _layout.MasterSlider;
-            _lastValidFocus = _layout.MasterSlider;
+            _navigator.RequestFocus(_layout.MasterSlider);
         }
 
         /// <summary>Shows one of the settings' pages (0 Sound, 1 Camera and feel, 2 Display) and marks its tab.</summary>
@@ -1207,9 +619,6 @@ namespace MoonProject.UI
                 _settingsTabs[i].parent.EnableInClassList(TabSkinOnClass, i == tab);
             }
         }
-
-        /// <summary>The page now shown (tests and captures).</summary>
-        public int SettingsTab => _settingsTab;
 
         private enum Step
         {
@@ -1276,8 +685,7 @@ namespace MoonProject.UI
                 }
             }
 
-            _pendingFocus = _layout.SettingsButton;
-            _lastValidFocus = _layout.SettingsButton;
+            _navigator.RequestFocus(_layout.SettingsButton);
         }
 
         /// <summary>
@@ -1319,25 +727,6 @@ namespace MoonProject.UI
             }
         }
 
-        private Focusable Button(PauseFocus focus)
-        {
-            switch (focus)
-            {
-                case PauseFocus.NewGame:
-                    return _layout.NewGameButton;
-                case PauseFocus.Quit:
-                    return _layout.QuitButton;
-                case PauseFocus.QuitStay:
-                    return _layout.QuitStayButton;
-                case PauseFocus.NewGameKeep:
-                    return _layout.NewGameKeepButton;
-                case PauseFocus.Language:
-                    return _languageButtons[0];
-                default:
-                    return _layout.ResumeButton;
-            }
-        }
-
         /// <summary>Asks <paramref name="question"/> in place of the main buttons, focused on its safe answer.</summary>
         private void Ask(PausePage question)
         {
@@ -1351,8 +740,7 @@ namespace MoonProject.UI
                 CloseSettings();
             }
 
-            _pendingFocus = Button(_pages.DefaultFocus);
-            _lastValidFocus = _pendingFocus;
+            _navigator.RequestFocus(_pages.DefaultFocus);
             Cue(UiCueKind.Confirm);
         }
 
@@ -1361,8 +749,7 @@ namespace MoonProject.UI
         {
             if (IsOpen && _pages.Current == question && _pages.Back(out PauseFocus focus))
             {
-                _pendingFocus = Button(focus);
-                _lastValidFocus = _pendingFocus;
+                _navigator.RequestFocus(focus);
                 Cue(UiCueKind.Back);
             }
         }
@@ -1427,80 +814,9 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>
-        /// True when neither the element nor any ancestor is display: none (a fading page is not yet shown).
-        /// </summary>
-        private static bool IsDisplayed(VisualElement element)
-        {
-            for (VisualElement current = element; current != null; current = current.parent)
-            {
-                if (current.resolvedStyle.display == DisplayStyle.None)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        private Focusable DefaultFocus()
-        {
-            if (_credits.IsOpen)
-            {
-                return _layout.CreditsBack;
-            }
-
-            if (_settingsPanel.Target)
-            {
-                return _layout.MasterSlider;
-            }
-
-            return Button(_pages.DefaultFocus);
-        }
-
-        private Focusable FocusedElement()
-        {
-            return _layout.Root.panel?.focusController?.focusedElement;
-        }
-
-        private void Blur()
-        {
-            FocusedElement()?.Blur();
-        }
-
         private void Cue(UiCueKind kind)
         {
             _events.Publish(new UiCue(kind));
-        }
-
-        /// <summary>
-        /// Focus moved by the player's keyboard or gamepad (not the menu placing it, not a mouse click): a soft tick.
-        /// </summary>
-        private void OnFocusIn(FocusInEvent evt)
-        {
-            if (evt.target is VisualElement el && IsValidFocusForCurrentState(el))
-            {
-                _lastValidFocus = el;
-                SyncSettingRowFocus(el);
-            }
-
-            if (IsOpen && !_focusingByCode && !_pointerPressed)
-            {
-                Cue(UiCueKind.FocusMove);
-            }
-        }
-
-        private void OnFocusOut(FocusOutEvent evt)
-        {
-            if (FocusedElement() == null)
-            {
-                SyncSettingRowFocus(null);
-            }
-        }
-
-        private void OnPointerDown(PointerDownEvent evt)
-        {
-            _pointerPressed = true;
         }
 
         private void OnResumeClicked()
@@ -1563,8 +879,7 @@ namespace MoonProject.UI
             _main.Snap(false);
             _titleScreen.Snap(false);
             _titleKeyHint.Snap(false);
-            _pendingFocus = _layout.CreditsBack;
-            _lastValidFocus = _layout.CreditsBack;
+            _navigator.RequestFocus(_layout.CreditsBack);
             Cue(UiCueKind.Confirm);
         }
 
@@ -1579,12 +894,11 @@ namespace MoonProject.UI
         private void CloseCredits()
         {
             _credits.Close();
-            Blur();
+            _navigator.Blur();
             _main.Show();
             _titleScreen.Show();
             _titleKeyHint.Show();
-            _pendingFocus = _layout.CreditsButton;
-            _lastValidFocus = _layout.CreditsButton;
+            _navigator.RequestFocus(_layout.CreditsButton);
             Cue(UiCueKind.Back);
         }
 
@@ -1726,11 +1040,8 @@ namespace MoonProject.UI
         private void CloseTitle()
         {
             IsOpen = false;
-            _pendingFocus = null;
-            _lastValidFocus = null;
             _resting = false;
-            Blur();
-            SyncSettingRowFocus(null);
+            _navigator.ClearFocus();
             SaveIfChanged();
             _main.Hide();
             _titleScreen.Hide();
@@ -1744,17 +1055,9 @@ namespace MoonProject.UI
         private void StepTitleAnimation(float timeSeconds, bool standaloneFraming)
         {
             _titleScenePainter.SetTime(timeSeconds, standaloneFraming);
+            _titleScenePainter.SyncLeftColumnLayout();
             _titleCrtOverlayPainter.SetTime(timeSeconds, standaloneFraming);
-            bool cursorVisible = _titleScenePainter.State.CursorVisible;
-            if (cursorVisible != _lastCursorVisible)
-            {
-                _lastCursorVisible = cursorVisible;
-                Visibility visibility = cursorVisible ? Visibility.Visible : Visibility.Hidden;
-                for (int i = 0; i < _titleCursors.Length; i++)
-                {
-                    _titleCursors[i].style.visibility = visibility;
-                }
-            }
+            _navigator.SetCursorVisibility(_titleScenePainter.State.CursorVisible);
         }
 
         private static Label CreateContinueNote(Button resumeButton)
@@ -1766,64 +1069,6 @@ namespace MoonProject.UI
             note.AddToClassList("menu-button__note");
             resumeButton.Add(note);
             return note;
-        }
-
-        private static Label[] CreateTitleCursors(UiLayout layout, Button[] languageButtons, VisualElement[] settingRows,
-            out VisualElement[] hosts)
-        {
-            VisualElement[] targets =
-            {
-                layout.ResumeButton,
-                layout.NewGameButton,
-                layout.SettingsButton,
-                layout.CreditsButton,
-                layout.QuitToTitleButton,
-                layout.QuitButton,
-                layout.NewGameKeepButton,
-                layout.NewGameConfirmButton,
-                layout.QuitStayButton,
-                layout.QuitConfirmButton,
-                layout.SettingsBackButton,
-                layout.CreditsBack,
-                layout.TabSound.parent,
-                layout.TabCamera.parent,
-                layout.TabDisplay.parent,
-            };
-
-            var cursors = new Label[targets.Length + languageButtons.Length + settingRows.Length];
-            hosts = new VisualElement[cursors.Length];
-            int idx = 0;
-            for (int i = 0; i < targets.Length; i++)
-            {
-                hosts[idx] = targets[i];
-                cursors[idx++] = AttachCursor(targets[i]);
-            }
-
-            for (int i = 0; i < languageButtons.Length; i++)
-            {
-                hosts[idx] = languageButtons[i];
-                cursors[idx++] = AttachCursor(languageButtons[i]);
-            }
-
-            for (int i = 0; i < settingRows.Length; i++)
-            {
-                hosts[idx] = settingRows[i];
-                cursors[idx++] = AttachCursor(settingRows[i]);
-            }
-
-            return cursors;
-        }
-
-        private static Label AttachCursor(VisualElement host)
-        {
-            var cursor = new Label(">")
-            {
-                pickingMode = PickingMode.Ignore,
-            };
-            cursor.style.display = DisplayStyle.None;
-            cursor.AddToClassList("menu-button__cursor");
-            host?.Add(cursor);
-            return cursor;
         }
 
         /// <summary>
@@ -1868,7 +1113,7 @@ namespace MoonProject.UI
             _untouched = 0f;
             if (resting)
             {
-                Blur();
+                _navigator.Blur();
                 _main.Hide();
                 _settingsPanel.Hide();
                 _titleScreen.Hide();
@@ -1879,17 +1124,14 @@ namespace MoonProject.UI
             _main.Show();
             _titleScreen.Show();
             _titleKeyHint.Show();
-            _pendingFocus = DefaultFocus();
-            _lastValidFocus = _pendingFocus;
+            _navigator.RequestDefaultFocus();
         }
 
         /// <summary>Draws the dark; once it is drawn, <see cref="Go"/> does what was chosen.</summary>
         private void Draw(Leaving leaving)
         {
             _leaving = leaving;
-            _pendingFocus = null;
-            _lastValidFocus = null;
-            Blur();
+            _navigator.ClearFocus();
             _curtain.Show();
         }
 
@@ -1944,8 +1186,7 @@ namespace MoonProject.UI
             }
 
             _player.ChooseLanguage(_localization.Languages[index]);
-            _pendingFocus = Button(_pages.DefaultFocus);
-            _lastValidFocus = _pendingFocus;
+            _navigator.RequestFocus(_pages.DefaultFocus);
             Cue(UiCueKind.Confirm);
         }
 

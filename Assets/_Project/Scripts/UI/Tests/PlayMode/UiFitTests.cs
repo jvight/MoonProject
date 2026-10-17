@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -27,7 +28,6 @@ namespace MoonProject.UI.PlayModeTests
     {
         private const float Settle = 0.4f;
         private const float PlaceTolerance = 0.01f;
-        private const float WideAspect = 16f / 9f;
         private const float NeverIdleSeconds = 1e6f;
         private const int BigTextPresses = 2;
         private const float RecipeCardViewportX = 0.8f;
@@ -37,6 +37,7 @@ namespace MoonProject.UI.PlayModeTests
         private const int CellHeight = 270;
         private const int CellPad = 6;
         private const string FitSheetPath = "Logs/fit_sheet.png";
+        private const string TitleFitDir = "Logs/title-fit";
 
         private static readonly Dictionary<string, Color32[][]> s_SheetRows = new Dictionary<string, Color32[][]>();
 
@@ -86,6 +87,8 @@ namespace MoonProject.UI.PlayModeTests
 #endif
             UiLayout layout = _rig.Ui.Layout;
             EventBus events = _rig.Bootstrap.Context.Events;
+            Vector2 refSize = _rig.Tuning.Title.MenuReferenceSize;
+            float wideAspect = refSize.x / refSize.y;
             yield return null;
 
             events.Publish(new TitleShown(true));
@@ -118,6 +121,7 @@ namespace MoonProject.UI.PlayModeTests
                 yield return Check(shape, "title", (label, found) =>
                 {
                     ScreenFit.CheckInsideCrtFrame(layout, _rig.Tuning.Title, label, found);
+                    ScreenFit.CheckTitleArtApart(layout, _rig.Ui.Pause, label, found);
                     ScreenFit.CheckApart(layout.TitleScreen, layout.PauseMain, label, found);
                     ScreenFit.CheckApart(layout.TitleWordmark, layout.PauseMain, label, found);
                     ScreenFit.CheckApart(layout.PauseMain, layout.TitleKeyHint, label, found);
@@ -126,8 +130,8 @@ namespace MoonProject.UI.PlayModeTests
                 });
                 closedWordmarkRects[shape.Name] = layout.TitleScreen.worldBound;
                 closedHintRects[shape.Name] = layout.TitleKeyHint.worldBound;
-                CaptureSheetCell(shape, closedCol);
-                if ((float)shape.Width / shape.Height >= WideAspect - PlaceTolerance)
+                CaptureTitleFitAndSheetCell(shape, closedCol);
+                if ((float)shape.Width / shape.Height >= wideAspect - PlaceTolerance)
                 {
                     wordmarkPlaces.Add(WordmarkPlace(layout));
                 }
@@ -147,6 +151,8 @@ namespace MoonProject.UI.PlayModeTests
                 yield return Check(shape, "title settings", (label, found) =>
                 {
                     ScreenFit.CheckInsideCrtFrame(layout, _rig.Tuning.Title, label, found);
+                    ScreenFit.CheckTitleArtApart(layout, _rig.Ui.Pause, label, found);
+                    ScreenFit.CheckSettingsLegibility(layout, label, found);
                     ScreenFit.CheckApart(layout.PauseMain, layout.PauseSettings, label, found);
                     ScreenFit.CheckApart(layout.TitleScreen, layout.PauseSettings, label, found);
                     ScreenFit.CheckApart(layout.TitleWordmark, layout.PauseSettings, label, found);
@@ -160,8 +166,56 @@ namespace MoonProject.UI.PlayModeTests
                     $"{shape.Name}: opening Settings must not reflow #title-screen");
                 Assert.AreEqual(closedHintRects[shape.Name].yMin, openHint.yMin, 1f,
                     $"{shape.Name}: opening Settings must not reflow #title-key-hint");
-                CaptureSheetCell(shape, openCol);
+                CaptureTitleFitAndSheetCell(shape, openCol);
             }
+
+            // Also verify Camera & feel and Display tabs and Vietnamese localization on title settings.
+            yield return Reframe(ScreenShapes.All[0]);
+            _rig.Ui.Pause.SelectTab(1);
+            yield return Seconds(Settle);
+            yield return Check(ScreenShapes.All[0], "title settings camera-en", (label, found) =>
+            {
+                ScreenFit.CheckInsideCrtFrame(layout, _rig.Tuning.Title, label, found);
+                ScreenFit.CheckTitleArtApart(layout, _rig.Ui.Pause, label, found);
+                ScreenFit.CheckSettingsLegibility(layout, label, found);
+                ScreenFit.CheckChildrenApart(layout.PageCamera, label, found);
+            });
+
+            _rig.Ui.Pause.SelectTab(2);
+            yield return Seconds(Settle);
+            yield return Check(ScreenShapes.All[0], "title settings display-en", (label, found) =>
+            {
+                ScreenFit.CheckInsideCrtFrame(layout, _rig.Tuning.Title, label, found);
+                ScreenFit.CheckTitleArtApart(layout, _rig.Ui.Pause, label, found);
+                ScreenFit.CheckSettingsLegibility(layout, label, found);
+                ScreenFit.CheckChildrenApart(layout.PageDisplay, label, found);
+            });
+
+            Submit(layout.LanguageButton);
+            yield return Seconds(Settle);
+            yield return Check(ScreenShapes.All[0], "title settings display-vi", (label, found) =>
+            {
+                ScreenFit.CheckInsideCrtFrame(layout, _rig.Tuning.Title, label, found);
+                ScreenFit.CheckTitleArtApart(layout, _rig.Ui.Pause, label, found);
+                ScreenFit.CheckSettingsLegibility(layout, label, found);
+                ScreenFit.CheckChildrenApart(layout.PageDisplay, label, found);
+            });
+
+            _rig.Ui.Pause.SelectTab(1);
+            yield return Seconds(Settle);
+            yield return Check(ScreenShapes.All[0], "title settings camera-vi", (label, found) =>
+            {
+                ScreenFit.CheckInsideCrtFrame(layout, _rig.Tuning.Title, label, found);
+                ScreenFit.CheckTitleArtApart(layout, _rig.Ui.Pause, label, found);
+                ScreenFit.CheckSettingsLegibility(layout, label, found);
+                ScreenFit.CheckChildrenApart(layout.PageCamera, label, found);
+            });
+
+            _rig.Ui.Pause.SelectTab(2);
+            yield return null;
+            Submit(layout.LanguageButton);
+            _rig.Ui.Pause.SelectTab(0);
+            yield return Seconds(Settle);
 
             WriteFitSheet();
 
@@ -284,8 +338,11 @@ namespace MoonProject.UI.PlayModeTests
             foreach (ScreenShape shape in ScreenShapes.All)
             {
                 yield return Reframe(shape);
-                yield return Check(shape, "pause settings",
-                    (label, found) => ScreenFit.CheckApart(layout.PauseMain, layout.PauseSettings, label, found));
+                yield return Check(shape, "pause settings", (label, found) =>
+                {
+                    ScreenFit.CheckApart(layout.PauseMain, layout.PauseSettings, label, found);
+                    ScreenFit.CheckSettingsLegibility(layout, label, found);
+                });
             }
 
             Submit(layout.SettingsBackButton);
@@ -306,19 +363,9 @@ namespace MoonProject.UI.PlayModeTests
                                       "% text:\n" + string.Join("\n", _problems));
         }
 
-        private void CaptureSheetCell(ScreenShape shape, int colIndex)
+        private void CaptureTitleFitAndSheetCell(ScreenShape shape, int colIndex)
         {
-            bool inSheet = false;
-            for (int i = 0; i < ScreenShapes.TitleSheet.Length; i++)
-            {
-                if (ScreenShapes.TitleSheet[i].Name == shape.Name)
-                {
-                    inSheet = true;
-                    break;
-                }
-            }
-
-            if (!inSheet || _rig.Frame == null)
+            if (_rig.Frame == null)
             {
                 return;
             }
@@ -332,9 +379,42 @@ namespace MoonProject.UI.PlayModeTests
             RenderTexture.active = prev;
 
             Color32[] srcPixels = src.GetPixels32();
+            for (int i = 0; i < srcPixels.Length; i++)
+            {
+                Color32 p = srcPixels[i];
+                p.a = 255;
+                srcPixels[i] = p;
+            }
+
+            src.SetPixels32(srcPixels);
+            src.Apply();
+            byte[] nativePng = src.EncodeToPNG();
+
+            string scaleTag = colIndex >= 2 ? "150" : "100";
+            string stateTag = (colIndex & 1) == 1 ? "settings" : "title";
+            string fitDir = Path.GetFullPath(TitleFitDir);
+            Directory.CreateDirectory(fitDir);
+            string nativePath = Path.Combine(fitDir, $"{shape.Name}_{scaleTag}_{stateTag}.png");
+            File.WriteAllBytes(nativePath, nativePng);
+
             int srcW = rt.width;
             int srcH = rt.height;
             Object.DestroyImmediate(src);
+
+            bool inSheet = false;
+            for (int i = 0; i < ScreenShapes.TitleSheet.Length; i++)
+            {
+                if (ScreenShapes.TitleSheet[i].Name == shape.Name)
+                {
+                    inSheet = true;
+                    break;
+                }
+            }
+
+            if (!inSheet)
+            {
+                return;
+            }
 
             var cell = new Color32[CellWidth * CellHeight];
             Color32 bg = new Color32(6, 8, 12, 255);
@@ -451,14 +531,14 @@ namespace MoonProject.UI.PlayModeTests
             byte[] png = sheetTex.EncodeToPNG();
             Object.DestroyImmediate(sheetTex);
 
-            string fullPath = System.IO.Path.GetFullPath(FitSheetPath);
-            string dir = System.IO.Path.GetDirectoryName(fullPath);
+            string fullPath = Path.GetFullPath(FitSheetPath);
+            string dir = Path.GetDirectoryName(fullPath);
             if (!string.IsNullOrEmpty(dir))
             {
-                System.IO.Directory.CreateDirectory(dir);
+                Directory.CreateDirectory(dir);
             }
 
-            System.IO.File.WriteAllBytes(fullPath, png);
+            File.WriteAllBytes(fullPath, png);
         }
 
         /// <summary>

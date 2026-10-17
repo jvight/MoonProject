@@ -502,7 +502,7 @@ Label {
     right: auto;
     bottom: auto;
     width: 470px;
-    height: 368px;
+    height: 396px;
     flex-grow: 0;
     flex-shrink: 0;
     justify-content: center;
@@ -513,6 +513,11 @@ Label {
 
 .pause--title .pause__stack {
     width: 470px;
+}
+
+.pause--title.pause--settings-open .pause__frame,
+.pause--title.pause--settings-open .pause__stack {
+    width: 510px;
 }
 
 .pause--title .pause__pages {
@@ -570,11 +575,11 @@ Label {
 
 .setting-row .menu-button__cursor {
     left: 6px;
-    font-size: 20px;
+    font-size: 22px;
 }
 
 .settings-tab-wrap .menu-button__cursor {
-    left: 8px;
+    left: 6px;
     font-size: 18px;
 }
 
@@ -605,26 +610,26 @@ Label {
     left: 0;
     top: 0;
     bottom: auto;
-    width: 470px;
+    width: 510px;
     margin-left: 0;
 }
 
 .pause--title .pause__panel--settings {
-    padding: 12px 20px 10px 20px;
+    padding: 12px 18px 10px 18px;
 }
 
 .pause--title .settings-tabs {
-    margin: 0 4px 6px 4px;
+    margin: 0 0 8px 0;
 }
 
 .pause--title .settings-tab-wrap,
 .pause--title .settings-tab {
-    min-height: 34px;
-    font-size: 17px;
+    min-height: 36px;
+    font-size: 18px;
 }
 
 .pause--title .settings-tab {
-    padding: 2px 12px 2px 20px;
+    padding: 2px 10px 2px 18px;
 }
 
 .pause--title .settings-tab-wrap--focus {
@@ -638,28 +643,28 @@ Label {
 }
 
 .pause--title .settings-page {
-    min-height: 222px;
+    min-height: 244px;
 }
 
 .pause--title .setting-row {
-    min-height: 33px;
+    min-height: 38px;
     margin: 1px 0;
     padding-left: 24px;
 }
 
 .pause--title .setting-row__label {
-    width: 168px;
-    font-size: 17px;
+    width: 206px;
+    font-size: 22px;
 }
 
 .pause--title .menu-button--compact {
-    height: 30px;
-    font-size: 17px;
+    height: 34px;
+    font-size: 20px;
 }
 
 .pause--title .pause__panel--settings .menu-button--quiet,
 .pause--title .credits__panel .menu-button--quiet {
-    height: 40px;
+    height: 42px;
     margin-top: 6px;
     margin-bottom: 0;
     padding: 0 18px 0 42px;
@@ -671,6 +676,7 @@ Label {
     border-color: var(--glass-rim);
     background-color: var(--moon-glass);
     color: var(--glass-hi);
+    font-size: 22px;
     -unity-text-align: middle-left;
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
 }
@@ -1910,7 +1916,7 @@ Label {
     position: absolute;
     left: 100%;
     top: 0;
-    width: 480px;
+    width: 510px;
     margin-left: 26px;
 }
 
@@ -1998,9 +2004,9 @@ Label {
 .pause .menu-button--compact {
     flex-grow: 1;
     height: 38px;
-    margin: 0 8px;
-    padding: 0 14px;
-    font-size: 18px;
+    margin: 0 6px;
+    padding: 0 12px;
+    font-size: 20px;
     border-radius: 12px;
     border-color: var(--glass-rim);
     background-color: var(--glass-btn);
@@ -2009,7 +2015,7 @@ Label {
 
 /* The settings list has grown to a dozen rows: a little less padding keeps it on screen at the largest text size */
 .pause__panel--settings {
-    padding: 18px 28px 14px 28px;
+    padding: 18px 22px 14px 22px;
 }
 
 .pause__panel--settings .menu-button--quiet {
@@ -2053,16 +2059,17 @@ Label {
 .settings-tabs {
     flex-direction: row;
     align-items: stretch;
-    margin: 0 8px 14px 8px;
+    margin: 0 0 12px 0;
 }
 
 /* Each tab's chamfered CRT frame is painted on its wrapper, beneath the button, so the label is always drawn on top */
 .settings-tab-wrap {
     flex-grow: 1;
-    flex-basis: 0;
+    flex-basis: auto;
+    flex-shrink: 0;
     min-width: 0;
     min-height: 40px;
-    margin: 0 3px;
+    margin: 0 2px;
     --tab-color: var(--glass-deep);
     --tab-edge: var(--moon-track);
     --tab-edge-width: 1.5;
@@ -2085,8 +2092,8 @@ Label {
     min-width: 0;
     min-height: 40px;
     margin: 0;
-    padding: 2px 16px;
-    white-space: normal;
+    padding: 2px 10px 2px 18px;
+    white-space: nowrap;
     border-width: 0;
     background-color: rgba(0, 0, 0, 0);
     color: var(--glass-hi);
@@ -2099,14 +2106,14 @@ Label {
 }
 
 .settings-page {
-    min-height: 240px;
+    min-height: 244px;
 }
 
 /* A choice stepped by a pair of arrows round its current value (resolution, window mode, FPS limit) */
 .cycle__arrow {
     flex-grow: 0;
     flex-shrink: 0;
-    min-width: 38px;
+    min-width: 34px;
     margin: 0 2px;
     padding: 0;
 }
@@ -2114,7 +2121,7 @@ Label {
 .cycle__value {
     flex-grow: 1;
     flex-shrink: 1;
-    font-size: 18px;
+    font-size: 20px;
     white-space: normal;
     color: var(--glass-hi);
     -unity-text-align: middle-center;
@@ -2163,12 +2170,13 @@ Label {
 
 /* A fixed label column wide enough for the longest label in English and Vietnamese; a longer one wraps */
 .setting-row__label {
-    width: 172px;
+    width: 206px;
     flex-shrink: 0;
     margin-right: 6px;
-    font-size: 18px;
+    font-size: 22px;
     white-space: normal;
-    color: var(--moon-text-dim);
+    color: var(--glass-hi);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
 }
 
 .setting-row__slider {
@@ -2177,9 +2185,9 @@ Label {
 }
 
 .setting-row__value {
-    width: 52px;
-    font-size: 18px;
-    color: var(--moon-text-faint);
+    width: 58px;
+    font-size: 20px;
+    color: var(--moon-text);
     -unity-text-align: middle-right;
 }
 

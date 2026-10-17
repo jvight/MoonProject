@@ -47,7 +47,8 @@ namespace MoonProject.UI
             }
 
             Painter2D painter = context.painter2D;
-            float s = _standaloneFraming ? (h / 720f) : Mathf.Min(w / 1280f, h / 720f);
+            Vector2 refSize = _settings.StandaloneReferenceSize;
+            float s = _standaloneFraming ? (h / refSize.y) : Mathf.Min(w / refSize.x, h / refSize.y);
             PaintScanlines(painter, w, h);
             PaintRefreshBand(painter, w, h, s);
             PaintVignetteAndBezel(painter, w, h, s);
@@ -78,7 +79,7 @@ namespace MoonProject.UI
         private void PaintRefreshBand(Painter2D painter, float w, float h, float s)
         {
             Color baseCol = WithAlpha(_settings.Amber, 0.0025f);
-            float periodHeight = 720f + _settings.CrtRollBandHeight;
+            float periodHeight = _settings.StandaloneReferenceSize.y + _settings.CrtRollBandHeight;
             float phase = ((_timeSeconds * _settings.CrtRollSpeed) % periodHeight) / periodHeight;
             if (phase < 0f)
             {
@@ -114,8 +115,9 @@ namespace MoonProject.UI
                 return;
             }
 
-            float padX = 36f * s;
-            float padY = 26f * s;
+            Vector2 bezelInset = _settings.CrtBezelInset;
+            float padX = bezelInset.x * s;
+            float padY = bezelInset.y * s;
             float cornerR = 30f * s;
             float sagX = 3.5f * s;
             float sagY = 3.5f * s;
@@ -259,8 +261,9 @@ namespace MoonProject.UI
 
         private void PaintStandaloneBezel(Painter2D painter, float w, float h, float s)
         {
-            float padX = 14f * s;
-            float padY = 12f * s;
+            Vector2 bezelInset = _settings.StandaloneBezelInset;
+            float padX = bezelInset.x * s;
+            float padY = bezelInset.y * s;
             float cornerR = 22f * s;
             float sagX = 2.5f * s;
             float sagY = 2.5f * s;
