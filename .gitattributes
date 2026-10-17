@@ -71,7 +71,7 @@
 *.uss text eol=lf
 *.tss text eol=lf
 *.uxml text eol=lf
-Assets/_Project/UI/Icons/*.svg text eol=lf
+Assets/_Project/UI/Icons/**/*.svg text eol=lf
 *.cginc text
 *.shader text
 
