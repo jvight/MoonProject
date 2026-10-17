@@ -1,21 +1,27 @@
 using System;
+using MoonProject.Core;
 using MoonProject.Gameplay;
 
 namespace MoonProject.UI
 {
-    /// <summary><see cref="IWeldEnergy"/> read from Gameplay's <see cref="BatteryField"/>.</summary>
+    /// <summary><see cref="IWeldEnergy"/> read from Gameplay's <see cref="IBuildEnergy"/>.</summary>
     internal sealed class BatteryWeldEnergy : IWeldEnergy
     {
-        private readonly BatteryField _battery;
+        private readonly IBuildEnergy _energy;
 
-        public BatteryWeldEnergy(BatteryField battery)
+        public BatteryWeldEnergy(IBuildEnergy energy)
         {
-            _battery = battery ?? throw new ArgumentNullException(nameof(battery));
+            _energy = energy ?? throw new ArgumentNullException(nameof(energy));
         }
 
         public float WeldShare01(StructureDefinition definition)
         {
-            return _battery.WeldShare01(definition);
+            if (definition == null)
+            {
+                throw new ArgumentNullException(nameof(definition));
+            }
+
+            return _energy.WeldShare01(definition.Id);
         }
     }
 }

@@ -110,20 +110,7 @@ namespace MoonProject.UI
             context.TryGet(out IRoverFaceScreen faceScreen);
             context.TryGet(out BuildField buildField);
             context.TryGet(out ISunlight sun);
-            IWeldEnergy weldEnergy = null;
-            if (buildField != null)
-            {
-                // Gameplay registers its battery field, which answers the weld's cost, as the chargers' reach.
-                if (context.Get<IChargerReach>() is BatteryField battery)
-                {
-                    weldEnergy = new BatteryWeldEnergy(battery);
-                }
-                else
-                {
-                    Debug.LogError($"{nameof(UiServices)}: the registered {nameof(IChargerReach)} is not a " +
-                                   $"{nameof(BatteryField)}, so the build menu cannot say what a weld costs 07's battery.");
-                }
-            }
+            IWeldEnergy weldEnergy = buildField != null ? new BatteryWeldEnergy(context.Get<IBuildEnergy>()) : null;
 
             return new UiServices(context.Events, context.Input, context.Get<IViewCamera>(), context.Get<IRoverState>(),
                 context.Get<IAudioSettings>(), context.Get<ILookSettings>(), context.Get<IFeelSettings>(),

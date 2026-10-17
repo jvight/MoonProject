@@ -124,9 +124,7 @@ namespace MoonProject.UI.Tests
             foreach (string id in new[]
                      {
                          StructureIds.ChargingPad, StructureIds.SolarArray, StructureIds.BatteryBank,
-                         StructureIds.PowerPylon, StructureIds.Smelter, StructureIds.Fabricator,
-                         StructureIds.StorageRack, StructureIds.UpgradeBay, StructureIds.AntennaMast,
-                         StructureIds.VehiclePad,
+                         StructureIds.PowerPylon, StructureIds.AntennaMast,
                      })
             {
                 Assert.IsTrue(_english.TryGet(UiKeys.StructureName(id), out _), UiKeys.StructureName(id));
