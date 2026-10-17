@@ -14,7 +14,6 @@ Usage:
 import argparse
 import hashlib
 import io
-import json
 import math
 import sys
 from pathlib import Path
@@ -136,7 +135,6 @@ def base_manifest_entries() -> list[dict]:
 
 
 AUDIO_LIBRARY_PATH = REPO_ROOT / "Assets" / "_Project" / "Data" / "Audio" / "AudioLibrary.asset"
-JINGLES_PATH = REPO_ROOT / "tools" / "music" / "jingles.json"
 BUS_ENUM = {"Master": 0, "Music": 1, "Sfx": 2, "Ambience": 3}
 
 
@@ -219,24 +217,7 @@ def _build_audio_library_yaml(all_cues: list[dict]) -> str:
         "  _cues:",
     ]
 
-    jingles_data = json.loads(JINGLES_PATH.read_text(encoding="utf-8"))
-    jingle_entries = [
-        {
-            "id": j["id"],
-            "files": [j["file"]],
-            "variantLabels": [j["id"]],
-            "bus": "Sfx",
-            "spatial": True,
-            "loop": False,
-            "volumeMin": 1.0,
-            "volumeMax": 1.0,
-            "pitchMin": 1.0,
-            "pitchMax": 1.0,
-        }
-        for j in jingles_data["jingles"]
-    ]
-
-    for entry in all_cues + jingle_entries:
+    for entry in all_cues:
         lines.append(f"  - _id: {entry['id']}")
         lines.append("    _clips:")
         for f_rel in entry["files"]:

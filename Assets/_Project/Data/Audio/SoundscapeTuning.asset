@@ -18,12 +18,7 @@ MonoBehaviour:
   _farBasinDb: -10
   _roomToneNearDb: -20
   _roomToneFarDb: -2
-  _roomToneInCanyonDb: -6
   _smallSoundsNearDb: -10
-  _quietHoursSolitude: 0.5
-  _canyonSolitude: 0.8
-  _quietHoursBasinDb: 2.6
-  _quietHoursEase: 3
   _stillDelay: 1.5
   _stillRiseTime: 1.5
   _stillReleaseTime: 0.3

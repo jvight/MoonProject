@@ -10,22 +10,19 @@ namespace MoonProject.Audio.Tests
         private const float DbTolerance = 0.05f;
 
         private SoundscapeTuning _tuning;
-        private CanyonAudioTuning _canyon;
         private SoundscapeModel _model;
 
         [SetUp]
         public void SetUp()
         {
             _tuning = ScriptableObject.CreateInstance<SoundscapeTuning>();
-            _canyon = ScriptableObject.CreateInstance<CanyonAudioTuning>();
-            _model = new SoundscapeModel(_tuning, _canyon);
+            _model = new SoundscapeModel(_tuning);
         }
 
         [TearDown]
         public void TearDown()
         {
             Object.DestroyImmediate(_tuning);
-            Object.DestroyImmediate(_canyon);
         }
 
         private static float Db(float gain)
@@ -33,10 +30,9 @@ namespace MoonProject.Audio.Tests
             return SoundscapeModel.ToDb(gain);
         }
 
-        private void At(float distance, float stillness = 0f, float canyon = 0f, bool quietHours = false,
-            float wide = 0f)
+        private void At(float distance, float stillness = 0f, float wide = 0f)
         {
-            _model.Step(distance, Edge, stillness, wide, canyon, quietHours, Settled);
+            _model.Step(distance, Edge, stillness, wide, Settled);
         }
 
         [Test]
@@ -46,7 +42,6 @@ namespace MoonProject.Audio.Tests
             Assert.AreEqual(0f, _model.Solitude);
             Assert.AreEqual(0f, Db(_model.RadioGain), DbTolerance);
             Assert.AreEqual(0f, Db(_model.BasinBedGain), DbTolerance);
-            Assert.AreEqual(0f, Db(_model.CanyonBedGain), DbTolerance);
             Assert.AreEqual(_tuning.RoomToneNearDb, Db(_model.RoomToneGain), DbTolerance);
             Assert.AreEqual(_tuning.SmallSoundsNearDb, Db(_model.SmallSoundsGain), DbTolerance);
         }
@@ -92,10 +87,10 @@ namespace MoonProject.Audio.Tests
         }
 
         [Test]
-        public void ATallerTower_PushesTheSilenceOut()
+        public void AWiderSignal_PushesTheSilenceOut()
         {
             float far = Edge + _tuning.SilenceWidth;
-            _model.Step(far, Edge + 300f, 0f, 0f, 0f, false, Settled);
+            _model.Step(far, Edge + 300f, 0f, 0f, Settled);
             Assert.AreEqual(0f, _model.Farness, "a wider signal brings this spot back in range");
         }
 
@@ -109,7 +104,6 @@ namespace MoonProject.Audio.Tests
             At(0f, 1f);
             Assert.AreEqual(_tuning.StillDuckDb, Db(_model.RadioGain), DbTolerance);
             Assert.AreEqual(_tuning.StillDuckDb, Db(_model.BasinBedGain), DbTolerance);
-            Assert.AreEqual(_tuning.StillDuckDb, Db(_model.CanyonBedGain), DbTolerance);
             Assert.AreEqual(room, _model.RoomToneGain, 1e-6f, "the space stays: it feels wider");
             Assert.AreEqual(small, _model.SmallSoundsGain, 1e-6f);
         }
@@ -120,14 +114,12 @@ namespace MoonProject.Audio.Tests
             At(0f, 1f);
             float radio = Db(_model.RadioGain);
             float basin = Db(_model.BasinBedGain);
-            float canyonBeds = Db(_model.CanyonBedGain);
             float room = Db(_model.RoomToneGain);
             float small = _model.SmallSoundsGain;
 
             At(0f, 1f, wide: 1f);
             Assert.AreEqual(radio + _tuning.WideDuckDb, Db(_model.RadioGain), DbTolerance);
             Assert.AreEqual(basin + _tuning.WideDuckDb, Db(_model.BasinBedGain), DbTolerance);
-            Assert.AreEqual(canyonBeds + _tuning.WideDuckDb, Db(_model.CanyonBedGain), DbTolerance);
             Assert.AreEqual(room + _tuning.WideRoomToneDb, Db(_model.RoomToneGain), DbTolerance);
             Assert.AreEqual(small, _model.SmallSoundsGain, 1e-6f, "07 stays as close as ever");
             Assert.LessOrEqual(_tuning.WideDuckDb, -2f, "a gentle -2 to -3 dB");
@@ -138,44 +130,11 @@ namespace MoonProject.Audio.Tests
         }
 
         [Test]
-        public void QuietHours_EasesIn_SwellsTheBasin_AndBringsTheRoomAnd07Forward()
+        public void TheLayers_AddUp_FarAndStill()
         {
-            _model.Step(0f, Edge, 0f, 0f, 0f, true, 0.1f);
-            Assert.Greater(_model.QuietHours, 0f);
-            Assert.Less(_model.QuietHours, 0.1f, "eased, never a switch");
-
-            At(0f, quietHours: true);
-            Assert.AreEqual(1f, _model.QuietHours, 1e-4f);
-            Assert.AreEqual(_tuning.QuietHoursBasinDb, Db(_model.BasinBedGain), DbTolerance);
-            Assert.AreEqual(_tuning.QuietHoursSolitude, _model.Solitude, 1e-4f);
-            float expectedRoom = Mathf.Lerp(_tuning.RoomToneNearDb, _tuning.RoomToneFarDb, _tuning.QuietHoursSolitude);
-            Assert.AreEqual(expectedRoom, Db(_model.RoomToneGain), DbTolerance);
-            Assert.Greater(Db(_model.SmallSoundsGain), _tuning.SmallSoundsNearDb);
-        }
-
-        [Test]
-        public void InTheCanyon_TheRadioThins_TheBasinRecedes_AndTheWhisperIsTheRoomsAir()
-        {
-            At(0f, canyon: 1f);
-            Assert.AreEqual(SoundscapeModel.ToDb(_canyon.RadioMusicInside), Db(_model.RadioGain), DbTolerance);
-            Assert.AreEqual(SoundscapeModel.ToDb(_canyon.BasinBedInside), Db(_model.BasinBedGain), DbTolerance);
-            Assert.AreEqual(_tuning.CanyonSolitude, _model.Solitude, 1e-4f);
-            float room = Mathf.Lerp(_tuning.RoomToneNearDb, _tuning.RoomToneFarDb, _tuning.CanyonSolitude) +
-                         _tuning.RoomToneInCanyonDb;
-            Assert.AreEqual(room, Db(_model.RoomToneGain), DbTolerance);
-            Assert.AreEqual(_canyon.RadioCutoffInside, _model.RadioCutoff(22000f), 1f);
-
-            At(0f, canyon: 0f);
-            Assert.AreEqual(22000f, _model.RadioCutoff(22000f));
-        }
-
-        [Test]
-        public void TheLayers_AddUp_FarStillAndQuiet()
-        {
-            At(Edge + _tuning.SilenceWidth, 1f, 0f, true);
+            At(Edge + _tuning.SilenceWidth, 1f);
             Assert.AreEqual(_tuning.FarRadioDb + _tuning.StillDuckDb, Db(_model.RadioGain), DbTolerance);
-            Assert.AreEqual(_tuning.FarBasinDb + _tuning.QuietHoursBasinDb + _tuning.StillDuckDb,
-                Db(_model.BasinBedGain), DbTolerance);
+            Assert.AreEqual(_tuning.FarBasinDb + _tuning.StillDuckDb, Db(_model.BasinBedGain), DbTolerance);
             Assert.AreEqual(1f, _model.Solitude, 1e-4f);
         }
 
