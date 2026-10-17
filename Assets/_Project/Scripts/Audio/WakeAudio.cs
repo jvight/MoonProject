@@ -66,7 +66,7 @@ namespace MoonProject.Audio
                 return;
             }
 
-            CueHandle asleep = _director.Resolve(AudioCueIds.AsleepStatic);
+            CueHandle asleep = _director.Resolve(AudioCueIds.RadioCarrier);
             _cues[(int)WakeCueKind.Thump] = _director.Resolve(AudioCueIds.WakePowerThump);
             _cues[(int)WakeCueKind.Ghost] = _director.Resolve(AudioCueIds.GhostChord);
             _cues[(int)WakeCueKind.Tick] = _director.Resolve(AudioCueIds.LidTick);
@@ -127,6 +127,7 @@ namespace MoonProject.Audio
                 case WakeBeat.PullingOut:
                     _narrowing = true;
                     break;
+                case WakeBeat.PulledOut:
                 case WakeBeat.OverShoulder:
                 case WakeBeat.ChaseFrame:
                 case WakeBeat.Stirred:

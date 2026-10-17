@@ -207,6 +207,29 @@ namespace MoonProject.Rover
             ApplyRearVent();
         }
 
+        /// <summary>
+        /// Holds the CRT screen completely dark while 07 is asleep on the title or while the camera is inside the scan lens,
+        /// until the front reveal beat (<see cref="WakeBeat.PulledOut"/>) starts the CRT boot sequence.
+        /// </summary>
+        public void SetOpeningDarkHold(bool hold)
+        {
+            if (_director != null)
+            {
+                _director.SetOpeningDarkHold(hold);
+            }
+            else if (_display != null && _display.State != null)
+            {
+                _display.State.SetDarkHold(hold);
+            }
+
+            if (_display != null)
+            {
+                _display.ApplyToRenderer();
+            }
+
+            ApplyRearVent();
+        }
+
         private void ResolveServices()
         {
             if (_context == null)
