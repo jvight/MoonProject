@@ -98,7 +98,7 @@
 ## 3. What Lunarion does better or differently (and must not lose)
 | Subnautica | Lunarion, differently or better |
 |---|---|
-| dread from creatures and the dark | **calm tension** from range, darkness and the unknown only. No threat, no death, no loss: the crawl home, chargers, Tilly (ruling 15). |
+| dread from creatures and the dark | **calm tension** from range, darkness and the unknown, plus real but readable danger since 2026-10-17: wear, hazards and the Reclaimers can kill 07 (ruling 17). The battery stays the crawl home, chargers, Tilly (ruling 15). |
 | fauna | **machine life that is logical:** every machine has power, a goal and a reason. Repairing changes the ecology visibly and permanently. |
 | day and night as mood | **light as a resource:** the polar Sun charges, earthshine only lights, and dark places need floods and heat. |
 | a faceless diver | **07 as a character:** one lens, body language, wordless pentatonic chirps; it grows visibly from tired to cared-for |
