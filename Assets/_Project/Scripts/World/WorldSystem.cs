@@ -181,6 +181,7 @@ namespace MoonProject.World
             // 1. Deterministic companion cobbles and spall pebbles around large boulders on the basin floor
             // so every major boulder sits in a fragmented lunar boulder family with smaller spall stones at its base.
             int baseCount = instances.Count;
+            GroundShape[] footprints = { surface.Shaping.Ruins, surface.Shaping.Lander, surface.Shaping.Apron };
             for (int i = 0; i < baseCount; i++)
             {
                 ScatterInstance b = instances[i];
@@ -208,8 +209,7 @@ namespace MoonProject.World
                         : b.Size * Mathf.Lerp(0.62f, 1.85f, Hashing.ToUnit(Hashing.Mix(hk ^ 0x2468ACE0u)));
                     float sx = center2D.x + Mathf.Cos(angle) * radius;
                     float sz = center2D.y + Mathf.Sin(angle) * radius;
-                    GroundShape ruins = surface.Shaping.Ruins;
-                    if (Vector2.Distance(new Vector2(sx, sz), ruins.Center) < ruins.Radius + 3.5f)
+                    if (OnOpeningFootprint(footprints, new Vector2(sx, sz)))
                     {
                         continue;
                     }
@@ -293,6 +293,23 @@ namespace MoonProject.World
                     s.aspect,
                     s.burial));
             }
+        }
+
+        // A boulder's companion stones keep this far outside the opening's flat footprints (the ruins, the lander and
+        // the build apron), so none lies where the player builds or drives in.
+        private const float CompanionClearance = 3.5f;
+
+        private static bool OnOpeningFootprint(GroundShape[] footprints, Vector2 at)
+        {
+            foreach (GroundShape shape in footprints)
+            {
+                if (Vector2.Distance(at, shape.Center) < shape.Radius + CompanionClearance)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private CraterField CreateCraterField(MoonSurface surface)

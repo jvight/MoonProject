@@ -112,10 +112,11 @@ namespace MoonProject.World.PlayModeTests
         private const float TowerActSeconds = 0.25f;
         private const float TowerFlareCaptureSeconds = 0.25f;
 
-        // Opening v2 (§4, §6 acceptance): from 07's wake (chase height, a step behind the post) toward the lander in front
-        // of The Peak, and from the build apron toward the ruins and toward the dead west mast.
+        // Opening v2 (§4, §6 acceptance): from 07's wake (chase height, a few metres ahead of the post so 07's own lamps
+        // stay behind the camera) toward the lander in front of The Peak, and from the build apron toward the ruins and
+        // toward the dead west mast.
         private const float OpeningEyeHeight = 3.2f;
-        private const float OpeningWakeSetback = 7f;
+        private const float OpeningWakeLead = 6f;
         private const float OpeningLookHeight = 4f;
         private const float OpeningFov = 60f;
 
@@ -397,7 +398,7 @@ namespace MoonProject.World.PlayModeTests
             Vector3 mast = Anchor(anchors, WorldAnchorIds.RelayPrefix + 1).Position;
             Vector3 lift = Vector3.up * OpeningLookHeight;
             Vector3 toLander = Vector3.ProjectOnPlane(lander - wake, Vector3.up).normalized;
-            Vector3 eye = wake - toLander * OpeningWakeSetback + Vector3.up * OpeningEyeHeight;
+            Vector3 eye = wake + toLander * OpeningWakeLead + Vector3.up * OpeningEyeHeight;
             Vector3 apronEye = apron + Vector3.up * OpeningEyeHeight;
             Camera view = context.Get<IViewCamera>().Camera;
             var host = new GameObject("OpeningReviewCamera");

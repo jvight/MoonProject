@@ -368,11 +368,17 @@ namespace MoonProject.World.Tests
 
             List<ScatterInstance> plan = new ScatterPlanner(_surface, new ScatterSettings(), _anchors).Plan();
             WorldSystem.AddHomeApronStones(plan, _surface);
+            GroundShape lander = _surface.Shaping.Lander;
+            GroundShape apron = _surface.Shaping.Apron;
             foreach (ScatterInstance rock in plan)
             {
                 var at = new Vector2(rock.Position.x, rock.Position.z);
                 Assert.GreaterOrEqual(Vector2.Distance(at, ruins.Center), ruins.Radius,
                     $"{rock.Kind} at {at} encroaches on the ruins cluster lanes");
+                Assert.GreaterOrEqual(Vector2.Distance(at, lander.Center), lander.Radius,
+                    $"{rock.Kind} at {at} lies on the lander's footprint");
+                Assert.GreaterOrEqual(Vector2.Distance(at, apron.Center), apron.Radius,
+                    $"{rock.Kind} at {at} lies on the build apron");
             }
         }
 
