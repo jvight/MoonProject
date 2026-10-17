@@ -11,17 +11,11 @@ namespace MoonProject.UI
         /// <summary>A station or recipe card: what 07 faces or is parked at.</summary>
         Card = 1,
 
-        /// <summary>A place's card, the first time near it.</summary>
-        Place = 2,
-
         /// <summary>The low-battery hint: at 30% on a trip, once.</summary>
-        Battery = 3,
-
-        /// <summary>The radio ticker line: waits for prompts, cards, places, and battery warnings, and precedes the idle next line.</summary>
-        Ticker = 4,
+        Battery = 2,
 
         /// <summary>The next line, after a while without progress.</summary>
-        Next = 5,
+        Next = 3,
     }
 
     /// <summary>
@@ -32,7 +26,7 @@ namespace MoonProject.UI
     /// </summary>
     internal sealed class GuidanceSlot
     {
-        public const int KindCount = 6;
+        public const int KindCount = 4;
 
         /// <summary>The element that may show now, or null while the slot is held back for a fade.</summary>
         public GuidanceKind? Granted { get; private set; }

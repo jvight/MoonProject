@@ -45,23 +45,5 @@ namespace MoonProject.UI.Tests
             Assert.IsTrue(pages.StartingOver);
             Assert.IsFalse(pages.ConfirmNewGame(), "a second press asks for nothing more");
         }
-
-        [Test]
-        public void TheOlderJourneyLine_ShowsOnce_AndOnlyWhenOneWasPutAway()
-        {
-            foreach (SaveLoadResult result in new[]
-                     {
-                         SaveLoadResult.NotLoaded, SaveLoadResult.NoSave, SaveLoadResult.Loaded,
-                         SaveLoadResult.RecoveredFromBackup, SaveLoadResult.Unreadable, SaveLoadResult.NewerFormat,
-                     })
-            {
-                Assert.IsFalse(new JourneyNotice().TryTake(result, out _), result.ToString());
-            }
-
-            var notice = new JourneyNotice();
-            Assert.IsTrue(notice.TryTake(SaveLoadResult.PutAwayOlder, out TickerLine line));
-            Assert.AreEqual(UiKeys.JourneyPutAway, line.Key);
-            Assert.IsFalse(notice.TryTake(SaveLoadResult.PutAwayOlder, out _), "once per boot");
-        }
     }
 }

@@ -30,16 +30,16 @@ namespace MoonProject.UI.Tests
         [Test]
         public void TheHighestWantingKind_HoldsTheSlot()
         {
-            _wants[(int)GuidanceKind.Place] = true;
+            _wants[(int)GuidanceKind.Battery] = true;
             _wants[(int)GuidanceKind.Next] = true;
             _slot.Step(_wants, _visible);
-            Assert.IsTrue(_slot.Allows(GuidanceKind.Place));
+            Assert.IsTrue(_slot.Allows(GuidanceKind.Battery));
             Assert.IsFalse(_slot.Allows(GuidanceKind.Next), "the lower one waits");
 
             _wants[(int)GuidanceKind.Prompt] = true;
             _slot.Step(_wants, _visible);
             Assert.IsTrue(_slot.Allows(GuidanceKind.Prompt));
-            Assert.IsFalse(_slot.Allows(GuidanceKind.Place));
+            Assert.IsFalse(_slot.Allows(GuidanceKind.Battery));
         }
 
         [Test]
@@ -63,39 +63,6 @@ namespace MoonProject.UI.Tests
             _visible[(int)GuidanceKind.Card] = true;
             _slot.Step(_wants, _visible);
             Assert.IsTrue(_slot.Allows(GuidanceKind.Card));
-        }
-
-        [Test]
-        public void TheTicker_NeverSharesTheSlot_WaitsForHigherKinds_AndStepsAheadOfTheNextLine()
-        {
-            _wants[(int)GuidanceKind.Ticker] = true;
-            _wants[(int)GuidanceKind.Next] = true;
-            _visible[(int)GuidanceKind.Next] = true;
-            _slot.Step(_wants, _visible);
-            Assert.IsNull(_slot.Granted, "the next line fades out before the ticker starts");
-
-            _visible[(int)GuidanceKind.Next] = false;
-            _slot.Step(_wants, _visible);
-            Assert.IsTrue(_slot.Allows(GuidanceKind.Ticker));
-            Assert.IsFalse(_slot.Allows(GuidanceKind.Next));
-
-            _visible[(int)GuidanceKind.Ticker] = true;
-            _wants[(int)GuidanceKind.Place] = true;
-            _slot.Step(_wants, _visible);
-            Assert.IsNull(_slot.Granted, "a place card waits for the ticker to fade out");
-
-            _visible[(int)GuidanceKind.Ticker] = false;
-            _slot.Step(_wants, _visible);
-            Assert.IsTrue(_slot.Allows(GuidanceKind.Place));
-            Assert.IsFalse(_slot.Allows(GuidanceKind.Ticker), "the ticker waits while the place card holds the slot");
-
-            _wants[(int)GuidanceKind.Place] = false;
-            _slot.Step(_wants, _visible);
-            Assert.IsTrue(_slot.Allows(GuidanceKind.Ticker), "then the ticker gets its turn");
-
-            _wants[(int)GuidanceKind.Ticker] = false;
-            _slot.Step(_wants, _visible);
-            Assert.IsTrue(_slot.Allows(GuidanceKind.Next), "and once the ticker is done, the next line returns");
         }
 
         [Test]

@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The safe-area root (docs/features/M3-24 part A): keeps the HUD, the lab's screen and the title and pause pages
+    /// The safe-area root (docs/features/M3-24 part A): keeps the HUD and the title and pause pages
     /// in a frame no wider than the tuned shape and inside the device's safe area, so nothing sits out in the corner
     /// of an ultra-wide screen or under a notch. The world anchors, the veils and the curtain stay full-screen. The
     /// insets are written when the panel's size changes, never per frame.
@@ -15,7 +15,6 @@ namespace MoonProject.UI
         private readonly SafeFrameSettings _settings;
         private readonly VisualElement _root;
         private readonly VisualElement _hudFrame;
-        private readonly VisualElement _labHud;
         private readonly VisualElement _menuFrame;
         private Vector2 _written = new Vector2(float.NaN, float.NaN);
 
@@ -29,7 +28,6 @@ namespace MoonProject.UI
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _root = layout.Root;
             _hudFrame = layout.HudFrame;
-            _labHud = layout.LabHud;
             _menuFrame = layout.MenuFrame;
             _root.RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
             Apply();
@@ -73,7 +71,6 @@ namespace MoonProject.UI
             _written = size;
             Rect device = DeviceSafeShare();
             Place(_hudFrame, Compute(size.x, size.y, _settings.HudAspect, device, _settings.EdgeMargin));
-            Place(_labHud, Compute(size.x, size.y, _settings.HudAspect, device, _settings.EdgeMargin));
             Place(_menuFrame, Compute(size.x, size.y, _settings.MenuAspect, device, _settings.EdgeMargin));
         }
 

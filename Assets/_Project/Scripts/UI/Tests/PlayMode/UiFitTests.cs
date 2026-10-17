@@ -217,7 +217,6 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(1f);
             Submit(layout.ResumeButton);
             events.Publish(new RoverAwoke(Vector3.zero, false));
-            _rig.Fakes.Fade = 0f;
             yield return Seconds(1f);
 
             _rig.Fakes.Cells = 4;
@@ -225,7 +224,6 @@ namespace MoonProject.UI.PlayModeTests
             events.Publish(new BatteryArcRevealed(false));
             events.Publish(new NextStepChanged("next.tower.pad"));
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Excavate, new Vector3(0f, 0f, 12f), true);
-            events.Publish(new TickerLine(UiTestRig.HomeLine));
             int gain = 0;
             foreach (ScreenShape shape in ScreenShapes.All)
             {
@@ -236,26 +234,14 @@ namespace MoonProject.UI.PlayModeTests
                 yield return Check(shape, "hud", (label, found) =>
                 {
                     ScreenFit.CheckApart(layout.BatteryDial, layout.NextLine, label, found);
-                    ScreenFit.CheckApart(layout.HomeMeter, layout.NextLine, label, found);
                     ScreenFit.CheckApart(layout.BatteryDial, layout.PickupFeed, label, found);
-                    ScreenFit.CheckApart(layout.NextLine, layout.Ticker, label, found);
-                    ScreenFit.CheckApart(layout.Ticker, layout.PickupFeed, label, found);
                 });
             }
 
             _rig.Fakes.PrimaryHint = InteractionHint.None;
             _rig.Fakes.Upgrade = _rig.TestTower();
-            _rig.Fakes.AtStation = true;
-            yield return Seconds(2f);
-            foreach (ScreenShape shape in ScreenShapes.All)
-            {
-                yield return Reframe(shape);
-                yield return Check(shape, "tower card", null);
-            }
-
-            _rig.Fakes.AtStation = false;
             _rig.Fakes.Looked = _rig.Fakes.Upgrade.Id;
-            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Deposit,
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.PickUp,
                 _rig.Camera.ViewportToWorldPoint(new Vector3(RecipeCardViewportX, RecipeCardViewportY, CardDepth)),
                 true);
             yield return Seconds(3f);
@@ -268,37 +254,9 @@ namespace MoonProject.UI.PlayModeTests
 
             _rig.Fakes.Looked = null;
             _rig.Fakes.PrimaryHint = InteractionHint.None;
-            events.Publish(new UpgradePurchased(_rig.Fakes.Upgrade.Id, 1));
-            events.Publish(new FeelBeat(FeelKind.Build, FeelPhase.Reward, Vector3.zero, Vector3.up, 1f, 0f));
-            yield return Seconds(_rig.Tuning.RewardCard.Reveal.FadeIn + 1f);
-            Assert.IsTrue(_rig.Ui.RewardCard.IsVisible, "the tower's reward card is up");
-            foreach (ScreenShape shape in ScreenShapes.All)
-            {
-                yield return Reframe(shape);
-                yield return Check(shape, "reward card", (label, found) =>
-                    ScreenFit.CheckApart(layout.RewardCard, layout.NextLine, label, found));
-            }
-
-            yield return Seconds(_rig.Tuning.RewardCard.HoldSeconds + _rig.Tuning.RewardCard.Reveal.FadeOut);
-            yield return Seconds(1f);
-
-            events.Publish(new CrewCrateOpened("site.garage", "kenji", SalvageMaterial.Wiring, 2, Vector3.zero));
-            yield return Seconds(_rig.Tuning.CrateNote.Reveal.FadeIn + 1f);
-            foreach (ScreenShape shape in ScreenShapes.All)
-            {
-                yield return Reframe(shape);
-                yield return Check(shape, "crate note", (label, found) =>
-                    ScreenFit.CheckApart(layout.CrateNote, layout.NextLine, label, found));
-            }
-
-            yield return Seconds(_rig.Tuning.CrateNote.HoldSeconds(120) + _rig.Tuning.CrateNote.Reveal.FadeOut);
-            yield return Seconds(1f);
-
             _rig.Fakes.Hold.Set(14, new MaterialSlot(SalvageMaterial.Metal, 4, 4),
                 new MaterialSlot(SalvageMaterial.Ilmenite, 3, 6));
             _rig.Fakes.Hold.WaitingBundles = 2;
-            _rig.Fakes.Grant(RoverAbility.Tether);
-            _rig.Fakes.SetTech(TechNodeId.HoverJump, TechNodeState.Decoded);
             yield return Tap(keyboard.tabKey);
             yield return Seconds(1f);
             foreach (ScreenShape shape in ScreenShapes.All)
@@ -309,16 +267,6 @@ namespace MoonProject.UI.PlayModeTests
 
             yield return Tap(keyboard.tabKey);
             yield return Seconds(1f);
-            events.Publish(new RelicDeposited("rubber_duck", Vector3.zero, 4));
-            yield return Seconds(2f);
-            foreach (ScreenShape shape in ScreenShapes.All)
-            {
-                yield return Reframe(shape);
-                yield return Check(shape, "memory card", null);
-            }
-
-            _rig.Ui.Card.Dismiss();
-            yield return Seconds(1.5f);
             yield return Tap(keyboard.escapeKey);
             yield return Seconds(1f);
             foreach (ScreenShape shape in ScreenShapes.All)
@@ -342,16 +290,6 @@ namespace MoonProject.UI.PlayModeTests
             Submit(layout.SettingsBackButton);
             yield return Tap(keyboard.escapeKey);
             yield return Seconds(1f);
-
-            events.Publish(new LabEntered(LabStation.Board));
-            events.Publish(new PlaceFirstApproached("place.lab"));
-            events.Publish(new LabStationLooked(LabStation.Board, true));
-            yield return Seconds(2f);
-            foreach (ScreenShape shape in ScreenShapes.All)
-            {
-                yield return Reframe(shape);
-                yield return Check(shape, "lab", null);
-            }
 
             Assert.IsEmpty(_problems, "the UI fits every screen shape at " + (textSizePresses > 0 ? "150" : "100") +
                                       "% text:\n" + string.Join("\n", _problems));

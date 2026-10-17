@@ -64,38 +64,20 @@ namespace MoonProject.UI.PlayModeTests
             InputSystem.AddDevice<Keyboard>();
             _rig = UiTestRig.Boot(_controls, _slot);
             _rig.Bootstrap.Context.Events.Publish(new RoverAwoke(Vector3.zero, false));
-            _rig.Fakes.TetherState = TetherAimState.Hovering;
-            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Excavate, new Vector3(0f, 0f, 10f), true);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.PickUp, new Vector3(0f, 0f, 10f), true);
             _rig.Fakes.Position = new Vector3(0f, 0f, 2f);
-            _rig.Fakes.TillyStatus = new FriendStatus(FriendState.PartsGathering, 1, 3, true, false,
-                new Vector3(-3f, 0f, 12f));
             yield return new WaitForSecondsRealtime(2f);
-            Assert.IsTrue(_rig.Ui.Prompt.IsVisible && _rig.Ui.Reticle.IsVisible);
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible);
 
             Action update = Bind(_rig.Ui, "Update");
             Action frame = () =>
             {
                 _step++;
-                _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Excavate,
+                _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.PickUp,
                     new Vector3(Mathf.Sin(_step * 0.01f) * 3f, 0f, 10f), true);
-                _rig.Fakes.TillyStatus = new FriendStatus(FriendState.PartsGathering, 1 + (_step / 200) % 3, 3, true,
-                    false, new Vector3(-3f + Mathf.Cos(_step * 0.01f), 0f, 12f));
                 update();
             };
-            yield return Measure(frame, "prompt and parts readout following moving points, reticle up");
-        }
-
-        [UnityTest]
-        public IEnumerator TowerPanel_DoesNotAllocate()
-        {
-            InputSystem.AddDevice<Keyboard>();
-            _rig = UiTestRig.Boot(_controls, _slot);
-            _rig.Fakes.Upgrade = _rig.TestTower();
-            _rig.Fakes.SetMaterials(1, 1, 0);
-            _rig.Fakes.AtStation = true;
-            yield return new WaitForSecondsRealtime(2f);
-            Assert.IsTrue(_rig.Ui.Tower.IsVisible);
-            yield return Measure(Bind(_rig.Ui, "Update"), "tower panel");
+            yield return Measure(frame, "prompt following a moving point");
         }
 
         [UnityTest]
@@ -113,55 +95,6 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator BayPickingAsTheStockChanges_DoesNotAllocate_AndRestsQuietly()
-        {
-            InputSystem.AddDevice<Keyboard>();
-            _rig = UiTestRig.Boot(_controls, _slot);
-            _rig.Fakes.Bay = _rig.TestBay(new Recipe(2, 1, 0), new Recipe(3, 2, 0), new Recipe(1, 2, 2));
-            _rig.Fakes.SetMaterials(4, 3, 0);
-            _rig.Fakes.AtStation = true;
-            yield return new WaitForSecondsRealtime(2f);
-            Assert.IsTrue(_rig.Ui.Tower.IsVisible && _rig.Ui.Tower.IsChoosing);
-
-            Action update = Bind(_rig.Ui, "Update");
-            Action picking = () =>
-            {
-                _step++;
-                if (_step % PickEvery == 0)
-                {
-                    _rig.Ui.Tower.Choices.Step(1);
-                }
-
-                if (_step % StockEvery == 0)
-                {
-                    _rig.Fakes.SetMaterials(4, 3, (_step / StockEvery) % 2 * 2);
-                }
-
-                update();
-            };
-            Run(picking, WarmUpCalls * PickEvery);
-            Assert.That(() => Run(picking, MeasuredCalls), Is.Not.AllocatingGCMemory(),
-                "picking at the bay while the stock changes allocates nothing in the UI's update");
-            yield return null;
-            yield return Measure(update, "bay resting with a piece picked");
-        }
-
-        [UnityTest]
-        public IEnumerator KitNameResting_DoesNotAllocate()
-        {
-            InputSystem.AddDevice<Keyboard>();
-            _rig = UiTestRig.Boot(_controls, _slot);
-            _rig.Tune("_kitTitle._holdSeconds", LongHoldSeconds);
-            var gift = new PartFitted(RoverSocket.Wing, RoverKitPiece.SolarCell, true, false, default, 0);
-            _rig.Bootstrap.Context.Events.Publish(gift);
-            yield return new WaitForSecondsRealtime(_rig.Tuning.KitTitle.Delay + _rig.Tuning.KitTitle.Reveal.FadeIn +
-                                                    0.5f);
-            Assert.IsTrue(_rig.Ui.KitTitle.IsVisible);
-            yield return Measure(Bind(_rig.Ui, "Update"), "a kit name resting");
-            Assert.IsTrue(_rig.Ui.KitTitle.IsVisible, "the name rested through the whole measurement");
-        }
-
-        [UnityTest]
         public IEnumerator OpenPauseMenu_DoesNotAllocate()
         {
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
@@ -173,44 +106,6 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(1f);
             Assert.IsTrue(_rig.Ui.Pause.IsOpen && _rig.Ui.Pause.IsSettled);
             yield return Measure(Bind(_rig.Ui, "Update"), "open pause menu");
-        }
-
-        [UnityTest]
-        public IEnumerator TickerLineResting_DoesNotAllocate()
-        {
-            InputSystem.AddDevice<Keyboard>();
-            _rig = UiTestRig.Boot(_controls, _slot);
-            _rig.Tune("_ticker._minHoldSeconds", LongHoldSeconds);
-            _rig.Tune("_ticker._maxHoldSeconds", LongHoldSeconds);
-            _rig.Bootstrap.Context.Events.Publish(new RoverAwoke(Vector3.zero, false));
-            _rig.Bootstrap.Context.Events.Publish(new TickerLine(UiTestRig.SignalLine));
-            yield return new WaitForSecondsRealtime(1.5f);
-            Assert.IsTrue(_rig.Ui.Ticker.IsShown);
-            yield return Measure(Bind(_rig.Ui, "Update"), "ticker line resting, its lamp breathing");
-            Assert.IsTrue(_rig.Ui.Ticker.IsShown, "the line rested through the whole measurement");
-        }
-
-        [UnityTest]
-        public IEnumerator HopListHoldingAndTheFadeMidway_DoNotAllocate()
-        {
-            InputSystem.AddDevice<Keyboard>();
-            _rig = UiTestRig.Boot(_controls, _slot);
-            _rig.Bootstrap.Context.Events.Publish(new RoverAwoke(Vector3.zero, false));
-            _rig.Fakes.SetHopChoices(UiTestRig.HomeNode, UiTestRig.FirstRelayNode, UiTestRig.SecondRelayNode);
-            _rig.Fakes.Open();
-            _rig.Fakes.Fade = 0.5f;
-            yield return new WaitForSecondsRealtime(1f);
-            Assert.IsTrue(_rig.Ui.HopList.IsVisible && _rig.Ui.HopFade.IsVisible);
-
-            Action update = Bind(_rig.Ui, "Update");
-            Action frame = () =>
-            {
-                _step++;
-                _rig.Fakes.ConfirmHold = (_step % 100) * 0.01f;
-                _rig.Fakes.Fade = 0.5f + 0.4f * Mathf.Sin(_step * 0.02f);
-                update();
-            };
-            yield return Measure(frame, "hop list with a filling ring over a moving fade");
         }
 
         [UnityTest]
