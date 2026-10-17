@@ -18,7 +18,7 @@ namespace MoonProject.UI
             IInteractionHints hints, ISalvageStatus salvage, IGameFlow flow, ISettingsFile settings,
             IRoverBattery battery, IBeamStatus beam, ICargoHold hold, IMaterialCatalog catalog,
             IRoverSystems systems, IRoverFaceScreen faceScreen = null, BuildField buildField = null,
-            ISunlight sun = null, IBuildEnergy buildEnergy = null)
+            ISunlight sun = null, IWeldEnergy weldEnergy = null)
         {
             Events = events ?? throw new ArgumentNullException(nameof(events));
             Input = input ?? throw new ArgumentNullException(nameof(input));
@@ -41,7 +41,7 @@ namespace MoonProject.UI
             FaceScreen = faceScreen;
             BuildField = buildField;
             Sun = sun;
-            BuildEnergy = buildEnergy;
+            WeldEnergy = weldEnergy;
         }
 
         public EventBus Events { get; }
@@ -95,7 +95,7 @@ namespace MoonProject.UI
         public ISunlight Sun { get; }
 
         /// <summary>What a weld takes from 07's battery: the build menu says it (optional in isolated test rigs).</summary>
-        public IBuildEnergy BuildEnergy { get; }
+        public IWeldEnergy WeldEnergy { get; }
 
         /// <summary>
         /// Resolves every service; a missing one throws (a system is missing from the bootstrap order).
@@ -110,12 +110,7 @@ namespace MoonProject.UI
             context.TryGet(out IRoverFaceScreen faceScreen);
             context.TryGet(out BuildField buildField);
             context.TryGet(out ISunlight sun);
-            context.TryGet(out IBuildEnergy buildEnergy);
-            if (buildField != null && buildEnergy == null)
-            {
-                Debug.LogError($"{nameof(UiServices)}: no {nameof(IBuildEnergy)} is registered (Gameplay), so the " +
-                               "build menu cannot say what a weld costs 07's battery.");
-            }
+            IWeldEnergy weldEnergy = buildField != null ? new BatteryWeldEnergy(context.Get<IBuildEnergy>()) : null;
 
             return new UiServices(context.Events, context.Input, context.Get<IViewCamera>(), context.Get<IRoverState>(),
                 context.Get<IAudioSettings>(), context.Get<ILookSettings>(), context.Get<IFeelSettings>(),
@@ -123,7 +118,7 @@ namespace MoonProject.UI
                 context.Get<IMaterialStock>(), context.Get<IInteractionHints>(), context.Get<ISalvageStatus>(),
                 context.Get<IGameFlow>(), context.Get<ISettingsFile>(), context.Get<IRoverBattery>(),
                 context.Get<IBeamStatus>(), context.Get<ICargoHold>(), context.Get<IMaterialCatalog>(),
-                context.Get<IRoverSystems>(), faceScreen, buildField, sun, buildEnergy);
+                context.Get<IRoverSystems>(), faceScreen, buildField, sun, weldEnergy);
         }
     }
 }

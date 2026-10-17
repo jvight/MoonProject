@@ -16,7 +16,7 @@ namespace MoonProject.UI
     /// <see cref="BuildModeState.Menu"/> or <see cref="BuildModeState.Placing"/>, a calm Moonlight Glass strip at the
     /// bottom of the HUD lists the structures 07 has learned with their 256 px icons, localized names, description,
     /// material cost rows (<see cref="RecipeView"/>), the share of 07's battery the weld takes
-    /// (<see cref="IBuildEnergy"/>), and input hints. When the placement ghost sits on an invalid
+    /// (<see cref="IWeldEnergy"/>), and input hints. When the placement ghost sits on an invalid
     /// spot in <see cref="BuildModeState.Placing"/>, a one-line reason chip floats above the ghost via
     /// <see cref="WorldAnchor"/>. Zero per-frame GC allocations.
     /// </summary>
@@ -39,7 +39,7 @@ namespace MoonProject.UI
         private readonly IMaterialStock _stock;
         private readonly BuildField _buildField;
         private readonly GlyphLabels _glyphs;
-        private readonly IBuildEnergy _buildEnergy;
+        private readonly IWeldEnergy _weldEnergy;
         private readonly string[] _energyTexts = new string[WeldEnergyShare.MaxPercent + 1];
         private readonly GlyphView _primaryGlyph;
         private readonly GlyphView _secondaryGlyph;
@@ -74,7 +74,7 @@ namespace MoonProject.UI
             BuildField buildField = null,
             Texture2D[] structureIcons = null,
             GlyphLabels glyphs = null,
-            IBuildEnergy buildEnergy = null)
+            IWeldEnergy weldEnergy = null)
         {
             _layout = layout ?? throw new ArgumentNullException(nameof(layout));
             if (stripReveal == null)
@@ -92,7 +92,7 @@ namespace MoonProject.UI
             _stock = stock ?? throw new ArgumentNullException(nameof(stock));
             _buildField = buildField;
             _glyphs = glyphs;
-            _buildEnergy = buildEnergy;
+            _weldEnergy = weldEnergy;
             _primaryGlyph = new GlyphView(layout.BuildStripGlyphPrimary, layout.BuildStripGlyphPrimaryLabel);
             _secondaryGlyph = new GlyphView(layout.BuildStripGlyphSecondary, layout.BuildStripGlyphSecondaryLabel);
 
@@ -306,12 +306,12 @@ namespace MoonProject.UI
 
         private int EnergyPercentOf(StructureDefinition definition)
         {
-            return _buildEnergy != null ? WeldEnergyShare.Percent(_buildEnergy.WeldShare01(definition.Id)) : -1;
+            return _weldEnergy != null ? WeldEnergyShare.Percent(_weldEnergy.WeldShare01(definition)) : -1;
         }
 
         private bool EnergyChanged(IReadOnlyList<StructureDefinition> available, int count)
         {
-            if (_buildEnergy == null)
+            if (_weldEnergy == null)
             {
                 return false;
             }
