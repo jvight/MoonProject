@@ -1505,6 +1505,15 @@ Label {
     color: var(--moon-warm-accent);
 }
 
+/* The share of 07's battery the weld takes, under the materials: the calm cyan telemetry accent */
+.build-card__energy {
+    margin-top: 3px;
+    font-size: 13px;
+    color: var(--crt-cyan-dim);
+    -unity-text-align: middle-center;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");
+}
+
 .build-strip__detail {
     display: none;
 }

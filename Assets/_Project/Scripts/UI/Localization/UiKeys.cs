@@ -49,6 +49,7 @@ namespace MoonProject.UI
         public const string BuildHintWeld = "build.hint.weld";
         public const string BuildHintDeconstruct = "build.hint.deconstruct";
         public const string BuildLocked = "build.locked";
+        public const string BuildEnergyCard = "build.energy.card";
 
         /// <summary>"hint.excavate": the one word of the prompt teaching <paramref name="kind"/>.</summary>
         public static string Hint(InteractionKind kind)

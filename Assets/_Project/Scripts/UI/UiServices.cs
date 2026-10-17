@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Input;
 using MoonProject.Core.Save;
@@ -17,7 +18,7 @@ namespace MoonProject.UI
             IInteractionHints hints, ISalvageStatus salvage, IGameFlow flow, ISettingsFile settings,
             IRoverBattery battery, IBeamStatus beam, ICargoHold hold, IMaterialCatalog catalog,
             IRoverSystems systems, IRoverFaceScreen faceScreen = null, BuildField buildField = null,
-            ISunlight sun = null)
+            ISunlight sun = null, IWeldEnergy weldEnergy = null)
         {
             Events = events ?? throw new ArgumentNullException(nameof(events));
             Input = input ?? throw new ArgumentNullException(nameof(input));
@@ -40,6 +41,7 @@ namespace MoonProject.UI
             FaceScreen = faceScreen;
             BuildField = buildField;
             Sun = sun;
+            WeldEnergy = weldEnergy;
         }
 
         public EventBus Events { get; }
@@ -92,6 +94,9 @@ namespace MoonProject.UI
         /// <summary>The sky: the Sun's arc reads it (optional in isolated UI test rigs).</summary>
         public ISunlight Sun { get; }
 
+        /// <summary>What a weld takes from 07's battery: the build menu says it (optional in isolated test rigs).</summary>
+        public IWeldEnergy WeldEnergy { get; }
+
         /// <summary>
         /// Resolves every service; a missing one throws (a system is missing from the bootstrap order).
         /// </summary>
@@ -105,13 +110,28 @@ namespace MoonProject.UI
             context.TryGet(out IRoverFaceScreen faceScreen);
             context.TryGet(out BuildField buildField);
             context.TryGet(out ISunlight sun);
+            IWeldEnergy weldEnergy = null;
+            if (buildField != null)
+            {
+                // Gameplay registers its battery field, which answers the weld's cost, as the chargers' reach.
+                if (context.Get<IChargerReach>() is BatteryField battery)
+                {
+                    weldEnergy = new BatteryWeldEnergy(battery);
+                }
+                else
+                {
+                    Debug.LogError($"{nameof(UiServices)}: the registered {nameof(IChargerReach)} is not a " +
+                                   $"{nameof(BatteryField)}, so the build menu cannot say what a weld costs 07's battery.");
+                }
+            }
+
             return new UiServices(context.Events, context.Input, context.Get<IViewCamera>(), context.Get<IRoverState>(),
                 context.Get<IAudioSettings>(), context.Get<ILookSettings>(), context.Get<IFeelSettings>(),
                 context.Get<ISaveService>(),
                 context.Get<IMaterialStock>(), context.Get<IInteractionHints>(), context.Get<ISalvageStatus>(),
                 context.Get<IGameFlow>(), context.Get<ISettingsFile>(), context.Get<IRoverBattery>(),
                 context.Get<IBeamStatus>(), context.Get<ICargoHold>(), context.Get<IMaterialCatalog>(),
-                context.Get<IRoverSystems>(), faceScreen, buildField, sun);
+                context.Get<IRoverSystems>(), faceScreen, buildField, sun, weldEnergy);
         }
     }
 }

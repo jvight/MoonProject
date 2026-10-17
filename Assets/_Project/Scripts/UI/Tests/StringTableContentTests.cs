@@ -106,7 +106,7 @@ namespace MoonProject.UI.Tests
                           UiKeys.HintHold,
                           UiKeys.BuildStripTitle, UiKeys.BuildCostAffordable, UiKeys.BuildCostShort,
                           UiKeys.BuildHintRotate, UiKeys.BuildHintSnap, UiKeys.BuildHintPlace,
-                          UiKeys.BuildHintWeld, UiKeys.BuildHintDeconstruct, UiKeys.BuildLocked,
+                          UiKeys.BuildHintWeld, UiKeys.BuildHintDeconstruct, UiKeys.BuildLocked, UiKeys.BuildEnergyCard,
                       })
             {
                 Assert.IsTrue(_english.TryGet(key, out _), key);

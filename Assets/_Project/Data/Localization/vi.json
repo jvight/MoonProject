@@ -1112,7 +1112,11 @@
         },
         {
             "key": "story.airlock_panel",
-            "text": "NIÊM PHONG NHÀ Ở · KHOÁ · 28 THG 10 1988\nÁO VŨ TRỤ 01-04 · NGOẠI TUYẾN · 29 THG 10 1988 · 04:12"
+            "text": "NIÊM PHONG NHÀ Ở · KHOÁ · 28/10/1988\nÁO VŨ TRỤ 01-04 · NGOẠI TUYẾN · 29/10/1988 · 04:12"
+        },
+        {
+            "key": "build.energy.card",
+            "text": "Pin {0}"
         }
     ]
 }

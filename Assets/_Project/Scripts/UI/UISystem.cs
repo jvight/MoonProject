@@ -333,7 +333,8 @@ namespace MoonProject.UI
                 services.Catalog, services.Events);
             _salvageRing = new SalvageRing(_layout, _tuning.Salvage, _tuning.Prompts, services.Salvage, services.View);
             _buildStrip = new BuildStripView(_layout, _tuning.BuildStripReveal, _tuning.Prompts, _localization,
-                _numbers, services.Materials, services.View, services.BuildField, _structureIcons, _glyphs);
+                _numbers, services.Materials, services.View, services.BuildField, _structureIcons, _glyphs,
+                services.WeldEnergy);
             _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold, services.Systems,
                 _roverDiagram, _glyphs, _numbers, services.Events, _ledger);
             BindFacePanel(root);
