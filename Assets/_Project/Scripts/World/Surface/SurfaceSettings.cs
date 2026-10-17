@@ -243,7 +243,7 @@ namespace MoonProject.World
         [SerializeField] private CanyonSettings _canyon = new CanyonSettings();
 
         [Header("Sites")]
-        [Tooltip("Ground shaped for the salvage sites and relay.0's mound, and Kestrel-3's impact (M3-13).")]
+        [Tooltip("Ground shaped for the opening's places and Kestrel-3's impact (M3-13).")]
         [SerializeField] private SiteSettings _sites = new SiteSettings();
 
         [Header("Crater field")]

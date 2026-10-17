@@ -4,9 +4,9 @@ using UnityEngine;
 namespace MoonProject.World
 {
     /// <summary>
-    /// The shaped ground of <see cref="SiteSettings"/>: flat footprints on the basin floor (the opening's places and
-    /// the cut sites' ground) and the old relay mound. Each plateau's height is read once from the natural ground at its centre (raised
-    /// by the mound's rise), so the shapes sit level with their surroundings. Immutable and thread-safe.
+    /// The shaped ground of <see cref="SiteSettings"/>: flat footprints on the basin floor under the opening's
+    /// places. Each plateau's height is read once from the natural ground at its centre, so the shapes sit level with
+    /// their surroundings. Immutable and thread-safe.
     /// </summary>
     public sealed class GroundShaping
     {
@@ -27,20 +27,14 @@ namespace MoonProject.World
             }
 
             float blend = settings.FootprintBlend;
-            GroundShape depot = Flat(naturalHeight, settings.DepotCenter, settings.DepotRadius, blend);
-            GroundShape drill = Flat(naturalHeight, settings.DrillCenter, settings.DrillRadius, blend);
-            GroundShape garage = Flat(naturalHeight, settings.GarageCenter, settings.GarageRadius, blend);
             Ruins = Flat(naturalHeight, settings.RuinsCenter, settings.RuinsRadius, settings.RuinsBlend);
             Lander = Flat(naturalHeight, settings.LanderCenter, settings.LanderRadius, blend);
             Apron = Flat(naturalHeight, settings.ApronCenter, settings.ApronRadius, blend);
             MidwayCenter = settings.MidwayCenter;
             MidwayRadius = settings.MidwayRadius;
             WakePost = settings.WakePost;
-            Vector2 mound = settings.MoundCenter;
-            var relayMound = new GroundShape(mound, settings.MoundRadius, settings.MoundRun,
-                naturalHeight(mound.x, mound.y) + settings.MoundRise);
 
-            _shapes = new[] { depot, drill, garage, Ruins, relayMound, Lander, Apron };
+            _shapes = new[] { Ruins, Lander, Apron };
             _reachSq = new float[_shapes.Length];
             for (int i = 0; i < _shapes.Length; i++)
             {

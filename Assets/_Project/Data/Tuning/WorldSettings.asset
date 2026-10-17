@@ -139,20 +139,6 @@ MonoBehaviour:
       _exitFootLength: 9
     _sites:
       _footprintBlend: 12
-      _depotBearing: 315
-      _depotDistance: 55
-      _depotRadius: 10
-      _drillBearing: 113
-      _drillDistance: 148.3
-      _drillRadius: 9
-      _garageBearing: 232
-      _garageDistance: 115
-      _garageRadius: 10
-      _moundBearing: 28.5
-      _moundDistance: 150
-      _moundRadius: 4
-      _moundRise: 1.6
-      _moundRun: 16
       _kestrel:
         _bearing: 356
         _distance: 185
