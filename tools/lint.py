@@ -262,6 +262,9 @@ class TypeDecl:
     line: int
     top_level: bool
     bases: tuple
+    attrs: str = ""      # the attribute lists before the declaration, e.g. "[InitializeOnLoad]"
+    start: int = 0       # offset of the declaration's first token in the stripped code
+    end: int = 0         # offset just past its closing brace (equal to start for a delegate)
 
 
 @dataclass
@@ -329,9 +332,10 @@ def parse_structure(src):
                 stack.append(("namespace", ns.group(1)))
             elif type_match and "(" not in clean[:type_match.start()] and "=" not in clean:
                 keyword = TYPE_HEADER_RE.search(" " + header)
+                attrs = header[:len(header) - len(ATTRIBUTES_RE.sub("", header))].strip()
                 decl = TypeDecl(type_match.group(2), type_match.group(1), namespace(), clean, src.path,
                                 src.line_of(start + keyword.start(1) - 1), at_namespace_level(),
-                                parse_bases(clean[type_match.end() - 1:]))
+                                parse_bases(clean[type_match.end() - 1:]), attrs, start)
                 structure.types.append(decl)
                 stack.append(("type", decl))
             else:
@@ -342,6 +346,8 @@ def parse_structure(src):
         elif c == "}":
             if stack:
                 kind, payload = stack.pop()
+                if kind == "type":
+                    payload.end = i + 1
                 if kind == "block" and payload is not None and current_type() is not None:
                     pending = (payload[0], payload[1], i + 1)
             seg_start = i + 1
@@ -362,7 +368,7 @@ def parse_structure(src):
                 elif delegate:
                     lead = seg_start + len(code[seg_start:i]) - len(code[seg_start:i].lstrip())
                     structure.types.append(TypeDecl(delegate.group(1), "delegate", namespace(), header, src.path,
-                                                    src.line_of(lead), True, ()))
+                                                    src.line_of(lead), True, (), start=lead, end=lead))
             seg_start = i + 1
     if pending is not None and current_type() is not None:
         emit_member(pending[0], pending[2], pending[1], True)
