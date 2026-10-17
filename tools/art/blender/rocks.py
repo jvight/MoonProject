@@ -365,6 +365,206 @@ ROCK_SPECS: tuple[dict[str, object], ...] = (
             },
         ],
     },
+    # Big Boulder 0 (Rock_10): ~3.6 m weathered basalt cover erratic with oblique cleavage face
+    {
+        "name": "Rock_10",
+        "footprint_radius": 2.25,
+        "skirt_height_frac": 0.26,
+        "shells": [
+            {
+                "center_u": (0.0, 0.0, 0.0),
+                "size_u": (3.28, 2.35, 2.92),
+                "seed": 1103,
+                "lon_segs": 18,
+                "lat_rings": 9,
+                "skirt_flare": 0.18,
+                "burial_frac": 0.16,
+                "rot_deg_u": (0.0, 0.0, 0.0),
+                "fractures_u": [
+                    ((0.58, 0.68, 0.44), 0.50, 0.52),
+                    ((-0.62, 0.62, -0.48), 0.54, 0.46),
+                    ((0.24, 0.66, -0.71), 0.58, 0.42),
+                ],
+                "pits_u": [
+                    ((0.50, 0.74, 0.45), 0.34, 0.15),
+                    ((-0.58, 0.64, -0.50), 0.32, 0.14),
+                    ((0.26, 0.64, -0.72), 0.30, 0.14),
+                    ((-0.42, 0.78, 0.46), 0.28, 0.13),
+                    ((0.14, 0.92, -0.36), 0.26, 0.11),
+                ],
+                "crevices_u": [
+                    ((0.68, 0.20, 0.70), 0.04, 0.19, 0.14),
+                ],
+            },
+        ],
+    },
+    # Big Boulder 1 (Rock_11): ~4.8 m split-crown crater-rim basalt erratic with companion talus shoulder
+    {
+        "name": "Rock_11",
+        "footprint_radius": 3.05,
+        "skirt_height_frac": 0.25,
+        "shells": [
+            {
+                "center_u": (-0.18, 0.0, 0.06),
+                "size_u": (4.05, 3.15, 3.60),
+                "seed": 1217,
+                "lon_segs": 18,
+                "lat_rings": 9,
+                "skirt_flare": 0.18,
+                "burial_frac": 0.16,
+                "rot_deg_u": (2.0, 12.0, -3.0),
+                "fractures_u": [
+                    ((0.62, 0.66, 0.42), 0.48, 0.54),
+                    ((-0.56, 0.72, -0.41), 0.52, 0.48),
+                    ((-0.74, 0.46, 0.48), 0.56, 0.44),
+                ],
+                "pits_u": [
+                    ((0.54, 0.70, 0.46), 0.34, 0.15),
+                    ((-0.50, 0.74, -0.44), 0.32, 0.14),
+                    ((0.24, 0.60, -0.76), 0.30, 0.13),
+                    ((-0.72, 0.50, 0.48), 0.28, 0.12),
+                ],
+                "crevices_u": [
+                    ((-0.64, 0.22, 0.73), -0.05, 0.18, 0.13),
+                ],
+            },
+            {
+                "center_u": (1.28, 0.0, -0.48),
+                "size_u": (2.10, 1.45, 1.90),
+                "seed": 1229,
+                "lon_segs": 12,
+                "lat_rings": 5,
+                "skirt_flare": 0.15,
+                "burial_frac": 0.20,
+                "rot_deg_u": (4.0, -22.0, 5.0),
+                "fractures_u": [
+                    ((0.60, 0.70, 0.38), 0.52, 0.48),
+                ],
+                "pits_u": [
+                    ((0.46, 0.78, 0.42), 0.34, 0.12),
+                ],
+                "crevices_u": [],
+            },
+        ],
+    },
+    # Big Boulder 2 (Rock_12): ~6.2 m ridged lunar breccia landmark outcrop with stepped fracture planes
+    {
+        "name": "Rock_12",
+        "footprint_radius": 3.95,
+        "skirt_height_frac": 0.26,
+        "shells": [
+            {
+                "center_u": (0.22, 0.0, -0.10),
+                "size_u": (5.25, 4.05, 4.65),
+                "seed": 1307,
+                "lon_segs": 20,
+                "lat_rings": 9,
+                "skirt_flare": 0.19,
+                "burial_frac": 0.16,
+                "rot_deg_u": (-3.0, -16.0, 4.0),
+                "fractures_u": [
+                    ((-0.60, 0.68, 0.42), 0.48, 0.54),
+                    ((0.58, 0.66, -0.47), 0.52, 0.48),
+                    ((0.74, 0.46, 0.48), 0.56, 0.44),
+                ],
+                "pits_u": [
+                    ((-0.52, 0.72, 0.45), 0.34, 0.15),
+                    ((0.50, 0.68, -0.53), 0.32, 0.14),
+                    ((0.70, 0.52, 0.49), 0.30, 0.13),
+                    ((-0.38, 0.60, -0.70), 0.28, 0.13),
+                ],
+                "crevices_u": [
+                    ((0.60, 0.20, 0.77), 0.04, 0.20, 0.14),
+                    ((-0.46, 0.24, -0.85), -0.06, 0.17, 0.12),
+                ],
+            },
+            {
+                "center_u": (-1.65, 0.0, 0.78),
+                "size_u": (2.65, 1.85, 2.35),
+                "seed": 1319,
+                "lon_segs": 12,
+                "lat_rings": 5,
+                "skirt_flare": 0.15,
+                "burial_frac": 0.20,
+                "rot_deg_u": (-4.0, 24.0, -5.0),
+                "fractures_u": [
+                    ((-0.58, 0.72, 0.38), 0.52, 0.48),
+                ],
+                "pits_u": [
+                    ((-0.44, 0.80, 0.40), 0.34, 0.12),
+                ],
+                "crevices_u": [],
+            },
+        ],
+    },
+    # Big Boulder 3 (Rock_13): ~7.6 m towering crater-ejecta landmark megalith with twin talus spurs
+    {
+        "name": "Rock_13",
+        "footprint_radius": 4.85,
+        "skirt_height_frac": 0.26,
+        "shells": [
+            {
+                "center_u": (0.0, 0.0, 0.0),
+                "size_u": (6.40, 4.85, 5.55),
+                "seed": 1409,
+                "lon_segs": 20,
+                "lat_rings": 9,
+                "skirt_flare": 0.19,
+                "burial_frac": 0.16,
+                "rot_deg_u": (0.0, 8.0, 0.0),
+                "fractures_u": [
+                    ((-0.54, 0.74, -0.40), 0.48, 0.54),
+                    ((0.64, 0.62, 0.45), 0.52, 0.48),
+                    ((-0.30, 0.64, 0.70), 0.56, 0.44),
+                ],
+                "pits_u": [
+                    ((-0.48, 0.76, -0.43), 0.34, 0.15),
+                    ((0.58, 0.64, 0.50), 0.32, 0.14),
+                    ((-0.28, 0.66, 0.69), 0.30, 0.14),
+                    ((0.42, 0.58, -0.69), 0.28, 0.13),
+                    ((0.14, 0.92, 0.36), 0.26, 0.11),
+                ],
+                "crevices_u": [
+                    ((0.54, 0.22, -0.81), -0.05, 0.19, 0.14),
+                    ((-0.72, 0.18, 0.66), 0.04, 0.18, 0.13),
+                ],
+            },
+            {
+                "center_u": (2.15, 0.0, -0.85),
+                "size_u": (2.95, 2.05, 2.55),
+                "seed": 1423,
+                "lon_segs": 10,
+                "lat_rings": 5,
+                "skirt_flare": 0.15,
+                "burial_frac": 0.20,
+                "rot_deg_u": (4.0, -20.0, 5.0),
+                "fractures_u": [
+                    ((0.60, 0.70, 0.38), 0.52, 0.48),
+                ],
+                "pits_u": [
+                    ((0.45, 0.78, 0.42), 0.32, 0.12),
+                ],
+                "crevices_u": [],
+            },
+            {
+                "center_u": (-2.05, 0.0, 0.92),
+                "size_u": (2.60, 1.75, 2.25),
+                "seed": 1439,
+                "lon_segs": 10,
+                "lat_rings": 5,
+                "skirt_flare": 0.15,
+                "burial_frac": 0.22,
+                "rot_deg_u": (-3.0, 26.0, -4.0),
+                "fractures_u": [
+                    ((-0.58, 0.72, 0.38), 0.52, 0.48),
+                ],
+                "pits_u": [
+                    ((-0.42, 0.80, 0.42), 0.32, 0.12),
+                ],
+                "crevices_u": [],
+            },
+        ],
+    },
 )
 
 
@@ -398,17 +598,78 @@ def build_rock(spec: dict[str, object]) -> bpy.types.Object:
     return obj
 
 
+def render_big_boulders_with_rover() -> None:
+    """Render Rock_10..Rock_13 alongside Rover 07 under Day C and Night A lighting presets."""
+    import math
+    from mathutils import Euler, Vector
+    from ruins import ruins_common as rc
+
+    rc.reset_ruins_scene()
+    scene_group = bpy.data.objects.new("_BigBouldersScaleScene", None)
+    bpy.context.scene.collection.objects.link(scene_group)
+
+    big_specs = {str(s["name"]): s for s in ROCK_SPECS if str(s["name"]) in ("Rock_10", "Rock_11", "Rock_12", "Rock_13")}
+    placements = (
+        ("Rock_10", (-4.8, -1.6, 0.0), 12.0),
+        ("Rock_11", (-1.2, 1.8, 0.0), -18.0),
+        ("Rock_12", (3.8, 2.4, 0.0), 22.0),
+        ("Rock_13", (9.6, 0.8, 0.0), -14.0),
+    )
+    for rname, loc, yaw_deg in placements:
+        robj = build_rock(big_specs[rname])
+        if robj.data is not None:
+            for v in robj.data.vertices:
+                if v.co.z < 0.0:
+                    v.co.z = 0.0
+            robj.data.update()
+        robj.parent = scene_group
+        robj.location = Vector(loc)
+        robj.rotation_euler = Euler((0.0, 0.0, math.radians(yaw_deg)), "XYZ")
+
+    rover_fbx = Path("Assets/_Project/Art/R1/Models/Rover/RoverModel.fbx")
+    if rover_fbx.exists():
+        before = set(bpy.data.objects)
+        bpy.ops.import_scene.fbx(filepath=str(rover_fbx.resolve()))
+        rover_objs = [o for o in bpy.data.objects if o not in before]
+        for o in rover_objs:
+            if o.type == "MESH" and o.data is not None:
+                for slot in o.material_slots:
+                    if slot.material is not None:
+                        base_m = bpy.data.materials.get(slot.material.name.split(".")[0])
+                        if base_m is not None:
+                            slot.material = base_m
+            if o.parent is None:
+                o.parent = scene_group
+                o.location = Vector((-1.4, -2.2, 0.0))
+                o.rotation_euler = Euler((0.0, 0.0, math.radians(28.0)), "XYZ")
+
+    rc.render_ruin_day_night(
+        scene_group,
+        slug="boulders_scale",
+        cam_angle_deg=24.0,
+        cam_elev_deg=20.0,
+        res=(1024, 768),
+    )
+
+
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(description="Build Rock_00..Rock_09 FBX models.")
+    parser = argparse.ArgumentParser(description="Build Rock_00..Rock_13 FBX models.")
     parser.add_argument(
         "--out-dir",
         type=Path,
         default=Path("Assets/_Project/Art/R1/Models/Rocks"),
     )
+    parser.add_argument("--only-big", action="store_true", help="Only build and export Rock_10..Rock_13.")
+    parser.add_argument("--render-scale", action="store_true", help="Render boulders_scale_dawn/night.png with 07.")
     args = parser.parse_args(argv)
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
-    for spec in ROCK_SPECS:
+    specs_to_build = (
+        [s for s in ROCK_SPECS if str(s["name"]) in ("Rock_10", "Rock_11", "Rock_12", "Rock_13")]
+        if args.only_big
+        else ROCK_SPECS
+    )
+    for spec in specs_to_build:
         r1kit.reset_scene()
         rock_obj = build_rock(spec)
         tris = r1kit.count_triangles(rock_obj)
@@ -417,7 +678,11 @@ def main(argv: list[str] | None = None) -> None:
         r1kit.export_fbx(rock_obj, out_path)
         print(f"[{spec['name']}] Exported {out_path} ({verts} verts, {tris} triangles)")
 
+    if args.render_scale:
+        render_big_boulders_with_rover()
+
 
 if __name__ == "__main__":
     cli_args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
     main(cli_args)
+
