@@ -677,16 +677,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             recorder.SetMetric("placesApproachedCount", placesApproached);
             recorder.SetMetric("placeCardVisibleOnRuinsEntry", placeCardVisible ? 1f : 0f);
 
-            // Beat 6: Drive to the Chasm Lip and measure Finding #12 (ChasmLookSeconds hard input lock)
+            // Beat 6: Drive to the Chasm Lip and verify ATMO-03 (vista look without hard input lock)
             if (_context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.CanyonLip, out WorldAnchor lip))
             {
                 Vector3 lipStand = Flat(lip.Position - lip.Forward * 8f);
-                // Arm _bellLit on BaseProgression so approaching the lip triggers StepChasm
-                FieldInfo bellLitField = typeof(BaseProgression).GetField(
-                    "_bellLit",
-                    BindingFlags.Instance | BindingFlags.NonPublic);
-                bellLitField?.SetValue(_gameplay.Progression, true);
-
                 yield return DriveAutopilotWithPeriodicCaptures(
                     recorder,
                     pilot,
@@ -707,16 +701,19 @@ namespace MoonProject.Gameplay.PlayModeTests
                 recorder.CaptureFrame("chasm_lip_input_locked");
 
                 float lockStart = Time.time;
+                float lockedSeconds = 0f;
                 while (_gameplay.Progression.LookingAcross && Time.time - lockStart < 5f)
                 {
-                    // Player tries to steer/reverse while locked at chasm lip
-                    pilot.Reverse = 0.8f;
+                    if (_rover.IsHeldStill)
+                    {
+                        lockedSeconds += FrameTime;
+                    }
+
                     yield return null;
                     StepPeriodicCapture(recorder);
                 }
 
-                pilot.Reverse = 0f;
-                recorder.SetMetric("chasmLipHardLockSeconds", Time.time - lockStart);
+                recorder.SetMetric("chasmLipHardLockSeconds", lockedSeconds);
             }
 
             _rover.SetDriveSource(null);
