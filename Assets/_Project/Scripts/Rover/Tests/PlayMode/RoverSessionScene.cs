@@ -46,23 +46,19 @@ namespace MoonProject.Rover.PlayModeTests
             File.WriteAllText(ScenePath, text.Replace(SceneSlotLine, "_saveSlot: " + SaveSlot));
             AssetDatabase.ImportAsset(ScenePath, ImportAssetOptions.ForceSynchronousImport);
             EditorBuildSettingsScene[] scenes = EditorBuildSettings.scenes;
-            bool listedAlready = false;
+            int kept = 0;
+            var listed = new EditorBuildSettingsScene[scenes.Length + 1];
             foreach (EditorBuildSettingsScene scene in scenes)
             {
-                if (scene.path == ScenePath)
+                if (!string.IsNullOrEmpty(scene.path) && scene.path != ScenePath)
                 {
-                    listedAlready = true;
-                    break;
+                    listed[kept++] = scene;
                 }
             }
 
-            if (!listedAlready)
-            {
-                var listed = new EditorBuildSettingsScene[scenes.Length + 1];
-                scenes.CopyTo(listed, 0);
-                listed[scenes.Length] = new EditorBuildSettingsScene(ScenePath, true);
-                EditorBuildSettings.scenes = listed;
-            }
+            listed[kept++] = new EditorBuildSettingsScene(ScenePath, true);
+            Array.Resize(ref listed, kept);
+            EditorBuildSettings.scenes = listed;
 #endif
         }
 
@@ -74,7 +70,7 @@ namespace MoonProject.Rover.PlayModeTests
             var restored = new EditorBuildSettingsScene[scenes.Length];
             foreach (EditorBuildSettingsScene scene in scenes)
             {
-                if (scene.path != ScenePath)
+                if (!string.IsNullOrEmpty(scene.path) && scene.path != ScenePath)
                 {
                     restored[kept++] = scene;
                 }
