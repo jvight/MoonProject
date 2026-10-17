@@ -1,0 +1,162 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 083d27cf91a4b3448af79fccecefeba6, type: 3}
+  m_Name: OpeningTuning
+  m_EditorClassIdentifier: 
+  _landerAnchor: place.lander
+  _apronAnchor: place.apron
+  _landerReach: 25
+  _reserveCells: 4
+  _portCableReach: 10
+  _padChargeRadius: 1.6
+  _cargoScanPoints:
+  - {x: -1.4, y: 1.2, z: 1.8}
+  - {x: 1.2, y: 1.2, z: 2.4}
+  _igniterPart: part.igniter
+  _collectReach: 3
+  _recoveryLamps:
+    _link: 4
+    _dish: 4
+    _answer: 1
+  _caches:
+  - _id: supply.wake
+    _anchorId: place.wake
+    _offset: {x: 2.5, y: 0, z: -1.5}
+    _yaw: 30
+    _container: Crate_S
+    _yield:
+      _metal: 3
+      _wiring: 1
+      _optics: 0
+    _startsOpen: 0
+    _part: 
+  - _id: supply.midway
+    _anchorId: place.midway
+    _offset: {x: 1.5, y: 0, z: 0}
+    _yaw: -20
+    _container: Crate_S
+    _yield:
+      _metal: 2
+      _wiring: 1
+      _optics: 0
+    _startsOpen: 0
+    _part: 
+  - _id: supply.lander.open
+    _anchorId: place.lander
+    _offset: {x: 6, y: 0, z: 9}
+    _yaw: -30
+    _container: Crate_M
+    _yield:
+      _metal: 2
+      _wiring: 1
+      _optics: 0
+    _startsOpen: 1
+    _part: part.igniter
+  - _id: supply.lander.a
+    _anchorId: place.lander
+    _offset: {x: -5, y: 0, z: -9}
+    _yaw: 180
+    _container: Crate_M
+    _yield:
+      _metal: 3
+      _wiring: 2
+      _optics: 0
+    _startsOpen: 0
+    _part: 
+  - _id: supply.lander.b
+    _anchorId: place.lander
+    _offset: {x: 5, y: 0, z: -9}
+    _yaw: 160
+    _container: Crate_M
+    _yield:
+      _metal: 3
+      _wiring: 2
+      _optics: 0
+    _startsOpen: 0
+    _part: 
+  - _id: supply.lander.panels
+    _anchorId: place.lander
+    _offset: {x: 0, y: 0, z: -12}
+    _yaw: 0
+    _container: Crate_M
+    _yield:
+      _metal: 6
+      _wiring: 0
+      _optics: 0
+    _startsOpen: 0
+    _part: 
+  - _id: supply.habitat.reel
+    _anchorId: HabitatModules
+    _offset: {x: 3, y: 0, z: -3}
+    _yaw: 0
+    _container: Crate_M
+    _yield:
+      _metal: 0
+      _wiring: 4
+      _optics: 0
+    _startsOpen: 0
+    _part: 
+  - _id: supply.workshop.a
+    _anchorId: KenjiWorkshop
+    _offset: {x: -2.5, y: 0, z: -3}
+    _yaw: 0
+    _container: Crate_S
+    _yield:
+      _metal: 0
+      _wiring: 2
+      _optics: 2
+    _startsOpen: 0
+    _part: 
+  - _id: supply.workshop.b
+    _anchorId: KenjiWorkshop
+    _offset: {x: 2.5, y: 0, z: -3}
+    _yaw: 0
+    _container: Crate_S
+    _yield:
+      _metal: 0
+      _wiring: 2
+      _optics: 2
+    _startsOpen: 0
+    _part: 
+  - _id: supply.tower.a
+    _anchorId: RadioTower
+    _offset: {x: -3, y: 0, z: -2.5}
+    _yaw: 0
+    _container: Crate_S
+    _yield:
+      _metal: 2
+      _wiring: 0
+      _optics: 1
+    _startsOpen: 0
+    _part: 
+  - _id: supply.tower.b
+    _anchorId: RadioTower
+    _offset: {x: 3, y: 0, z: -2.5}
+    _yaw: 0
+    _container: Crate_S
+    _yield:
+      _metal: 2
+      _wiring: 0
+      _optics: 1
+    _startsOpen: 0
+    _part: 
+  - _id: supply.scatter
+    _anchorId: ScatterSet
+    _offset: {x: 0, y: 0, z: -3}
+    _yaw: 0
+    _container: Crate_M
+    _yield:
+      _metal: 6
+      _wiring: 0
+      _optics: 0
+    _startsOpen: 0
+    _part: 
