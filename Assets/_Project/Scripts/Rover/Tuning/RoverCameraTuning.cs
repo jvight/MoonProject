@@ -546,6 +546,14 @@ namespace MoonProject.Rover
         [Range(0.02f, 0.25f)]
         [SerializeField] private float _faceInspectNearClip = 0.05f;
 
+        [Tooltip("Share (0..1) of the chassis roll that 07 counter-rolls its head toward level when lifting its head for face inspect.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _faceInspectHeadCounterRollShare = 0.5f;
+
+        [Tooltip("Largest head counter-roll (deg) 07 applies toward level when lifting its head for face inspect.")]
+        [Range(0f, 20f)]
+        [SerializeField] private float _faceInspectHeadCounterRollMax = 8f;
+
         public float MouseSensitivity => _mouseSensitivity;
 
         public float StickRate => _stickRate;
@@ -793,5 +801,9 @@ namespace MoonProject.Rover
         public float FaceInspectProbeRadius => _faceInspectProbeRadius;
 
         public float FaceInspectNearClip => _faceInspectNearClip;
+
+        public float FaceInspectHeadCounterRollShare => _faceInspectHeadCounterRollShare;
+
+        public float FaceInspectHeadCounterRollMax => _faceInspectHeadCounterRollMax;
     }
 }

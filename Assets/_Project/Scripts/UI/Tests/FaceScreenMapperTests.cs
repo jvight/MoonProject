@@ -120,6 +120,51 @@ namespace MoonProject.UI.Tests
             }
         }
 
+        [Test]
+        public void CursorPolicy_OpenInventory_ConfinesAndShowsCursor_AndCloseRestoresPreviousState()
+        {
+            CursorLockMode origLock = UnityEngine.Cursor.lockState;
+            bool origVisible = UnityEngine.Cursor.visible;
+            try
+            {
+                var policy = new CursorPolicy();
+                policy.Drive();
+                Assert.AreEqual(CursorLockMode.Locked, policy.LockState);
+                Assert.IsFalse(policy.IsVisible);
+                Assert.IsFalse(policy.InMenu);
+
+                policy.OpenInventory();
+                Assert.AreEqual(CursorLockMode.Confined, policy.LockState,
+                    "Inventory cursor must be Confined to the window.");
+                Assert.IsTrue(policy.IsVisible, "Inventory cursor must be visible.");
+                Assert.IsTrue(policy.InMenu);
+
+                policy.CloseInventory();
+                Assert.AreEqual(CursorLockMode.Locked, policy.LockState,
+                    "Closing inventory must restore the prior Locked drive state.");
+                Assert.IsFalse(policy.IsVisible);
+                Assert.IsFalse(policy.InMenu);
+
+                policy.Menu();
+                Assert.AreEqual(CursorLockMode.None, policy.LockState);
+                Assert.IsTrue(policy.IsVisible);
+                policy.OpenInventory();
+                Assert.AreEqual(CursorLockMode.Confined, policy.LockState);
+                Assert.IsTrue(policy.IsVisible);
+
+                policy.CloseInventory();
+                Assert.AreEqual(CursorLockMode.None, policy.LockState,
+                    "Closing inventory must restore whatever cursor lock state was active before opening.");
+                Assert.IsTrue(policy.IsVisible);
+                Assert.IsTrue(policy.InMenu);
+            }
+            finally
+            {
+                UnityEngine.Cursor.lockState = origLock;
+                UnityEngine.Cursor.visible = origVisible;
+            }
+        }
+
         private sealed class FakeFaceScreen : IRoverFaceScreen
         {
             public float Curvature { get; set; }

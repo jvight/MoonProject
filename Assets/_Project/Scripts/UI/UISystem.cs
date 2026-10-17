@@ -597,9 +597,9 @@ namespace MoonProject.UI
             _map?.Tick(deltaTime, paused);
             SetFacePanelVisible(_cargo.IsOpen || _cargo.Openness > 0f);
             _cargo.Tick(deltaTime, CargoScreenSize(), input.ActiveDevice);
-            if (_cargo.IsOpen && !_cargo.IsBooting)
+            if (_cargo.IsOpen)
             {
-                StepCargoInput(menu);
+                StepCargoInput(menu, deltaTime);
             }
 
             if (_cargo.IsOpen && ((_cargo.IsTransferView && !_services.Dock.IsDocked) || _cargo.WantsClose))
@@ -811,7 +811,12 @@ namespace MoonProject.UI
             _slot.Step(_guidanceWants, _guidanceShown);
         }
 
+        private const float CargoNavInitialRepeatDelay = 0.35f;
+        private const float CargoNavRepeatInterval = 0.12f;
+
         private Vector2 _lastFaceMouseScreenPos = new Vector2(float.NaN, float.NaN);
+        private NavigationMoveEvent.Direction _lastCargoNavDirection = NavigationMoveEvent.Direction.None;
+        private float _cargoNavRepeatTimer;
 
         private void BindFacePanel(VisualElement root)
         {
@@ -908,27 +913,59 @@ namespace MoonProject.UI
                 CargoScreenSize());
         }
 
-        private void StepCargoInput(MenuInput menu)
+        private static NavigationMoveEvent.Direction QuantizeNavigationDirection(Vector2 nav)
+        {
+            if (Mathf.Abs(nav.x) >= Mathf.Abs(nav.y))
+            {
+                return nav.x > 0.2f ? NavigationMoveEvent.Direction.Right
+                    : nav.x < -0.2f ? NavigationMoveEvent.Direction.Left
+                    : NavigationMoveEvent.Direction.None;
+            }
+
+            return nav.y > 0.2f ? NavigationMoveEvent.Direction.Up
+                : nav.y < -0.2f ? NavigationMoveEvent.Direction.Down
+                : NavigationMoveEvent.Direction.None;
+        }
+
+        private void StepCargoInput(MenuInput menu, float deltaTime)
         {
             FaceInventoryView view = _cargo.View;
-            if (menu.NavigatePressed && view.LastNavigationFrame != Time.frameCount)
+            NavigationMoveEvent.Direction dir = QuantizeNavigationDirection(menu.NavigateVector);
+            if (dir == NavigationMoveEvent.Direction.None)
             {
-                Vector2 nav = menu.NavigateVector;
-                NavigationMoveEvent.Direction dir = Mathf.Abs(nav.x) >= Mathf.Abs(nav.y)
-                    ? (nav.x > 0.2f ? NavigationMoveEvent.Direction.Right
-                        : nav.x < -0.2f ? NavigationMoveEvent.Direction.Left
-                        : NavigationMoveEvent.Direction.None)
-                    : (nav.y > 0.2f ? NavigationMoveEvent.Direction.Up
-                        : nav.y < -0.2f ? NavigationMoveEvent.Direction.Down
-                        : NavigationMoveEvent.Direction.None);
-                if (dir != NavigationMoveEvent.Direction.None)
-                {
-                    view.Navigate(dir);
-                }
-                else if (view.FocusedHoldCell < 0 && view.FocusedSocketIndex < 0 && view.FocusedHomeCell < 0)
+                _lastCargoNavDirection = NavigationMoveEvent.Direction.None;
+                _cargoNavRepeatTimer = 0f;
+                if (menu.NavigatePressed && view.FocusedHoldCell < 0 && view.FocusedSocketIndex < 0 &&
+                    view.FocusedHomeCell < 0)
                 {
                     _cargo.FocusFirst();
                 }
+            }
+            else if (dir != _lastCargoNavDirection || menu.NavigatePressed)
+            {
+                _lastCargoNavDirection = dir;
+                _cargoNavRepeatTimer = CargoNavInitialRepeatDelay;
+                if (view.LastNavigationFrame != Time.frameCount)
+                {
+                    view.Navigate(dir);
+                }
+            }
+            else
+            {
+                _cargoNavRepeatTimer -= deltaTime;
+                if (_cargoNavRepeatTimer <= 0f)
+                {
+                    _cargoNavRepeatTimer = CargoNavRepeatInterval;
+                    if (view.LastNavigationFrame != Time.frameCount)
+                    {
+                        view.Navigate(dir);
+                    }
+                }
+            }
+
+            if (menu.SubmitPressed)
+            {
+                view.SubmitFocused();
             }
 
             if (_faceDocument == null || _services.FaceScreen == null || !_services.FaceScreen.IsOpen)
@@ -997,21 +1034,25 @@ namespace MoonProject.UI
         {
             _reopenCargo = false;
             _lastFaceMouseScreenPos = _services.Input.Menu.PointerPosition;
+            _lastCargoNavDirection = NavigationMoveEvent.Direction.None;
+            _cargoNavRepeatTimer = 0f;
             SetFacePanelVisible(true);
             _cargo.Open();
             _services.FaceScreen?.SetScreenOpen(true, FaceTargetTexture());
             _services.Input.Disable();
-            _cursor.Menu();
+            _cursor.OpenInventory();
             _cargo.FocusFirst();
             _events.Publish(new UiCue(UiCueKind.Confirm));
         }
 
         private void CloseCargo()
         {
+            _lastCargoNavDirection = NavigationMoveEvent.Direction.None;
+            _cargoNavRepeatTimer = 0f;
             _cargo.Close();
             _services.FaceScreen?.SetScreenOpen(false, FaceTargetTexture());
             _services.Input.Enable();
-            _cursor.Drive();
+            _cursor.CloseInventory();
             _events.Publish(new UiCue(UiCueKind.Back));
         }
 

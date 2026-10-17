@@ -64,16 +64,18 @@ namespace MoonProject.Rover.PlayModeTests
         private readonly InputActionAsset _actions;
         private readonly InputReader _input;
         private readonly PhysicsMaterial _sphereMaterial;
+        private readonly Mesh _screenMesh;
         private readonly ScriptableObject[] _tunings;
 
         private TestRover(GameObject root, GameObject cameraRoot, InputActionAsset actions, InputReader input,
-            PhysicsMaterial sphereMaterial, ScriptableObject[] tunings)
+            PhysicsMaterial sphereMaterial, Mesh screenMesh, ScriptableObject[] tunings)
         {
             Root = root;
             _cameraRoot = cameraRoot;
             _actions = actions;
             _input = input;
             _sphereMaterial = sphereMaterial;
+            _screenMesh = screenMesh;
             _tunings = tunings;
         }
 
@@ -489,8 +491,30 @@ namespace MoonProject.Rover.PlayModeTests
             AssignArray(controller, "_stageSleeves", sleeves);
             Assign(controller, ("_lockGlow", lockGlow.GetComponent<MeshRenderer>()), ("_focusLens", lens.gameObject),
                 ("_focusLensGlass", lensGlass.GetComponent<MeshRenderer>()));
+            var screenMesh = new Mesh
+            {
+                name = "TestScreen",
+                vertices = new[]
+                {
+                    new Vector3(-0.5f, -0.5f, 0f),
+                    new Vector3(0.5f, -0.5f, 0f),
+                    new Vector3(-0.5f, 0.5f, 0f),
+                    new Vector3(0.5f, 0.5f, 0f),
+                },
+                uv = new[]
+                {
+                    new Vector2(0f, 0f),
+                    new Vector2(1f, 0f),
+                    new Vector2(0f, 1f),
+                    new Vector2(1f, 1f),
+                },
+                triangles = new[] { 0, 2, 1, 2, 3, 1 },
+            };
+            screenMesh.RecalculateNormals();
+            screenMesh.RecalculateBounds();
+            screen.GetComponent<MeshFilter>().sharedMesh = screenMesh;
             var screenCollider = screen.gameObject.AddComponent<MeshCollider>();
-            screenCollider.sharedMesh = screen.GetComponent<MeshFilter>().sharedMesh;
+            screenCollider.sharedMesh = screenMesh;
             var faceDisplay = screen.gameObject.AddComponent<FaceDisplay>();
             Assign(faceDisplay, ("_tuning", faceTuning), ("_screenRenderer", screen.GetComponent<MeshRenderer>()));
             var faceDirector = screen.gameObject.AddComponent<RoverFaceDirector>();
@@ -518,7 +542,7 @@ namespace MoonProject.Rover.PlayModeTests
             InputActionAsset actions = TestControls.Create();
             var input = new InputReader(actions);
             input.Enable();
-            var rover = new TestRover(root, cameraRoot, actions, input, sphereMaterial, tunings)
+            var rover = new TestRover(root, cameraRoot, actions, input, sphereMaterial, screenMesh, tunings)
             {
                 Controller = controller,
                 Rig = rig,
@@ -680,6 +704,7 @@ namespace MoonProject.Rover.PlayModeTests
             Object.DestroyImmediate(Root);
             Object.DestroyImmediate(_cameraRoot);
             Object.DestroyImmediate(_sphereMaterial);
+            Object.DestroyImmediate(_screenMesh);
             Object.DestroyImmediate(_actions);
             foreach (ScriptableObject tuning in _tunings)
             {
