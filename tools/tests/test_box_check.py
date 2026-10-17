@@ -80,6 +80,8 @@ class TestCommandTests(unittest.TestCase):
     ROOT = Path("D:/wt/world")
 
     def args(self, *boxes, **kw):
+        if len(boxes) == 1 and isinstance(boxes[0], (list, tuple)):
+            boxes = boxes[0]
         values = dict(boxes=list(boxes), filter=None, assembly=None, platform="editmode", fast=False)
         values.update(kw)
         return argparse.Namespace(**values)
@@ -112,7 +114,7 @@ class TestCommandTests(unittest.TestCase):
         self.assertEqual(len(box_check.test_commands(self.ROOT, self.args("art", fast=True))), 1)
 
     def test_multiple_boxes_merge_and_deduplicate_assemblies(self):
-        planned = box_check.test_commands(self.ROOT, self.args(["gameplay", "ui", "art"]))
+        planned = box_check.test_commands(self.ROOT, self.args("gameplay", "ui", "art"))
         self.assertEqual(
             [label for label, _ in planned],
             [
