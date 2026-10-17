@@ -194,17 +194,6 @@ namespace MoonProject.Core.Events
         public Quaternion Rotation { get; }
     }
 
-    /// <summary>The radio tower's clear-signal radius changed (tower upgrade, load).</summary>
-    public readonly struct SignalRadiusChanged
-    {
-        public SignalRadiusChanged(float radius)
-        {
-            Radius = radius;
-        }
-
-        public float Radius { get; }
-    }
-
     /// <summary>07's beam started cutting a salvage piece loose (docs/features/M3-13).</summary>
     public readonly struct SalvageCutStarted
     {
@@ -497,27 +486,6 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// The crew's belly lift (docs/features/M3-19 §4) started or finished carrying 07: <see cref="Riding"/> while it
-    /// moves, <see cref="Inside"/> once it settled in the lab (the turntable takes over; Back brings it down).
-    /// </summary>
-    public readonly struct LiftRideChanged
-    {
-        public LiftRideChanged(bool riding, bool inside, Vector3 position)
-        {
-            Riding = riding;
-            Inside = inside;
-            Position = position;
-        }
-
-        public bool Riding { get; }
-
-        public bool Inside { get; }
-
-        /// <summary>The platform's position.</summary>
-        public Vector3 Position { get; }
-    }
-
-    /// <summary>
     /// 07's look up the crew's ladder (docs/features/M3-16 "Each place"): the first time near it, 07 looks up the
     /// ladder to the deck, then at the lift. Published as each look begins (<see cref="Looking"/>, toward
     /// <see cref="Subject"/>) and once more when it ends; Rover frames each look.
@@ -603,23 +571,6 @@ namespace MoonProject.Core.Events
 
         /// <summary>Metal the bay made of the part that came off (0 without a swap).</summary>
         public int RecycledMetal { get; }
-    }
-
-    /// <summary>
-    /// <see cref="Part"/> came off <see cref="Socket"/> into the parts row at its station (§3.5): Rover plays the
-    /// short reverse moment, and the ability it gave pauses until it is refitted.
-    /// </summary>
-    public readonly struct PartRemoved
-    {
-        public PartRemoved(RoverSocket socket, RoverKitPiece part)
-        {
-            Socket = socket;
-            Part = part;
-        }
-
-        public RoverSocket Socket { get; }
-
-        public RoverKitPiece Part { get; }
     }
 
     /// <summary>
