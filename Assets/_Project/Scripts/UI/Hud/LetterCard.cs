@@ -20,16 +20,12 @@ namespace MoonProject.UI
     {
         public const string EndingAnswerKey = "ticker.ending.answer";
         public const string LetterPrefix = "letter.";
-        public const string MastPrefix = "letter.mast_";
         public const string AfterPrefix = "letter.after_";
-        public const string LogPrefix = "log.";
         public const string DefaultArkStamp = "L4 ARK";
         public const string ArkLinkClass = "letter-card--ark";
 
         private const string MidDotSeparator = " · ";
         private const string EmDashSeparator = " — ";
-        private const string EnglishCrewLogStampPrefix = "LOG ";
-        private const string VietnameseCrewLogStampPrefix = "NHẬT KÝ ";
         private const int MaxStampSearchIndex = 36;
         private const int MaxTrailingSignoffLength = 24;
 
@@ -37,7 +33,6 @@ namespace MoonProject.UI
         {
             RadioLetter,
             ArkBulletin,
-            CrewLog,
             EndingAnswer,
         }
 
@@ -134,10 +129,10 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// Classifies a letter by its localization key and optional raw text into its real kind (radio letter, Ark
-        /// bulletin, crew log, or ending answer).
+        /// Classifies a letter by its localization key into its real kind (radio letter, Ark bulletin, or ending
+        /// answer).
         /// </summary>
-        public static LetterKind Classify(string key, string raw = null)
+        public static LetterKind Classify(string key)
         {
             if (string.Equals(key, EndingAnswerKey, StringComparison.Ordinal))
             {
@@ -147,12 +142,6 @@ namespace MoonProject.UI
             if (!string.IsNullOrEmpty(key) && key.StartsWith(AfterPrefix, StringComparison.Ordinal))
             {
                 return LetterKind.ArkBulletin;
-            }
-
-            if ((!string.IsNullOrEmpty(key) && key.StartsWith(LogPrefix, StringComparison.Ordinal)) ||
-                HasCrewLogStamp(raw))
-            {
-                return LetterKind.CrewLog;
             }
 
             return LetterKind.RadioLetter;
@@ -165,24 +154,11 @@ namespace MoonProject.UI
             {
                 case LetterKind.ArkBulletin:
                     return UiKeys.ArkBulletinCaption;
-                case LetterKind.CrewLog:
-                    return UiKeys.CrewLogCaption;
                 case LetterKind.EndingAnswer:
                     return UiKeys.EndingAnswerCaption;
                 default:
                     return UiKeys.RadioLetterCaption;
             }
-        }
-
-        private static bool HasCrewLogStamp(string raw)
-        {
-            if (string.IsNullOrEmpty(raw))
-            {
-                return false;
-            }
-
-            return raw.StartsWith(EnglishCrewLogStampPrefix, StringComparison.OrdinalIgnoreCase) ||
-                   raw.StartsWith(VietnameseCrewLogStampPrefix, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -356,7 +332,7 @@ namespace MoonProject.UI
         private void Write(TickerLine line, int initialRevealedChars)
         {
             string formatted = _formatter.Format(line);
-            LetterKind kind = Classify(line.Key, formatted);
+            LetterKind kind = Classify(line.Key);
             _card.EnableInClassList(ArkLinkClass,
                 kind == LetterKind.ArkBulletin || kind == LetterKind.EndingAnswer);
             _caption.text = _localization.Get(CaptionKey(kind));
