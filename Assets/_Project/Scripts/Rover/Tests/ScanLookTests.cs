@@ -129,38 +129,38 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void ScanAim_HeadReachVsBodyTurn_UsesHeadInsideReach_AndTurnsBodyOutsideReach()
         {
-            const float headYawLimit = 115f;
             const float headYawReach = 105f;
             const float bodyStopYaw = 22f;
-            const float minDist = 0.35f;
+            const float pitchUpLimit = 45f;
+            const float pitchDownLimit = 45f;
             var lensOffset = new Vector3(-0.34f, 0.04f, 0.25f);
 
-            // Target in front (yaw ~18 deg): head alone reaches it, no body turn needed.
-            var frontTarget = new Vector3(0.9f, 0.1f, 3.2f);
+            // Target in front (yaw ~13 deg, within 22 deg stop threshold): head alone reaches it, no body turn needed.
+            var frontTarget = new Vector3(0.4f, 0.1f, 3.2f);
             bool frontTurn = ScanAim.NeedsBodyTurn(
-                frontTarget, lensOffset, headYawLimit, headYawReach, bodyStopYaw, minDist, false, out float frontDelta);
+                frontTarget, lensOffset, headYawReach, bodyStopYaw, pitchUpLimit, pitchDownLimit, false, out float frontDelta);
             Assert.IsFalse(frontTurn, "Target in front within neck limits must not trigger a body turn.");
 
             // Target beside (yaw ~75 deg, within 105 deg head reach): head alone reaches it.
             var sideTarget = new Vector3(3.0f, 0.0f, 0.9f);
             bool sideTurn = ScanAim.NeedsBodyTurn(
-                sideTarget, lensOffset, headYawLimit, headYawReach, bodyStopYaw, minDist, false, out _);
+                sideTarget, lensOffset, headYawReach, bodyStopYaw, pitchUpLimit, pitchDownLimit, false, out _);
             Assert.IsFalse(sideTurn, "Target beside within head reach must be handled by the head.");
 
             // Target behind (yaw ~155 deg, outside 105 deg head reach): triggers whole-body turn in place.
             var behindTarget = new Vector3(1.4f, 0.0f, -3.2f);
             bool behindTurn = ScanAim.NeedsBodyTurn(
-                behindTarget, lensOffset, headYawLimit, headYawReach, bodyStopYaw, minDist, false, out float behindDelta);
+                behindTarget, lensOffset, headYawReach, bodyStopYaw, pitchUpLimit, pitchDownLimit, false, out float behindDelta);
             Assert.IsTrue(behindTurn, "Target behind 07 outside head reach must trigger a whole-body turn.");
             Assert.Greater(behindDelta, 100f);
 
             // Hysteresis: while turning, body continues until within BodyStopYaw (22 deg), then hands off to head.
-            var midTurnTarget = new Vector3(2.2f, 0.0f, 2.2f); // ~45 deg yaw
+            var midTurnTarget = new Vector3(2.2f, 0.0f, 2.2f); // ~51 deg yaw
             Assert.IsTrue(ScanAim.NeedsBodyTurn(
-                    midTurnTarget, lensOffset, headYawLimit, headYawReach, bodyStopYaw, minDist, true, out _),
+                    midTurnTarget, lensOffset, headYawReach, bodyStopYaw, pitchUpLimit, pitchDownLimit, true, out _),
                 "Active body turn continues through mid-angles until within stop threshold.");
             Assert.IsFalse(ScanAim.NeedsBodyTurn(
-                    frontTarget, lensOffset, headYawLimit, headYawReach, bodyStopYaw, minDist, true, out _),
+                    frontTarget, lensOffset, headYawReach, bodyStopYaw, pitchUpLimit, pitchDownLimit, true, out _),
                 "Body turn stops once target enters the head handoff zone.");
             Assert.Greater(Mathf.Abs(frontDelta), 0f);
         }
