@@ -1220,6 +1220,33 @@
       "notes": "Opening v2 B8: a structure taking power: a relay thunk, a transformer swell D2 -> A2, its lamp blooming on D5."
     },
     {
+      "id": "title_crt_off",
+      "category": "stinger_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/title_crt_off.wav"
+      ],
+      "variantLabels": [
+        "title_crt_off"
+      ],
+      "sha256": [
+        "af72e3afd726243505716d549302b26a0ed4d65edd3b6a89c0aa54a6c70688a5"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "The title CRT switching off into New Game / Continue: a soft tube tock, a falling breath and a short warm D4 ring that the wake's ghost chord continues."
+    },
+    {
       "id": "base_lamp_on",
       "category": "oneshot_3d",
       "milestone": "M3",

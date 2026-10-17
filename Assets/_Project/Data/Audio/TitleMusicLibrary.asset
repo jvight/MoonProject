@@ -27,5 +27,5 @@ MonoBehaviour:
     _bpm: 60
   _selectedId: title_a_turning_moon
   _fadeInSeconds: 2
-  _fadeOutSeconds: 2.5
+  _fadeOutSeconds: 0.8
   _volume: 1

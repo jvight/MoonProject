@@ -10,7 +10,7 @@ namespace MoonProject.Audio.Tests
     {
         private const float Frame = 1f / 60f;
         private const float FadeIn = 2f;
-        private const float FadeOut = 2.5f;
+        private const float FadeOut = 0.8f;
         private const float BeatsPerBar = 4f;
         private const float SecondsPerMinute = 60f;
         private const double MaxSamplesOffTheBar = 2.0;
@@ -45,7 +45,7 @@ namespace MoonProject.Audio.Tests
         }
 
         [Test]
-        public void Fader_FadesOutOverTwoPointFiveSeconds_AndStops()
+        public void Fader_FadesOutOverUnderASecond_AndStops()
         {
             var fader = new TitleMusicFader();
             fader.ShowTitle();
@@ -56,11 +56,11 @@ namespace MoonProject.Audio.Tests
             fader.FadeOut(); // Idempotent when NewGameRequested is followed by SessionStarted.
             Assert.IsTrue(fader.IsFadingOut);
 
-            Step(fader, 1.25f);
-            Assert.AreEqual(0.5f, fader.Level, 0.03f, "halfway through the 2.5 s fade-out");
+            Step(fader, 0.4f);
+            Assert.AreEqual(0.5f, fader.Level, 0.03f, "halfway through the 0.8 s fade-out");
             Assert.IsTrue(fader.IsPlaying);
 
-            Step(fader, 1.35f);
+            Step(fader, 0.5f);
             Assert.AreEqual(0f, fader.Level, 1e-5f);
             Assert.IsFalse(fader.IsPlaying);
             Assert.IsFalse(fader.IsFadingOut);
@@ -76,7 +76,7 @@ namespace MoonProject.Audio.Tests
             Assert.AreEqual(3, library.Count);
             Assert.AreEqual(TitleMusicLibrary.DefaultTrackId, library.SelectedId);
             Assert.AreEqual(2f, library.FadeInSeconds, 1e-4f);
-            Assert.AreEqual(2.5f, library.FadeOutSeconds, 1e-4f);
+            Assert.AreEqual(0.8f, library.FadeOutSeconds, 1e-4f);
             Assert.AreEqual("title_a_turning_moon", library.SelectedTrack.Id);
 
             string manifestPath = Path.Combine(Application.dataPath, "..", "tools", "music", "title.json");
