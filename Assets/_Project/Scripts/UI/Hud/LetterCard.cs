@@ -20,7 +20,6 @@ namespace MoonProject.UI
     {
         public const string EndingAnswerKey = "ticker.ending.answer";
         public const string LetterPrefix = "letter.";
-        public const string MastPrefix = "letter.mast_";
         public const string AfterPrefix = "letter.after_";
         public const string DefaultArkStamp = "L4 ARK";
         public const string ArkLinkClass = "letter-card--ark";
@@ -29,6 +28,13 @@ namespace MoonProject.UI
         private const string EmDashSeparator = " — ";
         private const int MaxStampSearchIndex = 36;
         private const int MaxTrailingSignoffLength = 24;
+
+        public enum LetterKind
+        {
+            RadioLetter,
+            ArkBulletin,
+            EndingAnswer,
+        }
 
         private readonly LetterCardSettings _settings;
         private readonly ILocalization _localization;
@@ -122,10 +128,37 @@ namespace MoonProject.UI
                    string.Equals(key, EndingAnswerKey, StringComparison.Ordinal);
         }
 
-        /// <summary>True for the pre-launch crew mast letters (`letter.mast_*`); false for live Ark replies.</summary>
-        public static bool IsCrewLetterKey(string key)
+        /// <summary>
+        /// Classifies a letter by its localization key into its real kind (radio letter, Ark bulletin, or ending
+        /// answer).
+        /// </summary>
+        public static LetterKind Classify(string key)
         {
-            return !string.IsNullOrEmpty(key) && key.StartsWith(MastPrefix, StringComparison.Ordinal);
+            if (string.Equals(key, EndingAnswerKey, StringComparison.Ordinal))
+            {
+                return LetterKind.EndingAnswer;
+            }
+
+            if (!string.IsNullOrEmpty(key) && key.StartsWith(AfterPrefix, StringComparison.Ordinal))
+            {
+                return LetterKind.ArkBulletin;
+            }
+
+            return LetterKind.RadioLetter;
+        }
+
+        /// <summary>Returns the localization key for the header caption of <paramref name="kind"/>.</summary>
+        public static string CaptionKey(LetterKind kind)
+        {
+            switch (kind)
+            {
+                case LetterKind.ArkBulletin:
+                    return UiKeys.ArkBulletinCaption;
+                case LetterKind.EndingAnswer:
+                    return UiKeys.EndingAnswerCaption;
+                default:
+                    return UiKeys.RadioLetterCaption;
+            }
         }
 
         /// <summary>
@@ -285,8 +318,6 @@ namespace MoonProject.UI
         private void Present(TickerLine line)
         {
             _shown = line;
-            bool isCrewLetter = IsCrewLetterKey(line.Key);
-            _card.EnableInClassList(ArkLinkClass, !isCrewLetter);
             Write(line, 0);
             _holdSeconds = _settings.TotalHoldSeconds(_fullBody.Length);
             _timer = 0f;
@@ -300,10 +331,11 @@ namespace MoonProject.UI
 
         private void Write(TickerLine line, int initialRevealedChars)
         {
-            bool isCrewLetter = IsCrewLetterKey(line.Key);
-            _caption.text = _localization.Get(
-                isCrewLetter ? UiKeys.CrewLogCaption : UiKeys.StationName(UpgradeStationKind.RadioTower));
             string formatted = _formatter.Format(line);
+            LetterKind kind = Classify(line.Key);
+            _card.EnableInClassList(ArkLinkClass,
+                kind == LetterKind.ArkBulletin || kind == LetterKind.EndingAnswer);
+            _caption.text = _localization.Get(CaptionKey(kind));
             ParseLetter(line.Key, formatted, out string stamp, out string body, out string sender);
             _stamp.text = stamp;
             _fullBody = body;

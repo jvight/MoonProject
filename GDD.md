@@ -4,7 +4,8 @@
 **Visual Vibe:** Low-poly, dream-like, stylized, midnight blue/purple tones, warm lighting. "WALL-E meets Journey".
 
 ## 1. CRITICAL RULES (THE ZERO-STRESS MANDATE)
-- NO survival mechanics (No health, oxygen, hunger, enemies, or fail states).
+- NO survival mechanics (No health, oxygen, hunger, enemies, or fail states). Superseded 2026-10-17: 07 has a wear
+  meter, dangerous Reclaimer machines exist and 07 can die (`docs/VISION.md` ruling 17). Still no oxygen or hunger.
 - NO complex realistic physics (NEVER use Unity's built-in `WheelCollider`).
 - NO terrain deformation (voxel digging). Excavation is strictly visual using particles and lighting.
 - NO free-form grid building (Use automatic Snap-Points for base decorating to prevent physics bugs).

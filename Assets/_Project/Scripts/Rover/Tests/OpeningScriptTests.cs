@@ -71,6 +71,7 @@ namespace MoonProject.Rover.Tests
             float seconds = RunToChase(60f);
 
             Assert.LessOrEqual(seconds, MaxUntouched, "the untouched opening stays at or under 45 s");
+            Assert.AreEqual(20.0f, seconds, 0.35f, "the untouched v3 opening is ~20 s");
             CollectionAssert.AreEqual(new[]
             {
                 WakeBeat.Crackle, WakeBeat.LidCracked, WakeBeat.LidHalf, WakeBeat.FocusHunting, WakeBeat.FocusSettled,

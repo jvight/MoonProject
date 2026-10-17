@@ -116,6 +116,26 @@ def airlock_room(x):
     return filters.peaking(out, freq, gain_db, q)
 
 
+def old_radio(n, gen):
+    """Whisper-soft Old Radio tape floor (C2 'Radio bench'): smooth warm tape air, zero crackle or static."""
+    air = filters.butter(noise.brown(n, gen), "lowpass", 240.0, order=2)
+    air /= float(np.std(air)) or 1.0
+    tape = filters.butter(filters.butter(noise.white(n, gen), "highpass", 900.0, order=1), "lowpass", 4200.0, order=2)
+    tape /= float(np.std(tape)) or 1.0
+    breath = filters.onepole_lp(noise.white(n, gen), 0.25)
+    breath /= float(np.max(np.abs(breath))) or 1.0
+    mono = 0.65 * air + 0.35 * tape * (1.0 + 0.08 * breath)
+    side = filters.butter(noise.white(n, gen), "bandpass", (1000.0, 3800.0), order=2)
+    side /= float(np.std(side)) or 1.0
+    return np.stack([mono + 0.12 * side, mono - 0.12 * side], axis=1)
+
+
+def old_radio_bench(x):
+    """C2 'Radio bench' warmth: gentle wooden-cabinet low-mid body and warm midrange presence."""
+    warm = filters.peaking(x, 320.0, 1.4, 0.8)
+    return filters.peaking(warm, 960.0, 0.9, 0.9)
+
+
 def narrow(x, width):
     """Scale the side signal by `width` (1 = unchanged, 0 = mono)."""
     mid = 0.5 * (x[:, 0] + x[:, 1])
@@ -159,7 +179,7 @@ def steady(x, process, warmup_s=STEADY_WARMUP_S, lookahead_s=STEADY_LOOKAHEAD_S)
 
 def bed(texture, n, gen, seamless):
     """The surface-noise bed named by `texture`, `n` samples; `seamless` cross-fades it into a loop."""
-    make = {"vinyl": vinyl, "cassette": cassette, "airlock": airlock}[texture]
+    make = {"vinyl": vinyl, "cassette": cassette, "airlock": airlock, "old_radio": old_radio}[texture]
     if not seamless:
         return make(n, gen)
     fade = samples(LOOP_SEAM_FADE_S)

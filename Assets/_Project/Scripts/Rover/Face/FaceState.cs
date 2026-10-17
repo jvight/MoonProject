@@ -48,6 +48,8 @@ namespace MoonProject.Rover
 
         private float _nextBlinkCountdown;
         private float _blinkElapsed;
+        private float _activeBlinkDuration;
+        private bool _isDarkHold;
 
         private float _elapsedTime;
 
@@ -79,7 +81,8 @@ namespace MoonProject.Rover
             Feeling = FaceFeeling.Calm;
             BootProgress = 1.0f;
             BlinkMultiplier = 1.0f;
-            _blinkElapsed = _tuning.BlinkDuration;
+            _activeBlinkDuration = _tuning.BlinkDuration;
+            _blinkElapsed = _activeBlinkDuration;
             _nextBlinkCountdown = InitialBlinkDelay;
             _nextSaccadeCountdown = InitialSaccadeDelay;
 
@@ -141,8 +144,11 @@ namespace MoonProject.Rover
         /// <summary>Vertical eye openness multiplier from the current blink in [0..1] (1 = open, 0 = closed at mid-blink).</summary>
         public float BlinkMultiplier { get; private set; }
 
+        /// <summary>True while the CRT is held completely dark before the opening's front reveal.</summary>
+        public bool IsDarkHold => _isDarkHold;
+
         /// <summary>True when a blink cycle is currently in progress.</summary>
-        public bool IsBlinking => _blinkElapsed < _tuning.BlinkDuration;
+        public bool IsBlinking => _blinkElapsed < Math.Max(_activeBlinkDuration, 1e-4f);
 
         /// <summary>Clamped low-power amount in [0..1].</summary>
         public float LowPower { get; private set; }
@@ -301,6 +307,21 @@ namespace MoonProject.Rover
                 return;
             }
 
+            _activeBlinkDuration = _tuning.BlinkDuration;
+            _blinkElapsed = 0.0f;
+            _nextBlinkCountdown = NextRange(_tuning.BlinkMinInterval, _tuning.BlinkMaxInterval);
+            BlinkCount++;
+        }
+
+        /// <summary>Triggers a slow, expressive wake blink unless 07 is currently <see cref="FaceFeeling.Asleep"/>.</summary>
+        public void SlowBlink(float durationScale = 2.0f)
+        {
+            if (Feeling == FaceFeeling.Asleep)
+            {
+                return;
+            }
+
+            _activeBlinkDuration = _tuning.BlinkDuration * Math.Max(1.0f, durationScale);
             _blinkElapsed = 0.0f;
             _nextBlinkCountdown = NextRange(_tuning.BlinkMinInterval, _tuning.BlinkMaxInterval);
             BlinkCount++;
@@ -337,10 +358,26 @@ namespace MoonProject.Rover
             _targetExternalLookY = 0.0f;
         }
 
+        /// <summary>Holds the CRT screen completely dark (0 boot progress, 0 brightness) until released for the reveal.</summary>
+        public void SetDarkHold(bool hold)
+        {
+            _isDarkHold = hold;
+            if (hold)
+            {
+                BootProgress = 0.0f;
+            }
+
+            ComposeEyesAndBrightness();
+            GhostLeftEye = LeftEye;
+            GhostRightEye = RightEye;
+        }
+
         /// <summary>Restarts the CRT power-on boot sequence from <c>0</c>.</summary>
         public void Boot()
         {
+            _isDarkHold = false;
             BootProgress = 0.0f;
+            _nextBlinkCountdown = Math.Max(_nextBlinkCountdown, 2.5f);
             ComposeEyesAndBrightness();
             GhostLeftEye = LeftEye;
             GhostRightEye = RightEye;
@@ -349,6 +386,7 @@ namespace MoonProject.Rover
         /// <summary>Sets the normalized boot progress directly in [0..1] (useful for deterministic frame captures).</summary>
         public void SetBootProgress(float progress)
         {
+            _isDarkHold = false;
             BootProgress = Clamp01(progress);
             ComposeEyesAndBrightness();
         }
@@ -391,7 +429,14 @@ namespace MoonProject.Rover
             FaceEyeParams prevRight = RightEye;
 
             _elapsedTime += deltaTime;
-            BootProgress = Clamp01(BootProgress + deltaTime * _tuning.BootRate);
+            if (_isDarkHold)
+            {
+                BootProgress = 0.0f;
+            }
+            else
+            {
+                BootProgress = Clamp01(BootProgress + deltaTime * _tuning.BootRate);
+            }
 
             StepScreenMode(deltaTime);
 
@@ -619,9 +664,9 @@ namespace MoonProject.Rover
 
         private void StepBlink(float deltaTime)
         {
-            if (Feeling == FaceFeeling.Asleep)
+            if (Feeling == FaceFeeling.Asleep || _isDarkHold)
             {
-                _blinkElapsed = _tuning.BlinkDuration;
+                _blinkElapsed = Math.Max(_activeBlinkDuration, _tuning.BlinkDuration);
                 BlinkMultiplier = 1.0f;
                 return;
             }
@@ -629,12 +674,13 @@ namespace MoonProject.Rover
             _nextBlinkCountdown -= deltaTime;
             if (_nextBlinkCountdown <= 0.0f)
             {
+                _activeBlinkDuration = _tuning.BlinkDuration;
                 _blinkElapsed = 0.0f;
                 _nextBlinkCountdown = NextRange(_tuning.BlinkMinInterval, _tuning.BlinkMaxInterval);
                 BlinkCount++;
             }
 
-            float duration = Math.Max(_tuning.BlinkDuration, 1e-4f);
+            float duration = Math.Max(_activeBlinkDuration, 1e-4f);
             if (_blinkElapsed < duration)
             {
                 _blinkElapsed += deltaTime;
@@ -674,7 +720,7 @@ namespace MoonProject.Rover
             float sep = _tuning.EyeSeparation;
 
             float maxOpen = Math.Min(Lerp(1.0f, 0.58f, LowPower), Lerp(1.0f, 0.82f, _scanFocusBlend));
-            float effectiveOpen = Math.Min(_open, maxOpen) * BlinkMultiplier * BootEyeOpen;
+            float effectiveOpen = _isDarkHold ? 0.0f : Math.Min(_open, maxOpen) * BlinkMultiplier * BootEyeOpen;
             float focusCut = Math.Max(_cut, Math.Max(LowPower * 0.25f, 0.28f * _scanFocusBlend));
             float focusSquint = Math.Max(_squint, 0.42f * _scanFocusBlend);
             float asym = _asymmetry * (1.0f - 0.45f * _scanFocusBlend);
@@ -690,6 +736,13 @@ namespace MoonProject.Rover
             RightEye = new FaceEyeParams(
                 0.5f + sep + combinedLx, 0.5f + combinedLy, _width, _height, effectiveOpen,
                 rightTilt, rightCut, focusSquint, _arc, _ring, _closed, combinedLx, combinedLy, rightScale);
+
+            if (_isDarkHold)
+            {
+                Brightness = 0.0f;
+                VerticalJitter = 0.0f;
+                return;
+            }
 
             float sleepDim = Feeling == FaceFeeling.Asleep ? _tuning.SleepBrightness : 1.0f;
             float lowPowerDim = Lerp(1.0f, _tuning.LowPowerMinBrightness, LowPower);

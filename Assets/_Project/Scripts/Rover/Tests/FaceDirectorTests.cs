@@ -497,5 +497,62 @@ namespace MoonProject.Rover.Tests
                     "Closing happy blink must publish RoverFaceCueKind.Blink.");
             }
         }
+
+        [Test]
+        public void OpeningDarkHold_KeepsScreenDarkUntilPulledOut_ThenBootsAndSlowBlinksWithCuriousGlance()
+        {
+            var events = new EventBus();
+            var cues = new System.Collections.Generic.List<RoverFaceCueKind>();
+            using (events.Subscribe<RoverFaceCued>(c => cues.Add(c.Kind)))
+            {
+                var director = new FaceDirector(_faceTuning, _directorTuning, seed: 7, events: events);
+                director.SetOpeningDarkHold(true);
+
+                Assert.IsTrue(director.IsHoldingDarkForOpening);
+                Assert.IsTrue(director.State.IsDarkHold);
+                Assert.AreEqual(0f, director.State.Brightness, 1e-5f);
+                Assert.AreEqual(0f, director.RearVentEmissionStrength, 1e-5f);
+
+                director.OnSceneStart(isNewGame: true);
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Crackle, false));
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.LidCracked, false));
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.LidHalf, false));
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.FocusHunting, false));
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Flicker, false));
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.GazeHome, false));
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.GazePilot, false));
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.GazePeak, false));
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.GazeEarth, false));
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.PullingOut, false));
+                director.Step(1.0f);
+
+                Assert.IsTrue(director.IsHoldingDarkForOpening, "CRT stays dark through the lens POV and pull-out.");
+                Assert.IsTrue(director.State.IsDarkHold);
+                Assert.AreEqual(0, director.BootCount, "Face must not boot before PulledOut.");
+                Assert.AreEqual(0f, director.State.Brightness, 1e-5f);
+                Assert.AreEqual(0f, director.RearVentEmissionStrength, 1e-5f);
+                Assert.IsEmpty(cues);
+
+                // Reveal at PulledOut: single phosphor line flickers on and opens into two eyes
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.PulledOut, false));
+                Assert.IsFalse(director.IsHoldingDarkForOpening);
+                Assert.IsFalse(director.State.IsDarkHold);
+                Assert.AreEqual(1, director.BootCount);
+                Assert.IsTrue(director.State.IsBooting);
+                CollectionAssert.AreEqual(new[] { RoverFaceCueKind.Boot }, cues);
+
+                director.Step(1.2f);
+                Assert.IsFalse(director.State.IsBooting, "Boot completes before WakeBeat.Blinked.");
+                Assert.AreEqual(1f, director.State.BootProgress, 1e-5f);
+
+                // Slow blink + curious glance at Blinked
+                cues.Clear();
+                director.OnWakeBeatReached(new RoverWakeBeatReached(WakeBeat.Blinked, false));
+                Assert.AreEqual(1, director.WakeBlinkCount);
+                Assert.IsTrue(director.State.IsBlinking);
+                Assert.AreEqual(FaceFeeling.Curious, director.CurrentFeeling);
+                CollectionAssert.Contains(cues, RoverFaceCueKind.Blink);
+            }
+        }
     }
 }

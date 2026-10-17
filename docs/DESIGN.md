@@ -210,4 +210,5 @@ framing helpers and filters.
 ## Scope guard
 - Keep the slice's feel bar for every new system; a feature that can't pass the feel checklist is cut, not shipped.
 - Target length: main arc 5–7 hours, completion 10–12 hours.
-- No combat, timers, fail states or punishing mechanics will ever be added to create "depth".
+- No combat or timers will ever be added to create "depth". Since 2026-10-17 07 can wear down and die (VISION
+  ruling 17); every death must be readable and avoidable.

@@ -5,6 +5,7 @@ Ro's cassette tapes (lofi.tapes), which the radio only plays once they are colle
 """
 from .spec import Mood, SectionPlan, TrackSpec
 from .tapes import TAPES
+from .title_themes import TITLE_THEMES
 
 PLAYLIST = (
     TrackSpec(
@@ -105,11 +106,12 @@ PLAYLIST = (
 
 
 CATALOGUE = PLAYLIST + TAPES
+ALL_TRACKS = CATALOGUE + TITLE_THEMES
 
 
 def track_by_id(track_id):
-    """A playlist track or a tape by id, slug or catalogue number ("3", "03", "dust_on_the_dial", "slow_orbit")."""
-    for spec in CATALOGUE:
+    """A playlist track, tape or title theme by id, slug or catalogue number."""
+    for spec in ALL_TRACKS:
         if track_id in (spec.id, spec.slug, str(spec.number), f"{spec.number:02d}"):
             return spec
-    raise ValueError(f"unknown track {track_id!r}; known: {[s.id for s in CATALOGUE]}")
+    raise ValueError(f"unknown track {track_id!r}; known: {[s.id for s in ALL_TRACKS]}")

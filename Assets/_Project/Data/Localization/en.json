@@ -815,6 +815,18 @@
             "text": "Crew log"
         },
         {
+            "key": "ui.card.radio_letter",
+            "text": "Radio letter"
+        },
+        {
+            "key": "ui.card.ark_bulletin",
+            "text": "Ark bulletin"
+        },
+        {
+            "key": "ui.card.ending_answer",
+            "text": "Ark reply"
+        },
+        {
             "key": "ui.card.liner_caption",
             "text": "Ro's liner notes"
         },
@@ -1864,7 +1876,7 @@
         },
         {
             "key": "scan.complete",
-            "text": "Blueprint complete: {0}. Build it in the bay."
+            "text": "Blueprint learned: {0}."
         },
         {
             "key": "scan.site_count",

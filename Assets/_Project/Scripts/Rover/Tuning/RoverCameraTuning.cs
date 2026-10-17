@@ -89,13 +89,13 @@ namespace MoonProject.Rover
         [Range(-0.4f, 0.4f)]
         [SerializeField] private float _wakeScreenY = 0.22f;
 
-        [Tooltip("Seconds beat 1 holds on the lens before the camera turns round to Earth.")]
+        [Tooltip("Seconds beat 1 holds on the face before the camera turns round to Earth.")]
         [Range(0.5f, 15f)]
-        [SerializeField] private float _wakeLensSeconds = 3.5f;
+        [SerializeField] private float _wakeLensSeconds = 2.2f;
 
-        [Tooltip("Seconds the camera takes to ease round from the lens to over 07's shoulder, as 07 turns to Earth.")]
+        [Tooltip("Seconds the camera takes to ease round from the face to over 07's shoulder, as 07 turns to Earth.")]
         [Range(0.5f, 10f)]
-        [SerializeField] private float _wakeTurnSeconds = 3f;
+        [SerializeField] private float _wakeTurnSeconds = 1.4f;
 
         [Tooltip("Beat 2, Earth: orbit elevation (deg) of the shot over 07's shoulder, opposite Earth's bearing.")]
         [Range(-10f, 40f)]
@@ -113,11 +113,11 @@ namespace MoonProject.Rover
         [Tooltip("Seconds the opening holds (both beats) before easing to the chase frame on its own; any input eases "
             + "sooner. Never shorter than the lens beat plus the turn.")]
         [Range(1f, 30f)]
-        [SerializeField] private float _wakeHoldSeconds = 10f;
+        [SerializeField] private float _wakeHoldSeconds = 6f;
 
         [Tooltip("Seconds the opening takes to ease into the chase frame (ruling 8).")]
         [Range(0.5f, 10f)]
-        [SerializeField] private float _wakeEaseSeconds = 4f;
+        [SerializeField] private float _wakeEaseSeconds = 2f;
 
         [Header("Stargazing")]
         [Tooltip("Orbit elevation (deg) where looking up begins to count: 07 starts lifting its head toward the sky.")]

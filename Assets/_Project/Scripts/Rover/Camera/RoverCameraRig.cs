@@ -118,6 +118,8 @@ namespace MoonProject.Rover
         private readonly FaceInspectSightLine _faceSight = new FaceInspectSightLine();
         private RoverBodyLanguage _faceInspectBody;
         private FaceInspectShot _faceInspectShot;
+        private FaceInspectShot _wakeFaceShot;
+        private bool _hasWakeFaceShot;
         private bool _faceInspectOpen;
         private bool _faceInspectHasShot;
         private float _faceInspectEase;
@@ -169,6 +171,9 @@ namespace MoonProject.Rover
         /// <summary>True while the CRT face-inspect camera mode is open.</summary>
         public bool IsFaceInspectOpen => _faceInspectOpen;
 
+        /// <summary>Neck yaw offset (deg) solved for the opening's front CRT reveal shot.</summary>
+        public float WakeFaceNeckYaw => _hasWakeFaceShot ? _wakeFaceShot.NeckYawOffset : 0f;
+
         /// <summary>The close shot composed for the bay fitting under way, if any (for tests and tooling).</summary>
         public bool TryGetFittingShot(out BayShot shot)
         {
@@ -181,6 +186,22 @@ namespace MoonProject.Rover
         {
             shot = _faceInspectShot;
             return _faceInspectHasShot;
+        }
+
+        /// <summary>The front face-inspect shot composed for the opening's CRT reveal, if any (for tests and tooling).</summary>
+        public bool TryGetWakeFaceShot(out FaceInspectShot shot)
+        {
+            shot = _wakeFaceShot;
+            return _hasWakeFaceShot;
+        }
+
+        /// <summary>Assigns 07's <see cref="RoverBodyLanguage"/> so the wake opening can compose its front CRT reveal shot.</summary>
+        public void SetWakeBody(RoverBodyLanguage bodyLanguage)
+        {
+            if (bodyLanguage != null)
+            {
+                _faceInspectBody = bodyLanguage;
+            }
         }
 
         public Camera Camera => _viewCamera;
@@ -430,7 +451,9 @@ namespace MoonProject.Rover
         {
             float target = _orbitState.IsFollowing ? 0f : 1f;
             _freeLook = Smoothing.Damp(_freeLook, target, _tuning.FreeLookDampingHalfLife, deltaTime);
-            float inspectFade = _faceInspectOpen ? 0f : 1f - _faceInspectWeight;
+            float wakeFaceWeight = _hasWakeFaceShot ? _opening.Weight * (1f - _opening.Turn) : 0f;
+            float inspectWeight = Mathf.Max(_faceInspectWeight, wakeFaceWeight);
+            float inspectFade = _faceInspectOpen || wakeFaceWeight > 0.99f ? 0f : 1f - inspectWeight;
             float share = Mathf.Lerp(1f, _tuning.FreeLookDampingShare, _freeLook) * inspectFade;
             if (Mathf.Approximately(share, _appliedDampingShare))
             {
@@ -740,7 +763,8 @@ namespace MoonProject.Rover
             _faceInspectEase = Mathf.MoveTowards(_faceInspectEase, _faceInspectOpen ? 1f : 0f, deltaTime / seconds);
             _faceInspectWeight = Smoothing.SmoothStep(0f, 1f, _faceInspectEase);
 
-            bool cineAvoidance = _faceInspectWeight < 0.01f;
+            float wakeFaceWeight = _hasWakeFaceShot ? _opening.Weight * (1f - _opening.Turn) : 0f;
+            bool cineAvoidance = Mathf.Max(_faceInspectWeight, wakeFaceWeight) < 0.01f;
             if (_decollider.TerrainResolution.Enabled != cineAvoidance)
             {
                 _decollider.TerrainResolution.Enabled = cineAvoidance;
@@ -772,6 +796,46 @@ namespace MoonProject.Rover
             radius = Mathf.Lerp(radius, shotRadius, _faceInspectWeight);
             fov = Mathf.Lerp(fov, _faceInspectShot.VerticalFov, _faceInspectWeight);
             screen = Vector2.Lerp(screen, Vector2.zero, _faceInspectWeight);
+            _target.SetPositionAndRotation(focus, Quaternion.Euler(0f, _targetYaw, 0f));
+        }
+
+        private void BlendWakeFace(float weight, ref float orbitYaw, ref float elevation, ref float radius, ref float fov,
+            ref Vector2 screen)
+        {
+            Vector3 target = _target.position;
+            Vector3 focus = Vector3.Lerp(target, _wakeFaceShot.Focus, weight);
+            Vector3 shotLine = Quaternion.Euler(0f, _opening.DriftYaw, 0f) * (_wakeFaceShot.Focus - _wakeFaceShot.Eye);
+            float shotRadius = Mathf.Max(0.05f, shotLine.magnitude);
+            float shotElevation = Mathf.Asin(Mathf.Clamp(-shotLine.y / shotRadius, -1f, 1f)) * Mathf.Rad2Deg;
+            float shotYaw = Mathf.Atan2(shotLine.x, shotLine.z) * Mathf.Rad2Deg;
+
+            float currentYaw = _targetYaw + orbitYaw;
+            float deltaYaw = Mathf.DeltaAngle(currentYaw, shotYaw);
+            if (Mathf.Abs(deltaYaw) > 179.9f)
+            {
+                deltaYaw = 180f;
+            }
+
+            _targetYaw = currentYaw + deltaYaw * weight;
+            orbitYaw = 0f;
+            elevation = Mathf.Lerp(elevation, shotElevation, weight);
+            float radiusWeight = weight * weight;
+            radius = Mathf.Lerp(radius, shotRadius, radiusWeight);
+            fov = Mathf.Lerp(fov, _wakeFaceShot.VerticalFov, weight);
+            screen = Vector2.Lerp(screen, Vector2.zero, weight);
+
+            if (weight < 0.999f)
+            {
+                float pitchRad = Mathf.Clamp(elevation, _tuning.MinPitch, _tuning.MaxPitch) * Mathf.Deg2Rad;
+                Vector3 back = Quaternion.Euler(0f, _targetYaw, 0f) * Vector3.back;
+                Vector3 candidateEye = focus + (back * Mathf.Cos(pitchRad) + Vector3.up * Mathf.Sin(pitchRad)) * radius;
+                float clear = _faceSight.Clear(focus, candidateEye, _tuning.FaceInspectProbeRadius);
+                if (clear < radius)
+                {
+                    radius = Mathf.Max(_tuning.FaceInspectMinDistance, clear);
+                }
+            }
+
             _target.SetPositionAndRotation(focus, Quaternion.Euler(0f, _targetYaw, 0f));
         }
 
@@ -872,6 +936,7 @@ namespace MoonProject.Rover
             }
 
             float wake = _opening.Weight;
+            float wakeFaceWeight = 0f;
             if (wake > 0f)
             {
                 float turn = _opening.Turn;
@@ -881,6 +946,10 @@ namespace MoonProject.Rover
                     Mathf.Lerp(_tuning.WakeElevation, _tuning.WakeEarthElevation, turn), wake);
                 radius = Mathf.Lerp(radius, Mathf.Lerp(_tuning.WakeDistance, _tuning.WakeEarthDistance, turn), wake);
                 screen.y = Mathf.Lerp(screen.y, Mathf.Lerp(_tuning.WakeScreenY, _wakeEarthScreenY, turn), wake);
+                if (_hasWakeFaceShot)
+                {
+                    wakeFaceWeight = wake * (1f - turn);
+                }
             }
 
             if (_shotWeight > 0f)
@@ -888,22 +957,28 @@ namespace MoonProject.Rover
                 BlendShot(ref yaw, ref elevation, ref radius);
             }
 
+            if (wakeFaceWeight > 0f)
+            {
+                BlendWakeFace(wakeFaceWeight, ref yaw, ref elevation, ref radius, ref fov, ref screen);
+            }
+
             if (_faceInspectWeight > 0f && _faceInspectHasShot)
             {
                 BlendFaceInspect(ref yaw, ref elevation, ref radius, ref fov, ref screen);
             }
 
-            float orbitShare = 1f - _faceInspectWeight;
+            float effectiveInspectWeight = Mathf.Max(_faceInspectWeight, wakeFaceWeight);
+            float orbitShare = 1f - effectiveInspectWeight;
             _orbit.HorizontalAxis.Value = yaw;
             elevation = Mathf.Clamp(elevation, _tuning.MinPitch, _tuning.MaxPitch);
             float floor = LowOrbit.Floor(radius, _tuning.TargetHeight, _tuning.LowestCameraHeight) * orbitShare;
-            float held = Mathf.Lerp(Mathf.Max(elevation, floor), elevation, _faceInspectWeight);
+            float held = Mathf.Lerp(Mathf.Max(elevation, floor), elevation, effectiveInspectWeight);
             _orbit.VerticalAxis.Value = held;
             float tilt = Mathf.Min(held - elevation, _tuning.MaxLookUpTilt) * orbitShare;
             _composer.TargetOffset = Vector3.up * (LowOrbit.AimLift(floor, tilt, radius) * orbitShare);
             _orbit.Radius = radius;
             _camera.Lens.FieldOfView = fov;
-            _camera.Lens.NearClipPlane = Mathf.Lerp(_tuning.NearClip, _tuning.FaceInspectNearClip, _faceInspectWeight);
+            _camera.Lens.NearClipPlane = Mathf.Lerp(_tuning.NearClip, _tuning.FaceInspectNearClip, effectiveInspectWeight);
             ScreenComposerSettings composition = _composer.Composition;
             composition.ScreenPosition = screen;
             _composer.Composition = composition;
@@ -941,6 +1016,10 @@ namespace MoonProject.Rover
         {
             if (_opening.IsActive)
             {
+                PlaceTarget();
+                FrameWakeShots();
+                ApplyOrbit();
+                _camera.PreviousStateIsValid = false;
                 return;
             }
 
@@ -953,9 +1032,42 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The two beats' framing, fixed once 07 rests on its dock. Beat 1 sits on the front three-quarter side of the
-        /// lens; beat 2 looks along Earth's bearing from behind 07 (the orbit looks along the target's yaw plus its
-        /// axis value), raised so Earth sits at the tuned height in the frame.
+        /// Re-solves the front CRT reveal shot using <see cref="FaceInspectComposer.Solve"/> and its sphere-cast
+        /// occlusion fallback (<see cref="FaceInspectSightLine"/>) at 07's current dock position and rotation.
+        /// </summary>
+        public void RefreshWakeFaceShot()
+        {
+            if (_faceInspectBody == null || _rover == null)
+            {
+                _hasWakeFaceShot = false;
+                return;
+            }
+
+            _faceInspectBody.EvaluateScreenPose(0f, _tuning.FaceInspectHeadPitch,
+                out Vector3 baseScreenPos, out Quaternion baseScreenRot);
+            Vector3 neckPivot = _faceInspectBody.NeckTransform != null
+                ? _faceInspectBody.NeckTransform.position
+                : baseScreenPos;
+            _wakeFaceShot = FaceInspectComposer.Solve(
+                neckPivot,
+                _rover.Rotation,
+                baseScreenPos,
+                baseScreenRot,
+                _tuning.FaceInspectScreenHeight,
+                _tuning.FaceInspectHeightFill,
+                _tuning.FaceInspectDistance,
+                _tuning.FaceInspectMinDistance,
+                _tuning.FaceInspectLookOffsetY,
+                _tuning.FaceInspectSideYaw,
+                _tuning.FaceInspectProbeRadius,
+                _faceSight);
+            _hasWakeFaceShot = true;
+        }
+
+        /// <summary>
+        /// The two beats' framing, fixed once 07 rests on its dock. Beat 1 frames 07's front CRT face using the
+        /// face-inspect composer; beat 2 looks along Earth's bearing from behind 07 (the orbit looks along the target's
+        /// yaw plus its axis value), raised so Earth sits at the tuned height in the frame.
         /// </summary>
         private void FrameWakeShots()
         {
@@ -971,6 +1083,7 @@ namespace MoonProject.Rover
             float earthElevation = Mathf.Asin(Mathf.Clamp(earth.y, -1f, 1f)) * Mathf.Rad2Deg;
             _wakeEarthScreenY = Mathf.Clamp(WakeOpening.EarthScreenY(earthElevation, elevation,
                 _tuning.WakeEarthHeight, _orbitState.FieldOfView), -MaxScreenOffset, MaxScreenOffset);
+            RefreshWakeFaceShot();
         }
 
         /// <summary>

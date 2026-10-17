@@ -56,6 +56,8 @@ namespace MoonProject.Rover
 
         private readonly EventBus _events;
 
+        private bool _holdingDarkForOpening;
+        private bool _pendingFreshSessionBoot;
         private bool _hasBootedOnWake;
         private int _bootCount;
         private int _wakeBlinkCount;
@@ -110,6 +112,9 @@ namespace MoonProject.Rover
         /// <summary>True when 07 has been stationary at night past <see cref="FaceDirectorTuning.NightIdleDelaySeconds"/>.</summary>
         public bool IsNightIdleSlowLookActive => _isNightIdleSlowLookActive;
 
+        /// <summary>True while the CRT is held completely dark until the opening's front reveal (<see cref="WakeBeat.PulledOut"/>).</summary>
+        public bool IsHoldingDarkForOpening => _holdingDarkForOpening;
+
         /// <summary>True once a wake event or fresh-game start has triggered the CRT boot sequence.</summary>
         public bool HasBootedOnWake => _hasBootedOnWake;
 
@@ -139,12 +144,30 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
+        /// Holds the CRT screen completely dark while 07 is asleep on the title or while the camera is inside the scan lens,
+        /// until the front reveal beat (<see cref="WakeBeat.PulledOut"/>) starts the CRT boot sequence.
+        /// </summary>
+        public void SetOpeningDarkHold(bool hold)
+        {
+            _holdingDarkForOpening = hold;
+            _state.SetDarkHold(hold);
+            if (!hold && _pendingFreshSessionBoot && !_hasBootedOnWake)
+            {
+                _pendingFreshSessionBoot = false;
+                StartWakeBoot();
+                return;
+            }
+
+            _rearVentEmissionStrength = ComputeRearVentEmission();
+        }
+
+        /// <summary>
         /// Scene start notification. Starts the CRT boot sequence only when <paramref name="isNewGame"/> is true,
         /// then settles into <see cref="FaceFeeling.Calm"/>.
         /// </summary>
         public void OnSceneStart(bool isNewGame)
         {
-            if (!isNewGame)
+            if (!isNewGame || _holdingDarkForOpening)
             {
                 return;
             }
@@ -152,11 +175,13 @@ namespace MoonProject.Rover
             StartWakeBoot();
         }
 
-        /// <summary>Handles <see cref="SessionStarted"/>; fresh games play the boot sequence, then <see cref="FaceFeeling.Calm"/>.</summary>
+        /// <summary>Handles <see cref="SessionStarted"/>; fresh games without an opening dark hold play the boot sequence.</summary>
         public void OnSessionStarted(SessionStarted started)
         {
-            if (started.FreshGame)
+            _pendingFreshSessionBoot = started.FreshGame;
+            if (started.FreshGame && !_holdingDarkForOpening)
             {
+                _pendingFreshSessionBoot = false;
                 StartWakeBoot();
             }
         }
@@ -168,21 +193,43 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// Handles a <see cref="WakeBeat"/> from the opening sequence. Starts the CRT boot sequence on the first wake
-        /// beat (or when a new wake begins at <see cref="WakeBeat.Crackle"/> / <see cref="WakeBeat.Stirred"/>) and
-        /// triggers a blink on <see cref="WakeBeat.Blinked"/>.
+        /// Handles a <see cref="WakeBeat"/> from the opening sequence. When the opening holds the CRT dark inside the
+        /// scan lens, the boot sequence starts at the front reveal (<see cref="WakeBeat.PulledOut"/>); standalone wake
+        /// sequences start at <see cref="WakeBeat.Crackle"/> / <see cref="WakeBeat.Stirred"/>. <see cref="WakeBeat.Blinked"/>
+        /// triggers a slow wake blink and a curious glance at Earth.
         /// </summary>
         public void OnWakeBeat(WakeBeat beat)
         {
-            if (!_hasBootedOnWake || beat == WakeBeat.Crackle || beat == WakeBeat.Stirred)
+            if (beat == WakeBeat.PushedIn)
             {
+                SetOpeningDarkHold(true);
+                return;
+            }
+
+            if (_holdingDarkForOpening)
+            {
+                if (beat == WakeBeat.PulledOut || beat == WakeBeat.OverShoulder || beat == WakeBeat.ChaseFrame || beat == WakeBeat.Stirred)
+                {
+                    _pendingFreshSessionBoot = false;
+                    SetOpeningDarkHold(false);
+                    StartWakeBoot();
+                }
+                else
+                {
+                    return;
+                }
+            }
+            else if (!_hasBootedOnWake || beat == WakeBeat.Crackle || beat == WakeBeat.Stirred)
+            {
+                _pendingFreshSessionBoot = false;
                 StartWakeBoot();
             }
 
             if (beat == WakeBeat.Blinked)
             {
-                _state.Blink();
+                _state.SlowBlink();
                 _wakeBlinkCount++;
+                TriggerBeat(BeatKind.EarthGlance, _tuning.EarthGlanceHoldSeconds);
                 FlushStateCues();
             }
         }
@@ -770,7 +817,7 @@ namespace MoonProject.Rover
         private bool CanStartEarthGlance()
         {
             if (_isCharging || _isLowPower || _isLowBattery || _isScanning || _scanHoldTimer > 0f || _activeBeat != BeatKind.None)
-        {
+            {
                 return false;
             }
 
@@ -971,6 +1018,11 @@ namespace MoonProject.Rover
 
         private float ComputeRearVentEmission()
         {
+            if (_holdingDarkForOpening || _state.IsDarkHold)
+            {
+                return 0f;
+            }
+
             float screenLuminance = Mathf.Clamp01(_state.Brightness * Mathf.Clamp01(_state.BootProgress));
             float emission = Mathf.Lerp(_tuning.RearVentMinEmission, _tuning.RearVentBaseEmission, screenLuminance);
 

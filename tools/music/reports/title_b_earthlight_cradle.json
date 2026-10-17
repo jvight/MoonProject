@@ -1,0 +1,220 @@
+{
+  "id": "title_b_earthlight_cradle",
+  "title": "Earthlight Cradle",
+  "bpm": 70.0,
+  "swing": 0.53,
+  "key": "D major",
+  "family": "I-iii-vi-V-pent",
+  "drums": "off",
+  "ending": "loop",
+  "form": [
+    "Intro x4",
+    "A x8",
+    "B x8",
+    "A' x8",
+    "B' x8",
+    "Outro x4"
+  ],
+  "pcm_sha256": "1b927b1ac404df7b228186c4286792209ead86f11f465f9e9a8f629fc5b1a2a9",
+  "measured": {
+    "duration_s": 137.1429,
+    "loudness_lufs": -19.9671,
+    "true_peak_dbtp": -6.9105,
+    "sample_peak_db": -6.916,
+    "rms_db": -22.0306,
+    "crest_db": 15.1146,
+    "centroid_hz": 697.81,
+    "above_8k_db": -65.3692,
+    "bands": {
+      "low": 0.444,
+      "mid": 0.5559,
+      "high": 0.0001
+    },
+    "correlation": 0.8163,
+    "correlation_below_150hz": 0.9942,
+    "clipped_samples": 0,
+    "silent_gaps": [],
+    "dc": 0.0,
+    "chroma_out_of_key": 0.014,
+    "beat_clarity": 1.3154
+  },
+  "theory": {
+    "chord_chart": {
+      "Intro": [
+        "| Dadd9p | Dadd9p/F# | Bm11p | A6sus4 |"
+      ],
+      "A": [
+        "| Dadd9p | D6/9p/F# | Bm7p | A6sus4 |",
+        "| Dadd9p | Dadd9p/F# | Em7sus4 | A9sus4p |"
+      ],
+      "B": [
+        "| Em7sus4 | D6/9p/F# | Bm7p | A6sus4 |",
+        "| Bm7p | Dadd9p/F# | Em7sus4 | A6sus4 A6sus4 |"
+      ],
+      "A'": [
+        "| D6/9p | Bm11p | Em7sus4 D6/9p/F# | A6sus4 |",
+        "| Dadd9p | Dadd9p/F# | Em7sus4 | A9sus4p |"
+      ],
+      "B'": [
+        "| Em7sus4 | Dadd9p/F# | Bm11p | A9sus4p |",
+        "| Bm11p | D6/9p/F# | Em7sus4 | A6sus4 A9sus4p |"
+      ],
+      "Outro": [
+        "| D6/9p | Bm11p | Em7sus4 | A6sus4 |"
+      ]
+    },
+    "out_of_key_notes": 0,
+    "borrowed_chords": [],
+    "lead_notes": 78,
+    "lead_non_pentatonic": 0,
+    "lead_strong_off_chord": 0,
+    "lead_clashes": 0,
+    "parts": {
+      "keys": 320,
+      "pad": 40,
+      "bass": 43,
+      "lead.celesta": 62,
+      "lead.flute": 8,
+      "lead.felt": 8
+    },
+    "drum_hits": 0
+  },
+  "gates": {
+    "loudness_lufs": {
+      "value": -19.9671,
+      "pass": true
+    },
+    "true_peak_dbtp": {
+      "value": -6.9105,
+      "pass": true
+    },
+    "duration_s": {
+      "value": 137.1429,
+      "pass": true
+    },
+    "clipped_samples": {
+      "value": 0,
+      "pass": true
+    },
+    "silent_gaps": {
+      "value": 0,
+      "pass": true
+    },
+    "correlation_below_150hz": {
+      "value": 0.9942,
+      "pass": true
+    },
+    "correlation": {
+      "value": 0.8163,
+      "pass": true
+    },
+    "high_band_share": {
+      "value": 0.0001,
+      "pass": true
+    },
+    "above_8k_db": {
+      "value": -65.3692,
+      "pass": true
+    },
+    "chroma_out_of_key": {
+      "value": 0.014,
+      "pass": true
+    },
+    "beat_clarity": {
+      "value": 1.3154,
+      "pass": true
+    },
+    "tempo_error": {
+      "value": 0.0,
+      "pass": true
+    },
+    "out_of_key_notes": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_non_pentatonic": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_strong_off_chord": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_clashes": {
+      "value": 0,
+      "pass": true
+    },
+    "seam_ratio": {
+      "value": 0.5865,
+      "pass": true
+    },
+    "seam_loudness_step_lu": {
+      "value": 0.2563,
+      "pass": true
+    }
+  },
+  "notes": "Variant B (more melodic): 70 BPM pure D major pentatonic theme. Celesta opens by singing a gentle variation of Lumen Station's D-E-A pentatonic motif over felt-piano broken chords and a warm pad, answered in the B sections by soft breathy flute and high felt piano, mastered through Old Radio tape warmth to -20 LUFS with no drums.",
+  "instruments": {
+    "keys": "felt (rock, arp)",
+    "leads": [
+      "celesta",
+      "flute",
+      "felt"
+    ],
+    "drums": "off",
+    "bass": [
+      "hold"
+    ],
+    "texture": "old_radio",
+    "events": []
+  },
+  "listening": {
+    "tempo_detected_bpm": 70.0,
+    "tempo_detected_clarity": 1.3154,
+    "scale": {
+      "scale": "A major",
+      "share": 0.9861,
+      "runner_up": "D major",
+      "runner_up_share": 0.986
+    },
+    "loudness": {
+      "range_lu": 1.1989,
+      "min_lufs": -20.9543,
+      "max_lufs": -18.6585,
+      "every_10s_lufs": [
+        -20.2347,
+        -20.4403,
+        -19.7538,
+        -20.7269,
+        -19.6314,
+        -19.4012,
+        -19.8201,
+        -19.8732,
+        -19.6912,
+        -20.1237,
+        -20.3222,
+        -20.2443,
+        -20.0776,
+        -20.4847
+      ]
+    },
+    "octaves_db": {
+      "31.5": -39.9127,
+      "63": -3.9676,
+      "125": -2.7125,
+      "250": 0.0,
+      "500": -2.098,
+      "1000": -5.1379,
+      "2000": -14.5646,
+      "4000": -26.3506,
+      "8000": -48.4561,
+      "16000": -71.7115
+    },
+    "width_db": -8.0836,
+    "seam": {
+      "ratio": 0.5865,
+      "jump_db": 11.6981,
+      "loudness_step_lu": 0.2563
+    }
+  }
+}

@@ -15,19 +15,19 @@ namespace MoonProject.Rover
         [Header("Holds (s), one per storyboard row")]
         [Tooltip("O1: pure black while 07's systems thump on and the static swells.")]
         [Range(0.5f, 6f)]
-        [SerializeField] private float _crackleSeconds = 3f;
+        [SerializeField] private float _crackleSeconds = 1.1f;
 
         [Tooltip("O2: the lid's first stage, a warm slit, and its stall.")]
         [Range(0.5f, 5f)]
-        [SerializeField] private float _lidCrackSeconds = 2.5f;
+        [SerializeField] private float _lidCrackSeconds = 1.1f;
 
         [Tooltip("O3: the lid's second stage, up to half open with a shudder.")]
         [Range(0.5f, 5f)]
-        [SerializeField] private float _lidHalfSeconds = 2.5f;
+        [SerializeField] private float _lidHalfSeconds = 1.1f;
 
         [Tooltip("O4: the lens hunts for focus, too near, too far, then settles.")]
         [Range(1f, 6f)]
-        [SerializeField] private float _huntSeconds = 3.5f;
+        [SerializeField] private float _huntSeconds = 1.7f;
 
         [Tooltip("O5: the old electronics' two dips, roll band and warm lift.")]
         [Range(0.8f, 3f)]
@@ -35,31 +35,31 @@ namespace MoonProject.Rover
 
         [Tooltip("O6: the look at the sleeping home.")]
         [Range(1f, 8f)]
-        [SerializeField] private float _gazeHomeSeconds = 4f;
+        [SerializeField] private float _gazeHomeSeconds = 1.8f;
 
         [Tooltip("O7: the look at the tower's pilot; long enough to hold through one of its blinks.")]
         [Range(1f, 8f)]
-        [SerializeField] private float _gazePilotSeconds = 3.5f;
+        [SerializeField] private float _gazePilotSeconds = 1.5f;
 
         [Tooltip("O8: the look across the basin at The Peak's beacon.")]
         [Range(1f, 8f)]
-        [SerializeField] private float _gazePeakSeconds = 4f;
+        [SerializeField] private float _gazePeakSeconds = 1.5f;
 
         [Tooltip("O9: the look up at Earth, the longest hold.")]
         [Range(1f, 10f)]
-        [SerializeField] private float _gazeEarthSeconds = 5f;
+        [SerializeField] private float _gazeEarthSeconds = 1.8f;
 
-        [Tooltip("O10: the camera eases backward out of the lens to the front three-quarter shot.")]
+        [Tooltip("O10: the camera eases backward out of the lens to the front face-inspect reveal shot.")]
         [Range(1f, 8f)]
-        [SerializeField] private float _pullOutSeconds = 4f;
+        [SerializeField] private float _pullOutSeconds = 1.8f;
 
-        [Tooltip("O11: the lens shot holds for the blink, the head tilt, the wing's sigh and the call sign.")]
+        [Tooltip("O11: the front reveal holds for the CRT boot line, eyes opening, slow blink, head tilt, wing sigh and call sign.")]
         [Range(1f, 6f)]
-        [SerializeField] private float _blinkShotSeconds = 3.5f;
+        [SerializeField] private float _blinkShotSeconds = 2.2f;
 
         [Tooltip("O12: the ease round over 07's shoulder toward Earth, before the chase frame takes over.")]
         [Range(1f, 6f)]
-        [SerializeField] private float _overShoulderSeconds = 3f;
+        [SerializeField] private float _overShoulderSeconds = 1.4f;
 
         [Header("Lid (0 shut, 0.7 rest, 1 fully open)")]
         [Tooltip("Openness of the lid's first stage (O2).")]
@@ -80,11 +80,11 @@ namespace MoonProject.Rover
 
         [Tooltip("Seconds each lid stage takes to rise before it stalls.")]
         [Range(0.2f, 2f)]
-        [SerializeField] private float _lidRiseSeconds = 1.2f;
+        [SerializeField] private float _lidRiseSeconds = 0.65f;
 
         [Tooltip("Seconds the lid takes to settle from its second stage to rest (from O4's end, through O5).")]
         [Range(0.3f, 3f)]
-        [SerializeField] private float _lidSettleSeconds = 1.6f;
+        [SerializeField] private float _lidSettleSeconds = 0.9f;
 
         [Tooltip("Size of the second stage's shudder (lid openness).")]
         [Range(0f, 0.05f)]
@@ -94,13 +94,13 @@ namespace MoonProject.Rover
         [Range(1, 5)]
         [SerializeField] private int _shudderWobbles = 3;
 
-        [Tooltip("The O11 blink: seconds into the lens shot it starts.")]
+        [Tooltip("The O11 blink: seconds into the front reveal shot it starts (after the CRT boot line opens into two eyes).")]
         [Range(0f, 2f)]
-        [SerializeField] private float _blinkDelay = 0.4f;
+        [SerializeField] private float _blinkDelay = 1.15f;
 
         [Tooltip("The O11 blink's length (s): wonder down to its lowest, then back up to rest.")]
         [Range(0.3f, 1.5f)]
-        [SerializeField] private float _blinkSeconds = 0.7f;
+        [SerializeField] private float _blinkSeconds = 0.55f;
 
         [Tooltip("Lowest openness in the O11 blink.")]
         [Range(0f, 0.5f)]
@@ -133,7 +133,7 @@ namespace MoonProject.Rover
 
         [Tooltip("Seconds of the O8 re-hunt (from the start of the look at The Peak).")]
         [Range(0.3f, 3f)]
-        [SerializeField] private float _rehuntSeconds = 1.4f;
+        [SerializeField] private float _rehuntSeconds = 0.8f;
 
         [Header("Old electronics (O5)")]
         [Tooltip("Length (s) of each soft exposure dip. Photosensitivity: long enough that nothing strobes at 3 Hz.")]
@@ -152,7 +152,7 @@ namespace MoonProject.Rover
         [Tooltip("Seconds the boot readout shows in the lens, from the start of the flicker; it is never shown when "
             + "the player hurried the wake.")]
         [Range(0.5f, 4f)]
-        [SerializeField] private float _readoutSeconds = 2f;
+        [SerializeField] private float _readoutSeconds = 1.8f;
 
         [Tooltip("Seconds the readout takes to fade in, and again to fade out.")]
         [Range(0.1f, 1.5f)]
@@ -189,7 +189,7 @@ namespace MoonProject.Rover
 
         [Tooltip("Neck response (Hz): low and critically damped, an old neck.")]
         [Range(0.1f, 2f)]
-        [SerializeField] private float _neckFrequency = 0.45f;
+        [SerializeField] private float _neckFrequency = 0.6f;
 
         [Tooltip("Share of the player's look input the heavy neck follows.")]
         [Range(0.1f, 1f)]
@@ -213,7 +213,7 @@ namespace MoonProject.Rover
 
         [Tooltip("O6: seconds into the look at home before the gaze drifts back, unsure.")]
         [Range(0.5f, 4f)]
-        [SerializeField] private float _hesitateAfter = 1.8f;
+        [SerializeField] private float _hesitateAfter = 1f;
 
         [Tooltip("O6: how far (deg) the unsure gaze drifts back toward centre.")]
         [Range(0f, 10f)]
@@ -236,13 +236,13 @@ namespace MoonProject.Rover
         [SerializeField] private float _beaconHeight = 6f;
 
         [Header("Lens camera")]
-        [Tooltip("The POV camera sits this far (m) in front of the lens centre, clear of the glass.")]
-        [Range(0f, 0.3f)]
-        [SerializeField] private float _lensForward = 0.15f;
+        [Tooltip("The POV camera sits this far (m) in front of the scan lens origin, clear of the cheek glass and visor.")]
+        [Range(0f, 0.6f)]
+        [SerializeField] private float _lensForward = 0.44f;
 
         [Tooltip("Near clip (m) of the lens camera.")]
         [Range(0.01f, 0.3f)]
-        [SerializeField] private float _lensNearClip = 0.02f;
+        [SerializeField] private float _lensNearClip = 0.22f;
 
         [Tooltip("Vertical field of view (deg) through 07's eye: a little wider than the chase camera's.")]
         [Range(30f, 90f)]
@@ -268,24 +268,24 @@ namespace MoonProject.Rover
         [Header("Hurry (any drive input)")]
         [Tooltip("Seconds the remaining lid and focus stages compress into; control is held this long at most.")]
         [Range(0.3f, 1.5f)]
-        [SerializeField] private float _hurryLidSeconds = 1.2f;
+        [SerializeField] private float _hurryLidSeconds = 0.9f;
 
         [Tooltip("Seconds the hurried camera takes from the lens straight to the chase frame.")]
         [Range(1f, 2.8f)]
-        [SerializeField] private float _hurryPullOutSeconds = 2.5f;
+        [SerializeField] private float _hurryPullOutSeconds = 1.6f;
 
         [Header("07's body in the blink (O11)")]
         [Tooltip("Head tilt (deg) to one side as 07 blinks: a question.")]
         [Range(0f, 20f)]
-        [SerializeField] private float _blinkTilt = 8f;
+        [SerializeField] private float _blinkTilt = 7f;
 
         [Tooltip("Seconds the tilt eases in, and again out.")]
         [Range(0.2f, 2f)]
-        [SerializeField] private float _tiltEaseSeconds = 0.6f;
+        [SerializeField] private float _tiltEaseSeconds = 0.45f;
 
         [Tooltip("Seconds the tilt holds between easing in and out.")]
         [Range(0f, 4f)]
-        [SerializeField] private float _tiltHoldSeconds = 1.6f;
+        [SerializeField] private float _tiltHoldSeconds = 1.1f;
 
         [Tooltip("Strength of the solar wing's sigh as 07 blinks.")]
         [Range(0f, 1f)]

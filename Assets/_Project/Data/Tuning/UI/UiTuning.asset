@@ -61,6 +61,9 @@ MonoBehaviour:
     - 1
     - 1.25
     - 1.5
+    _repeatInitialDelay: 0.35
+    _repeatInterval: 0.1
+    _axisDeadzone: 0.5
   _title:
     _reveal:
       _fadeIn: 2.2
@@ -92,6 +95,8 @@ MonoBehaviour:
     _menuEarthCenter: {x: 955, y: 192}
     _menuEarthRadius: 38
     _menuArkOffset: {x: 66, y: -18}
+    _skyVerticalOffsetShare: 0.35
+    _menuSceneLeftGap: 32
     _titleScreenLeft: 150
     _titleScreenTop: 126
     _subtitleTopMargin: 4
@@ -135,6 +140,8 @@ MonoBehaviour:
     _crtVignetteAlpha: 0.58
     _crtRollSpeed: 36
     _crtRollBandHeight: 90
+    _crtBezelInset: {x: 36, y: 26}
+    _standaloneBezelInset: {x: 14, y: 12}
     _glowOuterWidthMultiplier: 4.6
     _glowOuterAlpha: 0.22
     _glowInnerWidthMultiplier: 2.4

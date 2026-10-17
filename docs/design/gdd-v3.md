@@ -45,7 +45,8 @@ pushes its battery's reach a little farther every night until it can call Earth,
 
 ## 3. Battery and range
 ### 3.1 The rules (the calm). These become VISION ruling 15.
-1. **No death, no loss, no failure screen.** Whatever 07 carries stays with it. Nothing breaks, resets or falls off.
+1. **An empty battery never kills and never costs cargo.** (Superseded in part 2026-10-17: 07 can now wear down and
+   die through impacts, hazards and Reclaimers, VISION ruling 17; the battery itself stays range, not danger.)
 2. **A verb in progress always completes.** A cut, stitch, dig, feed or tow that starts on the last charge finishes on
    the reserve, and the crawl starts after. A leap that can't be paid for never charges: the coils fizzle softly at
    the lip, and 07 glances at its lamps. A leap never fails mid-air.
