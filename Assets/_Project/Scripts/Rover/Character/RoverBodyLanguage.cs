@@ -158,6 +158,10 @@ namespace MoonProject.Rover
         private float _screenInspectBlend;
         private float _screenInspectYawDeg;
         private float _screenInspectPitchDeg = 10f;
+        private float _openingPoseBlend;
+        private float _openingYawDeg;
+        private float _openingPitchDeg;
+        private float _openingRollDeg;
         private bool _initialized;
 
         private const float ScreenInspectBlendSeconds = 0.30f;
@@ -366,12 +370,30 @@ namespace MoonProject.Rover
         public void HoldAsleep()
         {
             _mood.Wake.Hold();
+            if (_faceDirector != null)
+            {
+                _faceDirector.SetOpeningDarkHold(true);
+            }
         }
 
         /// <summary>No title in this game (fixtures, test runs): 07 wakes on its own, as it always did.</summary>
         public void WakeOnItsOwn()
         {
+            if (_faceDirector != null)
+            {
+                _faceDirector.SetOpeningDarkHold(false);
+            }
+
             _mood.Wake.Release();
+        }
+
+        /// <summary>Holds or releases the CRT face dark-hold for the opening sequence.</summary>
+        public void HoldOpeningScreenDark(bool hold)
+        {
+            if (_faceDirector != null)
+            {
+                _faceDirector.SetOpeningDarkHold(hold);
+            }
         }
 
         /// <summary>The opening or the short wake takes 07's wake over (RoverAwoke follows on the next frame).</summary>
@@ -392,12 +414,36 @@ namespace MoonProject.Rover
             _wakeTilt = tilt;
         }
 
+        /// <summary>
+        /// Poses 07's neck and head directly for the opening sequence (aligning <c>ScanOrigin</c> with the lens gaze
+        /// while inside the lens, and lifting the head to face the front reveal camera during the pull-out and CRT boot).
+        /// </summary>
+        public void PoseOpeningHead(float yawDeg, float pitchDeg, float rollDeg, float blend)
+        {
+            _openingPoseBlend = Mathf.Clamp01(blend);
+            _openingYawDeg = yawDeg;
+            _openingPitchDeg = pitchDeg;
+            _openingRollDeg = rollDeg;
+            if (_openingPoseBlend >= 0.999f)
+            {
+                _yaw.Reset(yawDeg);
+                _pitch.Reset(pitchDeg);
+            }
+
+            if (_initialized)
+            {
+                Apply(SkyLift());
+            }
+        }
+
         /// <summary>The wake is done: the face and the head are 07's own again.</summary>
         public void FinishWake()
         {
             _mood.Wake.FinishScripted();
             _mood.SetWakeLid(0f, 0f);
             _wakeTilt = 0f;
+            _openingPoseBlend = 0f;
+            _openingRollDeg = 0f;
         }
 
         /// <summary>07's first blink (O11): the solar wing sighs and the antenna starts the call sign.</summary>
@@ -825,15 +871,19 @@ namespace MoonProject.Rover
         private void Apply(float sky)
         {
             float inspect = ScreenInspectBlend;
-            float idleScale = 1f - inspect;
+            float opening = _openingPoseBlend;
+            float steady = Mathf.Max(inspect, opening);
+            float idleScale = 1f - steady;
 
             float breathing = _tuning.IdleHeadBreath * _mood.Idle * (2f * _mood.Breath - 1f);
             BatteryMoodSettings battery = _tuning.Battery;
             float bow = _tired * battery.LowHeadBow + _crawl * battery.CrawlHeadBow;
             float rawPitch = _pitch.Value + (_mood.HeadPitchOffset + breathing - bow - _headNudge.Pitch
                 - _chirpPose.HeadDip) * idleScale;
-            float pitch = Mathf.Lerp(rawPitch, _screenInspectPitchDeg, inspect);
-            float yaw = Mathf.Lerp(_yaw.Value, _screenInspectYawDeg, inspect);
+            float targetPitch = opening >= inspect ? _openingPitchDeg : _screenInspectPitchDeg;
+            float targetYaw = opening >= inspect ? _openingYawDeg : _screenInspectYawDeg;
+            float pitch = Mathf.Lerp(rawPitch, targetPitch, steady);
+            float yaw = Mathf.Lerp(_yaw.Value, targetYaw, steady);
 
             _neck.localRotation = _neckRest * Quaternion.AngleAxis(yaw, Vector3.up);
             if (_neckLift != null)
@@ -844,7 +894,8 @@ namespace MoonProject.Rover
                 _neckLift.localRotation = _neckLiftRest * Quaternion.AngleAxis(neckDroop, Vector3.right);
             }
 
-            float roll = (_wakeTilt + _chirpPose.HeadRoll) * idleScale;
+            float baseRoll = (_wakeTilt + _chirpPose.HeadRoll) * (1f - inspect);
+            float roll = opening > 0f ? Mathf.Lerp(baseRoll, _openingRollDeg, opening) : baseRoll;
             _head.localRotation = _headRest * Quaternion.AngleAxis(-pitch, Vector3.right)
                 * Quaternion.AngleAxis(roll, Vector3.forward);
             if (_cutterTurret != null)

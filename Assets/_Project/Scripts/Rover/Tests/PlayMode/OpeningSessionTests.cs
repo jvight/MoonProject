@@ -37,17 +37,21 @@ namespace MoonProject.Rover.PlayModeTests
     {
         private const int CaptureWidth = 1600;
         private const int CaptureHeight = 900;
+        private const int KeyFrameWidth = 1920;
+        private const int KeyFrameHeight = 1080;
         private const float BootTimeout = 30f;
         private const float TitleQuietSeconds = 4f;
         private const float MaxUntouched = 45f;
+        private const float TargetUntouched = 20f;
         private const float MaxToChase = 4f;
         private const float MaxHeld = 1.5f;
         private const float MaxShortWake = 3f;
         private const float RunTimeout = 70f;
-        private const float HurryAt = 7f;
+        private const float HurryAt = 4f;
         private const float DriveStick = 0.8f;
         private const float AfterChaseSeconds = 3f;
         private const float TitleSettleSeconds = 4f;
+        private const float StripInterval = 2f;
 
         // Zero GC: extra director updates per measured frame, frames measured and the counter's slack.
         private const int MeasuredCalls = 40;
@@ -59,8 +63,8 @@ namespace MoonProject.Rover.PlayModeTests
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "captures", "opening"));
 
-        private readonly List<WakeBeat> _beats = new List<WakeBeat>();
-        private readonly List<float> _beatTimes = new List<float>();
+        private readonly List<WakeBeat> _beats = new List<WakeBeat>(32);
+        private readonly List<float> _beatTimes = new List<float>(32);
         private readonly StringBuilder _report = new StringBuilder();
         private GameContext _context;
         private OpeningDirector _director;
@@ -122,7 +126,8 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(0, _awoke, "nothing wakes while the title is up");
             Assert.AreEqual(0, _beats.Count, "no wake beat on the title");
             Assert.AreEqual(WakePhase.Asleep, _body.Mood.Wake.Phase, "07 sleeps under the title");
-            Assert.IsTrue(_rig.Opening.IsHeld, "the fresh title holds the lens shot on the closed lens");
+            Assert.IsTrue(_rig.Opening.IsHeld, "the fresh title holds the wake shot");
+            Assert.IsTrue(_body.FaceDirector.Director.IsHoldingDarkForOpening, "the CRT face is held dark under the title");
             Capture("title_fresh");
 
             _context.Events.Publish(new NewGameRequested());
@@ -141,16 +146,39 @@ namespace MoonProject.Rover.PlayModeTests
                 (OpeningPhase.GazeEarth, 0.85f, "o09_earth"),
                 (OpeningPhase.PullOut, 0.55f, "o10_pull_out"),
                 (OpeningPhase.PullOut, 0.9f, "o10b_lens_glass"),
-                (OpeningPhase.BlinkShot, 0.2f, "o11_blink"),
+                (OpeningPhase.BlinkShot, 0.08f, "o11a_face_boot_line"),
+                (OpeningPhase.BlinkShot, 0.48f, "o11b_eyes_open"),
+                (OpeningPhase.BlinkShot, 0.68f, "o11_blink"),
                 (OpeningPhase.OverShoulder, 0.9f, "o12_over_shoulder"),
                 (OpeningPhase.ChaseEase, 0.95f, "o13_chase"),
             };
+            var keyShots = new (OpeningPhase Phase, float Share, string Name)[]
+            {
+                (OpeningPhase.LidHalf, 0.8f, "key_01_lens_pov_first_light"),
+                (OpeningPhase.BlinkShot, 0.08f, "key_02_face_boot_line"),
+                (OpeningPhase.BlinkShot, 0.48f, "key_03_eyes_open"),
+                (OpeningPhase.ChaseEase, 0.95f, "key_04_chase_frame"),
+            };
             var taken = new bool[shots.Length];
+            var keyTaken = new bool[keyShots.Length];
+            int nextStripIndex = 0;
+            float crackleStarted = -1f;
             float started = Time.time;
             while (!_beats.Contains(WakeBeat.ChaseFrame))
             {
                 Assert.Less(Time.time - started, RunTimeout, "the opening reaches the chase frame");
                 OpeningScript script = _director.Script;
+                if (crackleStarted < 0f && _beats.Contains(WakeBeat.Crackle))
+                {
+                    crackleStarted = Time.time;
+                }
+
+                if (script.InLens)
+                {
+                    Assert.IsTrue(_body.FaceDirector.Director.IsHoldingDarkForOpening, "CRT stays dark while in the lens");
+                    Assert.AreEqual(0, _body.FaceDirector.Director.BootCount, "face does not boot while in the lens");
+                }
+
                 for (int i = 0; i < shots.Length; i++)
                 {
                     if (!taken[i] && script.Phase == shots[i].Phase && script.PhaseTime >= shots[i].Share * script.PhaseLength)
@@ -160,7 +188,27 @@ namespace MoonProject.Rover.PlayModeTests
                     }
                 }
 
+                for (int i = 0; i < keyShots.Length; i++)
+                {
+                    if (!keyTaken[i] && script.Phase == keyShots[i].Phase && script.PhaseTime >= keyShots[i].Share * script.PhaseLength)
+                    {
+                        keyTaken[i] = true;
+                        CaptureKeyFrame(keyShots[i].Name);
+                    }
+                }
+
+                if (crackleStarted >= 0f && Time.time - crackleStarted >= nextStripIndex * StripInterval)
+                {
+                    Capture(string.Format(CultureInfo.InvariantCulture, "strip_{0:00}s", nextStripIndex * 2));
+                    nextStripIndex++;
+                }
+
                 yield return null;
+            }
+
+            if (crackleStarted >= 0f && nextStripIndex <= 10)
+            {
+                Capture(string.Format(CultureInfo.InvariantCulture, "strip_{0:00}s", nextStripIndex * 2));
             }
 
             yield return Wait(AfterChaseSeconds);
@@ -173,10 +221,18 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(1, Count(WakeBeat.Crackle), "the full opening plays once");
             Assert.AreEqual(1, Count(WakeBeat.PushedIn), "New Game pushed into the closed lens");
             Assert.AreEqual(1, _awoke, "RoverAwoke goes with the crackle, once");
+            Assert.AreEqual(1, _body.FaceDirector.Director.BootCount, "the CRT face boots once at the reveal");
+            Assert.GreaterOrEqual(_body.FaceDirector.Director.WakeBlinkCount, 1, "the CRT face slow-blinks on Blinked");
             Assert.LessOrEqual(chase - crackle, MaxUntouched, "the untouched opening lasts at most 45 s");
+            Assert.AreEqual(TargetUntouched, chase - crackle, 1.8f, "the untouched v3 opening is ~20 s");
             for (int i = 0; i < shots.Length; i++)
             {
                 Assert.IsTrue(taken[i], $"{shots[i].Name} was captured");
+            }
+
+            for (int i = 0; i < keyShots.Length; i++)
+            {
+                Assert.IsTrue(keyTaken[i], $"{keyShots[i].Name} was captured");
             }
 
             Assert.IsFalse(_rover.IsHeldStill, "control is the player's after the opening");
@@ -444,6 +500,12 @@ namespace MoonProject.Rover.PlayModeTests
         {
             Directory.CreateDirectory(CaptureFolder);
             FrameCapture.SavePng(_view, CaptureWidth, CaptureHeight, Path.Combine(CaptureFolder, name + ".png"));
+        }
+
+        private void CaptureKeyFrame(string name)
+        {
+            Directory.CreateDirectory(CaptureFolder);
+            FrameCapture.SavePng(_view, KeyFrameWidth, KeyFrameHeight, Path.Combine(CaptureFolder, name + ".png"));
         }
 
         private static IEnumerator Wait(float seconds)

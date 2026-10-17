@@ -609,10 +609,10 @@ namespace MoonProject.Audio
         {
             switch (reached.Beat)
             {
+                case WakeBeat.PushedIn:
                 case WakeBeat.Crackle:
                     _openingHoldsRadio = true;
                     break;
-                case WakeBeat.OverShoulder:
                 case WakeBeat.ChaseFrame:
                     if (_openingHoldsRadio)
                     {

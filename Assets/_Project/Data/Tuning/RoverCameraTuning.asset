@@ -30,13 +30,13 @@ MonoBehaviour:
   _wakeElevation: -15
   _wakeDistance: 3.2
   _wakeScreenY: 0.22
-  _wakeLensSeconds: 3.5
-  _wakeTurnSeconds: 3
+  _wakeLensSeconds: 2.2
+  _wakeTurnSeconds: 1.4
   _wakeEarthElevation: 15
   _wakeEarthDistance: 2.4
   _wakeEarthHeight: 0.75
-  _wakeHoldSeconds: 10
-  _wakeEaseSeconds: 4
+  _wakeHoldSeconds: 6
+  _wakeEaseSeconds: 2
   _stargazeStartElevation: 0
   _stargazeFullElevation: -20
   _stargazeRiseHalfLife: 1.2
@@ -240,28 +240,28 @@ MonoBehaviour:
   _gentleBreathRate: 0.5
   _gentleMinSensitivity: 0.15
   _opening:
-    _crackleSeconds: 3
-    _lidCrackSeconds: 2.5
-    _lidHalfSeconds: 2.5
-    _huntSeconds: 3.5
+    _crackleSeconds: 1.1
+    _lidCrackSeconds: 1.1
+    _lidHalfSeconds: 1.1
+    _huntSeconds: 1.7
     _flickerSeconds: 1
-    _gazeHomeSeconds: 4
-    _gazePilotSeconds: 3.5
-    _gazePeakSeconds: 4
-    _gazeEarthSeconds: 5
-    _pullOutSeconds: 4
-    _blinkShotSeconds: 3.5
-    _overShoulderSeconds: 3
+    _gazeHomeSeconds: 1.8
+    _gazePilotSeconds: 1.5
+    _gazePeakSeconds: 1.5
+    _gazeEarthSeconds: 1.8
+    _pullOutSeconds: 1.8
+    _blinkShotSeconds: 2.2
+    _overShoulderSeconds: 1.4
     _lidCrack: 0.12
     _lidHalf: 0.4
     _lidRest: 0.7
     _lidWonder: 0.85
-    _lidRiseSeconds: 1.2
-    _lidSettleSeconds: 1.6
+    _lidRiseSeconds: 0.65
+    _lidSettleSeconds: 0.9
     _shudderAmount: 0.02
     _shudderWobbles: 3
-    _blinkDelay: 0.4
-    _blinkSeconds: 0.7
+    _blinkDelay: 1.15
+    _blinkSeconds: 0.55
     _blinkLow: 0.25
     _blinkAfter: 0.75
     _focusBlur: 2.5
@@ -269,11 +269,11 @@ MonoBehaviour:
     _focusOvershoot: 400
     _focusSettle: 80
     _rehuntNear: 25
-    _rehuntSeconds: 1.4
+    _rehuntSeconds: 0.8
     _dipSeconds: 0.4
     _dipGap: 0.12
     _secondDip: 0.8
-    _readoutSeconds: 2
+    _readoutSeconds: 1.8
     _readoutFade: 0.4
     _speckStart: {x: -0.2, y: 0}
     _speckEnd: {x: -0.34, y: -0.7}
@@ -282,30 +282,30 @@ MonoBehaviour:
     _pitchDownLimit: -15
     _pitchUpLimit: 50
     _softZone: 18
-    _neckFrequency: 0.45
+    _neckFrequency: 0.6
     _lookShare: 0.6
     _attentionResume: 2
     _earthFoundAngle: 10
     _earthFoundSeconds: 1
     _seenAngle: 12
-    _hesitateAfter: 1.8
+    _hesitateAfter: 1
     _hesitateYaw: 3
     _peakLift: 1
     _earthBelow: 4
     _landerLookHeight: 3
     _beaconHeight: 6
-    _lensForward: 0.15
-    _lensNearClip: 0.02
+    _lensForward: 0.44
+    _lensNearClip: 0.22
     _lensFov: 58
     _pullOutReach: 0.7
     _pullOutOntoEarth: 0.15
     _pullOutEarthHeld: 0.4
     _lensReleaseAt: 0.2
-    _hurryLidSeconds: 1.2
-    _hurryPullOutSeconds: 2.5
-    _blinkTilt: 8
-    _tiltEaseSeconds: 0.6
-    _tiltHoldSeconds: 1.6
+    _hurryLidSeconds: 0.9
+    _hurryPullOutSeconds: 1.6
+    _blinkTilt: 7
+    _tiltEaseSeconds: 0.45
+    _tiltHoldSeconds: 1.1
     _blinkSigh: 0.5
     _pushInSeconds: 2
     _pushDarkFrom: 0.6
