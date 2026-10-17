@@ -69,28 +69,6 @@ namespace MoonProject.World.Editor
         /// <summary>Art's R1 cargo lander, landed at place.lander in the opening (opening v2 §4).</summary>
         public const string CargoLanderPrefab = "Assets/_Project/Generated/Art/R1/Models/Lander/CargoLander.prefab";
 
-        /// <summary>Art's props folder, where Kestrel-3's HullFragment variants are (0.5.5).</summary>
-        public const string HullFragmentFolder = "Assets/_Project/Generated/Art/Props/";
-
-        /// <summary>Wires <see cref="LandmarkPrefabs"/> on a WorldSystem (scene build and test rigs).</summary>
-        public static void AssignLandmarks(UnityEditor.SerializedObject world)
-        {
-            UnityEditor.SerializedProperty fragments = world.FindProperty("_landmarkPrefabs._hullFragments");
-            fragments.arraySize = MoonProject.Art.Editor.PropModelBuilder.HullFragmentVariants;
-            for (int i = 0; i < fragments.arraySize; i++)
-            {
-                fragments.GetArrayElementAtIndex(i).objectReferenceValue = Require(HullFragmentFolder
-                    + MoonProject.Art.Editor.PropModelBuilder.HullFragmentPrefix + i + ".prefab");
-            }
-        }
-
-        private static UnityEngine.GameObject Require(string path)
-        {
-            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(path);
-            return prefab != null ? prefab
-                : throw new System.InvalidOperationException($"No prefab at {path}; run the Art builders.");
-        }
-
         public const string CapturePoses = "Assets/_Project/Scripts/World/Editor/Captures/world_views.json";
     }
 }

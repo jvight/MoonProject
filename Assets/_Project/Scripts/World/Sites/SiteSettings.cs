@@ -4,8 +4,8 @@ using UnityEngine;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Ground shaped for the places content stands on (M3-06 relays, M3-13 salvage sites): flat, drivable footprints
-    /// for the salvage sites on the basin floor and the low mound the teaching relay (relay.0) stands on. Each shape
+    /// Ground shaped for the places content stands on: opening v2's ruins, lander and apron, and the flat footprints
+    /// and low mound the cut salvage sites and teaching relay (relay.0) stood on, kept as ground. Each shape
     /// blends into the ground around it, so the surface stays smooth. Positions are bearings and distances from the
     /// base.
     /// </summary>

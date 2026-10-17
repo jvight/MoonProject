@@ -122,7 +122,6 @@ namespace MoonProject.Showcase.Editor
             AssignObject(serialized, "_paletteMaterial", paletteMaterial);
             AssignObject(serialized, "_earthMaterial", earthMaterial);
             AssignObject(serialized, "_groundMarkMaterial", RequireAsset<Material>(WorldPaths.GroundMarkMaterial));
-            WorldPaths.AssignLandmarks(serialized);
             AssignRocks(context, serialized, "_pebbleRocks", WorldPaths.PebbleRocks);
             AssignRocks(context, serialized, "_boulderRocks", WorldPaths.BoulderRocks);
             AssignObject(serialized, "_earthlight", earthlight);
