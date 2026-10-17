@@ -123,8 +123,8 @@ DIMENSIONS = {
     "screen_height": 0.39,               # 0.39 m tall (y = 1.065..1.455 m world)
     "screen_bulge_z": 0.018,             # Gentle convex CRT glass crown
     "screen_corner_round": 0.075,
-    "screen_grid_x": 8,
-    "screen_grid_y": 6,
+    "screen_grid_x": 16,
+    "screen_grid_y": 12,
     "rear_vent_width": 0.48,             # 0.48 m wide rear louver grille
     "rear_vent_height": 0.26,            # 0.26 m tall rear louver grille
     "rear_vent_bar_count": 6,            # 6 recessed angled louver slats
