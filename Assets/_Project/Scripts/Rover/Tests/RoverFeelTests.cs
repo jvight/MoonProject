@@ -141,6 +141,8 @@ namespace MoonProject.Rover.Tests
             _events.Publish(new RoverLanded(Vector3.zero, 6f, 1f));
             Run(Frame);
             Assert.AreEqual(0.3f, _motors.Low, Tolerance, "A hard landing rumbles hardest.");
+            Run(0.05f);
+            Assert.Less(_feel.Nudge.Heave, -0.02f, "Landing squashes 07's chassis down.");
         }
 
         [Test]
@@ -252,6 +254,17 @@ namespace MoonProject.Rover.Tests
             Beat(FeelPhase.Impact);
             Run(Frame);
             Assert.AreEqual(0f, _motors.Low, "Never rumbles without a pad.");
+        }
+
+        [Test]
+        public void ObstacleCollision_JoltsChassis_AndPulsesRumble()
+        {
+            _events.Publish(new RoverCollided(Vector3.zero, Vector3.back, 6f));
+            Run(Frame);
+            Assert.Greater(_motors.Low, 0.2f, "Hard collision pulses rumble.");
+            Run(0.04f);
+            Assert.Less(_feel.Nudge.Heave, -0.01f, "Collision compresses heave.");
+            Assert.Greater(_feel.Nudge.Pitch, 1f, "Collision dips the nose.");
         }
     }
 }

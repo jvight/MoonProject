@@ -36,7 +36,7 @@ UPGRADE_BAY_DIMS = {
     "collar_width_x": 0.50,
     "collar_depth_z": 0.78,
     "collar_height_y": 0.10,
-    "rail_rest_x": 0.72,
+    "rail_rest_x": 0.61,
     "rail_length_z": 2.32,
     "bridge_bot_y": 2.42,
     "bridge_top_y": 2.68,
@@ -232,12 +232,12 @@ def _build_stage_1(root: bpy.types.Object) -> bpy.types.Object:
             bevel_segments=1,
         )
 
-        # Lateral slide-way sleeper blocks supporting the wheel guide rails
+        # Lateral slide-way sleeper blocks supporting the wheel guide rails (between plinth at 0.92 and rail outer edge at 0.81)
         for sz_way in (-0.58, 0.50):
-            way_x = side * ((col_x - plinth_w * 0.5 + d["rail_rest_x"]) * 0.5)
+            way_x = side * 0.855
             mb.add_bevel_box(
                 center_u=(way_x, 0.022, sz_way),
-                size_u=(0.20, 0.044, 0.095),
+                size_u=(0.14, 0.044, 0.095),
                 mat="R1_GreyMetal",
                 bevel=0.006,
                 segments=1,
@@ -268,23 +268,23 @@ def _build_stage_1(root: bpy.types.Object) -> bpy.types.Object:
         bevel_segments=1,
     )
 
-    # Braided dark rubber cable coiling away across the ground from the right pillar base to the right guide rail
+    # Braided dark rubber cable coiling away across the ground from the right pillar base to the outer edge of the right guide rail (-0.81 m)
     coil_pts = [
         (px, py, pz + 0.015),
         (px + 0.04, 0.040, pz + 0.14),
         (-1.14, 0.024, 1.00),
-        (-1.00, 0.024, 1.12),
-        (-0.84, 0.024, 1.15),
-        (-0.68, 0.024, 1.09),
-        (-0.58, 0.024, 0.96),
-        (-0.60, 0.024, 0.80),
-        (-0.68, 0.026, 0.66),
-        (-0.74, 0.036, 0.56),
+        (-1.02, 0.024, 1.12),
+        (-0.90, 0.024, 1.14),
+        (-0.82, 0.024, 1.06),
+        (-0.79, 0.024, 0.92),
+        (-0.80, 0.024, 0.78),
+        (-0.82, 0.026, 0.66),
+        (-0.83, 0.036, 0.56),
     ]
     mb.add_tube_path(coil_pts, radius=0.024, mat="R1_Rubber", segments=8, cap_ends=True)
-    # Cable junction block where the coiled cable feeds into the right guide rail
+    # Cable junction block where the coiled cable feeds into the right guide rail outer curb
     mb.add_bevel_box(
-        center_u=(-0.74, 0.038, 0.55),
+        center_u=(-0.83, 0.038, 0.55),
         size_u=(0.068, 0.052, 0.088),
         mat="R1_GreyMetal",
         bevel=0.006,
@@ -672,8 +672,8 @@ def _build_wrench_arm_left(parent: bpy.types.Object) -> bpy.types.Object:
         bevel_segments=0,
     )
 
-    # 2. Upper articulated brass boom reaching up-and-inward from shoulder (0.97, 1.19, 0.06) to high elbow (0.64, 1.54, 0.10)
-    elbow_u = (0.64, 1.54, pz + 0.04)
+    # 2. Upper articulated brass boom reaching up-and-inward from shoulder (0.97, 1.19, 0.06) to high elbow (0.78, 1.58, 0.10)
+    elbow_u = (0.78, 1.58, pz + 0.04)
     mb.add_strut(
         p0_u=sh_u,
         p1_u=elbow_u,
@@ -692,10 +692,10 @@ def _build_wrench_arm_left(parent: bpy.types.Object) -> bpy.types.Object:
             mat="R1_BareSteel",
             bevel=0.006,
             segments=1,
-            rot_deg_u=(0.0, 0.0, -46.0),
+            rot_deg_u=(0.0, 0.0, -26.0),
         )
 
-    # 3. High cylindrical brass elbow joint drum at (0.64, 1.54, 0.10)
+    # 3. High cylindrical brass elbow joint drum at (0.78, 1.58, 0.10)
     mb.add_cylinder(
         center_u=elbow_u,
         radius=0.050,
@@ -717,8 +717,8 @@ def _build_wrench_arm_left(parent: bpy.types.Object) -> bpy.types.Object:
         bevel_segments=0,
     )
 
-    # 4. Articulated brass forearm angling down-and-inward toward 07's side cheek (wrist at x = 0.42, y = 1.14)
-    wrist_u = (0.42, 1.14, pz + 0.08)
+    # 4. Articulated brass forearm angling down-and-inward with rest pose jaw tip at x = +0.60 m (1.20 m clear gap)
+    wrist_u = (0.68, 1.18, pz + 0.08)
     mb.add_strut(
         p0_u=elbow_u,
         p1_u=wrist_u,
@@ -737,10 +737,10 @@ def _build_wrench_arm_left(parent: bpy.types.Object) -> bpy.types.Object:
             mat="R1_BareSteel",
             bevel=0.005,
             segments=1,
-            rot_deg_u=(0.0, 0.0, 29.0),
+            rot_deg_u=(0.0, 0.0, 14.0),
         )
 
-    # 5. Wrist rotary collar + open C-shaped spanner wrench jaws at the tip (matching s_upgrade_bay.png)
+    # 5. Wrist rotary collar + open C-shaped spanner wrench jaws at the tip (innermost tip at X = +0.600 m)
     mb.add_cylinder(
         center_u=wrist_u,
         radius=0.036,
@@ -753,15 +753,15 @@ def _build_wrench_arm_left(parent: bpy.types.Object) -> bpy.types.Object:
     )
     mb.add_strut(
         p0_u=wrist_u,
-        p1_u=(0.35, 1.07, wrist_u[2] + 0.02),
+        p1_u=(0.62, 1.11, wrist_u[2] + 0.02),
         width=0.024,
         thickness=0.034,
         mat="R1_BareSteel",
         bevel=0.003,
     )
     mb.add_strut(
-        p0_u=(0.35, 1.07, wrist_u[2] + 0.02),
-        p1_u=(0.34, 1.00, wrist_u[2] + 0.02),
+        p0_u=(0.62, 1.11, wrist_u[2] + 0.02),
+        p1_u=(0.61, 1.04, wrist_u[2] + 0.02),
         width=0.020,
         thickness=0.030,
         mat="R1_BareSteel",
@@ -769,15 +769,15 @@ def _build_wrench_arm_left(parent: bpy.types.Object) -> bpy.types.Object:
     )
     mb.add_strut(
         p0_u=wrist_u,
-        p1_u=(0.44, 1.04, wrist_u[2] - 0.02),
+        p1_u=(0.70, 1.08, wrist_u[2] - 0.02),
         width=0.024,
         thickness=0.034,
         mat="R1_BareSteel",
         bevel=0.003,
     )
     mb.add_strut(
-        p0_u=(0.44, 1.04, wrist_u[2] - 0.02),
-        p1_u=(0.39, 0.99, wrist_u[2] - 0.02),
+        p0_u=(0.70, 1.08, wrist_u[2] - 0.02),
+        p1_u=(0.65, 1.03, wrist_u[2] - 0.02),
         width=0.020,
         thickness=0.030,
         mat="R1_BareSteel",
@@ -788,7 +788,7 @@ def _build_wrench_arm_left(parent: bpy.types.Object) -> bpy.types.Object:
 
 
 def _build_wrench_arm_right(parent: bpy.types.Object) -> bpy.types.Object:
-    """Build the viewer-right (-X) articulated brass arm (`WrenchArm_R`) reaching toward 07's upper body with a welding torch tip."""
+    """Build the viewer-right (-X) articulated brass arm (`WrenchArm_R`) with rest pose tip at X = -0.60 m."""
     d = UPGRADE_BAY_DIMS
     px, py, pz = d["arm_r_pivot_x"], d["arm_r_pivot_y"], d["arm_r_pivot_z"]
     mb = r1kit.MeshBuilder("WrenchArm_R", pivot_u=(px, py, pz))
@@ -831,8 +831,8 @@ def _build_wrench_arm_right(parent: bpy.types.Object) -> bpy.types.Object:
         bevel_segments=0,
     )
 
-    # 2. Upper articulated brass boom reaching up-and-inward from (-0.97, 1.19, -0.04) to high elbow (-0.62, 1.54, -0.06)
-    elbow_u = (-0.62, 1.54, pz - 0.02)
+    # 2. Upper articulated brass boom reaching up-and-inward from (-0.97, 1.19, -0.04) to high elbow (-0.78, 1.58, -0.06)
+    elbow_u = (-0.78, 1.58, pz - 0.02)
     mb.add_strut(
         p0_u=sh_u,
         p1_u=elbow_u,
@@ -851,10 +851,10 @@ def _build_wrench_arm_right(parent: bpy.types.Object) -> bpy.types.Object:
             mat="R1_BareSteel",
             bevel=0.006,
             segments=1,
-            rot_deg_u=(0.0, 0.0, 45.0),
+            rot_deg_u=(0.0, 0.0, 26.0),
         )
 
-    # 3. High cylindrical brass elbow joint drum at (-0.62, 1.54, -0.06)
+    # 3. High cylindrical brass elbow joint drum at (-0.78, 1.58, -0.06)
     mb.add_cylinder(
         center_u=elbow_u,
         radius=0.050,
@@ -876,8 +876,8 @@ def _build_wrench_arm_right(parent: bpy.types.Object) -> bpy.types.Object:
         bevel_segments=0,
     )
 
-    # 4. Forearm reaching down-and-inward toward 07's rear cylinder deck (wrist at x = -0.34, y = 1.24)
-    wrist_u = (-0.34, 1.24, pz - 0.04)
+    # 4. Forearm reaching down-and-inward with rest pose tip at x = -0.60 m (1.20 m clear gap)
+    wrist_u = (-0.69, 1.24, pz - 0.04)
     mb.add_strut(
         p0_u=elbow_u,
         p1_u=wrist_u,
@@ -896,10 +896,10 @@ def _build_wrench_arm_right(parent: bpy.types.Object) -> bpy.types.Object:
             mat="R1_BareSteel",
             bevel=0.005,
             segments=1,
-            rot_deg_u=(0.0, 0.0, -47.0),
+            rot_deg_u=(0.0, 0.0, -15.0),
         )
 
-    # 5. Wrist rotary collar + welding/fitting torch nozzle tip (matching s_upgrade_bay.png)
+    # 5. Wrist rotary collar + welding/fitting torch nozzle tip (innermost tip at X = -0.600 m)
     mb.add_cylinder(
         center_u=wrist_u,
         radius=0.036,
@@ -912,15 +912,15 @@ def _build_wrench_arm_right(parent: bpy.types.Object) -> bpy.types.Object:
     )
     mb.add_strut(
         p0_u=wrist_u,
-        p1_u=(-0.25, 1.16, wrist_u[2]),
+        p1_u=(-0.64, 1.17, wrist_u[2]),
         width=0.032,
         thickness=0.032,
         mat="R1_Copper",
         bevel=0.004,
     )
     mb.add_strut(
-        p0_u=(-0.25, 1.16, wrist_u[2]),
-        p1_u=(-0.19, 1.10, wrist_u[2]),
+        p0_u=(-0.64, 1.17, wrist_u[2]),
+        p1_u=(-0.609, 1.11, wrist_u[2]),
         width=0.018,
         thickness=0.018,
         mat="R1_BareSteel",
@@ -942,38 +942,38 @@ def _build_stage_4(root: bpy.types.Object) -> bpy.types.Object:
     for side in (-1.0, 1.0):
         mb_stage4.add_bevel_box(
             center_u=(side * d["rail_rest_x"], 0.024, -1.04),
-            size_u=(0.095, 0.048, 0.12),
+            size_u=(0.30, 0.048, 0.12),
             mat="R1_GreyMetal",
             bevel=0.006,
             segments=1,
         )
     stage_4_obj = mb_stage4.build_object(parent=root)
 
-    # 1. GuideRail_L (+X) and GuideRail_R (-X)
+    # 1. GuideRail_L (+X) and GuideRail_R (-X) centered at ±0.61 m with 0.32 m inner trough (0.40 m outer width)
     rail_len = d["rail_length_z"]
     for side, name in ((1.0, "GuideRail_L"), (-1.0, "GuideRail_R")):
         rx = side * d["rail_rest_x"]
         mb_rail = r1kit.MeshBuilder(name, pivot_u=(rx, 0.05, 0.0))
-        # Dark-charcoal lower sleeper plate
+        # Dark-charcoal lower sleeper plate (0.40 m wide)
         mb_rail.add_bevel_box(
             center_u=(rx, 0.018, 0.0),
-            size_u=(0.145, 0.036, rail_len),
+            size_u=(0.40, 0.036, rail_len),
             mat="R1_GreyMetal",
             bevel=0.006,
             segments=1,
         )
-        # Raised inner & outer wheel guide curb flanges (forming the U-channel visible in s_upgrade_bay.png)
-        for curbx in (-0.046, 0.046):
+        # Raised inner & outer wheel guide curb flanges (0.04 m wide at rx ± 0.18 m -> 0.32 m clear inner trough)
+        for curbx in (-0.180, 0.180):
             mb_rail.add_bevel_box(
                 center_u=(rx + curbx, 0.052, 0.0),
-                size_u=(0.036, 0.038, rail_len - 0.04),
+                size_u=(0.040, 0.038, rail_len - 0.04),
                 mat="R1_GreyMetal",
                 bevel=0.005,
                 segments=1,
             )
         # Brushed steel top wear strip along the inner guide flange
         mb_rail.add_bevel_box(
-            center_u=(rx - side * 0.046, 0.074, 0.0),
+            center_u=(rx - side * 0.180, 0.074, 0.0),
             size_u=(0.028, 0.010, rail_len - 0.10),
             mat="R1_BareSteel",
             bevel=0.002,
@@ -983,7 +983,7 @@ def _build_stage_4(root: bpy.types.Object) -> bpy.types.Object:
         for end_s in (-1.0, 1.0):
             mb_rail.add_bevel_box(
                 center_u=(rx, 0.016, end_s * (rail_len * 0.5 + 0.05)),
-                size_u=(0.155, 0.032, 0.11),
+                size_u=(0.41, 0.032, 0.11),
                 mat="R1_GreyMetal",
                 bevel=0.005,
                 segments=1,

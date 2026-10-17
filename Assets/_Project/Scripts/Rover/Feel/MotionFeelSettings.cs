@@ -56,6 +56,13 @@ namespace MoonProject.Rover
         [Tooltip("Launch: 0.25 for 90 ms.")]
         [SerializeField] private RumbleProfile _launchRumble = new RumbleProfile(0.25f, 0.25f, 0.2f, 0.2f, 0.09f, false);
 
+        [Tooltip("Landing squash: 07 compresses down on touchdown (m, negative = down), scaled by impact and springing back.")]
+        [SerializeField] private NudgeSettings _landSquash = new NudgeSettings(-0.045f, 0f, 3.2f, 0.52f);
+
+        [Tooltip("Minimum share of landing squash on a soft cushioned landing.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _landSquashSoft = 0.45f;
+
         [Tooltip("Landing rumble (0.1 to 0.3 by impact, for 120 ms), scaled by the impact below.")]
         [SerializeField] private RumbleProfile _landRumble = new RumbleProfile(1f, 1f, 0.7f, 0.7f, 0.12f, false);
 
@@ -70,6 +77,17 @@ namespace MoonProject.Rover
         [Tooltip("Impact speed (m/s) counted as the hardest landing.")]
         [Range(0.5f, 20f)]
         [SerializeField] private float _hardLanding = 6f;
+
+        [Header("Collision")]
+        [Tooltip("Collision jolt: nose dip (deg) and heave compression (m) when 07 bumps an obstacle, scaled by impact.")]
+        [SerializeField] private NudgeSettings _collisionJolt = new NudgeSettings(-0.025f, 3.2f, 3.8f, 0.5f);
+
+        [Tooltip("Collision rumble (scaled by impact, for 100 ms).")]
+        [SerializeField] private RumbleProfile _collisionRumble = new RumbleProfile(0.28f, 0.28f, 0.22f, 0.22f, 0.1f, false);
+
+        [Tooltip("Impact speed (m/s) counted as a full-strength collision jolt.")]
+        [Range(1f, 15f)]
+        [SerializeField] private float _collisionHardSpeed = 6f;
 
         [Header("Install")]
         [Tooltip("The piece seats: 0.2 for 100 ms.")]
@@ -122,6 +140,14 @@ namespace MoonProject.Rover
 
         public RumbleProfile LaunchRumble => _launchRumble;
 
+        public NudgeSettings LandSquash => _landSquash;
+
+        /// <summary>The landing squash's scale for an impact of share <paramref name="impact"/> (0..1).</summary>
+        public float LandSquashScale(float impact)
+        {
+            return impact <= 0f ? 0f : Mathf.Lerp(_landSquashSoft, 1f, Mathf.Clamp01(impact));
+        }
+
         public RumbleProfile LandRumble => _landRumble;
 
         /// <summary>The landing rumble's level for an impact of share <paramref name="impact"/> (0..1).</summary>
@@ -131,6 +157,12 @@ namespace MoonProject.Rover
         }
 
         public float HardLanding => _hardLanding;
+
+        public NudgeSettings CollisionJolt => _collisionJolt;
+
+        public RumbleProfile CollisionRumble => _collisionRumble;
+
+        public float CollisionHardSpeed => _collisionHardSpeed;
 
         public RumbleProfile SeatRumble => _seatRumble;
 

@@ -12,7 +12,7 @@ namespace MoonProject.Art.Editor
     internal static class GaragePortMeshes
     {
         private const float FrameWidth = 2.6f;
-        private const float FrameHeight = 1.6f;
+        private const float FrameHeight = 2.0f;
         private const float FrameDepth = 0.12f;
         private const float PostX = 0.9f;
         private const float PostHeight = 1.25f;

@@ -41,11 +41,11 @@ namespace MoonProject.Rover
 
         [Tooltip("Seconds to stop from top speed while holding full opposite input.")]
         [Range(0.2f, 5f)]
-        [SerializeField] private float _brakeStopTime = 1.1f;
+        [SerializeField] private float _brakeStopTime = 1.28f;
 
         [Tooltip("Shape of the braking curve, same meaning as Coast Ease.")]
         [Range(0f, 0.9f)]
-        [SerializeField] private float _brakeEase = 0.35f;
+        [SerializeField] private float _brakeEase = 0.42f;
 
         [Tooltip("Seconds to ease to a stop from top speed when gameplay asks 07 to hold still (excavation beam).")]
         [Range(0.3f, 5f)]
@@ -70,6 +70,16 @@ namespace MoonProject.Rover
         [Tooltip("Below this speed (m/s), holding the opposite direction stops braking and starts driving that way.")]
         [Range(0.05f, 1f)]
         [SerializeField] private float _reverseEngageSpeed = 0.25f;
+
+        [Tooltip("Projection of throttle-weighted heading along the obstacle outward normal above which a post-bounce "
+            + "throttle hold is cancelled early so the player can reverse away immediately.")]
+        [Range(0.01f, 0.5f)]
+        [SerializeField] private float _bounceCancelAwayDot = 0.05f;
+
+        [Tooltip("Minimum squared speed (m^2/s^2) while a bounce hold is active that counts as rebounding motion and "
+            + "resets the stuck detector.")]
+        [Range(0.005f, 0.5f)]
+        [SerializeField] private float _bounceMovingSpeedSqr = 0.04f;
 
         public float TopSpeed => _topSpeed;
 
@@ -98,6 +108,10 @@ namespace MoonProject.Rover
         public float InputDeadZone => _inputDeadZone;
 
         public float ReverseEngageSpeed => _reverseEngageSpeed;
+
+        public float BounceCancelAwayDot => _bounceCancelAwayDot;
+
+        public float BounceMovingSpeedSqr => _bounceMovingSpeedSqr;
 
         /// <summary>Peak forward acceleration (m/s^2) at standstill, from <see cref="AccelerationTime"/>.</summary>
         public float ForwardAcceleration => NinetyPercentTimeConstants * _topSpeed / _accelerationTime;
