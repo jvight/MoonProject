@@ -382,6 +382,14 @@ namespace MoonProject.Rover
             ComposeEyesAndBrightness();
         }
 
+        /// <summary>Sets the tether strain amount, clamped to [0..1], narrowing/squinting 07's eyes under load.</summary>
+        public void SetStrain(float amount)
+        {
+            Strain = Clamp01(amount);
+            ComposeEyesAndBrightness();
+            ApplyStrainToEyes();
+        }
+
         /// <summary>Sets the low-power state amount, clamped to [0..1].</summary>
         public void SetLowPower(float amount)
         {
@@ -398,13 +406,6 @@ namespace MoonProject.Rover
                 ActiveSymbol = FaceSymbol.None;
             }
 
-            ComposeEyesAndBrightness();
-        }
-
-        /// <summary>Sets the tether strain amount, clamped to [0..1], narrowing/squinting 07's eyes under load.</summary>
-        public void SetStrain(float amount)
-        {
-            Strain = Clamp01(amount);
             ComposeEyesAndBrightness();
         }
 
@@ -480,6 +481,7 @@ namespace MoonProject.Rover
             RollingBandPhase = Repeat01(RollingBandPhase + deltaTime * _tuning.RollingBandSpeed);
 
             ComposeEyesAndBrightness();
+            ApplyStrainToEyes();
 
             float kTrail = 1.0f - (float)Math.Exp(-deltaTime * _tuning.TrailEaseRate);
             GhostLeftEye = FaceEyeParams.Lerp(GhostLeftEye, prevLeft, kTrail);
@@ -682,6 +684,55 @@ namespace MoonProject.Rover
             }
         }
 
+        private void ApplyStrainToEyes()
+        {
+            if (Strain <= 0.0f)
+            {
+                return;
+            }
+
+            float maxOpenByStrain = Lerp(1.0f, 0.80f, Strain) * BlinkMultiplier * BootEyeOpen;
+            float leftOpen = _isDarkHold ? 0.0f : Math.Min(LeftEye.Open, maxOpenByStrain);
+            float rightOpen = _isDarkHold ? 0.0f : Math.Min(RightEye.Open, maxOpenByStrain);
+            float leftCut = Math.Max(LeftEye.Cut, Strain * 0.35f);
+            float effectiveSquint = Clamp01(LeftEye.Squint + Strain * 0.55f);
+            float effectiveTilt = _tilt - Strain * 0.38f;
+            float rightCut = Lerp(leftCut, _tuning.AsymmetricRightCut, _asymmetry);
+            float rightTilt = Lerp(effectiveTilt, _tuning.AsymmetricRightTilt, _asymmetry);
+
+            LeftEye = new FaceEyeParams(
+                LeftEye.CenterX,
+                LeftEye.CenterY,
+                LeftEye.Width,
+                LeftEye.Height,
+                leftOpen,
+                effectiveTilt,
+                leftCut,
+                effectiveSquint,
+                LeftEye.Arc,
+                LeftEye.Ring,
+                LeftEye.Closed,
+                LeftEye.LookX,
+                LeftEye.LookY,
+                LeftEye.Scale);
+
+            RightEye = new FaceEyeParams(
+                RightEye.CenterX,
+                RightEye.CenterY,
+                RightEye.Width,
+                RightEye.Height,
+                rightOpen,
+                rightTilt,
+                rightCut,
+                effectiveSquint,
+                RightEye.Arc,
+                RightEye.Ring,
+                RightEye.Closed,
+                RightEye.LookX,
+                RightEye.LookY,
+                RightEye.Scale);
+        }
+
         private void StepSaccade(float deltaTime)
         {
             if (Feeling == FaceFeeling.Asleep)
@@ -714,17 +765,13 @@ namespace MoonProject.Rover
             float centerY = 0.5f + combinedLy;
 
             float maxOpenByPower = Lerp(1.0f, 0.58f, LowPower);
-            float maxOpenByStrain = Lerp(1.0f, 0.80f, Strain);
-            float maxOpen = Math.Min(maxOpenByPower, maxOpenByStrain);
-            float effectiveOpen = _isDarkHold ? 0.0f : Math.Min(_open, maxOpen) * BlinkMultiplier * BootEyeOpen;
-            float powerCut = Math.Max(_cut, Math.Max(LowPower * 0.25f, Strain * 0.35f));
-            float effectiveSquint = Clamp01(_squint + Strain * 0.55f);
-            float effectiveTilt = _tilt - Strain * 0.38f;
+            float effectiveOpen = _isDarkHold ? 0.0f : Math.Min(_open, maxOpenByPower) * BlinkMultiplier * BootEyeOpen;
+            float powerCut = Math.Max(_cut, LowPower * 0.25f);
 
             float leftScale = Lerp(1.0f, _tuning.AsymmetricLeftScale, _asymmetry);
             float rightScale = Lerp(1.0f, _tuning.AsymmetricRightScale, _asymmetry);
             float rightCut = Lerp(powerCut, _tuning.AsymmetricRightCut, _asymmetry);
-            float rightTilt = Lerp(effectiveTilt, _tuning.AsymmetricRightTilt, _asymmetry);
+            float rightTilt = Lerp(_tilt, _tuning.AsymmetricRightTilt, _asymmetry);
 
             LeftEye = new FaceEyeParams(
                 centerLeftX,
@@ -732,9 +779,9 @@ namespace MoonProject.Rover
                 _width,
                 _height,
                 effectiveOpen,
-                effectiveTilt,
+                _tilt,
                 powerCut,
-                effectiveSquint,
+                _squint,
                 _arc,
                 _ring,
                 _closed,
@@ -750,7 +797,7 @@ namespace MoonProject.Rover
                 effectiveOpen,
                 rightTilt,
                 rightCut,
-                effectiveSquint,
+                _squint,
                 _arc,
                 _ring,
                 _closed,

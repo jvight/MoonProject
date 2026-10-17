@@ -711,7 +711,7 @@ namespace MoonProject.Rover
 
             StepElder();
 
-            _mood.SetEffort(Mathf.Max(_rover.JumpCharge, _tetherStrain));
+            _mood.SetEffort(_rover.JumpCharge);
             _mood.SetWingMended(_rover.Kit.HasMendedWing);
             switch (_mood.Step(_rover.Speed, _rover.DriveInput.magnitude, deltaTime))
             {
@@ -790,6 +790,7 @@ namespace MoonProject.Rover
             _scoopKick = Smoothing.Damp(_scoopKick, 0f, halfLife, deltaTime);
             _winchReel = Smoothing.Damp(_winchReel, _tetherActive ? 1f : 0f, 0.15f, deltaTime);
             _winchAngle = Mathf.Repeat(_winchAngle + _winchReel * 360f * deltaTime, 360f);
+            _mood.SetEffort(Mathf.Max(_rover.JumpCharge, _tetherStrain));
         }
 
         /// <summary>The tired look below the Low share and the quieter crawl, each eased in and out.</summary>
