@@ -8909,12 +8909,9 @@ MonoBehaviour:
   _document: {fileID: 2746450647057328791}
   _faceDocument: {fileID: 3561576768991188631}
   _tuning: {fileID: 11400000, guid: a614583542305cc41a89499c14d9f0d1, type: 2}
-  _relics: {fileID: 11400000, guid: 93d153b3071e596409b379516fe9c088, type: 2}
   _stringTables:
   - {fileID: 4900000, guid: 883507821acbd1744b9d4bfafd1347fd, type: 3}
   - {fileID: 4900000, guid: c722eb162180a424fa4406cc2dc9c340, type: 3}
-  _mapSheet: {fileID: 11400000, guid: 59efd900c39f24b47bda626e71b11a79, type: 2}
-  _mapTuning: {fileID: 11400000, guid: c4cbd258394e83a4abb0dd4eb177760b, type: 2}
   _wordmark: {fileID: 11400000, guid: d675b977c90eef54090f9af57adc6cac, type: 2}
   _roverDiagram: {fileID: 11400000, guid: 8721b36bdc2045c458f1ba2bae6e0ad9, type: 2}
   _credits: {fileID: 4900000, guid: 0e070ce2d397ff649bc0d7a9eb2869cc, type: 3}
