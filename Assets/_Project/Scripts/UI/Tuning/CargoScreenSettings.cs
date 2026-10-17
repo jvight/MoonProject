@@ -19,8 +19,8 @@ namespace MoonProject.UI
         [SerializeField] private float _panelHeight = 768f;
 
         [Tooltip("Largest slot cell (px at 1080p); the cells shrink to fit when the screen is narrow or the text big.")]
-        [Range(32f, 96f)]
-        [SerializeField] private float _maxCell = 86f;
+        [Range(32f, 112f)]
+        [SerializeField] private float _maxCell = 96f;
 
         [Tooltip("Smallest slot cell (px): below this the screen would be unreadable, so it stops shrinking.")]
         [Range(24f, 64f)]
@@ -70,11 +70,11 @@ namespace MoonProject.UI
 
         [Tooltip("Left X coordinate (px in 1152x768) of the 4x6 hold grid.")]
         [Range(16f, 120f)]
-        [SerializeField] private float _holdGridX = 48f;
+        [SerializeField] private float _holdGridX = 34f;
 
         [Tooltip("Top Y coordinate (px in 1152x768) of the 4x6 hold and shelf grids.")]
         [Range(24f, 120f)]
-        [SerializeField] private float _holdGridY = 58f;
+        [SerializeField] private float _holdGridY = 54f;
 
         [Tooltip("Left X coordinate (px in 1152x768) of the right-pane header and docked shelf grid.")]
         [Range(400f, 640f)]
@@ -86,15 +86,15 @@ namespace MoonProject.UI
 
         [Tooltip("Vertical gap (px in 1152x768) between adjacent hold rows.")]
         [Range(2f, 24f)]
-        [SerializeField] private float _cellGapY = 7f;
+        [SerializeField] private float _cellGapY = 8f;
 
         [Tooltip("X coordinate (px in 1152x768) of the vertical divider between the hold grid and the 07 pane.")]
         [Range(400f, 560f)]
-        [SerializeField] private float _dividerX = 474f;
+        [SerializeField] private float _dividerX = 478f;
 
         [Tooltip("Radius (px in 1152x768) of each of the 10 orbital equipment socket bubbles.")]
         [Range(20f, 48f)]
-        [SerializeField] private float _bubbleRadius = 31f;
+        [SerializeField] private float _bubbleRadius = 36f;
 
         [Tooltip("Origin X (px in 1152x768) of the side-3/4 Rover 07 line-art drawing.")]
         [Range(600f, 960f)]
@@ -102,11 +102,11 @@ namespace MoonProject.UI
 
         [Tooltip("Origin Y (px in 1152x768) of the side-3/4 Rover 07 line-art ground line.")]
         [Range(300f, 620f)]
-        [SerializeField] private float _roverOriginY = 456f;
+        [SerializeField] private float _roverOriginY = 468f;
 
         [Tooltip("Scale (px per rover unit in 1152x768) of the side-3/4 Rover 07 line-art drawing.")]
         [Range(80f, 240f)]
-        [SerializeField] private float _roverScale = 154f;
+        [SerializeField] private float _roverScale = 156f;
 
         [Tooltip("Seconds a transient toast message remains visible at the bottom of the panel.")]
         [Range(1f, 8f)]

@@ -35,18 +35,18 @@ namespace MoonProject.UI
         public const int OrbitalSocketCount = 10;
         public const int MaxShelfCells = 24;
 
-        public const float HoldGridX = 48f;
-        public const float HoldGridY = 58f;
+        public const float HoldGridX = 34f;
+        public const float HoldGridY = 54f;
         public const float ShelfGridX = 504f;
-        public const float ShelfGridY = 58f;
-        public const float CellSize = 86f;
+        public const float ShelfGridY = 54f;
+        public const float CellSize = 96f;
         public const float CellGapX = 10f;
-        public const float CellGapY = 7f;
-        public const float DividerX = 474f;
-        public const float BubbleRadius = 31f;
+        public const float CellGapY = 8f;
+        public const float DividerX = 478f;
+        public const float BubbleRadius = 36f;
         public const float RoverOriginX = 804f;
-        public const float RoverOriginY = 456f;
-        public const float RoverScale = 154f;
+        public const float RoverOriginY = 468f;
+        public const float RoverScale = 156f;
 
         public const int MaxTooltipDescriptionChars = 52;
         private float ToastDurationSeconds => _settings.ToastDurationSeconds;
@@ -68,16 +68,16 @@ namespace MoonProject.UI
 
         private static readonly Vector2[] OrbitalCenters =
         {
-            new Vector2(756f, 132f), // Wing
-            new Vector2(944f, 152f), // Cutter
-            new Vector2(1044f, 246f), // Tether
-            new Vector2(1054f, 372f), // Lamp
-            new Vector2(1026f, 502f), // Flanks
-            new Vector2(894f, 594f), // Belly
-            new Vector2(732f, 594f), // Panniers
-            new Vector2(564f, 492f), // Hold
-            new Vector2(554f, 348f), // Deck
-            new Vector2(618f, 198f), // Back
+            new Vector2(760f, 116f), // Wing
+            new Vector2(956f, 136f), // Cutter
+            new Vector2(1062f, 232f), // Tether
+            new Vector2(1078f, 368f), // Lamp
+            new Vector2(1046f, 508f), // Flanks
+            new Vector2(908f, 616f), // Belly
+            new Vector2(728f, 616f), // Panniers
+            new Vector2(556f, 504f), // Hold
+            new Vector2(544f, 344f), // Deck
+            new Vector2(612f, 186f), // Back
         };
 
         // Two-colour amber CRT palette + cyan focus/drag accent read from CargoScreenSettings.
@@ -473,9 +473,9 @@ namespace MoonProject.UI
             float s = Mathf.Max(0.25f, Mathf.Min(panelWidth / ReferenceWidth, panelHeight / ReferenceHeight));
             _scale = s;
 
-            PositionElement(_holdTitle, HoldGridX * s, 22f * s);
-            PositionElement(_rightTitle, ShelfGridX * s, 22f * s);
-            PositionElement(_bootLabel, HoldGridX * s, 22f * s);
+            PositionElement(_holdTitle, HoldGridX * s, 18f * s);
+            PositionElement(_rightTitle, ShelfGridX * s, 18f * s);
+            PositionElement(_bootLabel, HoldGridX * s, 18f * s);
 
             for (int i = 0; i < MaxHoldCells; i++)
             {
@@ -500,7 +500,7 @@ namespace MoonProject.UI
                 PositionBox(_homeCells[i], x * s, y * s, CellSize * s, CellSize * s);
             }
 
-            PositionBox(_toast, 64f * s, 714f * s, 1032f * s, 38f * s);
+            PositionBox(_toast, 48f * s, 708f * s, 1056f * s, 38f * s);
             UpdateTooltip();
             _canvas.MarkDirtyRepaint();
         }
@@ -1766,7 +1766,7 @@ namespace MoonProject.UI
             {
                 string name = PartInfo.PartName(_dragKitPiece, _localization);
                 string desc = PartInfo.PartDescription(_dragKitPiece, _localization);
-                ShowTooltipBox(name, desc, 636f * s, 636f * s, 430f * s, 66f * s);
+                ShowTooltipBox(name, desc, 636f * s, 676f * s, 430f * s, 64f * s);
                 return;
             }
 
@@ -1777,7 +1777,7 @@ namespace MoonProject.UI
                 {
                     string name = HoldItemName(_focusedHoldCell);
                     string desc = HoldItemDescription(_focusedHoldCell);
-                    ShowTooltipBox(name, desc, 48f * s, 622f * s, 404f * s, 66f * s);
+                    ShowTooltipBox(name, desc, 34f * s, 680f * s, 414f * s, 64f * s);
                     return;
                 }
             }
@@ -1791,7 +1791,7 @@ namespace MoonProject.UI
                 string desc = _equipment.TryGetFitted(socket, out RoverKitPiece fittedDesc)
                     ? PartInfo.PartDescription(fittedDesc, _localization)
                     : PartInfo.SocketDescription(socket, _localization);
-                ShowTooltipBox(name, desc, 612f * s, 636f * s, 468f * s, 66f * s);
+                ShowTooltipBox(name, desc, 612f * s, 676f * s, 468f * s, 64f * s);
                 return;
             }
 
@@ -1802,7 +1802,7 @@ namespace MoonProject.UI
                 {
                     string name = PartInfo.MaterialName(slot.Material, _localization);
                     string desc = _localization.Get(UiKeys.TransferToTrip);
-                    ShowTooltipBox(name, desc, 504f * s, 622f * s, 560f * s, 66f * s);
+                    ShowTooltipBox(name, desc, 504f * s, 680f * s, 560f * s, 64f * s);
                     return;
                 }
             }
@@ -1886,22 +1886,15 @@ namespace MoonProject.UI
             Painter2D painter = context.painter2D;
             float s = rect.width / ReferenceWidth;
 
-            // Outer CRT frame & inner bevel
-            RoverLineArtPainter.StrokeRect(painter, 1f, 1f, rect.width - 2f, rect.height - 2f, AmberText, 2.2f);
-            RoverLineArtPainter.StrokeRect(painter, 5f * s, 5f * s, rect.width - 10f * s, rect.height - 10f * s,
-                RoverLineArtPainter.WithAlpha(AmberMuted, 75), 1.0f);
-            RoverLineArtPainter.DrawCornerTicks(painter, 2f * s, 2f * s, rect.width - 4f * s, rect.height - 4f * s,
-                14f * s, AmberBright, 2.6f);
-
             if (!hideForBoot)
             {
-                // Vertical divider & header rules
-                RoverLineArtPainter.DrawLine(painter, new Vector2(DividerX * s, 26f * s),
-                    new Vector2(DividerX * s, 610f * s), AmberMuted, 1.2f);
-                RoverLineArtPainter.DrawLine(painter, new Vector2(48f * s, 52f * s),
-                    new Vector2(430f * s, 52f * s), AmberMuted, 1.2f);
-                RoverLineArtPainter.DrawLine(painter, new Vector2(504f * s, 52f * s),
-                    new Vector2(1096f * s, 52f * s), AmberMuted, 1.2f);
+                // Vertical divider & header rules (no inner rectangular panel box — the physical CRT bezel frames the glass)
+                RoverLineArtPainter.DrawLine(painter, new Vector2(DividerX * s, 20f * s),
+                    new Vector2(DividerX * s, 670f * s), AmberMuted, 1.2f);
+                RoverLineArtPainter.DrawLine(painter, new Vector2(HoldGridX * s, 46f * s),
+                    new Vector2(448f * s, 46f * s), AmberMuted, 1.2f);
+                RoverLineArtPainter.DrawLine(painter, new Vector2(ShelfGridX * s, 46f * s),
+                    new Vector2(1118f * s, 46f * s), AmberMuted, 1.2f);
             }
 
             DrawHoldGrid(painter, s);
@@ -1993,7 +1986,7 @@ namespace MoonProject.UI
                     ? UiIconPainter.FaintAmber
                     : RoverLineArtPainter.WithAlpha(UiIconPainter.LitAmber, (byte)Mathf.RoundToInt(248f * bootProgress));
                 Vector2 iconCenter = new Vector2(cx + cw * 0.5f + slideX, cy + ch * 0.5f - 2f * s);
-                UiIconPainter.Draw(painter, in icon, iconCenter, 56f * s, tint);
+                UiIconPainter.Draw(painter, in icon, iconCenter, 64f * s, tint);
 
                 if (!hideForBoot && state.Kind == HoldCellKind.Material && state.Units > 1)
                 {
@@ -2039,7 +2032,7 @@ namespace MoonProject.UI
                 {
                     UiIconShape icon = _diagram.GetIcon(slot.Material);
                     UiIconPainter.Draw(painter, in icon, new Vector2(cx + cw * 0.5f, cy + ch * 0.5f - 2f * s),
-                        56f * s, UiIconPainter.LitAmber);
+                        64f * s, UiIconPainter.LitAmber);
                     if (slot.Units > 1)
                     {
                         RoverLineArtPainter.FillRect(painter, cx + cw - 34f * s, cy + ch - 28f * s, 32f * s, 26f * s,
@@ -2167,7 +2160,7 @@ namespace MoonProject.UI
                 UiIconState iconState = (_isDraggingKit && focused)
                     ? UiIconState.Cyan
                     : (installed || focused ? UiIconState.Lit : UiIconState.Faint);
-                UiIconPainter.Draw(painter, in icon, b, 40f * s, iconState);
+                UiIconPainter.Draw(painter, in icon, b, 46f * s, iconState);
             }
         }
 

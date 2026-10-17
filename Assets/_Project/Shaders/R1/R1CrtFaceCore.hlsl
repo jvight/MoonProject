@@ -406,10 +406,15 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
     // Hot phosphor inner core factor (only deep inside the stroke/pill reaches _HotCorePeak > BloomThreshold)
     float innerCore = smoothstep(0.0, HOT_CORE_INNER_DIST, minPrimarySdf) * primaryCov;
 
-    // Warm dark CRT screen background with radial vignette
-    float vig = smoothstep(0.46, 0.04, rSq);
+    // Rounded screen bezel SDF + curved rim vignette + soft phosphor glow at the glass edge
+    float bezelSdf = SdfRoundedBox(warpedUv - 0.5, float2(0.498, 0.498), 0.056);
+    float rimVig = smoothstep(0.008, -0.072, bezelSdf);
+    float edgePhosphorGlow = smoothstep(-0.088, -0.014, bezelSdf) * smoothstep(0.010, -0.006, bezelSdf) * poweredOn;
+
+    // Warm dark CRT screen background with radial + curved-rim vignette and soft phosphor edge glow
+    float vig = smoothstep(0.48, 0.04, rSq) * rimVig;
     half3 bgPhosphor = lerp(_ScreenEdgeColor.rgb, _ScreenBaseColor.rgb, (half)vig)
-        + _PhosphorGlowColor.rgb * (half)(0.05 * vig * poweredOn);
+        + _PhosphorGlowColor.rgb * (half)(0.05 * vig * poweredOn + 0.14 * edgePhosphorGlow);
 
     // Compose phosphor layers:
     // 1. Dark warm phosphor base + wide halo + tight halo + ghost trail + primary amber shape
@@ -458,8 +463,8 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
             * _ContentGlowIntensity * shoulderWeight * glowMask;
 
         half3 contentBody = bgPhosphor * (1.0h - contentSample.a)
-            + contentSample.rgb * CONTENT_DIRECT_GAIN
-            + phosphorHalation;
+            + (contentSample.rgb * CONTENT_DIRECT_GAIN + phosphorHalation) * (half)lerp(0.65, 1.0, rimVig)
+            + _PhosphorGlowColor.rgb * (half)(0.11 * edgePhosphorGlow);
         half contentBodyMax = max(contentBody.r, max(contentBody.g, contentBody.b));
         if (contentBodyMax > _BloomSafeMax)
         {
@@ -500,9 +505,7 @@ half4 CrtFacePassFragment(Varyings input) : SV_Target
     float bandBoost = 1.0 + ROLLING_BAND_STRENGTH * exp(-(bandDist * bandDist) / (ROLLING_BAND_WIDTH * ROLLING_BAND_WIDTH));
 
     // Rounded screen bezel edge vignette
-    float2 bezelBox = abs(warpedUv - 0.5);
-    float bezelSdf = SdfRoundedBox(warpedUv - 0.5, float2(0.485, 0.485), 0.055);
-    float bezelMask = smoothstep(0.015, -0.025, bezelSdf);
+    float bezelMask = smoothstep(0.012, -0.016, bezelSdf);
 
     half3 finalEmission = phosphorHdr * (half)(brightness * scanMod * bandBoost * bezelMask);
 
