@@ -15,37 +15,16 @@ namespace MoonProject.UI
             Hud = Require<VisualElement>("hud");
             HudFrame = Require<VisualElement>("hud-frame");
             MenuFrame = Require<VisualElement>("menu-frame");
-            LabHud = Require<VisualElement>("lab-hud");
 
             NextLine = Require<VisualElement>("next-line");
             BatteryDial = Require<VisualElement>("battery-dial");
-            HomeMeter = Require<VisualElement>("home-meter");
-            HomeMeterArc = Require<VisualElement>("home-meter-arc");
-            HomeMeterValue = Require<Label>("home-meter-value");
-            HomeMeterKey = Require<Label>("home-meter-key");
             BatteryDialFace = Require<VisualElement>("battery-dial-face");
             BatteryDialRing = Require<VisualElement>("battery-dial-ring");
             BatteryDialValue = Require<Label>("battery-dial-value");
             NextLineShadow = Require<VisualElement>("next-line-shadow");
             NextLineText = Require<Label>("next-line-text");
-            PlaceCard = Require<VisualElement>("place-card");
-            PlaceCardShadow = Require<VisualElement>("place-card-shadow");
-            PlaceCardName = Require<Label>("place-card-name");
-            PlaceCardJob = Require<Label>("place-card-job");
-            KitTitle = Require<VisualElement>("kit-title");
-            KitTitleName = Require<Label>("kit-title-name");
-            KitTitleShadow = Require<VisualElement>("kit-title-shadow");
-            RewardCard = Require<VisualElement>("reward-card");
             Cargo = Require<VisualElement>("cargo");
             UnlockCard = Require<VisualElement>("unlock-card");
-            CrateNote = Require<VisualElement>("crate-note");
-            RewardTitle = Require<Label>("reward-card-title");
-            RewardLines = Require<VisualElement>("reward-card-lines");
-            TowerState = Require<Label>("tower-state");
-
-            Reticle = Require<VisualElement>("reticle");
-            ReticleRest = Require<VisualElement>("reticle-rest");
-            ReticleHover = Require<VisualElement>("reticle-hover");
 
             PromptAnchor = Require<VisualElement>("prompt-anchor");
             Prompt = Require<VisualElement>("prompt");
@@ -54,64 +33,12 @@ namespace MoonProject.UI
             PromptGlyphLabel = Require<Label>("prompt-glyph-label");
             PromptWord = Require<Label>("prompt-word");
 
-            FriendNameAnchor = Require<VisualElement>("friend-name-anchor");
-            FriendName = Require<VisualElement>("friend-name");
-            FriendNameShadow = Require<VisualElement>("friend-name-shadow");
-            FriendNameText = Require<Label>("friend-name-text");
-
             PickupFeed = Require<VisualElement>("pickup-feed");
 
             SalvageRingAnchor = Require<VisualElement>("salvage-ring-anchor");
             SalvageRing = Require<VisualElement>("salvage-ring");
-            SiteNameAnchor = Require<VisualElement>("site-name-anchor");
-            SiteName = Require<VisualElement>("site-name");
-            SiteNameShadow = Require<VisualElement>("site-name-shadow");
-            SiteNameText = Require<Label>("site-name-text");
 
-            MemoryCard = Require<VisualElement>("memory-card");
-            MemoryCardShadow = Require<VisualElement>("memory-card-shadow");
-            MemoryCardIcon = Require<VisualElement>("memory-card-icon");
-            MemoryCardCaption = Require<Label>("memory-card-caption");
-            MemoryCardCount = Require<Label>("memory-card-count");
-            MemoryCardName = Require<Label>("memory-card-name");
-            MemoryCardText = Require<Label>("memory-card-text");
-            MemoryCardGlyph = Require<VisualElement>("memory-card-glyph");
-            MemoryCardGlyphLabel = Require<Label>("memory-card-glyph-label");
-            MemoryCardClose = Require<Label>("memory-card-close");
-
-            LetterCard = Require<VisualElement>("letter-card");
-            LetterCardShadow = Require<VisualElement>("letter-card-shadow");
-            LetterCardIcon = Require<VisualElement>("letter-card-icon");
-            LetterCardCaption = Require<Label>("letter-card-caption");
-            LetterCardStamp = Require<Label>("letter-card-stamp");
-            LetterCardText = Require<Label>("letter-card-text");
-            LetterCardSender = Require<Label>("letter-card-sender");
-            LetterCardGlyph = Require<VisualElement>("letter-card-glyph");
-            LetterCardGlyphLabel = Require<Label>("letter-card-glyph-label");
-            LetterCardClose = Require<Label>("letter-card-close");
-
-            TowerPanel = Require<VisualElement>("tower-panel");
             RecipeCardRoot = Require<VisualElement>("recipe-card");
-            TowerPanelShadow = Require<VisualElement>("tower-panel-shadow");
-            TowerName = Require<Label>("tower-name");
-            TowerLevel = Require<Label>("tower-level");
-            TowerTitle = Require<Label>("tower-title");
-            TowerDescription = Require<Label>("tower-description");
-            TowerConfirm = Require<VisualElement>("tower-confirm");
-            TowerRing = Require<VisualElement>("tower-ring");
-            TowerRingGlyph = Require<Label>("tower-ring-glyph");
-            TowerHoldWord = Require<Label>("tower-hold-word");
-            TowerRecipe = Require<VisualElement>("tower-recipe");
-            TowerChoices = Require<VisualElement>("tower-choices");
-            TowerPick = Require<VisualElement>("tower-pick");
-            TowerPickGlyph = Require<VisualElement>("tower-pick-glyph");
-            TowerPickGlyphLabel = Require<Label>("tower-pick-glyph-label");
-
-            Ticker = Require<VisualElement>("ticker");
-            TickerLamp = Require<VisualElement>("ticker-lamp");
-            TickerText = Require<Label>("ticker-text");
-            TickerIcon = Require<VisualElement>("ticker-icon");
-            TickerLine = Require<VisualElement>("ticker-line");
 
             LookHint = Require<VisualElement>("look-hint");
             LookHintShadow = Require<VisualElement>("look-hint-shadow");
@@ -119,39 +46,12 @@ namespace MoonProject.UI
             LookHintGlyphLabel = Require<Label>("look-hint-glyph-label");
             LookHintWord = Require<Label>("look-hint-word");
 
-            DialReadout = Require<VisualElement>("dial-readout");
-            DialReadoutShadow = Require<VisualElement>("dial-readout-shadow");
-            DialDetents = Require<VisualElement>("dial-detents");
-            DialStation = Require<Label>("dial-station");
-            DialTape = Require<Label>("dial-tape");
-
-            HopList = Require<VisualElement>("hop-list");
-            HopListShadow = Require<VisualElement>("hop-list-shadow");
-            HopListRows = Require<VisualElement>("hop-list-rows");
-
-            RelayTagAnchor = Require<VisualElement>("relay-tag-anchor");
-            RelayTag = Require<VisualElement>("relay-tag");
-            RelayTagShadow = Require<VisualElement>("relay-tag-shadow");
-            RelayTagRing = Require<VisualElement>("relay-tag-ring");
-            RelayTagIcon = Require<VisualElement>("relay-tag-icon");
-            RelayTagRecipe = Require<VisualElement>("relay-tag-recipe");
-
-            HopVeil = Require<VisualElement>("hop-veil");
-            HopVeilDark = Require<VisualElement>("hop-veil-dark");
-            HopVeilGrain = Require<VisualElement>("hop-veil-grain");
-
             Pause = Require<VisualElement>("pause");
             PauseVeil = Require<VisualElement>("pause-veil");
             PauseFrame = Require<VisualElement>("pause-frame");
             PauseStack = Require<VisualElement>("pause-stack");
             PauseMain = Require<VisualElement>("pause-main");
             PauseMainShadow = Require<VisualElement>("pause-main-shadow");
-            PauseCassettes = Require<VisualElement>("pause-cassettes");
-            PauseCassetteIcon = Require<VisualElement>("pause-cassette-icon");
-            PauseCassettesCount = Require<Label>("pause-cassettes-count");
-            PauseRelays = Require<VisualElement>("pause-relays");
-            PauseRelayIcon = Require<VisualElement>("pause-relay-icon");
-            PauseRelaysCount = Require<Label>("pause-relays-count");
             PageMain = Require<VisualElement>("page-main");
             PageQuit = Require<VisualElement>("page-quit");
             ResumeButton = Require<Button>("button-resume");
@@ -245,24 +145,12 @@ namespace MoonProject.UI
         /// <summary>The title's and the pause menu's pages, inside their own safe frame.</summary>
         public VisualElement MenuFrame { get; }
 
-        /// <summary>The crew's lab's own quiet screen, shown instead of the HUD while 07 is up in the lab.</summary>
-        public VisualElement LabHud { get; }
-
         public VisualElement NextLine { get; }
 
         /// <summary>The battery dial at the bottom left: its glass face, the cells' ring and the percentage.</summary>
         public VisualElement BatteryDial { get; }
 
         public VisualElement BatteryDialFace { get; }
-
-        /// <summary>The distance home at the top centre: its arc, the metres and the bearing line.</summary>
-        public VisualElement HomeMeter { get; }
-
-        public VisualElement HomeMeterArc { get; }
-
-        public Label HomeMeterValue { get; }
-
-        public Label HomeMeterKey { get; }
 
         /// <summary>07's abilities as round glass bubbles at the bottom centre (filled from code).</summary>
         public VisualElement BatteryDialRing { get; }
@@ -273,44 +161,11 @@ namespace MoonProject.UI
 
         public Label NextLineText { get; }
 
-        public VisualElement PlaceCard { get; }
-
-        public VisualElement PlaceCardShadow { get; }
-
-        public Label PlaceCardName { get; }
-
-        public Label PlaceCardJob { get; }
-
-        public VisualElement KitTitle { get; }
-
-        public Label KitTitleName { get; }
-
-        public VisualElement KitTitleShadow { get; }
-
-        /// <summary>The card that says what a tower level gave: its box, its title and the column of its lines.</summary>
-        public VisualElement RewardCard { get; }
-
         /// <summary>The cargo screen's root (Tab / View): its parts are found beneath it by name.</summary>
         public VisualElement Cargo { get; }
 
         /// <summary>The card that says what a newly fitted kit lets 07 do.</summary>
         public VisualElement UnlockCard { get; }
-
-        /// <summary>The card with a crew crate's packing note.</summary>
-        public VisualElement CrateNote { get; }
-
-        public Label RewardTitle { get; }
-
-        public VisualElement RewardLines { get; }
-
-        /// <summary>The tower card's state word ("offline" until the tower is built).</summary>
-        public Label TowerState { get; }
-
-        public VisualElement Reticle { get; }
-
-        public VisualElement ReticleRest { get; }
-
-        public VisualElement ReticleHover { get; }
 
         public VisualElement PromptAnchor { get; }
 
@@ -324,14 +179,6 @@ namespace MoonProject.UI
 
         public Label PromptWord { get; }
 
-        public VisualElement FriendNameAnchor { get; }
-
-        public VisualElement FriendName { get; }
-
-        public VisualElement FriendNameShadow { get; }
-
-        public Label FriendNameText { get; }
-
         /// <summary>The column the pickup feed's rows are built into.</summary>
         public VisualElement PickupFeed { get; }
 
@@ -339,97 +186,8 @@ namespace MoonProject.UI
 
         public VisualElement SalvageRing { get; }
 
-        public VisualElement SiteNameAnchor { get; }
-
-        public VisualElement SiteName { get; }
-
-        public VisualElement SiteNameShadow { get; }
-
-        public Label SiteNameText { get; }
-
-        public VisualElement MemoryCard { get; }
-
-        public VisualElement MemoryCardShadow { get; }
-
-        public VisualElement MemoryCardIcon { get; }
-
-        public Label MemoryCardCaption { get; }
-
-        public Label MemoryCardCount { get; }
-
-        public Label MemoryCardName { get; }
-
-        public Label MemoryCardText { get; }
-
-        public VisualElement MemoryCardGlyph { get; }
-
-        public Label MemoryCardGlyphLabel { get; }
-
-        public Label MemoryCardClose { get; }
-
-        public VisualElement LetterCard { get; }
-
-        public VisualElement LetterCardShadow { get; }
-
-        public VisualElement LetterCardIcon { get; }
-
-        public Label LetterCardCaption { get; }
-
-        public Label LetterCardStamp { get; }
-
-        public Label LetterCardText { get; }
-
-        public Label LetterCardSender { get; }
-
-        public VisualElement LetterCardGlyph { get; }
-
-        public Label LetterCardGlyphLabel { get; }
-
-        public Label LetterCardClose { get; }
-
-        public VisualElement TowerPanel { get; }
-
         /// <summary>The recipe card's box (the prompt keeps clear of it).</summary>
         public VisualElement RecipeCardRoot { get; }
-
-        public VisualElement TowerPanelShadow { get; }
-
-        public Label TowerName { get; }
-
-        public Label TowerLevel { get; }
-
-        public Label TowerTitle { get; }
-
-        public Label TowerDescription { get; }
-
-        public VisualElement TowerConfirm { get; }
-
-        public VisualElement TowerRing { get; }
-
-        public Label TowerRingGlyph { get; }
-
-        public Label TowerHoldWord { get; }
-
-        public VisualElement TowerRecipe { get; }
-
-        public VisualElement TowerChoices { get; }
-
-        public VisualElement TowerPick { get; }
-
-        public VisualElement TowerPickGlyph { get; }
-
-        public Label TowerPickGlyphLabel { get; }
-
-        public VisualElement Ticker { get; }
-
-        public VisualElement TickerLamp { get; }
-
-        public Label TickerText { get; }
-
-        /// <summary>The radio icon in the ticker toast's round glass bubble.</summary>
-        public VisualElement TickerIcon { get; }
-
-        public VisualElement TickerLine { get; }
 
         public VisualElement LookHint { get; }
 
@@ -440,40 +198,6 @@ namespace MoonProject.UI
         public Label LookHintGlyphLabel { get; }
 
         public Label LookHintWord { get; }
-
-        public VisualElement DialReadout { get; }
-
-        public VisualElement DialReadoutShadow { get; }
-
-        public VisualElement DialDetents { get; }
-
-        public Label DialStation { get; }
-
-        public Label DialTape { get; }
-
-        public VisualElement HopList { get; }
-
-        public VisualElement HopListShadow { get; }
-
-        public VisualElement HopListRows { get; }
-
-        public VisualElement RelayTagAnchor { get; }
-
-        public VisualElement RelayTag { get; }
-
-        public VisualElement RelayTagShadow { get; }
-
-        public VisualElement RelayTagRing { get; }
-
-        public VisualElement RelayTagIcon { get; }
-
-        public VisualElement RelayTagRecipe { get; }
-
-        public VisualElement HopVeil { get; }
-
-        public VisualElement HopVeilDark { get; }
-
-        public VisualElement HopVeilGrain { get; }
 
         public VisualElement Pause { get; }
 
@@ -486,19 +210,6 @@ namespace MoonProject.UI
         public VisualElement PauseMain { get; }
 
         public VisualElement PauseMainShadow { get; }
-
-        /// <summary>"07 can": the verbs learned so far, on the pause page (docs/design/first-hour-v2 6.5).</summary>
-        public VisualElement PauseCassettes { get; }
-
-        public VisualElement PauseCassetteIcon { get; }
-
-        public Label PauseCassettesCount { get; }
-
-        public VisualElement PauseRelays { get; }
-
-        public VisualElement PauseRelayIcon { get; }
-
-        public Label PauseRelaysCount { get; }
 
         public VisualElement PageMain { get; }
 

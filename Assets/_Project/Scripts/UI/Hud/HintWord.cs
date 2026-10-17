@@ -1,8 +1,8 @@
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The word in the low look-hint chip (<see cref="LookUpChip"/>): the stargaze hint's "Look up", or the opening's
-    /// first prompt (<see cref="FirstPrompt"/>), "Look up" or "Drive".
+    /// The word in the low look-hint chip (<see cref="LookUpChip"/>): the opening's first prompt
+    /// (<see cref="FirstPrompt"/>), "Look up" or "Drive", or the Tab chip (<see cref="HoldHint"/>), "Hold".
     /// </summary>
     internal enum HintWord
     {
@@ -10,6 +10,5 @@ namespace MoonProject.UI
         LookUp = 1,
         Drive = 2,
         Hold = 3,
-        Fit = 4,
     }
 }

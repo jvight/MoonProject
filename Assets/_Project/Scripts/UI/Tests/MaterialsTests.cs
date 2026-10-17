@@ -115,8 +115,6 @@ namespace MoonProject.UI.Tests
         [Test]
         public void TheRecipeView_DimsTheShort_AndShowsAMissingComponentAsOneRow_InTheCurrentLanguage()
         {
-            var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(UiAssetPaths.Uxml);
-            Assert.IsNotNull(uxml, UiAssetPaths.Uxml);
             LocalizationService localization = TestTables.Localization(new EventBus(),
                 UiKeys.RecipeRow, "{0} (have {1})", "{0} (có {1})",
                 UiKeys.MaterialName(SalvageMaterial.Metal), "metal", "kim loại",
@@ -124,8 +122,7 @@ namespace MoonProject.UI.Tests
                 UiKeys.MaterialName(SalvageMaterial.Optics), "optics", "quang học",
                 "pickup.part_towercoil", "Tower Coil", "cuộn dây tháp",
                 UiKeys.ComponentNeeded("Part_TowerCoil"), "Coil crate · Supply Depot", "Thùng cuộn dây · Kho tiếp tế");
-            var layout = new UiLayout(uxml.Instantiate());
-            var view = new RecipeView(layout.TowerRecipe, localization, new IntText(100));
+            var view = new RecipeView(new VisualElement(), localization, new IntText(100));
             var stock = new Stock { Metal = 2, Wiring = 9 };
 
             view.Show(new Recipe(6, 4, 0), stock);

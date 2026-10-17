@@ -16,7 +16,7 @@ namespace MoonProject.UI
         [Tooltip("The prompt chip easing in and out.")]
         [SerializeField] private RevealSettings _reveal = new RevealSettings(0.35f, 0.3f, 10f, 0.88f, 1.6f, 0.55f);
 
-        [Tooltip("Teachable actions. The tower upgrade is taught by its own panel, so it has no entry.")]
+        [Tooltip("Teachable actions.")]
         [SerializeField] private PromptEntry[] _entries =
         {
             new PromptEntry(InteractionKind.Excavate, RoverAction.Excavate, 0.5f, 0.9f),
@@ -55,7 +55,7 @@ namespace MoonProject.UI
         [Range(0f, 300f)]
         [SerializeField] private float _screenMargin = 72f;
 
-        [Tooltip("Pixels (at 1080p) a prompt keeps clear of the recipe card and the tower's panel.")]
+        [Tooltip("Pixels (at 1080p) a prompt keeps clear of the recipe card and the build menu.")]
         [Range(0f, 100f)]
         [SerializeField] private float _cardGap = 18f;
 

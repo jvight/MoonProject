@@ -39,52 +39,8 @@
             "text": "Thoát"
         },
         {
-            "key": "ui.journey.put_away",
-            "text": "Bản lưu cũ đã được cất riêng."
-        },
-        {
             "key": "ui.save_tick.word",
             "text": "07"
-        },
-        {
-            "key": "ui.meter.home",
-            "text": "nhà · {0}"
-        },
-        {
-            "key": "ui.meter.unit",
-            "text": "m"
-        },
-        {
-            "key": "ui.compass.n",
-            "text": "B"
-        },
-        {
-            "key": "ui.compass.ne",
-            "text": "ĐB"
-        },
-        {
-            "key": "ui.compass.e",
-            "text": "Đ"
-        },
-        {
-            "key": "ui.compass.se",
-            "text": "ĐN"
-        },
-        {
-            "key": "ui.compass.s",
-            "text": "N"
-        },
-        {
-            "key": "ui.compass.sw",
-            "text": "TN"
-        },
-        {
-            "key": "ui.compass.w",
-            "text": "T"
-        },
-        {
-            "key": "ui.compass.nw",
-            "text": "TB"
         },
         {
             "key": "ui.hint.look_up",
@@ -275,114 +231,6 @@
             "text": "› tháp radio"
         },
         {
-            "key": "ui.board.known",
-            "text": "BẢN VẼ CỦA KENJI"
-        },
-        {
-            "key": "tech.tower_l1.name",
-            "text": "Tháp radio cấp 1"
-        },
-        {
-            "key": "tech.tower_l2.name",
-            "text": "Tháp radio cấp 2"
-        },
-        {
-            "key": "tech.tower_l3.name",
-            "text": "Tháp radio cấp 3"
-        },
-        {
-            "key": "tech.relay_network.name",
-            "text": "Mạng trạm tiếp sóng"
-        },
-        {
-            "key": "tech.hover_jump.name",
-            "text": "Bật nhảy"
-        },
-        {
-            "key": "tech.cargo_cradle.name",
-            "text": "Giỏ chở đồ"
-        },
-        {
-            "key": "tech.warm_headlamp.name",
-            "text": "Đèn pha ấm"
-        },
-        {
-            "key": "tech.capacitor_drums.name",
-            "text": "Bộ tăng tốc"
-        },
-        {
-            "key": "tech.cell_pack_2.name",
-            "text": "Bộ pin II"
-        },
-        {
-            "key": "ticker.recovery.link",
-            "text": "Mạng lưới đã nối tới Đỉnh núi."
-        },
-        {
-            "key": "ticker.recovery.dish",
-            "text": "Chảo ăng-ten lớn đã sửa xong."
-        },
-        {
-            "key": "ticker.recovery.answer",
-            "text": "Các tàu Ark đã nghe thấy."
-        },
-        {
-            "key": "notyet.bay",
-            "text": "Cần tháp cấp 2."
-        },
-        {
-            "key": "notyet.chart",
-            "text": "Cần tháp cấp 3."
-        },
-        {
-            "key": "notyet.tether",
-            "text": "07 chưa có dây kéo. Kenji để một cái dự phòng ở gara."
-        },
-        {
-            "key": "ticker.listen.first",
-            "text": "Dừng lại để 07 lắng nghe: xác tàu còn đồ sẽ sáng lên."
-        },
-        {
-            "key": "place.dock.name",
-            "text": "Đế sạc"
-        },
-        {
-            "key": "place.dock.job",
-            "text": "Đỗ vào để sạc pin và lưu game."
-        },
-        {
-            "key": "place.lander.name",
-            "text": "Tàu đổ bộ"
-        },
-        {
-            "key": "place.tower.name",
-            "text": "Tháp radio"
-        },
-        {
-            "key": "place.bay.name",
-            "text": "Xưởng xe của Kenji"
-        },
-        {
-            "key": "place.ladder.name",
-            "text": "Thang của phi hành đoàn"
-        },
-        {
-            "key": "place.lift.name",
-            "text": "Thang nâng"
-        },
-        {
-            "key": "place.lab.name",
-            "text": "Phòng thí nghiệm"
-        },
-        {
-            "key": "place.rack.name",
-            "text": "Kệ băng"
-        },
-        {
-            "key": "place.garage_port.name",
-            "text": "Cổng bảo trì ở gara"
-        },
-        {
             "key": "ui.settings.sound",
             "text": "Âm thanh"
         },
@@ -479,14 +327,6 @@
             "text": "Quay lại"
         },
         {
-            "key": "ui.card.caption",
-            "text": "Kỷ vật {0}/{1}"
-        },
-        {
-            "key": "ui.card.close",
-            "text": "Đóng"
-        },
-        {
             "key": "hint.excavate",
             "text": "Đào"
         },
@@ -553,54 +393,6 @@
         {
             "key": "upgrade.rover.hover_jump.1.effect",
             "text": "Giữ để tích lực, thả ra để nhảy: 07 bật qua các khe vực."
-        },
-        {
-            "key": "relic.cassette_player.name",
-            "text": "Cuộn băng của Ro"
-        },
-        {
-            "key": "relic.cassette_player.memory",
-            "text": "Chiếc walkman vẫn còn cuộn băng bên trong, nét chữ của Ro ghi: \"cho chuyến đi dài\". Mặt B chỉ ghi: \"cho ngày mình về nhà\"."
-        },
-        {
-            "key": "relic.rubber_duck.name",
-            "text": "Cố vấn gỡ lỗi cấp cao"
-        },
-        {
-            "key": "relic.rubber_duck.memory",
-            "text": "Kenji giải thích mọi bộ phận hỏng cho chú vịt này nghe trước khi sửa. Chú chẳng nói câu nào, mà thường thì chú đúng."
-        },
-        {
-            "key": "relic.golden_record.name",
-            "text": "Đĩa vàng Lumen"
-        },
-        {
-            "key": "relic.golden_record.memory",
-            "text": "Chiếc đĩa vàng Ro tự làm: lời chào từ bốn con người, một chiếc rover và một chậu húng quế rất đỗi tự hào, sẵn sàng gửi tới bất kỳ ai đang lắng nghe."
-        },
-        {
-            "key": "relic.astronaut_boot.name",
-            "text": "Đôi ủng của Ines"
-        },
-        {
-            "key": "relic.astronaut_boot.memory",
-            "text": "Sáng nào Ines cũng đi dọc vành núi \"để chắc rằng Mặt Trăng vẫn còn đó\". Gai đế vẫn còn đầy bụi của ngọn đồi chị yêu nhất."
-        },
-        {
-            "key": "relic.teapot.name",
-            "text": "Ấm trà thật sự đầu tiên"
-        },
-        {
-            "key": "relic.teapot.memory",
-            "text": "Theo pha bạc hà trồng trong đất Mặt Trăng bằng chiếc ấm móp này. \"Ấm trà đầu tiên trên Mặt Trăng có vị thật sự\", Ro viết trên nắp."
-        },
-        {
-            "key": "relic.garden_gnome.name",
-            "text": "Trưởng ban An ninh"
-        },
-        {
-            "key": "relic.garden_gnome.memory",
-            "text": "Theo lén mang chú lên tàu cho vui rồi giao chú canh vườn ươm. Suốt nhiệm kỳ, chưa một cây non nào bị mất."
         },
         {
             "key": "glyph.keyboard.escape",
@@ -707,168 +499,12 @@
             "text": "LS"
         },
         {
-            "key": "ui.lab.turn",
-            "text": "Xoay"
-        },
-        {
-            "key": "ui.lab.look",
-            "text": "Nhìn"
-        },
-        {
-            "key": "ui.lab.down",
-            "text": "Xuống"
-        },
-        {
             "key": "hint.repair",
             "text": "Sửa"
         },
         {
-            "key": "ui.card.log_caption",
-            "text": "Nhật ký sửa chữa: {0}"
-        },
-        {
-            "key": "friend.tilly.name",
-            "text": "Tilly"
-        },
-        {
-            "key": "friend.tilly.repair_log",
-            "text": "Sáng nay lại đi dọc vành núi lúc bình minh, Tilly ríu rít bên vai. Mặt Trăng vẫn còn đây, Trái Đất vẫn treo trên trời, cà phê vẫn dở tệ: mọi chuyện vẫn ổn. — Ines"
-        },
-        {
-            "key": "friend.bell.name",
-            "text": "Bell"
-        },
-        {
-            "key": "friend.bell.repair_log",
-            "text": "Mình lắp Bell từ một máy thu hỏng và bốn cái chân máy quay, để đài vẫn phát khi mình ngủ. Cô ấy biết nhảy. Phần đó mình không hề lắp. — Ro"
-        },
-        {
-            "key": "log.ro_1",
-            "text": "Đêm đầu tiên của Lumen After Dark trên sóng nội bộ. Khán giả: ba nhà khoa học mệt nhoài dưới bếp, cộng thêm 07 đỗ cạnh cột tiếp sóng vì cái biến áp ở đó chạy rì rì, ấm ấm. — Ro"
-        },
-        {
-            "key": "cassette.after_dark_1.title",
-            "text": "Lumen After Dark, Tập 1"
-        },
-        {
-            "key": "cassette.after_dark_1.note",
-            "text": "Buổi phát sóng đêm đầu tiên. Khán giả: ba người, một chiếc rover, một chậu húng quế. Chậu húng quế còn xin bài."
-        },
-        {
-            "key": "cassette.dust_and_honey.title",
-            "text": "Bụi & Mật ong"
-        },
-        {
-            "key": "cassette.dust_and_honey.note",
-            "text": "Thu với cái micro dán băng keo lên cửa khoang. Nghe tiếng thịch thì đó là Kenji."
-        },
-        {
-            "key": "cassette.slow_orbit.title",
-            "text": "Quỹ đạo chậm"
-        },
-        {
-            "key": "cassette.slow_orbit.note",
-            "text": "Cho những đêm Trái Đất trông gần như đi bộ tới được. Không đâu. Mình thử rồi."
-        },
-        {
-            "key": "ticker.bell.home",
-            "text": "Bell về nhà trước bạn. Cô ấy bảo đèn hiên vẫn sáng."
-        },
-        {
-            "key": "ticker.bell.signal",
-            "text": "Bell bắt được tín hiệu. Hãy đi theo ánh đèn của cô ấy."
-        },
-        {
-            "key": "ticker.bell.found_0",
-            "text": "Bell bảo: thấy chưa, đã bảo mà."
-        },
-        {
-            "key": "ticker.bell.found_1",
-            "text": "Bell bảo: cái đó đợi bạn lâu lắm rồi."
-        },
-        {
-            "key": "ticker.bell.found_2",
-            "text": "Bell ngân lên: một món Ro từng rất thích."
-        },
-        {
             "key": "hint.tune",
             "text": "Dò đài"
-        },
-        {
-            "key": "radio.channel.lumen_after_dark",
-            "text": "Lumen After Dark"
-        },
-        {
-            "key": "radio.channel.tape_deck",
-            "text": "Máy phát băng"
-        },
-        {
-            "key": "radio.channel.quiet_hours",
-            "text": "Giờ yên tĩnh"
-        },
-        {
-            "key": "ui.pause.cassettes",
-            "text": "Băng cassette {0}/{1}"
-        },
-        {
-            "key": "ui.card.crew_log",
-            "text": "Nhật ký phi hành đoàn"
-        },
-        {
-            "key": "ui.card.radio_letter",
-            "text": "Thư radio"
-        },
-        {
-            "key": "ui.card.ark_bulletin",
-            "text": "Bản tin tàu Ark"
-        },
-        {
-            "key": "ui.card.ending_answer",
-            "text": "Tín hiệu hồi đáp"
-        },
-        {
-            "key": "ui.card.liner_caption",
-            "text": "Ghi chú của Ro trên vỏ băng"
-        },
-        {
-            "key": "ui.card.tape_count",
-            "text": "{0}/{1}"
-        },
-        {
-            "key": "ui.station.radio_tower",
-            "text": "Tháp radio"
-        },
-        {
-            "key": "ui.station.workshop",
-            "text": "Xưởng xe của Kenji"
-        },
-        {
-            "key": "ticker.radio.now_playing",
-            "text": "Đang phát — {0}"
-        },
-        {
-            "key": "track.01_earthrise_static.title",
-            "text": "Rè sóng lúc Trái Đất mọc"
-        },
-        {
-            "key": "track.02_sevens_lullaby.title",
-            "text": "Khúc ru của 07"
-        },
-        {
-            "key": "track.03_dust_on_the_dial.title",
-            "text": "Bụi trên mặt số"
-        },
-        {
-            "key": "track.04_long_way_home.title",
-            "text": "Đường về xa"
-        },
-        {
-            "key": "track.05_low_orbit_tea.title",
-            "text": "Trà trên quỹ đạo thấp"
-        },
-        {
-            "key": "track.06_signal_through_craters.title",
-            "text": "Tín hiệu qua miệng hố"
         },
         {
             "key": "hint.restore",
@@ -877,38 +513,6 @@
         {
             "key": "hint.hop",
             "text": "Nhảy sóng"
-        },
-        {
-            "key": "ticker.relay.online",
-            "text": "{0} đã hoạt động."
-        },
-        {
-            "key": "ticker.relay.waiting",
-            "text": "Cần một trạm có điện ở gần."
-        },
-        {
-            "key": "hop.node.home",
-            "text": "Nhà"
-        },
-        {
-            "key": "hop.node.relay.0",
-            "text": "Trạm trên gò"
-        },
-        {
-            "key": "hop.node.relay.1",
-            "text": "Trạm vai vành hố"
-        },
-        {
-            "key": "hop.node.relay.2",
-            "text": "Trạm miệng hẻm"
-        },
-        {
-            "key": "hop.node.relay.3",
-            "text": "Trạm cuối hẻm"
-        },
-        {
-            "key": "ui.pause.relays",
-            "text": "Trạm tiếp sóng {0}/{1}"
         },
         {
             "key": "hint.salvage",
@@ -965,26 +569,6 @@
         {
             "key": "material.superconductor",
             "text": "Siêu dẫn"
-        },
-        {
-            "key": "site.depot.name",
-            "text": "Kho tiếp tế"
-        },
-        {
-            "key": "site.kestrel.name",
-            "text": "Kestrel-3"
-        },
-        {
-            "key": "site.drill.name",
-            "text": "Giàn khoan"
-        },
-        {
-            "key": "site.garage.name",
-            "text": "Gara của Kenji"
-        },
-        {
-            "key": "site.lander.name",
-            "text": "Tàu tiếp tế trong hẻm"
         },
         {
             "key": "ui.recipe.row",
@@ -1047,40 +631,8 @@
             "text": "Chế tạo"
         },
         {
-            "key": "tech.focus_lens.name",
-            "text": "Thấu kính hội tụ"
-        },
-        {
-            "key": "tech.side_bins.name",
-            "text": "Thùng hông"
-        },
-        {
-            "key": "ui.crate.caption",
-            "text": "Từ chiếc thùng"
-        },
-        {
-            "key": "ui.reward.title",
-            "text": "{0} · Cấp {1}"
-        },
-        {
-            "key": "ui.reward.light_on",
-            "text": "Nhà đã có điện"
-        },
-        {
-            "key": "ui.reward.light_up",
-            "text": "Nhà sáng hơn"
-        },
-        {
-            "key": "ui.reward.radio_on",
-            "text": "Radio bắt được tín hiệu"
-        },
-        {
-            "key": "ui.reward.reach",
-            "text": "Đi xa hơn {0} m"
-        },
-        {
-            "key": "ui.station.offline",
-            "text": "đang tắt"
+            "key": "hint.scan",
+            "text": "Quét"
         },
         {
             "key": "ui.recipecard.needs",
@@ -1145,338 +697,6 @@
         {
             "key": "kit.tether_ring.name",
             "text": "Vòng dây kéo dự phòng của Kenji"
-        },
-        {
-            "key": "ui.bay.fitted",
-            "text": "Đã lắp cho 07"
-        },
-        {
-            "key": "log.kenji_1",
-            "text": "Hôm nay làm lại hệ truyền động cho khung xe khảo sát dự phòng—việc thứ bảy trên bảng tuần này, nên đặt tên luôn là 07. Đã đấu đèn hiệu cho nháy mã gọi của trạm, ba ngắn một dài, mỗi khi máy thu bắt được sóng. — Kenji"
-        },
-        {
-            "key": "log.ines_1",
-            "text": "Mẫu lõi số 41: bụi xám, bụi xám, một viên sỏi xanh. Ghi vào sổ là \"bất thường\". Giữ lại làm \"của tôi\". — Ines"
-        },
-        {
-            "key": "log.theo_1",
-            "text": "Đặt tên cho hết cây con ở khay số bốn; cây bạc hà tên là Gerald. Gerald là cây bạc hà ngon nhất trên Mặt Trăng; tiêu chuẩn thì thấp thật, nhưng cậu chàng vượt qua ngon lành. — Theo"
-        },
-        {
-            "key": "log.ro_2",
-            "text": "Tối nay đọc cảnh báo bão trên sóng, kẹp giữa hai bài nhạc chậm để dưới bếp khỏi lặng đi. 07 lăn tới sát loa ngoài sân rồi đỗ yên trong vệt đèn hắt ra. — Ro"
-        },
-        {
-            "key": "log.ines_2",
-            "text": "Transfer-19 muốn chúng tôi lên tàu ngay, bỏ lại các ổ dữ liệu. Tôi hỏi ai muốn ở lại trong đồ du hành để gửi cho xong bản khảo sát. Cả bốn cánh tay giơ lên trước khi tôi nói hết câu. — Ines"
-        },
-        {
-            "key": "log.kenji_2",
-            "text": "Giấu một cái bánh dự phòng cho 07 dưới tấm bạt trong xe bánh xích. Lần tới mình sẽ thay cho nó đủ sáu bánh giống nhau, chứ không chỉ vá cái bánh lạc loài. — Kenji"
-        },
-        {
-            "key": "log.theo_2",
-            "text": "Đã niêm phong mấy hộp hạt giống dự phòng trong kho dưới Hố Tối và giao vòng tưới nhà kính lại cho Moss. Moss ngân nga với mình suốt hai mươi giây, cứ như mình vừa đích thân xúc phạm đám cà chua. — Theo"
-        },
-        {
-            "key": "log.ro_3",
-            "text": "Đêm cuối phát sóng trực tiếp; mình đã nối đầu băng vào vòng lặp của cột phát để nhạc cứ chạy trong lúc cả nhóm làm nốt việc trên sống núi. Nếu Chủ nhật này Lena có mở máy nghe, cô ấy sẽ biết đèn hiên vẫn còn sáng. — Ro"
-        },
-        {
-            "key": "log.ines_3",
-            "text": "Bản khảo sát lòng chảo đã tổng hợp xong và nạp vào lõi chính; tôi đã xếp lệnh căn chảo ăng-ten lớn và phát lên Ark IV vào hàng đợi khôi phục của 07, phòng khi đội trên sống núi không kịp giờ. Mọi thứ họ cần để về nhà đều nằm trong tệp này. — Ines"
-        },
-        {
-            "key": "log.theo_3",
-            "text": "Đã chuyển hệ thông gió thủy canh sang chu trình kín và để khay húng quế cuối cùng bên cửa sổ, chỗ ánh Trái Đất rọi vào. Khi các tàu Ark mang kho hạt giống xuống, họ sẽ muốn thấy đất ở đây đã trồng được. — Theo"
-        },
-        {
-            "key": "log.kenji_3",
-            "text": "Đã đấu bệ sạc của 07 vào mạch sạc sâu và đặt bộ khởi động theo tần số Chủ nhật. Bão đã làm đứt đường dây trên sống núi, nên nếu sau hôm nay chảo ăng-ten lớn vẫn tắt, chiếc xe nhỏ có thể tự đi nốt quãng đường khi pin đầy lại. — Kenji"
-        },
-        {
-            "key": "ticker.radio.weather",
-            "text": "…thời tiết đêm nay: trời quang trên Biển Tĩnh Lặng, như mọi khi…"
-        },
-        {
-            "key": "letter.mast_1",
-            "text": "02/10/1988 · Lumen Station, đây là Đài Kiểm soát Khởi hành Geneva. Đã xác nhận năm mất mùa thứ mười trên cả hai bán cầu. Các chuyến bay cuối cùng từ mặt đất lên cụm tàu Ark ở L4 và L5 sẽ hoàn tất trong tháng này."
-        },
-        {
-            "key": "letter.mast_2",
-            "text": "14/10/1988 · Lumen Station, đây là trạm tiếp sóng Ark IV tại L5. Các mẫu lõi khoan nông ở vùng cực đều khô; phương án định cư trên Mặt Trăng đã bị loại. Hãy thu dọn trạm, tàu sẽ tới đón vào ngày 29."
-        },
-        {
-            "key": "letter.mast_3",
-            "text": "18/10/1988 · Lena, Ines ở Lumen đây. Kết luận khô hạn sai rồi—mẫu lõi 41 lấy từ dưới tầng bazan có ngậm nước. Cô cho radar tự động của Meridian quét xuống dưới lòng chảo chỗ chúng tôi được không?"
-        },
-        {
-            "key": "letter.mast_4",
-            "text": "22/10/1988 · Ines, Lena trên tàu Ark IV đây. Tôi đã khóa dàn máy dò tự động của Meridian vào một vòng quét sâu qua đường truyền của Lumen. Vùng phản xạ dưới lòng chảo của chị rất lớn—đó là cả một sông băng ngầm."
-        },
-        {
-            "key": "letter.mast_5",
-            "text": "25/10/1988 · Ro ơi, tối Chủ nhật nào nửa tàu Ark IV cũng mở Lumen After Dark trong lúc hàn kín các vòng thân tàu. Mình đã đăng ký tần số Chủ nhật của bạn làm kênh nhận dữ liệu khảo sát nước của Ines rồi nhé. — Lena Moreau"
-        },
-        {
-            "key": "letter.mast_6",
-            "text": "27/10/1988 · Đài canh Ark IV, Kalani ở Lumen Station đây. Mũi khoan đã xuyên qua tầng bazan ở độ sâu 140 m—băng nước tinh khiết, đủ để cả hạm đội hạ cánh. Toàn bộ bản khảo sát sẽ được phát từ chảo ăng-ten lớn trên Đỉnh núi lúc 22:00 tối mai."
-        },
-        {
-            "key": "letter.mast_7",
-            "text": "28/10/1988 · 19:30 · Lumen Station, đây là tàu đón Transfer-19. Bão mặt trời sẽ ập tới trong hai tiếng nữa. Bỏ lại các ổ dữ liệu khảo sát và lên khoang phóng ngay, nếu không chúng ta sẽ lỡ cửa sổ quỹ đạo."
-        },
-        {
-            "key": "letter.mast_8",
-            "text": "28/10/1988 · 21:20 · Transfer-19, Morrow ở Lumen đây. Bão làm kẹt chảo ăng-ten lớn trên Đỉnh núi khi mới truyền được mười bốn phần trăm. Cả bốn chúng tôi đang mặc đồ du hành để cất ổ sao lưu và cài các rover sang chế độ tiếp tục—xin giữ quỹ đạo chờ tới bình minh."
-        },
-        {
-            "key": "letter.mast_9",
-            "text": "29/10/1988 · 05:00 · Đài chỉ huy Ark IV, Transfer-19 đây. Khoang ở của Lumen bị hở trong cơn bão; bộ phát tín hiệu trên đồ du hành 01 đến 04 đã tắt lúc 04:12. Bức xạ đã vượt ngưỡng—chúng tôi buộc phải quay về L5 mà không có họ."
-        },
-        {
-            "key": "letter.mast_10",
-            "text": "06/11/1988 · Gửi bộ đệm Lumen Station, Tiến sĩ Lena Moreau trên tàu Ark IV đây. Vì thiếu gói dữ liệu hoàn chỉnh của các bạn, Hội đồng đã kết luận Mặt Trăng khô hạn và giữ hạm đội lại ở quỹ đạo chờ tại L5. Tôi vẫn sẽ giữ lịch canh nghe Chủ nhật của Ro—ba ngắn, một dài—chừng nào tôi còn sống."
-        },
-        {
-            "key": "ticker.ending.answer",
-            "text": "Lumen Station, Moreau trên tàu Ark IV đây. Ba mươi sáu năm trực sóng mỗi Chủ nhật, cuối cùng bản khảo sát của các bạn cũng đã tới. Chúng tôi về nhà đây. — L. Moreau"
-        },
-        {
-            "key": "letter.after_1",
-            "text": "10/2024 · BẢN TIN ARK IV: Gói dữ liệu thủy văn đã được xác thực—đủ cả sáu phân khu khảo sát. Sau ba mươi sáu năm ở L5, Hội đồng Hạm đội đã nhất trí đưa các tàu Ark xuống Mặt Trăng. — L. Moreau"
-        },
-        {
-            "key": "letter.after_2",
-            "text": "10/2024 · BẢN TIN ARK IV: Hội đồng đã đặt tên cho bãi đáp chính là Lòng chảo Kalani–Morrow. Nửa đêm tôi đi dọc hành lang quan sát chỉ để ngắm Mặt Trăng, biết rằng cuối cùng chúng ta cũng có đất để đặt chân. — L. Moreau"
-        },
-        {
-            "key": "letter.after_3",
-            "text": "11/2024 · KỸ THUẬT ARK IV: Số liệu đo xa của trạm cho thấy chiếc 07 đã leo lên Đỉnh núi trên sáu bánh từ tính đồng bộ. Cả xưởng máy reo hò—hàng đợi bảo trì năm 1988 của Morrow rốt cuộc đã làm xong việc. — L. Moreau"
-        },
-        {
-            "key": "letter.after_4",
-            "text": "11/2024 · THÔNG TIN ARK IV: Tối nay chúng tôi đã phát cuộn băng lưu trữ của Ro Amadi—mặt băng ghi 'cho ngày mình về nhà'—trên khắp mười hai tàu Ark. Mọi hành lang từ Boong A tới khoang động cơ đều lắng nghe. — L. Moreau"
-        },
-        {
-            "key": "letter.after_5",
-            "text": "12/2024 · THỰC VẬT ARK IV: Hình ảnh từ hầm trú ẩn trong ống dung nham xác nhận giống rêu của Theo Lindqvist vẫn xanh dưới ngọn đèn chạy pin đồng vị. Đội thực vật học đang dọn sẵn khoang ươm để đón các nhánh cấy. — L. Moreau"
-        },
-        {
-            "key": "letter.after_6",
-            "text": "12/2024 · KHÍ TƯỢNG ARK IV: Màn khói mù trên Trái Đất còn cần thêm một thế kỷ nữa mới lắng xuống, nhưng bầu trời trên Lumen Station vẫn quang đãng như mọi khi. Đội khoan băng tiền trạm sẽ khởi hành vào tháng tới. — L. Moreau"
-        },
-        {
-            "key": "letter.after_7",
-            "text": "01/2025 · BÀN KHẢO SÁT ARK IV: Cô học trò nhỏ tuổi nhất của tôi đã xin suất địa chất đầu tiên trên Tàu đáp Số Một. Con bé luôn để sổ tay thực địa năm 1988 của Ines trong túi áo và sáng nào cũng ngắm đường chân trời Mặt Trăng. — L. Moreau"
-        },
-        {
-            "key": "letter.after_8",
-            "text": "01/2025 · BAN ĐIỀU PHỐI CHUNG TYCHO–ILC: Dàn máy phân loại tự động của Meridian chưa bỏ một ca nào suốt ba mươi sáu năm. Đội tiền trạm sẽ nối lưới điện Lumen lên Bậc thềm vành hố trước tiên, để cả hai trạm cùng cấp điện cho các mái vòm mới. — L. Moreau"
-        },
-        {
-            "key": "letter.after_9",
-            "text": "02/2025 · BUỒNG LÁI ARK IV: Đội thợ xưởng tàu đã sơn một chú vịt cao su màu vàng lên mũi Tàu kéo Số Một để lấy may. Đến Giám đốc Bay cũng không nỡ cho sơn đè lên. — L. Moreau"
-        },
-        {
-            "key": "letter.after_10",
-            "text": "03/2025 · ARK IV VANGUARD: Động cơ hạ quỹ đạo sẽ đánh lửa lúc bình minh. Hãy giữ đèn hiệu của trạm luôn sáng và máy thu ở tần số Chủ nhật—sau ba mươi sáu năm, phi hành đoàn đầu tiên đang xuống Lumen. — L. Moreau"
-        },
-        {
-            "key": "map.sheet.title",
-            "text": "Lòng chảo Lumen, khảo sát bằng đôi chân. — I. Kalani"
-        },
-        {
-            "key": "map.tally.label",
-            "text": "Đã kiểm tra:"
-        },
-        {
-            "key": "map.complete.note",
-            "text": "Đã kiểm tra: Mặt Trăng vẫn còn đó. — I."
-        },
-        {
-            "key": "map.state.heart_waiting",
-            "text": "Bên trong vẫn còn đồ."
-        },
-        {
-            "key": "map.state.picked_clean",
-            "text": "Đã dọn sạch."
-        },
-        {
-            "key": "map.state.mast_dark",
-            "text": "Đang tắt. Cần sửa."
-        },
-        {
-            "key": "map.state.mast_lit",
-            "text": "Đang hoạt động. Trong tầm phủ sóng."
-        },
-        {
-            "key": "map.place.lander.name",
-            "text": "Tàu đổ bộ"
-        },
-        {
-            "key": "map.place.lander.note",
-            "text": "Nhà. Dân số: bốn người, một rover, một chậu húng quế rất tự hào."
-        },
-        {
-            "key": "map.site.depot.name",
-            "text": "Kho tiếp tế"
-        },
-        {
-            "key": "map.site.depot.note",
-            "text": "Đồ dự phòng đủ cả. Chủ yếu là bu-lông."
-        },
-        {
-            "key": "map.site.kestrel.name",
-            "text": "Kestrel-3"
-        },
-        {
-            "key": "map.site.kestrel.note",
-            "text": "Vệ tinh tiếp sóng của Meridian. Lúc rơi xuống nó vẫn chĩa về phía các tàu Ark."
-        },
-        {
-            "key": "map.trail.kestrel.name",
-            "text": "Vệt trượt của Kestrel"
-        },
-        {
-            "key": "map.trail.kestrel.note",
-            "text": "Tôi đã đi bộ đo nó. Hai lần."
-        },
-        {
-            "key": "map.site.drill.name",
-            "text": "Giàn khoan"
-        },
-        {
-            "key": "map.site.drill.note",
-            "text": "Máy khoan của tôi. Mẫu lõi 41 lấy ở đây, viên màu xanh."
-        },
-        {
-            "key": "map.site.garage.name",
-            "text": "Gara của Kenji"
-        },
-        {
-            "key": "map.site.garage.note",
-            "text": "Không vào nếu không có Kenji. Kenji: không vào nếu không đội mũ."
-        },
-        {
-            "key": "map.site.lander.name",
-            "text": "Tàu tiếp tế trong hẻm"
-        },
-        {
-            "key": "map.site.lander.note",
-            "text": "Chuyến tiếp tế năm 87 chở khay hạt giống của Theo. Hạ cánh hơi… mạnh tay."
-        },
-        {
-            "key": "map.friend.tilly.name",
-            "text": "Hố của Tilly"
-        },
-        {
-            "key": "map.friend.tilly.note",
-            "text": "Chỗ con bé dỗi mỗi khi tôi đi nhanh quá."
-        },
-        {
-            "key": "map.relay.0.name",
-            "text": "Trạm trên gò"
-        },
-        {
-            "key": "map.relay.0.note",
-            "text": "Ro gọi nó là \"bé út\"."
-        },
-        {
-            "key": "map.relay.1.name",
-            "text": "Trạm vai vành hố"
-        },
-        {
-            "key": "map.relay.1.note",
-            "text": "Bóng đổ dài nhất lòng chảo."
-        },
-        {
-            "key": "map.relay.2.name",
-            "text": "Trạm miệng hẻm"
-        },
-        {
-            "key": "map.relay.2.note",
-            "text": "Ở đây cái gì cũng vang. Cả tiếng rè."
-        },
-        {
-            "key": "map.relay.3.name",
-            "text": "Trạm cuối hẻm"
-        },
-        {
-            "key": "map.relay.3.note",
-            "text": "Ngay trên căn phòng của Ro. Đương nhiên rồi."
-        },
-        {
-            "key": "map.canyon.mouth.name",
-            "text": "Hẻm Thì Thầm"
-        },
-        {
-            "key": "map.canyon.mouth.note",
-            "text": "Nói gì đó đi. Nó sẽ nói lại, nhỏ hơn."
-        },
-        {
-            "key": "map.canyon.lip.name",
-            "text": "Vực sâu"
-        },
-        {
-            "key": "map.canyon.lip.note",
-            "text": "Quá rộng để qua. Kenji bảo \"tạm thời thôi\"."
-        },
-        {
-            "key": "map.canyon.landing.name",
-            "text": "Bờ bên kia"
-        },
-        {
-            "key": "map.canyon.landing.note",
-            "text": "Bên này lúc nào cũng có người để đèn."
-        },
-        {
-            "key": "map.canyon.ledge.name",
-            "text": "Gờ đá của Ro"
-        },
-        {
-            "key": "map.canyon.ledge.note",
-            "text": "Cô ấy ra đây để nghe tiếng mình hát vọng lại."
-        },
-        {
-            "key": "map.canyon.terminus.name",
-            "text": "Căn phòng của Ro"
-        },
-        {
-            "key": "map.canyon.terminus.note",
-            "text": "Âm thanh hay nhất Mặt Trăng. Lời cô ấy, không phải của tôi."
-        },
-        {
-            "key": "map.canyon.exit.name",
-            "text": "Lối ra"
-        },
-        {
-            "key": "map.canyon.exit.note",
-            "text": "Chỉ đi một chiều. Đừng thử leo ngược lên."
-        },
-        {
-            "key": "map.region.peak.name",
-            "text": "Đỉnh núi"
-        },
-        {
-            "key": "map.region.peak.note",
-            "text": "Chảo ăng-ten lớn. Chặng cuối trước khi gửi bản khảo sát lên."
-        },
-        {
-            "key": "map.region.terraces.name",
-            "text": "Bậc thềm vành hố"
-        },
-        {
-            "key": "map.region.terraces.note",
-            "text": "Quá dốc cho xe bốn bánh. Atlas của Kenji đỗ ở trên này."
-        },
-        {
-            "key": "map.place.antenna_farm.name",
-            "text": "Rừng ăng-ten của Ro"
-        },
-        {
-            "key": "map.place.antenna_farm.note",
-            "text": "Gặp bão mặt trời là chúng ngân lên. Ro gọi đó là dàn đồng ca."
         },
         {
             "key": "ui.title.subtitle",
@@ -1601,38 +821,6 @@
         {
             "key": "crew.kenji.plate",
             "text": "Kenji (hỏi chú vịt)"
-        },
-        {
-            "key": "ticker.set.ro.filling",
-            "text": "Kệ của Ro đầy dần. Nghe đã thấy giống cô ấy rồi."
-        },
-        {
-            "key": "ticker.set.theo.filling",
-            "text": "Kệ của Theo đầy dần. Có món gì trên đó như sắp nảy mầm."
-        },
-        {
-            "key": "ticker.set.ines.filling",
-            "text": "Kệ của Ines đầy dần, món nào cũng xếp thẳng hàng."
-        },
-        {
-            "key": "ticker.set.kenji.filling",
-            "text": "Kệ của Kenji đầy dần. Chú vịt gật gù tán thành."
-        },
-        {
-            "key": "ticker.set.ro.complete",
-            "text": "Cửa sổ của Ro lại sáng đèn."
-        },
-        {
-            "key": "ticker.set.theo.complete",
-            "text": "Cửa sổ của Theo lại sáng đèn."
-        },
-        {
-            "key": "ticker.set.ines.complete",
-            "text": "Cửa sổ của Ines lại sáng đèn."
-        },
-        {
-            "key": "ticker.set.kenji.complete",
-            "text": "Cửa sổ của Kenji lại sáng đèn."
         },
         {
             "key": "lens.boot.signal",
@@ -1775,34 +963,6 @@
             "text": "Luyện từ đất hiếm và chip mạch ở lò luyện II."
         },
         {
-            "key": "ticker.cargo.full",
-            "text": "Khoang hàng đã đầy. Phần đã cắt vẫn nằm ở xác tàu."
-        },
-        {
-            "key": "ticker.cargo.home_full",
-            "text": "Kho ở nhà đã đầy. Hãy dựng thêm kệ ở ổ trống."
-        },
-        {
-            "key": "crate.depot.note",
-            "text": "Đồ dự phòng cho đường dây trên sống núi. Đừng để Ines lấy cuộn dây đồng xịn đi buộc nhãn mẫu lõi. — Kenji"
-        },
-        {
-            "key": "crate.kestrel.note",
-            "text": "Thấu kính tháo từ Kestrel-3. Cầm nhẹ tay như cầm đĩa than nhé. — Ro"
-        },
-        {
-            "key": "crate.drill.note",
-            "text": "Cáp dự phòng cho đợt khoan băng tầng sâu. Đã dán nhãn, cuộn gọn, đếm hai lần. — I. Kalani"
-        },
-        {
-            "key": "crate.garage.note",
-            "text": "Cho 07, lần tới nó hỏng. Thế nào cũng hỏng. — Kenji"
-        },
-        {
-            "key": "crate.lander.note",
-            "text": "Khay hạt giống từ chuyến tiếp tế năm 87 đã mang lên mái vòm. Phụ tùng thừa đóng thùng để lại đây. — Theo"
-        },
-        {
             "key": "kit.focus_lens.name",
             "text": "Thấu kính hội tụ"
         },
@@ -1863,24 +1023,12 @@
             "text": "Thêm bốn ô trong khoang hàng của 07, mỗi chuyến chở về được nhiều hơn."
         },
         {
-            "key": "hint.scan",
-            "text": "Quét"
-        },
-        {
             "key": "scan.fragment",
             "text": "Mảnh {0}/{1} · {2}"
         },
         {
             "key": "scan.known",
             "text": "Bản vẽ đã có · +{0} Kim loại"
-        },
-        {
-            "key": "scan.complete",
-            "text": "Đã học bản vẽ: {0}."
-        },
-        {
-            "key": "scan.site_count",
-            "text": "{0} mảnh cần quét"
         },
         {
             "key": "hint.hold",
@@ -1929,14 +1077,6 @@
         {
             "key": "container.survey_sled",
             "text": "Xe trượt của Tilly"
-        },
-        {
-            "key": "site.hut.name",
-            "text": "Chòi bảo trì trạm tiếp sóng"
-        },
-        {
-            "key": "site.chasm_lip.name",
-            "text": "Bãi thử nhảy của Kenji"
         },
         {
             "key": "glyph.keyboard.tab",
@@ -2091,28 +1231,8 @@
             "text": "Chưa tìm thấy bản vẽ"
         },
         {
-            "key": "micro.06.name",
-            "text": "06"
-        },
-        {
-            "key": "micro.mule.name",
-            "text": "Mule"
-        },
-        {
-            "key": "micro.haul_sled.name",
-            "text": "Xe chở hàng"
-        },
-        {
-            "key": "micro.drone.name",
-            "text": "Chị em của Tilly"
-        },
-        {
             "key": "ui.cargo.tab_seven",
             "text": "TRANG BỊ"
-        },
-        {
-            "key": "hint.fit",
-            "text": "Lắp"
         },
         {
             "key": "ui.bay.row_full",

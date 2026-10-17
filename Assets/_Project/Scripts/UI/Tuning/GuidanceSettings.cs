@@ -4,7 +4,7 @@ using UnityEngine;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The gentle guidance (docs/features/M3-16, M3-24 B): the soft "next" line, the place cards and the opening's
+    /// The gentle guidance (docs/features/M3-16, M3-24 B): the soft "next" line, the recipe card and the opening's
     /// protocol readout.
     /// </summary>
     [Serializable]
@@ -36,18 +36,6 @@ namespace MoonProject.UI
         [Range(0f, 5f)]
         [SerializeField] private float _stillSeconds = 1.2f;
 
-        [Tooltip("A place card (the place's name and its one job) easing in and out.")]
-        [SerializeField] private RevealSettings _place = new RevealSettings(1f, 1.4f, 12f, 0.94f, 1f, 0.7f);
-
-        [Tooltip("Seconds a place card rests fully visible.")]
-        [Range(1f, 10f)]
-        [SerializeField] private float _placeHoldSeconds = 4f;
-
-        [Tooltip("Seconds the radio tower's card waits after 07 first comes near, while World's slow light runs down "
-            + "each dark cable to what the tower will power (M3-24 B); its line then names the job.")]
-        [Range(0f, 10f)]
-        [SerializeField] private float _towerCardDelay = 4f;
-
         [Tooltip("The recipe card easing in while 07 looks at the tower's hopper or a board sheet, and out after.")]
         [SerializeField] private RevealSettings _recipe = new RevealSettings(0.45f, 0.6f, 8f, 0.96f, 1.4f, 0.7f);
 
@@ -69,12 +57,6 @@ namespace MoonProject.UI
         public float StillSpeed => _stillSpeed;
 
         public float StillSeconds => _stillSeconds;
-
-        public RevealSettings Place => _place;
-
-        public float PlaceHoldSeconds => _placeHoldSeconds;
-
-        public float TowerCardDelay => _towerCardDelay;
 
         public RevealSettings Recipe => _recipe;
 
