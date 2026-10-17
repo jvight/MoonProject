@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 
@@ -249,6 +250,40 @@ namespace MoonProject.UI.PlayModeTests
         public int SetSize(string blueprintId)
         {
             return blueprintId != null && SetSizes.TryGetValue(blueprintId, out int z) ? z : 0;
+        }
+    }
+
+    /// <summary>The sky, set by hand: the Sun's elevation is all the Sun's arc reads.</summary>
+    public sealed class FakeSunlight : ISunlight
+    {
+        public float ElevationDegrees { get; set; } = 10f;
+
+        public float TimeSeconds => 0f;
+
+        public bool IsHoldingEclipse => false;
+
+        public Vector3 SunDirection
+        {
+            get
+            {
+                float radians = ElevationDegrees * Mathf.Deg2Rad;
+                return new Vector3(Mathf.Cos(radians), Mathf.Sin(radians), 0f);
+            }
+        }
+
+        public float EclipseFactor => 0f;
+
+        public float EarthPhase => 0f;
+
+        public SkyPhase Phase => SkyPhase.Sunlit;
+
+        public float SunlightAt(Vector3 position)
+        {
+            return 1f;
+        }
+
+        public void ReleaseOpeningEclipse()
+        {
         }
     }
 }

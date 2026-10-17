@@ -15,9 +15,9 @@ namespace MoonProject.UI
         public UiServices(EventBus events, InputReader input, IViewCamera view, IRoverState rover, IAudioSettings audio,
             ILookSettings look, IFeelSettings feel, ISaveService save, IMaterialStock materials,
             IInteractionHints hints, ISalvageStatus salvage, IGameFlow flow, ISettingsFile settings,
-            IRoverBattery battery, IBeamStatus beam, IRecoveryProgress recovery, ICargoHold hold,
-            IMaterialCatalog catalog, IRoverSystems systems, IRoverFaceScreen faceScreen = null,
-            BuildField buildField = null)
+            IRoverBattery battery, IBeamStatus beam, ICargoHold hold, IMaterialCatalog catalog,
+            IRoverSystems systems, IRoverFaceScreen faceScreen = null, BuildField buildField = null,
+            ISunlight sun = null)
         {
             Events = events ?? throw new ArgumentNullException(nameof(events));
             Input = input ?? throw new ArgumentNullException(nameof(input));
@@ -33,13 +33,13 @@ namespace MoonProject.UI
             Flow = flow ?? throw new ArgumentNullException(nameof(flow));
             Settings = settings ?? throw new ArgumentNullException(nameof(settings));
             Battery = battery ?? throw new ArgumentNullException(nameof(battery));
-            Recovery = recovery ?? throw new ArgumentNullException(nameof(recovery));
             Beam = beam ?? throw new ArgumentNullException(nameof(beam));
             Hold = hold ?? throw new ArgumentNullException(nameof(hold));
             Systems = systems ?? throw new ArgumentNullException(nameof(systems));
             Catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
             FaceScreen = faceScreen;
             BuildField = buildField;
+            Sun = sun;
         }
 
         public EventBus Events { get; }
@@ -89,8 +89,8 @@ namespace MoonProject.UI
         /// <summary>Whether 07's beam is at work: the HUD arc hides meanwhile.</summary>
         public IBeamStatus Beam { get; }
 
-        /// <summary>The four recovery targets' lamps: the recovery panel's labels.</summary>
-        public IRecoveryProgress Recovery { get; }
+        /// <summary>The sky: the Sun's arc reads it (optional in isolated UI test rigs).</summary>
+        public ISunlight Sun { get; }
 
         /// <summary>
         /// Resolves every service; a missing one throws (a system is missing from the bootstrap order).
@@ -104,13 +104,14 @@ namespace MoonProject.UI
 
             context.TryGet(out IRoverFaceScreen faceScreen);
             context.TryGet(out BuildField buildField);
+            context.TryGet(out ISunlight sun);
             return new UiServices(context.Events, context.Input, context.Get<IViewCamera>(), context.Get<IRoverState>(),
                 context.Get<IAudioSettings>(), context.Get<ILookSettings>(), context.Get<IFeelSettings>(),
                 context.Get<ISaveService>(),
                 context.Get<IMaterialStock>(), context.Get<IInteractionHints>(), context.Get<ISalvageStatus>(),
                 context.Get<IGameFlow>(), context.Get<ISettingsFile>(), context.Get<IRoverBattery>(),
-                context.Get<IBeamStatus>(), context.Get<IRecoveryProgress>(), context.Get<ICargoHold>(),
-                context.Get<IMaterialCatalog>(), context.Get<IRoverSystems>(), faceScreen, buildField);
+                context.Get<IBeamStatus>(), context.Get<ICargoHold>(), context.Get<IMaterialCatalog>(),
+                context.Get<IRoverSystems>(), faceScreen, buildField, sun);
         }
     }
 }

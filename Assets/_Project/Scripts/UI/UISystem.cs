@@ -68,7 +68,9 @@ namespace MoonProject.UI
         private bool _cellRowRevealed;
         private bool _carrying;
         private SaveTick _saveTick;
-        private ProtocolReadout _protocol;
+        private ReadoutView _readout;
+        private SunArcView _sunArc;
+        private readonly OpeningProtocol _openingProtocol = new OpeningProtocol();
         private ContextPrompt _prompt;
         private PickupFeed _pickups;
         private SalvageRing _salvageRing;
@@ -116,7 +118,11 @@ namespace MoonProject.UI
 
         internal UnlockCard UnlockCard => _unlockCard;
 
-        internal ProtocolReadout Protocol => _protocol;
+        internal ReadoutView Readout => _readout;
+
+        internal SunArcView SunArc => _sunArc;
+
+        internal OpeningProtocol OpeningProtocol => _openingProtocol;
 
         internal LookUpChip LookUp => _lookUpChip;
 
@@ -259,7 +265,11 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RoverWakeBeatReached>(OnWakeBeat));
             _tokens.Add(events.Subscribe<LanguageChanged>(OnLanguageChanged));
             _tokens.Add(events.Subscribe<TickerLine>(OnTickerLine));
-            _tokens.Add(events.Subscribe<RoverSystemChanged>(_ => _cargo?.MarkDirty()));
+            _tokens.Add(events.Subscribe<RoverSystemChanged>(OnSystemChanged));
+            _tokens.Add(events.Subscribe<CutterRefused>(_ => _readout?.CutterRefused()));
+            _tokens.Add(events.Subscribe<OpeningMilestoneReached>(OnMilestoneReached));
+            _tokens.Add(events.Subscribe<LanderReserveChanged>(OnLanderReserveChanged));
+            _tokens.Add(events.Subscribe<StoryScanned>(scanned => _readout?.StoryScanned(scanned.TextKey)));
             _tokens.Add(events.Subscribe<StructureLearned>(OnStructureLearned));
             _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
             _tokens.Add(events.Subscribe<StructurePlaced>(_ => _director.NotifyUsed(InteractionKind.Build)));
@@ -314,7 +324,9 @@ namespace MoonProject.UI
             _lowBattery = new LowBatteryHint(_tuning.Guidance, services.Battery, _localization);
             _batteryDial = new BatteryDial(_layout, _tuning.Battery, services.Battery, services.Beam);
             _saveTick = new SaveTick(_layout, _tuning.SaveTick);
-            _protocol = new ProtocolReadout(_layout.Hud, _tuning.Guidance, _localization, services.Recovery);
+            _readout = new ReadoutView(_layout.Hud, _tuning.Guidance, _localization, services.Systems, services.Battery,
+                services.BuildField, _openingProtocol);
+            _sunArc = new SunArcView(_layout, _tuning.Guidance, _localization, services.Sun);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
                 services.Events, new[] { _layout.BuildStrip });
             _pickups = new PickupFeed(_layout, _tuning.PickupFeed, _numbers, _localization, services.Materials,
@@ -423,7 +435,7 @@ namespace MoonProject.UI
             _prompt.Tick(deltaTime, PromptsOpen(paused) && holder == PromptHolder.Chip,
                 _services.Hints.Primary, device, panelSize);
             _salvageRing.Tick(deltaTime, !paused && _awake, panelSize);
-            _protocol.Tick(hudTime);
+            _readout.Tick(hudTime, holder == PromptHolder.Readout);
             // The look-up chip is the gentlest of the prompts: a teaching prompt that wants the screen takes it first.
             bool hintOpen = LookHintsOpen() && holder == PromptHolder.Chip &&
                             !_director.Wants(_services.Hints.Primary);
@@ -438,6 +450,7 @@ namespace MoonProject.UI
                 _lowBattery, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Battery));
             bool hudOpen = !paused && _awake && !_inOpening && !_stargaze.IsVeiled && !cargoOpen;
             _batteryDial.Tick(deltaTime, _cellRowRevealed, hudOpen);
+            _sunArc.Tick(deltaTime, hudOpen && _openingProtocol.IsPowerOn);
         }
 
         /// <summary>The cell row exists from the first time the charge dropped below its reveal share.</summary>
@@ -455,13 +468,17 @@ namespace MoonProject.UI
 
         private bool ObjectiveOpen(bool paused)
         {
-            return !paused && _awake && !_inOpening && !_stargaze.IsVeiled && !_protocol.IsVisible &&
-                   !_cargo.IsOpen && !BuildMenuOpen();
+            return !paused && _awake && !_inOpening && !_stargaze.IsVeiled && !_cargo.IsOpen && !BuildMenuOpen();
         }
 
         private bool LookHintsOpen()
         {
-            return !_protocol.IsVisible && !BuildMenuOpen();
+            return !BuildMenuOpen();
+        }
+
+        private bool ReadoutOpen(bool paused)
+        {
+            return !paused && !_stargaze.IsVeiled && !_cargo.IsOpen;
         }
 
         private bool BuildMenuOpen()
@@ -474,30 +491,34 @@ namespace MoonProject.UI
         {
             None,
             Unlock,
+            Readout,
             Chip,
         }
 
         /// <summary>
         /// One guidance element at a time (docs/design/opening-v2.md §5): a chip or card (the teaching prompt, the
-        /// look/drive/hold chips, the blueprint card), then the low-battery hint, then the objective line. Each wants
-        /// the slot when it could show; the slot goes to the highest and passes on once the screen is clear. Inside
-        /// the prompt kind the one already up keeps the screen, else the blueprint card and the chips take turns in
-        /// that order.
+        /// look/drive/hold chips, the blueprint card, 07's readout cards), then the low-battery hint, then the
+        /// objective line. Each wants the slot when it could show; the slot goes to the highest and passes on once the
+        /// screen is clear. Inside the prompt kind the one already up keeps the screen, else the blueprint card, the
+        /// readout and the chips take turns in that order.
         /// </summary>
         private PromptHolder DecideGuidance(bool paused)
         {
             bool looks = LookHintsOpen() && (_firstPrompt.Word != HintWord.None || _holdHint.Wants(_awake && _carrying));
             bool chipWants = (PromptsOpen(paused) && _director.Wants(_services.Hints.Primary)) || looks;
             bool unlockWants = !_cargo.IsOpen && _unlockCard.IsWaiting;
+            bool readoutWants = ReadoutOpen(paused) && _readout.Wants;
             bool chipUp = _prompt.IsVisible || _lookUpChip.IsVisible;
             PromptHolder holder = _unlockCard.IsVisible ? PromptHolder.Unlock
+                : _readout.IsVisible ? PromptHolder.Readout
                 : chipUp ? PromptHolder.Chip
                 : unlockWants ? PromptHolder.Unlock
+                : readoutWants ? PromptHolder.Readout
                 : chipWants ? PromptHolder.Chip : PromptHolder.None;
             _guidanceWants[(int)GuidanceKind.Prompt] = holder != PromptHolder.None;
             _guidanceWants[(int)GuidanceKind.Battery] = ObjectiveOpen(paused) && _lowBattery.WantsShown;
             _guidanceWants[(int)GuidanceKind.Objective] = ObjectiveOpen(paused) && _objective.WantsShown;
-            _guidanceShown[(int)GuidanceKind.Prompt] = chipUp || _unlockCard.IsVisible;
+            _guidanceShown[(int)GuidanceKind.Prompt] = chipUp || _unlockCard.IsVisible || _readout.IsVisible;
             _guidanceShown[(int)GuidanceKind.Battery] = _objectiveView.ShowsBattery;
             _guidanceShown[(int)GuidanceKind.Objective] = _objectiveView.ShowsObjective;
             _slot.Step(_guidanceWants, _guidanceShown);
@@ -830,17 +851,47 @@ namespace MoonProject.UI
             {
                 _inOpening = true;
                 _firstPrompt.OpeningBegan();
-                _protocol.OpeningBegan();
+                _readout.OpeningBegan();
             }
             else if (reached.Beat == WakeBeat.GazeEarth)
             {
-                _protocol.Cue();
+                _readout.LensOpened();
             }
             else if (reached.Beat == WakeBeat.ChaseFrame)
             {
                 _inOpening = false;
-                _protocol.Cue();
+                _readout.LensOpened();
                 _firstPrompt.ChaseFrameReached();
+            }
+        }
+
+        /// <summary>
+        /// A milestone of the opening: the protocol line follows it, and a milestone reached now (not replayed from a
+        /// save) shows the new line.
+        /// </summary>
+        private void OnMilestoneReached(OpeningMilestoneReached reached)
+        {
+            if (_openingProtocol.Reach(reached.Milestone) && !reached.Restored && _bound)
+            {
+                _readout.ProtocolChanged();
+            }
+        }
+
+        /// <summary>The lander's old cells gave out: the readout says so once; a loaded game says nothing.</summary>
+        private void OnLanderReserveChanged(LanderReserveChanged changed)
+        {
+            if (_bound && !changed.Restored && changed.Reserve01 <= 0f)
+            {
+                _readout.ReserveEmpty(Mathf.RoundToInt(changed.Reserve01 * 100f));
+            }
+        }
+
+        private void OnSystemChanged(RoverSystemChanged changed)
+        {
+            _cargo?.MarkDirty();
+            if (_bound && !changed.Restored)
+            {
+                _readout.SystemChanged(changed.System);
             }
         }
 
@@ -866,7 +917,8 @@ namespace MoonProject.UI
             _lookUpChip.Relocalize();
             _lowBattery.Relocalize();
             _objectiveView.Relocalize(_lowBattery);
-            _protocol.Relocalize();
+            _readout.Relocalize();
+            _sunArc.Relocalize();
             _buildStrip?.Relocalize();
             _pickups.Relocalize();
             _cargo.Relocalize();

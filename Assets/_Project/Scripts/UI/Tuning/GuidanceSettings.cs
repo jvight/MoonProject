@@ -4,8 +4,8 @@ using UnityEngine;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The gentle guidance (docs/design/opening-v2.md §3): the objective line and the protocol
-    /// readout.
+    /// The gentle guidance (docs/design/opening-v2.md §3, §10): the objective line, 07's readout cards and the Sun's
+    /// arc.
     /// </summary>
     [Serializable]
     public sealed class GuidanceSettings
@@ -41,12 +41,33 @@ namespace MoonProject.UI
         [Range(10f, 600f)]
         [SerializeField] private float _objectiveIdleSeconds = 90f;
 
-        [Tooltip("The recovery protocol's readout in 07's lens at the end of the full opening, easing in and out.")]
-        [SerializeField] private RevealSettings _protocol = new RevealSettings(0.8f, 1.1f, 6f, 0.97f, 1f, 0.8f);
+        [Tooltip("07's readout cards (the boot diagnostics, the protocol line, the lander's reserve, a scanned " +
+                 "panel's text) easing in and out.")]
+        [SerializeField] private RevealSettings _readout = new RevealSettings(0.8f, 1.1f, 6f, 0.97f, 1f, 0.8f);
 
-        [Tooltip("Seconds the protocol readout rests fully visible (about 4 s on screen with its fades, M3-24 B).")]
-        [Range(1f, 10f)]
-        [SerializeField] private float _protocolHoldSeconds = 2.8f;
+        [Tooltip("Seconds the boot diagnostics rest fully visible: ten lines to read.")]
+        [Range(2f, 20f)]
+        [SerializeField] private float _bootHoldSeconds = 8f;
+
+        [Tooltip("Seconds a one- or two-line readout card (the protocol line, the reserve, one system) rests.")]
+        [Range(1f, 12f)]
+        [SerializeField] private float _statusHoldSeconds = 4f;
+
+        [Tooltip("Seconds a scanned panel's text rests: the player stops to read it (opening-v2 section 7).")]
+        [Range(3f, 20f)]
+        [SerializeField] private float _storyHoldSeconds = 9f;
+
+        [Tooltip("Seconds a line stays lit after its system changed or refused.")]
+        [Range(0.3f, 4f)]
+        [SerializeField] private float _flashSeconds = 1.2f;
+
+        [Tooltip("The Sun's arc easing in and out.")]
+        [SerializeField] private RevealSettings _sunArc = new RevealSettings(1.2f, 1.5f, 6f, 0.97f, 1f, 0.8f);
+
+        [Tooltip("Elevation (degrees) at which the Sun's arc reads full: the highest the low circling Sun climbs " +
+                 "(World's sky cycle).")]
+        [Range(5f, 60f)]
+        [SerializeField] private float _sunArcFullElevation = 17.3f;
 
         public RevealSettings Line => _line;
 
@@ -64,8 +85,18 @@ namespace MoonProject.UI
 
         public float ObjectiveIdleSeconds => _objectiveIdleSeconds;
 
-        public RevealSettings Protocol => _protocol;
+        public RevealSettings Readout => _readout;
 
-        public float ProtocolHoldSeconds => _protocolHoldSeconds;
+        public float BootHoldSeconds => _bootHoldSeconds;
+
+        public float StatusHoldSeconds => _statusHoldSeconds;
+
+        public float StoryHoldSeconds => _storyHoldSeconds;
+
+        public float FlashSeconds => _flashSeconds;
+
+        public RevealSettings SunArc => _sunArc;
+
+        public float SunArcFullElevation => _sunArcFullElevation;
     }
 }

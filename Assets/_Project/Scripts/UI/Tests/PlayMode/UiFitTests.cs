@@ -235,7 +235,32 @@ namespace MoonProject.UI.PlayModeTests
                 });
             }
 
+            // 07's readout (the boot diagnostics, longest in Vietnamese) beside the Sun's arc and the battery dial.
             _rig.Fakes.PrimaryHint = InteractionHint.None;
+            _rig.Tune("_guidance._bootHoldSeconds", 60f);
+            events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, true));
+            string language = _rig.Ui.Localization.Language;
+            _rig.Ui.Localization.SetLanguage("vi");
+            events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle, false));
+            events.Publish(new RoverWakeBeatReached(WakeBeat.GazeEarth, false));
+            events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame, false));
+            yield return Seconds(3f);
+            Assert.IsTrue(_rig.Ui.Readout.IsVisible, "the boot diagnostics are up for the fit check");
+            Assert.IsTrue(_rig.Ui.SunArc.IsVisible, "and so is the Sun's arc");
+            foreach (ScreenShape shape in ScreenShapes.All)
+            {
+                yield return Reframe(shape);
+                yield return Seconds(Settle);
+                yield return Check(shape, "readout and sun arc", (label, found) =>
+                {
+                    ScreenFit.CheckApart(_rig.Ui.Readout.Panel, layout.SunArc, label, found);
+                    ScreenFit.CheckApart(_rig.Ui.Readout.Panel, layout.BatteryDial, label, found);
+                    ScreenFit.CheckApart(_rig.Ui.Readout.Panel, layout.PickupFeed, label, found);
+                    ScreenFit.CheckApart(layout.SunArc, layout.BatteryDial, label, found);
+                });
+            }
+
+            _rig.Ui.Localization.SetLanguage(language);
             _rig.Fakes.Hold.Set(14, new MaterialSlot(SalvageMaterial.Metal, 4, 4),
                 new MaterialSlot(SalvageMaterial.Ilmenite, 3, 6));
             _rig.Fakes.Hold.WaitingBundles = 2;

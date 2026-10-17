@@ -163,30 +163,6 @@
             "text": "Repair the offline relays on the way to the Peak."
         },
         {
-            "key": "ui.recovery.title",
-            "text": "LUMEN RECOVERY PROTOCOL"
-        },
-        {
-            "key": "recovery.power.name",
-            "text": "Power the station"
-        },
-        {
-            "key": "recovery.link.name",
-            "text": "Link the network to the Peak"
-        },
-        {
-            "key": "recovery.dish.name",
-            "text": "Repair the great dish"
-        },
-        {
-            "key": "recovery.answer.name",
-            "text": "Answer the signal"
-        },
-        {
-            "key": "protocol.power.need",
-            "text": "› the radio tower"
-        },
-        {
             "key": "ui.settings.sound",
             "text": "Sound"
         },
@@ -1109,6 +1085,34 @@
         {
             "key": "pickup.part.igniter.job",
             "text": "Fits the cutter on the pad."
+        },
+        {
+            "key": "ui.system.column",
+            "text": "16"
+        },
+        {
+            "key": "ui.readout.power_off",
+            "text": "POWER · OFFLINE"
+        },
+        {
+            "key": "ui.readout.power_on",
+            "text": "POWER · ON"
+        },
+        {
+            "key": "ui.readout.link_west",
+            "text": "LINK · 0/1 · SIGNAL WEST"
+        },
+        {
+            "key": "ui.readout.reserve",
+            "text": "LANDER RESERVE · {0}%"
+        },
+        {
+            "key": "ui.readout.sun",
+            "text": "SUN"
+        },
+        {
+            "key": "story.airlock_panel",
+            "text": "HABITAT SEAL · LOCKED · 28 OCT 1988\nSUIT 01-04 · OFFLINE · 29 OCT 1988 · 04:12"
         }
     ]
 }

@@ -13,12 +13,8 @@ namespace MoonProject.UI.PlayModeTests
     /// cut, the battery and the beam at work.
     /// </summary>
     public sealed class FakeGameServices : MonoBehaviour, IGameSystem, IViewCamera, IAudioSettings, ILookSettings, IFeelSettings,
-        IMaterialStock, IInteractionHints, IRoverState, ISalvageStatus, IRoverBattery, IBeamStatus,
-        IRecoveryProgress
+        IMaterialStock, IInteractionHints, IRoverState, ISalvageStatus, IRoverBattery, IBeamStatus
     {
-        private readonly int[] _litLamps = new int[Enum.GetValues(typeof(RecoveryTarget)).Length];
-        private readonly int[] _lamps = { 3, 3, 4, 1 };
-
         private readonly float[] _volumes = { 1f, 1f, 1f, 1f };
         private float _sensitivity = 1f;
         private EventBus _events;
@@ -58,6 +54,9 @@ namespace MoonProject.UI.PlayModeTests
 
         /// <summary>07's systems, set by a test.</summary>
         public FakeSystems Systems { get; } = new FakeSystems();
+
+        /// <summary>The sky, set by a test.</summary>
+        public FakeSunlight Sun { get; } = new FakeSunlight();
 
         public int Metal => _units[(int)SalvageMaterial.Metal];
 
@@ -153,31 +152,10 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<ISalvageStatus>(this);
             context.Register<IRoverBattery>(this);
             context.Register<IBeamStatus>(this);
-            context.Register<IRecoveryProgress>(this);
             context.Register<ICargoHold>(Hold);
             context.Register<IMaterialCatalog>(Catalog);
             context.Register<IRoverSystems>(Systems);
-        }
-
-        public int LitLamps(RecoveryTarget target)
-        {
-            return _litLamps[(int)target];
-        }
-
-        public int Lamps(RecoveryTarget target)
-        {
-            return _lamps[(int)target];
-        }
-
-        public bool IsComplete(RecoveryTarget target)
-        {
-            return _litLamps[(int)target] >= _lamps[(int)target];
-        }
-
-        /// <summary>Sets how many lamps of <paramref name="target"/>'s row are lit.</summary>
-        public void SetLitLamps(RecoveryTarget target, int lit)
-        {
-            _litLamps[(int)target] = lit;
+            context.Register<ISunlight>(Sun);
         }
 
         /// <summary>Sets the materials held and publishes the change like the real stock.</summary>

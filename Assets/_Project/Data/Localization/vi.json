@@ -163,30 +163,6 @@
             "text": "Sửa các trạm tiếp sóng đang tắt trên đường tới Đỉnh núi."
         },
         {
-            "key": "ui.recovery.title",
-            "text": "QUY TRÌNH KHÔI PHỤC LUMEN"
-        },
-        {
-            "key": "recovery.power.name",
-            "text": "Cấp điện cho trạm"
-        },
-        {
-            "key": "recovery.link.name",
-            "text": "Nối mạng lưới tới Đỉnh núi"
-        },
-        {
-            "key": "recovery.dish.name",
-            "text": "Sửa chảo ăng-ten lớn"
-        },
-        {
-            "key": "recovery.answer.name",
-            "text": "Trả lời tín hiệu"
-        },
-        {
-            "key": "protocol.power.need",
-            "text": "› tháp radio"
-        },
-        {
             "key": "ui.settings.sound",
             "text": "Âm thanh"
         },
@@ -992,7 +968,7 @@
         },
         {
             "key": "ui.system.unit",
-            "text": "ĐƠN Vị 07 · SSR-5 · TIẾP TỤC · 13 148 NGÀY"
+            "text": "ĐƠN VỊ 07 · SSR-5 · TIẾP TỤC · 13 148 NGÀY"
         },
         {
             "key": "ui.system.wheels",
@@ -1109,6 +1085,34 @@
         {
             "key": "pickup.part.igniter.job",
             "text": "Lắp vào mỏ cắt khi đỗ trên bệ."
+        },
+        {
+            "key": "ui.system.column",
+            "text": "17"
+        },
+        {
+            "key": "ui.readout.power_off",
+            "text": "NGUỒN · NGOẠI TUYẾN"
+        },
+        {
+            "key": "ui.readout.power_on",
+            "text": "NGUỒN · BẬT"
+        },
+        {
+            "key": "ui.readout.link_west",
+            "text": "LIÊN KẾT · 0/1 · TÍN HIỆU PHÍA TÂY"
+        },
+        {
+            "key": "ui.readout.reserve",
+            "text": "DỰ TRỮ TÀU ĐỔ BỘ · {0}%"
+        },
+        {
+            "key": "ui.readout.sun",
+            "text": "MẶT TRỜI"
+        },
+        {
+            "key": "story.airlock_panel",
+            "text": "NIÊM PHONG NHÀ Ở · KHOÁ · 28 THG 10 1988\nÁO VŨ TRỤ 01-04 · NGOẠI TUYẾN · 29 THG 10 1988 · 04:12"
         }
     ]
 }

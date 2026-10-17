@@ -23,6 +23,9 @@ namespace MoonProject.UI
             BatteryDialValue = Require<Label>("battery-dial-value");
             NextLineShadow = Require<VisualElement>("next-line-shadow");
             NextLineText = Require<Label>("next-line-text");
+            SunArc = Require<VisualElement>("sun-arc");
+            SunArcFace = Require<VisualElement>("sun-arc-face");
+            SunArcLabel = Require<Label>("sun-arc-label");
             Cargo = Require<VisualElement>("cargo");
             UnlockCard = Require<VisualElement>("unlock-card");
 
@@ -159,6 +162,13 @@ namespace MoonProject.UI
         public VisualElement NextLineShadow { get; }
 
         public Label NextLineText { get; }
+
+        /// <summary>The Sun's arc above the battery dial.</summary>
+        public VisualElement SunArc { get; }
+
+        public VisualElement SunArcFace { get; }
+
+        public Label SunArcLabel { get; }
 
         /// <summary>The cargo screen's root (Tab / View): its parts are found beneath it by name.</summary>
         public VisualElement Cargo { get; }

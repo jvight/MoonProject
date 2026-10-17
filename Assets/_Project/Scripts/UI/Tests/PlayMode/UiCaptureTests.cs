@@ -504,6 +504,12 @@ namespace MoonProject.UI.PlayModeTests
 #endif
         }
 
+        /// <summary>
+        /// 07's readout and the objective line (docs/design/opening-v2.md sections 2, 3, 10): the boot diagnostics are
+        /// the one guidance element while they show and the objective waits for them, the cutter refusing flashes its
+        /// line, then the protocol line, the lander's reserve, a scanned panel's text and the Sun's arc. Rerun with
+        /// --filter CaptureGuidance.
+        /// </summary>
         [UnityTest]
         public IEnumerator CaptureGuidance()
         {
@@ -516,22 +522,53 @@ namespace MoonProject.UI.PlayModeTests
             string folder = Path.GetFullPath(OutputFolder);
             Directory.CreateDirectory(folder);
             context.Events.Publish(new RoverAwoke(Vector3.zero, false));
-            yield return new WaitForSecondsRealtime(0.5f);
-
-            context.Events.Publish(new NextStepChanged("next.v2.build_pad"));
-            yield return new WaitForSecondsRealtime(_tuning.Guidance.Line.FadeIn + 0.5f);
-            yield return Capture(camera, folder, "49_next_line");
-
+            context.Events.Publish(new NextStepChanged("next.v2.drive_lander"));
             context.Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle, false));
             context.Events.Publish(new RoverWakeBeatReached(WakeBeat.GazeEarth, false));
-            yield return new WaitForSecondsRealtime(_tuning.Guidance.Protocol.FadeIn + 0.5f);
-            Assert.IsTrue(ui.Protocol.IsVisible, "the protocol readout shows at Earth's gaze (M3-24 B)");
-            yield return Capture(camera, folder, "49b_protocol_readout");
-            yield return new WaitForSecondsRealtime(_tuning.Guidance.ProtocolHoldSeconds +
-                                                    _tuning.Guidance.Protocol.FadeOut + 0.5f);
-            Assert.IsFalse(ui.Protocol.IsVisible, "and fades by itself");
-            context.Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame, false));
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Readout.FadeIn + 0.5f);
+            Assert.IsTrue(ui.Readout.IsVisible && ui.Readout.Showing == ReadoutKind.Boot,
+                "the boot diagnostics show when 07's lens opens");
+            Assert.IsFalse(ui.Objective.IsVisible, "and the objective line waits for them");
+            yield return Capture(camera, folder, "49_boot_readout");
 
+            context.Events.Publish(new CutterRefused(Vector3.zero));
+            yield return null;
+            Assert.IsTrue(ui.Readout.IsFlashing(1 + (int)RoverSystem.Cutter), "a refused cut flashes the cutter's line");
+            yield return Capture(camera, folder, "49a_boot_cutter_refused");
+
+            context.Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame, false));
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.BootHoldSeconds +
+                                                    _tuning.Guidance.Readout.FadeOut + _tuning.Guidance.Line.FadeIn +
+                                                    _tuning.Guidance.ObjectiveDelaySeconds + 2.5f);
+            Assert.IsFalse(ui.Readout.IsVisible, "the diagnostics fade by themselves");
+            Assert.IsTrue(ui.Objective.ShowsObjective, "and the first objective line follows");
+            yield return Capture(camera, folder, "49b_objective_line");
+
+            context.Events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, false));
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Readout.FadeIn + 0.5f);
+            Assert.AreEqual(ReadoutKind.Protocol, ui.Readout.Showing);
+            yield return Capture(camera, folder, "49c_protocol_power_on");
+            fakes.Sun.ElevationDegrees = 9f;
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.StatusHoldSeconds +
+                                                    _tuning.Guidance.Readout.FadeOut + _tuning.Guidance.SunArc.FadeIn);
+            Assert.IsTrue(ui.SunArc.IsVisible, "the Sun's arc comes with the power");
+            yield return Capture(camera, folder, "49d_sun_arc");
+
+            context.Events.Publish(new LanderReserveChanged(0f, false));
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Readout.FadeIn + 0.5f);
+            Assert.AreEqual(ReadoutKind.Reserve, ui.Readout.Showing);
+            yield return Capture(camera, folder, "49e_lander_reserve");
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.StatusHoldSeconds +
+                                                    _tuning.Guidance.Readout.FadeOut + 0.5f);
+
+            context.Events.Publish(new StoryScanned("airlock_panel", "story.airlock_panel", Vector3.zero));
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Readout.FadeIn + 0.5f);
+            Assert.AreEqual(ReadoutKind.Story, ui.Readout.Showing);
+            yield return Capture(camera, folder, "49f_story_panel");
+            ui.Localization.SetLanguage("vi");
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return Capture(camera, folder, "49g_story_panel_vi");
+            ui.Localization.SetLanguage("en");
 #else
             Assert.Ignore("Captures need the editor.");
             yield break;
@@ -652,8 +689,8 @@ namespace MoonProject.UI.PlayModeTests
             save = new SaveService(SaveService.DefaultDirectory, _slot);
             ui.Initialize(new UiServices(context.Events, context.Input, fakes, fakes, context.Get<IAudioSettings>(),
                 context.Get<ILookSettings>(), context.Get<IFeelSettings>(), save, fakes, fakes, fakes,
-                context.Get<IGameFlow>(), new SettingsFile(SaveService.DefaultDirectory, _slot), fakes, fakes, fakes,
-                fakes.Hold, fakes.Catalog, fakes.Systems));
+                context.Get<IGameFlow>(), new SettingsFile(SaveService.DefaultDirectory, _slot), fakes, fakes,
+                fakes.Hold, fakes.Catalog, fakes.Systems, sun: fakes.Sun));
             save.Load();
             return ui;
         }

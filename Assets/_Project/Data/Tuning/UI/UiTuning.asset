@@ -731,14 +731,13 @@ MonoBehaviour:
       _springDamping: 0.7
     _placeHoldSeconds: 4
     _towerCardDelay: 4
-    _protocol:
+    _readout:
       _fadeIn: 0.8
       _fadeOut: 1.1
       _slide: 6
       _scaleFrom: 0.97
       _springFrequency: 1
       _springDamping: 0.8
-    _protocolHoldSeconds: 2.8
   _backdrop:
     _blurStartMetres: 0
     _blurEndMetres: 4

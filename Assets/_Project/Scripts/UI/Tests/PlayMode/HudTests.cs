@@ -432,24 +432,119 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator Readout_BootDiagnosticsFirst_TheCutterFlashes_AndOnlyAMilestoneReachedNowShowsTheProtocolLine()
+        {
+            Boot();
+            _rig.Tune("_guidance._bootHoldSeconds", 1.5f);
+            _rig.Tune("_guidance._statusHoldSeconds", 1.5f);
+            int cutterLine = 1 + (int)RoverSystem.Cutter;
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new NextStepChanged("next.v2.drive_lander"));
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle, false));
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.GazeEarth, false));
+            yield return Seconds(_rig.Tuning.Guidance.Readout.FadeIn + 0.4f);
+            ReadoutView readout = _rig.Ui.Readout;
+            Assert.IsTrue(readout.IsVisible);
+            Assert.AreEqual(ReadoutKind.Boot, readout.Showing, "07's diagnostics show when its lens opens");
+            Assert.AreEqual(11, readout.LineCount, "the unit, eight systems, the battery and the protocol line");
+            Assert.AreEqual(Text(ReadoutText.UnitKey), readout.LineText(0));
+            StringAssert.StartsWith(Text("ui.system.cutter"), readout.LineText(cutterLine));
+            StringAssert.EndsWith(Text("ui.system.state.fault_igniter"), readout.LineText(cutterLine));
+            Assert.AreEqual(Text("ui.readout.power_off"), readout.LineText(10));
+            Assert.IsFalse(_rig.Ui.Objective.IsVisible, "the objective line waits for the diagnostics");
+
+            Events.Publish(new CutterRefused(Vector3.zero));
+            yield return null;
+            Assert.IsTrue(readout.IsFlashing(cutterLine), "a refused cut flashes the cutter's line");
+
+            _rig.Fakes.Systems.Set(RoverSystem.Cutter, RoverSystemState.Ok);
+            Events.Publish(new RoverSystemChanged(RoverSystem.Cutter, RoverSystemState.Ok, false));
+            yield return null;
+            StringAssert.EndsWith(Text("ui.system.state.ok"), readout.LineText(cutterLine), "the line turns OK");
+
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame, false));
+            float limit = Time.realtimeSinceStartup + 12f;
+            while (!_rig.Ui.Objective.ShowsObjective && Time.realtimeSinceStartup < limit)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rig.Ui.Objective.ShowsObjective, "the first objective line follows the diagnostics");
+            Assert.IsFalse(readout.IsVisible);
+            Assert.AreEqual(Text("next.v2.drive_lander"), _rig.Ui.Layout.NextLineText.text);
+
+            Events.Publish(new OpeningMilestoneReached(OpeningMilestone.PowerOn, false));
+            yield return Seconds(_rig.Tuning.Guidance.Readout.FadeIn + 0.6f);
+            Assert.AreEqual(ReadoutKind.Protocol, readout.Showing, "a milestone reached now shows its line");
+            Assert.AreEqual(Text("ui.readout.power_on"), readout.LineText(0));
+            Assert.IsFalse(_rig.Ui.Objective.IsVisible, "over the objective line");
+
+            yield return Seconds(_rig.Tuning.Guidance.StatusHoldSeconds + _rig.Tuning.Guidance.Readout.FadeOut + 0.6f);
+            Assert.IsFalse(readout.IsVisible);
+            Events.Publish(new OpeningMilestoneReached(OpeningMilestone.SignalWest, true));
+            yield return Seconds(1f);
+            Assert.IsFalse(readout.IsVisible, "a replayed milestone sets the line without showing it");
+            Assert.AreEqual(ProtocolLine.LinkSignalWest, _rig.Ui.OpeningProtocol.Line);
+        }
+
+        [UnityTest]
+        public IEnumerator Readout_TheLandersReserveAndAScannedPanel_ShowOnceInTheirOwnWords_AndALoadedGameSaysNothing()
+        {
+            Boot();
+            _rig.Tune("_guidance._statusHoldSeconds", 1.5f);
+            _rig.Tune("_guidance._storyHoldSeconds", 1.5f);
+            yield return null;
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new LanderReserveChanged(0.5f, true));
+            Events.Publish(new LanderReserveChanged(0f, true));
+            yield return Seconds(1f);
+            Assert.IsFalse(_rig.Ui.Readout.IsVisible, "a loaded game's reserve is stated without a card");
+
+            Events.Publish(new LanderReserveChanged(0.4f, false));
+            yield return Seconds(0.5f);
+            Assert.IsFalse(_rig.Ui.Readout.IsVisible, "the reserve is read only once it has given out");
+            Events.Publish(new LanderReserveChanged(0f, false));
+            yield return Seconds(_rig.Tuning.Guidance.Readout.FadeIn + 0.6f);
+            Assert.AreEqual(ReadoutKind.Reserve, _rig.Ui.Readout.Showing);
+            Assert.AreEqual(string.Format(Text("ui.readout.reserve"), 0), _rig.Ui.Readout.LineText(0));
+
+            Events.Publish(new StoryScanned("airlock_panel", "story.airlock_panel", Vector3.zero));
+            yield return Seconds(_rig.Tuning.Guidance.StatusHoldSeconds + _rig.Tuning.Guidance.Readout.FadeOut +
+                                 _rig.Tuning.Guidance.Readout.FadeIn + 1f);
+            Assert.AreEqual(ReadoutKind.Story, _rig.Ui.Readout.Showing, "the scanned panel's text follows");
+            Assert.AreEqual(2, _rig.Ui.Readout.LineCount);
+            Assert.AreEqual(Text("story.airlock_panel").Split('\n')[1], _rig.Ui.Readout.LineText(1));
+        }
+
+        [UnityTest]
         public IEnumerator NoFrame_ShowsTwoGuidanceElements()
         {
             Boot();
+            _rig.Tune("_guidance._bootHoldSeconds", 2f);
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
+            Events.Publish(new NextStepChanged("next.v2.drive_lander"));
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle, false));
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.GazeEarth, false));
+            Events.Publish(new RoverWakeBeatReached(WakeBeat.ChaseFrame, false));
             Events.Publish(new TickerLine("battery.low.lander"));
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Build, new Vector3(0f, 0f, 10f), true);
             int shownFrames = 0;
-            float until = Time.realtimeSinceStartup + 8f;
+            bool readoutSeen = false;
+            float until = Time.realtimeSinceStartup + 12f;
             while (Time.realtimeSinceStartup < until)
             {
+                readoutSeen |= _rig.Ui.Readout.IsVisible;
                 int up = (_rig.Ui.Prompt.IsVisible ? 1 : 0) + (_rig.Ui.LookUp.IsVisible ? 1 : 0) +
+                         (_rig.Ui.Readout.IsVisible ? 1 : 0) + (_rig.Ui.UnlockCard.IsVisible ? 1 : 0) +
                          (_rig.Ui.Objective.IsVisible ? 1 : 0);
                 shownFrames += up > 0 ? 1 : 0;
                 Assert.LessOrEqual(up, 1, "one guidance element at a time");
                 yield return null;
             }
 
+            Assert.IsTrue(readoutSeen, "the boot diagnostics came first, or the test proves nothing");
             Assert.Greater(shownFrames, 0, "the scene did guide, or the test proves nothing");
         }
 
