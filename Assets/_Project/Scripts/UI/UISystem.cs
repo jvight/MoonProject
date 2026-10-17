@@ -64,8 +64,8 @@ namespace MoonProject.UI
         private HoldHint _holdHint;
         private FirstPrompt _firstPrompt;
         private LookUpChip _lookUpChip;
-        private NextStepLine _nextStep;
-        private NextLineView _nextLine;
+        private ObjectiveLine _objective;
+        private ObjectiveView _objectiveView;
         private LowBatteryHint _lowBattery;
         private BatteryDial _batteryDial;
         private bool _cellRowRevealed;
@@ -130,7 +130,9 @@ namespace MoonProject.UI
 
         internal BackdropBlur Backdrop => _backdrop;
 
-        internal NextLineView NextLine => _nextLine;
+        internal ObjectiveView Objective => _objectiveView;
+
+        internal ObjectiveLine ObjectiveRule => _objective;
 
         internal BatteryDial BatteryDial => _batteryDial;
 
@@ -266,7 +268,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RoverWakeBeatReached>(OnWakeBeat));
             _tokens.Add(events.Subscribe<LanguageChanged>(OnLanguageChanged));
             _tokens.Add(events.Subscribe<TickerLine>(OnTickerLine));
-            _tokens.Add(events.Subscribe<PartFitted>(OnPartFitted));
+            _tokens.Add(events.Subscribe<PartFitted>(_ => _cargo?.MarkDirty()));
+            _tokens.Add(events.Subscribe<StructureLearned>(OnStructureLearned));
             _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
             _tokens.Add(events.Subscribe<StructurePlaced>(_ => _director.NotifyUsed(InteractionKind.Build)));
             _tokens.Add(events.Subscribe<StructureRemoved>(_ => _director.NotifyUsed(InteractionKind.Deconstruct)));
@@ -315,8 +318,8 @@ namespace MoonProject.UI
             _holdHint = new HoldHint(_tuning.Stargaze, _ledger);
             _firstPrompt = new FirstPrompt(_tuning.Stargaze, _ledger);
             _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization);
-            _nextStep = new NextStepLine(_tuning.Guidance);
-            _nextLine = new NextLineView(_layout, _tuning.Guidance, _localization);
+            _objective = new ObjectiveLine(_tuning.Guidance, _ledger);
+            _objectiveView = new ObjectiveView(_layout, _tuning.Guidance, _localization);
             _lowBattery = new LowBatteryHint(_tuning.Guidance, services.Battery, _localization);
             _batteryDial = new BatteryDial(_layout, _tuning.Battery, services.Battery, services.Beam);
             _saveTick = new SaveTick(_layout, _tuning.SaveTick);
@@ -334,7 +337,7 @@ namespace MoonProject.UI
                 services.Home, services.Transfer, services.Dock, services.Equipment, services.Portrait, _roverDiagram,
                 _glyphs, _numbers, services.Events, _ledger);
             BindFacePanel(root);
-            _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization, _glyphs);
+            _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
                 services.Events, _settings, services.Flow,
                 _numbers, _cursor, Quit,
@@ -421,10 +424,10 @@ namespace MoonProject.UI
 
             InputDeviceKind device = input.ActiveDevice;
             _textScale.Apply(_player.TextScale);
-            _nextStep.Tick(hudTime, _services.Rover.Speed, _player.Guidance);
-            _lowBattery.Tick(paused ? 0f : deltaTime, _nextLine.ShowsBattery);
-            DecideGuidance(paused);
-            _unlockCard.Tick(hudTime, !cargoOpen && !_nextLine.IsVisible, device);
+            _objective.Tick(hudTime, _services.Rover.Speed, _player.Guidance, _objectiveView.ShowsObjective);
+            _lowBattery.Tick(paused ? 0f : deltaTime, _objectiveView.ShowsBattery);
+            PromptHolder holder = DecideGuidance(paused);
+            _unlockCard.Tick(hudTime, !cargoOpen && holder == PromptHolder.Unlock);
             _pickups.Tick(deltaTime);
             bool cutting = _services.Salvage.IsCutting;
             if (cutting)
@@ -438,14 +441,14 @@ namespace MoonProject.UI
             _pickUpGrace = _services.Hints.Primary.Kind == InteractionKind.PickUp
                 ? PickUpGraceSeconds
                 : Mathf.Max(0f, _pickUpGrace - deltaTime);
-            _prompt.Tick(deltaTime, PromptsOpen(paused) && _slot.Allows(GuidanceKind.Prompt),
+            _prompt.Tick(deltaTime, PromptsOpen(paused) && holder == PromptHolder.Chip,
                 _services.Hints.Primary, device, panelSize);
             _salvageRing.Tick(deltaTime, !paused && _awake, panelSize);
             _protocol.Tick(hudTime);
             // Its own zone (right of centre): it stands beside the protocol readout, never over it.
-            _recipeCard.Tick(hudTime, CardsOpen(paused) && _awake && _slot.Allows(GuidanceKind.Card));
+            _recipeCard.Tick(hudTime, CardsOpen(paused) && _awake && holder == PromptHolder.Recipe);
             // The look-up chip is the gentlest of the prompts: a teaching prompt that wants the screen takes it first.
-            bool hintOpen = LookHintsOpen() && _slot.Allows(GuidanceKind.Prompt) &&
+            bool hintOpen = LookHintsOpen() && holder == PromptHolder.Chip &&
                             !_director.Wants(_services.Hints.Primary);
             float stick = _tuning.Stargaze.FirstPromptStick * _tuning.Stargaze.FirstPromptStick;
             bool looking = !paused && (input.LookDelta.sqrMagnitude > 0f || input.LookRate.sqrMagnitude > stick);
@@ -454,8 +457,8 @@ namespace MoonProject.UI
             HintWord hint = _firstPrompt.Word != HintWord.None ? _firstPrompt.Word
                 : _holdHint.WantsShown ? HintWord.Hold : HintWord.None;
             _lookUpChip.Tick(deltaTime, paused ? HintWord.None : hint, device);
-            _nextLine.Tick(deltaTime, _nextStep, NextLineOpen(paused) && _slot.Allows(GuidanceKind.Next), _lowBattery,
-                NextLineOpen(paused) && _slot.Allows(GuidanceKind.Battery));
+            _objectiveView.Tick(deltaTime, _objective, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Objective),
+                _lowBattery, ObjectiveOpen(paused) && _slot.Allows(GuidanceKind.Battery));
             bool hudOpen = !paused && _awake && !_inOpening && !_stargaze.IsVeiled && !cargoOpen;
             _batteryDial.Tick(deltaTime, _cellRowRevealed, hudOpen);
         }
@@ -478,10 +481,10 @@ namespace MoonProject.UI
             return !paused && !_protocol.IsVisible && !_stargaze.IsVeiled;
         }
 
-        private bool NextLineOpen(bool paused)
+        private bool ObjectiveOpen(bool paused)
         {
             return !paused && _awake && !_inOpening && !_stargaze.IsVeiled && !_protocol.IsVisible &&
-                   !_unlockCard.IsVisible && !BuildMenuOpen();
+                   !_cargo.IsOpen && !BuildMenuOpen();
         }
 
         private bool LookHintsOpen()
@@ -494,24 +497,43 @@ namespace MoonProject.UI
             return _buildStrip != null && _buildStrip.IsOpen;
         }
 
+        /// <summary>Which element of the prompt kind holds the screen: a card first, then a chip.</summary>
+        private enum PromptHolder
+        {
+            None,
+            Unlock,
+            Recipe,
+            Chip,
+        }
+
         /// <summary>
-        /// One guidance element at a time (docs/design/0.5.5-owner-feedback.md §4.1): the teaching prompt, then the
-        /// recipe card, the low-battery hint and the next line. Each wants the slot when it could show; the slot goes
-        /// to the highest and passes on once the screen is clear.
+        /// One guidance element at a time (docs/design/opening-v2.md §5): a chip or card (the teaching prompt, the
+        /// look/drive/hold chips, the recipe card, the blueprint card), then the low-battery hint, then the objective
+        /// line. Each wants the slot when it could show; the slot goes to the highest and passes on once the screen
+        /// is clear. Inside the prompt kind the one already up keeps the screen, else the blueprint card, the recipe
+        /// card and the chips take turns in that order.
         /// </summary>
-        private void DecideGuidance(bool paused)
+        private PromptHolder DecideGuidance(bool paused)
         {
             bool looks = LookHintsOpen() && (_firstPrompt.Word != HintWord.None || _holdHint.Wants(_awake && _carrying));
-            _guidanceWants[(int)GuidanceKind.Prompt] =
-                (PromptsOpen(paused) && _director.Wants(_services.Hints.Primary)) || looks;
-            _guidanceWants[(int)GuidanceKind.Card] = CardsOpen(paused) && _awake && _recipeCard.Wants;
-            _guidanceWants[(int)GuidanceKind.Battery] = NextLineOpen(paused) && _lowBattery.WantsShown;
-            _guidanceWants[(int)GuidanceKind.Next] = NextLineOpen(paused) && _nextStep.WantsShown;
-            _guidanceShown[(int)GuidanceKind.Prompt] = _prompt.IsVisible || _lookUpChip.IsVisible;
-            _guidanceShown[(int)GuidanceKind.Card] = _recipeCard.IsVisible;
-            _guidanceShown[(int)GuidanceKind.Battery] = _nextLine.ShowsBattery;
-            _guidanceShown[(int)GuidanceKind.Next] = _nextLine.ShowsNext;
+            bool chipWants = (PromptsOpen(paused) && _director.Wants(_services.Hints.Primary)) || looks;
+            bool recipeWants = CardsOpen(paused) && _awake && _recipeCard.Wants;
+            bool unlockWants = !_cargo.IsOpen && _unlockCard.IsWaiting;
+            bool chipUp = _prompt.IsVisible || _lookUpChip.IsVisible;
+            PromptHolder holder = _unlockCard.IsVisible ? PromptHolder.Unlock
+                : _recipeCard.IsVisible ? PromptHolder.Recipe
+                : chipUp ? PromptHolder.Chip
+                : unlockWants ? PromptHolder.Unlock
+                : recipeWants ? PromptHolder.Recipe
+                : chipWants ? PromptHolder.Chip : PromptHolder.None;
+            _guidanceWants[(int)GuidanceKind.Prompt] = holder != PromptHolder.None;
+            _guidanceWants[(int)GuidanceKind.Battery] = ObjectiveOpen(paused) && _lowBattery.WantsShown;
+            _guidanceWants[(int)GuidanceKind.Objective] = ObjectiveOpen(paused) && _objective.WantsShown;
+            _guidanceShown[(int)GuidanceKind.Prompt] = chipUp || _recipeCard.IsVisible || _unlockCard.IsVisible;
+            _guidanceShown[(int)GuidanceKind.Battery] = _objectiveView.ShowsBattery;
+            _guidanceShown[(int)GuidanceKind.Objective] = _objectiveView.ShowsObjective;
             _slot.Step(_guidanceWants, _guidanceShown);
+            return _slot.Allows(GuidanceKind.Prompt) ? holder : PromptHolder.None;
         }
 
         private const float CargoNavInitialRepeatDelay = 0.35f;
@@ -842,7 +864,15 @@ namespace MoonProject.UI
 
         private void OnNextStepChanged(NextStepChanged changed)
         {
-            _nextStep.SetKey(changed.LineKey);
+            _objective.SetKey(changed.LineKey);
+        }
+
+        private void OnStructureLearned(StructureLearned learned)
+        {
+            if (_bound && !learned.Restored)
+            {
+                _unlockCard.Learned(learned.StructureId);
+            }
         }
 
         /// <summary>The full opening's crackle and its chase frame time the first prompt (cutscenes O14).</summary>
@@ -871,15 +901,6 @@ namespace MoonProject.UI
             }
         }
 
-        private void OnPartFitted(PartFitted fitted)
-        {
-            if (_bound && AbilityTable.TryAbilityOf(fitted.Part, out RoverAbility gained))
-            {
-                _unlockCard.Gained(gained);
-                _cargo.MarkDirty();
-            }
-        }
-
         /// <summary>Gameplay's low-charge line is guidance (priority of the slot), offered to the low-battery hint.</summary>
         private void OnTickerLine(TickerLine line)
         {
@@ -901,7 +922,7 @@ namespace MoonProject.UI
             _prompt.Relocalize();
             _lookUpChip.Relocalize();
             _lowBattery.Relocalize();
-            _nextLine.Relocalize(_nextStep, _lowBattery);
+            _objectiveView.Relocalize(_lowBattery);
             _protocol.Relocalize();
             _recipeCard.Relocalize();
             _recipeCard.Relocalize();

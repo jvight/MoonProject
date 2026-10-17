@@ -2,20 +2,20 @@ using System;
 
 namespace MoonProject.UI
 {
-    /// <summary>The kinds of guidance, highest priority first (docs/design/0.5.5-owner-feedback.md §4.1).</summary>
+    /// <summary>The kinds of guidance, highest priority first (docs/design/opening-v2.md §5, §9).</summary>
     internal enum GuidanceKind
     {
-        /// <summary>The teaching prompt chip: glyph and one verb, until its verb is learned.</summary>
+        /// <summary>
+        /// A chip or a card: the teaching prompt (glyph and one verb), the look/drive/hold chips, the recipe card, the
+        /// blueprint-learned card.
+        /// </summary>
         Prompt = 0,
 
-        /// <summary>A station or recipe card: what 07 faces or is parked at.</summary>
-        Card = 1,
+        /// <summary>The low-battery hint: once per charge cycle, on the objective line's own line.</summary>
+        Battery = 1,
 
-        /// <summary>The low-battery hint: at 30% on a trip, once.</summary>
-        Battery = 2,
-
-        /// <summary>The next line, after a while without progress.</summary>
-        Next = 3,
+        /// <summary>The objective line: what to do next.</summary>
+        Objective = 2,
     }
 
     /// <summary>

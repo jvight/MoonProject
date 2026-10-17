@@ -1,5 +1,6 @@
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Gameplay;
 
 namespace MoonProject.UI
 {
@@ -17,7 +18,7 @@ namespace MoonProject.UI
             }
 
             return string.Format(localization.Get(UiKeys.ScanFragment), scanned.Index + 1, scanned.Count,
-                localization.Get(UiKeys.UpgradeName(scanned.BlueprintId)));
+                localization.Get(StructureIds.NameKey(scanned.BlueprintId)));
         }
     }
 }

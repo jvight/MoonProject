@@ -2,32 +2,28 @@ using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
 using MoonProject.Core;
-using MoonProject.Core.Input;
+using MoonProject.Gameplay;
 
 namespace MoonProject.UI
 {
     /// <summary>
-    /// When a kit is fitted that lets 07 do something new, a glass card stays up for a few seconds with its key, its
-    /// word and one line of what it does (docs/design/first-hour-qa.md R1: the card teaches the key, the world gives
-    /// the first use). Cards wait their turn behind one another and behind whatever else holds the upper third (the
-    /// kit's title first).
+    /// The reward beat of a scan (docs/design/opening-v2.md §3, §5): when 07 learns a blueprint a glass card stays up
+    /// for a few seconds and says "Blueprint learned: Charging Pad". Cards wait their turn behind one another and
+    /// behind whatever else holds the guidance slot; it is a card, so it is part of the one guidance slot.
     /// </summary>
     internal sealed class UnlockCard
     {
         private readonly UnlockCardSettings _settings;
         private readonly ILocalization _localization;
-        private readonly GlyphLabels _glyphs;
         private readonly Reveal _reveal;
-        private readonly GlyphView _glyph;
-        private readonly VisualElement _glyphElement;
         private readonly Label _verb;
-        private readonly Queue<AbilityRow> _waiting = new Queue<AbilityRow>();
-        private AbilityRow _shown;
+        private readonly Queue<string> _waiting = new Queue<string>();
+        private string _shown = string.Empty;
         private bool _showing;
         private bool _leaving;
         private float _timer;
 
-        public UnlockCard(UiLayout layout, UnlockCardSettings settings, ILocalization localization, GlyphLabels glyphs)
+        public UnlockCard(UiLayout layout, UnlockCardSettings settings, ILocalization localization)
         {
             if (layout == null)
             {
@@ -36,12 +32,9 @@ namespace MoonProject.UI
 
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
-            _glyphs = glyphs ?? throw new ArgumentNullException(nameof(glyphs));
             VisualElement root = layout.UnlockCard;
             _reveal = new Reveal(root, settings.Reveal);
             _reveal.Snap(false);
-            _glyphElement = Require<VisualElement>(root, "unlock-glyph");
-            _glyph = new GlyphView(_glyphElement, Require<Label>(root, "unlock-glyph-label"));
             _verb = Require<Label>(root, "unlock-card-verb");
         }
 
@@ -51,19 +44,18 @@ namespace MoonProject.UI
         /// <summary>True while a card waits its turn.</summary>
         public bool IsWaiting => _waiting.Count > 0;
 
-        /// <summary>The ability of the card on screen (tests and captures).</summary>
-        public RoverAbility Shown => _shown.Ability;
+        /// <summary>The structure of the card on screen, or empty (tests and captures).</summary>
+        public string Shown => _shown;
 
-        /// <summary>Queues the card of <paramref name="ability"/>; false when the "07 can" page does not list it.</summary>
-        public bool Gained(RoverAbility ability)
+        /// <summary>Queues the card of the structure <paramref name="structureId"/> that 07 just learned.</summary>
+        public void Learned(string structureId)
         {
-            if (!AbilityTable.TryFind(ability, out AbilityRow row))
+            if (string.IsNullOrEmpty(structureId))
             {
-                return false;
+                throw new ArgumentException("A learned blueprint needs a structure id.", nameof(structureId));
             }
 
-            _waiting.Enqueue(row);
-            return true;
+            _waiting.Enqueue(structureId);
         }
 
         /// <summary>Re-reads the words in the new language.</summary>
@@ -71,19 +63,18 @@ namespace MoonProject.UI
         {
             if (_showing || _leaving)
             {
-                Write(InputDeviceKind.KeyboardMouse);
+                Write();
             }
         }
 
         /// <param name="deltaTime">Unscaled seconds; 0 while paused.</param>
-        /// <param name="open">False while another block holds the upper third.</param>
-        /// <param name="device">The active device, for the key.</param>
-        public void Tick(float deltaTime, bool open, InputDeviceKind device)
+        /// <param name="open">False while another block holds the screen.</param>
+        public void Tick(float deltaTime, bool open)
         {
             if (!_showing && !_leaving && open && _waiting.Count > 0)
             {
                 _shown = _waiting.Dequeue();
-                Write(device);
+                Write();
                 _showing = true;
                 _timer = 0f;
                 _reveal.Show();
@@ -91,11 +82,6 @@ namespace MoonProject.UI
 
             if (_showing)
             {
-                if (_shown.HasAction)
-                {
-                    _glyph.Set(_glyphs.For(_shown.Action, device), device);
-                }
-
                 _timer += deltaTime;
                 if (_timer >= _settings.HoldSeconds)
                 {
@@ -109,19 +95,14 @@ namespace MoonProject.UI
             if (_leaving && _reveal.IsHidden)
             {
                 _leaving = false;
+                _shown = string.Empty;
             }
         }
 
-        private void Write(InputDeviceKind device)
+        private void Write()
         {
-            _verb.text = _localization.Get(_shown.VerbKey);
-            _glyphElement.style.display = _shown.HasAction
-                ? DisplayStyle.Flex
-                : DisplayStyle.None;
-            if (_shown.HasAction)
-            {
-                _glyph.Set(_glyphs.For(_shown.Action, device), device);
-            }
+            _verb.text = string.Format(_localization.Get(UiKeys.BlueprintLearned),
+                _localization.Get(StructureIds.NameKey(_shown)));
         }
 
         private static T Require<T>(VisualElement root, string name) where T : VisualElement
