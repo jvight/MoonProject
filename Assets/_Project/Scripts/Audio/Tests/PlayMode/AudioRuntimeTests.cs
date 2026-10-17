@@ -43,6 +43,7 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.IsTrue(_rig.RoverAudio.enabled);
             Assert.IsTrue(_rig.Gameplay.enabled);
             Assert.IsTrue(_rig.Radio.enabled);
+            Assert.IsTrue(_rig.TitleMusic.enabled);
             Assert.IsTrue(_rig.Ambience.enabled);
             Assert.AreEqual(2, _rig.Events.SubscriberCount<RoverLanded>(),
                 "director (thump) and rover audio (creak) both listen to landings");
@@ -141,7 +142,8 @@ namespace MoonProject.Audio.PlayModeTests
             {
                 AudioTestRig.UpdateOf(_rig.Director), AudioTestRig.UpdateOf(_rig.RoverAudio),
                 AudioTestRig.UpdateOf(_rig.Gameplay), AudioTestRig.UpdateOf(_rig.Ui), AudioTestRig.UpdateOf(_rig.Radio),
-                AudioTestRig.UpdateOf(_rig.Friends), AudioTestRig.UpdateOf(_rig.Jump),
+                AudioTestRig.UpdateOf(_rig.TitleMusic), AudioTestRig.UpdateOf(_rig.Friends),
+                AudioTestRig.UpdateOf(_rig.Jump),
                 AudioTestRig.UpdateOf(_rig.Ambience), AudioTestRig.UpdateOf(_rig.Canyon),
                 AudioTestRig.UpdateOf(_rig.Soundscape), AudioTestRig.UpdateOf(_rig.SmallSounds),
                 AudioTestRig.UpdateOf(_rig.Relays), AudioTestRig.UpdateOf(_rig.Salvage),

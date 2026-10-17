@@ -79,6 +79,9 @@ namespace MoonProject.Audio
         [SerializeField] private StationAudio _stations;
         [SerializeField] private LabAudio _lab;
 
+        [Tooltip("The title screen's dedicated procedural theme.")]
+        [SerializeField] private TitleMusic _titleMusic;
+
         private readonly AudioBusMixer _buses = new AudioBusMixer();
         private readonly LoopFader _pause = new LoopFader();
         private readonly AudioClip[] _recentClips = new AudioClip[RecentClipCapacity];
@@ -101,6 +104,9 @@ namespace MoonProject.Audio
 
         /// <summary>The base radio (the chirps sit under its music).</summary>
         internal RadioStation Radio => _radio;
+
+        /// <summary>The dedicated title screen theme.</summary>
+        internal TitleMusic TitleMusic => _titleMusic;
 
         public bool IsInitialized { get; private set; }
 
@@ -179,6 +185,19 @@ namespace MoonProject.Audio
             _canyon.Initialize(context, this);
             _voice.Initialize(context, this);
             _radio.Initialize(context, this);
+            if (_titleMusic == null && _mixTuning.TitleMusic != null)
+            {
+                var titleHost = new GameObject("TitleMusic");
+                titleHost.transform.SetParent(transform, false);
+                _titleMusic = titleHost.AddComponent<TitleMusic>();
+                _titleMusic.Wire(_mixTuning.TitleMusic);
+            }
+
+            if (_titleMusic != null)
+            {
+                _titleMusic.Initialize(context, this);
+            }
+
             _feel.Initialize(context, this);
             _chirps.Initialize(context, this);
             _soundscape.Initialize(context, this, _radio, _canyon, _mixTuning.AmbienceFadeIn);
@@ -326,6 +345,11 @@ namespace MoonProject.Audio
         {
             _feel = feel;
             _chirps = chirps;
+        }
+
+        internal void WireTitleMusic(TitleMusic titleMusic)
+        {
+            _titleMusic = titleMusic;
         }
 
         internal void Wire(AudioLibrary library, AudioMixTuning mixTuning, RoverAudio roverAudio,

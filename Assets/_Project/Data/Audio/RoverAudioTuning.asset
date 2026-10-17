@@ -44,9 +44,7 @@ MonoBehaviour:
   _liftVolume: 1
   _settleVolume: 1
   _wake:
-    _titleStatic: 0.35
     _openingStatic: 0.6
-    _titleFadeSeconds: 2.5
     _swellSeconds: 1.2
     _handOverSeconds: 2
     _insideCutoff: 1100

@@ -56,10 +56,12 @@ def instruments(spec):
         if plan.keys != "off" and plan.keys not in keys:
             keys.append(plan.keys)
     extras = [voice for voice, _, _ in style_named(spec.drums).extras]
+    has_drums = any(plan.drums != "off" for plan in spec.form)
+    drums_desc = (spec.drums + (f" (+ {', '.join(extras)})" if extras else "")) if has_drums else "off"
     return {
         "keys": f"{spec.keys_voice} ({', '.join(keys)})",
         "leads": leads,
-        "drums": spec.drums + (f" (+ {', '.join(extras)})" if extras else ""),
+        "drums": drums_desc,
         "bass": bass,
         "texture": spec.mood.texture,
         "events": [voice for _, voice, _ in spec.events],

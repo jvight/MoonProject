@@ -30,8 +30,10 @@ an unchanged render keeps the existing file untouched; WAV files are byte-identi
 """
 import argparse
 import hashlib
+import html
 import json
 import os
+import shutil
 import sys
 import tempfile
 import time
@@ -45,16 +47,18 @@ sys.path[:0] = [str(TOOLS / "music"), str(TOOLS / "audio")]
 import synth  # noqa: E402
 from lofi import analysis, jingle, listening, theory_report  # noqa: E402
 from lofi.composer import compose  # noqa: E402
-from lofi.mixer import PRE_ROLL_S, TARGET_LUFS, render  # noqa: E402
+from lofi.mixer import PRE_ROLL_S, render  # noqa: E402
 from lofi.tapes import TAPES  # noqa: E402
 from lofi.theory import D_MAJOR, key_named  # noqa: E402
-from lofi.tracks import CATALOGUE, PLAYLIST, track_by_id  # noqa: E402
+from lofi.title_themes import DEFAULT_TITLE_THEME_ID, TITLE_DESCRIPTIONS_VI, TITLE_THEMES  # noqa: E402
+from lofi.tracks import ALL_TRACKS, CATALOGUE, PLAYLIST, track_by_id  # noqa: E402
 from synth.core import note_to_midi  # noqa: E402
 
 REPO = TOOLS.parent
 REPORTS = REPO / "tools" / "music" / "reports"
 LISTENING_REPORT = REPORTS / "tapes.md"
 PREVIEWS = REPO / "Logs" / "music"
+TITLE_AUDITION_DIR = REPO / "Logs" / "titlemusic"
 JINGLE_ASSET_DIR = "Assets/_Project/Audio/Music/Jingles"
 JINGLE_MANIFEST = REPO / "tools" / "music" / "jingles.json"
 MANIFEST_VERSION = 1
@@ -72,6 +76,7 @@ MAX_HIGH_BAND_SHARE = 0.05
 MAX_ABOVE_8K_DB = -25.0
 MAX_CHROMA_OUT_OF_KEY = 0.12
 MIN_BEAT_CLARITY = 1.5
+MIN_TITLE_BEAT_CLARITY = 1.25
 MAX_TEMPO_ERROR = 0.005
 MAX_SEAM_RATIO = 1.0
 MAX_SEAM_STEP_LU = 3.0
@@ -94,10 +99,15 @@ RADIO = Collection("radio", PLAYLIST, "Assets/_Project/Audio/Music/Radio", REPO 
                    False)
 TAPE_DECK = Collection("tapes", TAPES, "Assets/_Project/Audio/Music/Tapes", REPO / "tools" / "music" / "tapes.json",
                        True)
+TITLE = Collection("title", TITLE_THEMES, "Assets/_Project/Audio/Music/Title", REPO / "tools" / "music" / "title.json",
+                   False)
 COLLECTIONS = (RADIO, TAPE_DECK)
+ALL_COLLECTIONS = (RADIO, TAPE_DECK, TITLE)
 
 
 def collection_of(spec):
+    if spec.title_theme:
+        return TITLE
     return TAPE_DECK if spec.tape else RADIO
 
 
@@ -114,9 +124,10 @@ def _round(value):
 def gates(spec, measured, theory, listened):
     """{gate: (value, passed)} for one track."""
     tempo_error = abs(listened["tempo_detected_bpm"] - spec.bpm) / spec.bpm
+    min_clarity = MIN_TITLE_BEAT_CLARITY if spec.title_theme else MIN_BEAT_CLARITY
     result = {
         "loudness_lufs": (measured["loudness_lufs"],
-                          abs(measured["loudness_lufs"] - TARGET_LUFS) <= LOUDNESS_TOLERANCE_LU),
+                          abs(measured["loudness_lufs"] - spec.target_lufs) <= LOUDNESS_TOLERANCE_LU),
         "true_peak_dbtp": (measured["true_peak_dbtp"], measured["true_peak_dbtp"] <= MAX_TRUE_PEAK_DBTP),
         "duration_s": (measured["duration_s"], MIN_DURATION_S <= measured["duration_s"] <= MAX_DURATION_S),
         "clipped_samples": (measured["clipped_samples"], measured["clipped_samples"] == 0),
@@ -127,7 +138,7 @@ def gates(spec, measured, theory, listened):
         "high_band_share": (measured["bands"]["high"], measured["bands"]["high"] <= MAX_HIGH_BAND_SHARE),
         "above_8k_db": (measured["above_8k_db"], measured["above_8k_db"] <= MAX_ABOVE_8K_DB),
         "chroma_out_of_key": (measured["chroma_out_of_key"], measured["chroma_out_of_key"] <= MAX_CHROMA_OUT_OF_KEY),
-        "beat_clarity": (measured["beat_clarity"], measured["beat_clarity"] >= MIN_BEAT_CLARITY),
+        "beat_clarity": (measured["beat_clarity"], measured["beat_clarity"] >= min_clarity),
         "tempo_error": (tempo_error, tempo_error <= MAX_TEMPO_ERROR),
         "out_of_key_notes": (theory["out_of_key_notes"], theory["out_of_key_notes"] == 0),
         "lead_non_pentatonic": (theory["lead_non_pentatonic"], theory["lead_non_pentatonic"] == 0),
@@ -225,7 +236,7 @@ def _report(result):
         "swing": spec.swing,
         "key": spec.key,
         "family": spec.family,
-        "drums": spec.drums,
+        "drums": "off" if spec.title_theme else spec.drums,
         "ending": spec.ending,
         "form": [f"{s.name} x{s.bars}" for s in spec.form],
         "pcm_sha256": result["digest"],
@@ -235,6 +246,8 @@ def _report(result):
     }
     if spec.tape:
         report["tape"] = spec.id
+        report["notes"] = spec.notes
+    elif spec.title_theme:
         report["notes"] = spec.notes
     report["instruments"] = listening.instruments(spec)
     report["listening"] = result["listening"]
@@ -308,7 +321,11 @@ def _manifest_text(collection, results, existing):
         if r["spec"] in collection.specs:
             entries[r["spec"].id] = _entry(r)
     known = [s.id for s in collection.specs]
-    return _json_text({"version": MANIFEST_VERSION, "tracks": [entries[i] for i in known if i in entries]})
+    data = {"version": MANIFEST_VERSION}
+    if collection is TITLE:
+        data["defaultTrackId"] = DEFAULT_TITLE_THEME_ID
+    data["tracks"] = [entries[i] for i in known if i in entries]
+    return _json_text(data)
 
 
 def _jingle_manifest_text(results, existing):
@@ -325,7 +342,7 @@ def _failed(result):
 
 
 def _print_tracks(results):
-    print(f"{'track':28} {'bpm':>5} {'found':>6} {'key':8} {'family':13} {'dur s':>6} {'LUFS':>6} {'dBTP':>6} "
+    print(f"{'track':28} {'bpm':>5} {'found':>6} {'key':8} {'family':15} {'dur s':>6} {'LUFS':>6} {'dBTP':>6} "
           f"{'crest':>5} {'low/mid/high %':>15} {'corr':>5} {'<150':>5} {'off-key':>7} {'beat':>5} {'seam':>5} "
           f"{'notes':>5} {'gates':>6} {'time':>5}")
     for r in results:
@@ -334,7 +351,7 @@ def _print_tracks(results):
         found = f"{heard['tempo_detected_bpm']:6.2f}" if heard else f"{'-':>6}"
         seam = f"{heard['seam']['ratio']:5.2f}" if "seam" in heard else f"{'-':>5}"
         failed = _failed(r)
-        print(f"{spec.id:28} {spec.bpm:5.0f} {found} {spec.key:8} {spec.family:13} {m['duration_s']:6.1f} "
+        print(f"{spec.id:28} {spec.bpm:5.0f} {found} {spec.key:8} {spec.family:15} {m['duration_s']:6.1f} "
               f"{m['loudness_lufs']:6.2f} {m['true_peak_dbtp']:6.2f} {m['crest_db']:5.1f} {bands:>15} "
               f"{m['correlation']:5.2f} {m['correlation_below_150hz']:5.2f} {100 * m['chroma_out_of_key']:6.1f}% "
               f"{m['beat_clarity']:5.2f} {seam} {r['theory']['lead_notes']:5d} "
@@ -365,14 +382,133 @@ def _run(track_ids, jingle_ids, track_dir, jingle_dir, preview_s, jobs):
 
 
 def _spread_ok(results):
-    loudness = [r["measured"]["loudness_lufs"] for r in results]
-    spread = max(loudness) - min(loudness)
-    print(f"catalogue loudness spread: {spread:.2f} LU (limit {PLAYLIST_SPREAD_LU})")
-    return spread <= PLAYLIST_SPREAD_LU
+    catalogue = [r["measured"]["loudness_lufs"] for r in results if not r["spec"].title_theme]
+    titles = [r["measured"]["loudness_lufs"] for r in results if r["spec"].title_theme]
+    ok = True
+    if len(catalogue) > 1:
+        spread = max(catalogue) - min(catalogue)
+        print(f"catalogue loudness spread: {spread:.2f} LU (limit {PLAYLIST_SPREAD_LU})")
+        ok = ok and spread <= PLAYLIST_SPREAD_LU
+    if len(titles) > 1:
+        title_spread = max(titles) - min(titles)
+        print(f"title themes loudness spread: {title_spread:.2f} LU (limit {PLAYLIST_SPREAD_LU})")
+        ok = ok and title_spread <= PLAYLIST_SPREAD_LU
+    return ok
 
 
 def _all_passed(track_results, jingle_results):
     return all(not _failed(r) for r in track_results + jingle_results)
+
+
+def write_title_audition_page():
+    """Write Logs/titlemusic/index.html with audio players, Vietnamese descriptions, loudness/seam metrics, and pick."""
+    TITLE_AUDITION_DIR.mkdir(parents=True, exist_ok=True)
+    cards = []
+    for label, spec in zip(("A", "B", "C"), TITLE_THEMES):
+        report_path = REPORTS / f"{spec.id}.json"
+        if not report_path.exists():
+            continue
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        measured = report["measured"]
+        seam = report["listening"]["seam"]
+        src_ogg = REPO / TITLE.asset_dir / f"{spec.id}.ogg"
+        if src_ogg.exists():
+            shutil.copy2(src_ogg, TITLE_AUDITION_DIR / f"{spec.id}.ogg")
+        is_pick = spec.id == DEFAULT_TITLE_THEME_ID
+        badge = '<span class="badge">Khuyên dùng (Default Pick)</span>' if is_pick else ""
+        desc_vi = html.escape(TITLE_DESCRIPTIONS_VI[spec.id])
+        leads = ", ".join(report["instruments"]["leads"])
+        cards.append(f"""
+    <section class="card {'pick' if is_pick else ''}">
+      <div class="header">
+        <h2>Variant {label}: {html.escape(spec.title)} <code>{spec.id}</code></h2>
+        {badge}
+      </div>
+      <p class="vi">{desc_vi}</p>
+      <audio controls preload="metadata" loop src="{spec.id}.ogg"></audio>
+      <div class="metrics">
+        <span><strong>BPM:</strong> {spec.bpm:g} (no drums)</span>
+        <span><strong>Key:</strong> {spec.key} pentatonic ({spec.family})</span>
+        <span><strong>Duration:</strong> {measured['duration_s']:.1f} s ({measured['duration_s']/60:.1f} min)</span>
+        <span><strong>Loudness:</strong> {measured['loudness_lufs']:.2f} LUFS</span>
+        <span><strong>True Peak:</strong> {measured['true_peak_dbtp']:.2f} dBTP</span>
+        <span><strong>Loop Seam Ratio:</strong> {seam['ratio']:.2f} (&le; 1.0)</span>
+        <span><strong>Loop Seam Step:</strong> {seam['loudness_step_lu']:.2f} LU (&le; 3.0)</span>
+        <span><strong>Voices:</strong> pad + {report['instruments']['keys']} + {leads}</span>
+      </div>
+    </section>""")
+    page = f"""<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <title>Lunarion — Title Screen Music Audition (Variants A, B, C)</title>
+  <style>
+    body {{
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      max-width: 880px;
+      margin: 2rem auto;
+      padding: 0 1.25rem;
+      line-height: 1.55;
+    }}
+    h1 {{ color: #f0f6fc; margin-bottom: 0.25rem; }}
+    .sub {{ color: #8b949e; margin-top: 0; margin-bottom: 1.75rem; }}
+    .card {{
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
+    }}
+    .card.pick {{
+      border-color: #d29922;
+      box-shadow: 0 0 0 1px rgba(210, 153, 34, 0.35);
+    }}
+    .header {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }}
+    h2 {{ margin: 0; font-size: 1.2rem; color: #f0f6fc; }}
+    code {{ font-size: 0.9rem; color: #79c0ff; background: #0d1117; padding: 0.15rem 0.4rem; border-radius: 4px; }}
+    .badge {{
+      background: rgba(210, 153, 34, 0.2);
+      color: #e3b341;
+      border: 1px solid rgba(210, 153, 34, 0.5);
+      border-radius: 999px;
+      padding: 0.2rem 0.7rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }}
+    .vi {{ margin: 0.75rem 0; color: #c9d1d9; }}
+    audio {{ width: 100%; margin: 0.4rem 0 0.75rem; }}
+    .metrics {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.1rem;
+      font-size: 0.85rem;
+      color: #8b949e;
+    }}
+    .metrics strong {{ color: #c9d1d9; }}
+  </style>
+</head>
+<body>
+  <h1>Lunarion — Nhạc nền màn hình chính (Title Screen Themes)</h1>
+  <p class="sub">
+    3 phương án nhạc nền màn hình Title (ngũ cung D trưởng, 60–72 BPM, vòng lặp liền mạch 2–3 phút, không trống,
+    âm lượng chuẩn -20 LUFS, màu băng từ radio ấm áp không tiếng rè static). Phương án mặc định đang được gắn trong
+    <code>TitleMusicLibrary.asset</code> là <strong>Variant A ({DEFAULT_TITLE_THEME_ID})</strong>.
+  </p>
+  {"".join(cards)}
+</body>
+</html>
+"""
+    out_path = TITLE_AUDITION_DIR / "index.html"
+    _write_text(out_path, page)
+    return out_path
 
 
 def _check(track_ids, jingle_ids, jobs):
@@ -401,10 +537,11 @@ def _check(track_ids, jingle_ids, jobs):
         print(f"{r['spec'].id}: committed WAV {'matches' if same_file else 'DIFFERS'} byte for byte, "
               f"jingles.json entry {'matches' if same_entry else 'DIFFERS'}")
         ok = ok and same_file and same_entry
-    if len(track_ids) == len(CATALOGUE) and len(jingle_ids) == len(jingle.JINGLES):
+    if len(track_ids) == len(ALL_TRACKS) and len(jingle_ids) == len(jingle.JINGLES):
         ok = _spread_ok(track_results) and ok
         empty = {"version": MANIFEST_VERSION, "tracks": [], "jingles": []}
-        fresh = {collection.manifest: _manifest_text(collection, track_results, empty) for collection in COLLECTIONS}
+        fresh = {collection.manifest: _manifest_text(collection, track_results, empty)
+                 for collection in ALL_COLLECTIONS}
         fresh[JINGLE_MANIFEST] = _jingle_manifest_text(jingle_results, empty)
         for path, text in fresh.items():
             committed = path.read_text(encoding="utf-8").replace("\r\n", "\n") if path.exists() else ""
@@ -416,7 +553,7 @@ def _check(track_ids, jingle_ids, jobs):
 
 
 def _write_outputs(track_results, jingle_results):
-    for collection in COLLECTIONS:
+    for collection in ALL_COLLECTIONS:
         if any(r["spec"] in collection.specs for r in track_results):
             text = _manifest_text(collection, track_results, _load(collection.manifest, "tracks"))
             _write_text(collection.manifest, text)
@@ -426,6 +563,8 @@ def _write_outputs(track_results, jingle_results):
         _write_text(REPORTS / f"{r['spec'].id}.json", _json_text(_report(r)))
     for r in jingle_results:
         _write_text(REPORTS / f"{r['spec'].id}.json", _json_text(_jingle_report(r)))
+    if any(r["spec"].title_theme for r in track_results):
+        write_title_audition_page()
     track_reports = []
     for spec in CATALOGUE:
         path = REPORTS / f"{spec.id}.json"
@@ -441,7 +580,8 @@ def _write_outputs(track_results, jingle_results):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--track", help="track or tape id, slug or catalogue number (default: everything)")
+    parser.add_argument("--track", help="track, tape or title id, slug or catalogue number (default: everything)")
+    parser.add_argument("--title", action="store_true", help="render only the title themes")
     parser.add_argument("--jingles", action="store_true", help="render only the jingles")
     parser.add_argument("--preview", type=float, metavar="SECONDS", help="render only the first SECONDS")
     parser.add_argument("--check", action="store_true", help="verify determinism, manifests and quality gates")
@@ -449,10 +589,12 @@ def main():
     args = parser.parse_args()
     if args.jingles:
         track_ids, jingle_ids = [], [j.id for j in jingle.JINGLES]
+    elif args.title:
+        track_ids, jingle_ids = [s.id for s in TITLE_THEMES], []
     elif args.track:
         track_ids, jingle_ids = [track_by_id(args.track).id], []
     else:
-        track_ids, jingle_ids = [s.id for s in CATALOGUE], [j.id for j in jingle.JINGLES]
+        track_ids, jingle_ids = [s.id for s in ALL_TRACKS], [j.id for j in jingle.JINGLES]
 
     if args.preview:
         results, _ = _run(track_ids, [], lambda spec: PREVIEWS, PREVIEWS, args.preview, args.jobs)
@@ -469,7 +611,7 @@ def main():
     _print_jingles(jingle_results)
     _write_outputs(track_results, jingle_results)
     ok = _all_passed(track_results, jingle_results)
-    if len(track_ids) == len(CATALOGUE):
+    if len(track_ids) >= 2:
         ok = _spread_ok(track_results) and ok
     print("RESULT: PASS" if ok else "RESULT: FAIL")
     return 0 if ok else 1

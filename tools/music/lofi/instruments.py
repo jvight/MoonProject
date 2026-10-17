@@ -185,6 +185,31 @@ def felt_note(pitch, velocity, gate_s, gen):
     return envelope.fade_out(note * (0.25 + 0.75 * velocity ** 1.3), 0.03)
 
 
+CELESTA_RING_S = 0.85
+CELESTA_DAMP_S = 0.18
+
+
+def celesta_note(pitch, velocity, gate_s, gen):
+    """Celesta steel plate over a wooden resonator struck by a felt hammer, held for `gate_s` then gently damped."""
+    n = samples(gate_s + CELESTA_RING_S)
+    freq = _detuned(midi_to_freq(pitch), float(gen.normal(0.0, 0.8)))
+    sustain_t60 = 2.6 * 2.0 ** (-(pitch - 72) / 24.0)
+    brightness = 0.3 + 0.5 * velocity
+    tone = (instruments.partial(n, freq, 1.0, 0.004, sustain_t60)
+            + instruments.partial(n, 2.0 * freq, 0.22 * brightness, 0.003, 0.9 * sustain_t60, detune_cents=2.5))
+    if 4.0 * freq < SOFT_PARTIAL_CEILING_HZ:
+        tone += instruments.partial(n, 4.0 * freq, 0.09 * brightness, 0.002, 0.28)
+    if 6.0 * freq < SOFT_PARTIAL_CEILING_HZ:
+        tone += instruments.partial(n, 6.0 * freq, 0.025 * brightness, 0.0015, 0.12)
+    felt_n = samples(0.005)
+    felt = filters.lowpass(noise.white(felt_n, gen), 1300.0) * envelope.ar(felt_n, 0.0006, 0.004)
+    tone[:felt_n] += 0.018 * velocity * felt
+    gate_n = min(n, samples(gate_s + CELESTA_RING_S / 2.0))
+    t = np.arange(n - gate_n) / SAMPLE_RATE
+    tone[gate_n:] *= np.exp(-t / CELESTA_DAMP_S)
+    return envelope.fade_out(tone * (0.3 + 0.7 * velocity ** 1.2) * 0.75, 0.02)
+
+
 def theremin_line(notes, start_s, n, seconds_of):
     """
     Render a lead part as one continuous voice into `n` samples (`seconds_of(beat)` maps beats to seconds,

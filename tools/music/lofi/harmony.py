@@ -21,6 +21,12 @@ _SUBSTITUTES = {
     "13sus4": ("9sus4", "13"),
     "9sus4": ("13sus4",),
     "7sus4": ("9sus4",),
+    "6/9p": ("add9p",),
+    "add9p": ("6/9p",),
+    "m7p": ("m11p",),
+    "m11p": ("m7p",),
+    "6sus4": ("9sus4p",),
+    "9sus4p": ("6sus4",),
 }
 
 
@@ -113,6 +119,31 @@ FAMILIES = {f.name: f for f in (
         "B1": "ii:m9 | ii:m9 | IV:maj9 | IV:maj9",
         "B2": "vi:m11 | iii:m7 | IV:maj9#11 | V:13sus4",
         "O": "I:maj9 | vi:m9 | IV:maj9#11 | V:13sus4",
+    }),
+    # Title theme families: pure D major pentatonic (D E F# A B), looping V -> I.
+    Family("I-vi-ii-V-pent", "major", {
+        "A1": "I:6/9p | vi:m7p | ii:m7sus4 | V:6sus4",
+        "A2": "I:add9p | vi:m11p | ii:m7sus4 | I:6/9p/iii V:9sus4p",
+        "A3": "I:6/9p | I:add9p/iii | vi:m11p | V:6sus4",
+        "B1": "vi:m7p | I:6/9p/iii | ii:m7sus4 | V:9sus4p",
+        "B2": "ii:m7sus4 | I:6/9p/iii | vi:m11p | V:6sus4 V:9sus4p",
+        "O": "I:6/9p | vi:m7p | ii:m7sus4 | V:6sus4",
+    }),
+    Family("I-iii-vi-V-pent", "major", {
+        "A1": "I:add9p | I:6/9p/iii | vi:m7p | V:6sus4",
+        "A2": "I:6/9p | I:add9p/iii | ii:m7sus4 | V:9sus4p",
+        "A3": "I:6/9p | vi:m11p | ii:m7sus4 I:6/9p/iii | V:6sus4",
+        "B1": "ii:m7sus4 | I:6/9p/iii | vi:m7p | V:9sus4p",
+        "B2": "vi:m11p | I:add9p/iii | ii:m7sus4 | V:6sus4 V:9sus4p",
+        "O": "I:add9p | vi:m11p | ii:m7sus4 | V:6sus4",
+    }),
+    Family("I-vi-pent-drone", "major", {
+        "A1": "I:6/9p | I:add9p | vi:m11p | vi:m7p",
+        "A2": "ii:m7sus4 | ii:m7sus4 | I:6/9p/iii | V:6sus4",
+        "A3": "I:add9p | I:6/9p | vi:m7p | vi:m11p",
+        "B1": "vi:m11p | I:6/9p/iii | ii:m7sus4 | V:9sus4p",
+        "B2": "ii:m7sus4 | I:add9p/iii | vi:m11p | V:6sus4",
+        "O": "I:6/9p | vi:m11p | ii:m7sus4 | V:6sus4",
     }),
 )}
 

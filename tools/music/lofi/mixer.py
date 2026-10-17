@@ -21,9 +21,9 @@ from synth import analysis, effects, envelope, filters
 from synth.core import db_to_gain, pan, place, samples
 
 from .harmony import BEATS_PER_BAR
-from .instruments import (DrumKit, bass_line, felt_note, flute_note, kalimba_note, musicbox_note, pad_note,
-                          rhodes_note, theremin_line, vibes_note)
-from .texture import airlock_room, bed, mono_below, narrow, orbit, steady, tape_stop, wrap_loop
+from .instruments import (DrumKit, bass_line, celesta_note, felt_note, flute_note, kalimba_note, musicbox_note,
+                          pad_note, rhodes_note, theremin_line, vibes_note)
+from .texture import airlock_room, bed, mono_below, narrow, old_radio_bench, orbit, steady, tape_stop, wrap_loop
 from .voicing import KEYS_STYLE
 
 PRE_ROLL_S = 0.5
@@ -31,14 +31,16 @@ END_PAD_S = 0.5
 TARGET_LUFS = -16.0
 CEILING_DBTP = -1.5
 STEM_LUFS = {"drums": -19.0, "bass": -21.0, "keys": -20.5, "pad": -28.0, "lead": -21.0}
+TITLE_STEM_LUFS = {"bass": -22.0, "keys": -20.5, "pad": -24.5, "lead": -21.0}
 PUMP_DEPTH = {"keys": 1.0, "pad": 1.0, "bass": 0.5, "lead": 0.3}
 REVERB_SEND = {"keys": 0.22, "pad": 0.3, "lead": 0.45, "drums": 0.06, "bass": 0.0}
+TITLE_REVERB_SEND = {"keys": 0.32, "pad": 0.45, "lead": 0.5, "bass": 0.0}
 DRUM_PANS = {"kick": 0.0, "snare": -0.08, "rim": -0.18, "hat": 0.22, "ohat": 0.22, "shaker": -0.3, "snap": 0.15,
              "swish": -0.12, "thump": -0.45}
 UNFILTERED_DRUMS = ("kick", "thump")
 LEAD_PANS = {"kalimba": 0.25, "musicbox": 0.3, "flute": -0.2, "vibes": 0.2, "rhodes": -0.1, "theremin": -0.3,
-             "felt": 0.35}
-CROSS_ECHO_LEADS = ("theremin", "felt")
+             "felt": 0.35, "celesta": -0.24}
+CROSS_ECHO_LEADS = ("theremin", "felt", "celesta")
 LEAD_ECHO_MIX = 0.28
 VIBES_MOTOR_PER_BEAT = 2.0
 VIBES_MOTOR_DEPTH = 0.25
@@ -88,6 +90,8 @@ class Renderer:
             return rhodes_note(note.pitch, note.velocity, gate_s, gen)
         if voice == "felt":
             return felt_note(note.pitch, note.velocity, gate_s, gen)
+        if voice == "celesta":
+            return celesta_note(note.pitch, note.velocity, gate_s, gen)
         if voice == "pad":
             return pad_note(note.pitch, note.velocity, gate_s, gen)
         if voice == "flute":
@@ -118,7 +122,7 @@ class Renderer:
         return out
 
     def keys(self):
-        if self.spec.keys_voice == "felt":
+        if self.spec.keys_voice in ("felt", "celesta"):
             spread = self._spread_notes(self.score.parts["keys"], "keys", self.rng("keys-notes"))
             stereo = effects.chorus(spread, voices=2, rate=0.31, depth=0.0012, delay=0.013, mix=0.3, spread=0.8)
             return filters.highpass(stereo, 90.0)
@@ -196,7 +200,13 @@ class Renderer:
         return np.exp(np.interp(np.arange(self.n), times, logs))
 
     def stems(self):
-        stems = {"keys": self.keys(), "bass": self.bass(), "drums": self.drums()}
+        stems = {}
+        if "keys" in self.score.parts:
+            stems["keys"] = self.keys()
+        if "bass" in self.score.parts:
+            stems["bass"] = self.bass()
+        if self.score.drums:
+            stems["drums"] = self.drums()
         if "pad" in self.score.parts:
             stems["pad"] = self.pad()
         for name in self.score.parts:
@@ -219,13 +229,15 @@ def mix(renderer, stems):
     duck = renderer.pump()
     bus = np.zeros((renderer.n, 2))
     send = np.zeros((renderer.n, 2))
+    stem_lufs = TITLE_STEM_LUFS if renderer.spec.title_theme else STEM_LUFS
+    reverb_send = TITLE_REVERB_SEND if renderer.spec.title_theme else REVERB_SEND
     for name, stem in sorted(stems.items()):
         family = _family(name)
-        staged = _to_lufs(stem, STEM_LUFS[family])
+        staged = _to_lufs(stem, stem_lufs[family])
         if family in PUMP_DEPTH:
             staged = staged * db_to_gain(-PUMP_DEPTH[family] * duck)[:, None]
         bus += staged
-        send += REVERB_SEND[family] * space * staged
+        send += reverb_send[family] * space * staged
     wet = effects.reverb(send, room=0.84, damping=0.55, wet=1.0, dry=0.0, width=1.0, predelay=0.025)
     wet = filters.butter(filters.butter(wet, "highpass", 220.0, order=2), "lowpass", 7000.0, order=2)
     return bus + wet
@@ -243,6 +255,8 @@ def master(renderer, music):
     mood = spec.mood
     if mood.texture == "airlock":
         music = airlock_room(music)
+    elif mood.texture == "old_radio":
+        music = old_radio_bench(music)
     music = filters.swept(music, "lowpass", renderer.cutoff_curve(), q=0.6, block=64)
     if mood.presence_db:
         music = filters.highshelf(music, PRESENCE_HZ, mood.presence_db)
@@ -271,7 +285,7 @@ def master(renderer, music):
         out = envelope.fade_in(out, 0.08)
     out = _to_lufs(out, GLUE_LEVEL_LUFS)
     out = steady(out, _glue) if renderer.looping else _glue(out)
-    return normalise(out, loop=renderer.looping)
+    return normalise(out, target=spec.target_lufs, loop=renderer.looping)
 
 
 def fader_out(x, duration_s, floor_db=FADE_FLOOR_DB):

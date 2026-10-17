@@ -55,6 +55,7 @@ LEADS = {v.name: v for v in (
     LeadVoice("rhodes", 62, 81),
     LeadVoice("theremin", 62, 79),
     LeadVoice("felt", 69, 88),
+    LeadVoice("celesta", 66, 86),
 )}
 
 

@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e30741a8bc54d1290f32b45a18c0201, type: 3}
+  m_Name: TitleMusicLibrary
+  m_EditorClassIdentifier: 
+  _tracks:
+  - _id: title_a_turning_moon
+    _title: Little Turning Moon
+    _clip: {fileID: 8300000, guid: 9e30741a8bc54d1290f32b45a18c0101, type: 3}
+    _bpm: 66
+    _tapeId: 
+  - _id: title_b_earthlight_cradle
+    _title: Earthlight Cradle
+    _clip: {fileID: 8300000, guid: 9e30741a8bc54d1290f32b45a18c0102, type: 3}
+    _bpm: 70
+    _tapeId: 
+  - _id: title_c_quiet_horizon
+    _title: Quiet Horizon
+    _clip: {fileID: 8300000, guid: 9e30741a8bc54d1290f32b45a18c0103, type: 3}
+    _bpm: 60
+    _tapeId: 
+  _selectedId: title_a_turning_moon
+  _fadeInSeconds: 2
+  _fadeOutSeconds: 2.5
+  _volume: 1

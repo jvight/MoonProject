@@ -12,17 +12,9 @@ namespace MoonProject.Audio
     public sealed class WakeAudioSettings
     {
         [Header("The Asleep radio (static)")]
-        [Tooltip("Static level while the fresh title is up: quiet, out of tune.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _titleStatic = 0.35f;
-
         [Tooltip("Static level once the crackle swells in O1 and through the look inside the lens.")]
         [Range(0f, 1f)]
         [SerializeField] private float _openingStatic = 0.6f;
-
-        [Tooltip("Seconds the static takes to come up on the title.")]
-        [Range(0.1f, 6f)]
-        [SerializeField] private float _titleFadeSeconds = 2.5f;
 
         [Tooltip("Seconds of the O1 crackle swell.")]
         [Range(0.1f, 4f)]
@@ -106,9 +98,7 @@ namespace MoonProject.Audio
         [Range(0f, 1f)]
         [SerializeField] private float _hurried = 0.7f;
 
-        public float TitleStatic => _titleStatic;
         public float OpeningStatic => _openingStatic;
-        public float TitleFadeSeconds => _titleFadeSeconds;
         public float SwellSeconds => _swellSeconds;
         public float HandOverSeconds => _handOverSeconds;
         public float InsideCutoff => _insideCutoff;

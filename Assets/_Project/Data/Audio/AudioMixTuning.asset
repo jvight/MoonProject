@@ -34,3 +34,4 @@ MonoBehaviour:
   _pausedWorldGain: 0
   _ambienceFadeIn: 4
   _ambienceCrossfade: 6
+  _titleMusic: {fileID: 11400000, guid: 9e30741a8bc54d1290f32b45a18c0301, type: 2}

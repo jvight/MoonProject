@@ -1,0 +1,219 @@
+{
+  "id": "title_a_turning_moon",
+  "title": "Little Turning Moon",
+  "bpm": 66.0,
+  "swing": 0.52,
+  "key": "D major",
+  "family": "I-vi-ii-V-pent",
+  "drums": "off",
+  "ending": "loop",
+  "form": [
+    "Intro x4",
+    "A x8",
+    "B x8",
+    "A' x8",
+    "B' x8",
+    "Outro x4"
+  ],
+  "pcm_sha256": "5cd29a2e73a251b0c5eebfc61932c6d022b9eac0429e0faf6fcb1223f3e87328",
+  "measured": {
+    "duration_s": 145.4545,
+    "loudness_lufs": -19.9666,
+    "true_peak_dbtp": -6.0284,
+    "sample_peak_db": -6.034,
+    "rms_db": -21.9689,
+    "crest_db": 15.9349,
+    "centroid_hz": 676.5486,
+    "above_8k_db": -67.4206,
+    "bands": {
+      "low": 0.3984,
+      "mid": 0.6016,
+      "high": 0.0
+    },
+    "correlation": 0.7986,
+    "correlation_below_150hz": 0.9986,
+    "clipped_samples": 0,
+    "silent_gaps": [],
+    "dc": 0.0,
+    "chroma_out_of_key": 0.0144,
+    "beat_clarity": 1.3666
+  },
+  "theory": {
+    "chord_chart": {
+      "Intro": [
+        "| D6/9p | Bm7p | Em7sus4 | A9sus4p |"
+      ],
+      "A": [
+        "| D6/9p | Bm7p | Em7sus4 | A6sus4 |",
+        "| Dadd9p | Bm11p | Em7sus4 | D6/9p/F# A9sus4p |"
+      ],
+      "B": [
+        "| Bm7p | D6/9p/F# | Em7sus4 | A9sus4p |",
+        "| Em7sus4 | D6/9p/F# | Bm11p | A6sus4 A9sus4p |"
+      ],
+      "A'": [
+        "| Dadd9p | D6/9p/F# | Bm11p | A6sus4 |",
+        "| Dadd9p | Bm11p | Em7sus4 | D6/9p/F# A9sus4p |"
+      ],
+      "B'": [
+        "| Bm11p | D6/9p/F# | Em7sus4 | A9sus4p |",
+        "| Em7sus4 | Dadd9p/F# | Bm11p | A6sus4 A9sus4p |"
+      ],
+      "Outro": [
+        "| D6/9p | Bm7p | Em7sus4 | A6sus4 |"
+      ]
+    },
+    "out_of_key_notes": 0,
+    "borrowed_chords": [],
+    "lead_notes": 34,
+    "lead_non_pentatonic": 0,
+    "lead_strong_off_chord": 0,
+    "lead_clashes": 0,
+    "parts": {
+      "keys": 320,
+      "pad": 43,
+      "bass": 44,
+      "lead.celesta": 17,
+      "lead.felt": 17
+    },
+    "drum_hits": 0
+  },
+  "gates": {
+    "loudness_lufs": {
+      "value": -19.9666,
+      "pass": true
+    },
+    "true_peak_dbtp": {
+      "value": -6.0284,
+      "pass": true
+    },
+    "duration_s": {
+      "value": 145.4545,
+      "pass": true
+    },
+    "clipped_samples": {
+      "value": 0,
+      "pass": true
+    },
+    "silent_gaps": {
+      "value": 0,
+      "pass": true
+    },
+    "correlation_below_150hz": {
+      "value": 0.9986,
+      "pass": true
+    },
+    "correlation": {
+      "value": 0.7986,
+      "pass": true
+    },
+    "high_band_share": {
+      "value": 0.0,
+      "pass": true
+    },
+    "above_8k_db": {
+      "value": -67.4206,
+      "pass": true
+    },
+    "chroma_out_of_key": {
+      "value": 0.0144,
+      "pass": true
+    },
+    "beat_clarity": {
+      "value": 1.3666,
+      "pass": true
+    },
+    "tempo_error": {
+      "value": 0.0,
+      "pass": true
+    },
+    "out_of_key_notes": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_non_pentatonic": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_strong_off_chord": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_clashes": {
+      "value": 0,
+      "pass": true
+    },
+    "seam_ratio": {
+      "value": 0.6065,
+      "pass": true
+    },
+    "seam_loudness_step_lu": {
+      "value": 0.6866,
+      "pass": true
+    }
+  },
+  "notes": "Variant A (closest to brief, default pick): 66 BPM pure D major pentatonic lullaby for 07's CRT title screen. A warm low-passed pad drifts in a slow four-bar lunar orbit over a held root pedal; felt piano plays cradle-like broken chords while celesta and high felt piano trade sparse, tender phrases through C2 'Radio bench' tape warmth at -20 LUFS with zero drums and no static.",
+  "instruments": {
+    "keys": "felt (rock)",
+    "leads": [
+      "celesta",
+      "felt"
+    ],
+    "drums": "off",
+    "bass": [
+      "hold"
+    ],
+    "texture": "old_radio",
+    "events": []
+  },
+  "listening": {
+    "tempo_detected_bpm": 66.0,
+    "tempo_detected_clarity": 1.3666,
+    "scale": {
+      "scale": "D major",
+      "share": 0.9856,
+      "runner_up": "A major",
+      "runner_up_share": 0.9853
+    },
+    "loudness": {
+      "range_lu": 1.3472,
+      "min_lufs": -20.982,
+      "max_lufs": -18.8733,
+      "every_10s_lufs": [
+        -20.5534,
+        -20.0242,
+        -19.7703,
+        -20.0814,
+        -20.0167,
+        -19.6038,
+        -20.1768,
+        -19.8923,
+        -18.8733,
+        -20.4614,
+        -19.1121,
+        -19.4891,
+        -20.1657,
+        -20.2804,
+        -20.1512
+      ]
+    },
+    "octaves_db": {
+      "31.5": -38.6468,
+      "63": -2.6215,
+      "125": -3.1677,
+      "250": -1.9667,
+      "500": 0.0,
+      "1000": -6.8242,
+      "2000": -15.8463,
+      "4000": -28.7904,
+      "8000": -51.037,
+      "16000": -72.128
+    },
+    "width_db": -7.2528,
+    "seam": {
+      "ratio": 0.6065,
+      "jump_db": 9.8481,
+      "loudness_step_lu": 0.6866
+    }
+  }
+}
