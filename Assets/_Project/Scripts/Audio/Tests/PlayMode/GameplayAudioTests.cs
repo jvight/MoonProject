@@ -16,6 +16,7 @@ namespace MoonProject.Audio.PlayModeTests
         public IEnumerator SetUp()
         {
             _rig = new AudioTestRig();
+            _tuning = AudioTestRig.LoadTuning<GameplayAudioTuning>("GameplayAudioTuning.asset");
             yield return null;
         }
 
@@ -24,6 +25,8 @@ namespace MoonProject.Audio.PlayModeTests
         {
             _rig.Dispose();
         }
+
+        private GameplayAudioTuning _tuning;
 
         private AudioSource Last => _rig.Director.LastVoice;
 
@@ -80,24 +83,37 @@ namespace MoonProject.Audio.PlayModeTests
             AssertLastPlayed("build_deconstruct", spot);
         }
 
-        [Test]
-        public void AStructureTakingPower_ThunksAndSwellsOnce_NeverOnARestoreOrADim()
+        [UnityTest]
+        public IEnumerator AStructureTakingPower_ThunksAndSwells_NeverOnARestoreOrADim()
         {
             var spot = new Vector3(2f, 0f, -5f);
             _rig.Events.Publish(new StructurePowerChanged(7, "charge_pad", spot, 1f, false));
             AssertLastPlayed("structure_power_on", spot);
-            AudioSource first = Last;
+            int plays = _rig.Director.PlayCount;
 
             _rig.Events.Publish(new StructurePowerChanged(7, "charge_pad", spot, 0.5f, false));
-            Assert.AreSame(first, Last, "a dim is not a power-on");
-
+            Assert.AreEqual(plays, _rig.Director.PlayCount, "a dim is not a power-on");
             _rig.Events.Publish(new StructurePowerChanged(8, "charge_pad", spot, 1f, true));
-            Assert.AreSame(first, Last, "a save restoring power stays quiet");
+            Assert.AreEqual(plays, _rig.Director.PlayCount, "a save restoring power stays quiet");
+            _rig.Events.Publish(new StructurePowerChanged(9, "lamp_post", spot, 1f, false));
+            Assert.AreEqual(plays, _rig.Director.PlayCount, "several at once: one swell speaks for them");
 
+            yield return new WaitForSeconds(_tuning.PowerOnMinInterval + 0.1f);
             _rig.Events.Publish(new StructurePowerChanged(7, "charge_pad", spot, 0f, false));
             _rig.Events.Publish(new StructurePowerChanged(7, "charge_pad", spot, 1f, false));
-            Assert.AreNotSame(first, Last, "power lost and found again sounds again");
+            Assert.AreEqual(plays + 1, _rig.Director.PlayCount, "power lost and found again sounds again");
             AssertLastPlayed("structure_power_on", spot);
+        }
+
+        [Test]
+        public void AStructureBuiltIntoAPoweredBase_IsLitByItsBuild_NotASecondSwell()
+        {
+            var spot = new Vector3(6f, 0f, 1f);
+            _rig.Events.Publish(new StructureBuilt(11, "lamp_post", spot, 0f));
+            AssertLastPlayed("build_structure_complete", spot);
+            int plays = _rig.Director.PlayCount;
+            _rig.Events.Publish(new StructurePowerChanged(11, "lamp_post", spot, 1f, false));
+            Assert.AreEqual(plays, _rig.Director.PlayCount);
         }
 
         [UnityTest]

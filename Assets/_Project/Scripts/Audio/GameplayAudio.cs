@@ -9,8 +9,9 @@ namespace MoonProject.Audio
     /// <summary>
     /// The base's sounds (docs/design/opening-v2.md B5-B10): build mode's ghost, snap, invalid spot, placement, weld
     /// loop (following the beam), stage and structure complete and deconstruct (<see cref="BuildCue"/> and the
-    /// structure events); a structure taking power for the first time (<see cref="StructurePowerChanged"/> from
-    /// unpowered to powered, not on a restore): a relay thunk and a transformer swell rising onto its lamp; and the
+    /// structure events); a structure taking power (<see cref="StructurePowerChanged"/> from unpowered to powered,
+    /// not on a restore, not just after its own build, one swell for several at once): a relay thunk and a
+    /// transformer swell rising onto its lamp; and the
     /// first nightfall's light sequence (<see cref="SkyPhaseChanged"/> Sunset to Earthlit): every built structure's
     /// lamp clicking on one by one, nearest to the base first, climbing the pentatonic ladder
     /// (<see cref="NightLightsSequence"/>). Initialised by <see cref="AudioDirector"/>.
@@ -28,6 +29,7 @@ namespace MoonProject.Audio
         private readonly LoopFader _weldFader = new LoopFader();
         private readonly NightLightsSequence _nightLights = new NightLightsSequence();
         private readonly Dictionary<int, bool> _powered = new Dictionary<int, bool>(InitialStructureCapacity);
+        private readonly Dictionary<int, float> _builtAt = new Dictionary<int, float>(InitialStructureCapacity);
         private AudioDirector _director;
         private IWorldLayout _layout;
         private CueHandle _buildGhost;
@@ -43,6 +45,7 @@ namespace MoonProject.Audio
         private float _weldLoopCueVolume;
         private int _lampNotes;
         private SkyPhase _phase;
+        private float _lastPowerOn = float.NegativeInfinity;
 
         /// <summary>True while the build weld loop can be heard (including its fade-out).</summary>
         public bool BuildWeldAudible => _weldFader.IsAudible;
@@ -142,6 +145,7 @@ namespace MoonProject.Audio
         private void OnStructureBuilt(StructureBuilt built)
         {
             _nightLights.Add(built.InstanceId, built.Position);
+            _builtAt[built.InstanceId] = built.Restored ? float.NegativeInfinity : Time.time;
             if (!built.Restored)
             {
                 _director.PlayAt(_buildStructureComplete, built.Position);
@@ -154,19 +158,31 @@ namespace MoonProject.Audio
         {
             _nightLights.Remove(removed.InstanceId);
             _powered.Remove(removed.InstanceId);
+            _builtAt.Remove(removed.InstanceId);
             _director.PlayAt(_buildDeconstruct, removed.Position);
         }
 
-        /// <summary>Only the moment a structure first takes power sounds; dimming and restoring stay quiet.</summary>
+        /// <summary>Only the moment a structure takes power sounds; dimming and restoring stay quiet.</summary>
         private void OnStructurePowerChanged(StructurePowerChanged changed)
         {
             bool powered = changed.SupplyRatio > 0f;
             bool was = _powered.TryGetValue(changed.InstanceId, out bool before) && before;
             _powered[changed.InstanceId] = powered;
-            if (powered && !was && !changed.Restored)
+            if (!powered || was || changed.Restored)
             {
-                _director.PlayAt(_powerOn, changed.Position, _tuning.PowerOnVolume);
+                return;
             }
+
+            float now = Time.time;
+            bool justBuilt = _builtAt.TryGetValue(changed.InstanceId, out float builtAt) &&
+                             now - builtAt < _tuning.PowerOnBuildGrace;
+            if (justBuilt || now - _lastPowerOn < _tuning.PowerOnMinInterval)
+            {
+                return;
+            }
+
+            _lastPowerOn = now;
+            _director.PlayAt(_powerOn, changed.Position, _tuning.PowerOnVolume);
         }
 
         private void OnBuildCue(BuildCue cue)

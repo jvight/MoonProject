@@ -216,14 +216,20 @@ namespace MoonProject.Audio.PlayModeTests
                 yield return null;
             }
 
-            // Sky transitions: Eclipse -> Sunrise (diamond ring) -> Earthlit (nightfall settle) -> Sunrise (dawn sweep)
+            // Sky transitions: the first charge ends the eclipse (diamond ring) -> Earthlit (nightfall settle) ->
+            // Sunrise (dawn sweep). The eclipse's own sunrise adds nothing over the ring.
             _rig.Events.Publish(new SkyPhaseChanged(SkyPhase.Eclipse, 1f));
             yield return new WaitForSecondsRealtime(0.2f);
             Assert.IsTrue(_rig.Ambience.EclipseSource.isPlaying);
             Assert.Greater(_rig.Ambience.EclipseSource.volume, 0f);
 
-            _rig.Events.Publish(new SkyPhaseChanged(SkyPhase.Sunrise, 0f));
+            _rig.Milestone(OpeningMilestone.FirstCharge);
             AssertLastFlat("sky_diamond_ring");
+            int plays = _rig.Director.PlayCount;
+            _rig.Events.Publish(new SkyPhaseChanged(SkyPhase.Sunrise, 0f));
+            Assert.AreEqual(plays, _rig.Director.PlayCount, "no dawn sweep on top of the ring");
+            _rig.Milestone(OpeningMilestone.FirstCharge, true);
+            Assert.AreEqual(plays, _rig.Director.PlayCount, "a restored first charge stays quiet");
             yield return new WaitForSecondsRealtime(0.2f);
             Assert.IsTrue(_rig.Ambience.DaySource.isPlaying);
             Assert.Greater(_rig.Ambience.DaySource.volume, 0f);

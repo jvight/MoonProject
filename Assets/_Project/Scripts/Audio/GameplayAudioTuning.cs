@@ -19,6 +19,14 @@ namespace MoonProject.Audio
         [Tooltip("Volume scale of a structure's power-on: the relay thunk and the transformer swell onto its lamp.")]
         [Range(0f, 1f)] [SerializeField] private float _powerOnVolume = 0.85f;
 
+        [Tooltip("Seconds after a structure is built during which its first power is silent: the build's own " +
+                 "completion already lit its lamp, so the swell would only pile on.")]
+        [Range(0f, 5f)] [SerializeField] private float _powerOnBuildGrace = 1.5f;
+
+        [Tooltip("Seconds between two power-on swells: when a cable brings several structures up at once, one swell " +
+                 "speaks for them.")]
+        [Range(0f, 5f)] [SerializeField] private float _powerOnMinInterval = 1.2f;
+
         [Header("The first nightfall (opening v2 B10)")]
         [Tooltip("Seconds after the Sun sets before the first base lamp clicks on (the night settles first).")]
         [Range(0f, 10f)] [SerializeField] private float _nightLampDelay = 2.5f;
@@ -32,6 +40,8 @@ namespace MoonProject.Audio
         public float WeldFadeIn => _weldFadeIn;
         public float WeldFadeOut => _weldFadeOut;
         public float PowerOnVolume => _powerOnVolume;
+        public float PowerOnBuildGrace => _powerOnBuildGrace;
+        public float PowerOnMinInterval => _powerOnMinInterval;
         public float NightLampDelay => _nightLampDelay;
         public float NightLampInterval => _nightLampInterval;
         public float NightLampVolume => _nightLampVolume;

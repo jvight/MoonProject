@@ -243,6 +243,12 @@ namespace MoonProject.Audio.PlayModeTests
             return child;
         }
 
+        /// <summary>A builder-made tuning asset from Assets/_Project/Data/Audio (read only).</summary>
+        public static T LoadTuning<T>(string file) where T : ScriptableObject
+        {
+            return Load<T>(file);
+        }
+
         private static T Load<T>(string file) where T : Object
         {
 #if UNITY_EDITOR
