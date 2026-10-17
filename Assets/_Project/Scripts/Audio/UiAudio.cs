@@ -20,8 +20,6 @@ namespace MoonProject.Audio
 
         private readonly RepeatSoftener _focusRepeats = new RepeatSoftener();
         private readonly RepeatSoftener _sliderRepeats = new RepeatSoftener();
-        private readonly RepeatSoftener _typeCardRepeats = new RepeatSoftener();
-        private readonly RepeatSoftener _typeTerminalRepeats = new RepeatSoftener();
         private AudioDirector _director;
         private CueHandle _panelOpen;
         private CueHandle _panelClose;
@@ -29,8 +27,6 @@ namespace MoonProject.Audio
         private CueHandle _confirm;
         private CueHandle _cancel;
         private CueHandle _toast;
-        private CueHandle _typeCard;
-        private CueHandle _typeTerminal;
         private CueHandle _holdComplete;
         private CueHandle _partPick;
         private CueHandle _partDrop;
@@ -40,7 +36,6 @@ namespace MoonProject.Audio
         private bool _holdStopping;
         private float _holdFadeTime;
         private IDisposable _subscription;
-        private IDisposable _typeSubscription;
 
         /// <summary>True while the hold swell is sounding (including its short let-go fade).</summary>
         public bool HoldSwellPlaying => _holdSwell != null && _holdSwell.isPlaying;
@@ -63,15 +58,13 @@ namespace MoonProject.Audio
             _confirm = director.Resolve(AudioCueIds.UiConfirm);
             _cancel = director.Resolve(AudioCueIds.UiCancel);
             _toast = director.Resolve(AudioCueIds.UiToast);
-            _typeCard = director.Resolve(AudioCueIds.UiTypeCard);
-            _typeTerminal = director.Resolve(AudioCueIds.UiTypeTerminal);
             _holdComplete = director.Resolve(AudioCueIds.UiHoldComplete);
             _partPick = director.Resolve(AudioCueIds.PartPick);
             _partDrop = director.Resolve(AudioCueIds.PartDrop);
             _partRefuse = director.Resolve(AudioCueIds.PartRefuse);
             CueHandle holdFill = director.Resolve(AudioCueIds.UiHoldFill);
             if (!(_panelOpen.IsValid && _panelClose.IsValid && _cursorMove.IsValid && _confirm.IsValid &&
-                  _cancel.IsValid && _toast.IsValid && _typeCard.IsValid && _typeTerminal.IsValid &&
+                  _cancel.IsValid && _toast.IsValid &&
                   _holdComplete.IsValid && holdFill.IsValid && _partPick.IsValid && _partDrop.IsValid &&
                   _partRefuse.IsValid))
             {
@@ -83,7 +76,6 @@ namespace MoonProject.Audio
             _holdSwell.loop = false;
             _holdCueVolume = director.Library.GetCue(holdFill).VolumeMax;
             _subscription = context.Events.Subscribe<UiCue>(OnUiCue);
-            _typeSubscription = context.Events.Subscribe<UiTypewriterTick>(OnTypewriterTick);
         }
 
         internal void Wire(UiAudioTuning tuning)
@@ -168,19 +160,6 @@ namespace MoonProject.Audio
             }
         }
 
-        private void OnTypewriterTick(UiTypewriterTick tick)
-        {
-            switch (tick.Kind)
-            {
-                case UiTypeKind.Card:
-                    PlaySoftened(_typeCard, _typeCardRepeats, _tuning.SliderMinInterval);
-                    break;
-                case UiTypeKind.Terminal:
-                    PlaySoftened(_typeTerminal, _typeTerminalRepeats, _tuning.SliderMinInterval);
-                    break;
-            }
-        }
-
         private void PlaySoftened(CueHandle cue, RepeatSoftener repeats, float minInterval)
         {
             if (repeats.TryTrigger(Time.unscaledTime, minInterval, _tuning.StreakWindow, _tuning.StreakDecay,
@@ -212,8 +191,6 @@ namespace MoonProject.Audio
         {
             _subscription?.Dispose();
             _subscription = null;
-            _typeSubscription?.Dispose();
-            _typeSubscription = null;
         }
     }
 }

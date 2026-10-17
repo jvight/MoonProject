@@ -21,7 +21,6 @@ namespace MoonProject.Audio.Editor
             EnsureExists<RoverAudioTuning>(AudioAssetPaths.RoverTuning);
             EnsureExists<GameplayAudioTuning>(AudioAssetPaths.GameplayTuning);
             EnsureExists<UiAudioTuning>(AudioAssetPaths.UiTuning);
-            EnsureExists<JumpAudioTuning>(AudioAssetPaths.JumpTuning);
             EnsureExists<RadioTuning>(AudioAssetPaths.RadioTuning);
             EnsureExists<FeelAudioTuning>(AudioAssetPaths.FeelTuning);
             EnsureExists<SoundscapeTuning>(AudioAssetPaths.SoundscapeTuning);

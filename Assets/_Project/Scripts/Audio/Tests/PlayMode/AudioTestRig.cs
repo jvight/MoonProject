@@ -52,7 +52,6 @@ namespace MoonProject.Audio.PlayModeTests
             RoverAudio = Child(audioRoot, "RoverAudio").AddComponent<RoverAudio>();
             Gameplay = Child(audioRoot, "GameplayAudio").AddComponent<GameplayAudio>();
             Ui = Child(audioRoot, "UiAudio").AddComponent<UiAudio>();
-            Jump = Child(audioRoot, "JumpAudio").AddComponent<JumpAudio>();
             Radio = Child(audioRoot, "RadioStation").AddComponent<RadioStation>();
             TitleMusicLibrary = Track(Object.Instantiate(Load<TitleMusicLibrary>("TitleMusicLibrary.asset")));
             TitleMusic = Child(audioRoot, "TitleMusic").AddComponent<TitleMusic>();
@@ -74,10 +73,9 @@ namespace MoonProject.Audio.PlayModeTests
             RoverAudio.Wire(Load<RoverAudioTuning>("RoverAudioTuning.asset"));
             Gameplay.Wire(Load<GameplayAudioTuning>("GameplayAudioTuning.asset"));
             Ui.Wire(Load<UiAudioTuning>("UiAudioTuning.asset"));
-            Jump.Wire(Load<JumpAudioTuning>("JumpAudioTuning.asset"));
             Radio.Wire(Load<RadioTuning>("RadioTuning.asset"), playlist);
             Director.Wire(Load<AudioLibrary>("AudioLibrary.asset"), Load<AudioMixTuning>("AudioMixTuning.asset"),
-                RoverAudio, Jump, Gameplay, Ui, Radio, Ambience, Soundscape, SmallSounds, Salvage);
+                RoverAudio, Gameplay, Ui, Radio, Ambience, Soundscape, SmallSounds, Salvage);
             Director.WireTitleMusic(TitleMusic);
             Director.WireBattery(Battery);
             Director.WireFeel(Feel, Chirps);
@@ -96,7 +94,6 @@ namespace MoonProject.Audio.PlayModeTests
 
         public UiAudio Ui { get; }
 
-        public JumpAudio Jump { get; }
 
         public BatteryAudio Battery { get; }
 

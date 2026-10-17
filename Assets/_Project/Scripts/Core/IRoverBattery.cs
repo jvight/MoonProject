@@ -31,7 +31,7 @@ namespace MoonProject.Core
 
         /// <summary>
         /// True when the capacitor drums and the cells can pay for a full leap now. When false the Hover-Jump never
-        /// charges: the coils fizzle at the lip (<see cref="Events.RoverLeapRefused"/>), never mid-air.
+        /// charges, so a leap is never cut short mid-air.
         /// </summary>
         bool CanLeap { get; }
 

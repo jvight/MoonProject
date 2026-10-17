@@ -29,27 +29,4 @@ namespace MoonProject.Core.Events
 
         public RoverFaceCueKind Kind { get; }
     }
-
-    /// <summary>
-    /// Surface kind for UI typewriter ticks (<c>ui_type_card</c> vs <c>ui_type_terminal</c>).
-    /// </summary>
-    public enum UiTypeKind
-    {
-        Card,
-        Terminal,
-    }
-
-    /// <summary>
-    /// Published by UI card or terminal text reveals per stepped character/word so <c>UiAudio</c> can play the
-    /// rate-limited <c>ui_type_card</c> or <c>ui_type_terminal</c> cue.
-    /// </summary>
-    public readonly struct UiTypewriterTick
-    {
-        public UiTypewriterTick(UiTypeKind kind)
-        {
-            Kind = kind;
-        }
-
-        public UiTypeKind Kind { get; }
-    }
 }
