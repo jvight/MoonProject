@@ -79,6 +79,17 @@ namespace MoonProject.UI
             MemoryCardGlyphLabel = Require<Label>("memory-card-glyph-label");
             MemoryCardClose = Require<Label>("memory-card-close");
 
+            LetterCard = Require<VisualElement>("letter-card");
+            LetterCardShadow = Require<VisualElement>("letter-card-shadow");
+            LetterCardIcon = Require<VisualElement>("letter-card-icon");
+            LetterCardCaption = Require<Label>("letter-card-caption");
+            LetterCardStamp = Require<Label>("letter-card-stamp");
+            LetterCardText = Require<Label>("letter-card-text");
+            LetterCardSender = Require<Label>("letter-card-sender");
+            LetterCardGlyph = Require<VisualElement>("letter-card-glyph");
+            LetterCardGlyphLabel = Require<Label>("letter-card-glyph-label");
+            LetterCardClose = Require<Label>("letter-card-close");
+
             TowerPanel = Require<VisualElement>("tower-panel");
             RecipeCardRoot = Require<VisualElement>("recipe-card");
             TowerPanelShadow = Require<VisualElement>("tower-panel-shadow");
@@ -131,6 +142,7 @@ namespace MoonProject.UI
 
             Pause = Require<VisualElement>("pause");
             PauseVeil = Require<VisualElement>("pause-veil");
+            PauseFrame = Require<VisualElement>("pause-frame");
             PauseStack = Require<VisualElement>("pause-stack");
             PauseMain = Require<VisualElement>("pause-main");
             PauseMainShadow = Require<VisualElement>("pause-main-shadow");
@@ -154,6 +166,7 @@ namespace MoonProject.UI
             TitleCrt = Require<VisualElement>("title-crt");
             TitleScreen = Require<VisualElement>("title-screen");
             TitleWordmark = Require<VisualElement>("title-wordmark");
+            TitleSubtitleRow = Require<VisualElement>("title-subtitle-row");
             TitleSubtitlePrefix = Require<Label>("title-subtitle-prefix");
             TitleRule = Require<VisualElement>("title-rule");
             TitleKeyHint = Require<Label>("title-key-hint");
@@ -354,6 +367,26 @@ namespace MoonProject.UI
 
         public Label MemoryCardClose { get; }
 
+        public VisualElement LetterCard { get; }
+
+        public VisualElement LetterCardShadow { get; }
+
+        public VisualElement LetterCardIcon { get; }
+
+        public Label LetterCardCaption { get; }
+
+        public Label LetterCardStamp { get; }
+
+        public Label LetterCardText { get; }
+
+        public Label LetterCardSender { get; }
+
+        public VisualElement LetterCardGlyph { get; }
+
+        public Label LetterCardGlyphLabel { get; }
+
+        public Label LetterCardClose { get; }
+
         public VisualElement TowerPanel { get; }
 
         /// <summary>The recipe card's box (the prompt keeps clear of it).</summary>
@@ -446,6 +479,8 @@ namespace MoonProject.UI
 
         public VisualElement PauseVeil { get; }
 
+        public VisualElement PauseFrame { get; }
+
         public VisualElement PauseStack { get; }
 
         public VisualElement PauseMain { get; }
@@ -496,6 +531,9 @@ namespace MoonProject.UI
 
         /// <summary>The drawn Lunarion wordmark (WordmarkPainter) inside <see cref="TitleScreen"/>.</summary>
         public VisualElement TitleWordmark { get; }
+
+        /// <summary>The subtitle row beneath the wordmark (`// một chiếc radio vẫn bật`).</summary>
+        public VisualElement TitleSubtitleRow { get; }
 
         /// <summary>The cyan comment prefix ("// ") beside the title subtitle.</summary>
         public Label TitleSubtitlePrefix { get; }

@@ -971,6 +971,9 @@ namespace MoonProject.UI.PlayModeTests
             ui.Pause.SetTitleAnimationTime(1.1f, false);
             yield return Capture(camera, logsFolder, "title_vi_1920x1080");
 
+            ui.Pause.SetTitleAnimationTime(5.1f, false);
+            yield return Capture(camera, logsFolder, "title_vi_5_1s_1920x1080");
+
             ui.Localization.SetLanguage("en");
             ui.Pause.SetTitleAnimationTime(1.1f, false);
             yield return Capture(camera, logsFolder, "title_en_1920x1080");
@@ -988,6 +991,57 @@ namespace MoonProject.UI.PlayModeTests
 
             ui.Pause.SetTitleAnimationTime(9.0f, true);
             yield return Capture(camera, logsFolder, "title_anim_9_0s");
+            Debug.Log($"[title-perf] TitleScenePainter.LastPaintMilliseconds = {ui.Pause.TitleScenePaintMs:F3} ms");
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
+        /// <summary>
+        /// Captures the story-v4 letter card (`#letter-card`) in Vietnamese and English at 1920x1080 and 1280x720
+        /// into Logs/. Rerun with --filter CaptureLetterCards.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CaptureLetterCards()
+        {
+#if UNITY_EDITOR
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out _, out _);
+            yield return null;
+            string logsFolder = Path.GetFullPath("Logs");
+            Directory.CreateDirectory(logsFolder);
+
+            Reframe(1920, 1080);
+            ui.Localization.SetLanguage("vi");
+            context.Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return new WaitForSecondsRealtime(2.2f);
+            FreezeWorld();
+            ui.Layout.Hud.Q("protocol").style.display = DisplayStyle.None;
+
+            context.Events.Publish(new TickerLine("letter.mast_5"));
+            yield return new WaitForSecondsRealtime(_tuning.LetterCard.AppearDelay + _tuning.LetterCard.Reveal.FadeIn + 1.2f);
+            ui.LetterCard.CompleteRevealImmediate();
+            Assert.IsTrue(ui.LetterCard.IsVisible && ui.LetterCard.IsFullyRevealed, "letter card vi 1080p is visible and revealed");
+            yield return Capture(camera, logsFolder, "letter_vi_1920x1080");
+
+            ui.Localization.SetLanguage("en");
+            yield return new WaitForSecondsRealtime(0.15f);
+            Assert.IsTrue(ui.LetterCard.IsVisible && ui.LetterCard.IsFullyRevealed, "letter card en 1080p is visible and revealed");
+            yield return Capture(camera, logsFolder, "letter_en_1920x1080");
+
+            Reframe(1280, 720);
+            ui.Localization.SetLanguage("vi");
+            yield return new WaitForSecondsRealtime(0.2f);
+            Assert.IsTrue(ui.LetterCard.IsVisible && ui.LetterCard.IsFullyRevealed, "letter card vi 720p is visible and revealed");
+            yield return Capture(camera, logsFolder, "letter_vi_1280x720");
+
+            ui.Localization.SetLanguage("en");
+            yield return new WaitForSecondsRealtime(0.15f);
+            Assert.IsTrue(ui.LetterCard.IsVisible && ui.LetterCard.IsFullyRevealed, "letter card en 720p is visible and revealed");
+            yield return Capture(camera, logsFolder, "letter_en_1280x720");
 #else
             Assert.Ignore("Captures need the editor.");
             yield break;
@@ -1231,6 +1285,11 @@ namespace MoonProject.UI.PlayModeTests
             if (ui.Card.IsVisible)
             {
                 on.Add("story card");
+            }
+
+            if (ui.LetterCard.IsVisible)
+            {
+                on.Add("letter card");
             }
 
             if (ui.KitTitle.IsVisible)

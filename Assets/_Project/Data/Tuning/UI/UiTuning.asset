@@ -92,6 +92,15 @@ MonoBehaviour:
     _menuEarthCenter: {x: 955, y: 192}
     _menuEarthRadius: 38
     _menuArkOffset: {x: 66, y: -18}
+    _titleScreenLeft: 150
+    _titleScreenTop: 126
+    _subtitleTopMargin: 4
+    _ruleTopMargin: 16
+    _ruleWidth: 510
+    _ruleHeight: 2
+    _ruleAccentWidth: 48
+    _menuFrameLeftPadding: 144
+    _menuFrameTopPadding: 342
     _standaloneReferenceSize: {x: 1280, y: 720}
     _standaloneMoonCenter: {x: 640, y: 678}
     _standaloneMoonRadius: 320
@@ -126,6 +135,11 @@ MonoBehaviour:
     _crtVignetteAlpha: 0.58
     _crtRollSpeed: 36
     _crtRollBandHeight: 90
+    _glowOuterWidthMultiplier: 4.6
+    _glowOuterAlpha: 0.22
+    _glowInnerWidthMultiplier: 2.4
+    _glowInnerAlpha: 0.42
+    _trailOpacity: 0.34
     _bgDeep: {r: 0.05490196, g: 0.03529412, b: 0.019607844, a: 1}
     _bgWarm: {r: 0.1254902, g: 0.078431375, b: 0.039215688, a: 1}
     _bgCorner: {r: 0.07058824, g: 0.043137256, b: 0.019607844, a: 1}
@@ -866,3 +880,17 @@ MonoBehaviour:
     _hudAspect: 2.3333
     _menuAspect: 1.7778
     _edgeMargin: 48
+  _letterCard:
+    _reveal:
+      _fadeIn: 0.35
+      _fadeOut: 0.75
+      _slide: 10
+      _scaleFrom: 0.98
+      _springFrequency: 1.1
+      _springDamping: 0.75
+    _appearDelay: 0.4
+    _charactersPerSecond: 42
+    _tickIntervalSeconds: 0.055
+    _holdAfterRevealSeconds: 8
+    _minHoldSeconds: 10
+    _voiceTailSeconds: 1.5

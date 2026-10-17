@@ -191,6 +191,28 @@
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
+                <ui:VisualElement name="letter-card" class="letter-card" picking-mode="Ignore">
+                    <ui:VisualElement name="letter-card-shadow" class="soft-shadow soft-shadow--panel" picking-mode="Ignore" />
+                    <ui:VisualElement name="letter-card-body" class="panel letter-card__body" picking-mode="Ignore">
+                        <ui:VisualElement name="letter-card-heading" class="letter-card__heading" picking-mode="Ignore">
+                            <ui:VisualElement class="letter-card__title-group" picking-mode="Ignore">
+                                <ui:VisualElement name="letter-card-lamp" class="letter-card__lamp" picking-mode="Ignore" />
+                                <ui:VisualElement name="letter-card-icon" class="cassette-icon letter-card__icon" picking-mode="Ignore" />
+                                <ui:Label name="letter-card-caption" class="caption letter-card__caption" picking-mode="Ignore" />
+                            </ui:VisualElement>
+                            <ui:Label name="letter-card-stamp" class="caption letter-card__stamp" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="letter-card__rule" picking-mode="Ignore" />
+                        <ui:Label name="letter-card-text" class="letter-card__text" picking-mode="Ignore" />
+                        <ui:Label name="letter-card-sender" class="letter-card__sender" picking-mode="Ignore" />
+                        <ui:VisualElement name="letter-card-footer" class="hint-row letter-card__footer" picking-mode="Ignore">
+                            <ui:VisualElement name="letter-card-glyph" class="glyph glyph--small" picking-mode="Ignore">
+                                <ui:Label name="letter-card-glyph-label" class="glyph__label" picking-mode="Ignore" />
+                            </ui:VisualElement>
+                            <ui:Label name="letter-card-close" class="hint-row__word" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
                 <ui:VisualElement name="tower-panel" class="tower-panel" picking-mode="Ignore">
                     <ui:VisualElement name="tower-panel-shadow" class="soft-shadow soft-shadow--panel" />
                     <ui:VisualElement name="tower-panel-body" class="panel tower-panel__body">
@@ -322,7 +344,7 @@
             <ui:VisualElement name="menu-frame" class="safe-frame" picking-mode="Ignore">
                 <ui:VisualElement name="title-screen" class="title-screen" picking-mode="Ignore">
                     <ui:VisualElement name="title-wordmark" class="title-screen__wordmark" picking-mode="Ignore" />
-                    <ui:VisualElement class="title-screen__subtitle-row" picking-mode="Ignore">
+                    <ui:VisualElement name="title-subtitle-row" class="title-screen__subtitle-row" picking-mode="Ignore">
                         <ui:Label name="title-subtitle-prefix" class="title-screen__subtitle-prefix" picking-mode="Ignore" />
                         <ui:Label name="title-subtitle" class="title-screen__subtitle loc" text="ui.title.subtitle" picking-mode="Ignore" />
                     </ui:VisualElement>

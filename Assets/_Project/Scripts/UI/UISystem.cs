@@ -98,6 +98,8 @@ namespace MoonProject.UI
         private SalvageRing _salvageRing;
         private SiteNameTag _siteName;
         private MemoryCard _card;
+        private LetterCard _letterCard;
+        private readonly Queue<TickerLine> _pendingLetters = new Queue<TickerLine>();
         private RewardCard _rewardCard;
         private readonly GuidanceSlot _slot = new GuidanceSlot();
         private readonly bool[] _guidanceWants = new bool[GuidanceSlot.KindCount];
@@ -156,6 +158,8 @@ namespace MoonProject.UI
         internal SiteNameTag SiteName => _siteName;
 
         internal MemoryCard Card => _card;
+
+        internal LetterCard LetterCard => _letterCard;
 
         internal RadioTicker Ticker => _ticker;
 
@@ -481,6 +485,12 @@ namespace MoonProject.UI
             _salvageRing = new SalvageRing(_layout, _tuning.Salvage, _tuning.Prompts, services.Salvage, services.View);
             _siteName = new SiteNameTag(_layout, _tuning.Salvage, _tuning.Prompts, _localization, services.View);
             _card = new MemoryCard(_layout, _tuning.MemoryCard, _localization, services.Events, _relics);
+            _letterCard = new LetterCard(_layout, _tuning.LetterCard, _localization, services.Events);
+            while (_pendingLetters.Count > 0)
+            {
+                _letterCard.Enqueue(_pendingLetters.Dequeue());
+            }
+
             _friendName = new FriendNameTag(_layout, _tuning.Friends, _tuning.Prompts, services.Friends,
                 _localization, services.View);
             _ticker = new RadioTicker(_layout, _tuning.Ticker, _tickerLines);
@@ -556,6 +566,10 @@ namespace MoonProject.UI
             {
                 _card.Dismiss();
             }
+            else if ((pausePressed || cancelPressed) && _letterCard.CanDismiss)
+            {
+                _letterCard.Dismiss();
+            }
             else if (pausePressed)
             {
                 _pause.Open();
@@ -598,17 +612,24 @@ namespace MoonProject.UI
             _nextStep.Tick(hudTime, _services.Rover.Speed, _player.Guidance);
             _lowBattery.Tick(paused ? 0f : deltaTime, _nextLine.ShowsBattery);
             DecideGuidance(paused, hopping);
-            _card.Tick(hudTime, _glyphs.Cancel(device), device,
-                !_ticker.IsVisible && !hopping && !_hopList.IsBusy && !_placeCard.IsVisible && !_prompt.IsVisible &&
-                !_rewardCard.IsVisible && !_lookUpChip.IsVisible);
+            string cancelGlyph = _glyphs.Cancel(device);
+            _card.Tick(hudTime, cancelGlyph, device,
+                !_letterCard.IsVisible && !_ticker.IsVisible && !hopping && !_hopList.IsBusy && !_placeCard.IsVisible &&
+                !_prompt.IsVisible && !_rewardCard.IsVisible && !_lookUpChip.IsVisible);
+            _letterCard.Tick(hudTime, cancelGlyph, device,
+                !_card.IsBusy && !_ticker.IsVisible && !hopping && !_hopList.IsBusy && !_placeCard.IsVisible &&
+                !_prompt.IsVisible && !_rewardCard.IsVisible && !_lookUpChip.IsVisible);
             _tower.Tick(hudTime, !paused && _slot.Allows(GuidanceKind.Card), input.ExcavateHeld, input.Winch,
                 _services.Tether.State == TetherAimState.Towing, _glyphs.For(RoverAction.Excavate, device), device);
             _kitTitle.Tick(hudTime, !_placeCard.IsVisible && !GarageBeatActive() && !_nextLine.IsVisible);
-            _rewardCard.Tick(hudTime, !_placeCard.IsVisible && !_kitTitle.IsVisible && !_card.IsVisible);
-            _crateNote.Tick(hudTime, !_card.IsVisible && !_rewardCard.IsVisible && !_unlockCard.IsVisible && !onMap);
+            _rewardCard.Tick(hudTime,
+                !_placeCard.IsVisible && !_kitTitle.IsVisible && !_card.IsVisible && !_letterCard.IsVisible);
+            _crateNote.Tick(hudTime,
+                !_card.IsVisible && !_letterCard.IsVisible && !_rewardCard.IsVisible && !_unlockCard.IsVisible &&
+                !onMap);
             _unlockCard.Tick(hudTime, !_placeCard.IsVisible && !_kitTitle.IsVisible && !_kitTitle.IsWaiting &&
-                                      !_card.IsVisible && !_rewardCard.IsVisible && !_rewardCard.IsWaiting && !onMap &&
-                                      !GarageBeatActive() && !_nextLine.IsVisible,
+                                      !_card.IsVisible && !_letterCard.IsVisible && !_rewardCard.IsVisible &&
+                                      !_rewardCard.IsWaiting && !onMap && !GarageBeatActive() && !_nextLine.IsVisible,
                 device);
             _pickups.Tick(deltaTime);
             bool cutting = _services.Salvage.IsCutting;
@@ -635,7 +656,7 @@ namespace MoonProject.UI
             // A standing prompt gives way to a waiting card or site name: those moments pass, the prompt returns.
             _prompt.Tick(deltaTime, PromptsOpen(paused, hopping) && _slot.Allows(GuidanceKind.Prompt),
                 _services.Hints.Primary, device, panelSize);
-            bool tagOpen = !paused && _awake && !_card.IsVisible && !_tower.IsVisible &&
+            bool tagOpen = !paused && _awake && !_card.IsVisible && !_letterCard.IsVisible && !_tower.IsVisible &&
                            !_hopList.IsBusy && !hopping;
             _relayTag.Tick(deltaTime, tagOpen, panelSize,
                 _prompt.StackHeight(InteractionKind.Restore, _tuning.Relays.TagStackGap));
@@ -681,7 +702,7 @@ namespace MoonProject.UI
                 NextLineOpen(paused) && _slot.Allows(GuidanceKind.Battery));
             bool hudOpen = !paused && _awake && !_stargaze.IsVeiled && !onMap;
             _batteryDial.Tick(deltaTime, _cellRowRevealed, hudOpen);
-            _homeMeter.Tick(deltaTime, hudOpen && !_card.IsVisible);
+            _homeMeter.Tick(deltaTime, hudOpen && !_card.IsVisible && !_letterCard.IsVisible);
         }
 
         /// <summary>The cell row exists from the first time the charge dropped below its reveal share.</summary>
@@ -706,27 +727,27 @@ namespace MoonProject.UI
         private bool PromptsOpen(bool paused, bool hopping)
         {
             return !paused && _awake && _sinceAwake >= _tuning.Prompts.StartDelay && !_card.IsBusy &&
-                   !_dial.IsBusy && !_hopList.IsBusy && !hopping && !_siteName.IsVisible && !_siteName.IsWaiting &&
-                   !_kitTitle.IsVisible && !_lookUpChip.IsVisible && !GarageBeatActive() &&
+                   !_letterCard.IsBusy && !_dial.IsBusy && !_hopList.IsBusy && !hopping && !_siteName.IsVisible &&
+                   !_siteName.IsWaiting && !_kitTitle.IsVisible && !_lookUpChip.IsVisible && !GarageBeatActive() &&
                    (_buildStrip == null || !_buildStrip.IsOpen);
         }
 
         private bool CardsOpen(bool paused)
         {
-            return !paused && !_protocol.IsVisible && !_card.IsVisible && !_stargaze.IsVeiled &&
-                   !_tickerLines.HasKey(UiKeys.RowFull);
+            return !paused && !_protocol.IsVisible && !_card.IsVisible && !_letterCard.IsVisible &&
+                   !_stargaze.IsVeiled && !_tickerLines.HasKey(UiKeys.RowFull);
         }
 
         private bool PlaceCardsOpen()
         {
             return _awake && !_protocol.IsVisible && !_kitTitle.IsVisible && !_card.IsVisible &&
-                   !_rewardCard.IsVisible && !_siteName.IsVisible && !GarageBeatActive() &&
+                   !_letterCard.IsVisible && !_rewardCard.IsVisible && !_siteName.IsVisible && !GarageBeatActive() &&
                    (_buildStrip == null || !_buildStrip.IsOpen);
         }
 
         private bool TickerOpen(bool hopping)
         {
-            return _awake && !_card.IsBusy && !_digging && !_services.Salvage.IsCutting &&
+            return _awake && !_card.IsBusy && !_letterCard.IsBusy && !_digging && !_services.Salvage.IsCutting &&
                    !_reticle.IsVisible && !_dial.IsBusy && !_hopList.IsBusy && !hopping &&
                    !_siteName.IsVisible && !_kitTitle.IsVisible && !_rewardCard.IsVisible && !_rewardCard.IsWaiting &&
                    !GarageBeatActive() && (_buildStrip == null || !_buildStrip.IsOpen);
@@ -740,8 +761,8 @@ namespace MoonProject.UI
 
         private bool LookHintsOpen()
         {
-            return !_protocol.IsVisible && !_card.IsVisible && !_kitTitle.IsVisible && !_dial.IsBusy &&
-                   !_hopList.IsBusy && !_siteName.IsVisible && !GarageBeatActive() &&
+            return !_protocol.IsVisible && !_card.IsVisible && !_letterCard.IsVisible && !_kitTitle.IsVisible &&
+                   !_dial.IsBusy && !_hopList.IsBusy && !_siteName.IsVisible && !GarageBeatActive() &&
                    (_buildStrip == null || !_buildStrip.IsOpen);
         }
 
@@ -1145,12 +1166,32 @@ namespace MoonProject.UI
                 return;
             }
 
+            if (LetterCard.IsLetterKey(line.Key))
+            {
+                if (_bound)
+                {
+                    _letterCard.Enqueue(line);
+                }
+                else
+                {
+                    _pendingLetters.Enqueue(line);
+                }
+
+                return;
+            }
+
             _tickerLines.Enqueue(line);
         }
 
         /// <summary>The ticker's line is a recording's subtitle: it stays up until the voice has finished.</summary>
         private void OnVoiceLineStarted(VoiceLineStarted started)
         {
+            if (LetterCard.IsLetterKey(started.Key))
+            {
+                _letterCard?.HoldAtLeast(started.Key, started.Seconds + _tuning.LetterCard.VoiceTailSeconds);
+                return;
+            }
+
             _tickerLines.HoldAtLeast(started.Key, started.Seconds + _tuning.Ticker.VoiceTailSeconds);
         }
 
@@ -1194,6 +1235,7 @@ namespace MoonProject.UI
             _staticText.Apply();
             _prompt.Relocalize();
             _card.Relocalize();
+            _letterCard.Relocalize();
             _ticker.Relocalize();
             _homeMeter.Relocalize();
             _lookUpChip.Relocalize();
