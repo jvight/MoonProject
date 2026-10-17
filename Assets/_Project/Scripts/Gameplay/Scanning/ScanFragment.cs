@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
 
@@ -6,15 +7,17 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// One of Art's scan fragments set on its host's FragmentSocket_&lt;Blueprint&gt;_&lt;n&gt; (docs/design/0.5.5
-    /// -owner-feedback.md §1.2): its <c>Solid</c> and white <c>Lines</c> drawing driven by <c>_ScanProgress</c> (the
-    /// cyan sweep climbing it) and <c>_Dissolve</c> (the 900 ms close), its four corner <c>Brackets</c>, the
-    /// <c>ScanTarget</c> 07 looks at, and the faint <c>DustOutline</c> it leaves, faded with <c>_Fade</c>. Plain state;
-    /// <see cref="ScanField"/> drives it. Allocation-free after construction.
+    /// -owner-feedback.md §1.2), or a <c>Scan_1..N</c> target on an R1 ruin piece (RUINS-WORLD): its <c>Solid</c> and
+    /// white <c>Lines</c> drawing driven by <c>_ScanProgress</c> (the cyan sweep climbing it) and <c>_Dissolve</c>
+    /// (the 900 ms close), its four corner <c>Brackets</c>, the <c>ScanTarget</c> 07 looks at, and the faint
+    /// <c>DustOutline</c> it leaves, faded with <c>_Fade</c>. Plain state; <see cref="ScanField"/> drives it.
+    /// Allocation-free after construction.
     /// </summary>
     public sealed class ScanFragment : IScanTarget
     {
         public const string SocketPrefix = "FragmentSocket_";
         public const string PrefabPrefix = "Fragment_";
+        public const string RuinScanPrefix = "Scan_";
 
         private const string SolidName = "Solid";
         private const string LinesName = "Lines";
@@ -28,6 +31,7 @@ namespace MoonProject.Gameplay
 
         private const float EndBandShare = 0.15f;
         private const float MinBandHeight = 0.01f;
+        private const float RuinSweepHeight = 0.7f;
 
         private readonly Renderer _solid;
         private readonly Renderer _lines;
@@ -36,11 +40,13 @@ namespace MoonProject.Gameplay
         private readonly GameObject _brackets;
         private readonly MaterialPropertyBlock _block = new MaterialPropertyBlock();
 
-        private ScanFragment(string fragmentId, string blueprintId, int index, int count, ScanSize size, string hostId,
-            Transform root, Renderer solid, Renderer lines, Renderer outline, Transform target, GameObject brackets)
+        private ScanFragment(string fragmentId, string blueprintId, IReadOnlyList<string> structureIds, int index,
+            int count, ScanSize size, string hostId, Transform root, Renderer solid, Renderer lines, Renderer outline,
+            Transform target, GameObject brackets)
         {
             FragmentId = fragmentId;
             BlueprintId = blueprintId;
+            StructureIds = structureIds;
             Index = index;
             Count = count;
             Size = size;
@@ -58,6 +64,9 @@ namespace MoonProject.Gameplay
         public string FragmentId { get; }
 
         public string BlueprintId { get; }
+
+        /// <summary>Structure blueprint ids taught by this ruin's scan set, or null for rover upgrade fragments.</summary>
+        public IReadOnlyList<string> StructureIds { get; }
 
         /// <summary>Its number in its set (the &lt;n&gt; of its socket).</summary>
         public int Index { get; }
@@ -123,14 +132,27 @@ namespace MoonProject.Gameplay
                 return null;
             }
 
-            return new ScanFragment(fragmentId, blueprintId, index, count, size, hostId, root, solid, lines, outline,
-                target, brackets.gameObject);
+            return new ScanFragment(fragmentId, blueprintId, null, index, count, size, hostId, root, solid, lines,
+                outline, target, brackets.gameObject);
+        }
+
+        /// <summary>Wraps a <c>Scan_1..N</c> empty transform on an R1 ruin piece as a scan target.</summary>
+        public static ScanFragment ForRuinTarget(string fragmentId, string blueprintId,
+            IReadOnlyList<string> structureIds, int index, int count, ScanSize size, string hostId, Transform target)
+        {
+            if (target == null)
+            {
+                throw new ArgumentNullException(nameof(target));
+            }
+
+            return new ScanFragment(fragmentId, blueprintId, structureIds, index, count, size, hostId, target, null,
+                null, null, target, null);
         }
 
         /// <summary>The corner brackets: shown while it waits to be scanned and 07 is near enough.</summary>
         internal void ShowBrackets(bool show)
         {
-            if (_brackets.activeSelf != show)
+            if (_brackets != null && _brackets.activeSelf != show)
             {
                 _brackets.SetActive(show);
             }
@@ -139,21 +161,32 @@ namespace MoonProject.Gameplay
         /// <summary>The sweep has climbed <paramref name="progress"/> (0..1) of it; what it passed is drawn.</summary>
         internal void Draw(float progress)
         {
-            Apply(_solid, ProgressId, progress);
-            Apply(_lines, ProgressId, progress);
+            if (_solid != null)
+            {
+                Apply(_solid, ProgressId, progress);
+                Apply(_lines, ProgressId, progress);
+            }
         }
 
         /// <summary>The close, 0..1: the solid fades, then the lines unthread into 07's lens.</summary>
         internal void Dissolve(float t)
         {
-            Apply(_solid, DissolveId, t);
-            Apply(_lines, DissolveId, t);
+            if (_solid != null)
+            {
+                Apply(_solid, DissolveId, t);
+                Apply(_lines, DissolveId, t);
+            }
         }
 
         /// <summary>The dissolve is done: only the faint dust outline remains, faded by <paramref name="fade"/>.
         /// </summary>
         internal void LeaveOutline(float fade)
         {
+            if (_outline == null)
+            {
+                return;
+            }
+
             if (_solid.gameObject.activeSelf)
             {
                 _solid.gameObject.SetActive(false);
@@ -167,7 +200,10 @@ namespace MoonProject.Gameplay
         /// <summary>Nothing of it shows any more (scanned and faded, or a save loaded it scanned).</summary>
         internal void Hide()
         {
-            Root.gameObject.SetActive(false);
+            if (_solid != null)
+            {
+                Root.gameObject.SetActive(false);
+            }
         }
 
         private void Apply(Renderer renderer, int property, float value)
@@ -185,6 +221,11 @@ namespace MoonProject.Gameplay
 
         private static Vector3 ComputeSweepSpan(Renderer solid)
         {
+            if (solid == null)
+            {
+                return new Vector3(0f, RuinSweepHeight, 0f);
+            }
+
             Bounds bounds = solid.bounds;
             MeshFilter filter = solid.GetComponent<MeshFilter>();
             Mesh mesh = filter != null ? filter.sharedMesh : null;

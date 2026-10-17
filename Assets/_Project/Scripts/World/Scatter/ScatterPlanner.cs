@@ -93,6 +93,7 @@ namespace MoonProject.World
 
             ends.Add(surface.Canyon.MainPath.PointAt(0f));
             ends.Add(surface.Canyon.ExitFoot);
+            ends.Add(surface.Shaping.Ruins.Center);
             ends.AddRange(placesOnTheFloor);
             foreach (float bearing in settings.LaneBearings ?? Array.Empty<float>())
             {
@@ -117,7 +118,8 @@ namespace MoonProject.World
         public float PebbleChance(float x, float z)
         {
             float distFromOrigin = Mathf.Sqrt(x * x + z * z);
-            if (distFromOrigin < _surface.PadRadius + _settings.PadClearance || Scorched(x, z))
+            if (distFromOrigin < _surface.PadRadius + _settings.PadClearance
+                || NearRuins(new Vector2(x, z)) || Scorched(x, z))
             {
                 return 0f;
             }
@@ -153,7 +155,8 @@ namespace MoonProject.World
             var point = new Vector2(x, z);
             float minBoulderRadius = _surface.PadRadius + _settings.PadClearance + 2.5f;
             if (point.magnitude < minBoulderRadius
-                || DistanceToLanes(point) < _settings.LaneHalfWidth || NearPlayFeature(point) || Scorched(x, z))
+                || DistanceToLanes(point) < _settings.LaneHalfWidth || NearPlayFeature(point)
+                || NearRuins(point) || Scorched(x, z))
             {
                 return 0f;
             }
@@ -346,6 +349,12 @@ namespace MoonProject.World
             }
 
             return false;
+        }
+
+        private bool NearRuins(Vector2 point)
+        {
+            GroundShape ruins = _surface.Shaping.Ruins;
+            return Vector2.Distance(point, ruins.Center) < ruins.Radius + _settings.PadClearance;
         }
     }
 }

@@ -26,6 +26,7 @@ namespace MoonProject.Gameplay
     public sealed class ScanField : IScanSites
     {
         private const int Quarters = 4;
+        private const string ScanCompleteKey = "scan.complete";
 
         private readonly List<ScanFragment> _fragments = new List<ScanFragment>();
         private readonly List<string> _placeIds = new List<string>();
@@ -46,6 +47,7 @@ namespace MoonProject.Gameplay
         private readonly GameplayVisuals _visuals;
         private readonly IRoverAbilities _abilities;
         private readonly Blueprints _blueprints;
+        private readonly KnownStructures _knownStructures;
         private readonly Func<bool> _othersClaim;
         private ScanFragment _scanning;
         private int _quarter;
@@ -56,7 +58,7 @@ namespace MoonProject.Gameplay
         /// True while another E verb is on offer (a pickup, a cut, a dig, a restore...): scanning comes last.
         /// </param>
         public ScanField(ScanTuning tuning, GameplayServices services, IRoverAbilities abilities,
-            Blueprints blueprints, Func<bool> othersClaim)
+            Blueprints blueprints, Func<bool> othersClaim, KnownStructures knownStructures = null)
         {
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             if (services == null)
@@ -67,6 +69,7 @@ namespace MoonProject.Gameplay
             _abilities = abilities ?? throw new ArgumentNullException(nameof(abilities));
             _blueprints = blueprints ?? throw new ArgumentNullException(nameof(blueprints));
             _othersClaim = othersClaim ?? throw new ArgumentNullException(nameof(othersClaim));
+            _knownStructures = knownStructures;
             _events = services.Events;
             _input = services.Input;
             _rover = services.Rover;
@@ -75,6 +78,16 @@ namespace MoonProject.Gameplay
             _save = services.Save;
             _materials = services.Materials;
             _visuals = services.Visuals;
+        }
+
+        internal ScanField(ScanTuning tuning, EventBus events, ISaveService save, MaterialStock materials,
+            KnownStructures knownStructures)
+        {
+            _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
+            _events = events ?? throw new ArgumentNullException(nameof(events));
+            _save = save ?? throw new ArgumentNullException(nameof(save));
+            _materials = materials ?? throw new ArgumentNullException(nameof(materials));
+            _knownStructures = knownStructures ?? throw new ArgumentNullException(nameof(knownStructures));
         }
 
         public ScanTuning Tuning => _tuning;
@@ -113,6 +126,41 @@ namespace MoonProject.Gameplay
                 {
                     return $"'{hostId}': {problem}";
                 }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Registers every <c>Scan_1..N</c> target on an R1 ruin piece under <paramref name="ruinRoot"/> for
+        /// <paramref name="set"/>. Null when all targets are present, else what breaks the contract.
+        /// </summary>
+        public string AddRuin(RuinScanSet set, Transform ruinRoot)
+        {
+            if (string.IsNullOrEmpty(set.RuinId) || ruinRoot == null)
+            {
+                throw new ArgumentException("A ruin scan host needs a ruin id and a root.", nameof(set));
+            }
+
+            for (int i = 0; i < set.Count; i++)
+            {
+                string targetName = ScanFragment.RuinScanPrefix + (i + 1).ToString(CultureInfo.InvariantCulture);
+                Transform target = FindChild(ruinRoot, targetName);
+                if (target == null)
+                {
+                    return $"'{set.RuinId}' has no '{targetName}' node";
+                }
+
+                string id = FragmentId(set.BlueprintId, i);
+                if (Find(id) != null)
+                {
+                    return $"'{targetName}' on '{set.RuinId}' lies in the world twice";
+                }
+
+                ScanFragment fragment = ScanFragment.ForRuinTarget(id, set.BlueprintId, set.StructureIds, i,
+                    set.Count, set.Size(i), set.RuinId, target);
+                fragment.Place = -1;
+                _fragments.Add(fragment);
             }
 
             return null;
@@ -289,7 +337,8 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < _fragments.Count; i++)
             {
                 ScanFragment fragment = _fragments[i];
-                if (!fragment.Scanned && _blueprints.IsLearned(fragment.BlueprintId))
+                if (!fragment.Scanned && fragment.StructureIds == null
+                    && _blueprints.IsLearned(fragment.BlueprintId))
                 {
                     LieScanned(fragment);
                 }
@@ -586,7 +635,7 @@ namespace MoonProject.Gameplay
             if (_holding != hold)
             {
                 _holding = hold;
-                _rig.SetHoldStill(this, hold);
+                _rig?.SetHoldStill(this, hold);
             }
         }
 
@@ -632,6 +681,11 @@ namespace MoonProject.Gameplay
                 fragment.Progress, 0f));
         }
 
+        internal void CompleteTarget(ScanFragment fragment, float now)
+        {
+            Complete(fragment, now);
+        }
+
         /// <summary>
         /// Fully scanned: the dissolve begins, new knowledge joins its set (the last fragment completes the
         /// blueprint), and a known blueprint's fragment owes its Metal. E must be let go before the next scan.
@@ -641,6 +695,12 @@ namespace MoonProject.Gameplay
             _scanning = null;
             _waitRelease = true;
             Hold(false);
+            if (fragment.StructureIds != null)
+            {
+                CompleteRuin(fragment, now);
+                return;
+            }
+
             bool known = _blueprints.IsLearned(fragment.BlueprintId);
             int before = ScannedOf(fragment.BlueprintId);
             fragment.Scanned = true;
@@ -664,6 +724,53 @@ namespace MoonProject.Gameplay
             _save.SaveNow();
         }
 
+        private void CompleteRuin(ScanFragment fragment, float now)
+        {
+            string learnedStructureId = NextUnlearnedStructure(fragment.StructureIds);
+            bool known = string.IsNullOrEmpty(learnedStructureId);
+            int before = ScannedOf(fragment.BlueprintId);
+            fragment.Scanned = true;
+            fragment.ScannedAt = now;
+            fragment.Owed = known ? _tuning.KnownMetal : 0;
+            fragment.ShowBrackets(false);
+            if (known)
+            {
+                _events.Publish(new FragmentScanned(fragment.FragmentId, fragment.BlueprintId, before, fragment.Count,
+                    true, fragment.Owed));
+            }
+
+            _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Reward, fragment.Point, Vector3.up, 1f, 0f));
+            if (!known)
+            {
+                _knownStructures?.Learn(learnedStructureId);
+                _events.Publish(new TickerLine(ScanCompleteKey, StructureIds.NameKey(learnedStructureId), true));
+                _events.Publish(new BuildCue(BuildCueKind.StageComplete, fragment.Point));
+                _events.Publish(new RoverChirpRequested(ChirpMood.Proud, 1f));
+                _events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Reward, fragment.Point, Vector3.up, 1f, 0f));
+            }
+
+            _save.SaveNow();
+        }
+
+        private string NextUnlearnedStructure(IReadOnlyList<string> structureIds)
+        {
+            if (structureIds == null || _knownStructures == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < structureIds.Count; i++)
+            {
+                string id = structureIds[i];
+                if (!string.IsNullOrEmpty(id) && !_knownStructures.IsKnown(id))
+                {
+                    return id;
+                }
+            }
+
+            return null;
+        }
+
         public int ScannedOf(string blueprintId)
         {
             int scanned = 0;
@@ -680,13 +787,37 @@ namespace MoonProject.Gameplay
 
         private void LieScanned(ScanFragment fragment)
         {
-            _placeLeft[fragment.Place] -= fragment.Scanned ? 0 : 1;
+            if (fragment.Place >= 0)
+            {
+                _placeLeft[fragment.Place] -= fragment.Scanned ? 0 : 1;
+            }
+
             fragment.Scanned = true;
             fragment.Progress = 1f;
             fragment.Gone = true;
             fragment.Owed = 0;
             fragment.ShowBrackets(false);
             fragment.Hide();
+        }
+
+        private static Transform FindChild(Transform node, string name)
+        {
+            for (int i = 0; i < node.childCount; i++)
+            {
+                Transform child = node.GetChild(i);
+                if (string.Equals(child.name, name, StringComparison.Ordinal))
+                {
+                    return child;
+                }
+
+                Transform nested = FindChild(child, name);
+                if (nested != null)
+                {
+                    return nested;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>A known blueprint's Metal goes into 07's hold, else home's overflow crates (§1.2).</summary>

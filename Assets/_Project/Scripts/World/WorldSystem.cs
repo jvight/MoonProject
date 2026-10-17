@@ -213,6 +213,12 @@ namespace MoonProject.World
                         : b.Size * Mathf.Lerp(0.62f, 1.85f, Hashing.ToUnit(Hashing.Mix(hk ^ 0x2468ACE0u)));
                     float sx = center2D.x + Mathf.Cos(angle) * radius;
                     float sz = center2D.y + Mathf.Sin(angle) * radius;
+                    GroundShape ruins = surface.Shaping.Ruins;
+                    if (Vector2.Distance(new Vector2(sx, sz), ruins.Center) < ruins.Radius + 3.5f)
+                    {
+                        continue;
+                    }
+
                     Vector3 sNorm = surface.SampleNormal(sx, sz);
                     if (sNorm.y < 0.78f)
                     {

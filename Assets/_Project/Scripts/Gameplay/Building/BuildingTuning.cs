@@ -87,6 +87,31 @@ namespace MoonProject.Gameplay
             if (_playtestUnlockedIds == null)
             {
                 _playtestUnlockedIds = Array.Empty<string>();
+                return;
+            }
+
+            int validCount = 0;
+            for (int i = 0; i < _playtestUnlockedIds.Length; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(_playtestUnlockedIds[i]))
+                {
+                    validCount++;
+                }
+            }
+
+            if (validCount != _playtestUnlockedIds.Length)
+            {
+                var cleaned = new string[validCount];
+                int dst = 0;
+                for (int i = 0; i < _playtestUnlockedIds.Length; i++)
+                {
+                    if (!string.IsNullOrWhiteSpace(_playtestUnlockedIds[i]))
+                    {
+                        cleaned[dst++] = _playtestUnlockedIds[i];
+                    }
+                }
+
+                _playtestUnlockedIds = cleaned;
             }
         }
     }

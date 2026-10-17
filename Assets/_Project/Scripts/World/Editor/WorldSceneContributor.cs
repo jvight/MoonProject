@@ -17,6 +17,8 @@ namespace MoonProject.World.Editor
     /// </summary>
     public sealed class WorldSceneContributor : ISceneContributor
     {
+        public const string RuinsRootName = "Ruins";
+
         public int Order => 200;
 
         public void Contribute(SceneBuildContext context)
@@ -44,6 +46,7 @@ namespace MoonProject.World.Editor
             WorldAtmosphere.Apply(settings.Atmosphere, settings.Sky, earthlight, fill);
 
             PeakBeacon beacon = CreateBeacon(context, settings, root);
+            CreateRuins(context, settings, root);
 
             var world = context.CreateChild("World", root).AddComponent<WorldSystem>();
             var serialized = new SerializedObject(world);
@@ -96,6 +99,41 @@ namespace MoonProject.World.Editor
             Assign(lab, "_settings", settings);
             lab.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(labLights);
+        }
+
+        /// <summary>
+        /// Places the R1 Lumen station ruins cluster under [World]/Ruins from <see cref="LandmarkSettings.Ruins"/>
+        /// and <see cref="SiteSettings.RuinsCenter"/> at scene-build time, never at runtime.
+        /// </summary>
+        private static void CreateRuins(SceneBuildContext context, WorldSettings settings, Transform root)
+        {
+            MoonSurface surface = settings.CreateSurface();
+            Vector2 center = settings.Surface.Sites.RuinsCenter;
+            Transform ruinsRoot = context.CreateChild(RuinsRootName, root).transform;
+            RuinPlacement[] pieces = settings.Landmarks.Ruins;
+            if (pieces == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < pieces.Length; i++)
+            {
+                RuinPlacement piece = pieces[i];
+                var prefab = context.LoadAsset<GameObject>(WorldPaths.RuinPrefab(piece.Id));
+                Vector2 spot = center + piece.Offset;
+                var position = new Vector3(spot.x, surface.SampleHeight(spot.x, spot.y), spot.y);
+                Quaternion rotation = Quaternion.Euler(0f, piece.Yaw, 0f) * prefab.transform.localRotation;
+                GameObject instance = context.InstantiatePrefab(prefab, ruinsRoot, position, rotation);
+                instance.name = piece.Id;
+                foreach (MeshFilter filter in instance.GetComponentsInChildren<MeshFilter>(true))
+                {
+                    if (filter.sharedMesh != null && filter.GetComponent<Collider>() == null)
+                    {
+                        filter.gameObject.layer = Core.Layers.Prop;
+                        filter.gameObject.AddComponent<MeshCollider>().sharedMesh = filter.sharedMesh;
+                    }
+                }
+            }
         }
 
         /// <summary>

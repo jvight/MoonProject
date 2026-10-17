@@ -747,6 +747,7 @@ namespace MoonProject.World
             return _kestrel.Overlaps(crater.Center, crater.OuterRadius)
                 || Reaches(crater, sites.DepotCenter, sites.DepotRadius + blend)
                 || Reaches(crater, sites.GarageCenter, sites.GarageRadius + blend)
+                || Reaches(crater, sites.RuinsCenter, sites.RuinsRadius + blend)
                 || Reaches(crater, sites.MoundCenter, sites.MoundRadius + sites.MoundRun);
         }
 

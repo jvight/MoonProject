@@ -932,5 +932,150 @@ namespace MoonProject.Gameplay.Tests
                 Object.DestroyImmediate(testRoot);
             }
         }
+
+        [Test]
+        public void RuinScanning_TeachesStructureBlueprints_FiresBeatsAndToasts_RewardsKnownMetal_AndPersists()
+        {
+            var buildingTuningAsset = AssetDatabase.LoadAssetAtPath<BuildingTuning>(GameplayAssetPaths.BuildingTuning);
+            Assert.IsNotNull(buildingTuningAsset);
+            CollectionAssert.AreEqual(
+                new[] { StructureIds.ChargingPad },
+                buildingTuningAsset.PlaytestUnlockedIds,
+                "A new game starts knowing only ChargingPad.");
+
+            var scanTuningAsset = AssetDatabase.LoadAssetAtPath<ScanTuning>(GameplayAssetPaths.ScanTuning);
+            Assert.IsNotNull(scanTuningAsset);
+            CollectionAssert.AreEquivalent(
+                new[] { StructureIds.UpgradeBay, StructureIds.VehiclePad },
+                scanTuningAsset.LaterStructureIds,
+                "UpgradeBay and VehiclePad are reserved in ScanTuning.LaterStructureIds for later places.");
+
+            var known = new KnownStructures(_catalog, _events);
+            var placedBase = new PlacedBase(_catalog, buildingTuningAsset, _events, known);
+            placedBase.ApplyPlaytestUnlocks(restored: true);
+            Assert.AreEqual(1, known.Count);
+            Assert.IsTrue(known.IsKnown(StructureIds.ChargingPad));
+            Assert.IsFalse(known.IsKnown(StructureIds.SolarArray));
+
+            var learnedEvents = new List<StructureLearned>();
+            var toasts = new List<TickerLine>();
+            var buildCues = new List<BuildCue>();
+            var chirps = new List<RoverChirpRequested>();
+            _events.Subscribe<StructureLearned>(learnedEvents.Add);
+            _events.Subscribe<TickerLine>(toasts.Add);
+            _events.Subscribe<BuildCue>(buildCues.Add);
+            _events.Subscribe<RoverChirpRequested>(chirps.Add);
+
+            MaterialCatalog matCatalog = CargoFixtures.Catalog();
+            var ruinInstances = new List<GameObject>();
+            try
+            {
+                MaterialStock stock = CargoFixtures.Stock(_events, matCatalog);
+                var save = new SaveService(_tempSaveDir, "ruin_scans_slot", "0.5.7");
+                save.Load();
+                var scans = new ScanField(scanTuningAsset, _events, save, stock, known);
+
+                for (int i = 0; i < scanTuningAsset.Ruins.Count; i++)
+                {
+                    RuinScanSet set = scanTuningAsset.Ruins[i];
+                    var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                        "Assets/_Project/Generated/Art/R1/Models/Ruins/" + set.RuinId + ".prefab");
+                    Assert.IsNotNull(prefab, "Missing R1 ruin prefab for " + set.RuinId);
+                    GameObject instance = Object.Instantiate(prefab);
+                    instance.name = set.RuinId;
+                    ruinInstances.Add(instance);
+                    Assert.IsNull(scans.AddRuin(set, instance.transform));
+                }
+
+                // Scan FallenSolarArray target 0 -> learns SolarArray immediately.
+                ScanFragment fallen0 = scans.Find(ScanField.FragmentId("ruin.FallenSolarArray", 0));
+                Assert.IsNotNull(fallen0);
+                scans.CompleteTarget(fallen0, 1f);
+                Assert.IsTrue(known.IsKnown(StructureIds.SolarArray));
+                Assert.AreEqual(0, fallen0.Owed);
+                Assert.AreEqual(1, learnedEvents.Count);
+                Assert.AreEqual(StructureIds.SolarArray, learnedEvents[0].StructureId);
+                Assert.AreEqual(1, toasts.Count);
+                Assert.AreEqual("scan.complete", toasts[0].Key);
+                Assert.AreEqual(StructureIds.NameKey(StructureIds.SolarArray), toasts[0].Argument);
+                Assert.IsTrue(toasts[0].ArgumentIsKey);
+                Assert.AreEqual(1, buildCues.Count);
+                Assert.AreEqual(BuildCueKind.StageComplete, buildCues[0].Kind);
+                Assert.AreEqual(1, chirps.Count);
+                Assert.AreEqual(ChirpMood.Proud, chirps[0].Mood);
+
+                // Scanning remaining targets on FallenSolarArray whose blueprint is already known awards KnownMetal.
+                ScanFragment fallen1 = scans.Find(ScanField.FragmentId("ruin.FallenSolarArray", 1));
+                scans.CompleteTarget(fallen1, 2f);
+                Assert.AreEqual(scanTuningAsset.KnownMetal, fallen1.Owed);
+                Assert.AreEqual(1, learnedEvents.Count, "Already-known blueprint does not fire a duplicate unlock.");
+
+                // Scan KenjiWorkshop targets 0 and 1 -> learns Fabricator then StorageRack; target 2 awards KnownMetal.
+                scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.KenjiWorkshop", 0)), 10f);
+                Assert.IsTrue(known.IsKnown(StructureIds.Fabricator));
+                Assert.IsFalse(known.IsKnown(StructureIds.StorageRack));
+                scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.KenjiWorkshop", 1)), 11f);
+                Assert.IsTrue(known.IsKnown(StructureIds.StorageRack));
+                ScanFragment workshop2 = scans.Find(ScanField.FragmentId("ruin.KenjiWorkshop", 2));
+                scans.CompleteTarget(workshop2, 12f);
+                Assert.AreEqual(scanTuningAsset.KnownMetal, workshop2.Owed);
+
+                // Scan HabitatModules targets 0 and 1 -> learns BatteryBank then Smelter.
+                scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.HabitatModules", 0)), 20f);
+                Assert.IsTrue(known.IsKnown(StructureIds.BatteryBank));
+                scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.HabitatModules", 1)), 21f);
+                Assert.IsTrue(known.IsKnown(StructureIds.Smelter));
+
+                // Scan RadioTower targets 0 and 1 -> learns AntennaMast then PowerPylon.
+                scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.RadioTower", 0)), 30f);
+                Assert.IsTrue(known.IsKnown(StructureIds.AntennaMast));
+                scans.CompleteTarget(scans.Find(ScanField.FragmentId("ruin.RadioTower", 1)), 31f);
+                Assert.IsTrue(known.IsKnown(StructureIds.PowerPylon));
+
+                // ScatterSet has no new structure blueprints -> scanning a target awards KnownMetal.
+                ScanFragment scatterFrag = scans.Find(ScanField.FragmentId("ruin.ScatterSet", 0));
+                scans.CompleteTarget(scatterFrag, 40f);
+                Assert.AreEqual(scanTuningAsset.KnownMetal, scatterFrag.Owed);
+
+                // Round-trip save/load of both ScansSaveData and BuildingSaveData.
+                ScansSaveData savedScans = scans.Capture();
+                BuildingSaveData savedBuilding = placedBase.Capture();
+
+                var loadedKnown = new KnownStructures(_catalog, _events);
+                var loadedBase = new PlacedBase(_catalog, buildingTuningAsset, _events, loadedKnown);
+                loadedBase.Restore(savedBuilding);
+                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.SolarArray));
+                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.Fabricator));
+                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.StorageRack));
+                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.BatteryBank));
+                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.Smelter));
+                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.AntennaMast));
+                Assert.IsTrue(loadedKnown.IsKnown(StructureIds.PowerPylon));
+                Assert.IsFalse(loadedKnown.IsKnown(StructureIds.UpgradeBay));
+                Assert.IsFalse(loadedKnown.IsKnown(StructureIds.VehiclePad));
+
+                var loadedScans = new ScanField(scanTuningAsset, _events, save, stock, loadedKnown);
+                for (int i = 0; i < scanTuningAsset.Ruins.Count; i++)
+                {
+                    loadedScans.AddRuin(scanTuningAsset.Ruins[i], ruinInstances[i].transform);
+                }
+
+                loadedScans.Restore(savedScans);
+                Assert.IsTrue(loadedScans.Find(ScanField.FragmentId("ruin.FallenSolarArray", 0)).Scanned);
+                Assert.AreEqual(scanTuningAsset.KnownMetal * 3, stock.Metal, "Owed metal from 3 known ruin scans arrives on restore.");
+            }
+            finally
+            {
+                for (int i = 0; i < ruinInstances.Count; i++)
+                {
+                    if (ruinInstances[i] != null)
+                    {
+                        Object.DestroyImmediate(ruinInstances[i]);
+                    }
+                }
+
+                Object.DestroyImmediate(matCatalog);
+            }
+        }
     }
 }
