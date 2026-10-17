@@ -314,7 +314,7 @@ namespace MoonProject.World
         /// <summary>Kestrel-3's impact crater and furrow (docs/features/M3-13).</summary>
         public KestrelImpact Kestrel => _kestrel;
 
-        /// <summary>The flat site footprints and relay.0's mound shaped into the floor.</summary>
+        /// <summary>The flat footprints under the opening's places, shaped into the floor.</summary>
         public GroundShaping Shaping => _shaping;
 
         /// <summary>Unit XZ direction for a bearing in degrees clockwise from +Z.</summary>
@@ -735,17 +735,16 @@ namespace MoonProject.World
         }
 
         /// <summary>
-        /// True when a seeded crater would reach into Kestrel-3's impact or a flat site footprint. The drill rig is
-        /// left out on purpose: it stands on a crater's rim.
+        /// True when a seeded crater would reach into Kestrel-3's impact or a flat footprint under the opening's
+        /// places (the ruins, the lander and the build apron).
         /// </summary>
         private bool OnASite(Crater crater, SiteSettings sites)
         {
             float blend = sites.FootprintBlend;
             return _kestrel.Overlaps(crater.Center, crater.OuterRadius)
-                || Reaches(crater, sites.DepotCenter, sites.DepotRadius + blend)
-                || Reaches(crater, sites.GarageCenter, sites.GarageRadius + blend)
                 || Reaches(crater, sites.RuinsCenter, sites.RuinsRadius + blend)
-                || Reaches(crater, sites.MoundCenter, sites.MoundRadius + sites.MoundRun);
+                || Reaches(crater, sites.LanderCenter, sites.LanderRadius + blend)
+                || Reaches(crater, sites.ApronCenter, sites.ApronRadius + blend);
         }
 
         private static bool Reaches(Crater crater, Vector2 centre, float reach)
