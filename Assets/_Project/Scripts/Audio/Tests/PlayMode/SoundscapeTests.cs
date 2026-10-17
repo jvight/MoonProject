@@ -21,6 +21,7 @@ namespace MoonProject.Audio.PlayModeTests
         {
             _rig = new AudioTestRig();
             yield return null;
+            _rig.Milestone(OpeningMilestone.PowerOn, true);
             _rig.Wake(true);
             float deadline = Time.realtimeSinceStartup + 3f;
             while (!_rig.Radio.MusicStarted && Time.realtimeSinceStartup < deadline)

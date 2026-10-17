@@ -12,10 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 38dc8631a7c2f7943bea9329e944f66f, type: 3}
   m_Name: FeelAudioTuning
   m_EditorClassIdentifier: 
-  _freshChargeSeconds: 0.45
+  _undertoneByTier: {x: 0.35, y: 0.6, z: 0.9}
+  _braceSeconds: 0.5
+  _whineLevel: 0.7
+  _humByStage: {x: 0.35, y: 0.55, z: 0.75, w: 0.9}
+  _drainSeconds: 0.2
   _sizzleMax: 0.8
   _sizzleMin: 0.3
   _sizzleEase: 0.15
+  _scanVolume: 0.6
+  _sheetCompleteDelay: 1.2
+  _scanEase: 0.15
+  _chargeFadeIn: 1.5
+  _chargeFadeOut: 2
+  _chargeVolume: 0.5
   _chirpVolume: 0.8
   _chirpUnderRadio: 0.7
   _chirpHoldSeconds: 3

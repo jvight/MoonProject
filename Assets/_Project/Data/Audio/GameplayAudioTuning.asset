@@ -12,26 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78db6072fd21cb54a99d9384327db3cf, type: 3}
   m_Name: GameplayAudioTuning
   m_EditorClassIdentifier: 
-  _answerNearDistance: 10
-  _answerFarDistance: 140
-  _answerNearVolume: 1
-  _answerFarVolume: 0.55
-  _answerNearCutoff: 16000
-  _answerFarCutoff: 2200
-  _answerMinDistance: 25
-  _tetherHumFadeIn: 0.3
-  _tetherHumFadeOut: 0.5
-  _tetherHumVolume: 1
-  _tetherHumSpatialBlend: 0.85
-  _tetherLightMass: 1
-  _tetherHeavyMass: 25
-  _tetherLightVolume: 0.75
-  _tetherHeavyVolume: 1
-  _tetherHumStrainPitch: 1.2599
-  _tetherHumStrainVolume: 0.25
-  _tetherHumPitchEase: 3.5
-  _signalSpatialBlend: 0.3
-  _signalPickVolume: 0.8
-  _rumbleFadeIn: 0.8
-  _rumbleFadeOut: 1
-  _rumbleVolume: 1
+  _weldFadeIn: 0.08
+  _weldFadeOut: 0.12
+  _powerOnVolume: 0.85
+  _nightLampDelay: 2.5
+  _nightLampInterval: 0.7
+  _nightLampVolume: 0.75

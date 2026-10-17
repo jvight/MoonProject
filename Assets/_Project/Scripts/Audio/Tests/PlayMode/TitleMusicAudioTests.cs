@@ -103,6 +103,7 @@ namespace MoonProject.Audio.PlayModeTests
 
             // Player selects Continue: SessionStarted(false) fires and 07 wakes.
             _rig.Events.Publish(new SessionStarted(false));
+            _rig.Milestone(OpeningMilestone.PowerOn, true);
             _rig.Wake(true);
 
             yield return new WaitForSecondsRealtime(1.25f);

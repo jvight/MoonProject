@@ -11,7 +11,7 @@ namespace MoonProject.Audio
     /// falling two-note (A to F#); an empty battery a soft power-down sigh as the crawl begins; a leap the battery
     /// can't pay for the coils' quiet fizzle under the belly; each flank lamp waking in the opening a quiet tick
     /// (<see cref="FlankLampLit"/>). A loaded game's battery is shown silently. The charging
-    /// hum is the dock's, following whichever charger fills the cells (<see cref="StationAudio"/>).
+    /// hum is the pad's, following whichever charger fills the cells (<see cref="FeelAudio"/>).
     /// Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]

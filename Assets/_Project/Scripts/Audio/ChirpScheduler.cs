@@ -4,9 +4,8 @@ using MoonProject.Core;
 namespace MoonProject.Audio
 {
     /// <summary>
-    /// When 07's chirps may sound (pure, EditMode-tested; feel-pass section 7.2). One chirp at a time; never over a
-    /// voice line or a letter: a request made while one plays (or while a chirp still speaks) waits up to the hold
-    /// time, then is dropped; a newer request replaces a waiting one. Variants are picked at random, never the same
+    /// When 07's chirps may sound (pure, EditMode-tested; feel-pass section 7.2). One chirp at a time: a request made
+    /// while a chirp still speaks waits up to the hold time, then is dropped; a newer request replaces a waiting one. Variants are picked at random, never the same
     /// one twice in a row for a mood. 07's character (Rover) owns the cooldowns and which mood to ask for.
     /// </summary>
     public sealed class ChirpScheduler

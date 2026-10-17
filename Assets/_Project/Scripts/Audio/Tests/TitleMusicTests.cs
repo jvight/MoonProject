@@ -81,12 +81,12 @@ namespace MoonProject.Audio.Tests
 
             string manifestPath = Path.Combine(Application.dataPath, "..", "tools", "music", "title.json");
             Assert.IsTrue(File.Exists(manifestPath), $"missing {manifestPath}");
-            var manifest = JsonUtility.FromJson<RadioTapeImportTests.TapesManifest>(File.ReadAllText(manifestPath));
+            var manifest = JsonUtility.FromJson<TitleManifest>(File.ReadAllText(manifestPath));
             Assert.AreEqual(3, manifest.tracks.Length);
 
             for (int i = 0; i < manifest.tracks.Length; i++)
             {
-                RadioTapeImportTests.TapesManifest.Track expected = manifest.tracks[i];
+                TitleManifest.Track expected = manifest.tracks[i];
                 RadioTrack actual = library.GetTrack(i);
                 Assert.AreEqual(expected.id, actual.Id);
                 Assert.IsNotNull(actual.Clip, expected.id);
@@ -138,6 +138,20 @@ namespace MoonProject.Audio.Tests
             for (float t = 0f; t < seconds; t += Frame)
             {
                 fader.Step(Frame, FadeIn, FadeOut);
+            }
+        }
+
+        /// <summary>JsonUtility mirror of the title.json keys this test reads (names = JSON keys).</summary>
+        [Serializable]
+        private sealed class TitleManifest
+        {
+            public Track[] tracks;
+
+            [Serializable]
+            public sealed class Track
+            {
+                public string id;
+                public float bpm;
             }
         }
     }
