@@ -325,6 +325,56 @@ content.
    lander's port and beacon, the apron decal, the airlock readout surface, the unlit mast, the Peak beacon.
    - Until those land, place the closest existing R1 asset and list the swap in your report.
 
+## 10. 07's start kit and energy (owner-approved 2026-10-18 ~03:10)
+The owner: 07 must not start with too many functions; what works, what is broken and what comes later must be clear.
+Identity: `docs/design/07-identity.md` (SSR-5 service rover).
+
+**The boot readout** (B1, on the CRT; it is the one guidance element while it shows):
+```
+UNIT 07 · SSR-5 · CONTINUE · 13 148 DAYS        ĐƠN VỊ 07 · SSR-5 · TIẾP TỤC · 13 148 NGÀY
+WHEELS ········ OK (1 MISMATCHED)               BÁNH XE ········ OK (1 BÁNH KHÁC BỘ)
+LAMPS ········· OK                              ĐÈN ············ OK
+LENS · SCAN ··· OK                              ỐNG KÍNH · QUÉT  OK
+ASSEMBLY ······ OK · 0 BLUEPRINTS               LẮP DỰNG ······· OK · 0 BẢN VẼ
+CUTTER ········ FAULT · NO IGNITER              MỎ CẮT ········· LỖI · MẤT BỘ ĐÁNH LỬA
+SOLAR WING ···· JAMMED                          CÁNH PIN ······· KẸT
+ANTENNA ······· RECEIVE ONLY                    ĂNG-TEN ········ CHỈ NHẬN
+SOCKETS 1-2 ··· EMPTY                           Ổ LẮP 1–2 ······ TRỐNG
+BATTERY ······· 50%                             PIN ············ 50%
+```
+
+**Works from the start, three verbs only:**
+- drive (with lamps);
+- scan;
+- build, with 0 blueprints known.
+
+**Broken, each one a goal:**
+
+| Part | Fault | Fixed |
+|---|---|---|
+| Cutter | the igniter is missing | **B6.** A spare igniter lies in the lander's **open** cargo crate (B4). Docked on the newly built pad, the player fits it into the cutter socket on the CRT face (the first use of the socket screen). The cutter's pilot light comes on, the readout line turns OK, and the A "done" tone plays. From then on the cutter works (B7 ruins lockers and crates). |
+| Solar wing | jammed | after the opening (the first visible upgrade). **While it is jammed there is no stand-still trickle:** that is why the battery is at 50%, and only chargers refill it. |
+| Antenna | receive only | the Link → Dish → Answer spine |
+| Sockets 1-2 | empty | later kits (scoop, winch, ...) |
+
+**B4 changes:** "Cut the crates" becomes "Collect the parts from the lander's open crate" (no cutting before B6).
+- The hold starts with Metal 2 and Wiring 1.
+- The open crate adds Metal 2, Wiring 1 and the igniter, which together cover the pad (Metal 4, Wiring 2).
+- New objective lines:
+  - B4: "Collect the parts from the lander's open crate." / "Lấy phụ tùng trong thùng hàng mở của tàu đổ bộ."
+  - B6, after charging starts, with the igniter in the hold: "Fit the igniter to the cutter." / "Lắp bộ đánh lửa vào mỏ cắt."
+
+**Energy: every function costs battery** (owner, 2026-10-18):
+- driving: per metre (as today);
+- scanning: per second of active scan;
+- building: welding per structure, scaled by its build time;
+- cutting: per second of beam (as today);
+- lamps: free (no micromanagement).
+
+The balance target: 50% at the wake; the drive to the lander, 2 scans, the collection and the pad weld leave about
+25-30%, so the Low warning (B4-B5) makes the first charge (B6) a relief, not a chore. Later trips to the ruins make
+solar and the battery bank a real need. The build menu shows each structure's energy cost next to its materials.
+
 ## Tóm tắt (Tiếng Việt)
 - **Móc câu:** 07 mở mắt giữa nhật thực. Trái Đất đen, chỉ còn viền đồng mảnh, không một ánh đèn thành phố. Gần đó có
   một chấm sáng mờ (các con tàu Ark), và đèn đỏ trên Đỉnh. Mặt CRT in dòng `ORBITAL SIGNAL · DETECTED`. Cách 165 m có
