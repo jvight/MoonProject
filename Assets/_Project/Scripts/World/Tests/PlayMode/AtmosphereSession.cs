@@ -112,6 +112,13 @@ namespace MoonProject.World.PlayModeTests
         private const float TowerActSeconds = 0.25f;
         private const float TowerFlareCaptureSeconds = 0.25f;
 
+        // Opening v2 (§4, §6 acceptance): from 07's wake (chase height, a step behind the post) toward the lander in front
+        // of The Peak, and from the build apron toward the ruins and toward the dead west mast.
+        private const float OpeningEyeHeight = 3.2f;
+        private const float OpeningWakeSetback = 7f;
+        private const float OpeningLookHeight = 4f;
+        private const float OpeningFov = 60f;
+
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "world-captures"));
 
@@ -341,6 +348,89 @@ namespace MoonProject.World.PlayModeTests
             yield return new WaitForSeconds(LiftSettleSeconds);
             Capture(view, "wake-4-lift");
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// Opening v2's layout in the real game at the start of a new game (the eclipse holding): from 07's wake toward
+        /// the landed lander in front of The Peak under the eclipsed Earth, and from the build apron toward the Lumen
+        /// ruins and toward the dead west mast. Writes Logs/world-captures/opening-*.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator OpeningLayout_IsCapturedFromTheWakeAndTheApron()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+            IWorldAnchors anchors = context.Get<IWorldAnchors>();
+            Vector3 wake = Anchor(anchors, WorldAnchorIds.PlaceWake).Position;
+            Vector3 lander = Anchor(anchors, WorldAnchorIds.PlaceLander).Position;
+            Vector3 apron = Anchor(anchors, WorldAnchorIds.PlaceApron).Position;
+            Vector3 ruins = Anchor(anchors, WorldAnchorIds.PlaceRuins).Position;
+            Vector3 mast = Anchor(anchors, WorldAnchorIds.RelayPrefix + 1).Position;
+            Vector3 lift = Vector3.up * OpeningLookHeight;
+            Vector3 toLander = Vector3.ProjectOnPlane(lander - wake, Vector3.up).normalized;
+            Vector3 eye = wake - toLander * OpeningWakeSetback + Vector3.up * OpeningEyeHeight;
+            Vector3 apronEye = apron + Vector3.up * OpeningEyeHeight;
+            Camera view = context.Get<IViewCamera>().Camera;
+            var host = new GameObject("OpeningReviewCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                foreach (Pose pose in new[]
+                         {
+                             LookPose("wake_toward_the_lander", eye, lander + lift, OpeningFov),
+                             LookPose("apron_toward_the_ruins", apronEye, ruins + lift, OpeningFov),
+                             LookPose("apron_toward_the_west_mast", apronEye, mast + lift, OpeningFov),
+                         })
+                {
+                    Place(camera, pose);
+                    FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
+                        Path.Combine(CaptureFolder, "opening-" + pose.name + ".png"));
+                }
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        private static WorldAnchor Anchor(IWorldAnchors anchors, string id)
+        {
+            Assert.IsTrue(anchors.TryGet(id, out WorldAnchor anchor), $"the World has {id}");
+            return anchor;
         }
 
         private static void Publish(GameContext context, FeelPhase phase, Vector3 tower, float strength, float seconds)
