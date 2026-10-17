@@ -78,6 +78,13 @@ namespace MoonProject.World
         /// </summary>
         public float EclipseFactor { get; private set; }
 
+        /// <summary>
+        /// Global basin-wide sunlight factor, 0..1: depends only on the Sun's elevation above the geometric horizon
+        /// and <see cref="EclipseFactor"/>, never on a single point's local terrain shadow. Drives the sky and
+        /// directional key light so distant sunlit mountains and the basin never go dark when 07 enters a local shadow.
+        /// </summary>
+        public float GlobalSunlight { get; private set; }
+
         /// <summary>Current phase of the lunar sky cycle.</summary>
         public SkyPhase Phase { get; private set; }
 
@@ -284,6 +291,19 @@ namespace MoonProject.World
             EclipseFactor = ComputeEclipseFactor(SunDirection, _sky.EarthDirection,
                 _settings.SunDiameter * 0.5f * Mathf.Deg2Rad,
                 _sky.EarthDiameter * 0.5f * Mathf.Deg2Rad);
+
+            if (IsHoldingEclipse || EclipseFactor >= 1f)
+            {
+                GlobalSunlight = 0f;
+            }
+            else
+            {
+                float softness = Mathf.Max(_settings.HorizonSoftness, 1e-4f);
+                float halfSoftness = softness * 0.5f;
+                float t = Mathf.Clamp01((Elevation + halfSoftness) / softness);
+                float horizonFactor = t * t * (3f - 2f * t);
+                GlobalSunlight = horizonFactor * (1f - EclipseFactor);
+            }
 
             bool isRising = Mathf.Sin(phaseRadians) < 0f;
             Phase = DeterminePhase(isRising);

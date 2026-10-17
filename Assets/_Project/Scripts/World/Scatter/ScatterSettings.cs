@@ -56,13 +56,20 @@ namespace MoonProject.World
         [Range(0f, 1f)]
         [SerializeField] private float _clusterContrast = 0.85f;
 
-        [Header("Pebbles (no colliders)")]
+        [Header("Pebbles & Cobbles (wheel-size collider cutoff)")]
         [Tooltip("Minimum distance between pebbles, metres.")]
         [Range(0.5f, 20f)]
         [SerializeField] private float _pebbleSpacing = 5f;
 
         [Tooltip("Pebble size range (x = min, y = max), metres.")]
         [SerializeField] private Vector2 _pebbleSize = new Vector2(0.18f, 0.46f);
+
+        [Tooltip("Wheel-size collider cutoff (metres): 07's wheel radius is 0.35 m (wheel diameter 0.70 m, belly-pan " +
+            "clearance 0.335 m). Stones with horizontal size >= 0.48 m (~0.69x wheel diameter, exposed height >= 0.30 m " +
+            "after ~10% burial) reach the wheel hub / belly pan and get a cheap SphereCollider on Layers.Prop; smaller " +
+            "pebbles (< 0.48 m) stay below the axle and remain non-colliding.")]
+        [Range(0.25f, 1.0f)]
+        [SerializeField] private float _cobbleColliderMinSize = 0.48f;
 
         [Tooltip("Average fraction of pebble sites that get a pebble.")]
         [Range(0f, 1f)]
@@ -125,6 +132,7 @@ namespace MoonProject.World
         public float ClusterContrast => _clusterContrast;
         public float PebbleSpacing => _pebbleSpacing;
         public Vector2 PebbleSize => _pebbleSize;
+        public float CobbleColliderMinSize => _cobbleColliderMinSize;
         public float PebbleDensity => _pebbleDensity;
         public float PebbleMaxSlope => _pebbleMaxSlope;
         public float PebbleCullDistance => _pebbleCullDistance;
@@ -145,6 +153,11 @@ namespace MoonProject.World
                 || _boulderSize.x > _boulderSize.y)
             {
                 return "Rock size ranges need 0 < min <= max.";
+            }
+
+            if (_cobbleColliderMinSize <= 0f || _cobbleColliderMinSize > _boulderSize.x)
+            {
+                return "Cobble collider cutoff must be positive and no larger than the minimum boulder size.";
             }
 
             if (_boulderSize.y > _boulderSpacing)

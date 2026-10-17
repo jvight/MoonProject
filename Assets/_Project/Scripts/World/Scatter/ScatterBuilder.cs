@@ -24,6 +24,9 @@ namespace MoonProject.World
         private const float ReferenceFieldOfView = 60f;
         private const float PebbleCullScreenHeight = 0.05f;
 
+        // A cobble's sphere collider spans just under half its horizontal extent: the rock's body, not its flared foot.
+        private const float CobbleSphereShare = 0.46f;
+
         private const MeshUpdateFlags UploadFlags = MeshUpdateFlags.DontRecalculateBounds
             | MeshUpdateFlags.DontValidateIndices | MeshUpdateFlags.DontNotifyMeshUsers;
 
@@ -116,8 +119,10 @@ namespace MoonProject.World
                 }
             }
 
-            AddBoulderColliders(parent, instances, boulderRocks, boulderShapes, hideFlags);
-            return new ScatterBuildReport(pebbles, boulders, triangles, groups.Count, watch.Elapsed.TotalMilliseconds);
+            int solidCobbles = AddRockColliders(parent, instances, settings, pebbleShapes, boulderRocks, boulderShapes,
+                hideFlags);
+            return new ScatterBuildReport(pebbles, boulders, triangles, groups.Count, watch.Elapsed.TotalMilliseconds,
+                solidCobbles);
         }
 
         public void DestroyMeshes()
@@ -265,29 +270,48 @@ namespace MoonProject.World
             return meshRenderer;
         }
 
-        private static void AddBoulderColliders(Transform parent, IReadOnlyList<ScatterInstance> instances,
-            IReadOnlyList<Mesh> boulderRocks, RockShape[] boulderShapes, HideFlags hideFlags)
+        private static int AddRockColliders(Transform parent, IReadOnlyList<ScatterInstance> instances,
+            ScatterSettings settings, RockShape[] pebbleShapes, IReadOnlyList<Mesh> boulderRocks,
+            RockShape[] boulderShapes, HideFlags hideFlags)
         {
             var colliders = new GameObject("BoulderColliders") { hideFlags = hideFlags };
             colliders.transform.SetParent(parent, false);
+            float cobbleCutoff = settings.CobbleColliderMinSize;
+            int solidCobbles = 0;
             foreach (ScatterInstance instance in instances)
             {
-                if (instance.Kind != ScatterKind.Boulder)
+                if (instance.Kind == ScatterKind.Boulder)
                 {
-                    continue;
+                    int variant = instance.Variant % boulderShapes.Length;
+                    var collider = new GameObject("Boulder") { hideFlags = hideFlags, layer = Layers.Prop };
+                    collider.transform.SetParent(colliders.transform, false);
+                    Vector3 buriedPosition = instance.Position - instance.Normal * instance.BurialDepth;
+                    collider.transform.SetPositionAndRotation(buriedPosition, Orientation(instance));
+                    float baseScale = instance.Size / boulderShapes[variant].HorizontalExtent;
+                    collider.transform.localScale = instance.ScaleAspect * baseScale;
+                    var meshCollider = collider.AddComponent<MeshCollider>();
+                    meshCollider.convex = true;
+                    meshCollider.sharedMesh = boulderRocks[variant];
                 }
-
-                int variant = instance.Variant % boulderShapes.Length;
-                var collider = new GameObject("Boulder") { hideFlags = hideFlags, layer = Layers.Prop };
-                collider.transform.SetParent(colliders.transform, false);
-                Vector3 buriedPosition = instance.Position - instance.Normal * instance.BurialDepth;
-                collider.transform.SetPositionAndRotation(buriedPosition, Orientation(instance));
-                float baseScale = instance.Size / boulderShapes[variant].HorizontalExtent;
-                collider.transform.localScale = instance.ScaleAspect * baseScale;
-                var meshCollider = collider.AddComponent<MeshCollider>();
-                meshCollider.convex = true;
-                meshCollider.sharedMesh = boulderRocks[variant];
+                else if (instance.Size >= cobbleCutoff)
+                {
+                    // A cobble at or above the cutoff reaches 07's wheel hub and belly pan, so it gets a cheap sphere;
+                    // smaller pebbles stay non-colliding.
+                    int variant = instance.Variant % pebbleShapes.Length;
+                    var collider = new GameObject("Cobble") { hideFlags = hideFlags, layer = Layers.Prop };
+                    collider.transform.SetParent(colliders.transform, false);
+                    Vector3 buriedPosition = instance.Position - instance.Normal * instance.BurialDepth;
+                    collider.transform.SetPositionAndRotation(buriedPosition, Orientation(instance));
+                    float baseScale = instance.Size / pebbleShapes[variant].HorizontalExtent;
+                    collider.transform.localScale = instance.ScaleAspect * baseScale;
+                    var sphereCollider = collider.AddComponent<SphereCollider>();
+                    sphereCollider.center = pebbleShapes[variant].BoundsCenter;
+                    sphereCollider.radius = pebbleShapes[variant].HorizontalExtent * CobbleSphereShare;
+                    solidCobbles++;
+                }
             }
+
+            return solidCobbles;
         }
 
         /// <summary>An indexed source rock read once on the main thread.</summary>
@@ -342,6 +366,7 @@ namespace MoonProject.World
                 Triangles = mesh.triangles;
 
                 Bounds bounds = mesh.bounds;
+                BoundsCenter = bounds.center;
                 HorizontalExtent = Mathf.Max(bounds.size.x, bounds.size.z);
             }
 
@@ -356,6 +381,8 @@ namespace MoonProject.World
             public Vector2[] Uvs { get; }
 
             public int[] Triangles { get; }
+
+            public Vector3 BoundsCenter { get; }
 
             /// <summary>The larger of the X and Z sizes: the rock's horizontal extent.</summary>
             public float HorizontalExtent { get; }
