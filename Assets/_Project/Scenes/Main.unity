@@ -27926,12 +27926,6 @@ MonoBehaviour:
   - {fileID: 7262000839014035994, guid: ceef8bce65876c141980a13fbc85c981, type: 3}
   _earthMaterial: {fileID: 2100000, guid: e693f9521e4513348aba7c17b670757b, type: 2}
   _groundMarkMaterial: {fileID: 2100000, guid: 4ebca80a2545b674f93814a3006a47d2, type: 2}
-  _landmarkPrefabs:
-    _hullFragments:
-    - {fileID: 2037638421221605166, guid: ac71eab131dc1ef44a707f8e3f91731d, type: 3}
-    - {fileID: 2710474304211634752, guid: b81e3c820b87ede439646b9fa90896cb, type: 3}
-    - {fileID: 5211233873720822207, guid: a3eac53c63df53544baa4a4a338a3dec, type: 3}
-    - {fileID: 4807920037987281836, guid: 4a5b9d9dbc74c7b49af1b913826c7981, type: 3}
   _peakBeacon: {fileID: 1743128060635935041}
   _earthlight: {fileID: 3339212068541551884}
   _fillLight: {fileID: 4575894151075447720}
