@@ -25,11 +25,11 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Intensity: 0.9
+    - _Intensity: 2.2
     - _MinAngleFrom: 60
     - _MinAngleFull: 80
-    - _MinAngleTan: 0.0061087282
-    - _Radius: 0.25
+    - _MinAngleTan: 0.012217913
+    - _Radius: 0.3
     m_Colors:
     - _Color: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
   m_BuildTextureStacks: []
