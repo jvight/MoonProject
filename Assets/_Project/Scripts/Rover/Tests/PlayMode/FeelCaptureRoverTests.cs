@@ -345,6 +345,7 @@ namespace MoonProject.Rover.PlayModeTests
                     && _rover.Velocity.y < -0.5f)
                 {
                     descentCaptured = true;
+                    rec.SetMetric("peakBallisticDescentVerticalSpeed", peakBallisticDescentSpeed);
                     rec.SetMetric("descentVerticalSpeedInCushionZone", _rover.Velocity.y);
                     rec.CaptureFrame("05_cushioned_descent");
                 }
@@ -358,10 +359,9 @@ namespace MoonProject.Rover.PlayModeTests
                 elapsed += FrameTime;
             }
 
-            yield return StepForSeconds(rec, 0.04f);
+            yield return StepForSeconds(rec, 0.06f);
             rec.CaptureFrame("06_regolith_touchdown_puff");
-            yield return StepForSeconds(rec, 0.8f);
-            rec.SetMetric("peakBallisticDescentVerticalSpeed", peakBallisticDescentSpeed);
+            yield return StepForSeconds(rec, 0.74f);
             rec.SetMetric("regolithLeapApexMeters", maxApexAboveGround);
             rec.SetMetric("regolithAirTimeSeconds", lastAirTime);
             rec.SetMetric("regolithLandingImpactSpeed", lastImpactSpeed);
@@ -370,31 +370,52 @@ namespace MoonProject.Rover.PlayModeTests
             SetDriveStick(Vector2.zero);
             if (TryFindBoulderTarget(out Bounds boulderBounds))
             {
-                Vector3 toBoulder = new Vector3(1f, 0f, 0f);
-                Vector3 launchPos = boulderBounds.center - toBoulder * (Mathf.Max(boulderBounds.extents.x, boulderBounds.extents.z) + 4.2f);
+                Vector3 toBoulder = Vector3.forward;
+                float boulderExtent = Mathf.Max(boulderBounds.extents.x, boulderBounds.extents.z);
+                Vector3 launchPos = boulderBounds.center - toBoulder * (boulderExtent + 3.6f);
                 launchPos.y = _terrain.SampleHeight(launchPos.x, launchPos.z);
-                PlaceRover(launchPos, 90f);
+                PlaceRover(launchPos, 0f);
                 yield return SettleFrames(10);
+                Set(_gamepad.rightStick, new Vector2(0f, -0.55f));
+                yield return SettleFrames(22);
+                Set(_gamepad.rightStick, Vector2.zero);
                 rec.ResetBaseline();
 
-                SetDriveStick(new Vector2(0f, 0.55f));
+                SetDriveStick(new Vector2(0f, 0.45f));
                 SetJumpHeld(true);
-                yield return StepForSeconds(rec, 0.68f);
+                yield return StepForSeconds(rec, 0.62f);
                 SetJumpHeld(false);
-                yield return StepForSeconds(rec, 1.25f);
-                rec.CaptureFrame("07_leap_toward_rock");
 
-                float rockWait = 0f;
-                while (rockWait < 4.2f && !_rover.IsGrounded)
+                float rockFlight = 0f;
+                bool capturedLeapTowardRock = false;
+                while (rockFlight < 4.5f)
                 {
+                    float remDist = Vector3.Dot(boulderBounds.center - _rover.Position, toBoulder);
+                    float desiredSpeed = Mathf.Clamp(remDist * 0.9f, -2.5f, 2.5f);
+                    float stickY = Mathf.Clamp((desiredSpeed - _rover.ForwardSpeed) * 0.7f, -1f, 0.55f);
+                    SetDriveStick(new Vector2(0f, stickY));
+
+                    if (!capturedLeapTowardRock && rockFlight >= 1.15f)
+                    {
+                        capturedLeapTowardRock = true;
+                        rec.CaptureFrame("07_leap_toward_rock");
+                    }
+
+                    if (rockFlight > 0.6f && _rover.IsGrounded)
+                    {
+                        break;
+                    }
+
                     yield return StepOneFrame(rec);
-                    rockWait += FrameTime;
+                    rockFlight += FrameTime;
                 }
 
+                SetDriveStick(Vector2.zero);
+                yield return StepForSeconds(rec, 0.06f);
                 float rockTilt = Vector3.Angle(_rover.Rotation * Vector3.up, Vector3.up);
                 rec.SetMetric("rockLandingTiltDeg", rockTilt);
                 rec.CaptureFrame("08_landed_on_rock");
-                yield return StepForSeconds(rec, 0.8f);
+                yield return StepForSeconds(rec, 0.74f);
             }
 
             SetDriveStick(Vector2.zero);
