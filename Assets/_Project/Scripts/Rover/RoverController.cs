@@ -161,6 +161,10 @@ namespace MoonProject.Rover
         private Vector3 _lastVelocity;
         private Vector3 _localAcceleration;
         private Vector3 _spawnNormal = Vector3.up;
+        private float _bounceHoldTimer;
+        private float _collisionCooldownTimer;
+        private Vector3 _obstacleNormal;
+        private readonly Collider[] _overlapColliders = new Collider[16];
 
         public RoverTuning Tuning => _tuning;
 
@@ -366,6 +370,9 @@ namespace MoonProject.Rover
             _forwardSpeed = 0f;
             _leaping = false;
             _liftoff = 0f;
+            _bounceHoldTimer = 0f;
+            _collisionCooldownTimer = 0f;
+            _obstacleNormal = Vector3.zero;
             _jump.Reset();
         }
 
@@ -376,6 +383,9 @@ namespace MoonProject.Rover
             _body.linearVelocity = Vector3.zero;
             _lastVelocity = Vector3.zero;
             _forwardSpeed = 0f;
+            _bounceHoldTimer = 0f;
+            _collisionCooldownTimer = 0f;
+            _obstacleNormal = Vector3.zero;
             _landing.Reset();
             _stuck.Reset();
         }
@@ -640,7 +650,37 @@ namespace MoonProject.Rover
             _localAcceleration = Quaternion.Inverse(yaw) * ((velocity - _lastVelocity) / dt);
 
             ReadInput(dt);
-            ProbeGround(out float speedIntoGround, velocity);
+            _bounceHoldTimer = Mathf.Max(0f, _bounceHoldTimer - dt);
+            _collisionCooldownTimer = Mathf.Max(0f, _collisionCooldownTimer - dt);
+            bool groundedBeforeProbe = (_hasContact || _landing.IsGrounded) && !_leaping && _liftoff <= 0f;
+            ProbeObstacle(velocity, dt, groundedBeforeProbe, out _obstacleNormal, out Vector3 obstaclePoint,
+                out float obstacleGap);
+            if (_obstacleNormal.sqrMagnitude > 0.5f)
+            {
+                Vector3 resolved = GroundModel.ResolveObstacleVelocity(_tuning.Ground, velocity, _obstacleNormal,
+                    groundedBeforeProbe, out float impactSpeed, out bool bouncedHeadOn);
+                if (impactSpeed >= _tuning.Ground.CollisionMinImpactSpeed && _collisionCooldownTimer <= 0f)
+                {
+                    _collisionCooldownTimer = 0.35f;
+                    _events.Publish(new RoverCollided(obstaclePoint, _obstacleNormal, impactSpeed));
+                    if (bouncedHeadOn)
+                    {
+                        _bounceHoldTimer = _tuning.Ground.CollisionBounceHoldTime;
+                    }
+                }
+
+                if (groundedBeforeProbe && obstacleGap < 0.02f)
+                {
+                    Vector3 pushOut = _obstacleNormal * (0.02f - obstacleGap);
+                    _body.position += pushOut;
+                    _body.transform.position = _body.position;
+                }
+
+                velocity = resolved;
+                _body.linearVelocity = resolved;
+            }
+
+            ProbeGround(out float speedIntoGround, velocity, _obstacleNormal.sqrMagnitude > 0.5f && !_leaping);
             if (_liftoff > 0f)
             {
                 // Leaving the ground after a Hover-Jump: no downforce or grip pulling 07 back for a moment.
@@ -670,7 +710,11 @@ namespace MoonProject.Rover
 
             Steer(dt);
             Drive(velocity, normal, forward, dt);
-            if (_stuck.Step(_throttle, _body.position, dt))
+            if (_bounceHoldTimer > 0f && velocity.sqrMagnitude >= 0.04f)
+            {
+                _stuck.Reset();
+            }
+            else if (_stuck.Step(_throttle, _body.position, dt))
             {
                 TryStartRecovery();
             }
@@ -731,6 +775,9 @@ namespace MoonProject.Rover
             _groundNormal = normal;
             _leaping = false;
             _liftoff = 0f;
+            _bounceHoldTimer = 0f;
+            _collisionCooldownTimer = 0f;
+            _obstacleNormal = Vector3.zero;
             _jump.Reset();
             _landing.Reset();
             _stuck.Reset();
@@ -938,7 +985,146 @@ namespace MoonProject.Rover
             return Smoothing.Damp(current, target, rising ? riseHalfLife : fallHalfLife, dt);
         }
 
-        private void ProbeGround(out float speedIntoGround, Vector3 velocity)
+        private void ProbeObstacle(Vector3 velocity, float dt, bool grounded, out Vector3 wallNormal,
+            out Vector3 contactPoint, out float surfaceGap)
+        {
+            wallNormal = Vector3.zero;
+            contactPoint = _body.position;
+            surfaceGap = float.MaxValue;
+
+            GroundSettings ground = _tuning.Ground;
+            float radius = ground.SphereRadius * 1.65f;
+            Vector3 planarVel = new Vector3(velocity.x, 0f, velocity.z);
+            float planarSpeed = planarVel.magnitude;
+            float sign = _throttle < -1e-3f ? -1f : 1f;
+            Vector3 headingDir = Quaternion.Euler(0f, _heading, 0f) * Vector3.forward * sign;
+            Vector3 primaryDir = planarSpeed > 0.1f ? planarVel / planarSpeed : headingDir;
+            float lookahead = Mathf.Max(0.08f, planarSpeed * dt * 1.25f);
+
+            if (!_leaping)
+            {
+                int overlapMask = Layers.PropMask | Layers.RelicMask;
+                int count = Physics.OverlapSphereNonAlloc(_body.position, radius + lookahead, _overlapColliders,
+                    overlapMask, QueryTriggerInteraction.Ignore);
+                float minHeight = _body.position.y - ground.SphereRadius * 0.75f;
+                for (int i = 0; i < count; i++)
+                {
+                    Collider col = _overlapColliders[i];
+                    if (col == null || col == _sphere || col == _screenCollider || !SupportsClosestPoint(col))
+                    {
+                        continue;
+                    }
+
+                    Vector3 closest = col.ClosestPoint(_body.position);
+                    if (closest.y < minHeight)
+                    {
+                        continue;
+                    }
+
+                    Vector3 planar = new Vector3(_body.position.x - closest.x, 0f, _body.position.z - closest.z);
+                    float horizDist = planar.magnitude;
+                    if (horizDist <= 1e-4f)
+                    {
+                        continue;
+                    }
+
+                    float gap = horizDist - radius;
+                    if (gap <= lookahead && gap < surfaceGap)
+                    {
+                        surfaceGap = gap;
+                        wallNormal = planar / horizDist;
+                        contactPoint = closest;
+                    }
+                }
+            }
+
+            ProbeObstacleFan(ground, primaryDir, radius, lookahead, grounded, ref wallNormal, ref contactPoint,
+                ref surfaceGap);
+            if (Mathf.Abs(_throttle) > 0.01f && Vector3.Angle(primaryDir, headingDir) > 5f)
+            {
+                ProbeObstacleFan(ground, headingDir, radius, lookahead, grounded, ref wallNormal, ref contactPoint,
+                    ref surfaceGap);
+            }
+        }
+
+        private static bool SupportsClosestPoint(Collider col)
+        {
+            if (col is BoxCollider || col is SphereCollider || col is CapsuleCollider)
+            {
+                return true;
+            }
+
+            return col is MeshCollider mesh && mesh.convex;
+        }
+
+        private void ProbeObstacleFan(GroundSettings ground, Vector3 centerDir, float radius, float lookahead,
+            bool grounded, ref Vector3 bestNormal, ref Vector3 bestPoint, ref float bestGap)
+        {
+            const int mask = Layers.DriveableMask | Layers.RelicMask;
+            float maxDist = radius + lookahead;
+            Vector3 originHigh = _body.position;
+            Vector3 originLow = _body.position - Vector3.up * (ground.SphereRadius * 0.55f);
+
+            for (int i = -4; i <= 4; i++)
+            {
+                Vector3 dir = Quaternion.Euler(0f, i * 22.5f, 0f) * centerDir;
+                if (Physics.Raycast(originHigh, dir, out RaycastHit hitHigh, maxDist, mask,
+                        QueryTriggerInteraction.Ignore)
+                    && IsObstacleHit(ground, in hitHigh, out Vector3 normalHigh))
+                {
+                    float gap = hitHigh.distance - radius;
+                    if (gap < bestGap)
+                    {
+                        bestGap = gap;
+                        bestNormal = normalHigh;
+                        bestPoint = hitHigh.point;
+                    }
+                }
+
+                if (grounded
+                    && Physics.Raycast(originLow, dir, out RaycastHit hitLow, maxDist, mask,
+                        QueryTriggerInteraction.Ignore)
+                    && IsObstacleHit(ground, in hitLow, out Vector3 normalLow))
+                {
+                    float gap = hitLow.distance - radius;
+                    if (gap < bestGap)
+                    {
+                        bestGap = gap;
+                        bestNormal = normalLow;
+                        bestPoint = hitLow.point;
+                    }
+                }
+            }
+        }
+
+        private bool IsObstacleHit(GroundSettings ground, in RaycastHit hit, out Vector3 planarNormal)
+        {
+            planarNormal = Vector3.zero;
+            if (hit.collider == null)
+            {
+                return false;
+            }
+
+            float slope = Vector3.Angle(hit.normal, Vector3.up);
+            int layer = hit.collider.gameObject.layer;
+            bool propObstacle = (layer == Layers.Prop || layer == Layers.Relic) && !_leaping && slope > 20f;
+            bool steepObstacle = slope > ground.MaxGroundAngle;
+            if (!propObstacle && !steepObstacle)
+            {
+                return false;
+            }
+
+            Vector3 planar = new Vector3(hit.normal.x, 0f, hit.normal.z);
+            if (planar.sqrMagnitude <= 1e-6f)
+            {
+                return false;
+            }
+
+            planarNormal = planar.normalized;
+            return true;
+        }
+
+        private void ProbeGround(out float speedIntoGround, Vector3 velocity, bool preferGroundLayer)
         {
             GroundSettings ground = _tuning.Ground;
             float radius = ground.SphereRadius;
@@ -947,10 +1133,19 @@ namespace MoonProject.Rover
             Vector3 origin = _body.position + Vector3.up * lift;
             float distance = lift + (radius - probeRadius) + ground.GroundSnapDistance;
 
-            _hasContact = Physics.SphereCast(origin, probeRadius, Vector3.down, out RaycastHit hit, distance,
-                    Layers.DriveableMask, QueryTriggerInteraction.Ignore)
+            RaycastHit hit = default;
+            bool found = preferGroundLayer
+                && Physics.SphereCast(origin, probeRadius, Vector3.down, out hit, distance, Layers.GroundMask,
+                    QueryTriggerInteraction.Ignore)
                 && Vector3.Angle(hit.normal, Vector3.up) <= ground.MaxGroundAngle;
+            if (!found)
+            {
+                found = Physics.SphereCast(origin, probeRadius, Vector3.down, out hit, distance, Layers.DriveableMask,
+                        QueryTriggerInteraction.Ignore)
+                    && Vector3.Angle(hit.normal, Vector3.up) <= ground.MaxGroundAngle;
+            }
 
+            _hasContact = found;
             _contactNormal = _hasContact ? hit.normal : Vector3.up;
             speedIntoGround = -Vector3.Dot(velocity, _contactNormal);
         }
@@ -965,25 +1160,83 @@ namespace MoonProject.Rover
             _yawRate = SteeringModel.YawRate(steering, _steer, _steerDirection, _forwardSpeed,
                 _tuning.Drive.TopSpeed, true) * (_hasContact ? 1f : airSteer);
 
+            float crossSlopeYaw = 0f;
+            if (_hasContact && _obstacleNormal.sqrMagnitude <= 0.5f)
+            {
+                Vector3 headingForward = Quaternion.Euler(0f, _heading, 0f) * Vector3.forward;
+                crossSlopeYaw = GroundModel.CrossSlopeYawRate(_tuning.Ground, Physics.gravity, _contactNormal,
+                    headingForward, _forwardSpeed);
+            }
+
             _previousHeading = _heading;
-            _heading = Mathf.Repeat(_heading + _yawRate * dt, 360f);
+            _heading = Mathf.Repeat(_heading + (_yawRate + crossSlopeYaw) * dt, 360f);
+            if (_hasContact && _obstacleNormal.sqrMagnitude > 0.5f && _bounceHoldTimer <= 0f
+                && Mathf.Abs(_steer) < 0.25f)
+            {
+                _heading = GroundModel.DeflectHeadingOnWall(_tuning.Ground, _heading, _obstacleNormal, _throttle, dt);
+            }
         }
 
         private void Drive(Vector3 velocity, Vector3 normal, Vector3 forward, float dt)
         {
             GroundSettings ground = _tuning.Ground;
+            float effectiveThrottle = _throttle;
+            if (_bounceHoldTimer > 0f)
+            {
+                if (_obstacleNormal.sqrMagnitude > 0.5f && _throttle * Vector3.Dot(forward, _obstacleNormal) > 0.05f)
+                {
+                    _bounceHoldTimer = 0f;
+                }
+                else
+                {
+                    effectiveThrottle = 0f;
+                }
+            }
+
             float drive = _holds.IsHeld
                 ? LongitudinalDrive.HoldAcceleration(_tuning.Drive, _forwardSpeed, dt)
-                : LongitudinalDrive.Acceleration(_tuning.Drive, _forwardSpeed, _throttle, _boost.ExtraSpeed,
+                : LongitudinalDrive.Acceleration(_tuning.Drive, _forwardSpeed, effectiveThrottle, _boost.ExtraSpeed,
                     _battery.DriveCap01, dt);
 
             if (_hasContact)
             {
-                Vector3 acceleration = forward * drive
-                    + GroundModel.SlopeAcceleration(ground, Physics.gravity, normal, forward, _forwardSpeed)
+                Vector3 driveForward = forward;
+                if (_obstacleNormal.sqrMagnitude > 0.5f && _bounceHoldTimer <= 0f)
+                {
+                    float moveSign = effectiveThrottle < -1e-3f ? -1f : 1f;
+                    float intoWall = -Vector3.Dot(forward * moveSign, _obstacleNormal);
+                    if (intoWall >= 0.995f)
+                    {
+                        if (drive * Vector3.Dot(forward, _obstacleNormal) < 0f)
+                        {
+                            drive = 0f;
+                        }
+                    }
+                    else if (intoWall > 0f)
+                    {
+                        Vector3 wallTangent = Vector3.ProjectOnPlane(forward, _obstacleNormal);
+                        Vector3 onSlope = Vector3.ProjectOnPlane(wallTangent, normal);
+                        if (onSlope.sqrMagnitude > 1e-4f)
+                        {
+                            driveForward = onSlope.normalized;
+                        }
+                    }
+                }
+
+                Vector3 acceleration = driveForward * drive
+                    + GroundModel.SlopeAcceleration(ground, Physics.gravity, normal, driveForward, _forwardSpeed)
                     - normal * ground.Downforce;
+                if (_obstacleNormal.sqrMagnitude > 0.5f && _bounceHoldTimer <= 0f)
+                {
+                    float intoAccel = Vector3.Dot(acceleration, _obstacleNormal);
+                    if (intoAccel < 0f)
+                    {
+                        acceleration -= _obstacleNormal * intoAccel;
+                    }
+                }
+
                 _body.AddForce(acceleration, ForceMode.Acceleration);
-                _body.AddForce(GroundModel.GripVelocityChange(velocity, normal, forward, ground.GripRate, dt),
+                _body.AddForce(GroundModel.GripVelocityChange(velocity, normal, driveForward, ground.GripRate, dt),
                     ForceMode.VelocityChange);
             }
             else
