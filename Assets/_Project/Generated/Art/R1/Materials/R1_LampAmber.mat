@@ -42,6 +42,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _BloomSafeMax: 1.06
+    - _BuildModeGlow: 0
     - _BumpScale: 0.5
     - _ColorVarAmount: 0.025
     - _ColorVarScale: 1.8

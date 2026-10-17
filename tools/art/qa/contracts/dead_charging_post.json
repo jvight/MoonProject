@@ -1,0 +1,80 @@
+{
+  "model": "dead_charging_post",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Brass",
+    "R1_Copper",
+    "R1_CreamEnamel",
+    "R1_DarkGlass",
+    "R1_GreyMetal",
+    "R1_OrangeStripe",
+    "R1_Rubber",
+    "R1_SagePatch"
+  ],
+  "max_triangles": 6000,
+  "max_meshes": 6,
+  "max_draw_calls": 20,
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "DeadChargingPost": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "PostBody": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "EmptySocket": {
+      "pivot": [
+        0.0,
+        -0.19,
+        0.46
+      ]
+    },
+    "CableTail": {
+      "pivot": [
+        0.0,
+        0.22,
+        0.042
+      ]
+    },
+    "Socket_Umbilical": {
+      "pivot": [
+        0.0,
+        -0.27,
+        0.46
+      ]
+    },
+    "StatusWindow_Dead": {
+      "pivot": [
+        0.0,
+        -0.22,
+        0.82
+      ]
+    },
+    "CableOrigin_Anchor": {
+      "pivot": [
+        0.0,
+        0.46,
+        0.042
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      0.66,
+      0.7982,
+      1.009
+    ],
+    "tolerance": 0.03
+  }
+}

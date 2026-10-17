@@ -33,11 +33,12 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator EachShowTrack_IsAnnouncedOncePerSession_TapesUnderTheirCassetteTitle_NeverOnTheTapeDeck()
+        public IEnumerator EachTrack_IsAnnouncedOncePerSession()
         {
             _rig.Wake(true);
+            _rig.Milestone(OpeningMilestone.PowerOn);
             yield return new WaitForSecondsRealtime(3f * AudioTestRig.ShortTrackSeconds + 1f);
-            Assert.AreEqual(2, _lines.Count, "both base tracks announced once, however often they come round");
+            Assert.AreEqual(2, _lines.Count, "both tracks announced once, however often they come round");
             var arguments = new HashSet<string>();
             foreach (TickerLine line in _lines)
             {
@@ -47,26 +48,6 @@ namespace MoonProject.Audio.PlayModeTests
             }
 
             CollectionAssert.AreEquivalent(new[] { "track.t1.title", "track.t2.title" }, arguments);
-
-            _rig.Program.Own(AudioTestRig.TapeA);
-            _rig.ProgramChanged();
-            float deadline = Time.realtimeSinceStartup + 4f * AudioTestRig.ShortTrackSeconds + 2f;
-            while (_lines.Count < 3 && Time.realtimeSinceStartup < deadline)
-            {
-                yield return null;
-            }
-
-            Assert.AreEqual(3, _lines.Count, "the new tape comes round within a round of the shuffle");
-            Assert.AreEqual("cassette.after_dark_1.title", _lines[2].Argument);
-
-            _rig.Program.Own(AudioTestRig.TapeB);
-            _rig.Program.DialUnlocked = true;
-            _rig.Program.SelectedTape = AudioTestRig.TapeB;
-            _rig.Program.Channel = RadioChannel.TapeDeck;
-            _rig.ProgramChanged();
-            yield return new WaitForSecondsRealtime(2f * AudioTestRig.ShortTrackSeconds);
-            Assert.AreEqual(AudioTestRig.TapeB, _rig.Radio.CurrentTrack.TapeId);
-            Assert.AreEqual(3, _lines.Count, "the Tape Deck is the player's own choice: no ticker");
         }
     }
 }

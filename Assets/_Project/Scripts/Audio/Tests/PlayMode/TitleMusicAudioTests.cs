@@ -9,7 +9,7 @@ namespace MoonProject.Audio.PlayModeTests
 {
     /// <summary>
     /// Title screen theme playback: 2 s fade-in on <see cref="TitleShown"/>, uninterrupted playback through Settings
-    /// and Credits, 2.5 s fade-out on Continue (<see cref="SessionStarted"/>) or New Game
+    /// and Credits, 0.8 s fade-out on Continue (<see cref="SessionStarted"/>) or New Game
     /// (<see cref="NewGameRequested"/>), data-driven variant selection, and complete silence from the radio and static
     /// while on the title screen.
     /// </summary>
@@ -95,7 +95,7 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator Continue_FadesOutTitleThemeOverTwoPointFiveSeconds_AndGameAudioTakesOver()
+        public IEnumerator Continue_DucksTheTitleThemeUnderTheCrtTock_AndGameAudioTakesOver()
         {
             _rig.Events.Publish(new TitleShown(true));
             yield return new WaitForSecondsRealtime(2.2f);
@@ -103,34 +103,37 @@ namespace MoonProject.Audio.PlayModeTests
 
             // Player selects Continue: SessionStarted(false) fires and 07 wakes.
             _rig.Events.Publish(new SessionStarted(false));
+            Assert.AreEqual("title_crt_off", _rig.Director.LastVoice.clip.name, "the tube's tock as the CRT switches off");
+            _rig.Milestone(OpeningMilestone.PowerOn, true);
             _rig.Wake(true);
 
-            yield return new WaitForSecondsRealtime(1.25f);
-            Assert.IsTrue(_rig.TitleMusic.IsPlaying, "still fading out midway through the 2.5 s fade");
+            yield return new WaitForSecondsRealtime(0.4f);
+            Assert.IsTrue(_rig.TitleMusic.IsPlaying, "still fading out midway through the 0.8 s duck");
             Assert.Greater(_rig.TitleMusic.EnvelopeLevel, 0.2f);
             Assert.Less(_rig.TitleMusic.EnvelopeLevel, 0.8f);
             Assert.IsTrue(_rig.Radio.IsOn, "the game's own radio rules have taken over");
 
-            yield return new WaitForSecondsRealtime(1.5f);
+            yield return new WaitForSecondsRealtime(0.6f);
             Assert.AreEqual(0f, _rig.TitleMusic.EnvelopeLevel, 1e-4f);
-            Assert.IsFalse(_rig.TitleMusic.IsPlaying, "title theme stops once the 2.5 s fade-out finishes");
+            Assert.IsFalse(_rig.TitleMusic.IsPlaying, "title theme is silent once the 0.8 s duck finishes");
             Assert.IsTrue(_rig.Radio.MusicStarted, "the game's radio station is now playing");
         }
 
         [UnityTest]
-        public IEnumerator NewGame_FadesOutTitleThemeOverTwoPointFiveSeconds()
+        public IEnumerator NewGame_DucksTheTitleThemeUnderTheCrtTock()
         {
             _rig.Events.Publish(new TitleShown(true));
             yield return new WaitForSecondsRealtime(2.2f);
             Assert.AreEqual(1f, _rig.TitleMusic.EnvelopeLevel, 1e-3f);
 
             _rig.Events.Publish(new NewGameRequested());
-            yield return new WaitForSecondsRealtime(1.25f);
+            Assert.AreEqual("title_crt_off", _rig.Director.LastVoice.clip.name);
+            yield return new WaitForSecondsRealtime(0.4f);
             Assert.IsTrue(_rig.TitleMusic.IsPlaying);
             Assert.Greater(_rig.TitleMusic.EnvelopeLevel, 0.2f);
             Assert.Less(_rig.TitleMusic.EnvelopeLevel, 0.8f);
 
-            yield return new WaitForSecondsRealtime(1.5f);
+            yield return new WaitForSecondsRealtime(0.6f);
             Assert.AreEqual(0f, _rig.TitleMusic.EnvelopeLevel, 1e-4f);
             Assert.IsFalse(_rig.TitleMusic.IsPlaying);
         }

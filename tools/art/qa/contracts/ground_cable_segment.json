@@ -1,0 +1,63 @@
+{
+  "model": "ground_cable_segment",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Brass",
+    "R1_GreyMetal",
+    "R1_LampAmber",
+    "R1_OrangeStripe",
+    "R1_Rubber"
+  ],
+  "max_triangles": 2500,
+  "max_meshes": 4,
+  "max_draw_calls": 10,
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "GroundCableSegment": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "CableRun": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "MarkerLamp": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.098
+      ]
+    },
+    "Start_Anchor": {
+      "pivot": [
+        0.0,
+        -4.0,
+        0.042
+      ]
+    },
+    "End_Anchor": {
+      "pivot": [
+        0.0,
+        4.0,
+        0.042
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      0.2,
+      8.0002,
+      0.116
+    ],
+    "tolerance": 0.03
+  }
+}

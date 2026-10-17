@@ -24,15 +24,6 @@ def _chassis_thump(seconds: float, hz: float = 60.0) -> np.ndarray:
     return filters.lowpass(body, 180.0)
 
 
-def cut_cancel(_variant, _gen):
-    """A charge let go: a soft falling A -> F#, glassy and small."""
-    n = samples(0.7)
-    mix = np.zeros(n)
-    place(mix, 0.55 * _glass(note_freq("A5"), 0.5), 0)
-    place(mix, 0.45 * _glass(note_freq("F#5"), 0.5), samples(0.12))
-    return filters.lowpass(mix, 5000.0)
-
-
 CUT_SIZZLE_LOOP_S = 3.0
 
 
@@ -224,27 +215,6 @@ def chirp_bank_data() -> dict:
 
 # ------------------------------------------------------------------------------------- the first hour's silences
 
-NODE_LIGHT_NOTES = ("D5", "E5", "F#5", "A5", "B5")
-
-
-def node_light(variant, gen):
-    """A tech node lighting in the lab: a soft bloom pop and one pentatonic step (by branch)."""
-    n = samples(1.4)
-    mix = np.zeros(n)
-    place(mix, 0.5 * instruments.soft_bell(note_freq(NODE_LIGHT_NOTES[variant]), 1.3, decay=0.9), samples(0.04))
-    pop = filters.bandpass(noise.white(samples(0.06), gen), 1200.0, 1.0) * envelope.ar(samples(0.06), 0.002, 0.03)
-    place(mix, 0.15 * pop, 0)
-    return filters.lowpass(mix, 5000.0)
-
-
-def component_found(_variant, gen):
-    """A component lifting free of its wreck: a two-note 'found', E -> A."""
-    n = samples(1.6)
-    mix = np.zeros(n)
-    place(mix, 0.5 * instruments.kalimba(note_freq("E5"), 1.0, gen, decay=0.8), 0)
-    place(mix, 0.6 * instruments.kalimba(note_freq("A5"), 1.3, gen, decay=1.1), samples(0.16))
-    return filters.lowpass(mix, 5500.0)
-
 
 BOOST_LOOP_S = 2.0
 
@@ -284,46 +254,6 @@ COUNT_TICK_NOTES = ("D5", "E5", "F#5", "A5", "B5", "D6")
 def count_tick(variant, gen):
     """The stock counter rolling one unit (feel-pass CountTick): a soft rising pentatonic tick."""
     return filters.lowpass(0.25 * _tick(gen, note_freq(COUNT_TICK_NOTES[variant]), 0.15), 5000.0)
-
-
-def window_click(_variant, gen):
-    """A home window lighting: one warm click, heard from outside."""
-    n = samples(0.3)
-    click = filters.bandpass(noise.white(n, gen), 1100.0, 1.2) * envelope.ar(n, 0.001, 0.03)
-    return filters.lowpass(0.12 * click + 0.2 * _tick(gen, note_freq("D4"), 0.3), 2500.0)
-
-
-# ------------------------------------------------------------------------------------ the tower comes online (8.2)
-
-TOWER_RING_NOTES = ("D5", "E5", "F#5", "A5")
-
-
-def tower_hum_rise(_variant, _gen):
-    """The tower taking the parts: a low hum on D2/A2 rising in level and a fifth in pitch over ~1.2 s, felt more
-    than heard, ending where the first lamp ring lights."""
-    n = samples(1.4)
-    rise = osc.glide(n, note_freq("D2"), note_freq("A2"), time_constant=0.6)
-    hum = osc.additive(n, rise, [(1, 1.0), (2, 0.4), (3, 0.12)])
-    shape = envelope.segments(n, [(0.0, 0.0), (1.15, 1.0), (1.4, 0.0)], shape="smooth")
-    return filters.lowpass(0.3 * hum * shape, 600.0)
-
-
-def tower_ring(variant, _gen):
-    """A lamp ring lighting on the tower, bottom to top: one soft bell per ring on D E F# A."""
-    bell = instruments.soft_bell(note_freq(TOWER_RING_NOTES[variant]), 1.4, decay=1.0, attack=0.01)
-    return filters.lowpass(0.6 * bell, 5000.0)
-
-
-def tower_thoom(_variant, _gen):
-    """The beacon flares: a deep soft 'thoom' felt through the ground and a D major chord (D F# A D') blooming over
-    it."""
-    n = samples(3.5)
-    thoom = osc.sine(n, osc.glide(n, 70.0, 46.0, time_constant=0.15)) * envelope.ar(n, 0.01, 1.2)
-    mix = 0.8 * filters.lowpass(thoom, 160.0)
-    for index, note in enumerate(("D4", "F#4", "A4", "D5")):
-        place(mix, 0.22 * instruments.soft_bell(note_freq(note), 3.0, decay=2.2, attack=0.06), samples(0.03 * index))
-    place(mix, 0.1 * instruments.soft_pad(note_freq("D3"), 3.0, 0.4, 1.8, hold=0.4), 0)
-    return filters.lowpass(mix, 4500.0)
 
 
 # ----------------------------------------------------------------------------------------- picking a part up (E)
@@ -402,16 +332,6 @@ def cargo_tok(_variant, gen):
     return filters.lowpass(0.45 * knock + 0.4 * thump, 3000.0)
 
 
-def shelf_chord(_variant, _gen):
-    """A shelf built at home: a warm D major chord (D3 F#3 A3 D4) on felt bells over a soft pad, settling slowly."""
-    n = samples(3.0)
-    mix = np.zeros(n)
-    for index, note in enumerate(("D3", "F#3", "A3", "D4")):
-        place(mix, 0.25 * instruments.soft_bell(note_freq(note), 2.6, decay=1.8, attack=0.05), samples(0.05 * index))
-    place(mix, 0.1 * instruments.soft_pad(note_freq("D3"), 2.6, 0.4, 1.6, hold=0.3), 0)
-    return filters.lowpass(mix, 4000.0)
-
-
 def crate_latch(_variant, gen):
     """A crew supply crate opened: a latch click and spring, then a soft paper rustle as the note is found."""
     n = samples(1.2)
@@ -426,24 +346,9 @@ def crate_latch(_variant, gen):
     return filters.lowpass(filters.lowpass(mix, 5000.0), 5000.0)
 
 
-def tilly_fetch(_variant, gen):
-    """Tilly fetching a bundle from the shelves: her two-note kalimba 'got it', A5 up to D6, over a soft drag."""
-    n = samples(1.3)
-    mix = np.zeros(n)
-    drag_n = samples(0.4)
-    drag = filters.bandpass(noise.pink_filter(noise.white(drag_n, gen)), 600.0, 1.2)
-    drag = drag / max(float(np.std(drag)), 1e-9) * envelope.segments(
-        drag_n, [(0.0, 0.0), (0.1, 1.0), (0.4, 0.0)], shape="smooth")
-    place(mix, 0.03 * drag, 0)
-    place(mix, 0.45 * instruments.kalimba(note_freq("A5"), 0.8, gen, decay=0.7), samples(0.3))
-    place(mix, 0.5 * instruments.kalimba(note_freq("D6"), 0.9, gen, decay=0.9), samples(0.45))
-    return filters.lowpass(mix, 6000.0)
-
-
-# ------------------------------------------------------------------------- 0.5.5 B: 07's hold boots, the transfer
+# ------------------------------------------------------------------------- 0.5.5 B: 07's hold boots
 
 HOLD_SLOT_NOTES = ("D5", "E5", "F#5", "A5", "B5", "D6", "E6", "F#6")
-TRANSFER_LABELS = ("to_home", "to_07")
 
 
 def hold_boot(_variant, gen):
@@ -471,18 +376,6 @@ def item_slide(_variant, gen):
     mix = 0.04 * slide
     place(mix, 0.25 * _tick(gen, note_freq("D5"), 0.1), samples(0.22))
     return filters.lowpass(mix, 4000.0)
-
-
-def stack_transfer(variant, gen):
-    """One stack moved in the docked Shelves view: a quick slide and a two-note tick, falling A -> D toward home,
-    rising D -> A toward 07."""
-    notes = ("A5", "D5") if TRANSFER_LABELS[variant] == "to_home" else ("D5", "A5")
-    n = samples(0.4)
-    mix = np.zeros(n)
-    place(mix, 0.22 * _tick(gen, note_freq(notes[0]), 0.12), 0)
-    place(mix, 0.25 * _tick(gen, note_freq(notes[1]), 0.15), samples(0.07))
-    slide = filters.bandpass(noise.white(n, gen), 1500.0, 1.2) * envelope.ar(n, 0.01, 0.08)
-    return filters.lowpass(mix + 0.03 * slide, 4500.0)
 
 
 # ------------------------------------------------------------------------- 0.5.5 C: seals and containers
@@ -624,43 +517,12 @@ def scan_liftoff(_variant, _gen):
     return filters.lowpass(mix, 6500.0)
 
 
-# ------------------------------------------------------------------------- 0.5.5 equipment: swaps and removals
-
-def recycle_crunch(_variant, gen):
-    """The bay recycling a swapped-out part into Metal: a soft, muffled crunch and two settling ticks (E, D),
-    heard through the bay's floor, never harsh."""
-    n = samples(1.0)
-    crunch_n = samples(0.4)
-    crunch = noise.pink_filter(noise.white(crunch_n, gen)) * (0.5 + 0.5 * (gen.random(crunch_n) > 0.6))
-    crunch = filters.lowpass(filters.bandpass(crunch, 500.0, 0.8), 1500.0)
-    crunch = crunch / max(float(np.std(crunch)), 1e-9) * envelope.segments(
-        crunch_n, [(0.0, 0.0), (0.03, 1.0), (0.25, 0.5), (0.4, 0.0)], shape="smooth")
-    mix = np.zeros(n)
-    place(mix, 0.05 * crunch, 0)
-    place(mix, 0.5 * _chassis_thump(0.1, 70.0), 0)
-    place(mix, 0.25 * _tick(gen, note_freq("E4"), 0.15), samples(0.5))
-    place(mix, 0.25 * _tick(gen, note_freq("D4"), 0.2), samples(0.65))
-    return filters.lowpass(mix, 3000.0)
-
-
-def part_remove(_variant, gen):
-    """A part coming off 07 into the parts row: the latch releasing (a tick on A), then a short servo easing down
-    a fourth (D3 to A2), the install moment in reverse."""
-    n = samples(0.8)
-    mix = np.zeros(n)
-    place(mix, 0.3 * _tick(gen, note_freq("A4"), 0.12), 0)
-    servo_n = samples(0.5)
-    servo = osc.additive(servo_n, osc.glide(servo_n, note_freq("D3"), note_freq("A2"), time_constant=0.15),
-                         [(1, 1.0), (2, 0.35)])
-    servo *= envelope.segments(servo_n, [(0.0, 0.0), (0.06, 1.0), (0.4, 0.6), (0.5, 0.0)], shape="smooth")
-    place(mix, 0.1 * servo, samples(0.1))
-    return filters.lowpass(mix, 2500.0)
+# --------------------------------------------------------------------- 0.5.5 D: a blueprint's sheet complete
 
 
 def sheet_complete(_variant, gen):
-    """A blueprint's last fragment scanned, the sheet complete on the lab's board: a soft, warm rising D major
-    arpeggio (D4 F#4 A4 D5) on a felt piano, settling on a quiet bell D5. Gentler than the tower's thoom, and no
-    glass, so it never sounds like the scan's lift-off."""
+    """A blueprint's last fragment scanned, the sheet complete: a soft, warm rising D major arpeggio (D4 F#4 A4 D5)
+    on a felt piano, settling on a quiet bell D5. No glass, so it never sounds like the scan's lift-off."""
     n = samples(2.6)
     mix = np.zeros(n)
     for index, note in enumerate(("D4", "F#4", "A4", "D5")):
@@ -698,28 +560,3 @@ def part_refuse(_variant, gen):
     return filters.lowpass(mix, 2500.0)
 
 
-# ------------------------------------------------------------------------- 0.5.5: the network pulse (handshake)
-
-PULSE_NOTES = ("D5", "E5", "F#5", "A5", "B5", "D6")
-
-
-def pulse_note(variant, gen):
-    """A mast lamp flashing as the network's handshake passes: an airy bell (no glass) with a breath of air around
-    it, one pentatonic step higher per hop, short and calm."""
-    freq = note_freq(PULSE_NOTES[variant])
-    bell = instruments.soft_bell(freq, 1.5, decay=1.1, attack=0.03)
-    n = bell.shape[0]
-    air = filters.bandpass(noise.pink_filter(noise.white(n, gen)), 2.0 * freq, 1.5)
-    air = air / max(float(np.std(air)), 1e-9) * envelope.ar(n, 0.02, 0.5)
-    mix = 0.45 * bell + 0.008 * air
-    return filters.lowpass(mix, 4200.0)
-
-
-def pulse_home(_variant, gen):
-    """The handshake arriving home: a warm two-note resolve, A4 settling onto D5 on felt piano over a soft D3 pad."""
-    n = samples(2.6)
-    mix = np.zeros(n)
-    place(mix, 0.32 * instruments.felt_piano(note_freq("A4"), 1.6, gen, decay=1.2), 0)
-    place(mix, 0.38 * instruments.felt_piano(note_freq("D5"), 2.2, gen, decay=1.6), samples(0.32))
-    place(mix, 0.08 * instruments.soft_pad(note_freq("D3"), 2.2, 0.4, 1.4, hold=0.2), samples(0.32))
-    return filters.lowpass(mix, 4000.0)

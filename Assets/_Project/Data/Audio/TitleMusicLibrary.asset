@@ -17,18 +17,15 @@ MonoBehaviour:
     _title: Little Turning Moon
     _clip: {fileID: 8300000, guid: 9e30741a8bc54d1290f32b45a18c0101, type: 3}
     _bpm: 66
-    _tapeId: 
   - _id: title_b_earthlight_cradle
     _title: Earthlight Cradle
     _clip: {fileID: 8300000, guid: 9e30741a8bc54d1290f32b45a18c0102, type: 3}
     _bpm: 70
-    _tapeId: 
   - _id: title_c_quiet_horizon
     _title: Quiet Horizon
     _clip: {fileID: 8300000, guid: 9e30741a8bc54d1290f32b45a18c0103, type: 3}
     _bpm: 60
-    _tapeId: 
   _selectedId: title_a_turning_moon
   _fadeInSeconds: 2
-  _fadeOutSeconds: 2.5
+  _fadeOutSeconds: 0.8
   _volume: 1

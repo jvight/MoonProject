@@ -7,8 +7,8 @@ namespace MoonProject.UI
     /// <summary>
     /// The low look-hint chip in the prompt chip's style, centred on screen: a glyph and one word (<see cref="HintWord"/>).
     /// "Look up" shows the camera control (the right stick, or the mouse), "Drive" the drive control (the left stick,
-    /// or WASD), "Hold" the cargo control (Tab, or View; "Fit" shows the same control). <see cref="LookUpHint"/>,
-    /// <see cref="FirstPrompt"/>, <see cref="HoldHint"/> and <see cref="FitHint"/> decide when it shows; a new word waits until the
+    /// or WASD), "Hold" the cargo control (Tab, or View). <see cref="FirstPrompt"/> and
+    /// <see cref="HoldHint"/> decide when it shows; a new word waits until the
     /// chip has faded out.
     /// </summary>
     internal sealed class LookUpChip
@@ -78,8 +78,6 @@ namespace MoonProject.UI
                     return UiKeys.Drive;
                 case HintWord.Hold:
                     return UiKeys.HintHold;
-                case HintWord.Fit:
-                    return UiKeys.HintFit;
                 default:
                     return UiKeys.LookUp;
             }
@@ -88,7 +86,7 @@ namespace MoonProject.UI
         private string GlyphKey(InputDeviceKind device)
         {
             bool pad = device == InputDeviceKind.Gamepad;
-            if (_word == HintWord.Hold || _word == HintWord.Fit)
+            if (_word == HintWord.Hold)
             {
                 return pad ? HoldPadGlyphKey : HoldKeysGlyphKey;
             }

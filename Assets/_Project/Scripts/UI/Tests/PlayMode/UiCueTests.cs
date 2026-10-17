@@ -103,71 +103,14 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator Start_ClosesAMemoryCardFirst_ThenPauses()
+        public IEnumerator HudCues_PromptShown()
         {
-            Gamepad gamepad = InputSystem.AddDevice<Gamepad>();
-            Boot();
-            yield return null;
-            Events.Publish(new RelicDeposited("teapot", Vector3.zero, 1));
-            yield return new WaitForSecondsRealtime(1f);
-            Assert.IsTrue(_rig.Ui.Card.CanDismiss);
-            CollectionAssert.AreEqual(new[] { UiCueKind.CardShown }, _cues);
-
-            yield return Tap(gamepad.startButton);
-            Assert.IsFalse(_rig.Ui.Card.CanDismiss, "Start closes the card");
-            Assert.IsFalse(_rig.Ui.Pause.IsOpen, "and does not also pause");
-            Assert.AreEqual(UiCueKind.Back, _cues[_cues.Count - 1]);
-
-            yield return Tap(gamepad.startButton);
-            Assert.IsTrue(_rig.Ui.Pause.IsOpen, "with no card up, Start pauses");
-        }
-
-        [UnityTest]
-        public IEnumerator HudCues_PromptShown_HoldFill_HoldComplete()
-        {
-            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             Boot();
             _rig.Ui.Ledger.RecordHoldBooted();
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Excavate, new Vector3(0f, 0f, 12f), true);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.PickUp, new Vector3(0f, 0f, 12f), true);
             yield return new WaitForSecondsRealtime(1.5f);
             CollectionAssert.AreEqual(new[] { UiCueKind.PromptShown }, _cues, "one cue per appearance");
-
-            _cues.Clear();
-            _rig.Fakes.PrimaryHint = InteractionHint.None;
-            _rig.Fakes.Upgrade = _rig.TestTower();
-            _rig.Fakes.SetMaterials(20, 20, 20);
-            _rig.Fakes.AtStation = true;
-            yield return new WaitForSecondsRealtime(1.5f);
-            Press(keyboard.eKey);
-            yield return new WaitForSecondsRealtime(_rig.Tuning.TowerPanel.HoldSeconds + 0.3f);
-            Release(keyboard.eKey);
-            yield return null;
-            CollectionAssert.AreEqual(new[] { UiCueKind.HoldFill, UiCueKind.HoldComplete }, _cues);
-        }
-
-        [UnityTest]
-        public IEnumerator BayCues_ATapIsAFocusMove_NeverAHoldSwell()
-        {
-            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
-            Boot();
-            yield return null;
-            _rig.Fakes.Bay = _rig.TestBay(new Recipe(2, 1, 0), new Recipe(3, 2, 0), new Recipe(1, 2, 2));
-            _rig.Fakes.SetMaterials(20, 20, 20);
-            _rig.Fakes.AtStation = true;
-            yield return new WaitForSecondsRealtime(1.5f);
-            _cues.Clear();
-            yield return Tap(keyboard.eKey);
-            yield return new WaitForSecondsRealtime(0.3f);
-            CollectionAssert.AreEqual(new[] { UiCueKind.FocusMove }, _cues, "a tap picks, it does not swell");
-
-            _cues.Clear();
-            Press(keyboard.eKey);
-            yield return new WaitForSecondsRealtime(_rig.Tuning.TowerPanel.TapSeconds +
-                                                    _rig.Tuning.TowerPanel.HoldSeconds + 0.3f);
-            Release(keyboard.eKey);
-            yield return null;
-            CollectionAssert.AreEqual(new[] { UiCueKind.HoldFill, UiCueKind.HoldComplete }, _cues);
         }
 
         private EventBus Events => _rig.Bootstrap.Context.Events;

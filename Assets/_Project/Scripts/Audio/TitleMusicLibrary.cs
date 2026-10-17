@@ -6,7 +6,7 @@ namespace MoonProject.Audio
     /// <summary>
     /// The title screen's procedural music variants (built from <c>tools/music/title.json</c> by the
     /// <c>Audio/TitleMusic</c> builder) and the data-driven choice of which variant plays on the title screen,
-    /// together with its fade-in (~2 s) and fade-out (~2.5 s) durations.
+    /// together with its fade-in (~2 s) and fade-out (0.8 s) durations.
     /// </summary>
     public sealed class TitleMusicLibrary : ScriptableObject
     {
@@ -22,7 +22,7 @@ namespace MoonProject.Audio
         [Min(0.01f)] [SerializeField] private float _fadeInSeconds = 2f;
 
         [Tooltip("Seconds for the title theme to fade out on Continue or New Game.")]
-        [Min(0.01f)] [SerializeField] private float _fadeOutSeconds = 2.5f;
+        [Min(0.01f)] [SerializeField] private float _fadeOutSeconds = 0.8f;
 
         [Tooltip("Gain applied on top of the Music bus (tracks are mastered to -20 LUFS).")]
         [Range(0f, 1f)] [SerializeField] private float _volume = 1f;
@@ -77,7 +77,7 @@ namespace MoonProject.Audio
         }
 
         public void Populate(RadioTrack[] tracks, string selectedId = DefaultTrackId, float fadeInSeconds = 2f,
-            float fadeOutSeconds = 2.5f, float volume = 1f)
+            float fadeOutSeconds = 0.8f, float volume = 1f)
         {
             _tracks = tracks ?? Array.Empty<RadioTrack>();
             _selectedId = string.IsNullOrEmpty(selectedId) ? DefaultTrackId : selectedId;

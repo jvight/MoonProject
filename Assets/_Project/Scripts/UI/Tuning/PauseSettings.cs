@@ -22,7 +22,7 @@ namespace MoonProject.UI
         [Tooltip("The soft indigo veil dimming the world behind the menu.")]
         [SerializeField] private RevealSettings _veil = new RevealSettings(0.25f, 0.2f, 0f, 1f, 1f, 1f);
 
-        [Tooltip("The driving HUD (prompts, reticle, chip, cards) fading away while paused and back after.")]
+        [Tooltip("The driving HUD (prompts, chips, cards) fading away while paused and back after.")]
         [SerializeField] private RevealSettings _hud = new RevealSettings(0.25f, 0.4f, 0f, 1f, 1.6f, 1f);
 
         [Tooltip("Real seconds over which game time eases to a stop when the menu opens.")]

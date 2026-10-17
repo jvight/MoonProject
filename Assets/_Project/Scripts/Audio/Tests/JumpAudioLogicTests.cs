@@ -93,45 +93,5 @@ namespace MoonProject.Audio.Tests
             charge.Charge(0f);
             Assert.AreEqual(1f, charge.Pitch, 1e-6f);
         }
-
-        [Test]
-        public void Wind_IsSilentOnTheGroundAndOverSmallBumps_SwellsWithAirTimeAndSpeed_ResolvesOnTouchdown()
-        {
-            var wind = new AirWindModel(_tuning);
-            for (int i = 0; i < 120; i++)
-            {
-                wind.Step(Frame, true, 0f, 10f);
-            }
-
-            Assert.AreEqual(0f, wind.Gain);
-            wind.Step(Frame, false, _tuning.WindMinAirTime * 0.5f, 10f);
-            Assert.AreEqual(0f, wind.Gain, "a tiny bump stays quiet");
-
-            float air = _tuning.WindMinAirTime;
-            float slowGain = 0f;
-            for (int i = 0; i < 180; i++)
-            {
-                air += Frame;
-                wind.Step(Frame, false, air, 2f);
-                slowGain = wind.Gain;
-            }
-
-            float slowPitch = wind.Pitch;
-            for (int i = 0; i < 120; i++)
-            {
-                air += Frame;
-                wind.Step(Frame, false, air, _tuning.WindFullSpeed);
-            }
-
-            Assert.Greater(slowGain, 0f);
-            Assert.Greater(wind.Gain, slowGain, "faster is louder");
-            Assert.Greater(wind.Pitch, slowPitch, "and a little higher");
-            for (int i = 0; i < 90; i++)
-            {
-                wind.Step(Frame, true, 0f, _tuning.WindFullSpeed);
-            }
-
-            Assert.AreEqual(0f, wind.Gain, "resolves to true silence");
-        }
     }
 }

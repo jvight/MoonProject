@@ -18,12 +18,10 @@ namespace MoonProject.UI.Editor
 
         public const string TuningFolder = "Assets/_Project/Data/Tuning/UI";
         public const string Tuning = TuningFolder + "/UiTuning.asset";
-        public const string MapViewTuning = TuningFolder + "/MapViewTuning.asset";
 
         public const string LocalizationFolder = "Assets/_Project/Data/Localization";
         public const string PrimaryLanguage = "en";
 
-        public const string RelicCatalog = "Assets/_Project/Data/Content/RelicCatalog.asset";
         public const string StructureCatalog = "Assets/_Project/Data/Content/StructureCatalog.asset";
 
         public const string GeneratedFolder = GeneratedAssets.Root + "/UI";

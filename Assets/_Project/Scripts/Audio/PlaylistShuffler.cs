@@ -4,8 +4,7 @@ namespace MoonProject.Audio
 {
     /// <summary>
     /// Shuffle-bag track order: every track plays once per round, rounds are reshuffled, and a round never starts
-    /// with the track that ended the previous one (no immediate repeats). The pool can grow or shrink up to its
-    /// capacity (a collected tape joins the show) without allocating; existing indices keep their meaning.
+    /// with the track that ended the previous one (no immediate repeats). Allocation-free after construction.
     /// </summary>
     public sealed class PlaylistShuffler
     {
@@ -15,38 +14,21 @@ namespace MoonProject.Audio
         private int _position;
         private int _last = -1;
 
-        public PlaylistShuffler(int capacity, AudioRandom random)
+        public PlaylistShuffler(int count, AudioRandom random)
         {
-            if (capacity < 0)
+            if (count < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(capacity), capacity, "Capacity cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(count), count, "The pool cannot be negative.");
             }
 
             _random = random ?? throw new ArgumentNullException(nameof(random));
-            _order = new int[capacity];
-            _count = capacity;
-            _position = capacity;
+            _order = new int[count];
+            _count = count;
+            _position = count;
         }
 
         /// <summary>Tracks currently in the pool.</summary>
         public int Count => _count;
-
-        public int Capacity => _order.Length;
-
-        /// <summary>
-        /// Changes how many tracks are in the pool (0..capacity). The next pick starts a fresh round, still never
-        /// repeating the track that played last.
-        /// </summary>
-        public void Resize(int count)
-        {
-            if (count < 0 || count > _order.Length)
-            {
-                throw new ArgumentOutOfRangeException(nameof(count), count, $"Pool size must be 0..{_order.Length}.");
-            }
-
-            _count = count;
-            _position = count;
-        }
 
         /// <summary>The next track index, or -1 for an empty pool.</summary>
         public int Next()
