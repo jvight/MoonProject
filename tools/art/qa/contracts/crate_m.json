@@ -1,0 +1,78 @@
+{
+  "model": "crate_m",
+  "pivot_tolerance": 0.01,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Brass",
+    "R1_CreamEnamel",
+    "R1_GoldFoil",
+    "R1_GreyMetal",
+    "R1_LampAmber",
+    "R1_OrangeStripe",
+    "R1_Rubber",
+    "R1_SagePatch",
+    "R1_Signage"
+  ],
+  "max_triangles": 3200,
+  "max_meshes": 3,
+  "max_draw_calls": 14,
+  "allow_rotation": [],
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "Crate_M": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Lid": {
+      "pivot": [
+        0.0,
+        -0.204,
+        0.266
+      ]
+    },
+    "Seal": {
+      "pivot": [
+        0.0,
+        -0.204,
+        0.266
+      ]
+    },
+    "CutPoint": {
+      "pivot": [
+        0.0,
+        0.204,
+        0.266
+      ]
+    },
+    "ItemSocket": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.095
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      0.6,
+      0.44,
+      0.38
+    ],
+    "tolerance": 0.02,
+    "min_size": [
+      0.58,
+      0.42,
+      0.36
+    ],
+    "max_size": [
+      0.62,
+      0.46,
+      0.4
+    ]
+  }
+}
