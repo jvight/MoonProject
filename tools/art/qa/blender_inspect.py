@@ -69,6 +69,25 @@ def topology(obj):
             "closed_shells": shells, "inverted_shells": inverted}
 
 
+def mesh_bounds(obj):
+    if not obj.data.vertices:
+        return None
+    mw = obj.matrix_world
+    verts = [mw @ v.co for v in obj.data.vertices]
+    bmin = [round(min(v[i] for v in verts), 4) for i in range(3)]
+    bmax = [round(max(v[i] for v in verts), 4) for i in range(3)]
+    return {"min": bmin, "max": bmax, "size": [round(bmax[i] - bmin[i], 4) for i in range(3)]}
+
+
+def union_bounds(bounds_list):
+    valid = [b for b in bounds_list if b is not None]
+    if not valid:
+        return None
+    bmin = [round(min(b["min"][i] for b in valid), 4) for i in range(3)]
+    bmax = [round(max(b["max"][i] for b in valid), 4) for i in range(3)]
+    return {"min": bmin, "max": bmax, "size": [round(bmax[i] - bmin[i], 4) for i in range(3)]}
+
+
 def node_facts(obj):
     euler = obj.matrix_world.to_euler()
     facts = {"name": obj.name, "type": obj.type, "parent": obj.parent.name if obj.parent else None,
@@ -82,6 +101,9 @@ def node_facts(obj):
         facts["slots"] = sorted({slot_name(s.material.name) for s in obj.material_slots if s.material})
         facts["empty_slots"] = sum(1 for s in obj.material_slots if s.material is None)
         facts["color_attributes"] = [a.name for a in data.color_attributes]
+        bounds = mesh_bounds(obj)
+        if bounds is not None:
+            facts["bounds"] = bounds
         facts.update(topology(obj))
     return facts
 
@@ -94,8 +116,12 @@ def main():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.fbx(filepath=source)
     nodes = [node_facts(obj) for obj in sorted(bpy.context.scene.objects, key=lambda o: o.name)]
+    bounds = union_bounds([n.get("bounds") for n in nodes if n["type"] == "MESH"])
+    payload = {"source": source, "nodes": nodes}
+    if bounds is not None:
+        payload["bounds"] = bounds
     with open(target, "w", encoding="utf-8") as handle:
-        json.dump({"source": source, "nodes": nodes}, handle, indent=1)
+        json.dump(payload, handle, indent=1)
     print(f"INSPECT_OK {target} {len(nodes)} nodes")
 
 

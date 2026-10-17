@@ -120,6 +120,25 @@ namespace MoonProject.Gameplay.Feel.Tests
             vfx.Dispose();
         }
 
+        [Test]
+        public void LeapAndLand_DoNotSpawnSixteenSphereGlowingDustRing()
+        {
+            FeelVfxTuning tuning = Tuning();
+            var events = new EventBus();
+            var anchors = new Anchors(Make("Emitter", new Vector3(0f, 1.2f, 0f)),
+                Make("Piece", new Vector3(0f, 1f, 1.5f)));
+            GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            _created.Add(ground);
+            using var vfx = new FeelVfx(Make("Host", Vector3.zero), tuning,
+                Visuals(tuning, ground.GetComponent<Renderer>().sharedMaterial), events, anchors);
+
+            events.Publish(new FeelBeat(FeelKind.Leap, FeelPhase.Impact, Vector3.zero, Vector3.up, 1f, 0f));
+            Assert.AreEqual(0, vfx.Debris.Dust, "Leap must not spawn the 16-sphere glowing white ring.");
+
+            events.Publish(new FeelBeat(FeelKind.Land, FeelPhase.Impact, Vector3.zero, Vector3.up, 1f, 0f));
+            Assert.AreEqual(0, vfx.Debris.Dust, "Land must not spawn the 16-sphere glowing white ring.");
+        }
+
         // A scan beam active and a dissolve ribbon streaming through every measured frame (see Tuning).
         private static void PublishScan(EventBus events)
         {

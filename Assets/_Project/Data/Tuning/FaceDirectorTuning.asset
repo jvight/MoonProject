@@ -44,7 +44,7 @@ MonoBehaviour:
   _nightSlowLookPeriodSeconds: 6.5
   _eyeLeadFactor: 0.35
   _lookDirectionFullScaleDegrees: 35
-  _rearVentBaseEmission: 0.85
+  _rearVentBaseEmission: 1.45
   _rearVentMinEmission: 0.08
   _rearVentHappyBoost: 1.25
   _rearVentWorriedPulseAmplitude: 0.18

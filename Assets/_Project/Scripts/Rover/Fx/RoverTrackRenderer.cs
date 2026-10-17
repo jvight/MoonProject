@@ -17,6 +17,7 @@ namespace MoonProject.Rover
         private Color32[] _colors;
         private Vector2[] _uvs;
         private int[] _indices;
+        private bool _hasGeometry;
 
         public TrackRibbon Ribbon => _ribbon;
 
@@ -54,16 +55,23 @@ namespace MoonProject.Rover
                 _tuning.TrackOpacity, lifetime * _tuning.TrackFadeStart, lifetime, _vertices, _colors, _uvs, _indices,
                 out int vertexCount, out int indexCount);
 
-            _mesh.Clear(true);
             if (indexCount == 0)
             {
+                if (_hasGeometry)
+                {
+                    _mesh.Clear(true);
+                    _hasGeometry = false;
+                }
+
                 return;
             }
 
+            _mesh.Clear(true);
             _mesh.SetVertices(_vertices, 0, vertexCount);
             _mesh.SetColors(_colors, 0, vertexCount);
             _mesh.SetUVs(0, _uvs, 0, vertexCount);
             _mesh.SetTriangles(_indices, 0, indexCount, 0, true);
+            _hasGeometry = true;
         }
 
         private void OnDestroy()

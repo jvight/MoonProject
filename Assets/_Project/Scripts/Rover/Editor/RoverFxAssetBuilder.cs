@@ -22,9 +22,9 @@ namespace MoonProject.Rover.Editor
         private const float TrackEdgeSoftness = 0.5f;
 
         /// <summary>Tracks start fading at this camera distance (m) and are gone by the far one.</summary>
-        private const float TrackFadeNear = 20f;
+        private const float TrackFadeNear = 120f;
 
-        private const float TrackFadeFar = 55f;
+        private const float TrackFadeFar = 260f;
 
         private const int DustTextureSize = 64;
 

@@ -65,7 +65,7 @@ namespace MoonProject.Rover
 
         [Tooltip("While driving, the head looks slightly down at the road (deg, negative = down).")]
         [Range(-30f, 30f)]
-        [SerializeField] private float _travelHeadPitch = -6f;
+        [SerializeField] private float _travelHeadPitch = -1.5f;
 
         [Tooltip("Spring frequency (Hz) of the head following the travel direction: a gentle, lagging look.")]
         [Range(0.05f, 4f)]
