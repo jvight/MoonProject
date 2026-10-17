@@ -208,7 +208,9 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(0f, NeckYaw, 5f,
                 "After a seal cut completes without Collect.Reward, 07 releases cut gaze and looks ahead again.");
 
-            Vector3 relicOnRight = _rover.Controller.Position + Vector3.right * 6f + Vector3.forward * 2f;
+            // The cut turned 07's body toward the seal, so the relic is placed on its right as it faces now.
+            Vector3 relicOnRight = _rover.Controller.Position
+                + Quaternion.Euler(0f, _rover.Controller.Heading, 0f) * (Vector3.right * 6f + Vector3.forward * 2f);
             events.Publish(new FeelBeat(FeelKind.Dig, FeelPhase.Anticipate, relicOnRight, Vector3.up, 0f, 0.5f));
             events.Publish(new FeelBeat(FeelKind.Dig, FeelPhase.Impact, relicOnRight, Vector3.up, 1f, 0f));
             events.Publish(new FeelBeat(FeelKind.Dig, FeelPhase.Follow, relicOnRight, Vector3.up, 0f, 0f));
