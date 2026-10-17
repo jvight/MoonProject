@@ -154,10 +154,7 @@ namespace MoonProject.UI
                 _view.Refresh();
             }
 
-            if (!_boot.IsRunning)
-            {
-                _view.FocusFirst();
-            }
+            _view.FocusFirst();
         }
 
         public void MarkDirty()
@@ -241,7 +238,10 @@ namespace MoonProject.UI
             if (completed)
             {
                 _events.Publish(new RoverChirpRequested(ChirpMood.Affirm, 1f));
-                _view.FocusFirst();
+                if (_view.FocusedHoldCell < 0 && _view.FocusedSocketIndex < 0 && _view.FocusedHomeCell < 0)
+                {
+                    _view.FocusFirst();
+                }
             }
         }
 
