@@ -7,10 +7,11 @@ namespace MoonProject.Audio
 {
     /// <summary>
     /// The three 60 s seamless lunar ambience beds (<c>ambience_earthlit_night</c>, <c>ambience_sunlit_day</c>,
-    /// <c>ambience_eclipse</c>) on the Ambience bus and the three sky transition one-shots (<c>sky_diamond_ring</c>,
-    /// <c>sky_dawn_sweep</c>, <c>sky_nightfall_settle</c>) on <see cref="SkyPhaseChanged"/>. Beds follow the sky phase
-    /// with slow eased crossfades (4-8 s) and scale with the <see cref="Soundscape"/>. Initialised by
-    /// <see cref="AudioDirector"/>.
+    /// <c>ambience_eclipse</c>) on the Ambience bus and the three sky transition one-shots: the eclipse's diamond-ring
+    /// swell when the Sun breaks out behind Earth (<see cref="OpeningMilestoneReached"/> FirstCharge, opening v2 B6;
+    /// never on a restore), the dawn sweep on an ordinary sunrise and the nightfall settle on
+    /// <see cref="SkyPhaseChanged"/>. Beds follow the sky phase with slow eased crossfades (4-8 s) and scale with the
+    /// <see cref="Soundscape"/>. Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class AmbienceBed : MonoBehaviour
@@ -28,6 +29,7 @@ namespace MoonProject.Audio
         private CueHandle _dawnSweep;
         private CueHandle _nightfallSettle;
         private IDisposable _skySubscription;
+        private IDisposable _milestoneSubscription;
         private SkyPhase _phase = SkyPhase.Earthlit;
         private float _fadeTime;
         private float _crossfadeTime = 6f;
@@ -80,6 +82,7 @@ namespace MoonProject.Audio
             }
 
             _skySubscription = context.Events.Subscribe<SkyPhaseChanged>(OnSkyPhaseChanged);
+            _milestoneSubscription = context.Events.Subscribe<OpeningMilestoneReached>(OnMilestoneReached);
         }
 
         private void Update()
@@ -123,11 +126,8 @@ namespace MoonProject.Audio
                     _targetNight = 0f;
                     _targetDay = 1f;
                     _targetEclipse = 0f;
-                    if (previous == SkyPhase.Eclipse || changed.EclipseFactor > 0f)
-                    {
-                        _director.Play2D(_diamondRing);
-                    }
-                    else
+                    // The eclipse's end has its own swell (the FirstCharge milestone): only an ordinary dawn sweeps.
+                    if (previous != SkyPhase.Eclipse && changed.EclipseFactor <= 0f)
                     {
                         _director.Play2D(_dawnSweep);
                     }
@@ -137,17 +137,21 @@ namespace MoonProject.Audio
                     _targetNight = 0f;
                     _targetDay = 1f;
                     _targetEclipse = 0f;
-                    if (previous == SkyPhase.Eclipse)
-                    {
-                        _director.Play2D(_diamondRing);
-                    }
-
                     break;
                 case SkyPhase.Sunset:
                     _targetNight = 0f;
                     _targetDay = 1f;
                     _targetEclipse = 0f;
                     break;
+            }
+        }
+
+        /// <summary>The first charge ends the eclipse: the diamond ring swells as the Sun breaks out.</summary>
+        private void OnMilestoneReached(OpeningMilestoneReached reached)
+        {
+            if (reached.Milestone == OpeningMilestone.FirstCharge && !reached.Restored)
+            {
+                _director.Play2D(_diamondRing);
             }
         }
 
@@ -168,6 +172,8 @@ namespace MoonProject.Audio
         {
             _skySubscription?.Dispose();
             _skySubscription = null;
+            _milestoneSubscription?.Dispose();
+            _milestoneSubscription = null;
         }
     }
 }

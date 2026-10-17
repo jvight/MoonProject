@@ -71,31 +71,54 @@ namespace MoonProject.Audio.Tests
         }
 
         [Test]
-        public void RelicAnswerTone_IsFullAndOpenNear_SofterAndDarkerFar()
+        public void NightLights_LightNearestToTheBaseFirst_OnePerInterval_AfterTheDelay()
         {
-            var tuning = ScriptableObject.CreateInstance<GameplayAudioTuning>();
-            try
-            {
-                RelicAnswerTone near = RelicAnswerTone.ForDistance(0f, tuning);
-                RelicAnswerTone far = RelicAnswerTone.ForDistance(1000f, tuning);
-                Assert.AreEqual(tuning.AnswerNearVolume, near.Volume, 1e-5f);
-                Assert.AreEqual(tuning.AnswerNearCutoff, near.CutoffHz, 1f);
-                Assert.AreEqual(tuning.AnswerFarVolume, far.Volume, 1e-5f);
-                Assert.AreEqual(tuning.AnswerFarCutoff, far.CutoffHz, 1f);
+            var lights = new NightLightsSequence();
+            lights.Add(1, new Vector3(30f, 0f, 0f));
+            lights.Add(2, new Vector3(5f, 0f, 0f));
+            lights.Add(3, new Vector3(0f, 0f, -12f));
+            lights.Begin(Vector3.zero, 2f);
 
-                RelicAnswerTone previous = near;
-                for (float d = 0f; d <= 120f; d += 5f)
-                {
-                    RelicAnswerTone tone = RelicAnswerTone.ForDistance(d, tuning);
-                    Assert.LessOrEqual(tone.Volume, previous.Volume + 1e-6f);
-                    Assert.LessOrEqual(tone.CutoffHz, previous.CutoffHz + 1e-3f);
-                    previous = tone;
-                }
-            }
-            finally
-            {
-                Object.DestroyImmediate(tuning);
-            }
+            Assert.IsFalse(lights.Step(1.9f, 0.5f, out _, out _), "the night settles first");
+            Assert.IsTrue(lights.Step(0.2f, 0.5f, out Vector3 first, out int firstOrder));
+            Assert.AreEqual(new Vector3(5f, 0f, 0f), first);
+            Assert.AreEqual(0, firstOrder);
+            Assert.IsFalse(lights.Step(0.4f, 0.5f, out _, out _));
+            Assert.IsTrue(lights.Step(0.1f, 0.5f, out Vector3 second, out int secondOrder));
+            Assert.AreEqual(new Vector3(0f, 0f, -12f), second);
+            Assert.AreEqual(1, secondOrder);
+            Assert.IsTrue(lights.Step(0.5f, 0.5f, out Vector3 third, out _));
+            Assert.AreEqual(new Vector3(30f, 0f, 0f), third);
+            Assert.IsFalse(lights.Running);
+            Assert.IsFalse(lights.Step(5f, 0.5f, out _, out _));
+        }
+
+        [Test]
+        public void NightLights_ARemovedStructureNeverLights_AndAReAddedOneMoves()
+        {
+            var lights = new NightLightsSequence();
+            lights.Add(1, new Vector3(4f, 0f, 0f));
+            lights.Add(2, new Vector3(8f, 0f, 0f));
+            lights.Add(2, new Vector3(2f, 0f, 0f));
+            lights.Remove(1);
+            Assert.AreEqual(1, lights.Count);
+            lights.Begin(Vector3.zero, 0f);
+            Assert.IsTrue(lights.Step(0f, 1f, out Vector3 only, out _));
+            Assert.AreEqual(new Vector3(2f, 0f, 0f), only);
+            Assert.IsFalse(lights.Running);
+        }
+
+        [Test]
+        public void NightLights_ASunriseStopsTheSequence()
+        {
+            var lights = new NightLightsSequence();
+            lights.Add(1, Vector3.one);
+            lights.Add(2, Vector3.one * 2f);
+            lights.Begin(Vector3.zero, 0f);
+            Assert.IsTrue(lights.Step(0f, 1f, out _, out _));
+            lights.Stop();
+            Assert.IsFalse(lights.Running);
+            Assert.IsFalse(lights.Step(2f, 1f, out _, out _));
         }
     }
 }

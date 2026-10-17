@@ -18,8 +18,7 @@ namespace MoonProject.Audio.PlayModeTests
     /// <summary>
     /// The real Audio domain (library and tuning assets from Assets/_Project/Data/Audio, built by the Audio builders)
     /// booted through GameBootstrap behind a fake rover, wired the way AudioSceneContributor wires Main.unity.
-    /// The radio gets a test playlist and two test tapes of generated tones (short ones change track within
-    /// seconds).
+    /// The radio gets a test playlist of generated tones (short ones change track within seconds).
     /// </summary>
     public sealed class AudioTestRig : IDisposable
     {
@@ -29,47 +28,22 @@ namespace MoonProject.Audio.PlayModeTests
         /// <summary>Long tracks: no track change (and its crossfade static) during a test.</summary>
         public const int LongTrackSeconds = 30;
 
-        /// <summary>Cassette ids of the two test tapes (a third exists in the program but has no track).</summary>
-        public const string TapeA = "after_dark_1";
-
-        public const string TapeB = "slow_orbit";
-
-        /// <summary>The one voiced ticker line in the rig's voice library.</summary>
-        public const string VoiceKey = "test.voice.line";
-
-        /// <summary>Length of the rig's voiced recording.</summary>
-        public const int VoiceSeconds = 2;
-
         private const string DataFolder = "Assets/_Project/Data/Audio/";
         private const int SampleRate = 48000;
 
         private readonly List<Object> _created = new List<Object>();
 
-        /// <param name="stationUnlocked">True (most tests): Bell's dial is open, so the station plays as soon as
-        /// 07 wakes. False: a fresh game's radio, whose music is still to be earned (M3-24).</param>
-        /// <param name="deckFitted">True: 07 boots with its tape deck on (a loaded game).</param>
-        public AudioTestRig(int trackSeconds = LongTrackSeconds, bool stationUnlocked = true, bool deckFitted = false)
+        public AudioTestRig(int trackSeconds = LongTrackSeconds)
         {
             InputActionAsset controls = Track(BootstrapHarness.LoadControlsCopy());
             Track(new GameObject("Listener", typeof(AudioListener)));
             Rover = Track(new GameObject("FakeRover")).AddComponent<FakeRoverSystem>();
-            Rover.Program.DialUnlocked = stationUnlocked;
-            if (deckFitted)
-            {
-                Rover.Equipment.Fit(RoverSocket.Deck, RoverKitPiece.TapeDeck);
-            }
 
             var playlist = Track(ScriptableObject.CreateInstance<RadioPlaylist>());
             playlist.Populate(new[]
             {
                 new RadioTrack("t1", "Tone One", Track(Tone("t1", 293.66f, trackSeconds)), 76f),
                 new RadioTrack("t2", "Tone Two", Track(Tone("t2", 440f, trackSeconds)), 80f),
-            });
-            var tapes = Track(ScriptableObject.CreateInstance<RadioTapeLibrary>());
-            tapes.Populate(new[]
-            {
-                new RadioTrack(TapeA, "Tape A", Track(Tone(TapeA, 369.99f, trackSeconds)), 84f, TapeA),
-                new RadioTrack(TapeB, "Tape B", Track(Tone(TapeB, 329.63f, trackSeconds)), 64f, TapeB),
             });
 
             GameObject audioRoot = Track(new GameObject("[Audio]"));
@@ -78,53 +52,34 @@ namespace MoonProject.Audio.PlayModeTests
             RoverAudio = Child(audioRoot, "RoverAudio").AddComponent<RoverAudio>();
             Gameplay = Child(audioRoot, "GameplayAudio").AddComponent<GameplayAudio>();
             Ui = Child(audioRoot, "UiAudio").AddComponent<UiAudio>();
-            Friends = Child(audioRoot, "FriendAudio").AddComponent<FriendAudio>();
             Jump = Child(audioRoot, "JumpAudio").AddComponent<JumpAudio>();
             Radio = Child(audioRoot, "RadioStation").AddComponent<RadioStation>();
             TitleMusicLibrary = Track(Object.Instantiate(Load<TitleMusicLibrary>("TitleMusicLibrary.asset")));
             TitleMusic = Child(audioRoot, "TitleMusic").AddComponent<TitleMusic>();
             TitleMusic.Wire(TitleMusicLibrary);
-            Voice = Child(audioRoot, "RadioVoice").AddComponent<RadioVoice>();
-            var voices = Track(ScriptableObject.CreateInstance<VoiceLibrary>());
-            voices.Populate(new[]
-            {
-                new VoiceLine(VoiceKey, "ro", Track(Tone(VoiceKey, 220f, VoiceSeconds))),
-            });
-            Voice.Wire(Load<RadioTuning>("RadioTuning.asset"), voices);
             FeelTuning = Track(ScriptableObject.CreateInstance<FeelAudioTuning>());
             Feel = Child(audioRoot, "FeelAudio").AddComponent<FeelAudio>();
             Feel.Wire(FeelTuning);
             Chirps = Child(audioRoot, "RoverChirpAudio").AddComponent<RoverChirpAudio>();
             Chirps.Wire(FeelTuning, Load<ChirpBank>("ChirpBank.asset"));
             Ambience = Child(audioRoot, "AmbienceBed").AddComponent<AmbienceBed>();
-            Canyon = Child(audioRoot, "CanyonAmbience").AddComponent<CanyonAmbience>();
-            Canyon.Wire(Load<CanyonAudioTuning>("CanyonAudioTuning.asset"));
             Soundscape = Child(audioRoot, "Soundscape").AddComponent<Soundscape>();
             SmallSounds = Child(audioRoot, "RoverSmallSounds").AddComponent<RoverSmallSounds>();
             var soundscapeTuning = Load<SoundscapeTuning>("SoundscapeTuning.asset");
             Soundscape.Wire(soundscapeTuning);
             SmallSounds.Wire(soundscapeTuning);
-            Relays = Child(audioRoot, "RelayAudio").AddComponent<RelayAudio>();
-            Relays.Wire(Load<RelayAudioTuning>("RelayAudioTuning.asset"));
             Salvage = Child(audioRoot, "SalvageAudio").AddComponent<SalvageAudio>();
             Salvage.Wire(Load<SalvageAudioTuning>("SalvageAudioTuning.asset"));
-            Stations = Child(audioRoot, "StationAudio").AddComponent<StationAudio>();
-            Stations.Wire(Load<StationAudioTuning>("StationAudioTuning.asset"));
-            Lab = Child(audioRoot, "LabAudio").AddComponent<LabAudio>();
-            Lab.Wire(Load<StationAudioTuning>("StationAudioTuning.asset"));
             Battery = Child(audioRoot, "BatteryAudio").AddComponent<BatteryAudio>();
             RoverAudio.Wire(Load<RoverAudioTuning>("RoverAudioTuning.asset"));
             Gameplay.Wire(Load<GameplayAudioTuning>("GameplayAudioTuning.asset"));
             Ui.Wire(Load<UiAudioTuning>("UiAudioTuning.asset"));
-            Friends.Wire(Load<FriendAudioTuning>("FriendAudioTuning.asset"));
             Jump.Wire(Load<JumpAudioTuning>("JumpAudioTuning.asset"));
-            Radio.Wire(Load<RadioTuning>("RadioTuning.asset"), playlist, tapes);
+            Radio.Wire(Load<RadioTuning>("RadioTuning.asset"), playlist);
             Director.Wire(Load<AudioLibrary>("AudioLibrary.asset"), Load<AudioMixTuning>("AudioMixTuning.asset"),
-                RoverAudio, Jump, Gameplay, Friends, Ui, Radio, Ambience, Canyon, Soundscape, SmallSounds, Relays,
-                Salvage, Stations, Lab);
+                RoverAudio, Jump, Gameplay, Ui, Radio, Ambience, Soundscape, SmallSounds, Salvage);
             Director.WireTitleMusic(TitleMusic);
             Director.WireBattery(Battery);
-            Director.WireVoice(Voice);
             Director.WireFeel(Feel, Chirps);
             audioRoot.SetActive(true);
 
@@ -141,8 +96,6 @@ namespace MoonProject.Audio.PlayModeTests
 
         public UiAudio Ui { get; }
 
-        public FriendAudio Friends { get; }
-
         public JumpAudio Jump { get; }
 
         public BatteryAudio Battery { get; }
@@ -153,8 +106,6 @@ namespace MoonProject.Audio.PlayModeTests
 
         public TitleMusicLibrary TitleMusicLibrary { get; }
 
-        public RadioVoice Voice { get; }
-
         public FeelAudioTuning FeelTuning { get; }
 
         public FeelAudio Feel { get; }
@@ -163,34 +114,20 @@ namespace MoonProject.Audio.PlayModeTests
 
         public AmbienceBed Ambience { get; }
 
-        public CanyonAmbience Canyon { get; }
-
         public Soundscape Soundscape { get; }
 
         public RoverSmallSounds SmallSounds { get; }
 
-        public RelayAudio Relays { get; }
-
         public SalvageAudio Salvage { get; }
-
-        public StationAudio Stations { get; }
-
-        public LabAudio Lab { get; }
-
-        public FakeRoverBay Bay => Rover.Bay;
-
-        public FakeStationReach Reach => Rover.Reach;
 
         public GameBootstrap Bootstrap { get; }
 
         public EventBus Events => Bootstrap.Context.Events;
 
-        public FakeRadioProgram Program => Rover.Program;
-
-        /// <summary>Publishes <see cref="RadioProgramChanged"/> after the test changed <see cref="Program"/>.</summary>
-        public void ProgramChanged()
+        /// <summary>Publishes <see cref="OpeningMilestoneReached"/> (live, or a save's restore).</summary>
+        public void Milestone(OpeningMilestone milestone, bool restored = false)
         {
-            Events.Publish(new RadioProgramChanged());
+            Events.Publish(new OpeningMilestoneReached(milestone, restored));
         }
 
         /// <summary>Publishes <see cref="RoverAwoke"/> (07 starts waking: the radio and motor come on).</summary>
@@ -304,6 +241,12 @@ namespace MoonProject.Audio.PlayModeTests
             var child = new GameObject(name);
             child.transform.SetParent(parent.transform, false);
             return child;
+        }
+
+        /// <summary>A builder-made tuning asset from Assets/_Project/Data/Audio (read only).</summary>
+        public static T LoadTuning<T>(string file) where T : ScriptableObject
+        {
+            return Load<T>(file);
         }
 
         private static T Load<T>(string file) where T : Object

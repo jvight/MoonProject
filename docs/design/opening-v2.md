@@ -64,7 +64,7 @@ rover):
 | **B6** | 12:00–14:00 | **Charge, and the Sun returns** | park on the pad | **charging** (the dock-lock walls, cells filling with notes) | The pad locks 07 in and the cells fill. **The eclipse ends:** the Sun's edge breaks out behind Earth (a diamond-ring flash), and low golden light floods the basin. Then the CRT reads `LANDER RESERVE · 0%`: the lander's old cells are spent. | the battery is full and the lander's reserve is empty |
 | **B7** | 14:00–22:00 | **The Lumen ruins** | drive ~85 m to the ruins; scan the fallen solar array's 3 fragments; scan the habitat's airlock panel (story); cut the workshop's lockers for Optics | scan beam, cutter | A station of human scale in the low Sun: habitat modules, Kenji's workshop, a fallen solar array, a radio tower ruin. **The airlock panel** reads `HABITAT SEAL · LOCKED · 28 OCT 1988 / SUIT 01-04 · OFFLINE · 29 OCT 1988 · 04:12`. No bodies, ever. | the solar-array blueprint is learned |
 | **B8** | 22:00–28:00 | **Build solar, power on** | build the solar array within 14 m of the pad (its connection radius) | build mode | The array unfolds and turns to the Sun. A cable lights between it and the pad. **Power on:** the pad's lamps steady, the CRT's protocol line reads `POWER · ON`, the first lamp of Power → Link → Dish → Answer lights on 07's face, and the radio's hiss clears into the first music (low, warm). | the solar array is built and powering the pad |
-| **B9** | 28:00–36:00 | **Night is coming** | the Sun nears the west rim; scan the habitat's power-module fragments (2); cut for Wiring; build a battery bank next to the array | scan beam, cutter, build mode | Shadows lengthen visibly. The CRT shows the Sun's remaining time as an arc (the only clock, and it is the world's). The battery bank's charge lamps fill as the array feeds it. | the battery bank is built and holds charge |
+| **B9** | 28:00–36:00 | **Night is coming** | the Sun nears the rim (south-south-east on day 1's path); scan the habitat's power-module fragments (2); cut for Wiring; build a battery bank next to the array | scan beam, cutter, build mode | Shadows lengthen visibly. The CRT shows the Sun's remaining time as an arc (the only clock, and it is the world's). The battery bank's charge lamps fill as the array feeds it. | the battery bank is built and holds charge |
 | **B10** | 36:00–40:00 | **The first nightfall** (awe beat, north-star §4a) | watch; or keep working | — | The Sun drops behind the rim. Shadows race; the array stows; **the player's own base lights come on in sequence**; the stars and the Milky Way bloom; Earth's night side stays dark (story v4), its rim glowing. The radio shifts to the night set. No text. | the Sun has set |
 | **B11** | 40:00–45:00 | **Toward Link** | scan the radio tower ruin's 2 fragments (antenna mast); cut for Optics; build the antenna mast at the base | scan beam, cutter, build mode | Under earthshine (lavender night), the tower ruin's dish frame. The built mast's dish turns, listening. **A faint signal answers from beyond the west rim:** a pillar of light rises there, over a dead Lumen relay mast's silhouette on the rim shoulder. The CRT: `LINK · 0/1 · SIGNAL WEST`. | the antenna mast is built and the west signal is heard: **the opening ends** |
 
@@ -300,7 +300,7 @@ content.
    start; World's sky clock reacts:
    - `FirstCharge` (B6): the eclipse ends (the diamond-ring break-out). Expected near 12 min, but whenever it happens.
    - Until `PowerOn` (B8) the first day's Sun **holds at golden hour**.
-   - After `PowerOn` the Sun sinks to "last light", low above the west rim, and **holds there** until `NightReady`.
+   - After `PowerOn` the Sun sinks to "last light", low above the rim (south-south-east on the current sun path), and **holds there** until `NightReady`.
    - `NightReady` (B9, a built battery bank holds charge): the first sunset runs (about 2–3 min) into B10.
    - After the first night the normal day cycle runs. (The real lunar Sun moves about 0.5° an hour, so a held Sun
      reads as natural.)
@@ -324,6 +324,56 @@ content.
    ChargingPad scale fix). The rest of §6's Argon list follows in a second job: the dead charging post and cable, the
    lander's port and beacon, the apron decal, the airlock readout surface, the unlit mast, the Peak beacon.
    - Until those land, place the closest existing R1 asset and list the swap in your report.
+
+## 10. 07's start kit and energy (owner-approved 2026-10-18 ~03:10)
+The owner: 07 must not start with too many functions; what works, what is broken and what comes later must be clear.
+Identity: `docs/design/07-identity.md` (SSR-5 service rover).
+
+**The boot readout** (B1, on the CRT; it is the one guidance element while it shows):
+```
+UNIT 07 · SSR-5 · CONTINUE · 13 148 DAYS        ĐƠN VỊ 07 · SSR-5 · TIẾP TỤC · 13 148 NGÀY
+WHEELS ········ OK (1 MISMATCHED)               BÁNH XE ········ OK (1 BÁNH KHÁC BỘ)
+LAMPS ········· OK                              ĐÈN ············ OK
+LENS · SCAN ··· OK                              ỐNG KÍNH · QUÉT  OK
+ASSEMBLY ······ OK · 0 BLUEPRINTS               LẮP DỰNG ······· OK · 0 BẢN VẼ
+CUTTER ········ FAULT · NO IGNITER              MỎ CẮT ········· LỖI · MẤT BỘ ĐÁNH LỬA
+SOLAR WING ···· JAMMED                          CÁNH PIN ······· KẸT
+ANTENNA ······· RECEIVE ONLY                    ĂNG-TEN ········ CHỈ NHẬN
+SOCKETS 1-2 ··· EMPTY                           Ổ LẮP 1–2 ······ TRỐNG
+BATTERY ······· 50%                             PIN ············ 50%
+```
+
+**Works from the start, three verbs only:**
+- drive (with lamps);
+- scan;
+- build, with 0 blueprints known.
+
+**Broken, each one a goal:**
+
+| Part | Fault | Fixed |
+|---|---|---|
+| Cutter | the igniter is missing | **B6.** A spare igniter lies in the lander's **open** cargo crate (B4). Docked on the newly built pad, the player fits it into the cutter socket on the CRT face (the first use of the socket screen). The cutter's pilot light comes on, the readout line turns OK, and the A "done" tone plays. From then on the cutter works (B7 ruins lockers and crates). |
+| Solar wing | jammed | after the opening (the first visible upgrade). **While it is jammed there is no stand-still trickle:** that is why the battery is at 50%, and only chargers refill it. |
+| Antenna | receive only | the Link → Dish → Answer spine |
+| Sockets 1-2 | empty | later kits (scoop, winch, ...) |
+
+**B4 changes:** "Cut the crates" becomes "Collect the parts from the lander's open crate" (no cutting before B6).
+- The hold starts with Metal 2 and Wiring 1.
+- The open crate adds Metal 2, Wiring 1 and the igniter, which together cover the pad (Metal 4, Wiring 2).
+- New objective lines:
+  - B4: "Collect the parts from the lander's open crate." / "Lấy phụ tùng trong thùng hàng mở của tàu đổ bộ."
+  - B6, after charging starts, with the igniter in the hold: "Fit the igniter to the cutter." / "Lắp bộ đánh lửa vào mỏ cắt."
+
+**Energy: every function costs battery** (owner, 2026-10-18):
+- driving: per metre (as today);
+- scanning: per second of active scan;
+- building: welding per structure, scaled by its build time;
+- cutting: per second of beam (as today);
+- lamps: free (no micromanagement).
+
+The balance target: 50% at the wake; the drive to the lander, 2 scans, the collection and the pad weld leave about
+25-30%, so the Low warning (B4-B5) makes the first charge (B6) a relief, not a chore. Later trips to the ruins make
+solar and the battery bank a real need. The build menu shows each structure's energy cost next to its materials.
 
 ## Tóm tắt (Tiếng Việt)
 - **Móc câu:** 07 mở mắt giữa nhật thực. Trái Đất đen, chỉ còn viền đồng mảnh, không một ánh đèn thành phố. Gần đó có

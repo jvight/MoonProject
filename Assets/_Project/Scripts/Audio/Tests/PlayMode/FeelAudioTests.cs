@@ -105,33 +105,8 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual("dock_walls_drop", LastClip);
         }
 
-        [UnityTest]
-        public IEnumerator TheTower_HumsRingsUpThoomsAndTheRadioComesBackIn()
-        {
-            _rig.Wake(true);
-            yield return new WaitForSecondsRealtime(3f);
-            float before = _rig.LoudestDeck().volume;
-            Beat(FeelKind.Build, FeelPhase.Anticipate, 0f, 1.2f);
-            Assert.AreEqual("tower_hum_rise", LastClip);
-            for (int ring = 1; ring <= 4; ring++)
-            {
-                Beat(FeelKind.Build, FeelPhase.Act, ring * 0.25f);
-                Assert.AreEqual($"tower_ring_0{ring}", LastClip, "one pentatonic step per lamp ring");
-            }
-
-            Beat(FeelKind.Build, FeelPhase.Impact);
-            Assert.AreEqual("tower_thoom", LastClip);
-            yield return new WaitForSecondsRealtime(1.5f);
-            Assert.Less(_rig.LoudestDeck().volume, before * 0.5f, "the radio steps back for the tower");
-
-            Beat(FeelKind.Build, FeelPhase.Follow, 0f);
-            Assert.IsTrue(AudioTestRig.FindChildSource(_rig.Radio.transform, "TuningSwish").isPlaying, "a crackle");
-            yield return new WaitForSecondsRealtime(5f);
-            Assert.Greater(_rig.LoudestDeck().volume, before * 0.8f, "and the music fades back in");
-        }
-
         [Test]
-        public void APart_LiftsThenClunks_AndTheBundlesRewardStaysTheMelodys()
+        public void APart_LiftsThenClunks_AndItsRewardStaysTheMelodys()
         {
             Beat(FeelKind.Collect, FeelPhase.Act);
             Assert.AreEqual("pickup_lift", LastClip);
@@ -139,7 +114,7 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual("pickup_clunk", LastClip);
             int plays = _rig.Director.PlayCount;
             Beat(FeelKind.Collect, FeelPhase.Reward);
-            Assert.AreEqual(plays, _rig.Director.PlayCount, "FeelAudio adds nothing to the bundle's reward");
+            Assert.AreEqual(plays, _rig.Director.PlayCount, "FeelAudio adds nothing to the pickup's reward");
         }
 
         [Test]
@@ -153,27 +128,43 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [Test]
-        public void CargoAndStorage_SoundTheirMoments()
+        public void AFullHold_Toks_AndACrewCrate_Latches()
         {
             _rig.Events.Publish(new CargoOverflowed(SalvageMaterial.Metal, 2, Point));
             Assert.AreEqual("cargo_tok", LastClip);
-            Beat(FeelKind.Cargo, FeelPhase.Act, 0f);
-            Assert.AreEqual("count_tick_01", LastClip, "the first crate on the belt");
-            Beat(FeelKind.Cargo, FeelPhase.Act, 1f);
-            Assert.AreEqual("count_tick_06", LastClip, "the last one, highest");
-            Beat(FeelKind.Cargo, FeelPhase.Reward, 1f);
-            Assert.AreEqual("node_light_01", LastClip, "the hold empty: a bell on D");
-            int plays = _rig.Director.PlayCount;
-            Beat(FeelKind.Cargo, FeelPhase.Impact, 1f);
-            Assert.AreEqual(plays, _rig.Director.PlayCount, "a full hold's Impact is CargoOverflowed's tok");
-            Beat(FeelKind.Build, FeelPhase.Impact);
-            Assert.AreEqual("shelf_chord", LastClip, "a lone Build Impact is a shelf built");
-            Beat(FeelKind.Build, FeelPhase.Act, 0.5f);
-            Assert.AreEqual("shelf_chord", LastClip, "no tower ring outside the tower's chain");
             _rig.Events.Publish(new CrewCrateOpened("site", "ro", SalvageMaterial.Metal, 3, Point));
             Assert.AreEqual("crate_latch", LastClip);
-            _rig.Events.Publish(new BundleFetched(SalvageMaterial.Metal, 2));
-            Assert.AreEqual("tilly_fetch", LastClip);
+        }
+
+        [UnityTest]
+        public IEnumerator ChargingOnThePad_Hums_AndAFullBatteryRingsItsChord()
+        {
+            _rig.Events.Publish(new BatteryChanged(1, 4, true, false));
+            _rig.Events.Publish(new ChargingChanged(true, ChargerKind.Dock, Point));
+            yield return new WaitForSeconds(_rig.FeelTuning.ChargeFadeIn + 0.2f);
+            AudioSource hum = AudioTestRig.FindChildSource(_rig.Feel.transform, "ChargerHum");
+            Assert.IsTrue(hum.isPlaying, "the charger's hum breathes while the cells fill");
+            Assert.Greater(_rig.Feel.ChargerHum, 0.9f);
+
+            _rig.Events.Publish(new BatteryChanged(4, 4, true, false));
+            _rig.Events.Publish(new ChargingChanged(false, ChargerKind.Dock, Point));
+            yield return null;
+            Assert.AreEqual("dock_full", LastClip, "the last cell rings the full chord");
+            yield return new WaitForSeconds(_rig.FeelTuning.ChargeFadeOut + 0.2f);
+            Assert.IsFalse(hum.isPlaying, "and the hum settles away");
+        }
+
+        [UnityTest]
+        public IEnumerator DrivingOffEarly_LetsTheHumGo_WithoutTheChord()
+        {
+            _rig.Events.Publish(new BatteryChanged(1, 4, true, false));
+            _rig.Events.Publish(new ChargingChanged(true, ChargerKind.Dock, Point));
+            yield return new WaitForSeconds(0.5f);
+            int plays = _rig.Director.PlayCount;
+            _rig.Events.Publish(new ChargingChanged(false, ChargerKind.Dock, Point));
+            yield return new WaitForSeconds(_rig.FeelTuning.ChargeFadeOut + 0.2f);
+            Assert.AreEqual(plays, _rig.Director.PlayCount, "no chord for a half charge");
+            Assert.AreEqual(0f, _rig.Feel.ChargerHum, 1e-4f);
         }
 
         [Test]
@@ -218,17 +209,6 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual(plays, _rig.Director.PlayCount, "07's Proud chirp leads");
             yield return new WaitForSeconds(_rig.FeelTuning.SheetCompleteDelay);
             Assert.AreEqual("sheet_complete", LastClip, "then the sheet answers");
-        }
-
-        [Test]
-        public void TheNetworkPulse_StepsUpPerHop_AndResolvesAtHome()
-        {
-            _rig.Events.Publish(new NetworkPulseReached("relay.2", Point, 0, 3));
-            Assert.AreEqual("pulse_note_01", LastClip, "the new mast first, on D");
-            _rig.Events.Publish(new NetworkPulseReached("relay.1", Point, 1, 3));
-            Assert.AreEqual("pulse_note_02", LastClip, "a step up the next hop");
-            _rig.Events.Publish(new NetworkPulseReached("home", Point, 3, 3));
-            Assert.AreEqual("pulse_home", LastClip, "home answers with a warm resolve");
         }
 
         [Test]
@@ -278,19 +258,6 @@ namespace MoonProject.Audio.PlayModeTests
             StringAssert.StartsWith("count_tick", LastClip);
         }
 
-        [Test]
-        public void EachWindowStep_ClicksOnce()
-        {
-            int plays = _rig.Director.PlayCount;
-            for (int step = 1; step <= 4; step++)
-            {
-                _rig.Events.Publish(new HomeWindowLit(step, 4));
-            }
-
-            Assert.AreEqual(plays + 4, _rig.Director.PlayCount);
-            Assert.AreEqual("window_click", LastClip);
-        }
-
         [UnityTest]
         public IEnumerator AChirp_PublishesEachSyllable_InOrder()
         {
@@ -313,20 +280,5 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.IsFalse(_rig.Chirps.IsSpeaking);
         }
 
-        [UnityTest]
-        public IEnumerator AChirp_WaitsForAVoiceLine()
-        {
-            _rig.Events.Publish(new TickerLineShown(AudioTestRig.VoiceKey));
-            int heard = 0;
-            using (_rig.Events.Subscribe<RoverChirpSyllable>(s => heard++))
-            {
-                _rig.Events.Publish(new RoverChirpRequested(ChirpMood.Affirm, 0f));
-                yield return new WaitForSecondsRealtime(0.5f);
-                Assert.AreEqual(0, heard, "never over a voice");
-                yield return new WaitForSecondsRealtime(AudioTestRig.VoiceSeconds + 0.5f);
-            }
-
-            Assert.AreEqual(2, heard, "it speaks once the voice is done");
-        }
     }
 }

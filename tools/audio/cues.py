@@ -7,17 +7,16 @@ material is in D major pentatonic (D E F# A B). Loops are periodic by constructi
 pink/brown colouring of white noise - run through ``synth.loop.periodic``.
 """
 import math
-import re
 from dataclasses import dataclass
-from pathlib import Path
 
 import numpy as np
 from synth import effects, envelope, filters, instruments, noise, osc
 from synth.core import SAMPLE_RATE, loop_freq, note_freq, pan, pentatonic, place, samples, to_mono
-from synth.fm import operator, two_op
+from synth.fm import two_op
 from synth.loop import periodic
 from synth.pluck import karplus_strong
 
+import base_cues as base
 import feel_cues as feel
 
 
@@ -226,51 +225,7 @@ def radio_tune(_variant, gen):
     return np.stack(sides, axis=1)
 
 
-# --------------------------------------------------------------------------------------------------- sonar & relics
-
-def sonar_ping(_variant, gen):
-    """Kalimba D5 with a small, soft room."""
-    dry = instruments.kalimba(note_freq("D5"), 1.9, gen, decay=1.5)
-    return _mono_reverb(dry, room=0.45, damping=0.55, wet=0.22, dry=1.0)
-
-
-RELIC_CONTENT = Path(__file__).resolve().parents[2] / "Assets" / "_Project" / "Data" / "Content" / "Relics"
-RELIC_LADDER_NOTES = 10
-_RELIC_FIELD = re.compile(r"^  _(id|answerNote): *(.*?)\s*$", re.MULTILINE)
-
-
-def read_relic_notes(folder: Path = RELIC_CONTENT) -> tuple:
-    """``((relic_id, ladder_index), ...)`` sorted by id, read from Gameplay's relic content assets
-    (``Relic_<id>.asset``: ``_id`` and ``_answerNote``, an index into the D major pentatonic ladder from D5).
-    Gameplay owns the notes; re-rendering after a content change keeps every relic singing its own note."""
-    notes = []
-    for asset in sorted(folder.glob("Relic_*.asset")):
-        fields = dict(_RELIC_FIELD.findall(asset.read_text(encoding="utf-8")))
-        if "id" not in fields or "answerNote" not in fields:
-            raise ValueError(f"{asset}: missing _id or _answerNote (RelicDefinition layout changed?)")
-        index = int(fields["answerNote"])
-        if not 0 <= index < RELIC_LADDER_NOTES:
-            raise ValueError(f"{asset}: _answerNote {index} outside the ladder 0..{RELIC_LADDER_NOTES - 1}")
-        notes.append((fields["id"], index))
-    if not notes:
-        raise ValueError(f"no relic content assets in {folder}")
-    return tuple(sorted(notes))
-
-
-RELIC_NOTES = read_relic_notes()
-
-
-def relic_answer(variant, _gen):
-    """A relic's reply on its own note (D major pentatonic ladder from D5): a slow-attack shimmering bell with a
-    softer octave answering 110 ms later, tremolo, detuned twins and air. Same voice for every relic, so they are
-    told apart by their note."""
-    freq = pentatonic(5, RELIC_NOTES[variant][1])
-    root = instruments.soft_bell(freq, 2.9, decay=1.9, attack=0.03)
-    octave = instruments.soft_bell(2.0 * freq, 2.9, decay=1.5, attack=0.03)
-    mix = root.copy()
-    place(mix, octave, samples(0.11), 0.45)
-    mix = filters.lowpass(effects.tremolo(mix, 6.5, 0.22), 6000.0)
-    return _mono_reverb(mix, room=0.7, damping=0.6, wet=0.32, dry=1.0)
+# ---------------------------------------------------------------------------------------------- recovery & salvage
 
 
 RECOVERY_LOOP_S = 4.0
@@ -327,115 +282,6 @@ def salvage_chime(variant, gen):
     return _mono_reverb(dry + fold, room=0.5, damping=0.55, wet=0.2, dry=1.0)
 
 
-def relic_placed(_variant, gen):
-    """A relic settles on the museum shelf: a soft felt 'tock' on D3 and a quiet A4 -> D5 kalimba resolve."""
-    n = samples(1.8)
-    tock = osc.sine(n, osc.glide(n, 1.25 * note_freq("D3"), note_freq("D3"), time_constant=0.015))
-    tock *= envelope.ar(n, 0.002, 0.16)
-    felt = filters.lowpass(filters.lowpass(noise.white(n, gen), 900.0), 900.0) * envelope.ar(n, 0.001, 0.035)
-    mix = tock + 0.5 * felt
-    place(mix, instruments.kalimba(note_freq("A4"), 1.6, gen, decay=1.1), samples(0.05), 0.35)
-    place(mix, instruments.kalimba(note_freq("D5"), 1.6, gen, decay=1.4), samples(0.16), 0.45)
-    return _mono_reverb(filters.lowpass(mix, 5000.0), room=0.45, damping=0.6, wet=0.2, dry=1.0)
-
-
-EXCAVATION_LOOP_S = 6.0
-
-
-def excavation_rumble(_variant, gen):
-    """Low, soft earth rumble with a little sliding grit and a quiet D2/A2 drone that beats slowly."""
-    n = samples(EXCAVATION_LOOP_S)
-    rumble = periodic(noise.white(n, gen), lambda s: filters.highpass(
-        filters.lowpass(filters.lowpass(noise.brown_filter(s, 0.996), 140.0), 140.0), 28.0))
-    grit = _grains(n, gen, 35.0, (0.01, 0.03), (0.002, 0.002), (0.008, 0.02), 0.4, 0.5)
-    grit = periodic(grit, lambda s: filters.lowpass(filters.bandpass(s, 450.0, 1.2), 1800.0))
-    step = SAMPLE_RATE / n
-    d2, a2 = loop_freq(note_freq("D2"), n), loop_freq(note_freq("A2"), n)
-    drone = (osc.sine(n, d2, amp=0.25) + osc.sine(n, d2 + step, 0.4, 0.12)
-             + osc.sine(n, a2, 0.2, 0.15) + osc.sine(n, a2 + step, 0.7, 0.07))
-    swell = (envelope.lfo(n, 3.0 / EXCAVATION_LOOP_S, 0.2, 1.0)
-             + envelope.lfo(n, 8.0 / EXCAVATION_LOOP_S, 0.1, 0.0, phase=0.16))
-    return (1.6 * rumble + 0.8 * grit + drone) * swell
-
-
-def surfacing_sparkle(_variant, gen):
-    """A relic surfaces: a quick rising run of glassy notes (D5 to D6) over a soft upward whoosh."""
-    n = samples(3.0)
-    mix = np.zeros(n)
-    for k in range(6):
-        last = k == 5
-        note = instruments.glass_chime(pentatonic(5, k), 2.4 if last else 1.4, decay=1.6 if last else 0.9,
-                                       attack=0.004)
-        place(mix, note, samples(0.075 * k), 0.55 + 0.08 * k)
-    sweep_n = samples(2.2)
-    whoosh = filters.swept(noise.pink(sweep_n, gen), "bandpass", osc.glide(sweep_n, 300.0, 1500.0), q=1.4)
-    whoosh *= envelope.segments(sweep_n, [(0.0, 0.0), (0.45, 1.0), (2.2, 0.0)], shape="smooth")
-    place(mix, whoosh, 0, 1.2)
-    mix = filters.lowpass(effects.tremolo(mix, 7.0, 0.15), 7000.0)
-    return _mono_reverb(mix, room=0.75, damping=0.6, wet=0.32, dry=1.0)
-
-
-# --------------------------------------------------------------------------------------------------- tether
-
-def tether_attach(_variant, gen):
-    """Soft felt pluck on D4 with a little A2 body and a faint D5 glint."""
-    n = samples(1.3)
-    string = karplus_strong(n, note_freq("D4"), gen, decay=0.9965, brightness=0.35, pick_softness=2000.0)
-    body = osc.sine(n, note_freq("A2")) * envelope.ar(n, 0.002, 0.12)
-    glint = osc.sine(n, note_freq("D5")) * envelope.ar(n, 0.006, 0.55)
-    return filters.lowpass(string + 0.25 * body + 0.06 * glint, 5000.0)
-
-
-TETHER_LOOP_S = 4.0
-
-
-def tether_hum(_variant, gen):
-    """Warm energy hum on D3 + A3 + D4 with a gentle vibrato (4.5 Hz) and a slow wobble (0.75 Hz); faint fizz."""
-    n = samples(TETHER_LOOP_S)
-    vib_rate = 18.0 / TETHER_LOOP_S
-    vibrato = osc.sine(n, vib_rate)
-    tone = np.zeros(n)
-    for note, amp in (("D3", 1.0), ("A3", 0.55), ("D4", 0.32)):
-        f = loop_freq(note_freq(note), n)
-        beta = 0.004 * f / vib_rate
-        tone += amp * operator(n, f, modulation=vibrato, index=beta)
-        tone += 0.04 * amp * operator(n, 3.0 * f, modulation=vibrato, index=3.0 * beta, phase=0.2)
-    wobble = envelope.lfo(n, 3.0 / TETHER_LOOP_S, 0.09, 0.91)
-    fizz = periodic(noise.white(n, gen), lambda s: filters.bandpass(s, 1800.0, 3.0))
-    fizz *= envelope.lfo(n, 24.0 / TETHER_LOOP_S, 0.5, 0.5)
-    mix = tone * wobble + 0.035 * fizz
-    return periodic(mix, lambda s: filters.lowpass(to_mono(effects.chorus(
-        s, voices=1, rate=2.0 / TETHER_LOOP_S, depth=0.0015, delay=0.008, mix=0.35, spread=0.0)), 2600.0))
-
-
-def tether_snap(_variant, gen):
-    """The tether lets go on its own (anti-frustration snap): a softer, longer, falling sigh - a band-passed
-    breath sweeping down with a slow A4 -> D4 fall. Never a crack or a twang."""
-    n = samples(0.9)
-    centre = osc.glide(n, 1800.0, 380.0)
-    sigh = filters.swept(noise.pink(n, gen), "bandpass", centre, q=1.6)
-    breath = filters.lowpass(noise.white(n, gen), 900.0)
-    env = envelope.segments(n, [(0.0, 0.0), (0.09, 1.0), (0.35, 0.6), (0.9, 0.0)], shape="smooth")
-    hint = osc.sine(n, osc.glide(n, note_freq("A4"), note_freq("D4"), time_constant=0.22))
-    hint *= envelope.ar(n, 0.03, 0.5)
-    return filters.lowpass((2.6 * sigh + 0.1 * breath) * env + 0.04 * hint, 4500.0)
-
-
-def tether_release(_variant, gen):
-    """Breathy 'fwip': a rising band-passed noise sweep with a soft falling A4 -> D4 tonal hint."""
-    n = samples(0.55)
-    rise, settle = samples(0.14), samples(0.3)
-    idx = np.arange(n)
-    centre = np.where(idx < rise, 450.0 * (2200.0 / 450.0) ** (idx / rise),
-                      2200.0 - 700.0 * np.minimum(1.0, (idx - rise) / settle))
-    sweep = filters.swept(noise.pink(n, gen), "bandpass", centre, q=2.2)
-    breath = filters.lowpass(noise.white(n, gen), 1200.0)
-    env = envelope.segments(n, [(0.0, 0.0), (0.06, 1.0), (0.18, 0.75), (0.55, 0.0)], shape="smooth")
-    hint = osc.sine(n, osc.glide(n, note_freq("A4"), note_freq("D4"), time_constant=0.08))
-    hint *= envelope.ar(n, 0.01, 0.25)
-    return filters.lowpass((3.0 * sweep + 0.12 * breath) * env + 0.05 * hint, 6000.0)
-
-
 # --------------------------------------------------------------------------------------------------- UI
 
 def _rolled(notes, gap: float, duration: float, gen, decay: float, brightness: float, gains=None) -> np.ndarray:
@@ -477,278 +323,6 @@ def ui_hold_complete(_variant, gen):
     place(mix, instruments.music_box(note_freq("D6"), 1.5, decay=1.0), samples(0.06), 0.18)
     wet = effects.reverb(filters.lowpass(mix, 4500.0)[:n], room=0.5, damping=0.6, wet=0.2, dry=0.0, width=0.8)
     return filters.lowpass(mix, 4500.0)[:, None] * np.array([[1.0, 1.0]]) + wet
-
-
-
-def upgrade_arpeggio(_variant, gen):
-    """Soft kalimba arpeggio D4 A4 D5 F#5 A5 rising left to right over a quiet D/A pad, in a warm stereo room."""
-    n = samples(3.4)
-    dry = np.zeros((n, 2))
-    mono = np.zeros(n)
-    for k, note in enumerate(("D4", "A4", "D5", "F#5", "A5")):
-        last = k == 4
-        tone = instruments.kalimba(note_freq(note), 2.6 if last else 1.6, gen, decay=1.8 if last else 1.2)
-        gain = 0.75 + 0.05 * k
-        place(dry, pan(tone, -0.3 + 0.15 * k), samples(0.11 * k), gain)
-        place(mono, tone, samples(0.11 * k), gain)
-    pad = (instruments.soft_pad(note_freq("D4"), 3.4, 0.35, 1.6, hold=0.5)
-           + instruments.soft_pad(note_freq("A4"), 3.4, 0.35, 1.6, hold=0.5))
-    wet = effects.reverb(mono, room=0.65, damping=0.55, wet=0.3, dry=0.0, width=0.9)
-    return dry + wet + 0.12 * filters.lowpass(pad, 2000.0)[:, None]
-
-
-# --------------------------------------------------------------------------------------------------- friends: Tilly
-
-def _blip(duration: float, start: str, end: str, glide: float, gen, amp: float = 1.0, index: float = 0.7,
-          vibrato_cents: float = 0.0, vibrato_rate: float = 9.0, formant=(900.0, 1700.0)) -> np.ndarray:
-    """One bird-like blip: a soft 2-operator FM tone that glides from ``start`` into ``end`` (time constant
-    ``glide`` seconds) and holds it, with a gently moving formant ('oo' -> 'ee') and an optional flutter."""
-    n = samples(duration)
-    freq = osc.glide(n, note_freq(start), note_freq(end), time_constant=glide)
-    if vibrato_cents:
-        freq = freq * 2.0 ** (vibrato_cents * np.sin(2.0 * math.pi * vibrato_rate * np.arange(n) / SAMPLE_RATE)
-                              / 1200.0)
-    tone = two_op(n, freq, 2.0, index * envelope.exp_decay(n, max(duration, 0.05) * 1.5))
-    shaped = filters.swept(tone, "bandpass", osc.glide(n, formant[0], formant[1]), q=2.0)
-    env = envelope.segments(n, [(0.0, 0.0), (0.008, 1.0), (0.65 * duration, 0.75), (duration, 0.0)],
-                            shape="smooth")
-    return amp * (0.6 * tone + 0.8 * shaped) * env
-
-
-def _phrase(parts, gen, tail: float = 0.25) -> np.ndarray:
-    """Places blips ``[(time_s, blip_array), ...]`` in a buffer with a short tail."""
-    length = max(t + b.shape[0] / SAMPLE_RATE for t, b in parts) + tail
-    out = np.zeros(samples(length))
-    for t, b in parts:
-        place(out, b, samples(t))
-    return out
-
-
-def _chirp_finish(x: np.ndarray, cutoff: float = 5000.0, room: float = 0.35, wet: float = 0.12) -> np.ndarray:
-    return _mono_reverb(filters.lowpass(filters.highpass(x, 300.0), cutoff), room=room, damping=0.6, wet=wet,
-                        dry=1.0)
-
-
-TILLY_CURIOUS = (("D5", "A5"), ("E5", "B5"), ("F#5", "D6"))
-
-
-def tilly_curious(variant, gen):
-    """Curious 'hm?': a short blip, then a slower slide up a fourth/fifth that holds like a question."""
-    low, high = TILLY_CURIOUS[variant]
-    return _chirp_finish(_phrase([
-        (0.0, _blip(0.07, high, low, 0.008, gen, amp=0.6)),
-        (0.12, _blip(0.26, low, high, 0.022, gen, vibrato_cents=8.0)),
-    ], gen))
-
-
-TILLY_HAPPY = (("A5", "B5", "D6", "E6"), ("D6", "B5", "D6", "E6"), ("F#5", "A5", "B5", "D6"))
-
-
-def tilly_happy(variant, gen):
-    """Happy bouncing trill climbing the pentatonic."""
-    notes = TILLY_HAPPY[variant]
-    parts = []
-    for k, note in enumerate(notes):
-        last = k == len(notes) - 1
-        prev = notes[k - 1] if k else note
-        parts.append((0.075 * k, _blip(0.16 if last else 0.06, prev, note, 0.008, gen, amp=0.7 + 0.08 * k,
-                                       vibrato_cents=18.0 if last else 0.0)))
-    return _chirp_finish(_phrase(parts, gen))
-
-
-TILLY_SLEEPY = (("A5", "F#5"), ("D5", "A4"))
-
-
-def tilly_sleepy(variant, gen):
-    """Sleepy coo on the perch: a slow falling note with a breath, then a smaller, lower echo."""
-    high, low = TILLY_SLEEPY[variant]
-    coo = _blip(0.5, high, low, 0.12, gen, amp=0.8, index=0.4, vibrato_cents=10.0, vibrato_rate=4.0,
-                formant=(1400.0, 800.0))
-    echo = _blip(0.3, low, low, 0.02, gen, amp=0.35, index=0.3, formant=(1000.0, 700.0))
-    n = samples(0.5)
-    breath = filters.bandpass(noise.pink(n, gen), 900.0, 0.8) * envelope.segments(
-        n, [(0.0, 0.0), (0.15, 1.0), (0.5, 0.0)], shape="smooth")
-    breath = 0.25 * breath / max(float(np.std(breath)), 1e-9) * 0.1
-    phrase = _phrase([(0.0, coo + breath), (0.55, echo)], gen, tail=0.3)
-    return _chirp_finish(phrase, cutoff=3500.0, wet=0.16)
-
-
-TILLY_GREETING = (("D5", "A5", "B5", "D6"), ("E5", "B5", "A5", "D6"), ("A4", "D5", "F#5", "A5"))
-
-
-def tilly_greeting(variant, gen):
-    """'Hello!' when she flies out to meet 07: a rising swoop, then a quick little trill landing high."""
-    a, b, c, d = TILLY_GREETING[variant]
-    return _chirp_finish(_phrase([
-        (0.0, _blip(0.17, a, b, 0.025, gen, amp=0.9)),
-        (0.2, _blip(0.06, b, c, 0.008, gen, amp=0.6)),
-        (0.27, _blip(0.06, c, b, 0.008, gen, amp=0.6)),
-        (0.34, _blip(0.24, b, d, 0.012, gen, amp=0.85, vibrato_cents=10.0)),
-    ], gen))
-
-
-TILLY_EXCITED = (("D5", "F#5", "A5", "D6", "E6", "D6"), ("A5", "B5", "D6", "B5", "D6", "E6"),
-                 ("F#5", "A5", "B5", "D6", "F#6", "E6"))
-
-
-def tilly_excited(variant, gen):
-    """Excited (a relic is home): a fast fluttering arpeggio that skips upward and lands with a flutter."""
-    notes = TILLY_EXCITED[variant]
-    parts = []
-    for k, note in enumerate(notes):
-        last = k == len(notes) - 1
-        prev = notes[k - 1] if k else note
-        parts.append((0.055 * k, _blip(0.22 if last else 0.05, prev, note, 0.006, gen, amp=0.65 + 0.05 * k,
-                                       vibrato_cents=14.0 if last else 0.0, vibrato_rate=11.0)))
-    return _chirp_finish(_phrase(parts, gen))
-
-
-TILLY_BROKEN = (("A5", "D5"), ("B5", "E5"), ("D6", "A5"))
-
-
-def tilly_broken(variant, gen):
-    """A broken, hopeful answer from the crater floor: a curious chirp that stutters, sags an octave mid-way and
-    tries again, faint and muffled under the dust, with a whisper of crackle."""
-    high, low = TILLY_BROKEN[variant]
-    first = _blip(0.18, low, high, 0.02, gen, amp=0.8)
-    sag = _blip(0.12, high, low, 0.015, gen, amp=0.4, index=0.3)
-    retry = _blip(0.26, low, high, 0.025, gen, amp=0.7, vibrato_cents=10.0)
-    phrase = _phrase([(0.0, first), (0.2, sag), (0.36, retry)], gen, tail=0.3)
-    n = phrase.shape[0]
-    gate = np.ones(n)
-    t = samples(0.03)
-    while t < n:
-        if gen.random() < 0.35:
-            width = samples(gen.uniform(0.012, 0.03))
-            ramp = samples(0.002)
-            dip = np.concatenate((np.linspace(1.0, 0.1, ramp), np.full(max(0, width - 2 * ramp), 0.1),
-                                  np.linspace(0.1, 1.0, ramp)))
-            gate[t:t + dip.shape[0]] *= dip[:max(0, n - t)]
-        t += samples(gen.uniform(0.03, 0.07))
-    crackle = _grains(n, gen, 14.0, (0.0006, 0.0015), (0.0002, 0.0002), (0.0005, 0.001), 0.04, 0.6)
-    crackle = filters.lowpass(filters.bandpass(crackle, 1500.0, 0.9), 3000.0)
-    return _chirp_finish(phrase * gate + crackle, cutoff=3000.0, wet=0.2)
-
-
-TILLY_FOUND = (("A5", "D6"), ("B5", "E6"), ("F#5", "A5"))
-
-
-def tilly_found(variant, gen):
-    """'Found it!' as Tilly hovers over something: a quick hop up that lands bright with a little flutter, and a
-    tiny echo of the landing note."""
-    low, high = TILLY_FOUND[variant]
-    return _chirp_finish(_phrase([
-        (0.0, _blip(0.06, low, low, 0.006, gen, amp=0.6)),
-        (0.08, _blip(0.2, low, high, 0.012, gen, amp=0.9, vibrato_cents=10.0, vibrato_rate=10.0)),
-        (0.32, _blip(0.07, high, high, 0.006, gen, amp=0.4)),
-    ], gen))
-
-
-def friend_spot_ping(_variant, gen):
-    """The soft ping marking what a friend spotted: a round A5 bell with its octave shimmering a moment later,
-    gentler and higher than 07's kalimba sonar."""
-    n = samples(1.8)
-    bell = instruments.soft_bell(note_freq("A5"), 1.8, decay=1.3, attack=0.012)
-    place(bell, instruments.soft_bell(note_freq("A6"), 1.8, decay=0.9, attack=0.012)[:n - samples(0.07)],
-          samples(0.07), 0.25)
-    bell = filters.lowpass(effects.tremolo(bell, 6.0, 0.18), 5500.0)
-    return _mono_reverb(bell, room=0.55, damping=0.6, wet=0.25, dry=1.0)
-
-
-TILLY_ROTOR_LOOP_S = 4.0
-
-
-def tilly_rotor(_variant, gen):
-    """Tiny four-rotor hum: blade-pass tones around A3 that beat slowly against each other, a soft whirr of air
-    pulsing at the blade rate. Whole cycles in the loop; nothing above ~3.5 kHz so it pitches up cleanly."""
-    n = samples(TILLY_ROTOR_LOOP_S)
-    step = SAMPLE_RATE / n
-    base = loop_freq(note_freq("A3"), n)
-    buzz = np.zeros(n)
-    for offset, amp, phase in ((0.0, 1.0, 0.0), (step, 0.8, 0.31), (2.0 * step, 0.7, 0.57), (-step, 0.75, 0.83)):
-        buzz += amp * osc.additive(n, base + offset, [(1, 1.0), (2, 0.45), (3, 0.2), (4, 0.08), (6, 0.03)],
-                                   phase=phase)
-    whirr = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 950.0, 0.9))
-    whirr *= envelope.lfo(n, base, 0.45, 0.55)
-    mix = 0.22 * buzz + 1.6 * whirr / max(float(np.std(whirr)), 1e-9) * 0.1
-    return periodic(mix, lambda x: filters.highpass(filters.lowpass(filters.lowpass(x, 3500.0), 3500.0), 90.0))
-
-
-STITCH_LOOP_S = 4.0
-STITCH_NOTES = ("D6", "E6", "F#6", "A6")
-
-
-def friend_stitch(_variant, gen):
-    """Repair 'stitching': a warm D/A shimmer, a soft sewing-machine pulse on D3, and tiny needle-like pentatonic
-    ticks and thread pulls scattered over it, in a little room. Seamless; the runtime lifts it over the repair."""
-    n = samples(STITCH_LOOP_S)
-    step = SAMPLE_RATE / n
-    pad = np.zeros(n)
-    for note, amp in (("D4", 1.0), ("A4", 0.7), ("D5", 0.4)):
-        f = loop_freq(note_freq(note), n)
-        pad += amp * (osc.sine(n, f) + 0.6 * osc.sine(n, f + step, phase=0.4))
-    pad *= envelope.lfo(n, 12.0 / STITCH_LOOP_S, 0.15, 0.85)
-    pulse = osc.additive(n, loop_freq(note_freq("D3"), n), [(1, 1.0), (2, 0.3)])
-    pulse *= envelope.lfo(n, 24.0 / STITCH_LOOP_S, 0.5, 0.5) ** 2
-    ticks = np.zeros(n)
-    for pos in noise.event_times(n, gen, 13.0):
-        note = STITCH_NOTES[int(gen.integers(0, len(STITCH_NOTES)))]
-        tick = instruments.partial(samples(0.05), note_freq(note), gen.uniform(0.4, 1.0), 0.0015, 0.04)
-        place(ticks, tick, int(pos), wrap=True)
-    pulls = _grains(n, gen, 5.0, (0.02, 0.04), (0.006, 0.01), (0.015, 0.03), 0.3, 0.4)
-    pulls = periodic(pulls, lambda x: filters.lowpass(filters.bandpass(x, 1800.0, 1.4), 4000.0))
-    dry = 0.22 * pad + 0.18 * pulse + 0.5 * ticks + 0.5 * pulls
-    wet = periodic(dry, lambda x: to_mono(effects.reverb(x, room=0.55, damping=0.6, wet=0.35, dry=1.0)),
-                   warmup=samples(3.0))
-    return periodic(wet, lambda x: filters.lowpass(x, 6000.0))
-
-
-def friend_boot(_variant, gen):
-    """The repaired friend boots: three soft electric flickers (the eye), a little power-up glide on D3, then a
-    music-box startup jingle D5 F#5 A5 D6."""
-    n = samples(2.4)
-    mix = np.zeros(n)
-    for when, gain in ((0.0, 0.5), (0.11, 0.35), (0.18, 0.6)):
-        flick = instruments.partial(samples(0.03), note_freq("A6"), gain, 0.001, 0.02)
-        click = filters.bandpass(noise.white(samples(0.004), gen), 2000.0, 1.0) * 0.1
-        place(mix, flick, samples(when))
-        place(mix, click, samples(when))
-    rise_n = samples(0.5)
-    rise = osc.sine(rise_n, osc.glide(rise_n, note_freq("D2"), note_freq("D3")))
-    rise *= envelope.segments(rise_n, [(0.0, 0.0), (0.3, 1.0), (0.5, 0.0)], shape="smooth")
-    place(mix, rise, samples(0.12), 0.35)
-    for k, note in enumerate(("D5", "F#5", "A5", "D6")):
-        last = k == 3
-        place(mix, instruments.music_box(note_freq(note), 1.6 if last else 0.9, decay=1.3 if last else 0.7),
-              samples(0.48 + 0.12 * k), 0.7 if last else 0.55)
-    return _mono_reverb(filters.lowpass(mix, 5500.0), room=0.45, damping=0.6, wet=0.2, dry=1.0)
-
-
-FRIEND_PART_STEPS = ("D5", "F#5", "A5", "B5")
-
-
-def _amber_bar(freq: float, duration: float) -> np.ndarray:
-    """Warm vibraphone-like bar (the 'amber' of friend parts, unlike the glassy scrap chime): fundamental,
-    the bar's 4x mode dying fast, and a slow motor tremolo."""
-    n = samples(duration)
-    bar = (instruments.partial(n, freq, 1.0, 0.002, 1.6)
-           + instruments.partial(n, 4.0 * freq, 0.22, 0.0015, 0.25)
-           + instruments.partial(n, 2.0 * freq, 0.06, 0.002, 0.6))
-    return effects.tremolo(bar, 5.2, 0.3)
-
-
-def friend_part(variant, _gen):
-    """A friend part collected: a warm amber bar climbing D5 F#5 A5 B5 per part, and on the last part a resolved
-    A5 -> D6 figure over a soft D5."""
-    if variant < len(FRIEND_PART_STEPS):
-        mix = _amber_bar(note_freq(FRIEND_PART_STEPS[variant]), 1.6)
-        mix += 0.25 * _amber_bar(note_freq("D4"), 1.6)
-    else:
-        mix = np.zeros(samples(2.2))
-        place(mix, _amber_bar(note_freq("D5"), 2.0), 0, 0.35)
-        place(mix, _amber_bar(note_freq("A5"), 2.0), 0, 0.8)
-        place(mix, _amber_bar(note_freq("D6"), 2.0), samples(0.14), 0.9)
-    return _mono_reverb(filters.lowpass(mix, 6000.0), room=0.5, damping=0.55, wet=0.22, dry=1.0)
 
 
 # --------------------------------------------------------------------------------------------------- hover-jump
@@ -812,23 +386,6 @@ def coil_twang(variant, gen):
     return filters.lowpass(mix, 4000.0)
 
 
-AIR_WIND_LOOP_S = 6.0
-
-
-def air_wind(_variant, gen):
-    """Air rushing past during a leap: two soft band-passed noise layers (no whistle) breathing slowly.
-    Seamless; the runtime swells it with air time and speed."""
-    n = samples(AIR_WIND_LOOP_S)
-    low = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 520.0, 0.6),
-                   warmup=samples(1.0))
-    high = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 1400.0, 0.9),
-                    warmup=samples(1.0))
-    low *= envelope.lfo(n, 2.0 / AIR_WIND_LOOP_S, 0.2, 0.8)
-    high *= envelope.lfo(n, 3.0 / AIR_WIND_LOOP_S, 0.3, 0.7, phase=0.25)
-    mix = low / max(float(np.std(low)), 1e-9) + 0.5 * high / max(float(np.std(high)), 1e-9)
-    return periodic(mix, lambda x: filters.lowpass(filters.lowpass(x, 2800.0), 2800.0))
-
-
 JUMP_LAND_SETTINGS = (
     # thud start/end Hz, cushion T60, sproing note
     (80.0, 52.0, 0.35, "D3"),
@@ -851,459 +408,6 @@ def jump_land(variant, gen):
     dust = filters.lowpass(filters.highpass(noise.pink(n, gen), 1400.0), 4200.0) * envelope.ar(n, 0.06, 0.9)
     dust = dust / max(float(np.std(dust)), 1e-9) * 0.004
     return puff + 0.16 * thud + 0.15 * spring + dust
-
-
-def coil_pop(_variant, gen):
-    """The coils popping in under 07 after the purchase: a small mechanical clunk, then a springy sproing on D4."""
-    n = samples(1.0)
-    clunk = filters.bandpass(noise.white(n, gen), 260.0, 1.4) * envelope.ar(n, 0.002, 0.06)
-    clunk = clunk / max(float(np.std(clunk[:samples(0.05)])), 1e-9) * 0.08
-    clunk += 0.25 * osc.sine(n, osc.glide(n, 150.0, 110.0, time_constant=0.03)) * envelope.ar(n, 0.004, 0.09)
-    t = np.arange(n) / SAMPLE_RATE
-    sproing_f = osc.glide(n, note_freq("A3"), note_freq("D4"), time_constant=0.04) * (
-        1.0 + 0.06 * np.exp(-t / 0.18) * np.sin(2.0 * math.pi * 10.0 * t))
-    sproing = osc.additive(n, sproing_f, [(1, 1.0), (2, 0.15)]) * envelope.ar(n, 0.01, 0.55)
-    mix = clunk.copy()
-    place(mix, 0.6 * sproing[:n - samples(0.06)], samples(0.06))
-    return filters.lowpass(mix, 4000.0)
-
-
-# Gameplay fires the bench's spark particle bursts at these times (s) after the purchase; the crackles match them.
-WORKBENCH_SPARK_BURSTS = (0.0, 0.16, 0.32)
-
-
-def workbench_upgrade(_variant, gen):
-    """Buying an upgrade at Kenji's workbench: three soft spark crackles in time with the bench's spark bursts and a
-    toolbox rattle, then a resolved cadence (felt piano A4 + E5 settling into D major with a music-box D6), distinct
-    from the tower's arpeggio."""
-    n = samples(3.2)
-    sparks = np.zeros(n)
-    for burst, gain in zip(WORKBENCH_SPARK_BURSTS, (1.0, 0.8, 0.65)):
-        burst_n = samples(0.14)
-        crackle = _grains(burst_n, gen, 70.0, (0.002, 0.006), (0.0003, 0.0006), (0.002, 0.005), 0.25, 0.6)
-        crackle *= envelope.segments(burst_n, [(0.0, 0.0), (0.008, 1.0), (0.14, 0.0)], shape="smooth")
-        place(sparks, crackle, samples(burst), gain)
-    sparks = filters.lowpass(filters.bandpass(sparks, 3000.0, 0.9), 5000.0)
-    rattle = np.zeros(n)
-    for k in range(7):
-        freq = gen.uniform(900.0, 1500.0)
-        clink_n = samples(0.12)
-        clink = (instruments.partial(clink_n, freq, 1.0, 0.0008, 0.06)
-                 + instruments.partial(clink_n, 1.53 * freq, 0.5, 0.0008, 0.04)
-                 + instruments.partial(clink_n, 2.31 * freq, 0.2, 0.0008, 0.025))
-        place(rattle, clink, samples(0.05 + 0.045 * k + gen.uniform(0.0, 0.02)), gen.uniform(0.4, 0.8))
-    rattle = filters.lowpass(rattle, 4500.0)
-    chord = np.zeros(n)
-    place(chord, _rolled(("A4", "E5"), 0.03, 1.0, gen, decay=0.8, brightness=0.45), samples(0.38), 0.6)
-    place(chord, _rolled(("D4", "F#4", "A4", "D5"), 0.02, 2.4, gen, decay=1.6, brightness=0.45,
-                         gains=(0.7, 0.55, 0.55, 0.6)), samples(0.72))
-    place(chord, instruments.music_box(note_freq("D6"), 2.0, decay=1.3), samples(0.78), 0.2)
-    mono = 0.6 * sparks + 0.5 * rattle + chord
-    wet = effects.reverb(mono, room=0.5, damping=0.6, wet=0.22, dry=0.0, width=0.85)
-    dry = np.stack([0.6 * sparks + 0.5 * rattle * 0.8 + chord, 0.6 * sparks * 0.8 + 0.5 * rattle + chord], axis=1)
-    return dry + wet
-
-
-# ---------------------------------------------------------------------------------------------- Bell, radio, canyon
-
-def _old_radio(x: np.ndarray, drive: float = 1.6) -> np.ndarray:
-    """An old receiver's voice: band-limited 280 Hz - 2.6 kHz, gently saturated, slightly boxy."""
-    band = filters.lowpass(filters.lowpass(filters.highpass(x, 280.0), 2600.0), 2600.0)
-    return effects.saturate(filters.peaking(band, 900.0, 3.0, 1.2), drive) / drive
-
-
-def _radio_blip(note: str, duration: float, gen, amp: float = 1.0) -> np.ndarray:
-    """A short warbling tone as an old radio would sound it (AM-filtered, a touch of flutter)."""
-    n = samples(duration)
-    freq = osc.vibrato(n, note_freq(note), 7.0, 12.0)
-    tone = osc.additive(n, freq, [(1, 1.0), (2, 0.25), (3, 0.1)]) * envelope.ar(n, 0.006, duration * 0.9)
-    return amp * tone
-
-
-def _static(n: int, gen, centre: float = 1400.0, q: float = 0.8) -> np.ndarray:
-    hiss = filters.bandpass(noise.white(n, gen), centre, q)
-    crackle = _grains(n, gen, 30.0, (0.0005, 0.0015), (0.0002, 0.0002), (0.0004, 0.001), 0.5, 0.7)
-    return hiss / max(float(np.std(hiss)), 1e-9) * 0.3 + filters.bandpass(crackle, 1800.0, 0.9)
-
-
-def bell_broken(variant, gen):
-    """Bell, dormant, answering a ping: a dying set catching for a moment - faint crackle, the needle drifting
-    past a station, a fragment of a note that fades away."""
-    n = samples(1.2)
-    static = _static(n, gen) * envelope.segments(n, [(0.0, 0.0), (0.06, 0.8), (0.5, 0.5), (1.2, 0.0)],
-                                                  shape="smooth")
-    note = ("A4", "D5")[variant]
-    fragment = np.zeros(n)
-    place(fragment, _radio_blip(note, 0.45, gen, 0.9), samples(0.28))
-    fragment *= envelope.segments(n, [(0.0, 1.0), (0.55, 1.0), (0.75, 0.25), (1.2, 0.0)], shape="smooth")
-    return _old_radio(0.5 * static + fragment)
-
-
-def bell_excited(variant, gen):
-    """Bell's happy crackle when a relic comes home: a bright static burst, then two quick warbling blips up
-    the scale, like a station cheering through the speaker."""
-    n = samples(0.95)
-    burst = _static(n, gen, 1800.0, 0.9) * envelope.segments(n, [(0.0, 0.0), (0.01, 1.0), (0.18, 0.0)],
-                                                            shape="smooth")
-    first, second = (("D5", "A5"), ("E5", "B5"))[variant]
-    mix = 0.45 * burst
-    place(mix, _radio_blip(first, 0.12, gen, 0.8), samples(0.16))
-    place(mix, _radio_blip(second, 0.3, gen, 1.0), samples(0.3))
-    return _old_radio(mix, 1.4)
-
-
-def bell_tune(variant, gen):
-    """Bell's station-switch crackle: the detent's tick, a swish of static as the needle moves, a resonant
-    whistle-free sweep between stations."""
-    n = samples(0.5)
-    tick = filters.bandpass(noise.white(n, gen), 2000.0, 1.2) * envelope.ar(n, 0.0005, 0.008)
-    sweep = filters.swept(noise.white(n, gen), "bandpass",
-                          osc.glide(n, (700.0, 1100.0)[variant], (1500.0, 650.0)[variant]), q=3.0)
-    sweep *= envelope.segments(n, [(0.0, 0.0), (0.05, 1.0), (0.3, 0.6), (0.5, 0.0)], shape="smooth")
-    return _old_radio(0.3 * tick / max(float(np.max(np.abs(tick))), 1e-9) + sweep / max(float(np.std(sweep)),
-                                                                                         1e-9) * 0.15)
-
-
-BELL_STEP_PITCH_HZ = (520.0, 610.0, 470.0)
-
-
-def bell_step(variant, gen):
-    """A light tripod-foot tap: a tiny rubber-tipped click with a hollow little knock from the cabinet."""
-    n = samples(0.12)
-    click = filters.bandpass(noise.white(n, gen), 2400.0, 1.4) * envelope.ar(n, 0.0004, 0.006)
-    click = click / max(float(np.max(np.abs(click))), 1e-9) * 0.25
-    knock = osc.sine(n, osc.glide(n, 1.2 * BELL_STEP_PITCH_HZ[variant], BELL_STEP_PITCH_HZ[variant],
-                                  time_constant=0.004)) * envelope.ar(n, 0.0008, 0.035)
-    return filters.lowpass(click + 0.5 * knock, 4500.0)
-
-
-BELL_DOZE_LOOP_S = 6.0
-
-
-def bell_doze(_variant, gen):
-    """Bell dozing: the dial lamp's ember hum on D2/D3, a faint warm A3 glow tone and a valve's rare soft tick.
-    Seamless and very soft."""
-    n = samples(BELL_DOZE_LOOP_S)
-    step = SAMPLE_RATE / n
-    d2 = loop_freq(note_freq("D2"), n)
-    hum = osc.additive(n, d2, [(1, 0.6), (2, 1.0), (3, 0.3), (4, 0.15)]) + 0.4 * osc.sine(n, 2.0 * d2 + step,
-                                                                                         phase=0.3)
-    glow = osc.sine(n, loop_freq(note_freq("A3"), n), amp=0.18)
-    breath = envelope.lfo(n, 2.0 / BELL_DOZE_LOOP_S, 0.2, 0.8)
-    ticks = _grains(n, gen, 1.5, (0.001, 0.003), (0.0003, 0.0003), (0.001, 0.002), 0.25, 0.4)
-    ticks = periodic(ticks, lambda x: filters.lowpass(filters.bandpass(x, 1500.0, 1.0), 3000.0))
-    mix = (0.3 * hum + glow) * breath + ticks
-    return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 2200.0), 50.0))
-
-
-def bell_wake(_variant, gen):
-    """Bell wakes: the hum warms up from nothing, a little crackle, and a sleepy two-note hello E5 -> A5."""
-    n = samples(1.4)
-    hum = osc.additive(n, osc.glide(n, note_freq("D2") * 0.7, note_freq("D2")), [(1, 0.6), (2, 1.0), (3, 0.3)])
-    hum *= envelope.segments(n, [(0.0, 0.0), (0.4, 1.0), (1.4, 0.0)], shape="smooth")
-    crackle = _static(n, gen, 1500.0, 1.0) * envelope.segments(n, [(0.0, 0.0), (0.2, 0.6), (0.5, 0.0)],
-                                                                shape="smooth")
-    mix = 0.25 * hum + 0.3 * crackle
-    place(mix, _radio_blip("E5", 0.14, gen, 0.6), samples(0.55))
-    place(mix, _radio_blip("A5", 0.4, gen, 0.75), samples(0.72))
-    return _old_radio(mix, 1.3)
-
-
-def _whistle(notes, durations, gen, glide: float = 0.018, vibrato_cents: float = 0.0, vibrato_rate: float = 5.5,
-             start_cents: float = 0.0, amp: float = 1.0) -> np.ndarray:
-    """A heterodyne whistle as an old receiver makes it between stations: one continuous tone that slides from
-    note to note (portamento ``glide`` seconds) instead of Tilly's separate bird-like blips. ``start_cents``
-    makes it tune in from off-pitch, like a squeak settling onto a station."""
-    total = float(sum(durations))
-    n = samples(total)
-    cents = np.zeros(n)
-    t0 = 0
-    target = np.zeros(n)
-    for note, duration in zip(notes, durations):
-        t1 = min(n, t0 + samples(duration))
-        target[t0:t1] = 1200.0 * math.log2(note_freq(note) / note_freq(notes[0]))
-        t0 = t1
-    target[t0:] = target[t0 - 1] if t0 else 0.0
-    alpha = 1.0 - math.exp(-1.0 / (glide * SAMPLE_RATE))
-    value = start_cents
-    for i in range(n):
-        value += (target[i] - value) * alpha
-        cents[i] = value
-    t = np.arange(n) / SAMPLE_RATE
-    if vibrato_cents:
-        cents = cents + vibrato_cents * np.sin(2.0 * math.pi * vibrato_rate * t) * np.clip(t / 0.15, 0.0, 1.0)
-    freq = note_freq(notes[0]) * 2.0 ** (cents / 1200.0)
-    tone = osc.additive(n, freq, [(1, 1.0), (2, 0.18), (3, 0.08)])
-    gates = np.zeros(n)
-    t0 = 0
-    for k, duration in enumerate(durations):
-        seg = samples(duration)
-        last = k == len(durations) - 1
-        env = envelope.segments(seg, [(0.0, 0.35 if k else 0.0), (0.012, 1.0), (0.7 * duration, 0.85),
-                                      (duration, 0.0 if last else 0.45)], shape="smooth")
-        gates[t0:t0 + seg] = env[:max(0, min(seg, n - t0))]
-        t0 += seg
-    return amp * tone * gates
-
-
-def _fading_station(x: np.ndarray, gen, depth: float = 0.25, rate: float = 3.0) -> np.ndarray:
-    """Slow AM 'fading' of a distant station riding on the signal."""
-    n = x.shape[0]
-    phase = gen.uniform(0.0, 2.0 * math.pi)
-    t = np.arange(n) / SAMPLE_RATE
-    return x * (1.0 - depth * 0.5 * (1.0 + np.sin(2.0 * math.pi * rate * t + phase)))
-
-
-def _bell_voice(phrase: np.ndarray, gen, crackle: float = 0.12, drive: float = 1.4) -> np.ndarray:
-    """Bell's speaker: a little static riding under the whistle, then the old receiver's band and warmth."""
-    bed = _static(phrase.shape[0], gen, 1500.0, 0.9)
-    env = envelope.segments(phrase.shape[0], [(0.0, 0.0), (0.02, 1.0),
-                                               (phrase.shape[0] / SAMPLE_RATE, 0.3)], shape="smooth")
-    return _old_radio(phrase + crackle * bed * env, drive)
-
-
-BELL_CURIOUS = (("A4", "D5"), ("D5", "E5"), ("E5", "A5"))
-
-
-def bell_curious(variant, gen):
-    """'Hm?': a tuning squeak settling onto a note, then the whistle sliding up like a question, fading as a
-    distant station does."""
-    low, high = BELL_CURIOUS[variant]
-    phrase = _whistle((low, high), (0.16, 0.34), gen, glide=0.025, vibrato_cents=12.0, start_cents=-450.0)
-    return _bell_voice(_fading_station(_pad(phrase, 0.12), gen), gen)
-
-
-BELL_HAPPY = (("D5", "E5", "F#5", "A5"), ("A4", "D5", "E5", "A5"), ("F#5", "A5", "B5", "D6"))
-
-
-def bell_happy(variant, gen):
-    """Happy at home: the dial whistles up a little pentatonic run, gliding note to note, landing with a wobble."""
-    notes = BELL_HAPPY[variant]
-    phrase = _whistle(notes, (0.09, 0.09, 0.09, 0.3), gen, glide=0.012, vibrato_cents=10.0, start_cents=-200.0)
-    return _bell_voice(_pad(phrase, 0.15), gen, crackle=0.1)
-
-
-BELL_SLEEPY = (("A4", "F#4"), ("D5", "B4"))
-
-
-def bell_sleepy(variant, gen):
-    """Sleepy: a slow whistle sagging down like a tape winding down, under a soft hiss."""
-    high, low = BELL_SLEEPY[variant]
-    phrase = _whistle((high, low), (0.3, 0.7), gen, glide=0.06, vibrato_cents=12.0, vibrato_rate=3.5, amp=0.8)
-    n = phrase.shape[0]
-    hiss = filters.bandpass(noise.pink(n, gen), 1200.0, 0.7)
-    hiss = hiss / max(float(np.std(hiss)), 1e-9) * 0.05 * envelope.segments(
-        n, [(0.0, 0.0), (0.2, 1.0), (n / SAMPLE_RATE, 0.0)], shape="smooth")
-    return _bell_voice(_pad(phrase + hiss, 0.2), gen, crackle=0.06, drive=1.2)
-
-
-BELL_GREETING = (("D5", "F#5", "A5", "D6"), ("A4", "D5", "F#5", "A5"))
-
-
-def bell_greeting(variant, gen):
-    """'Hello!': a quick upward tuning squeak, then a bright station-ident whistle that holds its last note."""
-    notes = BELL_GREETING[variant]
-    phrase = _whistle(notes, (0.12, 0.1, 0.1, 0.42), gen, glide=0.014, vibrato_cents=14.0, start_cents=-700.0)
-    return _bell_voice(_pad(phrase, 0.18), gen, crackle=0.14)
-
-
-BELL_FOUND = (("A5", "D6"), ("E5", "A5"))
-
-
-def bell_found(variant, gen):
-    """'Got it!': a squeak sweeping down and locking onto a clean tone, then hopping up a fourth."""
-    lock, hop = BELL_FOUND[variant]
-    phrase = _whistle((lock, hop), (0.24, 0.3), gen, glide=0.02, vibrato_cents=8.0, start_cents=800.0)
-    return _bell_voice(_pad(phrase, 0.15), gen, crackle=0.1)
-
-
-def _pad(x: np.ndarray, tail: float) -> np.ndarray:
-    return np.concatenate((x, np.zeros(samples(tail))))
-
-
-BELL_WALK_LOOP_S = 4.0
-BELL_WALK_TICKS = 24
-
-
-def bell_rotor(_variant, gen):
-    """Bell's walking effort (her 'rotor' loop): the soft clockwork of her four camera legs - an escapement's
-    tick and tock, a tiny spring whirr and a faint cabinet creak. Seamless; nothing above ~3.5 kHz so it speeds up
-    cleanly with her waddle."""
-    n = samples(BELL_WALK_LOOP_S)
-    ticks = np.zeros(n)
-    tick_n = samples(0.05)
-    for k in range(BELL_WALK_TICKS):
-        freq = 1900.0 if k % 2 == 0 else 1350.0
-        body = filters.bandpass(noise.white(tick_n, gen), freq, 2.0) * envelope.ar(tick_n, 0.0008, 0.012)
-        body = body / max(float(np.max(np.abs(body))), 1e-9)
-        knock = osc.sine(tick_n, 0.32 * freq) * envelope.ar(tick_n, 0.001, 0.02)
-        place(ticks, 0.5 * body + 0.35 * knock, k * n // BELL_WALK_TICKS, 1.0 if k % 2 == 0 else 0.8, wrap=True)
-    whirr = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 700.0, 1.2))
-    whirr = whirr / max(float(np.std(whirr)), 1e-9) * 0.05 * envelope.lfo(n, 6.0 / BELL_WALK_LOOP_S, 0.2, 0.8)
-    creak = periodic(noise.white(n, gen), lambda x: filters.swept(
-        x, "bandpass", 560.0 + 80.0 * np.sin(2.0 * math.pi * 2.0 * np.arange(x.shape[0]) / n), q=8.0))
-    creak = creak / max(float(np.std(creak)), 1e-9) * 0.04 * envelope.lfo(n, 2.0 / BELL_WALK_LOOP_S, 0.5, 0.5) ** 3
-    mix = 0.5 * ticks + whirr + creak
-    return periodic(mix, lambda x: filters.highpass(filters.lowpass(filters.lowpass(x, 3500.0), 3500.0), 120.0))
-
-
-def bell_tape_slot(_variant, gen):
-    """07's beam slides Bell's tape into her slot: a plastic slide, the clack of it seating and the little
-    capstan motor catching."""
-    n = samples(0.75)
-    slide_n = samples(0.2)
-    slide = filters.bandpass(noise.pink(slide_n, gen), 900.0, 1.0) * envelope.segments(
-        slide_n, [(0.0, 0.0), (0.05, 1.0), (0.18, 0.0)], shape="smooth")
-    clack_n = samples(0.08)
-    clack = filters.bandpass(noise.white(clack_n, gen), 1700.0, 1.6) * envelope.ar(clack_n, 0.0006, 0.02)
-    seat = osc.sine(clack_n, osc.glide(clack_n, 260.0, 190.0, time_constant=0.01)) * envelope.ar(clack_n, 0.001,
-                                                                                                  0.03)
-    motor_n = samples(0.45)
-    motor = osc.additive(motor_n, osc.glide(motor_n, 70.0, note_freq("D3"), time_constant=0.12),
-                         [(1, 0.5), (2, 1.0), (3, 0.4), (5, 0.15)])
-    motor *= envelope.segments(motor_n, [(0.0, 0.0), (0.1, 1.0), (0.3, 0.6), (0.45, 0.0)], shape="smooth")
-    mix = np.zeros(n)
-    place(mix, slide / max(float(np.std(slide)), 1e-9) * 0.06, 0)
-    place(mix, clack / max(float(np.max(np.abs(clack))), 1e-9) * 0.3 + 0.25 * seat, samples(0.17))
-    place(mix, 0.06 * motor, samples(0.24))
-    return filters.lowpass(filters.lowpass(mix, 4500.0), 4500.0)
-
-
-BELL_SWEEP_STATIONS = ((0.25, "A4"), (0.48, "D5"), (0.72, "F#5"))
-
-
-def bell_needle_sweep(_variant, gen):
-    """Bell waking from her repair: the dial lamp's hum warms up and the needle sweeps up the band past three
-    faint stations before it settles."""
-    n = samples(1.6)
-    sweep_n = samples(1.3)
-    sweep = filters.swept(noise.white(sweep_n, gen), "bandpass", osc.glide(sweep_n, 450.0, 2200.0), q=2.5)
-    sweep = sweep / max(float(np.std(sweep)), 1e-9) * 0.12 * envelope.segments(
-        sweep_n, [(0.0, 0.0), (0.15, 1.0), (1.0, 0.7), (1.3, 0.0)], shape="smooth")
-    hum = osc.additive(n, osc.glide(n, note_freq("D2") * 0.8, note_freq("D2"), time_constant=0.3),
-                       [(1, 0.6), (2, 1.0), (3, 0.3)])
-    hum *= envelope.segments(n, [(0.0, 0.0), (0.4, 1.0), (1.2, 0.8), (1.6, 0.0)], shape="smooth")
-    mix = 0.08 * hum
-    place(mix, sweep, samples(0.05))
-    for when, note in BELL_SWEEP_STATIONS:
-        place(mix, _radio_blip(note, 0.16, gen, 0.35), samples(when))
-    return _old_radio(mix, 1.3)
-
-
-def radio_dial_click(_variant, gen):
-    """One detent of Bell's chunky dial: a bakelite catch and land with a small wooden knock."""
-    n = samples(0.16)
-    catch = filters.bandpass(noise.white(n, gen), 1600.0, 1.2) * envelope.ar(n, 0.0012, 0.01)
-    land = np.zeros(n)
-    place(land, filters.bandpass(noise.white(n, gen), 1300.0, 1.2)[:n - samples(0.018)] * envelope.ar(
-        n - samples(0.018), 0.0004, 0.01), samples(0.018))
-    knock = osc.sine(n, note_freq("A3")) * envelope.ar(n, 0.002, 0.05)
-    mix = (0.2 * catch / max(float(np.max(np.abs(catch))), 1e-9)
-           + 0.25 * land / max(float(np.max(np.abs(land))), 1e-9))
-    return filters.lowpass(filters.lowpass(mix + 0.4 * knock, 4000.0), 4000.0)
-
-
-def cassette_pickup(_variant, gen):
-    """Collecting a tape: a plastic clack, a little spin of the reels speeding up, and a soft D6 tick of the
-    counter - small and pleased."""
-    n = samples(1.0)
-    clack = filters.bandpass(noise.white(n, gen), 1600.0, 1.4) * envelope.ar(n, 0.0005, 0.02)
-    clack = clack / max(float(np.max(np.abs(clack))), 1e-9) * 0.35
-    spin_n = samples(0.55)
-    rate = osc.glide(spin_n, 9.0, 26.0)
-    spin_am = 0.5 + 0.5 * np.sin(2.0 * math.pi * np.cumsum(rate) / SAMPLE_RATE)
-    whirr = filters.bandpass(noise.pink(spin_n, gen), 1100.0, 1.6) * spin_am
-    whirr = whirr / max(float(np.std(whirr)), 1e-9) * 0.07 * envelope.segments(
-        spin_n, [(0.0, 0.0), (0.08, 1.0), (0.4, 0.8), (0.55, 0.0)], shape="smooth")
-    motor = osc.sine(spin_n, osc.glide(spin_n, note_freq("A3"), note_freq("D4")), amp=0.08) * envelope.segments(
-        spin_n, [(0.0, 0.0), (0.1, 1.0), (0.55, 0.0)], shape="smooth")
-    mix = clack.copy()
-    place(mix, whirr + motor, samples(0.04))
-    place(mix, instruments.music_box(note_freq("D6"), 0.4, decay=0.35), samples(0.58), 0.18)
-    return filters.lowpass(mix, 5000.0)
-
-
-def crew_log_found(_variant, gen):
-    """Opening Ro's tin cache: a soft tin 'tink', the hinge's little creak and a whisper of paper."""
-    n = samples(1.3)
-    tink = (instruments.partial(n, 1150.0, 1.0, 0.001, 0.25) + instruments.partial(n, 1150.0 * 2.71, 0.25, 0.001,
-                                                                                    0.08))
-    excitation = np.zeros(n)
-    t = samples(0.18)
-    while t < samples(0.5):
-        excitation[t] += gen.uniform(0.4, 1.0)
-        t += samples(gen.uniform(0.008, 0.016))
-    creak = filters.bandpass(excitation, 720.0, 8.0) + 0.5 * filters.bandpass(excitation, 1150.0, 6.0)
-    creak = creak / max(float(np.max(np.abs(creak))), 1e-9) * 0.25
-    rustle = _grains(n, gen, 60.0, (0.004, 0.012), (0.001, 0.002), (0.003, 0.008), 0.2, 0.5)
-    rustle = filters.lowpass(filters.bandpass(rustle, 2600.0, 0.8), 4500.0) * envelope.segments(
-        n, [(0.0, 0.0), (0.45, 0.0), (0.6, 1.0), (1.2, 0.0)], shape="smooth")
-    return filters.lowpass(0.3 * tink + creak + 0.8 * rustle, 5000.0)
-
-
-def bell_signal_pick(_variant, gen):
-    """Bell's signal standing up at the pillar: a warm, very soft A4/D5/F#5 shimmer swelling and fading, far
-    away."""
-    pad = sum(instruments.soft_pad(note_freq(note), 4.0, 1.0, 1.8, hold=0.6, detune_cents=7.0)
-              for note in ("A4", "D5", "F#5"))
-    pad = filters.lowpass(effects.tremolo(pad, 5.0, 0.25), 3500.0)
-    return _mono_reverb(pad, room=0.8, damping=0.6, wet=0.45, dry=1.0)
-
-
-def bell_signal_found(_variant, gen):
-    """Bell's signal found: a resolved two-note chime, A5 then D6, soft and round."""
-    n = samples(2.2)
-    mix = instruments.soft_bell(note_freq("A5"), 2.2, decay=1.4, attack=0.01)
-    place(mix, instruments.soft_bell(note_freq("D6"), 2.2, decay=1.6, attack=0.01)[:n - samples(0.2)],
-          samples(0.2), 0.9)
-    return _mono_reverb(filters.lowpass(mix, 5500.0), room=0.6, damping=0.6, wet=0.28, dry=1.0)
-
-
-CANYON_LOOP_S = 16.0
-CANYON_WHISPER_BANDS = (
-    # centre Hz, Q, LFO cycles per loop, phase
-    (420.0, 2.2, 1.0, 0.0),
-    (680.0, 2.4, 2.0, 0.3),
-    (1050.0, 2.6, 3.0, 0.55),
-    (1550.0, 2.8, 2.0, 0.8),
-)
-
-
-def canyon_whisper(_variant, gen):
-    """Whispering Canyon's bed: breath-like air through narrow stone, its 'vowel' moving as four soft bands
-    swell in turn (fixed filters, periodic swells: seamless), with a high, faint air layer. Stereo, very soft."""
-    n = samples(CANYON_LOOP_S)
-    sides = []
-    for side in range(2):
-        mix = np.zeros(n)
-        for centre, q, cycles, phase in CANYON_WHISPER_BANDS:
-            band = periodic(noise.white(n, gen), lambda x, c=centre, qq=q, sd=side: filters.bandpass(
-                noise.pink_filter(x), c * (1.0 + 0.03 * sd), qq), warmup=samples(1.0))
-            swell = envelope.lfo(n, cycles / CANYON_LOOP_S, 0.5, 0.5, phase=phase + 0.11 * side) ** 2
-            mix += band / max(float(np.std(band)), 1e-9) * swell
-        air = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 2600.0, 1.0),
-                       warmup=samples(1.0))
-        mix += 0.15 * air / max(float(np.std(air)), 1e-9)
-        sides.append(periodic(mix, lambda x: filters.lowpass(filters.lowpass(x, 3200.0), 3200.0)))
-    return np.stack(sides, axis=1)
-
-
-def canyon_trough(_variant, gen):
-    """The chasm trough's deeper, darker bed: low brown rumble breathing slowly, a hollow 180 Hz resonance and a
-    faint D2 undertone. Stereo, seamless."""
-    n = samples(CANYON_LOOP_S)
-    d2 = loop_freq(note_freq("D2"), n)
-    sides = []
-    for side in range(2):
-        rumble = periodic(noise.white(n, gen), lambda x: filters.lowpass(filters.lowpass(
-            noise.brown_filter(x, 0.996), 320.0), 320.0), warmup=samples(1.0))
-        hollow = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 180.0, 1.6),
-                          warmup=samples(1.0))
-        breath = envelope.lfo(n, 2.0 / CANYON_LOOP_S, 0.25, 0.75, phase=0.3 * side)
-        mix = (rumble / max(float(np.std(rumble)), 1e-9) + 0.6 * hollow / max(float(np.std(hollow)), 1e-9)) * breath
-        mix += 0.25 * osc.sine(n, d2, phase=0.2 * side)
-        sides.append(periodic(mix, lambda x: filters.highpass(x, 30.0)))
-    return np.stack(sides, axis=1)
 
 
 # --------------------------------------------------------------------------------------------------- solitude (M3-10)
@@ -1390,100 +494,6 @@ def rover_metal_tick(variant, gen):
     ring = (instruments.partial(n, freq, 1.0, 0.0006, 0.09)
             + instruments.partial(n, 2.76 * freq, 0.2, 0.0006, 0.03))
     return filters.lowpass(click + 0.35 * ring, 6000.0)
-
-
-# --------------------------------------------------------------------------------------------------- relays (M3-06)
-
-def relay_mast_creak(_variant, gen):
-    """An old relay mast straightening: a long, low metal groan rising as it comes upright (stick-slip pulses in a
-    resonant body), a last little scrape and a soft clunk as it locks."""
-    n = samples(2.3)
-    groan_n = samples(1.7)
-    rate = osc.glide(groan_n, 9.0, 22.0, time_constant=0.6)
-    phase = np.cumsum(rate) / SAMPLE_RATE
-    pulses = np.maximum(0.0, np.sin(2.0 * math.pi * phase)) ** 3
-    friction = filters.bandpass(noise.white(groan_n, gen), 900.0, 1.2) * pulses
-    body = filters.swept(friction, "bandpass", osc.glide(groan_n, 160.0, 260.0, time_constant=0.7), q=3.0)
-    body = effects.saturate(body / max(float(np.std(body)), 1e-9), 0.6)
-    body *= envelope.segments(groan_n, [(0.0, 0.0), (0.25, 1.0), (1.4, 0.8), (1.7, 0.0)], shape="smooth")
-    scrape_n = samples(0.25)
-    scrape = filters.bandpass(noise.pink(scrape_n, gen), 1400.0, 1.0) * envelope.segments(
-        scrape_n, [(0.0, 0.0), (0.05, 1.0), (0.25, 0.0)], shape="smooth")
-    clunk_n = samples(0.5)
-    clunk = osc.sine(clunk_n, osc.glide(clunk_n, 120.0, 90.0, time_constant=0.03)) * envelope.ar(clunk_n, 0.003,
-                                                                                                   0.18)
-    clunk += 0.4 * filters.bandpass(noise.white(clunk_n, gen), 500.0, 1.5) * envelope.ar(clunk_n, 0.001, 0.03)
-    mix = np.zeros(n)
-    place(mix, 0.2 * body, 0)
-    place(mix, 0.05 * scrape / max(float(np.std(scrape)), 1e-9), samples(1.55))
-    place(mix, 0.3 * clunk, samples(1.75))
-    return filters.lowpass(filters.highpass(mix, 50.0), 4500.0)
-
-
-def relay_lamp_warm(_variant, gen):
-    """The mast's lamp warming up: a filament's tiny catch, then a soft hum rising from D3 into a warm glow with its
-    fifth and octave blooming over it."""
-    n = samples(2.6)
-    d3 = note_freq("D3")
-    hum = osc.additive(n, osc.glide(n, 0.92 * d3, d3, time_constant=0.25), [(1, 1.0), (2, 0.4), (3, 0.15)])
-    hum *= envelope.segments(n, [(0.0, 0.0), (0.5, 0.7), (1.6, 1.0), (2.6, 0.0)], shape="smooth")
-    glow = (instruments.soft_pad(note_freq("A4"), 2.4, 0.7, 1.2, hold=0.4)
-            + 0.7 * instruments.soft_pad(note_freq("D5"), 2.4, 0.9, 1.2, hold=0.3))
-    catch_n = samples(0.1)
-    catch = filters.bandpass(noise.white(catch_n, gen), 3000.0, 2.0) * envelope.ar(catch_n, 0.0005, 0.02)
-    mix = 0.25 * hum
-    place(mix, 0.12 * glow, samples(0.2))
-    place(mix, 0.04 * catch / max(float(np.max(np.abs(catch))), 1e-9), 0)
-    return filters.lowpass(mix, 5000.0)
-
-
-RELAY_LINK_NOTES = (("A4", 0.0), ("D5", 0.2), ("F#5", 0.4))
-
-
-def relay_link(_variant, gen):
-    """The link: a short three-note answer as an old radio would sound it - A4, D5, then F#5 left ringing - with a
-    breath of static, as if home had heard the new mast and replied."""
-    n = samples(1.9)
-    mix = np.zeros(n)
-    for note, when in RELAY_LINK_NOTES:
-        last = note == RELAY_LINK_NOTES[-1][0]
-        place(mix, _radio_blip(note, 0.9 if last else 0.18, gen, 1.0 if last else 0.75), samples(when))
-        place(mix, 0.5 * instruments.soft_bell(note_freq(note), 1.4 if last else 0.5, decay=1.0 if last else 0.4),
-              samples(when))
-    hiss = _static(n, gen, 1400.0, 0.8) * envelope.segments(n, [(0.0, 0.0), (0.1, 1.0), (1.0, 0.2), (1.9, 0.0)],
-                                                            shape="smooth")
-    return _old_radio(mix + 0.12 * hiss, 1.2)
-
-
-def radio_hop_out(_variant, gen):
-    """A radio-hop leaving: static swells up while a resonant band sweeps down and the sound filters out to a thin,
-    soft hiss as the screen fades (the radio's own static holds the dark until the hop lands)."""
-    n = samples(1.1)
-    centre = osc.glide(n, 1800.0, 380.0, time_constant=0.35)
-    env = envelope.segments(n, [(0.0, 0.0), (0.3, 1.0), (0.8, 0.6), (1.1, 0.0)], shape="smooth")
-    sides = []
-    for side in range(2):
-        hiss = filters.lowpass(filters.highpass(noise.white(n, gen), 250.0), 2600.0)
-        sweep = filters.swept(noise.white(n, gen), "bandpass", centre * (1.0 + 0.03 * side), q=4.0)
-        sides.append(filters.lowpass(filters.lowpass((0.4 * hiss + 1.2 * sweep) * env, 3200.0), 3200.0))
-    return np.stack(sides, axis=1)
-
-
-def radio_hop_in(_variant, gen):
-    """A radio-hop landing: the static's band sweeps up and locks onto the station - a soft D5 carrier emerges and
-    the hiss settles away as the view eases back in."""
-    n = samples(1.3)
-    centre = osc.glide(n, 380.0, 1600.0, time_constant=0.3)
-    hiss_env = envelope.segments(n, [(0.0, 0.6), (0.4, 1.0), (1.0, 0.15), (1.3, 0.0)], shape="smooth")
-    carrier = osc.additive(n, note_freq("D5"), [(1, 1.0), (2, 0.15)]) * envelope.segments(
-        n, [(0.0, 0.0), (0.45, 0.0), (0.75, 1.0), (1.3, 0.0)], shape="smooth")
-    sides = []
-    for side in range(2):
-        sweep = filters.swept(noise.white(n, gen), "bandpass", centre * (1.0 + 0.03 * side), q=4.0)
-        hiss = filters.lowpass(filters.highpass(noise.white(n, gen), 250.0), 2600.0)
-        mix = (1.0 * sweep + 0.3 * hiss) * hiss_env + 0.5 * carrier
-        sides.append(filters.lowpass(filters.lowpass(mix, 3200.0), 3200.0))
-    return np.stack(sides, axis=1)
 
 
 # --------------------------------------------------------------------------------------------------- salvage (M3-13)
@@ -1581,174 +591,7 @@ def salvage_break(variant, gen):
     return filters.lowpass(mix, 6000.0)
 
 
-# Site names after their anchor's "site." prefix; the runtime maps SiteAnswered.SiteId to these labels.
-SITE_ANSWER_NOTES = (("depot", "D4"), ("garage", "E4"), ("drill", "F#4"), ("kestrel", "A4"), ("lander", "B4"))
-# The basin's lone derelicts (0.5.5 section 1.7) answer the listen too: ids "micro.<name>", labelled "micro_<name>" (the
-# runtime maps the label back). Machines on their own, not stations: a higher, thinner octave, shorter and drier, each
-# on its own note and colour: (label, note, low-pass Hz, knock gain).
-MICRO_ANSWER_VOICES = (("micro_06", "F#5", 4200.0, 0.04), ("micro_mule", "D5", 2800.0, 0.08),
-                       ("micro_drone", "A5", 5200.0, 0.02))
-SITE_ANSWER_LABELS = (
-    tuple(label for site, _ in SITE_ANSWER_NOTES for label in (site, f"{site}_relic"))
-    + tuple(label for label, _, _, _ in MICRO_ANSWER_VOICES))
-
-
-def _micro_answer(voice, gen):
-    """A lone derelict answering the listen: a small, thin hull ring an octave above the stations' (a single detuned
-    twin, a faint octave), short and dry, so it reads as one machine rather than a place."""
-    _, note, cutoff, knock_gain = voice
-    freq = note_freq(note)
-    n = samples(2.2)
-    ring = (instruments.partial(n, freq, 1.0, 0.1, 1.4)
-            + instruments.partial(n, freq, 0.5, 0.1, 1.3, detune_cents=8.0)
-            + instruments.partial(n, 2.0 * freq, 0.1, 0.08, 0.6))
-    knock = filters.lowpass(noise.white(n, gen), 700.0) * envelope.ar(n, 0.002, 0.03)
-    mix = 0.45 * ring + knock_gain * knock / max(float(np.max(np.abs(knock))), 1e-9)
-    return _mono_reverb(filters.lowpass(mix, cutoff), room=0.45, damping=0.7, wet=0.18, dry=1.0)
-
-
-def site_answer(variant, gen):
-    """A salvage site answering 07's ping on its own note: a soft, hollow hull resonance swelling up (detuned twins,
-    a slow beat) and settling. A site still holding a crew relic answers warmer: its octave and a D5 glow rise
-    with it."""
-    if variant >= 2 * len(SITE_ANSWER_NOTES):
-        return _micro_answer(MICRO_ANSWER_VOICES[variant - 2 * len(SITE_ANSWER_NOTES)], gen)
-    note = SITE_ANSWER_NOTES[variant // 2][1]
-    holds_relic = variant % 2 == 1
-    freq = note_freq(note)
-    n = samples(3.0)
-    hull = (instruments.partial(n, freq, 1.0, 0.12, 2.2)
-            + instruments.partial(n, freq, 0.6, 0.12, 2.0, detune_cents=6.0)
-            + instruments.partial(n, 2.0 * freq, 0.18, 0.1, 1.0)
-            + instruments.partial(n, 3.0 * freq, 0.05, 0.1, 0.5))
-    knock = filters.lowpass(noise.white(n, gen), 600.0) * envelope.ar(n, 0.002, 0.04)
-    mix = 0.6 * hull + 0.05 * knock / max(float(np.max(np.abs(knock))), 1e-9)
-    if holds_relic:
-        mix += 0.22 * instruments.soft_bell(2.0 * freq, 3.0, decay=1.6, attack=0.15)
-        mix += 0.12 * instruments.soft_pad(note_freq("D5"), 3.0, 0.6, 1.4, hold=0.4)
-    return _mono_reverb(filters.lowpass(mix, 4500.0), room=0.7, damping=0.6, wet=0.3, dry=1.0)
-
-
 # ------------------------------------------------------------------------------------------- built for 07 (M3-14)
-
-HOPPER_HUM_LOOP_S = 2.0
-
-
-def hopper_feed_hum(_variant, gen):
-    """07's beam feeding a hopper: a soft, warm beam hum on D3 with its fifth, a little air flowing along it."""
-    n = samples(HOPPER_HUM_LOOP_S)
-    step = SAMPLE_RATE / n
-    d3 = loop_freq(note_freq("D3"), n)
-    a3 = loop_freq(note_freq("A3"), n)
-    hum = osc.additive(n, d3, [(1, 1.0), (2, 0.35), (3, 0.1)]) + 0.5 * osc.sine(n, a3 + step, phase=0.2)
-    hum *= envelope.lfo(n, 6.0 / HOPPER_HUM_LOOP_S, 0.12, 0.88)
-    air = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 1100.0, 0.8))
-    air = air / max(float(np.std(air)), 1e-9) * envelope.lfo(n, 2.0 / HOPPER_HUM_LOOP_S, 0.3, 0.7)
-    mix = 0.3 * hum + 0.04 * air
-    return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 3000.0), 70.0))
-
-
-def hopper_clunk(variant, gen):
-    """A bundle dropping into the hopper: a muffled clunk inside the bin and a short rattle settling."""
-    n = samples(0.8)
-    pitch = (1.0, 0.88)[variant]
-    clunk = osc.sine(n, osc.glide(n, 170.0 * pitch, 110.0 * pitch, time_constant=0.03)) * envelope.ar(n, 0.002, 0.2)
-    thud = filters.lowpass(noise.white(n, gen), 500.0) * envelope.ar(n, 0.001, 0.05)
-    rattle = _grains(n, gen, 30.0, (0.002, 0.005), (0.0005, 0.001), (0.01, 0.02), 0.5, 0.5)
-    rattle = filters.lowpass(filters.bandpass(rattle, 1300.0, 1.0), 3000.0) * envelope.segments(
-        n, [(0.0, 0.0), (0.04, 1.0), (0.35, 0.3), (0.8, 0.0)], shape="smooth")
-    mix = 0.6 * clunk + 0.25 * thud / max(float(np.max(np.abs(thud))), 1e-9) + 0.5 * rattle
-    return filters.lowpass(mix, 4000.0)
-
-
-BAY_SERVO_LOOP_S = 2.0
-
-
-def bay_arm_servo(_variant, gen):
-    """An old gantry arm moving: a low, patient servo whirr with a slow gear flutter and a gentle creak breathing
-    through it. Seamless; the runtime follows how fast the arm's tip moves."""
-    n = samples(BAY_SERVO_LOOP_S)
-    loop_hz = 1.0 / BAY_SERVO_LOOP_S
-    whirr = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 380.0, 2.2))
-    whirr = whirr / max(float(np.std(whirr)), 1e-9) * envelope.lfo(n, round(24.0 / loop_hz) * loop_hz, 0.2, 0.8)
-    motor = osc.additive(n, loop_freq(note_freq("A2"), n), [(1, 1.0), (2, 0.4), (3, 0.15)])
-    creak = periodic(noise.white(n, gen), lambda x: filters.swept(
-        x, "bandpass", 480.0 + 60.0 * np.sin(2.0 * math.pi * 2.0 * np.arange(x.shape[0]) / n), q=7.0))
-    creak = creak / max(float(np.std(creak)), 1e-9) * envelope.lfo(n, 2.0 * loop_hz, 0.5, 0.5) ** 3
-    mix = 0.1 * whirr + 0.05 * motor + 0.03 * creak
-    return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 3000.0), 60.0))
-
-
-def bay_arm_sigh(_variant, gen):
-    """An arm coming to rest: a soft hydraulic sigh (a filtered exhale) and a low settling thunk."""
-    n = samples(1.0)
-    breath = filters.swept(noise.pink(n, gen), "bandpass", osc.glide(n, 1400.0, 500.0, time_constant=0.3), q=1.2)
-    breath *= envelope.segments(n, [(0.0, 0.0), (0.08, 1.0), (0.5, 0.4), (1.0, 0.0)], shape="smooth")
-    thunk = osc.sine(n, osc.glide(n, 110.0, 80.0, time_constant=0.04)) * envelope.ar(n, 0.004, 0.15)
-    return filters.lowpass(0.08 * breath / max(float(np.std(breath)), 1e-9) + 0.3 * thunk, 4000.0)
-
-
-def bay_weld(_variant, gen):
-    """The kit set on 07: a short weld hiss with a soft crackle of sparks, then a gentle 'fitted' clunk."""
-    n = samples(1.1)
-    hiss = filters.bandpass(noise.white(n, gen), 1900.0, 0.9) * envelope.segments(
-        n, [(0.0, 0.0), (0.03, 1.0), (0.45, 0.6), (0.6, 0.0)], shape="smooth")
-    crackle = _grains(n, gen, 45.0, (0.0006, 0.002), (0.0002, 0.0003), (0.002, 0.005), 0.4, 0.6)
-    crackle = filters.lowpass(filters.bandpass(crackle, 2800.0, 0.9), 5000.0) * envelope.segments(
-        n, [(0.0, 0.0), (0.02, 1.0), (0.55, 0.3), (0.65, 0.0)], shape="smooth")
-    clunk_n = samples(0.4)
-    clunk = osc.sine(clunk_n, osc.glide(clunk_n, 200.0, 140.0, time_constant=0.02)) * envelope.ar(clunk_n, 0.002,
-                                                                                                    0.12)
-    mix = 0.05 * hiss / max(float(np.std(hiss)), 1e-9) + 0.9 * crackle
-    place(mix, 0.45 * clunk, samples(0.62))
-    return filters.lowpass(filters.lowpass(mix, 4500.0), 4500.0)
-
-
-PORT_ARM_S = 1.8
-
-
-def port_arm(_variant, gen):
-    """Kenji's garage port (first-hour v2 section 3): the folded arm wakes and reaches for 07 - a patient servo whirr
-    rising a fifth (A2 to E3) as it unfolds, a gear flutter through it, and a soft latch click as it settles."""
-    n = samples(PORT_ARM_S)
-    rise = osc.glide(n, note_freq("A2"), note_freq("E3"), time_constant=0.5)
-    motor = osc.additive(n, rise, [(1, 1.0), (2, 0.35), (3, 0.12)])
-    whirr = filters.bandpass(noise.pink_filter(noise.white(n, gen)), 420.0, 2.0)
-    whirr = whirr / max(float(np.std(whirr)), 1e-9) * (0.8 + 0.2 * osc.sine(n, 22.0))
-    body = envelope.segments(n, [(0.0, 0.0), (0.15, 1.0), (1.35, 0.8), (1.55, 0.0)], shape="smooth")
-    mix = (0.06 * motor + 0.05 * whirr) * body
-    click_n = samples(0.12)
-    click = filters.bandpass(noise.white(click_n, gen), 2200.0, 1.5) * envelope.ar(click_n, 0.001, 0.03)
-    place(mix, 0.25 * click, samples(1.5))
-    return filters.highpass(filters.lowpass(mix, 3200.0), 60.0)
-
-
-TETHER_RING_WAKE_S = 3.0
-
-
-def tether_ring_wake(_variant, gen):
-    """The tether ring's first hum once the port has fitted it: the tether's warm D3/A3/D4 energy swelling in out of
-    nothing, holding a breath with a gentle vibrato, then settling to silence - the verb coming back to 07."""
-    n = samples(TETHER_RING_WAKE_S)
-    vibrato = osc.sine(n, 4.5)
-    tone = np.zeros(n)
-    for note, amp in (("D3", 1.0), ("A3", 0.55), ("D4", 0.32)):
-        f = note_freq(note)
-        tone += amp * operator(n, f, modulation=vibrato, index=0.004 * f / 4.5)
-    shape = envelope.segments(n, [(0.0, 0.0), (0.9, 1.0), (1.7, 0.85), (3.0, 0.0)], shape="smooth")
-    fizz = filters.bandpass(noise.white(n, gen), 1800.0, 3.0) * shape
-    return filters.highpass(filters.lowpass(0.12 * tone * shape + 0.006 * fizz, 3000.0), 60.0)
-
-
-def bay_fitted_chime(_variant, gen):
-    """'Fitted - for you, 07': a resolved two-note chime, A4 settling onto D5, felt-soft, after a breath."""
-    n = samples(2.2)
-    mix = np.zeros((n, 2))
-    place(mix, pan(instruments.kalimba(note_freq("A4"), 1.2, gen, decay=0.9), -0.15), samples(0.25), 0.7)
-    place(mix, pan(instruments.kalimba(note_freq("D5"), 1.8, gen, decay=1.4), 0.15), samples(0.45), 0.85)
-    pad = instruments.soft_pad(note_freq("D4"), 1.8, 0.4, 1.2, hold=0.2)
-    place(mix, 0.08 * pad, samples(0.45))
-    return mix
 
 
 def stargaze_swell(_variant, gen):
@@ -1764,163 +607,6 @@ def stargaze_swell(_variant, gen):
         air = filters.lowpass(air / max(float(np.std(air)), 1e-9), 2500.0) * shape
         place(mix, pan(0.035 * air, side), 0)
     return mix
-
-
-BASE_WAKE_PLACES = ("home", "bay", "lift")
-BASE_WAKE_CHIMES = {"home": ("F#4", "A4", "D5"), "bay": ("A4", "D5"), "lift": ("D5", "E5", "A5")}
-
-
-def base_wake(variant, gen):
-    """Power returning to a place of the base: a low hum breathes up from A1 onto D2, then a gentle kalimba phrase
-    settles on top (home F#4-A4-D5, bay A4-D5, lift D5-E5-A5)."""
-    n = samples(4.0)
-    mix = np.zeros((n, 2))
-    rise = osc.glide(n, note_freq("A1"), note_freq("D2"), time_constant=0.5)
-    hum = osc.additive(n, rise, [(1, 1.0), (2, 0.3), (3, 0.08)])
-    hum = filters.lowpass(hum, 900.0) * envelope.segments(
-        n, [(0.0, 0.0), (1.2, 1.0), (2.0, 0.6), (4.0, 0.0)], shape="smooth")
-    place(mix, pan(0.22 * hum, 0.0), 0)
-    for i, note in enumerate(BASE_WAKE_CHIMES[BASE_WAKE_PLACES[variant]]):
-        place(mix, pan(instruments.kalimba(note_freq(note), 2.2, gen, decay=1.4), -0.15 + 0.15 * i),
-              samples(1.0 + 0.28 * i), 0.55)
-    return mix
-
-
-def station_not_yet(_variant, gen):
-    """A dormant station answering the sonar: one soft, muffled D3 bell with a felt-soft knock under it, asleep."""
-    n = samples(1.6)
-    bell = filters.lowpass(instruments.soft_bell(note_freq("D3"), 1.6, decay=1.0, attack=0.03), 700.0)
-    knock = osc.sine(n, osc.glide(n, 140.0, 110.0, time_constant=0.04)) * envelope.ar(n, 0.004, 0.12)
-    return 0.5 * bell[:n] + 0.15 * knock
-
-
-def lift_winch_creak(variant, gen):
-    """The crew's jammed winch as 07 comes near: a slow, low metal creak that leans and settles, never a squeal."""
-    n = samples(1.8)
-    start, end = ((260.0, 330.0), (300.0, 240.0))[variant]
-    creak = filters.swept(noise.pink(n, gen), "bandpass", osc.glide(n, start, end, time_constant=0.6), q=9.0)
-    creak = creak / max(float(np.std(creak)), 1e-9) * envelope.segments(
-        n, [(0.0, 0.0), (0.25, 1.0), (0.9, 0.7), (1.8, 0.0)], shape="smooth")
-    groan = osc.sine(n, osc.glide(n, note_freq("A1"), note_freq("D2"), time_constant=0.5)) * envelope.ar(n, 0.2, 1.0)
-    return filters.lowpass(0.06 * creak + 0.12 * groan, 2200.0)
-
-
-LIFT_RIDE_LOOP_S = 2.0
-
-
-def lift_ride(_variant, gen):
-    """The crew's lift riding: a patient ratchet ticking over a soft D2/A2 motor hum. Seamless."""
-    n = samples(LIFT_RIDE_LOOP_S)
-    hum = osc.additive(n, loop_freq(note_freq("D2"), n), [(1, 1.0), (2, 0.3), (3, 0.08)])
-    hum = hum + 0.4 * osc.sine(n, loop_freq(note_freq("A2"), n), phase=0.3)
-    ticks = np.zeros(n)
-    tick_len = samples(0.05)
-    for k in range(8):
-        click = filters.bandpass(noise.white(tick_len, gen), 1600.0, 2.5) * envelope.ar(tick_len, 0.001, 0.03)
-        start = k * n // 8
-        ticks[start:start + tick_len] += (0.8 + 0.2 * (k % 2)) * click
-    mix = 0.12 * hum + 0.05 * ticks / max(float(np.max(np.abs(ticks))), 1e-9)
-    return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 3500.0), 50.0))
-
-
-def lift_stop_clunk(_variant, gen):
-    """The lift reaching a stop: a deep, padded clunk of the platform seating and a short settle of its cables."""
-    n = samples(1.0)
-    clunk = osc.sine(n, osc.glide(n, 120.0, 75.0, time_constant=0.04)) * envelope.ar(n, 0.003, 0.3)
-    thud = filters.lowpass(noise.white(n, gen), 400.0) * envelope.ar(n, 0.001, 0.08)
-    rattle = _grains(n, gen, 20.0, (0.002, 0.005), (0.0005, 0.001), (0.01, 0.02), 0.5, 0.5)
-    rattle = filters.lowpass(filters.bandpass(rattle, 1100.0, 1.0), 2500.0) * envelope.segments(
-        n, [(0.0, 0.0), (0.06, 1.0), (0.4, 0.2), (1.0, 0.0)], shape="smooth")
-    mix = 0.6 * clunk + 0.25 * thud / max(float(np.max(np.abs(thud))), 1e-9) + 0.3 * rattle
-    return filters.lowpass(mix, 3500.0)
-
-
-def plotter_draw(_variant, gen):
-    """Kenji's pen plotter drawing a sheet (~3 s): the carriage whirs between strokes and the pen scratches softly
-    along each line."""
-    n = samples(3.2)
-    strokes = ((0.15, 0.7), (0.85, 1.35), (1.5, 2.2), (2.35, 2.9))
-    pen_gate = np.zeros(n)
-    whirr_gate = np.zeros(n)
-    for a, b in strokes:
-        seg = samples(b - a)
-        pen_gate[samples(a):samples(a) + seg] = envelope.segments(
-            seg, [(0.0, 0.0), (0.05, 1.0), (b - a - 0.05, 1.0), (b - a, 0.0)], shape="smooth")
-    for a, b in zip((0.0,) + tuple(s[1] for s in strokes), tuple(s[0] for s in strokes) + (3.2,)):
-        seg = samples(b - a)
-        whirr_gate[samples(a):samples(a) + seg] = envelope.segments(
-            seg, [(0.0, 0.0), (0.04, 1.0), (max(0.05, b - a - 0.04), 1.0), (b - a, 0.0)], shape="smooth")[:seg]
-    pen = filters.bandpass(noise.pink(n, gen), 3200.0, 1.4)
-    pen = pen / max(float(np.std(pen)), 1e-9) * (0.7 + 0.3 * envelope.lfo(n, 23.0, 1.0)) * pen_gate
-    whirr = filters.bandpass(noise.pink(n, gen), 700.0, 3.0)
-    whirr = whirr / max(float(np.std(whirr)), 1e-9) + 0.5 * osc.sine(n, note_freq("A3"))
-    mix = 0.025 * filters.lowpass(pen, 6000.0) + 0.05 * whirr * whirr_gate
-    return envelope.fade_out(filters.lowpass(mix, 7000.0), 0.1)
-
-
-def dock_evening_swell(_variant, gen):
-    """The dock's evening: a warm, low swell under the wide shot of the day's lamps, D3/F#3/A3 over a D2 root."""
-    n = samples(6.0)
-    mix = np.zeros((n, 2))
-    for note, gain, side in (("D2", 0.45, 0.0), ("D3", 0.3, -0.2), ("F#3", 0.18, 0.25), ("A3", 0.16, -0.1)):
-        place(mix, pan(gain * instruments.soft_pad(note_freq(note), 6.0, 2.0, 2.6, hold=1.0), side), 0, 0.3)
-    return mix
-
-
-BAY_TURNTABLE_LOOP_S = 3.0
-
-
-def bay_turntable(_variant, gen):
-    """The turntable turning 07: a low rumble of the disc on its rollers and a steady bearing hum on D2."""
-    n = samples(BAY_TURNTABLE_LOOP_S)
-    loop_hz = 1.0 / BAY_TURNTABLE_LOOP_S
-    rumble = periodic(noise.white(n, gen), lambda x: filters.lowpass(filters.lowpass(
-        noise.brown_filter(x, 0.996), 200.0), 200.0))
-    rumble = rumble / max(float(np.std(rumble)), 1e-9) * envelope.lfo(n, round(8.0 / loop_hz) * loop_hz, 0.2, 0.8)
-    bearing = osc.additive(n, loop_freq(note_freq("D2"), n), [(1, 1.0), (2, 0.5), (3, 0.2), (4, 0.08)])
-    mix = 0.25 * rumble + 0.12 * bearing
-    return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 1500.0), 30.0))
-
-
-def port_hatch_open(_variant, gen):
-    """The tower's service hatch opening: a metal latch clacking free and a short hinge creak as it swings."""
-    n = samples(1.0)
-    latch = filters.bandpass(noise.white(n, gen), 2000.0, 1.6) * envelope.ar(n, 0.0005, 0.015)
-    latch = latch / max(float(np.max(np.abs(latch))), 1e-9)
-    creak_n = samples(0.6)
-    creak = filters.swept(noise.white(creak_n, gen), "bandpass", osc.glide(creak_n, 600.0, 820.0), q=9.0)
-    creak = creak / max(float(np.std(creak)), 1e-9) * envelope.segments(
-        creak_n, [(0.0, 0.0), (0.1, 1.0), (0.45, 0.6), (0.6, 0.0)], shape="smooth")
-    mix = 0.25 * latch
-    place(mix, 0.06 * creak, samples(0.12))
-    return filters.lowpass(mix, 4500.0)
-
-
-def port_hatch_close(_variant, gen):
-    """The hatch swinging shut: a brief hinge swing and a solid little latch click."""
-    n = samples(0.8)
-    swing_n = samples(0.3)
-    swing = filters.swept(noise.white(swing_n, gen), "bandpass", osc.glide(swing_n, 760.0, 560.0), q=8.0)
-    swing = swing / max(float(np.std(swing)), 1e-9) * envelope.segments(
-        swing_n, [(0.0, 0.0), (0.08, 1.0), (0.3, 0.0)], shape="smooth")
-    click = filters.lowpass(filters.bandpass(noise.white(n, gen), 1500.0, 1.2), 2500.0) * envelope.ar(n, 0.002,
-                                                                                                    0.02)
-    knock = osc.additive(n, 280.0, [(1, 1.0), (2, 0.3)]) * envelope.ar(n, 0.004, 0.16)
-    mix = np.zeros(n)
-    place(mix, 0.12 * swing, 0)
-    tail = 0.1 * click / max(float(np.max(np.abs(click))), 1e-9) + 0.3 * knock
-    place(mix, tail[:n - samples(0.3)], samples(0.3))
-    return filters.lowpass(mix, 4500.0)
-
-
-def dock_connect(_variant, gen):
-    """07 settling onto the charging dock: a soft magnetic clunk as the contacts meet, a tiny electric tick."""
-    n = samples(0.7)
-    clunk = osc.sine(n, osc.glide(n, 150.0, 105.0, time_constant=0.025)) * envelope.ar(n, 0.003, 0.18)
-    mag = osc.sine(n, osc.glide(n, 900.0, 600.0, time_constant=0.02)) * envelope.ar(n, 0.002, 0.05)
-    tick = filters.bandpass(noise.white(n, gen), 3000.0, 2.0) * envelope.ar(n, 0.0004, 0.006)
-    mix = 0.55 * clunk + 0.06 * mag + 0.05 * tick / max(float(np.max(np.abs(tick))), 1e-9)
-    return filters.lowpass(mix, 5000.0)
 
 
 DOCK_HUM_LOOP_S = 4.0
@@ -2014,131 +700,6 @@ def leap_fizzle(_variant, gen):
     buzz *= envelope.ar(n, 0.01, 0.35)
     return filters.lowpass(crackle + 0.18 * buzz, 4200.0)
 
-
-def dock_release(_variant, gen):
-    """Leaving the dock: a tiny release, the contacts parting with a soft click and a breath of air."""
-    n = samples(0.25)
-    click = filters.bandpass(noise.white(n, gen), 1800.0, 1.4) * envelope.ar(n, 0.0005, 0.01)
-    air = filters.bandpass(noise.pink(n, gen), 900.0, 0.8) * envelope.segments(
-        n, [(0.0, 0.0), (0.03, 1.0), (0.2, 0.0)], shape="smooth")
-    mix = 0.25 * click / max(float(np.max(np.abs(click))), 1e-9) + 0.02 * air / max(float(np.std(air)), 1e-9)
-    return filters.lowpass(mix, 4500.0)
-
-
-def bell_knob_tap(_variant, gen):
-    """07's beam tapping Bell's dial knob: a tiny bakelite tick."""
-    n = samples(0.12)
-    tick = filters.bandpass(noise.white(n, gen), 2200.0, 1.6) * envelope.ar(n, 0.0004, 0.008)
-    knock = osc.sine(n, note_freq("A4")) * envelope.ar(n, 0.001, 0.025)
-    return filters.lowpass(0.25 * tick / max(float(np.max(np.abs(tick))), 1e-9) + 0.3 * knock, 4000.0)
-
-
-# ---- The crew's lab up the belly lift (docs/features/M3-19) and its map (M3-07) ----
-
-LAB_DETENT_NOTES = ("D5", "F#5", "A5")
-
-
-def lift_hatch_open(_variant, gen):
-    """The belly hatch's leaves sliding open over the rising platform: a soft rail rumble and an A3/A4 bell as they
-    part."""
-    n = samples(1.6)
-    slide = filters.lowpass(noise.brown(n, gen), 500.0)
-    slide = slide / max(float(np.std(slide)), 1e-9) * envelope.segments(
-        n, [(0.0, 0.0), (0.15, 1.0), (1.0, 0.6), (1.4, 0.0)], shape="smooth")
-    bell = instruments.soft_bell(note_freq("A3"), 1.6, decay=1.2, attack=0.03)[:n]
-    bell += 0.5 * instruments.soft_bell(note_freq("A4"), 1.6, decay=1.0, attack=0.04)[:n]
-    return filters.lowpass(0.05 * slide + 0.35 * bell, 3000.0)
-
-
-def lift_hatch_close(_variant, gen):
-    """The belly hatch's leaves sliding shut behind the lowered platform: the same rail rumble and a soft seat on D3."""
-    n = samples(1.4)
-    slide = filters.lowpass(noise.brown(n, gen), 450.0)
-    slide = slide / max(float(np.std(slide)), 1e-9) * envelope.segments(
-        n, [(0.0, 0.0), (0.1, 0.8), (0.8, 0.6), (1.0, 0.0)], shape="smooth")
-    seat = osc.sine(n, note_freq("D3"))
-    seat = seat * envelope.segments(n, [(0.0, 0.0), (0.82, 0.0), (0.84, 1.0), (1.4, 0.0)], shape="smooth")
-    return filters.lowpass(0.05 * slide + 0.3 * seat, 2500.0)
-
-
-def lab_detent(variant, gen):
-    """The lab's turntable settling at a station: a felt detent click with a tiny tine on one note of D major
-    pentatonic per station."""
-    n = samples(0.6)
-    click = filters.bandpass(noise.white(n, gen), 1800.0, 1.4) * envelope.ar(n, 0.0005, 0.012)
-    click = click / max(float(np.max(np.abs(click))), 1e-9)
-    tine = instruments.kalimba(note_freq(LAB_DETENT_NOTES[variant]), 0.6, gen, decay=0.35)
-    tine = (to_mono(tine) if tine.ndim > 1 else tine)[:n]
-    return filters.lowpass(0.15 * click + 0.4 * tine, 5000.0)
-
-
-LAB_ROOM_LOOP_S = 8.0
-
-
-def lab_room_tone(_variant, gen):
-    """The crew's lab around 07: a close, warm room, a lamp transformer's soft D2 hum and the faintest air. Seamless."""
-    n = samples(LAB_ROOM_LOOP_S)
-    air = periodic(noise.pink(n, gen), lambda x: filters.lowpass(filters.highpass(x, 120.0), 900.0))
-    air = air / max(float(np.std(air)), 1e-9)
-    hum = osc.additive(n, loop_freq(note_freq("D2"), n), [(1, 1.0), (2, 0.35), (3, 0.1)])
-    hum *= envelope.lfo(n, 1.0 / LAB_ROOM_LOOP_S, 0.15, 0.85)
-    return periodic(0.03 * air + 0.1 * hum, lambda x: filters.highpass(filters.lowpass(x, 1800.0), 40.0))
-
-
-RECOVERY_CHORD_NOTES = ("D3", "A3", "D4", "F#4", "A4")
-
-
-def recovery_row_chord(_variant, gen):
-    """A recovery target's row completes ("Power restored."): as its lamps pulse once from left to right a warm chord
-    rises with them, D3, A3, D4, F#4 and A4 swelling in one after another from left to right, two soft bells (F#5,
-    A5) settling on top. Slow and low: a held breath, never a fanfare."""
-    mix = np.zeros((samples(5.6), 2))
-    for i, note in enumerate(RECOVERY_CHORD_NOTES):
-        place(mix, pan(instruments.soft_pad(note_freq(note), 4.6, 0.7, 2.2, hold=0.9), -0.5 + 0.25 * i),
-              samples(0.24 * i), 0.3)
-    for i, note in enumerate(("F#5", "A5")):
-        place(mix, pan(instruments.soft_bell(note_freq(note), 3.2, decay=1.8), 0.25 + 0.2 * i),
-              samples(1.0 + 0.24 * i), 0.12)
-    return mix
-
-
-def map_pencil(_variant, gen):
-    """A place blinking seen on the crew's map: a short, soft pencil hiss on paper."""
-    n = samples(0.5)
-    hiss = filters.bandpass(noise.pink(n, gen), 2200.0, 0.9)
-    hiss = hiss / max(float(np.std(hiss)), 1e-9) * envelope.segments(
-        n, [(0.0, 0.0), (0.04, 1.0), (0.3, 0.5), (0.5, 0.0)], shape="smooth")
-    return filters.butter(0.05 * hiss, "lowpass", 3800.0)
-
-
-MAP_PEN_NOTES = ("D5", "E5", "F#5", "A5", "B5", "D6")
-
-
-def map_pen(variant, gen):
-    """The chart pen inking one place: a scratch of nib on paper over a faint tine, climbing D major pentatonic place
-    by place."""
-    n = samples(0.8)
-    scratch = filters.bandpass(noise.white(n, gen), 2400.0, 1.2)
-    scratch = scratch / max(float(np.std(scratch)), 1e-9) * envelope.segments(
-        n, [(0.0, 0.0), (0.03, 1.0), (0.45, 0.6), (0.6, 0.0)], shape="smooth")
-    tine = instruments.glass_chime(note_freq(MAP_PEN_NOTES[variant]), 0.8, decay=0.6)
-    tine = (to_mono(tine) if tine.ndim > 1 else tine)[:n]
-    return filters.lowpass(0.03 * scratch + 0.3 * tine, 6000.0)
-
-
-MAP_TABLE_LOOP_S = 4.0
-
-
-def map_table_hum(_variant, gen):
-    """The light table glowing under Ines's chart: a warm, very soft lamp hum on D3 with its fifth. Seamless."""
-    n = samples(MAP_TABLE_LOOP_S)
-    d3 = loop_freq(note_freq("D3"), n)
-    hum = osc.additive(n, d3, [(1, 1.0), (2, 0.3)]) + 0.35 * osc.sine(n, loop_freq(note_freq("A3"), n), phase=0.2)
-    hum *= envelope.lfo(n, 1.0 / MAP_TABLE_LOOP_S, 0.2, 0.8)
-    return periodic(0.2 * hum, lambda x: filters.highpass(filters.lowpass(x, 1600.0), 90.0))
-
-
-# --------------------------------------------------------------------------------------------------- registry
 
 # ---- 07's wake through its own eye (docs/design/cutscenes.md section 1) ----
 
@@ -2298,8 +859,6 @@ def hm_chirp(_variant, gen):
 
 CUES = (
     # 0.5.2 "Satisfying" (docs/design/feel-pass.md, polish-pass.md 1.1): recipes in feel_cues.py.
-    Cue("cut_cancel", "oneshot_3d", feel.cut_cancel, volume=(0.5, 0.5), milestone="M3",
-        notes="A charge let go: a soft falling A -> F#."),
     Cue("cut_sizzle", "loop_3d", feel.cut_sizzle, loop=True, file_stem="cut_sizzle_loop", volume=(0.5, 0.5),
         milestone="M3", notes="The beam through 07's body: a low-passed sizzle, level by cut progress. 3 s seamless."),
     Cue("cut_crack", "oneshot_3d", feel.cut_crack, volume=(0.7, 0.7), milestone="M3",
@@ -2336,16 +895,8 @@ CUES = (
         notes="0.5.5: a part dropped on a valid socket: a seated tick on D5 over a felt thud."),
     Cue("part_refuse", "tick_2d", feel.part_refuse, volume=(0.4, 0.4), milestone="M3",
         notes="0.5.5: a drop refused: two soft muted ticks falling B4 -> F#4."),
-    Cue("pulse_note", "oneshot_3d", feel.pulse_note, variants=len(feel.PULSE_NOTES), volume=(0.5, 0.5),
-        milestone="M3", tonal=True, notes="0.5.5: a mast lamp on the network's handshake: an airy bell a step up per hop."),
-    Cue("pulse_home", "oneshot_3d", feel.pulse_home, volume=(0.55, 0.55), milestone="M3", tonal=True,
-        notes="0.5.5: the handshake arriving home: a warm A4 -> D5 resolve."),
     Cue("sheet_complete", "stinger_2d", feel.sheet_complete, volume=(0.45, 0.45), milestone="M3", tonal=True,
         notes="0.5.5 D: a blueprint's sheet complete: a soft rising D major arpeggio on felt piano."),
-    Cue("recycle_crunch", "oneshot_3d", feel.recycle_crunch, volume=(0.55, 0.55), milestone="M3",
-        notes="0.5.5: the bay recycling a swapped-out part into Metal: a muffled crunch and two settling ticks."),
-    Cue("part_remove", "oneshot_3d", feel.part_remove, volume=(0.6, 0.6), milestone="M3",
-        notes="0.5.5: a part coming off 07: a latch tick and a servo easing down (the install in reverse)."),
     Cue("scan_sweep", "loop_3d", feel.scan_sweep, loop=True, file_stem="scan_sweep_loop", volume=(0.5, 0.5),
         milestone="M3", notes="0.5.5 D: the lens's fan sweeping a fragment; pitch steps D E F# A per 25%. 2 s loop."),
     Cue("scan_step", "oneshot_3d", feel.scan_step, variants=len(feel.SCAN_STEP_NOTES), volume=(0.5, 0.5),
@@ -2368,8 +919,6 @@ CUES = (
         milestone="M3", notes="0.5.5 B: a hold slot lighting, a rising pentatonic tick (D5 .. F#6)."),
     Cue("item_slide", "tick_2d", feel.item_slide, volume=(0.45, 0.45), milestone="M3",
         notes="0.5.5 B: a starter item sliding into its slot."),
-    Cue("stack_transfer", "tick_2d", feel.stack_transfer, variants=2, variant_labels=feel.TRANSFER_LABELS,
-        volume=(0.45, 0.45), milestone="M3", notes="0.5.5 B: a stack moved, falling to home, rising to 07."),
     Cue("seal_cut", "oneshot_3d", feel.seal_cut, volume=(0.6, 0.6), milestone="M3",
         notes="0.5.5 C: a container's seal cut through: a pop felt through the chassis and a ping on A5."),
     Cue("container_open", "oneshot_3d", feel.container_open, variants=len(feel.CONTAINER_LABELS),
@@ -2384,26 +933,21 @@ CUES = (
         milestone="M3", notes="The beam moving to the next cut line: a tick and a slide onto the next step."),
     Cue("cargo_tok", "tick_3d", feel.cargo_tok, volume=(0.7, 0.7), milestone="M3",
         notes="The cargo hold full (M3-25): a soft tok on the lid."),
-    Cue("shelf_chord", "stinger_2d", feel.shelf_chord, volume=(0.55, 0.55), milestone="M3",
-        notes="A shelf built at home (M3-25): a warm D major chord."),
     Cue("crate_latch", "tick_3d", feel.crate_latch, volume=(0.6, 0.6), milestone="M3",
         notes="A crew supply crate opened (M3-25): a latch and a soft paper rustle for the note."),
-    Cue("tilly_fetch", "stinger_2d", feel.tilly_fetch, volume=(0.5, 0.5), milestone="M3",
-        notes="Tilly fetching a bundle from the shelves (M3-25): a soft drag and her A5 -> D6 'got it'."),
     Cue("pickup_lift", "oneshot_3d", feel.pickup_lift, volume=(0.6, 0.6), milestone="M3",
         notes="07 lifting a part (Collect Act): a soft servo whirr rising A2 -> D3."),
     Cue("pickup_clunk", "tick_3d", feel.pickup_clunk, volume=(0.8, 0.8), milestone="M3",
         notes="The part seating on 07's back (Collect Impact): a solid little clunk on D."),
-    Cue("tower_hum_rise", "oneshot_3d", feel.tower_hum_rise, volume=(0.7, 0.7), milestone="M3",
-        notes="The tower taking its parts (Build Anticipate): a low D2 -> A2 hum rising over ~1.2 s."),
-    Cue("tower_ring", "oneshot_3d", feel.tower_ring, variants=len(feel.TOWER_RING_NOTES), volume=(0.6, 0.6),
-        milestone="M3", tonal=True, notes="A tower lamp ring lighting (Build Act x4): D E F# A, bottom to top."),
-    Cue("tower_thoom", "oneshot_3d", feel.tower_thoom, volume=(0.75, 0.75), milestone="M3",
-        notes="The beacon flares (Build Impact): a deep soft thoom and a D major chord."),
-    Cue("node_light", "stinger_2d", feel.node_light, variants=len(feel.NODE_LIGHT_NOTES), volume=(0.55, 0.55),
-        milestone="M3", tonal=True, notes="A tech node lighting: a bloom pop and one pentatonic step by branch."),
-    Cue("component_found", "oneshot_3d", feel.component_found, volume=(0.6, 0.6), milestone="M3", tonal=True,
-        notes="A component lifting free: a two-note found, E -> A."),
+    Cue("structure_power_on", "oneshot_3d", base.structure_power_on, volume=(0.6, 0.6), milestone="M3",
+        tonal=True, notes="Opening v2 B8: a structure taking power: a relay thunk, a transformer swell D2 -> A2, "
+                          "its lamp blooming on D5."),
+    Cue("title_crt_off", "stinger_2d", base.title_crt_off, volume=(0.6, 0.6), milestone="M3", tonal=True,
+        notes="The title CRT switching off into New Game / Continue: a soft tube tock, a falling breath and a "
+              "short warm D4 ring that the wake's ghost chord continues."),
+    Cue("base_lamp_on", "oneshot_3d", base.base_lamp_on, variants=len(base.BASE_LAMP_NOTES), volume=(0.5, 0.5),
+        milestone="M3", tonal=True, notes="Opening v2 B10: a base lamp coming on at nightfall: a muted filament "
+                                          "switch and a warm glow on its step (D4 .. F#5)."),
     Cue("boost_whine", "loop_3d", feel.boost_whine, loop=True, file_stem="boost_whine_loop", volume=(0.45, 0.45),
         milestone="M3", notes="The capacitor drums boosting: a soft whine on A. 2 s seamless."),
     Cue("boost_release", "tick_3d", feel.boost_release, volume=(0.6, 0.6), milestone="M3",
@@ -2414,8 +958,6 @@ CUES = (
         notes="The game saved: a tiny soft tick on D, once per burst."),
     Cue("count_tick", "tick_2d", feel.count_tick, variants=len(feel.COUNT_TICK_NOTES), volume=(0.45, 0.45),
         milestone="M3", notes="The stock counter rolling one unit: a rising pentatonic tick."),
-    Cue("window_click", "tick_3d", feel.window_click, volume=(0.6, 0.6), milestone="M3",
-        notes="A home window lighting: one warm click from outside."),
     Cue("asleep_static", "radio_2d", asleep_static, loop=True, file_stem="asleep_static_loop", volume=(0.6, 0.6),
         milestone="M3", notes="The radio asleep, out of tune (title, 07's opening): narrow-band hiss, a faint "
                               "wandering A5 whistle, odd crackle pops. 8 s seamless."),
@@ -2445,10 +987,6 @@ CUES = (
         notes="Soft rubbery stick-slip creak + quiet spring tone; no resonance above ~1.2 kHz (never squeaky)."),
     Cue("landing_thump", "oneshot_3d", landing_thump, variants=3, volume=(0.85, 1.0), pitch=(0.95, 1.05),
         fade_out=0.08, notes="Soft whump (98->47 Hz glide) + body + slow dust hiss; runtime scales by impact."),
-    Cue("port_arm", "oneshot_3d", port_arm, volume=(0.8, 0.8), milestone="M3",
-        notes="Kenji's garage port: the folded arm unfolds towards 07 (servo whirr rising A2 to E3, latch click)."),
-    Cue("tether_ring_wake", "oneshot_3d", tether_ring_wake, volume=(0.8, 0.8), milestone="M3", tonal=True,
-        notes="The tether ring's first hum after the port fits it: D3/A3/D4 swelling in, held, settling."),
     Cue("radio_carrier", "radio_2d", radio_carrier, loop=True, file_stem="radio_carrier_loop", tonal=True,
         milestone="M3", notes="The Earth signal's carrier after tower L1 (M3-24): a steady soft D4 tone with a faint "
                               "A4, breathing slowly over a trace of hiss. 8 s seamless; no music."),
@@ -2456,12 +994,6 @@ CUES = (
         notes="Warm AM/vinyl static, 6 s seamless stereo; volume rises as radio clarity falls."),
     Cue("radio_tune", "radio_fx_2d", radio_tune, fade_out=0.1,
         notes="Dial-tuning swish (static swell + sweeping resonant band) under the crossfade between tracks."),
-    Cue("sonar_ping", "oneshot_3d", sonar_ping, volume=(0.8, 0.8), fade_out=0.15, milestone="M2",
-        tonal=True, notes="Kalimba D5 (tine partial 6.27x, felt-pick transient)."),
-    Cue("relic_answer", "oneshot_3d", relic_answer, variants=len(RELIC_NOTES), volume=(0.8, 0.8), fade_out=0.2,
-        variant_labels=tuple(relic_id for relic_id, _ in RELIC_NOTES), milestone="M2", tonal=True,
-        notes="One variant per relic (label = relic id) on its answer note from Data/Content/Relics: shimmering "
-              "soft bell + octave, tremolo 6.5 Hz."),
     Cue("recovery_lift", "loop_3d", recovery_lift, loop=True, file_stem="recovery_lift_loop", volume=(0.6, 0.6),
         milestone="M2", tonal=True, hf_cutoff=6000.0, hf_max_db=-40.0,
         notes="Servo whir D3/A3 + air while 07 is lifted to safety; content < 3.2 kHz for the pitch glide."),
@@ -2471,55 +1003,11 @@ CUES = (
         fade_out=0.1, variant_labels=("D5", "E5", "Fs5", "A5", "B5", "D6", "E6", "Fs6"), milestone="M3",
         tonal=True, notes="Salvage folding in: felt fold + glassy chime per pentatonic degree D5..F#6; the salvage "
                           "melody picks the clip from the site's combo step (climbs, then weaves over the top)."),
-    Cue("tether_attach", "oneshot_3d", tether_attach, volume=(0.7, 0.7), fade_out=0.15, milestone="M2",
-        tonal=True, notes="Karplus-Strong felt pluck D4 + A2 body."),
-    Cue("tether_hum", "loop_3d", tether_hum, loop=True, file_stem="tether_hum_loop", volume=(0.5, 0.5),
-        milestone="M2", tonal=True, notes="D3/A3/D4 hum, vibrato 4.5 Hz, wobble 0.75 Hz, 4 s seamless."),
-    Cue("tether_release", "oneshot_3d", tether_release, volume=(0.6, 0.6), pitch=(0.95, 1.05), fade_out=0.06,
-        milestone="M2", notes="Breathy band-passed noise sweep 450->2200 Hz + falling A4->D4 hint."),
-    Cue("tether_snap", "oneshot_3d", tether_snap, volume=(0.45, 0.45), pitch=(0.97, 1.03), fade_out=0.1,
-        milestone="M2", notes="Softer sighing release when the tether snaps itself: falling breath 1800->380 Hz."),
-    Cue("relic_placed", "oneshot_3d", relic_placed, volume=(0.7, 0.7), fade_out=0.2, milestone="M2", tonal=True,
-        notes="Relic placed on the museum shelf: soft D3 felt tock + A4 -> D5 kalimba resolve."),
-    Cue("excavation_rumble", "loop_3d", excavation_rumble, loop=True, file_stem="excavation_rumble_loop",
-        volume=(0.6, 0.6), milestone="M2", notes="Low brown-noise rumble + grit + D2/A2 drone, 6 s seamless."),
-    Cue("surfacing_sparkle", "oneshot_3d", surfacing_sparkle, volume=(0.8, 0.8), fade_out=0.25, milestone="M2",
-        tonal=True, notes="Rising glassy run D5..D6 over an upward whoosh."),
     Cue("ui_hold_fill", "ui_2d", ui_hold_fill, volume=(0.45, 0.45), fade_out=0.05,
         notes="UiCue HoldFill: D5/A5 swell rising over the 0.6 s hold (UI TowerPanelSettings.HoldSeconds); "
               "stopped on release/complete."),
     Cue("ui_hold_complete", "ui_2d", ui_hold_complete, volume=(0.55, 0.55), fade_out=0.2, tonal=True,
         notes="UiCue HoldComplete: soft resolved D major felt-piano chord + music-box D6."),
-    Cue("tilly_broken", "oneshot_3d", tilly_broken, variants=len(TILLY_BROKEN), volume=(0.45, 0.5), fade_out=0.1,
-        milestone="M3", tonal=True,
-        notes="Tilly dormant answering a ping: faint, glitchy, hopeful chirp (stutters, sags, retries)."),
-    Cue("tilly_curious", "oneshot_3d", tilly_curious, variants=len(TILLY_CURIOUS), volume=(0.5, 0.55),
-        fade_out=0.08, milestone="M3", tonal=True, notes="Tilly curious 'hm?': short blip + rising question slide."),
-    Cue("tilly_happy", "oneshot_3d", tilly_happy, variants=len(TILLY_HAPPY), volume=(0.55, 0.6), fade_out=0.08,
-        milestone="M3", tonal=True, notes="Tilly happy: bouncing pentatonic trill."),
-    Cue("tilly_sleepy", "oneshot_3d", tilly_sleepy, variants=len(TILLY_SLEEPY), volume=(0.35, 0.4),
-        fade_out=0.12, milestone="M3", tonal=True, notes="Tilly napping on her perch: slow falling coo + echo."),
-    Cue("tilly_greeting", "oneshot_3d", tilly_greeting, variants=len(TILLY_GREETING), volume=(0.6, 0.65),
-        fade_out=0.08, milestone="M3", tonal=True,
-        notes="Tilly flying out to meet 07: rising swoop + trill landing high."),
-    Cue("tilly_excited", "oneshot_3d", tilly_excited, variants=len(TILLY_EXCITED), volume=(0.6, 0.65),
-        fade_out=0.08, milestone="M3", tonal=True, notes="Tilly when a relic comes home: fluttering arpeggio."),
-    Cue("tilly_found", "oneshot_3d", tilly_found, variants=len(TILLY_FOUND), volume=(0.55, 0.6), fade_out=0.08,
-        milestone="M3", tonal=True, notes="Tilly spotting something: 'found it!' hop up with a bright landing."),
-    Cue("friend_spot_ping", "oneshot_3d", friend_spot_ping, volume=(0.5, 0.5), fade_out=0.2, milestone="M3",
-        tonal=True, notes="Soft A5 bell + A6 shimmer marking what a friend spotted (relic, part, scrap)."),
-    Cue("tilly_rotor", "loop_3d", tilly_rotor, loop=True, file_stem="tilly_rotor_loop", volume=(0.35, 0.35),
-        hf_cutoff=6000.0, hf_max_db=-40.0, milestone="M3", tonal=True,
-        notes="Tilly's tiny four-rotor hum around A3, 4 s seamless; < 3.5 kHz so speed can pitch it up."),
-    Cue("friend_stitch", "loop_3d", friend_stitch, loop=True, file_stem="friend_stitch_loop", volume=(0.6, 0.6),
-        milestone="M3", tonal=True,
-        notes="Repair stitching: D/A shimmer + D3 sewing pulse + pentatonic needle ticks, 4 s seamless."),
-    Cue("friend_boot", "oneshot_3d", friend_boot, volume=(0.7, 0.7), fade_out=0.2, milestone="M3", tonal=True,
-        notes="Repaired friend boots: eye flickers, power-up glide, music-box jingle D5 F#5 A5 D6."),
-    Cue("friend_part", "oneshot_3d", friend_part, variants=len(FRIEND_PART_STEPS) + 1, volume=(0.65, 0.65),
-        variant_labels=("step1", "step2", "step3", "step4", "complete"), fade_out=0.2, milestone="M3",
-        tonal=True, notes="Friend part collected: amber vibraphone bar climbing D5 F#5 A5 B5; 'complete' on the last "
-                          "part resolves A5 -> D6."),
     Cue("jump_charge", "loop_3d", jump_charge, loop=True, file_stem="jump_charge_loop", volume=(0.45, 0.45),
         hf_cutoff=6000.0, hf_max_db=-40.0, milestone="M3", tonal=True,
         notes="Hover-Jump charge hum on D4 + spring creak; runtime steps it D E F# A B with the charge."),
@@ -2528,62 +1016,9 @@ CUES = (
         notes="Leap: soft rising boing + whoosh; 'hop' for taps, 'leap' for strong charges (volume by strength)."),
     Cue("coil_twang", "oneshot_3d", coil_twang, variants=2, variant_labels=("A3", "D4"), volume=(0.4, 0.45),
         fade_out=0.1, milestone="M3", tonal=True, notes="The coils springing out on a leap: soft plucked spring."),
-    Cue("air_wind", "loop_3d", air_wind, loop=True, file_stem="air_wind_loop", volume=(0.4, 0.4), milestone="M3",
-        notes="Soft rushing air while airborne, 6 s seamless; swells with air time and speed."),
     Cue("jump_land", "oneshot_3d", jump_land, variants=len(JUMP_LAND_SETTINGS), volume=(0.75, 0.85),
         pitch=(0.97, 1.03), fade_out=0.1, milestone="M3",
         notes="Cushioned landing after a leap: air puff + muted thud + spring + dust (gentler than the thump)."),
-    Cue("coil_pop", "oneshot_3d", coil_pop, volume=(0.6, 0.6), fade_out=0.1, milestone="M3",
-        notes="The Hover-Jump coils popping in after the purchase: clunk + sproing."),
-    Cue("workbench_upgrade", "stinger_2d", workbench_upgrade, volume=(0.75, 0.75), fade_out=0.3, milestone="M3",
-        tonal=True, notes="Workbench purchase: spark crackles at 0/0.16/0.32 s (matching the bench's bursts) + "
-                          "toolbox rattle + resolved A -> D major cadence."),
-    Cue("bell_broken", "oneshot_3d", bell_broken, variants=2, volume=(0.45, 0.5), fade_out=0.15, milestone="M3",
-        notes="Bell dormant answering a ping: a dying set catching a station for a moment."),
-    Cue("bell_excited", "oneshot_3d", bell_excited, variants=2, volume=(0.55, 0.6), fade_out=0.1, milestone="M3",
-        tonal=True, notes="Bell's happy crackle on a new relic: static burst + two warbling blips up the scale."),
-    Cue("bell_tune", "oneshot_3d", bell_tune, variants=2, volume=(0.45, 0.5), fade_out=0.06, milestone="M3",
-        notes="Bell's station-switch crackle: detent tick + a static swish as the needle moves."),
-    Cue("bell_step", "tick_3d", bell_step, variants=len(BELL_STEP_PITCH_HZ), volume=(0.45, 0.55),
-        pitch=(0.96, 1.04), fade_out=0.02, milestone="M3", notes="Bell's light tripod-foot taps while she walks."),
-    Cue("bell_doze", "loop_3d", bell_doze, loop=True, file_stem="bell_doze_loop", volume=(0.3, 0.3), milestone="M3",
-        tonal=True, notes="Bell dozing: dial ember hum on D2/D3 + faint A3 glow + rare valve tick, 6 s seamless."),
-    Cue("bell_wake", "oneshot_3d", bell_wake, volume=(0.5, 0.5), fade_out=0.12, milestone="M3", tonal=True,
-        notes="Bell waking: the hum warms up, a crackle, a sleepy E5 -> A5 hello."),
-    Cue("bell_curious", "oneshot_3d", bell_curious, variants=len(BELL_CURIOUS), volume=(0.45, 0.5), fade_out=0.08,
-        milestone="M3", tonal=True,
-        notes="Bell 'hm?': a tuning squeak settling onto a note, then the whistle sliding up like a question."),
-    Cue("bell_happy", "oneshot_3d", bell_happy, variants=len(BELL_HAPPY), volume=(0.5, 0.55), fade_out=0.08,
-        milestone="M3", tonal=True, notes="Bell happy at home: a gliding dial-whistle run up the pentatonic."),
-    Cue("bell_sleepy", "oneshot_3d", bell_sleepy, variants=len(BELL_SLEEPY), volume=(0.35, 0.4), fade_out=0.15,
-        milestone="M3", tonal=True, notes="Bell sleepy: a slow whistle sagging down like a tape winding down."),
-    Cue("bell_greeting", "oneshot_3d", bell_greeting, variants=len(BELL_GREETING), volume=(0.55, 0.6),
-        fade_out=0.1, milestone="M3", tonal=True,
-        notes="Bell 'hello!': upward tuning squeak + a station-ident whistle (her jingle replaces it at home)."),
-    Cue("bell_found", "oneshot_3d", bell_found, variants=len(BELL_FOUND), volume=(0.5, 0.55), fade_out=0.08,
-        milestone="M3", tonal=True, notes="Bell 'got it!': a squeak locking onto a clean tone, then up a fourth."),
-    Cue("bell_rotor", "loop_3d", bell_rotor, loop=True, file_stem="bell_rotor_loop", volume=(0.3, 0.3),
-        hf_cutoff=6000.0, hf_max_db=-40.0, milestone="M3",
-        notes="Bell's walking effort: soft clockwork tick-tock of her legs + spring whirr + creak, 4 s seamless."),
-    Cue("bell_tape_slot", "oneshot_3d", bell_tape_slot, volume=(0.6, 0.6), fade_out=0.08, milestone="M3",
-        notes="BellCued.TapeSlotted: the tape slides into her slot, clacks home and the capstan motor catches."),
-    Cue("bell_needle_sweep", "oneshot_3d", bell_needle_sweep, volume=(0.6, 0.6), fade_out=0.15, milestone="M3",
-        notes="BellCued.NeedleSwept: lamp hum warms, the needle sweeps up the band past three faint stations."),
-    Cue("radio_dial_click", "tick_2d", radio_dial_click, volume=(0.7, 0.7), fade_out=0.02, milestone="M3",
-        notes="One detent of Bell's radio dial (2D, at the dial)."),
-    Cue("cassette_pickup", "oneshot_3d", cassette_pickup, volume=(0.7, 0.7), fade_out=0.1, milestone="M3",
-        notes="Collecting a cassette: plastic clack + reels spinning up + a soft D6 counter tick."),
-    Cue("crew_log_found", "oneshot_3d", crew_log_found, volume=(0.6, 0.6), fade_out=0.1, milestone="M3",
-        notes="Opening a crew log cache: tin tink + hinge creak + paper rustle."),
-    Cue("bell_signal_pick", "oneshot_3d", bell_signal_pick, volume=(0.35, 0.35), fade_out=0.4, milestone="M3",
-        tonal=True, notes="Bell's signal pillar appearing: warm, very soft A4/D5/F#5 shimmer (played distant)."),
-    Cue("bell_signal_found", "oneshot_3d", bell_signal_found, volume=(0.55, 0.55), fade_out=0.25, milestone="M3",
-        tonal=True, notes="Bell's signal found: resolved A5 -> D6 chime."),
-    Cue("canyon_whisper", "ambience_2d", canyon_whisper, loop=True, file_stem="canyon_whisper_loop",
-        volume=(0.8, 0.8), milestone="M3",
-        notes="Whispering Canyon bed: breathy air with a slowly moving 'vowel', 16 s seamless stereo."),
-    Cue("canyon_trough", "ambience_2d", canyon_trough, loop=True, file_stem="canyon_trough_loop", volume=(0.7, 0.7),
-        milestone="M3", notes="The chasm trough's deeper, darker bed: low rumble + hollow 180 Hz + D2, 16 s seamless."),
     Cue("room_tone", "ambience_2d", room_tone, loop=True, file_stem="room_tone_loop", volume=(0.8, 0.8),
         milestone="M3", notes="Solitude room tone: wide, very soft dark air + faint D2/A2, 24 s seamless stereo."),
     Cue("rover_lamp_hum", "loop_3d", rover_lamp_hum, loop=True, file_stem="rover_lamp_hum_loop", volume=(0.5, 0.5),
@@ -2593,16 +1028,6 @@ CUES = (
     Cue("rover_metal_tick", "tick_3d", rover_metal_tick, variants=len(METAL_TICK_NOTES), volume=(0.4, 0.55),
         pitch=(0.98, 1.02), fade_out=0.03, milestone="M3", tonal=True,
         notes="07's metal ticking as it cools after a drive: dry click + a tiny pentatonic ring."),
-    Cue("relay_mast_creak", "oneshot_3d", relay_mast_creak, volume=(0.6, 0.6), fade_out=0.1, milestone="M3",
-        notes="A relay mast straightening: low metal groan rising, a scrape and a soft locking clunk."),
-    Cue("relay_lamp_warm", "oneshot_3d", relay_lamp_warm, volume=(0.55, 0.55), fade_out=0.2, milestone="M3",
-        tonal=True, notes="A mast's lamp warming: filament catch, hum rising onto D3, A4/D5 glow."),
-    Cue("relay_link", "oneshot_3d", relay_link, volume=(0.6, 0.6), fade_out=0.2, milestone="M3", tonal=True,
-        notes="The link answer from home's direction: old-radio A4 D5 F#5 with a breath of static."),
-    Cue("radio_hop_out", "radio_fx_2d", radio_hop_out, volume=(0.8, 0.8), fade_out=0.05, milestone="M3",
-        notes="Radio-hop leaving: static swells, band sweeps down and filters out as the screen fades."),
-    Cue("radio_hop_in", "radio_fx_2d", radio_hop_in, volume=(0.8, 0.8), fade_out=0.1, milestone="M3",
-        notes="Radio-hop landing: band sweeps up and locks onto a soft D5 carrier as the view eases in."),
     Cue("salvage_cut_metal", "loop_3d", salvage_cut_metal, loop=True, file_stem="salvage_cut_metal_loop",
         volume=(0.5, 0.5), milestone="M3", notes="Cutting metal: low soft grind breathing with the beam + sparks."),
     Cue("salvage_cut_wiring", "loop_3d", salvage_cut_wiring, loop=True, file_stem="salvage_cut_wiring_loop",
@@ -2615,65 +1040,8 @@ CUES = (
     Cue("salvage_break", "oneshot_3d", salvage_break, variants=len(SALVAGE_BREAK_KINDS),
         variant_labels=SALVAGE_BREAK_KINDS, volume=(0.65, 0.65), fade_out=0.1, milestone="M3",
         notes="A piece breaking loose: metal crack + clunk, wiring snap + spring, optics glassy crack + tinkle."),
-    Cue("site_answer", "oneshot_3d", site_answer, variants=len(SITE_ANSWER_LABELS), variant_labels=SITE_ANSWER_LABELS,
-        volume=(0.8, 0.8), fade_out=0.25, milestone="M3", tonal=True,
-        notes="A site answering a ping: hull resonance on its note (depot D4, garage E4, drill F#4, kestrel A4, "
-              "lander B4); '_relic' answers warmer with its octave and a D5 glow; the lone derelicts "
-              "(micro_06 F#5, micro_mule D5, micro_drone A5) answer thinner and shorter, an octave above."),
-    Cue("hopper_feed_hum", "loop_3d", hopper_feed_hum, loop=True, file_stem="hopper_feed_hum_loop",
-        volume=(0.45, 0.45), milestone="M3", tonal=True, notes="07's beam feeding a hopper: soft D3/A3 hum + air."),
-    Cue("hopper_clunk", "oneshot_3d", hopper_clunk, variants=2, volume=(0.55, 0.6), fade_out=0.1, milestone="M3",
-        notes="Bundles dropping into the hopper: muffled clunk + a short settling rattle."),
-    Cue("bay_arm_servo", "loop_3d", bay_arm_servo, loop=True, file_stem="bay_arm_servo_loop", volume=(0.5, 0.5),
-        milestone="M3", notes="An old gantry arm moving: low servo whirr, gear flutter, a gentle creak."),
-    Cue("bay_arm_sigh", "oneshot_3d", bay_arm_sigh, volume=(0.45, 0.45), fade_out=0.1, milestone="M3",
-        notes="An arm coming to rest: soft hydraulic sigh + low settling thunk."),
-    Cue("bay_weld", "oneshot_3d", bay_weld, volume=(0.6, 0.6), fade_out=0.1, milestone="M3",
-        notes="Kit set on 07: short weld hiss + soft spark crackle, then a gentle 'fitted' clunk."),
-    Cue("bay_fitted_chime", "stinger_2d", bay_fitted_chime, volume=(0.6, 0.6), fade_out=0.3, milestone="M3",
-        tonal=True, notes="'Done for 07': A4 resolving onto D5, felt-soft kalimba over a faint D4 pad."),
     Cue("stargaze_swell", "stinger_2d", stargaze_swell, volume=(0.5, 0.5), fade_out=0.6, milestone="M3",
         tonal=True, notes="07 stargazing: a soft low D2/A2/D3 pad with a faint A3, swelling in under airy noise."),
-    Cue("base_wake", "stinger_2d", base_wake, variants=len(BASE_WAKE_PLACES), variant_labels=BASE_WAKE_PLACES,
-        volume=(0.6, 0.6), fade_out=0.4, milestone="M3", tonal=True,
-        notes="A place of the base waking: low hum rising A1 to D2 into a gentle kalimba phrase per place."),
-    Cue("station_not_yet", "oneshot_3d", station_not_yet, volume=(0.5, 0.5), fade_out=0.2, milestone="M3",
-        tonal=True, notes="A dormant station answering a ping: one muffled D3 bell over a felt knock, asleep."),
-    Cue("lift_winch_creak", "oneshot_3d", lift_winch_creak, variants=2, volume=(0.5, 0.55), fade_out=0.2,
-        milestone="M3", notes="The crew's jammed winch as 07 comes near: a slow low metal creak over a soft groan."),
-    Cue("lift_ride", "loop_3d", lift_ride, loop=True, file_stem="lift_ride_loop", volume=(0.5, 0.5), milestone="M3",
-        tonal=True, notes="The crew's lift riding: a patient ratchet over a soft D2/A2 motor hum."),
-    Cue("lift_stop_clunk", "oneshot_3d", lift_stop_clunk, volume=(0.6, 0.6), fade_out=0.1, milestone="M3",
-        notes="The lift reaching a stop: a deep padded clunk and a short cable settle."),
-    Cue("plotter_draw", "stinger_2d", plotter_draw, volume=(0.55, 0.55), fade_out=0.1, milestone="M3",
-        notes="Kenji's pen plotter drawing a sheet: soft pen scratches between carriage whirrs, ~3 s."),
-    Cue("lift_hatch_open", "oneshot_3d", lift_hatch_open, volume=(0.55, 0.55), fade_out=0.2, milestone="M3",
-        tonal=True, notes="The belly hatch sliding open over the rising platform: rail rumble + A3/A4 bell."),
-    Cue("lift_hatch_close", "oneshot_3d", lift_hatch_close, volume=(0.55, 0.55), fade_out=0.15, milestone="M3",
-        tonal=True, notes="The belly hatch sliding shut behind the lowered platform: rail rumble + soft D3 seat."),
-    Cue("lab_detent", "tick_3d", lab_detent, variants=len(LAB_DETENT_NOTES), volume=(0.55, 0.55), fade_out=0.05,
-        milestone="M3", tonal=True, notes="The lab's turntable settling at a station: felt click + a pentatonic tine."),
-    Cue("lab_room_tone", "ambience_2d", lab_room_tone, loop=True, file_stem="lab_room_tone_loop", volume=(0.7, 0.7),
-        milestone="M3", tonal=True, notes="The crew's lab: a close warm room, a soft D2 lamp hum and faint air."),
-    Cue("recovery_row_chord", "stinger_2d", recovery_row_chord, volume=(0.55, 0.55), fade_out=0.6, milestone="M3",
-        tonal=True, notes="A recovery row completes: a warm D-major chord rising left to right under its lamps."),
-    Cue("map_pencil", "tick_2d", map_pencil, volume=(0.5, 0.5), fade_out=0.05, milestone="M3",
-        notes="A place blinking seen on the crew's map: a short soft pencil hiss."),
-    Cue("map_pen", "tick_2d", map_pen, variants=len(MAP_PEN_NOTES), volume=(0.55, 0.55), fade_out=0.1,
-        milestone="M3", tonal=True, notes="The chart pen inking a place: nib scratch + tine climbing D pentatonic."),
-    Cue("map_table_hum", "loop_3d", map_table_hum, loop=True, file_stem="map_table_hum_loop", volume=(0.4, 0.4),
-        milestone="M3", tonal=True, notes="The light table glowing under the chart: soft D3/A3 lamp hum."),
-    Cue("dock_evening_swell", "stinger_2d", dock_evening_swell, volume=(0.5, 0.5), fade_out=0.6, milestone="M3",
-        tonal=True, notes="The dock's evening: a warm low D-major swell under the wide shot of the lamps."),
-    Cue("bay_turntable", "loop_3d", bay_turntable, loop=True, file_stem="bay_turntable_loop", volume=(0.5, 0.5),
-        milestone="M3", tonal=True, hf_cutoff=6000.0, hf_max_db=-40.0,
-        notes="The turntable turning 07: low roller rumble + bearing hum on D2."),
-    Cue("port_hatch_open", "oneshot_3d", port_hatch_open, volume=(0.55, 0.55), fade_out=0.1, milestone="M3",
-        notes="The tower's service hatch opening: latch clack + short hinge creak."),
-    Cue("port_hatch_close", "oneshot_3d", port_hatch_close, volume=(0.55, 0.55), fade_out=0.08, milestone="M3",
-        notes="The hatch swinging shut: hinge swing + a solid little latch click."),
-    Cue("dock_connect", "oneshot_3d", dock_connect, volume=(0.55, 0.55), fade_out=0.08, milestone="M3",
-        notes="07 settling onto the charging dock: soft magnetic clunk + tiny electric tick."),
     Cue("dock_charge_hum", "loop_3d", dock_charge_hum, loop=True, file_stem="dock_charge_hum_loop",
         volume=(0.35, 0.35), milestone="M3", tonal=True,
         notes="Charging: a very soft warm hum on D3 + octave, breathing slowly."),
@@ -2691,10 +1059,4 @@ CUES = (
         notes="A flank lamp lighting as 07 wakes: a tiny relay tick with a breath of filament on D6."),
     Cue("leap_fizzle", "oneshot_3d", leap_fizzle, volume=(0.4, 0.4), fade_out=0.1, milestone="M3",
         notes="A leap the battery can't pay for: the coils fizzle softly under the belly, a crackle and a small buzz."),
-    Cue("dock_release", "tick_3d", dock_release, volume=(0.5, 0.5), fade_out=0.03, milestone="M3",
-        notes="Leaving the dock: contacts parting, a soft click and a breath of air."),
-    Cue("bell_knob_tap", "tick_3d", bell_knob_tap, volume=(0.55, 0.55), fade_out=0.02, milestone="M3",
-        notes="BellCued.DialTapped: 07's beam taps Bell's dial knob, a tiny bakelite tick."),
-    Cue("upgrade_arpeggio", "stinger_2d", upgrade_arpeggio, volume=(0.8, 0.8), fade_out=0.3, milestone="M2",
-        tonal=True, notes="Soft kalimba D4 A4 D5 F#5 A5, stereo, over a quiet D/A pad."),
 )

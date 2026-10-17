@@ -3,117 +3,47 @@ using UnityEngine;
 namespace MoonProject.Audio
 {
     /// <summary>
-    /// How gameplay events sound: relic and site answers by distance, tether and excavation loops.
+    /// How the base sounds: the weld loop's fades, the power-on swell and the first nightfall's light sequence.
     /// Created by the Audio/Tuning builder; runtime code only reads it.
     /// </summary>
     public sealed class GameplayAudioTuning : ScriptableObject
     {
-        // Keeps ranges non-degenerate if an asset is edited into min >= max.
-        private const float MinSpan = 0.01f;
+        [Header("Build mode")]
+        [Tooltip("Seconds for the weld loop to come in when the beam starts welding.")]
+        [Range(0.01f, 1f)] [SerializeField] private float _weldFadeIn = 0.08f;
 
-        [Header("Listening (first-hour v2: 07 listens when it rests)")]
-        [Tooltip("Level of the listening ring's kalimba note (the old ping, 6 dB softer: 0.5). It sounds at most " +
-            "once per stop, because 07 listens at most once per stop.")]
-        [Range(0f, 1f)] [SerializeField] private float _listenVolume = 0.5f;
+        [Tooltip("Seconds for the weld loop to settle away when the beam stops.")]
+        [Range(0.01f, 1f)] [SerializeField] private float _weldFadeOut = 0.12f;
 
-        [Header("Relic answer")]
-        [Tooltip("Distance (m, rover to relic) at and below which the answer is fullest and brightest.")]
-        [Min(0f)] [SerializeField] private float _answerNearDistance = 10f;
+        [Header("Power on (opening v2 B8)")]
+        [Tooltip("Volume scale of a structure's power-on: the relay thunk and the transformer swell onto its lamp.")]
+        [Range(0f, 1f)] [SerializeField] private float _powerOnVolume = 0.85f;
 
-        [Tooltip("Distance (m) at and beyond which the answer is quietest and darkest.")]
-        [Min(1f)] [SerializeField] private float _answerFarDistance = 140f;
+        [Tooltip("Seconds after a structure is built during which its first power is silent: the build's own " +
+                 "completion already lit its lamp, so the swell would only pile on.")]
+        [Range(0f, 5f)] [SerializeField] private float _powerOnBuildGrace = 1.5f;
 
-        [Tooltip("Volume scale of a near answer.")]
-        [Range(0f, 1f)] [SerializeField] private float _answerNearVolume = 1f;
+        [Tooltip("Seconds between two power-on swells: when a cable brings several structures up at once, one swell " +
+                 "speaks for them.")]
+        [Range(0f, 5f)] [SerializeField] private float _powerOnMinInterval = 1.2f;
 
-        [Tooltip("Volume scale of a far answer.")]
-        [Range(0f, 1f)] [SerializeField] private float _answerFarVolume = 0.55f;
+        [Header("The first nightfall (opening v2 B10)")]
+        [Tooltip("Seconds after the Sun sets before the first base lamp clicks on (the night settles first).")]
+        [Range(0f, 10f)] [SerializeField] private float _nightLampDelay = 2.5f;
 
-        [Tooltip("Low-pass cutoff (Hz) of a near answer (high = the clip as rendered).")]
-        [Range(1000f, 22000f)] [SerializeField] private float _answerNearCutoff = 16000f;
+        [Tooltip("Seconds between one base lamp and the next, nearest to the base first.")]
+        [Range(0.1f, 3f)] [SerializeField] private float _nightLampInterval = 0.7f;
 
-        [Tooltip("Low-pass cutoff (Hz) of a far answer (lower = more distant).")]
-        [Range(500f, 8000f)] [SerializeField] private float _answerFarCutoff = 2200f;
+        [Tooltip("Volume scale of each lamp's click and filament bloom (soft: the night is the moment).")]
+        [Range(0f, 1f)] [SerializeField] private float _nightLampVolume = 0.75f;
 
-        [Tooltip("3D full-volume radius (m) of answers: larger than usual so distant relics stay findable by ear.")]
-        [Min(0.1f)] [SerializeField] private float _answerMinDistance = 25f;
-
-        [Header("Tether")]
-        [Tooltip("Seconds for the tether hum to fade in after attaching.")]
-        [Min(0f)] [SerializeField] private float _tetherHumFadeIn = 0.3f;
-
-        [Tooltip("Seconds for the tether hum to fade out after release.")]
-        [Min(0f)] [SerializeField] private float _tetherHumFadeOut = 0.5f;
-
-        [Tooltip("Volume scale of the tether hum (times the cue volume).")]
-        [Range(0f, 1f)] [SerializeField] private float _tetherHumVolume = 1f;
-
-        [Tooltip("3D amount of the tether hum (it follows the beam emitter on 07's eye).")]
-        [Range(0f, 1f)] [SerializeField] private float _tetherHumSpatialBlend = 0.85f;
-
-        [Tooltip("Mass (kg) at or below which the attach pluck is lightest.")]
-        [Min(0f)] [SerializeField] private float _tetherLightMass = 1f;
-
-        [Tooltip("Mass (kg) at or above which the attach pluck is fullest.")]
-        [Min(0.01f)] [SerializeField] private float _tetherHeavyMass = 25f;
-
-        [Tooltip("Attach pluck volume scale for light objects.")]
-        [Range(0f, 1f)] [SerializeField] private float _tetherLightVolume = 0.75f;
-
-        [Tooltip("Attach pluck volume scale for heavy objects.")]
-        [Range(0f, 1f)] [SerializeField] private float _tetherHeavyVolume = 1f;
-
-        [Tooltip("Tether hum pitch multiplier at full strain (1.2599 = a major third higher, in key).")]
-        [Range(1f, 2f)] [SerializeField] private float _tetherHumStrainPitch = 1.2599f;
-
-        [Tooltip("Extra tether hum volume boost at full strain.")]
-        [Range(0f, 1f)] [SerializeField] private float _tetherHumStrainVolume = 0.25f;
-
-        [Tooltip("Ease rate (per second) of the tether hum pitch as strain rises and falls.")]
-        [Range(0.5f, 20f)] [SerializeField] private float _tetherHumPitchEase = 3.5f;
-
-        [Header("Bell's signals")]
-        [Tooltip("Spatial blend of the shimmer from a new signal's pillar: mostly flat so a pillar far across the " +
-                 "basin is still heard, faintly, with a hint of its direction (0 = flat, 1 = fully 3D).")]
-        [Range(0f, 1f)] [SerializeField] private float _signalSpatialBlend = 0.3f;
-
-        [Tooltip("Volume scale of the pillar's shimmer (very soft: a suggestion, never a call).")]
-        [Range(0f, 1f)] [SerializeField] private float _signalPickVolume = 0.8f;
-
-        [Header("Excavation")]
-        [Tooltip("Seconds for the excavation rumble to swell in.")]
-        [Min(0f)] [SerializeField] private float _rumbleFadeIn = 0.8f;
-
-        [Tooltip("Seconds for the excavation rumble to settle away.")]
-        [Min(0f)] [SerializeField] private float _rumbleFadeOut = 1f;
-
-        [Tooltip("Volume scale of the excavation rumble (times the cue volume).")]
-        [Range(0f, 1f)] [SerializeField] private float _rumbleVolume = 1f;
-
-        public float ListenVolume => _listenVolume;
-
-        public float AnswerNearDistance => _answerNearDistance;
-        public float AnswerFarDistance => Mathf.Max(_answerFarDistance, _answerNearDistance + MinSpan);
-        public float AnswerNearVolume => _answerNearVolume;
-        public float AnswerFarVolume => _answerFarVolume;
-        public float AnswerNearCutoff => _answerNearCutoff;
-        public float AnswerFarCutoff => _answerFarCutoff;
-        public float AnswerMinDistance => _answerMinDistance;
-        public float TetherHumFadeIn => _tetherHumFadeIn;
-        public float TetherHumFadeOut => _tetherHumFadeOut;
-        public float TetherHumVolume => _tetherHumVolume;
-        public float TetherHumSpatialBlend => _tetherHumSpatialBlend;
-        public float TetherHumStrainPitch => _tetherHumStrainPitch;
-        public float TetherHumStrainVolume => _tetherHumStrainVolume;
-        public float TetherHumPitchEase => _tetherHumPitchEase;
-        public float SignalSpatialBlend => _signalSpatialBlend;
-        public float SignalPickVolume => _signalPickVolume;
-        public float TetherLightMass => _tetherLightMass;
-        public float TetherHeavyMass => Mathf.Max(_tetherHeavyMass, _tetherLightMass + MinSpan);
-        public float TetherLightVolume => _tetherLightVolume;
-        public float TetherHeavyVolume => _tetherHeavyVolume;
-        public float RumbleFadeIn => _rumbleFadeIn;
-        public float RumbleFadeOut => _rumbleFadeOut;
-        public float RumbleVolume => _rumbleVolume;
+        public float WeldFadeIn => _weldFadeIn;
+        public float WeldFadeOut => _weldFadeOut;
+        public float PowerOnVolume => _powerOnVolume;
+        public float PowerOnBuildGrace => _powerOnBuildGrace;
+        public float PowerOnMinInterval => _powerOnMinInterval;
+        public float NightLampDelay => _nightLampDelay;
+        public float NightLampInterval => _nightLampInterval;
+        public float NightLampVolume => _nightLampVolume;
     }
 }

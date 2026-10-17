@@ -3,20 +3,17 @@ using UnityEngine;
 namespace MoonProject.Audio
 {
     /// <summary>
-    /// The radio: how far the clear signal reaches, how clarity maps to low-pass/static/volume/wobble, and how the
-    /// station crossfades between tracks. Created by the Audio/Tuning builder; runtime code only reads it.
+    /// The radio: how far the clear signal reaches from the base, how clarity maps to low-pass/static/volume/wobble,
+    /// how the playlist crossfades between tracks, and how the hiss clears into music when the base powers on. Created by the Audio/Tuning builder; runtime code only reads it.
     /// </summary>
     public sealed class RadioTuning : ScriptableObject
     {
         [Header("Signal field")]
-        [Tooltip("Metres from the base where the music is perfectly clear (radio tower upgrades raise it at runtime).")]
+        [Tooltip("Metres from the base where the music is perfectly clear.")]
         [Min(0f)] [SerializeField] private float _signalRadius = 60f;
 
         [Tooltip("Metres over which the signal fades from clear to gone beyond the radius.")]
         [Min(1f)] [SerializeField] private float _falloffWidth = 140f;
-
-        [Tooltip("Seconds (time constant) for a new signal radius to take effect: progress is heard as a slow bloom.")]
-        [Min(0f)] [SerializeField] private float _radiusEaseTime = 3f;
 
         [Tooltip("Seconds (time constant) smoothing the clarity the player hears.")]
         [Min(0f)] [SerializeField] private float _claritySmoothing = 0.8f;
@@ -85,39 +82,6 @@ namespace MoonProject.Audio
         [Tooltip("Volume scale of the dial-tuning swish.")]
         [Range(0f, 1f)] [SerializeField] private float _tuneSwishVolume = 0.8f;
 
-        [Header("Bell's dial (stations)")]
-        [Tooltip("Seconds of the static-swish crossfade when the dial turns to another station.")]
-        [Range(0.3f, 4f)] [SerializeField] private float _stationSwitchDuration = 1.2f;
-
-        [Tooltip("Seconds of the quiet, swish-free crossfade when the station changes without a dial turn (the dial " +
-                 "locked again).")]
-        [Range(0.05f, 3f)] [SerializeField] private float _silentSwitchFade = 0.6f;
-
-        [Tooltip("Static level on Quiet Hours (scales the clarity static; 0 = off, only the moon's ambience).")]
-        [Range(0f, 1f)] [SerializeField] private float _quietStaticGain;
-
-        [Tooltip("Seconds (time constant) for the static to settle into or out of Quiet Hours.")]
-        [Range(0.05f, 5f)] [SerializeField] private float _quietStaticFade = 1.2f;
-
-        [Header("Radio-hop (between lit relay nodes; times match Gameplay's hop view)")]
-        [Tooltip("Seconds for the radio to ease into static as the hop starts and the screen fades.")]
-        [Range(0.1f, 5f)] [SerializeField] private float _hopOutTime = 0.8f;
-
-        [Tooltip("Seconds of full dark (07 is moved) before the static starts to resolve.")]
-        [Range(0f, 5f)] [SerializeField] private float _hopDarkTime = 0.4f;
-
-        [Tooltip("Seconds for the static to resolve into the target node's radio as the view eases back in.")]
-        [Range(0.1f, 5f)] [SerializeField] private float _hopInTime = 0.8f;
-
-        [Tooltip("Extra static at the depth of the hop (0..1, on top of the clarity static).")]
-        [Range(0f, 1f)] [SerializeField] private float _hopStaticBoost = 0.5f;
-
-        [Tooltip("Music level at the depth of the hop (it filters away, not off).")]
-        [Range(0f, 1f)] [SerializeField] private float _hopMusicGain = 0.15f;
-
-        [Tooltip("Low-pass (Hz) the music closes to at the depth of the hop.")]
-        [Range(100f, 22000f)] [SerializeField] private float _hopCutoff = 700f;
-
         [Header("Paused: listening in the cabin")]
         [Tooltip("Low-pass (Hz) the radio eases to while paused: a subtly closer, warmer set (22 kHz = unchanged).")]
         [Range(2000f, 22000f)] [SerializeField] private float _cabinCutoff = 7000f;
@@ -147,69 +111,24 @@ namespace MoonProject.Audio
         [Tooltip("Extra static while the radio is still finding the station (melts away as the music resolves).")]
         [Range(0f, 1f)] [SerializeField] private float _wakeStaticBoost = 0.55f;
 
-        [Header("Earned music (M3-24): static, then 07's tape deck, then Bell's station")]
-        [Tooltip("Static level near home before tower level 1, while the set finds no station (a fresh game hears " +
-            "only this and the room tone).")]
-        [Range(0f, 1f)] [SerializeField] private float _unclearedStaticFloor = 0.3f;
+        [Header("Power on (opening v2 B8): the hiss clears into the first music")]
+        [Tooltip("Static level before the base has power, while the set hears only a faint signal (a fresh game " +
+            "hears only this, 07's servos and the room tone).")]
+        [Range(0f, 1f)] [SerializeField] private float _unpoweredStaticFloor = 0.3f;
 
-        [Tooltip("Static under the Earth signal's carrier once tower level 1 clears it, as a share of its level.")]
-        [Range(0f, 1f)] [SerializeField] private float _carrierStaticGain = 0.35f;
+        [Tooltip("Time constant (s) of the hiss clearing once the base powers on.")]
+        [Min(0.01f)] [SerializeField] private float _powerOnClearTime = 2.5f;
 
-        [Tooltip("Level of the Earth signal's carrier (radio_carrier) while no music plays.")]
-        [Range(0f, 1f)] [SerializeField] private float _carrierVolume = 0.7f;
+        [Tooltip("Seconds the first track takes to fade in as the base powers on (low, warm).")]
+        [Min(0.01f)] [SerializeField] private float _powerOnMusicFade = 6f;
 
-        [Tooltip("Time constant (s) of the carrier easing in after tower level 1 and out when music comes.")]
-        [Min(0.01f)] [SerializeField] private float _carrierFadeTime = 2.5f;
-
-        [Tooltip("Level of the first tape on 07's deck as a share of the station's: soft, close, a little private.")]
-        [Range(0f, 1f)] [SerializeField] private float _deckMusicGain = 0.45f;
-
-        [Tooltip("Low-pass on the deck's tape (Hz): an old cassette's rounded top end.")]
-        [Range(1000f, 22000f)] [SerializeField] private float _deckCutoff = 6000f;
-
-        [Tooltip("Seconds the first tape takes to ease in after the deck is fitted (no dial swish: it is 07's own " +
-            "deck, not the radio).")]
-        [Min(0.01f)] [SerializeField] private float _deckFitFade = 6f;
-
-        [Tooltip("Time constant (s) of the move from the deck's soft level to the station's when Bell's dial opens.")]
-        [Min(0.01f)] [SerializeField] private float _deckBlendTime = 1.5f;
-
-        [Header("The dock evening (polish-pass section 1.1)")]
-        [Tooltip("Gain on the radio's music under the dock evening's swell (0.7 is about -3 dB).")]
-        [Range(0f, 1f)] [SerializeField] private float _eveningDuckGain = 0.7f;
-
-        [Tooltip("Seconds the radio stays ducked under the swell before it comes back.")]
-        [Min(0f)] [SerializeField] private float _eveningDuckSeconds = 3.5f;
-
-        [Header("The tower comes online (feel-pass section 8.2)")]
-        [Tooltip("Gain on the whole set (music, carrier, static) while the tower powers up, so the hum, the rings " +
-            "and the thoom are heard alone.")]
-        [Range(0f, 1f)] [SerializeField] private float _buildDuckGain = 0.15f;
-
-        [Tooltip("Time constant (s) of the set stepping back as the tower powers up.")]
-        [Min(0.01f)] [SerializeField] private float _buildDuckTime = 0.4f;
-
-        [Tooltip("Longest the set stays stepped back (s) if the tower's sequence never reaches its Follow.")]
-        [Min(0.1f)] [SerializeField] private float _buildDuckMaxSeconds = 10f;
-
-        [Tooltip("Time constant (s) of the set coming back in after the radio's crackle at Follow.")]
-        [Min(0.01f)] [SerializeField] private float _buildReturnTime = 1.5f;
-
-        [Header("Voices (Ro's recordings, the automated station; tools/voice)")]
-        [Tooltip("Level of a voiced recording on the Sfx bus.")]
-        [Range(0f, 1f)] [SerializeField] private float _voiceVolume = 1f;
-
-        [Tooltip("Gain on the radio's music while a voice speaks, so the words stay clear.")]
-        [Range(0f, 1f)] [SerializeField] private float _voiceMusicDuck = 0.35f;
-
-        [Tooltip("Time constant (s) of the music ducking under a voice and coming back after it.")]
-        [Min(0.01f)] [SerializeField] private float _voiceDuckTime = 0.6f;
+        [Tooltip("Seconds of the quiet fade when the playlist starts or stops without a dial turn.")]
+        [Range(0.05f, 3f)] [SerializeField] private float _silentSwitchFade = 0.6f;
 
         public float SignalRadius => _signalRadius;
         public float FalloffWidth => _falloffWidth;
 
         public float CrawlDistance => _crawlDistance;
-        public float RadiusEaseTime => _radiusEaseTime;
         public float ClaritySmoothing => _claritySmoothing;
         public float MinCutoff => _minCutoff;
         public float MaxCutoff => Mathf.Max(_maxCutoff, _minCutoff);
@@ -230,16 +149,7 @@ namespace MoonProject.Audio
         public float IncomingStart => _incomingStart;
         public float TuneStaticBoost => _tuneStaticBoost;
         public float TuneSwishVolume => _tuneSwishVolume;
-        public float StationSwitchDuration => _stationSwitchDuration;
         public float SilentSwitchFade => _silentSwitchFade;
-        public float QuietStaticGain => _quietStaticGain;
-        public float QuietStaticFade => _quietStaticFade;
-        public float HopOutTime => _hopOutTime;
-        public float HopDarkTime => _hopDarkTime;
-        public float HopInTime => _hopInTime;
-        public float HopStaticBoost => _hopStaticBoost;
-        public float HopMusicGain => _hopMusicGain;
-        public float HopCutoff => _hopCutoff;
         public float CabinCutoff => _cabinCutoff;
         public float CabinMusicGain => _cabinMusicGain;
         public float CabinStaticGain => _cabinStaticGain;
@@ -249,22 +159,8 @@ namespace MoonProject.Audio
         public float PlayerWakeMusicFade => _playerWakeMusicFade;
         public float WakePowerTime => _wakePowerTime;
         public float WakeStaticBoost => _wakeStaticBoost;
-        public float UnclearedStaticFloor => _unclearedStaticFloor;
-        public float CarrierStaticGain => _carrierStaticGain;
-        public float CarrierVolume => _carrierVolume;
-        public float CarrierFadeTime => _carrierFadeTime;
-        public float DeckMusicGain => _deckMusicGain;
-        public float DeckCutoff => _deckCutoff;
-        public float DeckFitFade => _deckFitFade;
-        public float DeckBlendTime => _deckBlendTime;
-        public float VoiceVolume => _voiceVolume;
-        public float VoiceMusicDuck => _voiceMusicDuck;
-        public float VoiceDuckTime => _voiceDuckTime;
-        public float EveningDuckGain => _eveningDuckGain;
-        public float BuildDuckGain => _buildDuckGain;
-        public float BuildDuckTime => _buildDuckTime;
-        public float BuildReturnTime => _buildReturnTime;
-        public float BuildDuckMaxSeconds => _buildDuckMaxSeconds;
-        public float EveningDuckSeconds => _eveningDuckSeconds;
+        public float UnpoweredStaticFloor => _unpoweredStaticFloor;
+        public float PowerOnClearTime => _powerOnClearTime;
+        public float PowerOnMusicFade => _powerOnMusicFade;
     }
 }

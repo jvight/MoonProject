@@ -3,7 +3,7 @@ using System;
 namespace MoonProject.Audio.Editor
 {
     /// <summary>
-    /// JsonUtility mirror of the music box's tools/music/playlist.json and tapes.json (only the keys the radio needs;
+    /// JsonUtility mirror of the music box's tools/music/playlist.json and title.json (only the keys the radio needs;
     /// extra keys are ignored). Field names must equal the JSON keys, hence the public camelCase fields.
     /// </summary>
     [Serializable]
@@ -21,9 +21,6 @@ namespace MoonProject.Audio.Editor
             public string file;
             public string title;
             public float bpm;
-
-            /// <summary>Cassette id (tapes.json only).</summary>
-            public string tape;
         }
     }
 }

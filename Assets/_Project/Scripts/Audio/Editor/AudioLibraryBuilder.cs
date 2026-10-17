@@ -9,8 +9,7 @@ using MoonProject.Editor.Builders;
 namespace MoonProject.Audio.Editor
 {
     /// <summary>
-    /// Builds <c>Assets/_Project/Data/Audio/AudioLibrary.asset</c> from tools/audio/sfx_manifest.json plus the music
-    /// box's friend jingles (tools/music/jingles.json: 3D cues named after them, e.g. bell_jingle_short). Every file is
+    /// Builds <c>Assets/_Project/Data/Audio/AudioLibrary.asset</c> from tools/audio/sfx_manifest.json. Every file is
     /// checked against its manifest's sha256 first, so a library can never point at stale renders.
     /// </summary>
     internal static class AudioLibraryBuilder
@@ -35,16 +34,10 @@ namespace MoonProject.Audio.Editor
                     $"{BuilderPath}: unsupported manifest (expected version {SfxManifest.SupportedVersion}).");
             }
 
-            MusicJinglesManifest jingles = ReadJingles();
-            var cues = new AudioCue[manifest.cues.Length + jingles.jingles.Length];
+            var cues = new AudioCue[manifest.cues.Length];
             for (int i = 0; i < manifest.cues.Length; i++)
             {
                 cues[i] = ToCue(manifest.cues[i]);
-            }
-
-            for (int i = 0; i < jingles.jingles.Length; i++)
-            {
-                cues[manifest.cues.Length + i] = ToJingleCue(jingles.jingles[i]);
             }
 
             var library = ScriptableObject.CreateInstance<AudioLibrary>();
@@ -57,35 +50,6 @@ namespace MoonProject.Audio.Editor
             }
 
             Debug.Log($"{BuilderPath}: {cues.Length} cues -> {AudioAssetPaths.Library}");
-        }
-
-        private static MusicJinglesManifest ReadJingles()
-        {
-            string file = AudioAssetPaths.ProjectFile(AudioAssetPaths.MusicJingles);
-            if (!File.Exists(file))
-            {
-                throw new FileNotFoundException(
-                    $"{BuilderPath}: {AudioAssetPaths.MusicJingles} is missing; render the jingles with tools/music.",
-                    file);
-            }
-
-            var jingles = JsonUtility.FromJson<MusicJinglesManifest>(File.ReadAllText(file));
-            if (jingles == null || jingles.jingles == null || jingles.version != MusicJinglesManifest.SupportedVersion)
-            {
-                throw new InvalidOperationException($"{BuilderPath}: unsupported {AudioAssetPaths.MusicJingles} " +
-                                                    $"(expected version {MusicJinglesManifest.SupportedVersion}).");
-            }
-
-            return jingles;
-        }
-
-        /// <summary>A music-box jingle as a 3D voice cue of its friend (Sfx bus, no variance: it is a
-        /// melody).</summary>
-        private static AudioCue ToJingleCue(MusicJinglesManifest.Jingle jingle)
-        {
-            AudioClip clip = LoadVerified(jingle.file, jingle.sha256);
-            return new AudioCue(jingle.id, new[] { clip }, new[] { jingle.id }, AudioBus.Sfx, true, false, 1f, 1f, 1f,
-                1f);
         }
 
         private static AudioCue ToCue(SfxManifest.Cue entry)

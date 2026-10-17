@@ -47,10 +47,15 @@ namespace MoonProject.Audio
         [Tooltip("Time constant (s) of the sweep tone easing in and out.")]
         [Min(0.01f)] [SerializeField] private float _scanEase = 0.15f;
 
-        [Header("Cargo and storage (M3-25)")]
-        [Tooltip("Level of the dock's unload ticks and its closing bell: one tick per slot every ~0.15 s, so they " +
-            "stay soft.")]
-        [Range(0f, 1f)] [SerializeField] private float _unloadVolume = 0.6f;
+        [Header("Charging on the pad (opening v2 B6)")]
+        [Tooltip("Seconds for the charging hum to come in once a charger starts filling the cells.")]
+        [Range(0.1f, 5f)] [SerializeField] private float _chargeFadeIn = 1.5f;
+
+        [Tooltip("Seconds for the charging hum to settle away when charging stops.")]
+        [Range(0.1f, 5f)] [SerializeField] private float _chargeFadeOut = 2f;
+
+        [Tooltip("Volume scale of the charging hum (very soft).")]
+        [Range(0f, 1f)] [SerializeField] private float _chargeVolume = 0.5f;
 
         [Header("07 speaks machine (feel-pass section 7.2)")]
         [Tooltip("Level of 07's chirps (mezzo-piano).")]
@@ -59,7 +64,7 @@ namespace MoonProject.Audio
         [Tooltip("Share of the chirp level while the radio plays music: the chirps sit under the radio.")]
         [Range(0f, 1f)] [SerializeField] private float _chirpUnderRadio = 0.7f;
 
-        [Tooltip("Seconds a chirp asked for during a voice line (or another chirp) waits before it is dropped.")]
+        [Tooltip("Seconds a chirp asked for while another chirp speaks waits before it is dropped.")]
         [Min(0f)] [SerializeField] private float _chirpHoldSeconds = 3f;
 
         [Header("The first hour's small moments (polish-pass section 1.1)")]
@@ -95,7 +100,9 @@ namespace MoonProject.Audio
                     return Mathf.Clamp01(_humByStage.w);
             }
         }
-        public float UnloadVolume => _unloadVolume;
+        public float ChargeFadeIn => _chargeFadeIn;
+        public float ChargeFadeOut => _chargeFadeOut;
+        public float ChargeVolume => _chargeVolume;
         public float ScanVolume => _scanVolume;
         public float ScanEase => _scanEase;
         public float SheetCompleteDelay => _sheetCompleteDelay;
