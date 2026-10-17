@@ -82,7 +82,10 @@ namespace MoonProject.Art.Tests
             "_FaceCrtState",
             "_FacePhases",
             "_ContentTex",
-            "_FaceContentState"
+            "_FaceContentState",
+            "_ContentGlowIntensity",
+            "_ContentGlowMip",
+            "_ContentScanlineAtten"
         };
 
         [Test]
@@ -158,6 +161,11 @@ namespace MoonProject.Art.Tests
                         $"Material '{spec.MaterialAssetName}' must use '{R1MaterialRecipes.CrtFaceShaderName}'.");
                     Assert.Less(material.GetFloat("_BloomSafeMax"), Palette.BloomThreshold);
                     Assert.Greater(material.GetFloat("_HotCorePeak"), Palette.BloomThreshold);
+                    Assert.AreEqual(R1MaterialLibrary.CrtScanlineCount, material.GetFloat("_ScanlineCount"), 1e-3f);
+                    Assert.AreEqual(R1MaterialLibrary.CrtScanlineDepth, material.GetFloat("_ScanlineDepth"), 1e-3f);
+                    Assert.AreEqual(R1MaterialLibrary.CrtContentGlowIntensity, material.GetFloat("_ContentGlowIntensity"), 1e-3f);
+                    Assert.AreEqual(R1MaterialLibrary.CrtContentGlowMip, material.GetFloat("_ContentGlowMip"), 1e-3f);
+                    Assert.AreEqual(R1MaterialLibrary.CrtContentScanlineAtten, material.GetFloat("_ContentScanlineAtten"), 1e-3f);
                     continue;
                 }
 

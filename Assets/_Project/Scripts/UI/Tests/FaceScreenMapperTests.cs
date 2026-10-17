@@ -87,6 +87,9 @@ namespace MoonProject.UI.Tests
             Assert.IsNotNull(facePanel, $"{UiAssetPaths.FacePanelSettings} is missing: run the UI/Theme builder");
             Assert.AreEqual(1152, faceTarget.width);
             Assert.AreEqual(768, faceTarget.height);
+            Assert.IsTrue(faceTarget.useMipMap, "Face target RenderTexture must enable mipmaps for smooth CRT phosphor glow.");
+            Assert.IsTrue(faceTarget.autoGenerateMips, "Face target RenderTexture must auto-generate mipmaps.");
+            Assert.AreEqual(FilterMode.Trilinear, faceTarget.filterMode, "Face target RenderTexture must use Trilinear filtering.");
             Assert.AreEqual(new Vector2Int(1152, 768), facePanel.referenceResolution);
             Assert.AreSame(faceTarget, facePanel.targetTexture);
             Assert.AreEqual(1f, facePanel.sortingOrder, 1e-4f, "Face panel must sort above the main HUD panel.");
