@@ -47,7 +47,7 @@ namespace MoonProject.UI
             }
 
             Painter2D painter = context.painter2D;
-            float s = h / 720f;
+            float s = _standaloneFraming ? (h / 720f) : Mathf.Min(w / 1280f, h / 720f);
             PaintScanlines(painter, w, h);
             PaintRefreshBand(painter, w, h, s);
             PaintVignetteAndBezel(painter, w, h, s);

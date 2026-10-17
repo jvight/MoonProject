@@ -149,17 +149,28 @@ namespace MoonProject.UI
             _scroll.contentContainer.style.paddingBottom = viewport * LeadOut;
         }
 
-        private void OnNavigate(NavigationMoveEvent evt)
+        internal void ScrollByStep(int direction)
         {
-            float step = evt.direction == NavigationMoveEvent.Direction.Down ? _settings.LineStepPixels
-                : evt.direction == NavigationMoveEvent.Direction.Up ? -_settings.LineStepPixels : 0f;
-            if (step == 0f)
+            if (direction == 0)
             {
                 return;
             }
 
+            float step = direction * _settings.LineStepPixels;
             float end = Mathf.Max(0f, _scroll.contentContainer.layout.height - _scroll.contentViewport.layout.height);
             _scroll.scrollOffset = new Vector2(0f, Mathf.Clamp(_scroll.scrollOffset.y + step, 0f, end));
+        }
+
+        private void OnNavigate(NavigationMoveEvent evt)
+        {
+            int dir = evt.direction == NavigationMoveEvent.Direction.Down ? 1
+                : evt.direction == NavigationMoveEvent.Direction.Up ? -1 : 0;
+            if (dir == 0)
+            {
+                return;
+            }
+
+            ScrollByStep(dir);
             evt.StopPropagation();
         }
 

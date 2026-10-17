@@ -418,22 +418,28 @@ Label {
     --icon-color: var(--moon-amber-edge);
 }
 
-/* The title over the live world (M3-09): the wordmark in the sky, a quiet subtitle, the menu low and left */
+/* The title over the live world (M3-09): anchored left-column composition inside the CRT bezel */
 
-/* TITLE-SCREEN v1: Full-monitor CRT with wordmark, "// " subtitle and amber divider on the left, 2D animation on the right */
+.pause--title .safe-frame {
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding-left: 72px;
+}
 
 .title-screen {
-    position: absolute;
-    left: 150px;
+    position: relative;
+    left: 0;
+    top: 0;
     width: 510px;
-    top: 126px;
+    flex-shrink: 0;
     align-items: flex-start;
 }
 
 /* Drawn by WordmarkPainter from the approved SVG; its height follows its width */
 .title-screen__wordmark {
-    width: 460px;
-    margin-left: -30px;
+    width: 440px;
+    margin-left: -26px;
     --ink-color: var(--moon-cream);
     --glow-color: var(--moon-amber-soft);
     --glow-width: 18px;
@@ -442,7 +448,7 @@ Label {
 .title-screen__subtitle-row {
     flex-direction: row;
     align-items: center;
-    margin-top: 4px;
+    margin-top: 2px;
     margin-left: 4px;
 }
 
@@ -465,16 +471,18 @@ Label {
 .title-screen__rule {
     width: 510px;
     height: 2px;
-    margin-top: 16px;
+    margin-top: 10px;
     background-color: var(--glass-rim-glow);
     border-left-width: 48px;
     border-left-color: var(--moon-warm-lamp);
 }
 
 .title-key-hint {
-    position: absolute;
-    left: 150px;
-    bottom: 132px;
+    position: relative;
+    left: 0;
+    bottom: 0;
+    flex-shrink: 0;
+    margin-left: 4px;
     font-size: 18px;
     letter-spacing: 1px;
     color: var(--moon-text-dim);
@@ -488,27 +496,27 @@ Label {
 }
 
 .pause--title .pause__frame {
-    justify-content: flex-start;
+    position: relative;
+    left: auto;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    width: 510px;
+    height: 364px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    justify-content: center;
     align-items: flex-start;
-    padding-left: 144px;
-    padding-top: 342px;
-    padding-bottom: 0;
-}
-
-/* The settings panel is tall and wide: while it is open the title's menu steps down and narrows so both fit at 150% text */
-.pause--title.pause--settings-open .pause__frame {
-    justify-content: flex-end;
-    padding-left: 7%;
-    padding-top: 0;
-    padding-bottom: 8px;
+    padding: 0;
+    margin: 10px 0;
 }
 
 .pause--title .pause__stack {
-    width: 516px;
+    width: 510px;
 }
 
-.pause--title.pause--settings-open .pause__stack {
-    width: 340px;
+.pause--title .pause__pages {
+    min-height: 0;
 }
 
 .pause--title .pause__main .pause__panel {
@@ -517,8 +525,8 @@ Label {
 }
 
 .pause--title .pause__main .menu-button {
-    height: 52px;
-    margin: 6px 0;
+    height: 48px;
+    margin: 4px 0;
     padding: 0 18px 0 42px;
     border-radius: 5px;
     border-top-width: 2px;
@@ -531,11 +539,6 @@ Label {
     font-size: 28px;
     -unity-text-align: middle-left;
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
-}
-
-.pause--title .pause__main .menu-button:hover {
-    background-color: var(--crt-cyan-fill);
-    border-color: var(--crt-cyan-edge);
 }
 
 .pause--title .pause__main .menu-button:focus,
@@ -558,8 +561,21 @@ Label {
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
 }
 
-.pause--title .pause__main .menu-button:focus .menu-button__cursor {
+.pause .menu-button:focus .menu-button__cursor,
+.credits__panel .menu-button:focus .menu-button__cursor,
+.setting-row--focused .menu-button__cursor,
+.settings-tab-wrap--focus .menu-button__cursor {
     display: flex;
+}
+
+.setting-row .menu-button__cursor {
+    left: 6px;
+    font-size: 20px;
+}
+
+.settings-tab-wrap .menu-button__cursor {
+    left: 8px;
+    font-size: 18px;
 }
 
 .menu-button__note {
@@ -579,18 +595,93 @@ Label {
     display: flex;
 }
 
-.pause--title.pause--settings-open .pause__main .menu-button .menu-button__note {
-    display: none;
-}
-
 .pause--title .pause__main .menu-button:focus .menu-button__note {
     color: var(--crt-cyan-dim);
 }
 
-/* The title's menu sits low when settings open, so its settings open beside it and grow upward from its foot, never off the bottom */
+/* Title settings sub-screen: occupies the same anchored left-column slot as the title menu */
 .pause--title .pause__settings {
-    top: auto;
-    bottom: 0;
+    position: relative;
+    left: 0;
+    top: 0;
+    bottom: auto;
+    width: 510px;
+    margin-left: 0;
+}
+
+.pause--title .pause__panel--settings {
+    padding: 12px 22px 10px 22px;
+}
+
+.pause--title .settings-tabs {
+    margin: 0 4px 6px 4px;
+}
+
+.pause--title .settings-tab-wrap,
+.pause--title .settings-tab {
+    min-height: 34px;
+    font-size: 17px;
+}
+
+.pause--title .settings-tab {
+    padding: 2px 12px 2px 20px;
+}
+
+.pause--title .settings-tab-wrap--focus {
+    --tab-color: var(--crt-cyan-fill);
+    --tab-edge: var(--moon-tech-glow);
+    scale: 1 1;
+}
+
+.pause--title .settings-tab-wrap--focus .settings-tab {
+    color: var(--moon-tech-glow);
+}
+
+.pause--title .settings-page {
+    min-height: 216px;
+}
+
+.pause--title .setting-row {
+    min-height: 34px;
+    padding-left: 24px;
+}
+
+.pause--title .setting-row__label {
+    width: 192px;
+    font-size: 17px;
+}
+
+.pause--title .menu-button--compact {
+    height: 30px;
+    font-size: 17px;
+}
+
+.pause--title .pause__panel--settings .menu-button--quiet,
+.pause--title .credits__panel .menu-button--quiet {
+    height: 40px;
+    margin-top: 6px;
+    margin-bottom: 0;
+    padding: 0 18px 0 42px;
+    border-radius: 5px;
+    border-top-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+    border-left-width: 6px;
+    border-color: var(--glass-rim);
+    background-color: var(--moon-glass);
+    color: var(--glass-hi);
+    -unity-text-align: middle-left;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
+}
+
+.pause--title .pause__panel--settings .menu-button--quiet:focus,
+.pause--title .pause__panel--settings .menu-button--quiet:active,
+.pause--title .credits__panel .menu-button--quiet:focus,
+.pause--title .credits__panel .menu-button--quiet:active {
+    background-color: var(--crt-cyan-fill);
+    border-color: var(--moon-tech-glow);
+    color: var(--moon-tech-glow);
+    scale: 1 1;
 }
 
 .pause--title .pause__question,
@@ -635,6 +726,7 @@ Label {
 .credits__panel {
     width: 46%;
     min-width: 520px;
+    max-width: 680px;
     height: 76%;
     padding: 24px 32px 20px 32px;
 }
@@ -1924,10 +2016,6 @@ Label {
     padding-left: 4px;
 }
 
-.pause .menu-button:hover {
-    background-color: var(--glass-bar);
-}
-
 /* Focus swells 4% over 120 ms; a press dips to 98% in 60 ms and comes back over 140 (feel-pass 2.12) */
 .pause .menu-button {
     transform-origin: 50% 50%;
@@ -1950,6 +2038,14 @@ Label {
     color: var(--glass-sel-text);
     scale: 0.98 0.98;
     transition-duration: 0.06s, 0.06s;
+}
+
+.pause--title .menu-button--compact:focus,
+.pause--title .menu-button--compact:active {
+    background-color: var(--crt-cyan-fill);
+    border-color: var(--moon-tech-glow);
+    color: var(--moon-tech-glow);
+    scale: 1 1;
 }
 
 /* The settings' tabs: chamfered CRT terminal tabs (Variant C), the selected one edged in amber */
@@ -2044,7 +2140,24 @@ Label {
     flex-direction: row;
     align-items: center;
     min-height: 40px;
-    padding-left: 4px;
+    padding: 0 6px 0 24px;
+    border-radius: 5px;
+    border-top-width: 1.5px;
+    border-right-width: 1.5px;
+    border-bottom-width: 1.5px;
+    border-left-width: 5px;
+    border-color: rgba(0, 0, 0, 0);
+}
+
+.setting-row--focused {
+    background-color: var(--crt-cyan-fill);
+    border-color: var(--moon-tech-glow);
+}
+
+.setting-row--focused .setting-row__label,
+.setting-row--focused .setting-row__value,
+.setting-row--focused .cycle__value {
+    color: var(--moon-tech-glow);
 }
 
 /* A fixed label column wide enough for the longest label in English and Vietnamese; a longer one wraps */
@@ -2097,12 +2210,12 @@ Label {
 }
 
 .pause .unity-base-slider:focus .unity-base-slider__dragger {
-    border-color: var(--glass-sel);
-    background-color: var(--glass-sel);
+    border-color: var(--moon-tech-glow);
+    background-color: var(--moon-tech-glow);
 }
 
 .pause .unity-base-slider:focus .unity-base-slider__fill {
-    background-color: var(--glass-sel);
+    background-color: var(--moon-tech-glow);
 }
 
 .pause .unity-toggle__checkmark {
@@ -2116,7 +2229,7 @@ Label {
 }
 
 .pause .unity-toggle:focus .unity-toggle__checkmark {
-    border-color: var(--glass-sel);
+    border-color: var(--moon-tech-glow);
     border-width: 2px;
 }
 

@@ -28,6 +28,7 @@ namespace MoonProject.UI
         private bool _standaloneFraming;
         private float _scale = 1f;
         private float _offsetX;
+        private float _offsetY;
         private float _width;
         private float _height;
         private float _roverPxScale;
@@ -79,8 +80,11 @@ namespace MoonProject.UI
             _trailState.Evaluate(Mathf.Max(0f, _timeSeconds - _settings.TrailLagSeconds), _standaloneFraming);
 
             Vector2 refSize = _state.ReferenceSize;
-            _scale = _height / refSize.y;
+            _scale = _standaloneFraming
+                ? (_height / refSize.y)
+                : Mathf.Min(_width / refSize.x, _height / refSize.y);
             _offsetX = (_width - refSize.x * _scale) * 0.5f;
+            _offsetY = _standaloneFraming ? 0f : (_height - refSize.y * _scale);
 
             _painter = context.painter2D;
             _painter.lineCap = LineCap.Round;
@@ -100,12 +104,12 @@ namespace MoonProject.UI
 
         private Vector2 Map(float refX, float refY)
         {
-            if (!_standaloneFraming && _width < _state.ReferenceSize.x * _scale)
-            {
-                return new Vector2((refX / _state.ReferenceSize.x) * _width, refY * _scale);
-            }
+            return new Vector2(_offsetX + refX * _scale, _offsetY + refY * _scale);
+        }
 
-            return new Vector2(_offsetX + refX * _scale, refY * _scale);
+        private Vector2 MapSky(float refX, float refY)
+        {
+            return new Vector2(_offsetX + refX * _scale, _offsetY * 0.35f + refY * _scale);
         }
 
         private void PaintBackground()
@@ -168,7 +172,7 @@ namespace MoonProject.UI
 
         private void PaintEarth()
         {
-            Vector2 center = Map(_state.EarthCenter.x, _state.EarthCenter.y);
+            Vector2 center = MapSky(_state.EarthCenter.x, _state.EarthCenter.y);
             float r = _state.EarthRadius * _scale;
 
             Shapes.Disc(_painter, center, r, _settings.BgDeep);
@@ -181,7 +185,7 @@ namespace MoonProject.UI
             StrokeArc(center, r + 1.8f * _scale, 0.04f * Mathf.PI, 0.24f * Mathf.PI, _settings.Cyan, 1.1f, 0.50f,
                 12, true);
 
-            Vector2 ark = Map(_state.ArkPosition.x, _state.ArkPosition.y);
+            Vector2 ark = MapSky(_state.ArkPosition.x, _state.ArkPosition.y);
             float pulse = _state.ArkPulse;
             Shapes.Disc(_painter, ark, 7.2f * _scale, WithAlpha(_settings.CyanDim, 0.14f * pulse));
             Shapes.Disc(_painter, ark, 4.2f * _scale, WithAlpha(_settings.Cyan, 0.28f * pulse));
