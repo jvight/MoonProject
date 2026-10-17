@@ -120,19 +120,20 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator NewGame_FadesOutTitleThemeOverTwoPointFiveSeconds()
+        public IEnumerator NewGame_DucksTheTitleThemeUnderTheCrtTock()
         {
             _rig.Events.Publish(new TitleShown(true));
             yield return new WaitForSecondsRealtime(2.2f);
             Assert.AreEqual(1f, _rig.TitleMusic.EnvelopeLevel, 1e-3f);
 
             _rig.Events.Publish(new NewGameRequested());
-            yield return new WaitForSecondsRealtime(1.25f);
+            Assert.AreEqual("title_crt_off", _rig.Director.LastVoice.clip.name);
+            yield return new WaitForSecondsRealtime(0.4f);
             Assert.IsTrue(_rig.TitleMusic.IsPlaying);
             Assert.Greater(_rig.TitleMusic.EnvelopeLevel, 0.2f);
             Assert.Less(_rig.TitleMusic.EnvelopeLevel, 0.8f);
 
-            yield return new WaitForSecondsRealtime(1.5f);
+            yield return new WaitForSecondsRealtime(0.6f);
             Assert.AreEqual(0f, _rig.TitleMusic.EnvelopeLevel, 1e-4f);
             Assert.IsFalse(_rig.TitleMusic.IsPlaying);
         }
