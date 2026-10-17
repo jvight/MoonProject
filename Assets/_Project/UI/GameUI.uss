@@ -1647,11 +1647,12 @@ Label {
 
 .cargo__device-state {
     position: absolute;
-    left: -60px;
-    right: -60px;
+    left: -40px;
+    right: -40px;
     top: 100%;
     margin-top: 4px;
     font-size: 17px;
+    white-space: nowrap;
     -unity-text-align: upper-center;
     color: rgb(242, 192, 104);
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Medium.asset");

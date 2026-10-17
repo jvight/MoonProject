@@ -471,7 +471,7 @@ namespace MoonProject.UI
         private bool PromptsOpen(bool paused)
         {
             return !paused && _awake && !_inOpening && _sinceAwake >= _tuning.Prompts.StartDelay &&
-                   !_lookUpChip.IsVisible && !BuildMenuOpen();
+                   !_lookUpChip.IsVisible && !_readout.IsVisible && !BuildMenuOpen();
         }
 
         private bool ObjectiveOpen(bool paused)
@@ -481,7 +481,7 @@ namespace MoonProject.UI
 
         private bool LookHintsOpen()
         {
-            return !BuildMenuOpen();
+            return !_readout.IsVisible && !BuildMenuOpen();
         }
 
         private bool ReadoutOpen(bool paused)

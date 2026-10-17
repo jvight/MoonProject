@@ -510,8 +510,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(string.Format(Text("ui.readout.reserve"), 0), _rig.Ui.Readout.LineText(0));
 
             Events.Publish(new StoryScanned("airlock_panel", "story.airlock_panel", Vector3.zero));
-            yield return Seconds(_rig.Tuning.Guidance.StatusHoldSeconds + _rig.Tuning.Guidance.Readout.FadeOut +
-                                 _rig.Tuning.Guidance.Readout.FadeIn + 1f);
+            yield return Seconds(_rig.Tuning.Guidance.Readout.FadeOut + _rig.Tuning.Guidance.Readout.FadeIn + 0.8f);
             Assert.AreEqual(ReadoutKind.Story, _rig.Ui.Readout.Showing, "the scanned panel's text follows");
             Assert.AreEqual(2, _rig.Ui.Readout.LineCount);
             Assert.AreEqual(Text("story.airlock_panel").Split('\n')[1], _rig.Ui.Readout.LineText(1));
@@ -522,6 +521,9 @@ namespace MoonProject.UI.PlayModeTests
         {
             Boot();
             _rig.Tune("_guidance._bootHoldSeconds", 2f);
+            _rig.Ui.Ledger.RecordLookTaught();
+            _rig.Ui.Ledger.RecordDriveTaught();
+            _rig.Ui.Ledger.RecordHoldChipShown();
             yield return null;
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             Events.Publish(new NextStepChanged("next.v2.drive_lander"));
@@ -540,7 +542,9 @@ namespace MoonProject.UI.PlayModeTests
                          (_rig.Ui.Readout.IsVisible ? 1 : 0) + (_rig.Ui.UnlockCard.IsVisible ? 1 : 0) +
                          (_rig.Ui.Objective.IsVisible ? 1 : 0);
                 shownFrames += up > 0 ? 1 : 0;
-                Assert.LessOrEqual(up, 1, "one guidance element at a time");
+                Assert.LessOrEqual(up, 1, "one guidance element at a time: prompt " + _rig.Ui.Prompt.IsVisible + ", look-up " +
+                    _rig.Ui.LookUp.IsVisible + ", readout " + _rig.Ui.Readout.IsVisible + ", unlock " +
+                    _rig.Ui.UnlockCard.IsVisible + ", objective " + _rig.Ui.Objective.IsVisible);
                 yield return null;
             }
 
