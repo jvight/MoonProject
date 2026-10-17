@@ -13,8 +13,6 @@ namespace MoonProject.World.Editor
         public const string GroundMarkShader = "Assets/_Project/Shaders/Rover/RoverTrack.shader";
         /// <summary>The orange vent's bead field (M3-27): the rover's track shader tinted volcanic orange.</summary>
         public const string VentBeadMaterial = GeneratedRoot + "/M_VentBeads.mat";
-        /// <summary>Home's marks in the lander's frame: worn tracks between its places, the blast scar, bootprints.</summary>
-        public const string HomeGroundMarks = GeneratedRoot + "/HomeGroundMarks.asset";
         public const string VolumeProfile = GeneratedRoot + "/WorldVolumeProfile.asset";
         /// <summary>Home's warm grade, blended in a step per power stage over the main profile.</summary>
         public const string HomeGradeProfile = GeneratedRoot + "/HomeGradeProfile.asset";

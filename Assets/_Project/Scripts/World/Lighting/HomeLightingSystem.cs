@@ -12,18 +12,13 @@ namespace MoonProject.World
     /// glass segments of Art's ground power cables (lit from the tower outward), the tower's pilot blink while the
     /// base sleeps, the warm light pools on the ground under home's warm points and home's grade, which warms a step
     /// with each stage. The first time 07 comes near the radio tower (<see cref="PlaceFirstApproached"/>), a slow light
-    /// previews each dark cable, showing what the tower will power (docs/features/M3-24 B). When the network's
-    /// handshake reaches home (<see cref="NetworkPulseReached"/>), a soft light runs along the powered cables
-    /// (north-star beat 7). Thin: the timing lives in
+    /// previews each dark cable, showing what the tower will power (docs/features/M3-24 B). Thin: the timing lives in
     /// <see cref="HomeLightStages"/>.
     /// </summary>
     public sealed class HomeLightingSystem : MonoBehaviour, IGameSystem, IHomeLights
     {
         /// <summary>The radio tower's place id (docs/features/M3-16 contracts, published by Gameplay).</summary>
         private const string TowerPlace = "place.tower";
-
-        /// <summary>Home's id among the relay network's nodes (RelayNode.Id, set by Gameplay).</summary>
-        private const string HomeNode = "home";
 
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
         private static readonly int IntensityId = Shader.PropertyToID("_Intensity");
@@ -74,7 +69,6 @@ namespace MoonProject.World
         private IDisposable _feelBeat;
         private IViewCamera _view;
         private float[] _poolsApplied;
-        private IDisposable _networkPulse;
 
         public void Initialize(GameContext context)
         {
@@ -100,7 +94,6 @@ namespace MoonProject.World
             _powerChanged = context.Events.Subscribe<BasePowerChanged>(OnPowerChanged);
             _feelBeat = context.Events.Subscribe<FeelBeat>(OnFeelBeat);
             _placeApproached = context.Events.Subscribe<PlaceFirstApproached>(OnPlaceApproached);
-            _networkPulse = context.Events.Subscribe<NetworkPulseReached>(OnNetworkPulse);
             context.Register<IHomeLights>(this);
         }
 
@@ -321,19 +314,10 @@ namespace MoonProject.World
             }
         }
 
-        private void OnNetworkPulse(NetworkPulseReached reached)
-        {
-            if (reached.NodeId == HomeNode)
-            {
-                _stages.Echo(Time.time);
-            }
-        }
-
         private void OnDestroy()
         {
             _powerChanged?.Dispose();
             _placeApproached?.Dispose();
-            _networkPulse?.Dispose();
             _feelBeat?.Dispose();
         }
 

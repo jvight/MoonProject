@@ -5,9 +5,8 @@ using MoonProject.Core;
 namespace MoonProject.World
 {
     /// <summary>
-    /// The ground's smallest scale (M3-18 V4): marks pressed into the dust. 07's worn tracks (desire paths it has
-    /// driven a hundred times) out from home to the places it goes and between home's places, the lander's
-    /// landing-blast scar and a few crew bootprints by the ladder. Drawn with the rover's track shader.
+    /// The ground's smallest scale (M3-18 V4): marks pressed into the dust, the crew's faded tracks along the
+    /// opening's route (opening v2 §4). Drawn with the rover's track shader.
     /// </summary>
     [Serializable]
     public sealed class GroundMarkSettings
@@ -80,50 +79,6 @@ namespace MoonProject.World
         [Range(1f, 400f)]
         [SerializeField] private float _fadeFar = 130f;
 
-        [Header("Landing-blast scar")]
-        [Tooltip("Radius of the lander's landing-blast scar, metres.")]
-        [Range(1f, 30f)]
-        [SerializeField] private float _scarRadius = 13f;
-
-        [Tooltip("Radius inside which the scar's streaks start (under the lander), metres.")]
-        [Range(0f, 10f)]
-        [SerializeField] private float _scarInner = 1.5f;
-
-        [Tooltip("Number of radial streaks the blast swept into the dust.")]
-        [Range(4, 64)]
-        [SerializeField] private int _scarStreaks = 32;
-
-        [Tooltip("Half width of one streak, metres.")]
-        [Range(0.05f, 2f)]
-        [SerializeField] private float _scarStreakHalfWidth = 0.6f;
-
-        [Tooltip("Strength of a streak at its inner end (0..1); it fades outward.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _scarStrength = 0.75f;
-
-        [Header("Bootprints")]
-        [Tooltip("Where the crew's bootprints start, in the lander's frame (the ladder's foot), metres.")]
-        [SerializeField] private Vector3 _bootprintStart = new Vector3(1.6f, 0f, 3.2f);
-
-        [Tooltip("Heading of the bootprints in the lander's frame, degrees from its forward.")]
-        [Range(-180f, 180f)]
-        [SerializeField] private float _bootprintHeading = 55f;
-
-        [Tooltip("Number of bootprints.")]
-        [Range(0, 30)]
-        [SerializeField] private int _bootprintCount = 9;
-
-        [Tooltip("Distance between steps, metres.")]
-        [Range(0.3f, 1.5f)]
-        [SerializeField] private float _bootprintStride = 0.75f;
-
-        [Tooltip("Bootprint half length and half width, metres.")]
-        [SerializeField] private Vector2 _bootprintSize = new Vector2(0.16f, 0.07f);
-
-        [Tooltip("Strength of a bootprint (0..1): a faint remnant, years old.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _bootprintStrength = 0.5f;
-
         public string[] Route => _route;
         public float TrackGauge => _trackGauge;
         public float RutHalfWidth => _rutHalfWidth;
@@ -140,16 +95,5 @@ namespace MoonProject.World
         public Color Tint => _tint;
         public float FadeNear => _fadeNear;
         public float FadeFar => _fadeFar;
-        public float ScarRadius => _scarRadius;
-        public float ScarInner => _scarInner;
-        public int ScarStreaks => _scarStreaks;
-        public float ScarStreakHalfWidth => _scarStreakHalfWidth;
-        public float ScarStrength => _scarStrength;
-        public Vector3 BootprintStart => _bootprintStart;
-        public float BootprintHeading => _bootprintHeading;
-        public int BootprintCount => _bootprintCount;
-        public float BootprintStride => _bootprintStride;
-        public Vector2 BootprintSize => _bootprintSize;
-        public float BootprintStrength => _bootprintStrength;
     }
 }

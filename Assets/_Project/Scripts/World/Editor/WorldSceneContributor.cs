@@ -11,9 +11,8 @@ namespace MoonProject.World.Editor
     /// <summary>
     /// The World's part of Main.unity: the earthlight and its fill, the post-processing volume, the skybox, fog and
     /// ambient (saved into the scene), The Peak's beacon, and the <see cref="WorldSystem"/> that generates the
-    /// terrain, the rocks and Earth at boot, the <see cref="HomeLightingSystem"/> that wakes home's warm points and the
-    /// <see cref="LabLights"/> that light the belly lift and the crew's lab (wired to the base by
-    /// <see cref="WorldHomeWiringContributor"/>).
+    /// terrain, the rocks and Earth at boot, and the <see cref="HomeLightingSystem"/> that wakes home's warm points
+    /// (wired to the base by <see cref="WorldHomeWiringContributor"/>).
     /// Runs first (order 200) because rover, audio and gameplay read ITerrainQuery and IWorldLayout.
     /// </summary>
     public sealed class WorldSceneContributor : ISceneContributor
@@ -96,25 +95,6 @@ namespace MoonProject.World.Editor
             lighting.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(homeLighting);
 
-            var reachRing = context.CreateChild("Reach Ring", root).AddComponent<ReachRingSystem>();
-            var ring = new SerializedObject(reachRing);
-            Assign(ring, "_settings", settings);
-            ring.ApplyModifiedPropertiesWithoutUndo();
-            context.AddSystem(reachRing);
-
-            var networkPulse = context.CreateChild("Network Pulse", root).AddComponent<NetworkPulseSystem>();
-            var handshake = new SerializedObject(networkPulse);
-            Assign(handshake, "_settings", settings);
-            Assign(handshake, "_haloMesh", context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh));
-            Assign(handshake, "_haloMaterial", context.LoadAsset<Material>(WorldPaths.BeaconHaloMaterial));
-            handshake.ApplyModifiedPropertiesWithoutUndo();
-            context.AddSystem(networkPulse);
-
-            var labLights = context.CreateChild("Lab Lights", root).AddComponent<LabLights>();
-            var lab = new SerializedObject(labLights);
-            Assign(lab, "_settings", settings);
-            lab.ApplyModifiedPropertiesWithoutUndo();
-            context.AddSystem(labLights);
         }
 
         /// <summary>

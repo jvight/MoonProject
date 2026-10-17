@@ -414,10 +414,6 @@ MonoBehaviour:
     _pilotSharpness: 6
     _topLightLevel: 0.6
     _pilotMinAngle: 0.4
-    _echoTravel: 1.2
-    _echoRise: 0.15
-    _echoTail: 0.9
-    _echoPeak: 1.8
     _buildHoldTimeout: 8
     _towerBeatRadius: 20
     _beaconFlareGain: 3
@@ -488,25 +484,6 @@ MonoBehaviour:
       _intensity: 2.6
       _disc: 0
       _tint: {r: 1, g: 1, b: 1, a: 1}
-  _labLighting:
-    _bellyLampGlow: 3
-    _hatchRimGlow: 2.6
-    _cabinLampGlow: 2.4
-    _portholeGlow: 0.9
-    _tableThroughPorthole: 0.5
-    _portholeLampGlow: 3.2
-    _boardLampGlow: 2
-    _recoveryLampGlow: 2.2
-    _rowPulseSwell: 0.8
-    _rowPulseSeconds: 1.6
-    _readingLampBase: 0.6
-    _readingLampPerKeepsake: 0.7
-    _lampWarmUp: 1.8
-    _tableGlow: 1.4
-    _tableLookBoost: 0.8
-    _tableLookEase: 1.2
-    _chartRadius: 320
-    _penTravel: 0.45
   _postProcessing:
     _bloomThreshold: 1.25
     _bloomIntensity: 1.1
@@ -551,17 +528,6 @@ MonoBehaviour:
     _tint: {r: 0.58, g: 0.58, b: 0.72, a: 1}
     _fadeNear: 45
     _fadeFar: 130
-    _scarRadius: 13
-    _scarInner: 1.5
-    _scarStreaks: 32
-    _scarStreakHalfWidth: 0.6
-    _scarStrength: 0.75
-    _bootprintStart: {x: 1.6, y: 0, z: 3.2}
-    _bootprintHeading: 55
-    _bootprintCount: 9
-    _bootprintStride: 0.75
-    _bootprintSize: {x: 0.16, y: 0.07}
-    _bootprintStrength: 0.5
   _landmarks:
     _routeBearing: 72
     _routePostDistances:
@@ -611,15 +577,6 @@ MonoBehaviour:
       _wander: 1.6
       _bends: 3
       _portReach: 2.9
-  _reachRing:
-    _duration: 2
-    _fadeIn: 0.1
-    _fadeOut: 0.45
-    _halfWidth: 2.5
-    _color: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
-    _intensity: 0.55
-    _relayReach: 80
-    _packReach: 45
   _scrapField:
     _pieces: 14
     _laneHalfWidth: 2.5
@@ -664,31 +621,6 @@ MonoBehaviour:
     _readoutCorner: {x: 0.07, y: 0.9}
     _readoutDistance: 0.5
     _volumePriority: 90
-  _chargerPools:
-    _radius: 2.8
-    _lift: 0.06
-    _litGlow: 0.9
-    _chargingGlow: 1.5
-    _ease: 0.9
-  _networkPulse:
-    _hopSeconds: 1.4
-    _flashRise: 0.2
-    _flashFall: 1.6
-    _originBoost: 1.4
-    _beadFade: 0.2
-    _arcPerMetre: 0.06
-    _color: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
-    _flashIntensity: 2.4
-    _flashRadius: 1
-    _beadIntensity: 1.8
-    _beadRadius: 0.6
-    _minAngle: 0.8
-    _minAngleFrom: 30
-    _minAngleFull: 60
-    _flashLight: 4
-    _flashLightRange: 14
-    _beadLight: 2.5
-    _beadLightRange: 8
   _skyCycle:
     _dayLengthSeconds: 7200
     _eclipseBreakoutLead: 1
