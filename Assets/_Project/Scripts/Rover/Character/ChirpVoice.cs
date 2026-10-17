@@ -32,8 +32,8 @@ namespace MoonProject.Rover
             return now < _soundingUntil;
         }
 
-        /// <summary>True (and the chirp is booked) when <paramref name="mood"/> may sound at <paramref
-        /// name="now"/>.</summary>
+        /// <summary>True (and the chirp is booked) when <paramref name="mood"/> may sound at
+        /// <paramref name="now"/>.</summary>
         public bool TryChirp(ChirpMood mood, float now)
         {
             int index = (int)mood;

@@ -106,7 +106,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                                                      changed.State == RoverSystemState.Ok && !changed.Restored),
                 "the pilot light and the done tone");
             yield return Waits.Until(() => !battery.IsCharging, 60f);
-            Assert.AreEqual(1f, battery.Charge01, 0.01f, $"full (reserve {opening.Port.ReserveCells:F2}, cells {battery.Cells}, " +
+            Assert.AreEqual(1f, battery.Charge01, 0.01f,
+                $"full (reserve {opening.Port.ReserveCells:F2}, cells {battery.Cells}, " +
                 $"rover {_fixture.Rover.Position}, reserve events {_reserve.Count})");
             Assert.IsTrue(opening.Port.Spent, "the lander's old cells gave out after one charge");
             Assert.AreEqual(0f, _reserve[_reserve.Count - 1].Reserve01, "LANDER RESERVE · 0%");
@@ -241,7 +242,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _parts.Clear();
             _systems.Clear();
             _refused.Clear();
-            _fixture = GameplayFixture.Boot(_controls, slot, spares: spares);
+            _fixture = GameplayFixture.Boot(_controls, slot, spares: spares, startKit: true);
             EventBus events = _fixture.Bootstrap.Context.Events;
             _milestoneToken = events.Subscribe<OpeningMilestoneReached>(_milestones.Add);
             _reserveToken = events.Subscribe<LanderReserveChanged>(_reserve.Add);

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace MoonProject.Gameplay.Tests
 {
-    /// <summary>Easing, flight and glide curves: start where they say, end where they say, never jump.</summary>
+    /// <summary>Easing and flight curves: start where they say, end where they say, never jump.</summary>
     public sealed class MotionTests
     {
         [Test]
@@ -94,40 +94,6 @@ namespace MoonProject.Gameplay.Tests
             Assert.Greater(Vector3.Distance(middle, straight), 0.5f, "it does not fly in a straight line");
             Assert.AreEqual(0.6f, PickupFlight.Duration(0f, 0.6f, 0.06f), 1e-6f);
             Assert.AreEqual(0.9f, PickupFlight.Duration(5f, 0.6f, 0.06f), 1e-6f);
-        }
-
-        [Test]
-        public void GlidePath_ArrivesWithASoftSettleBelowAndBack()
-        {
-            var start = new Vector3(5f, 1f, 0f);
-            var end = new Vector3(0f, 2f, 0f);
-            Assert.Less(Vector3.Distance(GlidePath.Position(start, end, 0f, 0.9f, 0.25f, 1.4f), start), 1e-4f);
-            Assert.Less(Vector3.Distance(GlidePath.Position(start, end, 1f, 0.9f, 0.25f, 1.4f), end), 1e-4f);
-            Vector3 glideEnd = GlidePath.Position(start, end, GlidePath.GlideShare, 0.9f, 0.25f, 1.4f);
-            Assert.AreEqual(end.y + 0.25f, glideEnd.y, 1e-3f, "it glides to a point above the slot first");
-
-            float lowest = float.MaxValue;
-            for (int i = 0; i <= 100; i++)
-            {
-                float p = Mathf.Lerp(GlidePath.GlideShare, 1f, i / 100f);
-                lowest = Mathf.Min(lowest, GlidePath.Position(start, end, p, 0.9f, 0.25f, 1.4f).y);
-            }
-
-            Assert.Less(lowest, end.y, "the settle dips a touch past the slot");
-            Assert.Greater(lowest, end.y - 0.06f, "only a touch");
-        }
-
-        [Test]
-        public void MarkerBlink_BlinksAndThenFadesToZero()
-        {
-            const float period = 1.8f;
-            const float duration = 3f * period;
-            Assert.AreEqual(0f, MarkerEnvelope.Blink(0f, duration, period), 1e-6f);
-            Assert.AreEqual(1f, MarkerEnvelope.Blink(0.25f * period, duration, period), 1e-3f, "first blink peak");
-            Assert.Less(MarkerEnvelope.Blink(0.75f * period, duration, period), 0.25f, "dip between blinks");
-            Assert.AreEqual(1f, MarkerEnvelope.Blink(1.25f * period, duration, period), 1e-3f, "second blink peak");
-            Assert.AreEqual(1f, MarkerEnvelope.Blink(2.25f * period, duration, period), 1e-3f, "third blink peak");
-            Assert.AreEqual(0f, MarkerEnvelope.Blink(duration, duration, period), 1e-6f);
         }
 
         [Test]

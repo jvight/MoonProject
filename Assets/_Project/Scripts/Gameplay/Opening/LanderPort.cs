@@ -46,7 +46,8 @@ namespace MoonProject.Gameplay
             Reached = true;
         }
 
-        /// <summary>A pad on the port's cable drew <paramref name="cells"/>; returns the cells it actually got.</summary>
+        /// <summary>A pad on the port's cable drew <paramref name="cells"/>; returns the cells it actually
+        /// got.</summary>
         public float Draw(float cells)
         {
             float drawn = Mathf.Clamp(cells, 0f, ReserveCells);

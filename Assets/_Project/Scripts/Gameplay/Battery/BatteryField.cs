@@ -8,30 +8,19 @@ using MoonProject.Core.Save;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// 07's battery in the world (docs/features/M3-20, VISION ruling 15): each frame it measures what 07 did (metres
-    /// on the ground and the slope under them, a tow, the boost, beam work), finds the charger 07 stands on (the dock,
-    /// or a lit relay mast's 4 m ring, once stopped) and steps <see cref="BatteryModel"/>, which other domains read
-    /// as
-    /// <see cref="IRoverBattery"/>. Leaps are paid as they happen. While 07 crawls, new beam work sleeps. The Low
-    /// warning shows, the first few times, a ticker line naming home or a lit charger only. Once Tilly is home her
-    /// repaired solar cell trickles a still 07 back up, and a few seconds into a crawl she flies out to lead toward
-    /// the nearest lit charger until 07 charges. A finished charge keeps the day (saves). Allocation-free per frame.
+    /// 07's battery in the world (docs/features/M3-20, VISION ruling 15, opening-v2 §10): each frame it measures what
+    /// 07 did (metres on the ground and the slope under them, the boost, beam work, scanning, welding), finds the pad
+    /// 07 built that it stands on (powered by the base, or by the lander's reserve, which it draws as it fills 07) and
+    /// steps <see cref="BatteryModel"/>, which other domains read as <see cref="IRoverBattery"/>. Leaps are paid as
+    /// they happen. While 07 crawls, new beam work sleeps. The Low warning shows, the first few times, a ticker line.
+    /// The stand-still trickle runs only while 07's solar wing works. A finished charge keeps the day (saves).
+    /// Allocation-free per frame.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class BatteryField : MonoBehaviour, IChargerReach
+    public sealed class BatteryField : MonoBehaviour, IBuildEnergy
     {
-        private const string LowDockLine = "battery.low.dock";
-        private const string LowMastLine = "battery.low.mast";
-        private const string NodeNamePrefix = "hop.node.";
-
-        /// <summary>No charger found (the dock is always one, so only before the first frame).</summary>
-        private const int NoCharger = -1;
-
-        /// <summary>A pad 07 built (opening-v2): found through the opening, not in the station's reach.</summary>
-        private const int PadCharger = -2;
-
-        /// <summary>The dock in the charger index: masts use their reach node (1..).</summary>
-        private const int Dock = StationReach.Home;
+        private const string LowLine = "battery.low";
+        private const string LowPadLine = "battery.low.pad";
 
         [Tooltip("What draws charge, the crawl, the chargers and the warnings " +
                  "(Assets/_Project/Data/Tuning/Gameplay/BatteryTuning.asset).")]
@@ -43,25 +32,16 @@ namespace MoonProject.Gameplay
         private IRoverAbilities _abilities;
         private ISaveService _save;
         private BeamWork _beam;
-        private StationReach _reach;
-        private TetherSystem _tether;
         private OpeningField _pads;
         private IRoverSystems _systems;
+        private StructureCatalog _structures;
         private bool _padFromReserve;
         private bool _chargingOnReserve;
-        private ChargingDock _dock;
-        private Friend _leader;
-        private DroneBody _leaderBody;
-        private Vector3 _nearestLit;
-        private int _nearestLitNode = Dock;
-        private string[] _nodeNames = Array.Empty<string>();
+        private bool _hasCharger;
+        private Vector3 _nearestCharger;
         private Vector3 _lastPosition;
-        private bool _docked;
         private bool _boosting;
         private bool _placed;
-        private bool _wasAtMast;
-        private bool _mastFull;
-        private int _mastCells;
         private bool _wasLow;
         private bool _initialized;
 
@@ -71,39 +51,17 @@ namespace MoonProject.Gameplay
         public BatteryTuning Tuning => _tuning;
 
         /// <summary>
-        /// The share of 07's battery (0..1 of its present cells) welding <paramref name="definition"/> costs: the build
-        /// menu shows it next to the materials (opening-v2 §10).
+        /// The share of 07's battery (0..1 of its present cells) welding <paramref name="structureId"/> costs: the
+        /// build menu shows it next to the materials (opening-v2 §10).
         /// </summary>
-        public float WeldShare01(StructureDefinition definition)
+        public float WeldShare01(string structureId)
         {
-            if (definition == null)
+            if (!_structures.TryGet(structureId, out StructureDefinition definition))
             {
-                throw new ArgumentNullException(nameof(definition));
+                throw new ArgumentException($"No structure '{structureId}' in the catalog.", nameof(structureId));
             }
 
             return _tuning.WeldCells(definition.BuildSeconds) / Model.Cells;
-        }
-
-        /// <summary>The dock counts from the start: home always charges 07 (docs/design/first-hour-qa.md #8).</summary>
-        public bool HasCharger => _initialized;
-
-        public Vector3 NearestPosition => _nearestLit;
-
-        public string NearestNameKey => _nodeNames[_nearestLitNode];
-
-        public float DistanceToNearest => Mathf.Sqrt(SurfaceRules.HorizontalDistanceSquared(_rover.Position, _nearestLit));
-
-        /// <summary>
-        /// The share of a full battery the way to the nearest lit charger takes, with the Low warning's margins (its
-        /// route factor and range margin), so the dial's tick and the warning agree.
-        /// </summary>
-        public float ChargeToReach
-        {
-            get
-            {
-                float metres = DistanceToNearest * _tuning.LowRouteFactor * _tuning.LowRangeMargin;
-                return Mathf.Clamp01(metres / (_tuning.MetresPerCell * Mathf.Max(1, Model.Cells)));
-            }
         }
 
         internal void Wire(BatteryTuning tuning)
@@ -111,8 +69,7 @@ namespace MoonProject.Gameplay
             _tuning = tuning;
         }
 
-        internal bool Initialize(GameplayServices services, StationReach reach, TetherSystem tether, HomeBase home,
-            IRoverAbilities abilities, FriendField friends)
+        internal bool Initialize(GameplayServices services, IRoverAbilities abilities)
         {
             if (services == null)
             {
@@ -126,45 +83,18 @@ namespace MoonProject.Gameplay
                 return false;
             }
 
-            _reach = reach ?? throw new ArgumentNullException(nameof(reach));
-            _tether = tether != null ? tether : throw new ArgumentNullException(nameof(tether));
-            _dock = home != null ? home.Dock : throw new ArgumentNullException(nameof(home));
             _abilities = abilities ?? throw new ArgumentNullException(nameof(abilities));
-            if (friends == null)
-            {
-                throw new ArgumentNullException(nameof(friends));
-            }
-
-            _leader = friends.Find(_tuning.LeadFriend);
-            _leaderBody = _leader != null ? _leader.Body as DroneBody : null;
-            if (_leaderBody == null)
-            {
-                Debug.LogError($"{nameof(BatteryField)}: no flying friend '{_tuning.LeadFriend}' to lead a crawl " +
-                               "and give the solar cell (BatteryTuning's lead friend).", this);
-                enabled = false;
-                return false;
-            }
-
             _events = services.Events;
             _rover = services.Rover;
             _save = services.Save;
             _beam = services.Beam;
             Model = new BatteryModel(_tuning, _events);
-            _nodeNames = new string[_reach.NodeCount];
-            for (int node = 0; node < _nodeNames.Length; node++)
-            {
-                _nodeNames[node] = NodeNamePrefix + _reach.Id(node);
-            }
-
             _lastPosition = _rover.Position;
-            _subscriptions.Add(_events.Subscribe<RoverDockChanged>(OnDockChanged));
             _subscriptions.Add(_events.Subscribe<RoverJumped>(OnJumped));
             _subscriptions.Add(_events.Subscribe<RoverBoostChanged>(OnBoostChanged));
             _subscriptions.Add(_events.Subscribe<RoverPlaced>(OnPlaced));
             _subscriptions.Add(_events.Subscribe<BatteryWarned>(OnWarned));
             _subscriptions.Add(_events.Subscribe<ChargingChanged>(OnChargingChanged));
-            _subscriptions.Add(_events.Subscribe<PartFitted>(OnPartFitted));
-            _subscriptions.Add(_events.Subscribe<PartRemoved>(OnPartRemoved));
             _initialized = true;
             return true;
         }
@@ -180,12 +110,18 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// The opening's built pads become chargers (opening-v2 B6): fed by the base, or by the lander's reserve,
-        /// which they draw as they fill 07.
+        /// The opening's built pads are the chargers (opening-v2 B6): fed by the base, or by the lander's reserve,
+        /// which they draw as they fill 07. Connected before the first frame.
         /// </summary>
         internal void ConnectPads(OpeningField opening)
         {
             _pads = opening ?? throw new ArgumentNullException(nameof(opening));
+        }
+
+        /// <summary>The structures 07 can build: what each weld costs the battery.</summary>
+        internal void ConnectStructures(StructureCatalog structures)
+        {
+            _structures = structures ?? throw new ArgumentNullException(nameof(structures));
         }
 
         /// <summary>07's systems: the solar wing's stand-still trickle only runs while the wing works.</summary>
@@ -226,62 +162,17 @@ namespace MoonProject.Gameplay
             }
 
             _chargingOnReserve = onReserve;
-            StepFeel();
             _beam.SetAsleep(Model.IsLowPower);
-            _leaderBody.Lead(Model.FriendLeads && !Model.IsCharging, _nearestLit);
-        }
-
-        /// <summary>
-        /// The battery's FeelBeats (feel-pass §2.7, §2.13). At a lit mast (Kind MastCharge): Anticipate as charging
-        /// starts, Act per whole cell gained (strength = charge), Reward when full there, Cancel when 07 leaves it
-        /// first. Low power (Kind LowPower): Impact as 07 drops onto its reserve cell, Reward when it is back above.
-        /// </summary>
-        private void StepFeel()
-        {
-            Vector3 at = _rover.Position;
-            bool atMast = Model.IsCharging && Model.Charger == ChargerKind.Mast;
-            int cells = Mathf.FloorToInt(Model.Charge);
-            bool full = Model.Charge >= Model.Cells;
-            if (atMast && !_wasAtMast)
-            {
-                _mastCells = cells;
-                Feel(FeelKind.MastCharge, FeelPhase.Anticipate, at, Model.Charge01);
-            }
-            else if (!atMast && _wasAtMast && !_mastFull)
-            {
-                Feel(FeelKind.MastCharge, FeelPhase.Cancel, at, Model.Charge01);
-            }
-
-            if (atMast)
-            {
-                while (_mastCells < cells)
-                {
-                    _mastCells++;
-                    Feel(FeelKind.MastCharge, FeelPhase.Act, at, Model.Charge01);
-                }
-
-                if (full && !_mastFull)
-                {
-                    Feel(FeelKind.MastCharge, FeelPhase.Reward, at, 1f);
-                }
-            }
-
-            _mastFull = atMast && full;
-            _wasAtMast = atMast;
             if (Model.IsLowPower != _wasLow)
             {
-                Feel(FeelKind.LowPower, Model.IsLowPower ? FeelPhase.Impact : FeelPhase.Reward, at,
-                    Model.IsLowPower ? 1f : Model.Charge01);
+                _events.Publish(new FeelBeat(FeelKind.LowPower,
+                    Model.IsLowPower ? FeelPhase.Impact : FeelPhase.Reward, _rover.Position, Vector3.up,
+                    Model.IsLowPower ? 1f : Model.Charge01, 0f));
                 _wasLow = Model.IsLowPower;
             }
         }
 
-        private void Feel(FeelKind kind, FeelPhase phase, Vector3 at, float strength)
-        {
-            _events.Publish(new FeelBeat(kind, phase, at, Vector3.up, strength, 0f));
-        }
-
-        /// <summary>This frame's battery step: 07's travel, its verbs, the charger under it.</summary>
+        /// <summary>This frame's battery step: 07's travel, its functions, the pad under it.</summary>
         private BatteryStep Sample()
         {
             Vector3 position = _rover.Position;
@@ -291,19 +182,13 @@ namespace MoonProject.Gameplay
             _placed = false;
             _lastPosition = position;
 
-            Vector3 padPosition = Vector3.zero;
-            _padFromReserve = false;
-            bool onPad = _pads != null && _pads.Pads.TryFindUnder(position, out padPosition, out _padFromReserve);
-            int charger = onPad ? PadCharger : ChargerUnder(position);
-            _nearestLitNode = NearestCharger(position, true);
-            _nearestLit = ChargerPosition(_nearestLitNode);
-            bool friendHome = _leader.Progress.State == FriendState.Awake;
+            bool onPad = _pads.Pads.TryFindUnder(position, out Vector3 padPosition, out _padFromReserve);
+            _hasCharger = _pads.Pads.TryFindNearest(position, out _nearestCharger);
             return new BatteryStep
             {
                 GroundDistance = counted ? travel.magnitude : 0f,
                 Speed = _rover.Speed,
                 SlopeDegrees = SlopeAlong(_rover.GroundNormal, travel),
-                Towing = _tether.State == TetherAimState.Towing,
                 Boosting = _boosting,
                 BeamSeconds = _beam.Take(out float scanSeconds, out float weldSeconds),
                 ScanSeconds = scanSeconds,
@@ -311,68 +196,12 @@ namespace MoonProject.Gameplay
                 Still = _rover.Speed <= _tuning.StillSpeed,
                 SolarFitted = _systems.StateOf(RoverSystem.SolarWing) == RoverSystemState.Ok,
                 DrumsFitted = _abilities.Has(RoverAbility.BoostCoils),
-                FriendCanLead = friendHome,
-                OnCharger = charger != NoCharger,
-                Charger = onPad ? ChargerKind.Pad : charger == Dock ? ChargerKind.Dock : ChargerKind.Mast,
-                ChargerPosition = onPad ? padPosition
-                    : charger != NoCharger ? ChargerPosition(charger) : Vector3.zero,
+                OnCharger = onPad,
+                Charger = ChargerKind.Pad,
+                ChargerPosition = padPosition,
                 Position = position,
-                NearestLitCharger = _nearestLit,
+                NearestLitCharger = _hasCharger ? _nearestCharger : position,
             };
-        }
-
-        /// <summary>
-        /// The charger 07 is on now: the dock while docked, else a lit mast's ring (the model waits for a stop).
-        /// </summary>
-        private int ChargerUnder(Vector3 position)
-        {
-            if (_docked)
-            {
-                return Dock;
-            }
-
-            float ring = _tuning.RingRadius * _tuning.RingRadius;
-            for (int node = StationReach.Home + 1; node < _reach.NodeCount; node++)
-            {
-                if (_reach.IsLit(node) &&
-                    SurfaceRules.HorizontalDistanceSquared(position, _reach.Position(node)) <= ring)
-                {
-                    return node;
-                }
-            }
-
-            return NoCharger;
-        }
-
-        /// <summary>
-        /// The nearest charger to <paramref name="position"/>: the dock or a mast, only lit masts when
-        /// <paramref name="litOnly"/>.
-        /// </summary>
-        private int NearestCharger(Vector3 position, bool litOnly)
-        {
-            int nearest = Dock;
-            float best = SurfaceRules.HorizontalDistanceSquared(position, _dock.Position);
-            for (int node = StationReach.Home + 1; node < _reach.NodeCount; node++)
-            {
-                if (litOnly && !_reach.IsLit(node))
-                {
-                    continue;
-                }
-
-                float distance = SurfaceRules.HorizontalDistanceSquared(position, _reach.Position(node));
-                if (distance < best)
-                {
-                    best = distance;
-                    nearest = node;
-                }
-            }
-
-            return nearest;
-        }
-
-        private Vector3 ChargerPosition(int charger)
-        {
-            return charger == Dock ? _dock.Position : _reach.Position(charger);
         }
 
         /// <summary>Slope (degrees) of the ground along <paramref name="travel"/>: + uphill, - downhill.</summary>
@@ -390,15 +219,10 @@ namespace MoonProject.Gameplay
 
         private void OnWarned(BatteryWarned warned)
         {
-            if (warned.Warning != BatteryWarning.Low || !Model.TakeLowLine())
+            if (warned.Warning == BatteryWarning.Low && Model.TakeLowLine())
             {
-                return;
+                _events.Publish(new TickerLine(_hasCharger ? LowPadLine : LowLine));
             }
-
-            int lit = NearestCharger(_rover.Position, true);
-            _events.Publish(lit == Dock
-                ? new TickerLine(LowDockLine)
-                : new TickerLine(LowMastLine, _nodeNames[lit], true));
         }
 
         /// <summary>A finished charge keeps the day.</summary>
@@ -408,29 +232,6 @@ namespace MoonProject.Gameplay
             {
                 _save.SaveNow();
             }
-        }
-
-        /// <summary>Cell Pack II's spine is on 07: two more cells, arriving full (the install moment's rise).</summary>
-        private void OnPartFitted(PartFitted fitted)
-        {
-            if (fitted.Part == RoverKitPiece.BatterySpine)
-            {
-                Model.GrowTo(_tuning.CellPackCells);
-            }
-        }
-
-        /// <summary>The spine came off at the bay: back to 07's own cells until it is refitted.</summary>
-        private void OnPartRemoved(PartRemoved removed)
-        {
-            if (removed.Part == RoverKitPiece.BatterySpine)
-            {
-                Model.ShrinkTo(_tuning.StartingCells);
-            }
-        }
-
-        private void OnDockChanged(RoverDockChanged dock)
-        {
-            _docked = dock.Docked;
         }
 
         private void OnJumped(RoverJumped jumped)

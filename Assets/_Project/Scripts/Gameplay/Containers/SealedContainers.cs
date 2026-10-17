@@ -10,12 +10,11 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// The world's sealed containers (docs/design/0.5.5-owner-feedback.md §2: no find rests on open regolith). Within
-    /// the beam's reach, with no salvage piece, pickup or crew crate before it, holding E cuts a container's glowing
-    /// seal
-    /// once (the cut's own beats, <see cref="CutState"/>, at the cutter's tier): <see cref="ContainerSealCut"/>, the
-    /// lid
-    /// swings open about its local X, and as it stands open <see cref="ContainerOpened"/> lets its owner slide the find
-    /// out. A save keeps which stand open. Allocation-free after the containers are added.
+    /// the beam's reach and ahead of 07, with no salvage piece or pickup before it, holding E cuts a container's
+    /// glowing seal once (the cut's own beats, <see cref="CutState"/>, at the cutter's tier):
+    /// <see cref="ContainerSealCut"/>, the lid swings open about its local X, and as it stands open
+    /// <see cref="ContainerOpened"/> lets its owner slide the find out. A save keeps which stand open. Allocation-free
+    /// after the containers are added.
     /// </summary>
     public sealed class SealedContainers
     {
@@ -30,12 +29,9 @@ namespace MoonProject.Gameplay
         private readonly ISaveService _save;
         private readonly PickupReach _pickups;
         private readonly CutState _cut;
-        private CrewCrates _crates;
         private SealedContainer _cutting;
 
-        /// <summary>
-        /// Made before the finds' owners initialise, so each can add its containers; connect the crates later.
-        /// </summary>
+        /// <summary>Made before the finds' owners initialise, so each can add its containers.</summary>
         public SealedContainers(SalvageField salvage, CargoTuning tuning, Cutter cutter, GameplayServices services)
         {
             _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
@@ -54,12 +50,6 @@ namespace MoonProject.Gameplay
             _pickups = services.Pickups;
             _cut = new CutState(_events, FeelKind.Cut, cutter.ChargeSeconds, cutter.ResumeChargeSeconds,
                 salvage.Tuning.CutSteps);
-        }
-
-        /// <summary>The crew's crates: a crate in reach is cut before a container (one press, one verb).</summary>
-        public void Connect(CrewCrates crates)
-        {
-            _crates = crates ?? throw new ArgumentNullException(nameof(crates));
         }
 
         /// <summary>The sealed container a hold of E would cut now, or null.</summary>
@@ -106,7 +96,7 @@ namespace MoonProject.Gameplay
 
         public void Step(float now, float deltaTime)
         {
-            bool busy = _salvage.Candidate != null || _salvage.Cutting != null || _crates.Candidate != null ||
+            bool busy = _salvage.Candidate != null || _salvage.Cutting != null ||
                         _pickups.TryGet(Time.frameCount, out _, out _);
             Candidate = busy ? null : Nearest();
             for (int i = 0; i < _containers.Count; i++)

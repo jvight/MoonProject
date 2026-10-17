@@ -71,6 +71,34 @@ namespace MoonProject.Gameplay
             return false;
         }
 
+        /// <summary>
+        /// The nearest built pad that can charge 07 now (powered by the base, or on the lander's cable while its
+        /// reserve lasts), if any.
+        /// </summary>
+        public bool TryFindNearest(Vector3 from, out Vector3 position)
+        {
+            float bestSq = float.MaxValue;
+            position = Vector3.zero;
+            for (int i = 0; i < _base.Count; i++)
+            {
+                PlacedStructure pad = _base.StructureAt(i);
+                if (!pad.IsBuilt || pad.Definition.Id != StructureIds.ChargingPad ||
+                    !(Powered(pad) || (OnCable(pad) && !_port.Spent)))
+                {
+                    continue;
+                }
+
+                float distanceSq = SurfaceRules.HorizontalDistanceSquared(from, pad.Pose.Position);
+                if (distanceSq < bestSq)
+                {
+                    bestSq = distanceSq;
+                    position = pad.Pose.Position;
+                }
+            }
+
+            return bestSq < float.MaxValue;
+        }
+
         /// <summary>A built solar array is connected to a built pad.</summary>
         public bool PowerOn => AnyConnectedToPad(StructureIds.SolarArray);
 

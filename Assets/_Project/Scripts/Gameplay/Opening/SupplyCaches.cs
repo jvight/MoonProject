@@ -241,7 +241,7 @@ namespace MoonProject.Gameplay
 
         private int Take(SalvageMaterial material, int units, Vector3 at, int index)
         {
-            int fitted = Math.Min(units, _stock.Hold.FreeUnits(material));
+            int fitted = Math.Min(units, _stock.Room(material));
             if (fitted <= 0)
             {
                 return 0;

@@ -6,27 +6,14 @@ using MoonProject.Core;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Scanning (docs/design/0.5.5-owner-feedback.md §1): the blueprints' fragment sets, how long a fragment takes to
-    /// scan by its size, how far its corner brackets show, and the closing dissolve. Created by the Gameplay/Tuning
+    /// Scanning (docs/design/0.5.5-owner-feedback.md §1, opening-v2 §1): the ruins' structure sets and story scans,
+    /// how long a target takes to scan by its size, and the closing dissolve. Created by the Gameplay/Tuning
     /// builder; runtime code only reads it.
     /// </summary>
     public sealed class ScanTuning : ScriptableObject
     {
         /// <summary>The lander cargo bay's scan host id (its fragments' saved ids start with it).</summary>
         public const string LanderCargoId = "LanderCargo";
-
-        [Header("The sets (§1.3)")]
-        [Tooltip("Every blueprint's fragments, in Art's set names; the 18 of 0.5.")]
-        [SerializeField] private ScanSet[] _sets =
-        {
-            new ScanSet("CargoCradle", "rover.cargo_cradle", ScanSize.Medium, ScanSize.Medium),
-            new ScanSet("WarmHeadlamp", "rover.warm_headlamp", ScanSize.Small, ScanSize.Medium),
-            new ScanSet("HoverJump", "rover.hover_jump", ScanSize.Small, ScanSize.Medium, ScanSize.Medium),
-            new ScanSet("BoostCoils", "rover.boost_coils", ScanSize.Medium, ScanSize.Medium, ScanSize.Large),
-            new ScanSet("CellPack", "rover.cell_pack", ScanSize.Small, ScanSize.Small, ScanSize.Medium),
-            new ScanSet("FocusLens", "rover.focus_lens", ScanSize.Small, ScanSize.Small, ScanSize.Small),
-            new ScanSet("SideBins", "rover.side_bins", ScanSize.Medium, ScanSize.Large),
-        };
 
         [Header("The verb (§1.2)")]
         [Tooltip("Seconds to scan a small fragment (a lamp, a lens).")]
@@ -37,15 +24,6 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Seconds to scan a large fragment (a capacitor bank, a pannier).")]
         [Range(0.3f, 10f)] [SerializeField] private float _largeSeconds = 4f;
-
-        [Tooltip("How much faster the Focus Lens makes every scan (§1.6).")]
-        [Range(1f, 3f)] [SerializeField] private float _lensFactor = 1.5f;
-
-        [Tooltip("Metres within which a fragment still to scan shows its corner brackets.")]
-        [Range(2f, 60f)] [SerializeField] private float _bracketRange = 15f;
-
-        [Tooltip("The same with the Focus Lens fitted (§1.6).")]
-        [Range(2f, 60f)] [SerializeField] private float _lensBracketRange = 25f;
 
         [Tooltip("Metres from a fragment's scan point within which a hold of E scans it.")]
         [Range(1f, 20f)] [SerializeField] private float _reach = 8f;
@@ -68,9 +46,6 @@ namespace MoonProject.Gameplay
         [Header("Done (§1.2, D2)")]
         [Tooltip("Seconds of the dissolve: the solid fades, the lines stream into 07's lens, the lens flares.")]
         [Range(0.3f, 3f)] [SerializeField] private float _dissolveSeconds = 0.9f;
-
-        [Tooltip("Seconds the faint dust outline left on the spot takes to fade.")]
-        [Range(0.3f, 6f)] [SerializeField] private float _outlineSeconds = 2f;
 
         [Tooltip("Metal a fragment of an already known blueprint gives after its dissolve, so leftovers still pay.")]
         [Range(0, 12)] [SerializeField] private int _knownMetal = 3;
@@ -127,17 +102,9 @@ namespace MoonProject.Gameplay
         [Tooltip("Peak alpha of the tiny motes sparkling right at 07's lens.")]
         [Range(0f, 0.5f)] [SerializeField] private float _lensMoteAlpha = 0.16f;
 
-        [Header("The chasm's near lip (§1.3)")]
-        [Tooltip("Metres back from the canyon lip, toward the basin, where Kenji's crashed test jumper lies.")]
-        [Range(0f, 30f)] [SerializeField] private float _jumperSetback = 6f;
-
-        [Tooltip("Metres to the left of the leap's run-up line (looking at the chasm) the jumper lies: clear of the " +
-                 "lane 07 runs at the lip and of the bridge's stub on its right, inside the chasm's floor.")]
-        [Range(0f, 10f)] [SerializeField] private float _jumperSide = 6f;
-
         [Header("Lumen station ruins (RUINS-WORLD, opening-v2 §4)")]
-        [Tooltip("Each R1 ruin piece's Scan_1..N targets and the structure blueprints it teaches once every one of them " +
-                 "is scanned (the workshop and the scatter teach nothing: they hold lockers and panels).")]
+        [Tooltip("Each R1 ruin piece's Scan_1..N targets and the structure blueprints it teaches once every one of " +
+                 "them is scanned (the workshop and the scatter teach nothing: they hold lockers and panels).")]
         [SerializeField] private RuinScanSet[] _ruins =
         {
             new RuinScanSet("FallenSolarArray", new[] { StructureIds.SolarArray },
@@ -160,29 +127,17 @@ namespace MoonProject.Gameplay
             new StoryScan("airlock", "HabitatModules", "AirlockPanel", "story.airlock_panel", ScanSize.Small),
         };
 
-        [Tooltip("Structure blueprints whose scan targets belong to places later in the map (not at the home ruins).")]
-        [SerializeField] private string[] _laterStructureIds =
-        {
-            StructureIds.UpgradeBay,
-            StructureIds.VehiclePad,
-        };
-
         private static readonly int ScanLineColorShaderId = Shader.PropertyToID("_MoonScanLineColor");
         private static readonly int ScanPingColorShaderId = Shader.PropertyToID("_MoonScanPingColor");
         private static readonly int ScanParamsShaderId = Shader.PropertyToID("_MoonScanParams");
         private static readonly int ScanPingParamsShaderId = Shader.PropertyToID("_MoonScanPingParams");
 
-        public IReadOnlyList<ScanSet> Sets => _sets;
         public IReadOnlyList<RuinScanSet> Ruins => _ruins;
 
         /// <summary>The lander cargo bay's scan set (the charging pad's fragments).</summary>
         public RuinScanSet LanderCargo => _landerCargo;
 
         public IReadOnlyList<StoryScan> Stories => _stories;
-        public IReadOnlyList<string> LaterStructureIds => _laterStructureIds;
-        public float LensFactor => _lensFactor;
-        public float BracketRange => _bracketRange;
-        public float LensBracketRange => _lensBracketRange;
         public float Reach => _reach;
         public float Cone => _cone;
         public float DistanceWeight => _distanceWeight;
@@ -190,7 +145,6 @@ namespace MoonProject.Gameplay
         public int GazePriority => _gazePriority;
         public float AimToleranceDegrees => _aimToleranceDegrees;
         public float DissolveSeconds => _dissolveSeconds;
-        public float OutlineSeconds => _outlineSeconds;
         public int KnownMetal => _knownMetal;
         public Color ScanLineColor => _scanLineColor;
         public Color CompletionPingColor => _completionPingColor;
@@ -209,8 +163,6 @@ namespace MoonProject.Gameplay
         public float LensMoteRadius => _lensMoteRadius;
         public float LensMoteSize => _lensMoteSize;
         public float LensMoteAlpha => _lensMoteAlpha;
-        public float JumperSetback => _jumperSetback;
-        public float JumperSide => _jumperSide;
 
         /// <summary>Pushes the surface scan line, raster band, and completion ping tuning to shader globals (zero GC).</summary>
         public void ApplyShaderGlobals(float scanDurationSeconds)
@@ -242,22 +194,6 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>The set named <paramref name="blueprint"/> in Art's names, or false.</summary>
-        public bool TryGetSet(string blueprint, out ScanSet set)
-        {
-            for (int i = 0; i < _sets.Length; i++)
-            {
-                if (string.Equals(_sets[i].Blueprint, blueprint, StringComparison.Ordinal))
-                {
-                    set = _sets[i];
-                    return true;
-                }
-            }
-
-            set = default;
-            return false;
-        }
-
         /// <summary>The ruin scan set for <paramref name="ruinId"/>, or false.</summary>
         public bool TryGetRuinSet(string ruinId, out RuinScanSet set)
         {
@@ -272,39 +208,6 @@ namespace MoonProject.Gameplay
 
             set = default;
             return false;
-        }
-
-        private void OnValidate()
-        {
-            if (_laterStructureIds == null)
-            {
-                _laterStructureIds = Array.Empty<string>();
-                return;
-            }
-
-            int validCount = 0;
-            for (int i = 0; i < _laterStructureIds.Length; i++)
-            {
-                if (!string.IsNullOrWhiteSpace(_laterStructureIds[i]))
-                {
-                    validCount++;
-                }
-            }
-
-            if (validCount != _laterStructureIds.Length)
-            {
-                var cleaned = new string[validCount];
-                int dst = 0;
-                for (int i = 0; i < _laterStructureIds.Length; i++)
-                {
-                    if (!string.IsNullOrWhiteSpace(_laterStructureIds[i]))
-                    {
-                        cleaned[dst++] = _laterStructureIds[i];
-                    }
-                }
-
-                _laterStructureIds = cleaned;
-            }
         }
     }
 }

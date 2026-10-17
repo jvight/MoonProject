@@ -218,11 +218,11 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void SiteEntry_FindsAValidCutLine_ByPieceNumber()
         {
-            var entry = new SalvageSiteEntry("site.test", null, AbilityGate.Open, false, 1, new[]
+            var entry = new SalvageSiteEntry("site.test", null, 1, new[]
             {
                 new PieceCutLine(1, new[] { Vector3.zero, Vector3.right }),
                 new PieceCutLine(2, new[] { Vector3.zero }),
-            }, new[] { new PieceSizeEntry(1, PieceSize.Large) }, new SupplyCrate("ro", SalvageMaterial.Metal, 6));
+            }, new[] { new PieceSizeEntry(1, PieceSize.Large) });
             Assert.IsTrue(entry.TryGetSize(1, out PieceSize size));
             Assert.AreEqual(PieceSize.Large, size);
             Assert.IsFalse(entry.TryGetSize(2, out _));

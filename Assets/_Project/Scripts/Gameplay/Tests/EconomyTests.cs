@@ -71,35 +71,16 @@ namespace MoonProject.Gameplay.Tests
             _stock.Collect(SalvageMaterial.Metal, 5);
             var saved = new MaterialsSaveData
             {
-                hold = new[] { 2, 1, 0 }, holdSlots = 8, home = new[] { 5, 2, 2 }, shelvesBuilt = 3,
+                hold = new[] { 2, 1, 0 }, holdSlots = 8,
             };
             _stock.Restore(saved);
-            Assert.AreEqual(12, _stock.Total);
-            Assert.AreEqual(7, _changes[_changes.Count - 1].Metal);
-            Assert.AreEqual(3, _changes[_changes.Count - 1].Wiring);
-            Assert.AreEqual(3, _stock.Home.BuiltCount, "a built shelf stays built");
+            Assert.AreEqual(3, _stock.Total, "the save replaces what was aboard");
+            Assert.AreEqual(2, _changes[_changes.Count - 1].Metal);
+            Assert.AreEqual(1, _changes[_changes.Count - 1].Wiring);
             MaterialsSaveData captured = _stock.Capture();
             Assert.AreEqual(2, captured.hold[(int)SalvageMaterial.Metal]);
-            Assert.AreEqual(5, captured.home[(int)SalvageMaterial.Metal]);
-            Assert.AreEqual(SalvageMaterials.Count, captured.home.Length, "every material, new ones at 0");
-            Assert.Throws<FormatException>(() => _stock.Restore(new MaterialsSaveData { home = new[] { 0, -1 } }));
-        }
-
-        [Test]
-        public void OldScrap_BecomesAFairMaterialStock()
-        {
-            string json = MaterialsSaveMigrations.Migrate(JsonUtility.ToJson(new WalletSaveData { balance = 150 }),
-                1);
-            MaterialsSaveDataV2 stock = JsonUtility.FromJson<MaterialsSaveDataV2>(json);
-            Assert.AreEqual(8, stock.metal + stock.wiring + stock.optics, "150 scrap at 20 per unit, rounded");
-            Assert.AreEqual(4, stock.metal, "dealt metal, wiring, metal, wiring, metal, wiring, optics, metal");
-            Assert.AreEqual(3, stock.wiring);
-            Assert.AreEqual(1, stock.optics);
-            MaterialsSaveDataV2 none = MaterialsSaveMigrations.Convert(0);
-            Assert.AreEqual(0, none.metal + none.wiring + none.optics);
-            MaterialsSaveDataV2 all = MaterialsSaveMigrations.Convert(705);
-            Assert.AreEqual(35, all.metal + all.wiring + all.optics, "the whole old economy buys about every recipe");
-            Assert.Throws<InvalidOperationException>(() => MaterialsSaveMigrations.Migrate("{}", 3));
+            Assert.AreEqual(SalvageMaterials.Count, captured.hold.Length, "every material, new ones at 0");
+            Assert.Throws<FormatException>(() => _stock.Restore(new MaterialsSaveData { hold = new[] { 0, -1 } }));
         }
 
         [Test]
@@ -135,33 +116,5 @@ namespace MoonProject.Gameplay.Tests
             Assert.IsTrue(cadence.TryClaim(1.11f));
         }
 
-        [Test]
-        public void SaveData_RoundTripsThroughJson()
-        {
-            var relics = new RelicsSaveData
-            {
-                relics = new[]
-                {
-                    new RelicSaveData
-                    {
-                        id = "teapot", state = (int)RelicState.Surfacing, progress = 0.4f, discovered = true,
-                        position = new Vector3(1f, 2f, 3f), rotation = Quaternion.Euler(0f, 30f, 0f), slot = -1,
-                    },
-                },
-            };
-            RelicsSaveData copy = JsonUtility.FromJson<RelicsSaveData>(JsonUtility.ToJson(relics));
-            Assert.AreEqual("teapot", copy.relics[0].id);
-            Assert.AreEqual((int)RelicState.Surfacing, copy.relics[0].state);
-            Assert.AreEqual(0.4f, copy.relics[0].progress, 1e-6f);
-            Assert.IsTrue(copy.relics[0].discovered);
-            Assert.AreEqual(new Vector3(1f, 2f, 3f), copy.relics[0].position);
-
-            var upgrades = new UpgradesSaveData
-            {
-                upgrades = new[] { new UpgradeSaveData { id = "radio_tower", level = 2 } },
-            };
-            UpgradesSaveData upgradesCopy = JsonUtility.FromJson<UpgradesSaveData>(JsonUtility.ToJson(upgrades));
-            Assert.AreEqual(2, upgradesCopy.upgrades[0].level);
-        }
     }
 }
