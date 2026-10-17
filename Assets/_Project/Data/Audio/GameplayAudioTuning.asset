@@ -27,6 +27,9 @@ MonoBehaviour:
   _tetherHeavyMass: 25
   _tetherLightVolume: 0.75
   _tetherHeavyVolume: 1
+  _tetherHumStrainPitch: 1.2599
+  _tetherHumStrainVolume: 0.25
+  _tetherHumPitchEase: 3.5
   _signalSpatialBlend: 0.3
   _signalPickVolume: 0.8
   _rumbleFadeIn: 0.8

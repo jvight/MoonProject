@@ -232,6 +232,47 @@ namespace MoonProject.Rover.PlayModeTests
             _rover.Drive.Drive = Vector2.zero;
         }
 
+        [UnityTest]
+        public IEnumerator TetherStrain_SquintsFaceAndLiftsEffort_AndDrivingAccumulatesDustCleanedOnDock()
+        {
+            Spawn(false);
+            yield return Wait(0.5f);
+
+            EventBus events = _rover.Context.Events;
+            FaceState faceState = _rover.BodyLanguage.FaceDirector.Display.State;
+            float baseSquint = faceState.LeftEye.Squint;
+            float baseOpen = faceState.LeftEye.Open;
+
+            events.Publish(new TetherAttached(_rover.Controller.Position + Vector3.back * 4f, 10f));
+            events.Publish(new FeelBeat(FeelKind.Tether, FeelPhase.Act, _rover.Controller.Position, Vector3.back, 0.9f, 0f));
+            yield return Wait(0.25f);
+
+            Assert.AreEqual(0.9f, _rover.BodyLanguage.TetherStrain, 1e-3f);
+            Assert.AreEqual(0.9f, faceState.Strain, 1e-3f);
+            Assert.Greater(faceState.LeftEye.Squint, baseSquint + 0.3f, "07 squints under tether strain.");
+            Assert.Less(faceState.LeftEye.Open, baseOpen - 0.1f, "07's eyes narrow under tether strain.");
+
+            events.Publish(new TetherReleased(_rover.Controller.Position, true));
+            yield return null;
+            Assert.AreEqual(0f, _rover.BodyLanguage.TetherStrain, 1e-4f);
+            Assert.AreEqual(0f, faceState.Strain, 1e-4f);
+
+            RoverVisualRig rig = _rover.Controller.GetComponentInChildren<RoverVisualRig>();
+            float initialDust = rig.AppliedDustAmount;
+            _rover.Drive.Drive = new Vector2(0f, 1f);
+            yield return Wait(1.5f);
+            _rover.Drive.Drive = Vector2.zero;
+
+            Assert.Greater(rig.DustLevel, 0.02f, "Driving across the regolith accumulates lower-body dust.");
+            Assert.Greater(rig.AppliedDustAmount, initialDust + 0.01f, "Lower-body renderers receive increased _DustAmount.");
+
+            float dustedLevel = rig.DustLevel;
+            events.Publish(new RoverDockChanged(true, _rover.Controller.Position, _rover.Controller.Rotation));
+            yield return Wait(1.2f);
+            Assert.Less(rig.DustLevel, dustedLevel * 0.5f, "Docking at home brushes off lower-body regolith dust.");
+            events.Publish(new RoverDockChanged(false, _rover.Controller.Position, _rover.Controller.Rotation));
+        }
+
         private IEnumerator PeakPerkAfter(MaterialSalvaged salvage)
         {
             _peakPerk = 0f;

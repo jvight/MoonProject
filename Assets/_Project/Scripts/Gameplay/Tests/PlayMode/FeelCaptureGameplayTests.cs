@@ -319,6 +319,39 @@ namespace MoonProject.Gameplay.PlayModeTests
                 recorder.SetMetric("tetherReeledInLengthMeters", reeledInLen);
                 recorder.CaptureFrame("tether_winch_reeling");
 
+                // Pull against an anchored load to verify ENV-05 tether strain build-up before snap
+                float relaxedArc = _gameplay.Tether.CurrentArc;
+                duck.Body.isKinematic = true;
+                float peakStrain = 0f;
+                float minStrainedArc = relaxedArc;
+                float strainUntil = Time.time + 2.0f;
+                while (Time.time < strainUntil && _gameplay.Tether.State == TetherAimState.Towing)
+                {
+                    Set(_gamepad.leftStick, new Vector2(0f, 1f));
+                    yield return null;
+                    recorder.StepFrame();
+                    peakStrain = Mathf.Max(peakStrain, _gameplay.Tether.Strain);
+                    if (_gameplay.Tether.Strain > 0.4f)
+                    {
+                        minStrainedArc = Mathf.Min(minStrainedArc, _gameplay.Tether.CurrentArc);
+                    }
+
+                    if (_gameplay.Tether.Strain >= 0.8f)
+                    {
+                        break;
+                    }
+                }
+
+                Set(_gamepad.leftStick, Vector2.zero);
+                var bodyLang = _rover.GetComponentInChildren<RoverBodyLanguage>();
+                float faceStrain = bodyLang != null && bodyLang.FaceDirector != null && bodyLang.FaceDirector.Display != null
+                    ? bodyLang.FaceDirector.Display.State.Strain
+                    : 0f;
+                recorder.SetMetric("tetherStrainPeak", peakStrain);
+                recorder.SetMetric("tetherStrainedArcMeters", minStrainedArc);
+                recorder.SetMetric("tetherFaceStrain", faceStrain);
+                duck.Body.isKinematic = false;
+
                 Release(_mouse.rightButton);
                 yield return StepFrames(recorder, 10);
             }
@@ -430,6 +463,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             // -----------------------------------------------------------------
             // 6. DOCK & CHARGE (Park on home ChargingDock)
             // -----------------------------------------------------------------
+            var visualRig = _rover.GetComponentInChildren<RoverVisualRig>();
+            float dustBeforeDock = visualRig != null ? visualRig.AppliedDustAmount : 0f;
+            recorder.SetMetric("roverLowerBodyDustBeforeDock", dustBeforeDock);
+
             ChargingDock dock = _gameplay.Home.Dock;
             Vector3 dockFacing = Flat(dock.Rotation * Vector3.forward).normalized;
             Vector3 dockSpot = Flat(dock.Position);
@@ -444,6 +481,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             yield return StepFrames(recorder, 25);
+            float dustAfterDock = visualRig != null ? visualRig.AppliedDustAmount : 0f;
+            recorder.SetMetric("roverLowerBodyDustAfterDock", dustAfterDock);
             recorder.SetMetric("dockedState", dock.Docked ? 1f : 0f);
             recorder.SetMetric("dockGlowLevel", dock.GlowLevel);
             recorder.CaptureFrame("dock_charging");

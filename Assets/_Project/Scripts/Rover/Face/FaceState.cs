@@ -141,6 +141,9 @@ namespace MoonProject.Rover
         /// <summary>Clamped low-power amount in [0..1].</summary>
         public float LowPower { get; private set; }
 
+        /// <summary>Clamped tether strain amount in [0..1] (narrows/squints 07's eyes under heavy load).</summary>
+        public float Strain { get; private set; }
+
         /// <summary>Current overall CRT phosphor brightness multiplier.</summary>
         public float Brightness { get; private set; }
 
@@ -395,6 +398,13 @@ namespace MoonProject.Rover
                 ActiveSymbol = FaceSymbol.None;
             }
 
+            ComposeEyesAndBrightness();
+        }
+
+        /// <summary>Sets the tether strain amount, clamped to [0..1], narrowing/squinting 07's eyes under load.</summary>
+        public void SetStrain(float amount)
+        {
+            Strain = Clamp01(amount);
             ComposeEyesAndBrightness();
         }
 
@@ -704,13 +714,17 @@ namespace MoonProject.Rover
             float centerY = 0.5f + combinedLy;
 
             float maxOpenByPower = Lerp(1.0f, 0.58f, LowPower);
-            float effectiveOpen = _isDarkHold ? 0.0f : Math.Min(_open, maxOpenByPower) * BlinkMultiplier * BootEyeOpen;
-            float powerCut = Math.Max(_cut, LowPower * 0.25f);
+            float maxOpenByStrain = Lerp(1.0f, 0.80f, Strain);
+            float maxOpen = Math.Min(maxOpenByPower, maxOpenByStrain);
+            float effectiveOpen = _isDarkHold ? 0.0f : Math.Min(_open, maxOpen) * BlinkMultiplier * BootEyeOpen;
+            float powerCut = Math.Max(_cut, Math.Max(LowPower * 0.25f, Strain * 0.35f));
+            float effectiveSquint = Clamp01(_squint + Strain * 0.55f);
+            float effectiveTilt = _tilt - Strain * 0.38f;
 
             float leftScale = Lerp(1.0f, _tuning.AsymmetricLeftScale, _asymmetry);
             float rightScale = Lerp(1.0f, _tuning.AsymmetricRightScale, _asymmetry);
             float rightCut = Lerp(powerCut, _tuning.AsymmetricRightCut, _asymmetry);
-            float rightTilt = Lerp(_tilt, _tuning.AsymmetricRightTilt, _asymmetry);
+            float rightTilt = Lerp(effectiveTilt, _tuning.AsymmetricRightTilt, _asymmetry);
 
             LeftEye = new FaceEyeParams(
                 centerLeftX,
@@ -718,9 +732,9 @@ namespace MoonProject.Rover
                 _width,
                 _height,
                 effectiveOpen,
-                _tilt,
+                effectiveTilt,
                 powerCut,
-                _squint,
+                effectiveSquint,
                 _arc,
                 _ring,
                 _closed,
@@ -736,7 +750,7 @@ namespace MoonProject.Rover
                 effectiveOpen,
                 rightTilt,
                 rightCut,
-                _squint,
+                effectiveSquint,
                 _arc,
                 _ring,
                 _closed,

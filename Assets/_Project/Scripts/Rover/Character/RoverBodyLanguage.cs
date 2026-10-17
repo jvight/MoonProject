@@ -116,6 +116,7 @@ namespace MoonProject.Rover
         private float _digFocus;
         private float _scoopKick;
         private bool _tetherActive;
+        private float _tetherStrain;
         private float _winchReel;
         private float _winchAngle;
         private float _cargoTarget;
@@ -169,6 +170,9 @@ namespace MoonProject.Rover
 
         /// <summary>Read-only view of the mood, for audio/debug tooling.</summary>
         public RoverMood Mood => _mood;
+
+        /// <summary>Current normalized tether strain [0..1] reported by the tether feel beats.</summary>
+        public float TetherStrain => _tetherStrain;
 
         /// <summary>07's CRT face director wired on <c>Neck/NeckLift/Head/Screen</c>.</summary>
         public RoverFaceDirector FaceDirector => _faceDirector;
@@ -537,12 +541,14 @@ namespace MoonProject.Rover
         private void OnTetherAttached(TetherAttached attached)
         {
             _tetherActive = true;
+            _tetherStrain = 0f;
             _winchReel = 1f;
         }
 
         private void OnTetherReleased(TetherReleased release)
         {
             _tetherActive = false;
+            _tetherStrain = 0f;
             if (release.Snapped)
             {
                 _mood.Sigh(_tuning.SnapSigh);
@@ -705,7 +711,7 @@ namespace MoonProject.Rover
 
             StepElder();
 
-            _mood.SetEffort(_rover.JumpCharge);
+            _mood.SetEffort(Mathf.Max(_rover.JumpCharge, _tetherStrain));
             _mood.SetWingMended(_rover.Kit.HasMendedWing);
             switch (_mood.Step(_rover.Speed, _rover.DriveInput.magnitude, deltaTime))
             {
@@ -1002,13 +1008,20 @@ namespace MoonProject.Rover
             if (beat.Kind == FeelKind.Tether)
             {
                 _winchReel = 1f;
-                if (beat.Phase == FeelPhase.Anticipate || beat.Phase == FeelPhase.Act)
+                if (beat.Phase == FeelPhase.Anticipate)
                 {
                     _tetherActive = true;
+                    _tetherStrain = 0f;
+                }
+                else if (beat.Phase == FeelPhase.Act)
+                {
+                    _tetherActive = true;
+                    _tetherStrain = Mathf.Clamp01(beat.Strength);
                 }
                 else if (beat.Phase == FeelPhase.Cancel || beat.Phase == FeelPhase.Reward)
                 {
                     _tetherActive = false;
+                    _tetherStrain = 0f;
                 }
 
                 return;
