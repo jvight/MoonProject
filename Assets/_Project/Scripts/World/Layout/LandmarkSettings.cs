@@ -98,6 +98,13 @@ namespace MoonProject.World
         public float VentStrength => _ventStrength;
         public float VentEdgeSoftness => _ventEdgeSoftness;
         public Vector2 VentFade => _ventFade;
+        [Header("The landed cargo lander (opening v2 §4)")]
+        [Tooltip("How far the landed lander leans off level, degrees, about the axis from its port side to the far " +
+            "side: a hard landing on uneven ground, slightly tilted.")]
+        [Range(0f, 8f)]
+        [SerializeField] private float _landerTilt = 2.5f;
+
         public RuinPlacement[] Ruins => _ruins;
+        public float LanderTilt => _landerTilt;
     }
 }

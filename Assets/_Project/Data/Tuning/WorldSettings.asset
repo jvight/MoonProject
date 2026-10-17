@@ -185,9 +185,20 @@ MonoBehaviour:
         _gougeHalfWidth: 2
         _scorchReach: 8
         _clearMargin: 4
-      _ruinsBearing: 15
-      _ruinsDistance: 55
+      _ruinsBearing: 27.2
+      _ruinsDistance: 208
       _ruinsRadius: 14
+      _ruinsBlend: 24
+      _wakePost: {x: -2.4, y: -4}
+      _landerBearing: 12.3
+      _landerDistance: 164
+      _landerRadius: 10
+      _apronBearing: 6.1
+      _apronDistance: 141
+      _apronRadius: 14
+      _midwayBearing: 336
+      _midwayDistance: 98.5
+      _midwayRadius: 6
     _craterField:
       _cellSize: 18
       _density: 0.7
@@ -593,6 +604,7 @@ MonoBehaviour:
       _offset: {x: -5.2, y: -5.2}
       _yaw: -18
       _clearanceRadius: 2.6
+    _landerTilt: 2.5
   _reachRing:
     _duration: 2
     _fadeIn: 0.1

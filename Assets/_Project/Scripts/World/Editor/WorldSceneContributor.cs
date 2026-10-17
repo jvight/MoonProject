@@ -19,6 +19,10 @@ namespace MoonProject.World.Editor
     {
         public const string RuinsRootName = "Ruins";
 
+        /// <summary>[World]/Lander holds the landed R1 cargo lander, named <see cref="CargoLanderName"/>.</summary>
+        public const string LanderRootName = "Lander";
+        public const string CargoLanderName = "CargoLander";
+
         public int Order => 200;
 
         public void Contribute(SceneBuildContext context)
@@ -47,6 +51,7 @@ namespace MoonProject.World.Editor
 
             PeakBeacon beacon = CreateBeacon(context, settings, root);
             CreateRuins(context, settings, root);
+            CreateLander(context, settings, root);
 
             var world = context.CreateChild("World", root).AddComponent<WorldSystem>();
             var serialized = new SerializedObject(world);
@@ -127,6 +132,29 @@ namespace MoonProject.World.Editor
                 instance.name = piece.Id;
                 RuinColliderBuilder.Fit(instance);
             }
+        }
+
+        /// <summary>
+        /// Lands the R1 cargo lander on its footprint at place.lander (opening v2 §4) under [World]/Lander at
+        /// scene-build time: its long side, where the service port is, faces the build apron, and it leans a little
+        /// off level from a hard landing. Its parts are made solid on <see cref="Core.Layers.Prop"/>.
+        /// </summary>
+        private static void CreateLander(SceneBuildContext context, WorldSettings settings, Transform root)
+        {
+            MoonSurface surface = settings.CreateSurface();
+            SiteSettings sites = settings.Surface.Sites;
+            Vector2 center = sites.LanderCenter;
+            Vector2 toApron = (sites.ApronCenter - center).normalized;
+            var forward = new Vector3(toApron.x, 0f, toApron.y);
+            Quaternion facing = Quaternion.LookRotation(forward, Vector3.up);
+            Quaternion lean = Quaternion.AngleAxis(settings.Landmarks.LanderTilt, forward);
+            var prefab = context.LoadAsset<GameObject>(WorldPaths.CargoLanderPrefab);
+            var position = new Vector3(center.x, surface.SampleHeight(center.x, center.y), center.y);
+            Transform landerRoot = context.CreateChild(LanderRootName, root).transform;
+            GameObject lander = context.InstantiatePrefab(prefab, landerRoot, position,
+                lean * facing * prefab.transform.localRotation);
+            lander.name = CargoLanderName;
+            RuinColliderBuilder.Fit(lander);
         }
 
         /// <summary>

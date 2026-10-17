@@ -54,6 +54,9 @@ namespace MoonProject.World.Editor
 
         public static string RuinPrefab(string id) => RuinsPrefabFolder + id + ".prefab";
 
+        /// <summary>Art's R1 cargo lander, landed at place.lander in the opening (opening v2 §4).</summary>
+        public const string CargoLanderPrefab = "Assets/_Project/Generated/Art/R1/Models/Lander/CargoLander.prefab";
+
         /// <summary>Art's landmark kit World places (M3-18 L2, L4, L7).</summary>
         public const string LandmarkFolder = "Assets/_Project/Generated/Art/Landmarks/";
         /// <summary>Art's props folder, where Kestrel-3's HullFragment variants are (0.5.5).</summary>
