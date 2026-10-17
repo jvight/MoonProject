@@ -22,15 +22,15 @@ import r1kit  # noqa: E402
 
 
 ROCK_SPECS: tuple[dict[str, object], ...] = (
-    # Pebble 0: weathered rounded basalt cobble with shallow crown spall pit
+    # Pebble 0: weathered rounded basalt cobble with shallow crown spall pit (0.38x -> ~0.37 m W)
     {
         "name": "Rock_00",
-        "footprint_radius": 0.56,
+        "footprint_radius": 0.2128,
         "skirt_height_frac": 0.26,
         "shells": [
             {
                 "center_u": (0.0, 0.0, 0.0),
-                "size_u": (0.90, 0.56, 0.78),
+                "size_u": (0.3420, 0.2128, 0.2964),
                 "seed": 101,
                 "lon_segs": 12,
                 "lat_rings": 5,
@@ -50,15 +50,15 @@ ROCK_SPECS: tuple[dict[str, object], ...] = (
             },
         ],
     },
-    # Pebble 1: asymmetric sub-rounded breccia lump with oblique cleavage face
+    # Pebble 1: asymmetric sub-rounded breccia lump with oblique cleavage face (0.38x -> ~0.39 m W)
     {
         "name": "Rock_01",
-        "footprint_radius": 0.58,
+        "footprint_radius": 0.2204,
         "skirt_height_frac": 0.25,
         "shells": [
             {
                 "center_u": (0.0, 0.0, 0.0),
-                "size_u": (0.94, 0.62, 0.74),
+                "size_u": (0.3572, 0.2356, 0.2812),
                 "seed": 203,
                 "lon_segs": 12,
                 "lat_rings": 5,
@@ -81,15 +81,15 @@ ROCK_SPECS: tuple[dict[str, object], ...] = (
             },
         ],
     },
-    # Pebble 2: low-domed weathered regolith stone with stepped rim
+    # Pebble 2: low-domed weathered regolith stone with stepped rim (0.38x -> ~0.41 m W)
     {
         "name": "Rock_02",
-        "footprint_radius": 0.62,
+        "footprint_radius": 0.2356,
         "skirt_height_frac": 0.28,
         "shells": [
             {
                 "center_u": (0.0, 0.0, 0.0),
-                "size_u": (0.98, 0.46, 0.84),
+                "size_u": (0.3724, 0.1748, 0.3192),
                 "seed": 307,
                 "lon_segs": 12,
                 "lat_rings": 5,
@@ -109,15 +109,15 @@ ROCK_SPECS: tuple[dict[str, object], ...] = (
             },
         ],
     },
-    # Pebble 3: squat potato-shaped lunar clast with weathered split seam
+    # Pebble 3: squat potato-shaped lunar clast with weathered split seam (0.42x -> ~0.40 m W)
     {
         "name": "Rock_03",
-        "footprint_radius": 0.56,
+        "footprint_radius": 0.2352,
         "skirt_height_frac": 0.25,
         "shells": [
             {
                 "center_u": (0.0, 0.0, 0.0),
-                "size_u": (0.86, 0.58, 0.80),
+                "size_u": (0.3612, 0.2436, 0.3360),
                 "seed": 409,
                 "lon_segs": 12,
                 "lat_rings": 5,
@@ -139,15 +139,15 @@ ROCK_SPECS: tuple[dict[str, object], ...] = (
             },
         ],
     },
-    # Pebble 4: pear-shaped impact-gardened basalt lump with spall pits
+    # Pebble 4: pear-shaped impact-gardened basalt lump with spall pits (0.45x -> ~0.44 m W)
     {
         "name": "Rock_04",
-        "footprint_radius": 0.57,
+        "footprint_radius": 0.2565,
         "skirt_height_frac": 0.26,
         "shells": [
             {
                 "center_u": (0.0, 0.0, 0.0),
-                "size_u": (0.92, 0.52, 0.72),
+                "size_u": (0.4140, 0.2340, 0.3240),
                 "seed": 503,
                 "lon_segs": 12,
                 "lat_rings": 5,
@@ -167,15 +167,15 @@ ROCK_SPECS: tuple[dict[str, object], ...] = (
             },
         ],
     },
-    # Boulder 0 (Rock_05): broad weathered lunar breccia boulder with soft dome, chipped fracture faces, vesicles, and regolith skirt
+    # Medium Boulder 0 (Rock_05): broad weathered lunar breccia boulder (0.75x -> ~1.15 m W)
     {
         "name": "Rock_05",
-        "footprint_radius": 0.90,
+        "footprint_radius": 0.6750,
         "skirt_height_frac": 0.25,
         "shells": [
             {
                 "center_u": (0.0, 0.0, 0.0),
-                "size_u": (1.36, 0.88, 1.20),
+                "size_u": (1.0200, 0.6600, 0.9000),
                 "seed": 607,
                 "lon_segs": 18,
                 "lat_rings": 9,
@@ -200,15 +200,15 @@ ROCK_SPECS: tuple[dict[str, object], ...] = (
             },
         ],
     },
-    # Boulder 1 (Rock_06): asymmetric humped basalt erratic with cleaved shoulder and half-buried companion spall cobble
+    # Medium Boulder 1 (Rock_06): asymmetric humped basalt erratic with companion spall cobble (0.80x -> ~1.22 m W)
     {
         "name": "Rock_06",
-        "footprint_radius": 0.92,
+        "footprint_radius": 0.7360,
         "skirt_height_frac": 0.24,
         "shells": [
             {
-                "center_u": (-0.06, 0.0, 0.02),
-                "size_u": (1.26, 1.02, 1.14),
+                "center_u": (-0.0480, 0.0, 0.0160),
+                "size_u": (1.0080, 0.8160, 0.9120),
                 "seed": 709,
                 "lon_segs": 16,
                 "lat_rings": 8,
@@ -231,8 +231,8 @@ ROCK_SPECS: tuple[dict[str, object], ...] = (
                 ],
             },
             {
-                "center_u": (0.42, 0.0, -0.18),
-                "size_u": (0.66, 0.44, 0.60),
+                "center_u": (0.3360, 0.0, -0.1440),
+                "size_u": (0.5280, 0.3520, 0.4800),
                 "seed": 719,
                 "lon_segs": 10,
                 "lat_rings": 4,
@@ -249,15 +249,15 @@ ROCK_SPECS: tuple[dict[str, object], ...] = (
             },
         ],
     },
-    # Boulder 2 (Rock_07): split-crown lunar breccia boulder with deep central fissure, rounded twin lobes, and regolith apron
+    # Medium Boulder 2 (Rock_07): split-crown lunar breccia boulder (0.80x -> ~1.24 m W)
     {
         "name": "Rock_07",
-        "footprint_radius": 0.96,
+        "footprint_radius": 0.7680,
         "skirt_height_frac": 0.26,
         "shells": [
             {
                 "center_u": (0.0, 0.0, 0.0),
-                "size_u": (1.42, 0.82, 1.24),
+                "size_u": (1.1360, 0.6560, 0.9920),
                 "seed": 811,
                 "lon_segs": 18,
                 "lat_rings": 9,
@@ -283,15 +283,15 @@ ROCK_SPECS: tuple[dict[str, object], ...] = (
             },
         ],
     },
-    # Boulder 3 (Rock_08): slanted crater-ejecta boulder with conchoidal fracture shelves and companion talus lump
+    # Large Boulder 0 (Rock_08): slanted crater-ejecta boulder with companion talus lump (1.65x -> ~2.43 m W)
     {
         "name": "Rock_08",
-        "footprint_radius": 0.94,
+        "footprint_radius": 1.5510,
         "skirt_height_frac": 0.25,
         "shells": [
             {
-                "center_u": (0.05, 0.0, -0.03),
-                "size_u": (1.34, 0.90, 1.18),
+                "center_u": (0.0825, 0.0, -0.0495),
+                "size_u": (2.2110, 1.4850, 1.9470),
                 "seed": 919,
                 "lon_segs": 16,
                 "lat_rings": 8,
@@ -314,8 +314,8 @@ ROCK_SPECS: tuple[dict[str, object], ...] = (
                 ],
             },
             {
-                "center_u": (-0.40, 0.0, 0.22),
-                "size_u": (0.70, 0.42, 0.62),
+                "center_u": (-0.6600, 0.0, 0.3630),
+                "size_u": (1.1550, 0.6930, 1.0230),
                 "seed": 929,
                 "lon_segs": 10,
                 "lat_rings": 4,
@@ -332,15 +332,15 @@ ROCK_SPECS: tuple[dict[str, object], ...] = (
             },
         ],
     },
-    # Boulder 4 (Rock_09): massive hummocky lunar boulder with dust-blanketed crown and clustered vesicles
+    # Large Boulder 1 (Rock_09): massive hummocky lunar boulder (1.95x -> ~2.95 m W)
     {
         "name": "Rock_09",
-        "footprint_radius": 0.96,
+        "footprint_radius": 1.8720,
         "skirt_height_frac": 0.26,
         "shells": [
             {
                 "center_u": (0.0, 0.0, 0.0),
-                "size_u": (1.38, 0.94, 1.28),
+                "size_u": (2.6910, 1.8330, 2.4960),
                 "seed": 1031,
                 "lon_segs": 18,
                 "lat_rings": 9,

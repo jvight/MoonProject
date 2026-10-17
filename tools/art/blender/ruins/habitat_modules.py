@@ -203,42 +203,42 @@ def _build_main_module(root) -> None:
 
     # Front Domed Bulkhead Seams (vertical center seam above door + horizontal mid-seam + top bolts)
     front_z = cz - 1.31
-    mb.add_bevel_box((cx, 2.48, front_z), (0.028, 0.96, 0.08), bevel=0.004, mat="R1_GreyMetal", segs=1)
+    mb.add_bevel_box((cx, 2.80, front_z), (0.028, 0.42, 0.08), bevel=0.004, mat="R1_GreyMetal", segs=1)
     for bx_off in (-0.08, 0.08):
-        mb.add_Detail_Bolt((cx + bx_off, 2.86, front_z - 0.04), radius=0.022, height=0.018, axis="z", mat="R1_BareSteel")
+        mb.add_Detail_Bolt((cx + bx_off, 2.94, front_z - 0.04), radius=0.022, height=0.018, axis="z", mat="R1_BareSteel")
     for sx in (-1.0, 1.0):
-        mb.add_bevel_box((cx + sx * 0.96, 1.34, front_z + 0.04), (0.68, 0.026, 0.10), bevel=0.004, mat="R1_GreyMetal", segs=1)
+        mb.add_bevel_box((cx + sx * 1.04, 1.56, front_z + 0.04), (0.56, 0.026, 0.10), bevel=0.004, mat="R1_GreyMetal", segs=1)
 
-    # Round / Arched Airlock Door centered on the lower front bulkhead (matching ruins_v1_dawn.png)
+    # Round / Arched Airlock Door centered on the lower front bulkhead (1.10 x 2.05 m clear leaf, 1.36 x 2.20 m outer frame)
     door_z = cz - 1.29
     # Outer thick dark-grey rounded-arch door bezel frame (24 smooth arch segments)
     mb.add_arch_housing(
         base_center_u=(cx, 0.03, door_z),
-        width_x=1.22,
-        height_y=1.48,
+        width_x=1.36,
+        height_y=2.20,
         depth_z=0.18,
-        arch_radius=0.60,
+        arch_radius=0.67,
         mat="R1_GreyMetal",
         bevel=0.022,
         arch_segments=12,
         arch_axis_u="X",
     )
-    # Recessed cream-enamel arched door leaf
+    # Recessed cream-enamel arched door leaf (1.10 m W x 2.05 m H clear)
     mb.add_arch_housing(
         base_center_u=(cx, 0.05, door_z - 0.03),
-        width_x=0.96,
-        height_y=1.32,
+        width_x=1.10,
+        height_y=2.05,
         depth_z=0.15,
-        arch_radius=0.47,
+        arch_radius=0.54,
         mat="R1_CreamEnamel",
         bevel=0.016,
         arch_segments=12,
         arch_axis_u="X",
     )
     # Vertical center door split seam + central circular locking mechanism (wheel bezel & hub)
-    mb.add_bevel_box((cx, 0.70, door_z - 0.09), (0.024, 1.24, 0.04), bevel=0.003, mat="R1_GreyMetal", segs=1)
+    mb.add_bevel_box((cx, 1.06, door_z - 0.09), (0.024, 1.94, 0.04), bevel=0.003, mat="R1_GreyMetal", segs=1)
     mb.add_ring(
-        (cx, 0.72, door_z - 0.10),
+        (cx, 1.08, door_z - 0.10),
         r_outer=0.22,
         r_inner=0.14,
         height=0.05,
@@ -247,7 +247,7 @@ def _build_main_module(root) -> None:
         mat="R1_GreyMetal",
     )
     mb.add_cylinder(
-        (cx, 0.72, door_z - 0.10),
+        (cx, 1.08, door_z - 0.10),
         radius=0.14,
         height=0.05,
         segs=20,
@@ -255,10 +255,10 @@ def _build_main_module(root) -> None:
         mat="R1_CreamEnamel",
         bevel=0.008,
     )
-    mb.add_bevel_box((cx - 0.03, 0.72, door_z - 0.125), (0.12, 0.036, 0.03), bevel=0.005, mat="R1_Copper", segs=1)
+    mb.add_bevel_box((cx - 0.03, 1.08, door_z - 0.125), (0.12, 0.036, 0.03), bevel=0.005, mat="R1_Copper", segs=1)
 
-    # Recessed Keypad Box beside the round airlock door on the left (matching ruins_v1_dawn.png)
-    kx, ky, kz = cx - 0.84, 0.84, door_z + 0.05
+    # Recessed Keypad Box beside the round airlock door on the left, centered at Z = 1.25 m
+    kx, ky, kz = cx - 0.90, 1.25, door_z + 0.05
     mb.add_bevel_box((kx, ky, kz), (0.36, 0.48, 0.14), bevel=0.016, mat="R1_GreyMetal", segs=1)
     mb.add_bevel_box((kx, ky + 0.02, kz - 0.04), (0.28, 0.38, 0.08), bevel=0.010, mat="R1_CreamEnamel", segs=1)
     # Upper small dark status slot & amber LED
@@ -303,7 +303,7 @@ def _build_main_module(root) -> None:
 def _build_airlock_panel(root) -> None:
     """Build the separate `AirlockPanel` child mesh node (`SEALED · 1988 · STANDBY` / `SUIT 01-04 · OFFLINE` above the round airlock door)."""
     mb = r1kit.MeshBuilder()
-    px, py, pz = -3.45, 1.78, -1.36
+    px, py, pz = -3.45, 2.46, -1.36
 
     # Outer dark-grey bezel housing
     mb.add_bevel_box((px, py, pz), (1.20, 0.35, 0.12), bevel=0.022, mat="R1_GreyMetal", segs=1)
@@ -564,7 +564,7 @@ def build(skip_renders: bool = False) -> None:
     _build_crushed_module(root)
 
     # Scan points as empties named Scan_<n>
-    r1kit.add_empty("Scan_1", (-3.45, 1.78, -1.44), parent=root)  # AirlockPanel (`SEALED · 1988 · STANDBY`)
+    r1kit.add_empty("Scan_1", (-3.45, 2.46, -1.44), parent=root)  # AirlockPanel (`SEALED · 1988 · STANDBY`)
     r1kit.add_empty("Scan_2", (3.88, 2.68, -0.45), parent=root)   # Dented/crushed module upper hull
     r1kit.add_empty("Scan_3", (-0.16, 2.04, -1.46), parent=root)  # `SEC-04 HABITAT & LAB` stencil signage
 
@@ -581,4 +581,4 @@ def build(skip_renders: bool = False) -> None:
 
 
 if __name__ == "__main__":
-    build()
+    build(skip_renders="--skip-renders" in sys.argv)
