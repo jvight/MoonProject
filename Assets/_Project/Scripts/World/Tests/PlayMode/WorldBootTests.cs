@@ -24,7 +24,6 @@ namespace MoonProject.World.PlayModeTests
         private const string SettingsPath = "Assets/_Project/Data/Tuning/WorldSettings.asset";
         private const string GroundMaterialPath = "Assets/_Project/Generated/World/M_Ground.mat";
         private const string GroundMarkMaterialPath = "Assets/_Project/Generated/World/M_GroundMarks.mat";
-        private const string CableMaterialPath = "Assets/_Project/Generated/Art/R1/Materials/R1_Rubber.mat";
         private const string LandmarkFolder = "Assets/_Project/Generated/Art/Landmarks/";
         private const string PropFolder = "Assets/_Project/Generated/Art/Props/";
         private static readonly string[] HullFragments =
@@ -80,7 +79,6 @@ namespace MoonProject.World.PlayModeTests
             serialized.FindProperty("_earthMaterial").objectReferenceValue = Load<Material>(EarthMaterialPath);
             serialized.FindProperty("_groundMarkMaterial").objectReferenceValue =
                 Load<Material>(GroundMarkMaterialPath);
-            serialized.FindProperty("_cableMaterial").objectReferenceValue = Load<Material>(CableMaterialPath);
             SerializedProperty fragments = serialized.FindProperty("_landmarkPrefabs._hullFragments");
             fragments.arraySize = HullFragments.Length;
             for (int i = 0; i < HullFragments.Length; i++)

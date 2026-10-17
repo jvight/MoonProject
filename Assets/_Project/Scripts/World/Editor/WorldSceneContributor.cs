@@ -19,19 +19,6 @@ namespace MoonProject.World.Editor
     {
         public const string RuinsRootName = "Ruins";
 
-        /// <summary>[World]/Lander holds the landed R1 cargo lander, named <see cref="CargoLanderName"/>.</summary>
-        public const string LanderRootName = "Lander";
-        public const string CargoLanderName = "CargoLander";
-        public const string LanderBeaconName = "Beacon";
-
-        /// <summary>[World]/OpeningProps holds the dead charging post and the dead west mast.</summary>
-        public const string OpeningPropsRootName = "OpeningProps";
-        public const string WakePostName = "WakePost";
-        public const string WestMastName = "WestMast";
-
-        // The dead west mast stands on relay.1, the west rim shoulder (opening v2 §4).
-        private const string WestMastAnchor = WorldAnchorIds.RelayPrefix + "1";
-
         public int Order => 200;
 
         public void Contribute(SceneBuildContext context)
@@ -60,8 +47,7 @@ namespace MoonProject.World.Editor
 
             PeakBeacon beacon = CreateBeacon(context, settings, root);
             CreateRuins(context, settings, root);
-            CreateLander(context, settings, root);
-            CreateOpeningProps(context, settings, root);
+            OpeningLayoutPlacer.Place(context, settings, root);
 
             var world = context.CreateChild("World", root).AddComponent<WorldSystem>();
             var serialized = new SerializedObject(world);
@@ -71,7 +57,6 @@ namespace MoonProject.World.Editor
             Assign(serialized, "_earthMaterial", earthMaterial);
             Assign(serialized, "_groundMarkMaterial", context.LoadAsset<Material>(WorldPaths.GroundMarkMaterial));
             WorldPaths.AssignLandmarks(serialized);
-            Assign(serialized, "_cableMaterial", context.LoadAsset<Material>(WorldPaths.CableMaterial));
             AssignRocks(context, serialized, "_pebbleRocks", WorldPaths.PebbleRocks);
             AssignRocks(context, serialized, "_boulderRocks", WorldPaths.BoulderRocks);
             Assign(serialized, "_earthlight", earthlight);
@@ -126,106 +111,8 @@ namespace MoonProject.World.Editor
         }
 
         /// <summary>
-        /// Opening v2's two dead machines (§4), stood at scene-build time from the closest R1 models until their own
-        /// land: 07's dead charging post at place.wake facing the lander, and the dead relay mast on the west rim
-        /// shoulder at relay.1 facing the basin. Both are unlit and solid on <see cref="Core.Layers.Prop"/>.
-        /// </summary>
-        private static void CreateOpeningProps(SceneBuildContext context, WorldSettings settings, Transform root)
-        {
-            MoonSurface surface = settings.CreateSurface();
-            var anchors = new WorldAnchors(surface, settings.Surface.Canyon, settings.Relays);
-            Transform props = context.CreateChild(OpeningPropsRootName, root).transform;
-            StandProp(context, props, WakePostName, WorldPaths.WakePostPrefab, Require(anchors, WorldAnchorIds.PlaceWake));
-            StandProp(context, props, WestMastName, WorldPaths.WestMastPrefab, Require(anchors, WestMastAnchor));
-        }
-
-        private static void StandProp(SceneBuildContext context, Transform parent, string name, string prefabPath,
-            WorldAnchor anchor)
-        {
-            var prefab = context.LoadAsset<GameObject>(prefabPath);
-            Quaternion facing = Quaternion.LookRotation(anchor.Forward, Vector3.up);
-            GameObject prop = context.InstantiatePrefab(prefab, parent, anchor.Position,
-                facing * prefab.transform.localRotation);
-            prop.name = name;
-            RuinColliderBuilder.Fit(prop);
-        }
-
-        private static WorldAnchor Require(WorldAnchors anchors, string id)
-        {
-            if (!anchors.TryGet(id, out WorldAnchor anchor))
-            {
-                throw new System.InvalidOperationException($"The world has no '{id}' anchor for an opening prop.");
-            }
-
-            return anchor;
-        }
-
-        /// <summary>
-        /// Lands the R1 cargo lander on its footprint at place.lander (opening v2 §4) under [World]/Lander at
-        /// scene-build time: its long side, where the service port is, faces the build apron, and it leans a little
-        /// off level from a hard landing. Its parts are made solid on <see cref="Core.Layers.Prop"/>.
-        /// </summary>
-        private static void CreateLander(SceneBuildContext context, WorldSettings settings, Transform root)
-        {
-            MoonSurface surface = settings.CreateSurface();
-            SiteSettings sites = settings.Surface.Sites;
-            Vector2 center = sites.LanderCenter;
-            Vector2 toApron = (sites.ApronCenter - center).normalized;
-            var forward = new Vector3(toApron.x, 0f, toApron.y);
-            Quaternion facing = Quaternion.LookRotation(forward, Vector3.up);
-            Quaternion lean = Quaternion.AngleAxis(settings.Landmarks.LanderTilt, forward);
-            var prefab = context.LoadAsset<GameObject>(WorldPaths.CargoLanderPrefab);
-            var position = new Vector3(center.x, surface.SampleHeight(center.x, center.y), center.y);
-            Transform landerRoot = context.CreateChild(LanderRootName, root).transform;
-            GameObject lander = context.InstantiatePrefab(prefab, landerRoot, position,
-                lean * facing * prefab.transform.localRotation);
-            lander.name = CargoLanderName;
-            RuinColliderBuilder.Fit(lander);
-            CreateLanderBeacon(context, settings, landerRoot, lander);
-        }
-
-        /// <summary>
-        /// The lander's amber emergency beacon (opening v2 §4): World's halo and warm light just above the top of the
-        /// hull, and the <see cref="LanderBeacon"/> that pulses them. No R1 lamp model exists yet, so the light is the
-        /// beacon.
-        /// </summary>
-        private static void CreateLanderBeacon(SceneBuildContext context, WorldSettings settings, Transform landerRoot,
-            GameObject lander)
-        {
-            LanderBeaconSettings tuning = settings.Landmarks.LanderBeacon;
-            var bounds = new Bounds(lander.transform.position, Vector3.zero);
-            foreach (Renderer part in lander.GetComponentsInChildren<Renderer>())
-            {
-                bounds.Encapsulate(part.bounds);
-            }
-
-            GameObject halo = context.CreateChild(LanderBeaconName, landerRoot);
-            halo.transform.position = new Vector3(bounds.center.x, bounds.max.y + tuning.Height, bounds.center.z);
-            halo.AddComponent<MeshFilter>().sharedMesh = context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh);
-            var haloRenderer = halo.AddComponent<MeshRenderer>();
-            haloRenderer.sharedMaterial = context.LoadAsset<Material>(WorldPaths.LanderBeaconMaterial);
-            haloRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            haloRenderer.receiveShadows = false;
-            haloRenderer.lightProbeUsage = LightProbeUsage.Off;
-            haloRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
-            var light = halo.AddComponent<Light>();
-            light.type = LightType.Point;
-            light.color = tuning.Color;
-            light.range = tuning.LightRange;
-            light.shadows = LightShadows.None;
-
-            var beacon = landerRoot.gameObject.AddComponent<LanderBeacon>();
-            var serialized = new SerializedObject(beacon);
-            Assign(serialized, "_settings", settings);
-            Assign(serialized, "_halo", haloRenderer);
-            Assign(serialized, "_light", light);
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-            context.AddSystem(beacon);
-        }
-
-        /// <summary>
-        /// The beacon node on the summit: the art-kit model (art swaps in the broken dish in M4), a halo at the lamp
-        /// and the <see cref="PeakBeacon"/> that breathes them.
+        /// The beacon node on the summit: Art's R1 Peak beacon, a halo at its lamp and the <see cref="PeakBeacon"/>
+        /// that breathes them.
         /// </summary>
         private static PeakBeacon CreateBeacon(SceneBuildContext context, WorldSettings settings, Transform root)
         {

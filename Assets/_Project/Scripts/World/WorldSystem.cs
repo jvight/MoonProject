@@ -48,9 +48,6 @@ namespace MoonProject.World
         [Tooltip("Art's prefabs World plans for: Kestrel-3's hull fragment variants (the cuttable slots' range).")]
         [SerializeField] private LandmarkPrefabs _landmarkPrefabs = new LandmarkPrefabs();
 
-        [Tooltip("Material of 07's old charging cable on the dust (Generated/Art/R1/Materials/R1_Rubber).")]
-        [SerializeField] private Material _cableMaterial;
-
         [Tooltip("The beacon on The Peak; placed on the summit and breathed by the beacon settings.")]
         [SerializeField] private PeakBeacon _peakBeacon;
 
@@ -70,7 +67,6 @@ namespace MoonProject.World
         private GameObject _generatedRoot;
         private Mesh _earthMesh;
         private Mesh _tracksMesh;
-        private Mesh _cableMesh;
         private List<ScrapPlate> _cuttables = new List<ScrapPlate>();
 
         public MoonSurface Surface { get; private set; }
@@ -171,7 +167,6 @@ namespace MoonProject.World
                 scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _paletteMaterial, hideFlags);
             BuildEarth(hideFlags);
             BuildWornTracks(hideFlags);
-            BuildWakeCable(hideFlags);
             _peakBeacon.transform.position = Layout.PeakPosition;
             _peakBeacon.Configure(_settings.Beacon);
         }
@@ -181,6 +176,7 @@ namespace MoonProject.World
             // 1. Deterministic companion cobbles and spall pebbles around large boulders on the basin floor
             // so every major boulder sits in a fragmented lunar boulder family with smaller spall stones at its base.
             int baseCount = instances.Count;
+            GroundShape[] footprints = { surface.Shaping.Ruins, surface.Shaping.Lander, surface.Shaping.Apron };
             for (int i = 0; i < baseCount; i++)
             {
                 ScatterInstance b = instances[i];
@@ -208,8 +204,7 @@ namespace MoonProject.World
                         : b.Size * Mathf.Lerp(0.62f, 1.85f, Hashing.ToUnit(Hashing.Mix(hk ^ 0x2468ACE0u)));
                     float sx = center2D.x + Mathf.Cos(angle) * radius;
                     float sz = center2D.y + Mathf.Sin(angle) * radius;
-                    GroundShape ruins = surface.Shaping.Ruins;
-                    if (Vector2.Distance(new Vector2(sx, sz), ruins.Center) < ruins.Radius + 3.5f)
+                    if (OnOpeningFootprint(footprints, new Vector2(sx, sz)))
                     {
                         continue;
                     }
@@ -295,6 +290,23 @@ namespace MoonProject.World
             }
         }
 
+        // A boulder's companion stones keep this far outside the opening's flat footprints (the ruins, the lander and
+        // the build apron), so none lies where the player builds or drives in.
+        private const float CompanionClearance = 3.5f;
+
+        private static bool OnOpeningFootprint(GroundShape[] footprints, Vector2 at)
+        {
+            foreach (GroundShape shape in footprints)
+            {
+                if (Vector2.Distance(at, shape.Center) < shape.Radius + CompanionClearance)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private CraterField CreateCraterField(MoonSurface surface)
         {
             SurfaceSettings ground = _settings.Surface;
@@ -363,31 +375,6 @@ namespace MoonProject.World
             return false;
         }
 
-        /// <summary>
-        /// 07's old charging cable on the dust (opening v2 §4): from its dead post at place.wake to the lander's port,
-        /// on the hull's side facing the apron.
-        /// </summary>
-        private void BuildWakeCable(HideFlags hideFlags)
-        {
-            if (!Anchors.TryGet(WorldAnchorIds.PlaceWake, out WorldAnchor wake)
-                || !Anchors.TryGet(WorldAnchorIds.PlaceLander, out WorldAnchor lander))
-            {
-                Debug.LogError($"{nameof(WorldSystem)}: the wake cable needs place.wake and place.lander.", this);
-                return;
-            }
-
-            GroundCableSettings tuning = _settings.Landmarks.WakeCable;
-            Vector3 port = lander.Position + lander.Forward * tuning.PortReach;
-            MoonSurface surface = Surface;
-            _cableMesh = GroundCable.Build(new Vector2(wake.Position.x, wake.Position.z), new Vector2(port.x, port.z),
-                tuning, (x, z) => surface.Sample(x, z).Height);
-            _cableMesh.hideFlags = hideFlags;
-            var cable = new GameObject("WakeCable") { hideFlags = hideFlags };
-            cable.transform.SetParent(_generatedRoot.transform, false);
-            cable.AddComponent<MeshFilter>().sharedMesh = _cableMesh;
-            cable.AddComponent<MeshRenderer>().sharedMaterial = _cableMaterial;
-        }
-
         private void DestroyGenerated()
         {
             if (_generatedRoot != null)
@@ -405,12 +392,6 @@ namespace MoonProject.World
                 Release(_tracksMesh);
             }
 
-            if (_cableMesh != null)
-            {
-                Release(_cableMesh);
-            }
-
-            _cableMesh = null;
 
 
             _tracksMesh = null;
@@ -478,9 +459,9 @@ namespace MoonProject.World
             }
 
             if (_groundMaterial == null || _paletteMaterial == null || _earthMaterial == null
-                || _groundMarkMaterial == null || _cableMaterial == null)
+                || _groundMarkMaterial == null)
             {
-                return "Ground, Palette, Earth, Ground Mark and Cable materials must be assigned.";
+                return "Ground, Palette, Earth and Ground Mark materials must be assigned.";
             }
 
             string rocks = RockProblem(_pebbleRocks, "Pebble Rocks") ?? RockProblem(_boulderRocks, "Boulder Rocks")

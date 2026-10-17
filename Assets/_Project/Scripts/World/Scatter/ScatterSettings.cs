@@ -120,6 +120,11 @@ namespace MoonProject.World
         [Range(0f, 40f)]
         [SerializeField] private float _featureClearance = 8f;
 
+        [Header("Big boulders (Art's R1 Rock_10..13)")]
+        [Tooltip("The rare big boulders the scene build stands on the basin floor, off the opening's routes.")]
+        [SerializeField] private BigBoulderSettings _bigBoulders = new BigBoulderSettings();
+
+        public BigBoulderSettings BigBoulders => _bigBoulders;
         public float ExtentRadius => _extentRadius;
         public float PadClearance => _padClearance;
         public float AnchorClearance => _anchorClearance;

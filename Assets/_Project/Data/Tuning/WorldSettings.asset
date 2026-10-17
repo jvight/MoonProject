@@ -292,6 +292,20 @@ MonoBehaviour:
     _talusHalfWidth: 26
     _boulderMaxSlope: 24
     _featureClearance: 8
+    _bigBoulders:
+      _rocks:
+      - Rock_10
+      - Rock_11
+      - Rock_12
+      - Rock_13
+      _spacing: 85
+      _chance: 0.3
+      _extent: 290
+      _padClearance: 45
+      _anchorClearance: 18
+      _routeClearance: 20
+      _maxSlope: 12
+      _sink: 0.18
   _sky:
     _skyTop: {r: 0.0507, g: 0.0702, b: 0.1517, a: 1}
     _horizonGlow: {r: 0.1648, g: 0.1045, b: 0.2855, a: 1}
@@ -542,22 +556,90 @@ MonoBehaviour:
       _clearanceRadius: 2.6
     _landerTilt: 2.5
     _wakeCable:
-      _radius: 0.035
-      _step: 1
       _wander: 1.6
       _bends: 3
-      _portReach: 2.9
+      _portInset: 0.9
     _landerBeacon:
-      _height: 0.3
       _color: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
       _period: 3.2
       _sharpness: 3
-      _floor: 0.3
-      _haloIntensity: 0.9
-      _haloRadius: 0.25
-      _haloMinAngle: 0.35
-      _lightIntensity: 1.6
-      _lightRange: 14
+      _floor: 0.35
+      _lensGlow: 3.2
+      _haloIntensity: 2.2
+      _haloRadius: 0.3
+      _haloMinAngle: 0.7
+      _lightIntensity: 2.2
+      _lightRange: 16
+      _markerGlow: 0.35
+      _markerPulse: 1.2
+      _markerRunSeconds: 4
+      _markerRepeatSeconds: 9
+      _markerWaveWidth: 0.18
+    _debris:
+    - _anchor: place.midway
+      _id: Kestrel_HullPanel
+      _offset: {x: -1.6, y: 1.4}
+      _yaw: 30
+      _sink: 0.25
+    - _anchor: place.midway
+      _id: Kestrel_StrutFrame
+      _offset: {x: 2.2, y: -0.6}
+      _yaw: 115
+      _sink: 0.15
+    - _anchor: place.midway
+      _id: Kestrel_CableTray
+      _offset: {x: 0.3, y: -2.8}
+      _yaw: 205
+      _sink: 0.1
+    - _anchor: site.kestrel
+      _id: Kestrel_Tank
+      _offset: {x: 3.2, y: 1.8}
+      _yaw: 15
+      _sink: 0.3
+    - _anchor: site.kestrel
+      _id: Kestrel_EngineBell
+      _offset: {x: -3.4, y: 2.2}
+      _yaw: 250
+      _sink: 0.4
+    - _anchor: site.kestrel
+      _id: Kestrel_LandingFoot
+      _offset: {x: 0.6, y: -4.2}
+      _yaw: 80
+      _sink: 0.2
+    - _anchor: site.kestrel
+      _id: Kestrel_HullPanel
+      _offset: {x: -2.2, y: -1.4}
+      _yaw: 160
+      _sink: 0.3
+    _boulders:
+    - _anchor: place.midway
+      _id: Rock_12
+      _offset: {x: 24, y: 14}
+      _yaw: 40
+      _sink: 0.8
+    - _anchor: place.wake
+      _id: Rock_11
+      _offset: {x: -30, y: 46}
+      _yaw: 120
+      _sink: 0.6
+    - _anchor: place.apron
+      _id: Rock_10
+      _offset: {x: -26, y: 4}
+      _yaw: 210
+      _sink: 0.5
+    - _anchor: place.lander
+      _id: Rock_13
+      _offset: {x: -30, y: 26}
+      _yaw: 300
+      _sink: 1
+    - _anchor: place.ruins
+      _id: Rock_12
+      _offset: {x: 10, y: 30}
+      _yaw: 75
+      _sink: 0.8
+    _signalPillarSetback: 18
+    _signalPillarGlow: 3.5
+    _signalPillarWidth: 3
   _scrapField:
     _laneHalfWidth: 2.5
     _cuttables: 4

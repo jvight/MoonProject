@@ -52,20 +52,37 @@ MonoBehaviour:
   _scanLineColor: {r: 0.2, g: 0.86, b: 0.96, a: 1}
   _completionPingColor: {r: 1, g: 0.682, b: 0.22, a: 1}
   _scanLineWidth: 0.014
-  _scanLineIntensity: 1.35
+  _scanLineIntensity: 1.15
   _rasterSpacingMeters: 0.055
   _rasterContrast: 0.18
   _rasterFadeSeconds: 1
   _pingDurationSeconds: 0.38
   _pingEdgeThickness: 1.35
   _pingEdgeIntensity: 1.25
-  _lensGlowSize: 0.06
-  _lensGlowAlpha: 0.32
-  _lensHaloSize: 0.13
-  _lensHaloAlpha: 0.08
-  _lensMoteRadius: 0.042
-  _lensMoteSize: 0.014
-  _lensMoteAlpha: 0.16
+  _lensGlowSize: 0.072
+  _lensGlowAlpha: 0.76
+  _lensHaloSize: 0.16
+  _lensHaloAlpha: 0.18
+  _lensMoteRadius: 0.052
+  _lensMoteSize: 0.008
+  _lensMoteAlpha: 0.38
+  _beamLensWidth: 0.064
+  _beamTargetWidthShare: 0.85
+  _beamLensPeakAlpha: 0.68
+  _beamMidAlpha: 0.022
+  _beamContactAlpha: 0.38
+  _beamScanlineDensity: 42
+  _beamScanlineContrast: 0.48
+  _lensIrisSize: 0.138
+  _lensIrisAlpha: 0.82
+  _lensGlintLength: 0.068
+  _lensGlintWidth: 0.008
+  _lensGlintAlpha: 0.76
+  _pathGlintCount: 5
+  _pathGlintSize: 0.016
+  _pathGlintAlpha: 0.32
+  _pathGlintLifetime: 0.18
+  _pathGlintGravity: 1.62
   _jumperSetback: 6
   _jumperSide: 6
   _ruins:
