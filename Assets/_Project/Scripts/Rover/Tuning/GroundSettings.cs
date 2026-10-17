@@ -128,7 +128,12 @@ namespace MoonProject.Rover
         [Tooltip("Vertical drop below the sphere centre (as a fraction of SphereRadius) for the low obstacle raycast "
             + "fan that catches low boulders and crates.")]
         [Range(0.1f, 0.95f)]
-        [SerializeField] private float _obstacleLowRayDropFactor = 0.55f;
+        [SerializeField] private float _obstacleLowRayDropFactor = 0.15f;
+
+        [Tooltip("Vertical lift above the sphere centre (as a fraction of SphereRadius) for the upper obstacle raycast "
+            + "fan that catches workbench tops and overhangs within the sphere's upper hemisphere.")]
+        [Range(0.1f, 0.95f)]
+        [SerializeField] private float _obstacleHighRayLiftFactor = 0.6f;
 
         [Tooltip("Angular step (deg) between rays in the horizontal obstacle probe fan.")]
         [Range(5f, 45f)]
@@ -156,7 +161,11 @@ namespace MoonProject.Rover
 
         [Tooltip("Minimum surface slope (deg) on Prop or Relic colliders to count as a bumper obstacle when not leaping.")]
         [Range(5f, 60f)]
-        [SerializeField] private float _propObstacleMinSlope = 20f;
+        [SerializeField] private float _propObstacleMinSlope = 55f;
+
+        [Tooltip("Maximum dot product between two obstacle normals for them to register as a concave two-wall corner.")]
+        [Range(0f, 0.9f)]
+        [SerializeField] private float _cornerMaxNormalCosine = 0.5f;
 
         public float Mass => _mass;
 
@@ -214,6 +223,8 @@ namespace MoonProject.Rover
 
         public float ObstacleLowRayDropFactor => _obstacleLowRayDropFactor;
 
+        public float ObstacleHighRayLiftFactor => _obstacleHighRayLiftFactor;
+
         public float ObstacleFanStepDegrees => _obstacleFanStepDegrees;
 
         public float ObstacleHeadingFanAngle => _obstacleHeadingFanAngle;
@@ -227,5 +238,7 @@ namespace MoonProject.Rover
         public float ObstacleMinNormalY => _obstacleMinNormalY;
 
         public float PropObstacleMinSlope => _propObstacleMinSlope;
+
+        public float CornerMaxNormalCosine => _cornerMaxNormalCosine;
     }
 }

@@ -120,11 +120,6 @@ namespace MoonProject.Rover
             }
 
             Vector3 result = velocity;
-            if (grounded && result.y > 0f)
-            {
-                result.y = 0f;
-            }
-
             Vector3 planar = new Vector3(result.x, 0f, result.z);
             float planarSpeed = planar.magnitude;
             float into = -Vector3.Dot(planar, wallNormal);
@@ -136,6 +131,11 @@ namespace MoonProject.Rover
             Vector3 tangent = planar + wallNormal * into;
             if (planarSpeed >= settings.CollisionMinImpactSpeed && into >= settings.CollisionMinImpactSpeed)
             {
+                if (grounded && result.y > 0f)
+                {
+                    result.y = 0f;
+                }
+
                 impactSpeed = into;
                 float headOnCosine = into / planarSpeed;
                 if (headOnCosine >= settings.CollisionHeadOnCosine)

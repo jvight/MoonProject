@@ -67,14 +67,16 @@ MonoBehaviour:
     _collisionMinImpactSpeed: 1.8
     _obstacleBumperRadiusFactor: 1.65
     _obstacleMinHeightDropFactor: 0.75
-    _obstacleLowRayDropFactor: 0.55
+    _obstacleLowRayDropFactor: 0.15
+    _obstacleHighRayLiftFactor: 0.6
     _obstacleFanStepDegrees: 22.5
     _obstacleHeadingFanAngle: 5
     _obstacleMinLookahead: 0.08
     _obstacleLookaheadStepScale: 1.25
     _obstacleSkin: 0.02
     _obstacleMinNormalY: -0.15
-    _propObstacleMinSlope: 20
+    _propObstacleMinSlope: 55
+    _cornerMaxNormalCosine: 0.5
   _landing:
     _coyoteTime: 0.1
     _minAirTime: 0.25

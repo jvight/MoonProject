@@ -15,6 +15,7 @@ namespace MoonProject.Rover
         private const float ThrottleEpsilon = 1e-3f;
         private const float MinHorizontalDistance = 1e-4f;
         private const float PlanarNormalEpsilonSqr = 1e-6f;
+        private const float HasNormalSqrMagnitude = 0.5f;
 
         private readonly GroundSettings _ground;
         private readonly IObstacleQuery _query;
@@ -27,6 +28,12 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
+        /// Outward horizontal normal of a secondary obstacle wall forming a concave corner with the primary wall on
+        /// the most recent <see cref="ProbeObstacle"/> call, or <see cref="Vector3.zero"/> when none.
+        /// </summary>
+        public Vector3 SecondaryNormal { get; private set; }
+
+        /// <summary>
         /// Finds the nearest obstacle wall normal, contact point and horizontal surface gap around
         /// <paramref name="origin"/> for the current velocity, heading and throttle.
         /// </summary>
@@ -36,6 +43,8 @@ namespace MoonProject.Rover
             wallNormal = Vector3.zero;
             contactPoint = origin;
             surfaceGap = float.MaxValue;
+            Vector3 secondaryNormal = Vector3.zero;
+            float secondaryGap = float.MaxValue;
 
             float radius = _ground.SphereRadius * _ground.ObstacleBumperRadiusFactor;
             Vector3 planarVel = new Vector3(velocity.x, 0f, velocity.z);
@@ -66,63 +75,104 @@ namespace MoonProject.Rover
                     }
 
                     float gap = horizDist - radius;
-                    if (gap <= lookahead && gap < surfaceGap)
+                    if (gap <= lookahead)
                     {
-                        surfaceGap = gap;
-                        wallNormal = planar / horizDist;
-                        contactPoint = closest;
+                        RecordCandidate(planar / horizDist, closest, gap, ref wallNormal, ref contactPoint,
+                            ref surfaceGap, ref secondaryNormal, ref secondaryGap);
                     }
                 }
             }
 
-            ProbeObstacleFan(origin, primaryDir, radius, lookahead, grounded, leaping, ref wallNormal,
-                ref contactPoint, ref surfaceGap);
+            ProbeObstacleFanInternal(origin, primaryDir, radius, lookahead, grounded, leaping, ref wallNormal,
+                ref contactPoint, ref surfaceGap, ref secondaryNormal, ref secondaryGap);
             if (Mathf.Abs(throttle) > ThrottleEpsilon
                 && Vector3.Angle(primaryDir, headingDir) > _ground.ObstacleHeadingFanAngle)
             {
-                ProbeObstacleFan(origin, headingDir, radius, lookahead, grounded, leaping, ref wallNormal,
-                    ref contactPoint, ref surfaceGap);
+                ProbeObstacleFanInternal(origin, headingDir, radius, lookahead, grounded, leaping, ref wallNormal,
+                    ref contactPoint, ref surfaceGap, ref secondaryNormal, ref secondaryGap);
             }
+
+            SecondaryNormal = wallNormal.sqrMagnitude > HasNormalSqrMagnitude
+                && secondaryNormal.sqrMagnitude > HasNormalSqrMagnitude
+                && Vector3.Dot(wallNormal, secondaryNormal) < _ground.CornerMaxNormalCosine
+                ? secondaryNormal
+                : Vector3.zero;
         }
 
         /// <summary>
         /// Casts a horizontal ray fan centered on <paramref name="centerDir"/> at sphere-centre height and (when
-        /// grounded) lower-bumper height, updating the nearest obstacle hit.
+        /// grounded) lower and upper bumper heights, updating the nearest obstacle hit.
         /// </summary>
         public void ProbeObstacleFan(Vector3 origin, Vector3 centerDir, float radius, float lookahead,
             bool grounded, bool leaping, ref Vector3 bestNormal, ref Vector3 bestPoint, ref float bestGap)
         {
+            Vector3 secondaryNormal = Vector3.zero;
+            float secondaryGap = float.MaxValue;
+            ProbeObstacleFanInternal(origin, centerDir, radius, lookahead, grounded, leaping, ref bestNormal,
+                ref bestPoint, ref bestGap, ref secondaryNormal, ref secondaryGap);
+        }
+
+        private void ProbeObstacleFanInternal(Vector3 origin, Vector3 centerDir, float radius, float lookahead,
+            bool grounded, bool leaping, ref Vector3 bestNormal, ref Vector3 bestPoint, ref float bestGap,
+            ref Vector3 secondaryNormal, ref float secondaryGap)
+        {
             float maxDist = radius + lookahead;
-            Vector3 originHigh = origin;
+            Vector3 originMid = origin;
             Vector3 originLow = origin - Vector3.up * (_ground.SphereRadius * _ground.ObstacleLowRayDropFactor);
+            Vector3 originHigh = origin + Vector3.up * (_ground.SphereRadius * _ground.ObstacleHighRayLiftFactor);
 
             for (int i = -FanHalfSteps; i <= FanHalfSteps; i++)
             {
                 Vector3 dir = Quaternion.Euler(0f, i * _ground.ObstacleFanStepDegrees, 0f) * centerDir;
-                if (_query.Raycast(originHigh, dir, maxDist, out ObstacleRayHit hitHigh)
-                    && IsObstacleHit(_ground, in hitHigh, leaping, out Vector3 normalHigh))
+                if (_query.Raycast(originMid, dir, maxDist, out ObstacleRayHit hitMid)
+                    && IsObstacleHit(_ground, in hitMid, leaping, out Vector3 normalMid))
                 {
-                    float gap = hitHigh.Distance - radius;
-                    if (gap < bestGap)
-                    {
-                        bestGap = gap;
-                        bestNormal = normalHigh;
-                        bestPoint = hitHigh.Point;
-                    }
+                    RecordCandidate(normalMid, hitMid.Point, hitMid.Distance - radius, ref bestNormal, ref bestPoint,
+                        ref bestGap, ref secondaryNormal, ref secondaryGap);
                 }
 
                 if (grounded
                     && _query.Raycast(originLow, dir, maxDist, out ObstacleRayHit hitLow)
                     && IsObstacleHit(_ground, in hitLow, leaping, out Vector3 normalLow))
                 {
-                    float gap = hitLow.Distance - radius;
-                    if (gap < bestGap)
-                    {
-                        bestGap = gap;
-                        bestNormal = normalLow;
-                        bestPoint = hitLow.Point;
-                    }
+                    RecordCandidate(normalLow, hitLow.Point, hitLow.Distance - radius, ref bestNormal, ref bestPoint,
+                        ref bestGap, ref secondaryNormal, ref secondaryGap);
                 }
+
+                if (grounded
+                    && _query.Raycast(originHigh, dir, maxDist, out ObstacleRayHit hitHigh)
+                    && IsObstacleHit(_ground, in hitHigh, leaping, out Vector3 normalHigh))
+                {
+                    RecordCandidate(normalHigh, hitHigh.Point, hitHigh.Distance - radius, ref bestNormal, ref bestPoint,
+                        ref bestGap, ref secondaryNormal, ref secondaryGap);
+                }
+            }
+        }
+
+        private void RecordCandidate(Vector3 normal, Vector3 point, float gap, ref Vector3 bestNormal,
+            ref Vector3 bestPoint, ref float bestGap, ref Vector3 secondaryNormal, ref float secondaryGap)
+        {
+            float maxCornerCosine = _ground.CornerMaxNormalCosine;
+            if (gap < bestGap)
+            {
+                if (bestNormal.sqrMagnitude > HasNormalSqrMagnitude
+                    && Vector3.Dot(bestNormal, normal) < maxCornerCosine
+                    && bestGap < secondaryGap)
+                {
+                    secondaryNormal = bestNormal;
+                    secondaryGap = bestGap;
+                }
+
+                bestGap = gap;
+                bestNormal = normal;
+                bestPoint = point;
+            }
+            else if (bestNormal.sqrMagnitude > HasNormalSqrMagnitude
+                     && Vector3.Dot(bestNormal, normal) < maxCornerCosine
+                     && gap < secondaryGap)
+            {
+                secondaryNormal = normal;
+                secondaryGap = gap;
             }
         }
 
@@ -140,10 +190,11 @@ namespace MoonProject.Rover
             }
 
             float slope = Vector3.Angle(hit.Normal, Vector3.up);
-            bool propObstacle = (hit.Layer == Layers.Prop || hit.Layer == Layers.Relic)
-                && !leaping && slope > ground.PropObstacleMinSlope;
-            bool steepObstacle = slope > ground.MaxGroundAngle;
-            if (!propObstacle && !steepObstacle)
+            bool isPropOrRelic = hit.Layer == Layers.Prop || hit.Layer == Layers.Relic;
+            bool isObstacle = isPropOrRelic
+                ? !leaping && slope > ground.PropObstacleMinSlope
+                : slope > ground.MaxGroundAngle;
+            if (!isObstacle)
             {
                 return false;
             }

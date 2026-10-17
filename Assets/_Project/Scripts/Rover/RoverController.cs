@@ -655,8 +655,8 @@ namespace MoonProject.Rover
             bool groundedBeforeProbe = (_hasContact || _landing.IsGrounded) && !_leaping && _liftoff <= 0f;
             _obstacleProbe.ProbeObstacle(_body.position, velocity, _heading, _throttle, dt, groundedBeforeProbe,
                 _leaping, out Vector3 obstacleNormal, out Vector3 obstaclePoint, out float obstacleGap);
-            velocity = _contacts.StepContact(velocity, obstacleNormal, obstacleGap, groundedBeforeProbe, dt,
-                out Vector3 pushOut, out float impactSpeed, out bool publishCollision);
+            velocity = _contacts.StepContact(velocity, obstacleNormal, _obstacleProbe.SecondaryNormal, obstacleGap,
+                groundedBeforeProbe, dt, out Vector3 pushOut, out float impactSpeed, out bool publishCollision);
             if (_contacts.HasObstacle)
             {
                 if (publishCollision)
@@ -673,7 +673,7 @@ namespace MoonProject.Rover
                 _body.linearVelocity = velocity;
             }
 
-            ProbeGround(out float speedIntoGround, velocity, _contacts.HasObstacle && !_leaping);
+            ProbeGround(out float speedIntoGround, velocity);
             if (_liftoff > 0f)
             {
                 // Leaving the ground after a Hover-Jump: no downforce or grip pulling 07 back for a moment.
@@ -978,7 +978,7 @@ namespace MoonProject.Rover
             return Smoothing.Damp(current, target, rising ? riseHalfLife : fallHalfLife, dt);
         }
 
-        private void ProbeGround(out float speedIntoGround, Vector3 velocity, bool preferGroundLayer)
+        private void ProbeGround(out float speedIntoGround, Vector3 velocity)
         {
             GroundSettings ground = _tuning.Ground;
             float radius = ground.SphereRadius;
@@ -987,19 +987,9 @@ namespace MoonProject.Rover
             Vector3 origin = _body.position + Vector3.up * lift;
             float distance = lift + (radius - probeRadius) + ground.GroundSnapDistance;
 
-            RaycastHit hit = default;
-            bool found = preferGroundLayer
-                && Physics.SphereCast(origin, probeRadius, Vector3.down, out hit, distance, Layers.GroundMask,
+            _hasContact = Physics.SphereCast(origin, probeRadius, Vector3.down, out RaycastHit hit, distance, Layers.DriveableMask,
                     QueryTriggerInteraction.Ignore)
                 && Vector3.Angle(hit.normal, Vector3.up) <= ground.MaxGroundAngle;
-            if (!found)
-            {
-                found = Physics.SphereCast(origin, probeRadius, Vector3.down, out hit, distance, Layers.DriveableMask,
-                        QueryTriggerInteraction.Ignore)
-                    && Vector3.Angle(hit.normal, Vector3.up) <= ground.MaxGroundAngle;
-            }
-
-            _hasContact = found;
             _contactNormal = _hasContact ? hit.normal : Vector3.up;
             speedIntoGround = -Vector3.Dot(velocity, _contactNormal);
         }

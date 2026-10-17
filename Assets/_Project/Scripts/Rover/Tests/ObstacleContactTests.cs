@@ -89,7 +89,7 @@ namespace MoonProject.Rover.Tests
             Assert.AreEqual(Vector3.zero, slabNormal);
             Assert.AreEqual(float.MaxValue, slabGap);
 
-            Vector3 boulderNormal = Quaternion.Euler(-35f, 0f, 0f) * Vector3.up;
+            Vector3 boulderNormal = Quaternion.Euler(-65f, 0f, 0f) * Vector3.up;
             var boulderHit = new ObstacleRayHit(new Vector3(0f, 0.5f, 0.7f), boulderNormal, 0.7f, Layers.Prop);
             fakeQuery.RayHit = boulderHit;
             probe.ProbeObstacle(Vector3.zero, Vector3.forward * 4f, 0f, 1f, 0.02f, true, false,
@@ -119,6 +119,31 @@ namespace MoonProject.Rover.Tests
             _contacts.StepContact(impactVelocity, wallNormal, 0.01f, true, _ground.CollisionCooldown,
                 out _, out _, out bool afterCooldownPublished);
             Assert.IsTrue(afterCooldownPublished, "Impact after cooldown expires publishes again.");
+        }
+
+        [Test]
+        public void ConcaveCornerContact_EscapesAlongOpenTangent_WhenReversingIntoBayCorner()
+        {
+            Vector3 workbenchNormal = Vector3.right;
+            Vector3 backWallNormal = Vector3.back;
+            Vector3 reverseVelocity = new Vector3(-0.6f, 0f, 0.8f);
+
+            _contacts.StepContact(reverseVelocity, backWallNormal, workbenchNormal, 0.02f, true, 0.02f,
+                out _, out _, out _);
+
+            Assert.IsTrue(_contacts.HasCorner, "Two perpendicular wall normals must register as a concave corner.");
+            Assert.AreEqual(workbenchNormal, _contacts.CornerNormal);
+
+            float drive = -4f;
+            Vector3 forwardIntoEntrance = Quaternion.Euler(0f, 145f, 0f) * Vector3.forward;
+            Vector3 redirected = _contacts.RedirectDrive(forwardIntoEntrance, Vector3.up, -0.4f, ref drive);
+            Vector3 effectiveVelocityDir = redirected * Mathf.Sign(drive);
+            Assert.Greater(Vector3.Dot(effectiveVelocityDir, Vector3.right), 0.99f,
+                "Corner escape must redirect reverse drive out along the open +X tangent away from the workbench.");
+
+            Vector3 clampedAccel = _contacts.ClampAcceleration(new Vector3(-2f, 0f, 3f));
+            Assert.AreEqual(0f, clampedAccel.x, 1e-4f, "Inward acceleration into the workbench normal is stripped.");
+            Assert.AreEqual(0f, clampedAccel.z, 1e-4f, "Inward acceleration into the back wall normal is stripped.");
         }
 
         private sealed class FakeObstacleQuery : IObstacleQuery
