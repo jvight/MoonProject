@@ -72,6 +72,58 @@ namespace MoonProject.Gameplay
         [Tooltip("Metal a fragment of an already known blueprint gives after its dissolve, so leftovers still pay.")]
         [Range(0, 12)] [SerializeField] private int _knownMetal = 3;
 
+        [Header("Surface scan look (SCAN v2)")]
+        [Tooltip("Cyan colour of the crisp surface scan line and low-contrast swept raster band (same palette as the face).")]
+        [SerializeField] private Color _scanLineColor = new Color(0.20f, 0.86f, 0.96f, 1f);
+
+        [Tooltip("Warm amber accent colour for the completion ping outline and lens pulse (same palette as the CRT face).")]
+        [SerializeField] private Color _completionPingColor = new Color(1.00f, 0.682f, 0.220f, 1f);
+
+        [Tooltip("World-space half-width of the crisp bright scan line where the laser touches the object (m).")]
+        [Range(0.003f, 0.05f)] [SerializeField] private float _scanLineWidth = 0.014f;
+
+        [Tooltip("Emissive intensity of the crisp surface scan line (calm, under bloom blowout).")]
+        [Range(0.1f, 2f)] [SerializeField] private float _scanLineIntensity = 1.35f;
+
+        [Tooltip("World-space vertical spacing between anti-aliased horizontal surface raster lines (m), chosen so they never alias at chase distance.")]
+        [Range(0.02f, 0.2f)] [SerializeField] private float _rasterSpacingMeters = 0.055f;
+
+        [Tooltip("Low-contrast intensity of the swept surface raster band behind the scan line.")]
+        [Range(0.02f, 0.5f)] [SerializeField] private float _rasterContrast = 0.18f;
+
+        [Tooltip("Seconds over which the swept surface raster band fades out behind the moving scan line.")]
+        [Range(0.2f, 3f)] [SerializeField] private float _rasterFadeSeconds = 1.0f;
+
+        [Tooltip("Seconds the thin anti-aliased warm-amber edge traces the object at the completion ping before fading.")]
+        [Range(0.1f, 0.9f)] [SerializeField] private float _pingDurationSeconds = 0.38f;
+
+        [Tooltip("Screen-derivative thickness multiplier for the thin anti-aliased completion ping edge.")]
+        [Range(0.5f, 3f)] [SerializeField] private float _pingEdgeThickness = 1.35f;
+
+        [Tooltip("Emissive intensity of the warm-amber completion ping edge.")]
+        [Range(0.1f, 2f)] [SerializeField] private float _pingEdgeIntensity = 1.25f;
+
+        [Tooltip("Diameter of the soft emitter glow core at 07's scan lens (m).")]
+        [Range(0.01f, 0.2f)] [SerializeField] private float _lensGlowSize = 0.06f;
+
+        [Tooltip("Alpha of the soft emitter glow core at 07's scan lens.")]
+        [Range(0.02f, 1f)] [SerializeField] private float _lensGlowAlpha = 0.32f;
+
+        [Tooltip("Diameter of the soft outer halo at 07's scan lens (m).")]
+        [Range(0.02f, 0.4f)] [SerializeField] private float _lensHaloSize = 0.13f;
+
+        [Tooltip("Alpha of the soft outer halo at 07's scan lens.")]
+        [Range(0.01f, 0.5f)] [SerializeField] private float _lensHaloAlpha = 0.08f;
+
+        [Tooltip("Maximum radius from 07's lens where tiny motes sparkle in vacuum (m).")]
+        [Range(0.01f, 0.12f)] [SerializeField] private float _lensMoteRadius = 0.042f;
+
+        [Tooltip("Diameter of the tiny motes sparkling right at 07's lens (m).")]
+        [Range(0.004f, 0.04f)] [SerializeField] private float _lensMoteSize = 0.014f;
+
+        [Tooltip("Peak alpha of the tiny motes sparkling right at 07's lens.")]
+        [Range(0f, 0.5f)] [SerializeField] private float _lensMoteAlpha = 0.16f;
+
         [Header("The chasm's near lip (§1.3)")]
         [Tooltip("Metres back from the canyon lip, toward the basin, where Kenji's crashed test jumper lies.")]
         [Range(0f, 30f)] [SerializeField] private float _jumperSetback = 6f;
@@ -103,6 +155,11 @@ namespace MoonProject.Gameplay
             StructureIds.VehiclePad,
         };
 
+        private static readonly int ScanLineColorShaderId = Shader.PropertyToID("_MoonScanLineColor");
+        private static readonly int ScanPingColorShaderId = Shader.PropertyToID("_MoonScanPingColor");
+        private static readonly int ScanParamsShaderId = Shader.PropertyToID("_MoonScanParams");
+        private static readonly int ScanPingParamsShaderId = Shader.PropertyToID("_MoonScanPingParams");
+
         public IReadOnlyList<ScanSet> Sets => _sets;
         public IReadOnlyList<RuinScanSet> Ruins => _ruins;
         public IReadOnlyList<string> LaterStructureIds => _laterStructureIds;
@@ -118,8 +175,39 @@ namespace MoonProject.Gameplay
         public float DissolveSeconds => _dissolveSeconds;
         public float OutlineSeconds => _outlineSeconds;
         public int KnownMetal => _knownMetal;
+        public Color ScanLineColor => _scanLineColor;
+        public Color CompletionPingColor => _completionPingColor;
+        public float ScanLineWidth => _scanLineWidth;
+        public float ScanLineIntensity => _scanLineIntensity;
+        public float RasterSpacingMeters => _rasterSpacingMeters;
+        public float RasterContrast => _rasterContrast;
+        public float RasterFadeSeconds => _rasterFadeSeconds;
+        public float PingDurationSeconds => _pingDurationSeconds;
+        public float PingEdgeThickness => _pingEdgeThickness;
+        public float PingEdgeIntensity => _pingEdgeIntensity;
+        public float LensGlowSize => _lensGlowSize;
+        public float LensGlowAlpha => _lensGlowAlpha;
+        public float LensHaloSize => _lensHaloSize;
+        public float LensHaloAlpha => _lensHaloAlpha;
+        public float LensMoteRadius => _lensMoteRadius;
+        public float LensMoteSize => _lensMoteSize;
+        public float LensMoteAlpha => _lensMoteAlpha;
         public float JumperSetback => _jumperSetback;
         public float JumperSide => _jumperSide;
+
+        /// <summary>Pushes the surface scan line, raster band, and completion ping tuning to shader globals (zero GC).</summary>
+        public void ApplyShaderGlobals(float scanDurationSeconds)
+        {
+            float duration = Mathf.Max(scanDurationSeconds, 0.25f);
+            float fadeBandShare = Mathf.Clamp(_rasterFadeSeconds / duration, 0.08f, 0.95f);
+
+            Shader.SetGlobalColor(ScanLineColorShaderId, _scanLineColor.linear);
+            Shader.SetGlobalColor(ScanPingColorShaderId, _completionPingColor.linear);
+            Shader.SetGlobalVector(ScanParamsShaderId,
+                new Vector4(_scanLineWidth, _rasterSpacingMeters, _rasterContrast, fadeBandShare));
+            Shader.SetGlobalVector(ScanPingParamsShaderId,
+                new Vector4(_scanLineIntensity, _pingDurationSeconds, _pingEdgeThickness, _pingEdgeIntensity));
+        }
 
         /// <summary>Seconds a fragment of <paramref name="size"/> takes to scan with the plain eye.</summary>
         public float Seconds(ScanSize size)

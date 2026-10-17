@@ -84,6 +84,7 @@ namespace MoonProject.Gameplay
             _save = services.Save;
             _materials = services.Materials;
             _visuals = services.Visuals;
+            _tuning.ApplyShaderGlobals(_tuning.Seconds(ScanSize.Medium));
         }
 
         internal ScanField(ScanTuning tuning, EventBus events, ISaveService save, MaterialStock materials,
@@ -94,6 +95,7 @@ namespace MoonProject.Gameplay
             _save = save ?? throw new ArgumentNullException(nameof(save));
             _materials = materials ?? throw new ArgumentNullException(nameof(materials));
             _knownStructures = knownStructures ?? throw new ArgumentNullException(nameof(knownStructures));
+            _tuning.ApplyShaderGlobals(_tuning.Seconds(ScanSize.Medium));
         }
 
         public ScanTuning Tuning => _tuning;
@@ -805,16 +807,20 @@ namespace MoonProject.Gameplay
 
         private void Begin(ScanFragment fragment, bool lens)
         {
+            float duration = Seconds(fragment, lens);
+            _tuning.ApplyShaderGlobals(duration);
             _scanning = fragment;
             _quarter = Mathf.FloorToInt(fragment.Progress * Quarters);
             _events.Publish(new ScanStarted(fragment.FragmentId, fragment.Point));
             _events.Publish(new FeelBeat(FeelKind.Scan, FeelPhase.Anticipate, fragment.Point,
-                fragment.SweepSpan, fragment.Progress, (1f - fragment.Progress) * Seconds(fragment, lens)));
+                fragment.SweepSpan, fragment.Progress, (1f - fragment.Progress) * duration));
         }
 
         private void Advance(ScanFragment fragment, float now, float deltaTime, bool lens)
         {
-            fragment.Progress = Mathf.Min(1f, fragment.Progress + deltaTime / Seconds(fragment, lens));
+            float duration = Seconds(fragment, lens);
+            _tuning.ApplyShaderGlobals(duration);
+            fragment.Progress = Mathf.Min(1f, fragment.Progress + deltaTime / duration);
             fragment.Draw(fragment.Progress);
             int quarter = Mathf.FloorToInt(fragment.Progress * Quarters);
             while (_quarter < quarter)

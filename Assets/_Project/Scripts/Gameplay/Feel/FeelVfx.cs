@@ -51,7 +51,7 @@ namespace MoonProject.Gameplay
         private float _sweepSeconds;
 
         public FeelVfx(Transform parent, FeelVfxTuning tuning, GameplayVisuals visuals, EventBus events,
-            IFeelAnchors anchors)
+            IFeelAnchors anchors, ScanTuning scanTuning = null)
         {
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             _anchors = anchors ?? throw new ArgumentNullException(nameof(anchors));
@@ -70,8 +70,8 @@ namespace MoonProject.Gameplay
             _charge = new ChargeUp(root, tuning, visuals.FeelSprite);
             _beam = new CutBeam(root, tuning, visuals.BeamCore, visuals.BeamSheath);
             _debris = new VacuumDebris(root, tuning, visuals.FeelSprite);
-            _scanBeam = new ScanBeam(root, tuning, visuals.BeamCore, visuals.FeelSprite);
-            _scanRibbon = new ScanRibbon(root, tuning, visuals.FeelSprite);
+            _scanBeam = new ScanBeam(root, tuning, visuals.BeamCore, visuals.FeelSprite, scanTuning);
+            _scanRibbon = new ScanRibbon(root, tuning, visuals.FeelSprite, scanTuning);
             _flashLight = new LightPulse("FlashLight", root, Color.white, tuning.FlashRange);
             _cutLight = new LightPulse("CutLight", root, tuning.CutLightColor, tuning.CutRange);
             _installLight = new LightPulse("InstallLight", root, tuning.MoteColor, tuning.EmitterRange);

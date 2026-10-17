@@ -94,9 +94,6 @@ namespace MoonProject.Rover
         private const string SaveKey = "rover.character";
         private const int SaveVersion = 1;
 
-        /// <summary>A fan this faint is off: its dark rays never show at rest (nor in the portrait).</summary>
-        private const float FanDark = 1e-3f;
-
         private readonly object _scanOwner = new object();
         private ScanLook _scanLook;
         private ElderGlance _elderGlance;
@@ -993,17 +990,10 @@ namespace MoonProject.Rover
                 * Mathf.Lerp(1f, _tuning.CutFocus.EyeGlow, _cutFocus) * _chirpPose.EyeGlow
                 * (1f + _sigh * _tuning.Chirp.SighEye) * _scanLook.EyeGlow;
             SetGlow(_eyeRenderer, eyeGlow);
-            ScanLookSettings scan = _tuning.ScanLook;
             _scanFan.transform.localRotation = _scanFanRest * Quaternion.AngleAxis(_scanLook.Sweep, Vector3.up);
-            bool fanLit = _scanLook.Fan > FanDark;
-            if (_scanFan.enabled != fanLit)
+            if (_scanFan.enabled)
             {
-                _scanFan.enabled = fanLit;
-            }
-
-            if (fanLit)
-            {
-                SetGlow(_scanFan, scan.FanColour.linear * (_scanLook.Fan * scan.FanGlow));
+                _scanFan.enabled = false;
             }
             SetGlow(_antennaTipRenderer, _listen.TipEmission(_mood.TipGlow));
             _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow;

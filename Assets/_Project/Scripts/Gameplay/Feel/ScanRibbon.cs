@@ -17,10 +17,8 @@ namespace MoonProject.Gameplay
         // The flare swells by this share of its size as it fades.
         private const float FlareSwell = 0.4f;
 
-        // Each bead stretches along the path over this many gaps to the next, so the beads join into one stream.
-        private const float Overlap = 1.6f;
-
         private readonly FeelVfxTuning _tuning;
+        private readonly ScanTuning _scanTuning;
         private readonly FeelSprites _sprites;
         private readonly FeelSprites _flare;
         private readonly LightPulse _flareLight;
@@ -28,9 +26,10 @@ namespace MoonProject.Gameplay
         private float _age = float.PositiveInfinity;
         private bool _flared;
 
-        public ScanRibbon(Transform parent, FeelVfxTuning tuning, Material sprite)
+        public ScanRibbon(Transform parent, FeelVfxTuning tuning, Material sprite, ScanTuning scanTuning = null)
         {
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
+            _scanTuning = scanTuning;
             _sprites = new FeelSprites("ScanRibbon", parent, sprite, tuning.ScanRibbonBeads, true, 1f);
             _flare = new FeelSprites("ScanFlare", parent, sprite, 1, false, 0f);
             _flareLight = new LightPulse("ScanFlareLight", parent, tuning.ScanRibbonColor, tuning.EmitterRange);
@@ -65,7 +64,7 @@ namespace MoonProject.Gameplay
             Vector3 toFrom = _from - lens;
             float distance = toFrom.magnitude;
             Vector3 aperture = distance > 1e-4f
-                ? lens + (toFrom / distance) * Mathf.Min(_tuning.ScanApertureOffset * 1.15f, distance * 0.35f)
+                ? lens + (toFrom / distance) * 0.025f
                 : lens;
             _flareLight.MoveTo(aperture);
             _flareLight.Step(deltaTime);
@@ -90,40 +89,29 @@ namespace MoonProject.Gameplay
 
         private void Stream(Vector3 lens, float t)
         {
-            Vector2 span = FeelCurves.RibbonSpan(t, _tuning.ScanRibbonLength);
             int beads = _tuning.ScanRibbonBeads;
-            float arc = _tuning.ScanRibbonArc;
-            float gap = Mathf.Max((span.y - span.x) / (beads - 1), 1f / beads);
-            Color baseColor = _tuning.ScanRibbonColor;
-            float baseAlpha = baseColor.a;
+            float radius = _scanTuning != null ? _scanTuning.LensMoteRadius : 0.042f;
+            float moteSize = _scanTuning != null ? _scanTuning.LensMoteSize : 0.014f;
+            Color baseColor = _scanTuning != null ? _scanTuning.CompletionPingColor : _tuning.ScanRibbonColor;
+            float env = Mathf.Sin(Mathf.Clamp01(t) * Mathf.PI);
             for (int i = 0; i < beads; i++)
             {
                 float toHead = (float)i / (beads - 1);
-                float along = Mathf.Lerp(span.x, span.y, toHead);
                 float weight = Mathf.Lerp(TailShare, 1f, toHead);
-                float s0 = Mathf.Min(along, 1f - gap);
-                Vector3 tangentStart = FeelCurves.RibbonPoint(_from, lens, arc, s0);
-                Vector3 tangentEnd = FeelCurves.RibbonPoint(_from, lens, arc, s0 + gap);
-                Vector3 streak = (tangentEnd - tangentStart) * Overlap;
-                Vector3 at = FeelCurves.RibbonPoint(_from, lens, arc, along);
-                if (along + gap > 1f)
-                {
-                    float intoLens = Mathf.InverseLerp(1f - gap, 1f, along);
-                    at -= streak * (0.5f * intoLens);
-                }
-
-                float lensTaper = 1f - 0.55f * Mathf.InverseLerp(0.8f, 1f, along);
+                float angle = i * 2.3999632f + t * 4f;
+                float r = radius * (1f - 0.7f * Mathf.Clamp01(t)) * (0.25f + 0.75f * toHead);
+                var offset = new Vector3(Mathf.Cos(angle) * r, Mathf.Sin(angle) * r, 0f);
                 Color color = baseColor;
-                color.a = baseAlpha * weight * lensTaper;
-                _sprites.Add(at, _tuning.ScanRibbonSize * weight, color, streak);
+                color.a = (_scanTuning != null ? _scanTuning.LensMoteAlpha : 0.14f) * weight * env;
+                _sprites.Add(lens + offset, moteSize * weight, color, Vector3.zero);
             }
 
-            if (span.y > 0.35f)
+            if (t > 0.35f)
             {
-                float catchWeight = Mathf.InverseLerp(0.35f, 1f, span.y);
-                Color lensCatch = _tuning.ScanCoreColor;
-                lensCatch.a = _tuning.ScanLensCoreAlpha * (1.45f + 0.55f * catchWeight);
-                _flare.Add(lens, _tuning.ScanLensCoreSize * (1f + 0.2f * catchWeight), lensCatch, Vector3.zero);
+                float catchWeight = Mathf.InverseLerp(0.35f, 1f, t);
+                Color lensCatch = baseColor;
+                lensCatch.a = _tuning.ScanLensCoreAlpha * (0.85f + 0.35f * catchWeight) * env;
+                _flare.Add(lens, _tuning.ScanLensCoreSize * (1f + 0.15f * catchWeight), lensCatch, Vector3.zero);
             }
         }
 
