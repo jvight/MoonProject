@@ -66,7 +66,7 @@ rover):
 | **B8** | 22:00–28:00 | **Build solar, power on** | build the solar array within 14 m of the pad (its connection radius) | build mode | The array unfolds and turns to the Sun. A cable lights between it and the pad. **Power on:** the pad's lamps steady, the CRT's protocol line reads `POWER · ON`, the first lamp of Power → Link → Dish → Answer lights on 07's face, and the radio's hiss clears into the first music (low, warm). | the solar array is built and powering the pad |
 | **B9** | 28:00–36:00 | **Night is coming** | the Sun nears the west rim; scan the habitat's power-module fragments (2); cut for Wiring; build a battery bank next to the array | scan beam, cutter, build mode | Shadows lengthen visibly. The CRT shows the Sun's remaining time as an arc (the only clock, and it is the world's). The battery bank's charge lamps fill as the array feeds it. | the battery bank is built and holds charge |
 | **B10** | 36:00–40:00 | **The first nightfall** (awe beat, north-star §4a) | watch; or keep working | — | The Sun drops behind the rim. Shadows race; the array stows; **the player's own base lights come on in sequence**; the stars and the Milky Way bloom; Earth's night side stays dark (story v4), its rim glowing. The radio shifts to the night set. No text. | the Sun has set |
-| **B11** | 40:00–45:00 | **Toward Link** | scan the radio tower ruin's 3 fragments (antenna mast); cut for Optics; build the antenna mast at the base | scan beam, cutter, build mode | Under earthshine (lavender night), the tower ruin's dish frame. The built mast's dish turns, listening. **A faint signal answers from beyond the west rim:** a pillar of light rises there, over a dead Lumen relay mast's silhouette on the rim shoulder. The CRT: `LINK · 0/1 · SIGNAL WEST`. | the antenna mast is built and the west signal is heard: **the opening ends** |
+| **B11** | 40:00–45:00 | **Toward Link** | scan the radio tower ruin's 2 fragments (antenna mast); cut for Optics; build the antenna mast at the base | scan beam, cutter, build mode | Under earthshine (lavender night), the tower ruin's dish frame. The built mast's dish turns, listening. **A faint signal answers from beyond the west rim:** a pillar of light rises there, over a dead Lumen relay mast's silhouette on the rim shoulder. The CRT: `LINK · 0/1 · SIGNAL WEST`. | the antenna mast is built and the west signal is heard: **the opening ends** |
 
 ### After the opening: Power → Link → Dish → Answer, by building
 | Step | What 07 builds | Where | What it opens |
@@ -260,7 +260,7 @@ content.
 | Session | Tasks | Acceptance |
 |---|---|---|
 | **world** | §4's layout in World's coordinates: the wake on today's pad with the dead post and its cable; the R1 lander at ~(35, 160) with its port and beacon; the build site plateau at ~(15, 140) (flat, markings, no scatter); the ruins cluster moved to ~(95, 185); the midway debris point; Kestrel kept; the crew tracks re-routed (wake → lander → ruins); the relay.1 dead mast; remove everything in §4's "removed" list and §5's World CUT rows (code, builders, generated assets, anchors). The eclipse timing (it ends at ~12 min of a new game) and the first day's Sun (sets at ~36 min). | A capture from the wake point shows the lander in front of the Peak with the eclipsed Earth in one frame; a capture from the build site shows the ruins and the west dead mast. A new game's eclipse ends between 11 and 14 min, and the first sunset falls between 34 and 38 min. No legacy model in the scene (art QA lists only R1). compile_check and box_check PASS. |
-| **gameplay** | ObjectiveFlow v2 (§3) read from game state (never stored); fragment sets (pad 2 at the lander, solar 3, battery bank 2, antenna 3 in the ruins); crate and panel yields (§4 supply); the lander port and its one-charge reserve; the pad's DockLock; the battery start at 50%; recovery Power on at B8; the west signal after B11; delete §5's Gameplay CUT rows fully, with a save content floor. **The GoldenPath Playthrough rewritten for B0–B11 (Playthrough required), runtime ≤ 10 min.** | The Playthrough passes B0–B11 in ≤ 10 min. Every objective line shows and clears per §3, and never two guidance elements at once. Zero per-frame GC. compile_check, box_check and the Playthrough PASS. |
+| **gameplay** | ObjectiveFlow v2 (§3) read from game state (never stored); fragment sets (pad 2 at the lander, solar 3, battery bank 2, antenna 2 in the ruins); crate and panel yields (§4 supply); the lander port and its one-charge reserve; the pad's DockLock; the battery start at 50%; recovery Power on at B8; the west signal after B11; delete §5's Gameplay CUT rows fully, with a save content floor. **The GoldenPath Playthrough rewritten for B0–B11 (Playthrough required), runtime ≤ 10 min.** | The Playthrough passes B0–B11 in ≤ 10 min. Every objective line shows and clears per §3, and never two guidance elements at once. Zero per-frame GC. compile_check, box_check and the Playthrough PASS. |
 | **ui-fit** | the objective line (show, dim, re-brighten rules, one-element arbitration with chips, the build menu and CRT readouts); the CRT protocol line (`POWER · OFFLINE/ON`, `LINK · 0/1 · SIGNAL WEST`) and the `LANDER RESERVE` and sun-arc readouts; remove §5's UI CUT rows. | Captures at B1, B5, B8 and B11 show exactly one guidance element. vi lines fit at 1080p. Box_check PASS. |
 | **audio** | build sounds (snap, weld, power-on), the eclipse's diamond-ring swell, the nightfall light sequence, the radio hiss clearing to music at Power on; remove §5's Audio CUT rows (AirWind first). | Every build state change has a sound in D pentatonic at ≤ mezzo-piano. No wind in a vacuum. Box_check PASS. |
 | **Argon (visuals)** | needs: the dead 07 charging post and its cable; the lander's service port and amber emergency beacon; the build apron's floor-marking decal; the `ChargingPad` scale fix (scale.md §3.2); a cable-lighting look between structures; the airlock panel's readout surface; the west relay mast's dead silhouette (unlit `AntennaMast` variant); R1 debris fragments (to replace the legacy hull fragments); R1 crates S/M (scale.md sizes); an R1 Peak beacon. | Each asset passes art QA (R1 contract, scale.md). The pad lets 07 roll on from the front with ≥ 0.1 m per side. |
@@ -324,6 +324,56 @@ content.
    ChargingPad scale fix). The rest of §6's Argon list follows in a second job: the dead charging post and cable, the
    lander's port and beacon, the apron decal, the airlock readout surface, the unlit mast, the Peak beacon.
    - Until those land, place the closest existing R1 asset and list the swap in your report.
+
+## 10. 07's start kit and energy (owner-approved 2026-10-18 ~03:10)
+The owner: 07 must not start with too many functions; what works, what is broken and what comes later must be clear.
+Identity: `docs/design/07-identity.md` (SSR-5 service rover).
+
+**The boot readout** (B1, on the CRT; it is the one guidance element while it shows):
+```
+UNIT 07 · SSR-5 · CONTINUE · 13 148 DAYS        ĐƠN VỊ 07 · SSR-5 · TIẾP TỤC · 13 148 NGÀY
+WHEELS ········ OK (1 MISMATCHED)               BÁNH XE ········ OK (1 BÁNH KHÁC BỘ)
+LAMPS ········· OK                              ĐÈN ············ OK
+LENS · SCAN ··· OK                              ỐNG KÍNH · QUÉT  OK
+ASSEMBLY ······ OK · 0 BLUEPRINTS               LẮP DỰNG ······· OK · 0 BẢN VẼ
+CUTTER ········ FAULT · NO IGNITER              MỎ CẮT ········· LỖI · MẤT BỘ ĐÁNH LỬA
+SOLAR WING ···· JAMMED                          CÁNH PIN ······· KẸT
+ANTENNA ······· RECEIVE ONLY                    ĂNG-TEN ········ CHỈ NHẬN
+SOCKETS 1-2 ··· EMPTY                           Ổ LẮP 1–2 ······ TRỐNG
+BATTERY ······· 50%                             PIN ············ 50%
+```
+
+**Works from the start, three verbs only:**
+- drive (with lamps);
+- scan;
+- build, with 0 blueprints known.
+
+**Broken, each one a goal:**
+
+| Part | Fault | Fixed |
+|---|---|---|
+| Cutter | the igniter is missing | **B6.** A spare igniter lies in the lander's **open** cargo crate (B4). Docked on the newly built pad, the player fits it into the cutter socket on the CRT face (the first use of the socket screen). The cutter's pilot light comes on, the readout line turns OK, and the A "done" tone plays. From then on the cutter works (B7 ruins lockers and crates). |
+| Solar wing | jammed | after the opening (the first visible upgrade). **While it is jammed there is no stand-still trickle:** that is why the battery is at 50%, and only chargers refill it. |
+| Antenna | receive only | the Link → Dish → Answer spine |
+| Sockets 1-2 | empty | later kits (scoop, winch, ...) |
+
+**B4 changes:** "Cut the crates" becomes "Collect the parts from the lander's open crate" (no cutting before B6).
+- The hold starts with Metal 2 and Wiring 1.
+- The open crate adds Metal 2, Wiring 1 and the igniter, which together cover the pad (Metal 4, Wiring 2).
+- New objective lines:
+  - B4: "Collect the parts from the lander's open crate." / "Lấy phụ tùng trong thùng hàng mở của tàu đổ bộ."
+  - B6, after charging starts, with the igniter in the hold: "Fit the igniter to the cutter." / "Lắp bộ đánh lửa vào mỏ cắt."
+
+**Energy: every function costs battery** (owner, 2026-10-18):
+- driving: per metre (as today);
+- scanning: per second of active scan;
+- building: welding per structure, scaled by its build time;
+- cutting: per second of beam (as today);
+- lamps: free (no micromanagement).
+
+The balance target: 50% at the wake; the drive to the lander, 2 scans, the collection and the pad weld leave about
+25-30%, so the Low warning (B4-B5) makes the first charge (B6) a relief, not a chore. Later trips to the ruins make
+solar and the battery bank a real need. The build menu shows each structure's energy cost next to its materials.
 
 ## Tóm tắt (Tiếng Việt)
 - **Móc câu:** 07 mở mắt giữa nhật thực. Trái Đất đen, chỉ còn viền đồng mảnh, không một ánh đèn thành phố. Gần đó có

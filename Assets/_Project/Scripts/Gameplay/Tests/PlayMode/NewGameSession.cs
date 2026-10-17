@@ -12,6 +12,7 @@ using MoonProject.Core.Save;
 using Object = UnityEngine.Object;
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.SceneManagement;
 #endif
 
 namespace MoonProject.Gameplay.PlayModeTests
@@ -113,12 +114,17 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private static IEnumerator Boot(Action<GameBootstrap> found)
         {
-            AsyncOperation loading = SceneManager.LoadSceneAsync(PlaythroughScene.ScenePath, LoadSceneMode.Single);
-            Assert.IsNotNull(loading, "the copy is listed in the build settings for the run");
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(PlaythroughScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            Assert.IsNotNull(loading, "the scene copy loads in play mode");
             while (!loading.isDone)
             {
                 yield return null;
             }
+#else
+            throw new NotSupportedException("The new game session loads the scene through the editor.");
+#endif
 
             GameBootstrap bootstrap = FindBootstrap();
             Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
@@ -174,9 +180,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// The playthrough's copy of Main on its own slot, listed in the build settings for the run so the bootstrap
-        /// can reload it the way it reloads Main (the list is restored afterwards); the slot's files, put-away ones
-        /// included, are removed before and after.
+        /// The playthrough's copy of Main on its own slot. Nothing in the project settings changes: the session loads
+        /// the copy by path in play mode, and the bootstrap reloads it by path the same way. The slot's files,
+        /// put-away ones included, are removed before and after.
         /// </summary>
         public sealed class NewGameScene : IPrebuildSetup, IPostBuildCleanup
         {
@@ -193,30 +199,12 @@ namespace MoonProject.Gameplay.PlayModeTests
 #if UNITY_EDITOR
                 DeletePutAway();
                 new PlaythroughScene().Setup();
-                EditorBuildSettingsScene[] scenes = EditorBuildSettings.scenes;
-                var listed = new EditorBuildSettingsScene[scenes.Length + 1];
-                scenes.CopyTo(listed, 0);
-                listed[scenes.Length] = new EditorBuildSettingsScene(PlaythroughScene.ScenePath, true);
-                EditorBuildSettings.scenes = listed;
 #endif
             }
 
             public void Cleanup()
             {
 #if UNITY_EDITOR
-                EditorBuildSettingsScene[] scenes = EditorBuildSettings.scenes;
-                int kept = 0;
-                var restored = new EditorBuildSettingsScene[scenes.Length];
-                foreach (EditorBuildSettingsScene scene in scenes)
-                {
-                    if (scene.path != PlaythroughScene.ScenePath)
-                    {
-                        restored[kept++] = scene;
-                    }
-                }
-
-                Array.Resize(ref restored, kept);
-                EditorBuildSettings.scenes = restored;
                 new PlaythroughScene().Cleanup();
                 DeletePutAway();
 #endif

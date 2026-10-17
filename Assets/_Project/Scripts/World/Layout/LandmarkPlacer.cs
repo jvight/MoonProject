@@ -5,9 +5,9 @@ using MoonProject.Core;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Places Art's landmark kit on the ground at boot (M3-18): the route posts along the road to the canyon with
-    /// faintly glinting reflectors (L2), the broken cable bridge at the chasm with its far anchor's lamp lit warm (L4)
-    /// and the antenna farm's toppled dish frames (L7). Meshes only, no colliders: they never block 07's lanes.
+    /// Places Art's landmark kit on the ground at boot (M3-18, ENV-03): the route posts along the road to the canyon
+    /// with faintly glinting reflectors (L2), the broken cable bridge at the chasm with its far anchor's lamp lit warm
+    /// (L4) and the antenna farm's toppled dish frames (L7), fitted with compound BoxColliders on Layers.Prop.
     /// </summary>
     public static class LandmarkPlacer
     {
@@ -17,6 +17,8 @@ namespace MoonProject.World
         private const uint VentSalt = 0x3C6EF372u;
         private const int VentDiscSegments = 12;
         private const float VentLift = 0.05f;
+        private const int DishHeightSlices = 5;
+        private const float DishMaxSliceHeight = 0.62f;
 
         // The patches at the field's edge keep this much less strength than those at the vent.
         private const float VentEdgeFade = 0.6f;
@@ -83,6 +85,7 @@ namespace MoonProject.World
                 GameObject post = Place(root, prefab, Ground(surface, spot), new Vector3(along.x, 0f, along.y),
                     hideFlags);
                 Glow(post.transform, ReflectorName, settings.ReflectorGlow, block);
+                AddRoutePostCollider(post);
             }
         }
 
@@ -96,11 +99,14 @@ namespace MoonProject.World
             across.Normalize();
             Vector3 side = Vector3.Cross(Vector3.up, across) * settings.BridgeSide;
             Vector3 near = lip.Position + side;
-            Place(root, prefabs.BridgeNear, Ground(surface, new Vector2(near.x, near.z)), across, hideFlags);
+            GameObject nearAnchor = Place(root, prefabs.BridgeNear, Ground(surface, new Vector2(near.x, near.z)),
+                across, hideFlags);
+            AddBridgeNearColliders(nearAnchor);
             Vector3 far = landing.Position + side;
             GameObject anchor = Place(root, prefabs.BridgeFar, Ground(surface, new Vector2(far.x, far.z)), across,
                 hideFlags);
             Glow(anchor.transform, LampName, settings.BridgeLampGlow, block);
+            AddBridgeFarColliders(anchor);
             Vector3 middle = (lip.Position + landing.Position) * 0.5f + side;
             Place(root, prefabs.BridgeCable, Ground(surface, new Vector2(middle.x, middle.z)), across, hideFlags);
         }
@@ -119,9 +125,110 @@ namespace MoonProject.World
                 var spot = new Vector2(farm.Position.x + Mathf.Sin(angle) * reach,
                     farm.Position.z + Mathf.Cos(angle) * reach);
                 float yaw = Hashing.ToUnit(Hashing.Hash(i, 2, dishSeed)) * Mathf.PI * 2f;
-                Place(root, frames[i], Ground(surface, spot), new Vector3(Mathf.Sin(yaw), 0f, Mathf.Cos(yaw)),
-                    hideFlags);
+                GameObject dish = Place(root, frames[i], Ground(surface, spot),
+                    new Vector3(Mathf.Sin(yaw), 0f, Mathf.Cos(yaw)), hideFlags);
+                AddDishFrameColliders(dish);
             }
+        }
+
+        private static void AddRoutePostCollider(GameObject post)
+        {
+            post.layer = Layers.Prop;
+            AddBox(post, new Vector3(0f, 0.675f, 0f), new Vector3(0.22f, 1.35f, 0.22f));
+        }
+
+        private static void AddBridgeNearColliders(GameObject nearAnchor)
+        {
+            nearAnchor.layer = Layers.Prop;
+            // Twin A-frame posts at x = +/- 1.2m leave the 2.0m centre span open; backstays and deadmen sit behind.
+            AddBox(nearAnchor, new Vector3(-1.2f, 1.3f, 0f), new Vector3(0.52f, 2.6f, 0.52f));
+            AddBox(nearAnchor, new Vector3(1.2f, 1.3f, 0f), new Vector3(0.52f, 2.6f, 0.52f));
+            AddBox(nearAnchor, new Vector3(-1.2f, 0.32f, -0.7f), new Vector3(0.50f, 0.64f, 1.1f));
+            AddBox(nearAnchor, new Vector3(-1.2f, 0.32f, -1.8f), new Vector3(0.50f, 0.64f, 1.1f));
+            AddBox(nearAnchor, new Vector3(1.2f, 0.32f, -0.7f), new Vector3(0.50f, 0.64f, 1.1f));
+            AddBox(nearAnchor, new Vector3(1.2f, 0.32f, -1.8f), new Vector3(0.50f, 0.64f, 1.1f));
+            AddBox(nearAnchor, new Vector3(0f, 2.2f, 0f), new Vector3(2.4f, 0.16f, 0.16f));
+        }
+
+        private static void AddBridgeFarColliders(GameObject farAnchor)
+        {
+            farAnchor.layer = Layers.Prop;
+            AddBox(farAnchor, new Vector3(0f, 1.3f, 0f), new Vector3(0.52f, 2.6f, 0.52f));
+            AddBox(farAnchor, new Vector3(0f, 0.32f, 0.7f), new Vector3(0.50f, 0.64f, 1.1f));
+            AddBox(farAnchor, new Vector3(0f, 0.32f, 1.8f), new Vector3(0.50f, 0.64f, 1.1f));
+        }
+
+        private static void AddDishFrameColliders(GameObject dish)
+        {
+            dish.layer = Layers.Prop;
+            // Snapped pedestal stub to the side of the toppled dish.
+            AddBox(dish, new Vector3(2.88f, 0.55f, -1.2f), new Vector3(0.65f, 1.10f, 0.65f));
+
+            var filter = dish.GetComponentInChildren<MeshFilter>();
+            Mesh mesh = filter != null ? filter.sharedMesh : null;
+            if (mesh == null)
+            {
+                AddBox(dish, new Vector3(0f, 0.6f, 0f), new Vector3(3.2f, 1.2f, 3.2f));
+                return;
+            }
+
+            Vector3[] verts = mesh.vertices;
+            float maxY = 0f;
+            for (int i = 0; i < verts.Length; i++)
+            {
+                if (verts[i].y > maxY)
+                {
+                    maxY = verts[i].y;
+                }
+            }
+
+            int slices = Mathf.Max(1, Mathf.CeilToInt(Mathf.Max(maxY, 0.6f) / DishMaxSliceHeight));
+            slices = Mathf.Max(slices, DishHeightSlices);
+            float sliceStep = Mathf.Max(maxY, 0.6f) / slices;
+            for (int s = 0; s < slices; s++)
+            {
+                float yMin = s * sliceStep;
+                float yMax = (s + 1) * sliceStep;
+                Vector3 min = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+                Vector3 max = new Vector3(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
+                int count = 0;
+                for (int i = 0; i < verts.Length; i++)
+                {
+                    Vector3 v = verts[i];
+                    // Exclude the separate pedestal vertices (already covered by its own tight box).
+                    if (v.x > 2.2f && v.z < -0.5f)
+                    {
+                        continue;
+                    }
+
+                    if (v.y < yMin - 0.04f || v.y > yMax + 0.04f)
+                    {
+                        continue;
+                    }
+
+                    Vector3 clamped = new Vector3(v.x, Mathf.Clamp(v.y, yMin, yMax), v.z);
+                    min = Vector3.Min(min, clamped);
+                    max = Vector3.Max(max, clamped);
+                    count++;
+                }
+
+                if (count == 0)
+                {
+                    continue;
+                }
+
+                Vector3 size = Vector3.Max(max - min, new Vector3(0.24f, 0.18f, 0.24f));
+                size.y = Mathf.Min(size.y, DishMaxSliceHeight);
+                Vector3 center = (min + max) * 0.5f;
+                AddBox(dish, center, size);
+            }
+        }
+
+        private static void AddBox(GameObject host, Vector3 center, Vector3 size)
+        {
+            var box = host.AddComponent<BoxCollider>();
+            box.center = center;
+            box.size = size;
         }
 
         private static void Glow(Transform model, string node, float glow, MaterialPropertyBlock block)

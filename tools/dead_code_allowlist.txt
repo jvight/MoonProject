@@ -1,0 +1,5 @@
+# Findings of tools/dead_code.py that are not dead: Unity or the tooling reaches them in a way the search cannot see
+# (a type loaded by name from a config file, a member read by reflection, a contract kept for a box about to use it).
+# One pattern per line: a type ("Name"), a member ("Name.Member"), or an unconstructed event ("Name.new");
+# * and ? match. Give every entry a reason after '#'. Types Unity discovers by attribute, base class, interface or
+# script GUID need no entry: the tool already treats them as entry points.

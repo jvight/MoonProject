@@ -90,6 +90,39 @@ namespace MoonProject.World
         [Range(0.1f, 10f)]
         [SerializeField] private float _keySmoothingSeconds = 1.8f;
 
+        [Tooltip("Exponent shaping how fast the sky, fog and haze turn to day as the basin-wide sunlight rises " +
+            "(below 1: the day look arrives early in a sunrise, so dawn already reads as day).")]
+        [Range(0.2f, 2f)]
+        [SerializeField] private float _dayBlendExponent = 0.65f;
+
+        [Tooltip("Basin-wide sunlight (0..1) at which the key light hands over from the earthlight to the Sun: low, " +
+            "so the first limb of dawn already lights the landscape with warm grazing light.")]
+        [Range(0.005f, 0.5f)]
+        [SerializeField] private float _dawnKeyCrossover = 0.04f;
+
+        [Tooltip("Share of the sunlit ambient kept while 07 sits in a local ridge or crater shadow: high, so a local " +
+            "shadow only eases the ambient a little and the basin never goes dark around 07.")]
+        [Range(0.5f, 1f)]
+        [SerializeField] private float _localShadowAmbientFloor = 0.85f;
+
+        [Tooltip("Share of the Sun's rise (after the crossover) over which its key light fades in from nothing, so " +
+            "the handover never pops.")]
+        [Range(0.01f, 0.5f)]
+        [SerializeField] private float _sunEmergenceShare = 0.08f;
+
+        [Tooltip("Exponent shaping the Sun key light's rise after the crossover (below 1: it reaches strength early).")]
+        [Range(0.2f, 2f)]
+        [SerializeField] private float _sunKeyCurveExponent = 0.55f;
+
+        [Tooltip("Share of the full Sun key intensity at the very start of dawn (it grows to 1 with the Sun's rise).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _dawnKeyFloor = 0.42f;
+
+        [Tooltip("Share of the full Sun shadow strength at the very start of dawn (it grows to 1 with the Sun's " +
+            "rise): long grazing shadows read from the first light.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _dawnShadowFloor = 0.7f;
+
         [Tooltip("Seconds after releasing the opening eclipse over which the basin's sunlight ramps in as the Sun's " +
             "limb clears Earth.")]
         [Range(2f, 60f)]
@@ -217,6 +250,13 @@ namespace MoonProject.World
         public float ReceiverHeight => _receiverHeight;
         public float HorizonSoftness => _horizonSoftness;
         public float KeySmoothingSeconds => _keySmoothingSeconds;
+        public float DayBlendExponent => _dayBlendExponent;
+        public float DawnKeyCrossover => _dawnKeyCrossover;
+        public float LocalShadowAmbientFloor => _localShadowAmbientFloor;
+        public float SunEmergenceShare => _sunEmergenceShare;
+        public float SunKeyCurveExponent => _sunKeyCurveExponent;
+        public float DawnKeyFloor => _dawnKeyFloor;
+        public float DawnShadowFloor => _dawnShadowFloor;
         public float DawnSweepSeconds => _dawnSweepSeconds;
         public Color SunlitKeyColor => _sunlitKeyColor;
         public Color DawnKeyColor => _dawnKeyColor;
