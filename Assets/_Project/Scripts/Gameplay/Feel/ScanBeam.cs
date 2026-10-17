@@ -20,7 +20,7 @@ namespace MoonProject.Gameplay
         private const int IrisCaliperCount = 2;
         private const int MoteCount = 6;
         private const int MaxPathGlints = 16;
-        private const int PointSlots = CorePointCount + IrisRingCount + IrisCaliperCount + MoteCount + MaxPathGlints;
+        private const int PointSlots = CorePointCount + IrisRingCount + IrisCaliperCount + MoteCount + MaxPathGlints * 2;
         private const int LensStreakCount = 6;
         private const int StreakSlots = LensStreakCount + MaxPathGlints;
 
@@ -32,22 +32,20 @@ namespace MoonProject.Gameplay
         private const float DefaultPingDuration = 0.38f;
         private const float TwoPi = Mathf.PI * 2f;
 
-        private const float DefaultGroundLineWidth = 0.032f;
-        private const float DefaultGroundLineIntensity = 2.05f;
-        private const float DefaultGroundSweepAngleDeg = 4.2f;
-        private const float DefaultGroundSweepHz = 1.15f;
-        private const float DefaultGroundStartOffset = 0.08f;
+        private const float DefaultGroundLineWidth = 0.015f;
+        private const float DefaultGroundLineIntensity = 1.65f;
+        private const float DefaultGroundStartOffset = 0.85f;
         private const float DefaultLensIrisSize = 0.145f;
         private const float DefaultLensIrisAlpha = 0.90f;
-        private const float DefaultLensGlintLength = 0.44f;
-        private const float DefaultLensGlintWidth = 0.015f;
-        private const float DefaultLensGlintAlpha = 0.92f;
+        private const float DefaultLensGlintLength = 0.068f;
+        private const float DefaultLensGlintWidth = 0.009f;
+        private const float DefaultLensGlintAlpha = 0.85f;
         private const float DefaultLensSpillIntensity = 0.65f;
         private const float DefaultLensSpillRange = 0.95f;
-        private const int DefaultPathGlintCount = 10;
-        private const float DefaultPathGlintSize = 0.082f;
-        private const float DefaultPathGlintAlpha = 0.96f;
-        private const float DefaultPathGlintLifetime = 0.42f;
+        private const int DefaultPathGlintCount = 5;
+        private const float DefaultPathGlintSize = 0.020f;
+        private const float DefaultPathGlintAlpha = 0.95f;
+        private const float DefaultPathGlintLifetime = 0.20f;
         private const float DefaultLunarGravity = 1.62f;
 
         private const float SpillForwardOffset = 0.10f;
@@ -58,12 +56,11 @@ namespace MoonProject.Gameplay
         private const float RoverChassisClearanceBelowLens = 0.12f;
         private const float IrisClosedScale = 0.38f;
         private const float IrisCaliperRadiusFactor = 0.56f;
-        private const float PathStartShare = 0.08f;
-        private const float PathEndShare = 0.92f;
-        private const float PathActiveDutyCycle = 0.82f;
-        private const float PathLateralJitter = 0.032f;
-        private const float PathUpwardLoftVelocity = 0.085f;
-        private const float PathHdrBoost = 2.15f;
+        private const float PathStartShare = 0.22f;
+        private const float PathEndShare = 0.90f;
+        private const float PathActiveDutyCycle = 0.54f;
+        private const float PathLateralJitter = 0.014f;
+        private const float PathUpwardLoftVelocity = 0.012f;
 
         private static readonly Color DefaultCyanColor = new Color(0.20f, 0.86f, 0.96f, 1f);
         private static readonly Color DefaultAmberPingColor = new Color(1.00f, 0.682f, 0.220f, 1f);
@@ -211,9 +208,9 @@ namespace MoonProject.Gameplay
             float glintLength = _scanTuning != null ? _scanTuning.LensGlintLength : DefaultLensGlintLength;
             float glintWidth = _scanTuning != null ? _scanTuning.LensGlintWidth : DefaultLensGlintWidth;
             float glintAlpha = _scanTuning != null ? _scanTuning.LensGlintAlpha : DefaultLensGlintAlpha;
-            float moteRadius = _scanTuning != null ? _scanTuning.LensMoteRadius : 0.065f;
-            float moteSizeBase = _scanTuning != null ? _scanTuning.LensMoteSize : 0.020f;
-            float moteAlphaBase = _scanTuning != null ? _scanTuning.LensMoteAlpha : 0.65f;
+            float moteRadius = _scanTuning != null ? _scanTuning.LensMoteRadius : 0.052f;
+            float moteSizeBase = _scanTuning != null ? _scanTuning.LensMoteSize : 0.007f;
+            float moteAlphaBase = _scanTuning != null ? _scanTuning.LensMoteAlpha : 0.42f;
 
             float eased = Ease.InOutSine(_level);
             float ping01 = _pingRemaining > 0f
@@ -232,15 +229,8 @@ namespace MoonProject.Gameplay
             Vector3 orthoUp = Vector3.Cross(forward, right).normalized;
             Vector3 lensFront = emitter + forward * LensSurfaceStandOff;
 
-            // Sweep fan oscillation shared by the ground line, lens glint, and path glints
-            float sweepAngleDeg = _scanTuning != null ? _scanTuning.GroundSweepAngleDeg : DefaultGroundSweepAngleDeg;
-            float sweepHz = _scanTuning != null ? _scanTuning.GroundSweepHz : DefaultGroundSweepHz;
-            float maxSweepTan = Mathf.Tan(sweepAngleDeg * Mathf.Deg2Rad);
-            float sweepOsc = Mathf.Sin((_progress * 1.75f + _elapsed * sweepHz * 0.45f) * TwoPi);
-            float currentSweepTan = sweepOsc * maxSweepTan * (1f - 0.40f * ping01);
-
-            // 1. Update ground scan line shader globals (runs from under 07's cheek lens to the target's base)
-            UpdateGroundLineGlobals(emitter, sweepLevel, 0f, currentSweepTan, maxSweepTan);
+            // 1. Update straight ground scan line shader globals (runs from lens's ground projection to the target)
+            UpdateGroundLineGlobals(emitter, sweepLevel, 0f);
 
             // 2. Soft cyan spill light on 07's CRT face, brass bezel, and the ground right in front of the lens
             Color activeTint = _pingRemaining > 0f ? amberColor : cyanColor;
@@ -256,7 +246,7 @@ namespace MoonProject.Gameplay
             _lensLight.Ramp(spillIntensity, 0f, false);
             _lensLight.Step(deltaTime);
 
-            // 3. 07's cheek lens emitter core, outer halo, opening iris ring, and cross-flare glints
+            // 3. 07's cheek lens emitter core, outer halo, opening iris ring, and short bezel-clamped flare needles
             Color halo = activeTint;
             halo.a = haloAlpha * visibility;
             _points.Add(lensFront, haloSize * widthScale, halo, Vector3.zero);
@@ -282,41 +272,32 @@ namespace MoonProject.Gameplay
                 _points.Add(lensFront + ringOffset, irisSegmentSize, irisColor, Vector3.zero);
             }
 
-            // Bright horizontal iris caliper ticks that shift slightly with the sweep oscillation
+            // Bright vertical iris caliper ticks that shift slightly with the vertical fan sweep
             Color caliperColor = Color.Lerp(activeTint, Color.white, 0.62f);
             caliperColor.a = Mathf.Min(1f, irisAlpha * 1.15f) * visibility;
             float caliperRadius = irisSize * IrisCaliperRadiusFactor * Mathf.Lerp(IrisClosedScale, 1f, visibility);
-            Vector3 sweepShift = right * (currentSweepTan * 0.10f);
+            float verticalTickShift = Mathf.Sin((_progress * 1.75f + _elapsed * 0.5f) * TwoPi) * 0.006f;
+            Vector3 sweepShift = orthoUp * verticalTickShift;
             _points.Add(lensFront + right * caliperRadius + sweepShift, irisSegmentSize * 1.45f, caliperColor, Vector3.zero);
             _points.Add(lensFront - right * caliperRadius + sweepShift, irisSegmentSize * 1.45f, caliperColor, Vector3.zero);
 
-            // Razor-thin optical lens flare / cross-glint needles at the lens aperture
+            // Short optical lens flare needles clamped strictly to the lens bezel (never crossing 07's CRT screen or face)
             if (glintAlpha > VisibleThreshold)
             {
-                Color streakColor = Color.Lerp(activeTint, Color.white, 0.48f);
+                Color streakColor = Color.Lerp(activeTint, Color.white, 0.45f);
                 streakColor.a = glintAlpha * visibility;
                 float streakWidth = glintWidth * widthScale;
-                float horizLen = glintLength * 0.62f * widthScale;
-                float vertLen = glintLength * 0.46f * widthScale;
-                Vector3 sweepDir = (forward + right * currentSweepTan).normalized;
-                float exitGlintLen = glintLength * 0.82f * widthScale;
+                float bezelRadius = irisSize * 0.5f;
+                float horizLen = Mathf.Min(glintLength * 0.28f, bezelRadius * 0.24f) * widthScale;
+                float vertLen = Mathf.Min(glintLength, bezelRadius * 0.94f) * widthScale;
 
-                _streaks.Add(lensFront, streakWidth, streakColor, right * horizLen);
-                _streaks.Add(lensFront, streakWidth, streakColor, -right * horizLen);
-                _streaks.Add(lensFront, streakWidth * 0.88f, streakColor, orthoUp * vertLen);
-                _streaks.Add(lensFront, streakWidth * 0.88f, streakColor, -orthoUp * vertLen);
-
-                // Short aperture exit glint pointing along the active sweep fan direction right out of the bezel
-                if (sweepLevel > VisibleThreshold)
-                {
-                    Color exitColor = Color.Lerp(activeTint, Color.white, 0.35f);
-                    exitColor.a = glintAlpha * 0.85f * sweepLevel;
-                    _streaks.Add(lensFront + sweepDir * 0.015f, streakWidth * 0.85f, exitColor, sweepDir * exitGlintLen);
-                    _streaks.Add(lensFront + sweepDir * (0.015f + exitGlintLen * 0.55f), streakWidth * 0.68f, exitColor, -sweepDir * (exitGlintLen * 0.55f));
-                }
+                _streaks.Add(lensFront, streakWidth * 0.85f, streakColor, right * horizLen);
+                _streaks.Add(lensFront, streakWidth * 0.85f, streakColor, -right * horizLen);
+                _streaks.Add(lensFront, streakWidth, streakColor, orthoUp * vertLen);
+                _streaks.Add(lensFront, streakWidth, streakColor, -orthoUp * vertLen);
             }
 
-            // Near-lens motes
+            // Tiny near-lens motes
             if (moteAlphaBase > VisibleThreshold && sweepLevel > VisibleThreshold)
             {
                 for (int i = 0; i < MoteCount; i++)
@@ -327,31 +308,21 @@ namespace MoonProject.Gameplay
                     float angle = i * 1.0471976f + _elapsed * 0.55f;
                     float radial = moteRadius * (0.35f + 0.65f * life01);
                     Vector3 offset = (right * Mathf.Cos(angle) + orthoUp * Mathf.Sin(angle)) * radial
-                        + forward * (0.025f * life01);
+                        + forward * (0.018f * life01);
                     Color moteColor = cyanColor;
                     moteColor.a = moteAlphaBase * env * sweepLevel;
-                    float size = moteSizeBase * Mathf.Lerp(0.75f, 1.15f, i & 1) * widthScale;
+                    float size = moteSizeBase * Mathf.Lerp(0.75f, 1.10f, i & 1) * widthScale;
                     _points.Add(lensFront + offset, size, moteColor, Vector3.zero);
                 }
             }
 
-            // 4. Sparse, brief ballistic dust glints along the beam path falling under 1/6 g lunar gravity
-            StepBallisticPathGlints(lensFront, forward, right, orthoUp, dist, currentSweepTan, cyanColor, sweepLevel, widthScale);
+            // 4. Sparse, brief (0.1-0.3 s) tiny dust sparkles along the beam path falling ballistically under 1/6 g
+            StepBallisticPathGlints(lensFront, right, orthoUp, dist, cyanColor, sweepLevel, widthScale);
         }
 
-        private void UpdateGroundLineGlobals(
-            Vector3 emitter,
-            float visibility,
-            float ping01,
-            float currentSweepTan,
-            float maxSweepTan)
+        private void UpdateGroundLineGlobals(Vector3 emitter, float visibility, float ping01)
         {
-            Vector2 toTargetXZ = new Vector2(_target.x - emitter.x, _target.z - emitter.z);
-            float distXZ = toTargetXZ.magnitude;
-            Vector2 forwardXZ = distXZ > MinDistance ? toTargetXZ / distXZ : new Vector2(0f, 1f);
-
             float startOffset = _scanTuning != null ? _scanTuning.GroundStartOffset : DefaultGroundStartOffset;
-            Vector2 startXZ = new Vector2(emitter.x, emitter.z) + forwardXZ * startOffset;
             float roverGroundCeilingY = emitter.y - RoverChassisClearanceBelowLens;
             float targetBaseY = _target.y - Mathf.Max(_span.y * 0.5f, 0.1f);
             float encodedProgress = _pingRemaining > VisibleThreshold ? (1f + ping01) : _progress;
@@ -359,20 +330,18 @@ namespace MoonProject.Gameplay
             float lineWidth = _scanTuning != null ? _scanTuning.GroundLineWidth : DefaultGroundLineWidth;
             float lineIntensity = _scanTuning != null ? _scanTuning.GroundLineIntensity : DefaultGroundLineIntensity;
 
-            var groundStart = new Vector4(startXZ.x, roverGroundCeilingY, startXZ.y, visibility);
+            var groundStart = new Vector4(emitter.x, roverGroundCeilingY, emitter.z, visibility);
             var groundEnd = new Vector4(_target.x, targetBaseY, _target.z, encodedProgress);
-            var groundParams = new Vector4(lineWidth, lineIntensity, currentSweepTan, maxSweepTan);
+            var groundParams = new Vector4(lineWidth, lineIntensity, startOffset, 0f);
             ScanTuning.SetGroundLineGlobals(groundStart, groundEnd, groundParams);
             _groundGlobalsActive = true;
         }
 
         private void StepBallisticPathGlints(
             Vector3 lensFront,
-            Vector3 forward,
             Vector3 right,
             Vector3 orthoUp,
             float dist,
-            float currentSweepTan,
             Color activeTint,
             float visibility,
             float widthScale)
@@ -380,10 +349,9 @@ namespace MoonProject.Gameplay
             int count = _scanTuning != null ? Mathf.Clamp(_scanTuning.PathGlintCount, 0, MaxPathGlints) : DefaultPathGlintCount;
             float baseSize = _scanTuning != null ? _scanTuning.PathGlintSize : DefaultPathGlintSize;
             float baseAlpha = _scanTuning != null ? _scanTuning.PathGlintAlpha : DefaultPathGlintAlpha;
-            float lifetime = Mathf.Max(0.15f, _scanTuning != null ? _scanTuning.PathGlintLifetime : DefaultPathGlintLifetime);
-            float gravity = _scanTuning != null ? _scanTuning.PathGlintGravity : DefaultLunarGravity;
+            float lifetime = Mathf.Clamp(_scanTuning != null ? _scanTuning.PathGlintLifetime : DefaultPathGlintLifetime, 0.10f, 0.30f);
 
-            if (count <= 0 || baseAlpha <= VisibleThreshold || visibility <= VisibleThreshold || dist <= 0.35f)
+            if (count <= 0 || baseAlpha <= VisibleThreshold || visibility <= VisibleThreshold || dist <= 0.65f)
             {
                 return;
             }
@@ -394,57 +362,64 @@ namespace MoonProject.Gameplay
                 Mathf.Lerp(_target.y - halfSpanY, _target.y + halfSpanY, _progress),
                 _target.z);
 
-            float distanceClamp = Mathf.Min(1f, 2.8f / Mathf.Max(dist, 1f));
-            float effectiveSweepTan = currentSweepTan * distanceClamp;
-
             for (int i = 0; i < count; i++)
             {
-                float seed = i * 0.61803399f;
-                float cyclePhase = (_elapsed / lifetime) + i * 0.37f + _progress * 1.15f;
+                // Brief twinkle (0.10-0.30 s) with asynchronous cycle periods so only a few sparkles appear at a time
+                float twinkleSeconds = Mathf.Clamp(lifetime * Mathf.Lerp(0.68f, 1.32f, Hash01(i * 17.13f + 0.31f)), 0.10f, 0.30f);
+                float dutyCycle = PathActiveDutyCycle * Mathf.Lerp(0.85f, 1.15f, Hash01(i * 29.47f + 0.53f));
+                float cyclePeriod = twinkleSeconds / Mathf.Max(dutyCycle, 0.20f);
+                float cyclePhase = (_elapsed / cyclePeriod) + Hash01(i * 43.91f + 0.73f);
                 float cycleIndex = Mathf.Floor(cyclePhase);
                 float cycleFrac = cyclePhase - cycleIndex;
-                if (cycleFrac > PathActiveDutyCycle)
+                if (cycleFrac > dutyCycle)
                 {
                     continue;
                 }
 
-                float life01 = cycleFrac / PathActiveDutyCycle;
-                float ageSeconds = life01 * lifetime;
-                float sparkleEnv = Mathf.Sin(life01 * Mathf.PI);
+                float life01 = cycleFrac / dutyCycle;
+                float ageSeconds = life01 * twinkleSeconds;
+                float sinLife = Mathf.Sin(life01 * Mathf.PI);
+                float sparkleEnv = sinLife * sinLife;
 
-                // Distribute grains sparsely along the path from lensFront (0.08) to the target (0.92)
-                float slotShare = (i + 0.5f) / count;
-                float jitter = (Mathf.Sin(cycleIndex * 1.73f + i * 2.41f) * 0.45f) / count;
-                float u01 = Mathf.Clamp(Mathf.Lerp(PathStartShare, PathEndShare, slotShare + jitter), PathStartShare, PathEndShare);
+                // Random position along the path (no regular slot spacing) and random height inside the vertical laser fan
+                float hU = Hash01(i * 53.37f + cycleIndex * 97.13f + 0.19f);
+                float scrambledU = Mathf.Repeat(hU + i * 0.38196601f, 1f);
+                float minStartShare = Mathf.Max(PathStartShare, 0.95f / dist);
+                float u01 = Mathf.Lerp(minStartShare, PathEndShare, scrambledU);
 
-                // Position along the active straight laser fan plane between 07's lens and the target
-                float lateralFan = u01 * dist * effectiveSweepTan;
-                float fanHeight = Mathf.Sin((seed + cycleIndex * 0.29f) * TwoPi) * Mathf.Lerp(0.03f, halfSpanY * 0.38f, u01);
-                float lateralDrift = Mathf.Cos((seed * 1.7f + cycleIndex * 0.53f) * TwoPi) * PathLateralJitter;
+                float hHeight = Hash01(i * 71.29f + cycleIndex * 61.43f + 0.41f) * 2f - 1f;
+                float fanHeight = hHeight * Mathf.Lerp(0.06f, Mathf.Max(halfSpanY * 0.65f, 0.24f), u01);
+                float hLat = Hash01(i * 89.17f + cycleIndex * 37.59f + 0.67f) * 2f - 1f;
+                float lateralDrift = hLat * PathLateralJitter;
 
                 Vector3 rayAnchor = Vector3.Lerp(lensFront, sweepTargetPoint, u01)
-                    + right * (lateralFan + lateralDrift)
+                    + right * lateralDrift
                     + orthoUp * fanHeight;
 
                 // 1/6 g lunar ballistic trajectory: y(t) = v0_y * t - 0.5 * g * t^2
-                Vector3 initialVelocity = right * (lateralDrift * 0.8f) + Vector3.up * PathUpwardLoftVelocity;
-                Vector3 ballisticDisplacement = initialVelocity * ageSeconds
-                    + 0.5f * Vector3.down * gravity * ageSeconds * ageSeconds;
-                Vector3 instantaneousVelocity = initialVelocity + Vector3.down * gravity * ageSeconds;
-                Vector3 grainPos = rayAnchor + ballisticDisplacement;
+                float verticalOffset = EvaluateBallisticVerticalOffset(ageSeconds);
+                Vector3 grainPos = rayAnchor + Vector3.up * verticalOffset;
 
-                Color glintColor = Color.Lerp(activeTint, Color.white, 0.52f) * PathHdrBoost;
-                glintColor.a = baseAlpha * sparkleEnv * visibility;
-                float size = baseSize * Mathf.Lerp(0.84f, 1.25f, i & 1) * widthScale;
+                // Tiny 1-3 px sparkle at chase distance, scaled gently with u01 so near grains never bloat into balls
+                float distanceScale = Mathf.Lerp(0.68f, 1.12f, u01);
+                float grainScale = Mathf.Lerp(0.84f, 1.14f, Hash01(i * 97.41f + cycleIndex * 19.83f));
+                float size = baseSize * distanceScale * grainScale * widthScale;
 
+                float alpha = Mathf.Min(1f, baseAlpha * sparkleEnv * 1.15f) * visibility;
+                Color glintColor = Color.Lerp(activeTint, Color.white, 0.15f);
+                glintColor.a = alpha;
                 _points.Add(grainPos, size, glintColor, Vector3.zero);
 
-                // Brief ballistic glint needle showing the grain catching the laser as it falls under 1/6 g
-                Vector3 streakVec = instantaneousVelocity * 0.14f + forward * (size * 1.15f);
-                Color streakColor = glintColor;
-                streakColor.a *= 0.85f;
-                _streaks.Add(grainPos, size * 0.24f, streakColor, streakVec);
+                Color pinpointColor = Color.Lerp(activeTint, Color.white, 0.58f);
+                pinpointColor.a = alpha;
+                _points.Add(grainPos, size * 0.78f, pinpointColor, Vector3.zero);
             }
+        }
+
+        private static float Hash01(float seed)
+        {
+            float s = Mathf.Sin(seed * 12.9898f + 78.233f) * 43758.5453f;
+            return s - Mathf.Floor(s);
         }
     }
 }

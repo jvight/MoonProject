@@ -63,26 +63,26 @@ MonoBehaviour:
   _lensGlowAlpha: 0.94
   _lensHaloSize: 0.22
   _lensHaloAlpha: 0.36
-  _lensMoteRadius: 0.065
-  _lensMoteSize: 0.02
-  _lensMoteAlpha: 0.65
-  _groundLineWidth: 0.032
-  _groundLineIntensity: 2.05
-  _groundWakeIntensity: 0.38
-  _groundSweepAngleDeg: 4.2
+  _lensMoteRadius: 0.052
+  _lensMoteSize: 0.007
+  _lensMoteAlpha: 0.42
+  _groundLineWidth: 0.015
+  _groundLineIntensity: 1.65
+  _groundWakeIntensity: 0
+  _groundSweepAngleDeg: 0
   _groundSweepHz: 1.15
-  _groundStartOffset: 0.08
+  _groundStartOffset: 0.85
   _lensIrisSize: 0.145
   _lensIrisAlpha: 0.9
-  _lensGlintLength: 0.44
-  _lensGlintWidth: 0.015
-  _lensGlintAlpha: 0.92
+  _lensGlintLength: 0.068
+  _lensGlintWidth: 0.009
+  _lensGlintAlpha: 0.85
   _lensSpillIntensity: 0.65
   _lensSpillRange: 0.95
-  _pathGlintCount: 10
-  _pathGlintSize: 0.082
-  _pathGlintAlpha: 0.96
-  _pathGlintLifetime: 0.42
+  _pathGlintCount: 5
+  _pathGlintSize: 0.02
+  _pathGlintAlpha: 0.95
+  _pathGlintLifetime: 0.2
   _pathGlintGravity: 1.62
   _jumperSetback: 6
   _jumperSide: 6

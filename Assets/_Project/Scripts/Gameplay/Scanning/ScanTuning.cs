@@ -116,32 +116,32 @@ namespace MoonProject.Gameplay
         [Range(0.01f, 0.8f)] [SerializeField] private float _lensHaloAlpha = 0.36f;
 
         [Tooltip("Maximum radius from 07's lens where tiny motes sparkle in vacuum (m).")]
-        [Range(0.01f, 0.16f)] [SerializeField] private float _lensMoteRadius = 0.065f;
+        [Range(0.01f, 0.16f)] [SerializeField] private float _lensMoteRadius = 0.052f;
 
         [Tooltip("Diameter of the tiny motes sparkling right at 07's lens (m).")]
-        [Range(0.004f, 0.06f)] [SerializeField] private float _lensMoteSize = 0.020f;
+        [Range(0.003f, 0.06f)] [SerializeField] private float _lensMoteSize = 0.007f;
 
         [Tooltip("Peak alpha of the tiny motes sparkling right at 07's lens.")]
-        [Range(0f, 1f)] [SerializeField] private float _lensMoteAlpha = 0.65f;
+        [Range(0f, 1f)] [SerializeField] private float _lensMoteAlpha = 0.42f;
 
         [Header("07 scanner & ground link (SCAN v3)")]
         [Tooltip("World-space width of the crisp bright laser intersection line on the ground from under 07's lens to the target's base (m).")]
-        [Range(0.005f, 0.10f)] [SerializeField] private float _groundLineWidth = 0.032f;
+        [Range(0.005f, 0.10f)] [SerializeField] private float _groundLineWidth = 0.015f;
 
         [Tooltip("Emissive intensity of the crisp ground laser line linking 07's lens to the target's base.")]
-        [Range(0.2f, 4f)] [SerializeField] private float _groundLineIntensity = 2.05f;
+        [Range(0.2f, 4f)] [SerializeField] private float _groundLineIntensity = 1.65f;
 
         [Tooltip("Low-contrast intensity of the swept fan wake and range ticks on the regolith between 07 and the target.")]
-        [Range(0f, 1f)] [SerializeField] private float _groundWakeIntensity = 0.38f;
+        [Range(0f, 1f)] [SerializeField] private float _groundWakeIntensity = 0f;
 
-        [Tooltip("Half-angle (deg) of the vertical laser fan's horizontal sweep across the ground and target.")]
-        [Range(0.5f, 15f)] [SerializeField] private float _groundSweepAngleDeg = 4.2f;
+        [Tooltip("Half-angle (deg) of the vertical laser fan's horizontal sweep across the ground and target (0 keeps a dead-straight vertical fan ground line).")]
+        [Range(0f, 15f)] [SerializeField] private float _groundSweepAngleDeg = 0f;
 
         [Tooltip("Oscillation frequency (Hz) of the vertical laser fan sweep across the ground and target.")]
         [Range(0.2f, 4f)] [SerializeField] private float _groundSweepHz = 1.15f;
 
-        [Tooltip("Forward stand-off (m) from under 07's cheek lens where the ground laser line begins on the regolith.")]
-        [Range(0.02f, 1.0f)] [SerializeField] private float _groundStartOffset = 0.08f;
+        [Tooltip("Forward stand-off (m) from under 07's cheek lens ground projection where the ground laser line emerges past the wheel shadow.")]
+        [Range(0.02f, 1.2f)] [SerializeField] private float _groundStartOffset = 0.85f;
 
         [Tooltip("Diameter (m) of the opening cyan iris ring on 07's brass cheek lens while scanning.")]
         [Range(0.04f, 0.4f)] [SerializeField] private float _lensIrisSize = 0.145f;
@@ -149,14 +149,14 @@ namespace MoonProject.Gameplay
         [Tooltip("Peak alpha of the opening cyan iris ring on 07's brass cheek lens.")]
         [Range(0.05f, 1f)] [SerializeField] private float _lensIrisAlpha = 0.90f;
 
-        [Tooltip("Length (m) of the optical cross-glint flare streaks on 07's cheek lens.")]
-        [Range(0.05f, 0.8f)] [SerializeField] private float _lensGlintLength = 0.44f;
+        [Tooltip("Length (m) of the short optical cross-glint flare needles clamped within 07's cheek lens bezel.")]
+        [Range(0.02f, 0.4f)] [SerializeField] private float _lensGlintLength = 0.068f;
 
-        [Tooltip("Width (m) of the optical cross-glint flare streaks on 07's cheek lens.")]
-        [Range(0.005f, 0.15f)] [SerializeField] private float _lensGlintWidth = 0.015f;
+        [Tooltip("Width (m) of the optical cross-glint flare needles on 07's cheek lens.")]
+        [Range(0.003f, 0.05f)] [SerializeField] private float _lensGlintWidth = 0.009f;
 
         [Tooltip("Peak alpha of the optical cross-glint flare on 07's cheek lens.")]
-        [Range(0.05f, 1f)] [SerializeField] private float _lensGlintAlpha = 0.92f;
+        [Range(0.05f, 1f)] [SerializeField] private float _lensGlintAlpha = 0.85f;
 
         [Tooltip("Intensity of the soft cyan point light spilling onto 07's face, brass bezel, and the ground right in front of the lens.")]
         [Range(0f, 8f)] [SerializeField] private float _lensSpillIntensity = 0.65f;
@@ -165,16 +165,16 @@ namespace MoonProject.Gameplay
         [Range(0.5f, 8f)] [SerializeField] private float _lensSpillRange = 0.95f;
 
         [Tooltip("Number of sparse dust grains catching the laser sparkle along the beam path from 07's lens to the target.")]
-        [Range(0, 16)] [SerializeField] private int _pathGlintCount = 10;
+        [Range(0, 16)] [SerializeField] private int _pathGlintCount = 5;
 
-        [Tooltip("Diameter (m) of each sparse dust grain sparkle along the beam path.")]
-        [Range(0.008f, 0.15f)] [SerializeField] private float _pathGlintSize = 0.082f;
+        [Tooltip("Diameter (m) of each tiny dust grain sparkle along the beam path (1-3 px at chase distance).")]
+        [Range(0.004f, 0.08f)] [SerializeField] private float _pathGlintSize = 0.020f;
 
         [Tooltip("Peak alpha of each brief dust grain sparkle along the beam path.")]
-        [Range(0f, 1f)] [SerializeField] private float _pathGlintAlpha = 0.96f;
+        [Range(0f, 1f)] [SerializeField] private float _pathGlintAlpha = 0.95f;
 
-        [Tooltip("Brief lifetime (s) of each ballistic dust grain sparkle before falling out of the laser plane.")]
-        [Range(0.12f, 1.2f)] [SerializeField] private float _pathGlintLifetime = 0.42f;
+        [Tooltip("Brief twinkle lifetime (s) of each ballistic dust grain sparkle (0.1-0.3 s).")]
+        [Range(0.1f, 0.3f)] [SerializeField] private float _pathGlintLifetime = 0.20f;
 
         [Tooltip("Downward lunar gravity acceleration (m/s^2, 1/6 g = 1.62) for the ballistic dust grains along the scan path.")]
         [Range(0.2f, 5f)] [SerializeField] private float _pathGlintGravity = 1.62f;
