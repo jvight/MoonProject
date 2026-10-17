@@ -27,6 +27,20 @@ Không mở rộng nội dung khi phần nhìn của phase hiện tại chưa ch
 > đi, bốn mục tiêu phục hồi (Power → Link → Dish → Answer), còn lại khám phá tự do. Mỗi phiên bản ghi rõ tầng vật liệu,
 > tầm đi và công trình của nó.
 
+## Cổng "lõi cảm giác" (chủ dự án 2026-10-17): làm thật tốt phần lõi rồi mới đi xa hơn
+Sau khi chơi bản 0.5.6-1ad3cf5b, chủ dự án chốt: phải làm thật tốt **mọi điều khiển của 07, môi trường, không khí lúc
+mới vào game, hiệu ứng và tương tác với môi trường** rồi mới mở rộng tiếp.
+- **Đóng băng tính năng mới** cho tới khi qua cổng: hao mòn / cái chết / robot tái chế (luật 17), thiết bị đào, công
+  trình mới, vùng mới. Bản thiết kế (docs, concept) vẫn được viết tiếp, nhưng chưa code.
+- **Bốn mảng của cổng**, mỗi mảng có bảng lỗi, bằng chứng (ảnh, số đo) và tiêu chí đạt:
+  1. Điều khiển 07: lái, phanh, lùi, rẽ, dốc, nhảy, tiếp đất, va chạm, camera; quét, cắt, kéo, xây, kho đồ; chuột,
+     bàn phím, tay cầm, chạy đúng trong bản build.
+  2. Không khí 5 phút đầu: màn hình tiêu đề, nhạc, cảnh mở đầu, ánh sáng, bầu trời, âm thanh nền, lần cầm lái đầu.
+  3. Hiệu ứng: bụi bánh xe, vết bánh, đèn, quét, tia cắt và hàn, sạc, xây; khớp với âm thanh, đúng logic chân không.
+  4. Tương tác môi trường: thế giới phản hồi 07 (vết bánh, đá sỏi, âm thanh theo vật liệu, ánh sáng, công trình).
+- Cổng đạt khi checklist cảm giác trong `docs/VISION.md` đúng cho cả bốn mảng, có ảnh trước/sau, và chủ dự án chơi
+  bản build và đồng ý.
+
 ## Các box (agent) và vùng sở hữu
 | Box | Sở hữu | Ghi chú |
 |---|---|---|
