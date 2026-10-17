@@ -1,0 +1,77 @@
+{
+  "model": "build_apron_markings",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_CreamEnamel",
+    "R1_GreyMetal",
+    "R1_LampAmber",
+    "R1_OrangeStripe",
+    "R1_Rubber",
+    "R1_Signage"
+  ],
+  "max_triangles": 4500,
+  "max_meshes": 5,
+  "max_draw_calls": 14,
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "BuildApronMarkings": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "ApronFrame": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "StencilCodes": {
+      "pivot": [
+        0.0,
+        -1.85,
+        0.007
+      ]
+    },
+    "BayGlowOutline": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.01
+      ]
+    },
+    "PadSnap_Anchor": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "RoverApproach_Anchor": {
+      "pivot": [
+        0.0,
+        -2.26,
+        0.0
+      ]
+    },
+    "CableChannel_Anchor": {
+      "pivot": [
+        0.0,
+        2.38,
+        0.01
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      4.4,
+      4.8,
+      0.018
+    ],
+    "tolerance": 0.04
+  }
+}

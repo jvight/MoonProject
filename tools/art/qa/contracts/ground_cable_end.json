@@ -1,0 +1,55 @@
+{
+  "model": "ground_cable_end",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Brass",
+    "R1_GreyMetal",
+    "R1_OrangeStripe",
+    "R1_Rubber"
+  ],
+  "max_triangles": 2000,
+  "max_meshes": 3,
+  "max_draw_calls": 8,
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "GroundCableEnd": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "CableLead": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Start_Anchor": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.042
+      ]
+    },
+    "Plug_Anchor": {
+      "pivot": [
+        0.0,
+        1.56,
+        0.35
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      0.34,
+      1.5665,
+      0.45
+    ],
+    "tolerance": 0.03
+  }
+}

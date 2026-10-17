@@ -16,11 +16,7 @@ namespace MoonProject.UI
     /// safe answer; see <see cref="PausePages"/>). A confirmed new game restores game time and publishes
     /// <see cref="NewGameRequested"/>: the App puts the save away and reloads. Keyboard, mouse and gamepad all
     /// work: UI Toolkit moves focus between the buttons and sliders; Esc / B steps back one level. Every touch is
-    /// published as a <see cref="UiCue"/> (open, close, focus move, confirm, back, slider step) for Audio. Beside the
-    /// heading, a small summary shows 07's metal, wiring and optics (<see cref="IMaterialStock"/>). Once 07 owns
-    /// a cassette, a quiet line under the heading counts them against every tape in the game (both numbers from
-    /// <see cref="IRadioProgram"/>, so a loaded save is counted right); once a relay mast is lit, another counts the
-    /// lit masts against them all (<see cref="IRelayStatus"/>). Neither shows before the world has shown the thing.
+    /// published as a <see cref="UiCue"/> (open, close, focus move, confirm, back, slider step) for Audio.
     /// The same menu is the title's over the live world (M3-09, <see cref="OpenTitle"/>): Continue in place of Resume,
     /// New Game (asking once when a save exists), the same settings and Quit, under the wordmark; game time keeps
     /// running, and the title menu stays visible until dismissed. A first boot opens on a language step. The pause
@@ -44,8 +40,6 @@ namespace MoonProject.UI
         private readonly InputReader _input;
         private readonly EventBus _events;
         private readonly SettingsStore _settingsStore;
-        private readonly IRadioProgram _radio;
-        private readonly IRelayStatus _relays;
         private readonly IGameFlow _flow;
         private readonly CursorPolicy _cursor;
         private readonly Action _quit;
@@ -82,7 +76,7 @@ namespace MoonProject.UI
 
         public PauseMenu(UiLayout layout, PauseSettings settings, TitleSettings title, PlayerSettings player,
             ILocalization localization, InputReader input, EventBus events, SettingsStore settingsStore,
-            IRadioProgram radio, IRelayStatus relays, IGameFlow flow, IntText numbers, CursorPolicy cursor, Action quit,
+            IGameFlow flow, IntText numbers, CursorPolicy cursor, Action quit,
             CreditsView credits)
         {
             _credits = credits ?? throw new ArgumentNullException(nameof(credits));
@@ -102,8 +96,6 @@ namespace MoonProject.UI
             _input = input ?? throw new ArgumentNullException(nameof(input));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _settingsStore = settingsStore ?? throw new ArgumentNullException(nameof(settingsStore));
-            _radio = radio ?? throw new ArgumentNullException(nameof(radio));
-            _relays = relays ?? throw new ArgumentNullException(nameof(relays));
             _flow = flow ?? throw new ArgumentNullException(nameof(flow));
             _cursor = cursor ?? throw new ArgumentNullException(nameof(cursor));
             _quit = quit ?? throw new ArgumentNullException(nameof(quit));
@@ -156,8 +148,6 @@ namespace MoonProject.UI
             _curtain.Snap(false);
             new ShadowPainter(layout.PauseMainShadow);
             new ShadowPainter(layout.PauseSettingsShadow);
-            new CassetteIconPainter(layout.PauseCassetteIcon);
-            new RelayIconPainter(layout.PauseRelayIcon);
 
             _lookTexts = new string[player.LookStepCount + 1];
             for (int step = player.GentleLookStep; step <= player.LookStepCount; step++)
@@ -236,8 +226,6 @@ namespace MoonProject.UI
             _clock.Pause();
             _input.Disable();
             _cursor.Menu();
-            WriteCassettes();
-            WriteRelays();
             _titleCrt.Snap(false);
             _titleCrtOverlay.Snap(false);
             _titleKeyHint.Snap(false);
@@ -399,14 +387,12 @@ namespace MoonProject.UI
             _navigator.Tick(unscaledDeltaTime, _input.Menu.PointerPosition, _input.Menu.NavigateVector);
         }
 
-        /// <summary>Re-reads the words set from code (the language selector, the cassette and relay lines).</summary>
+        /// <summary>Re-reads the words set from code (the language selector).</summary>
         public void Relocalize()
         {
             _layout.LanguageButton.text = _localization.GetLanguageName(_localization.Language);
             WriteDisplay();
             WriteMode();
-            WriteCassettes();
-            WriteRelays();
             _credits.Relocalize();
         }
 
@@ -526,30 +512,6 @@ namespace MoonProject.UI
             SelectTab(tab);
             _navigator.FocusControl(_settingsTabs[tab], byCode: true);
             Cue(UiCueKind.Confirm);
-        }
-
-        /// <summary>Allocates (it formats): only when the menu opens or the language changes.</summary>
-        private void WriteCassettes()
-        {
-            int owned = _radio.OwnedTapeCount;
-            _layout.PauseCassettes.style.display = owned > 0 ? DisplayStyle.Flex : DisplayStyle.None;
-            if (owned > 0)
-            {
-                _layout.PauseCassettesCount.text = string.Format(_localization.Get(UiKeys.PauseCassettes), owned,
-                    _radio.TotalTapeCount);
-            }
-        }
-
-        /// <summary>Allocates (it formats): only when the menu opens or the language changes.</summary>
-        private void WriteRelays()
-        {
-            int lit = _relays.LitMasts;
-            _layout.PauseRelays.style.display = lit > 0 ? DisplayStyle.Flex : DisplayStyle.None;
-            if (lit > 0)
-            {
-                _layout.PauseRelaysCount.text = string.Format(_localization.Get(UiKeys.PauseRelays), lit,
-                    _relays.MastCount);
-            }
         }
 
         private void BindVolume(SliderInt slider, AudioBus bus)

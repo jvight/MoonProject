@@ -1,0 +1,64 @@
+{
+  "model": "lander_beacon",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Brass",
+    "R1_GoldFoil",
+    "R1_GreyMetal",
+    "R1_LampAmber",
+    "R1_OrangeStripe",
+    "R1_Rubber"
+  ],
+  "max_triangles": 3000,
+  "max_meshes": 4,
+  "max_draw_calls": 12,
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "LanderBeacon": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "BeaconHousing": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "BeaconLens": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.44
+      ]
+    },
+    "Mount_Anchor": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Light_Anchor": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.44
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      0.52,
+      0.52,
+      0.639
+    ],
+    "tolerance": 0.04
+  }
+}

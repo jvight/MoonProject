@@ -72,19 +72,8 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(0.8f);
             Submit(layout.ResumeButton);
             context.Events.Publish(new RoverAwoke(Vector3.zero, false));
-            fakes.Fade = 0f;
             yield return new WaitForSecondsRealtime(_tuning.Title.Reveal.FadeOut + 1f);
 
-            context.Events.Publish(new NextStepChanged("next.tower.pad"));
-            context.Events.Publish(new PlaceFirstApproached("place.tower"));
-            yield return new WaitForSecondsRealtime(_tuning.Guidance.Place.FadeIn + 0.5f);
-            foreach (ScreenShape shape in ScreenShapes.All)
-            {
-                yield return ShapeShot(camera, folder, shape, "hud_place", problems, null, (shot, found) => { });
-            }
-
-            yield return new WaitForSecondsRealtime(_tuning.Guidance.PlaceHoldSeconds +
-                                                    _tuning.Guidance.Place.FadeOut + _tuning.Guidance.Line.FadeIn + 0.5f);
             fakes.Cells = ShapeCells;
             fakes.Charge = ShapeCells * BatteryChargeShare;
             context.Events.Publish(new BatteryArcRevealed(false));
@@ -93,7 +82,6 @@ namespace MoonProject.UI.PlayModeTests
                            Vector3.down * 1.5f;
             fakes.PrimaryHint = new InteractionHint(InteractionKind.Excavate, site, true);
             fakes.Position = context.Get<IWorldLayout>().BasePosition + new Vector3(120f, 0f, 90f);
-            fakes.Grant(RoverAbility.HoverJump);
             yield return new WaitForSecondsRealtime(1.5f);
             int gain = 0;
             foreach (ScreenShape shape in ScreenShapes.All)
@@ -104,39 +92,7 @@ namespace MoonProject.UI.PlayModeTests
                     {
                         ScreenFit.CheckApart(layout.BatteryDial, layout.NextLine, shot, found);
                         ScreenFit.CheckApart(layout.NextLine, layout.PickupFeed, shot, found);
-                        ScreenFit.CheckApart(layout.HomeMeter, layout.NextLine, shot, found);
                         ScreenFit.CheckApart(layout.BatteryDial, layout.PickupFeed, shot, found);
-                    });
-            }
-
-            fakes.PrimaryHint = InteractionHint.None;
-            fakes.Upgrade = _tower;
-            fakes.AtStation = true;
-            yield return new WaitForSecondsRealtime(2f);
-            foreach (ScreenShape shape in ScreenShapes.All)
-            {
-                yield return ShapeShot(camera, folder, shape, "tower_card", problems, null, (shot, found) => { });
-            }
-
-            fakes.AtStation = false;
-            yield return new WaitForSecondsRealtime(1f);
-            context.Events.Publish(new RelicDeposited("rubber_duck", Vector3.zero, 4));
-            yield return new WaitForSecondsRealtime(_tuning.MemoryCard.AppearDelay + _tuning.MemoryCard.Reveal.FadeIn +
-                                                    1f);
-            foreach (ScreenShape shape in ScreenShapes.All)
-            {
-                yield return ShapeShot(camera, folder, shape, "memory_card", problems, null, (shot, found) => { });
-            }
-
-            ui.Card.Dismiss();
-            yield return new WaitForSecondsRealtime(_tuning.MemoryCard.Reveal.FadeOut + 1f);
-            foreach (ScreenShape shape in ScreenShapes.All)
-            {
-                yield return ShapeShot(camera, folder, shape, "ticker", problems,
-                    () => context.Events.Publish(new TickerLine(UiTestRig.HomeLine)), (shot, found) =>
-                    {
-                        ScreenFit.CheckApart(layout.BatteryDial, layout.NextLine, shot, found);
-                        ScreenFit.CheckApart(layout.NextLine, layout.Ticker, shot, found);
                     });
             }
 
@@ -160,15 +116,6 @@ namespace MoonProject.UI.PlayModeTests
             Submit(layout.SettingsBackButton);
             yield return Tap(keyboard.escapeKey);
             yield return new WaitForSecondsRealtime(1f);
-
-            context.Events.Publish(new LabEntered(LabStation.Board));
-            context.Events.Publish(new PlaceFirstApproached("place.lab"));
-            context.Events.Publish(new LabStationLooked(LabStation.Board, true));
-            yield return new WaitForSecondsRealtime(_tuning.Lab.Place.FadeIn + 1f);
-            foreach (ScreenShape shape in ScreenShapes.All)
-            {
-                yield return ShapeShot(camera, folder, shape, "lab", problems, null, (shot, found) => { });
-            }
 
             Assert.IsEmpty(problems, "the UI fits every screen shape:\n" + string.Join("\n", problems));
 #else

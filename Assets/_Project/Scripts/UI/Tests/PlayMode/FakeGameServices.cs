@@ -9,31 +9,22 @@ namespace MoonProject.UI.PlayModeTests
 {
     /// <summary>
     /// Everything the UI reads from the World, Rover, Audio and Gameplay domains, as one scriptable stand-in system
-    /// (initialised before the UI). Tests set the tether state, the gameplay hint, the material stock, the tower offer,
-    /// the radio program, the relay network, the radio-hop, the salvage cut, the battery and the beam at work.
+    /// (initialised before the UI). Tests set the gameplay hint, the material stock, the station offer, the salvage
+    /// cut, the battery and the beam at work.
     /// </summary>
     public sealed class FakeGameServices : MonoBehaviour, IGameSystem, IViewCamera, IAudioSettings, ILookSettings, IFeelSettings,
-        IMaterialStock, ITetherAim, IInteractionHints, IUpgradeShop, IRoverState, IFriendStatuses, IRadioProgram,
-        IRadioHop, IRelayStatus, ISalvageStatus, IBlueprintBoard, IRoverBattery, IBeamStatus, ITechTree,
-        IRecoveryProgress, IRecipeLook, IWorldLayout, IRoverAbilities
+        IMaterialStock, IInteractionHints, IUpgradeShop, IRoverState, ISalvageStatus, IRoverBattery, IBeamStatus,
+        IRecoveryProgress, IRecipeLook
     {
-        private readonly TechNodeState[] _techStates = new TechNodeState[Enum.GetValues(typeof(TechNodeId)).Length];
         private readonly int[] _litLamps = new int[Enum.GetValues(typeof(RecoveryTarget)).Length];
         private readonly int[] _lamps = { 3, 3, 4, 1 };
 
         private readonly float[] _volumes = { 1f, 1f, 1f, 1f };
-        private readonly List<string> _tapes = new List<string>();
-        private readonly List<string> _hopChoices = new List<string>();
         private readonly Dictionary<string, int> _levels = new Dictionary<string, int>();
         private float _sensitivity = 1f;
         private EventBus _events;
 
         public Camera Camera { get; set; }
-
-        /// <summary>The one friend in this world (Tilly's definition), its state set by the test.</summary>
-        public FriendDefinition Friend { get; set; }
-
-        public FriendStatus TillyStatus { get; set; }
 
         /// <summary>The recipe the view rests on (<see cref="IRecipeLook"/>), set by a test.</summary>
         public string Looked { get; set; }
@@ -58,8 +49,6 @@ namespace MoonProject.UI.PlayModeTests
 
         public Vector3 GroundNormal => Vector3.up;
 
-        public int Count => Friend != null ? 1 : 0;
-
         /// <summary>The station's one upgrade (the radio tower), unless <see cref="Bay"/> is set.</summary>
         public UpgradeDefinition Upgrade { get; set; }
 
@@ -75,31 +64,6 @@ namespace MoonProject.UI.PlayModeTests
 
         public bool RumbleEnabled { get; set; } = true;
 
-        /// <summary>Where home is, for the home meter (the test's origin unless set).</summary>
-        public Vector3 BasePosition { get; set; }
-
-        public Vector3 PeakPosition { get; set; } = new Vector3(0f, 200f, 2000f);
-
-        public Vector3 EarthDirection { get; set; } = Vector3.up;
-
-        /// <summary>The abilities 07 has, for the ability slots.</summary>
-        public HashSet<RoverAbility> Abilities { get; } = new HashSet<RoverAbility>();
-
-        public bool Has(RoverAbility ability)
-        {
-            return Abilities.Contains(ability);
-        }
-
-        public void Grant(RoverAbility ability)
-        {
-            Abilities.Add(ability);
-        }
-
-        public void Revoke(RoverAbility ability)
-        {
-            Abilities.Remove(ability);
-        }
-
         public float RumbleStrength { get; set; } = 1f;
 
         /// <summary>True while the next level waits for a component the tower has not been fed (the coil).</summary>
@@ -108,8 +72,6 @@ namespace MoonProject.UI.PlayModeTests
         public int Purchases { get; private set; }
 
         public InteractionHint PrimaryHint { get; set; } = InteractionHint.None;
-
-        public TetherAimState TetherState { get; set; }
 
         private readonly int[] _units = new int[SalvageMaterials.Count];
 
@@ -132,9 +94,6 @@ namespace MoonProject.UI.PlayModeTests
 
         /// <summary>07's portrait, set by a test.</summary>
         public FakePortrait Portrait { get; } = new FakePortrait();
-
-        /// <summary>Scan sites and blueprint fragment counts, set by a test.</summary>
-        public FakeScanSites ScanSites { get; } = new FakeScanSites();
 
         /// <summary>The docked transfer, moving whole slots between <see cref="Hold"/> and <see cref="Home"/>.</summary>
         public FakeTransfer Transfer => _transfer ?? (_transfer = new FakeTransfer(Hold, Home, Dock));
@@ -172,7 +131,7 @@ namespace MoonProject.UI.PlayModeTests
 
         public bool IsCutting { get; set; }
 
-        /// <summary>The salvage cut's progress (<see cref="ISalvageStatus.Progress"/>; the hop has its own).</summary>
+        /// <summary>The salvage cut's progress (<see cref="ISalvageStatus.Progress"/>).</summary>
         public float CutProgress { get; set; }
 
         public SalvageMaterial Material { get; set; }
@@ -193,14 +152,6 @@ namespace MoonProject.UI.PlayModeTests
         {
             return HotPoint;
         }
-
-        public TetherAimState State => TetherState;
-
-        public Vector3 TargetPosition { get; set; }
-
-        public float Strain => 0f;
-
-        public float Length => 0f;
 
         public float Sensitivity
         {
@@ -240,40 +191,6 @@ namespace MoonProject.UI.PlayModeTests
 
         public InteractionHint Primary => IsUpgradeOffered(out InteractionHint upgrade) ? upgrade : PrimaryHint;
 
-        public bool DialUnlocked { get; set; }
-
-        public RadioChannel Channel { get; set; }
-
-        public string SelectedTape { get; set; } = string.Empty;
-
-        public int OwnedTapeCount => _tapes.Count;
-
-        public int TotalTapeCount { get; set; } = 3;
-
-        public RadioHopPhase Phase { get; set; }
-
-        public bool CanOpen => Phase == RadioHopPhase.Closed && _hopChoices.Count > 0;
-
-        public int Here => -1;
-
-        public int ChoiceCount => Phase == RadioHopPhase.Closed ? 0 : _hopChoices.Count;
-
-        public int Selected { get; set; }
-
-        public float ConfirmHold { get; set; }
-
-        public float Fade { get; set; }
-
-        public float Progress => 0f;
-
-        public int MastCount { get; set; } = 4;
-
-        public int LitMasts { get; set; }
-
-        public Recipe NextCost { get; set; } = new Recipe(2, 1, 0);
-
-        public float RestoreHold { get; set; }
-
         public int Cells { get; set; } = 4;
 
         public float Charge { get; set; } = 4f;
@@ -303,23 +220,14 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<ILookSettings>(this);
             context.Register<IFeelSettings>(this);
             context.Register<IMaterialStock>(this);
-            context.Register<ITetherAim>(this);
             context.Register<IInteractionHints>(this);
             context.Register<IUpgradeShop>(this);
-            context.Register<IBlueprintBoard>(this);
             context.Register<IRecipeLook>(this);
             context.Register<IRoverState>(this);
-            context.Register<IFriendStatuses>(this);
-            context.Register<IRadioProgram>(this);
-            context.Register<IRadioHop>(this);
-            context.Register<IRelayStatus>(this);
             context.Register<ISalvageStatus>(this);
             context.Register<IRoverBattery>(this);
             context.Register<IBeamStatus>(this);
-            context.Register<ITechTree>(this);
             context.Register<IRecoveryProgress>(this);
-            context.Register<IWorldLayout>(this);
-            context.Register<IRoverAbilities>(this);
             context.Register<ICargoHold>(Hold);
             context.Register<IMaterialCatalog>(Catalog);
             context.Register<IHomeStorage>(Home);
@@ -327,47 +235,6 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IRoverEquipment>(Equipment);
             context.Register<IRoverPortrait>(Portrait);
             context.Register<IStackTransfer>(Transfer);
-            context.Register<IScanSites>(ScanSites);
-        }
-
-        public int KnownCount
-        {
-            get
-            {
-                int known = 0;
-                foreach (TechNodeState state in _techStates)
-                {
-                    known += state != TechNodeState.Unknown ? 1 : 0;
-                }
-
-                return known;
-            }
-        }
-
-        public TechNodeState StateOf(TechNodeId node)
-        {
-            return _techStates[(int)node];
-        }
-
-        public string KitOf(TechNodeId node)
-        {
-            switch (node)
-            {
-                case TechNodeId.HoverJump: return "rover.hover_jump";
-                case TechNodeId.CargoCradle: return "rover.cargo_cradle";
-                case TechNodeId.WarmHeadlamp: return "rover.warm_headlamp";
-                case TechNodeId.CapacitorDrums: return "rover.capacitor_drums";
-                case TechNodeId.CellPackII: return "rover.cell_pack_2";
-                case TechNodeId.FocusLens: return "rover.focus_lens";
-                case TechNodeId.SideBins: return "rover.side_bins";
-                default: return null;
-            }
-        }
-
-        /// <summary>Sets what the tech board knows of <paramref name="node"/>.</summary>
-        public void SetTech(TechNodeId node, TechNodeState state)
-        {
-            _techStates[(int)node] = state;
         }
 
         public int LitLamps(RecoveryTarget target)
@@ -389,97 +256,6 @@ namespace MoonProject.UI.PlayModeTests
         public void SetLitLamps(RecoveryTarget target, int lit)
         {
             _litLamps[(int)target] = lit;
-        }
-
-        /// <summary>The lit nodes the list will offer (their name keys), home first.</summary>
-        public void SetHopChoices(params string[] labelKeys)
-        {
-            _hopChoices.Clear();
-            _hopChoices.AddRange(labelKeys);
-        }
-
-        public int ChoiceNode(int choice)
-        {
-            return choice;
-        }
-
-        public string ChoiceLabelKey(int choice)
-        {
-            return _hopChoices[choice];
-        }
-
-        public bool Open()
-        {
-            if (!CanOpen)
-            {
-                return false;
-            }
-
-            Selected = 0;
-            Phase = RadioHopPhase.Choosing;
-            _events.Publish(new RadioHopListChanged(true));
-            return true;
-        }
-
-        public void Next()
-        {
-            Selected = (Selected + 1) % _hopChoices.Count;
-        }
-
-        public void Previous()
-        {
-            Selected = (Selected + _hopChoices.Count - 1) % _hopChoices.Count;
-        }
-
-        public bool Confirm()
-        {
-            if (Phase != RadioHopPhase.Choosing)
-            {
-                return false;
-            }
-
-            Phase = RadioHopPhase.Leaving;
-            _events.Publish(new RadioHopListChanged(false));
-            return true;
-        }
-
-        public void Cancel()
-        {
-            if (Phase == RadioHopPhase.Choosing)
-            {
-                Phase = RadioHopPhase.Closed;
-                _events.Publish(new RadioHopListChanged(false));
-            }
-        }
-
-        public string GetOwnedTape(int index)
-        {
-            return _tapes[index];
-        }
-
-        /// <summary>07 owns one more tape: the program changes (its card comes from the test's own event).</summary>
-        public void AddTape(string cassetteId)
-        {
-            _tapes.Add(cassetteId);
-            _events.Publish(new RadioProgramChanged());
-        }
-
-        /// <summary>Bell's dial was turned (or the program otherwise changed): publishes the change.</summary>
-        public void Tune(RadioChannel channel, string tape)
-        {
-            Channel = channel;
-            SelectedTape = tape;
-            _events.Publish(new RadioProgramChanged());
-        }
-
-        public FriendDefinition Definition(int index)
-        {
-            return Friend;
-        }
-
-        public FriendStatus Status(int index)
-        {
-            return TillyStatus;
         }
 
         /// <summary>Sets the materials held and publishes the change like the real stock.</summary>
@@ -555,14 +331,6 @@ namespace MoonProject.UI.PlayModeTests
             bool maxed = level >= upgrade.MaxLevel;
             offer = new UpgradeOffer(upgrade, level, !maxed && Has(upgrade.Levels[level].Recipe));
             return true;
-        }
-
-        /// <summary>Kits the bay has no blueprint for yet (every other kit is pinned).</summary>
-        public HashSet<string> Unpinned { get; } = new HashSet<string>(StringComparer.Ordinal);
-
-        public bool IsPinned(string upgradeId)
-        {
-            return !Unpinned.Contains(upgradeId);
         }
 
         public string ComponentNeeded(string upgradeId)

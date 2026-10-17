@@ -1,0 +1,27 @@
+{
+  "model": "kestrel_cable_tray",
+  "nodes": {
+    "Kestrel_CableTray": { "pivot": [0.0, 0.0, 0.0], "tolerance": 0.01 },
+    "CutPoint": { "pivot": [0.02, 0.0, 0.52], "tolerance": 0.02 }
+  },
+  "slots": [
+    "R1_GreyMetal",
+    "R1_Basalt",
+    "R1_BareSteel",
+    "R1_Rubber",
+    "R1_Copper",
+    "R1_Brass",
+    "R1_OrangeStripe"
+  ],
+  "require_vertex_colors": true,
+  "max_triangles": 1800,
+  "max_meshes": 1,
+  "max_draw_calls": 7,
+  "allow_boundary_edges": false,
+  "bounds": {
+    "size": [1.45, 0.92, 0.84],
+    "tolerance": 0.04,
+    "min_size": [0.80, 0.80, 0.80],
+    "max_size": [4.00, 4.00, 4.00]
+  }
+}

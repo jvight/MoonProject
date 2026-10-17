@@ -626,10 +626,10 @@ def generate_signage_maps(res: int = 512, seed: int = 1988) -> dict[str, np.ndar
     for sy in range(278, 492, 8):
         draw.line([(530, sy), (1006, sy)], fill=STATUS_SCANLINE, width=2)
 
-    # Primary status line: SEALED · 1988 · STANDBY
+    # Primary status line: HABITAT SEAL · LOCKED
     _draw_stencil_text(
         draw,
-        "SEALED · 1988 · STANDBY",
+        "HABITAT SEAL · LOCKED",
         cx=768.0,
         cy=342.0,
         char_w=15.0,
@@ -642,7 +642,7 @@ def generate_signage_maps(res: int = 512, seed: int = 1988) -> dict[str, np.ndar
     )
     _draw_stencil_text(
         draw,
-        "SEALED · 1988 · STANDBY",
+        "HABITAT SEAL · LOCKED",
         cx=768.0,
         cy=342.0,
         char_w=15.0,
@@ -655,7 +655,7 @@ def generate_signage_maps(res: int = 512, seed: int = 1988) -> dict[str, np.ndar
     )
     _draw_stencil_text(
         em_draw,
-        "SEALED · 1988 · STANDBY",
+        "HABITAT SEAL · LOCKED",
         cx=768.0,
         cy=342.0,
         char_w=15.0,
@@ -668,7 +668,7 @@ def generate_signage_maps(res: int = 512, seed: int = 1988) -> dict[str, np.ndar
     )
     _draw_stencil_text(
         em_draw,
-        "SEALED · 1988 · STANDBY",
+        "HABITAT SEAL · LOCKED",
         cx=768.0,
         cy=342.0,
         char_w=15.0,

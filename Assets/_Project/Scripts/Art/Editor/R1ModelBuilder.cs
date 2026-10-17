@@ -53,6 +53,7 @@ namespace MoonProject.Art.Editor
                 try
                 {
                     AssignLibraryMaterials(instance, modelPath);
+                    R1StoryPropsBuilder.ApplyStoryPropOverrides(instance, modelPath);
                 }
                 catch
                 {

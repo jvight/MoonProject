@@ -1,25 +1,18 @@
-using System.Collections.Generic;
 using NUnit.Framework;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 
 namespace MoonProject.UI.Tests
 {
-    /// <summary>The "07 can" page lists each ability once, and a fitted kit says which ability it gave.</summary>
+    /// <summary>Every ability has an unlock card row, and a fitted kit says which ability it gave.</summary>
     public sealed class AbilityTableTests
     {
         [Test]
-        public void EveryAbility_IsListedOnce()
+        public void EveryAbility_HasAnUnlockCardRow()
         {
-            var seen = new HashSet<RoverAbility>();
-            for (int i = 0; i < AbilityTable.Count; i++)
-            {
-                Assert.IsTrue(seen.Add(AbilityTable.At(i).Ability), AbilityTable.At(i).Ability + " is listed twice");
-            }
-
             foreach (RoverAbility ability in System.Enum.GetValues(typeof(RoverAbility)))
             {
-                Assert.IsTrue(seen.Contains(ability), ability + " is not on the page");
+                Assert.IsTrue(AbilityTable.TryFind(ability, out _), ability + " has no unlock card row");
             }
         }
 

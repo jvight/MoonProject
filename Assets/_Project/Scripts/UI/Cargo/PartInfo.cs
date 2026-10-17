@@ -50,12 +50,6 @@ namespace MoonProject.UI
 
         public static string PartName(RoverKitPiece part, ILocalization localization)
         {
-            if (AbilityTable.TryAbilityOf(part, out RoverAbility ability) &&
-                AbilityTable.TryFind(ability, out AbilityRow row))
-            {
-                return localization.Get(row.VerbKey);
-            }
-
             return PartNames.TryTitle(part, out string key) ? localization.Get(key) : string.Empty;
         }
 

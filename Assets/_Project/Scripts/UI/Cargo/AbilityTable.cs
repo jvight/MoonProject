@@ -6,17 +6,14 @@ using MoonProject.Core.Input;
 
 namespace MoonProject.UI
 {
-    /// <summary>One thing 07 can do: its key (if it has one), its words and the kit that brings it.</summary>
+    /// <summary>One thing 07 can do: its key (if it has one) and the words of its unlock card.</summary>
     internal readonly struct AbilityRow
     {
-        public AbilityRow(RoverAbility ability, bool hasAction, RoverAction action, bool hasNode, TechNodeId node,
-            string verbKey)
+        public AbilityRow(RoverAbility ability, bool hasAction, RoverAction action, string verbKey)
         {
             Ability = ability;
             HasAction = hasAction;
             Action = action;
-            HasNode = hasNode;
-            Node = node;
             VerbKey = verbKey;
         }
 
@@ -27,41 +24,29 @@ namespace MoonProject.UI
 
         public RoverAction Action { get; }
 
-        /// <summary>True when a kit's blueprint can be decoded for it (it then shows as a pencil sheet).</summary>
-        public bool HasNode { get; }
-
-        public TechNodeId Node { get; }
-
         /// <summary>"ui.can.tether.verb": the part's name, on the unlock card.</summary>
         public string VerbKey { get; }
     }
 
     /// <summary>
-    /// What 07 can do, in the order the player meets it, and which piece of kit an unlock card is for. Pure logic, EditMode-tested; the words live in the localization tables.
+    /// Which ability a fitted piece of kit gave, and the words and key of that ability's unlock card. Pure logic,
+    /// EditMode-tested; the words live in the localization tables.
     /// </summary>
     internal static class AbilityTable
     {
         private static readonly AbilityRow[] Table =
         {
             Row(RoverAbility.Tether, RoverAction.Tether),
-            Row(RoverAbility.HoverJump, RoverAction.Jump, TechNodeId.HoverJump),
-            Row(RoverAbility.CargoCradle, RoverAction.Tether, TechNodeId.CargoCradle),
-            Row(RoverAbility.WarmHeadlamp, null, TechNodeId.WarmHeadlamp),
-            Row(RoverAbility.BoostCoils, null, TechNodeId.CapacitorDrums),
-            Row(RoverAbility.CellPack, null, TechNodeId.CellPackII),
+            Row(RoverAbility.HoverJump, RoverAction.Jump),
+            Row(RoverAbility.CargoCradle, RoverAction.Tether),
+            Row(RoverAbility.WarmHeadlamp),
+            Row(RoverAbility.BoostCoils),
+            Row(RoverAbility.CellPack),
             Row(RoverAbility.WideSonar),
             Row(RoverAbility.MagneticTreads),
-            Row(RoverAbility.SideBins, null, TechNodeId.SideBins),
-            Row(RoverAbility.FocusLens, null, TechNodeId.FocusLens),
+            Row(RoverAbility.SideBins),
+            Row(RoverAbility.FocusLens),
         };
-
-        /// <summary>How many abilities the page can list.</summary>
-        public static int Count => Table.Length;
-
-        public static AbilityRow At(int index)
-        {
-            return Table[index];
-        }
 
         /// <summary>The ability a fitted piece of kit gives, if it gives one.</summary>
         public static bool TryAbilityOf(RoverKitPiece piece, out RoverAbility ability)
@@ -98,7 +83,7 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>The row of <paramref name="ability"/>; false for an ability the page does not list.</summary>
+        /// <summary>The row of <paramref name="ability"/>; false for an ability without an unlock card.</summary>
         public static bool TryFind(RoverAbility ability, out AbilityRow row)
         {
             for (int i = 0; i < Table.Length; i++)
@@ -114,11 +99,10 @@ namespace MoonProject.UI
             return false;
         }
 
-        private static AbilityRow Row(RoverAbility ability, RoverAction? action = null, TechNodeId? node = null)
+        private static AbilityRow Row(RoverAbility ability, RoverAction? action = null)
         {
             string snake = Snake(ability.ToString());
-            return new AbilityRow(ability, action.HasValue, action ?? default, node.HasValue, node ?? default,
-                "ui.can." + snake + ".verb");
+            return new AbilityRow(ability, action.HasValue, action ?? default, "ui.can." + snake + ".verb");
         }
 
         private static string Snake(string name)
