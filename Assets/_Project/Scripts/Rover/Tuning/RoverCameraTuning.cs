@@ -10,6 +10,8 @@ namespace MoonProject.Rover
     [CreateAssetMenu(fileName = "RoverCameraTuning", menuName = "MoonProject/Rover/Rover Camera Tuning")]
     public sealed class RoverCameraTuning : ScriptableObject
     {
+        private const float MinRecenterSpeedSpan = 0.1f;
+
         [Header("Look input")]
         [Tooltip("Orbit degrees per pixel of mouse movement.")]
         [Range(0.005f, 1f)]
@@ -246,6 +248,11 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _stoppedDownhillShare = 1f;
 
+        [Tooltip("Lowest forward speed (m/s, negative = slight rollback) at which a stopped rover on a downhill grade "
+            + "still holds its downhill pitch lift instead of tilting back up (CTRL-09).")]
+        [Range(-3f, 0f)]
+        [SerializeField] private float _downhillHoldMinSpeed = -0.5f;
+
         [Tooltip("Half-life (s) of the pitch lift blending with vertical velocity while airborne over a ridge crest "
             + "(CTRL-09).")]
         [Range(0.05f, 3f)]
@@ -255,6 +262,11 @@ namespace MoonProject.Rover
             + "a crest (CTRL-09).")]
         [Range(0.5f, 15f)]
         [SerializeField] private float _airbornePitchRefSpeed = 4f;
+
+        [Tooltip("Lowest normalized downhill-lift share allowed while airborne (negative pitches the camera slightly "
+            + "upward on the rising half of a jump or crest, CTRL-09).")]
+        [Range(-1f, 0f)]
+        [SerializeField] private float _airborneMinLiftShare = -0.5f;
 
         [Header("Field of view")]
         [Tooltip("Vertical field of view (deg) at rest.")]
@@ -505,9 +517,24 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _freeLookDampingShare = 0.65f;
 
+        [Tooltip("Cap on the share of Cinemachine body and aim damping kept during free-look so the orbital tracker "
+            + "and composer stay in step while the remaining damping is applied on the shared follow target (CTRL-08).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _freeLookBodyDampingShare = 0.15f;
+
+        [Tooltip("Scale converting the extra free-look damping share into a half-life multiplier on the shared follow "
+            + "target position (CTRL-08).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _freeLookTargetHalfLifeScale = 0.22f;
+
         [Tooltip("Half-life (s) of the damping easing between following 07 and a view of the player's own.")]
         [Range(0.05f, 3f)]
         [SerializeField] private float _freeLookDampingHalfLife = 0.4f;
+
+        [Tooltip("Half-life (s) over which Cinemachine position and aim damping fade back in after the wake opening or "
+            + "face-inspect mode ends.")]
+        [Range(0.05f, 2f)]
+        [SerializeField] private float _openingDampingFadeHalfLife = 0.25f;
 
         [Tooltip("Rotation composer damping (horizontal, vertical).")]
         [SerializeField] private Vector2 _aimDamping = new Vector2(0.6f, 0.5f);
@@ -590,6 +617,10 @@ namespace MoonProject.Rover
         [Tooltip("Closest pulled-in camera distance (m) allowed when rocks or terrain occlude the default and side views.")]
         [Range(0.25f, 1.00f)]
         [SerializeField] private float _faceInspectMinDistance = 0.42f;
+
+        [Tooltip("Safety floor (m) on the solved face-inspect shot radius so inverse-trig elevation never divides by zero.")]
+        [Range(0.01f, 0.25f)]
+        [SerializeField] private float _faceInspectMinRadius = 0.05f;
 
         [Tooltip("Upward head pitch (deg) 07 lifts to meet the face-inspect camera.")]
         [Range(0f, 25f)]
@@ -693,7 +724,7 @@ namespace MoonProject.Rover
 
         public float RecenterMinSpeed => _recenterMinSpeed;
 
-        public float RecenterFullSpeed => Mathf.Max(_recenterMinSpeed + 0.1f, _recenterFullSpeed);
+        public float RecenterFullSpeed => Mathf.Max(_recenterMinSpeed + MinRecenterSpeedSpan, _recenterFullSpeed);
 
         public float RecenterSlowDelayScale => _recenterSlowDelayScale;
 
@@ -729,9 +760,13 @@ namespace MoonProject.Rover
 
         public float StoppedDownhillShare => _stoppedDownhillShare;
 
+        public float DownhillHoldMinSpeed => _downhillHoldMinSpeed;
+
         public float AirborneLiftHalfLife => _airborneLiftHalfLife;
 
         public float AirbornePitchRefSpeed => _airbornePitchRefSpeed;
+
+        public float AirborneMinLiftShare => _airborneMinLiftShare;
 
         public float BaseFov => _baseFov;
 
@@ -841,7 +876,13 @@ namespace MoonProject.Rover
 
         public float FreeLookDampingShare => _freeLookDampingShare;
 
+        public float FreeLookBodyDampingShare => _freeLookBodyDampingShare;
+
+        public float FreeLookTargetHalfLifeScale => _freeLookTargetHalfLifeScale;
+
         public float FreeLookDampingHalfLife => _freeLookDampingHalfLife;
+
+        public float OpeningDampingFadeHalfLife => _openingDampingFadeHalfLife;
 
         public Vector2 AimDamping => _aimDamping;
 
@@ -884,6 +925,8 @@ namespace MoonProject.Rover
         public float FaceInspectDistance => _faceInspectDistance;
 
         public float FaceInspectMinDistance => _faceInspectMinDistance;
+
+        public float FaceInspectMinRadius => _faceInspectMinRadius;
 
         public float FaceInspectHeadPitch => _faceInspectHeadPitch;
 

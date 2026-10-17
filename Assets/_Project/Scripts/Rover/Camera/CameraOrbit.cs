@@ -30,6 +30,9 @@ namespace MoonProject.Rover
         /// <summary>A recenter this close (deg) to straight behind 07 has arrived; following takes over.</summary>
         private const float HomeAngle = 0.01f;
 
+        /// <summary>Smallest speed span (m/s) between minimum and full recenter speed so the ratio never divides by zero.</summary>
+        private const float MinRecenterSpeedSpan = 0.1f;
+
         private readonly RoverCameraTuning _tuning;
         private Vector2 _lookVelocity;
         private float _idleTime;
@@ -162,7 +165,7 @@ namespace MoonProject.Rover
             {
                 float downhill = Mathf.Clamp01(input.DescentAngle / _tuning.DownhillFullAngle);
                 float targetLift = downhill * _tuning.DownhillLift;
-                if (input.Throttle <= ThrottleEpsilon && input.ForwardSpeed >= -0.5f
+                if (input.Throttle <= ThrottleEpsilon && input.ForwardSpeed >= _tuning.DownhillHoldMinSpeed
                     && input.DescentAngle >= _tuning.DownhillSlopeMinAngle)
                 {
                     targetLift = Mathf.Max(targetLift, Lift);
@@ -172,7 +175,10 @@ namespace MoonProject.Rover
             }
             else
             {
-                float airDownhill = Mathf.Clamp(input.DescentAngle / _tuning.DownhillFullAngle, -0.5f, 1f);
+                float airDownhill = Mathf.Clamp(
+                    input.DescentAngle / _tuning.DownhillFullAngle,
+                    _tuning.AirborneMinLiftShare,
+                    1f);
                 Lift = Smoothing.Damp(Lift, airDownhill * _tuning.DownhillLift, _tuning.AirborneLiftHalfLife, deltaTime);
             }
 
@@ -218,7 +224,7 @@ namespace MoonProject.Rover
                 return;
             }
 
-            float speedSpan = Mathf.Max(0.1f, _tuning.RecenterFullSpeed - _tuning.RecenterMinSpeed);
+            float speedSpan = Mathf.Max(MinRecenterSpeedSpan, _tuning.RecenterFullSpeed - _tuning.RecenterMinSpeed);
             float speed01 = Mathf.Clamp01((input.ForwardSpeed - _tuning.RecenterMinSpeed) / speedSpan);
             float delayScale = Mathf.Lerp(_tuning.RecenterSlowDelayScale, 1f, speed01);
             float rateShare = Mathf.Lerp(_tuning.RecenterSlowRateShare, 1f, speed01);

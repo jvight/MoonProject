@@ -36,6 +36,9 @@ namespace MoonProject.Rover
         /// <summary>Drive input below this (stick magnitude) is drift, not the player driving.</summary>
         private const float DriveEpsilon = 0.05f;
 
+        /// <summary>Phase length or probe distance below this is treated as zero.</summary>
+        private const float LengthEpsilon = 1e-4f;
+
         [Tooltip("Camera tuning (Assets/_Project/Data/Tuning/RoverCameraTuning.asset); the opening is its Opening block.")]
         [SerializeField] private RoverCameraTuning _tuning;
 
@@ -372,7 +375,7 @@ namespace MoonProject.Rover
                 }
                 else if (phase == OpeningPhase.PullOut)
                 {
-                    float u = _script.PhaseLength > 1e-4f
+                    float u = _script.PhaseLength > LengthEpsilon
                         ? Mathf.Clamp01(_script.PhaseTime / _script.PhaseLength)
                         : 1f;
                     float pullT = WakeOpening.SmoothStepC2(0f, 1f, u);
@@ -392,7 +395,7 @@ namespace MoonProject.Rover
                 else if (phase == OpeningPhase.BlinkShot)
                 {
                     Vector2 earthGaze = LensGaze.Angles(Quaternion.Inverse(Heading()) * _world.EarthDirection);
-                    float tiltShare = _tuning.Opening.BlinkTilt > 1e-4f
+                    float tiltShare = _tuning.Opening.BlinkTilt > LengthEpsilon
                         ? Mathf.Clamp01(Mathf.Abs(_script.HeadTilt) / _tuning.Opening.BlinkTilt)
                         : 0f;
                     float curiousYaw = _rig.WakeFaceNeckYaw + Mathf.Clamp(earthGaze.x * 0.18f, -10f, 10f) * tiltShare;
@@ -476,14 +479,14 @@ namespace MoonProject.Rover
             float nearClip = settings.LensNearClip;
             if (phase == OpeningPhase.PushIn)
             {
-                float u = _script.PhaseLength > 1e-4f
+                float u = _script.PhaseLength > LengthEpsilon
                     ? Mathf.Clamp01(_script.PhaseTime / _script.PhaseLength)
                     : 1f;
                 float t = WakeOpening.SmoothStepC2(0f, 1f, u);
                 Vector3 desiredPos = Vector3.Lerp(_pushFrom, eye, t);
                 Vector3 stepDir = desiredPos - _pushFrom;
                 float stepDist = stepDir.magnitude;
-                if (stepDist > 1e-4f)
+                if (stepDist > LengthEpsilon)
                 {
                     float clearStep = _sight.Clear(_pushFrom, desiredPos, _tuning.FaceInspectProbeRadius);
                     position = _pushFrom + (stepDir / stepDist) * clearStep;
@@ -506,7 +509,7 @@ namespace MoonProject.Rover
                     CapturePullOutStart();
                 }
 
-                float u = _script.PhaseLength > 1e-4f
+                float u = _script.PhaseLength > LengthEpsilon
                     ? Mathf.Clamp01(_script.PhaseTime / _script.PhaseLength)
                     : 1f;
                 float t = WakeOpening.SmoothStepC2(0f, 1f, u);
@@ -526,9 +529,11 @@ namespace MoonProject.Rover
                 float endNearClip = hasWakeShot ? _tuning.FaceInspectNearClip : chase.Lens.NearClipPlane;
 
                 Vector3 frontDir = _script.Hurried
-                    ? (startForward + Vector3.up * 0.6f).normalized
+                    ? (startForward + Vector3.up * settings.HurryPullOutUp).normalized
                     : (startForward + (Heading() * Vector3.forward)).normalized;
-                Vector3 reachAnchor = _script.Hurried ? startEye : Vector3.Lerp(startEye, end, 0.5f);
+                Vector3 reachAnchor = _script.Hurried
+                    ? startEye
+                    : Vector3.Lerp(startEye, end, settings.PullOutReachAnchor);
                 Vector3 reach = reachAnchor + frontDir * settings.PullOutReach;
                 Vector3 desiredPos = Vector3.Lerp(Vector3.Lerp(startEye, reach, t), Vector3.Lerp(reach, end, t), t);
                 Vector3 probeOrigin = hasWakeShot
@@ -536,7 +541,7 @@ namespace MoonProject.Rover
                     : startOrigin;
                 Vector3 probeVec = desiredPos - probeOrigin;
                 float probeDist = probeVec.magnitude;
-                if (probeDist > 1e-4f)
+                if (probeDist > LengthEpsilon)
                 {
                     float clearDist = _sight.Clear(probeOrigin, desiredPos, _tuning.FaceInspectProbeRadius);
                     position = probeOrigin + (probeVec / probeDist) * clearDist;
@@ -547,8 +552,9 @@ namespace MoonProject.Rover
                 }
 
                 Quaternion earth = Quaternion.LookRotation(_world.EarthDirection);
-                Quaternion held = Quaternion.Slerp(startGaze, earth, WakeOpening.SmoothStepC2(0f, settings.PullOutOntoEarth, u));
-                float turnStart = 0.5f * settings.PullOutOntoEarth;
+                Quaternion held = Quaternion.Slerp(startGaze, earth,
+                    WakeOpening.SmoothStepC2(0f, settings.PullOutOntoEarth, u));
+                float turnStart = settings.PullOutTurnStartShare * settings.PullOutOntoEarth;
                 float turn = WakeOpening.SmoothStepC2(turnStart, 1f, u);
                 rotation = Quaternion.Slerp(held, endRot, turn);
                 fov = Mathf.Lerp(settings.LensFov, endFov, t);

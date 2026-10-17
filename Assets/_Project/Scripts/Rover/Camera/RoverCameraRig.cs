@@ -54,6 +54,18 @@ namespace MoonProject.Rover
         /// <summary>Smallest share of the orbit a moment leaves, so adopting the wide yaw never divides by 0.</summary>
         private const float MinOrbitShare = 0.05f;
 
+        /// <summary>Blend weight below this is settled enough to treat a framed shot or face-inspect mode as inactive.</summary>
+        private const float ShotWeightEpsilon = 0.01f;
+
+        /// <summary>Blend margin inside (0, 1) where the wake face turn actively probes for terrain clearance.</summary>
+        private const float WakeProbeWeightEpsilon = 0.001f;
+
+        /// <summary>Yaw difference (deg) close enough to 180 deg to pick a deterministic turn side.</summary>
+        private const float OppositeYawThreshold = 179.9f;
+
+        /// <summary>Squared length above which a reported ground normal is valid rather than zero.</summary>
+        private const float ValidGroundNormalSqr = 0.5f;
+
         /// <summary>Steps either way the evening frame turns, and raises, to find a clear view.</summary>
         private const int HeldShotTurns = 2;
         private const int HeldShotLifts = 3;
@@ -443,8 +455,9 @@ namespace MoonProject.Rover
 
         private void StepWallCompression(float deltaTime, bool snap)
         {
-            bool suppress = _inBay || _faceInspectOpen || _faceInspectWeight > 0.01f || _opening.IsActive
-                || _wide.Weight > 0.01f || _held.Weight > 0.01f || _shotWeight > 0.01f;
+            bool suppress = _inBay || _faceInspectOpen || _faceInspectWeight > ShotWeightEpsilon || _opening.IsActive
+                || _wide.Weight > ShotWeightEpsilon || _held.Weight > ShotWeightEpsilon
+                || _shotWeight > ShotWeightEpsilon;
             if (suppress)
             {
                 _wallCompressionTarget = snap ? 0f : Smoothing.Damp(_wallCompressionTarget, 0f, _tuning.WallLiftHalfLife, deltaTime);
@@ -561,10 +574,11 @@ namespace MoonProject.Rover
             bool zeroDamping = _faceInspectOpen || _opening.IsActive;
             _openingDampingFade = zeroDamping
                 ? 0f
-                : (deltaTime > 0f ? Smoothing.Damp(_openingDampingFade, 1f, 0.25f, deltaTime) : 1f);
+                : (deltaTime > 0f
+                    ? Smoothing.Damp(_openingDampingFade, 1f, _tuning.OpeningDampingFadeHalfLife, deltaTime)
+                    : 1f);
             float inspectFade = Mathf.Min(1f - _faceInspectWeight, _openingDampingFade);
-            const float FreeLookBodyShare = 0.15f;
-            float bodyShare = Mathf.Min(_tuning.FreeLookDampingShare, FreeLookBodyShare);
+            float bodyShare = Mathf.Min(_tuning.FreeLookDampingShare, _tuning.FreeLookBodyDampingShare);
             float share = Mathf.Lerp(1f, bodyShare, _freeLook) * inspectFade;
             if (Mathf.Approximately(share, _appliedDampingShare))
             {
@@ -596,7 +610,7 @@ namespace MoonProject.Rover
                     ? Mathf.Atan2(-velocity.y, horizontal) * Mathf.Rad2Deg
                     : 0f;
                 Vector3 normal = _rover.GroundNormal;
-                float normalDownhill = normal.sqrMagnitude > 0.5f
+                float normalDownhill = normal.sqrMagnitude > ValidGroundNormalSqr
                     ? Mathf.Asin(Mathf.Clamp(Vector3.Dot(heading, normal), -1f, 1f)) * Mathf.Rad2Deg
                     : 0f;
                 Vector3 chassisForward = _rover.Rotation * Vector3.forward;
@@ -925,7 +939,7 @@ namespace MoonProject.Rover
             _faceInspectEase = Mathf.MoveTowards(_faceInspectEase, _faceInspectOpen ? 1f : 0f, deltaTime / seconds);
             _faceInspectWeight = Smoothing.SmoothStep(0f, 1f, _faceInspectEase);
 
-            bool cineAvoidance = !_faceInspectOpen && _faceInspectWeight < 0.01f && !_opening.IsActive;
+            bool cineAvoidance = !_faceInspectOpen && _faceInspectWeight < ShotWeightEpsilon && !_opening.IsActive;
             if (_decollider.TerrainResolution.Enabled != cineAvoidance)
             {
                 _decollider.TerrainResolution.Enabled = cineAvoidance;
@@ -940,13 +954,13 @@ namespace MoonProject.Rover
             Vector3 target = _target.position;
             Vector3 focus = Vector3.Lerp(target, _faceInspectShot.Focus, _faceInspectWeight);
             Vector3 shotLine = _faceInspectShot.Focus - _faceInspectShot.Eye;
-            float shotRadius = Mathf.Max(0.05f, shotLine.magnitude);
+            float shotRadius = Mathf.Max(_tuning.FaceInspectMinRadius, shotLine.magnitude);
             float shotElevation = Mathf.Asin(Mathf.Clamp(-shotLine.y / shotRadius, -1f, 1f)) * Mathf.Rad2Deg;
             float shotYaw = Mathf.Atan2(shotLine.x, shotLine.z) * Mathf.Rad2Deg;
 
             float currentYaw = _targetYaw + orbitYaw;
             float deltaYaw = Mathf.DeltaAngle(currentYaw, shotYaw);
-            if (Mathf.Abs(deltaYaw) > 179.9f)
+            if (Mathf.Abs(deltaYaw) > OppositeYawThreshold)
             {
                 deltaYaw = 180f;
             }
@@ -997,16 +1011,16 @@ namespace MoonProject.Rover
                 point = Vector3.Lerp(point, BeamMiddle(), cut);
             }
 
-            const float FreeLookBodyShare = 0.15f;
             float inspectFade = Mathf.Min(1f - _faceInspectWeight, _openingDampingFade);
-            float freeTargetShare = Mathf.Max(0f, _tuning.FreeLookDampingShare - FreeLookBodyShare) * _freeLook * inspectFade;
-            if (snap || deltaTime <= 0f || freeTargetShare <= 1e-4f)
+            float freeTargetShare = Mathf.Max(0f, _tuning.FreeLookDampingShare - _tuning.FreeLookBodyDampingShare)
+                * _freeLook * inspectFade;
+            if (snap || deltaTime <= 0f || freeTargetShare <= LookEpsilon)
             {
                 _dampedTargetPosition = point;
             }
             else
             {
-                Vector3 halfLife = _tuning.PositionDamping * (freeTargetShare * 0.22f);
+                Vector3 halfLife = _tuning.PositionDamping * (freeTargetShare * _tuning.FreeLookTargetHalfLifeScale);
                 _dampedTargetPosition.x = Smoothing.Damp(_dampedTargetPosition.x, point.x, halfLife.x, deltaTime);
                 _dampedTargetPosition.y = Smoothing.Damp(_dampedTargetPosition.y, point.y, halfLife.y, deltaTime);
                 _dampedTargetPosition.z = Smoothing.Damp(_dampedTargetPosition.z, point.z, halfLife.z, deltaTime);
@@ -1082,12 +1096,12 @@ namespace MoonProject.Rover
                 {
                     wakeFaceWeight = wake * (1f - turn);
                     Vector3 shotLine = _wakeFaceShot.Focus - _wakeFaceShot.Eye;
-                    float faceRadius = Mathf.Max(0.05f, shotLine.magnitude);
+                    float faceRadius = Mathf.Max(_tuning.FaceInspectMinRadius, shotLine.magnitude);
                     float faceElevation = Mathf.Asin(Mathf.Clamp(-shotLine.y / faceRadius, -1f, 1f)) * Mathf.Rad2Deg;
                     float faceWorldYaw = Mathf.Atan2(shotLine.x, shotLine.z) * Mathf.Rad2Deg;
                     float earthYaw = yaw + Mathf.DeltaAngle(yaw, _wakeEarthYaw);
                     float deltaEarthToFace = Mathf.DeltaAngle(_wakeEarthYaw, faceWorldYaw - _targetYaw);
-                    if (Mathf.Abs(deltaEarthToFace) > 179.9f)
+                    if (Mathf.Abs(deltaEarthToFace) > OppositeYawThreshold)
                     {
                         deltaEarthToFace = _wakeYaw < 0f ? -180f : 180f;
                     }
@@ -1107,7 +1121,7 @@ namespace MoonProject.Rover
                     fov = Mathf.Lerp(fov, wakeShotFov, wake);
                     screen = Vector2.Lerp(screen, wakeShotScreen, wake);
 
-                    if (wakeFaceWeight > 0.001f && wakeFaceWeight < 0.999f)
+                    if (wakeFaceWeight > WakeProbeWeightEpsilon && wakeFaceWeight < 1f - WakeProbeWeightEpsilon)
                     {
                         float pitchRad = Mathf.Clamp(elevation, _tuning.MinPitch, _tuning.MaxPitch) * Mathf.Deg2Rad;
                         Vector3 back = Quaternion.Euler(0f, _targetYaw + yaw, 0f) * Vector3.back;
