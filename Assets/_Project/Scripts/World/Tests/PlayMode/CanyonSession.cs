@@ -148,6 +148,102 @@ namespace MoonProject.World.PlayModeTests
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
         }
 
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator RoutePostAndRuinWall_StopRover_InRealScene()
+        {
+            yield return Boot();
+            Scene scene = SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath);
+            SkyCycleSystem skyCycle = null;
+            Transform routePost = null;
+            Transform habitat = null;
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                if (skyCycle == null)
+                {
+                    skyCycle = root.GetComponentInChildren<SkyCycleSystem>(true);
+                }
+
+                foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
+                {
+                    if (routePost == null && t.name == "RoutePost" && t.GetComponent<Collider>() != null)
+                    {
+                        routePost = t;
+                    }
+                    else if (habitat == null && t.name == "HabitatModules")
+                    {
+                        habitat = t;
+                    }
+                }
+            }
+
+            Assert.IsNotNull(skyCycle, "Main scene must have SkyCycleSystem.");
+            Assert.IsNotNull(routePost, "Main scene must have a solid RoutePost on Layers.Prop.");
+            Assert.IsNotNull(habitat, "Main scene must have HabitatModules.");
+            skyCycle.SetClockTime(210f, false);
+            yield return null;
+
+            string afterDir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "after"));
+            Directory.CreateDirectory(afterDir);
+            Camera view = _context.Get<IViewCamera>().Camera;
+
+            // 1. Drive straight into a RoutePost and verify 07 collides and stops instead of driving through it.
+            Vector3 postPos = routePost.position;
+            Vector3 toPost = new Vector3(postPos.x, 0f, postPos.z).normalized;
+            Vector3 startPost = postPos - toPost * 6.0f;
+            startPost.y = _terrain.SampleHeight(startPost.x, startPost.z);
+            float postYaw = Quaternion.LookRotation(toPost, Vector3.up).eulerAngles.y;
+            _pilot.Release();
+            _rover.PlaceAt(startPost, Quaternion.Euler(0f, postYaw, 0f));
+            Physics.SyncTransforms();
+            yield return Settle();
+            for (int i = 0; i < 15; i++)
+            {
+                yield return null;
+            }
+
+            _pilot.Throttle = 0.75f;
+            _pilot.Target = postPos + toPost * 6.0f;
+            yield return new WaitForSeconds(1.1f);
+            FrameCapture.SavePng(view, CaptureWidth, CaptureHeight, Path.Combine(afterDir, "route_post_approach.png"));
+            yield return new WaitForSeconds(1.6f);
+            FrameCapture.SavePng(view, CaptureWidth, CaptureHeight, Path.Combine(afterDir, "route_post_impact.png"));
+
+            float distToPost = Vector2.Distance(
+                new Vector2(_rover.Position.x, _rover.Position.z),
+                new Vector2(postPos.x, postPos.z));
+            Assert.Less(distToPost, 2.6f, "07 must be stopped at the RoutePost rather than driving past it.");
+            Assert.Less(_rover.Speed, 0.5f, "RoutePost collider must arrest 07's forward motion.");
+
+            // 2. Drive straight into the unobstructed north hull wall of HabitatModules and verify 07 stops against the compound BoxColliders.
+            _pilot.Release();
+            Vector3 habPos = habitat.position;
+            Vector3 toHab = Vector3.back;
+            Vector3 startHab = new Vector3(habPos.x, 0f, habPos.z + 6.5f);
+            startHab.y = _terrain.SampleHeight(startHab.x, startHab.z);
+            _rover.PlaceAt(startHab, Quaternion.LookRotation(toHab, Vector3.up));
+            Physics.SyncTransforms();
+            yield return Settle();
+            for (int i = 0; i < 15; i++)
+            {
+                yield return null;
+            }
+
+            FrameCapture.SavePng(view, CaptureWidth, CaptureHeight, Path.Combine(afterDir, "ruin_wall_approach.png"));
+
+            _pilot.Throttle = 0.80f;
+            _pilot.Target = new Vector3(habPos.x, habPos.y, habPos.z - 6.0f);
+            yield return new WaitForSeconds(2.2f);
+            FrameCapture.SavePng(view, CaptureWidth, CaptureHeight, Path.Combine(afterDir, "ruin_wall_impact.png"));
+            Assert.Greater(_rover.Position.z, habPos.z + 1.5f, "07 must be blocked outside the solid HabitatModules ruin wall.");
+            Assert.Less(_rover.Speed, 0.8f, "Solid ruin wall must arrest 07.");
+            _pilot.Release();
+
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
         private IEnumerator Boot()
         {
 #if UNITY_EDITOR
