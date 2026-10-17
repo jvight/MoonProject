@@ -33,9 +33,6 @@
             <ui:VisualElement name="hud-frame" class="safe-frame" picking-mode="Ignore">
                 <ui:VisualElement class="unlock-anchor" picking-mode="Ignore">
                     <ui:VisualElement name="unlock-card" class="unlock-card" picking-mode="Ignore">
-                        <ui:VisualElement name="unlock-glyph" class="glyph" picking-mode="Ignore">
-                            <ui:Label name="unlock-glyph-label" class="glyph__label" picking-mode="Ignore" />
-                        </ui:VisualElement>
                         <ui:VisualElement class="unlock-card__text" picking-mode="Ignore">
                             <ui:Label name="unlock-card-verb" class="unlock-card__verb" picking-mode="Ignore" />
                         </ui:VisualElement>

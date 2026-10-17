@@ -12,6 +12,7 @@ namespace MoonProject.UI
     /// </summary>
     internal static class UiKeys
     {
+        public const string BlueprintLearned = "ui.unlock.blueprint";
         public const string PauseResume = "ui.pause.resume";
         public const string PauseSettings = "ui.pause.settings";
         public const string PauseQuit = "ui.pause.quit";

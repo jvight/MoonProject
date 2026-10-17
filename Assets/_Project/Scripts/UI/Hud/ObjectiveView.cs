@@ -1,22 +1,24 @@
 using System;
 using MoonProject.Core;
-using MoonProject.Gameplay;
 
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The "next" line on screen: one soft line high and centred, on the floating names' soft shadow, eased in and out
-    /// as <see cref="NextStepLine"/> wants. The words are looked up only when the key or the language changes.
+    /// The objective line on screen (docs/design/opening-v2.md §3): one plain line, high on the left, bright for its
+    /// rest and a small dim line after; the low-battery hint takes the same line when the guidance slot gives it the
+    /// turn. The words are looked up only when the key or the language changes.
     /// </summary>
-    internal sealed class NextLineView
+    internal sealed class ObjectiveView
     {
+        private const string DimClass = "next-line--dim";
+
         private readonly UiLayout _layout;
         private readonly ILocalization _localization;
         private readonly Reveal _reveal;
         private string _key = string.Empty;
         private bool _showingBattery;
 
-        public NextLineView(UiLayout layout, GuidanceSettings settings, ILocalization localization)
+        public ObjectiveView(UiLayout layout, GuidanceSettings settings, ILocalization localization)
         {
             if (settings == null)
             {
@@ -35,57 +37,52 @@ namespace MoonProject.UI
         /// <summary>True while the line on screen (or easing) is the low-battery hint.</summary>
         public bool ShowsBattery => !_reveal.IsHidden && _showingBattery;
 
-        /// <summary>True while the line on screen (or easing) is the next line.</summary>
-        public bool ShowsNext => !_reveal.IsHidden && !_showingBattery;
+        /// <summary>True while the line on screen (or easing) is the objective.</summary>
+        public bool ShowsObjective => !_reveal.IsHidden && !_showingBattery;
+
+        /// <summary>True while the objective is shown in its small dim form (tests and captures).</summary>
+        public bool IsDim => _layout.NextLine.ClassListContains(DimClass);
 
         /// <param name="deltaTime">Unscaled seconds.</param>
-        /// <param name="line">The next line's rule: its key and whether it wants to show.</param>
-        /// <param name="nextOpen">False while something else needs the screen (pause, a card, the title).</param>
+        /// <param name="line">The objective's rule: its key, whether it wants to show and whether it is bright.</param>
+        /// <param name="lineOpen">False while something else needs the screen (pause, a card, the title).</param>
         /// <param name="battery">The low-battery hint, which takes this same line when the slot gives it the turn.</param>
         /// <param name="batteryOpen">False while the hint may not show.</param>
-        public void Tick(float deltaTime, NextStepLine line, bool nextOpen, LowBatteryHint battery, bool batteryOpen)
+        public void Tick(float deltaTime, ObjectiveLine line, bool lineOpen, LowBatteryHint battery, bool batteryOpen)
         {
             bool wantBattery = batteryOpen && battery.WantsShown;
-            bool wantNext = !wantBattery && nextOpen && line.WantsShown;
+            bool wantLine = !wantBattery && lineOpen && line.WantsShown;
             bool sameSource = _showingBattery == wantBattery;
-            bool sameStep = sameSource && (!wantNext || _key.Length == 0 || SameStep(_key, line.Key));
-            bool shown = (wantBattery || wantNext) && (sameStep || _reveal.IsHidden);
-            if (shown && (!sameSource || (wantNext && !string.Equals(_key, line.Key, StringComparison.Ordinal))))
+            bool sameStep = sameSource && (!wantLine || _key.Length == 0 ||
+                                           string.Equals(_key, line.Key, StringComparison.Ordinal));
+            bool shown = (wantBattery || wantLine) && (sameStep || _reveal.IsHidden);
+            if (shown && (!sameSource || (wantLine && !string.Equals(_key, line.Key, StringComparison.Ordinal))))
             {
                 _showingBattery = wantBattery;
-                _key = wantNext ? line.Key : string.Empty;
-                Relocalize(line, battery);
+                _key = wantLine ? line.Key : string.Empty;
+                Relocalize(battery);
             }
             else if (shown && wantBattery)
             {
                 _layout.NextLineText.text = battery.Text;
             }
 
+            _layout.NextLine.EnableInClassList(DimClass, shown && wantLine && !line.Bright);
             _reveal.Set(shown);
             _reveal.Tick(deltaTime);
         }
 
         /// <summary>A new language: the line on screen is written again.</summary>
-        public void Relocalize(NextStepLine line, LowBatteryHint battery)
+        public void Relocalize(LowBatteryHint battery)
         {
             if (_showingBattery)
             {
                 _layout.NextLineText.text = battery.Text;
             }
-            else if (ProgressionKeys.TryParseGarageScrap(_key, out int remaining))
-            {
-                _layout.NextLineText.text = string.Format(_localization.Get(ProgressionKeys.NextGarageScrap), remaining);
-            }
             else if (_key.Length > 0)
             {
                 _layout.NextLineText.text = _localization.Get(_key);
             }
-        }
-
-        private static bool SameStep(string a, string b)
-        {
-            return string.Equals(a, b, StringComparison.Ordinal) ||
-                   (ProgressionKeys.TryParseGarageScrap(a, out _) && ProgressionKeys.TryParseGarageScrap(b, out _));
         }
     }
 }

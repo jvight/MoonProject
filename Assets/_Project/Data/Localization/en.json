@@ -1305,6 +1305,70 @@
         {
             "key": "ui.kit.antenna.desc",
             "text": "Extends sonar ping range across the basin."
+        },
+        {
+            "key": "next.v2.drive_lander",
+            "text": "Drive to the lander."
+        },
+        {
+            "key": "next.v2.scan_lander",
+            "text": "Scan the lander's cargo for a blueprint."
+        },
+        {
+            "key": "next.v2.collect_parts",
+            "text": "Collect the parts from the lander's open crate."
+        },
+        {
+            "key": "next.v2.cut_crates",
+            "text": "Cut the crates for metal and wiring."
+        },
+        {
+            "key": "next.v2.build_pad",
+            "text": "Build a charging pad beside the lander."
+        },
+        {
+            "key": "next.v2.charge",
+            "text": "Park on the pad to charge."
+        },
+        {
+            "key": "next.v2.fit_igniter",
+            "text": "Fit the igniter to the cutter."
+        },
+        {
+            "key": "next.v2.find_solar",
+            "text": "Find a solar blueprint in the Lumen ruins."
+        },
+        {
+            "key": "next.v2.cut_optics",
+            "text": "Cut the ruins for optics."
+        },
+        {
+            "key": "next.v2.build_solar",
+            "text": "Build a solar array near the pad."
+        },
+        {
+            "key": "next.v2.build_battery_bank",
+            "text": "Night is coming. Build a battery bank."
+        },
+        {
+            "key": "next.v2.scan_tower",
+            "text": "Scan the radio tower for an antenna."
+        },
+        {
+            "key": "next.v2.build_mast",
+            "text": "Build an antenna mast."
+        },
+        {
+            "key": "battery.low.lander",
+            "text": "Battery low. The lander's port can charge you once a pad stands there."
+        },
+        {
+            "key": "battery.low.pad",
+            "text": "Battery low. Return to your pad."
+        },
+        {
+            "key": "ui.unlock.blueprint",
+            "text": "Blueprint learned: {0}"
         }
     ]
 }

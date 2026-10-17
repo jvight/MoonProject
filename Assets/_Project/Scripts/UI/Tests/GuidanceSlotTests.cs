@@ -31,10 +31,10 @@ namespace MoonProject.UI.Tests
         public void TheHighestWantingKind_HoldsTheSlot()
         {
             _wants[(int)GuidanceKind.Battery] = true;
-            _wants[(int)GuidanceKind.Next] = true;
+            _wants[(int)GuidanceKind.Objective] = true;
             _slot.Step(_wants, _visible);
             Assert.IsTrue(_slot.Allows(GuidanceKind.Battery));
-            Assert.IsFalse(_slot.Allows(GuidanceKind.Next), "the lower one waits");
+            Assert.IsFalse(_slot.Allows(GuidanceKind.Objective), "the lower one waits");
 
             _wants[(int)GuidanceKind.Prompt] = true;
             _slot.Step(_wants, _visible);
@@ -46,12 +46,12 @@ namespace MoonProject.UI.Tests
         public void ALowerElementOnScreen_IsFadedOutBeforeTheHigherOneStarts()
         {
             _wants[(int)GuidanceKind.Prompt] = true;
-            _wants[(int)GuidanceKind.Next] = true;
-            _visible[(int)GuidanceKind.Next] = true;
+            _wants[(int)GuidanceKind.Objective] = true;
+            _visible[(int)GuidanceKind.Objective] = true;
             _slot.Step(_wants, _visible);
-            Assert.IsNull(_slot.Granted, "nobody may show while the next line is still fading");
+            Assert.IsNull(_slot.Granted, "nobody may show while the objective line is still fading");
 
-            _visible[(int)GuidanceKind.Next] = false;
+            _visible[(int)GuidanceKind.Objective] = false;
             _slot.Step(_wants, _visible);
             Assert.IsTrue(_slot.Allows(GuidanceKind.Prompt));
         }
@@ -59,10 +59,10 @@ namespace MoonProject.UI.Tests
         [Test]
         public void TheHolderKeepsTheSlot_WhileItIsTheOnlyOneUp()
         {
-            _wants[(int)GuidanceKind.Card] = true;
-            _visible[(int)GuidanceKind.Card] = true;
+            _wants[(int)GuidanceKind.Prompt] = true;
+            _visible[(int)GuidanceKind.Prompt] = true;
             _slot.Step(_wants, _visible);
-            Assert.IsTrue(_slot.Allows(GuidanceKind.Card));
+            Assert.IsTrue(_slot.Allows(GuidanceKind.Prompt));
         }
 
         [Test]

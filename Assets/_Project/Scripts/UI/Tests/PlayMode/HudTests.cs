@@ -412,13 +412,13 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator UnlockCard_SaysWhatAFittedKitLetsSevenDo_AfterTheKitTitle()
+        public IEnumerator UnlockCard_SaysWhichBlueprintWasLearned_AndLeavesByItself()
         {
             InputSystem.AddDevice<Keyboard>();
             Boot();
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             yield return Seconds(0.3f);
-            Events.Publish(new PartFitted(RoverSocket.Belly, RoverKitPiece.HoverCoils, false, false, default, 0));
+            Events.Publish(new StructureLearned(StructureIds.ChargingPad));
             yield return Seconds(0.5f);
             Assert.IsTrue(_rig.Ui.UnlockCard.IsWaiting || _rig.Ui.UnlockCard.IsVisible);
             float limit = Time.realtimeSinceStartup + 20f;
@@ -427,9 +427,10 @@ namespace MoonProject.UI.PlayModeTests
                 yield return null;
             }
 
-            Assert.IsTrue(_rig.Ui.UnlockCard.IsVisible, "the card follows the kit's title");
-            Assert.AreEqual(RoverAbility.HoverJump, _rig.Ui.UnlockCard.Shown);
-            Assert.AreEqual(Text("ui.can.hover_jump.verb"), _rig.Ui.Layout.UnlockCard.Q<Label>("unlock-card-verb").text);
+            Assert.IsTrue(_rig.Ui.UnlockCard.IsVisible, "the card shows once the screen is clear");
+            Assert.AreEqual(StructureIds.ChargingPad, _rig.Ui.UnlockCard.Shown);
+            Assert.AreEqual(string.Format(Text(UiKeys.BlueprintLearned), Text(StructureIds.NameKey(StructureIds.ChargingPad))),
+                _rig.Ui.Layout.UnlockCard.Q<Label>("unlock-card-verb").text);
             yield return Seconds(_rig.Tuning.UnlockCard.HoldSeconds + _rig.Tuning.UnlockCard.Reveal.FadeOut + 0.5f);
             Assert.IsFalse(_rig.Ui.UnlockCard.IsVisible, "and leaves by itself");
         }
@@ -561,12 +562,12 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(1f);
             Events.Publish(new TickerLine("battery.low.dock"));
             yield return Seconds(2f);
-            Assert.IsTrue(_rig.Ui.NextLine.ShowsBattery, "it shows on the one soft line");
+            Assert.IsTrue(_rig.Ui.Objective.ShowsBattery, "it shows on the one soft line");
             Assert.AreEqual(Text("battery.low.dock"), _rig.Ui.Layout.NextLineText.text);
 
             _rig.Fakes.IsCharging = true;
             yield return Seconds(2.5f);
-            Assert.IsFalse(_rig.Ui.NextLine.IsVisible, "a charger ends it");
+            Assert.IsFalse(_rig.Ui.Objective.IsVisible, "a charger ends it");
         }
 
         [UnityTest]
@@ -582,7 +583,7 @@ namespace MoonProject.UI.PlayModeTests
             while (Time.realtimeSinceStartup < until)
             {
                 int up = (_rig.Ui.Prompt.IsVisible ? 1 : 0) + (_rig.Ui.LookUp.IsVisible ? 1 : 0) +
-                         (_rig.Ui.RecipeCard.IsVisible ? 1 : 0) + (_rig.Ui.NextLine.IsVisible ? 1 : 0);
+                         (_rig.Ui.RecipeCard.IsVisible ? 1 : 0) + (_rig.Ui.Objective.IsVisible ? 1 : 0);
                 shownFrames += up > 0 ? 1 : 0;
                 Assert.LessOrEqual(up, 1, "one guidance element at a time");
                 yield return null;
