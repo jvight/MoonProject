@@ -252,9 +252,18 @@ namespace MoonProject.Rover
         [Range(0f, 2f)]
         [SerializeField] private float _pullOutReach = 0.7f;
 
+        [Tooltip("Share (0..1) along the line from the lens to the front reveal shot where the pull-out's reach "
+            + "control point is anchored.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _pullOutReachAnchor = 0.5f;
+
         [Tooltip("Share of the pull-out over which the view settles from the gaze onto Earth itself.")]
         [Range(0.02f, 0.4f)]
         [SerializeField] private float _pullOutOntoEarth = 0.15f;
+
+        [Tooltip("Share of Pull Out Onto Earth at which the pull-out camera begins turning smoothly toward 07.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _pullOutTurnStartShare = 0.5f;
 
         [Tooltip("Share of the pull-out Earth stays the subject before the view turns round to 07: the turn then "
             + "sweeps the sky between Earth and the lens, never the empty ground to the side.")]
@@ -273,6 +282,11 @@ namespace MoonProject.Rover
         [Tooltip("Seconds the hurried camera takes from the lens straight to the chase frame.")]
         [Range(1f, 2.8f)]
         [SerializeField] private float _hurryPullOutSeconds = 1.6f;
+
+        [Tooltip("Upward bias added to the gaze forward direction when the hurried pull-out arcs straight to the "
+            + "chase frame.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _hurryPullOutUp = 0.6f;
 
         [Header("07's body in the blink (O11)")]
         [Tooltip("Head tilt (deg) to one side as 07 blinks: a question.")]
@@ -387,11 +401,14 @@ namespace MoonProject.Rover
         public float LensNearClip => _lensNearClip;
         public float LensFov => _lensFov;
         public float PullOutReach => _pullOutReach;
+        public float PullOutReachAnchor => _pullOutReachAnchor;
         public float PullOutOntoEarth => _pullOutOntoEarth;
+        public float PullOutTurnStartShare => _pullOutTurnStartShare;
         public float PullOutEarthHeld => Mathf.Max(_pullOutEarthHeld, _pullOutOntoEarth);
         public float LensReleaseAt => _lensReleaseAt;
         public float HurryLidSeconds => _hurryLidSeconds;
         public float HurryPullOutSeconds => _hurryPullOutSeconds;
+        public float HurryPullOutUp => _hurryPullOutUp;
         public float BlinkTilt => _blinkTilt;
         public float TiltEaseSeconds => _tiltEaseSeconds;
         public float TiltHoldSeconds => _tiltHoldSeconds;

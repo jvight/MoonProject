@@ -22,7 +22,6 @@ namespace MoonProject.UI.PlayModeTests
         private const float StageSettle = 2f;
         private const float BatteryChargeShare = 0.55f;
         private const int ShapeCells = 4;
-        private const float NeverIdleSeconds = 1e6f;
 
         /// <summary>
         /// The title, the title's settings, the driving HUD, the pause menu, its settings and the lab's board at every
@@ -42,7 +41,6 @@ namespace MoonProject.UI.PlayModeTests
             Camera camera = context.Get<IViewCamera>().Camera;
             UISystem ui = BuildUi(context, out FakeGameServices fakes, out _);
             TuneQuickPatience();
-            KeepTitleAwake();
             yield return null;
             string folder = Path.GetFullPath(ShapeFolder);
             Directory.CreateDirectory(folder);
@@ -180,14 +178,6 @@ namespace MoonProject.UI.PlayModeTests
         }
 
 #if UNITY_EDITOR
-        /// <summary>The title never rests out of sight, so every shape's shot of it has a menu to look at.</summary>
-        private void KeepTitleAwake()
-        {
-            var serialized = new SerializedObject(_tuning);
-            serialized.FindProperty("_title._idleSeconds").floatValue = NeverIdleSeconds;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-        }
-
         private IEnumerator ShapeShot(Camera camera, string folder, ScreenShape shape, string state,
             List<string> problems, Action stage, Action<string, List<string>> pairChecks)
         {

@@ -88,7 +88,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             });
             yield return null;
             Assert.AreEqual(ProgressionKeys.NextPort, port.StepLine(), "step (b): port open, park on the pad");
+            float ringParkStart = Time.time;
+            yield return Waits.Until(() => port.Installing, 2f);
+            yield return Waits.Until(() => Vector3.Distance(port.ArmTipPosition, port.ArmRestPosition) > 0.25f, 2f);
+            Assert.Greater(Vector3.Distance(port.ArmTipPosition, port.ArmRestPosition), 0.25f,
+                "the port's service arm unfolds toward 07");
+            yield return Waits.Until(() => port.SparkCount > 0, 2f);
+            Assert.Greater(port.SparkCount, 0, "weld sparks burst as the tether ring seats on 07");
             yield return Waits.Until(() => port.RingFitted, 4f);
+            Assert.GreaterOrEqual(Time.time - ringParkStart, 3f, "the ring install moment takes ~3.4 s on the pad");
             Assert.IsTrue(port.IsOpen, "the last cut opened it");
             Assert.AreEqual(ProgressionKeys.NextGarageCrate, port.StepLine(), "step (c): cut the 07 · SPARE crate");
             Assert.AreEqual(RoverKitPiece.TetherRing, fittings[0].Part);
@@ -111,9 +119,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(port.DeckInTheCrate, "Ro's tape deck rises to the crate's mouth");
             Assert.AreEqual(ProgressionKeys.NextGarageDeck, port.StepLine(),
                 "step (d): put the tape deck on the tray, then park on the pad again");
-            yield return PickupPress.Take(this, gameplay, 2f, "Ro's tape deck");
+            yield return Waits.Until(() => gameplay.Hints.TryGet(InteractionKind.PickUp, out _), 2f);
+            Press(_mouse.rightButton);
+            yield return null;
+            yield return null;
+            Release(_mouse.rightButton);
             yield return Waits.Until(() => port.DeckOnTheTray, _fixture.ProgressionTuning.PortTrayGlideSeconds + 1f);
-            Assert.IsTrue(port.DeckOnTheTray, "it glides onto the port's tray");
+            Assert.IsTrue(port.DeckOnTheTray, "Tether lifts the tape deck onto the port's tray");
             Assert.AreEqual(ProgressionKeys.NextGarageDeck, port.StepLine(), "still step (d) until parked on the pad");
             Assert.AreEqual(1, fittings.Count, "on the tray it waits for 07 to park");
             _fixture.Rover.Place(port.PadCentre, 0f);

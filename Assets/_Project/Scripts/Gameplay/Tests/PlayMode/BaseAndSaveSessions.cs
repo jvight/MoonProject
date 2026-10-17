@@ -381,10 +381,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             Assert.IsTrue(progression.ChasmSeen, "07 reached the lip without Hover-Jump");
             Assert.IsTrue(progression.LookingAcross, "it looks across at Bell's light");
-            Assert.AreEqual(1, _fixture.Rover.HoldStillCount, "holding still while it looks");
+            Assert.AreEqual(0, _fixture.Rover.HoldStillCount, "driving is never held while looking across (VISION ruling 8)");
             yield return new WaitForSeconds(_fixture.ProgressionTuning.ChasmLookSeconds + 0.5f);
             Assert.IsFalse(progression.LookingAcross);
-            Assert.AreEqual(0, _fixture.Rover.HoldStillCount, "then it is free to drive");
+            Assert.AreEqual(0, _fixture.Rover.HoldStillCount, "still free to drive");
             Assert.AreEqual(ContainerKind.Box, box.Kind);
             Assert.IsTrue(box.Available, "now Tilly spots it: the garage's junction box glows to be cut");
             Assert.IsFalse(field.IsResting(1), "the transformer is still sealed in");

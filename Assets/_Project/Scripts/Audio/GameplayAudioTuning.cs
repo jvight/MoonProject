@@ -63,6 +63,15 @@ namespace MoonProject.Audio
         [Tooltip("Attach pluck volume scale for heavy objects.")]
         [Range(0f, 1f)] [SerializeField] private float _tetherHeavyVolume = 1f;
 
+        [Tooltip("Tether hum pitch multiplier at full strain (1.2599 = a major third higher, in key).")]
+        [Range(1f, 2f)] [SerializeField] private float _tetherHumStrainPitch = 1.2599f;
+
+        [Tooltip("Extra tether hum volume boost at full strain.")]
+        [Range(0f, 1f)] [SerializeField] private float _tetherHumStrainVolume = 0.25f;
+
+        [Tooltip("Ease rate (per second) of the tether hum pitch as strain rises and falls.")]
+        [Range(0.5f, 20f)] [SerializeField] private float _tetherHumPitchEase = 3.5f;
+
         [Header("Bell's signals")]
         [Tooltip("Spatial blend of the shimmer from a new signal's pillar: mostly flat so a pillar far across the " +
                  "basin is still heard, faintly, with a hint of its direction (0 = flat, 1 = fully 3D).")]
@@ -94,6 +103,9 @@ namespace MoonProject.Audio
         public float TetherHumFadeOut => _tetherHumFadeOut;
         public float TetherHumVolume => _tetherHumVolume;
         public float TetherHumSpatialBlend => _tetherHumSpatialBlend;
+        public float TetherHumStrainPitch => _tetherHumStrainPitch;
+        public float TetherHumStrainVolume => _tetherHumStrainVolume;
+        public float TetherHumPitchEase => _tetherHumPitchEase;
         public float SignalSpatialBlend => _signalSpatialBlend;
         public float SignalPickVolume => _signalPickVolume;
         public float TetherLightMass => _tetherLightMass;

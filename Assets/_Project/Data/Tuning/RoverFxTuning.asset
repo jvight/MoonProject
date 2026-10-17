@@ -14,41 +14,41 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _trackWidth: 0.24
   _trackSegmentLength: 0.3
-  _trackLifetime: 24
-  _trackFadeStart: 0.55
-  _trackOpacity: 0.6
+  _trackLifetime: 600
+  _trackFadeStart: 0.88
+  _trackOpacity: 0.68
   _trackLift: 0.02
-  _trackCapacity: 640
-  _trackGroundProbe: 0.6
+  _trackCapacity: 1024
+  _trackGroundProbe: 0.75
   _dustMinSpeed: 0.6
   _dustFullSpeed: 7
-  _dustMaxRate: 26
-  _dustLifetime: 1
-  _dustSize: 0.2
-  _dustSpeed: 1.3
-  _dustDrag: 3
-  _dustOpacity: 0.5
-  _dustGravity: 0.3
+  _dustMaxRate: 44
+  _dustLifetime: 0.95
+  _dustSize: 0.11
+  _dustSpeed: 2.4
+  _dustDrag: 0
+  _dustOpacity: 0.45
+  _dustGravity: 1
   _landingMinImpact: 0.5
   _landingFullImpact: 4
   _landingRingAirTimeFrom: 1
   _landingRingAirTimeFull: 3.5
-  _landingMinCount: 10
-  _landingMaxCount: 36
-  _landingMinSpeed: 1.2
-  _landingMaxSpeed: 3
-  _landingMinSize: 0.2
-  _landingMaxSize: 0.42
-  _landingLifetime: 1.3
-  _landingDrag: 2.2
-  _landingOpacity: 0.6
+  _landingMinCount: 16
+  _landingMaxCount: 42
+  _landingMinSpeed: 1.6
+  _landingMaxSpeed: 3.2
+  _landingMinSize: 0.09
+  _landingMaxSize: 0.16
+  _landingLifetime: 0.95
+  _landingDrag: 0
+  _landingOpacity: 0.52
   _moteCount: 40
-  _moteLifetime: 10
+  _moteLifetime: 0.9
   _moteFade: 0.25
   _moteMinSize: 0.012
-  _moteMaxSize: 0.03
-  _moteDrift: 0.035
-  _moteWander: 0.03
+  _moteMaxSize: 0.026
+  _moteDrift: 1.4
+  _moteWander: 0
   _moteWanderFrequency: 0.35
   _moteSpread: 20
   _moteReach: 2.6
@@ -58,7 +58,7 @@ MonoBehaviour:
   _moteBrightness: 1
   _moteFadeSpeed: 0.3
   _moteGoneSpeed: 2.5
-  _moteVisibilityHalfLife: 0.6
+  _moteVisibilityHalfLife: 0.18
   _moteGlintDepth: 0.45
   _moteGlintPeriod: 5
   _cutterNozzle:

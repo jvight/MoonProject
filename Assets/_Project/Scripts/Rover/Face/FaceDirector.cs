@@ -532,6 +532,12 @@ namespace MoonProject.Rover
             }
         }
 
+        /// <summary>Clears any tether strain expression when the tether releases or snaps.</summary>
+        public void OnTetherReleased(TetherReleased evt)
+        {
+            _state.SetStrain(0f);
+        }
+
         /// <summary>Handles <see cref="RoverRecovering"/>.</summary>
         public void OnRecovering(RoverRecovering evt)
         {
@@ -547,6 +553,22 @@ namespace MoonProject.Rover
         /// <summary>Handles <see cref="FeelBeat"/> for scan and install cues.</summary>
         public void OnFeelBeat(FeelBeat beat)
         {
+            if (beat.Kind == FeelKind.Tether)
+            {
+                if (beat.Phase == FeelPhase.Act)
+                {
+                    _state.SetStrain(beat.Strength);
+                }
+                else if (beat.Phase == FeelPhase.Anticipate
+                    || beat.Phase == FeelPhase.Cancel
+                    || beat.Phase == FeelPhase.Reward)
+                {
+                    _state.SetStrain(0f);
+                }
+
+                return;
+            }
+
             if (beat.Kind == FeelKind.Install && beat.Phase == FeelPhase.Reward)
             {
                 TriggerBeat(BeatKind.Proud, _tuning.ProudHoldSeconds);

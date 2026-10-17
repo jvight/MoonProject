@@ -47,14 +47,12 @@ namespace MoonProject.Rover.Editor
 
         private const int DustMaxParticles = 160;
         private const int LandingMaxParticles = 240;
-        private const float DustConeAngle = 30f;
-        private const float DustConeRadius = 0.15f;
-        private const float LandingRingRadius = 0.7f;
+        private const float DustConeAngle = 14f;
+        private const float DustConeRadius = 0.08f;
+        private const float LandingRingRadius = 0.55f;
+        private const float LandingConeAngle = 72f;
 
-        /// <summary>Dust drifts on the tuned drag; the builder sets a unit curve for it to scale.</summary>
-        private const float UnitDrag = 1f;
-
-        /// <summary>How far the lighter half of the puffs is lifted from the dust swatch toward white.</summary>
+        /// <summary>How far the lighter half of the grains is lifted from the dust swatch toward white.</summary>
         private const float DustHighlight = 0.2f;
 
         /// <summary>Radius (m) of the lamp's lens, where the motes' cone starts.</summary>
@@ -66,8 +64,8 @@ namespace MoonProject.Rover.Editor
         /// <summary>How fast (per second) the curling air the motes wander on changes its pattern.</summary>
         private const float MoteNoiseScroll = 0.06f;
 
-        /// <summary>Kicks rolling dust up and back from the rear wheel contact (cone axis tipped back).</summary>
-        private static readonly Vector3 DustConeRotation = new Vector3(-120f, 0f, 0f);
+        /// <summary>Kicks rolling dust up and back from the rear wheel contact at a 32-deg elevation arc.</summary>
+        private static readonly Vector3 DustConeRotation = new Vector3(-148f, 0f, 0f);
 
         [MoonBuilder("Rover/Rover", 310)]
         public static void Build()
@@ -521,8 +519,12 @@ namespace MoonProject.Rover.Editor
             var wheelFx = host.AddComponent<RoverWheelFx>();
             BuildWiring.Assign(wheelFx,
                 ("_tuning", tuning),
+                ("_frontSocketLeft", BuildWiring.Node(model, RoverModelNodes.Wheel(0))),
+                ("_frontSocketRight", BuildWiring.Node(model, RoverModelNodes.Wheel(1))),
                 ("_dustSocketLeft", BuildWiring.Node(model, RoverModelNodes.DustSocketLeft)),
                 ("_dustSocketRight", BuildWiring.Node(model, RoverModelNodes.DustSocketRight)),
+                ("_trackFrontLeft", Track(scratch, "TrackFrontLeft", host.transform, trackMaterial)),
+                ("_trackFrontRight", Track(scratch, "TrackFrontRight", host.transform, trackMaterial)),
                 ("_trackLeft", Track(scratch, "TrackLeft", host.transform, trackMaterial)),
                 ("_trackRight", Track(scratch, "TrackRight", host.transform, trackMaterial)),
                 ("_dustLeft", Dust(scratch, "DustLeft", host.transform, dustMaterial)),
@@ -696,11 +698,11 @@ namespace MoonProject.Rover.Editor
                 MoteCreamShare);
             tint.a = 0f;
             main.startColor = tint;
-            main.gravityModifier = 0f;
+            main.gravityModifier = 1f;
 
             ParticleSystem.EmissionModule emission = system.emission;
             emission.enabled = true;
-            emission.rateOverTime = tuning.MoteCount / tuning.MoteLifetime;
+            emission.rateOverTime = 0f;
 
             ParticleSystem.ShapeModule shape = system.shape;
             shape.enabled = true;
@@ -709,11 +711,11 @@ namespace MoonProject.Rover.Editor
             shape.radius = MoteLensRadius;
             shape.radiusThickness = 1f;
             shape.length = tuning.MoteReach;
-            shape.randomDirectionAmount = 1f;
+            shape.randomDirectionAmount = 0.35f;
 
             ParticleSystem.NoiseModule noise = system.noise;
-            noise.enabled = true;
-            noise.strength = tuning.MoteWander;
+            noise.enabled = false;
+            noise.strength = 0f;
             noise.frequency = tuning.MoteWanderFrequency;
             noise.scrollSpeed = MoteNoiseScroll;
             noise.octaveCount = 1;
@@ -747,7 +749,7 @@ namespace MoonProject.Rover.Editor
             return track.AddComponent<RoverTrackRenderer>();
         }
 
-        /// <summary>Rolling dust: soft puffs kicked up and back that pop, settle and drift (rate at runtime).</summary>
+        /// <summary>Rolling dust: ballistic grains kicked up and back in a clean lunar parabola (rate at runtime).</summary>
         private static ParticleSystem Dust(BuilderScratchScene scratch, string name, Transform parent,
             Material material)
         {
@@ -761,33 +763,30 @@ namespace MoonProject.Rover.Editor
             shape.rotation = DustConeRotation;
 
             ParticleSystem.LimitVelocityOverLifetimeModule drag = dust.limitVelocityOverLifetime;
-            drag.enabled = true;
-            drag.drag = UnitDrag;
+            drag.enabled = false;
+            drag.drag = 0f;
             return dust;
         }
 
-        /// <summary>Landing ring: puffs pushed outward along the ground, lifted gently; emitted on demand.</summary>
+        /// <summary>Landing splash ring: grains sprayed outward along a shallow 18-deg cone and falling ballistically.</summary>
         private static ParticleSystem LandingRing(BuilderScratchScene scratch, Transform parent, Material material)
         {
             ParticleSystem ring = CreateSystem(scratch, "LandingDust", parent, material, LandingMaxParticles, false);
 
             ParticleSystem.ShapeModule shape = ring.shape;
             shape.enabled = true;
-            shape.shapeType = ParticleSystemShapeType.Circle;
+            shape.shapeType = ParticleSystemShapeType.Cone;
+            shape.angle = LandingConeAngle;
             shape.radius = LandingRingRadius;
             shape.radiusThickness = 0f;
             shape.arc = 360f;
 
             ParticleSystem.VelocityOverLifetimeModule lift = ring.velocityOverLifetime;
-            lift.enabled = true;
-            lift.space = ParticleSystemSimulationSpace.Local;
-            lift.x = new ParticleSystem.MinMaxCurve(0f, 0f);
-            lift.y = new ParticleSystem.MinMaxCurve(0f, 0f);
-            lift.z = new ParticleSystem.MinMaxCurve(0.2f, 0.6f);
+            lift.enabled = false;
 
             ParticleSystem.LimitVelocityOverLifetimeModule drag = ring.limitVelocityOverLifetime;
-            drag.enabled = true;
-            drag.drag = UnitDrag;
+            drag.enabled = false;
+            drag.drag = 0f;
             return ring;
         }
 
@@ -824,7 +823,7 @@ namespace MoonProject.Rover.Editor
             ParticleSystem.SizeOverLifetimeModule size = system.sizeOverLifetime;
             size.enabled = true;
             size.size = new ParticleSystem.MinMaxCurve(1f,
-                new AnimationCurve(new Keyframe(0f, 0.6f), new Keyframe(0.3f, 1.2f), new Keyframe(1f, 2f)));
+                new AnimationCurve(new Keyframe(0f, 0.95f), new Keyframe(0.7f, 1f), new Keyframe(1f, 0.65f)));
 
             ParticleSystem.ColorOverLifetimeModule color = system.colorOverLifetime;
             color.enabled = true;

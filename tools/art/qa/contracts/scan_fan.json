@@ -2,11 +2,35 @@
   "model": "scan_fan",
   "pivot_tolerance": 0.015,
   "nodes": {
-    "ScanFan": {"pivot": [0.0, 0.0, 0.0]}
+    "ScanFan": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
   },
   "require_vertex_colors": true,
   "allow_boundary_edges": false,
   "max_triangles": 3000,
   "max_meshes": 1,
-  "max_draw_calls": 8
+  "max_draw_calls": 8,
+  "bounds": {
+    "size": [
+      0.1451,
+      0.1239,
+      0.094
+    ],
+    "tolerance": 0.02,
+    "min_size": [
+      0.1251,
+      0.1039,
+      0.074
+    ],
+    "max_size": [
+      0.1651,
+      0.1439,
+      0.114
+    ]
+  }
 }

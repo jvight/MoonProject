@@ -19,20 +19,108 @@
   "max_triangles": 5000,
   "max_meshes": 16,
   "max_draw_calls": 32,
-  "allow_rotation": ["Elevation", "Wing_*", "Socket_Power_*"],
+  "allow_rotation": [
+    "Elevation",
+    "Wing_*",
+    "Socket_Power_*"
+  ],
   "scale_tolerance": 0.001,
   "allow_boundary_edges": false,
   "nodes": {
-    "SolarArray": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_1": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_2": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_3": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_4": { "pivot": [0.0, 0.0, 0.0] },
-    "StatusLamp": { "pivot": [0.0, 0.42, 0.85] },
-    "Azimuth": { "pivot": [0.0, 0.0, 1.04] },
-    "Elevation": { "pivot": [0.0, 0.0, 1.35] },
-    "Wing_L": { "pivot": [0.075, -0.14745, 1.45324] },
-    "Wing_R": { "pivot": [-0.075, -0.14745, 1.45324] },
-    "Socket_Power_1": { "pivot": [-0.15, 0.26, 0.68] }
+    "SolarArray": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_2": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_3": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_4": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "StatusLamp": {
+      "pivot": [
+        0.0,
+        0.42,
+        0.85
+      ]
+    },
+    "Azimuth": {
+      "pivot": [
+        0.0,
+        0.0,
+        1.04
+      ]
+    },
+    "Elevation": {
+      "pivot": [
+        0.0,
+        0.0,
+        1.35
+      ]
+    },
+    "Wing_L": {
+      "pivot": [
+        0.075,
+        -0.14745,
+        1.45324
+      ]
+    },
+    "Wing_R": {
+      "pivot": [
+        -0.075,
+        -0.14745,
+        1.45324
+      ]
+    },
+    "Socket_Power_1": {
+      "pivot": [
+        -0.15,
+        0.26,
+        0.68
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      2.4059,
+      1.5662,
+      1.9385
+    ],
+    "tolerance": 0.12,
+    "min_size": [
+      2.2859,
+      1.4462,
+      1.8185
+    ],
+    "max_size": [
+      2.5259,
+      1.6862,
+      2.0585
+    ]
   }
 }

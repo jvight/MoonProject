@@ -19,23 +19,127 @@
   "max_triangles": 5000,
   "max_meshes": 16,
   "max_draw_calls": 32,
-  "allow_rotation": ["Socket_Power_*"],
+  "allow_rotation": [
+    "Socket_Power_*"
+  ],
   "scale_tolerance": 0.001,
   "allow_boundary_edges": false,
   "nodes": {
-    "ChargingPad": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_1": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_2": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_3": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_4": { "pivot": [0.0, 0.0, 0.0] },
-    "ContactShoes": { "pivot": [0.0, 0.04, 0.12] },
-    "CoolingLouver": { "pivot": [0.0, -1.22, 1.24] },
-    "GuideStrip_L": { "pivot": [-0.445, 1.07, 0.1316] },
-    "GuideStrip_R": { "pivot": [0.445, 1.07, 0.1316] },
-    "TotemBar_1": { "pivot": [0.0, -0.762, 0.76] },
-    "TotemBar_2": { "pivot": [0.0, -0.762, 0.852] },
-    "TotemBar_3": { "pivot": [0.0, -0.762, 0.944] },
-    "TotemBar_4": { "pivot": [0.0, -0.762, 1.036] },
-    "Socket_Power_1": { "pivot": [0.0, -1.29, 0.2] }
+    "ChargingPad": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_2": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_3": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_4": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "ContactShoes": {
+      "pivot": [
+        0.0,
+        0.04,
+        0.12
+      ]
+    },
+    "CoolingLouver": {
+      "pivot": [
+        0.0,
+        -1.57,
+        1.24
+      ]
+    },
+    "GuideStrip_L": {
+      "pivot": [
+        -0.755,
+        1.26,
+        0.1316
+      ]
+    },
+    "GuideStrip_R": {
+      "pivot": [
+        0.755,
+        1.26,
+        0.1316
+      ]
+    },
+    "TotemBar_1": {
+      "pivot": [
+        0.0,
+        -1.112,
+        0.76
+      ]
+    },
+    "TotemBar_2": {
+      "pivot": [
+        0.0,
+        -1.112,
+        0.852
+      ]
+    },
+    "TotemBar_3": {
+      "pivot": [
+        0.0,
+        -1.112,
+        0.944
+      ]
+    },
+    "TotemBar_4": {
+      "pivot": [
+        0.0,
+        -1.112,
+        1.036
+      ]
+    },
+    "Socket_Power_1": {
+      "pivot": [
+        0.0,
+        -1.64,
+        0.2
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      2.615,
+      3.2013,
+      1.55
+    ],
+    "tolerance": 0.16,
+    "min_size": [
+      2.455,
+      3.0413,
+      1.39
+    ],
+    "max_size": [
+      2.775,
+      3.3613,
+      1.71
+    ]
   }
 }

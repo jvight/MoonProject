@@ -29,13 +29,41 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void SpeedVisibility_FullWhileStillOrCrawling_GoneOnceDriving()
+        public void SpeedVisibility_ZeroWhileParked_AppearsOnlyWhileDriving()
         {
-            Assert.AreEqual(1f, LampMoteLight.SpeedVisibility(_tuning, 0f), 1e-4f);
-            Assert.AreEqual(1f, LampMoteLight.SpeedVisibility(_tuning, _tuning.MoteFadeSpeed), 1e-4f);
-            Assert.AreEqual(0f, LampMoteLight.SpeedVisibility(_tuning, _tuning.MoteGoneSpeed), 1e-4f);
+            Assert.AreEqual(0f, LampMoteLight.SpeedVisibility(_tuning, 0f), 1e-4f, "No floating motes when 07 is parked in vacuum.");
+            Assert.AreEqual(0f, LampMoteLight.SpeedVisibility(_tuning, _tuning.MoteFadeSpeed), 1e-4f);
+            Assert.AreEqual(1f, LampMoteLight.SpeedVisibility(_tuning, _tuning.MoteGoneSpeed), 1e-4f, "Kicked-up grains cross the beam while driving.");
             float halfway = 0.5f * (_tuning.MoteFadeSpeed + _tuning.MoteGoneSpeed);
             Assert.That(LampMoteLight.SpeedVisibility(_tuning, halfway), Is.InRange(0.1f, 0.9f));
+        }
+
+        [Test]
+        public void VacuumDustAndTracks_AreBallisticZeroDragFourWheelAndPersistent()
+        {
+            Assert.AreEqual(1f, _tuning.DustGravity, 1e-4f, "Dust must fall at full lunar gravity (1.62 m/s^2).");
+            Assert.AreEqual(0f, _tuning.DustDrag, 1e-4f, "Vacuum dust must have zero air drag.");
+            Assert.AreEqual(0f, _tuning.LandingDrag, 1e-4f, "Landing splash ring must have zero air drag.");
+            Assert.GreaterOrEqual(_tuning.TrackLifetime, 600f, "Tracks must persist across the crater.");
+            Assert.GreaterOrEqual(_tuning.TrackCapacity, 1024, "Track ribbon capacity must hold long trails.");
+            Assert.GreaterOrEqual(_tuning.TrackFadeStart, 0.85f, "Tracks fade only at the far end.");
+        }
+
+        [Test]
+        public void RearVentGlow_AndTravelHeadPitch_ReadCleanlyFromChaseCamera()
+        {
+            var faceDirectorTuning = ScriptableObject.CreateInstance<FaceDirectorTuning>();
+            var characterTuning = ScriptableObject.CreateInstance<RoverCharacterTuning>();
+            try
+            {
+                Assert.Greater(faceDirectorTuning.RearVentBaseEmission, 1.25f, "Rear vent glow must exceed the 1.25 bloom threshold at night.");
+                Assert.That(characterTuning.TravelHeadPitch, Is.InRange(-2.5f, 0f), "Travel head pitch must not bow the head -6 deg down.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(faceDirectorTuning);
+                Object.DestroyImmediate(characterTuning);
+            }
         }
 
         [Test]

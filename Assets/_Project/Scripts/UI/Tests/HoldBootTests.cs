@@ -269,7 +269,7 @@ namespace MoonProject.UI.Tests
                 Assert.GreaterOrEqual(c.x - FaceInventoryView.BubbleRadius, FaceInventoryView.DividerX + 16f);
                 Assert.LessOrEqual(c.x + FaceInventoryView.BubbleRadius, FaceInventoryView.ReferenceWidth - 16f);
                 Assert.GreaterOrEqual(c.y - FaceInventoryView.BubbleRadius, 60f);
-                Assert.LessOrEqual(c.y + FaceInventoryView.BubbleRadius, 630f);
+                Assert.LessOrEqual(c.y + FaceInventoryView.BubbleRadius, 670f);
 
                 RoverSocket socket = FaceInventoryView.OrbitalSockets[i];
                 Vector2 mount = RoverLineArtPainter.GetSocketMountPoint(socket,

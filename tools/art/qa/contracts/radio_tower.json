@@ -9,11 +9,65 @@
   "scale_tolerance": 0.001,
   "allow_boundary_edges": false,
   "nodes": {
-    "RadioTower": { "pivot": [0.0, 0.0, 0.0] },
-    "TowerBase": { "pivot": [0.0, 0.0, 0.0] },
-    "MastLeaning": { "pivot": [0.0, 0.0, 0.0] },
-    "Dish": { "pivot": [0.0, 0.0, 0.0] },
-    "Scan_1": { "pivot": [1.58, -0.24, 2.06] },
-    "Scan_2": { "pivot": [-0.82, -0.22, 1.32] }
+    "RadioTower": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "TowerBase": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "MastLeaning": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Dish": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Scan_1": {
+      "pivot": [
+        1.58,
+        -0.24,
+        2.06
+      ]
+    },
+    "Scan_2": {
+      "pivot": [
+        -0.82,
+        -0.22,
+        1.32
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      5.8331,
+      3.7527,
+      7.2959
+    ],
+    "tolerance": 0.25,
+    "min_size": [
+      5.5831,
+      3.5027,
+      7.0459
+    ],
+    "max_size": [
+      6.0831,
+      4.0027,
+      7.5459
+    ]
   }
 }

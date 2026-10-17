@@ -36,10 +36,10 @@ namespace MoonProject.Gameplay
             main.duration = Duration;
             main.startLifetime = new ParticleSystem.MinMaxCurve(tuning.DustLifetime.x, tuning.DustLifetime.y);
             main.startSize = new ParticleSystem.MinMaxCurve(tuning.DustSize.x, tuning.DustSize.y);
-            main.startSpeed = 0f;
+            main.startSpeed = new ParticleSystem.MinMaxCurve(tuning.DustRise * 1.8f, tuning.DustRise * 2.8f);
             main.startRotation = new ParticleSystem.MinMaxCurve(0f, 2f * Mathf.PI);
             main.startColor = Color.white;
-            main.gravityModifier = 0f;
+            main.gravityModifier = 1f;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
             main.maxParticles = tuning.MaxDust;
 
@@ -47,23 +47,19 @@ namespace MoonProject.Gameplay
             emission.rateOverTime = 0f;
 
             ParticleSystem.ShapeModule shape = _particles.shape;
-            shape.shapeType = ParticleSystemShapeType.Box;
-            shape.scale = new Vector3(tuning.DustRadius * 2f, FlatShapeHeight, tuning.DustRadius * 2f);
+            shape.shapeType = ParticleSystemShapeType.Cone;
+            shape.angle = 32f;
+            shape.radius = tuning.DustRadius;
+            shape.rotation = new Vector3(-90f, 0f, 0f);
 
             ParticleSystem.VelocityOverLifetimeModule velocity = _particles.velocityOverLifetime;
-            velocity.enabled = true;
-            velocity.space = ParticleSystemSimulationSpace.Local;
-            velocity.x = 0f;
-            velocity.y = tuning.DustRise;
-            velocity.z = 0f;
-            velocity.orbitalY = tuning.DustSwirl;
-            velocity.radial = RadialDrift;
+            velocity.enabled = false;
 
             var fade = new Gradient();
             fade.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
                 new[]
                 {
-                    new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.25f), new GradientAlphaKey(0.8f, 0.6f),
+                    new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.15f), new GradientAlphaKey(0.75f, 0.55f),
                     new GradientAlphaKey(0f, 1f),
                 });
             ParticleSystem.ColorOverLifetimeModule color = _particles.colorOverLifetime;
@@ -72,7 +68,8 @@ namespace MoonProject.Gameplay
 
             ParticleSystem.SizeOverLifetimeModule size = _particles.sizeOverLifetime;
             size.enabled = true;
-            size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 0.6f, 1f, 1.3f));
+            size.size = new ParticleSystem.MinMaxCurve(1f,
+                new AnimationCurve(new Keyframe(0f, 0.95f), new Keyframe(0.6f, 0.95f), new Keyframe(1f, 0.65f)));
 
             var particleRenderer = host.GetComponent<ParticleSystemRenderer>();
             particleRenderer.sharedMaterial = material;

@@ -18,31 +18,31 @@ import r1kit  # noqa: E402
 
 # Single table of dimensions taken from DESIGN.md (sections 1.2, 2, and 3.1)
 CHARGING_PAD_DIMS: dict[str, float] = {
-    # Overall footprint and heights (DESIGN.md §2 & §3.1)
+    # Overall footprint and heights (DESIGN.md §2 & §3.1 + Scale Bible §1.1)
     "footprint_width": 2.60,
-    "footprint_depth": 2.60,
+    "footprint_depth": 3.20,
     "deck_height": 0.18,
     "bollard_height": 1.55,
     "ramp_angle_deg": 15.0,
     # Moving-part ranges (TASK.md & DESIGN.md §3.1)
     "contact_shoes_rise": 0.08,
     "cooling_louver_open_deg": 20.0,
-    # Octagonal deck & 3-sided ramp geometry (matching s_charging_pad.png)
-    "deck_core_width": 1.88,
-    "deck_core_depth": 1.88,
-    "deck_core_center_z": -0.02,
-    "deck_chamfer": 0.38,
+    # Octagonal deck & 3-sided ramp geometry (matching s_charging_pad.png, rescaled for 07)
+    "deck_core_width": 1.92,
+    "deck_core_depth": 2.42,
+    "deck_core_center_z": -0.10,
+    "deck_chamfer": 0.16,
     "ramp_length": 0.48,
-    "ramp_width_front": 0.98,
+    "ramp_width_front": 1.60,
     "ramp_width_side": 0.90,
     "ramp_thickness": 0.068,
-    "guide_rail_x": 0.68,
+    "guide_rail_x": 0.86,
     "guide_rail_width": 0.095,
     "guide_rail_height": 0.070,
-    "guide_rail_length": 1.28,
-    "wheel_lane_x": 0.48,
-    "wheel_pad_width": 0.28,
-    "wheel_pad_length": 1.22,
+    "guide_rail_length": 1.82,
+    "wheel_lane_x": 0.61,
+    "wheel_pad_width": 0.34,
+    "wheel_pad_length": 1.76,
     "well_width": 0.58,
     "well_depth": 0.72,
     "well_center_z": 0.04,
@@ -50,7 +50,7 @@ CHARGING_PAD_DIMS: dict[str, float] = {
     "plinth_width": 0.76,
     "plinth_height": 0.22,
     "plinth_depth": 0.50,
-    "bollard_center_z": -1.00,
+    "bollard_center_z": -1.35,
     "bollard_base_y": 0.22,
     "bollard_width": 0.62,
     "bollard_depth": 0.44,
@@ -74,7 +74,7 @@ CHARGING_PAD_DIMS: dict[str, float] = {
     "totem_bar_step_y": 0.092,
     # Cooling louver on rear of bollard
     "louver_hinge_y": 1.24,
-    "louver_hinge_z": -1.22,
+    "louver_hinge_z": -1.57,
     "louver_width": 0.40,
     "louver_height": 0.44,
     "louver_depth": 0.046,
@@ -87,7 +87,7 @@ CHARGING_PAD_DIMS: dict[str, float] = {
     "shoe_plate_top_y": 0.23,
     # Rear power socket
     "socket_power_y": 0.20,
-    "socket_power_z": -1.29,
+    "socket_power_z": -1.64,
 }
 
 
@@ -118,7 +118,7 @@ def _build_stage_1(root: bpy.types.Object) -> bpy.types.Object:
         segments=1,
     )
 
-    # Rear bollard charcoal base plinth extending to z = -1.28 m
+    # Rear bollard charcoal base plinth extending behind deck
     mb.add_bevel_box(
         center_u=(0.0, d["plinth_height"] * 0.5, d["bollard_center_z"] - 0.03),
         size_u=(d["plinth_width"], d["plinth_height"], d["plinth_depth"]),
@@ -130,7 +130,7 @@ def _build_stage_1(root: bpy.types.Object) -> bpy.types.Object:
     # Non-slip rubber wheel pads on left and right wheel lanes
     for side in (-1.0, 1.0):
         mb.add_bevel_box(
-            center_u=(side * d["wheel_lane_x"], d["deck_height"] + 0.006, d["well_center_z"]),
+            center_u=(side * d["wheel_lane_x"], d["deck_height"] + 0.006, -0.04),
             size_u=(d["wheel_pad_width"], 0.016, d["wheel_pad_length"]),
             mat="R1_Rubber",
             bevel=0.005,
@@ -140,18 +140,20 @@ def _build_stage_1(root: bpy.types.Object) -> bpy.types.Object:
     # Top deck hex bolts around octagon corners
     top_bolts: list[tuple[float, float, float]] = []
     for side in (-1.0, 1.0):
-        for z_pos in (-0.64, 0.60):
-            top_bolts.append((side * 0.64, d["deck_height"] + 0.008, z_pos))
-            top_bolts.append((side * 0.52, d["deck_height"] + 0.008, z_pos + (0.10 if z_pos > 0 else -0.10)))
+        for z_pos in (-1.14, 0.94):
+            top_bolts.append((side * 0.82, d["deck_height"] + 0.008, z_pos))
+            top_bolts.append((side * 0.70, d["deck_height"] + 0.008, z_pos + (0.08 if z_pos > 0 else -0.08)))
     mb.add_bolts(top_bolts, radius=0.017, height=0.012, axis_u="Y", mat="R1_BareSteel")
 
     # Vertical chamfer-face bolt pairs matching s_charging_pad.png
     chamfer_bolts: list[tuple[float, float, float]] = []
+    cx_mid = d["deck_core_width"] * 0.5 - d["deck_chamfer"] * 0.5
+    cz_mid = d["deck_core_depth"] * 0.5 - d["deck_chamfer"] * 0.5
     for sx in (-1.0, 1.0):
         for sz in (-1.0, 1.0):
-            for offset in (-0.06, 0.06):
-                bx = sx * (0.745 + offset)
-                bz = d["deck_core_center_z"] + sz * (0.745 - offset)
+            for offset in (-0.035, 0.035):
+                bx = sx * (cx_mid + offset)
+                bz = d["deck_core_center_z"] + sz * (cz_mid - offset)
                 for by in (0.055, 0.125):
                     chamfer_bolts.append((bx, by, bz))
     mb.add_bolts(chamfer_bolts, radius=0.014, height=0.012, axis_u="Z", mat="R1_BareSteel")
@@ -199,11 +201,12 @@ def _build_stage_2(root: bpy.types.Object) -> bpy.types.Object:
     ramp_h = d["deck_height"]
     ramp_pitch = d["ramp_angle_deg"]
     ramp_thick = d["ramp_thickness"]
+    front_ramp_z = d["deck_core_center_z"] + d["deck_core_depth"] * 0.5 + 0.15
 
-    # Front (+Z) 15-deg entry ramp reaching z = +1.30 m
+    # Front (+Z) 15-deg entry ramp
     _add_sloped_ramp(
         mb,
-        center_u=(0.0, ramp_h * 0.52, 1.07),
+        center_u=(0.0, ramp_h * 0.52, front_ramp_z),
         width=d["ramp_width_front"],
         length=ramp_len,
         thickness=ramp_thick,
@@ -229,7 +232,7 @@ def _build_stage_2(root: bpy.types.Object) -> bpy.types.Object:
             center_u=(
                 side * d["guide_rail_x"],
                 d["deck_height"] + d["guide_rail_height"] * 0.5,
-                d["well_center_z"],
+                -0.04,
             ),
             size_u=(d["guide_rail_width"], d["guide_rail_height"], d["guide_rail_length"]),
             mat="R1_GreyMetal",
@@ -237,12 +240,12 @@ def _build_stage_2(root: bpy.types.Object) -> bpy.types.Object:
             segments=2,
             top_scale_xz=(0.72, 0.90),
         )
-        # Inner brushed-steel rub strips
+        # Inner brushed-steel rub strips (inner face at ±0.81 m -> 1.62 m clear width)
         mb.add_bevel_box(
             center_u=(
                 side * (d["guide_rail_x"] - 0.042),
                 d["deck_height"] + d["guide_rail_height"] * 0.45,
-                d["well_center_z"],
+                -0.04,
             ),
             size_u=(0.018, 0.032, d["guide_rail_length"] - 0.16),
             mat="R1_BareSteel",
@@ -505,12 +508,13 @@ def _build_stage_4(root: bpy.types.Object) -> bpy.types.Object:
     front_half_w = d["ramp_width_front"] * 0.5 - 0.045
     side_half_w = d["ramp_width_side"] * 0.5 - 0.045
     strip_y = d["deck_height"] * 0.52 + d["ramp_thickness"] * 0.5 + 0.004
+    front_ramp_z = d["deck_core_center_z"] + d["deck_core_depth"] * 0.5 + 0.15
 
     for side, name in ((-1.0, "GuideStrip_L"), (1.0, "GuideStrip_R")):
-        g_mb = r1kit.MeshBuilder(name, pivot_u=(side * front_half_w, strip_y, 1.07))
+        g_mb = r1kit.MeshBuilder(name, pivot_u=(side * front_half_w, strip_y, front_ramp_z))
         # Strip on the front (+Z) ramp cheek
         g_mb.add_bevel_box(
-            center_u=(side * front_half_w, strip_y, 1.07),
+            center_u=(side * front_half_w, strip_y, front_ramp_z),
             size_u=(0.038, 0.022, ramp_len - 0.05),
             mat="R1_LampAmber",
             bevel=0.004,

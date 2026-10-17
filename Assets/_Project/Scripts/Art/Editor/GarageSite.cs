@@ -204,9 +204,9 @@ namespace MoonProject.Art.Editor
                 SiteKit.Sheet(b, strip, 0.98f, height, PaletteSwatch.FadedPaint);
             }
 
-            Matrix4x4 door = SiteKit.Face(new Vector3(-0.95f, Floor + 0.95f, z - 0.06f), Vector3.back, Vector3.up);
-            b.Box(door, new Vector3(0.84f, 1.9f, 0.04f), PaletteSwatch.Charcoal);
-            b.Box(door * At(0f, 0f, 0.02f), new Vector3(0.74f, 1.8f, 0.04f), PaletteSwatch.FadedPaint);
+            Matrix4x4 door = SiteKit.Face(new Vector3(-0.95f, Floor + 1.075f, z - 0.06f), Vector3.back, Vector3.up);
+            b.Box(door, new Vector3(1.00f, 2.15f, 0.04f), PaletteSwatch.Charcoal);
+            b.Box(door * At(0f, 0f, 0.02f), new Vector3(0.90f, 2.05f, 0.04f), PaletteSwatch.FadedPaint);
             SiteKit.RustPatch(b, door * At(0f, 0f, 0.04f), 0.15f, -0.5f, 0.45f);
 
             Matrix4x4 fallen = SiteKit.Face(new Vector3(1.3f, Floor + 0.03f, z - 0.7f), new Vector3(0.02f, 1f, -0.04f),

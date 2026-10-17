@@ -165,5 +165,14 @@ namespace MoonProject.Rover.Tests
             Assert.AreEqual(_settings.FullHeight, apex, 0.1f);
             Assert.LessOrEqual(-vy, _settings.CushionLandingSpeed + 2f * FallGravity * Step, "A soft touchdown.");
         }
+
+        [Test]
+        public void Cushion_OnlyActsNearTheGround_LeavingUpperDescentBallistic()
+        {
+            Assert.LessOrEqual(_settings.CushionProbe, 3.0f,
+                "Cushion must be a short retro-puff near the ground, not an 8 m brake.");
+            Assert.AreEqual(0f, _jump.CushionVelocityChange(-4f, 4f),
+                "Upper half of a 7 m leap falls ballistically under lunar gravity.");
+        }
     }
 }

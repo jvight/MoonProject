@@ -58,6 +58,7 @@ namespace MoonProject.Rover
                     charged.Strength)),
                 events.Subscribe<RoverJumped>(jumped => Publish(FeelKind.Leap, FeelPhase.Act, jumped.Strength)),
                 events.Subscribe<RoverLanded>(OnLanded),
+                events.Subscribe<RoverCollided>(OnCollided),
                 events.Subscribe<LowPowerChanged>(OnLowPowerChanged),
                 events.Subscribe<RoverBoostChanged>(OnBoostChanged),
                 events.Subscribe<CutChargeStaged>(OnChargeStaged),
@@ -276,6 +277,7 @@ namespace MoonProject.Rover
                     _rumble.Play(_motion.LaunchRumble);
                     return true;
                 case FeelKind.Land when beat.Phase == FeelPhase.Impact:
+                    _nudge.KickHeave(_motion.LandSquash, _motion.LandSquashScale(beat.Strength));
                     _rumble.Play(_motion.LandRumble, _motion.LandLevel(beat.Strength));
                     return true;
                 case FeelKind.Install when beat.Phase == FeelPhase.Impact:
@@ -296,6 +298,19 @@ namespace MoonProject.Rover
         {
             float impact = landed.ImpactSpeed / _motion.HardLanding;
             _events.Publish(new FeelBeat(FeelKind.Land, FeelPhase.Impact, landed.Position, Vector3.up, impact, 0f));
+        }
+
+        private void OnCollided(RoverCollided collided)
+        {
+            float share = Mathf.Clamp01(collided.ImpactSpeed / _motion.CollisionHardSpeed);
+            if (share <= 0f)
+            {
+                return;
+            }
+
+            _nudge.KickHeave(_motion.CollisionJolt, share);
+            _nudge.KickPitch(_motion.CollisionJolt, share);
+            _rumble.Play(_motion.CollisionRumble, share);
         }
 
         private void OnLowPowerChanged(LowPowerChanged power)

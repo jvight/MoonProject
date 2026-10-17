@@ -19,8 +19,8 @@ namespace MoonProject.UI
         [SerializeField] private float _panelHeight = 768f;
 
         [Tooltip("Largest slot cell (px at 1080p); the cells shrink to fit when the screen is narrow or the text big.")]
-        [Range(32f, 96f)]
-        [SerializeField] private float _maxCell = 86f;
+        [Range(32f, 112f)]
+        [SerializeField] private float _maxCell = 96f;
 
         [Tooltip("Smallest slot cell (px): below this the screen would be unreadable, so it stops shrinking.")]
         [Range(24f, 64f)]
@@ -70,31 +70,31 @@ namespace MoonProject.UI
 
         [Tooltip("Left X coordinate (px in 1152x768) of the 4x6 hold grid.")]
         [Range(16f, 120f)]
-        [SerializeField] private float _holdGridX = 48f;
+        [SerializeField] private float _holdGridX = 52f;
 
         [Tooltip("Top Y coordinate (px in 1152x768) of the 4x6 hold and shelf grids.")]
         [Range(24f, 120f)]
-        [SerializeField] private float _holdGridY = 58f;
+        [SerializeField] private float _holdGridY = 74f;
 
         [Tooltip("Left X coordinate (px in 1152x768) of the right-pane header and docked shelf grid.")]
         [Range(400f, 640f)]
-        [SerializeField] private float _shelfGridX = 504f;
+        [SerializeField] private float _shelfGridX = 512f;
 
         [Tooltip("Horizontal gap (px in 1152x768) between adjacent hold cells.")]
         [Range(2f, 24f)]
-        [SerializeField] private float _cellGapX = 10f;
+        [SerializeField] private float _cellGapX = 12f;
 
         [Tooltip("Vertical gap (px in 1152x768) between adjacent hold rows.")]
         [Range(2f, 24f)]
-        [SerializeField] private float _cellGapY = 7f;
+        [SerializeField] private float _cellGapY = 6f;
 
         [Tooltip("X coordinate (px in 1152x768) of the vertical divider between the hold grid and the 07 pane.")]
         [Range(400f, 560f)]
-        [SerializeField] private float _dividerX = 474f;
+        [SerializeField] private float _dividerX = 480f;
 
         [Tooltip("Radius (px in 1152x768) of each of the 10 orbital equipment socket bubbles.")]
         [Range(20f, 48f)]
-        [SerializeField] private float _bubbleRadius = 31f;
+        [SerializeField] private float _bubbleRadius = 36f;
 
         [Tooltip("Origin X (px in 1152x768) of the side-3/4 Rover 07 line-art drawing.")]
         [Range(600f, 960f)]
@@ -102,11 +102,11 @@ namespace MoonProject.UI
 
         [Tooltip("Origin Y (px in 1152x768) of the side-3/4 Rover 07 line-art ground line.")]
         [Range(300f, 620f)]
-        [SerializeField] private float _roverOriginY = 456f;
+        [SerializeField] private float _roverOriginY = 468f;
 
         [Tooltip("Scale (px per rover unit in 1152x768) of the side-3/4 Rover 07 line-art drawing.")]
         [Range(80f, 240f)]
-        [SerializeField] private float _roverScale = 154f;
+        [SerializeField] private float _roverScale = 156f;
 
         [Tooltip("Seconds a transient toast message remains visible at the bottom of the panel.")]
         [Range(1f, 8f)]
@@ -164,39 +164,39 @@ namespace MoonProject.UI
         [Range(-0.3f, 0.3f)]
         [SerializeField] private float _roverAntennaSway = 0.04f;
 
-        [Tooltip("Forward reach (in rover-local units) of the short 3-slice headlamp gradient cone when Lamp is installed; stops well short of the Lamp bubble.")]
+        [Tooltip("Forward reach (in rover-local units) of the short headlamp ray lines when Lamp is installed; stops well short of the Lamp bubble.")]
         [Range(0.75f, 1.65f)]
         [SerializeField] private float _headlampBeamLength = 1.15f;
 
-        [Tooltip("Alpha of each of the 3 overlapping borderless slices of the headlamp gradient cone when Lamp is installed.")]
+        [Tooltip("Alpha of each of the 3 overlapping borderless slices of the headlamp gradient cone when Lamp is installed (0 = crisp vector rays without background wash).")]
         [Range(0f, 0.12f)]
-        [SerializeField] private float _headlampBeamSliceAlpha = 0.028f;
+        [SerializeField] private float _headlampBeamSliceAlpha = 0f;
 
         [Header("Orbital socket leader lines (faint default, slightly brighter installed, cyan only on focus/drag)")]
         [Tooltip("Faint amber stroke (~27% alpha) for empty socket leader lines so the 10 spokes do not compete with 07.")]
-        [SerializeField] private Color32 _leaderEmptyColor = new Color32(204, 150, 68, 68);
+        [SerializeField] private Color32 _leaderEmptyColor = new Color32(236, 188, 104, 76);
 
         [Tooltip("Stroke width (px at 1152x768) for empty socket leader lines.")]
         [Range(0.5f, 3f)]
-        [SerializeField] private float _leaderEmptyWidth = 1.0f;
+        [SerializeField] private float _leaderEmptyWidth = 1.15f;
 
         [Tooltip("Mount anchor dot radius (px at 1152x768) on 07 for empty socket leader lines.")]
         [Range(1f, 5f)]
         [SerializeField] private float _leaderEmptyDotRadius = 2.0f;
 
-        [Tooltip("Subtle warm amber stroke (~38% alpha) for installed socket leader lines.")]
-        [SerializeField] private Color32 _leaderInstalledColor = new Color32(232, 174, 82, 96);
+        [Tooltip("Subtle warm amber stroke (~42% alpha) for installed socket leader lines.")]
+        [SerializeField] private Color32 _leaderInstalledColor = new Color32(252, 204, 118, 110);
 
         [Tooltip("Stroke width (px at 1152x768) for installed socket leader lines.")]
         [Range(0.5f, 3f)]
-        [SerializeField] private float _leaderInstalledWidth = 1.25f;
+        [SerializeField] private float _leaderInstalledWidth = 1.35f;
 
         [Tooltip("Mount anchor dot radius (px at 1152x768) on 07 for installed socket leader lines.")]
         [Range(1f, 5f)]
         [SerializeField] private float _leaderInstalledDotRadius = 2.4f;
 
         [Tooltip("Bright cyan stroke for the single focused, hovered, or active drag-target socket's leader line.")]
-        [SerializeField] private Color32 _leaderFocusColor = new Color32(95, 243, 255, 235);
+        [SerializeField] private Color32 _leaderFocusColor = new Color32(95, 243, 255, 250);
 
         [Tooltip("Stroke width (px at 1152x768) for the focused or drag-target socket leader line.")]
         [Range(1f, 4f)]
@@ -206,39 +206,39 @@ namespace MoonProject.UI
         [Range(1.5f, 6f)]
         [SerializeField] private float _leaderFocusDotRadius = 3.2f;
 
-        [Header("Two-colour CRT palette (amber + cyan, docs/design/screen-ui.md)")]
-        [Tooltip("Dark warm CRT fill inside an unlocked inventory cell or socket bubble.")]
-        [SerializeField] private Color32 _cellBackground = new Color32(18, 12, 6, 235);
+        [Header("Two-colour CRT palette (amber + cyan, near-neutral warm-black background, >= 7:1 stroke contrast)")]
+        [Tooltip("Near-neutral warm-black CRT fill (HSV sat <= 0.25, val ~0.075) inside an unlocked inventory cell or socket bubble.")]
+        [SerializeField] private Color32 _cellBackground = new Color32(19, 18, 16, 255);
 
-        [Tooltip("Tinted CRT fill inside the focused, hovered, or drag-target cell or socket bubble.")]
-        [SerializeField] private Color32 _cellFocusBackground = new Color32(26, 28, 22, 245);
+        [Tooltip("Near-neutral warm-black CRT fill inside the focused, hovered, or drag-target cell or socket bubble.")]
+        [SerializeField] private Color32 _cellFocusBackground = new Color32(19, 18, 16, 255);
 
-        [Tooltip("Opaque dark CRT backing plate behind count badges, tooltips, and toasts.")]
-        [SerializeField] private Color32 _plateBackground = new Color32(14, 9, 5, 248);
+        [Tooltip("Opaque near-neutral warm-black CRT backing plate behind count badges, tooltips, and toasts.")]
+        [SerializeField] private Color32 _plateBackground = new Color32(19, 18, 16, 255);
 
         [Tooltip("Brightest amber stroke and badge color for active and installed items.")]
-        [SerializeField] private Color32 _amberBright = new Color32(255, 214, 128, 255);
+        [SerializeField] private Color32 _amberBright = new Color32(255, 224, 148, 255);
 
         [Tooltip("Primary warm amber stroke color for hold item icons and Rover 07 line-art.")]
-        [SerializeField] private Color32 _amberText = new Color32(255, 194, 92, 255);
+        [SerializeField] private Color32 _amberText = new Color32(255, 206, 116, 255);
 
         [Tooltip("Secondary amber border color for filled cells and fitted socket rings.")]
-        [SerializeField] private Color32 _amberDim = new Color32(232, 174, 82, 255);
+        [SerializeField] private Color32 _amberDim = new Color32(242, 192, 104, 255);
 
-        [Tooltip("Faint amber stroke for empty cells, empty socket rings, and default leader lines.")]
-        [SerializeField] private Color32 _amberFaint = new Color32(204, 150, 68, 165);
+        [Tooltip("Amber stroke for empty cells, empty socket rings, and default leader lines (>= 7:1 contrast).")]
+        [SerializeField] private Color32 _amberFaint = new Color32(232, 182, 98, 240);
 
-        [Tooltip("Muted amber stroke for ghosted kit silhouettes inside empty sockets.")]
-        [SerializeField] private Color32 _amberMuted = new Color32(204, 150, 68, 95);
+        [Tooltip("Amber stroke for ghosted kit silhouettes inside empty sockets and grid rules (>= 7:1 contrast).")]
+        [SerializeField] private Color32 _amberMuted = new Color32(224, 176, 94, 225);
 
-        [Tooltip("Subtle amber stroke for locked hold cell dotted borders and padlocks.")]
-        [SerializeField] private Color32 _amberLocked = new Color32(204, 150, 68, 68);
+        [Tooltip("Amber stroke for locked hold cell dotted borders and padlocks (>= 7:1 contrast).")]
+        [SerializeField] private Color32 _amberLocked = new Color32(216, 168, 90, 215);
 
         [Tooltip("Bright cyan accent for focused/hovered cells, active drag-target sockets, and their leader lines.")]
         [SerializeField] private Color32 _cyanAccent = new Color32(95, 243, 255, 255);
 
         [Tooltip("Soft cyan stroke for drag trail lines and secondary focus rings.")]
-        [SerializeField] private Color32 _cyanDim = new Color32(146, 240, 252, 180);
+        [SerializeField] private Color32 _cyanDim = new Color32(146, 240, 252, 235);
 
         public RevealSettings Reveal => _reveal;
 

@@ -19,23 +19,129 @@
   "max_triangles": 5000,
   "max_meshes": 16,
   "max_draw_calls": 32,
-  "allow_rotation": ["CableDrum_*", "KnifeSwitch", "Socket_Power_*"],
+  "allow_rotation": [
+    "CableDrum_*",
+    "KnifeSwitch",
+    "Socket_Power_*"
+  ],
   "scale_tolerance": 0.001,
   "allow_boundary_edges": false,
   "nodes": {
-    "PowerPylon": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_1": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_2": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_3": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_4": { "pivot": [0.0, 0.0, 0.0] },
-    "CableDrum_1": { "pivot": [0.28495, 0.07635, 0.36] },
-    "CableDrum_2": { "pivot": [-0.07635, -0.28495, 0.36] },
-    "CableDrum_3": { "pivot": [-0.2086, 0.2086, 0.36] },
-    "KnifeSwitch": { "pivot": [0.125, 0.0, 1.22] },
-    "Yoke": { "pivot": [0.0, 0.0, 1.62] },
-    "PathLamp": { "pivot": [0.0, 0.3, 1.695] },
-    "Socket_Power_1": { "pivot": [-0.09748, 0.26781, 0.3] },
-    "Socket_Power_2": { "pivot": [0.28067, -0.04949, 0.3] },
-    "Socket_Power_3": { "pivot": [-0.18319, -0.21832, 0.3] }
+    "PowerPylon": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_2": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_3": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_4": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "CableDrum_1": {
+      "pivot": [
+        0.28495,
+        0.07635,
+        0.36
+      ]
+    },
+    "CableDrum_2": {
+      "pivot": [
+        -0.07635,
+        -0.28495,
+        0.36
+      ]
+    },
+    "CableDrum_3": {
+      "pivot": [
+        -0.2086,
+        0.2086,
+        0.36
+      ]
+    },
+    "KnifeSwitch": {
+      "pivot": [
+        0.125,
+        0.0,
+        1.22
+      ]
+    },
+    "Yoke": {
+      "pivot": [
+        0.0,
+        0.0,
+        1.62
+      ]
+    },
+    "PathLamp": {
+      "pivot": [
+        0.0,
+        0.3,
+        1.695
+      ]
+    },
+    "Socket_Power_1": {
+      "pivot": [
+        -0.09748,
+        0.26781,
+        0.3
+      ]
+    },
+    "Socket_Power_2": {
+      "pivot": [
+        0.28067,
+        -0.04949,
+        0.3
+      ]
+    },
+    "Socket_Power_3": {
+      "pivot": [
+        -0.18319,
+        -0.21832,
+        0.3
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      0.777,
+      0.803,
+      1.9457
+    ],
+    "tolerance": 0.097,
+    "min_size": [
+      0.68,
+      0.706,
+      1.8487
+    ],
+    "max_size": [
+      0.874,
+      0.9,
+      2.0427
+    ]
   }
 }

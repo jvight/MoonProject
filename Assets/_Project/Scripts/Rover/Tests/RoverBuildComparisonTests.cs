@@ -94,6 +94,147 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void WheelFx_HasFourTracks_AndBallisticNonGrowingDustSystems()
+        {
+            using (var scratch = new BuilderScratchScene())
+            {
+                GameObject rover = RoverPrefabBuilder.Assemble(scratch);
+                Transform wheelFx = BuildWiring.Node(rover.transform, "WheelFx");
+                RoverTrackRenderer[] tracks = wheelFx.GetComponentsInChildren<RoverTrackRenderer>(true);
+                Assert.AreEqual(4, tracks.Length, "All 4 wheels must have track renderers.");
+
+                foreach (string name in new[] { "DustLeft", "DustRight", "LandingDust" })
+                {
+                    ParticleSystem ps = BuildWiring.Node(wheelFx, name).GetComponent<ParticleSystem>();
+                    Assert.IsFalse(ps.limitVelocityOverLifetime.enabled, $"{name} must not have atmospheric air drag.");
+                    if (ps.sizeOverLifetime.enabled)
+                    {
+                        AnimationCurve sizeCurve = ps.sizeOverLifetime.size.curve;
+                        Assert.LessOrEqual(sizeCurve.Evaluate(1f), sizeCurve.Evaluate(0.1f) + 1e-3f,
+                            $"{name} grains must not swell/grow in vacuum.");
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void LampGlasses_OnRoverAndLampBar_FaceWithinThreeDegreesOfHeadlampForward()
+        {
+            using (var scratch = new BuilderScratchScene())
+            {
+                GameObject rover = RoverPrefabBuilder.Assemble(scratch);
+                Transform headlampSocket = BuildWiring.Node(rover.transform, RoverModelNodes.HeadlampSocket);
+                Transform headlamp = BuildWiring.Node(headlampSocket, "Headlamp");
+                Vector3 lightForward = headlamp.forward.normalized;
+
+                // 1. Base rover headlamp glasses (Glass_L and Glass_R merged into Body's R1_LampAmber submesh at z > 0.5m)
+                Transform bodyNode = BuildWiring.Node(rover.transform, RoverModelNodes.Body);
+                var bodyMf = bodyNode.GetComponent<MeshFilter>();
+                var bodyMr = bodyNode.GetComponent<MeshRenderer>();
+                Assert.IsNotNull(bodyMf);
+                Assert.IsNotNull(bodyMr);
+
+                Mesh bodyMesh = bodyMf.sharedMesh;
+                Material[] bodyMats = bodyMr.sharedMaterials;
+                int amberSubmesh = -1;
+                for (int s = 0; s < bodyMats.Length; s++)
+                {
+                    if (bodyMats[s] != null && bodyMats[s].name.Contains("R1_LampAmber"))
+                    {
+                        amberSubmesh = s;
+                        break;
+                    }
+                }
+                Assert.GreaterOrEqual(amberSubmesh, 0, "Body must have an R1_LampAmber submesh for headlamp glasses.");
+
+                Vector3[] bodyVerts = bodyMesh.vertices;
+                int[] amberTris = bodyMesh.GetTriangles(amberSubmesh);
+                Vector3 leftGlassNormalSum = Vector3.zero;
+                Vector3 rightGlassNormalSum = Vector3.zero;
+
+                for (int t = 0; t < amberTris.Length; t += 3)
+                {
+                    Vector3 v0 = bodyNode.TransformPoint(bodyVerts[amberTris[t]]);
+                    Vector3 v1 = bodyNode.TransformPoint(bodyVerts[amberTris[t + 1]]);
+                    Vector3 v2 = bodyNode.TransformPoint(bodyVerts[amberTris[t + 2]]);
+                    Vector3 center = (v0 + v1 + v2) / 3f;
+                    if (center.z < 0.50f)
+                    {
+                        continue;
+                    }
+
+                    Vector3 areaNormal = Vector3.Cross(v1 - v0, v2 - v0);
+                    if (areaNormal.z <= 0f)
+                    {
+                        continue;
+                    }
+
+                    if (center.x < 0f)
+                    {
+                        leftGlassNormalSum += areaNormal;
+                    }
+                    else
+                    {
+                        rightGlassNormalSum += areaNormal;
+                    }
+                }
+
+                Assert.Greater(leftGlassNormalSum.sqrMagnitude, 1e-8f, "Glass_L front dome triangles not found.");
+                Assert.Greater(rightGlassNormalSum.sqrMagnitude, 1e-8f, "Glass_R front dome triangles not found.");
+
+                float leftAngle = Vector3.Angle(leftGlassNormalSum.normalized, lightForward);
+                float rightAngle = Vector3.Angle(rightGlassNormalSum.normalized, lightForward);
+                Assert.LessOrEqual(leftAngle, 3f, $"Glass_L facing direction deviated {leftAngle:F2}° from Headlamp forward.");
+                Assert.LessOrEqual(rightAngle, 3f, $"Glass_R facing direction deviated {rightAngle:F2}° from Headlamp forward.");
+
+                // 2. Kit_LampBar glasses (Lamp_0, Lamp_1, Lamp_2 under HeadlampSocket/Kit_LampBar)
+                Transform lampBar = BuildWiring.Node(headlampSocket, "Kit_LampBar");
+                foreach (string lampName in new[] { "Lamp_0", "Lamp_1", "Lamp_2" })
+                {
+                    Transform lampNode = BuildWiring.Node(lampBar, lampName);
+                    var mf = lampNode.GetComponent<MeshFilter>();
+                    Assert.IsNotNull(mf, $"{lampName} missing MeshFilter.");
+                    Mesh m = mf.sharedMesh;
+                    Vector3[] verts = m.vertices;
+                    int[] tris = m.triangles;
+                    Vector3 domeNormalSum = Vector3.zero;
+                    for (int t = 0; t < tris.Length; t += 3)
+                    {
+                        Vector3 v0 = lampNode.TransformPoint(verts[tris[t]]);
+                        Vector3 v1 = lampNode.TransformPoint(verts[tris[t + 1]]);
+                        Vector3 v2 = lampNode.TransformPoint(verts[tris[t + 2]]);
+                        Vector3 areaNormal = Vector3.Cross(v1 - v0, v2 - v0);
+                        if (areaNormal.normalized.z > 0.2f)
+                        {
+                            domeNormalSum += areaNormal;
+                        }
+                    }
+
+                    Assert.Greater(domeNormalSum.sqrMagnitude, 1e-8f, $"{lampName} front dome triangles not found.");
+                    float angle = Vector3.Angle(domeNormalSum.normalized, lightForward);
+                    Assert.LessOrEqual(angle, 3f, $"{lampName} facing direction deviated {angle:F2}° from Headlamp forward.");
+                }
+            }
+        }
+
+        [Test]
+        public void ScreenBezel_OnHead_ExposesSingleMaterialSlotDefaultingToCreamEnamel()
+        {
+            using (var scratch = new BuilderScratchScene())
+            {
+                GameObject rover = RoverPrefabBuilder.Assemble(scratch);
+                Transform head = BuildWiring.Node(rover.transform, RoverModelNodes.Head);
+                Transform bezel = BuildWiring.Node(head, "ScreenBezel");
+                var mr = bezel.GetComponent<MeshRenderer>();
+                Assert.IsNotNull(mr, "ScreenBezel must have a MeshRenderer.");
+                Assert.AreEqual(1, mr.sharedMaterials.Length, "ScreenBezel must expose a single material slot for data-driven bezel switching.");
+                Assert.IsNotNull(mr.sharedMaterial, "ScreenBezel default material must be assigned.");
+                StringAssert.Contains("R1_CreamEnamel", mr.sharedMaterial.name,
+                    "ScreenBezel must default to Variant A (R1_CreamEnamel).");
+            }
+        }
+
+        [Test]
         public void CutterNozzle_IsBuiltUnderCutterOriginWithR1Materials_AndFailsFastWhenUnwired()
         {
             using (var scratch = new BuilderScratchScene())

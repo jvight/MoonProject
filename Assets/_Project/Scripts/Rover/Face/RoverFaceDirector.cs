@@ -57,8 +57,8 @@ namespace MoonProject.Rover
         /// <summary>The wired renderer receiving <c>_EmissionStrength</c> for <c>RearVentStrip</c>.</summary>
         public Renderer RearVentRenderer => _rearVentRenderer;
 
-        /// <summary>The barrel curvature parameter on the CRT face material.</summary>
-        public float Curvature => _display != null ? _display.Curvature : 0.12f;
+        /// <summary>CRT curvature is physically modelled by the convex Screen mesh (0 UV warp).</summary>
+        public float Curvature => _display != null ? _display.Curvature : 0f;
 
         /// <summary>Explicitly wires all serialized references on this component.</summary>
         public void Wire(
@@ -114,6 +114,7 @@ namespace MoonProject.Rover
                 events.Subscribe<PartFitted>(_director.OnPartFitted),
                 events.Subscribe<RoverLanded>(_director.OnLanded),
                 events.Subscribe<RoverRecovering>(_director.OnRecovering),
+                events.Subscribe<TetherReleased>(_director.OnTetherReleased),
                 events.Subscribe<FeelBeat>(_director.OnFeelBeat),
             };
 

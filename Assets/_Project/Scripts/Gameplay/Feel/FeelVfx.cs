@@ -106,7 +106,6 @@ namespace MoonProject.Gameplay
                     Leap(beat);
                     break;
                 case FeelKind.Land when beat.Phase == FeelPhase.Impact:
-                    _debris.Ring(beat.Position, Mathf.RoundToInt(_tuning.RingDust * beat.Strength), beat.Strength);
                     break;
                 case FeelKind.Tether when beat.Phase == FeelPhase.Follow:
                     _debris.Fall(beat.Position, _tuning.TetherDust);
@@ -300,11 +299,9 @@ namespace MoonProject.Gameplay
             _seam = null;
         }
 
-        /// <summary>The leap's take-off: a ring of dust and a flash of the coils under 07.</summary>
+        /// <summary>The leap's take-off: a pulse of the coil flash light under 07.</summary>
         private void Leap(FeelBeat beat)
         {
-            _debris.Ring(beat.Position, Mathf.RoundToInt(_tuning.RingDust * _tuning.LeapRingShare), beat.Strength);
-            Flash(beat.Position, _tuning.CoilFlashSize, _tuning.FlashSeconds);
             _flashLight.MoveTo(beat.Position);
             _flashLight.Ramp(_tuning.CoilFlashLight, 0f, false);
             _flashLight.Ramp(0f, _tuning.FlashDecaySeconds, false);

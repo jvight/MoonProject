@@ -35,7 +35,7 @@ namespace MoonProject.Gameplay.PlayModeTests
     public sealed class FeelCaptureGameplayTests : InputTestFixture
     {
         private const float FrameTime = 1f / 30f;
-        private const float WakeTimeout = 25f;
+        private const float WakeTimeout = 35f;
         private const float WakeEaseTimeout = 8f;
         private const string FallenArrayFirstFragmentId = "ruin.FallenSolarArray.0";
         private const string DuckRelicId = "rubber_duck";
@@ -321,6 +321,39 @@ namespace MoonProject.Gameplay.PlayModeTests
                 recorder.SetMetric("tetherReeledInLengthMeters", reeledInLen);
                 recorder.CaptureFrame("tether_winch_reeling");
 
+                // Pull against an anchored load to verify ENV-05 tether strain build-up before snap
+                float relaxedArc = _gameplay.Tether.CurrentArc;
+                duck.Body.isKinematic = true;
+                float peakStrain = 0f;
+                float minStrainedArc = relaxedArc;
+                float strainUntil = Time.time + 2.0f;
+                while (Time.time < strainUntil && _gameplay.Tether.State == TetherAimState.Towing)
+                {
+                    Set(_gamepad.leftStick, new Vector2(0f, 1f));
+                    yield return null;
+                    recorder.StepFrame();
+                    peakStrain = Mathf.Max(peakStrain, _gameplay.Tether.Strain);
+                    if (_gameplay.Tether.Strain > 0.4f)
+                    {
+                        minStrainedArc = Mathf.Min(minStrainedArc, _gameplay.Tether.CurrentArc);
+                    }
+
+                    if (_gameplay.Tether.Strain >= 0.8f)
+                    {
+                        break;
+                    }
+                }
+
+                Set(_gamepad.leftStick, Vector2.zero);
+                var bodyLang = _rover.GetComponentInChildren<RoverBodyLanguage>();
+                float faceStrain = bodyLang != null && bodyLang.FaceDirector != null && bodyLang.FaceDirector.Display != null
+                    ? bodyLang.FaceDirector.Display.State.Strain
+                    : 0f;
+                recorder.SetMetric("tetherStrainPeak", peakStrain);
+                recorder.SetMetric("tetherStrainedArcMeters", minStrainedArc);
+                recorder.SetMetric("tetherFaceStrain", faceStrain);
+                duck.Body.isKinematic = false;
+
                 Release(_mouse.rightButton);
                 yield return StepFrames(recorder, 10);
             }
@@ -447,6 +480,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             // -----------------------------------------------------------------
             // 6. DOCK & CHARGE (Park on home ChargingDock)
             // -----------------------------------------------------------------
+            var visualRig = _rover.GetComponentInChildren<RoverVisualRig>();
+            float dustBeforeDock = visualRig != null ? visualRig.AppliedDustAmount : 0f;
+            recorder.SetMetric("roverLowerBodyDustBeforeDock", dustBeforeDock);
+
             ChargingDock dock = _gameplay.Home.Dock;
             Vector3 dockFacing = Flat(dock.Rotation * Vector3.forward).normalized;
             Vector3 dockSpot = Flat(dock.Position);
@@ -461,6 +498,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             yield return StepFrames(recorder, 25);
+            float dustAfterDock = visualRig != null ? visualRig.AppliedDustAmount : 0f;
+            recorder.SetMetric("roverLowerBodyDustAfterDock", dustAfterDock);
             recorder.SetMetric("dockedState", dock.Docked ? 1f : 0f);
             recorder.SetMetric("dockGlowLevel", dock.GlowLevel);
             recorder.CaptureFrame("dock_charging");
@@ -511,24 +550,39 @@ namespace MoonProject.Gameplay.PlayModeTests
                 _context.Events.Publish(new NewGameRequested());
             }
 
-            yield return StepFrames(recorder, 18);
+            bool reachedBlinked = false;
+            bool reachedChaseFrame = false;
+            using IDisposable wakeBeatSub = _context.Events.Subscribe<RoverWakeBeatReached>(beat =>
+            {
+                if (beat.Beat == WakeBeat.Blinked)
+                {
+                    reachedBlinked = true;
+                }
+                else if (beat.Beat == WakeBeat.ChaseFrame)
+                {
+                    reachedChaseFrame = true;
+                }
+            });
+
+            yield return StepFrames(recorder, 24);
             recorder.CaptureFrame("title_new_game_push_in");
 
-            // Wait for 07 to wake on the charging dock
+            // Wait for the full opening wake sequence (O1-O13) to reach the dock chase frame
             float wakeDeadline = Time.time + WakeTimeout;
             bool capturedOpening = false;
-            while (!_awake && Time.time < wakeDeadline)
+            while (!reachedChaseFrame && Time.time < wakeDeadline)
             {
                 yield return null;
                 recorder.StepFrame();
-                if (!capturedOpening && Time.time - newGameStartTime >= 2.0f)
+                if (!capturedOpening && reachedBlinked)
                 {
+                    yield return StepFrames(recorder, 8);
                     recorder.CaptureFrame("opening_wake_sequence");
                     capturedOpening = true;
                 }
             }
 
-            Assert.IsTrue(_awake, "07 wakes up on the charging dock.");
+            Assert.IsTrue(_awake && reachedChaseFrame, "07 wakes up on the charging dock and reaches the chase frame.");
             float wakeDuration = Time.time - newGameStartTime;
             recorder.SetMetric("titleToWakeSeconds", wakeDuration);
             recorder.CaptureFrame("rover_awoke_on_dock");
@@ -679,16 +733,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             recorder.SetMetric("placesApproachedCount", placesApproached);
             recorder.SetMetric("placeCardVisibleOnRuinsEntry", placeCardVisible ? 1f : 0f);
 
-            // Beat 6: Drive to the Chasm Lip and measure Finding #12 (ChasmLookSeconds hard input lock)
+            // Beat 6: Drive to the Chasm Lip and verify ATMO-03 (vista look without hard input lock)
             if (_context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.CanyonLip, out WorldAnchor lip))
             {
                 Vector3 lipStand = Flat(lip.Position - lip.Forward * 8f);
-                // Arm _bellLit on BaseProgression so approaching the lip triggers StepChasm
-                FieldInfo bellLitField = typeof(BaseProgression).GetField(
-                    "_bellLit",
-                    BindingFlags.Instance | BindingFlags.NonPublic);
-                bellLitField?.SetValue(_gameplay.Progression, true);
-
                 yield return DriveAutopilotWithPeriodicCaptures(
                     recorder,
                     pilot,
@@ -709,16 +757,19 @@ namespace MoonProject.Gameplay.PlayModeTests
                 recorder.CaptureFrame("chasm_lip_input_locked");
 
                 float lockStart = Time.time;
+                float lockedSeconds = 0f;
                 while (_gameplay.Progression.LookingAcross && Time.time - lockStart < 5f)
                 {
-                    // Player tries to steer/reverse while locked at chasm lip
-                    pilot.Reverse = 0.8f;
+                    if (_rover.IsHeldStill)
+                    {
+                        lockedSeconds += FrameTime;
+                    }
+
                     yield return null;
                     StepPeriodicCapture(recorder);
                 }
 
-                pilot.Reverse = 0f;
-                recorder.SetMetric("chasmLipHardLockSeconds", Time.time - lockStart);
+                recorder.SetMetric("chasmLipHardLockSeconds", lockedSeconds);
             }
 
             _rover.SetDriveSource(null);
