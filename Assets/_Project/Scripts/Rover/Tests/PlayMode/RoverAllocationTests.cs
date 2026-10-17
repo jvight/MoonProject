@@ -99,6 +99,7 @@ namespace MoonProject.Rover.PlayModeTests
         {
             _world = new TestWorld();
             _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -300f), 0f);
+            _rover.Context.Get<IRoverAbilities>().Grant(RoverAbility.BoostCoils);
             _rover.Friends.Bell.Activity = FriendActivity.Home;
             _rover.Drive.Drive = new Vector2(0f, 1f);
             float until = Time.time + 5f;
