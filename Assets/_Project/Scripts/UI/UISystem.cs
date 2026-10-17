@@ -382,6 +382,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RelicStowed>(OnRelicStowed));
             _tokens.Add(events.Subscribe<RoverAwoke>(OnRoverAwoke));
             _tokens.Add(events.Subscribe<TitleShown>(OnTitleShown));
+            _tokens.Add(events.Subscribe<NewGameRequested>(_ => OnTitleDismissed()));
+            _tokens.Add(events.Subscribe<ContinueRequested>(_ => OnTitleDismissed()));
             _tokens.Add(events.Subscribe<FeelBeat>(OnFeelBeat));
             _tokens.Add(events.Subscribe<UpgradePurchased>(OnUpgradePurchased));
             _tokens.Add(events.Subscribe<CargoChanged>(OnCargoChanged));
@@ -1091,6 +1093,12 @@ namespace MoonProject.UI
 
             _titleWaiting = true;
             _titleHasSave = shown.HasSave;
+        }
+
+        private void OnTitleDismissed()
+        {
+            _titleWaiting = false;
+            _pause?.CloseTitleIfOpen();
         }
 
         private void OnGameSaved(GameSaved saved)

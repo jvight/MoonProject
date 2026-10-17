@@ -80,7 +80,6 @@ MonoBehaviour:
       _springFrequency: 1
       _springDamping: 1
     _backdropWeight: 0.55
-    _idleSeconds: 20
     _moonTurnPeriodSeconds: 48
     _morsePeriodSeconds: 4.2
     _eyeBlinkPeriodSeconds: 6.5

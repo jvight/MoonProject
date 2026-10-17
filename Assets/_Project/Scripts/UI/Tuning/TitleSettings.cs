@@ -189,10 +189,6 @@ namespace MoonProject.UI
         [Range(0f, 1f)]
         [SerializeField] private float _backdropWeight = 0.55f;
 
-        [Tooltip("Seconds untouched before the title's menu fades and leaves the world to itself; any input returns it.")]
-        [Range(5f, 120f)]
-        [SerializeField] private float _idleSeconds = 20f;
-
         [Header("Moon turn and rover motion timings")]
         [Tooltip("Seconds for one full revolution of the Moon under 07's wheels.")]
         [Range(10f, 120f)]
@@ -510,8 +506,6 @@ namespace MoonProject.UI
         public RevealSettings Curtain => _curtain;
 
         public float BackdropWeight => _backdropWeight;
-
-        public float IdleSeconds => _idleSeconds;
 
         public float MoonTurnPeriodSeconds => _moonTurnPeriodSeconds;
 

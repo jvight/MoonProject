@@ -23,9 +23,9 @@ namespace MoonProject.UI
     /// lit masts against them all (<see cref="IRelayStatus"/>). Neither shows before the world has shown the thing.
     /// The same menu is the title's over the live world (M3-09, <see cref="OpenTitle"/>): Continue in place of Resume,
     /// New Game (asking once when a save exists), the same settings and Quit, under the wordmark; game time keeps
-    /// running, and the menu rests out of sight when left untouched. A first boot opens on a language step. The pause
-    /// offers "Quit to title" instead of New Game. New Game, Quit to title and Quit draw a soft dark first, so the
-    /// scene never cuts.
+    /// running, and the title menu stays visible until dismissed. A first boot opens on a language step. The pause
+    /// offers "Quit to title" instead of New Game. Quit to title, Quit, and New Game from pause draw a soft dark first,
+    /// while New Game on the title eases the title away for the lens push-in, so the scene never cuts.
     /// </summary>
     internal sealed class PauseMenu
     {
@@ -77,8 +77,6 @@ namespace MoonProject.UI
         private float _writtenShift = float.NaN;
         private float _writtenTop = float.NaN;
         private Leaving _leaving;
-        private float _untouched;
-        private bool _resting;
         private float _titleTime;
         private bool _lockedTitleTime;
 
@@ -187,9 +185,6 @@ namespace MoonProject.UI
         /// <summary>Last measured CPU time (ms) of <see cref="TitleScenePainter.Paint"/>.</summary>
         public float TitleScenePaintMs => _titleScenePainter.LastPaintMilliseconds;
 
-        /// <summary>True while the title's menu rests out of sight, left untouched.</summary>
-        public bool IsResting => _resting;
-
         /// <summary>True while the first boot's language step is up.</summary>
         public bool IsChoosingLanguage => _pages.Current == PausePage.Language;
 
@@ -285,10 +280,6 @@ namespace MoonProject.UI
             {
                 CloseCredits();
             }
-            else if (_resting)
-            {
-                Rest(false);
-            }
             else if (_pages.Current == PausePage.Language)
             {
                 ChooseLanguage(0);
@@ -337,9 +328,17 @@ namespace MoonProject.UI
             _titleScreen.Show();
             _curtain.Snap(true);
             _curtain.Hide();
-            _untouched = 0f;
-            _resting = false;
             _navigator.ResetOnOpen(_input.Menu.PointerPosition, _navigator.DefaultFocus(NavigationContext()));
+        }
+
+        /// <summary>Closes the title if it is open when an external caller starts or continues a game.</summary>
+        public void CloseTitleIfOpen()
+        {
+            if (IsTitle)
+            {
+                _leaving = Leaving.Gone;
+                CloseTitle();
+            }
         }
 
         /// <summary>Evaluates the title screen's 2D CRT animation at an exact timestamp (for deterministic captures).</summary>
@@ -347,23 +346,6 @@ namespace MoonProject.UI
         {
             _lockedTitleTime = true;
             _titleTime = timeSeconds;
-            _untouched = 0f;
-            if (_resting)
-            {
-                Rest(false);
-                if (_settingsPanel.Target)
-                {
-                    _settingsPanel.Snap(true);
-                }
-                else
-                {
-                    _main.Snap(true);
-                }
-
-                _titleScreen.Snap(true);
-                _titleKeyHint.Snap(true);
-            }
-
             Display(_layout.MenuFrame, !standaloneFraming);
             StepTitleAnimation(timeSeconds, standaloneFraming);
         }
@@ -377,7 +359,6 @@ namespace MoonProject.UI
             }
 
             SwapPages();
-            TickTitle(unscaledDeltaTime);
 
             _veil.Tick(unscaledDeltaTime);
             _main.Tick(unscaledDeltaTime);
@@ -438,7 +419,7 @@ namespace MoonProject.UI
         private MenuNavigationContext NavigationContext()
         {
             return new MenuNavigationContext(
-                IsOpen && !_resting && _leaving == Leaving.None,
+                IsOpen && _leaving == Leaving.None,
                 _pages.Current,
                 _pages.DefaultFocus,
                 _credits.IsOpen,
@@ -677,7 +658,7 @@ namespace MoonProject.UI
             {
                 _settingsPanel.Snap(false);
                 ApplyTitleLayout();
-                if (!_resting && !_credits.IsOpen)
+                if (!_credits.IsOpen)
                 {
                     _main.Show();
                     _titleScreen.Show();
@@ -1047,11 +1028,10 @@ namespace MoonProject.UI
             element.style.display = shown ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
-        /// <summary>Continue, or a New Game with no save: the title eases away and play begins under it.</summary>
+        /// <summary>Continue, or a New Game on the title: the title eases away and play begins under it.</summary>
         private void CloseTitle()
         {
             IsOpen = false;
-            _resting = false;
             _navigator.ClearFocus();
             SaveIfChanged();
             _main.Hide();
@@ -1080,62 +1060,6 @@ namespace MoonProject.UI
             note.AddToClassList("menu-button__note");
             resumeButton.Add(note);
             return note;
-        }
-
-        /// <summary>
-        /// Counts the title's untouched time: after a while the menu and the wordmark rest out of sight (stillness is a
-        /// reward); a step, a click or Esc brings them back.
-        /// </summary>
-        private void TickTitle(float unscaledDeltaTime)
-        {
-            if (!IsTitle || _leaving != Leaving.None || _lockedTitleTime)
-            {
-                return;
-            }
-
-            if (_credits.IsOpen)
-            {
-                _untouched = 0f;
-                return;
-            }
-
-            MenuInput menu = _input.Menu;
-            bool touched = menu.NavigatePressed || menu.ClickPressed;
-            if (_resting)
-            {
-                if (touched)
-                {
-                    Rest(false);
-                }
-
-                return;
-            }
-
-            _untouched = touched || _settingsPanel.Target ? 0f : _untouched + unscaledDeltaTime;
-            if (_untouched >= _title.IdleSeconds)
-            {
-                Rest(true);
-            }
-        }
-
-        private void Rest(bool resting)
-        {
-            _resting = resting;
-            _untouched = 0f;
-            if (resting)
-            {
-                _navigator.Blur();
-                _main.Hide();
-                _settingsPanel.Hide();
-                _titleScreen.Hide();
-                _titleKeyHint.Hide();
-                return;
-            }
-
-            _main.Show();
-            _titleScreen.Show();
-            _titleKeyHint.Show();
-            _navigator.RequestDefaultFocus();
         }
 
         /// <summary>Draws the dark; once it is drawn, <see cref="Go"/> does what was chosen.</summary>
