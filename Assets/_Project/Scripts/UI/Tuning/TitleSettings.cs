@@ -179,8 +179,8 @@ namespace MoonProject.UI
     [Serializable]
     public sealed class TitleSettings
     {
-        [Tooltip("The wordmark and subtitle easing in and out (slow and soft).")]
-        [SerializeField] private RevealSettings _reveal = new RevealSettings(2.2f, 2.8f, 14f, 0.985f, 0.6f, 0.8f);
+        [Tooltip("The wordmark and subtitle easing in and out (slow in, 0.5 s out into the lens push-in).")]
+        [SerializeField] private RevealSettings _reveal = new RevealSettings(2.2f, 0.5f, 14f, 0.985f, 0.6f, 0.8f);
 
         [Tooltip("The dark drawn over everything before New Game, Quit to title or Quit, and lifted after a boot.")]
         [SerializeField] private RevealSettings _curtain = new RevealSettings(0.9f, 1.4f, 0f, 1f, 1f, 1f);
@@ -188,10 +188,6 @@ namespace MoonProject.UI
         [Tooltip("How much of the menu blur the world takes behind the title (the pause takes all of it).")]
         [Range(0f, 1f)]
         [SerializeField] private float _backdropWeight = 0.55f;
-
-        [Tooltip("Seconds untouched before the title's menu fades and leaves the world to itself; any input returns it.")]
-        [Range(5f, 120f)]
-        [SerializeField] private float _idleSeconds = 20f;
 
         [Header("Moon turn and rover motion timings")]
         [Tooltip("Seconds for one full revolution of the Moon under 07's wheels.")]
@@ -510,8 +506,6 @@ namespace MoonProject.UI
         public RevealSettings Curtain => _curtain;
 
         public float BackdropWeight => _backdropWeight;
-
-        public float IdleSeconds => _idleSeconds;
 
         public float MoonTurnPeriodSeconds => _moonTurnPeriodSeconds;
 

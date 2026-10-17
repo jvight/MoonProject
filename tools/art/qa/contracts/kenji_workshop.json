@@ -9,13 +9,79 @@
   "scale_tolerance": 0.001,
   "allow_boundary_edges": false,
   "nodes": {
-    "KenjiWorkshop": { "pivot": [0.0, 0.0, 0.0] },
-    "QuonsetShell": { "pivot": [0.0, 0.0, 0.0] },
-    "HoistRail": { "pivot": [0.0, 0.0, 0.0] },
-    "HangingLamp": { "pivot": [0.0, 0.0, 0.0] },
-    "WorkbenchAndRacks": { "pivot": [0.0, 0.0, 0.0] },
-    "Scan_1": { "pivot": [-0.78, 0.28, 0.92] },
-    "Scan_2": { "pivot": [-0.10, -1.62, 1.44] },
-    "Scan_3": { "pivot": [0.88, -1.56, 1.54] }
+    "KenjiWorkshop": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "QuonsetShell": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "HoistRail": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "HangingLamp": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "WorkbenchAndRacks": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Scan_1": {
+      "pivot": [
+        -0.78,
+        0.28,
+        0.96
+      ]
+    },
+    "Scan_2": {
+      "pivot": [
+        -0.1,
+        -1.62,
+        1.96
+      ]
+    },
+    "Scan_3": {
+      "pivot": [
+        0.88,
+        -1.56,
+        1.94
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      5.2596,
+      5.58,
+      3.08
+    ],
+    "tolerance": 0.25,
+    "min_size": [
+      5.0096,
+      5.33,
+      2.83
+    ],
+    "max_size": [
+      5.5096,
+      5.83,
+      3.33
+    ]
   }
 }

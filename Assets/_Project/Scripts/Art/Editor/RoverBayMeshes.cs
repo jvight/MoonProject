@@ -144,8 +144,8 @@ namespace MoonProject.Art.Editor
 
         private static readonly Vector2[] MugProfile =
         {
-            new Vector2(0f, 0f), new Vector2(0.05f, 0f), new Vector2(0.055f, 0.01f), new Vector2(0.055f, 0.11f),
-            new Vector2(0.045f, 0.11f), new Vector2(0.045f, 0.015f), new Vector2(0f, 0.015f),
+            new Vector2(0f, 0f), new Vector2(0.0385f, 0f), new Vector2(0.0425f, 0.008f), new Vector2(0.0425f, 0.095f),
+            new Vector2(0.035f, 0.095f), new Vector2(0.035f, 0.012f), new Vector2(0f, 0.012f),
         };
 
         /// <summary>
@@ -760,9 +760,9 @@ namespace MoonProject.Art.Editor
             Vector3 at = MugShelf + new Vector3(0.06f, 0f, 0.03f);
             MeshRange cup = b.Lathe(At(at), MugProfile, 12, PaletteSwatch.Enamel);
             Vector3 chip = new Vector3(0.6f, 1f, 0.5f).normalized;
-            b.Shave(cup, chip, b.Support(cup, chip) - 0.012f);
-            b.Prism(At(at + new Vector3(0f, 0.06f, 0f)), 0.0565f, 0.025f, 12, PaletteSwatch.WarmAccent, false);
-            b.Torus(At(at + new Vector3(-0.065f, 0.058f, 0f), AlongZ), 0.026f, 0.008f, 8, 3, PaletteSwatch.Enamel);
+            b.Shave(cup, chip, b.Support(cup, chip) - 0.010f);
+            b.Prism(At(at + new Vector3(0f, 0.052f, 0f)), 0.0437f, 0.022f, 12, PaletteSwatch.WarmAccent, false);
+            b.Torus(At(at + new Vector3(-0.050f, 0.050f, 0f), AlongZ), 0.020f, 0.0065f, 8, 3, PaletteSwatch.Enamel);
         }
 
         /// <summary>The old hand-painted "PIT" board on the left pier, hung askew like the bench sticker.</summary>

@@ -19,23 +19,127 @@
   "max_triangles": 7000,
   "max_meshes": 16,
   "max_draw_calls": 32,
-  "allow_rotation": ["Socket_Power_*"],
+  "allow_rotation": [
+    "Socket_Power_*"
+  ],
   "scale_tolerance": 0.001,
   "allow_boundary_edges": false,
   "nodes": {
-    "AntennaMast": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_1": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_2": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_3": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_4": { "pivot": [0.0, 0.0, 0.0] },
-    "Socket_Power_1": { "pivot": [-0.49, 0.0, 0.44] },
-    "Mast": { "pivot": [0.0, 0.0, 1.55] },
-    "DishAzimuth": { "pivot": [0.44, 0.08, 2.12] },
-    "Dish": { "pivot": [0.44, 0.08, 2.22] },
-    "SonarLoop": { "pivot": [-0.38, 0.0, 2.28] },
-    "TapeReel_L": { "pivot": [0.16, 0.45, 0.78] },
-    "TapeReel_R": { "pivot": [-0.16, 0.45, 0.78] },
-    "BeaconLamp": { "pivot": [0.0, 0.0, 2.72] },
-    "DialLamp": { "pivot": [0.0, 0.43, 1.38] }
+    "AntennaMast": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_2": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_3": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_4": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Socket_Power_1": {
+      "pivot": [
+        -0.49,
+        0.0,
+        0.44
+      ]
+    },
+    "Mast": {
+      "pivot": [
+        0.0,
+        0.0,
+        1.55
+      ]
+    },
+    "DishAzimuth": {
+      "pivot": [
+        0.44,
+        0.08,
+        2.12
+      ]
+    },
+    "Dish": {
+      "pivot": [
+        0.44,
+        0.08,
+        2.22
+      ]
+    },
+    "SonarLoop": {
+      "pivot": [
+        -0.38,
+        0.0,
+        2.28
+      ]
+    },
+    "TapeReel_L": {
+      "pivot": [
+        0.16,
+        0.45,
+        0.78
+      ]
+    },
+    "TapeReel_R": {
+      "pivot": [
+        -0.16,
+        0.45,
+        0.78
+      ]
+    },
+    "BeaconLamp": {
+      "pivot": [
+        0.0,
+        0.0,
+        2.72
+      ]
+    },
+    "DialLamp": {
+      "pivot": [
+        0.0,
+        0.43,
+        1.38
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      1.5534,
+      1.2646,
+      2.797
+    ],
+    "tolerance": 0.14,
+    "min_size": [
+      1.4134,
+      1.1246,
+      2.657
+    ],
+    "max_size": [
+      1.6934,
+      1.4046,
+      2.937
+    ]
   }
 }

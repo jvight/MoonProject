@@ -62,12 +62,16 @@ namespace MoonProject.App
         private IDisposable _quitToTitle;
         private IDisposable _wakeBeat;
         private readonly PushedInGate _pushedIn = new PushedInGate();
+        private AsyncOperation _pendingReload;
         private bool _reloading;
 #if UNITY_EDITOR
         private InputActionAsset _controlsCopy;
 #endif
 
         public GameContext Context { get; private set; }
+
+        /// <summary>True while an async scene reload has been pre-warmed and is waiting for O1's black to activate.</summary>
+        public bool IsReloadPrewarmed => _pendingReload != null && !_pendingReload.allowSceneActivation;
 
         private void Awake()
         {
@@ -216,8 +220,9 @@ namespace MoonProject.App
         /// <summary>
         /// Over a world with no save the title is already a fresh game, so play begins here. Over a save, puts the save
         /// away (it refuses every later save, so nothing torn down writes the old progress back), notes that the next
-        /// boot starts fresh, and reloads this scene once the camera has pushed into 07's closed lens (O1's black): every
-        /// system, the context and this bootstrap are rebuilt.
+        /// boot starts fresh, pre-warms an async reload while the camera pushes into 07's closed lens, and activates the
+        /// reload once <see cref="WakeBeat.PushedIn"/> arrives inside O1's black: every system, the context and this
+        /// bootstrap are rebuilt without a mid-push hitch.
         /// </summary>
         private void OnNewGameRequested(NewGameRequested request)
         {
@@ -242,9 +247,10 @@ namespace MoonProject.App
             _save.PutAway();
             _intent.Arm();
             _pushedIn.Arm();
+            _pendingReload = BeginAsyncReload(allowActivation: false);
         }
 
-        /// <summary>The camera is inside 07's closed lens: the new game's reload hides in O1's black.</summary>
+        /// <summary>The camera is inside 07's closed lens: the new game's pre-warmed reload activates in O1's black.</summary>
         private void OnWakeBeat(RoverWakeBeatReached reached)
         {
             if (_pushedIn.Notify(reached.Beat))
@@ -267,10 +273,17 @@ namespace MoonProject.App
 
         private void ReloadForNewGame()
         {
-            SceneManager.LoadScene(gameObject.scene.buildIndex, LoadSceneMode.Single);
+            if (_pendingReload != null)
+            {
+                _pendingReload.allowSceneActivation = true;
+                _pendingReload = null;
+                return;
+            }
+
+            BeginAsyncReload(allowActivation: true);
         }
 
-        /// <summary>Saves and reloads this scene, which boots into the title over the same save.</summary>
+        /// <summary>Saves and reloads this scene asynchronously, which boots into the title over the same save.</summary>
         private void OnQuitToTitleRequested(QuitToTitleRequested request)
         {
             if (_reloading || !_flow.CanQuitToTitle || !CanReload("quitting to the title"))
@@ -280,7 +293,26 @@ namespace MoonProject.App
 
             _reloading = true;
             _save.SaveNow();
-            SceneManager.LoadScene(gameObject.scene.buildIndex, LoadSceneMode.Single);
+            BeginAsyncReload(allowActivation: true);
+        }
+
+        private AsyncOperation BeginAsyncReload(bool allowActivation)
+        {
+            Scene scene = gameObject.scene;
+            AsyncOperation operation = scene.buildIndex >= 0
+                ? SceneManager.LoadSceneAsync(scene.buildIndex, LoadSceneMode.Single)
+#if UNITY_EDITOR
+                : UnityEditor.SceneManagement.EditorSceneManager.LoadSceneAsyncInPlayMode(
+                    scene.path, new LoadSceneParameters(LoadSceneMode.Single));
+#else
+                : null;
+#endif
+            if (operation != null)
+            {
+                operation.allowSceneActivation = allowActivation;
+            }
+
+            return operation;
         }
 
         private static bool TestRunSkipsTitle()
@@ -294,12 +326,18 @@ namespace MoonProject.App
 
         private bool CanReload(string reason)
         {
-            if (gameObject.scene.buildIndex >= 0)
+            Scene scene = gameObject.scene;
+            if (scene.buildIndex >= 0)
             {
                 return true;
             }
-
-            Debug.LogError($"{nameof(GameBootstrap)}: scene '{gameObject.scene.path}' is not in the build settings, " +
+#if UNITY_EDITOR
+            if (!string.IsNullOrEmpty(scene.path))
+            {
+                return true;
+            }
+#endif
+            Debug.LogError($"{nameof(GameBootstrap)}: scene '{scene.path}' is not in the build settings, " +
                            $"so {reason} cannot reload it; the save was left as it is.", this);
             return false;
         }

@@ -181,5 +181,35 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(end, TetherBeamShape.Point(start, control, end, 1f));
             Assert.Greater(TetherBeamShape.Point(start, control, end, 0.5f).y, 1.5f);
         }
+
+        [Test]
+        public void DustSwirl_UsesLunarGravity_AndDoesNotGrow()
+        {
+            var tuning = ScriptableObject.CreateInstance<ExcavationTuning>();
+            var host = new GameObject("DustSwirlTestHost");
+            var quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            var mat = new Material(quad.GetComponent<Renderer>().sharedMaterial);
+            try
+            {
+                var swirl = new DustSwirl(host.transform, tuning, mat);
+                var ps = host.GetComponentInChildren<ParticleSystem>(true);
+                Assert.IsNotNull(ps);
+                Assert.GreaterOrEqual(ps.main.gravityModifier.constant, 0.99f,
+                    "Excavation dust must fall under lunar gravity, not 0g.");
+                if (ps.sizeOverLifetime.enabled)
+                {
+                    AnimationCurve curve = ps.sizeOverLifetime.size.curve;
+                    Assert.LessOrEqual(curve.Evaluate(1f), curve.Evaluate(0.15f) + 1e-3f,
+                        "Excavation dust must not swell/grow in vacuum.");
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(quad);
+                Object.DestroyImmediate(mat);
+                Object.DestroyImmediate(tuning);
+            }
+        }
     }
 }

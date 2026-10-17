@@ -12,6 +12,30 @@
   "scale_tolerance": 0.001,
   "allow_boundary_edges": false,
   "nodes": {
-    "Rock_09": { "pivot": [0.0, 0.0, 0.0] }
+    "Rock_09": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      2.9476,
+      2.7058,
+      1.833
+    ],
+    "tolerance": 0.147,
+    "min_size": [
+      2.8006,
+      2.5588,
+      1.686
+    ],
+    "max_size": [
+      3.0946,
+      2.8528,
+      1.98
+    ]
   }
 }

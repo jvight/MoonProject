@@ -32,7 +32,6 @@ namespace MoonProject.Rover
         private static readonly int FacePhasesId = Shader.PropertyToID("_FacePhases");
         private static readonly int ContentTexId = Shader.PropertyToID("_ContentTex");
         private static readonly int FaceContentStateId = Shader.PropertyToID("_FaceContentState");
-        private static readonly int CurvatureId = Shader.PropertyToID("_Curvature");
 
         [Tooltip("Face tuning asset (Assets/_Project/Data/Tuning/FaceTuning.asset).")]
         [SerializeField] private FaceTuning _tuning;
@@ -60,20 +59,8 @@ namespace MoonProject.Rover
         /// <summary>Currently bound screen UI content texture (<c>_ContentTex</c>).</summary>
         public Texture ContentTexture => _contentTexture;
 
-        /// <summary>CRT barrel curvature parameter read from the screen's shared material (defaults to 0.10).</summary>
-        public float Curvature
-        {
-            get
-            {
-                if (_screenRenderer != null && _screenRenderer.sharedMaterial != null &&
-                    _screenRenderer.sharedMaterial.HasProperty(CurvatureId))
-                {
-                    return _screenRenderer.sharedMaterial.GetFloat(CurvatureId);
-                }
-
-                return 0.10f;
-            }
-        }
+        /// <summary>CRT curvature is physically modelled by the convex Screen mesh; UV warp is 0.</summary>
+        public float Curvature => 0f;
 
         /// <summary>When true, <see cref="RoverFaceDirector"/> steps this display and <see cref="Update"/> is a no-op.</summary>
         public bool ExternallyDriven

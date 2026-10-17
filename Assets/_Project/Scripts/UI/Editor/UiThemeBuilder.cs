@@ -20,7 +20,7 @@ namespace MoonProject.UI.Editor
         public static readonly Vector2Int FaceReferenceResolution = new Vector2Int(1152, 768);
         private const string StyleSheet = UiAssetPaths.SourceFolder + "/GameUI.uss";
         private static readonly Vector2Int ReferenceResolution = new Vector2Int(1920, 1080);
-        private static readonly Color FaceClearColor = new Color(0.031f, 0.039f, 0.055f, 1f);
+        private static readonly Color FaceClearColor = new Color(0f, 0f, 0f, 0f);
 
         /// <summary>
         /// 1 scales by the screen's height. The UI is composed against the picture, whose height is what stays the

@@ -3,19 +3,18 @@ using UnityEngine;
 namespace MoonProject.Rover
 {
     /// <summary>
-    /// How visible a dust mote hanging in front of 07's headlamp is, as pure functions: dust is only seen where the
-    /// beam catches it, so a mote's opacity is the spot's soft cone at its direction, fading right at the lens and
-    /// thinning with distance; it fades in and out over its life, glints slowly as it turns, and all motes fade away
-    /// once 07 drives faster than a crawl.
+    /// How visible a kicked-up dust grain crossing 07's headlamp beam is, as pure functions: in vacuum nothing hangs
+    /// in the air when parked, so motes only appear while driving above a crawl and fall through the spot's soft cone,
+    /// fading right at the lens and thinning with distance.
     /// </summary>
     public static class LampMoteLight
     {
         private const float MinDistance = 1e-4f;
 
-        /// <summary>Target visibility (0..1) of all motes while 07 moves at <paramref name="speed"/> m/s.</summary>
+        /// <summary>Target visibility (0..1) of lamp motes while 07 moves at <paramref name="speed"/> m/s: 0 when parked, ramping to 1 while driving.</summary>
         public static float SpeedVisibility(RoverFxTuning tuning, float speed)
         {
-            return 1f - Smoothing.SmoothStep(tuning.MoteFadeSpeed, tuning.MoteGoneSpeed, speed);
+            return Smoothing.SmoothStep(tuning.MoteFadeSpeed, tuning.MoteGoneSpeed, speed);
         }
 
         /// <summary>

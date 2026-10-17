@@ -78,7 +78,7 @@ namespace MoonProject.UI
                 ? cargoSettings.RoverFarWheelScale
                 : (titleSettings != null ? titleSettings.FarWheelScale : 0.94f);
             float farAlpha = cargoSettings != null
-                ? cargoSettings.RoverFarWheelAlpha
+                ? Mathf.Max(cargoSettings.RoverFarWheelAlpha, 0.85f)
                 : (titleSettings != null ? titleSettings.FarWheelAlpha : 0.42f);
             Vector2 farOffsetRef = cargoSettings != null
                 ? cargoSettings.RoverFarWheelOffset
@@ -94,7 +94,9 @@ namespace MoonProject.UI
                 : (titleSettings != null ? titleSettings.BodyPivotHeight : 0.58f);
             float baseWingTilt = cargoSettings != null ? cargoSettings.RoverWingTilt : -0.11f;
 
-            Color32 bgWarm = titleSettings != null ? WithAlpha((Color32)titleSettings.BgWarm, 178) : DefaultBgWarm;
+            Color32 bgWarm = cargoSettings != null
+                ? cargoSettings.CellBackground
+                : (titleSettings != null ? WithAlpha((Color32)titleSettings.BgWarm, 178) : DefaultBgWarm);
             Color32 amber = cargoSettings != null
                 ? cargoSettings.AmberText
                 : (titleSettings != null ? (Color32)titleSettings.Amber : DefaultAmber);
@@ -180,16 +182,19 @@ namespace MoonProject.UI
             float wyRear = (crownY + pose.MoonDropAtAxle) - wheelR + pose.BumpRear * s;
             float wyFront = (crownY + pose.MoonDropAtAxle) - wheelR + pose.BumpFront * s;
 
-            // 0. Subtle lunar ground arc & contact shadow under 07 (in inventory diagram mode)
+            // 0. Subtle lunar ground arc under 07 (in inventory diagram mode)
             if (pose.DrawGroundArc)
             {
                 StrokeQuadratic(painter,
                     new Vector2(crownX - 1.35f * s, crownY + 14f * sc),
                     new Vector2(crownX, crownY - 6f * sc),
                     new Vector2(crownX + 1.35f * s, crownY + 18f * sc),
-                    WithAlpha(amberFaint, 110), 1.5f);
-                FillEllipse(painter, new Vector2(crownX, crownY + 2f * sc), 0.86f * s, 11f * sc, 0f,
-                    new Color32(10, 6, 3, 140));
+                    WithAlpha(amberFaint, 225), 1.5f);
+                if (cargoSettings == null)
+                {
+                    FillEllipse(painter, new Vector2(crownX, crownY + 2f * sc), 0.86f * s, 11f * sc, 0f,
+                        new Color32(10, 6, 3, 140));
+                }
             }
 
             // 1. Far-side wheels (2 wheels in 3/4 depth offset, drawn behind chassis without interior disc fill)
@@ -265,7 +270,7 @@ namespace MoonProject.UI
             painter.ClosePath();
             painter.Fill();
 
-            int tubPasses = titleGlow ? 3 : 2;
+            int tubPasses = titleGlow ? 3 : 1;
             for (int pass = 0; pass < tubPasses; pass++)
             {
                 if (titleGlow)
@@ -288,9 +293,8 @@ namespace MoonProject.UI
                 }
                 else
                 {
-                    bool isGlow = pass == 0;
-                    painter.strokeColor = WithAlpha(amber, (byte)(isGlow ? 48 : 245));
-                    painter.lineWidth = (isGlow ? 6.6f : 2.3f) * sc;
+                    painter.strokeColor = WithAlpha(amber, 248);
+                    painter.lineWidth = 2.3f * sc;
                 }
 
                 painter.lineCap = LineCap.Round;
@@ -316,7 +320,7 @@ namespace MoonProject.UI
 
             // 6. Horizontal chassis beltline seams
             DrawGlowLine(B(-0.60f * s, -0.60f * s), B(0.65f * s, -0.60f * s), WithAlpha(amberDim, 210), 1.2f * sc);
-            DrawLine(painter, B(-0.56f * s, -0.78f * s), B(0.56f * s, -0.78f * s), WithAlpha(amberFaint, 175), 1.0f * sc);
+            DrawLine(painter, B(-0.56f * s, -0.78f * s), B(0.56f * s, -0.78f * s), WithAlpha(amberFaint, 220), 1.0f * sc);
 
             // 7. Side inspection hatch + 4 vertical louver vents (highlighted when Panniers is installed)
             bool hasPanniers = pose.IsInstalled(RoverSocket.Panniers);
@@ -330,7 +334,7 @@ namespace MoonProject.UI
             for (int v = 0; v < 4; v++)
             {
                 float vx = (-0.27f + v * 0.065f) * s;
-                DrawLine(painter, B(vx, -0.71f * s), B(vx, -0.52f * s), WithAlpha(amberFaint, 195), 1.0f * sc);
+                DrawLine(painter, B(vx, -0.71f * s), B(vx, -0.52f * s), WithAlpha(amberFaint, 220), 1.0f * sc);
             }
 
             // 8. 6-segment side battery charge indicator bar (highlighted when Flanks is installed)
@@ -358,10 +362,10 @@ namespace MoonProject.UI
                 ScratchQuad[3] = B(sx + 0.8f * sc, by0 + bh - 2f * sc);
                 if (i < 5)
                 {
-                    FillPolygon(painter, ScratchQuad, 4, WithAlpha(amberHi, (byte)(hasFlanks ? 210 : 158)));
+                    FillPolygon(painter, ScratchQuad, 4, WithAlpha(amberHi, (byte)(hasFlanks ? 235 : 215)));
                 }
 
-                StrokePolygon(painter, ScratchQuad, 4, WithAlpha(amberDim, 195), 0.9f * sc);
+                StrokePolygon(painter, ScratchQuad, 4, WithAlpha(amberDim, 220), 0.9f * sc);
             }
 
             // 9. Front lower dig scoop / blade
@@ -409,7 +413,7 @@ namespace MoonProject.UI
                 float minReach = pose.AlwaysDrawHeadlampBeam ? 0.98f : Mathf.Min(0.84f, maxReach * 0.72f);
                 float sliceAlphaFloat = pose.AlwaysDrawHeadlampBeam
                     ? 0.032f
-                    : (cargoSettings != null ? cargoSettings.HeadlampBeamSliceAlpha : 0.028f);
+                    : (cargoSettings != null ? cargoSettings.HeadlampBeamSliceAlpha : 0f);
                 byte sliceAlpha = (byte)Mathf.Clamp(Mathf.RoundToInt(sliceAlphaFloat * 255f), 0, 255);
                 if (sliceAlpha > 0)
                 {
@@ -426,6 +430,11 @@ namespace MoonProject.UI
                         ScratchBeam[3] = B(0.73f * s, -0.59f * s);
                         FillPolygon(painter, ScratchBeam, 4, beamCol);
                     }
+                }
+                else
+                {
+                    DrawLine(painter, B(0.75f * s, -0.63f * s), B(0.96f * s, -0.68f * s), WithAlpha(amberDim, 230), 1.2f * sc);
+                    DrawLine(painter, B(0.75f * s, -0.60f * s), B(0.96f * s, -0.53f * s), WithAlpha(amberDim, 230), 1.2f * sc);
                 }
             }
 
@@ -474,7 +483,7 @@ namespace MoonProject.UI
                 WithAlpha(hasWing ? amberHi : amber, 240), (hasWing ? 2.1f : 1.8f) * sc);
             for (int c = -20; c <= 16; c += 12)
             {
-                DrawLine(painter, W(c * sc, -9f * sc), W(c * sc, -6f * sc), WithAlpha(amberDim, 210), 1.0f * sc);
+                DrawLine(painter, W(c * sc, -9f * sc), W(c * sc, -6f * sc), WithAlpha(amberDim, 220), 1.0f * sc);
             }
 
             // 13. Rear whip antenna + diamond sonar loop + Morse beacon
@@ -503,8 +512,8 @@ namespace MoonProject.UI
                 FillCircle(painter, antTip, 2.0f * sc, cream);
                 Color32 ringCol = titleGlow ? cyan : amberHi;
                 Color32 outerRingCol = titleGlow ? cyanDim : amber;
-                StrokeGlowCircle(antTip, 7f * sc, WithAlpha(ringCol, 140), 1.2f * sc, titleGlow);
-                StrokeCircle(painter, antTip, 13f * sc, WithAlpha(outerRingCol, 72), 1.0f * sc);
+                StrokeGlowCircle(antTip, 7f * sc, WithAlpha(ringCol, (byte)(titleGlow ? 140 : 225)), 1.2f * sc, titleGlow);
+                StrokeCircle(painter, antTip, 13f * sc, WithAlpha(outerRingCol, (byte)(titleGlow ? 72 : 215)), 1.0f * sc);
             }
 
             // 14. Ribbed rubber neck bellows (3 stacked collars)
@@ -544,7 +553,7 @@ namespace MoonProject.UI
             painter.fillColor = bgWarm;
             painter.Fill();
 
-            int headPasses = titleGlow ? 3 : 2;
+            int headPasses = titleGlow ? 3 : 1;
             for (int pass = 0; pass < headPasses; pass++)
             {
                 if (titleGlow)
@@ -567,9 +576,8 @@ namespace MoonProject.UI
                 }
                 else
                 {
-                    bool isGlow = pass == 0;
-                    painter.strokeColor = WithAlpha(amber, (byte)(isGlow ? 48 : 248));
-                    painter.lineWidth = (isGlow ? 6.4f : 2.3f) * sc;
+                    painter.strokeColor = WithAlpha(amber, 248);
+                    painter.lineWidth = 2.3f * sc;
                 }
 
                 BeginRoundedHeadPath(painter, headPivot, cosH, sinH, -hw * 0.85f, -hh, hw * 1.85f, hh, hr);
@@ -756,10 +764,6 @@ namespace MoonProject.UI
             {
                 // Dark interior disc so background lines do not show through near-side wheels.
                 FillCircle(painter, center, rOuter, bgWarm);
-                if (!titleGlow)
-                {
-                    StrokeCircle(painter, center, rOuter, WithAlpha(amber, 48), 6.2f * sc);
-                }
             }
 
             float outerW = (isFarSide ? 1.5f : 2.2f) * sc;

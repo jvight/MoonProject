@@ -17,7 +17,7 @@ namespace MoonProject.Rover
 
         [Tooltip("Half-life (s) of the steering input easing back to centre when released.")]
         [Range(0f, 0.5f)]
-        [SerializeField] private float _steerReturnHalfLife = 0.06f;
+        [SerializeField] private float _steerReturnHalfLife = 0.16f;
 
         [Tooltip("Turn rate (deg/s) when standing still: a deliberate on-the-spot pivot.")]
         [Range(0f, 180f)]

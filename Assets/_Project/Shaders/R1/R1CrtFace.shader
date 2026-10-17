@@ -10,14 +10,13 @@ Shader "MoonProject/R1/CrtFace"
         _BloomSafeMax ("Bloom Safe Max", Range(0.5, 1.2)) = 1.06
         _HotCorePeak ("Hot Core Peak", Range(1.0, 2.5)) = 1.65
         _Smoothness ("Glass Smoothness", Range(0.0, 1.0)) = 0.86
-        _Curvature ("CRT Glass Curvature", Range(0.0, 0.25)) = 0.08
         _ScanlineCount ("Scanline Count", Range(60.0, 480.0)) = 280.0
-        _ScanlineDepth ("Scanline Depth", Range(0.0, 0.5)) = 0.12
+        _ScanlineDepth ("Scanline Depth", Range(0.0, 0.5)) = 0.15
         _GlowRadius ("Phosphor Halo Radius", Range(0.005, 0.08)) = 0.028
         _TrailAlpha ("Phosphor Trail Alpha", Range(0.0, 0.8)) = 0.28
-        _ContentGlowIntensity ("Content Phosphor Glow Intensity", Range(0.0, 0.5)) = 0.12
-        _ContentGlowMip ("Content Phosphor Glow Mip", Range(0.5, 4.0)) = 1.60
-        _ContentScanlineAtten ("Content Scanline Attenuation", Range(0.0, 1.0)) = 0.55
+        _ContentGlowIntensity ("Content Phosphor Glow Intensity", Range(0.0, 0.5)) = 0.20
+        _ContentGlowMip ("Content Phosphor Glow Mip", Range(0.5, 4.0)) = 1.25
+        _ContentScanlineAtten ("Content Scanline Attenuation", Range(0.0, 1.0)) = 0.60
 
         _EyeLeftRect ("Left Eye Rect (cx, cy, w, h)", Vector) = (0.31, 0.50, 0.2006, 0.4012)
         _EyeLeftShape ("Left Eye Shape (tilt, cut, squint, open)", Vector) = (0, 0, 0, 1)

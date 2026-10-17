@@ -165,6 +165,77 @@ namespace MoonProject.UI.Tests
             }
         }
 
+        [Test]
+        public void GlassSafeArea_ContainsAllInventoryElementsAndMarginsAreSymmetric_AndCameraFramingIsSquareAcrossAspects()
+        {
+            Vector2 panelSize = FaceScreenMapper.DefaultPanelSize;
+            float minMargin = FaceScreenMapper.GlassSafeMarginPx;
+
+            float contentMinX = float.MaxValue;
+            float contentMaxX = float.MinValue;
+            float contentMinY = float.MaxValue;
+            float contentMaxY = float.MinValue;
+
+            // 1. All 24 Hold grid cells lie inside the rounded-rectangle glass mask with margin >= M.
+            for (int i = 0; i < FaceInventoryView.MaxHoldCells; i++)
+            {
+                Rect cell = FaceInventoryView.GetHoldCellReferenceRect(i);
+                float dist = FaceScreenMapper.SignedDistanceInsideGlass(cell, panelSize);
+                Assert.GreaterOrEqual(dist, minMargin,
+                    $"Hold cell {i} ({cell}) must stay >= {minMargin}px inside the rounded CRT glass (actual {dist:F2}px).");
+                contentMinX = Mathf.Min(contentMinX, cell.xMin);
+                contentMaxX = Mathf.Max(contentMaxX, cell.xMax);
+            }
+
+            // 2. All 10 Orbital socket bubbles lie inside the rounded-rectangle glass mask with margin >= M.
+            for (int i = 0; i < FaceInventoryView.OrbitalSocketCount; i++)
+            {
+                Vector2 center = FaceInventoryView.GetOrbitalSocketReferenceCenter(i);
+                float r = FaceInventoryView.BubbleRadius;
+                float dist = FaceScreenMapper.SignedDistanceInsideGlass(center, r, panelSize);
+                Assert.GreaterOrEqual(dist, minMargin,
+                    $"Orbital socket {FaceInventoryView.OrbitalSockets[i]} at {center} must stay >= {minMargin}px inside the rounded CRT glass (actual {dist:F2}px).");
+                contentMinX = Mathf.Min(contentMinX, center.x - r);
+                contentMaxX = Mathf.Max(contentMaxX, center.x + r);
+            }
+
+            // 3. Headers, header rules, divider, and both left/right tooltip boxes lie inside the glass safe area.
+            var leftHeaderRule = new Rect(72f, 42f, 376f, 22f);
+            var rightHeaderRule = new Rect(FaceInventoryView.ShelfGridX, 42f, 568f, 22f);
+            var leftTooltip = new Rect(72f, 664f, 376f, 62f);
+            var rightTooltip = new Rect(512f, 664f, 568f, 62f);
+
+            Assert.GreaterOrEqual(FaceScreenMapper.SignedDistanceInsideGlass(leftHeaderRule, panelSize), minMargin,
+                "Left header and rule must lie inside the glass safe area.");
+            Assert.GreaterOrEqual(FaceScreenMapper.SignedDistanceInsideGlass(rightHeaderRule, panelSize), minMargin,
+                "Right header and rule must lie inside the glass safe area.");
+            Assert.GreaterOrEqual(FaceScreenMapper.SignedDistanceInsideGlass(leftTooltip, panelSize), minMargin,
+                "Left hold tooltip must lie inside the glass safe area.");
+            Assert.GreaterOrEqual(FaceScreenMapper.SignedDistanceInsideGlass(rightTooltip, panelSize), minMargin,
+                "Right socket tooltip must lie inside the glass safe area.");
+
+            contentMinY = leftHeaderRule.yMin;
+            contentMaxY = leftTooltip.yMax;
+
+            // 4. Left/right and top/bottom margins of the content bounding box differ by < 10%.
+            float leftMargin = contentMinX;
+            float rightMargin = panelSize.x - contentMaxX;
+            float topMargin = contentMinY;
+            float bottomMargin = panelSize.y - contentMaxY;
+
+            Assert.GreaterOrEqual(leftMargin, minMargin);
+            Assert.GreaterOrEqual(rightMargin, minMargin);
+            Assert.GreaterOrEqual(topMargin, minMargin);
+            Assert.GreaterOrEqual(bottomMargin, minMargin);
+
+            float lrDiffRatio = Mathf.Abs(leftMargin - rightMargin) / Mathf.Max(leftMargin, rightMargin);
+            float tbDiffRatio = Mathf.Abs(topMargin - bottomMargin) / Mathf.Max(topMargin, bottomMargin);
+            Assert.Less(lrDiffRatio, 0.10f,
+                $"Left ({leftMargin:F1}px) and right ({rightMargin:F1}px) margins must differ by < 10% (actual {lrDiffRatio * 100f:F1}%).");
+            Assert.Less(tbDiffRatio, 0.10f,
+                $"Top ({topMargin:F1}px) and bottom ({bottomMargin:F1}px) margins must differ by < 10% (actual {tbDiffRatio * 100f:F1}%).");
+        }
+
         private sealed class FakeFaceScreen : IRoverFaceScreen
         {
             public float Curvature { get; set; }

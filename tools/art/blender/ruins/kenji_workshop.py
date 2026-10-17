@@ -255,37 +255,37 @@ def _build_quonset_shell(root) -> None:
 
 
 def _build_hoist_rail(root) -> None:
-    """Build the overhead I-beam hoist rail across the interior with warm-orange trolley and hook."""
+    """Build the overhead I-beam hoist rail across the interior with warm-orange trolley and hook (min Z >= 1.75 m)."""
     mb = r1kit.MeshBuilder()
-    ry = 1.84
+    ry = 2.12
     rz = -1.62
 
     # Ceiling hanger brackets supporting the transverse hoist beam
     for hx in (-1.35, 1.35):
-        mb.add_bevel_box((hx, ry + 0.34, rz), (0.12, 0.62, 0.12), bevel=0.010, mat="R1_GreyMetal", segs=1)
+        mb.add_bevel_box((hx, ry + 0.18, rz), (0.12, 0.36, 0.12), bevel=0.010, mat="R1_GreyMetal", segs=1)
 
     # Transverse overhead I-beam hoist rail visible right inside the open doorway
     mb.add_bevel_box((0.0, ry + 0.05, rz), (3.12, 0.035, 0.16), bevel=0.005, mat="R1_GreyMetal", segs=1)
     mb.add_bevel_box((0.0, ry, rz), (3.12, 0.10, 0.05), bevel=0.005, mat="R1_GreyMetal", segs=1)
     mb.add_bevel_box((0.0, ry - 0.05, rz), (3.12, 0.035, 0.16), bevel=0.005, mat="R1_BareSteel", segs=1)
 
-    # Warm-orange trolley block & hanging hoist hook near the center (`x = -0.10`)
+    # Warm-orange trolley block & compact hanging hoist hook near the center (`x = -0.10`, hook bottom at 1.750 m)
     tx = -0.10
-    mb.add_bevel_box((tx, ry - 0.12, rz), (0.38, 0.17, 0.24), bevel=0.014, mat="R1_OrangeStripe", segs=1)
-    mb.add_cylinder((tx, ry - 0.28, rz), radius=0.024, height=0.26, segs=10, axis="y", mat="R1_GreyMetal")
-    mb.add_bevel_box((tx, ry - 0.40, rz), (0.12, 0.12, 0.10), bevel=0.012, mat="R1_OrangeStripe", segs=1)
-    mb.add_ring((tx, ry - 0.50, rz), r_outer=0.072, r_inner=0.034, height=0.036, segs=16, axis="z", mat="R1_GreyMetal")
+    mb.add_bevel_box((tx, ry - 0.12, rz), (0.38, 0.15, 0.24), bevel=0.014, mat="R1_OrangeStripe", segs=1)
+    mb.add_cylinder((tx, ry - 0.22, rz), radius=0.024, height=0.12, segs=10, axis="y", mat="R1_GreyMetal")
+    mb.add_bevel_box((tx, ry - 0.27, rz), (0.12, 0.09, 0.10), bevel=0.012, mat="R1_OrangeStripe", segs=1)
+    mb.add_ring((tx, 1.812, rz), r_outer=0.062, r_inner=0.030, height=0.036, segs=16, axis="z", mat="R1_GreyMetal")
 
     ruins_common.to_ruin_object(mb, "HoistRail", parent=root)
 
 
 def _build_hanging_lamp(root) -> None:
-    """Build the warm glowing cage lantern (`R1_LampAmber`) hanging on the right inside the open doorway."""
+    """Build the warm glowing cage lantern (`R1_LampAmber`) hanging on the right inside the open doorway (min Z = 1.75 m)."""
     mb = r1kit.MeshBuilder()
-    lx, ly, lz = 0.88, 1.54, -1.56
+    lx, ly, lz = 0.88, 1.94, -1.56
 
-    # Suspension conduit rod & top dome cap
-    mb.add_cylinder((lx, ly + 0.34, lz), radius=0.022, height=0.52, segs=12, axis="y", mat="R1_GreyMetal")
+    # Suspension conduit rod & top dome cap (cord shortened by -0.40 m so lamp bottom sits at 1.750 m)
+    mb.add_cylinder((lx, ly + 0.24, lz), radius=0.022, height=0.32, segs=12, axis="y", mat="R1_GreyMetal")
     mb.add_cylinder((lx, ly + 0.12, lz), radius=0.15, height=0.08, segs=20, axis="y", mat="R1_GreyMetal", bevel=0.015)
 
     # Warm glowing rounded lantern bulb (`R1_LampAmber`, 24 segments)
@@ -315,33 +315,33 @@ def _build_workbench_and_racks(root) -> None:
     """Build Kenji's workbench visible on the left inside the workshop, tool board, and rear cabinet."""
     mb = r1kit.MeshBuilder()
 
-    # 1. Kenji's Workbench on the left side of the interior (`x = -0.78, z = +0.28`, top at `y = 0.78`)
+    # 1. Kenji's Workbench on the left side of the interior (`x = -0.78, z = +0.28`, top at `y = 0.880 m`)
     wx, wz = -0.78, 0.28
     w_width = 1.62
     w_depth = 0.78
-    # Sturdy tabletop
-    mb.add_bevel_box((wx, 0.76, wz), (w_width, 0.07, w_depth), bevel=0.012, mat="R1_GreyMetal", segs=1)
+    # Sturdy tabletop (top face at y = 0.845 + 0.035 = 0.880 m)
+    mb.add_bevel_box((wx, 0.845, wz), (w_width, 0.07, w_depth), bevel=0.012, mat="R1_GreyMetal", segs=1)
     # Under-table frame & right-side tool drawer
-    mb.add_bevel_box((wx, 0.68, wz), (w_width - 0.12, 0.09, w_depth - 0.10), bevel=0.008, mat="R1_GreyMetal", segs=1)
-    mb.add_bevel_box((wx + 0.42, 0.56, wz), (0.56, 0.16, w_depth - 0.12), bevel=0.010, mat="R1_CreamEnamel", segs=1)
-    mb.add_bevel_box((wx + 0.42, 0.56, wz - w_depth * 0.5 + 0.04), (0.22, 0.035, 0.04), bevel=0.004, mat="R1_GreyMetal", segs=1)
+    mb.add_bevel_box((wx, 0.765, wz), (w_width - 0.12, 0.09, w_depth - 0.10), bevel=0.008, mat="R1_GreyMetal", segs=1)
+    mb.add_bevel_box((wx + 0.42, 0.645, wz), (0.56, 0.16, w_depth - 0.12), bevel=0.010, mat="R1_CreamEnamel", segs=1)
+    mb.add_bevel_box((wx + 0.42, 0.645, wz - w_depth * 0.5 + 0.04), (0.22, 0.035, 0.04), bevel=0.004, mat="R1_GreyMetal", segs=1)
 
     # 4 square legs & lower stretcher rails
     for lx_off in (-0.72, 0.72):
         for lz_off in (-0.32, 0.32):
-            mb.add_bevel_box((wx + lx_off, 0.38, wz + lz_off), (0.075, 0.72, 0.075), bevel=0.008, mat="R1_GreyMetal", segs=1)
-        mb.add_bevel_box((wx + lx_off, 0.20, wz), (0.06, 0.05, w_depth - 0.08), bevel=0.006, mat="R1_GreyMetal", segs=1)
-    mb.add_bevel_box((wx, 0.20, wz + 0.30), (w_width - 0.10, 0.05, 0.06), bevel=0.006, mat="R1_GreyMetal", segs=1)
+            mb.add_bevel_box((wx + lx_off, 0.4225, wz + lz_off), (0.075, 0.805, 0.075), bevel=0.008, mat="R1_GreyMetal", segs=1)
+        mb.add_bevel_box((wx + lx_off, 0.22, wz), (0.06, 0.05, w_depth - 0.08), bevel=0.006, mat="R1_GreyMetal", segs=1)
+    mb.add_bevel_box((wx, 0.22, wz + 0.30), (w_width - 0.10, 0.05, 0.06), bevel=0.006, mat="R1_GreyMetal", segs=1)
 
     # Machinist bench vice & small instrument box on top of the workbench
-    mb.add_bevel_box((wx + 0.18, 0.85, wz - 0.14), (0.26, 0.12, 0.24), bevel=0.010, mat="R1_GreyMetal", segs=1)
-    mb.add_cylinder((wx + 0.18, 0.85, wz - 0.28), radius=0.020, height=0.14, segs=10, axis="z", mat="R1_BareSteel")
-    mb.add_bevel_box((wx - 0.38, 0.83, wz + 0.06), (0.34, 0.08, 0.22), bevel=0.008, mat="R1_OrangeStripe", segs=1)
+    mb.add_bevel_box((wx + 0.18, 0.935, wz - 0.14), (0.26, 0.12, 0.24), bevel=0.010, mat="R1_GreyMetal", segs=1)
+    mb.add_cylinder((wx + 0.18, 0.935, wz - 0.28), radius=0.020, height=0.14, segs=10, axis="z", mat="R1_BareSteel")
+    mb.add_bevel_box((wx - 0.38, 0.915, wz + 0.06), (0.34, 0.08, 0.22), bevel=0.008, mat="R1_OrangeStripe", segs=1)
 
     # 2. Interior Wall Rail & Riveted Sage Tool Board (`R1_SagePatch`)
-    mb.add_bevel_box((-1.32, 1.04, 0.45), (0.06, 0.56, 0.06), bevel=0.006, mat="R1_GreyMetal", segs=1)
+    mb.add_bevel_box((-1.32, 1.12, 0.45), (0.06, 0.56, 0.06), bevel=0.006, mat="R1_GreyMetal", segs=1)
     mb.add_bevel_box(
-        (-2.12, 1.34, 0.15),
+        (-2.12, 1.38, 0.15),
         (0.06, 0.68, 1.48),
         bevel=0.010,
         mat="R1_SagePatch",
@@ -349,9 +349,9 @@ def _build_workbench_and_racks(root) -> None:
         segs=1,
     )
 
-    # 3. Rear-right storage cabinet (`R1_CreamEnamel` / `R1_GreyMetal`)
-    mb.add_bevel_box((1.36, 0.58, 1.65), (0.68, 1.08, 0.72), bevel=0.018, mat="R1_CreamEnamel", segs=1)
-    mb.add_bevel_box((1.36, 1.13, 1.65), (0.70, 0.06, 0.74), bevel=0.008, mat="R1_GreyMetal", segs=1)
+    # 3. Rear-right storage cabinet (`R1_CreamEnamel` / `R1_GreyMetal`, 1.80 m tall)
+    mb.add_bevel_box((1.36, 0.90, 1.65), (0.68, 1.72, 0.72), bevel=0.018, mat="R1_CreamEnamel", segs=1)
+    mb.add_bevel_box((1.36, 1.77, 1.65), (0.70, 0.06, 0.74), bevel=0.008, mat="R1_GreyMetal", segs=1)
 
     ruins_common.to_ruin_object(mb, "WorkbenchAndRacks", parent=root)
 
@@ -366,9 +366,9 @@ def build(skip_renders: bool = False) -> None:
     _build_workbench_and_racks(root)
 
     # Scan points as empties named Scan_<n>
-    r1kit.add_empty("Scan_1", (-0.78, 0.92, 0.28), parent=root)   # Kenji's workbench
-    r1kit.add_empty("Scan_2", (-0.10, 1.44, -1.62), parent=root)  # Overhead hoist trolley & hook
-    r1kit.add_empty("Scan_3", (0.88, 1.54, -1.56), parent=root)   # Warm hanging workshop lamp
+    r1kit.add_empty("Scan_1", (-0.78, 0.96, 0.28), parent=root)   # Kenji's workbench
+    r1kit.add_empty("Scan_2", (-0.10, 1.96, -1.62), parent=root)  # Overhead hoist trolley & hook
+    r1kit.add_empty("Scan_3", (0.88, 1.94, -1.56), parent=root)   # Warm hanging workshop lamp
 
     fbx_path, dawn_path, night_path = ruins_common.finalize_ruin_and_export(
         root,
@@ -383,4 +383,4 @@ def build(skip_renders: bool = False) -> None:
 
 
 if __name__ == "__main__":
-    build()
+    build(skip_renders="--skip-renders" in sys.argv)

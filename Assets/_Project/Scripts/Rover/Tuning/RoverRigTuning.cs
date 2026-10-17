@@ -76,6 +76,23 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _rearSteerFactor = 0f;
 
+        [Header("Lower-body regolith dust")]
+        [Tooltip("Grounded driving distance (m) for 07's wheels, suspension arms, and struts to reach full regolith dust.")]
+        [Min(1f)]
+        [SerializeField] private float _dustFullMeters = 180f;
+
+        [Tooltip("Half-life (s) for lower-body dust to brush off while docked at home.")]
+        [Min(0.05f)]
+        [SerializeField] private float _dustCleanHalfLife = 0.8f;
+
+        [Tooltip("Baseline _DustAmount on clean lower-body parts.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _dustMinAmount = 0.04f;
+
+        [Tooltip("Peak _DustAmount on fully dusted lower-body parts after a long drive.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _dustMaxAmount = 0.72f;
+
         [Header("Jelly lean")]
         [Tooltip("Spring frequency (Hz) of the chassis pitch/roll lean.")]
         [Range(0.2f, 6f)]
@@ -233,6 +250,14 @@ namespace MoonProject.Rover
         public float FrontSteerAngle => _frontSteerAngle;
 
         public float RearSteerFactor => _rearSteerFactor;
+
+        public float DustFullMeters => Mathf.Max(1f, _dustFullMeters);
+
+        public float DustCleanHalfLife => Mathf.Max(0.05f, _dustCleanHalfLife);
+
+        public float DustMinAmount => _dustMinAmount;
+
+        public float DustMaxAmount => Mathf.Max(_dustMinAmount, _dustMaxAmount);
 
         public float LeanFrequency => _leanFrequency;
 

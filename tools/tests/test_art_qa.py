@@ -118,6 +118,29 @@ class LintTests(unittest.TestCase):
         closed = model_lint.evaluate(rotated, {"allow_rotation": ["Ant*"], "allow_boundary_edges": False}, SLOTS)
         self.assertFalse(verdicts(closed)["topology"])
 
+    def test_bounds_check_passes_within_tolerance_and_fails_outside(self):
+        bounded = facts(bounds={"min": [-0.74, -0.90, 0.0], "max": [0.74, 0.90, 1.59], "size": [1.48, 1.80, 1.59]})
+        ok_contract = {
+            "model": "m",
+            "bounds": {
+                "size": [1.48, 1.80, 1.59],
+                "tolerance": 0.05,
+                "min_size": [1.43, 1.75, 1.54],
+                "max_size": [1.53, 1.85, 1.64],
+            },
+        }
+        self.assertTrue(verdicts(model_lint.evaluate(bounded, ok_contract, SLOTS))["bounds"])
+        bad_contract = {
+            "model": "m",
+            "bounds": {
+                "size": [1.20, 1.80, 1.59],
+                "tolerance": 0.05,
+                "min_size": [1.15, 1.75, 1.54],
+                "max_size": [1.25, 1.85, 1.64],
+            },
+        }
+        self.assertFalse(verdicts(model_lint.evaluate(bounded, bad_contract, SLOTS))["bounds"])
+
 
 if __name__ == "__main__":
     unittest.main()

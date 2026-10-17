@@ -19,23 +19,127 @@
   "max_triangles": 9000,
   "max_meshes": 16,
   "max_draw_calls": 32,
-  "allow_rotation": ["Socket_Power_*"],
+  "allow_rotation": [
+    "Socket_Power_*"
+  ],
   "scale_tolerance": 0.001,
   "allow_boundary_edges": false,
   "nodes": {
-    "VehiclePad": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_1": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_2": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_3": { "pivot": [0.0, 0.0, 0.0] },
-    "Stage_4": { "pivot": [0.0, 0.0, 0.0] },
-    "Socket_Power_1": { "pivot": [-1.36, -0.56, 0.16] },
-    "CraneBoom": { "pivot": [-1.14, -0.92, 1.94] },
-    "HoistHook": { "pivot": [0.06, 0.02, 2.08] },
-    "BoomLamp": { "pivot": [0.18, 0.12, 1.96] },
-    "RampLip": { "pivot": [0.0, 1.34, 0.2] },
-    "BollardLamp_1": { "pivot": [1.42, 0.48, 0.42] },
-    "BollardLamp_2": { "pivot": [-1.42, 0.48, 0.42] },
-    "BollardLamp_3": { "pivot": [0.7, -1.22, 0.42] },
-    "BollardLamp_4": { "pivot": [-0.7, 1.22, 0.42] }
+    "VehiclePad": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_1": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_2": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_3": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Stage_4": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Socket_Power_1": {
+      "pivot": [
+        -1.36,
+        -0.56,
+        0.16
+      ]
+    },
+    "CraneBoom": {
+      "pivot": [
+        -1.14,
+        -0.92,
+        1.94
+      ]
+    },
+    "HoistHook": {
+      "pivot": [
+        0.06,
+        0.02,
+        2.08
+      ]
+    },
+    "BoomLamp": {
+      "pivot": [
+        0.18,
+        0.12,
+        1.96
+      ]
+    },
+    "RampLip": {
+      "pivot": [
+        0.0,
+        1.34,
+        0.2
+      ]
+    },
+    "BollardLamp_1": {
+      "pivot": [
+        1.42,
+        0.48,
+        0.42
+      ]
+    },
+    "BollardLamp_2": {
+      "pivot": [
+        -1.42,
+        0.48,
+        0.42
+      ]
+    },
+    "BollardLamp_3": {
+      "pivot": [
+        0.7,
+        -1.22,
+        0.42
+      ]
+    },
+    "BollardLamp_4": {
+      "pivot": [
+        -0.7,
+        1.22,
+        0.42
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      3.7605,
+      3.3889,
+      2.2851
+    ],
+    "tolerance": 0.188,
+    "min_size": [
+      3.5725,
+      3.2009,
+      2.0971
+    ],
+    "max_size": [
+      3.9485,
+      3.5769,
+      2.4731
+    ]
   }
 }

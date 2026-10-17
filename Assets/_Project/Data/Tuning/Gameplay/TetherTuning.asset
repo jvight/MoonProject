@@ -47,6 +47,9 @@ MonoBehaviour:
   _wobble: 0.1
   _wobbleFrequency: 1.3
   _strainWobble: 0.25
+  _strainTighten: 0.85
+  _strainIntensityBoost: 0.9
+  _strainFrequencyBoost: 2.5
   _beamWidth: {x: 0.09, y: 0.05}
   _beamExtend: 0.18
   _beamRetract: 0.28

@@ -22,6 +22,27 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// 07 bumped or scraped into an obstacle (boulder, crate, wall, ruin). Drives contact thud audio and chassis jolt.
+    /// </summary>
+    public readonly struct RoverCollided
+    {
+        public RoverCollided(Vector3 position, Vector3 normal, float impactSpeed)
+        {
+            Position = position;
+            Normal = normal;
+            ImpactSpeed = impactSpeed;
+        }
+
+        public Vector3 Position { get; }
+
+        /// <summary>Outward planar normal of the obstacle contact.</summary>
+        public Vector3 Normal { get; }
+
+        /// <summary>Speed into the obstacle normal at impact in m/s (always positive).</summary>
+        public float ImpactSpeed { get; }
+    }
+
+    /// <summary>
     /// 07 began waking up at the start of the session (eye opening, design ruling 8): the moment the radio crackles on.
     /// </summary>
     public readonly struct RoverAwoke

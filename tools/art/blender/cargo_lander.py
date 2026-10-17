@@ -42,7 +42,7 @@ CARGO_LANDER_DIMS: dict[str, Any] = {
     "bay_y_ceil": 2.44,
     "bay_arch_radius": 0.42,
     "bay_z_front": 1.66,
-    "bay_z_back": -1.18,
+    "bay_z_back": -1.34,
     # Underbelly thermal blanket & descent engine nozzle
     "belly_y_bot": 0.36,
     "belly_radius": 1.68,
@@ -139,7 +139,7 @@ CARGO_LANDER_DIMS: dict[str, Any] = {
     # ChargeContacts & Bay repair parts
     "charge_contacts_pivot_u": (0.0, 0.48, 0.20),
     "bay_cable_pivot_u": (-0.88, 1.16, 0.22),
-    "bay_socket_pivot_u": (-0.88, 1.30, -0.36),
+    "bay_socket_pivot_u": (-0.88, 1.30, -0.71),
     # Power sockets at the tips of the 4 downward-curving lower-capsule cable stubs
     "power_sockets_u": {
         "Socket_Power_1": (2.10, 0.58, 0.48),
@@ -587,8 +587,8 @@ def _add_lower_capsule_and_bay(mb: r1kit.MeshBuilder, d: dict[str, Any]) -> None
     )
     # Interior right wall (-X) power bus panel & upstream trunk cable feeding Bay_CableGap / Bay_CableFixed
     mb.add_bevel_box(
-        center_u=(-bay_w * 0.5 + 0.045, 1.22, -0.08),
-        size_u=(0.08, 0.84, 1.62),
+        center_u=(-bay_w * 0.5 + 0.045, 1.22, -0.18),
+        size_u=(0.08, 0.84, 1.82),
         mat="R1_GreyMetal",
         bevel=0.008,
         segments=1,

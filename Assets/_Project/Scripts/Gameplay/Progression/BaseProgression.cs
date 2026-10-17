@@ -366,18 +366,19 @@ namespace MoonProject.Gameplay
                 _sonar.RevealFriend(_leapIndex, _tuning.BellLightBrightness);
             }
 
-            if (_bellLit && !_chasmSeen && bellAway && _upgrades.LevelOf(_tuning.LeapKit) == 0 &&
-                SurfaceRules.HorizontalDistance(rover, _lip) <= _tuning.ChasmLookRadius)
+            float toLip = SurfaceRules.HorizontalDistance(rover, _lip);
+            if (!_chasmSeen && bellAway && _upgrades.LevelOf(_tuning.LeapKit) == 0 &&
+                toLip <= _tuning.ChasmLookRadius)
             {
+                _bellLit = true;
                 _chasmSeen = true;
                 _looking = true;
                 _lookUntil = now + _tuning.ChasmLookSeconds;
                 _sonar.RevealFriend(_leapIndex, _tuning.BellLightBrightness);
                 _rig.SetGazeTarget(this, _leap.Site.Position, GazePriorities.Focus);
-                _rig.SetHoldStill(this, true);
             }
 
-            if (_looking && now >= _lookUntil)
+            if (_looking && (now >= _lookUntil || toLip > _tuning.ChasmLookRadius))
             {
                 EndLook();
             }
@@ -412,7 +413,6 @@ namespace MoonProject.Gameplay
         {
             _looking = false;
             _rig.ClearGazeTarget(this);
-            _rig.SetHoldStill(this, false);
         }
 
         private static int IndexOf(FriendField friends, Friend friend)

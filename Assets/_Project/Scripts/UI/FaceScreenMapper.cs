@@ -4,14 +4,75 @@ using MoonProject.Core;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// Maps a pointer position on the player's screen through a camera ray onto 07's curved CRT <c>Screen</c> mesh and
-    /// into UI Toolkit panel coordinates (<c>0..1152</c>, <c>0..768</c>), matching the horizontal mirror and barrel
-    /// warp of <c>R1CrtFaceCore.hlsl</c>.
+    /// Maps a pointer position on the player's screen through a camera ray onto 07's convex CRT <c>Screen</c> mesh and
+    /// into UI Toolkit panel coordinates (<c>0..1152</c>, <c>0..768</c>), and exposes the visible rounded-rectangle
+    /// glass boundary and safe area in content space.
     /// </summary>
     public static class FaceScreenMapper
     {
         public static readonly Vector2 DefaultPanelSize = new Vector2(1152f, 768f);
         public static readonly Vector2 OutsidePanel = new Vector2(float.NaN, float.NaN);
+
+        /// <summary>
+        /// Corner radius (px in <c>1152x768</c> content space) of the visible CRT glass opening
+        /// (<c>0.0420 m / 0.368667 m * 768 = 87.5 px</c>, matching <c>GLASS_CORNER_RADIUS_H</c> in <c>R1CrtFaceCore.hlsl</c>).
+        /// </summary>
+        public const float GlassCornerRadiusPx = 87.5f;
+
+        /// <summary>Uniform safe-area inset margin (px in <c>1152x768</c> content space) inside the visible CRT glass.</summary>
+        public const float GlassSafeMarginPx = 36f;
+
+        /// <summary>Corner radius (px in <c>1152x768</c>) of the inset glass safe area (<c>87.5 - 36 = 51.5 px</c>).</summary>
+        public const float GlassSafeCornerRadiusPx = GlassCornerRadiusPx - GlassSafeMarginPx;
+
+        /// <summary>Returns the bounding rectangle of the inset glass safe area in <paramref name="panelSize"/> coordinates.</summary>
+        public static Rect GetGlassSafeRect(Vector2 panelSize)
+        {
+            float sx = panelSize.x / DefaultPanelSize.x;
+            float sy = panelSize.y / DefaultPanelSize.y;
+            float mx = GlassSafeMarginPx * sx;
+            float my = GlassSafeMarginPx * sy;
+            return new Rect(mx, my, panelSize.x - 2f * mx, panelSize.y - 2f * my);
+        }
+
+        /// <summary>
+        /// Returns the inward distance (px) from <paramref name="panelPosition"/> to the visible rounded-rectangle
+        /// CRT glass boundary in <paramref name="panelSize"/> coordinates (positive inside the glass, negative outside).
+        /// </summary>
+        public static float SignedDistanceInsideGlass(Vector2 panelPosition, Vector2 panelSize)
+        {
+            float scale = panelSize.y / DefaultPanelSize.y;
+            float radius = GlassCornerRadiusPx * scale;
+            Vector2 halfSize = panelSize * 0.5f;
+            Vector2 p = panelPosition - halfSize;
+            Vector2 b = halfSize - new Vector2(radius, radius);
+            Vector2 d = new Vector2(Mathf.Abs(p.x) - b.x, Mathf.Abs(p.y) - b.y);
+            Vector2 maxD = new Vector2(Mathf.Max(d.x, 0f), Mathf.Max(d.y, 0f));
+            float sdfOutside = maxD.magnitude + Mathf.Min(Mathf.Max(d.x, d.y), 0f) - radius;
+            return -sdfOutside;
+        }
+
+        /// <summary>
+        /// Returns the minimum inward distance (px) from any point of <paramref name="rect"/> to the visible
+        /// rounded-rectangle CRT glass boundary in <paramref name="panelSize"/> coordinates.
+        /// </summary>
+        public static float SignedDistanceInsideGlass(Rect rect, Vector2 panelSize)
+        {
+            float d0 = SignedDistanceInsideGlass(new Vector2(rect.xMin, rect.yMin), panelSize);
+            float d1 = SignedDistanceInsideGlass(new Vector2(rect.xMax, rect.yMin), panelSize);
+            float d2 = SignedDistanceInsideGlass(new Vector2(rect.xMin, rect.yMax), panelSize);
+            float d3 = SignedDistanceInsideGlass(new Vector2(rect.xMax, rect.yMax), panelSize);
+            return Mathf.Min(Mathf.Min(d0, d1), Mathf.Min(d2, d3));
+        }
+
+        /// <summary>
+        /// Returns the minimum inward distance (px) from a circle of <paramref name="circleRadius"/> at
+        /// <paramref name="circleCenter"/> to the visible rounded-rectangle CRT glass boundary.
+        /// </summary>
+        public static float SignedDistanceInsideGlass(Vector2 circleCenter, float circleRadius, Vector2 panelSize)
+        {
+            return SignedDistanceInsideGlass(circleCenter, panelSize) - circleRadius;
+        }
 
         /// <summary>
         /// Mirrors the horizontal UV (<c>1 - u</c>) to match <c>R1CrtFaceCore.hlsl</c>, because the <c>Screen</c>

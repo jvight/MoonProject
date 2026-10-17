@@ -35,17 +35,17 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _airSteer = 0.2f;
 
-        [Tooltip("Height (m) above the ground at which the landing cushion can start to act.")]
+        [Tooltip("Height (m) above the ground at which the landing cushion starts its short retro-puff.")]
         [Range(0.5f, 20f)]
-        [SerializeField] private float _cushionProbe = 8f;
+        [SerializeField] private float _cushionProbe = 2.4f;
 
         [Tooltip("Deceleration (m/s^2) the cushion may use to soften a descent.")]
         [Range(0.5f, 30f)]
-        [SerializeField] private float _cushionDeceleration = 6f;
+        [SerializeField] private float _cushionDeceleration = 6.5f;
 
         [Tooltip("Speed (m/s) 07 touches down at after a cushioned leap: soft enough for a happy perk, never an oof.")]
         [Range(0.2f, 5f)]
-        [SerializeField] private float _cushionLandingSpeed = 1.6f;
+        [SerializeField] private float _cushionLandingSpeed = 1.85f;
 
         [Tooltip("RoverJumpCharged is published at the start of a charge and this many times more until it is full.")]
         [Range(1, 8)]

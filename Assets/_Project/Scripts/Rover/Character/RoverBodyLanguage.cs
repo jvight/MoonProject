@@ -113,6 +113,7 @@ namespace MoonProject.Rover
         private float _digFocus;
         private float _scoopKick;
         private bool _tetherActive;
+        private float _tetherStrain;
         private float _winchReel;
         private float _winchAngle;
         private float _cargoTarget;
@@ -180,6 +181,9 @@ namespace MoonProject.Rover
         /// <summary>Read-only view of the mood, for audio/debug tooling.</summary>
         public RoverMood Mood => _mood;
 
+        /// <summary>Current normalized tether strain [0..1] reported by the tether feel beats.</summary>
+        public float TetherStrain => _tetherStrain;
+
         /// <summary>07's CRT face director wired on <c>Neck/NeckLift/Head/Screen</c>.</summary>
         public RoverFaceDirector FaceDirector => _faceDirector;
 
@@ -221,8 +225,8 @@ namespace MoonProject.Rover
         /// <summary>Transform of 07's <c>Neck</c> yaw joint.</summary>
         public Transform NeckTransform => _neck;
 
-        /// <summary>CRT barrel curvature parameter read from the screen's shared material.</summary>
-        public float Curvature => _faceDirector != null ? _faceDirector.Curvature : 0.10f;
+        /// <summary>CRT curvature is physically modelled by the convex Screen mesh (0 UV warp).</summary>
+        public float Curvature => _faceDirector != null ? _faceDirector.Curvature : 0f;
 
         /// <summary>Transform of 07's CRT <c>Screen</c> mesh.</summary>
         public Transform ScreenTransform =>
@@ -621,12 +625,14 @@ namespace MoonProject.Rover
         private void OnTetherAttached(TetherAttached attached)
         {
             _tetherActive = true;
+            _tetherStrain = 0f;
             _winchReel = 1f;
         }
 
         private void OnTetherReleased(TetherReleased release)
         {
             _tetherActive = false;
+            _tetherStrain = 0f;
             if (release.Snapped)
             {
                 _mood.Sigh(_tuning.SnapSigh);
@@ -870,6 +876,7 @@ namespace MoonProject.Rover
             _scoopKick = Smoothing.Damp(_scoopKick, 0f, halfLife, deltaTime);
             _winchReel = Smoothing.Damp(_winchReel, _tetherActive ? 1f : 0f, 0.15f, deltaTime);
             _winchAngle = Mathf.Repeat(_winchAngle + _winchReel * 360f * deltaTime, 360f);
+            _mood.SetEffort(Mathf.Max(_rover.JumpCharge, _tetherStrain));
         }
 
         /// <summary>The tired look below the Low share and the quieter crawl, each eased in and out.</summary>
@@ -1062,6 +1069,7 @@ namespace MoonProject.Rover
                 * Mathf.Lerp(1f, _tuning.CutFocus.EyeGlow, _cutFocus) * _chirpPose.EyeGlow
                 * (1f + _sigh * _tuning.Chirp.SighEye) * _scanLook.EyeGlow;
             float scanOpen = _scanLook.Open;
+            float inspectLightDim = 1f - _screenInspectBlend * 0.92f;
             if (scanOpen > ScanEyeOpenThreshold)
             {
                 Color fanColor = _tuning.ScanLook.FanColour;
@@ -1070,7 +1078,7 @@ namespace MoonProject.Rover
                 SetGlow(_eyeRenderer, Color.Lerp(restEyeColor, scanEyeColor, scanOpen));
                 _eyeLight.color = Color.Lerp(_eyeLightRestColor, fanColor, scanOpen);
                 _eyeLight.range = _tuning.EyeLightRange * (1f + ScanEyeLightRangeBoost * scanOpen);
-                _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow * (1f + ScanEyeLightIntensityBoost * scanOpen);
+                _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow * (1f + ScanEyeLightIntensityBoost * scanOpen) * inspectLightDim;
                 _eyeLight.transform.localPosition = Vector3.Lerp(_eyeLightRestLocalPos, ScanEyeLightLocalOffset, scanOpen);
             }
             else
@@ -1078,7 +1086,7 @@ namespace MoonProject.Rover
                 SetGlow(_eyeRenderer, eyeGlow);
                 _eyeLight.color = _eyeLightRestColor;
                 _eyeLight.range = _tuning.EyeLightRange;
-                _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow;
+                _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow * inspectLightDim;
                 _eyeLight.transform.localPosition = _eyeLightRestLocalPos;
             }
 
@@ -1140,13 +1148,20 @@ namespace MoonProject.Rover
             if (beat.Kind == FeelKind.Tether)
             {
                 _winchReel = 1f;
-                if (beat.Phase == FeelPhase.Anticipate || beat.Phase == FeelPhase.Act)
+                if (beat.Phase == FeelPhase.Anticipate)
                 {
                     _tetherActive = true;
+                    _tetherStrain = 0f;
+                }
+                else if (beat.Phase == FeelPhase.Act)
+                {
+                    _tetherActive = true;
+                    _tetherStrain = Mathf.Clamp01(beat.Strength);
                 }
                 else if (beat.Phase == FeelPhase.Cancel || beat.Phase == FeelPhase.Reward)
                 {
                     _tetherActive = false;
+                    _tetherStrain = 0f;
                 }
 
                 return;

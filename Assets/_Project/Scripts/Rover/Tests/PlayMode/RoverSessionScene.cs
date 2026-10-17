@@ -32,6 +32,7 @@ namespace MoonProject.Rover.PlayModeTests
         {
 #if UNITY_EDITOR
             BootstrapHarness.DeleteSaveFiles(SaveSlot);
+            DeletePutAway();
             DeleteCopy();
             AssetDatabase.CreateFolder(Parent, FolderName);
             string text = File.ReadAllText(MainScene);
@@ -52,6 +53,7 @@ namespace MoonProject.Rover.PlayModeTests
 #if UNITY_EDITOR
             DeleteCopy();
             BootstrapHarness.DeleteSaveFiles(SaveSlot);
+            DeletePutAway();
 #endif
         }
 
@@ -61,6 +63,20 @@ namespace MoonProject.Rover.PlayModeTests
             if (AssetDatabase.IsValidFolder(Folder))
             {
                 AssetDatabase.DeleteAsset(Folder);
+            }
+        }
+
+        private static void DeletePutAway()
+        {
+            string directory = MoonProject.Core.Save.SaveService.DefaultDirectory;
+            if (!Directory.Exists(directory))
+            {
+                return;
+            }
+
+            foreach (string file in Directory.GetFiles(directory, SaveSlot + MoonProject.Core.Save.SaveService.PutAwayMarker + "*"))
+            {
+                File.Delete(file);
             }
         }
 #endif

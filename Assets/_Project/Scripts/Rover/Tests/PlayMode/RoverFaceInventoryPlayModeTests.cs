@@ -192,8 +192,28 @@ namespace MoonProject.Rover.PlayModeTests
             FaceState faceState = _faceDirector.Director.State;
             Assert.AreEqual(0f, faceState.ScreenContentMix, 1e-4f);
 
-            // BEAT 1: Chase Camera (Driving / Ready)
+            Transform bezelNode = _body.ScreenTransform.parent.Find("ScreenBezel");
+            Assert.IsNotNull(bezelNode, "Head must contain ScreenBezel.");
+            var bezelRenderer = bezelNode.GetComponent<MeshRenderer>();
+            Assert.IsNotNull(bezelRenderer, "ScreenBezel must have a MeshRenderer.");
+            Material creamBezelMat = bezelRenderer.sharedMaterial;
+            Assert.IsNotNull(creamBezelMat, "ScreenBezel default material must be assigned.");
+            StringAssert.Contains("R1_CreamEnamel", creamBezelMat.name, "Default ScreenBezel material must be Variant A (R1_CreamEnamel).");
+#if UNITY_EDITOR
+            var darkBezelMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Generated/Art/R1/Materials/R1_GreyMetal.mat");
+            Assert.IsNotNull(darkBezelMat, "Variant B material R1_GreyMetal must exist.");
+#else
+            Material darkBezelMat = creamBezelMat;
+#endif
+
+            // BEAT 1: Chase Camera (Driving / Ready) + Variant A / B night chase + Headlamp front/side captures + 9 face expressions on curved Screen
+            CaptureAllFaceExpressions();
             Capture("face-inv-beat-1-chase");
+            Capture("chase_variant_a_night");
+            bezelRenderer.sharedMaterial = darkBezelMat;
+            Capture("chase_variant_b_night");
+            bezelRenderer.sharedMaterial = creamBezelMat;
+            CaptureHeadlampViews("lamps_front", "lamps_side", "lamps_front_lampbar", "lamps_side_lampbar");
 
             // Press Tab to open the inventory on 07's CRT face.
             Press(_keyboard.tabKey);
@@ -274,7 +294,6 @@ namespace MoonProject.Rover.PlayModeTests
             Capture("face-inv-beat-5-inventory-expand");
             Capture("face-inv-night-open");
             Capture("face-inv-night-open-vi");
-
             // CURVED SCREEN INPUT 1: Hover tooltip on 07's curved 3D CRT face.
             Vector2 cell0Panel = FaceInventoryView.GetHoldCellReferenceRect(0).center;
             Assert.IsTrue(FaceScreenMapper.TryPanelToScreen(cell0Panel, _view, faceScreen, FaceScreenMapper.DefaultPanelSize, out Vector2 cell0Screen),
@@ -287,6 +306,15 @@ namespace MoonProject.Rover.PlayModeTests
                 "Tooltip on 07's face must display the Vietnamese material name.");
             Capture("face-inv-hover-tooltip");
             CaptureScreenshot("face_inv_hover");
+            Capture("inventory_variant_a_night");
+            CaptureAtSize("face_inv_16x9_night", 1920, 1080);
+            CaptureAtSize("face_inv_21x9_night", 2520, 1080);
+            CaptureAtSize("face_inv_4x3_night", 1440, 1080);
+            CaptureWithGlassOutlineOverlay("inventory_glass_outline", faceScreen, 1920, 1080);
+            AssertLiveGlassFitAndComfort(faceScreen, "night");
+            bezelRenderer.sharedMaterial = darkBezelMat;
+            Capture("inventory_variant_b_night");
+            bezelRenderer.sharedMaterial = creamBezelMat;
 
             // CURVED SCREEN INPUT 2: Drag waiting kit (HoverCoils in hold cell 5) across 07's curved CRT screen onto Belly socket bubble.
             Vector2 kitCellPanel = FaceInventoryView.GetHoldCellReferenceRect(5).center;
@@ -391,14 +419,36 @@ namespace MoonProject.Rover.PlayModeTests
             yield return null;
             Capture("face-inv-day-open");
             Capture("face-inv-day-open-vi");
+            view.FocusFirst();
+            yield return null;
+            Capture("inventory_variant_a");
+            Capture("inventory_variant_a_day");
+            CaptureAtSize("face_inv_16x9_day", 1920, 1080);
+            CaptureAtSize("face_inv_21x9_day", 2520, 1080);
+            CaptureAtSize("face_inv_4x3_day", 1440, 1080);
+            AssertLiveGlassFitAndComfort(faceScreen, "day");
+            bezelRenderer.sharedMaterial = darkBezelMat;
+            Capture("inventory_variant_b");
+            Capture("inventory_variant_b_day");
+            bezelRenderer.sharedMaterial = creamBezelMat;
+            view.ClearFocus();
 
             yield return TapTab();
-            yield return WaitSeconds(0.60f);
+            while (_cameraRig.FaceInspectWeight > 0.01f)
+            {
+                yield return null;
+            }
             Assert.IsFalse(faceScreen.IsOpen);
+            _cameraRig.Orbit.AdoptBearing(_rover.Heading + 162f);
+            yield return null;
+            Capture("chase_variant_a");
+            bezelRenderer.sharedMaterial = darkBezelMat;
+            Capture("chase_variant_b");
+            bezelRenderer.sharedMaterial = creamBezelMat;
 
             // ROCK OCCLUSION CAPTURE: Place a rock obstacle directly on the default 0-degree face-inspect camera spot.
             _body.EvaluateScreenPose(0f, 10f, out Vector3 screenPos, out Quaternion screenRot);
-            FaceInspectComposer.ComposePose(screenPos, screenRot, -0.01f, 0.67f, out _, out Vector3 defaultEye);
+            FaceInspectComposer.ComposePose(screenPos, screenRot, 0f, 0.67f, out _, out Vector3 defaultEye);
 
             _rockObstacle = CreateRockObstacle(defaultEye);
             Physics.SyncTransforms();
@@ -471,9 +521,9 @@ namespace MoonProject.Rover.PlayModeTests
                 "07 must counter-roll its head toward the horizon when lifting its head for screen inspect.");
 
             // 3. Top edge of the Screen projects horizontally in the viewport and fills ~75% of viewport height with no clipping.
-            Vector3 topLeftCorner = slopeScreenPos + slopeScreenRot * new Vector3(-0.18f, 0.16f, 0f);
-            Vector3 topRightCorner = slopeScreenPos + slopeScreenRot * new Vector3(0.18f, 0.16f, 0f);
-            Vector3 bottomLeftCorner = slopeScreenPos + slopeScreenRot * new Vector3(-0.18f, -0.16f, 0f);
+            Vector3 topLeftCorner = slopeScreenPos + slopeScreenRot * new Vector3(-0.2765f, 0.18435f, 0f);
+            Vector3 topRightCorner = slopeScreenPos + slopeScreenRot * new Vector3(0.2765f, 0.18435f, 0f);
+            Vector3 bottomLeftCorner = slopeScreenPos + slopeScreenRot * new Vector3(-0.2765f, -0.18435f, 0f);
             Vector3 topLeftVp = _view.WorldToViewportPoint(topLeftCorner);
             Vector3 topRightVp = _view.WorldToViewportPoint(topRightCorner);
             Vector3 bottomLeftVp = _view.WorldToViewportPoint(bottomLeftCorner);
@@ -684,13 +734,559 @@ namespace MoonProject.Rover.PlayModeTests
 
         private void Capture(string name)
         {
+            CaptureAtSize(name, CaptureWidth, CaptureHeight);
+        }
+
+        private void CaptureAtSize(string name, int width, int height)
+        {
             string path = Path.Combine(CaptureFolder, name + ".png");
-            FrameCapture.SavePng(_view, CaptureWidth, CaptureHeight, path);
+            FrameCapture.SavePng(_view, width, height, path);
             Assert.IsTrue(File.Exists(path), $"Capture must be written to {path}.");
 
             string r2Path = Path.Combine(R2CaptureFolder, name + ".png");
             File.Copy(path, r2Path, true);
             Assert.IsTrue(File.Exists(r2Path), $"Capture must be written to {r2Path}.");
+        }
+
+        private void CaptureAllFaceExpressions()
+        {
+            Vector3 savedPos = _view.transform.position;
+            Quaternion savedRot = _view.transform.rotation;
+            float savedFov = _view.fieldOfView;
+
+            Transform screenTr = _body.ScreenTransform;
+            Vector3 screenCenter = screenTr.position;
+            Vector3 outward = screenTr.forward;
+            Vector3 right = screenTr.right;
+            Vector3 up = screenTr.up;
+
+            var keyLightObj = new GameObject("TempFaceExprInspectFill");
+            var keyLight = keyLightObj.AddComponent<Light>();
+            keyLight.type = LightType.Point;
+            keyLight.color = new Color(0.85f, 0.88f, 0.96f, 1f);
+            keyLight.intensity = 1.6f;
+            keyLight.range = 4.5f;
+            keyLight.shadows = LightShadows.None;
+            keyLightObj.transform.position = screenCenter + outward * 1.15f - right * 0.65f + up * 0.55f;
+
+            (FaceFeeling feeling, string captureName)[] expressions =
+            {
+                (FaceFeeling.Calm, "face_neutral"),
+                (FaceFeeling.Happy, "face_happy"),
+                (FaceFeeling.Curious, "face_curious"),
+                (FaceFeeling.Proud, "face_strain"),
+                (FaceFeeling.Tired, "face_sleepy"),
+                (FaceFeeling.Startled, "face_wince"),
+                (FaceFeeling.Curious, "face_question"),
+                (FaceFeeling.Sad, "face_sad"),
+                (FaceFeeling.Worried, "face_low_battery"),
+                (FaceFeeling.Asleep, "face_asleep"),
+            };
+
+            try
+            {
+                Vector3 camEye = screenCenter + outward * 0.82f - right * 0.24f + up * 0.06f;
+                _view.fieldOfView = 34f;
+                _view.transform.SetPositionAndRotation(camEye, Quaternion.LookRotation(screenCenter - camEye, up));
+
+                for (int i = 0; i < expressions.Length; i++)
+                {
+                    (FaceFeeling feeling, string captureName) = expressions[i];
+                    _faceDisplay.SetLowPower(feeling == FaceFeeling.Worried ? 1f : 0f);
+                    _faceDisplay.ClearLookTarget();
+                    _faceDisplay.State.SnapToFeeling(feeling);
+                    _faceDisplay.Step(0.30f);
+                    _faceDisplay.State.SnapToFeeling(feeling);
+                    _faceDisplay.ApplyToRenderer();
+                    Capture(captureName);
+                }
+            }
+            finally
+            {
+                _faceDisplay.SetLowPower(0f);
+                _faceDisplay.ClearLookTarget();
+                _faceDisplay.State.SnapToFeeling(FaceFeeling.Calm);
+                _faceDisplay.Step(0.10f);
+                _faceDisplay.State.SnapToFeeling(FaceFeeling.Calm);
+                _faceDisplay.ApplyToRenderer();
+
+                Object.DestroyImmediate(keyLightObj);
+                _view.fieldOfView = savedFov;
+                _view.transform.SetPositionAndRotation(savedPos, savedRot);
+            }
+        }
+
+        private void CaptureWithGlassOutlineOverlay(string name, IRoverFaceScreen faceScreen, int width, int height)
+        {
+            Texture2D tex = RenderCameraToTexture(_view, width, height);
+            try
+            {
+                Color32[] pixels = tex.GetPixels32();
+                var outerColor = new Color32(64, 255, 128, 255);
+                var safeColor = new Color32(72, 232, 255, 255);
+
+                _view.aspect = (float)width / height;
+                try
+                {
+                    for (int y = 0; y < height; y++)
+                    {
+                        float v = (y + 0.5f) / height;
+                        int rowOffset = y * width;
+                        for (int x = 0; x < width; x++)
+                        {
+                            float u = (x + 0.5f) / width;
+                            Ray ray = _view.ViewportPointToRay(new Vector3(u, v, 0f));
+                            if (!faceScreen.TryRaycastScreenUv(ray, out Vector2 meshUv))
+                            {
+                                continue;
+                            }
+
+                            if (!FaceScreenMapper.TryUvToPanel(meshUv, 0f, FaceScreenMapper.DefaultPanelSize, out Vector2 panelPos))
+                            {
+                                continue;
+                            }
+
+                            float distInside = FaceScreenMapper.SignedDistanceInsideGlass(panelPos, FaceScreenMapper.DefaultPanelSize);
+                            if (Mathf.Abs(distInside) <= 2.2f)
+                            {
+                                pixels[rowOffset + x] = outerColor;
+                            }
+                            else if (Mathf.Abs(distInside - FaceScreenMapper.GlassSafeMarginPx) <= 1.8f)
+                            {
+                                pixels[rowOffset + x] = safeColor;
+                            }
+                        }
+                    }
+                }
+                finally
+                {
+                    _view.ResetAspect();
+                }
+
+                tex.SetPixels32(pixels);
+                tex.Apply(false);
+                byte[] png = tex.EncodeToPNG();
+
+                string path = Path.Combine(CaptureFolder, name + ".png");
+                File.WriteAllBytes(path, png);
+                Assert.IsTrue(File.Exists(path), $"Outline capture must be written to {path}.");
+
+                string r2Path = Path.Combine(R2CaptureFolder, name + ".png");
+                File.WriteAllBytes(r2Path, png);
+                Assert.IsTrue(File.Exists(r2Path), $"Outline capture must be written to {r2Path}.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(tex);
+            }
+        }
+
+        private void AssertLiveGlassFitAndComfort(IRoverFaceScreen faceScreen, string lightingTag)
+        {
+            // 1. Automated Fit Check: verify all UI elements lie inside the rounded-rectangle glass mask with margin >= M (36 px)
+            //    and that left/right and top/bottom margins differ by < 10%.
+            Vector2 panelSize = FaceScreenMapper.DefaultPanelSize;
+            float minMargin = FaceScreenMapper.GlassSafeMarginPx;
+            Assert.GreaterOrEqual(minMargin, 36f);
+
+            var rects = new List<Rect>
+            {
+                new Rect(72f, 42f, 376f, 22f),
+                new Rect(FaceInventoryView.ShelfGridX, 42f, 568f, 22f),
+                new Rect(72f, 664f, 376f, 62f),
+                new Rect(512f, 664f, 568f, 62f),
+            };
+
+            for (int i = 0; i < FaceInventoryView.MaxHoldCells; i++)
+            {
+                rects.Add(FaceInventoryView.GetHoldCellReferenceRect(i));
+            }
+
+            for (int i = 0; i < FaceInventoryView.OrbitalSocketCount; i++)
+            {
+                Vector2 c = FaceInventoryView.GetOrbitalSocketReferenceCenter(i);
+                float r = FaceInventoryView.BubbleRadius;
+                Assert.GreaterOrEqual(
+                    FaceScreenMapper.SignedDistanceInsideGlass(c, r, panelSize),
+                    minMargin,
+                    $"[{lightingTag}] Orbital socket {i} must lie inside the glass safe area with margin >= {minMargin} px.");
+                rects.Add(new Rect(c.x - r, c.y - r, 2f * r, 2f * r));
+            }
+
+            float xMin = float.PositiveInfinity;
+            float yMin = float.PositiveInfinity;
+            float xMax = float.NegativeInfinity;
+            float yMax = float.NegativeInfinity;
+            for (int i = 0; i < rects.Count; i++)
+            {
+                Rect r = rects[i];
+                Assert.GreaterOrEqual(
+                    FaceScreenMapper.SignedDistanceInsideGlass(r, panelSize),
+                    minMargin,
+                    $"[{lightingTag}] Inventory element rect {r} must lie inside the glass safe area with margin >= {minMargin} px.");
+                xMin = Mathf.Min(xMin, r.xMin);
+                yMin = Mathf.Min(yMin, r.yMin);
+                xMax = Mathf.Max(xMax, r.xMax);
+                yMax = Mathf.Max(yMax, r.yMax);
+            }
+
+            float leftMargin = xMin;
+            float rightMargin = panelSize.x - xMax;
+            float topMargin = yMin;
+            float bottomMargin = panelSize.y - yMax;
+            Assert.Less(
+                Mathf.Abs(leftMargin - rightMargin) / Mathf.Max(leftMargin, rightMargin),
+                0.10f,
+                $"[{lightingTag}] Left ({leftMargin:F1}px) and right ({rightMargin:F1}px) margins must differ by < 10%.");
+            Assert.Less(
+                Mathf.Abs(topMargin - bottomMargin) / Mathf.Max(topMargin, bottomMargin),
+                0.10f,
+                $"[{lightingTag}] Top ({topMargin:F1}px) and bottom ({bottomMargin:F1}px) margins must differ by < 10%.");
+
+            // Verify square camera framing on the live Screen transform (zero keystone, centered bezel margins).
+            Transform screenTr = _body.ScreenTransform;
+            Assert.Less(
+                Vector3.Angle(_view.transform.forward, -screenTr.forward),
+                0.35f,
+                $"[{lightingTag}] Face-inspect camera must look straight down the glass normal.");
+
+            // 2. Automated Comfort Check on the 1920x1080 rendered inventory capture:
+            //    - stroke/text pixels vs local background >= 7:1;
+            //    - background saturation <= 0.25 (near-neutral warm black, not orange);
+            //    - no background hotspot > 1.3x median background luminance inside the safe area.
+            const int width = 1920;
+            const int height = 1080;
+            Texture2D captureTex = RenderCameraToTexture(_view, width, height);
+            Texture2D uiTex = ReadRenderTexture(_faceDisplay.ContentTexture);
+            try
+            {
+                Color[] capturePixels = captureTex.GetPixels();
+                Color[] uiPixels = uiTex.GetPixels();
+                int uiW = uiTex.width;
+                int uiH = uiTex.height;
+
+                var bgLuminances = new List<float>(8192);
+                var strokeCheckCoords = new List<Vector2Int>(1024);
+                float maxBgSat = 0f;
+
+                _view.aspect = (float)width / height;
+                try
+                {
+                    for (int y = 0; y < height; y += 2)
+                    {
+                        float v = (y + 0.5f) / height;
+                        int rowOffset = y * width;
+                        for (int x = 0; x < width; x += 2)
+                        {
+                            float u = (x + 0.5f) / width;
+                            Ray ray = _view.ViewportPointToRay(new Vector3(u, v, 0f));
+                            if (!faceScreen.TryRaycastScreenUv(ray, out Vector2 meshUv))
+                            {
+                                continue;
+                            }
+
+                            if (!FaceScreenMapper.TryUvToPanel(meshUv, 0f, panelSize, out Vector2 panelPos))
+                            {
+                                continue;
+                            }
+
+                            float distInside = FaceScreenMapper.SignedDistanceInsideGlass(panelPos, panelSize);
+                            if (distInside < minMargin)
+                            {
+                                continue;
+                            }
+
+                            int uiX = Mathf.Clamp(Mathf.RoundToInt(panelPos.x), 0, uiW - 1);
+                            int uiY = Mathf.Clamp(Mathf.RoundToInt(panelSize.y - panelPos.y), 0, uiH - 1);
+                            float neighborhoodUiLum = MaxUiLuminanceInWindow(uiPixels, uiW, uiH, uiX, uiY, 5);
+
+                            if (neighborhoodUiLum < 0.008f)
+                            {
+                                Color bgCol = capturePixels[rowOffset + x];
+                                Color.RGBToHSV(bgCol, out _, out float bgSat, out _);
+                                if (bgSat > maxBgSat)
+                                {
+                                    maxBgSat = bgSat;
+                                }
+
+                                Assert.LessOrEqual(
+                                    bgSat,
+                                    0.25f,
+                                    $"[{lightingTag}] Background pixel at panel {panelPos} must have HSV saturation <= 0.25 (got {bgSat:F3}, color={bgCol}).");
+
+                                bgLuminances.Add(RelativeLuminance(bgCol));
+                            }
+                            else if (distInside >= minMargin + 6f && IsUiStrokeCore(uiPixels, uiW, uiH, uiX, uiY))
+                            {
+                                strokeCheckCoords.Add(new Vector2Int(x, y));
+                            }
+                        }
+                    }
+                }
+                finally
+                {
+                    _view.ResetAspect();
+                }
+
+                Assert.GreaterOrEqual(bgLuminances.Count, 500, $"[{lightingTag}] Must sample at least 500 pure background pixels inside the safe area.");
+                bgLuminances.Sort();
+                float medianBgLum = bgLuminances[bgLuminances.Count / 2];
+                float maxBgLum = bgLuminances[bgLuminances.Count - 1];
+                Assert.LessOrEqual(
+                    maxBgLum,
+                    medianBgLum * 1.30f,
+                    $"[{lightingTag}] No background hotspot inside the safe area may exceed 1.3x median background luminance (max={maxBgLum:F5}, median={medianBgLum:F5}, ratio={maxBgLum / Mathf.Max(medianBgLum, 1e-6f):F3}x).");
+
+                Assert.GreaterOrEqual(strokeCheckCoords.Count, 40, $"[{lightingTag}] Must sample at least 40 stroke/text core pixels inside the safe area.");
+                for (int i = 0; i < strokeCheckCoords.Count; i++)
+                {
+                    Vector2Int pt = strokeCheckCoords[i];
+                    float fgLum = MaxCaptureLuminanceInWindow(capturePixels, width, height, pt.x, pt.y, 2);
+                    float localBgLum = MinCaptureLuminanceInWindow(capturePixels, width, height, pt.x, pt.y, 14, medianBgLum);
+                    float contrast = ContrastRatio(fgLum, localBgLum);
+                    Assert.GreaterOrEqual(
+                        contrast,
+                        7.0f,
+                        $"[{lightingTag}] Stroke/text pixel at capture ({pt.x},{pt.y}) must have >= 7:1 contrast against local background (got {contrast:F2}:1, fgLum={fgLum:F4}, bgLum={localBgLum:F5}).");
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(captureTex);
+                Object.DestroyImmediate(uiTex);
+            }
+        }
+
+        private static float MaxUiLuminanceInWindow(Color[] uiPixels, int w, int h, int cx, int cy, int radius)
+        {
+            float maxLum = 0f;
+            int y0 = Mathf.Max(0, cy - radius);
+            int y1 = Mathf.Min(h - 1, cy + radius);
+            int x0 = Mathf.Max(0, cx - radius);
+            int x1 = Mathf.Min(w - 1, cx + radius);
+            for (int y = y0; y <= y1; y++)
+            {
+                int row = y * w;
+                for (int x = x0; x <= x1; x++)
+                {
+                    Color c = uiPixels[row + x];
+                    float lum = Mathf.Max(c.r, Mathf.Max(c.g, c.b));
+                    if (lum > maxLum)
+                    {
+                        maxLum = lum;
+                    }
+                }
+            }
+
+            return maxLum;
+        }
+
+        private static bool IsUiStrokeCore(Color[] uiPixels, int w, int h, int cx, int cy)
+        {
+            if (cx < 2 || cx >= w - 2 || cy < 2 || cy >= h - 2)
+            {
+                return false;
+            }
+
+            Color center = uiPixels[cy * w + cx];
+            float centerLum = Mathf.Max(center.r, Mathf.Max(center.g, center.b));
+            if (centerLum < 0.55f)
+            {
+                return false;
+            }
+
+            // Require at least 4 neighbors in the 3x3 neighborhood to also be bright so subpixel 1px tips are excluded
+            // and we test true stroke/glyph cores.
+            int brightNeighbors = 0;
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                int row = (cy + dy) * w;
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    Color c = uiPixels[row + cx + dx];
+                    float lum = Mathf.Max(c.r, Mathf.Max(c.g, c.b));
+                    if (lum >= 0.45f)
+                    {
+                        brightNeighbors++;
+                    }
+                }
+            }
+
+            return brightNeighbors >= 5;
+        }
+
+        private static float MaxCaptureLuminanceInWindow(Color[] pixels, int w, int h, int cx, int cy, int radius)
+        {
+            float maxLum = 0f;
+            int y0 = Mathf.Max(0, cy - radius);
+            int y1 = Mathf.Min(h - 1, cy + radius);
+            int x0 = Mathf.Max(0, cx - radius);
+            int x1 = Mathf.Min(w - 1, cx + radius);
+            for (int y = y0; y <= y1; y++)
+            {
+                int row = y * w;
+                for (int x = x0; x <= x1; x++)
+                {
+                    float lum = RelativeLuminance(pixels[row + x]);
+                    if (lum > maxLum)
+                    {
+                        maxLum = lum;
+                    }
+                }
+            }
+
+            return maxLum;
+        }
+
+        private static float MinCaptureLuminanceInWindow(Color[] pixels, int w, int h, int cx, int cy, int radius, float fallback)
+        {
+            float minLum = float.PositiveInfinity;
+            int y0 = Mathf.Max(0, cy - radius);
+            int y1 = Mathf.Min(h - 1, cy + radius);
+            int x0 = Mathf.Max(0, cx - radius);
+            int x1 = Mathf.Min(w - 1, cx + radius);
+            for (int y = y0; y <= y1; y += 2)
+            {
+                int row = y * w;
+                for (int x = x0; x <= x1; x += 2)
+                {
+                    float lum = RelativeLuminance(pixels[row + x]);
+                    if (lum < minLum)
+                    {
+                        minLum = lum;
+                    }
+                }
+            }
+
+            return minLum < float.PositiveInfinity ? Mathf.Min(minLum, fallback) : fallback;
+        }
+
+        private static float RelativeLuminance(Color srgb)
+        {
+            Color lin = srgb.linear;
+            return 0.2126f * lin.r + 0.7152f * lin.g + 0.0722f * lin.b;
+        }
+
+        private static float ContrastRatio(float l1, float l2)
+        {
+            float lighter = Mathf.Max(l1, l2);
+            float darker = Mathf.Min(l1, l2);
+            return (lighter + 0.05f) / (darker + 0.05f);
+        }
+
+        private static Texture2D RenderCameraToTexture(Camera cam, int width, int height)
+        {
+            var rt = RenderTexture.GetTemporary(width, height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+            RenderTexture prevActive = RenderTexture.active;
+            RenderTexture prevTarget = cam.targetTexture;
+            try
+            {
+                cam.targetTexture = rt;
+                cam.Render();
+                cam.targetTexture = prevTarget;
+
+                RenderTexture.active = rt;
+                var tex = new Texture2D(width, height, TextureFormat.RGBA32, false, false);
+                tex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+                tex.Apply(false);
+                return tex;
+            }
+            finally
+            {
+                cam.targetTexture = prevTarget;
+                RenderTexture.active = prevActive;
+                RenderTexture.ReleaseTemporary(rt);
+            }
+        }
+
+        private static Texture2D ReadRenderTexture(Texture source)
+        {
+            int w = source.width;
+            int h = source.height;
+            var srgbRt = RenderTexture.GetTemporary(w, h, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+            RenderTexture prevActive = RenderTexture.active;
+            try
+            {
+                Graphics.Blit(source, srgbRt);
+                RenderTexture.active = srgbRt;
+                var tex = new Texture2D(w, h, TextureFormat.RGBA32, false, false);
+                tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+                tex.Apply(false);
+                return tex;
+            }
+            finally
+            {
+                RenderTexture.active = prevActive;
+                RenderTexture.ReleaseTemporary(srgbRt);
+            }
+        }
+
+        private void CaptureHeadlampViews(string frontName, string sideName, string frontBarName, string sideBarName)
+        {
+            Vector3 savedPos = _view.transform.position;
+            Quaternion savedRot = _view.transform.rotation;
+            float savedFov = _view.fieldOfView;
+
+            var keyLightObj = new GameObject("TempLampInspectFill");
+            var keyLight = keyLightObj.AddComponent<Light>();
+            keyLight.type = LightType.Point;
+            keyLight.color = new Color(0.95f, 0.92f, 0.88f, 1f);
+            keyLight.intensity = 2.2f;
+            keyLight.range = 5.5f;
+            keyLight.shadows = LightShadows.None;
+            keyLightObj.transform.position = _rover.Position + _rover.Rotation * new Vector3(-1.1f, 1.35f, 1.45f);
+
+            Transform lampBarNode = null;
+            foreach (Transform t in _rover.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name == "Kit_LampBar")
+                {
+                    lampBarNode = t;
+                    break;
+                }
+            }
+
+            try
+            {
+                Vector3 frontEye = _rover.Position + _rover.Rotation * new Vector3(-1.12f, 1.02f, 1.72f);
+                Vector3 frontLook = _rover.Position + _rover.Rotation * new Vector3(0.0f, 0.44f, 0.72f);
+                Vector3 sideEye = _rover.Position + _rover.Rotation * new Vector3(-1.45f, 0.56f, 0.92f);
+                Vector3 sideLook = _rover.Position + _rover.Rotation * new Vector3(0.0f, 0.42f, 0.92f);
+
+                _view.fieldOfView = 36f;
+                _view.transform.SetPositionAndRotation(frontEye, Quaternion.LookRotation(frontLook - frontEye, Vector3.up));
+                Capture(frontName);
+
+                _view.transform.SetPositionAndRotation(sideEye, Quaternion.LookRotation(sideLook - sideEye, Vector3.up));
+                Capture(sideName);
+
+                if (lampBarNode != null)
+                {
+                    bool wasActive = lampBarNode.gameObject.activeSelf;
+                    Vector3 prevScale = lampBarNode.localScale;
+                    lampBarNode.gameObject.SetActive(true);
+                    lampBarNode.localScale = Vector3.one;
+                    try
+                    {
+                        _view.transform.SetPositionAndRotation(frontEye, Quaternion.LookRotation(frontLook - frontEye, Vector3.up));
+                        Capture(frontBarName);
+
+                        _view.transform.SetPositionAndRotation(sideEye, Quaternion.LookRotation(sideLook - sideEye, Vector3.up));
+                        Capture(sideBarName);
+                    }
+                    finally
+                    {
+                        lampBarNode.localScale = prevScale;
+                        lampBarNode.gameObject.SetActive(wasActive);
+                    }
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(keyLightObj);
+                _view.fieldOfView = savedFov;
+                _view.transform.SetPositionAndRotation(savedPos, savedRot);
+            }
         }
 
         private void CaptureScreenshot(string name)

@@ -21,7 +21,7 @@ namespace MoonProject.Audio
     [DisallowMultipleComponent]
     public sealed class GameplayAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 19;
+        private const int SubscriptionCount = 20;
         private const float WeldLoopFadeIn = 0.08f;
         private const float WeldLoopFadeOut = 0.12f;
         private const string SiteRelicSuffix = "_relic";
@@ -79,9 +79,16 @@ namespace MoonProject.Audio
         private float _tetherHumCueVolume;
         private float _rumbleCueVolume;
         private float _weldLoopCueVolume;
+        private float _tetherStrain;
 
         /// <summary>True while the tether hum can be heard (including its fade-out).</summary>
         public bool TetherHumAudible => _tetherFader.IsAudible;
+
+        /// <summary>Current pitch multiplier of the tether hum loop (rises in key under strain).</summary>
+        public float TetherHumPitch => _tetherHum != null ? _tetherHum.pitch : 1f;
+
+        /// <summary>Current normalized tether strain [0..1] driving the hum pitch and volume.</summary>
+        public float TetherStrain => _tetherStrain;
 
         /// <summary>True while the excavation rumble can be heard (including its fade-out).</summary>
         public bool RumbleAudible => _rumbleFader.IsAudible;
@@ -209,6 +216,7 @@ namespace MoonProject.Audio
             _subscriptions[16] = events.Subscribe<StructureRemoved>(OnStructureRemoved);
             _subscriptions[17] = events.Subscribe<BuildCue>(OnBuildCue);
             _subscriptions[18] = events.Subscribe<BuildWeldStateChanged>(OnBuildWeldStateChanged);
+            _subscriptions[19] = events.Subscribe<FeelBeat>(OnFeelBeat);
         }
 
         internal void Wire(GameplayAudioTuning tuning)
@@ -228,10 +236,13 @@ namespace MoonProject.Audio
             if (_tetherFader.IsAudible || _tetherFader.IsOn)
             {
                 _tetherHum.transform.position = _tetherOrigin.position;
+                float targetPitch = Mathf.Lerp(1f, _tuning.TetherHumStrainPitch, _tetherStrain);
+                _tetherHum.pitch = Mathf.MoveTowards(_tetherHum.pitch, targetPitch, _tuning.TetherHumPitchEase * dt);
             }
 
+            float tetherStrainGain = 1f + _tetherStrain * _tuning.TetherHumStrainVolume;
             StepLoop(_tetherHum, _tetherFader, dt, _tuning.TetherHumFadeIn, _tuning.TetherHumFadeOut,
-                _tetherHumCueVolume * _tuning.TetherHumVolume * sfx);
+                _tetherHumCueVolume * _tuning.TetherHumVolume * tetherStrainGain * sfx);
             StepLoop(_rumble, _rumbleFader, dt, _tuning.RumbleFadeIn, _tuning.RumbleFadeOut,
                 _rumbleCueVolume * _tuning.RumbleVolume * sfx);
             StepLoop(_weldLoop, _weldFader, dt, WeldLoopFadeIn, WeldLoopFadeOut,
@@ -293,6 +304,8 @@ namespace MoonProject.Audio
             float heft = Mathf.InverseLerp(_tuning.TetherLightMass, _tuning.TetherHeavyMass, attached.Mass);
             _director.PlayAt(_tetherAttach, attached.Position,
                 Mathf.Lerp(_tuning.TetherLightVolume, _tuning.TetherHeavyVolume, heft));
+            _tetherStrain = 0f;
+            _tetherHum.pitch = 1f;
             _tetherHum.transform.position = _tetherOrigin.position;
             _tetherFader.FadeIn();
         }
@@ -300,6 +313,7 @@ namespace MoonProject.Audio
         private void OnTetherReleased(TetherReleased released)
         {
             _director.PlayAt(released.Snapped ? _tetherSnap : _tetherRelease, released.Position);
+            _tetherStrain = 0f;
             _tetherFader.FadeOut();
         }
 
@@ -413,6 +427,25 @@ namespace MoonProject.Audio
             else
             {
                 _weldFader.FadeOut();
+            }
+        }
+
+        private void OnFeelBeat(FeelBeat beat)
+        {
+            if (beat.Kind != FeelKind.Tether)
+            {
+                return;
+            }
+
+            if (beat.Phase == FeelPhase.Act)
+            {
+                _tetherStrain = Mathf.Clamp01(beat.Strength);
+            }
+            else if (beat.Phase == FeelPhase.Anticipate
+                || beat.Phase == FeelPhase.Cancel
+                || beat.Phase == FeelPhase.Reward)
+            {
+                _tetherStrain = 0f;
             }
         }
 

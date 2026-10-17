@@ -646,6 +646,13 @@
         1.26
       ]
     },
+    "ScreenBezel": {
+      "pivot": [
+        0.0,
+        0.425,
+        1.26
+      ]
+    },
     "Shock_FL": {
       "pivot": [
         -0.42,
@@ -893,5 +900,23 @@
     "ScoopCyl_*",
     "Shock_*"
   ],
-  "allow_boundary_edges": true
+  "allow_boundary_edges": true,
+  "bounds": {
+    "size": [
+      1.4726,
+      2.0143,
+      1.5902
+    ],
+    "tolerance": 0.101,
+    "min_size": [
+      1.3716,
+      1.9133,
+      1.4892
+    ],
+    "max_size": [
+      1.5736,
+      2.1153,
+      1.6912
+    ]
+  }
 }

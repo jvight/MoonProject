@@ -28,6 +28,10 @@ MonoBehaviour:
   _suspensionDamping: 0.5
   _frontSteerAngle: 28
   _rearSteerFactor: 0
+  _dustFullMeters: 180
+  _dustCleanHalfLife: 0.8
+  _dustMinAmount: 0.04
+  _dustMaxAmount: 0.72
   _leanFrequency: 1.5
   _leanDamping: 0.42
   _pitchPerAcceleration: 1.1
@@ -242,6 +246,12 @@ MonoBehaviour:
       _highEnd: 0.2
       _seconds: 0.09
       _holdsEnd: 0
+    _landSquash:
+      _distance: -0.045
+      _angle: 0
+      _frequency: 3.2
+      _damping: 0.52
+    _landSquashSoft: 0.45
     _landRumble:
       _lowStart: 1
       _lowEnd: 1
@@ -252,6 +262,19 @@ MonoBehaviour:
     _landRumbleSoft: 0.1
     _landRumbleHard: 0.3
     _hardLanding: 6
+    _collisionJolt:
+      _distance: -0.025
+      _angle: 3.2
+      _frequency: 3.8
+      _damping: 0.5
+    _collisionRumble:
+      _lowStart: 0.28
+      _lowEnd: 0.28
+      _highStart: 0.22
+      _highEnd: 0.22
+      _seconds: 0.1
+      _holdsEnd: 0
+    _collisionHardSpeed: 6
     _seatRumble:
       _lowStart: 0.2
       _lowEnd: 0.2

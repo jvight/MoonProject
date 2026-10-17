@@ -144,10 +144,16 @@ namespace MoonProject.Audio.PlayModeTests
             _rig.Rover.TetherOrigin.position = new Vector3(30f, 2f, -7f);
             yield return null;
             Assert.Less(Vector3.Distance(hum.transform.position, _rig.Rover.TetherOrigin.position), 1e-4f);
+            Assert.AreEqual(1f, _rig.Gameplay.TetherHumPitch, 1e-3f, "relaxed tether hum starts at base pitch");
+
+            _rig.Events.Publish(new FeelBeat(FeelKind.Tether, FeelPhase.Act, attach, Vector3.back, 1f, 0f));
+            yield return new WaitForSecondsRealtime(0.25f);
+            Assert.Greater(_rig.Gameplay.TetherHumPitch, 1.15f, "tether hum pitch rises in key under strain");
 
             var release = new Vector3(6f, 0f, 1f);
             _rig.Events.Publish(new TetherReleased(release, false));
             AssertLastPlayed("tether_release", release);
+            Assert.AreEqual(0f, _rig.Gameplay.TetherStrain, 1e-4f, "strain clears on release");
 
             yield return new WaitForSecondsRealtime(1f);
             Assert.IsFalse(hum.isPlaying, "hum stops once its fade-out ends");

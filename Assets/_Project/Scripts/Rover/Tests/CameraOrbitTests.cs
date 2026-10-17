@@ -483,16 +483,53 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void Lift_HoldsWhileAirborne()
+        public void Downhill_StoppingOnASlope_KeepsDownhillFraming()
+        {
+            DriveForward(6f);
+            _descent = _tuning.DownhillFullAngle;
+            Run(5f, Vector2.zero);
+            float drivingLift = _orbit.Lift;
+
+            Park();
+            _descent = 8f;
+            Run(3f, Vector2.zero);
+            Assert.AreEqual(drivingLift, _orbit.Lift, 0.05f,
+                "Stopping on a downhill slope keeps the downhill framing instead of tilting up (CTRL-09).");
+        }
+
+        [Test]
+        public void Lift_BlendsWithVerticalVelocityWhileAirborne()
         {
             DriveForward(6f);
             _descent = _tuning.DownhillFullAngle;
             Run(5f, Vector2.zero);
             float lift = _orbit.Lift;
-            _descent = -30f;
+            _descent = 0f;
             _grounded = false;
-            Run(1f, Vector2.zero);
-            Assert.AreEqual(lift, _orbit.Lift, 1e-4f);
+            Run(0.5f, Vector2.zero);
+            Assert.Less(_orbit.Lift, lift - 0.5f, "Airborne lift is not frozen mid-air over a ridge crest (CTRL-09).");
+            Assert.Greater(_orbit.Lift, 0.5f, "Airborne lift blends smoothly rather than snapping.");
+
+            _descent = _tuning.DownhillFullAngle;
+            Run(2f, Vector2.zero);
+            Assert.Greater(_orbit.Lift, _tuning.DownhillLift - 0.5f, "Falling mid-air tilts down toward the landing.");
+        }
+
+        [Test]
+        public void SlowSightseeing_WaitsLongerAndRecentersMoreGentlyThanCruise()
+        {
+            DriveForward(2.3f);
+            LookAway(1.5f);
+            float slowOffset = _orbit.YawOffset;
+            Run(_tuning.RecenterDelay, Vector2.zero);
+            Assert.AreEqual(0f, _orbit.RecenterWeight, 1e-4f,
+                "Slow sightseeing waits longer than the cruise recenter delay (CTRL-09).");
+            Assert.AreEqual(slowOffset, _orbit.YawOffset, Held);
+
+            Run(_tuning.RecenterDelay * (_tuning.RecenterSlowDelayScale - 1f) + 0.5f, Vector2.zero);
+            Assert.Greater(_orbit.RecenterWeight, 0f);
+            Assert.LessOrEqual(FastestTurn(4f), _tuning.RecenterMaxRate * 0.6f,
+                "Slow sightseeing recenters more gently than full cruise speed (CTRL-09).");
         }
 
         [Test]

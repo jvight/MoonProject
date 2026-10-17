@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
 
@@ -15,6 +16,7 @@ namespace MoonProject.Rover
     public sealed class RoverVisualRig : MonoBehaviour
     {
         private const float ShockRestLength = 0.30f;
+        private static readonly int DustAmountId = Shader.PropertyToID("_DustAmount");
 
         [Tooltip("Rig tuning (Assets/_Project/Data/Tuning/RoverRigTuning.asset).")]
         [SerializeField] private RoverRigTuning _tuning;
@@ -60,10 +62,20 @@ namespace MoonProject.Rover
         private Vector3 _antennaRestPosition;
         private float _antennaLift;
         private Vector3 _lastPosition;
+        private Renderer[] _lowerBodyRenderers;
+        private MaterialPropertyBlock _dustBlock;
+        private float _dustLevel;
+        private float _appliedDustAmount = -1f;
 
         public Vector3 RootPosition => transform.position;
 
         public Quaternion RootRotation => transform.rotation;
+
+        /// <summary>Normalized lower-body regolith dust accumulation [0..1] from driving; brushes off while docked.</summary>
+        public float DustLevel => _dustLevel;
+
+        /// <summary>Current <c>_DustAmount</c> applied to 07's lower-body renderers (wheels, arms, shock struts).</summary>
+        public float AppliedDustAmount => _appliedDustAmount >= 0f ? _appliedDustAmount : (_tuning != null ? _tuning.DustMinAmount : 0f);
 
         /// <summary>Validates the wiring and snaps the model onto the sphere; false (and logged) when broken.</summary>
         public bool Initialize(RoverController rover)
@@ -176,6 +188,52 @@ namespace MoonProject.Rover
             _chassisRestRotation = _chassis.localRotation;
             _antennaRestRotation = _antenna.localRotation;
             _antennaRestPosition = _antenna.localPosition;
+            CacheLowerBodyRenderers();
+        }
+
+        private void CacheLowerBodyRenderers()
+        {
+            var seen = new HashSet<Renderer>();
+            var list = new List<Renderer>(16);
+            CollectRenderers(_wheels, seen, list);
+            CollectRenderers(_arms, seen, list);
+            CollectRenderers(_shocks, seen, list);
+            for (int i = 0; i < _wheels.Length; i++)
+            {
+                Transform parent = _wheels[i] != null ? _wheels[i].parent : null;
+                if (parent != null && parent != _chassis && parent.TryGetComponent(out Renderer parentRenderer)
+                    && seen.Add(parentRenderer))
+                {
+                    list.Add(parentRenderer);
+                }
+            }
+
+            _lowerBodyRenderers = list.ToArray();
+            _dustBlock = new MaterialPropertyBlock();
+            _dustLevel = 0f;
+            _appliedDustAmount = -1f;
+            ApplyLowerBodyDust();
+        }
+
+        private static void CollectRenderers(Transform[] roots, HashSet<Renderer> seen, List<Renderer> list)
+        {
+            for (int i = 0; i < roots.Length; i++)
+            {
+                if (roots[i] == null)
+                {
+                    continue;
+                }
+
+                Renderer[] childRenderers = roots[i].GetComponentsInChildren<Renderer>(true);
+                for (int j = 0; j < childRenderers.Length; j++)
+                {
+                    Renderer r = childRenderers[j];
+                    if (r != null && seen.Add(r))
+                    {
+                        list.Add(r);
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -250,7 +308,9 @@ namespace MoonProject.Rover
 
             rotation = heading * GroundPlaneFit.Tilt(_attitude.Pitch, _attitude.Roll);
             Vector3 position = sphere - rotation * Vector3.up * radius;
-            float travelled = Vector3.Dot(position - _lastPosition, rotation * Vector3.forward);
+            Vector3 deltaPos = position - _lastPosition;
+            float travelled = Vector3.Dot(deltaPos, rotation * Vector3.forward);
+            float planarMeters = new Vector2(deltaPos.x, deltaPos.z).magnitude;
             _lastPosition = position;
             transform.SetPositionAndRotation(position, rotation);
 
@@ -260,9 +320,50 @@ namespace MoonProject.Rover
             StepSuspension(deltaTime);
             ApplyWheels(travelled, deltaTime);
             ApplySuspensionLinks();
+            StepLowerBodyDust(planarMeters, deltaTime);
             _antenna.localRotation =
                 GroundPlaneFit.Tilt(_jelly.AntennaPitch, _jelly.AntennaRoll) * _antennaRestRotation;
             _antenna.localPosition = _antennaRestPosition + _antennaRestRotation * Vector3.up * _antennaLift;
+        }
+
+        private void StepLowerBodyDust(float planarMeters, float deltaTime)
+        {
+            if (_rover.IsDocked)
+            {
+                _dustLevel = Smoothing.Damp(_dustLevel, 0f, _tuning.DustCleanHalfLife, deltaTime);
+                if (_dustLevel < 1e-4f)
+                {
+                    _dustLevel = 0f;
+                }
+            }
+            else if (_rover.IsGrounded && planarMeters > 0f)
+            {
+                _dustLevel = Mathf.Clamp01(_dustLevel + planarMeters / _tuning.DustFullMeters);
+            }
+
+            ApplyLowerBodyDust();
+        }
+
+        private void ApplyLowerBodyDust()
+        {
+            if (_lowerBodyRenderers == null || _lowerBodyRenderers.Length == 0 || _dustBlock == null)
+            {
+                return;
+            }
+
+            float targetAmount = Mathf.Lerp(_tuning.DustMinAmount, _tuning.DustMaxAmount, _dustLevel);
+            if (Mathf.Abs(targetAmount - _appliedDustAmount) <= 1e-4f)
+            {
+                return;
+            }
+
+            _appliedDustAmount = targetAmount;
+            _dustBlock.Clear();
+            _dustBlock.SetFloat(DustAmountId, targetAmount);
+            for (int i = 0; i < _lowerBodyRenderers.Length; i++)
+            {
+                _lowerBodyRenderers[i].SetPropertyBlock(_dustBlock);
+            }
         }
 
         private int CastWheels(Quaternion heading)

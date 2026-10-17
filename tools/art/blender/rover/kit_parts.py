@@ -224,7 +224,7 @@ def build_kit_lamp_bar_model(cfg=DIMENSIONS, mats=None, parent=None, unity_loc=(
             center_xyz=(lx, lamp_y, lamp_z),
             segments=16,
             mat_idx=1,
-            rot_euler=(lamp_tilt_deg, 0.0, 0.0),
+            rot_euler=(-tilt_rad, 0.0, 0.0),
             ring_mat_indices=[5, 0, 2, 1, 1, 1, 3, 0, 0],
             auto_chamfer=False,
         )
@@ -240,7 +240,7 @@ def build_kit_lamp_bar_model(cfg=DIMENSIONS, mats=None, parent=None, unity_loc=(
                 major_seg=16,
                 minor_seg=6,
                 mat_idx=2,
-                rot_euler=(lamp_tilt_deg, 0.0, 0.0),
+                rot_euler=(-tilt_rad, 0.0, 0.0),
             )
 
         # Outer tubular dark-charcoal brush-guard ring framing each headlamp
@@ -254,7 +254,7 @@ def build_kit_lamp_bar_model(cfg=DIMENSIONS, mats=None, parent=None, unity_loc=(
             major_seg=16,
             minor_seg=6,
             mat_idx=0,
-            rot_euler=(lamp_tilt_deg, 0.0, 0.0),
+            rot_euler=(-tilt_rad, 0.0, 0.0),
         )
 
         # Horizontal stone-guard grille bars across the front of the headlamp hoop
@@ -301,7 +301,7 @@ def build_kit_lamp_bar_model(cfg=DIMENSIONS, mats=None, parent=None, unity_loc=(
         center_xyz=(0.0, bar_y, bar_z + 0.006),
         segments=14,
         mat_idx=1,
-        rot_euler=(lamp_tilt_deg, 0.0, 0.0),
+        rot_euler=(-tilt_rad, 0.0, 0.0),
         ring_mat_indices=[0, 0, 2, 1, 3, 0],
         auto_chamfer=False,
     )
@@ -313,7 +313,7 @@ def build_kit_lamp_bar_model(cfg=DIMENSIONS, mats=None, parent=None, unity_loc=(
         bevel_width=0.004,
         bevel_segments=1,
         mat_idx=0,
-        rot_euler=(lamp_tilt_deg, 0.0, 0.0),
+        rot_euler=(-tilt_rad, 0.0, 0.0),
     )
 
     root_obj = create_mesh_node(
@@ -343,7 +343,7 @@ def build_kit_lamp_bar_model(cfg=DIMENSIONS, mats=None, parent=None, unity_loc=(
             segments=14,
             rings=3,
             mat_idx=0,
-            rot_euler=(lamp_tilt_deg, 0.0, 0.0),
+            rot_euler=(-tilt_rad, 0.0, 0.0),
         )
         create_mesh_node(
             l_name,
