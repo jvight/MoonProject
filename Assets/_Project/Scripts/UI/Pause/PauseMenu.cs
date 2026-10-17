@@ -177,6 +177,9 @@ namespace MoonProject.UI
         /// <summary>True while the menu is the title's (from <see cref="OpenTitle"/> until Continue or New Game).</summary>
         public bool IsTitle => IsOpen && _pages.IsTitle;
 
+        /// <summary>Last measured CPU time (ms) of <see cref="TitleScenePainter.Paint"/>.</summary>
+        public float TitleScenePaintMs => _titleScenePainter.LastPaintMilliseconds;
+
         /// <summary>True while the title's menu rests out of sight, left untouched.</summary>
         public bool IsResting => _resting;
 
@@ -521,6 +524,7 @@ namespace MoonProject.UI
             {
                 _titleScreen.Hide();
                 _titleKeyHint.Hide();
+                ApplyTitleLayout();
             }
 
             _pendingFocus = _layout.MasterSlider;
@@ -594,10 +598,14 @@ namespace MoonProject.UI
         {
             SaveIfChanged();
             _settingsPanel.Hide();
-            if (_pages.IsTitle && !_resting)
+            if (_pages.IsTitle)
             {
-                _titleScreen.Show();
-                _titleKeyHint.Show();
+                ApplyTitleLayout();
+                if (!_resting)
+                {
+                    _titleScreen.Show();
+                    _titleKeyHint.Show();
+                }
             }
 
             _pendingFocus = _layout.SettingsButton;
@@ -998,6 +1006,7 @@ namespace MoonProject.UI
         {
             bool title = _pages.IsTitle;
             _layout.Pause.EnableInClassList(TitleClass, title);
+            ApplyTitleLayout();
             _layout.ResumeButton.text = _localization.Get(title ? UiKeys.TitleContinue : UiKeys.PauseResume);
             _layout.SettingsButton.text = _localization.Get(title ? UiKeys.TitleSettings : UiKeys.PauseSettings);
             _layout.QuitButton.text = _localization.Get(title ? UiKeys.TitleQuit : UiKeys.PauseQuit);
@@ -1006,6 +1015,28 @@ namespace MoonProject.UI
             Display(_layout.NewGameButton, title);
             Display(_layout.QuitToTitleButton, !title && _flow.ShowsTitle);
             Display(_layout.CreditsButton, title);
+        }
+
+        private void ApplyTitleLayout()
+        {
+            _layout.TitleScreen.style.left = _title.TitleScreenLeft;
+            _layout.TitleScreen.style.top = _title.TitleScreenTop;
+            _layout.TitleScreen.style.width = _title.RuleWidth;
+            _layout.TitleSubtitleRow.style.marginTop = _title.SubtitleTopMargin;
+            _layout.TitleRule.style.marginTop = _title.RuleTopMargin;
+            _layout.TitleRule.style.width = _title.RuleWidth;
+            _layout.TitleRule.style.height = _title.RuleHeight;
+            _layout.TitleRule.style.borderLeftWidth = _title.RuleAccentWidth;
+            if (_pages.IsTitle && !_settingsPanel.Target)
+            {
+                _layout.PauseFrame.style.paddingLeft = _title.MenuFrameLeftPadding;
+                _layout.PauseFrame.style.paddingTop = _title.MenuFrameTopPadding;
+            }
+            else
+            {
+                _layout.PauseFrame.style.paddingLeft = StyleKeyword.Null;
+                _layout.PauseFrame.style.paddingTop = StyleKeyword.Null;
+            }
         }
 
         private static void Display(VisualElement element, bool shown)

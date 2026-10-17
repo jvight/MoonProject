@@ -62,9 +62,9 @@ namespace MoonProject.UI
                 return;
             }
 
-            painter.strokeColor = new Color(0f, 0f, 0f, alpha);
-            painter.lineWidth = 1f;
             float step = h / count;
+            painter.strokeColor = new Color(0f, 0f, 0f, alpha);
+            painter.lineWidth = Mathf.Max(1f, step * 0.38f);
             for (int i = 0; i < count; i++)
             {
                 float y = (i + 0.5f) * step;

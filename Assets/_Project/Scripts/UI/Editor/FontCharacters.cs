@@ -4,9 +4,9 @@ using System.Text;
 namespace MoonProject.UI.Editor
 {
     /// <summary>
-    /// The characters the UI font atlases are filled with at build time: printable ASCII, the whole Vietnamese
-    /// alphabet, a little typography, and every character of every string table. The atlases stay dynamic for
-    /// anything unforeseen, but nothing the game ships needs a glyph added at runtime.
+    /// The characters the UI font atlases are baked with at build time: printable ASCII (including digits), the whole
+    /// Vietnamese alphabet, UI symbols and typography, and every character of every string table and credits file. The
+    /// baked atlases are static so nothing writes to font assets at runtime.
     /// </summary>
     internal static class FontCharacters
     {
@@ -19,9 +19,10 @@ namespace MoonProject.UI.Editor
             "ẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặẸẹẺẻẼẽẾếỀềỂểỄễỆệỈỉỊịỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợỤụỦủỨứỪừỬửỮữỰựỲỳỴỵỶỷỸỹ";
 
         /// <summary>
-        /// Typographic marks the copy may use: curly quotes, dashes, ellipsis, the multiplication sign.
+        /// Typographic marks and UI symbols the copy and HUD use: curly quotes, dashes, ellipsis, multiplication,
+        /// middle dot, bullet, angle quotes, degree, copyright, plus-minus, and minus sign.
         /// </summary>
-        public const string Typography = "‘’“”–—…×·";
+        public const string Typography = "‘’“”–—…×·•‹›°©±−";
 
         /// <summary>
         /// Every distinct character of the base set and <paramref name="texts"/>, sorted (deterministic).

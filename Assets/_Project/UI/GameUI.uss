@@ -426,7 +426,7 @@ Label {
     position: absolute;
     left: 150px;
     width: 510px;
-    top: 175px;
+    top: 126px;
     align-items: flex-start;
 }
 
@@ -442,7 +442,7 @@ Label {
 .title-screen__subtitle-row {
     flex-direction: row;
     align-items: center;
-    margin-top: 2px;
+    margin-top: 4px;
     margin-left: 4px;
 }
 
@@ -466,7 +466,7 @@ Label {
     width: 510px;
     height: 2px;
     margin-top: 16px;
-    background-color: var(--moon-track);
+    background-color: var(--glass-rim-glow);
     border-left-width: 48px;
     border-left-color: var(--moon-warm-lamp);
 }
@@ -491,7 +491,7 @@ Label {
     justify-content: flex-start;
     align-items: flex-start;
     padding-left: 144px;
-    padding-top: 336px;
+    padding-top: 342px;
     padding-bottom: 0;
 }
 
@@ -1493,6 +1493,111 @@ Label {
 }
 
 .memory-card .hint-row__word {
+    color: var(--paper-ink-dim);
+}
+
+/* Letter card (story-v4 letters: Variant C terminal metadata header + warm paper/telex sheet, readable 580 px width) */
+
+.letter-card {
+    position: absolute;
+    left: 50%;
+    margin-left: -290px;
+    bottom: 28px;
+    width: 580px;
+}
+
+.letter-card__body {
+    padding: 20px 28px 18px 28px;
+    border-width: 2px;
+    border-left-width: 6px;
+    border-radius: 8px;
+    border-color: var(--paper-border);
+    border-left-color: var(--paper-stamp);
+    background-color: var(--paper-fill);
+    -unity-background-image-tint-color: var(--paper-tint);
+}
+
+.letter-card--ark .letter-card__body {
+    border-left-color: var(--moon-warm-lamp);
+}
+
+.letter-card__heading {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.letter-card__title-group {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 1;
+}
+
+.letter-card__lamp {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    margin-right: 10px;
+    background-color: var(--paper-stamp);
+}
+
+.letter-card--ark .letter-card__lamp {
+    background-color: var(--moon-warm-lamp);
+}
+
+.letter-card__icon {
+    display: flex;
+    width: 20px;
+    height: 13px;
+    margin-right: 10px;
+    --icon-color: var(--paper-stamp);
+    --icon-hole-color: var(--paper-fill);
+}
+
+.letter-card__caption {
+    font-size: 17px;
+    letter-spacing: 2.5px;
+    color: var(--paper-stamp);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
+}
+
+.letter-card__stamp {
+    margin-left: 14px;
+    font-size: 17px;
+    letter-spacing: 2px;
+    color: var(--paper-ink-dim);
+    -unity-text-align: middle-right;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
+}
+
+.letter-card__rule {
+    height: 1.5px;
+    margin-top: 10px;
+    margin-bottom: 14px;
+    background-color: var(--paper-border);
+}
+
+.letter-card__text {
+    font-size: 21px;
+    color: var(--paper-ink);
+    white-space: normal;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/BeVietnamPro-Regular.asset");
+}
+
+.letter-card__sender {
+    margin-top: 10px;
+    font-size: 18px;
+    letter-spacing: 1.5px;
+    color: var(--paper-stamp);
+    -unity-text-align: middle-right;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/IBMPlexMono-Bold.asset");
+}
+
+.letter-card__footer {
+    margin-top: 14px;
+}
+
+.letter-card .hint-row__word {
     color: var(--paper-ink-dim);
 }
 

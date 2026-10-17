@@ -37,6 +37,7 @@ namespace MoonProject.UI
         [SerializeField] private LabHudSettings _lab = new LabHudSettings();
         [SerializeField] private CellRowSettings _battery = new CellRowSettings();
         [SerializeField] private SafeFrameSettings _safe = new SafeFrameSettings();
+        [SerializeField] private LetterCardSettings _letterCard = new LetterCardSettings();
 
         public PauseSettings Pause => _pause;
 
@@ -90,6 +91,8 @@ namespace MoonProject.UI
 
         public SafeFrameSettings Safe => _safe;
 
+        public LetterCardSettings LetterCard => _letterCard;
+
         /// <summary>Null when the tuning is usable, else the first problem.</summary>
         public string Validate()
         {
@@ -99,12 +102,13 @@ namespace MoonProject.UI
                 _stargaze == null || _guidance == null || _backdrop == null || _battery == null || _lab == null ||
                 _safe == null || _saveTick == null || _homeMeter == null || _credits == null ||
                 _rewardCard == null || _cargo == null || _unlockCard == null ||
-                _crateNote == null)
+                _crateNote == null || _letterCard == null)
             {
                 return "a settings section is missing";
             }
 
-            return _title.Validate() ?? _prompts.Validate() ?? _safe.Validate() ?? _pause.Validate() ?? _cargo.Validate();
+            return _title.Validate() ?? _prompts.Validate() ?? _safe.Validate() ?? _pause.Validate() ??
+                _cargo.Validate() ?? _letterCard.Validate();
         }
     }
 }
