@@ -448,7 +448,8 @@ namespace MoonProject.UI
 
             InputDeviceKind device = input.ActiveDevice;
             _textScale.Apply(_player.TextScale);
-            _objective.Tick(hudTime, _services.Rover.Speed, _player.Guidance, _objectiveView.ShowsObjective);
+            _objective.Tick(hudTime, _services.Rover.Speed, _player.Guidance, _objectiveView.ShowsObjective,
+                _objectiveChip.AtHand(_services.Hints.Primary.Kind));
             _lowBattery.Tick(paused ? 0f : deltaTime, _objectiveView.ShowsBattery);
             PromptHolder holder = DecideGuidance(paused, hudTime);
             _unlockCard.Tick(hudTime, !cargoOpen && holder == PromptHolder.Unlock,
