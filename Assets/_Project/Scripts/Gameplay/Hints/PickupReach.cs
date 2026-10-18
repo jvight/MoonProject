@@ -16,6 +16,9 @@ namespace MoonProject.Gameplay
         /// <summary>Owner id of the pieces held because the hold was full (<see cref="CargoBundles"/>).</summary>
         public const int Bundles = 4;
 
+        /// <summary>Owner id of the open supply crates' contents (<see cref="SupplyCaches"/>).</summary>
+        public const int OpenCrates = 5;
+
         private int _frame = int.MinValue;
         private bool _held;
         private float _bestSq;

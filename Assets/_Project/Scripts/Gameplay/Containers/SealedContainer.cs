@@ -51,6 +51,18 @@ namespace MoonProject.Gameplay
 
         public Transform CutPoint { get; }
 
+        /// <summary>
+        /// The way 07 comes in to the seal, flat: from the lid's hinge out through the seal on its front edge (Art's
+        /// FBX root turn leaves the container's own forward pointing down); an open container, which has no seal to
+        /// face, is come at from <paramref name="from"/>.
+        /// </summary>
+        public Vector3 SealSide(Vector3 from)
+        {
+            Vector3 side = StandsOpen ? from - CutPoint.position : CutPoint.position - Lid.position;
+            side.y = 0f;
+            return side.normalized;
+        }
+
         public EmissionGlow Seal { get; }
 
         /// <summary>Where the find rests inside, and slides out from once the lid is open.</summary>

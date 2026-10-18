@@ -879,6 +879,10 @@
             "text": "Nhặt"
         },
         {
+            "key": "pickup.crate.contents",
+            "text": "phụ tùng"
+        },
+        {
             "key": "pickup.part.icecore",
             "text": "LÕI BĂNG 41 · H₂O"
         },

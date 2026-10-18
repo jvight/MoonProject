@@ -879,6 +879,10 @@
             "text": "Pick up"
         },
         {
+            "key": "pickup.crate.contents",
+            "text": "the parts"
+        },
+        {
             "key": "pickup.part.icecore",
             "text": "CORE 41 · H₂O"
         },
