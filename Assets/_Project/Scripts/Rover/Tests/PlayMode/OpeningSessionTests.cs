@@ -827,6 +827,11 @@ namespace MoonProject.Rover.PlayModeTests
 
                     Object.DestroyImmediate(shot);
 
+                    if (frame == 30)
+                    {
+                        Assert.AreNotEqual(OpeningPhase.Idle, phase, buttonName + " began the wake");
+                    }
+
                     if (chaseAt < 0f && _beats.Contains(WakeBeat.ChaseFrame))
                     {
                         chaseAt = Time.time;
