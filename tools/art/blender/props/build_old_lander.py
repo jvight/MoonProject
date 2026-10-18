@@ -103,18 +103,18 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         p1_u = _pose_pt(upper_corners[j])
 
         # Main lower perimeter aluminium tubes
-        sf.add_pipe(p0_l, p1_l, radius=0.028, mat="R1_GreyMetal", segments=10)
+        sf.add_pipe(p0_l, p1_l, radius=0.036, mat="R1_GreyMetal", segments=10)
         # Secondary lower inner chord tubes
         p0_li = _pose_pt(_cyl_pt(r_lower * 0.70, corner_angles[i], y_lower - 0.06))
         p1_li = _pose_pt(_cyl_pt(r_lower * 0.70, corner_angles[j], y_lower - 0.06))
-        sf.add_pipe(p0_li, p1_li, radius=0.020, mat="R1_GreyMetal", segments=8)
-        sf.add_pipe(p0_l, p0_li, radius=0.018, mat="R1_BareSteel", segments=8)
+        sf.add_pipe(p0_li, p1_li, radius=0.028, mat="R1_GreyMetal", segments=8)
+        sf.add_pipe(p0_l, p0_li, radius=0.026, mat="R1_BareSteel", segments=8)
 
         # Upper perimeter triangle tubes
-        sf.add_pipe(p0_u, p1_u, radius=0.024, mat="R1_GreyMetal", segments=10)
+        sf.add_pipe(p0_u, p1_u, radius=0.032, mat="R1_GreyMetal", segments=10)
 
         # Primary rising corner columns & V-diagonals
-        sf.add_pipe(p0_l, p0_u, radius=0.026, mat="R1_BareSteel", segments=10)
+        sf.add_pipe(p0_l, p0_u, radius=0.034, mat="R1_BareSteel", segments=10)
         mid_low = _pose_pt(
             (
                 (lower_corners[i][0] + lower_corners[j][0]) * 0.5,
@@ -122,8 +122,8 @@ def build_prop_old_lander(out_fbx: Path) -> None:
                 (lower_corners[i][2] + lower_corners[j][2]) * 0.5,
             )
         )
-        sf.add_pipe(mid_low, p0_u, radius=0.018, mat="R1_GreyMetal", segments=8)
-        sf.add_pipe(mid_low, p1_u, radius=0.018, mat="R1_GreyMetal", segments=8)
+        sf.add_pipe(mid_low, p0_u, radius=0.026, mat="R1_GreyMetal", segments=8)
+        sf.add_pipe(mid_low, p1_u, radius=0.026, mat="R1_GreyMetal", segments=8)
 
         # Machined aluminium corner gusset blocks at lower & upper vertices
         sf.add_bevel_box(
@@ -146,7 +146,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     # Central mast support spider pyramid & upper mast collar
     mast_base_u = _pose_pt((0.0, 1.44, 0.0))
     for i in range(3):
-        sf.add_pipe(_pose_pt(upper_corners[i]), mast_base_u, radius=0.022, mat="R1_BareSteel", segments=8)
+        sf.add_pipe(_pose_pt(upper_corners[i]), mast_base_u, radius=0.030, mat="R1_BareSteel", segments=8)
 
     sf.add_cylinder(
         center_u=mast_base_u,
@@ -189,7 +189,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         sf.add_pipe(
             _pose_pt(_cyl_pt(0.24, a, 0.58)),
             _pose_pt(_cyl_pt(r_lower, a, y_lower)),
-            radius=0.020,
+            radius=0.028,
             mat="R1_BareSteel",
             segments=8,
         )
@@ -271,22 +271,22 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         wrist_u = (foot_u[0] - rad_x * 0.04, foot_u[1] + 0.09, foot_u[2] - rad_z * 0.04)
 
         # A-frame twin lower tubular struts
-        legs.add_pipe(h_left, wrist_u, radius=0.024, mat="R1_GreyMetal", segments=10)
-        legs.add_pipe(h_right, wrist_u, radius=0.024, mat="R1_GreyMetal", segments=10)
+        legs.add_pipe(h_left, wrist_u, radius=0.032, mat="R1_GreyMetal", segments=10)
+        legs.add_pipe(h_right, wrist_u, radius=0.032, mat="R1_GreyMetal", segments=10)
 
         # Crossbar between the A-frame legs
         mid_l = tuple(h_left[k] * 0.52 + wrist_u[k] * 0.48 for k in range(3))
         mid_r = tuple(h_right[k] * 0.52 + wrist_u[k] * 0.48 for k in range(3))
-        legs.add_pipe(mid_l, mid_r, radius=0.016, mat="R1_BareSteel", segments=8)
+        legs.add_pipe(mid_l, mid_r, radius=0.024, mat="R1_BareSteel", segments=8)
 
         # Hinge knuckles at the spaceframe attachment
         legs.add_hinge(
             center_u=c_low,
             axis_u="X",
             length=0.26,
-            knuckle_radius=0.026,
+            knuckle_radius=0.028,
             leaf_width=0.075,
-            leaf_thickness=0.016,
+            leaf_thickness=0.018,
             rot_deg_u=_pose_rot((0.0, az_deg, 0.0)),
             mat_body="R1_GreyMetal",
             mat_pin="R1_BareSteel",
@@ -296,13 +296,13 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         c_up = _pose_pt(_cyl_pt(r_upper + 0.04, az_deg, y_upper - 0.04))
         shock_bot = tuple((mid_l[k] + mid_r[k]) * 0.5 + (wrist_u[k] - c_low[k]) * 0.18 for k in range(3))
         shock_mid = tuple(c_up[k] * 0.56 + shock_bot[k] * 0.44 for k in range(3))
-        legs.add_pipe(c_up, shock_mid, radius=0.034, mat="R1_GreyMetal", segments=10)
-        legs.add_pipe(shock_mid, shock_bot, radius=0.020, mat="R1_BareSteel", segments=10)
+        legs.add_pipe(c_up, shock_mid, radius=0.042, mat="R1_GreyMetal", segments=10)
+        legs.add_pipe(shock_mid, shock_bot, radius=0.030, mat="R1_BareSteel", segments=10)
         legs.add_cylinder(
             center_u=shock_mid,
-            radius=0.040,
+            radius=0.046,
             length=0.05,
-            mat="R1_Copper",
+            mat="R1_GreyMetal",
             axis_u="Y",
             segments=10,
             bevel=0.005,
@@ -383,20 +383,20 @@ def build_prop_old_lander(out_fbx: Path) -> None:
 
     # -----------------------------------------------------------------------
     # C. MastAndSolar (Tall central mast reaching ~2.86 m above ground / 3.00 m total height,
-    #    with flat solar panel and flat planar array antenna)
+    #    with flat solar panel; planar array exposed separately on Array_Hinge)
     # -----------------------------------------------------------------------
     mast = r1kit.MeshBuilder("MastAndSolar", pivot_u=(0.0, 2.15, 0.0))
 
     m_bot = _pose_pt((0.0, 1.40, 0.0))
     m_mid = _pose_pt((0.0, 2.18, 0.0))
     m_top = _pose_pt((0.0, 2.84, 0.0))
-    mast.add_pipe(m_bot, m_mid, radius=0.042, mat="R1_GreyMetal", segments=12)
-    mast.add_pipe(m_mid, m_top, radius=0.034, mat="R1_BareSteel", segments=12)
+    mast.add_pipe(m_bot, m_mid, radius=0.046, mat="R1_GreyMetal", segments=12)
+    mast.add_pipe(m_mid, m_top, radius=0.038, mat="R1_BareSteel", segments=12)
 
     for ym in (1.60, 1.90, 2.20, 2.48, 2.74):
         mast.add_cylinder(
             center_u=_pose_pt((0.0, ym, 0.0)),
-            radius=0.054,
+            radius=0.058,
             length=0.036,
             mat="R1_BareSteel",
             axis_u="Y",
@@ -408,7 +408,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     mast.add_pipe(
         _pose_pt((0.048, 1.44, 0.02)),
         _pose_pt((0.044, 2.52, 0.02)),
-        radius=0.012,
+        radius=0.018,
         mat="R1_Copper",
         segments=8,
     )
@@ -508,15 +508,34 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     mast.add_pipe(
         _pose_pt((0.24, 2.52, 0.0)),
         _pose_pt(sp_center_local),
-        radius=0.020,
+        radius=0.028,
         mat="R1_BareSteel",
         segments=8,
     )
 
-    # 2) Flat rectangular Planar Array Antenna on the -X side of the mast gimbal
+    mast.build_object(parent=root)
+
+    # -----------------------------------------------------------------------
+    # C2. Array_Hinge (Flat rectangular Planar Array Antenna on its own hinge node,
+    #     tilting about the mast arm axis like Surveyor's two-axis drive; default pose unchanged)
+    # -----------------------------------------------------------------------
+    array_hinge_pivot_u = _pose_pt((-0.22, 2.52, 0.0))
+    array_hinge = r1kit.MeshBuilder("Array_Hinge", pivot_u=array_hinge_pivot_u)
+
     pa_center_local = (-0.38, 2.56, -0.04)
     pa_rot = _pose_rot((-52.0, -16.0, 6.0))
-    mast.add_bevel_box(
+    array_hinge.add_cylinder(
+        center_u=array_hinge_pivot_u,
+        radius=0.068,
+        length=0.048,
+        mat="R1_GreyMetal",
+        axis_u="X",
+        segments=12,
+        bevel=0.005,
+        bevel_segments=1,
+        rot_deg_u=_pose_rot(),
+    )
+    array_hinge.add_bevel_box(
         center_u=_pose_pt(pa_center_local),
         size_u=(0.68, 0.048, 0.74),
         mat="R1_GreyMetal",
@@ -524,7 +543,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         segments=1,
         rot_deg_u=pa_rot,
     )
-    mast.add_bevel_box(
+    array_hinge.add_bevel_box(
         center_u=_pose_pt((pa_center_local[0], pa_center_local[1] + 0.012, pa_center_local[2] + 0.014)),
         size_u=(0.60, 0.036, 0.66),
         mat="R1_CreamEnamel",
@@ -533,7 +552,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         rot_deg_u=pa_rot,
     )
     for row_off in (-0.20, -0.07, 0.07, 0.20):
-        mast.add_bevel_box(
+        array_hinge.add_bevel_box(
             center_u=_pose_pt((pa_center_local[0] + row_off, pa_center_local[1] + 0.020, pa_center_local[2] + 0.020)),
             size_u=(0.034, 0.024, 0.58),
             mat="R1_Copper",
@@ -541,15 +560,15 @@ def build_prop_old_lander(out_fbx: Path) -> None:
             segments=1,
             rot_deg_u=pa_rot,
         )
-    mast.add_pipe(
-        _pose_pt((-0.22, 2.52, 0.0)),
+    array_hinge.add_pipe(
+        array_hinge_pivot_u,
         _pose_pt(pa_center_local),
-        radius=0.022,
+        radius=0.030,
         mat="R1_BareSteel",
         segments=8,
     )
 
-    mast.build_object(parent=root)
+    array_hinge.build_object(parent=root)
 
     # -----------------------------------------------------------------------
     # D. TvCamera (Surveyor vertical television camera with rotating mirror hood)
@@ -659,8 +678,8 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         dn_a = _pose_pt((p_a[0] + 0.03, p_a[1] - 0.055, p_a[2]))
         up_b = _pose_pt((p_b[0] - 0.03, p_b[1] + 0.055, p_b[2]))
         dn_b = _pose_pt((p_b[0] + 0.03, p_b[1] - 0.055, p_b[2]))
-        scoop.add_strut(up_a, dn_b, width=0.024, thickness=0.016, mat="R1_BareSteel", bevel=0.003)
-        scoop.add_strut(dn_a, up_b, width=0.024, thickness=0.016, mat="R1_GreyMetal", bevel=0.003)
+        scoop.add_strut(up_a, dn_b, width=0.030, thickness=0.022, mat="R1_BareSteel", bevel=0.003)
+        scoop.add_strut(dn_a, up_b, width=0.030, thickness=0.022, mat="R1_GreyMetal", bevel=0.003)
         scoop.add_cylinder(
             center_u=_pose_pt(((p_a[0] + p_b[0]) * 0.5, (p_a[1] + p_b[1]) * 0.5, (p_a[2] + p_b[2]) * 0.5)),
             radius=0.018,
@@ -834,7 +853,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         for dy_s in (-0.07, 0.07):
             removed.add_cylinder(
                 center_u=_pose_pt((s1_center[0] + 0.03 + dx_s * 0.6, s1_center[1] + dy_s, s1_center[2] + 0.035)),
-                radius=0.012,
+                radius=0.015,
                 length=0.045,
                 mat="R1_BareSteel",
                 axis_u="Z",
@@ -850,11 +869,11 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     )
     for c_path in s1_cables:
         posed_path = [_pose_pt(p) for p in c_path]
-        removed.add_tube_path(posed_path, radius=0.015, mat="R1_Rubber", segments=8, cap_ends=True)
+        removed.add_tube_path(posed_path, radius=0.016, mat="R1_Rubber", segments=8, cap_ends=True)
         tip_a = posed_path[-2]
         tip_b = posed_path[-1]
         ext_tip = tuple(tip_b[k] + (tip_b[k] - tip_a[k]) * 0.42 for k in range(3))
-        removed.add_pipe(tip_b, ext_tip, radius=0.010, mat="R1_Copper", segments=8)
+        removed.add_pipe(tip_b, ext_tip, radius=0.012, mat="R1_Copper", segments=8)
 
     # --- Spot 2: Removed cylindrical sensor/battery canister cradle on the Front-Left shoulder (X=-0.46, Y=0.86, Z=+0.24) ---
     s2_center = (-0.46, 0.86, 0.24)
@@ -863,7 +882,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         removed.add_torus(
             center_u=_pose_pt((s2_center[0] - 0.03, s2_center[1] + dy_c, s2_center[2] + 0.02)),
             major_radius=0.105,
-            minor_radius=0.018,
+            minor_radius=0.022,
             mat="R1_BareSteel",
             axis_u="Y",
             major_segments=14,
@@ -883,8 +902,8 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     removed.add_strut(
         _pose_pt((s2_center[0] - 0.06, s2_center[1] + 0.09, s2_center[2] + 0.06)),
         _pose_pt((s2_center[0] - 0.16, s2_center[1] - 0.04, s2_center[2] + 0.14)),
-        width=0.026,
-        thickness=0.010,
+        width=0.030,
+        thickness=0.018,
         mat="R1_BareSteel",
         bevel=0.002,
     )
@@ -898,7 +917,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
         tip_a = posed_path[-2]
         tip_b = posed_path[-1]
         ext_tip = tuple(tip_b[k] + (tip_b[k] - tip_a[k]) * 0.42 for k in range(3))
-        removed.add_pipe(tip_b, ext_tip, radius=0.011, mat="R1_Copper", segments=8)
+        removed.add_pipe(tip_b, ext_tip, radius=0.012, mat="R1_Copper", segments=8)
 
     removed.build_object(parent=root)
 
@@ -915,7 +934,7 @@ def build_prop_old_lander(out_fbx: Path) -> None:
     r1kit.apply_triplanar_uvs(root)
     r1kit.prune_unused_materials(r1kit.collect_hierarchy(root))
     r1kit.bake_vertex_colors(root, footprint_radius=1.65)
-    _boost_weathering(root, extra_dust=0.22, extra_wear=0.14, darken_ao=0.88)
+    _boost_weathering(root, extra_dust=0.24, extra_wear=0.10, darken_ao=0.88)
     r1kit.export_fbx(root, out_fbx, bake_space_transform=False)
     print(f"Exported {out_fbx}")
 
@@ -927,15 +946,18 @@ def _boost_weathering(
     darken_ao: float = 0.88,
 ) -> None:
     """Enhance vertex-color edge wear (G) and dust (B) for decades-old lunar weathering."""
+    strut_meshes = {"Spaceframe", "LandingLegs", "MastAndSolar", "ScoopArm", "RemovedPartSpots"}
     for obj in r1kit.collect_hierarchy(root):
         if obj.type != "MESH" or obj.data is None or not obj.data.color_attributes:
             continue
+        is_strut_mesh = obj.name in strut_meshes
         attr = obj.data.color_attributes[0]
         for item in attr.data:
             r, g, b, a = item.color
+            new_g = (g * 0.52) if is_strut_mesh else (g * 1.12 + extra_wear)
             item.color = (
                 max(0.16, min(1.0, r * darken_ao)),
-                max(0.0, min(1.0, g * 1.18 + extra_wear)),
+                max(0.0, min(1.0, new_g)),
                 max(0.0, min(1.0, b + extra_dust)),
                 a,
             )
