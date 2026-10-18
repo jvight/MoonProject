@@ -835,8 +835,8 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// Where the placing ghost stands: <see cref="BuildingTuning.GhostAheadMetres"/> in front of 07, which drives
-        /// it to its spot, settling onto the apron's bay for the charging pad once it rides within
-        /// <see cref="BuildingTuning.ApronSnapRadius"/> of it (a test's aim point wins).
+        /// it to its spot, settling onto the apron's bay for the charging pad (see <see cref="GhostAim"/>; a test's aim
+        /// point wins).
         /// </summary>
         private Vector3 SampleAimPoint(Vector3 roverPosition, StructureDefinition selected)
         {
@@ -847,16 +847,11 @@ namespace MoonProject.Gameplay
             }
             else
             {
-                Vector3 forward = _rover.Rotation * Vector3.forward;
-                forward.y = 0f;
-                forward = forward.sqrMagnitude > 1e-6f ? forward.normalized : Vector3.forward;
-                point = roverPosition + forward * _tuning.GhostAheadMetres;
-                if (_apronCentre.HasValue && selected.Id == StructureIds.ChargingPad &&
-                    SurfaceRules.HorizontalDistanceSquared(point, _apronCentre.Value) <=
-                    _tuning.ApronSnapRadius * _tuning.ApronSnapRadius)
-                {
-                    point = _apronCentre.Value;
-                }
+                point = GhostAim.Point(
+                    roverPosition,
+                    _rover.Rotation * Vector3.forward,
+                    selected.Id == StructureIds.ChargingPad ? _apronCentre : null,
+                    _tuning);
             }
 
             return SurfaceRules.OnSurface(_terrain, point.x, point.z);
