@@ -52,29 +52,14 @@ namespace MoonProject.Gameplay
         [Range(0, 12)] [SerializeField] private int _knownMetal = 3;
 
         [Header("Surface scan look (SCAN v2)")]
-        [Tooltip("Active scan look preset: ProfilerSweep (A), WireframeReveal (B), or PointScan (C).")]
-        [SerializeField] private ScanVariant _variant = ScanVariant.ProfilerSweep;
-
         [Tooltip("Cyan colour of the crisp surface scan line and low-contrast swept raster band (same palette as the face).")]
         [SerializeField] private Color _scanLineColor = new Color(0.20f, 0.86f, 0.96f, 1f);
 
         [Tooltip("Warm amber accent colour for the completion ping outline and lens pulse (same palette as the CRT face).")]
         [SerializeField] private Color _completionPingColor = new Color(1.00f, 0.682f, 0.220f, 1f);
 
-        [Tooltip("World-space half-width of the crisp bright scan line where the laser touches the object (m).")]
+        [Tooltip("World-space half-width of the wireframe reveal's bright rising front on the object (m).")]
         [Range(0.003f, 0.05f)] [SerializeField] private float _scanLineWidth = 0.014f;
-
-        [Tooltip("Emissive intensity of the crisp surface scan line (calm, under bloom blowout).")]
-        [Range(0.1f, 2f)] [SerializeField] private float _scanLineIntensity = 1.15f;
-
-        [Tooltip("World-space vertical spacing between anti-aliased horizontal surface raster lines (m), chosen so they never alias at chase distance.")]
-        [Range(0.02f, 0.2f)] [SerializeField] private float _rasterSpacingMeters = 0.048f;
-
-        [Tooltip("Low-contrast intensity of the swept surface raster band behind the scan line.")]
-        [Range(0.02f, 0.5f)] [SerializeField] private float _rasterContrast = 0.32f;
-
-        [Tooltip("Seconds over which the swept surface raster band fades out behind the moving scan line.")]
-        [Range(0.2f, 3f)] [SerializeField] private float _rasterFadeSeconds = 1.0f;
 
         [Tooltip("Seconds the thin anti-aliased warm-amber edge traces the object at the completion ping before fading.")]
         [Range(0.1f, 0.9f)] [SerializeField] private float _pingDurationSeconds = 0.38f;
@@ -85,16 +70,13 @@ namespace MoonProject.Gameplay
         [Tooltip("Emissive intensity of the warm-amber completion ping edge.")]
         [Range(0.1f, 2f)] [SerializeField] private float _pingEdgeIntensity = 1.25f;
 
-        [Tooltip("World-space cell pitch (m) of the surface wireframe lattice (Variant B) and surface point-cloud grid (Variant C).")]
+        [Tooltip("World-space cell pitch (m) of the surface wireframe lattice  the scan reveals.")]
         [Range(0.015f, 0.12f)] [SerializeField] private float _surfaceGridPitchMeters = 0.044f;
 
-        [Tooltip("Emissive intensity of the progressive CRT-amber wireframe hologram (Variant B).")]
+        [Tooltip("Emissive intensity of the progressive CRT-amber wireframe hologram.")]
         [Range(0.2f, 2.0f)] [SerializeField] private float _wireframeRevealIntensity = 1.18f;
 
-        [Tooltip("Radius share (0.1..0.48) of each surface-locked lidar dot in the scanning point grid (Variant C).")]
-        [Range(0.10f, 0.48f)] [SerializeField] private float _pointGridRadiusShare = 0.28f;
-
-        [Tooltip("Speed (cycles/s) of the data ticks streaming to the lens (Variant B) and fine laser line pulses (Variant C).")]
+        [Tooltip("Speed (cycles/s) of the data ticks streaming along the beam to the lens.")]
         [Range(0.5f, 8.0f)] [SerializeField] private float _beamPulseSpeed = 3.2f;
 
         [Tooltip("Diameter of the soft emitter glow core at 07's scan lens (m).")]
@@ -200,7 +182,6 @@ namespace MoonProject.Gameplay
         private static readonly int ScanPingColorShaderId = Shader.PropertyToID("_MoonScanPingColor");
         private static readonly int ScanParamsShaderId = Shader.PropertyToID("_MoonScanParams");
         private static readonly int ScanPingParamsShaderId = Shader.PropertyToID("_MoonScanPingParams");
-        private static readonly int ScanVariantParamsShaderId = Shader.PropertyToID("_MoonScanVariantParams");
 
         public IReadOnlyList<RuinScanSet> Ruins => _ruins;
 
@@ -208,7 +189,6 @@ namespace MoonProject.Gameplay
         public RuinScanSet LanderCargo => _landerCargo;
 
         public IReadOnlyList<StoryScan> Stories => _stories;
-        public ScanVariant Variant => _variant;
         public float Reach => _reach;
         public float Cone => _cone;
         public float DistanceWeight => _distanceWeight;
@@ -220,16 +200,11 @@ namespace MoonProject.Gameplay
         public Color ScanLineColor => _scanLineColor;
         public Color CompletionPingColor => _completionPingColor;
         public float ScanLineWidth => _scanLineWidth;
-        public float ScanLineIntensity => _scanLineIntensity;
-        public float RasterSpacingMeters => _rasterSpacingMeters;
-        public float RasterContrast => _rasterContrast;
-        public float RasterFadeSeconds => _rasterFadeSeconds;
         public float PingDurationSeconds => _pingDurationSeconds;
         public float PingEdgeThickness => _pingEdgeThickness;
         public float PingEdgeIntensity => _pingEdgeIntensity;
         public float SurfaceGridPitchMeters => _surfaceGridPitchMeters;
         public float WireframeRevealIntensity => _wireframeRevealIntensity;
-        public float PointGridRadiusShare => _pointGridRadiusShare;
         public float BeamPulseSpeed => _beamPulseSpeed;
         public float LensGlowSize => _lensGlowSize;
         public float LensGlowAlpha => _lensGlowAlpha;
@@ -256,27 +231,15 @@ namespace MoonProject.Gameplay
         public float PathGlintLifetime => _pathGlintLifetime;
         public float PathGlintGravity => _pathGlintGravity;
 
-        /// <summary>Switches the active scan look variant preset at runtime and refreshes shader globals (zero GC).</summary>
-        public void SetVariant(ScanVariant variant)
+        /// <summary>Pushes the wireframe reveal and completion ping tuning to shader globals (zero GC).</summary>
+        public void ApplyShaderGlobals()
         {
-            _variant = variant;
-            ApplyShaderGlobals(_mediumSeconds);
-        }
-
-        /// <summary>Pushes the surface scan line, raster band, completion ping, and variant preset tuning to shader globals (zero GC).</summary>
-        public void ApplyShaderGlobals(float scanDurationSeconds)
-        {
-            float duration = Mathf.Max(scanDurationSeconds, 0.25f);
-            float fadeBandShare = Mathf.Clamp(_rasterFadeSeconds / duration, 0.08f, 0.95f);
-
             Shader.SetGlobalColor(ScanLineColorShaderId, _scanLineColor.linear);
             Shader.SetGlobalColor(ScanPingColorShaderId, _completionPingColor.linear);
             Shader.SetGlobalVector(ScanParamsShaderId,
-                new Vector4(_scanLineWidth, _rasterSpacingMeters, _rasterContrast, fadeBandShare));
+                new Vector4(_scanLineWidth, _surfaceGridPitchMeters, _wireframeRevealIntensity, _pingEdgeThickness));
             Shader.SetGlobalVector(ScanPingParamsShaderId,
-                new Vector4(_scanLineIntensity, _pingDurationSeconds, _pingEdgeThickness, _pingEdgeIntensity));
-            Shader.SetGlobalVector(ScanVariantParamsShaderId,
-                new Vector4((float)_variant, _surfaceGridPitchMeters, _wireframeRevealIntensity, _pointGridRadiusShare));
+                new Vector4(_pingDurationSeconds, _pingEdgeIntensity, 0f, 0f));
         }
 
         /// <summary>Seconds a fragment of <paramref name="size"/> takes to scan with the plain eye.</summary>

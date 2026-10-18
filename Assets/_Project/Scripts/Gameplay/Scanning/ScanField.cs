@@ -72,7 +72,7 @@ namespace MoonProject.Gameplay
             _save = services.Save;
             _materials = services.Materials;
             _beam = services.Beam;
-            _tuning.ApplyShaderGlobals(_tuning.Seconds(ScanSize.Medium));
+            _tuning.ApplyShaderGlobals();
         }
 
         internal ScanField(ScanTuning tuning, EventBus events, ISaveService save, MaterialStock materials,
@@ -83,7 +83,7 @@ namespace MoonProject.Gameplay
             _save = save ?? throw new ArgumentNullException(nameof(save));
             _materials = materials ?? throw new ArgumentNullException(nameof(materials));
             _knownStructures = knownStructures ?? throw new ArgumentNullException(nameof(knownStructures));
-            _tuning.ApplyShaderGlobals(_tuning.Seconds(ScanSize.Medium));
+            _tuning.ApplyShaderGlobals();
         }
 
         public ScanTuning Tuning => _tuning;
@@ -594,7 +594,7 @@ namespace MoonProject.Gameplay
         private void Begin(ScanFragment fragment)
         {
             float duration = _tuning.Seconds(fragment.Size);
-            _tuning.ApplyShaderGlobals(duration);
+            _tuning.ApplyShaderGlobals();
             _scanning = fragment;
             _beamOn = fragment;
             _quarter = Mathf.FloorToInt(fragment.Progress * Quarters);
@@ -606,7 +606,7 @@ namespace MoonProject.Gameplay
         private void Advance(ScanFragment fragment, float now, float deltaTime)
         {
             float duration = _tuning.Seconds(fragment.Size);
-            _tuning.ApplyShaderGlobals(duration);
+            _tuning.ApplyShaderGlobals();
             fragment.Progress = Mathf.Min(1f, fragment.Progress + deltaTime / duration);
             _beam.Scan(deltaTime);
             fragment.Draw(fragment.Progress);
