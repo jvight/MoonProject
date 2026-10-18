@@ -14,6 +14,8 @@ namespace MoonProject.Art.Editor
     {
         public const string SignalPillarShaderName = "MoonProject/R1/SignalPillar";
         public const string SignalPillarShaderPath = "Assets/_Project/Shaders/R1/R1SignalPillar.shader";
+        public const string GroundImprintShaderName = "MoonProject/R1/GroundImprint";
+        public const string GroundImprintShaderPath = "Assets/_Project/Shaders/R1/R1GroundImprint.shader";
 
         public const string PropsSourceFolder = R1MaterialRecipes.ModelsFolder + "/Props";
         public const string PropsModelsFolder = ArtPaths.R1ModelsFolder + "/Props";
@@ -32,6 +34,8 @@ namespace MoonProject.Art.Editor
         public const string OldLanderTanEnamelMaterialName = "R1_OldLanderTanEnamel";
         public const string OldLanderBlastDecalMaterialName = "R1_OldLanderBlastDecal";
         public const string CargoCrateLabelMaterialName = "R1_CargoCrateLabel";
+        public const string MissionFlagStripeMaterialName = "R1_MissionFlagStripe";
+        public const string BootprintTrailMaterialName = "R1_BootprintTrail";
 
         public const string CableMarkerAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CableMarkerAmberMaterialName + ".mat";
         public const string CrateRimGlowAmberMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CrateRimGlowAmberMaterialName + ".mat";
@@ -47,6 +51,8 @@ namespace MoonProject.Art.Editor
         public const string OldLanderTanEnamelMaterialPath = ArtPaths.R1MaterialsFolder + "/" + OldLanderTanEnamelMaterialName + ".mat";
         public const string OldLanderBlastDecalMaterialPath = ArtPaths.R1MaterialsFolder + "/" + OldLanderBlastDecalMaterialName + ".mat";
         public const string CargoCrateLabelMaterialPath = ArtPaths.R1MaterialsFolder + "/" + CargoCrateLabelMaterialName + ".mat";
+        public const string MissionFlagStripeMaterialPath = ArtPaths.R1MaterialsFolder + "/" + MissionFlagStripeMaterialName + ".mat";
+        public const string BootprintTrailMaterialPath = ArtPaths.R1MaterialsFolder + "/" + BootprintTrailMaterialName + ".mat";
 
         public const string LanderReserveAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_LanderReserve_Albedo.png";
         public const string LanderReserveEmissionPath = R1MaterialRecipes.TexturesFolder + "/T_R1_LanderReserve_Emission.png";
@@ -57,6 +63,8 @@ namespace MoonProject.Art.Editor
         public const string IceCoreLabelAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_IceCoreLabel_Albedo.png";
         public const string IceCoreFrostAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_IceCoreFrost_Albedo.png";
         public const string CargoCrateLabelAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_CargoCrateLabel_Albedo.png";
+        public const string BootprintTrailAlbedoPath = R1MaterialRecipes.TexturesFolder + "/T_R1_BootprintTrail_Albedo.png";
+        public const string BootprintTrailNormalPath = R1MaterialRecipes.TexturesFolder + "/T_R1_BootprintTrail_Normal.png";
 
         public const string DeadChargingPostPrefabPath = PropsModelsFolder + "/DeadChargingPost.prefab";
         public const string GroundCableSegmentPrefabPath = PropsModelsFolder + "/GroundCableSegment.prefab";
@@ -82,6 +90,12 @@ namespace MoonProject.Art.Editor
         public const string HabitatModulesPrefabPath = ArtPaths.R1ModelsFolder + "/Ruins/HabitatModules.prefab";
         public const string PropOldLanderPrefabPath = PropsModelsFolder + "/Prop_OldLander.prefab";
         public const string DecalOldLanderBlastPrefabPath = PropsModelsFolder + "/Decal_OldLanderBlast.prefab";
+        public const string PropMissionFlagPrefabPath = PropsModelsFolder + "/Prop_MissionFlag.prefab";
+        public const string PropSeismicStationPrefabPath = PropsModelsFolder + "/Prop_SeismicStation.prefab";
+        public const string PropRetroreflectorPrefabPath = PropsModelsFolder + "/Prop_Retroreflector.prefab";
+        public const string PropSurveyTripodPrefabPath = PropsModelsFolder + "/Prop_SurveyTripod.prefab";
+        public const string PropSampleRackPrefabPath = PropsModelsFolder + "/Prop_SampleRack.prefab";
+        public const string DecalBootprintTrailPrefabPath = PropsModelsFolder + "/Decal_BootprintTrail.prefab";
 
         /// <summary>Loads the <c>MoonProject/R1/SignalPillar</c> shader asset.</summary>
         public static Shader LoadSignalPillarShader()
@@ -96,6 +110,19 @@ namespace MoonProject.Art.Editor
             return shader;
         }
 
+        /// <summary>Loads the <c>MoonProject/R1/GroundImprint</c> shader asset.</summary>
+        public static Shader LoadGroundImprintShader()
+        {
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>(GroundImprintShaderPath);
+            if (shader == null)
+            {
+                throw new InvalidOperationException(
+                    $"R1GroundImprint shader is missing at '{GroundImprintShaderPath}' ({GroundImprintShaderName}).");
+            }
+
+            return shader;
+        }
+
         /// <summary>
         /// Builds all specialized story-prop materials under <c>Assets/_Project/Generated/Art/R1/Materials/</c>.
         /// Called automatically from <see cref="R1MaterialLibrary.BuildMaterials"/>.
@@ -104,6 +131,7 @@ namespace MoonProject.Art.Editor
         {
             Shader r1Lit = litShader ?? R1MaterialLibrary.LoadShader();
             Shader pillarShader = LoadSignalPillarShader();
+            Shader groundImprintShader = LoadGroundImprintShader();
 
             R1MaterialSpec lampSpec = R1MaterialRecipes.Get(R1MaterialSlot.LampAmber);
             R1MaterialSpec orangeSpec = R1MaterialRecipes.Get(R1MaterialSlot.OrangeStripe);
@@ -323,6 +351,36 @@ namespace MoonProject.Art.Editor
             cargoCrateLabelMat.SetFloat("_EdgeWearAmount", 0.20f);
             cargoCrateLabelMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             GeneratedAssets.CreateOrReplace(cargoCrateLabelMat, CargoCrateLabelMaterialPath);
+
+            // 15. R1_MissionFlagStripe: sun-bleached faint stripe & canton trim (almost white warm grey-cream, zero emission)
+            Material flagStripeMat = R1MaterialLibrary.CreateMaterial(r1Lit, creamSpec);
+            flagStripeMat.name = MissionFlagStripeMaterialName;
+            flagStripeMat.SetColor("_BaseColor", new Color(0.84f, 0.80f, 0.74f, 1f));
+            flagStripeMat.SetColor("_EdgeWearColor", new Color(0.95f, 0.93f, 0.89f, 1f));
+            flagStripeMat.SetFloat("_EdgeWearAmount", 0.55f);
+            flagStripeMat.SetFloat("_DustAmount", 0.34f);
+            flagStripeMat.SetFloat("_SmoothnessMin", 0.08f);
+            flagStripeMat.SetFloat("_SmoothnessMax", 0.22f);
+            flagStripeMat.SetTexture("_EmissionMap", null);
+            flagStripeMat.SetColor("_EmissionColor", Color.black);
+            flagStripeMat.SetFloat("_EmissionStrength", 0.0f);
+            flagStripeMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            GeneratedAssets.CreateOrReplace(flagStripeMat, MissionFlagStripeMaterialPath);
+
+            // 16. R1_BootprintTrail: two crossing EVA bootprint trails, re-shading only the ground's own sunlight so the
+            //     prints keep the regolith's colour, show no edge, and read in grazing sun but fade out at high sun
+            var bootprintMat = new Material(groundImprintShader) { name = BootprintTrailMaterialName };
+            bootprintMat.SetTexture("_BaseMap", LoadRequiredTexture(BootprintTrailAlbedoPath));
+            bootprintMat.SetTexture("_BumpMap", LoadRequiredTexture(BootprintTrailNormalPath));
+            bootprintMat.SetVector("_ImprintSize", new Vector4(0.95f, 3.00f, 0f, 0f));
+            bootprintMat.SetFloat("_BandBelow", 0.10f);
+            bootprintMat.SetFloat("_BandAbove", 0.02f);
+            bootprintMat.SetFloat("_ReliefStrength", 0.45f);
+            bootprintMat.SetFloat("_MaxShade", 0.25f);
+            bootprintMat.SetFloat("_GrazeStart", 0.35f);
+            bootprintMat.SetFloat("_GrazeEnd", 0.75f);
+            bootprintMat.SetFloat("_HighSunRelief", 0.15f);
+            GeneratedAssets.CreateOrReplace(bootprintMat, BootprintTrailMaterialPath);
         }
 
         /// <summary>
@@ -399,6 +457,40 @@ namespace MoonProject.Art.Editor
             {
                 ReplaceRendererSlotMaterial(root, "FrostBlock", R1MaterialRecipes.CreamEnamelSlot, LoadOrBuildMaterial(IceCoreFrostMaterialPath));
             }
+            else if (modelPath.EndsWith("/Prop_MissionFlag.fbx", StringComparison.Ordinal))
+            {
+                ReplaceRendererSlotMaterial(root, "FlagSheet", R1MaterialRecipes.SignageSlot, LoadOrBuildMaterial(MissionFlagStripeMaterialPath));
+                EnsureSimpleBoxCollider(root);
+            }
+            else if (modelPath.EndsWith("/Prop_SeismicStation.fbx", StringComparison.Ordinal))
+            {
+                EnsureSimpleBoxCollider(root);
+            }
+            else if (modelPath.EndsWith("/Prop_Retroreflector.fbx", StringComparison.Ordinal))
+            {
+                ReplaceRendererSlotMaterial(root, "PrismArray", R1MaterialRecipes.DarkGlassSlot, LoadOrBuildMaterial(IceCoreWindowMaterialPath));
+                EnsureSimpleBoxCollider(root);
+            }
+            else if (modelPath.EndsWith("/Prop_SurveyTripod.fbx", StringComparison.Ordinal))
+            {
+                EnsureSimpleBoxCollider(root);
+            }
+            else if (modelPath.EndsWith("/Prop_SampleRack.fbx", StringComparison.Ordinal))
+            {
+                EnsureSimpleBoxCollider(root);
+            }
+            else if (modelPath.EndsWith("/Decal_BootprintTrail.fbx", StringComparison.Ordinal))
+            {
+                ReplaceRendererSlotMaterial(root, "TrailSheet", R1MaterialRecipes.SignageSlot, LoadOrBuildMaterial(BootprintTrailMaterialPath));
+                Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    renderers[i].shadowCastingMode = ShadowCastingMode.Off;
+                    renderers[i].receiveShadows = true;
+                }
+
+                EnsureSimpleBoxCollider(root);
+            }
             else if (modelPath.EndsWith("/Prop_OldLander.fbx", StringComparison.Ordinal))
             {
                 Material tanMat = LoadOrBuildMaterial(OldLanderTanEnamelMaterialPath);
@@ -439,6 +531,66 @@ namespace MoonProject.Art.Editor
             var leg3Col = root.AddComponent<BoxCollider>();
             leg3Col.center = new Vector3(0.0f, 0.24f, -0.86f);
             leg3Col.size = new Vector3(0.66f, 0.66f, 0.96f);
+        }
+
+        /// <summary>
+        /// Ensures a simple <see cref="BoxCollider"/> exists on <paramref name="root"/> fitted to the combined local
+        /// mesh bounds of its hierarchy.
+        /// </summary>
+        public static BoxCollider EnsureSimpleBoxCollider(GameObject root)
+        {
+            MeshFilter[] filters = root.GetComponentsInChildren<MeshFilter>(true);
+            Matrix4x4 worldToRoot = root.transform.worldToLocalMatrix;
+            Bounds bounds = default;
+            bool hasBounds = false;
+
+            for (int i = 0; i < filters.Length; i++)
+            {
+                Mesh mesh = filters[i].sharedMesh;
+                if (mesh == null)
+                {
+                    continue;
+                }
+
+                Matrix4x4 toRoot = worldToRoot * filters[i].transform.localToWorldMatrix;
+                Bounds mb = mesh.bounds;
+                Vector3 c = mb.center;
+                Vector3 e = mb.extents;
+                for (int sx = -1; sx <= 1; sx += 2)
+                {
+                    for (int sy = -1; sy <= 1; sy += 2)
+                    {
+                        for (int sz = -1; sz <= 1; sz += 2)
+                        {
+                            Vector3 pt = toRoot.MultiplyPoint3x4(c + new Vector3(e.x * sx, e.y * sy, e.z * sz));
+                            if (!hasBounds)
+                            {
+                                bounds = new Bounds(pt, Vector3.zero);
+                                hasBounds = true;
+                            }
+                            else
+                            {
+                                bounds.Encapsulate(pt);
+                            }
+                        }
+                    }
+                }
+            }
+
+            BoxCollider collider = root.GetComponent<BoxCollider>();
+            if (collider == null)
+            {
+                collider = root.AddComponent<BoxCollider>();
+            }
+
+            if (hasBounds)
+            {
+                collider.center = bounds.center;
+                Vector3 s = bounds.size;
+                collider.size = new Vector3(Mathf.Max(0.02f, s.x), Mathf.Max(0.02f, s.y), Mathf.Max(0.02f, s.z));
+            }
+
+            return collider;
         }
 
         /// <summary>Loads a generated story-prop material, building the story-prop materials first if missing.</summary>

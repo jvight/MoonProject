@@ -1,0 +1,79 @@
+{
+  "model": "prop_survey_tripod",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Basalt",
+    "R1_Brass",
+    "R1_CreamEnamel",
+    "R1_DarkGlass",
+    "R1_GoldFoil",
+    "R1_GreyMetal",
+    "R1_OrangeStripe"
+  ],
+  "max_triangles": 4500,
+  "max_meshes": 4,
+  "max_draw_calls": 24,
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "Prop_SurveyTripod": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "TripodFrame": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "BuckledLeg": {
+      "pivot": [
+        0.12,
+        -0.17,
+        0.235
+      ]
+    },
+    "TheodoliteHead": {
+      "pivot": [
+        -0.47,
+        0.02,
+        0.165
+      ]
+    },
+    "Base_Anchor": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "Head_Anchor": {
+      "pivot": [
+        -0.47,
+        0.02,
+        0.165
+      ]
+    },
+    "BuckledKnee_Anchor": {
+      "pivot": [
+        0.12,
+        -0.17,
+        0.235
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      1.2633,
+      0.6547,
+      0.2873
+    ],
+    "tolerance": 0.025
+  }
+}

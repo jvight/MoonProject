@@ -1,0 +1,95 @@
+{
+  "model": "prop_seismic_station",
+  "pivot_tolerance": 0.02,
+  "require_vertex_colors": true,
+  "slots": [
+    "R1_BareSteel",
+    "R1_Basalt",
+    "R1_Brass",
+    "R1_Copper",
+    "R1_CreamEnamel",
+    "R1_DarkGlass",
+    "R1_GoldFoil",
+    "R1_GreyMetal",
+    "R1_OrangeStripe",
+    "R1_Rubber"
+  ],
+  "max_triangles": 4500,
+  "max_meshes": 6,
+  "max_draw_calls": 28,
+  "scale_tolerance": 0.001,
+  "allow_boundary_edges": false,
+  "nodes": {
+    "Prop_SeismicStation": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "FoilShroud": {
+      "pivot": [
+        -0.34,
+        0.0,
+        0.0
+      ]
+    },
+    "SeismometerUnit": {
+      "pivot": [
+        -0.34,
+        0.0,
+        0.24
+      ]
+    },
+    "UmbilicalCable": {
+      "pivot": [
+        0.0,
+        0.0,
+        0.02
+      ]
+    },
+    "CentralBox": {
+      "pivot": [
+        0.36,
+        0.0,
+        0.0
+      ]
+    },
+    "DeadStatusLamp": {
+      "pivot": [
+        0.26,
+        -0.08,
+        0.295
+      ]
+    },
+    "Seismometer_Anchor": {
+      "pivot": [
+        -0.34,
+        0.0,
+        0.0
+      ]
+    },
+    "CentralBox_Anchor": {
+      "pivot": [
+        0.36,
+        0.0,
+        0.0
+      ]
+    },
+    "StatusLamp_Dead": {
+      "pivot": [
+        0.26,
+        -0.08,
+        0.327
+      ]
+    }
+  },
+  "bounds": {
+    "size": [
+      1.2512,
+      0.6076,
+      0.441
+    ],
+    "tolerance": 0.025
+  }
+}
