@@ -472,8 +472,9 @@ namespace MoonProject.Art.Tests
 
             BoxCollider box = flagPrefab.GetComponent<BoxCollider>();
             Assert.IsNotNull(box, "Prop_MissionFlag must have a simple BoxCollider on root.");
-            Assert.Greater(box.size.x, 0.80f);
-            Assert.Greater(box.size.y, 1.45f);
+            Vector3 boxSize = ColliderSizeInPrefabAxes(flagPrefab, box);
+            Assert.Greater(boxSize.x, 0.80f);
+            Assert.Greater(boxSize.y, 1.45f);
 
             Renderer sheetRenderer = flagSheet.GetComponent<Renderer>();
             Assert.IsNotNull(sheetRenderer);
@@ -508,7 +509,8 @@ namespace MoonProject.Art.Tests
 
             BoxCollider box = seisPrefab.GetComponent<BoxCollider>();
             Assert.IsNotNull(box, "Prop_SeismicStation must have a simple BoxCollider on root.");
-            Assert.Greater(box.size.x, 1.0f);
+            Vector3 boxSize = ColliderSizeInPrefabAxes(seisPrefab, box);
+            Assert.Greater(boxSize.x, 1.0f);
 
             bool hasGoldFoil = false;
             foreach (Material m in shroud.GetComponent<Renderer>().sharedMaterials)
@@ -536,7 +538,8 @@ namespace MoonProject.Art.Tests
 
             BoxCollider box = retroPrefab.GetComponent<BoxCollider>();
             Assert.IsNotNull(box, "Prop_Retroreflector must have a simple BoxCollider on root.");
-            Assert.Greater(box.size.x, 0.50f);
+            Vector3 boxSize = ColliderSizeInPrefabAxes(retroPrefab, box);
+            Assert.Greater(boxSize.x, 0.50f);
 
             Mesh prismMesh = prismArray.GetComponent<MeshFilter>().sharedMesh;
             Assert.IsNotNull(prismMesh);
@@ -569,7 +572,8 @@ namespace MoonProject.Art.Tests
 
             BoxCollider box = tripodPrefab.GetComponent<BoxCollider>();
             Assert.IsNotNull(box, "Prop_SurveyTripod must have a simple BoxCollider on root.");
-            Assert.Greater(box.size.x, box.size.y * 2.5f,
+            Vector3 boxSize = ColliderSizeInPrefabAxes(tripodPrefab, box);
+            Assert.Greater(boxSize.x, boxSize.y * 2.5f,
                 "Prop_SurveyTripod must be fallen horizontally on the ground (width much greater than height).");
 
             AssertNoEmissiveMaterials(tripodPrefab);
@@ -591,8 +595,9 @@ namespace MoonProject.Art.Tests
 
             BoxCollider box = rackPrefab.GetComponent<BoxCollider>();
             Assert.IsNotNull(box, "Prop_SampleRack must have a simple BoxCollider on root.");
-            Assert.Greater(box.size.x, 0.70f);
-            Assert.Greater(box.size.y, 0.75f);
+            Vector3 boxSize = ColliderSizeInPrefabAxes(rackPrefab, box);
+            Assert.Greater(boxSize.x, 0.70f);
+            Assert.Greater(boxSize.y, 0.75f);
 
             AssertNoEmissiveMaterials(rackPrefab);
         }
@@ -613,8 +618,9 @@ namespace MoonProject.Art.Tests
 
             BoxCollider box = decalPrefab.GetComponent<BoxCollider>();
             Assert.IsNotNull(box, "Decal_BootprintTrail must have a simple BoxCollider on root.");
-            Assert.AreEqual(0.95f, box.size.x, 0.03f);
-            Assert.AreEqual(3.00f, box.size.z, 0.03f);
+            Vector3 boxSize = ColliderSizeInPrefabAxes(decalPrefab, box);
+            Assert.AreEqual(0.95f, boxSize.x, 0.03f);
+            Assert.AreEqual(3.00f, boxSize.z, 0.03f);
 
             Renderer renderer = trailSheet.GetComponent<Renderer>();
             Assert.IsNotNull(renderer);
@@ -625,6 +631,16 @@ namespace MoonProject.Art.Tests
             Assert.IsNotNull(mat.GetTexture("_BumpMap"), "R1_BootprintTrail must have _BumpMap assigned.");
 
             AssertNoEmissiveMaterials(decalPrefab);
+        }
+
+        /// <summary>
+        /// The collider is fitted in the FBX root's local axes, and that root carries Blender's +90 deg X axis
+        /// conversion, so its local Z is the prop's height; rotate the size into the prefab's Y-up axes.
+        /// </summary>
+        private static Vector3 ColliderSizeInPrefabAxes(GameObject prefab, BoxCollider box)
+        {
+            Vector3 size = prefab.transform.localRotation * box.size;
+            return new Vector3(Mathf.Abs(size.x), Mathf.Abs(size.y), Mathf.Abs(size.z));
         }
 
         private static void AssertNoEmissiveMaterials(GameObject prefab)
