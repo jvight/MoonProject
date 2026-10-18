@@ -329,20 +329,20 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(2, view.FocusedHoldCell);
             yield return TapKey(_keyboard.rightArrowKey);
             Assert.AreEqual(3, view.FocusedHoldCell);
-            yield return TapKey(_keyboard.upArrowKey);
-            Assert.AreEqual(FaceDevices.SocketOne, view.FocusedDeviceIndex,
-                "Navigating Up from the hold's top row must focus the frame above it, socket 1.");
-            yield return TapKey(_keyboard.upArrowKey);
-            Assert.AreEqual(FaceDevices.Scan, view.FocusedDeviceIndex, "Up from socket 1 reaches the scan lens.");
             yield return TapKey(_keyboard.rightArrowKey);
-            Assert.AreEqual(FaceDevices.Cutter, view.FocusedDeviceIndex, "Right from the scan lens crosses to the cutter.");
+            Assert.AreEqual(FaceDevices.Cutter, view.FocusedDeviceIndex,
+                "Right from the end of the hold's top row must cross to the frame beside it, the cutter.");
+            yield return TapKey(_keyboard.rightArrowKey);
+            Assert.AreEqual(FaceDevices.Scan, view.FocusedDeviceIndex, "Right from the cutter crosses to the scan lens.");
             yield return TapKey(_keyboard.downArrowKey);
-            Assert.AreEqual(FaceDevices.SocketTwo, view.FocusedDeviceIndex, "Down from the cutter reaches socket 2.");
+            Assert.AreEqual(FaceDevices.SocketTwo, view.FocusedDeviceIndex, "Down from the scan lens reaches socket 2.");
             yield return TapKey(_keyboard.leftArrowKey);
             Assert.AreEqual(FaceDevices.SocketOne, view.FocusedDeviceIndex, "Left from socket 2 crosses to socket 1.");
-            yield return TapKey(_keyboard.downArrowKey);
-            Assert.AreEqual(FaceLayout.HoldEntryBelow(FaceDevices.SocketOne, view.UnlockedCellCount), view.FocusedHoldCell,
-                "Navigating Down from socket 1 must return focus to the hold below it.");
+            yield return TapKey(_keyboard.upArrowKey);
+            Assert.AreEqual(FaceDevices.Cutter, view.FocusedDeviceIndex, "Up from socket 1 reaches the cutter.");
+            yield return TapKey(_keyboard.leftArrowKey);
+            Assert.AreEqual(FaceNavigation.HoldEntryLeftOf(FaceDevices.Cutter, view.UnlockedCellCount, view.HoldPage),
+                view.FocusedHoldCell, "Navigating Left from the cutter must return focus to the hold's top row.");
 
             // BEAT 6: Close Returns with Happy Blink (^ ^)
             int happyBlinksBefore = faceState.ClosingHappyBlinkCount;

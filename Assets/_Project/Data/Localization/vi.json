@@ -304,7 +304,7 @@
         },
         {
             "key": "ui.cargo.waiting",
-            "text": "{0} phần để lại tại chỗ: hết chỗ chứa"
+            "text": "{0} phần để lại: hết chỗ chứa"
         },
         {
             "key": "ui.cargo.summary",
@@ -961,6 +961,10 @@
         {
             "key": "ui.cargo.more_slots",
             "text": "+{0} ô về sau"
+        },
+        {
+            "key": "ui.cargo.page",
+            "text": "Trang {0}/{1}"
         },
         {
             "key": "ui.cargo.empty_name",

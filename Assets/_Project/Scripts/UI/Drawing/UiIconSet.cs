@@ -85,13 +85,16 @@ namespace MoonProject.UI
             throw new InvalidOperationException($"No UI icon exists for id '{id}'.");
         }
 
-        /// <summary>The canonical SVG icon id (<c>item_*</c>) for <paramref name="material"/>.</summary>
+        /// <summary>
+        /// The icon id for <paramref name="material"/>: the face's own drawing (<c>icon_*</c>, see
+        /// <see cref="RoverDiagramData.FaceIconIds"/>) where Art made one, else the SVG icon (<c>item_*</c>).
+        /// </summary>
         public static string IconIdOf(SalvageMaterial material)
         {
             switch (material)
             {
-                case SalvageMaterial.Metal: return "item_metal";
-                case SalvageMaterial.Wiring: return "item_wiring";
+                case SalvageMaterial.Metal: return "icon_metal_plates";
+                case SalvageMaterial.Wiring: return "icon_wiring_spool";
                 case SalvageMaterial.Optics: return "item_optics";
                 case SalvageMaterial.CircuitChips: return "item_circuit_chips";
                 case SalvageMaterial.OrangeBeads: return "item_orange_beads";
@@ -108,10 +111,7 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>
-        /// The canonical SVG icon id for story part <paramref name="partId"/>. The spare igniter and the ice core borrow
-        /// the cutter's icon until Art draws their own.
-        /// </summary>
+        /// <summary>The face icon id (<see cref="RoverDiagramData.FaceIconIds"/>) for story part <paramref name="partId"/>.</summary>
         public static string IconIdOfPart(string partId)
         {
             if (string.IsNullOrEmpty(partId))
@@ -122,32 +122,11 @@ namespace MoonProject.UI
             switch (partId)
             {
                 case "part.igniter":
+                    return "icon_spare_igniter";
                 case "part.icecore":
-                    return "kit_cutter";
+                    return "icon_ice_core_tube";
                 default:
                     throw new InvalidOperationException($"Story part '{partId}' has no icon id.");
-            }
-        }
-
-        /// <summary>The canonical SVG icon id (<c>kit_*</c>) for <paramref name="socket"/>.</summary>
-        public static string IconIdOf(RoverSocket socket)
-        {
-            switch (socket)
-            {
-                case RoverSocket.Cutter: return "kit_cutter";
-                case RoverSocket.Tether: return "kit_tether";
-                case RoverSocket.Lamp: return "kit_lamp";
-                case RoverSocket.Belly: return "kit_belly";
-                case RoverSocket.Flanks: return "kit_flanks";
-                case RoverSocket.Panniers: return "kit_panniers";
-                case RoverSocket.Back: return "kit_back";
-                case RoverSocket.Hold: return "kit_hold";
-                case RoverSocket.Wing: return "kit_wing";
-                case RoverSocket.Deck: return "kit_deck";
-                case RoverSocket.Wheels: return "kit_wheels";
-                case RoverSocket.Antenna: return "kit_antenna";
-                default:
-                    throw new InvalidOperationException($"RoverSocket '{socket}' has no icon id.");
             }
         }
     }

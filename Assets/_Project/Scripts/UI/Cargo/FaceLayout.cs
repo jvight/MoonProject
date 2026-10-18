@@ -3,10 +3,11 @@ using UnityEngine;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// Where everything on 07's face screen sits in the 1152x768 reference frame (pure, EditMode-tested): the title
-    /// row, 07 in the middle with its four devices in labelled frames at the corners, the hold as a strip along the
-    /// foot with each item's name under it, the info box and the key hints. The hold's bottom row is fixed and the
-    /// rows a bigger hold adds grow upwards, so no item ever moves when a row unlocks.
+    /// Where everything on 07's face screen sits in the 1152x768 reference frame (pure, EditMode-tested). The title row
+    /// and the key hints run the full width. The left half is the hold: a grid of four columns with each item's name
+    /// under its cell, only the unlocked rows shown and one hint row where the next row will grow, paged three rows at
+    /// a time (a full hold of 24 is two pages), then a status line and the info box. The right half is 07's line
+    /// drawing with its four devices in labelled frames, two above it and two below, each with a leader to its part.
     /// </summary>
     internal static class FaceLayout
     {
@@ -16,104 +17,130 @@ namespace MoonProject.UI
         public const float TitleHeight = 32f;
         public const float TitleRuleY = 78f;
 
-        public const float FrameWidth = 288f;
+        public const int Columns = 4;
+        public const int RowsPerPage = 3;
+        public const int PageSize = Columns * RowsPerPage;
+        public const float ColumnPitch = 128f;
+        public const float HoldWidth = Columns * ColumnPitch;
+        public const float HoldRight = Margin + HoldWidth;
+        public const float HeadingY = 92f;
+        public const float HeadingHeight = 28f;
+        public const float HeadingRuleY = 126f;
+        public const float PageWidth = 176f;
+        public const float GridTop = 132f;
+        public const float CellSize = 70f;
+        public const float NameGap = 2f;
+        public const float NameHeight = 46f;
+        public const float RowGap = 2f;
+        public const float RowPitch = CellSize + NameGap + NameHeight + RowGap;
+        public const float HintGap = 4f;
+        public const float HintHeight = 26f;
+        public const float HintPadlockX = 14f;
+        public const float ToastY = 522f;
+        public const float ToastHeight = 28f;
+        public const float InfoX = Margin;
+        public const float InfoY = 556f;
+        public const float InfoWidth = HoldWidth;
+        public const float InfoHeight = 132f;
+        public const float FooterY = 700f;
+        public const float FooterHeight = 28f;
+
+        public const float DeviceX = 600f;
+        public const float FrameWidth = 234f;
         public const float FrameHeight = 96f;
+        public const float FrameGap = RightEdge - DeviceX - 2f * FrameWidth;
+        public const float FrameTopY = 92f;
+        public const float FrameBottomY = 592f;
         public const float FrameNameHeight = 34f;
+        public const float FrameNamePad = 12f;
+        public const float FrameGlyphRoom = 36f;
         public const float FrameIconX = 32f;
         public const float FrameTextX = 62f;
         public const float FrameEdgeInset = 12f;
         public const float DeviceHitPadding = 8f;
+        public const float ArtY = 204f;
+        public const float ArtHeight = 372f;
         public const float LeaderKnee = 36f;
-
-        public const float CellSize = 60f;
-        public const float CellGapX = 20f;
-        public const float NameGap = 2f;
-        public const float NameHeight = 44f;
-        public const float RowPitch = 116f;
-        public const float BottomRowY = 584f;
-        public const float StripHeadingHeight = 28f;
-        public const float StripHeadingGap = 30f;
-        public const float StripRuleGap = 8f;
-        public const float MoreRowWidth = 296f;
-
-        public const float InfoX = 744f;
-        public const float InfoY = 530f;
-        public const float InfoWidth = RightEdge - InfoX;
-        public const float InfoHeight = 164f;
-        public const float ToastY = 478f;
-        public const float ToastHeight = 44f;
-        public const float FooterY = 700f;
-        public const float FooterHeight = 28f;
+        public const float LeaderEdgeInset = 24f;
 
         private static readonly Vector2[] FrameOrigins =
         {
-            new Vector2(Margin, 92f),
-            new Vector2(RightEdge - FrameWidth, 92f),
-            new Vector2(Margin, 214f),
-            new Vector2(RightEdge - FrameWidth, 214f),
+            new Vector2(RightEdge - FrameWidth, FrameTopY),
+            new Vector2(DeviceX, FrameTopY),
+            new Vector2(DeviceX, FrameBottomY),
+            new Vector2(RightEdge - FrameWidth, FrameBottomY),
         };
 
-        /// <summary>Width of the hold strip: one full row of cells.</summary>
-        public static float StripWidth => FaceInventoryView.GridColumns * (CellSize + CellGapX) - CellGapX;
+        /// <summary>The box 07's drawing is fitted into, between the upper and the lower frames.</summary>
+        public static Rect ArtBox => new Rect(DeviceX, ArtY, RightEdge - DeviceX, ArtHeight);
 
         /// <summary>Rows of the hold that hold at least one unlocked slot.</summary>
         public static int RowsOf(int unlocked)
         {
-            return (unlocked + FaceInventoryView.GridColumns - 1) / FaceInventoryView.GridColumns;
+            return (unlocked + Columns - 1) / Columns;
         }
 
-        /// <summary>True while some slots are still locked: the hint on the heading row says more come later.</summary>
+        /// <summary>Pages of the hold: one for every three rows, and always one.</summary>
+        public static int PageCount(int unlocked)
+        {
+            return Mathf.Max(1, (unlocked + PageSize - 1) / PageSize);
+        }
+
+        /// <summary>The page hold slot <paramref name="index"/> is shown on.</summary>
+        public static int PageOf(int index)
+        {
+            return index / PageSize;
+        }
+
+        /// <summary>The unlocked rows shown on <paramref name="page"/>.</summary>
+        public static int RowsOnPage(int page, int unlocked)
+        {
+            return Mathf.Clamp(RowsOf(unlocked - page * PageSize), 0, RowsPerPage);
+        }
+
+        /// <summary>True while some slots are still locked: one hint row says more come later.</summary>
         public static bool HasMoreRow(int unlocked)
         {
             return unlocked < FaceInventoryView.MaxHoldCells;
         }
 
-        /// <summary>The cell of hold slot <paramref name="index"/>: row 0 is the bottom row, and more rows stack upwards.</summary>
+        /// <summary>The cell of hold slot <paramref name="index"/> on its page: rows run down from the grid's top.</summary>
         public static Rect HoldCellRect(int index)
         {
-            int col = index % FaceInventoryView.GridColumns;
-            int row = index / FaceInventoryView.GridColumns;
-            return new Rect(Margin + col * (CellSize + CellGapX), BottomRowY - row * RowPitch, CellSize, CellSize);
+            int col = index % Columns;
+            int row = index / Columns % RowsPerPage;
+            return new Rect(Margin + col * ColumnPitch + (ColumnPitch - CellSize) * 0.5f, GridTop + row * RowPitch,
+                CellSize, CellSize);
         }
 
         /// <summary>The line of words under hold slot <paramref name="index"/>, as wide as the slot's column.</summary>
         public static Rect HoldNameRect(int index)
         {
             Rect cell = HoldCellRect(index);
-            return new Rect(cell.x - CellGapX * 0.5f, cell.yMax + NameGap, CellSize + CellGapX, NameHeight);
+            return new Rect(Margin + index % Columns * ColumnPitch, cell.yMax + NameGap, ColumnPitch, NameHeight);
         }
 
         /// <summary>The area that selects hold slot <paramref name="index"/>: its cell, its name and the gaps around them.</summary>
         public static Rect HoldHitRect(int index)
         {
             Rect cell = HoldCellRect(index);
-            float gapY = (RowPitch - CellSize - NameGap - NameHeight) * 0.5f;
-            return new Rect(cell.x - CellGapX * 0.5f, cell.y - gapY, CellSize + CellGapX, RowPitch);
+            return new Rect(Margin + index % Columns * ColumnPitch, cell.y - RowGap * 0.5f, ColumnPitch, RowPitch);
         }
 
-        /// <summary>Top of the highest unlocked row.</summary>
-        public static float StripTop(int unlocked)
-        {
-            return BottomRowY - (Mathf.Max(1, RowsOf(unlocked)) - 1) * RowPitch;
-        }
+        /// <summary>The heading over the hold, left of the page count.</summary>
+        public static Rect HeadingRect => new Rect(Margin, HeadingY, HoldWidth - PageWidth, HeadingHeight);
 
-        /// <summary>The heading over the hold strip.</summary>
-        public static Rect StripHeadingRect(int unlocked)
-        {
-            return new Rect(Margin, StripTop(unlocked) - StripHeadingGap - StripRuleGap, StripWidth, StripHeadingHeight);
-        }
+        /// <summary>The page count on the heading row, right-aligned over the grid: a click turns the page.</summary>
+        public static Rect PageRect => new Rect(HoldRight - PageWidth, HeadingY, PageWidth, HeadingHeight);
 
-        /// <summary>Y of the rule under the strip's heading.</summary>
-        public static float StripRuleY(int unlocked)
+        /// <summary>
+        /// The one hint row that stands for every locked slot: on the last page, right under its last row, where the
+        /// next row will grow.
+        /// </summary>
+        public static Rect HintRect(int unlocked)
         {
-            return StripTop(unlocked) - StripRuleGap;
-        }
-
-        /// <summary>The one hint on the heading row, right-aligned, that stands for every locked slot.</summary>
-        public static Rect MoreRowRect(int unlocked)
-        {
-            Rect heading = StripHeadingRect(unlocked);
-            return new Rect(heading.xMax - MoreRowWidth, heading.y, MoreRowWidth, heading.height);
+            int rows = RowsOnPage(PageCount(unlocked) - 1, unlocked);
+            return new Rect(Margin, GridTop + rows * RowPitch + HintGap, HoldWidth, HintHeight);
         }
 
         /// <summary>The labelled frame of device <paramref name="device"/>.</summary>
@@ -123,25 +150,10 @@ namespace MoonProject.UI
             return new Rect(origin.x, origin.y, FrameWidth, FrameHeight);
         }
 
-        /// <summary>True for the frames left of 07: their leaders leave from the right edge.</summary>
-        public static bool IsLeftFrame(int device)
+        /// <summary>True for the frames above 07: their leaders leave from the bottom edge.</summary>
+        public static bool IsTopFrame(int device)
         {
-            return FrameOrigins[device].x < FaceInventoryView.ReferenceWidth * 0.5f;
-        }
-
-        /// <summary>Where device <paramref name="device"/>'s leader leaves its frame: the inner edge, level with the name.</summary>
-        public static Vector2 LeaderAnchor(int device)
-        {
-            Rect frame = DeviceFrame(device);
-            float x = IsLeftFrame(device) ? frame.xMax : frame.xMin;
-            return new Vector2(x, frame.y + FrameNameHeight * 0.5f);
-        }
-
-        /// <summary>The bend of the leader: it runs level out of the frame, then straight to the part it names.</summary>
-        public static Vector2 LeaderKneeOf(int device)
-        {
-            Vector2 anchor = LeaderAnchor(device);
-            return new Vector2(anchor.x + (IsLeftFrame(device) ? LeaderKnee : -LeaderKnee), anchor.y);
+            return FrameOrigins[device].y < ArtY;
         }
 
         /// <summary>Centre of the status disc in device <paramref name="device"/>'s frame.</summary>
@@ -149,6 +161,14 @@ namespace MoonProject.UI
         {
             Rect frame = DeviceFrame(device);
             return new Vector2(frame.x + FrameIconX, frame.y + FrameNameHeight + (FrameHeight - FrameNameHeight) * 0.5f);
+        }
+
+        /// <summary>Centre of the warning mark on the name row of device <paramref name="device"/>'s frame.</summary>
+        public static Vector2 WarningCenter(int device)
+        {
+            Rect frame = DeviceFrame(device);
+            return new Vector2(frame.xMax - FrameGlyphRoom * 0.5f - FrameEdgeInset * 0.5f,
+                frame.y + FrameNameHeight * 0.5f);
         }
 
         /// <summary>The area that selects a device: its frame and a little around it.</summary>
@@ -159,26 +179,39 @@ namespace MoonProject.UI
                 frame.height + 2f * DeviceHitPadding);
         }
 
-        /// <summary>The hold slot the selection enters from below a device frame: the top row, nearest the frame.</summary>
-        public static int HoldEntryBelow(int device, int unlocked)
+        /// <summary>
+        /// The whole image of 07's drawing, placed so its lines (<paramref name="contentUv"/>, UV with a top-left
+        /// origin) fill <see cref="ArtBox"/> as far as their shape allows, centred.
+        /// </summary>
+        public static Rect ArtImageRect(Rect contentUv)
         {
-            if (unlocked <= 0)
-            {
-                return -1;
-            }
-
-            int topRow = RowsOf(unlocked) - 1;
-            float x = DeviceFrame(device).center.x;
-            int col = Mathf.Clamp(Mathf.FloorToInt((x - Margin) / (CellSize + CellGapX)), 0,
-                FaceInventoryView.GridColumns - 1);
-            return Mathf.Min(unlocked - 1, topRow * FaceInventoryView.GridColumns + col);
+            Rect box = ArtBox;
+            float scale = Mathf.Min(box.width / contentUv.width, box.height / contentUv.height);
+            Vector2 content = contentUv.size * scale;
+            Vector2 contentMin = box.center - content * 0.5f;
+            return new Rect(contentMin - contentUv.min * scale, new Vector2(scale, scale));
         }
 
-        /// <summary>The device the selection enters from the top row of the hold: the frame above that column.</summary>
-        public static int DeviceAbove(int index)
+        /// <summary>The point on the face of <paramref name="uv"/> (top-left origin) on 07's drawing.</summary>
+        public static Vector2 ArtPoint(Vector2 uv, Rect contentUv)
         {
-            return HoldCellRect(index).center.x < DeviceFrame(FaceDevices.SocketOne).xMax ? FaceDevices.SocketOne
-                : FaceDevices.SocketTwo;
+            Rect image = ArtImageRect(contentUv);
+            return image.position + Vector2.Scale(uv, image.size);
+        }
+
+        /// <summary>Where device <paramref name="device"/>'s leader leaves its frame: the edge facing 07, over the part.</summary>
+        public static Vector2 LeaderStart(int device, Vector2 target)
+        {
+            Rect frame = DeviceFrame(device);
+            float x = Mathf.Clamp(target.x, frame.xMin + LeaderEdgeInset, frame.xMax - LeaderEdgeInset);
+            return new Vector2(x, IsTopFrame(device) ? frame.yMax : frame.yMin);
+        }
+
+        /// <summary>The bend of the leader: it runs straight out of the frame, then on to the part it names.</summary>
+        public static Vector2 LeaderKneeOf(int device, Vector2 target)
+        {
+            Vector2 start = LeaderStart(device, target);
+            return new Vector2(start.x, start.y + (IsTopFrame(device) ? LeaderKnee : -LeaderKnee));
         }
     }
 }

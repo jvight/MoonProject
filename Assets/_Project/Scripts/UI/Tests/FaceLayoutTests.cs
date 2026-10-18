@@ -1,3 +1,4 @@
+using System;
 using NUnit.Framework;
 using UnityEngine;
 using MoonProject.Core;
@@ -7,19 +8,33 @@ using MoonProject.UI.Editor;
 namespace MoonProject.UI.Tests
 {
     /// <summary>
-    /// The layout of 07's face screen: device frames at the corners, the hold strip along the foot with its names,
-    /// hit areas without dead strips, an info box and a foot row that clear the strip and the frames, and words that
-    /// fit in English and Vietnamese at the sizes the screen is read at.
+    /// The layout of 07's face screen: the hold grid on the left (four columns, names under the cells, paged three
+    /// rows at a time, one hint row where it grows, a status line and the info box under it), 07's drawing between two
+    /// upper and two lower device frames on the right, hit areas without dead strips, nothing overlapping, and words
+    /// that fit in English and Vietnamese at the sizes the screen is read at.
     /// </summary>
     public sealed class FaceLayoutTests
     {
         // IBM Plex Mono advance as a share of its size: the width of one character.
         private const float MonoAdvance = 0.6f;
+
+        // Chakra Petch SemiBold's widest average advance over the names and headings it sets (measured 0.48 to 0.55).
+        private const float TitleAdvance = 0.55f;
         private const float SmallestText = 22f;
+        private const float NameText = 18f;
+
+        // A long word may carry a soft hyphen where it breaks under a cell ("Super\u00adconductor").
+        private const char SoftHyphen = '\u00ad';
+        private const int NameLines = 2;
+        private const float NameLineHeight = 1.25f;
         private const float InfoPadding = 36f;
+        private const int InfoLines = 3;
         private const float GlassBottomMargin = 36f;
-        private const float StripHeadingLetterSpace = 2f;
-        private const float NameInset = 68f;
+        private const float HeadingLetterSpace = 2f;
+        private const float HintTextInset = 30f;
+        private const float ToastTextInset = 20f;
+        private const int TwoDigits = 99;
+        private static readonly int[] Tiers = { 8, 16, 24 };
 
         private StringTable[] _tables;
 
@@ -34,28 +49,40 @@ namespace MoonProject.UI.Tests
             }
         }
 
-        [TestCase(8, 1)]
-        [TestCase(9, 2)]
-        [TestCase(16, 2)]
-        [TestCase(24, 3)]
-        [TestCase(0, 0)]
-        public void TheRowsOfTheStrip_AreTheOnesThatHoldAnUnlockedSlot(int unlocked, int rows)
+        [TestCase(8, 2, 1)]
+        [TestCase(12, 3, 1)]
+        [TestCase(16, 4, 2)]
+        [TestCase(24, 6, 2)]
+        [TestCase(0, 0, 1)]
+        public void TheGrid_HasARowPerFourSlots_AndAPagePerThreeRows(int unlocked, int rows, int pages)
         {
             Assert.AreEqual(rows, FaceLayout.RowsOf(unlocked));
+            Assert.AreEqual(pages, FaceLayout.PageCount(unlocked));
         }
 
-        [Test]
-        public void TheBottomRowNeverMoves_AndMoreRowsStackAboveIt()
+        [TestCase(8, 0, 2)]
+        [TestCase(16, 0, 3)]
+        [TestCase(16, 1, 1)]
+        [TestCase(24, 1, 3)]
+        public void EachPage_ShowsOnlyItsUnlockedRows(int unlocked, int page, int rows)
         {
-            Assert.AreEqual(FaceLayout.HoldCellRect(0).y, FaceLayout.HoldCellRect(FaceInventoryView.GridColumns - 1).y);
-            Assert.AreEqual(FaceLayout.HoldCellRect(0).y - FaceLayout.RowPitch,
-                FaceLayout.HoldCellRect(FaceInventoryView.GridColumns).y, 1e-3f);
-            Assert.AreEqual(FaceLayout.BottomRowY, FaceLayout.StripTop(8), "a hold of one row");
-            Assert.Less(FaceLayout.StripTop(16), FaceLayout.StripTop(8));
+            Assert.AreEqual(rows, FaceLayout.RowsOnPage(page, unlocked));
         }
 
         [Test]
-        public void TheCellsNeverOverlap_AndTheirNamesStayUnderThem()
+        public void TheRowsGrowDown_AndAPageStartsAgainAtTheTop()
+        {
+            Assert.AreEqual(FaceLayout.GridTop, FaceLayout.HoldCellRect(0).y, 1e-3f);
+            Assert.AreEqual(FaceLayout.HoldCellRect(0).y + FaceLayout.RowPitch,
+                FaceLayout.HoldCellRect(FaceLayout.Columns).y, 1e-3f);
+            Assert.AreEqual(FaceLayout.HoldCellRect(0), FaceLayout.HoldCellRect(FaceLayout.PageSize),
+                "the second page's first slot sits where the first page's did");
+            Assert.AreEqual(1, FaceLayout.PageOf(FaceLayout.PageSize));
+            Assert.AreEqual(0, FaceLayout.PageOf(FaceLayout.PageSize - 1));
+        }
+
+        [Test]
+        public void TheCellsOfAPage_NeverOverlap_AndTheirNamesStayUnderThem()
         {
             for (int i = 0; i < FaceInventoryView.MaxHoldCells; i++)
             {
@@ -66,10 +93,18 @@ namespace MoonProject.UI.Tests
                 Rect hitArea = FaceLayout.HoldHitRect(i);
                 Assert.IsTrue(hitArea.xMin <= name.xMin && hitArea.xMax >= name.xMax && hitArea.yMin <= name.yMin &&
                               hitArea.yMax >= name.yMax, $"cell {i}: the hit area takes in the name");
+                Assert.GreaterOrEqual(name.xMin, FaceLayout.Margin, $"cell {i}");
+                Assert.LessOrEqual(name.xMax, FaceLayout.HoldRight, $"cell {i}: in the left half");
                 for (int j = i + 1; j < FaceInventoryView.MaxHoldCells; j++)
                 {
+                    if (FaceLayout.PageOf(i) != FaceLayout.PageOf(j))
+                    {
+                        continue;
+                    }
+
                     Assert.IsFalse(cell.Overlaps(FaceLayout.HoldCellRect(j)), $"cells {i} and {j}");
                     Assert.IsFalse(cell.Overlaps(FaceLayout.HoldNameRect(j)), $"cell {i} and the name of {j}");
+                    Assert.IsFalse(name.Overlaps(FaceLayout.HoldNameRect(j)), $"the names of {i} and {j}");
                 }
             }
         }
@@ -81,117 +116,138 @@ namespace MoonProject.UI.Tests
             {
                 Rect hit = FaceLayout.HoldHitRect(i);
                 Rect cell = FaceLayout.HoldCellRect(i);
-                Assert.IsTrue(hit.Contains(cell.center));
-                Assert.IsTrue(hit.Contains(cell.min) && hit.Contains(cell.max));
-                if (i % FaceInventoryView.GridColumns + 1 < FaceInventoryView.GridColumns)
+                Assert.IsTrue(hit.Contains(cell.min) && hit.Contains(cell.max), $"cell {i}");
+                if (i % FaceLayout.Columns + 1 < FaceLayout.Columns)
                 {
                     Assert.AreEqual(hit.xMax, FaceLayout.HoldHitRect(i + 1).xMin, 1e-3f, $"cells {i} and {i + 1}");
                 }
 
-                if (i + FaceInventoryView.GridColumns < FaceInventoryView.MaxHoldCells)
+                int below = i + FaceLayout.Columns;
+                if (below < FaceInventoryView.MaxHoldCells && FaceLayout.PageOf(below) == FaceLayout.PageOf(i))
                 {
-                    Assert.AreEqual(hit.yMin, FaceLayout.HoldHitRect(i + FaceInventoryView.GridColumns).yMax, 1e-3f,
-                        $"cells {i} and the one above");
+                    Assert.AreEqual(hit.yMax, FaceLayout.HoldHitRect(below).yMin, 1e-3f, $"cell {i} and the one below");
                 }
             }
         }
 
         [Test]
-        public void TheStrip_ClearsTheFrames_TheInfoBox_AndTheFootRow_AtEverySize()
+        public void TheGrid_TheHint_TheStatusLine_AndTheInfoBox_StackDownTheLeftHalf_AtEverySize()
         {
-            float lowestFrame = Mathf.Max(FaceLayout.DeviceFrame(FaceDevices.SocketOne).yMax,
-                FaceLayout.DeviceFrame(FaceDevices.SocketTwo).yMax);
-            Rect bottomNames = FaceLayout.HoldNameRect(0);
-            foreach (int unlocked in new[] { 8, 16, 24 })
-            {
-                Assert.GreaterOrEqual(FaceLayout.StripHeadingRect(unlocked).yMin, lowestFrame + 4f,
-                    $"{unlocked} slots: the strip's heading clears the frame above it");
-            }
-
-            Assert.LessOrEqual(FaceLayout.HoldNameRect(0).xMax, FaceLayout.InfoX - 8f, "the strip clears the info box");
-            Assert.LessOrEqual(bottomNames.yMax, FaceLayout.InfoY + FaceLayout.InfoHeight, "on the same foot line");
-            Assert.Greater(FaceLayout.FooterY, FaceLayout.InfoY + FaceLayout.InfoHeight);
-            Assert.Greater(FaceLayout.FooterY, bottomNames.yMax);
+            Rect toast = new Rect(FaceLayout.Margin, FaceLayout.ToastY, FaceLayout.HoldWidth, FaceLayout.ToastHeight);
+            Rect info = new Rect(FaceLayout.InfoX, FaceLayout.InfoY, FaceLayout.InfoWidth, FaceLayout.InfoHeight);
+            float lowestName = FaceLayout.HoldNameRect(FaceLayout.PageSize - 1).yMax;
+            Assert.Greater(FaceLayout.GridTop, FaceLayout.HeadingRuleY, "the grid starts under the heading's rule");
+            Assert.Greater(FaceLayout.HeadingY, FaceLayout.TitleRuleY);
+            Assert.LessOrEqual(lowestName, toast.yMin, "a full page clears the status line");
+            Assert.LessOrEqual(toast.yMax, info.yMin);
+            Assert.LessOrEqual(info.yMax, FaceLayout.FooterY, "the info box clears the foot row");
             Assert.LessOrEqual(FaceLayout.FooterY + FaceLayout.FooterHeight,
                 FaceInventoryView.ReferenceHeight - GlassBottomMargin, "inside the glass");
-            Assert.LessOrEqual(FaceLayout.InfoX + FaceLayout.InfoWidth, FaceLayout.RightEdge);
-            Assert.Greater(FaceLayout.InfoY, FaceLayout.DeviceFrame(FaceDevices.SocketTwo).yMax + FaceLayout.ToastHeight,
-                "the toast fits between the lower right frame and the info box");
-            Assert.AreEqual(FaceLayout.InfoY - FaceLayout.ToastHeight - 8f, FaceLayout.ToastY, 1e-3f,
-                "the toast sits right above the info box");
+            Assert.LessOrEqual(info.xMax, FaceLayout.HoldRight);
+            foreach (int unlocked in new[] { 8, 12, 16 })
+            {
+                Rect hint = FaceLayout.HintRect(unlocked);
+                int last = Mathf.Min(unlocked, FaceInventoryView.MaxHoldCells) - 1;
+                Assert.GreaterOrEqual(hint.yMin, FaceLayout.HoldNameRect(last).yMax,
+                    $"{unlocked} slots: the hint row sits under the last row");
+                Assert.LessOrEqual(hint.yMax, toast.yMin, $"{unlocked} slots: and above the status line");
+                Assert.LessOrEqual(hint.yMin - FaceLayout.HoldNameRect(last).yMax, FaceLayout.RowGap + FaceLayout.HintGap + 1e-3f,
+                    $"{unlocked} slots: right where the next row will grow");
+            }
+
+            for (int device = 0; device < FaceDevices.Count; device++)
+            {
+                Rect hit = FaceLayout.DeviceHitRect(device);
+                Assert.Greater(hit.xMin, FaceLayout.HoldRight, $"device {device} stands in the right half");
+                Assert.IsFalse(hit.Overlaps(info) || hit.Overlaps(toast), $"device {device}");
+            }
         }
 
         [Test]
-        public void TheFrames_StandApartFromEachOther_AndBelowTheTitle()
+        public void ThePageCount_SharesTheHeadingRow_RightOfTheHeading()
         {
+            Rect heading = FaceLayout.HeadingRect;
+            Rect page = FaceLayout.PageRect;
+            Assert.AreEqual(heading.y, page.y, 1e-3f);
+            Assert.LessOrEqual(heading.xMax, page.xMin);
+            Assert.AreEqual(FaceLayout.HoldRight, page.xMax, 1e-3f);
+            Assert.Less(page.yMax, FaceLayout.HeadingRuleY);
+        }
+
+        [Test]
+        public void TheFrames_StandApart_TwoAboveAndTwoBelowTheDrawing()
+        {
+            Rect art = FaceLayout.ArtBox;
             for (int a = 0; a < FaceDevices.Count; a++)
             {
-                Assert.Greater(FaceLayout.DeviceFrame(a).yMin, FaceLayout.TitleRuleY, $"frame {a}");
+                Rect frame = FaceLayout.DeviceFrame(a);
+                Assert.Greater(FaceLayout.DeviceHitRect(a).yMin, FaceLayout.TitleRuleY, $"frame {a}");
+                Assert.LessOrEqual(FaceLayout.DeviceHitRect(a).yMax, FaceLayout.FooterY, $"frame {a}");
+                Assert.LessOrEqual(frame.xMax, FaceLayout.RightEdge, $"frame {a}");
+                Assert.IsFalse(FaceLayout.DeviceHitRect(a).Overlaps(art), $"frame {a} clears the drawing's box");
+                Assert.AreEqual(FaceLayout.IsTopFrame(a), frame.yMax < art.yMin, $"frame {a}");
                 for (int b = a + 1; b < FaceDevices.Count; b++)
                 {
                     Assert.IsFalse(FaceLayout.DeviceHitRect(a).Overlaps(FaceLayout.DeviceFrame(b)), $"frames {a} and {b}");
                 }
             }
+
+            Assert.IsTrue(FaceLayout.IsTopFrame(FaceDevices.Cutter) && FaceLayout.IsTopFrame(FaceDevices.Scan));
+            Assert.IsFalse(FaceLayout.IsTopFrame(FaceDevices.SocketOne) || FaceLayout.IsTopFrame(FaceDevices.SocketTwo));
         }
 
         [Test]
-        public void TheLeaders_LeaveTheInnerEdgeOfTheirFrame_AndBendTowardsSeven()
+        public void TheDrawing_FillsItsBox_AsFarAsItsShapeAllows_AndTheAnchorsLandOnIt()
         {
+            var content = new Rect(0.04f, 0.17f, 0.907f, 0.673f);
+            Rect box = FaceLayout.ArtBox;
+            Rect image = FaceLayout.ArtImageRect(content);
+            Vector2 min = FaceLayout.ArtPoint(content.min, content);
+            Vector2 max = FaceLayout.ArtPoint(content.max, content);
+            Assert.AreEqual(image.width, image.height, 1e-3f, "a square image keeps its shape");
+            Assert.GreaterOrEqual(min.x, box.xMin - 1e-3f);
+            Assert.GreaterOrEqual(min.y, box.yMin - 1e-3f);
+            Assert.LessOrEqual(max.x, box.xMax + 1e-3f);
+            Assert.LessOrEqual(max.y, box.yMax + 1e-3f);
+            Assert.IsTrue(Mathf.Abs(max.x - min.x - box.width) < 1e-2f || Mathf.Abs(max.y - min.y - box.height) < 1e-2f,
+                "the lines touch two sides of the box");
+            Assert.AreEqual(box.center.x, (min.x + max.x) * 0.5f, 1e-2f, "centred");
+            Assert.AreEqual(box.center.y, (min.y + max.y) * 0.5f, 1e-2f, "centred");
+        }
+
+        [Test]
+        public void TheLeaders_LeaveTheEdgeFacingSeven_OverThePart_AndBendTowardsIt()
+        {
+            Rect box = FaceLayout.ArtBox;
+            Vector2[] targets = { box.min, box.center, box.max, new Vector2(box.xMin, box.yMax) };
             for (int device = 0; device < FaceDevices.Count; device++)
             {
                 Rect frame = FaceLayout.DeviceFrame(device);
-                Vector2 anchor = FaceLayout.LeaderAnchor(device);
-                Vector2 knee = FaceLayout.LeaderKneeOf(device);
-                Assert.AreEqual(FaceLayout.IsLeftFrame(device) ? frame.xMax : frame.xMin, anchor.x, 1e-3f);
-                Assert.AreEqual(anchor.y, knee.y, 1e-3f, "level out of the frame");
-                Assert.Greater(Mathf.Abs(knee.x - anchor.x), 0f);
-                Assert.IsTrue(FaceLayout.IsLeftFrame(device) ? knee.x > anchor.x : knee.x < anchor.x);
+                foreach (Vector2 target in targets)
+                {
+                    Vector2 start = FaceLayout.LeaderStart(device, target);
+                    Vector2 knee = FaceLayout.LeaderKneeOf(device, target);
+                    Assert.AreEqual(FaceLayout.IsTopFrame(device) ? frame.yMax : frame.yMin, start.y, 1e-3f);
+                    Assert.GreaterOrEqual(start.x, frame.xMin + FaceLayout.LeaderEdgeInset - 1e-3f);
+                    Assert.LessOrEqual(start.x, frame.xMax - FaceLayout.LeaderEdgeInset + 1e-3f);
+                    Assert.AreEqual(start.x, knee.x, 1e-3f, "straight out of the frame");
+                    Assert.AreEqual(FaceLayout.IsTopFrame(device), knee.y > start.y, "towards 07");
+                    Assert.IsTrue(box.Contains(knee), $"device {device}: the bend is over the drawing's box");
+                }
             }
-        }
-
-        [Test]
-        public void TheSelection_EntersTheHoldBelowAFrame_AndLeavesItAboveTheTopRow()
-        {
-            Assert.AreEqual(-1, FaceLayout.HoldEntryBelow(FaceDevices.SocketOne, 0));
-            foreach (int unlocked in new[] { 8, 16 })
-            {
-                int top = FaceLayout.RowsOf(unlocked) - 1;
-                int entry = FaceLayout.HoldEntryBelow(FaceDevices.SocketOne, unlocked);
-                Assert.AreEqual(top, entry / FaceInventoryView.GridColumns, $"{unlocked} slots: the top row");
-                Assert.Less(entry, unlocked);
-                Assert.AreEqual(FaceDevices.SocketOne, FaceLayout.DeviceAbove(entry));
-                int right = FaceLayout.HoldEntryBelow(FaceDevices.SocketTwo, unlocked);
-                Assert.AreEqual(top, right / FaceInventoryView.GridColumns);
-                Assert.AreEqual(FaceDevices.SocketTwo, FaceLayout.DeviceAbove(right));
-            }
-
-            Assert.AreEqual(5, FaceLayout.HoldEntryBelow(FaceDevices.SocketTwo, 6), "never past the last unlocked slot");
-        }
-
-        [Test]
-        public void OnlyOneHint_StandsForTheLockedSlots_OnTheHeadingRow()
-        {
-            foreach (int unlocked in new[] { 8, 16 })
-            {
-                Assert.IsTrue(FaceLayout.HasMoreRow(unlocked));
-                Rect row = FaceLayout.MoreRowRect(unlocked);
-                Assert.LessOrEqual(row.yMax, FaceLayout.StripRuleY(unlocked), "on the heading row, above the rule");
-                Assert.LessOrEqual(row.xMax, FaceLayout.Margin + FaceLayout.StripWidth, "it stays over the strip");
-            }
-
-            Assert.IsFalse(FaceLayout.HasMoreRow(FaceInventoryView.MaxHoldCells), "nothing left to hint at");
         }
 
         [Test]
         public void TheWordsInEveryFrame_FitTheirBox_InEveryLanguage()
         {
             float room = FaceLayout.FrameWidth - FaceLayout.FrameTextX - FaceLayout.FrameEdgeInset;
-            float nameRoom = FaceLayout.FrameWidth - NameInset;
+            float nameRoom = FaceLayout.FrameWidth - FaceLayout.FrameGlyphRoom - FaceLayout.FrameNamePad;
             foreach (StringTable table in _tables)
             {
                 for (int device = 0; device < FaceDevices.Count; device++)
                 {
-                    AssertFits(table, FaceDevices.NameKey(device), nameRoom, SmallestText, $"device {device} name");
+                    AssertFits(table, FaceDevices.NameKey(device), nameRoom, SmallestText * TitleAdvance,
+                        $"device {device} name");
                     RoverSystem system = FaceDevices.SystemOf(device);
                     if (system == RoverSystem.Sockets)
                     {
@@ -214,20 +270,43 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
-        public void TheTitle_TheStripHeading_AndTheHint_FitTheirRows_InEveryLanguage()
+        public void EveryItemName_WrapsInTwoLinesUnderItsCell_InEveryLanguage()
+        {
+            float advance = NameText * TitleAdvance;
+            foreach (StringTable table in _tables)
+            {
+                foreach (SalvageMaterial material in Enum.GetValues(typeof(SalvageMaterial)))
+                {
+                    AssertWrapsIn(table, UiKeys.MaterialName(material), FaceLayout.ColumnPitch, NameLines,
+                        material.ToString(), advance);
+                }
+
+                foreach (string part in new[] { "part.igniter", "part.icecore" })
+                {
+                    AssertWrapsIn(table, UiKeys.PickupName(part), FaceLayout.ColumnPitch, NameLines, part, advance);
+                }
+            }
+
+            Assert.GreaterOrEqual(FaceLayout.NameHeight, NameLines * NameText * NameLineHeight,
+                "two lines of names fit");
+        }
+
+        [Test]
+        public void TheTitle_TheHeading_ThePageCount_TheHint_AndTheStatusLine_FitTheirRows_InEveryLanguage()
         {
             foreach (StringTable table in _tables)
             {
-                AssertFits(table, UiKeys.FaceTitle, FaceLayout.RightEdge - FaceLayout.Margin, 28f + StripHeadingLetterSpace,
-                    "the title row");
-                Assert.IsTrue(table.TryGet(UiKeys.CargoHold, out string heading));
-                float headingWidth = heading.Length * (SmallestText * MonoAdvance + StripHeadingLetterSpace);
-                Assert.LessOrEqual(headingWidth, FaceLayout.StripWidth - FaceLayout.MoreRowWidth,
-                    $"{table.Language}: the heading leaves room for the hint on its row");
-                Assert.IsTrue(table.TryGet(UiKeys.CargoMoreSlots, out string more));
-                string line = string.Format(more, FaceInventoryView.MaxHoldCells);
-                Assert.LessOrEqual(line.Length * SmallestText * MonoAdvance, FaceLayout.MoreRowWidth - 30f,
-                    $"{table.Language}: {line} fits the hint row beside its padlock");
+                AssertFits(table, UiKeys.FaceTitle, FaceLayout.RightEdge - FaceLayout.Margin,
+                    28f * MonoAdvance + HeadingLetterSpace, "the title row");
+                AssertFits(table, UiKeys.CargoHold, FaceLayout.HeadingRect.width,
+                    SmallestText * MonoAdvance + HeadingLetterSpace, "the heading");
+                int pages = FaceLayout.PageCount(FaceInventoryView.MaxHoldCells);
+                AssertFits(table, UiKeys.CargoPage, FaceLayout.PageWidth, SmallestText * MonoAdvance, "the page count",
+                    pages, pages);
+                AssertFits(table, UiKeys.CargoMoreSlots, FaceLayout.HoldWidth - HintTextInset,
+                    SmallestText * MonoAdvance, "the hint row", FaceInventoryView.MaxHoldCells);
+                AssertFits(table, UiKeys.CargoWaiting, FaceLayout.HoldWidth - ToastTextInset,
+                    SmallestText * MonoAdvance, "the status line", TwoDigits);
             }
         }
 
@@ -241,9 +320,10 @@ namespace MoonProject.UI.Tests
                          {
                              UiKeys.CargoEmptyDesc, "ui.device.cutter.fault", "ui.device.cutter.fit",
                              "ui.device.cutter.ok", "ui.device.scan.ok", "ui.device.socket.empty",
+                             "ui.cargo.drag.not_docked", "ui.cargo.drag.to_cutter", "ui.cargo.drag.nowhere",
                          })
                 {
-                    AssertWrapsIn(table, key, room, 4, key);
+                    AssertWrapsIn(table, key, room, InfoLines, key);
                 }
             }
         }
@@ -288,36 +368,47 @@ namespace MoonProject.UI.Tests
             }
         }
 
-        private static void AssertWrapsIn(StringTable table, string key, float room, int lines, string what)
+        [Test]
+        public void EveryTier_FitsTheGrid_OnAtMostTwoPages()
+        {
+            foreach (int tier in Tiers)
+            {
+                Assert.LessOrEqual(FaceLayout.PageCount(tier), 2, $"{tier} slots");
+                Assert.LessOrEqual(FaceLayout.RowsOnPage(0, tier), FaceLayout.RowsPerPage);
+            }
+        }
+
+        private static void AssertWrapsIn(StringTable table, string key, float room, int lines, string what,
+            float advance = SmallestText * MonoAdvance)
         {
             Assert.IsTrue(table.TryGet(key, out string text), $"{table.Language}: {key}");
-            string[] words = text.Split(' ');
+            string[] words = text.Split(' ', SoftHyphen);
             int used = 1;
             float width = 0f;
-            float space = SmallestText * MonoAdvance;
             foreach (string word in words)
             {
-                float wordWidth = word.Length * SmallestText * MonoAdvance;
+                float wordWidth = word.Length * advance;
                 Assert.LessOrEqual(wordWidth, room, $"{table.Language} {what}: {word} is wider than {room}");
-                if (width > 0f && width + space + wordWidth > room)
+                if (width > 0f && width + advance + wordWidth > room)
                 {
                     used++;
                     width = wordWidth;
                 }
                 else
                 {
-                    width += (width > 0f ? space : 0f) + wordWidth;
+                    width += (width > 0f ? advance : 0f) + wordWidth;
                 }
             }
 
             Assert.LessOrEqual(used, lines, $"{table.Language} {what}: {text} needs {used} lines in {room}");
         }
 
-        private static void AssertFits(StringTable table, string key, float room, float size, string what)
+        private static void AssertFits(StringTable table, string key, float room, float advance, string what,
+            params object[] args)
         {
             Assert.IsTrue(table.TryGet(key, out string text), $"{table.Language}: {key}");
-            Assert.LessOrEqual(text.Length * size * MonoAdvance, room,
-                $"{table.Language} {what}: {text} is wider than {room}");
+            string line = args.Length > 0 ? string.Format(text, args) : text;
+            Assert.LessOrEqual(line.Length * advance, room, $"{table.Language} {what}: {line} is wider than {room}");
         }
     }
 }

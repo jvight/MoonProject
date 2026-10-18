@@ -8,12 +8,21 @@ namespace MoonProject.UI
     /// <summary>
     /// 07 v3's equipment socket anchor positions, wheel centres, and the 30 parsed SVG icons (<see cref="UiIconShape"/>)
     /// extracted at build time from <c>Assets/_Project/Generated/Art/R1/Models/Rover/RoverModel.prefab</c> and
-    /// <c>Assets/_Project/UI/Icons/</c> by <c>UI/Rover Diagram</c> for <see cref="FaceInventoryView"/>.
+    /// <c>Assets/_Project/UI/Icons/</c> by <c>UI/Rover Diagram</c>, and the face's own art from
+    /// <c>Assets/_Project/Art/UI/Face/</c>: 07's three-quarter line drawing, where its lines sit in the image, the point
+    /// on it each device's leader ends at, and the face's parsed icons, for <see cref="FaceInventoryView"/>.
     /// </summary>
     public sealed class RoverDiagramData : ScriptableObject
     {
         public const int SocketCount = 12;
         public const int WheelCount = 4;
+
+        /// <summary>The face icons (<c>Art/UI/Face/&lt;id&gt;.svg</c>) the screen draws, in ordinal order.</summary>
+        public static readonly string[] FaceIconIds =
+        {
+            "icon_cutter", "icon_empty_socket", "icon_ice_core_tube", "icon_lens", "icon_metal_plates",
+            "icon_spare_igniter", "icon_warning", "icon_wiring_spool",
+        };
 
         [Tooltip("Root-local socket positions on 07 v3, indexed by Core.RoverSocket (0..11).")]
         [SerializeField] private Vector3[] _sockets = Array.Empty<Vector3>();
@@ -24,9 +33,33 @@ namespace MoonProject.UI
         [Tooltip("The 30 parsed 64x64 vector icons (item_*.svg and kit_*.svg) drawn by FaceInventoryView.")]
         [SerializeField] private UiIconShape[] _icons = Array.Empty<UiIconShape>();
 
+        [Tooltip("The face's parsed icons (FaceIconIds, scaled from their 256 viewBox to 64) drawn by FaceInventoryView.")]
+        [SerializeField] private UiIconShape[] _faceIcons = Array.Empty<UiIconShape>();
+
+        [Tooltip("07's three-quarter line drawing on the face (Art/UI/Face/rover_07_line_3q.png).")]
+        [SerializeField] private Texture2D _faceArt;
+
+        [Tooltip("Where the drawing's lines sit inside the image, as a UV rect with a top-left origin.")]
+        [SerializeField] private Rect _faceArtContent;
+
+        [Tooltip("Per FaceDevices index, the UV (top-left origin) on the drawing that device's leader ends at.")]
+        [SerializeField] private Vector2[] _faceAnchors = Array.Empty<Vector2>();
+
         public int Count => _sockets != null ? _sockets.Length : 0;
 
         public int IconCount => _icons != null ? _icons.Length : 0;
+
+        /// <summary>07's three-quarter line drawing on the face.</summary>
+        public Texture2D FaceArt => _faceArt;
+
+        /// <summary>Where the drawing's lines sit inside <see cref="FaceArt"/> (UV, top-left origin).</summary>
+        public Rect FaceArtContent => _faceArtContent;
+
+        /// <summary>The UV (top-left origin) on <see cref="FaceArt"/> where device <paramref name="device"/>'s leader ends.</summary>
+        public Vector2 FaceAnchor(int device)
+        {
+            return _faceAnchors[device];
+        }
 
         /// <summary>Contract transform name on <c>RoverModel.prefab</c> for <paramref name="socket"/>.</summary>
         public static string SocketNodeName(RoverSocket socket)
@@ -81,7 +114,8 @@ namespace MoonProject.UI
         /// </summary>
         public UiIconShape GetIcon(string id)
         {
-            return UiIconSet.FindInArray(_icons, id);
+            return Array.IndexOf(FaceIconIds, id) >= 0 ? UiIconSet.FindInArray(_faceIcons, id)
+                : UiIconSet.FindInArray(_icons, id);
         }
 
         public UiIconShape GetIcon(SalvageMaterial material)
@@ -92,11 +126,6 @@ namespace MoonProject.UI
         public UiIconShape GetPartIcon(string partId)
         {
             return GetIcon(UiIconSet.IconIdOfPart(partId));
-        }
-
-        public UiIconShape GetIcon(RoverSocket socket)
-        {
-            return GetIcon(UiIconSet.IconIdOf(socket));
         }
 
         internal void SetSockets(Vector3[] sockets)
@@ -114,9 +143,26 @@ namespace MoonProject.UI
             _icons = icons ?? throw new ArgumentNullException(nameof(icons));
         }
 
-        /// <summary>Null when all 12 socket positions, 4 wheel centres, and 30 icons are present and populated.</summary>
+        internal void SetFaceArt(Texture2D art, Rect content, Vector2[] anchors, UiIconShape[] icons)
+        {
+            _faceArt = art;
+            _faceArtContent = content;
+            _faceAnchors = anchors ?? throw new ArgumentNullException(nameof(anchors));
+            _faceIcons = icons ?? throw new ArgumentNullException(nameof(icons));
+        }
+
+        /// <summary>
+        /// Null when all 12 socket positions, 4 wheel centres, the 30 icons and the face's drawing, anchors and icons
+        /// are present and populated.
+        /// </summary>
         public string Validate()
         {
+            string faceProblem = ValidateFace();
+            if (faceProblem != null)
+            {
+                return "face art " + faceProblem;
+            }
+
             if (_sockets == null || _sockets.Length != SocketCount)
             {
                 return $"needs {SocketCount} socket positions (has {_sockets?.Length ?? 0})";
@@ -152,6 +198,59 @@ namespace MoonProject.UI
 
             string iconProblem = UiIconSet.ValidateArray(_icons);
             return iconProblem != null ? "icons: " + iconProblem : null;
+        }
+
+        private string ValidateFace()
+        {
+            if (_faceArt == null)
+            {
+                return "has no line drawing";
+            }
+
+            if (_faceArt.width != _faceArt.height)
+            {
+                return $"has a {_faceArt.width}x{_faceArt.height} line drawing; the face places a square one";
+            }
+
+            if (_faceArtContent.width <= 0f || _faceArtContent.height <= 0f || _faceArtContent.xMin < 0f ||
+                _faceArtContent.yMin < 0f || _faceArtContent.xMax > 1f || _faceArtContent.yMax > 1f)
+            {
+                return $"has a content rect {_faceArtContent} outside the image";
+            }
+
+            if (_faceAnchors == null || _faceAnchors.Length != FaceDevices.Count)
+            {
+                return $"needs {FaceDevices.Count} device anchors (has {_faceAnchors?.Length ?? 0})";
+            }
+
+            for (int i = 0; i < _faceAnchors.Length; i++)
+            {
+                if (!_faceArtContent.Contains(_faceAnchors[i]))
+                {
+                    return $"has device {i}'s anchor {_faceAnchors[i]} off the drawing";
+                }
+            }
+
+            if (_faceIcons == null || _faceIcons.Length != FaceIconIds.Length)
+            {
+                return $"needs {FaceIconIds.Length} icons (has {_faceIcons?.Length ?? 0})";
+            }
+
+            for (int i = 0; i < FaceIconIds.Length; i++)
+            {
+                if (!string.Equals(_faceIcons[i].Id, FaceIconIds[i], StringComparison.Ordinal))
+                {
+                    return $"has icon '{_faceIcons[i].Id}' where '{FaceIconIds[i]}' belongs";
+                }
+
+                string problem = _faceIcons[i].Validate();
+                if (problem != null)
+                {
+                    return problem;
+                }
+            }
+
+            return null;
         }
     }
 }
