@@ -111,6 +111,80 @@ namespace MoonProject.Rover
 
         public float BatteryFill => _batteryFill;
 
+        [Header("The camera")]
+        [Tooltip("How far (m) the three-quarter front shot sits from the point it looks at.")]
+        [Range(1f, 6f)]
+        [SerializeField] private float _shotDistance = 2.6f;
+
+        [Tooltip("How far (deg) round from 07's front the camera stands: 35 is a three-quarter view.")]
+        [Range(0f, 90f)]
+        [SerializeField] private float _shotSideYaw = 35f;
+
+        [Tooltip("The shot's field of view (deg).")]
+        [Range(20f, 70f)]
+        [SerializeField] private float _shotFov = 42f;
+
+        [Tooltip("At the start the camera swings round to this side yaw (deg) as the head turns to the beacon.")]
+        [Range(-90f, 90f)]
+        [SerializeField] private float _beginSideYaw = -15f;
+
+        [Tooltip("After the checks the camera settles this far (m) to 07's right, high and behind it.")]
+        [SerializeField] private float _overShoulderSide = 0.9f;
+
+        [SerializeField] private float _overShoulderHeight = 1.6f;
+
+        [SerializeField] private float _overShoulderBack = 2.6f;
+
+        [Tooltip("The whole-body focus the pull-out arrives at and the lens check starts from.")]
+        [SerializeField] private PostFocus _baseFocus = new PostFocus(BootCheckStep.Lens, new Vector3(0f, 0.8f, 0.3f), 1f, 1.35f);
+
+        [Tooltip("What the camera eases toward for each check: a point in 07's frame (x right, y up, z forward), how " +
+                 "close (a share of the shot distance) and how high (m).")]
+        [SerializeField] private PostFocus[] _focus =
+        {
+            new PostFocus(BootCheckStep.Lens, new Vector3(0f, 1.15f, 0.4f), 0.7f, 1.3f),
+            new PostFocus(BootCheckStep.Lamps, new Vector3(0f, 0.95f, 0.55f), 0.75f, 1.2f),
+            new PostFocus(BootCheckStep.Head, new Vector3(0f, 1.15f, 0.25f), 0.8f, 1.35f),
+            new PostFocus(BootCheckStep.Wheels, new Vector3(0f, 0.35f, 0.1f), 0.95f, 0.7f),
+            new PostFocus(BootCheckStep.Motor, new Vector3(0f, 0.6f, -0.35f), 0.95f, 1f),
+            new PostFocus(BootCheckStep.Cutter, new Vector3(0f, 0.85f, 0.5f), 0.75f, 1.1f),
+            new PostFocus(BootCheckStep.SolarWing, new Vector3(0f, 1f, -0.2f), 0.9f, 1.5f),
+            new PostFocus(BootCheckStep.Antenna, new Vector3(0f, 1.4f, -0.3f), 0.9f, 1.5f),
+            new PostFocus(BootCheckStep.Battery, new Vector3(0.55f, 1.05f, 0f), 0.8f, 1.1f),
+            new PostFocus(BootCheckStep.Assembly, new Vector3(0f, 0.8f, 0.3f), 1f, 1.35f),
+            new PostFocus(BootCheckStep.Begin, new Vector3(0f, 1f, 0.3f), 0.9f, 1.35f),
+        };
+
+        public float ShotDistance => _shotDistance;
+
+        public float ShotSideYaw => _shotSideYaw;
+
+        public float ShotFov => _shotFov;
+
+        public float BeginSideYaw => _beginSideYaw;
+
+        public float OverShoulderSide => _overShoulderSide;
+
+        public float OverShoulderHeight => _overShoulderHeight;
+
+        public float OverShoulderBack => _overShoulderBack;
+
+        public PostFocus BaseFocus => _baseFocus;
+
+        /// <summary>What the camera frames for <paramref name="step"/> (the base focus for a step with none).</summary>
+        public PostFocus FocusOf(BootCheckStep step)
+        {
+            for (int i = 0; i < _focus.Length; i++)
+            {
+                if (_focus[i].Step == step)
+                {
+                    return _focus[i];
+                }
+            }
+
+            return _baseFocus;
+        }
+
         /// <summary>Seconds <paramref name="step"/> takes; the lens stages' steps (carrier, resume, agenda) have none here.</summary>
         public float SecondsOf(BootCheckStep step)
         {
@@ -130,5 +204,34 @@ namespace MoonProject.Rover
                 default: return 0f;
             }
         }
+    }
+
+    /// <summary>Where the self-test's camera looks during one check, and how near and high it stands.</summary>
+    [Serializable]
+    public sealed class PostFocus
+    {
+        [SerializeField] private BootCheckStep _step;
+        [SerializeField] private Vector3 _local;
+        [SerializeField] private float _distance = 1f;
+        [SerializeField] private float _height = 1.35f;
+
+        public PostFocus(BootCheckStep step, Vector3 local, float distance, float height)
+        {
+            _step = step;
+            _local = local;
+            _distance = distance;
+            _height = height;
+        }
+
+        public BootCheckStep Step => _step;
+
+        /// <summary>The point looked at, in 07's frame (x right, y up, z forward).</summary>
+        public Vector3 Local => _local;
+
+        /// <summary>How near the camera stands, as a share of the shot distance.</summary>
+        public float Distance => _distance;
+
+        /// <summary>How high above 07's ground point (m).</summary>
+        public float Height => _height;
     }
 }
